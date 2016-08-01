@@ -10,7 +10,7 @@ This repo contains APIs to access SAI services. It provides functions that take 
 
 Building
 ---------
-Please see the instructions in the sonic-nas-manifest repo for more details on the common build tools.  [Sonic-nas-manifest](https://stash.force10networks.com/projects/SONIC/repos/sonic-nas-manifest/browse)
+Please see the instructions in the sonic-nas-manifest repo for more details on the common build tools.  [Sonic-nas-manifest](https://github.com/Azure/sonic-nas-manifest)
 
 Development Dependencies:
  - sonic-common
