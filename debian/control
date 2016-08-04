@@ -12,6 +12,6 @@ Description: This package contains nas-ndi code
 
 Package: libsonic-nas-ndi-dev
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends},libsonic-common-dev,libsonic-logging-dev,libsonic-nas-common-dev,sonic-ndi-api-dev,sonic-sai-api-dev,libsonic-model-dev,libsonic-sai-common1
+Depends: ${shlibs:Depends}, ${misc:Depends},libsonic-nas-ndi1 (=${binary:Version}),libsonic-common-dev,libsonic-logging-dev,libsonic-nas-common-dev,sonic-ndi-api-dev,sonic-sai-api-dev,libsonic-model-dev,libsonic-sai-common1
 Description: This package contains nas-ndi code
 
