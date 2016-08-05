@@ -16,6 +16,8 @@ libsonic_nas_ndi_la_SOURCES= src/nas_ndi_init.c src/nas_ndi_utils.cpp \
 
 libsonic_nas_ndi_la_CPPFLAGS= -D_FILE_OFFSET_BITS=64 -I$(top_srcdir)/sonic -I$(includedir)/sonic
 
-libsonic_nas_ndi_la_LDFLAGS=-shared -lsonic_common -lsonic_nas_common -lsonic_cps_class_map -lsonic_logging -lsai-common -version-info 1:1:0
-
 libsonic_nas_ndi_la_CXXFLAGS=-std=c++11
+
+libsonic_nas_ndi_la_LDFLAGS=-shared -version-info 1:1:0
+
+libsonic_nas_ndi_la_LIBADD=-lsonic_common -lsonic_nas_common -lsonic_cps_class_map -lsonic_logging -lsai-common
