@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
-AC_INIT([sonic-nas-ndi], [1.0.0], [support@dell.com])
+AC_INIT([sonic-nas-ndi], [1.0.1], [support@dell.com])
 AM_INIT_AUTOMAKE([foreign])
 AC_CONFIG_SRCDIR([config.h.in])
 AC_CONFIG_HEADERS([config.h])
