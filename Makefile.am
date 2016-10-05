@@ -20,4 +20,4 @@ libsonic_nas_ndi_la_CXXFLAGS=-std=c++11
 
 libsonic_nas_ndi_la_LDFLAGS=-shared -version-info 1:1:0
 
-libsonic_nas_ndi_la_LIBADD=-lsonic_common -lsonic_nas_common -lsonic_cps_class_map -lsonic_logging -lsai-common
+libsonic_nas_ndi_la_LIBADD=-lsonic_common -lsonic_logging -lsai-common
