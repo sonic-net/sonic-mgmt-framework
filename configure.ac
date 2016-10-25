@@ -3,7 +3,7 @@
 
 AC_PREREQ([2.69])
 AC_INIT([sonic-nas-ndi], [1.0.1], [sonicproject@gmail.com])
-AM_INIT_AUTOMAKE([foreign])
+AM_INIT_AUTOMAKE([foreign subdir-objects])
 AC_CONFIG_SRCDIR([config.h.in])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIRS([m4])
