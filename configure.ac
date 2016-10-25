@@ -6,6 +6,7 @@ AC_INIT([sonic-nas-ndi], [1.0.1], [sonicproject@gmail.com])
 AM_INIT_AUTOMAKE([foreign])
 AC_CONFIG_SRCDIR([config.h.in])
 AC_CONFIG_HEADERS([config.h])
+AC_CONFIG_MACRO_DIRS([m4])
 # Checks for programs.
 AC_PROG_CXX
 AC_PROG_CC

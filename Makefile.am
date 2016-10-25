@@ -1,3 +1,5 @@
+ACLOCAL_AMFLAGS=-I m4
+
 lib_LTLIBRARIES=libsonic_nas_ndi.la
 
 libsonic_nas_ndi_la_SOURCES= src/nas_ndi_init.c src/nas_ndi_utils.cpp \
