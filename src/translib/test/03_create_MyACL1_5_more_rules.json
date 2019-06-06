@@ -1,0 +1,134 @@
+{
+    "acl-entry": [
+        {
+            "sequence-id": 6,
+            "config": {
+                "sequence-id": 6,
+                "description": "Description for MyACL1 Rule Seq 6"
+            },
+            "ipv4": {
+                "config": {
+                    "source-address": "11.1.1.6/32",
+                    "destination-address": "21.1.1.6/32",
+                    "dscp": 6,
+                    "protocol": "IP_TCP"
+                }
+            },
+            "transport": {
+                "config": {
+                    "source-port": 106,
+                    "destination-port": 206
+                }
+            },
+            "actions": {
+                "config": {
+                    "forwarding-action": "ACCEPT"
+                }
+            }
+        },
+        {
+            "sequence-id": 7,
+            "config": {
+                "sequence-id": 7,
+                "description": "Description for MyACL1 Rule Seq 7"
+            },
+            "ipv4": {
+                "config": {
+                    "source-address": "11.1.1.7/32",
+                    "destination-address": "21.1.1.7/32",
+                    "dscp": 7,
+                    "protocol": "IP_TCP"
+                }
+            },
+            "transport": {
+                "config": {
+                    "source-port": 107,
+                    "destination-port": 207
+                }
+            },
+            "actions": {
+                "config": {
+                    "forwarding-action": "DROP"
+                }
+            }
+        },
+        {
+            "sequence-id": 8,
+            "config": {
+                "sequence-id": 8,
+                "description": "Description for MyACL1 Rule Seq 8"
+            },
+            "ipv4": {
+                "config": {
+                    "source-address": "11.1.1.8/32",
+                    "destination-address": "21.1.1.8/32",
+                    "dscp": 8,
+                    "protocol": "IP_TCP"
+                }
+            },
+            "transport": {
+                "config": {
+                    "source-port": 108,
+                    "destination-port": 208
+                }
+            },
+            "actions": {
+                "config": {
+                    "forwarding-action": "ACCEPT"
+                }
+            }
+        },
+        {
+            "sequence-id": 9,
+            "config": {
+                "sequence-id": 9,
+                "description": "Description for MyACL1 Rule Seq 9"
+            },
+            "ipv4": {
+                "config": {
+                    "source-address": "11.1.1.9/32",
+                    "destination-address": "21.1.1.9/32",
+                    "dscp": 9,
+                    "protocol": "IP_TCP"
+                }
+            },
+            "transport": {
+                "config": {
+                    "source-port": 109,
+                    "destination-port": 209
+                }
+            },
+            "actions": {
+                "config": {
+                    "forwarding-action": "DROP"
+                }
+            }
+        },
+        {
+            "sequence-id": 10,
+            "config": {
+                "sequence-id": 10,
+                "description": "Description for MyACL1 Rule Seq 10"
+            },
+            "ipv4": {
+                "config": {
+                    "source-address": "11.1.1.10/32",
+                    "destination-address": "21.1.1.10/32",
+                    "dscp": 10,
+                    "protocol": "IP_TCP"
+                }
+            },
+            "transport": {
+                "config": {
+                    "source-port": 110,
+                    "destination-port": 210
+                }
+            },
+            "actions": {
+                "config": {
+                    "forwarding-action": "ACCEPT"
+                }
+            }
+        }
+    ]
+}
