@@ -1,0 +1,592 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE CLISH_MODULE [
+<!ENTITY MODULE-NS-VRRP                 "http://www.dellemc.com/networking/os10/dell-vrrp">
+<!ENTITY MODULE-NS-OTM                  "http://www.dellemc.com/networking/os10/dell-otm">
+<!ENTITY MODULE                         "dell-vrrp">
+<!ENTITY SUBTREE_FILTER                 "Filter_Type:SUBTREE">
+<!ENTITY MODULE-NS-IETF-INTF            "urn:ietf:params:xml:ns:yang:ietf-interfaces">
+<!ENTITY MODULE-INTF-VRRP-NS            "&MODULE-NS-IETF-INTF;,&MODULE;=&MODULE-NS-VRRP;">
+<!ENTITY NAMESPACE_FILTER               "Filter_Namespace:&MODULE-INTF-VRRP-NS;">
+<!ENTITY VRRP_SYS_NS_FILTER             "Filter_Namespace:&MODULE-NS-VRRP;">
+
+<!ENTITY INTF_ENTRY                     "/interfaces/interface">
+<!ENTITY INTF_NAME                      "&INTF_ENTRY;/name=${ifacename}">
+<!ENTITY VLAN_INTF_NAME                 "&INTF_ENTRY;/name=${vlan_name}">
+
+<!ENTITY INTF_ENTRY_RNG                 "/interfaces/interface[]">
+<!ENTITY VLAN_INTF_NAME_RNG             "&INTF_ENTRY_RNG;/name">
+
+<!ENTITY VRRP_SYS                       "/vrrp-system">
+<!ENTITY VRRP_SYS_DELAY_RELOAD          "&VRRP_SYS;/delay-reload">
+<!ENTITY VRRP_SYS_VERSION               "&VRRP_SYS;/version">
+
+<!ENTITY VRRP_IPV4_YANG_KEY             "/vrrp-ipv4/vrrp-instance/vrid">
+<!ENTITY VRRP_IPV6_YANG_KEY             "/vrrp-ipv6/vrrp-instance/vrid">
+
+<!ENTITY VRRP_IF_CONFIG                 "&INTF_ENTRY;/&MODULE;:vrrp">
+<!ENTITY VRRP_IF_ACTIVE_ACTIVE          "&VRRP_IF_CONFIG;/&MODULE;:active-active-mode">
+
+<!ENTITY VRRP_IFRNG_CONFIG              "&INTF_ENTRY_RNG;/&MODULE;:vrrp">
+<!ENTITY VRRP_IF_RNGACTIVE_ACTIVE       "&VRRP_IFRNG_CONFIG;/&MODULE;:active-active-mode">
+
+<!ENTITY VRRP_IPV4                      "&INTF_ENTRY;/&MODULE;:vrrp-ipv4">
+<!ENTITY VRRP_IPV4_INST                 "&VRRP_IPV4;/&MODULE;:vrrp-instance">
+<!ENTITY VRRP_IPV4_VRID                 "&VRRP_IPV4_INST;/&MODULE;:vrid">
+<!ENTITY VRRP_IPV4_LOG_STATE_CHANGE     "&VRRP_IPV4_INST;/&MODULE;:log-state-change">
+<!ENTITY VRRP_IPV4_PREEMPT              "&VRRP_IPV4_INST;/&MODULE;:preempt">
+<!ENTITY VRRP_IPV4_PREEMPT_ENABLE       "&VRRP_IPV4_PREEMPT;/&MODULE;:enable">
+<!ENTITY VRRP_IPV4_PREEMPT_HOLDTIME     "&VRRP_IPV4_PREEMPT;/&MODULE;:hold-time">
+<!ENTITY VRRP_IPV4_PRIORITY             "&VRRP_IPV4_INST;/&MODULE;:priority">
+<!ENTITY VRRP_IPV4_ADVT_INT             "&VRRP_IPV4_INST;/&MODULE;:advertise-interval">
+<!ENTITY VRRP_IPV4_ADVT_INT_SEC         "&VRRP_IPV4_ADVT_INT;/&MODULE;:advertise-interval-sec">
+<!ENTITY VRRP_IPV4_ADVT_INT_CENTISEC    "&VRRP_IPV4_ADVT_INT;/&MODULE;:advertise-interval-centi-sec">
+<!ENTITY VRRP_IPV4_PRIMARY_IPADDR       "&VRRP_IPV4_INST;/&MODULE;:primary-ip-addr">
+<!ENTITY VRRP_IPV4_VIP                  "&VRRP_IPV4_INST;/&MODULE;:virtual-ip-address">
+<!ENTITY VRRP_IPV4_ACCEPT_MODE          "&VRRP_IPV4_INST;/&MODULE;:accept-mode">
+<!ENTITY VRRP_IPV4_ADMIN_STATE          "&VRRP_IPV4_INST;/&MODULE;:admin-state">
+<!ENTITY VRRP_IPV4_AUTH_TYPE            "&VRRP_IPV4_INST;/&MODULE;:auth-type">
+<!ENTITY VRRP_IPV4_AUTH_KEY             "&VRRP_IPV4_INST;/&MODULE;:auth-key">
+<!ENTITY VRRP_IPV4_PROTOCOL             "&VRRP_IPV4_INST;/&MODULE;:protocol">
+<!ENTITY VRRP_IPV4_TRACK_LIST           "&VRRP_IPV4_INST;/&MODULE;:track-list">
+<!ENTITY VRRP_IPV4_TRACK_LIST_TRACK_ID  "&VRRP_IPV4_TRACK_LIST;/&MODULE;:track-id">
+<!ENTITY VRRP_IPV4_TRACK_LIST_PRI_COST  "&VRRP_IPV4_TRACK_LIST;/&MODULE;:priority-decrement">
+
+<!ENTITY VRRP_IPV6                      "&INTF_ENTRY;/&MODULE;:vrrp-ipv6">
+<!ENTITY VRRP_IPV6_INST                 "&VRRP_IPV6;/&MODULE;:vrrp-instance">
+<!ENTITY VRRP_IPV6_VRID                 "&VRRP_IPV6_INST;/&MODULE;:vrid">
+<!ENTITY VRRP_IPV6_LOG_STATE_CHANGE     "&VRRP_IPV6_INST;/&MODULE;:log-state-change">
+<!ENTITY VRRP_IPV6_PREEMPT              "&VRRP_IPV6_INST;/&MODULE;:preempt">
+<!ENTITY VRRP_IPV6_PREEMPT_ENABLE       "&VRRP_IPV6_PREEMPT;/&MODULE;:enable">
+<!ENTITY VRRP_IPV6_PREEMPT_HOLDTIME     "&VRRP_IPV6_PREEMPT;/&MODULE;:hold-time">
+<!ENTITY VRRP_IPV6_PRIORITY             "&VRRP_IPV6_INST;/&MODULE;:priority">
+<!ENTITY VRRP_IPV6_ADVT_INT             "&VRRP_IPV6_INST;/&MODULE;:advertise-interval">
+<!ENTITY VRRP_IPV6_ADVT_INT_SEC         "&VRRP_IPV6_ADVT_INT;/&MODULE;:advertise-interval-sec">
+<!ENTITY VRRP_IPV6_ADVT_INT_CENTISEC    "&VRRP_IPV6_ADVT_INT;/&MODULE;:advertise-interval-centi-sec">
+<!ENTITY VRRP_IPV6_PRIMARY_IPADDR       "&VRRP_IPV6_INST;/&MODULE;:primary-ip-addr">
+<!ENTITY VRRP_IPV6_VIP                  "&VRRP_IPV6_INST;/&MODULE;:virtual-ip-address">
+<!ENTITY VRRP_IPV6_ACCEPT_MODE          "&VRRP_IPV6_INST;/&MODULE;:accept-mode">
+<!ENTITY VRRP_IPV6_ADMIN_STATE          "&VRRP_IPV6_INST;/&MODULE;:admin-state">
+<!ENTITY VRRP_IPV6_AUTH_TYPE            "&VRRP_IPV6_INST;/&MODULE;:auth-type">
+<!ENTITY VRRP_IPV6_AUTH_KEY             "&VRRP_IPV6_INST;/&MODULE;:auth-key">
+<!ENTITY VRRP_IPV6_PROTOCOL             "&VRRP_IPV6_INST;/&MODULE;:protocol">
+<!ENTITY VRRP_IPV6_TRACK_LIST           "&VRRP_IPV6_INST;/&MODULE;:track-list">
+<!ENTITY VRRP_IPV6_TRACK_LIST_TRACK_ID  "&VRRP_IPV6_TRACK_LIST;/&MODULE;:track-id">
+<!ENTITY VRRP_IPV6_TRACK_LIST_PRI_COST  "&VRRP_IPV6_TRACK_LIST;/&MODULE;:priority-decrement">
+
+<!ENTITY INTF_STATE_ENTRY               "/interfaces-state/interface">
+<!ENTITY VRRP_IPV4_STATE                "&INTF_STATE_ENTRY;/&MODULE;:vrrp-ipv4-state">
+<!ENTITY VRRP_IPV4_STATE_INST           "&VRRP_IPV4_STATE;/&MODULE;:vrrp-instance">
+<!ENTITY VRRP_IPV4_STATE_VRID           "&VRRP_IPV4_STATE_INST;/&MODULE;:vrid">
+<!ENTITY VRRP_IPV4_STATE_STATS          "&VRRP_IPV4_STATE_INST;/&MODULE;:statistics">
+
+<!ENTITY VRRP_IPV6_STATE                "&INTF_STATE_ENTRY;/&MODULE;:vrrp-ipv6-state">
+<!ENTITY VRRP_IPV6_STATE_INST           "&VRRP_IPV6_STATE;/&MODULE;:vrrp-instance">
+<!ENTITY VRRP_IPV6_STATE_VRID           "&VRRP_IPV6_STATE_INST;/&MODULE;:vrid">
+<!ENTITY VRRP_IPV6_STATE_STATS          "&VRRP_IPV6_STATE_INST;/&MODULE;:statistics">
+
+<!ENTITY TRACK_GROUP                    "/track-group">
+<!ENTITY TRACK_INST                     "&TRACK_GROUP;/track">
+<!ENTITY TRACK_INST_ID                  "&TRACK_INST;/track-id">
+<!ENTITY TRACK_INST_OBJ                 "&TRACK_INST;/track-obj/obj">
+<!ENTITY TRACK_INST_OBJ_TYPE            "&TRACK_INST;/track-obj/obj-type">
+<!ENTITY TRACK_INST_OBJ_SUBTYPE         "&TRACK_INST;/track-obj/obj-sub-type">
+
+<!ENTITY TRACK_GROUP_STATE              "/track-group">
+<!ENTITY TRACK_INST_STATE               "&TRACK_GROUP_STATE;track">
+<!ENTITY TRACK_INST_STATE_ID            "&TRACK_INST_STATE;/track-id">
+<!ENTITY TRACK_INST_STATE_OBJ           "&TRACK_INST_STATE;/track-obj/obj">
+<!ENTITY TRACK_INST_STATE_OBJ_TYPE      "&TRACK_INST_STATE;/track-obj/obj-type">
+<!ENTITY TRACK_INST_STATE_OBJ_SUBTYPE   "&TRACK_INST_STATE;/track-obj/obj-sub-type">
+
+<!ENTITY VRRP_IPV4_KEY                  "&VRRP_IPV4_VRID;=${v_vrid}">
+<!ENTITY VRRP_IPV4_TRACK_LIST_KEY       "&VRRP_IPV4_TRACK_LIST_TRACK_ID;">
+<!ENTITY VRRP_IPV4_VIP_KEY              "&VRRP_IPV4_KEY;,&VRRP_INST_VIP;" >
+
+<!ENTITY VRRP_IPV6_KEY                  "&VRRP_IPV6_VRID;=${v_vrid}">
+<!ENTITY VRRP_IPV6_TRACK_LIST_KEY       "&VRRP_IPV6_TRACK_LIST_TRACK_ID;">
+<!ENTITY VRRP_IPV6_VIP_KEY              "&VRRP_IPV6_KEY;,&VRRP_INST_VIP;" >
+
+<!ENTITY TRACK_INST_KEY                 "&TRACK_INST_ID;=${v_trackid}">
+
+<!ENTITY NS-GET-BULK           "http://yumaworks.com/ns/yumaworks-getbulk">
+]>
+
+<CLISH_MODULE
+		xmlns="http://www.dellemc.com/force10/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xi="http://www.w3.org/2001/XInclude"
+		xsi:schemaLocation="http://www.dellemc.com/force10/XMLSchema
+		http://www.dellemc.com/force10/XMLSchema/clish.xsd"
+		>
+
+  <!--SHOW COMMANDS-->
+    <VIEW
+        name="enable-view"
+        >
+         <COMMAND
+             name="show vrrp"
+             help="VRRP group status"
+             namespace="&NS-GET-BULK;"
+             operation="get"
+             >
+                <PARAM
+                    name="subcommands"
+                    help="subcommands"
+                    mode="switch"
+                    ptype="SUBCOMMAND"
+                    >
+             <PARAM
+                name="brief"
+                operation="get-bulk"
+                help="Brief VRRP group status"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                yang_name="/get-bulk/count=1,/get-bulk/list-target=&INTF_STATE_ENTRY;,/get-bulk/select=vrrp-ipv4-state;vrrp-ipv6-state,/get-bulk/select-config=vrrp-ipv4;vrrp-ipv6"
+                template="show_vrrp_brief.xsl"
+             />
+             <PARAM
+                name="vrrp-id"
+                help="VRRP group id"
+                ptype="RANGE_1_255"
+                template="show_vrrp_vrid.xsl"
+                yang_filter="&SUBTREE_FILTER;;Filter_Conditions:&VRRP_IPV4_STATE_VRID;=${vrrp-id};&NAMESPACE_FILTER;"
+              />
+              <PARAM
+                name="ipv6"
+                help="Select IPv6"
+                mode="subcommand"
+                ptype="SUBCOMMAND"
+              >
+                  <PARAM
+                     name="vrrp-ipv6-id"
+                     help="VRRP group id"
+                     ptype="RANGE_1_255"
+                     template="show_vrrp_ipv6_vrid.xsl"
+                     yang_filter="&SUBTREE_FILTER;;Filter_Conditions:&VRRP_IPV6_STATE_VRID;=${vrrp-ipv6-id};&NAMESPACE_FILTER;"/>
+              </PARAM>
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                />
+         </COMMAND>
+     </VIEW>
+
+	<!--=======================================================-->
+	<!--                CONFIG MODE config                     -->
+	<!--=======================================================-->
+	<VIEW name="configure-view">
+
+		<!-- vrrp delay reload [seconds] -->
+		<COMMAND name="vrrp"
+		         help="Configure VRRP global attributes"
+		         operation="edit-config"
+		         namespace="&MODULE-NS-VRRP;" >
+				
+			<MACRO name="VRRP_DELAY_MODE_CFG" />
+			
+			<ACTION builtin="clish_extn"> </ACTION>
+		</COMMAND>
+
+		<!-- vrrp delay reload [seconds] -->
+		<COMMAND name="no vrrp"
+		         help="Negate VRRP global attributes"
+		         operation="edit-config"
+		         namespace="&MODULE-NS-VRRP;" >
+				
+			<MACRO name="VRRP_DELAY_MODE_NO_CFG" />
+			
+			<ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+
+	</VIEW>	
+
+	<!--=======================================================-->
+	<!--                INTERFACE MODE config                  -->
+	<!--=======================================================-->
+
+	<VIEW name="configure-if-view">
+
+		<!-- vrrp-group vrid-->
+		<COMMAND name="vrrp-group"
+		         help="Configure a VRRP IPv4 group"
+		         operation="edit-config"
+		         view="configure-if-vrrp-group-view"
+             viewid="v_vrid=${vrrp-id};v_iptype=ipv4;v_ifname=${ifacename};v_version=${version}"
+		         namespace="&MODULE-INTF-VRRP-NS;"
+             yang_key="&VRRP_IPV4_VRID;" >
+			
+			<PARAM  name="vrrp-id"
+		        help="VRRP group ID"
+		        ptype="RANGE_1_255"
+		        yang_name="&INTF_NAME;,&VRRP_IPV4_VRID;=${vrrp-id}"
+                >
+		    </PARAM>
+		
+			<ACTION builtin="clish_extn"> </ACTION>
+		</COMMAND>	
+
+		<!-- no vrrp-group vrid-->
+		<COMMAND name="no vrrp-group"
+		         help="Configure a VRRP IPv4 group"
+		         operation="edit-config"
+		         sub_oper_yang="remove:vrrp-instance"
+		         namespace="&MODULE-INTF-VRRP-NS;" >
+				
+			<PARAM  name="vrrp-id"
+		        help="VRRP group ID"
+                ptype="RANGE_1_255"
+                yang_name="&INTF_NAME;,&VRRP_IPV4_VRID;=${vrrp-id}" >
+			</PARAM>
+				
+			<ACTION builtin="clish_extn"> </ACTION>
+		</COMMAND>
+		
+		<!-- vrrp-ipv6group vrid-->
+		<COMMAND name="vrrp-ipv6-group"
+		         help="Configure a VRRP IPv6 group"
+				 namespace="&MODULE-INTF-VRRP-NS;"
+		         operation="edit-config"
+		         view="configure-if-vrrp-ipv6-group-view"
+		         viewid="v_vrid=${vrrp-id};v_iptype=ipv6;v_ifname=${ifacename};v_version=${version}"
+                 yang_key="&VRRP_IPV6_VRID;"
+                 >
+			
+			<PARAM  name="vrrp-id"
+		        help="VRRP group ID"
+		        ptype="RANGE_1_255"
+				yang_name="&INTF_NAME;,&VRRP_IPV6_VRID;=${vrrp-id}"
+				>
+		    </PARAM>
+			
+			<ACTION builtin="clish_extn"> </ACTION>
+		</COMMAND>	
+
+		<!-- no vrrp-ipv6group vrid-->
+		<COMMAND name="no vrrp-ipv6-group"
+		         help="Configure a VRRP IPv6 group"
+		         operation="edit-config"
+				 sub_oper_yang="remove:vrrp-instance"
+		         namespace="&MODULE-INTF-VRRP-NS;" >
+			
+			<PARAM  name="vrrp-id"
+		        help="VRRP group ID"
+                ptype="RANGE_1_255"
+                yang_name="&INTF_NAME;,&VRRP_IPV6_VRID;=${vrrp-id}" >
+		    </PARAM>
+			
+			<ACTION builtin="clish_extn"> </ACTION>
+		</COMMAND>
+	</VIEW>
+
+	<VIEW name="configure-vlan-view">
+
+        <MACRO name="VRRP_IF_ACTIVE_ACTIVE_CFG" />
+
+		<!-- vrrp-group vrid-->
+		<COMMAND name="vrrp-group"
+		         help="Configure a VRRP IPv4 group"
+		         operation="edit-config"
+				 view="configure-vlan-vrrp-group-view"
+		         viewid="v_vrid=${vrrp-id};v_iptype=ipv4;v_ifname=${vlan_name};v_version=${version}"
+		         namespace="&MODULE-INTF-VRRP-NS;"
+                 yang_key="&VRRP_IPV4_VRID;" >
+			
+			<PARAM  name="vrrp-id"
+		        help="VRRP group ID"
+		        ptype="RANGE_1_255"
+				yang_name="&VLAN_INTF_NAME;,&VRRP_IF_CONFIG;,&VRRP_IPV4_VRID;=${vrrp-id}" >
+		    </PARAM>
+		
+			<ACTION builtin="clish_extn"> </ACTION>
+		</COMMAND>	
+
+		<!-- no vrrp-group vrid-->
+		<COMMAND name="no vrrp-group"
+		         help="Configure a VRRP IPv4 group"
+		         operation="edit-config"
+		         sub_oper_yang="remove:vrrp-instance"
+		         namespace="&MODULE-INTF-VRRP-NS;" >
+				
+			<PARAM  name="vrrp-id"
+		          help="VRRP group ID"
+              ptype="RANGE_1_255"
+              yang_name="&VLAN_INTF_NAME;,&VRRP_IF_CONFIG;,&VRRP_IPV4_VRID;=${vrrp-id}" >
+			</PARAM>
+				
+			<ACTION builtin="clish_extn"> </ACTION>
+		</COMMAND>
+
+		<!-- vrrp-ipv6group vrid-->
+		<COMMAND name="vrrp-ipv6-group"
+		         help="Configure a VRRP IPv6 group"
+		         namespace="&MODULE-INTF-VRRP-NS;"
+		         operation="edit-config"
+		         view="configure-vlan-vrrp-ipv6-group-view"
+		         viewid="v_vrid=${vrrp-id};v_iptype=ipv6;v_ifname=${vlan_name};v_version=${version}"
+             yang_key="&VRRP_IPV6_VRID;"
+                 >
+			
+			<PARAM  name="vrrp-id"
+		        help="VRRP group ID"
+		        ptype="RANGE_1_255"
+		        yang_name="&VLAN_INTF_NAME;,&VRRP_IF_CONFIG;,&VRRP_IPV6_VRID;=${vrrp-id}"
+				>
+		    </PARAM>
+			
+			<ACTION builtin="clish_extn"> </ACTION>
+		</COMMAND>	
+
+		<!-- no vrrp-ipv6group vrid-->
+		<COMMAND name="no vrrp-ipv6-group"
+		         help="Configure a VRRP IPv6 group"
+		         operation="edit-config"
+				 sub_oper_yang="remove:vrrp-instance"
+		         namespace="&MODULE-INTF-VRRP-NS;" >
+			
+			<PARAM  name="vrrp-id"
+		        help="VRRP group ID"
+                ptype="RANGE_1_255"
+                yang_name="&VLAN_INTF_NAME;,&VRRP_IF_CONFIG;,&VRRP_IPV6_VRID;=${vrrp-id}" >
+		    </PARAM>
+			
+			<ACTION builtin="clish_extn"> </ACTION>
+		</COMMAND>
+	</VIEW>		
+
+    <VIEW
+        name="configure-vlan-range-view"
+        >
+		<MACRO name="VRRP_IFRANGE_ACTIVE_ACTIVE_CFG" />
+    </VIEW>
+
+	<!--=======================================================-->
+	<!--                INTERFACE-VRRP MODE config             -->
+	<!--=======================================================-->
+	<VIEW name="configure-if-vrrp-group-view"
+	      prompt="${SYSTEM_NAME}(conf-${v_ifname}-vrid-${v_vrid})# "
+	      depth="3" >
+
+		<NAMESPACE ref="configure-if-view"
+		           help="false"
+		           completion="false"/>
+
+		<MACRO name="VRRP_IPV4_PRIORITY_CFG" />
+		<MACRO name="VRRP_IPV4_PREEMPT" />
+		<MACRO name="VRRP_IPV4_TRACK_CFG" />
+		<MACRO name="VRRP_IPV4_VIRTUAL_ADDR_CFG" />
+		<MACRO name="VRRP_IPV4_AUTHTYPE_CFG" />
+		<MACRO name="VRRP_IPV4_ADVT_INTERVAL_CFG" />
+
+		<COMMAND name="no"
+		         help="Negate a command or set its defaults">
+		</COMMAND>
+
+		<MACRO name="VRRP_IPV4_NO_PRIORITY_CFG" />
+		<MACRO name="VRRP_IPV4_NO_PREEMPT" />
+		<MACRO name="VRRP_IPV4_NO_TRACK_CFG" />
+		<MACRO name="VRRP_IPV4_NO_VIRTUAL_ADDR_CFG" />
+		<MACRO name="VRRP_IPV4_NO_AUTHTYPE_CFG" />
+		<MACRO name="VRRP_IPV4_NO_ADVT_INTERVAL_CFG" />
+
+        <!-- show configuration candidate -->
+         <COMMAND
+             name="show"
+             help="show configuration"
+         />
+
+        <COMMAND
+             name="show configuration candidate"
+             help="Current candidate configuration"
+             yang_filter="&SUBTREE_FILTER;;Filter_Conditions:&INTF_NAME;,&VRRP_IPV4_KEY;;&NAMESPACE_FILTER;"
+             >
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+
+     <!-- show configuration -->
+        <COMMAND
+             name="show configuration"
+             help="Current configuration (default = running)"
+             yang_filter="&SUBTREE_FILTER;;Filter_Conditions:&INTF_NAME;,&VRRP_IPV4_KEY;;&NAMESPACE_FILTER;"
+             >
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+
+	</VIEW>
+
+	<VIEW name="configure-vlan-vrrp-group-view"
+	      prompt="${SYSTEM_NAME}(conf-${v_ifname}-vrid-${v_vrid})# "
+	      depth="3" >
+
+		<NAMESPACE ref="configure-vlan-view"
+		           help="false"
+		           completion="false"/>
+
+		<MACRO name="VRRP_IPV4_PRIORITY_CFG"/>
+		<MACRO name="VRRP_IPV4_PREEMPT" />
+		<MACRO name="VRRP_IPV4_TRACK_CFG" />
+		<MACRO name="VRRP_IPV4_VIRTUAL_ADDR_CFG" />
+		<MACRO name="VRRP_IPV4_AUTHTYPE_CFG" />
+		<MACRO name="VRRP_IPV4_ADVT_INTERVAL_CFG" />
+
+		<COMMAND name="no"
+		         help="Negate a command or set its defaults">
+		</COMMAND>
+
+		<MACRO name="VRRP_IPV4_NO_PRIORITY_CFG" />
+		<MACRO name="VRRP_IPV4_NO_PREEMPT" />
+		<MACRO name="VRRP_IPV4_NO_TRACK_CFG" />
+		<MACRO name="VRRP_IPV4_NO_VIRTUAL_ADDR_CFG" />
+		<MACRO name="VRRP_IPV4_NO_AUTHTYPE_CFG" />
+		<MACRO name="VRRP_IPV4_NO_ADVT_INTERVAL_CFG" />
+
+        <!-- show configuration candidate -->
+         <COMMAND
+             name="show"
+             help="show configuration"
+         />
+
+        <COMMAND
+             name="show configuration candidate"
+             help="Current candidate configuration"
+             yang_filter="&SUBTREE_FILTER;;Filter_Conditions:&VLAN_INTF_NAME;,&VRRP_IPV4_KEY;;&NAMESPACE_FILTER;"
+             >
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+
+     <!-- show configuration -->
+        <COMMAND
+             name="show configuration"
+             help="Current configuration (default = running)"
+             yang_filter="&SUBTREE_FILTER;;Filter_Conditions:&VLAN_INTF_NAME;,&VRRP_IPV4_KEY;;&NAMESPACE_FILTER;"
+             >
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+
+
+	</VIEW>
+
+	<VIEW name="configure-if-vrrp-ipv6-group-view"
+	      prompt="${SYSTEM_NAME}(conf-${v_ifname}-vrid-v6-${v_vrid})# "
+	      depth="3" >
+
+		<NAMESPACE ref="configure-if-view"
+		           help="false"
+		           completion="false"/>
+
+		<MACRO name="VRRP_IPV6_PRIORITY_CFG" />
+		<MACRO name="VRRP_IPV6_PREEMPT" />
+		<MACRO name="VRRP_IPV6_TRACK_CFG" />
+		<MACRO name="VRRP_IPV6_VIRTUAL_ADDR_CFG" />
+		<MACRO name="VRRP_IPV6_AUTHTYPE_CFG" />
+		<MACRO name="VRRP_IPV6_ADVT_INTERVAL_CFG" />
+
+		<COMMAND name="no"
+		         help="Negate a command or set its defaults">
+		</COMMAND>
+
+		<MACRO name="VRRP_IPV6_NO_PRIORITY_CFG" />
+		<MACRO name="VRRP_IPV6_NO_PREEMPT" />
+		<MACRO name="VRRP_IPV6_NO_TRACK_CFG" />
+		<MACRO name="VRRP_IPV6_NO_VIRTUAL_ADDR_CFG" />
+		<MACRO name="VRRP_IPV6_NO_AUTHTYPE_CFG" />
+		<MACRO name="VRRP_IPV6_NO_ADVT_INTERVAL_CFG" />
+
+        <!-- show configuration candidate -->
+         <COMMAND
+             name="show"
+             help="show configuration"
+         />
+
+        <COMMAND
+             name="show configuration candidate"
+             help="Current candidate configuration"
+             yang_filter="&SUBTREE_FILTER;;Filter_Conditions:&INTF_NAME;,&VRRP_IPV6_KEY;;&NAMESPACE_FILTER;"
+             >
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+
+     <!-- show configuration -->
+        <COMMAND
+             name="show configuration"
+             help="Current configuration (default = running)"
+             yang_filter="&SUBTREE_FILTER;;Filter_Conditions:&INTF_NAME;,&VRRP_IPV6_KEY;;&NAMESPACE_FILTER;"
+             >
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+
+	</VIEW>
+	
+	<VIEW name="configure-vlan-vrrp-ipv6-group-view"
+	      prompt="${SYSTEM_NAME}(conf-${v_ifname}-vrid-v6-${v_vrid})# "
+	      depth="3" >
+
+		<NAMESPACE ref="configure-vlan-view"
+		           help="false"
+		           completion="false"/>
+
+		<MACRO name="VRRP_IPV6_PRIORITY_CFG" />
+		<MACRO name="VRRP_IPV6_PREEMPT" />
+		<MACRO name="VRRP_IPV6_TRACK_CFG" />
+		<MACRO name="VRRP_IPV6_VIRTUAL_ADDR_CFG" />
+		<MACRO name="VRRP_IPV6_AUTHTYPE_CFG" />
+		<MACRO name="VRRP_IPV6_ADVT_INTERVAL_CFG" />
+
+		<COMMAND name="no"
+		         help="Negate a command or set its defaults">
+		</COMMAND>
+
+		<MACRO name="VRRP_IPV6_NO_PRIORITY_CFG" />
+		<MACRO name="VRRP_IPV6_NO_PREEMPT" />
+		<MACRO name="VRRP_IPV6_NO_TRACK_CFG" />
+		<MACRO name="VRRP_IPV6_NO_VIRTUAL_ADDR_CFG" />
+		<MACRO name="VRRP_IPV6_NO_AUTHTYPE_CFG" />
+		<MACRO name="VRRP_IPV6_NO_ADVT_INTERVAL_CFG" />
+
+        <!-- show configuration candidate -->
+         <COMMAND
+             name="show"
+             help="show configuration"
+         />
+
+        <COMMAND
+             name="show configuration candidate"
+             help="Current candidate configuration"
+             yang_filter="&SUBTREE_FILTER;;Filter_Conditions:&VLAN_INTF_NAME;,&VRRP_IPV6_KEY;;&NAMESPACE_FILTER;"
+             >
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+
+     <!-- show configuration -->
+        <COMMAND
+             name="show configuration"
+             help="Current configuration (default = running)"
+             yang_filter="&SUBTREE_FILTER;;Filter_Conditions:&VLAN_INTF_NAME;,&VRRP_IPV6_KEY;;&NAMESPACE_FILTER;"
+             >
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+
+	</VIEW>
+
+  <!--=======================================================-->
+  <!--                CONFIG-TRACK MODE config               -->
+  <!--=======================================================-->
+  <VIEW name="configure-track-group-view"
+    prompt="${SYSTEM_NAME}(conf-track-${v_trackid})# "
+    depth="2" >
+
+    <NAMESPACE ref="configure-view"
+      help="false"
+      completion="false"/>
+
+    <MACRO name="TRACK_INST_IF_CFG" />
+
+    <COMMAND name="no"
+      help="Negate a command or set its defaults">
+    </COMMAND>
+
+     <MACRO name="TRACK_INST_NO_IF_CFG" />
+
+  </VIEW>
+		
+</CLISH_MODULE>		

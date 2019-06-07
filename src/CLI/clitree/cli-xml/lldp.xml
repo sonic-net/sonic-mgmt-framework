@@ -1,0 +1,990 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE CLISH_MODULE [
+<!ENTITY SUBTREE_FILTER                     "Filter_Type:SUBTREE">
+<!ENTITY NAMESPACE_FILTER                   "Filter_Namespace:http://www.dellemc.com/networking/os10/dell-lldp">
+<!ENTITY LLDP_GLOB_CFG_NAMESPACE            "http://www.dellemc.com/networking/os10/dell-lldp">
+<!ENTITY LLDP_NAMESPACE                     "dell-lldp=http://www.dellemc.com/networking/os10/dell-lldp">
+<!ENTITY ISCSI_NAMESPACE                    "dell-iscsi-optimization=http://www.dellemc.com/networking/os10/dell-iscsi-optimization">
+<!ENTITY IF_NAMESPACE                       "urn:ietf:params:xml:ns:yang:ietf-interfaces">
+<!ENTITY LLDP_GLOBAL_CONFIG                 "/global-params">
+<!ENTITY LLDP_INTFCONFIG                    "/interfaces/interface">
+<!ENTITY LLDP_INTF_NAME                     "&LLDP_INTFCONFIG;/name=${ifacename}">
+<!ENTITY LLDP_BASIC_TLVS                    "&LLDP_INTFCONFIG;/dell-lldp:lldp/dell-lldp:basic-tlvs">
+<!ENTITY LLDP_DOT1_TLVS                     "&LLDP_INTFCONFIG;/dell-lldp:lldp/dell-lldp:dot1-tlvs">
+<!ENTITY LLDP_DOT3_TLVS                     "&LLDP_INTFCONFIG;/dell-lldp:lldp/dell-lldp:dot3-tlvs">
+<!ENTITY LLDP_INTF_STATUS                   "/interfaces-state/interface">
+<!ENTITY LLDP_RANGE_INTF_CFG                "/interfaces/interface[]">
+<!ENTITY LLDP_RANGE_INTF_NAME               "&LLDP_RANGE_INTF_CFG;/name=${ifacename}">
+<!ENTITY LLDP_MED_GLOB_CFG_NAMESPACE        "http://www.dellemc.com/networking/os10/dell-lldp-med">
+<!ENTITY LLDP_MED_NAMESPACE                 "dell-lldp-med=http://www.dellemc.com/networking/os10/dell-lldp-med">
+<!ENTITY LLDP_MED_FILTER_NAMESPACE          "Filter_Namespace:http://www.dellemc.com/networking/os10/dell-lldp-med">
+<!ENTITY LLDP_MED_SYS_CFG                   "/sys-config">
+<!ENTITY LLDP_MED_INTF                      "/interfaces/interface">
+<!ENTITY LLDP_MED_PORT_CFG                  "&LLDP_MED_INTF;/dell-lldp-med:lldp-med-cfg">
+<!ENTITY LLDP_MED_POLICY_CFG                "&LLDP_MED_SYS_CFG;/media-policy">
+<!ENTITY LLDP_MED_INTF_STATUS               "/interfaces-state/interface">
+<!ENTITY LLDP_MED_PORT_INFO                 "&LLDP_MED_INTF_STATUS;/dell-lldp-med:lldp-med-port-info">
+<!ENTITY LLDP_MED_REM_DATA                  "&LLDP_MED_INTF_STATUS;/dell-lldp-med:lldp-med-remote-data">
+<!ENTITY LLDP_RANGE_MED_INTF                "/interfaces/interface[]">
+<!ENTITY LLDP_RANGE_MED_INTF_NAME           "&LLDP_RANGE_MED_INTF;/name=${ifacename}">
+<!ENTITY LLDP_RANGE_MED_PORT_CFG            "&LLDP_RANGE_MED_INTF;/dell-lldp-med:lldp-med-cfg">
+<!ENTITY LLDP_RANGE_MED_ENABLE              "&LLDP_RANGE_MED_PORT_CFG;/dell-lldp-med:med-enable">
+<!ENTITY LLDP_RANGE_MED_TLV                 "&LLDP_RANGE_MED_PORT_CFG;/dell-lldp-med:tlvs-tx-enable">
+<!ENTITY NS-GET-BULK                        "http://yumaworks.com/ns/yumaworks-getbulk">
+]>
+<CLISH_MODULE
+    xmlns="http://www.dellemc.com/force10/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xi="http://www.w3.org/2001/XInclude"
+    xsi:schemaLocation="http://www.dellemc.com/force10/XMLSchema
+                        http://www.dellemc.com/force10/XMLSchema/clish.xsd"
+    >
+    <!--=======================================================-->
+    <VIEW
+        name="enable-view"
+        >
+        <!--show candidate-configuration lldp -->
+        <COMMAND
+            name="show candidate-configuration lldp"
+            help="Current candidate lldp configuration"
+            yang_filter="&SUBTREE_FILTER;;Filter_Conditions:/global-params;&NAMESPACE_FILTER;|&SUBTREE_FILTER;;Filter_Conditions:/sys-config;&LLDP_MED_FILTER_NAMESPACE;|&SUBTREE_FILTER;;Filter_Conditions:&LLDP_INTFCONFIG;/dell-lldp:lldp,&LLDP_MED_PORT_CFG;;Filter_Namespace:&LLDP_NAMESPACE;,&LLDP_MED_NAMESPACE;,&IF_NAMESPACE;"
+            db_mode="configure,configure-if"
+            >
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+
+        <!--show running-configuration lldp -->
+        <COMMAND
+            name="show running-configuration lldp"
+            help="Current operating lldp configuration"
+            yang_filter="&SUBTREE_FILTER;;Filter_Conditions:/global-params;&NAMESPACE_FILTER;|&SUBTREE_FILTER;;Filter_Conditions:/sys-config;&LLDP_MED_FILTER_NAMESPACE;|&SUBTREE_FILTER;;Filter_Conditions:&LLDP_INTFCONFIG;/dell-lldp:lldp,&LLDP_MED_PORT_CFG;;Filter_Namespace:&LLDP_NAMESPACE;,&LLDP_MED_NAMESPACE;,&IF_NAMESPACE;"
+            db_mode="configure,configure-if"
+            >
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+
+       <!-- show lldp -->
+        <COMMAND
+            name="show lldp"
+            help="Show lldp"
+            operation="get"
+            namespace="&LLDP_NAMESPACE;"
+            />
+        <!-- show lldp -->
+        <COMMAND
+            name="show lldp interface"
+            help="Select an interface"
+            operation="get"
+            namespace="&LLDP_NAMESPACE;"
+            template="show_lldp_interface.xsl"
+            yang_filter="&SUBTREE_FILTER;;Filter_Conditions:&LLDP_INTF_STATUS;/name=${iface_num},&LLDP_INTF_STATUS;/dell-lldp:lldp-status/dell-lldp:info;Filter_Namespace:&IF_NAMESPACE;,&LLDP_NAMESPACE;"
+            >
+            <PARAM
+                name="iface_num"
+                help="Physical interface"
+                ptype="PHY_INTERFACE"
+                >
+                <PARAM
+                    name="intf-subcmds"
+                    help="sub-commands"
+                    ptype="SUBCOMMAND"
+                    mode="switch"
+                    optional="true"
+                    >
+                    <PARAM
+                        name="local-device"
+                        help="Local device information"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        template="show_lldp_med_local_dev.xsl"
+                        yang_filter="&SUBTREE_FILTER;;Filter_Conditions:&LLDP_MED_INTF_STATUS;/name=${iface_num},&LLDP_MED_PORT_INFO;/dell-lldp-med:status;Filter_Namespace:&IF_NAMESPACE;,&LLDP_MED_NAMESPACE;|&SUBTREE_FILTER;;Filter_Conditions:/sys-status;&LLDP_MED_FILTER_NAMESPACE;|&SUBTREE_FILTER;;Filter_Conditions:/local-system-data;Filter_Namespace:&LLDP_NAMESPACE;|&SUBTREE_FILTER;;Filter_Conditions:/global-params;Filter_Namespace:&LLDP_NAMESPACE;|&SUBTREE_FILTER;;Filter_Conditions:&LLDP_INTF_STATUS;/name=${iface_num},&LLDP_INTF_STATUS;/dell-lldp:lldp-status;Filter_Namespace:&IF_NAMESPACE;,&LLDP_NAMESPACE;"
+                        />
+                    <PARAM
+                        name="med"
+                        help="MED information"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        template="show_lldp_med_intf.xsl"
+                        namespace="&LLDP_MED_NAMESPACE;"
+                        yang_filter="&SUBTREE_FILTER;;Filter_Conditions:&LLDP_MED_INTF_STATUS;/name=${iface_num},&LLDP_MED_PORT_INFO;/dell-lldp-med:status;Filter_Namespace:&IF_NAMESPACE;,&LLDP_MED_NAMESPACE;|&SUBTREE_FILTER;;Filter_Conditions:/sys-status/media-policy;&LLDP_MED_FILTER_NAMESPACE;"
+                    />
+                </PARAM>
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                />
+        </COMMAND>
+        <COMMAND
+            name="show lldp med"
+            help="Show lldp med"
+            operation="get"
+            namespace="&LLDP_MED_NAMESPACE;"
+            template="show_lldp_med.xsl"
+            yang_filter="&SUBTREE_FILTER;;Filter_Conditions:&LLDP_MED_PORT_INFO;/dell-lldp-med:status;Filter_Namespace:&IF_NAMESPACE;,&LLDP_MED_NAMESPACE;|&SUBTREE_FILTER;;Filter_Conditions:/sys-status;&LLDP_MED_FILTER_NAMESPACE;"
+            >
+            <ACTION
+                builtin="clish_extn"
+                />
+        </COMMAND>
+        <COMMAND
+            name="show network-policy"
+            help="Show network policy"
+            operation="get"
+            namespace="&LLDP_NAMESPACE;"
+            template="show_lldp_med_nw_profile.xsl"
+            yang_filter="&SUBTREE_FILTER;;Filter_Conditions:/sys-status/media-policy;&LLDP_MED_FILTER_NAMESPACE;"
+            >
+            <PARAM
+                name="profile"
+                help="Profile"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                >
+                <PARAM
+                    name="value"
+                    help="Network policy id"
+                    ptype="RANGE_1_32"
+                    optional="true"
+                    yang_filter="&SUBTREE_FILTER;;Filter_Conditions:/sys-status/media-policy/policy-id=${value};&LLDP_MED_FILTER_NAMESPACE;"
+                    />
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                />
+        </COMMAND>
+        <!-- show lldp neighbors -->
+        <COMMAND
+            name="show lldp neighbors"
+            help="Show lldp neighbor info"
+            operation="get-bulk"
+            namespace="&NS-GET-BULK;"
+            yang_name="/get-bulk/count=50,/get-bulk/list-target=&LLDP_INTF_STATUS;,/get-bulk/select=lldp-rem-neighbor-info,/get-bulk/select-config=lldp"
+            template="show_lldp_neighbor_bulk.xsl"
+            >
+            <PARAM
+                name="lldp-subcmds"
+                help="sub-commands"
+                ptype="SUBCOMMAND"
+                mode="switch"
+                optional="true"
+                namespace="&LLDP_NAMESPACE;"
+                >
+                <PARAM
+                    name="detail"
+                    help="Neighbor details"
+                    operation="get"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    template="show_lldp_neighbor_detail.xsl"
+                    yang_filter="&SUBTREE_FILTER;;Filter_Conditions:&LLDP_INTF_STATUS;/dell-lldp:lldp-rem-neighbor-info/dell-lldp:info,&LLDP_INTF_STATUS;/dell-lldp:rem-mgmt-addr/dell-lldp:info;Filter_Namespace:&IF_NAMESPACE;,&LLDP_NAMESPACE;|&SUBTREE_FILTER;;Filter_Conditions:&LLDP_MED_REM_DATA;/dell-lldp-med:capabilities-table,&LLDP_MED_REM_DATA;/dell-lldp-med:inventory-table,&LLDP_MED_REM_DATA;/dell-lldp-med:media-policy-table,&LLDP_MED_REM_DATA;/dell-lldp-med:location-table,&LLDP_MED_REM_DATA;/dell-lldp-med:poe-table,&LLDP_MED_REM_DATA;/dell-lldp-med:poe-pse-table,&LLDP_MED_REM_DATA;/dell-lldp-med:poe-pd-table;Filter_Namespace:&IF_NAMESPACE;,&LLDP_MED_NAMESPACE;;"
+                    />
+                <PARAM
+                    name="interface"
+                    help="Select an interface"
+                    operation="get"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    template="show_lldp_neighbor.xsl"
+                    yang_filter="&SUBTREE_FILTER;;Filter_Conditions:&LLDP_INTF_STATUS;/name=${if-name},&LLDP_INTF_STATUS;/dell-lldp:lldp-rem-neighbor-info/dell-lldp:info,&LLDP_INTF_STATUS;/dell-lldp:rem-mgmt-addr/dell-lldp:info;Filter_Namespace:&IF_NAMESPACE;,&LLDP_NAMESPACE;|&SUBTREE_FILTER;;Filter_Conditions:&LLDP_MED_INTF_STATUS;/name=${if-name},&LLDP_MED_REM_DATA;/dell-lldp-med:capabilities-table,&LLDP_MED_INTF_STATUS;/name=${if-name},&LLDP_MED_REM_DATA;/dell-lldp-med:inventory-table,&LLDP_MED_REM_DATA;/dell-lldp-med:media-policy-table,&LLDP_MED_REM_DATA;/dell-lldp-med:location-table,&LLDP_MED_REM_DATA;/dell-lldp-med:poe-table,&LLDP_MED_REM_DATA;/dell-lldp-med:poe-pse-table,&LLDP_MED_REM_DATA;/dell-lldp-med:poe-pd-table;Filter_Namespace:&IF_NAMESPACE;,&LLDP_MED_NAMESPACE;"
+                    >
+                    <PARAM
+                        name="if-name"
+                        help="Physical interface"
+                        operation="get"
+                        ptype="PHY_INTERFACE"
+                        >
+                        <PARAM
+                            name="detail"
+                            help="Neighbor details"
+                            operation="get"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            optional="true"
+                            template="show_lldp_neighbor_detail.xsl"
+                            />
+                    </PARAM>
+                </PARAM>
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                />
+        </COMMAND>
+        <!-- show lldp errors -->
+        <COMMAND
+            name="show lldp errors"
+            help="Show lldp errors"
+            operation="get"
+            namespace="&LLDP_NAMESPACE;"
+            template="show_lldp_errrs.xsl"
+            yang_filter="&SUBTREE_FILTER;;Filter_Conditions:/errors;&NAMESPACE_FILTER;"
+            >
+            <ACTION
+                builtin="clish_extn"
+                />
+        </COMMAND>
+        <!-- show lldp traffic -->
+        <COMMAND
+            name="show lldp traffic"
+            help="Show lldp traffic info"
+            operation="get"
+            namespace="&LLDP_NAMESPACE;"
+            template="show_lldp_traffic.xsl"
+            yang_filter="&SUBTREE_FILTER;;Filter_Conditions:/global-statistics;&NAMESPACE_FILTER;"
+            >
+            <PARAM
+                name="interface"
+                help="Select an interface"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                optional="true"
+                template="show_lldp_traffic_int.xsl"
+                yang_filter="&SUBTREE_FILTER;;Filter_Conditions:&LLDP_INTF_STATUS;/name=${iface_num},&LLDP_INTF_STATUS;/dell-lldp:lldp-statistics/dell-lldp:intf;Filter_Namespace:&IF_NAMESPACE;,&LLDP_NAMESPACE;|&SUBTREE_FILTER;;Filter_Conditions:&LLDP_MED_INTF_STATUS;/name=${iface_num},&LLDP_MED_PORT_INFO;/dell-lldp-med:statistics;Filter_Namespace:&IF_NAMESPACE;,&LLDP_MED_NAMESPACE;"
+                >
+                <PARAM
+                    name="iface_num"
+                    help="Physical interface"
+                    ptype="PHY_INTERFACE"
+                    yang_name="arg1=${iface_num}"
+                    />
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                />
+        </COMMAND>
+        <!-- show lldp timers-->
+        <COMMAND
+            name="show lldp timers"
+            help="Show lldp timers"
+            operation="get"
+            namespace="&LLDP_NAMESPACE;"
+            template="show_lldp_timers.xsl"
+            yang_filter="&SUBTREE_FILTER;;Filter_Conditions:/global-params;&NAMESPACE_FILTER;"
+            >
+            <ACTION
+                builtin="clish_extn"
+                />
+        </COMMAND>
+        <!-- show lldp tlv-select -->
+        <COMMAND
+            name="show lldp tlv-select"
+            help="Enabled tlvs in LLDP"
+            operation="get"
+            namespace="&LLDP_NAMESPACE;"
+            template="show_lldp_tlvselect.xsl"
+            yang_filter="&SUBTREE_FILTER;;Filter_Conditions:&LLDP_INTFCONFIG;/name=${iface_num},&LLDP_INTFCONFIG;/dell-lldp:lldp;Filter_Namespace:&IF_NAMESPACE;,&LLDP_NAMESPACE;"
+            >
+            <PARAM
+                name="interface"
+                help="Select an interface"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                >
+                <PARAM
+                    name="iface_num"
+                    help="Physical interface"
+                    ptype="PHY_INTERFACE"/>
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                />
+        </COMMAND>
+    </VIEW>
+    <!--=======================================================-->
+    <!--                Config MODE                            -->
+    <!--=======================================================-->
+    <VIEW
+        name="configure-view"
+        >
+        <!-- feature lldp -->
+        <COMMAND
+            name="feature lldp"
+            operation="edit-config"
+            namespace="&LLDP_GLOB_CFG_NAMESPACE;"
+            help="Configure LLDP parameters"
+            yang_name="&LLDP_GLOBAL_CONFIG;/lldp-module-status=true"
+            pfeature="NOT_SUPPORTED"
+            >
+            <ACTION
+                builtin="clish_extn"
+                />
+        </COMMAND>
+        <!-- no feature lldp -->
+        <COMMAND
+            name="no feature lldp"
+            operation="edit-config"
+            namespace="&LLDP_GLOB_CFG_NAMESPACE;"
+            help="Configure LLDP parameters"
+            default_oper="merge"
+            yang_name="&LLDP_GLOBAL_CONFIG;/lldp-module-status=false"
+            pfeature="NOT_SUPPORTED"
+            >
+            <ACTION
+                builtin="clish_extn"
+                />
+        </COMMAND>
+
+        <!-- lldp -->
+        <COMMAND
+            name="lldp"
+            operation="edit-config"
+            namespace="&LLDP_GLOB_CFG_NAMESPACE;"
+            help="Configure LLDP parameters"
+            >
+            <PARAM
+                name="lldp-subcmds"
+                help="sub-commands"
+                ptype="SUBCOMMAND"
+                mode="switch"
+                >
+                <!-- lldp holdtime-multiplier -->
+                <PARAM
+                    name="holdtime-multiplier"
+                    help="Specify the multiplier value for the hold timer"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    >
+                    <PARAM
+                        name="value"
+                        help="multiplier"
+                        ptype="RANGE_2_10"
+                        yang_name="&LLDP_GLOBAL_CONFIG;/txhold-multiplier=${value}"
+                        />
+                </PARAM>
+                <!-- lldp med -->
+                <PARAM
+                    name="med"
+                    namespace="&LLDP_MED_GLOB_CFG_NAMESPACE;"
+                    help="Configure MED information"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    >
+                    <PARAM
+                        name="med-subcmds"
+                        help="sub-commands"
+                        ptype="SUBCOMMAND"
+                        mode="switch"
+                        >
+                        <PARAM
+                            name="fast-start-repeat-count"
+                            help="Number of packets that is sent during the activation of the fast start mechanism"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            >
+                            <PARAM
+                                name="value"
+                                help="Number of fast start LLDPDUs (default=3)"
+                                ptype="RANGE_1_10"
+                                yang_name="&LLDP_MED_SYS_CFG;/fast-start-repeat-count=${value}"
+                                />
+                        </PARAM>
+                        <MACRO name="MACRO_LLDP_MED_NW_POLICY"/>
+                    </PARAM>
+                </PARAM> <!-- lldp med -->
+                <!-- lldp reinit -->
+                <PARAM
+                    name="reinit"
+                    help="Delay (in sec) for LLDP initialization on any interface"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    >
+                    <PARAM
+                        name="value"
+                        help="Reinit in sec"
+                        ptype="RANGE_1_10"
+                        yang_name="&LLDP_GLOBAL_CONFIG;/reinit-delay=${value}"
+                        />
+                </PARAM>
+                <!-- lldp timer -->
+                <PARAM
+                    name="timer"
+                    help="Specify the rate at which LLDP packets are sent (in sec)"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    >
+                    <PARAM
+                        name="value"
+                        help="Rate of packets in sec"
+                        ptype="RANGE_5_254"
+                        yang_name="&LLDP_GLOBAL_CONFIG;/tx-interval=${value}"
+                        />
+                </PARAM>
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                />
+        </COMMAND>
+        <!-- no lldp -->
+        <COMMAND
+            name="no lldp"
+            operation="edit-config"
+            namespace="&LLDP_GLOB_CFG_NAMESPACE;"
+            help="Remove/delete LLDP parameters"
+            >
+            <PARAM
+                name="lldp-subcmds"
+                help="sub-commands"
+                ptype="SUBCOMMAND"
+                mode="switch"
+                >
+                <!-- no lldp holdtime-multiplier -->
+                <PARAM
+                    name="holdtime-multiplier"
+                    help="Specify the multiplier value for the hold timer"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    yang_name="&LLDP_GLOBAL_CONFIG;/txhold-multiplier"
+                    >
+                    <PARAM
+                        name="value"
+                        help="multiplier"
+                        ptype="RANGE_2_10"
+                        optional="true"
+                        />
+                </PARAM>
+                <!-- no lldp med -->
+                <PARAM
+                    name="med"
+                    namespace="&LLDP_MED_GLOB_CFG_NAMESPACE;"
+                    help="med"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    >
+                    <PARAM
+                        name="med-subcmds"
+                        help="sub-commands"
+                        ptype="SUBCOMMAND"
+                        mode="switch"
+                        >
+                        <PARAM
+                            name="fast-start-repeat-count"
+                            help="med fast-start-repeat-count"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            yang_name="&LLDP_MED_SYS_CFG;/fast-start-repeat-count"
+                            />
+                        <PARAM
+                            name="network-policy"
+                            help="network policy"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            sub_oper_yang="remove:media-policy"
+                            >
+                            <PARAM
+                                name="value"
+                                help="Network policy id"
+                                ptype="RANGE_1_32"
+                                yang_name="&LLDP_MED_POLICY_CFG;/policy-id=${value}"
+                             />
+                        </PARAM>
+                    </PARAM>
+                </PARAM>
+                <!-- no lldp reinit -->
+                <PARAM
+                    name="reinit"
+                    help="Delay (in sec) for LLDP initialization on any interface"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    yang_name="&LLDP_GLOBAL_CONFIG;/reinit-delay"
+                    >
+                    <PARAM
+                        name="value"
+                        help="Reinit in sec"
+                        ptype="RANGE_1_10"
+                        optional="true"
+                        />
+                </PARAM>
+                <!-- no lldp timer -->
+                <PARAM
+                    name="timer"
+                    help="Specify the rate at which LLDP packets are sent (in sec)"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    yang_name="&LLDP_GLOBAL_CONFIG;/tx-interval"
+                    >
+                    <PARAM
+                        name="value"
+                        help="Rate of packets in sec"
+                        ptype="RANGE_5_254"
+                        optional="true"
+                        />
+                </PARAM>
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                />
+        </COMMAND>
+    </VIEW>
+    <!--=======================================================-->
+    <!--                Config Interface MODE                  -->
+    <!--=======================================================-->
+    <VIEW
+        name="configure-if-view"
+        >
+        <!-- lldp -->
+        <COMMAND
+            name="lldp"
+            operation="edit-config"
+            namespace="&LLDP_NAMESPACE;,&IF_NAMESPACE;,&ISCSI_NAMESPACE;"
+            help="Configure LLDP parameters"
+            >
+            <PARAM
+                name="lldp-subcmds"
+                help="sub-commands"
+                ptype="SUBCOMMAND"
+                mode="switch"
+                >
+                <!-- lldp receive -->
+                <PARAM
+                    name="receive"
+                    help="Enable reception of lldp packets"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    yang_name="&LLDP_INTF_NAME;,&LLDP_INTFCONFIG;/dell-lldp:lldp/dell-lldp:rx-enable=true"
+                    >
+                </PARAM>
+                <!-- lldp tlv-select -->
+                <PARAM
+                    name="tlv-select"
+                    help="Specifies the LLDP TLVs to send"
+                    add_config_entry="false"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    >
+                    <PARAM
+                        name="tlv-subcmds"
+                        help="sub-commands"
+                        ptype="SUBCOMMAND"
+                        mode="switch"
+                        >
+                        <!-- lldp tlv-select basic-tlv [port-description] [system-name] [system-description]
+                                                                 [system-capabilities] [management-address] {all | ipv4 <ucast_addr>]} -->
+                        <MACRO name="MACRO_LLDP_BASIC_TLV" arg="remove,true"/>
+                        <MACRO name="MACRO_LLDP_DCBXP_TLV_SELECT"/>
+                        <!-- lldp tlv-select dot1-tlv {[port-vlan-id] [vlan-name {all | <integer(1-4094)>}] </integer(1-4094)> -->
+                        <MACRO name="MACRO_LLDP_DOT1_TLV" arg="remove,true"/>
+                        <!-- lldp tlv-select dot3-tlv { [macphy-config] [link-aggregation] [max-framesize] } -->
+                        <MACRO name="MACRO_LLDP_DOT3_TLV" arg="remove,true"/>
+                        <!-- lldp tlv-select appln-tlv { [iscsi] [fcoe] } -->
+                        <MACRO name="MACRO_LLDP_APP_TLV" arg="true"/>
+                    </PARAM>
+                </PARAM>
+                <!-- lldp transmit -->
+                <PARAM
+                    name="transmit"
+                    help="Enable transmission of lldp packets"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    yang_name="&LLDP_INTF_NAME;,&LLDP_INTFCONFIG;/dell-lldp:lldp/dell-lldp:tx-enable=true"
+                    >
+                </PARAM>
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                />
+        </COMMAND>
+        <!-- lldp med  -->
+        <COMMAND
+            name="lldp med"
+            operation="edit-config"
+            namespace="&LLDP_MED_NAMESPACE;,&IF_NAMESPACE;"
+            help="Configure MED information"
+            >
+            <PARAM
+                name="med-subcmds"
+                help="sub-commands"
+                ptype="SUBCOMMAND"
+                mode="switch"
+                >
+                <MACRO name="MACRO_LLDP_MED_ENABLE"/>
+                <MACRO name="MACRO_LLDP_MED_INTF_NW_POLICY"/>
+                <MACRO name="MACRO_LLDP_MED_TLV_SELECT"/>
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                />
+        </COMMAND> <!-- lldp med  -->
+        <!-- no lldp tlv-select -->
+        <COMMAND
+            name="no lldp tlv-select"
+            operation="edit-config"
+            namespace="&LLDP_NAMESPACE;,&IF_NAMESPACE;,&ISCSI_NAMESPACE;"
+            help="Remove/delete LLDP parameters"
+            add_config_entry="true"
+            >
+            <PARAM
+                name="tlv-subcmds"
+                help="sub-commands"
+                ptype="SUBCOMMAND"
+                mode="switch"
+                default_oper="merge"
+                >
+                <!-- lldp tlv-select basic-tlv [port-description] [system-name] [system-description]
+                                                         [system-capabilities] [management-address] {all | ipv4 <ucast_addr>]} -->
+                <MACRO name="MACRO_LLDP_BASIC_TLV" arg="merge,false"/>
+                <MACRO name="MACRO_NO_LLDP_DCBXP_TLV_SELECT"/>
+                <!-- lldp tlv-select dot1-tlv {[port-vlan-id] [vlan-name {all | <integer(1-4094)>}] </integer(1-4094)> -->
+                <MACRO name="MACRO_LLDP_DOT1_TLV" arg="merge,false"/>
+                <!-- lldp tlv-select dot3-tlv { [macphy-config] [link-aggregation] [max-framesize] } -->
+                <MACRO name="MACRO_LLDP_DOT3_TLV" arg="merge,false"/>
+                <!-- lldp tlv-select appln-tlv { [iscsi] [fcoe] } -->
+                <MACRO name="MACRO_LLDP_APP_TLV" arg="false"/>
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                />
+        </COMMAND>
+        <!-- no lldp med -->
+        <COMMAND
+            name="no lldp med"
+            operation="edit-config"
+            namespace="&LLDP_MED_NAMESPACE;,&IF_NAMESPACE;"
+            help="Remove/delete LLDP MED parameters"
+            yang_name="&LLDP_MED_INTF;/name=${ifacename},&LLDP_MED_PORT_CFG;/dell-lldp-med:med-enable=false"
+            >
+            <ACTION
+                builtin="clish_extn"
+                />
+        </COMMAND> <!-- no lldp med -->
+        <!-- no lldp med tlv-select -->
+        <COMMAND
+            name="no lldp med tlv-select"
+            operation="edit-config"
+            namespace="&LLDP_MED_NAMESPACE;,&IF_NAMESPACE;"
+            help="Remove/delete LLDP MED parameters"
+            add_config_entry="true"
+            >
+            <PARAM
+                name="tlv-select-subcmds"
+                help="sub-commands"
+                ptype="SUBCOMMAND"
+                mode="switch"
+                >
+                <PARAM
+                    name="inventory"
+                    help="Inventory TLV"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    add_config_entry="false"
+                    sub_oper_yang="remove:inventory"
+                    yang_name="&LLDP_MED_INTF;/name=${ifacename},&LLDP_MED_PORT_CFG;/dell-lldp-med:tlvs-tx-enable/dell-lldp-med:inventory=false"
+                    />
+                <PARAM
+                    name="network-policy"
+                    help="Network policy TLV"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    sub_oper_yang="merge:network-policy"
+                    yang_name="&LLDP_MED_INTF;/name=${ifacename},&LLDP_MED_PORT_CFG;/dell-lldp-med:tlvs-tx-enable/dell-lldp-med:network-policy=false"
+                    />
+            </PARAM>
+            <PARAM
+                 name="inventory"
+                 test="'${tlv-select-subcmds}' != 'inventory'"
+                 help="Inventory TLV"
+                 ptype="SUBCOMMAND"
+                 mode="subcommand"
+                 optional="true"
+                 sub_oper_yang="remove:inventory"
+                 yang_name="&LLDP_MED_PORT_CFG;/dell-lldp-med:tlvs-tx-enable/dell-lldp-med:inventory=false"
+                 db_flag="SKIP_NODE"
+                 />
+            <PARAM
+                 name="network-policy"
+                 test="'${tlv-select-subcmds}' != 'network-policy'"
+                 help="Network policy TLV"
+                 ptype="SUBCOMMAND"
+                 mode="subcommand"
+                 optional="true"
+                 sub_oper_yang="remove:network-policy"
+                 yang_name="&LLDP_MED_PORT_CFG;/dell-lldp-med:tlvs-tx-enable/dell-lldp-med:network-policy=false"
+                 db_flag="SKIP_NODE"
+                 />
+            <ACTION
+                builtin="clish_extn"
+                />
+        </COMMAND> <!-- no lldp med tlv-select -->
+        <!-- no lldp -->
+        <COMMAND
+            name="no lldp"
+            operation="edit-config"
+            namespace="&LLDP_NAMESPACE;,&IF_NAMESPACE;"
+            help="Remove/delete LLDP parameters"
+            add_config_entry="true"
+            >
+            <PARAM
+                name="lldp-subcmds"
+                help="sub-commands"
+                ptype="SUBCOMMAND"
+                mode="switch"
+                >
+                <!-- no lldp transmit -->
+                <PARAM
+                    name="transmit"
+                    help="Disable transmission of lldp packets"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    default_oper="merge"
+                    yang_name="&LLDP_INTF_NAME;,&LLDP_INTFCONFIG;/dell-lldp:lldp/dell-lldp:tx-enable=false"
+                    >
+                </PARAM>
+                <!-- no lldp receive -->
+                <PARAM
+                    name="receive"
+                    help="Disable reception of lldp packets"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    default_oper="merge"
+                    yang_name="&LLDP_INTF_NAME;,&LLDP_INTFCONFIG;/dell-lldp:lldp/dell-lldp:rx-enable=false"
+                    >
+                </PARAM>
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                />
+        </COMMAND>
+    </VIEW>
+
+    <!--=======================================================-->
+    <!--              Config Interface range MODE              -->
+    <!--=======================================================-->
+
+    <VIEW
+        name="configure-if-range-view"
+        >
+        <!-- lldp -->
+        <COMMAND
+            name="lldp"
+            operation="edit-config"
+            namespace="&LLDP_NAMESPACE;,&IF_NAMESPACE;"
+            help="Configure LLDP parameters"
+            add_config_entry="false"
+            >
+            <PARAM
+                name="lldp-subcmds"
+                help="sub-commands"
+                ptype="SUBCOMMAND"
+                mode="switch"
+                >
+                <!-- lldp transmit -->
+                <PARAM
+                    name="transmit"
+                    help="Enable transmission of lldp packets"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    yang_name="&LLDP_RANGE_INTF_NAME;,&LLDP_RANGE_INTF_CFG;/dell-lldp:lldp/dell-lldp:tx-enable=true"
+                    app_common_yang="&LLDP_RANGE_INTF_NAME;"
+                    >
+                </PARAM>
+                <!-- lldp receive -->
+                <PARAM
+                    name="receive"
+                    help="Enable reception of lldp packets"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    yang_name="&LLDP_RANGE_INTF_NAME;,&LLDP_RANGE_INTF_CFG;/dell-lldp:lldp/dell-lldp:rx-enable=true"
+                    app_common_yang="&LLDP_RANGE_INTF_NAME;"
+                    >
+                </PARAM>
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                />
+        </COMMAND>
+        <!-- lldp tlv-select -->
+        <COMMAND
+            name="lldp tlv-select"
+            operation="edit-config"
+            namespace="&LLDP_NAMESPACE;,&IF_NAMESPACE;,&ISCSI_NAMESPACE;"
+            help="Configure LLDP parameters"
+            add_config_entry="false"
+            >
+            <PARAM
+                name="tlv-subcmds"
+                help="sub-commands"
+                ptype="SUBCOMMAND"
+                mode="switch"
+                >
+                <!-- lldp tlv-select basic-tlv [port-description] [system-name] [system-description]
+                                                         [system-capabilities] [management-address] {all | ipv4 <ucast_addr>]} -->
+                <MACRO name="MACRO_RANGE_LLDP_BASIC_TLV" arg="remove"/>
+                <MACRO name="MACRO_RANGE_LLDP_DCBXP_TLV_SELECT"/>
+                <!-- lldp tlv-select dot1-tlv {[port-vlan-id] [vlan-name {all | <integer(1-4094)>}] </integer(1-4094)> -->
+                <MACRO name="MACRO_RANGE_LLDP_DOT1_TLV" arg="remove"/>
+                <!-- lldp tlv-select dot3-tlv { [macphy-config] [link-aggregation] [max-framesize] } -->
+                <MACRO name="MACRO_RANGE_LLDP_DOT3_TLV" arg="remove"/>
+                <!-- lldp tlv-select dcbxp-tlv { [iscsi] [fcoe] } -->
+                <MACRO name="MACRO_RANGE_LLDP_APP_TLV" arg="true"/>
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                />
+        </COMMAND>
+        <!-- lldp med  -->
+        <COMMAND
+            name="lldp med"
+            operation="edit-config"
+            namespace="&LLDP_MED_NAMESPACE;,&IF_NAMESPACE;"
+            help="Configure MED information"
+            >
+            <PARAM
+                name="med-subcmds"
+                help="sub-commands"
+                ptype="SUBCOMMAND"
+                mode="switch"
+                >
+                <MACRO name="MACRO_RANGE_LLDP_MED_ENABLE"/>
+                <MACRO name="MACRO_RANGE_LLDP_MED_INTF_NW_POLICY"/>
+                <MACRO name="MACRO_RANGE_LLDP_MED_TLV_SELECT"/>
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                />
+        </COMMAND> <!-- lldp med  -->
+        <!-- no lldp tlv-select -->
+        <COMMAND
+            name="no lldp tlv-select"
+            operation="edit-config"
+            namespace="&LLDP_NAMESPACE;,&IF_NAMESPACE;,&ISCSI_NAMESPACE;"
+            help="Remove/delete LLDP parameters"
+            add_config_entry="true"
+            >
+            <PARAM
+                name="tlv-subcmds"
+                help="sub-commands"
+                ptype="SUBCOMMAND"
+                mode="switch"
+                default_oper="merge"
+                >
+                <!-- lldp tlv-select basic-tlv [port-description] [system-name] [system-description]
+                                                         [system-capabilities] [management-address] {all | ipv4 <ucast_addr>]} -->
+                <MACRO name="MACRO_RANGE_LLDP_BASIC_TLV" arg="merge"/>
+                <MACRO name="MACRO_RANGE_NO_LLDP_DCBXP_TLV_SELECT"/>
+                <!-- lldp tlv-select dot1-tlv {[port-vlan-id] [vlan-name {all | <integer(1-4094)>}] </integer(1-4094)> -->
+                <MACRO name="MACRO_RANGE_LLDP_DOT1_TLV" arg="merge"/>
+                <!-- lldp tlv-select dot3-tlv { [macphy-config] [link-aggregation] [max-framesize] } -->
+                <MACRO name="MACRO_RANGE_LLDP_DOT3_TLV" arg="merge"/>
+                <!-- lldp tlv-select dcbxp-tlv { [iscsi] [fcoe] } -->
+                <MACRO name="MACRO_RANGE_LLDP_APP_TLV" arg="false"/>
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                />
+        </COMMAND>
+        <!-- no lldp med -->
+        <COMMAND
+            name="no lldp med"
+            operation="edit-config"
+            namespace="&LLDP_MED_NAMESPACE;,&IF_NAMESPACE;"
+            help="Remove/delete LLDP MED parameters"
+            yang_name="&LLDP_RANGE_MED_INTF_NAME;,&LLDP_RANGE_MED_ENABLE;=false"
+            app_common_yang="&LLDP_RANGE_MED_INTF_NAME;"
+            >
+            <ACTION
+                builtin="clish_extn"
+                />
+        </COMMAND> <!-- no lldp med -->
+        <!-- no lldp med tlv-select -->
+        <COMMAND
+            name="no lldp med tlv-select"
+            operation="edit-config"
+            namespace="&LLDP_MED_NAMESPACE;,&IF_NAMESPACE;"
+            help="Remove/delete LLDP MED parameters"
+            add_config_entry="true"
+            >
+            <PARAM
+                name="tlv-select-subcmds"
+                help="sub-commands"
+                ptype="SUBCOMMAND"
+                mode="switch"
+                >
+                <PARAM
+                    name="network-policy"
+                    help="Network policy TLV"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    sub_oper_yang="merge:network-policy"
+                    yang_name="&LLDP_RANGE_MED_INTF_NAME;,&LLDP_RANGE_MED_TLV;/dell-lldp-med:network-policy=false"
+                    app_common_yang="&LLDP_RANGE_MED_INTF_NAME;"
+                    />
+                <PARAM
+                    name="inventory"
+                    help="Inventory TLV"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    add_config_entry="false"
+                    sub_oper_yang="remove:inventory"
+                    yang_name="&LLDP_RANGE_MED_INTF_NAME;,&LLDP_RANGE_MED_TLV;/dell-lldp-med:inventory=false"
+                    app_common_yang="&LLDP_RANGE_MED_INTF_NAME;"
+                    />
+            </PARAM>
+            <PARAM
+                 name="network-policy"
+                 test="'${tlv-select-subcmds}' != 'network-policy'"
+                 help="Network policy TLV"
+                 ptype="SUBCOMMAND"
+                 mode="subcommand"
+                 optional="true"
+                 sub_oper_yang="remove:network-policy"
+                 yang_name="&LLDP_RANGE_MED_TLV;/dell-lldp-med:network-policy=false"
+                 app_common_yang="&LLDP_RANGE_MED_INTF_NAME;"
+                 db_flag="SKIP_NODE"
+                 />
+            <PARAM
+                 name="inventory"
+                 test="'${tlv-select-subcmds}' != 'inventory'"
+                 help="Inventory TLV"
+                 ptype="SUBCOMMAND"
+                 mode="subcommand"
+                 optional="true"
+                 sub_oper_yang="remove:inventory"
+                 yang_name="&LLDP_RANGE_MED_TLV;/dell-lldp-med:inventory=false"
+                 app_common_yang="&LLDP_RANGE_MED_INTF_NAME;"
+                 db_flag="SKIP_NODE"
+                 />
+            <ACTION
+                builtin="clish_extn"
+                />
+        </COMMAND> <!-- no lldp med tlv-select -->
+        <!-- no lldp -->
+        <COMMAND
+            name="no lldp"
+            operation="edit-config"
+            namespace="&LLDP_NAMESPACE;,&IF_NAMESPACE;"
+            help="Remove/delete LLDP parameters"
+            add_config_entry="true"
+            >
+            <PARAM
+                name="lldp-subcmds"
+                help="sub-commands"
+                ptype="SUBCOMMAND"
+                mode="switch"
+                >
+                <!-- no lldp transmit -->
+                <PARAM
+                    name="transmit"
+                    help="Disable transmission of lldp packets"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    default_oper="merge"
+                    yang_name="&LLDP_RANGE_INTF_NAME;,&LLDP_RANGE_INTF_CFG;/dell-lldp:lldp/dell-lldp:tx-enable=false"
+                    app_common_yang="&LLDP_RANGE_INTF_NAME;"
+                    >
+                </PARAM>
+                <!-- no lldp receive -->
+                <PARAM
+                    name="receive"
+                    help="Disable reception of lldp packets"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    default_oper="merge"
+                    yang_name="&LLDP_RANGE_INTF_NAME;,&LLDP_RANGE_INTF_CFG;/dell-lldp:lldp/dell-lldp:rx-enable=false"
+                    app_common_yang="&LLDP_RANGE_INTF_NAME;"
+                    >
+                </PARAM>
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                />
+        </COMMAND>
+    </VIEW>
+</CLISH_MODULE>

@@ -1,0 +1,433 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE CLISH_MODULE [
+<!ENTITY MODULE-HW_SERV "http://www.dellemc.com/networking/os10/dell-serviceability-hw">
+]>
+<CLISH_MODULE
+        xmlns="http://www.dellemc.com/force10/XMLSchema"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xi="http://www.w3.org/2001/XInclude"
+        xsi:schemaLocation="http://www.dellemc.com/force10/XMLSchema
+        http://www.dellemc.com/force10/XMLSchema/clish.xsd"
+        >
+        <!--=======================================================-->
+        <!--                Exec MODE                              -->
+        <!--=======================================================-->
+
+        <VIEW
+             name="enable-view"
+             >
+             <NAMESPACE ref="hidden-view" help="false" completion="false"/>
+        </VIEW>
+        <VIEW
+             name="hidden-view"
+             >
+             <COMMAND name="test" access="sysadmin"
+                help="Test Port Loopback"
+                operation="generic-rpc"
+                namespace="&MODULE-HW_SERV;">
+             <!-- test port loopback <port-id> [mac-level | phy-level] [num-of-packets] -->
+                <PARAM
+                   name="port"
+                   help="Port sub command"
+                   mode="subcommand"
+                   ptype="SUBCOMMAND">
+                   <PARAM
+                      name="loopback"
+                      help="Loopback subcommand"
+                      mode="subcommand"
+                      ptype="SUBCOMMAND">
+                      <PARAM
+                         name="port-id"
+                         help="Port identifier"
+                         ptype="PHY_INTERFACE"
+                         mode="subcommand">
+                         <PARAM
+                            name="loopback-mode"
+                            help="loopback mode"
+                            mode="switch"
+                            ptype="SUBCOMMAND">
+                            <PARAM
+                               name="mac"
+                               help="mac level loopback"
+                               mode="subcommand"
+                               ptype="SUBCOMMAND"
+                               yang_name="/set-loopback/port-id=${port-id},/set-loopback/type=${loopback-mode}">
+                               <PARAM
+                                  name="no-of-packet"
+                                  help="number of packets to loopback"
+                                  ptype="UINT"
+                                  optional="true"
+                                  yang_name="/set-loopback/no-of-packet=${no-of-packet}" />
+                            </PARAM>
+                            <PARAM
+                               name="phy"
+                               help="phy level loopback"
+                               mode="subcommand"
+                               ptype="SUBCOMMAND"
+                               yang_name="/set-loopback/port-id=${port-id},/set-loopback/type=${loopback-mode}">
+                               <PARAM
+                                  name="no-of-packet"
+                                  help="number of packets to loopback"
+                                  ptype="UINT"
+                                  optional="true"
+                                  yang_name="/set-loopback/no-of-packet=${no-of-packet}" />
+                            </PARAM>
+                         </PARAM>
+                      </PARAM>
+                   </PARAM>
+                </PARAM>
+                <ACTION builtin="clish_extn"/>
+             </COMMAND>
+             <COMMAND name="set" access="sysadmin"
+                help="Set hardware related information"
+                operation="generic-rpc" />
+
+                <!-- set system device <device-id> register <register-id> value <val>  -->
+                <!-- set system device-access [start | stop ] -->
+                <COMMAND
+                   name="set system"
+                   operation="generic-rpc"
+                   namespace="&MODULE-HW_SERV;"
+                   help="System Level subcommand"
+                   mode="subcommand"
+                   ptype="SUBCOMMAND">
+                   <PARAM
+                      name="system-switch"
+                      help="System Level switch"
+                      mode="switch"
+                      ptype="SUBCOMMAND">
+                      <PARAM
+                         name="device-access"
+                         help="System device access"
+                         mode="subcommand"
+                         ptype="SUBCOMMAND">
+                         <PARAM
+                            name="access"
+                            help="System device access switch"
+                            mode="switch"
+                            ptype="SUBCOMMAND">
+                            <PARAM
+                               name="start"
+                               help="Start system device access"
+                               mode="subcommand"
+                               ptype="SUBCOMMAND"
+                               prompt_str="WARNING : This will stop PAS functionality. PAS may no longer monitor system. Do you really want to continue?"
+                               yang_name="/set-register-access/access=${access}"/>
+                            <PARAM
+                               name="stop"
+                               help="Stop system device access"
+                               mode="subcommand"
+                               ptype="SUBCOMMAND"
+                               yang_name="/set-register-access/access=${access}"/>
+                         </PARAM>
+                      </PARAM>
+                      <PARAM
+                         name="device"
+                         help="System device details"
+                         mode="subcommand"
+                         ptype="SUBCOMMAND">
+                         <PARAM
+                            name="device-id"
+                            help="Device identifier"
+                            ptype="UINT">
+                            <PARAM
+                               name="register"
+                               help="System register details"
+                               mode="subcommand"
+                               ptype="SUBCOMMAND">
+                               <PARAM
+                                  name="register-id"
+                                  help="Register identifier"
+                                  ptype="UINT">
+                                  <PARAM
+                                     name="value"
+                                     help="Register Value details"
+                                     mode="subcommand"
+                                     ptype="SUBCOMMAND">
+                                     <PARAM
+                                        name="val"
+                                        help="Register Value"
+                                        ptype="STRING"
+                                        yang_name="/set-register/device-id=${device-id},/set-register/register-id=${register-id},/set-register/val=${val}"/>
+                                  </PARAM>
+                               </PARAM>
+                            </PARAM>
+                         </PARAM>
+                      </PARAM>
+                   </PARAM>
+                   <ACTION builtin="clish_extn"/>
+                </COMMAND>
+             <!-- set led <led-type> <led-color> -->
+             <COMMAND
+                name="set led"
+                operation="generic-rpc"
+                namespace="&MODULE-HW_SERV;"
+                help="LED  details"
+                mode="subcommand"
+                ptype="SUBCOMMAND"
+                yang_name="/set-led/type=${led-type},/set-led/color=${led-color}">
+                 <MACRO name="SERV_HW_LED_TYPE_PARAMS" arg="" />
+                <MACRO name="SERV_HW_LED_COLOR_PARAMS" arg="" />
+                <ACTION builtin="clish_extn"/>
+             </COMMAND>
+             <COMMAND
+                name="get" access="sysadmin"
+                help="Get hardware related information"
+                operation="get"
+                >
+             </COMMAND>
+              <!-- get led details -->
+              <!-- get led type <led-type> details -->
+              <!-- get led status all | led-type  <led-type> -->
+              <COMMAND
+                 name="get led"
+                 help="Get LED info"
+                 operation="get"
+                 >
+                 <PARAM
+                    help="LED details"
+                    name="led-switch"
+                    ptype="SUBCOMMAND"
+                    mode="switch"
+                    >
+                    <PARAM
+                        name="details"
+                        help="Get LED details"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        template="hs_get_led_details.xsl"
+                        yang_filter="Filter_Type:SUBTREE;Filter_Conditions:/rd-data/led-details;Filter_Namespace:&MODULE-HW_SERV;" />
+                    <PARAM
+                        name="type"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        help="Get details of given LED type"
+                        >
+                        <MACRO name="SERV_HW_LED_TYPE_PARAMS" arg="" />
+                        <PARAM
+                            name="details"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            help="Get details of given LED type"
+                            template="hs_get_led_type_details.xsl"
+                            yang_filter="Filter_Type:SUBTREE;Filter_Conditions:/rd-data/led-type-details/type=${led-type};Filter_Namespace:&MODULE-HW_SERV;" />
+                    </PARAM>
+                    <PARAM
+                        name="status"
+                        help="Get status of given LED type"
+                        mode="subcommand"
+                        ptype="SUBCOMMAND"
+                        >
+                        <PARAM
+                            help="LED type details"
+                            name="led-type-switch"
+                            ptype="SUBCOMMAND"
+                            mode="switch"
+                            >
+                            <PARAM
+                                name="all"
+                                help="Get LED all LED status"
+                                ptype="SUBCOMMAND"
+                                mode="subcommand"
+                                template="hs_get_led_status.xsl"
+                                yang_filter="Filter_Type:SUBTREE;Filter_Conditions:/rd-data/led-status;Filter_Namespace:&MODULE-HW_SERV;" />
+                            <PARAM
+                                name="type"
+                                help="Get LED status for give led-type"
+                                ptype="SUBCOMMAND"
+                                mode="subcommand"
+                                template="hs_get_led_status.xsl"
+                                yang_filter="Filter_Type:SUBTREE;Filter_Conditions:/rd-data/led-status/type=${led-type};Filter_Namespace:&MODULE-HW_SERV;">
+                                <MACRO name="SERV_HW_LED_TYPE_PARAMS" arg="" />
+                            </PARAM>
+                        </PARAM>
+                    </PARAM>
+                 </PARAM>
+                 <ACTION
+                    builtin="clish_extn"
+                 ></ACTION>
+              </COMMAND>
+              <!-- get loopback status -->
+              <COMMAND
+                 name="get loopback-status"
+                 help="Get Last Executed loopback status"
+                 operation="get"
+                 template="hs_get_lpbk_status.xsl"
+                 yang_filter="Filter_Type:SUBTREE;Filter_Conditions:/rd-data/loopback-status;Filter_Namespace:&MODULE-HW_SERV;"
+                 >
+                 <ACTION
+                    builtin="clish_extn"
+                 ></ACTION>
+              </COMMAND>
+              <!-- get npu-info -->
+              <COMMAND
+                 name="get npu-info"
+                 help="Get NPU info"
+                 operation="get"
+                 template="hs_get_npu_info.xsl"
+                 yang_filter="Filter_Type:SUBTREE;Filter_Conditions:/rd-data/sys-npu-info;Filter_Namespace:&MODULE-HW_SERV;"
+                 >
+                 <ACTION
+                    builtin="clish_extn"
+                 ></ACTION>
+              </COMMAND>
+              <!-- get system device-tree i2c -->
+              <!-- get system device-info  -->
+              <!-- get system device-all-register <dev-id> -->
+              <!-- get system device-register <dev-id> <reg-id>-->
+              <COMMAND
+                 name="get system"
+                 help="Get system device info"
+                 operation="get"
+                 >
+                 <PARAM
+                    help="Device tree details"
+                    name="device-switch"
+                    ptype="SUBCOMMAND"
+                    mode="switch"
+                    >
+                    <PARAM
+                        help="Device tree details"
+                        name="device-tree"
+                        mode="subcommand"
+                        ptype="SUBCOMMAND">
+                        <PARAM
+                            help="I2C bus"
+                            name="I2C"
+                            mode="subcommand"
+                            ptype="SUBCOMMAND"
+                            template="hs_get_i2c_bus.xsl"
+                            yang_filter="Filter_Type:SUBTREE;Filter_Conditions:/rd-data/i2c-bus;Filter_Namespace:&MODULE-HW_SERV;" />
+                    </PARAM>
+                    <PARAM
+                        help="System device info details"
+                        name="device-info"
+                        mode="subcommand"
+                        ptype="SUBCOMMAND">
+                        <PARAM
+                            help="Device identifier"
+                            name="device-id"
+                            ptype="UINT"
+                            template="hs_get_device_info.xsl"
+                            yang_filter="Filter_Type:SUBTREE;Filter_Conditions:/rd-data/device-info/device-id=${device-id};Filter_Namespace:&MODULE-HW_SERV;"/>
+                    </PARAM>
+                    <PARAM
+                        help="System device registers"
+                        name="device-all-register"
+                        mode="subcommand"
+                        ptype="SUBCOMMAND">
+                        <PARAM
+                            help="Device identifier"
+                            name="device-id"
+                            ptype="UINT"
+                            template="hs_get_device_reg_info.xsl"
+                            yang_filter="Filter_Type:SUBTREE;Filter_Conditions:/rd-data/register-info/device-id=${device-id};Filter_Namespace:&MODULE-HW_SERV;" />
+                    </PARAM>
+                    <PARAM
+                        help="System device single register"
+                        name="device-register"
+                        mode="subcommand"
+                        ptype="SUBCOMMAND">
+                        <PARAM
+                            help="Device identifier"
+                            name="device-id"
+                            ptype="UINT">
+                            <PARAM
+                                help="Register identifier"
+                                name="register-id"
+                                ptype="UINT"
+                                template="hs_get_device_reg_info.xsl"
+                                yang_filter="Filter_Type:SUBTREE;Filter_Conditions:/rd-data/register-info/device-id=${device-id},/rd-data/register-info/register-id=${register-id};Filter_Namespace:&MODULE-HW_SERV;" />
+                        </PARAM>
+                    </PARAM>
+                 </PARAM>
+                 <ACTION
+                    builtin="clish_extn"
+                 ></ACTION>
+              </COMMAND>
+
+              <!-- get event-history <module-type> <module-id> <duration> -->
+              <COMMAND
+                 name="get event-history"
+                 help="Get device event history"
+                 operation="get"
+                 template="hs_get_event_history.xsl"
+                 yang_filter="Filter_Type:SUBTREE;Filter_Conditions:/rd-data/event-history/module-type=${module-type},/rd-data/event-history/module-id=${module-id},/rd-data/event-history/duration=${duration};Filter_Namespace:&MODULE-HW_SERV;" >
+                 <MACRO name="SERV_HW_HIST_PARAMS" arg="" />
+                 <ACTION
+                    builtin="clish_extn"
+                 ></ACTION>
+              </COMMAND>
+
+              <!-- get alarm-history <module-type> <module-id> <duration> -->
+              <COMMAND
+                 name="get alarm-history"
+                 help="Get device alarm history"
+                 operation="get"
+                 template="hs_get_alarm_history.xsl"
+                 yang_filter="Filter_Type:SUBTREE;Filter_Conditions:/rd-data/alarm-history/module-type=${module-type},/rd-data/alarm-history/module-id=${module-id},/rd-data/alarm-history/duration=${duration};Filter_Namespace:&MODULE-HW_SERV;" >
+                 <MACRO name="SERV_HW_HIST_PARAMS" arg="" />
+                 <ACTION
+                    builtin="clish_extn"
+                 ></ACTION>
+              </COMMAND>
+
+              <!-- get temperature-threshold-cross-history <module-type> <module-id> <duration> -->
+              <COMMAND
+                 name="get temperature-threshold-cross-history"
+                 help="Get device temperature threshold cross history"
+                 operation="get"
+                 template="hs_get_temp_thresh_cross_history.xsl"
+                 yang_filter="Filter_Type:SUBTREE;Filter_Conditions:/rd-data/threshold-cross-history/module-type=${module-type},/rd-data/threshold-cross-history/module-id=${module-id},/rd-data/threshold-cross-history/duration=${duration};Filter_Namespace:&MODULE-HW_SERV;"
+                 >
+                 <PARAM
+                    help="Device module type"
+                    name="module-type"
+                    ptype="SUBCOMMAND"
+                    mode="switch"
+                    >
+                    <PARAM
+                       help="Card temperature sensor"
+                       mode="subcommand"
+                       name="CARD"
+                       ptype="SUBCOMMAND"
+                       />
+                 </PARAM>
+                 <PARAM
+                    help="Module identifier nodeId:unitId:sensorId (e.g. 1:1:2)"
+                    name="module-id"
+                    ptype="STRING"
+                    />
+                 <MACRO name="SERV_HW_HIST_DURATION_PARAMS" arg="" />
+                 <ACTION
+                    builtin="clish_extn"
+                 ></ACTION>
+              </COMMAND>
+
+              <!-- get port-stats  <stats-type> <port-id> <duration> history -->
+              <COMMAND
+                 name="get port-stats"
+                 help="Get Port Statistics"
+                 operation="get"
+                 template="hs_get_port_stats_history.xsl"
+                 yang_filter="Filter_Type:SUBTREE;Filter_Conditions:/rd-data/port-stats-history/port-stats-id=${port-stats-id},/rd-data/port-stats-history/port-id=${port-id},/rd-data/port-stats-history/duration=${duration};Filter_Namespace:&MODULE-HW_SERV;" >
+                 <MACRO name="SERV_HW_PORT_STAT_PARAMS" arg="" />
+                 <ACTION
+                    builtin="clish_extn"
+                 ></ACTION>
+              </COMMAND>
+
+              <!-- get temperature-threshold-setting -->
+              <COMMAND
+                 name="get temperature-threshold-setting"
+                 help="Get the configured temperature threshold level"
+                 operation="get"
+                 template="hs_get_temp_thresh_setting.xsl"
+                 yang_filter="Filter_Type:SUBTREE;Filter_Conditions:/rd-data/threshold-level-setting;Filter_Namespace:&MODULE-HW_SERV;" >
+                 <ACTION
+                    builtin="clish_extn"
+                 ></ACTION>
+              </COMMAND>
+
+        </VIEW>
+</CLISH_MODULE>

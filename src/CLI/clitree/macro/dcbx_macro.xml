@@ -1,0 +1,355 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE ROOT [
+<!ENTITY MODULE-PREF-IANA-IF "ianaift">
+<!ENTITY MODULE-NS-IANA-IF           "&MODULE-PREF-IANA-IF;=urn:ietf:params:xml:ns:yang:iana-if-type">
+<!ENTITY MODULE                      "dell-dcbx">
+<!ENTITY MODULE-NS                   "http://www.dellemc.com/networking/os10/dell-dcbx">
+<!ENTITY IF-MODULE-NS                "urn:ietf:params:xml:ns:yang:ietf-interfaces">
+<!ENTITY MODULE-INTF-NS              "&IF-MODULE-NS;,dell-dcbx=&MODULE-NS;">
+<!ENTITY SUBTREE_FILTER                     "Filter_Type:SUBTREE">
+<!ENTITY NAMESPACE_FILTER                   "Filter_Namespace:http://www.dellemc.com/networking/os10/dell-dcbx">
+<!ENTITY DCBX_NAMESPACE                     "dell-dcbx:http://www.dellemc.com/networking/os10/dell-dcbx">
+<!ENTITY IF_NAMESPACE                       "urn:ietf:params:xml:ns:yang:ietf-interfaces">
+<!ENTITY DCBX_INTFCONFIG                    "/interfaces/interface">
+<!ENTITY DCBX_INTF_NAME                     "&DCBX_INTFCONFIG;/name=${ifacename}">
+<!ENTITY DCBX_PORT_CFG                      "&DCBX_INTFCONFIG;/dell-dcbx:dcbx-config">
+<!ENTITY DCBX_RANGE_INTF_CFG                "/interfaces/interface[]">
+<!ENTITY DCBX_RANGE_INTF_NAME               "&DCBX_RANGE_INTF_CFG;/name=${ifacename}">
+<!ENTITY DCBX_RANGE_PORT_CFG                "&DCBX_RANGE_INTF_CFG;/dell-dcbx:dcbx-config">
+
+
+
+]>
+<ROOT>
+<MACRODEF name = "MACRO_LLDP_DCBXP_TLV_SELECT">
+    <PARAM
+        name="dcbxp"
+        help="Enable dcbx tlvs"
+        ptype="SUBCOMMAND"
+        mode="subcommand"
+        namespace="&MODULE-INTF-NS;"
+        yang_name="&DCBX_INTF_NAME;,&DCBX_PORT_CFG;/dell-dcbx:enable=true"
+        />
+</MACRODEF>
+<MACRODEF name = "MACRO_NO_LLDP_DCBXP_TLV_SELECT">
+    <PARAM
+        name="dcbxp"
+        help="Enable dcbx tlvs"
+        ptype="SUBCOMMAND"
+        mode="subcommand"
+        namespace="&MODULE-INTF-NS;"
+        yang_name="&DCBX_INTF_NAME;,&DCBX_PORT_CFG;/dell-dcbx:enable=false"
+        />
+</MACRODEF>
+
+<!-- INTERFACE RANGE CONFIGS  -->
+<MACRODEF name = "MACRO_RANGE_LLDP_DCBXP_TLV_SELECT">
+    <PARAM
+        name="dcbxp"
+        help="Enable dcbx tlvs"
+        ptype="SUBCOMMAND"
+        mode="subcommand"
+        namespace="&MODULE-INTF-NS;"
+        yang_name="&DCBX_RANGE_INTF_NAME;,&DCBX_RANGE_PORT_CFG;/dell-dcbx:enable=true"
+        />
+</MACRODEF>
+<MACRODEF name = "MACRO_RANGE_NO_LLDP_DCBXP_TLV_SELECT">
+    <PARAM
+        name="dcbxp"
+        help="Enable dcbx tlvs"
+        ptype="SUBCOMMAND"
+        mode="subcommand"
+        namespace="&MODULE-INTF-NS;"
+        yang_name="&DCBX_RANGE_INTF_NAME;,&DCBX_RANGE_PORT_CFG;/dell-dcbx:enable=false"
+        />
+</MACRODEF>
+
+<MACRODEF name = "MACRO_DCBXP_TLV_SELECT">
+    <PARAM
+        name="tlv-select"
+        help="Enable dcbx tlvs"
+        ptype="SUBCOMMAND"
+        mode="subcommand"
+        namespace="&MODULE-INTF-NS;"
+        >
+        <PARAM
+            name="dcbxp-tlv-subcmds"
+            help="sub-commands"
+            ptype="SUBCOMMAND"
+            mode="switch"
+            >
+            <PARAM
+                name="ets-conf"
+                help="Enable ETS Configuration TLV"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                yang_name="&DCBX_INTF_NAME;,&DCBX_PORT_CFG;/dell-dcbx:ets-config-tx-enable=true"
+                />
+            <PARAM
+                name="ets-reco"
+                help="Enable ETS recommendation TLV"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                yang_name="&DCBX_INTF_NAME;,&DCBX_PORT_CFG;/dell-dcbx:ets-recom-tx-enable=true"
+                />
+            <PARAM
+                name="pfc"
+                help="Enable PFC TLV"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                yang_name="&DCBX_INTF_NAME;,&DCBX_PORT_CFG;/dell-dcbx:pfc-tx-enable=true"
+                />
+        </PARAM>
+        <PARAM
+            name="ets-conf"
+            test="'${dcbxp-tlv-subcmds}' != 'ets-conf'"
+            help="Enable ETS Configuration TLV"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            optional="true"
+            db_flag="SKIP_TREE"
+            yang_name="&DCBX_PORT_CFG;/dell-dcbx:ets-config-tx-enable=true"
+            />
+        <PARAM
+            name="ets-reco"
+            test="'${dcbxp-tlv-subcmds}' != 'ets-reco'"
+            help="Enable ETS recommendation TLV"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            optional="true"
+            db_flag="SKIP_TREE"
+            yang_name="&DCBX_PORT_CFG;/dell-dcbx:ets-recom-tx-enable=true"
+            />
+        <PARAM
+            name="pfc"
+            test="'${dcbxp-tlv-subcmds}' != 'pfc'"
+            help="Enable PFC TLV"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            optional="true"
+            db_flag="SKIP_TREE"
+            yang_name="&DCBX_PORT_CFG;/dell-dcbx:pfc-tx-enable=true"
+            />
+    </PARAM>
+</MACRODEF>
+<MACRODEF name = "MACRO_NO_DCBXP_TLV_SELECT">
+    <PARAM
+        name="tlv-select"
+        help="Enable dcbx tlvs"
+        ptype="SUBCOMMAND"
+        mode="subcommand"
+        namespace="&MODULE-INTF-NS;"
+        >
+        <PARAM
+            name="dcbxp-tlv-subcmds"
+            help="sub-commands"
+            ptype="SUBCOMMAND"
+            mode="switch"
+            >
+            <PARAM
+                name="ets-conf"
+                help="Enable ETS Configuration TLV"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                yang_name="&DCBX_INTF_NAME;,&DCBX_PORT_CFG;/dell-dcbx:ets-config-tx-enable=false"
+                />
+            <PARAM
+                name="ets-reco"
+                help="Enable ETS recommendation TLV"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                yang_name="&DCBX_INTF_NAME;,&DCBX_PORT_CFG;/dell-dcbx:ets-recom-tx-enable=false"
+                />
+            <PARAM
+                name="pfc"
+                help="Enable PFC TLV"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                yang_name="&DCBX_INTF_NAME;,&DCBX_PORT_CFG;/dell-dcbx:pfc-tx-enable=false"
+                />
+        </PARAM>
+        <PARAM
+            name="ets-conf"
+            test="'${dcbxp-tlv-subcmds}' != 'ets-conf'"
+            help="Enable ETS Configuration TLV"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            optional="true"
+            db_flag="SKIP_TREE"
+            yang_name="&DCBX_PORT_CFG;/dell-dcbx:ets-config-tx-enable=false"
+            />
+        <PARAM
+            name="ets-reco"
+            test="'${dcbxp-tlv-subcmds}' != 'ets-reco'"
+            help="Enable ETS recommendation TLV"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            optional="true"
+            db_flag="SKIP_TREE"
+            yang_name="&DCBX_PORT_CFG;/dell-dcbx:ets-recom-tx-enable=false"
+            />
+        <PARAM
+            name="pfc"
+            test="'${dcbxp-tlv-subcmds}' != 'pfc'"
+            help="Enable PFC TLV"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            optional="true"
+            db_flag="SKIP_TREE"
+            yang_name="&DCBX_PORT_CFG;/dell-dcbx:pfc-tx-enable=false"
+            />
+    </PARAM>
+</MACRODEF>
+
+<!-- INTERFACE RANGE CONFIGS  -->
+<MACRODEF name = "MACRO_RANGE_DCBXP_TLV_SELECT">
+    <PARAM
+        name="tlv-select"
+        help="Enable dcbx tlvs"
+        ptype="SUBCOMMAND"
+        mode="subcommand"
+        namespace="&MODULE-INTF-NS;"
+        >
+        <PARAM
+            name="dcbxp-tlv-subcmds"
+            help="sub-commands"
+            ptype="SUBCOMMAND"
+            mode="switch"
+            >
+            <PARAM
+                name="ets-conf"
+                help="Enable ETS Configuration TLV"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                yang_name="&DCBX_RANGE_INTF_NAME;,&DCBX_RANGE_PORT_CFG;/dell-dcbx:ets-config-tx-enable=true"
+                app_common_yang="&DCBX_RANGE_INTF_NAME;"
+                />
+            <PARAM
+                name="ets-reco"
+                help="Enable ETS recommendation TLV"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                yang_name="&DCBX_RANGE_INTF_NAME;,&DCBX_RANGE_PORT_CFG;/dell-dcbx:ets-recom-tx-enable=true"
+                app_common_yang="&DCBX_RANGE_INTF_NAME;"
+                />
+            <PARAM
+                name="pfc"
+                help="Enable PFC TLV"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                yang_name="&DCBX_RANGE_INTF_NAME;,&DCBX_RANGE_PORT_CFG;/dell-dcbx:pfc-tx-enable=true"
+                app_common_yang="&DCBX_RANGE_INTF_NAME;"
+                />
+        </PARAM>
+        <PARAM
+            name="ets-conf"
+            test="'${dcbxp-tlv-subcmds}' != 'ets-conf'"
+            help="Enable ETS Configuration TLV"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            optional="true"
+            db_flag="SKIP_TREE"
+            yang_name="&DCBX_RANGE_PORT_CFG;/dell-dcbx:ets-config-tx-enable=true"
+            app_common_yang="&DCBX_RANGE_INTF_NAME;"
+            />
+        <PARAM
+            name="ets-reco"
+            test="'${dcbxp-tlv-subcmds}' != 'ets-reco'"
+            help="Enable ETS recommendation TLV"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            optional="true"
+            db_flag="SKIP_TREE"
+            yang_name="&DCBX_RANGE_PORT_CFG;/dell-dcbx:ets-recom-tx-enable=true"
+            app_common_yang="&DCBX_RANGE_INTF_NAME;"
+            />
+        <PARAM
+            name="pfc"
+            test="'${dcbxp-tlv-subcmds}' != 'pfc'"
+            help="Enable PFC TLV"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            optional="true"
+            db_flag="SKIP_TREE"
+            yang_name="&DCBX_RANGE_PORT_CFG;/dell-dcbx:pfc-tx-enable=true"
+            app_common_yang="&DCBX_RANGE_INTF_NAME;"
+            />
+    </PARAM>
+</MACRODEF>
+<MACRODEF name = "MACRO_RANGE_NO_DCBXP_TLV_SELECT">
+    <PARAM
+        name="tlv-select"
+        help="Enable dcbx tlvs"
+        ptype="SUBCOMMAND"
+        mode="subcommand"
+        db_flag="SKIP_TREE"
+        namespace="&MODULE-INTF-NS;"
+        >
+        <PARAM
+            name="dcbxp-tlv-subcmds"
+            help="sub-commands"
+            ptype="SUBCOMMAND"
+            mode="switch"
+            >
+            <PARAM
+                name="ets-conf"
+                help="Enable ETS Configuration TLV"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                yang_name="&DCBX_RANGE_INTF_NAME;,&DCBX_RANGE_PORT_CFG;/dell-dcbx:ets-config-tx-enable=false"
+                app_common_yang="&DCBX_RANGE_INTF_NAME;"
+                />
+            <PARAM
+                name="ets-reco"
+                help="Enable ETS recommendation TLV"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                yang_name="&DCBX_RANGE_INTF_NAME;,&DCBX_RANGE_PORT_CFG;/dell-dcbx:ets-recom-tx-enable=false"
+                app_common_yang="&DCBX_RANGE_INTF_NAME;"
+                />
+            <PARAM
+                name="pfc"
+                help="Enable PFC TLV"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                yang_name="&DCBX_RANGE_INTF_NAME;,&DCBX_RANGE_PORT_CFG;/dell-dcbx:pfc-tx-enable=false"
+                app_common_yang="&DCBX_RANGE_INTF_NAME;"
+                />
+        </PARAM>
+        <PARAM
+            name="ets-conf"
+            test="'${dcbxp-tlv-subcmds}' != 'ets-conf'"
+            help="Enable ETS Configuration TLV"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            optional="true"
+            db_flag="SKIP_TREE"
+            yang_name="&DCBX_RANGE_PORT_CFG;/dell-dcbx:ets-config-tx-enable=false"
+            app_common_yang="&DCBX_RANGE_INTF_NAME;"
+            />
+        <PARAM
+            name="ets-reco"
+            test="'${dcbxp-tlv-subcmds}' != 'ets-reco'"
+            help="Enable ETS recommendation TLV"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            optional="true"
+            db_flag="SKIP_TREE"
+            yang_name="&DCBX_RANGE_PORT_CFG;/dell-dcbx:ets-recom-tx-enable=false"
+            app_common_yang="&DCBX_RANGE_INTF_NAME;"
+            />
+        <PARAM
+            name="pfc"
+            test="'${dcbxp-tlv-subcmds}' != 'pfc'"
+            help="Enable PFC TLV"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            optional="true"
+            db_flag="SKIP_TREE"
+            yang_name="&DCBX_RANGE_PORT_CFG;/dell-dcbx:pfc-tx-enable=false"
+            app_common_yang="&DCBX_RANGE_INTF_NAME;"
+            />
+    </PARAM>
+</MACRODEF>
+
+</ROOT>

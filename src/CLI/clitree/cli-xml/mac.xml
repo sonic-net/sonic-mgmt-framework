@@ -1,0 +1,458 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE CLISH_MODULE [
+<!ENTITY MODULE-NS             "http://www.dellemc.com/networking/os10/dell-l2-mac">
+<!ENTITY NAMESPACE_FILTER   "Filter_Namespace:&MODULE-NS;">
+<!ENTITY MAC_CONFIG         "/config-params">
+<!ENTITY AGING_TIMER        "&MAC_CONFIG;/aging-timer">
+<!ENTITY STATIC_TABLE       "&MAC_CONFIG;/static-table">
+<!ENTITY STATIC_MAC_ADDR    "&STATIC_TABLE;/mac-addr">
+<!ENTITY STATIC_TBL_VLAN    "&STATIC_TABLE;/vlan">
+<!ENTITY STATIC_LEARNMODE   "&STATIC_TABLE;/learn-mode">
+<!ENTITY STATIC_TBL_IF_NAME "&STATIC_TABLE;/if-name">
+<!ENTITY STATIC_TBL_ENT_TYPE "&STATIC_TABLE;/entry-type">
+
+<!ENTITY SUBTREE_FILTER     "Filter_Type:SUBTREE;">
+<!ENTITY MAC_OPER           "/oper-params">
+<!ENTITY MAC_FWD_TBL        "&MAC_OPER;/fwd-table">
+<!ENTITY MAC_FWD_TBL_MAC    "&MAC_FWD_TBL;/mac-addr">
+<!ENTITY MAC_FWD_TBL_VLAN   "&MAC_FWD_TBL;/vlan">
+<!ENTITY MAC_FWD_TBL_IF_NAME "&MAC_FWD_TBL;/if-name">
+<!ENTITY MAC_FWD_TBL_TYPE   "&MAC_FWD_TBL;/entry-type">
+<!ENTITY MAC_STATIC_COUNT    "&MAC_OPER;/static-mac-count">
+<!ENTITY MAC_DYNAMIC_COUNT    "&MAC_OPER;/dynamic-mac-count">
+<!ENTITY NS-GET-BULK           "http://yumaworks.com/ns/yumaworks-getbulk">
+]>
+<CLISH_MODULE
+    xmlns="http://www.dellemc.com/force10/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xi="http://www.w3.org/2001/XInclude"
+    xsi:schemaLocation="http://www.dellemc.com/force10/XMLSchema
+    http://www.dellemc.com/force10/XMLSchema/clish.xsd"
+    >
+    <!--=======================================================-->
+    <!--=======================================================-->
+    <!--                Exec MODE                              -->
+    <!--=======================================================-->
+    <VIEW
+        name="enable-view"
+        >
+        <COMMAND
+            name="clear mac"
+            help="Clear MAC Forwarding Table">
+        </COMMAND>
+        <COMMAND
+            name="clear mac address-table"
+            help="Clear MAC Forwarding Table"/>
+        <COMMAND
+            name="clear mac address-table dynamic"
+            help="Dynamic entry type"
+            operation="generic-rpc"
+            namespace="&MODULE-NS;"
+            ptype="SUBCOMMAND">
+                <PARAM name="mac-options"
+                       help=""
+                       ptype="SUBCOMMAND"
+                       mode="switch">
+                            <PARAM name="all"
+                                   help="Clear all entries in MAC Address-table"
+                                   ptype="SUBCOMMAND"
+                                   mode="subcommand"
+                                   yang_name="/clear-mac/all=true"/>
+                            <PARAM name="address"
+                                   help="Address keyword"
+                                   ptype="SUBCOMMAND"
+                                   mode="subcommand">
+                                   <PARAM name="address-value"
+                                          help="48 bit MAC Address"
+                                          ptype="MAC_ADDR">
+                                          <PARAM name="vlan"
+                                                 help="Vlan keyword"
+                                                 ptype="SUBCOMMAND"
+                                                 mode="subcommand">
+                                                 <PARAM name="vlan-value"
+                                                        help="Vlan number"
+                                                        ptype="VLAN_ID"
+                                                        yang_name="/clear-mac/address=${address-value},/clear-mac/vlan-identifier=vlan${vlan-value}"/>
+                                          </PARAM>
+                                   </PARAM>
+                            </PARAM>
+                            <PARAM name="vlan"
+                                   help="Vlan keyword"
+                                   ptype="SUBCOMMAND"
+                                   mode="subcommand">
+                                   <PARAM name="vlan-value"
+                                          help="Vlan number"
+                                          ptype="VLAN_ID"
+                                          yang_name="/clear-mac/vlan=vlan${vlan-value}"/>
+                            </PARAM>
+                            <PARAM name="interface"
+                                   help="Interface keyword"
+                                   ptype="SUBCOMMAND"
+                                   mode="subcommand">
+                                   <PARAM name="interface-value"
+                                          help="Interface keyword"
+                                          ptype="SUBCOMMAND"
+                                          mode="switch">
+                                          <PARAM name="ethernet-value"
+                                                 help="Ethernet interface"
+                                                 ptype="PHY_INTERFACE"
+                                                 yang_name="/clear-mac/interface=${ethernet-value}"/>
+                                         <PARAM name="po-value"
+                                                 help="Port-channel Interface"
+                                                 ptype="PO_INTERFACE"
+                                                 yang_name="/clear-mac/interface=${po-value}"/>
+                                   </PARAM>
+                            </PARAM>
+                </PARAM>
+        <ACTION builtin="clish_extn" > </ACTION>
+        </COMMAND>
+        <!--show mac address-table [ dynamic | static ] [ address mac-address | interface { type slot/port | port-channel number } | vlan vlan-id ] [count [vlan vlan-id] [interface { type slot/port | port-channel number }] -->
+        <COMMAND
+            name="show mac"
+            help="MAC forwarding table"
+            operation="get"
+            namespace="&MODULE-NS;"
+            >
+            <PARAM
+                name="address-table"
+                help="MAC forwarding table"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                namespace="&NS-GET-BULK;"
+                operation="get-bulk"
+                yang_name="/get-bulk/count=200,/get-bulk/list-target=&MAC_FWD_TBL;,/get-bulk/filter=cmd-filter=all"
+                template="show_mac-address-table_bulk.xsl"
+                >
+                <PARAM
+                    name="ad-table"
+                    help="address table sub commands"
+                    ptype="SUBCOMMAND"
+                    mode="switch"
+                    optional="true"
+                    >
+                <!--show mac address-table address -->
+                    <PARAM
+                        name="address"
+                        help="Address keyword"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        >
+                        <PARAM
+                            name="mac-address"
+                            help="48 bit MAC address"
+                            ptype="MAC_ADDR"
+                            refresh_yang_name="true"
+                            namespace="&NS-GET-BULK;"
+                            operation="get-bulk"
+                            yang_name="/get-bulk/count=200,/get-bulk/list-target=&MAC_FWD_TBL;,/get-bulk/filter=cmd-filter=address;mac-addr=${mac-address}"
+                            yang_filter="&SUBTREE_FILTER;Filter_Conditions:&MAC_FWD_TBL_MAC;=${mac-address};&NAMESPACE_FILTER;"
+                            template="show_mac-address-table_bulk.xsl"
+                            />
+                    </PARAM>
+                <!--show mac address-table aging-time -->
+                    <PARAM
+                        name="aging-time"
+                        help="Aging-time keyword"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        operation="get"
+                        yang_filter="&SUBTREE_FILTER;Filter_Conditions:&AGING_TIMER;;&NAMESPACE_FILTER;"
+                        template="show_mac-address-table_aging-time.xsl"
+                        >
+                    </PARAM>
+                <!--show mac address-table count -->
+                    <PARAM
+                        name="count"
+                        help="Count keyword"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        operation="get"
+                        yang_filter="&SUBTREE_FILTER;Filter_Conditions:&MAC_DYNAMIC_COUNT;,&MAC_STATIC_COUNT;;&NAMESPACE_FILTER;"
+                        template="show_mac-address-table_count.xsl"
+                        optional="true"
+                        >
+                        <MACRO name="MAC_COUNT_IF" arg=""/>
+                    </PARAM>
+                    <!--show mac address-table dynamic -->
+                    <PARAM
+                        name="dynamic"
+                        help="Dynamic entry type"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        refresh_yang_name="true"
+                        yang_name="/get-bulk/count=200,/get-bulk/list-target=&MAC_FWD_TBL;,/get-bulk/filter=cmd-filter=dynamic;entry-type=dynamic"
+                        optional="true"
+                        >
+                        <PARAM
+                            name="dyn-options"
+                            help="Dynamic MAC information"
+                            ptype="SUBCOMMAND"
+                            mode="switch"
+                            optional="true"
+                            >
+                            <PARAM
+                                name="address"
+                                help="Address keyword"
+                                ptype="SUBCOMMAND"
+                                mode="subcommand"
+                                >
+                                <PARAM
+                                    name="mac-address"
+                                    help="48 bit MAC address"
+                                    ptype="MAC_ADDR"
+                                    refresh_yang_name="true"
+                                    namespace="&NS-GET-BULK;"
+                                    operation="get-bulk"
+                                    yang_name="/get-bulk/count=200,/get-bulk/list-target=&MAC_FWD_TBL;,/get-bulk/filter=cmd-filter=dynamic-address;entry-type=dynamic;mac-addr=${mac-address}"
+                                    yang_filter="&SUBTREE_FILTER;Filter_Conditions:&MAC_FWD_TBL_MAC;=${mac-address};&NAMESPACE_FILTER;"
+                                    template="show_mac-address-table_bulk.xsl"
+                                    />
+                            </PARAM>
+                            <PARAM
+                               name="vlan"
+                               help="VLAN keyword"
+                               ptype="SUBCOMMAND"
+                               mode="subcommand"
+                               >
+                               <PARAM
+                                  name="vlan-instance"
+                                  help="VLAN number"
+                                  ptype="VLAN_ID"
+                                  refresh_yang_name="true"
+                                  yang_name="/get-bulk/count=200,/get-bulk/list-target=&MAC_FWD_TBL;,/get-bulk/filter=cmd-filter=dynamic-vlan;entry-type=dynamic;vlan=vlan${vlan-instance}"
+                                  />
+                            </PARAM>
+                            <MACRO name="MAC_ALL_IF" arg=";cmd-filter=dynamic-interface;entry-type=dynamic"/>
+                        </PARAM>
+                    </PARAM>
+                    <MACRO name="MAC_ALL_IF" arg=";cmd-filter=interface"/>
+                    <!--show mac address-table static -->
+                    <PARAM
+                        name="static"
+                        help="Static entry type"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        refresh_yang_name="true"
+                        yang_name="/get-bulk/count=200,/get-bulk/list-target=&MAC_FWD_TBL;,/get-bulk/filter=cmd-filter=static;entry-type=static"
+                        optional="true"
+                        >
+                        <PARAM
+                            name="static-options"
+                            help="static MAC information"
+                            ptype="SUBCOMMAND"
+                            mode="switch"
+                            optional="true"
+                            >
+                            <PARAM
+                                name="address"
+                                help="Address keyword"
+                                ptype="SUBCOMMAND"
+                                mode="subcommand"
+                                >
+                                <PARAM
+                                    name="mac-address"
+                                    help="48 bit MAC address"
+                                    ptype="MAC_ADDR"
+                                    refresh_yang_name="true"
+                                    namespace="&NS-GET-BULK;"
+                                    operation="get-bulk"
+                                    yang_name="/get-bulk/count=200,/get-bulk/list-target=&MAC_FWD_TBL;,/get-bulk/filter=cmd-filter=static-address;entry-type=static;mac-addr=${mac-address}"
+                                    yang_filter="&SUBTREE_FILTER;Filter_Conditions:&MAC_FWD_TBL_MAC;=${mac-address};&NAMESPACE_FILTER;"
+                                    template="show_mac-address-table_bulk.xsl"
+                                    />
+                            </PARAM>
+                            <PARAM
+                               name="vlan"
+                               help="Vlan keyword"
+                               ptype="SUBCOMMAND"
+                               mode="subcommand"
+                               >
+                               <PARAM
+                                  name="vlan-instance"
+                                  help="Vlan number"
+                                  ptype="VLAN_ID"
+                                  refresh_yang_name="true"
+                                  yang_name="/get-bulk/count=200,/get-bulk/list-target=&MAC_FWD_TBL;,/get-bulk/filter=cmd-filter=static-vlan;entry-type=static;vlan=vlan${vlan-instance}"
+                                  yang_filter="&SUBTREE_FILTER;Filter_Conditions:&MAC_FWD_TBL_TYPE;=static,&MAC_FWD_TBL_VLAN;=vlan${vlan-instance};&NAMESPACE_FILTER;"
+                                  />
+                            </PARAM>
+                            <MACRO name="MAC_ALL_IF" arg=";cmd-filter=static-interface;entry-type=static"/>
+                        </PARAM>
+                    </PARAM>
+                    <PARAM
+                       name="vlan"
+                       help="VLAN keyword"
+                       ptype="SUBCOMMAND"
+                       mode="subcommand"
+                       >
+                       <PARAM
+                          name="vlan-instance"
+                          help="Vlan number"
+                          ptype="VLAN_ID"
+                          refresh_yang_name="true"
+                          yang_name="/get-bulk/count=200,/get-bulk/list-target=&MAC_FWD_TBL;,/get-bulk/filter=cmd-filter=vlan;vlan=vlan${vlan-instance}"
+                          />
+                    </PARAM>
+
+                </PARAM>
+            </PARAM>
+            <ACTION builtin="clish_extn" > </ACTION>
+        </COMMAND>
+    </VIEW>
+    <!--=======================================================-->
+    <!--                Config MODE                            -->
+    <!--=======================================================-->
+    <VIEW
+        name="configure-view"
+        >
+        <!--mac address-table [static|aging-time] -->
+        <COMMAND
+            name="mac"
+            help="MAC Address Table Configuration Subcommands"
+            operation="edit-config"
+            namespace="&MODULE-NS;"
+            >
+            <PARAM
+                name="address-table"
+                help="MAC Address Table Configuration Subcommands"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                >
+                <PARAM
+                    name="sub-commands"
+                    help="sub-commands"
+                    ptype="SUBCOMMAND"
+                    mode="switch"
+                    >
+                    <!--mac address-table static mac-address vlan vlan-id {interface { type slot/port | port-channel number}-->
+                    <PARAM
+                        name="static"
+                        help="Static keyword"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        yang_key="&STATIC_MAC_ADDR;,&STATIC_TBL_VLAN;"
+                        >
+                        <PARAM
+                            name="mac-address"
+                            help="48 bit MAC address"
+                            ptype="MAC_ADDR"
+                            yang_name="&STATIC_TBL_ENT_TYPE;=static,&STATIC_MAC_ADDR;=${mac-address}"
+                            >
+                            <PARAM
+                                name="vlan"
+                                help="Vlan keyword"
+                                ptype="SUBCOMMAND"
+                                mode="subcommand"
+                                >
+                                <PARAM
+                                    name="vlan-instance"
+                                    help="Vlan number"
+                                    ptype="VLAN_ID"
+                                    yang_name="&STATIC_TBL_VLAN;=vlan${vlan-instance}"
+                                    >
+                                    <PARAM
+                                        name="vlan-sub-commands"
+                                        help="vlan-sub-commands"
+                                        ptype="SUBCOMMAND"
+                                        mode="switch"
+                                        >
+                                        <MACRO name="MAC_DEST_IF" arg="&STATIC_TBL_IF_NAME;"/>
+                                    </PARAM>
+                                </PARAM>
+                            </PARAM>   <!--vlan-->
+                        </PARAM>
+                    </PARAM>   <!--static-->
+
+                    <!--mac address-table aging-time seconds -->
+                    <PARAM
+                        name="aging-time"
+                        help="Aging-time keyword"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        >
+                        <PARAM
+                            name="seconds"
+                            help="MAC age time in seconds. Enter 0 to disable MAC aging (default = 1800)"
+                            ptype="MAC_AGE_TIMER"
+                            yang_name="&AGING_TIMER;=${seconds}"
+                            >
+                        </PARAM>
+                    </PARAM>
+
+                </PARAM>
+            </PARAM>
+            <ACTION builtin="clish_extn" > </ACTION>
+        </COMMAND>
+
+        <!--no mac address-table static {mac-address} {vlan vlan-id} -->
+        <COMMAND
+            name="no mac"
+            help="MAC Address Table Configuration Subcommands"
+            operation="edit-config"
+            namespace="&MODULE-NS;"
+            >
+            <PARAM
+                name="address-table"
+                help="MAC Address Table Configuration Subcommands"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                >
+                <PARAM
+                    name="adtb-sub-commands"
+                    help="sub-commands"
+                    ptype="SUBCOMMAND"
+                    mode="switch"
+                    >
+                    <PARAM
+                        name="static"
+                        help="Static keyword"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        sub_oper_yang="remove:static-table"
+                        >
+                        <PARAM
+                            name="mac-address"
+                            help="48 bit MAC address"
+                            ptype="MAC_ADDR"
+                            yang_name="&STATIC_MAC_ADDR;=${mac-address}"
+                            >
+                            <PARAM
+                                name="vlan"
+                                help="Vlan keyword"
+                                ptype="SUBCOMMAND"
+                                mode="subcommand"
+                                >
+                                <PARAM
+                                    name="vlan-instance"
+                                    help="Vlan number"
+                                    ptype="VLAN_ID"
+                                    yang_name="&STATIC_TBL_VLAN;=vlan${vlan-instance}"
+                                    >
+                                </PARAM>
+                            </PARAM>   <!--vlan-->
+                        </PARAM>
+                    </PARAM>   <!--static-->
+
+                    <!--no mac address-table aging-time seconds -->
+                    <PARAM
+                        name="aging-time"
+                        help="aging-time keyword"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        yang_name="&AGING_TIMER;"
+                        >
+                        <PARAM
+                            name="seconds"
+                            help="aging-time keyword"
+                            ptype="MAC_AGE_TIMER"
+                            optional="true"
+                            >
+                        </PARAM>
+                    </PARAM>
+                </PARAM>
+            </PARAM>
+            <ACTION builtin="clish_extn" > </ACTION>
+        </COMMAND>
+    </VIEW>
+
+</CLISH_MODULE>

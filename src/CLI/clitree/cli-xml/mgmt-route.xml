@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE CLISH_MODULE [
+<!ENTITY SUBTREE_FILTER                         "Filter_Type:SUBTREE">
+<!ENTITY MODULE_NS                              "http://www.dellemc.com/networking/os10/dell-management-routing">
+<!ENTITY IPV4_ROUTE                             "/ipv4-mgmt-routes/route">
+<!ENTITY IPV6_ROUTE                             "/ipv6-mgmt-routes/route">
+]>
+
+<CLISH_MODULE
+    xmlns="http://www.dellemc.com/force10/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xi="http://www.w3.org/2001/XInclude"
+    xsi:schemaLocation="http://www.dellemc.com/force10/XMLSchema
+                        http://www.dellemc.com/force10/XMLSchema/clish.xsd"
+    >
+    <!--=======================================================-->
+    <!--MODE : Global -->
+    <VIEW
+        name="configure-view"
+        >
+        <!--- management route  -->
+        <COMMAND
+            name="management"
+            help="management interface commands"
+            operation="edit-config"
+            namespace="&MODULE_NS;"
+            />
+            <COMMAND
+                name="management route"
+                help="Configure management static route"
+                operation="edit-config"
+                namespace="&MODULE_NS;"
+                >
+                <!--- management route ip-prefix -->
+                <PARAM
+                    name="prefix"
+                    help="ipv4/6 destination prefix"
+                    ptype="SUBCOMMAND"
+                    mode="switch"
+                    >
+                    <PARAM
+                        name="ipv4-prefix"
+                        help="IPv4 Destination prefix"
+                        ptype="IP_ADDR_MASK"
+                        prompt_fn="inconsistent_mask_check"
+                        prompt_str="${ipv4-prefix}"
+                        yang_key="&IPV4_ROUTE;/destination-prefix"
+                        yang_name="&IPV4_ROUTE;/destination-prefix=${ipv4-prefix}"
+                        >
+                        <PARAM
+                            name="next-hop"
+                            help="Forwarding router IPv4 address/managementethernet"
+                            ptype="SUBCOMMAND"
+                            mode="switch"
+                            >
+                            <PARAM
+                                name="forwarding-router-address"
+                                help="Forwarding router's address"
+                                ptype="IP_ADDR"
+                                yang_name="&IPV4_ROUTE;/forwarding-router-address=${forwarding-router-address}"
+                            />
+                            <PARAM
+                                name="managementethernet"
+                                help="Management Ethernet interface"
+                                ptype="SUBCOMMAND"
+                                mode="subcommand"
+                                yang_name="&IPV4_ROUTE;/mgmt-ethernet=true"
+                            />
+                        </PARAM>
+                    </PARAM>
+                    <PARAM
+                        name="ipv6-prefix"
+                        help="IPv6 Destination prefix"
+                        ptype="IPV6_ADDR_MASK"
+                        yang_key="&IPV6_ROUTE;/destination-prefix"
+                        yang_name="&IPV6_ROUTE;/destination-prefix"
+                        >
+                        <PARAM
+                            name="next-hop"
+                            help="Forwarding router IPv6 address/managementethernet"
+                            ptype="SUBCOMMAND"
+                            mode="switch"
+                            >
+                            <PARAM
+                                name="forwarding-router-address"
+                                help="Forwarding router's address"
+                                ptype="IPV6_ADDR"
+                                prompt_oper="${forwarding-router-address}"
+                                prompt_str="${ipv6-prefix}"
+                                prompt_fn="ipv6_config_trim_leading_zeroes"
+                                yang_name="&IPV6_ROUTE;/forwarding-router-address"
+                            />
+                            <PARAM
+                                name="managementethernet"
+                                help="Management Ethernet interface"
+                                ptype="SUBCOMMAND"
+                                mode="subcommand"
+                                prompt_str="${ipv6-prefix}"
+                                prompt_fn="ipv6_config_trim_leading_zeroes"
+                                yang_name="&IPV6_ROUTE;/mgmt-ethernet=true"
+                            />
+                        </PARAM>
+                    </PARAM>
+                </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+            </COMMAND>
+        	<!--- no management route -->
+	        <COMMAND
+                name="no management"
+                help="management interface commands"
+                operation="edit-config"
+                namespace="&MODULE_NS;"
+                />
+                <COMMAND
+                    name="no management route"
+                    help="Configure management static route"
+                    operation="edit-config"
+                    namespace="&MODULE_NS;"
+                    >
+                    <!---no  management route ip-prefix -->
+                    <PARAM
+                        name="prefix"
+                        help="ipv4/6 destination prefix"
+                        ptype="SUBCOMMAND"
+                        mode="switch"
+                        >
+                        <PARAM
+                            name="ipv4-prefix"
+                            help="IPv4 Destination prefix"
+                            ptype="IP_ADDR_MASK"
+                            sub_oper_yang="remove:route"
+                            yang_key="&IPV4_ROUTE;/destination-prefix"
+                            yang_name="&IPV4_ROUTE;/destination-prefix=${ipv4-prefix}"
+                            >
+                            <PARAM
+                                name="next-hop"
+                                help="Forwarding router IPv4 address/managementethernet"
+                                ptype="SUBCOMMAND"
+                                mode="switch"
+                                >
+                                <PARAM
+                                    name="forwarding-router-address"
+                                    help="Forwarding router's address"
+                                    ptype="IP_ADDR"
+                                    yang_name="&IPV4_ROUTE;/forwarding-router-address=${forwarding-router-address}"
+                                />
+                                <PARAM
+                                    name="managementethernet"
+                                    help="Management Ethernet interface"
+                                    ptype="SUBCOMMAND"
+                                    mode="subcommand"
+                                    yang_name="&IPV4_ROUTE;/mgmt-ethernet=false"
+                                />
+                            </PARAM>
+                        </PARAM>
+                        <PARAM
+                            name="ipv6-prefix"
+                            help="IPv6 Destination prefix"
+                            ptype="IPV6_ADDR_MASK"
+                            sub_oper_yang="remove:route"
+                            yang_key="&IPV6_ROUTE;/destination-prefix"
+                            yang_name="&IPV6_ROUTE;/destination-prefix"
+                            >
+                            <PARAM
+                                name="next-hop"
+                                help="Forwarding router IPv6 address/managementethernet"
+                                ptype="SUBCOMMAND"
+                                mode="switch"
+                                >
+                                <PARAM
+                                    name="forwarding-router-address"
+                                    help="Forwarding router's address"
+                                    ptype="IPV6_ADDR"
+                                    prompt_oper="${forwarding-router-address}"
+                                    prompt_str="${ipv6-prefix}"
+                                    prompt_fn="ipv6_config_trim_leading_zeroes"
+                                    yang_name="&IPV6_ROUTE;/forwarding-router-address"
+                                />
+                                <PARAM
+                                    name="managementethernet"
+                                    help="Management Ethernet interface"
+                                    ptype="SUBCOMMAND"
+                                    mode="subcommand"
+                                    prompt_str="${ipv6-prefix}"
+                                    prompt_fn="ipv6_config_trim_leading_zeroes"
+                                    yang_name="&IPV6_ROUTE;/mgmt-ethernet=false"
+                                />
+                            </PARAM>
+                        </PARAM>
+                </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+            </COMMAND>
+
+  </VIEW>
+</CLISH_MODULE>
+

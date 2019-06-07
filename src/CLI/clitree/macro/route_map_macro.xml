@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE ROOT [
+<!ENTITY MODULE-NS      "http://www.dellemc.com/networking/os10/dell-policy">
+<!ENTITY MODULE         "dell-policy">
+<!ENTITY SUBTREE_FILTER "Filter_Type:SUBTREE;">
+<!ENTITY POLICY_PREF    "policy">
+<!ENTITY POLICY_INTF_NS  "urn:ietf:params:xml:ns:yang:ietf-interfaces,&POLICY_PREF;=http://www.dellemc.com/networking/os10/dell-policy">
+<!ENTITY IF_PBR_ROUTE_MAP_GROUP    "/interfaces/interface[]/&POLICY_PREF;:policy-pbr-config/&POLICY_PREF;:pbr-route-map-group">
+<!ENTITY IF_RANGE_PBR_ROUTE_MAP_GROUP_IFACE_NAME     "/interfaces/interface[]/name">
+<!ENTITY IF_RANGE_PBR_ROUTE_MAP_GROUP_IP_TYPE        "&IF_PBR_ROUTE_MAP_GROUP;/&POLICY_PREF;:ip-type">
+<!ENTITY IF_RANGE_PBR_ROUTE_MAP_GROUP_VRF            "&IF_PBR_ROUTE_MAP_GROUP;/&POLICY_PREF;:vrf">
+<!ENTITY IF_RANGE_PBR_ROUTE_MAP_GROUP_ROUTE_MAP_NAME "&IF_PBR_ROUTE_MAP_GROUP;/&POLICY_PREF;:route-map-name">
+]>
+<ROOT>
+
+<MACRODEF name="pbr-if-range-cmds">
+
+<!-- ip policy -->
+    <COMMAND name="ip policy"
+        help="Configure PBR feature"
+        operation="edit-config"
+        namespace="&POLICY_INTF_NS;"
+        yang_key="&IF_RANGE_PBR_ROUTE_MAP_GROUP_IP_TYPE;=ipv4,&IF_RANGE_PBR_ROUTE_MAP_GROUP_VRF;=0">
+
+        <PARAM name="route-map"
+            help="Route-map for PBR"
+            mode="subcommand"
+            ptype="SUBCOMMAND">
+
+            <PARAM name="map-name"
+                help="Route-map name"
+                ptype="STRING"
+                yang_name="&IF_RANGE_PBR_ROUTE_MAP_GROUP_IFACE_NAME;=arg1,&IF_RANGE_PBR_ROUTE_MAP_GROUP_VRF;=0,&IF_RANGE_PBR_ROUTE_MAP_GROUP_IP_TYPE;=ipv4,&IF_RANGE_PBR_ROUTE_MAP_GROUP_ROUTE_MAP_NAME;=${map-name}"
+            />
+        </PARAM>
+
+        <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+<!-- ipv6 policy -->
+    <COMMAND name="ipv6 policy"
+        help="Configure PBR feature"
+        operation="edit-config"
+        namespace="&POLICY_INTF_NS;"
+        yang_key="&IF_RANGE_PBR_ROUTE_MAP_GROUP_IP_TYPE;=ipv6,&IF_RANGE_PBR_ROUTE_MAP_GROUP_VRF;=0">
+
+        <PARAM name="route-map"
+            help="Route-map for PBR"
+            mode="subcommand"
+            ptype="SUBCOMMAND">
+
+            <PARAM name="map-name"
+                help="Route-map name"
+                ptype="STRING"
+                yang_name="&IF_RANGE_PBR_ROUTE_MAP_GROUP_IFACE_NAME;=arg1,&IF_RANGE_PBR_ROUTE_MAP_GROUP_VRF;=0,&IF_RANGE_PBR_ROUTE_MAP_GROUP_IP_TYPE;=ipv6,&IF_RANGE_PBR_ROUTE_MAP_GROUP_ROUTE_MAP_NAME;=${map-name}"
+            />
+        </PARAM>
+
+        <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+
+<!-- no ip policy -->
+    <COMMAND name="no ip policy"
+        help="Configure PBR feature"
+        operation="edit-config"
+        namespace="&POLICY_INTF_NS;"
+        sub_oper_yang="remove:pbr-route-map-group">
+
+        <PARAM name="route-map"
+            help="Route-map for PBR"
+            mode="subcommand"
+            ptype="SUBCOMMAND">
+
+            <PARAM name="map-name"
+                help="Route-map name"
+                ptype="STRING"
+                yang_name="&IF_RANGE_PBR_ROUTE_MAP_GROUP_IFACE_NAME;=arg1,&IF_RANGE_PBR_ROUTE_MAP_GROUP_VRF;=0,&IF_RANGE_PBR_ROUTE_MAP_GROUP_IP_TYPE;=ipv4,&IF_RANGE_PBR_ROUTE_MAP_GROUP_ROUTE_MAP_NAME;=${map-name}"
+            />
+        </PARAM>
+
+        <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+<!-- no ipv6 policy -->
+    <COMMAND name="no ipv6 policy"
+        help="Configure PBR feature"
+        operation="edit-config"
+        namespace="&POLICY_INTF_NS;"
+        sub_oper_yang="remove:pbr-route-map-group">
+
+        <PARAM name="route-map"
+            help="Route-map for PBR"
+            mode="subcommand"
+            ptype="SUBCOMMAND">
+
+            <PARAM name="map-name"
+                help="Route-map name"
+                ptype="STRING"
+                yang_name="&IF_RANGE_PBR_ROUTE_MAP_GROUP_IFACE_NAME;=arg1,&IF_RANGE_PBR_ROUTE_MAP_GROUP_VRF;=0,&IF_RANGE_PBR_ROUTE_MAP_GROUP_IP_TYPE;=ipv6,&IF_RANGE_PBR_ROUTE_MAP_GROUP_ROUTE_MAP_NAME;=${map-name}"
+            />
+        </PARAM>
+
+        <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+</MACRODEF>
+
+</ROOT>

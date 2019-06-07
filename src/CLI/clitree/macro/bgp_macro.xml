@@ -1,0 +1,1203 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE ROOT [
+<!ENTITY SUBTREE_FILTER                        "Filter_Type:SUBTREE">
+<!ENTITY NS_FILTER                             "http://www.dellemc.com/networking/os10/dell-bgp">
+<!ENTITY FILTER_NS                             "Filter_Namespace:&NS_FILTER;">
+<!ENTITY VRF                                   "/bgp-router/vrf">
+<!ENTITY VRF_NAME_DEFAULT                      "&VRF;/vrf-name=default">
+<!ENTITY ROUTER_COMMON                         "&VRF_NAME;,&VRF;">
+<!ENTITY ROUTER_COMMON_ADD_PATH                "&VRF_NAME;,&VRF;/add-path">
+<!ENTITY DEF_FILTER                            "Filter_Conditions:/bgp-oper/vrf/vrf-name=default">
+]>
+<ROOT>
+
+    <MACRODEF name="REDISTRIBUTE_CMDS_V4" >
+        <PARAM
+            name="protocol"
+            help="protocol-sub-commands"
+            ptype="SUBCOMMAND"
+            mode="switch"
+            >
+            <PARAM
+                name="connected"
+                help="Connected Routes"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                yang_name="arg1/redistribute-connected/enable"
+                >
+                <PARAM
+                    name="route-map"
+                    help="Route-map reference"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    optional="true"
+                    >
+                    <PARAM
+                        name="name"
+                        help="Route map name"
+                        ptype="STRING"
+                        yang_name="arg2/redistribute-connected/redistribute-route-map=${name}"
+                        />
+                </PARAM>
+            </PARAM>
+            <PARAM
+                name="ospf"
+                help="Open shortest path first"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                >
+                <PARAM
+                    name="id"
+                    help="Process ID"
+                    ptype="RANGE_1_65535"
+                    yang_name="arg1/redistribute-ospf/id=${id}"
+                    >
+                    <PARAM
+                        name="route-map"
+                        help="Route-map reference"
+                        optional="true"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        >
+                        <PARAM
+                            name="name"
+                            help="Route map name"
+                            ptype="STRING"
+                            yang_name="arg2/redistribute-ospf/route-map=${name}"
+                            />
+                    </PARAM>
+                </PARAM>
+            </PARAM>
+            <PARAM
+                name="static"
+                help="Redistribute static routes"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                yang_name="arg1/redistribute-static/enable"
+                >
+                <PARAM
+                    name="route-map"
+                    help="Route-map reference"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    optional="true"
+                    >
+                    <PARAM
+                        name="name"
+                        help="Route map name"
+                        ptype="STRING"
+                        yang_name="arg2/redistribute-static/route-map=${name}"/>
+                </PARAM>
+            </PARAM>
+        </PARAM>
+    </MACRODEF>
+    <MACRODEF name="REDISTRIBUTE_CMDS_V6" >
+        <PARAM
+            name="protocol"
+            help="protocol-sub-commands"
+            ptype="SUBCOMMAND"
+            mode="switch"
+            >
+            <PARAM
+                name="connected"
+                help="Connected Routes"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                yang_name="arg1/redistribute-connected/enable"
+                >
+                <PARAM
+                    name="route-map"
+                    help="Route-map reference"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    optional="true"
+                    >
+                    <PARAM
+                        name="name"
+                        help="Route map name"
+                        ptype="STRING"
+                        yang_name="arg2/redistribute-connected/redistribute-route-map=${name}"
+                        />
+                </PARAM>
+            </PARAM>
+            <PARAM
+                name="ospfv3"
+                help="Open shortest path first"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                >
+                <PARAM
+                    name="id"
+                    help="Process ID"
+                    ptype="RANGE_1_65535"
+                    yang_name="arg1/redistribute-ospf/id=${id}"
+                    >
+                    <PARAM
+                        name="route-map"
+                        help="Route-map reference"
+                        optional="true"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        >
+                        <PARAM
+                            name="name"
+                            help="Route map name"
+                            ptype="STRING"
+                            yang_name="arg2/redistribute-ospf/route-map=${name}"
+                            />
+                    </PARAM>
+                </PARAM>
+            </PARAM>
+            <PARAM
+                name="static"
+                help="Redistribute static routes"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                yang_name="arg1/redistribute-static/enable"
+                >
+                <PARAM
+                    name="route-map"
+                    help="Route-map reference"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    optional="true"
+                    >
+                    <PARAM
+                        name="name"
+                        help="Route map name"
+                        ptype="STRING"
+                        yang_name="arg2/redistribute-static/route-map=${name}"/>
+                </PARAM>
+            </PARAM>
+        </PARAM>
+    </MACRODEF>
+    <MACRODEF name="NO_REDISTRIBUTE_CMDS_V4" >
+        <PARAM
+            name="protocol"
+            help="protocol-sub-commands"
+            ptype="SUBCOMMAND"
+            mode="switch"
+            >
+            <PARAM
+                name="connected"
+                help="Redistribute connected routes"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                sub_oper_yang="remove:redistribute-connected"
+                yang_name="arg1/redistribute-connected"
+                >
+                <PARAM
+                    name="route-map"
+                    help="Route-map reference"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    optional="true"
+                    >
+                    <PARAM
+                        name="name"
+                        help="Route map name"
+                        ptype="STRING"
+                        yang_name="arg2/redistribute-connected/redistribute-route-map=${name}"
+                        />
+                </PARAM>
+            </PARAM>
+            <PARAM
+                name="ospf"
+                help="Redistribute OSPF routes"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                >
+                <PARAM
+                    name="id"
+                    help="Process ID"
+                    ptype="RANGE_1_65535"
+                    yang_name="arg1/redistribute-ospf"
+                    sub_oper_yang="remove:redistribute-ospf"
+                    >
+                    <PARAM
+                        name="route-map"
+                        help="Route-map reference"
+                        optional="true"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        >
+                        <PARAM
+                            name="name"
+                            help="Route map name"
+                            ptype="STRING"
+                            yang_name="arg2/redistribute-ospf/route-map=${name}"
+                            />
+                    </PARAM>
+                </PARAM>
+            </PARAM>
+            <PARAM
+                name="static"
+                help="Redistribute static routes"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                sub_oper_yang="remove:redistribute-static"
+                yang_name="arg1/redistribute-static"
+                >
+                <PARAM
+                    name="route-map"
+                    help="Route-map reference"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    optional="true"
+                    >
+                    <PARAM
+                        name="name"
+                        help="Route map name"
+                        ptype="STRING"
+                        yang_name="arg2/redistribute-static/route-map=${name}"
+                    />
+                </PARAM>
+            </PARAM>
+        </PARAM>
+    </MACRODEF>
+    <MACRODEF name="NO_REDISTRIBUTE_CMDS_V6" >
+        <PARAM
+            name="protocol"
+            help="protocol-sub-commands"
+            ptype="SUBCOMMAND"
+            mode="switch"
+            >
+            <PARAM
+                name="connected"
+                help="Redistribute connected routes"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                sub_oper_yang="remove:redistribute-connected"
+                yang_name="arg1/redistribute-connected"
+                >
+                <PARAM
+                    name="route-map"
+                    help="Route-map reference"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    optional="true"
+                    >
+                    <PARAM
+                        name="name"
+                        help="Route map name"
+                        ptype="STRING"
+                        yang_name="arg2/redistribute-connected/redistribute-route-map=${name}"
+                        />
+                </PARAM>
+            </PARAM>
+            <PARAM
+                name="ospfv3"
+                help="Redistribute OSPF routes"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                >
+                <PARAM
+                    name="id"
+                    help="Process ID"
+                    ptype="RANGE_1_65535"
+                    yang_name="arg1/redistribute-ospf"
+                    sub_oper_yang="remove:redistribute-ospf"
+                    >
+                    <PARAM
+                        name="route-map"
+                        help="Route-map reference"
+                        optional="true"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        >
+                        <PARAM
+                            name="name"
+                            help="Route map name"
+                            ptype="STRING"
+                            yang_name="arg2/redistribute-ospf/route-map=${name}"
+                            />
+                    </PARAM>
+                </PARAM>
+            </PARAM>
+            <PARAM
+                name="static"
+                help="Redistribute static routes"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                sub_oper_yang="remove:redistribute-static"
+                yang_name="arg1/redistribute-static"
+                >
+                <PARAM
+                    name="route-map"
+                    help="Route-map reference"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    optional="true"
+                    >
+                    <PARAM
+                        name="name"
+                        help="Route map name"
+                        ptype="STRING"
+                        yang_name="arg2/redistribute-static/route-map=${name}"
+                    />
+                </PARAM>
+            </PARAM>
+        </PARAM>
+    </MACRODEF>
+    <MACRODEF name="AGGREGATE_CMDS" >
+        <PARAM
+            name="advertise-map"
+            help="Set condition to advertise attribute"
+            ptype="SUBCOMMAND"
+            order="true"
+            optional="true"
+            mode="subcommand"
+            >
+            <PARAM
+                name="advertise-map-val"
+                help="Route map to control attribute advertisement (max 140 chars)"
+                ptype="STRING"
+                yang_name="arg1/advertise-map=${advertise-map-val}"
+                />
+        </PARAM>
+        <PARAM
+            name="as-set"
+            help="Generate AS set path information"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            order="true"
+            optional="true"
+            yang_name="arg1/as-set=true"
+            />
+        <PARAM
+            name="attribute-map"
+            help="Set attributes of aggregate"
+            ptype="SUBCOMMAND"
+            order="true"
+            optional="true"
+            mode="subcommand"
+            >
+            <PARAM
+                name="attribute-map-val"
+                help="Route map for parameter control (max 140 chars)"
+                ptype="STRING"
+                yang_name="arg1/attribute-map=${attribute-map-val}"
+                />
+        </PARAM>
+        <PARAM
+            name="summary-only"
+            help="Filter more specific routes from updates"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            order="true"
+            optional="true"
+            yang_name="arg1/summary-only"
+            />
+        <PARAM
+            name="suppress-map"
+            help="Conditionally filter more specific routes from updates"
+            ptype="SUBCOMMAND"
+            order="true"
+            optional="true"
+            mode="subcommand"
+            >
+            <PARAM
+                name="suppress-map-val"
+                help="Route map for suppression (max 140 chars)"
+                ptype="STRING"
+                yang_name="arg1/suppress-map=${suppress-map-val}"
+            />
+        </PARAM>
+    </MACRODEF>
+    <!-- dampening -->
+    <MACRODEF name="DAMPENING" >
+        <COMMAND
+            name="dampening"
+            help="Enable route-flap dampening"
+            operation="edit-config"
+            namespace="&NS_FILTER;"
+            yang_name="arg1/half-time=15,arg1/reuse-value=750,arg1/start-suppress-time=2000,arg1/max-suppress-time=60,arg2/dampening/enable=true"
+            mode="subcommand"
+            >
+            <PARAM
+                name="dampening-switch"
+                help="dampening-switch"
+                mode="switch"
+                optional="true"
+                ptype="SUBCOMMAND">
+                <PARAM
+                    name="half-time"
+                    help="Half-life time for the penalty (default = 15)"
+                    ptype="RANGE_1_45"
+                    order="true"
+                    yang_name="arg1/half-time=${half-time}"
+                    >
+                    <PARAM
+                        name="reuse-value"
+                        help="Value to start reusing a route (default = 750)"
+                        ptype="RANGE_1_20000"
+                        yang_name="arg1/reuse-value=${reuse-value}"
+                        >
+                        <PARAM
+                            name="start-suppress-time"
+                            help="Value to start suppressing a route (default = 2000)"
+                            ptype="RANGE_1_20000"
+                            yang_name="arg1/start-suppress-time=${start-suppress-time}"
+                            >
+                            <PARAM
+                                name="max-suppress-time"
+                                help="Maximum duration to suppress a stable route (default = 60)"
+                                ptype="RANGE_1_255"
+                                refresh_yang_name="true"
+                                yang_name="arg2/dampening/enable=true,arg1/half-time=${half-time},arg1/reuse-value=${reuse-value},arg1/start-suppress-time=${start-suppress-time},arg1/max-suppress-time=${max-suppress-time}"
+                                >
+                                <PARAM
+                                    name="route-map"
+                                    help="Route-map to specify criteria for dampening"
+                                    ptype="SUBCOMMAND"
+                                    optional="true"
+                                    mode="subcommand"
+                                    >
+                                    <PARAM
+                                        name="map_name"
+                                        help="Route-map name (max 140 chars)"
+                                        ptype="STRING"
+                                        yang_name="arg1/route-map=${map_name}"
+                                        />
+                                </PARAM>
+                            </PARAM>
+                        </PARAM>
+                    </PARAM>
+                </PARAM>
+                <PARAM
+                    name="route-map"
+                    help="Route-map to specify criteria for dampening"
+                    db_flag="SKIP_TREE"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    >
+                    <PARAM
+                        name="map_name"
+                        help="Route-map name (max 140 chars)"
+                        ptype="STRING"
+                        yang_name="arg1/route-map=${map_name}"
+                        />
+               </PARAM>
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+    </MACRODEF>
+    <MACRODEF name="NO_DAMPENING" >
+        <COMMAND
+            name="no dampening"
+            help="Enable route-flap dampening"
+            operation="edit-config"
+            namespace="&NS_FILTER;"
+            sub_oper_yang="remove:dampening"
+            yang_name="arg1/dampening/enable=false"
+            mode="subcommand"
+            >
+            <PARAM
+                name="dampening-commands"
+                help="dampening-sub-commands"
+                optional="true"
+                ptype="SUBCOMMAND"
+                mode="switch"
+                >
+                <PARAM
+                    name="half-time"
+                    help="Half-life time for the penalty (default = 15)"
+                    ptype="RANGE_1_45"
+                    >
+                    <PARAM
+                        name="reuse-value"
+                        help="Value to start reusing a route (default = 750)"
+                        ptype="RANGE_1_20000"
+                        >
+                        <PARAM
+                            name="start-suppress-time"
+                            help="Value to start suppressing a route (default = 2000)"
+                            ptype="RANGE_1_20000"
+                            >
+                            <PARAM
+                                name="max-suppress-time"
+                                help="Maximum duration to suppress a stable route (default = 60)"
+                                ptype="RANGE_1_255"
+                                >
+                                <PARAM
+                                    name="route-map"
+                                    help="Route-map to specify criteria for dampening"
+                                    ptype="SUBCOMMAND"
+                                    optional="true"
+                                    mode="subcommand"
+                                    >
+                                    <PARAM
+                                        name="map_name"
+                                        help="Route-map name (max 140 chars)"
+                                        yang_name="arg/route-map=${map_name}"
+                                        ptype="STRING"
+                                        />
+                                </PARAM>
+                            </PARAM>
+                        </PARAM>
+                    </PARAM>
+                </PARAM>
+                <PARAM
+                    name="route-map"
+                    help="Route-map to specify criteria for dampening"
+                    ptype="SUBCOMMAND"
+                    optional="true"
+                    mode="subcommand"
+                    >
+                    <PARAM
+                        name="map_name"
+                        help="Route-map name (max 140 chars)"
+                        ptype="STRING"
+                        yang_name="arg/route-map=${map_name}"
+                        optional="true"
+                        />
+               </PARAM>
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+    </MACRODEF>
+    <!-- maximum-paths ibgp | ebgp -->
+    <MACRODEF name="MAXIMUM_PATHS" >
+        <COMMAND
+            name="maximum-paths"
+            help="Forward packets over multiple paths"
+            operation="edit-config"
+            namespace="&NS_FILTER;"
+            mode="subcommand"
+            >
+            <PARAM
+                name="maximum-paths-commands"
+                help="maximum-paths-sub-commands"
+                ptype="SUBCOMMAND"
+                mode="switch"
+                >
+                <PARAM
+                    name="ebgp"
+                    help="Multipath for EBGP"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    >
+                    <PARAM
+                        name="paths"
+                        help="Number of paths (default = 64)"
+                        ptype="RANGE_1_64"
+                        yang_name="arg1/ebgp-number-of-path=${paths}"
+                        />
+                </PARAM>
+                <PARAM
+                    name="ibgp"
+                    help="Multipath for IBGP"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    >
+                    <PARAM
+                        name="paths"
+                        help="Number of paths (default = 64)"
+                        ptype="RANGE_1_64"
+                        yang_name="arg1/ibgp-number-of-path=${paths}"
+                        />
+                </PARAM>
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+    </MACRODEF>
+    <MACRODEF name="NO_MAXIMUM_PATHS" >
+        <COMMAND
+            name="no maximum-paths"
+            help="Forward packets over multiple paths"
+            operation="edit-config"
+            namespace="&NS_FILTER;"
+            mode="subcommand"
+            >
+            <PARAM
+                name="maximum-paths-commands"
+                help="maximum-paths-sub-commands"
+                ptype="SUBCOMMAND"
+                mode="switch"
+                >
+                <PARAM
+                    name="ebgp"
+                    help="Multipath for EBGP"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    yang_name="arg1/ebgp-number-of-path"
+                    >
+                    <PARAM
+                        name="paths"
+                        help="Number of paths (default = 1)"
+                        ptype="RANGE_1_64"
+                        optional="true"
+                        />
+                </PARAM>
+                <PARAM
+                    name="ibgp"
+                    help="Multipath for IBGP"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    yang_name="arg1/ibgp-number-of-path"
+                    >
+                    <PARAM
+                        name="paths"
+                        help="Number of paths (default = 1)"
+                        ptype="RANGE_1_64"
+                        optional="true"
+                        />
+                </PARAM>
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+    </MACRODEF>
+    <!-- add-path receive | send | both -->
+    <MACRODEF name="ADD_PATH" >
+        <COMMAND
+            name="add-path"
+            help="Send or Receive multiple paths"
+            ptype="SUBCOMMAND"
+            operation="edit-config"
+            namespace="&NS_FILTER;"
+            mode="subcommand"
+            pfeature="NOT_SUPPORTED"
+            >
+            <PARAM
+                name="add-path-commands"
+                help="add-path-sub-commands"
+                ptype="SUBCOMMAND"
+                mode="switch"
+                >
+                <PARAM
+                    name="both"
+                    help="Both receive and send multiple paths"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    yang_name="&VRF_NAME_DEFAULT;,arg1/capability=both"
+                    >
+                    <PARAM
+                        name="path-count"
+                        help="Number of paths to advertise"
+                        ptype="RANGE_2_64"
+                        yang_name="arg1/count=${path-count}"
+                        />
+                </PARAM>
+                <PARAM
+                    name="receive"
+                    help="Receive multiple paths from peer"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    yang_name="&VRF_NAME_DEFAULT;,arg1/capability=receive"
+                    />
+                <PARAM
+                    name="send"
+                    help="Send multiple paths to peer"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    yang_name="&VRF_NAME_DEFAULT;,arg1/capability=send"
+                    >
+                    <PARAM
+                        name="path-count"
+                        help="Number of paths to advertise"
+                        ptype="RANGE_2_64"
+                        yang_name="arg1/count=${path-count}"
+                        />
+                </PARAM>
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+    </MACRODEF>
+    <!-- add-path receive | send | both -->
+    <MACRODEF name="NO_ADD_PATH" >
+        <COMMAND
+            name="no add-path"
+            help="Send or Receive multiple paths"
+            ptype="SUBCOMMAND"
+            operation="edit-config"
+            namespace="&NS_FILTER;"
+            mode="subcommand"
+            sub_oper_yang="remove:add-path"
+            yang_name="&VRF_NAME_DEFAULT;,arg1"
+            pfeature="NOT_SUPPORTED"
+            >
+            <PARAM
+                name="add-path-commands"
+                help="add-path-sub-commands"
+                ptype="SUBCOMMAND"
+                mode="switch"
+                optional="true"
+                >
+                <PARAM
+                    name="both"
+                    help="Both receive and send multiple paths"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    >
+                    <PARAM
+                        name="path-count"
+                        help="Number of paths to advertise"
+                        ptype="RANGE_2_64"
+                        optional="true"
+                        />
+                </PARAM>
+                <PARAM
+                    name="receive"
+                    help="Receive multiple paths from peer"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    />
+                <PARAM
+                    name="send"
+                    help="Send multiple paths to peer"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    >
+                    <PARAM
+                        name="path-count"
+                        help="Number of paths to advertise"
+                        optional="true"
+                        ptype="RANGE_2_64"
+                        />
+                </PARAM>
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+    </MACRODEF>
+    <!-- router bgp as-num distance -->
+    <MACRODEF name="DISTANCE" >
+        <COMMAND
+            name="distance"
+            help="Define an administrative distance"
+            operation="edit-config"
+            namespace="&NS_FILTER;"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            pfeature="NOT_SUPPORTED"
+            >
+            <PARAM
+                name="bgp"
+                help="BGP distance"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                >
+                <PARAM
+                    name="edist"
+                    help="Distance for routes external to the AS (default = 20)"
+                    ptype="RANGE_1_255"
+                    yang_name="&VRF_NAME_DEFAULT;,arg1/ext-route-distance=${edist}"
+                    >
+                    <PARAM
+                        name="idist"
+                        help="Distance for routes internal to the AS (default = 200)"
+                        ptype="RANGE_1_255"
+                        yang_name="arg1/int-route-distance=${idist}"
+                        >
+                        <PARAM
+                            name="ldist"
+                            help="Distance for local routes (default = 200)"
+                            ptype="RANGE_1_255"
+                            yang_name="arg1/local-route-distance=${ldist}"
+                            />
+                    </PARAM>
+                </PARAM>
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+    </MACRODEF>
+    <!-- end of router bgp as-num distance -->
+    <!-- router bgp as-num distance -->
+    <MACRODEF name="NO_DISTANCE" >
+        <COMMAND
+            name="no distance"
+            help="Define an administrative distance"
+            operation="edit-config"
+            namespace="&NS_FILTER;"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            pfeature="NOT_SUPPORTED"
+            >
+            <PARAM
+                name="bgp"
+                help="BGP distance"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                sub_oper_yang="remove:ext-route-distance,local-route-distance,int-route-distance"
+                yang_name="&VRF_NAME_DEFAULT;,arg1/ext-route-distance, arg1/local-route-distance, arg1/int-route-distance"
+                >
+                <PARAM
+                    name="edist"
+                    help="Distance for routes external to the AS (default = 20)"
+                    ptype="RANGE_1_255"
+                    optional="true"
+                    >
+                    <PARAM
+                        name="idist"
+                        help="Distance for routes internal to the AS (default = 200)"
+                        ptype="RANGE_1_255"
+                        optional="true"
+                        >
+                        <PARAM
+                            name="ldist"
+                            help="Distance for local routes (default = 200)"
+                            ptype="RANGE_1_255"
+                            optional="true"
+                            />
+                    </PARAM>
+                </PARAM>
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+    </MACRODEF>
+
+    <MACRODEF name="BGP_V4_AFI_SAFI_CMDS">
+              <PARAM name="unicast-multicast"
+                     help=""
+                     ptype="SUBCOMMAND"
+                     mode="switch">
+                     <PARAM name="unicast"
+                            help="Unicast route information"
+                            yang_filter="&SUBTREE_FILTER;;&DEF_FILTER;,/bgp-oper/vrf/summary-info;&FILTER_NS;"
+                            prompt_fn="show_ip_bgp_bulk_cmds"
+                            template="show_ip_bgp_bulk.xsl"
+                            prompt_oper="/get-bulk/count=150,/get-bulk/list-target=/bgp-oper/vrf=default/bgp-afi-loc-rib-route-list=1\,1/prefix-list"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand">
+                            <PARAM name="multiple-bgp-options"
+                                   help=""
+                                   optional="true"
+                                   prompt_fn="pass"
+                                   ptype="SUBCOMMAND"
+                                   mode="switch">
+                                   <PARAM name="ip-address-mask"
+                                          help="show ip bgp ip unicast network/mask"
+                                          ptype="IP_ADDR_MASK"
+                                          pfeature="NOT_SUPPORTED">
+                                          <PARAM name="longer-prefixes"
+                                                 help="show ip bgp longer-prefixes"
+                                                 yang_filter="&SUBTREE_FILTER;;&DEF_FILTER;,/bgp-oper/vrf/summary-info,/bgp-oper/vrf/bgp-longer-prefix-oper/longer-prefix=${ip-address-mask},/bgp-oper/vrf/bgp-longer-prefix-oper/arg1,/bgp-oper/vrf/bgp-longer-prefix-oper/safi=1;&FILTER_NS;"
+                                                 template="show_ip_bgp_ipaddress_longer_prefixes.xsl"
+                                                 ptype="SUBCOMMAND"
+                                                 mode="subcommand"
+                                                 pfeature="NOT_SUPPORTED"/>
+                                   </PARAM>
+                    <PARAM name="summary"
+                     help="Unicast Summary"
+                     ptype="SUBCOMMAND"
+                     prompt_oper="/get-bulk/count=1,/get-bulk/list-target=/bgp-oper/vrf=default/peer-oper,/get-bulk/last-keys/remote-address=0\.0\.0\.0,/get-bulk/last-keys/afi=1,/get-bulk/last-keys/safi=1,/get-bulk/last-keys/peer-index=0"
+
+                     prompt_fn="show_ip_bgp_bulk_cmds"
+                     yang_filter="&SUBTREE_FILTER;;&DEF_FILTER;,/bgp-oper/vrf/summary-info;&FILTER_NS;"
+                     template="show_ip_bgp_summary.xsl"
+                     mode="subcommand">
+                     </PARAM>
+
+                                   <MACRO name="BGP_NEIGHBOR_CMDS" arg="arg1,safi=1"/>
+                            </PARAM>
+                     </PARAM>
+                     <PARAM name="multicast"
+                            help="multicast route information"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            pfeature="NOT_SUPPORTED">
+                            <PARAM name="multiple-bgp-options"
+                                   help=""
+                                   ptype="SUBCOMMAND"
+                                   mode="switch">
+                                   <PARAM name="ip-address-mask"
+                                          help="show ip bgp ip multicast network/mask"
+                                          ptype="IP_ADDR_MASK">
+                                          <PARAM name="longer-prefixes"
+                                                 help="show ip bgp longer-prefixes"
+                                                 yang_filter="&SUBTREE_FILTER;;&DEF_FILTER;,/bgp-oper/vrf/summary-info,/bgp-oper/vrf/bgp-longer-prefix-oper/longer-prefix=${ip-address-mask},/bgp-oper/vrf/bgp-longer-prefix-oper/arg1,/bgp-oper/vrf/bgp-longer-prefix-oper/safi=2;&FILTER_NS;"
+                                                 template="show_ip_bgp_ipaddress_longer_prefixes.xsl"
+                                                 ptype="SUBCOMMAND"
+                                                 mode="subcommand"
+                                                 pfeature="NOT_SUPPORTED"/>
+                                   </PARAM>
+                                   <MACRO name="BGP_NEIGHBOR_CMDS" arg="arg1,safi=2"/>
+                            </PARAM>
+                     </PARAM>
+              </PARAM>
+    </MACRODEF>
+
+    <MACRODEF name="BGP_V6_AFI_SAFI_CMDS">
+              <PARAM name="unicast-multicast"
+                     help=""
+                     ptype="SUBCOMMAND"
+                     mode="switch">
+                     <PARAM name="unicast"
+                            help="Unicast route information"
+                            yang_filter="&SUBTREE_FILTER;;&DEF_FILTER;,/bgp-oper/vrf/summary-info;&FILTER_NS;"
+                            prompt_fn="show_ip_bgp_bulk_cmds"
+                            template="show_ip_bgp_bulk.xsl"
+                            prompt_oper="/get-bulk/count=150,/get-bulk/list-target=/bgp-oper/vrf=default/bgp-afi-loc-rib-route-list=2\,1/prefix-list"
+
+                            ptype="SUBCOMMAND"
+                            mode="subcommand">
+                            <PARAM name="multiple-bgp-options"
+                                   help=""
+                                   optional="true"
+                                   prompt_fn="pass"
+                                   ptype="SUBCOMMAND"
+                                   mode="switch">
+                                   <PARAM name="ipv6-address-mask"
+                                          help="show ip bgp ipv6 unicast network/mask"
+                                          mode = "switch"
+                                          ptype="IPV6_ADDR_MASK"
+                                          pfeature="NOT_SUPPORTED">
+                                          <PARAM name="longer-prefixes"
+                                                 help="show ip bgp longer-prefixes"
+                                                 yang_filter="&SUBTREE_FILTER;;&DEF_FILTER;,/bgp-oper/vrf/summary-info,/bgp-oper/vrf/bgp-longer-prefix-oper/longer-prefix=${ip-address-mask},/bgp-oper/vrf/bgp-longer-prefix-oper/arg1,/bgp-oper/vrf/bgp-longer-prefix-oper/safi=1;&FILTER_NS;"
+                                                 template="show_ip_bgp_ipaddress_longer_prefixes.xsl"
+                                                 ptype="SUBCOMMAND"
+                                                 mode="switch"
+                                                 pfeature="NOT_SUPPORTED"/>
+                                   </PARAM>
+                          <PARAM name="ip"
+                                 help="IPv6 prefix (network)"
+                                 yang_filter="&SUBTREE_FILTER;;&DEF_FILTER;,/bgp-oper/vrf/summary-info,/bgp-oper/vrf/bgp-nlri-prefix-oper/nlri-prefix=new_param1;&FILTER_NS;"
+                                 prompt_oper="${ip}"
+                                 prompt_fn="show_trim_ip"
+                                 template="show_ip_bgp_ipaddress.xsl"
+                                 ptype="IPV6_ADDR_MASK"/>
+
+                    <PARAM name="summary"
+                     help="Unicast Summary"
+                     ptype="SUBCOMMAND"
+
+                     prompt_oper="/get-bulk/count=1,/get-bulk/list-target=/bgp-oper/vrf=default/peer-oper,/get-bulk/last-keys/remote-address=0\.0\.0\.0,/get-bulk/last-keys/afi=2,/get-bulk/last-keys/safi=1,/get-bulk/last-keys/peer-index=0"
+                     prompt_fn="show_ip_bgp_bulk_cmds"
+                     yang_filter="&SUBTREE_FILTER;;&DEF_FILTER;,/bgp-oper/vrf/summary-info;&FILTER_NS;"
+                     template="show_ip_bgp_summary.xsl"
+                     mode="subcommand">
+                     </PARAM>
+
+                                   <MACRO name="BGP_NEIGHBOR_CMDS" arg="arg1,safi=1"/>
+                            </PARAM>
+                     </PARAM>
+                     <PARAM name="multicast"
+                            help="multicast route information"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            pfeature="NOT_SUPPORTED">
+                            <PARAM name="multiple-bgp-options"
+                                   help=""
+                                   ptype="SUBCOMMAND"
+                                   mode="switch">
+                                   <PARAM name="ip-address-mask"
+                                          help="show ip bgp ip multicast network/mask"
+                                          ptype="IP_ADDR_MASK">
+                                          <PARAM name="longer-prefixes"
+                                                 help="show ip bgp longer-prefixes"
+                                                 yang_filter="&SUBTREE_FILTER;;Filter_Conditions:/bgp-oper/vrf/summary-info,/bgp-oper/vrf/bgp-longer-prefix-oper/longer-prefix=${ip-address-mask},/bgp-oper/vrf/bgp-longer-prefix-oper/arg1,/bgp-oper/vrf/bgp-longer-prefix-oper/safi=2;&FILTER_NS;"
+                                                 template="show_ip_bgp_ipaddress_longer_prefixes.xsl"
+                                                 ptype="SUBCOMMAND"
+                                                 mode="subcommand"/>
+                                   </PARAM>
+                                   <MACRO name="BGP_NEIGHBOR_CMDS" arg="arg1,safi=2"/>
+                            </PARAM>
+                     </PARAM>
+              </PARAM>
+    </MACRODEF>
+    <MACRODEF name="BGP_NEIGHBOR_CMDS">
+              <PARAM name="neighbors"
+                     help="show ip bgp neighbors"
+                     ptype="SUBCOMMAND"
+                     prompt_fn="show_ip_bgp_bulk_cmds"
+                     mode="subcommand"
+                     prompt_oper="/get-bulk/count=1,/get-bulk/list-target=/bgp-oper/vrf=default/peer-oper,/get-bulk/last-keys/remote-address=0\.0\.0\.0,/get-bulk/last-keys/arg1,/get-bulk/last-keys/arg2,/get-bulk/last-keys/peer-index=0"
+                     yang_filter="&SUBTREE_FILTER;;&DEF_FILTER;,/bgp-oper/vrf/summary-info;&FILTER_NS;"
+                     template="show_ip_bgp_nbrs_bulk.xsl">
+                     <PARAM name="ip"
+                            help="show ip bgp neighbors x.x.x.x"
+                            optional="true"
+                            yang_filter="&SUBTREE_FILTER;;&DEF_FILTER;,/bgp-oper/vrf/summary-info,/bgp-oper/vrf/peer-oper/remote-address=new_param1;&FILTER_NS;"
+                            prompt_oper="${ip}"
+                            prompt_fn="show_trim_ip"
+                            template="show_ip_bgp_neighbors.xsl"
+                            ptype="IPV4V6_ADDR">
+                            <PARAM name="advertised-received"
+                                   help=""
+                                   optional="true"
+                                   ptype="SUBCOMMAND"
+                                   mode="switch">
+                                   <PARAM name="advertised-routes"
+                                          help="Display the routes advertised to neighbor"
+                                          ptype="SUBCOMMAND"
+                                          mode="subcommand"
+                                          optional="true"
+                                          yang_filter="&SUBTREE_FILTER;;&DEF_FILTER;,/bgp-oper/vrf/advertised-routes/arg1,/bgp-oper/vrf/advertised-routes/arg2,/bgp-oper/vrf/advertised-routes/input-peer=new_param1,/bgp-oper/vrf/summary-info;&FILTER_NS;"
+                                          prompt_oper="${ip}"
+                                          prompt_fn="show_trim_ip"
+                                          template="show_ip_bgp_neighbors_advertised_routes.xsl"/>
+                                   <PARAM name="dampened-routes"
+                                          help="Display the suppressed routes received from neighbor"
+                                          ptype="SUBCOMMAND"
+                                          mode="subcommand"
+                                          optional="true"
+                                          yang_filter="&SUBTREE_FILTER;;&DEF_FILTER;,/bgp-oper/vrf/damp-or-flap-routes/arg1,/bgp-oper/vrf/damp-or-flap-routes/arg2,/bgp-oper/vrf/damp-or-flap-routes/input-peer=new_param1,/bgp-oper/vrf/damp-or-flap-routes/type=damp,/bgp-oper/vrf/summary-info;&FILTER_NS;"
+                                          prompt_oper="${ip}"
+                                          prompt_fn="show_trim_ip"
+                                          template="show_ip_bgp_flap_or_damp.xsl"/>
+                                   <PARAM name="flap-statistics"
+                                          help="Display the route's flap statistics received from neighbor"
+                                          ptype="SUBCOMMAND"
+                                          mode="subcommand"
+                                          optional="true"
+                                          yang_filter="&SUBTREE_FILTER;;&DEF_FILTER;,/bgp-oper/vrf/damp-or-flap-routes/arg1,/bgp-oper/vrf/damp-or-flap-routes/arg2,/bgp-oper/vrf/damp-or-flap-routes/input-peer=new_param1,/bgp-oper/vrf/damp-or-flap-routes/type=flap,/bgp-oper/vrf/summary-info;&FILTER_NS;"
+                                          prompt_oper="${ip}"
+                                          prompt_fn="show_trim_ip"
+                                          template="show_ip_bgp_flap_or_damp.xsl"/>
+                                   <PARAM name="received-routes"
+                                          help="Display the routes received from neighbor"
+                                          ptype="SUBCOMMAND"
+                                          mode="subcommand"
+                                          optional="true"
+                                          yang_filter="&SUBTREE_FILTER;;&DEF_FILTER;,/bgp-oper/vrf/received-routes/arg1,/bgp-oper/vrf/received-routes/arg2,/bgp-oper/vrf/received-routes/input-peer=new_param1,/bgp-oper/vrf/summary-info;&FILTER_NS;"
+                                          prompt_oper="${ip}"
+                                          prompt_fn="show_trim_ip"
+                                          template="show_ip_bgp_neighbors_received_routes.xsl"/>
+                                   <PARAM name="denied-routes"
+                                          help="Display the routes denied from neighbor"
+                                          ptype="SUBCOMMAND"
+                                          mode="subcommand"
+                                          optional="true"
+                                          yang_filter="&SUBTREE_FILTER;;&DEF_FILTER;,/bgp-oper/vrf/received-routes/arg1,/bgp-oper/vrf/received-routes/arg2,/bgp-oper/vrf/received-routes/input-peer=new_param1,/bgp-oper/vrf/summary-info;&FILTER_NS;"
+                                          prompt_oper="${ip}"
+                                          prompt_fn="show_trim_ip"
+                                          template="show_ip_bgp_neighbors_denied_routes.xsl"/>
+                                   <PARAM name="routes"
+                                          help="Display routes learned from neighbor"
+                                          ptype="SUBCOMMAND"
+                                          mode="subcommand"
+                                          optional="true"
+                                          yang_filter="&SUBTREE_FILTER;;&DEF_FILTER;,/bgp-oper/vrf/damp-or-flap-routes/arg1,/bgp-oper/vrf/damp-or-flap-routes/arg2,/bgp-oper/vrf/damp-or-flap-routes/input-peer=new_param1,/bgp-oper/vrf/damp-or-flap-routes/type=routes,/bgp-oper/vrf/summary-info;&FILTER_NS;"
+                                          prompt_oper="${ip}"
+                                          prompt_fn="show_trim_ip"
+                                          template="show_ip_bgp_routes.xsl"/>
+                            </PARAM>
+                     </PARAM>
+              </PARAM>
+    </MACRODEF>
+    <MACRODEF name="BGP_NEIGHBOR_TEMPLATE_CMDS">
+              <PARAM name="peer-group"
+                     help="show ip bgp peer-group"
+                     ptype="SUBCOMMAND"
+                     mode="subcommand"
+                     yang_filter="&SUBTREE_FILTER;;&DEF_FILTER;,/bgp-oper/vrf/summary-info;&FILTER_NS;"
+                     prompt_oper="/get-bulk/count=1,/get-bulk/list-target=/bgp-oper/vrf=default/peer-template-list"
+                     prompt_fn="show_ip_bgp_bulk_cmds"
+                     template="show_ip_bgp_peergroups_bulk.xsl">
+                     <PARAM name="peergroup-name"
+                            help="show ip bgp peer-group xx"
+                            optional="true"
+                            prompt_fn="pass"
+                            yang_filter="&SUBTREE_FILTER;;&DEF_FILTER;,/bgp-oper/vrf/summary-info,/bgp-oper/vrf/peer-template-list/peer-group-name=${peergroup-name},/bgp-oper/vrf/peer-template-list/afi=1;&FILTER_NS;"
+                            template="show_ip_bgp_peergroups.xsl"
+                            ptype="STRING">
+                                   <PARAM name="summary"
+                                          help="Display peer-group summary"
+                                          ptype="SUBCOMMAND"
+                                          mode="subcommand"
+                                          optional="true"
+                                          yang_filter="&SUBTREE_FILTER;;&DEF_FILTER;,/bgp-oper/vrf/peer-template-list/peer-group-name=${peergroup-name},/bgp-oper/vrf/peer-template-list/afi=1,/bgp-oper/vrf/summary-info;&FILTER_NS;"
+                                          template="show_ip_bgp_peergroups_summary.xsl"/>
+                      </PARAM>
+              </PARAM>
+    </MACRODEF>
+
+    <MACRODEF name="BGP_NEIGHBOR_WO_AFI_SAFI_CMDS">
+              <PARAM name="neighbors"
+                     help="show ip bgp neighbors"
+                     ptype="SUBCOMMAND"
+                     prompt_oper="/get-bulk/count=1,/get-bulk/list-target=/bgp-oper/vrf=default/peer-oper,/get-bulk/last-keys/remote-address=0\.0\.0\.0,/get-bulk/last-keys/arg1,/get-bulk/last-keys/arg2,/get-bulk/last-keys/peer-index=0"
+
+                     prompt_fn="show_ip_bgp_bulk_cmds"
+                     mode="subcommand"
+                     yang_filter="&SUBTREE_FILTER;;&DEF_FILTER;,/bgp-oper/vrf/summary-info;&FILTER_NS;"
+                     template="show_ip_bgp_nbrs_bulk.xsl">
+                     <PARAM name="ip"
+                            help="show ip bgp neighbors x.x.x.x"
+                            optional="true"
+                            yang_filter="&SUBTREE_FILTER;;&DEF_FILTER;,/bgp-oper/vrf/summary-info,/bgp-oper/vrf/peer-oper/remote-address=new_param1;&FILTER_NS;"
+                            prompt_oper="${ip}"
+                            prompt_fn="show_trim_ip"
+                            template="show_ip_bgp_neighbors.xsl"
+                            ptype="IPV4V6_ADDR">
+                            <PARAM name="advertised-received"
+                                   help=""
+                                   optional="true"
+                                   ptype="SUBCOMMAND"
+                                   mode="switch">
+                                   <PARAM name="advertised-routes"
+                                          help="Display the routes advertised to neighbor"
+                                          ptype="SUBCOMMAND"
+                                          mode="subcommand"
+                                          optional="true"
+                                          yang_filter="&SUBTREE_FILTER;;&DEF_FILTER;,/bgp-oper/vrf/advertised-routes/input-peer=new_param1,/bgp-oper/vrf/summary-info;&FILTER_NS;"
+                                          prompt_oper="${ip}"
+                                          prompt_fn="show_trim_ip"
+                                          template="show_ip_bgp_neighbors_advertised_routes.xsl"/>
+                                   <PARAM name="dampened-routes"
+                                          help="Display the suppressed routes received from neighbor"
+                                          ptype="SUBCOMMAND"
+                                          mode="subcommand"
+                                          optional="true"
+                                          yang_filter="&SUBTREE_FILTER;;&DEF_FILTER;,/bgp-oper/vrf/damp-or-flap-routes/input-peer=new_param1,/bgp-oper/vrf/damp-or-flap-routes/type=damp,/bgp-oper/vrf/summary-info;&FILTER_NS;"
+                                          prompt_oper="${ip}"
+                                          prompt_fn="show_trim_ip"
+                                          template="show_ip_bgp_flap_or_damp.xsl"/>
+                                   <PARAM name="flap-statistics"
+                                          help="Display the route's flap statistics received from neighbor"
+                                          ptype="SUBCOMMAND"
+                                          mode="subcommand"
+                                          optional="true"
+                                          yang_filter="&SUBTREE_FILTER;;&DEF_FILTER;,/bgp-oper/vrf/damp-or-flap-routes/input-peer=new_param1,/bgp-oper/vrf/damp-or-flap-routes/type=flap,/bgp-oper/vrf/summary-info;&FILTER_NS;"
+                                          prompt_oper="${ip}"
+                                          prompt_fn="show_trim_ip"
+                                          template="show_ip_bgp_flap_or_damp.xsl"/>
+                                   <PARAM name="received-routes"
+                                          help="Display the routes received from neighbor"
+                                          ptype="SUBCOMMAND"
+                                          mode="subcommand"
+                                          optional="true"
+                                          yang_filter="&SUBTREE_FILTER;;&DEF_FILTER;,/bgp-oper/vrf/received-routes/input-peer=new_param1,/bgp-oper/vrf/summary-info;&FILTER_NS;"
+                                          prompt_oper="${ip}"
+                                          prompt_fn="show_trim_ip"
+                                          template="show_ip_bgp_neighbors_received_routes.xsl"/>
+                                   <PARAM name="denied-routes"
+                                          help="Display the routes received from neighbor"
+                                          ptype="SUBCOMMAND"
+                                          mode="subcommand"
+                                          optional="true"
+                                          yang_filter="&SUBTREE_FILTER;;&DEF_FILTER;,/bgp-oper/vrf/received-routes/input-peer=new_param1,/bgp-oper/vrf/summary-info;&FILTER_NS;"
+                                          prompt_oper="${ip}"
+                                          prompt_fn="show_trim_ip"
+                                          template="show_ip_bgp_neighbors_denied_routes.xsl"/>
+                                   <PARAM name="routes"
+                                          help="Display routes learned from neighbor"
+                                          ptype="SUBCOMMAND"
+                                          mode="subcommand"
+                                          optional="true"
+                                          yang_filter="&SUBTREE_FILTER;;&DEF_FILTER;,/bgp-oper/vrf/damp-or-flap-routes/input-peer=new_param1,/bgp-oper/vrf/damp-or-flap-routes/type=routes,/bgp-oper/vrf/summary-info;&FILTER_NS;"
+                                          template="show_ip_bgp_routes.xsl"/>
+                            </PARAM>
+                     </PARAM>
+              </PARAM>
+    </MACRODEF>
+
+</ROOT>
+<!-- end of router bgp as-num distance -->
+

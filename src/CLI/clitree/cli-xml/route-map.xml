@@ -1,0 +1,1867 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE CLISH_MODULE [
+<!ENTITY SUBTREE_FILTER                   "Filter_Type:SUBTREE;">
+<!ENTITY POLICY_MODULE_NS                 "http://www.dellemc.com/networking/os10/dell-policy">
+<!ENTITY ROUTE_MAP                        "/config/route-map">
+<!ENTITY ROUTE_MAP_NAME                   "&ROUTE_MAP;/rm-name">
+<!ENTITY ROUTE_MAP_RULE                   "&ROUTE_MAP;/rule">
+<!ENTITY ROUTE_MAP_PBR_COUNTER_ENABLE     "&ROUTE_MAP;/pbr-counter">
+<!ENTITY ROUTE_MAP_RULE_SEQ_NO                 "&ROUTE_MAP_RULE;/seq-no">
+<!ENTITY ROUTE_MAP_RULE_NEXT_SEQ_NO            "&ROUTE_MAP_RULE;/next-seq-no">
+<!ENTITY ROUTE_MAP_RULE_PACKET_HANDLE          "&ROUTE_MAP_RULE;/packet-handling">
+<!ENTITY ROUTE_MAP_RULE_MATCH_NODE             "&ROUTE_MAP_RULE;/match-node">
+<!ENTITY ROUTE_MAP_RULE_MATCH_AS_PATH          "&ROUTE_MAP_RULE_MATCH_NODE;/as-path">
+<!ENTITY ROUTE_MAP_RULE_MATCH_COMMUNITY        "&ROUTE_MAP_RULE_MATCH_NODE;/community">
+<!ENTITY ROUTE_MAP_RULE_MATCH_COMMUNITY_EXACT  "&ROUTE_MAP_RULE_MATCH_NODE;/community-exact-match">
+<!ENTITY ROUTE_MAP_RULE_MATCH_EXT_COMMUN       "&ROUTE_MAP_RULE_MATCH_NODE;/ext-community">
+<!ENTITY ROUTE_MAP_RULE_MATCH_EXT_COMM_EXACT   "&ROUTE_MAP_RULE_MATCH_NODE;/ext-community-exact-match">
+<!ENTITY ROUTE_MAP_RULE_MATCH_INTF_NAME        "&ROUTE_MAP_RULE_MATCH_NODE;/interface-name">
+<!ENTITY ROUTE_MAP_RULE_MATCH_METRIC           "&ROUTE_MAP_RULE_MATCH_NODE;/metric">
+<!ENTITY ROUTE_MAP_RULE_MATCH_ORIGIN           "&ROUTE_MAP_RULE_MATCH_NODE;/origin">
+<!ENTITY ROUTE_MAP_RULE_MATCH_ROUTE_TYPE       "&ROUTE_MAP_RULE_MATCH_NODE;/route-type">
+<!ENTITY ROUTE_MAP_RULE_MATCH_SOURCE_PROTO     "&ROUTE_MAP_RULE_MATCH_NODE;/source-protocol">
+<!ENTITY ROUTE_MAP_RULE_MATCH_TAG              "&ROUTE_MAP_RULE_MATCH_NODE;/tag">
+<!ENTITY ROUTE_MAP_RULE_MATCH_VLAN             "&ROUTE_MAP_RULE_MATCH_NODE;/vlan">
+<!ENTITY ROUTE_MAP_RULE_MATCH_IPV4_AD_PREFIX_NAME "&ROUTE_MAP_RULE_MATCH_NODE;/ipv4-route-prefix-list">
+<!ENTITY ROUTE_MAP_RULE_MATCH_IPV4_NH_PREFIX_NAME "&ROUTE_MAP_RULE_MATCH_NODE;/ipv4-nh-prefix-list">
+<!ENTITY ROUTE_MAP_RULE_MATCH_IPV4_ACL_LIST     "&ROUTE_MAP_RULE_MATCH_NODE;/ipv4-acl-list">
+<!ENTITY ROUTE_MAP_RULE_MATCH_IPV6_AD_PREFIX_NAME "&ROUTE_MAP_RULE_MATCH_NODE;/ipv6-route-prefix-list">
+<!ENTITY ROUTE_MAP_RULE_MATCH_IPV6_NH_PREFIX_NAME "&ROUTE_MAP_RULE_MATCH_NODE;/ipv6-nh-prefix-list">
+<!ENTITY ROUTE_MAP_RULE_MATCH_IPV6_ACL_LIST    "&ROUTE_MAP_RULE_MATCH_NODE;/ipv6-acl-list">
+<!ENTITY ROUTE_MAP_RULE_MATCH_MAC_ACL_LIST     "&ROUTE_MAP_RULE_MATCH_NODE;/mac-acl-list">
+
+<!ENTITY ROUTE_MAP_RULE_SET                    "&ROUTE_MAP_RULE;/set-action">
+<!ENTITY ROUTE_MAP_RULE_SET_AS_PATH_NUMBER     "&ROUTE_MAP_RULE_SET;/as-path-number">
+<!ENTITY ROUTE_MAP_RULE_SET_AUTO_TAG           "&ROUTE_MAP_RULE_SET;/as-path-tag">
+<!ENTITY ROUTE_MAP_RULE_SET_COMM_LIST_DEL_NAME "&ROUTE_MAP_RULE_SET;/comm-name-del">
+<!ENTITY ROUTE_MAP_RULE_SET_COMMUNITY_NUMBER   "&ROUTE_MAP_RULE_SET;/comm-number">
+<!ENTITY ROUTE_MAP_RULE_SET_COMMUNITY_ADDITIVE "&ROUTE_MAP_RULE_SET;/comm-additive">
+<!ENTITY ROUTE_MAP_RULE_SET_COMMUNITY_NONE     "&ROUTE_MAP_RULE_SET;/comm-none">
+<!ENTITY ROUTE_MAP_RULE_SET_EXT_COMM_NAME_DEL  "&ROUTE_MAP_RULE_SET;/ext-comm-name-del">
+<!ENTITY ROUTE_MAP_RULE_SET_EXT_COMM_ATTRIBUTE "&ROUTE_MAP_RULE_SET;/ext-comm-attr">
+<!ENTITY ROUTE_MAP_RULE_SET_EXT_COMM_TYPE      "&ROUTE_MAP_RULE_SET;/ext-comm-type">
+<!ENTITY ROUTE_MAP_RULE_SET_EXT_COMM_VALUE     "&ROUTE_MAP_RULE_SET;/ext-comm-value">
+<!ENTITY ROUTE_MAP_RULE_SET_IPV4_NEXT_HOP      "&ROUTE_MAP_RULE_SET;/ipv4-nexthop/address">
+<!ENTITY ROUTE_MAP_RULE_SET_IPV6_NEXT_HOP      "&ROUTE_MAP_RULE_SET;/ipv6-nexthop/address">
+<!ENTITY ROUTE_MAP_RULE_SET_IPV4_NEXT_HOP_TRACK_ID      "&ROUTE_MAP_RULE_SET;/ipv4-nexthop/track-id">
+<!ENTITY ROUTE_MAP_RULE_SET_IPV6_NEXT_HOP_TRACK_ID      "&ROUTE_MAP_RULE_SET;/ipv6-nexthop/track-id">
+<!ENTITY ROUTE_MAP_RULE_SET_LEVEL              "&ROUTE_MAP_RULE_SET;/level">
+<!ENTITY ROUTE_MAP_RULE_SET_PREFERENCE         "&ROUTE_MAP_RULE_SET;/local-preference">
+<!ENTITY ROUTE_MAP_RULE_SET_METRIC_VALUE       "&ROUTE_MAP_RULE_SET;/metric-value">
+<!ENTITY ROUTE_MAP_RULE_SET_METRIC_OPERATION   "&ROUTE_MAP_RULE_SET;/metric-operation">
+<!ENTITY ROUTE_MAP_RULE_SET_METRIC_TYPE        "&ROUTE_MAP_RULE_SET;/metric-type">
+<!ENTITY ROUTE_MAP_RULE_SET_NSSA_ONLY          "&ROUTE_MAP_RULE_SET;/nssa-only">
+<!ENTITY ROUTE_MAP_RULE_SET_ORIGIN             "&ROUTE_MAP_RULE_SET;/origin">
+<!ENTITY ROUTE_MAP_RULE_SET_TAG                "&ROUTE_MAP_RULE_SET;/tag">
+<!ENTITY ROUTE_MAP_RULE_SET_WEIGHT             "&ROUTE_MAP_RULE_SET;/weight">
+<!ENTITY ROUTE_MAP_RULE_SET_INTERFACE_NAME     "&ROUTE_MAP_RULE_SET;/interface-name">
+
+<!ENTITY POLICY_PREF    "policy">
+<!ENTITY POLICY_INTF_NS  "urn:ietf:params:xml:ns:yang:ietf-interfaces,&POLICY_PREF;=http://www.dellemc.com/networking/os10/dell-policy">
+<!ENTITY IF_PBR_ROUTE_MAP_GROUP    "/interfaces/interface/&POLICY_PREF;:policy-pbr-config/&POLICY_PREF;:pbr-route-map-group">
+<!ENTITY IF_PBR_ROUTE_MAP_GROUP_IFACE_NAME     "/interfaces/interface/name">
+<!ENTITY IF_PBR_ROUTE_MAP_GROUP_IP_TYPE        "&IF_PBR_ROUTE_MAP_GROUP;/&POLICY_PREF;:ip-type">
+<!ENTITY IF_PBR_ROUTE_MAP_GROUP_VRF            "&IF_PBR_ROUTE_MAP_GROUP;/&POLICY_PREF;:vrf">
+<!ENTITY IF_PBR_ROUTE_MAP_GROUP_ROUTE_MAP_NAME "&IF_PBR_ROUTE_MAP_GROUP;/&POLICY_PREF;:route-map-name">
+
+<!ENTITY PBR_OPER_ENTRY_STATS           "/oper-stat/pbr-oper-data/pbr-entry-stats">
+<!ENTITY CLEAR_ROUTE_MAP_PBR_COUNTERS   "/clear_route_map_pbr_counters">
+<!ENTITY CLEAR_ROUTE_MAP_PBR_COUNTERS_NAME   "/clear_route_map_pbr_counters/name">
+
+]>
+
+<CLISH_MODULE xmlns="http://www.dellemc.com/force10/XMLSchema"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xmlns:xi="http://www.w3.org/2001/XInclude"
+ xsi:schemaLocation="http://clish.sourceforge.net/XMLSchema
+                     http://clish.sourceforge.net/XMLSchema/clish.xsd">
+	<!--=======================================================-->
+
+<VIEW name="enable-view">
+
+    <COMMAND name="clear route-map"
+        help="Route-map used for PBR"
+        namespace="&POLICY_MODULE_NS;"
+        operation="generic-rpc">
+
+        <PARAM name="rm-name"
+            help="Route map name"
+            ptype="STRING"
+            yang_name="&CLEAR_ROUTE_MAP_PBR_COUNTERS_NAME;=${rm-name}">
+
+            <PARAM name="pbr-statistics"
+                help="Statistics for policy based routing"
+                ptype="SUBCOMMAND"
+                mode="subcommand"/>
+        </PARAM>
+
+	<ACTION builtin="clish_extn"> </ACTION>
+
+    </COMMAND>
+
+<!--show candidate-configuration route-map -->
+    <COMMAND
+        name="show candidate-configuration route-map"
+        help="Current candidate route-map configuration"
+        yang_filter="&SUBTREE_FILTER;Filter_Conditions:&ROUTE_MAP;;Filter_Namespace:&POLICY_MODULE_NS;"
+        db_mode="configure-route-map"
+        >
+        <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+<!--show running-configuration route-map -->
+    <COMMAND
+        name="show running-configuration route-map"
+        help="Current operating route-map configuration"
+        yang_filter="&SUBTREE_FILTER;Filter_Conditions:&ROUTE_MAP;;Filter_Namespace:&POLICY_MODULE_NS;"
+        db_mode="configure-route-map"
+        >
+        <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+    <COMMAND name="show route-map"
+        help="Show route map information"
+        namespace="&POLICY_MODULE_NS;"
+        operation="get"
+        template="show_route-map.xsl"
+        yang_filter="&SUBTREE_FILTER;Filter_Conditions:&ROUTE_MAP;;Filter_Namespace:&POLICY_MODULE_NS;">
+
+        <PARAM name="rm-name"
+            help="Route map name"
+            ptype="STRING"
+            optional="true"
+            template="show_route-map.xsl"
+            yang_filter="&SUBTREE_FILTER;Filter_Conditions:&ROUTE_MAP_NAME;=${rm-name};Filter_Namespace:&POLICY_MODULE_NS;">
+
+            <PARAM name="pbr-statistics"
+                help="PBR statistics"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                optional="true"
+                template="show_route_map_pbr_statistics.xsl"
+                yang_filter="&SUBTREE_FILTER;Filter_Conditions:&ROUTE_MAP_NAME;=${rm-name};Filter_Namespace:&POLICY_MODULE_NS;|&SUBTREE_FILTER;Filter_Conditions:&PBR_OPER_ENTRY_STATS;/name=${rm-name};Filter_Namespace:&POLICY_MODULE_NS;|&SUBTREE_FILTER;Filter_Conditions:&IF_PBR_ROUTE_MAP_GROUP_ROUTE_MAP_NAME;=${rm-name};Filter_Namespace:&POLICY_INTF_NS;"/>
+        </PARAM>
+
+	<ACTION builtin="clish_extn"> </ACTION>
+
+    </COMMAND>
+
+    <COMMAND name="show ip policy"
+        help="Policy routing"
+        operation="get"
+        namespace="&POLICY_INTF_NS;"
+        template="show_route_map_policy.xsl"
+        yang_filter="&SUBTREE_FILTER;Filter_Conditions:&IF_PBR_ROUTE_MAP_GROUP_IP_TYPE;=ipv4;Filter_Namespace:&POLICY_INTF_NS;"
+        >
+
+        <PARAM name="rm-name"
+            help="Route map name"
+            ptype="STRING"
+            optional="true"
+            yang_filter="&SUBTREE_FILTER;Filter_Conditions:&IF_PBR_ROUTE_MAP_GROUP_ROUTE_MAP_NAME;=${rm-name},&IF_PBR_ROUTE_MAP_GROUP_IP_TYPE;=ipv4;Filter_Namespace:&POLICY_INTF_NS;"/>
+
+	<ACTION builtin="clish_extn"> </ACTION>
+
+    </COMMAND>
+
+    <COMMAND name="show ipv6 policy"
+        help="Policy routing"
+        operation="get"
+        namespace="&POLICY_INTF_NS;"
+        template="show_route_map_policy.xsl"
+        yang_filter="&SUBTREE_FILTER;Filter_Conditions:&IF_PBR_ROUTE_MAP_GROUP_IP_TYPE;=ipv6;Filter_Namespace:&POLICY_INTF_NS;"
+        >
+
+        <PARAM name="rm-name"
+            help="Route map name"
+            ptype="STRING"
+            optional="true"
+            yang_filter="&SUBTREE_FILTER;Filter_Conditions:&IF_PBR_ROUTE_MAP_GROUP_ROUTE_MAP_NAME;=${rm-name},&IF_PBR_ROUTE_MAP_GROUP_IP_TYPE;=ipv6;Filter_Namespace:&POLICY_INTF_NS;"/>
+
+	<ACTION builtin="clish_extn"> </ACTION>
+
+    </COMMAND>
+</VIEW>
+
+<!--=======================================================-->
+<!--                Config MODE                            -->
+<!--=======================================================-->
+
+<VIEW name="configure-view">
+
+<!-- route-map map-name [permit | deny] [seq] -->
+
+	<COMMAND name="route-map"
+      help="Creates route-map"
+	  operation="edit-config"
+      namespace="&POLICY_MODULE_NS;"
+      view = "configure-route-map-view"
+      viewid = "routeMapView=config-route-map;routeMapName=${route-map-name};routeMapSeq=10"
+      add_config_entry="false">
+
+         <PARAM name="route-map-name"
+            help="Route-map name"
+            ptype="STRING"
+            prompt_fn="process_route_map_subcmd"
+            yang_name="&ROUTE_MAP_NAME;=${route-map-name}">
+            <PARAM name="match-sub-commands"
+               help="match-sub-commands"
+               optional="true"
+               ptype="SUBCOMMAND"
+               mode="switch">
+               <PARAM name="sequence-number"
+                  help="Sequence number"
+                  ptype="RANGE_1_65535"
+                  db_flag="SKIP_TREE"
+                  viewid = "routeMapView=config-route-map;routeMapName=${route-map-name};routeMapSeq=${sequence-number}"
+                  yang_name="&ROUTE_MAP_RULE_PACKET_HANDLE;=permit,&ROUTE_MAP_RULE_SEQ_NO;=${sequence-number}">
+               </PARAM>
+               <PARAM name="deny"
+                  help="denies set operations"
+                  ptype="SUBCOMMAND"
+                  mode="subcommand"
+                  yang_name="&ROUTE_MAP_RULE_PACKET_HANDLE;=deny">
+                  <PARAM name="deny-sequence-number"
+                     help="Sequence number"
+                     optional="true"
+                     ptype="RANGE_1_65535"
+                     viewid = "routeMapView=config-route-map;routeMapName=${route-map-name};routeMapSeq=${deny-sequence-number}"
+                     yang_name="&ROUTE_MAP_RULE_SEQ_NO;=${deny-sequence-number}"/>
+               </PARAM>
+               <PARAM name="permit"
+                  help="permits set operations"
+                  ptype="SUBCOMMAND"
+                  mode="subcommand"
+                  yang_name="&ROUTE_MAP_RULE_PACKET_HANDLE;=permit">
+                  <PARAM name="permit-sequence-number"
+                     help="Sequence number"
+                     optional="true"
+                     ptype="RANGE_1_65535"
+                     viewid = "routeMapView=config-route-map;routeMapName=${route-map-name};routeMapSeq=${permit-sequence-number}"
+                     yang_name="&ROUTE_MAP_RULE_SEQ_NO;=${permit-sequence-number}"/>
+               </PARAM>
+               <PARAM name="pbr-statistics"
+                  help="Statistics for policy based routing"
+                  ptype="SUBCOMMAND"
+                  mode="subcommand"
+                  optional="true"
+                  view="configure-view"
+                  yang_name="&ROUTE_MAP_PBR_COUNTER_ENABLE;=true"/>
+              </PARAM>
+            </PARAM>
+
+      <ACTION builtin="clish_extn"> </ACTION>
+   </COMMAND>
+
+
+<!--no route-map map-name [seq | pbr-statistics] -->
+
+	<COMMAND name="no route-map"
+      help="Creates route-map"
+	  operation="edit-config"
+      namespace="&POLICY_MODULE_NS;"
+      >
+         <PARAM name="name"
+            help="Route map name"
+            ptype="STRING"
+            prompt_fn="no_route_map_subcmd"
+            yang_name="&ROUTE_MAP_NAME;=${name}"
+            >
+            <PARAM name="sequence-number"
+               help="Sequence number"
+               ptype="RANGE_1_65535"
+               sub_oper_yang="remove:rule"
+               yang_name="&ROUTE_MAP_RULE_SEQ_NO;=${sequence-number}"
+               optional="true"/>
+            <PARAM name="pbr-statistics"
+               help="Statistics for policy based routing"
+               ptype="SUBCOMMAND"
+               mode="subcommand"
+               yang_name="&ROUTE_MAP_PBR_COUNTER_ENABLE;=false"
+               optional="true"/>
+         </PARAM>
+
+      <ACTION builtin="clish_extn"> </ACTION>
+   </COMMAND>
+
+</VIEW>  <!--  End of Config MODE -->
+
+<!--=======================================================-->
+<!--                Interface MODE                            -->
+<!--=======================================================-->
+
+<VIEW name="configure-if-view">
+    <COMMAND name="ip policy"
+        help="Configure PBR feature"
+        operation="edit-config"
+        namespace="&POLICY_INTF_NS;"
+        yang_key="&IF_PBR_ROUTE_MAP_GROUP_IP_TYPE;=ipv4,&IF_PBR_ROUTE_MAP_GROUP_VRF;=0">
+
+        <PARAM name="route-map"
+            help="Route-map for PBR"
+            mode="subcommand"
+            ptype="SUBCOMMAND">
+
+            <PARAM name="map-name"
+                help="Route-map name"
+                ptype="STRING"
+                yang_name="&IF_PBR_ROUTE_MAP_GROUP_IFACE_NAME;=${ifacename},&IF_PBR_ROUTE_MAP_GROUP_VRF;=0,&IF_PBR_ROUTE_MAP_GROUP_IP_TYPE;=ipv4,&IF_PBR_ROUTE_MAP_GROUP_ROUTE_MAP_NAME;=${map-name}"
+            />
+        </PARAM>
+
+        <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+    <COMMAND name="ipv6 policy"
+        help="Configure PBR feature"
+        operation="edit-config"
+        namespace="&POLICY_INTF_NS;"
+        yang_key="&IF_PBR_ROUTE_MAP_GROUP_IP_TYPE;=ipv6,&IF_PBR_ROUTE_MAP_GROUP_VRF;=0">
+
+        <PARAM name="route-map"
+            help="Route-map for PBR"
+            mode="subcommand"
+            ptype="SUBCOMMAND">
+
+            <PARAM name="map-name"
+                help="Route-map name"
+                ptype="STRING"
+                yang_name="&IF_PBR_ROUTE_MAP_GROUP_IFACE_NAME;=${ifacename},&IF_PBR_ROUTE_MAP_GROUP_VRF;=0,&IF_PBR_ROUTE_MAP_GROUP_IP_TYPE;=ipv6,&IF_PBR_ROUTE_MAP_GROUP_ROUTE_MAP_NAME;=${map-name}"
+            />
+        </PARAM>
+
+        <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+    <COMMAND name="no ip policy"
+        help="Configure PBR feature"
+        operation="edit-config"
+        namespace="&POLICY_INTF_NS;"
+        sub_oper_yang="remove:pbr-route-map-group">
+
+        <PARAM name="route-map"
+            help="Route-map for PBR"
+            mode="subcommand"
+            ptype="SUBCOMMAND">
+
+            <PARAM name="map-name"
+                help="Route-map name"
+                ptype="STRING"
+                yang_name="&IF_PBR_ROUTE_MAP_GROUP_IFACE_NAME;=${ifacename},&IF_PBR_ROUTE_MAP_GROUP_VRF;=0,&IF_PBR_ROUTE_MAP_GROUP_IP_TYPE;=ipv4,&IF_PBR_ROUTE_MAP_GROUP_ROUTE_MAP_NAME;=${map-name}"
+            />
+        </PARAM>
+
+        <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+    <COMMAND name="no ipv6 policy"
+        help="Configure PBR feature"
+        operation="edit-config"
+        namespace="&POLICY_INTF_NS;"
+        sub_oper_yang="remove:pbr-route-map-group">
+
+        <PARAM name="route-map"
+            help="Route-map for PBR"
+            mode="subcommand"
+            ptype="SUBCOMMAND">
+
+            <PARAM name="map-name"
+                help="Route-map name"
+                ptype="STRING"
+                yang_name="&IF_PBR_ROUTE_MAP_GROUP_IFACE_NAME;=${ifacename},&IF_PBR_ROUTE_MAP_GROUP_VRF;=0,&IF_PBR_ROUTE_MAP_GROUP_IP_TYPE;=ipv6,&IF_PBR_ROUTE_MAP_GROUP_ROUTE_MAP_NAME;=${map-name}"
+            />
+        </PARAM>
+
+        <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+</VIEW>
+
+<VIEW name="configure-lag-view">
+    <COMMAND name="ip policy"
+        help="Configure PBR feature"
+        operation="edit-config"
+        namespace="&POLICY_INTF_NS;"
+        yang_key="&IF_PBR_ROUTE_MAP_GROUP_IP_TYPE;=ipv4,&IF_PBR_ROUTE_MAP_GROUP_VRF;=0">
+
+        <PARAM name="route-map"
+            help="Route-map for PBR"
+            mode="subcommand"
+            ptype="SUBCOMMAND">
+
+            <PARAM name="map-name"
+                help="Route-map name"
+                ptype="STRING"
+                yang_name="&IF_PBR_ROUTE_MAP_GROUP_IFACE_NAME;=${port-channeliface},&IF_PBR_ROUTE_MAP_GROUP_VRF;=0,&IF_PBR_ROUTE_MAP_GROUP_IP_TYPE;=ipv4,&IF_PBR_ROUTE_MAP_GROUP_ROUTE_MAP_NAME;=${map-name}"
+            />
+        </PARAM>
+
+        <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+    <COMMAND name="ipv6 policy"
+        help="Configure PBR feature"
+        operation="edit-config"
+        namespace="&POLICY_INTF_NS;"
+        yang_key="&IF_PBR_ROUTE_MAP_GROUP_IP_TYPE;=ipv6,&IF_PBR_ROUTE_MAP_GROUP_VRF;=0">
+
+        <PARAM name="route-map"
+            help="Route-map for PBR"
+            mode="subcommand"
+            ptype="SUBCOMMAND">
+
+            <PARAM name="map-name"
+                help="Route-map name"
+                ptype="STRING"
+                yang_name="&IF_PBR_ROUTE_MAP_GROUP_IFACE_NAME;=${port-channeliface},&IF_PBR_ROUTE_MAP_GROUP_VRF;=0,&IF_PBR_ROUTE_MAP_GROUP_IP_TYPE;=ipv6,&IF_PBR_ROUTE_MAP_GROUP_ROUTE_MAP_NAME;=${map-name}"
+            />
+        </PARAM>
+
+        <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+    <COMMAND name="no ip policy"
+        help="Configure PBR feature"
+        operation="edit-config"
+        namespace="&POLICY_INTF_NS;"
+        sub_oper_yang="remove:pbr-route-map-group">
+
+        <PARAM name="route-map"
+            help="Route-map for PBR"
+            mode="subcommand"
+            ptype="SUBCOMMAND">
+
+            <PARAM name="map-name"
+                help="Route-map name"
+                ptype="STRING"
+                yang_name="&IF_PBR_ROUTE_MAP_GROUP_IFACE_NAME;=${port-channeliface},&IF_PBR_ROUTE_MAP_GROUP_VRF;=0,&IF_PBR_ROUTE_MAP_GROUP_IP_TYPE;=ipv4,&IF_PBR_ROUTE_MAP_GROUP_ROUTE_MAP_NAME;=${map-name}"
+            />
+        </PARAM>
+
+        <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+    <COMMAND name="no ipv6 policy"
+        help="Configure PBR feature"
+        operation="edit-config"
+        namespace="&POLICY_INTF_NS;"
+        sub_oper_yang="remove:pbr-route-map-group">
+
+        <PARAM name="route-map"
+            help="Route-map for PBR"
+            mode="subcommand"
+            ptype="SUBCOMMAND">
+
+            <PARAM name="map-name"
+                help="Route-map name"
+                ptype="STRING"
+                yang_name="&IF_PBR_ROUTE_MAP_GROUP_IFACE_NAME;=${port-channeliface},&IF_PBR_ROUTE_MAP_GROUP_VRF;=0,&IF_PBR_ROUTE_MAP_GROUP_IP_TYPE;=ipv6,&IF_PBR_ROUTE_MAP_GROUP_ROUTE_MAP_NAME;=${map-name}"
+            />
+        </PARAM>
+
+        <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+</VIEW>
+
+<VIEW name="configure-vlan-view">
+    <COMMAND name="ip policy"
+        help="Configure PBR feature"
+        operation="edit-config"
+        namespace="&POLICY_INTF_NS;"
+        yang_key="&IF_PBR_ROUTE_MAP_GROUP_IP_TYPE;=ipv4,&IF_PBR_ROUTE_MAP_GROUP_VRF;=0">
+
+        <PARAM name="route-map"
+            help="Route-map for PBR"
+            mode="subcommand"
+            ptype="SUBCOMMAND">
+
+            <PARAM name="map-name"
+                help="Route-map name"
+                ptype="STRING"
+                yang_name="&IF_PBR_ROUTE_MAP_GROUP_IFACE_NAME;=vlan${vlan_id},&IF_PBR_ROUTE_MAP_GROUP_VRF;=0,&IF_PBR_ROUTE_MAP_GROUP_IP_TYPE;=ipv4,&IF_PBR_ROUTE_MAP_GROUP_ROUTE_MAP_NAME;=${map-name}"
+            />
+        </PARAM>
+
+        <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+    <COMMAND name="ipv6 policy"
+        help="Configure PBR feature"
+        operation="edit-config"
+        namespace="&POLICY_INTF_NS;"
+        yang_key="&IF_PBR_ROUTE_MAP_GROUP_IP_TYPE;=ipv6,&IF_PBR_ROUTE_MAP_GROUP_VRF;=0">
+
+        <PARAM name="route-map"
+            help="Route-map for PBR"
+            mode="subcommand"
+            ptype="SUBCOMMAND">
+
+            <PARAM name="map-name"
+                help="Route-map name"
+                ptype="STRING"
+                yang_name="&IF_PBR_ROUTE_MAP_GROUP_IFACE_NAME;=vlan${vlan_id},&IF_PBR_ROUTE_MAP_GROUP_VRF;=0,&IF_PBR_ROUTE_MAP_GROUP_IP_TYPE;=ipv6,&IF_PBR_ROUTE_MAP_GROUP_ROUTE_MAP_NAME;=${map-name}"
+            />
+        </PARAM>
+
+        <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+    <COMMAND name="no ip policy"
+        help="Configure PBR feature"
+        operation="edit-config"
+        namespace="&POLICY_INTF_NS;"
+        sub_oper_yang="remove:pbr-route-map-group">
+
+        <PARAM name="route-map"
+            help="Route-map for PBR"
+            mode="subcommand"
+            ptype="SUBCOMMAND">
+
+            <PARAM name="map-name"
+                help="Route-map name"
+                ptype="STRING"
+                yang_name="&IF_PBR_ROUTE_MAP_GROUP_IFACE_NAME;=vlan${vlan_id},&IF_PBR_ROUTE_MAP_GROUP_VRF;=0,&IF_PBR_ROUTE_MAP_GROUP_IP_TYPE;=ipv4,&IF_PBR_ROUTE_MAP_GROUP_ROUTE_MAP_NAME;=${map-name}"
+            />
+        </PARAM>
+
+        <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+    <COMMAND name="no ipv6 policy"
+        help="Configure PBR feature"
+        operation="edit-config"
+        namespace="&POLICY_INTF_NS;"
+        sub_oper_yang="remove:pbr-route-map-group">
+
+        <PARAM name="route-map"
+            help="Route-map for PBR"
+            mode="subcommand"
+            ptype="SUBCOMMAND">
+
+            <PARAM name="map-name"
+                help="Route-map name"
+                ptype="STRING"
+                yang_name="&IF_PBR_ROUTE_MAP_GROUP_IFACE_NAME;=vlan${vlan_id},&IF_PBR_ROUTE_MAP_GROUP_VRF;=0,&IF_PBR_ROUTE_MAP_GROUP_IP_TYPE;=ipv6,&IF_PBR_ROUTE_MAP_GROUP_ROUTE_MAP_NAME;=${map-name}"
+            />
+        </PARAM>
+
+        <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+</VIEW>
+
+<!--  End of Interface MODE -->
+
+<!--=======================================================-->
+<!--                ROUTE-MAP-NAME MODE config             -->
+<!--=======================================================-->
+
+<VIEW name="configure-route-map-view"
+      prompt="${SYSTEM_NAME}(${routeMapView})# "
+      depth="2">
+
+   <NAMESPACE ref="configure-view"
+      help="false"
+      completion="false"/>
+
+        <!-- show configuration candidate -->
+        <COMMAND
+            name="show"
+            help="show configuration"
+        />
+        <COMMAND
+            name="show configuration candidate"
+            help="Current candidate configuration"
+            yang_filter="&SUBTREE_FILTER;Filter_Conditions:&ROUTE_MAP_NAME;=${routeMapName},&ROUTE_MAP_RULE_SEQ_NO;=${routeMapSeq};Filter_Namespace:&POLICY_MODULE_NS;"
+            >
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+        <!-- show configuration -->
+        <COMMAND
+            name="show configuration"
+            help="Current configuration (default = running)"
+            yang_filter="&SUBTREE_FILTER;Filter_Conditions:&ROUTE_MAP_NAME;=${routeMapName},&ROUTE_MAP_RULE_SEQ_NO;=${routeMapSeq};Filter_Namespace:&POLICY_MODULE_NS;"
+            >
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+   <!--match [ip|ipv6|as-path|community|extcommunity|interface|metric|route-type|tag] -->
+
+	 <COMMAND name="match"
+		  help="Match values from routing table"
+		  operation="edit-config"
+          namespace="&POLICY_MODULE_NS;">
+
+      <PARAM name="match-sub-commands"
+         help="match-sub-commands"
+         ptype="SUBCOMMAND"
+         mode="switch"
+         yang_name="&ROUTE_MAP_NAME;=${routeMapName},&ROUTE_MAP_RULE_SEQ_NO;=${routeMapSeq}">
+
+         <!--match as-path [name] -->
+
+         <PARAM name="as-path"
+            help="Matches against as-path list"
+            ptype="SUBCOMMAND"
+            mode="subcommand">
+            <PARAM name="name"
+               help="Matches against AS-path list"
+               ptype="STRING"
+               yang_name="&ROUTE_MAP_RULE_MATCH_AS_PATH;=${name}"/>
+         </PARAM>
+
+         <!--match community name [exact-match] -->
+
+         <PARAM name="community"
+            help="Matches against community lists"
+            ptype="SUBCOMMAND"
+            mode="subcommand">
+            <PARAM name="name"
+               help="Matches against community lists"
+               ptype="STRING"
+               yang_name="&ROUTE_MAP_RULE_MATCH_COMMUNITY;=${name}">
+               <PARAM name="exact-match"
+                  help="exact match option"
+                  ptype="SUBCOMMAND"
+                  mode="subcommand"
+                  optional="true"
+                  yang_name="&ROUTE_MAP_RULE_MATCH_COMMUNITY_EXACT;=true"/>
+            </PARAM>
+         </PARAM>
+
+         <!--match extcommunity name [exact-match] -->
+
+         <PARAM name="extcommunity"
+            help="Matches against extended community lists"
+            ptype="SUBCOMMAND"
+            mode="subcommand">
+            <PARAM name="name"
+               help="Matches against extended community lists"
+               ptype="STRING"
+               yang_name="&ROUTE_MAP_RULE_MATCH_EXT_COMMUN;=${name}">
+               <PARAM name="exact-match"
+                  help="exact match option"
+                  ptype="SUBCOMMAND"
+                  mode="subcommand"
+                  optional="true"
+                  yang_name="&ROUTE_MAP_RULE_MATCH_EXT_COMM_EXACT;=true"/>
+            </PARAM>
+         </PARAM>
+
+         <!--match interface [ethernet/port0channel/vlan,loopback] [a/b/c/d] -->
+
+         <MACRO name="ALL_IF_MANDATORY" arg="&ROUTE_MAP_RULE_MATCH_INTF_NAME;"/>
+
+         <PARAM name="ip"
+            help="Matches against IPv4 parameters against prefix lists"
+            ptype="SUBCOMMAND"
+            mode="subcommand">
+
+            <PARAM name="ip-sub-commands"
+               help="ip-sub-commands"
+               ptype="SUBCOMMAND"
+               mode="switch">
+
+               <PARAM name="address"
+                  help="Matches against one or more IP prefix lists"
+                  ptype="SUBCOMMAND"
+                  mode="subcommand">
+                  <PARAM name="address-switch"
+                     help="address-sub-commands"
+                     ptype="SUBCOMMAND"
+                     mode="switch">
+
+                     <!--match ip address prefix-list [name] -->
+
+                     <PARAM name="prefix-list"
+                        help="Matches against IP prefix lists"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand">
+                        <PARAM name="name"
+                           help="Name of the prefix list"
+                           ptype="STRING"
+                           yang_name="&ROUTE_MAP_RULE_MATCH_IPV4_AD_PREFIX_NAME;=${name}"/>
+                     </PARAM>
+
+                     <!--match ip address [access-list-name] -->
+
+                     <PARAM name="WORD"
+                        help="Name of the access group or list"
+                        ptype="STRING"
+                        yang_name="&ROUTE_MAP_RULE_MATCH_IPV4_ACL_LIST;=${WORD}"/>
+                  </PARAM>
+               </PARAM>
+
+
+               <!--match ip next-hop prefix-list [name] -->
+
+               <PARAM name="next-hop"
+                  help="Matches next-hop address of a route to one or more IP prefix lists"
+                  ptype="SUBCOMMAND"
+                  mode="subcommand">
+                  <PARAM name="prefix-list"
+                     help="Matches against IP prefix lists"
+                     ptype="SUBCOMMAND"
+                     mode="subcommand">
+                     <PARAM name="name"
+                        help="Name of the prefix list"
+                        ptype="STRING"
+                        yang_name="&ROUTE_MAP_RULE_MATCH_IPV4_NH_PREFIX_NAME;=${name}"/>
+                  </PARAM>
+               </PARAM>
+
+            </PARAM>
+         </PARAM>
+
+         <PARAM name="ipv6"
+            help="Matches against IPv6 parameters against prefix lists"
+            ptype="SUBCOMMAND"
+            mode="subcommand">
+
+            <PARAM name="ipv6-sub-commands"
+               help="ipv6-sub-commands"
+               ptype="SUBCOMMAND"
+               mode="switch">
+
+               <PARAM name="address"
+                  help="Matches against one or more IP prefix lists"
+                  ptype="SUBCOMMAND"
+                  mode="subcommand">
+                  <PARAM name="address-switch"
+                     help="address-sub-commands"
+                     ptype="SUBCOMMAND"
+                     mode="switch">
+
+                     <!--match ipv6 address prefix-list [name] -->
+
+                     <PARAM name="prefix-list"
+                        help="Matches against IP prefix lists"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand">
+                        <PARAM name="name"
+                           help="Name of the prefix list"
+                           ptype="STRING"
+                           yang_name="&ROUTE_MAP_RULE_MATCH_IPV6_AD_PREFIX_NAME;=${name}"/>
+                     </PARAM>
+
+                     <!--match ipv6 address [access-list-name] -->
+
+                     <PARAM name="WORD"
+                        help="Name of the access group or list"
+                        ptype="STRING"
+                        yang_name="&ROUTE_MAP_RULE_MATCH_IPV6_ACL_LIST;=${WORD}"/>
+                  </PARAM>
+               </PARAM>
+
+
+               <!--match ipv6 next-hop prefix-list [name] -->
+
+               <PARAM name="next-hop"
+                  help="Matches next-hop address of a route to one or more IP prefix lists"
+                  ptype="SUBCOMMAND"
+                  mode="subcommand">
+                  <PARAM name="prefix-list"
+                     help="Matches against IP prefix lists"
+                     ptype="SUBCOMMAND"
+                     mode="subcommand">
+                     <PARAM name="name"
+                        help="Name of the prefix list"
+                        ptype="STRING"
+                        yang_name="&ROUTE_MAP_RULE_MATCH_IPV6_NH_PREFIX_NAME;=${name}"/>
+                  </PARAM>
+               </PARAM>
+
+            </PARAM>
+         </PARAM>
+
+         <!--match metric <0-4294967295> -->
+
+         <PARAM name="metric"
+            help="Matches the route metric against metric values"
+            ptype="SUBCOMMAND"
+            mode="subcommand">
+            <PARAM name="metric-value"
+               help="Value to match the route metric against"
+               ptype="RANGE_0_4294967295"
+               yang_name="&ROUTE_MAP_RULE_MATCH_METRIC;=${metric-value}"/>
+         </PARAM>
+
+         <!--match route-type [external|type-1|type-2|internal|local] -->
+
+         <PARAM name="route-type"
+            help="Matches against a type of route"
+            ptype="SUBCOMMAND"
+            mode="subcommand">
+            <PARAM name="route-type-sub-cmds"
+               help="type of route"
+               ptype="SUBCOMMAND"
+               mode="switch">
+               <PARAM name="external"
+                  help="External route (OSPF type 1/2)"
+                  ptype="SUBCOMMAND"
+                  mode="subcommand">
+                  <PARAM name="external-type-sub-cmds"
+                     help="external route type"
+                     ptype="SUBCOMMAND"
+                     mode="switch">
+                     <PARAM name="type-1"
+                        help="OSPF external type 1 route"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        yang_name="&ROUTE_MAP_RULE_MATCH_ROUTE_TYPE;=external-type-1"/>
+                     <PARAM name="type-2"
+                        help="OSPF external type 2 route"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        yang_name="&ROUTE_MAP_RULE_MATCH_ROUTE_TYPE;=external-type-2"/>
+                  </PARAM>
+               </PARAM>
+               <PARAM name="internal"
+                  help="Internal route (including OSPF intra/inter area)"
+                  ptype="SUBCOMMAND"
+                  mode="subcommand"
+                  yang_name="&ROUTE_MAP_RULE_MATCH_ROUTE_TYPE;=internal"/>
+               <PARAM name="local"
+                  help="Locally generated route"
+                  ptype="SUBCOMMAND"
+                  mode="subcommand"
+                  yang_name="&ROUTE_MAP_RULE_MATCH_ROUTE_TYPE;=local"/>
+
+            </PARAM>
+         </PARAM>
+
+         <!--match origin [egp|igp|incomplete] -->
+
+         <PARAM name="origin"
+            help="Matches BGP origin attribute"
+            ptype="SUBCOMMAND"
+            mode="subcommand">
+            <PARAM name="match-origin-sub-cmds"
+               help="type of metric"
+               ptype="SUBCOMMAND"
+               mode="switch">
+               <PARAM name="egp"
+                  help="Remote egp"
+                  mode="subcommand"
+                  ptype="SUBCOMMAND"
+                  yang_name="&ROUTE_MAP_RULE_MATCH_ORIGIN;=egp"/>
+               <PARAM name="igp"
+                  help="Local igp"
+                  mode="subcommand"
+                  ptype="SUBCOMMAND"
+                  yang_name="&ROUTE_MAP_RULE_MATCH_ORIGIN;=igp"/>
+               <PARAM name="incomplete"
+                  help="Unknown heritage"
+                  mode="subcommand"
+                  ptype="SUBCOMMAND"
+                  yang_name="&ROUTE_MAP_RULE_MATCH_ORIGIN;=incomplete"/>
+            </PARAM>
+         </PARAM>
+
+
+         <!--match tag <0-4294967295> -->
+
+         <PARAM name="tag"
+            help="Matches a route against a tag for filtering"
+            ptype="SUBCOMMAND"
+            mode="subcommand">
+            <PARAM name="tagid"
+               help="Tag id to match"
+               ptype="RANGE_0_4294967295"
+               yang_name="&ROUTE_MAP_RULE_MATCH_TAG;=${tagid}"/>
+         </PARAM>
+
+
+      </PARAM>  <!--match-sub-commands -->
+
+      <ACTION builtin="clish_extn"> </ACTION>
+	</COMMAND>
+
+  <!--set [ip | ipv6 | interface | comm-list | community | extcomm-list | extcommunity | level | local-preference | metric | metric-type | origin | tag | weight]  -->
+
+	<COMMAND name="set"
+		help="Set values in destination routing protocol"
+		operation="edit-config"
+        namespace="&POLICY_MODULE_NS;">
+
+      <PARAM name="set-sub-commands"
+         help="set-sub-commands"
+         ptype="SUBCOMMAND"
+         mode="switch"
+         yang_name="&ROUTE_MAP_NAME;=${routeMapName},&ROUTE_MAP_RULE_SEQ_NO;=${routeMapSeq}">
+
+         <!--set comm-list {name} delete -->
+
+         <PARAM name="comm-list"
+            help="Set BGP community list (for deletion)"
+            ptype="SUBCOMMAND"
+            mode="subcommand">
+            <PARAM name="name"
+               help="Name of the community"
+               ptype="STRING"
+               yang_name="&ROUTE_MAP_RULE_SET_COMM_LIST_DEL_NAME;=${name}">
+               <PARAM name="delete"
+                  help="Remove community attribute of a BGP update"
+                  mode="subcommand"
+                  ptype="SUBCOMMAND"/>
+            </PARAM>
+         </PARAM>
+
+         <!--set community [ none | aa:nn {additive} ] -->
+
+         <PARAM name="community"
+            help="Sets the community attribute for a BGP route update"
+            ptype="SUBCOMMAND"
+            mode="subcommand">
+            <PARAM name="community-sub-cmds"
+               help="type of route"
+               ptype="SUBCOMMAND"
+               mode="switch">
+               <PARAM name="none"
+                  help="No community attribute"
+                  mode="subcommand"
+                  ptype="SUBCOMMAND"
+                  yang_name="&ROUTE_MAP_RULE_SET_COMMUNITY_NONE;=true"/>
+               <PARAM name="comm-number"
+                  help="Community number aa:nn format"
+                  ptype="AA_NN"
+                  yang_name="&ROUTE_MAP_RULE_SET_COMMUNITY_NUMBER;=${comm-number}">
+                   <PARAM name="additive"
+                      help="Addition to existing community"
+                      mode="subcommand"
+                      ptype="SUBCOMMAND"
+                      optional="true"
+                      yang_name="&ROUTE_MAP_RULE_SET_COMMUNITY_ADDITIVE;=true"/>
+               </PARAM>
+            </PARAM>
+         </PARAM>
+
+         <!--set extcomm-list {[name] delete}  -->
+
+         <PARAM name="extcomm-list"
+            help="Set BGP extcommunity list (for deletion)"
+            ptype="SUBCOMMAND"
+            mode="subcommand">
+            <PARAM name="name"
+               help="Name of the extcommunity"
+               ptype="STRING"
+               yang_name="&ROUTE_MAP_RULE_SET_EXT_COMM_NAME_DEL;=${name}">
+               <PARAM name="delete"
+                  help="Remove extcommunity attribute of a BGP update"
+                  mode="subcommand"
+                  ptype="SUBCOMMAND"/>
+            </PARAM>
+         </PARAM>
+
+         <!--set extcommunity rt {ASN2:NN| ASN4:NN | IPADDR:NN } -->
+
+         <PARAM name="extcommunity"
+            help="Sets the extended community attribute for a BGP route update"
+            ptype="SUBCOMMAND"
+            mode="subcommand">
+            <PARAM name="rt"
+               help="Route-Target"
+               ptype="SUBCOMMAND"
+               mode="subcommand">
+               <PARAM name="extcommunity-sub-cmds"
+                  help="type of route"
+                  ptype="SUBCOMMAND"
+                  mode="switch">
+                  <PARAM name="ASN2NN"
+                    help="ASN2:NN Extcommunity number"
+                    ptype="ASN2_NN"
+                    yang_name="&ROUTE_MAP_RULE_SET_EXT_COMM_TYPE;=asn-nnnn,&ROUTE_MAP_RULE_SET_EXT_COMM_VALUE;=${ASN2NN}"/>
+                  <PARAM name="ASN4NN"
+                    help="ASN4:NN Extcommunity number"
+                    ptype="ASN4_NN"
+                    yang_name="&ROUTE_MAP_RULE_SET_EXT_COMM_TYPE;=as4,&ROUTE_MAP_RULE_SET_EXT_COMM_VALUE;=${ASN4NN}"/>
+                  <PARAM name="IPADDRNN"
+                    help="IPADDR:NN Extcommunity number"
+                    ptype="IPADDR_NN"
+                    yang_name="&ROUTE_MAP_RULE_SET_EXT_COMM_TYPE;=ipadd-nn,&ROUTE_MAP_RULE_SET_EXT_COMM_VALUE;=${IPADDRNN}"/>
+              </PARAM>
+            </PARAM> <!--rt-->
+         </PARAM> <!--extcommunity-->
+
+         <!--set ip next-hop {address} track-id {track-id}-->
+
+         <PARAM name="ip"
+            help="Configure IP features"
+            ptype="SUBCOMMAND"
+            mode="subcommand">
+            <PARAM name="next-hop"
+               help="Next hop address"
+               ptype="SUBCOMMAND"
+               mode="subcommand">
+               <PARAM name="address"
+                  help="IP address of next hop"
+                  ptype="IP_ADDR"
+                  yang_name="&ROUTE_MAP_RULE_SET_IPV4_NEXT_HOP;=${address}"/>
+                  <PARAM name="track-id"
+                     help="Object Track ID"
+                     ptype="SUBCOMMAND"
+                     optional="true"
+                     mode="subcommand">
+                     <PARAM name="id"
+                        help="Track ID"
+                        ptype="TRACK_ID"
+                        yang_name="&ROUTE_MAP_RULE_SET_IPV4_NEXT_HOP_TRACK_ID;=${id}"/>
+                </PARAM>
+            </PARAM>
+         </PARAM>
+
+         <!--set ipv6 next-hop {address} track-id {track-id} -->
+
+         <PARAM name="ipv6"
+            help="Configure IPv6 features"
+            ptype="SUBCOMMAND"
+            mode="subcommand">
+            <PARAM name="next-hop"
+               help="Next hop ipv6 address"
+               ptype="SUBCOMMAND"
+               mode="subcommand">
+               <PARAM name="address"
+                  help="IPV6 address of next hop"
+                  ptype="IPV6_ADDR"
+                  yang_name="&ROUTE_MAP_RULE_SET_IPV6_NEXT_HOP;=${address}"/>
+                  <PARAM name="track-id"
+                     help="Object Track ID"
+                     ptype="SUBCOMMAND"
+                     optional="true"
+                     mode="subcommand">
+                     <PARAM name="id"
+                        help="Track ID"
+                        ptype="TRACK_ID"
+                        yang_name="&ROUTE_MAP_RULE_SET_IPV6_NEXT_HOP_TRACK_ID;=${id}"/>
+                </PARAM>
+            </PARAM>
+         </PARAM>
+
+         <!--set level {[backbone|level-1|level-1-2|level-2]} -->
+
+         <PARAM name="level"
+            help="Sets the area to import routes for IS-IS"
+            ptype="SUBCOMMAND"
+            pfeature="FEATURE_NOT_SUPPORTED"
+            mode="subcommand">
+            <PARAM name="level-sub-cmds"
+               help="type of route"
+               ptype="SUBCOMMAND"
+               mode="switch">
+               <PARAM name="backbone"
+                  help="No community attribute"
+                  mode="subcommand"
+                  ptype="SUBCOMMAND"
+                  yang_name="&ROUTE_MAP_RULE_SET_LEVEL;=backbone"/>
+               <PARAM name="level-1"
+                  help="Addition to existing community"
+                  mode="subcommand"
+                  ptype="SUBCOMMAND"
+                  yang_name="&ROUTE_MAP_RULE_SET_LEVEL;=level-1"/>
+               <PARAM name="level-2"
+                  help="Send inside local-AS"
+                  mode="subcommand"
+                  ptype="SUBCOMMAND"
+                  yang_name="&ROUTE_MAP_RULE_SET_LEVEL;=level-2"/>
+               <PARAM name="level-1-2"
+                  help="Do not advertise to peers"
+                  mode="subcommand"
+                  ptype="SUBCOMMAND"
+                  yang_name="&ROUTE_MAP_RULE_SET_LEVEL;=level-1-2"/>
+               <PARAM name="sub-area"
+                  help="Do not advertise to peers"
+                  mode="subcommand"
+                  ptype="SUBCOMMAND"
+                  yang_name="&ROUTE_MAP_RULE_SET_LEVEL;=sub-area"/>
+            </PARAM>
+         </PARAM>
+
+         <!--set local-preference <0-4294967295> -->
+
+         <PARAM name="local-preference"
+            help="Set BGP local preference path attribute"
+            ptype="SUBCOMMAND"
+            mode="subcommand">
+            <PARAM name="value"
+               help="Range values"
+               ptype="RANGE_0_4294967295"
+               yang_name="&ROUTE_MAP_RULE_SET_PREFERENCE;=${value}"/>
+         </PARAM>
+
+         <!--set metric [+|-] bandwidth-metric -->
+
+         <PARAM name="metric"
+            help="Adds or subtracts from the existing metric value"
+            ptype="SUBCOMMAND"
+            mode="subcommand">
+               <PARAM name="operation"
+                  help="Operation"
+                  ptype="SUBCOMMAND"
+                  optional="true"
+                  default="none"
+                  mode="switch">
+                  <PARAM name="plus"
+                    help="Add a metric"
+                    mode="subcommand"
+                    ptype="SUBCOMMAND"
+                    value="+"/>
+                  <PARAM name="minus"
+                    help="Subtract a metric"
+                    mode="subcommand"
+                    ptype="SUBCOMMAND"
+                    value="-"/>
+               </PARAM>
+               <PARAM name="value"
+                  help="Metric value"
+                  ptype="RANGE_0_4294967295"
+                  yang_name="&ROUTE_MAP_RULE_SET_METRIC_OPERATION;=${operation},&ROUTE_MAP_RULE_SET_METRIC_VALUE;=${value}"/>
+         </PARAM>
+
+         <!--set metric-type [external|internal|type-1|type-2] -->
+
+         <PARAM name="metric-type"
+            help="Sets the metric type for destination routing protocol"
+            ptype="SUBCOMMAND"
+            mode="subcommand">
+            <PARAM name="type-sub-cmds"
+               help="type of metric"
+               ptype="SUBCOMMAND"
+               mode="switch">
+               <PARAM name="external"
+                  help="IS-IS external metric"
+                  mode="subcommand"
+                  ptype="SUBCOMMAND"
+                  pfeature="FEATURE_NOT_SUPPORTED"
+                  yang_name="&ROUTE_MAP_RULE_SET_METRIC_TYPE;=external"/>
+               <PARAM name="internal"
+                  help="Use IGP metric as the MED for BGP"
+                  mode="subcommand"
+                  ptype="SUBCOMMAND"
+                  yang_name="&ROUTE_MAP_RULE_SET_METRIC_TYPE;=internal"/>
+               <PARAM name="type-1"
+                  help="OSPF external type 1 metric"
+                  mode="subcommand"
+                  ptype="SUBCOMMAND"
+                  yang_name="&ROUTE_MAP_RULE_SET_METRIC_TYPE;=type-1"/>
+               <PARAM name="type-2"
+                  help="OSPF external type 2 metric"
+                  mode="subcommand"
+                  ptype="SUBCOMMAND"
+                  yang_name="&ROUTE_MAP_RULE_SET_METRIC_TYPE;=type-2"/>
+            </PARAM>
+         </PARAM>
+
+         <!--set origin [egp|igp|incomplete] -->
+
+         <PARAM name="origin"
+            help="Sets the BGP origin attribute"
+            ptype="SUBCOMMAND"
+            mode="subcommand">
+            <PARAM name="origin-sub-cmds"
+               help="type of metric"
+               ptype="SUBCOMMAND"
+               mode="switch">
+               <PARAM name="egp"
+                  help="Remote egp"
+                  mode="subcommand"
+                  ptype="SUBCOMMAND"
+                  yang_name="&ROUTE_MAP_RULE_SET_ORIGIN;=egp"/>
+               <PARAM name="igp"
+                  help="Local igp"
+                  mode="subcommand"
+                  ptype="SUBCOMMAND"
+                  yang_name="&ROUTE_MAP_RULE_SET_ORIGIN;=igp"/>
+               <PARAM name="incomplete"
+                  help="Unknown heritage"
+                  mode="subcommand"
+                  ptype="SUBCOMMAND"
+                  yang_name="&ROUTE_MAP_RULE_SET_ORIGIN;=incomplete"/>
+            </PARAM>
+         </PARAM>
+
+         <!--set tag <0-4294967295> -->
+
+         <PARAM name="tag"
+            help="Sets the tag value for destination routing protocol"
+            ptype="SUBCOMMAND"
+            mode="subcommand">
+            <PARAM name="value"
+               help="Range values"
+               ptype="RANGE_0_4294967295"
+               yang_name="&ROUTE_MAP_RULE_SET_TAG;=${value}"/>
+         </PARAM>
+
+         <!--set weight <0-65535> -->
+
+         <PARAM name="weight"
+            help="Sets the weight for the BGP route"
+            ptype="SUBCOMMAND"
+            mode="subcommand">
+            <PARAM name="value"
+               help="Range values"
+               ptype="RANGE_0_65535"
+               yang_name="&ROUTE_MAP_RULE_SET_WEIGHT;=${value}"/>
+         </PARAM>
+
+      </PARAM>  <!--set-sub-commands -->
+
+      <ACTION builtin="clish_extn"> </ACTION>
+	</COMMAND>
+
+  <!--continue sequence number-->
+
+	<COMMAND name="continue"
+      help="Determine next sequence"
+      operation="edit-config"
+      namespace="&POLICY_MODULE_NS;">
+
+            <PARAM name="next-seq-number"
+               help="Next Sequence number"
+               ptype="RANGE_1_65535"
+               yang_name="&ROUTE_MAP_NAME;=${routeMapName},&ROUTE_MAP_RULE_SEQ_NO;=${routeMapSeq},&ROUTE_MAP_RULE_NEXT_SEQ_NO;=${next-seq-number}"/>
+
+      <ACTION builtin="clish_extn"> </ACTION>
+   </COMMAND>
+
+   <!--no match [ip|ipv6|as-path|community|extcommunity|interface|metric|route-type|tag] -->
+
+	 <COMMAND name="no"
+		  help="Negate a command or set its defaults">
+	 </COMMAND>
+	 <COMMAND name="no match"
+		  help="Match values from routing table"
+		  operation="edit-config"
+      namespace="&POLICY_MODULE_NS;">
+
+      <PARAM name="match-sub-commands"
+         help="match-sub-commands"
+         ptype="SUBCOMMAND"
+         mode="switch"
+         yang_name="&ROUTE_MAP_RULE_SEQ_NO;=${routeMapSeq},&ROUTE_MAP_NAME;=${routeMapName}">
+
+         <!--no match as-path [name] -->
+
+         <PARAM name="as-path"
+            help="Matches against as-path list"
+            ptype="SUBCOMMAND"
+            mode="subcommand">
+            <PARAM name="name"
+               help="Matches against AS-path list"
+               ptype="STRING"
+               yang_name="&ROUTE_MAP_RULE_MATCH_AS_PATH;=${name}"
+               sub_oper_yang="delete:as-path"/>
+         </PARAM>
+
+         <!--no match community name [exact-match] -->
+
+         <PARAM name="community"
+            help="Matches against community lists"
+            ptype="SUBCOMMAND"
+            mode="subcommand">
+            <PARAM name="name"
+               help="Matches against community lists"
+               ptype="STRING"
+               sub_oper_yang="delete:community"
+               yang_name="&ROUTE_MAP_RULE_MATCH_COMMUNITY;=${name}">
+               <PARAM name="exact-match"
+                  help="exact match option"
+                  ptype="SUBCOMMAND"
+                  mode="subcommand"
+                  optional="true"/>
+            </PARAM>
+         </PARAM>
+
+         <!--no match extcommunity name [exact-match] -->
+
+         <PARAM name="extcommunity"
+            help="Matches against extended community lists"
+            ptype="SUBCOMMAND"
+            mode="subcommand">
+            <PARAM name="name"
+               help="Matches against extended community lists"
+               ptype="STRING"
+               sub_oper_yang="delete:ext-community"
+               yang_name="&ROUTE_MAP_RULE_MATCH_EXT_COMMUN;=${name}">
+               <PARAM name="exact-match"
+                  help="exact match option"
+                  ptype="SUBCOMMAND"
+                  mode="subcommand"
+                  optional="true"/>
+            </PARAM>
+         </PARAM>
+
+         <!--no match interface [ethernet/port0channel/vlan/loopback] [a/b/c/d] -->
+
+         <MACRO name="ALL_NO_IF_MANDATORY" arg="&ROUTE_MAP_RULE_MATCH_INTF_NAME;,interface-name"/>
+
+         <PARAM name="ip"
+            help="Matches against IPv4 parameters against prefix lists"
+            ptype="SUBCOMMAND"
+            mode="subcommand">
+
+            <PARAM name="ip-sub-commands"
+               help="ip-sub-commands"
+               ptype="SUBCOMMAND"
+               mode="switch">
+
+               <PARAM name="address"
+                  help="Matches against one or more IP prefix lists"
+                  ptype="SUBCOMMAND"
+                  mode="subcommand">
+                  <PARAM name="address-switch"
+                     help="address-sub-commands"
+                     ptype="SUBCOMMAND"
+                     mode="switch">
+
+                     <!--no match ip address prefix-list [name] -->
+
+                     <PARAM name="prefix-list"
+                        help="Matches against IP prefix lists"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand">
+                        <PARAM name="name"
+                           help="Name of the prefix list"
+                           ptype="STRING"
+                           sub_oper_yang="delete:ipv4-route-prefix-list"
+                           yang_name="&ROUTE_MAP_RULE_MATCH_IPV4_AD_PREFIX_NAME;=${name}"/>
+                     </PARAM>
+
+                     <!--no match ip address [access-list-name] -->
+
+                     <PARAM name="WORD"
+                        help="Name of the access group or list"
+                        ptype="STRING"
+                        yang_name="&ROUTE_MAP_RULE_MATCH_IPV4_ACL_LIST;"/>
+                  </PARAM>
+               </PARAM>
+
+               <!--no match ip next-hop prefix-list [name] -->
+
+               <PARAM name="next-hop"
+                  help="Matches next-hop address of a route to one or more IP prefix lists"
+                  ptype="SUBCOMMAND"
+                  mode="subcommand">
+                  <PARAM name="prefix-list"
+                     help="Matches against IP prefix lists"
+                     ptype="SUBCOMMAND"
+                     mode="subcommand">
+                     <PARAM name="name"
+                        help="Name of the prefix list"
+                        ptype="STRING"
+                        sub_oper_yang="delete:ipv4-nh-prefix-list"
+                        yang_name="&ROUTE_MAP_RULE_MATCH_IPV4_NH_PREFIX_NAME;=${name}"/>
+                  </PARAM>
+               </PARAM>
+
+            </PARAM>
+         </PARAM>
+
+         <PARAM name="ipv6"
+            help="Matches against IPv6 parameters against prefix lists"
+            ptype="SUBCOMMAND"
+            mode="subcommand">
+
+            <PARAM name="ipv6-sub-commands"
+               help="ipv6-sub-commands"
+               ptype="SUBCOMMAND"
+               mode="switch">
+
+               <PARAM name="address"
+                  help="Matches against one or more IP prefix lists"
+                  ptype="SUBCOMMAND"
+                  mode="subcommand">
+                  <PARAM name="address-switch"
+                     help="address-sub-commands"
+                     ptype="SUBCOMMAND"
+                     mode="switch">
+
+                     <!--no match ipv6 address prefix-list [name] -->
+
+                     <PARAM name="prefix-list"
+                        help="Matches against IP prefix lists"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand">
+                        <PARAM name="name"
+                           help="Name of the prefix list"
+                           ptype="STRING"
+                           sub_oper_yang="delete:ipv6-route-prefix-list"
+                           yang_name="&ROUTE_MAP_RULE_MATCH_IPV6_AD_PREFIX_NAME;=${name}"/>
+                     </PARAM>
+
+                     <!--no match ipv6 address [access-list-name] -->
+
+                     <PARAM name="WORD"
+                        help="Name of the access group or list"
+                        ptype="STRING"
+                        yang_name="&ROUTE_MAP_RULE_MATCH_IPV6_ACL_LIST;"/>
+                  </PARAM>
+               </PARAM>
+
+               <!--no match ipv6 next-hop prefix-list [name] -->
+
+               <PARAM name="next-hop"
+                  help="Matches next-hop address of a route to one or more IP prefix lists"
+                  ptype="SUBCOMMAND"
+                  mode="subcommand">
+                  <PARAM name="prefix-list"
+                     help="Matches against IP prefix lists"
+                     ptype="SUBCOMMAND"
+                     mode="subcommand">
+                     <PARAM name="name"
+                        help="Name of the prefix list"
+                        ptype="STRING"
+                        sub_oper_yang="delete:ipv6-nh-prefix-list"
+                        yang_name="&ROUTE_MAP_RULE_MATCH_IPV6_NH_PREFIX_NAME;=${name}"/>
+                  </PARAM>
+               </PARAM>
+
+            </PARAM>
+         </PARAM>
+
+         <!--no match metric <0-4294967295> -->
+
+         <PARAM name="metric"
+            help="Matches the route metric against metric values"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            yang_name="&ROUTE_MAP_RULE_MATCH_METRIC;">
+            <PARAM name="metric-value"
+               help="Value to match the route metric against"
+               ptype="RANGE_0_4294967295"
+               optional="true"/>
+         </PARAM>
+
+        <!--no match origin [egp|igp|incomplete] -->
+
+         <PARAM name="origin"
+            help="Matches BGP origin attribute"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            yang_name="&ROUTE_MAP_RULE_MATCH_ORIGIN;">
+            <PARAM name="match-origin-sub-cmds"
+               help="type of metric"
+               ptype="SUBCOMMAND"
+               optional="true"
+               mode="switch">
+               <PARAM name="egp"
+                  help="Remote egp"
+                  mode="subcommand"
+                  ptype="SUBCOMMAND"/>
+               <PARAM name="igp"
+                  help="Local igp"
+                  mode="subcommand"
+                  ptype="SUBCOMMAND"/>
+               <PARAM name="incomplete"
+                  help="Unknown heritage"
+                  mode="subcommand"
+                  ptype="SUBCOMMAND"/>
+            </PARAM>
+         </PARAM>
+
+
+         <!--no match route-type [external-type-1|external-type-2|internal|local] -->
+
+         <PARAM name="route-type"
+            help="Matches against a type of route"
+            ptype="SUBCOMMAND"
+            mode="subcommand">
+            <PARAM name="route-type-sub-cmds"
+               help="type of route"
+               ptype="SUBCOMMAND"
+               mode="switch">
+               <PARAM name="external"
+                  help="External route (OSPF type 1/2)"
+                  ptype="SUBCOMMAND"
+                  mode="subcommand">
+                  <PARAM name="external-type-sub-cmds"
+                     help="external route type"
+                     ptype="SUBCOMMAND"
+                     mode="switch">
+                     <PARAM name="type-1"
+                        help="OSPF external type 1 route"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        sub_oper_yang="delete:route-type"
+                        yang_name="&ROUTE_MAP_RULE_MATCH_ROUTE_TYPE;=external-type-1"/>
+                     <PARAM name="type-2"
+                        help="OSPF external type 2 route"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        sub_oper_yang="delete:route-type"
+                        yang_name="&ROUTE_MAP_RULE_MATCH_ROUTE_TYPE;=external-type-2"/>
+                  </PARAM>
+               </PARAM>
+               <PARAM name="internal"
+                  help="internal route"
+                  mode="subcommand"
+                  ptype="SUBCOMMAND"
+                  sub_oper_yang="delete:route-type"
+                  yang_name="&ROUTE_MAP_RULE_MATCH_ROUTE_TYPE;=internal"/>
+
+               <PARAM name="local"
+                  help="Locally generated route"
+                  mode="subcommand"
+                  ptype="SUBCOMMAND"
+                  sub_oper_yang="delete:route-type"
+                  yang_name="&ROUTE_MAP_RULE_MATCH_ROUTE_TYPE;=local"/>
+
+            </PARAM>
+         </PARAM>
+
+         <!--no match tag <0-4294967295> -->
+
+         <PARAM name="tag"
+            help="Matches a route against a tag for filtering"
+            ptype="SUBCOMMAND"
+            mode="subcommand">
+            <PARAM name="tagid"
+               help="Tag id to match"
+               ptype="RANGE_0_4294967295"
+               sub_oper_yang="delete:tag"
+               yang_name="&ROUTE_MAP_RULE_MATCH_TAG;=${tagid}"/>
+         </PARAM>
+
+
+      </PARAM>  <!--match-sub-commands -->
+
+      <ACTION builtin="clish_extn"> </ACTION>
+	</COMMAND>
+
+  <!--no set [as-path | ip | ipv6 | interface | comm-list | community | extcomm-list | extcommunity | level | local-preference | metric | metric-type | origin | tag | weight]  -->
+
+	<COMMAND name="no set"
+		help="Set values in destination routing protocol"
+		operation="edit-config"
+      namespace="&POLICY_MODULE_NS;">
+
+      <PARAM name="set-sub-commands"
+         help="ip-sub-commands"
+         ptype="SUBCOMMAND"
+         mode="switch"
+         yang_name="&ROUTE_MAP_RULE_SEQ_NO;=${routeMapSeq},&ROUTE_MAP_NAME;=${routeMapName}">
+
+         <!--no set comm-list {name} delete -->
+
+         <PARAM name="comm-list"
+            help="Set BGP community list (for deletion)"
+            ptype="SUBCOMMAND"
+            mode="subcommand">
+            <PARAM name="name"
+               help="Name of the community"
+               ptype="STRING"
+               yang_name="&ROUTE_MAP_RULE_SET_COMM_LIST_DEL_NAME;">
+               <PARAM name="delete"
+                  help="Remove community attribute of a BGP update"
+                  ptype="SUBCOMMAND"
+                  mode="subcommand"/>
+            </PARAM>
+         </PARAM>
+
+         <!--no set community [ none | aa:nn {additive} ] -->
+
+         <PARAM name="community"
+            help="Sets the community attribute for a BGP route update"
+            ptype="SUBCOMMAND"
+            mode="subcommand">
+            <PARAM name="community-sub-cmds"
+               help="type of route"
+               ptype="SUBCOMMAND"
+               mode="switch">
+               <PARAM name="none"
+                  help="No community attribute"
+                  ptype="SUBCOMMAND"
+                  mode="subcommand"
+                  yang_name="&ROUTE_MAP_RULE_SET_COMMUNITY_NONE;"/>
+               <PARAM name="comm-number"
+                  help="Community number aa:nn format"
+                  ptype="AA_NN"
+                  yang_name="&ROUTE_MAP_RULE_SET_COMMUNITY_NUMBER;">
+                   <PARAM name="additive"
+                      help="Addition to existing community"
+                      mode="subcommand"
+                      ptype="SUBCOMMAND"
+                      optional="true"
+                      yang_name="&ROUTE_MAP_RULE_SET_COMMUNITY_ADDITIVE;"/>
+               </PARAM>
+            </PARAM>
+         </PARAM>
+
+         <!--no set extcomm-list {[name] delete}  -->
+
+         <PARAM name="extcomm-list"
+            help="Set BGP extcommunity list (for deletion)"
+            ptype="SUBCOMMAND"
+            mode="subcommand">
+            <PARAM name="name"
+               help="Name of the extcommunity"
+               ptype="STRING"
+               yang_name="&ROUTE_MAP_RULE_SET_EXT_COMM_NAME_DEL;">
+               <PARAM name="delete"
+                  help="Remove extcommunity attribute of a BGP update"
+                  ptype="SUBCOMMAND"
+                  mode="subcommand"/>
+            </PARAM>
+         </PARAM>
+
+         <!--no set extcommunity rt {as4| ASN:NNNN | IPADDR:NN } -->
+
+         <PARAM name="extcommunity"
+            help="Sets the extended community attribute for a BGP route update"
+            ptype="SUBCOMMAND"
+            mode="subcommand">
+            <PARAM name="rt"
+               help="Route-Target"
+               ptype="SUBCOMMAND"
+               mode="subcommand">
+               <PARAM name="extcommunity-sub-cmds"
+                  help="type of route"
+                  ptype="SUBCOMMAND"
+                  mode="switch">
+                  <PARAM name="ASN2NN"
+                    help="ASN2:NN Extcommunity number"
+                    ptype="ASN2_NN"
+                    sub_oper_yang="remove:ext-comm-type,remove:ext-comm-value"
+                    yang_name="&ROUTE_MAP_RULE_SET_EXT_COMM_TYPE;=asn-nnnn,&ROUTE_MAP_RULE_SET_EXT_COMM_VALUE;=${ASN2NN}"/>
+                  <PARAM name="ASN4NN"
+                    help="ASN4:NN Extcommunity number"
+                    ptype="ASN4_NN"
+                    sub_oper_yang="remove:ext-comm-type,remove:ext-comm-value"
+                    yang_name="&ROUTE_MAP_RULE_SET_EXT_COMM_TYPE;=as4,&ROUTE_MAP_RULE_SET_EXT_COMM_VALUE;={ASN4NN}"/>
+                  <PARAM name="IPADDRNN"
+                    help="IPADDR:NN Extcommunity number"
+                    ptype="IPADDR_NN"
+                    sub_oper_yang="remove:ext-comm-type,remove:ext-comm-value"
+                    yang_name="&ROUTE_MAP_RULE_SET_EXT_COMM_TYPE;=ipadd-nn,&ROUTE_MAP_RULE_SET_EXT_COMM_VALUE;=${IPADDRNN}"/>
+              </PARAM>
+            </PARAM> <!--rt-->
+         </PARAM> <!--extcommunity-->
+
+
+         <!--no set ip next-hop {address}  -->
+
+         <PARAM name="ip"
+            help="Configure IP features"
+            ptype="SUBCOMMAND"
+            mode="subcommand">
+            <PARAM name="next-hop"
+               help="Next hop address"
+               ptype="SUBCOMMAND"
+               mode="subcommand">
+               <PARAM name="address"
+                  help="IP address of next hop"
+                  ptype="IP_ADDR"
+                  sub_oper_yang="remove:ipv4-nexthop"
+                  yang_name="&ROUTE_MAP_RULE_SET_IPV4_NEXT_HOP;=${address}">
+               </PARAM>
+            </PARAM>
+         </PARAM>
+
+         <!--no set ipv6 next-hop {address} -->
+
+         <PARAM name="ipv6"
+            help="Configure IPv6 features"
+            ptype="SUBCOMMAND"
+            mode="subcommand">
+            <PARAM name="next-hop"
+               help="Next hop ipv6 address"
+               ptype="SUBCOMMAND"
+               mode="subcommand">
+               <PARAM name="address"
+                  help="IPV6 address of next hop"
+                  ptype="IPV6_ADDR"
+                  sub_oper_yang="remove:ipv6-nexthop"
+                  yang_name="&ROUTE_MAP_RULE_SET_IPV6_NEXT_HOP;=${address}">
+               </PARAM>
+            </PARAM>
+         </PARAM>
+
+         <!--no set level {[backbone|level-1|level-1-2|level-2]} -->
+
+         <PARAM name="level"
+            help="Sets the area to import routes for IS-IS"
+            ptype="SUBCOMMAND"
+            pfeature="FEATURE_NOT_SUPPORTED"
+            mode="subcommand">
+            <PARAM name="level-sub-cmds"
+               help="type of route"
+               ptype="SUBCOMMAND"
+               mode="switch">
+               <PARAM name="backbone"
+                  help="No community attribute"
+                  mode="subcommand"
+                  ptype="SUBCOMMAND"
+                  yang_name="&ROUTE_MAP_RULE_SET_LEVEL;"/>
+               <PARAM name="level-1"
+                  help="Addition to existing community"
+                  mode="subcommand"
+                  ptype="SUBCOMMAND"
+                  yang_name="&ROUTE_MAP_RULE_SET_LEVEL;"/>
+               <PARAM name="level-2"
+                  help="Send inside local-AS"
+                  mode="subcommand"
+                  ptype="SUBCOMMAND"
+                  yang_name="&ROUTE_MAP_RULE_SET_LEVEL;"/>
+               <PARAM name="level-1-2"
+                  help="Do not advertise to peers"
+                  mode="subcommand"
+                  ptype="SUBCOMMAND"
+                  yang_name="&ROUTE_MAP_RULE_SET_LEVEL;"/>
+               <PARAM name="sub-area"
+                  help="Do not advertise to peers"
+                  mode="subcommand"
+                  ptype="SUBCOMMAND"
+                  yang_name="&ROUTE_MAP_RULE_SET_LEVEL;"/>
+            </PARAM>
+         </PARAM>
+
+         <!--no set local-preference <0-4294967295> -->
+
+         <PARAM name="local-preference"
+            help="Set IPv4 next-hop address"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            yang_name="&ROUTE_MAP_RULE_SET_PREFERENCE;">
+            <PARAM name="value"
+               help="Range values"
+               ptype="RANGE_0_4294967295"
+               optional="true"/>
+         </PARAM>
+
+         <!--no set metric [+|-] bandwidth-metric -->
+
+         <PARAM name="metric"
+            help="Adds or subtracts from the existing metric value"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            sub_oper_yang="remove:metric-value,remove:metric-operation"
+            yang_name="&ROUTE_MAP_RULE_SET_METRIC_OPERATION;,&ROUTE_MAP_RULE_SET_METRIC_VALUE;">
+            <PARAM name="operation"
+                help="Operation"
+                ptype="SUBCOMMAND"
+                optional="true"
+                mode="switch">
+                <PARAM name="+"
+                    help="Add a metric"
+                    mode="subcommand"
+                    ptype="SUBCOMMAND"/>
+                <PARAM name="-"
+                    help="Subtract a metric"
+                    mode="subcommand"
+                    ptype="SUBCOMMAND"/>
+            </PARAM>
+            <PARAM name="value"
+               help="Metric value"
+               ptype="RANGE_0_4294967295"
+               optional="true" />
+         </PARAM>
+
+         <!--no set metric-type [external|internal|type-1|type-2] -->
+
+         <PARAM name="metric-type"
+            help="Sets the metric type for destination routing protocol"
+            ptype="SUBCOMMAND"
+            mode="subcommand">
+            <PARAM name="type-sub-cmds"
+               help="type of metric"
+               ptype="SUBCOMMAND"
+               mode="switch">
+               <PARAM name="external"
+                  help="IS-IS external metric"
+                  mode="subcommand"
+                  ptype="SUBCOMMAND"
+                  yang_name="&ROUTE_MAP_RULE_SET_METRIC_TYPE;"/>
+               <PARAM name="internal"
+                  help="Use IGP metric as the MED for BGP"
+                  mode="subcommand"
+                  ptype="SUBCOMMAND"
+                  yang_name="&ROUTE_MAP_RULE_SET_METRIC_TYPE;"/>
+               <PARAM name="type-1"
+                  help="OSPF external type 1 metric"
+                  mode="subcommand"
+                  ptype="SUBCOMMAND"
+                  yang_name="&ROUTE_MAP_RULE_SET_METRIC_TYPE;"/>
+               <PARAM name="type-2"
+                  help="OSPF external type 2 metric"
+                  mode="subcommand"
+                  ptype="SUBCOMMAND"
+                  yang_name="&ROUTE_MAP_RULE_SET_METRIC_TYPE;"/>
+            </PARAM>
+         </PARAM>
+
+         <!--no set origin [egp|igp|incomplete] -->
+
+         <PARAM name="origin"
+            help="Sets the BGP origin attribute"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            yang_name="&ROUTE_MAP_RULE_SET_ORIGIN;">
+            <PARAM name="origin-sub-cmds"
+               help="type of metric"
+               ptype="SUBCOMMAND"
+               optional="true"
+               mode="switch">
+               <PARAM name="egp"
+                  help="Remote egp"
+                  mode="subcommand"
+                  ptype="SUBCOMMAND"/>
+               <PARAM name="igp"
+                  help="Local igp"
+                  mode="subcommand"
+                  ptype="SUBCOMMAND"/>
+               <PARAM name="incomplete"
+                  help="Unknown heritage"
+                  mode="subcommand"
+                  ptype="SUBCOMMAND"/>
+            </PARAM>
+         </PARAM>
+
+         <!--no set tag <0-4294967295> -->
+
+         <PARAM name="tag"
+            help="Sets the tag value for destination routing protocol"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            yang_name="&ROUTE_MAP_RULE_SET_TAG;">
+            <PARAM name="value"
+               help="Range values"
+               ptype="RANGE_0_4294967295"
+               optional="true"/>
+         </PARAM>
+
+         <!--no set weight <0-65535> -->
+
+         <PARAM name="weight"
+            help="Sets the weight for the BGP route"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            yang_name="&ROUTE_MAP_RULE_SET_WEIGHT;">
+            <PARAM name="value"
+               help="Range values"
+               ptype="RANGE_0_65535"
+               optional="true"/>
+         </PARAM>
+
+      </PARAM>  <!--set-sub-commands -->
+
+      <ACTION builtin="clish_extn"> </ACTION>
+	</COMMAND>
+
+  <!--no continue sequence number-->
+
+	<COMMAND name="no continue"
+      help="Determine next sequence"
+      operation="edit-config"
+      namespace="&POLICY_MODULE_NS;"
+      yang_name="&ROUTE_MAP_NAME;=${routeMapName},&ROUTE_MAP_RULE_SEQ_NO;=${routeMapSeq},&ROUTE_MAP_RULE_NEXT_SEQ_NO;">
+
+            <PARAM name="sequence-number"
+               help="Sequence number"
+               ptype="RANGE_1_65535"
+               optional="true"/>
+
+      <ACTION builtin="clish_extn"> </ACTION>
+   </COMMAND>
+
+</VIEW>  <!--  End of ROUTE-MAP-NAME MODE config  -->
+
+</CLISH_MODULE>

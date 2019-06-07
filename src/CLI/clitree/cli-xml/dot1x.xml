@@ -1,0 +1,982 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE CLISH_MODULE [
+<!ENTITY SUBTREE_FILTER     "Filter_Type:SUBTREE;">
+<!ENTITY MODULE-NS          "dell-dot1x=http://www.dellemc.com/networking/os10/dell-dot1x">
+<!ENTITY IF-MODULE-NS       "urn:ietf:params:xml:ns:yang:ietf-interfaces">
+<!ENTITY DOT1X_CONFIG_RANGE_IF_ENTRY  "/interfaces/interface[]">
+<!ENTITY DOT1X_CONFIG_RANGE_IF_NAME   "&DOT1X_CONFIG_RANGE_IF_ENTRY;/name=${ifacename}">
+<!ENTITY DOT1X_CONFIG_RANGE_IF_PARAMS  "&DOT1X_CONFIG_RANGE_IF_ENTRY;/dell-dot1x:dot1x-if-config-params">
+<!ENTITY DOT1X_CONFIG_GLOBAL_PARAMS   "/dot1x-sys-config-params">
+<!ENTITY DOT1X_OPER_GLOBAL_PARAMS     "/dot1x-sys-oper">
+<!ENTITY DOT1X_CONFIG_IF_NAME     "/interfaces/interface/name=${ifacename}">
+<!ENTITY DOT1X_OPER_IF_NAME     "/interfaces-state/interface/name=${dot1x_iface_name}">
+<!ENTITY DOT1X_OPER_CFG_IF_NAME "/interfaces/interface/name=${dot1x_iface_name}">
+<!ENTITY DOT1X_CONFIG_IF_PARAMS "/interfaces/interface/dell-dot1x:dot1x-if-config-params">
+<!ENTITY DOT1X_OPER_IF_PARAMS     "/interfaces-state/interface/dell-dot1x:dot1x-if-oper-params">
+]>
+<CLISH_MODULE
+     xmlns="http://www.dellemc.com/force10/XMLSchema"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xmlns:xi="http://www.w3.org/2001/XInclude"
+     xsi:schemaLocation="http://www.dellemc.com/force10/XMLSchema
+     http://www.dellemc.com/force10/XMLSchema/clish.xsd"
+    >
+    <!--=========================================================================-->
+    <!--MODE : exec -->
+    <VIEW
+        name="enable-view"
+        >
+        <!--show candidate-configuration dot1x -->
+        <COMMAND
+            name="show candidate-configuration dot1x"
+            help="Current candidate dot1x configuration"
+            yang_filter="&SUBTREE_FILTER;Filter_Conditions:&DOT1X_CONFIG_GLOBAL_PARAMS;;Filter_Namespace:&MODULE-NS;|&SUBTREE_FILTER;Filter_Conditions:&DOT1X_CONFIG_IF_PARAMS;;Filter_Namespace:&MODULE-NS;,&IF-MODULE-NS;"
+            db_mode="configure,configure-if"
+            >
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+
+        <!--show running-configuration dot1x -->
+        <COMMAND
+            name="show running-configuration dot1x"
+            help="Current operating dot1x configuration"
+            yang_filter="&SUBTREE_FILTER;Filter_Conditions:&DOT1X_CONFIG_GLOBAL_PARAMS;;Filter_Namespace:&MODULE-NS;|&SUBTREE_FILTER;Filter_Conditions:&DOT1X_CONFIG_IF_PARAMS;;Filter_Namespace:&MODULE-NS;,&IF-MODULE-NS;"
+
+            db_mode="configure,configure-if"
+            >
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+
+        <!--show dot1x interface -->
+        <COMMAND
+            name="show dot1x"
+            help="Show dot1x information"
+            operation="get"
+            namespace="http://www.dellemc.com/networking/os10/dell-dot1x"
+            yang_filter="&SUBTREE_FILTER;Filter_Conditions:&DOT1X_CONFIG_GLOBAL_PARAMS;;Filter_Namespace:&MODULE-NS;|&SUBTREE_FILTER;Filter_Conditions:&DOT1X_OPER_GLOBAL_PARAMS;;Filter_Namespace:&MODULE-NS;"
+            template="show_dot1x.xsl"
+            >
+            <PARAM
+                name="interface"
+                help="Select an interface"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                optional="true"
+                yang_filter="&SUBTREE_FILTER;Filter_Conditions:&DOT1X_CONFIG_GLOBAL_PARAMS;;Filter_Namespace:&MODULE-NS;|&SUBTREE_FILTER;Filter_Conditions:&DOT1X_CONFIG_IF_PARAMS;;Filter_Namespace:&IF-MODULE-NS;,&MODULE-NS;|&SUBTREE_FILTER;Filter_Conditions:&DOT1X_OPER_IF_PARAMS;;Filter_Namespace:&IF-MODULE-NS;,&MODULE-NS;"
+                template="show_dot1x_interface.xsl"
+                >
+                <PARAM
+                name="dot1x_iface_name"
+                help="Ethernet interface number"
+                ptype="PHY_INTERFACE"
+                optional="true"
+                yang_filter="&SUBTREE_FILTER;Filter_Conditions:&DOT1X_CONFIG_GLOBAL_PARAMS;;Filter_Namespace:&MODULE-NS;|&SUBTREE_FILTER;Filter_Conditions:&DOT1X_OPER_CFG_IF_NAME;,&DOT1X_CONFIG_IF_PARAMS;;Filter_Namespace:&IF-MODULE-NS;,&MODULE-NS;|&SUBTREE_FILTER;Filter_Conditions:&DOT1X_OPER_IF_NAME;,&DOT1X_OPER_IF_PARAMS;;Filter_Namespace:&IF-MODULE-NS;,&MODULE-NS;"
+                template="show_dot1x_interface.xsl"
+                />
+            </PARAM>
+
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+    </VIEW>
+    <!--MODE : interface -->
+    <VIEW
+        name="configure-if-view"
+        >
+        <!-- dot1x [ host-mode | max-req | port-control | re-authentication | timeout ] -->
+        <COMMAND
+            name="dot1x"
+            help="Configure dot1x Parameters"
+            operation="edit-config"
+            namespace="&MODULE-NS;,&IF-MODULE-NS;"
+            >
+            <PARAM
+                name="dot1x-options"
+                help="Configure dot1x options"
+                ptype="SUBCOMMAND"
+                mode="switch"
+                >
+                <!--dot1x host-mode -->
+                <PARAM
+                    name="host-mode"
+                    help="Configure the host mode for the interface"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    >
+                    <PARAM
+                        name="host-mode-options"
+                        help="Configure the host mode for the interface"
+                        ptype="SUBCOMMAND"
+                        mode="switch"
+                        >
+                        <PARAM
+                            name="multi-host"
+                            help="Multiple host mode (default)"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            yang_name="&DOT1X_CONFIG_IF_NAME;,&DOT1X_CONFIG_IF_PARAMS;/dell-dot1x:host-mode=multi-host"
+                            />
+                        <PARAM
+                            name="multi-auth"
+                            help="Multiple supplicant mode"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            yang_name="&DOT1X_CONFIG_IF_NAME;,&DOT1X_CONFIG_IF_PARAMS;/dell-dot1x:host-mode=multi-auth"
+                            >
+                        </PARAM>
+                    </PARAM>
+                </PARAM>
+                <!--dot1x max-req -->
+                <PARAM
+                    name="max-req"
+                    help="Configure the max requests for the interface"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    >
+                    <PARAM
+                        name="max-req-count"
+                        help="Configure the retry count (default = 2)"
+                        ptype="RANGE_1_10"
+                        yang_name="&DOT1X_CONFIG_IF_NAME;,&DOT1X_CONFIG_IF_PARAMS;/dell-dot1x:max-auth-req=${max-req-count}"
+                        />
+                </PARAM>
+                <!--dot1x port-control -->
+                <PARAM
+                    name="port-control"
+                    help="Configure the port control for the interface"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    >
+                    <PARAM
+                        name="port-control-switch"
+                        help="Configure the port control for the interface"
+                        ptype="SUBCOMMAND"
+                        mode="switch"
+                        >
+                        <!--dot1x port-control force-authorized -->
+                        <PARAM
+                            name="force-authorized"
+                            help="Configure the port for force authorization"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            yang_name="&DOT1X_CONFIG_IF_NAME;,&DOT1X_CONFIG_IF_PARAMS;/dell-dot1x:port-control=force-authorized"
+                            />
+                        <!--dot1x port-control force-unauthorized -->
+                        <PARAM
+                            name="force-unauthorized"
+                            help="Configure the port for force unauthorization"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            yang_name="&DOT1X_CONFIG_IF_NAME;,&DOT1X_CONFIG_IF_PARAMS;/dell-dot1x:port-control=force-unauthorized"
+                            />
+                        <!--dot1x port-control auto -->
+                        <PARAM
+                            name="auto"
+                            help="Configure the port for automatic mode"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            yang_name="&DOT1X_CONFIG_IF_NAME;,&DOT1X_CONFIG_IF_PARAMS;/dell-dot1x:port-control=auto"
+                            />
+                    </PARAM>
+                </PARAM>
+                <!--dot1x re-authentication -->
+                <PARAM
+                    name="re-authentication"
+                    help="enable reauthentication in the interface"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    yang_name="&DOT1X_CONFIG_IF_NAME;,&DOT1X_CONFIG_IF_PARAMS;/dell-dot1x:reauth-enabled=true"
+                    />
+                <!--dot1x timeout [quiet-period | reauth-period | server-timeout | supp-timeout | tx-period -->
+                <PARAM
+                    name="timeout"
+                    help="Configure timeout value"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    >
+                    <PARAM
+                        name="timeout-options"
+                        help="Configure timeout value options"
+                        ptype="SUBCOMMAND"
+                        mode="switch"
+                        >
+                        <!--dot1x timeout quiet-period -->
+                        <PARAM
+                            name="quiet-period"
+                            help="Configure Idle time before retry on failed authentication exchange with supplicant"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            >
+                            <PARAM
+                                name="quiet-period-value"
+                                help="Value in seconds (default = 60)"
+                                ptype="RANGE_1_65535"
+                                yang_name="&DOT1X_CONFIG_IF_NAME;,&DOT1X_CONFIG_IF_PARAMS;/dell-dot1x:quiet-period=${quiet-period-value}"
+                                />
+                        </PARAM>
+                        <!--dot1x timeout re-authperiod -->
+                        <PARAM
+                            name="re-authperiod"
+                            help="Configure reauthentication interval"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            >
+                            <PARAM
+                                name="re-authperiod-value"
+                                help="Value in seconds (default = 3600)"
+                                ptype="RANGE_1_65535"
+                                yang_name="&DOT1X_CONFIG_IF_NAME;,&DOT1X_CONFIG_IF_PARAMS;/dell-dot1x:reauth-period=${re-authperiod-value}"
+                                />
+                        </PARAM>
+                        <!--dot1x timeout server-timeout -->
+                        <PARAM
+                            name="server-timeout"
+                            help="Configure timeout for exchanges with authentication server"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            >
+                            <PARAM
+                                name="server-timeout-value"
+                                help="Value in seconds (default = 30)"
+                                ptype="RANGE_1_65535"
+                                yang_name="&DOT1X_CONFIG_IF_NAME;,&DOT1X_CONFIG_IF_PARAMS;/dell-dot1x:server-timeout=${server-timeout-value}"
+                                />
+                        </PARAM>
+                        <!--dot1x timeout supp-timeout -->
+                        <PARAM
+                            name="supp-timeout"
+                            help="Configure timeout for exchanges with supplicant"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            >
+                            <PARAM
+                                name="supp-timeout-value"
+                                help="Value in seconds (default = 30)"
+                                ptype="RANGE_1_65535"
+                                yang_name="&DOT1X_CONFIG_IF_NAME;,&DOT1X_CONFIG_IF_PARAMS;/dell-dot1x:supp-timeout=${supp-timeout-value}"
+                                />
+                        </PARAM>
+                        <!--dot1x timeout tx-period -->
+                        <PARAM
+                            name="tx-period"
+                            help="Configure the time for retransmission of EAP requests"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            >
+                            <PARAM
+                                name="tx-period-value"
+                                help="Value in seconds (default = 60)"
+                                ptype="RANGE_1_65535"
+                                yang_name="&DOT1X_CONFIG_IF_NAME;,&DOT1X_CONFIG_IF_PARAMS;/dell-dot1x:tx-period=${tx-period-value}"
+                                />
+                        </PARAM>
+                    </PARAM>
+                </PARAM>
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+    </VIEW>
+    <VIEW
+        name="configure-if-view"
+        >
+        <!-- no dot1x [ host-mode | max-req | port-control | re-authentication | timeout ] -->
+        <COMMAND
+            name="no dot1x"
+            help="Configure dot1x information"
+            operation="edit-config"
+            namespace="&MODULE-NS;,&IF-MODULE-NS;"
+            >
+            <!--dot1x timeout [quiet-period | server-timeout | supp-timeout | tx-period | reauth-period -->
+            <PARAM
+                name="dot1x-options"
+                help="Configure dot1x options"
+                ptype="SUBCOMMAND"
+                mode="switch"
+                >
+                <!--dot1x host-mode -->
+                <PARAM
+                    name="host-mode"
+                    help="Delete the host mode for the interface"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    yang_name="&DOT1X_CONFIG_IF_NAME;,&DOT1X_CONFIG_IF_PARAMS;/dell-dot1x:host-mode"
+                    sub_oper_yang = "remove:host-mode"
+                    >
+                    <PARAM
+                        name="host-mode-options"
+                        help="Configure the host mode for the interface"
+                        ptype="SUBCOMMAND"
+                        mode="switch"
+                        optional="true"
+                        >
+                        <PARAM
+                            name="multi-host"
+                            help="Delete the host mode"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            />
+                        <PARAM
+                            name="multi-auth"
+                            help="Delete the host mode"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            >
+                        </PARAM>
+                    </PARAM>
+                </PARAM>
+                <!--dot1x max-req -->
+                <PARAM
+                    name="max-req"
+                    help="Delete the max requests for the interface"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    yang_name="&DOT1X_CONFIG_IF_NAME;,&DOT1X_CONFIG_IF_PARAMS;/dell-dot1x:max-auth-req"
+                    sub_oper_yang = "remove:max-auth-req"
+                    >
+                    <PARAM
+                        name="max-req-count"
+                        help="Optional retry count"
+                        ptype="RANGE_1_3600"
+                        optional="true"
+                        />
+                </PARAM>
+                <!--dot1x port-control -->
+                <PARAM
+                    name="port-control"
+                    help="Remove the port control for the interface"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    yang_name="&DOT1X_CONFIG_IF_NAME;,&DOT1X_CONFIG_IF_PARAMS;/dell-dot1x:port-control"
+                    sub_oper_yang = "remove:port-control"
+                    >
+                    <PARAM
+                        name="port-control-switch"
+                        help="Delete the port control for the interface"
+                        ptype="SUBCOMMAND"
+                        mode="switch"
+                        optional="true"
+                        >
+                        <!--dot1x port-control auto -->
+                        <PARAM
+                            name="auto"
+                            help="optional mode value "
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            />
+                        <!--dot1x port-control force-authorized -->
+                        <PARAM
+                            name="force-authorized"
+                            help="optional mode value "
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            />
+                        <!--dot1x port-control force-unauthorized -->
+                        <PARAM
+                            name="force-unauthorized"
+                            help="optional mode value "
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            />
+                    </PARAM>
+                </PARAM>
+                <!--dot1x re-authentication -->
+                <PARAM
+                    name="re-authentication"
+                    help="disable reauthentication in the interface"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    yang_name="&DOT1X_CONFIG_IF_NAME;,&DOT1X_CONFIG_IF_PARAMS;/dell-dot1x:reauth-enabled"
+                    sub_oper_yang = "remove:reauth-enabled"
+                    />
+                <PARAM
+                    name="timeout"
+                    help="Remove timeout value"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    >
+                    <PARAM
+                        name="timeout-options"
+                        help="Remove timeout value options"
+                        ptype="SUBCOMMAND"
+                        mode="switch"
+                        >
+                        <!--dot1x timeout quiet-period -->
+                        <PARAM
+                            name="quiet-period"
+                            help="select quiet-period option to remove"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            yang_name="&DOT1X_CONFIG_IF_NAME;,&DOT1X_CONFIG_IF_PARAMS;/dell-dot1x:quiet-period"
+                            sub_oper_yang = "remove:quiet-period"
+                            >
+                            <PARAM
+                                name="quiet-period-value"
+                                optional="true"
+                                help="Optional value in seconds"
+                                ptype="RANGE_1_65535"
+                                />
+                        </PARAM>
+                        <!--dot1x timeout re-authperiod -->
+                        <PARAM
+                            name="re-authperiod"
+                            help="select re-authperiod as property to remove"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            yang_name="&DOT1X_CONFIG_IF_NAME;,&DOT1X_CONFIG_IF_PARAMS;/dell-dot1x:reauth-period"
+                            sub_oper_yang = "remove:reauth-period"
+                            >
+                            <PARAM
+                                name="re-authperiod-value"
+                                help="Optional value in seconds"
+                                optional="true"
+                                ptype="RANGE_1_65535"
+                                />
+                        </PARAM>
+                        <!--dot1x timeout server-timeout -->
+                        <PARAM
+                            name="server-timeout"
+                            help="select re-authperiod as property to remove"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            yang_name="&DOT1X_CONFIG_IF_NAME;,&DOT1X_CONFIG_IF_PARAMS;/dell-dot1x:server-timeout"
+                            sub_oper_yang = "remove:server-timeout"
+                            >
+                            <PARAM
+                                name="server-timeout-value"
+                                optional="true"
+                                help="Optional value in seconds"
+                                ptype="RANGE_1_65535"
+                                />
+                        </PARAM>
+                        <!--dot1x timeout supp-timeout -->
+                        <PARAM
+                            name="supp-timeout"
+                            help="select supp-timeout as property to remove"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            yang_name="&DOT1X_CONFIG_IF_NAME;,&DOT1X_CONFIG_IF_PARAMS;/dell-dot1x:supp-timeout"
+                            sub_oper_yang = "remove:supp-timeout"
+                            >
+                            <PARAM
+                                name="supp-timeout-value"
+                                optional="true"
+                                help="Optional value in seconds"
+                                ptype="RANGE_1_65535"
+                                />
+                        </PARAM>
+                        <!--dot1x timeout tx-period -->
+                        <PARAM
+                            name="tx-period"
+                            help="select tx-period as property to remove"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            yang_name="&DOT1X_CONFIG_IF_NAME;,&DOT1X_CONFIG_IF_PARAMS;/dell-dot1x:tx-period"
+                            sub_oper_yang = "remove:tx-period"
+                            >
+                            <PARAM
+                                name="tx-period-value"
+                                help="Optional value in seconds"
+                                optional="true"
+                                ptype="RANGE_1_65535"
+                                />
+                        </PARAM>
+                    </PARAM>
+                </PARAM>
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+    </VIEW>
+    <!--MODE : global -->
+    <VIEW
+        name="configure-view"
+        >
+        <COMMAND
+            name="dot1x"
+            help="Configure dot1x global information"
+            operation="edit-config"
+            namespace="http://www.dellemc.com/networking/os10/dell-dot1x"
+            >
+            <PARAM
+                name="dot1x-options"
+                help="Configure dot1x options"
+                ptype="SUBCOMMAND"
+                mode="switch"
+                >
+                <!--dot1x system-auth-control -->
+                <PARAM
+                    name="system-auth-control"
+                    help="Enable dot1x globally"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    yang_name="&DOT1X_CONFIG_GLOBAL_PARAMS;/auth-control=enabled"
+                    />
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="no dot1x"
+            help="Remove dot1x global information"
+            operation="edit-config"
+            namespace="http://www.dellemc.com/networking/os10/dell-dot1x"
+            >
+            <PARAM
+                name="dot1x-options"
+                help="Configure dot1x options"
+                ptype="SUBCOMMAND"
+                mode="switch"
+                >
+                <!--dot1x system-auth-control -->
+                <PARAM
+                    name="system-auth-control"
+                    help="Disable system-auth-control"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    yang_name="&DOT1X_CONFIG_GLOBAL_PARAMS;/auth-control"
+                    sub_oper_yang = "remove:auth-control"
+                    />
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+    </VIEW>
+    <VIEW
+        name="configure-if-range-view"
+        >
+        <!-- no dot1x [ host-mode | max-req | port-control | re-authentication | timeout ] -->
+        <COMMAND
+            name="no dot1x"
+            help="Configure dot1x information"
+            operation="edit-config"
+            namespace="&MODULE-NS;,&IF-MODULE-NS;"
+            >
+            <!--dot1x timeout [quiet-period | server-timeout | supp-timeout | tx-period | reauth-period -->
+            <PARAM
+                name="dot1x-options"
+                help="Configure dot1x options"
+                ptype="SUBCOMMAND"
+                mode="switch"
+                >
+                <!--dot1x host-mode -->
+                <PARAM
+                    name="host-mode"
+                    help="Delete the host mode for the interface"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    yang_name="&DOT1X_CONFIG_RANGE_IF_NAME;,&DOT1X_CONFIG_RANGE_IF_PARAMS;/dell-dot1x:host-mode"
+                    app_common_yang="&DOT1X_CONFIG_RANGE_IF_NAME;"
+                    sub_oper_yang = "remove:host-mode"
+                    >
+                    <PARAM
+                        name="host-mode-options"
+                        help="Configure the host mode for the interface"
+                        ptype="SUBCOMMAND"
+                        mode="switch"
+                        optional="true"
+                        >
+                        <PARAM
+                            name="multi-host"
+                            help="Delete the host mode"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            />
+                        <PARAM
+                            name="multi-auth"
+                            help="Delete the host mode"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            >
+                        </PARAM>
+                    </PARAM>
+                </PARAM>
+                <!--dot1x max-req -->
+                <PARAM
+                    name="max-req"
+                    help="Delete the max requests for the interface"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    yang_name="&DOT1X_CONFIG_RANGE_IF_NAME;,&DOT1X_CONFIG_RANGE_IF_PARAMS;/dell-dot1x:max-auth-req"
+                    app_common_yang="&DOT1X_CONFIG_RANGE_IF_NAME;"
+                    sub_oper_yang = "remove:max-auth-req"
+                    >
+                    <PARAM
+                        name="max-req-count"
+                        help="Optional retry count"
+                        ptype="RANGE_1_3600"
+                        optional="true"
+                        />
+                </PARAM>
+                <!--dot1x port-control -->
+                <PARAM
+                    name="port-control"
+                    help="Remove the port control for the interface"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    yang_name="&DOT1X_CONFIG_RANGE_IF_NAME;,&DOT1X_CONFIG_RANGE_IF_PARAMS;/dell-dot1x:port-control"
+                    app_common_yang="&DOT1X_CONFIG_RANGE_IF_NAME;"
+                    sub_oper_yang = "remove:port-control"
+                    >
+                    <PARAM
+                        name="port-control-switch"
+                        help="Delete the port control for the interface"
+                        ptype="SUBCOMMAND"
+                        mode="switch"
+                        optional="true"
+                        >
+                        <!--dot1x port-control auto -->
+                        <PARAM
+                            name="auto"
+                            help="optional mode value "
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            />
+                        <!--dot1x port-control force-authorized -->
+                        <PARAM
+                            name="force-authorized"
+                            help="optional mode value "
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            />
+                        <!--dot1x port-control force-unauthorized -->
+                        <PARAM
+                            name="force-unauthorized"
+                            help="optional mode value "
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            />
+                    </PARAM>
+                </PARAM>
+                <!--dot1x re-authentication -->
+                <PARAM
+                    name="re-authentication"
+                    help="disable reauthentication in the interface"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    yang_name="&DOT1X_CONFIG_RANGE_IF_NAME;,&DOT1X_CONFIG_RANGE_IF_PARAMS;/dell-dot1x:reauth-enabled"
+                    app_common_yang="&DOT1X_CONFIG_RANGE_IF_NAME;"
+                    sub_oper_yang = "remove:reauth-enabled"
+                    />
+                <PARAM
+                    name="timeout"
+                    help="Remove timeout value"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    >
+                    <PARAM
+                        name="timeout-options"
+                        help="Remove timeout value options"
+                        ptype="SUBCOMMAND"
+                        mode="switch"
+                        >
+                        <!--dot1x timeout quiet-period -->
+                        <PARAM
+                            name="quiet-period"
+                            help="select quiet-period option to remove"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            yang_name="&DOT1X_CONFIG_RANGE_IF_NAME;,&DOT1X_CONFIG_RANGE_IF_PARAMS;/dell-dot1x:quiet-period"
+                            app_common_yang="&DOT1X_CONFIG_RANGE_IF_NAME;"
+                            sub_oper_yang = "remove:quiet-period"
+                            >
+                            <PARAM
+                                name="quiet-period-value"
+                                optional="true"
+                                help="Optional value in seconds"
+                                ptype="RANGE_1_65535"
+                                />
+                        </PARAM>
+                        <!--dot1x timeout re-authperiod -->
+                        <PARAM
+                            name="re-authperiod"
+                            help="select re-authperiod as property to remove"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            yang_name="&DOT1X_CONFIG_RANGE_IF_NAME;,&DOT1X_CONFIG_RANGE_IF_PARAMS;/dell-dot1x:reauth-period"
+                            app_common_yang="&DOT1X_CONFIG_RANGE_IF_NAME;"
+                            sub_oper_yang = "remove:reauth-period"
+                            >
+                            <PARAM
+                                name="re-authperiod-value"
+                                help="Optional value in seconds"
+                                optional="true"
+                                ptype="RANGE_1_65535"
+                                />
+                        </PARAM>
+                        <!--dot1x timeout server-timeout -->
+                        <PARAM
+                            name="server-timeout"
+                            help="select re-authperiod as property to remove"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            yang_name="&DOT1X_CONFIG_RANGE_IF_NAME;,&DOT1X_CONFIG_RANGE_IF_PARAMS;/dell-dot1x:server-timeout"
+                            app_common_yang="&DOT1X_CONFIG_RANGE_IF_NAME;"
+                            sub_oper_yang = "remove:server-timeout"
+                            >
+                            <PARAM
+                                name="server-timeout-value"
+                                optional="true"
+                                help="Optional value in seconds"
+                                ptype="RANGE_1_65535"
+                                />
+                        </PARAM>
+                        <!--dot1x timeout supp-timeout -->
+                        <PARAM
+                            name="supp-timeout"
+                            help="select supp-timeout as property to remove"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            yang_name="&DOT1X_CONFIG_RANGE_IF_NAME;,&DOT1X_CONFIG_RANGE_IF_PARAMS;/dell-dot1x:supp-timeout"
+                            app_common_yang="&DOT1X_CONFIG_RANGE_IF_NAME;"
+                            sub_oper_yang = "remove:supp-timeout"
+                            >
+                            <PARAM
+                                name="supp-timeout-value"
+                                optional="true"
+                                help="Optional value in seconds"
+                                ptype="RANGE_1_65535"
+                                />
+                        </PARAM>
+                        <!--dot1x timeout tx-period -->
+                        <PARAM
+                            name="tx-period"
+                            help="select tx-period as property to remove"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            yang_name="&DOT1X_CONFIG_RANGE_IF_NAME;,&DOT1X_CONFIG_RANGE_IF_PARAMS;/dell-dot1x:tx-period"
+                            app_common_yang="&DOT1X_CONFIG_RANGE_IF_NAME;"
+                            sub_oper_yang = "remove:tx-period"
+                            >
+                            <PARAM
+                                name="tx-period-value"
+                                help="Optional value in seconds"
+                                optional="true"
+                                ptype="RANGE_1_65535"
+                                />
+                        </PARAM>
+                    </PARAM>
+                </PARAM>
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+    </VIEW>
+    <VIEW
+        name="configure-if-range-view"
+        >
+        <!-- dot1x [ host-mode | max-req | port-control | re-authentication | timeout ] -->
+        <COMMAND
+            name="dot1x"
+            help="Configure dot1x Parameters"
+            operation="edit-config"
+            namespace="&MODULE-NS;,&IF-MODULE-NS;"
+            >
+            <PARAM
+                name="dot1x-options"
+                help="Configure dot1x options"
+                ptype="SUBCOMMAND"
+                mode="switch"
+                >
+                <!--dot1x host-mode -->
+                <PARAM
+                    name="host-mode"
+                    help="Configure the host mode for the interface"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    >
+                    <PARAM
+                        name="host-mode-options"
+                        help="Configure the host mode for the interface"
+                        ptype="SUBCOMMAND"
+                        mode="switch"
+                        >
+                        <PARAM
+                            name="multi-host"
+                            help="Multiple host mode (default)"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            yang_name="&DOT1X_CONFIG_RANGE_IF_NAME;,&DOT1X_CONFIG_RANGE_IF_PARAMS;/dell-dot1x:host-mode=multi-host"
+                            app_common_yang="&DOT1X_CONFIG_RANGE_IF_NAME;"
+                            />
+                        <PARAM
+                            name="multi-auth"
+                            help="Multiple supplicant mode"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            yang_name="&DOT1X_CONFIG_RANGE_IF_NAME;,&DOT1X_CONFIG_RANGE_IF_PARAMS;/dell-dot1x:host-mode=multi-auth"
+                            app_common_yang="&DOT1X_CONFIG_RANGE_IF_NAME;"
+                            >
+                        </PARAM>
+                    </PARAM>
+                </PARAM>
+                <!--dot1x max-req -->
+                <PARAM
+                    name="max-req"
+                    help="Configure the max requests for the interface"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    >
+                    <PARAM
+                        name="max-req-count"
+                        help="Configure the retry count (default = 2)"
+                        ptype="RANGE_1_10"
+                        yang_name="&DOT1X_CONFIG_RANGE_IF_NAME;,&DOT1X_CONFIG_RANGE_IF_PARAMS;/dell-dot1x:max-auth-req=${max-req-count}"
+                        app_common_yang="&DOT1X_CONFIG_RANGE_IF_NAME;"
+                        />
+                </PARAM>
+                <!--dot1x port-control -->
+                <PARAM
+                    name="port-control"
+                    help="Configure the port control for the interface"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    >
+                    <PARAM
+                        name="port-control-switch"
+                        help="Configure the port control for the interface"
+                        ptype="SUBCOMMAND"
+                        mode="switch"
+                        >
+                        <!--dot1x port-control force-authorized -->
+                        <PARAM
+                            name="force-authorized"
+                            help="Configure the port for force authorization"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            yang_name="&DOT1X_CONFIG_RANGE_IF_NAME;,&DOT1X_CONFIG_RANGE_IF_PARAMS;/dell-dot1x:port-control=force-authorized"
+                            app_common_yang="&DOT1X_CONFIG_RANGE_IF_NAME;"
+                            />
+                        <!--dot1x port-control force-unauthorized -->
+                        <PARAM
+                            name="force-unauthorized"
+                            help="Configure the port for force unauthorization"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            yang_name="&DOT1X_CONFIG_RANGE_IF_NAME;,&DOT1X_CONFIG_RANGE_IF_PARAMS;/dell-dot1x:port-control=force-unauthorized"
+                            app_common_yang="&DOT1X_CONFIG_RANGE_IF_NAME;"
+                            />
+                        <!--dot1x port-control auto -->
+                        <PARAM
+                            name="auto"
+                            help="Configure the port for automatic mode"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            yang_name="&DOT1X_CONFIG_RANGE_IF_NAME;,&DOT1X_CONFIG_RANGE_IF_PARAMS;/dell-dot1x:port-control=auto"
+                            app_common_yang="&DOT1X_CONFIG_RANGE_IF_NAME;"
+                            />
+                    </PARAM>
+                </PARAM>
+                <!--dot1x re-authentication -->
+                <PARAM
+                    name="re-authentication"
+                    help="enable reauthentication in the interface"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    yang_name="&DOT1X_CONFIG_RANGE_IF_NAME;,&DOT1X_CONFIG_RANGE_IF_PARAMS;/dell-dot1x:reauth-enabled=true"
+                    app_common_yang="&DOT1X_CONFIG_RANGE_IF_NAME;"
+                    />
+                <!--dot1x timeout [quiet-period | reauth-period | server-timeout | supp-timeout | tx-period -->
+                <PARAM
+                    name="timeout"
+                    help="Configure timeout value"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    >
+                    <PARAM
+                        name="timeout-options"
+                        help="Configure timeout value options"
+                        ptype="SUBCOMMAND"
+                        mode="switch"
+                        >
+                        <!--dot1x timeout quiet-period -->
+                        <PARAM
+                            name="quiet-period"
+                            help="Configure ideal time before retry on faild authentication exchange with supplicant"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            >
+                            <PARAM
+                                name="quiet-period-value"
+                                help="Value in seconds (default = 60)"
+                                ptype="RANGE_1_65535"
+                                yang_name="&DOT1X_CONFIG_RANGE_IF_NAME;,&DOT1X_CONFIG_RANGE_IF_PARAMS;/dell-dot1x:quiet-period=${quiet-period-value}"
+                                app_common_yang="&DOT1X_CONFIG_RANGE_IF_NAME;"
+                                />
+                        </PARAM>
+                        <!--dot1x timeout re-authperiod -->
+                        <PARAM
+                            name="re-authperiod"
+                            help="Configure reauthentication interval"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            >
+                            <PARAM
+                                name="re-authperiod-value"
+                                help="Value in seconds (default = 3600)"
+                                ptype="RANGE_1_65535"
+                                yang_name="&DOT1X_CONFIG_RANGE_IF_NAME;,&DOT1X_CONFIG_RANGE_IF_PARAMS;/dell-dot1x:reauth-period=${re-authperiod-value}"
+                                app_common_yang="&DOT1X_CONFIG_RANGE_IF_NAME;"
+                                />
+                        </PARAM>
+                        <!--dot1x timeout server-timeout -->
+                        <PARAM
+                            name="server-timeout"
+                            help="Configure timeout for exchanges with authentication server"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            >
+                            <PARAM
+                                name="server-timeout-value"
+                                help="Value in seconds (default = 30)"
+                                ptype="RANGE_1_65535"
+                                yang_name="&DOT1X_CONFIG_RANGE_IF_NAME;,&DOT1X_CONFIG_RANGE_IF_PARAMS;/dell-dot1x:server-timeout=${server-timeout-value}"
+                                app_common_yang="&DOT1X_CONFIG_RANGE_IF_NAME;"
+                                />
+                        </PARAM>
+                        <!--dot1x timeout supp-timeout -->
+                        <PARAM
+                            name="supp-timeout"
+                            help="Configure timeout for exchanges with supplicant"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            >
+                            <PARAM
+                                name="supp-timeout-value"
+                                help="Value in seconds (default = 30)"
+                                ptype="RANGE_1_65535"
+                                yang_name="&DOT1X_CONFIG_RANGE_IF_NAME;,&DOT1X_CONFIG_RANGE_IF_PARAMS;/dell-dot1x:supp-timeout=${supp-timeout-value}"
+                                app_common_yang="&DOT1X_CONFIG_RANGE_IF_NAME;"
+                                />
+                        </PARAM>
+                        <!--dot1x timeout tx-period -->
+                        <PARAM
+                            name="tx-period"
+                            help="Configure the time for retransmission of EAP requests"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            >
+                            <PARAM
+                                name="tx-period-value"
+                                help="Value in seconds (default = 60)"
+                                ptype="RANGE_1_65535"
+                                yang_name="&DOT1X_CONFIG_RANGE_IF_NAME;,&DOT1X_CONFIG_RANGE_IF_PARAMS;/dell-dot1x:tx-period=${tx-period-value}"
+                                app_common_yang="&DOT1X_CONFIG_RANGE_IF_NAME;"
+                                />
+                        </PARAM>
+                    </PARAM>
+                </PARAM>
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+    </VIEW>
+</CLISH_MODULE>
+

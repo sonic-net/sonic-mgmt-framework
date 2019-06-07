@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE CLISH_MODULE [
+<!ENTITY NAME_SPACE                     "http://www.dellemc.com/networking/os10/dell-tracker">
+<!ENTITY MODULE-DELL-OTM    "dell-tracker">
+<!ENTITY TRACK_NS_FILTER             "Filter_Namespace:&NAME_SPACE;">
+<!ENTITY SUBTREE_FILTER                 "Filter_Type:SUBTREE">
+<!ENTITY TRACK_STATUS                    "/track-status">
+<!ENTITY TRACK_STATUS_OBJ                "&TRACK_STATUS;/objects">
+]>
+
+<CLISH_MODULE
+    xmlns="http://www.dellemc.com/force10/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xi="http://www.w3.org/2001/XInclude"
+    xsi:schemaLocation="http://www.dellemc.com/force10/XMLSchema
+                        http://www.dellemc.com/force10/XMLSchema/clish.xsd"
+    >
+    <!--=======================================================-->
+
+    <VIEW
+        name="enable-view"
+        >
+    <COMMAND
+        name="show track"
+        help="Show object tracking information"
+        operation="get"
+        >
+        <PARAM
+            name="subcommands"
+            help="subcommands"
+            mode="switch"
+            ptype="SUBCOMMAND"
+            >
+            <PARAM
+                name="brief"
+                help="Brief status"
+                mode="subcommand"
+                ptype="SUBCOMMAND"
+                template="show_track_brief.xsl"
+                yang_filter="&TRACK_NS_FILTER;;&SUBTREE_FILTER;;Filter_Conditions:&TRACK_STATUS;"
+                />
+            <PARAM
+                name="track-id"
+                help="Object tracking resource ID"
+                ptype="RANGE_1_500"
+				template="show_track_id.xsl"
+				yang_filter="&TRACK_NS_FILTER;;&SUBTREE_FILTER;;Filter_Conditions:&TRACK_STATUS_OBJ;/track-id=${track-id}"
+                />
+			<PARAM
+				name="interface"
+				help="Tracked interfaces"
+                mode="subcommand"
+                ptype="SUBCOMMAND"
+                template="show_track_interface.xsl"
+                yang_filter="&TRACK_NS_FILTER;;&SUBTREE_FILTER;;Filter_Conditions:&TRACK_STATUS;"
+				/>
+			<PARAM
+				name="ip"
+				help="Tracked IPv4 host"
+                mode="subcommand"
+                ptype="SUBCOMMAND"
+                template="show_track_ip.xsl"
+                yang_filter="&TRACK_NS_FILTER;;&SUBTREE_FILTER;;Filter_Conditions:&TRACK_STATUS;"
+				/>
+			<PARAM
+				name="ipv6"
+				help="Tracked IPv6 host"
+                mode="subcommand"
+                ptype="SUBCOMMAND"
+                template="show_track_ipv6.xsl"
+                yang_filter="&TRACK_NS_FILTER;;&SUBTREE_FILTER;;Filter_Conditions:&TRACK_STATUS;"
+				/>
+        </PARAM>
+
+        <ACTION
+            builtin="clish_extn"
+            />
+    </COMMAND>
+    </VIEW>
+</CLISH_MODULE>

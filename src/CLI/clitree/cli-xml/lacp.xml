@@ -1,0 +1,611 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE CLISH_MODULE [
+<!ENTITY MODULE-PREF-IANA-IF "ianaift">
+<!ENTITY MODULE-NS-IANA-IF "&MODULE-PREF-IANA-IF;=urn:ietf:params:xml:ns:yang:iana-if-type">
+<!ENTITY MODULE           "dell-lacp">
+<!ENTITY MODULE-NS        "http://www.dellemc.com/networking/os10/dell-lacp">
+<!ENTITY IF-MODULE-NS     "urn:ietf:params:xml:ns:yang:ietf-interfaces">
+<!ENTITY MODULE-INTF-NS   "&IF-MODULE-NS;,dell-lacp=&MODULE-NS;">
+<!ENTITY MODULE-REF       "dell-lacp">
+<!ENTITY SUBTREE_FILTER   "Filter_Type:SUBTREE">
+<!ENTITY SYS_PRIORITY     "/sys-confg/system-priority">
+<!ENTITY SYS_MAC          "/sys-status/system-id">
+<!ENTITY IF_CFG           "/interfaces/interface">
+<!ENTITY IF_STATE         "/interfaces-state/interface">
+<!ENTITY IF_CFG_RANGE     "/interfaces/interface[]">
+<!ENTITY PORT_CFG         "/interfaces/interface/&MODULE-REF;:lacp-config">
+<!ENTITY RANGE_PORT_CFG   "/interfaces/interface[]/&MODULE-REF;:lacp-config">
+<!ENTITY LAG_CFG          "/interfaces/interface/&MODULE-REF;:lacp-lag-config">
+<!ENTITY RANGE_LAG_CFG    "/interfaces/interface[]/&MODULE-REF;:lacp-lag-config">
+<!ENTITY PORT_INFO_STATUS "/interfaces-state/interface/&MODULE-REF;:lacp-status">
+<!ENTITY PORT_INFO_STATS  "/interfaces-state/interface/statistics/&MODULE-REF;:lacp-statistics">
+<!ENTITY LAG_INFO_CFG     "/interfaces/interface/&MODULE-REF;:lacp-lag-config">
+<!ENTITY LAG_INFO_STATUS  "/interfaces-state/interface/dell-lacp:lacp-lag-status">
+
+<!ENTITY IANA-LAG-TYPE "ianaift:ieee8023adLag">
+]>
+<CLISH_MODULE
+          xmlns="http://www.dellemc.com/force10/XMLSchema"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xmlns:xi="http://www.w3.org/2001/XInclude"
+          xsi:schemaLocation="http://www.dellemc.com/force10/XMLSchema
+                              http://www.dellemc.com/force10/XMLSchema/clish.xsd"
+    >
+    <!--=======================================================-->
+    <!--                Exec MODE                              -->
+    <!--=======================================================-->
+    <VIEW
+        name="enable-view"
+        >
+        <!--show candidate-configuration lacp -->
+        <COMMAND
+            name="show candidate-configuration lacp"
+            help="Current candidate lacp configuration"
+            yang_filter="&SUBTREE_FILTER;;Filter_Conditions:/sys-confg;Filter_Namespace:&MODULE-NS;|&SUBTREE_FILTER;;Filter_Conditions:&PORT_CFG;;Filter_Namespace:&MODULE-INTF-NS;|&SUBTREE_FILTER;;Filter_Conditions:&LAG_CFG;;Filter_Namespace:&MODULE-INTF-NS;"
+            db_mode="configure,configure-if,configure-lag"
+            >
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+
+        <!--show running-configuration lacp -->
+        <COMMAND
+            name="show running-configuration lacp"
+            help="Current operating lacp configuration"
+            yang_filter="&SUBTREE_FILTER;;Filter_Conditions:/sys-confg;Filter_Namespace:&MODULE-NS;|&SUBTREE_FILTER;;Filter_Conditions:&PORT_CFG;;Filter_Namespace:&MODULE-INTF-NS;|&SUBTREE_FILTER;;Filter_Conditions:&LAG_CFG;;Filter_Namespace:&MODULE-INTF-NS;"
+            db_mode="configure,configure-if,configure-lag"
+            >
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+
+        <COMMAND
+            name="show lacp"
+            help="Show LACP information"
+            operation="get"
+            namespace="&MODULE-INTF-NS;"
+            >
+            <PARAM
+                name="subcommands"
+                help="subcommands"
+                mode="switch"
+                ptype="SUBCOMMAND"
+                >
+                <!-- show lacp counters -->
+                <PARAM
+                    name="counter"
+                    help="LACP counters information"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    yang_filter="&SUBTREE_FILTER;;Filter_Conditions:&PORT_INFO_STATS;;Filter_Namespace:&MODULE-INTF-NS;|&SUBTREE_FILTER;;Filter_Conditions:&LAG_INFO_STATUS;;Filter_Namespace:&MODULE-INTF-NS;"
+                    template="show_lacp_counters.xsl"
+                    >
+                    <!-- show lacp counters interface port-channel <num> -->
+                    <PARAM
+                    name="interface"
+                    help="LACP counters of the port channel interface"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    optional="true"
+                    >
+                        <PARAM
+                         name="iface"
+                         help="Port-channel identifier"
+                         ptype="PO_INTERFACE"
+                         yang_name="intentionally-nonnull=${iface}"
+                         yang_filter="&SUBTREE_FILTER;;Filter_Conditions:&PORT_INFO_STATS;;Filter_Namespace:&MODULE-INTF-NS;|&SUBTREE_FILTER;;Filter_Conditions:&IF_STATE;/name=${iface},&LAG_INFO_STATUS;;Filter_Namespace:&MODULE-INTF-NS;"
+                         /> <!-- iface -->
+                    </PARAM>     <!-- interface -->
+                </PARAM> <!-- counter -->
+
+                <!-- show lacp interface <interface name> -->
+                <PARAM
+                    name="interface"
+                    help="LACP statistics of interface"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    >
+                    <PARAM
+                        name="iface"
+                        help="Physical interface"
+                        ptype="PHY_INTERFACE"
+                        yang_filter="&SUBTREE_FILTER;;Filter_Conditions:&IF_STATE;/name=${iface},&PORT_INFO_STATUS;,&PORT_INFO_STATS;;Filter_Namespace:&MODULE-INTF-NS;"
+                        yang_name="intentionally-nonnull=${iface}"
+                        template="show_lacp_interface.xsl"
+                    />
+                </PARAM>
+                <!-- show lacp neighbor [interface port-channel <num>-->
+                <PARAM
+                    name="neighbor"
+                    help="LACP neighbor information"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    yang_filter="&SUBTREE_FILTER;;Filter_Conditions:&PORT_INFO_STATS;;Filter_Namespace:&MODULE-INTF-NS;|&SUBTREE_FILTER;;Filter_Conditions:&PORT_INFO_STATUS;;Filter_Namespace:&MODULE-INTF-NS;|&SUBTREE_FILTER;;Filter_Conditions:&LAG_INFO_STATUS;;Filter_Namespace:&MODULE-INTF-NS;"
+                    template="show_lacp_neighbor.xsl"
+                    >
+                    <PARAM
+                        name="interface"
+                        help="LACP neighbor state"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        optional="true"
+                        >
+                        <PARAM
+                            name="iface"
+                            help="Port-channel identifier"
+                            ptype="PO_INTERFACE"
+                            mode="subcommand"
+                            yang_filter="&SUBTREE_FILTER;;Filter_Conditions:&PORT_INFO_STATS;;Filter_Namespace:&MODULE-INTF-NS;|&SUBTREE_FILTER;;Filter_Conditions:&PORT_INFO_STATUS;;Filter_Namespace:&MODULE-INTF-NS;|&SUBTREE_FILTER;;Filter_Conditions:&IF_STATE;/name=${iface},&LAG_INFO_STATUS;;Filter_Namespace:&MODULE-INTF-NS;"
+                        />
+                    </PARAM>
+                </PARAM> <!-- neighbor -->
+
+                <!-- show lacp port-channel [interface port-channel <num>] -->
+                <PARAM
+                    name="port-channel"
+                    help="Port-channel number"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    yang_filter="&SUBTREE_FILTER;;Filter_Conditions:&IF_STATE;/oper-status,&PORT_INFO_STATUS;;Filter_Namespace:&MODULE-INTF-NS;|&SUBTREE_FILTER;;Filter_Namespace:&MODULE-INTF-NS;;Filter_Conditions:&IF_STATE;/oper-status,&LAG_INFO_STATUS;|&SUBTREE_FILTER;;Filter_Namespace:&MODULE-INTF-NS;;Filter_Conditions:&IF_CFG;/type=&IANA-LAG-TYPE;,&IF_CFG;/enabled"
+                    template="show_lacp_portchannel.xsl"
+                    >
+                    <PARAM
+                        name="interface"
+                        help="Select an interface"
+                        ptype="SUBCOMMAND"
+                        optional="true"
+                        mode="subcommand"
+                        >
+                        <PARAM
+                            name="interface-switch"
+                            help="Select an interface"
+                            ptype="SUBCOMMAND"
+                            mode="switch"
+                            >
+                            <PARAM
+                                name="port-channel"
+                                help="Port-channel interface"
+                                ptype="SUBCOMMAND"
+                                mode="subcommand"
+                                >
+                                <PARAM
+                                    name="iface_num"
+                                    help="Port-channel number"
+                                    ptype="LAG_NUM"
+                                    yang_filter="&SUBTREE_FILTER;;Filter_Conditions:&IF_STATE;/oper-status,&PORT_INFO_STATUS;;Filter_Namespace:&MODULE-INTF-NS;|&SUBTREE_FILTER;;Filter_Namespace:&MODULE-INTF-NS;;Filter_Conditions:&IF_STATE;/oper-status,&LAG_INFO_STATUS;,&IF_STATE;/name=port-channel${iface_num}|&SUBTREE_FILTER;;Filter_Namespace:&MODULE-INTF-NS;;Filter_Conditions:&IF_CFG;/enabled,&IF_CFG;/name=port-channel${iface_num}"
+                                />
+                            </PARAM>
+                        </PARAM>
+                    </PARAM>
+                </PARAM> <!-- neighbor -->
+
+                <!-- show lacpsystem-identifier -->
+                <PARAM
+                    name="system-identifier"
+                    help="LACP system identifier"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    yang_filter="&SUBTREE_FILTER;;Filter_Conditions:&SYS_PRIORITY;;Filter_Namespace:&MODULE-NS;|&SUBTREE_FILTER;;Filter_Conditions:&SYS_MAC;;Filter_Namespace:&MODULE-NS;"
+                    template="show_lacp_system_identifier.xsl"
+                    >
+                </PARAM>
+
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                />
+        </COMMAND>
+
+    </VIEW>
+
+    <VIEW
+        name="configure-view"
+        >
+        <!-- lacp system-priority <priority> -->
+        <COMMAND
+            name="lacp"
+            help="LACP commands"
+            operation="edit-config"
+            namespace="&MODULE-NS;"
+            >
+            <PARAM
+                name="system-priority"
+                help="LACP system priority"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                >
+                <PARAM
+                    name="priority-value"
+                    help="Priority value"
+                    ptype="RANGE_1_65535"
+                    yang_name="&SYS_PRIORITY;=${priority-value}"
+                    />
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                />
+        </COMMAND>
+
+        <!-- no lacp system-priority <priority> -->
+        <COMMAND
+            name="no lacp"
+            help="LACP commands"
+            operation="edit-config"
+            namespace="&MODULE-NS;"
+            >
+            <PARAM
+                name="system-priority"
+                help="LACP system priority"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                yang_name="&SYS_PRIORITY;"
+                sub_oper_yang="remove:system-priority"
+                >
+                <PARAM
+                    name="priority-value"
+                    help="Priority value"
+                    ptype="RANGE_1_65535"
+                    optional="true"
+                    />
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                />
+        </COMMAND>
+    </VIEW>
+
+    <VIEW
+        name="configure-lag-view"
+        >
+        <!-- lacp max-bundle <num> -->
+        <COMMAND
+            help="LACP configurations"
+            name="lacp"
+            namespace="&MODULE-INTF-NS;"
+            operation="edit-config">
+            <PARAM
+                name="max-bundle"
+                help="LACP maximum link bundle size"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                >
+                <PARAM
+                    name="maxbundle"
+                    help="Maximum bundle size (default=32)"
+                    ptype="RANGE_1_32"
+                    yang_name="&IF_CFG;/name=${port-channeliface},&LAG_CFG;/&MODULE-REF;:max-bundle=${maxbundle}"
+                />
+            </PARAM> <!--max-bundle -->
+            <ACTION builtin="clish_extn"/>
+        </COMMAND>
+
+        <!-- no lacp max-bundle [num] -->
+        <COMMAND
+            help="LACP configurations"
+            name="no lacp"
+            namespace="&MODULE-INTF-NS;"
+            operation="edit-config">
+            <PARAM
+                name="max-bundle"
+                help="LACP maximum link bundle size"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                yang_name="&IF_CFG;/name=${port-channeliface},&LAG_CFG;/&MODULE-REF;:max-bundle"
+                sub_oper_yang="remove:max-bundle"
+                >
+                <PARAM
+                    name="maxbundle"
+                    help="Maximum bundle size (default=32)"
+                    ptype="RANGE_1_32"
+                    optional="true"
+                />
+            </PARAM> <!--max-bundle -->
+            <ACTION builtin="clish_extn"/>
+        </COMMAND> <!-- no lacp max-bundle [num] -->
+    </VIEW>
+
+    <VIEW
+        name="configure-if-view"
+        >
+        <!-- lacp {[port-priority <priority>] | rate <rate>]} -->
+        <COMMAND
+            name="lacp"
+            help="Configure LACP information"
+            operation="edit-config"
+            namespace="&MODULE-INTF-NS;"
+            >
+            <PARAM
+                name="lacp-options"
+                help="Configure LACP information"
+                ptype="SUBCOMMAND"
+                mode="switch"
+                >
+                <PARAM
+                    name="port-priority"
+                    help="LACP port-priority"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                >
+                    <PARAM
+                        name="priority"
+                        help="Port priority (default=32768)"
+                        ptype="RANGE_1_65535"
+                        yang_name="&IF_CFG;/name=${ifacename},&PORT_CFG;/&MODULE-REF;:actor-port-priority=${priority}"
+                    />
+                </PARAM> <!--port-priority -->
+                <PARAM
+                    name="rate"
+                    help="LACP rate (default=normal)"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                >
+                    <PARAM
+                         name="lacp-rate"
+                         help="LACP rate"
+                         yang_name="&IF_CFG;/name=${ifacename}"
+                         ptype="SUBCOMMAND"
+                         mode="switch"
+                         >
+                         <PARAM
+                             name="fast"
+                             help="Fast lacp rate"
+                             ptype="SUBCOMMAND"
+                             mode="subcommand"
+                             yang_name="&PORT_CFG;/&MODULE-REF;:rate=fast"
+                             />
+                         <PARAM
+                             name="normal"
+                             help="Normal lacp rate"
+                             ptype="SUBCOMMAND"
+                             mode="subcommand"
+                             yang_name="&PORT_CFG;/&MODULE-REF;:rate=slow"
+                             />
+                    </PARAM> <!-- lacp-rate -->
+                </PARAM> <!-- lacp rate -->
+            </PARAM> <!-- lacp-options -->
+            <ACTION
+                builtin="clish_extn"
+            />
+        </COMMAND> <!-- lacp -->
+        <!-- no lacp ... -->
+        <!-- TBD - applicable only for port-channelview . -->
+        <COMMAND
+            name="no lacp"
+            help="Configure LACP information"
+            operation="edit-config"
+            namespace="&MODULE-INTF-NS;"
+            >
+            <PARAM
+                name="lacp-options"
+                help="Configure LACP information"
+                ptype="SUBCOMMAND"
+                mode="switch"
+                >
+                <PARAM
+                    name="port-priority"
+                    help="LACP port-priority"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    sub_oper_yang="remove:actor-port-priority"
+                    yang_name="&IF_CFG;/name=${ifacename},&PORT_CFG;/&MODULE-REF;:actor-port-priority"
+
+                >
+                    <PARAM
+                        name="priority"
+                        help="Port priority (default=32768)"
+                        ptype="RANGE_1_65535"
+                        optional="true"
+                    />
+                </PARAM> <!--port-priority -->
+                <PARAM
+                    name="rate"
+                    help="LACP rate (default=normal)"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    sub_oper_yang="remove:rate"
+                    yang_name="&IF_CFG;/name=${ifacename},&PORT_CFG;/&MODULE-REF;:rate"
+                >
+                    <PARAM
+                         name="lacp-rate"
+                         help="LACP rate"
+                         ptype="SUBCOMMAND"
+                         mode="switch"
+                         >
+                         <PARAM
+                             name="fast"
+                             help="Fast lacp rate"
+                             ptype="SUBCOMMAND"
+                             mode="subcommand"
+                             />
+                         <PARAM
+                             name="normal"
+                             help="Normal lacp rate"
+                             ptype="SUBCOMMAND"
+                             mode="subcommand"
+                             yang_name="&PORT_CFG;/&MODULE-REF;:rate=slow"
+                             />
+                    </PARAM> <!-- lacp-rate -->
+                </PARAM> <!-- lacp rate -->
+            </PARAM> <!-- lacp-options -->
+            <ACTION
+                builtin="clish_extn"
+            />
+        </COMMAND> <!-- lacp -->
+    </VIEW>
+    <!--***********************************************************-->
+    <!--                INTERFACE RANGE MODE CMDS                  -->
+    <!--***********************************************************-->
+    <VIEW
+        name="configure-if-range-view"
+        >
+        <!-- lacp {[port-priority <priority>] | rate <rate>]} -->
+        <COMMAND
+            name="lacp"
+            help="Configure LACP information"
+            operation="edit-config"
+            namespace="&MODULE-INTF-NS;"
+            >
+            <PARAM
+                name="lacp-options"
+                help="Configure LACP information"
+                ptype="SUBCOMMAND"
+                mode="switch"
+                >
+                <PARAM
+                    name="port-priority"
+                    help="LACP port-priority"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    >
+                    <PARAM
+                        name="priority"
+                        help="Port priority (default=32768)"
+                        ptype="RANGE_1_65535"
+                        yang_name="&IF_CFG_RANGE;/name=${ifacename},&RANGE_PORT_CFG;/&MODULE-REF;:actor-port-priority=${priority}"
+                    />
+                </PARAM> <!--port-priority -->
+                <PARAM
+                    name="rate"
+                    help="LACP rate (default=normal)"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    >
+                    <PARAM
+                         name="lacp-rate"
+                         help="LACP rate"
+                         yang_name="&IF_CFG_RANGE;/name=${ifacename}"
+                         ptype="SUBCOMMAND"
+                         mode="switch"
+                         >
+                         <PARAM
+                             name="fast"
+                             help="Fast lacp rate"
+                             ptype="SUBCOMMAND"
+                             mode="subcommand"
+                             yang_name="&RANGE_PORT_CFG;/&MODULE-REF;:rate=fast"
+                             />
+                         <PARAM
+                             name="normal"
+                             help="Normal lacp rate"
+                             ptype="SUBCOMMAND"
+                             mode="subcommand"
+                             yang_name="&RANGE_PORT_CFG;/&MODULE-REF;:rate=slow"
+                             />
+                    </PARAM> <!-- lacp-rate -->
+                </PARAM> <!-- lacp rate -->
+            </PARAM> <!-- lacp-options -->
+            <ACTION
+                builtin="clish_extn"
+            />
+        </COMMAND> <!-- lacp -->
+        <!-- no lacp ... -->
+        <!-- TBD - applicable only for port-channelview . -->
+        <COMMAND
+            name="no lacp"
+            help="Configure LACP information"
+            operation="edit-config"
+            namespace="&MODULE-INTF-NS;"
+            >
+            <PARAM
+                name="lacp-options"
+                help="Configure LACP information"
+                ptype="SUBCOMMAND"
+                mode="switch"
+                >
+                <PARAM
+                    name="port-priority"
+                    help="LACP port-priority"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    sub_oper_yang="remove:actor-port-priority"
+                    yang_name="&IF_CFG_RANGE;/name=${ifacename},&RANGE_PORT_CFG;/&MODULE-REF;:actor-port-priority=${priority}"
+                    >
+                    <PARAM
+                        name="priority"
+                        help="Port priority (default=32768)"
+                        ptype="RANGE_1_65535"
+                        optional="true"
+                    />
+                </PARAM> <!--port-priority -->
+                <PARAM
+                    name="rate"
+                    help="LACP rate (default=normal)"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    sub_oper_yang="remove:rate"
+                    yang_name="&IF_CFG_RANGE;/name=${ifacename},&RANGE_PORT_CFG;/&MODULE-REF;:rate=${lacp-rate}"
+                    >
+                    <PARAM
+                         name="lacp-rate"
+                         help="LACP rate"
+                         ptype="SUBCOMMAND"
+                         mode="switch"
+                         >
+                         <PARAM
+                             name="fast"
+                             help="Fast lacp rate"
+                             ptype="SUBCOMMAND"
+                             mode="subcommand"
+                             />
+                         <PARAM
+                             name="normal"
+                             help="Normal lacp rate"
+                             ptype="SUBCOMMAND"
+                             mode="subcommand"
+                             />
+                    </PARAM> <!-- lacp-rate -->
+                </PARAM> <!-- lacp rate -->
+            </PARAM> <!-- lacp-options -->
+            <ACTION
+                builtin="clish_extn"
+            />
+        </COMMAND> <!-- lacp -->
+    </VIEW>
+    <VIEW
+        name="configure-lag-range-view"
+        >
+        <!-- lacp max-bundle <num> -->
+        <COMMAND
+            help="LACP configurations"
+            name="lacp"
+            namespace="&MODULE-INTF-NS;"
+            operation="edit-config">
+            <PARAM
+                name="max-bundle"
+                help="LACP maximum link bundle size"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                >
+                <PARAM
+                    name="maxbundle"
+                    help="Maximum bundle size (default=32)"
+                    ptype="RANGE_1_32"
+                    yang_name="&IF_CFG_RANGE;/name=${portchanliface},&RANGE_LAG_CFG;/&MODULE-REF;:max-bundle=${maxbundle}"
+                />
+            </PARAM> <!--max-bundle -->
+            <ACTION builtin="clish_extn"/>
+        </COMMAND>
+
+        <!-- no lacp max-bundle [num] -->
+        <COMMAND
+            help="LACP configurations"
+            name="no lacp"
+            namespace="&MODULE-INTF-NS;"
+            operation="edit-config">
+            <PARAM
+                name="max-bundle"
+                help="LACP maximum link bundle size"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                yang_name="&IF_CFG_RANGE;/name=${portchanliface},&RANGE_LAG_CFG;/&MODULE-REF;:max-bundle"
+                sub_oper_yang="remove:max-bundle"
+                >
+                <PARAM
+                    name="maxbundle"
+                    help="Maximum bundle size (default=32)"
+                    ptype="RANGE_1_32"
+                />
+            </PARAM> <!--max-bundle -->
+            <ACTION builtin="clish_extn"/>
+        </COMMAND> <!-- no lacp max-bundle [num] -->
+    </VIEW>
+
+</CLISH_MODULE>

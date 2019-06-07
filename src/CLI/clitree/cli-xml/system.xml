@@ -1,0 +1,698 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE CLISH_MODULE [
+<!ENTITY NAME_SPACE                     "http://www.dellemc.com/networking/os10/dell-system">
+<!ENTITY NAME_SPACE_FILE                "http://www.dellemc.com/networking/os10/dell-filesystem">
+<!ENTITY SUBTREE_FILTER                 "Filter_Type:SUBTREE">
+<!ENTITY HOSTNAME                       "/system/hostname">
+<!ENTITY HOSTDESC                       "/system/host-descr">
+<!ENTITY SYSTEM_STATUS                  "/system-state/system-status">
+<!ENTITY FILE_STATUS                    "/file-transfer-status">
+<!ENTITY DIR_CONTENT                    "/file-system-info/system-folder">
+<!ENTITY DELETE_FILE                    "/delete-file">
+<!ENTITY MOVE_FILE                      "/move-file">
+<!ENTITY COPY_FILE                      "/copy-file">
+<!ENTITY IMAGE_URL                      "image directory (image://filepath)">
+<!ENTITY CORE_URL                       "coredump directory (coredump://filepath)">
+<!ENTITY CONFIG_URL                     "configuration directory (config://filepath)">
+<!ENTITY SUPPORT_URL                    "support-bundle directory (supportbundle://filepath)">
+<!ENTITY HOME_URL                       "home directory (home://filepath)">
+<!ENTITY HTTP_URL                       "remote HTTP server (http[s]://userid@hostip/filepath)">
+<!ENTITY FTP_URL                        "remote FTP server (ftp://userid:passwd@hostip/filepath)">
+<!ENTITY SCP_URL                        "remote SCP server (scp://userid:passwd@hostip/filepath)">
+<!ENTITY SFTP_URL                       "remote SFTP server (sftp://userid:passwd@hostip/filepath)">
+<!ENTITY TFTP_URL                       "remote TFTP server (tftp://hostip/filepath)">
+<!ENTITY USB_URL                        "USB filesystem (usb://filepath)">
+<!ENTITY SET_DATE                       "/set-current-datetime/current-datetime">
+<!ENTITY TIME_STR                       "/current/time">
+<!ENTITY DATE_STR                       "/current/date">
+<!ENTITY FILTER_DIR                     "Filter_Type:SUBTREE;Filter_Namespace:&NAME_SPACE_FILE;;Filter_Conditions:">
+]>
+<CLISH_MODULE
+    xmlns="http://www.dellemc.com/force10/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.dellemc.com/force10/XMLSchema
+                        http://www.dellemc.com/force10/XMLSchema/clish.xsd"
+    >
+    <VIEW name="enable-view">
+
+    <!--MODE : exec -->
+    <!-- copy -->
+          <COMMAND name="copy" access="sysadmin" help="Perform a file copy operation" operation="generic-rpc" namespace="http://www.dellemc.com/networking/os10/dell-filesystem"   yang_name="/copy-file" template="show_rpc_output.xsl" ptype="SUBCOMMAND">
+              <PARAM name="src-copy-options" help="Copy source options" ptype="SUBCOMMAND" mode="switch">
+
+                  <PARAM name="copy_config_url" help="Copy from &CONFIG_URL;" ptype="CONFIG_TYPE" yang_name="/copy-file/source-filename=${copy_config_url}">
+                      <PARAM name="copy_config_options" help="Copy configuration options" ptype="SUBCOMMAND" mode="switch">
+                          <PARAM name="config_to_config_url" help="Copy to &CONFIG_URL;" ptype="CONFIG_TYPE" yang_name="/copy-file/dest-filename=${config_to_config_url}"/>
+                          <PARAM name="config_to_ftp_url" help="Copy to &FTP_URL;" ptype="FTP_TYPE" prompt_fn="pwd_prompt" yang_name="/copy-file/dest-filename=${config_to_ftp_url}"/>
+                          <PARAM name="config_to_home_url" help="Copy to &HOME_URL;" ptype="HOME_TYPE" prompt_fn="insert_username" prompt_oper= "/copy-file/dest-filename=${config_to_home_url},/copy-file/source-filename=${copy_config_url}" yang_name="/copy-file/dest-filename=${config_to_home_url}"/>
+                          <PARAM name="config_to_http_url" help="Copy to &HTTP_URL;" ptype="HTTP_TYPE" yang_name="/copy-file/dest-filename=${config_to_http_url}"/>
+                          <PARAM name="config_to_scp_url" help="Copy to &SCP_URL;" ptype="SCP_TYPE" prompt_fn="pwd_prompt" yang_name="/copy-file/dest-filename=${config_to_scp_url}"/>
+                          <PARAM name="config_to_sftp_url" help="Copy to &SFTP_URL;" ptype="SFTP_TYPE" prompt_fn="pwd_prompt" yang_name="/copy-file/dest-filename=${config_to_sftp_url}"/>
+                          <PARAM name="config_to_tftp_url" help="Copy to &TFTP_URL;" ptype="TFTP_TYPE" yang_name="/copy-file/dest-filename=${config_to_tftp_url}"/>
+                          <PARAM name="config_to_usb_url" help="Copy to &USB_URL;" ptype="USB_TYPE" yang_name="/copy-file/dest-filename=${config_to_usb_url}"/>
+                      </PARAM>
+                  </PARAM>
+
+                  <PARAM name="copy_core_url" help="Copy from &CORE_URL;" ptype="CORE_TYPE" yang_name="/copy-file/source-filename=${copy_core_url}">
+                      <PARAM name="copy_core_options" help="Copy core options" ptype="SUBCOMMAND" mode="switch">
+                          <PARAM name="core_to_ftp_url" help="Copy to &FTP_URL;" ptype="FTP_TYPE" prompt_fn="pwd_prompt" yang_name="/copy-file/dest-filename=${core_to_ftp_url}"/>
+                          <PARAM name="core_to_http_url" help="Copy to &HTTP_URL;" ptype="HTTP_TYPE" yang_name="/copy-file/dest-filename=${core_to_http_url}"/>
+                          <PARAM name="core_to_scp_url" help="Copy to &SCP_URL;" ptype="SCP_TYPE" prompt_fn="pwd_prompt" yang_name="/copy-file/dest-filename=${core_to_scp_url}"/>
+                          <PARAM name="core_to_sftp_url" help="Copy to &SFTP_URL;" ptype="SFTP_TYPE" prompt_fn="pwd_prompt" yang_name="/copy-file/dest-filename=${core_to_sftp_url}"/>
+                          <PARAM name="core_to_tftp_url" help="Copy to &TFTP_URL;" ptype="TFTP_TYPE" yang_name="/copy-file/dest-filename=${core_to_tftp_url}"/>
+                          <PARAM name="core_to_usb_url" help="Copy to &USB_URL;" ptype="USB_TYPE" yang_name="/copy-file/dest-filename=${core_to_usb_url}"/>
+                      </PARAM>
+                  </PARAM>
+
+
+                  <PARAM name="copy_ftp_url" help="Copy from &FTP_URL;" ptype="FTP_TYPE" yang_name="/copy-file/source-filename=${copy_ftp_url}">
+                      <PARAM name="copy_ftp_options" help="Copy FTP options" ptype="SUBCOMMAND" mode="switch">
+                          <PARAM name="ftp_to_config_url" help="Copy to &CONFIG_URL;" ptype="CONFIG_TYPE" prompt_fn="pwd_prompt" yang_name="/copy-file/dest-filename=${ftp_to_config_url}"/>
+                          <PARAM name="ftp_to_home_url" help="Copy to &HOME_URL;" ptype="HOME_TYPE" prompt_fn="pwd_prompt_insert_username" prompt_oper= "/copy-file/dest-filename=${ftp_to_home_url},/copy-file/source-filename=${copy_ftp_url}" yang_name="/copy-file/dest-filename=${ftp_to_home_url}"/>
+                      </PARAM>
+                  </PARAM>
+
+                  <PARAM name="copy_home_url" help="Copy from &HOME_URL;" ptype="HOME_TYPE"  yang_name="/copy-file/source-filename=${copy_home_url}">
+                      <PARAM name="copy_home_options" help="Copy home options" ptype="SUBCOMMAND" mode="switch">
+                          <PARAM name="home_to_config_url" help="Copy to &CONFIG_URL;" ptype="CONFIG_TYPE" prompt_fn="insert_username" prompt_oper= "/copy-file/dest-filename=${home_to_config_url},/copy-file/source-filename=${copy_home_url}" yang_name="/copy-file/dest-filename=${home_to_config_url}"/>
+                          <PARAM name="home_to_ftp_url" help="Copy to &FTP_URL;" ptype="FTP_TYPE" prompt_fn="pwd_prompt_insert_username" prompt_oper= "/copy-file/dest-filename=${home_to_ftp_url},/copy-file/source-filename=${copy_home_url}" yang_name="/copy-file/dest-filename=${home_to_ftp_url}"/>
+                          <PARAM name="home_to_home_url" help="Copy to &HOME_URL;" ptype="HOME_TYPE" prompt_fn="insert_username" prompt_oper= "/copy-file/dest-filename=${home_to_home_url},/copy-file/source-filename=${copy_home_url}"  yang_name="/copy-file/dest-filename=${home_to_home_url}"/>
+                          <PARAM name="home_to_http_url" help="Copy to &HTTP_URL;" ptype="HTTP_TYPE" yang_name="/copy-file/dest-filename=${home_to_http_url}"/>
+                          <PARAM name="home_to_scp_url" help="Copy to &SCP_URL;" ptype="SCP_TYPE" prompt_fn="pwd_prompt_insert_username" prompt_oper= "/copy-file/dest-filename=${home_to_scp_url},/copy-file/source-filename=${copy_home_url}" yang_name="/copy-file/dest-filename=${home_to_scp_url}"/>
+                          <PARAM name="home_to_sftp_url" help="Copy to &SFTP_URL;" ptype="SFTP_TYPE" prompt_fn="pwd_prompt_insert_username" prompt_oper= "/copy-file/dest-filename=${home_to_sftp_url},/copy-file/source-filename=${copy_home_url}" yang_name="/copy-file/dest-filename=${home_to_sftp_url}"/>
+                          <PARAM name="home_to_tftp_url" help="Copy to &TFTP_URL;" ptype="TFTP_TYPE" prompt_fn="insert_username" prompt_oper= "/copy-file/dest-filename=${home_to_tftp_url},/copy-file/source-filename=${copy_home_url}" yang_name="/copy-file/dest-filename=${home_to_tftp_url}"/>
+                          <PARAM name="home_to_usb_url" help="Copy to &USB_URL;" ptype="USB_TYPE" prompt_fn="insert_username" prompt_oper= "/copy-file/dest-filename=${home_to_usb_url},/copy-file/source-filename=${copy_home_url}" yang_name="/copy-file/dest-filename=${home_to_tftp_url}"/>
+                      </PARAM>
+                  </PARAM>
+
+                  <PARAM name="running-configuration" help="Copy from current system configuration" mode="subcommand" ptype="SUBCOMMAND">
+                      <PARAM name="startup-configuration" help="Copy to startup configuration" mode="subcommand" ptype="SUBCOMMAND" operation="copy-config" />
+                  </PARAM>
+
+                  <PARAM name="copy_scp_url" help="Copy from &SCP_URL;" ptype="SCP_TYPE" yang_name="/copy-file/source-filename=${copy_scp_url}">
+                      <PARAM name="copy_scp_options" help="Copy SCP options" ptype="SUBCOMMAND" mode="switch">
+                          <PARAM name="scp_to_config_url" help="Copy to &CONFIG_URL;" ptype="CONFIG_TYPE" prompt_fn="pwd_prompt" yang_name="/copy-file/dest-filename=${scp_to_config_url}"/>
+                          <PARAM name="scp_to_home_url" help="Copy to &HOME_URL;" ptype="HOME_TYPE" prompt_fn="pwd_prompt_insert_username" prompt_oper= "/copy-file/dest-filename=${scp_to_home_url},/copy-file/source-filename=${copy_scp_url}" yang_name="/copy-file/dest-filename=${scp_to_home_url}"/>
+                      </PARAM>
+                  </PARAM>
+
+                  <PARAM name="copy_sftp_url" help="Copy from &SFTP_URL;" ptype="SFTP_TYPE" yang_name="/copy-file/source-filename=${copy_sftp_url}">
+                      <PARAM name="copy_sftp_options" help="Copy SFTP options" ptype="SUBCOMMAND" mode="switch">
+                          <PARAM name="sftp_to_config_url" help="Copy to &CONFIG_URL;" ptype="CONFIG_TYPE" prompt_fn="pwd_prompt" yang_name="/copy-file/dest-filename=${sftp_to_config_url}"/>
+                          <PARAM name="sftp_to_home_url" help="Copy to &HOME_URL;" ptype="HOME_TYPE" prompt_fn="pwd_prompt_insert_username" prompt_oper= "/copy-file/dest-filename=${sftp_to_home_url},/copy-file/source-filename=${copy_sftp_url}" yang_name="/copy-file/dest-filename=${sftp_to_home_url}"/>
+                      </PARAM>
+                  </PARAM>
+
+                  <PARAM name="copy_support_url" help="Copy from &SUPPORT_URL;" ptype="SUPPORT_TYPE" yang_name="/copy-file/source-filename=${copy_support_url}">
+                      <PARAM name="copy_support_options" help="Copy support-bundle options" ptype="SUBCOMMAND" mode="switch">
+                          <PARAM name="support_to_ftp_url" help="Copy to &FTP_URL;" ptype="FTP_TYPE" prompt_fn="pwd_prompt" yang_name="/copy-file/dest-filename=${support_to_ftp_url}"/>
+                          <PARAM name="support_to_http_url" help="Copy to &HTTP_URL;" ptype="HTTP_TYPE" yang_name="/copy-file/dest-filename=${support_to_http_url}"/>
+                          <PARAM name="support_to_scp_url" help="Copy to &SCP_URL;" ptype="SCP_TYPE" prompt_fn="pwd_prompt" yang_name="/copy-file/dest-filename=${support_to_scp_url}"/>
+                          <PARAM name="support_to_sftp_url" help="Copy to &SFTP_URL;" ptype="SFTP_TYPE" prompt_fn="pwd_prompt" yang_name="/copy-file/dest-filename=${support_to_sftp_url}"/>
+                          <PARAM name="support_to_tftp_url" help="Copy to &TFTP_URL;" ptype="TFTP_TYPE" yang_name="/copy-file/dest-filename=${support_to_tftp_url}"/>
+                          <PARAM name="support_to_usb_url" help="Copy to &USB_URL;" ptype="USB_TYPE" yang_name="/copy-file/dest-filename=${support_to_usb_url}"/>
+                      </PARAM>
+                  </PARAM>
+
+                  <PARAM name="copy_tftp_url" help="Copy from &TFTP_URL;" ptype="TFTP_TYPE" yang_name="/copy-file/source-filename=${copy_tftp_url}">
+                      <PARAM name="copy_tftp_options" help="Copy options" ptype="SUBCOMMAND" mode="switch">
+                          <PARAM name="tftp_to_config_url" help="Copy to &CONFIG_URL;" ptype="CONFIG_TYPE" yang_name="/copy-file/dest-filename=${tftp_to_config_url}"/>
+                          <PARAM name="tftp_to_home_url" help="Copy to &HOME_URL;" ptype="HOME_TYPE" prompt_fn="insert_username" prompt_oper= "/copy-file/dest-filename=${tftp_to_home_url},/copy-file/source-filename=${copy_tftp_url}" yang_name="/copy-file/dest-filename=${tftp_to_home_url}"/>
+                      </PARAM>
+                  </PARAM>
+
+                  <PARAM name="copy_usb_url" help="Copy from &USB_URL;" ptype="USB_TYPE" yang_name="/copy-file/source-filename=${copy_usb_url}">
+                      <PARAM name="copy_usb_options" help="Copy options" ptype="SUBCOMMAND" mode="switch">
+                          <PARAM name="usb_to_config_url" help="Copy to &CONFIG_URL;" ptype="CONFIG_TYPE" yang_name="/copy-file/dest-filename=${usb_to_config_url}"/>
+                          <PARAM name="usb_to_home_url" help="Copy to &HOME_URL;" ptype="HOME_TYPE" prompt_fn="insert_username" prompt_oper= "/copy-file/dest-filename=${usb_to_home_url},/copy-file/source-filename=${copy_usb_url}" yang_name="/copy-file/dest-filename=${usb_to_home_url}"/>
+                      </PARAM>
+                  </PARAM>
+              </PARAM>
+
+              <ACTION builtin="clish_extn" />
+          </COMMAND>
+
+    <!-- move -->
+      <COMMAND
+        name="move" access="sysadmin"
+        help="Perform a file move/rename operation on local filesystem"
+        ptype="SUBCOMMAND"
+        operation="generic-rpc"
+        namespace="&NAME_SPACE_FILE;"
+        yang_name="&MOVE_FILE;"
+        template="show_rpc_output.xsl"
+        >
+        <PARAM
+          name="move-src-options" help="Move source options"
+          ptype="SUBCOMMAND"
+          mode="switch"
+          >
+          <PARAM name="config_s_url" help="Move from &CONFIG_URL;"
+            ptype="CONFIG_TYPE"
+            yang_name="&MOVE_FILE;/source-filename=${config_s_url}"
+            >
+            <PARAM
+              name="move-conf-dest-options"
+              help="Move destination options"
+              ptype="SUBCOMMAND"
+              mode="switch"
+              >
+              <PARAM
+                name="config_d_url" help="Move to &CONFIG_URL;"
+                ptype="CONFIG_TYPE"
+                yang_name="&MOVE_FILE;/dest-filename=${config_d_url}"
+                >
+              </PARAM>
+              <PARAM
+                name="home_d_url" help="Move to &HOME_URL;"
+                ptype="HOME_TYPE"
+                prompt_fn="insert_username"
+                prompt_oper= "&MOVE_FILE;/dest-filename=${home_d_url},&MOVE_FILE;/source-filename=${config_s_url}"
+                yang_name="&MOVE_FILE;/dest-filename=${home_d_url}"
+               >
+              </PARAM>
+              <PARAM
+                name="usb_d_url" help="Move to &USB_URL;"
+                ptype="USB_TYPE"
+                yang_name="&MOVE_FILE;/dest-filename=${usb_d_url}"
+                >
+                </PARAM>
+              </PARAM>
+          </PARAM>
+          <PARAM name="home_s_url" help="Move from &HOME_URL;"
+            ptype="HOME_TYPE"
+            yang_name="&MOVE_FILE;/source-filename=${home_s_url}"
+            >
+            <PARAM
+              name="move-home-dest-options"
+              help="Move destination options"
+              ptype="SUBCOMMAND"
+              mode="switch"
+              >
+              <PARAM
+                name="config_d_url" help="Move to &CONFIG_URL;"
+                ptype="CONFIG_TYPE"
+                prompt_fn="insert_username"
+                prompt_oper= "&MOVE_FILE;/dest-filename=${config_d_url},&MOVE_FILE;/source-filename=${home_s_url}"
+                yang_name="&MOVE_FILE;/dest-filename=${config_d_url}"
+                >
+              </PARAM>
+              <PARAM
+                name="home_d_url" help="Move to &HOME_URL;"
+                ptype="HOME_TYPE"
+                prompt_fn="insert_username"
+                prompt_oper= "&MOVE_FILE;/dest-filename=${home_d_url},&MOVE_FILE;/source-filename=${home_s_url}"
+                yang_name="&MOVE_FILE;/dest-filename=${home_d_url}"
+                >
+              </PARAM>
+              <PARAM
+                name="usb_d_url" help="Move to &USB_URL;"
+                ptype="USB_TYPE"
+                prompt_fn="insert_username"
+                prompt_oper= "&MOVE_FILE;/dest-filename=${usb_d_url},&MOVE_FILE;/source-filename=${home_s_url}"
+                yang_name="&MOVE_FILE;/dest-filename=${usb_d_url}"
+                >
+              </PARAM>
+            </PARAM>
+          </PARAM>
+          <PARAM name="usb_s_url" help="Move from &USB_URL;"
+            ptype="USB_TYPE"
+            yang_name="&MOVE_FILE;/source-filename=${usb_s_url}"
+            >
+            <PARAM
+              name="move-conf-dest-options"
+              help="Move destination options"
+              ptype="SUBCOMMAND"
+              mode="switch"
+              >
+              <PARAM
+                name="config_d_url" help="Move to &CONFIG_URL;"
+                ptype="CONFIG_TYPE"
+                yang_name="&MOVE_FILE;/dest-filename=${config_d_url}"
+                >
+              </PARAM>
+              <PARAM
+                name="home_d_url" help="Move to &HOME_URL;"
+                ptype="HOME_TYPE"
+                prompt_fn="insert_username"
+                prompt_oper= "&MOVE_FILE;/dest-filename=${home_d_url},&MOVE_FILE;/source-filename=${usb_s_url}"
+                yang_name="&MOVE_FILE;/dest-filename=${home_d_url}"
+               >
+              </PARAM>
+              <PARAM
+                name="usb_d_url" help="Move to &USB_URL;"
+                ptype="USB_TYPE"
+                yang_name="&MOVE_FILE;/dest-filename=${usb_d_url}"
+                >
+                </PARAM>
+              </PARAM>
+          </PARAM>
+        </PARAM>
+        <ACTION builtin="clish_extn"/>
+      </COMMAND>
+
+      <COMMAND
+        name="clock" access="sysadmin"
+        help="Configure the system clock">
+      </COMMAND>
+
+      <COMMAND
+        name="clock set"
+        help="Set the system date and time"
+        ptype="SUBCOMMAND"
+        operation="generic-rpc"
+        namespace="&NAME_SPACE;">
+        <PARAM
+          name="system-time"
+          help="Enter the current time in &lt;HH:MM:SS&gt; format"
+          ptype="STRING">
+          <PARAM
+            name="system-date"
+            help="Enter the date in &lt;YYYY-MM-DD&gt; format"
+            ptype="STRING"
+            yang_name="&SET_DATE;=${system-date}T${system-time}Z"/>
+        </PARAM>
+        <ACTION builtin="clish_extn"/>
+      </COMMAND>
+
+    <!-- delete -->
+      <COMMAND
+        name="delete" access="sysadmin"
+        help="Perform a file delete operation on local file system"
+        ptype="SUBCOMMAND"
+        operation="generic-rpc"
+        namespace="&NAME_SPACE_FILE;"
+        yang_name="&DELETE_FILE;"
+        template="show_rpc_output.xsl"
+        >
+
+        <PARAM
+          name="delete-options"
+          help="Delete file options"
+          ptype="SUBCOMMAND"
+          mode="switch"
+          >
+          <PARAM
+            name="config_url"
+            help="Delete from &CONFIG_URL;"
+            ptype="CONFIG_TYPE"
+            yang_name="&DELETE_FILE;/filename=${config_url}"
+            prompt_fn="prompt_yes_no_cb"
+            prompt_str="Proceed to delete ${config_url} [confirm yes/no(default)]:"
+            >
+          </PARAM>
+          <PARAM name="core_url" help="Delete from &CORE_URL;"
+            ptype="CORE_TYPE"
+            yang_name="&DELETE_FILE;/filename=${core_url}"
+            prompt_fn="prompt_yes_no_cb"
+            prompt_str="Proceed to delete ${core_url} [confirm yes/no(default)]:"
+            >
+          </PARAM>
+          <PARAM name="home_url" help="Delete from &HOME_URL;"
+            ptype="HOME_TYPE"
+            yang_name="&DELETE_FILE;/filename=${home_url}"
+            prompt_fn="delete_file_prompt"
+            prompt_oper="&DELETE_FILE;/filename=${home_url}"
+            prompt_str="Proceed to delete ${home_url} [confirm yes/no(default)]:"
+            >
+          </PARAM>
+          <PARAM name="image_url" help="Delete from &IMAGE_URL;"
+            ptype="IMAGE_TYPE"
+            yang_name="&DELETE_FILE;/filename=${image_url}"
+            prompt_fn="prompt_yes_no_cb"
+            prompt_str="Proceed to delete ${image_url} [confirm yes/no(default)]:"
+            >
+          </PARAM>
+          <PARAM
+            name="startup-configuration"
+            help="Delete startup configuration"
+            mode="subcommand"
+            ptype="SUBCOMMAND"
+            operation="delete-config"
+            prompt_fn="prompt_yes_no_cb"
+            prompt_str="Proceed to delete startup-configuration [confirm yes/no(default)]:"
+            >
+          </PARAM>
+          <PARAM name="support_url" help="Delete from &SUPPORT_URL;"
+            ptype="SUPPORT_TYPE"
+            yang_name="&DELETE_FILE;/filename=${support_url}"
+            prompt_fn="prompt_yes_no_cb"
+            prompt_str="Proceed to delete ${support_url} [confirm yes/no(default)]:"
+            >
+          </PARAM>
+          <PARAM name="usb_url" help="Delete from &USB_URL;"
+            ptype="USB_TYPE"
+            yang_name="&DELETE_FILE;/filename=${usb_url}"
+            prompt_fn="prompt_yes_no_cb"
+            prompt_str="Proceed to delete ${usb_url} [confirm yes/no(default)]:"
+            >
+          </PARAM>
+        </PARAM>
+        <ACTION builtin="clish_extn"/>
+      </COMMAND>
+
+    <!-- show commands -->
+      <COMMAND
+        name="show copy-file"
+        help="Show file copy operation information"
+        >
+      </COMMAND>
+
+      <COMMAND name="show copy-file status"
+         help="Show the current status of file copy operation in progress"
+         operation="get"
+         yang_filter="Filter_Type:SUBTREE;Filter_Namespace:&NAME_SPACE_FILE;;Filter_Conditions:&FILE_STATUS;"
+         template="file_transfer_status.xsl"
+         >
+         <ACTION builtin="clish_extn"> </ACTION>
+      </COMMAND>
+
+      <COMMAND
+         name="show clock"
+         help="Show the system date and time"
+         operation="get"
+         yang_filter="Filter_Type:SUBTREE;Filter_Namespace:&NAME_SPACE;;Filter_Conditions:/system-state/system-status/"
+         template="clock.xsl">
+         <ACTION builtin="clish_extn"> </ACTION>
+      </COMMAND>
+
+      <COMMAND
+         name="show uptime"
+         help="Show the system uptime"
+         operation="get"
+         yang_filter="Filter_Type:SUBTREE;Filter_Namespace:&NAME_SPACE;;Filter_Conditions:/system-state/system-status/"
+         template="uptime.xsl">
+         <ACTION builtin="clish_extn"> </ACTION>
+      </COMMAND>
+
+      <COMMAND
+         name="show file"
+         help="Display file content in specified location"
+         >
+      </COMMAND>
+      <COMMAND name="show file home"
+         help="Folder containing files in home directory"
+         >
+           <PARAM
+             name="hfilename"
+             help="Filename path in user home directory"
+             ptype="STRING"
+             >
+           </PARAM>
+           <ACTION builtin="clish_file_print">cat ~/${hfilename} </ACTION>
+      </COMMAND>
+
+      <COMMAND name="show file config"
+         help="Folder containing configuration files"
+         >
+           <PARAM
+             name="cfilename"
+             help="Filename path in configuration directory"
+             ptype="STRING"
+             >
+           </PARAM>
+           <ACTION builtin="clish_file_print">cat /config/etc/opt/dell/os10/db_init/${cfilename} </ACTION>
+       </COMMAND>
+
+    <!-- dir command -->
+      <COMMAND name="dir"
+         help="Show the list of files for the specified system folder"
+         operation="get"
+         namespace="&NAME_SPACE_FILE;"
+         ptype="SUBCOMMAND"
+         >
+         <PARAM
+           name="folder-options"
+           help="Folder name options"
+           ptype="SUBCOMMAND"
+           mode="switch"
+           >
+           <PARAM
+             name="config"
+             help="Folder containing configuration files"
+             mode="subcommand"
+             ptype="SUBCOMMAND"
+             yang_filter="Filter_Type:SUBTREE;Filter_Namespace:&NAME_SPACE_FILE;;Filter_Conditions:&DIR_CONTENT;/name=config"
+             template="file_folder_content.xsl"
+             />
+           <PARAM
+             name="coredump"
+             help="Folder containing coredump files"
+             mode="subcommand"
+             ptype="SUBCOMMAND"
+             yang_filter="Filter_Type:SUBTREE;Filter_Namespace:&NAME_SPACE_FILE;;Filter_Conditions:&DIR_CONTENT;/name=coredump"
+             template="file_folder_content.xsl"
+             />
+           <PARAM
+             name="home"
+             help="Folder containing files in user's home directory"
+             mode="subcommand"
+             ptype="SUBCOMMAND"
+             yang_filter="Filter_Type:SUBTREE;Filter_Namespace:&NAME_SPACE_FILE;;Filter_Conditions:&DIR_CONTENT;/name=home,&DIR_CONTENT;/folder-match=${USER}"
+             template="file_folder_content.xsl"
+             />
+           <PARAM
+             name="image"
+             help="Folder containing image files"
+             mode="subcommand"
+             ptype="SUBCOMMAND"
+             yang_filter="Filter_Type:SUBTREE;Filter_Namespace:&NAME_SPACE_FILE;;Filter_Conditions:&DIR_CONTENT;/name=image"
+             template="file_folder_content.xsl"
+             />
+           <PARAM
+             name="supportbundle"
+             help="Folder containing support bundle files"
+             mode="subcommand"
+             ptype="SUBCOMMAND"
+             yang_filter="Filter_Type:SUBTREE;Filter_Namespace:&NAME_SPACE_FILE;;Filter_Conditions:&DIR_CONTENT;/name=supportbundle"
+             template="file_folder_content.xsl"
+             />
+         <PARAM
+           name="usb"
+           help="Folder containing files on USB"
+           mode="subcommand"
+           ptype="SUBCOMMAND"
+           yang_filter="Filter_Type:SUBTREE;Filter_Namespace:&NAME_SPACE_FILE;;Filter_Conditions:&DIR_CONTENT;/name=usb"
+           template="file_folder_content.xsl"
+               />
+         </PARAM>
+         <ACTION builtin="clish_extn"> </ACTION>
+      </COMMAND>
+
+    </VIEW>
+
+    <!--=======================================================-->
+    <!--                Config MODE                            -->
+    <!--=======================================================-->
+    <VIEW
+        name="configure-view"
+        >
+       <!-- clock timezone settings -->
+        <COMMAND
+            name="clock"
+            help="Configure clock parameters"
+            namespace="&NAME_SPACE;"
+            operation="edit-config"
+            >
+            <PARAM
+                name="clock_option"
+                help="Configure clock options"
+                mode="switch"
+                ptype="SUBCOMMAND"
+                >
+                <!--clock timezone -->
+                <PARAM
+                    name="timezone"
+                    help="Configure time zone"
+                    mode="subcommand"
+                    ptype="SUBCOMMAND"
+                    >
+                    <PARAM
+                        name="timezonelbl"
+                        help="Name of time zone (max 8 chars). Do not use spaces"
+                        ptype="STRING_8"
+                        yang_name="/system/timezone/timezone_label=${timezonelbl}"
+                        >
+                        <PARAM
+                           name="hr_offset"
+                           help="Hours offset from UTC"
+                           ptype="UTC_HR_OFFSET"
+                           yang_name="/system/timezone/utc_hour_offset=${hr_offset}"
+                           >
+                           <PARAM
+                              name="min_offset"
+                              help="Minutes offset from UTC"
+                              ptype="UTC_MIN_OFFSET"
+                              yang_name="/system/timezone/utc_minute_offset=${min_offset}"
+                              />
+                        </PARAM>
+                    </PARAM>
+                </PARAM>
+            </PARAM>
+            <ACTION builtin="clish_extn"/>
+        </COMMAND>
+        <COMMAND
+            name="no clock"
+            help="Configure clock parameters"
+            namespace="&NAME_SPACE;"
+            operation="edit-config"
+            >
+            <PARAM
+                name="clock_option"
+                help="Configure clock options"
+                mode="switch"
+                ptype="SUBCOMMAND"
+                >
+                <!--no clock timezone -->
+                <PARAM
+                    name="timezone"
+                    help="Configure time zone"
+                    mode="subcommand"
+                    ptype="SUBCOMMAND"
+                    operation="edit-config"
+                    sub_oper_yang="remove:timezone"
+                    yang_name="/system/timezone"
+                    />
+            </PARAM>
+            <ACTION builtin="clish_extn"/>
+        </COMMAND>
+        <!-- crypto -->
+        <COMMAND
+            name="crypto"
+            operation="edit-config"
+            namespace="&NAME_SPACE;"
+            help="Crypto commands"
+            >
+            <PARAM
+                name="crypto_options"
+                help="Configure system cryptographic options"
+                mode="switch"
+                ptype="SUBCOMMAND"
+                >
+                <!-- crypto fips -->
+                <PARAM
+                    name="fips"
+                    help="Toggle FIPS mode"
+                    mode="subcommand"
+                    ptype="SUBCOMMAND"
+                    >
+                    <!-- crypto fips enable -->
+                    <PARAM
+                        name="enable"
+                        help="Enable FIPS mode"
+                        mode="subcommand"
+                        ptype="SUBCOMMAND"
+                        yang_name="/crypto/fips_mode=true"
+                        prompt_fn="prompt_yes_no_cb"
+                        prompt_str="WARNING: Upon committing this configuration, the system will
+                                    &#xa;regenerate SSH keys. Please consult documentation and
+                                    &#xa;toggle FIPS mode only if you know what you are doing!
+                                    &#xa;Continue? [yes/no(default)]:"
+                        >
+                    </PARAM>
+                </PARAM>
+            </PARAM>
+            <ACTION builtin="clish_extn" />
+        </COMMAND>
+        <!-- no crypto -->
+        <COMMAND
+            name="no crypto"
+            operation="edit-config"
+            namespace="&NAME_SPACE;"
+            help="Crypto commands"
+            >
+            <PARAM
+                name="no_crypto_options"
+                help="Disable system cryptographic options"
+                mode="switch"
+                ptype="SUBCOMMAND"
+                >
+                <!-- no crypto fips -->
+                <PARAM
+                    name="fips"
+                    help="Toggle FIPS mode"
+                    mode="subcommand"
+                    ptype="SUBCOMMAND"
+                    >
+                    <!-- no crypto fips enable -->
+                    <PARAM
+                        name="enable"
+                        help="Disable FIPS mode"
+                        mode="subcommand"
+                        ptype="SUBCOMMAND"
+                        yang_name="/crypto/fips_mode=false"
+                        prompt_fn="prompt_yes_no_cb"
+                        prompt_str="WARNING: Upon committing this configuration, the system will
+                                    &#xa;regenerate SSH keys. Please consult documentation and
+                                    &#xa;toggle FIPS mode only if you know what you are doing!
+                                    &#xa;Continue? [yes/no(default)]:"
+                        >
+                    </PARAM>
+                </PARAM>
+            </PARAM>
+            <ACTION builtin="clish_extn" />
+        </COMMAND>
+        <!-- hostname -->
+        <COMMAND
+            name="hostname"
+            help="Set the system hostname"
+            operation="edit-config"
+            namespace="&NAME_SPACE;"
+            default_oper="merge"
+            >
+            <PARAM
+                name="sys-hostname"
+                help="System hostname"
+                ptype="HOSTNAME_STR"
+                yang_name="&HOSTNAME;=${sys-hostname}"
+            />
+            <ACTION
+                builtin="clish_extn"
+            />
+        </COMMAND>
+        <!-- host-description -->
+        <COMMAND
+            name="host-description"
+            help="Set the system host description"
+            operation="edit-config"
+            namespace="&NAME_SPACE;"
+            default_oper="merge"
+            >
+            <PARAM
+                name="sys-hostdesc"
+                help="System host description"
+                ptype="STRING"
+                yang_name="&HOSTDESC;=${sys-hostdesc}"
+            />
+            <ACTION
+                builtin="clish_extn"
+            />
+        </COMMAND>
+        <!-- no hostname -->
+        <COMMAND
+            name="no hostname"
+            operation="edit-config"
+            namespace="&NAME_SPACE;"
+            help="Reset defaults for hostname settings"
+            sub_oper_yang="remove:hostname"
+            yang_name="&HOSTNAME;"
+            >
+            <ACTION
+                builtin="clish_extn"
+            />
+        </COMMAND>
+        <!-- no host-description -->
+        <COMMAND
+            name="no host-description"
+            operation="edit-config"
+            namespace="&NAME_SPACE;"
+            help="Reset defaults for host description settings"
+            sub_oper_yang="remove:host-descr"
+            yang_name="&HOSTDESC;"
+            >
+            <ACTION
+                builtin="clish_extn"
+            />
+        </COMMAND>
+    </VIEW>
+</CLISH_MODULE>

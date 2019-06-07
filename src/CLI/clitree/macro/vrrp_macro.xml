@@ -1,0 +1,911 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE ROOT  [
+<!ENTITY MODULE-NS-VRRP                 "http://www.dellemc.com/networking/os10/dell-vrrp">
+<!ENTITY MODULE-NS-OTM                  "http://www.dellemc.com/networking/os10/dell-otm">
+<!ENTITY MODULE                         "dell-vrrp">
+<!ENTITY SUBTREE_FILTER                 "Filter_Type:SUBTREE">
+<!ENTITY MODULE-NS-IETF-INTF            "urn:ietf:params:xml:ns:yang:ietf-interfaces">
+<!ENTITY MODULE-INTF-VRRP-NS            "&MODULE-NS-IETF-INTF;,&MODULE;=&MODULE-NS-VRRP;">
+
+<!ENTITY INTF_ENTRY                     "/interfaces/interface">
+<!ENTITY INTF_NAME                      "&INTF_ENTRY;/name=${v_ifname}">
+<!ENTITY VLAN_INTF_NAME                 "&INTF_ENTRY;/name=${vlan_name}">
+
+<!ENTITY INTF_ENTRY_RNG                 "/interfaces/interface[]">
+<!ENTITY INTF_NAME_RNG                  "&INTF_ENTRY_RNG;/name=${v_ifname}">
+<!ENTITY VLAN_INTF_NAME_RNG             "&INTF_ENTRY_RNG;/name=${vlan_name}">
+
+<!ENTITY VRRP_SYS                       "/vrrp-system">
+<!ENTITY VRRP_SYS_DELAY_RELOAD          "&VRRP_SYS;/delay-reload">
+<!ENTITY VRRP_SYS_VERSION               "&VRRP_SYS;/version">
+
+<!ENTITY VRRP_IF_CONFIG                 "&INTF_ENTRY;/&MODULE;:vrrp">
+<!ENTITY VRRP_IF_ACTIVE_ACTIVE          "&VRRP_IF_CONFIG;/&MODULE;:active-active-mode">
+
+<!ENTITY VRRP_IFRNG_CONFIG              "&INTF_ENTRY_RNG;/&MODULE;:vrrp">
+<!ENTITY VRRP_IFRNG_ACTIVE_ACTIVE       "&VRRP_IFRNG_CONFIG;/&MODULE;:active-active-mode">
+
+<!ENTITY VRRP_IPV4                      "&INTF_ENTRY;/&MODULE;:vrrp-ipv4">
+<!ENTITY VRRP_IPV4_INST                 "&VRRP_IPV4;/&MODULE;:vrrp-instance">
+<!ENTITY VRRP_IPV4_VRID                 "&VRRP_IPV4_INST;/&MODULE;:vrid">
+<!ENTITY VRRP_IPV4_VERSION              "&VRRP_IPV4_INST;/&MODULE;:version">
+<!ENTITY VRRP_IPV4_LOG_STATE_CHANGE     "&VRRP_IPV4_INST;/&MODULE;:log-state-change">
+<!ENTITY VRRP_IPV4_PREEMPT              "&VRRP_IPV4_INST;/&MODULE;:preempt">
+<!ENTITY VRRP_IPV4_PREEMPT_ENABLE       "&VRRP_IPV4_PREEMPT;/&MODULE;:enable">
+<!ENTITY VRRP_IPV4_PREEMPT_HOLDTIME     "&VRRP_IPV4_PREEMPT;/&MODULE;:hold-time">
+<!ENTITY VRRP_IPV4_PRIORITY             "&VRRP_IPV4_INST;/&MODULE;:priority">
+<!ENTITY VRRP_IPV4_ADVT_INT             "&VRRP_IPV4_INST;/&MODULE;:advertise-interval">
+<!ENTITY VRRP_IPV4_ADVT_INT_SEC         "&VRRP_IPV4_ADVT_INT;/&MODULE;:advertise-interval-sec">
+<!ENTITY VRRP_IPV4_ADVT_INT_CENTISEC    "&VRRP_IPV4_ADVT_INT;/&MODULE;:advertise-interval-centi-sec">
+<!ENTITY VRRP_IPV4_PRIMARY_IPADDR       "&VRRP_IPV4_INST;/&MODULE;:primary-ip-addr">
+<!ENTITY VRRP_IPV4_VIP                  "&VRRP_IPV4_INST;/&MODULE;:virtual-ip-address">
+<!ENTITY VRRP_IPV4_ACCEPT_MODE          "&VRRP_IPV4_INST;/&MODULE;:accept-mode">
+<!ENTITY VRRP_IPV4_ADMIN_STATE          "&VRRP_IPV4_INST;/&MODULE;:admin-state">
+<!ENTITY VRRP_IPV4_AUTH_TYPE            "&VRRP_IPV4_INST;/&MODULE;:auth-type">
+<!ENTITY VRRP_IPV4_AUTH_KEY             "&VRRP_IPV4_INST;/&MODULE;:auth-key">
+<!ENTITY VRRP_IPV4_PROTOCOL             "&VRRP_IPV4_INST;/&MODULE;:protocol">
+<!ENTITY VRRP_IPV4_TRACK_LIST           "&VRRP_IPV4_INST;/&MODULE;:track-list">
+<!ENTITY VRRP_IPV4_TRACK_LIST_TRACK_ID  "&VRRP_IPV4_TRACK_LIST;/&MODULE;:track-id">
+<!ENTITY VRRP_IPV4_TRACK_LIST_PRI_COST  "&VRRP_IPV4_TRACK_LIST;/&MODULE;:priority-decrement">
+
+<!ENTITY VRRP_IPV6                      "&INTF_ENTRY;/&MODULE;:vrrp-ipv6">
+<!ENTITY VRRP_IPV6_INST                 "&VRRP_IPV6;/&MODULE;:vrrp-instance">
+<!ENTITY VRRP_IPV6_VRID                 "&VRRP_IPV6_INST;/&MODULE;:vrid">
+<!ENTITY VRRP_IPV6_VERSION              "&VRRP_IPV6_INST;/&MODULE;:version">
+<!ENTITY VRRP_IPV6_LOG_STATE_CHANGE     "&VRRP_IPV6_INST;/&MODULE;:log-state-change">
+<!ENTITY VRRP_IPV6_PREEMPT              "&VRRP_IPV6_INST;/&MODULE;:preempt">
+<!ENTITY VRRP_IPV6_PREEMPT_ENABLE       "&VRRP_IPV6_PREEMPT;/&MODULE;:enable">
+<!ENTITY VRRP_IPV6_PREEMPT_HOLDTIME     "&VRRP_IPV6_PREEMPT;/&MODULE;:hold-time">
+<!ENTITY VRRP_IPV6_PRIORITY             "&VRRP_IPV6_INST;/&MODULE;:priority">
+<!ENTITY VRRP_IPV6_ADVT_INT             "&VRRP_IPV6_INST;/&MODULE;:advertise-interval">
+<!ENTITY VRRP_IPV6_ADVT_INT_SEC         "&VRRP_IPV6_ADVT_INT;/&MODULE;:advertise-interval-sec">
+<!ENTITY VRRP_IPV6_ADVT_INT_CENTISEC    "&VRRP_IPV6_ADVT_INT;/&MODULE;:advertise-interval-centi-sec">
+<!ENTITY VRRP_IPV6_PRIMARY_IPADDR       "&VRRP_IPV6_INST;/&MODULE;:primary-ip-addr">
+<!ENTITY VRRP_IPV6_VIP                  "&VRRP_IPV6_INST;/&MODULE;:virtual-ip-address">
+<!ENTITY VRRP_IPV6_ACCEPT_MODE          "&VRRP_IPV6_INST;/&MODULE;:accept-mode">
+<!ENTITY VRRP_IPV6_ADMIN_STATE          "&VRRP_IPV6_INST;/&MODULE;:admin-state">
+<!ENTITY VRRP_IPV6_AUTH_TYPE            "&VRRP_IPV6_INST;/&MODULE;:auth-type">
+<!ENTITY VRRP_IPV6_AUTH_KEY             "&VRRP_IPV6_INST;/&MODULE;:auth-key">
+<!ENTITY VRRP_IPV6_PROTOCOL             "&VRRP_IPV6_INST;/&MODULE;:protocol">
+<!ENTITY VRRP_IPV6_TRACK_LIST           "&VRRP_IPV6_INST;/&MODULE;:track-list">
+<!ENTITY VRRP_IPV6_TRACK_LIST_TRACK_ID  "&VRRP_IPV6_TRACK_LIST;/&MODULE;:track-id">
+<!ENTITY VRRP_IPV6_TRACK_LIST_PRI_COST  "&VRRP_IPV6_TRACK_LIST;/&MODULE;:priority-decrement">
+
+<!ENTITY VRRP_IPV4_STATE                "&INTF_NAME;/&MODULE;:vrrp-ipv4-state">
+<!ENTITY VRRP_IPV6_STATE                "&INTF_NAME;/&MODULE;:vrrp-ipv6-state">
+
+<!ENTITY TRACK_GROUP                    "/track-group">
+<!ENTITY TRACK_INST                     "&TRACK_GROUP;/track">
+<!ENTITY TRACK_INST_ID                  "&TRACK_INST;/track-id">
+<!ENTITY TRACK_INST_OBJ                 "&TRACK_INST;/track-obj/obj">
+<!ENTITY TRACK_INST_OBJ_TYPE            "&TRACK_INST;/track-obj/obj-type">
+<!ENTITY TRACK_INST_OBJ_SUBTYPE         "&TRACK_INST;/track-obj/obj-sub-type">
+
+<!ENTITY VRRP_IPV4_KEY                  "&VRRP_IPV4_VRID;=${v_vrid}">
+<!ENTITY VRRP_IPV4_TRACK_LIST_KEY       "&VRRP_IPV4_KEY;,&VRRP_IPV4_TRACK_LIST_TRACK_ID;">
+<!ENTITY VRRP_IPV4_VIP_KEY              "&VRRP_IPV4_KEY;,&VRRP_IPV4_VIP;" >
+
+<!ENTITY VRRP_IPV6_KEY                  "&VRRP_IPV6_VRID;=${v_vrid}">
+<!ENTITY VRRP_IPV6_TRACK_LIST_KEY       "&VRRP_IPV6_KEY;,&VRRP_IPV6_TRACK_LIST_TRACK_ID;">
+<!ENTITY VRRP_IPV6_VIP_KEY              "&VRRP_IPV6_KEY;,&VRRP_IPV4_VIP;" >
+
+<!ENTITY TRACK_INST_KEY                 "&TRACK_INST_ID;=${v_trackid}">
+
+
+]>
+
+<ROOT>
+	<!-- Macro definitions for VRRP module -->
+
+	<!-- VRRP Global configs START -->
+	<MACRODEF name="VRRP_DELAY_MODE_CFG">
+      <PARAM name="vrrp_delay_mode_options"
+             help="VRRP options"
+             ptype="SUBCOMMAND"
+             mode="switch"
+             >
+		<PARAM name="delay"
+		       help="Delay timer configurations"
+		       ptype="SUBCOMMAND"
+               pfeature="NOT_SUPPORTED"
+		       mode="subcommand" >
+
+			<PARAM name="reload"
+			       help="Delay applied after boot"
+			       ptype="SUBCOMMAND"
+			       mode="subcommand" >
+
+				<PARAM name="seconds"
+				       help="Seconds (default = 0)"
+				       ptype="RANGE_0_900"
+				       yang_name="&VRRP_SYS_DELAY_RELOAD;=${seconds}">
+				</PARAM>
+			</PARAM>
+		</PARAM>
+        <PARAM name="version"
+               help="VRRP protocol version for system (default = 2)"
+               ptype="SUBCOMMAND"
+               mode="subcommand" >
+            <PARAM name="versiontype"
+                   help="VRRP Version"
+                   ptype="VRRP_VERSION_MODE"
+                   yang_name="&VRRP_SYS_VERSION;=${versiontype}">
+            </PARAM>
+        </PARAM>
+      </PARAM>
+	</MACRODEF>
+	
+	<MACRODEF name="VRRP_DELAY_MODE_NO_CFG">
+      <PARAM name="vrrp_delay_mode_options"
+             help="VRRP options"
+             ptype="SUBCOMMAND"
+             mode="switch"
+             >
+		<PARAM name="delay"
+		       help="Delay timer configurations"
+		       ptype="SUBCOMMAND"
+               pfeature="NOT_SUPPORTED"
+		       mode="subcommand" >
+
+			<PARAM name="reload"
+			       help="Delay applied after boot"
+			       ptype="SUBCOMMAND"
+			       mode="subcommand"
+				   sub_oper_yang="remove:delay-reload"
+				   yang_name="&VRRP_SYS_DELAY_RELOAD;" >
+
+				<PARAM name="seconds"
+				       help="Seconds (default = 0)"
+				       ptype="RANGE_0_900"
+				       default="0"
+				       optional="true" >
+				</PARAM>
+			</PARAM>
+		</PARAM>
+		<PARAM name="version"
+		       help="VRRP protocol version for system (default = 2)"
+		       ptype="SUBCOMMAND"
+                mode="subcommand"
+		       sub_oper_yang="remove:version"
+		       yang_name="&VRRP_SYS_VERSION;" >
+
+			<PARAM name="versiontype"
+		           help="VRRP Version"
+		           ptype="VRRP_VERSION_MODE"
+		           optional="true">
+		    </PARAM>
+		</PARAM>
+      </PARAM>
+	</MACRODEF>
+	<!-- VRRP Global configs END -->
+
+	<!-- VRRP INSTANT configs  START -->
+
+	<MACRODEF name="VRRP_IPV4_PRIORITY_CFG" >
+		<COMMAND name="priority"
+		         help="Virtual router priority (default = 100)"
+		         operation="edit-config"
+		         namespace="&MODULE-INTF-VRRP-NS;"
+		         ptype="SUBCOMMAND"
+		         mode="subcommand"
+				 >
+
+			<PARAM name="priority"
+		       help="Priority (default = 100)"
+		       ptype="RANGE_1_254"
+			   yang_name="&INTF_NAME;,&VRRP_IPV4_KEY;,&VRRP_IPV4_PRIORITY;=${priority}" >
+            </PARAM>
+			<ACTION builtin="clish_extn"> </ACTION>
+		</COMMAND>
+	</MACRODEF>
+
+	<MACRODEF name="VRRP_IPV4_NO_PRIORITY_CFG" >
+		<COMMAND name="no priority"
+		         help="Virtual router priority (default = 100)"
+		         operation="edit-config"
+		         namespace="&MODULE-INTF-VRRP-NS;"
+		         ptype="SUBCOMMAND"
+		         mode="subcommand"
+		         sub_oper_yang="remove:priority"
+		         yang_name="&INTF_NAME;,&VRRP_IPV4_KEY;,&VRRP_IPV4_PRIORITY;">
+
+			<PARAM name="priority"
+		       help="Priority (default = 100)"
+		       ptype="RANGE_1_254"
+		       optional="true" >
+	        </PARAM>
+			<ACTION builtin="clish_extn"> </ACTION>
+		</COMMAND>
+	</MACRODEF>
+
+	<MACRODEF name="VRRP_IPV4_PREEMPT" >
+		<COMMAND name="preempt"
+		         help="Preempt mode (default = preempt)"
+		         operation="edit-config"
+		         namespace="&MODULE-INTF-VRRP-NS;"
+		         yang_name="&INTF_NAME;,&VRRP_IPV4_KEY;,&VRRP_IPV4_PREEMPT_HOLDTIME;=0,&VRRP_IPV4_PREEMPT_ENABLE;=true" >
+			<ACTION builtin="clish_extn"> </ACTION>
+		</COMMAND>
+	</MACRODEF>
+
+	<MACRODEF name="VRRP_IPV4_NO_PREEMPT" >
+		<COMMAND name="no preempt"
+		         help="preempt mode (default = preempt)"
+		         operation="edit-config"
+                 sub_oper_yang="merge:preempt"
+                 add_config_entry = "true"
+		         namespace="&MODULE-INTF-VRRP-NS;"
+		         yang_name="&INTF_NAME;,&VRRP_IPV4_KEY;,&VRRP_IPV4_PREEMPT_HOLDTIME;=0,&VRRP_IPV4_PREEMPT_ENABLE;=false" >
+			<ACTION builtin="clish_extn"> </ACTION>
+		</COMMAND>
+	</MACRODEF>
+
+	<MACRODEF name="VRRP_IPV4_TRACK_CFG" >
+		<COMMAND name="track"
+		         help="Track interface"
+		         operation="edit-config"
+		         namespace="&MODULE-INTF-VRRP-NS;"
+				 >
+			
+			<PARAM name="track-id"
+		       help="Object tracking resource ID"
+			   ptype="RANGE_1_500"
+			   yang_name="&INTF_NAME;,&VRRP_IPV4_TRACK_LIST_KEY;,&VRRP_IPV4_TRACK_LIST_PRI_COST;=${cost},&VRRP_IPV4_TRACK_LIST_TRACK_ID;=${track-id}"
+		       >
+
+			   <PARAM name="priority-cost"
+				   help="Priority-cost (default:10)"
+				   optional="true"
+				   ptype="SUBCOMMAND"
+			       mode="subcommand" >
+
+				<PARAM name="cost"
+				       help="Priority mark down"
+					   ptype="RANGE_1_254"
+					   refresh_yang_name="true"
+					   default="10"
+					   yang_name="&INTF_NAME;,&VRRP_IPV4_TRACK_LIST_KEY;,&VRRP_IPV4_TRACK_LIST_TRACK_ID;=${track-id},&VRRP_IPV4_TRACK_LIST_PRI_COST;=${cost}">
+				</PARAM>
+			</PARAM>
+		</PARAM>
+			<ACTION builtin="clish_extn"> </ACTION>
+		</COMMAND>
+	</MACRODEF>
+
+	<MACRODEF name="VRRP_IPV4_NO_TRACK_CFG" >
+		<COMMAND name="no track"
+		         help="Track interface"
+		         operation="edit-config"
+		         namespace="&MODULE-INTF-VRRP-NS;"
+				 >
+				
+		    <PARAM name="track-id"
+		       help="Object tracking resource ID"
+		       ptype="RANGE_1_500"
+		       sub_oper_yang="remove:track-list"
+               yang_name="&INTF_NAME;,&VRRP_IPV4_TRACK_LIST_KEY;,&VRRP_IPV4_TRACK_LIST_TRACK_ID;=${track-id}">
+		</PARAM>
+			<ACTION builtin="clish_extn"> </ACTION>
+		</COMMAND>
+	</MACRODEF>
+
+	<MACRODEF name="VRRP_IPV4_VIRTUAL_ADDR_CFG" >
+		<COMMAND name="virtual-address"
+		         help="Virtual IP address of VRRP router"
+		         operation="edit-config"
+		         namespace="&MODULE-INTF-VRRP-NS;"
+                         yang_key="&VRRP_IPV4_VIP;;;leaf-list"
+				 >
+
+			<PARAM
+				name="ip-address"
+				help="Virtual IP address (maximum of 10)"
+				ptype="IP_ADDR"
+				recursive="true"
+				yang_name="&INTF_NAME;,&VRRP_IPV4_KEY;,&VRRP_IPV4_VIP;=${ip-address}">
+		    </PARAM>
+
+			<ACTION builtin="clish_extn"> </ACTION>
+		</COMMAND>
+	</MACRODEF>
+
+	<MACRODEF name="VRRP_IPV4_NO_VIRTUAL_ADDR_CFG" >
+		<COMMAND name="no virtual-address"
+		         help="Virtual IP address of VRRP router"
+		         operation="edit-config"
+		         sub_oper_yang="remove:virtual-ip-address"
+		         namespace="&MODULE-INTF-VRRP-NS;"
+             >
+
+			<PARAM
+				name="ip-address"
+				help="Virtual IP address (maximum of 10)"
+				ptype="IP_ADDR"
+                recursive="true"
+                yang_name="&INTF_NAME;,&VRRP_IPV4_KEY;,&VRRP_IPV4_VIP;=${ip-address}" >
+		    </PARAM>
+
+			<ACTION builtin="clish_extn"> </ACTION>
+		</COMMAND>
+	</MACRODEF>
+
+	<MACRODEF name="VRRP_IPV4_AUTHTYPE_CFG" >
+		<COMMAND  name="authentication"
+		          help="Authentication"
+		          operation="edit-config"
+		          namespace="&MODULE-INTF-VRRP-NS;"
+                  ptype="SUBCOMMAND"
+                  mode="subcommand"
+				  >
+				
+		    <PARAM name="simple-text"
+		       help="Simple text Authentication type"
+		       ptype="SUBCOMMAND"
+		       mode="subcommand" >
+		
+			<PARAM name="auth-text"
+			       help="authentication value "
+                   ptype="STRING"
+				   yang_name="&INTF_NAME;,&VRRP_IPV4_KEY;,&VRRP_IPV4_AUTH_TYPE;=simple-text-password,&VRRP_IPV4_AUTH_KEY;=${auth-text}" >
+			</PARAM>
+		</PARAM>
+
+			<ACTION builtin="clish_extn"> </ACTION>
+		</COMMAND>
+	</MACRODEF>
+
+	<MACRODEF name="VRRP_IPV4_NO_AUTHTYPE_CFG" >
+		<COMMAND  name="no authentication"
+		          help="Authentication"
+		          operation="edit-config"
+		          namespace="&MODULE-INTF-VRRP-NS;"
+		          default="no-authentication"
+		          sub_oper_yang="remove:auth-type,remove:auth-key"
+		          yang_name="&INTF_NAME;,&VRRP_IPV4_KEY;,&VRRP_IPV4_AUTH_TYPE;,&VRRP_IPV4_AUTH_KEY;" >
+			
+			<PARAM name="simple-text"
+		       help="Simple text Authentication type"
+		       ptype="SUBCOMMAND"
+		       mode="subcommand"
+		       optional="true">
+			
+			<PARAM name="auth-text"
+			       help="authentication value "
+			       ptype="STRING"  >
+			</PARAM>
+		</PARAM>
+		
+			<ACTION builtin="clish_extn"> </ACTION>
+		</COMMAND>
+	</MACRODEF>
+
+	<MACRODEF name="VRRP_IPV4_ADVT_INTERVAL_CFG" >
+		<COMMAND name="advertise-interval"
+		         help="Advertisement interval (default = 1 second)"
+		         operation="edit-config"
+                 namespace="&MODULE-INTF-VRRP-NS;"
+                 ptype="SUBCOMMAND"
+                 mode="subcommand"
+				 >
+				
+         <PARAM name="ADVT_INTERVAL_SWITCH"
+           help="choose the time type"
+           ptype="SUBCOMMAND"
+           mode="switch" >
+
+           <PARAM name="secs"
+             help="Specify time interval in seconds"
+             ptype="SUBCOMMAND"
+             prompt_fn="vrrp_check_version_v2orboth"
+             mode="subcommand" >
+
+             <PARAM name="sec-val"
+               help="Advertisement interval (default = 1 second)"
+               ptype="RANGE_1_255"
+               yang_name="&INTF_NAME;,&VRRP_IPV4_KEY;,&VRRP_IPV4_ADVT_INT_SEC;=${sec-val}" >
+
+             </PARAM>
+           </PARAM>
+
+           <PARAM name="centisecs"
+			       help="Specify time interval in centi-seconds"
+			       ptype="SUBCOMMAND"
+                               prompt_fn="vrrp_check_version_v3orboth"
+                   mode="subcommand" >
+
+				<PARAM name="val"
+				       help="Advertisement interval (default = 100 centi-seconds, multiple of 25)"
+				       ptype="RANGE_25_4075"
+				       yang_name="&INTF_NAME;,&VRRP_IPV4_KEY;,&VRRP_IPV4_ADVT_INT_CENTISEC;=${val}" >
+				</PARAM>
+			</PARAM>
+		</PARAM>
+			<ACTION builtin="clish_extn"> </ACTION>
+		</COMMAND>
+	</MACRODEF>
+	
+	<MACRODEF name="VRRP_IPV4_NO_ADVT_INTERVAL_CFG" >
+    <COMMAND name="no advertise-interval"
+      help="Advertisement interval (default = 1 second)"
+      operation="edit-config"
+      namespace="&MODULE-INTF-VRRP-NS;"
+      ptype="SUBCOMMAND"
+      mode="subcommand"
+      >
+      <PARAM name="ADVT_INTERVAL_SWITCH"
+        help="chose the time type"
+        ptype="SUBCOMMAND"
+        mode="switch" >
+
+        <PARAM name="secs"
+          help="Specify time interval in seconds"
+          ptype="SUBCOMMAND"
+          mode="subcommand"
+          sub_oper_yang="remove:advertise-interval-sec"
+          yang_name="&INTF_NAME;,&VRRP_IPV4_KEY;,&VRRP_IPV4_ADVT_INT_SEC;">
+
+
+          <PARAM name="sec-val"
+            help="Advertisement interval (default = 1 second)"
+            ptype="RANGE_1_255"
+            optional="true"
+            yang_name="&INTF_NAME;,&VRRP_IPV4_KEY;,&VRRP_IPV4_ADVT_INT_SEC;" >
+
+          </PARAM>
+        </PARAM>
+        <PARAM name="centisecs"
+          help="Specify time interval in centi-seconds"
+          ptype="SUBCOMMAND"
+          mode="subcommand"
+          sub_oper_yang="remove:advertise-interval-centi-sec"
+          yang_name="&INTF_NAME;,&VRRP_IPV4_KEY;,&VRRP_IPV4_ADVT_INT_CENTISEC;">
+
+          <PARAM name="val"
+            help="Advertisement interval (default = 100 centi-seconds, multiple of 25)"
+            ptype="RANGE_25_4075"
+            optional="true">
+				</PARAM>
+			</PARAM>
+		</PARAM>
+		
+		<ACTION builtin="clish_extn"> </ACTION>
+		
+		</COMMAND>
+	</MACRODEF>
+
+    <MACRODEF name="VRRP_IF_ACTIVE_ACTIVE_CFG">
+        <COMMAND name="vrrp"
+               help="VRRP mode configuration"
+               ptype="SUBCOMMAND"
+               operation="edit-config"
+               namespace="&MODULE-INTF-VRRP-NS;"
+               add_config_entry="false"
+               mode="subcommand" >
+            <PARAM name="mode"
+                   help="VRRP mode configuration"
+                   ptype="SUBCOMMAND"
+                   mode="subcommand">
+                <PARAM name="active-active"
+                       help="Enable active-active mode"
+                       ptype="SUBCOMMAND"
+                       mode="subcommand"
+                       yang_name="&VLAN_INTF_NAME;,&VRRP_IF_ACTIVE_ACTIVE;=true"/>
+            </PARAM>
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+        <COMMAND name="no vrrp"
+               help="VRRP mode configuration"
+               ptype="SUBCOMMAND"
+               operation="edit-config"
+               namespace="&MODULE-INTF-VRRP-NS;"
+               add_config_entry="true"
+               mode="subcommand" >
+            <PARAM name="mode"
+                   help="VRRP mode configuration"
+                   ptype="SUBCOMMAND"
+                   mode="subcommand">
+                <PARAM name="active-active"
+                       help="Disable active-active mode"
+                       ptype="SUBCOMMAND"
+                       mode="subcommand"
+                       yang_name="&VLAN_INTF_NAME;,&VRRP_IF_ACTIVE_ACTIVE;=false"/>
+            </PARAM>
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+    </MACRODEF>
+
+    <MACRODEF name="VRRP_IFRANGE_ACTIVE_ACTIVE_CFG">
+        <COMMAND name="vrrp"
+               help="VRRP mode configuration"
+               ptype="SUBCOMMAND"
+               operation="edit-config"
+               namespace="&MODULE-INTF-VRRP-NS;"
+               add_config_entry="false"
+               mode="subcommand" >
+            <PARAM name="mode"
+                   help="VRRP mode configuration"
+                   ptype="SUBCOMMAND"
+                   mode="subcommand">
+                <PARAM name="active-active"
+                       help="Enable active-active mode"
+                       ptype="SUBCOMMAND"
+                       mode="subcommand"
+                       yang_name="&VLAN_INTF_NAME_RNG;=${vlan_id},&VRRP_IFRNG_ACTIVE_ACTIVE;=true"/>
+            </PARAM>
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+        <COMMAND name="no vrrp"
+               help="VRRP mode configuration"
+               ptype="SUBCOMMAND"
+               operation="edit-config"
+               namespace="&MODULE-INTF-VRRP-NS;"
+               add_config_entry="true"
+               mode="subcommand" >
+            <PARAM name="mode"
+                   help="VRRP mode configuration"
+                   ptype="SUBCOMMAND"
+                   mode="subcommand">
+                <PARAM name="active-active"
+                       help="Disable active-active mode"
+                       ptype="SUBCOMMAND"
+                       mode="subcommand"
+                       yang_name="&VLAN_INTF_NAME_RNG;=${vlan_id},&VRRP_IFRNG_ACTIVE_ACTIVE;=false"/>
+            </PARAM>
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+    </MACRODEF>
+
+  <!-- VRRP IPV6-CONFIG START -->
+
+	<MACRODEF name="VRRP_IPV6_PRIORITY_CFG" >
+		<COMMAND name="priority"
+		         help="Virtual router priority (default = 100)"
+		         operation="edit-config"
+		         namespace="&MODULE-INTF-VRRP-NS;"
+		         ptype="SUBCOMMAND"
+		         mode="subcommand"
+				 >
+
+			<PARAM name="priority"
+		       help="Priority (default = 100)"
+		       ptype="RANGE_1_254"
+			   yang_name="&INTF_NAME;,&VRRP_IPV6_KEY;,&VRRP_IPV6_PRIORITY;=${priority}" >
+            </PARAM>
+			<ACTION builtin="clish_extn"> </ACTION>
+		</COMMAND>
+	</MACRODEF>
+
+	<MACRODEF name="VRRP_IPV6_NO_PRIORITY_CFG" >
+		<COMMAND name="no priority"
+		         help="Virtual router priority (default = 100)"
+		         operation="edit-config"
+		         namespace="&MODULE-INTF-VRRP-NS;"
+		         ptype="SUBCOMMAND"
+		         mode="subcommand"
+		         sub_oper_yang="remove:priority"
+		         yang_name="&INTF_NAME;,&VRRP_IPV6_KEY;,&VRRP_IPV6_PRIORITY;">
+
+			<PARAM name="priority"
+		       help="Priority (default = 100)"
+		       ptype="RANGE_1_254"
+		       optional="true" >
+	        </PARAM>
+			<ACTION builtin="clish_extn"> </ACTION>
+		</COMMAND>
+	</MACRODEF>
+
+	<MACRODEF name="VRRP_IPV6_PREEMPT" >
+		<COMMAND name="preempt"
+		         help="Preempt mode (default = preempt)"
+		         operation="edit-config"
+		         namespace="&MODULE-INTF-VRRP-NS;"
+                 yang_name="&INTF_NAME;,&VRRP_IPV6_KEY;,&VRRP_IPV6_PREEMPT_HOLDTIME;=0,&VRRP_IPV6_PREEMPT_ENABLE;=true" >
+			<ACTION builtin="clish_extn"> </ACTION>
+		</COMMAND>
+	</MACRODEF>
+
+	<MACRODEF name="VRRP_IPV6_NO_PREEMPT" >
+		<COMMAND name="no preempt"
+		         help="preempt mode (default = preempt)"
+                 operation="edit-config"
+                 sub_oper_yang="merge:preempt"
+                 add_config_entry = "true"
+		         namespace="&MODULE-INTF-VRRP-NS;"
+                 yang_name="&INTF_NAME;,&VRRP_IPV6_KEY;,&VRRP_IPV6_PREEMPT_HOLDTIME;=0,&VRRP_IPV6_PREEMPT_ENABLE;=false" >
+			<ACTION builtin="clish_extn"> </ACTION>
+		</COMMAND>
+	</MACRODEF>
+
+	<MACRODEF name="VRRP_IPV6_TRACK_CFG" >
+		<COMMAND name="track"
+		         help="Track interface"
+		         operation="edit-config"
+		         namespace="&MODULE-INTF-VRRP-NS;"
+				 >
+			
+			<PARAM name="track-id"
+		       help="Object tracking resource ID"
+			   ptype="RANGE_1_500"
+			   yang_name="&INTF_NAME;,&VRRP_IPV6_TRACK_LIST_KEY;,&VRRP_IPV6_TRACK_LIST_PRI_COST;=${cost},&VRRP_IPV6_TRACK_LIST_TRACK_ID;=${track-id}"
+		       >
+
+			<PARAM name="priority-cost"
+				   help="Priority-cost (default:10)"
+                   optional="true"
+			       ptype="SUBCOMMAND"
+			       mode="subcommand" >
+
+				<PARAM name="cost"
+				       help="Priority mark down"
+					   ptype="RANGE_1_254"
+					   refresh_yang_name="true"
+					   default="10"
+				       yang_name="&INTF_NAME;,&VRRP_IPV6_TRACK_LIST_KEY;,&VRRP_IPV6_TRACK_LIST_TRACK_ID;=${track-id},&VRRP_IPV6_TRACK_LIST_PRI_COST;=${cost}">
+				</PARAM>
+			</PARAM>
+		</PARAM>
+			<ACTION builtin="clish_extn"> </ACTION>
+		</COMMAND>
+	</MACRODEF>
+
+	<MACRODEF name="VRRP_IPV6_NO_TRACK_CFG" >
+		<COMMAND name="no track"
+		         help="Track interface"
+		         operation="edit-config"
+		         namespace="&MODULE-INTF-VRRP-NS;"
+				 >
+				
+		    <PARAM name="track-id"
+		       help="Object tracking resource ID"
+		       ptype="RANGE_1_500"
+		       sub_oper_yang="remove:track-list"
+               yang_name="&INTF_NAME;,&VRRP_IPV6_TRACK_LIST_KEY;,&VRRP_IPV6_TRACK_LIST_TRACK_ID;=${track-id}">
+		</PARAM>
+			<ACTION builtin="clish_extn"> </ACTION>
+		</COMMAND>
+	</MACRODEF>
+
+	<MACRODEF name="VRRP_IPV6_VIRTUAL_ADDR_CFG" >
+		<COMMAND name="virtual-address"
+		         help="Virtual IP address of VRRP router"
+		         operation="edit-config"
+		         namespace="&MODULE-INTF-VRRP-NS;"
+                         yang_key="&VRRP_IPV6_VIP;;;leaf-list"
+                 >
+
+			<PARAM
+				name="ipv6-address"
+				help="Virtual IPv6 address (maximum of 10)"
+				ptype="IPV6_ADDR"
+				recursive="true"
+				yang_name="&INTF_NAME;,&VRRP_IPV6_KEY;,&VRRP_IPV6_VIP;=${ipv6-address}">
+		    </PARAM>
+
+			<ACTION builtin="clish_extn"> </ACTION>
+		</COMMAND>
+	</MACRODEF>
+
+  <MACRODEF name="VRRP_IPV6_NO_VIRTUAL_ADDR_CFG" >
+    <COMMAND name="no virtual-address"
+      help="Virtual IP address of VRRP router"
+      operation="edit-config"
+      sub_oper_yang="remove:virtual-ip-address"
+      namespace="&MODULE-INTF-VRRP-NS;"
+      >
+
+      <PARAM
+        name="ipv6-address"
+        help="Virtual IPv6 address (maximum of 10)"
+        ptype="IPV6_ADDR"
+        recursive="true"
+        yang_name="&INTF_NAME;,&VRRP_IPV6_KEY;,&VRRP_IPV6_VIP;=${ipv6-address}">
+      </PARAM>
+
+      <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+  </MACRODEF>
+
+
+	<MACRODEF name="VRRP_IPV6_AUTHTYPE_CFG" >
+		<COMMAND  name="authentication"
+		          help="Authentication"
+		          operation="edit-config"
+		          namespace="&MODULE-INTF-VRRP-NS;"
+                  ptype="SUBCOMMAND"
+                  mode="subcommand"
+				  >
+				
+		    <PARAM name="simple-text"
+		       help="Simple text Authentication type"
+		       ptype="SUBCOMMAND"
+		       mode="subcommand" >
+		
+			<PARAM name="auth-text"
+			       help="authentication value "
+                   ptype="STRING"
+				   yang_name="&INTF_NAME;,&VRRP_IPV6_KEY;,&VRRP_IPV6_AUTH_TYPE;=simple-text-password,&VRRP_IPV6_AUTH_KEY;=${auth-text}" >
+			</PARAM>
+		</PARAM>
+
+			<ACTION builtin="clish_extn"> </ACTION>
+		</COMMAND>
+	</MACRODEF>
+
+	<MACRODEF name="VRRP_IPV6_NO_AUTHTYPE_CFG" >
+		<COMMAND  name="no authentication"
+		          help="Authentication"
+		          operation="edit-config"
+		          namespace="&MODULE-INTF-VRRP-NS;"
+		          default="no-authentication"
+		          sub_oper_yang="remove:auth-type,remove:auth-key"
+		          yang_name="&INTF_NAME;,&VRRP_IPV6_KEY;,&VRRP_IPV6_AUTH_TYPE;,&VRRP_IPV6_AUTH_KEY;" >
+			
+			<PARAM name="simple-text"
+		       help="Simple text Authentication type"
+		       ptype="SUBCOMMAND"
+		       mode="subcommand"
+		       optional="true">
+			
+			<PARAM name="auth-text"
+			       help="authentication value "
+			       ptype="STRING"  >
+			</PARAM>
+		</PARAM>
+		
+			<ACTION builtin="clish_extn"> </ACTION>
+		</COMMAND>
+	</MACRODEF>
+
+	<MACRODEF name="VRRP_IPV6_ADVT_INTERVAL_CFG" >
+		<COMMAND name="advertise-interval"
+		         help="Advertisement interval (default = 1 second)"
+		         operation="edit-config"
+                 namespace="&MODULE-INTF-VRRP-NS;"
+                 ptype="SUBCOMMAND"
+                 mode="subcommand"
+				 >
+				
+         <PARAM name="ADVT_INTERVAL_SWITCH"
+           help="choose the time type"
+           ptype="SUBCOMMAND"
+           mode="switch" >
+
+           <PARAM name="secs"
+             help="Specify time interval in seconds"
+             ptype="SUBCOMMAND"
+             prompt_fn="vrrp_check_version_v2orboth"
+             mode="subcommand" >
+
+             <PARAM name="sec-val"
+               help="Advertisement interval (default = 1 second)"
+               ptype="RANGE_1_255"
+               yang_name="&INTF_NAME;,&VRRP_IPV6_KEY;,&VRRP_IPV6_ADVT_INT_SEC;=${sec-val}" >
+
+             </PARAM>
+           </PARAM>
+
+           <PARAM name="centisecs"
+			       help="Specify time interval in centi-seconds"
+			       ptype="SUBCOMMAND"
+                               prompt_fn="vrrp_check_version_v3orboth"
+                   mode="subcommand" >
+
+				<PARAM name="val"
+				       help="Advertisement interval (default = 100 centi-seconds, multiple of 25)"
+				       ptype="RANGE_25_4075"
+				       yang_name="&INTF_NAME;,&VRRP_IPV6_KEY;,&VRRP_IPV6_ADVT_INT_CENTISEC;=${val}" >
+				</PARAM>
+			</PARAM>
+		</PARAM>
+			<ACTION builtin="clish_extn"> </ACTION>
+		</COMMAND>
+	</MACRODEF>
+	
+	<MACRODEF name="VRRP_IPV6_NO_ADVT_INTERVAL_CFG" >
+    <COMMAND name="no advertise-interval"
+      help="Advertisement interval (default = 1 second)"
+      operation="edit-config"
+      namespace="&MODULE-INTF-VRRP-NS;"
+      ptype="SUBCOMMAND"
+      mode="subcommand"
+      >
+      <PARAM name="ADVT_INTERVAL_SWITCH"
+        help="chose the time type"
+        ptype="SUBCOMMAND"
+        mode="switch" >
+
+        <PARAM name="secs"
+          help="Specify time interval in seconds"
+          ptype="SUBCOMMAND"
+          mode="subcommand"
+          sub_oper_yang="remove:advertise-interval-sec"
+          yang_name="&INTF_NAME;,&VRRP_IPV6_KEY;,&VRRP_IPV6_ADVT_INT_SEC;">
+
+
+          <PARAM name="sec-val"
+            help="Advertisement interval (default = 1 second)"
+            ptype="RANGE_1_255"
+            optional="true"
+            yang_name="&INTF_NAME;,&VRRP_IPV6_KEY;,&VRRP_IPV6_ADVT_INT_SEC;" >
+
+          </PARAM>
+        </PARAM>
+        <PARAM name="centisecs"
+          help="Specify time interval in centi-seconds"
+          ptype="SUBCOMMAND"
+          mode="subcommand"
+          sub_oper_yang="remove:advertise-interval-centi-sec"
+          yang_name="&INTF_NAME;,&VRRP_IPV6_KEY;,&VRRP_IPV6_ADVT_INT_CENTISEC;">
+
+          <PARAM name="val"
+            help="Advertisement interval (default = 100 centi-seconds, multiple of 25)"
+            ptype="RANGE_25_4075"
+            optional="true">
+				</PARAM>
+			</PARAM>
+		</PARAM>
+		
+		<ACTION builtin="clish_extn"> </ACTION>
+		
+		</COMMAND>
+	</MACRODEF>
+  <!-- VRRP IPV6-CONFIG END -->
+	
+	
+  <!-- VRRP INSTANT configs  END -->
+
+  <!-- VRRP Object tracking global configs START -->
+  <MACRODEF name="TRACK_INST_IF_CFG">
+    <COMMAND name="track-interface"
+      help="Select an interface to track"
+      operation="edit-config"
+      namespace="&MODULE-NS-OTM;"
+      ptype="SUBCOMMAND"
+      mode="subcommand" >
+
+      <PARAM name="if-name"
+        help="Ethernet interface"
+        ptype="PHY_INTERFACE"
+        yang_name="&TRACK_INST_KEY;,&TRACK_INST_OBJ_TYPE;=otm-type-interface,&TRACK_INST_OBJ;=${if-name}" >
+
+        <PARAM name="line-protocol"
+          help="Track the interface line protocol status."
+          ptype="SUBCOMMAND"
+          mode="subcommand"
+          yang_name="&TRACK_INST_OBJ_SUBTYPE;=otm-sub-type-line" >
+        </PARAM>
+      </PARAM>
+		<ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+  </MACRODEF>
+
+<MACRODEF name="TRACK_INST_NO_IF_CFG">
+    <COMMAND name="no track-interface"
+      help="Select an interface to track"
+      operation="edit-config"
+      namespace="&MODULE-NS-OTM;"
+      ptype="SUBCOMMAND"
+      mode="subcommand" >
+
+      <PARAM name="if-name"
+        help="Ethernet interface"
+        ptype="PHY_INTERFACE"
+        sub_oper_yang="remove:track"
+        yang_name="&TRACK_INST_KEY;,&TRACK_INST_OBJ_TYPE;=otm-type-interface,&TRACK_INST_OBJ;=${if-name}" >
+
+
+        <PARAM name="line-protocol"
+          help="Track the interface line protocol status."
+          ptype="SUBCOMMAND"
+          mode="subcommand"
+          yang_name="&TRACK_INST_OBJ_SUBTYPE;=otm-sub-type-line" >
+        </PARAM>
+      </PARAM>
+		<ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+  </MACRODEF>
+
+  <!-- VRRP Object tracking global configs END -->
+</ROOT>

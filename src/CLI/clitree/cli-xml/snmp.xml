@@ -1,0 +1,494 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE CLISH_MODULE [
+<!ENTITY NAME_SPACE                     "http://www.dellemc.com/networking/os10/dell-snmp">
+<!ENTITY SUBTREE_FILTER                 "Filter_Type:SUBTREE;">
+<!ENTITY COMMUNITY_NAME                 "/snmp-server/community/community-name">
+<!ENTITY COMMUNITY_ACCESS               "/snmp-server/community/community-access">
+<!ENTITY CONTACT                        "/snmp-server/global/sys-contact">
+<!ENTITY LOCATION                       "/snmp-server/global/sys-location">
+<!ENTITY TRAP_REC_HOSTLIST              "/snmp-server/trap-recipient-host">
+<!ENTITY TRAP_REC_HOST_PORT             "&TRAP_REC_HOSTLIST;/udp-port">
+<!ENTITY TRAP_REC_HOST_ADDR             "&TRAP_REC_HOSTLIST;/host-address">
+<!ENTITY TRAP_LIST                      "/snmp-server/trap-notification/trap">
+<!ENTITY SNMP_SERV                      "/snmp-server">
+]>
+<CLISH_MODULE
+    xmlns="http://www.dellemc.com/force10/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xi="http://www.w3.org/2001/XInclude"
+    xsi:schemaLocation="http://www.dellemc.com/force10/XMLSchema
+                        http://www.dellemc.com/force10/XMLSchema/clish.xsd"
+    >
+    <!--=======================================================-->
+    <!--                Config MODE                            -->
+    <!--=======================================================-->
+    <VIEW
+        name="configure-view"
+        >
+        <!-- snmp-server -->
+        <COMMAND
+            name="snmp-server"
+            help="Configure SNMP server"
+            operation="edit-config"
+            namespace="&NAME_SPACE;"
+            default_oper="merge"
+            >
+            <PARAM
+                name="options"
+                help="Select from given options"
+                ptype="SUBCOMMAND"
+                mode="switch"
+                >
+                <PARAM
+                    name="community"
+                    help="Configure a new community string access"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    yang_key="&COMMUNITY_NAME;"
+                    >
+                    <PARAM
+                        name="community-name"
+                        help="Specify the community name string to act as password for SNMP"
+                        ptype="STRING"
+                        yang_name="&COMMUNITY_NAME;=${community-name}"
+                    >
+                    <PARAM
+                        name="community-access"
+                        ptype="ACCESS_TYPE"
+                        yang_name="&COMMUNITY_ACCESS;=${community-access}"
+                        help="Specify the access privilege for given community-name "
+                    >
+                    </PARAM>
+                    </PARAM>
+                </PARAM>
+                <PARAM
+                    name="contact"
+                    help="Specify the contact information of this managed node"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    >
+                    <PARAM
+                        name="contact_info"
+                        help="Enter an alphanumeric text string, up to 55 characters long"
+                        ptype="URL"
+                        yang_name="&CONTACT;=${contact_info}"
+                    />
+                </PARAM>
+                <!-- snmp-server enable traps -->
+                <PARAM
+                    name="enable"
+                    help="Enable SNMP traps"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    yang_key="&TRAP_LIST;/trap-name"
+                    >
+                    <PARAM
+                        name="traps"
+                        help="Enable SNMP traps"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        prompt_fn="snmp_server_traps_enable_all"
+                        >
+                        <PARAM
+                            name="traps-switch"
+                            help="enable traps subcommands"
+                            ptype="SUBCOMMAND"
+                            optional="true"
+                            mode="switch"
+                            >
+                            <PARAM
+                                name="envmon"
+                                help="Enable SNMP environmental monitor traps"
+                                ptype="SUBCOMMAND"
+                                mode="subcommand"
+                                yang_name="&TRAP_LIST;/trap-name=envmon"
+                                >
+                                <PARAM
+                                    name="envmon-options-switch"
+                                    help="enable snmp traps subcommands"
+                                    ptype="SUBCOMMAND"
+                                    optional="true"
+                                    mode="switch"
+                                    >
+                                    <PARAM
+                                        name="fan"
+                                        help="Enable temperature traps"
+                                        ptype="SUBCOMMAND"
+                                        mode="subcommand"
+                                        yang_name="&TRAP_LIST;/trap-envmon-option=fan"
+                                        >
+                                    </PARAM> <!-- fan -->
+                                    <PARAM
+                                        name="power-supply"
+                                        help="Enable temperature traps"
+                                        ptype="SUBCOMMAND"
+                                        mode="subcommand"
+                                        yang_name="&TRAP_LIST;/trap-envmon-option=power-supply"
+                                        >
+                                    </PARAM> <!-- power-supply -->
+                                    <PARAM
+                                        name="temperature"
+                                        help="Enable temperature traps"
+                                        ptype="SUBCOMMAND"
+                                        mode="subcommand"
+                                        yang_name="&TRAP_LIST;/trap-envmon-option=temperature"
+                                        >
+                                    </PARAM> <!-- temperature -->
+                                </PARAM> <!-- envmon-options-switch -->
+                            </PARAM> <!-- envmon -->
+                            <PARAM
+                                name="lldp"
+                                help="Enable lldp state change traps"
+                                ptype="SUBCOMMAND"
+                                mode="subcommand"
+                                yang_name="&TRAP_LIST;/trap-name=lldp"
+                                >
+                            </PARAM> <!-- lldp -->
+                            <PARAM
+                                name="snmp"
+                                help="Enable SNMP generic traps"
+                                ptype="SUBCOMMAND"
+                                mode="subcommand"
+                                yang_name="&TRAP_LIST;/trap-name=snmp"
+                                >
+                                <PARAM
+                                    name="snmp-options-switch"
+                                    help="enable snmp traps subcommands"
+                                    ptype="SUBCOMMAND"
+                                    optional="true"
+                                    mode="switch"
+                                    >
+                                    <PARAM
+                                        name="authentication"
+                                        help="Enable authentication trap"
+                                        ptype="SUBCOMMAND"
+                                        mode="subcommand"
+                                        yang_name="&TRAP_LIST;/trap-snmp-option=authentication"
+                                        >
+                                    </PARAM> <!-- authentication -->
+                                    <PARAM
+                                        name="linkdown"
+                                        help="Enable linkdown traps"
+                                        ptype="SUBCOMMAND"
+                                        mode="subcommand"
+                                        yang_name="&TRAP_LIST;/trap-snmp-option=linkDown"
+                                        >
+                                    </PARAM> <!-- linkdown -->
+                                    <PARAM
+                                        name="linkup"
+                                        help="Enable linkup traps"
+                                        ptype="SUBCOMMAND"
+                                        mode="subcommand"
+                                        yang_name="&TRAP_LIST;/trap-snmp-option=linkUp"
+                                        >
+                                    </PARAM> <!-- linkup -->
+                                </PARAM> <!-- snmp-options-switch -->
+                            </PARAM> <!-- snmp -->
+                        </PARAM> <!-- traps-switch -->
+                    </PARAM> <!-- traps -->
+                </PARAM> <!-- enable -->
+                <!-- snmp-server host -->
+                <PARAM
+                    name="host"
+                    help="Specify hosts to receive SNMP traps"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    prompt_fn="snmp_server_host_set_defaults"
+                    prompt_oper="&TRAP_REC_HOST_ADDR;,&TRAP_REC_HOST_PORT;"
+                    yang_key="&TRAP_REC_HOST_ADDR;,&TRAP_REC_HOST_PORT;"
+                    >
+                    <PARAM
+                        name="host_addr"
+                        help="IP address or Host name of SNMP trap host"
+                        ptype="HOSTNAME_OR_IPADDR"
+                        yang_name="&TRAP_REC_HOST_ADDR;=${host_addr}"
+                        >
+                        <PARAM
+                            name="host-commands"
+                            help="host-sub-commands"
+                            ptype="SUBCOMMAND"
+                            mode="switch"
+                            >
+                            <PARAM
+                                name="traps"
+                                help="Send trap messages to this host"
+                                ptype="SUBCOMMAND"
+                                optional="true"
+                                mode="subcommand"
+                                yang_name="&TRAP_REC_HOSTLIST;/notification-type=traps"
+                                add_config_entry="true"
+                                >
+                                <MACRO name="SNMP_VER" arg="false"/>
+                            </PARAM>  <!-- traps -->
+                            <!-- version followed by comunity/security name and port -->
+                            <MACRO name="SNMP_VER_WO_TRAPS_INFORMS" arg="true"/>
+                            <!-- community or security name followed by port -->
+                            <MACRO name="COMMUNITY_NM_AND_PORT" arg="SNMPv1 community string,1"/>
+                        </PARAM> <!-- host commands -->
+                    </PARAM> <!-- host_addr -->
+                </PARAM> <!-- snmp-server host -->
+                <PARAM
+                    name="location"
+                    help="Specify the physical location of this managed node"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    >
+                    <PARAM
+                        name="location_info"
+                        help="Enter an alphanumeric text string, up to 55 characters long"
+                        ptype="STRING_55"
+                        yang_name="&LOCATION;=${location_info}"
+                    />
+                </PARAM>
+            </PARAM> <!-- options switch -->
+            <ACTION
+                builtin="clish_extn"
+            />
+        </COMMAND>
+        <COMMAND
+            name="no snmp-server"
+            help="Delete a snmp-server"
+            />
+        <!-- no snmp-server community -->
+        <COMMAND
+            name="no snmp-server community"
+            namespace="&NAME_SPACE;"
+            operation="edit-config"
+            help="Delete a snmp-server community"
+            sub_oper_yang="remove:community"
+            >
+            <PARAM
+                name="community_name"
+                help="Specify the community name string"
+                ptype="STRING"
+                yang_name="&COMMUNITY_NAME;=${community_name}"
+                >
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+            />
+        </COMMAND>
+        <!-- no snmp-server enable traps -->
+        <COMMAND
+            name="no snmp-server enable"
+            namespace="&NAME_SPACE;"
+            operation="edit-config"
+            help="Enable SNMP traps"
+            >
+            <PARAM
+                name="traps"
+                help="Enable SNMP traps"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                prompt_fn="snmp_server_traps_disable_all"
+                >
+                <PARAM
+                    name="traps-switch"
+                    help="enable traps subcommands"
+                    ptype="SUBCOMMAND"
+                    optional="true"
+                    mode="switch"
+                    >
+                    <PARAM
+                        name="envmon"
+                        help="Enable SNMP environmental monitor traps"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        sub_oper_yang="remove:trap"
+                        yang_key="&TRAP_LIST;/trap-name"
+                        yang_name="&TRAP_LIST;/trap-name=envmon"
+                        >
+                        <PARAM
+                            name="envmon-options-switch"
+                            help="enable snmp traps subcommands"
+                            ptype="SUBCOMMAND"
+                            optional="true"
+                            mode="switch"
+                            >
+                            <PARAM
+                                name="fan"
+                                help="Enable temperature traps"
+                                ptype="SUBCOMMAND"
+                                mode="subcommand"
+                                sub_oper_yang="clear;remove:trap-envmon-option"
+                                yang_name="&TRAP_LIST;/trap-envmon-option=fan"
+                                >
+                            </PARAM> <!-- fan -->
+                            <PARAM
+                                name="power-supply"
+                                help="Enable temperature traps"
+                                ptype="SUBCOMMAND"
+                                mode="subcommand"
+                                sub_oper_yang="clear;remove:trap-envmon-option"
+                                yang_name="&TRAP_LIST;/trap-envmon-option=power-supply"
+                                >
+                            </PARAM> <!-- power-supply -->
+                            <PARAM
+                                name="temperature"
+                                help="Enable temperature traps"
+                                ptype="SUBCOMMAND"
+                                mode="subcommand"
+                                sub_oper_yang="clear;remove:trap-envmon-option"
+                                yang_name="&TRAP_LIST;/trap-envmon-option=temperature"
+                                >
+                           </PARAM> <!-- temperature -->
+                        </PARAM> <!-- envmon-options-switch -->
+                    </PARAM> <!-- envmon -->
+                    <PARAM
+                        name="lldp"
+                        help="Enable lldp state change traps"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        sub_oper_yang="remove:trap"
+                        yang_key="&TRAP_LIST;/trap-name"
+                        yang_name="&TRAP_LIST;/trap-name=lldp"
+                        >
+                    </PARAM>
+                    <PARAM
+                        name="snmp"
+                        help="Enable SNMP generic traps"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        sub_oper_yang="remove:trap"
+                        yang_key="&TRAP_LIST;/trap-name"
+                        yang_name="&TRAP_LIST;/trap-name=snmp"
+                        >
+                    <PARAM
+                        name="snmp-options-switch"
+                        help="enable snmp traps subcommands"
+                        ptype="SUBCOMMAND"
+                        optional="true"
+                        mode="switch"
+                        >
+                        <PARAM
+                            name="authentication"
+                            help="Enable authentication trap"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            sub_oper_yang="clear;remove:trap-snmp-option"
+                            yang_name="&TRAP_LIST;/trap-snmp-option=authentication"
+                            >
+                        </PARAM> <!-- authentication -->
+                        <PARAM
+                            name="linkdown"
+                            help="Enable linkdown traps"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            sub_oper_yang="clear;remove:trap-snmp-option"
+                            yang_name="&TRAP_LIST;/trap-snmp-option=linkDown"
+                            >
+                        </PARAM> <!-- linkdown -->
+                        <PARAM
+                            name="linkup"
+                            help="Enable linkup traps"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            sub_oper_yang="clear;remove:trap-snmp-option"
+                            yang_name="&TRAP_LIST;/trap-snmp-option=linkUp"
+                            >
+                        </PARAM> <!-- linkup -->
+                    </PARAM> <!-- snmp-options-switch -->
+                </PARAM> <!-- snmp -->
+            </PARAM> <!-- traps-switch -->
+      </PARAM> <!-- traps -->
+      <ACTION
+          builtin="clish_extn"
+      />
+      </COMMAND>
+        <!-- no snmp-server contact -->
+        <COMMAND
+            name="no snmp-server contact"
+            namespace="&NAME_SPACE;"
+            operation="edit-config"
+            help="Delete a snmp-server contact"
+            yang_name="&CONTACT;"
+            sub_oper_yang="remove:sys-contact"
+            >
+        <ACTION
+            builtin="clish_extn"
+        />
+        </COMMAND>
+
+        <!-- no snmp-server location -->
+        <COMMAND
+            name="no snmp-server location"
+            namespace="&NAME_SPACE;"
+            operation="edit-config"
+            help="Delete a snmp-server location"
+            yang_name="&LOCATION;"
+            sub_oper_yang="remove:sys-location"
+            >
+        <ACTION
+            builtin="clish_extn"
+        />
+        </COMMAND>
+
+        <!-- no snmp-server host -->
+        <COMMAND
+            name="no snmp-server host"
+            namespace="&NAME_SPACE;"
+            operation="edit-config"
+            help="Specify hosts to receive SNMP traps"
+            prompt_fn="snmp_server_host_set_defaults"
+            prompt_oper="&TRAP_REC_HOST_ADDR;,&TRAP_REC_HOST_PORT;"
+            yang_key="&TRAP_REC_HOST_PORT;,&TRAP_REC_HOST_ADDR;"
+            sub_oper_yang="delete:trap-recipient-host"
+            >
+            <PARAM
+                name="host_addr"
+                help="IP address or Host name of SNMP trap host"
+                ptype="HOSTNAME_OR_IPADDR"
+                yang_name="&TRAP_REC_HOST_ADDR;=${host_addr}"
+                >
+                <PARAM
+                    name="host-commands"
+                    help="host-sub-commands"
+                    ptype="SUBCOMMAND"
+                    mode="switch"
+                    >
+                    <PARAM
+                        name="traps"
+                        help="Send trap messages to this host"
+                        ptype="SUBCOMMAND"
+                        optional="true"
+                        mode="subcommand"
+                        yang_name="&TRAP_REC_HOSTLIST;/notification-type=traps"
+                        >
+                        <MACRO name="SNMP_VER" arg="false"/>
+                    </PARAM>  <!-- traps -->
+                    <!-- version followed by comunity/security name and port -->
+                    <MACRO name="SNMP_VER_WO_TRAPS_INFORMS" arg="true"/>
+                    <!-- community or security name followed by port -->
+                    <MACRO name="COMMUNITY_NM_AND_PORT" arg="SNMPv1 community string,1"/>
+                </PARAM> <!-- host commands -->
+            </PARAM> <!-- host_addr -->
+          <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+    </VIEW>
+       <!--=======================================================-->
+    <VIEW name="enable-view">
+
+        <!--show candidate-configuration SNMP -->
+      <COMMAND
+        name="show candidate-configuration snmp"
+        help="Current candidate snmp configuration"
+        yang_filter="&SUBTREE_FILTER;Filter_Conditions:&SNMP_SERV;;Filter_Namespace:&NAME_SPACE;"
+        db_mode="configure"
+        >
+        <ACTION builtin="clish_extn"> </ACTION>
+      </COMMAND>
+
+    <!--show running-configuration SNMP -->
+      <COMMAND
+        name="show running-configuration snmp"
+        help="Current operating snmp configuration"
+        yang_filter="&SUBTREE_FILTER;Filter_Conditions:&SNMP_SERV;;Filter_Namespace:&NAME_SPACE;"
+        db_mode="configure"
+        >
+        <ACTION builtin="clish_extn"> </ACTION>
+      </COMMAND>
+
+    </VIEW>
+</CLISH_MODULE>
+
+

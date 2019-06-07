@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE CLISH_MODULE [
+]>
+<CLISH_MODULE
+    xmlns="http://www.dellemc.com/force10/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xi="http://www.w3.org/2001/XInclude"
+    xsi:schemaLocation="http://www.dellemc.com/force10/XMLSchema
+                        http://www.dellemc.com/force10/XMLSchema/clish.xsd"
+    >
+    <!--=======================================================-->
+    <VIEW
+        name="enable-view"
+        >
+        <COMMAND
+             name="show processes"
+             help="Show processes statistics"/>
+        <COMMAND
+            name="show processes node-id"
+            help="Show processes on the node"
+            mode="subcommand"
+            ptype="SUBCOMMAND">
+            <PARAM
+                 name="system-id"
+                 help="Node id number"
+                 ptype="STACK">
+                 <PARAM
+                     name="pid"
+                     help="Process id"
+                     optional="true"
+                     mode="subcommand"
+                     ptype="SUBCOMMAND">
+                     <PARAM
+                         name="pid-value"
+                         help="Process pid number"
+                         default="0"
+                         ptype="RANGE_PID"/>
+                 </PARAM>
+            </PARAM>
+            <ACTION builtin="clish_file_print">bash /opt/dell/os10/bin/show_process.sh ${system-id} ${pid-value} 2>/dev/null</ACTION>
+        </COMMAND>
+    </VIEW>
+</CLISH_MODULE>

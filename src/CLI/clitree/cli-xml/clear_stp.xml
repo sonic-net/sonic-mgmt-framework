@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE CLISH_MODULE [
+<!ENTITY SUBTREE_FILTER "Filter_Type:SUBTREE">
+]>
+<CLISH_MODULE
+    xmlns="http://www.dellemc.com/force10/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xi="http://www.w3.org/2001/XInclude"
+    xsi:schemaLocation="http://www.dellemc.com/force10/XMLSchema
+                        http://www.dellemc.com/force10/XMLSchema/clish.xsd">
+<!-- ********************************************************************** -->
+<!-- *  CLEAR STP COMMANDS                                                * -->
+<!--
+clear spanning-tree counters
+clear spanning-tree detected-protocol
+-->
+<!-- *  View : enable-view                                                * -->
+<!-- ********************************************************************** -->
+    <VIEW name="enable-view">
+        <COMMAND name="clear spanning-tree"
+                 help="Clears STP related information"
+                 ptype="SUBCOMMAND"
+                 operation="generic-rpc"
+                 namespace="http://www.dellemc.com/networking/os10/dell-xstp">
+                 <PARAM name="options"
+                        help=""
+                        ptype="SUBCOMMAND"
+                        mode="switch">
+                        <PARAM name="counters"
+                               help="clear spanning-tree counters"
+                               ptype="SUBCOMMAND"
+                               mode="subcommand"
+                               yang_name="/clear-xstp/counters">
+                                      <PARAM name="mst"
+                                             help="clear spanning-tree counters"
+                                             ptype="SUBCOMMAND"
+                                             optional="true"
+                                             mode="subcommand">
+                                             <PARAM name="mst-value"
+                                                    help="clear spanning-tree counters mst value"
+                                                    ptype="MSTP_INSTANCE"
+                                                    yang_name="/clear-xstp/mst=${mst-value}"/>
+                                      </PARAM>
+                                      <PARAM name="interface"
+                                             help="clear spanning-tree counters interface"
+                                             optional="true"
+                                             ptype="SUBCOMMAND"
+                                             mode="subcommand">
+                                             <PARAM name="interface-value"
+                                                    help="clear spanning-tree counters interface value"
+                                                    ptype="PHY_PO_INTERFACE"
+                                                    yang_name="/clear-xstp/interface=${interface-value}"/>
+                                      </PARAM>
+                        </PARAM>
+                        <PARAM name="detected-protocol"
+                               help="clear spanning-tree detected-protocol"
+                               ptype="SUBCOMMAND"
+                               mode="subcommand"
+                               yang_name="/clear-xstp/detected-protocol">
+                               <PARAM name="interface"
+                                      help="clear spanning-tree detected-protocol interface"
+                                      ptype="SUBCOMMAND"
+                                      optional="true"
+                                      mode="subcommand">
+                                      <PARAM name="interface-value"
+                                             help="clear spanning-tree counters interface value"
+                                             ptype="PHY_PO_INTERFACE"
+                                             yang_name="/clear-xstp/interface=${interface-value}"/>
+                               </PARAM>
+                        </PARAM>
+                 </PARAM>
+        <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+    </VIEW>
+</CLISH_MODULE>
