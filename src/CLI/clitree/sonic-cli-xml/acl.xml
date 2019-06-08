@@ -126,7 +126,10 @@
       <xi:include href="include/pipe.xml"/>
     </COMMAND>
     <!--show ip access-lists -->
-    <COMMAND name="show ip access-lists" help="Show IPv4 access-list information" operation="get-bulk" namespace="&NS-GET-BULK;" prompt_fn="get_bulk_multiple_obj" template="show_ip_access_lists.xsl" pfeature="NOT_SUPPORTED_IN_OPENFLOW_ONLY_MODE">
+    <COMMAND name="show ip access-lists" help="Show IPv4 access-list information">
+      <PARAM name="access-list-name" help="Name of access-list (Max size 140)" ptype="STRING" optional="true">
+      </PARAM>
+      <!--
       <PARAM name="direction-switch" help="Configure the direction to apply the access list" ptype="SUBCOMMAND" mode="switch">
         <PARAM name="in" help="show access-list in incoming direction" ptype="SUBCOMMAND" mode="subcommand" yang_name="/get-bulk/count=200,/get-bulk/list-target=/oper-stat/acl-oper-data/acl-entry-stats,/get-bulk/filter=role=ipv4;direction=in" prompt_oper="Filter_Type:SUBTREE;Filter_Conditions:&IF-ACG;/&POLICY-PREF;:role=ipv4,&IF-ACG;/&POLICY-PREF;:direction=in;Filter_Namespace:&POLICY-NS;|Filter_Type:SUBTREE;Filter_Conditions:/config/access-list/role=ipv4;Filter_Namespace:http://www.dellemc.com/networking/os10/dell-policy|Filter_Type:SUBTREE;Filter_Conditions:/config/control-plane-acl/access-group/role=ipv4;Filter_Namespace:http://www.dellemc.com/networking/os10/dell-policy">
           <PARAM name="acl-name" help="Name of access-list (Max size 140)" ptype="STRING_1_140" refresh_yang_name="true" yang_name="/get-bulk/count=200,/get-bulk/list-target=/oper-stat/acl-oper-data/acl-entry-stats,/get-bulk/filter=role=ipv4;direction=in;name=${acl-name}" prompt_oper="Filter_Type:SUBTREE;Filter_Conditions:&IF-ACG;/&POLICY-PREF;:role=ipv4,&IF-ACG;/&POLICY-PREF;:direction=in,&IF-ACG;/&POLICY-PREF;:name=${acl-name};Filter_Namespace:&POLICY-NS;|Filter_Type:SUBTREE;Filter_Conditions:/config/access-list/role=ipv4,/config/access-list/name=${acl-name};Filter_Namespace:http://www.dellemc.com/networking/os10/dell-policy|Filter_Type:SUBTREE;Filter_Conditions:/config/control-plane-acl/access-group/role=ipv4,/config/control-plane-acl/access-group/name=${acl-name};Filter_Namespace:http://www.dellemc.com/networking/os10/dell-policy" optional="true"/>
@@ -135,7 +138,14 @@
           <PARAM name="acl-name" help="Name of access-list (Max size 140)" ptype="STRING_1_140" refresh_yang_name="true" yang_name="/get-bulk/count=200,/get-bulk/list-target=/oper-stat/acl-oper-data/acl-entry-stats,/get-bulk/filter=role=ipv4;direction=out;name=${acl-name}" prompt_oper="Filter_Type:SUBTREE;Filter_Conditions:&IF-ACG;/&POLICY-PREF;:role=ipv4,&IF-ACG;/&POLICY-PREF;:direction=out,&IF-ACG;/&POLICY-PREF;:name=${acl-name};Filter_Namespace:&POLICY-NS;|Filter_Type:SUBTREE;Filter_Conditions:/config/access-list/role=ipv4,/config/access-list/name=${acl-name};Filter_Namespace:http://www.dellemc.com/networking/os10/dell-policy" optional="true"/>
         </PARAM>
       </PARAM>
-      <ACTION builtin="clish_nop"> </ACTION>
+      -->
+      <ACTION>
+        if test "${access-list-name}" = ""; then
+             python $SONIC_CLI_ROOT/target/sonic-cli.py get_list_base_acl_sets_acl_set
+        else
+             python $SONIC_CLI_ROOT/target/sonic-cli.py get_acl_set_acl_entries ${access-list-name} ACL_IPV4
+        fi
+      </ACTION>
       <xi:include href="include/pipe.xml"/>
     </COMMAND>
     <!--show ipv6 access-lists -->
@@ -165,10 +175,11 @@
       <xi:include href="include/pipe.xml"/>
     </COMMAND>
     <!--show ip access-group -->
-    <COMMAND name="show ip access-group" help="Show IPv4 access-group information" namespace="&POLICY-NS;" operation="get" yang_filter="&SUBTREE_FILTER;Filter_Conditions:&IF-ACG;/&POLICY-PREF;:role=ipv4;Filter_Namespace:&POLICY-NS;|Filter_Type:SUBTREE;Filter_Conditions:&CP-ACCESS-LIST-ACG;/role=ipv4;Filter_Namespace:&ACL-NS;" template="show_ip_access_group.xsl" pfeature="NOT_SUPPORTED_IN_OPENFLOW_ONLY_MODE">
-      <PARAM name="access-list-name" help="Name of access-list (Max size 140)" ptype="STRING_1_140" yang_filter="&SUBTREE_FILTER;Filter_Conditions:&IF-ACG;/&POLICY-PREF;:name=${access-list-name},&IF-ACG;/&POLICY-PREF;:role=ipv4;Filter_Namespace:&POLICY-NS;|Filter_Type:SUBTREE;Filter_Conditions:&CP-ACCESS-LIST-ACG;/role=ipv4,&CP-ACCESS-LIST-ACG;/name=${access-list-name};Filter_Namespace:&ACL-NS;" optional="true"> </PARAM>
-      <ACTION builtin="clish_nop"> </ACTION>
-      <xi:include href="include/pipe.xml"/>
+    <COMMAND name="show ip access-group" help="Show IPv4 access-group information">
+      <PARAM name="access-list-name" help="Name of access-list" ptype="STRING" optional="true"> </PARAM>
+      <ACTION>
+	python $SONIC_CLI_ROOT/target/sonic-cli.py get_acl_interfaces
+      </ACTION>
     </COMMAND>
     <!--show ipv6 access-group -->
     <COMMAND name="show ipv6 access-group" help="Show IPv6 access-group information" namespace="&POLICY-NS;" operation="get" yang_filter="&SUBTREE_FILTER;Filter_Conditions:&IF-ACG;/&POLICY-PREF;:role=ipv6;Filter_Namespace:&POLICY-NS;|Filter_Type:SUBTREE;Filter_Conditions:&CP-ACCESS-LIST-ACG;/role=ipv6;Filter_Namespace:&ACL-NS;" template="show_ip_access_group.xsl" pfeature="NOT_SUPPORTED_IN_OPENFLOW_ONLY_MODE">

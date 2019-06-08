@@ -27,6 +27,10 @@ def generate_body(func, args):
     if func.__name__ == 'get_list_base_acl_sets_acl_set':
        keypath = []
 
+    # Get Interface binding to ACL table info
+    elif func.__name__ == 'get_acl_interfaces':
+       keypath = []
+
     # Get all the rules specific to an ACL table.
     elif func.__name__ == 'get_acl_set_acl_entries':
        keypath = [ args[0], args[1] ]
@@ -177,6 +181,7 @@ def run(func, args):
            api_response = getattr(swagger_client.OpenconfigAclApi(),func.__name__)(*keypath, body)
         else :
            api_response = getattr(swagger_client.OpenconfigAclApi(),func.__name__)(*keypath)
+        #print(api_response)
         if api_response is None:
             print ("Success")
         else:
@@ -186,7 +191,16 @@ def run(func, args):
                 if value is None:
                     print("Success")
                 else:
-                   print ("Failed")
+                    print ("Failed")
+            elif 'openconfig_aclacl_entries' in response.keys():
+                value = response['openconfig_aclacl_entries']
+                # Call the template
+            elif 'openconfig_aclacl_set' in response.keys():
+                value = response['openconfig_aclacl_set']
+                # Call the template
+            elif 'openconfig_aclinterfaces' in response.keys():
+                value = response['openconfig_aclinterfaces']
+                # Call the template
             else:
                 print("Failed")
         #pprint(api_response)
