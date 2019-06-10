@@ -733,24 +733,23 @@
         <COMMAND
             name="interface"
             help="Select an interface"
-            operation="edit-config"
-            db_multi_yang_key="&DN_IF_ENTRY;/name=Ethernet*||&DN_IF_ENTRY;/name=fibre*||&DN_IF_ENTRY;/name=loopback*||&DN_IF_ENTRY;/name=mgmt*||&DN_IF_ENTRY;/name=null*||&DN_IF_ENTRY;/name=port-channel*||&DN_VL_ENTRY;/name=vlan*"
-            db_flag="SEP_CLI"
+            view="configure-if-view"
+            viewid="iface=Ethernet${phy-if-name}"
             >
             <PARAM
                 name="if-switch"
                 help="Interface commands"
                 mode="switch"
                 ptype="STRING"
-                db_flag="SEP_CLI"
                 >
                 <PARAM
                     name="phy-if-name"
-                    help="Physical interface"
-                    ptype="SONIC_PHY_INTERFACE"
+                    help="Physical interface(Multiples of 4)"
+                    ptype="UINT"
                     view="configure-if-view"
-                    viewid="iface=${phyifname};ifacename=${phy-if-name};vlan-bulk-list=&VLAN-RANGE;"
+                    viewid="iface=Ethernet${phyifname}"
                     />
+                <!--
                 <PARAM
                     name="fc-if-name"
                     help="Fibre-channel interface"
@@ -854,7 +853,8 @@
                     view="configure-vlan-view"
                     viewid="vlan_id=${vlanifname};vlan_name=${vlan-if-name};vlan-bulk-list=&VLAN-RANGE;"
                     />
-                </PARAM>
+                -->
+            </PARAM>
             <ACTION builtin="clish_nop"></ACTION>
         </COMMAND>
         <COMMAND

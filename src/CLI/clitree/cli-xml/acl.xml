@@ -37,7 +37,7 @@
 
         <MACRO name="CLEAR-ACL-OPTIONS" arg="ipv4"></MACRO>
 
-        <ACTION builtin="clish_extn"> </ACTION>
+        <ACTION builtin="clish_nop"> </ACTION>
     </COMMAND>
 
 <!-- clear ipv6 access-list counters [name] -->
@@ -49,7 +49,7 @@
 
         <MACRO name="CLEAR-ACL-OPTIONS" arg="ipv6"></MACRO>
 
-        <ACTION builtin="clish_extn"> </ACTION>
+        <ACTION builtin="clish_nop"> </ACTION>
     </COMMAND>
 
 <!-- clear mac access-list counters [name] -->
@@ -61,7 +61,7 @@
 
         <MACRO name="CLEAR-ACL-OPTIONS" arg="mac"></MACRO>
 
-        <ACTION builtin="clish_extn"> </ACTION>
+        <ACTION builtin="clish_nop"> </ACTION>
     </COMMAND>
 
 <!--show candidate-configuration access-list -->
@@ -72,7 +72,7 @@
         yang_filter="&SUBTREE_FILTER;Filter_Conditions:&ACCESS-LIST;;Filter_Namespace:&MODULE-NS;"
         db_mode="configure-acl"
         >
-        <ACTION builtin="clish_extn"> </ACTION>
+        <ACTION builtin="clish_nop"> </ACTION>
     </COMMAND>
 
 <!--show running-configuration access-list -->
@@ -83,7 +83,7 @@
         yang_filter="&SUBTREE_FILTER;Filter_Conditions:&ACCESS-LIST;;Filter_Namespace:&MODULE-NS;"
         db_mode="configure-acl"
         >
-        <ACTION builtin="clish_extn"> </ACTION>
+        <ACTION builtin="clish_nop"> </ACTION>
     </COMMAND>
 
 <!--show candidate-configuration prefix-list -->
@@ -93,7 +93,7 @@
         yang_filter="&SUBTREE_FILTER;Filter_Conditions:&PREFIX-LIST;;Filter_Namespace:&MODULE-NS;"
         db_mode="configure"
         >
-        <ACTION builtin="clish_extn"> </ACTION>
+        <ACTION builtin="clish_nop"> </ACTION>
     </COMMAND>
 
 <!--show running-configuration prefix-list -->
@@ -103,7 +103,7 @@
         yang_filter="&SUBTREE_FILTER;Filter_Conditions:&PREFIX-LIST;;Filter_Namespace:&MODULE-NS;"
         db_mode="configure"
         >
-        <ACTION builtin="clish_extn"> </ACTION>
+        <ACTION builtin="clish_nop"> </ACTION>
     </COMMAND>
 
 <!--show candidate-configuration community-list -->
@@ -113,7 +113,7 @@
         yang_filter="&SUBTREE_FILTER;Filter_Conditions:&COMMUNITY;;Filter_Namespace:&MODULE-NS;"
         db_mode="configure"
         >
-        <ACTION builtin="clish_extn"> </ACTION>
+        <ACTION builtin="clish_nop"> </ACTION>
     </COMMAND>
 
 <!--show running-configuration community-list -->
@@ -123,7 +123,7 @@
         yang_filter="&SUBTREE_FILTER;Filter_Conditions:&COMMUNITY;;Filter_Namespace:&MODULE-NS;"
         db_mode="configure"
         >
-        <ACTION builtin="clish_extn"> </ACTION>
+        <ACTION builtin="clish_nop"> </ACTION>
     </COMMAND>
 
 <!--show candidate-configuration extcommunity-list -->
@@ -133,7 +133,7 @@
         yang_filter="&SUBTREE_FILTER;Filter_Conditions:&EXT-COMMUNITY;;Filter_Namespace:&MODULE-NS;"
         db_mode="configure"
         >
-        <ACTION builtin="clish_extn"> </ACTION>
+        <ACTION builtin="clish_nop"> </ACTION>
     </COMMAND>
 
 <!--show running-configuration extcommunity-list -->
@@ -143,7 +143,7 @@
         yang_filter="&SUBTREE_FILTER;Filter_Conditions:&EXT-COMMUNITY;;Filter_Namespace:&MODULE-NS;"
         db_mode="configure"
         >
-        <ACTION builtin="clish_extn"> </ACTION>
+        <ACTION builtin="clish_nop"> </ACTION>
     </COMMAND>
 
 <!--show candidate-configuration as-path -->
@@ -153,7 +153,7 @@
         yang_filter="&SUBTREE_FILTER;Filter_Conditions:&AS-PATH;;Filter_Namespace:&MODULE-NS;"
         db_mode="configure"
         >
-        <ACTION builtin="clish_extn"> </ACTION>
+        <ACTION builtin="clish_nop"> </ACTION>
     </COMMAND>
 
 <!--show running-configuration as-path -->
@@ -163,7 +163,7 @@
         yang_filter="&SUBTREE_FILTER;Filter_Conditions:&AS-PATH;;Filter_Namespace:&MODULE-NS;"
         db_mode="configure"
         >
-        <ACTION builtin="clish_extn"> </ACTION>
+        <ACTION builtin="clish_nop"> </ACTION>
     </COMMAND>
 
 <!--show ip access-lists -->
@@ -200,7 +200,7 @@
 
       <MACRO name="SHOW-ACL-OPTIONS" arg="ipv6,&IF-ACG;,&POLICY-PREF;,&POLICY-NS;"></MACRO>
 
-      <ACTION builtin="clish_extn"> </ACTION>
+      <ACTION builtin="clish_nop"> </ACTION>
     </COMMAND>
 
 <!--show mac access-lists -->
@@ -213,7 +213,7 @@
 
       <MACRO name="SHOW-ACL-OPTIONS" arg="mac,&IF-ACG;,&POLICY-PREF;,&POLICY-NS;"></MACRO>
 
-      <ACTION builtin="clish_extn"> </ACTION>
+      <ACTION builtin="clish_nop"> </ACTION>
     </COMMAND>
 
 <!--show ip access-group -->
@@ -251,7 +251,7 @@
 			>
         </PARAM>
 
-      <ACTION builtin="clish_extn"> </ACTION>
+      <ACTION builtin="clish_nop"> </ACTION>
     </COMMAND>
 
 <!--show mac access-group -->
@@ -271,7 +271,7 @@
 			>
         </PARAM>
 
-      <ACTION builtin="clish_extn"> </ACTION>
+      <ACTION builtin="clish_nop"> </ACTION>
     </COMMAND>
 
 <!--show ip prefix-list  -->
@@ -292,7 +292,7 @@
             >
         </PARAM>
 
-      <ACTION builtin="clish_extn"> </ACTION>
+      <ACTION builtin="clish_nop"> </ACTION>
     </COMMAND>
 
 <!--show ip community-list  -->
@@ -313,7 +313,7 @@
             >
         </PARAM>
 
-      <ACTION builtin="clish_extn"> </ACTION>
+      <ACTION builtin="clish_nop"> </ACTION>
     </COMMAND>
 
 <!--show ip extcommunity-list  -->
@@ -334,7 +334,7 @@
             >
         </PARAM>
 
-      <ACTION builtin="clish_extn"> </ACTION>
+      <ACTION builtin="clish_nop"> </ACTION>
     </COMMAND>
 
 <!--show ip as-path-access-list  -->
@@ -355,7 +355,7 @@
             >
         </PARAM>
 
-      <ACTION builtin="clish_extn"> </ACTION>
+      <ACTION builtin="clish_nop"> </ACTION>
     </COMMAND>
 
 <!--show ipv6 prefix-list  -->
@@ -376,7 +376,7 @@
             >
         </PARAM>
 
-      <ACTION builtin="clish_extn"> </ACTION>
+      <ACTION builtin="clish_nop"> </ACTION>
     </COMMAND>
 
 </VIEW>
@@ -412,7 +412,7 @@
 
     <MACRO name="ACG-OPTIONS" arg="ipv6,&IF-ACG;,/interfaces/interface/name=${ifacename},&POLICY-PREF;"></MACRO>
 
-    <ACTION builtin="clish_extn"> </ACTION>
+    <ACTION builtin="clish_nop"> </ACTION>
 
     </COMMAND>
 
@@ -430,7 +430,7 @@
 
     <MACRO name="ACG-OPTIONS" arg="mac,&IF-ACG;,/interfaces/interface/name=${ifacename},&POLICY-PREF;"></MACRO>
 
-    <ACTION builtin="clish_extn"> </ACTION>
+    <ACTION builtin="clish_nop"> </ACTION>
 
     </COMMAND>
 
@@ -461,7 +461,7 @@
 
     <MACRO name="NO-ACG-OPTIONS" arg="ipv6,&IF-ACG;,/interfaces/interface/name=${ifacename},&POLICY-PREF;"></MACRO>
 
-    <ACTION builtin="clish_extn"> </ACTION>
+    <ACTION builtin="clish_nop"> </ACTION>
 
     </COMMAND>
 
@@ -479,7 +479,7 @@
 
     <MACRO name="NO-ACG-OPTIONS" arg="mac,&IF-ACG;,/interfaces/interface/name=${ifacename},&POLICY-PREF;"></MACRO>
 
-    <ACTION builtin="clish_extn"> </ACTION>
+    <ACTION builtin="clish_nop"> </ACTION>
 
     </COMMAND>
 </VIEW>
@@ -496,7 +496,7 @@
 
     <MACRO name="ACG-OPTIONS" arg="ipv4,&IF-ACG;,/interfaces/interface/name=${port-channeliface},&POLICY-PREF;"></MACRO>
 
-    <ACTION builtin="clish_extn"> </ACTION>
+    <ACTION builtin="clish_nop"> </ACTION>
 
     </COMMAND>
 
@@ -510,7 +510,7 @@
 
     <MACRO name="ACG-OPTIONS" arg="ipv6,&IF-ACG;,/interfaces/interface/name=${port-channeliface},&POLICY-PREF;"></MACRO>
 
-    <ACTION builtin="clish_extn"> </ACTION>
+    <ACTION builtin="clish_nop"> </ACTION>
 
     </COMMAND>
 
@@ -528,7 +528,7 @@
 
     <MACRO name="ACG-OPTIONS" arg="mac,&IF-ACG;,/interfaces/interface/name=${port-channeliface},&POLICY-PREF;"></MACRO>
 
-    <ACTION builtin="clish_extn"> </ACTION>
+    <ACTION builtin="clish_nop"> </ACTION>
 
     </COMMAND>
 
@@ -542,7 +542,7 @@
 
     <MACRO name="NO-ACG-OPTIONS" arg="ipv4,&IF-ACG;,/interfaces/interface/name=${port-channeliface},&POLICY-PREF;"></MACRO>
 
-    <ACTION builtin="clish_extn"> </ACTION>
+    <ACTION builtin="clish_nop"> </ACTION>
 
     </COMMAND>
 
@@ -556,7 +556,7 @@
 
     <MACRO name="NO-ACG-OPTIONS" arg="ipv6,&IF-ACG;,/interfaces/interface/name=${port-channeliface},&POLICY-PREF;"></MACRO>
 
-    <ACTION builtin="clish_extn"> </ACTION>
+    <ACTION builtin="clish_nop"> </ACTION>
 
     </COMMAND>
 
@@ -574,7 +574,7 @@
 
     <MACRO name="NO-ACG-OPTIONS" arg="mac,&IF-ACG;,/interfaces/interface/name=${port-channeliface},&POLICY-PREF;"></MACRO>
 
-    <ACTION builtin="clish_extn"> </ACTION>
+    <ACTION builtin="clish_nop"> </ACTION>
 
     </COMMAND>
 </VIEW>
@@ -591,7 +591,7 @@
 
     <MACRO name="ACG-OPTIONS" arg="ipv4,&IF-ACG;,/interfaces/interface/name=vlan${vlan_id},&POLICY-PREF;"></MACRO>
 
-    <ACTION builtin="clish_extn"> </ACTION>
+    <ACTION builtin="clish_nop"> </ACTION>
 
     </COMMAND>
 
@@ -605,7 +605,7 @@
 
     <MACRO name="ACG-OPTIONS" arg="ipv6,&IF-ACG;,/interfaces/interface/name=vlan${vlan_id},&POLICY-PREF;"></MACRO>
 
-    <ACTION builtin="clish_extn"> </ACTION>
+    <ACTION builtin="clish_nop"> </ACTION>
 
     </COMMAND>
 
@@ -619,7 +619,7 @@
 
     <MACRO name="NO-ACG-OPTIONS" arg="ipv4,&IF-ACG;,/interfaces/interface/name=vlan${vlan_id},&POLICY-PREF;"></MACRO>
 
-    <ACTION builtin="clish_extn"> </ACTION>
+    <ACTION builtin="clish_nop"> </ACTION>
 
     </COMMAND>
 
@@ -633,7 +633,7 @@
 
     <MACRO name="NO-ACG-OPTIONS" arg="ipv6,&IF-ACG;,/interfaces/interface/name=vlan${vlan_id},&POLICY-PREF;"></MACRO>
 
-    <ACTION builtin="clish_extn"> </ACTION>
+    <ACTION builtin="clish_nop"> </ACTION>
 
     </COMMAND>
 
@@ -674,7 +674,7 @@
 			 >
         </PARAM>
 
-    <ACTION builtin="clish_extn"> </ACTION>
+    <ACTION builtin="clish_nop"> </ACTION>
 
     </COMMAND>
 
@@ -775,7 +775,7 @@
             </PARAM>
         </PARAM>
     </PARAM>
-    <ACTION builtin="clish_extn"> </ACTION>
+    <ACTION builtin="clish_nop"> </ACTION>
 </COMMAND>
 
 <!-- ipv6 prefix-list -->
@@ -875,7 +875,7 @@
             </PARAM>
         </PARAM>
     </PARAM>
-    <ACTION builtin="clish_extn"> </ACTION>
+    <ACTION builtin="clish_nop"> </ACTION>
 </COMMAND>
 
 <!-- ip community-list -->
@@ -985,7 +985,7 @@
                 </PARAM>
             </PARAM>
         </PARAM>
-        <ACTION builtin="clish_extn"> </ACTION>
+        <ACTION builtin="clish_nop"> </ACTION>
     </COMMAND>
 
 <!-- ip as-path -->
@@ -1043,7 +1043,7 @@
                 </PARAM>
             </PARAM>
         </PARAM>
-        <ACTION builtin="clish_extn"> </ACTION>
+        <ACTION builtin="clish_nop"> </ACTION>
     </COMMAND>
 
 <!-- ip extcommunity-list -->
@@ -1152,7 +1152,7 @@
                 </PARAM>
             </PARAM>
         </PARAM>
-        <ACTION builtin="clish_extn"> </ACTION>
+        <ACTION builtin="clish_nop"> </ACTION>
     </COMMAND>
 
 <!-- mac access-list -->
@@ -1172,7 +1172,7 @@
 			 >
         </PARAM>
 
-    <ACTION builtin="clish_extn"> </ACTION>
+    <ACTION builtin="clish_nop"> </ACTION>
 
     </COMMAND>
 
@@ -1203,7 +1203,7 @@
 			 >
         </PARAM>
 
-    <ACTION builtin="clish_extn"> </ACTION>
+    <ACTION builtin="clish_nop"> </ACTION>
 
     </COMMAND>
 
@@ -1222,7 +1222,7 @@
 			 >
         </PARAM>
 
-    <ACTION builtin="clish_extn"> </ACTION>
+    <ACTION builtin="clish_nop"> </ACTION>
 
     </COMMAND>
 
@@ -1284,7 +1284,7 @@
                 </PARAM>
             </PARAM>
         </PARAM>
-    <ACTION builtin="clish_extn"> </ACTION>
+    <ACTION builtin="clish_nop"> </ACTION>
     </COMMAND>
 
 <!-- no ipv6 prefix-list -->
@@ -1345,7 +1345,7 @@
                 </PARAM>
             </PARAM>
         </PARAM>
-    <ACTION builtin="clish_extn"> </ACTION>
+    <ACTION builtin="clish_nop"> </ACTION>
     </COMMAND>
 
 <!-- no ip community-list -->
@@ -1467,7 +1467,7 @@
                 </PARAM>
             </PARAM>
         </PARAM>
-        <ACTION builtin="clish_extn"> </ACTION>
+        <ACTION builtin="clish_nop"> </ACTION>
     </COMMAND>
 
 <!-- no ip as-path -->
@@ -1532,7 +1532,7 @@
                 </PARAM>
             </PARAM>
         </PARAM>
-    <ACTION builtin="clish_extn"> </ACTION>
+    <ACTION builtin="clish_nop"> </ACTION>
     </COMMAND>
 
 <!-- no ip extcommunity-list -->
@@ -1655,7 +1655,7 @@
                 </PARAM>
             </PARAM>
         </PARAM>
-    <ACTION builtin="clish_extn"> </ACTION>
+    <ACTION builtin="clish_nop"> </ACTION>
     </COMMAND>
 </VIEW>
 
@@ -1679,7 +1679,7 @@
           help="Current candidate configuration"
           yang_filter="&SUBTREE_FILTER;Filter_Conditions:&ACCESS-LIST;/name=${name},&ACCESS-LIST;/role=ipv4;Filter_Namespace:&MODULE-NS;"
       >
-     <ACTION builtin="clish_extn"> </ACTION>
+     <ACTION builtin="clish_nop"> </ACTION>
      </COMMAND>
      <!-- show configuration -->
      <COMMAND
@@ -1687,7 +1687,7 @@
          help="Current configuration (default = running)"
          yang_filter="&SUBTREE_FILTER;Filter_Conditions:&ACCESS-LIST;/name=${name},&ACCESS-LIST;/role=ipv4;Filter_Namespace:&MODULE-NS;"
       >
-     <ACTION builtin="clish_extn"> </ACTION>
+     <ACTION builtin="clish_nop"> </ACTION>
      </COMMAND>
 
      <COMMAND name="no"
@@ -1725,7 +1725,7 @@
 		>
      <MACRO name="IPV4-ACL-PERMIT-OPTIONS" arg=""></MACRO>
      </PARAM>
-	 <ACTION builtin="clish_extn"> </ACTION>
+	 <ACTION builtin="clish_nop"> </ACTION>
      </COMMAND>
 
      <COMMAND name="deny"
@@ -1745,7 +1745,7 @@
 		>
      <MACRO name="IPV4-ACL" arg=""></MACRO>
      </PARAM>
-     <ACTION builtin="clish_extn"> </ACTION>
+     <ACTION builtin="clish_nop"> </ACTION>
      </COMMAND>
 
      <COMMAND name="description"
@@ -1760,7 +1760,7 @@
              ptype="STRING_1_90"
              yang_name="&ACCESS-LIST;/description-string=${description-str}"
              />
-     <ACTION builtin="clish_extn"> </ACTION>
+     <ACTION builtin="clish_nop"> </ACTION>
      </COMMAND>
 
     <COMMAND name="remark"
@@ -1776,7 +1776,7 @@
             ptype="STRING"
             yang_name="&ACCESS-LIST;/name=${name},&ACCESS-LIST;/role=ipv4,&ACCESS-LIST;/rule/remark=${remark-str}"
             />
-        <ACTION builtin="clish_extn"> </ACTION>
+        <ACTION builtin="clish_nop"> </ACTION>
     </COMMAND>
 
      <COMMAND
@@ -1878,7 +1878,7 @@
           help="Current candidate configuration"
           yang_filter="&SUBTREE_FILTER;Filter_Conditions:&ACCESS-LIST;/name=${name},&ACCESS-LIST;/role=ipv6;Filter_Namespace:&MODULE-NS;"
       >
-     <ACTION builtin="clish_extn"> </ACTION>
+     <ACTION builtin="clish_nop"> </ACTION>
      </COMMAND>
      <!-- show configuration -->
      <COMMAND
@@ -1886,7 +1886,7 @@
          help="Current configuration (default = running)"
          yang_filter="&SUBTREE_FILTER;Filter_Conditions:&ACCESS-LIST;/name=${name},&ACCESS-LIST;/role=ipv6;Filter_Namespace:&MODULE-NS;"
       >
-     <ACTION builtin="clish_extn"> </ACTION>
+     <ACTION builtin="clish_nop"> </ACTION>
      </COMMAND>
 
      <COMMAND name="no"
@@ -1905,7 +1905,7 @@
             sub_oper_yang="remove:rule"
             />
 
-        <ACTION builtin="clish_extn"> </ACTION>
+        <ACTION builtin="clish_nop"> </ACTION>
     </COMMAND>
 
      <COMMAND name="permit"
@@ -1925,7 +1925,7 @@
 			>
 			 <MACRO name="IPV6-ACL-PERMIT-OPTIONS" arg=""></MACRO>
 		 </PARAM>
-	 <ACTION builtin="clish_extn"> </ACTION>
+	 <ACTION builtin="clish_nop"> </ACTION>
      </COMMAND>
 
      <COMMAND name="deny"
@@ -1945,7 +1945,7 @@
 			>
 			 <MACRO name="IPV6-ACL" arg=""></MACRO>
 		 </PARAM>
-     <ACTION builtin="clish_extn"> </ACTION>
+     <ACTION builtin="clish_nop"> </ACTION>
      </COMMAND>
 
      <COMMAND name="description"
@@ -1960,7 +1960,7 @@
              ptype="STRING_1_90"
              yang_name="&ACCESS-LIST;/description-string=${description-str}"
              />
-     <ACTION builtin="clish_extn"> </ACTION>
+     <ACTION builtin="clish_nop"> </ACTION>
      </COMMAND>
 
     <COMMAND name="remark"
@@ -1976,7 +1976,7 @@
             ptype="STRING"
             yang_name="&ACCESS-LIST;/name=${name},&ACCESS-LIST;/role=ipv6,&ACCESS-LIST;/rule/remark=${remark-str}"
             />
-        <ACTION builtin="clish_extn"> </ACTION>
+        <ACTION builtin="clish_nop"> </ACTION>
     </COMMAND>
 
      <COMMAND name="seq"
@@ -2037,7 +2037,7 @@
               </PARAM>
      </PARAM>
      </PARAM>
-     <ACTION builtin="clish_extn"> </ACTION>
+     <ACTION builtin="clish_nop"> </ACTION>
      </COMMAND>
 
 </VIEW>
@@ -2062,7 +2062,7 @@
           help="Current candidate configuration"
           yang_filter="&SUBTREE_FILTER;Filter_Conditions:&ACCESS-LIST;/name=${name},&ACCESS-LIST;/role=mac;Filter_Namespace:&MODULE-NS;"
       >
-     <ACTION builtin="clish_extn"> </ACTION>
+     <ACTION builtin="clish_nop"> </ACTION>
      </COMMAND>
      <!-- show configuration -->
      <COMMAND
@@ -2070,7 +2070,7 @@
          help="Current configuration (default = running)"
          yang_filter="&SUBTREE_FILTER;Filter_Conditions:&ACCESS-LIST;/name=${name},&ACCESS-LIST;/role=mac;Filter_Namespace:&MODULE-NS;"
       >
-     <ACTION builtin="clish_extn"> </ACTION>
+     <ACTION builtin="clish_nop"> </ACTION>
      </COMMAND>
 
      <COMMAND name="no"
@@ -2089,7 +2089,7 @@
             sub_oper_yang="remove:rule"
             />
 
-        <ACTION builtin="clish_extn"> </ACTION>
+        <ACTION builtin="clish_nop"> </ACTION>
     </COMMAND>
 
      <COMMAND name="permit"
@@ -2109,7 +2109,7 @@
 		>
      <MACRO name="MAC-ACL-PERMIT-OPTIONS" arg=""></MACRO>
      </PARAM>
-	 <ACTION builtin="clish_extn"> </ACTION>
+	 <ACTION builtin="clish_nop"> </ACTION>
      </COMMAND>
 
      <COMMAND name="deny"
@@ -2129,7 +2129,7 @@
 		>
      <MACRO name="MAC-ACL-OPTIONS" arg=""></MACRO>
      </PARAM>
-     <ACTION builtin="clish_extn"> </ACTION>
+     <ACTION builtin="clish_nop"> </ACTION>
      </COMMAND>
 
      <COMMAND name="description"
@@ -2144,7 +2144,7 @@
              ptype="STRING_1_90"
              yang_name="&ACCESS-LIST;/description-string=${description-str}"
              />
-     <ACTION builtin="clish_extn"> </ACTION>
+     <ACTION builtin="clish_nop"> </ACTION>
      </COMMAND>
 
     <COMMAND name="remark"
@@ -2160,7 +2160,7 @@
             ptype="STRING"
             yang_name="&ACCESS-LIST;/name=${name},&ACCESS-LIST;/role=mac,&ACCESS-LIST;/rule/remark=${remark-str}"
             />
-        <ACTION builtin="clish_extn"> </ACTION>
+        <ACTION builtin="clish_nop"> </ACTION>
     </COMMAND>
 
      <COMMAND name="seq"
@@ -2221,7 +2221,7 @@
               </PARAM>
      </PARAM>
      </PARAM>
-     <ACTION builtin="clish_extn"> </ACTION>
+     <ACTION builtin="clish_nop"> </ACTION>
      </COMMAND>
 
 </VIEW>
