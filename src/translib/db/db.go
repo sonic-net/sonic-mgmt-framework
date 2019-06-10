@@ -698,6 +698,10 @@ func (k *Key) Get(index int) string {
 
 //===== Functions for db.Value =====
 
+func (v *Value) IsPopulated() bool {
+	return len(v.Field) > 0
+}
+
 // Has function checks if a field exists.
 func (v *Value) Has(name string) bool {
 	_, flag := v.Field[name]

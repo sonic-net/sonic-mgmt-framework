@@ -79,13 +79,9 @@ func (binder *requestBinder) unMarshall() (*ygot.GoStruct, *interface{}, error) 
 		return nil, nil, err
 	}
 
-	appRootNodeName := (*binder.appRootNodeType).Name()
-	fmt.Println("App root node name: ", appRootNodeName)
-
-	rootObj, errObj := getAppRootObject(appRootNodeName, &deviceObj)
-	if errObj != nil {
-		return nil, nil, errObj
-	}
+	rootIntf := reflect.ValueOf(&deviceObj).Interface()
+        ygotObj := rootIntf.(ygot.GoStruct)
+        var ygotRootObj *ygot.GoStruct = &ygotObj
 
 	switch binder.opcode {
 	case CREATE:
@@ -96,11 +92,12 @@ func (binder *requestBinder) unMarshall() (*ygot.GoStruct, *interface{}, error) 
 			if err != nil {
 				return nil, nil, err
 			}
-			return rootObj, workObj, nil
+			return ygotRootObj, workObj, nil
 		}
 
 	case GET, DELETE:
-		return rootObj, workObj, errObj
+		fmt.Println("target node name", reflect.TypeOf(*workObj).Elem().Name())
+		return ygotRootObj, workObj, nil
 	case UPDATE, REPLACE:
 		var tmpTargetNode *interface{}
 		if binder.pathTmp != nil {
@@ -125,7 +122,7 @@ func (binder *requestBinder) unMarshall() (*ygot.GoStruct, *interface{}, error) 
 		}
 
 		fmt.Println("unMarshall - END ")
-		return rootObj, workObj, nil
+		return ygotRootObj, workObj, nil
 	}
 
 	fmt.Println("unMarshall - END ")
@@ -190,24 +187,4 @@ func (binder *requestBinder) unMarshallUri(deviceObj *ocbinds.Device) (*interfac
 	}
 
 	return &ygNode, nil
-}
-
-func getAppRootObject(appRootNodeName string, deviceObj *ocbinds.Device) (*ygot.GoStruct, error) {
-	if deviceObj == nil {
-		err := errors.New("Device object is nil")
-		return nil, err
-	}
-
-	devType := reflect.TypeOf(*deviceObj)
-
-	for i := 0; i < devType.NumField(); i++ {
-		fType := devType.Field(i).Type.Elem()
-
-		if fType.Name() == appRootNodeName {
-			rootObj := reflect.ValueOf(*deviceObj).Field(i).Interface().(ygot.GoStruct)
-			return &rootObj, nil
-		}
-	}
-
-	return nil, errors.New("App root node is not found in the ygot bindings for the given name: " + appRootNodeName)
 }

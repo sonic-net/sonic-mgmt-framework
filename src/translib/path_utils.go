@@ -8,9 +8,17 @@
 package translib
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
+        "reflect"
+
+	"github.com/openconfig/gnmi/proto/gnmi"
+	"github.com/openconfig/goyang/pkg/yang"
+	"github.com/openconfig/ygot/ygot"
+	"github.com/openconfig/ygot/ytypes"
+	"translib/ocbinds"
 )
 
 // PathInfo structure contains parsed path information.
@@ -80,4 +88,81 @@ func readUntil(r *strings.Reader, delim byte) string {
 	}
 
 	return buff.String()
+}
+
+func getParentNode(targetUri *string, deviceObj *ocbinds.Device) (*interface{}, *yang.Entry, error) {
+	path, err := ygot.StringToPath(*targetUri, ygot.StructuredPath, ygot.StringSlicePath)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var pathList []*gnmi.PathElem = path.Elem
+
+	parentPath := &gnmi.Path{}
+
+	for i := 0; i < (len(pathList) - 1); i++ {
+		fmt.Println("pathList[i] ", pathList[i])
+		pathSlice := strings.Split(pathList[i].Name, ":")
+		pathList[i].Name = pathSlice[len(pathSlice)-1]
+		parentPath.Elem = append(parentPath.Elem, pathList[i])
+	}
+
+	fmt.Println("parentPath => ", parentPath)
+
+	treeNodeList, err2 := ytypes.GetNode(ygSchema.RootSchema(), deviceObj, parentPath)
+	if err2 != nil {
+		return nil, nil, err2
+	}
+
+	if len(treeNodeList) == 0 {
+		return nil, nil, errors.New("Invalid URI")
+	}
+
+	return &(treeNodeList[0].Data), treeNodeList[0].Schema, nil
+}
+
+func getNodeName(targetUri *string, deviceObj *ocbinds.Device) (string, error) {
+	path, err := ygot.StringToPath(*targetUri, ygot.StructuredPath, ygot.StringSlicePath)
+	if err != nil {
+		fmt.Println("Error in uri to path conversion: ", err)
+		return "", err
+	}
+
+	pathList := path.Elem
+	for i := 0; i < len(pathList); i++ {
+		pathSlice := strings.Split(pathList[i].Name, ":")
+		pathList[i].Name = pathSlice[len(pathSlice)-1]
+	}
+
+	treeNodeList, err := ytypes.GetNode(ygSchema.RootSchema(), deviceObj, path)
+	if err != nil {
+		fmt.Println("Error in uri to path conversion: ", err)
+		return "", err
+	}
+
+	if len(treeNodeList) == 0 {
+		return "", errors.New("Invalid URI")
+	}
+
+	return treeNodeList[0].Schema.Name, nil
+}
+
+func getObjectFieldName(targetUri *string, deviceObj *ocbinds.Device, ygotTarget *interface{}) (string, error) {
+	parentObjIntf, _, err := getParentNode(targetUri, deviceObj)
+	if err != nil {
+		return "", err
+	}
+	valObj := reflect.ValueOf(*parentObjIntf).Elem()
+	parentObjType := reflect.TypeOf(*parentObjIntf).Elem()
+
+	for i := 0; i < parentObjType.NumField(); i++ {
+		if reflect.ValueOf(*ygotTarget).Kind() == reflect.Ptr && valObj.Field(i).Kind() == reflect.Ptr {
+			if valObj.Field(i).Pointer() == reflect.ValueOf(*ygotTarget).Pointer() {
+				return parentObjType.Field(i).Name, nil
+			}
+		} else if valObj.Field(i).String() == reflect.ValueOf(*ygotTarget).String() {
+			return parentObjType.Field(i).Name, nil
+		}
+	}
+	return "", errors.New("Target object not found")
 }
