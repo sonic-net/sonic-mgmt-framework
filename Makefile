@@ -27,10 +27,9 @@ rest-server: $(REST_BIN)
 yamlGen:
 	$(MAKE) -C models/yang
 
-$(REST_SRCS): yamlGen
-
 $(REST_BIN): $(REST_SRCS)
 	$(MAKE) -C models
+	$(MAKE) -C models/yang
 	GOPATH=$(REST_GOPATH) go build -o $@ $(TOPDIR)/src/rest/main/main.go
 
 codegen:

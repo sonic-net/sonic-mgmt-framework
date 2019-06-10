@@ -18,15 +18,24 @@ PYANG_DIR        := $(TOOLS_DIR)/pyang
 PYANG_PLUGIN_DIR := $(PYANG_DIR)/pyang_plugins
 PYANG_BIN        := pyang
 
+.PHONY: all yamlGen
+
 all: yamlGen
+
+yamlGen: $(YANGAPI_DIR)/.done
 
 #======================================================================
 # Generate YAML files for Yang modules
 #======================================================================
-yamlGen: $(YANG_MOD_FILES) $(YANG_COMMON_FILES)
+$(YANGAPI_DIR)/.done: | $(YANG_MOD_FILES) $(YANG_COMMON_FILES)
 	@echo "+++++ Generating YAML files for Yang modules +++++"
 	mkdir -p $(YANGAPI_DIR)
-	$(PYANG_BIN) -f swaggerapi --outdir $(YANGAPI_DIR) --plugindir $(PYANG_PLUGIN_DIR) -p $(YANGDIR_COMMON):$(YANGDIR) $(YANG_MOD_FILES)
+	$(PYANG_BIN) \
+		-f swaggerapi \
+		--outdir $(YANGAPI_DIR) \
+		--plugindir $(PYANG_PLUGIN_DIR) \
+		-p $(YANGDIR_COMMON):$(YANGDIR) \
+		$(YANG_MOD_FILES)
 	@echo "+++++ Generation of  YAML files for Yang modules completed +++++"
 	touch $@
 
@@ -36,5 +45,3 @@ yamlGen: $(YANG_MOD_FILES) $(YANG_COMMON_FILES)
 
 clean:
 	rm -rf $(YANGAPI_DIR)
-	rm -rf yamlGen
-

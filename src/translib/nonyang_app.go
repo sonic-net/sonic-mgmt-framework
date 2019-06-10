@@ -54,18 +54,16 @@ func init() {
 		"/nonyang/",
 		&appInfo{appType: reflect.TypeOf(nonYangDemoApp{}),
 			isNative: true})
-
-	log.Info("nonYangDemoApp initialized")
 }
 
+// initialize function prepares this nonYangDemoApp instance
+// for a new request handling.
 func (app *nonYangDemoApp) initialize(data appData) {
-	*app = nonYangDemoApp{
-		path:    NewPathInfo(data.path),
-		reqData: data.payload,
+	app.path = NewPathInfo(data.path)
+	app.reqData = data.payload
 
-		vlanTable:   &db.TableSpec{"VLAN"},
-		memberTable: &db.TableSpec{"VLAN_MEMBER"},
-	}
+	app.vlanTable = &db.TableSpec{"VLAN"}
+	app.memberTable = &db.TableSpec{"VLAN_MEMBER"}
 }
 
 func (app *nonYangDemoApp) translateCreate(d *db.DB) ([]db.WatchKeys, error) {
@@ -102,7 +100,7 @@ func (app *nonYangDemoApp) translateDelete(d *db.DB) ([]db.WatchKeys, error) {
 	pathInfo := app.path
 	var err error
 
-	log.Infof("Received CREATE for path %s; vars=%v", pathInfo.Template, pathInfo.Vars)
+	log.Infof("Received DELETE for path %s; vars=%v", pathInfo.Template, pathInfo.Vars)
 
 	switch pathInfo.Template {
 	case "/nonyang/vlan/{id}":
