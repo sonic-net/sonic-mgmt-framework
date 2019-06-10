@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE ROOT [
+<!ENTITY SUBTREE_FILTER        "Filter_Type:SUBTREE;">
+<!ENTITY MODULE-NS             "http://www.dellemc.com/networking/os10/dell-l2-mac">
+<!ENTITY IF-MODULE-NS          "urn:ietf:params:xml:ns:yang:ietf-interfaces">
+<!ENTITY NAMESPACE_FILTER      "Filter_Namespace:&MODULE-NS;">
+<!ENTITY L2_MAC_NS             "dell-l2-mac=http://www.dellemc.com/networking/os10/dell-l2-mac">
+<!ENTITY STATIC_TBL_IF_NAME    "/config-params/static-table/if-name">
+<!ENTITY INTERFACE_NAME        "/interfaces-state/interface">
+<!ENTITY MAC_FWD_TBL_IF_NAME   "/oper-params/fwd-table/if-name">
+<!ENTITY MAC_FWD_TABLE         "&INTERFACE_NAME;/dell-l2-mac:l2-mac-params">
+<!ENTITY MAC_OPER              "/oper-params">
+<!ENTITY MAC_FWD_TBL           "&MAC_OPER;/fwd-table">
+]>
+
+<ROOT>
+<MACRODEF name="MAC_DEST_IF">
+    <PARAM
+    name="interface"
+    help="Select an interface"
+    ptype="SUBCOMMAND"
+    mode="subcommand"
+    >
+    <PARAM
+        name="if-switch"
+        help="Interface commands"
+        mode="switch"
+        ptype="STRING"
+        >
+        <PARAM
+            name="if-name"
+            help="Ethernet IEEE 802.3"
+            ptype="PHY_INTERFACE"
+            yang_name="arg1=${if-name}"
+            />
+        <PARAM
+            name="po-if-name"
+            help="Interface port-channel"
+            ptype="PO_INTERFACE"
+            yang_name="arg1=${po-if-name}"
+            />
+    </PARAM>
+    </PARAM>
+</MACRODEF>
+
+<MACRODEF name="MAC_ALL_IF">
+    <PARAM
+        name="interface"
+        help="Select an interface"
+        ptype="SUBCOMMAND"
+        mode="subcommand"
+        optional="true"
+        >
+        <PARAM
+            name="if-switch"
+            help="Interface commands"
+            mode="switch"
+            ptype="STRING"
+            >
+            <PARAM
+                name="if-name"
+                help="Ethernet IEEE 802.3"
+                ptype="PHY_INTERFACE"
+                refresh_yang_name="true"
+                yang_name="/get-bulk/count=200,/get-bulk/list-target=&MAC_FWD_TBL;,/get-bulk/filter=if-name=${if-name}arg1"
+                >
+            </PARAM>
+            <PARAM
+                name="po-if-name"
+                help="Interface port-channel"
+                ptype="PO_INTERFACE"
+                refresh_yang_name="true"
+                yang_name="/get-bulk/count=200,/get-bulk/list-target=&MAC_FWD_TBL;,/get-bulk/filter=if-name=${po-if-name}arg1"
+                >
+            </PARAM>
+        </PARAM>
+    </PARAM>
+</MACRODEF>
+
+<MACRODEF name="MAC_COUNT_IF">
+    <PARAM
+        name="interface"
+        help="Select an interface"
+        ptype="SUBCOMMAND"
+        mode="subcommand"
+        template="show_mac-address-table_intf_count.xsl"
+        optional="true"
+        >
+        <PARAM
+            name="if-switch"
+            help="Interface commands"
+            mode="switch"
+            ptype="STRING"
+            >
+            <PARAM
+                name="if-name"
+                help="Ethernet IEEE 802.3"
+                ptype="PHY_INTERFACE"
+                yang_filter="&SUBTREE_FILTER;Filter_Conditions:&INTERFACE_NAME;/name=${if-name},&MAC_FWD_TABLE;;Filter_Namespace:&IF-MODULE-NS;,&L2_MAC_NS;"
+                >
+            </PARAM>
+            <PARAM
+                name="vlan-if"
+                help="Interface vlan"
+                ptype="VLAN_INTERFACE"
+                yang_filter="&SUBTREE_FILTER;Filter_Conditions:&INTERFACE_NAME;/name=${vlan-if},&MAC_FWD_TABLE;;Filter_Namespace:&IF-MODULE-NS;,&L2_MAC_NS;"
+                >
+            </PARAM>
+            <PARAM
+                name="po-if-name"
+                help="Interface port-channel"
+                ptype="PO_INTERFACE"
+                yang_filter="&SUBTREE_FILTER;Filter_Conditions:&INTERFACE_NAME;/name=${po-if-name},&MAC_FWD_TABLE;;Filter_Namespace:&IF-MODULE-NS;,&L2_MAC_NS;"
+                >
+            </PARAM>
+        </PARAM>
+    </PARAM>
+</MACRODEF>
+</ROOT>

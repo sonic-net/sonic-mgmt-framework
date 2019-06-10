@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CLISH_MODULE
+    xmlns="http://www.dellemc.com/force10/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.dellemc.com/force10/XMLSchema
+                        http://www.dellemc.com/force10/XMLSchema/clish.xsd"
+    >
+
+    <!--=======================================================-->
+    <VAR dynamic="true" name="pipe-option">
+        <ACTION>echo -n "${__params}" | sed 's/^[^|]*\|//' </ACTION>
+    </VAR>
+
+</CLISH_MODULE>
+

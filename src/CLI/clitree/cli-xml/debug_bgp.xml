@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE CLISH_MODULE [
+<!ENTITY SUBTREE_FILTER "Filter_Type:SUBTREE">
+<!ENTITY NS_FILTER      "http://www.dellemc.com/networking/os10/dell-bgp">
+]>
+<CLISH_MODULE
+    xmlns="http://www.dellemc.com/force10/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xi="http://www.w3.org/2001/XInclude"
+    xsi:schemaLocation="http://www.dellemc.com/force10/XMLSchema
+			http://www.dellemc.com/force10/XMLSchema/clish.xsd">
+<!-- ********************************************************************** -->
+<!-- *  DEBUG BGP COMMANDS                                                * -->
+<!--
+debug ip bgp <ip-address>|<ipv6-address|*> [events] [in | out]
+debug ip bgp <ip-address>|<ipv6-address|*> [keepalives] [in | out]
+debug ip bgp <ip-address>|<ipv6-address|*> [notifications] [in | out]
+debug ip bgp <ip-address>|<ipv6-address|*> [updates] [in |  out]
+-->
+<!-- *  View : enable-view                                                * -->
+<!-- ********************************************************************** -->
+    <VIEW name="enable-view">
+        <COMMAND name="debug ip bgp"
+            help="Debug bgp related information"
+            ptype="SUBCOMMAND"
+            pfeature="NOT_SUPPORTED"
+            operation="generic-rpc"
+            namespace="&NS_FILTER;"
+            >
+            <PARAM name="debug-ip-bgp-options"
+                help=""
+                ptype="SUBCOMMAND"
+                mode="switch">
+                <PARAM name="*"
+                    help="debug ip bgp *"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    yang_name="/debug_bgp/debug-all=true"
+                    />
+                <PARAM name="ip-address-value"
+                    help="IPv4 address"
+                    ptype="IP_ADDR"
+                    yang_name="/debug_bgp/address=${ip-address-value}"
+                    />
+                <PARAM name="ipv6-address-value"
+                    help="IPv6 address"
+                    ptype="IPV6_ADDR"
+                    yang_name="/debug_bgp/address=${ipv6-address-value}"
+                    />
+            </PARAM>
+
+            <PARAM name="bgp-options"
+                help=""
+                ptype="SUBCOMMAND"
+                mode="switch">
+                <PARAM name="events"
+                    help="debug ip bgp # events"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand">
+
+                    <MACRO name="DEBUG-BGP-OPTIONS" arg="events"></MACRO>
+
+                </PARAM>
+                <PARAM name="keepalives"
+                    help="debug ip bgp # keepalives"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand">
+
+                    <MACRO name="DEBUG-BGP-OPTIONS" arg="keepalives"></MACRO>
+
+                </PARAM>
+                <PARAM name="notifications"
+                    help="debug ip bgp # notifications"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand">
+
+                    <MACRO name="DEBUG-BGP-OPTIONS" arg="notifications"></MACRO>
+
+                </PARAM>
+                <PARAM name="updates"
+                    help="debug ip bgp # updates"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand">
+
+                    <MACRO name="DEBUG-BGP-OPTIONS" arg="updates"></MACRO>
+
+                </PARAM>
+            </PARAM>
+
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+    </VIEW>
+</CLISH_MODULE>

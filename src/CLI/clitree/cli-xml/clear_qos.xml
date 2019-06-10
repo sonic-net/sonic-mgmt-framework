@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE CLISH_MODULE [
+<!ENTITY SUBTREE_FILTER "Filter_Type:SUBTREE">
+<!ENTITY QOS_NS         "http://www.dellemc.com/networking/os10/dell-qos">
+]>
+<CLISH_MODULE
+    xmlns="http://www.dellemc.com/force10/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xi="http://www.w3.org/2001/XInclude"
+    xsi:schemaLocation="http://www.dellemc.com/force10/XMLSchema
+                        http://www.dellemc.com/force10/XMLSchema/clish.xsd">
+<!-- ********************************************************************** -->
+<!-- *  CLEAR QOS COMMANDS                                                * -->
+<!--
+clear qos statistics [interface <interface>] [type {qos | queuing | control-plane}]
+-->
+<!-- *  View : enable-view                                                * -->
+<!-- ********************************************************************** -->
+    <VIEW name="enable-view">
+	<COMMAND name="clear qos"
+                 help="Clear QoS"/>
+        <COMMAND name="clear qos statistics"
+                 help="Clears QoS related information"
+                 ptype="SUBCOMMAND"
+                 mode="subcommand"
+                 operation="generic-rpc"
+                 namespace="&QOS_NS;"
+                 yang_name="/clear-qos">
+                 <PARAM name="interface"
+                        help="Clear QoS statistics interface"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        optional="true">
+                        <PARAM name="interface-name"
+                               help="Select interface"
+                               ptype="PHY_INTERFACE"
+                               yang_name="/clear-qos/interface=${interface-name}"/>
+                 </PARAM>
+                 <PARAM name="type"
+                        help="Clear QoS statistics type"
+                        optional="true"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand">
+                        <PARAM name="qos-queuing"
+                               help=""
+                               ptype="SUBCOMMAND"
+                               mode="switch">
+                               <PARAM name="qos"
+                                      help="Clear QoS statistics type QoS"
+                                      ptype="SUBCOMMAND"
+                                      mode="subcommand"
+                                      yang_name="/clear-qos/qos-type"/>
+                               <PARAM name="queuing"
+                                      help="Clear QoS statistics type queuing"
+                                      ptype="SUBCOMMAND"
+                                      mode="subcommand"
+                                      yang_name="/clear-qos/queuing-type"/>
+                               <PARAM
+                                      name="control-plane"
+                                      help="Clear QoS statistics type control plane"
+                                      ptype="SUBCOMMAND"
+                                      mode="subcommand"
+                                      yang_name="/clear-qos/copp-type" />
+                        </PARAM>
+                 </PARAM>
+        <ACTION builtin="clish_extn"/>
+        </COMMAND>
+    </VIEW>
+</CLISH_MODULE>

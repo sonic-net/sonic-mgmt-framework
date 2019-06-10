@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE CLISH_MODULE [
+    <!ENTITY QOS-PREF                           "dell-qos">
+    <!ENTITY QOS_NS                             "&QOS-PREF;=http://www.dellemc.com/networking/os10/dell-qos">
+    <!ENTITY QOS_INTF_NS                        "urn:ietf:params:xml:ns:yang:ietf-interfaces,&QOS_NS;">
+    <!ENTITY INTF_STATE_ENTRY                   "/interfaces-state/interface">
+    <!ENTITY QOS_IFACE_STATE                    "/interfaces-state/interface/name">
+    <!ENTITY INTF_STATE_SPEED                   "/interfaces-state/interface/speed">
+    <!ENTITY QOS_EG_BUFF_STAT                  "&INTF_STATE_ENTRY;/&QOS-PREF;:queue-statistics">
+    <!ENTITY QOS_EG_BUFF_STAT_ENTRY            "&QOS_EG_BUFF_STAT;/&QOS-PREF;:queue-entry">
+    <!ENTITY QOS_ING_BUFF_STAT                  "&INTF_STATE_ENTRY;/&QOS-PREF;:pg-info">
+    <!ENTITY QOS_ING_BUFF_STAT_ENTRY            "&QOS_ING_BUFF_STAT;/&QOS-PREF;:pg-entry">
+    <!ENTITY SUBTREE_FILTER                     "Filter_Type:SUBTREE">
+]>
+<CLISH_MODULE
+    xmlns="http://www.dellemc.com/force10/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xi="http://www.w3.org/2001/XInclude"
+    xsi:schemaLocation="http://www.dellemc.com/force10/XMLSchema
+                        http://www.dellemc.com/force10/XMLSchema/clish.xsd"
+    >
+    <!--=======================================================-->
+
+    <VIEW
+        name="enable-view"
+        >
+    <COMMAND
+        name="show qos egress"
+        help="Show egress buffer configuration"
+        operation="get"
+        yang_filter="Filter_Namespace:&QOS_INTF_NS;;Filter_Type:SUBTREE;Filter_Conditions:&QOS_IFACE_STATE;=ethernet${interface-number},&INTF_STATE_SPEED;,&QOS_EG_BUFF_STAT_ENTRY;"
+        >
+        <PARAM
+            name="subcommands"
+            help="subcommands"
+            mode="switch"
+            ptype="SUBCOMMAND"
+            >
+            <PARAM
+                name="buffers"
+                help="Buffer configuration"
+                mode="subcommand"
+                ptype="SUBCOMMAND"
+                template="show_qos_egress_buffer.xsl"
+                />
+            <PARAM
+                name="buffer-stats"
+                help="Buffer statistics"
+                mode="subcommand"
+                ptype="SUBCOMMAND"
+                template="show_qos_egress_buffer_stats.xsl"
+                />
+            </PARAM>
+        <PARAM
+            name="interface"
+            help="Select an interface for displaying buffer configuration"
+            mode="subcommand"
+            ptype="SUBCOMMAND"
+            />
+        <MACRO name="qos_interface_state"/>
+        <ACTION
+            builtin="clish_extn"
+            />
+    </COMMAND>
+    <COMMAND
+        name="show qos ingress"
+        help="Show ingress buffer configuration"
+        operation="get"
+        yang_filter="Filter_Namespace:&QOS_INTF_NS;;Filter_Type:SUBTREE;Filter_Conditions:&QOS_IFACE_STATE;=ethernet${interface-number},&INTF_STATE_SPEED;,&QOS_ING_BUFF_STAT_ENTRY;"
+        >
+        <PARAM
+            name="subcommands"
+            help="subcommands"
+            mode="switch"
+            ptype="SUBCOMMAND"
+            >
+            <PARAM
+                name="buffers"
+                help="Buffer configuration"
+                mode="subcommand"
+                ptype="SUBCOMMAND"
+                template="show_qos_ingress_buffer.xsl"
+                />
+            <PARAM
+                name="buffer-stats"
+                help="Buffer statistics"
+                mode="subcommand"
+                ptype="SUBCOMMAND"
+                template="show_qos_ingress_buffer_stats.xsl"
+                />
+            </PARAM>
+            <PARAM
+                name="interface"
+                help="Select an interface for displaying buffer configuration"
+                mode="subcommand"
+                ptype="SUBCOMMAND"
+                />
+                <MACRO name="qos_interface_state"/>
+            <ACTION
+                builtin="clish_extn"
+                />
+        </COMMAND>
+    </VIEW>
+</CLISH_MODULE>
+

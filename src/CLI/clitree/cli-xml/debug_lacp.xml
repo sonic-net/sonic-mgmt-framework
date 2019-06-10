@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE CLISH_MODULE [
+<!ENTITY MODULE-NS      "http://www.dellemc.com/networking/os10/dell-lacp">
+<!ENTITY MODULE         "dell-lacp">
+<!ENTITY SUBTREE_FILTER "Filter_Type:SUBTREE">
+<!ENTITY SYS_PRIORITY   "/lacp-sys-confg/system-priority">
+<!ENTITY PORT_INFO  "/lacp-port-info/port-info">
+<!ENTITY PORT_INFO_CFG  "/lacp-port-info/port-info/port-info-config">
+<!ENTITY PORT_INFO_STATUS "/lacp-port-info/port-info/port-info-status">
+<!ENTITY PORT_INFO_STATS "/lacp-port-info/port-info-stats">
+<!ENTITY LAG_INFO        "/lacp-lag-info/lag-info">
+<!ENTITY LAG_INFO_CFG    "/lacp-lag-info/lag-info/lag-info-config">
+<!ENTITY LAG_INFO_STATUS "/lacp-lag-info/lag-info/lag-info-status">
+]>
+<CLISH_MODULE
+          xmlns="http://www.dellemc.com/force10/XMLSchema"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xmlns:xi="http://www.w3.org/2001/XInclude"
+          xsi:schemaLocation="http://www.dellemc.com/force10/XMLSchema
+                              http://www.dellemc.com/force10/XMLSchema/clish.xsd">
+
+<!-- ********************************************************************** -->
+<!-- *  DEBUG LACP COMMANDS                                               * -->
+<!--
+debug lacp {all | event | pkt}
+-->
+<!-- *  View : enable-view                                                * -->
+<!-- ********************************************************************** -->
+
+    <VIEW name="enable-view">
+          <COMMAND name="debug lacp"
+                   help="Debug lacp related information"
+                   ptype="SUBCOMMAND"
+                   operation="generic-rpc"
+                   namespace="http://www.dellemc.com/networking/os10/dell-lacp"
+                   pfeature="NOT_SUPPORTED"
+                   >
+                   <PARAM name="option"
+                          help=""
+                          ptype="SUBCOMMAND"
+                          mode="switch">
+                          <PARAM name="all"
+                                 help="debug lacp all"
+                                 ptype="SUBCOMMAND"
+                                 mode="subcommand"
+                                 yang_name="/debug_lacp/all"/>
+                          <PARAM name="event"
+                                 help="debug lacp event"
+                                 ptype="SUBCOMMAND"
+                                 mode="subcommand"
+                                 yang_name="/debug_lacp/event"/>
+                          <PARAM name="pkt"
+                                 help="debug lacp pkt"
+                                 ptype="SUBCOMMAND"
+                                 mode="subcommand"
+                                 yang_name="/debug_lacp/pkt"/>
+                   </PARAM>
+         <ACTION builtin="clish_extn"/>
+         </COMMAND>
+    </VIEW>
+
+</CLISH_MODULE>

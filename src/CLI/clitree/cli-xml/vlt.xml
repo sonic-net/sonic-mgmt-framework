@@ -1,0 +1,535 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE CLISH_MODULE [
+
+<!ENTITY NAMESPACE                            "http://www.dellemc.com/networking/os10/dell-vlt">
+<!ENTITY VLT_PREF                             "dell-vlt">
+<!ENTITY INTF_NAMESPACE                       "urn:ietf:params:xml:ns:yang:ietf-interfaces,&VLT_PREF;=&NAMESPACE;">
+<!ENTITY NDM_NAMESPACE                       "http://www.dellemc.com/networking/os10/dell-node-management,&VLT_PREF;=&NAMESPACE;">
+
+<!ENTITY NDM_CONF_TOPOLOGY_ID                 "/node-topology/topology-id=${id}">
+<!ENTITY NDM_CONF_INTF_RANGE_NAME             "/node-topology/discovery-interface[]=${intf-range-name}">
+<!ENTITY NDM_CONF_TOPOLOGY_TYPE               "/node-topology/topology-type">
+
+<!ENTITY VLT_DOMAIN_LIST                      "&NDM_CONF_TOPOLOGY_ID;">
+<!ENTITY VLT_DOMAIN                           "/node-topology/&VLT_PREF;:vlt-domain">
+<!ENTITY VLT_DOMAIN_PEER_ROUTING              "&VLT_DOMAIN;/&VLT_PREF;:peer-routing">
+<!ENTITY VLT_DOMAIN_PEER_ROUTING_TIMEOUT      "&VLT_DOMAIN;/&VLT_PREF;:peer-routing-timeout">
+<!ENTITY VLT_DOMAIN_DELAY_RESTORE             "&VLT_DOMAIN;/&VLT_PREF;:delay-restore">
+<!ENTITY VLT_DOMAIN_ENCAP_TYPE                "&VLT_DOMAIN;/&VLT_PREF;:encap">
+<!ENTITY VLT_INTF_LIST                        "/interfaces/interface/name=${port-channeliface}">
+<!ENTITY VLT_INTF_CONFIG                      "/interfaces/interface/&VLT_PREF;:vlt">
+<!ENTITY VLT_INTF_VLT_ID                      "&VLT_INTF_CONFIG;/&VLT_PREF;:vlt-id">
+
+<!ENTITY VLT_OPER_DOMAIN                                        "/topology-oper-data/&VLT_PREF;:vlt-domain">
+<!ENTITY VLT_OPER_DOMAIN_ID                                     "/topology-oper-data/topology-id=${domain_id}">
+<!ENTITY VLT_OPER_DOMAIN_LOCAL_INFO                             "&VLT_OPER_DOMAIN;/&VLT_PREF;:local-info">
+<!ENTITY VLT_OPER_DOMAIN_PEER_LINK_INFO                         "&VLT_OPER_DOMAIN;/&VLT_PREF;:peer-link-info">
+<!ENTITY VLT_OPER_DOMAIN_PEER_INFO                              "&VLT_OPER_DOMAIN;/&VLT_PREF;:peer-info">
+<!ENTITY VLT_OPER_DOMAIN_PORT_INFO                              "&VLT_OPER_DOMAIN;/&VLT_PREF;:vlt-port-info">
+<!ENTITY VLT_OPER_DOMAIN_MISMATCH                               "&VLT_OPER_DOMAIN;/&VLT_PREF;:mismatch">
+<!ENTITY VLT_OPER_DOMAIN_MISMATCH_PEER                          "&VLT_OPER_DOMAIN_MISMATCH;/&VLT_PREF;:peer">
+<!ENTITY VLT_OPER_DOMAIN_MISMATCH_VLANS                         "&VLT_OPER_DOMAIN_MISMATCH;/&VLT_PREF;:vlans">
+<!ENTITY VLT_OPER_DOMAIN_MISMATCH_VLT_VLAN                      "&VLT_OPER_DOMAIN_MISMATCH;/&VLT_PREF;:vlt-vlan">
+
+<!ENTITY FILTER_SUBTREE                       "Filter_Type:SUBTREE">
+<!ENTITY FILTER_NAMESPACE                     "Filter_Namespace:&NDM_NAMESPACE;">
+
+]>
+
+<CLISH_MODULE
+    xmlns="http://www.dellemc.com/force10/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xi="http://www.w3.org/2001/XInclude"
+    xsi:schemaLocation="http://www.dellemc.com/force10/XMLSchema
+                        http://www.dellemc.com/force10/XMLSchema/clish.xsd"
+    >
+    <!--=======================================================-->
+    <!--                   EXEC MODE                           -->
+    <!--=======================================================-->
+    <VIEW
+        name="enable-view"
+        >
+        <!--show running-configuration vlt -->
+        <COMMAND
+            name="show running-configuration vlt"
+            help="Current operating vlt domain configuration"
+            yang_filter="&FILTER_SUBTREE;;Filter_Conditions:/node-topology;Filter_Namespace:&NDM_NAMESPACE;|&FILTER_SUBTREE;;Filter_Conditions:&VLT_INTF_CONFIG;;Filter_Namespace:&INTF_NAMESPACE;"
+            db_mode="configure-vlt,configure-if,configure-lag"
+            >
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+        <!--show candidate-configuration vlt -->
+        <COMMAND
+            name="show candidate-configuration vlt"
+            help="Current candidate vlt domain configuration"
+            yang_filter="&FILTER_SUBTREE;;Filter_Conditions:/node-topology;Filter_Namespace:&NDM_NAMESPACE;|&FILTER_SUBTREE;;Filter_Conditions:&VLT_INTF_CONFIG;;Filter_Namespace:&INTF_NAMESPACE;"
+            db_mode="configure-vlt,configure-if,configure-lag"
+            >
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+        <!--show vlt mac-inconsistency -->
+        <COMMAND
+            name="show vlt mac-inconsistency"
+            help="Show inconsistencies in dynamic MAC addresses learnt between VLT peers"
+            >
+            <ACTION builtin="clish_file_print">dn_vlt_mac_check.py</ACTION>
+        </COMMAND>
+        <!-- show vlt -->
+        <COMMAND
+            name="show vlt"
+            help="Show VLT domain info"
+            operation="get"
+            namespace="&NDM_NAMESPACE;"
+            template="show_vlt_domain.xsl"
+            >
+            <PARAM
+                name="domain_id"
+                help="VLT domain id"
+                ptype="RANGE_1_255"
+                yang_filter="&FILTER_SUBTREE;;Filter_Conditions:&VLT_DOMAIN;;Filter_Namespace:&NDM_NAMESPACE;|&FILTER_SUBTREE;;Filter_Conditions:&VLT_OPER_DOMAIN_ID;,&VLT_OPER_DOMAIN_LOCAL_INFO;,&VLT_OPER_DOMAIN_PEER_INFO;,&VLT_OPER_DOMAIN_PEER_LINK_INFO;;&FILTER_NAMESPACE;"
+                >
+                <PARAM
+                    name="allcommands"
+                    help="commands"
+                    ptype="SUBCOMMAND"
+                    optional="true"
+                    mode="switch"
+                    >
+                    <PARAM
+                        name="mismatch"
+                        help="Show mismatch in VLT peers"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        template="show_vlt_mismatch.xsl"
+                        template_param="tparam_mismatch=&#39;${allmismatchcommands}&#39;,tparam_vlt_vlan=${vlt-vlan-value}"
+                        yang_filter="&FILTER_SUBTREE;;Filter_Conditions:&VLT_OPER_DOMAIN_ID;,&VLT_OPER_DOMAIN_LOCAL_INFO;,&VLT_OPER_DOMAIN_MISMATCH;;&FILTER_NAMESPACE;"
+                        >
+                        <PARAM
+                            name="allmismatchcommands"
+                            help="no commands"
+                            ptype="SUBCOMMAND"
+                            default="all"
+                            optional="true"
+                            mode="switch"
+                            >
+                            <PARAM
+                                name="peer-routing"
+                                help="Show peer-routing mismatch in VLT peers"
+                                ptype="SUBCOMMAND"
+                                mode="subcommand"
+                                optional="true"
+                                yang_filter="&FILTER_SUBTREE;;Filter_Conditions:&VLT_OPER_DOMAIN_ID;,&VLT_OPER_DOMAIN_LOCAL_INFO;,&VLT_OPER_DOMAIN_MISMATCH_PEER;;&FILTER_NAMESPACE;"
+                                />
+                            <PARAM
+                                name="vlan"
+                                help="Show VLAN mismatch in VLT peers"
+                                ptype="SUBCOMMAND"
+                                mode="subcommand"
+                                optional="true"
+                                yang_filter="&FILTER_SUBTREE;;Filter_Conditions:&VLT_OPER_DOMAIN_ID;,&VLT_OPER_DOMAIN_LOCAL_INFO;,&VLT_OPER_DOMAIN_MISMATCH_VLANS;;&FILTER_NAMESPACE;"
+                                />
+                            <PARAM
+                                name="vlt-vlan"
+                                help="Show VLT VLAN mismatch in VLT peers"
+                                ptype="SUBCOMMAND"
+                                mode="subcommand"
+                                optional="true"
+                                yang_filter="&FILTER_SUBTREE;;Filter_Conditions:&VLT_OPER_DOMAIN_ID;,&VLT_OPER_DOMAIN_LOCAL_INFO;,&VLT_OPER_DOMAIN_MISMATCH_VLT_VLAN;;&FILTER_NAMESPACE;"
+                                >
+                                <PARAM
+                                    name="vlt-vlan-value"
+                                    help="VLT port id"
+                                    ptype="RANGE_1_1024"
+                                    default="0"
+                                    optional="true"
+                                    yang_filter="&FILTER_SUBTREE;;Filter_Conditions:&VLT_OPER_DOMAIN_ID;,&VLT_OPER_DOMAIN_LOCAL_INFO;,&VLT_OPER_DOMAIN_MISMATCH_VLT_VLAN;/vlt-id=${vlt-vlan-value};&FILTER_NAMESPACE;"
+                                    />
+                            </PARAM>
+                        </PARAM>
+                    </PARAM>
+                    <PARAM
+                        name="role"
+                        help="Show VLT peer roles"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        template="show_vlt_role.xsl"
+                        yang_filter="&FILTER_SUBTREE;;Filter_Conditions:&VLT_OPER_DOMAIN_ID;,&VLT_OPER_DOMAIN_LOCAL_INFO;,&VLT_OPER_DOMAIN_PEER_INFO;;&FILTER_NAMESPACE;"
+                        />
+                    <PARAM
+                        name="vlt-port-detail"
+                        help="Show VLT port detail"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        template="show_vlt_port.xsl"
+                        yang_filter="&FILTER_SUBTREE;;Filter_Conditions:&VLT_OPER_DOMAIN_ID;,&VLT_OPER_DOMAIN_LOCAL_INFO;,&VLT_OPER_DOMAIN_PORT_INFO;;&FILTER_NAMESPACE;"
+                        >
+                        <PARAM
+                            name="vlt-port-detail-value"
+                            help="VLT port id"
+                            ptype="RANGE_1_1024"
+                            optional="true"
+                            yang_filter="&FILTER_SUBTREE;;Filter_Conditions:&VLT_OPER_DOMAIN_ID;,&VLT_OPER_DOMAIN_LOCAL_INFO;,&VLT_OPER_DOMAIN_PORT_INFO;/&VLT_PREF;:id=${vlt-port-detail-value};&FILTER_NAMESPACE;"
+                            />
+                    </PARAM>
+                </PARAM>
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                />
+        </COMMAND>
+    </VIEW>
+    <!--=======================================================-->
+    <!--                Config MODE                            -->
+    <!--=======================================================-->
+    <VIEW
+        name="configure-view"
+        >
+        <!-- vlt domain <name> -->
+        <COMMAND
+            name="vlt-domain"
+            help="VLT domain configurations"
+            operation="edit-config"
+            namespace="&NDM_NAMESPACE;"
+            viewid="id=${id}"
+            view="configure-vlt-view"
+            yang_key="/node-topology/topology-id,&NDM_CONF_TOPOLOGY_TYPE;=VLT"
+            yang_name="&NDM_CONF_TOPOLOGY_ID;,&NDM_CONF_TOPOLOGY_TYPE;=VLT"
+            >
+            <PARAM
+                name="id"
+                help="VLT domain id"
+                ptype="RANGE_1_255"
+                yang_name="&VLT_DOMAIN;"
+                db_multi_yang_name="&NDM_CONF_TOPOLOGY_ID;"
+                />
+            <ACTION
+                builtin="clish_extn"
+                />
+        </COMMAND>
+        <!-- no vlt domain <name> -->
+        <COMMAND
+            name="no vlt-domain"
+            help="Delete the VLT domain"
+            operation="edit-config"
+            namespace="&NDM_NAMESPACE;"
+            >
+            <PARAM
+                name="id"
+                help="VLT domain id"
+                ptype="RANGE_1_255"
+                sub_oper_yang="remove:node-topology"
+                yang_name="&NDM_CONF_TOPOLOGY_ID;"
+                />
+            <ACTION
+                builtin="clish_extn"
+                />
+        </COMMAND>
+    </VIEW>
+    <!--=======================================================-->
+    <!--                   VLT MODE                            -->
+    <!--=======================================================-->
+    <VIEW
+        name="configure-vlt-view"
+        prompt="${SYSTEM_NAME}(conf-vlt-${id})# "
+        depth="2"
+        >
+        <!-- Inheritance -->
+        <NAMESPACE
+            ref="configure-view"
+            help="false"
+            completion="false"
+            />
+        <!-- Show commands -->
+        <COMMAND
+            name="show"
+            help="Show configuration"
+            />
+       <!-- show configuration candidate -->
+        <COMMAND
+            name="show configuration candidate"
+            help="Current candidate configuration"
+            yang_filter="&FILTER_SUBTREE;;Filter_Conditions:&NDM_CONF_TOPOLOGY_ID;;Filter_Namespace:&NDM_NAMESPACE;"
+            >
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+
+        <!-- show configuration -->
+        <COMMAND
+            name="show configuration"
+            help="Current configuration (default = running)"
+            yang_filter="&FILTER_SUBTREE;;Filter_Conditions:&NDM_CONF_TOPOLOGY_ID;;Filter_Namespace:&NDM_NAMESPACE;"
+            >
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+
+        <!-- delay-restore <value> -->
+        <COMMAND
+            name="delay-restore"
+            operation="edit-config"
+            namespace="&NDM_NAMESPACE;"
+            help="Configure the delay-restore value"
+            >
+            <PARAM
+                name="value"
+                help="Delay restore value(Default:90)"
+                ptype="RANGE_1_1200"
+                yang_name="&VLT_DOMAIN_LIST;,&VLT_DOMAIN_DELAY_RESTORE;=${value}"
+                />
+            <ACTION
+                builtin="clish_extn"
+                />
+        </COMMAND>
+        <!-- discovery-interface ethernet <x:x:x-y:y:y> -->
+        <COMMAND
+            name="discovery-interface"
+            help="Discovery Interface"
+            operation="edit-config"
+            namespace="&NDM_NAMESPACE;"
+            yang_name="&NDM_CONF_TOPOLOGY_ID;"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            >
+            <PARAM
+                name="intf-name"
+                help="Interface Name"
+                ptype="ETHER_INTERFACE_RANGE"
+                yang_name="/node-topology/discovery-interface[]=${intf-name}"
+                />
+            <ACTION
+                builtin="clish_extn"
+                />
+        </COMMAND>
+        <!-- encapsulation-type <type> -->
+        <COMMAND
+            name="encapsulation-type"
+            operation="edit-config"
+            namespace="&NDM_NAMESPACE;"
+            help="Configure the encapsulation type used for VLT domain"
+            pfeature="NOT_SUPPORTED"
+            >
+            <PARAM
+                name="type"
+                help="Encapsulation type"
+                ptype="VLT_ENCAP_TYPE"
+                yang_name="&VLT_DOMAIN_LIST;,&VLT_DOMAIN_ENCAP_TYPE;=${type}"
+                />
+            <ACTION
+                builtin="clish_extn"
+                />
+        </COMMAND>
+        <!-- peer-routing -->
+        <COMMAND
+            name="peer-routing"
+            operation="edit-config"
+            namespace="&NDM_NAMESPACE;"
+            help="Enable VLT peer routing"
+            yang_name="&VLT_DOMAIN_LIST;,&VLT_DOMAIN_PEER_ROUTING;=true"
+            >
+            <ACTION
+                builtin="clish_extn"
+                />
+        </COMMAND>
+        <!-- peer-routing-timeout  <0-65535> -->
+        <COMMAND
+            name="peer-routing-timeout"
+            operation="edit-config"
+            namespace="&NDM_NAMESPACE;"
+            help="Configure the peer-routing timeout value"
+            >
+            <PARAM
+                name="value"
+                help="Peer-routing timeout value(Default:0)"
+                ptype="RANGE_0_65535"
+                yang_name="&VLT_DOMAIN_LIST;,&VLT_DOMAIN_PEER_ROUTING_TIMEOUT;=${value}"
+                />
+            <ACTION
+                builtin="clish_extn"
+                />
+        </COMMAND>
+        <!-- vlt-mac <xx:xx:xx:xx:xx> -->
+        <COMMAND
+            name="vlt-mac"
+            help="VLT MAC Address"
+            operation="edit-config"
+            namespace="&NDM_NAMESPACE;"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            >
+            <PARAM
+                name="mac"
+                help="MAC address for the topology"
+                ptype="MAC_ADDR"
+                yang_name="&NDM_CONF_TOPOLOGY_ID;,/node-topology/fabric-mac=${mac}"
+                />
+            <ACTION
+                builtin="clish_extn"
+                />
+      </COMMAND>
+
+        <!-- no -->
+        <COMMAND
+            name="no"
+            help="Negate a command or set its defaults"
+            operation="edit-config"
+            namespace="&NDM_NAMESPACE;"
+            >
+            <PARAM
+                name="allnocommands"
+                help="no commands"
+                ptype="SUBCOMMAND"
+                mode="switch"
+                >
+                <!-- no encapsulation-type <type> -->
+                <PARAM
+                    name="encapsulation-type"
+                    help="Configure the encapsulation type used for VLT domain"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    yang_name="&VLT_DOMAIN_LIST;,&VLT_DOMAIN_ENCAP_TYPE;"
+                    pfeature="NOT_SUPPORTED"
+                    >
+                    <PARAM
+                        name="type"
+                        help="Encapsulation type"
+                        ptype="VLT_ENCAP_TYPE"
+                        optional="true"
+                        />
+                </PARAM>
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                />
+        </COMMAND>
+        <!-- no delay-restore <value> -->
+        <COMMAND
+            name="no delay-restore"
+            operation="edit-config"
+            namespace="&NDM_NAMESPACE;"
+            help="Unconfigure the delay-restore value"
+            yang_name="&VLT_DOMAIN_LIST;,&VLT_DOMAIN_DELAY_RESTORE;"
+            >
+            <PARAM
+                name="value"
+                help="Delay restore value(Default:90)"
+                ptype="RANGE_1_1200"
+                optional="true"
+                />
+            <ACTION
+                builtin="clish_extn"
+                />
+        </COMMAND>
+        <!-- no discovery-interface ethernet <x:x:x-y:y:y> -->
+        <COMMAND
+            name="no discovery-interface"
+            help="Remove the Discovery Interface"
+            operation="edit-config"
+            namespace="&NDM_NAMESPACE;"
+            yang_name="&NDM_CONF_TOPOLOGY_ID;"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            >
+            <PARAM
+                name="intf-name"
+                help="Interface Name"
+                ptype="ETHER_INTERFACE_RANGE"
+                sub_oper_yang="remove:discovery-interface"
+                yang_name="/node-topology/discovery-interface[]=${intf-name}"
+                />
+            <ACTION
+                builtin="clish_extn"
+                />
+      </COMMAND>
+        <!-- no peer-routing -->
+        <COMMAND
+            name="no peer-routing"
+            help="Disable VLT peer routing"
+            operation="edit-config"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            namespace="&NDM_NAMESPACE;"
+            yang_name="&VLT_DOMAIN_LIST;,&VLT_DOMAIN_PEER_ROUTING;"
+            >
+            <ACTION
+                builtin="clish_extn"
+                />
+        </COMMAND>
+        <!-- no peer-routing-timeout <0-65535> -->
+        <COMMAND
+            name="no peer-routing-timeout"
+            help="Unconfigure the peer-routing timeout value"
+            operation="edit-config"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            namespace="&NDM_NAMESPACE;"
+            yang_name="&VLT_DOMAIN_LIST;,&VLT_DOMAIN_PEER_ROUTING_TIMEOUT;"
+            >
+            <PARAM
+                name="value"
+                help="Peer-routing timeout value(Default:0)"
+                ptype="RANGE_0_65535"
+                optional="true"
+                />
+            <ACTION
+                builtin="clish_extn"
+                />
+        </COMMAND>
+        <!-- no vlt-mac <mac> -->
+        <COMMAND
+            name="no vlt-mac"
+            help="Remove the VLT MAC Address"
+            operation="edit-config"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            namespace="&NDM_NAMESPACE;"
+            sub_oper_yang="remove:fabric-mac"
+            yang_name="&NDM_CONF_TOPOLOGY_ID;,/node-topology/fabric-mac"
+            >
+            <ACTION
+                builtin="clish_extn"
+                />
+      </COMMAND>
+    </VIEW>
+    <!--=======================================================-->
+    <!--                Config LAG  MODE                       -->
+    <!--=======================================================-->
+    <VIEW
+        name="configure-lag-view"
+        >
+        <!-- vlt-port-channel <1-1024> -->
+        <COMMAND
+            name="vlt-port-channel"
+            operation="edit-config"
+            namespace="&INTF_NAMESPACE;"
+            help="Configure vlt-port-channel id"
+            >
+            <PARAM
+                name="value"
+                help="vlt-port-channel id"
+                ptype="RANGE_1_1024"
+                yang_name="&VLT_INTF_LIST;,&VLT_INTF_VLT_ID;=${value}"
+                />
+            <ACTION
+                builtin="clish_extn"
+                />
+        </COMMAND>
+        <!-- no vlt-port-channel <1-1024> -->
+        <COMMAND
+            name="no vlt-port-channel"
+            operation="edit-config"
+            namespace="&INTF_NAMESPACE;"
+            help="Unconfigure vlt-port-channel id"
+            sub_oper_yang="remove:vlt-id"
+            yang_name="&VLT_INTF_LIST;,&VLT_INTF_VLT_ID;"
+            >
+            <PARAM
+                name="value"
+                help="vlt-port-channel id"
+                ptype="RANGE_1_1024"
+                optional="true"
+                />
+            <ACTION
+                builtin="clish_extn"
+                />
+        </COMMAND>
+    </VIEW>
+</CLISH_MODULE>

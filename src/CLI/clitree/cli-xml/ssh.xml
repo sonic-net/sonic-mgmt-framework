@@ -1,0 +1,298 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE CLISH_MODULE [
+<!ENTITY NAME_SPACE                     "http://www.dellemc.com/networking/os10/dell-system">
+<!ENTITY SUBTREE_FILTER                 "Filter_Type:SUBTREE">
+<!ENTITY SSH_SERVER                     "/ssh-server-config">
+<!ENTITY SSH_INFO                       "/ssh-server-info">
+]>
+<CLISH_MODULE
+    xmlns="http://www.dellemc.com/force10/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.dellemc.com/force10/XMLSchema
+                        http://www.dellemc.com/force10/XMLSchema/clish.xsd"
+    >
+
+    <!--=======================================================-->
+    <!--                Enable MODE                            -->
+    <!--=======================================================-->
+    <VIEW name="enable-view">
+    <!-- show commands -->
+    <!-- show ip ssh command -->
+      <COMMAND name="show ip ssh"
+         help="Show SSH server information"
+         operation="get"
+         yang_filter="&SUBTREE_FILTER;;Filter_Namespace:&NAME_SPACE;;Filter_Conditions:&SSH_INFO;"
+         template="show_ip_ssh.xsl"
+         >
+         <ACTION builtin="clish_extn"/>
+     </COMMAND>
+    </VIEW>
+
+    <!--=======================================================-->
+    <!--                Config MODE                            -->
+    <!--=======================================================-->
+    <VIEW name="configure-view">
+        <!-- ip ssh -->
+        <COMMAND
+            name="ip ssh"
+            help="Edit SSH settings"
+            operation="edit-config"
+            namespace="&NAME_SPACE;"
+            />
+        <!-- ip ssh server -->
+        <COMMAND
+            name="ip ssh server"
+            help="Edit SSH server settings"
+            operation="edit-config"
+            namespace="&NAME_SPACE;"
+            />
+        <!-- ip ssh server challenge-response-authentication -->
+        <COMMAND
+            name="ip ssh server challenge-response-authentication"
+            help="Enable challenge-response authentication"
+            mode="subcommand"
+            ptype="SUBCOMMAND"
+            operation="edit-config"
+            namespace="&NAME_SPACE;"
+            yang_name="&SSH_SERVER;/challengeresp-authentication=true"
+            >
+            <ACTION builtin="clish_extn" />
+        </COMMAND>
+        <!-- ip ssh server cipher -->
+        <COMMAND
+            name="ip ssh server cipher"
+            help="SSH server cipher algorithms"
+            mode="subcommand"
+            ptype="SUBCOMMAND"
+            operation="edit-config"
+            namespace="&NAME_SPACE;"
+            >
+            <PARAM
+                name="cipher-name"
+                help="SSH server cipher algorithms"
+                ptype="SSH_CIPHER_SELECT"
+                recursive="true"
+                yang_name="&SSH_SERVER;/ciphers/cipher-list=${cipher-name}"
+                />
+            <ACTION builtin="clish_extn" />
+        </COMMAND>
+        <!-- ip ssh server enable -->
+        <COMMAND
+            name="ip ssh server enable"
+            help="Enable SSH Server"
+            mode="subcommand"
+            ptype="SUBCOMMAND"
+            operation="edit-config"
+            namespace="&NAME_SPACE;"
+            yang_name="&SSH_SERVER;/status=true"
+            >
+            <ACTION builtin="clish_extn" />
+        </COMMAND>
+        <!-- ip ssh server hostbased-authentication -->
+        <COMMAND
+            name="ip ssh server hostbased-authentication"
+            help="Enable host-based authentication"
+            mode="subcommand"
+            ptype="SUBCOMMAND"
+            operation="edit-config"
+            namespace="&NAME_SPACE;"
+            yang_name="&SSH_SERVER;/hostbased-authentication=true"
+            >
+            <ACTION builtin="clish_extn" />
+        </COMMAND>
+        <!-- ip ssh server kex -->
+        <COMMAND
+            name="ip ssh server kex"
+            help="SSH server Key Exchange algorithms"
+            mode="subcommand"
+            ptype="SUBCOMMAND"
+            operation="edit-config"
+            namespace="&NAME_SPACE;"
+            >
+            <PARAM
+                name="kex-name"
+                help="SSH server key exchange algorithms"
+                ptype="SSH_KEX_SELECT"
+                recursive="true"
+                yang_name="&SSH_SERVER;/kex/kex-list=${kex-name}"
+                />
+            <ACTION builtin="clish_extn" />
+        </COMMAND>
+        <!-- ip ssh server mac -->
+        <COMMAND
+            name="ip ssh server mac"
+            help="SSH server MAC algorithms"
+            mode="subcommand"
+            ptype="SUBCOMMAND"
+            operation="edit-config"
+            namespace="&NAME_SPACE;"
+            >
+            <PARAM
+                name="mac-name"
+                help="SSH server MAC algorithms"
+                ptype="SSH_MAC_SELECT"
+                recursive="true"
+                yang_name="&SSH_SERVER;/macs/mac-list=${mac-name}"
+                />
+            <ACTION builtin="clish_extn" />
+        </COMMAND>
+        <!-- ip ssh server port # -->
+        <COMMAND
+            name="ip ssh server port"
+            help="SSH server listening port [1-65535]"
+            mode="subcommand"
+            ptype="SUBCOMMAND"
+            operation="edit-config"
+            namespace="&NAME_SPACE;"
+            >
+            <PARAM
+                name="portnum"
+                help="port number [1-65535] (default:22)"
+                mode="subcommand"
+                ptype="UINT16"
+                yang_name="&SSH_SERVER;/port=${portnum}"
+                />
+            <ACTION builtin="clish_extn" />
+        </COMMAND>
+        <!-- ip ssh server password-authentication -->
+        <COMMAND
+            name="ip ssh server password-authentication"
+            help="Enable password authentication"
+            mode="subcommand"
+            ptype="SUBCOMMAND"
+            operation="edit-config"
+            namespace="&NAME_SPACE;"
+            yang_name="&SSH_SERVER;/password-authentication=true"
+            >
+            <ACTION builtin="clish_extn" />
+        </COMMAND>
+        <!-- ip ssh server pubkey-authentication -->
+        <COMMAND
+            name="ip ssh server pubkey-authentication"
+            help="Enable Public Key authentication"
+            mode="subcommand"
+            ptype="SUBCOMMAND"
+            operation="edit-config"
+            namespace="&NAME_SPACE;"
+            yang_name="&SSH_SERVER;/pubkey-authentication=true"
+            >
+            <ACTION builtin="clish_extn" />
+        </COMMAND>
+
+        <!--no ip ssh -->
+        <COMMAND
+            name="no ip ssh"
+            help="Edit SSH settings"
+            operation="edit-config"
+            namespace="&NAME_SPACE;"
+            />
+        <!--no ip ssh server-->
+        <COMMAND
+            name="no ip ssh server"
+            help="Edit SSH server settings"
+            operation="edit-config"
+            namespace="&NAME_SPACE;"
+            />
+        <!--no ip ssh server challenge-response-authentication-->
+        <COMMAND
+            name="no ip ssh server challenge-response-authentication"
+            help="Disable challenge-response authentication"
+            mode="subcommand"
+            ptype="SUBCOMMAND"
+            operation="edit-config"
+            namespace="&NAME_SPACE;"
+            yang_name="&SSH_SERVER;/challengeresp-authentication=false"
+            >
+            <ACTION builtin="clish_extn" />
+        </COMMAND>
+        <!--no ip ssh server cipher-->
+        <COMMAND
+            name="no ip ssh server cipher"
+            help="Reset cipher algorithms list to default"
+            mode="subcommand"
+            ptype="SUBCOMMAND"
+            operation="edit-config"
+            sub_oper_yang="remove:ciphers"
+            namespace="&NAME_SPACE;"
+            yang_name="&SSH_SERVER;/ciphers"
+            >
+            <ACTION builtin="clish_extn" />
+        </COMMAND>
+        <!--no ip ssh server enable-->
+        <COMMAND
+            name="no ip ssh server enable"
+            help="Disable SSH Server"
+            mode="subcommand"
+            ptype="SUBCOMMAND"
+            operation="edit-config"
+            namespace="&NAME_SPACE;"
+            yang_name="&SSH_SERVER;/status=false"
+            >
+            <ACTION builtin="clish_extn" />
+        </COMMAND>
+        <!--no ip ssh server hostbased-authentication-->
+        <COMMAND
+            name="no ip ssh server hostbased-authentication"
+            help="Disable host-based authentication"
+            mode="subcommand"
+            ptype="SUBCOMMAND"
+            operation="edit-config"
+            namespace="&NAME_SPACE;"
+            yang_name="&SSH_SERVER;/hostbased-authentication=false"
+            >
+            <ACTION builtin="clish_extn" />
+        </COMMAND>
+        <!--no ip ssh server kex-->
+        <COMMAND
+            name="no ip ssh server kex"
+            help="Reset key exchange algorithm list to default"
+            mode="subcommand"
+            ptype="SUBCOMMAND"
+            operation="edit-config"
+            sub_oper_yang="remove:kex"
+            namespace="&NAME_SPACE;"
+            yang_name="&SSH_SERVER;/kex"
+            >
+            <ACTION builtin="clish_extn" />
+        </COMMAND>
+        <!--no ip ssh server mac-->
+        <COMMAND
+            name="no ip ssh server mac"
+            help="Reset MAC algorithm list to default"
+            mode="subcommand"
+            ptype="SUBCOMMAND"
+            operation="edit-config"
+            sub_oper_yang="remove:macs"
+            namespace="&NAME_SPACE;"
+            yang_name="&SSH_SERVER;/macs"
+            >
+            <ACTION builtin="clish_extn" />
+        </COMMAND>
+        <!--no ip ssh server password-authentication-->
+        <COMMAND
+            name="no ip ssh server password-authentication"
+            help="Disable password authentication"
+            mode="subcommand"
+            ptype="SUBCOMMAND"
+            operation="edit-config"
+            namespace="&NAME_SPACE;"
+            yang_name="&SSH_SERVER;/password-authentication=false"
+            add_config_entry="true"
+            >
+            <ACTION builtin="clish_extn" />
+        </COMMAND>
+        <!--no ip ssh server pubkey-authentication-->
+        <COMMAND
+            name="no ip ssh server pubkey-authentication"
+            help="Disable public key authentication"
+            mode="subcommand"
+            ptype="SUBCOMMAND"
+            operation="edit-config"
+            namespace="&NAME_SPACE;"
+            yang_name="&SSH_SERVER;/pubkey-authentication=false"
+            add_config_entry="true"
+            >
+            <ACTION builtin="clish_extn" />
+        </COMMAND>
+    </VIEW>
+</CLISH_MODULE>

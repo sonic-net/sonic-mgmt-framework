@@ -1,0 +1,1176 @@
+<!DOCTYPE ROOT [
+<!ENTITY FILTER_NS "Filter_Namespace:http://www.dellemc.com/networking/os10/dell-ospf-v2">
+<!ENTITY SUBTREE_FILTER                       "Filter_Type:SUBTREE">
+<!ENTITY OSPF_INSTLIST                        "/router-ospf-v2/instance-list">
+<!ENTITY OSPFV3_INSTLIST                      "/ospf-v3-oper/instance-list">
+<!ENTITY OSPFV2_INSTLIST                      "/ospf-v2-oper/instance-list">
+<!ENTITY OSPF_INSTANCE                        "&OSPF_INSTLIST;/instance=${instance}">
+<!ENTITY OSPF_AREA                            "&OSPF_INSTLIST;/area-list">
+<!ENTITY OSPF_AREA_NSSA                       "/router-ospf-v2/instance-list/area-list/nssa">
+<!ENTITY OSPF_AREA_STUB                       "/router-ospf-v2/instance-list/area-list/stub">
+<!ENTITY OSPFV3_AREA_STUB                     "/router-ospf-v3/instance-list/area-list/stub">
+<!ENTITY OSPF_INTF_NS                         "urn:ietf:params:xml:ns:yang:ietf-interfaces">
+<!ENTITY OSPFV2_NS                            "&OSPFV2_PREF;=http://www.dellemc.com/networking/os10/dell-ospf-v2">
+<!ENTITY OSPFV3_NS                            "&OSPFV3_PREF;=http://www.dellemc.com/networking/os10/dell-ospf-v3">
+<!ENTITY OSPFV3_FILTER_NS                     "Filter_Namespace:http://www.dellemc.com/networking/os10/dell-ospf-v3">
+<!ENTITY FILTER_IETF_NS                       "Filter_Namespace:&OSPF_INTF_NS;,&OSPFV2_NS;">
+<!ENTITY OSPFV3_FILTER_IETF_NS                "Filter_Namespace:&OSPF_INTF_NS;,&OSPFV3_NS;">
+<!ENTITY OSPFV2_PREF                          "dell-ospf">
+<!ENTITY OSPFV3_PREF                          "dell-ospf">
+<!ENTITY NS-GET-BULK                          "http://yumaworks.com/ns/yumaworks-getbulk">
+]>
+<ROOT>
+
+<MACRODEF name="IP_OSPF_SUBCMDS">
+     <PARAM name="ospf-sub-cmds"
+            help="Process ID"
+            optional="true"
+            ptype="SUBCOMMAND"
+            mode="switch">
+              <PARAM name="asbr"
+                     help="Displays asbr router visible to ospf"
+                     ptype="SUBCOMMAND"
+                     mode="subcommand"
+                     yang_filter="&SUBTREE_FILTER;;Filter_Conditions:/ospf-v2-oper/instance-list/instance=${ospf-instance},/ospf-v2-oper/instance-list/vrf-name=default,/ospf-v2-oper/instance-list/asbr-data;&FILTER_NS;"
+                     template="show_ip_ospf_asbr.xsl">
+              </PARAM>
+              <PARAM name="database"
+                     namespace="&NS-GET-BULK;"
+                     help="Database summary"
+                     ptype="SUBCOMMAND"
+                     operation="get-bulk"
+                     mode="subcommand"
+                     prompt_fn="get_ospf_database"
+                     yang_name="/get-bulk/count=150"
+                     prompt_oper="&SUBTREE_FILTER;;Filter_Conditions:/ospf-v2-oper/instance-list/instance=${ospf-instance},/ospf-v2-oper/instance-list/vrf-name=default,/ospf-v2-oper/instance-list/linkstate-database/area-id,/ospf-v2-oper/instance-list/linkstate-database/router-id;&FILTER_NS;"
+                     prompt_str="v2"
+                     template="show_ip_ospf_database.xsl">
+                     <PARAM name="ospf-database-commands"
+                            help="OSPF Database commands"
+                            prompt_fn="pass"
+                            operation="get"
+                            optional="true"
+                            ptype="SUBCOMMAND"
+                            mode="switch">
+
+                                 <PARAM name="asbr-summary"
+                                        help="ASBR summary link states"
+                                        ptype="SUBCOMMAND"
+                                        mode="subcommand"
+                                        optional="true"
+                                 yang_filter="&SUBTREE_FILTER;;Filter_Conditions:/ospf-v2-oper/instance-list/instance=${ospf-instance},/ospf-v2-oper/instance-list/vrf-name=default,/ospf-v2-oper/instance-list/linkstate-database/as-summary-lsa-list;&FILTER_NS;"
+                                 template="show_ip_ospf_database_as_summary.xsl">
+                                        <PARAM name="link-id"
+                                               help="Link state ID (as an IP address)"
+                                               ptype="IP_ADDR"
+                                               pfeature="NOT_SUPPORTED"
+                                               optional="true"
+                                        yang_filter="&SUBTREE_FILTER;;Filter_Conditions:/ospf-v2-oper/instance-list/instance=${ospf-instance},/ospf-v2-oper/instance-list/vrf-name=default,/ospf-v2-oper/instance-list/linkstate-database/as-summary-lsa-list/link-id=${link-id};&FILTER_NS;"
+                                        template="show_ip_ospf_database_as_summary.xsl">
+                                               <PARAM name="adv-router"
+                                                      help="Advertising Router link states"
+                                                      ptype="SUBCOMMAND"
+                                                      mode="subcommand"
+                                                      optional="true">
+                                                      <PARAM name="router-id"
+                                                             help="Advertising Router (as an IP address)"
+                                                             ptype="IP_ADDR"
+                                                       yang_filter="&SUBTREE_FILTER;;Filter_Conditions:/ospf-v2-oper/instance-list/instance=${ospf-instance},/ospf-v2-oper/instance-list/vrf-name=default,/ospf-v2-oper/instance-list/linkstate-database/as-summary-lsa-list/link-id=${link-id},/ospf-v2-oper/instance-list/linkstate-database/as-summary-lsa-list/adv-router-id=${router-id};&FILTER_NS;"
+                                                       template="show_ip_ospf_database_as_summary.xsl">
+                                                       </PARAM>
+                                                </PARAM>
+                                         </PARAM>
+                                  </PARAM>
+
+                                 <PARAM name="external"
+                                        help="External link states"
+                                        ptype="SUBCOMMAND"
+                                        mode="subcommand"
+                                        optional="true"
+                                 yang_filter="&SUBTREE_FILTER;;Filter_Conditions:/ospf-v2-oper/instance-list/instance=${ospf-instance},/ospf-v2-oper/instance-list/vrf-name=default,/ospf-v2-oper/instance-list/external-lsa-list;&FILTER_NS;"
+                                 template="show_ip_ospf_database_external.xsl">
+                                        <PARAM name="link-id"
+                                               help="Link state ID (as an IP address)"
+                                               ptype="IP_ADDR"
+                                               pfeature="NOT_SUPPORTED"
+                                               optional="true"
+                                        yang_filter="&SUBTREE_FILTER;;Filter_Conditions:/ospf-v2-oper/instance-list/instance=${ospf-instance},/ospf-v2-oper/instance-list/vrf-name=default,/ospf-v2-oper/instance-list/external-lsa-list/link-id=${link-id};&FILTER_NS;"
+                                        template="show_ip_ospf_database_external.xsl">
+                                               <PARAM name="adv-router"
+                                                      help="Advertising Router link states"
+                                                      ptype="SUBCOMMAND"
+                                                      mode="subcommand"
+                                                      optional="true">
+                                                      <PARAM name="router-id"
+                                                             help="Advertising Router (as an IP address)"
+                                                             ptype="IP_ADDR"
+                                                       yang_filter="&SUBTREE_FILTER;;Filter_Conditions:/ospf-v2-oper/instance-list/instance=${ospf-instance},/ospf-v2-oper/instance-list/vrf-name=default,/ospf-v2-oper/instance-list/external-lsa-list/link-id=${link-id},/ospf-v2-oper/instance-list/external-lsa-list/adv-router-id=${router-id};&FILTER_NS;"
+                                                       template="show_ip_ospf_database_external.xsl">
+                                                       </PARAM>
+                                                </PARAM>
+                                         </PARAM>
+                                  </PARAM>
+
+                                 <PARAM name="network"
+                                        help="Network link states"
+                                        ptype="SUBCOMMAND"
+                                        mode="subcommand"
+                                        optional="true"
+                                 yang_filter="&SUBTREE_FILTER;;Filter_Conditions:/ospf-v2-oper/instance-list/instance=${ospf-instance},/ospf-v2-oper/instance-list/vrf-name=default,/ospf-v2-oper/instance-list/linkstate-database/network-lsa-list;&FILTER_NS;"
+                                 template="show_ip_ospf_database_network.xsl">
+                                        <PARAM name="link-id"
+                                               help="Link state ID (as an IP address)"
+                                               ptype="IP_ADDR"
+                                               pfeature="NOT_SUPPORTED"
+                                               optional="true"
+                                        yang_filter="&SUBTREE_FILTER;;Filter_Conditions:/ospf-v2-oper/instance-list/instance=${ospf-instance},/ospf-v2-oper/instance-list/vrf-name=default,/ospf-v2-oper/instance-list/linkstate-database/network-lsa-list/link-id=${link-id};&FILTER_NS;"
+                                        template="show_ip_ospf_database_network.xsl">
+                                               <PARAM name="adv-router"
+                                                      help="Advertising Router link states"
+                                                      ptype="SUBCOMMAND"
+                                                      mode="subcommand"
+                                                      optional="true">
+                                                      <PARAM name="router-id"
+                                                             help="Advertising Router (as an IP address)"
+                                                             ptype="IP_ADDR"
+                                                       yang_filter="&SUBTREE_FILTER;;Filter_Conditions:/ospf-v2-oper/instance-list/instance=${ospf-instance},/ospf-v2-oper/instance-list/vrf-name=default,/ospf-v2-oper/instance-list/linkstate-database/network-lsa-list/link-id=${link-id},/ospf-v2-oper/instance-list/linkstate-database/network-lsa-list/adv-router-id=${router-id};&FILTER_NS;"
+                                                       template="show_ip_ospf_database_network.xsl">
+                                                       </PARAM>
+                                                </PARAM>
+                                         </PARAM>
+                                  </PARAM>
+
+                                 <PARAM name="nssa-external"
+                                        help="NSSA external Link states"
+                                        ptype="SUBCOMMAND"
+                                        mode="subcommand"
+                                        optional="true"
+                                 yang_filter="&SUBTREE_FILTER;;Filter_Conditions:/ospf-v2-oper/instance-list/instance=${ospf-instance},/ospf-v2-oper/instance-list/vrf-name=default,/ospf-v2-oper/instance-list/linkstate-database/nssa-external-lsa-list;&FILTER_NS;"
+                                 template="show_ip_ospf_database_nssa_external.xsl">
+                                        <PARAM name="link-id"
+                                               help="Link state ID (as an IP address)"
+                                               ptype="IP_ADDR"
+                                               pfeature="NOT_SUPPORTED"
+                                               optional="true"
+                                        yang_filter="&SUBTREE_FILTER;;Filter_Conditions:/ospf-v2-oper/instance-list/instance=${ospf-instance},/ospf-v2-oper/instance-list/vrf-name=default,/ospf-v2-oper/instance-list/linkstate-database/nssa-external-lsa-list/link-id=${link-id};&FILTER_NS;"
+                                        template="show_ip_ospf_database_nssa_external.xsl">
+                                               <PARAM name="adv-router"
+                                                      help="Advertising Router link states"
+                                                      ptype="SUBCOMMAND"
+                                                      mode="subcommand"
+                                                      optional="true">
+                                                      <PARAM name="router-id"
+                                                             help="Advertising Router (as an IP address)"
+                                                             ptype="IP_ADDR"
+                                                       yang_filter="&SUBTREE_FILTER;;Filter_Conditions:/ospf-v2-oper/instance-list/instance=${ospf-instance},/ospf-v2-oper/instance-list/vrf-name=default,/ospf-v2-oper/instance-list/linkstate-database/nssa-external-lsa-list/link-id=${link-id},/ospf-v2-oper/instance-list/linkstate-database/nssa-external-lsa-list/adv-router-id=${router-id};&FILTER_NS;"
+                                                       template="show_ip_ospf_database_nssa_external.xsl">
+                                                       </PARAM>
+                                                </PARAM>
+                                         </PARAM>
+                                  </PARAM>
+
+                                 <PARAM name="opaque-area"
+                                        help="Opaque-area link states"
+                                        ptype="SUBCOMMAND"
+                                        mode="subcommand"
+                                        optional="true"
+                                 yang_filter="&SUBTREE_FILTER;;Filter_Conditions:/ospf-v2-oper/instance-list/instance=${ospf-instance},/ospf-v2-oper/instance-list/vrf-name=default,/ospf-v2-oper/instance-list/linkstate-database/opaque-area-lsa-list;&FILTER_NS;"
+                                 template="show_ip_ospf_database_opaque_area.xsl">
+                                        <PARAM name="link-id"
+                                               help="Link state ID (as an IP address)"
+                                               ptype="IP_ADDR"
+                                               pfeature="NOT_SUPPORTED"
+                                               optional="true"
+                                        yang_filter="&SUBTREE_FILTER;;Filter_Conditions:/ospf-v2-oper/instance-list/instance=${ospf-instance},/ospf-v2-oper/instance-list/vrf-name=default,/ospf-v2-oper/instance-list/linkstate-database/opaque-area-lsa-list/link-id=${link-id};&FILTER_NS;"
+                                        template="show_ip_ospf_database_opaque_area.xsl">
+                                               <PARAM name="adv-router"
+                                                      help="Advertising Router link states"
+                                                      ptype="SUBCOMMAND"
+                                                      mode="subcommand"
+                                                      optional="true">
+                                                      <PARAM name="router-id"
+                                                             help="Advertising Router (as an IP address)"
+                                                             ptype="IP_ADDR"
+                                                       yang_filter="&SUBTREE_FILTER;;Filter_Conditions:/ospf-v2-oper/instance-list/instance=${ospf-instance},/ospf-v2-oper/instance-list/vrf-name=default,/ospf-v2-oper/instance-list/linkstate-database/opaque-area-lsa-list/link-id=${link-id},/ospf-v2-oper/instance-list/linkstate-database/opaque-area-lsa-list/adv-router-id=${router-id};&FILTER_NS;"
+                                                       template="show_ip_ospf_database_opaque_area.xsl">
+                                                       </PARAM>
+                                                </PARAM>
+                                         </PARAM>
+                                  </PARAM>
+
+                                 <PARAM name="opaque-as"
+                                        help="Opaque-as link states"
+                                        ptype="SUBCOMMAND"
+                                        mode="subcommand"
+                                        optional="true"
+                                 yang_filter="&SUBTREE_FILTER;;Filter_Conditions:/ospf-v2-oper/instance-list/instance=${ospf-instance},/ospf-v2-oper/instance-list/vrf-name=default,/ospf-v2-oper/instance-list/opaque-as-lsa-list;&FILTER_NS;"
+                                 template="show_ip_ospf_database_opaque_as.xsl">
+                                        <PARAM name="link-id"
+                                               help="Link state ID (as an IP address)"
+                                               ptype="IP_ADDR"
+                                               pfeature="NOT_SUPPORTED"
+                                               optional="true"
+                                        yang_filter="&SUBTREE_FILTER;;Filter_Conditions:/ospf-v2-oper/instance-list/instance=${ospf-instance},/ospf-v2-oper/instance-list/vrf-name=default,/ospf-v2-oper/instance-list/opaque-as-lsa-list/link-id=${link-id};&FILTER_NS;"
+                                        template="show_ip_ospf_database_opaque_as.xsl">
+                                               <PARAM name="adv-router"
+                                                      help="Advertising Router link states"
+                                                      ptype="SUBCOMMAND"
+                                                      mode="subcommand"
+                                                      optional="true">
+                                                      <PARAM name="router-id"
+                                                             help="Advertising Router (as an IP address)"
+                                                             ptype="IP_ADDR"
+                                                       yang_filter="&SUBTREE_FILTER;;Filter_Conditions:/ospf-v2-oper/instance-list/instance=${ospf-instance},/ospf-v2-oper/instance-list/vrf-name=default,/ospf-v2-oper/instance-list/opaque-lsa-list/link-id=${link-id},/ospf-v2-oper/instance-list/opaque-as-lsa-list/adv-router-id=${router-id};&FILTER_NS;"
+                                                       template="show_ip_ospf_database_opaque_as.xsl">
+                                                       </PARAM>
+                                                </PARAM>
+                                         </PARAM>
+                                  </PARAM>
+
+                                 <PARAM name="opaque-link"
+                                        help="Opaque-link link states"
+                                        ptype="SUBCOMMAND"
+                                        mode="subcommand"
+                                        optional="true"
+                                 yang_filter="&SUBTREE_FILTER;;Filter_Conditions:/ospf-v2-oper/instance-list/instance=${ospf-instance},/ospf-v2-oper/instance-list/vrf-name=default,/ospf-v2-oper/instance-list/linkstate-database/opaque-link-lsa-list;&FILTER_NS;"
+                                 template="show_ip_ospf_database_opaque_link.xsl">
+                                        <PARAM name="link-id"
+                                               help="Link state ID (as an IP address)"
+                                               ptype="IP_ADDR"
+                                               pfeature="NOT_SUPPORTED"
+                                               optional="true"
+                                        yang_filter="&SUBTREE_FILTER;;Filter_Conditions:/ospf-v2-oper/instance-list/instance=${ospf-instance},/ospf-v2-oper/instance-list/vrf-name=default,/ospf-v2-oper/instance-list/linkstate-database/opaque-link-lsa-list/link-id=${link-id};&FILTER_NS;"
+                                        template="show_ip_ospf_database_opaque_link.xsl">
+                                               <PARAM name="adv-router"
+                                                      help="Advertising Router link states"
+                                                      ptype="SUBCOMMAND"
+                                                      mode="subcommand"
+                                                      optional="true">
+                                                      <PARAM name="router-id"
+                                                             help="Advertising Router (as an IP address)"
+                                                             ptype="IP_ADDR"
+                                                       yang_filter="&SUBTREE_FILTER;;Filter_Conditions:/ospf-v2-oper/instance-list/instance=${ospf-instance},/ospf-v2-oper/instance-list/vrf-name=default,/ospf-v2-oper/instance-list/linkstate-database/opaque-link-lsa-list/link-id=${link-id},/ospf-v2-oper/instance-list/linkstate-database/opaque-link-lsa-list/adv-router-id=${router-id};&FILTER_NS;"
+                                                       template="show_ip_ospf_database_opaque_link.xsl">
+                                                       </PARAM>
+                                                </PARAM>
+                                         </PARAM>
+                                  </PARAM>
+
+                                 <PARAM name="router"
+                                        help="Router link states"
+                                        ptype="SUBCOMMAND"
+                                        mode="subcommand"
+                                        optional="true"
+                                 yang_filter="&SUBTREE_FILTER;;Filter_Conditions:/ospf-v2-oper/instance-list/instance=${ospf-instance},/ospf-v2-oper/instance-list/vrf-name=default,/ospf-v2-oper/instance-list/linkstate-database/router-lsa-list;&FILTER_NS;"
+                                 template="show_ip_ospf_database_router.xsl">
+                                        <PARAM name="link-id"
+                                               help="Link state ID (as an IP address)"
+                                               ptype="IP_ADDR"
+                                               pfeature="NOT_SUPPORTED"
+                                               optional="true"
+                                        yang_filter="&SUBTREE_FILTER;;Filter_Conditions:/ospf-v2-oper/instance-list/instance=${ospf-instance},/ospf-v2-oper/instance-list/vrf-name=default,/ospf-v2-oper/instance-list/linkstate-database/router-lsa-list/link-id=${link-id};&FILTER_NS;"
+                                        template="show_ip_ospf_database_router.xsl">
+                                               <PARAM name="adv-router"
+                                                      help="Advertising Router link states"
+                                                      ptype="SUBCOMMAND"
+                                                      mode="subcommand"
+                                                      optional="true">
+                                                      <PARAM name="router-id"
+                                                             help="Advertising Router (as an IP address)"
+                                                             ptype="IP_ADDR"
+                                                       yang_filter="&SUBTREE_FILTER;;Filter_Conditions:/ospf-v2-oper/instance-list/instance=${ospf-instance},/ospf-v2-oper/instance-list/vrf-name=default,/ospf-v2-oper/instance-list/linkstate-database/router-lsa-list/link-id=${link-id},/ospf-v2-oper/instance-list/linkstate-database/router-lsa-list/adv-router-id=${router-id};&FILTER_NS;"
+                                                       template="show_ip_ospf_database_router.xsl">
+                                                       </PARAM>
+                                                </PARAM>
+                                         </PARAM>
+                                 </PARAM>
+
+                                 <PARAM name="summary"
+                                        help="Summary link states"
+                                        ptype="SUBCOMMAND"
+                                        mode="subcommand"
+                                        optional="true"
+                                 yang_filter="&SUBTREE_FILTER;;Filter_Conditions:/ospf-v2-oper/instance-list/instance=${ospf-instance},/ospf-v2-oper/instance-list/vrf-name=default,/ospf-v2-oper/instance-list/linkstate-database/summary-lsa-list;&FILTER_NS;"
+                                 template="show_ip_ospf_database_summary.xsl">
+                                        <PARAM name="link-id"
+                                               help="Link state ID (as an IP address)"
+                                               ptype="IP_ADDR"
+                                               pfeature="NOT_SUPPORTED"
+                                               optional="true"
+                                        yang_filter="&SUBTREE_FILTER;;Filter_Conditions:/ospf-v2-oper/instance-list/instance=${ospf-instance},/ospf-v2-oper/instance-list/vrf-name=default,/ospf-v2-oper/instance-list/linkstate-database/summary-lsa-list/link-id=${link-id};&FILTER_NS;"
+                                        template="show_ip_ospf_database_summary.xsl">
+                                               <PARAM name="adv-router"
+                                                      help="Advertising Router link states"
+                                                      ptype="SUBCOMMAND"
+                                                      mode="subcommand"
+                                                      optional="true">
+                                                      <PARAM name="router-id"
+                                                             help="Advertising Router (as an IP address)"
+                                                             ptype="IP_ADDR"
+                                                       yang_filter="&SUBTREE_FILTER;;Filter_Conditions:/ospf-v2-oper/instance-list/instance=${ospf-instance},/ospf-v2-oper/instance-list/vrf-name=default,/ospf-v2-oper/instance-list/linkstate-database/summary-lsa-list/link-id=${link-id},/ospf-v2-oper/instance-list/linkstate-database/summary-lsa-list/adv-router-id=${router-id};&FILTER_NS;"
+                                                       template="show_ip_ospf_database_summary.xsl">
+                                                       </PARAM>
+                                                </PARAM>
+                                         </PARAM>
+                                  </PARAM>
+
+                          </PARAM>
+              </PARAM>
+              <PARAM name="interface"
+                     namespace="&NS-GET-BULK;"
+                     help="Interface information"
+                     ptype="SUBCOMMAND"
+                     operation="get-bulk"
+                     mode="subcommand"
+                     prompt_fn="get_ospf_instance"
+                     yang_name="/get-bulk/count=1,/get-bulk/list-target=/interfaces-state/interface,/get-bulk/select=ospf-status,/get-bulk/select-config=ospf-info"
+                     prompt_oper="${ospf-instance}"
+                     prompt_str="v2"
+                     template="show_ip_ospf_interface_all.xsl">
+                     <PARAM name="interface-name"
+                            help="Interface name"
+                            ptype="PHY_VL_PO_LOOPB_INTERFACE"
+                            operation="get"
+                            optional="true"
+                            prompt_fn="pass"
+                            yang_filter="&SUBTREE_FILTER;;Filter_Conditions:/ospf-v2-oper/instance-list/instance=${ospf-instance},/ospf-v2-oper/instance-list/vrf-name=default,/ospf-v2-oper/instance-list/ospf-inst-data;&FILTER_NS;|&SUBTREE_FILTER;;Filter_Conditions:/interfaces-state/interface/name=${interface-name},/interfaces-state/interface/&OSPFV2_PREF;:ospf-status;&FILTER_IETF_NS;"
+                            template="show_ip_ospf_interface.xsl"/>
+              </PARAM>
+              <PARAM name="neighbor"
+                     help="Neighbor list"
+                     ptype="SUBCOMMAND"
+                     mode="subcommand"
+              yang_filter="&SUBTREE_FILTER;;Filter_Conditions:/ospf-v2-oper/instance-list/instance=${ospf-instance},/ospf-v2-oper/instance-list/vrf-name=default,/ospf-v2-oper/instance-list/neighbor-database-list;&FILTER_NS;"
+                     template="show_ip_ospf_neighbor.xsl">
+                     <PARAM name="ip"
+                            help="show ip ospf neighbor nbr-id"
+                            ptype="STRING"
+                            pfeature="NOT_SUPPORTED"
+                            optional="true"
+                            yang_filter="&SUBTREE_FILTER;;Filter_Conditions:/ospf-v2-oper/instance-list/instance=${ospf-instance},/ospf-v2-oper/instance-list/neighbor-database-list/nbr-id=new_param1;&FILTER_NS;"
+                            prompt_oper="${ip}"
+                            prompt_fn="show_trim_ip"
+                            template="show_ip_ospf_neighbor.xsl">
+                     </PARAM>
+              </PARAM>
+              <PARAM name="routes"
+                     namespace="&NS-GET-BULK;"
+                     help="Displays routes as calculated by ospf"
+                     ptype="SUBCOMMAND"
+                     operation="get-bulk"
+                     mode="subcommand"
+                     prompt_fn="ospf_fill_instance_id_for_get_bulk_request"
+                     yang_name="/get-bulk/count=150,/get-bulk/list-target=&OSPFV2_INSTLIST;=,default/route-list"
+                     prompt_oper="v2"
+                     prompt_str="${ospf-instance}"
+                     template="show_ip_ospf_routes_all.xsl">
+                     <PARAM name="prefix"
+                            help="show ip ospf routes prefix"
+                            ptype="SUBCOMMAND"
+                            optional="true"
+                            mode="subcommand">
+                            <PARAM name="prefix-name"
+                                   help="prefix"
+                                   ptype="STRING"
+                                   operation="get"
+                                   prompt_fn="pass"
+                                   yang_filter="&SUBTREE_FILTER;;Filter_Conditions:&OSPFV2_INSTLIST;/instance=${ospf-instance},&OSPFV2_INSTLIST;/vrf-name=default,&OSPFV2_INSTLIST;/route-list/prefix=${prefix-name};&FILTER_NS;"
+                                   template="show_ip_ospf_routes.xsl"/>
+                     </PARAM>
+              </PARAM>
+              <PARAM name="statistics"
+                     help="Statistics information"
+                     ptype="SUBCOMMAND"
+                     mode="subcommand"
+                     yang_filter="&SUBTREE_FILTER;;Filter_Conditions:/ospf-v2-oper/instance-list/instance=${ospf-instance},/ospf-v2-oper/instance-list/vrf-name=default,/ospf-v2-oper/instance-list/ospf-inst-data;&FILTER_NS;|&SUBTREE_FILTER;;Filter_Conditions:/interfaces-state/interface/name=,/interfaces-state/interface/&OSPFV2_PREF;:ospf-stats;&FILTER_IETF_NS;"
+                     template="show_ip_ospf_statistics.xsl">
+                     <PARAM name="interface"
+                            help="show ip ospf statistics interface"
+                            ptype="SUBCOMMAND"
+                            optional="true"
+                            mode="subcommand">
+                            <PARAM name="interface-name"
+                                   help="Interface name"
+                                   ptype="PHY_VL_PO_LOOPB_INTERFACE"
+                                   yang_filter="&SUBTREE_FILTER;;Filter_Conditions:/ospf-v2-oper/instance-list/instance=${ospf-instance},/ospf-v2-oper/instance-list/vrf-name=default,/ospf-v2-oper/instance-list/ospf-inst-data;&FILTER_NS;|&SUBTREE_FILTER;;Filter_Conditions:/interfaces-state/interface/name=${interface-name},/interfaces-state/interface/&OSPFV2_PREF;:ospf-stats;&FILTER_IETF_NS;"
+                                   template="show_ip_ospf_statistics.xsl"/>
+                     </PARAM>
+              </PARAM>
+              <PARAM name="topology"
+                     help="Displays routers in directly connected ospf area's"
+                     ptype="SUBCOMMAND"
+                     mode="subcommand"
+                     yang_filter="&SUBTREE_FILTER;;Filter_Conditions:/ospf-v2-oper/instance-list/instance=${ospf-instance},/ospf-v2-oper/instance-list/vrf-name=default,/ospf-v2-oper/instance-list/topology;&FILTER_NS;"
+                     template="show_ip_ospf_topology.xsl">
+              </PARAM>
+     </PARAM>
+
+</MACRODEF>
+
+<MACRODEF name="IPV6_OSPF_SUBCMDS">
+     <PARAM name="ospf-sub-cmds"
+            help="Process ID"
+            optional="true"
+            ptype="SUBCOMMAND"
+            mode="switch">
+            <PARAM name="interface"
+                   namespace="&NS-GET-BULK;"
+                   help="Interface information"
+                   ptype="SUBCOMMAND"
+                   operation="get-bulk"
+                   mode="subcommand"
+                   prompt_fn="get_ospf_instance"
+                   yang_name="/get-bulk/count=1,/get-bulk/list-target=/interfaces-state/interface,/get-bulk/select=ospf-v3-oper,/get-bulk/select-config=ospf-v3-config"
+                   prompt_oper="${ospf-instance}"
+                   prompt_str="v3"
+                   template="show_ipv6_ospf_interface_all.xsl">
+                   <PARAM name="interface-name"
+                          help="Select interface"
+                          ptype="PHY_VL_PO_LOOPB_INTERFACE"
+                          operation="get"
+                          optional="true"
+                          prompt_fn="pass"
+                          yang_filter="&SUBTREE_FILTER;;Filter_Conditions:&OSPFV3_INSTLIST;/instance=${ospf-instance},&OSPFV3_INSTLIST;/vrf-name=default,&OSPFV3_INSTLIST;/ospf-inst-data;&OSPFV3_FILTER_NS;|&SUBTREE_FILTER;;Filter_Conditions:/interfaces-state/interface/name=${interface-name},/interfaces-state/interface/&OSPFV3_PREF;:ospf-v3-oper;&OSPFV3_FILTER_IETF_NS;"
+                          template="show_ipv6_ospf_interface.xsl"/>
+            </PARAM>
+            <PARAM name="neighbor"
+                   help="Neighbor list"
+                   ptype="SUBCOMMAND"
+                   mode="subcommand"
+                   yang_filter="&SUBTREE_FILTER;;Filter_Conditions:&OSPFV3_INSTLIST;/instance=${ospf-instance},&OSPFV3_INSTLIST;/vrf-name=default,&OSPFV3_INSTLIST;/neighbor-database-list;&OSPFV3_FILTER_NS;"
+                   template="show_ipv6_ospf_neighbor.xsl">
+            </PARAM>
+            <PARAM name="database"
+                   namespace="&NS-GET-BULK;"
+                   help="Database summary"
+                   ptype="SUBCOMMAND"
+                   operation="get-bulk"
+                   mode="subcommand"
+                   prompt_fn="get_ospf_database"
+                   yang_name="/get-bulk/count=150"
+                   prompt_oper="&SUBTREE_FILTER;;Filter_Conditions:&OSPFV3_INSTLIST;/instance=${ospf-instance},&OSPFV3_INSTLIST;/vrf-name=default,&OSPFV3_INSTLIST;/linkstate-database/area-id,&OSPFV3_INSTLIST;/linkstate-database/router-id;&OSPFV3_FILTER_NS;"
+                  prompt_str="v3"
+                  template="show_ipv6_ospf_database.xsl">
+            </PARAM>
+
+     </PARAM>
+</MACRODEF>
+
+<MACRODEF name="OSPF_REDISTRIBUTE">
+    <PARAM name="route-map"
+          help="Route-map reference"
+          ptype="SUBCOMMAND"
+          optional="true"
+          mode="subcommand">
+          <PARAM name="name"
+                help="Route map name"
+                ptype="STRING"
+                yang_name="arg1/routemap=${name}">
+          </PARAM>
+    </PARAM>
+</MACRODEF>
+
+<MACRODEF name="OSPF_NO_REDISTRIBUTE">
+    <PARAM name="route-map"
+          help="Route-map reference"
+          ptype="SUBCOMMAND"
+          optional="true"
+          mode="subcommand">
+          <PARAM name="name"
+                help="Route map name"
+                ptype="STRING">
+          </PARAM>
+    </PARAM>
+</MACRODEF>
+
+<MACRODEF name="OSPFV3_AREA_EXTN">
+<PARAM name="area-id-commands"
+      help="area-id-sub-commands"
+      ptype="SUBCOMMAND"
+      mode="switch">
+    <PARAM name="stub"
+          help="Specify area as a stub area"
+          ptype="SUBCOMMAND"
+          mode="subcommand"
+          yang_name="&OSPFV3_AREA_STUB;/enable-stub=true">
+          <PARAM name="no-summary"
+                help="Do not send summary LSA into stub area"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                optional="true"
+                yang_name="&OSPFV3_AREA_STUB;/no-summary=true"/>
+    </PARAM>
+</PARAM>
+</MACRODEF>
+
+<MACRODEF name="OSPFV3_NO_AREA_EXTN">
+<PARAM name="area-id-commands"
+      help="area-id-sub-commands"
+      ptype="SUBCOMMAND"
+      mode="switch">
+    <PARAM name="stub"
+          help="Specify area as a stub area"
+          ptype="SUBCOMMAND"
+          mode="subcommand"
+          sub_oper_yang="delete:stub"
+          yang_name="&OSPFV3_AREA_STUB;">
+          <PARAM name="no-summary"
+                help="Do not send summary LSA into stub area"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                optional="true"
+                sub_oper_yang="clear;remove:no-summary"
+                yang_name="&OSPFV3_AREA_STUB;/no-summary"/>
+    </PARAM>
+</PARAM>
+</MACRODEF>
+
+<MACRODEF name="OSPF_AREA_EXTN">
+<PARAM name="area-id-commands"
+      help="area-id-sub-commands"
+      ptype="SUBCOMMAND"
+      mode="switch">
+      <PARAM name="default-cost"
+            help="Set the summary default-cost of a NSSA/stub area"
+            ptype="SUBCOMMAND"
+            mode="subcommand">
+            <PARAM name="metric"
+                  help="Stub's advertised external route metric"
+                  ptype="RANGE_0_65535"
+                  yang_name="/router-ospf-v2/instance-list/area-list/metric=${metric}"/>
+     </PARAM>
+
+     <PARAM name="nssa"
+           help="Specify a NSSA area"
+           ptype="SUBCOMMAND"
+           mode="subcommand"
+           yang_name="&OSPF_AREA_NSSA;/enable-nssa=true">
+           <PARAM name="nssa-commands"
+                 help="nssa-sub-commands"
+                 ptype="SUBCOMMAND"
+                 db_flag="SKIP_TREE"
+                 optional="true"
+                 mode="switch">
+                 <PARAM name="default-information-originate"
+                       help="Originate Type 7 default into NSSA area"
+                       ptype="SUBCOMMAND"
+                       mode="subcommand"
+                       yang_name="&OSPF_AREA_NSSA;/default-information-originate=true"/>
+                 <PARAM name="no-redistribution"
+                       help="No redistribution into this NSSA area"
+                       ptype="SUBCOMMAND"
+                       mode="subcommand"
+                       yang_name="&OSPF_AREA_NSSA;/no-redistribute=true"/>
+                 <PARAM name="no-summary"
+                       help="Do not send summary LSA into NSSA"
+                       ptype="SUBCOMMAND"
+                       mode="subcommand"
+                       yang_name="&OSPF_AREA_NSSA;/no-nssa-summary=true"/>
+           </PARAM>
+         <PARAM name="default-information-originate"
+               help="Originate Type 7 default into NSSA area"
+               ptype="SUBCOMMAND"
+               mode="subcommand"
+               test="${nssa} != default-information-originate"
+               optional="true"
+               yang_name="&OSPF_AREA_NSSA;/default-information-originate=true"/>
+         <PARAM name="no-redistribution"
+               help="No redistribution into this NSSA area"
+               ptype="SUBCOMMAND"
+               mode="subcommand"
+               test="${nssa} != no-redistribution"
+               optional="true"
+               yang_name="&OSPF_AREA_NSSA;/no-redistribute=true"/>
+         <PARAM name="no-summary"
+               help="Do not send summary LSA into NSSA"
+               ptype="SUBCOMMAND"
+               mode="subcommand"
+               test="${nssa} != no-summary"
+               optional="true"
+               yang_name="&OSPF_AREA_NSSA;/no-nssa-summary=true"/>
+    </PARAM>
+
+    <PARAM name="range"
+          help="Summarize routes matching address/mask (border routers only)"
+          ptype="SUBCOMMAND"
+          mode="subcommand">
+          <PARAM name="ip-add"
+                help="IP address"
+                ptype="IP_ADDR_MASK"
+                yang_name="/router-ospf-v2/instance-list/area-list/area-range-list/prefix=${ip-add}">
+                 <PARAM name="no-advertise"
+                       help="Do not advertise LSA"
+                       ptype="SUBCOMMAND"
+                       mode="subcommand"
+                       optional="true"
+                       yang_name="/router-ospf-v2/instance-list/area-list/area-range-list/not-advertise=true"/>
+          </PARAM>
+    </PARAM>
+
+    <PARAM name="stub"
+          help="Specify area as a stub area"
+          ptype="SUBCOMMAND"
+          mode="subcommand"
+          yang_name="&OSPF_AREA_STUB;/enable-stub=true">
+          <PARAM name="no-summary"
+                help="Do not send summary LSA into stub area"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                optional="true"
+                yang_name="&OSPF_AREA_STUB;/no-summary=true"/>
+    </PARAM>
+</PARAM>
+</MACRODEF>
+
+<MACRODEF name="OSPF_NO_AREA">
+<PARAM name="area-id-commands"
+      help="area-id-sub-commands"
+      ptype="SUBCOMMAND"
+      mode="switch">
+      <PARAM name="default-cost"
+            help="Set the summary default-cost of a NSSA/stub area"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            sub_oper_yang="delete:metric"
+            yang_name="/router-ospf-v2/instance-list/area-list/metric=${metric}">
+            <PARAM name="metric"
+                  help="Stub's advertised external route metric"
+                  ptype="RANGE_0_65535"
+                  default="0"
+                  optional="true"/>
+     </PARAM>
+
+     <PARAM name="nssa"
+           help="Specify a NSSA area"
+           ptype="SUBCOMMAND"
+           mode="subcommand"
+           default_oper="merge"
+           sub_oper_yang="delete:nssa"
+           yang_name="&OSPF_AREA_NSSA;"
+           >
+           <PARAM name="default-information-originate"
+                 pfeature="NOT_SUPPORTED"
+                 help="Originate Type 7 default into NSSA area"
+                 ptype="SUBCOMMAND"
+                 mode="subcommand"
+                 optional="true"
+                 default_oper="none"
+                 sub_oper_yang="clear;delete:default-information-originate"
+                 yang_name="&OSPF_AREA_NSSA;/default-information-originate"/>
+           <PARAM name="no-redistribution"
+                 help="No redistribution into this NSSA area"
+                 ptype="SUBCOMMAND"
+                 mode="subcommand"
+                 optional="true"
+                 default_oper="none"
+                 sub_oper_yang="clear;delete:no-redistribute"
+                 yang_name="&OSPF_AREA_NSSA;/no-redistribute"/>
+           <PARAM name="no-summary"
+                 help="Do not send summary LSA into NSSA"
+                 ptype="SUBCOMMAND"
+                 mode="subcommand"
+                 optional="true"
+                 default_oper="none"
+                 sub_oper_yang="clear;delete:no-nssa-summary"
+                 yang_name="&OSPF_AREA_NSSA;/no-nssa-summary"/>
+    </PARAM>
+
+    <PARAM name="range"
+          help="Summarize routes matching address/mask (border routers only)"
+          ptype="SUBCOMMAND"
+          mode="subcommand">
+          <PARAM name="ip-add"
+                help="IP address"
+                ptype="IP_ADDR_MASK"
+                sub_oper_yang="delete:area-range-list"
+                yang_name="/router-ospf-v2/instance-list/area-list/area-range-list/prefix=${ip-add}">
+                 <PARAM name="no-advertise"
+                       help="Do not advertise LSA"
+                       ptype="SUBCOMMAND"
+                       mode="subcommand"
+                       optional="true"
+                       sub_oper_yang="clear;delete:not-advertise"
+                       yang_name="/router-ospf-v2/instance-list/area-list/area-range-list/not-advertise"/>
+          </PARAM>
+    </PARAM>
+
+    <PARAM name="stub"
+          help="Specify area as a stub area"
+          ptype="SUBCOMMAND"
+          mode="subcommand"
+          sub_oper_yang="delete:stub"
+          yang_name="&OSPF_AREA_STUB;">
+          <PARAM name="no-summary"
+                help="Do not send summary LSA into stub area"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                optional="true"
+                sub_oper_yang="clear;delete:no-summary"
+                yang_name="&OSPF_AREA_STUB;/no-summary"/>
+    </PARAM>
+
+</PARAM>
+</MACRODEF>
+
+<MACRODEF name="OSPF_IF_CMDS">
+     <PARAM name="process-id"
+           help="Process ID"
+           ptype="RANGE_1_65535"
+           yang_name="arg2/arg3:proc-id=${process-id}"
+           sub_oper_yang="create:proc-id">
+         <PARAM name="area"
+           help="OSPF area id"
+           ptype="SUBCOMMAND"
+           mode="subcommand">
+             <PARAM name="area-id"
+               help="OSPF area id as ip address or number"
+               ptype="INT_OR_IP_ADDR"
+               prompt_fn="ospf_area_convert_to_ip_type"
+               prompt_str="${area-id}"
+               yang_name="arg1/arg3:area-id"/>
+       </PARAM>
+    </PARAM>
+    <PARAM name="authentication-key"
+      help="Authentication password (key)"
+      ptype="SUBCOMMAND"
+      mode="subcommand">
+      <PARAM name="key"
+            help="Set the authentication key (upto 8 bytes)"
+            ptype="STRING"
+            yang_name="arg2/arg3:authentication-key=${key}"/>
+    </PARAM>
+    <PARAM name="cost"
+      help="Interface cost"
+      ptype="SUBCOMMAND"
+      mode="subcommand">
+      <PARAM name="cost_val"
+            help="Set the interace cost"
+            ptype="RANGE_1_65535"
+            yang_name="arg2/arg3:cost=${cost_val}"/>
+    </PARAM>
+    <PARAM name="dead-interval"
+      help="Interval after which a neighbor is declared dead"
+      ptype="SUBCOMMAND"
+      mode="subcommand">
+      <PARAM name="interval"
+            help="Set the dead interval in seconds"
+            ptype="RANGE_1_65535"
+            yang_name="arg2/arg3:dead-interval=${interval}"/>
+    </PARAM>
+    <PARAM name="hello-interval"
+      help="Time between HELLO packets"
+      ptype="SUBCOMMAND"
+      mode="subcommand">
+      <PARAM name="hinterval"
+            help="Set the hello interval in seconds (default = 10)"
+            ptype="RANGE_1_65535"
+            yang_name="arg2/arg3:hello-interval=${hinterval}"/>
+    </PARAM>
+    <PARAM name="message-digest-key"
+      help="message digest authentication password (key)"
+      ptype="SUBCOMMAND"
+      mode="subcommand">
+      <PARAM name="id"
+            help="Set the key id"
+            ptype="RANGE_1_255"
+            yang_name="arg2/arg3:message-digest-key=${id}">
+          <PARAM name="md5"
+            help="Use MD5 authentication"
+            ptype="SUBCOMMAND"
+            mode="subcommand">
+              <PARAM name="key"
+                    help="Set the authentication key"
+                    ptype="STRING"
+                    yang_name="arg1/arg3:message-digest-key-pwd=${key}"/>
+          </PARAM>
+      </PARAM>
+    </PARAM>
+    <PARAM name="mtu-ignore"
+      help="Ignores the MTU in DBD packets"
+      ptype="SUBCOMMAND"
+      mode="subcommand"
+      yang_name="arg2/arg3:mtu-ignore=true"/>
+    <PARAM name="network"
+      help="Network type"
+      ptype="SUBCOMMAND"
+      mode="subcommand">
+      <PARAM name="type"
+            help="Set the network type"
+            ptype="NETWORK_TYPE"
+            yang_name="arg2/arg3:network-type=${type}"/>
+    </PARAM>
+    <PARAM name="passive"
+      help="Configure interface as passive"
+      ptype="SUBCOMMAND"
+      mode="subcommand"
+      yang_name="arg2/arg3:passive=true"/>
+    <PARAM name="priority"
+      help="Router priority"
+      ptype="SUBCOMMAND"
+      mode="subcommand">
+      <PARAM name="priority_val"
+            help="Set the priority (default = 1)"
+            ptype="RANGE_0_255"
+            yang_name="arg2/arg3:priority=${priority_val}"/>
+    </PARAM>
+    <PARAM name="retransmit-interval"
+      help="Time between retransmitting lost LSA"
+      ptype="SUBCOMMAND"
+      mode="subcommand">
+      <PARAM name="retrans"
+            help="Set the retransmit interval (default = 5)"
+            ptype="RANGE_1_3600"
+            yang_name="arg2/arg3:retransmit-interval=${retrans}"/>
+    </PARAM>
+    <PARAM name="transmit-delay"
+      help="Link state transmit delay"
+      ptype="SUBCOMMAND"
+      mode="subcommand">
+      <PARAM name="delay"
+            help="Set the transmit delay (default = 1)"
+            ptype="RANGE_1_3600"
+            yang_name="arg2/arg3:transmit-delay=${delay}"/>
+    </PARAM>
+</MACRODEF>
+
+<MACRODEF name="OSPF_NO_IF_CMDS">
+     <PARAM name="process-id"
+           help="Process ID"
+           ptype="RANGE_1_65535"
+           yang_name="arg2/arg3:proc-id=${process-id},arg1/arg3:area-id=0.0.0.0"
+           sub_oper_yang="remove:proc-id,remove:area-id"
+           default_oper="none">
+           <PARAM name="area"
+           help="OSPF area id"
+           ptype="SUBCOMMAND"
+           optional="true"
+           mode="subcommand">
+            <PARAM name="area-id"
+               help="OSPF area id as ip address or number"
+               ptype="INT_OR_IP_ADDR"/>
+           </PARAM>
+    </PARAM>
+    <PARAM name="authentication-key"
+      help="Authentication password (key)"
+      ptype="SUBCOMMAND"
+      mode="subcommand"
+      yang_name="arg2/arg3:authentication-key"
+      sub_oper_yang="remove:authentication-key"
+      default_oper="none">
+      <PARAM name="key"
+            help="Set the authentication key (upto 8 bytes)"
+            optional="true"
+            ptype="STRING"/>
+    </PARAM>
+    <PARAM name="cost"
+      help="Interface cost"
+      ptype="SUBCOMMAND"
+      mode="subcommand"
+      yang_name="arg2/arg3:cost">
+      <PARAM name="cost_val"
+            help="Set the interace cost"
+            ptype="RANGE_1_65535"
+            optional="true"/>
+    </PARAM>
+    <PARAM name="dead-interval"
+      help="Interval after which a neighbor is declared dead"
+      ptype="SUBCOMMAND"
+      mode="subcommand"
+      yang_name="arg2/arg3:dead-interval">
+      <PARAM name="interval"
+            help="Set the dead interval in seconds"
+            ptype="RANGE_1_65535"
+            optional="true"/>
+    </PARAM>
+    <PARAM name="hello-interval"
+      help="Interval after which a neighbor is declared dead"
+      ptype="SUBCOMMAND"
+      mode="subcommand"
+      yang_name="arg2/arg3:hello-interval">
+      <PARAM name="interval"
+            help="Set the dead interval in seconds"
+            ptype="RANGE_1_65535"
+            optional="true"/>
+    </PARAM>
+    <PARAM name="message-digest-key"
+      help="message digest authentication password (key)"
+      ptype="SUBCOMMAND"
+      mode="subcommand">
+      <PARAM name="id"
+            help="Set the key id"
+            ptype="RANGE_1_255"
+            yang_name="arg2/arg3:message-digest-key=${id},arg1/arg3:message-digest-key-pwd=0"
+            sub_oper_yang="remove:message-digest-key,remove:message-digest-key-pwd"
+            default_oper="none">
+            <PARAM name="md5"
+              help="Use MD5 authentication"
+              optional="true"
+              ptype="SUBCOMMAND"
+              mode="subcommand">
+              <PARAM name="key"
+                    help="Set the authentication key"
+                    ptype="STRING"/>
+            </PARAM>
+      </PARAM>
+    </PARAM>
+    <PARAM name="mtu-ignore"
+      help="Ignores the MTU in DBD packets"
+      ptype="SUBCOMMAND"
+      mode="subcommand"
+      sub_oper_yang="remove:mtu-ignore"
+      default_oper="none"
+      yang_name="arg2/arg3:mtu-ignore">
+    </PARAM>
+    <PARAM name="network"
+      help="Network type"
+      ptype="SUBCOMMAND"
+      mode="subcommand">
+      <PARAM name="type"
+            help="Set the network type"
+            ptype="NETWORK_TYPE"
+            sub_oper_yang="remove:network-type"
+            default_oper="none"
+            yang_name="arg2/arg3:network-type"/>
+    </PARAM>
+    <PARAM name="passive"
+      help="Configure interface as passive"
+      ptype="SUBCOMMAND"
+      mode="subcommand"
+      sub_oper_yang="remove:passive"
+      default_oper="none"
+      yang_name="arg2/arg3:passive"/>
+    <PARAM name="priority"
+      help="Router priority"
+      ptype="SUBCOMMAND"
+      mode="subcommand"
+      sub_oper_yang="remove:priority"
+      default_oper="none"
+      yang_name="arg2/arg3:priority">
+      <PARAM name="interval"
+            help="Set the priority (default = 1)"
+            ptype="RANGE_0_255"
+            optional="true"/>
+    </PARAM>
+    <PARAM name="retransmit-interval"
+      help="Time between retransmitting lost LSA"
+      ptype="SUBCOMMAND"
+      mode="subcommand"
+      yang_name="arg2/arg3:retransmit-interval">
+      <PARAM name="retrans"
+            help="Set the retransmit interval (default = 5)"
+            optional="true"
+            ptype="RANGE_1_3600"/>
+    </PARAM>
+    <PARAM name="transmit-delay"
+      help="Link state transmit delay"
+      ptype="SUBCOMMAND"
+      mode="subcommand"
+      yang_name="arg2/arg3:transmit-delay">
+      <PARAM name="delay"
+            help="Set the transmit delay (default = 1)"
+            optional="true"
+            ptype="RANGE_1_3600"/>
+    </PARAM>
+</MACRODEF>
+
+<MACRODEF name="OSPFV3_IF_CMDS">
+     <PARAM name="process-id"
+           help="Process ID"
+           ptype="RANGE_1_65535"
+           yang_name="arg2/arg3:proc-id=${process-id}"
+           sub_oper_yang="create:proc-id">
+         <PARAM name="area"
+           help="OSPFv3 area id"
+           ptype="SUBCOMMAND"
+           mode="subcommand">
+             <PARAM name="area-id"
+               help="OSPFv3 area id as ip address or number"
+               ptype="INT_OR_IP_ADDR"
+               prompt_fn="ospf_area_convert_to_ip_type"
+               prompt_str="${area-id}"
+               yang_name="arg1/arg3:area-id"/>
+       </PARAM>
+    </PARAM>
+    <PARAM name="cost"
+      help="Interface cost"
+      ptype="SUBCOMMAND"
+      mode="subcommand">
+      <PARAM name="cost_val"
+            help="Set the interace cost"
+            ptype="RANGE_1_65535"
+            yang_name="arg2/arg3:cost=${cost_val}"/>
+    </PARAM>
+    <PARAM name="dead-interval"
+      help="Interval after which a neighbor is declared dead"
+      ptype="SUBCOMMAND"
+      mode="subcommand">
+      <PARAM name="interval"
+            help="Set the dead interval in seconds"
+            ptype="RANGE_1_65535"
+            yang_name="arg2/arg3:dead-interval=${interval}"/>
+    </PARAM>
+    <PARAM name="hello-interval"
+      help="Time between HELLO packets"
+      ptype="SUBCOMMAND"
+      mode="subcommand">
+      <PARAM name="hinterval"
+            help="Set the hello interval in seconds (default = 10)"
+            ptype="RANGE_1_65535"
+            yang_name="arg2/arg3:hello-interval=${hinterval}"/>
+    </PARAM>
+    <PARAM name="network"
+      help="Network type"
+      ptype="SUBCOMMAND"
+      mode="subcommand">
+      <PARAM name="type"
+            help="Set the network type"
+            ptype="NETWORK_TYPE"
+            yang_name="arg2/arg3:network-type=${type}"/>
+    </PARAM>
+    <PARAM name="passive"
+      help="Configure interface as passive"
+      ptype="SUBCOMMAND"
+      mode="subcommand"
+      yang_name="arg2/arg3:passive=true"/>
+    <PARAM name="priority"
+      help="Router priority"
+      ptype="SUBCOMMAND"
+      mode="subcommand">
+      <PARAM name="priority_val"
+            help="Set the priority (default = 1)"
+            ptype="RANGE_0_255"
+            yang_name="arg2/arg3:priority=${priority_val}"/>
+    </PARAM>
+</MACRODEF>
+
+<MACRODEF name="OSPFV3_NO_IF_CMDS">
+     <PARAM name="process-id"
+           help="Process ID"
+           ptype="RANGE_1_65535"
+           yang_name="arg2/arg3:proc-id=${process-id},arg1/arg3:area-id=0.0.0.0"
+           sub_oper_yang="remove:proc-id,remove:area-id"
+           default_oper="none">
+           <PARAM name="area"
+           help="OSPFv3 area id"
+           ptype="SUBCOMMAND"
+           optional="true"
+           mode="subcommand">
+            <PARAM name="area-id"
+               help="OSPFv3 area id as ip address or number"
+               ptype="INT_OR_IP_ADDR"/>
+           </PARAM>
+    </PARAM>
+    <PARAM name="cost"
+      help="Interface cost"
+      ptype="SUBCOMMAND"
+      mode="subcommand"
+      yang_name="arg2/arg3:cost">
+      <PARAM name="cost_val"
+            help="Set the interace cost"
+            ptype="RANGE_1_65535"
+            optional="true"/>
+    </PARAM>
+    <PARAM name="dead-interval"
+      help="Interval after which a neighbor is declared dead"
+      ptype="SUBCOMMAND"
+      mode="subcommand"
+      yang_name="arg2/arg3:dead-interval">
+      <PARAM name="interval"
+            help="Set the dead interval in seconds"
+            ptype="RANGE_1_65535"
+            optional="true"/>
+    </PARAM>
+    <PARAM name="hello-interval"
+      help="Interval after which a neighbor is declared dead"
+      ptype="SUBCOMMAND"
+      mode="subcommand"
+      yang_name="arg2/arg3:hello-interval">
+      <PARAM name="interval"
+            help="Set the dead interval in seconds"
+            ptype="RANGE_1_65535"
+            optional="true"/>
+    </PARAM>
+    <PARAM name="network"
+      help="Network type"
+      ptype="SUBCOMMAND"
+      mode="subcommand">
+      <PARAM name="type"
+            help="Set the network type"
+            ptype="NETWORK_TYPE"
+            sub_oper_yang="remove:network-type"
+            default_oper="none"
+            yang_name="arg2/arg3:network-type"/>
+    </PARAM>
+    <PARAM name="passive"
+      help="Configure interface as passive"
+      ptype="SUBCOMMAND"
+      mode="subcommand"
+      sub_oper_yang="remove:passive"
+      default_oper="none"
+      yang_name="arg2/arg3:passive"/>
+    <PARAM name="priority"
+      help="Router priority"
+      ptype="SUBCOMMAND"
+      mode="subcommand"
+      sub_oper_yang="remove:priority"
+      default_oper="none"
+      yang_name="arg2/arg3:priority">
+      <PARAM name="interval"
+            help="Set the priority (default = 1)"
+            ptype="RANGE_0_255"
+            optional="true"/>
+    </PARAM>
+</MACRODEF>
+
+<MACRODEF name="SHOW_OSPF">
+
+      <PARAM name="asbr"
+            help="Displays asbr router visible to ospf"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            yang_name="&OSPF_INSTANCE;,&OSPF_INSTLIST;/">
+      </PARAM>
+      <PARAM name="database"
+            help="Database summary"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            yang_name="&OSPF_INSTANCE;,&OSPF_INSTLIST;/">
+            <PARAM name="database-commands"
+                  help="database-sub-commands"
+                  ptype="SUBCOMMAND"
+                  mode="switch">
+                  <PARAM name="asbr-summary"
+                        help="ASBR summary link states"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        yang_name="&OSPF_INSTANCE;,&OSPF_INSTLIST;/">
+                  </PARAM>
+                  <PARAM name="ip"
+                        help="Neighbor list"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        yang_name="&OSPF_INSTANCE;,&OSPF_INSTLIST;/">
+                  </PARAM>
+            </PARAM>
+      </PARAM>
+      <PARAM name="interface"
+            help="Interface information"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            yang_name="&OSPF_INSTANCE;,&OSPF_INSTLIST;/">
+      </PARAM>
+      <PARAM name="neigbor"
+            help="Neighbor list"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            yang_name="&OSPF_INSTANCE;,&OSPF_INSTLIST;/">
+      </PARAM>
+      <PARAM name="routes"
+            help="Displays routes as calculated by ospf"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            yang_name="&OSPF_INSTANCE;,&OSPF_INSTLIST;/">
+      </PARAM>
+
+</MACRODEF>
+</ROOT>

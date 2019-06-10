@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE ROOT [
+<!ENTITY MODULE-NS      "http://www.dellemc.com/networking/os10/dell-fc-services">
+<!ENTITY MODULE         "dell-fc-services">
+<!ENTITY SUBTREE_FILTER "Filter_Type:SUBTREE;">
+<!ENTITY FC_CFG "/fc-cfg/">
+]>
+
+<ROOT>
+<MACRODEF name="FC-NAME">
+    <PARAM
+        name="arg1"
+        help="Configure FC arg1"
+        ptype="SUBCOMMAND"
+        mode="subcommand"
+        view="configure-fc-arg1-view"
+        viewid="name=${fc-name}"
+        yang_key="&FC_CFG;arg1/name"
+    >
+        <PARAM
+            name="fc-name"
+            help="FC arg1 name"
+            ptype="STRING_32"
+            yang_name="&FC_CFG;arg1[]/name=${fc-name}"
+        />
+    </PARAM>
+</MACRODEF>
+
+<MACRODEF name="NO-FC-NAME">
+    <PARAM
+        name="arg1"
+        help="Unconfigure FC arg1"
+        ptype="SUBCOMMAND"
+        mode="subcommand"
+        yang_key="&FC_CFG;arg1/name"
+    >
+        <PARAM
+            name="fc-name"
+            help="FC arg1 name"
+            ptype="STRING_32"
+            sub_oper_yang="delete:arg1"
+            yang_name="&FC_CFG;arg1[]/name=${fc-name}"
+        />
+    </PARAM>
+</MACRODEF>
+
+<MACRODEF name="FC-MEMBER-OPTIONS">
+    <PARAM
+        name="fc-id"
+        help="FC arg1 member fc-id"
+        ptype="SUBCOMMAND"
+        mode="subcommand"
+    >
+        <PARAM
+            name="fc-id-val"
+            help="FC arg1 member fc-id"
+            ptype="RANGE_1_15728639"
+            yang_name="&FC_CFG;arg1/fc-id[]=${fc-id-val}"
+        />
+    </PARAM>
+    <PARAM
+        name="wwn"
+        help="FC arg1 member wwn"
+        ptype="SUBCOMMAND"
+        mode="subcommand"
+    >
+        <PARAM
+            name="wwn-val"
+            help="FC arg1 member wwn"
+            ptype="STRING"
+            yang_name="&FC_CFG;arg1/wwn[]=${wwn-val}"
+        />
+    </PARAM>
+    <PARAM
+        name="member-port"
+        help="FC arg1 member port"
+        ptype="SUBCOMMAND"
+        mode="subcommand"
+    >
+        <PARAM
+            name="member-port-val"
+            help="FC arg1 member port"
+            ptype="FC_INTERFACE"
+            yang_name="&FC_CFG;arg1/member-port[]=${member-port-val}"
+        />
+    </PARAM>
+</MACRODEF>
+
+<MACRODEF name="FC-NO-MEMBER-OPTIONS">
+    <PARAM
+        name="fc-id"
+        help="FC arg1 member fc-id"
+        ptype="SUBCOMMAND"
+        mode="subcommand"
+    >
+        <PARAM
+            name="fc-id-val"
+            help="FC arg1 member fc-id"
+            ptype="RANGE_1_15728639"
+            sub_oper_yang="delete:fc-id"
+            yang_name="&FC_CFG;arg1/fc-id[]=${fc-id-val}"
+        />
+    </PARAM>
+    <PARAM
+        name="wwn"
+        help="FC arg1 member wwn"
+        ptype="SUBCOMMAND"
+        mode="subcommand"
+    >
+        <PARAM
+            name="wwn-val"
+            help="FC arg1 member wwn"
+            ptype="STRING"
+            sub_oper_yang="delete:wwn"
+            yang_name="&FC_CFG;arg1/wwn[]=${wwn-val}"
+        />
+    </PARAM>
+    <PARAM
+        name="member-port"
+        help="FC arg1 member port"
+        ptype="SUBCOMMAND"
+        mode="subcommand"
+    >
+        <PARAM
+            name="member-port-val"
+            help="FC arg1 member port"
+            ptype="FC_INTERFACE"
+            sub_oper_yang="delete:member-port"
+            yang_name="&FC_CFG;arg1/member-port[]=${member-port-val}"
+        />
+    </PARAM>
+</MACRODEF>
+
+<MACRODEF name="FC-MEMBER-SWITCH">
+    <PARAM
+        name="member-switch"
+        help="FC arg1 member"
+        ptype="SUBCOMMAND"
+        mode="switch"
+    >
+        <MACRO name="FC-MEMBER-OPTIONS" arg="arg1"></MACRO>
+    </PARAM>
+</MACRODEF>
+
+<MACRODEF name="FC-NO-MEMBER-SWITCH">
+    <PARAM
+        name="member-switch"
+        help="FC arg1 member"
+        ptype="SUBCOMMAND"
+        mode="switch"
+    >
+        <MACRO name="FC-NO-MEMBER-OPTIONS" arg="arg1"></MACRO>
+    </PARAM>
+</MACRODEF>
+
+</ROOT>

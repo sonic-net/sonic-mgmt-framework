@@ -1,0 +1,32 @@
+{{>partial_header}}
+package {{packageName}}
+{{#models}}{{#imports}}
+import ({{/imports}}{{#imports}}
+	"{{import}}"{{/imports}}{{#imports}}
+)
+{{/imports}}{{#model}}{{#isEnum}}{{#description}}// {{{classname}}} : {{{description}}}{{/description}}
+type {{{name}}} {{^format}}{{dataType}}{{/format}}{{#format}}{{{format}}}{{/format}}
+
+// List of {{{name}}}
+const (
+	{{#allowableValues}}
+	{{#enumVars}}
+	{{name}} {{{classname}}} = "{{{value}}}"
+	{{/enumVars}}
+	{{/allowableValues}}
+){{/isEnum}}{{^isEnum}}{{#description}}
+// {{{description}}}{{/description}}
+type {{classname}} struct {
+{{#requiredVars}}
+	{{name}} {{^isEnum}}{{^isPrimitiveType}}{{^isContainer}}{{^isDateTime}}*{{/isDateTime}}{{/isContainer}}{{/isPrimitiveType}}{{/isEnum}}{{{datatype}}} `validate:"required" json:"{{baseName}}{{^required}},omitempty{{/required}}"`
+{{/requiredVars}}
+{{#vars}}{{#description}}
+	// {{{description}}}{{/description}}
+{{^required}}{{#isContainer}}
+	{{name}} {{^isEnum}}{{^isPrimitiveType}}{{^isContainer}}{{^isDateTime}}*{{/isDateTime}}{{/isContainer}}{{/isPrimitiveType}}{{/isEnum}}{{{datatype}}} `validate:"dive" json:"{{baseName}}{{^required}},omitempty{{/required}}"`
+{{/isContainer}}{{/required}}
+{{^required}}{{^isContainer}}
+	{{name}} {{^isEnum}}{{^isPrimitiveType}}{{^isContainer}}{{^isDateTime}}*{{/isDateTime}}{{/isContainer}}{{/isPrimitiveType}}{{/isEnum}}{{{datatype}}} `json:"{{baseName}}{{^required}},omitempty{{/required}}"`
+{{/isContainer}}{{/required}}
+{{/vars}}
+}{{/isEnum}}{{/model}}{{/models}}

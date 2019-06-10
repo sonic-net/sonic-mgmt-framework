@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE CLISH_MODULE [
+<!ENTITY SUBTREE_FILTER "Filter_Type:SUBTREE">
+<!ENTITY OSPFV2_NS "http://www.dellemc.com/networking/os10/dell-ospf-v2">
+<!ENTITY OSPFV3_NS "http://www.dellemc.com/networking/os10/dell-ospf-v3">
+]>
+<CLISH_MODULE
+    xmlns="http://www.dellemc.com/force10/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xi="http://www.w3.org/2001/XInclude"
+    xsi:schemaLocation="http://www.dellemc.com/force10/XMLSchema
+                        http://www.dellemc.com/force10/XMLSchema/clish.xsd">
+<!-- ********************************************************************** -->
+<!-- *  CLEAR OSPF COMMANDS                                                * -->
+<!--
+clear ip ospf <Process ID> process
+clear ip ospf <Process ID> statistics
+clear ip ospfv3 <Process ID> process
+-->
+<!-- *  View : enable-view                                                * -->
+<!-- ********************************************************************** -->
+    <VIEW name="enable-view">
+        <COMMAND name="clear ip ospf"
+                 help="OSPF clear commands"
+                 ptype="SUBCOMMAND"
+                 operation="generic-rpc"
+                 namespace="&OSPFV2_NS;"
+                 >
+                 <PARAM name="clear-ospf-options"
+                        help=""
+                        ptype="SUBCOMMAND"
+                        mode="switch">
+                        <PARAM name="ospfv2-instance"
+                               help="Process ID"
+                               ptype="RANGE_1_65535">
+                               <PARAM name="process-statistics"
+                                      help=""
+                                      ptype="SUBCOMMAND"
+                                      mode="switch">
+                                      <PARAM name="process"
+                                             help="Reset OSPF # process"
+                                             ptype="SUBCOMMAND"
+                                             mode="subcommand"
+                                             yang_name="/clear-ospfv2/process_id=${ospfv2-instance},/clear-ospfv2/process"/>
+                                      <PARAM name="statistics"
+                                             help="Clear OSPF # statistics"
+                                             ptype="SUBCOMMAND"
+                                             pfeature="NOT_SUPPORTED"
+                                             mode="subcommand"
+                                             yang_name="/clear-ospfv2/process_id=${ospfv2-instance},/clear-ospfv2/statistics"/>
+                               </PARAM>
+                        </PARAM>
+                        <PARAM name="process"
+                               help="Reset OSPF process"
+                               ptype="SUBCOMMAND"
+                               mode="subcommand"
+                               yang_name="/clear-ospfv2/process_id=0,/clear-ospfv2/process"/>
+                        <PARAM name="statistics"
+                               help="Clear OSPF statistics"
+                               ptype="SUBCOMMAND"
+                               pfeature="NOT_SUPPORTED"
+                               mode="subcommand"
+                               yang_name="/clear-ospfv2/process_id=0,/clear-ospfv2/statistics"/>
+                </PARAM>
+                <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+
+        <COMMAND name="clear ipv6 ospf"
+                 help="Clears OSPFv3 related information"
+                 ptype="SUBCOMMAND"
+                 operation="generic-rpc"
+                 namespace="&OSPFV3_NS;"
+                 >
+                 <PARAM name="clear-ospfv3-options"
+                        help=""
+                        ptype="SUBCOMMAND"
+                        mode="switch">
+                        <PARAM name="ospfv3-instance"
+                               help="Instance number"
+                               ptype="RANGE_1_65535">
+                                      <PARAM name="process"
+                                             help="OSPFv3 process #"
+                                             ptype="SUBCOMMAND"
+                                             mode="subcommand"
+                                             yang_name="/clear-ospfv3/process_id=${ospfv3-instance},/clear-ospfv3/process"/>
+                        </PARAM>
+                        <PARAM name="process"
+                               help="OSPFv3 process"
+                               ptype="SUBCOMMAND"
+                               mode="subcommand"
+                               yang_name="/clear-ospfv3/process_id=0,/clear-ospfv3/process"/>
+                </PARAM>
+                <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+
+    </VIEW>
+</CLISH_MODULE>

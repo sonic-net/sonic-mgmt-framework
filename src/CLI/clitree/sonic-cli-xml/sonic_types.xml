@@ -1,0 +1,1296 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE CLISH_MODULE [
+<!ENTITY ETH_INTF_TUPLE  "([1-9]([0-9])*)">
+<!ENTITY SYSTEM_ID       "((&ETH_INTF_TUPLE;)|(&ETH_INTF_TUPLE;/&ETH_INTF_TUPLE;))">
+<!ENTITY ETH_PHY_NUM     "((&ETH_INTF_TUPLE;/&ETH_INTF_TUPLE;/&ETH_INTF_TUPLE;))">
+<!ENTITY ETH_PHY_NUM_WITH_SUBPORT    "(&ETH_PHY_NUM;:&ETH_INTF_TUPLE;)">
+<!ENTITY ETH_OPTION      "(^e([t]|(th)|(thernet))?\s*)">
+<!ENTITY VLAN_OPTION     "(^v([l]|(lan))?\s*)">
+<!ENTITY PO_OPTION       "(^p([o]|(ort-channel))?\s*)">
+<!ENTITY FC_OPTION       "(^f([c]|(ib)|(ibre-channel))?\s*)">
+<!ENTITY ETH_TUPLE_OPTION "(&ETH_PHY_NUM;)|(&ETH_PHY_NUM_WITH_SUBPORT;)">
+<!ENTITY ETH_PAIR        "((&ETH_TUPLE_OPTION;)(\-(&ETH_TUPLE_OPTION;))?)">
+<!ENTITY ETH_ALL_INTF    "(^e([t]|(th)|(thernet))?\s*((&ETH_PHY_NUM;$)|(&ETH_PHY_NUM_WITH_SUBPORT;$)))">
+<!ENTITY VLAN_NUM        "(409[0-3]|40[0-8][0-9]|[1-3][0-9]{3}|[1-9][0-9]{2}|[1-9][0-9]|[1-9])">
+<!ENTITY VLAN_PAIR       "((&VLAN_NUM;)(\-(&VLAN_NUM;))?)">
+<!ENTITY VLAN_ALL_INTF   "(^v([l]|(lan))?\s*&VLAN_NUM;$)">
+<!ENTITY PO_INTF_VALUE   "(12[0-8]|1[0-1][0-9]|[1-9][0-9]|[1-9])">
+<!ENTITY SONIC_IF_VALUE  "(12[0-4]|1[0-1][0-9]|[1-9][0-9]|[1-9])">
+<!ENTITY PO_PAIR         "((&PO_INTF_VALUE;)(\-(&PO_INTF_VALUE;))?)">
+<!ENTITY PO_ALL_INTF     "^p([o]|(ort-channel))?\s*&PO_INTF_VALUE;$">
+<!ENTITY SONIC_PHY_INTF  "(^E([t]|(th)|(thernet))?\s*&SONIC_IF_VALUE;$)">
+<!ENTITY FC_ALL_INTF     "(^f([c]|(ib)|(ibre-channel))?\s*((&ETH_PHY_NUM;$)|(&ETH_PHY_NUM_WITH_SUBPORT;$)))">
+<!ENTITY LOOPB_INTF_VAL  "([0-9]|[1-9][0-9]|[1-9][0-9]{2}|[1-9][0-9]{3}|1[0-5][0-9]{3}|16[0-2][0-9]{2}|163[0-7][0-9]|1638[0-3])">
+<!ENTITY LOOPB_OPTION    "(^l([o]|(oop)|(oopback))?\s*)">
+<!ENTITY LOOPB_INTF      "&LOOPB_OPTION;&LOOPB_INTF_VAL;$">
+<!ENTITY NULL_OPTION     "(^n([u]|(ull))?\s*)">
+<!ENTITY NULL_INTF       "&NULL_OPTION;(0)$">
+<!ENTITY MGMT_OPTION     "(^m([g]|(gmt))?\s*)">
+<!ENTITY MGMT_INTF       "&MGMT_OPTION;(1/1/1)$">
+<!ENTITY VLAN_RNG        "(&VLAN_NUM;-&VLAN_NUM;)">
+<!ENTITY ETH_RANGE       "&ETH_OPTION;&ETH_PAIR;(,&ETH_PAIR;)*">
+<!ENTITY PO_RANGE        "&PO_OPTION;&PO_PAIR;(,&PO_PAIR;)*">
+<!ENTITY VLAN_RANGE      "&VLAN_OPTION;&VLAN_PAIR;(,&VLAN_PAIR;)*">
+<!ENTITY TAG_VLAN_RANGE  "&VLAN_PAIR;(,&VLAN_PAIR;)*">
+<!ENTITY FC_RANGE       "&FC_OPTION;&ETH_PAIR;(,&ETH_PAIR;)*">
+<!ENTITY PORT_NUM        "(6553[0-5]|655[0-2][0-9]|65[0-4][0-9][0-9]|6[0-4][0-9]{3}|[1-5][0-9]{4}|[1-9][0-9]{0,3}|0)">
+<!ENTITY IPV4_OPTIONAL_PORT "((((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)))(:&PORT_NUM;)?">
+<!ENTITY IPV6_WITH_PORT     "\[((([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)))\]:(&PORT_NUM;)">
+<!ENTITY IPV4_ADDRESS    "(^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$)">
+<!ENTITY UINT_16_RANGE   "(^([0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$)">
+<!ENTITY DSCP_NUM        "(6[0-3]|[1-5][0-9]|[0-9])">
+<!ENTITY DSCP_RANGE      "^(&DSCP_NUM;)((,(&DSCP_NUM;)+)*(\-(&DSCP_NUM;)+)*)*$">
+<!ENTITY MST_INST_NUM    "(6[0-3]|[1-5][0-9]|[0-9])">
+<!ENTITY MST_INST_PAIR       "((&MST_INST_NUM;)(\-(&MST_INST_NUM;))?)">
+<!ENTITY MST_INST_NUM_RANGE  "&MST_INST_PAIR;(,&MST_INST_PAIR;)*">
+<!ENTITY PRECE_NUM       "([0-7])">
+<!ENTITY PRECE_RANGE     "^(&PRECE_NUM;)((,(&PRECE_NUM;)+)*(\-(&PRECE_NUM;)+)*)*$">
+<!ENTITY COS_NUM         "([0-7])">
+<!ENTITY TC_NUM          "([0-7])">
+<!ENTITY COS_RANGE       "^(&COS_NUM;)((,(&COS_NUM;)+)*(\-(&COS_NUM;)+)*)*$">
+<!ENTITY TC_RANGE        "^(&TC_NUM;)((,(&TC_NUM;)+)*(\-(&TC_NUM;)+)*)*$">
+<!ENTITY RANGE_STR       "(^range)?\s*$)">
+<!ENTITY TCP_PORT_RNG    "^(&PORT_NUM;)((,(&PORT_NUM;)+)*(\-(&PORT_NUM;)+)*)*$">
+<!ENTITY HOSTNAME_PATTERN    "(^([A-Z]|[a-z]|[0-9]))([A-Z]|[a-z]*|[0-9]|\-)*([^-]$)">
+<!ENTITY HOSTNAME_PATTERN_64    "^([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])(\.([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]{0,61}[a-zA-Z0-9]))*$">
+]>
+<CLISH_MODULE
+    xmlns="http://www.dellemc.com/force10/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xi="http://www.w3.org/2001/XInclude"
+    xsi:schemaLocation="http://www.dellemc.com/force10/XMLSchema
+    http://www.dellemc.com/force10/XMLSchema/clish.xsd"
+    >
+    <!--=======================================================-->
+    <PTYPE
+        name="STACK"
+        method="integer"
+        pattern="1..1"
+        help=""
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="VLAN_ID"
+        method="integer"
+        pattern="1..4093"
+        help=""
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="MIN_LINK"
+        method="integer"
+        pattern="1..32"
+        help=""
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="RATE_INT"
+        method="integer"
+        pattern="5..299"
+        help=""
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="UNIT_ID"
+        method="integer"
+        pattern="1..99"
+        help=""
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="SWITCH_ID"
+        pattern="([1-9]|10)/([1-9]|[1-9][0-9]|1[0-1][0-9]|12[0-8])"
+        help="Node/Unit"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="LAG_NUM"
+        method="integer"
+        pattern="1..128"
+        help=""
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="PHY_ETH_NUM"
+        pattern="([1-9]|10)/([1-9]|[1-9][0-9]|1[0-1][0-9]|12[0-8])/([1-9]|[1-9][0-9]|[1-4][0-9][0-9]|50[0-9]|51[0-2])"
+        help="Chassis/Slot/Port"
+        />
+     <!--=======================================================-->
+     <PTYPE
+        name="PORT_GROUP_ID"
+        pattern="([1-9]|10)/([1-9]|[1-9][0-9]|1[0-1][0-9]|12[0-8])/([1-9]|[1-9][0-9]|2[0-7])"
+        help="Chassis/Slot/PortGroup(1-28)"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="SYSTEM_ID"
+        pattern="(&SYSTEM_ID;)"
+        help="&lt;node-id | node-id/unit-id&gt;"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="ON_OFF"
+        method="select"
+        pattern="on(true) off(false)"
+        help="on|off"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="LOOPBACK_NUM"
+        method="integer"
+        pattern="0..16383"
+        help=""
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="NULL_INTF_NUM"
+        method="integer"
+        pattern="0..0"
+        help=""
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="MGMT_INTF_NUM"
+        pattern="(1/1/1)"
+        help="Chassis/Slot/Port"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="TRACK_ID"
+        method="integer"
+        pattern="1..500"
+        help=""
+        />
+    <!--=======================================================-->
+    <PTYPE name="AS_NUM_DOT"
+        pattern="(^([0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])[.]([0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$)|^([1-9][0-9]{0,8})$|^([1-3][0-9]{9})$|^(4[0-1][0-9]{8}$)|^(42[0-8][0-9]{7})$|^(429[0-3][0-9]{6})$|^(4294[0-8][0-9]{5})$|^(42949[0-5][0-9]{4})$|^(429496[0-6][0-9]{3})$|^(4294967[0-1][0-9]{2})$|^(42949672[0-8][0-9])$|^(429496729[0-5])$"
+        help="0.1..65535.65535 or 1..4294967295"/>
+    <!--=======================================================-->
+    <PTYPE
+        name="AA_NN"
+        pattern="(^([0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])[:]([0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$)"
+        help="0..65535:0..65535"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="ASN2_NN"
+        pattern="(^([0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])[:](([1-9][0-9]{0,8})|([1-3][0-9]{9})|(4[0-1][0-9]{8}$)|(42[0-8][0-9]{7})|(429[0-3][0-9]{6})|(4294[0-8][0-9]{5})|(42949[0-5][0-9]{4})|(429496[0-6][0-9]{3})|(4294967[0-1][0-9]{2})|(42949672[0-8][0-9])|(429496729[0-5]{1}))$)"
+        help="1..65535:1..4294967295"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="ASN4_NN"
+        pattern="((^(([1-9][0-9]{0,8})|([1-3][0-9]{9})|(4[0-1][0-9]{8})|(42[0-8][0-9]{7})|(429[0-3][0-9]{6})|(4294[0-8][0-9]{5})|(42949[0-5][0-9]{4})|(429496[0-6][0-9]{3})|(4294967[0-1][0-9]{2})|(42949672[0-8][0-9])|(429496729[0-5]))[:]([0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$)|(^([0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])[.]([0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])[:]([0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$))"
+        help="1..4294967295:1..65535 or 1..65535.1..65535:1..65535"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="IPADDR_NN"
+        pattern="(^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])[:]([0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$)"
+        help="A.B.C.D:[1..65535]"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="INT_OR_IP_ADDR"
+        pattern="(&IPV4_ADDRESS;|&UINT_16_RANGE;)"
+        help="A.B.C.D or [0..65535]"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="IP_ADDR"
+        pattern="(&IPV4_ADDRESS;)"
+        help="A.B.C.D"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="IPV4_ADDR_ABC"
+        pattern="(([1-9]|[1-9][0-9]|1[0-9][0-9]|2[0-2][0-3])(\.([2][0-5][0-5]|[1][0-9][0-9]|[1-9][0-9]|[0-9])){3})"
+        help="A.B.C.D"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="IPV4V6_ADDR"
+        pattern="((((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))|(([^:]+:){6}(([^:]+:[^:]+)|(.*\..*)))|((([^:]+:)*[^:]+)?::(([^:]+:)*[^:]+)?)(%.+)?)"
+        help="A.B.C.D/A::B"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="IPV6_ADDR"
+        pattern="(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:))$"
+        help="A::B"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="IPV6_ADDR_MASK"
+        pattern="(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:))(\/([0-9]|[1-9][0-9]|1[0-1][0-9]|12[0-8]))$"
+        help="A::B/mask"
+        preprocess="tolower"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="IPV4_OR_IPV6_ADDR"
+        pattern="(^(((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))$)|(^(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:))$)"
+        help="A.B.C.D or A:B:C:D:E:F:G:H"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="HOSTNAME_OR_IPADDR"
+        pattern="(^([a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.?)+[a-zA-Z0-9]{2,6}$)|(^(((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))$)|(^(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:))$)"
+        help="Hostname or IPv4/v6 address"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="HOSTNAME_OR_IPV4_ADDR"
+        pattern="(^([a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.?)+[a-zA-Z0-9]{2,6}$)|(^(((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))$)"
+        help="Hostname or IPv4 address"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="HOSTNAME_STR"
+        pattern="(&HOSTNAME_PATTERN;)"
+        help="Hostname string"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="HOSTNAME_STR_64"
+        pattern="(&HOSTNAME_PATTERN_64;)"
+        help="Hostname string(Max: 64 characters)"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="EMAILID"
+        pattern="^([A-Za-z0-9][A-Za-z0-9._%+-]{1,64}@([A-Za-z0-9-]{1,63}\.){1,8}[A-Za-z]{2,63})$"
+        help="Email address"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="UINT16"
+        method="integer"
+        pattern="0..65535"
+        help=""
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="UINT"
+        pattern="[0-9]+"
+        help="Unsigned integer"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="STRING"
+        pattern="[^|]+"
+        help="String"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="PASSWORD_STR"
+        pattern="[^,]+"
+        help="String"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="STRING_8"
+        pattern="(^([a-zA-Z]){1,8})$"
+        help="String"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="STRING_20"
+        pattern="(^([a-zA-Z0-9_-]){1,20})$"
+        help="String"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="STRING_32"
+        pattern="(^([a-zA-Z0-9_-]){0,32})$"
+        help="String(Max: 32 characters)"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="STRING_55"
+        pattern="(^([a-zA-Z0-9 _-]){0,55})$"
+        help="String"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="STRING_WITH_PIPE"
+        pattern=".+"
+        help="String"
+        />
+    <!--=======================================================-->
+     <PTYPE
+        name="URL"
+        pattern="[^|]+"
+        help="Enter the string URL in one of the following formats:"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="SUBCOMMAND"
+        pattern="[^\]+"
+        help="String"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="BOOL"
+        method="select"
+        pattern="true(1) false(0)"
+        help="Boolean choice"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="IFACE_NUM"
+        pattern="(&ETH_PHY_NUM;|&ETH_PHY_NUM_WITH_SUBPORT;)"
+        help="&lt;chassis/slot/port[:subport]&gt;"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="VLAN_IFACE_NUM"
+        pattern="&VLAN_NUM;"
+        help="1-4093"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="STPTYPE"
+        method="select"
+        pattern="rstp(rstp) mst(mst) rapid-pvst(rapid-pvst)"
+        help="STP protocol choice"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="RSTP_FORCE_VERSION"
+        method="select"
+        pattern="stp(stp)"
+        help="Force version choice for RSTP Protocol"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="RPVST_FORCE_VERSION"
+        method="select"
+        pattern="stp(stp) rstp(rstp)"
+        ext_help= "(choose STP as backward compatibility protocol) (choose RSTP as backward compatibility protocol)"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="MSTP_FORCE_VERSION"
+        method="select"
+        pattern="stp(stp) rstp(rstp)"
+        help="Force version choice for MSTP protocol"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="PROTO"
+        method="select"
+        pattern="ip(ip) ipencap(ipencap) icmp(icmp) igmp(igmp) tcp(tcp) udp(udp)"
+        help="Protocol choice"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="DIRECTION"
+        method="select"
+        pattern="both(both) rx(rx) tx(tx)"
+        help="Direction"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="SPANMODE"
+        method="select"
+        pattern="local(local) rspan-source(rspan-source)"
+        help="Span type"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="SERVICE"
+        pattern="((ftp)|(telnet)|(sntp)|(smtp)|(http)|([0-9]+))"
+        help="Port"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="INTF_SPEED"
+        method="select"
+        pattern="10(10MBPS) 100(100MBPS) 1000(1GIGE) 10000(10GIGE) 25000(25GIGE) 40000(40GIGE) 100000(100GIGE) auto(AUTO)"
+        help="Port speed"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="INTF_DUPLEX"
+        method="select"
+        pattern="full(full) half(half) auto(auto)"
+        help="Port duplex"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="BREAKOUT_TYPE"
+        method="select"
+        pattern="10g-4x(BREAKOUT_4x1)"
+        help="Breakout type"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="IP_ADDR_MASK"
+        pattern="(((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))(/(1[0-9]|2[0-9]|3[0-2]|[0-9]))"
+        help="A.B.C.D/mask"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="IP_ADDR_DHCP_SUBNET"
+        pattern="(((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))(/(1[7-9]|2[0-9]|3[0-0]))"
+        help="A.B.C.D/mask(17-30)"
+        />
+	<!--=======================================================-->
+	<PTYPE
+		name="IP_ADDR_DHCP_SUBNET_IPV4IPV6"
+		pattern="(((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))(/(1[7-9]|2[0-9]|3[0-0]))|(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:))(/([0-9]|[1-9][0-9]|1[0-1][0-9]|12[0-8]))$"
+		help="A.B.C.D/mask(17-30)or A::B/mask"
+		/>
+	<!--=======================================================-->
+	<PTYPE
+		name="IPV4_IPV6_NETWORK"
+		pattern="(((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))(\/(1[0-9]|2[0-9]|3[0-2]|[0-9]))|(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:))(\/([0-9]|[1-9][0-9]|1[0-1][0-9]|12[0-8]))$"
+		help="A.B.C.D/mask or A::B/mask"
+		/>
+	<!--=======================================================-->
+	<PTYPE
+        name="IP_ADDR_ANY"
+        pattern="(((((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))(/(1[0-9]|2[0-9]|3[0-2]|[0-9])))|any)"
+        help="A.B.C.D/mask or any"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="PORT_MASK_ANY"
+        pattern="^(([0-9]+(/0x[0-9a-f]+)?)|(any))$"
+        help="Port[/mask]"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="SEQ"
+        pattern="^[0-9]*[1-9][0-9]*"
+        help="Entry number"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="VLAN_RANGE"
+        pattern="((&VLAN_NUM;|&VLAN_RNG;)(,(&VLAN_NUM;|&VLAN_RNG;))*)$"
+        help="[1 - 4093]-[1 - 4093]"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="DOTTED_QUAD"
+        pattern="(([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])\.){3}'
+                + '([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])"
+        help="A.B.C.D"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="MAC_ADDR"
+        pattern="[0-9a-fA-F]{2}(:[0-9a-fA-F]{2}){5}"
+        help="nn:nn:nn:nn:nn:nn"
+        preprocess="tolower"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="NETWORK_TYPE"
+        method="select"
+        pattern="broadcast(broadcast) point-to-point(point-to-point)"
+        ext_help="(Specify OSPF broadcast multi-access network) (Specify OSPF point-to-point network)"
+        help="Type of network"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="BURST_SZ"
+        method="integer"
+        pattern="16..200000"
+        help=""
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="WEIGHT_CONST"
+        method="integer"
+        pattern="1..15"
+        help=""
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="QOS_GROUP_ID"
+        method="integer"
+        pattern="0..11"
+        help=""
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="GROUP_ID"
+        method="integer"
+        pattern="0..7"
+        help=""
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="DSCP_ID"
+        method="regexp_select"
+        ext_pattern="(0-63)"
+        pattern="&DSCP_RANGE;"
+        help=""
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="PRECE_ID"
+        method="regexp_select"
+        ext_pattern="(0-7)"
+        pattern="&PRECE_RANGE;"
+        help=""
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="COS_ID"
+        method="regexp_select"
+        ext_pattern="(0-7)"
+        pattern="&COS_RANGE;"
+        help=""
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="TC_GROUP_ID"
+        method="regexp_select"
+        ext_pattern="(0-7)"
+        pattern="&TC_RANGE;"
+        help=""
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="QOS_PRIO_LVL"
+        method="integer"
+        pattern="1..3"
+        help=""
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="PERCENT"
+        method="integer"
+        pattern="0..100"
+        help=""
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="BW_PERCENT"
+        method="integer"
+        pattern="1..100"
+        help=""
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="QOS_RATE_ADJ"
+        method="integer"
+        pattern="1..31"
+        help=""
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="VRF_ID"
+        method="integer"
+        pattern="1..63"
+        help=""
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="QoS_ALL_TYPES"
+        method="select"
+        pattern="control-plane(control-plane) network-qos(network-qos) qos(qos) queuing(queuing) application(application)"
+        ext_help="(Control-plane type map) (Network-qos type map) (Qos type map) (Queuing type map) (Application type map)"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="QoS_NQOS_QUEUE_TYPES"
+        method="select"
+        pattern="qos(qos) queuing(queuing)"
+        ext_help="(Qos type map) (Queuing type map)"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="QoS_QUEUE_TYPES"
+        method="select"
+        pattern="qos(qos) queuing(queuing)"
+        ext_help="(Qos type map) (Queuing type map)"
+        />
+    <!--=======================================================-->
+     <PTYPE
+        name="QoS_INPUT_TYPES"
+        method="select"
+        pattern="qos(qos) network-qos(network-qos)"
+        ext_help="(Qos type policy)(Network-qos type policy)"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="QoS_OUTPUT_TYPES"
+        method="select"
+        pattern="queuing(queuing)"
+        ext_help="(Queueing type policy)"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="QoS_PROTO_OPTIONS"
+        method="select"
+        pattern="arp(arp) bridging(bridging) cdp(cdp) dhcp(dhcp) isis(isis)"
+        ext_help="(Arp protocol) (Bridging) (Cdp protocol) (Isis protocol)"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="QoS_MATCH_OPTIONS"
+        method="select"
+        pattern="match-all(match-all) match-any(match-any)"
+        ext_help="(Match all) (Match any)"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="QoS_MATCH_FIRST"
+        method="select"
+        pattern="match-first(match-first)"
+        ext_help="(Match)"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="QoS_IO_MODE_OPTIONS"
+        method="select"
+        pattern="input(input) output(output)"
+        ext_help="(Input Mode) (Output Mode)"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="QoS_ON_OFF"
+        method="select"
+        pattern="off(off) on(on)"
+        ext_help=""
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="QoS_DSCP_PRECEDENCE"
+        method="select"
+        pattern="dscp(dscp) precedence(precedence)"
+        ext_help="(Dscp) (Precedence)"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="QoS_PKT_RATE"
+        method="integer"
+        pattern="1..33554368"
+        help=""
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="LOOPBACK_INTERFACE"
+        method="regexp_select"
+        ext_pattern="loopback(0-16383)"
+        pattern="&LOOPB_INTF;"
+        help=""
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="MGMT_INTERFACE"
+        method="regexp_select"
+        ext_pattern="mgmt(1/1/1)"
+        pattern="&MGMT_INTF;"
+        help=""
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="NULL_INTERFACE"
+        method="regexp_select"
+        ext_pattern="null(0)"
+        pattern="&NULL_INTF;"
+        help=""
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="PHY_BREAKOUT"
+        pattern="&ETH_PHY_NUM;"
+        help="&lt;chassis/slot/port&gt;"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="PHY_INTERFACE"
+        method="regexp_select"
+        ext_pattern="ethernet(chassis/slot/port[:subport])"
+        pattern="&ETH_ALL_INTF;"
+        help=""
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="SONIC_PHY_INTERFACE"
+        method="regexp_select"
+        ext_pattern="Ethernet(4-124)"
+        pattern="&SONIC_PHY_INTF;"
+        help=""
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="VLAN_INTERFACE"
+        method="regexp_select"
+        ext_pattern="vlan(1-4093)"
+        pattern="&VLAN_ALL_INTF;"
+        help=""
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="PO_INTERFACE"
+        method="regexp_select"
+        ext_pattern="port-channel(1-128)"
+        pattern="&PO_ALL_INTF;"
+        help=""
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="PHY_PO_INTERFACE"
+        method="regexp_select"
+        ext_pattern="ethernet(chassis/slot/port[:subport]) port-channel(1-128)"
+        pattern="&ETH_ALL_INTF;|&PO_ALL_INTF;"
+        help="Interface Type - Ranges"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="LOGICAL_INTERFACE"
+        method="regexp_select"
+        ext_pattern="port-channel(1-128) vlan(1-4093)"
+        pattern="&VLAN_ALL_INTF;|&PO_ALL_INTF;"
+        help="Interface Type - Ranges"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="ALL_INTERFACE"
+        method="regexp_select"
+        ext_pattern="ethernet(chassis/slot/port[:subport]) loopback(0-16383) mgmt(1/1/1) null(0) port-channel(1-128) vlan(1-4093)"
+        ext_help="(Ethernet interface type) (Loopback interface type) (Management interface type) (Null interface type) (Port-channel interface type) (Vlan interface type)"
+        pattern="&ETH_ALL_INTF;|&VLAN_ALL_INTF;|&PO_ALL_INTF;|&LOOPB_INTF;|&NULL_INTF;|&MGMT_INTF;"
+        help="Interface Type - Ranges"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="PHY_VL_PO_INTERFACE"
+        method="regexp_select"
+        ext_pattern="ethernet(chassis/slot/port[:subport]) port-channel(1-128) vlan(1-4093) "
+        ext_help="(Ethernet interface type) (Port-channel interface type) (Vlan interface type)"
+        pattern="&ETH_ALL_INTF;|&VLAN_ALL_INTF;|&PO_ALL_INTF;"
+        help="Interface Type - Ranges"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="PHY_VL_PO_LOOPB_INTERFACE"
+        method="regexp_select"
+        ext_pattern="ethernet(chassis/slot/port[:subport]) loopback(0-16383) port-channel(1-128) vlan(1-4093)"
+        ext_help="(Ethernet interface type) (Loopback interface type) (Port-channel interface type) (Vlan interface type)"
+        pattern="&ETH_ALL_INTF;|&VLAN_ALL_INTF;|&PO_ALL_INTF;|&LOOPB_INTF;"
+        help="Interface Type - Ranges"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="PORT_CHANNEL_RANGE"
+        pattern="[1..128]"
+        help=""
+        />
+    <!--=======================================================-->
+     <PTYPE
+        name="LOG_SEVERITY_LEVEL"
+        method="select"
+        pattern="log-emerg(log-emerg) log-alert(log-alert) log-crit(log-crit) log-err(log-err) log-warning(log-warning) log-notice(log-notice) log-info(log-info) log-debug(log-debug)"
+        help=""
+        />
+     <!--======================================================-->
+     <PTYPE
+        name="ETHER_TYPE"
+        pattern="([6-9a-fA-F][0-9a-fA-F][0-9a-fA-f])|([1-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F])"
+        help="600 - ffff"
+        />
+    <!--=======================================================-->
+    <PTYPE name="ALL_INTERFACE_RANGE"
+           method="regexp_select"
+           ext_pattern="ethernet(chassis/slot/port[:subport]) port-channel(1-128) vlan(1-4093)"
+           pattern="&PO_RANGE;|&VLAN_RANGE;|&ETH_RANGE;"
+           help="Interface Range"/>
+    <!--=======================================================-->
+    <PTYPE name="ETHER_INTERFACE_RANGE"
+           method="regexp_select"
+           ext_pattern="ethernet(chassis/slot/port[:subport]-chassis/slot/port[:subport])"
+           pattern="&ETH_RANGE;"
+           help="Interface Ethernet Range"/>
+    <!--=======================================================-->
+    <PTYPE name="FC_INTERFACE_RANGE"
+           method="regexp_select"
+           ext_pattern="fibre-channel(chassis/slot/port[:subport]-chassis/slot/port[:subport])"
+           pattern="&FC_RANGE;"
+           help="Interface Fibre-channel Range"/>
+    <!--=======================================================-->
+    <PTYPE name="VLAN_INTERFACE_RANGE"
+           method="regexp_select"
+           ext_pattern="vlan(1-4093)"
+           pattern="&VLAN_RANGE;"
+           help="Interface Vlan Range"/>
+    <!--=======================================================-->
+    <PTYPE name="PO_INTERFACE_RANGE"
+           method="regexp_select"
+           ext_pattern="port-channel(1-128)"
+           pattern="&PO_RANGE;"
+           help="Interface Port-channel Range"/>
+    <!--=======================================================-->
+     <PTYPE
+        name="QOS_COLOR"
+        method="select"
+        pattern="green(green) yellow(yellow)"
+        help=""
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="STRING_1_140"
+        pattern="(([^,=|\&quot;&amp;])|(\w)){1,140}"
+        help="String"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="STRING_1_90"
+        pattern="(([^,=|\&quot;&amp;])|(\w)){1,90}"
+        help="String"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="RELOAD_UNIT_NAME"
+        method="select"
+        pattern="unit(unit) line-card(line-card) controller-card(controller-card)"
+        help=""
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="SA_ACTIVITY_TYPE"
+        method="select"
+        pattern="coredump-transfer(coredump-transfer) event-notification(event-notification) full-transfer(full-transfer)"
+        help=""
+        ext_help="(Transfer of coredump) (Notify crtical events) (Transfer logs and tech-support info)"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="SA_SCHED_ACTIVITY_TYPE"
+        method="select"
+        pattern="full-transfer(full-transfer)"
+        help=""
+        ext_help="(Transfer logs and tech-support info)"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="SA_URL"
+        pattern="^https?://((([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9_-]{0,61}[a-zA-Z0-9])(\.([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9_.-]{0,61}[a-zA-Z0-9]))(:&PORT_NUM;)?)|(&IPV4_OPTIONAL_PORT;)|(&IPV6_WITH_PORT;)|((([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:))))(/.*)?$"
+        help="http[s]://DomainOrIP[:port][/resource].IPV6 should be enclosed in [] when specifying port number"/>
+    <!--=======================================================-->
+    <PTYPE
+        name="MINUTES_TYPE"
+        method="integer"
+        pattern="0..59"
+        help="Minutes range"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="HOURS_TYPE"
+        method="integer"
+        pattern="0..23"
+        help="Hours range"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="DAYS_TYPE"
+        method="integer"
+        pattern="1..31"
+        help="Days range"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="MONTHS_TYPE"
+        method="integer"
+        pattern="1..12"
+        help="Months range"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="DAYS_OF_WEEK_TYPE"
+        method="integer"
+        pattern="0..6"
+        help="number of weekday (0-6 corresponds to mon,tue,wed,thu,fri,sat,sun)"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="UTC_HR_OFFSET"
+        method="integer"
+        pattern="-23..23"
+        help=""
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="UTC_MIN_OFFSET"
+        method="integer"
+        pattern="0..59"
+        help=""
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="SYSTEM_BOOT_OPTION"
+        method="select"
+        pattern="active(active) standby(standby)"
+        help="System boot options"
+        />
+    <!--=======================================================-->
+    <PTYPE name="TAGGED_VLAN_INTERFACE_RANGE"
+           method="regexp_select"
+           ext_pattern="(1-4093)"
+           pattern="&TAG_VLAN_RANGE;"
+           help="Vlan Range"/>
+    <!--=======================================================-->
+    <PTYPE name="MST_INSTANCE_RANGE"
+           method="regexp_select"
+           ext_pattern="(0-63)"
+           pattern="&MST_INST_NUM_RANGE;"
+           help="mst instance Range"/>
+    <!--=======================================================-->
+     <PTYPE
+        name="ALARM_SEV_TYPE"
+        method="select"
+        pattern="critical(critical) major(major) minor(minor) warning(warning)"
+        help=""
+        />
+    <!--=======================================================-->
+    <PTYPE name="NO_TAGGED_VLAN_INTERFACE_RANGE"
+           method="regexp_select"
+           ext_pattern="vlan(1-4093)"
+           pattern="vlan"
+           help="Vlan Range"/>
+    <!--=======================================================-->
+    <PTYPE name="METRIC_VALUE_TYPE"
+           pattern="[+-]?(([1-9][0-9]{0,8})|([1-3][0-9]{9})|(4[0-1][0-9]{8})|(42[0-8][0-9]{7})|(429[0-3][0-9]{6})|(4294[0-8][0-9]{5})|(42949[0-5][0-9]{4})|(429496[0-6][0-9]{3})|(4294967[0-1][0-9]{2})|(42949672[0-8][0-9])|(429496729[0-5]))"
+           help="[+/-]&lt;1-4294967295&gt;"/>
+    <!--=======================================================-->
+     <PTYPE
+        name="ENCRYPTION_TYPE"
+        method="select"
+        pattern="md5(MD5) sha-256(SHA256) sha-512(SHA512)"
+        help=""
+        />
+    <!--=======================================================-->
+     <PTYPE
+        name="ROLE_TYPE"
+        method="select"
+        pattern="sysadmin(sysadmin) netoperator(netoperator) secadmin(secadmin)
+        netadmin(netadmin)"
+         help=""
+         />
+    <!--=======================================================-->
+     <PTYPE
+        name="ACCESS_TYPE"
+        method="select"
+        pattern="ro(read-only)"
+        ext_help="(Read-only access for this community)"
+        help=""
+        />
+    <!--=======================================================-->
+     <PTYPE
+        name="VLT_ENCAP_TYPE"
+        method="select"
+        pattern="none(none)"
+        help=""
+        ext_help="(No encapsulation)"
+        />
+    <!--=======================================================-->
+	<PTYPE
+		name="METHOD_TYPE"
+		method="select"
+		pattern="ethernet(ethernet) udp(udp)"
+		ext_help="(ethernet) (udp)"
+		/>
+	<!--=======================================================-->
+	<PTYPE
+		name="ENCRYPT_TYPE"
+		method="select"
+		pattern="plain(plain) md5(md5) sha(sha)"
+		ext_help="(plain) (md5) (sha)"
+		/>
+	<!--=======================================================-->
+	<PTYPE
+		name="KEY_TYPE"
+		method="select"
+		pattern="mac(mac-address) ipv4(ipv4-address) ipv6(ipv6-address) user(user-defined)"
+		ext_help="(mac-address) (ipv4-address) (ipv6-address) (user-defined)"
+		/>
+  <!--=======================================================-->
+  <PTYPE
+    name="VRRP_VERSION_MODE"
+    method="select"
+    pattern="2(2) both(both) 3(3)"
+    ext_help="(Support VRRP version 2) (Support both VRRP version 2 and 3) (Support VRRP version 3)"
+    help="VRRP version type"
+    />
+  <!--=======================================================-->
+  <PTYPE
+    name="VRRP_AUTH_MODE"
+    method="select"
+    pattern="no-authentication(no-authentication) simple-text-password (simple-text-password)"
+    ext_help="(No authentication support ) (Simple text authentication support)"
+    help="VRRP authentication type"
+    />
+  <!--=======================================================-->
+	<PTYPE
+		name="HEX_TYPE"
+		method="hexadecimal"
+        pattern="0[xX][0-9a-fA-F]+"
+        help="Hexadecimal Type"
+		/>
+  <!--=======================================================-->
+  <PTYPE
+    help="aaa authentication method types"
+    pattern="local(local) radius(radius) ldap(ldap)"
+    method="select"
+    name="METH_TYPE"
+    />
+  <!--=======================================================-->
+  <PTYPE
+      name="QoS_STRING"
+      pattern="[^|]+"
+      help="String"
+      />
+  <!--=======================================================-->
+  <PTYPE
+      name="QoS_THRESHOLD"
+      method="integer"
+      pattern="1..12480"
+      help=""
+      />
+  <!--=======================================================-->
+  <PTYPE
+      name="QoS_CIR_PIR"
+      method="integer"
+      pattern="0..40000000"
+      help=""
+      />
+  <!--=======================================================-->
+  <PTYPE
+      name="QoS_BURST"
+      method="integer"
+      pattern="0..10000"
+      help=""
+      />
+  <!--=======================================================-->
+  <PTYPE
+      name="QoS_COMMIT_RATE_MBPS"
+      method="integer"
+      pattern="0..40000"
+      help=""
+      />
+  <!--=======================================================-->
+  <PTYPE
+      name="QoS_COMMIT_RATE_PPS"
+      method="integer"
+      pattern="1..268000000"
+      help=""
+      />
+  <!--=======================================================-->
+  <PTYPE
+      name="QoS_COMMIT_RATE_PKTS"
+      method="integer"
+      pattern="1..1073000"
+      help=""
+      />
+  <!--=======================================================-->
+  <PTYPE name="FTP_TYPE"
+      pattern="ftp:\/\/[^|]+"
+      help="ftp:"
+      />
+  <!--=======================================================-->
+  <PTYPE name="SCP_TYPE"
+      pattern="scp:\/\/[^|]+"
+      help="scp:"
+      />
+  <!--=======================================================-->
+  <PTYPE name="USB_TYPE"
+      pattern="usb:\/\/[^|]+"
+      help="usb:"
+      />
+  <!--=======================================================-->
+  <PTYPE name="HOME_TYPE"
+      pattern="home:\/\/[^|]+"
+      help="home:"
+      />
+  <!--=======================================================-->
+  <PTYPE name="TFTP_TYPE"
+      pattern="tftp:\/\/[^|]+"
+      help="tftp:"
+      />
+  <!--=======================================================-->
+  <PTYPE name="SFTP_TYPE"
+      pattern="sftp:\/\/[^|]+"
+      help="sftp:"
+      />
+  <!--=======================================================-->
+  <PTYPE name="IMAGE_TYPE"
+      pattern="image:\/\/[^|]+"
+      help="image:"
+      />
+  <!--=======================================================-->
+  <PTYPE name="CORE_TYPE"
+      pattern="coredump:\/\/[^|]+"
+      help="coredump:"
+      />
+  <!--=======================================================-->
+  <PTYPE name="CONFIG_TYPE"
+      pattern="config:\/\/[^|]+"
+      help="config:"
+      />
+  <!--=======================================================-->
+  <PTYPE name="SUPPORT_TYPE"
+      pattern="supportbundle:\/\/[^|]+"
+      help="supportbundle:"
+      />
+ <!--=======================================================-->
+   <PTYPE name="HTTP_TYPE"
+      pattern="https?:\/\/[^|]+"
+      help="http[s]:"
+      />
+ <!--=======================================================-->
+  <PTYPE
+      name="RANGE_TYPE"
+      method="regexp_select"
+      ext_pattern="range()"
+      pattern="range"
+      help=""
+      />
+ <!--=======================================================-->
+  <PTYPE name="LOCAL_FS_TYPE"
+      pattern="localfs:\/\/[^|]+"
+      help="localfs:"
+      />
+ <!--=======================================================-->
+  <PTYPE
+      name="TCP_PORT"
+      pattern="&TCP_PORT_RNG;"
+      help="[0 - 65535]"
+      />
+ <!--=======================================================-->
+ <PTYPE
+     name="ISID_VALUE"
+     pattern="[0-9a-fA-F]{12}"
+     help="ISID"
+ />
+ <!--=======================================================-->
+ <PTYPE
+     name="FC_INTERFACE"
+     method="regexp_select"
+     ext_pattern="fibre-channel(chassis/slot/port[:subport])"
+     pattern="&FC_ALL_INTF;"
+     help=""
+ />
+ <!--=======================================================-->
+ <PTYPE
+     name="RANGE_PID"
+     method="integer"
+     pattern="1..2147483647"
+     help=""
+ />
+ <!--=======================================================-->
+ <PTYPE
+     name="RANGE_SYSTEM_IDENTIFY"
+     method="integer"
+     pattern="1..9"
+     help=""
+ />
+ <!--=======================================================-->
+ <PTYPE
+     name="OUI"
+     method="integer"
+     pattern="0..16777215"
+     help=""
+     />
+ <!--=======================================================-->
+  <PTYPE
+    name="SSH_CIPHER_SELECT"
+    method="select"
+    pattern="3des-cbc(3des-cbc)
+             aes128-cbc(aes128-cbc)
+             aes192-cbc(aes192-cbc)
+             aes256-cbc(aes256-cbc)
+             aes128-ctr(aes128-ctr)
+             aes192-ctr(aes192-ctr)
+             aes256-ctr(aes256-ctr)
+             aes128-gcm@openssh.com(aes128-gcm@openssh.com)
+             aes256-gcm@openssh.com(aes256-gcm@openssh.com)
+             blowfish-cbc(blowfish-cbc)
+             cast128-cbc(cast128-cbc)
+             chacha20-poly1305@openssh.com(chacha20-poly1305@openssh.com)"
+    ext_help="(Add 3des-cbc to the cipher list)
+              (Add aes128-cbc to the cipher list)
+              (Add aes192-cbc to the cipher list)
+              (Add aes256-cbc to the cipher list)
+              (Add aes128-ctr to the cipher list)
+              (Add aes192-ctr to the cipher list)
+              (Add aes256-ctr to the cipher list)
+              (Add aes128-gcm to the cipher list)
+              (Add aes256-gcm to the cipher list)
+              (Add blowfish-cbc to the cipher list)
+              (Add cast128-cbc to the cipher list)
+              (Add chacha20-poly1305 to the cipher list)"
+    help="SSH server cipher algorithms"
+    />
+ <!--=======================================================-->
+  <PTYPE
+    name="SSH_KEX_SELECT"
+    method="select"
+    pattern="curve25519-sha256(curve25519-sha256)
+            diffie-hellman-group1-sha1(diffie-hellman-group1-sha1)
+            diffie-hellman-group14-sha1(diffie-hellman-group14-sha1)
+            diffie-hellman-group-exchange-sha1(diffie-hellman-group-exchange-sha1)
+            diffie-hellman-group-exchange-sha256(diffie-hellman-group-exchange-sha256)
+            ecdh-sha2-nistp256(ecdh-sha2-nistp256)
+            ecdh-sha2-nistp384(ecdh-sha2-nistp384)
+            ecdh-sha2-nistp521(ecdh-sha2-nistp521)"
+    ext_help="(Add curve25519-sha256 to the kex list)
+              (Add diffie-hellman-group1-sha1 to the kex list)
+              (Add diffie-hellman-group14-sha1 to the kex list)
+              (Add diffie-hellman-group-exchange-sha1 to the kex list)
+              (Add diffie-hellman-group-exchange-sha256 to the kex list)
+              (Add ecdh-sha2-nistp256 to the kex list)
+              (Add ecdh-sha2-nistp384 to the kex list)
+              (Add ecdh-sha2-nistp521 to the kex list)"
+    help="SSH server key exchange algorithms"
+    />
+ <!--=======================================================-->
+  <PTYPE
+    name="SSH_MAC_SELECT"
+    method="select"
+    pattern="hmac-md5(hmac-md5)
+             hmac-md5-96(hmac-md5-96)
+             hmac-ripemd160(hmac-ripemd160)
+             hmac-sha1(hmac-sha1)
+             hmac-sha1-96(hmac-sha1-96)
+             hmac-sha2-256(hmac-sha2-256)
+             hmac-sha2-512(hmac-sha2-512)
+             umac-64@openssh.com(umac-64@openssh.com)
+             umac-128@openssh.com(umac-128@openssh.com)
+             hmac-md5-etm@openssh.com(hmac-md5-etm@openssh.com)
+             hmac-md5-96-etm@openssh.com(hmac-md5-96-etm@openssh.com)
+             hmac-ripemd160-etm@openssh.com(hmac-ripemd160-etm@openssh.com)
+             hmac-sha1-etm@openssh.com(hmac-sha1-etm@openssh.com)
+             hmac-sha1-96-etm@openssh.com(hmac-sha1-96-etm@openssh.com)
+             hmac-sha2-256-etm@openssh.com(hmac-sha2-256-etm@openssh.com)
+             hmac-sha2-512-etm@openssh.com(hmac-sha2-512-etm@openssh.com)
+             umac-64-etm@openssh.com(umac-64-etm@openssh.com)
+             umac-128-etm@openssh.com(umac-128-etm@openssh.com)"
+    ext_help="(Add hmac-md5 to the MAC list)
+              (Add hmac-md5-96 to the MAC list)
+              (Add hmac-ripemd160 to the MAC list)
+              (Add hmac-sha1 to the MAC list)
+              (Add hmac-sha1-96 to the MAC list)
+              (Add hmac-sha2-256 to the MAC list)
+              (Add hmac-sha2-512 to the MAC list)
+              (Add umac-64 to the MAC list)
+              (Add umac-128 to the MAC list)
+              (Add hmac-md5-etm Encrypt-Then-MAC to the MAC list)
+              (Add hmac-md5-96-etm to the MAC list)
+              (Add hmac-ripemd160-etm to the MAC list)
+              (Add hmac-sha1-etm to the MAC list)
+              (Add hmac-sha1-96-etm to the MAC list)
+              (Add hmac-sha2-256-etm to the MAC list)
+              (Add hmac-sha2-512-etm to the MAC list)
+              (Add umac-64-etm to the MAC list)
+              (Add umac-128-etm to the MAC list)"
+    help="SSH server MAC algorithms"
+    />
+ <!--=======================================================-->
+</CLISH_MODULE>

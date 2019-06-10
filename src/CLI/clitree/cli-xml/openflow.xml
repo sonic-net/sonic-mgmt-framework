@@ -1,0 +1,857 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE CLISH_MODULE [
+<!ENTITY OPENFLOW_MODULE_NS                                    "http://www.dellemc.com/networking/os10/dell-openflow">
+
+<!ENTITY OPENFLOW                                              "/of-config">
+<!ENTITY OPENFLOW_LOGICAL_SWITCH                               "&OPENFLOW;/logical-switch">
+<!ENTITY OPENFLOW_LOGICAL_SWITCH_NAME                          "&OPENFLOW_LOGICAL_SWITCH;/name">
+<!ENTITY OPENFLOW_LOGICAL_SWITCH_CONNECT_CONTROLLERS           "&OPENFLOW_LOGICAL_SWITCH;/connect-controllers">
+<!ENTITY OPENFLOW_LOGICAL_SWITCH_INTF_BIND_MODE                "&OPENFLOW_LOGICAL_SWITCH;/intf-bind-mode">
+<!ENTITY OPENFLOW_LOGICAL_SWITCH_VERSION                       "&OPENFLOW_LOGICAL_SWITCH;/version">
+<!ENTITY OPENFLOW_LOGICAL_SWITCH_DPID_MAC_ADDRESS              "&OPENFLOW_LOGICAL_SWITCH;/dpid-mac-address">
+<!ENTITY OPENFLOW_LOGICAL_SWITCH_MAX_BACKOFF                   "&OPENFLOW_LOGICAL_SWITCH;/max-backoff">
+<!ENTITY OPENFLOW_LOGICAL_SWITCH_PROBE_INTERVAL                "&OPENFLOW_LOGICAL_SWITCH;/probe-interval">
+<!ENTITY OPENFLOW_LOGICAL_SWITCH_RECOVERY_MODE                 "&OPENFLOW_LOGICAL_SWITCH;/recovery-mode">
+<!ENTITY OPENFLOW_LOGICAL_SWITCH_FLOW_MISS_ACTION              "&OPENFLOW_LOGICAL_SWITCH;/flow-miss-action">
+<!ENTITY OPENFLOW_LOGICAL_SWITCH_PACKET_IN_MAX_RATE            "&OPENFLOW_LOGICAL_SWITCH;/packet-in-max-rate">
+<!ENTITY OPENFLOW_LOGICAL_SWITCH_PACKET_IN_MAX_BURST           "&OPENFLOW_LOGICAL_SWITCH;/packet-in-max-burst">
+<!ENTITY OPENFLOW_LOGICAL_SWITCH_CONTROLLER                    "&OPENFLOW_LOGICAL_SWITCH;/controller">
+<!ENTITY OPENFLOW_LOGICAL_SWITCH_CONTROLLER_ADDRESS            "&OPENFLOW_LOGICAL_SWITCH_CONTROLLER;/address">
+<!ENTITY OPENFLOW_LOGICAL_SWITCH_CONTROLLER_PORT               "&OPENFLOW_LOGICAL_SWITCH_CONTROLLER;/port">
+<!ENTITY OPENFLOW_LOGICAL_SWITCH_CONTROLLER_SECURITY           "&OPENFLOW_LOGICAL_SWITCH_CONTROLLER;/security">
+
+<!ENTITY IF_OPENFLOW_CFG                                       "/interfaces/interface/dell-openflow:of-cfg">
+<!ENTITY IF_OPENFLOW_INTF_NAME                                 "/interfaces/interface/name">
+<!ENTITY IF_OPENFLOW_CFG_LOGICAL_SWITCH_NAME                   "&IF_OPENFLOW_CFG;/dell-openflow:logical-switch-name">
+
+<!ENTITY OPENFLOW_MODULE_PREF_NS                               "dell-openflow=&OPENFLOW_MODULE_NS;">
+<!ENTITY IF-MODULE-NS                                          "urn:ietf:params:xml:ns:yang:ietf-interfaces">
+
+<!ENTITY FILTER_SUBTREE                                        "Filter_Type:SUBTREE">
+<!ENTITY FILTER_NAMESPACE                                      "Filter_Namespace:&OPENFLOW_MODULE_NS;">
+
+]>
+
+<CLISH_MODULE xmlns="http://www.dellemc.com/force10/XMLSchema"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xmlns:xi="http://www.w3.org/2001/XInclude"
+ xsi:schemaLocation="http://clish.sourceforge.net/XMLSchema
+                     http://clish.sourceforge.net/XMLSchema/clish.xsd">
+    <!--=======================================================-->
+
+<!--=======================================================-->
+<!--                Exec MODE                            -->
+<!--=======================================================-->
+
+<VIEW name="enable-view">
+    <COMMAND name="show openflow"
+        help="Openflow global information"
+        operation="get"
+        namespace="&OPENFLOW_MODULE_NS;"
+        yang_filter="&FILTER_SUBTREE;;Filter_Conditions:/global-info;&FILTER_NAMESPACE;"
+        template="show_openflow.xsl"
+		pfeature="NOT_SUPPORTED"
+        >
+        <PARAM name="allcommands"
+            help="commands"
+            ptype="SUBCOMMAND"
+            optional="true"
+            mode="switch"
+            >
+            <PARAM name="switch"
+                help="Openflow switch information"
+                template="show_openflow_switch.xsl"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                optional="true"
+                yang_filter="&FILTER_SUBTREE;;Filter_Conditions:/of-config/logical-switch;&FILTER_NAMESPACE;|&FILTER_SUBTREE;;Filter_Conditions:/logical-switch-instance-info;&FILTER_NAMESPACE;"
+                >
+                <PARAM name="name"
+                    help="Switch name"
+                    ptype="STRING_32"
+                    optional="true"
+                    yang_filter="&FILTER_SUBTREE;;Filter_Conditions:/of-config/logical-switch/name=${name};&FILTER_NAMESPACE;|&FILTER_SUBTREE;;Filter_Conditions:/logical-switch-instance-info/name=${name};&FILTER_NAMESPACE;"
+                    >
+                    <PARAM name="flows"
+                        help="Openflow flow information"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        template="show_openflow_switch_flows.xsl"
+                        optional="true"
+                        yang_filter="&FILTER_SUBTREE;;Filter_Conditions:/of-config/logical-switch/name=${name};&FILTER_NAMESPACE;|&FILTER_SUBTREE;;Filter_Conditions:/instance-flow-info/logical-instance-name=${name};&FILTER_NAMESPACE;"
+                        >
+                    </PARAM>
+                </PARAM>
+            </PARAM>
+            <PARAM name="flows"
+                help="Openflow flow information"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                template="show_openflow_switch_flows.xsl"
+                optional="true"
+                yang_filter="&FILTER_SUBTREE;;Filter_Conditions:/of-config/logical-switch;&FILTER_NAMESPACE;|&FILTER_SUBTREE;;Filter_Conditions:/instance-flow-info;&FILTER_NAMESPACE;"
+                >
+            </PARAM>
+       </PARAM>
+      <ACTION builtin="clish_extn"> </ACTION>
+  </COMMAND>
+</VIEW>
+
+
+<!--=======================================================-->
+<!--                Config MODE                            -->
+<!--=======================================================-->
+
+<VIEW name="configure-view">
+
+<!-- openflow -->
+
+    <COMMAND name="openflow"
+        help="Configure OpenFlow"
+        operation="edit-config"
+		namespace="&OPENFLOW_MODULE_NS;"
+		pfeature="NOT_SUPPORTED"
+        view="configure-openflow-view"
+        yang_name="&OPENFLOW;">
+
+      <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+<!-- no openflow -->
+
+    <COMMAND name="no openflow"
+        help="Remove OpenFlow configuration"
+        operation="edit-config"
+		namespace="&OPENFLOW_MODULE_NS;"
+		pfeature="NOT_SUPPORTED"
+		sub_oper_yang="remove:of-config"
+		yang_name="&OPENFLOW;">
+
+      <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+</VIEW>  <!-- End of Config MODE -->
+
+<!--=======================================================-->
+<!--                Interface MODE                         -->
+<!--=======================================================-->
+<VIEW name="configure-if-view">
+
+<!-- openflow switch {logical-switch-name} -->
+
+    <COMMAND
+        name="openflow"
+		help="Configure interface in OpenFlow instance"
+		pfeature="NOT_SUPPORTED"
+        operation="edit-config"
+        namespace="&OPENFLOW_MODULE_PREF_NS;,&IF-MODULE-NS;">
+
+        <PARAM
+            name="switch"
+            help="Switch instance"
+            ptype="SUBCOMMAND"
+            mode="subcommand">
+
+            <PARAM
+                name="logical-switch-name"
+                help="Logical switch instance name (max 15 chars)"
+                ptype="STRING"
+                yang_name="&IF_OPENFLOW_INTF_NAME;=${ifacename},&IF_OPENFLOW_CFG_LOGICAL_SWITCH_NAME;=${logical-switch-name}">
+            </PARAM>
+        </PARAM>
+
+        <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+<!-- no openflow switch {logical-switch-name} -->
+
+    <COMMAND
+        name="no openflow"
+        help="Remove the OpenFlow instance interface configuration"
+        operation="edit-config"
+		namespace="&OPENFLOW_MODULE_PREF_NS;,&IF-MODULE-NS;"
+		pfeature="NOT_SUPPORTED"
+        sub_oper_yang="remove:of-cfg,remove:logical-switch-name">
+
+        <PARAM
+            name="switch"
+            help="Switch instance"
+            ptype="SUBCOMMAND"
+            mode="subcommand">
+
+            <PARAM
+                name="logical-switch-name"
+                help="Logical switch instance name (max 15 chars)"
+                ptype="STRING"
+                yang_name="&IF_OPENFLOW_INTF_NAME;=${ifacename},&IF_OPENFLOW_CFG_LOGICAL_SWITCH_NAME;=${logical-switch-name}">
+            </PARAM>
+        </PARAM>
+
+        <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+</VIEW>
+
+<VIEW name="configure-lag-view">
+
+<!-- openflow switch {logical-switch-name} -->
+
+    <COMMAND
+        name="openflow"
+		help="Configure interface in OpenFlow instance"
+		pfeature="NOT_SUPPORTED"
+        operation="edit-config"
+        namespace="&OPENFLOW_MODULE_PREF_NS;,&IF-MODULE-NS;">
+
+        <PARAM
+            name="switch"
+            help="Switch instance"
+            ptype="SUBCOMMAND"
+            mode="subcommand">
+
+            <PARAM
+                name="logical-switch-name"
+                help="Logical switch instance name (max 15 chars)"
+                ptype="STRING"
+                yang_name="&IF_OPENFLOW_INTF_NAME;=${port-channeliface},&IF_OPENFLOW_CFG_LOGICAL_SWITCH_NAME;=${logical-switch-name}">
+            </PARAM>
+        </PARAM>
+
+        <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+<!-- no openflow switch {logical-switch-name} -->
+
+    <COMMAND
+        name="no openflow"
+        help="Remove the OpenFlow instance interface configuration"
+		operation="edit-config"
+		pfeature="NOT_SUPPORTED"
+        namespace="&OPENFLOW_MODULE_PREF_NS;,&IF-MODULE-NS;"
+        sub_oper_yang="remove:of-cfg,remove:logical-switch-name">
+
+        <PARAM
+            name="switch"
+            help="Switch instance"
+            ptype="SUBCOMMAND"
+            mode="subcommand">
+
+            <PARAM
+                name="logical-switch-name"
+                help="Logical switch instance name (max 15 chars)"
+                ptype="STRING"
+                yang_name="&IF_OPENFLOW_INTF_NAME;=${port-channeliface},&IF_OPENFLOW_CFG_LOGICAL_SWITCH_NAME;=${logical-switch-name}">
+            </PARAM>
+        </PARAM>
+
+        <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+</VIEW>
+
+<!--  End of Interface MODE -->
+
+<!--=======================================================-->
+<!--             OpenFlow mode config                      -->
+<!--=======================================================-->
+
+<VIEW name="configure-openflow-view"
+      prompt="${SYSTEM_NAME} (config-openflow)# "
+      depth="2">
+
+   <NAMESPACE ref="configure-view"
+      help="false"
+      completion="false"/>
+
+   <!--switch {logical-switch-name} -->
+
+   <COMMAND name="switch"
+       help="Configure OpenFlow switch instance"
+       operation="edit-config"
+       namespace="&OPENFLOW_MODULE_NS;"
+       view="configure-openflow-logical-switch-view"
+       viewid="switchname=${logical-switch-name}"
+       yang_key="&OPENFLOW_LOGICAL_SWITCH_NAME;">
+
+       <PARAM name="logical-switch-name"
+           help="Logical switch instance name (max 15 chars)"
+           ptype="STRING"
+           yang_name="&OPENFLOW_LOGICAL_SWITCH_NAME;=${logical-switch-name}">
+       </PARAM>
+
+      <ACTION builtin="clish_extn"> </ACTION>
+   </COMMAND>
+
+   <!--no switch {logical-switch-name} -->
+
+   <COMMAND name="no"
+       help="Remove switch instance">
+   </COMMAND>
+
+   <COMMAND name="no switch"
+       help="Remove OpenFlow switch instance"
+       operation="edit-config"
+       namespace="&OPENFLOW_MODULE_NS;"
+       sub_oper_yang="remove:logical-switch">
+
+       <PARAM
+           name="logical-switch-name"
+           help="Logical switch instance name (max 15 chars)"
+           ptype="STRING"
+           yang_name="&OPENFLOW_LOGICAL_SWITCH_NAME;=${logical-switch-name}">
+       </PARAM>
+
+      <ACTION builtin="clish_extn"> </ACTION>
+   </COMMAND>
+
+</VIEW>  <!--  End of OpenFlow mode config  -->
+
+<!--=======================================================-->
+<!--             OpenFlow logical switch mode config       -->
+<!--=======================================================-->
+
+<VIEW name="configure-openflow-logical-switch-view"
+    prompt="${SYSTEM_NAME} (config-openflow-switch)# "
+    depth="3">
+
+    <NAMESPACE ref="configure-openflow-view"
+        help="false"
+        completion="false"/>
+
+    <!-- controller ipv4 <ip-address> [port <port-number>] [security {none | tls}] -->
+
+    <COMMAND
+        name="controller"
+        help="Configure controller for the OpenFlow instance"
+        operation="edit-config"
+        namespace="&OPENFLOW_MODULE_NS;"
+        yang_key="&OPENFLOW_LOGICAL_SWITCH_CONTROLLER_ADDRESS;,&OPENFLOW_LOGICAL_SWITCH_CONTROLLER_PORT;">
+
+        <PARAM
+            name="ipv4"
+            help="IPV4 address of the controller"
+            ptype="SUBCOMMAND"
+            mode="subcommand">
+
+            <PARAM
+                name="ip-address"
+                help="Specify IP address of controller"
+				ptype="IP_ADDR"
+				yang_name="&OPENFLOW_LOGICAL_SWITCH_CONTROLLER_PORT;=${port-number},&OPENFLOW_LOGICAL_SWITCH_NAME;=${switchname},&OPENFLOW_LOGICAL_SWITCH_CONTROLLER_ADDRESS;=${ip-address}">
+
+                <PARAM
+                    name="port"
+                    help="Configure port number"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    optional="true">
+
+                    <PARAM
+                        name="port-number"
+                        help="Specify tcp port (default=6653)"
+						ptype="RANGE_0_65535"
+						default="6653"
+						refresh_yang_name="true"
+						yang_name="&OPENFLOW_LOGICAL_SWITCH_NAME;=${switchname},&OPENFLOW_LOGICAL_SWITCH_CONTROLLER_ADDRESS;=${ip-address},&OPENFLOW_LOGICAL_SWITCH_CONTROLLER_PORT;=${port-number}">
+                    </PARAM>
+                </PARAM>
+
+                <PARAM
+                    name="security"
+                    help="Type of controller connection (default=none)"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    optional="true">
+
+                    <PARAM
+                        name="security type to choose"
+                        help="Security type to choose"
+                        ptype="SUBCOMMAND"
+                        mode="switch">
+
+                        <PARAM
+                            name="none"
+                            help="Configure tcp connection to controller (default)"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            yang_name="&OPENFLOW_LOGICAL_SWITCH_CONTROLLER_SECURITY;=none">
+                        </PARAM>
+                        <PARAM
+                            name="tls"
+                            help="Configure tls connection to controller"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            yang_name="&OPENFLOW_LOGICAL_SWITCH_CONTROLLER_SECURITY;=tls">
+                        </PARAM>
+                    </PARAM>
+                </PARAM>
+
+            </PARAM>
+        </PARAM>
+
+        <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+    <!-- bind mode {any|port|vlan} -->
+
+    <COMMAND
+        name="bind-mode"
+        help="Configure the type of interface associated with the OpenFlow instance"
+        operation="edit-config"
+        namespace="&OPENFLOW_MODULE_NS;">
+
+        <PARAM
+            name="mode to choose"
+            help="Bind mode to choose"
+            ptype="SUBCOMMAND"
+            mode="switch"
+            yang_name="&OPENFLOW_LOGICAL_SWITCH_NAME;=${switchname}">
+
+            <PARAM
+                name="any"
+                help="Port and Vlan OpenFlow instance"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                yang_name="&OPENFLOW_LOGICAL_SWITCH_INTF_BIND_MODE;=any">
+            </PARAM>
+            <PARAM
+                name="port"
+                help="Port OpenFlow instance (default)"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                yang_name="&OPENFLOW_LOGICAL_SWITCH_INTF_BIND_MODE;=port">
+            </PARAM>
+            <PARAM
+                name="vlan"
+                help="Vlan OpenFlow instance"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                yang_name="&OPENFLOW_LOGICAL_SWITCH_INTF_BIND_MODE;=vlan">
+            </PARAM>
+        </PARAM>
+
+        <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+    <!-- max-backoff <interval> -->
+
+    <COMMAND
+        name="max-backoff"
+        help="Configure max backoff interval"
+        operation="edit-config"
+        namespace="&OPENFLOW_MODULE_NS;">
+        <PARAM
+            name="interval"
+            help="Specify max backoff in seconds (default=8 seconds)"
+            ptype="RANGE_1_65535"
+            yang_name="&OPENFLOW_LOGICAL_SWITCH_NAME;=${switchname},&OPENFLOW_LOGICAL_SWITCH_MAX_BACKOFF;=${interval}">
+        </PARAM>
+
+        <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+    <!-- probe-interval <interval> -->
+
+    <COMMAND
+        name="probe-interval"
+        help="Configure probe interval"
+        operation="edit-config"
+        namespace="&OPENFLOW_MODULE_NS;">
+        <PARAM
+            name="interval"
+            help="Specify the probe interval in seconds (default=5 seconds)"
+            ptype="RANGE_5_65535"
+            yang_name="&OPENFLOW_LOGICAL_SWITCH_NAME;=${switchname},&OPENFLOW_LOGICAL_SWITCH_PROBE_INTERVAL;=${interval}">
+        </PARAM>
+
+        <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+    <!-- shutdown -->
+
+    <COMMAND
+        name="shutdown"
+        help="Shutdown the selected OpenFlow instance"
+        operation="edit-config"
+        namespace="&OPENFLOW_MODULE_NS;"
+        ptype="SUBCOMMAND"
+        add_config_entry="false"
+        yang_name="&OPENFLOW_LOGICAL_SWITCH_NAME;=${switchname},&OPENFLOW_LOGICAL_SWITCH_CONNECT_CONTROLLERS;=false"
+        sub_oper_yang="remove:connect-controllers">
+
+        <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+    <!-- rate-limit packet_in <max_rate> [burst <max-burst>] -->
+
+    <COMMAND
+        name="rate-limit"
+        help="Configure software rate limit for controller connection"
+        operation="edit-config"
+        namespace="&OPENFLOW_MODULE_NS;">
+
+        <PARAM
+            name="packet_in"
+            help="Configure packet-in rate limit"
+            ptype="SUBCOMMAND"
+            mode="subcommand">
+
+            <PARAM
+                name="max-rate"
+                help="Specify rate limit in packets per second (default=0)"
+                ptype="RANGE_0_268000000"
+                yang_name="&OPENFLOW_LOGICAL_SWITCH_NAME;=${switchname},&OPENFLOW_LOGICAL_SWITCH_PACKET_IN_MAX_RATE;=${max-rate}">
+            </PARAM>
+
+            <PARAM
+                name="burst"
+                help="Configure software burst rate limit for controller connection"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                optional="true">
+
+                <PARAM
+                    name="max-burst"
+                    help="Specify burst limit in packets per second (default=0)"
+                    ptype="RANGE_0_1073000"
+                    yang_name="&OPENFLOW_LOGICAL_SWITCH_PACKET_IN_MAX_BURST;=${max-burst}">
+                </PARAM>
+            </PARAM>
+        </PARAM>
+
+        <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+    <!-- dpid-mac-address {mac-address} -->
+
+    <COMMAND
+        name="dpid-mac-address"
+        help="Configure datapath ID MAC Address"
+        operation="edit-config"
+        namespace="&OPENFLOW_MODULE_NS;">
+        <PARAM
+            name="mac-address"
+            help="Specify MAC address in nn:nn:nn:nn:nn:nn format"
+            ptype="MAC_ADDR"
+            yang_name="&OPENFLOW_LOGICAL_SWITCH_NAME;=${switchname},&OPENFLOW_LOGICAL_SWITCH_DPID_MAC_ADDRESS;=${mac-address}">
+        </PARAM>
+
+        <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+    <!-- protocol-version { negotiate | 1.0 | 1.3} -->
+
+    <COMMAND
+        name="protocol-version"
+        help="Configure protocol version of the logical switch instance"
+        operation="edit-config"
+        namespace="&OPENFLOW_MODULE_NS;">
+
+        <PARAM
+            name="version to choose"
+            help="Version to choose"
+            ptype="SUBCOMMAND"
+            mode="switch"
+            yang_name="&OPENFLOW_LOGICAL_SWITCH_NAME;=${switchname}">
+
+            <PARAM
+                name="negotiate"
+                help="Negotiate openflow protocol version (default)"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                yang_name="&OPENFLOW_LOGICAL_SWITCH_VERSION;=negotiate">
+            </PARAM>
+            <PARAM
+                name="1.0"
+                help="OpenFlow protocol version as 1.0"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                yang_name="&OPENFLOW_LOGICAL_SWITCH_VERSION;=1.0">
+            </PARAM>
+            <PARAM
+                name="1.3"
+                help="OpenFlow protocol version as 1.3"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                yang_name="&OPENFLOW_LOGICAL_SWITCH_VERSION;=1.3">
+            </PARAM>
+        </PARAM>
+
+        <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+    <!-- dataplane-default {secure | stand-alone} -->
+
+    <COMMAND
+        name="dataplane-default"
+        help="Specify the fail-over mode packet forwarding behavior upon loss of controller connection"
+        operation="edit-config"
+        namespace="&OPENFLOW_MODULE_NS;">
+
+        <PARAM
+            name="mode to choose"
+            help="Fail-over mode to choose"
+            ptype="SUBCOMMAND"
+            mode="switch"
+            yang_name="&OPENFLOW_LOGICAL_SWITCH_NAME;=${switchname}">
+
+            <PARAM
+                name="secure"
+                help="Retain installed flow-entries on disconnect (default)"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                yang_name="&OPENFLOW_LOGICAL_SWITCH_RECOVERY_MODE;=secure">
+            </PARAM>
+            <PARAM
+                name="stand-alone"
+                help="Remove installed flow-entries on disconnect"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                yang_name="&OPENFLOW_LOGICAL_SWITCH_RECOVERY_MODE;=stand-alone">
+            </PARAM>
+        </PARAM>
+
+        <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+    <!-- flow-miss {normal | drop | controller} -->
+
+    <COMMAND
+        name="flow-miss"
+        help="Configure the action to be executed on flow entry miss"
+        operation="edit-config"
+        namespace="&OPENFLOW_MODULE_NS;">
+
+        <PARAM
+            name="action to choose"
+            help="Flow-miss action to choose"
+            ptype="SUBCOMMAND"
+            mode="switch"
+            yang_name="&OPENFLOW_LOGICAL_SWITCH_NAME;=${switchname}">
+
+            <PARAM
+                name="normal"
+                help="Forward the flow miss packets based on normal switch L2/L3 lookup (default)"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                yang_name="&OPENFLOW_LOGICAL_SWITCH_FLOW_MISS_ACTION;=normal">
+            </PARAM>
+            <PARAM
+                name="drop"
+                help="Drop the flow miss packets"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                yang_name="&OPENFLOW_LOGICAL_SWITCH_FLOW_MISS_ACTION;=drop">
+            </PARAM>
+            <PARAM
+                name="controller"
+                help="Redirect flow miss packets to controller"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                yang_name="&OPENFLOW_LOGICAL_SWITCH_FLOW_MISS_ACTION;=controller">
+            </PARAM>
+        </PARAM>
+
+        <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+    <!-- no -->
+
+    <COMMAND name="no"
+        help="Negate a command or set its defaults">
+    </COMMAND>
+
+
+    <!-- no controller ipv4 <ip-address> port <port-number> -->
+
+      <COMMAND
+          name="no controller"
+          help="Remove controller configuration for the OpenFlow instance"
+          operation="edit-config"
+          namespace="&OPENFLOW_MODULE_NS;">
+
+          <PARAM
+              name="ipv4"
+              help="IPV4 address of the controller"
+              ptype="SUBCOMMAND"
+              mode="subcommand">
+
+              <PARAM
+                  name="ip-address"
+                  help="Specify the IPV4 address"
+                  ptype="IP_ADDR"
+                  yang_name="&OPENFLOW_LOGICAL_SWITCH_NAME;=${switchname},&OPENFLOW_LOGICAL_SWITCH_CONTROLLER_ADDRESS;=${ip-address}">
+
+                  <PARAM
+                      name="port"
+                      help="Port number for Controller connection"
+                      ptype="SUBCOMMAND"
+                      mode="subcommand">
+
+                      <PARAM
+                          name="port-number"
+                          help="Port range is 1 to 65535"
+                          ptype="RANGE_0_65535"
+                          yang_name="&OPENFLOW_LOGICAL_SWITCH_CONTROLLER_PORT;=${port-number}"
+                          sub_oper_yang="remove:controller">
+                      </PARAM>
+
+                  </PARAM>
+
+              </PARAM>
+          </PARAM>
+
+          <ACTION builtin="clish_extn"> </ACTION>
+      </COMMAND>
+
+      <!-- no max-backoff -->
+
+      <COMMAND
+          name="no max-backoff"
+          help="Number of seconds to wait after attempting to establish a connection with OF controller"
+          operation="edit-config"
+          namespace="&OPENFLOW_MODULE_NS;"
+          yang_name="&OPENFLOW_LOGICAL_SWITCH_NAME;=${switchname},&OPENFLOW_LOGICAL_SWITCH_MAX_BACKOFF;"
+          sub_oper_yang="remove:max-backoff">
+
+          <ACTION builtin="clish_extn"> </ACTION>
+      </COMMAND>
+
+      <!-- no dpid-mac-address -->
+
+      <COMMAND
+          name="no dpid-mac-address"
+          help="Remove datapath ID’s MAC Address for the logical switch Instance"
+          operation="edit-config"
+          namespace="&OPENFLOW_MODULE_NS;"
+          yang_name="&OPENFLOW_LOGICAL_SWITCH_NAME;=${switchname},&OPENFLOW_LOGICAL_SWITCH_DPID_MAC_ADDRESS;">
+
+          <ACTION builtin="clish_extn"> </ACTION>
+      </COMMAND>
+
+     <!-- no probe-interval -->
+
+      <COMMAND
+          name="no probe-interval"
+          help="Echo request interval(seconds) for the controllers configured"
+          operation="edit-config"
+          namespace="&OPENFLOW_MODULE_NS;"
+          yang_name="&OPENFLOW_LOGICAL_SWITCH_NAME;=${switchname},&OPENFLOW_LOGICAL_SWITCH_PROBE_INTERVAL;"
+          sub_oper_yang="remove:probe-interval">
+
+          <ACTION builtin="clish_extn"> </ACTION>
+      </COMMAND>
+
+    <!-- no bind mode -->
+
+    <COMMAND
+        name="no bind-mode"
+        help="Remove the type of interface associated with the OpenFlow instance"
+        operation="edit-config"
+        namespace="&OPENFLOW_MODULE_NS;"
+        yang_name="&OPENFLOW_LOGICAL_SWITCH_NAME;=${switchname},&OPENFLOW_LOGICAL_SWITCH_INTF_BIND_MODE;"
+        sub_oper_yang="remove:intf-bind-mode">
+
+        <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+    <!-- no rate-limit packet_in <max_rate> [burst <max-burst>] -->
+
+    <COMMAND
+        name="no rate-limit"
+        help="Remove software rate limit for controller connection"
+        operation="edit-config"
+        namespace="&OPENFLOW_MODULE_NS;">
+
+        <PARAM
+            name="packet_in"
+            help="Remove packet-in rate limit"
+            ptype="SUBCOMMAND"
+            mode="subcommand">
+
+            <PARAM
+                name="max-rate"
+                help="Remove the configured rate limit in packets per second (default=0)"
+                ptype="RANGE_0_268000000"
+                yang_name="&OPENFLOW_LOGICAL_SWITCH_NAME;=${switchname},&OPENFLOW_LOGICAL_SWITCH_PACKET_IN_MAX_RATE;=${max-rate}"
+                sub_oper_yang="remove:packet-in-max-rate">
+            </PARAM>
+
+            <PARAM
+                name="burst"
+                help="Remove software burst rate limit for controller connection"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                optional="true">
+
+                <PARAM
+                    name="max-burst"
+                    help="Remove the configured  burst rate limit in packets per second (default=0)"
+                    ptype="RANGE_0_1073000"
+                    yang_name="&OPENFLOW_LOGICAL_SWITCH_PACKET_IN_MAX_BURST;=${max-burst}"
+                    sub_oper_yang="remove:packet-in-max-burst">
+
+                </PARAM>
+            </PARAM>
+        </PARAM>
+
+        <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+    <!-- no protocol-version -->
+
+    <COMMAND
+        name="no protocol-version"
+        help="Remove the configured protocol version of logical switch instance (default=negotiate)"
+        operation="edit-config"
+        namespace="&OPENFLOW_MODULE_NS;"
+        yang_name="&OPENFLOW_LOGICAL_SWITCH_NAME;=${switchname},&OPENFLOW_LOGICAL_SWITCH_VERSION;"
+        sub_oper_yang="remove:version">
+
+        <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+    <!-- no dataplane-default -->
+
+    <COMMAND
+        name="no dataplane-default"
+        help="Remove the configured fail-over mode (default=secure)"
+        operation="edit-config"
+        namespace="&OPENFLOW_MODULE_NS;"
+        yang_name="&OPENFLOW_LOGICAL_SWITCH_NAME;=${switchname},&OPENFLOW_LOGICAL_SWITCH_RECOVERY_MODE;"
+        sub_oper_yang="remove:recovery-mode">
+
+        <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+   <!-- no flow-miss -->
+
+    <COMMAND
+        name="no flow-miss"
+        help="Remove the configured action to be executed on flow entry miss (default=normal)"
+        operation="edit-config"
+        namespace="&OPENFLOW_MODULE_NS;"
+        yang_name="&OPENFLOW_LOGICAL_SWITCH_NAME;=${switchname},&OPENFLOW_LOGICAL_SWITCH_FLOW_MISS_ACTION;"
+        sub_oper_yang="remove:flow-miss-action">
+
+        <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+   <!-- no shutdown -->
+
+    <COMMAND
+        name="no shutdown"
+        help="Startup the selected OpenFlow instance"
+        operation="edit-config"
+        namespace="&OPENFLOW_MODULE_NS;"
+        ptype="SUBCOMMAND"
+        add_config_entry="true"
+        yang_name="&OPENFLOW_LOGICAL_SWITCH_NAME;=${switchname},&OPENFLOW_LOGICAL_SWITCH_CONNECT_CONTROLLERS;=true">
+
+        <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+</VIEW>  <!--  End of OpenFlow logical switch mode config  -->
+
+</CLISH_MODULE>
+

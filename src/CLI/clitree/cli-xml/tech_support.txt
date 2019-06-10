@@ -1,0 +1,45 @@
+show version
+show interface status
+show interface ethernet
+show interface port-channel
+show interface vlan
+show interface mgmt
+show interface loopback
+show running-configuration
+show startup-configuration
+show diff candidate-configuration startup-configuration
+show alarms summary
+show inventory
+show environment
+show system
+show ip route all
+show spanning-tree
+show spanning-tree guard
+show dot1x
+show dot1x interface
+show ip ospf
+show ip ospf interface
+show ip ospf statistics
+show ip ospf neighbor
+show ip ospf routes
+show ip ospf database
+show ip bgp summary
+show ip bgp
+show ip bgp neighbors
+show ip bgp flap-statistics
+show ip bgp dampened-paths
+show ip bgp peer-group
+show ip route
+show ip route bgp
+show ip route ospf
+show ip access-lists in
+show ip access-lists out
+show ip access-group
+show ipv6 route
+show ipv6 access-lists in
+show ipv6 access-lists out
+show ipv6 access-group
+show mac access-lists in
+show mac access-lists out
+show mac access-group
+show lldp neighbors

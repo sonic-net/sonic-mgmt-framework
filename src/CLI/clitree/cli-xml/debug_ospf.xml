@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE CLISH_MODULE [
+<!ENTITY SUBTREE_FILTER "Filter_Type:SUBTREE">
+<!ENTITY OSPFV2_NS "http://www.dellemc.com/networking/os10/dell-ospf-v2">
+<!ENTITY OSPFV3_NS "http://www.dellemc.com/networking/os10/dell-ospf-v3">
+]>
+<CLISH_MODULE
+    xmlns="http://www.dellemc.com/force10/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xi="http://www.w3.org/2001/XInclude"
+    xsi:schemaLocation="http://www.dellemc.com/force10/XMLSchema
+                        http://www.dellemc.com/force10/XMLSchema/clish.xsd">
+<!-- ********************************************************************** -->
+<!-- *  DEBUG OSPF COMMANDS                                                * -->
+<!--
+debug ip ospfv2 [<Process ID>] packets <specific interface if any>
+debug ip ospfv2 [<Process ID>] database-timers rate-limit
+debug ip ospfv2 [<Process ID>] event <specific interface if any>
+debug ip ospfv3 [<Process ID>] packets <specific interface if any>
+debug ip ospfv3 [<Process ID>] event <specific interface if any>
+-->
+<!-- *  View : enable-view                                                * -->
+<!-- ********************************************************************** -->
+    <VIEW name="enable-view">
+
+       <COMMAND name="debug ip ospfv2"
+                help="Debug command for ospf-v2 related information"
+                pfeature="NOT_SUPPORTED"
+                ptype="SUBCOMMAND"
+                operation="generic-rpc"
+                namespace="&OSPFV2_NS;"
+                >
+                <PARAM name="ospfv2-debug-choice1"
+                       help=""
+                       ptype="SUBCOMMAND"
+                       mode="switch">
+                       <PARAM name="ospfv2-instance"
+                              help="Instance number"
+                      	      ptype="RANGE_1_65535">
+                              <PARAM name="ospfv2-debug-choice2"
+                                     help=""
+                                     ptype="SUBCOMMAND"
+                                     mode="switch">
+                                     <PARAM name="database-timers"
+                                            help="debug ip ospfv2 # database-timers"
+                                            ptype="SUBCOMMAND"
+                                            mode="subcommand"
+                                            yang_name="/debug-ospfv2/process_id=${ospfv2-instance},/debug-ospfv2/database-timers"/>
+                                     <PARAM name="packets"
+                                               help="debug ip ospfv2 # packets #"
+                                               ptype="SUBCOMMAND"
+                                               mode="subcommand">
+                                               <PARAM name="packets-value"
+                                                      help="Packets"
+                                                      yang_name="/debug-ospfv2/process_id=${ospfv2-instance},/debug-ospfv2/packets=${packets-value}"
+                                                      ptype="STRING"/>
+                                     </PARAM>
+                                     <PARAM name="event"
+                                               help="debug ip ospfv2 # event #"
+                                               ptype="SUBCOMMAND"
+                                               mode="subcommand">
+                                               <PARAM name="event-value"
+                                                      help="Event"
+                                                      ptype="STRING"
+                                                      yang_name="/debug-ospfv2/process_id=${ospfv2-instance},/debug-ospfv2/event=${event-value}"/>
+                                     </PARAM>
+                	      </PARAM>
+		       </PARAM>
+                       <PARAM name="database-timers"
+                              help="debug ip ospfv2 database-timers"
+                              ptype="SUBCOMMAND"
+                              mode="subcommand"
+                              yang_name="/debug-ospfv2/process_id=0,/debug-ospfv2/database-timers"/>
+                       <PARAM name="packets"
+                              help="debug ip ospfv2 packets #"
+                              ptype="SUBCOMMAND"
+                              mode="subcommand">
+                              <PARAM name="packets-value"
+                                     help="Packets"
+                                     yang_name="/debug-ospfv2/process_id=0,/debug-ospfv2/packets=${packets-value}"
+                                     ptype="STRING"/>
+                       </PARAM>
+                       <PARAM name="event"
+                              help="debug ip ospfv2 event #"
+                              ptype="SUBCOMMAND"
+                              mode="subcommand">
+                              <PARAM name="event-value"
+                                     help="Event"
+                                     ptype="STRING"
+                                     yang_name="/debug-ospfv2/process_id=0,/debug-ospfv2/event=${event-value}"/>
+                       </PARAM>
+		</PARAM>
+                <ACTION builtin="clish_extn"> </ACTION>
+       </COMMAND>
+
+       <COMMAND name="debug ip ospfv3"
+                help="Debug command for ospf-v3 related information"
+                ptype="SUBCOMMAND"
+                pfeature="NOT_SUPPORTED"
+                operation="generic-rpc"
+                namespace="&OSPFV3_NS;"
+                >
+                <PARAM name="ospfv3-debug-choice1"
+                       help=""
+                       ptype="SUBCOMMAND"
+                       mode="switch">
+                       <PARAM name="ospfv3-instance"
+                              help="Instance number"
+                      	      ptype="RANGE_1_65535">
+                              <PARAM name="ospfv3-debug-choice2"
+                                     help=""
+                                     ptype="SUBCOMMAND"
+                                     mode="switch">
+                                     <PARAM name="packets"
+                                               help="debug ip ospfv3 # packets #"
+                                               ptype="SUBCOMMAND"
+                                               mode="subcommand">
+                                               <PARAM name="packets-value"
+                                                      help="Packets"
+                                                      yang_name="/debug-ospfv3/process_id=${ospfv3-instance},/debug-ospfv3/packets=${packets-value}"
+                                                      ptype="STRING"/>
+                                     </PARAM>
+                                     <PARAM name="event"
+                                               help="debug ip ospfv3 # event #"
+                                               ptype="SUBCOMMAND"
+                                               mode="subcommand">
+                                               <PARAM name="event-value"
+                                                      help="Event"
+                                                      ptype="STRING"
+                                                      yang_name="/debug-ospfv3/process_id=${ospfv3-instance},/debug-ospfv3/event=${event-value}"/>
+                                     </PARAM>
+                	      </PARAM>
+		       </PARAM>
+                       <PARAM name="packets"
+                              help="debug ip ospfv3 packets #"
+                              ptype="SUBCOMMAND"
+                              mode="subcommand">
+                              <PARAM name="packets-value"
+                                     help="Packets"
+                                     yang_name="/debug-ospfv3/process_id=0,/debug-ospfv3/packets=${packets-value}"
+                                     ptype="STRING"/>
+                       </PARAM>
+                       <PARAM name="event"
+                              help="debug ip ospfv3 event #"
+                              ptype="SUBCOMMAND"
+                              mode="subcommand">
+                              <PARAM name="event-value"
+                                     help="Event"
+                                     ptype="STRING"
+                                     yang_name="/debug-ospfv3/process_id=0,/debug-ospfv3/event=${event-value}"/>
+                       </PARAM>
+		</PARAM>
+                <ACTION builtin="clish_extn"> </ACTION>
+       </COMMAND>
+    </VIEW>
+</CLISH_MODULE>

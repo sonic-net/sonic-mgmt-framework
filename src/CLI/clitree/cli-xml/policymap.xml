@@ -1,0 +1,3718 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE CLISH_MODULE [
+    <!ENTITY COMMON_NAME_SPACE "http://www.dellemc.com/networking/os10/">
+    <!ENTITY NAME_SPACE "&COMMON_NAME_SPACE;dell-diffserv-policy">
+    <!ENTITY CLS_NAME_SPACE "&COMMON_NAME_SPACE;dell-diffserv-classifier">
+    <!ENTITY ACTN_NAME_SPACE "&COMMON_NAME_SPACE;dell-diffserv-action">
+    <!ENTITY SYS_QOS_NS "&COMMON_NAME_SPACE;dell-qos">
+    <!ENTITY QOS-PREF "dell-qos">
+    <!ENTITY QOS_NS "&QOS-PREF;=http://www.dellemc.com/networking/os10/dell-qos">
+    <!ENTITY QOS_INTF_NS "urn:ietf:params:xml:ns:yang:ietf-interfaces,&QOS_NS;">
+    <!ENTITY IFACE_ENTRY "/interfaces/interface">
+    <!ENTITY POL_IFACE_NAME "&IFACE_ENTRY;/name">
+    <!ENTITY POL_IFACE_PNAME "&IFACE_ENTRY;/&QOS-PREF;:qos-cfg/&QOS-PREF;:policy/&QOS-PREF;:name">
+    <!ENTITY POL_IFACE_DIR "&IFACE_ENTRY;/&QOS-PREF;:qos-cfg/&QOS-PREF;:policy/&QOS-PREF;:direction">
+    <!ENTITY POL_IFACE_TYPE "&IFACE_ENTRY;/&QOS-PREF;:qos-cfg/&QOS-PREF;:policy/&QOS-PREF;:ptype">
+    <!ENTITY VLAN_ENTRY "/interfaces/interface">
+    <!ENTITY VLAN_NAME "&VLAN_ENTRY;/name">
+    <!ENTITY VLAN_POL_ENTRY "&VLAN_ENTRY;/&QOS-PREF;:qos-cfg/&QOS-PREF;:policy">
+    <!ENTITY VLAN_PNAME "&VLAN_POL_ENTRY;/&QOS-PREF;:name">
+    <!ENTITY VLAN_DIR "&VLAN_POL_ENTRY;/&QOS-PREF;:direction">
+    <!ENTITY VLAN_TYPE "&VLAN_POL_ENTRY;/&QOS-PREF;:ptype">
+    <!ENTITY LAG_ENTRY "/interfaces/interface">
+    <!ENTITY LAG_NAME "&LAG_ENTRY;/name">
+    <!ENTITY LAG_POL_ENTRY "&LAG_ENTRY;/&QOS-PREF;:qos-cfg/&QOS-PREF;:policy">
+    <!ENTITY LAG_PNAME "&LAG_POL_ENTRY;/&QOS-PREF;:name">
+    <!ENTITY LAG_DIR "&LAG_POL_ENTRY;/&QOS-PREF;:direction">
+    <!ENTITY LAG_TYPE "&LAG_POL_ENTRY;/&QOS-PREF;:ptype">
+    <!ENTITY SYS_QOS "/system-qos-cfg/">
+    <!ENTITY SYS_QOS_PFC_SHR_BUFF "&SYS_QOS;pause-shared-buffer-size">
+    <!ENTITY SYS_QOS_POL "&SYS_QOS;spolicy/">
+    <!ENTITY QOS_RATE_ADJUST "&SYS_QOS;rate-adjust">
+    <!ENTITY SYS_QOS_TRUST_MAP "&SYS_QOS;trust-map">
+    <!ENTITY SYS_QOS_POL_NAME "&SYS_QOS_POL;pol-name">
+    <!ENTITY SYS_QOS_POL_DIR "&SYS_QOS_POL;mode">
+    <!ENTITY SYS_QOS_POL_TYPE "&SYS_QOS_POL;policy-type">
+    <!ENTITY SYS_QOS_TRUST_MAP_DOT1P_TC "&SYS_QOS;trust-map-dot1p">
+    <!ENTITY SYS_QOS_TRUST_MAP_DSCP_TC  "&SYS_QOS;trust-map-dscp">
+    <!ENTITY SYS_QOS_TRUST_MAP_TC_QUEUE "&SYS_QOS;trust-map-tc-queue">
+    <!ENTITY SYS_QOS_ETS_MODE "&SYS_QOS;ets-mode">
+    <!ENTITY CONTROL_PLANE "/control-plane-cfg/">
+    <!ENTITY CP_QOS_POL "&CONTROL_PLANE;service-policy">
+    <!ENTITY CP_QOS_DIR "&CONTROL_PLANE;pol-direction">
+    <!ENTITY POL_ENTRY "/policy-entry/">
+    <!ENTITY POL_ENTRY_NAME "&POL_ENTRY;name=">
+    <!ENTITY POL_ENTRY_TYPE "&POL_ENTRY;ptype=">
+    <!ENTITY POL_ENTRY_GTYPE "&POL_ENTRY;ref-type=">
+    <!ENTITY POL_CMAP "&POL_ENTRY;classifier-entry/">
+    <!ENTITY POL_CMAP_NAME "&POL_CMAP;cname=">
+    <!ENTITY POL_CMAP_ACTN "&POL_CMAP;action-entry/">
+    <!ENTITY POL_CMAP_ACTN_TYPE "&POL_CMAP_ACTN;atype">
+    <!ENTITY POL_CMAP_ACTN_SCHD_PRIO "&POL_CMAP_ACTN;scheduling-priority/">
+    <!ENTITY POL_CMAP_ACTN_SCHD_WEIGHT "&POL_CMAP_ACTN;scheduling-weight/">
+    <!ENTITY POL_CMAP_ACTN_BW "&POL_CMAP_ACTN_SCHD_WEIGHT;bandwidth">
+    <!ENTITY POL_CMAP_ACTN_BW_REM "&POL_CMAP_ACTN_SCHD_PRIO;bandwidth-remaining">
+    <!ENTITY POL_CMAP_ACTN_PRIO "&POL_CMAP_ACTN_SCHD_PRIO;level">
+    <!ENTITY POL_CMAP_ACTN_METER "&POL_CMAP_ACTN;meter-cfg/">
+    <!ENTITY POL_CMAP_ACTN_DROP "&POL_CMAP_ACTN;drop-cfg/">
+    <!ENTITY POL_CMAP_ACTN_WRED_MIN "&POL_CMAP_ACTN_DROP;min-threshold">
+    <!ENTITY POL_CMAP_ACTN_WRED_MAX "&POL_CMAP_ACTN_DROP;max-threshold">
+    <!ENTITY POL_CMAP_ACTN_WRED_PROB "&POL_CMAP_ACTN_DROP;max-drop-rate">
+    <!ENTITY POL_CMAP_ACTN_WRED_COLOR "&POL_CMAP_ACTN_DROP;colormap">
+    <!ENTITY POL_CMAP_ACTN_WRED_ECN "&POL_CMAP_ACTN_DROP;ecn">
+    <!ENTITY POL_CMAP_ACTN_WRED_WEIGHT "&POL_CMAP_ACTN_DROP;weight">
+    <!ENTITY POL_CMAP_ACTN_SHAPE "&POL_CMAP_ACTN;shaping-cfg/">
+    <!ENTITY POL_CMAP_ACTN_SHAPE_UNIT "&POL_CMAP_ACTN_SHAPE;unit">
+    <!ENTITY POL_CMAP_ACTN_PEAK_RATE "&POL_CMAP_ACTN_SHAPE;peak-rate">
+    <!ENTITY POL_CMAP_ACTN_PEAK_BURST "&POL_CMAP_ACTN_SHAPE;peak-burst">
+    <!ENTITY POL_CMAP_ACTN_COMMITTED_RATE "&POL_CMAP_ACTN_SHAPE;committed-rate">
+    <!ENTITY POL_CMAP_ACTN_COMMITTED_BURST "&POL_CMAP_ACTN_SHAPE;committed-burst">
+    <!ENTITY POL_CMAP_ACTN_SHAPE_UNIT "&POL_CMAP_ACTN_SHAPE;unit">
+    <!ENTITY POL_CMAP_ACTN_TRUST "&POL_CMAP_ACTN;trust-cfg/ttype">
+    <!ENTITY POL_CMAP_ACTN_QOSGRP "&POL_CMAP_ACTN;qos-group-cfg/">
+    <!ENTITY POL_CMAP_ACTN_DSCP "&POL_CMAP_ACTN;marking-dscp/">
+    <!ENTITY POL_CMAP_ACTN_PREC "&POL_CMAP_ACTN;marking-precedence/">
+    <!ENTITY POL_CMAP_ACTN_COS "&POL_CMAP_ACTN;marking-cos/">
+    <!ENTITY POL_CMAP_ACTN_MARKCOL "&POL_CMAP_ACTN;marking-color/">
+    <!ENTITY POL_CMAP_ACTN_COLOR "&POL_CMAP_ACTN_DSCP;colormap">
+    <!ENTITY POL_CMAP_ACTN_PAUSE "&POL_CMAP_ACTN;pause-cfg/">
+    <!ENTITY POL_CMAP_ACTN_PFC_COS "&POL_CMAP_ACTN;pfc-cos-cfg/">
+    <!ENTITY POL_CMAP_ACTN_PAUSE_BSIZE "&POL_CMAP_ACTN_PAUSE;pause-buffer-size">
+    <!ENTITY POL_CMAP_ACTN_PAUSE_BTHR "&POL_CMAP_ACTN_PAUSE;pause-buffer-thr">
+    <!ENTITY POL_CMAP_ACTN_PAUSE_RTHR "&POL_CMAP_ACTN_PAUSE;pause-resume-thr">
+    <!ENTITY DEF_TRUST_MAP_ENTRY "/active-trust-map/">
+    <!ENTITY DEF_TRUST_MAP_ENTRY_NAME "&DEF_TRUST_MAP_ENTRY;name">
+    <!ENTITY DEF_TRUST_MAP_ENTRY_QUEUE_MAPPING "&DEF_TRUST_MAP_ENTRY;queue-mapping/">
+    <!ENTITY DEF_TRUST_MAP_ENTRY_QUEUE_MAP_QUEUE_ID "&DEF_TRUST_MAP_ENTRY_QUEUE_MAPPING;queue-id">
+    <!ENTITY DEF_TRUST_MAP_ENTRY_QUEUE_MAP_DOT1P "&DEF_TRUST_MAP_ENTRY_QUEUE_MAPPING;dot1p-cfg/dot1p[]">
+    <!ENTITY DEF_TRUST_MAP_ENTRY_QUEUE_MAP_DSCP "&DEF_TRUST_MAP_ENTRY_QUEUE_MAPPING;dscp-cfg/dscp[]">
+    <!ENTITY DEF_TRUST_MAP_TC_QUEUE_ENTRY_QUEUE_MAP_TC_CFG "&DEF_TRUST_MAP_TC_QUEUE_ENTRY_QUEUE_MAPPING;traffic-class-cfg/">
+    <!ENTITY DEF_TRUST_MAP_TC_QUEUE_ENTRY_QUEUE_MAP_TC "&DEF_TRUST_MAP_TC_QUEUE_ENTRY_QUEUE_MAP_TC_CFG;traffic-class[]">
+    <!ENTITY TRUST_MAP_ENTRY "/trust-map-entry/">
+    <!ENTITY TRUST_MAP_ENTRY_NAME "&TRUST_MAP_ENTRY;name">
+    <!ENTITY TRUST_MAP_ENTRY_QUEUE_MAPPING "&TRUST_MAP_ENTRY;queue-mapping/">
+    <!ENTITY TRUST_MAP_ENTRY_QUEUE_MAP_QUEUE_ID "&TRUST_MAP_ENTRY_QUEUE_MAPPING;queueId">
+    <!ENTITY TRUST_MAP_ENTRY_QUEUE_MAP_DOT1P "&TRUST_MAP_ENTRY_QUEUE_MAPPING;dot1p-cfg/dot1p[]">
+    <!ENTITY TRUST_MAP_ENTRY_QUEUE_MAP_DSCP "&TRUST_MAP_ENTRY_QUEUE_MAPPING;dscp-cfg/dscp[]">
+    <!ENTITY TRUST_MAP_TC_QUEUE_ENTRY "/trust-map-tc-queue-entry/trust-map-tc-queue/">
+    <!ENTITY TRUST_MAP_TC_QUEUE_ENTRY_NAME "&TRUST_MAP_TC_QUEUE_ENTRY;name">
+    <!ENTITY TRUST_MAP_TC_QUEUE_ENTRY_QUEUE_MAPPING "&TRUST_MAP_TC_QUEUE_ENTRY;queue-mapping/">
+    <!ENTITY TRUST_MAP_TC_QUEUE_ENTRY_QUEUE_MAP_QUEUE_ID "&TRUST_MAP_TC_QUEUE_ENTRY_QUEUE_MAPPING;queueId">
+    <!ENTITY TRUST_MAP_TC_QUEUE_ENTRY_QUEUE_MAP_TC_CFG "&TRUST_MAP_TC_QUEUE_ENTRY_QUEUE_MAPPING;traffic-class-cfg/">
+    <!ENTITY TRUST_MAP_TC_QUEUE_ENTRY_QUEUE_MAP_TC "&TRUST_MAP_TC_QUEUE_ENTRY_QUEUE_MAP_TC_CFG;traffic-class[]">
+    <!ENTITY TRUST_MAP_TC_QUEUE_IFACE "&IFACE_ENTRY;/&QOS-PREF;:qos-cfg/&QOS-PREF;:trust-map-tc-queue">
+    <!ENTITY ETS_MODE_TC_QUEUE_IFACE "&IFACE_ENTRY;/&QOS-PREF;:qos-cfg/&QOS-PREF;:ets-mode">
+    <!ENTITY TRUST_MAP_DOT1P_TC_ENTRY "/trust-map-dot1p-to-tc-entry/trust-map-dot1p/">
+    <!ENTITY TRUST_MAP_DOT1P_TC_ENTRY_NAME "&TRUST_MAP_DOT1P_TC_ENTRY;name">
+    <!ENTITY TRUST_MAP_DOT1P_TC_ENTRY_TC_MAPPING "&TRUST_MAP_DOT1P_TC_ENTRY;tc-mapping/">
+    <!ENTITY TRUST_MAP_DOT1P_TC_ENTRY_TC_MAPPING_TC_VAL "&TRUST_MAP_DOT1P_TC_ENTRY_TC_MAPPING;traffic-class-val">
+    <!ENTITY TRUST_MAP_DOT1P_TC_ENTRY_TC_MAPPING_TC_VAL_DOT1P_CFG "&TRUST_MAP_DOT1P_TC_ENTRY_TC_MAPPING;dot1p-cfg/">
+    <!ENTITY TRUST_MAP_DOT1P_TC_ENTRY_TC_MAP_DOT1P "&TRUST_MAP_DOT1P_TC_ENTRY_TC_MAPPING_TC_VAL_DOT1P_CFG;dot1p-val[]">
+    <!ENTITY TRUST_MAP_DOT1P_TC_IFACE "&IFACE_ENTRY;/&QOS-PREF;:qos-cfg/&QOS-PREF;:trust-map-dot1p">
+    <!ENTITY TRUST_MAP_DSCP_TC_ENTRY "/trust-map-dscp-to-tc-entry/trust-map-dscp/">
+    <!ENTITY TRUST_MAP_DSCP_TC_ENTRY_NAME "&TRUST_MAP_DSCP_TC_ENTRY;name">
+    <!ENTITY TRUST_MAP_DSCP_TC_ENTRY_TC_MAPPING "&TRUST_MAP_DSCP_TC_ENTRY;tc-mapping/">
+    <!ENTITY TRUST_MAP_DSCP_TC_ENTRY_TC_MAPPING_TC_VAL "&TRUST_MAP_DSCP_TC_ENTRY_TC_MAPPING;traffic-class-val">
+    <!ENTITY TRUST_MAP_DSCP_TC_ENTRY_TC_MAPPING_TC_VAL_DSCP_CFG "&TRUST_MAP_DSCP_TC_ENTRY_TC_MAPPING;dscp-cfg/">
+    <!ENTITY TRUST_MAP_DSCP_TC_ENTRY_TC_MAP_DSCP "&TRUST_MAP_DSCP_TC_ENTRY_TC_MAPPING_TC_VAL_DSCP_CFG;dscp-val[]">
+    <!ENTITY TRUST_MAP_DSCP_TC_IFACE "&IFACE_ENTRY;/&QOS-PREF;:qos-cfg/&QOS-PREF;:trust-map-dscp">
+    <!ENTITY POL_CMAP_ACTN_QLMT "&POL_CMAP_ACTN;queue-limit-cfg/">
+    <!ENTITY POL_CMAP_ACTN_QLMT_STATICSHRBUF "&POL_CMAP_ACTN_QLMT;static-shared-buffer">
+    <!ENTITY POL_CMAP_ACTN_QLMT_DYNSHRTHR "&POL_CMAP_ACTN_QLMT;dyn-shr-buffer-thr">
+    <!ENTITY POL_CMAP_ACTN_QLMT_STATICSHRTHR "&POL_CMAP_ACTN_QLMT;stat-shr-buffer-thr">
+    <!ENTITY POL_CMAP_ACTN_QLMT_QLEN "&POL_CMAP_ACTN_QLMT;queue-length">
+
+]>
+<CLISH_MODULE
+    xmlns="http://www.dellemc.com/force10/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xi="http://www.w3.org/2001/XInclude"
+    xsi:schemaLocation="http://www.dellemc.com/force10/XMLSchema
+            http://www.dellemc.com/force10/XMLSchema/clish.xsd"
+    >
+    <!--=======================================================-->
+    <VIEW
+        name="configure-sys-cp-view"
+        prompt="${SYSTEM_NAME}(config-control-plane)# "
+        depth="2"
+        >
+        <NAMESPACE ref="configure-view"
+                help="false"
+                completion="false"/>
+        <COMMAND
+            name="no"
+            help="Negate a command or set its defaults"
+            />
+        <COMMAND
+            name="service-policy"
+            help="Configure service-policy"
+            operation="edit-config"
+            namespace="&SYS_QOS_NS;"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            >
+            <PARAM
+                name="input"
+                help="Assign input policy to control plane"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                yang_name="&CP_QOS_DIR;=input"
+                />
+            <PARAM
+                name="policy-map-name"
+                help="Service policy name (max 32 chars)"
+                ptype="STRING"
+                yang_name="&CP_QOS_POL;=${policy-map-name}"
+                />
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="no service-policy"
+            help="Configure service-policy"
+            operation="edit-config"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            namespace="&SYS_QOS_NS;"
+            >
+            <PARAM
+                name="input"
+                help="Assign input policy to control plane"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                yang_name="&CP_QOS_DIR;"
+                />
+            <PARAM
+                name="policy-map-name"
+                help="Service policy name (max 32 chars)"
+                ptype="STRING"
+                operation="edit-config"
+                sub_oper_yang="remove:pol-direction,remove:service-policy"
+                yang_name="&CP_QOS_POL;"
+                />
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+    </VIEW>
+    <VIEW
+        name="configure-sys-cos-view"
+        prompt="${SYSTEM_NAME}(config-sys-qos)# "
+        depth="2"
+        >
+        <NAMESPACE ref="configure-view"
+                help="false"
+                completion="false"/>
+        <!-- show configuration candidate -->
+        <COMMAND
+            name="show"
+            help="show configuration"
+            />
+        <COMMAND
+            name="show configuration candidate"
+            help="Current candidate configuration"
+            yang_filter="Filter_Type:SUBTREE;Filter_Conditions:&SYS_QOS;;Filter_Namespace:&SYS_QOS_NS;"
+            template="show_config_sys_qos.xsl"
+            add_config_entry="false"
+            >
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+        <!-- show configuration -->
+        <COMMAND
+            name="show configuration"
+            help="Current configuration (default = running)"
+            yang_filter="Filter_Type:SUBTREE;Filter_Conditions:&SYS_QOS;;Filter_Namespace:&SYS_QOS_NS;"
+            add_config_entry="false"
+            template="show_config_sys_qos.xsl"
+            >
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="no"
+            help="Negate a command or set its defaults"
+            />
+        <COMMAND
+            name="service-policy"
+            help="Configure service-policy"
+            operation="edit-config"
+            namespace="&SYS_QOS_NS;"
+            yang_key="&SYS_QOS_POL_DIR;"
+            >
+            <PARAM
+                name="iomode"
+                help="Input or output mode to use"
+                mode="switch"
+                ptype="SUBCOMMAND"
+                >
+                <MACRO name="policy_direction_and_type" arg="&SYS_QOS_POL_TYPE;,QoS_INPUT_TYPES,input,&SYS_QOS_POL_DIR;"/>
+                <MACRO name="policy_direction_and_type" arg="&SYS_QOS_POL_TYPE;,QoS_OUTPUT_TYPES,output,&SYS_QOS_POL_DIR;"/>
+                </PARAM>
+                <PARAM
+                    name="policy-map-name"
+                    help="Service policy name (max 32 chars)"
+                    ptype="STRING"
+                    yang_name="&SYS_QOS_POL_NAME;=${policy-map-name}"
+                    >
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="service-policy type"
+            help="Configure service-policy type application "
+            operation="edit-config"
+            namespace="&SYS_QOS_NS;"
+            yang_key="&SYS_QOS;app-policy/"
+            >
+            <PARAM
+                name="application"
+                help="Application type service-policy"
+                mode="subcommand"
+                ptype="SUBCOMMAND"
+                yang_name="&SYS_QOS;app-policy/policy-type=${application}"
+                >
+                <PARAM
+                    name="policy-map-name"
+                    help="Service policy name (max 32 chars)"
+                    ptype="STRING"
+                    yang_name="&SYS_QOS;app-policy/pol-name=${policy-map-name}"
+                   />
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="no service-policy"
+            help="Configure service-policy"
+            operation="edit-config"
+            namespace="&SYS_QOS_NS;"
+            >
+            <PARAM
+                name="iomode"
+                help="Input or output mode to use"
+                mode="switch"
+                ptype="SUBCOMMAND"
+                >
+                <MACRO name="policy_direction_and_type" arg="&SYS_QOS_POL_TYPE;,QoS_INPUT_TYPES,input,&SYS_QOS_POL_DIR;"/>
+                <MACRO name="policy_direction_and_type" arg="&SYS_QOS_POL_TYPE;,QoS_OUTPUT_TYPES,output,&SYS_QOS_POL_DIR;"/>
+                </PARAM>
+                <PARAM
+                    name="policy-map-name"
+                    help="Service policy name (max 32 chars)"
+                    ptype="STRING"
+                    operation="edit-config"
+                    sub_oper_yang="remove:spolicy"
+                    yang_name="&SYS_QOS_POL_NAME;=${policy-map-name}"
+                >
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="no service-policy type"
+            help="Configure service-policy type application"
+            operation="edit-config"
+            namespace="&SYS_QOS_NS;"
+            >
+            <PARAM
+                name="application"
+                help="Application type service-policy"
+                mode="subcommand"
+                ptype="SUBCOMMAND"
+                yang_name="&SYS_QOS;app-policy/policy-type=${application}"
+                >
+                </PARAM>
+                <PARAM
+                    name="policy-map-name"
+                    help="Service policy name (max 32 chars)"
+                    ptype="STRING"
+                    operation="edit-config"
+                    sub_oper_yang="remove:app-policy"
+                    yang_name="&SYS_QOS;/app-policy/pol-name=${policy-map-name}"
+                >
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="no ets"
+            help="Apply ETS mode on system"
+            operation="edit-config"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            sub_oper_yang="remove:ets-mode"
+            yang_name="&SYS_QOS_ETS_MODE;"
+            namespace="&SYS_QOS_NS;"
+            >
+
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="ets"
+            help="Apply ETS mode on system"
+            operation="edit-config"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            namespace="&SYS_QOS_NS;"
+            >
+            <PARAM
+               name="mode"
+               help="ETS modes"
+               mode="subcommand"
+               ptype="SUBCOMMAND"
+               >
+               <PARAM
+                  name="on"
+                  help="ETS mode on"
+                  ptype="SUBCOMMAND"
+                  mode="subcommand"
+                  yang_name="&SYS_QOS_ETS_MODE;=on"
+                  />
+           </PARAM>
+
+           <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+
+        <COMMAND
+            name="qos-map traffic-class"
+            help="Apply traffic-class to queue map"
+            operation="edit-config"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            namespace="&SYS_QOS_NS;"
+            >
+            <PARAM
+                name="queue-name"
+                help="Queue map name (max 32 chars)"
+                ptype="STRING"
+                yang_name="&SYS_QOS_TRUST_MAP_TC_QUEUE;=${queue-name}"
+                />
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="no qos-map traffic-class"
+            help="Apply traffic-class to queue map"
+            operation="edit-config"
+            namespace="&SYS_QOS_NS;"
+            ptype="SUBCOMMAND"
+            sub_oper_yang="remove:trust-map-tc-queue"
+            yang_name="&SYS_QOS_TRUST_MAP_TC_QUEUE;"
+            >
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+
+        <COMMAND
+            name="qos-map"
+            help="Apply QoS map"
+            operation="edit-config"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            namespace="&SYS_QOS_NS;"
+            add_config_entry="false"
+            >
+        </COMMAND>
+
+         <COMMAND
+            name="no qos-map"
+            help="Apply QoS map"
+            operation="edit-config"
+            namespace="&SYS_QOS_NS;"
+            ptype="SUBCOMMAND"
+            sub_oper_yang="remove:trust-map-tc-queue"
+            yang_name="&SYS_QOS_TRUST_MAP_TC_QUEUE;"
+            >
+        </COMMAND>
+        <COMMAND
+            name="trust-map dot1p"
+            help="Apply DOT1P priority to traffic-class map"
+            operation="edit-config"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            namespace="&SYS_QOS_NS;"
+            >
+            <PARAM
+                name="map-name"
+                help="Dot1p priority map name (max 32 chars)"
+                ptype="STRING"
+                yang_name="&SYS_QOS_TRUST_MAP_DOT1P_TC;=${map-name}"
+                />
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="no trust-map dot1p"
+            help="Apply DOT1P priority to traffic-class map"
+            operation="edit-config"
+            namespace="&SYS_QOS_NS;"
+            ptype="SUBCOMMAND"
+            sub_oper_yang="remove:trust-map-dot1p"
+            yang_name="&SYS_QOS_TRUST_MAP_DOT1P_TC;"
+            >
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+
+        <COMMAND
+            name="trust-map dscp"
+            help="Apply DSCP priority to traffic-class map"
+            operation="edit-config"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            namespace="&SYS_QOS_NS;"
+            >
+            <PARAM
+                name="map-name"
+                help="DSCP priority map name (max 32 chars)"
+                ptype="STRING"
+                yang_name="&SYS_QOS_TRUST_MAP_DSCP_TC;=${map-name}"
+                />
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="no trust-map dscp"
+            help="Apply DSCP priority to traffic-class map"
+            operation="edit-config"
+            namespace="&SYS_QOS_NS;"
+            ptype="SUBCOMMAND"
+            sub_oper_yang="remove:trust-map-dscp"
+            yang_name="&SYS_QOS_TRUST_MAP_DSCP_TC;"
+            >
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+
+        <COMMAND
+            name="trust-map"
+            help="Apply QoS trust map"
+            operation="edit-config"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            add_config_entry="false"
+            namespace="&SYS_QOS_NS;"
+            >
+        </COMMAND>
+
+         <COMMAND
+            name="no trust-map"
+            help="Apply QoS trust map"
+            operation="edit-config"
+            namespace="&SYS_QOS_NS;"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            >
+        </COMMAND>
+        <COMMAND
+            name="pfc-shared-buffer-size"
+            help="Configure shared buffers for PFC flows (size in KB)"
+            operation="edit-config"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            namespace="&SYS_QOS_NS;"
+            >
+            <PARAM
+                name="buff-size"
+                help="Shared buffer size (size in KB)"
+                ptype="RANGE_0_16384"
+                yang_name="&SYS_QOS_PFC_SHR_BUFF;=${buff-size}"
+                />
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="no pfc-shared-buffer-size"
+            help="Configure shared buffers for PFC flows (size in KB)"
+            operation="edit-config"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            sub_oper_yang="remove:pause-shared-buffer-size"
+            yang_name="&SYS_QOS_PFC_SHR_BUFF;"
+            namespace="&SYS_QOS_NS;"
+            >
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+    </VIEW>
+    <VIEW
+        name="configure-if-view"
+        >
+        <COMMAND
+            name="service-policy"
+            help="Configure service-policy"
+            operation="edit-config"
+            namespace="&QOS_INTF_NS;"
+            yang_key="&POL_IFACE_DIR;,&POL_IFACE_TYPE;"
+            >
+            <PARAM
+                name="iomode"
+                help="Input or output mode to use"
+                mode="switch"
+                ptype="SUBCOMMAND"
+                yang_name="&POL_IFACE_NAME;=${ifacename}"
+                >
+                <PARAM
+                    name="input"
+                    help="Assign input policy"
+                    ptype="SUBCOMMAND"
+                    yang_name="&POL_IFACE_DIR;=input"
+                    mode="subcommand"
+                    >
+                    <PARAM
+                        name="type"
+                        help="Service policy type"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        >
+                        <PARAM
+                            name="typename"
+                            yang_name="&POL_IFACE_TYPE;=${typename}"
+                            ptype="QoS_INPUT_TYPES"
+                            help="Policy map types"
+                            />
+                    </PARAM>
+                </PARAM>
+                <PARAM
+                    name="output"
+                    help="Assign output policy"
+                    ptype="SUBCOMMAND"
+                    yang_name="&POL_IFACE_DIR;=output"
+                    mode="subcommand"
+                    >
+                    <PARAM
+                        name="type"
+                        help="Service policy type"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        >
+                        <PARAM
+                            name="typename"
+                            yang_name="&POL_IFACE_TYPE;=${typename}"
+                            ptype="QoS_OUTPUT_TYPES"
+                            help="Policy map types"
+                            />
+                    </PARAM>
+                </PARAM>
+            </PARAM>
+                <PARAM
+                    name="policy-map-name"
+                    help="Service policy name (max 32 chars)"
+                    ptype="STRING"
+                    yang_name="&POL_IFACE_PNAME;=${policy-map-name}"
+                    >
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="no service-policy"
+            help="Configure service-policy"
+            operation="edit-config"
+            namespace="&QOS_INTF_NS;"
+            >
+            <PARAM
+                name="iomode"
+                help="Input or output mode to use"
+                mode="switch"
+                ptype="SUBCOMMAND"
+                yang_name="&POL_IFACE_NAME;=${ifacename}"
+                >
+
+                <MACRO name="policy_direction_and_type" arg="&POL_IFACE_TYPE;,QoS_INPUT_TYPES,input,&POL_IFACE_DIR;"/>
+                <MACRO name="policy_direction_and_type" arg="&POL_IFACE_TYPE;,QoS_OUTPUT_TYPES,output,&POL_IFACE_DIR;"/>
+                </PARAM>
+                <PARAM
+                    name="policy-map-name"
+                    help="Service policy name (max 32 chars)"
+                    ptype="STRING"
+                    operation="edit-config"
+                    sub_oper_yang="remove:policy"
+                    yang_name="&POL_IFACE_PNAME;=${policy-map-name}"
+                    >
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="no ets"
+            help="Apply ETS mode on the interface"
+            operation="edit-config"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            sub_oper_yang="remove:ets-mode"
+            yang_name="&POL_IFACE_NAME;=${ifacename},&ETS_MODE_TC_QUEUE_IFACE;"
+            namespace="&QOS_INTF_NS;"
+            >
+
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="ets"
+            help="Apply ETS mode on the interface"
+            operation="edit-config"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            namespace="&QOS_INTF_NS;"
+            >
+             <PARAM
+               name="mode"
+               help="ETS modes"
+               mode="subcommand"
+               ptype="SUBCOMMAND"
+               >
+               <PARAM
+                  name="on"
+                  help="ETS mode on"
+                  ptype="SUBCOMMAND"
+                  mode="subcommand"
+                  yang_name="&POL_IFACE_NAME;=${ifacename},&ETS_MODE_TC_QUEUE_IFACE;=on"
+                  />
+              </PARAM>
+
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+
+        <COMMAND
+            name="qos-map traffic-class"
+            help="Apply traffic-class to queue map"
+            operation="edit-config"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            yang_name="&POL_IFACE_NAME;=${ifacename}"
+            namespace="&QOS_INTF_NS;"
+            >
+            <PARAM
+                name="queue-name"
+                help="Queue map name (max 32 chars)"
+                ptype="STRING"
+                yang_name="&TRUST_MAP_TC_QUEUE_IFACE;=${queue-name}"
+                />
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="no qos-map traffic-class"
+            help="Apply traffic-class to queue map"
+            operation="edit-config"
+            namespace="&QOS_INTF_NS;"
+            ptype="SUBCOMMAND"
+            sub_oper_yang="remove:trust-map-tc-queue"
+            yang_name="&POL_IFACE_NAME;=${ifacename},&TRUST_MAP_TC_QUEUE_IFACE;=${queue-name}"
+            >
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="qos-map"
+            help="Apply QoS map"
+            operation="edit-config"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            yang_name="&POL_IFACE_NAME;=${ifacename}"
+            namespace="&QOS_INTF_NS;"
+            add_config_entry="false"
+            >
+        </COMMAND>
+        <COMMAND
+            name="no qos-map"
+            help="Apply QoS map"
+            operation="edit-config"
+            namespace="&SYS_QOS_NS;"
+            ptype="SUBCOMMAND"
+            sub_oper_yang="remove:trust-map-tc-queue"
+            yang_name="&SYS_QOS_TRUST_MAP_TC_QUEUE;"
+            >
+        </COMMAND>
+
+        <COMMAND
+            name="trust-map dot1p"
+            help="Apply DOT1P priority to traffic-class map"
+            operation="edit-config"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            yang_name="&POL_IFACE_NAME;=${ifacename}"
+            namespace="&QOS_INTF_NS;"
+            >
+            <PARAM
+                name="prio-name"
+                help="DOT1P priority map name (max 32 chars)"
+                ptype="STRING"
+                yang_name="&TRUST_MAP_DOT1P_TC_IFACE;=${prio-name}"
+                />
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="no trust-map dot1p"
+            help="Apply DOT1P priority to traffic-class map"
+            operation="edit-config"
+            namespace="&QOS_INTF_NS;"
+            ptype="SUBCOMMAND"
+            sub_oper_yang="remove:trust-map-dot1p"
+            yang_name="&POL_IFACE_NAME;=${ifacename},&TRUST_MAP_DOT1P_TC_IFACE;=${queue-name}"
+            >
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+
+        <COMMAND
+            name="trust-map dscp"
+            help="Apply DSCP priority to traffic-class map"
+            operation="edit-config"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            yang_name="&POL_IFACE_NAME;=${ifacename}"
+            namespace="&QOS_INTF_NS;"
+            >
+            <PARAM
+                name="prio-name"
+                help="DSCP priority map name (max 32 chars)"
+                ptype="STRING"
+                yang_name="&TRUST_MAP_DSCP_TC_IFACE;=${prio-name}"
+                />
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="no trust-map dscp"
+            help="Apply DSCP priority to traffic-class map"
+            operation="edit-config"
+            namespace="&QOS_INTF_NS;"
+            ptype="SUBCOMMAND"
+            sub_oper_yang="remove:trust-map-dscp"
+            yang_name="&POL_IFACE_NAME;=${ifacename},&TRUST_MAP_DSCP_TC_IFACE;=${queue-name}"
+            >
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+
+        <COMMAND
+            name="trust-map"
+            help="Apply QoS trust map"
+            operation="edit-config"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            add_config_entry="false"
+            yang_name="&POL_IFACE_NAME;=${ifacename}"
+            namespace="&QOS_INTF_NS;"
+            >
+        </COMMAND>
+        <COMMAND
+            name="no trust-map"
+            help="Apply QoS trust map"
+            operation="edit-config"
+            ptype="SUBCOMMAND"
+            namespace="&QOS_INTF_NS;"
+            yang_name="&POL_IFACE_NAME;=${ifacename}"
+            >
+        </COMMAND>
+    </VIEW>
+
+    <VIEW
+        name="configure-vlan-view"
+        >
+        <COMMAND
+            name="service-policy"
+            help="Configure service-policy"
+            operation="edit-config"
+            namespace="&QOS_INTF_NS;"
+            pfeature="NOT_SUPPORTED"
+            yang_key="&VLAN_DIR;,&VLAN_TYPE;"
+            >
+            <PARAM
+                name="iomode"
+                help="Input or output mode to use"
+                mode="switch"
+                ptype="SUBCOMMAND"
+                yang_name="&VLAN_NAME;=vlan${vlan_id}"
+                >
+                <PARAM
+                    name="input"
+                    help="Assign input policy"
+                    ptype="SUBCOMMAND"
+                    yang_name="&VLAN_DIR;=input"
+                    mode="subcommand"
+                    >
+                    <PARAM
+                        name="type"
+                        help="Service policy type"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        >
+                        <PARAM
+                            name="typename"
+                            yang_name="&VLAN_TYPE;=${typename}"
+                            ptype="QoS_INPUT_TYPES"
+                            help="Policy map types"
+                            />
+                    </PARAM>
+                </PARAM>
+                <PARAM
+                    name="output"
+                    help="Assign input policy"
+                    ptype="SUBCOMMAND"
+                    yang_name="&VLAN_DIR;=output"
+                    mode="subcommand"
+                    >
+                    <PARAM
+                        name="type"
+                        help="Service policy type"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        >
+                        <PARAM
+                            name="typename"
+                            yang_name="&VLAN_TYPE;=${typename}"
+                            ptype="QoS_OUTPUT_TYPES"
+                            help="Policy map types"
+                            />
+                    </PARAM>
+                </PARAM>
+            </PARAM>
+                <PARAM
+                    name="policy-map-name"
+                    help="Service policy name (max 32 chars)"
+                    ptype="STRING"
+                    yang_name="&VLAN_PNAME;=${policy-map-name}"
+                    >
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="no service-policy"
+            help="Configure service-policy"
+            operation="edit-config"
+            pfeature="NOT_SUPPORTED"
+            namespace="&QOS_INTF_NS;"
+            >
+            <PARAM
+                name="iomode"
+                help="Input or output mode to use"
+                mode="switch"
+                ptype="SUBCOMMAND"
+                yang_name="&VLAN_NAME;=vlan${vlan_id}"
+                >
+                <MACRO name="policy_direction_and_type" arg="&VLAN_TYPE;,QoS_INPUT_TYPES,input,&VLAN_DIR;"/>
+                <MACRO name="policy_direction_and_type" arg="&VLAN_TYPE;,QoS_OUTPUT_TYPES,output,&VLAN_DIR;"/>
+                </PARAM>
+                <PARAM
+                    name="policy-map-name"
+                    help="Service policy name (max 32 chars)"
+                    ptype="STRING"
+                    operation="edit-config"
+                    sub_oper_yang="remove:policy"
+                    yang_name="&VLAN_PNAME;=${policy-map-name}"
+                    >
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+    </VIEW>
+    <VIEW
+        name="configure-lag-view"
+        >
+        <COMMAND
+            name="service-policy"
+            help="Configure service-policy"
+            operation="edit-config"
+            namespace="&QOS_INTF_NS;"
+            pfeature="NOT_SUPPORTED"
+            yang_key="&LAG_DIR;,&LAG_TYPE;"
+            >
+            <PARAM
+                name="iomode"
+                help="Input or output mode to use"
+                mode="switch"
+                ptype="SUBCOMMAND"
+                yang_name="&LAG_NAME;=${port-channeliface}"
+                >
+                <PARAM
+                    name="input"
+                    help="Assign input policy"
+                    ptype="SUBCOMMAND"
+                    yang_name="&LAG_DIR;=input"
+                    mode="subcommand"
+                    >
+                    <PARAM
+                        name="type"
+                        help="Service policy type"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        >
+                        <PARAM
+                            name="typename"
+                            yang_name="&LAG_TYPE;=${typename}"
+                            ptype="QoS_INPUT_TYPES"
+                            help="Policy map types"
+                            />
+                    </PARAM>
+                </PARAM>
+                <PARAM
+                    name="output"
+                    help="Assign input policy"
+                    ptype="SUBCOMMAND"
+                    yang_name="&LAG_DIR;=output"
+                    mode="subcommand"
+                    >
+                    <PARAM
+                        name="type"
+                        help="Service policy type"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        >
+                        <PARAM
+                            name="typename"
+                            yang_name="&LAG_TYPE;=${typename}"
+                            ptype="QoS_OUTPUT_TYPES"
+                            help="Policy map types"
+                            />
+                    </PARAM>
+                </PARAM>
+            </PARAM>
+                <PARAM
+                    name="policy-map-name"
+                    help="Service policy name (max 32 chars)"
+                    ptype="STRING"
+                    yang_name="&LAG_PNAME;=${policy-map-name}"
+                    >
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="no service-policy"
+            help="Configure service-policy"
+            pfeature="NOT_SUPPORTED"
+            operation="edit-config"
+            namespace="&QOS_INTF_NS;"
+            >
+            <PARAM
+                name="iomode"
+                help="Input or output mode to use"
+                mode="switch"
+                ptype="SUBCOMMAND"
+                yang_name="&LAG_NAME;=${port-channeliface}"
+                >
+                <MACRO name="policy_direction_and_type" arg="&LAG_TYPE;,QoS_INPUT_TYPES,input,&LAG_DIR;"/>
+                <MACRO name="policy_direction_and_type" arg="&LAG_TYPE;,QoS_OUTPUT_TYPES,output,&LAG_DIR;"/>
+                </PARAM>
+                <PARAM
+                    name="policy-map-name"
+                    help="Service policy name (max 32 chars)"
+                    ptype="STRING"
+                    operation="edit-config"
+                    sub_oper_yang="remove:policy"
+                    yang_name="&LAG_PNAME;=${policy-map-name}"
+                    >
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+    </VIEW>
+    <VIEW
+        name="enable-view"
+        >
+       <!--show candidate-configuration policy-map-->
+    <COMMAND
+        name="show candidate-configuration policy-map"
+        help="Current candidate policy-map configuration"
+        yang_filter="Filter_Type:SUBTREE;Filter_Conditions:&POL_ENTRY;;Filter_Namespace:&NAME_SPACE;"
+        db_mode="configure-cmap-qos-view,configure-pmap-qos-view,configure-sys-cp-view"
+        template="show_config_policy_map.xsl"
+        >
+        <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+    <!--show running-configuration policy-map -->
+    <COMMAND
+        name="show running-configuration policy-map"
+        help="Current operating policy-map configuration"
+        yang_filter="Filter_Type:SUBTREE;Filter_Conditions:&POL_ENTRY;;Filter_Namespace:&NAME_SPACE;"
+        db_mode="configure-cmap-qos-view,configure-pmap-qos-view,configure-sys-cp-view"
+        template="show_config_policy_map.xsl"
+        >
+        <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+    <!--show candidate-configuration qos-map-->
+    <COMMAND
+        name="show candidate-configuration qos-map"
+        help="Current candidate qos-map configuration"
+        yang_filter="Filter_Type:SUBTREE;Filter_Conditions:/trust-map-tc-queue-entry;Filter_Namespace:&QOS_NS;"
+        db_mode="configure-cmap-qos-view,configure-pmap-qos-view,configure-sys-cp-view"
+        template="show_config_tc_queue_map.xsl"
+        >
+        <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+    <!--show running-configuration qos-map -->
+    <COMMAND
+        name="show running-configuration qos-map"
+        help="Current operating qos-map configuration"
+        yang_filter="Filter_Type:SUBTREE;Filter_Conditions:/trust-map-tc-queue-entry;Filter_Namespace:&QOS_NS;"
+        db_mode="configure-cmap-qos-view,configure-pmap-qos-view,configure-sys-cp-view"
+        template="show_config_tc_queue_map.xsl"
+        >
+        <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+    <!--show candidate-configuration trust-map-->
+    <COMMAND
+        name="show candidate-configuration trust-map"
+        help="Current candidate trust-map configuration"
+        yang_filter="Filter_Namespace:&QOS_NS;;Filter_Type:SUBTREE;Filter_Conditions:&TRUST_MAP_DOT1P_TC_ENTRY;|Filter_Namespace:&QOS_NS;;Filter_Type:SUBTREE;Filter_Conditions:&TRUST_MAP_DSCP_TC_ENTRY;"
+        db_mode="configure-cmap-qos-view,configure-pmap-qos-view,configure-sys-cp-view"
+        template="show_config_trust_maps.xsl"
+        >
+        <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+    <!--show running-configuration trust-map -->
+    <COMMAND
+        name="show running-configuration trust-map"
+        help="Current operating trust-map configuration"
+        yang_filter="Filter_Namespace:&QOS_NS;;Filter_Type:SUBTREE;Filter_Conditions:&TRUST_MAP_DOT1P_TC_ENTRY;|Filter_Namespace:&QOS_NS;;Filter_Type:SUBTREE;Filter_Conditions:&TRUST_MAP_DSCP_TC_ENTRY;"
+        db_mode="configure-cmap-qos-view,configure-pmap-qos-view,configure-sys-cp-view"
+        template="show_config_trust_maps.xsl"
+        >
+        <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+    <COMMAND
+        name="show policy-map"
+        help="Show policy-map information"
+        operation="get"
+        namespace="&NAME_SPACE;"
+        yang_filter="Filter_Namespace:&NAME_SPACE;;Filter_Type:SUBTREE;Filter_Conditions:&POL_ENTRY;"
+            template="show_policy_map.xsl"
+            >
+            <PARAM
+                name="policy-map-name"
+                help="Policy map name (max 32 chars)"
+                optional="true"
+                ptype="STRING"
+                yang_filter="Filter_Namespace:&NAME_SPACE;;Filter_Type:SUBTREE;Filter_Conditions:&POL_ENTRY_NAME;${policy-map-name}"
+                />
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="show policy-map type"
+            help="Show policy-map information"
+            operation="get"
+            namespace="&NAME_SPACE;"
+            template="show_policy_map.xsl"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            >
+            <PARAM
+                name="ptype-name"
+                help="Policy type to use"
+                mode="switch"
+                ptype="SUBCOMMAND"
+                yang_filter="Filter_Namespace:&NAME_SPACE;;Filter_Type:SUBTREE;Filter_Conditions:&POL_ENTRY;,&POL_ENTRY_TYPE;${ptype-name}"
+                >
+                <MACRO name="nqos_qos_que_options"/>
+            </PARAM>
+            <PARAM
+                name="policy-map-name"
+                help="Policy map name (max 32 chars)"
+                optional="true"
+                order="true"
+                ptype="STRING"
+                yang_filter="Filter_Namespace:&NAME_SPACE;;Filter_Type:SUBTREE;Filter_Conditions:&POL_ENTRY;,&POL_ENTRY_NAME;${policy-map-name},&POL_ENTRY_TYPE;${ptype-name}"
+                />
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="show policy-map type control-plane"
+            help="Show policy-map control-plane information"
+            operation="get"
+            namespace="&NAME_SPACE;"
+            template="show_policy_map.xsl"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            yang_filter="Filter_Namespace:&NAME_SPACE;;Filter_Type:SUBTREE;Filter_Conditions:&POL_ENTRY;,&POL_ENTRY_TYPE;control-plane"
+            >
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="show qos control-plane"
+            help="Show QoS control-plane information"
+            operation="get"
+            namespace="&SYS_QOS_NS;"
+            template="show_policy_map_cp.xsl"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            yang_filter="Filter_Namespace:&SYS_QOS_NS;;Filter_Type:SUBTREE;Filter_Conditions:&CP_QOS_POL;,&CP_QOS_DIR;"
+            >
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="show qos system"
+            help="Show QoS system information"
+            operation="get"
+            namespace="&SYS_QOS_NS;"
+            template="show_policy_map_system.xsl"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            yang_filter="Filter_Namespace:&SYS_QOS_NS;;Filter_Type:SUBTREE;Filter_Conditions:&SYS_QOS_POL;,&SYS_QOS_TRUST_MAP_DOT1P_TC;,&SYS_QOS_TRUST_MAP_DSCP_TC;,&SYS_QOS_TRUST_MAP_TC_QUEUE;,&SYS_QOS_ETS_MODE;"
+            >
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="show qos system ingress"
+            help="System ingress buffer information"
+            operation="get"
+            namespace="&SYS_QOS_NS;"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            yang_filter="Filter_Namespace:&SYS_QOS_NS;;Filter_Type:SUBTREE;Filter_Conditions:/system-ingress-buffer-pool/"
+            >
+            <PARAM
+                name="buffer"
+                help="buffer information"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                template="show_system_ingress_buffer.xsl"
+                >
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="show qos system egress"
+            help="System egress buffer information"
+            operation="get"
+            namespace="&SYS_QOS_NS;"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            yang_filter="Filter_Namespace:&SYS_QOS_NS;;Filter_Type:SUBTREE;Filter_Conditions:/system-egress-buffer-pool/"
+            >
+            <PARAM
+                name="buffer"
+                help="buffer information"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                template="show_system_egress_buffer.xsl"
+                >
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="show qos maps"
+            help="Show QoS mapping information"
+            operation="get"
+            namespace="&SYS_QOS_NS;"
+            template="show_qos_map.xsl"
+            yang_filter="Filter_Namespace:&SYS_QOS_NS;;Filter_Type:SUBTREE;Filter_Conditions:&TRUST_MAP_TC_QUEUE_ENTRY;|Filter_Namespace:&SYS_QOS_NS;;Filter_Type:SUBTREE;Filter_Conditions:&TRUST_MAP_DOT1P_TC_ENTRY;|Filter_Namespace:&SYS_QOS_NS;;Filter_Type:SUBTREE;Filter_Conditions:&TRUST_MAP_DSCP_TC_ENTRY;|Filter_Namespace:&SYS_QOS_NS;;Filter_Type:SUBTREE;Filter_Conditions:&DEF_TRUST_MAP_ENTRY;|Filter_Namespace:&SYS_QOS_NS;;Filter_Type:SUBTREE;Filter_Conditions:&DEF_TRUST_MAP_ENTRY_QUEUE_MAPPING;"
+            >
+            <PARAM
+                name="qname"
+                help="Qos map name (max 32 chars)"
+                optional="true"
+                ptype="STRING"
+                yang_filter="Filter_Namespace:&SYS_QOS_NS;;Filter_Type:SUBTREE;Filter_Conditions:&TRUST_MAP_TC_QUEUE_ENTRY_NAME;${name}|Filter_Namespace:&SYS_QOS_NS;;Filter_Type:SUBTREE;Filter_Conditions:&TRUST_MAP_DOT1P_TC_ENTRY;${qname}|Filter_Namespace:&SYS_QOS_NS;;Filter_Type:SUBTREE;Filter_Conditions:&TRUST_MAP_DSCP_TC_ENTRY;${qname}"/>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="show qos maps type"
+            help="Show qos-map information"
+            operation="get"
+            namespace="&SYS_QOS_NS;"
+            template="show_qos_map.xsl"
+            >
+            <PARAM
+                name="subtype"
+                help="Sub type to use"
+                mode="switch"
+                ptype="SUBCOMMAND"
+                >
+                <MACRO name="qos_maps_options"/>
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+    </VIEW>
+    <VIEW
+        name="configure-view"
+        >
+        <COMMAND
+            name="policy-map"
+            help="Configure policy map"
+            operation="edit-config"
+            namespace="&NAME_SPACE;"
+            yang_name="&POL_ENTRY_TYPE;qos"
+            view="configure-pmap-qos-view"
+            viewid="pname=${policy-map-name};ptypes=qos;prmt=-qos"
+            add_config_entry="false"
+            >
+            <PARAM
+                name="type"
+                help="Type of policy map"
+                optional="true"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                >
+                <PARAM
+                    name="typename"
+                    help="Policy map types"
+                    ptype="QoS_ALL_TYPES"
+                    refresh_yang_name="true"
+                    view="configure-pmap-qos-view"
+                    viewid="pname=${policy-map-name};ptypes=${typename};prmt=-${typename}"
+                    yang_name="&POL_ENTRY_TYPE;${typename}"
+                    >
+                    </PARAM>
+            </PARAM>
+            <PARAM
+                name="policy-map-name"
+                help="Policy map name (max 32 chars)"
+                ptype="QoS_STRING"
+                yang_name="&POL_ENTRY_NAME;${policy-map-name}"
+                />
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="system"
+            help="System configuration"
+            ptype="STRING"
+            view="configure-sys-cos-view"
+            >
+            <PARAM
+                name="qos"
+                help="System QoS configuration"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                />
+        </COMMAND>
+        <COMMAND
+            name="control-plane"
+            help="Control-plane configuration"
+            ptype="STRING"
+            view="configure-sys-cp-view"
+            />
+        <COMMAND
+            name="qos-rate-adjust"
+            ptype="STRING"
+            operation="edit-config"
+            help="Configure the number of bytes added to each frame for rate policing/shaping"
+            pfeature="NOT_SUPPORTED"
+            >
+            <PARAM
+                name="rate-adjust-value"
+                help="Number of bytes"
+                ptype="QOS_RATE_ADJ"
+                namespace="&SYS_QOS_NS;"
+                yang_name="&QOS_RATE_ADJUST;=${rate-adjust-value}"
+                />
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="no policy-map"
+            help="Configure policy map"
+            operation="edit-config"
+            sub_oper_yang="remove:policy-entry"
+            namespace="&NAME_SPACE;"
+            viewid="pname=${policy-map-name};ptypes=${typename};prmt=-qos"
+            >
+            <PARAM
+                name="type"
+                help="Type of policy map"
+                optional="true"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                >
+                <PARAM
+                    name="typename"
+                    help="Policy map types"
+                    ptype="QoS_ALL_TYPES"
+                    viewid="pname=${policy-map-name};ptypes=${typename};prmt=-${typename}"
+                    yang_name="&POL_ENTRY_TYPE;${typename}"
+                    >
+                    </PARAM>
+            </PARAM>
+            <PARAM
+                name="policy-map-name"
+                help="Policy map name (max 32 chars)"
+                ptype="QoS_STRING"
+                yang_name="&POL_ENTRY_NAME;${policy-map-name}"
+                />
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="no qos-rate-adjust"
+            operation="edit-config"
+            help="Configure the number of bytes added to each frame for rate policing/shaping"
+            sub_oper_yang="remove:rate-adjust"
+            namespace="&SYS_QOS_NS;"
+            yang_name="&QOS_RATE_ADJUST;"
+            pfeature="NOT_SUPPORTED"
+            >
+            <PARAM
+                name="rate-adjust-value"
+                help="Number of bytes"
+                ptype="QOS_RATE_ADJ"
+                optional="true"
+                />
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="qos-map"
+            help="Configure QoS map"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            operation="edit-config"
+            namespace="&SYS_QOS_NS;"
+            view="configure-qos-map-view"
+            viewid="qname=${queue-map-name}"
+            >
+          <PARAM
+            name="traffic-class"
+            help="Configure traffic-class to queue map"
+            operation="edit-config"
+            namespace="&SYS_QOS_NS;"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            >
+            <PARAM
+                name="queue-map-name"
+                help="Queue map name (max 32 chars)"
+                ptype="STRING"
+                yang_key="&TRUST_MAP_TC_QUEUE_ENTRY_NAME;"
+                yang_name="&TRUST_MAP_TC_QUEUE_ENTRY_NAME;=${queue-map-name}"
+                />
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                ></ACTION>
+         </COMMAND>
+         <COMMAND
+            name="no qos-map"
+            help="Configure QoS map"
+            operation="edit-config"
+            sub_oper_yang="remove:trust-map-tc-queue"
+            namespace="&SYS_QOS_NS;"
+            viewid="qname=${queue-map-name}"
+            >
+          <PARAM
+            name="traffic-class"
+            help="Configure traffic-class to queue map"
+            operation="edit-config"
+            namespace="&SYS_QOS_NS;"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            >
+            <PARAM
+                name="queue-map-name"
+                help="Queue map name (max 32 chars)"
+                ptype="STRING"
+                operation="edit-config"
+                yang_name="&TRUST_MAP_TC_QUEUE_ENTRY_NAME;=${queue-map-name}"
+                />
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                ></ACTION>
+        </COMMAND>
+
+        <COMMAND
+            name="trust dot1p-map"
+            help="Configure dot1p trust"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            operation="edit-config"
+            namespace="&SYS_QOS_NS;"
+            view="configure-tmap-dot1p-qos-view"
+            viewid="qname=${dot1p-map-name}"
+            >
+            <PARAM
+                name="dot1p-map-name"
+                help="DOT1p map name (max 32 chars)"
+                ptype="STRING"
+                yang_key="&TRUST_MAP_DOT1P_TC_ENTRY_NAME;"
+                yang_name="&TRUST_MAP_DOT1P_TC_ENTRY_NAME;=${dot1p-map-name}"
+                />
+            <ACTION
+                builtin="clish_extn"
+                ></ACTION>
+         </COMMAND>
+         <COMMAND
+            name="no trust dot1p-map"
+            help="Configure dot1p trust"
+            operation="edit-config"
+            sub_oper_yang="remove:trust-map-dot1p"
+            namespace="&SYS_QOS_NS;"
+            viewid="qname=${dot1p-map-name}"
+            >
+            <PARAM
+                name="dot1p-map-name"
+                help="DOT1p map name (max 32 chars)"
+                ptype="STRING"
+                operation="edit-config"
+                yang_name="&TRUST_MAP_DOT1P_TC_ENTRY_NAME;=${dot1p-map-name}"
+                />
+            <ACTION
+                builtin="clish_extn"
+                ></ACTION>
+        </COMMAND>
+
+        <COMMAND
+            name="trust dscp-map"
+            help="Configure dscp trust"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            operation="edit-config"
+            namespace="&SYS_QOS_NS;"
+            view="configure-tmap-dscp-qos-view"
+            viewid="qname=${dscp-map-name}"
+            >
+            <PARAM
+                name="dscp-map-name"
+                help="DSCP map name (max 32 chars)"
+                ptype="STRING"
+                yang_key="&TRUST_MAP_DSCP_TC_ENTRY_NAME;"
+                yang_name="&TRUST_MAP_DSCP_TC_ENTRY_NAME;=${dscp-map-name}"
+                />
+            <ACTION
+                builtin="clish_extn"
+                ></ACTION>
+         </COMMAND>
+         <COMMAND
+            name="no trust dscp-map"
+            help="Configure dscp trust"
+            operation="edit-config"
+            sub_oper_yang="remove:trust-map-dscp"
+            namespace="&SYS_QOS_NS;"
+            viewid="qname=${dscp-map-name}"
+            >
+            <PARAM
+                name="dscp-map-name"
+                help="DSCP map name (max 32 chars)"
+                ptype="STRING"
+                operation="edit-config"
+                yang_name="&TRUST_MAP_DSCP_TC_ENTRY_NAME;=${dscp-map-name}"
+                />
+            <ACTION
+                builtin="clish_extn"
+                ></ACTION>
+        </COMMAND>
+         <COMMAND
+            name="trust"
+            help="Configure trust"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            operation="edit-config"
+            namespace="&SYS_QOS_NS;"
+            >
+         </COMMAND>
+         <COMMAND
+            name="no trust"
+            help="Configure trust"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            operation="edit-config"
+            namespace="&SYS_QOS_NS;"
+            >
+        </COMMAND>
+    </VIEW>
+    <VIEW
+        name="configure-qos-map-view"
+        prompt="${SYSTEM_NAME}(config-qos-map)# "
+        depth="2"
+        >
+        <NAMESPACE ref="configure-view"
+                help="false"
+                completion="false"/>
+        <!-- show configuration candidate -->
+        <COMMAND
+            name="show"
+            help="show configuration"
+            />
+        <COMMAND
+            name="show configuration candidate"
+            help="Current candidate configuration"
+            yang_filter="Filter_Type:SUBTREE;Filter_Conditions:&TRUST_MAP_TC_QUEUE_ENTRY_NAME;=${qname};Filter_Namespace:&SYS_QOS_NS;"
+            add_config_entry="false"
+            >
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+        <!-- show configuration -->
+        <COMMAND
+            name="show configuration"
+            help="Current configuration (default = running)"
+            yang_filter="Filter_Type:SUBTREE;Filter_Conditions:&TRUST_MAP_TC_QUEUE_ENTRY_NAME;=${qname};Filter_Namespace:&SYS_QOS_NS;"
+            add_config_entry="false"
+            >
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="no"
+            help="Negate a command or set its defaults"
+            />
+        <COMMAND
+            name="queue"
+            help="Configure traffic-class to queue map"
+            namespace="&SYS_QOS_NS;"
+            operation="edit-config"
+            yang_key="&TRUST_MAP_TC_QUEUE_ENTRY_NAME;,&TRUST_MAP_TC_QUEUE_ENTRY_QUEUE_MAP_QUEUE_ID;"
+            yang_name="&TRUST_MAP_TC_QUEUE_ENTRY_NAME;=${qname},&TRUST_MAP_TC_QUEUE_ENTRY_QUEUE_MAP_QUEUE_ID;=${queue-id}"
+            >
+            <PARAM
+                name="queue-id"
+                help="Queue id (0-7)"
+                ptype="GROUP_ID"
+                >
+                   <PARAM
+                      name="qos-group"
+                      help="Configure traffic-class to queue map"
+                      ptype="SUBCOMMAND"
+                      mode="subcommand"
+                      >
+                      <PARAM
+                         name="qos-group-list"
+                         help="TC value either single, comma-delimited or hyphenated-range"
+                         ptype="TC_GROUP_ID"
+                         default_oper="merge"
+                         sub_oper_yang="replace:traffic-class-cfg"
+                         yang_name="&TRUST_MAP_TC_QUEUE_ENTRY_QUEUE_MAP_TC;=${qos-group-list}"
+                         />
+                   </PARAM>
+            </PARAM>
+           <ACTION builtin="clish_extn"/>
+       </COMMAND>
+       <COMMAND
+            name="no queue"
+            help="Configure traffic-class to queue map"
+            namespace="&SYS_QOS_NS;"
+            operation="edit-config"
+            yang_key="&TRUST_MAP_TC_QUEUE_ENTRY_NAME;,&TRUST_MAP_TC_QUEUE_ENTRY_QUEUE_MAP_QUEUE_ID;"
+            >
+            <PARAM
+                name="queue-id"
+                help="Queue id (0-7)"
+                operation="edit-config"
+                sub_oper_yang="clear;remove:queue-mapping"
+                ptype="GROUP_ID"
+                yang_name="&TRUST_MAP_TC_QUEUE_ENTRY_NAME;=${qname},&TRUST_MAP_TC_QUEUE_ENTRY_QUEUE_MAP_QUEUE_ID;=${queue-id}">
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+    </VIEW>
+
+    <VIEW
+        name="configure-tmap-dscp-qos-view"
+        prompt="${SYSTEM_NAME}(config-tmap-dscp-map)# "
+        depth="2"
+        >
+        <NAMESPACE ref="configure-view"
+                help="false"
+                completion="false"/>
+        <!-- show configuration candidate -->
+        <COMMAND
+            name="show"
+            help="show configuration"
+            />
+        <COMMAND
+            name="show configuration candidate"
+            help="Current candidate configuration"
+            yang_filter="Filter_Type:SUBTREE;Filter_Conditions:&TRUST_MAP_DSCP_TC_ENTRY_NAME;=${qname};Filter_Namespace:&SYS_QOS_NS;"
+            add_config_entry="false"
+            >
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+        <!-- show configuration -->
+        <COMMAND
+            name="show configuration"
+            help="Current configuration (default = running)"
+            yang_filter="Filter_Type:SUBTREE;Filter_Conditions:&TRUST_MAP_DSCP_TC_ENTRY_NAME;=${qname};Filter_Namespace:&SYS_QOS_NS;"
+            add_config_entry="false"
+            >
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="no"
+            help="Negate a command or set its defaults"
+            />
+        <COMMAND
+            name="qos-group"
+            help="Configure dscp priority to traffic-class"
+            namespace="&SYS_QOS_NS;"
+            operation="edit-config"
+            yang_key="&TRUST_MAP_DSCP_TC_ENTRY_NAME;,&TRUST_MAP_DSCP_TC_ENTRY_TC_MAPPING_TC_VAL;"
+            yang_name="&TRUST_MAP_DSCP_TC_ENTRY_NAME;=${qname},&TRUST_MAP_DSCP_TC_ENTRY_TC_MAPPING_TC_VAL;=${qos-group-id}"
+            >
+            <PARAM
+                name="qos-group-id"
+                help="Qos group id (0-7)"
+                ptype="GROUP_ID"
+                >
+                   <PARAM
+                      name="dscp"
+                      help="Configure dscp values to traffic-class map"
+                      ptype="SUBCOMMAND"
+                      mode="subcommand"
+                      >
+                      <PARAM
+                         name="dscp-list"
+                         help="DSCP value either single, comma-delimited or hyphenated-range"
+                         ptype="DSCP_ID"
+                         default_oper="merge"
+                         sub_oper_yang="replace:dscp-cfg"
+                         yang_name="&TRUST_MAP_DSCP_TC_ENTRY_TC_MAP_DSCP;=${dscp-list}"
+                         />
+                   </PARAM>
+            </PARAM>
+           <ACTION builtin="clish_extn"/>
+       </COMMAND>
+       <COMMAND
+            name="no qos-group"
+            help="Configure dscp priority to traffic-class"
+            namespace="&SYS_QOS_NS;"
+            operation="edit-config"
+            yang_key="&TRUST_MAP_DSCP_TC_ENTRY_NAME;,&TRUST_MAP_DSCP_TC_ENTRY_TC_MAPPING_TC_VAL;"
+            >
+            <PARAM
+                name="qos-group-id"
+                help="Qos group id (0-7)"
+                operation="edit-config"
+                sub_oper_yang="clear;remove:tc-mapping"
+                ptype="GROUP_ID"
+                yang_name="&TRUST_MAP_DSCP_TC_ENTRY_NAME;=${qname},&TRUST_MAP_DSCP_TC_ENTRY_TC_MAPPING_TC_VAL;=${qos-group-id}"
+            >
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+    </VIEW>
+
+    <VIEW
+        name="configure-tmap-dot1p-qos-view"
+        prompt="${SYSTEM_NAME}(config-tmap-dot1p-map)# "
+        depth="2"
+        >
+        <NAMESPACE ref="configure-view"
+                help="false"
+                completion="false"/>
+        <!-- show configuration candidate -->
+        <COMMAND
+            name="show"
+            help="show configuration"
+            />
+        <COMMAND
+            name="show configuration candidate"
+            help="Current candidate configuration"
+            yang_filter="Filter_Type:SUBTREE;Filter_Conditions:&TRUST_MAP_DOT1P_TC_ENTRY_NAME;=${qname};Filter_Namespace:&SYS_QOS_NS;"
+            add_config_entry="false"
+            >
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+        <!-- show configuration -->
+        <COMMAND
+            name="show configuration"
+            help="Current configuration (default = running)"
+            yang_filter="Filter_Type:SUBTREE;Filter_Conditions:&TRUST_MAP_DOT1P_TC_ENTRY_NAME;=${qname};Filter_Namespace:&SYS_QOS_NS;"
+            add_config_entry="false"
+            >
+            <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+        <COMMAND
+            name="no"
+            help="Negate a command or set its defaults"
+            />
+        <COMMAND
+            name="qos-group"
+            help="Configure dot1p priority to traffic-class"
+            namespace="&SYS_QOS_NS;"
+            operation="edit-config"
+            yang_key="&TRUST_MAP_DOT1P_TC_ENTRY_NAME;,&TRUST_MAP_DOT1P_TC_ENTRY_TC_MAPPING_TC_VAL;"
+            yang_name="&TRUST_MAP_DOT1P_TC_ENTRY_NAME;=${qname},&TRUST_MAP_DOT1P_TC_ENTRY_TC_MAPPING_TC_VAL;=${qos-group-id}"
+            >
+            <PARAM
+                name="qos-group-id"
+                help="Qos group id (0-7)"
+                ptype="GROUP_ID"
+                >
+                   <PARAM
+                      name="dot1p"
+                      help="Configure dot1p values to traffic-class map"
+                      ptype="SUBCOMMAND"
+                      mode="subcommand"
+                      >
+                      <PARAM
+                         name="dot1p-list"
+                         help="DOT1p value either single, comma-delimited or hyphenated-range"
+                         ptype="COS_ID"
+                         default_oper="merge"
+                         sub_oper_yang="replace:dot1p-cfg"
+                         yang_name="&TRUST_MAP_DOT1P_TC_ENTRY_TC_MAP_DOT1P;=${dot1p-list}"
+                         />
+                   </PARAM>
+            </PARAM>
+           <ACTION builtin="clish_extn"/>
+       </COMMAND>
+       <COMMAND
+            name="no qos-group"
+            help="Configure dot1p priority to traffic-class"
+            namespace="&SYS_QOS_NS;"
+            operation="edit-config"
+            yang_key="&TRUST_MAP_DOT1P_TC_ENTRY_NAME;,&TRUST_MAP_DOT1P_TC_ENTRY_TC_MAPPING_TC_VAL;"
+            >
+            <PARAM
+                name="qos-group-id"
+                help="Qos group id (0-7)"
+                operation="edit-config"
+                sub_oper_yang="clear;remove:tc-mapping"
+                ptype="GROUP_ID"
+                yang_name="&TRUST_MAP_DOT1P_TC_ENTRY_NAME;=${qname},&TRUST_MAP_DOT1P_TC_ENTRY_TC_MAPPING_TC_VAL;=${qos-group-id}"
+            >
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+
+    </VIEW>
+    <VIEW
+        name="configure-pmap-qos-view"
+        prompt="${SYSTEM_NAME}(config-pmap${prmt})# "
+        depth="2"
+        >
+        <!-- Inheritance -->
+
+        <NAMESPACE ref="configure-view"
+                help="false"
+                completion="false"/>
+       <!-- show configuration candidate -->
+        <COMMAND
+            name="show"
+            help="show configuration"
+            />
+        <COMMAND
+            name="show configuration candidate"
+            help="Current candidate configuration"
+            yang_filter="Filter_Type:SUBTREE;Filter_Conditions:&POL_ENTRY;name=${pname};Filter_Namespace:&NAME_SPACE;"
+            >
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+        <!-- show configuration -->
+        <COMMAND
+            name="show configuration"
+            help="Current configuration (default = running)"
+            yang_filter="Filter_Type:SUBTREE;Filter_Conditions:&POL_ENTRY;name=${pname};Filter_Namespace:&NAME_SPACE;"
+            >
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+
+        <COMMAND
+            name="no"
+            help="Negate a command or set its defaults"
+            />
+        <COMMAND
+            name="class"
+            help="Configure QoS class"
+            operation="edit-config"
+            namespace="&NAME_SPACE;"
+            yang_key="&POL_CMAP;cname"
+            view="configure-pmap-${ptypes}-c-view"
+            viewid="pname=${pname};ptypes=${ptypes};cname=${classname};ftype=${filtertype};prmt=${prmt}"
+            >
+            <PARAM
+                name="classname"
+                help="Class map name (max 32 chars)"
+                ptype="STRING"
+                namespace="&NAME_SPACE;,cls=&CLS_NAME_SPACE;"
+                yang_name="&POL_ENTRY_NAME;${pname},&POL_CMAP;cname=${classname}"
+                />
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="no class"
+            help="Configure QoS class"
+            operation="edit-config"
+            sub_oper_yang="remove:classifier-entry"
+            namespace="&NAME_SPACE;"
+            view="configure-pmap-qos-view"
+            viewid="pname=${pname};cname=${classname};prmt=${prmt};ftype=${filtertype}"
+            >
+            <PARAM
+                name="classname"
+                help="Class map name (max 32 chars)"
+                ptype="STRING"
+                order="true"
+                namespace="&NAME_SPACE;,cls=&CLS_NAME_SPACE;"
+                yang_name="&POL_ENTRY_NAME;${pname},&POL_CMAP;cname=${classname}"
+                />
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+    </VIEW>
+    <VIEW
+        name="configure-pmap-qos-c-view"
+        prompt="${SYSTEM_NAME}(config-pmap-c${prmt})# "
+        depth="3"
+        >
+        <NAMESPACE ref="configure-view"
+                help="false"
+                completion="false"/>
+        <NAMESPACE
+            ref="configure-pmap-qos-view"
+            help="false"
+            completion="false"
+            />
+        <!-- show configuration candidate -->
+        <COMMAND
+            name="show"
+            help="show configuration"
+            />
+        <COMMAND
+            name="show configuration candidate"
+            help="Current candidate configuration"
+            yang_filter="Filter_Type:SUBTREE;Filter_Conditions:&POL_ENTRY;name=${pname},&POL_CMAP;cname=${cname};Filter_Namespace:&NAME_SPACE;"
+            template="show_config_policy_class.xsl"
+            add_config_entry="false"
+            >
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+        <!-- show configuration -->
+        <COMMAND
+            name="show configuration"
+            help="Current configuration (default = running)"
+            yang_filter="Filter_Type:SUBTREE;Filter_Conditions:&POL_ENTRY;name=${pname},&POL_CMAP;cname=${cname};Filter_Namespace:&NAME_SPACE;"
+            template="show_config_policy_class.xsl"
+            add_config_entry="false"
+            >
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="no"
+            help="Negate a command or set its defaults"
+            />
+        <COMMAND
+            name="police"
+            help="Rate police input traffic"
+            ptype="SUBCOMMAND"
+            operation="edit-config"
+            yang_name="&POL_ENTRY_NAME;${pname},&POL_CMAP;cname=${cname},&POL_CMAP_ACTN_TYPE;=meter"
+            yang_key="&POL_CMAP_ACTN_TYPE;=meter"
+            >
+            <PARAM
+                name="cir"
+                help="Specify the committed rate"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                >
+                <PARAM
+                    name="committed"
+                    help="Committed rate in pps for control plane and kbps for others"
+                    ptype="QoS_CIR_PIR"
+                    default_oper="merge"
+                    sub_oper_yang="replace:meter-cfg"
+                    namespace="&NAME_SPACE;"
+                    yang_name="&POL_CMAP_ACTN_METER;committed-meter-rate=${committed}"
+                    />
+                <PARAM
+                    name="bc"
+                    help="Specify committed burst"
+                    optional="true"
+                    ptype="STRING"
+                    mode="subcommand"
+                    >
+                    <PARAM
+                        name="bcv"
+                        help="Committed burst size in packets (default = 200Packets) for control plane and KB for others (default = 100KB)"
+                        ptype="BURST_SZ"
+                        yang_name="&POL_CMAP_ACTN_METER;committed-burst-size=${bcv}"
+                        />
+                </PARAM>
+            </PARAM>
+            <PARAM
+                name="pir"
+                help="Specify the peak rate"
+                namespace="&NAME_SPACE;"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                >
+                <PARAM
+                    name="peak"
+                    help="Peak rate in pps for control plane and kbps for others"
+                    ptype="QoS_CIR_PIR"
+                    namespace="&NAME_SPACE;"
+                    yang_name="&POL_CMAP_ACTN_METER;meter-rate=${peak}"
+                    />
+                <PARAM
+                    name="be"
+                    help="Specify the peak burst rate"
+                    optional="true"
+                    ptype="STRING"
+                    mode="subcommand"
+                    >
+                    <PARAM
+                        name="bev"
+                        help="Peak burst size in packets (default = 200Packets) for control plane and KB for others (default = 100KB)"
+                        ptype="BURST_SZ"
+                        namespace="&NAME_SPACE;"
+                        yang_name="&POL_CMAP_ACTN_METER;burst-size=${bev}"
+                        />
+                </PARAM>
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="trust"
+            help="Specify dynamic classification to trust[dscp/dot1p]"
+            operation="edit-config"
+            namespace="&NAME_SPACE;"
+            >
+            <MACRO name="trust-types"/>
+            <ACTION
+                builtin="clish_extn"
+                ></ACTION>
+        </COMMAND>
+        <COMMAND
+            name="set"
+            help="Mark input traffic"
+            operation="edit-config"
+            namespace="&NAME_SPACE;"
+            >
+            <PARAM
+                name="subtype"
+                help="Sub type to use"
+                mode="switch"
+                ptype="SUBCOMMAND"
+                >
+                <PARAM
+                    name="cos"
+                    help="Specify dot1p values"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    yang_key="&POL_CMAP_ACTN_TYPE;=marking-cos"
+                    >
+                    <PARAM
+                        name="cos-value"
+                        help="Dot1p values"
+                        ptype="GROUP_ID"
+                        namespace="&NAME_SPACE;"
+                        yang_name="&POL_ENTRY_NAME;${pname},&POL_CMAP;cname=${cname},&POL_CMAP_ACTN_TYPE;=marking-cos,&POL_CMAP_ACTN_COS;cos=${cos-value}"
+                        />
+                </PARAM>
+                <PARAM
+                    name="dscp"
+                    help="Specify dscp values"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    yang_key="&POL_CMAP_ACTN_TYPE;=marking-dscp"
+                    >
+                    <PARAM
+                        name="dscp-value"
+                        help="Dscp values"
+                        ptype="DSCP_ID"
+                        default_oper="merge"
+                        namespace="&NAME_SPACE;"
+                        yang_name="&POL_ENTRY_NAME;${pname},&POL_CMAP;cname=${cname},&POL_CMAP_ACTN_TYPE;=marking-dscp,&POL_CMAP_ACTN_DSCP;dscp=${dscp-value}"
+                        />
+                    <PARAM
+                        name="color"
+                        help="Dscp color map"
+                        optional="true"
+                        mode="subcommand"
+                        ptype="STRING"
+                        >
+                        <PARAM
+                            name="color-value"
+                            help="Color to use"
+                            mode="switch"
+                            ptype="SUBCOMMAND"
+                            namespace="&NAME_SPACE;"
+                            >
+                            <PARAM
+                                name="red"
+                                help="Configure diffserv code points to be colored red"
+                                ptype="STRING"
+                                mode="subcommand"
+                                yang_name="&POL_CMAP_ACTN_COLOR;=red"
+                                />
+                            <PARAM
+                                name="yellow"
+                                help="Configure diffserv code points to be colored yellow"
+                                ptype="STRING"
+                                mode="subcommand"
+                                yang_name="&POL_CMAP_ACTN_COLOR;=yellow"
+                                />
+                        </PARAM>
+                    </PARAM>
+                </PARAM>
+                <PARAM
+                    name="qos-group"
+                    help="Specify queue values"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    yang_key="&POL_CMAP_ACTN_TYPE;=qos-group"
+                    >
+                    <PARAM
+                        name="qos-group-value"
+                        help="Queue number"
+                        ptype="GROUP_ID"
+                        namespace="&NAME_SPACE;"
+                        yang_name="&POL_ENTRY_NAME;${pname},&POL_CMAP;cname=${cname},&POL_CMAP_ACTN_TYPE;=qos-group,&POL_CMAP_ACTN_QOSGRP;qos-group=${qos-group-value}"
+                        />
+                </PARAM>
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="no set"
+            help="Mark input traffic"
+            operation="edit-config"
+            >
+            <PARAM
+                name="subtype"
+                help="Sub type to use"
+                mode="switch"
+                ptype="SUBCOMMAND"
+                >
+                <PARAM
+                    name="cos"
+                    help="Specify dot1p values"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    operation="edit-config"
+                    sub_oper_yang="remove:action-entry"
+                    namespace="&NAME_SPACE;"
+                    yang_name="&POL_CMAP_ACTN;,&POL_ENTRY_NAME;${pname},&POL_ENTRY_TYPE;${ptypes},&POL_CMAP;cname=${cname},&POL_CMAP_ACTN_TYPE;=marking-cos"
+                    >
+                    <PARAM
+                        name="cos-value"
+                        help="Dot1p values"
+                        ptype="GROUP_ID"
+                        optional="true"
+                        />
+                </PARAM>
+                <PARAM
+                    name="dscp"
+                    help="Specify dscp values"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    operation="edit-config"
+                    sub_oper_yang="remove:action-entry"
+                    namespace="&NAME_SPACE;"
+                    yang_name="&POL_CMAP_ACTN;,&POL_ENTRY_NAME;${pname},&POL_ENTRY_TYPE;${ptypes},&POL_CMAP;cname=${cname},&POL_CMAP_ACTN_TYPE;=marking-dscp"
+                    >
+                    <PARAM
+                        name="dscp-value"
+                        help="Specify dscp values"
+                        ptype="DSCP_ID"
+                        optional="true"
+                        order="true"
+                        />
+                    <PARAM
+                        name="color"
+                        help="Dscp color map"
+                        optional="true"
+                        mode="subcommand"
+                        ptype="STRING"
+                        >
+                        <PARAM
+                            name="color-value"
+                            help="Color to use"
+                            mode="switch"
+                            operation="edit-config"
+                            ptype="SUBCOMMAND"
+                            >
+                            <PARAM
+                                name="red"
+                                help="Configure diffserv code point colored red"
+                                ptype="STRING"
+                                mode="subcommand"
+                                />
+                            <PARAM
+                                name="yellow"
+                                help="Configure diffserv code point colored yellow"
+                                ptype="STRING"
+                                mode="subcommand"
+                                />
+                        </PARAM>
+                    </PARAM>
+                </PARAM>
+                <PARAM
+                    name="qos-group"
+                    help="Specify queue values"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    operation="edit-config"
+                    sub_oper_yang="remove:action-entry"
+                    namespace="&NAME_SPACE;"
+                    yang_name="&POL_ENTRY_NAME;${pname},&POL_CMAP;cname=${cname},&POL_CMAP_ACTN_TYPE;=qos-group"
+                    >
+                    <PARAM
+                        name="qos-group-value"
+                        help="Queue number"
+                        ptype="GROUP_ID"
+                        optional="true"
+                        />
+                </PARAM>
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="no police"
+            help="Rate police input traffic"
+            ptype="SUBCOMMAND"
+            operation="edit-config"
+            yang_name="&POL_ENTRY_NAME;${pname},&POL_CMAP;cname=${cname},&POL_CMAP_ACTN_TYPE;=meter"
+            >
+            <PARAM
+                name="cir"
+                help="Specify the committed rate"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                sub_oper_yang="remove:action-entry"
+                >
+                <PARAM
+                    name="committed"
+                    help="Committed rate in pps for control plane and kbps for others"
+                    ptype="QoS_CIR_PIR"
+                    />
+                <PARAM
+                    name="bc"
+                    help="Specify committed burst"
+                    optional="true"
+                    ptype="STRING"
+                    mode="subcommand"
+                    >
+                    <PARAM
+                        name="bcv"
+                        help="Committed burst size in packets (default = 200Packets) for control plane and KB for others (default = 100KB)"
+                        ptype="BURST_SZ"
+                        yang_name="&POL_CMAP_ACTN_METER;committed-burst-size=${bcv}"
+                        />
+                </PARAM>
+            </PARAM>
+            <PARAM
+                name="pir"
+                help="Specify the peak rate"
+                namespace="&NAME_SPACE;"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                >
+                <PARAM
+                    name="peak"
+                    help="Peak rate in pps for control plane and kbps for others"
+                    ptype="QoS_CIR_PIR"
+                    namespace="&NAME_SPACE;"
+                    yang_name="&POL_CMAP_ACTN_METER;meter-rate=${peak}"
+                    />
+                <PARAM
+                    name="be"
+                    help="Specify the peak burst rate"
+                    optional="true"
+                    ptype="STRING"
+                    mode="subcommand"
+                    >
+                    <PARAM
+                        name="bev"
+                        help="Peak burst size in packets (default = 200Packets) for control plane and KB for others (default = 100KB)"
+                        ptype="BURST_SZ"
+                        namespace="&NAME_SPACE;"
+                        yang_name="&POL_CMAP_ACTN_METER;burst-size=${bev}"
+                        />
+                </PARAM>
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="no trust"
+            help="Specify dynamic classification to trust[dscp/dot1p]"
+            operation="edit-config"
+            ptype="STRING"
+            >
+            <PARAM
+                name="dot1p"
+                help="Specify dynamic classification to trust dot1p"
+                mode="subcommand"
+                ptype="STRING"
+                sub_oper_yang="remove:action-entry"
+                namespace="&NAME_SPACE;"
+                yang_name="&POL_ENTRY_NAME;${pname},&POL_ENTRY_TYPE;${ptypes},&POL_CMAP;cname=${cname},&POL_CMAP_ACTN;atype=trust"
+                />
+            <PARAM
+                name="fallback"
+                help="Fall back to trust dot1p"
+                optional="true"
+                mode="subcommand"
+                ptype="STRING"
+                />
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="no trust diffserv"
+            help="Specify dynamic classification to trust dscp"
+            mode="subcommand"
+            ptype="STRING"
+            operation="edit-config"
+            sub_oper_yang="remove:action-entry"
+            namespace="&NAME_SPACE;"
+            yang_name="&POL_ENTRY_NAME;${pname},&POL_ENTRY_TYPE;${ptypes},&POL_CMAP;cname=${cname},&POL_CMAP_ACTN;atype=trust"
+            >
+            <PARAM
+                name="fallback"
+                help="Fall back to trust diffserv"
+                optional="true"
+                operation="edit-config"
+                sub_oper_yang="remove:action-entry"
+                namespace="&NAME_SPACE;"
+                yang_name="&POL_ENTRY_NAME;${pname},&POL_ENTRY_TYPE;${ptypes},&POL_CMAP;cname=${cname},&POL_CMAP_ACTN;atype=trust"
+                mode="subcommand"
+                ptype="STRING"
+                />
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+
+    </VIEW>
+    <VIEW
+        name="configure-pmap-queuing-view"
+        prompt="${SYSTEM_NAME}(config-pmap-que)# "
+        depth="2"
+        >
+        <NAMESPACE ref="configure-view"
+                help="false"
+                completion="false"/>
+        <NAMESPACE
+            ref="configure-pmap-qos-view"
+            help="false"
+            completion="false"
+            />
+    </VIEW>
+    <VIEW
+        name="configure-pmap-network-qos-view"
+        prompt="${SYSTEM_NAME}(config-pmap-nqos)# "
+        depth="2"
+        >
+        <COMMAND
+            name="no"
+            help="Negate a command or set its defaults"
+            />
+        <COMMAND
+            name="class"
+            help="Configure network-qos class"
+            operation="edit-config"
+            namespace="&NAME_SPACE;"
+            yang_key="&POL_CMAP;cname"
+            view="configure-pmap-${ptypes}-c-view"
+            viewid="pname=${pname};ptypes=${ptypes};cname=${classname};ftype=${filtertype};prmt=${prmt}"
+            >
+            <PARAM
+                name="classname"
+                help="Class map name (max 32 chars)"
+                ptype="STRING"
+                namespace="&NAME_SPACE;,cls=&CLS_NAME_SPACE;"
+                yang_name="&POL_ENTRY_NAME;${pname},&POL_CMAP;cname=${classname}"
+                />
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="no class"
+            help="Configure network-qos class"
+            operation="edit-config"
+            sub_oper_yang="remove:classifier-entry"
+            namespace="&NAME_SPACE;"
+            view="configure-pmap-network-qos-view"
+            viewid="pname=${pname};cname=${classname};prmt=${prmt};ftype=${filtertype}"
+            >
+            <PARAM
+                name="classname"
+                help="Class map name (max 32 chars)"
+                ptype="STRING"
+                order="true"
+                namespace="&NAME_SPACE;"
+                yang_name="&POL_CMAP;,&POL_ENTRY_NAME;${pname},&POL_CMAP;cname=${classname}"
+                />
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+    </VIEW>
+    <VIEW
+        name="configure-pmap-control-plane-view"
+        prompt="${SYSTEM_NAME}(config-pmap)# "
+        depth="2"
+        >
+        <NAMESPACE ref="configure-view"
+                help="false"
+                completion="false"/>
+        <NAMESPACE
+            ref="configure-pmap-qos-view"
+            help="false"
+            completion="false"
+            />
+    </VIEW>
+    <VIEW
+        name="configure-pmap-queuing-c-view"
+        prompt="${SYSTEM_NAME}(config-pmap-c-que)# "
+        depth="3"
+        >
+        <NAMESPACE
+            ref="configure-view"
+            help="false"
+            completion="false"/>
+        <NAMESPACE
+            ref="configure-pmap-queuing-view"
+            help="false"
+            completion="false"/>
+        <!-- show configuration candidate -->
+        <COMMAND
+            name="show"
+            help="show configuration"
+            />
+        <COMMAND
+            name="show configuration candidate"
+            help="Current candidate configuration"
+            yang_filter="Filter_Type:SUBTREE;Filter_Conditions:&POL_ENTRY;name=${pname},&POL_CMAP;cname=${cname};Filter_Namespace:&NAME_SPACE;"
+            template="show_config_policy_class.xsl"
+            add_config_entry="false"
+            >
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+        <!-- show configuration -->
+        <COMMAND
+            name="show configuration"
+            help="Current configuration (default = running)"
+            yang_filter="Filter_Type:SUBTREE;Filter_Conditions:&POL_ENTRY;name=${pname},&POL_CMAP;cname=${cname};Filter_Namespace:&NAME_SPACE;"
+            template="show_config_policy_class.xsl"
+            add_config_entry="false"
+            >
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="no"
+            help="Negate a command or set its defaults"
+            />
+        <COMMAND
+            name="bandwidth"
+            help="Traffic shaping"
+            operation="edit-config"
+            mode="subcommand"
+            ptype="STRING"
+            namespace="&NAME_SPACE;"
+            >
+            <PARAM
+                name="percent"
+                help="Assign percentage weight to the queue"
+                mode="subcommand"
+                ptype="STRING"
+                >
+                <PARAM
+                    name="percentage"
+                    help="Bandwidth percentage"
+                    ptype="BW_PERCENT"
+                    namespace="&NAME_SPACE;"
+                    yang_name="&POL_ENTRY_NAME;${pname},&POL_CMAP;cname=${cname},&POL_CMAP_ACTN_TYPE;=scheduling-weight,&POL_CMAP_ACTN_BW;=${percentage}"
+                    />
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="no bandwidth"
+            help="Traffic shaping"
+            operation="edit-config"
+            sub_oper_yang="remove:action-entry"
+            mode="subcommand"
+            ptype="STRING"
+            namespace="&NAME_SPACE;"
+            yang_name="&POL_ENTRY_NAME;${pname},&POL_CMAP;cname=${cname},&POL_CMAP_ACTN_TYPE;=scheduling-weight"
+            >
+            <PARAM
+                name="percent"
+                help="Assign percentage weight to the queue"
+                mode="subcommand"
+                ptype="STRING"
+                >
+                <PARAM
+                    name="percentage"
+                    help="Bandwidth percentage"
+                    ptype="BW_PERCENT"
+                    optional="true"
+                    />
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="priority"
+            help="Set scheduler as strict-priority"
+            operation="edit-config"
+            namespace="&NAME_SPACE;"
+            yang_name="&POL_ENTRY_NAME;${pname},&POL_ENTRY_TYPE;${ptypes},&POL_CMAP;cname=${cname},&POL_CMAP_ACTN_TYPE;=scheduling-priority,&POL_CMAP_ACTN_PRIO;=1"
+            >
+            <ACTION
+                builtin="clish_extn"
+                ></ACTION>
+        </COMMAND>
+        <COMMAND
+            name="no random-detect"
+            help="Specify WRED parameters for the queue"
+            mode="subcommand"
+            ptype="SUBCOMMAND"
+            operation="edit-config"
+            namespace="&NAME_SPACE;"
+            >
+            <PARAM
+                name="minimum-threshold"
+                help="Minimum threshold keyword"
+                mode="subcommand"
+                ptype="SUBCOMMAND"
+                operation="edit-config"
+                sub_oper_yang="remove:action-entry"
+                yang_name="&POL_ENTRY_NAME;${pname},&POL_CMAP;cname=${cname},&POL_CMAP_ACTN_TYPE;=drop"
+                >
+                <PARAM
+                    name="min-threshold"
+                    help="Specify the minimum threshold in kilo bytes"
+                    ptype="QoS_THRESHOLD"
+                    optional="true"
+                    />
+            </PARAM>
+            <PARAM
+                name="maximum-threshold"
+                help="Maximum threshold keyword"
+                mode="subcommand"
+                ptype="SUBCOMMAND"
+                >
+                <PARAM
+                    name="max-threshold"
+                    help="Specify the maximum threshold in kilo bytes"
+                    ptype="QoS_THRESHOLD"
+                    optional="true"
+                    />
+            </PARAM>
+            <PARAM
+                name="drop-probability"
+                help="Maximum drop rate keyword"
+                mode="subcommand"
+                ptype="SUBCOMMAND"
+                >
+                <PARAM
+                    name="max-drop-rate"
+                    help="Specify the maximum drop rate in percentage"
+                    ptype="PERCENT"
+                    optional="true"
+                    />
+            </PARAM>
+            <PARAM
+                name="color"
+                help="Drop precedence"
+                optional="true"
+                mode="subcommand"
+                ptype="SUBCOMMAND"
+                >
+                <PARAM
+                    name="subtype"
+                    ptype="SUBCOMMAND"
+                    help="Sub type to use"
+                    mode="switch"
+                    >
+                    <PARAM
+                        name="green"
+                        help="Green (low)drop precedence"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        />
+                    <PARAM
+                        name="yellow"
+                        help="Yellow (medium) drop precedence"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        />
+                </PARAM>
+            </PARAM>
+            <PARAM
+                name="ecn"
+                help="ECN configuration"
+                ptype="SUBCOMMAND"
+                optional="true"
+                mode="subcommand"
+                />
+            <PARAM
+                name="weight"
+                help="Weight configuration"
+                optional="true"
+                mode="subcommand"
+                ptype="SUBCOMMAND"
+                >
+                <PARAM
+                    name="weight-value"
+                    ptype="WEIGHT_CONST"
+                    help="Weight value"
+                    optional="true"
+                    />
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="no shape"
+            help="Rate shape output traffic"
+            mode="subcommand"
+            ptype="SUBCOMMAND"
+            operation="edit-config"
+            namespace="&NAME_SPACE;"
+            >
+            <PARAM
+                name="min"
+                help="Specify the committed rate"
+                mode="subcommand"
+                ptype="SUBCOMMAND"
+                sub_oper_yang="remove:action-entry"
+                yang_name="&POL_ENTRY_NAME;${pname},&POL_CMAP;cname=${cname},&POL_CMAP_ACTN;atype=shaping"
+                >
+                <PARAM
+                    name="subtype"
+                    help="Specify the committed rate unit"
+                    mode="switch"
+                    ptype="SUBCOMMAND"
+                    >
+                    <PARAM
+                        name="kbps"
+                        help="Specify the committed rate unit in kbps"
+                        optional="true"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        >
+                        <PARAM
+                            name="committed-rate-kbps"
+                            help="0 - 40000000 Kilo bits per second"
+                            ptype="QoS_CIR_PIR"
+                            optional="true"
+                            />
+                        <PARAM
+                            name="committed-burst-kbps"
+                            optional="true"
+                            help="Burst size in packets (default = 200Packets)"
+                            ptype="UINT"
+                            />
+                    </PARAM>
+                    <PARAM
+                        name="mbps"
+                        help="Specify the committed rate unit in mbps"
+                        optional="true"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        >
+                        <PARAM
+                            name="committed-rate"
+                            help="0 - 40000 mega bits per second"
+                            ptype="UINT"
+                            optional="true"
+                            />
+                        <PARAM
+                            name="committed-burst-sz"
+                            optional="true"
+                            help="0 - 10000 burst size in mbps"
+                            ptype="QoS_BURST"
+                            />
+                    </PARAM>
+                    <PARAM
+                        name="pps"
+                        help="Specify the committed rate unit in pps"
+                        optional="true"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        >
+                        <PARAM
+                            name="committed-rate-pps"
+                            help="Packets per second"
+                            ptype="QoS_COMMIT_RATE_PPS"
+                            optional="true"
+                            />
+                        <PARAM
+                            name="committed-burst-pkts"
+                            optional="true"
+                            help="Burst size in packets (default = 200 packets)"
+                            ptype="QoS_COMMIT_RATE_PKTS"
+                            />
+                    </PARAM>
+                </PARAM>
+            </PARAM>
+            <PARAM
+                name="max"
+                help="Maximum value"
+                mode="subcommand"
+                ptype="SUBCOMMAND"
+                >
+                <PARAM
+                    name="maxtype"
+                    help="Specify the committed rate unit"
+                    mode="switch"
+                    ptype="SUBCOMMAND"
+                    >
+                    <PARAM
+                        name="kbps"
+                        help="Kbps selection"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        test="'${subtype}' = 'kbps'"
+                        >
+                        <PARAM
+                            name="peak-rate-kbps"
+                            help="Kilo bits per second"
+                            ptype="QoS_CIR_PIR"
+                            optional="true"
+                            />
+                        <PARAM
+                            name="peak-burst-kbps"
+                            optional="true"
+                            help="Burst size in kilo bits per second"
+                            ptype="QoS_BURST"
+                            />
+                    </PARAM>
+                    <PARAM
+                        name="mbps"
+                        help="Mbps selection"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        test="'${subtype}' = 'mbps'"
+                        >
+                        <PARAM
+                            name="peak-rate-mbps"
+                            help="Mega bits per second (0 - 40000)"
+                            ptype="UINT"
+                            optional="true"
+                            />
+                        <PARAM
+                            name="peak-burst-sz"
+                            optional="true"
+                            help="Burst rate in mega bits per second"
+                            ptype="QoS_BURST"
+                            />
+                    </PARAM>
+                    <PARAM
+                        name="pps"
+                        help="Pps selection"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        test="'${subtype}' = 'pps'"
+                        >
+                        <PARAM
+                            name="peak-rate-pps"
+                            help="Packets per second"
+                            operation="edit-config"
+                            ptype="QoS_COMMIT_RATE_PPS"
+                            optional="true"
+                            />
+                        <PARAM
+                            name="peak-burst-pps"
+                            optional="true"
+                            help="Burst size in packets"
+                            ptype="QoS_COMMIT_RATE_PKTS"
+                            />
+                    </PARAM>
+                </PARAM>
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="no priority"
+            help="Set scheduler as strict-priority"
+            operation="edit-config"
+            sub_oper_yang="remove:action-entry"
+            namespace="&NAME_SPACE;"
+            yang_name="&POL_ENTRY_NAME;${pname},&POL_CMAP;cname=${cname},&POL_CMAP_ACTN_TYPE;=scheduling-priority"
+            >
+            <ACTION
+                builtin="clish_extn"
+                ></ACTION>
+        </COMMAND>
+        <COMMAND
+            name="random-detect"
+            help="Specify WRED parameters for the queue"
+            operation="edit-config"
+            mode="subcommand"
+            ptype="SUBCOMMAND"
+            yang_key="&POL_CMAP_ACTN_TYPE;"
+            >
+            <PARAM
+                name="minimum-threshold"
+                help="Minimum threshold keyword"
+                mode="subcommand"
+                ptype="SUBCOMMAND"
+                >
+                <PARAM
+                    name="min-threshold"
+                    help="Specify the minimum threshold in KB"
+                    ptype="QoS_THRESHOLD"
+                    default_oper="merge"
+                    sub_oper_yang="replace:drop-cfg"
+                    namespace="&NAME_SPACE;"
+                    yang_name="&POL_CMAP_ACTN_WRED_MIN;=${min-threshold}"
+                    />
+            </PARAM>
+            <PARAM
+                name="maximum-threshold"
+                help="Maximum threshold keyword"
+                mode="subcommand"
+                ptype="SUBCOMMAND"
+                >
+                <PARAM
+                    name="max-threshold"
+                    help="Specify the maximum threshold in KB"
+                    ptype="QoS_THRESHOLD"
+                    namespace="&NAME_SPACE;"
+                    yang_name="&POL_CMAP_ACTN_WRED_MAX;=${max-threshold}"
+                    />
+            </PARAM>
+            <PARAM
+                name="drop-probability"
+                help="Maximum drop rate keyword"
+                mode="subcommand"
+                ptype="SUBCOMMAND"
+                >
+                <PARAM
+                    name="max-drop-rate"
+                    help="Specify maximum in drop rate in percent"
+                    ptype="PERCENT"
+                    namespace="&NAME_SPACE;"
+                    yang_name="&POL_ENTRY_NAME;${pname},&POL_ENTRY_TYPE;${ptypes},&POL_CMAP;cname=${cname},&POL_CMAP_ACTN_TYPE;=drop,&POL_CMAP_ACTN_WRED_PROB;=${max-drop-rate}"
+                    />
+            </PARAM>
+            <PARAM
+                name="color"
+                help="Drop precedence"
+                optional="true"
+                mode="subcommand"
+                ptype="SUBCOMMAND"
+                >
+                <PARAM
+                    name="precedence"
+                    help="Green(low)/yellow(medium) drop precedence"
+                    ptype="QOS_COLOR"
+					namespace="&NAME_SPACE;"
+					yang_name="&POL_CMAP_ACTN_WRED_COLOR;=${precedence}"
+                    />
+            </PARAM>
+            <PARAM
+                name="ecn"
+                help="ECN configuration"
+                optional="true"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                namespace="&NAME_SPACE;"
+                yang_name="&POL_CMAP_ACTN_WRED_ECN;=true"
+                />
+            <PARAM
+                name="weight"
+                help="Weight configuration"
+                optional="true"
+                mode="subcommand"
+                ptype="SUBCOMMAND"
+                >
+                <PARAM
+                    name="weight-value"
+                    help="Weight value"
+                    ptype="WEIGHT_CONST"
+                    namespace="&NAME_SPACE;"
+                    yang_name="&POL_CMAP_ACTN_WRED_WEIGHT;=${weight-value}"
+                    />
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                ></ACTION>
+        </COMMAND>
+        <COMMAND
+            name="shape"
+            help="Rate shape output traffic"
+            mode="subcommand"
+            ptype="SUBCOMMAND"
+            operation="edit-config"
+            namespace="&NAME_SPACE;"
+            viewid="mintype=${subtype}"
+            yang_name="&POL_ENTRY_NAME;${pname},&POL_ENTRY_TYPE;${ptypes},&POL_CMAP;cname=${cname},&POL_CMAP_ACTN_TYPE;=shaping"
+            yang_key="&POL_CMAP_ACTN_TYPE;=shaping"
+            >
+            <PARAM
+                name="min"
+                help="Specify the committed rate"
+                mode="subcommand"
+                operation="edit-config"
+                ptype="SUBCOMMAND"
+                >
+                <PARAM
+                    name="subtype"
+                    help="Specify the committed rate unit"
+                    mode="switch"
+                    ptype="SUBCOMMAND"
+                    >
+                    <PARAM
+                        name="kbps"
+                        help="Specify the committed rate unit in kbps"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        yang_name="&POL_CMAP_ACTN_SHAPE_UNIT;=kbps"
+                        >
+                        <PARAM
+                            name="committed-rate-kbps"
+                            ptype="QoS_CIR_PIR"
+                            help="Committed rate in kilo bits per second"
+                            yang_name="&POL_CMAP_ACTN_COMMITTED_RATE;=${committed-rate-kbps}"
+                            />
+                        <PARAM
+                            name="committed-burst-size"
+                            optional="true"
+                            help="Burst size in kilo bytes per second"
+                            ptype="QoS_BURST"
+                            yang_name="&POL_CMAP_ACTN_COMMITTED_BURST;=${committed-burst-size}"
+                            />
+                    </PARAM>
+                    <PARAM
+                        name="mbps"
+                        help="Specify the committed rate unit in mbps"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        yang_name="&POL_CMAP_ACTN_SHAPE_UNIT;=mbps"
+                        >
+                        <PARAM
+                            name="committed-rate"
+                            help="Committed rate in megabits per second"
+                            ptype="QoS_COMMIT_RATE_MBPS"
+                            yang_name="&POL_CMAP_ACTN_COMMITTED_RATE;=${committed-rate}"
+                            />
+                        <PARAM
+                            name="committed-burst-sz"
+                            optional="true"
+                            help="Committed burst size in kilo bytes per second"
+                            ptype="QoS_BURST"
+                            yang_name="&POL_CMAP_ACTN_COMMITTED_BURST;=${committed-burst-sz}"
+                            />
+                    </PARAM>
+                    <PARAM
+                        name="pps"
+                        help="Specify the committed rate unit in pps"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        yang_name="&POL_CMAP_ACTN_SHAPE_UNIT;=pps"
+                        >
+                        <PARAM
+                            name="committed-rate-pps"
+                            help="Committed rate in packets per second"
+                            ptype="QoS_COMMIT_RATE_PPS"
+                            yang_name="&POL_CMAP_ACTN_COMMITTED_RATE;=${committed-rate-pps}"
+                            />
+                        <PARAM
+                            name="committed-burst-pkts"
+                            optional="true"
+                            help="Committed burst size in packets per second"
+                            ptype="QoS_COMMIT_RATE_PKTS"
+                            yang_name="&POL_CMAP_ACTN_COMMITTED_BURST;=${committed-burst-pkts}"
+                            />
+                    </PARAM>
+                </PARAM>
+            </PARAM>
+            <PARAM
+                name="max"
+                help="Specify max peak rate"
+                mode="subcommand"
+                ptype="SUBCOMMAND"
+                >
+                <PARAM
+                    name="maxtype"
+                    help="Specify max peak rate unit"
+                    mode="switch"
+                    ptype="SUBCOMMAND"
+                    >
+                    <PARAM
+                        name="kbps"
+                        help="Kbps selection"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        test="'${subtype}' = 'kbps'"
+                        yang_name="&POL_CMAP_ACTN_SHAPE_UNIT;=kbps"
+                        >
+                        <PARAM
+                            name="peak-rate-kbps"
+                            help="Kilo bits per second"
+                            ptype="QoS_CIR_PIR"
+                            yang_name="&POL_CMAP_ACTN_PEAK_RATE;=${peak-rate-kbps}"
+                            />
+                        <PARAM
+                            name="peak-burst-kbps"
+                            optional="true"
+                            help="Burst size in kilo bytes per second"
+                            ptype="QoS_BURST"
+                            yang_name="&POL_CMAP_ACTN_PEAK_BURST;=${peak-burst-kbps}"
+                            />
+                    </PARAM>
+                    <PARAM
+                        name="mbps"
+                        help="Mbps selection"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        test="'${subtype}' = 'mbps'"
+                        yang_name="&POL_CMAP_ACTN_SHAPE_UNIT;=mbps"
+                        >
+                        <PARAM
+                            name="peak-rate-mbps"
+                            help="Mega bits per second (0 - 40000)"
+                            ptype="UINT"
+                            yang_name="&POL_CMAP_ACTN_PEAK_RATE;=${peak-rate-mbps}"
+                            />
+                        <PARAM
+                            name="peak-burst-sz"
+                            optional="true"
+                            help="Burst rate in kilo bytes per second"
+                            ptype="QoS_BURST"
+                            yang_name="&POL_CMAP_ACTN_PEAK_BURST;=${peak-burst-sz}"
+                            />
+                    </PARAM>
+                    <PARAM
+                        name="pps"
+                        help="Pps selection"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        test="'${subtype}' = 'pps'"
+                        yang_name="&POL_CMAP_ACTN_SHAPE_UNIT;=pps"
+                        >
+                        <PARAM
+                            name="peak-rate-pps"
+                            help="Packets per second"
+                            ptype="QoS_COMMIT_RATE_PPS"
+                            yang_name="&POL_CMAP_ACTN_PEAK_RATE;=${peak-rate-pps}"
+                            />
+                        <PARAM
+                            name="peak-burst-pps"
+                            optional="true"
+                            help="Burst size in packets"
+                            ptype="QoS_COMMIT_RATE_PKTS"
+                            yang_name="&POL_CMAP_ACTN_PEAK_BURST;=${peak-burst-pps}"
+                            />
+                    </PARAM>
+                </PARAM>
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+         <COMMAND
+            name="queue-limit"
+            help="Shared buffer size for this queue"
+            ptype="SUBCOMMAND"
+            operation="edit-config"
+            namespace="&NAME_SPACE;"
+            yang_name="&POL_ENTRY_NAME;${pname},&POL_ENTRY_TYPE;${ptypes},&POL_CMAP;cname=${cname},&POL_CMAP_ACTN_TYPE;=queue-limit"
+            yang_key="&POL_CMAP_ACTN_TYPE;=queue-limit"
+            >
+            <PARAM
+                name="q-limit-options"
+                help="Queue limit options"
+                mode="switch"
+                ptype="SUBCOMMAND"
+                >
+                <PARAM
+                    name="queue-len"
+                    help="Guranteed queue-buffer size"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    optional="true"
+                    >
+                    <PARAM
+                        name="guaranteed-buf-size"
+                        help="Guaranteed queue-buffer size"
+                        ptype="RANGE_1_512"
+                        yang_name="&POL_CMAP_ACTN_QLMT_QLEN;=${guaranteed-buf-size}"
+                        >
+                    </PARAM>
+                    <MACRO name="static_dynamic_threshold_mode" arg="true"/>
+                </PARAM> <!-- queue-len -->
+                <MACRO name="static_dynamic_threshold_mode" arg="true"/>
+            </PARAM> <!-- limit-options -->
+            <PARAM
+                name="queue-len"
+                test="'${q-limit-options}' != 'queue-len'"
+                help="Guranteed queue-buffer size"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                optional="true"
+                >
+                <PARAM
+                    name="guaranteed-buf-size"
+                    help="Guaranteed queue-buffer size"
+                    ptype="RANGE_1_512"
+                    yang_name="&POL_CMAP_ACTN_QLMT_QLEN;=${guaranteed-buf-size}"
+                    >
+            </PARAM>
+        </PARAM>
+        <ACTION
+            builtin="clish_extn"
+            > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="no queue-limit"
+            help="Shared buffer size for this queue"
+            ptype="SUBCOMMAND"
+            operation="edit-config"
+            namespace="&NAME_SPACE;"
+            yang_name="&POL_ENTRY_NAME;${pname},&POL_ENTRY_TYPE;${ptypes},&POL_CMAP;cname=${cname},&POL_CMAP_ACTN_TYPE;=queue-limit"
+            sub_oper_yang="remove:action-entry"
+            >
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+    </VIEW>
+    <VIEW
+        name="configure-pmap-control-plane-c-view"
+        prompt="${SYSTEM_NAME}(config-pmap-c)# "
+        depth="3"
+        >
+        <NAMESPACE ref="configure-view"
+                help="false"
+                completion="false"/>
+        <NAMESPACE
+             ref="configure-pmap-qos-view"
+             help="false"
+             completion="false"
+             />
+        <!-- show configuration candidate -->
+        <COMMAND
+            name="show"
+            help="show configuration"
+            />
+        <COMMAND
+            name="show configuration candidate"
+            help="Current candidate configuration"
+            yang_filter="Filter_Type:SUBTREE;Filter_Conditions:&POL_ENTRY;name=${pname},&POL_CMAP;cname=${cname};Filter_Namespace:&NAME_SPACE;"
+            template="show_config_policy_class.xsl"
+            add_config_entry="false"
+            >
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+        <!-- show configuration -->
+        <COMMAND
+            name="show configuration"
+            help="Current configuration (default = running)"
+            yang_filter="Filter_Type:SUBTREE;Filter_Conditions:&POL_ENTRY;name=${pname},&POL_CMAP;cname=${cname};Filter_Namespace:&NAME_SPACE;"
+            template="show_config_policy_class.xsl"
+            add_config_entry="false"
+            >
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="no"
+            help="Negate a command or set its defaults"
+            />
+        <COMMAND
+            name="police"
+            help="Rate police input traffic"
+            ptype="SUBCOMMAND"
+            operation="edit-config"
+            yang_name="&POL_ENTRY_NAME;${pname},&POL_CMAP;cname=${cname},&POL_CMAP_ACTN_TYPE;=meter"
+            yang_key="&POL_CMAP_ACTN_TYPE;=meter"
+            >
+            <PARAM
+                name="cir"
+                help="Specify the committed rate"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                >
+                <PARAM
+                    name="committed"
+                    help="Committed rate in pps for control plane and kbps for others"
+                    ptype="QoS_CIR_PIR"
+                    default_oper="merge"
+                    sub_oper_yang="replace:meter-cfg"
+                    namespace="&NAME_SPACE;"
+                    yang_name="&POL_CMAP_ACTN_METER;committed-meter-rate=${committed}"
+                    />
+                <PARAM
+                    name="bc"
+                    help="Specify the committed burst"
+                    optional="true"
+                    ptype="STRING"
+                    mode="subcommand"
+                    >
+                    <PARAM
+                        name="bcv"
+                        help="Committed burst size in packets (default = 200Packets) for control plane and KB for others (default = 100KB)"
+                        ptype="BURST_SZ"
+                        yang_name="&POL_CMAP_ACTN_METER;committed-burst-size=${bcv}"
+                        />
+                </PARAM>
+            </PARAM>
+            <PARAM
+                name="pir"
+                help="Specify the peak rate"
+                namespace="&NAME_SPACE;"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                >
+                <PARAM
+                    name="peak"
+                    help="Peak rate in pps for control plane and kbps for others"
+                    ptype="QoS_CIR_PIR"
+                    namespace="&NAME_SPACE;"
+                    yang_name="&POL_CMAP_ACTN_METER;meter-rate=${peak}"
+                    />
+                <PARAM
+                    name="be"
+                    help="Specify the peak burst rate"
+                    optional="true"
+                    ptype="STRING"
+                    mode="subcommand"
+                    >
+                    <PARAM
+                        name="bev"
+                        help="Peak burst size in packets (default = 200Packets) for control plane and KB for others (default = 100KB)"
+                        ptype="BURST_SZ"
+                        namespace="&NAME_SPACE;"
+                        yang_name="&POL_CMAP_ACTN_METER;burst-size=${bev}"
+                        />
+                </PARAM>
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="set"
+            help="Mark input traffic"
+            operation="edit-config"
+            namespace="&NAME_SPACE;"
+            >
+                <PARAM
+                    name="qos-group"
+                    help="Specify queue values"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    yang_key="&POL_CMAP_ACTN_TYPE;=qos-group"
+                    >
+                    <PARAM
+                        name="qos-group-value"
+                        help="Queue number"
+                        ptype="QOS_GROUP_ID"
+                        namespace="&NAME_SPACE;"
+                        yang_name="&POL_ENTRY_NAME;${pname},&POL_CMAP;cname=${cname},&POL_CMAP_ACTN_TYPE;=qos-group,&POL_CMAP_ACTN_QOSGRP;qos-group=${qos-group-value}"
+                        />
+                </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="no set"
+            help="Mark input traffic"
+            operation="edit-config"
+            >
+                <PARAM
+                    name="qos-group"
+                    help="Specify queue values"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    operation="edit-config"
+                    sub_oper_yang="remove:action-entry"
+                    namespace="&NAME_SPACE;"
+                    yang_name="&POL_ENTRY_NAME;${pname},&POL_CMAP;cname=${cname},&POL_CMAP_ACTN_TYPE;=qos-group"
+                    >
+                    <PARAM
+                        name="qos-group-value"
+                        help="Queue number"
+                        ptype="QOS_GROUP_ID"
+                        optional="true"
+                        />
+                </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="no police"
+            help="Rate police input traffic"
+            ptype="SUBCOMMAND"
+            operation="edit-config"
+            >
+            <PARAM
+                name="cir"
+                help="Specify the committed rate"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                >
+                <PARAM
+                    name="committed"
+                    help="Committed rate in pps for control plane and kbps for others"
+                    ptype="QoS_CIR_PIR"
+                    namespace="&NAME_SPACE;"
+                    yang_name="&POL_CMAP_ACTN_METER;committed-meter-rate=${committed}"
+                    />
+                    <PARAM
+                        name="bc"
+                        help="Specify the committed burst"
+                        ptype="STRING"
+                        optional="true"
+                        mode="subcommand"
+                        >
+                        <PARAM
+                            name="bcv"
+                            help="Committed burst size in packets (default = 200Packets) for control plane and KB for others (default = 100KB)"
+                            ptype="BURST_SZ"
+                            yang_name="&POL_CMAP_ACTN_METER;committed-burst-size=${bcv}"
+                            />
+                    </PARAM>
+            </PARAM>
+            <PARAM
+                name="pir"
+                help="Specify the peak rate"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                sub_oper_yang="remove:action-entry"
+                namespace="&NAME_SPACE;"
+                yang_name="&POL_ENTRY_NAME;${pname},&POL_CMAP;cname=${cname},&POL_CMAP_ACTN;atype=meter"
+                >
+                <PARAM
+                    name="peak"
+                    help="Peak rate in pps for control plane and kbps for others"
+                    ptype="QoS_CIR_PIR"
+                    />
+                <PARAM
+                    name="be"
+                    help="Specify the peak burst"
+                    optional="true"
+                    ptype="STRING"
+                    mode="subcommand"
+                    >
+                    <PARAM
+                        name="bev"
+                        help="Peak burst size in packets (default = 200Packets) for control plane and KB for others (default = 100KB)"
+                        ptype="BURST_SZ"
+                        optional="true"
+                        />
+                </PARAM>
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+    </VIEW>
+    <VIEW
+        name="configure-pmap-application-c-view"
+        prompt="${SYSTEM_NAME} (config-pmap-c-app)# "
+        depth="3"
+        >
+        <NAMESPACE ref="configure-view"
+                help="false"
+                completion="false"/>
+        <!-- show configuration candidate -->
+        <COMMAND
+            name="show"
+            help="show configuration"
+            />
+        <COMMAND
+            name="show configuration candidate"
+            help="Current candidate configuration"
+            yang_filter="Filter_Type:SUBTREE;Filter_Conditions:&POL_ENTRY;name=${pname},&POL_CMAP;cname=${cname};Filter_Namespace:&NAME_SPACE;"
+            template="show_config_policy_class.xsl"
+            add_config_entry="false"
+            >
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+        <!-- show configuration -->
+        <COMMAND
+            name="show configuration"
+            help="Current configuration (default = running)"
+            yang_filter="Filter_Type:SUBTREE;Filter_Conditions:&POL_ENTRY;name=${pname},&POL_CMAP;cname=${cname};Filter_Namespace:&NAME_SPACE;"
+            template="show_config_policy_class.xsl"
+            add_config_entry="false"
+            >
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="no"
+            help="Negate a command or set its defaults"
+            />
+        <COMMAND
+            name="set"
+            help="Mark input traffic"
+            operation="edit-config"
+            namespace="&NAME_SPACE;"
+            >
+            <PARAM
+                name="subtype"
+                help="Sub type to use"
+                mode="switch"
+                ptype="SUBCOMMAND"
+                >
+                <PARAM
+                    name="cos"
+                    help="Specify dot1p values"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    yang_key="&POL_CMAP_ACTN_TYPE;=marking-cos"
+                    >
+                    <PARAM
+                        name="cos-value"
+                        help="Dot1p values"
+                        ptype="GROUP_ID"
+                        namespace="&NAME_SPACE;"
+                        yang_name="&POL_ENTRY_NAME;${pname},&POL_CMAP;cname=${cname},&POL_CMAP_ACTN_TYPE;=marking-cos,&POL_CMAP_ACTN_COS;cos=${cos-value}"
+                        />
+                </PARAM>
+                <PARAM
+                    name="qos-group"
+                    help="Specify queue values"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    yang_key="&POL_CMAP_ACTN_TYPE;=qos-group"
+                    >
+                    <PARAM
+                        name="qos-group-value"
+                        help="Queue number"
+                        ptype="GROUP_ID"
+                        namespace="&NAME_SPACE;"
+                        yang_name="&POL_ENTRY_NAME;${pname},&POL_CMAP;cname=${cname},&POL_CMAP_ACTN_TYPE;=qos-group,&POL_CMAP_ACTN_QOSGRP;qos-group=${qos-group-value}"
+                        />
+                </PARAM>
+                <PARAM
+                    name="dscp"
+                    help="Specify dscp values"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    yang_key="&POL_CMAP_ACTN_TYPE;=marking-dscp"
+                    >
+                    <PARAM
+                        name="dscp-value"
+                        help="Dscp values"
+                        ptype="DSCP_ID"
+                        default_oper="merge"
+                        namespace="&NAME_SPACE;"
+                        yang_name="&POL_ENTRY_NAME;${pname},&POL_CMAP;cname=${cname},&POL_CMAP_ACTN_TYPE;=marking-dscp,&POL_CMAP_ACTN_DSCP;dscp=${dscp-value}"
+                        />
+                </PARAM>
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+       </COMMAND>
+       <COMMAND
+            name="no set"
+            help="Mark input traffic"
+            operation="edit-config"
+            >
+            <PARAM
+                name="subtype"
+                help="Sub type to use"
+                mode="switch"
+                ptype="SUBCOMMAND"
+                >
+                <PARAM
+                    name="cos"
+                    help="Specify dot1p values"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    operation="edit-config"
+                    sub_oper_yang="remove:action-entry"
+                    namespace="&NAME_SPACE;"
+                    yang_name="&POL_CMAP_ACTN;,&POL_ENTRY_NAME;${pname},&POL_ENTRY_TYPE;${ptypes},&POL_CMAP;cname=${cname},&POL_CMAP_ACTN_TYPE;=marking-cos"
+                    >
+                    <PARAM
+                        name="cos-value"
+                        help="Dot1p values"
+                        ptype="GROUP_ID"
+                        optional="true"
+                        />
+                </PARAM>
+                <PARAM
+                    name="qos-group"
+                    help="Specify queue values"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    operation="edit-config"
+                    sub_oper_yang="remove:action-entry"
+                    namespace="&NAME_SPACE;"
+                    yang_name="&POL_ENTRY_NAME;${pname},&POL_CMAP;cname=${cname},&POL_CMAP_ACTN_TYPE;=qos-group"
+                    >
+                    <PARAM
+                        name="qos-group-value"
+                        help="Queue number"
+                        ptype="GROUP_ID"
+                        optional="true"
+                        />
+                </PARAM>
+                <PARAM
+                    name="dscp"
+                    help="Specify dscp values"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    operation="edit-config"
+                    sub_oper_yang="remove:action-entry"
+                    namespace="&NAME_SPACE;"
+                    yang_name="&POL_ENTRY_NAME;${pname},&POL_CMAP;cname=${cname},&POL_CMAP_ACTN_TYPE;=marking-dscp"
+                    >
+                    <PARAM
+                        name="dscp-value"
+                        help="Dscp values"
+                        ptype="DSCP_ID"
+                        optional="true"/>
+                </PARAM>
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+    </VIEW>
+    <VIEW
+        name="configure-pmap-network-qos-c-view"
+        prompt="${SYSTEM_NAME} (config-pmap-c-nqos)# "
+        depth="3"
+        >
+        <NAMESPACE ref="configure-view"
+                help="false"
+                completion="false"/>
+        <NAMESPACE
+            ref="configure-pmap-network-qos-view"
+            help="false"
+            completion="false"/>
+        <!-- show configuration candidate -->
+        <COMMAND
+            name="show"
+            help="show configuration"
+            />
+        <COMMAND
+            name="show configuration candidate"
+            help="Current candidate configuration"
+            yang_filter="Filter_Type:SUBTREE;Filter_Conditions:&POL_ENTRY;name=${pname},&POL_CMAP;cname=${cname};Filter_Namespace:&NAME_SPACE;"
+            template="show_config_policy_class.xsl"
+            add_config_entry="false"
+            >
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+        <!-- show configuration -->
+        <COMMAND
+            name="show configuration"
+            help="Current configuration (default = running)"
+            yang_filter="Filter_Type:SUBTREE;Filter_Conditions:&POL_ENTRY;name=${pname},&POL_CMAP;cname=${cname};Filter_Namespace:&NAME_SPACE;"
+            template="show_config_policy_class.xsl"
+            add_config_entry="false"
+            >
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="no"
+            help="Negate a command or set its defaults"
+            />
+        <COMMAND
+            name="pause"
+            help="Pause buffer configuration"
+            ptype="SUBCOMMAND"
+            operation="edit-config"
+            namespace="&NAME_SPACE;"
+            yang_name="&POL_ENTRY_NAME;${pname},&POL_CMAP;cname=${cname},&POL_CMAP_ACTN_TYPE;=pause-buffer,&POL_CMAP_ACTN_PAUSE;pause-buffer-size=0,&POL_CMAP_ACTN_PAUSE;pause-buffer-thr=0,&POL_CMAP_ACTN_PAUSE;pause-resume-thr=0"
+            yang_key="&POL_CMAP_ACTN_TYPE;=pause-buffer"
+            >
+            <PARAM
+                name="buffer-size"
+                help="Specify the buffer-size for pause"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                refresh_yang_name="true"
+                yang_name="&POL_ENTRY_NAME;${pname},&POL_CMAP;cname=${cname},&POL_CMAP_ACTN_TYPE;=pause-buffer"
+                optional="true"
+                >
+                <PARAM
+                    name="buffer-size-val"
+                    help="Buffer size in kbyte"
+                    ptype="RANGE_1_512"
+                    default_oper="merge"
+                    sub_oper_yang="replace:pause-cfg"
+                    namespace="&NAME_SPACE;"
+                    yang_name="&POL_CMAP_ACTN_PAUSE;pause-buffer-size=${buffer-size-val}"
+                    />
+                <PARAM
+                    name="pause-threshold"
+                    help="Specify pause buffer threshold"
+                    ptype="STRING"
+                    mode="subcommand"
+                    >
+                    <PARAM
+                        name="pause-buf-thr-val"
+                        help="Pause buffer thrshold in kb"
+                        ptype="RANGE_1_512"
+                        yang_name="&POL_CMAP_ACTN_PAUSE;pause-buffer-thr=${pause-buf-thr-val}"
+                        />
+                    <PARAM
+                        name="resume-threshold"
+                        help="Specify pause buffer threshold"
+                        ptype="STRING"
+                        mode="subcommand"
+                        >
+                        <PARAM
+                            name="pause-res-thr-val"
+                            help="Pause buffer resume thrshold in kb"
+                            ptype="RANGE_1_512"
+                            yang_name="&POL_CMAP_ACTN_PAUSE;pause-resume-thr=${pause-res-thr-val}"
+                            />
+                    </PARAM>
+                </PARAM>
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="no pause"
+            help="Pause buffer configuration"
+            ptype="SUBCOMMAND"
+            operation="edit-config"
+            namespace="&NAME_SPACE;"
+            sub_oper_yang="remove:action-entry"
+            yang_name="&POL_ENTRY_NAME;${pname},&POL_CMAP;cname=${cname},&POL_CMAP_ACTN_TYPE;=pause-buffer"
+            yang_key="&POL_CMAP_ACTN_TYPE;=pause-buffer"
+            >
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+         <COMMAND
+            name="queue-limit"
+            help="Shared buffer size for this queue"
+            ptype="SUBCOMMAND"
+            operation="edit-config"
+            namespace="&NAME_SPACE;"
+            sub_oper_yang="replace:queue-limit-cfg"
+            yang_name="&POL_ENTRY_NAME;${pname},&POL_ENTRY_TYPE;${ptypes},&POL_CMAP;cname=${cname},&POL_CMAP_ACTN_TYPE;=queue-limit"
+            yang_key="&POL_CMAP_ACTN_TYPE;=queue-limit"
+            >
+            <MACRO name="static_dynamic_threshold_mode" arg="false" />
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="no queue-limit"
+            help="Shared buffer size for this queue"
+            ptype="SUBCOMMAND"
+            operation="edit-config"
+            namespace="&NAME_SPACE;"
+            sub_oper_yang="remove:action-entry"
+            yang_name="&POL_ENTRY_NAME;${pname},&POL_CMAP;cname=${cname},&POL_CMAP_ACTN_TYPE;=queue-limit"
+            yang_key="&POL_CMAP_ACTN_TYPE;=queue-limit"
+            >
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+         <COMMAND
+            name="pfc-cos"
+            help="Enable pfc priorities"
+            ptype="SUBCOMMAND"
+            operation="edit-config"
+            namespace="&NAME_SPACE;"
+            yang_name="&POL_ENTRY_NAME;${pname},&POL_ENTRY_TYPE;${ptypes},&POL_CMAP;cname=${cname},&POL_CMAP_ACTN_TYPE;=pfc-cos"
+            yang_key="&POL_CMAP_ACTN_TYPE;=pfc-cos"
+            >
+            <PARAM
+                name="priority-list"
+                help="Priority value either single, comma-delimited or hyphenated-range"
+                ptype="COS_ID"
+                default_oper="merge"
+                sub_oper_yang="replace:pfc-cos-cfg"
+                namespace="&NAME_SPACE;"
+                yang_name="&POL_CMAP_ACTN_PFC_COS;cfg[]=${priority-list}"
+                />
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+         <COMMAND
+            name="no pfc-cos"
+            help="Enable pfc priorities"
+            ptype="SUBCOMMAND"
+            operation="edit-config"
+            sub_oper_yang="remove:action-entry"
+            namespace="&NAME_SPACE;"
+            yang_name="&POL_ENTRY_NAME;${pname},&POL_ENTRY_TYPE;${ptypes},&POL_CMAP;cname=${cname},&POL_CMAP_ACTN_TYPE;=pfc-cos"
+            yang_key="&POL_CMAP_ACTN_TYPE;=pfc-cos"
+            >
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+   </VIEW>
+</CLISH_MODULE>

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE CLISH_MODULE [
+<!ENTITY SUBTREE_FILTER "Filter_Type:SUBTREE">
+]>
+<CLISH_MODULE
+    xmlns="http://www.dellemc.com/force10/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xi="http://www.w3.org/2001/XInclude"
+    xsi:schemaLocation="http://www.dellemc.com/force10/XMLSchema
+                        http://www.dellemc.com/force10/XMLSchema/clish.xsd">
+<!-- ********************************************************************** -->
+<!-- *  CLEAR LLDP COMMANDS                                               * -->
+<!--
+clear lldp counters
+clear lldp table
+-->
+<!-- *  View : enable-view                                                * -->
+<!-- ********************************************************************** -->
+    <VIEW name="enable-view">
+        <COMMAND name="clear lldp"
+                 help="Clear lldp related information"
+                 ptype="SUBCOMMAND"
+                 operation="generic-rpc"
+                 namespace="http://www.dellemc.com/networking/os10/dell-lldp"
+                 >
+                 <PARAM name="option"
+                        help=""
+                        ptype="SUBCOMMAND"
+                        mode="switch">
+                        <PARAM name="counters"
+                               help="Clear lldp counters"
+                               ptype="SUBCOMMAND"
+                               mode="subcommand"
+                               yang_name="/clear_lldp/counters"/>
+                        <PARAM name="table"
+                               help="Clear lldp table"
+                               ptype="SUBCOMMAND"
+                               mode="subcommand"
+                               yang_name="/clear_lldp/table"/>
+                 </PARAM>
+        <ACTION builtin="clish_extn"/>
+        </COMMAND>
+    </VIEW>
+</CLISH_MODULE>

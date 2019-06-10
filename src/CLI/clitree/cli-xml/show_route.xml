@@ -1,0 +1,255 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE CLISH_MODULE [
+<!ENTITY SUBTREE_FILTER "Filter_Type:SUBTREE">
+<!ENTITY RIBS                  "/routing/instance/ribs">
+<!ENTITY RIB                   "&RIBS;/rib">
+<!ENTITY INST_NAME             "/routing/instance/vrf-name">
+<!ENTITY RIBS_ROUTE            "&RIBS;/rib/routes/route">
+<!ENTITY RIBS_SRC_PROTOCOL     "&RIBS_ROUTE;/source-protocol">
+<!ENTITY RIBS_PREFIX           "&RIBS_ROUTE;/destination-prefix">
+<!ENTITY RIBS_NEXT_HOP         "&RIBS_ROUTE;/next-hop">
+<!ENTITY RIBS_NEXT_HOP_INTF    "&RIBS_NEXT_HOP;/nhop-intf">
+<!ENTITY RIBS_NEXT_HOP_ADDR    "&RIBS_NEXT_HOP;/address">
+<!ENTITY FILTER_NS      "Filter_Namespace:http://www.dellemc.com/networking/os10/dell-routing">
+<!ENTITY NS-GET-BULK           "http://yumaworks.com/ns/yumaworks-getbulk">
+]>
+<CLISH_MODULE
+    xmlns="http://www.dellemc.com/force10/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xi="http://www.w3.org/2001/XInclude"
+    xsi:schemaLocation="http://www.dellemc.com/force10/XMLSchema
+                        http://www.dellemc.com/force10/XMLSchema/clish.xsd">
+<!-- ********************************************************************** -->
+<!-- *  SHOW IP ROUTE COMMANDS                                                 * -->
+<!--
+show ip route all
+show ipv6 route all
+-->
+<!-- *  View : enable-view                                                * -->
+<!-- ********************************************************************** -->
+    <VIEW name="enable-view">
+          <COMMAND name="show ip route"
+                   help="IP route information"
+                   operation="get-bulk"
+                   namespace="&NS-GET-BULK;"
+                   yang_name="/get-bulk/count=150,/get-bulk/list-target=/routing/instance=default/ribs/rib=ipV4\,nlriUnicast/routes/route,/get-bulk/filter=is-active=true"
+                   template="show_ip_route_bulk_all.xsl"
+                   skip_preprocess="true"
+                   >
+                          <PARAM name="type"
+                                 help="switch subcommand"
+                                 ptype="SUBCOMMAND"
+                                 optional="true"
+                                 mode="switch" >
+                          <PARAM name="all"
+                                 help="All routes including non-active routes"
+                                 ptype="SUBCOMMAND"
+                                 mode="subcommand"
+                                 refresh_yang_name="true"
+                                 yang_name="/get-bulk/count=150,/get-bulk/list-target=/routing/instance=default/ribs/rib=ipV4\,nlriUnicast/routes/route"
+                          />
+                          <PARAM name="bgp"
+                                 help="Border Gateway Protocol (BGP)"
+                                 ptype="SUBCOMMAND"
+                                 mode="subcommand"
+                                 refresh_yang_name="true"
+                                 yang_name="/get-bulk/count=150,/get-bulk/list-target=/routing/instance=default/ribs/rib=ipV4\,nlriUnicast/routes/route,/get-bulk/filter=source-protocol=bgp;is-active=true">
+                          </PARAM>
+                          <PARAM name="connected"
+                                 help="Connected"
+                                 ptype="SUBCOMMAND"
+                                 mode="subcommand"
+                                 refresh_yang_name="true"
+                                 yang_name="/get-bulk/count=150,/get-bulk/list-target=/routing/instance=default/ribs/rib=ipV4\,nlriUnicast/routes/route,/get-bulk/filter=source-protocol=connected-route;is-active=true"/>
+                          <PARAM name="interface"
+                                 help="Ip routes with this output interface"
+                                 operation="get"
+                                 ptype="SUBCOMMAND"
+                                 pfeature="NOT_SUPPORTED"
+                                 mode="subcommand">
+                                 <PARAM name="intf-type"
+                                 help="switch subcommand"
+                                 ptype="SUBCOMMAND"
+                                 mode="switch" >
+                                        <PARAM name="eth-if"
+                                               help="Ethernet IEEE 802.3"
+                                               ptype="PHY_INTERFACE"
+                                               yang_filter="&SUBTREE_FILTER;;&FILTER_NS;;Filter_Conditions:&INST_NAME;=default,&RIB;/afn=ipV4,&RIB;/safi=nlriUnicast,&RIBS_NEXT_HOP_INTF;=${eth-if}"
+                                               template="show_ip_route.xsl">
+                                        </PARAM>
+                                        <PARAM name="vlan-if"
+                                               help="Vlan interface"
+                                               ptype="VLAN_INTERFACE"
+                                               yang_filter="&SUBTREE_FILTER;;&FILTER_NS;;Filter_Conditions:&INST_NAME;=default,&RIB;/afn=ipV4,&RIB;/safi=nlriUnicast,&RIBS_NEXT_HOP_INTF;=${vlan-if}"
+                                               template="show_ip_route.xsl">
+                                        </PARAM>
+                                        <PARAM name="po-if"
+                                               help="Port Channel interface"
+                                               ptype="PO_INTERFACE"
+                                               yang_filter="&SUBTREE_FILTER;;&FILTER_NS;;Filter_Conditions:&INST_NAME;=default,&RIB;/afn=ipV4,&RIB;/safi=nlriUnicast,&RIBS_NEXT_HOP_INTF;=${po-if}"
+                                               template="show_ip_route.xsl">
+                                        </PARAM>
+                                 </PARAM>
+                          </PARAM>
+                          <PARAM name="next-hop"
+                                 help="Routes with next-hop"
+                                 operation="get"
+                                 ptype="SUBCOMMAND"
+                                 pfeature="NOT_SUPPORTED"
+                                 mode="subcommand">
+                                 <PARAM name="addr"
+                                        help="Next hop address"
+                                        ptype="IP_ADDR"
+                                        yang_filter="&SUBTREE_FILTER;;&FILTER_NS;;Filter_Conditions:&INST_NAME;=default,&RIB;/afn=ipV4,&RIB;/safi=nlriUnicast,&RIBS_NEXT_HOP_ADDR;=${addr}"
+                                        template="show_ip_route.xsl"/>
+                          </PARAM>
+                          <PARAM name="ospf"
+                                 help="Open Shortest Path First(OSPF)"
+                                 ptype="SUBCOMMAND"
+                                 mode="subcommand"
+                                 refresh_yang_name="true"
+                                 yang_name="/get-bulk/count=150,/get-bulk/list-target=/routing/instance=default/ribs/rib=ipV4\,nlriUnicast/routes/route,/get-bulk/filter=source-protocol=ospf;is-active=true">
+                                 <PARAM name="ospf-instance"
+                                        pfeature="NOT_SUPPORTED"
+                                        help="Ospf instance number"
+                                        operation="get"
+                                        optional="true"
+                                        ptype="RANGE_1_65535"
+                                        template="show_ip_route.xsl"
+                                        yang_filter="&SUBTREE_FILTER;;Filter_Conditions:&INST_NAME;=default,&RIB;/afn=ipV4,&RIB;/safi=nlriUnicast,&RIBS_SRC_PROTOCOL;=ospf,&RIBS_ROUTE;/ospf-instance-id=${ospf-instance},&RIB;/routes/route/is-active=true;&FILTER_NS;"/>
+                          </PARAM>
+                          <PARAM name="static"
+                                 help="Static routes"
+                                 ptype="SUBCOMMAND"
+                                 mode="subcommand"
+                                 refresh_yang_name="true"
+                                 yang_name="/get-bulk/count=150,/get-bulk/list-target=/routing/instance=default/ribs/rib=ipV4\,nlriUnicast/routes/route,/get-bulk/filter=source-protocol=static-route;is-active=true"/>
+
+                          <PARAM name="prefix"
+                                 help="Destination prefix"
+                                 operation="get"
+                                 ptype="IP_ADDR_MASK"
+                                 yang_filter="&SUBTREE_FILTER;;&FILTER_NS;;Filter_Conditions:&INST_NAME;=default,&RIB;/afn=ipV4,&RIB;/safi=nlriUnicast,&RIBS_PREFIX;=${prefix},&RIB;/routes/route/is-active=true"
+                                 template="show_ip_route.xsl"/>
+
+                          <PARAM name="summary"
+                                 help="Routes Summary"
+                                 operation="get"
+                                 ptype="SUBCOMMAND"
+                                 mode="subcommand"
+                                 yang_filter="&SUBTREE_FILTER;;&FILTER_NS;;Filter_Conditions:&INST_NAME;=default,&RIB;/afn=ipV4,&RIB;/safi=nlriUnicast,&RIB;/total-active-cnt,&RIB;/total-nonactive-cnt,&RIB;/per-protocol-count;"
+                                 template="show_ip_route_summary.xsl"/>
+
+                          </PARAM> <!-- End of switch -->
+
+          <ACTION builtin="clish_extn"></ACTION>
+          </COMMAND>
+
+
+
+          <COMMAND name="show ipv6 route"
+                   help="IPv6 route information"
+                   operation="get-bulk"
+                   namespace="&NS-GET-BULK;"
+                   yang_name="/get-bulk/count=150,/get-bulk/list-target=/routing/instance=default/ribs/rib=ipV6\,nlriUnicast/routes/route,/get-bulk/filter=is-active=true"
+                   template="show_ipv6_route_bulk_all.xsl">
+                          <PARAM name="type"
+                                 help="switch subcommand"
+                                 ptype="SUBCOMMAND"
+                                 optional="true"
+                                 mode="switch" >
+
+                          <PARAM name="all"
+                                 help="All routes including non-active routes"
+                                 ptype="SUBCOMMAND"
+                                 mode="subcommand"
+                                 refresh_yang_name="true"
+                                 yang_name="/get-bulk/count=150,/get-bulk/list-target=/routing/instance=default/ribs/rib=ipV6\,nlriUnicast/routes/route"/>
+                          <PARAM name="bgp"
+                                 help="Border Gateway Protocol (BGP)"
+                                 ptype="SUBCOMMAND"
+                                 mode="subcommand"
+                                 refresh_yang_name="true"
+                                 yang_name="/get-bulk/count=150,/get-bulk/list-target=/routing/instance=default/ribs/rib=ipV6\,nlriUnicast/routes/route,/get-bulk/filter=source-protocol=bgp;is-active=true">
+                          </PARAM>
+
+                          <PARAM name="connected"
+                                 help="Connected"
+                                 ptype="SUBCOMMAND"
+                                 mode="subcommand"
+                                 refresh_yang_name="true"
+                                 yang_name="/get-bulk/count=150,/get-bulk/list-target=/routing/instance=default/ribs/rib=ipV6\,nlriUnicast/routes/route,/get-bulk/filter=source-protocol=connected-route;is-active=true"/>
+                          <PARAM name="interface"
+                                 help="Ip routes with this output interface"
+                                 ptype="SUBCOMMAND"
+                                 pfeature="NOT_SUPPORTED"
+                                 mode="subcommand">
+                                 <PARAM name="intf-type"
+                                 help="switch subcommand"
+                                 ptype="SUBCOMMAND"
+                                 mode="switch" >
+                                        <PARAM name="eth-if"
+                                               help="Ethernet IEEE 802.3"
+                                               ptype="PHY_INTERFACE"
+                                               yang_filter="&SUBTREE_FILTER;;&FILTER_NS;;Filter_Conditions:&INST_NAME;=default,&RIB;/afn=ipV6,&RIB;/safi=nlriUnicast,&RIBS_NEXT_HOP_INTF;=${eth-if}"
+                                               template="show_ip_route.xsl">
+                                        </PARAM>
+                                        <PARAM name="vlan-if"
+                                               help="Vlan interface"
+                                               ptype="VLAN_INTERFACE"
+                                               yang_filter="&SUBTREE_FILTER;;&FILTER_NS;;Filter_Conditions:&INST_NAME;=default,&RIB;/afn=ipV6,&RIB;/safi=nlriUnicast,&RIBS_NEXT_HOP_INTF;=${vlan-if}"
+                                               template="show_ip_route.xsl">
+                                        </PARAM>
+                                        <PARAM name="po-if"
+                                               help="Port Channel interface"
+                                               ptype="PO_INTERFACE"
+                                               yang_filter="&SUBTREE_FILTER;;&FILTER_NS;;Filter_Conditions:&INST_NAME;=default,&RIB;/afn=ipV6,&RIB;/safi=nlriUnicast,&RIBS_NEXT_HOP_INTF;=${po-if}"
+                                               template="show_ip_route.xsl">
+                                        </PARAM>
+                                 </PARAM>
+                          </PARAM>
+                          <PARAM name="next-hop"
+                                 help="Routes with next-hop"
+                                 ptype="SUBCOMMAND"
+                                 pfeature="NOT_SUPPORTED"
+                                 mode="subcommand">
+                                 <PARAM name="addr"
+                                        help="Next hop address"
+                                        ptype="IPV6_ADDR"
+                                        yang_filter="&SUBTREE_FILTER;;&FILTER_NS;;Filter_Conditions:&INST_NAME;=default,&RIB;/afn=ipV6,&RIB;/safi=nlriUnicast,&RIBS_NEXT_HOP_ADDR;=${addr}"
+                                        template="show_ip_route.xsl"/>
+                          </PARAM>
+                          <PARAM name="ospf"
+                                 help="Open Shortest Path First (OSPF)"
+                                 ptype="SUBCOMMAND"
+                                 mode="subcommand"
+                                 refresh_yang_name="true"
+                                 yang_name="/get-bulk/count=150,/get-bulk/list-target=/routing/instance=default/ribs/rib=ipV6\,nlriUnicast/routes/route,/get-bulk/filter=source-protocol=ospf;is-active=true">
+                          </PARAM>
+                          <PARAM name="static"
+                                 help="Static routes"
+                                 ptype="SUBCOMMAND"
+                                 mode="subcommand"
+                                 refresh_yang_name="true"
+                                 yang_name="/get-bulk/count=150,/get-bulk/list-target=/routing/instance=default/ribs/rib=ipV6\,nlriUnicast/routes/route,/get-bulk/filter=source-protocol=static-route;is-active=true"/>
+                          <PARAM name="ip"
+                                 help="Destination prefix"
+                                 operation="get"
+                                 ptype="IPV6_ADDR_MASK"
+                                 yang_filter="&SUBTREE_FILTER;;&FILTER_NS;;Filter_Conditions:&INST_NAME;=default,&RIB;/afn=ipV6,&RIB;/safi=nlriUnicast,&RIBS_PREFIX;=new_param1,&RIB;/routes/route/is-active=true"
+                                 prompt_oper="${ip}"
+                                 prompt_fn="show_trim_ip"
+                                 template="show_ip_route.xsl"/>
+
+                          <PARAM name="summary"
+                                 help="Routes Summary"
+                                 operation="get"
+                                 ptype="SUBCOMMAND"
+                                 mode="subcommand"
+                                 yang_filter="&SUBTREE_FILTER;;&FILTER_NS;;Filter_Conditions:&INST_NAME;=default,&RIB;/afn=ipV6,&RIB;/safi=nlriUnicast,&RIB;/total-active-cnt,&RIB;/total-nonactive-cnt,&RIB;/per-protocol-count;"
+                                 template="show_ip_route_summary.xsl"/>
+                          </PARAM> <!-- End of switch -->
+          <ACTION builtin="clish_extn"></ACTION>
+          </COMMAND>
+    </VIEW>
+</CLISH_MODULE>

@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE CLISH_MODULE [
+<!ENTITY NAME_SPACE                     "http://www.dellemc.com/networking/os10/dell-equipment">
+<!ENTITY NAME_SPACE_UPTIME              "http://www.dellemc.com/networking/os10/dell-system">
+<!ENTITY NAME_SPACE_PORT                "http://www.dellemc.com/networking/os10/dell-port">
+<!ENTITY SUBTREE_FILTER                 "Filter_Type:SUBTREE">
+<!ENTITY LOGGING_REMOTE_HOST            "/logging-trace/logging/logging-remote/remote-host-ip-address">
+<!ENTITY LOGGING_REMOTE_HOST_LEVEL      "/logging-trace/logging/logging-remote/remote-host-level">
+<!ENTITY LOGGING_REMOTE                 "/logging-trace/logging/logging-remote">
+<!ENTITY LOGGING_LOGGING                "/logging-trace/logging/logging">
+<!ENTITY LOGGING_LOGGING_MODULE         "/logging-trace/logging/logging/log-output-module">
+<!ENTITY MODULE-NS-PORT                 "http://www.dellemc.com/networking/os10/dell-port">
+<!ENTITY FILTER_PORT                    "Filter_Type:SUBTREE;Filter_Namespace:&MODULE-NS-PORT;;Filter_Conditions:">
+]>
+<CLISH_MODULE
+    xmlns="http://www.dellemc.com/force10/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xi="http://www.w3.org/2001/XInclude"
+    xsi:schemaLocation="http://www.dellemc.com/force10/XMLSchema
+                        http://www.dellemc.com/force10/XMLSchema/clish.xsd"
+    >
+    <!--=======================================================-->
+    <VIEW name="enable-view">
+
+    <!-- show commands -->
+
+      <COMMAND
+        name="show environment"
+        help="Show the environmental information of the system"
+        operation="get"
+        yang_filter="Filter_Type:SUBTREE;Filter_Namespace:&NAME_SPACE;;Filter_Conditions:/system/environment"
+        template="show_chassis_environment.xsl"
+        >
+        <ACTION builtin="clish_extn"> </ACTION>
+      </COMMAND>
+
+      <COMMAND
+        name="show inventory"
+        help="Show the system inventory information"
+        operation="get"
+        yang_filter="Filter_Type:SUBTREE;Filter_Namespace:&NAME_SPACE;;Filter_Conditions:/system/node"
+        template="show_chassis_inventory.xsl"
+        >
+        <ACTION builtin="clish_extn"> </ACTION>
+      </COMMAND>
+
+      <COMMAND
+        name="show inventory media"
+        help="Show the system inventory media information"
+        operation="get"
+        yang_filter="Filter_Type:SUBTREE;Filter_Namespace:&NAME_SPACE_PORT;;Filter_Conditions:/ports/ports-state"
+        template="show_chassis_inventory_media.xsl"
+        >
+        <ACTION builtin="clish_extn"> </ACTION>
+      </COMMAND>
+
+      <COMMAND
+        name="show revision"
+        help="Show the system CPLD/FPGA revision"
+        operation="get"
+        yang_filter="Filter_Type:SUBTREE;Filter_Namespace:&NAME_SPACE;;Filter_Conditions:/system/node/firmware"
+        template="show_chassis_revision.xsl"
+        >
+        <ACTION builtin="clish_extn"> </ACTION>
+      </COMMAND>
+
+      <COMMAND
+        name="show system"
+        help="Show system status information"
+        operation="get"
+        yang_filter="Filter_Type:SUBTREE;Filter_Namespace:&NAME_SPACE;;Filter_Conditions:/system/node;|Filter_Type:SUBTREE;Filter_Namespace:&NAME_SPACE_UPTIME;;Filter_Conditions:/system-state/system-status/"
+        template="show_chassis_system.xsl"
+        >
+        <PARAM
+           name="show-system-switch"
+           help="show system options"
+           mode="switch"
+           ptype="SUBCOMMAND"
+           optional="true">
+            <PARAM
+               name="brief"
+               help="Show abbreviated list of system information"
+               ptype="SUBCOMMAND"
+               mode="subcommand"
+               optional="true"
+               template="show_chassis_system_brief.xsl">
+            </PARAM>
+            <PARAM
+               name="&PHYSICAL_SLOT_STRING;"
+               help="Node id number"
+               ptype="SUBCOMMAND"
+               mode="subcommand"
+               optional="true">
+               <PARAM
+                name="Node id number"
+                help="Node id number"
+                ptype="STACK">
+                <PARAM
+                    name="fanout-configured"
+                    help="Fanout status and configuration"
+                    mode="subcommand"
+                    ptype="SUBCOMMAND"
+                    yang_filter="&FILTER_PORT;/ports/ports-state/port"
+                    template="show_system_breakout.xsl"/>
+               </PARAM>
+            </PARAM>
+        </PARAM>
+        <ACTION builtin="clish_extn"> </ACTION>
+      </COMMAND>
+    </VIEW>
+    <!--=======================================================-->
+    <!--                Config MODE                            -->
+    <!--=======================================================-->
+    <VIEW
+        name="configure-view"
+        >
+        <!-- system identifier -->
+        <COMMAND
+            name="system identifier"
+            operation="edit-config"
+            pfeature="FEATURE_SYSTEM_IDENTIFIER"
+            namespace="&NAME_SPACE;"
+            help="set system-identifier id"
+            mode="subcommand"
+            ptype="SUBCOMMAND">
+            <PARAM  name="id"
+            help="system-identifier id"
+            ptype="RANGE_SYSTEM_IDENTIFY"
+            yang_name="/system-identifier-cfg/system-identifier=${id}">
+            </PARAM>
+            <ACTION builtin="clish_extn"/>
+        </COMMAND>
+    </VIEW>
+</CLISH_MODULE>

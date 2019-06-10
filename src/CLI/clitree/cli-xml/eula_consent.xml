@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE CLISH_MODULE [
+<!ENTITY MODULE-NS-SA "http://www.dellemc.com/networking/os10/dell-support-assist">
+<!ENTITY FILTER_EULA "Filter_Type:SUBTREE;Filter_Namespace:&MODULE-NS-SA;;Filter_Conditions:">
+]>
+<CLISH_MODULE
+    xmlns="http://www.dellemc.com/force10/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xi="http://www.w3.org/2001/XInclude"
+    xsi:schemaLocation="http://www.dellemc.com/force10/XMLSchema
+                                                http://www.dellemc.com/force10/XMLSchema/clish.xsd"
+    >
+    <!--=======================================================-->
+    <!--=======================================================-->
+    <!--                Exec MODE                              -->
+    <!--=======================================================-->
+    <VIEW
+        name="enable-view"
+        >
+	<COMMAND
+	    name="show eula-consent"
+	    help="Shows eula-consent for various modules"
+	    >
+	    <PARAM
+	        name="support-assist"
+	        help="Shows status for eula-consent for support-assist module"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                operation="get"
+                template="show_eula-consent_support-assist_status.xsl"
+       	        namespace="&MODULE-NS-SA;"
+                yang_filter="&FILTER_EULA;/sa-cfg/eula-accept"
+	        >
+            </PARAM>
+         <ACTION builtin="clish_extn" />
+	</COMMAND>
+    </VIEW>
+    <VIEW
+        name="configure-view"
+        >
+        <COMMAND
+            name="eula-consent"
+            help="eula-consent configuration"
+            />
+        <COMMAND
+            name="eula-consent support-assist"
+            help="support-assist eula-consent configuration"
+            namespace="&MODULE-NS-SA;"
+            operation="edit-config"
+            >
+            <PARAM
+                name="sa"
+                help="support-assist sub-commands"
+                mode="switch"
+                ptype="SUBCOMMAND"
+                >
+                <PARAM
+                    name="accept"
+                    help="accept eula-consent"
+                    mode="subcommand"
+                    ptype="SUBCOMMAND"
+                    yang_name="/sa-cfg/service-enable=true,/sa-cfg/eula-accept=true"
+                    />
+                <PARAM
+                    name="reject"
+                    help="reject eula-consent"
+                    mode="subcommand"
+                    ptype="SUBCOMMAND"
+                    default_oper="merge"
+                    sub_oper_yang="remove:activity-enable,remove:company-info,remove:sa-server,remove:proxy-server"
+                    add_config_entry="true"
+                    prompt_fn="prompt_yes_no_cb"
+                    prompt_str="This action will disable Support Assist and erase all configured data.Do you want to proceed ?  [yes/no(default)]:"
+                    yang_name="/sa-cfg/activity-enable,/sa-cfg/company-info,/sa-cfg/sa-server,/sa-cfg/proxy-server,/sa-cfg/service-enable=false,/sa-cfg/eula-accept=false"
+                    />
+            </PARAM>
+            <ACTION builtin="clish_extn"/>
+        </COMMAND>
+    </VIEW>
+</CLISH_MODULE>
+

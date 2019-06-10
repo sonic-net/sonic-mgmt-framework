@@ -1,0 +1,21 @@
+{{>partial_header}}
+package {{packageName}}
+
+{{#operations}}
+import (
+	"net/http"
+
+	"rest/server"
+){{#operation}}
+
+func {{nickname}}(w http.ResponseWriter, r *http.Request) {
+	{{#bodyParam.required}}
+	vs := {{bodyParam.dataType}}{}
+	err := server.RequestValidate(r, &vs)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	{{/bodyParam.required}}
+	server.Process(w, r)
+}{{/operation}}{{/operations}}

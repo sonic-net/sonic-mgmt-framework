@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE CLISH_MODULE [
+<!ENTITY SUBTREE_FILTER "Filter_Type:SUBTREE">
+<!ENTITY NS_FILTER      "http://www.dellemc.com/networking/os10/dell-bgp">
+<!ENTITY FILTER_NS      "Filter_Namespace:&NS_FILTER;">
+<!ENTITY DEF_FILTER     "Filter_Conditions:/bgp-oper/vrf/vrf-name=default">
+
+<!ENTITY NS-GET-BULK           "http://yumaworks.com/ns/yumaworks-getbulk">
+]>
+<CLISH_MODULE
+    xmlns="http://www.dellemc.com/force10/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xi="http://www.w3.org/2001/XInclude"
+    xsi:schemaLocation="http://www.dellemc.com/force10/XMLSchema
+                        http://www.dellemc.com/force10/XMLSchema/clish.xsd">
+<!-- ********************************************************************** -->
+<!-- *  SHOW BGP COMMANDS                                                 * -->
+<!--
+show ip bgp [neighbors <x.x.x.x> | summary]
+-->
+<!-- *  View : enable-view                                                * -->
+<!-- ********************************************************************** -->
+    <VIEW name="enable-view">
+          <COMMAND name="show ip bgp"
+                   help="BGP information"
+                   operation="get"
+                   namespace="&NS_FILTER;"
+                   prompt_fn="show_ip_bgp_bulk_cmds"
+                   template="show_ip_bgp_bulk.xsl"
+                   yang_filter="&SUBTREE_FILTER;;&DEF_FILTER;,/bgp-oper/vrf/summary-info;&FILTER_NS;"
+                   prompt_oper="/get-bulk/count=150,/get-bulk/list-target=/bgp-oper/vrf=default/bgp-afi-loc-rib-route-list=0\,0/prefix-list">
+                   <PARAM name="bgp-commands"
+                          help="bgp-sub commands"
+                          optional="true"
+                          ptype="SUBCOMMAND"
+                          mode="switch">
+                          <PARAM name="ip-address-mask"
+                                 help="show ip bgp network/mask"
+                                 prompt_str="${ip-address-mask}"
+                                 prompt_fn="inconsistent_mask_check"
+                                 yang_filter="&SUBTREE_FILTER;;&DEF_FILTER;,/bgp-oper/vrf/summary-info,/bgp-oper/vrf/bgp-nlri-prefix-oper/nlri-prefix=${ip-address-mask};&FILTER_NS;"
+                                 template="show_ip_bgp_ipaddress.xsl"
+                                 ptype="IP_ADDR_MASK"/>
+                         <PARAM name="dampened-paths"
+                                 prompt_fn="pass"
+                                 help="show ip bgp dampened-paths"
+                                 yang_filter="&SUBTREE_FILTER;;&DEF_FILTER;,/bgp-oper/vrf/summary-info,/bgp-oper/vrf/damp-or-flap-routes/type=damp;&FILTER_NS;"
+                                 template="show_ip_bgp_flap_or_damp.xsl"
+                                 ptype="SUBCOMMAND"
+                                 mode="subcommand"/>
+                         <PARAM name="flap-statistics"
+                                 help="show ip bgp flap-statistics"
+                                 prompt_fn="pass"
+                                 yang_filter="&SUBTREE_FILTER;;&DEF_FILTER;,/bgp-oper/vrf/summary-info,/bgp-oper/vrf/damp-or-flap-routes/type=flap;&FILTER_NS;"
+                                 template="show_ip_bgp_flap_or_damp.xsl"
+                                 ptype="SUBCOMMAND"
+                                 mode="subcommand">
+                                     <PARAM name="flap-commands"
+                                     help="bgp-sub commands"
+                                     optional="true"
+                                     prompt_fn="pass"
+                                     ptype="SUBCOMMAND"
+                                     mode="switch">
+                                          <PARAM name="ip-address-mask"
+                                           help="show ip bgp flap-statistics IPV4 prefix"
+                                           yang_filter="&SUBTREE_FILTER;;&DEF_FILTER;,/bgp-oper/vrf/summary-info,/bgp-oper/vrf/damp-or-flap-routes/type=flap,/bgp-oper/vrf/damp-or-flap-routes/prefix=${ip-address-mask};&FILTER_NS;"
+                                           template="show_ip_bgp_flap_or_damp.xsl"
+                                           ptype="IP_ADDR_MASK"/>
+                                          <PARAM name="ip"
+                                           help="show ip bgp flap-statistics IPV6 prefix"
+                                           yang_filter="&SUBTREE_FILTER;;&DEF_FILTER;,/bgp-oper/vrf/summary-info,/bgp-oper/vrf/damp-or-flap-routes/type=flap,/bgp-oper/vrf/damp-or-flap-routes/prefix=new_param1;&FILTER_NS;"
+                                           prompt_oper="${ip}"
+                                           prompt_fn="show_trim_ip"
+                                           template="show_ip_bgp_flap_or_damp.xsl"
+                                           ptype="IPV6_ADDR_MASK"/>
+                                     </PARAM>
+                          </PARAM>
+
+                          <PARAM name="ipv4"
+                                 help="IPV4 route information"
+                                 ptype="SUBCOMMAND"
+                                 mode="subcommand">
+                                 <MACRO name="BGP_V4_AFI_SAFI_CMDS"  arg="afi=1"/>
+                          </PARAM>
+                          <PARAM name="ipv6"
+                                 help="IPV6 route information"
+                                 ptype="SUBCOMMAND"
+                                 mode="subcommand">
+                                 <MACRO name="BGP_V6_AFI_SAFI_CMDS"  arg="afi=2"/>
+                          </PARAM>
+                          <MACRO name="BGP_NEIGHBOR_WO_AFI_SAFI_CMDS" arg="afi=0,safi=0"/>
+                          <PARAM name="summary"
+                                 help="show ip bgp summary"
+                                 ptype="SUBCOMMAND"
+                                 mode="subcommand"
+                                 yang_filter="&SUBTREE_FILTER;;&DEF_FILTER;,/bgp-oper/vrf/summary-info;&FILTER_NS;"
+                                 prompt_oper="/get-bulk/count=1,/get-bulk/list-target=/bgp-oper/vrf=default/peer-oper,/get-bulk/last-keys/remote-address=0\.0\.0\.0,/get-bulk/last-keys/afi=0,/get-bulk/last-keys/safi=0,/get-bulk/last-keys/peer-index=0"
+                                 template="show_ip_bgp_summary.xsl"/>
+                         <MACRO name="BGP_NEIGHBOR_TEMPLATE_CMDS"/>
+
+                   </PARAM>
+          <ACTION builtin="clish_extn"></ACTION>
+          </COMMAND>
+    </VIEW>
+</CLISH_MODULE>

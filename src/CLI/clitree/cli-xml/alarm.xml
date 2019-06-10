@@ -1,0 +1,265 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE CLISH_MODULE [
+<!ENTITY SUBTREE_FILTER "Filter_Type:SUBTREE">
+]>
+<CLISH_MODULE
+    xmlns="http://www.dellemc.com/force10/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xi="http://www.w3.org/2001/XInclude"
+    xsi:schemaLocation="http://www.dellemc.com/force10/XMLSchema
+                        http://www.dellemc.com/force10/XMLSchema/clish.xsd"
+    >
+
+    <!--=============================================-->
+    <VIEW
+        name="enable-view"
+        >
+        <!--show alarms [history|details|summary|history summary|index id] -->
+
+        <COMMAND
+            name="show alarms"
+            help="Display all current alarm situation in the system"
+            operation="get"
+            namespace="http://www.dellemc.com/networking/os10/dell-alarm"
+            yang_filter="Filter_Type:SUBTREE;Filter_Namespace:http://www.dellemc.com/networking/os10/dell-alarm;Filter_Conditions:/alarm-info/active-alarms"
+            template="alarm.xsl"
+            >
+            <PARAM
+                name="alarms"
+                help="alarms"
+                ptype="SUBCOMMAND"
+                optional="true"
+                mode="switch"
+                >
+                <!-- show alarms summary|details|history|history summary|index id -->
+                <PARAM
+                    name="acknowledged"
+                    help="Display active and acknowledged alarms"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    optional="true"
+                    yang_filter="Filter_Type:SUBTREE;Filter_Namespace:http://www.dellemc.com/networking/os10/dell-alarm;Filter_Conditions:/alarm-info/acknowledged-alarms"
+                    template="show_alarm_ack.xsl"
+                    pfeature="NOT_SUPPORTED"
+                    />
+                <PARAM
+                    name="details"
+                    help="Active alarm details"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    optional="true"
+                    yang_filter="Filter_Type:SUBTREE;Filter_Namespace:http://www.dellemc.com/networking/os10/dell-alarm;Filter_Conditions:/alarm-info/active-alarms"
+                    template="alarm_details.xsl"
+                    />
+                <PARAM
+                    name="history"
+                    help="History of cleared alarms"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    yang_filter="Filter_Type:SUBTREE;Filter_Namespace:http://www.dellemc.com/networking/os10/dell-alarm;Filter_Conditions:/alarm-info/alarm-history"
+                    template="alarm_history.xsl"
+                    >
+                    <PARAM
+                        name="summary"
+                        help="History summary of alarms"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        optional="true"
+                        yang_filter="Filter_Type:SUBTREE;Filter_Namespace:http://www.dellemc.com/networking/os10/dell-alarm;Filter_Conditions:/alarm-info/alarm-history-summary"
+                        template="alarm_history_summary.xsl"
+                        />
+                </PARAM>
+                <PARAM
+                    name="index"
+                    help="Display a specific alarm with given index"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand">
+                    <PARAM
+                        name="id"
+                        help="Display a specific alarm with given index"
+                        ptype="UINT"
+                        yang_filter="Filter_Type:SUBTREE;Filter_Namespace:http://www.dellemc.com/networking/os10/dell-alarm;Filter_Conditions:/alarm-info/active-alarms/index=${id}"
+                        template="alarm_details.xsl"
+                        />
+                </PARAM>
+                <PARAM
+                    name="severity"
+                    help="Display active alarms with given severity"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand">
+                    <PARAM
+                        name="sev"
+                        help="Display a specific alarm with given index"
+                        ptype="ALARM_SEV_TYPE"
+                        yang_filter="Filter_Type:SUBTREE;Filter_Namespace:http://www.dellemc.com/networking/os10/dell-alarm;Filter_Conditions:/alarm-info/active-alarms/severity=${sev}"
+                        template="alarm_severity.xsl"
+                        />
+                </PARAM>
+                <PARAM
+                    name="summary"
+                    help="Summary of alarms"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    yang_filter="Filter_Type:SUBTREE;Filter_Namespace:http://www.dellemc.com/networking/os10/dell-alarm;Filter_Conditions:/alarm-info/alarm-summary"
+                    template="alarm_summary.xsl"
+                    />
+                <PARAM
+                    name="temperature-threshold"
+                    help="Temperature threshold values"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    optional="true"
+                    yang_filter="Filter_Type:SUBTREE;Filter_Namespace:http://www.dellemc.com/networking/os10/dell-alarm;Filter_Conditions:/temperature-threshold/temp-thresholds"
+                    template="alarm_thresholds.xsl"
+                    pfeature="NOT_SUPPORTED"
+                    />
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+            ></ACTION>
+        </COMMAND>
+	
+	<!-- alarm [clear|acknowledge|unacknowledge] index <id> -->
+	<COMMAND
+        name="alarm"
+        help="Alarm commands"
+        >
+        </COMMAND>
+        <COMMAND
+                name="alarm clear"
+                help="Clear the alarm"
+                ptype="SUBCOMMAND"
+                operation="generic-rpc"
+                namespace="http://www.dellemc.com/networking/os10/dell-alarm"
+                >
+                    <PARAM
+                        name="id"
+                        help="Clear a particular alarm with given index"
+                        ptype="UINT"
+                        yang_name="/clear-alarm/alarm-index=${id}"
+                        >
+                    </PARAM>
+                    <ACTION
+                        builtin="clish_extn"
+                    ></ACTION>
+        </COMMAND>
+
+        <COMMAND
+            name="alarm acknowledge"
+            help="Acknowledge an alarm"
+            ptype="SUBCOMMAND"
+            operation="generic-rpc"
+            pfeature="NOT_SUPPORTED"
+            namespace="http://www.dellemc.com/networking/os10/dell-alarm"
+            >
+                <PARAM
+                    name="id"
+                    help="Acknowledge a particular alarm with given index"
+                    ptype="UINT"
+                    yang_name="/acknowledge-alarm/alarm-index=${id}"
+                    >
+                    </PARAM>
+                    <ACTION
+                        builtin="clish_extn"
+                    ></ACTION>
+        </COMMAND>
+        <COMMAND
+            name="alarm unacknowledge"
+            help="Unacknowledge the alarm"
+            ptype="SUBCOMMAND"
+            operation="generic-rpc"
+            pfeature="NOT_SUPPORTED"
+            namespace="http://www.dellemc.com/networking/os10/dell-alarm"
+            >
+                <PARAM
+                    name="id"
+                    help="Unacknowledge a particular alarm with given index"
+                    ptype="UINT"
+                    yang_name="/unacknowledge-alarm/alarm-index=${id}"
+                    >
+                    </PARAM>
+                    <ACTION
+                        builtin="clish_extn"
+                    ></ACTION>
+        </COMMAND>
+    </VIEW>
+    <VIEW
+        name="configure-view"
+        >
+        <COMMAND
+            name="alarm"
+            help="Configure alarm"
+            pfeature="NOT_SUPPORTED"
+            />
+            <COMMAND
+                name="alarm temperature-threshold"
+                help="Temperature threshold at which the alarms are triggered"
+                operation="edit-config"
+                namespace="http://www.dellemc.com/networking/os10/dell-alarm"
+                yang_key="/temperature-threshold/temp-thresholds/threshold-severity"
+                pfeature="NOT_SUPPORTED"
+                >
+                <PARAM	
+                    name="severity"
+                    help="Differnt severity options"	
+                    mode="switch"
+                    ptype="SUBCOMMAND">	
+
+                        <PARAM
+                            name="critical"
+                            help="Critical threshold temperature value"
+                            mode="subcommand"
+                            ptype="SUBCOMMAND"
+                            yang_name="/temperature-threshold/temp-thresholds/threshold-severity=${critical}">
+                                <PARAM
+                                    name="temperature"
+                                    help="Threshold temperature value in Celsius"
+                                    ptype="UINT"
+                                    yang_name="/temperature-threshold/temp-thresholds/threshold-value=${temperature}"/>				
+                        </PARAM>
+                        <PARAM
+                            name="major"
+                            help="Major threshold temperature value"
+                            mode="subcommand"
+                            ptype="SUBCOMMAND"
+                            yang_name="/temperature-threshold/temp-thresholds/threshold-severity=${major}">
+                                <PARAM
+                                    name="temperature"
+                                    help="Threshold temperature value in Celsius"
+                                    ptype="UINT"
+                                    yang_name="/temperature-threshold/temp-thresholds/threshold-value=${temperature}"/>				
+                        </PARAM>
+                        <PARAM
+                            name="minor"
+                            help="Minor threshold temperature value"
+                            mode="subcommand"
+                            ptype="SUBCOMMAND"
+                            yang_name="/temperature-threshold/temp-thresholds/threshold-severity=${minor}">
+                                <PARAM	
+                                    name="temperature"
+                                    help="Threshold temperature value in Celsius"
+                                    ptype="UINT"
+                                    yang_name="/temperature-threshold/temp-thresholds/threshold-value=${temperature}"/>				
+                                </PARAM>
+                                <PARAM
+                                    name="warning"
+                                    help="Warning threshold temperature value"
+                                    mode="subcommand"
+                                    ptype="SUBCOMMAND"
+                                    yang_name="/temperature-threshold/temp-thresholds/threshold-severity=${warning}">
+                                        <PARAM
+                                            name="temperature"
+                                            help="Threshold temperature value in Celsius"
+                                            ptype="UINT"
+                                            yang_name="/temperature-threshold/temp-thresholds/threshold-value=${temperature}"/>				
+                                </PARAM>
+                        </PARAM>
+                        <ACTION
+			    builtin="clish_extn">
+                        ></ACTION>
+        </COMMAND>
+    </VIEW>	
+</CLISH_MODULE>
+
+
+
