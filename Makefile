@@ -16,7 +16,7 @@ REST_SRCS := $(shell find $(TOPDIR)/src -name '*.go' | sort) \
 			 $(shell find $(TOPDIR)/models/openapi -name '*.yaml' | sort)
 
 REST_BIN := $(REST_DIST_DIR)/main
-REST_GOPATH = $(shell go env GOPATH):$(TOPDIR):$(REST_DIST_DIR):$(TOPDIR)/generated
+REST_GOPATH = $(shell go env GOPATH):$(TOPDIR):$(REST_DIST_DIR)
 
 #$(info REST_SRCS = $(REST_SRCS) )
 

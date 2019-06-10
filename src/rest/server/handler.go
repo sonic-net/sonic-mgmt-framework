@@ -7,7 +7,6 @@
 package server
 
 import (
-	"context"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -15,11 +14,9 @@ import (
 	"strings"
 	"sync/atomic"
 
-	tr "transd/rpc"
 	"translib"
 
 	"github.com/gorilla/mux"
-	"google.golang.org/grpc"
 )
 
 ////
@@ -42,17 +39,10 @@ func Process(w http.ResponseWriter, r *http.Request) {
 		log.Printf("[%s] Content-type=%s; data=%s", reqID, contentType, body)
 	}
 
-	var status int
-	var data []byte
+	path := getPathForTranslib(r)
+	log.Printf("[%s] Translated path = %s", reqID, path)
 
-	if ConnectToTransD {
-		// Temp code to connect to TransD
-		status, data = invokeTransD(reqID, r.Method, r.URL.Path, body)
-	} else {
-		path := getPathForTranslib(r)
-		log.Printf("[%s] Translated path = %s", reqID, path)
-		status, data = invokeTranslib(reqID, r.Method, path, body)
-	}
+	status, data := invokeTranslib(reqID, r.Method, path, body)
 
 	log.Printf("[%s] Sending response %d, data=%s", reqID, status, data)
 
@@ -208,90 +198,3 @@ func invokeTranslib(reqID, method, path string, payload []byte) (int, []byte) {
 	return status, content
 }
 
-//==============================================================
-// Temp code for TransD integration.
-// TODO: delete later
-//==============================================================
-
-// ConnectToTransD indicates whether the REST server should use legacy
-// TransD to service the requests.
-var ConnectToTransD = false
-
-// invokeTransD calls appropriate TransD gRPC API for the given HTTP
-// method. Returns response status code and content.
-func invokeTransD(reqID, method, path string, payload []byte) (int, []byte) {
-	var status = 400
-	var content string
-
-	switch method {
-	case "GET":
-		status, content = doRead(reqID, path)
-
-	case "POST":
-		status, content = doWrite(reqID, tr.WriteRequest_CREATE, path, string(payload))
-
-	case "PUT":
-		status, content = doWrite(reqID, tr.WriteRequest_REPLACE, path, string(payload))
-
-	case "PATCH":
-		status, content = doWrite(reqID, tr.WriteRequest_MERGE, path, string(payload))
-
-	case "DELETE":
-		status, content = doWrite(reqID, tr.WriteRequest_DELETE, path, string(payload))
-	}
-
-	return status, []byte(content)
-}
-
-// READ method
-func doRead(reqID string, xpath string) (int, string) {
-	conn, err := grpc.Dial("localhost:50051", grpc.WithInsecure())
-	if err != nil {
-		log.Printf("Grpc init failed, %v", err)
-		return 500, "RPC failed"
-	}
-
-	defer conn.Close()
-	client := tr.NewTransdServiceClient(conn)
-
-	request := tr.ReadRequest{Source: reqID, Xpath: []string{xpath}}
-
-	response, err := client.Read(context.Background(), &request)
-	if err != nil {
-		log.Printf("TransD call failed, %v", err)
-		return 500, "RPC failed"
-	}
-
-	if len(response.Error) != 0 && len(response.Data) == 0 {
-		return int(response.Status), response.Error
-	}
-
-	return int(response.Status), response.Data[0]
-}
-
-// WRITE method
-func doWrite(reqID string, method tr.WriteRequest_Method, xpath string, data string) (int, string) {
-	conn, err := grpc.Dial("localhost:50051", grpc.WithInsecure())
-	if err != nil {
-		log.Printf("Grpc init failed, %v", err)
-		return 500, "RPC failed"
-	}
-
-	defer conn.Close()
-	client := tr.NewTransdServiceClient(conn)
-
-	request := tr.WriteRequest{
-		Source: reqID,
-		Method: method,
-		Xpath:  xpath,
-		Data:   data,
-	}
-
-	response, err := client.Write(context.Background(), &request)
-	if err != nil {
-		log.Printf("TransD call failed, %v", err)
-		return 500, "RPC failed"
-	}
-
-	return int(response.Status), response.Error
-}
