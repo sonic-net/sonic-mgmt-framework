@@ -1,0 +1,880 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE CLISH_MODULE [
+<!ENTITY SUBTREE_FILTER                       "Filter_Type:SUBTREE">
+<!ENTITY OSPF_INSTLIST                        "/router-ospf-v3/instance-list">
+<!ENTITY OSPF_INSTANCE                        "&OSPF_INSTLIST;/vrf-name=default,&OSPF_INSTLIST;/instance=${instance}">
+<!ENTITY OSPF_AREA                            "&OSPF_INSTLIST;/area-list">
+<!ENTITY OSPF_AREA_STUB                       "/router-ospf-v3/instance-list/area-list/stub-area">
+<!ENTITY MODULE_NS                            "http://www.dellemc.com/networking/os10/dell-ospf-v3">
+<!ENTITY OSPFV3-PREF                          "ospfv3">
+<!ENTITY OSPFV3_NS                            "&OSPFV3-PREF;=&MODULE_NS;">
+<!ENTITY OSPFV3_INTF_NS                       "urn:ietf:params:xml:ns:yang:ietf-interfaces,&OSPFV3_NS;">
+<!ENTITY OSPFV3_INTF                          "/interfaces/interface">
+<!ENTITY OSPFV3_INTF_INFO                     "&OSPFV3_INTF;/&OSPFV3-PREF;:ospf-v3-config">
+<!ENTITY OSPFV3_INTF_RANGE                    "/interfaces/interface[]">
+<!ENTITY OSPFV3_INTF_RANGE_INFO               "&OSPFV3_INTF_RANGE;/&OSPFV3-PREF;:ospf-v3-config">
+]>
+<CLISH_MODULE
+    xmlns="http://www.dellemc.com/force10/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xi="http://www.w3.org/2001/XInclude"
+    xsi:schemaLocation="http://www.dellemc.com/force10/XMLSchema
+						http://www.dellemc.com/force10/XMLSchema/clish.xsd"
+    >
+    <!--=================================================================-->
+    <!--=================================================================-->
+    <!-- ********************************************************************** -->
+    <!-- *  SHOW COMMANDS                                                  * -->
+    <!-- *  View : enable-view                                             * -->
+    <!-- ********************************************************************** -->
+    <VIEW
+        name="enable-view"
+        >
+        <!--show candidate-configuration ospfv3 -->
+        <COMMAND
+            name="show candidate-configuration ospfv3"
+            help="Current candidate ospfv3 configuration"
+            yang_filter="&SUBTREE_FILTER;;Filter_Conditions:/router-ospf-v3;Filter_Namespace:&MODULE_NS;|&SUBTREE_FILTER;;Filter_Conditions:&OSPFV3_INTF_INFO;;Filter_Namespace:&OSPFV3_INTF_NS;"
+            db_mode="configure-if,configure-lag,configure-vlan,configure-router-ospfv3"
+            >
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+
+        <!--show running-configuration ospfv3 -->
+        <COMMAND
+            name="show running-configuration ospfv3"
+            help="Current operating ospfv3 configuration"
+            yang_filter="&SUBTREE_FILTER;;Filter_Conditions:/router-ospf-v3;Filter_Namespace:&MODULE_NS;|&SUBTREE_FILTER;;Filter_Conditions:&OSPFV3_INTF_INFO;;Filter_Namespace:&OSPFV3_INTF_NS;"
+            db_mode="configure-if,configure-lag,configure-vlan,configure-router-ospfv3"
+            >
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+    </VIEW>
+
+<!--=================================================================-->
+    <VIEW
+        name="configure-view"
+        >
+        <COMMAND
+            name="router ospfv3"
+            help="Configure Open Shortest Path First version 3 (OSPFv3)"
+            operation="edit-config"
+            namespace="&MODULE_NS;"
+            mode="subcommand"
+            ptype="SUBCOMMAND"
+            view="configure-router-ospfv3-view"
+            viewid="instance=${instance}"
+            >
+        <PARAM
+            name="instance"
+            help="Instance number"
+            ptype="RANGE_1_65535"
+            yang_name="&OSPF_INSTANCE;"
+            yang_key="/router-ospf-v3/instance-list/instance"
+            />
+        <ACTION
+            builtin="clish_extn"
+            > </ACTION>
+        </COMMAND>
+    </VIEW>
+<!--=================================================================-->
+    <VIEW
+        name="configure-view"
+        >
+        <COMMAND
+            name="no router ospfv3"
+            help="Disable OSPFv3 routing process"
+            operation="edit-config"
+            namespace="&MODULE_NS;"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            >
+        <PARAM
+            name="instance"
+            help="Instance number"
+            ptype="RANGE_1_65535"
+            sub_oper_yang="remove:instance-list"
+            yang_name="&OSPF_INSTANCE;"
+            />
+        <ACTION
+            builtin="clish_extn"
+            > </ACTION>
+        </COMMAND>
+    </VIEW>
+<!--=================================================================-->
+<VIEW name="configure-router-ospfv3-view"
+        prompt="${SYSTEM_NAME}(config-router-ospfv3-${instance})# "
+        depth="2">
+
+<!-- Inheritance -->
+
+        <NAMESPACE ref="configure-view"
+                help="false"
+                completion="false"/>
+
+        <!-- show configuration candidate -->
+        <COMMAND
+            name="show"
+            help="show configuration"
+        />
+        <COMMAND
+            name="show configuration candidate"
+            help="Current candidate configuration"
+            yang_filter="&SUBTREE_FILTER;;Filter_Conditions:/router-ospf-v3;Filter_Namespace:&MODULE_NS;"
+            >
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+        <!-- show configuration -->
+        <COMMAND
+            name="show configuration"
+            help="Current configuration (default = running)"
+            yang_filter="&SUBTREE_FILTER;;Filter_Conditions:/router-ospf-v3;Filter_Namespace:&MODULE_NS;"
+            >
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+
+        <COMMAND name="no"
+                help="Negate a command or set its defaults"
+                operation="edit-config"
+                namespace="&MODULE_NS;"
+                ptype="SUBCOMMAND"
+                mode="subcommand"/>
+
+<!-- router ospfv3 area <area-id> -->
+
+        <COMMAND
+            name="area"
+            help="OSPFV3 area parameters"
+            operation="edit-config"
+            namespace="&MODULE_NS;,http://www.dellemc.com/networking/os10/dell-ospf-common"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            yang_key="&OSPF_AREA;/area-id"
+            >
+            <PARAM
+                name="area_id"
+                help="OSPFv3 area id as a decimal value"
+                ptype="INT_OR_IP_ADDR"
+                prompt_fn="ospf_area_convert_to_ip_type"
+                prompt_str="${area_id}"
+                yang_name="&OSPF_INSTANCE;,&OSPF_AREA;/area-id">
+                <MACRO name="OSPFV3_AREA_EXTN"/>
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+
+<!-- end of router ospfv3 area <area-id> -->
+
+<!-- start of router ospfv3 auto-cost -->
+
+        <COMMAND name="auto-cost"
+                help="Calculate OSPFv3 interface cost according to bandwidth"
+                operation="edit-config"
+                namespace="&MODULE_NS;"
+                ptype="SUBCOMMAND"
+                mode="subcommand">
+                <PARAM name="reference-bandwidth"
+                      help="Use reference bandwidth method to assign OSPFv3 cost"
+                      ptype="SUBCOMMAND"
+                      mode="subcommand">
+                      <PARAM name="bandwidth"
+                            help="reference-bandwidth in Mbits/second (default = 100000)"
+                            ptype="RANGE_1_4294967"
+                            yang_name="&OSPF_INSTANCE;,&OSPF_INSTLIST;/auto-cost/reference-bandwidth=${bandwidth}"/>
+                </PARAM>
+           <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+
+<!-- end of router ospfv3 auto-cost -->
+
+<!-- start of router ospfv3 default-information -->
+
+        <COMMAND
+            name="default-information"
+            help="Control distribution of default information"
+            operation="edit-config"
+            namespace="&MODULE_NS;"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            >
+            <PARAM
+                name="originate"
+                help="Distribute a default route"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                yang_name="&OSPF_INSTANCE;,&OSPF_INSTLIST;/af-ipv6uni/default-information/originate=true"
+                >
+                <PARAM
+                    name="originate-commands"
+                    help="originate-sub-commands"
+                    ptype="SUBCOMMAND"
+                    optional="true"
+                    mode="switch"
+                    >
+                    <PARAM
+                        name="always"
+                        help="Always advertise default route"
+                        ptype="SUBCOMMAND"
+                        optional="true"
+                        mode="subcommand"
+                        yang_name="&OSPF_INSTLIST;/af-ipv6uni/default-information/always=true"
+                        >
+                        <PARAM
+                            name="route-map"
+                            pfeature="NOT_SUPPORTED"
+                            help="Route-map reference"
+                            ptype="SUBCOMMAND"
+                            optional="true"
+                            mode="subcommand"
+                            >
+                            <PARAM
+                                name="name"
+                                help="Route map name"
+                                ptype="STRING"
+                            yang_name="&OSPF_INSTLIST;/af-ipv6uni/default-information/route-map=${name}"
+                            />
+                        </PARAM>
+                    </PARAM>
+                    <PARAM
+                        name="route-map"
+                        pfeature="NOT_SUPPORTED"
+                        help="Route-map reference"
+                        ptype="SUBCOMMAND"
+                        optional="true"
+                        mode="subcommand"
+                        >
+                        <PARAM
+                            name="name"
+                            help="Route map name"
+                            ptype="STRING"
+                            yang_name="&OSPF_INSTLIST;/af-ipv6uni/default-information/route-map=${name}"
+                            />
+                    </PARAM>
+                </PARAM>
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+
+<!-- end of router ospfv3 default-information -->
+
+<!-- start of router ospfv3 log-adjacency -->
+
+        <COMMAND
+            name="log-adjacency-changes"
+            help="Log changes in adjacency state"
+            operation="edit-config"
+            namespace="&MODULE_NS;"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            yang_name="&OSPF_INSTANCE;,&OSPF_INSTLIST;/log-adjacency=true"
+            >
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+
+<!-- end of router ospfv3 log-adjacency -->
+
+<!-- start of router ospfv3 maximum-paths -->
+
+        <COMMAND
+            name="maximum-paths"
+            help="Forward packets over multiple paths"
+            operation="edit-config"
+            namespace="&MODULE_NS;"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            >
+            <PARAM
+                name="paths"
+                help="Maximum number of ECMP paths"
+                ptype="RANGE_1_64"
+                yang_name="&OSPF_INSTANCE;,&OSPF_INSTLIST;/af-ipv6uni,&OSPF_INSTLIST;/af-ipv6uni/paths=${paths}"
+                />
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+
+<!-- end of router ospfv3 maximum-paths -->
+
+<!-- start of router ospfv3 redistribute -->
+
+        <COMMAND
+            name="redistribute"
+            help="Redistribute information from another routing protocol"
+            operation="edit-config"
+            namespace="&MODULE_NS;"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            >
+            <PARAM
+                name="protocol"
+                help="protocol-sub-commands"
+                ptype="SUBCOMMAND"
+                mode="switch"
+                >
+                <PARAM
+                    name="bgp"
+                    help="Border gateway protocol"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    >
+                    <PARAM
+                        name="id"
+                        help="Autonomous system number"
+                        ptype="RANGE_1_4294967295"
+                        yang_name="&OSPF_INSTANCE;,&OSPF_INSTLIST;/af-ipv6uni/redistribute-bgp/bgp-id=${id}"
+                        >
+                        <MACRO name="OSPF_REDISTRIBUTE" arg="&OSPF_INSTLIST;/af-ipv6uni/redistribute-bgp" />
+                    </PARAM>
+                </PARAM>
+                <PARAM
+                    name="connected"
+                    help="Connected Routes"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    yang_name="&OSPF_INSTANCE;,&OSPF_INSTLIST;/af-ipv6uni/redistribute-connected/enable"
+                    >
+                    <MACRO name="OSPF_REDISTRIBUTE" arg="&OSPF_INSTLIST;/af-ipv6uni/redistribute-connected" />
+                </PARAM>
+                <PARAM
+                    name="static"
+                    help="Static Routes"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    yang_name="&OSPF_INSTANCE;,&OSPF_INSTLIST;/af-ipv6uni/redistribute-static/enable"
+                    >
+                    <MACRO name="OSPF_REDISTRIBUTE" arg="&OSPF_INSTLIST;/af-ipv6uni/redistribute-static" />
+                </PARAM>
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+
+<!-- end of router ospfv3 redistribute -->
+
+<!-- start of router ospfv3 router-id -->
+
+        <COMMAND
+            name="router-id"
+            help="Router-id for this OSPFv3 process"
+            operation="edit-config"
+            namespace="&MODULE_NS;"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            >
+            <PARAM
+                name="ip"
+                help="IP address"
+                ptype="IPV4_ADDR_ABC"
+                yang_name="&OSPF_INSTANCE;,&OSPF_INSTLIST;/router-id=${ip}"
+                />
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+
+<!-- end of router ospfv3 router-id  -->
+
+<!-- start of no area <area-id> -->
+
+        <COMMAND
+            name="no area"
+            help="OSPFv3 area parameters"
+            operation="edit-config"
+            namespace="&MODULE_NS;"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            >
+            <PARAM name="area_id"
+                   help="OSPF area id as a decimal value"
+                   ptype="INT_OR_IP_ADDR"
+                   prompt_fn="ospf_area_convert_to_ip_type"
+                   prompt_str="${area_id}"
+                   yang_name="&OSPF_INSTANCE;,&OSPF_AREA;/area-id">
+                   <MACRO name="OSPFV3_NO_AREA_EXTN" />
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+
+<!-- end of no area <area-id> -->
+
+<!-- start of no auto-cost -->
+
+        <COMMAND name="no auto-cost"
+                help="Calculate OSPFv3 interface cost according to bandwidth"
+                operation="edit-config"
+                namespace="&MODULE_NS;"
+                ptype="SUBCOMMAND"
+                mode="subcommand">
+                <PARAM name="reference-bandwidth"
+                      help="Use reference bandwidth method to assign OSPFv3 cost"
+                      ptype="SUBCOMMAND"
+                      mode="subcommand"
+                      sub_oper_yang="remove:auto-cost"
+                      yang_name="&OSPF_INSTANCE;,&OSPF_INSTLIST;/auto-cost">
+                      <PARAM name="bandwidth"
+                            help="reference-bandwidth in Mbits/second (default = 100000)"
+                            ptype="RANGE_1_4294967"
+                            optional="true"
+                            />
+                </PARAM>
+           <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+
+<!-- end of no auto-cost -->
+
+<!-- start of no log-adjacency-changes -->
+
+        <COMMAND
+            name="no log-adjacency-changes"
+            help="Log changes in adjacency state"
+            operation="edit-config"
+            namespace="&MODULE_NS;"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            sub_oper_yang="remove:log-adjacency"
+            yang_name="&OSPF_INSTANCE;,&OSPF_INSTLIST;/log-adjacency"
+            >
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+
+<!-- end of no log-adjacency-changes -->
+
+<!-- start of no router-id -->
+
+        <COMMAND
+            name="no router-id"
+            help="Router-id for this OSPFv3 process"
+            operation="edit-config"
+            namespace="&MODULE_NS;"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            sub_oper_yang="remove:router-id"
+            yang_name="&OSPF_INSTANCE;,&OSPF_INSTLIST;/router-id"
+            >
+            <PARAM
+                name="ip"
+                help="IP address"
+                ptype="IPV4_ADDR_ABC"
+                optional="true"
+                />
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+
+<!-- end of no router-id -->
+
+<!-- start of no default-information -->
+
+        <COMMAND
+            name="no default-information"
+            help="Control distribution of default information"
+            operation="edit-config"
+            namespace="&MODULE_NS;"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            >
+            <PARAM
+                name="originate"
+                help="Distribute a default route"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                sub_oper_yang="remove:default-information"
+                yang_name="&OSPF_INSTANCE;,&OSPF_INSTLIST;/af-ipv6uni/default-information"
+                >
+                <PARAM
+                    name="originate-commands"
+                    help="originate-sub-commands"
+                    ptype="SUBCOMMAND"
+                    optional="true"
+                    mode="switch"
+                    >
+                    <PARAM
+                        name="always"
+                        help="Always advertise default route"
+                        ptype="SUBCOMMAND"
+                        optional="true"
+                        mode="subcommand"
+                        >
+                        <PARAM
+                            name="route-map"
+                            pfeature="NOT_SUPPORTED"
+                            help="Route-map reference"
+                            ptype="SUBCOMMAND"
+                            optional="true"
+                            mode="subcommand"
+                            >
+                            <PARAM
+                                name="name"
+                                help="Route map name"
+                                ptype="STRING"
+                            />
+                        </PARAM>
+                    </PARAM>
+                    <PARAM
+                        name="route-map"
+                        pfeature="NOT_SUPPORTED"
+                        help="Route-map reference"
+                        ptype="SUBCOMMAND"
+                        optional="true"
+                        mode="subcommand"
+                        >
+                        <PARAM
+                            name="name"
+                            help="Route map name"
+                            ptype="STRING"
+                            />
+                    </PARAM>
+                </PARAM>
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+
+<!-- end of no default-information -->
+
+<!-- start of no maximum-paths -->
+
+        <COMMAND
+            name="no maximum-paths"
+            help="Forward packets over multiple paths"
+            operation="edit-config"
+            namespace="&MODULE_NS;"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            sub_oper_yang="remove:paths"
+            yang_name="&OSPF_INSTANCE;,&OSPF_INSTLIST;/af-ipv6uni/paths"
+            >
+            <PARAM
+                name="paths"
+                help="Maximum number of ECMP paths"
+                ptype="RANGE_1_64"
+                optional="true"
+                />
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+
+<!-- end of no maximum-paths -->
+
+<!-- start of no redistribute -->
+        <COMMAND
+            name="no redistribute"
+            help="Redistribute information from another routing protocol"
+            operation="edit-config"
+            namespace="&MODULE_NS;"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            >
+            <PARAM
+                name="protocol"
+                help="protocol-sub-commands"
+                ptype="SUBCOMMAND"
+                mode="switch"
+                >
+                <PARAM
+                    name="bgp"
+                    help="Border gateway protocol"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    sub_oper_yang="remove:redistribute-bgp"
+                    yang_name="&OSPF_INSTANCE;,&OSPF_INSTLIST;/af-ipv6uni/redistribute-bgp"
+                    >
+                    <PARAM
+                        name="bgp-commands"
+                        help="bgp-sub-commands"
+                        ptype="SUBCOMMAND"
+                        mode="switch"
+                        >
+                        <PARAM
+                            name="id"
+                            help="Autonomous system number"
+                            ptype="RANGE_1_4294967295"
+                            >
+                            <MACRO name="OSPF_NO_REDISTRIBUTE" arg="&OSPF_INSTLIST;/af-ipv6uni/redistribute-bgp,redistribute-bgp" />
+                        </PARAM>
+                    </PARAM>
+                </PARAM>
+                <PARAM
+                    name="connected"
+                    help="Connected Routes"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    sub_oper_yang="remove:redistribute-connected"
+                    yang_name="&OSPF_INSTANCE;,&OSPF_INSTLIST;/af-ipv6uni/redistribute-connected"
+                    >
+                    <MACRO name="OSPF_NO_REDISTRIBUTE" arg="&OSPF_INSTLIST;/af-ipv6uni/redistribute-connected,redistribute-connected" />
+                </PARAM>
+                <PARAM
+                    name="static"
+                    help="Static Routes"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    sub_oper_yang="remove:redistribute-static"
+                    yang_name="&OSPF_INSTANCE;,&OSPF_INSTLIST;/af-ipv6uni/redistribute-static"
+                    >
+                    <MACRO name="OSPF_NO_REDISTRIBUTE" arg="&OSPF_INSTLIST;/af-ipv6uni/redistribute-static,redistribute-static" />
+                </PARAM>
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+<!-- end of start of no redistribute -->
+
+</VIEW>
+
+<VIEW name="configure-if-view">
+
+    <COMMAND name="ipv6 ospf"
+          help="Configure interface specific OSPFv3 properties"
+          operation="edit-config"
+          namespace="&OSPFV3_INTF_NS;"
+          ptype="SUBCOMMAND"
+          mode="subcommand">
+      <PARAM name="ospf-if-cmds-switch"
+          help="ospf-if-cmds-switch"
+          ptype="SUBCOMMAND"
+          mode="switch">
+            <MACRO name="OSPFV3_IF_CMDS" arg="&OSPFV3_INTF_INFO;,&OSPFV3_INTF;/name=${ifacename}\,&OSPFV3_INTF_INFO;,&OSPFV3-PREF;"/>
+        </PARAM>
+    <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+    <COMMAND name="no ipv6 ospf"
+          help="Configure interface specific OSPFv3 properties"
+          operation="edit-config"
+          namespace="&OSPFV3_INTF_NS;"
+          ptype="SUBCOMMAND"
+          mode="subcommand">
+      <PARAM name="ospf-if-cmds-switch"
+          help="ospf-if-cmds-switch"
+          ptype="SUBCOMMAND"
+          mode="switch">
+        <MACRO name="OSPFV3_NO_IF_CMDS" arg="&OSPFV3_INTF_INFO;,&OSPFV3_INTF;/name=${ifacename}\,&OSPFV3_INTF_INFO;,&OSPFV3-PREF;"/>
+      </PARAM>
+    <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+</VIEW>
+
+<VIEW name="configure-if-range-view">
+
+    <COMMAND name="ipv6 ospf"
+          help="Configure interface specific OSPFv3 properties"
+          operation="edit-config"
+          namespace="&OSPFV3_INTF_NS;"
+          ptype="SUBCOMMAND"
+          mode="subcommand">
+        <PARAM name="ospf-if-cmds-switch"
+          help="ospf-if-cmds-switch"
+          ptype="SUBCOMMAND"
+          mode="switch">
+           <MACRO name="OSPFV3_IF_CMDS" arg="&OSPFV3_INTF_RANGE_INFO;,&OSPFV3_INTF_RANGE;/name=${ifacename}\,&OSPFV3_INTF_RANGE_INFO;,&OSPFV3-PREF;"/>
+        </PARAM>
+    <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+    <COMMAND name="no ipv6 ospf"
+          help="Configure interface specific OSPFv3 properties"
+          operation="edit-config"
+          namespace="&OSPFV3_INTF_NS;"
+          ptype="SUBCOMMAND"
+          mode="subcommand">
+        <PARAM name="ospf-if-cmds-switch"
+          help="ospf-if-cmds-switch"
+          ptype="SUBCOMMAND"
+          mode="switch">
+           <MACRO name="OSPFV3_NO_IF_CMDS" arg="&OSPFV3_INTF_RANGE_INFO;,&OSPFV3_INTF_RANGE;/name=${ifacename}\,&OSPFV3_INTF_RANGE_INFO;,&OSPFV3-PREF;"/>
+        </PARAM>
+    <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+</VIEW>
+
+
+<VIEW name="configure-vlan-view">
+
+    <COMMAND name="ipv6 ospf"
+          help="Configure interface specific OSPFv3 properties"
+          operation="edit-config"
+          namespace="&OSPFV3_INTF_NS;"
+          ptype="SUBCOMMAND"
+          mode="subcommand">
+      <PARAM name="ospf-if-cmds-switch"
+          help="ospf-if-cmds-switch"
+          ptype="SUBCOMMAND"
+          mode="switch">
+         <MACRO name="OSPFV3_IF_CMDS" arg="&OSPFV3_INTF_INFO;,&OSPFV3_INTF;/name=vlan${vlan_id}\,&OSPFV3_INTF_INFO;,&OSPFV3-PREF;"/>
+      </PARAM>
+    <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+    <COMMAND name="no ipv6 ospf"
+          help="Configure interface specific OSPFv3 properties"
+          operation="edit-config"
+          namespace="&OSPFV3_INTF_NS;"
+          ptype="SUBCOMMAND"
+          mode="subcommand">
+      <PARAM name="ospf-if-cmds-switch"
+          help="ospf-if-cmds-switch"
+          ptype="SUBCOMMAND"
+          mode="switch">
+          <MACRO name="OSPFV3_NO_IF_CMDS" arg="&OSPFV3_INTF_INFO;,&OSPFV3_INTF;/name=vlan${vlan_id}\,&OSPFV3_INTF_INFO;,&OSPFV3-PREF;"/>
+      </PARAM>
+    <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+</VIEW>
+
+<VIEW name="configure-vlan-range-view">
+
+    <COMMAND name="ipv6 ospf"
+          help="Configure interface specific OSPFv3 properties"
+          operation="edit-config"
+          namespace="&OSPFV3_INTF_NS;"
+          ptype="SUBCOMMAND"
+          mode="subcommand">
+        <PARAM name="ospf-if-cmds-switch"
+          help="ospf-if-cmds-switch"
+          ptype="SUBCOMMAND"
+          mode="switch">
+          <MACRO name="OSPFV3_IF_CMDS" arg="&OSPFV3_INTF_RANGE_INFO;,&OSPFV3_INTF_RANGE;/name=${vlan_id}\,&OSPFV3_INTF_RANGE_INFO;,&OSPFV3-PREF;"/>
+        </PARAM>
+    <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+    <COMMAND name="no ipv6 ospf"
+          help="Configure interface specific OSPFv3 properties"
+          operation="edit-config"
+          namespace="&OSPFV3_INTF_NS;"
+          ptype="SUBCOMMAND"
+          mode="subcommand">
+        <PARAM name="ospf-if-cmds-switch"
+          help="ospf-if-cmds-switch"
+          ptype="SUBCOMMAND"
+          mode="switch">
+          <MACRO name="OSPFV3_NO_IF_CMDS" arg="&OSPFV3_INTF_RANGE_INFO;,&OSPFV3_INTF_RANGE;/name=${vlan_id}\,&OSPFV3_INTF_RANGE_INFO;,&OSPFV3-PREF;"/>
+        </PARAM>
+    <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+</VIEW>
+
+<VIEW name="configure-lag-view">
+
+    <COMMAND name="ipv6 ospf"
+          help="Configure interface specific OSPFv3 properties"
+          operation="edit-config"
+          namespace="&OSPFV3_INTF_NS;"
+          ptype="SUBCOMMAND"
+          mode="subcommand">
+      <PARAM name="ospf-if-cmds-switch"
+          help="ospf-if-cmds-switch"
+          ptype="SUBCOMMAND"
+          mode="switch">
+          <MACRO name="OSPFV3_IF_CMDS" arg="&OSPFV3_INTF_INFO;,&OSPFV3_INTF;/name=${port-channeliface}\,&OSPFV3_INTF_INFO;,&OSPFV3-PREF;"/>
+      </PARAM>
+    <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+    <COMMAND name="no ipv6 ospf"
+          help="Configure interface specific OSPFv3 properties"
+          operation="edit-config"
+          namespace="&OSPFV3_INTF_NS;"
+          ptype="SUBCOMMAND"
+          mode="subcommand">
+      <PARAM name="ospf-if-cmds-switch"
+          help="ospf-if-cmds-switch"
+          ptype="SUBCOMMAND"
+          mode="switch">
+          <MACRO name="OSPFV3_NO_IF_CMDS" arg="&OSPFV3_INTF_INFO;,&OSPFV3_INTF;/name=${port-channeliface}\,&OSPFV3_INTF_INFO;,&OSPFV3-PREF;"/>
+      </PARAM>
+    <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+</VIEW>
+
+<VIEW name="configure-lag-range-view">
+
+    <COMMAND name="ipv6 ospf"
+          help="Configure interface specific OSPFv3 properties"
+          operation="edit-config"
+          namespace="&OSPFV3_INTF_NS;"
+          ptype="SUBCOMMAND"
+          mode="subcommand">
+        <PARAM name="ospf-if-cmds-switch"
+          help="ospf-if-cmds-switch"
+          ptype="SUBCOMMAND"
+          mode="switch">
+          <MACRO name="OSPFV3_IF_CMDS" arg="&OSPFV3_INTF_RANGE_INFO;,&OSPFV3_INTF_RANGE;/name=${portchanliface}\,&OSPFV3_INTF_RANGE_INFO;,&OSPFV3-PREF;"/>
+        </PARAM>
+    <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+    <COMMAND name="no ipv6 ospf"
+          help="Configure interface specific OSPFv3 properties"
+          operation="edit-config"
+          namespace="&OSPFV3_INTF_NS;"
+          ptype="SUBCOMMAND"
+          mode="subcommand">
+        <PARAM name="ospf-if-cmds-switch"
+          help="ospf-if-cmds-switch"
+          ptype="SUBCOMMAND"
+          mode="switch">
+           <MACRO name="OSPFV3_NO_IF_CMDS" arg="&OSPFV3_INTF_RANGE_INFO;,&OSPFV3_INTF_RANGE;/name=${portchanliface}\,&OSPFV3_INTF_RANGE_INFO;,&OSPFV3-PREF;"/>
+        </PARAM>
+    <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+</VIEW>
+
+<VIEW name="configure-loopback-view">
+
+    <COMMAND name="ipv6 ospf"
+          help="Configure interface specific OSPFv3 properties"
+          operation="edit-config"
+          namespace="&OSPFV3_INTF_NS;"
+          ptype="SUBCOMMAND"
+          mode="subcommand">
+      <PARAM name="ospf-if-cmds-switch"
+          help="ospf-if-cmds-switch"
+          ptype="SUBCOMMAND"
+          mode="switch">
+          <MACRO name="OSPFV3_IF_CMDS" arg="&OSPFV3_INTF_INFO;,&OSPFV3_INTF;/name=${ifacename}\,&OSPFV3_INTF_INFO;,&OSPFV3-PREF;"/>
+       </PARAM>
+    <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+    <COMMAND name="no ipv6 ospf"
+          help="Configure interface specific OSPFv3 properties"
+          operation="edit-config"
+          namespace="&OSPFV3_INTF_NS;"
+          ptype="SUBCOMMAND"
+          mode="subcommand">
+       <PARAM name="ospf-if-cmds-switch"
+          help="ospf-if-cmds-switch"
+          ptype="SUBCOMMAND"
+          mode="switch">
+           <MACRO name="OSPFV3_NO_IF_CMDS" arg="&OSPFV3_INTF_INFO;,&OSPFV3_INTF;/name=${ifacename}\,&OSPFV3_INTF_INFO;,&OSPFV3-PREF;"/>
+        </PARAM>
+    <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+</VIEW>
+
+</CLISH_MODULE>

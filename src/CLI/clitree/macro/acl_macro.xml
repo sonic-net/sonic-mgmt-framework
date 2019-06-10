@@ -1,0 +1,1715 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE ROOT [
+<!ENTITY MODULE-NS      "http://www.dellemc.com/networking/os10/dell-policy">
+<!ENTITY MODULE         "dell-policy">
+<!ENTITY SUBTREE_FILTER "Filter_Type:SUBTREE;">
+<!ENTITY ACCESS-LIST    "/config/access-list">
+<!ENTITY POLICY-PREF    "policy">
+<!ENTITY POLICY-NS      "urn:ietf:params:xml:ns:yang:ietf-interfaces,&POLICY-PREF;=http://www.dellemc.com/networking/os10/dell-policy">
+<!ENTITY IF-ACG         "/interfaces/interface/&POLICY-PREF;:policy-acl-config/&POLICY-PREF;:access-group">
+<!ENTITY IF-ACG-KEY     "/interfaces/interface/policy-acl-config/access-group">
+<!ENTITY ACCESS-OPER	"/oper-stat/acl-oper-data/acl-entry-stats">
+<!ENTITY PREFIX-LIST    "/config/prefix-list">
+<!ENTITY AS-PATH        "/config/as-path">
+<!ENTITY COMMUNITY      "/config/community">
+<!ENTITY EXT-COMMUNITY  "/config/ext-community">
+<!ENTITY CLEAR_ACL_COUNTERS  "/clear_access_list_counters">
+<!ENTITY RANGE-ACCESS-LIST    "/config/access-list[]">
+<!ENTITY IF-RANGE-ACCESS-GROUP "/interfaces/interface[]/&POLICY-PREF;:policy-acl-config/&POLICY-PREF;:access-group">	
+]>
+<ROOT>
+<MACRODEF name= "CMD-END-OPTIONS">
+    <PARAM
+        name="capture"
+        help="Monitor packets"
+        ptype="SUBCOMMAND"
+        optional="true"
+        mode="subcommand"
+	yang_name="&ACCESS-LIST;/rule/action/monitor/enabled=true"
+	>
+        <PARAM
+            name="session"
+            help="Monitor session"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+	>
+            <PARAM
+                name="session-id"
+                help="Session to be monitored"
+                ptype="RANGE_1_18"
+                yang_name="&ACCESS-LIST;/rule/action/monitor/session-id=${session-id}"/>
+	</PARAM>
+    </PARAM>
+    <PARAM
+        name="count"
+        help="Count packets"
+        ptype="SUBCOMMAND"
+        optional="true"
+        mode="subcommand"
+	yang_name="&ACCESS-LIST;/rule/action/counter-pkt-enabled=true"
+	>
+        <PARAM
+            name="byte"
+            help="Count bytes"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+	    optional="true"
+            yang_name="&ACCESS-LIST;/rule/action/counter-byte-enabled=true"/>
+    </PARAM>
+    <PARAM
+        name="dscp"
+        help="Consider only packets matching DSCP value"
+        ptype="SUBCOMMAND"
+        optional="true"
+        mode="subcommand">
+        <PARAM
+            name="dscp-val"
+            help="Consider only packets matching DSCP value"
+            ptype="RANGE_0_63"
+            yang_name="&ACCESS-LIST;/rule/condition/match-ip/dscp=${dscp-val}"/>
+    </PARAM>
+    <PARAM
+        name="fragment"
+        help="Check all fragments of a packet"
+        ptype="SUBCOMMAND"
+        mode="subcommand"
+        optional="true"
+        yang_name="&ACCESS-LIST;/rule/condition/match-ip/fragments=true"
+        />
+</MACRODEF>
+
+<MACRODEF name= "IPV6-CMD-END-OPTIONS">
+    <PARAM
+        name="capture"
+        help="Monitor packets"
+        ptype="SUBCOMMAND"
+        optional="true"
+        mode="subcommand"
+	yang_name="&ACCESS-LIST;/rule/action/monitor/enabled=true"
+	>
+        <PARAM
+            name="session"
+            help="Monitor session"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+	>
+            <PARAM
+                name="session-id"
+                help="Session to be monitored"
+                ptype="RANGE_1_18"
+                yang_name="&ACCESS-LIST;/rule/action/monitor/session-id=${session-id}"/>
+	</PARAM>
+    </PARAM>
+    <PARAM
+        name="count"
+        help="Count packets"
+        ptype="SUBCOMMAND"
+        optional="true"
+        mode="subcommand"
+	yang_name="&ACCESS-LIST;/rule/action/counter-pkt-enabled=true"
+	>
+        <PARAM
+            name="byte"
+            help="Count bytes"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+	    optional="true"
+            yang_name="&ACCESS-LIST;/rule/action/counter-byte-enabled=true"/>
+    </PARAM>
+    <PARAM
+        name="dscp"
+        help="Consider only packets matching DSCP value"
+        ptype="SUBCOMMAND"
+        optional="true"
+        mode="subcommand">
+        <PARAM
+            name="dscp-val"
+            help="Consider only packets matching DSCP value"
+            ptype="RANGE_0_63"
+            yang_name="&ACCESS-LIST;/rule/condition/match-ip/dscp=${dscp-val}"/>
+    </PARAM>
+    <PARAM
+        name="flow-label"
+        help="Flow label"
+        ptype="SUBCOMMAND"
+        optional="true"
+        pfeature="remove"
+        mode="subcommand">
+        <PARAM
+            name="flow-label-val"
+            help="Flow label value"
+            ptype="RANGE_0_1048575"
+            yang_name="&ACCESS-LIST;/rule/condition/match-ip/flow-label=${flow-label-val}"/>
+    </PARAM>
+    <PARAM
+        name="fragment"
+        help="Check all fragments of a packet"
+        ptype="SUBCOMMAND"
+        mode="subcommand"
+        optional="true"
+        yang_name="&ACCESS-LIST;/rule/condition/match-ip/fragments=true"
+        />
+</MACRODEF>
+
+<MACRODEF name= "MAC-CMD-END-OPTIONS">
+    <PARAM
+        name="protocol-number"
+        help="MAC protocol number"
+        optional="true"
+        ptype="ETHER_TYPE"
+        yang_name="&ACCESS-LIST;/rule/condition/match-mac/protocol=${protocol-number}"/>
+    <PARAM
+        name="capture"
+        help="Monitor packets"
+        ptype="SUBCOMMAND"
+        optional="true"
+        mode="subcommand"
+	yang_name="&ACCESS-LIST;/rule/action/monitor/enabled=true"
+	>
+        <PARAM
+            name="session"
+            help="Monitor session"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+	>
+            <PARAM
+                name="session-id"
+                help="Session to be monitored"
+                ptype="RANGE_1_18"
+                yang_name="&ACCESS-LIST;/rule/action/monitor/session-id=${session-id}"/>
+	</PARAM>
+    </PARAM>
+    <PARAM
+        name="cos"
+        help="CoS value"
+        ptype="SUBCOMMAND"
+        optional="true"
+        mode="subcommand">
+        <PARAM
+            name="cos-val"
+            help="CoS value"
+            ptype="RANGE_0_7"
+            yang_name="&ACCESS-LIST;/rule/condition/match-mac/cos=${cos-val}"/>
+    </PARAM>
+    <PARAM
+        name="count"
+        help="Count packets"
+        ptype="SUBCOMMAND"
+        optional="true"
+        mode="subcommand"
+	yang_name="&ACCESS-LIST;/rule/action/counter-pkt-enabled=true"
+	>
+        <PARAM
+            name="byte"
+            help="Count bytes"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+	    optional="true"
+            yang_name="&ACCESS-LIST;/rule/action/counter-byte-enabled=true"/>
+    </PARAM>
+    <PARAM
+        name="vlan"
+        help="VLAN number"
+        ptype="SUBCOMMAND"
+        optional="true"
+        mode="subcommand">
+        <PARAM
+            name="vlan-number"
+            help="VLAN number"
+            ptype="VLAN_ID"
+            yang_name="&ACCESS-LIST;/rule/condition/match-mac/vlan-id=${vlan-number}"/>
+    </PARAM>
+</MACRODEF>
+
+<MACRODEF name="IPV4-DEST-OPTIONS">
+        <PARAM
+            name="dest-options-switch"
+            help=""
+            ptype="SUBCOMMAND"
+            mode="switch"
+            >
+            <PARAM
+                name="dest-addr"
+                help="Destination address"
+                ptype="IP_ADDR"
+                yang_name="&ACCESS-LIST;/rule/condition/match-ip/destination-address=${dest-addr}"
+                >
+                <PARAM
+                    name="dest-mask"
+                    help="Destination address mask"
+                    ptype="IP_ADDR"
+                    yang_name="&ACCESS-LIST;/rule/condition/match-ip/destination-mask=${dest-mask}"
+                    >
+                </PARAM>
+            </PARAM>
+            <PARAM
+                name="dest-prefix"
+                help="Destination prefix "
+                ptype="IP_ADDR_MASK"
+                >
+            </PARAM>
+            <PARAM
+                name="dest-any"
+                help="Destination prefix "
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+		value="any"
+                yang_name="&ACCESS-LIST;/rule/condition/match-ip/destination-any=true"
+                >
+            </PARAM>
+            <PARAM
+                name="host"
+                help="IP address of host"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                >
+                <PARAM
+                    name="dest-host"
+                    help="Host address"
+                    ptype="IP_ADDR"
+                    yang_name="&ACCESS-LIST;/rule/condition/match-ip/destination-host=${dest-host}"
+                    >
+                </PARAM>
+            </PARAM>
+        </PARAM>
+</MACRODEF>
+
+<MACRODEF name="IPV4-SRC-OPTIONS">
+    <PARAM
+        name="src-options-switch"
+        help=""
+        ptype="SUBCOMMAND"
+        mode="switch"
+        >
+        <PARAM
+            name="src-prefix"
+            help="Source Prefix"
+            ptype="IP_ADDR_MASK"
+            >
+        </PARAM>
+        <PARAM
+            name="src-addr"
+            help="Source Address"
+            ptype="IP_ADDR"
+            yang_name="&ACCESS-LIST;/rule/condition/match-ip/source-address=${src-addr}"
+            >
+            <PARAM
+                name="src-mask"
+                help="Source address mask"
+                ptype="IP_ADDR"
+                yang_name="&ACCESS-LIST;/rule/condition/match-ip/source-mask=${src-mask}"
+                >
+            </PARAM>
+        </PARAM>
+        <PARAM
+            name="src-any"
+            help="Any source Address"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            value="any"
+            yang_name="&ACCESS-LIST;/rule/condition/match-ip/source-any=true"
+            >
+        </PARAM>
+        <PARAM
+            name="host"
+            help="Source host address"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            >
+            <PARAM
+                name="src-host-addr"
+                help="Source address of host"
+                ptype="IP_ADDR"
+                yang_name="&ACCESS-LIST;/rule/condition/match-ip/source-host=${src-host-addr}"
+                >
+            </PARAM>
+        </PARAM>
+    </PARAM>
+</MACRODEF>
+
+<MACRODEF name="IPV6-DEST-OPTIONS">
+        <PARAM
+            name="dest-options-switch"
+            help=""
+            ptype="SUBCOMMAND"
+            mode="switch"
+            >
+            <PARAM
+                name="dest-addr"
+                help="Destination address"
+                ptype="IPV6_ADDR"
+                yang_name="&ACCESS-LIST;/rule/condition/match-ip/destination-address=${dest-addr}"
+                >
+                <PARAM
+                    name="dest-mask"
+                    help="Destination address mask"
+                    ptype="IPV6_ADDR"
+                    yang_name="&ACCESS-LIST;/rule/condition/match-ip/destination-mask=${dest-mask}"
+                    >
+                </PARAM>
+            </PARAM>
+            <PARAM
+                name="dest-prefix"
+                help="Destination prefix "
+                ptype="IPV6_ADDR_MASK"
+                yang_name="&ACCESS-LIST;/rule/condition/match-ip/destination-prefix=${dest-prefix}"
+                >
+            </PARAM>
+            <PARAM
+                name="dest-any"
+                help="Any destination address"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                value="any"
+                yang_name="&ACCESS-LIST;/rule/condition/match-ip/destination-any=true"
+                >
+            </PARAM>
+            <PARAM
+                name="host"
+                help="IP address of host"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                >
+                <PARAM
+                    name="dest-host"
+                    help="Host address"
+                    ptype="IPV6_ADDR"
+                    yang_name="&ACCESS-LIST;/rule/condition/match-ip/destination-host=${dest-host}"
+                    >
+                </PARAM>
+            </PARAM>
+        </PARAM>
+</MACRODEF>
+
+<MACRODEF name="IPV6-SRC-OPTIONS">
+    <PARAM
+        name="src-options-switch"
+        help=""
+        ptype="SUBCOMMAND"
+        mode="switch"
+        >
+        <PARAM
+            name="src-addr"
+            help="Source Address"
+            ptype="IPV6_ADDR"
+            yang_name="&ACCESS-LIST;/rule/condition/match-ip/source-address=${src-addr}"
+            >
+            <PARAM
+                name="src-mask"
+                help="Source address mask"
+                ptype="IPV6_ADDR"
+                yang_name="&ACCESS-LIST;/rule/condition/match-ip/source-mask=${src-mask}"
+                >
+            </PARAM>
+        </PARAM>
+        <PARAM
+            name="src-prefix"
+            help="Source Prefix"
+            ptype="IPV6_ADDR_MASK"
+            yang_name="&ACCESS-LIST;/rule/condition/match-ip/source-prefix=${src-prefix}"
+            >
+        </PARAM>
+        <PARAM
+            name="src-any"
+            help="Any source Address"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            value="any"
+            yang_name="&ACCESS-LIST;/rule/condition/match-ip/source-any=true"
+            >
+        </PARAM>
+        <PARAM
+            name="host"
+            help="Source host address"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            >
+            <PARAM
+                name="src-host-addr"
+                help="Source address of host"
+                ptype="IPV6_ADDR"
+                yang_name="&ACCESS-LIST;/rule/condition/match-ip/source-host=${src-host-addr}"
+                >
+            </PARAM>
+        </PARAM>
+    </PARAM>
+</MACRODEF>
+
+<MACRODEF name="MAC-ACL-OPTIONS">
+    <PARAM
+        name="src-addr"
+        help="Source MAC address"
+        ptype="MAC_ADDR"
+        yang_name="&ACCESS-LIST;/rule/condition/match-mac/source-address=${src-addr}"
+        >
+        <PARAM
+            name="src-mask"
+            help="Source wildcard bits"
+            ptype="MAC_ADDR"
+            yang_name="&ACCESS-LIST;/rule/condition/match-mac/source-mask=${src-mask}"
+            >
+        </PARAM>
+    <MACRO name="MAC-DEST-OPTIONS" arg="" ></MACRO>
+    <MACRO name="MAC-CMD-END-OPTIONS" arg="" ></MACRO>
+    </PARAM>
+    <PARAM
+        name="src-any"
+        help="Any source Address"
+        ptype="SUBCOMMAND"
+        mode="subcommand"
+        value="any"
+        yang_name="&ACCESS-LIST;/rule/condition/match-mac/source-any=true"
+        >
+    <MACRO name="MAC-DEST-OPTIONS" arg="" ></MACRO>
+    <MACRO name="MAC-CMD-END-OPTIONS" arg="" ></MACRO>
+    </PARAM>
+</MACRODEF>
+
+<MACRODEF name="MAC-ACL-PERMIT-OPTIONS">
+    <PARAM
+        name="src-addr"
+        help="Source MAC address"
+        ptype="MAC_ADDR"
+        yang_name="&ACCESS-LIST;/rule/condition/match-mac/source-address=${src-addr}"
+        >
+        <PARAM
+            name="src-mask"
+            help="Source wildcard bits"
+            ptype="MAC_ADDR"
+            yang_name="&ACCESS-LIST;/rule/condition/match-mac/source-mask=${src-mask}"
+            >
+        </PARAM>
+    <MACRO name="MAC-DEST-OPTIONS" arg="" ></MACRO>
+    <MACRO name="MAC-CMD-END-OPTIONS" arg="" ></MACRO>
+    </PARAM>
+    <PARAM
+        name="src-any"
+        help="Any source Address"
+        ptype="SUBCOMMAND"
+        mode="subcommand"
+        value="any"
+        yang_name="&ACCESS-LIST;/rule/condition/match-mac/source-any=true"
+        >
+    <MACRO name="MAC-DEST-OPTIONS" arg="" ></MACRO>
+    <MACRO name="MAC-CMD-END-OPTIONS" arg="" ></MACRO>
+    </PARAM>
+    <!-- permit protocol -->
+    <MACRO name="MAC-ACL-PROTOCOL-OPTIONS" arg=""></MACRO>
+</MACRODEF>
+
+<MACRODEF name="MAC-DEST-OPTIONS">
+        <PARAM
+            name="dest-options-switch"
+            help=""
+            ptype="SUBCOMMAND"
+            mode="switch"
+            >
+            <PARAM
+                name="dest-addr"
+                help="Destination MAC address"
+                ptype="MAC_ADDR"
+                yang_name="&ACCESS-LIST;/rule/condition/match-mac/destination-address=${dest-addr}"
+                >
+                <PARAM
+                    name="dest-mask"
+                    help="Destination wildcard bits"
+                    ptype="MAC_ADDR"
+                    yang_name="&ACCESS-LIST;/rule/condition/match-mac/destination-mask=${dest-mask}"
+                    >
+                </PARAM>
+            </PARAM>
+            <PARAM
+                name="dest-any"
+                help="Any destination address"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                value="any"
+                yang_name="&ACCESS-LIST;/rule/condition/match-mac/destination-any=true"
+                >
+            </PARAM>
+        </PARAM>
+</MACRODEF>
+
+<MACRODEF name="TCP-PORT-OPTIONS">
+    <PARAM
+        name="arg1-port-options-switch"
+        help=""
+        ptype="SUBCOMMAND"
+        mode="switch"
+        optional="true"
+        >
+        <PARAM
+            name="arg1-eq"
+            help="Match only packets on a given port number"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            optional="true"
+            >
+            <PARAM
+                name="arg1-port-number"
+                help="port number"
+                ptype="RANGE_0_65535"/>
+        </PARAM>
+            <PARAM
+                name="arg1-gt"
+                help="Match only packets with a greater port number"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                value="gt"
+                optional="true"
+                pfeature="NOT_SUPPORTED"
+                yang_name="&ACCESS-LIST;/rule/condition/match-ip/match-tcp/arg1-port-range/comparator=ge">
+                <PARAM
+                    name="arg1-port-number"
+                    help="port number"
+                    ptype="RANGE_0_65535"
+	            yang_name="&ACCESS-LIST;/rule/condition/match-ip/match-tcp/arg1-port-range/comparator-port=${arg1-port-number}"/>
+	    </PARAM>
+            <PARAM
+                name="arg1-lt"
+                help="Match only packets with a lower port number"
+                ptype="SUBCOMMAND"
+		mode="subcommand"
+                value="lt"
+		optional="true"
+                pfeature="NOT_SUPPORTED"
+                yang_name="&ACCESS-LIST;/rule/condition/match-ip/match-tcp/arg1-port-range/comparator=le">
+                <PARAM
+                    name="arg1-port-number"
+                    help="port number"
+                    ptype="RANGE_0_65535"
+	            yang_name="&ACCESS-LIST;/rule/condition/match-ip/match-tcp/arg1-port-range/comparator-port=${arg1-port-number}"/>
+	    </PARAM>
+            <PARAM
+                name="arg1-neq"
+                help="Match only packets not on a given port number"
+                ptype="SUBCOMMAND"
+		mode="subcommand"
+                value="neq"
+		optional="true"
+                pfeature="NOT_SUPPORTED"
+                yang_name="&ACCESS-LIST;/rule/condition/match-ip/match-tcp/arg1-port-range/comparator=ne">
+                <PARAM
+                    name="arg1-port-number"
+                    help="port number"
+                    ptype="RANGE_0_65535"
+	            yang_name="&ACCESS-LIST;/rule/condition/match-ip/match-tcp/arg1-port-range/comparator-port=${arg1-port-number}"/>
+	    </PARAM>
+            <PARAM
+                name="arg1-range"
+                help="Match only packets in the range of port numbers"
+                ptype="SUBCOMMAND"
+		mode="subcommand"
+                value="range"
+                pfeature="NOT_SUPPORTED"
+		optional="true">
+                <PARAM
+                    name="arg1-lower-port-number"
+                    help="Lower port number"
+                    ptype="RANGE_0_65535"
+	            yang_name="&ACCESS-LIST;/rule/condition/match-ip/match-tcp/arg1-port-range/lower-port=${arg1-lower-port-number}"/>
+                <PARAM
+                    name="arg1-upper-port-number"
+                    help="Upper port number"
+                    ptype="RANGE_0_65535"
+	            yang_name="&ACCESS-LIST;/rule/condition/match-ip/match-tcp/arg1-port-range/upper-port=${arg1-upper-port-number}"/>
+	    </PARAM>
+    </PARAM>
+</MACRODEF>
+
+<MACRODEF name= "TCP-END-OPTIONS">
+    <PARAM
+        name="fin"
+        help="Match on the FIN bit"
+        ptype="SUBCOMMAND"
+        mode="subcommand"
+        optional="true"
+        yang_name="&ACCESS-LIST;/rule/condition/match-ip/match-tcp/tcp-bit-flags=fin"
+        />
+    <PARAM
+        name="syn"
+        help="Match on the SYN bit"
+        ptype="SUBCOMMAND"
+        mode="subcommand"
+        optional="true"
+        yang_name="&ACCESS-LIST;/rule/condition/match-ip/match-tcp/tcp-bit-flags=syn"
+        />
+    <PARAM
+        name="rst"
+        help="Match on the RST bit"
+        ptype="SUBCOMMAND"
+        mode="subcommand"
+        optional="true"
+        yang_name="&ACCESS-LIST;/rule/condition/match-ip/match-tcp/tcp-bit-flags=rst"
+        />
+    <PARAM
+        name="psh"
+        help="Match on the PSH bit"
+        ptype="SUBCOMMAND"
+        mode="subcommand"
+        optional="true"
+        yang_name="&ACCESS-LIST;/rule/condition/match-ip/match-tcp/tcp-bit-flags=psh"
+        />
+    <PARAM
+        name="ack"
+        help="Match on the ACK bit"
+        ptype="SUBCOMMAND"
+        mode="subcommand"
+        optional="true"
+        yang_name="&ACCESS-LIST;/rule/condition/match-ip/match-tcp/tcp-bit-flags=ack"
+        />
+    <PARAM
+        name="urg"
+        help="Match on the URG bit"
+        ptype="SUBCOMMAND"
+        mode="subcommand"
+        optional="true"
+        yang_name="&ACCESS-LIST;/rule/condition/match-ip/match-tcp/tcp-bit-flags=urg"
+        />
+</MACRODEF>
+
+<MACRODEF name="IPV4-ACL">
+    <!-- permit <0-255> -->
+    <PARAM
+        name="proto-num"
+        help="Protocol number"
+        ptype="RANGE_0_255"
+        yang_name="&ACCESS-LIST;/rule/condition/match-ip/ip-protocol=${proto-num}"
+        >
+        <MACRO name="IPV4-SRC-OPTIONS" arg="" ></MACRO>
+        <MACRO name="IPV4-DEST-OPTIONS" arg="" ></MACRO>
+        <MACRO name="CMD-END-OPTIONS" arg="" ></MACRO>
+    </PARAM>
+    <!-- permit icmp -->
+    <PARAM
+        name="icmp"
+        help="ICMP address"
+        ptype="SUBCOMMAND"
+        mode="subcommand"
+        yang_name="&ACCESS-LIST;/rule/condition/match-ip/ip-protocol=1"
+        >
+        <MACRO name="IPV4-SRC-OPTIONS" arg="" ></MACRO>
+        <MACRO name="IPV4-DEST-OPTIONS" arg="" ></MACRO>
+        <MACRO name="CMD-END-OPTIONS" arg="" ></MACRO>
+    </PARAM>
+    <!-- permit ip -->
+    <PARAM
+        name="ip"
+        help="IP address"
+        ptype="SUBCOMMAND"
+        mode="subcommand"
+        yang_name="&ACCESS-LIST;/rule/condition/match-ip/ip-protocol=4"
+        >
+        <MACRO name="IPV4-SRC-OPTIONS" arg="" ></MACRO>
+        <MACRO name="IPV4-DEST-OPTIONS" arg="" ></MACRO>
+        <MACRO name="CMD-END-OPTIONS" arg="" ></MACRO>
+    </PARAM>
+    <!-- permit tcp -->
+    <PARAM
+        name="tcp"
+        help="TCP packets"
+        ptype="SUBCOMMAND"
+        mode="subcommand"
+        >
+        <MACRO name="IPV4-SRC-OPTIONS" arg="" ></MACRO>
+        <MACRO name="TCP-PORT-OPTIONS" arg="source"> </MACRO>
+        <MACRO name="IPV4-DEST-OPTIONS" arg="" ></MACRO>
+        <MACRO name="TCP-PORT-OPTIONS" arg="destination" > </MACRO>
+        <MACRO name="TCP-END-OPTIONS" arg="" > </MACRO>
+        <MACRO name="CMD-END-OPTIONS" arg="" > </MACRO>
+    </PARAM>
+    <!-- permit udp -->
+    <PARAM
+        name="udp"
+        help="UDP packets"
+        ptype="SUBCOMMAND"
+        mode="subcommand"
+        >
+        <MACRO name="IPV4-SRC-OPTIONS" arg="" ></MACRO>
+        <MACRO name="TCP-PORT-OPTIONS" arg="source"> </MACRO>
+        <MACRO name="IPV4-DEST-OPTIONS" arg="" ></MACRO>
+        <MACRO name="TCP-PORT-OPTIONS" arg="destination" > </MACRO>
+        <MACRO name="CMD-END-OPTIONS" arg="" > </MACRO>
+    </PARAM>
+</MACRODEF>
+
+<MACRODEF name="IPV4-ACL-PERMIT-OPTIONS">
+    <!-- permit <0-255> -->
+    <PARAM
+        name="proto-num"
+        help="Protocol number"
+        ptype="RANGE_0_255"
+        yang_name="&ACCESS-LIST;/rule/condition/match-ip/ip-protocol=${proto-num}"
+        >
+        <MACRO name="IPV4-SRC-OPTIONS" arg="" ></MACRO>
+        <MACRO name="IPV4-DEST-OPTIONS" arg="" ></MACRO>
+        <MACRO name="CMD-END-OPTIONS" arg="" ></MACRO>
+    </PARAM>
+    <!-- permit icmp -->
+    <PARAM
+        name="icmp"
+        help="ICMP address"
+        ptype="SUBCOMMAND"
+        mode="subcommand"
+        yang_name="&ACCESS-LIST;/rule/condition/match-ip/ip-protocol=1"
+        >
+        <MACRO name="IPV4-SRC-OPTIONS" arg="" ></MACRO>
+        <MACRO name="IPV4-DEST-OPTIONS" arg="" ></MACRO>
+        <MACRO name="CMD-END-OPTIONS" arg="" ></MACRO>
+    </PARAM>
+    <!-- permit ip -->
+    <PARAM
+        name="ip"
+        help="IP address"
+        ptype="SUBCOMMAND"
+        mode="subcommand"
+        yang_name="&ACCESS-LIST;/rule/condition/match-ip/ip-protocol=4"
+        >
+        <MACRO name="IPV4-SRC-OPTIONS" arg="" ></MACRO>
+        <MACRO name="IPV4-DEST-OPTIONS" arg="" ></MACRO>
+        <MACRO name="CMD-END-OPTIONS" arg="" ></MACRO>
+    </PARAM>
+    <!-- permit protocol -->
+    <MACRO name="IPV4-ACL-PROTOCOL-OPTIONS" arg=""></MACRO>
+    <!-- permit tcp -->
+    <PARAM
+        name="tcp"
+        help="TCP packets"
+        ptype="SUBCOMMAND"
+        mode="subcommand"
+        >
+        <MACRO name="IPV4-SRC-OPTIONS" arg="" ></MACRO>
+        <MACRO name="TCP-PORT-OPTIONS" arg="source"> </MACRO>
+        <MACRO name="IPV4-DEST-OPTIONS" arg="" ></MACRO>
+        <MACRO name="TCP-PORT-OPTIONS" arg="destination" > </MACRO>
+        <MACRO name="TCP-END-OPTIONS" arg="" > </MACRO>
+        <MACRO name="CMD-END-OPTIONS" arg="" > </MACRO>
+    </PARAM>
+    <!-- permit udp -->
+    <PARAM
+        name="udp"
+        help="UDP packets"
+        ptype="SUBCOMMAND"
+        mode="subcommand"
+        >
+        <MACRO name="IPV4-SRC-OPTIONS" arg="" ></MACRO>
+        <MACRO name="TCP-PORT-OPTIONS" arg="source"> </MACRO>
+        <MACRO name="IPV4-DEST-OPTIONS" arg="" ></MACRO>
+        <MACRO name="TCP-PORT-OPTIONS" arg="destination" > </MACRO>
+        <MACRO name="CMD-END-OPTIONS" arg="" > </MACRO>
+    </PARAM>
+</MACRODEF>
+
+<MACRODEF name="IPV6-ACL">
+    <!-- permit <0-255> -->
+    <PARAM
+        name="proto-num"
+        help="Protocol number"
+        ptype="RANGE_0_255"
+        yang_name="&ACCESS-LIST;/rule/condition/match-ip/ip-protocol=${proto-num}"
+        >
+        <MACRO name="IPV6-SRC-OPTIONS" arg="" ></MACRO>
+        <MACRO name="IPV6-DEST-OPTIONS" arg="" ></MACRO>
+        <MACRO name="IPV6-CMD-END-OPTIONS" arg="" ></MACRO>
+    </PARAM>
+    <!-- permit icmp -->
+    <PARAM
+        name="icmp"
+        help="ICMP address"
+        ptype="SUBCOMMAND"
+        mode="subcommand"
+        yang_name="&ACCESS-LIST;/rule/condition/match-ip/ip-protocol=1"
+        >
+        <MACRO name="IPV6-SRC-OPTIONS" arg="" ></MACRO>
+        <MACRO name="IPV6-DEST-OPTIONS" arg="" ></MACRO>
+        <MACRO name="IPV6-CMD-END-OPTIONS" arg="" ></MACRO>
+    </PARAM>
+    <!-- permit ip -->
+    <PARAM
+        name="ipv6"
+        help="IPv6 address"
+        ptype="SUBCOMMAND"
+        mode="subcommand"
+        yang_name="&ACCESS-LIST;/rule/condition/match-ip/ip-protocol=41"
+        >
+        <MACRO name="IPV6-SRC-OPTIONS" arg="" ></MACRO>
+        <MACRO name="IPV6-DEST-OPTIONS" arg="" ></MACRO>
+        <MACRO name="IPV6-CMD-END-OPTIONS" arg="" ></MACRO>
+    </PARAM>
+    <!-- permit tcp -->
+    <PARAM
+        name="tcp"
+        help="TCP packets"
+        ptype="SUBCOMMAND"
+        mode="subcommand"
+        yang_name="&ACCESS-LIST;/rule/condition/match-ip/ip-protocol=6"
+        >
+        <MACRO name="IPV6-SRC-OPTIONS" arg="" ></MACRO>
+        <MACRO name="TCP-PORT-OPTIONS" arg="source"> </MACRO>
+        <MACRO name="IPV6-DEST-OPTIONS" arg="" ></MACRO>
+        <MACRO name="TCP-PORT-OPTIONS" arg="destination" > </MACRO>
+        <MACRO name="TCP-END-OPTIONS" arg="" > </MACRO>
+        <MACRO name="IPV6-CMD-END-OPTIONS" arg="" > </MACRO>
+    </PARAM>
+    <!-- permit udp -->
+    <PARAM
+        name="udp"
+        help="UDP packets"
+        ptype="SUBCOMMAND"
+        mode="subcommand"
+        yang_name="&ACCESS-LIST;/rule/condition/match-ip/ip-protocol=17"
+        >
+        <MACRO name="IPV6-SRC-OPTIONS" arg="" ></MACRO>
+        <MACRO name="TCP-PORT-OPTIONS" arg="source"> </MACRO>
+        <MACRO name="IPV6-DEST-OPTIONS" arg="" ></MACRO>
+        <MACRO name="TCP-PORT-OPTIONS" arg="destination" > </MACRO>
+        <MACRO name="IPV6-CMD-END-OPTIONS" arg="" > </MACRO>
+    </PARAM>
+</MACRODEF>
+
+<MACRODEF name="IPV6-ACL-PERMIT-OPTIONS">
+    <!-- permit <0-255> -->
+    <PARAM
+        name="proto-num"
+        help="Protocol number"
+        ptype="RANGE_0_255"
+        yang_name="&ACCESS-LIST;/rule/condition/match-ip/ip-protocol=${proto-num}"
+        >
+        <MACRO name="IPV6-SRC-OPTIONS" arg="" ></MACRO>
+        <MACRO name="IPV6-DEST-OPTIONS" arg="" ></MACRO>
+        <MACRO name="IPV6-CMD-END-OPTIONS" arg="" ></MACRO>
+    </PARAM>
+    <!-- permit icmp -->
+    <PARAM
+        name="icmp"
+        help="ICMP address"
+        ptype="SUBCOMMAND"
+        mode="subcommand"
+        yang_name="&ACCESS-LIST;/rule/condition/match-ip/ip-protocol=1"
+        >
+        <MACRO name="IPV6-SRC-OPTIONS" arg="" ></MACRO>
+        <MACRO name="IPV6-DEST-OPTIONS" arg="" ></MACRO>
+        <MACRO name="IPV6-CMD-END-OPTIONS" arg="" ></MACRO>
+    </PARAM>
+    <!-- permit ip -->
+    <PARAM
+        name="ipv6"
+        help="IPv6 address"
+        ptype="SUBCOMMAND"
+        mode="subcommand"
+        yang_name="&ACCESS-LIST;/rule/condition/match-ip/ip-protocol=41"
+        >
+        <MACRO name="IPV6-SRC-OPTIONS" arg="" ></MACRO>
+        <MACRO name="IPV6-DEST-OPTIONS" arg="" ></MACRO>
+        <MACRO name="IPV6-CMD-END-OPTIONS" arg="" ></MACRO>
+    </PARAM>
+    <!-- permit protocol -->
+    <MACRO name="IPV6-ACL-PROTOCOL-OPTIONS" arg=""></MACRO>
+    <!-- permit tcp -->
+    <PARAM
+        name="tcp"
+        help="TCP packets"
+        ptype="SUBCOMMAND"
+        mode="subcommand"
+        yang_name="&ACCESS-LIST;/rule/condition/match-ip/ip-protocol=6"
+        >
+        <MACRO name="IPV6-SRC-OPTIONS" arg="" ></MACRO>
+        <MACRO name="TCP-PORT-OPTIONS" arg="source"> </MACRO>
+        <MACRO name="IPV6-DEST-OPTIONS" arg="" ></MACRO>
+        <MACRO name="TCP-PORT-OPTIONS" arg="destination" > </MACRO>
+        <MACRO name="TCP-END-OPTIONS" arg="" > </MACRO>
+        <MACRO name="IPV6-CMD-END-OPTIONS" arg="" > </MACRO>
+    </PARAM>
+    <!-- permit udp -->
+    <PARAM
+        name="udp"
+        help="UDP packets"
+        ptype="SUBCOMMAND"
+        mode="subcommand"
+        yang_name="&ACCESS-LIST;/rule/condition/match-ip/ip-protocol=17"
+        >
+        <MACRO name="IPV6-SRC-OPTIONS" arg="" ></MACRO>
+        <MACRO name="TCP-PORT-OPTIONS" arg="source"> </MACRO>
+        <MACRO name="IPV6-DEST-OPTIONS" arg="" ></MACRO>
+        <MACRO name="TCP-PORT-OPTIONS" arg="destination" > </MACRO>
+        <MACRO name="IPV6-CMD-END-OPTIONS" arg="" > </MACRO>
+    </PARAM>
+</MACRODEF>
+
+<MACRODEF name="IPV4-ACL-PROTOCOL-OPTIONS">
+    <!-- permit protocol -->
+        <PARAM
+            name="protocol"
+            help="Protocol"
+            pfeature="NOT_SUPPORTED"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            >
+            <PARAM
+                name="protocol-options"
+                help=""
+                ptype="SUBCOMMAND"
+		mode="switch"
+            >
+                <PARAM
+                    name="bgp"
+                    help="Configure BGP control packets policing"
+                    ptype="SUBCOMMAND"
+		    mode="subcommand"
+                    yang_name="&ACCESS-LIST;/rule/condition/protocol-name=bgp"/>
+                <PARAM
+                    name="dhcp"
+                    help="Configure DHCP control packets policing"
+                    ptype="SUBCOMMAND"
+		    mode="subcommand"
+                    yang_name="&ACCESS-LIST;/rule/condition/protocol-name=dhcp"/>
+                <PARAM
+                    name="dhcp-relay"
+                    help="Configure DHCP-RELAY control packets policing"
+                    ptype="SUBCOMMAND"
+		    mode="subcommand"
+                    yang_name="&ACCESS-LIST;/rule/condition/protocol-name=dhcp-relay"/>
+                <PARAM
+                    name="ftp"
+                    help="Configure FTP control packets policing"
+                    ptype="SUBCOMMAND"
+		    mode="subcommand"
+                    yang_name="&ACCESS-LIST;/rule/condition/protocol-name=ftp"/>
+                <PARAM
+                    name="icmp"
+                    help="Configure ICMP control packets policing"
+                    ptype="SUBCOMMAND"
+		    mode="subcommand"
+                    yang_name="&ACCESS-LIST;/rule/condition/protocol-name=icmp"/>
+                <PARAM
+                    name="igmp"
+                    help="Configure IGMP control packets policing"
+                    ptype="SUBCOMMAND"
+		    mode="subcommand"
+                    yang_name="&ACCESS-LIST;/rule/condition/protocol-name=igmp"/>
+                <PARAM
+                    name="msdp"
+                    help="Configure MSDP control packets policing"
+                    ptype="SUBCOMMAND"
+		    mode="subcommand"
+                    yang_name="&ACCESS-LIST;/rule/condition/protocol-name=msdp"/>
+                <PARAM
+                    name="ntp"
+                    help="Configure NTP control packets policing"
+                    ptype="SUBCOMMAND"
+		    mode="subcommand"
+                    yang_name="&ACCESS-LIST;/rule/condition/protocol-name=ntp"/>
+                <PARAM
+                    name="ospf"
+                    help="Configure OSPF control packets policing"
+                    ptype="SUBCOMMAND"
+		    mode="subcommand"
+                    yang_name="&ACCESS-LIST;/rule/condition/protocol-name=ospf"/>
+                <PARAM
+                    name="pim"
+                    help="Configure PIM control packets policing"
+                    ptype="SUBCOMMAND"
+		    mode="subcommand"
+                    yang_name="&ACCESS-LIST;/rule/condition/protocol-name=pim"/>
+                <PARAM
+                    name="rip"
+                    help="Configure RIP control packets policing"
+                    ptype="SUBCOMMAND"
+		    mode="subcommand"
+                    yang_name="&ACCESS-LIST;/rule/condition/protocol-name=rip"/>
+                <PARAM
+                    name="ssh"
+                    help="Configure SSH control packets policing"
+                    ptype="SUBCOMMAND"
+		    mode="subcommand"
+                    yang_name="&ACCESS-LIST;/rule/condition/protocol-name=ssh"/>
+                <PARAM
+                    name="telnet"
+                    help="Configure TELNET control packets policing"
+                    ptype="SUBCOMMAND"
+		    mode="subcommand"
+                    yang_name="&ACCESS-LIST;/rule/condition/protocol-name=telnet"/>
+                <PARAM
+                    name="vrrp"
+                    help="Configure VRRP control packets policing"
+                    ptype="SUBCOMMAND"
+		    mode="subcommand"
+                    yang_name="&ACCESS-LIST;/rule/condition/protocol-name=vrrp"/>
+            </PARAM>
+        </PARAM>
+</MACRODEF>
+
+<MACRODEF name="IPV6-ACL-PROTOCOL-OPTIONS">
+    <!-- permit protocol -->
+        <PARAM
+            name="protocol"
+            help="Protocol"
+            pfeature="NOT_SUPPORTED"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            >
+            <PARAM
+                name="protocol-options"
+                help=""
+                ptype="SUBCOMMAND"
+		mode="switch"
+            >
+                <PARAM
+                    name="bgp"
+                    help="Configure BGP control packets policing"
+                    ptype="SUBCOMMAND"
+		    mode="subcommand"
+                    yang_name="&ACCESS-LIST;/rule/condition/protocol-name=bgp"/>
+                <PARAM
+                    name="dhcp"
+                    help="Configure DHCP control packets policing"
+                    ptype="SUBCOMMAND"
+		    mode="subcommand"
+                    yang_name="&ACCESS-LIST;/rule/condition/protocol-name=dhcp"/>
+                <PARAM
+                    name="icmp"
+                    help="Configure ICMP control packets policing"
+                    ptype="SUBCOMMAND"
+		    mode="subcommand"
+                    yang_name="&ACCESS-LIST;/rule/condition/protocol-name=icmp"/>
+                <PARAM
+                    name="ospf"
+                    help="Configure OSPF control packets policing"
+                    ptype="SUBCOMMAND"
+		    mode="subcommand"
+                    yang_name="&ACCESS-LIST;/rule/condition/protocol-name=ospf"/>
+                <PARAM
+                    name="vrrp"
+                    help="Configure VRRP control packets policing"
+                    ptype="SUBCOMMAND"
+		    mode="subcommand"
+                    yang_name="&ACCESS-LIST;/rule/condition/protocol-name=vrrp"/>
+            </PARAM>
+        </PARAM>
+</MACRODEF>
+
+<MACRODEF name="MAC-ACL-PROTOCOL-OPTIONS">
+    <!-- permit protocol -->
+        <PARAM
+            name="protocol"
+            help="Protocol"
+            pfeature="NOT_SUPPORTED"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            >
+            <PARAM
+                name="protocol-options"
+                help=""
+                ptype="SUBCOMMAND"
+		mode="switch"
+            >
+                <PARAM
+                    name="arp"
+                    help="Enable rate policing of ARP control packets"
+                    ptype="SUBCOMMAND"
+		    mode="subcommand"
+                    yang_name="&ACCESS-LIST;/rule/condition/protocol-name=arp"/>
+                <PARAM
+                    name="frrp"
+                    help="Enable rate policing of FRRP control packets"
+                    ptype="SUBCOMMAND"
+		    mode="subcommand"
+                    yang_name="&ACCESS-LIST;/rule/condition/protocol-name=frrp"/>
+                <PARAM
+                    name="gvrp"
+                    help="Enable rate policing of GVRP control packets"
+                    ptype="SUBCOMMAND"
+		    mode="subcommand"
+                    yang_name="&ACCESS-LIST;/rule/condition/protocol-name=gvrp"/>
+                <PARAM
+                    name="is-is"
+                    help="Enable rate policing of IS-IS control packets"
+                    ptype="SUBCOMMAND"
+		    mode="subcommand"
+                    yang_name="&ACCESS-LIST;/rule/condition/protocol-name=is-is"/>
+                <PARAM
+                    name="lacp"
+                    help="Enable rate policing of LACP control packets"
+                    ptype="SUBCOMMAND"
+		    mode="subcommand"
+                    yang_name="&ACCESS-LIST;/rule/condition/protocol-name=lacp"/>
+                <PARAM
+                    name="lldp"
+                    help="Enable rate policing of LLDP control packets"
+                    ptype="SUBCOMMAND"
+		    mode="subcommand"
+                    yang_name="&ACCESS-LIST;/rule/condition/protocol-name=lldp"/>
+                <PARAM
+                    name="stp"
+                    help="Enable rate policing of STP control packets"
+                    ptype="SUBCOMMAND"
+		    mode="subcommand"
+                    yang_name="&ACCESS-LIST;/rule/condition/protocol-name=stp"/>
+            </PARAM>
+        </PARAM>
+</MACRODEF>
+
+<MACRODEF name="ACG-OPTIONS">
+        <PARAM name="access-list-name"
+            help="Name of access-list (Max size 140)"
+            ptype="STRING_1_140"
+			/>
+
+        <PARAM name="direction-switch"
+            help="Configure the direction to apply the access list"
+            ptype="SUBCOMMAND"
+            mode="switch"
+	    >
+
+            <PARAM name="in"
+                help="Apply access-list in incoming direction"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+				/>
+
+            <PARAM name="out"
+                help="Apply access-list in outgoing direction"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+				/>
+	</PARAM>
+</MACRODEF>
+
+<MACRODEF name="NO-ACG-OPTIONS">
+        <PARAM name="access-list-name"
+            help="Name of access-list (Max size 140)"
+            ptype="STRING_1_140"
+			/>
+
+        <PARAM name="direction-switch"
+            help="Configure the direction to apply the access list"
+            ptype="SUBCOMMAND"
+            mode="switch"
+	    >
+
+            <PARAM name="in"
+                help="Apply access-list in incoming direction"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+				/>
+
+            <PARAM name="out"
+                help="Apply access-list in outgoing direction"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+				/>
+	</PARAM>
+</MACRODEF>
+
+<MACRODEF name="SHOW-ACL-OPTIONS">
+        <PARAM name="direction-switch"
+            help="Configure the direction to apply the access list"
+            ptype="SUBCOMMAND"
+            mode="switch"
+	    >
+
+            <PARAM name="in"
+                help="show access-list in incoming direction"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+		yang_filter="&SUBTREE_FILTER;Filter_Conditions:arg2/arg3:role=arg1,arg2/arg3:direction=in;Filter_Namespace:arg4|&SUBTREE_FILTER;Filter_Conditions:&ACCESS-OPER;/role=arg1,&ACCESS-OPER;/direction=in;Filter_Namespace:&MODULE-NS;|&SUBTREE_FILTER;Filter_Conditions:&ACCESS-LIST;/role=arg1;Filter_Namespace:&MODULE-NS;"
+	    >
+		<PARAM name="acl-name"
+		    help="Name of access-list (Max size 140)"
+		    ptype="STRING_1_140"
+		    yang_filter="&SUBTREE_FILTER;Filter_Conditions:arg2/arg3:role=arg1,arg2/arg3:direction=in,arg2/arg3:name=${acl-name};Filter_Namespace:arg4|&SUBTREE_FILTER;Filter_Conditions:&ACCESS-OPER;/role=arg1,&ACCESS-OPER;/direction=in,&ACCESS-OPER;/name=${acl-name};Filter_Namespace:&MODULE-NS;|&SUBTREE_FILTER;Filter_Conditions:&ACCESS-LIST;/role=arg1,&ACCESS-LIST;/name=${acl-name};Filter_Namespace:&MODULE-NS;"
+		    optional="true"
+		/>
+	    </PARAM>
+
+            <PARAM name="out"
+                help="show access-list in outgoing direction"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+		yang_filter="&SUBTREE_FILTER;Filter_Conditions:arg2/arg3:role=arg1,arg2/arg3:direction=out;Filter_Namespace:arg4|&SUBTREE_FILTER;Filter_Conditions:&ACCESS-OPER;/role=arg1,&ACCESS-OPER;/direction=out;Filter_Namespace:&MODULE-NS;|&SUBTREE_FILTER;Filter_Conditions:&ACCESS-LIST;/role=arg1;Filter_Namespace:&MODULE-NS;"
+	    >
+		<PARAM name="acl-name"
+		    help="Name of access-list (Max size 140)"
+		    ptype="STRING_1_140"
+		    yang_filter="&SUBTREE_FILTER;Filter_Conditions:arg2/arg3:role=arg1,arg2/arg3:direction=out,arg2/arg3:name=${acl-name};Filter_Namespace:arg4|&SUBTREE_FILTER;Filter_Conditions:&ACCESS-OPER;/role=arg1,&ACCESS-OPER;/direction=out,&ACCESS-OPER;/name=${acl-name};Filter_Namespace:&MODULE-NS;|&SUBTREE_FILTER;Filter_Conditions:&ACCESS-LIST;/role=arg1,&ACCESS-LIST;/name=${acl-name};Filter_Namespace:&MODULE-NS;"
+		    optional="true"
+		/>
+	    </PARAM>
+	</PARAM>
+</MACRODEF>
+
+<MACRODEF name="CLEAR-ACL-OPTIONS">
+    <PARAM name="counters"
+        help="Clear access-list counters"
+        ptype="SUBCOMMAND"
+        mode="subcommand"
+        yang_name="&CLEAR_ACL_COUNTERS;/role=arg1">
+
+        <PARAM name="access-list-name"
+             help="Name of the access-list (Max size 140)"
+             ptype="STRING_1_140"
+             optional="true"
+             yang_name="&CLEAR_ACL_COUNTERS;/name=${access-list-name}"
+        />
+    </PARAM>
+</MACRODEF>
+
+<MACRODEF name="IP-PL-OPTIONS">
+<PARAM name="ip-addr-mask" help="IP prefix network/length"
+	ptype="arg1"
+	yang_name="&PREFIX-LIST;/rule/ip-address=${ip-addr-mask}"> 	
+
+	<PARAM name="comparator" help="" ptype="SUBCOMMAND" mode="switch" optional="true">
+	<PARAM name="eq"
+		help="Exact prefix length to be matched"
+		ptype="SUBCOMMAND"
+		mode="subcommand"
+        pfeature="NOT_SUPPORTED"
+        yang_name="&PREFIX-LIST;/rule/comparator=eq">
+		<PARAM name="prefix-len-eq"
+			help="Exact prefix length"
+			ptype="arg2"
+			yang_name="&PREFIX-LIST;/rule/value1=${prefix-len-eq}"/>
+	</PARAM>
+
+	<PARAM name="ge"
+		help="Minimum prefix length to be matched"
+		ptype="SUBCOMMAND"
+		mode="subcommand"
+        yang_name="&PREFIX-LIST;/rule/comparator=ge-only"
+        db_multi_yang_name="&PREFIX-LIST;/rule/comparator=ge-only|ge-le">
+		<PARAM name="prefix-len-ge"
+			help="Minimum prefix length"
+			ptype="arg2"
+			yang_name="&PREFIX-LIST;/rule/value1=${prefix-len-ge}"/>
+        <PARAM name="le"
+            help="Maximum prefix length to be matched"
+            optional="true"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            refresh_yang_name="true"
+            db_multi_yang_name="&PREFIX-LIST;/rule/comparator=ge-le"
+            yang_name="arg3,arg4,arg5,arg6,&PREFIX-LIST;/rule/ip-address=${ip-addr-mask},&PREFIX-LIST;/rule/comparator=ge-le,&PREFIX-LIST;/rule/value1=${prefix-len-ge}">
+            <PARAM name="prefix-len-le"
+                 help="Maximum prefix length"
+                 ptype="arg2"
+                 yang_name="&PREFIX-LIST;/rule/value2=${prefix-len-le}"/>
+         </PARAM>
+	</PARAM>
+			
+	<PARAM name="le"
+		help="Maximum prefix length to be matched"
+		ptype="SUBCOMMAND"
+		mode="subcommand"		
+        yang_name="&PREFIX-LIST;/rule/comparator=le-only">
+		<PARAM name="prefix-len-le"
+			help="Maximum prefix length"
+			ptype="arg2"
+			yang_name="&PREFIX-LIST;/rule/value1=${prefix-len-le}"/>        						        			
+    	</PARAM>
+	</PARAM>
+</PARAM>
+</MACRODEF>
+
+<MACRODEF name="STD-CL-OPTIONS">
+   <PARAM
+        name="std-cl-options-switch"
+        help=""
+        ptype="SUBCOMMAND"
+        mode="switch"
+        >
+        <PARAM name="internet"
+	        help="Internet (well-known community)"
+	        ptype="SUBCOMMAND"
+	        mode="subcommand"
+            db_flag="SKIP_TREE"
+	        yang_name="&COMMUNITY;/std-rule/community-number=${internet}"/>
+      	<PARAM name="local-AS"
+       		help="Do not send outside local AS (well-known community)"
+	    	ptype="SUBCOMMAND"
+    		mode="subcommand"
+            db_flag="SKIP_TREE"
+	    	yang_name="&COMMUNITY;/std-rule/community-number=${local-AS}"/>
+       	<PARAM name="no-advertise"
+	    	help="Do not advertise to any peer (well-known community)"
+	    	ptype="SUBCOMMAND"
+	    	mode="subcommand"
+            db_flag="SKIP_TREE"
+	    	yang_name="&COMMUNITY;/std-rule/community-number=${no-advertise}"/>
+	    <PARAM name="no-export"
+		    help="Do not export to next AS (well-known community)"
+		    ptype="SUBCOMMAND"
+		    mode="subcommand"
+            db_flag="SKIP_TREE"
+		    yang_name="&COMMUNITY;/std-rule/community-number=${no-export}"/>	
+	    <PARAM name="asn2nn"
+	    	help="Community number aa:nn format"
+		    ptype="AA_NN"
+		    yang_name="&COMMUNITY;/std-rule/community-number=${asn2nn}"/>	
+   </PARAM>
+</MACRODEF>
+
+<MACRODEF name="STD-EXTCL-OPTIONS">
+    <PARAM name="std-exp-options"
+        help="expanded std options"
+        ptype="SUBCOMMAND"
+        mode="switch"
+        >
+
+	<PARAM name="4byteas-generic"
+		help="Generic extended community"
+		ptype="SUBCOMMAND"
+		mode="subcommand"
+		yang_name="&EXT-COMMUNITY;/std-rule/sub-type=4byteas-generic,&EXT-COMMUNITY;/std-rule/ext-attr-type=as4"
+		>
+      	<PARAM name="4byteas-generic-options" help="" ptype="SUBCOMMAND" mode="switch">
+			<PARAM name="non-transitive"
+				help="Non-Transitive extcommunity"
+				ptype="SUBCOMMAND"
+				mode="subcommand"
+				yang_name="&EXT-COMMUNITY;/std-rule/flags=non-transitive"
+				>
+				<PARAM name="aa4nn"
+					help="ASN4:NN Extcommunity number aa4:nn format"
+					ptype="ASN4_NN"
+					yang_name="&EXT-COMMUNITY;/std-rule/community=${aa4nn}"/>
+			</PARAM>
+            <PARAM name="transitive"
+               help="Transitive extcommunity"
+               ptype="SUBCOMMAND"
+               mode="subcommand"
+               yang_name="&EXT-COMMUNITY;/std-rule/flags=transitive"
+               >
+               <PARAM name="aa4nn"
+                    help="ASN4:NN Extcommunity number aa4:nn format"
+                    ptype="ASN4_NN"
+                    yang_name="&EXT-COMMUNITY;/std-rule/community=${aa4nn}"/>
+               </PARAM>
+		</PARAM>
+	</PARAM>
+    <PARAM name="rt"
+        help="Route-Target"
+        ptype="SUBCOMMAND"
+        yang_name="&EXT-COMMUNITY;/std-rule/sub-type=route-target"
+        mode="subcommand">
+           <PARAM name="extcommunity-rt-sub-cmds"
+               help="type of route"
+               ptype="SUBCOMMAND"
+               mode="switch">
+           <PARAM name="ASN2NN"
+               help="ASN2:NN Extcommunity number"
+               ptype="ASN2_NN"
+               yang_name="&EXT-COMMUNITY;/std-rule/ext-attr-type=asn-nnnn,&EXT-COMMUNITY;/std-rule/community=${ASN2NN}"/>
+           <PARAM name="ASN4NN"
+               help="ASN4:NN Extcommunity number"
+               ptype="ASN4_NN"
+               yang_name="&EXT-COMMUNITY;/std-rule/ext-attr-type=as4,&EXT-COMMUNITY;/std-rule/community=${ASN4NN}"/>
+           <PARAM name="IPADDRNN"
+               help="IPADDR:NN Extcommunity number"
+               ptype="IPADDR_NN"
+               yang_name="&EXT-COMMUNITY;/std-rule/ext-attr-type=ipadd-nn,&EXT-COMMUNITY;/std-rule/community=${IPADDRNN}"/>
+            </PARAM>
+    </PARAM> <!--rt-->
+    <PARAM name="soo"
+        help="Site-Of-Origin"
+        ptype="SUBCOMMAND"
+        yang_name="&EXT-COMMUNITY;/std-rule/sub-type=site-of-origin"
+        mode="subcommand">
+           <PARAM name="extcommunity-soo-sub-cmds"
+               help="type of route"
+               ptype="SUBCOMMAND"
+               mode="switch">
+           <PARAM name="ASN2NN"
+               help="ASN2:NN Extcommunity number"
+               ptype="ASN2_NN"
+               yang_name="&EXT-COMMUNITY;/std-rule/ext-attr-type=asn-nnnn,&EXT-COMMUNITY;/std-rule/community=${ASN2NN}"/>
+           <PARAM name="ASN4NN"
+               help="ASN4:NN Extcommunity number"
+               ptype="ASN4_NN"
+               yang_name="&EXT-COMMUNITY;/std-rule/ext-attr-type=as4,&EXT-COMMUNITY;/std-rule/community=${ASN4NN}"/>
+           <PARAM name="IPADDRNN"
+               help="IPADDR:NN Extcommunity number"
+               ptype="IPADDR_NN"
+               yang_name="&EXT-COMMUNITY;/std-rule/ext-attr-type=ipadd-nn,&EXT-COMMUNITY;/std-rule/community=${IPADDRNN}"/>
+            </PARAM>
+     </PARAM> <!--soo-->
+     </PARAM>
+</MACRODEF>
+
+<MACRODEF name="if-range-cmds">
+   <COMMAND name="ip" help="Configure ip details"/>
+   <COMMAND name="ipv6" help="Configure ipv6 details"/>
+   <COMMAND name="mac" help="Configure mac details"/>
+   <COMMAND name="no ip" help="Unconfigure ip details"/>
+   <COMMAND name="no ipv6" help="Unconfigure ipv6 details"/>
+   <COMMAND name="no mac" help="Unconfigure mac details"/>
+
+<!-- ip access-group -->
+   <COMMAND name="ip access-group"
+        help="Specify access control for packets"
+        operation="edit-config"
+        namespace="&POLICY-NS;"
+        yang_key="&IF-ACG-KEY;/role=ipv4,&IF-ACG-KEY;/name,&IF-ACG-KEY;/vrf,&IF-ACG-KEY;/direction" >
+
+    <MACRO name="RANGE-ACG-OPTIONS" arg="ipv4,&IF-RANGE-ACCESS-GROUP;,arg1,&POLICY-PREF;"></MACRO>
+
+    <ACTION builtin="clish_extn"> </ACTION>
+
+    </COMMAND>
+
+<!-- ipv6 access-group -->
+   <COMMAND name="ipv6 access-group"
+         help="Specify access control for packets"
+         operation="edit-config"
+         namespace="&POLICY-NS;"
+         yang_key="&IF-ACG-KEY;/role=ipv6,&IF-ACG-KEY;/name,&IF-ACG-KEY;/vrf,&IF-ACG-KEY;/direction" >
+
+    <MACRO name="RANGE-ACG-OPTIONS" arg="ipv6,&IF-RANGE-ACCESS-GROUP;,arg1,&POLICY-PREF;"></MACRO>
+
+    <ACTION builtin="clish_extn"> </ACTION>
+
+    </COMMAND>
+
+<!-- mac access-group -->
+   <COMMAND name="mac access-group"
+        help="Specify access control for packets"
+        operation="edit-config"
+        namespace="&POLICY-NS;"
+        yang_key="&IF-ACG-KEY;/role=mac,&IF-ACG-KEY;/name,&IF-ACG-KEY;/vrf,&IF-ACG-KEY;/direction" >
+
+    <MACRO name="RANGE-ACG-OPTIONS" arg="mac,&IF-RANGE-ACCESS-GROUP;,arg1,&POLICY-PREF;"></MACRO>
+
+    <ACTION builtin="clish_extn"> </ACTION>
+
+    </COMMAND>
+
+<!-- no ip access-group -->
+   <COMMAND name="no ip access-group"
+         help="Specify access control for packets"
+         operation="edit-config"
+         namespace="&POLICY-NS;"
+         sub_oper_yang="remove:access-group">
+
+    <MACRO name="RANGE-NO-ACG-OPTIONS" arg="ipv4,&IF-RANGE-ACCESS-GROUP;,arg1,&POLICY-PREF;"></MACRO>
+
+    <ACTION builtin="clish_extn"> </ACTION>
+
+    </COMMAND>
+
+<!-- no ipv6 access-group -->
+   <COMMAND name="no ipv6 access-group"
+         help="Specify access control for packets"
+         operation="edit-config"
+         namespace="&POLICY-NS;"
+         sub_oper_yang="remove:access-group">
+
+    <MACRO name="RANGE-NO-ACG-OPTIONS" arg="ipv6,&IF-RANGE-ACCESS-GROUP;,arg1,&POLICY-PREF;"></MACRO>
+
+    <ACTION builtin="clish_extn"> </ACTION>
+
+    </COMMAND>
+
+<!-- no mac access-group -->
+   <COMMAND name="no mac access-group"
+         help="Specify access control for packets"
+         operation="edit-config"
+         namespace="&POLICY-NS;"
+         sub_oper_yang="remove:access-group">
+
+    <MACRO name="RANGE-NO-ACG-OPTIONS" arg="mac,&IF-RANGE-ACCESS-GROUP;,arg1,&POLICY-PREF;"></MACRO>
+
+    <ACTION builtin="clish_extn"> </ACTION>
+
+    </COMMAND>
+</MACRODEF>
+
+<MACRODEF name="vlan-range-cmds">
+   <COMMAND name="ip" help="Configure ip details"/>
+   <COMMAND name="ipv6" help="Configure ipv6 details"/>
+   <COMMAND name="no ip" help="Unconfigure ip details"/>
+   <COMMAND name="no ipv6" help="Unconfigure ipv6 details"/>
+<!-- ip access-group -->
+   <COMMAND name="ip access-group"
+        help="Specify access control for packets"
+        operation="edit-config"
+        namespace="&POLICY-NS;"
+        yang_key="&IF-ACG-KEY;/role=ipv4,&IF-ACG-KEY;/name,&IF-ACG-KEY;/vrf,&IF-ACG-KEY;/direction" >
+
+    <MACRO name="RANGE-ACG-OPTIONS" arg="ipv4,&IF-RANGE-ACCESS-GROUP;,arg1,&POLICY-PREF;"></MACRO>
+
+    <ACTION builtin="clish_extn"> </ACTION>
+
+    </COMMAND>
+
+<!-- ipv6 access-group -->
+   <COMMAND name="ipv6 access-group"
+        help="Specify access control for packets"
+        operation="edit-config"
+        namespace="&POLICY-NS;"
+        yang_key="&IF-ACG-KEY;/role=ipv6,&IF-ACG-KEY;/name,&IF-ACG-KEY;/vrf,&IF-ACG-KEY;/direction" >
+
+    <MACRO name="RANGE-ACG-OPTIONS" arg="ipv6,&IF-RANGE-ACCESS-GROUP;,arg1,&POLICY-PREF;"></MACRO>
+
+    <ACTION builtin="clish_extn"> </ACTION>
+
+    </COMMAND>
+
+<!-- no ip access-group -->
+   <COMMAND name="no ip access-group"
+         help="Specify access control for packets"
+         operation="edit-config"
+         namespace="&POLICY-NS;"
+         sub_oper_yang="remove:access-group">
+
+    <MACRO name="RANGE-NO-ACG-OPTIONS" arg="ipv4,&IF-RANGE-ACCESS-GROUP;,arg1,&POLICY-PREF;"></MACRO>
+
+    <ACTION builtin="clish_extn"> </ACTION>
+
+    </COMMAND>
+
+<!-- no ipv6 access-group -->
+   <COMMAND name="no ipv6 access-group"
+         help="Specify access control for packets"
+         operation="edit-config"
+         namespace="&POLICY-NS;"
+         sub_oper_yang="remove:access-group">
+
+    <MACRO name="RANGE-NO-ACG-OPTIONS" arg="ipv6,&IF-RANGE-ACCESS-GROUP;,arg1,&POLICY-PREF;"></MACRO>
+
+    <ACTION builtin="clish_extn"> </ACTION>
+
+    </COMMAND>
+
+</MACRODEF>
+<MACRODEF name="lag-range-cmds">
+   <COMMAND name="ip" help="Configure ip details"/>
+   <COMMAND name="ipv6" help="Configure ipv6 details"/>
+   <COMMAND name="mac" help="Configure mac details"/>
+   <COMMAND name="no ip" help="Unconfigure ip details"/>
+   <COMMAND name="no ipv6" help="Unconfigure ipv6 details"/>
+   <COMMAND name="no mac" help="Unconfigure mac details"/>
+<!-- ip access-group -->
+   <COMMAND name="ip access-group"
+        help="Specify access control for packets"
+        operation="edit-config"
+        namespace="&POLICY-NS;">
+
+    <MACRO name="RANGE-ACG-OPTIONS" arg="ipv4,&IF-RANGE-ACCESS-GROUP;,arg1,&POLICY-PREF;"></MACRO>
+
+    <ACTION builtin="clish_extn"> </ACTION>
+
+    </COMMAND>
+
+<!-- ipv6 access-group -->
+   <COMMAND name="ipv6 access-group"
+        help="Specify access control for packets"
+        operation="edit-config"
+        namespace="&POLICY-NS;">
+
+    <MACRO name="RANGE-ACG-OPTIONS" arg="ipv6,&IF-RANGE-ACCESS-GROUP;,arg1,&POLICY-PREF;"></MACRO>
+
+    <ACTION builtin="clish_extn"> </ACTION>
+
+    </COMMAND>
+
+<!-- mac access-group -->
+   <COMMAND name="mac access-group"
+        help="Specify access control for packets"
+        operation="edit-config"
+        namespace="&POLICY-NS;">
+
+    <MACRO name="RANGE-ACG-OPTIONS" arg="mac,&IF-RANGE-ACCESS-GROUP;,arg1,&POLICY-PREF;"></MACRO>
+
+    <ACTION builtin="clish_extn"> </ACTION>
+
+    </COMMAND>
+
+<!-- no ip access-group -->
+   <COMMAND name="no ip access-group"
+         help="Specify access control for packets"
+         operation="edit-config"
+         namespace="&POLICY-NS;"
+         sub_oper_yang="remove:access-group">
+
+    <MACRO name="RANGE-NO-ACG-OPTIONS" arg="ipv4,&IF-RANGE-ACCESS-GROUP;,arg1,&POLICY-PREF;"></MACRO>
+
+    <ACTION builtin="clish_extn"> </ACTION>
+
+    </COMMAND>
+
+<!-- no ipv6 access-group -->
+   <COMMAND name="no ipv6 access-group"
+         help="Specify access control for packets"
+         operation="edit-config"
+         namespace="&POLICY-NS;"
+         sub_oper_yang="remove:access-group">
+
+    <MACRO name="RANGE-NO-ACG-OPTIONS" arg="ipv6,&IF-RANGE-ACCESS-GROUP;,arg1,&POLICY-PREF;"></MACRO>
+
+    <ACTION builtin="clish_extn"> </ACTION>
+
+    </COMMAND>
+
+<!-- no mac access-group -->
+   <COMMAND name="no mac access-group"
+         help="Specify access control for packets"
+         operation="edit-config"
+         namespace="&POLICY-NS;"
+         sub_oper_yang="remove:access-group">
+
+    <MACRO name="RANGE-NO-ACG-OPTIONS" arg="mac,&IF-RANGE-ACCESS-GROUP;,arg1,&POLICY-PREF;"></MACRO>
+
+    <ACTION builtin="clish_extn"> </ACTION>
+
+    </COMMAND>
+</MACRODEF>
+<MACRODEF name="RANGE-ACG-OPTIONS">
+        <PARAM name="access-list-name"
+            help="Name of access-list (Max size 140)"
+            ptype="STRING_1_140"
+            yang_name="/interfaces/interface[]/name=arg3,arg2/arg4:vrf=0,arg2/arg4:role=arg1,arg2/arg4:name=${access-list-name}"/>
+
+        <PARAM name="direction-switch"
+            help="Configure the direction to apply the access list"
+            ptype="SUBCOMMAND"
+            mode="switch">
+
+            <PARAM name="in"
+                help="Apply access-list in incoming direction"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                yang_name="arg2/arg4:direction=in"/>
+
+            <PARAM name="out"
+                help="Apply access-list in outgoing direction"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                yang_name="arg2/arg4:direction=out"/>
+	</PARAM>
+</MACRODEF>
+
+<MACRODEF name="RANGE-NO-ACG-OPTIONS">
+        <PARAM name="access-list-name"
+            help="Name of access-list (Max size 140)"
+            ptype="STRING_1_140"
+            yang_name="/interfaces/interface[]/name=arg3,arg2/arg4:vrf=0,arg2/arg4:role=arg1,arg2/arg4:name=${access-list-name}"/>
+
+        <PARAM name="direction-switch"
+            help="Configure the direction to apply the access list"
+            ptype="SUBCOMMAND"
+            mode="switch">
+
+            <PARAM name="in"
+                help="Apply access-list in incoming direction"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                yang_name="arg2/arg4:direction=in"/>
+
+            <PARAM name="out"
+                help="Apply access-list in outgoing direction"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                yang_name="arg2/arg4:direction=out"/>
+        </PARAM>
+</MACRODEF>
+</ROOT>

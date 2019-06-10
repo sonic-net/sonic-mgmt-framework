@@ -1,0 +1,1576 @@
+<?xml version="1.0"?>
+<!DOCTYPE CLISH_MODULE [
+<!ENTITY SUBTREE_FILTER "Filter_Type:SUBTREE">
+<!ENTITY MODULE-NS-DELL-IP "http://www.dellemc.com/networking/os10/dell-ip">
+<!ENTITY MODULE-NS-IETF-INTF "urn:ietf:params:xml:ns:yang:ietf-interfaces">
+<!ENTITY MODULE-PREF-DELL-IP "dell-ip">
+<!ENTITY MODULE-INTF-IP-NS     "&MODULE-NS-IETF-INTF;,&MODULE-PREF-DELL-IP;=&MODULE-NS-DELL-IP;">
+<!ENTITY GLOBAL_IPV4           "/ip-config/ipv4">
+<!ENTITY GLOBAL_ARP            "&GLOBAL_IPV4;/arp">
+<!ENTITY ARP_OPER	           "/ip-oper/ipv4/arp-oper">
+<!ENTITY ARP_OPER_ENTRY        "/ip-oper/ipv4/arp-oper/arp-entry">
+<!ENTITY INTF_ENTRY            "/interfaces/interface">
+<!ENTITY INTF_NAME             "&INTF_ENTRY;/name=${ifacename}">
+<!ENTITY PO_NAME               "&INTF_ENTRY;/name=${port-channeliface}">
+<!ENTITY VL_NAME               "&INTF_ENTRY;/name=${vlan_name}">
+<!ENTITY MGMT_NAME             "&INTF_ENTRY;/name=${ifacename}">
+<!ENTITY LOOPBACK_NAME         "&INTF_ENTRY;/name=${ifacename}">
+<!ENTITY INTF_IPV4             "&INTF_ENTRY;/&MODULE-PREF-DELL-IP;:ipv4">
+<!ENTITY INTERFACE_NAME        "/interfaces-state/interface">
+<!ENTITY IP_ARP_COUNT          "&INTERFACE_NAME;/dell-ip:l3-arp-params">
+<!ENTITY INTF_ARP              "&INTF_IPV4;/&MODULE-PREF-DELL-IP;:arp">
+<!ENTITY INTF_ARP_ENTRY        "&INTF_ARP;/&MODULE-PREF-DELL-IP;:arp-entry">
+<!ENTITY INTF_ARP_ADDR         "&INTF_ARP_ENTRY;/&MODULE-PREF-DELL-IP;:addr">
+<!ENTITY INTF_IPV4_ADDR_DHCP   "&INTF_IPV4;/&MODULE-PREF-DELL-IP;:dhcp-config/&MODULE-PREF-DELL-IP;:is-dhcp">
+<!ENTITY INTF_IPV4_PRI_ADDR    "&INTF_IPV4;/&MODULE-PREF-DELL-IP;:address/&MODULE-PREF-DELL-IP;:primary-addr">
+<!ENTITY INTF_IPV4_SEC_ADDR    "&INTF_IPV4;/&MODULE-PREF-DELL-IP;:address/&MODULE-PREF-DELL-IP;:secondary-addr">
+<!ENTITY FILTER_NS             "Filter_Namespace:http://www.dellemc.com/networking/os10/dell-ip">
+<!ENTITY L3_IP_NS              "dell-ip=http://www.dellemc.com/networking/os10/dell-ip">
+<!ENTITY NS-GET-BULK           "http://yumaworks.com/ns/yumaworks-getbulk">
+<!ENTITY IP_RANGE_INTF "/interfaces/interface[]">
+<!ENTITY IP_RANGE_IFACE "&IP_RANGE_INTF;/name">
+<!ENTITY IP_RANGE_INTF_INFO "&IP_RANGE_INTF;/&MODULE-PREF-DELL-IP;:ipv4">
+]>
+
+
+<CLISH_MODULE xmlns="http://www.dellemc.com/force10/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xi="http://www.w3.org/2001/XInclude"
+    xsi:schemaLocation="http://www.dellemc.com/force10/XMLSchema http://www.dellemc.com/force10/XMLSchema/clish.xsd">
+
+<VIEW name="enable-view">
+    <COMMAND
+            name="clear ip"
+            help="Clear ip command">
+    </COMMAND>
+    <COMMAND
+            name="debug ip"
+            pfeature="NOT_SUPPORTED"
+            help="Debug ip command">
+    </COMMAND>
+    <COMMAND
+        help="show IP commands"
+        name="show ip"
+        namespace="&MODULE-NS-DELL-IP;"
+        operation="get"
+        >
+        <PARAM
+        help="show ARP commands"
+        name="arp"
+        ptype="SUBCOMMAND"
+        mode="subcommand"
+        namespace="&NS-GET-BULK;"
+        operation="get-bulk"
+        yang_name="/get-bulk/count=100,/get-bulk/list-target=&ARP_OPER_ENTRY;"
+        template="show_ip_arp_bulk.xsl">
+            <PARAM
+                help="switch subcommand"
+                name="type"
+                mode="switch"
+                ptype="SUBCOMMAND"
+                optional="true">
+                <!--- show ip arp [interface interface] -->
+                <PARAM
+                    help="ARP entries for this interface"
+                    name="interface"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand">
+                        <PARAM
+                            help="switch subcommand"
+                            name="intf-type"
+                            mode="switch"
+                            ptype="SUBCOMMAND">
+                                 <PARAM
+                                     name="eth-if"
+                                     help="Ethernet IEEE 802.3"
+                                     ptype="PHY_INTERFACE"
+                                     refresh_yang_name="true"
+                                     yang_name="/get-bulk/count=100,/get-bulk/list-target=&ARP_OPER_ENTRY;,/get-bulk/filter=intf-name=${eth-if}"
+                                     >
+                                     <PARAM
+                                         help="Summary of ARP entries"
+                                         name="summary"
+                                         ptype="SUBCOMMAND"
+                                         operation="get"
+                                         mode="subcommand"
+                                         yang_filter="&SUBTREE_FILTER;;Filter_Conditions:&INTERFACE_NAME;/name=${eth-if},&IP_ARP_COUNT;;Filter_Namespace:&MODULE-NS-IETF-INTF;,&L3_IP_NS;"
+                                         template="show_ip_arp_summary_if.xsl"
+                                         optional="true">
+                                     </PARAM>
+                                 </PARAM>
+                                 <PARAM
+                                     name="vlan-if"
+                                     help="Interface vlan"
+                                     ptype="VLAN_INTERFACE"
+                                     refresh_yang_name="true"
+                                     yang_name="/get-bulk/count=100,/get-bulk/list-target=&ARP_OPER_ENTRY;,/get-bulk/filter=intf-name=${vlan-if}">
+                                     <PARAM
+                                         help="Summary of ARP entries"
+                                         name="summary"
+                                         ptype="SUBCOMMAND"
+                                         mode="subcommand"
+                                         operation="get"
+                                         yang_filter="&SUBTREE_FILTER;;Filter_Conditions:&INTERFACE_NAME;/name=${vlan-if},&IP_ARP_COUNT;;Filter_Namespace:&MODULE-NS-IETF-INTF;,&L3_IP_NS;"
+                                         template="show_ip_arp_summary_if.xsl"
+                                         optional="true">
+                                     </PARAM>
+                                 </PARAM>
+                                 <PARAM
+                                     name="po-if"
+                                     help="Interface port-channel"
+                                     ptype="PO_INTERFACE"
+                                     refresh_yang_name="true"
+                                     yang_name="/get-bulk/count=100,/get-bulk/list-target=&ARP_OPER_ENTRY;,/get-bulk/filter=intf-name=${po-if}">
+                                     <PARAM
+                                         help="Summary of ARP entries"
+                                         name="summary"
+                                         ptype="SUBCOMMAND"
+                                         mode="subcommand"
+                                         operation="get"
+                                         yang_filter="&SUBTREE_FILTER;;Filter_Conditions:&INTERFACE_NAME;/name=${po-if},&IP_ARP_COUNT;;Filter_Namespace:&MODULE-NS-IETF-INTF;,&L3_IP_NS;"
+                                         template="show_ip_arp_summary_if.xsl"
+                                         optional="true">
+                                     </PARAM>
+                                 </PARAM>
+                        </PARAM> <!--intf-type switch case end -->
+                </PARAM>
+
+                <!--- show ip arp [ip-address]  -->
+                <PARAM
+                    help="ARP entry for this IP address"
+                    name="ip-address"
+                    ptype="IP_ADDR"
+                    refresh_yang_name="true"
+                    namespace="&NS-GET-BULK;"
+                    operation="get-bulk"
+                    yang_name="/get-bulk/count=100,/get-bulk/list-target=&ARP_OPER_ENTRY;,/get-bulk/filter=addr=${ip-address}"
+                    yang_filter="&SUBTREE_FILTER;;&FILTER_NS;;Filter_Conditions:&ARP_OPER_ENTRY;/addr=${ip-address}"
+                    template="show_ip_arp_bulk.xsl"/>
+
+                <!--- show ip arp [mac-address <mac-addr>]  -->
+                <PARAM
+                    help="HW address"
+                    name="mac-address"
+                    operation="get"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand">
+                        <PARAM
+                            help="48 bit MAC address"
+                            name="mac-addr"
+                            ptype="MAC_ADDR"
+                            refresh_yang_name="true"
+                            namespace="&NS-GET-BULK;"
+                            operation="get-bulk"
+                            yang_name="/get-bulk/count=100,/get-bulk/list-target=&ARP_OPER_ENTRY;,/get-bulk/filter=link-layer-address=${mac-addr}"
+                            yang_filter="&SUBTREE_FILTER;;&FILTER_NS;;Filter_Conditions:&ARP_OPER_ENTRY;/link-layer-address=${mac-addr}"
+                            template="show_ip_arp_bulk.xsl"/>
+                </PARAM>
+
+                <!--- show ip arp [retries] -->
+                <PARAM
+                    help="Show number of ARP retries before a 20 sec back off"
+                    name="retries"
+                    operation="get"
+                    ptype="SUBCOMMAND"
+                    pfeature="NOT_SUPPORTED"
+                    mode="subcommand"
+                    yang_filter="&SUBTREE_FILTER;;&FILTER_NS;;Filter_Conditions:/arp/retries"
+                    template="show_ip_arp_retries.xsl"/>
+
+                <!--- show ip arp [static]  -->
+                <PARAM
+                    help="Keyword for static ARP entries"
+                    name="static"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    refresh_yang_name="true"
+                    yang_name="/get-bulk/count=100,/get-bulk/list-target=&ARP_OPER_ENTRY;,/get-bulk/filter=state=static"/>
+
+                <!--- show ip arp [dynamic]  -->
+                <PARAM
+                    help="Keyword for dynamic ARP entries"
+                    name="dynamic"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    refresh_yang_name="true"
+                    yang_name="/get-bulk/count=100,/get-bulk/list-target=&ARP_OPER_ENTRY;,/get-bulk/filter=state=dynamic"/>
+
+                <!--- show ip arp summary  -->
+                <PARAM
+                    help="Summary of ARP entries"
+                    name="summary"
+                    operation="get"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    yang_filter="&SUBTREE_FILTER;;&FILTER_NS;;Filter_Conditions:&ARP_OPER;/summary"
+                    template="show_ip_arp_summary.xsl">
+                </PARAM>
+            </PARAM>
+        </PARAM>
+    <ACTION builtin="clish_nop"/>
+    </COMMAND>
+</VIEW>
+
+<VIEW name="configure-view">
+    <!--- ip icmp source-interface <interface-name> <slot/port> -->
+    <COMMAND
+        help="ICMP configuration commands"
+        name="ip icmp"
+        namespace="&MODULE-NS-DELL-IP;"
+        operation="edit-config">
+           <PARAM
+              help="Specify interface for source address in ICMP Error messages"
+              name="source-interface"
+              mode="subcommand"
+              ptype="SUBCOMMAND">
+                  <PARAM
+                      help="Specify interface number"
+                      name="intf-name"
+                      ptype="PHY_INTERFACE"
+                      yang_name= "&GLOBAL_IPV4;/icmp-source-intf=${intf-name}"/>
+            </PARAM>
+      <ACTION builtin="clish_nop"/>
+    </COMMAND>
+
+    <!---  ip arp backoff-time <seconds> -->
+    <COMMAND
+        help="ARP Configuration"
+        name="ip arp"
+        namespace="&MODULE-NS-DELL-IP;"
+        operation="edit-config"
+        pfeature="NOT_SUPPORTED">
+            <PARAM
+                help="Select ip arp subcommands"
+                name="arp-subcommands"
+                mode="switch"
+                ptype="SUBCOMMAND">
+                <!---  ip arp backoff-time <seconds> -->
+                <PARAM
+                     help="Set number of seconds an unknown ARP entry is black-holed"
+                     name="backoff-time"
+                     mode="subcommand"
+                     ptype="SUBCOMMAND">
+                     <PARAM
+                         help="Number of seconds"
+                         name="backoff-time-val"
+                         ptype="UINT"
+                         yang_name="&GLOBAL_ARP;/backoff-time=${backoff-time-val}"/>
+                </PARAM>
+               <!---  Ip arp retries <number> -->
+               <PARAM
+                     help="Set number of ARP retries before a 20 sec back off"
+                     name="retries"
+                     mode="subcommand"
+                     ptype="SUBCOMMAND">
+                     <PARAM
+                         help="Number of seconds"
+                         name="retries-val"
+                         ptype="UINT"
+                         yang_name="&GLOBAL_ARP;/retries=${retries-val}"/>
+                 </PARAM>
+                <!--- ip arp max-entries <number> -->
+                <PARAM
+                     help="Enter the maximum number of ARP entries that a VRF RTM can hold"
+                     name="max-entries"
+                     mode="subcommand"
+                     ptype="SUBCOMMAND">
+                     <PARAM
+                         help="Number of entries"
+                         name="max-entries-val"
+                         ptype="UINT"
+                         yang_name="&GLOBAL_ARP;/max-entries=${max-entries-val}"/>
+                 </PARAM>
+                <!--- ip arp timeout -->
+                <PARAM
+                     help="Set ARP cache timeout"
+                     name="timeout"
+                     mode="subcommand"
+                     ptype="SUBCOMMAND">
+                     <PARAM
+                         help="Number of seconds"
+                         name="timeout-val"
+                         ptype="UINT"
+                         yang_name="&GLOBAL_ARP;/timeout=${timeout-val}"/>
+                 </PARAM>
+            </PARAM>
+      <ACTION builtin="clish_nop"/>
+    </COMMAND>
+    <!--- mac-address-table station-move refresh-arp -->
+    <COMMAND
+        help="Configure Mac Address Table Configuration Subcommand"
+        name="mac-address-table"
+        pfeature="NOT_SUPPORTED"
+        namespace="&MODULE-NS-DELL-IP;"
+        operation="edit-config">
+            <PARAM
+                help="Station-move keyword"
+                name="station-move"
+                mode="subcommand"
+                ptype="SUBCOMMAND">
+                <PARAM
+                    help="Refresh arp entries"
+                    name="refresh-arp"
+                    mode="subcommand"
+                    ptype="SUBCOMMAND"
+                    yang_name="&GLOBAL_IPV4;/station-move-refresh-arp=true"/>
+            </PARAM>
+      <ACTION builtin="clish_nop"/>
+    </COMMAND>
+  </VIEW>
+
+<!--=======================================================-->
+<!--                Config Interface PHY-MODE              -->
+<!--=======================================================-->
+
+<VIEW name="configure-if-view">
+    <COMMAND
+        name="ip"
+        help="Interface Internet Protocol config commands"
+    />
+    <COMMAND
+        name="no ip"
+        help="Interface Internet Protocol config commands"
+    />
+    <!--- ip unreachables -->
+    <COMMAND
+        name="ip unreachables"
+        help="Enable IP unreachables"
+        namespace="&MODULE-INTF-IP-NS;"
+        operation="edit-config"
+        yang_name= "&INTF_NAME;,&INTF_IPV4;/&MODULE-PREF-DELL-IP;:unreachables=true"
+        pfeature="NOT_SUPPORTED"
+        >
+        <ACTION builtin="clish_nop" ></ACTION>
+    </COMMAND>
+    <!--- ip redirects -->
+    <COMMAND
+        name="ip redirects"
+        help="Enable ICMP redirect messages"
+        namespace="&MODULE-INTF-IP-NS;"
+        operation="edit-config"
+        yang_name= "&INTF_NAME;,&INTF_IPV4;/&MODULE-PREF-DELL-IP;:redirects=true"
+        pfeature="NOT_SUPPORTED"
+        >
+        <ACTION builtin="clish_nop" ></ACTION>
+    </COMMAND>
+
+    <!--- no ip unreachables -->
+    <COMMAND
+        name="no ip unreachables"
+        help="Enable IP unreachables"
+        namespace="&MODULE-INTF-IP-NS;"
+        operation="edit-config"
+        sub_oper_yang="remove:unreachables"
+        yang_name= "&INTF_NAME;,&INTF_IPV4;/&MODULE-PREF-DELL-IP;:unreachables"
+        pfeature="NOT_SUPPORTED"
+        >
+        <ACTION builtin="clish_nop" ></ACTION>
+    </COMMAND>
+    <!--- no ip redirects -->
+    <COMMAND
+        name="no ip redirects"
+        help="Enable ICMP redirect messages"
+        namespace="&MODULE-INTF-IP-NS;"
+        operation="edit-config"
+        sub_oper_yang="remove:redirects"
+        yang_name= "&INTF_NAME;,&INTF_IPV4;/&MODULE-PREF-DELL-IP;:redirects"
+        pfeature="NOT_SUPPORTED"
+        >
+        <ACTION builtin="clish_nop" ></ACTION>
+    </COMMAND>
+     <!-- IP address -->
+     <COMMAND
+        name="ip address dhcp"
+        help="Enables dhcp client operations on an interface"
+        namespace="&MODULE-INTF-IP-NS;"
+        operation="edit-config"
+        yang_name="&INTF_NAME;,&INTF_IPV4_ADDR_DHCP;=true">
+        <ACTION builtin="clish_nop"></ACTION>
+        </COMMAND>
+     <COMMAND
+        name="ip address"
+        help="Set the IP address of an interface"
+        namespace="&MODULE-INTF-IP-NS;"
+        db_multi_yang_name="&INTF_IPV4_PRI_ADDR;,&INTF_IPV4_SEC_ADDR;"
+        db_multi_yang_key="-||&INTF_IPV4_SEC_ADDR;;;leaf-list"
+        db_flag="SEP_CLI"
+        operation="edit-config"
+        >
+        <!--- ip address <ip-address/mask> [secondary]  -->
+        <PARAM
+            help="Set IP address"
+            name="addr"
+            ptype="IP_ADDR_MASK"
+            yang_name= "&INTF_NAME;,&INTF_IPV4_PRI_ADDR;=${addr}"
+            namespace="&MODULE-INTF-IP-NS;">
+            <PARAM
+                name="addr-type"
+                help="IP address type"
+                optional="true"
+                ptype="SUBCOMMAND"
+                db_flag="SEP_CLI"
+                mode="switch">
+                <PARAM
+                    test='"${addr}" = "hide_primary"'
+                    help="Make this IP address a primary address"
+                    name="primary"
+                    db_flag="SKIP_NODE"
+                    mode="subcommand"
+                    ptype="SUBCOMMAND"/>
+                <PARAM
+                    help="Make this IP address a secondary address"
+                    name="secondary"
+                    prompt_fn="process_sec_ip_addr"
+                    mode="subcommand"
+                    ptype="SUBCOMMAND"
+                    yang_name= "&INTF_IPV4_SEC_ADDR;=${addr}"/>
+            </PARAM>
+        </PARAM>
+        <ACTION
+            builtin="clish_nop"
+            ></ACTION>
+    </COMMAND>
+    <COMMAND
+        name="no ip address dhcp"
+        help="Enables dhcp client operations on an interface"
+        namespace="&MODULE-INTF-IP-NS;"
+        operation="edit-config"
+        sub_oper_yang="remove:dhcp-config"
+        yang_name="&INTF_NAME;,&INTF_IPV4_ADDR_DHCP;=false">
+        <ACTION builtin="clish_nop"></ACTION>
+    </COMMAND>
+    <COMMAND
+        name="no ip address"
+        help="Set the IP address of an interface"
+        namespace="&MODULE-INTF-IP-NS;"
+        operation="edit-config"
+        sub_oper_yang="remove:dhcp-config,remove:address"
+        yang_name="&INTF_NAME;,&INTF_IPV4;/&MODULE-PREF-DELL-IP;:address,&INTF_IPV4;/&MODULE-PREF-DELL-IP;:dhcp-config">
+        <!--- no ip address <ip-address/mask> [secondary]   -->
+        <PARAM
+            help="Set IP address"
+            name="addr"
+            optional="true"
+            ptype="IP_ADDR_MASK"
+            refresh_yang_name="true"
+            sub_oper_yang="clear;remove:address"
+            yang_name= "&INTF_NAME;,&INTF_IPV4;/&MODULE-PREF-DELL-IP;:address/&MODULE-PREF-DELL-IP;:primary-addr=${addr}">
+            <PARAM
+                name="addr-type"
+                help="IP address type"
+                ptype="SUBCOMMAND"
+                optional="true"
+                mode="switch">
+                <PARAM
+                    test='"${addr}" = "hide_primary"'
+                    help="Make this IP address a primary address"
+                    name="primary"
+                    mode="subcommand"
+                    db_flag="SKIP_NODE"
+                    ptype="SUBCOMMAND"/>
+                <PARAM
+                    help="Make this IP address a secondary address"
+                    name="secondary"
+                    mode="subcommand"
+                    ptype="SUBCOMMAND"
+                    sub_oper_yang="clear;remove:secondary-addr"
+                    refresh_yang_name="true"
+                    yang_name= "&INTF_NAME;,&INTF_IPV4_SEC_ADDR;=${addr}"/>
+            </PARAM>
+        </PARAM>
+            <ACTION
+                builtin="clish_nop">
+            </ACTION>
+    </COMMAND>
+    <!--- ip arp subcommands   -->
+    <COMMAND
+        help="ARP configuration"
+        name="ip arp"
+        namespace="&MODULE-INTF-IP-NS;"
+        operation="edit-config">
+             <PARAM
+                 help="switch subcommand"
+                 name="type"
+                 mode="switch"
+                 ptype="SUBCOMMAND">
+                     <!--- ip arp <ip-address> <mac-address>   -->
+                     <PARAM
+                         help="Set IP address of the ARP entry"
+                         name="arp-addr"
+                         ptype="IP_ADDR"
+                         yang_name= "&INTF_NAME;,&INTF_ARP_ADDR;=${arp-addr}"
+                         yang_key = "&INTF_ARP_ADDR;">
+                         <PARAM
+                             help="Set hardware address of ARP entry"
+                             name="mac-addr"
+                             ptype="MAC_ADDR"
+                             yang_name= "&INTF_ARP_ENTRY;/&MODULE-PREF-DELL-IP;:link-layer-address=${mac-addr}"/>
+                     </PARAM>
+                     <!--- ip arp gratuitous -->
+                     <PARAM
+                         help="Gratuitous"
+                         name="gratuitous"
+                         mode="subcommand"
+                         ptype="SUBCOMMAND">
+                              <PARAM
+                                  help="Gratuituos type subcommand"
+                                  name="gratuituos-type"
+                                  mode="switch"
+                                  ptype="SUBCOMMAND">
+                                       <!--- ip arp gratuitous update   -->
+                                       <PARAM
+                                           help="Enable/Disable arp cache updates for gratuitous arp"
+                                           name="update"
+                                           mode="subcommand"
+                                           ptype="SUBCOMMAND"
+                                           pfeature="NOT_SUPPORTED"
+                                           yang_name= "&INTF_NAME;,&INTF_ARP;/&MODULE-PREF-DELL-IP;:update=true"/>
+                                       <!--- ip arp gratuitous request-->
+                                       <PARAM
+                                           help="Enable/Disable sending gratutious arp req when duplicate address detected"
+                                           name="request"
+                                           mode="subcommand"
+                                           ptype="SUBCOMMAND"
+                                           yang_name= "&INTF_NAME;,&INTF_ARP;/&MODULE-PREF-DELL-IP;:request=true"/>
+                              </PARAM>
+                     </PARAM>
+             </PARAM> <!-- End arp-switch -->
+      <ACTION builtin="clish_nop"/>
+    </COMMAND>
+  </VIEW>
+
+<!--=======================================================-->
+<!--                Config Interface LAG-MODE              -->
+<!--=======================================================-->
+
+<VIEW name="configure-lag-view">
+    <COMMAND
+        name="ip"
+        help="Interface Internet Protocol config commands"
+    />
+    <COMMAND
+        name="no ip"
+        help="Interface Internet Protocol config commands"
+    />
+    <!--- ip unreachables -->
+    <COMMAND
+        name="ip unreachables"
+        help="Enable IP unreachables"
+        namespace="&MODULE-INTF-IP-NS;"
+        operation="edit-config"
+        yang_name= "&PO_NAME;,&INTF_IPV4;/&MODULE-PREF-DELL-IP;:unreachables=true"
+        pfeature="NOT_SUPPORTED"
+        >
+        <ACTION builtin="clish_nop" ></ACTION>
+    </COMMAND>
+    <!--- ip redirects -->
+    <COMMAND
+        name="ip redirects"
+        help="Enable ICMP redirect messages"
+        namespace="&MODULE-INTF-IP-NS;"
+        operation="edit-config"
+        yang_name= "&PO_NAME;,&INTF_IPV4;/&MODULE-PREF-DELL-IP;:redirects=true"
+        pfeature="NOT_SUPPORTED"
+        >
+        <ACTION builtin="clish_nop" ></ACTION>
+    </COMMAND>
+
+    <!--- no ip unreachables -->
+    <COMMAND
+        name="no ip unreachables"
+        help="Enable IP unreachables"
+        namespace="&MODULE-INTF-IP-NS;"
+        operation="edit-config"
+        sub_oper_yang="remove:unreachables"
+        yang_name= "&PO_NAME;,&INTF_IPV4;/&MODULE-PREF-DELL-IP;:unreachables"
+        pfeature="NOT_SUPPORTED"
+        >
+        <ACTION builtin="clish_nop" ></ACTION>
+    </COMMAND>
+    <!--- no ip redirects -->
+    <COMMAND
+        name="no ip redirects"
+        help="Enable ICMP redirect messages"
+        namespace="&MODULE-INTF-IP-NS;"
+        operation="edit-config"
+        sub_oper_yang="remove:redirects"
+        yang_name= "&PO_NAME;,&INTF_IPV4;/&MODULE-PREF-DELL-IP;:redirects"
+        pfeature="NOT_SUPPORTED"
+        >
+        <ACTION builtin="clish_nop" ></ACTION>
+    </COMMAND>
+    <!-- IP address -->
+     <COMMAND
+        name="ip address dhcp"
+        help="Enables dhcp client operations on an interface"
+        namespace="&MODULE-INTF-IP-NS;"
+        operation="edit-config"
+        yang_name="&PO_NAME;,&INTF_IPV4_ADDR_DHCP;=true">
+        <ACTION builtin="clish_nop"></ACTION>
+     </COMMAND>
+
+     <!-- IP address -->
+     <COMMAND
+        name="ip address"
+        help="Set the IP address of an interface"
+        namespace="&MODULE-INTF-IP-NS;"
+        db_multi_yang_name="&INTF_IPV4_PRI_ADDR;,&INTF_IPV4_SEC_ADDR;"
+        db_multi_yang_key="-||&INTF_IPV4_SEC_ADDR;;;leaf-list"
+        db_flag="SEP_CLI"
+        operation="edit-config"
+        >
+    <!--- ip address <ip-address/mask> [secondary]  -->
+        <PARAM
+            help="Set IP address"
+            name="addr"
+            ptype="IP_ADDR_MASK"
+            yang_name= "&PO_NAME;,&INTF_IPV4_PRI_ADDR;=${addr}"
+            namespace="&MODULE-INTF-IP-NS;">
+            <PARAM
+                name="addr-type"
+                help="IP address type"
+                optional="true"
+                ptype="SUBCOMMAND"
+                db_flag="SEP_CLI"
+                mode="switch">
+                <PARAM
+                    test='"${addr}" = "hide_primary"'
+                    help="Make this IP address a primary address"
+                    name="primary"
+                    db_flag="SKIP_NODE"
+                    mode="subcommand"
+                    ptype="SUBCOMMAND"/>
+                <PARAM
+                    help="Make this IP address a secondary address"
+                    name="secondary"
+                    prompt_fn="process_sec_ip_addr"
+                    mode="subcommand"
+                    ptype="SUBCOMMAND"
+                    yang_name= "&INTF_IPV4_SEC_ADDR;=${addr}"/>
+                </PARAM>
+            </PARAM>
+        <ACTION
+            builtin="clish_nop"
+            ></ACTION>
+    </COMMAND>
+    <COMMAND
+            name="no ip address dhcp"
+            help="Enables dhcp client operations on an interface"
+            namespace="&MODULE-INTF-IP-NS;"
+            operation="edit-config"
+            sub_oper_yang="remove:dhcp-config"
+            yang_name="&PO_NAME;,&INTF_IPV4_ADDR_DHCP;=false">
+            <ACTION builtin="clish_nop"></ACTION>
+        </COMMAND>
+    <COMMAND
+        name="no ip address"
+        help="Set the IP address of an interface"
+        namespace="&MODULE-INTF-IP-NS;"
+        operation="edit-config"
+        sub_oper_yang="remove:address,remove:dhcp-config"
+        yang_name= "&PO_NAME;,&INTF_IPV4;/&MODULE-PREF-DELL-IP;:address,&INTF_IPV4;/&MODULE-PREF-DELL-IP;:dhcp-config"
+        >
+        <!--- no ip address <ip-address/mask> [secondary]   -->
+        <PARAM
+            help="Set IP address"
+            name="addr"
+            optional="true"
+            ptype="IP_ADDR_MASK"
+            refresh_yang_name="true"
+            sub_oper_yang="clear:remove:address"
+            yang_name= "&PO_NAME;,&INTF_IPV4;/&MODULE-PREF-DELL-IP;:address/&MODULE-PREF-DELL-IP;:primary-addr=${addr}">
+            <PARAM
+                name="addr-type"
+                help="IP address type"
+                ptype="SUBCOMMAND"
+                optional="true"
+                mode="switch">
+                <PARAM
+                    test='"${addr}" = "hide_primary"'
+                    help="Make this IP address a primary address"
+                    name="primary"
+                    mode="subcommand"
+                    db_flag="SKIP_NODE"
+                    ptype="SUBCOMMAND"/>
+                <PARAM
+                    help="Make this IP address a secondary address"
+                    name="secondary"
+                    mode="subcommand"
+                    ptype="SUBCOMMAND"
+                    sub_oper_yang="clear;remove:secondary-addr"
+                    refresh_yang_name="true"
+                    yang_name= "&PO_NAME;,&INTF_IPV4_SEC_ADDR;=${addr}"/>
+            </PARAM>
+        </PARAM>
+        <ACTION
+            builtin="clish_nop"
+            ></ACTION>
+    </COMMAND>
+    <!--- ip arp subcommands   -->
+    <COMMAND
+        help="ARP configuration"
+        name="ip arp"
+        namespace="&MODULE-INTF-IP-NS;"
+        operation="edit-config">
+             <PARAM
+                 help="switch subcommand"
+                 name="type"
+                 mode="switch"
+                 ptype="SUBCOMMAND">
+                     <!--- ip arp <ip-address> <mac-address>   -->
+                     <PARAM
+                         help="Set IP address of the ARP entry"
+                         name="arp-addr"
+                         ptype="IP_ADDR"
+                         yang_name= "&PO_NAME;,&INTF_ARP_ADDR;=${arp-addr}"
+                         yang_key = "&INTF_ARP_ADDR;">
+                         <PARAM
+                             help="Set hardware address of ARP entry"
+                             name="mac-addr"
+                             ptype="MAC_ADDR"
+                             yang_name= "&INTF_ARP_ENTRY;/&MODULE-PREF-DELL-IP;:link-layer-address=${mac-addr}"/>
+                     </PARAM>
+                     <!--- ip arp gratuitous -->
+                     <PARAM
+                         help="Gratuitous"
+                         name="gratuitous"
+                         mode="subcommand"
+                         ptype="SUBCOMMAND">
+                              <PARAM
+                                  help="Gratuituos type subcommand"
+                                  name="gratuituos-type"
+                                  mode="switch"
+                                  ptype="SUBCOMMAND">
+                                       <!--- ip arp gratuitous update   -->
+                                       <PARAM
+                                           help="Enable/Disable arp cache updates for gratuitous arp"
+                                           name="update"
+                                           mode="subcommand"
+                                           ptype="SUBCOMMAND"
+                                           yang_name= "&PO_NAME;,&INTF_ARP;/&MODULE-PREF-DELL-IP;:update=true"/>
+                                       <!--- ip arp gratuitous request-->
+                                       <PARAM
+                                           help="Enable/Disable sending gratutious arp req when duplicate address detected"
+                                           name="request"
+                                           mode="subcommand"
+                                           ptype="SUBCOMMAND"
+                                           yang_name= "&PO_NAME;,&INTF_ARP;/&MODULE-PREF-DELL-IP;:request=true"/>
+                              </PARAM>
+                     </PARAM>
+             </PARAM> <!-- End arp-switch -->
+      <ACTION builtin="clish_nop"/>
+    </COMMAND>
+  </VIEW>
+
+<!--=======================================================-->
+<!--                Config Interface VLAN-MODE              -->
+<!--=======================================================-->
+
+<VIEW name="configure-vlan-view">
+    <COMMAND
+        name="ip"
+        help="Interface Internet Protocol config commands"
+    />
+    <COMMAND
+        name="no ip"
+        help="Interface Internet Protocol config commands"
+    />
+    <!--- ip unreachables -->
+    <COMMAND
+        name="ip unreachables"
+        help="Enable IP unreachables"
+        namespace="&MODULE-INTF-IP-NS;"
+        operation="edit-config"
+        yang_name= "&VL_NAME;,&INTF_IPV4;/&MODULE-PREF-DELL-IP;:unreachables=true"
+        pfeature="NOT_SUPPORTED"
+        >
+        <ACTION builtin="clish_nop" ></ACTION>
+    </COMMAND>
+    <!--- ip redirects -->
+    <COMMAND
+        name="ip redirects"
+        help="Enable ICMP redirect messages"
+        namespace="&MODULE-INTF-IP-NS;"
+        operation="edit-config"
+        yang_name= "&VL_NAME;,&INTF_IPV4;/&MODULE-PREF-DELL-IP;:redirects=true"
+        pfeature="NOT_SUPPORTED"
+        >
+        <ACTION builtin="clish_nop" ></ACTION>
+    </COMMAND>
+
+    <!--- no ip unreachables -->
+    <COMMAND
+        name="no ip unreachables"
+        help="Enable IP unreachables"
+        namespace="&MODULE-INTF-IP-NS;"
+        operation="edit-config"
+        sub_oper_yang="remove:unreachables"
+        yang_name= "&VL_NAME;,&INTF_IPV4;/&MODULE-PREF-DELL-IP;:unreachables"
+        pfeature="NOT_SUPPORTED"
+        >
+        <ACTION builtin="clish_nop" ></ACTION>
+    </COMMAND>
+    <!--- no ip redirects -->
+    <COMMAND
+        name="no ip redirects"
+        help="Enable ICMP redirect messages"
+        namespace="&MODULE-INTF-IP-NS;"
+        operation="edit-config"
+        sub_oper_yang="remove:redirects"
+        yang_name= "&VL_NAME;,&INTF_IPV4;/&MODULE-PREF-DELL-IP;:redirects"
+        pfeature="NOT_SUPPORTED"
+        >
+        <ACTION builtin="clish_nop" ></ACTION>
+    </COMMAND>
+     <!-- IP address -->
+     <COMMAND
+        name="ip address dhcp"
+        help="Enables dhcp client operations on an interface"
+        namespace="&MODULE-INTF-IP-NS;"
+        operation="edit-config"
+        yang_name="&VL_NAME;,&INTF_IPV4_ADDR_DHCP;=true">
+        <ACTION builtin="clish_nop"></ACTION>
+      </COMMAND>
+
+     <COMMAND
+        name="ip address"
+        help="Set the IP address of an interface"
+        namespace="&MODULE-INTF-IP-NS;"
+        db_multi_yang_name="&INTF_IPV4_PRI_ADDR;,&INTF_IPV4_SEC_ADDR;"
+        db_multi_yang_key="-||&INTF_IPV4_SEC_ADDR;;;leaf-list"
+        db_flag="SEP_CLI"
+        operation="edit-config"
+        >
+        <!--- ip address <ip-address/mask> [secondary]  -->
+        <PARAM
+            help="Set IP address"
+            name="addr"
+            ptype="IP_ADDR_MASK"
+            yang_name= "&VL_NAME;,&INTF_IPV4_PRI_ADDR;=${addr}"
+            namespace="&MODULE-INTF-IP-NS;">
+            <PARAM
+                name="addr-type"
+                help="IP address type"
+                optional="true"
+                ptype="SUBCOMMAND"
+                db_flag="SEP_CLI"
+                mode="switch">
+                <PARAM
+                    test='"${addr}" = "hide_primary"'
+                    help="Make this IP address a primary address"
+                    name="primary"
+                    db_flag="SKIP_NODE"
+                    mode="subcommand"
+                    ptype="SUBCOMMAND"/>
+                <PARAM
+                    help="Make this IP address a secondary address"
+                    name="secondary"
+                    prompt_fn="process_sec_ip_addr"
+                    mode="subcommand"
+                    ptype="SUBCOMMAND"
+                    yang_name= "&INTF_IPV4_SEC_ADDR;=${addr}"/>
+            </PARAM>
+        </PARAM>
+            <ACTION
+                builtin="clish_nop"
+                ></ACTION>
+        </COMMAND>
+        <COMMAND
+            name="no ip address dhcp"
+            help="Enables dhcp client operations on an interface"
+            namespace="&MODULE-INTF-IP-NS;"
+            operation="edit-config"
+            sub_oper_yang="remove:dhcp-config"
+            yang_name="&VL_NAME;,&INTF_IPV4_ADDR_DHCP;=false">
+            <ACTION builtin="clish_nop"></ACTION>
+        </COMMAND>
+        <COMMAND
+            name="no ip address"
+            help="Set the IP address of an interface"
+            namespace="&MODULE-INTF-IP-NS;"
+            operation="edit-config"
+            sub_oper_yang="remove:dhcp-config,remove:address"
+            yang_name= "&VL_NAME;,&INTF_IPV4;/&MODULE-PREF-DELL-IP;:address,&INTF_IPV4;/&MODULE-PREF-DELL-IP;:dhcp-config">
+        <!--- no ip address <ip-address/mask> [secondary]   -->
+            <PARAM
+                help="Set IP address"
+                name="addr"
+                optional="true"
+                ptype="IP_ADDR_MASK"
+                refresh_yang_name="true"
+                sub_oper_yang="clear;remove:address"
+                yang_name= "&VL_NAME;,&INTF_IPV4;/&MODULE-PREF-DELL-IP;:address/&MODULE-PREF-DELL-IP;:primary-addr=${addr}">
+                <PARAM
+                    name="addr-type"
+                    help="IP address type"
+                    ptype="SUBCOMMAND"
+                    optional="true"
+                    mode="switch">
+                    <PARAM
+                        test='"${addr}" = "hide_primary"'
+                        help="Make this IP address a primary address"
+                        name="primary"
+                        mode="subcommand"
+                        db_flag="SKIP_NODE"
+                        ptype="SUBCOMMAND"/>
+                    <PARAM
+                        help="Make this IP address a secondary address"
+                        name="secondary"
+                        mode="subcommand"
+                        ptype="SUBCOMMAND"
+                        sub_oper_yang="clear;remove:secondary-addr"
+                        refresh_yang_name="true"
+                        yang_name= "&VL_NAME;,&INTF_IPV4_SEC_ADDR;=${addr}"/>
+                </PARAM>
+            </PARAM>
+        <ACTION
+            builtin="clish_nop"
+        ></ACTION>
+    </COMMAND>
+    <!--- ip arp subcommands   -->
+    <COMMAND
+        help="ARP configuration"
+        name="ip arp"
+        namespace="&MODULE-INTF-IP-NS;"
+        operation="edit-config">
+             <PARAM
+                 help="switch subcommand"
+                 name="type"
+                 mode="switch"
+                 ptype="SUBCOMMAND">
+                     <!--- ip arp <ip-address> <mac-address>   -->
+                     <PARAM
+                         help="Set IP address of the ARP entry"
+                         name="arp-addr"
+                         ptype="IP_ADDR"
+                         yang_name= "&VL_NAME;,&INTF_ARP_ADDR;=${arp-addr}"
+                         yang_key = "&INTF_ARP_ADDR;">
+                         <PARAM
+                             help="Set hardware address of ARP entry"
+                             name="mac-addr"
+                             ptype="MAC_ADDR"
+                             yang_name= "&INTF_ARP_ENTRY;/&MODULE-PREF-DELL-IP;:link-layer-address=${mac-addr}"/>
+                     </PARAM>
+                     <!--- ip arp gratuitous -->
+                     <PARAM
+                         help="Gratuitous"
+                         name="gratuitous"
+                         mode="subcommand"
+                         ptype="SUBCOMMAND">
+                              <PARAM
+                                  help="Gratuituos type subcommand"
+                                  name="gratuituos-type"
+                                  mode="switch"
+                                  ptype="SUBCOMMAND">
+                                       <!--- ip arp gratuitous update   -->
+                                       <PARAM
+                                           help="Enable/Disable arp cache updates for gratuitous arp"
+                                           name="update"
+                                           mode="subcommand"
+                                           ptype="SUBCOMMAND"
+                                           yang_name= "&VL_NAME;,&INTF_ARP;/&MODULE-PREF-DELL-IP;:update=true"/>
+                                       <!--- ip arp gratuitous request-->
+                                       <PARAM
+                                           help="Enable/Disable sending gratutious arp req when duplicate address detected"
+                                           name="request"
+                                           mode="subcommand"
+                                           ptype="SUBCOMMAND"
+                                           yang_name= "&VL_NAME;,&INTF_ARP;/&MODULE-PREF-DELL-IP;:request=true"/>
+                              </PARAM>
+                     </PARAM>
+             </PARAM> <!-- End arp-switch -->
+      <ACTION builtin="clish_nop"/>
+    </COMMAND>
+  </VIEW>
+
+
+<!-- ************************************************************************ -->
+<!--                               NO COMMANDS                                -->
+<!-- ************************************************************************ -->
+<VIEW name="configure-view">
+    <!---  no ip icmp source-interface <interface-name> <slot/port> -->
+    <COMMAND
+        help="ICMP configuration commands"
+        name="no ip icmp"
+        namespace="&MODULE-NS-DELL-IP;"
+        operation="edit-config">
+           <PARAM
+              help="Specify interface for source address in ICMP Error messages"
+              name="source-interface"
+              mode="subcommand"
+              ptype="SUBCOMMAND"
+              sub_oper_yang="remove:icmp-source-intf"
+              yang_name= "&GLOBAL_IPV4;/icmp-source-intf">
+                  <PARAM
+                      help="Specify interface number"
+                      name="intf-name"
+                      optional="true"
+                      ptype="PHY_INTERFACE"/>
+            </PARAM>
+      <ACTION builtin="clish_nop"/>
+    </COMMAND>
+
+    <!---  no ip arp backoff-time <seconds> -->
+    <COMMAND
+        help="ARP Configuration"
+        name="no ip arp"
+        namespace="&MODULE-NS-DELL-IP;"
+        operation="edit-config">
+            <PARAM
+                help="Select ip arp subcommands"
+                name="arp-subcommands"
+                mode="switch"
+                ptype="SUBCOMMAND">
+                <!--- no ip arp backoff-time <seconds> -->
+                <PARAM
+                     help="Set number of seconds an unknown ARP entry is black-holed"
+                     name="backoff-time"
+                     mode="subcommand"
+                     ptype="SUBCOMMAND"
+                     sub_oper_yang="remove:backoff-time"
+                     yang_name="&GLOBAL_ARP;/backoff-time">
+                     <PARAM
+                         help="Number of seconds"
+                         name="backoff-time-val"
+                         optional="true"
+                         ptype="UINT"/>
+                </PARAM>
+                <!---  no Ip arp retries <number> -->
+                <PARAM
+                     help="Set number of ARP retries before a 20 sec back off"
+                     name="retries"
+                     mode="subcommand"
+                     ptype="SUBCOMMAND"
+                     sub_oper_yang="remove:retries"
+                     yang_name="&GLOBAL_ARP;/retries">
+                     <PARAM
+                         help="Number of seconds"
+                         name="retries-val"
+                         optional="true"
+                         ptype="UINT"/>
+                 </PARAM>
+                <!--- no ip arp max-entries <number> -->
+                <PARAM
+                     help="Enter the maximum number of ARP entries that a VRF RTM can hold"
+                     name="max-entries"
+                     mode="subcommand"
+                     ptype="SUBCOMMAND"
+                     sub_oper_yang="remove:max-entries"
+                     yang_name="&GLOBAL_ARP;/max-entries">
+                     <PARAM
+                         help="Number of seconds"
+                         name="max-retries-val"
+                         optional="true"
+                         ptype="UINT"/>
+                 </PARAM>
+                <!--- no ip arp timeout -->
+                <PARAM
+                     help="Set ARP cache timeout"
+                     name="timeout"
+                     mode="subcommand"
+                     ptype="SUBCOMMAND"
+                     sub_oper_yang="remove:timeout"
+                     yang_name="&GLOBAL_ARP;/timeout">
+                     <PARAM
+                         help="Number of seconds"
+                         name="timeout-val"
+                         optional="true"
+                         ptype="UINT"/>
+                 </PARAM>
+            </PARAM>
+      <ACTION builtin="clish_nop"/>
+    </COMMAND>
+    <!---no mac-address-table station-move refresh-arp -->
+    <COMMAND
+        help="Configure Mac Address Table Configuration Subcommand"
+        name="no mac-address-table"
+        pfeature="NOT_SUPPORTED"
+        namespace="&MODULE-NS-DELL-IP;"
+        operation="edit-config">
+            <PARAM
+                help="Station-move keyword"
+                name="station-move"
+                mode="subcommand"
+                ptype="SUBCOMMAND"
+                sub_oper_yang="remove:station-move-refresh-arp"
+                yang_name="&GLOBAL_IPV4;/station-move-refresh-arp"/>
+                <PARAM
+                    help="Refresh arp entries"
+                    name="refresh-arp"
+                    mode="subcommand"
+                    optional="true"
+                    ptype="SUBCOMMAND">
+            </PARAM>
+      <ACTION builtin="clish_nop"/>
+    </COMMAND>
+  </VIEW>
+
+<!--=======================================================-->
+<!--                No-command Interface PHY-MODE          -->
+<!--=======================================================-->
+<VIEW name="configure-if-view">
+    <!--- no ip arp subcommands   -->
+    <COMMAND
+        help="ARP configuration"
+        name="no ip arp"
+        namespace="&MODULE-INTF-IP-NS;"
+        operation="edit-config">
+             <PARAM
+                 help="switch subcommand"
+                 name="type"
+                 mode="switch"
+                 ptype="SUBCOMMAND">
+                     <!--- no ip arp <ip-address> <mac-address>   -->
+                     <PARAM
+                         help="Set IP address of the ARP entry"
+                         name="arp-addr"
+                         ptype="IP_ADDR"
+                         sub_oper_yang="delete:arp-entry"
+                         yang_name= "&INTF_NAME;,&INTF_ARP_ENTRY;,&INTF_ARP_ADDR;=${arp-addr}">
+                         <PARAM
+                             help="Set hardware address of ARP entry"
+                             name="mac-addr"
+                             ptype="MAC_ADDR"
+                             optional="true"
+                             sub_oper_yang="delete:arp-entry"/>
+                     </PARAM>
+                     <!--- no ip arp gratuitous -->
+                     <PARAM
+                         help="Gratuitous"
+                         name="gratuitous"
+                         mode="subcommand"
+                         ptype="SUBCOMMAND">
+                              <PARAM
+                                  help="Gratuituos type subcommand"
+                                  name="gratuituos-type"
+                                  mode="switch"
+                                  ptype="SUBCOMMAND">
+                                       <!---no ip arp gratuitous update   -->
+                                       <PARAM
+                                           help="Enable/Disable arp cache updates for gratuitous arp"
+                                           name="update"
+                                           mode="subcommand"
+                                           ptype="SUBCOMMAND"
+                                           sub_oper_yang="remove:update"
+                                           yang_name= "&INTF_NAME;,&INTF_ARP;/&MODULE-PREF-DELL-IP;:update"/>
+                                       <!--- no ip arp gratuitous request-->
+                                       <PARAM
+                                           help="Enable/Disable sending gratutious arp req when duplicate address detected"
+                                           name="request"
+                                           mode="subcommand"
+                                           ptype="SUBCOMMAND"
+                                           sub_oper_yang="remove:request"
+                                           yang_name= "&INTF_NAME;,&INTF_ARP;/&MODULE-PREF-DELL-IP;:request"/>
+                              </PARAM>
+                     </PARAM>
+             </PARAM> <!-- End arp-switch -->
+      <ACTION builtin="clish_nop"/>
+    </COMMAND>
+  </VIEW>
+
+<!--=======================================================-->
+<!--                No-command Interface LAG-MODE          -->
+<!--=======================================================-->
+<VIEW name="configure-lag-view">
+    <!--- no ip arp subcommands   -->
+    <COMMAND
+        help="ARP configuration"
+        name="no ip arp"
+        namespace="&MODULE-INTF-IP-NS;"
+        operation="edit-config">
+             <PARAM
+                 help="switch subcommand"
+                 name="type"
+                 mode="switch"
+                 ptype="SUBCOMMAND">
+                     <!--- no ip arp <ip-address> <mac-address>   -->
+                     <PARAM
+                         help="Set IP address of the ARP entry"
+                         name="arp-addr"
+                         ptype="IP_ADDR"
+                         sub_oper_yang="delete:arp-entry"
+                         yang_name= "&PO_NAME;,&INTF_ARP_ENTRY;,&INTF_ARP_ADDR;=${arp-addr}">
+                         <PARAM
+                             help="Set hardware address of ARP entry"
+                             name="mac-addr"
+                             ptype="MAC_ADDR"
+                             optional="true"
+                             sub_oper_yang="delete:arp-entry"/>
+                     </PARAM>
+                     <!--- no ip arp gratuitous -->
+                     <PARAM
+                         help="Gratuitous"
+                         name="gratuitous"
+                         mode="subcommand"
+                         ptype="SUBCOMMAND">
+                              <PARAM
+                                  help="Gratuituos type subcommand"
+                                  name="gratuituos-type"
+                                  mode="switch"
+                                  ptype="SUBCOMMAND">
+                                       <!---no ip arp gratuitous update   -->
+                                       <PARAM
+                                           help="Enable/Disable arp cache updates for gratuitous arp"
+                                           name="update"
+                                           mode="subcommand"
+                                           ptype="SUBCOMMAND"
+                                           sub_oper_yang="remove:update"
+                                           yang_name= "&PO_NAME;,&INTF_ARP;/&MODULE-PREF-DELL-IP;:update"/>
+                                       <!--- no ip arp gratuitous request-->
+                                       <PARAM
+                                           help="Enable/Disable sending gratutious arp req when duplicate address detected"
+                                           name="request"
+                                           mode="subcommand"
+                                           ptype="SUBCOMMAND"
+                                           sub_oper_yang="remove:request"
+                                           yang_name= "&PO_NAME;,&INTF_ARP;/&MODULE-PREF-DELL-IP;:request"/>
+                              </PARAM>
+                     </PARAM>
+             </PARAM> <!-- End arp-switch -->
+      <ACTION builtin="clish_nop"/>
+    </COMMAND>
+  </VIEW>
+
+<!--=======================================================-->
+<!--                No-command Interface VLAN-MODE             -->
+<!--=======================================================-->
+<VIEW name="configure-vlan-view">
+    <!--- no ip arp subcommands   -->
+    <COMMAND
+        help="ARP configuration"
+        name="no ip arp"
+        namespace="&MODULE-INTF-IP-NS;"
+        operation="edit-config">
+             <PARAM
+                 help="switch subcommand"
+                 name="type"
+                 mode="switch"
+                 ptype="SUBCOMMAND">
+                     <!--- no ip arp <ip-address> <mac-address>   -->
+                     <PARAM
+                         help="Set IP address of the ARP entry"
+                         name="arp-addr"
+                         ptype="IP_ADDR"
+                         sub_oper_yang="delete:arp-entry"
+                         yang_name= "&VL_NAME;,&INTF_ARP_ENTRY;,&INTF_ARP_ADDR;=${arp-addr}">
+                         <PARAM
+                             help="Set hardware address of ARP entry"
+                             name="mac-addr"
+                             ptype="MAC_ADDR"
+                             optional="true"
+                             sub_oper_yang="delete:arp-entry"/>
+                     </PARAM>
+                     <!--- no ip arp gratuitous -->
+                     <PARAM
+                         help="Gratuitous"
+                         name="gratuitous"
+                         mode="subcommand"
+                         ptype="SUBCOMMAND">
+                              <PARAM
+                                  help="Gratuituos type subcommand"
+                                  name="gratuituos-type"
+                                  mode="switch"
+                                  ptype="SUBCOMMAND">
+                                       <!---no ip arp gratuitous update   -->
+                                       <PARAM
+                                           help="Enable/Disable arp cache updates for gratuitous arp"
+                                           name="update"
+                                           mode="subcommand"
+                                           ptype="SUBCOMMAND"
+                                           sub_oper_yang="remove:update"
+                                           yang_name= "&VL_NAME;,&INTF_ARP;/&MODULE-PREF-DELL-IP;:update"/>
+                                       <!--- no ip arp gratuitous request-->
+                                       <PARAM
+                                           help="Enable/Disable sending gratutious arp req when duplicate address detected"
+                                           name="request"
+                                           mode="subcommand"
+                                           ptype="SUBCOMMAND"
+                                           sub_oper_yang="remove:request"
+                                           yang_name= "&VL_NAME;,&INTF_ARP;/&MODULE-PREF-DELL-IP;:request"/>
+                              </PARAM>
+                     </PARAM>
+             </PARAM> <!-- End arp-switch -->
+      <ACTION builtin="clish_nop"/>
+    </COMMAND>
+  </VIEW>
+<!--=======================================================-->
+<!--                Config Interface MGMT-MODE              -->
+<!--=======================================================-->
+
+  <VIEW name="configure-mgmt-view">
+    <COMMAND
+        name="ip"
+        pfeature="FEATURE_MGMT_IF_IP"
+        help="Interface Internet Protocol config commands"
+        namespace="&MODULE-INTF-IP-NS;"
+        operation="edit-config"
+        />
+    <!-- IP address -->
+     <COMMAND
+        name="ip address dhcp"
+        pfeature="FEATURE_MGMT_IF_IP"
+        help="Enables dhcp client operations on an interface"
+        namespace="&MODULE-INTF-IP-NS;"
+        operation="edit-config"
+        yang_name="&MGMT_NAME;,&INTF_IPV4_ADDR_DHCP;=true">
+        <ACTION builtin="clish_nop"></ACTION>
+      </COMMAND>
+     <COMMAND
+        name="ip address"
+        pfeature="FEATURE_MGMT_IF_IP"
+        help="Set the IP address of an interface"
+        namespace="&MODULE-INTF-IP-NS;"
+        db_multi_yang_name="&INTF_IPV4_PRI_ADDR;,&INTF_IPV4_SEC_ADDR;"
+        db_multi_yang_key="-||&INTF_IPV4_SEC_ADDR;;;leaf-list"
+        db_flag="SEP_CLI"
+        operation="edit-config"
+        >
+        <!--- ip address <ip-address/mask> [secondary]  -->
+        <PARAM
+            help="Set IP address"
+            name="addr"
+            ptype="IP_ADDR_MASK"
+            yang_name= "&MGMT_NAME;,&INTF_IPV4_PRI_ADDR;=${addr}"
+            namespace="&MODULE-INTF-IP-NS;">
+            <PARAM
+                name="addr-type"
+                help="IP address type"
+                optional="true"
+                ptype="SUBCOMMAND"
+                db_flag="SEP_CLI"
+                mode="switch">
+                <PARAM
+                    test='"${addr}" = "hide_primary"'
+                    help="Make this IP address a primary address"
+                    name="primary"
+                    db_flag="SKIP_NODE"
+                    mode="subcommand"
+                    ptype="SUBCOMMAND"/>
+                <PARAM
+                    help="Make this IP address a secondary address"
+                    name="secondary"
+                    prompt_fn="process_sec_ip_addr"
+                    mode="subcommand"
+                    ptype="SUBCOMMAND"
+                    yang_name= "&INTF_IPV4_SEC_ADDR;=${addr}"/>
+            </PARAM>
+        </PARAM>
+        <ACTION
+            builtin="clish_nop"
+            ></ACTION>
+    </COMMAND>
+    <COMMAND
+        name="no ip"
+        pfeature="FEATURE_MGMT_IF_IP"
+        help="Interface Internet Protocol config commands"
+        namespace="&MODULE-INTF-IP-NS;"
+        operation="edit-config"
+        />
+    <COMMAND
+        name="no ip address dhcp"
+        pfeature="FEATURE_MGMT_IF_IP"
+        help="Enables dhcp client operations on an interface"
+        namespace="&MODULE-INTF-IP-NS;"
+        operation="edit-config"
+        sub_oper_yang="remove:dhcp-config"
+        yang_name="&MGMT_NAME;,&INTF_IPV4_ADDR_DHCP;=false">
+        <ACTION builtin="clish_nop"></ACTION>
+    </COMMAND>
+    <COMMAND
+        name="no ip address"
+        pfeature="FEATURE_MGMT_IF_IP"
+        help="Set the IP address of an interface"
+        namespace="&MODULE-INTF-IP-NS;"
+        operation="edit-config"
+        sub_oper_yang="remove:dhcp-config,remove:address"
+        yang_name= "&MGMT_NAME;,&INTF_IPV4;/&MODULE-PREF-DELL-IP;:address,&INTF_IPV4;/&MODULE-PREF-DELL-IP;:dhcp-config"
+        db_flag="SEP_CLI"
+        >
+            <!--- no ip address <ip-address/mask> [secondary]   -->
+            <PARAM
+                help="Set IP address"
+                name="addr"
+                optional="true"
+                ptype="IP_ADDR_MASK"
+                refresh_yang_name="true"
+                sub_oper_yang="clear;remove:address"
+                yang_name= "&MGMT_NAME;,&INTF_IPV4;/&MODULE-PREF-DELL-IP;:address/&MODULE-PREF-DELL-IP;:primary-addr=${addr}"
+                >
+                <PARAM
+                    name="addr-type"
+                    help="IP address type"
+                    ptype="SUBCOMMAND"
+                    optional="true"
+                    mode="switch">
+                    <PARAM
+                        test='"${addr}" = "hide_primary"'
+                        help="Make this IP address a primary address"
+                        name="primary"
+                        mode="subcommand"
+                        db_flag="SKIP_NODE"
+                        ptype="SUBCOMMAND"/>
+                    <PARAM
+                        help="Make this IP address a secondary address"
+                        name="secondary"
+                        mode="subcommand"
+                        ptype="SUBCOMMAND"
+                        sub_oper_yang="clear;remove:secondary-addr"
+                        refresh_yang_name="true"
+                        yang_name= "&MGMT_NAME;,&INTF_IPV4_SEC_ADDR;=${addr}"/>
+                </PARAM>
+            </PARAM>
+        <ACTION
+            builtin="clish_nop"
+            ></ACTION>
+    </COMMAND>
+  </VIEW>
+
+<!--=======================================================-->
+<!--                Config Interface LOOPBACK-MODE              -->
+<!--=======================================================-->
+
+  <VIEW name="configure-loopback-view">
+    <COMMAND
+        name="ip"
+        help="Interface Internet Protocol config commands"
+        namespace="&MODULE-INTF-IP-NS;"
+        operation="edit-config"
+        />
+    <!-- IP address -->
+    <COMMAND
+        name="ip address"
+        help="Set the IP address of an interface"
+        namespace="&MODULE-INTF-IP-NS;"
+        db_flag="SEP_CLI"
+        db_multi_yang_name="&INTF_IPV4_PRI_ADDR;,&INTF_IPV4_SEC_ADDR;"
+        db_multi_yang_key="-||&INTF_IPV4_SEC_ADDR;;;leaf-list"
+        operation="edit-config"
+        >
+        <!--- ip address <ip-address/mask> [secondary]  -->
+        <PARAM
+            help="Set IP address"
+            name="addr"
+            ptype="IP_ADDR_MASK"
+            yang_name= "&LOOPBACK_NAME;,&INTF_IPV4_PRI_ADDR;=${addr}"
+            namespace="&MODULE-INTF-IP-NS;">
+            <PARAM
+                name="addr-type"
+                help="IP address type"
+                optional="true"
+                ptype="SUBCOMMAND"
+                db_flag="SEP_CLI"
+                mode="switch">
+                <PARAM
+                    test='"${addr}" = "hide_primary"'
+                    help="Make this IP address a primary address"
+                    name="primary"
+                    db_flag="SKIP_NODE"
+                    mode="subcommand"
+                    ptype="SUBCOMMAND"/>
+                <PARAM
+                    help="Make this IP address a secondary address"
+                    name="secondary"
+                    prompt_fn="process_sec_ip_addr"
+                    mode="subcommand"
+                    ptype="SUBCOMMAND"
+                    yang_name= "&INTF_IPV4_SEC_ADDR;=${addr}"/>
+            </PARAM>
+        </PARAM>
+        <ACTION
+            builtin="clish_nop"
+            ></ACTION>
+    </COMMAND>
+    <COMMAND
+        name="no ip"
+        help="Interface Internet Protocol config commands"
+        namespace="&MODULE-INTF-IP-NS;"
+        operation="edit-config"
+        />
+    <COMMAND
+        name="no ip address"
+        help="Set the IP address of an interface"
+        namespace="&MODULE-INTF-IP-NS;"
+        operation="edit-config"
+        sub_oper_yang="remove:address"
+        yang_name= "&LOOPBACK_NAME;,&INTF_IPV4;/&MODULE-PREF-DELL-IP;:address">
+            <!--- no ip address <ip-address/mask> [secondary]   -->
+    <PARAM
+        help="Set IP address"
+        name="addr"
+        optional="true"
+        ptype="IP_ADDR_MASK"
+        refresh_yang_name="true"
+        sub_oper_yang="clear;remove:address"
+        yang_name= "&LOOPBACK_NAME;,&INTF_IPV4;/&MODULE-PREF-DELL-IP;:address/&MODULE-PREF-DELL-IP;:primary-addr=${addr}">
+            <PARAM
+                name="addr-type"
+                help="IP address type"
+                ptype="SUBCOMMAND"
+                optional="true"
+                mode="switch">
+                <PARAM
+                    test='"${addr}" = "hide_primary"'
+                    help="Make this IP address a primary address"
+                    name="primary"
+                    mode="subcommand"
+                    db_flag="SKIP_NODE"
+                    ptype="SUBCOMMAND"/>
+                <PARAM
+                    help="Make this IP address a secondary address"
+                    name="secondary"
+                    mode="subcommand"
+                    ptype="SUBCOMMAND"
+                    sub_oper_yang="clear;remove:secondary-addr"
+                    refresh_yang_name="true"
+                    yang_name= "&LOOPBACK_NAME;,&INTF_IPV4_SEC_ADDR;=${addr}"/>
+                </PARAM>
+        </PARAM>
+        <ACTION
+            builtin="clish_nop"
+            ></ACTION>
+    </COMMAND>
+  </VIEW>
+<!--=======================================================-->
+<!--                Config Interface range  PHY-MODE              -->
+<!--=======================================================-->
+
+<VIEW name="configure-if-range-view">
+    <COMMAND
+        name="no ip address"
+        help="Set the IP address of an interface"
+        namespace="&MODULE-INTF-IP-NS;"
+        operation="edit-config"
+        sub_oper_yang="remove:dhcp-config,remove:address"
+        yang_name="&IP_RANGE_IFACE;=${ifacename},&IP_RANGE_INTF_INFO;/&MODULE-PREF-DELL-IP;:address,&IP_RANGE_INTF_INFO;/&MODULE-PREF-DELL-IP;:dhcp-config">
+        <ACTION
+             builtin="clish_nop">
+        </ACTION>
+    </COMMAND>
+</VIEW>
+<VIEW name="configure-vlan-range-view">
+    <COMMAND
+        name="no ip address"
+        help="Set the IP address of an interface"
+        namespace="&MODULE-INTF-IP-NS;"
+        operation="edit-config"
+        sub_oper_yang="remove:dhcp-config,remove:address"
+        yang_name="&IP_RANGE_IFACE;=${vlan_name},&IP_RANGE_INTF_INFO;/&MODULE-PREF-DELL-IP;:address,&IP_RANGE_INTF_INFO;/&MODULE-PREF-DELL-IP;:dhcp-config">
+        <ACTION
+             builtin="clish_nop">
+        </ACTION>
+    </COMMAND>
+</VIEW>
+<VIEW name="configure-lag-range-view">
+    <COMMAND
+        name="no ip address"
+        help="Set the IP address of an interface"
+        namespace="&MODULE-INTF-IP-NS;"
+        operation="edit-config"
+        sub_oper_yang="remove:dhcp-config,remove:address"
+        yang_name="&IP_RANGE_IFACE;=${portchanliface},&IP_RANGE_INTF_INFO;/&MODULE-PREF-DELL-IP;:address,&IP_RANGE_INTF_INFO;/&MODULE-PREF-DELL-IP;:dhcp-config">
+        <ACTION
+             builtin="clish_nop">
+        </ACTION>
+    </COMMAND>
+</VIEW>
+</CLISH_MODULE>

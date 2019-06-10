@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE CLISH_MODULE [
+<!ENTITY SUBTREE_FILTER "Filter_Type:SUBTREE">
+]>
+<CLISH_MODULE
+    xmlns="http://www.dellemc.com/force10/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xi="http://www.w3.org/2001/XInclude"
+    xsi:schemaLocation="http://www.dellemc.com/force10/XMLSchema
+            http://www.dellemc.com/force10/XMLSchema/clish.xsd">
+<!-- ********************************************************************** -->
+<!-- *  DEBUG ISCSI COMMANDS                                              * -->
+<!--
+debug iscsi [config | snoop | acl | cos | app-tlv ]
+-->
+<!-- *  View : enable-view                                                * -->
+<!-- ********************************************************************** -->
+    <VIEW name="enable-view">
+        <COMMAND name="debug iscsi"
+            help="Debug iscsi related information"
+            ptype="SUBCOMMAND"
+            operation="generic-rpc"
+            namespace="http://www.dellemc.com/networking/os10/dell-iscsi-optimization"
+            >
+            <PARAM name="flag"
+                help=""
+                ptype="SUBCOMMAND"
+                mode="switch">
+                <PARAM name="config"
+                       help="Debug iSCSI config"
+                       ptype="SUBCOMMAND"
+                       mode="subcommand"
+                       yang_name="/debug-iscsi/flag=config"
+                />
+                <PARAM name="snoop"
+                       help="Debug iSCSI snoop"
+                       ptype="SUBCOMMAND"
+                       mode="subcommand"
+                       yang_name="/debug-iscsi/flag=snoop"
+                />
+                <PARAM name="acl"
+                       help="Debug iSCSI acl"
+                       ptype="SUBCOMMAND"
+                       mode="subcommand"
+                       yang_name="/debug-iscsi/flag=acl"
+                />
+                <PARAM name="cos"
+                       help="Debug iSCSI cos"
+                       ptype="SUBCOMMAND"
+                       mode="subcommand"
+                       yang_name="/debug-iscsi/flag=cos"
+                />
+                <PARAM name="app-tlv"
+                       help="Debug iSCSI app-tlv"
+                       ptype="SUBCOMMAND"
+                       mode="subcommand"
+                       yang_name="/debug-iscsi/flag=app-tlv"
+                />
+            </PARAM>
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+    </VIEW>
+</CLISH_MODULE>

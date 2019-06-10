@@ -1,0 +1,404 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE CLISH_MODULE [
+<!ENTITY SYSTEM_NAME_SPACE          "http://www.dellemc.com/networking/os10/dell-system-software">
+<!ENTITY CMS_INTERNAL_NS            "http://www.dellemc.com/networking/os10/dell-cms-internal">
+<!ENTITY SUBTREE_FILTER             "Filter_Type:SUBTREE">
+<!ENTITY FILTER_SOFTWARE_VERSION    "&SUBTREE_FILTER;;Filter_Namespace:&SYSTEM_NAME_SPACE;;Filter_Conditions:/system-sw-state/sw-version">
+<!ENTITY FILTER_CMS_INTERNAL_CANDIDATE "&SUBTREE_FILTER;;Filter_Namespace:&CMS_INTERNAL_NS;;Filter_Conditions:/cms-interface-backptr/interface-in-candidate">
+<!ENTITY FILTER_CMS_INTERNAL_RUNNING "&SUBTREE_FILTER;;Filter_Namespace:&CMS_INTERNAL_NS;;Filter_Conditions:/cms-interface-backptr/interface-in-running">
+<!ENTITY FILTER_CMS_INTERNAL_STARTUP "&SUBTREE_FILTER;;Filter_Namespace:&CMS_INTERNAL_NS;;Filter_Conditions:/cms-interface-backptr/interface-in-startup">
+]>
+<CLISH_MODULE
+    xmlns="http://www.dellemc.com/force10/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xi="http://www.w3.org/2001/XInclude"
+    xsi:schemaLocation="http://www.dellemc.com/force10/XMLSchema
+						http://www.dellemc.com/force10/XMLSchema/clish.xsd"
+    >
+    <VIEW name="hidden-view" prompt="hidden-view">
+        <COMMAND name="!"
+                 help="Comments"
+                 args="args"
+                 args_help="Comments">
+                 <ACTION builtin="clish_nop"/>
+        </COMMAND>
+    </VIEW>
+    <!--=======================================================-->
+    <VIEW
+        name="enable-view"
+        prompt="${SYSTEM_NAME}# "
+        >
+        <NAMESPACE ref="hidden-view" help="false" completion="false"/>
+        <!-- Simple enable mode commands -->
+        <COMMAND
+            name="help"
+            help="Display available commands"
+            >
+            <ACTION
+                builtin="clish_help_command"
+                />
+        </COMMAND>
+        <COMMAND
+            name="terminal"
+            help="Set terminal settings"
+            />
+        <COMMAND
+            name="terminal length"
+            help="Set terminal length"
+            >
+                 <PARAM name="length"
+                        help="Number of lines on screen (0 for no pausing, default 24)"
+                        ptype="RANGE_0_512"/>
+            <ACTION builtin="clish_terminal_length">${length}</ACTION>
+        </COMMAND>
+        <COMMAND
+            name="terminal monitor"
+            help="Enable logging">
+            <ACTION builtin="clish_logger_on_off">1</ACTION>
+        </COMMAND>
+        <COMMAND
+            name="no"
+            help="No commands under exec mode"/>
+        <COMMAND
+            name="no terminal"
+            help="Reset terminal settings"/>
+        <COMMAND
+            name="no terminal monitor"
+            help="Disable logging">
+            <ACTION builtin="clish_logger_on_off">2</ACTION>
+        </COMMAND>
+        <COMMAND
+            name="show terminal"
+            help="Show terminal configurations for this session">
+        </COMMAND>
+        <COMMAND
+            name="show terminal monitor"
+            help="Show terminal monitor status for this session">
+            <ACTION builtin="clish_logger_on_off">3</ACTION>
+        </COMMAND>
+        <COMMAND
+            name="exit"
+            help="Exit from the CLI"
+            lock="false"
+            >
+            <ACTION
+                builtin="clish_close"
+                />
+        </COMMAND>
+        <COMMAND
+            name="clear"
+            access="sysadmin"
+            help="Clear command"
+            >
+        </COMMAND>
+        <COMMAND
+            name="debug"
+            access="sysadmin"
+            help="Debug command">
+        </COMMAND>
+        <COMMAND
+            name="debug cli"
+            help="Debug CLI module"/>
+        <COMMAND
+            name="debug cli netconf"
+            help="Enable debugging on cli netconf">
+            <ACTION builtin="debug_on_off">1</ACTION>
+        </COMMAND>
+        <COMMAND
+            name="no debug"
+            help="Disable debugging"/>
+        <COMMAND
+            name="no debug cli"
+            help="Disable debugging on cli"/>
+        <COMMAND
+            name="no debug cli netconf"
+            help="Disable debugging on cli netconf">
+            <ACTION builtin="debug_on_off">2</ACTION>
+        </COMMAND>
+        <COMMAND
+            name="configure" access="sysadmin"
+            help="Enter configuration mode"
+            />
+        <COMMAND
+            name="configure terminal" access="sysadmin"
+            help="Configure from the terminal"
+            view="configure-view"
+            >
+    </COMMAND>
+        <!-- Show commands -->
+        <COMMAND help="Collection of show commands" name="show tech-support">
+            <PARAM
+                name="page"
+                help="Page through output"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                optional="true"
+            />
+            <ACTION builtin="clish_show_batch_plugin">${CLISH_PATH}/tech_support.txt</ACTION>
+        </COMMAND>
+
+        <COMMAND
+            name="show"
+            help="Show running system information"
+            />
+        <COMMAND
+            name="show diag"
+            help="Show diagnostic information for port adapters/modules"
+            >
+            <ACTION>lspci</ACTION>
+        </COMMAND>
+        <COMMAND
+            name="show parser-tree"
+            help="Show parser tree"
+            >
+            <ACTION builtin="clish_show_parser_tree"> </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="show running-configuration"
+            help="Current operating configuration"
+            operation="get-config"
+            prompt_fn="show_config_cb"
+            prompt_oper="&FILTER_SOFTWARE_VERSION;|&FILTER_CMS_INTERNAL_RUNNING;"
+            >
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="show candidate-configuration"
+            help="Current candidate configuration"
+            operation="get-config"
+            prompt_fn="show_config_cb"
+            prompt_oper="&FILTER_SOFTWARE_VERSION;|&FILTER_CMS_INTERNAL_CANDIDATE;"
+            >
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="show running-configuration compressed"
+            help="Current operating configuration in compressed format"
+            operation="get-config"
+            prompt_fn="show_config_cb"
+            prompt_oper="&FILTER_SOFTWARE_VERSION;|&FILTER_CMS_INTERNAL_RUNNING;"
+            >
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="show candidate-configuration compressed"
+            help="Current candidate configuration in compressed format"
+            operation="get-config"
+            prompt_fn="show_config_cb"
+            prompt_oper="&FILTER_SOFTWARE_VERSION;|&FILTER_CMS_INTERNAL_CANDIDATE;"
+            >
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="show startup-configuration"
+            help="Contents of startup configuration"
+            operation="get-config"
+            prompt_fn="show_config_cb"
+            prompt_oper="&FILTER_SOFTWARE_VERSION;|&FILTER_CMS_INTERNAL_STARTUP;"
+            >
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="show startup-configuration compressed"
+            help="Contents of startup configuration inn compressed format"
+            operation="get-config"
+            prompt_fn="show_config_cb"
+            prompt_oper="&FILTER_SOFTWARE_VERSION;|&FILTER_CMS_INTERNAL_STARTUP;"
+            >
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="show diff"
+            help="Display differences between two configuration set"
+            prompt_fn="diff_config"
+            >
+            <PARAM
+                name="src-options"
+                help="Run diff"
+                ptype="SUBCOMMAND"
+                mode="switch"
+                >
+				<PARAM
+					name="running-configuration"
+					help="running config"
+					ptype="SUBCOMMAND"
+					mode="subcommand"
+					/>
+				<PARAM
+					name="candidate-configuration"
+					help="candidate config"
+					ptype="SUBCOMMAND"
+					mode="subcommand"
+					/>
+				<PARAM
+					name="startup-configuration"
+					help="startup config"
+					ptype="SUBCOMMAND"
+					mode="subcommand"
+					/>
+            </PARAM>
+            <PARAM
+                name="dst-options"
+                help="Run diff"
+                ptype="SUBCOMMAND"
+                mode="switch"
+                >
+				<PARAM
+					name="running-configuration"
+                    test='"${src-options}"!="running-configuration"'
+					help="running config"
+					ptype="SUBCOMMAND"
+					mode="subcommand"
+					prompt_oper="${src-options},${dst-options}"
+					/>
+				<PARAM
+					name="candidate-configuration"
+                    test='"${src-options}"!="candidate-configuration"'
+					help="candidate config"
+					ptype="SUBCOMMAND"
+					mode="subcommand"
+					prompt_oper="${src-options},${dst-options}"
+					/>
+				<PARAM
+					name="startup-configuration"
+                    test='"${src-options}"!="startup-configuration"'
+					help="startup config"
+					ptype="SUBCOMMAND"
+					mode="subcommand"
+					prompt_oper="${src-options},${dst-options}"
+					/>
+            </PARAM>
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+        <COMMAND name="show exec-timeout"
+                 help="Show the timeout value of CLI session (in seconds)"
+                 operation="get"
+                 yang_filter="Filter_Type:SUBTREE;Filter_Conditions:/session-config;Filter_Namespace:http://www.dellemc.com/networking/os10/dell-session"
+                 template="show_session_cli_timeout.xsl">
+                 <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+        <COMMAND name="show cli-session"
+                 help="This command is deprecated please use 'show sessions' instead"
+                 operation="get"
+                 template="show_session.xsl"
+                 template_param="curr_sessid= __ncsessionid"
+                 yang_filter="Filter_Type:SUBTREE;Filter_Conditions:/netconf-state/sessions,/netconf-state/datastores;Filter_Namespace:urn:ietf:params:xml:ns:yang:ietf-netconf-monitoring">
+                 <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+
+        <COMMAND name="show sessions"
+                 help="Show active management sessions"
+                 operation="get"
+                 template="show_active_sessions.xsl"
+                 template_param="curr_sessid= __ncsessionid"
+                 yang_filter="Filter_Type:SUBTREE;Filter_Conditions:/netconf-state/sessions,/netconf-state/datastores;Filter_Namespace:urn:ietf:params:xml:ns:yang:ietf-netconf-monitoring">
+                 <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+
+        <COMMAND name="show command-history"
+                help="shows command history of the current user">
+                 <PARAM name="limit"
+                      help="Display last N lines in the history"
+                      ptype="RANGE_1_5000"
+                      optional="true"
+                      />
+              <ACTION builtin="clish_history"> ${limit}</ACTION>
+        </COMMAND>
+
+        <COMMAND name="kill-session" access="sysadmin"
+                 help="Kill a CLISH session"
+                 operation="kill">
+                 <PARAM name="session-id"
+                        help="Session ID"
+                        ptype="UINT"/>
+                 <ACTION builtin="clish_extn">${session-id}</ACTION>
+        </COMMAND>
+        <!-- Write commands -->
+        <COMMAND
+            name="write" access="sysadmin"
+            help="Copy from current system configuration"
+            />
+        <COMMAND
+            name="write memory" access="sysadmin"
+            help="Copy current system configuration to startup configuration"
+            operation="copy-config"
+            >
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+        <!-- Batch mode -->
+        <!-- TBD - Provision to accept URI where the file could be local or remote file -->
+        <COMMAND
+            name="batch" access="sysadmin"
+            help="Batch Mode"
+            >
+            <PARAM
+            name="batch_cmd"
+            help="Enter the batch config filename along with its filepath"
+            ptype="STRING">
+            </PARAM>
+            <ACTION builtin="clish_batch_mode"> ${batch_cmd}</ACTION>
+        </COMMAND>
+        <!-- Special commands -->
+        <COMMAND
+            name="commit" access="sysadmin"
+            help="Commit candidate configuration"
+            operation="commit"
+            >
+            <ACTION
+                builtin="clish_extn"
+                ></ACTION>
+        </COMMAND>
+        <COMMAND
+            name="discard" access="sysadmin"
+            help="Discard candidate configuration"
+            operation="discard-changes"
+            >
+            <ACTION
+                builtin="clish_extn"
+                ></ACTION>
+        </COMMAND>
+        <COMMAND
+            name="validate" access="sysadmin"
+            help="Validate candidate configuration"
+            operation="validate"
+            >
+            <ACTION
+                builtin="clish_extn"
+                ></ACTION>
+        </COMMAND>
+        <COMMAND
+            name="lock" access="sysadmin"
+            help="Lock candidate configuration"
+            operation="lock"
+            template="lock.xsl"
+            >
+            <ACTION
+                builtin="clish_extn"
+                ></ACTION>
+        </COMMAND>
+        <COMMAND
+            name="unlock" access="sysadmin"
+            help="Unlock candidate configuration"
+            operation="unlock"
+            template="lock.xsl"
+            >
+            <ACTION
+                builtin="clish_extn"
+                ></ACTION>
+        </COMMAND>
+        <COMMAND
+            name="system"
+            help="System command"
+            >
+            <PARAM
+                name="cmd"
+                help="Enter the linux command to execute"
+                ptype="STRING_WITH_PIPE"
+                >
+            </PARAM>
+            <ACTION>
+                ${cmd}
+            </ACTION>
+        </COMMAND>
+    </VIEW>
+</CLISH_MODULE>

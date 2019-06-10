@@ -1,0 +1,747 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE ROOT [
+<!ENTITY NS_FILTER "http://www.dellemc.com/networking/os10/dell-bgp">
+]>
+<!-- ************************************************************* -->
+<!-- *********************  NEIGHBOR COMMANDS  ******************* -->
+<!-- ************************************************************* -->
+<ROOT>
+    <MACRODEF name="AF_CMDS" >
+        <COMMAND
+            name="address-family"
+            help="Enter Address Family command mode"
+            namespace="&NS_FILTER;"
+            operation="edit-config"
+            mode="subcommand"
+            />
+        <COMMAND
+            name="address-family ipv4"
+            help="Enter Address Family command mode"
+            namespace="&NS_FILTER;"
+            operation="edit-config"
+            mode="subcommand"
+            />
+        <COMMAND
+            name="address-family ipv6"
+            help="Enter Address Family command mode"
+            namespace="&NS_FILTER;"
+            operation="edit-config"
+            mode="subcommand"
+            />
+    </MACRODEF>
+
+    <!-- commands common for neighbor and template -->
+    <MACRODEF name="NEIGHBOR_CMDS">
+        <COMMAND
+            name="advertisement-interval"
+            help="Minimum interval between sending BGP routing updates"
+            namespace="&NS_FILTER;"
+            operation="edit-config"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            >
+            <PARAM
+                name="interval"
+                help="Time in seconds (default = 30)"
+                ptype="RANGE_1_600"
+                yang_name="arg1/advertisement-interval=${interval}"
+                />
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="advertisement-start"
+            help="Delay initiating OPEN message for the specified time"
+            namespace="&NS_FILTER;"
+            operation="edit-config"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            >
+            <PARAM
+                name="interval"
+                help="Time in seconds"
+                ptype="RANGE_0_240"
+                yang_name="arg1/advertisement-start=${interval}"
+                />
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="connection-retry-timer"
+            help="Peer connection retry timer"
+            operation="edit-config"
+            namespace="&NS_FILTER;"
+            mode="subcommand"
+            >
+            <PARAM
+                name="timer"
+                help="Connect Retry Interval (default = 60)"
+                ptype="RANGE_10_65535"
+                yang_name="arg1/connection-retry-timer=${timer}"
+                />
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="ebgp-multihop"
+            help="Allow EBGP neighbors not on directly connected networks"
+            namespace="&NS_FILTER;"
+            operation="edit-config"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            >
+            <PARAM
+                name="count"
+                help="Maximum hop count (default = 1)"
+                ptype="RANGE_1_255"
+                yang_name="arg1/ebgp-multihop-count=${count}"
+                />
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="fall-over"
+            help="Session fall on peer route loss"
+            namespace="&NS_FILTER;"
+            operation="edit-config"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            yang_name="arg1/fall-over"
+            >
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="inherit"
+            help="Inherit a template"
+            namespace="&NS_FILTER;"
+            operation="edit-config"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            >
+            <PARAM
+                name="template"
+                help="Inherit configuration of peer-group"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                >
+                <PARAM
+                    name="peer-grp"
+                    help="Name of peer-group from which to inherit"
+                    ptype="STRING"
+                    yang_name="arg1/associate-peer-group=${peer-grp}"
+                    />
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="local-as"
+            help="Specify a local-as number for this peer"
+            namespace="&NS_FILTER;"
+            operation="edit-config"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            >
+            <PARAM
+                name="as-num"
+                help="AS number to be used as local AS"
+                ptype="RANGE_1_4294967295"
+                yang_name="arg1/local-as/as-number=${as-num}"
+                >
+                <PARAM
+                    name="no-prepend"
+                    help="Do not prepend local AS to updates from this peer"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    optional="true"
+                    yang_name="arg2/local-as/no-prepend=true"
+                    />
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="password"
+            help="Set a password"
+            namespace="&NS_FILTER;"
+            operation="edit-config"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            >
+            <PARAM
+                 name="passwd"
+                 help="MD5 password for authentication (max 128 chars)"
+                 ptype="STRING"
+                 yang_name="arg1/password=${passwd}"
+                 />
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="remote-as"
+            help="Specify a BGP neighbor"
+            namespace="&NS_FILTER;"
+            operation="edit-config"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            >
+            <PARAM
+                name="as-num"
+                help="AS of remote neighbor"
+                ptype="RANGE_1_4294967295"
+                yang_name="arg1/remote-as=${as-num}"
+                />
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="remove-private-as"
+            help="Remove private AS number from outbound updates"
+            namespace="&NS_FILTER;"
+            operation="edit-config"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            yang_name="arg1/remove-private-as=true"
+            >
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="route-reflector-client"
+            help="Configure a neighbor as Route Reflector client"
+            ptype="SUBCOMMAND"
+            namespace="&NS_FILTER;"
+            operation="edit-config"
+            mode="subcommand"
+            yang_name="arg1/route-reflector-client=true"
+            >
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="send-community"
+            help="Send community attribute to this neighbor"
+            namespace="&NS_FILTER;"
+            operation="edit-config"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            >
+            <PARAM
+                name="community-commands"
+                help="community-sub-commands"
+                ptype="SUBCOMMAND"
+                mode="switch"
+                >
+                <PARAM
+                    name="extended"
+                    help="Send extended community attribute"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    yang_name="arg1/send-community-extended=true"
+                    />
+                <PARAM
+                    name="standard"
+                    help="Send standard community attribute"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    yang_name="arg1/send-community-standard=true"
+                    />
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="timers"
+            help="Adjust routing timers"
+            namespace="&NS_FILTER;"
+            operation="edit-config"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            >
+            <PARAM
+                name="alive"
+                help="Keepalive interval (default = 60)"
+                ptype="RANGE_1_65535"
+                yang_name="arg1/timers/config-keepalive=${alive}"
+                >
+                <PARAM
+                    name="hold"
+                    help="Holdtime (default = 180)"
+                    ptype="RANGE_3_65535"
+                    yang_name="arg2/timers/config-hold-time=${hold}"
+                    />
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="update-source"
+            help="Source of routing updates"
+            namespace="&NS_FILTER;"
+            operation="edit-config"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            >
+            <PARAM
+                    name="loopback-if-name"
+                    help="Loopback interface identifier"
+                    ptype="LOOPBACK_INTERFACE"
+                    yang_name="arg1/update-source-interface=${loopback-if-name}"
+                    />
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="weight"
+            help="Set default weight for routes from this neighbor interface"
+            namespace="&NS_FILTER;"
+            operation="edit-config"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            >
+            <PARAM
+                name="num"
+                help="Default weight (default = 0)"
+                ptype="RANGE_1_4294967295"
+                yang_name="arg1/weight=${num}"
+                />
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+    </MACRODEF>
+    <!-- commands for neighbor only -->
+    <MACRODEF name="NEIGHBOR_ONLY_CMDS" >
+        <COMMAND
+            name="shutdown"
+            help="Shutdown a neighbor"
+            ptype="SUBCOMMAND"
+            namespace="&NS_FILTER;"
+            operation="edit-config"
+            mode="subcommand"
+            add_config_entry = "false"
+            yang_name="arg1/shutdown-status=true"
+            >
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+    </MACRODEF>
+<!-- ************************************************************* -->
+<!-- *********************  NEIGHBOR AF COMMANDS  **************** -->
+<!-- ************************************************************* -->
+    <MACRODEF name="AF_NBR_CMDS" >
+        <COMMAND
+            name="add-path"
+            help="Send or Receive multiple paths"
+            namespace="&NS_FILTER;"
+            operation="edit-config"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            >
+            <PARAM
+                name="add-path-commands"
+                help="add-path-sub-commands"
+                ptype="SUBCOMMAND"
+                mode="switch"
+                >
+                <PARAM
+                    name="both"
+                    help="Both receive and send multiple paths"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    yang_name="arg1/add-path/capability=both"
+                    >
+                    <PARAM
+                        name="path-count"
+                        help="Number of paths to advertise"
+                        ptype="RANGE_2_64"
+                        yang_name="arg2/add-path/count=${path-count}"
+                        />
+                </PARAM>
+                <PARAM
+                    name="receive"
+                    help="Receive multiple paths from peer"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    yang_name="arg1/add-path/capability=receive"
+                    />
+                <PARAM
+                    name="send"
+                    help="Send multiple paths to peer"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    yang_name="arg1/add-path/capability=send"
+                    >
+                    <PARAM
+                        name="path-count"
+                        help="Number of paths to advertise"
+                        ptype="RANGE_2_64"
+                        yang_name="arg2/add-path/count=${path-count}"
+                        />
+                </PARAM>
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="allowas-in"
+            help="Allow local AS number in as-path"
+            namespace="&NS_FILTER;"
+            operation="edit-config"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            >
+            <PARAM
+                name="as-num"
+                help="Number of occurences of AS number (range 1..10)"
+                ptype="RANGE_1_10"
+                yang_name="arg1/allowas-in=${as-num}"
+                />
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="default-originate"
+            help="Originate default route to this neighbor"
+            namespace="&NS_FILTER;"
+            operation="edit-config"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            yang_name="arg1/default-originate/status"
+            >
+            <PARAM
+                name="default-originate-commands"
+                help="default-originate-sub-commands"
+                optional="true"
+                ptype="SUBCOMMAND"
+                mode="switch"
+                >
+                <PARAM
+                    name="route-map"
+                    help="Route-map to specify criteria to originate default"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    >
+                    <PARAM
+                        name="map-name"
+                        help="Route-map name (max 140 chars)"
+                        ptype="STRING"
+                        yang_name="arg2/default-originate/route-map=${map-name}"
+                        />
+                </PARAM>
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="distribute-list"
+            help="Filter networks in routing updates"
+            namespace="&NS_FILTER;"
+            operation="edit-config"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            db_flag="SEP_CLI"
+            >
+            <PARAM
+                name="name"
+                help="Prefix list name (max 140 chars)"
+                ptype="STRING"
+                db_multi_yang_name="arg2/distribute-list-name-in,arg2/distribute-list-name-out"
+                >
+                <PARAM
+                    name="distribute-list-commands"
+                    help="distribute-list-sub-commands"
+                    ptype="SUBCOMMAND"
+                    mode="switch"
+                    db_flag="SEP_CLI"
+                    >
+                    <PARAM
+                        name="in"
+                        help="Apply policy to incoming routes"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        yang_name="arg1/distribute-list-name-in=${name}"
+                        />
+                    <PARAM
+                        name="out"
+                        help=" Apply policy to outgoing routes"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        yang_name="arg1/distribute-list-name-out=${name}"
+                        />
+                </PARAM>
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="maximum-prefix"
+            help="Maximum number of prefixes accepted from this peer"
+            namespace="&NS_FILTER;"
+            operation="edit-config"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            yang_name="arg1"
+            >
+            <PARAM
+                name="prefix"
+                help="Maximum no. of prefix limit (default = none)"
+                ptype="RANGE_1_4294967295"
+                yang_name="arg2/max-prefix/count=${prefix}"
+                >
+                <PARAM
+                    name="value"
+                    help="Threshold value (%) at which to generate a warning msg (default = 75)"
+                    ptype="RANGE_1_100"
+                    optional="true"
+                    yang_name="arg2/max-prefix/threshold=${value}"
+                    />
+               <PARAM
+                   name="warning-only"
+                   help="Only give warning message when limit is exceeded"
+                   ptype="SUBCOMMAND"
+                   optional="true"
+                   order="true"
+                   mode="subcommand"
+                   yang_name="arg2/max-prefix/warning-only=true"
+                   />
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="next-hop-self"
+            help="Disable the next hop calculation for this neighbor"
+            namespace="&NS_FILTER;"
+            operation="edit-config"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            add_config_entry = "true"
+            yang_name="arg1/next-hop-self=true"
+            >
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="route-map"
+            help="Name of the route map (max 140 chars)"
+            namespace="&NS_FILTER;"
+            operation="edit-config"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            db_flag="SEP_CLI"
+            >
+            <PARAM
+                name="name"
+                help="Route-map name (max 140 chars)"
+                ptype="STRING"
+                db_multi_yang_name="arg2/route-map-in,arg2/route-map-out"
+                >
+                <PARAM
+                    name="route-map-commands"
+                    help="route-map-sub-commands"
+                    ptype="SUBCOMMAND"
+                    mode="switch"
+                    db_flag="SEP_CLI"
+                    >
+                    <PARAM
+                        name="in"
+                        help="Filter incoming routing updates"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        yang_name="arg1/route-map-in=${name}"
+                        />
+                    <PARAM
+                        name="out"
+                        help="Filter outgoing routing updates"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        yang_name="arg1/route-map-out=${name}"
+                        />
+                </PARAM>
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="sender-side-loop-detection"
+            help="Sender side loop detect for neighbor"
+            namespace="&NS_FILTER;"
+            operation="edit-config"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            add_config_entry = "false"
+            yang_name="arg1/sender-side-loop-detection=true"
+            >
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="soft-reconfiguration"
+            help="Per neighbor soft reconfiguration"
+            namespace="&NS_FILTER;"
+            operation="edit-config"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            >
+            <PARAM
+                name="inbound"
+                help="Allow inbound soft reconfiguration for this neighbor"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                yang_name="arg1/soft-reconfiguration-inbound"
+                />
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+    </MACRODEF>
+<!-- ************************************************************* -->
+<!-- *********************  TEMPLATE AF COMMANDS  **************** -->
+<!-- ************************************************************* -->
+    <MACRODEF name="TEMPLATE_AF_NBR_CMDS" >
+        <COMMAND
+            name="default-originate"
+            help="Originate default route to this neighbor"
+            namespace="&NS_FILTER;"
+            operation="edit-config"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            yang_name="arg1/default-originate/status"
+            >
+            <PARAM
+                name="default-originate-commands"
+                help="default-originate-sub-commands"
+                optional="true"
+                ptype="SUBCOMMAND"
+                mode="switch"
+                >
+                <PARAM
+                    name="route-map"
+                    help="Route-map to specify criteria to originate default"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    >
+                    <PARAM
+                        name="map-name"
+                        help="Route-map name (max 140 chars)"
+                        ptype="STRING"
+                        yang_name="arg2/default-originate/route-map=${map-name}"
+                        />
+                </PARAM>
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="distribute-list"
+            help="Filter networks in routing updates"
+            namespace="&NS_FILTER;"
+            operation="edit-config"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            db_flag="SEP_CLI"
+            >
+            <PARAM
+                name="name"
+                help="Prefix list name (max 140 chars)"
+                ptype="STRING"
+                db_multi_yang_name="arg2/distribute-list-name-in,arg2/distribute-list-name-out"
+                >
+                <PARAM
+                    name="distribute-list-commands"
+                    help="distribute-list-sub-commands"
+                    ptype="SUBCOMMAND"
+                    mode="switch"
+                    db_flag="SEP_CLI"
+                    >
+                    <PARAM
+                        name="in"
+                        help="Apply policy to incoming routes"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        yang_name="arg1/distribute-list-name-in=${name}"
+                        />
+                    <PARAM
+                        name="out"
+                        help=" Apply policy to outgoing routes"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        yang_name="arg1/distribute-list-name-out=${name}"
+                        />
+                </PARAM>
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="route-map"
+            help="Name of the route map (max 140 chars)"
+            namespace="&NS_FILTER;"
+            operation="edit-config"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            db_flag="SEP_CLI"
+            >
+            <PARAM
+                name="name"
+                help="Route-map name (max 140 chars)"
+                ptype="STRING"
+                db_multi_yang_name="arg2/route-map-in,arg2/route-map-out"
+                >
+                <PARAM
+                    name="route-map-commands"
+                    help="route-map-sub-commands"
+                    ptype="SUBCOMMAND"
+                    mode="switch"
+                    db_flag="SEP_CLI"
+                    >
+                    <PARAM
+                        name="in"
+                        help="Filter incoming routing updates"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        yang_name="arg1/route-map-in=${name}"
+                        />
+                    <PARAM
+                        name="out"
+                        help="Filter outgoing routing updates"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        yang_name="arg1/route-map-out=${name}"
+                        />
+                </PARAM>
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+    </MACRODEF>
+</ROOT>
+

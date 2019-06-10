@@ -1,0 +1,399 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE CLISH_MODULE [
+<!ENTITY NAME_SPACE                     "http://www.dellemc.com/networking/os10/dell-tracker">
+<!ENTITY MODULE-DELL-OTM 	"dell-tracker">
+<!ENTITY TRACK_NS_FILTER             "Filter_Namespace:&NAME_SPACE;">
+<!ENTITY SUBTREE_FILTER                 "Filter_Type:SUBTREE">
+<!ENTITY OTM_CONFIG                    "/track-config">
+<!ENTITY TRACK_INST_ID                  "&OTM_CONFIG;/objects/track-id">
+<!ENTITY TRACK_INST_KEY                 "&TRACK_INST_ID;=${v_trackid}">
+<!ENTITY TRACK_INST_OBJ_INTERFACE       "&OTM_CONFIG;/objects/track-config-params/interface">
+<!ENTITY TRACK_INST_OBJ_HOST       "&OTM_CONFIG;/objects/track-config-params/next-hop-host">
+<!ENTITY TRACK_INST_OBJ_PROBE_INTERVAL       "&OTM_CONFIG;/objects/track-config-params/probe-interval">
+<!ENTITY TRACK_INST_OBJ_UP_DELAY       "&OTM_CONFIG;/objects/track-config-params/up-delay">
+<!ENTITY TRACK_INST_OBJ_DOWN_DELAY       "&OTM_CONFIG;/objects/track-config-params/down-delay">
+]>
+
+<CLISH_MODULE
+    xmlns="http://www.dellemc.com/force10/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xi="http://www.w3.org/2001/XInclude"
+    xsi:schemaLocation="http://www.dellemc.com/force10/XMLSchema
+                        http://www.dellemc.com/force10/XMLSchema/clish.xsd"
+    >
+
+    <!--=================================================================-->
+    <!-- ********************************************************************** -->
+    <!-- *  CONFIGURATION COMMANDS                                            * -->
+    <!-- *  View : configure-view                                             * -->
+    <!-- ********************************************************************** -->
+    <VIEW
+        name="configure-view"
+        >
+		<COMMAND
+            name="track"
+            help="Configure object tracking"
+            operation="edit-config"
+			view="configure-track-view"
+			viewid="v_trackid=${track-id}"
+			yang_key="&TRACK_INST_ID;"
+            namespace="&NAME_SPACE;"
+            >
+            <PARAM
+                name="track-id"
+                help="Object tracking resource ID"
+                ptype="RANGE_1_500"
+                yang_name="&TRACK_INST_ID;=${track-id}" >
+
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                >
+            </ACTION>
+        </COMMAND>
+		<COMMAND
+            name="no track"
+            help="Configure object tracking"
+            operation="edit-config"
+			sub_oper_yang="remove:objects"
+			viewid="v_trackid=${track-id}"
+			yang_key="&TRACK_INST_ID;=${track-id}"
+            namespace="&NAME_SPACE;"
+            >
+            <PARAM
+                name="track-id"
+                help="Object tracking resource ID"
+                ptype="RANGE_1_500"
+                yang_name="&TRACK_INST_ID;=${track-id}" >
+
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                >
+            </ACTION>
+        </COMMAND>
+	</VIEW>
+	
+	
+	<!--=======================================================-->
+    <!--                CONFIGURE-TRACK MODE config               -->
+    <!--=======================================================-->
+    <VIEW
+		name="configure-track-view"
+		prompt="${SYSTEM_NAME}(conf-track-${v_trackid})# "
+		depth="2" >
+    <NAMESPACE ref="configure-view"
+              help="false"
+                    completion="false"/>
+
+        <COMMAND
+            name="show"
+            help="Show configuration"
+            />
+		<COMMAND
+            name="show configuration"
+            help="Current configuration (default = running)"
+            yang_filter="&TRACK_NS_FILTER;;&SUBTREE_FILTER;;Filter_Conditions:&TRACK_INST_KEY;">
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+
+		<COMMAND
+			name="interface"
+			help="Select an interface to track"
+			operation="edit-config"
+			namespace="&NAME_SPACE;"
+			ptype="SUBCOMMAND"
+            mode="subcommand" >
+            <PARAM
+                name="interface_opt"
+                help="Specifies an Interface"
+                ptype="SUBCOMMAND"
+                mode="switch"
+                >
+                <PARAM
+                    name="piface_name"
+                    help="Physical interface"
+                    ptype="PHY_INTERFACE"
+                    yang_name="&TRACK_INST_KEY;,&TRACK_INST_OBJ_INTERFACE;=${piface_name}" >
+                    <PARAM
+                        name="line-protocol"
+                        help="Track the interface line protocol status."
+                        ptype="SUBCOMMAND"
+                        mode="subcommand">
+                    </PARAM>
+                </PARAM>						
+                <PARAM
+                    name="poiface"
+                    help="Port-channel identifier"
+                    ptype="PO_INTERFACE"
+                    yang_name="&TRACK_INST_KEY;,&TRACK_INST_OBJ_INTERFACE;=${poiface}" >
+                    <PARAM
+                        name="line-protocol"
+                        help="Track the interface line protocol status."
+                        ptype="SUBCOMMAND"
+                        mode="subcommand">
+                    </PARAM>
+                </PARAM>						
+                <PARAM
+                    name="vliface"
+                    help="Vlan identifier"
+                    ptype="VLAN_INTERFACE"
+                    yang_name="&TRACK_INST_KEY;,&TRACK_INST_OBJ_INTERFACE;=${vliface}" >
+                    <PARAM
+                        name="line-protocol"
+                        help="Track the interface line protocol status."
+                        ptype="SUBCOMMAND"
+                        mode="subcommand">
+                    </PARAM>
+                </PARAM>											
+                <PARAM
+                    name="loiface"
+                    help="Loopback interface identifier"
+                    ptype="LOOPBACK_INTERFACE"
+                    yang_name="&TRACK_INST_KEY;,&TRACK_INST_OBJ_INTERFACE;=${loiface}" >
+                    <PARAM
+                        name="line-protocol"
+                        help="Track the interface line protocol status."
+                        ptype="SUBCOMMAND"
+                        mode="subcommand">
+                    </PARAM>
+                </PARAM>																
+                <PARAM
+                    name="mgiface"
+                    help="Management interface"
+                    ptype="MGMT_INTERFACE"
+                    yang_name="&TRACK_INST_KEY;,&TRACK_INST_OBJ_INTERFACE;=${mgiface}" >
+                    <PARAM
+                        name="line-protocol"
+                        help="Track the interface line protocol status."
+                        ptype="SUBCOMMAND"
+                        mode="subcommand">
+                    </PARAM>
+                </PARAM>	
+            </PARAM>
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="no"
+            help="Track unconfig"
+            operation="edit-config"/>
+
+        <COMMAND
+            name="no interface"
+            help="Select an interface to track"
+			operation="edit-config"
+			namespace="&NAME_SPACE;"
+            ptype="SUBCOMMAND"
+            yang_name="&TRACK_INST_KEY;"
+			mode="subcommand" >
+
+			<PARAM
+				name="track-if-name"
+				help="Ethernet interface"
+                ptype="ALL_INTERFACE"
+                sub_oper_yang="remove:interface"
+				yang_name="&TRACK_INST_OBJ_INTERFACE;=${track-if-name}" >
+			</PARAM>
+			<ACTION builtin="clish_extn"> </ACTION>
+		</COMMAND>
+		
+		<COMMAND
+			name="ip"
+			help="Track the host"
+			operation="edit-config"
+			namespace="&NAME_SPACE;"
+			ptype="SUBCOMMAND"
+			mode="subcommand" >
+
+			<PARAM
+				name="host"
+				help="Track the host"
+				ptype="IP_ADDR"
+                yang_name="&TRACK_INST_KEY;,&TRACK_INST_OBJ_HOST;=${host}">
+
+				<PARAM
+					name="reachability"
+					help="Track next hop reachability"
+					ptype="SUBCOMMAND"
+					mode="subcommand">
+				</PARAM>
+			</PARAM>
+			<ACTION builtin="clish_extn"> </ACTION>
+		</COMMAND>
+		
+		<COMMAND
+			name="ipv6"
+			help="Track the host"
+			operation="edit-config"
+			namespace="&NAME_SPACE;"
+			ptype="SUBCOMMAND"
+			mode="subcommand" >
+
+			<PARAM
+				name="host"
+				help="Track the host"
+				ptype="IPV6_ADDR"
+                yang_name="&TRACK_INST_KEY;,&TRACK_INST_OBJ_HOST;=${host}">
+
+				<PARAM
+					name="reachability"
+					help="Track next hop reachability"
+					ptype="SUBCOMMAND"
+					mode="subcommand">
+				</PARAM>
+			</PARAM>
+			<ACTION builtin="clish_extn"> </ACTION>
+		</COMMAND>
+		
+		<COMMAND
+			name="no ip"
+			help="Track the host"
+			operation="edit-config"
+			namespace="&NAME_SPACE;"
+			ptype="SUBCOMMAND"
+			mode="subcommand" >
+
+			<PARAM
+				name="host"
+				help="Track the host"
+                ptype="IP_ADDR"
+                sub_oper_yang="remove:next-hop-host"
+				yang_name="&TRACK_INST_KEY;,&TRACK_INST_OBJ_HOST;=${host}" >
+			</PARAM>
+			<ACTION builtin="clish_extn"> </ACTION>
+		</COMMAND>
+		
+		<COMMAND
+			name="no ipv6"
+			help="Track the host"
+			operation="edit-config"
+			namespace="&NAME_SPACE;"
+			ptype="SUBCOMMAND"
+			mode="subcommand" >
+			<PARAM
+				name="host"
+				help="Track the host"
+                ptype="IPV6_ADDR"
+                sub_oper_yang="remove:next-hop-host"
+				yang_name="&TRACK_INST_KEY;,&TRACK_INST_OBJ_HOST;=${host}" >
+
+			</PARAM>
+			<ACTION builtin="clish_extn"> </ACTION>
+		</COMMAND>
+		
+		<COMMAND
+			name="reachability-refresh"
+			help="Modify reachability polling interval"
+			operation="edit-config"
+			namespace="&NAME_SPACE;"
+			ptype="SUBCOMMAND"
+			mode="subcommand" >
+
+			<PARAM
+				name="probe_interval"
+				help="Interval in seconds (default = 0)"
+				ptype="RANGE_0_3600"
+				yang_name="&TRACK_INST_KEY;,&TRACK_INST_OBJ_PROBE_INTERVAL;=${probe_interval}" >
+		
+			</PARAM>
+			<ACTION builtin="clish_extn"> </ACTION>
+		</COMMAND>
+		<COMMAND
+			name="no reachability-refresh"
+			help="Modify reachability polling interval"
+			operation="edit-config"
+			namespace="&NAME_SPACE;"
+			ptype="SUBCOMMAND"
+			mode="subcommand" >
+
+			<PARAM
+				name="probe_interval"
+				help="Interval in seconds (default = 0)"
+				ptype="RANGE_0_3600"
+                sub_oper_yang="remove:probe-interval"
+				yang_name="&TRACK_INST_KEY;,&TRACK_INST_OBJ_PROBE_INTERVAL;=${probe_interval}" >
+		
+			</PARAM>
+			<ACTION builtin="clish_extn"> </ACTION>
+		</COMMAND>
+		
+		<COMMAND
+			name="delay"
+            help="Up/down delay"
+			operation="edit-config"
+			namespace="&NAME_SPACE;"
+			ptype="SUBCOMMAND"
+            mode="subcommand" >
+            <PARAM
+                name="delay Options"
+                help="Choose one option"
+                ptype="SUBCOMMAND"
+                mode="switch"
+                >
+
+                <PARAM
+                    name="up"
+                    help="UP delay time"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand">
+
+                    <PARAM
+                        name="up_delay"
+                        help="Delay in seconds (default = 0)"
+                        ptype="RANGE_0_180"
+                        yang_name="&TRACK_INST_KEY;,&TRACK_INST_OBJ_UP_DELAY;=${up_delay}" >
+                    </PARAM>
+                </PARAM>
+                <PARAM
+                    name="down"
+                    help="DOWN delay time"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand">
+
+                    <PARAM
+                        name="down_delay"
+                        help="Delay in seconds (default = 0)"
+                        ptype="RANGE_0_180"
+                        yang_name="&TRACK_INST_KEY;,&TRACK_INST_OBJ_DOWN_DELAY;=${down_delay}" >
+                    </PARAM>
+
+                </PARAM>
+            </PARAM>
+			<ACTION builtin="clish_extn"> </ACTION>
+		</COMMAND>
+		<COMMAND
+			name="no delay"
+            help="Up/down delay"
+			operation="edit-config"
+			namespace="&NAME_SPACE;"
+			ptype="SUBCOMMAND"
+            mode="subcommand" >
+            <PARAM
+                name="delay Options"
+                help="Choose one option"
+                ptype="SUBCOMMAND"
+                mode="switch"
+                >
+
+                <PARAM
+                    name="up"
+                    help="UP delay time"
+                    ptype="SUBCOMMAND"
+                    sub_oper_yang="remove:up-delay"
+                    yang_name="&TRACK_INST_KEY;"
+                    mode="subcommand">
+                </PARAM>
+                <PARAM
+                    name="down"
+                    help="DOWN delay time"
+                    ptype="SUBCOMMAND"
+                    sub_oper_yang="remove:up-delay"
+                    yang_name="&TRACK_INST_KEY;"
+                    mode="subcommand">
+                </PARAM>
+            </PARAM>
+			<ACTION builtin="clish_extn"> </ACTION>
+		</COMMAND>
+  </VIEW>
+
+</CLISH_MODULE>

@@ -1,0 +1,1287 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE CLISH_MODULE [
+    <!ENTITY NAME_SPACE "http://www.dellemc.com/networking/os10/dell-diffserv-classifier">
+    <!ENTITY QOS-PREF "dell-qos">
+    <!ENTITY QOS_NS "&QOS-PREF;=http://www.dellemc.com/networking/os10/dell-qos">
+    <!ENTITY QOS_INTF_NS "urn:ietf:params:xml:ns:yang:ietf-interfaces,&QOS_NS;">
+    <!ENTITY CLS_PATH "/classifier-entry">
+    <!ENTITY CLS_FILTER "&CLS_PATH;/filter-entry/">
+    <!ENTITY CLS_DSCP "&CLS_FILTER;dscp-cfg/">
+    <!ENTITY CLS_PROTO "&CLS_FILTER;protocol-cfg/cfg/">
+    <!ENTITY CLS_ACCESS "&CLS_FILTER;access-group-cfg/cfg/">
+    <!ENTITY CLS_COS "&CLS_FILTER;cos-cfg/">
+    <!ENTITY CLS_VRF "&CLS_FILTER;vrf-cfg/">
+    <!ENTITY CLS_PRECEDENCE "&CLS_FILTER;precedence-cfg/">
+    <!ENTITY MATCH_PROTO "&CLS_PATH;/name=${cname},&CLS_FILTER;ftype=protocol,&CLS_PROTO;logical-not=false,&CLS_FILTER;protocol-type=ip,&CLS_PROTO;proto-name">
+    <!ENTITY MATCH_NOT_PROTO "&CLS_PATH;/name=${cname},&CLS_FILTER;ftype=protocol,&CLS_PROTO;logical-not=true,&CLS_FILTER;protocol-type=ip,&CLS_PROTO;proto-name">
+    <!ENTITY QOS_INTF "/interfaces/interface">
+    <!ENTITY QOS_IFACE "&QOS_INTF;/name">
+    <!ENTITY IFACE_ENTRY "/interfaces-state/interface">
+    <!ENTITY IFACE_NAME "&IFACE_ENTRY;/name">
+    <!ENTITY IFACE_WRED_STATS "&IFACE_ENTRY;/&QOS-PREF;:wred-statistics">
+    <!ENTITY IFACE_QUEUE_STATS "&IFACE_ENTRY;/&QOS-PREF;:queue-statistics">
+    <!ENTITY IFACE_PAUSE_STATS "&IFACE_ENTRY;/&QOS-PREF;:pause-statistics">
+]>
+<CLISH_MODULE
+    xmlns="http://www.dellemc.com/force10/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xi="http://www.w3.org/2001/XInclude"
+    xsi:schemaLocation="http://www.dellemc.com/force10/XMLSchema
+            http://www.dellemc.com/force10/XMLSchema/clish.xsd"
+    >
+    <!--=======================================================-->
+    <VIEW
+        name="enable-view"
+        >
+        <!--show candidate-configuration class-map-->
+    <COMMAND
+        name="show candidate-configuration class-map"
+        help="Current candidate class-map configuration"
+        yang_filter="Filter_Type:SUBTREE;Filter_Conditions:&CLS_PATH;;Filter_Namespace:&NAME_SPACE;"
+        db_mode="configure-cmap-qos-view,configure-pmap-qos-view,configure-sys-cp-view"
+        template="show_config_class_map.xsl"
+        >
+        <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+<!--show running-configuration class-map -->
+    <COMMAND
+        name="show running-configuration class-map"
+        help="Current operating class-map configuration"
+        yang_filter="Filter_Type:SUBTREE;Filter_Conditions:&CLS_PATH;;Filter_Namespace:&NAME_SPACE;"
+        db_mode="configure-cmap-qos-view,configure-pmap-qos-view,configure-sys-cp-view"
+        template="show_config_class_map.xsl"
+        >
+        <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+        <COMMAND
+            name="show class-map"
+            help="Show QoS class-map configuration"
+            operation="get"
+            template="show_class_map.xsl"
+            yang_filter="Filter_Namespace:&NAME_SPACE;;Filter_Type:SUBTREE;Filter_Conditions:&CLS_PATH;"
+            namespace="&NAME_SPACE;"
+            >
+            <PARAM
+                name="class-name"
+                help="Class-name"
+                ptype="STRING"
+                optional="true"
+                yang_filter="Filter_Namespace:&NAME_SPACE;;Filter_Type:SUBTREE;Filter_Conditions:&CLS_PATH;/name=${class-name}"
+                />
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="show class-map type"
+            help="Show QoS class-map configuration"
+            operation="get"
+            namespace="&NAME_SPACE;"
+            template="show_class_map.xsl"
+            >
+            <PARAM
+                name="type-name"
+                help="Type of classmap"
+                mode="switch"
+                ptype="SUBCOMMAND"
+                yang_filter="Filter_Namespace:&NAME_SPACE;;Filter_Type:SUBTREE;Filter_Conditions:&CLS_PATH;/mtype=${type-name}"
+                >
+                <MACRO name="qos_all_options"/>
+            </PARAM>
+            <PARAM
+                name="class-name"
+                help="Class map name (max 32 chars)"
+                ptype="STRING"
+                optional="true"
+                yang_filter="Filter_Namespace:&NAME_SPACE;;Filter_Type:SUBTREE;Filter_Conditions:&CLS_PATH;/mtype=${type-name},&CLS_PATH;/name=${class-name}"
+                />
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="show queuing"
+            help="Show egress QoS counters"
+            operation="get"
+            namespace="&QOS_INTF_NS;"
+            >
+            <PARAM
+                name="statistics"
+                help="Select queue for QoS statistics"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                />
+            <PARAM
+                name="interface"
+                help="Select interface for QoS statistics"
+                ptype="SUBCOMMAND"
+                mode="subcommand">
+                <PARAM
+                    name="ethernet"
+                    help="Ethernet type interface"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand">
+                    <PARAM
+                        name="interface-number"
+                        help="Chassis/slot/port:[subport]"
+                        ptype="IFACE_NUM"
+                        yang_filter="Filter_Namespace:&QOS_INTF_NS;;Filter_Type:SUBTREE;Filter_Conditions:&IFACE_NAME;=ethernet${interface-number},&IFACE_QUEUE_STATS;/&QOS-PREF;:queue-entry"
+                        template="show_queuing_statistics_queue.xsl">
+                        <PARAM
+                            name="switch-case"
+                            optional="true"
+                            help=""
+                            ptype="SUBCOMMAND"
+                            mode="switch">
+                            <PARAM
+                                name="wred"
+                                help="Wred statistics"
+                                ptype="SUBCOMMAND"
+                                mode="subcommand"
+                                yang_filter="Filter_Namespace:&QOS_INTF_NS;;Filter_Type:SUBTREE;Filter_Conditions:&IFACE_NAME;=ethernet${interface-number},&IFACE_WRED_STATS;"
+                                template="show_queuing_statistics.xsl"/>
+                            <PARAM
+                                name="queue"
+                                help="Select queue for QoS statistics"
+                                order="true"
+                                ptype="SUBCOMMAND"
+                                mode="subcommand"
+                                template="show_queuing_statistics_queue.xsl">
+                                <PARAM
+                                    name="queue-id"
+                                    help="Queue number"
+                                    ptype="GROUP_ID"
+                                    yang_filter="Filter_Namespace:&QOS_INTF_NS;;Filter_Type:SUBTREE;Filter_Conditions:&IFACE_NAME;=ethernet${interface-number},&IFACE_QUEUE_STATS;/&QOS-PREF;:queue-entry/&QOS-PREF;:id=${queue-id}"
+                                    />
+                            </PARAM>
+                        </PARAM>
+                    </PARAM>
+                </PARAM>
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="show qos"
+            help="Show ingress or egress QoS configuration"
+            operation="get"
+            namespace="&QOS_INTF_NS;"
+            template="show_qos_interface.xsl"
+            >
+            <PARAM
+                name="interface"
+                help="Select interface for QoS configuration"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                >
+                <PARAM
+                    name="ethernet"
+                    help="Ethernet type interface"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    >
+                    <PARAM
+                        name="interface-number"
+                        help="Chassis/slot/port:[subport] of the interface"
+                        ptype="IFACE_NUM"
+                        yang_filter="Filter_Namespace:&QOS_INTF_NS;;Filter_Type:SUBTREE;Filter_Conditions:&QOS_IFACE;=ethernet${interface-number}|Filter_Namespace:&QOS_INTF_NS;;Filter_Type:SUBTREE;Filter_Conditions:&IFACE_NAME;=ethernet${interface-number},&IFACE_ENTRY;/&QOS-PREF;:qos-if-params"
+                        />
+                </PARAM>
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+    </VIEW>
+    <VIEW
+        name="configure-cmap-queuing-view"
+        prompt="${SYSTEM_NAME}(config-cmap${prmt})# "
+        depth="2"
+        >
+        <NAMESPACE ref="configure-view"
+                help="false"
+                completion="false"/>
+        <!-- show configuration candidate -->
+        <COMMAND
+            name="show"
+            help="show configuration"
+            />
+        <COMMAND
+            name="show configuration candidate"
+            help="Current candidate configuration"
+            yang_filter="Filter_Type:SUBTREE;Filter_Conditions:&CLS_PATH;/name=${cname};Filter_Namespace:&NAME_SPACE;"
+            template="show_config_class_map.xsl"
+            >
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+
+        <!-- show configuration -->
+        <COMMAND
+            name="show configuration"
+            help="Current configuration (default = running)"
+            yang_filter="Filter_Type:SUBTREE;Filter_Conditions:&CLS_PATH;/name=${cname};Filter_Namespace:&NAME_SPACE;"
+            template="show_config_class_map.xsl"
+            >
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="no"
+            help="No commands in config mode"
+            />
+        <COMMAND
+            name="match"
+            help="Match the criteria for policy QoS"
+            operation="edit-config"
+            namespace="&NAME_SPACE;"
+            yang_key="&CLS_PATH;/name"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            />
+        <COMMAND
+            name="match queue"
+            help="Match queue"
+            operation="edit-config"
+            namespace="&NAME_SPACE;"
+            ptype="STRING"
+            mode="subcommand"
+            test="'${prmt}' = '-queuing'"
+            yang_key="&CLS_FILTER;ftype=queue"
+            >
+            <PARAM
+                name="queue-id"
+                help="Queue number"
+                ptype="GROUP_ID"
+                yang_name="&CLS_PATH;/name=${cname},&CLS_FILTER;ftype=queue,&CLS_FILTER;protocol-type=none,&CLS_FILTER;queue-cfg/id=${queue-id}"
+                />
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="no match"
+            help="Match the criteria for policy QoS"
+            operation="edit-config"
+            namespace="&NAME_SPACE;"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            />
+        <COMMAND
+            name="no match queue"
+            help="Match queue"
+            optional="true"
+            operation="edit-config"
+            sub_oper_yang="remove:filter-entry"
+            namespace="&NAME_SPACE;"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            yang_name="&CLS_PATH;,&CLS_PATH;/name=${cname},&CLS_FILTER;ftype=queue,&CLS_FILTER;protocol-type=none"
+            >
+            <PARAM
+                name="queue-id"
+                help="Queue number"
+                ptype="GROUP_ID"
+                optional="true"
+                />
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+    </VIEW>
+    <VIEW
+        name="configure-cmap-network-qos-view"
+        >
+        <NAMESPACE ref="configure-view"
+                help="false"
+                completion="false"/>
+    </VIEW>
+    <VIEW
+        name="configure-cmap-control-plane-view"
+        prompt="${SYSTEM_NAME}(config-cmap${prmt})# "
+        depth="2"
+        >
+    </VIEW>
+    <VIEW
+        name="configure-view"
+        >
+        <COMMAND
+            name="class-map"
+            help="Configure class map"
+            operation="edit-config"
+            namespace="&NAME_SPACE;"
+            view="configure-cmap-qos-view"
+            viewid="cname=${classname};prmt=-qos;type=${match-type};"
+            add_config_entry="false"
+            yang_name="&CLS_PATH;/mtype=qos"
+            >
+            <PARAM
+                name="options"
+                help="Class map options"
+                ptype="SUBCOMMAND"
+                optional="true"
+                order="true"
+                mode="switch"
+                >
+                <PARAM
+                    name="match-type"
+                    help="Class map match filter"
+                    ptype="QoS_MATCH_OPTIONS"
+                    yang_name="&CLS_PATH;/match=${match-type}"
+                    />
+                <PARAM
+                    name="type"
+                    help="Type of class map"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    >
+                    <PARAM
+                        name="typename"
+                        help="Class map types"
+                        ptype="SUBCOMMAND"
+                        mode="switch"
+                        >
+                        <MACRO name="class_qos_all_options"/>
+                    </PARAM>
+                    <PARAM
+                        name="match-type"
+                        help="Class map match filter"
+                        ptype="QoS_MATCH_OPTIONS"
+                        optional="true"
+                        test='"${typename}" = "qos"'
+                        yang_name="&CLS_PATH;/match=${match-type}"
+                        />
+                </PARAM>
+            </PARAM>
+            <PARAM
+                name="classname"
+                help="Class map name (max 32 chars)"
+                order="true"
+                ptype="QoS_STRING"
+                yang_name="&CLS_PATH;/name=${classname}"
+                />
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="no class-map"
+            help="Configure class map"
+            operation="edit-config"
+            namespace="&NAME_SPACE;"
+            viewid="cname=${classname};typename=tname=qos"
+            >
+            <PARAM
+                name="options"
+                help="Class map options"
+                ptype="SUBCOMMAND"
+                optional="true"
+                order="true"
+                mode="switch"
+                >
+                <PARAM
+                    name="match-type"
+                    help="Class map match filter"
+                    ptype="QoS_MATCH_OPTIONS"
+                    yang_name="&CLS_PATH;/match=${match-type}"
+                    />
+                <PARAM
+                    name="type"
+                    help="Type to class map"
+                    optional="true"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    >
+                    <PARAM
+                        name="typename"
+                        help="Class map types"
+                        ptype="QoS_ALL_TYPES"
+                        yang_name="&CLS_PATH;/mtype=${typename}"
+                        >
+                        </PARAM>
+                    <PARAM
+                        name="match-type"
+                        help="Class map match filter"
+                        ptype="QoS_MATCH_OPTIONS"
+                        optional="true"
+                        order="true"
+                        yang_name="&CLS_PATH;/match=${match-type}"
+                        />
+                </PARAM>
+            </PARAM>
+            <PARAM
+                name="classname"
+                help="Class map name (max 32 chars)"
+                order="true"
+                ptype="QoS_STRING"
+                yang_name="&CLS_PATH;,&CLS_PATH;/name=${classname}"
+                sub_oper_yang="remove:classifier-entry"
+                />
+            <ACTION
+                builtin="clish_extn"
+                ></ACTION>
+        </COMMAND>
+    </VIEW>
+    <VIEW
+        name="configure-cmap-qos-view"
+        prompt="${SYSTEM_NAME}(config-cmap${prmt})# "
+        depth="2"
+        >
+        <NAMESPACE ref="configure-view"
+                help="false"
+                completion="false"/>
+
+        <!-- show configuration candidate -->
+        <COMMAND
+            name="show"
+            help="show configuration"
+            />
+        <COMMAND
+            name="show configuration candidate"
+            help="Current candidate configuration"
+            yang_filter="Filter_Type:SUBTREE;Filter_Conditions:&CLS_PATH;/name=${cname};Filter_Namespace:&NAME_SPACE;"
+            >
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+
+        <!-- show configuration -->
+        <COMMAND
+            name="show configuration"
+            help="Current configuration (default = running)"
+            yang_filter="Filter_Type:SUBTREE;Filter_Conditions:&CLS_PATH;/name=${cname};Filter_Namespace:&NAME_SPACE;"
+            >
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+
+        <COMMAND
+            name="no"
+            help="No commands in config mode"
+            />
+        <COMMAND
+            name="match"
+            help="Match the criteria for policy QoS"
+            operation="edit-config"
+            namespace="&NAME_SPACE;"
+            yang_key="&CLS_PATH;/name"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            />
+        <COMMAND
+            name="match cos"
+            help="Match cos values"
+            operation="edit-config"
+            namespace="&NAME_SPACE;"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            yang_key="&CLS_COS;logical-not=false"
+            >
+            <PARAM
+                name="cos-list"
+                help="Cos value either single, comma-delimited or hyphenated-range"
+                ptype="COS_ID"
+                default_oper="merge"
+                sub_oper_yang="replace:cos-cfg"
+                yang_name="&CLS_PATH;/name=${cname},&CLS_FILTER;ftype=cos,&CLS_FILTER;protocol-type=mac,&CLS_COS;logical-not=false,&CLS_COS;cos-val[]=${cos-list}"
+                />
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="match ip"
+            help="Match the criteria for IPv4 specific policy QoS"
+            operation="edit-config"
+            namespace="&NAME_SPACE;"
+            yang_key="&CLS_FILTER;protocol-type=ip"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            >
+            <MACRO name="match-ip-params" arg="false,&CLS_PATH;/name=${cname}\,&CLS_FILTER;protocol-type=ip\,&CLS_FILTER;ftype=${subtype}"/>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="match ip access-group"
+            help="Match the criteria for IPv4 specific access list"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            namespace="&NAME_SPACE;"
+            operation="edit-config"
+            yang_key="&CLS_FILTER;protocol-type=ip"
+            >
+            <PARAM
+                name="name"
+                help="Name"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                />
+                <PARAM
+                name="match-all-acl-name"
+                help="Access group name (max 140 chars)"
+                ptype="STRING"
+                test="'${type}' = 'match-all'"
+                yang_name="&CLS_PATH;/name=${cname},&CLS_FILTER;ftype=access-group,&CLS_FILTER;protocol-type=ip,&CLS_FILTER;access-group-cfg/match-all-ag-name=${match-all-acl-name}"
+                />
+                <PARAM
+                name="match-any-acl-name"
+                help="Access group name (max 140 chars)"
+                ptype="STRING"
+                test="'${type}' != 'match-all'"
+                yang_name="&CLS_PATH;/name=${cname},&CLS_FILTER;ftype=access-group,&CLS_FILTER;protocol-type=ip,&CLS_ACCESS;ag-name=${match-any-acl-name}"
+                yang_key="&CLS_ACCESS;ag-name"
+                />
+                <PARAM
+                    name="set"
+                    help="Mark"
+                    mode="subcommand"
+                    optional="true"
+                    order="true"
+                    ptype="SUBCOMMAND"
+                    >
+                    <PARAM
+                        name="dscp"
+                        help="Dscp"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        >
+                        <PARAM
+                            name="match-all-dscp-val"
+                            help="Dscp value"
+                            ptype="DSCP_ID"
+                            test="'${type}' = 'match-all'"
+                            yang_name="&CLS_FILTER;access-group-cfg/match-all-dscp=${match-all-dscp-val}"
+                            />
+                        <PARAM
+                            name="match-any-dscp-val"
+                            help="Dscp value"
+                            ptype="DSCP_ID"
+                            test="'${type}' != 'match-all'"
+                            yang_name="&CLS_ACCESS;dscp=${match-any-dscp-val}"
+                            />
+                    </PARAM>
+                </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="match ipv6"
+            help="Match the criteria for IPv6 specific policy QoS"
+            operation="edit-config"
+            namespace="&NAME_SPACE;"
+            yang_key="&CLS_FILTER;protocol-type=ipv6"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            >
+            <MACRO name="match-ip-params" arg="false,&CLS_PATH;/name=${cname}\,&CLS_FILTER;protocol-type=ipv6\,&CLS_FILTER;ftype=${subtype}"/>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="match ipv6 access-group"
+            help="Match the criteria for IPv6 specific access list"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            namespace="&NAME_SPACE;"
+            operation="edit-config"
+            yang_key="&CLS_FILTER;protocol-type=ipv6"
+            pfeature="NOT_SUPPORTED"
+            >
+            <PARAM
+                name="name"
+                help="Name"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                />
+            <PARAM
+                name="acl-name"
+                help="Access group name (max 140 chars)"
+                ptype="STRING"
+                yang_name="&CLS_PATH;/name=${cname},&CLS_FILTER;ftype=access-group,&CLS_FILTER;protocol-type=ipv6,&CLS_ACCESS;ag-name=${acl-name}"
+                yang_key="&CLS_ACCESS;ag-name"
+                />
+            <MACRO name="set-dscp"/>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="match ip-any"
+            help="Match the criteria for IPv4, IPv6 header policy QoS"
+            operation="edit-config"
+            namespace="&NAME_SPACE;"
+            yang_key="&CLS_FILTER;protocol-type=ip-any"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            >
+            <MACRO name="match-ip-params" arg="false,&CLS_PATH;/name=${cname}\,&CLS_FILTER;protocol-type=ip-any\,&CLS_FILTER;ftype=${subtype}"/>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="match mac"
+            help="Match the criteria for mac specific access list"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            namespace="&NAME_SPACE;"
+            operation="edit-config"
+            yang_key="&CLS_FILTER;protocol-type=mac"
+            >
+            <PARAM
+                name="access-group"
+                help="Access group"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                >
+                <PARAM
+                    name="name"
+                    help="Name"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    />
+                <PARAM
+                    name="match-all-acl-name"
+                    help="Access group name (max 140 chars)"
+                    ptype="STRING"
+                    test="'${type}' = 'match-all'"
+                    yang_name="&CLS_PATH;/name=${cname},&CLS_FILTER;ftype=access-group,&CLS_FILTER;protocol-type=mac,&CLS_FILTER;access-group-cfg/match-all-ag-name=${match-all-acl-name}"
+                    />
+                <PARAM
+                    name="match-any-acl-name"
+                    help="Access group name (max 140 chars)"
+                    ptype="STRING"
+                    test="'${type}' != 'match-all'"
+                    yang_name="&CLS_PATH;/name=${cname},&CLS_FILTER;ftype=access-group,&CLS_FILTER;protocol-type=mac,&CLS_ACCESS;ag-name=${match-any-acl-name}"
+                    yang_key="&CLS_ACCESS;ag-name"
+                    />
+                </PARAM>
+                <PARAM
+                    name="set"
+                    help="Mark"
+                    mode="subcommand"
+                    optional="true"
+                    order="true"
+                    ptype="SUBCOMMAND"
+                    >
+                    <PARAM
+                        name="dscp"
+                        help="Dscp"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        >
+                        <PARAM
+                            name="match-all-dscp-val"
+                            help="Dscp value"
+                            ptype="DSCP_ID"
+                            test="'${type}' = 'match-all'"
+                            yang_name="&CLS_FILTER;access-group-cfg/match-all-dscp=${match-all-dscp-val}"
+                            />
+                        <PARAM
+                            name="match-any-dscp-val"
+                            help="Dscp value"
+                            ptype="DSCP_ID"
+                            test="'${type}' != 'match-all'"
+                            yang_name="&CLS_ACCESS;dscp=${match-any-dscp-val}"
+                            />
+                    </PARAM>
+                </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="match not"
+            help="Negate the matched criteria"
+            optional="true"
+            operation="edit-config"
+            namespace="&NAME_SPACE;"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            />
+        <COMMAND
+            name="match not ip"
+            help="Negate the IPv4 matched criteria"
+            operation="edit-config"
+            namespace="&NAME_SPACE;"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            yang_key="&CLS_FILTER;protocol-type=ip"
+            >
+            <MACRO name="match-ip-params" arg="true,&CLS_PATH;/name=${cname}\,&CLS_FILTER;protocol-type=ip\,&CLS_FILTER;ftype=${subtype}"/>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="match not ip-any"
+            help="Negate the IPv4 or IPv6 matched criteria"
+            operation="edit-config"
+            namespace="&NAME_SPACE;"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            yang_key="&CLS_FILTER;protocol-type=ip-any"
+            >
+            <MACRO name="match-ip-params" arg="true,&CLS_PATH;/name=${cname}\,&CLS_FILTER;protocol-type=ip-any\,&CLS_FILTER;ftype=${subtype}"/>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="match not ipv6"
+            help="Negate the IPv6 matched criteria"
+            operation="edit-config"
+            namespace="&NAME_SPACE;"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            yang_key="&CLS_FILTER;protocol-type=ipv6"
+            >
+            <MACRO name="match-ip-params" arg="true,&CLS_PATH;/name=${cname}\,&CLS_FILTER;protocol-type=ipv6\,&CLS_FILTER;ftype=${subtype}"/>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="match not cos"
+            help="Negate the cos matched criteria"
+            operation="edit-config"
+            namespace="&NAME_SPACE;"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            yang_key="&CLS_COS;logical-not=true"
+            >
+            <PARAM
+                name="cos-list"
+                help="Cos values either single, comma-delimited or hyphenated-range"
+                ptype="COS_ID"
+                default_oper="merge"
+                sub_oper_yang="replace:cos-cfg"
+                yang_name="&CLS_PATH;/name=${cname},&CLS_FILTER;ftype=cos,&CLS_FILTER;protocol-type=mac,&CLS_COS;logical-not=true,&CLS_COS;cos-val[]=${cos-list}"
+                />
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="match protocol"
+            help="Match protocol"
+            operation="edit-config"
+            default_oper="merge"
+            sub_oper_yang="replace:protocol-cfg"
+            namespace="&NAME_SPACE;"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            yang_key="&CLS_PROTO;logical-not=false"
+            pfeature="NOT_SUPPORTED"
+            >
+            <PARAM
+                name="proto-type"
+                help="Protocol type"
+                mode="switch"
+                ptype="SUBCOMMAND"
+                >
+                <MACRO name="qos_proto_options" arg="&MATCH_PROTO;"/>
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="match not protocol"
+            help="Negate the protocol matched criteria"
+            operation="edit-config"
+            default_oper="merge"
+            sub_oper_yang="replace:protocol-cfg"
+            namespace="&NAME_SPACE;"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            yang_key="&CLS_PROTO;logical-not=true"
+            pfeature="NOT_SUPPORTED"
+            >
+            <PARAM
+                name="proto-type"
+                help="Protocol type"
+                mode="switch"
+                ptype="SUBCOMMAND"
+                >
+                <MACRO name="qos_proto_options" arg="&MATCH_NOT_PROTO;"/>
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="match vlan"
+            help="Match vlan"
+            operation="edit-config"
+            namespace="&NAME_SPACE;"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            yang_key="&CLS_FILTER;ftype=vlan"
+            >
+            <PARAM
+                name="vlan-number"
+                help="Vlan number"
+                ptype="VLAN_ID"
+                yang_name="&CLS_PATH;/name=${cname},&CLS_FILTER;ftype=vlan,&CLS_FILTER;protocol-type=mac,&CLS_FILTER;vlan-cfg/id=${vlan-number}"
+                />
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="no match"
+            help="Configure the criteria for policy QoS"
+            operation="edit-config"
+            namespace="&NAME_SPACE;"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            />
+        <COMMAND
+            name="no match cos"
+            help="Match cos values"
+            optional="true"
+            operation="edit-config"
+            sub_oper_yang="remove:cos-val"
+            namespace="&NAME_SPACE;"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            yang_key="&CLS_COS;logical-not=false"
+            >
+            <PARAM
+                name="cos-list"
+                help="Cos value either single, comma-delimited or hyphenated-range"
+                ptype="COS_ID"
+                yang_name="&CLS_PATH;/name=${cname},&CLS_FILTER;ftype=cos,&CLS_FILTER;protocol-type=mac,&CLS_COS;logical-not=false,&CLS_COS;cos-val[]=${cos-list}"
+                />
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="no match ip"
+            help="Match the criteria for IPv4 specific policy QoS"
+            namespace="&NAME_SPACE;"
+            operation="edit-config"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            >
+            <MACRO name="no-match-ip-params" arg="false,&CLS_PATH;/name=${cname}\,&CLS_FILTER;ftype=${subtype}\,&CLS_FILTER;protocol-type=ip"/>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="no match ip access-group"
+            help="Match the criteria for IPv4 specific access list"
+            namespace="&NAME_SPACE;"
+            operation="edit-config"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            >
+            <PARAM
+                name="name"
+                help="Name"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                />
+                <PARAM
+                    name="match-all-acl-name"
+                    help="Access group name (max 140 chars)"
+                    ptype="STRING"
+                    sub_oper_yang="remove:match-all-ag-name"
+                    test="'${type}' = 'match-all'"
+                    yang_name="&CLS_PATH;/name=${cname},&CLS_FILTER;ftype=access-group,&CLS_FILTER;protocol-type=ip,&CLS_FILTER;access-group-cfg/match-all-ag-name=${match-all-acl-name}"
+                    />
+                <PARAM
+                    name="match-any-acl-name"
+                    help="Access group name (max 140 chars)"
+                    ptype="STRING"
+                    sub_oper_yang="remove:cfg"
+                    test="'${type}' != 'match-all'"
+                    yang_name="&CLS_PATH;/name=${cname},&CLS_FILTER;ftype=access-group,&CLS_FILTER;protocol-type=ip,&CLS_ACCESS;ag-name=${match-any-acl-name}"
+                    yang_key="&CLS_ACCESS;ag-name"
+                    />
+                <PARAM
+                    name="set"
+                    help="Mark"
+                    mode="subcommand"
+                    optional="true"
+                    order="true"
+                    ptype="SUBCOMMAND"
+                    >
+                    <PARAM
+                        name="dscp"
+                        help="Dscp"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        >
+                        <PARAM
+                            name="match-all-dscp-val"
+                            help="Dscp value"
+                            ptype="DSCP_ID"
+                            test="'${type}' = 'match-all'"
+                            yang_name="&CLS_FILTER;access-group-cfg/match-all-dscp=${match-all-dscp-val}"
+                            />
+                        <PARAM
+                            name="match-any-dscp-val"
+                            help="Dscp value"
+                            ptype="DSCP_ID"
+                            test="'${type}' != 'match-all'"
+                            yang_name="&CLS_ACCESS;dscp=${match-any-dscp-val}"
+                            />
+                    </PARAM>
+                </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="no match ipv6"
+            help="Match the criteria for IPv6 specific policy QoS"
+            operation="edit-config"
+            namespace="&NAME_SPACE;"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            >
+            <MACRO name="no-match-ip-params" arg="false,&CLS_PATH;/name=${cname}\,&CLS_FILTER;ftype=${subtype}\,&CLS_FILTER;protocol-type=ipv6"/>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="no match ipv6 access-group"
+            help="Match the criteria for IPv6 specific access list"
+            namespace="&NAME_SPACE;"
+            operation="edit-config"
+            sub_oper_yang="remove:cfg"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            pfeature="NOT_SUPPORTED"
+            >
+            <PARAM
+                name="name"
+                help="Name"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                />
+            <PARAM
+                name="acl-name"
+                help="Access group name (max 140 chars)"
+                ptype="STRING"
+                yang_name="&CLS_PATH;/name=${cname},&CLS_FILTER;ftype=access-group,&CLS_FILTER;protocol-type=ipv6,&CLS_ACCESS;ag-name=${acl-name}"
+                />
+            <MACRO name="set-dscp"/>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="no match ip-any"
+            help="Configure the criteria for IPv4, IPv6 header policy QoS"
+            operation="edit-config"
+            namespace="&NAME_SPACE;"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            >
+            <MACRO name="no-match-ip-params" arg="false,&CLS_PATH;/name=${cname}\,&CLS_FILTER;ftype=${subtype}\,&CLS_FILTER;protocol-type=ip-any"/>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="no match protocol"
+            help="Configure protocol"
+            optional="true"
+            operation="edit-config"
+            sub_oper_yang="remove:cfg"
+            namespace="&NAME_SPACE;"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            pfeature="NOT_SUPPORTED"
+            >
+            <PARAM
+                name="proto-type"
+                help="Protocol type"
+                mode="switch"
+                ptype="SUBCOMMAND"
+                >
+                <MACRO name="qos_proto_options" arg="&MATCH_PROTO;"/>
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="no match vlan"
+            help="Match vlan"
+            optional="true"
+            operation="edit-config"
+            sub_oper_yang="remove:filter-entry"
+            namespace="&NAME_SPACE;"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            yang_name="&CLS_PATH;/name=${cname},&CLS_FILTER;ftype=vlan,&CLS_FILTER;protocol-type=mac"
+            >
+            <PARAM
+                name="vlan-number"
+                help="Vlan number"
+                ptype="VLAN_ID"
+                optional="true"
+                />
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="no match mac"
+            help="Configure the criteria for mac specific access list"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            operation="edit-config"
+            namespace="&NAME_SPACE;"
+            >
+            <PARAM
+                name="access-group"
+                help="Access group"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                >
+                <PARAM
+                    name="name"
+                    help="Name"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    />
+                <PARAM
+                    name="match-all-acl-name"
+                    help="Access group name (max 140 chars)"
+                    ptype="STRING"
+                    sub_oper_yang="remove:match-all-ag-name"
+                    test="'${type}' = 'match-all'"
+                    yang_name="&CLS_PATH;/name=${cname},&CLS_FILTER;ftype=access-group,&CLS_FILTER;protocol-type=mac,&CLS_FILTER;access-group-cfg/match-all-ag-name=${match-all-acl-name}"
+                    />
+                <PARAM
+                    name="match-any-acl-name"
+                    help="Access group name (max 140 chars)"
+                    ptype="STRING"
+                    sub_oper_yang="remove:cfg"
+                    test="'${type}' != 'match-all'"
+                    yang_name="&CLS_PATH;/name=${cname},&CLS_FILTER;ftype=access-group,&CLS_FILTER;protocol-type=mac,&CLS_ACCESS;ag-name=${match-any-acl-name}"
+                    yang_key="&CLS_ACCESS;ag-name"
+                    />
+                </PARAM>
+                <PARAM
+                    name="set"
+                    help="Mark"
+                    mode="subcommand"
+                    optional="true"
+                    order="true"
+                    ptype="SUBCOMMAND"
+                    >
+                    <PARAM
+                        name="dscp"
+                        help="Dscp"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        >
+                        <PARAM
+                            name="match-all-dscp-val"
+                            help="Dscp value"
+                            ptype="DSCP_ID"
+                            test="'${type}' = 'match-all'"
+                            yang_name="&CLS_FILTER;access-group-cfg/match-all-dscp=${match-all-dscp-val}"
+                            />
+                        <PARAM
+                            name="match-any-dscp-val"
+                            help="Dscp value"
+                            ptype="DSCP_ID"
+                            test="'${type}' != 'match-all'"
+                            yang_name="&CLS_ACCESS;dscp=${match-any-dscp-val}"
+                            />
+                    </PARAM>
+                </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="no match not"
+            help="Negate the matched criteria"
+            optional="true"
+            operation="edit-config"
+            sub_oper_yang="remove:logical-not"
+            namespace="&NAME_SPACE;"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            >
+            <PARAM
+                name="cmd-type"
+                help="Cmd type"
+                mode="switch"
+                ptype="SUBCOMMAND"
+                >
+                <PARAM
+                    name="cos"
+                    help="Negate the cos matched criteria"
+                    operation="edit-config"
+                    sub_oper_yang="remove:cos-val"
+                    namespace="&NAME_SPACE;"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    >
+                    <PARAM
+                        name="cos-list"
+                        help="Cos value either single, comma-delimited or hyphenated-range"
+                        ptype="COS_ID"
+                        yang_name="&CLS_PATH;/name=${cname},&CLS_FILTER;ftype=cos,&CLS_FILTER;protocol-type=mac,&CLS_COS;logical-not=true,&CLS_COS;cos-val[]=${cos-list}"
+                        />
+                </PARAM>
+                <PARAM
+                    name="ip"
+                    help="Negate the IPv4 matched criteria"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    operation="edit-config"
+                    namespace="&NAME_SPACE;"
+                    >
+                    <MACRO name="no-match-ip-params" arg="true,&CLS_PATH;/name=${cname}\,&CLS_FILTER;ftype=${subtype}\,&CLS_FILTER;protocol-type=ip"/>
+                </PARAM>
+                <PARAM
+                    name="ipv6"
+                    help="Negate the IPv6 matched criteria"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    operation="edit-config"
+                    namespace="&NAME_SPACE;"
+                    >
+                    <MACRO name="no-match-ip-params" arg="true,&CLS_PATH;/name=${cname}\,&CLS_FILTER;ftype=${subtype}\,&CLS_FILTER;protocol-type=ipv6"/>
+                </PARAM>
+                <PARAM
+                    name="ip-any"
+                    help="Negate the IPv4 or IPv6 matched criteria"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    operation="edit-config"
+                    namespace="&NAME_SPACE;"
+                    >
+                    <MACRO name="no-match-ip-params" arg="true,&CLS_PATH;/name=${cname}\,&CLS_FILTER;ftype=${subtype}\,&CLS_FILTER;protocol-type=ip-any"/>
+                </PARAM>
+                <PARAM
+                    name="protocol"
+                    help="Match protocol"
+                    operation="edit-config"
+                    sub_oper_yang="remove:cfg"
+                    namespace="&NAME_SPACE;"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    pfeature="NOT_SUPPORTED"
+                    >
+                    <PARAM
+                        name="proto-type"
+                        help="Protocol type"
+                        mode="switch"
+                        ptype="SUBCOMMAND"
+                        >
+                        <MACRO name="qos_proto_options" arg="&MATCH_NOT_PROTO;"/>
+                    </PARAM>
+                </PARAM>
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+     </VIEW>
+     <VIEW
+        name="configure-cmap-nqos-view"
+        prompt="${SYSTEM_NAME} (config-cmap${prmt})# "
+        depth="2"
+        >
+        <NAMESPACE ref="configure-view"
+                help="false"
+                completion="false"/>
+        <!-- show configuration candidate -->
+        <COMMAND
+            name="show"
+            help="show configuration"
+            />
+        <COMMAND
+            name="show configuration candidate"
+            help="Current candidate configuration"
+            yang_filter="Filter_Type:SUBTREE;Filter_Conditions:&CLS_PATH;/name=${cname};Filter_Namespace:&NAME_SPACE;"
+            template="show_config_class_map.xsl"
+            >
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+
+        <!-- show configuration -->
+        <COMMAND
+            name="show configuration"
+            help="Current configuration (default = running)"
+            yang_filter="Filter_Type:SUBTREE;Filter_Conditions:&CLS_PATH;/name=${cname};Filter_Namespace:&NAME_SPACE;"
+            template="show_config_class_map.xsl"
+            >
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="no"
+            help="No commands in config mode"
+            />
+        <COMMAND
+            name="match"
+            help="Match criteria for policy Network-QoS"
+            operation="edit-config"
+            namespace="&NAME_SPACE;"
+            yang_key="&CLS_PATH;/name"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            />
+        <COMMAND
+            name="match qos-group"
+            help="Match qos-group"
+            operation="edit-config"
+            namespace="&NAME_SPACE;"
+            ptype="STRING"
+            mode="subcommand"
+            sub_oper_yang="replace:qos-group-cfg"
+            test="'${prmt}' = '-nqos'"
+            yang_key="&CLS_FILTER;ftype=qos-group"
+            >
+            <PARAM
+                name="qos-grp-id"
+                help="Traffic-class values either single, comma-delimited or hyphenated-range"
+                ptype="TC_GROUP_ID"
+                yang_name="&CLS_PATH;/name=${cname},&CLS_FILTER;ftype=qos-group,&CLS_FILTER;protocol-type=none,&CLS_FILTER;qos-group-cfg/tc-val[]=${qos-grp-id}"
+                />
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="no match"
+            help="Configure the criteria for policy QoS"
+            operation="edit-config"
+            namespace="&NAME_SPACE;"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            />
+        <COMMAND
+            name="no match qos-group"
+            help="Configure qos-group"
+            optional="true"
+            operation="edit-config"
+            sub_oper_yang="remove:filter-entry"
+            namespace="&NAME_SPACE;"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            yang_name="&CLS_PATH;,&CLS_PATH;/name=${cname},&CLS_FILTER;ftype=qos-group,&CLS_FILTER;protocol-type=none"
+            >
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+   </VIEW>
+</CLISH_MODULE>

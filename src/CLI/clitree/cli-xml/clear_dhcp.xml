@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE CLISH_MODULE [
+<!ENTITY SUBTREE_FILTER "Filter_Type:SUBTREE">
+]>
+<CLISH_MODULE
+    xmlns="http://www.dellemc.com/force10/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xi="http://www.w3.org/2001/XInclude"
+    xsi:schemaLocation="http://www.dellemc.com/force10/XMLSchema
+			http://www.dellemc.com/force10/XMLSchema/clish.xsd">
+<!-- ********************************************************************** -->
+<!-- *  CLEAR BGP COMMANDS                                                * -->
+<!--
+clear ip dhcp [binding {address}]
+-->
+<!-- *  View : enable-view                                                * -->
+<!-- ********************************************************************** -->
+    <VIEW name="enable-view">
+        <COMMAND name="clear ip dhcp"
+            help="Clear DHCP related information"
+            ptype="SUBCOMMAND"
+            pfeature="NOT_SUPPORTED"
+            operation="generic-rpc"
+            namespace="http://www.dellemc.com/networking/os10/dell-dhcp"
+            >
+            <PARAM name="binding"
+                help="DHCP IP bindings"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                yang_name="/clear_dhcp/clear-all=true">
+                <PARAM name="address"
+                    help="clear ip dhcp binding address"
+                    ptype="IP_ADDR"
+                    optional="true"
+                    yang_name="/clear_dhcp/address=${address}"/>
+            </PARAM>
+    	    <ACTION builtin="clish_extn"></ACTION>
+        </COMMAND>
+    </VIEW>
+</CLISH_MODULE>

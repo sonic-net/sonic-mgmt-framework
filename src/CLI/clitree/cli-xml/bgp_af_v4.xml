@@ -1,0 +1,468 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE CLISH_MODULE [
+<!ENTITY SUBTREE_FILTER                        "Filter_Type:SUBTREE;">
+<!ENTITY NS_FILTER                             "http://www.dellemc.com/networking/os10/dell-bgp">
+<!ENTITY VRF                                   "/bgp-router/vrf">
+<!ENTITY VRF_NAME                              "&VRF;/vrf-name=default">
+<!ENTITY ROUTER_COMMON                         "&VRF_NAME;,&VRF;">
+<!ENTITY IPV4_UNICAST                          "&VRF;/ipv4-unicast">
+<!ENTITY IPV4_UNICAST_BASE                     "&VRF_NAME;,&IPV4_UNICAST;">
+<!ENTITY PEER_GROUP_CONFIG                     "&VRF;/peer-group-config">
+<!ENTITY PEER_CONFIG                           "&VRF;/peer-config">
+<!ENTITY PEER_GROUP_NEIGHBOR_IPV4_UNICAST      "&PEER_GROUP_CONFIG;/ipv4-unicast">
+<!ENTITY PEER_CONFIG_NEIGHBOR_IPV4_UNICAST     "&PEER_CONFIG;/ipv4-unicast">
+<!ENTITY PEER_AFI_SAFI_CNTR                    "&PEER_CONFIG;/peer-afi-safi-cnts-list">
+<!ENTITY IPV4_UNICAST_ADD_PATH                 "&IPV4_UNICAST;/add-path">
+<!ENTITY IPV4_UNICAST_DAMP_VALUES              "&IPV4_UNICAST;/dampening">
+<!ENTITY IPV4_UNICAST_NETWORK                  "&IPV4_UNICAST;/network-address-list">
+<!ENTITY IPV4_UNICAST_AGGREGATE_LIST           "&IPV4_UNICAST;/aggregate-address-list">
+<!ENTITY IPV4_AF_NBR_PREFIX                    "&VRF_NAME;,&PEER_CONFIG;/remote-address=${nbr-addr},&PEER_CONFIG_NEIGHBOR_IPV4_UNICAST;">
+<!ENTITY IPV4_AF_PGRP_PREFIX                   "&VRF_NAME;,&PEER_GROUP_CONFIG;/name=${nbr-addr},&PEER_GROUP_NEIGHBOR_IPV4_UNICAST;">
+<!ENTITY IPV4_AF_NBR_FILTER                    "&VRF_NAME;,&PEER_CONFIG;/remote-address=${nbr-addr},&PEER_CONFIG_NEIGHBOR_IPV4_UNICAST;">
+]>
+<CLISH_MODULE
+    xmlns="http://www.dellemc.com/force10/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xi="http://www.w3.org/2001/XInclude"
+    xsi:schemaLocation="http://www.dellemc.com/force10/XMLSchema
+						http://www.dellemc.com/force10/XMLSchema/clish.xsd"
+    >
+    <!--=================================================================-->
+
+<!-- ********************************************************************** -->
+<!-- *  CONFIGURATION COMMANDS                                            * -->
+<!-- *  View : configure-router-bgp-af-v4-view                            * -->
+<!-- ********************************************************************** -->
+    <VIEW
+        name="configure-router-bgp-af-v4-view"
+        prompt="${SYSTEM_NAME}(${afview})# "
+        depth="3"
+        >
+        <!-- Inheritance -->
+        <NAMESPACE
+            ref="configure-view"
+            help="false"
+            completion="false"
+            />
+        <NAMESPACE
+            ref="configure-router-bgp-view"
+            help="false"
+            completion="false"
+            />
+        <!-- show configuration candidate -->
+        <COMMAND
+            name="show"
+            help="show configuration"
+        />
+        <COMMAND
+            name="show configuration candidate"
+            help="Current candidate configuration"
+            yang_filter="&SUBTREE_FILTER;Filter_Conditions:&IPV4_UNICAST_BASE;;Filter_Namespace:&NS_FILTER;"
+            >
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+        <!-- show configuration -->
+        <COMMAND
+            name="show configuration"
+            help="Current configuration (default = running)"
+            yang_filter="&SUBTREE_FILTER;Filter_Conditions:&IPV4_UNICAST_BASE;;Filter_Namespace:&NS_FILTER;"
+            >
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+        <!-- router bgp aggregate-address -->
+        <COMMAND
+            name="aggregate-address"
+            help="Configure BGP aggregate entries"
+            operation="edit-config"
+            namespace="&NS_FILTER;"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            >
+            <PARAM
+                name="ipv4"
+                help="Aggregate address"
+                ptype="IP_ADDR_MASK"
+                yang_name="&IPV4_UNICAST_BASE;/aggregate-address-list/prefix=${ipv4}"
+				yang_key="&IPV4_UNICAST_AGGREGATE_LIST;/prefix"
+                sub_oper_yang="replace:aggregate-options"
+                >
+                <MACRO name="AGGREGATE_CMDS" arg="&IPV4_UNICAST_AGGREGATE_LIST;/aggregate-options" />
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <!-- router bgp as-num bgp -->
+        <MACRO name="ADD_PATH" arg="&IPV4_UNICAST_ADD_PATH;,&IPV4_UNICAST;" />
+        <MACRO name="DAMPENING" arg="&IPV4_UNICAST_DAMP_VALUES;,&IPV4_UNICAST_BASE;" />
+        <!-- router bgp as-num distance -->
+        <MACRO name="DISTANCE" arg="&IPV4_UNICAST;" />
+        <!-- default-metric -->
+        <COMMAND
+            name="default-metric"
+            help="Set metric of redistributed routes"
+            operation="edit-config"
+            namespace="&NS_FILTER;"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            >
+            <PARAM
+                name="metric"
+                help="default metric"
+                ptype="RANGE_1_4294967295"
+                yang_name="&IPV4_UNICAST_BASE;/default-metric=${metric}"
+                />
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <!-- start of router bgp network -->
+        <COMMAND
+            name="network"
+            help="Enable routing on an IP network"
+            operation="edit-config"
+            namespace="&NS_FILTER;"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+	    yang_key="&IPV4_UNICAST_NETWORK;/prefix"
+            >
+            <PARAM
+                name="ip"
+                help="Network number"
+                ptype="IP_ADDR_MASK"
+                yang_name="&VRF_NAME;,&IPV4_UNICAST_NETWORK;/prefix=${ip}"
+                >
+                <PARAM
+                    name="network-commands"
+                    help="network-sub-commands"
+                    ptype="SUBCOMMAND"
+                    optional="true"
+                    mode="switch"
+                    >
+                    <PARAM
+                        name="backdoor"
+                        pfeature="NOT_SUPPORTED"
+                        help="Specify a BGP backdoor route"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        yang_name="&IPV4_UNICAST_NETWORK;/backdoor"
+                        />
+                    <PARAM
+                        name="route-map"
+                        help="Route-map reference"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        >
+                        <PARAM
+                            name="name"
+                            help="Route map name"
+                            ptype="STRING"
+                            yang_name="&IPV4_UNICAST_NETWORK;/route-map=${name}"
+                            />
+                    </PARAM>
+                </PARAM>
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <!-- end of router bgp network -->
+        <!-- start of router bgp redistribute -->
+        <COMMAND
+            name="redistribute"
+            help="Redistribute information from another routing protocol"
+            operation="edit-config"
+            namespace="&NS_FILTER;"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            >
+            <MACRO name="REDISTRIBUTE_CMDS_V4" arg="&IPV4_UNICAST_BASE;,&IPV4_UNICAST;" />
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+    </VIEW>
+    <!-- end of router bgp neighbor ipv4-->
+
+<!-- ********************************************************************** -->
+<!-- *  UNCONFIGURATION COMMANDS                                          * -->
+<!-- *  View : configure-router-bgp-af-v4-view                            * -->
+<!-- ********************************************************************** -->
+    <VIEW
+        name="configure-router-bgp-af-v4-view"
+        >
+        <COMMAND
+            name="no"
+            help="no commands"
+            />
+        <!-- router bgp aggregate-address -->
+        <COMMAND
+            name="no aggregate-address"
+            help="Configure BGP aggregate entries"
+            operation="edit-config"
+            namespace="&NS_FILTER;"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            >
+            <PARAM
+                name="ipv4"
+                help="Aggregate address"
+                ptype="IP_ADDR_MASK"
+                sub_oper_yang="remove:aggregate-address-list"
+                yang_name="&IPV4_UNICAST_BASE;/aggregate-address-list/prefix=${ipv4}"
+                >
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <!-- end of router bgp aggregate-address -->
+        <MACRO name="NO_ADD_PATH" arg="&IPV4_UNICAST_ADD_PATH;" />
+        <!-- end of router bgp as-num bgp -->
+        <MACRO name="NO_DAMPENING" arg="&IPV4_UNICAST_BASE;" />
+        <!-- router bgp default-metric -->
+        <COMMAND
+            name="no default-metric"
+            help="Set metric of redistributed routes"
+            operation="edit-config"
+            namespace="&NS_FILTER;"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            yang_name="&IPV4_UNICAST_BASE;/default-metric"
+            >
+            <PARAM
+                name="metric"
+                help="Default metric"
+                optional="true"
+                ptype="RANGE_1_4294967295"
+                />
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <!-- end of router bgp default-metric -->
+        <!-- router bgp as-num distance -->
+        <MACRO name="NO_DISTANCE" arg="&IPV4_UNICAST;" />
+        <!-- start of router bgp network -->
+        <COMMAND
+            name="no network"
+            help="Enable routing on an IP network"
+            operation="edit-config"
+            namespace="&NS_FILTER;"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            >
+            <PARAM
+                name="ip"
+                help="Network number"
+                ptype="IP_ADDR_MASK"
+                sub_oper_yang="remove:network-address-list"
+                yang_name="&VRF_NAME;,&IPV4_UNICAST_NETWORK;/prefix=${ip}"
+                >
+                <PARAM
+                    name="network-commands"
+                    help="network-sub-commands"
+                    ptype="SUBCOMMAND"
+                    optional="true"
+                    mode="switch"
+                    >
+                    <PARAM
+                        name="backdoor"
+                        pfeature="NOT_SUPPORTED"
+                        help="Specify a BGP backdoor route"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        sub_oper_yang="remove:network-address-list"
+                        yang_name="&IPV4_UNICAST_NETWORK;/backdoor"
+                        >
+                            </PARAM>
+                    <PARAM
+                        name="route-map"
+                        help="Route-map reference"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        >
+                        <PARAM
+                            name="name"
+                            help="Route map name"
+                            ptype="STRING"
+                            sub_oper_yang="remove:network-address-list"
+                            yang_name="&IPV4_UNICAST_NETWORK;/route-map=${name}"
+                            />
+                    </PARAM>
+                </PARAM>
+            </PARAM>
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+        <!-- end of router bgp network -->
+        <!-- start of router bgp redistribute -->
+        <COMMAND
+            name="no redistribute"
+            help="Redistribute information from another routing protocol"
+            operation="edit-config"
+            namespace="&NS_FILTER;"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            >
+            <MACRO name="NO_REDISTRIBUTE_CMDS_V4" arg="&IPV4_UNICAST_BASE;,&IPV4_UNICAST;" />
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+    </VIEW>
+<!-- ********************************************************************** -->
+<!-- *  CONFIGURATION COMMANDS                                            * -->
+<!-- *  View : configure-router-bgp-nbr-v4-af-v4-view                     * -->
+<!-- ********************************************************************** -->
+    <VIEW
+        name="configure-router-bgp-nbr-af-v4-view"
+        prompt="${SYSTEM_NAME}(config-router-bgp-neighbor-af)# "
+        depth="4"
+        >
+        <!-- Inheritance -->
+        <NAMESPACE
+            ref="configure-view"
+            help="false"
+            completion="false"
+            />
+        <NAMESPACE
+            ref="configure-router-bgp-nbr-view"
+            help="false"
+            completion="false"
+            />
+        <COMMAND
+            name="no"
+            help="Unconfigure BGP routing protocol"
+            />
+        <!-- show configuration candidate -->
+        <COMMAND
+            name="show"
+            help="show configuration"
+        />
+        <COMMAND
+            name="show configuration candidate"
+            help="Current candidate configuration"
+            yang_filter="&SUBTREE_FILTER;Filter_Conditions:&IPV4_AF_NBR_PREFIX;;Filter_Namespace:&NS_FILTER;"
+            >
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+        <!-- show configuration -->
+        <COMMAND
+            name="show configuration"
+            help="Current configuration (default = running)"
+            yang_filter="&SUBTREE_FILTER;Filter_Conditions:&IPV4_AF_NBR_PREFIX;;Filter_Namespace:&NS_FILTER;"
+            >
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+		<COMMAND
+		    name="activate"
+		    help="Enable the Address Family for this Neighbor"
+      		namespace="&NS_FILTER;"
+	    	operation="edit-config"
+		    ptype="SUBCOMMAND"
+		    mode="subcommand"
+		    yang_name="&IPV4_AF_NBR_PREFIX;,&PEER_CONFIG_NEIGHBOR_IPV4_UNICAST;/activate=true"
+		    add_config_entry = "false"
+		    >
+		    <ACTION builtin="clish_extn"> </ACTION>
+		</COMMAND>
+
+        <MACRO name="AF_NBR_CMDS" arg="&IPV4_AF_NBR_PREFIX;,&PEER_CONFIG_NEIGHBOR_IPV4_UNICAST;" />
+
+        <COMMAND
+            name="no activate"
+            help="Disable the Address Family for this Neighbor"
+            namespace="&NS_FILTER;"
+            operation="edit-config"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            default_oper="merge"
+            yang_name="&IPV4_AF_NBR_PREFIX;,&PEER_CONFIG_NEIGHBOR_IPV4_UNICAST;/activate=false"
+            add_config_entry = "true"
+            >
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+        <MACRO name="NO_AF_NBR_CMDS" arg="&IPV4_AF_NBR_PREFIX;,&PEER_CONFIG_NEIGHBOR_IPV4_UNICAST;" />
+    </VIEW>
+<!-- ********************************************************************** -->
+<!-- *  CONFIGURATION COMMANDS                                            * -->
+<!-- *  View : configure-router-bgp-pgrp-af-v4-view                       * -->
+<!-- ********************************************************************** -->
+    <VIEW
+        name="configure-router-bgp-pgrp-af-v4-view"
+        prompt="${SYSTEM_NAME}(config-router-bgp-template-af)# "
+        depth="4"
+        >
+        <!-- Inheritance -->
+        <NAMESPACE
+            ref="configure-view"
+            help="false"
+            completion="false"
+            />
+        <NAMESPACE
+            ref="configure-router-bgp-pgrp-view"
+            help="false"
+            completion="false"
+            />
+
+        <COMMAND
+            name="no"
+            help="Unconfigure template configuration"
+            />
+
+        <!-- show configuration candidate -->
+        <COMMAND
+            name="show"
+            help="show configuration"
+        />
+        <COMMAND
+            name="show configuration candidate"
+            help="Current candidate configuration"
+            yang_filter="&SUBTREE_FILTER;Filter_Conditions:&IPV4_AF_PGRP_PREFIX;;Filter_Namespace:&NS_FILTER;"
+            >
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+        <!-- show configuration -->
+        <COMMAND
+            name="show configuration"
+            help="Current configuration (default = running)"
+            yang_filter="&SUBTREE_FILTER;Filter_Conditions:&IPV4_AF_PGRP_PREFIX;;Filter_Namespace:&NS_FILTER;"
+            >
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+
+		<COMMAND
+		    name="activate"
+		    help="Enable the Address Family for this Neighbor"
+      		namespace="&NS_FILTER;"
+	    	operation="edit-config"
+		    ptype="SUBCOMMAND"
+		    mode="subcommand"
+		    yang_name="&IPV4_AF_PGRP_PREFIX;,&PEER_GROUP_NEIGHBOR_IPV4_UNICAST;/activate=true"
+		    add_config_entry = "false"
+		    >
+		    <ACTION builtin="clish_extn"> </ACTION>
+		</COMMAND>
+
+        <MACRO name="TEMPLATE_AF_NBR_CMDS" arg="&IPV4_AF_PGRP_PREFIX;,&PEER_GROUP_NEIGHBOR_IPV4_UNICAST;" />
+
+        <COMMAND
+            name="no activate"
+            help="Disable the Address Family for this Neighbor"
+            namespace="&NS_FILTER;"
+            operation="edit-config"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            default_oper="merge"
+            yang_name="&IPV4_AF_PGRP_PREFIX;,&PEER_GROUP_NEIGHBOR_IPV4_UNICAST;/activate=false"
+            add_config_entry = "true"
+            >
+            <ACTION builtin="clish_extn"> </ACTION>
+        </COMMAND>
+
+        <MACRO name="NO_TEMPLATE_AF_NBR_CMDS" arg="&IPV4_AF_PGRP_PREFIX;,&PEER_GROUP_NEIGHBOR_IPV4_UNICAST;"/>
+    </VIEW>
+</CLISH_MODULE>
+

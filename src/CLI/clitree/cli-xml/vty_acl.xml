@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE CLISH_MODULE [
+<!ENTITY MODULE-NS      "http://www.dellemc.com/networking/os10/dell-policy">
+<!ENTITY MODULE         "dell-policy">
+<!ENTITY SUBTREE_FILTER "Filter_Type:SUBTREE;">
+<!ENTITY VTY-CONFIG   "/config/policy-vty-config">
+<!ENTITY VTY-ACCESS-LIST    "/config/policy-vty-config/vty-acl">
+<!ENTITY POLICY-PREF    "policy">
+]>
+<CLISH_MODULE
+    xmlns="http://www.dellemc.com/force10/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xi="http://www.w3.org/2001/XInclude"
+    xsi:schemaLocation="http://www.dellemc.com/force10/XMLSchema
+                        http://www.dellemc.com/force10/XMLSchema/clish.xsd"
+    >
+<!--=========================================================================-->
+
+<VIEW name="enable-view">
+
+
+<!--MODE : exec -->
+
+<!--show candidate-configuration access-class -->
+    <COMMAND
+        name="show candidate-configuration line"
+        help="Current candidate line-vty configuration"
+        pfeature="FEATURE_NOT_SUPPORTED"
+        yang_filter="&SUBTREE_FILTER;Filter_Conditions:&VTY-ACCESS-LIST;;Filter_Namespace:&MODULE-NS;"
+        db_mode="configure-vty"
+        >
+        <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+<!--show running-configuration access-class -->
+    <COMMAND
+        name="show running-configuration line"
+        help="Current operating line-vty configuration"
+        pfeature="FEATURE_NOT_SUPPORTED"
+        yang_filter="&SUBTREE_FILTER;Filter_Conditions:&VTY-ACCESS-LIST;;Filter_Namespace:&MODULE-NS;"
+        db_mode="configure-vty"
+        >
+        <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+</VIEW>
+
+<VIEW name="configure-view">
+
+   <COMMAND name ="line"
+         help="Configure a terminal line"
+         pfeature="FEATURE_NOT_SUPPORTED"
+         >
+    </COMMAND>
+
+<!-- line vty -->
+   <COMMAND name ="line vty"
+         help="Virtual terminal line"
+         pfeature="FEATURE_NOT_SUPPORTED"
+         operation="edit-config"
+         view="configure-vty-view"
+         viewid="name=line-vty"
+         namespace="&MODULE-NS;"
+         yang_name="&VTY-CONFIG;"
+         >
+    <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+</VIEW>
+
+<VIEW name="configure-vty-view"
+        prompt="${SYSTEM_NAME}(config-line-vty)# "
+        depth="2">
+<!-- Inheritance -->
+     <NAMESPACE ref="configure-view"
+                help="false"
+                completion="false"/>
+
+     <!-- show configuration candidate -->
+     <COMMAND
+          name="show"
+          help="show configuration"
+     />
+     <COMMAND
+          name="show configuration candidate"
+          help="Current candidate configuration"
+          yang_filter="&SUBTREE_FILTER;Filter_Conditions:&VTY-ACCESS-LIST;;Filter_Namespace:&MODULE-NS;"
+      >
+     <ACTION builtin="clish_extn"> </ACTION>
+     </COMMAND>
+
+     <!-- show configuration -->
+     <COMMAND
+         name="show configuration"
+         help="Current configuration (default = running)"
+         yang_filter="&SUBTREE_FILTER;Filter_Conditions:&VTY-ACCESS-LIST;;Filter_Namespace:&MODULE-NS;"
+      >
+     <ACTION builtin="clish_extn"> </ACTION>
+     </COMMAND>
+
+   <COMMAND name ="ip"
+         help="Filter connections based on an IPv4 access list">
+    </COMMAND>
+<!-- ip access-class -->
+   <COMMAND name="ip access-class"
+         help="Specify IPv4 access class"
+         pfeature="FEATURE_NOT_SUPPORTED"
+         operation="edit-config"
+         namespace="&MODULE-NS;"
+         yang_key="&VTY-ACCESS-LIST;/ip-type=ipv4"
+         >
+         <PARAM name="access-list-name"
+             help="Name of the IPv4 access-list (Max size 140)"
+             ptype="STRING_1_140"
+             yang_name="&VTY-ACCESS-LIST;/ip-type=ipv4,&VTY-ACCESS-LIST;/name=${access-list-name}"
+             >
+         </PARAM>
+    <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+   <COMMAND name ="ipv6"
+         help="Filter connections based on an IPv6 access list">
+    </COMMAND>
+<!-- ipv6 access-class -->
+   <COMMAND name="ipv6 access-class"
+         help="Specify IPv6 access class"
+         pfeature="FEATURE_NOT_SUPPORTED"
+         operation="edit-config"
+         namespace="&MODULE-NS;"
+         yang_key="&VTY-ACCESS-LIST;/ip-type=ipv6"
+         >
+         <PARAM name="access-list-name"
+             help="Name of the IPv6 access-list (Max size 140)"
+             ptype="STRING_1_140"
+             yang_name="&VTY-ACCESS-LIST;/ip-type=ipv6,&VTY-ACCESS-LIST;/name=${access-list-name}"
+             >
+         </PARAM>
+    <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+   <COMMAND name ="no"
+         help="Negate a command or set its defaults">
+    </COMMAND>
+   <COMMAND name ="no ip"
+         help="Filter connections based on an IPv4 access list">
+    </COMMAND>
+<!-- no ip access-class -->
+   <COMMAND name="no ip access-class"
+         help="Specify IPv4 access class"
+         pfeature="FEATURE_NOT_SUPPORTED"
+         operation="edit-config"
+         namespace="&MODULE-NS;"
+         sub_oper_yang="remove:vty-acl"
+         >
+        <PARAM name="access-list-name"
+             help="Name of the IPv4 access-list (Max size 140)"
+             ptype="STRING_1_140"
+             yang_name="&VTY-ACCESS-LIST;/name=${access-list-name},&VTY-ACCESS-LIST;/ip-type=ipv4"
+             >
+        </PARAM>
+    <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+
+   <COMMAND name ="no ipv6"
+         help="Filter connections based on an IPv6 access list">
+    </COMMAND>
+<!-- no ipv6 access-class -->
+   <COMMAND name="no ipv6 access-class"
+         help="Specify IPv6 access class"
+         pfeature="FEATURE_NOT_SUPPORTED"
+         operation="edit-config"
+         namespace="&MODULE-NS;"
+         sub_oper_yang="remove:vty-acl"
+         >
+        <PARAM name="access-list-name"
+             help="Name of the IPv6 access-list (Max size 140)"
+             ptype="STRING_1_140"
+             yang_name="&VTY-ACCESS-LIST;/name=${access-list-name},&VTY-ACCESS-LIST;/ip-type=ipv6"
+             >
+        </PARAM>
+    <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+
+</VIEW>
+
+</CLISH_MODULE>

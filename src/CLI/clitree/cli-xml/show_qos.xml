@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE CLISH_MODULE [
+    <!ENTITY NAME_SPACE "http://www.dellemc.com/networking/os10/dell-qos">
+    <!ENTITY CLASS_NAME_SPACE "http://www.dellemc.com/networking/os10/dell-diffserv-classifier">
+    <!ENTITY POLICY_NAME_SPACE "http://www.dellemc.com/networking/os10/dell-diffserv-policy">
+    <!ENTITY COPP_STAT "/copp-statistics">
+    <!ENTITY COPP_INFO "/copp_info">
+    <!ENTITY TRUSTMAP_INFO "/active-trust-map">
+    <!ENTITY CLASSIFIER_CFG "/classifier-entry">
+    <!ENTITY POLICY_CFG "/policy-entry">
+    <!ENTITY SYS_QOS_CFG "/system-qos-cfg">
+    <!ENTITY CONTROL_PLANE_CFG "/control-plane-cfg">
+    <!ENTITY SUBTREE_FILTER "Filter_Type:SUBTREE">
+]>
+<CLISH_MODULE
+    xmlns="http://www.dellemc.com/force10/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xi="http://www.w3.org/2001/XInclude"
+    xsi:schemaLocation="http://www.dellemc.com/force10/XMLSchema
+            http://www.dellemc.com/force10/XMLSchema/clish.xsd"
+    >
+    <!--=======================================================-->
+
+    <VIEW
+        name="enable-view"
+        >
+      <COMMAND
+         name="show control-plane"
+         help="Display control-plane related informations"
+         operation="get"
+         >
+         <PARAM
+           name="control-plane switch"
+           help="Control-plane options"
+           ptype="SUBCOMMAND"
+           mode="switch">
+         <PARAM
+           name="info"
+           help="Display queue mapping and rate limit"
+           operation="get"
+           ptype="SUBCOMMAND"
+           mode="subcommand"
+           yang_filter="&SUBTREE_FILTER;;Filter_Conditions:&COPP_INFO;/mapping;Filter_Namespace:&NAME_SPACE;"
+           template="show_control_plane_info.xsl"/>
+         <PARAM
+         name="statistics"
+         help="Display counters of all CPU queue statistics"
+         operation="get"
+         yang_filter="&SUBTREE_FILTER;;Filter_Conditions:&COPP_STAT;/queue-entry;Filter_Namespace:&NAME_SPACE;"
+         ptype="SUBCOMMAND"
+         mode="subcommand"
+         template="show_control_plane_statistics.xsl"/>
+        </PARAM>
+         <ACTION builtin="clish_extn"> </ACTION>
+      </COMMAND>
+        <COMMAND
+            name="show qos system trust-queue-map"
+            help="Show system trust queue map information"
+            operation="get"
+            namespace="&NAME_SPACE;"
+            template="show_trust_map_system.xsl"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            yang_filter="Filter_Namespace:&NAME_SPACE;;Filter_Type:SUBTREE;Filter_Conditions:&TRUSTMAP_INFO;/queue-mapping"
+            pfeature="NOT_SUPPORTED"
+            >
+            <ACTION
+                builtin="clish_extn"
+                > </ACTION>
+        </COMMAND>
+    <!--show candidate-configuration control-plane -->
+    <COMMAND
+        name="show candidate-configuration control-plane"
+        help="Current candidate control-plane configuration"
+        yang_filter="&SUBTREE_FILTER;;Filter_Conditions:&CLASSIFIER_CFG;/mtype=control-plane;Filter_Namespace:&CLASS_NAME_SPACE;|&SUBTREE_FILTER;;Filter_Conditions:&POLICY_CFG;/ptype=control-plane;Filter_Namespace:&POLICY_NAME_SPACE;|&SUBTREE_FILTER;;Filter_Conditions:&CONTROL_PLANE_CFG;;Filter_Namespace:&NAME_SPACE;"
+        db_mode="configure-cmap-qos-view,configure-pmap-qos-view,configure-sys-cp-view"
+        >
+        <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+    <!--show running-configuration control-plane -->
+    <COMMAND
+        name="show running-configuration control-plane"
+        help="Current operating control-plane configuration"
+        yang_filter="&SUBTREE_FILTER;;Filter_Conditions:&CLASSIFIER_CFG;/mtype=control-plane;Filter_Namespace:&CLASS_NAME_SPACE;|&SUBTREE_FILTER;;Filter_Conditions:&POLICY_CFG;/ptype=control-plane;Filter_Namespace:&POLICY_NAME_SPACE;|&SUBTREE_FILTER;;Filter_Conditions:&CONTROL_PLANE_CFG;;Filter_Namespace:&NAME_SPACE;"
+        db_mode="configure-cmap-qos-view,configure-pmap-qos-view,configure-sys-cp-view"
+        >
+        <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+    <!--show candidate-configuration system-qos -->
+    <COMMAND
+        name="show candidate-configuration system-qos"
+        help="Current candidate system-qos configuration"
+        yang_filter="&SUBTREE_FILTER;;Filter_Conditions:&SYS_QOS_CFG;;Filter_Namespace:&NAME_SPACE;"
+        db_mode="configure-cmap-qos-view,configure-pmap-qos-view,configure-sys-cp-view"
+        template="show_config_sys_qos.xsl"
+        >
+        <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+
+    <!--show running-configuration system-qos -->
+    <COMMAND
+        name="show running-configuration system-qos"
+        help="Current operating system-qos configuration"
+        yang_filter="&SUBTREE_FILTER;;Filter_Conditions:&SYS_QOS_CFG;;Filter_Namespace:&NAME_SPACE;"
+        db_mode="configure-cmap-qos-view,configure-pmap-qos-view,configure-sys-cp-view"
+        template="show_config_sys_qos.xsl"
+        >
+        <ACTION builtin="clish_extn"> </ACTION>
+    </COMMAND>
+    </VIEW>
+</CLISH_MODULE>
+

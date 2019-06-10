@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE CLISH_MODULE [
+<!ENTITY SUBTREE_FILTER                     "Filter_Type:SUBTREE">
+]>
+<CLISH_MODULE
+        xmlns="http://www.dellemc.com/force10/XMLSchema"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xi="http://www.w3.org/2001/XInclude"
+        xsi:schemaLocation="http://www.dellemc.com/force10/XMLSchema
+        http://www.dellemc.com/force10/XMLSchema/clish.xsd"
+        >
+        <!--=======================================================-->
+        <!--                Exec MODE                              -->
+        <!--=======================================================-->
+
+        <VIEW
+             name="enable-view"
+             >
+        <COMMAND
+            name="generate"
+            help="Command to generate executed functionality"
+            ptype="SUBCOMMAND"
+            operation="generic-rpc"
+            namespace="http://www.dellemc.com/networking/os10/dell-support"
+            mode="subcommand"
+            >
+
+            <PARAM
+                name="support-bundle"
+                help="Generate a full support bundle"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                yang_name="/gen-support-bundle" >
+
+                <PARAM
+                    name="enable-all-plugin-options"
+                    help="Generate a full support bundle with all plugin options enabled"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    optional="true"
+                    yang_name="/gen-support-bundle/enable-all-plugin-options=true" >
+                </PARAM>
+            </PARAM>
+
+         <ACTION builtin="clish_extn"/>
+        </COMMAND>
+
+     </VIEW>
+
+</CLISH_MODULE>
+
+
