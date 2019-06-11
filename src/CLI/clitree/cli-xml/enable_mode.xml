@@ -43,15 +43,6 @@
             help="Set terminal settings"
             />
         <COMMAND
-            name="terminal length"
-            help="Set terminal length"
-            >
-                 <PARAM name="length"
-                        help="Number of lines on screen (0 for no pausing, default 24)"
-                        ptype="RANGE_0_512"/>
-            <ACTION builtin="clish_nop"></ACTION>
-        </COMMAND>
-        <COMMAND
             name="terminal monitor"
             help="Enable logging">
             <ACTION builtin="clish_nop"></ACTION>
@@ -82,7 +73,7 @@
             lock="false"
             >
             <ACTION
-                builtin="clish_nop"
+                builtin="clish_close"
                 />
         </COMMAND>
         <COMMAND
@@ -293,16 +284,6 @@
                  template_param="curr_sessid= __ncsessionid"
                  yang_filter="Filter_Type:SUBTREE;Filter_Conditions:/netconf-state/sessions,/netconf-state/datastores;Filter_Namespace:urn:ietf:params:xml:ns:yang:ietf-netconf-monitoring">
                  <ACTION builtin="clish_nop"> </ACTION>
-        </COMMAND>
-
-        <COMMAND name="show command-history"
-                help="shows command history of the current user">
-                 <PARAM name="limit"
-                      help="Display last N lines in the history"
-                      ptype="RANGE_1_5000"
-                      optional="true"
-                      />
-              <ACTION builtin="clish_nop"></ACTION>
         </COMMAND>
 
         <COMMAND name="kill-session" access="sysadmin"
