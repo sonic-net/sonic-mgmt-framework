@@ -7,6 +7,7 @@ import pdb
 import swagger_client
 from swagger_client.rest import ApiException
 from pprint import pprint
+from renderer.scripts.render_cli import show_cli_output
 
 
 plugins = dict()
@@ -194,13 +195,19 @@ def run(func, args):
                     print ("Failed")
             elif 'openconfig_aclacl_entries' in response.keys():
                 value = response['openconfig_aclacl_entries']
-                # Call the template
+                if value is None:
+                    return
+                show_cli_output(args[2], value)
             elif 'openconfig_aclacl_set' in response.keys():
                 value = response['openconfig_aclacl_set']
-                # Call the template
+                if value is None:
+                    return
+                show_cli_output(args[0], value)
             elif 'openconfig_aclinterfaces' in response.keys():
                 value = response['openconfig_aclinterfaces']
-                # Call the template
+                if value is None:
+                    return
+                show_cli_output(args[0], value)
             else:
                 print("Failed")
         #pprint(api_response)

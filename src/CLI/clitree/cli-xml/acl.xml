@@ -9,7 +9,10 @@
 <!--=========================================================================-->
 
 <VIEW name="enable-view">
-
+   <COMMAND
+        help="show IP commands"
+        name="show ip"
+        />
 <!--show ip access-lists -->
    <COMMAND
          name="show ip access-lists"
@@ -24,9 +27,9 @@
         </PARAM>
       <ACTION>
         if test "${access-list-name}" = ""; then
-             python $SONIC_CLI_ROOT/target/sonic-cli.py get_list_base_acl_sets_acl_set
+             python $SONIC_CLI_ROOT/target/sonic-cli.py get_list_base_acl_sets_acl_set show_access_list.j2
         else
-             python $SONIC_CLI_ROOT/target/sonic-cli.py get_acl_set_acl_entries ${access-list-name} ACL_IPV4
+             python $SONIC_CLI_ROOT/target/sonic-cli.py get_acl_set_acl_entries ${access-list-name} ACL_IPV4 show_access_list.j2
         fi
       </ACTION>
     </COMMAND>
@@ -45,7 +48,7 @@
 			>
         </PARAM>
       <ACTION>
-        python $SONIC_CLI_ROOT/target/sonic-cli.py get_acl_interfaces
+        python $SONIC_CLI_ROOT/target/sonic-cli.py get_acl_interfaces show_access_group.j2
       </ACTION>
     </COMMAND>
 
@@ -54,8 +57,15 @@
 <!--MODE : interface -->
 
 <VIEW name="configure-if-view">
-
-<!-- ip access-group -->
+    <COMMAND
+        name="ip"
+        help="Interface Internet Protocol config commands"
+    />
+    <COMMAND
+        name="no ip"
+        help="Interface Internet Protocol config commands"
+    />
+    <!-- ip access-group -->
     <COMMAND
          name="ip access-group"
          help="Specify access control for packets"

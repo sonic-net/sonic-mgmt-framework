@@ -32,16 +32,22 @@
         name="configure-view"
         >
         <COMMAND
+            name="end"
+            help="Exit to the exec Mode"
+            pfeature="FEATURE_FABRIC_MODE"
+            view="enable-view"
+            />
+        <COMMAND
             name="interface"
             help="Select an interface"
             view="configure-if-view"
             viewid="iface=Ethernet${phy-if-name}"
             >
             <PARAM
-                name="if-switch"
+                name="Ethernet"
                 help="Interface commands"
-                mode="switch"
-                ptype="STRING"
+                mode="subcommand"
+                ptype="SUBCOMMAND"
                 >
                 <PARAM
                     name="phy-if-name"
