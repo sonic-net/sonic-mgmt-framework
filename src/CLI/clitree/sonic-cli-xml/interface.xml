@@ -511,6 +511,7 @@
 <ACTION builtin="clish_nop"/>
 </VAR>
 <VIEW name="configure-view">
+<COMMAND name="end" help="Exit to the exec Mode" pfeature="FEATURE_FABRIC_MODE" view="enable-view"/>
 <COMMAND name="interface" access="sysadmin:netadmin" help="Select an interface" view="configure-if-view" viewid="iface=Ethernet${phy-if-name}" operation="edit-config" db_multi_yang_key="&DN_IF_ENTRY;/name=Ethernet*||&DN_IF_ENTRY;/name=fibre*||&DN_IF_ENTRY;/name=loopback*||&DN_IF_ENTRY;/name=mgmt*||&DN_IF_ENTRY;/name=port-channel*||&DN_VL_ENTRY;/name=virtual-network*||&DN_VL_ENTRY;/name=vlan*" db_flag="SEP_CLI" pfeature="FEATURE_FABRIC_MODE">
 <PARAM name="if-switch" help="Interface commands" mode="switch" ptype="STRING" db_flag="SEP_CLI">
 <PARAM name="Ethernet" help="Physical Interface" ptype="SUBCOMMAND" mode="subcommand">

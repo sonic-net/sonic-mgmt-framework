@@ -207,7 +207,7 @@
                 </PARAM>
             </PARAM>
         </PARAM>
-    <ACTION builtin="clish_extn"/>
+    <ACTION builtin="clish_nop"/>
     </COMMAND>
 </VIEW>
 
@@ -229,7 +229,7 @@
                       ptype="PHY_INTERFACE"
                       yang_name= "&GLOBAL_IPV4;/icmp-source-intf=${intf-name}"/>
             </PARAM>
-      <ACTION builtin="clish_extn"/>
+      <ACTION builtin="clish_nop"/>
     </COMMAND>
 
     <!---  ip arp backoff-time <seconds> -->
@@ -293,7 +293,7 @@
                          yang_name="&GLOBAL_ARP;/timeout=${timeout-val}"/>
                  </PARAM>
             </PARAM>
-      <ACTION builtin="clish_extn"/>
+      <ACTION builtin="clish_nop"/>
     </COMMAND>
     <!--- mac-address-table station-move refresh-arp -->
     <COMMAND
@@ -314,7 +314,7 @@
                     ptype="SUBCOMMAND"
                     yang_name="&GLOBAL_IPV4;/station-move-refresh-arp=true"/>
             </PARAM>
-      <ACTION builtin="clish_extn"/>
+      <ACTION builtin="clish_nop"/>
     </COMMAND>
   </VIEW>
 
@@ -340,7 +340,7 @@
         yang_name= "&INTF_NAME;,&INTF_IPV4;/&MODULE-PREF-DELL-IP;:unreachables=true"
         pfeature="NOT_SUPPORTED"
         >
-        <ACTION builtin="clish_extn" ></ACTION>
+        <ACTION builtin="clish_nop" ></ACTION>
     </COMMAND>
     <!--- ip redirects -->
     <COMMAND
@@ -351,7 +351,7 @@
         yang_name= "&INTF_NAME;,&INTF_IPV4;/&MODULE-PREF-DELL-IP;:redirects=true"
         pfeature="NOT_SUPPORTED"
         >
-        <ACTION builtin="clish_extn" ></ACTION>
+        <ACTION builtin="clish_nop" ></ACTION>
     </COMMAND>
 
     <!--- no ip unreachables -->
@@ -364,7 +364,7 @@
         yang_name= "&INTF_NAME;,&INTF_IPV4;/&MODULE-PREF-DELL-IP;:unreachables"
         pfeature="NOT_SUPPORTED"
         >
-        <ACTION builtin="clish_extn" ></ACTION>
+        <ACTION builtin="clish_nop" ></ACTION>
     </COMMAND>
     <!--- no ip redirects -->
     <COMMAND
@@ -376,7 +376,7 @@
         yang_name= "&INTF_NAME;,&INTF_IPV4;/&MODULE-PREF-DELL-IP;:redirects"
         pfeature="NOT_SUPPORTED"
         >
-        <ACTION builtin="clish_extn" ></ACTION>
+        <ACTION builtin="clish_nop" ></ACTION>
     </COMMAND>
      <!-- IP address -->
      <COMMAND
@@ -385,7 +385,7 @@
         namespace="&MODULE-INTF-IP-NS;"
         operation="edit-config"
         yang_name="&INTF_NAME;,&INTF_IPV4_ADDR_DHCP;=true">
-        <ACTION builtin="clish_extn"></ACTION>
+        <ACTION builtin="clish_nop"></ACTION>
         </COMMAND>
      <COMMAND
         name="ip address"
@@ -427,7 +427,7 @@
             </PARAM>
         </PARAM>
         <ACTION
-            builtin="clish_extn"
+            builtin="clish_nop"
             ></ACTION>
     </COMMAND>
     <COMMAND
@@ -437,7 +437,7 @@
         operation="edit-config"
         sub_oper_yang="remove:dhcp-config"
         yang_name="&INTF_NAME;,&INTF_IPV4_ADDR_DHCP;=false">
-        <ACTION builtin="clish_extn"></ACTION>
+        <ACTION builtin="clish_nop"></ACTION>
     </COMMAND>
     <COMMAND
         name="no ip address"
@@ -479,7 +479,7 @@
             </PARAM>
         </PARAM>
             <ACTION
-                builtin="clish_extn">
+                builtin="clish_nop">
             </ACTION>
     </COMMAND>
     <!--- ip arp subcommands   -->
@@ -535,7 +535,7 @@
                               </PARAM>
                      </PARAM>
              </PARAM> <!-- End arp-switch -->
-      <ACTION builtin="clish_extn"/>
+      <ACTION builtin="clish_nop"/>
     </COMMAND>
   </VIEW>
 
@@ -561,7 +561,7 @@
         yang_name= "&PO_NAME;,&INTF_IPV4;/&MODULE-PREF-DELL-IP;:unreachables=true"
         pfeature="NOT_SUPPORTED"
         >
-        <ACTION builtin="clish_extn" ></ACTION>
+        <ACTION builtin="clish_nop" ></ACTION>
     </COMMAND>
     <!--- ip redirects -->
     <COMMAND
@@ -572,7 +572,7 @@
         yang_name= "&PO_NAME;,&INTF_IPV4;/&MODULE-PREF-DELL-IP;:redirects=true"
         pfeature="NOT_SUPPORTED"
         >
-        <ACTION builtin="clish_extn" ></ACTION>
+        <ACTION builtin="clish_nop" ></ACTION>
     </COMMAND>
 
     <!--- no ip unreachables -->
@@ -585,7 +585,7 @@
         yang_name= "&PO_NAME;,&INTF_IPV4;/&MODULE-PREF-DELL-IP;:unreachables"
         pfeature="NOT_SUPPORTED"
         >
-        <ACTION builtin="clish_extn" ></ACTION>
+        <ACTION builtin="clish_nop" ></ACTION>
     </COMMAND>
     <!--- no ip redirects -->
     <COMMAND
@@ -597,7 +597,7 @@
         yang_name= "&PO_NAME;,&INTF_IPV4;/&MODULE-PREF-DELL-IP;:redirects"
         pfeature="NOT_SUPPORTED"
         >
-        <ACTION builtin="clish_extn" ></ACTION>
+        <ACTION builtin="clish_nop" ></ACTION>
     </COMMAND>
     <!-- IP address -->
      <COMMAND
@@ -606,7 +606,7 @@
         namespace="&MODULE-INTF-IP-NS;"
         operation="edit-config"
         yang_name="&PO_NAME;,&INTF_IPV4_ADDR_DHCP;=true">
-        <ACTION builtin="clish_extn"></ACTION>
+        <ACTION builtin="clish_nop"></ACTION>
      </COMMAND>
 
      <!-- IP address -->
@@ -650,7 +650,7 @@
                 </PARAM>
             </PARAM>
         <ACTION
-            builtin="clish_extn"
+            builtin="clish_nop"
             ></ACTION>
     </COMMAND>
     <COMMAND
@@ -660,7 +660,7 @@
             operation="edit-config"
             sub_oper_yang="remove:dhcp-config"
             yang_name="&PO_NAME;,&INTF_IPV4_ADDR_DHCP;=false">
-            <ACTION builtin="clish_extn"></ACTION>
+            <ACTION builtin="clish_nop"></ACTION>
         </COMMAND>
     <COMMAND
         name="no ip address"
@@ -703,7 +703,7 @@
             </PARAM>
         </PARAM>
         <ACTION
-            builtin="clish_extn"
+            builtin="clish_nop"
             ></ACTION>
     </COMMAND>
     <!--- ip arp subcommands   -->
@@ -758,7 +758,7 @@
                               </PARAM>
                      </PARAM>
              </PARAM> <!-- End arp-switch -->
-      <ACTION builtin="clish_extn"/>
+      <ACTION builtin="clish_nop"/>
     </COMMAND>
   </VIEW>
 
@@ -784,7 +784,7 @@
         yang_name= "&VL_NAME;,&INTF_IPV4;/&MODULE-PREF-DELL-IP;:unreachables=true"
         pfeature="NOT_SUPPORTED"
         >
-        <ACTION builtin="clish_extn" ></ACTION>
+        <ACTION builtin="clish_nop" ></ACTION>
     </COMMAND>
     <!--- ip redirects -->
     <COMMAND
@@ -795,7 +795,7 @@
         yang_name= "&VL_NAME;,&INTF_IPV4;/&MODULE-PREF-DELL-IP;:redirects=true"
         pfeature="NOT_SUPPORTED"
         >
-        <ACTION builtin="clish_extn" ></ACTION>
+        <ACTION builtin="clish_nop" ></ACTION>
     </COMMAND>
 
     <!--- no ip unreachables -->
@@ -808,7 +808,7 @@
         yang_name= "&VL_NAME;,&INTF_IPV4;/&MODULE-PREF-DELL-IP;:unreachables"
         pfeature="NOT_SUPPORTED"
         >
-        <ACTION builtin="clish_extn" ></ACTION>
+        <ACTION builtin="clish_nop" ></ACTION>
     </COMMAND>
     <!--- no ip redirects -->
     <COMMAND
@@ -820,7 +820,7 @@
         yang_name= "&VL_NAME;,&INTF_IPV4;/&MODULE-PREF-DELL-IP;:redirects"
         pfeature="NOT_SUPPORTED"
         >
-        <ACTION builtin="clish_extn" ></ACTION>
+        <ACTION builtin="clish_nop" ></ACTION>
     </COMMAND>
      <!-- IP address -->
      <COMMAND
@@ -829,7 +829,7 @@
         namespace="&MODULE-INTF-IP-NS;"
         operation="edit-config"
         yang_name="&VL_NAME;,&INTF_IPV4_ADDR_DHCP;=true">
-        <ACTION builtin="clish_extn"></ACTION>
+        <ACTION builtin="clish_nop"></ACTION>
       </COMMAND>
 
      <COMMAND
@@ -872,7 +872,7 @@
             </PARAM>
         </PARAM>
             <ACTION
-                builtin="clish_extn"
+                builtin="clish_nop"
                 ></ACTION>
         </COMMAND>
         <COMMAND
@@ -882,7 +882,7 @@
             operation="edit-config"
             sub_oper_yang="remove:dhcp-config"
             yang_name="&VL_NAME;,&INTF_IPV4_ADDR_DHCP;=false">
-            <ACTION builtin="clish_extn"></ACTION>
+            <ACTION builtin="clish_nop"></ACTION>
         </COMMAND>
         <COMMAND
             name="no ip address"
@@ -924,7 +924,7 @@
                 </PARAM>
             </PARAM>
         <ACTION
-            builtin="clish_extn"
+            builtin="clish_nop"
         ></ACTION>
     </COMMAND>
     <!--- ip arp subcommands   -->
@@ -979,7 +979,7 @@
                               </PARAM>
                      </PARAM>
              </PARAM> <!-- End arp-switch -->
-      <ACTION builtin="clish_extn"/>
+      <ACTION builtin="clish_nop"/>
     </COMMAND>
   </VIEW>
 
@@ -1007,7 +1007,7 @@
                       optional="true"
                       ptype="PHY_INTERFACE"/>
             </PARAM>
-      <ACTION builtin="clish_extn"/>
+      <ACTION builtin="clish_nop"/>
     </COMMAND>
 
     <!---  no ip arp backoff-time <seconds> -->
@@ -1078,7 +1078,7 @@
                          ptype="RANGE_0_35790"/>
                  </PARAM>
             </PARAM>
-      <ACTION builtin="clish_extn"/>
+      <ACTION builtin="clish_nop"/>
     </COMMAND>
     <!---no mac-address-table station-move refresh-arp -->
     <COMMAND
@@ -1101,7 +1101,7 @@
                     optional="true"
                     ptype="SUBCOMMAND">
             </PARAM>
-      <ACTION builtin="clish_extn"/>
+      <ACTION builtin="clish_nop"/>
     </COMMAND>
   </VIEW>
 
@@ -1164,7 +1164,7 @@
                               </PARAM>
                      </PARAM>
              </PARAM> <!-- End arp-switch -->
-      <ACTION builtin="clish_extn"/>
+      <ACTION builtin="clish_nop"/>
     </COMMAND>
   </VIEW>
 
@@ -1227,7 +1227,7 @@
                               </PARAM>
                      </PARAM>
              </PARAM> <!-- End arp-switch -->
-      <ACTION builtin="clish_extn"/>
+      <ACTION builtin="clish_nop"/>
     </COMMAND>
   </VIEW>
 
@@ -1290,7 +1290,7 @@
                               </PARAM>
                      </PARAM>
              </PARAM> <!-- End arp-switch -->
-      <ACTION builtin="clish_extn"/>
+      <ACTION builtin="clish_nop"/>
     </COMMAND>
   </VIEW>
 <!--=======================================================-->
@@ -1313,7 +1313,7 @@
         namespace="&MODULE-INTF-IP-NS;"
         operation="edit-config"
         yang_name="&MGMT_NAME;,&INTF_IPV4_ADDR_DHCP;=true">
-        <ACTION builtin="clish_extn"></ACTION>
+        <ACTION builtin="clish_nop"></ACTION>
       </COMMAND>
      <COMMAND
         name="ip address"
@@ -1356,7 +1356,7 @@
             </PARAM>
         </PARAM>
         <ACTION
-            builtin="clish_extn"
+            builtin="clish_nop"
             ></ACTION>
     </COMMAND>
     <COMMAND
@@ -1374,7 +1374,7 @@
         operation="edit-config"
         sub_oper_yang="remove:dhcp-config"
         yang_name="&MGMT_NAME;,&INTF_IPV4_ADDR_DHCP;=false">
-        <ACTION builtin="clish_extn"></ACTION>
+        <ACTION builtin="clish_nop"></ACTION>
     </COMMAND>
     <COMMAND
         name="no ip address"
@@ -1420,7 +1420,7 @@
                 </PARAM>
             </PARAM>
         <ACTION
-            builtin="clish_extn"
+            builtin="clish_nop"
             ></ACTION>
     </COMMAND>
   </VIEW>
@@ -1477,7 +1477,7 @@
             </PARAM>
         </PARAM>
         <ACTION
-            builtin="clish_extn"
+            builtin="clish_nop"
             ></ACTION>
     </COMMAND>
     <COMMAND
@@ -1526,7 +1526,7 @@
                 </PARAM>
         </PARAM>
         <ACTION
-            builtin="clish_extn"
+            builtin="clish_nop"
             ></ACTION>
     </COMMAND>
   </VIEW>
@@ -1543,7 +1543,7 @@
         sub_oper_yang="remove:dhcp-config,remove:address"
         yang_name="&IP_RANGE_IFACE;=${ifacename},&IP_RANGE_INTF_INFO;/&MODULE-PREF-DELL-IP;:address,&IP_RANGE_INTF_INFO;/&MODULE-PREF-DELL-IP;:dhcp-config">
         <ACTION
-             builtin="clish_extn">
+             builtin="clish_nop">
         </ACTION>
     </COMMAND>
 </VIEW>
@@ -1556,7 +1556,7 @@
         sub_oper_yang="remove:dhcp-config,remove:address"
         yang_name="&IP_RANGE_IFACE;=${vlan_name},&IP_RANGE_INTF_INFO;/&MODULE-PREF-DELL-IP;:address,&IP_RANGE_INTF_INFO;/&MODULE-PREF-DELL-IP;:dhcp-config">
         <ACTION
-             builtin="clish_extn">
+             builtin="clish_nop">
         </ACTION>
     </COMMAND>
 </VIEW>
@@ -1569,7 +1569,7 @@
         sub_oper_yang="remove:dhcp-config,remove:address"
         yang_name="&IP_RANGE_IFACE;=${portchanliface},&IP_RANGE_INTF_INFO;/&MODULE-PREF-DELL-IP;:address,&IP_RANGE_INTF_INFO;/&MODULE-PREF-DELL-IP;:dhcp-config">
         <ACTION
-             builtin="clish_extn">
+             builtin="clish_nop">
         </ACTION>
     </COMMAND>
 </VIEW>

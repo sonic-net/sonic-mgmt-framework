@@ -19,7 +19,7 @@ all : $(SRC_REPLACEMENTS)
 
 	mkdir -p $(SONIC_CLI_ROOT)/target
 	cp $(SONIC_CLI_ROOT)/klish/klish-$(KLISH_VERSION)/clish_start $(SONIC_CLI_ROOT)/.
-	cp $(SONIC_CLI_ROOT)/klish/klish-$(KLISH_VERSION)/bin/clish $(SONIC_CLI_ROOT)/target/.
+	cp -r $(SONIC_CLI_ROOT)/klish/klish-$(KLISH_VERSION)/bin/. $(SONIC_CLI_ROOT)/target/.
 	@echo "complete klish build"
 
 .PHONY: clean

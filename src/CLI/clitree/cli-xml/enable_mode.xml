@@ -35,7 +35,7 @@
             help="Display available commands"
             >
             <ACTION
-                builtin="clish_help_command"
+                builtin="clish_nop"
                 />
         </COMMAND>
         <COMMAND
@@ -43,18 +43,9 @@
             help="Set terminal settings"
             />
         <COMMAND
-            name="terminal length"
-            help="Set terminal length"
-            >
-                 <PARAM name="length"
-                        help="Number of lines on screen (0 for no pausing, default 24)"
-                        ptype="RANGE_0_512"/>
-            <ACTION builtin="clish_terminal_length">${length}</ACTION>
-        </COMMAND>
-        <COMMAND
             name="terminal monitor"
             help="Enable logging">
-            <ACTION builtin="clish_logger_on_off">1</ACTION>
+            <ACTION builtin="clish_nop"></ACTION>
         </COMMAND>
         <COMMAND
             name="no"
@@ -65,7 +56,7 @@
         <COMMAND
             name="no terminal monitor"
             help="Disable logging">
-            <ACTION builtin="clish_logger_on_off">2</ACTION>
+            <ACTION builtin="clish_nop"></ACTION>
         </COMMAND>
         <COMMAND
             name="show terminal"
@@ -74,7 +65,7 @@
         <COMMAND
             name="show terminal monitor"
             help="Show terminal monitor status for this session">
-            <ACTION builtin="clish_logger_on_off">3</ACTION>
+            <ACTION builtin="clish_nop"></ACTION>
         </COMMAND>
         <COMMAND
             name="exit"
@@ -102,7 +93,7 @@
         <COMMAND
             name="debug cli netconf"
             help="Enable debugging on cli netconf">
-            <ACTION builtin="debug_on_off">1</ACTION>
+            <ACTION builtin="clish_nop"></ACTION>
         </COMMAND>
         <COMMAND
             name="no debug"
@@ -113,7 +104,7 @@
         <COMMAND
             name="no debug cli netconf"
             help="Disable debugging on cli netconf">
-            <ACTION builtin="debug_on_off">2</ACTION>
+            <ACTION builtin="clish_nop"></ACTION>
         </COMMAND>
         <COMMAND
             name="configure" access="sysadmin"
@@ -134,7 +125,7 @@
                 mode="subcommand"
                 optional="true"
             />
-            <ACTION builtin="clish_show_batch_plugin">${CLISH_PATH}/tech_support.txt</ACTION>
+            <ACTION builtin="clish_nop"></ACTION>
         </COMMAND>
 
         <COMMAND
@@ -151,7 +142,7 @@
             name="show parser-tree"
             help="Show parser tree"
             >
-            <ACTION builtin="clish_show_parser_tree"> </ACTION>
+            <ACTION builtin="clish_nop"> </ACTION>
         </COMMAND>
         <COMMAND
             name="show running-configuration"
@@ -160,7 +151,7 @@
             prompt_fn="show_config_cb"
             prompt_oper="&FILTER_SOFTWARE_VERSION;|&FILTER_CMS_INTERNAL_RUNNING;"
             >
-            <ACTION builtin="clish_extn"> </ACTION>
+            <ACTION builtin="clish_nop"> </ACTION>
         </COMMAND>
         <COMMAND
             name="show candidate-configuration"
@@ -169,7 +160,7 @@
             prompt_fn="show_config_cb"
             prompt_oper="&FILTER_SOFTWARE_VERSION;|&FILTER_CMS_INTERNAL_CANDIDATE;"
             >
-            <ACTION builtin="clish_extn"> </ACTION>
+            <ACTION builtin="clish_nop"> </ACTION>
         </COMMAND>
         <COMMAND
             name="show running-configuration compressed"
@@ -178,7 +169,7 @@
             prompt_fn="show_config_cb"
             prompt_oper="&FILTER_SOFTWARE_VERSION;|&FILTER_CMS_INTERNAL_RUNNING;"
             >
-            <ACTION builtin="clish_extn"> </ACTION>
+            <ACTION builtin="clish_nop"> </ACTION>
         </COMMAND>
         <COMMAND
             name="show candidate-configuration compressed"
@@ -187,7 +178,7 @@
             prompt_fn="show_config_cb"
             prompt_oper="&FILTER_SOFTWARE_VERSION;|&FILTER_CMS_INTERNAL_CANDIDATE;"
             >
-            <ACTION builtin="clish_extn"> </ACTION>
+            <ACTION builtin="clish_nop"> </ACTION>
         </COMMAND>
         <COMMAND
             name="show startup-configuration"
@@ -196,7 +187,7 @@
             prompt_fn="show_config_cb"
             prompt_oper="&FILTER_SOFTWARE_VERSION;|&FILTER_CMS_INTERNAL_STARTUP;"
             >
-            <ACTION builtin="clish_extn"> </ACTION>
+            <ACTION builtin="clish_nop"> </ACTION>
         </COMMAND>
         <COMMAND
             name="show startup-configuration compressed"
@@ -205,7 +196,7 @@
             prompt_fn="show_config_cb"
             prompt_oper="&FILTER_SOFTWARE_VERSION;|&FILTER_CMS_INTERNAL_STARTUP;"
             >
-            <ACTION builtin="clish_extn"> </ACTION>
+            <ACTION builtin="clish_nop"> </ACTION>
         </COMMAND>
         <COMMAND
             name="show diff"
@@ -268,14 +259,14 @@
 					prompt_oper="${src-options},${dst-options}"
 					/>
             </PARAM>
-            <ACTION builtin="clish_extn"> </ACTION>
+            <ACTION builtin="clish_nop"> </ACTION>
         </COMMAND>
         <COMMAND name="show exec-timeout"
                  help="Show the timeout value of CLI session (in seconds)"
                  operation="get"
                  yang_filter="Filter_Type:SUBTREE;Filter_Conditions:/session-config;Filter_Namespace:http://www.dellemc.com/networking/os10/dell-session"
                  template="show_session_cli_timeout.xsl">
-                 <ACTION builtin="clish_extn"> </ACTION>
+                 <ACTION builtin="clish_nop"> </ACTION>
         </COMMAND>
         <COMMAND name="show cli-session"
                  help="This command is deprecated please use 'show sessions' instead"
@@ -283,7 +274,7 @@
                  template="show_session.xsl"
                  template_param="curr_sessid= __ncsessionid"
                  yang_filter="Filter_Type:SUBTREE;Filter_Conditions:/netconf-state/sessions,/netconf-state/datastores;Filter_Namespace:urn:ietf:params:xml:ns:yang:ietf-netconf-monitoring">
-                 <ACTION builtin="clish_extn"> </ACTION>
+                 <ACTION builtin="clish_nop"> </ACTION>
         </COMMAND>
 
         <COMMAND name="show sessions"
@@ -292,17 +283,7 @@
                  template="show_active_sessions.xsl"
                  template_param="curr_sessid= __ncsessionid"
                  yang_filter="Filter_Type:SUBTREE;Filter_Conditions:/netconf-state/sessions,/netconf-state/datastores;Filter_Namespace:urn:ietf:params:xml:ns:yang:ietf-netconf-monitoring">
-                 <ACTION builtin="clish_extn"> </ACTION>
-        </COMMAND>
-
-        <COMMAND name="show command-history"
-                help="shows command history of the current user">
-                 <PARAM name="limit"
-                      help="Display last N lines in the history"
-                      ptype="RANGE_1_5000"
-                      optional="true"
-                      />
-              <ACTION builtin="clish_history"> ${limit}</ACTION>
+                 <ACTION builtin="clish_nop"> </ACTION>
         </COMMAND>
 
         <COMMAND name="kill-session" access="sysadmin"
@@ -311,7 +292,7 @@
                  <PARAM name="session-id"
                         help="Session ID"
                         ptype="UINT"/>
-                 <ACTION builtin="clish_extn">${session-id}</ACTION>
+                 <ACTION builtin="clish_nop"></ACTION>
         </COMMAND>
         <!-- Write commands -->
         <COMMAND
@@ -323,7 +304,7 @@
             help="Copy current system configuration to startup configuration"
             operation="copy-config"
             >
-            <ACTION builtin="clish_extn"> </ACTION>
+            <ACTION builtin="clish_nop"> </ACTION>
         </COMMAND>
         <!-- Batch mode -->
         <!-- TBD - Provision to accept URI where the file could be local or remote file -->
@@ -336,7 +317,7 @@
             help="Enter the batch config filename along with its filepath"
             ptype="STRING">
             </PARAM>
-            <ACTION builtin="clish_batch_mode"> ${batch_cmd}</ACTION>
+            <ACTION builtin="clish_nop"></ACTION>
         </COMMAND>
         <!-- Special commands -->
         <COMMAND
@@ -345,7 +326,7 @@
             operation="commit"
             >
             <ACTION
-                builtin="clish_extn"
+                builtin="clish_nop"
                 ></ACTION>
         </COMMAND>
         <COMMAND
@@ -354,7 +335,7 @@
             operation="discard-changes"
             >
             <ACTION
-                builtin="clish_extn"
+                builtin="clish_nop"
                 ></ACTION>
         </COMMAND>
         <COMMAND
@@ -363,7 +344,7 @@
             operation="validate"
             >
             <ACTION
-                builtin="clish_extn"
+                builtin="clish_nop"
                 ></ACTION>
         </COMMAND>
         <COMMAND
@@ -373,7 +354,7 @@
             template="lock.xsl"
             >
             <ACTION
-                builtin="clish_extn"
+                builtin="clish_nop"
                 ></ACTION>
         </COMMAND>
         <COMMAND
@@ -383,7 +364,7 @@
             template="lock.xsl"
             >
             <ACTION
-                builtin="clish_extn"
+                builtin="clish_nop"
                 ></ACTION>
         </COMMAND>
         <COMMAND
