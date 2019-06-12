@@ -9,6 +9,8 @@ all:
 	(cd scripts;./klish_platform_features_process.sh ../../clicfg ${TGT_DIR})
 	python scripts/klish_preproc_cmdtree.py ${TGT_DIR}/command-tree ${TGT_DIR}/cli-macro 3
 	cp ./../actioner/*.py ${TGT_DIR}/.
+	cp ../renderer/scripts/*.py ${TGT_DIR}/scripts
+	cp ../renderer/templates/* ${TGT_DIR}/render-templates
 	########## remove following line when docker with correctly packaged Klish parser engine available
 	cp -r sonic-cli-xml ${TGT_DIR}/
 	rm -rf ${TGT_DIR}/cli-macro

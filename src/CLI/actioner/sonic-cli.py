@@ -7,7 +7,7 @@ import pdb
 import swagger_client
 from swagger_client.rest import ApiException
 from pprint import pprint
-from renderer.scripts.render_cli import show_cli_output
+from scripts.render_cli import show_cli_output
 
 
 plugins = dict()
