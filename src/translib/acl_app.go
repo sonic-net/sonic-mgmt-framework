@@ -117,7 +117,7 @@ func (acl *AclApp) translateCreate(d *db.DB) ([]db.WatchKeys, error)  {
     log.Info("translateCreate:acl:path =", acl.path)
 
     aclObj := acl.getAppRootObject()
-    if reflect.ValueOf(aclObj).Elem() == reflect.ValueOf(*acl.ygotTarget).Elem() {
+    if reflect.TypeOf(*acl.ygotTarget).Elem().Name() == "OpenconfigAcl_Acl" {
         acl_subtree = true
         //intf_subtree = true
     }
@@ -211,7 +211,7 @@ func (acl *AclApp) translateDelete(d *db.DB) ([]db.WatchKeys, error)  {
     log.Info("translateDelete:acl:path =", acl.path)
 
     aclObj := acl.getAppRootObject()
-    if reflect.ValueOf(aclObj).Elem() == reflect.ValueOf(*acl.ygotTarget).Elem() {
+    if reflect.TypeOf(*acl.ygotTarget).Elem().Name() == "OpenconfigAcl_Acl" {
         acl_subtree = true
         //intf_subtree = true
     }
@@ -319,7 +319,7 @@ func (acl *AclApp) processDelete(d *db.DB) (SetResponse, error)  {
     log.Info("processDelete:acl:path =", acl.path)
 
     aclObj := acl.getAppRootObject()
-    if reflect.ValueOf(aclObj).Elem() == reflect.ValueOf(*acl.ygotTarget).Elem() {
+    if reflect.TypeOf(*acl.ygotTarget).Elem().Name() == "OpenconfigAcl_Acl" {
         acl_subtree = true
         //intf_subtree = true
     }
@@ -373,17 +373,16 @@ func (acl *AclApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error)  {
     var err error
     var payload []byte
     var aclSubtree bool = false
-    //var intfSubtree bool = false
+    var intfSubtree bool = false
 
     configDb := dbs[db.ConfigDB]
     aclObj := acl.getAppRootObject()
 
-    if reflect.ValueOf(aclObj).Elem() == reflect.ValueOf(*acl.ygotTarget).Elem() {
-        aclSubtree = true
-        //intfSubtree = true
-    }
-
     log.Info("processGet: Target Type: " + reflect.TypeOf(*acl.ygotTarget).Elem().Name())
+    if reflect.TypeOf(*acl.ygotTarget).Elem().Name() == "OpenconfigAcl_Acl" {
+        aclSubtree = true
+        intfSubtree = true
+    }
 
     targetUriPath, err := getYangPathFromUri(acl.path)
     if isSubtreeRequest(targetUriPath, "/openconfig-acl:acl/acl-sets") || aclSubtree {
@@ -407,39 +406,37 @@ func (acl *AclApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error)  {
                         ygot.BuildEmptyTree(entrySet)
                         acl.convert_internal_to_oc_acl_rule(aclKey, aclSetKey.Type, int64(seqId), nil, entrySet)
 
-                        var jsonStr string
                         if *acl.ygotTarget == entrySet {
-                            jsonStr, err = dumpIetfJson(aclSet.AclEntries)
+                            payload, err = dumpIetfJson(aclSet.AclEntries)
                         } else {
                             dummyEntrySet := &ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry{}
                             if *acl.ygotTarget == entrySet.Config {
                                 dummyEntrySet.Config = entrySet.Config
-                                jsonStr, err = dumpIetfJson(dummyEntrySet)
+                                payload, err = dumpIetfJson(dummyEntrySet)
                             } else if *acl.ygotTarget == entrySet.State {
                                 dummyEntrySet.State = entrySet.State
-                                jsonStr, err = dumpIetfJson(dummyEntrySet)
+                                payload, err = dumpIetfJson(dummyEntrySet)
                             } else if *acl.ygotTarget == entrySet.Actions {
                                 dummyEntrySet.Actions = entrySet.Actions
-                                jsonStr, err = dumpIetfJson(dummyEntrySet)
+                                payload, err = dumpIetfJson(dummyEntrySet)
                             } else if *acl.ygotTarget == entrySet.InputInterface {
                                 dummyEntrySet.InputInterface = entrySet.InputInterface
-                                jsonStr, err = dumpIetfJson(dummyEntrySet)
+                                payload, err = dumpIetfJson(dummyEntrySet)
                             } else if *acl.ygotTarget == entrySet.Ipv4 {
                                 dummyEntrySet.Ipv4 = entrySet.Ipv4
-                                jsonStr, err = dumpIetfJson(dummyEntrySet)
+                                payload, err = dumpIetfJson(dummyEntrySet)
                             } else if *acl.ygotTarget == entrySet.Ipv6 {
                                 dummyEntrySet.Ipv6 = entrySet.Ipv6
-                                jsonStr, err = dumpIetfJson(dummyEntrySet)
+                                payload, err = dumpIetfJson(dummyEntrySet)
                             } else if *acl.ygotTarget == entrySet.L2 {
                                 dummyEntrySet.L2 = entrySet.L2
-                                jsonStr, err = dumpIetfJson(dummyEntrySet)
+                                payload, err = dumpIetfJson(dummyEntrySet)
                             } else if *acl.ygotTarget == entrySet.Transport {
                                 dummyEntrySet.Transport = entrySet.Transport
-                                jsonStr, err = dumpIetfJson(dummyEntrySet)
+                                payload, err = dumpIetfJson(dummyEntrySet)
                             } else {
                             }
                         }
-                        payload = []byte(jsonStr)
                     }
                 } else {
                     err = acl.convert_db_acl_to_internal(configDb, db.Key{Comp: []string {aclKey} })
@@ -450,33 +447,30 @@ func (acl *AclApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error)  {
                     ygot.BuildEmptyTree(aclSet)
                     acl.convert_internal_to_oc_acl(aclKey, aclObj.AclSets, aclSet)
 
-                    var jsonStr string
                     if *acl.ygotTarget == aclSet {
-                        jsonStr, err = dumpIetfJson(aclObj.AclSets)
+                        payload, err = dumpIetfJson(aclObj.AclSets)
                     } else {
                         dummyAclSet := &ocbinds.OpenconfigAcl_Acl_AclSets_AclSet{}
                         if *acl.ygotTarget == aclSet.Config {
                             dummyAclSet.Config = aclSet.Config
-                            jsonStr, err = dumpIetfJson(dummyAclSet)
+                            payload, err = dumpIetfJson(dummyAclSet)
                         } else if *acl.ygotTarget == aclSet.State {
                             dummyAclSet.State = aclSet.State
-                            jsonStr, err = dumpIetfJson(dummyAclSet)
+                            payload, err = dumpIetfJson(dummyAclSet)
                         } else if *acl.ygotTarget == aclSet.AclEntries {
                             dummyAclSet.AclEntries = aclSet.AclEntries
-                            jsonStr, err = dumpIetfJson(dummyAclSet)
+                            payload, err = dumpIetfJson(dummyAclSet)
                         } else {
                             if targetUriPath == "/openconfig-acl:acl/acl-sets/acl-set/acl-entries/acl-entry" {
                                 dummyAclSet.AclEntries = aclSet.AclEntries
-                                jsonStr, err = dumpIetfJson(dummyAclSet.AclEntries)
+                                payload, err = dumpIetfJson(dummyAclSet.AclEntries)
                             } else if targetUriPath == "/openconfig-acl:acl/acl-sets/acl-set/config/description" {
                                 dummyAclSet.Config = &ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_Config{}
                                 dummyAclSet.Config.Description = aclSet.Config.Description
-                                jsonStr, err = dumpIetfJson(dummyAclSet.Config)
+                                payload, err = dumpIetfJson(dummyAclSet.Config)
                             }
                         }
                     }
-
-                    payload = []byte(jsonStr)
                 }
             }
         } else {
@@ -492,59 +486,106 @@ func (acl *AclApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error)  {
                 return GetResponse{Payload:payload, ErrSrc:AppErr}, err
             }
 
-            var jsonStr string
-            if reflect.ValueOf(aclObj).Elem() == reflect.ValueOf(*acl.ygotTarget).Elem() {
-                jsonStr, err = dumpIetfJson(&ocbinds.Device{Acl:aclObj})
+            if reflect.TypeOf(*acl.ygotTarget).Elem().Name() == "OpenconfigAcl_Acl" {
+                //payload, err = dumpIetfJson(&ocbinds.Device{Acl:aclObj})
             } else if *acl.ygotTarget == aclObj.AclSets {
-                jsonStr, err = dumpIetfJson(aclObj)
+                payload, err = dumpIetfJson(aclObj)
             } else {
-                jsonStr, err = dumpIetfJson(aclObj.AclSets)
+                if targetUriPath == "/openconfig-acl:acl/acl-sets/acl-set" {
+                    payload, err = dumpIetfJson(aclObj.AclSets)
+                }
             }
-            payload = []byte(jsonStr)
         }
     }
 
-    /*
     if isSubtreeRequest(targetUriPath, "/openconfig-acl:acl/interfaces") || intfSubtree {
         if aclObj.Interfaces != nil && len(aclObj.Interfaces.Interface) > 0 {
-            for intfId,_ := range aclObj.Interfaces.Interface {
-                intfData := aclObj.Interfaces.Interface[intfId]
+            var intfData *ocbinds.OpenconfigAcl_Acl_Interfaces_Interface
+            for intfId := range aclObj.Interfaces.Interface {
+                intfData = aclObj.Interfaces.Interface[intfId]
+                ygot.BuildEmptyTree(intfData)
                 if isSubtreeRequest(targetUriPath, "/openconfig-acl:acl/interfaces/interface/ingress-acl-sets") {
                     // Ingress ACL Specific
-                    get_acl_binding_info_for_subtree(configDb, intfData, intfId, "INGRESS")
+                    acl.get_acl_binding_info_for_subtree(configDb, intfData, intfId, "INGRESS")
                 } else if isSubtreeRequest(targetUriPath, "/openconfig-acl:acl/interfaces/interface/egress-acl-sets") {
                     // Egress ACL Specific
-                    get_acl_binding_info_for_subtree(configDb, intfData, intfId, "EGRESS")
+                    acl.get_acl_binding_info_for_subtree(configDb, intfData, intfId, "EGRESS")
                 } else {
                     // Direction unknown. Check ACL Table for binding information.
                     fmt.Println("Request is for specific interface, ingress and egress ACLs")
-                    get_acl_binding_info_for_subtree(configDb, intfData, intfId, "INGRESS")
-                    get_acl_binding_info_for_subtree(configDb, intfData, intfId, "EGRESS")
+                    acl.get_acl_binding_info_for_subtree(configDb, intfData, intfId, "INGRESS")
+                    acl.get_acl_binding_info_for_subtree(configDb, intfData, intfId, "EGRESS")
+                }
+            }
+
+            if *acl.ygotTarget == intfData {
+                payload, err = dumpIetfJson(aclObj.Interfaces)
+            } else {
+                dummyIntfData := &ocbinds.OpenconfigAcl_Acl_Interfaces_Interface{}
+                if  *acl.ygotTarget == intfData.Config {
+                    dummyIntfData.Config = intfData.Config
+                    payload, err = dumpIetfJson(dummyIntfData)
+                } else if  *acl.ygotTarget == intfData.State {
+                    dummyIntfData.State = intfData.State
+                    payload, err = dumpIetfJson(dummyIntfData)
+                } else if *acl.ygotTarget == intfData.IngressAclSets {
+                    dummyIntfData.IngressAclSets = intfData.IngressAclSets
+                    payload, err = dumpIetfJson(dummyIntfData)
+                } else if *acl.ygotTarget == intfData.EgressAclSets {
+                    dummyIntfData.EgressAclSets = intfData.EgressAclSets
+                    payload, err = dumpIetfJson(dummyIntfData)
+                } else if *acl.ygotTarget == intfData.InterfaceRef {
+                    dummyIntfData.InterfaceRef = intfData.InterfaceRef
+                    payload, err = dumpIetfJson(dummyIntfData)
                 }
             }
         } else {
             fmt.Println("Request is for all interfaces and all directions on which ACL is applied")
-            if len(xlated_data[ACL_TABLE][ACL_TABLE]) == 0 {
+            if len(acl.aclTableMap) == 0 {
                 // Get all ACLs
-                tbl,_ := configDb.GetTable(&aclTs)
-                keys, _ := tbl.GetKeys()
-                for _, key := range keys {
-                    convert_db_acl_to_internal(configDb, key)
-                }
+                acl.convert_db_acl_to_internal(configDb, db.Key{})
+            }
 
-                for aclName := range xlated_data[ACL_TABLE][ACL_TABLE] {
-                    aclData := xlated_data[ACL_TABLE][ACL_TABLE][aclName]
-                    if len(aclData["ports@"]) > 0 {
+            var interfaces []string
+            for aclName := range acl.aclTableMap {
+                aclData := acl.aclTableMap[aclName]
+                if len(aclData.Get("ports@")) > 0 {
+                    aclIntfs := aclData.GetList("ports")
+                    for i,_ := range aclIntfs {
+                        if !contains(interfaces, aclIntfs[i]) && aclIntfs[i] != "" {
+                            interfaces = append(interfaces, aclIntfs[i])
+                        }
                     }
+                }
+            }
+
+            for _, intfId := range interfaces {
+                var intfData *ocbinds.OpenconfigAcl_Acl_Interfaces_Interface
+                intfData,ok := aclObj.Interfaces.Interface[intfId]; if !ok {
+                    intfData,_ = aclObj.Interfaces.NewInterface(intfId)
+                }
+                ygot.BuildEmptyTree(intfData)
+                acl.get_acl_binding_info_for_subtree(configDb, intfData, intfId, "INGRESS")
+                acl.get_acl_binding_info_for_subtree(configDb, intfData, intfId, "EGRESS")
+            }
+
+            if *acl.ygotTarget == aclObj.Interfaces {
+                payload, err = dumpIetfJson(aclObj)
+            } else {
+                if targetUriPath == "/openconfig-acl:acl/interfaces/interface" {
+                    payload, err = dumpIetfJson(aclObj.Interfaces)
                 }
             }
         }
     }
-    */
+
+    if reflect.TypeOf(*acl.ygotTarget).Elem().Name() == "OpenconfigAcl_Acl" {
+        //payload, err = dumpIetfJson((*acl.ygotRoot).(*ocbinds.Device))
+        payload, err = dumpIetfJson(aclObj)
+    }
 
     return GetResponse{Payload:payload}, err
 }
-
 
 /***********    These are Translation Helper Function   ***********/
 func (acl *AclApp) convert_db_acl_rules_to_internal(dbCl *db.DB, aclName string , seqId int64, ruleKey db.Key) error {
@@ -770,90 +811,168 @@ func (acl *AclApp) convert_internal_to_oc_acl_rule_properties(ruleData db.Value,
     }
 }
 
-/*
-func convert_internal_to_oc_acl_binding (d *db.DB, aclName string, intfId string, direction string, intfAclSet *ygot.GoStruct) {
-    convert_db_acl_to_internal(d, db.Key{Comp: []string {aclName} })
-
-    convert_db_acl_rules_to_internal(d, aclName, -1, db.Key{})
-
-    if reflect.TypeOf(*intfAclSet).Elem() == reflect.TypeOf(ocbinds.OpenconfigAcl_Acl_Interfaces_Interface_EgressAclSets_EgressAclSet{}) {
-        fmt.Println("Got Egress Acl set subtree")
-    } else if reflect.TypeOf(*intfAclSet).Elem() == reflect.TypeOf(ocbinds.OpenconfigAcl_Acl_Interfaces_Interface_IngressAclSets_IngressAclSet{}) {
-        fmt.Println("Got Ingress Acl set subtree")
-    }
-
-    for ruleName,_ := range xlated_data[RULE_TABLE][aclName] {
-        ruleData := xlated_data[RULE_TABLE][aclName][ruleName]
-        convert_internal_to_oc_acl_rule_binding(d, aclName, intfId, priority, intfAclSet)
-    }
-}
-
-func convert_internal_to_oc_acl_rule_binding(d *db.DB, aclName string, intfId string, priority uint32, seqId int64, aclSet *ygot.GoStruct, entrySet *ygotGoStruct) {
+func convert_internal_to_oc_acl_rule_binding(d *db.DB, priority uint32, seqId int64, direction string, aclSet ygot.GoStruct, entrySet ygot.GoStruct) {
     if seqId == -1 {
-        seqId = MAX_PRIORITY - priority
+        seqId = int64(MAX_PRIORITY - priority)
     }
-    if entrySet == nil {
-        entrySet = aclSet.AclEntries.AclEntry[seqId]
+
+    var num uint64
+    num = 0
+    var ruleId uint32 = uint32(seqId)
+
+    if direction == "INGRESS" {
+        var ingressEntrySet *ocbinds.OpenconfigAcl_Acl_Interfaces_Interface_IngressAclSets_IngressAclSet_AclEntries_AclEntry
+        var ok bool
+        if entrySet == nil {
+            ingressAclSet := aclSet.(*ocbinds.OpenconfigAcl_Acl_Interfaces_Interface_IngressAclSets_IngressAclSet)
+            if ingressEntrySet,ok = ingressAclSet.AclEntries.AclEntry[ruleId]; !ok {
+                ingressEntrySet,_ = ingressAclSet.AclEntries.NewAclEntry(ruleId)
+            }
+        } else {
+            ingressEntrySet = entrySet.(*ocbinds.OpenconfigAcl_Acl_Interfaces_Interface_IngressAclSets_IngressAclSet_AclEntries_AclEntry)
+        }
+        if ingressEntrySet != nil {
+            ygot.BuildEmptyTree(ingressEntrySet)
+            ingressEntrySet.State.SequenceId = &ruleId
+            ingressEntrySet.State.MatchedPackets = &num
+            ingressEntrySet.State.MatchedOctets = &num
+        }
+    } else if direction == "EGRESS" {
+        var egressEntrySet *ocbinds.OpenconfigAcl_Acl_Interfaces_Interface_EgressAclSets_EgressAclSet_AclEntries_AclEntry
+        var ok bool
+        if entrySet == nil {
+            egressAclSet := aclSet.(*ocbinds.OpenconfigAcl_Acl_Interfaces_Interface_EgressAclSets_EgressAclSet)
+            if egressEntrySet,ok = egressAclSet.AclEntries.AclEntry[ruleId]; !ok {
+                egressEntrySet,_ = egressAclSet.AclEntries.NewAclEntry(ruleId)
+            }
+        } else {
+            egressEntrySet = entrySet.(*ocbinds.OpenconfigAcl_Acl_Interfaces_Interface_EgressAclSets_EgressAclSet_AclEntries_AclEntry)
+        }
+        if egressEntrySet != nil {
+            ygot.BuildEmptyTree(egressEntrySet)
+            egressEntrySet.State.SequenceId = &ruleId
+            egressEntrySet.State.MatchedPackets = &num
+            egressEntrySet.State.MatchedOctets = &num
+        }
     }
-    entrySet.state.SequenceId(seqId)
-    entrySet.state.MatchedPackets = 0
-    entrySet.state.MatchedOctets = 0
 }
 
-func get_acl_binding_info_for_subtree(intfData *ocbinds.OpenconfigAcl_Acl_Interfaces_Interface, intfId string, direction string) {
+func (acl *AclApp) convert_internal_to_oc_acl_binding (d *db.DB, aclName string, intfId string, direction string, intfAclSet ygot.GoStruct) {
+    if _,ok := acl.aclTableMap[aclName]; !ok {
+        acl.convert_db_acl_to_internal(d, db.Key{Comp: []string {aclName} })
+    }
+
+    if _,ok := acl.ruleTableMap[aclName]; !ok {
+        acl.convert_db_acl_rules_to_internal(d, aclName, -1, db.Key{})
+    }
+
+    for ruleName,_ := range acl.ruleTableMap[aclName] {
+        ruleData := acl.ruleTableMap[aclName][ruleName]
+        priority,_ := strconv.ParseInt(ruleData.Get("PRIORITY"), 10, 32)
+        convert_internal_to_oc_acl_rule_binding(d, uint32(priority), -1, direction, intfAclSet, nil)
+    }
+}
+
+func (acl *AclApp) get_acl_binding_info_for_subtree(d *db.DB, intfData *ocbinds.OpenconfigAcl_Acl_Interfaces_Interface, intfId string, direction string) {
+    if intfData != nil {
+        intfData.Config.Id = intfData.Id
+        intfData.State.Id = intfData.Id
+    }
     if direction == "INGRESS" {
         if intfData.IngressAclSets != nil && len(intfData.IngressAclSets.IngressAclSet) > 0 {
             for ingressAclSetKey,_ := range intfData.IngressAclSets.IngressAclSet {
                 aclName := strings.ReplaceAll(strings.ReplaceAll(ingressAclSetKey.SetName, " ", "_"), "-", "_")
-                aclType := aclSetKey.Type.ΛMap()["E_OpenconfigAcl_ACL_TYPE"][int64(ingressAclSetKey.Type)].Name
+                aclType := ingressAclSetKey.Type.ΛMap()["E_OpenconfigAcl_ACL_TYPE"][int64(ingressAclSetKey.Type)].Name
                 aclKey := aclName + "_" + aclType
 
                 ingressAclSet := intfData.IngressAclSets.IngressAclSet[ingressAclSetKey]
                 if ingressAclSet != nil && ingressAclSet.AclEntries != nil && len(ingressAclSet.AclEntries.AclEntry) > 0 {
                     for seqId,_ := range ingressAclSet.AclEntries.AclEntry {
                         entrySet := ingressAclSet.AclEntries.AclEntry[seqId]
-                        convert_internal_to_oc_acl_rule_binding()
+                        convert_internal_to_oc_acl_rule_binding(d, 0, int64(seqId), direction, nil, entrySet)
                     }
                 } else {
-                    convert_internal_to_oc_acl_binding(aclKey, intfId, direction, ingressAclSet)
+                    acl.convert_internal_to_oc_acl_binding(d, aclKey, intfId, direction, ingressAclSet)
                 }
             }
         } else {
-            find_and_get_acl_binding_info_for(intfId, direction, ingressAclSet)
+            acl.find_and_get_acl_binding_info_for(d, intfId, direction, intfData)
         }
     } else if direction == "EGRESS" {
         if intfData.EgressAclSets != nil && len(intfData.EgressAclSets.EgressAclSet) > 0 {
             for egressAclSetKey,_ := range intfData.EgressAclSets.EgressAclSet {
                 aclName := strings.ReplaceAll(strings.ReplaceAll(egressAclSetKey.SetName, " ", "_"), "-", "_")
-                aclType := aclSetKey.Type.ΛMap()["E_OpenconfigAcl_ACL_TYPE"][int64(egressAclSetKey.Type)].Name
+                aclType := egressAclSetKey.Type.ΛMap()["E_OpenconfigAcl_ACL_TYPE"][int64(egressAclSetKey.Type)].Name
                 aclKey := aclName + "_" + aclType
 
                 egressAclSet := intfData.EgressAclSets.EgressAclSet[egressAclSetKey]
                 if egressAclSet != nil && egressAclSet.AclEntries != nil && len(egressAclSet.AclEntries.AclEntry) > 0 {
                     for seqId,_ := range egressAclSet.AclEntries.AclEntry {
                         entrySet := egressAclSet.AclEntries.AclEntry[seqId]
-                        convert_internal_to_oc_acl_rule_binding()
+                        convert_internal_to_oc_acl_rule_binding(d, 0, int64(seqId), direction, nil, entrySet)
                     }
                 } else {
-                    convert_internal_to_oc_acl_binding(aclKey, intfId, direction, egressAclSet)
+                    acl.convert_internal_to_oc_acl_binding(d, aclKey, intfId, direction, egressAclSet)
                 }
             }
         } else {
-            find_and_get_acl_binding_info_for(intfId, direction, egressAclSet)
+            acl.find_and_get_acl_binding_info_for(d, intfId, direction, intfData)
         }
     } else {
-        fmt.Println("Unknown direction")
+        log.Error("Unknown direction")
     }
 }
 
-func find_and_get_acl_binding_info_for(intfId string, direction string, aclSet *ygot.GoStruct) {
-    if reflect.TypeOf(*aclSet).Elem() == reflect.TypeOf(ocbinds.OpenconfigAcl_Acl_Interfaces_Interface_EgressAclSets_EgressAclSet{}) {
-        fmt.Println("Got Egress Acl set subtree")
-    } else if reflect.TypeOf(*aclSet).Elem() == reflect.TypeOf(ocbinds.OpenconfigAcl_Acl_Interfaces_Interface_IngressAclSets_IngressAclSet{}) {
-        fmt.Println("Got Ingress Acl set subtree")
+func (acl *AclApp) find_and_get_acl_binding_info_for(d *db.DB, intfId string, direction string, intfData *ocbinds.OpenconfigAcl_Acl_Interfaces_Interface) {
+    if len(acl.aclTableMap) == 0 {
+        acl.convert_db_acl_to_internal(d, db.Key{})
     }
+
+    for aclName, aclData := range acl.aclTableMap {
+        aclIntfs := aclData.GetList("ports")
+        aclType := aclData.Get(ACL_TYPE)
+        var aclOrigName string
+        var aclOrigType ocbinds.E_OpenconfigAcl_ACL_TYPE
+        if SONIC_ACL_TYPE_IPV4 == aclType {
+            aclOrigName = strings.Replace(aclName, "_"+OPENCONFIG_ACL_TYPE_IPV4, "", 1)
+            aclOrigType = ocbinds.OpenconfigAcl_ACL_TYPE_ACL_IPV4
+        } else if SONIC_ACL_TYPE_IPV6 == aclType {
+            aclOrigName = strings.Replace(aclName, "_"+OPENCONFIG_ACL_TYPE_IPV4, "", 1)
+            aclOrigType = ocbinds.OpenconfigAcl_ACL_TYPE_ACL_IPV6
+        } else if SONIC_ACL_TYPE_L2 == aclType {
+            aclOrigName = strings.Replace(aclName, "_"+OPENCONFIG_ACL_TYPE_L2, "", 1)
+            aclOrigType = ocbinds.OpenconfigAcl_ACL_TYPE_ACL_L2
+        }
+
+        if contains(aclIntfs, intfId) && direction == aclData.Get("stage") {
+            if direction == "INGRESS" {
+                fmt.Println("Ingress find_and_get_acl_binding_info_for AclName: " + aclOrigName + " and Interface: " + intfId)
+                if intfData.IngressAclSets != nil {
+                    aclSetKey := ocbinds.OpenconfigAcl_Acl_Interfaces_Interface_IngressAclSets_IngressAclSet_Key{ SetName: aclOrigName, Type: aclOrigType }
+                    ingressAclSet,ok := intfData.IngressAclSets.IngressAclSet[aclSetKey]; if !ok {
+                        ingressAclSet,_ = intfData.IngressAclSets.NewIngressAclSet(aclOrigName, aclOrigType)
+                        ygot.BuildEmptyTree(ingressAclSet)
+                        ingressAclSet.Config = &ocbinds.OpenconfigAcl_Acl_Interfaces_Interface_IngressAclSets_IngressAclSet_Config{SetName: &aclOrigName, Type: aclOrigType}
+                        ingressAclSet.State = &ocbinds.OpenconfigAcl_Acl_Interfaces_Interface_IngressAclSets_IngressAclSet_State{SetName: &aclOrigName, Type: aclOrigType}
+                    }
+                    acl.convert_internal_to_oc_acl_binding(d, aclName, intfId, direction, ingressAclSet)
+                }
+            } else if direction == "EGRESS" {
+                if intfData.EgressAclSets != nil {
+                    aclSetKey := ocbinds.OpenconfigAcl_Acl_Interfaces_Interface_EgressAclSets_EgressAclSet_Key{ SetName: aclOrigName, Type: aclOrigType }
+                    egressAclSet,ok := intfData.EgressAclSets.EgressAclSet[aclSetKey]; if !ok {
+                        egressAclSet,_ = intfData.EgressAclSets.NewEgressAclSet(aclOrigName, aclOrigType)
+                        ygot.BuildEmptyTree(egressAclSet)
+                        egressAclSet.Config = &ocbinds.OpenconfigAcl_Acl_Interfaces_Interface_EgressAclSets_EgressAclSet_Config{SetName: &aclOrigName, Type: aclOrigType}
+                        egressAclSet.State = &ocbinds.OpenconfigAcl_Acl_Interfaces_Interface_EgressAclSets_EgressAclSet_State{SetName: &aclOrigName, Type: aclOrigType}
+                    }
+                    acl.convert_internal_to_oc_acl_binding(d, aclName, intfId, direction, egressAclSet)
+                }
+            }
+        }
+    }
+
 }
-*/
 
 
 /********************   CREATE related    *******************************/
@@ -1333,7 +1452,7 @@ func isSubtreeRequest(targetUriPath string, nodePath string) bool {
     return strings.HasPrefix(targetUriPath, nodePath)
 }
 
-func dumpIetfJson(s ygot.ValidatedGoStruct) (string, error) {
+func dumpIetfJson(s ygot.ValidatedGoStruct) ([]byte, error) {
     jsonStr, err := ygot.EmitJSON(s, &ygot.EmitJSONConfig{
         Format: ygot.RFC7951,
         Indent: "  ",
@@ -1341,7 +1460,7 @@ func dumpIetfJson(s ygot.ValidatedGoStruct) (string, error) {
             AppendModuleName: true,
         },
     })
-    return jsonStr, err
+    return []byte(jsonStr), err
 }
 
 func contains(sl []string, str string) bool {
