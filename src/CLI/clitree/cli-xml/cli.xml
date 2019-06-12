@@ -30,7 +30,7 @@
                 help="Value of the alias"
                 ptype="STRING_WITH_PIPE"/>
         </PARAM>
-        <ACTION builtin="clish_extn"></ACTION>
+        <ACTION builtin="clish_nop"></ACTION>
     </COMMAND>
 
     <!-- no alias <alias-name> -->
@@ -40,7 +40,7 @@
             help="Name of the alias (Max size 20)"
             ptype="STRING_20">
         </PARAM>
-        <ACTION builtin="clish_no_alias_plugin">${alias-name}</ACTION>
+        <ACTION builtin="clish_nop"></ACTION>
     </COMMAND>
 
     <!-- show alias -->
@@ -65,7 +65,7 @@
             />
         </PARAM>
 
-         <ACTION builtin="clish_show_alias_plugin"/>
+         <ACTION builtin="clish_nop"/>
 
     </COMMAND>
 </VIEW>
@@ -93,7 +93,7 @@
             />
         </PARAM>
 
-        <ACTION builtin="clish_extn"> </ACTION>
+        <ACTION builtin="clish_nop"> </ACTION>
 
     </COMMAND>
 
@@ -118,7 +118,7 @@
             />
         </PARAM>
 
-        <ACTION builtin="clish_extn"> </ACTION>
+        <ACTION builtin="clish_nop"> </ACTION>
 
     </COMMAND>
 
@@ -139,7 +139,7 @@
                 ptype="STRING_WITH_PIPE"
                 yang_name="&CLI_CONFIG_ALIAS_VALUE;"/>
         </PARAM>
-        <ACTION builtin="clish_extn"></ACTION>
+        <ACTION builtin="clish_nop"></ACTION>
     </COMMAND>
     <!-- no alias <alias-name> -->
     <COMMAND name="no alias"
@@ -152,7 +152,7 @@
             yang_name="&CLI_CONFIG_ALIAS_NAME;=${alias-name}"
             sub_oper_yang="remove:alias">
         </PARAM>
-        <ACTION builtin="clish_extn"></ACTION>
+        <ACTION builtin="clish_nop"></ACTION>
     </COMMAND>
 
 </VIEW>
