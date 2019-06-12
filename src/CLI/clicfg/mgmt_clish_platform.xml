@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- Clish platform specific file
+     This file has two sections:
+     1. FEATURELIST - This contains list of features and their 'enabled'
+        state on this platform
+     2. ENTITYLIST - This contains the list of feature-parameters and their
+        respective values
+
+     Note: The FEATURENAME and ENTITYNAME must match a record in the schema
+     file feature_master.xsd.
+        -->
+<PLATFORMMODULE>
+ <FEATURELIST>
+ <FEATURE enabled="false">FEATURE_DUPLEX</FEATURE>
+ <FEATURE enabled="true">FEATURE_SPEED</FEATURE>
+ <FEATURE enabled="true">FEATURE_BREAKOUT</FEATURE>
+ <FEATURE enabled="true">FEATURE_MGMT_IF_IP</FEATURE>
+ <FEATURE enabled="true">FEATURE_SYSTEM_IDENTIFIER</FEATURE>
+ <FEATURE enabled="true" dynamic="true" condition="Filter_Type:SUBTREE;Filter_Namespace:http://www.dellemc.com/networking/os10/dell-cli;Filter_Conditions:/cli-config/features/name=config-os9-style,/cli-config/features/enable" namespace="dell-cli:http://www.dellemc.com/networking/os10/dell-cli" xpath="/dell-cli:cli-config/dell-cli:features[dell-cli:name='config-os9-style']/dell-cli:enable" expected_value="false" >FEATURE_CONFIG_OS10_STYLE</FEATURE>
+ <FEATURE enabled="true" dynamic="true" condition="Filter_Type:SUBTREE;Filter_Namespace:http://www.dellemc.com/networking/os10/dell-cli;Filter_Conditions:/cli-config/features/name=config-os9-style,/cli-config/features/enable" namespace="dell-cli:http://www.dellemc.com/networking/os10/dell-cli" xpath="/dell-cli:cli-config/dell-cli:features[dell-cli:name='config-os9-style']/dell-cli:enable" expected_value="true" >FEATURE_CONFIG_OS9_STYLE</FEATURE>
+ <FEATURE enabled="true">FEATURE_LOCATION_LED</FEATURE>
+ <FEATURE enabled="true" dynamic="true" condition="Filter_Type:SUBTREE;Filter_Namespace:http://www.dellemc.com/networking/os10/dell-openflow;Filter_Conditions:/of-config/mode" namespace="openflow:http://www.dellemc.com/networking/os10/dell-openflow" xpath="/openflow:of-config/openflow:mode" expected_value="!openflow-only" >NOT_SUPPORTED_IN_OPENFLOW_ONLY_MODE</FEATURE>
+ <FEATURE enabled="true" dynamic="true" condition="Filter_Type:SUBTREE;Filter_Namespace:http://www.dellemc.com/networking/os10/dell-openflow;Filter_Conditions:/of-config/mode" namespace="openflow:http://www.dellemc.com/networking/os10/dell-openflow" xpath="/openflow:of-config/openflow:mode" expected_value="openflow-only" >OPENFLOW_ONLY_MODE</FEATURE>
+ </FEATURELIST>
+ <ENTITYLIST>
+  <ENTITYNAME value="1">START_CHASSIS_ID</ENTITYNAME>
+  <ENTITYNAME value="1">MAX_CHASSIS_ID</ENTITYNAME>
+  <ENTITYNAME value="1">START_SLOT_ID</ENTITYNAME>
+  <ENTITYNAME value="1">MAX_SLOT_ID</ENTITYNAME>
+  <ENTITYNAME value="1">START_PORT_ID</ENTITYNAME>
+  <ENTITYNAME value="32">MAX_PORT_ID</ENTITYNAME>
+  <ENTITYNAME value="1">START_SUB_PORT_ID</ENTITYNAME>
+  <ENTITYNAME value="4">MAX_SUB_PORT_ID</ENTITYNAME>
+  <ENTITYNAME value="node-id">PHYSICAL_SLOT_STRING</ENTITYNAME>
+  <ENTITYNAME value="9216">MAX_MTU</ENTITYNAME>
+  <ENTITYNAME value="1">QOS_MIN_BUFFER</ENTITYNAME>
+  <ENTITYNAME value="512">QOS_MAX_BUFFER</ENTITYNAME>
+  <ENTITYNAME value="0">CPU_QUEUE_MIN</ENTITYNAME>
+  <ENTITYNAME value="22">CPU_QUEUE_MAX</ENTITYNAME>
+ </ENTITYLIST>
+</PLATFORMMODULE>
