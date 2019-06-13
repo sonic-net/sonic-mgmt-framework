@@ -27,6 +27,10 @@ module sonic-acl {
 		prefix sms;
 	}
 
+	import sonic-pf-limits {
+		prefix spf;
+	}
+
 	organization
 		"BRCM";
 
@@ -76,7 +80,6 @@ module sonic-acl {
 			}
 
 			leaf-list ports {
-				//must "ports = /prt:sonic-port/prt:PORT/prt:ifname";
 				type union { 
 					type leafref {
 						path "/prt:sonic-port/prt:PORT/prt:ifname";
@@ -92,6 +95,15 @@ module sonic-acl {
 			key "aclname rulename";
 			scommon:key-delim "|";
 			scommon:key-pattern "ACL_RULE|{aclname}|{rulename}";
+			scommon:pf-check    "ACL_CheckAclLimits";	
+
+			/* Limit for number of dynamic ACL rules */	
+			must "count(../ACL_RULE) > /spf:sonic-pf-limits/acl/MAX_ACL_RULES" {
+				error-message "Number of ACL rules reached max platform limit.";
+			}
+			must "PRIORITY > /spf:sonic-pf-limits/acl/MAX_PRIORITY" {
+				error-message "Invalid ACL rule priority.";
+			}
 
 			leaf aclname {
 				type leafref {
@@ -113,24 +125,17 @@ module sonic-acl {
 				type string;
 			}
 
-			choice action {
-				mandatory true;
-				case packet_action {
-					leaf PACKET_ACTION {
-						type enumeration {
-							enum FORWARD;
-							enum DROP;
-							enum REDIRECT;
-						}
-					}
+			leaf PACKET_ACTION {
+				type enumeration {
+					enum FORWARD;
+					enum DROP;
+					enum REDIRECT;
 				}
+			}
 
-				case mirror_action {
-					leaf MIRROR_ACTION {
-						type leafref {
-							path "/sms:sonic-mirror-session/sms:MIRROR_SESSION/sms:name";
-						}
-					}
+			leaf MIRROR_ACTION {
+				type leafref {
+					path "/sms:sonic-mirror-session/sms:MIRROR_SESSION/sms:name";
 				}
 			}
 

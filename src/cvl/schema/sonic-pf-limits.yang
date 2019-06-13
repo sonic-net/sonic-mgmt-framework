@@ -1,0 +1,52 @@
+module sonic-pf-limits {
+	namespace "http://github.com/Azure/sonic-pf-limits";
+	prefix spf;
+	yang-version 1.1;
+
+	import ietf-yang-types {
+		prefix yang;
+	}
+
+	import ietf-inet-types {
+		prefix inet;
+	}
+
+	import sonic-common {
+		prefix scommon;
+	}
+
+	organization
+		"BRCM";
+
+	contact
+		"BRCM";
+
+	description
+		"SONIC Platform constrainst";
+
+	revision 2019-05-15 {
+		description
+			"Initial revision.";
+	}
+
+	container sonic-pf-limits {
+		scommon:db-name "APPL_DB";
+
+		container acl { 
+			leaf MAX_ACL_RULES {
+				type uint16;
+			}
+			leaf MAX_PRIORITY {
+				type uint16 {
+					range "1..65535";
+				}
+			}
+
+		}
+		container vlan { 
+			leaf MAX_VLANS {
+				type uint16;
+			}
+		}
+	}
+}

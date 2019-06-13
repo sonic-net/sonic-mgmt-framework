@@ -10,10 +10,6 @@ module sonic-tc-priority-group-map {
 		prefix scommon;
 	}
 
-	import sonic-interface {
-		prefix sif;
-	}
-
 	organization
 		"BRCM";
 

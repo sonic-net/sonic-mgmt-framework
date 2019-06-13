@@ -71,4 +71,10 @@ module sonic-common {
 			"Map leaf names";
 		argument "value"; //
 	}
+
+	extension pf-check {
+		description
+			"Platform specific validation";
+		argument "handler"; //
+	}
 }
