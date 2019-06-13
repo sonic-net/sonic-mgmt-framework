@@ -34,7 +34,6 @@ from lxml import etree
 
 EXIT_CMD = """<COMMAND name="exit"
              	  help="Exit from current mode"
-                  pfeature="FEATURE_FABRIC_MODE"
                	  lock="false">
             	  <ACTION builtin="clish_nested_up"/>
   </COMMAND>"""
@@ -63,7 +62,6 @@ INHERIT_ENABLE_MODE_CMD_WITHOUT_PREFIX = """<NAMESPACE
 
 END_CMD = """<COMMAND name="end"
                  help="Exit to the exec Mode"
-                 pfeature="FEATURE_FABRIC_MODE"
                  view="enable-view"/>"""
 
 VIEW_TAG_STR = """{http://www.dellemc.com/force10/XMLSchema}VIEW"""

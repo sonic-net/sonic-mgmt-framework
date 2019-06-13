@@ -523,28 +523,24 @@
     <!--=======================================================-->
     <PTYPE
         name="DSCP_ID"
-        ext_pattern="(0-63)"
         pattern="&DSCP_RANGE;"
         help=""
         />
     <!--=======================================================-->
     <PTYPE
         name="PRECE_ID"
-        ext_pattern="(0-7)"
         pattern="&PRECE_RANGE;"
         help=""
         />
     <!--=======================================================-->
     <PTYPE
         name="COS_ID"
-        ext_pattern="(0-7)"
         pattern="&COS_RANGE;"
         help=""
         />
     <!--=======================================================-->
     <PTYPE
         name="TC_GROUP_ID"
-        ext_pattern="(0-7)"
         pattern="&TC_RANGE;"
         help=""
         />
@@ -670,21 +666,18 @@
     <!--=======================================================-->
     <PTYPE
         name="LOOPBACK_INTERFACE"
-        ext_pattern="loopback(0-16383)"
         pattern="&LOOPB_INTF;"
         help=""
         />
     <!--=======================================================-->
     <PTYPE
         name="MGMT_INTERFACE"
-        ext_pattern="mgmt(1/1/1)"
         pattern="&MGMT_INTF;"
         help=""
         />
     <!--=======================================================-->
     <PTYPE
         name="NULL_INTERFACE"
-        ext_pattern="null(0)"
         pattern="&NULL_INTF;"
         help=""
         />
@@ -697,42 +690,36 @@
     <!--=======================================================-->
     <PTYPE
         name="PHY_INTERFACE"
-        ext_pattern="ethernet(chassis/slot/port[:subport])"
         pattern="&ETH_ALL_INTF;"
         help=""
         />
     <!--=======================================================-->
     <PTYPE
         name="VLAN_INTERFACE"
-        ext_pattern="vlan(1-4093)"
         pattern="&VLAN_ALL_INTF;"
         help=""
         />
     <!--=======================================================-->
     <PTYPE
         name="PO_INTERFACE"
-        ext_pattern="port-channel(1-128)"
         pattern="&PO_ALL_INTF;"
         help=""
         />
     <!--=======================================================-->
     <PTYPE
         name="PHY_PO_INTERFACE"
-        ext_pattern="ethernet(chassis/slot/port[:subport]) port-channel(1-128)"
         pattern="&ETH_ALL_INTF;|&PO_ALL_INTF;"
         help="Interface Type - Ranges"
         />
     <!--=======================================================-->
     <PTYPE
         name="LOGICAL_INTERFACE"
-        ext_pattern="port-channel(1-128) vlan(1-4093)"
         pattern="&VLAN_ALL_INTF;|&PO_ALL_INTF;"
         help="Interface Type - Ranges"
         />
     <!--=======================================================-->
     <PTYPE
         name="ALL_INTERFACE"
-        ext_pattern="ethernet(chassis/slot/port[:subport]) loopback(0-16383) mgmt(1/1/1) null(0) port-channel(1-128) vlan(1-4093)"
         ext_help="(Ethernet interface type) (Loopback interface type) (Management interface type) (Null interface type) (Port-channel interface type) (Vlan interface type)"
         pattern="&ETH_ALL_INTF;|&VLAN_ALL_INTF;|&PO_ALL_INTF;|&LOOPB_INTF;|&NULL_INTF;|&MGMT_INTF;"
         help="Interface Type - Ranges"
@@ -740,7 +727,6 @@
     <!--=======================================================-->
     <PTYPE
         name="PHY_VL_PO_INTERFACE"
-        ext_pattern="ethernet(chassis/slot/port[:subport]) port-channel(1-128) vlan(1-4093) "
         ext_help="(Ethernet interface type) (Port-channel interface type) (Vlan interface type)"
         pattern="&ETH_ALL_INTF;|&VLAN_ALL_INTF;|&PO_ALL_INTF;"
         help="Interface Type - Ranges"
@@ -748,7 +734,6 @@
     <!--=======================================================-->
     <PTYPE
         name="PHY_VL_PO_LOOPB_INTERFACE"
-        ext_pattern="ethernet(chassis/slot/port[:subport]) loopback(0-16383) port-channel(1-128) vlan(1-4093)"
         ext_help="(Ethernet interface type) (Loopback interface type) (Port-channel interface type) (Vlan interface type)"
         pattern="&ETH_ALL_INTF;|&VLAN_ALL_INTF;|&PO_ALL_INTF;|&LOOPB_INTF;"
         help="Interface Type - Ranges"
@@ -774,27 +759,22 @@
         />
     <!--=======================================================-->
     <PTYPE name="ALL_INTERFACE_RANGE"
-           ext_pattern="ethernet(chassis/slot/port[:subport]) port-channel(1-128) vlan(1-4093)"
            pattern="&PO_RANGE;|&VLAN_RANGE;|&ETH_RANGE;"
            help="Interface Range"/>
     <!--=======================================================-->
     <PTYPE name="ETHER_INTERFACE_RANGE"
-           ext_pattern="ethernet(chassis/slot/port[:subport]-chassis/slot/port[:subport])"
            pattern="&ETH_RANGE;"
            help="Interface Ethernet Range"/>
     <!--=======================================================-->
     <PTYPE name="FC_INTERFACE_RANGE"
-           ext_pattern="fibre-channel(chassis/slot/port[:subport]-chassis/slot/port[:subport])"
            pattern="&FC_RANGE;"
            help="Interface Fibre-channel Range"/>
     <!--=======================================================-->
     <PTYPE name="VLAN_INTERFACE_RANGE"
-           ext_pattern="vlan(1-4093)"
            pattern="&VLAN_RANGE;"
            help="Interface Vlan Range"/>
     <!--=======================================================-->
     <PTYPE name="PO_INTERFACE_RANGE"
-           ext_pattern="port-channel(1-128)"
            pattern="&PO_RANGE;"
            help="Interface Port-channel Range"/>
     <!--=======================================================-->
@@ -902,12 +882,10 @@
         />
     <!--=======================================================-->
     <PTYPE name="TAGGED_VLAN_INTERFACE_RANGE"
-           ext_pattern="(1-4093)"
            pattern="&TAG_VLAN_RANGE;"
            help="Vlan Range"/>
     <!--=======================================================-->
     <PTYPE name="MST_INSTANCE_RANGE"
-           ext_pattern="(0-63)"
            pattern="&MST_INST_NUM_RANGE;"
            help="mst instance Range"/>
     <!--=======================================================-->
@@ -919,7 +897,6 @@
         />
     <!--=======================================================-->
     <PTYPE name="NO_TAGGED_VLAN_INTERFACE_RANGE"
-           ext_pattern="vlan(1-4093)"
            pattern="vlan"
            help="Vlan Range"/>
     <!--=======================================================-->
@@ -1113,7 +1090,6 @@
  <!--=======================================================-->
   <PTYPE
       name="RANGE_TYPE"
-      ext_pattern="range()"
       pattern="range"
       help=""
       />
@@ -1137,7 +1113,6 @@
  <!--=======================================================-->
  <PTYPE
      name="FC_INTERFACE"
-     ext_pattern="fibre-channel(chassis/slot/port[:subport])"
      pattern="&FC_ALL_INTF;"
      help=""
  />

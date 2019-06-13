@@ -9,10 +9,10 @@
 <!--=========================================================================-->
 
 <VIEW name="enable-view">
-   <COMMAND
+   <!--COMMAND
         help="show IP commands"
         name="show ip"
-        />
+        /-->
 <!--show ip access-lists -->
    <COMMAND
          name="show ip access-lists"
@@ -57,14 +57,14 @@
 <!--MODE : interface -->
 
 <VIEW name="configure-if-view">
-    <COMMAND
+    <!--COMMAND
         name="ip"
         help="Interface Internet Protocol config commands"
-    />
-    <COMMAND
+    /-->
+    <!--COMMAND
         name="no ip"
         help="Interface Internet Protocol config commands"
-    />
+    /-->
     <!-- ip access-group -->
     <COMMAND
          name="ip access-group"
@@ -143,15 +143,10 @@
                 help="false"
                 completion="false"/>
 
-     <!-- show configuration candidate -->
-     <COMMAND
-          name="show"
-          help="show configuration"
-     />
      <!-- show configuration -->
      <COMMAND
          name="show configuration"
-         help="Current configuration (default = running)"
+         help="Current configuration"
       >
      <ACTION builtin="clish_nop"> </ACTION>
      </COMMAND>

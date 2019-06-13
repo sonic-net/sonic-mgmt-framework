@@ -17,11 +17,6 @@
  <FEATURE enabled="true">FEATURE_BREAKOUT</FEATURE>
  <FEATURE enabled="true">FEATURE_MGMT_IF_IP</FEATURE>
  <FEATURE enabled="true">FEATURE_SYSTEM_IDENTIFIER</FEATURE>
- <FEATURE enabled="true" dynamic="true" condition="Filter_Type:SUBTREE;Filter_Namespace:http://www.dellemc.com/networking/os10/dell-cli;Filter_Conditions:/cli-config/features/name=config-os9-style,/cli-config/features/enable" namespace="dell-cli:http://www.dellemc.com/networking/os10/dell-cli" xpath="/dell-cli:cli-config/dell-cli:features[dell-cli:name='config-os9-style']/dell-cli:enable" expected_value="false" >FEATURE_CONFIG_OS10_STYLE</FEATURE>
- <FEATURE enabled="true" dynamic="true" condition="Filter_Type:SUBTREE;Filter_Namespace:http://www.dellemc.com/networking/os10/dell-cli;Filter_Conditions:/cli-config/features/name=config-os9-style,/cli-config/features/enable" namespace="dell-cli:http://www.dellemc.com/networking/os10/dell-cli" xpath="/dell-cli:cli-config/dell-cli:features[dell-cli:name='config-os9-style']/dell-cli:enable" expected_value="true" >FEATURE_CONFIG_OS9_STYLE</FEATURE>
- <FEATURE enabled="true">FEATURE_LOCATION_LED</FEATURE>
- <FEATURE enabled="true" dynamic="true" condition="Filter_Type:SUBTREE;Filter_Namespace:http://www.dellemc.com/networking/os10/dell-openflow;Filter_Conditions:/of-config/mode" namespace="openflow:http://www.dellemc.com/networking/os10/dell-openflow" xpath="/openflow:of-config/openflow:mode" expected_value="!openflow-only" >NOT_SUPPORTED_IN_OPENFLOW_ONLY_MODE</FEATURE>
- <FEATURE enabled="true" dynamic="true" condition="Filter_Type:SUBTREE;Filter_Namespace:http://www.dellemc.com/networking/os10/dell-openflow;Filter_Conditions:/of-config/mode" namespace="openflow:http://www.dellemc.com/networking/os10/dell-openflow" xpath="/openflow:of-config/openflow:mode" expected_value="openflow-only" >OPENFLOW_ONLY_MODE</FEATURE>
  </FEATURELIST>
  <ENTITYLIST>
   <ENTITYNAME value="1">START_CHASSIS_ID</ENTITYNAME>

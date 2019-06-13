@@ -12,8 +12,6 @@
        <xs:enumeration value="FEATURE_PBR"/>
        <xs:enumeration value="FEATURE_BREAKOUT"/>
        <xs:enumeration value="FEATURE_EEE"/>
-       <xs:enumeration value="FEATURE_CONFIG_OS9_STYLE"/>
-       <xs:enumeration value="FEATURE_CONFIG_OS10_STYLE"/>
        <xs:enumeration value="FEATURE_PORT_GROUP"/>
        <xs:enumeration value="FEATURE_HOMOGENOUS_PORT_GROUP"/>
        <xs:enumeration value="FEATURE_HYBRID_PORT_GROUP"/>
