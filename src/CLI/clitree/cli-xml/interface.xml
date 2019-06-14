@@ -31,12 +31,12 @@
     <VIEW
         name="configure-view"
         >
-        <COMMAND
+        <!--COMMAND
             name="end"
             help="Exit to the exec Mode"
             pfeature="FEATURE_FABRIC_MODE"
             view="enable-view"
-            />
+            /-->
         <COMMAND
             name="interface"
             help="Select an interface"
