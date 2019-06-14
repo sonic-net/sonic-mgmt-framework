@@ -81,7 +81,6 @@ $(CODEGEN_JAR): | $$(@D)/.
 	@echo "+++ Generating GO server for OpenAPI $$(basename $(@D)).yaml +++"
 	java -jar $(CODEGEN_JAR) generate \
 		--lang go-server \
-		--model-name-suffix Typ\
 		--input-spec $(OPENAPI_DIR)/$$(basename $(@D)).yaml \
 		--template-dir $(CODEGEN_TOOLS_DIR)/go-server/templates-nonyang \
 		--output $(@D)

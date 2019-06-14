@@ -28,8 +28,8 @@ yamlGen:
 	$(MAKE) -C models/yang
 
 $(REST_BIN): $(REST_SRCS)
-	$(MAKE) -C models
 	$(MAKE) -C models/yang
+	$(MAKE) -C models
 	GOPATH=$(REST_GOPATH) go build -o $@ $(TOPDIR)/src/rest/main/main.go
 
 codegen:

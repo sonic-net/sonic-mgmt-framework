@@ -94,6 +94,7 @@ import (
 
 	"github.com/go-redis/redis"
 	"github.com/golang/glog"
+	//  "cvl"
 )
 
 const (
@@ -140,7 +141,7 @@ type _txState int
 const (
 	txStateNone      _txState = iota // Idle (No transaction)
 	txStateWatch                     // WATCH issued
-	txStateSet                       // At least one SET|DEL done.
+	txStateSet                       // At least one Set|Mod|Delete done.
 	txStateMultiExec                 // Between MULTI & EXEC
 )
 
@@ -204,9 +205,18 @@ type Table struct {
 	db    *DB
 }
 
+type _txOp int
+
+const (
+	txOpNone      _txOp = iota // No Op
+	txOpHMSet     // key, value gives the field:value to be set in key
+	txOpHDel      // key, value gives the fields to be deleted in key
+	txOpDel       // key
+)
+
 type _txCmd struct {
 	ts    *TableSpec
-	isSet bool
+	op    _txOp
 	key   *Key
 	value *Value
 }
@@ -218,6 +228,7 @@ type DB struct {
 
 	txState _txState
 	txCmds  []_txCmd
+	// cvlKeyData [] cvl.KeyData
 }
 
 func (d DB) String() string {
@@ -246,6 +257,7 @@ func NewDB(opt Options) *DB {
 		Opts:    &opt,
 		txState: txStateNone,
 		txCmds:  make([]_txCmd, 0, InitialTxPipelineSize),
+		// cvlKeyData: make([]cvl.KeyData, 0, InitialTxPipelineSize),
 	}
 
 	if d.client == nil {
@@ -412,6 +424,175 @@ func (d *DB) DeleteKeys(ts *TableSpec, key Key) error {
 	return e
 }
 
+
+func (d *DB) doCVL(ts * TableSpec, op _txOp, key Key, val interface{}) error {
+	var e error = nil
+
+/*
+	var cvlRetCode cvl.CVLRetCode
+
+
+	keyDataItem := cvl.KeyData { Validate: true,
+	                             Key: d.key2redis(ts, key),
+	               }
+
+	switch op {
+		case txOpHMSet:
+			keyDataItem.Data = val.(Value).Field
+			d.cvlKeyData = append(d.cvlKeyData, keyDataItem)
+			if cvl.CVL_SUCCESS != cvl.ValidateCreate(d.keyData) {
+				glog.Error("doCVL: CVL Failure ")
+				e = errors.New("CVL Failure")
+			} else {
+				d.cvlKeyData[len(d.cvlKeyData)-1].Validate = false;
+			}
+
+		case txOpHDel:
+			keyDataItem.Data = val.(Value).Field
+			glog.Error("doCVL: Not Implemented HDel: ",
+			    key, " : ", keyDataItem.Data, " e: ", e)
+
+		case txOpDel:
+			keyDataItem.Data = map[string]string {}
+			d.cvlKeyData = append(d.cvlKeyData, keyDataItem)
+			if cvl.CVL_SUCCESS != cvl.ValidateDelete(d.keyData) {
+				glog.Error("doCVL: CVL Failure ")
+				e = errors.New("CVL Failure")
+			} else {
+				d.cvlKeyData[len(d.cvlKeyData)-1].Validate = false;
+			}
+
+		default:
+			glog.Error("doCVL: Unknown, op: ", op)
+			e = errors.New("Unknown Op: " + string(op))
+	}
+
+*/
+
+	if glog.V(3) {
+		glog.Info("doCVL: End: e: ", e)
+	}
+
+	return e
+}
+
+func (d *DB) doWrite(ts * TableSpec, op _txOp, key Key, val interface{}) error {
+	var e error = nil
+	var value Value
+
+	switch d.txState {
+	case txStateNone:
+		if glog.V(2) {
+			glog.Info("doWrite: No Transaction.")
+		}
+		break
+	case txStateWatch:
+		if glog.V(2) {
+			glog.Info("doWrite: Change to txStateSet, txState: ", d.txState)
+		}
+		d.txState = txStateSet
+		break
+	case txStateSet:
+		if glog.V(5) {
+			glog.Info("doWrite: Remain in txStateSet, txState: ", d.txState)
+		}
+	case txStateMultiExec:
+		glog.Error("doWrite: Incorrect State, txState: ", d.txState)
+		e = errors.New("Cannot issue {Set|Mod|Delete}Entry in txStateMultiExec")
+	default:
+		glog.Error("doWrite: Unknown, txState: ", d.txState)
+		e = errors.New("Unknown State: " + string(d.txState))
+	}
+
+	if e != nil {
+		goto doWriteExit
+	}
+
+	// No Transaction case. No CVL.
+	if d.txState == txStateNone {
+
+		switch op {
+
+		case txOpHMSet:
+			value = Value { Field: make(map[string]string,
+					len(val.(Value).Field)) }
+			vintf := make(map[string]interface{})
+			for k, v := range val.(Value).Field {
+				vintf[k] = v
+			}
+			e = d.client.HMSet(d.key2redis(ts, key), vintf).Err()
+
+			if e!= nil {
+				glog.Error("doWrite: HMSet: ", key, " : ", value, " e: ", e)
+			}
+
+		case txOpHDel:
+			fields := make([]string, 0, len(val.(Value).Field))
+			for k, _ := range val.(Value).Field {
+				fields = append(fields, k)
+			}
+
+			e = d.client.HDel(d.key2redis(ts, key), fields...).Err()
+			if e!= nil {
+				glog.Error("doWrite: HDel: ", key, " : ", fields, " e: ", e)
+			}
+
+		case txOpDel:
+			e = d.client.Del(d.key2redis(ts, key)).Err()
+			if e!= nil {
+				glog.Error("doWrite: Del: ", key, " : ", e)
+			}
+
+		default:
+			glog.Error("doWrite: Unknown, op: ", op)
+			e = errors.New("Unknown Op: " + string(op))
+		}
+
+		goto doWriteExit
+	}
+
+	// Transaction case.
+
+	glog.Info("doWrite: op: ", op, "  ", key, " : ", value)
+
+	e = d.doCVL(ts, op, key, val)
+
+	if e != nil {
+		goto doWriteExit
+	}
+
+	switch op {
+	case txOpHMSet, txOpHDel:
+		value = val.(Value)
+
+	case txOpDel:
+
+	default:
+		glog.Error("doWrite: Unknown, op: ", op)
+		e = errors.New("Unknown Op: " + string(op))
+	}
+
+	if e != nil {
+		goto doWriteExit
+	}
+
+	d.txCmds = append(d.txCmds, _txCmd{
+		ts:    ts,
+		op:    op,
+		key:   &key,
+		value: &value,
+	})
+
+doWriteExit:
+
+	if glog.V(3) {
+		glog.Info("doWrite: End: e: ", e)
+	}
+
+	return e
+}
+
+/*
 func (d *DB) doSetDeleteEntry(ts *TableSpec, isSet bool, key Key, v interface{}) error {
 
 	var e error = nil
@@ -500,15 +681,48 @@ doSetDeleteEntryExit:
 	return e
 }
 
+*/
+
 // SetEntry sets an entry(row) in the table.
 func (d *DB) SetEntry(ts *TableSpec, key Key, value Value) error {
+
+	var e error = nil
+	var valueComplement Value = Value { Field: make(map[string]string,len(value.Field))}
+	var valueCurrent Value
 
 	if glog.V(3) {
 		glog.Info("SetEntry: Begin: ", "ts: ", ts, " key: ", key,
 			" value: ", value)
 	}
 
-	return d.doSetDeleteEntry(ts, true, key, value)
+	if len(value.Field) == 0 {
+		glog.Info("SetEntry: Mapping to DeleteEntry()")
+		e = d.DeleteEntry(ts, key)
+		goto SetEntryExit
+	}
+
+	// Prepare the HDel list
+	// Note: This is for compatibililty with PySWSSDK semantics.
+	//       The CVL library will likely fail the SetEntry when
+	//       the item exists.
+	valueCurrent, e = d.GetEntry(ts, key)
+	if e == nil {
+		for k, _ := range valueCurrent.Field {
+			_, present := value.Field[k]
+			if ! present {
+				valueComplement.Field[k] = string("")
+			}
+		}
+	}
+
+	e = d.doWrite(ts, txOpHMSet, key, value)
+
+	if (e == nil) && (len(valueComplement.Field) != 0) {
+		e = d.doWrite(ts, txOpHDel, key, valueComplement)
+	}
+
+SetEntryExit:
+	return e
 }
 
 // DeleteEntry deletes an entry(row) in the table.
@@ -518,13 +732,13 @@ func (d *DB) DeleteEntry(ts *TableSpec, key Key) error {
 		glog.Info("DeleteEntry: Begin: ", "ts: ", ts, " key: ", key)
 	}
 
-	return d.doSetDeleteEntry(ts, false, key, nil)
+	return d.doWrite(ts, txOpDel, key, nil)
 }
 
 // ModEntry modifies an entry(row) in the table.
 func (d *DB) ModEntry(ts *TableSpec, key Key, value Value) error {
 
-	var e error
+	var e error = nil
 
 	if glog.V(3) {
 		glog.Info("ModEntry: Begin: ", "ts: ", ts, " key: ", key,
@@ -534,10 +748,12 @@ func (d *DB) ModEntry(ts *TableSpec, key Key, value Value) error {
 	if len(value.Field) == 0 {
 		glog.Info("ModEntry: Mapping to DeleteEntry()")
 		e = d.DeleteEntry(ts, key)
-	} else {
-		// TBD return d.doSetDeleteEntry(ts, false, key, nil)
-		glog.Error("ModEntry: Not Implemented!")
+		goto ModEntryExit
 	}
+
+	e = d.doWrite(ts, txOpHMSet, key, value)
+
+ModEntryExit:
 	return e;
 }
 
@@ -549,9 +765,7 @@ func (d *DB) DeleteEntryFields(ts *TableSpec, key Key, value Value) error {
 			" value: ", value)
 	}
 
-	// TBD return d.doSetDeleteEntry(ts, false, key, nil)
-	glog.Error("DeleteEntryFields: Not Implemented!")
-	return nil;
+	return d.doWrite(ts, txOpHDel, key, value)
 }
 
 
@@ -897,32 +1111,62 @@ func (d *DB) CommitTx() error {
 	// For each cmd in txCmds
 	//   Invoke it
 	for i := 0; i < len(d.txCmds); i++ {
-		// First Del
+
+		var args []interface{}
+
 		redisKey := d.key2redis(d.txCmds[i].ts, *(d.txCmds[i].key))
 
-		if glog.V(4) {
-			glog.Info("CommitTx: Do: DEL ", redisKey)
+		switch d.txCmds[i].op {
+
+		case txOpHMSet:
+
+			args = make([]interface{}, 0, len(d.txCmds[i].value.Field)*2+2)
+			args = append(args, "HMSET", redisKey)
+
+			for k, v := range d.txCmds[i].value.Field {
+				args = append(args, k, v)
+			}
+
+			if glog.V(4) {
+				glog.Info("CommitTx: Do: ", args)
+			}
+
+			_, e = d.client.Do(args...).Result()
+
+		case txOpHDel:
+
+			args = make([]interface{}, 0, len(d.txCmds[i].value.Field)+2)
+			args = append(args, "HDEL", redisKey)
+
+			for k, _ := range d.txCmds[i].value.Field {
+				args = append(args, k)
+			}
+
+			if glog.V(4) {
+				glog.Info("CommitTx: Do: ", args)
+			}
+
+			_, e = d.client.Do(args...).Result()
+
+		case txOpDel:
+
+			args = make([]interface{}, 0, 2)
+			args = append(args, "DEL", redisKey)
+
+			for k, _ := range d.txCmds[i].value.Field {
+				args = append(args, k)
+			}
+
+			if glog.V(4) {
+				glog.Info("CommitTx: Do: ", args)
+			}
+
+			_, e = d.client.Do(args...).Result()
+
+		default:
+			glog.Error("CommitTx: Unknown, op: ", d.txCmds[i].op)
+			e = errors.New("Unknown Op: " + string(d.txCmds[i].op))
 		}
-
-		d.client.Do("DEL", redisKey)
-
-		if !d.txCmds[i].isSet {
-			continue
-		}
-
-		// Second HMSet, if isSet
-		args := make([]interface{}, 0, len(d.txCmds[i].value.Field)*2+2)
-		args = append(args, "HMSET", redisKey)
-
-		for key, value := range d.txCmds[i].value.Field {
-			args = append(args, key, value)
-		}
-
-		if glog.V(4) {
-			glog.Info("CommitTx: Do: ", args)
-		}
-
-		_, e = d.client.Do(args...).Result()
 
 		if e != nil {
 			glog.Warning("CommitTx: Do: ", args, " e: ", e.Error())
@@ -939,6 +1183,7 @@ func (d *DB) CommitTx() error {
 	// Switch State, Clear Command list
 	d.txState = txStateNone
 	d.txCmds = d.txCmds[:0]
+	// d.cvlKeyData = d.cvlKeyData[:0]
 
 CommitTxExit:
 	if glog.V(3) {
@@ -988,6 +1233,7 @@ func (d *DB) AbortTx() error {
 	// Switch State, Clear Command list
 	d.txState = txStateNone
 	d.txCmds = d.txCmds[:0]
+	// d.cvlKeyData = d.cvlKeyData[:0]
 
 AbortTxExit:
 	if glog.V(3) {
