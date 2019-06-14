@@ -141,9 +141,9 @@
       -->
       <ACTION>
         if test "${access-list-name}" = ""; then
-             python $SONIC_CLI_ROOT/target/sonic-cli.py get_list_base_acl_sets_acl_set
+             python $SONIC_CLI_ROOT/target/sonic-cli.py get_list_base_acl_sets_acl_set show_access_list.j2
         else
-             python $SONIC_CLI_ROOT/target/sonic-cli.py get_acl_set_acl_entries ${access-list-name} ACL_IPV4
+             python $SONIC_CLI_ROOT/target/sonic-cli.py get_acl_set_acl_entries ${access-list-name} ACL_IPV4 show_access_list.j2
         fi
       </ACTION>
       <xi:include href="include/pipe.xml"/>
@@ -178,7 +178,7 @@
     <COMMAND name="show ip access-group" help="Show IPv4 access-group information">
       <PARAM name="access-list-name" help="Name of access-list" ptype="STRING" optional="true"> </PARAM>
       <ACTION>
-	python $SONIC_CLI_ROOT/target/sonic-cli.py get_acl_interfaces
+	python $SONIC_CLI_ROOT/target/sonic-cli.py get_acl_interfaces show_access_group.j2
       </ACTION>
     </COMMAND>
     <!--show ipv6 access-group -->

@@ -562,12 +562,12 @@
         help=""
         />
      <!--=======================================================-->
-    <PTYPE
+    <!--PTYPE
         name="RANGE_HEX_TYPE"
         method="hexadecimal"
         pattern="0..ff"
         help="Hexadecimal Type"
-        />
+        /-->
     <!--=======================================================-->
     <PTYPE
         name="RANGE_1_4095"
@@ -583,12 +583,12 @@
         help=""
         />
     <!--=======================================================-->
-    <PTYPE
+    <!--PTYPE
         name="HEX_RANGE_1_FF"
         method="hexadecimal"
         pattern="1..ff"
         help="Hexadecimal Type"
-        />
+        /-->
     <!--=======================================================-->
     <PTYPE
         name="RANGE_1_239"
@@ -604,11 +604,11 @@
         help="FC alias/zone member fc-id type"
         />
     <!--=======================================================-->
-    <PTYPE
+    <!--PTYPE
         name="HEX_RANGE_EFC00_EFCFF"
         method="hexadecimal"
         pattern="EFC00..EFCFF"
         help=""
-        />
+        /-->
     <!--=======================================================-->
 </CLISH_MODULE>

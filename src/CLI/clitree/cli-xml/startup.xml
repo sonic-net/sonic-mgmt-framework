@@ -8,6 +8,4 @@
     >
 	<STARTUP view="enable-view">
 	</STARTUP>
-
-	<HOOK name="access" builtin="mgmt_clish_user_access"></HOOK>
 </CLISH_MODULE>
