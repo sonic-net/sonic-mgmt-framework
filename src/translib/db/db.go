@@ -717,7 +717,7 @@ func (d *DB) SetEntry(ts *TableSpec, key Key, value Value) error {
 
 	e = d.doWrite(ts, txOpHMSet, key, value)
 
-	if (e != nil) && (len(valueComplement.Field) != 0) {
+	if (e == nil) && (len(valueComplement.Field) != 0) {
 		e = d.doWrite(ts, txOpHDel, key, valueComplement)
 	}
 
