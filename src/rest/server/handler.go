@@ -1,8 +1,9 @@
-///////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////
 //
-// Copyright 2019 Broadcom Inc.
+// Copyright 2019 Broadcom. All rights reserved.
+// The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
 //
-///////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////
 
 package server
 
@@ -135,24 +136,24 @@ func invokeTranslib(reqID, method, path string, payload []byte) (int, []byte) {
 
 	switch method {
 	case "GET":
-		req := translib.GetRequest{Path:path}
+		req := translib.GetRequest{Path: path}
 		resp, err1 := translib.Get(req)
 		if isTranslibSuccess(err1) {
 			data := resp.Payload
 			status = 200
 			content = []byte(data)
 		}
-        if err1 != nil{
-            log.Printf("Printing the ErrSrc =%v", resp.ErrSrc)
-        }
+		if err1 != nil {
+			log.Printf("Printing the ErrSrc =%v", resp.ErrSrc)
+		}
 		err = err1
 
 	case "POST":
 		//TODO return 200 for operations request
 		status = 201
-		req := translib.SetRequest{Path:path, Payload:payload}
+		req := translib.SetRequest{Path: path, Payload: payload}
 		resp, err1 := translib.Create(req)
-		if err1 != nil{
+		if err1 != nil {
 			log.Printf("Printing the ErrSrc =%v", resp.ErrSrc)
 		}
 		err = err1
@@ -160,29 +161,29 @@ func invokeTranslib(reqID, method, path string, payload []byte) (int, []byte) {
 	case "PUT":
 		//TODO send 201 if PUT resulted in creation
 		status = 204
-		req := translib.SetRequest{Path:path, Payload:payload}
+		req := translib.SetRequest{Path: path, Payload: payload}
 		resp, err1 := translib.Replace(req)
-        if err1 != nil{
-            log.Printf("Printing the ErrSrc =%v", resp.ErrSrc)
-        }
+		if err1 != nil {
+			log.Printf("Printing the ErrSrc =%v", resp.ErrSrc)
+		}
 		err = err1
 
 	case "PATCH":
 		status = 204
-		req := translib.SetRequest{Path:path, Payload:payload}
+		req := translib.SetRequest{Path: path, Payload: payload}
 		resp, err1 := translib.Update(req)
-        if err1 != nil{
-            log.Printf("Printing the ErrSrc =%v", resp.ErrSrc)
-        }
+		if err1 != nil {
+			log.Printf("Printing the ErrSrc =%v", resp.ErrSrc)
+		}
 		err = err1
 
 	case "DELETE":
 		status = 204
-		req := translib.SetRequest{Path:path}
+		req := translib.SetRequest{Path: path}
 		resp, err1 := translib.Delete(req)
-        if err1 != nil{
-            log.Printf("Printing the ErrSrc =%v", resp.ErrSrc)
-        }
+		if err1 != nil {
+			log.Printf("Printing the ErrSrc =%v", resp.ErrSrc)
+		}
 		err = err1
 	default:
 		log.Printf("[%s] Unknown method '%v'", reqID, method)
@@ -197,4 +198,3 @@ func invokeTranslib(reqID, method, path string, payload []byte) (int, []byte) {
 
 	return status, content
 }
-
