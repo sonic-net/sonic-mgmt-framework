@@ -1,3 +1,10 @@
+///////////////////////////////////////////////////////////////////////
+//
+// Copyright 2019 Broadcom. All rights reserved.
+// The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
+//
+///////////////////////////////////////////////////////////////////////
+
 package translib
 
 import (
@@ -227,13 +234,11 @@ func (acl *AclApp) translateDelete(d *db.DB) ([]db.WatchKeys, error)  {
     var err error
     var keys []db.WatchKeys
     var aclSubtree = false
-    //var intfSubtree = false
     log.Info("translateDelete:acl:path =", acl.path)
 
     aclObj := acl.getAppRootObject()
     if reflect.TypeOf(*acl.ygotTarget).Elem().Name() == "OpenconfigAcl_Acl" {
         aclSubtree = true
-        //intfSubtree = true
     }
 
     fmt.Println("translateDelete: Target Type: " + reflect.TypeOf(*acl.ygotTarget).Elem().Name())
@@ -279,10 +284,40 @@ func (acl *AclApp) translateDelete(d *db.DB) ([]db.WatchKeys, error)  {
         }
     }
 
-    /*
-    if isSubtreeRequest(targetUriPath, "/openconfig-acl:acl/interfaces") || intfSubtree {
+    if isSubtreeRequest(targetUriPath, "/openconfig-acl:acl/interfaces") {
+        if aclObj.Interfaces != nil && len(aclObj.Interfaces.Interface) > 0 {
+            var intfData *ocbinds.OpenconfigAcl_Acl_Interfaces_Interface
+            for intfId := range aclObj.Interfaces.Interface {
+                intfData = aclObj.Interfaces.Interface[intfId]
+                if intfData != nil {
+                    if intfData.IngressAclSets != nil && len(intfData.IngressAclSets.IngressAclSet) > 0 {
+                        for inAclKey,_ := range intfData.IngressAclSets.IngressAclSet {
+                            acln := strings.ReplaceAll(strings.ReplaceAll(inAclKey.SetName, " ", "_"), "-", "_")
+                            aclType := inAclKey.Type.ΛMap()["E_OpenconfigAcl_ACL_TYPE"][int64(inAclKey.Type)].Name
+                            aclName := acln + "_" + aclType
+                            keys = append(keys, db.WatchKeys{ &aclTs, &db.Key{Comp:[]string{aclName}} })
+                        }
+                    } else if intfData.EgressAclSets != nil && len(intfData.EgressAclSets.EgressAclSet) > 0 {
+                        for outAclKey,_ := range intfData.EgressAclSets.EgressAclSet {
+                            //egressAclSet := intf.EgressAclSets.EgressAclSet[outAclKey]
+                            acln := strings.ReplaceAll(strings.ReplaceAll(outAclKey.SetName, " ", "_"), "-", "_")
+                            aclType := outAclKey.Type.ΛMap()["E_OpenconfigAcl_ACL_TYPE"][int64(outAclKey.Type)].Name
+                            aclName := acln + "_" + aclType
+                            keys = append(keys, db.WatchKeys{ &aclTs, &db.Key{Comp:[]string{aclName}} })
+                        }
+                    }
+                }
+            }
+        } else {
+            aclKeys,_ := d.GetKeys(&aclTs)
+            for i,_ := range aclKeys {
+                aclEntry,_ := d.GetEntry(&aclTs, aclKeys[i])
+                if len(aclEntry.GetList("ports")) > 0 {
+                    keys = append(keys, db.WatchKeys{ &aclTs, &aclKeys[i]})
+                }
+            }
+        }
     }
-    */
 
     //err = errors.New("Not implemented")
     return keys, err
@@ -335,13 +370,11 @@ func (acl *AclApp) processDelete(d *db.DB) (SetResponse, error)  {
     var err error
     var resp SetResponse
     var aclSubtree = false
-    //var intfSubtree = false
     log.Info("processDelete:acl:path =", acl.path)
 
     aclObj := acl.getAppRootObject()
     if reflect.TypeOf(*acl.ygotTarget).Elem().Name() == "OpenconfigAcl_Acl" {
         aclSubtree = true
-        //intfSubtree = true
     }
     targetUriPath, err := getYangPathFromUri(acl.path)
     if isSubtreeRequest(targetUriPath, "/openconfig-acl:acl/acl-sets") || aclSubtree {
@@ -378,12 +411,76 @@ func (acl *AclApp) processDelete(d *db.DB) (SetResponse, error)  {
             d.DeleteTable(&aclTs)
             d.DeleteTable(&ruleTs)
         }
-    }
+    } else if isSubtreeRequest(targetUriPath, "/openconfig-acl:acl/interfaces") {
+        aclKeys,_ := d.GetKeys(&aclTs)
+        for i,_ := range aclKeys {
+            aclEntry,_ := d.GetEntry(&aclTs, aclKeys[i])
+            var isRequestedAclFound = false
+            if len(aclEntry.GetList("ports")) > 0 {
+                if aclObj.Interfaces != nil && len(aclObj.Interfaces.Interface) > 0 {
+                    direction := aclEntry.Get("stage")
+                    for intfId := range aclObj.Interfaces.Interface {
+                        if targetUriPath == "/openconfig-acl:acl/interfaces/interface/ingress-acl-sets"  && direction != "INGRESS" {
+                            err = errors.New("Acl is not Ingress")
+                            return resp, err
+                        }
+                        if targetUriPath == "/openconfig-acl:acl/interfaces/interface/egress-acl-sets" && direction != "EGRESS" {
+                            err = errors.New("Acl is not Egress")
+                            return resp, err
+                        }
 
-    /*
-    if isSubtreeRequest(targetUriPath, "/openconfig-acl:acl/interfaces") || intfSubtree {
+                        aclname, acltype := getAclKeysFromStrKey(aclKeys[i].Get(0), aclEntry.Get("type"))
+                        if targetUriPath == "/openconfig-acl:acl/interfaces/interface/ingress-acl-sets/ingress-acl-set" {
+                            intfData := aclObj.Interfaces.Interface[intfId]
+                            for k := range intfData.IngressAclSets.IngressAclSet {
+                                if aclname == k.SetName {
+                                    if acltype == k.Type {
+                                        isRequestedAclFound = true
+                                    } else {
+                                        err = errors.New("Acl Type is not maching")
+                                        return resp, err
+                                    }
+                                } else {
+                                    goto SkipDBProcessing
+                                }
+                            }
+                        } else if targetUriPath == "/openconfig-acl:acl/interfaces/interface/egress-acl-sets/egress-acl-set" {
+                            intfData := aclObj.Interfaces.Interface[intfId]
+                            for k := range intfData.EgressAclSets.EgressAclSet {
+                                if aclname == k.SetName {
+                                    if acltype == k.Type {
+                                        isRequestedAclFound = true
+                                    } else {
+                                        err = errors.New("Acl Type is not maching")
+                                        return resp, err
+                                    }
+                                } else {
+                                    goto SkipDBProcessing
+                                }
+                            }
+                        }
+
+                        intfs := aclEntry.GetList("ports")
+                        intfs = removeElement(intfs, intfId)
+                        aclEntry.SetList("ports", intfs)
+                        d.SetEntry(&aclTs, aclKeys[i], aclEntry)
+                        // If last interface removed, then remove stage field also
+                        if len(intfs) == 0 {
+                            aclEntry.Remove("stage")
+                        }
+                    }
+SkipDBProcessing:
+                } else {
+                    aclEntry.Remove("stage")
+                    aclEntry.SetList("ports", []string{})
+                    d.SetEntry(&aclTs, aclKeys[i], aclEntry)
+                }
+            }
+            if isRequestedAclFound {
+                break
+            }
+        }
     }
-    */
 
     //err = errors.New("Not implemented")
     return resp, err
@@ -1524,6 +1621,29 @@ func getTransportConfigSrcPort(srcPort string) ocbinds.OpenconfigAcl_Acl_AclSets
     return srcPortCfg
 }
 
+func getAclKeysFromStrKey(aclKey string, aclType string) (string, ocbinds.E_OpenconfigAcl_ACL_TYPE) {
+    var aclOrigName string
+    var aclOrigType ocbinds.E_OpenconfigAcl_ACL_TYPE
+
+    if SONIC_ACL_TYPE_IPV4 == aclType {
+        aclOrigName = strings.Replace(aclKey, "_"+OPENCONFIG_ACL_TYPE_IPV4, "", 1)
+        aclOrigType = ocbinds.OpenconfigAcl_ACL_TYPE_ACL_IPV4
+    } else if SONIC_ACL_TYPE_IPV6 == aclType {
+        aclOrigName = strings.Replace(aclKey, "_"+OPENCONFIG_ACL_TYPE_IPV4, "", 1)
+        aclOrigType = ocbinds.OpenconfigAcl_ACL_TYPE_ACL_IPV6
+    } else if SONIC_ACL_TYPE_L2 == aclType {
+        aclOrigName = strings.Replace(aclKey, "_"+OPENCONFIG_ACL_TYPE_L2, "", 1)
+        aclOrigType = ocbinds.OpenconfigAcl_ACL_TYPE_ACL_L2
+    }
+    return aclOrigName, aclOrigType
+}
+
+func getAclKeyStrFromOCKey(aclname string, acltype ocbinds.E_OpenconfigAcl_ACL_TYPE) string {
+    aclN := strings.ReplaceAll(strings.ReplaceAll(aclname, " ", "_"), "-", "_")
+    aclT := acltype.ΛMap()["E_OpenconfigAcl_ACL_TYPE"][int64(acltype)].Name
+    return aclN + "_" + aclT
+}
+
 
 func getYangPathFromUri(uri string) (string, error) {
     var path *gnmi.Path
@@ -1585,6 +1705,18 @@ func contains(sl []string, str string) bool {
         }
     }
     return false
+}
+
+func removeElement(sl []string, str string) []string {
+    for i := 0; i < len(sl); i++ {
+        if sl[i] == str {
+            sl = append(sl[:i], sl[i+1:]...)
+            i--
+            sl = sl[:len(sl)]
+            break
+        }
+    }
+    return sl
 }
 
 // remove this test method later
