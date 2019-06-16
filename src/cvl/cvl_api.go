@@ -7,8 +7,9 @@ import (
 	"path/filepath"
 )
 /*
-#cgo LDFLAGS: -lyang
-#cgo LDFLAGS: -lpcre
+#cgo CFLAGS: -I build/pcre-8.43/install/include -I build/libyang/build/include
+#cgo LDFLAGS: -L build/pcre-8.43/install/lib -lpcre
+#cgo LDFLAGS: -L build/libyang/build -lyang
 #include <libyang/libyang.h>
 #include <libyang/tree_data.h>
 #include <stdlib.h>
@@ -17,6 +18,42 @@ import (
 */
 import "C"
 
+type CVLValidateType uint
+const (
+	VALIDATE_NONE CVLValidateType = iota //Data is used as dependent data
+	VALIDATE_SYNTAX //Syntax is checked and data is used as dependent data
+	VALIDATE_SEMANTICS //Semantics is checked
+	VALIDATE_ALL //Syntax and Semantics are checked
+)
+
+type CVLOperation uint
+const (
+	OP_NONE   CVLOperation = iota //Used to just validate the config without any operation
+	OP_CREATE //For Create operation 
+	OP_UPDATE //For Update operation
+	OP_DELETE //For Delete operation
+)
+
+//Error code
+type CVLRetCode int
+const (
+	CVL_SUCCESS CVLRetCode = iota
+	CVL_SYNTAX_ERROR
+	CVL_SEMANTIC_ERROR
+	CVL_KEY_ALREADY_EXIST
+	CVL_KEY_NOT_EXIST
+	CVL_NOT_IMPLEMENTED
+	CVL_FAILURE
+	CVL_ERROR
+)
+
+//Strcture for key and data in API
+type CVLEditConfigData struct {
+	VType CVLValidateType //Validation type
+	VOp CVLOperation      //Operation type
+	Key string      //Key format : .PORT|Ethernet4.
+	Data map[string]string //Value :  {"alias": "40GE0/28", "mtu" : 9100,  "admin_status":  down}
+}
 
 func Initialize() CVLRetCode {
 	if (cvlInitialized == true) {
@@ -91,11 +128,35 @@ func ValidateConfig(jsonData string) CVLRetCode {
 	return  err
 }
 
+//Validate edit config 
+func ValidateEditConfig(cfgData []CVLEditConfigData) CVLRetCode {
+	op := OP_NONE
+
+	//find the operation
+	for _, cfgDataItem := range cfgData {
+		if ((cfgDataItem.VOp != OP_NONE) && (cfgDataItem.VType != VALIDATE_NONE)) {
+			op = cfgDataItem.VOp
+			break //assume all are same operation for now
+		}
+	}
+
+	switch (op) {
+	case OP_CREATE:
+		return ValidateCreate(cfgData)
+	case OP_UPDATE:
+		return ValidateUpdate(cfgData)
+	case OP_DELETE:
+		return ValidateDelete(cfgData)
+	}
+
+	return CVL_ERROR
+}
+
 //Validate data for Create operation
-func ValidateCreate(keyData []KeyData) CVLRetCode {
+func ValidateCreate(keyData []CVLEditConfigData) CVLRetCode {
 	clearTmpDbCache()
 
-	requestedData := keyDataToMap(true, keyData)
+	requestedData := keyDataToMap(VALIDATE_ALL, keyData)
 	jsonData := ""
 
 	jsonDataBytes, err := json.Marshal(requestedData) //Optimize TBD:
@@ -137,7 +198,7 @@ func ValidateCreate(keyData []KeyData) CVLRetCode {
 	//populated from Redis during validateSemantics() call.
 	//But dependent data 'dependentData' provided by caller is not really there in Redis,
 	//so need to skip such Redis call later
-	dependentData := keyDataToMap(false, keyData)
+	dependentData := keyDataToMap(VALIDATE_NONE, keyData)
 	yangXml := ""
 	if (len(dependentData) > 0) {
 		jsonDataBytes, err = json.Marshal(dependentData) //Optimize TBD:
@@ -162,10 +223,10 @@ func ValidateCreate(keyData []KeyData) CVLRetCode {
 }
 
 //Validate data for Update operation
-func ValidateUpdate(keyData []KeyData) CVLRetCode {
+func ValidateUpdate(keyData []CVLEditConfigData) CVLRetCode {
 	clearTmpDbCache()
 
-	requestedData := keyDataToMap(true, keyData)
+	requestedData := keyDataToMap(VALIDATE_ALL, keyData)
 	jsonData := ""
 
 	jsonDataBytes, err := json.Marshal(requestedData) //Optimize TBD:
@@ -205,7 +266,7 @@ func ValidateUpdate(keyData []KeyData) CVLRetCode {
 		}
 	}
 
-	dependentData := keyDataToMap(false, keyData)
+	dependentData := keyDataToMap(VALIDATE_NONE, keyData)
 	yangXml := ""
 	if (len(dependentData) > 0) {
 		jsonDataBytes, err = json.Marshal(dependentData) //Optimize TBD:
@@ -231,10 +292,10 @@ func ValidateUpdate(keyData []KeyData) CVLRetCode {
 }
 
 //Validate data for Delete operation
-func ValidateDelete(keyData []KeyData) CVLRetCode {
+func ValidateDelete(keyData []CVLEditConfigData) CVLRetCode {
 	clearTmpDbCache()
 
-	requestedData := keyDataToMap(true, keyData)
+	requestedData := keyDataToMap(VALIDATE_ALL, keyData)
 	jsonData := ""
 
 	jsonDataBytes, err := json.Marshal(requestedData) //Optimize TBD:

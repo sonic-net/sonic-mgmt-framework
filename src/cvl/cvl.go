@@ -14,8 +14,9 @@ import (
 )
 
 /*
-#cgo LDFLAGS: -lyang -L .
-#cgo LDFLAGS: -lpcre
+#cgo CFLAGS: -I build/pcre-8.43/install/include -I build/libyang/build/include
+#cgo LDFLAGS: -L build/pcre-8.43/install/lib -lpcre
+#cgo LDFLAGS: -L build/libyang/build -lyang
 #include <libyang/libyang.h>
 #include <libyang/tree_data.h>
 #include <stdlib.h>
@@ -37,26 +38,6 @@ int lyd_data_validate(struct lyd_node **node, int options, struct ly_ctx *ctx)
 */
 import "C"
 
-//Error code
-type CVLRetCode int
-const (
-	CVL_SUCCESS CVLRetCode = iota
-	CVL_SYNTAX_ERROR
-	CVL_SEMANTIC_ERROR
-	CVL_KEY_ALREADY_EXIST
-	CVL_KEY_NOT_EXIST
-	CVL_NOT_IMPLEMENTED
-	CVL_FAILURE
-	CVL_ERROR
-)
-
-//Strcture for key and data in API
-type KeyData struct {
-	Validate bool //If validate flag is true then syntax/semantics are checked, otherwise
-			// data is used as dependency for semantic check in other keydata
-	Key string      //Key format : .PORT|Ethernet4.
-	Data map[string]string //Value :  {"alias": "40GE0/28", "mtu" : 9100,  "admin_status":  down}
-}
 
 var ctx *C.struct_ly_ctx
 var data *C.struct_lyd_node
@@ -975,12 +956,12 @@ func validateSemantics(data *C.struct_lyd_node, otherDepData string) CVLRetCode 
 }
 
 //Convert key-data array to map data for json conversion
-func keyDataToMap(dataForValidation bool, keyData []KeyData) map[string]interface{} {
+func keyDataToMap(dataForValidation CVLValidateType, keyData []CVLEditConfigData) map[string]interface{} {
 	topData := make(map[string]interface{})
 
 	//For each keyData
 	for _, keyDataItem := range keyData {
-		if (dataForValidation != keyDataItem.Validate) {
+		if (dataForValidation != keyDataItem.VType) {
 			continue
 		}
 

@@ -18,55 +18,63 @@ func main() {
 	}
 	{
 		count++
-		keyData :=  []cvl.KeyData {
-			cvl.KeyData {
-				false,
+		keyData :=  []cvl.CVLEditConfigData {
+			cvl.CVLEditConfigData {
+				cvl.VALIDATE_NONE,
+				cvl.OP_NONE,
 				"PORTCHANNEL|ch1",
 				map[string]string {
 					"admin_status": "up",
 					"mtu": "9100",
 				},
 			},
-			cvl.KeyData {
-				false,
+			cvl.CVLEditConfigData {
+				cvl.VALIDATE_NONE,
+				cvl.OP_NONE,
 				"PORTCHANNEL|ch2",
 				map[string]string {
 					"admin_status": "up",
 					"mtu": "9100",
 				},
 			},
-			cvl.KeyData {
-				false,
+			cvl.CVLEditConfigData {
+				cvl.VALIDATE_NONE,
+				cvl.OP_NONE,
 				"PORTCHANNEL_MEMBER|ch1|Ethernet4",
 				map[string]string {
 				},
 			},
-			cvl.KeyData {
-				false,
+			cvl.CVLEditConfigData {
+				cvl.VALIDATE_NONE,
+				cvl.OP_NONE,
 				"PORTCHANNEL_MEMBER|ch1|Ethernet8",
 				map[string]string {
 				},
 			},
-			cvl.KeyData {
-				false,
+			cvl.CVLEditConfigData {
+				cvl.VALIDATE_NONE,
+				cvl.OP_NONE,
 				"PORTCHANNEL_MEMBER|ch2|Ethernet12",
 				map[string]string {
 				},
 			},
-			cvl.KeyData {
-				false,
+			cvl.CVLEditConfigData {
+				cvl.VALIDATE_NONE,
+				cvl.OP_NONE,
 				"PORTCHANNEL_MEMBER|ch2|Ethernet16",
 				map[string]string {
 				},
 			},
-			cvl.KeyData {
-				false,
+			cvl.CVLEditConfigData {
+				cvl.VALIDATE_NONE,
+				cvl.OP_NONE,
 				"PORTCHANNEL_MEMBER|ch2|Ethernet20",
 				map[string]string {
 				},
 			},
-			cvl.KeyData {
-				true,
+			cvl.CVLEditConfigData {
+				cvl.VALIDATE_ALL,
+				cvl.OP_CREATE,
 				"VLAN|Vlan1001",
 				map[string]string {
 					"vlanid": "1001",
@@ -77,7 +85,7 @@ func main() {
 
 		fmt.Printf("\nValidating data for must = %v\n\n", keyData);
 
-		err := cvl.ValidateCreate(keyData)
+		err := cvl.ValidateEditConfig(keyData)
 
 		if (err == cvl.CVL_SUCCESS) {
 			fmt.Printf("\nConfig Validation succeeded.\n\n");

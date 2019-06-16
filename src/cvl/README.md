@@ -6,5 +6,7 @@
 
 4. Refer to top level makefile rules for compiling individual targets. 
 
-5. On the target the 'schema' directory needs to be present in the same directory where application executable file is present.
+5. 'schema' directory should contain all .yin files
+
+6. On the target the 'schema' directory needs to be present in the same directory where application executable file is present.
 
