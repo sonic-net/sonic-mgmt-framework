@@ -98,12 +98,12 @@ module sonic-acl {
 			scommon:pf-check    "ACL_CheckAclLimits";	
 
 			/* Limit for number of dynamic ACL rules */	
-			must "count(../ACL_RULE) > /spf:sonic-pf-limits/acl/MAX_ACL_RULES" {
+			/*must "count(../ACL_RULE) > /spf:sonic-pf-limits/acl/MAX_ACL_RULES" {
 				error-message "Number of ACL rules reached max platform limit.";
 			}
 			must "PRIORITY > /spf:sonic-pf-limits/acl/MAX_PRIORITY" {
 				error-message "Invalid ACL rule priority.";
-			}
+			}*/
 
 			leaf aclname {
 				type leafref {

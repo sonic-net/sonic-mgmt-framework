@@ -44,6 +44,9 @@ $(BUILD_DIR)/cvl.a:
 	@echo "Building $@"
 	GOPATH=$(GOPATH) $(GO) build $(GOFLAGS) -o $@ $(SRC_FILES)
 
+install:
+	GOPATH=$(GO_DEP_PATH) $(GO) install
+
 schema:
 	make -C schema
 

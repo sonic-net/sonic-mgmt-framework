@@ -1,7 +1,7 @@
 SRC_FILES=$(wildcard *.go)
 OUT=$(patsubst %.go, %, $(SRC_FILES)) 
 TOPDIR := $(abspath ../../..)
-GOPATH = $(shell go env GOPATH):$(TOPDIR)
+GOPATH = $(TOPDIR):$(shell go env GOPATH)
 
 all:tests
 

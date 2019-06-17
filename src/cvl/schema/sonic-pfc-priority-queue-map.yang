@@ -29,14 +29,14 @@ module sonic-pfc-priority-queue-map {
 			key "name";
 			scommon:key-delim "|";
 			scommon:key-pattern "MAP_PFC_PRIORITY_TO_QUEUE|{name}";
+			scommon:map-list true; //special conversion for map tables
+			scommon:map-leaf "pfc_priority qindex"; //every key:value pair is mapped to list keys, e.g. "1":"7" ==> tc_num=1, dscp=7
 
 			leaf name {
 				type string;
 			}
 
 			list MAP_PFC_PRIORITY_TO_QUEUE { //this is list inside list for storing mapping between two fields
-				scommon:map-list true; //special conversion for map tables
-				scommon:map-leaf "pfc_priority qindex"; //every key:value pair is mapped to list keys, e.g. "1":"7" ==> tc_num=1, dscp=7
 				key "pfc_priority qindex";
 
 				leaf pfc_priority {

@@ -206,16 +206,19 @@ func storeModelInfo(modelFile string) { //such model info can be maintained in C
 			node = node.NextSibling
 		}
 
-		//Now store the tableInfo in global data
-		modelInfo.tableInfo[tableName] = tableInfo
-
 		//Find and store all leafref under each table
 		if (listNode == nil) {
+			//Store the tableInfo in global data
+			modelInfo.tableInfo[tableName] = tableInfo
+
 			continue
 		}
 
 		leafRefNodes := xmlquery.Find(listNode, "//type[@name='leafref']")
 		if (leafRefNodes == nil) {
+			//Store the tableInfo in global data
+			modelInfo.tableInfo[tableName] = tableInfo
+
 			continue
 		}
 
@@ -245,6 +248,8 @@ func storeModelInfo(modelFile string) { //such model info can be maintained in C
 		//Find all 'must' expression and store the agains its parent node
 		mustExps := xmlquery.Find(listNode, "//must")
 		if (mustExps == nil) {
+			//Update the tableInfo in global data
+			modelInfo.tableInfo[tableName] = tableInfo
 			continue
 		}
 
