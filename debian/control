@@ -1,0 +1,12 @@
+Source: sonic-mgmt-framework 
+Maintainer: Prabhu Sreenivasan <prabhu.sreenivasan@broadcom.com>
+Build-Depends: debhelper (>= 8.0.0),
+               dh-systemd
+Standards-Version: 3.9.3
+Section: net
+
+Package: sonic-mgmt-framework 
+Priority: extra  
+Architecture: amd64
+Depends: ${shlibs:Depends}, ${misc:Depends}  
+Description: SONiC Management Framework 
