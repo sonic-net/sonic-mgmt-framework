@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CLISH_MODULE
+    xmlns="http://www.dellemc.com/force10/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xi="http://www.w3.org/2001/XInclude"
+    xsi:schemaLocation="http://www.dellemc.com/force10/XMLSchema
+                        http://www.dellemc.com/force10/XMLSchema/clish.xsd"
+    >
+<!--=========================================================================-->
+
+<VIEW name="enable-view">
+   <!--COMMAND
+        help="show IP commands"
+        name="show ip"
+        /-->
+<!--show ip access-lists -->
+   <COMMAND
+         name="show ip access-lists"
+         help="Show IPv4 access-list information"
+		 >
+         <PARAM
+            name="access-list-name"
+            help="Name of access-list (Max size 140)"
+            ptype="STRING"
+            optional="true"
+            >
+        </PARAM>
+      <ACTION>
+        if test "${access-list-name}" = ""; then&#xA;
+            python $SONIC_CLI_ROOT/target/sonic-cli.py get_list_base_acl_sets_acl_set show_access_list.j2&#xA;
+        else&#xA;
+            python $SONIC_CLI_ROOT/target/sonic-cli.py get_acl_set_acl_entries ${access-list-name} ACL_IPV4 show_access_list.j2&#xA;
+        fi&#xA;
+      </ACTION>
+    </COMMAND>
+
+
+<!--show ip access-group -->
+   <COMMAND
+         name="show ip access-group"
+         help="Show IPv4 access-group information"
+		 >
+
+        <PARAM name="access-list-name"
+            help="Name of access-list (Max size 140)"
+            ptype="STRING"
+            optional="true"
+			>
+        </PARAM>
+      <ACTION>
+        python $SONIC_CLI_ROOT/target/sonic-cli.py get_acl_interfaces show_access_group.j2
+      </ACTION>
+    </COMMAND>
+
+</VIEW>
+
+<!--MODE : interface -->
+
+<VIEW name="configure-if-view">
+    <!--COMMAND
+        name="ip"
+        help="Interface Internet Protocol config commands"
+    /-->
+    <!--COMMAND
+        name="no ip"
+        help="Interface Internet Protocol config commands"
+    /-->
+    <!-- ip access-group -->
+    <COMMAND
+         name="ip access-group"
+         help="Specify access control for packets"
+         >
+
+    <MACRO name="ACG-OPTIONS" arg=""></MACRO>
+
+    <ACTION>
+        if test "${direction-switch}" = "in"; then&#xA;
+            python $SONIC_CLI_ROOT/target/sonic-cli.py post_list_base_interfaces_interface ${access-list-name} ACL_IPV4 ${iface} ingress&#xA;
+        else&#xA;
+            python $SONIC_CLI_ROOT/target/sonic-cli.py post_list_base_interfaces_interface ${access-list-name} ACL_IPV4 ${iface} egress&#xA;
+        fi&#xA;
+    </ACTION>
+    </COMMAND>
+
+<!-- no ip access-group -->
+   <COMMAND
+         name="no ip access-group"
+         help="Specify access control for packets"
+         >
+
+    <MACRO name="NO-ACG-OPTIONS" arg=""></MACRO>
+
+    <ACTION>
+        if test "${direction-switch}" = "in"; then&#xA;
+            python $SONIC_CLI_ROOT/target/sonic-cli.py delete_interface_ingress_acl_sets_ingress_acl_set ${iface} ${access-list-name} ACL_IPV4&#xA;
+        else&#xA;
+            python $SONIC_CLI_ROOT/target/sonic-cli.py delete_interface_egress_acl_sets_egress_acl_set ${iface} ${access-list-name} ACL_IPV4&#xA;
+        fi&#xA;
+    </ACTION>
+    </COMMAND>
+
+</VIEW>
+
+<VIEW name="configure-view">
+
+<!-- ip access-list -->
+   <COMMAND
+         name="ip access-list"
+         help="Configure IPv4 access-list"
+         view="configure-acl-ipv4-view"
+         viewid="name=${access-list-name}"
+         >
+         <PARAM
+             name="access-list-name"
+             help="Name of the IPv4 access-list (Max size 140)"
+             ptype="STRING"
+             >
+        </PARAM>
+        <ACTION>python $SONIC_CLI_ROOT/target/sonic-cli.py post_acl_set_config ${access-list-name} ACL_IPV4</ACTION>
+    </COMMAND>
+
+<!-- no ip access-list -->
+   <COMMAND name="no ip access-list"
+         help="Configure IPv4 access-list"
+		 >
+         <PARAM name="access-list-name"
+             help="Name of the IPv4 access-list (Max size 140)"
+             ptype="STRING"
+			 >
+        </PARAM>
+    <ACTION>python $SONIC_CLI_ROOT/target/sonic-cli.py delete_list_base_acl_entries_acl_entry ${access-list-name} ACL_IPV4</ACTION>
+    </COMMAND>
+
+</VIEW>
+
+<VIEW name="configure-acl-ipv4-view"
+        prompt="${SYSTEM_NAME}(config-ipv4-acl)# "
+        depth="2">
+
+<!-- Inheritance -->
+
+     <NAMESPACE ref="configure-view"
+                help="false"
+                completion="false"/>
+
+     <!-- show configuration -->
+     <COMMAND
+         name="show configuration"
+         help="Current configuration"
+      >
+     <ACTION builtin="clish_nop"> </ACTION>
+     </COMMAND>
+
+     <COMMAND name="no"
+              help="Negate a command or set its defaults">
+     </COMMAND>
+
+    <COMMAND
+        name="no seq"
+        help="Sequence number"
+        >
+        <PARAM
+            name="seq-no"
+            help="Sequence number"
+            ptype="UINT"
+            />
+        <ACTION>python $SONIC_CLI_ROOT/target/sonic-cli.py delete_acl_set_acl_entries_acl_entry ${name} ACL_IPV4 ${seq-no}</ACTION>
+    </COMMAND>
+
+     <COMMAND
+         name="seq"
+         help="Sequence number"
+         ptype="UINT"
+         >
+         <PARAM
+             name="seq-no"
+             help="Sequence number"
+             ptype="UINT"
+             >
+             <PARAM
+                 name="seq-options"
+                 help=""
+                 ptype="SUBCOMMAND"
+                 mode="switch"
+                 >
+                 <PARAM
+                     name="deny"
+                     help="Configure deny criteria"
+                     ptype="SUBCOMMAND"
+                     mode="subcommand"
+                     >
+                     <PARAM
+                         name="deny-options"
+                         help=""
+                         ptype="SUBCOMMAND"
+                         mode="switch"
+                        >
+                        <MACRO name="IPV4-ACL" arg=""></MACRO>
+                     </PARAM>
+                 </PARAM>
+                 <PARAM
+                     name="permit"
+                     help="Configure permit criteria"
+                     ptype="SUBCOMMAND"
+                     mode="subcommand"
+                     >
+                     <PARAM
+                         name="permit-options"
+                         help=""
+                         ptype="SUBCOMMAND"
+                         mode="switch"
+                         >
+                         <MACRO name="IPV4-ACL-PERMIT-OPTIONS" arg=""></MACRO>
+                     </PARAM>
+                 </PARAM>
+             </PARAM>
+         </PARAM>
+         <ACTION>
+             if test "${seq-options}" = "permit"; then&#xA;
+                 if test "${permit-options}" = "tcp"; then&#xA;
+                     python $SONIC_CLI_ROOT/target/sonic-cli.py post_list_base_acl_entries_acl_entry ${name} ACL_IPV4 ${seq-no} tcp permit ${src-prefix} ${source-port-number} ${dest-prefix} ${destination-port-number}&#xA;
+                 else&#xA;
+                     python $SONIC_CLI_ROOT/target/sonic-cli.py post_list_base_acl_entries_acl_entry ${name} ACL_IPV4 ${seq-no} udp permit ${src-prefix} ${source-port-number} ${dest-prefix} ${destination-port-number}&#xA;
+                 fi&#xA;
+             elif test "${seq-options}" = "deny"; then&#xA;
+                 if test "${deny-options}" = "tcp"; then&#xA;
+                      python $SONIC_CLI_ROOT/target/sonic-cli.py post_list_base_acl_entries_acl_entry ${name} ACL_IPV4 ${seq-no} tcp deny ${src-prefix} ${source-port-number} ${dest-prefix} ${destination-port-number}&#xA;
+                 else&#xA;
+                      python $SONIC_CLI_ROOT/target/sonic-cli.py post_list_base_acl_entries_acl_entry ${name} ACL_IPV4 ${seq-no} udp deny ${src-prefix} ${source-port-number} ${dest-prefix} ${destination-port-number}&#xA;
+                 fi&#xA;
+             fi&#xA;
+         </ACTION>
+     </COMMAND>
+</VIEW>
+
+</CLISH_MODULE>

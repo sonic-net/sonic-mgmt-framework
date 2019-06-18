@@ -1,0 +1,58 @@
+{% macro traverse_acl_entry(acl_entry_list) -%}
+    {% for seq in acl_entry_list %}
+        {# Get sequence id #}
+        {% set seqid = seq["sequence_id"] %}
+        {# Get forwarding action #}
+        {% set fwd_action = seq["actions"]["state"]["forwarding_action"] %}
+        {% if fwd_action == "ACCEPT" %}
+            {% set fwd_action = "permit" %}
+        {% endif %}
+        {% if fwd_action == "DROP" %}
+            {% set fwd_action = "deny" %}
+        {% endif %}
+        {# Get protocol #}
+        {% set proto = seq["ipv4"]["state"]["protocol"] %}
+        {% if proto == "6" %}
+            {% set proto = "tcp" %}
+        {% endif %}
+        {% if proto == "17" %}
+            {% set proto = "udp" %}
+        {% endif %}
+        {# Get Source IP #}
+        {% set src_ip = seq["ipv4"]["state"]["source_address"] %}
+        {# Get Destination IP #}
+        {% set dstn_ip = seq["ipv4"]["state"]["destination_address"] %}
+        {% set src_port = "" %}
+        {% set dstn_port = "" %}
+        {# include port number if available #}
+        {% if seq["transport"] %}
+            {% set src_port = "eq " + seq["transport"]["state"]["source_port"] %}
+            {% set dstn_port = "eq " + seq["transport"]["state"]["destination_port"] %}
+            {{- "    " }} {{ seqid }} {{ fwd_action }} {{ proto }} {{ src_ip }} {{ src_port }} {{ dstn_ip }} {{ dstn_port }}
+        {% else %}
+            {{- "    " }} {{ seqid }} {{ fwd_action }} {{ proto }} {{ src_ip }} {{ dstn_ip }}
+        {% endif %}
+    {% endfor %}
+{%- endmacro %}
+{% for key in json_output %}
+    {# This condition checks if the JSON response has data from the acl-entry list #}
+    {% if "acl_entry" in key -%}
+        {% set acl_entry = json_output[key] -%}
+        {{ traverse_acl_entry(acl_entry) }}     
+    {%- endif %}
+{% endfor %}
+{% for acl_set in json_output -%}
+    {% if acl_set -%} 
+    {# This condition checks if the JSON response has data from the acl-set list -#}
+    {% if acl_set["state"] -%}
+        ip access-list {{ acl_set["state"]["name"] }}
+        {% set acl_entry_list = acl_set["acl_entries"] %}
+        {% if acl_entry_list -%}  
+        {% for each in acl_entry_list -%}
+            {% set acl_entry = acl_entry_list[each] -%}
+            {{ traverse_acl_entry(acl_entry) }}
+        {%- endfor %}
+        {%- endif %}
+    {%- endif %}
+    {%- endif %} 
+{%- endfor %}

@@ -1,0 +1,42 @@
+<?xml version="1.0"?>
+<!DOCTYPE CLISH_MODULE [
+]>
+
+<CLISH_MODULE xmlns="http://www.dellemc.com/force10/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xi="http://www.w3.org/2001/XInclude"
+    xsi:schemaLocation="http://www.dellemc.com/force10/XMLSchema http://www.dellemc.com/force10/XMLSchema/clish.xsd">
+
+<VIEW name="enable-view">
+    <COMMAND
+            name="clear ip"
+            help="Clear ip command">
+    </COMMAND>
+    <COMMAND
+            name="debug ip"
+            help="Debug ip command">
+    </COMMAND>
+    <COMMAND
+        help="show IP commands"
+        name="show ip"
+        >
+    <ACTION builtin="clish_nop"/>
+    </COMMAND>
+</VIEW>
+
+<!--=======================================================-->
+<!--                Config Interface PHY-MODE              -->
+<!--=======================================================-->
+
+<VIEW name="configure-if-view">
+    <COMMAND
+        name="ip"
+        help="Interface Internet Protocol config commands"
+    />
+    <COMMAND
+        name="no ip"
+        help="Interface Internet Protocol config commands"
+    />
+  </VIEW>
+
+</CLISH_MODULE>

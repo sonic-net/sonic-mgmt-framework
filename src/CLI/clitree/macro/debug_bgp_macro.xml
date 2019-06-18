@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE ROOT [
+<!ENTITY SUBTREE_FILTER "Filter_Type:SUBTREE;">
+]>
+<ROOT>
+<MACRODEF name= "DEBUG-BGP-OPTIONS">
+    <PARAM name="in-out-options"
+        help=""
+        ptype="SUBCOMMAND"
+        mode="switch">
+        <PARAM name="in"
+            help="debug ip bgp # arg1 in"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            yang_name="/debug_bgp/arg1=in"/>
+        <PARAM name="out"
+            help="debug ip bgp # arg1 out"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            yang_name="/debug_bgp/arg1=out"/>
+    </PARAM>
+</MACRODEF>
+</ROOT>
