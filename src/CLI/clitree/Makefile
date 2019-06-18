@@ -3,7 +3,7 @@
 TGT_DIR := $(SONIC_CLI_ROOT)/target
 
 all:
-	mkdir -p ${TGT_DIR}/command-tree ${TGT_DIR}/cli-macro ${TGT_DIR}/render-templates ${TGT_DIR}/scripts ${TGT_DIR}/sonic-cli-xml 
+	mkdir -p ${TGT_DIR}/command-tree ${TGT_DIR}/cli-macro ${TGT_DIR}/render-templates ${TGT_DIR}/scripts
 	cp cli-xml/*.xml ${TGT_DIR}/command-tree
 	cp macro/*.xml ${TGT_DIR}/cli-macro
 	(cd scripts;./klish_platform_features_process.sh ../../clicfg ${TGT_DIR})
@@ -13,8 +13,6 @@ all:
 	cp ../renderer/templates/* ${TGT_DIR}/render-templates
 	cp scripts/sonic-clish.xsd ${TGT_DIR}/command-tree
 	(cd ${TGT_DIR}/command-tree;xmllint --noout --schema sonic-clish.xsd ${TGT_DIR}/command-tree/*.xml) || exit 1
-	########## remove following line when docker with correctly packaged Klish parser engine available
-	cp -r sonic-cli-xml ${TGT_DIR}/
 	rm -rf ${TGT_DIR}/cli-macro
 	rm -rf scripts/*.pyc
 
