@@ -1159,7 +1159,7 @@ func convert_oc_acls_to_internal(acl *ocbinds.OpenconfigAcl_Acl) map[string]db.V
                         aclInfo[aclKey].Field[ACL_TYPE] = SONIC_ACL_TYPE_L2
                     }
 
-                    if len(*aclSet.Config.Description) > 0 {
+                    if aclSet.Config.Description != nil && len(*aclSet.Config.Description) > 0 {
                         aclInfo[aclKey].Field[ACL_DESCRIPTION] = *aclSet.Config.Description
                     }
                 }
