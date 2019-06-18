@@ -16,8 +16,9 @@ REST_SRCS := $(shell find $(TOPDIR)/src -name '*.go' | sort) \
 			 $(shell find $(TOPDIR)/models/yang -name '*.yang' | sort) \
 			 $(shell find $(TOPDIR)/models/openapi -name '*.yaml' | sort)
 
+CVL_GOPATH=$(TOPDIR):$(TOPDIR)/src/cvl/build
 REST_BIN := $(REST_DIST_DIR)/main
-REST_GOPATH = $(shell go env GOPATH):$(TOPDIR):$(REST_DIST_DIR)
+REST_GOPATH = $(CVL_GOPATH):$(shell go env GOPATH):$(TOPDIR):$(REST_DIST_DIR)
 
 #$(info REST_SRCS = $(REST_SRCS) )
 
@@ -29,6 +30,7 @@ yamlGen:
 	$(MAKE) -C models/yang
 
 $(REST_BIN): $(REST_SRCS)
+	$(MAKE) -C src/cvl
 	$(MAKE) -C models/yang
 	$(MAKE) -C models
 	GOPATH=$(REST_GOPATH) go build -o $@ $(TOPDIR)/src/rest/main/main.go
@@ -37,8 +39,10 @@ codegen:
 	$(MAKE) -C models
 
 clean:
+	$(MAKE) -C src/cvl clean
 	$(MAKE) -C models clean
 	$(MAKE) -C models/yang clean
 
 cleanall:
+	$(MAKE) -C src/cvl cleanall
 	rm -rf build
