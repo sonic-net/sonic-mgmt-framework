@@ -3,10 +3,8 @@ import sys
 import time
 import json
 import ast
-import pdb
 import swagger_client
 from swagger_client.rest import ApiException
-from pprint import pprint
 from scripts.render_cli import show_cli_output
 
 
@@ -25,7 +23,7 @@ def call_method(name, args):
 def generate_body(func, args):
     body = None
     # Get the rules of all ACL table entries.
-    if func.__name__ == 'get_list_base_acl_sets_acl_set':
+    if func.__name__ == 'get_acl_acl_sets':
        keypath = []
 
     # Get Interface binding to ACL table info
@@ -159,7 +157,7 @@ def generate_body(func, args):
         keypath = [args[0], args[1], args[2]]
 
     # Remove all the rules and delete the ACL table.
-    elif func.__name__ == 'delete_list_base_acl_entries_acl_entry':
+    elif func.__name__ == 'delete_acl_acl_sets_acl_set':
         keypath = [args[0], args[1]]
     elif func.__name__ == 'delete_acl_set_acl_entries_acl_entry':
         keypath = [args[0], args[1], args[2]]
@@ -182,7 +180,6 @@ def run(func, args):
            api_response = getattr(swagger_client.OpenconfigAclApi(),func.__name__)(*keypath, body)
         else :
            api_response = getattr(swagger_client.OpenconfigAclApi(),func.__name__)(*keypath)
-        #print(api_response)
         if api_response is None:
             print ("Success")
         else:
@@ -193,13 +190,19 @@ def run(func, args):
                     print("Success")
                 else:
                     print ("Failed")
+            elif 'openconfig_aclacl_set' in response.keys():
+                value = response['openconfig_aclacl_set']
+                if value is None:
+                    print("Success")
+                else:
+                    print("Failed")
             elif 'openconfig_aclacl_entries' in response.keys():
                 value = response['openconfig_aclacl_entries']
                 if value is None:
                     return
                 show_cli_output(args[2], value)
-            elif 'openconfig_aclacl_set' in response.keys():
-                value = response['openconfig_aclacl_set']
+            elif 'openconfig_aclacl_sets' in response.keys():
+                value = response['openconfig_aclacl_sets']
                 if value is None:
                     return
                 show_cli_output(args[0], value)
@@ -210,7 +213,7 @@ def run(func, args):
                 show_cli_output(args[0], value)
             else:
                 print("Failed")
-        #pprint(api_response)
+
 
     except ApiException as e:
         print("Exception when calling OpenconfigAclApi->%s : %s\n" %(func.__name__, e))

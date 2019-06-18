@@ -27,7 +27,7 @@
         </PARAM>
       <ACTION>
         if test "${access-list-name}" = ""; then&#xA;
-            python $SONIC_CLI_ROOT/target/sonic-cli.py get_list_base_acl_sets_acl_set show_access_list.j2&#xA;
+            python $SONIC_CLI_ROOT/target/sonic-cli.py get_acl_acl_sets show_access_list.j2&#xA;
         else&#xA;
             python $SONIC_CLI_ROOT/target/sonic-cli.py get_acl_set_acl_entries ${access-list-name} ACL_IPV4 show_access_list.j2&#xA;
         fi&#xA;
@@ -128,7 +128,7 @@
              ptype="STRING"
 			 >
         </PARAM>
-    <ACTION>python $SONIC_CLI_ROOT/target/sonic-cli.py delete_list_base_acl_entries_acl_entry ${access-list-name} ACL_IPV4</ACTION>
+    <ACTION>python $SONIC_CLI_ROOT/target/sonic-cli.py delete_acl_acl_sets_acl_set ${access-list-name} ACL_IPV4</ACTION>
     </COMMAND>
 
 </VIEW>
