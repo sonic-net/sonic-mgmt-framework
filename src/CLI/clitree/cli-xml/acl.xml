@@ -36,13 +36,6 @@
          name="show ip access-group"
          help="Show IPv4 access-group information"
 		 >
-
-        <PARAM name="access-list-name"
-            help="Name of access-list (Max size 140)"
-            ptype="STRING"
-            optional="true"
-			>
-        </PARAM>
       <ACTION>
         python $SONIC_CLI_ROOT/target/sonic-cli.py get_acl_interfaces show_access_group.j2
       </ACTION>
