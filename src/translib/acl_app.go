@@ -62,14 +62,14 @@ var ETHERTYPE_MAP = map[ocbinds.E_OpenconfigPacketMatchTypes_ETHERTYPE]uint32 {
     ocbinds.OpenconfigPacketMatchTypes_ETHERTYPE_ETHERTYPE_MPLS: 0x8847,
 }
 
-var aclTs db.TableSpec
-var ruleTs db.TableSpec
-
 type AclApp struct {
     path       string
     ygotRoot   *ygot.GoStruct
     ygotTarget *interface{}
 
+    aclTs  *db.TableSpec
+    ruleTs *db.TableSpec
+        
     aclTableMap map[string]db.Value
     ruleTableMap map[string]map[string]db.Value
 
@@ -100,8 +100,8 @@ func (app *AclApp) initialize(data appData) {
     log.Info("initialize:acl:path =", data.path)
     *app = AclApp{path: data.path, ygotRoot: data.ygotRoot, ygotTarget: data.ygotTarget}
 
-    aclTs = db.TableSpec {Name: ACL_TABLE}
-    ruleTs = db.TableSpec {Name: RULE_TABLE}
+    app.aclTs = &db.TableSpec {Name: ACL_TABLE}
+    app.ruleTs = &db.TableSpec {Name: RULE_TABLE}
 
     app.aclTableMap  = make(map[string]db.Value)
     app.ruleTableMap  = make(map[string]map[string]db.Value)
@@ -144,7 +144,7 @@ func (app *AclApp) translateCreate(d *db.DB) ([]db.WatchKeys, error)  {
                 aclName := strings.ReplaceAll(strings.ReplaceAll(aclSetKey.Name, " ", "_"), "-", "_")
                 aclType := aclSetKey.Type.ΛMap()["E_OpenconfigAcl_ACL_TYPE"][int64(aclSetKey.Type)].Name
                 aclKey := aclName + "_" + aclType
-                keys = append(keys, db.WatchKeys{ &aclTs, &(db.Key{Comp:[]string{aclKey}})})
+                keys = append(keys, db.WatchKeys{ app.aclTs, &(db.Key{Comp:[]string{aclKey}})})
 
                 aclSet := aclObj.AclSets.AclSet[aclSetKey]
                 aclBasedTargets = append(aclBasedTargets, getYangPathFromStruct(aclSet))
@@ -154,22 +154,22 @@ func (app *AclApp) translateCreate(d *db.DB) ([]db.WatchKeys, error)  {
                     // Build Watch keys for a specific Rule
                     for seqId,_ := range aclSet.AclEntries.AclEntry {
                         ruleName := "RULE_" + strconv.FormatInt(int64(seqId), 10)
-                        keys = append(keys, db.WatchKeys{ &ruleTs, &(db.Key{Comp:[]string{aclKey,ruleName}})})
+                        keys = append(keys, db.WatchKeys{ app.ruleTs, &(db.Key{Comp:[]string{aclKey,ruleName}})})
                         ruleBasedTargets = append(ruleBasedTargets, getYangPathFromStruct(aclSet.AclEntries.AclEntry[seqId]))
                     }
                 } else {
                     // Build watch keys for all rules for a specific ACL
                     for ruleName,_ := range app.ruleTableMap[aclKey] {
-                        keys = append(keys, db.WatchKeys{ &ruleTs, &db.Key{Comp:[]string{aclKey, ruleName}} })
+                        keys = append(keys, db.WatchKeys{ app.ruleTs, &db.Key{Comp:[]string{aclKey, ruleName}} })
                     }
                 }
             }
         } else {
             // Building Watch keys for Create Request for All ACLs and Rules
             for aclName,_ := range app.aclTableMap {
-                keys = append(keys, db.WatchKeys{ &aclTs, &db.Key{Comp:[]string{aclName}} })
+                keys = append(keys, db.WatchKeys{ app.aclTs, &db.Key{Comp:[]string{aclName}} })
                 for ruleName,_ := range app.ruleTableMap[aclName] {
-                    keys = append(keys, db.WatchKeys{ &ruleTs, &db.Key{Comp:[]string{aclName, ruleName}} })
+                    keys = append(keys, db.WatchKeys{ app.ruleTs, &db.Key{Comp:[]string{aclName, ruleName}} })
                 }
             }
         }
@@ -186,7 +186,7 @@ func (app *AclApp) translateCreate(d *db.DB) ([]db.WatchKeys, error)  {
                             acln := strings.ReplaceAll(strings.ReplaceAll(inAclKey.SetName, " ", "_"), "-", "_")
                             aclType := inAclKey.Type.ΛMap()["E_OpenconfigAcl_ACL_TYPE"][int64(inAclKey.Type)].Name
                             aclName := acln + "_" + aclType
-                            keys = append(keys, db.WatchKeys{ &aclTs, &db.Key{Comp:[]string{aclName}} })
+                            keys = append(keys, db.WatchKeys{ app.aclTs, &db.Key{Comp:[]string{aclName}} })
                         }
                     } else if intfData.EgressAclSets != nil && len(intfData.EgressAclSets.EgressAclSet) > 0 {
                         for outAclKey,_ := range intfData.EgressAclSets.EgressAclSet {
@@ -194,7 +194,7 @@ func (app *AclApp) translateCreate(d *db.DB) ([]db.WatchKeys, error)  {
                             acln := strings.ReplaceAll(strings.ReplaceAll(outAclKey.SetName, " ", "_"), "-", "_")
                             aclType := outAclKey.Type.ΛMap()["E_OpenconfigAcl_ACL_TYPE"][int64(outAclKey.Type)].Name
                             aclName := acln + "_" + aclType
-                            keys = append(keys, db.WatchKeys{ &aclTs, &db.Key{Comp:[]string{aclName}} })
+                            keys = append(keys, db.WatchKeys{ app.aclTs, &db.Key{Comp:[]string{aclName}} })
                         }
                     }
                 }
@@ -250,36 +250,36 @@ func (app *AclApp) translateDelete(d *db.DB) ([]db.WatchKeys, error)  {
                 aclName := strings.ReplaceAll(strings.ReplaceAll(aclSetKey.Name, " ", "_"), "-", "_")
                 aclType := aclSetKey.Type.ΛMap()["E_OpenconfigAcl_ACL_TYPE"][int64(aclSetKey.Type)].Name
                 aclKey := aclName + "_" + aclType
-                keys = append(keys, db.WatchKeys{ &aclTs, &(db.Key{Comp:[]string{aclKey}})})
+                keys = append(keys, db.WatchKeys{ app.aclTs, &(db.Key{Comp:[]string{aclKey}})})
 
                 aclSet := aclObj.AclSets.AclSet[aclSetKey]
                 if aclSet.AclEntries != nil && len(aclSet.AclEntries.AclEntry) > 0 {
                     // Build Watch keys for a specific Rule
                     for seqId,_ := range aclSet.AclEntries.AclEntry {
                         ruleName := "RULE_" + strconv.FormatInt(int64(seqId), 10)
-                        keys = append(keys, db.WatchKeys{ &ruleTs, &(db.Key{Comp:[]string{aclKey,ruleName}})})
+                        keys = append(keys, db.WatchKeys{ app.ruleTs, &(db.Key{Comp:[]string{aclKey,ruleName}})})
                     }
                 } else {
                     // Build watch keys for all rules for a specific ACL
-                    ruleKeys,_ := d.GetKeys(&ruleTs)
+                    ruleKeys,_ := d.GetKeys(app.ruleTs)
                     for i,rulekey := range ruleKeys {
                         // Rulekey has two keys, first aclkey and second rulename
                         if rulekey.Comp[0] == aclKey {
-                            keys = append(keys, db.WatchKeys{ &ruleTs, &ruleKeys[i]})
+                            keys = append(keys, db.WatchKeys{ app.ruleTs, &ruleKeys[i]})
                         }
                     }
                 }
             }
         } else {
             // Building Watch keys for Delete Request for All ACLs and Rules
-            aclKeys,_ := d.GetKeys(&aclTs)
-            ruleKeys,_ := d.GetKeys(&ruleTs)
+            aclKeys,_ := d.GetKeys(app.aclTs)
+            ruleKeys,_ := d.GetKeys(app.ruleTs)
 
             for i,_ := range aclKeys {
-                keys = append(keys, db.WatchKeys{ &aclTs, &aclKeys[i]})
+                keys = append(keys, db.WatchKeys{ app.aclTs, &aclKeys[i]})
             }
             for i,_ := range ruleKeys {
-                keys = append(keys, db.WatchKeys{ &ruleTs, &ruleKeys[i]})
+                keys = append(keys, db.WatchKeys{ app.ruleTs, &ruleKeys[i]})
             }
         }
     }
@@ -295,7 +295,7 @@ func (app *AclApp) translateDelete(d *db.DB) ([]db.WatchKeys, error)  {
                             acln := strings.ReplaceAll(strings.ReplaceAll(inAclKey.SetName, " ", "_"), "-", "_")
                             aclType := inAclKey.Type.ΛMap()["E_OpenconfigAcl_ACL_TYPE"][int64(inAclKey.Type)].Name
                             aclName := acln + "_" + aclType
-                            keys = append(keys, db.WatchKeys{ &aclTs, &db.Key{Comp:[]string{aclName}} })
+                            keys = append(keys, db.WatchKeys{ app.aclTs, &db.Key{Comp:[]string{aclName}} })
                         }
                     } else if intfData.EgressAclSets != nil && len(intfData.EgressAclSets.EgressAclSet) > 0 {
                         for outAclKey,_ := range intfData.EgressAclSets.EgressAclSet {
@@ -303,17 +303,17 @@ func (app *AclApp) translateDelete(d *db.DB) ([]db.WatchKeys, error)  {
                             acln := strings.ReplaceAll(strings.ReplaceAll(outAclKey.SetName, " ", "_"), "-", "_")
                             aclType := outAclKey.Type.ΛMap()["E_OpenconfigAcl_ACL_TYPE"][int64(outAclKey.Type)].Name
                             aclName := acln + "_" + aclType
-                            keys = append(keys, db.WatchKeys{ &aclTs, &db.Key{Comp:[]string{aclName}} })
+                            keys = append(keys, db.WatchKeys{ app.aclTs, &db.Key{Comp:[]string{aclName}} })
                         }
                     }
                 }
             }
         } else {
-            aclKeys,_ := d.GetKeys(&aclTs)
+            aclKeys,_ := d.GetKeys(app.aclTs)
             for i,_ := range aclKeys {
-                aclEntry,_ := d.GetEntry(&aclTs, aclKeys[i])
+                aclEntry,_ := d.GetEntry(app.aclTs, aclKeys[i])
                 if len(aclEntry.GetList("ports")) > 0 {
-                    keys = append(keys, db.WatchKeys{ &aclTs, &aclKeys[i]})
+                    keys = append(keys, db.WatchKeys{ app.aclTs, &aclKeys[i]})
                 }
             }
         }
@@ -337,13 +337,13 @@ func (app *AclApp) processCreate(d *db.DB) (SetResponse, error)  {
     log.Info("ProcessCreate: Target Type is " + reflect.TypeOf(*app.ygotTarget).Elem().Name())
 
     if app.createAclFlag {
-        set_acl_data_in_config_db(d, app.aclTableMap)
+        app.set_acl_data_in_config_db(d, app.aclTableMap)
     }
     if app.createRuleFlag {
-        set_acl_rule_data_in_config_db(d, app.ruleTableMap)
+        app.set_acl_rule_data_in_config_db(d, app.ruleTableMap)
     }
     if app.bindAclFlag && !app.createAclFlag {
-        err = set_acl_bind_data_in_config_db(d, app.aclTableMap)
+        err = app.set_acl_bind_data_in_config_db(d, app.aclTableMap)
     }
 
 	//err = errors.New("Not implemented")
@@ -390,31 +390,31 @@ func (app *AclApp) processDelete(d *db.DB) (SetResponse, error)  {
                     // Deletion of a specific Rule
                     for seqId,_ := range aclSet.AclEntries.AclEntry {
                         ruleName := "RULE_" + strconv.FormatInt(int64(seqId), 10)
-                        d.DeleteEntry(&ruleTs, db.Key{Comp: []string {aclKey, ruleName} })
+                        d.DeleteEntry(app.ruleTs, db.Key{Comp: []string {aclKey, ruleName} })
                     }
                 } else {
                     // Deletion of a specific Acl and all its rule
                     if *app.ygotTarget == aclSet {
-                        d.DeleteKeys(&ruleTs, db.Key{Comp: []string {aclKey + TABLE_SEPARATOR + "*"} })
-                        d.DeleteEntry(&aclTs, db.Key{Comp: []string {aclKey} })
+                        d.DeleteKeys(app.ruleTs, db.Key{Comp: []string {aclKey + TABLE_SEPARATOR + "*"} })
+                        d.DeleteEntry(app.aclTs, db.Key{Comp: []string {aclKey} })
                     }
                     // Deletion of all rules for a specific ACL but NOT ACL
                     if *app.ygotTarget == aclSet.AclEntries {
-                        d.DeleteKeys(&ruleTs, db.Key{Comp: []string {aclKey + TABLE_SEPARATOR + "*"} })
+                        d.DeleteKeys(app.ruleTs, db.Key{Comp: []string {aclKey + TABLE_SEPARATOR + "*"} })
                     } else {
-                        d.DeleteKeys(&ruleTs, db.Key{Comp: []string {aclKey + TABLE_SEPARATOR + "*"} })
+                        d.DeleteKeys(app.ruleTs, db.Key{Comp: []string {aclKey + TABLE_SEPARATOR + "*"} })
                     }
                 }
             }
         } else {
             // Deletion of All ACLs and Rules
-            d.DeleteTable(&aclTs)
-            d.DeleteTable(&ruleTs)
+            d.DeleteTable(app.aclTs)
+            d.DeleteTable(app.ruleTs)
         }
     } else if isSubtreeRequest(targetUriPath, "/openconfig-acl:acl/interfaces") {
-        aclKeys,_ := d.GetKeys(&aclTs)
+        aclKeys,_ := d.GetKeys(app.aclTs)
         for i,_ := range aclKeys {
-            aclEntry,_ := d.GetEntry(&aclTs, aclKeys[i])
+            aclEntry,_ := d.GetEntry(app.aclTs, aclKeys[i])
             var isRequestedAclFound = false
             if len(aclEntry.GetList("ports")) > 0 {
                 if aclObj.Interfaces != nil && len(aclObj.Interfaces.Interface) > 0 {
@@ -463,7 +463,7 @@ func (app *AclApp) processDelete(d *db.DB) (SetResponse, error)  {
                         intfs := aclEntry.GetList("ports")
                         intfs = removeElement(intfs, intfId)
                         aclEntry.SetList("ports", intfs)
-                        d.SetEntry(&aclTs, aclKeys[i], aclEntry)
+                        d.SetEntry(app.aclTs, aclKeys[i], aclEntry)
                         // If last interface removed, then remove stage field also
                         if len(intfs) == 0 {
                             aclEntry.Remove("stage")
@@ -473,7 +473,7 @@ SkipDBProcessing:
                 } else {
                     aclEntry.Remove("stage")
                     aclEntry.SetList("ports", []string{})
-                    d.SetEntry(&aclTs, aclKeys[i], aclEntry)
+                    d.SetEntry(app.aclTs, aclKeys[i], aclEntry)
                 }
             }
             if isRequestedAclFound {
@@ -729,7 +729,7 @@ func (app *AclApp) convert_db_acl_rules_to_internal(dbCl *db.DB, aclName string 
     if ruleKey.Len() > 1 {
         ruleName := ruleKey.Get(1)
         if ruleName != "DEFAULT_RULE" {
-            ruleData, err := dbCl.GetEntry(&ruleTs, ruleKey)
+            ruleData, err := dbCl.GetEntry(app.ruleTs, ruleKey)
             if err != nil {
                 return err
             }
@@ -739,7 +739,7 @@ func (app *AclApp) convert_db_acl_rules_to_internal(dbCl *db.DB, aclName string 
             app.ruleTableMap[aclName][ruleName] = ruleData
         }
     } else {
-        ruleKeys, err := dbCl.GetKeys(&ruleTs)
+        ruleKeys, err := dbCl.GetKeys(app.ruleTs)
         if err != nil {
             return err
         }
@@ -756,7 +756,7 @@ func (app *AclApp) convert_db_acl_to_internal(dbCl *db.DB, aclkey db.Key) error 
     var err error
     if aclkey.Len() > 0 {
         // Get one particular ACL
-        entry, err := dbCl.GetEntry(&aclTs, aclkey)
+        entry, err := dbCl.GetEntry(app.aclTs, aclkey)
         if err != nil {
             return err
         }
@@ -772,7 +772,7 @@ func (app *AclApp) convert_db_acl_to_internal(dbCl *db.DB, aclkey db.Key) error 
         }
     } else {
         // Get all ACLs
-        tbl,err := dbCl.GetTable(&aclTs)
+        tbl,err := dbCl.GetTable(app.aclTs)
         if err != nil {
             return err
         }
@@ -1470,28 +1470,28 @@ func convert_oc_to_internal_action(ruleData db.Value, aclName string, ruleIndex 
     }
 }
 
-func set_acl_data_in_config_db(d *db.DB, aclData map[string]db.Value) {
+func (app *AclApp) set_acl_data_in_config_db(d *db.DB, aclData map[string]db.Value) {
     for key := range aclData {
 
         /*
-        existingEntry,_ := dbCl.GetEntry(&aclTs, db.Key{Comp: []string {key} })
+        existingEntry,_ := dbCl.GetEntry(app.aclTs, db.Key{Comp: []string {key} })
         //Merge any ACL binds already present. Validate should take care of any checks so its safe to blindly merge here
         if len(existingEntry.Field) > 0  {
             value.Field["ports"] += "," + existingEntry.Field["ports@"]
         }
         fmt.Println(value)
         */
-        err := d.SetEntry(&aclTs, db.Key{Comp: []string {key} }, aclData[key])
+        err := d.SetEntry(app.aclTs, db.Key{Comp: []string {key} }, aclData[key])
         if err != nil {
             fmt.Println(err)
         }
     }
 }
 
-func set_acl_rule_data_in_config_db(d *db.DB, ruleData map[string]map[string]db.Value) {
+func (app *AclApp) set_acl_rule_data_in_config_db(d *db.DB, ruleData map[string]map[string]db.Value) {
     for aclName := range ruleData {
         for ruleName := range ruleData[aclName] {
-            err := d.SetEntry(&ruleTs, db.Key{Comp: []string {aclName, ruleName} }, ruleData[aclName][ruleName])
+            err := d.SetEntry(app.ruleTs, db.Key{Comp: []string {aclName, ruleName} }, ruleData[aclName][ruleName])
             if err != nil {
                 fmt.Println(err)
             }
@@ -1499,11 +1499,11 @@ func set_acl_rule_data_in_config_db(d *db.DB, ruleData map[string]map[string]db.
     }
 }
 
-func set_acl_bind_data_in_config_db(d *db.DB, aclData map[string]db.Value) error {
+func (app *AclApp) set_acl_bind_data_in_config_db(d *db.DB, aclData map[string]db.Value) error {
     var err error
     for aclKey,aclInfo := range aclData {
         // Get ACL info from DB and merge ports from request with ports from DB
-        dbAcl, err := d.GetEntry(&aclTs, db.Key{Comp: []string{aclKey}})
+        dbAcl, err := d.GetEntry(app.aclTs, db.Key{Comp: []string{aclKey}})
         if err != nil {
             log.Error(err)
             return err
@@ -1526,7 +1526,7 @@ func set_acl_bind_data_in_config_db(d *db.DB, aclData map[string]db.Value) error
             dbAcl.Set("stage", aclInfo.Get("stage"))
         }
 
-        err = d.SetEntry(&aclTs, db.Key{Comp: []string{aclKey}}, dbAcl) 
+        err = d.SetEntry(app.aclTs, db.Key{Comp: []string{aclKey}}, dbAcl) 
         if err != nil {
             log.Error(err)
             return err
