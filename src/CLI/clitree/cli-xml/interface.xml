@@ -6,37 +6,9 @@
     xsi:schemaLocation="http://www.dellemc.com/force10/XMLSchema
     http://www.dellemc.com/force10/XMLSchema/clish.xsd"
     >
-    <!--========================================================================-->
-    <!-- NOTE                                                                   -->
-    <!-- "show interface <type>" options that exist in the VIEW "enable-view"   -->
-    <!-- if-switch PARAM need to be repeated here. This is needed to match      -->
-    <!-- cases where the user enters the full text for the "type" string        -->
-    <!-- followed by a space character, and to allow sub-params after the type  -->
-    <!-- without an interface number. This view is hidden so that the           -->
-    <!-- type options do not get displayed twice for "show interface ?".        -->
-    <!-- Note params of the COMMANDs here are not hidden                        -->
-    <!-- Following are matched here :                                           -->
-    <!-- "show interface ethernet" & "show interface ethernet 1/1/1"            -->
-    <!-- "show interface vlan" & "show interface vlan 10"                       -->
-    <!-- "show interface port-channel" & "show int port-channel 10 summary"     -->
-    <!--                                                                        -->
-    <!-- The command with if-switch in the enable-view matches the following    -->
-    <!-- cases :                                                                -->
-    <!-- 1) User enters the type as a substring with or w/o space followed by   -->
-    <!--    id. "show interface eth1/1/1" or "show interface eth 1/1/1"         -->
-    <!-- 2) User enters the full text of the type followed by id w/o a space.   -->
-    <!--    "show interface ethernet1/1/1" "show interface po10 summary"        -->
-    <!--========================================================================-->
-    <!--=======================================================-->
     <VIEW
         name="configure-view"
         >
-        <!--COMMAND
-            name="end"
-            help="Exit to the exec Mode"
-            pfeature="FEATURE_FABRIC_MODE"
-            view="enable-view"
-            /-->
         <COMMAND
             name="interface"
             help="Select an interface"
