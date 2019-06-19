@@ -214,7 +214,6 @@ def run(func, args):
             else:
                 print("Failed")
 
-
     except ApiException as e:
         print("Exception when calling OpenconfigAclApi->%s : %s\n" %(func.__name__, e))
 

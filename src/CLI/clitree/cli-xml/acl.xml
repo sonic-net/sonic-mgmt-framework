@@ -57,14 +57,6 @@
 <!--MODE : interface -->
 
 <VIEW name="configure-if-view">
-    <!--COMMAND
-        name="ip"
-        help="Interface Internet Protocol config commands"
-    /-->
-    <!--COMMAND
-        name="no ip"
-        help="Interface Internet Protocol config commands"
-    /-->
     <!-- ip access-group -->
     <COMMAND
          name="ip access-group"
