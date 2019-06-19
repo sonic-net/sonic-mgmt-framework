@@ -218,7 +218,12 @@ func (app *AclApp) translateUpdate(d *db.DB) ([]db.WatchKeys, error)  {
     var err error
     var keys []db.WatchKeys
     log.Info("translateUpdate:acl:path =", app.path)
-    err = errors.New("Not implemented")
+
+    log.Info("translateUpdate: Target Type: " + reflect.TypeOf(*app.ygotTarget).Elem().Name())
+    keys, err = app.translateCreate(d)
+
+    //err = errors.New("Not implemented")
+    log.Info(keys)
     return keys, err
 }
 
@@ -337,10 +342,10 @@ func (app *AclApp) processCreate(d *db.DB) (SetResponse, error)  {
     log.Info("ProcessCreate: Target Type is " + reflect.TypeOf(*app.ygotTarget).Elem().Name())
 
     if app.createAclFlag {
-        app.set_acl_data_in_config_db(d, app.aclTableMap)
+        err = app.set_acl_data_in_config_db(d, app.aclTableMap, true)
     }
     if app.createRuleFlag {
-        app.set_acl_rule_data_in_config_db(d, app.ruleTableMap)
+        err = app.set_acl_rule_data_in_config_db(d, app.ruleTableMap, true)
     }
     if app.bindAclFlag && !app.createAclFlag {
         err = app.set_acl_bind_data_in_config_db(d, app.aclTableMap)
@@ -354,7 +359,26 @@ func (app *AclApp) processUpdate(d *db.DB) (SetResponse, error)  {
     var err error
     var resp SetResponse
     log.Info("processUpdate:acl:path =", app.path)
-    err = errors.New("Not implemented")
+
+    if app.createAclFlag {
+        err = app.set_acl_data_in_config_db(d, app.aclTableMap, false)
+        if err != nil {
+            log.Error(err)
+            return resp, err
+        }
+    }
+    if app.createRuleFlag {
+        err = app.set_acl_rule_data_in_config_db(d, app.ruleTableMap, false)
+        if err != nil {
+            log.Error(err)
+            return resp, err
+        }
+    }
+    if app.bindAclFlag && !app.createAclFlag {
+        err = app.set_acl_bind_data_in_config_db(d, app.aclTableMap)
+    }
+
+    //err = errors.New("Not implemented")
     return resp, err
 }
 
@@ -1470,33 +1494,53 @@ func convert_oc_to_internal_action(ruleData db.Value, aclName string, ruleIndex 
     }
 }
 
-func (app *AclApp) set_acl_data_in_config_db(d *db.DB, aclData map[string]db.Value) {
+func (app *AclApp) set_acl_data_in_config_db(d *db.DB, aclData map[string]db.Value, createFlag bool) error {
+    var err error
     for key := range aclData {
 
+        existingEntry, err := d.GetEntry(app.aclTs, db.Key{Comp: []string{key}})
+        // If Create ACL request comes and ACL already exists, throw error
+        if createFlag && existingEntry.IsPopulated() {
+            return errors.New("Acl " + key + " already exists")
+        }
+        if createFlag || (!createFlag && err != nil && !existingEntry.IsPopulated()) {
+            log.Info("Acl entry "+key+" not existing in Db. Hence creating it", key)
+            err := d.SetEntry(app.aclTs, db.Key{Comp: []string{key}}, aclData[key])
+            if err != nil {
+                log.Error(err)
+                return err
+            }
+        }
         /*
-        existingEntry,_ := dbCl.GetEntry(app.aclTs, db.Key{Comp: []string {key} })
         //Merge any ACL binds already present. Validate should take care of any checks so its safe to blindly merge here
         if len(existingEntry.Field) > 0  {
             value.Field["ports"] += "," + existingEntry.Field["ports@"]
         }
         fmt.Println(value)
         */
-        err := d.SetEntry(app.aclTs, db.Key{Comp: []string {key} }, aclData[key])
-        if err != nil {
-            fmt.Println(err)
-        }
     }
+    return err
 }
 
-func (app *AclApp) set_acl_rule_data_in_config_db(d *db.DB, ruleData map[string]map[string]db.Value) {
+func (app *AclApp) set_acl_rule_data_in_config_db(d *db.DB, ruleData map[string]map[string]db.Value, createFlag bool) error {
+    var err error
     for aclName := range ruleData {
         for ruleName := range ruleData[aclName] {
-            err := d.SetEntry(app.ruleTs, db.Key{Comp: []string {aclName, ruleName} }, ruleData[aclName][ruleName])
-            if err != nil {
-                fmt.Println(err)
+            existingRuleEntry, err := d.GetEntry(app.ruleTs, db.Key{Comp: []string{aclName, ruleName}})
+            // If Create Rule request comes and Rule already exists, throw error
+            if createFlag && existingRuleEntry.IsPopulated() {
+                return errors.New("Rule " + ruleName + " already exists")
+            }
+            if createFlag || (!createFlag && err != nil && !existingRuleEntry.IsPopulated()) {
+                err := d.SetEntry(app.ruleTs, db.Key{Comp: []string{aclName, ruleName}}, ruleData[aclName][ruleName])
+                if err != nil {
+                    log.Error(err)
+                    return err
+                }
             }
         }
     }
+    return err
 }
 
 func (app *AclApp) set_acl_bind_data_in_config_db(d *db.DB, aclData map[string]db.Value) error {
