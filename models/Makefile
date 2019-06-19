@@ -34,11 +34,11 @@ OPENAPI_SERVERS := $(addsuffix /.openapi_done, $(addprefix $(SERVER_CODEGEN_DIR)
 
 .PHONY: all clean cleanall go-server py-client
 
-all: go-server
+all: go-server py-client
 
 go-server: $(YANGAPI_SERVERS) $(OPENAPI_SERVERS) $(SERVER_DIST_INIT)
 
-py-client: $(PY_CLIENT_CODEGEN_DIR)/README.md
+py-client: $(PY_CLIENT_CODEGEN_DIR)/.done
 
 
 .SECONDEXPANSION:
@@ -101,13 +101,16 @@ $(SERVER_DIST_INIT): | $$(@D)/.
 
 #======================================================================
 # Generate swagger client in Python.
+# FIXME generating only for openconfig-acl.yaml for now
 #======================================================================
-$(PY_CLIENT_CODEGEN_DIR)/README.md: $(CODEGEN_JAR) | $$(@D)/.
+$(PY_CLIENT_CODEGEN_DIR)/.done: | $(CODEGEN_JAR) $$(@D)/. $(YANGAPI_DIR)/openconfig-acl.yaml
+	rm -rf $(@D)/*
 	@echo "+++++ Generating Python client +++++"
 	java -jar $(CODEGEN_JAR) generate \
 		--lang python \
-		--input-spec $(YANGAPI_DIR)/*.yaml \
+		--input-spec $(YANGAPI_DIR)/openconfig-acl.yaml \
 		--output $(@D)
+	touch $@
 
 #======================================================================
 # Cleanups

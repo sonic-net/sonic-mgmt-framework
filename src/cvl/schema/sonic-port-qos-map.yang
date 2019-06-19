@@ -10,8 +10,8 @@ module sonic-port-qos-map {
 		prefix scommon;
 	}
 
-	import sonic-interface {
-		prefix sif;
+	import sonic-port {
+		prefix prt;
 	}
 
 	import sonic-tc-priority-group-map {
@@ -54,7 +54,7 @@ module sonic-port-qos-map {
 
 			leaf ifname {
 				type leafref {
-					path "/sif:sonic-interface/sif:PORT_TABLE/sif:ifname";
+					path "/prt:sonic-port/prt:PORT/prt:ifname";
 				}
 			}
 

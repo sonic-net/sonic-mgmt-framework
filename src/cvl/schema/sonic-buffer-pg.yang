@@ -14,8 +14,8 @@ module sonic-buffer-pg {
 		prefix scommon;
 	}
 
-	import sonic-interface {
-		prefix sif;
+	import sonic-port {
+		prefix prt;
 	}
 
 	import sonic-buffer-profile {
@@ -46,7 +46,7 @@ module sonic-buffer-pg {
 
 			leaf ifname {
 				type leafref {
-					path "/sif:sonic-interface/sif:PORT_TABLE/sif:ifname";
+					path "/prt:sonic-port/prt:PORT/prt:ifname";
 				}
 			}
 

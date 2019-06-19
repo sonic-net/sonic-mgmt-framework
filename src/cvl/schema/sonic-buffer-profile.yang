@@ -37,6 +37,8 @@ module sonic-buffer-profile {
 
 		list BUFFER_PROFILE {
 			key "name";
+			scommon:key-delim "|";
+			scommon:key-pattern "BUFFER_PROFILE|{name}";
 
 			leaf name {
 				type string;
@@ -47,7 +49,7 @@ module sonic-buffer-profile {
 			}
 
 			leaf dynamic_th {
-				type uint64;
+				type int64;
 			}
 
 			leaf size {

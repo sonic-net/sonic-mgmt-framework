@@ -10,10 +10,6 @@ module sonic-tc-priority-group-map {
 		prefix scommon;
 	}
 
-	import sonic-interface {
-		prefix sif;
-	}
-
 	organization
 		"BRCM";
 
@@ -33,14 +29,14 @@ module sonic-tc-priority-group-map {
 			key "name";
 			scommon:key-delim "|";
 			scommon:key-pattern "TC_TO_PRIORITY_GROUP_MAP|{name}";
+			scommon:map-list "true"; //special conversion for map tables
+			scommon:map-leaf "tc_num pg_num"; //every key:value pair is mapped to list keys, e.g. "1":"7" ==> tc_num=1, dscp=7
 
 			leaf name {
 				type string;
 			}
 
 			list TC_TO_PRIORITY_GROUP_MAP { //this is list inside list for storing mapping between two fields
-				scommon:map-list true; //special conversion for map tables
-				scommon:map-leaf "tc_num pg_num"; //every key:value pair is mapped to list keys, e.g. "1":"7" ==> tc_num=1, dscp=7
 				key "tc_num pg_num";
 
 				leaf tc_num {

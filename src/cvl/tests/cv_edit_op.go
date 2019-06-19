@@ -19,17 +19,19 @@ func main() {
 	{
 		count++
 
-		keyData :=  []cvl.KeyData {
-			cvl.KeyData {
-				false,
+		cfgData :=  []cvl.CVLEditConfigData {
+			cvl.CVLEditConfigData {
+				cvl.VALIDATE_NONE,
+				cvl.OP_NONE,
 				"ACL_TABLE|TestACL1",
 				map[string]string {
 					"stage": "INGRESS",
 					"type": "L3",
 				},
 			},
-			cvl.KeyData {
-				true,
+			cvl.CVLEditConfigData {
+				cvl.VALIDATE_ALL,
+				cvl.OP_CREATE,
 				"ACL_RULE|TestACL1|Rule1",
 				map[string]string {
 					"PACKET_ACTION": "FORWARD",
@@ -42,9 +44,9 @@ func main() {
 			},
 		}
 
-		fmt.Printf("\n\n%d. Validating create data = %v\n\n", count, keyData);
+		fmt.Printf("\n\n%d. Validating create data = %v\n\n", count, cfgData);
 
-		err := cvl.ValidateCreate(keyData)
+		err := cvl.ValidateEditConfig(cfgData)
 
 		if (err == cvl.CVL_SUCCESS) {
 			fmt.Printf("\nConfig Validation succeeded.\n\n");
@@ -55,9 +57,10 @@ func main() {
 	{
 		count++
 
-		keyData :=  []cvl.KeyData {
-			cvl.KeyData {
-				true,
+		cfgData :=  []cvl.CVLEditConfigData {
+			cvl.CVLEditConfigData {
+				cvl.VALIDATE_ALL,
+				cvl.OP_UPDATE,
 				"ACL_TABLE|MyACL11_ACL_IPV4",
 				map[string]string {
 					"stage": "INGRESS",
@@ -66,9 +69,9 @@ func main() {
 			},
 		}
 
-		fmt.Printf("\n\n%d. Validating update data = %v\n\n", count, keyData);
+		fmt.Printf("\n\n%d. Validating update data = %v\n\n", count, cfgData);
 
-		err := cvl.ValidateUpdate(keyData)
+		err := cvl.ValidateEditConfig(cfgData)
 
 		if (err == cvl.CVL_SUCCESS) {
 			fmt.Printf("\nConfig Validation succeeded.\n\n");
@@ -78,9 +81,10 @@ func main() {
 	}
 	{
 		count++
-		keyData :=  []cvl.KeyData {
-			cvl.KeyData {
-				true,
+		cfgData :=  []cvl.CVLEditConfigData {
+			cvl.CVLEditConfigData {
+				cvl.VALIDATE_ALL,
+				cvl.OP_CREATE,
 				"MIRROR_SESSION|everflow",
 				map[string]string {
 					"src_ip": "10.1.0.32",
@@ -89,8 +93,8 @@ func main() {
 			},
 		}
 
-		fmt.Printf("\n\n%d. Validating create data = %v\n\n", count, keyData);
-		err := cvl.ValidateCreate(keyData)
+		fmt.Printf("\n\n%d. Validating create data = %v\n\n", count, cfgData);
+		err := cvl.ValidateEditConfig(cfgData)
 
 		if (err == cvl.CVL_SUCCESS) {
 			fmt.Printf("\nConfig Validation succeeded.\n\n");
@@ -99,17 +103,19 @@ func main() {
 		}
 
 		count++
-		keyData = []cvl.KeyData {
-			cvl.KeyData {
-				false,
+		cfgData = []cvl.CVLEditConfigData {
+			cvl.CVLEditConfigData {
+				cvl.VALIDATE_NONE,
+				cvl.OP_NONE,
 				"MIRROR_SESSION|everflow",
 				map[string]string {
 					"src_ip": "10.1.0.32",
 					"dst_ip": "2.2.2.2",
 				},
 			},
-			cvl.KeyData {
-				true,
+			cvl.CVLEditConfigData {
+				cvl.VALIDATE_ALL,
+				cvl.OP_UPDATE,
 				"ACL_RULE|MyACL11_ACL_IPV4|RULE_1",
 				map[string]string {
 					"MIRROR_ACTION": "everflow",
@@ -117,9 +123,9 @@ func main() {
 			},
 		}
 
-		fmt.Printf("\n\n%d. Validating data for update = %v\n\n", count, keyData);
+		fmt.Printf("\n\n%d. Validating data for update = %v\n\n", count, cfgData);
 
-		err = cvl.ValidateUpdate(keyData)
+		err = cvl.ValidateEditConfig(cfgData)
 
 		if (err == cvl.CVL_SUCCESS) {
 			fmt.Printf("\nConfig Validation succeeded.\n\n");
@@ -130,24 +136,26 @@ func main() {
 	{
 		count++
 
-		keyData :=  []cvl.KeyData {
-			cvl.KeyData {
-				true,
+		cfgData :=  []cvl.CVLEditConfigData {
+			cvl.CVLEditConfigData {
+				cvl.VALIDATE_ALL,
+				cvl.OP_DELETE,
 				"MIRROR_SESSION|everflow",
 				map[string]string {
 				},
 			},
-			cvl.KeyData {
-				true,
+			cvl.CVLEditConfigData {
+				cvl.VALIDATE_ALL,
+				cvl.OP_DELETE,
 				"ACL_RULE|MyACL11_ACL_IPV4|RULE_1",
 				map[string]string {
 				},
 			},
 		}
 
-		fmt.Printf("\n\n%d. Validating data for delete = %v\n\n", count, keyData);
+		fmt.Printf("\n\n%d. Validating data for delete = %v\n\n", count, cfgData);
 
-		err := cvl.ValidateDelete(keyData)
+		err := cvl.ValidateEditConfig(cfgData)
 
 		if (err == cvl.CVL_SUCCESS) {
 			fmt.Printf("\nConfig Validation succeeded.\n\n");

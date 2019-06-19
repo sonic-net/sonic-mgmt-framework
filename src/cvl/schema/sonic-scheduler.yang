@@ -10,10 +10,6 @@ module sonic-scheduler {
 		prefix scommon;
 	}
 
-	import sonic-interface {
-		prefix sif;
-	}
-
 	organization
 		"BRCM";
 

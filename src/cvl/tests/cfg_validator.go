@@ -87,12 +87,16 @@ func main() {
 		fmt.Printf("\nConfig Validation failed.\n\n");
 	}
 
-	keyData := make([]cvl.KeyData, 4)
+	keyData := make([]cvl.CVLEditConfigData, 4)
+	keyData[0].VType = cvl.VALIDATE_NONE
+	keyData[0].VOp = cvl.OP_NONE
 	keyData[0].Key = "ACL_TABLE|MyACL55_ACL_IPV4"
 	keyData[0].Data = make(map[string]string)
 	keyData[0].Data["stage"] =  "INGRESS"
 	keyData[0].Data["type"] =  "l3"
 
+	keyData[1].VType = cvl.VALIDATE_NONE
+	keyData[1].VOp = cvl.OP_NONE
 	keyData[1].Key = "ACL_RULE|MyACL55_ACL_IPV4|RULE_1"
 	keyData[1].Data = make(map[string]string)
 	keyData[1].Data["packet_action"] = "forward"
@@ -100,23 +104,31 @@ func main() {
 	keyData[1].Data["src_ip"] = "10.1.1.1/32"
 	keyData[1].Data["dst_ip"] = "20.2.2.2/32"
 
+	keyData[2].VType = cvl.VALIDATE_NONE
+	keyData[2].VOp = cvl.OP_NONE
 	keyData[2].Key = "ACL_TABLE|MyACL11_ACL_IPV4"
 	keyData[2].Data = make(map[string]string)
 	keyData[2].Data["stage"] =  "INGRESS"
 
+	keyData[3].VType = cvl.VALIDATE_ALL
+	keyData[3].VOp = cvl.OP_CREATE
 	keyData[3].Key = "VLAN|Vlan901"
 	keyData[3].Data = make(map[string]string)
 	keyData[3].Data["members"] =  "Ethernet8"
 	keyData[3].Data["vlanid"] =  "901"
 
-	fmt.Printf("\n\n\n  cvl.ValidateCreate() = %d\n", cvl.ValidateCreate(keyData))
+	fmt.Printf("\n\n\n  cvl.ValidateEditConfig() = %d\n", cvl.ValidateEditConfig(keyData))
 
-	keyData1 := make([]cvl.KeyData, 3)
+	keyData1 := make([]cvl.CVLEditConfigData, 3)
+	keyData1[0].VType = cvl.VALIDATE_NONE
+	keyData1[0].VOp = cvl.OP_NONE
 	keyData1[0].Key = "ACL_TABLE|MyACL11_ACL_IPV4"
 	keyData1[0].Data = make(map[string]string)
 	keyData1[0].Data["stage"] =  "INGRESS"
 	keyData1[0].Data["type"] =  "l3"
 
+	keyData1[1].VType = cvl.VALIDATE_NONE
+	keyData1[1].VOp = cvl.OP_NONE
 	keyData1[1].Key = "ACL_RULE|MyACL11_ACL_IPV4|RULE_1"
 	keyData1[1].Data = make(map[string]string)
 	keyData1[1].Data["packet_action"] = "forward"
@@ -124,24 +136,32 @@ func main() {
 	keyData1[1].Data["src_ip"] = "10.1.1.1/32"
 	keyData1[1].Data["dst_ip"] = "20.2.2.2/32"
 
+	keyData1[2].VType = cvl.VALIDATE_ALL
+	keyData1[2].VOp = cvl.OP_UPDATE
 	keyData1[2].Key = "ACL_TABLE|MyACL33_ACL_IPV4"
 	keyData1[2].Data = make(map[string]string)
 	keyData1[2].Data["stage"] =  "INGRESS"
 
-	fmt.Printf("\n\n\n  cvl.ValidateUpdate() = %d\n", cvl.ValidateUpdate(keyData1))
+	fmt.Printf("\n\n\n  cvl.ValidateEditConfig() = %d\n", cvl.ValidateEditConfig(keyData1))
 
 
-	keyData2 := make([]cvl.KeyData, 3)
+	keyData2 := make([]cvl.CVLEditConfigData, 3)
+	keyData2[0].VType = cvl.VALIDATE_ALL
+	keyData2[0].VOp = cvl.OP_DELETE
 	keyData2[0].Key = "ACL_TABLE|MyACL11_ACL_IPV4"
 	keyData2[0].Data = make(map[string]string)
 
+	keyData2[1].VType = cvl.VALIDATE_ALL
+	keyData2[1].VOp = cvl.OP_DELETE
 	keyData2[1].Key = "ACL_RULE|MyACL11_ACL_IPV4|RULE_1"
 	keyData2[1].Data = make(map[string]string)
 
+	keyData2[2].VType = cvl.VALIDATE_ALL
+	keyData2[2].VOp = cvl.OP_DELETE
 	keyData2[2].Key = "ACL_TABLE|MyACL33_ACL_IPV4"
 	keyData2[2].Data = make(map[string]string)
 
-	fmt.Printf("\n\n\n  cvl.ValidateDelete() = %d\n", cvl.ValidateDelete(keyData2))
+	fmt.Printf("\n\n\n  cvl.ValidateEditConfig() = %d\n", cvl.ValidateEditConfig(keyData2))
 
 
 	cvl.Finish()

@@ -1,8 +1,9 @@
-############################################
+#######################################################################
 #
-# Copyright 2019 Broadcom Inc.
+# Copyright 2019 Broadcom. All rights reserved.
+# The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
 #
-############################################
+#######################################################################
 
 .PHONY: all clean cleanall codegen rest-server yamlGen
 
@@ -38,12 +39,13 @@ REST_SRCS := $(shell find $(TOPDIR)/src -name '*.go' | sort) \
 			 $(shell find $(TOPDIR)/models/yang -name '*.yang' | sort) \
 			 $(shell find $(TOPDIR)/models/openapi -name '*.yaml' | sort)
 
+CVL_GOPATH=$(TOPDIR):$(TOPDIR)/src/cvl/build
 REST_BIN := $(REST_DIST_DIR)/main
-REST_GOPATH = $(GOPATH):$(TOPDIR):$(REST_DIST_DIR):$(TOPDIR)/generated
+REST_GOPATH = $(GOPATH):$(CVL_GOPATH):$(TOPDIR):$(REST_DIST_DIR)
 
 #$(info REST_SRCS = $(REST_SRCS) )
 
-all: golang go-deps apt-deps pip-deps rest-server
+all: golang go-deps go-patch apt-deps pip-deps rest-server
 
 golang:
 	wget https://dl.google.com/go/go1.12.6.linux-amd64.tar.gz
@@ -70,14 +72,18 @@ rest-server: $(REST_BIN)
 yamlGen:
 	$(MAKE) -C models/yang
 
-$(REST_SRCS): yamlGen
-
 $(REST_BIN): $(REST_SRCS)
+	$(MAKE) -C src/cvl
+	$(MAKE) -C models/yang
 	$(MAKE) -C models
 	GOPATH=$(REST_GOPATH) /usr/local/go1.12/bin/go build -o $@ $(TOPDIR)/src/rest/main/main.go
 
 codegen:
 	$(MAKE) -C models
+
+go-patch:
+	cp $(TOPDIR)/ygot-modified-files/* /tmp/go/src/github.com/openconfig/ygot/ytypes/
+	/usr/local/go1.12/bin/go install -v -gcflags "-N -l" /tmp/go/src/github.com/openconfig/ygot/ygot
 
 
 install:
@@ -88,8 +94,10 @@ $(addprefix $(DEST)/, $(MAIN_TARGET)): $(DEST)/% :
 	mv $* $(DEST)/
 
 clean:
+	$(MAKE) -C src/cvl clean
 	$(MAKE) -C models clean
 	$(MAKE) -C models/yang clean
 
 cleanall:
+	$(MAKE) -C src/cvl cleanall
 	rm -rf build
