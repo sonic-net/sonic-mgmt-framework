@@ -17,14 +17,6 @@
             name="no"
             help="To delete / disable commands in config mode"
             />
-        <COMMAND
-            name="help"
-            help="Display available commands"
-            >
-            <ACTION
-                builtin="clish_nop"
-                />
-        </COMMAND>
     </VIEW>
 </CLISH_MODULE>
 

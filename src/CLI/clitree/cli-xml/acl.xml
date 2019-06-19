@@ -9,10 +9,6 @@
 <!--=========================================================================-->
 
 <VIEW name="enable-view">
-   <!--COMMAND
-        help="show IP commands"
-        name="show ip"
-        /-->
 <!--show ip access-lists -->
    <COMMAND
          name="show ip access-lists"
