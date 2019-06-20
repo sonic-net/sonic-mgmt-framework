@@ -34,6 +34,8 @@ TOPDIR := $(abspath .)
 BUILD_DIR := $(TOPDIR)/build
 REST_DIST_DIR := $(BUILD_DIR)/rest_server/dist
 
+export TOPDIR
+
 # Source files affecting REST server
 REST_SRCS := $(shell find $(TOPDIR)/src -name '*.go' | sort) \
 			 $(shell find $(TOPDIR)/models/yang -name '*.yang' | sort) \
@@ -45,7 +47,7 @@ REST_GOPATH = $(GOPATH):$(CVL_GOPATH):$(TOPDIR):$(REST_DIST_DIR)
 
 #$(info REST_SRCS = $(REST_SRCS) )
 
-all: golang go-deps go-patch apt-deps pip-deps rest-server
+all: golang go-deps go-patch apt-deps pip-deps rest-server cli
 
 golang:
 	wget https://dl.google.com/go/go1.12.6.linux-amd64.tar.gz
@@ -68,6 +70,9 @@ $(PIP_DEPS_LIST):
 	sudo pip3 install $@
 
 rest-server: $(REST_BIN)
+
+cli:
+	$(MAKE) -C src/CLI
 
 yamlGen:
 	$(MAKE) -C models/yang
@@ -97,6 +102,7 @@ clean:
 	$(MAKE) -C src/cvl clean
 	$(MAKE) -C models clean
 	$(MAKE) -C models/yang clean
+	$(MAKE) -C src/CLI clean
 
 cleanall:
 	$(MAKE) -C src/cvl cleanall

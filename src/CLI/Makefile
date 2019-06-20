@@ -3,7 +3,6 @@ SHELL = /bin/bash
 .SHELLFLAGS += -e
 
 SUBDIRS := clitree renderer klish 
-export SONIC_CLI_ROOT=$(shell pwd)
 
 all: packages $(SUBDIRS)
 $(SUBDIRS):
@@ -16,10 +15,11 @@ all:
     	$(MAKE) -C $$dir -f Makefile $@; \
 	done
 
+	mv target $(TOPDIR)/build/cli
+
 clean:
 	make --directory=klish clean
-	rm -f clish_start
-	rm -rf target
+	rm -rf $(TOPDIR)/build/cli
 
 packages:
 	if ! dpkg -l | grep autoconf -c >>/dev/null; then sudo apt-get install autoconf; fi
