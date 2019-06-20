@@ -94,7 +94,7 @@ import (
 
 	"github.com/go-redis/redis"
 	"github.com/golang/glog"
-	"cvl"
+	//  "cvl"
 )
 
 const (
@@ -228,7 +228,7 @@ type DB struct {
 
 	txState _txState
 	txCmds  []_txCmd
-	cvlEditConfigData [] cvl.CVLEditConfigData
+	// cvlKeyData [] cvl.KeyData
 }
 
 func (d DB) String() string {
@@ -257,7 +257,7 @@ func NewDB(opt Options) *DB {
 		Opts:    &opt,
 		txState: txStateNone,
 		txCmds:  make([]_txCmd, 0, InitialTxPipelineSize),
-		cvlEditConfigData: make([]cvl.CVLEditConfigData, 0, InitialTxPipelineSize),
+		// cvlKeyData: make([]cvl.KeyData, 0, InitialTxPipelineSize),
 	}
 
 	if d.client == nil {
@@ -428,46 +428,38 @@ func (d *DB) DeleteKeys(ts *TableSpec, key Key) error {
 func (d *DB) doCVL(ts * TableSpec, op _txOp, key Key, val interface{}) error {
 	var e error = nil
 
+/*
+	var cvlRetCode cvl.CVLRetCode
 
-	//var cvlRetCode cvl.CVLRetCode
 
-
-	cfgDataItem := cvl.CVLEditConfigData { VType: cvl.VALIDATE_ALL,
+	keyDataItem := cvl.KeyData { Validate: true,
 	                             Key: d.key2redis(ts, key),
 	               }
 
 	switch op {
 		case txOpHMSet:
-			cfgDataItem.VOp = cvl.OP_CREATE
-			cfgDataItem.Data = val.(Value).Field
-			d.cvlEditConfigData = append(d.cvlEditConfigData, cfgDataItem)
-			if cvl.CVL_SUCCESS != cvl.ValidateEditConfig(d.cvlEditConfigData) {
+			keyDataItem.Data = val.(Value).Field
+			d.cvlKeyData = append(d.cvlKeyData, keyDataItem)
+			if cvl.CVL_SUCCESS != cvl.ValidateCreate(d.keyData) {
 				glog.Error("doCVL: CVL Failure ")
 				e = errors.New("CVL Failure")
 			} else {
-				//Don't validate data if it has been already validated 
-				d.cvlEditConfigData[len(d.cvlEditConfigData)-1].VType = cvl.VALIDATE_NONE;
-				d.cvlEditConfigData[len(d.cvlEditConfigData)-1].VOp = cvl.OP_NONE;
+				d.cvlKeyData[len(d.cvlKeyData)-1].Validate = false;
 			}
 
 		case txOpHDel:
-			cfgDataItem.VOp = cvl.OP_DELETE
-			cfgDataItem.Data = val.(Value).Field
-			cfgDataItem.Data = val.(Value).Field
+			keyDataItem.Data = val.(Value).Field
 			glog.Error("doCVL: Not Implemented HDel: ",
-			    key, " : ", cfgDataItem.Data, " e: ", e)
+			    key, " : ", keyDataItem.Data, " e: ", e)
 
 		case txOpDel:
-			cfgDataItem.VOp = cvl.OP_DELETE
-			cfgDataItem.Data = map[string]string {}
-			d.cvlEditConfigData = append(d.cvlEditConfigData, cfgDataItem)
-			if cvl.CVL_SUCCESS != cvl.ValidateEditConfig(d.cvlEditConfigData) {
+			keyDataItem.Data = map[string]string {}
+			d.cvlKeyData = append(d.cvlKeyData, keyDataItem)
+			if cvl.CVL_SUCCESS != cvl.ValidateDelete(d.keyData) {
 				glog.Error("doCVL: CVL Failure ")
 				e = errors.New("CVL Failure")
 			} else {
-				//Don't validated data if its validated successfully
-				d.cvlEditConfigData[len(d.cvlEditConfigData)-1].VType = cvl.VALIDATE_NONE;
-				d.cvlEditConfigData[len(d.cvlEditConfigData)-1].VOp = cvl.OP_NONE;
+				d.cvlKeyData[len(d.cvlKeyData)-1].Validate = false;
 			}
 
 		default:
@@ -475,6 +467,7 @@ func (d *DB) doCVL(ts * TableSpec, op _txOp, key Key, val interface{}) error {
 			e = errors.New("Unknown Op: " + string(op))
 	}
 
+*/
 
 	if glog.V(3) {
 		glog.Info("doCVL: End: e: ", e)
@@ -1190,7 +1183,7 @@ func (d *DB) CommitTx() error {
 	// Switch State, Clear Command list
 	d.txState = txStateNone
 	d.txCmds = d.txCmds[:0]
-	d.cvlEditConfigData = d.cvlEditConfigData[:0]
+	// d.cvlKeyData = d.cvlKeyData[:0]
 
 CommitTxExit:
 	if glog.V(3) {
@@ -1240,7 +1233,7 @@ func (d *DB) AbortTx() error {
 	// Switch State, Clear Command list
 	d.txState = txStateNone
 	d.txCmds = d.txCmds[:0]
-	d.cvlEditConfigData = d.cvlEditConfigData[:0]
+	// d.cvlKeyData = d.cvlKeyData[:0]
 
 AbortTxExit:
 	if glog.V(3) {
