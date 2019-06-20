@@ -1573,8 +1573,8 @@ func (app *AclApp) set_acl_bind_data_in_config_db(d *db.DB, aclData map[string]d
 			dbAcl.Set("stage", aclInfo.Get("stage"))
 		}
 
-		//err = d.SetEntry(app.aclTs, db.Key{Comp: []string{aclKey}}, dbAcl)
-		err = d.ModEntry(app.aclTs, db.Key{Comp: []string{aclKey}}, dbAcl)
+		err = d.SetEntry(app.aclTs, db.Key{Comp: []string{aclKey}}, dbAcl)
+		//err = d.ModEntry(app.aclTs, db.Key{Comp: []string{aclKey}}, dbAcl)
 		if err != nil {
 			log.Error(err)
 			return err
