@@ -127,8 +127,8 @@ func (app *AclApp) translateCreate(d *db.DB) ([]db.WatchKeys, error) {
 		aclSubtree = true
 	}
 
-	app.aclTableMap = convert_oc_acls_to_internal(aclObj)
-	app.ruleTableMap = convert_oc_acl_rules_to_internal(aclObj)
+	app.aclTableMap = app.convert_oc_acls_to_internal(aclObj)
+	app.ruleTableMap = app.convert_oc_acl_rules_to_internal(aclObj)
 	app.bindAclFlag = app.convert_oc_acl_bindings_to_internal(d, app.aclTableMap, aclObj)
 
 	// These slices will store the yangPaths derived from the URI requested to help
@@ -222,7 +222,7 @@ func (app *AclApp) translateUpdate(d *db.DB) ([]db.WatchKeys, error) {
 	keys, err = app.translateCreate(d)
 
 	//err = errors.New("Not implemented")
-	log.Info(keys)
+	//log.Info(keys)
 	return keys, err
 }
 
@@ -865,7 +865,7 @@ func (app *AclApp) convert_internal_to_oc_acl_rule(aclName string, aclType ocbin
 func (app *AclApp) convert_internal_to_oc_acl_rule_properties(ruleData db.Value, aclType ocbinds.E_OpenconfigAcl_ACL_TYPE, aclSet *ocbinds.OpenconfigAcl_Acl_AclSets_AclSet, entrySet *ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry) {
 	priority, _ := strconv.ParseInt(ruleData.Get("PRIORITY"), 10, 32)
 	seqId := uint32(MAX_PRIORITY - priority)
-	ruleDescr := ruleData.Get("RULE_DESCRIPTION")
+	//ruleDescr := ruleData.Get("RULE_DESCRIPTION")
 
 	if entrySet == nil {
 		if aclSet != nil {
@@ -876,9 +876,9 @@ func (app *AclApp) convert_internal_to_oc_acl_rule_properties(ruleData db.Value,
 	}
 
 	entrySet.Config.SequenceId = &seqId
-	entrySet.Config.Description = &ruleDescr
+	//entrySet.Config.Description = &ruleDescr
 	entrySet.State.SequenceId = &seqId
-	entrySet.State.Description = &ruleDescr
+	//entrySet.State.Description = &ruleDescr
 
 	var num uint64
 	num = 0
@@ -1159,7 +1159,7 @@ func (app *AclApp) isInterfaceBindWithACL(d *db.DB, intfId string) bool {
 }
 
 /********************   CREATE related    *******************************/
-func convert_oc_acls_to_internal(acl *ocbinds.OpenconfigAcl_Acl) map[string]db.Value {
+func (app *AclApp) convert_oc_acls_to_internal(acl *ocbinds.OpenconfigAcl_Acl) map[string]db.Value {
 	var aclInfo map[string]db.Value
 	if acl != nil {
 		aclInfo = make(map[string]db.Value)
@@ -1192,7 +1192,7 @@ func convert_oc_acls_to_internal(acl *ocbinds.OpenconfigAcl_Acl) map[string]db.V
 	return aclInfo
 }
 
-func convert_oc_acl_rules_to_internal(acl *ocbinds.OpenconfigAcl_Acl) map[string]map[string]db.Value {
+func (app *AclApp) convert_oc_acl_rules_to_internal(acl *ocbinds.OpenconfigAcl_Acl) map[string]map[string]db.Value {
 	var rulesInfo map[string]map[string]db.Value
 	if acl != nil {
 		rulesInfo = make(map[string]map[string]db.Value)
@@ -1214,7 +1214,11 @@ func convert_oc_acl_rules_to_internal(acl *ocbinds.OpenconfigAcl_Acl) map[string
 					}
 				}
 
-				default_deny_rule(rulesInfo[aclKey])
+				yangPathStr, _ := getYangPathFromUri(app.path)
+				log.Infof("From convert_oc_acl_rules_to_internal, received path: %s", yangPathStr)
+				if yangPathStr != "/openconfig-acl:acl/acl-sets/acl-set/acl-entries" && yangPathStr != "/openconfig-acl:acl/acl-sets/acl-set/acl-entries/acl-entry" {
+					app.default_deny_rule(rulesInfo[aclKey])
+				}
 			}
 		}
 	}
@@ -1234,7 +1238,6 @@ func (app *AclApp) convert_oc_acl_bindings_to_internal(d *db.DB, aclData map[str
 		for intfId, _ := range aclObj.Interfaces.Interface {
 			intf := aclObj.Interfaces.Interface[intfId]
 			if intf != nil {
-				fmt.Println("Interface Name: " + *intf.Id)
 				if intf.IngressAclSets != nil && len(intf.IngressAclSets.IngressAclSet) > 0 {
 					for inAclKey, _ := range intf.IngressAclSets.IngressAclSet {
 						acln := strings.ReplaceAll(strings.ReplaceAll(inAclKey.SetName, " ", "_"), "-", "_")
@@ -1275,7 +1278,7 @@ func (app *AclApp) convert_oc_acl_bindings_to_internal(d *db.DB, aclData map[str
 	return ret
 }
 
-func default_deny_rule(rulesInfo map[string]db.Value) {
+func (app *AclApp) default_deny_rule(rulesInfo map[string]db.Value) {
 	m := make(map[string]string)
 	rulesInfo["DEFAULT_RULE"] = db.Value{Field: m}
 	rulesInfo["DEFAULT_RULE"].Field["PRIORITY"] = strconv.FormatInt(int64(MIN_PRIORITY), 10)
@@ -1285,9 +1288,12 @@ func default_deny_rule(rulesInfo map[string]db.Value) {
 func convert_oc_to_internal_rule(ruleData db.Value, seqId uint32, aclName string, aclType ocbinds.E_OpenconfigAcl_ACL_TYPE, rule *ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry) {
 	ruleIndex := seqId
 	ruleData.Field["PRIORITY"] = strconv.FormatInt(int64(MAX_PRIORITY-ruleIndex), 10)
-	if rule.Config != nil && rule.Config.Description != nil {
-		ruleData.Field["RULE_DESCRIPTION"] = *rule.Config.Description
-	}
+	// Rule Description is not supported in Sonic. So commenting this out.
+	/*
+		if rule.Config != nil && rule.Config.Description != nil {
+			ruleData.Field["RULE_DESCRIPTION"] = *rule.Config.Description
+		}
+	*/
 
 	if ocbinds.OpenconfigAcl_ACL_TYPE_ACL_IPV4 == aclType {
 		convert_oc_to_internal_ipv4(ruleData, aclName, ruleIndex, rule)
@@ -1502,7 +1508,6 @@ func (app *AclApp) set_acl_data_in_config_db(d *db.DB, aclData map[string]db.Val
 			return errors.New("Acl " + key + " already exists")
 		}
 		if createFlag || (!createFlag && err != nil && !existingEntry.IsPopulated()) {
-			log.Info("Acl entry "+key+" not existing in Db. Hence creating it", key)
 			err := d.SetEntry(app.aclTs, db.Key{Comp: []string{key}}, aclData[key])
 			if err != nil {
 				log.Error(err)
