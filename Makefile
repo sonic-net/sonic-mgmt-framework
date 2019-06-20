@@ -52,7 +52,7 @@ all: golang go-deps go-patch apt-deps pip-deps rest-server cli
 golang:
 	wget https://dl.google.com/go/go1.12.6.linux-amd64.tar.gz
 	tar -zxvf go1.12.6.linux-amd64.tar.gz
-	#sudo mv go /usr/local/go1.12
+	sudo mv go /usr/local/go1.12
 
 go-deps: $(GO_DEPS_LIST)
 apt-deps: $(APT_DEPS_LIST)
