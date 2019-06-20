@@ -37,7 +37,7 @@ def generate_body(func, args):
     # Configure ACL table
     elif func.__name__ == 'post_acl_set_config' :
        keypath = [ args[0], args[1] ]
-       body = { "config": {
+       body = { "openconfig-acl:config": {
                    "name": args[0],
                    "type": args[1],
                    "description": ""
@@ -55,11 +55,10 @@ def generate_body(func, args):
        else :
           protocol = "IP_UDP"
        if (len(args) <= 7):
-            body =  { "acl-entry": [ {
+            body =  { "openconfig-acl:acl-entry": [ {
                         "sequence-id": int(args[2]),
                         "config": {
                             "sequence-id": int(args[2]),
-                            "description": ""
                         },
                         "ipv4": {
                             "config": {
@@ -79,7 +78,6 @@ def generate_body(func, args):
                         "sequence-id": int(args[2]),
                         "config": {
                             "sequence-id": int(args[2]),
-                            "description": ""
                         },
                         "ipv4": {
                             "config": {
@@ -105,7 +103,7 @@ def generate_body(func, args):
     elif func.__name__ == 'post_list_base_interfaces_interface':
         keypath = []
         if args[3] == "ingress":
-            body = { "interface": [ {
+            body = { "openconfig-acl:interface": [ {
                         "id": args[2],
                         "config": {
                             "id": args[2]
@@ -163,7 +161,6 @@ def generate_body(func, args):
         keypath = [args[0], args[1], args[2]]
     else:
        body = {} 
-            
     if body is not None: 
        body = json.dumps(body,ensure_ascii=False)
        return keypath, ast.literal_eval(body)
