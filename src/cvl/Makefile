@@ -55,7 +55,7 @@ tests:
 
 clean:
 	#$(GO) clean
-	make -C schema clean
+	#make -C schema clean
 	make -C tests clean
 	rm -rf $(BUILD_DIR)/cvl.a
 
