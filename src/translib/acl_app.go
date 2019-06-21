@@ -1508,7 +1508,8 @@ func (app *AclApp) set_acl_data_in_config_db(d *db.DB, aclData map[string]db.Val
 			return errors.New("Acl " + key + " already exists")
 		}
 		if createFlag || (!createFlag && err != nil && !existingEntry.IsPopulated()) {
-			err := d.SetEntry(app.aclTs, db.Key{Comp: []string{key}}, aclData[key])
+			//err := d.SetEntry(app.aclTs, db.Key{Comp: []string{key}}, aclData[key])
+            err := d.CreateEntry(app.aclTs, db.Key{Comp: []string{key}}, aclData[key])
 			if err != nil {
 				log.Error(err)
 				return err
@@ -1535,7 +1536,8 @@ func (app *AclApp) set_acl_rule_data_in_config_db(d *db.DB, ruleData map[string]
 				return errors.New("Rule " + ruleName + " already exists")
 			}
 			if createFlag || (!createFlag && err != nil && !existingRuleEntry.IsPopulated()) {
-				err := d.SetEntry(app.ruleTs, db.Key{Comp: []string{aclName, ruleName}}, ruleData[aclName][ruleName])
+				//err := d.SetEntry(app.ruleTs, db.Key{Comp: []string{aclName, ruleName}}, ruleData[aclName][ruleName])
+                err := d.CreateEntry(app.ruleTs, db.Key{Comp: []string{aclName, ruleName}}, ruleData[aclName][ruleName])
 				if err != nil {
 					log.Error(err)
 					return err
