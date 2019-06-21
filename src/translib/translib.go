@@ -135,7 +135,7 @@ func Create(req SetRequest) (SetResponse, error){
         return resp, err
 	}
 
-	if ((keys != nil) && (!isNative)) {
+	if ((keys != nil)) {
 
 		if (len(keys) != 0) {
 			needTx = true
@@ -240,7 +240,7 @@ func Update(req SetRequest) (SetResponse, error){
         return resp, err
     }
 
-    if ((keys != nil) && (!isNative)) {
+    if ((keys != nil)) {
 
         if (len(keys) != 0) {
             needTx = true
@@ -344,7 +344,7 @@ func Replace(req SetRequest) (SetResponse, error){
         return resp, err
     }
 
-    if ((keys != nil) && (!isNative)) {
+    if ((keys != nil)) {
 
         if (len(keys) != 0) {
             needTx = true
@@ -446,7 +446,7 @@ func Delete(req SetRequest) (SetResponse, error){
         return resp, err
     }
 
-    if ((keys != nil) && (!isNative)) {
+    if ((keys != nil)) {
 
         if (len(keys) != 0) {
             needTx = true

@@ -1,10 +1,10 @@
 all: precheck deps schema tests
-GO=go
+GO=/usr/local/go1.12/bin/go
 SRC_FILES=$(wildcard *.go)
 TOP_DIR := $(abspath ../..)
 GOFLAGS:=
 BUILD_DIR:=build
-GO_DEP_PATH=$(abspath .)/$(BUILD_DIR)
+GO_DEP_PATH=/tmp/go:$(abspath .)/$(BUILD_DIR)
 GO_TRANSLIB_PATH=$(TOP_DIR)/sonic-mgmt-framework
 GO_SONIC_TELEMETRY_PATH=$(TOP_DIR)
 GOPATH = $(GO_DEP_PATH):$(GO_TRANSLIB_PATH):$(GO_SONIC_TELEMETRY_PATH)
@@ -55,7 +55,7 @@ tests:
 
 clean:
 	#$(GO) clean
-	make -C schema clean
+	#make -C schema clean
 	make -C tests clean
 	rm -rf $(BUILD_DIR)/cvl.a
 

@@ -79,6 +79,7 @@ yamlGen:
 
 $(REST_BIN): $(REST_SRCS)
 	$(MAKE) -C src/cvl
+	$(MAKE) -C src/cvl/schema
 	$(MAKE) -C models/yang
 	$(MAKE) -C models
 	GOPATH=$(REST_GOPATH) /usr/local/go1.12/bin/go build -o $@ $(TOPDIR)/src/rest/main/main.go
@@ -93,6 +94,13 @@ go-patch:
 
 install:
 	$(INSTALL) -D $(TOPDIR)/build/rest_server/dist/main $(DESTDIR)/usr/sbin/rest_server
+	$(INSTALL) -d $(DESTDIR)/usr/sbin/schema/
+	$(INSTALL) -d $(DESTDIR)/usr/local/lib/
+	$(INSTALL) -D $(TOPDIR)/src/cvl/schema/*.yin $(DESTDIR)/usr/sbin/schema/
+	$(INSTALL) -D $(TOPDIR)/src/cvl/build/pcre-8.43/install/lib/libpcre.so.1.2.11 $(DESTDIR)/usr/local/lib/libpcre.so.1
+	$(INSTALL) -D $(TOPDIR)/src/cvl/build/libyang/build/libyang.so.1.1.25 $(DESTDIR)/usr/local/lib/libyang.so.1
+	$(INSTALL) -D $(TOPDIR)/src/cvl/build/libyang/build/extensions/*.so $(DESTDIR)/usr/local/lib/
+	$(INSTALL) -D $(TOPDIR)/src/cvl/build/libyang/build/user_types/*.so $(DESTDIR)/usr/local/lib/
 	cp -rf $(TOPDIR)/build/rest_server/dist/ui/ $(DESTDIR)/rest_ui/
 
 $(addprefix $(DEST)/, $(MAIN_TARGET)): $(DEST)/% :
@@ -100,6 +108,7 @@ $(addprefix $(DEST)/, $(MAIN_TARGET)): $(DEST)/% :
 
 clean:
 	$(MAKE) -C src/cvl clean
+	$(MAKE) -C src/cvl/schema clean
 	$(MAKE) -C models clean
 	$(MAKE) -C models/yang clean
 	$(MAKE) -C src/CLI clean

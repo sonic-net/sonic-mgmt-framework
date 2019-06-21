@@ -94,7 +94,7 @@ import (
 
 	"github.com/go-redis/redis"
 	"github.com/golang/glog"
-	//  "cvl"
+	"cvl"
 )
 
 const (
@@ -228,7 +228,7 @@ type DB struct {
 
 	txState _txState
 	txCmds  []_txCmd
-	// cvlKeyData [] cvl.KeyData
+	cvlEditConfigData [] cvl.CVLEditConfigData
 }
 
 func (d DB) String() string {
@@ -257,7 +257,7 @@ func NewDB(opt Options) *DB {
 		Opts:    &opt,
 		txState: txStateNone,
 		txCmds:  make([]_txCmd, 0, InitialTxPipelineSize),
-		// cvlKeyData: make([]cvl.KeyData, 0, InitialTxPipelineSize),
+		cvlEditConfigData: make([]cvl.CVLEditConfigData, 0, InitialTxPipelineSize),
 	}
 
 	if d.client == nil {
@@ -425,49 +425,68 @@ func (d *DB) DeleteKeys(ts *TableSpec, key Key) error {
 }
 
 
-func (d *DB) doCVL(ts * TableSpec, op _txOp, key Key, val interface{}) error {
+func (d *DB) doCVL(ts * TableSpec, cvlOps []cvl.CVLOperation, key Key, vals []Value) error {
 	var e error = nil
 
-/*
 	var cvlRetCode cvl.CVLRetCode
 
-
-	keyDataItem := cvl.KeyData { Validate: true,
-	                             Key: d.key2redis(ts, key),
-	               }
-
-	switch op {
-		case txOpHMSet:
-			keyDataItem.Data = val.(Value).Field
-			d.cvlKeyData = append(d.cvlKeyData, keyDataItem)
-			if cvl.CVL_SUCCESS != cvl.ValidateCreate(d.keyData) {
-				glog.Error("doCVL: CVL Failure ")
-				e = errors.New("CVL Failure")
-			} else {
-				d.cvlKeyData[len(d.cvlKeyData)-1].Validate = false;
-			}
-
-		case txOpHDel:
-			keyDataItem.Data = val.(Value).Field
-			glog.Error("doCVL: Not Implemented HDel: ",
-			    key, " : ", keyDataItem.Data, " e: ", e)
-
-		case txOpDel:
-			keyDataItem.Data = map[string]string {}
-			d.cvlKeyData = append(d.cvlKeyData, keyDataItem)
-			if cvl.CVL_SUCCESS != cvl.ValidateDelete(d.keyData) {
-				glog.Error("doCVL: CVL Failure ")
-				e = errors.New("CVL Failure")
-			} else {
-				d.cvlKeyData[len(d.cvlKeyData)-1].Validate = false;
-			}
-
-		default:
-			glog.Error("doCVL: Unknown, op: ", op)
-			e = errors.New("Unknown Op: " + string(op))
+	// No Transaction case. No CVL.
+	if d.txState == txStateNone {
+		glog.Info("doCVL: No Transactions. Skipping CVL")
+		goto doCVLExit
 	}
 
-*/
+	if len(cvlOps) != len(vals) {
+		glog.Error("doCVL: Incorrect arguments len(cvlOps) != len(vals)")
+		e = errors.New("CVL Incorrect args")
+		return e
+	}
+	for i := 0; i < len(cvlOps); i++ {
+
+		cvlEditConfigData := cvl.CVLEditConfigData {
+				VType: cvl.VALIDATE_ALL,
+				VOp: cvlOps[i],
+				Key: d.key2redis(ts, key),
+				}
+
+		switch cvlOps[i] {
+		case cvl.OP_CREATE, cvl.OP_UPDATE:
+			cvlEditConfigData.Data = vals[i].Field
+			d.cvlEditConfigData = append(d.cvlEditConfigData, cvlEditConfigData)
+
+		case cvl.OP_DELETE:
+			cvlEditConfigData.Data = map[string]string {}
+			d.cvlEditConfigData = append(d.cvlEditConfigData, cvlEditConfigData)
+
+		default:
+			glog.Error("doCVL: Unknown, op: ", cvlOps[i])
+			e = errors.New("Unknown Op: " + string(cvlOps[i]))
+		}
+
+	}
+
+	if e != nil {
+		goto doCVLExit
+	}
+
+	if glog.V(3) {
+		glog.Info("doCVL: calling ValidateEditConfig: ", d.cvlEditConfigData)
+	}
+
+	cvlRetCode = cvl.ValidateEditConfig(d.cvlEditConfigData)
+
+	if cvl.CVL_SUCCESS != cvlRetCode {
+		glog.Error("doCVL: CVL Failure: " , cvlRetCode)
+		e = errors.New("CVL Failure: " + string(cvlRetCode))
+		glog.Error("doCVL: " , len(d.cvlEditConfigData), len(cvlOps))
+		d.cvlEditConfigData = d.cvlEditConfigData[:len(d.cvlEditConfigData) - len(cvlOps)]
+	} else {
+		for i := 0; i < len(cvlOps); i++ {
+			d.cvlEditConfigData[len(d.cvlEditConfigData)-1-i].VType = cvl.VALIDATE_NONE;
+		}
+	}
+
+doCVLExit:
 
 	if glog.V(3) {
 		glog.Info("doCVL: End: e: ", e)
@@ -555,12 +574,6 @@ func (d *DB) doWrite(ts * TableSpec, op _txOp, key Key, val interface{}) error {
 
 	glog.Info("doWrite: op: ", op, "  ", key, " : ", value)
 
-	e = d.doCVL(ts, op, key, val)
-
-	if e != nil {
-		goto doWriteExit
-	}
-
 	switch op {
 	case txOpHMSet, txOpHDel:
 		value = val.(Value)
@@ -592,147 +605,98 @@ doWriteExit:
 	return e
 }
 
-/*
-func (d *DB) doSetDeleteEntry(ts *TableSpec, isSet bool, key Key, v interface{}) error {
-
-	var e error = nil
-
-	switch d.txState {
-	case txStateNone:
-		if glog.V(2) {
-			glog.Info("doSetDeleteEntry: No Transaction.")
-		}
-		break
-	case txStateWatch:
-		if glog.V(2) {
-			glog.Info("doSetDeleteEntry: Change to txStateSet, txState: ", d.txState)
-		}
-		d.txState = txStateSet
-		break
-	case txStateSet:
-		if glog.V(5) {
-			glog.Info("doSetDeleteEntry: Remain in txStateSet, txState: ", d.txState)
-		}
-	case txStateMultiExec:
-		glog.Error("doSetDeleteEntry: Incorrect State, txState: ", d.txState)
-		e = errors.New("Cannot issue {Set|Delete}Entry in txStateMultiExec")
-	default:
-		glog.Error("doSetDeleteEntry: Unknown, txState: ", d.txState)
-		e = errors.New("Unknown State: " + string(d.txState))
-	}
-
-	if e != nil {
-		goto doSetDeleteEntryExit
-	}
-
-	if d.txState == txStateNone {
-
-		if isSet {
-
-			val := make(map[string]interface{})
-			for key, value := range v.(Value).Field {
-				val[key] = value
-			}
-			e = d.client.Del(d.key2redis(ts, key)).Err()
-			if e!= nil {
-				glog.Error("doSetDeleteEntry: Del: ", key, " : ", e)
-			}
-			e = d.client.HMSet(d.key2redis(ts, key), val).Err()
-
-		} else {
-
-			e = d.client.Del(d.key2redis(ts, key)).Err()
-
-		}
-
-	} else if isSet {
-
-		value := v.(Value)
-		if glog.V(2) {
-			glog.Info("doSetDeleteEntry: SetEntry ", key, " ", value)
-		}
-		d.txCmds = append(d.txCmds, _txCmd{
-			ts:    ts,
-			isSet: true,
-			key:   &key,
-			value: &value,
-		})
-
-	} else {
-
-		if glog.V(2) {
-			glog.Info("doSetDeleteEntry: DeleteEntry ", key)
-		}
-		d.txCmds = append(d.txCmds, _txCmd{
-			ts:    ts,
-			isSet: false,
-			key:   &key,
-			value: nil,
-		})
-
-	}
-
-doSetDeleteEntryExit:
-
-	if glog.V(3) {
-		glog.Info("doSetDeleteEntry: End: e: ", e)
-	}
-
-	return e
-}
-
-*/
-
-// SetEntry sets an entry(row) in the table.
-func (d *DB) SetEntry(ts *TableSpec, key Key, value Value) error {
+// setEntry either Creates, or Sets an entry(row) in the table.
+func (d *DB) setEntry(ts *TableSpec, key Key, value Value, isCreate bool) error {
 
 	var e error = nil
 	var valueComplement Value = Value { Field: make(map[string]string,len(value.Field))}
 	var valueCurrent Value
 
 	if glog.V(3) {
-		glog.Info("SetEntry: Begin: ", "ts: ", ts, " key: ", key,
-			" value: ", value)
+		glog.Info("setEntry: Begin: ", "ts: ", ts, " key: ", key,
+			" value: ", value, " isCreate: ", isCreate)
 	}
 
 	if len(value.Field) == 0 {
-		glog.Info("SetEntry: Mapping to DeleteEntry()")
+		glog.Info("setEntry: Mapping to DeleteEntry()")
 		e = d.DeleteEntry(ts, key)
-		goto SetEntryExit
+		goto setEntryExit
 	}
 
-	// Prepare the HDel list
-	// Note: This is for compatibililty with PySWSSDK semantics.
-	//       The CVL library will likely fail the SetEntry when
-	//       the item exists.
-	valueCurrent, e = d.GetEntry(ts, key)
-	if e == nil {
-		for k, _ := range valueCurrent.Field {
-			_, present := value.Field[k]
-			if ! present {
-				valueComplement.Field[k] = string("")
+	if isCreate == false {
+		// Prepare the HDel list
+		// Note: This is for compatibililty with PySWSSDK semantics.
+		//       The CVL library will likely fail the SetEntry when
+		//       the item exists.
+		valueCurrent, e = d.GetEntry(ts, key)
+		if e == nil {
+			for k, _ := range valueCurrent.Field {
+				_, present := value.Field[k]
+				if ! present {
+					valueComplement.Field[k] = string("")
+				}
 			}
 		}
+	}
+
+	if isCreate == false && e == nil {
+		if glog.V(3) {
+			glog.Info("setEntry: DoCVL for UPDATE")
+		}
+		e = d.doCVL(ts, []cvl.CVLOperation {cvl.OP_UPDATE}, key, []Value { value} )
+	} else {
+		if glog.V(3) {
+			glog.Info("setEntry: DoCVL for CREATE")
+		}
+		e = d.doCVL(ts, []cvl.CVLOperation {cvl.OP_CREATE}, key, []Value { value })
+	}
+
+	if e != nil {
+		goto setEntryExit
 	}
 
 	e = d.doWrite(ts, txOpHMSet, key, value)
 
 	if (e == nil) && (len(valueComplement.Field) != 0) {
+		if glog.V(3) {
+			glog.Info("setEntry: DoCVL for HDEL (post-POC)")
+		}
 		e = d.doWrite(ts, txOpHDel, key, valueComplement)
 	}
 
-SetEntryExit:
+setEntryExit:
 	return e
+}
+
+// CreateEntry creates an entry(row) in the table.
+func (d * DB) CreateEntry(ts * TableSpec, key Key, value Value) error {
+
+	return d.setEntry(ts, key, value, true)
+}
+
+// SetEntry sets an entry(row) in the table.
+func (d *DB) SetEntry(ts *TableSpec, key Key, value Value) error {
+	return d.setEntry(ts, key, value, false)
 }
 
 // DeleteEntry deletes an entry(row) in the table.
 func (d *DB) DeleteEntry(ts *TableSpec, key Key) error {
 
+	var e error = nil
 	if glog.V(3) {
 		glog.Info("DeleteEntry: Begin: ", "ts: ", ts, " key: ", key)
 	}
 
-	return d.doWrite(ts, txOpDel, key, nil)
+	if glog.V(3) {
+		glog.Info("DeleteEntry: DoCVL for DELETE")
+	}
+	e = d.doCVL(ts, []cvl.CVLOperation {cvl.OP_DELETE}, key, []Value {Value{}})
+
+	if e == nil {
+		e = d.doWrite(ts, txOpDel, key, nil)
+	}
+
+	return e;
 }
 
 // ModEntry modifies an entry(row) in the table.
@@ -751,10 +715,18 @@ func (d *DB) ModEntry(ts *TableSpec, key Key, value Value) error {
 		goto ModEntryExit
 	}
 
-	e = d.doWrite(ts, txOpHMSet, key, value)
+	if glog.V(3) {
+		glog.Info("ModEntry: DoCVL for UPDATE")
+	}
+	e = d.doCVL(ts, []cvl.CVLOperation {cvl.OP_UPDATE}, key, []Value {value})
+
+	if e == nil {
+		e = d.doWrite(ts, txOpHMSet, key, value)
+	}
 
 ModEntryExit:
-	return e;
+
+	return e
 }
 
 // DeleteEntryFields deletes some fields/columns in an entry(row) in the table.
@@ -763,6 +735,10 @@ func (d *DB) DeleteEntryFields(ts *TableSpec, key Key, value Value) error {
 	if glog.V(3) {
 		glog.Info("DeleteEntryFields: Begin: ", "ts: ", ts, " key: ", key,
 			" value: ", value)
+	}
+
+	if glog.V(3) {
+		glog.Info("DeleteEntryFields: DoCVL for HDEL (post-POC)")
 	}
 
 	return d.doWrite(ts, txOpHDel, key, value)
@@ -1183,7 +1159,7 @@ func (d *DB) CommitTx() error {
 	// Switch State, Clear Command list
 	d.txState = txStateNone
 	d.txCmds = d.txCmds[:0]
-	// d.cvlKeyData = d.cvlKeyData[:0]
+	d.cvlEditConfigData = d.cvlEditConfigData[:0]
 
 CommitTxExit:
 	if glog.V(3) {
@@ -1233,7 +1209,7 @@ func (d *DB) AbortTx() error {
 	// Switch State, Clear Command list
 	d.txState = txStateNone
 	d.txCmds = d.txCmds[:0]
-	// d.cvlKeyData = d.cvlKeyData[:0]
+	d.cvlEditConfigData = d.cvlEditConfigData[:0]
 
 AbortTxExit:
 	if glog.V(3) {
