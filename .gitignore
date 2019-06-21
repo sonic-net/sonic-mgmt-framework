@@ -1,0 +1,13 @@
+
+.vscode
+*.code-workspace
+pkg/*
+build
+__pycache__
+*.pyc
+*.rdb
+*.swp
+
+*.yin
+*.tree
+

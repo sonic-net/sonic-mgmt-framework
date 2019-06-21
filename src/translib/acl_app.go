@@ -129,7 +129,11 @@ func (app *AclApp) translateCreate(d *db.DB) ([]db.WatchKeys, error) {
 
 	app.aclTableMap = app.convert_oc_acls_to_internal(aclObj)
 	app.ruleTableMap = app.convert_oc_acl_rules_to_internal(aclObj)
-	app.bindAclFlag = app.convert_oc_acl_bindings_to_internal(d, app.aclTableMap, aclObj)
+	app.bindAclFlag, err = app.convert_oc_acl_bindings_to_internal(d, app.aclTableMap, aclObj)
+    if err != nil {
+        log.Error(err)
+        return keys, err
+    }
 
 	// These slices will store the yangPaths derived from the URI requested to help
 	// determining when to create ACL or rule or both
@@ -1226,7 +1230,8 @@ func (app *AclApp) convert_oc_acl_rules_to_internal(acl *ocbinds.OpenconfigAcl_A
 	return rulesInfo
 }
 
-func (app *AclApp) convert_oc_acl_bindings_to_internal(d *db.DB, aclData map[string]db.Value, aclObj *ocbinds.OpenconfigAcl_Acl) bool {
+func (app *AclApp) convert_oc_acl_bindings_to_internal(d *db.DB, aclData map[string]db.Value, aclObj *ocbinds.OpenconfigAcl_Acl) (bool, error) {
+    var err error
 	var ret bool = false
 	if len(aclData) == 0 {
 		app.convert_db_acl_to_internal(d, db.Key{})
@@ -1249,7 +1254,11 @@ func (app *AclApp) convert_oc_acl_bindings_to_internal(d *db.DB, aclData map[str
 						} else {
 							aclInterfacesMap[aclName] = append(aclInterfacesMap[aclName], *intf.Id)
 						}
-						aclData[aclName].Field["stage"] = "INGRESS"
+                        if _,ok := aclData[aclName]; !ok {
+                            err = errors.New("Incorrect Acl name: " + inAclKey.SetName + " used in port binding")
+                            return false,err
+                        }
+                        aclData[aclName].Field["stage"] = "INGRESS"
 						ret = true
 					}
 				}
@@ -1264,6 +1273,10 @@ func (app *AclApp) convert_oc_acl_bindings_to_internal(d *db.DB, aclData map[str
 						} else {
 							aclInterfacesMap[aclName] = append(aclInterfacesMap[aclName], *intf.Id)
 						}
+                        if _,ok := aclData[aclName]; !ok {
+                            err = errors.New("Incorrect Acl name: " + outAclKey.SetName + " used in port binding")
+                            return false,err
+                        }
 						aclData[aclName].Field["stage"] = "EGRESS"
 						ret = true
 					}
@@ -1275,7 +1288,7 @@ func (app *AclApp) convert_oc_acl_bindings_to_internal(d *db.DB, aclData map[str
 			(&val).SetList("ports", aclInterfacesMap[k])
 		}
 	}
-	return ret
+	return ret,err
 }
 
 func (app *AclApp) default_deny_rule(rulesInfo map[string]db.Value) {
@@ -1508,7 +1521,8 @@ func (app *AclApp) set_acl_data_in_config_db(d *db.DB, aclData map[string]db.Val
 			return errors.New("Acl " + key + " already exists")
 		}
 		if createFlag || (!createFlag && err != nil && !existingEntry.IsPopulated()) {
-			err := d.SetEntry(app.aclTs, db.Key{Comp: []string{key}}, aclData[key])
+			//err := d.SetEntry(app.aclTs, db.Key{Comp: []string{key}}, aclData[key])
+            err := d.CreateEntry(app.aclTs, db.Key{Comp: []string{key}}, aclData[key])
 			if err != nil {
 				log.Error(err)
 				return err
@@ -1535,7 +1549,8 @@ func (app *AclApp) set_acl_rule_data_in_config_db(d *db.DB, ruleData map[string]
 				return errors.New("Rule " + ruleName + " already exists")
 			}
 			if createFlag || (!createFlag && err != nil && !existingRuleEntry.IsPopulated()) {
-				err := d.SetEntry(app.ruleTs, db.Key{Comp: []string{aclName, ruleName}}, ruleData[aclName][ruleName])
+				//err := d.SetEntry(app.ruleTs, db.Key{Comp: []string{aclName, ruleName}}, ruleData[aclName][ruleName])
+                err := d.CreateEntry(app.ruleTs, db.Key{Comp: []string{aclName, ruleName}}, ruleData[aclName][ruleName])
 				if err != nil {
 					log.Error(err)
 					return err
