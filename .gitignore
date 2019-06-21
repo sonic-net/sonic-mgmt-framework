@@ -2,9 +2,12 @@
 .vscode
 *.code-workspace
 pkg/*
-build/*
+build
 __pycache__
 *.pyc
 *.rdb
 *.swp
+
+*.yin
+*.tree
 

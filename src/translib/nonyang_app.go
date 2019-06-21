@@ -39,11 +39,9 @@ type nonYangDemoApp struct {
 
 type transVlanData struct {
 	id         int               // vlan id
-	isVlanMod  bool              // indicate if vlan create/update
-	isVlanDel  bool              // indicate if vlan delete operation
-	allMembers map[string]bool   // all memebrs port names
+	vlanOpCode string            // VLAN table op - create, update or delete
 	delMembers map[string]bool   // Member port names for delete
-	modMembers map[string]string // Port name to tagging mode for create/update
+	newMembers map[string]string // Port name to tagging mode for create/update
 }
 
 type jsonObject map[string]interface{}
@@ -281,8 +279,8 @@ func (app *nonYangDemoApp) translateCreateVlans() error {
 		}
 
 		vlanData := transVlanData{
-			id:        vid,
-			isVlanMod: true,
+			id:         vid,
+			vlanOpCode: "create",
 		}
 
 		app.vlans = append(app.vlans, vlanData)
@@ -310,15 +308,10 @@ func (app *nonYangDemoApp) translateCreateVlanMembers() error {
 		return errors.New("Invalid input")
 	}
 
-	currentMembers, err := app.getMemberPortsAsMap(vlanID)
-	if err != nil {
-		return err
-	}
-
 	vlanData := transVlanData{
 		id:         vlanID,
-		allMembers: currentMembers,
-		modMembers: make(map[string]string),
+		vlanOpCode: "update",
+		newMembers: make(map[string]string),
 	}
 
 	vlanName := toVlanName(vlanID)
@@ -341,9 +334,7 @@ func (app *nonYangDemoApp) translateCreateVlanMembers() error {
 			return errors.New("Invalid input")
 		}
 
-		vlanData.isVlanMod = true
-		vlanData.allMembers[portName] = true
-		vlanData.modMembers[portName] = taggingMode
+		vlanData.newMembers[portName] = taggingMode
 		app.addWatchKey(app.memberTable, vlanName, portName)
 	}
 
@@ -355,21 +346,21 @@ func (app *nonYangDemoApp) translateDeleteVlan() error {
 	vlanID, _ := app.path.IntVar("id")
 	log.Infof("in translateDeleteVlan(); vid=%d", vlanID)
 
-	members, err := app.getMemberPortsAsMap(vlanID)
-	if err != nil {
-		return err
-	}
-
 	vlanData := transVlanData{
 		id:         vlanID,
-		isVlanDel:  true,
+		vlanOpCode: "delete",
 		delMembers: make(map[string]bool),
 	}
 
 	vlanName := toVlanName(vlanID)
 	app.addWatchKey(app.vlanTable, vlanName)
 
-	for portName := range members {
+	vlanEntry, err := app.confDB.GetEntry(app.vlanTable, asKey(vlanName))
+	if err != nil {
+		return err //FIXME return success if not exists
+	}
+
+	for _, portName := range vlanEntry.GetList("members") {
 		vlanData.delMembers[portName] = true
 		app.addWatchKey(app.memberTable, vlanName, portName)
 	}
@@ -383,25 +374,12 @@ func (app *nonYangDemoApp) translateDeleteVlanMember() error {
 	portName := app.path.Var("port")
 	log.Infof("in translateDeleteVlan(); vid=%d, member=%s", vlanID, portName)
 
-	members, err := app.getMemberPortsAsMap(vlanID)
-	if err != nil {
-		return err
-	}
-
-	_, ok := members[portName]
-	if !ok {
-		log.Errorf("%s is not a member of vlan %d", portName, vlanID)
-		return errors.New("Entry does not exist")
-	}
-
 	vlanData := transVlanData{
 		id:         vlanID,
-		isVlanMod:  true,
-		allMembers: members,
+		vlanOpCode: "update",
 		delMembers: make(map[string]bool),
 	}
 
-	delete(vlanData.allMembers, portName)
 	vlanData.delMembers[portName] = true
 
 	vlanName := toVlanName(vlanID)
@@ -410,21 +388,6 @@ func (app *nonYangDemoApp) translateDeleteVlanMember() error {
 
 	app.vlans = append(app.vlans, vlanData)
 	return nil
-}
-
-func (app *nonYangDemoApp) getMemberPortsAsMap(vid int) (map[string]bool, error) {
-	vlanKey := asKey(toVlanName(vid))
-	vlanEntry, err := app.confDB.GetEntry(app.vlanTable, vlanKey)
-	if err != nil {
-		return nil, err
-	}
-
-	portsMap := make(map[string]bool)
-	for _, portName := range vlanEntry.GetList("members") {
-		portsMap[portName] = true
-	}
-
-	return portsMap, nil
 }
 
 func (app *nonYangDemoApp) addWatchKey(ts *db.TableSpec, keyParts ...string) {
@@ -442,26 +405,44 @@ func (app *nonYangDemoApp) writeToDatabase() error {
 		vlanName := toVlanName(vlanData.id)
 		vlanKey := asKey(vlanName)
 
-		if vlanData.isVlanDel {
+		switch vlanData.vlanOpCode {
+		case "create":
+			log.Infof("NEW vlan entry '%s'", vlanName)
+			vlanValue := db.Value{Field: make(map[string]string)}
+			vlanValue.SetInt("vlanid", vlanData.id)
+			err := app.confDB.CreateEntry(app.vlanTable, vlanKey, vlanValue)
+			if err != nil {
+				return err
+			}
+
+		case "delete":
 			log.Infof("DEL vlan entry '%s'", vlanName)
 			err := app.confDB.DeleteEntry(app.vlanTable, vlanKey)
 			if err != nil {
 				return err
 			}
-		}
 
-		if vlanData.isVlanMod {
+		case "update":
+			vlanValue, err := app.confDB.GetEntry(app.vlanTable, vlanKey)
+			if err != nil {
+				return nil
+			}
+
 			var memberNames []string
-			for port := range vlanData.allMembers {
+			for _, port := range vlanValue.GetList("members") {
+				if _, found := vlanData.delMembers[port]; !found {
+					memberNames = append(memberNames, port)
+				}
+			}
+
+			for port := range vlanData.newMembers {
 				memberNames = append(memberNames, port)
 			}
 
 			log.Infof("SET vlan entry '%s', members=%v", vlanName, memberNames)
-			vlanValue := db.Value{Field: make(map[string]string)}
-			vlanValue.SetInt("vlanid", vlanData.id)
 			vlanValue.SetList("members", memberNames)
 
-			err := app.confDB.SetEntry(app.vlanTable, vlanKey, vlanValue)
+			err = app.confDB.SetEntry(app.vlanTable, vlanKey, vlanValue)
 			if err != nil {
 				return err
 			}
@@ -476,13 +457,13 @@ func (app *nonYangDemoApp) writeToDatabase() error {
 			}
 		}
 
-		for port, mode := range vlanData.modMembers {
+		for port, mode := range vlanData.newMembers {
 			log.Infof("SET vlan_member entry '%s|%s'; mode=%s", vlanName, port, mode)
 			memberKey := asKey(vlanName, port)
 			memberValue := db.Value{Field: make(map[string]string)}
 			memberValue.Set("tagging_mode", mode)
 
-			err := app.confDB.SetEntry(app.memberTable, memberKey, memberValue)
+			err := app.confDB.CreateEntry(app.memberTable, memberKey, memberValue)
 			if err != nil {
 				return err
 			}
