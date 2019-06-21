@@ -43,9 +43,8 @@ var ctx *C.struct_ly_ctx
 var data *C.struct_lyd_node
 
 //Schema path
-const (
-	CVL_SCHEMA = "schema/"
-)
+
+var CVL_SCHEMA string = "schema/"
 
 //DB number 
 const (
@@ -101,6 +100,10 @@ type keyValuePairStruct struct {
 
 //package init function 
 func init() {
+	if (os.Getenv("CVL_SCHEMA_PATH") != "") {
+		CVL_SCHEMA = os.Getenv("CVL_SCHEMA_PATH") + "/"
+	}
+
 	Initialize()
 }
 
