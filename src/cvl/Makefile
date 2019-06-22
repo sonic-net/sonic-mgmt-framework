@@ -23,20 +23,20 @@ precheck:
 deps: $(BUILD_DIR)/.lib_deps $(BUILD_DIR)/.deps cvl.a
 
 $(BUILD_DIR)/.lib_deps:
-	touch $@
 	cd build && wget -O $(LIBPCRE).tar.gz https://ftp.pcre.org/pub/pcre/$(LIBPCRE).tar.gz && tar -xvzf $(LIBPCRE).tar.gz && cd -
 	cd $(BUILD_DIR)/$(LIBPCRE) && ./configure --prefix=$(LIBPCRE_PATH) --enable-utf --enable-unicode-properties && make && make install && cd -
 	cd build && git clone https://github.com/CESNET/libyang  && cd -
 	@mkdir -p $(BUILD_DIR)/libyang/build
 	cd $(LIBYANG_PATH) && cmake -D CMAKE_PREFIX_PATH=$(LIBPCRE_PATH)/include -D CMAKE_LIBRARY_PATH=$(LIBPCRE_PATH)/lib -D CMAKE_INSTALL_PREFIX:PATH=$(LIBYANG_PATH) -DPLUGINS_DIR:PATH=$(LIBYANG_PATH) .. && make && make install && cd -
+	touch $@
 
 	
 $(BUILD_DIR)/.deps:
-	touch $@
 	GOPATH=$(GO_DEP_PATH) $(GO) get -u github.com/antchfx/jsonquery
 	GOPATH=$(GO_DEP_PATH) $(GO) get -u github.com/antchfx/xmlquery
 	GOPATH=$(GO_DEP_PATH) $(GO) get -u github.com/golang/glog
 	GOPATH=$(GO_DEP_PATH) $(GO) get -u github.com/go-redis/redis
+#	touch $@
 
 cvl.a:$(BUILD_DIR)/cvl.a
 
