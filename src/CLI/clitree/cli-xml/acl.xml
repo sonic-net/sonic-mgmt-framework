@@ -97,7 +97,7 @@
              ptype="STRING"
              >
         </PARAM>
-        <ACTION>python $SONIC_CLI_ROOT/target/sonic-cli.py post_acl_set_config ${access-list-name} ACL_IPV4</ACTION>
+        <ACTION>python $SONIC_CLI_ROOT/target/sonic-cli.py patch_acl_acl_sets_acl_set ${access-list-name} ACL_IPV4</ACTION>
     </COMMAND>
 
 <!-- no ip access-list -->

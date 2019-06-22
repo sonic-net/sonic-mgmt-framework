@@ -35,7 +35,7 @@ def generate_body(func, args):
        keypath = [ args[0], args[1] ]
 
     # Configure ACL table
-    elif func.__name__ == 'post_acl_set_config' :
+    elif func.__name__ == 'patch_acl_acl_sets_acl_set' :
        keypath = [ args[0], args[1] ]
        body = { "openconfig-acl:config": {
                    "name": args[0],
@@ -174,7 +174,7 @@ def run(func, args):
 
     try:
         if body is not None:
-           api_response = getattr(swagger_client.OpenconfigAclApi(),func.__name__)(*keypath, body)
+           api_response = getattr(swagger_client.OpenconfigAclApi(),func.__name__)(*keypath, body=body)
         else :
            api_response = getattr(swagger_client.OpenconfigAclApi(),func.__name__)(*keypath)
         if api_response is None:
