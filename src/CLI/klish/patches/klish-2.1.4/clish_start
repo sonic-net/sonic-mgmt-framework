@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export SONIC_MGMT_ROOT=/usr/sonic-mgmt
+export SONIC_MGMT_ROOT=/usr/sbin
 export SONIC_CLI_ROOT=$SONIC_MGMT_ROOT/cli
 export SYSTEM_NAME="${HOSTNAME%%.*}"
 export PYTHONPATH=$SONIC_MGMT_ROOT/:$PYTHONPATH
