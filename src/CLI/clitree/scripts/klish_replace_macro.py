@@ -1,4 +1,4 @@
-#!/tools/build/bin/python2.7
+#!/usr/bin/python2.7
 ''' This script does macro replacement on the xml
     files which are used by klish to defind CLI
     strucuture.

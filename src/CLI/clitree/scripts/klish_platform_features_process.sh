@@ -48,6 +48,7 @@ function insert_in()
         fi
     done < $filename
     #set -x
+    touch $outfile $filename
     mv -f $outfile $filename
 }
 

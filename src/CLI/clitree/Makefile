@@ -1,5 +1,6 @@
 .PHONY: install
 
+SONIC_CLI_ROOT := $(abspath ../)
 TGT_DIR := $(SONIC_CLI_ROOT)/target
 
 all:
@@ -17,6 +18,6 @@ all:
 	rm -rf scripts/*.pyc
 
 clean:
-	@echo "nothing to clean for now"
-	rm -rf TGT_DIR
+	rm -rf ${TGT_DIR}
+	@echo "Clitree Cleaned"
 	
