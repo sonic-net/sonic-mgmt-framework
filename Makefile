@@ -5,7 +5,7 @@
 #
 #######################################################################
 
-.PHONY: all clean cleanall codegen rest-server yamlGen
+.PHONY: all clean cleanall codegen rest-server yamlGen cli
 
 ifeq ($(GOPATH),)
 export GOPATH=/tmp/go
@@ -29,12 +29,11 @@ APT_DEPS_LIST = default-jre-headless \
                 libxslt-dev
 
 PIP_DEPS_LIST = pyang pyyaml
+PIP2_DEPS_LIST = connexion python_dateutil certifi six urllib3
 
 TOPDIR := $(abspath .)
 BUILD_DIR := $(TOPDIR)/build
 REST_DIST_DIR := $(BUILD_DIR)/rest_server/dist
-
-export TOPDIR
 
 # Source files affecting REST server
 REST_SRCS := $(shell find $(TOPDIR)/src -name '*.go' | sort) \
@@ -47,7 +46,7 @@ REST_GOPATH = $(GOPATH):$(CVL_GOPATH):$(TOPDIR):$(REST_DIST_DIR)
 
 #$(info REST_SRCS = $(REST_SRCS) )
 
-all: golang go-deps go-patch apt-deps pip-deps rest-server cli
+all: golang go-deps go-patch apt-deps pip-deps pip2-deps cli rest-server
 
 golang:
 	wget https://dl.google.com/go/go1.12.6.linux-amd64.tar.gz
@@ -57,6 +56,7 @@ golang:
 go-deps: $(GO_DEPS_LIST)
 apt-deps: $(APT_DEPS_LIST)
 pip-deps: $(PIP_DEPS_LIST)
+pip2-deps: $(PIP2_DEPS_LIST)
 
 $(GO_DEPS_LIST):
 	/usr/local/go/bin/go get -v $@
@@ -68,6 +68,9 @@ $(APT_DEPS_LIST):
 
 $(PIP_DEPS_LIST):
 	sudo pip3 install $@
+
+$(PIP2_DEPS_LIST):
+	sudo pip install $@
 
 rest-server: $(REST_BIN)
 
@@ -102,8 +105,8 @@ install:
 	$(INSTALL) -D $(TOPDIR)/src/cvl/build/libyang/build/extensions/*.so $(DESTDIR)/usr/sbin/lib/
 	$(INSTALL) -D $(TOPDIR)/src/cvl/build/libyang/build/user_types/*.so $(DESTDIR)/usr/sbin/lib/
 	cp -rf $(TOPDIR)/build/rest_server/dist/ui/ $(DESTDIR)/rest_ui/
-	cp -rf $(TOPDIR)/build/cli $(DESTDIR)/usr/sbin/.
-	cp -rf $(TOPDIR)/build/swagger_client_py/swagger_client $(DESTDIR)/usr/sbin/.
+	cp -rf $(TOPDIR)/build/cli $(DESTDIR)/usr/sbin/
+	cp -rf $(TOPDIR)/build/swagger_client_py/ $(DESTDIR)/usr/sbin/lib/
 
 
 $(addprefix $(DEST)/, $(MAIN_TARGET)): $(DEST)/% :
