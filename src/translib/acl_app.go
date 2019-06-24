@@ -415,26 +415,61 @@ func (app *AclApp) processDelete(d *db.DB) (SetResponse, error) {
 					// Deletion of a specific Rule
 					for seqId, _ := range aclSet.AclEntries.AclEntry {
 						ruleName := "RULE_" + strconv.FormatInt(int64(seqId), 10)
-						d.DeleteEntry(app.ruleTs, db.Key{Comp: []string{aclKey, ruleName}})
+						err = d.DeleteEntry(app.ruleTs, db.Key{Comp: []string{aclKey, ruleName}})
+                        if err != nil {
+                            log.Error(err)
+                            resp = SetResponse{ErrSrc: AppErr}
+                            return resp, err
+                        }
 					}
 				} else {
 					// Deletion of a specific Acl and all its rule
 					if *app.ygotTarget == aclSet {
-						d.DeleteKeys(app.ruleTs, db.Key{Comp: []string{aclKey + TABLE_SEPARATOR + "*"}})
-						d.DeleteEntry(app.aclTs, db.Key{Comp: []string{aclKey}})
+						err = d.DeleteKeys(app.ruleTs, db.Key{Comp: []string{aclKey + TABLE_SEPARATOR + "*"}})
+                        if err != nil {
+                            log.Error(err)
+                            resp = SetResponse{ErrSrc: AppErr}
+                            return resp, err
+                        }
+						err = d.DeleteEntry(app.aclTs, db.Key{Comp: []string{aclKey}})
+                        if err != nil {
+                            log.Error(err)
+                            resp = SetResponse{ErrSrc: AppErr}
+                            return resp, err
+                        }
 					}
 					// Deletion of all rules for a specific ACL but NOT ACL
 					if *app.ygotTarget == aclSet.AclEntries {
-						d.DeleteKeys(app.ruleTs, db.Key{Comp: []string{aclKey + TABLE_SEPARATOR + "*"}})
+						err = d.DeleteKeys(app.ruleTs, db.Key{Comp: []string{aclKey + TABLE_SEPARATOR + "*"}})
+                        if err != nil {
+                            log.Error(err)
+                            resp = SetResponse{ErrSrc: AppErr}
+                            return resp, err
+                        }
 					} else {
-						d.DeleteKeys(app.ruleTs, db.Key{Comp: []string{aclKey + TABLE_SEPARATOR + "*"}})
+						err = d.DeleteKeys(app.ruleTs, db.Key{Comp: []string{aclKey + TABLE_SEPARATOR + "*"}})
+                        if err != nil {
+                            log.Error(err)
+                            resp = SetResponse{ErrSrc: AppErr}
+                            return resp, err
+                        }
 					}
 				}
 			}
 		} else {
 			// Deletion of All ACLs and Rules
-			d.DeleteTable(app.aclTs)
-			d.DeleteTable(app.ruleTs)
+			err = d.DeleteTable(app.aclTs)
+            if err != nil {
+                log.Error(err)
+                resp = SetResponse{ErrSrc: AppErr}
+                return resp, err
+            }
+			err = d.DeleteTable(app.ruleTs)
+            if err != nil {
+                log.Error(err)
+                resp = SetResponse{ErrSrc: AppErr}
+                return resp, err
+            }
 		}
 	} else if isSubtreeRequest(targetUriPath, "/openconfig-acl:acl/interfaces") {
 		aclKeys, _ := d.GetKeys(app.aclTs)
@@ -446,10 +481,12 @@ func (app *AclApp) processDelete(d *db.DB) (SetResponse, error) {
 					direction := aclEntry.Get("stage")
 					for intfId := range aclObj.Interfaces.Interface {
 						if targetUriPath == "/openconfig-acl:acl/interfaces/interface/ingress-acl-sets" && direction != "INGRESS" {
+                            resp = SetResponse{ErrSrc: AppErr}
 							err = errors.New("Acl is not Ingress")
 							return resp, err
 						}
 						if targetUriPath == "/openconfig-acl:acl/interfaces/interface/egress-acl-sets" && direction != "EGRESS" {
+                            resp = SetResponse{ErrSrc: AppErr}
 							err = errors.New("Acl is not Egress")
 							return resp, err
 						}
@@ -463,6 +500,7 @@ func (app *AclApp) processDelete(d *db.DB) (SetResponse, error) {
 										isRequestedAclFound = true
 									} else {
 										err = errors.New("Acl Type is not maching")
+                                        resp = SetResponse{ErrSrc: AppErr}
 										return resp, err
 									}
 								} else {
@@ -477,6 +515,7 @@ func (app *AclApp) processDelete(d *db.DB) (SetResponse, error) {
 										isRequestedAclFound = true
 									} else {
 										err = errors.New("Acl Type is not maching")
+                                        resp = SetResponse{ErrSrc: AppErr}
 										return resp, err
 									}
 								} else {
@@ -488,7 +527,12 @@ func (app *AclApp) processDelete(d *db.DB) (SetResponse, error) {
 						intfs := aclEntry.GetList("ports")
 						intfs = removeElement(intfs, intfId)
 						aclEntry.SetList("ports", intfs)
-						d.SetEntry(app.aclTs, aclKeys[i], aclEntry)
+						err = d.SetEntry(app.aclTs, aclKeys[i], aclEntry)
+                        if err != nil {
+                            log.Error(err)
+                            resp = SetResponse{ErrSrc: AppErr}
+                            return resp, err
+                        }
 						// If last interface removed, then remove stage field also
 						if len(intfs) == 0 {
 							aclEntry.Remove("stage")
@@ -498,7 +542,12 @@ func (app *AclApp) processDelete(d *db.DB) (SetResponse, error) {
 				} else {
 					aclEntry.Remove("stage")
 					aclEntry.SetList("ports", []string{})
-					d.SetEntry(app.aclTs, aclKeys[i], aclEntry)
+					err = d.SetEntry(app.aclTs, aclKeys[i], aclEntry)
+                    if err != nil {
+                        log.Error(err)
+                        resp = SetResponse{ErrSrc: AppErr}
+                        return resp, err
+                    }
 				}
 			}
 			if isRequestedAclFound {
@@ -1233,10 +1282,7 @@ func (app *AclApp) convert_oc_acl_rules_to_internal(acl *ocbinds.OpenconfigAcl_A
 func (app *AclApp) convert_oc_acl_bindings_to_internal(d *db.DB, aclData map[string]db.Value, aclObj *ocbinds.OpenconfigAcl_Acl) (bool, error) {
     var err error
 	var ret bool = false
-	if len(aclData) == 0 {
-		app.convert_db_acl_to_internal(d, db.Key{})
-		aclData = app.aclTableMap
-	}
+
 	if aclObj.Interfaces != nil && len(aclObj.Interfaces.Interface) > 0 {
 		aclInterfacesMap := make(map[string][]string)
 		// Below code assumes that an ACL can be either INGRESS or EGRESS but not both.
@@ -1254,9 +1300,8 @@ func (app *AclApp) convert_oc_acl_bindings_to_internal(d *db.DB, aclData map[str
 						} else {
 							aclInterfacesMap[aclName] = append(aclInterfacesMap[aclName], *intf.Id)
 						}
-                        if _,ok := aclData[aclName]; !ok {
-                            err = errors.New("Incorrect Acl name: " + inAclKey.SetName + " used in port binding")
-                            return false,err
+                        if len(aclData) == 0 {
+                            aclData[aclName] = db.Value{Field: map[string]string{}}
                         }
                         aclData[aclName].Field["stage"] = "INGRESS"
 						ret = true
@@ -1273,9 +1318,8 @@ func (app *AclApp) convert_oc_acl_bindings_to_internal(d *db.DB, aclData map[str
 						} else {
 							aclInterfacesMap[aclName] = append(aclInterfacesMap[aclName], *intf.Id)
 						}
-                        if _,ok := aclData[aclName]; !ok {
-                            err = errors.New("Incorrect Acl name: " + outAclKey.SetName + " used in port binding")
-                            return false,err
+                        if len(aclData) == 0 {
+                            aclData[aclName] = db.Value{Field: map[string]string{}}
                         }
 						aclData[aclName].Field["stage"] = "EGRESS"
 						ret = true
