@@ -19,7 +19,7 @@ all:
 
 	mkdir -p $(TOPDIR)/build/cli
 	rm -rf $(TOPDIR)/build/cli/*
-	mv $(TGT_DIR) $(TOPDIR)/build/cli
+	mv target $(TOPDIR)/build/cli
 
 clean:
 	make --directory=klish clean
