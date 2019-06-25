@@ -1,0 +1,67 @@
+module sonic-buffer-pg {
+	namespace "http://github.com/Azure/sonic-buffer-pg";
+	prefix bpg;
+
+	import ietf-yang-types {
+		prefix yang;
+	}
+
+	import ietf-inet-types {
+		prefix inet;
+	}
+
+	import sonic-common {
+		prefix scommon;
+	}
+
+	import sonic-port {
+		prefix prt;
+	}
+
+	import sonic-buffer-profile {
+		prefix bpf;
+	}
+
+	organization
+		"BRCM";
+
+	contact
+		"BRCM";
+
+	description
+		"SONIC BUFFER PG";
+
+	revision 2019-05-15 {
+		description
+			"Initial revision.";
+	}
+
+
+	container sonic-buffer-pg {
+		list BUFFER_PG {
+			key "ifname pg_num";
+			scommon:key-delim "|";
+			scommon:key-pattern "BUFFER_PG|({ifname},)*|{pg_num}"; //special pattern used for extracting keys from redis-key and fill populate the yang instance
+									   // Total list instance = number(key1) * number(key2) * number(key3)
+
+			leaf ifname {
+				type leafref {
+					path "/prt:sonic-port/prt:PORT/prt:ifname";
+				}
+			}
+
+			leaf pg_num {
+				type string {
+					pattern "[0-7]((-)[0-7])?";
+				}
+			}
+
+			leaf profile { //Hash reference key
+				type leafref {
+					path "/bpf:sonic-buffer-profile/bpf:BUFFER_PROFILE/bpf:name";
+				}
+			}
+
+		}
+	}
+}

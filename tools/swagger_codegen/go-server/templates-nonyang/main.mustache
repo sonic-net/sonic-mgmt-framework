@@ -1,0 +1,33 @@
+{{>partial_header}}
+package main
+
+import (
+	"flag"
+	"fmt"
+	"log"
+	"net/http"
+
+	// WARNING!
+	// Change this to a fully-qualified import path
+	// once you place this file into your project.
+	// For example,
+	//
+	//    sw "github.com/myname/myrepo/{{apiPath}}"
+	//
+	sw "./{{apiPath}}"
+)
+
+func main() {
+	var port int
+
+	flag.IntVar(&port, "port", {{serverPort}}, "Listen port")
+	flag.Parse()
+
+	address := fmt.Sprintf(":%d", port)
+
+	log.Printf("Server started on %s", address)
+
+	router := sw.NewRouter()
+
+	log.Fatal(http.ListenAndServe(address, router))
+}

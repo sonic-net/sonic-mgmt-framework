@@ -1,0 +1,78 @@
+module sonic-buffer-profile {
+	namespace "http://github.com/Azure/sonic-buffer-profile";
+	prefix bpf;
+
+	import ietf-yang-types {
+		prefix yang;
+	}
+
+	import ietf-inet-types {
+		prefix inet;
+	}
+
+	import sonic-common {
+		prefix scommon;
+	}
+
+	import sonic-buffer-pool {
+		prefix bpl;
+	}
+
+	organization
+		"BRCM";
+
+	contact
+		"BRCM";
+
+	description
+		"SONIC BUFFER PROFILE";
+
+	revision 2019-05-15 {
+		description
+			"Initial revision.";
+	}
+
+
+	container sonic-buffer-profile {
+
+		list BUFFER_PROFILE {
+			key "name";
+			scommon:key-delim "|";
+			scommon:key-pattern "BUFFER_PROFILE|{name}";
+
+			leaf name {
+				type string;
+			}
+
+			leaf static_th {
+				type uint64;
+			}
+
+			leaf dynamic_th {
+				type int64;
+			}
+
+			leaf size {
+				type uint64;
+			}
+
+			leaf pool {
+				type leafref {
+					path "/bpl:sonic-buffer-pool/bpl:BUFFER_POOL/bpl:name";
+				}
+			}
+
+			leaf xon_offset {
+				type uint64;
+			}
+
+			leaf xon {
+				type uint64;
+			}
+
+			leaf xoff {
+				type uint64;
+			}
+		}
+	}
+}
