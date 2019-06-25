@@ -2,7 +2,6 @@ SHELL = /bin/bash
 .ONESHELL:
 .SHELLFLAGS += -e
 
-TOPDIR := $(abspath ../..)
 SUBDIRS := clitree renderer klish 
 export SONIC_CLI_ROOT=$(TOPDIR)/src/CLI
 TGT_DIR := $(SONIC_CLI_ROOT)/target
