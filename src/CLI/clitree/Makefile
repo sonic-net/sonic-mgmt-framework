@@ -1,6 +1,5 @@
 .PHONY: install
 
-SONIC_CLI_ROOT := $(abspath ../)
 TGT_DIR := $(SONIC_CLI_ROOT)/target
 
 all:
