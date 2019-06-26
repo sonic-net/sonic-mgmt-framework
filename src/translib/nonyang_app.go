@@ -425,7 +425,7 @@ func (app *nonYangDemoApp) writeToDatabase() error {
 		case "update":
 			vlanValue, err := app.confDB.GetEntry(app.vlanTable, vlanKey)
 			if err != nil {
-				return nil
+				return err
 			}
 
 			var memberNames []string
@@ -458,7 +458,7 @@ func (app *nonYangDemoApp) writeToDatabase() error {
 		}
 
 		for port, mode := range vlanData.newMembers {
-			log.Infof("SET vlan_member entry '%s|%s'; mode=%s", vlanName, port, mode)
+			log.Infof("NEW vlan_member entry '%s|%s'; mode=%s", vlanName, port, mode)
 			memberKey := asKey(vlanName, port)
 			memberValue := db.Value{Field: make(map[string]string)}
 			memberValue.Set("tagging_mode", mode)
