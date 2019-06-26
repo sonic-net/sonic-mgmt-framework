@@ -61,12 +61,12 @@ func (binder *requestBinder) unMarshallPayload(workObj *interface{}) error {
 		return err
 	}
 
-	err := ocbinds.Unmarshal(*binder.payload, targetObj, &ytypes.IgnoreExtraFields{})
+	err := ocbinds.Unmarshal(*binder.payload, targetObj)
 	if err != nil {
 		fmt.Println(err)
 		return err
 	}
-
+    
 	return nil
 }
 
@@ -92,11 +92,19 @@ func (binder *requestBinder) unMarshall() (*ygot.GoStruct, *interface{}, error) 
 			if err != nil {
 				return nil, nil, err
 			}
-			return ygotRootObj, workObj, nil
+          err = deviceObj.Validate(&ytypes.LeafrefOptions{IgnoreMissingData: true})
+          if err != nil {
+            return nil, nil, err
+          }
+		  return ygotRootObj, workObj, nil
 		}
 
 	case GET, DELETE:
 		fmt.Println("target node name", reflect.TypeOf(*workObj).Elem().Name())
+        err = deviceObj.Validate(&ytypes.LeafrefOptions{IgnoreMissingData: true})
+          if err != nil {
+            return nil, nil, err
+          }
 		return ygotRootObj, workObj, nil
 	case UPDATE, REPLACE:
 		var tmpTargetNode *interface{}
@@ -120,6 +128,12 @@ func (binder *requestBinder) unMarshall() (*ygot.GoStruct, *interface{}, error) 
 			fmt.Println("unMarshall - END ")
 			return nil, nil, err
 		}
+
+        err = deviceObj.Validate(&ytypes.LeafrefOptions{IgnoreMissingData: true})
+        if err != nil {
+            fmt.Println(err)
+            return nil, nil, err
+        }
 
 		fmt.Println("unMarshall - END ")
 		return ygotRootObj, workObj, nil
