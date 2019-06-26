@@ -9,13 +9,13 @@ Please note that the build instruction in this guide has only been tested on Ubu
 
 #### Steps to build and create an installer
 1. git clone https://github.com/project-arlo/sonic-buildimage.git
-* cd sonic-buildimage/
-* sudo modprobe overlay
-* make init
-* make configure PLATFORM=broadcom
-* sed -i "s/SONIC_CONFIG_BUILD_JOBS = 1/SONIC_CONFIG_BUILD_JOBS = 5/g" rules/config
-* BLDENV=stretch make stretch
-* make target/sonic-broadcom.bin
+2. cd sonic-buildimage/
+3. sudo modprobe overlay
+4. make init
+5. make configure PLATFORM=broadcom
+6. sed -i "s/SONIC_CONFIG_BUILD_JOBS = 1/SONIC_CONFIG_BUILD_JOBS = 5/g" rules/config
+7. BLDENV=stretch make stretch
+8. make target/sonic-broadcom.bin
  
 #### Faster builds
 In order to speed up the process of build, you can prefetch the latest debian files from Azure server, and just build what you need.
