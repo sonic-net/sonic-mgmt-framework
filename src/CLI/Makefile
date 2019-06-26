@@ -2,7 +2,6 @@ SHELL = /bin/bash
 .ONESHELL:
 .SHELLFLAGS += -e
 
-TOPDIR := $(abspath ../..)
 SUBDIRS := clitree renderer klish 
 export SONIC_CLI_ROOT=$(TOPDIR)/src/CLI
 TGT_DIR := $(SONIC_CLI_ROOT)/target
@@ -20,7 +19,7 @@ all:
 
 	mkdir -p $(TOPDIR)/build/cli
 	rm -rf $(TOPDIR)/build/cli/*
-	mv $(TGT_DIR) $(TOPDIR)/build/cli
+	mv target $(TOPDIR)/build/cli
 
 clean:
 	make --directory=klish clean

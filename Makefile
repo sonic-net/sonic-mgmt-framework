@@ -35,6 +35,7 @@ TOPDIR := $(abspath .)
 BUILD_DIR := $(TOPDIR)/build
 REST_DIST_DIR := $(BUILD_DIR)/rest_server/dist
 
+export TOPDIR
 # Source files affecting REST server
 REST_SRCS := $(shell find $(TOPDIR)/src -name '*.go' | sort) \
 			 $(shell find $(TOPDIR)/models/yang -name '*.yang' | sort) \
@@ -46,7 +47,7 @@ REST_GOPATH = $(GOPATH):$(CVL_GOPATH):$(TOPDIR):$(REST_DIST_DIR)
 
 #$(info REST_SRCS = $(REST_SRCS) )
 
-all: golang go-deps go-patch apt-deps pip-deps pip2-deps cli rest-server
+all: apt-deps pip-deps pip2-deps cli golang go-deps go-patch rest-server
 
 golang:
 	wget https://dl.google.com/go/go1.12.6.linux-amd64.tar.gz

@@ -5,14 +5,10 @@ SHELL = /bin/bash
 KLISH_VERSION = 2.1.4
 PYTHONVER=2.7
 
-TOPDIR := $(abspath ../../../)
-SONIC_CLI_ROOT=$(TOPDIR)/src/CLI
 KLISH_SRC = $(SONIC_CLI_ROOT)/klish/klish-$(KLISH_VERSION)
 
 SRC_REPLACEMENTS:=$(shell find patches -type f)
 all : $(SRC_REPLACEMENTS)
-	rm -rf klish-$(KLISH_VERSION)
-	pwd && ls -l
 	git clone https://src.libcode.org/pkun/klish.git klish-$(KLISH_VERSION)
 	cd klish-$(KLISH_VERSION)
 	git checkout master
