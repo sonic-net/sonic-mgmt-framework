@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CLISH_MODULE
+    xmlns="http://www.dellemc.com/force10/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xi="http://www.w3.org/2001/XInclude"
+    xsi:schemaLocation="http://www.dellemc.com/force10/XMLSchema
+    http://www.dellemc.com/force10/XMLSchema/clish.xsd"
+    >
+    <VIEW
+        name="configure-view"
+        >
+        <COMMAND
+            name="interface"
+            help="Select an interface"
+            view="configure-if-view"
+            viewid="iface=Ethernet${phy-if-name}"
+            >
+            <PARAM
+                name="Ethernet"
+                help="Interface commands"
+                mode="subcommand"
+                ptype="SUBCOMMAND"
+                >
+                <PARAM
+                    name="phy-if-name"
+                    help="Physical interface(Multiples of 4)"
+                    ptype="UINT"
+                    view="configure-if-view"
+                    viewid="iface=Ethernet${phyifname}"
+                    />
+            </PARAM>
+            <ACTION builtin="clish_nop"></ACTION>
+        </COMMAND>
+    </VIEW>
+    <VIEW
+        name="configure-if-view"
+        prompt="${SYSTEM_NAME}(conf-if-${iface})# "
+        depth="2"
+        >
+        <!-- Inheritance -->
+        <NAMESPACE
+            ref="configure-view"
+            help="false"
+            completion="false"
+            />
+        <COMMAND
+            name="no"
+            help="Negate a command or set its defaults"
+            />
+    </VIEW>
+    </CLISH_MODULE>
+

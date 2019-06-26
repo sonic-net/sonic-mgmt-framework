@@ -5,7 +5,7 @@
 #
 #######################################################################
 
-.PHONY: all clean cleanall codegen rest-server yamlGen
+.PHONY: all clean cleanall codegen rest-server yamlGen cli
 
 ifeq ($(GOPATH),)
 export GOPATH=/tmp/go
@@ -29,11 +29,13 @@ APT_DEPS_LIST = default-jre-headless \
                 libxslt-dev
 
 PIP_DEPS_LIST = pyang pyyaml
+PIP2_DEPS_LIST = connexion python_dateutil certifi six urllib3
 
 TOPDIR := $(abspath .)
 BUILD_DIR := $(TOPDIR)/build
 REST_DIST_DIR := $(BUILD_DIR)/rest_server/dist
 
+export TOPDIR
 # Source files affecting REST server
 REST_SRCS := $(shell find $(TOPDIR)/src -name '*.go' | sort) \
 			 $(shell find $(TOPDIR)/models/yang -name '*.yang' | sort) \
@@ -45,7 +47,7 @@ REST_GOPATH = $(GOPATH):$(CVL_GOPATH):$(TOPDIR):$(REST_DIST_DIR)
 
 #$(info REST_SRCS = $(REST_SRCS) )
 
-all: golang go-deps go-patch apt-deps pip-deps rest-server
+all: apt-deps pip-deps pip2-deps cli golang go-deps go-patch rest-server
 
 golang:
 	wget https://dl.google.com/go/go1.12.6.linux-amd64.tar.gz
@@ -55,6 +57,7 @@ golang:
 go-deps: $(GO_DEPS_LIST)
 apt-deps: $(APT_DEPS_LIST)
 pip-deps: $(PIP_DEPS_LIST)
+pip2-deps: $(PIP2_DEPS_LIST)
 
 $(GO_DEPS_LIST):
 	/usr/local/go/bin/go get -v $@
@@ -67,7 +70,13 @@ $(APT_DEPS_LIST):
 $(PIP_DEPS_LIST):
 	sudo pip3 install $@
 
+$(PIP2_DEPS_LIST):
+	sudo pip install $@
+
 rest-server: $(REST_BIN)
+
+cli:
+	$(MAKE) -C src/CLI
 
 yamlGen:
 	$(MAKE) -C models/yang
@@ -93,10 +102,13 @@ install:
 	$(INSTALL) -d $(DESTDIR)/usr/sbin/lib/
 	$(INSTALL) -D $(TOPDIR)/src/cvl/schema/*.yin $(DESTDIR)/usr/sbin/schema/
 	$(INSTALL) -T $(TOPDIR)/src/cvl/build/pcre-8.43/install/lib/libpcre.so.1.2.11 $(DESTDIR)/usr/sbin/lib/libpcre.so.1
-	$(INSTALL) -T $(TOPDIR)/src/cvl/build/libyang/build/libyang.so.1.1.25 $(DESTDIR)/usr/sbin/lib/libyang.so.1
+	$(INSTALL) -T $(TOPDIR)/src/cvl/build/libyang/build/libyang.so.1.1.* $(DESTDIR)/usr/sbin/lib/libyang.so.1
 	$(INSTALL) -D $(TOPDIR)/src/cvl/build/libyang/build/extensions/*.so $(DESTDIR)/usr/sbin/lib/
 	$(INSTALL) -D $(TOPDIR)/src/cvl/build/libyang/build/user_types/*.so $(DESTDIR)/usr/sbin/lib/
 	cp -rf $(TOPDIR)/build/rest_server/dist/ui/ $(DESTDIR)/rest_ui/
+	cp -rf $(TOPDIR)/build/cli $(DESTDIR)/usr/sbin/
+	cp -rf $(TOPDIR)/build/swagger_client_py/ $(DESTDIR)/usr/sbin/lib/
+
 
 $(addprefix $(DEST)/, $(MAIN_TARGET)): $(DEST)/% :
 	mv $* $(DEST)/
@@ -106,6 +118,7 @@ clean:
 	$(MAKE) -C src/cvl/schema clean
 	$(MAKE) -C models clean
 	$(MAKE) -C models/yang clean
+	$(MAKE) -C src/CLI clean
 
 cleanall:
 	$(MAKE) -C src/cvl cleanall

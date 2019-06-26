@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- Clish platform specific file
+     This file has two sections:
+     1. FEATURELIST - This contains list of features and their 'enabled'
+        state on this platform
+     2. ENTITYLIST - This contains the list of feature-parameters and their
+        respective values
+
+     Note: The FEATURENAME and ENTITYNAME must match a record in the schema
+     file feature_master.xsd.
+        -->
+<PLATFORMMODULE>
+ <FEATURELIST>
+ <FEATURE enabled="false">FEATURE_DUPLEX</FEATURE>
+ <FEATURE enabled="true">FEATURE_SPEED</FEATURE>
+ <FEATURE enabled="true">FEATURE_BREAKOUT</FEATURE>
+ <FEATURE enabled="true">FEATURE_MGMT_IF_IP</FEATURE>
+ <FEATURE enabled="true">FEATURE_SYSTEM_IDENTIFIER</FEATURE>
+ </FEATURELIST>
+ <ENTITYLIST>
+  <ENTITYNAME value="1">START_CHASSIS_ID</ENTITYNAME>
+  <ENTITYNAME value="1">MAX_CHASSIS_ID</ENTITYNAME>
+  <ENTITYNAME value="1">START_SLOT_ID</ENTITYNAME>
+  <ENTITYNAME value="1">MAX_SLOT_ID</ENTITYNAME>
+  <ENTITYNAME value="1">START_PORT_ID</ENTITYNAME>
+  <ENTITYNAME value="32">MAX_PORT_ID</ENTITYNAME>
+  <ENTITYNAME value="1">START_SUB_PORT_ID</ENTITYNAME>
+  <ENTITYNAME value="4">MAX_SUB_PORT_ID</ENTITYNAME>
+  <ENTITYNAME value="node-id">PHYSICAL_SLOT_STRING</ENTITYNAME>
+  <ENTITYNAME value="9216">MAX_MTU</ENTITYNAME>
+  <ENTITYNAME value="1">QOS_MIN_BUFFER</ENTITYNAME>
+  <ENTITYNAME value="512">QOS_MAX_BUFFER</ENTITYNAME>
+  <ENTITYNAME value="0">CPU_QUEUE_MIN</ENTITYNAME>
+  <ENTITYNAME value="22">CPU_QUEUE_MAX</ENTITYNAME>
+ </ENTITYLIST>
+</PLATFORMMODULE>
