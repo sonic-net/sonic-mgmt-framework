@@ -74,14 +74,16 @@ Here is a python script you could use to fetch latest prebuilt objects (deb, gz,
 
 
 ##### Incremental builds 
-Just clean up the deb's that require re-build, and build again. Here is a few exmples:
+Just clean up the deb's that require re-build, and build again. Here is an exmple:
 
 	BLDENV=stretch make target/debs/stretch/sonic-device-data_1.0-1_all.deb-clean 
 	BLDENV=stretch make target/debs/stretch/sonic-device-data_1.0-1_all.deb
 	
-	BLDENV=stretch make target/debs/stretch/platform-modules-s5232f_1.1_amd64.deb-clean 
-	BLDENV=stretch make target/debs/stretch/platform-modules-s5232f_1.1_amd64.deb
 
 ##### To build deb file for sonic-mgmt-framework
 
-	BLDENV=stretch make target/debs/stretch/sonic-mgmt-framework_1.0-01_amd64.deb 
+	BLDENV=stretch make target/debs/stretch/sonic-mgmt-framework_1.0-01_amd64.deb
+	
+##### To build sonic-mgmt-framework docker alone
+
+	make target/debs/stretch/sonic-mgmt-framework_1.0-01_amd64.gz
