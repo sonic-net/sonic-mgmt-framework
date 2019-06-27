@@ -3,10 +3,12 @@
 ### Build Instruction
 Please note that the build instruction in this guide has only been tested on Ubuntu 16.04.
 #### Pre-rerequisit
+##### User permissions:
+	`sudo usermod -aG sudo $USER`
+	`sudo usermod -aG docker $USER`
 
-* Packages to be installed:
- * sudo apt-get install git
- * sudo apt-get install docker 
+##### Packages to be installed:
+	`sudo apt-get install git docker`
 
 #### Steps to build and create an installer
 1. git clone https://github.com/project-arlo/sonic-buildimage.git
@@ -15,9 +17,12 @@ Please note that the build instruction in this guide has only been tested on Ubu
 4. make init
 5. make configure PLATFORM=broadcom
 6. Run the prefetch python script to download all binaries (see below for the script).
-7. BLDENV=stretch make target/docker-sonic-mgmt-framework.gz &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <--- to build  container
-8. BLDENV=stretch make stretch &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <--- to build Debian Stretch, if not already downloaded
-9. BLDENV=stretch make target/sonic-broadcom.bin &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <--- to build the ONIE installer
+7. To build mgmt-framework container:   
+	`BLDENV=stretch make target/docker-sonic-mgmt-framework.gz`
+8. To build Debian Stretch, if not already downloaded:   
+	`BLDENV=stretch make stretch`
+9. To build the ONIE installer:   
+	`BLDENV=stretch make target/sonic-broadcom.bin`
  
 #### Faster builds
 In order to speed up the process of build, you can prefetch the latest debian files from Azure server, and just build what you need.
@@ -69,10 +74,6 @@ Here is a python script you could use to fetch latest prebuilt objects (deb, gz,
     get_all_bins('target/python-wheels/', '.whl')
     get_all_bins('target/', '.gz')
 
-
-* Follow steps 1 to 6 in the previous section.
-* Download prebuilt objects from azure jenkins server using the above script.
-* Then run step 7 to create docker image, and run step 9 to build complete sonic onie NOS installer .
 
 
 ##### Incremental builds 
