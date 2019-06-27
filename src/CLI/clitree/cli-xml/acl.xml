@@ -23,9 +23,9 @@
         </PARAM>
       <ACTION>
         if test "${access-list-name}" = ""; then&#xA;
-            python $SONIC_CLI_ROOT/target/sonic-cli.py get_acl_acl_sets show_access_list.j2&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli.py get_acl_acl_sets show_access_list.j2&#xA;
         else&#xA;
-            python $SONIC_CLI_ROOT/target/sonic-cli.py get_acl_set_acl_entries ${access-list-name} ACL_IPV4 show_access_list.j2&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli.py get_acl_set_acl_entries ${access-list-name} ACL_IPV4 show_access_list.j2&#xA;
         fi&#xA;
       </ACTION>
     </COMMAND>
@@ -37,7 +37,7 @@
          help="Show IPv4 access-group information"
 		 >
       <ACTION>
-        python $SONIC_CLI_ROOT/target/sonic-cli.py get_acl_interfaces show_access_group.j2
+        python $SONIC_CLI_ROOT/sonic-cli.py get_acl_interfaces show_access_group.j2
       </ACTION>
     </COMMAND>
 
@@ -56,9 +56,9 @@
 
     <ACTION>
         if test "${direction-switch}" = "in"; then&#xA;
-            python $SONIC_CLI_ROOT/target/sonic-cli.py post_list_base_interfaces_interface ${access-list-name} ACL_IPV4 ${iface} ingress&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli.py post_list_base_interfaces_interface ${access-list-name} ACL_IPV4 ${iface} ingress&#xA;
         else&#xA;
-            python $SONIC_CLI_ROOT/target/sonic-cli.py post_list_base_interfaces_interface ${access-list-name} ACL_IPV4 ${iface} egress&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli.py post_list_base_interfaces_interface ${access-list-name} ACL_IPV4 ${iface} egress&#xA;
         fi&#xA;
     </ACTION>
     </COMMAND>
@@ -73,9 +73,9 @@
 
     <ACTION>
         if test "${direction-switch}" = "in"; then&#xA;
-            python $SONIC_CLI_ROOT/target/sonic-cli.py delete_interface_ingress_acl_sets_ingress_acl_set ${iface} ${access-list-name} ACL_IPV4&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli.py delete_interface_ingress_acl_sets_ingress_acl_set ${iface} ${access-list-name} ACL_IPV4&#xA;
         else&#xA;
-            python $SONIC_CLI_ROOT/target/sonic-cli.py delete_interface_egress_acl_sets_egress_acl_set ${iface} ${access-list-name} ACL_IPV4&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli.py delete_interface_egress_acl_sets_egress_acl_set ${iface} ${access-list-name} ACL_IPV4&#xA;
         fi&#xA;
     </ACTION>
     </COMMAND>
@@ -97,7 +97,7 @@
              ptype="STRING"
              >
         </PARAM>
-        <ACTION>python $SONIC_CLI_ROOT/target/sonic-cli.py patch_acl_acl_sets_acl_set ${access-list-name} ACL_IPV4</ACTION>
+        <ACTION>python $SONIC_CLI_ROOT/sonic-cli.py patch_acl_acl_sets_acl_set ${access-list-name} ACL_IPV4</ACTION>
     </COMMAND>
 
 <!-- no ip access-list -->
@@ -109,7 +109,7 @@
              ptype="STRING"
 			 >
         </PARAM>
-    <ACTION>python $SONIC_CLI_ROOT/target/sonic-cli.py delete_acl_acl_sets_acl_set ${access-list-name} ACL_IPV4</ACTION>
+    <ACTION>python $SONIC_CLI_ROOT/sonic-cli.py delete_acl_acl_sets_acl_set ${access-list-name} ACL_IPV4</ACTION>
     </COMMAND>
 
 </VIEW>
@@ -145,7 +145,7 @@
             help="Sequence number"
             ptype="UINT"
             />
-        <ACTION>python $SONIC_CLI_ROOT/target/sonic-cli.py delete_acl_set_acl_entries_acl_entry ${name} ACL_IPV4 ${seq-no}</ACTION>
+        <ACTION>python $SONIC_CLI_ROOT/sonic-cli.py delete_acl_set_acl_entries_acl_entry ${name} ACL_IPV4 ${seq-no}</ACTION>
     </COMMAND>
 
      <COMMAND
@@ -199,15 +199,15 @@
          <ACTION>
              if test "${seq-options}" = "permit"; then&#xA;
                  if test "${permit-options}" = "tcp"; then&#xA;
-                     python $SONIC_CLI_ROOT/target/sonic-cli.py post_list_base_acl_entries_acl_entry ${name} ACL_IPV4 ${seq-no} tcp permit ${src-prefix} ${source-port-number} ${dest-prefix} ${destination-port-number}&#xA;
+                     python $SONIC_CLI_ROOT/sonic-cli.py post_list_base_acl_entries_acl_entry ${name} ACL_IPV4 ${seq-no} tcp permit ${src-prefix} ${source-port-number} ${dest-prefix} ${destination-port-number}&#xA;
                  else&#xA;
-                     python $SONIC_CLI_ROOT/target/sonic-cli.py post_list_base_acl_entries_acl_entry ${name} ACL_IPV4 ${seq-no} udp permit ${src-prefix} ${source-port-number} ${dest-prefix} ${destination-port-number}&#xA;
+                     python $SONIC_CLI_ROOT/sonic-cli.py post_list_base_acl_entries_acl_entry ${name} ACL_IPV4 ${seq-no} udp permit ${src-prefix} ${source-port-number} ${dest-prefix} ${destination-port-number}&#xA;
                  fi&#xA;
              elif test "${seq-options}" = "deny"; then&#xA;
                  if test "${deny-options}" = "tcp"; then&#xA;
-                      python $SONIC_CLI_ROOT/target/sonic-cli.py post_list_base_acl_entries_acl_entry ${name} ACL_IPV4 ${seq-no} tcp deny ${src-prefix} ${source-port-number} ${dest-prefix} ${destination-port-number}&#xA;
+                      python $SONIC_CLI_ROOT/sonic-cli.py post_list_base_acl_entries_acl_entry ${name} ACL_IPV4 ${seq-no} tcp deny ${src-prefix} ${source-port-number} ${dest-prefix} ${destination-port-number}&#xA;
                  else&#xA;
-                      python $SONIC_CLI_ROOT/target/sonic-cli.py post_list_base_acl_entries_acl_entry ${name} ACL_IPV4 ${seq-no} udp deny ${src-prefix} ${source-port-number} ${dest-prefix} ${destination-port-number}&#xA;
+                      python $SONIC_CLI_ROOT/sonic-cli.py post_list_base_acl_entries_acl_entry ${name} ACL_IPV4 ${seq-no} udp deny ${src-prefix} ${source-port-number} ${dest-prefix} ${destination-port-number}&#xA;
                  fi&#xA;
              fi&#xA;
          </ACTION>
