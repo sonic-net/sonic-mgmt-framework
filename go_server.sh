@@ -12,8 +12,12 @@ cd $SERVER_DIR
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CVLDIR/build/pcre-8.43/install/lib:$CVLDIR/build/libyang/build/lib64
 
 # Setup CVL schema directory
-if [ ! -d schema ]; then
-    ln -s $CVLDIR/schema schema
+if [ -z $CVL_SCHEMA_PATH ]; then
+    export CVL_SCHEMA_PATH=$CVLDIR/schema
+fi
+
+if [ $(find $CVL_SCHEMA_PATH -name *.yin | wc -l) == 0 ]; then
+    echo "WARNING: no yin files at $CVL_SCHEMA_PATH"
 fi
 
 ##

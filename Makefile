@@ -11,6 +11,10 @@ ifeq ($(GOPATH),)
 export GOPATH=/tmp/go
 endif
 
+GOROOT := /usr/local/go1.12
+GO := $(GOROOT)/bin/go
+export GO
+
 INSTALL := /usr/bin/install
 
 MAIN_TARGET = sonic-mgmt-framework_1.0-01_amd64.deb
@@ -32,18 +36,8 @@ PIP_DEPS_LIST = pyang pyyaml
 
 TOPDIR := $(abspath .)
 BUILD_DIR := $(TOPDIR)/build
-REST_DIST_DIR := $(BUILD_DIR)/rest_server/dist
+CVL_GOPATH=$(TOPDIR)/src/cvl/build
 
-# Source files affecting REST server
-REST_SRCS := $(shell find $(TOPDIR)/src -name '*.go' | sort) \
-			 $(shell find $(TOPDIR)/models/yang -name '*.yang' | sort) \
-			 $(shell find $(TOPDIR)/models/openapi -name '*.yaml' | sort)
-
-CVL_GOPATH=$(TOPDIR):$(TOPDIR)/src/cvl/build
-REST_BIN := $(REST_DIST_DIR)/main
-REST_GOPATH = $(GOPATH):$(CVL_GOPATH):$(TOPDIR):$(REST_DIST_DIR)
-
-#$(info REST_SRCS = $(REST_SRCS) )
 
 all: golang go-deps go-patch apt-deps pip-deps rest-server
 
@@ -67,17 +61,18 @@ $(APT_DEPS_LIST):
 $(PIP_DEPS_LIST):
 	sudo pip3 install $@
 
+cvl:
+	$(MAKE) -C src/cvl
+	$(MAKE) -C src/cvl/schema
+
+REST_PREREQ := cvl
+GOPATH := $(GOPATH):$(CVL_GOPATH)
+include src/rest/Makefile
+
 rest-server: $(REST_BIN)
 
 yamlGen:
 	$(MAKE) -C models/yang
-
-$(REST_BIN): $(REST_SRCS)
-	$(MAKE) -C src/cvl
-	$(MAKE) -C src/cvl/schema
-	$(MAKE) -C models/yang
-	$(MAKE) -C models
-	GOPATH=$(REST_GOPATH) /usr/local/go1.12/bin/go build -o $@ $(TOPDIR)/src/rest/main/main.go
 
 codegen:
 	$(MAKE) -C models
@@ -101,12 +96,11 @@ install:
 $(addprefix $(DEST)/, $(MAIN_TARGET)): $(DEST)/% :
 	mv $* $(DEST)/
 
-clean:
+clean: rest-clean
 	$(MAKE) -C src/cvl clean
 	$(MAKE) -C src/cvl/schema clean
-	$(MAKE) -C models clean
-	$(MAKE) -C models/yang clean
 
 cleanall:
 	$(MAKE) -C src/cvl cleanall
 	rm -rf build
+
