@@ -36,6 +36,7 @@ moduleDict = OrderedDict()
 nodeDict = OrderedDict()
 XpathToBodyTagDict = OrderedDict()
 keysToLeafRefObjSet = set()
+currentTag = None
 base_path = '/restconf/data'
 verbs = ["post", "put", "patch", "get", "delete"]
 responses = OrderedDict()
@@ -83,9 +84,10 @@ def resetSwaggerDict():
     global keysToLeafRefObjSet
     global swaggerDict
     global swagger_tags
+    global currentTag
     
     moduleDict = OrderedDict()
-    nodeDict = OrderedDict()
+    #nodeDict = OrderedDict()
     XpathToBodyTagDict = OrderedDict()
     keysToLeafRefObjSet = set()    
 
@@ -102,6 +104,7 @@ def resetSwaggerDict():
     swaggerDict["basePath"] = "/v1" + base_path
     swaggerDict["schemes"] = ["http", "https"]
     swagger_tags = []
+    currentTag = None
     swaggerDict["tags"] = swagger_tags
     swaggerDict["paths"] = OrderedDict()
     swaggerDict["definitions"] = OrderedDict()    
@@ -128,7 +131,9 @@ class OpenApiPlugin(plugin.PyangPlugin):
         ctx.implicit_errors = False
 
     def emit(self, ctx, modules, fd):
-      
+    
+      global currentTag
+
       if ctx.opts.outdir is None:
         print("[Error]: Output directory is not mentioned")
         sys.exit(2)
@@ -138,14 +143,17 @@ class OpenApiPlugin(plugin.PyangPlugin):
         sys.exit(2)
 
       for module in modules:
+        print("===> processing ", module.i_modulename)
         if module.keyword == "submodule":
             continue
         resetSwaggerDict()
+        currentTag = module.i_modulename
         walk_module(module)
         # delete root '/' as we dont support it.
             
         if len(swaggerDict["paths"]) > 0:
-            del(swaggerDict["paths"]["/"])
+            if "/" in swaggerDict["paths"]:
+                del(swaggerDict["paths"]["/"])
 
         if len(swaggerDict["paths"]) <= 0:
             continue
@@ -191,6 +199,7 @@ def swagger_it(child, defName, pathstr, payload, metadata, verb, operId=False):
 
     firstEncounter = True
     verbPathStr = pathstr
+    global currentTag
     if verb == "post":
         # if child.keyword == "list":
         #     continue
@@ -206,7 +215,7 @@ def swagger_it(child, defName, pathstr, payload, metadata, verb, operId=False):
 
     if verb not in swaggerDict["paths"][verbPathStr]:
         swaggerDict["paths"][verbPathStr][verb] = OrderedDict()
-        swaggerDict["paths"][verbPathStr][verb]["tags"] = []
+        swaggerDict["paths"][verbPathStr][verb]["tags"] = [currentTag]
         if verb != "delete" and verb != "get":
             swaggerDict["paths"][verbPathStr][verb]["consumes"] = ["application/yang-data+json"]
         swaggerDict["paths"][verbPathStr][verb]["produces"] = ["application/yang-data+json"]
@@ -214,8 +223,8 @@ def swagger_it(child, defName, pathstr, payload, metadata, verb, operId=False):
         swaggerDict["paths"][verbPathStr][verb]["responses"] = copy.deepcopy(responses)
         firstEncounter = False
 
-    if child.i_module.i_modulename not in swaggerDict["paths"][verbPathStr][verb]["tags"]:
-        swaggerDict["paths"][verbPathStr][verb]["tags"].append(child.i_module.i_modulename)
+    # if child.i_module.i_modulename not in swaggerDict["paths"][verbPathStr][verb]["tags"]:
+    #     swaggerDict["paths"][verbPathStr][verb]["tags"].append(child.i_module.i_modulename)
 
 
     opId = None
@@ -308,9 +317,9 @@ def walk_child(child):
     if actXpath in keysToLeafRefObjSet:
         return    
 
-    if  child.keyword == "list":
-        listMetaData = copy.deepcopy(metadata)
-        walk_child_for_list_base(child,actXpath,pathstr, listMetaData)
+    # if  child.keyword == "list":
+    #     listMetaData = copy.deepcopy(metadata)
+    #     walk_child_for_list_base(child,actXpath,pathstr, listMetaData)
 
     if child.keyword in ["list", "container", "leaf", "leaf-list"]:
         payload = OrderedDict()       
@@ -329,7 +338,7 @@ def walk_child(child):
                         keysToLeafRefObjSet.add(listKeyPath)
                 return
 
-        defName = shortenNodeName(child,actXpath)
+        defName = shortenNodeName(child)
 
         if child.i_config == False:   
             payload_get = OrderedDict()
@@ -365,11 +374,15 @@ def walk_child(child):
                 
                 swagger_it(child, defName, pathstr, payload, metadata, verb)
 
+        if  child.keyword == "list":
+            listMetaData = copy.deepcopy(metadata)
+            walk_child_for_list_base(child,actXpath,pathstr, listMetaData, defName)
+
     if hasattr(child, 'i_children'):
         for ch in child.i_children:
             walk_child(ch)
 
-def walk_child_for_list_base(child, actXpath, pathstr, metadata):
+def walk_child_for_list_base(child, actXpath, pathstr, metadata, nonBaseDefName=None):
 
     payload = OrderedDict()
     pathstrList = pathstr.split('/')
@@ -394,7 +407,7 @@ def walk_child_for_list_base(child, actXpath, pathstr, metadata):
     if len(payload) == 0 and child.i_config == True:
         return
 
-    defName = shortenNodeName(child,actXpath)
+    defName = shortenNodeName(child)
     defName = "list_base"+'_'+defName
 
     if child.i_config == False:
@@ -406,14 +419,18 @@ def walk_child_for_list_base(child, actXpath, pathstr, metadata):
             return
 
         defName_get = "get" + '_' + defName
-        swaggerDict["definitions"][defName_get] = OrderedDict()
-        swaggerDict["definitions"][defName_get]["type"] = "object"
-        swaggerDict["definitions"][defName_get]["properties"] = copy.deepcopy(payload_get)
-        swagger_it(child, defName_get, pathstr, payload_get, metadata, "get", defName_get)
+        if nonBaseDefName is not None:
+            swagger_it(child, "get" + '_' + nonBaseDefName, pathstr, payload_get, metadata, "get", defName_get)
+        else:
+            swaggerDict["definitions"][defName_get] = OrderedDict()
+            swaggerDict["definitions"][defName_get]["type"] = "object"
+            swaggerDict["definitions"][defName_get]["properties"] = copy.deepcopy(payload_get)            
+            swagger_it(child, defName_get, pathstr, payload_get, metadata, "get", defName_get)
     else:
-        swaggerDict["definitions"][defName] = OrderedDict()
-        swaggerDict["definitions"][defName]["type"] = "object"
-        swaggerDict["definitions"][defName]["properties"] = copy.deepcopy(payload)        
+        if nonBaseDefName is None:
+            swaggerDict["definitions"][defName] = OrderedDict()
+            swaggerDict["definitions"][defName]["type"] = "object"
+            swaggerDict["definitions"][defName]["properties"] = copy.deepcopy(payload)        
 
         for verb in verbs:
             if verb == "get":
@@ -424,13 +441,19 @@ def walk_child_for_list_base(child, actXpath, pathstr, metadata):
                     continue
 
                 defName_get = "get" + '_' + defName
-                swaggerDict["definitions"][defName_get] = OrderedDict()
-                swaggerDict["definitions"][defName_get]["type"] = "object"
-                swaggerDict["definitions"][defName_get]["properties"] = copy.deepcopy(payload_get)
-                swagger_it(child, defName_get, pathstr, payload_get, metadata, verb, defName_get)
+                if nonBaseDefName is not None:
+                    swagger_it(child, "get" + '_' + nonBaseDefName, pathstr, payload_get, metadata, verb, defName_get)
+                else:
+                    swaggerDict["definitions"][defName_get] = OrderedDict()
+                    swaggerDict["definitions"][defName_get]["type"] = "object"
+                    swaggerDict["definitions"][defName_get]["properties"] = copy.deepcopy(payload_get)
+                    swagger_it(child, defName_get, pathstr, payload_get, metadata, verb, defName_get)
                 continue
             
-            swagger_it(child, defName, pathstr, payload, metadata, verb)
+            if nonBaseDefName is not None:
+                swagger_it(child, nonBaseDefName, pathstr, payload, metadata, verb, verb + '_' + defName)
+            else:
+                swagger_it(child, defName, pathstr, payload, metadata, verb, verb + '_' + defName)
 
 def build_payload(child, payloadDict, uriPath="", oneInstance=False, Xpath="", firstCall=False, config_false=False):
 
@@ -635,42 +658,54 @@ def handle_leafref(node,xpath):
     else:
         print("leafref not pointing to leaf/leaflist")
 
-def shortenNodeName(node,xpath):
+def shortenNodeName(node):
     global nodeDict
+    xpath = statements.mk_path_str(node, False)
+    name = node.i_module.i_modulename + xpath.replace('/','_')
+    name = name.replace('-','_').lower()
+    #print(name)
+    if name not in nodeDict:
+        nodeDict[name] = OrderedDict()
+    else:
+        while name in nodeDict:
+            name = node.i_module.i_modulename + '_' + name
+        nodeDict[name] = OrderedDict()
+    return name
+
     #name = node.arg.capitalize()
-    name = node.arg
-    parent = node.parent
-    while parent is not None:
-        parentLoop = True
-        if parent.keyword == 'module':
-            #name = getCamelForm(name)
-            name = node.i_module.i_modulename.replace('-','_').lower() + '_' + name
-            # if name not in nodeDict:
-            #     nodeDict[name] = OrderedDict()
-            #     break
-            # else:
-            #     # pdb.set_trace()
-            #     print("problem")
-            #     sys.exit(2)
-            while name not in nodeDict:
-                if name not in nodeDict:
-                    nodeDict[name] = OrderedDict()
-                    parentLoop = False
-                    break
-                else:
-                    name = node.i_module.i_modulename.replace('-','_').lower() + '_' + name
+    # name = node.arg
+    # parent = node.parent
+    # while parent is not None:
+    #     parentLoop = True
+    #     if parent.keyword == 'module':
+    #         #name = getCamelForm(name)
+    #         name = node.i_module.i_modulename.replace('-','_').lower() + '_' + name
+    #         # if name not in nodeDict:
+    #         #     nodeDict[name] = OrderedDict()
+    #         #     break
+    #         # else:
+    #         #     # pdb.set_trace()
+    #         #     print("problem")
+    #         #     sys.exit(2)
+    #         while name not in nodeDict:
+    #             if name not in nodeDict:
+    #                 nodeDict[name] = OrderedDict()
+    #                 parentLoop = False
+    #                 break
+    #             else:
+    #                 name = node.i_module.i_modulename.replace('-','_').lower() + '_' + name
         
-        if not parentLoop:
-            break
+    #     if not parentLoop:
+    #         break
 
-        #name = getCamelForm(parent.arg.capitalize() + name)
-        name = parent.arg.replace('-','_').lower() + '_' + name
-        if name not in nodeDict:
-            nodeDict[name] = OrderedDict()
-            break
+    #     #name = getCamelForm(parent.arg.capitalize() + name)
+    #     name = parent.arg.replace('-','_').lower() + '_' + name
+    #     if name not in nodeDict:
+    #         nodeDict[name] = OrderedDict()
+    #         break
 
-        parent = parent.parent
-    return name.replace('-','_').lower()
+    #     parent = parent.parent
+    # return name.replace('-','_').lower()
 
 def get_typename(s):
     t = s.search_one('type')
