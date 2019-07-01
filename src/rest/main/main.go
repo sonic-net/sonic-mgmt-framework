@@ -14,10 +14,12 @@ import (
 	"net/http"
 	"rest/server"
 	"swagger"
+        "github.com/pkg/profile"
 )
 
 // Start REST server
 func main() {
+        defer profile.Start().Stop()
 	var port int
 	var uiDir string
 
