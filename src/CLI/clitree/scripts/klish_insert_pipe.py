@@ -12,8 +12,8 @@ import xml.etree.ElementTree as ET
 DBG_FLAG                = False
 PIPE_XML                = "include/pipe.xml"
 PIPE_WITHOUT_DISPLAY_XML = "include/pipe_without_display_xml.xml"
-DEFAULT_NS_HREF         = "http://www.dellemc.com/force10/XMLSchema"
-XSI_NS_HREF             = "http://www.dellemc.com/force10/XMLSchema-instance"
+DEFAULT_NS_HREF         = "http://www.dellemc.com/sonic/XMLSchema"
+XSI_NS_HREF             = "http://www.dellemc.com/sonic/XMLSchema-instance"
 XI_NS_HREF              = "http://www.w3.org/2001/XInclude"
 COMMAND_XPATH_EXPR      = ".//{"+DEFAULT_NS_HREF+"}VIEW/{"+DEFAULT_NS_HREF+"}COMMAND"
 HIDDEN_CMD_XPATH_EXPR   = ".//{"+DEFAULT_NS_HREF+"}VIEW[@name='hidden-view']/{"+DEFAULT_NS_HREF+"}COMMAND"

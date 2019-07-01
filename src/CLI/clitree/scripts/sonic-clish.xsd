@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<xs:schema xmlns="http://www.dellemc.com/force10/XMLSchema"
+<xs:schema xmlns="http://www.dellemc.com/sonic/XMLSchema"
            xmlns:xs="http://www.w3.org/2001/XMLSchema"
            xmlns:xi="http://www.w3.org/2001/XInclude"
            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-           targetNamespace="http://www.dellemc.com/force10/XMLSchema">
+           targetNamespace="http://www.dellemc.com/sonic/XMLSchema">
 
 <xs:import namespace="http://www.w3.org/2001/XInclude"/>
 

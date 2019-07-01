@@ -10,11 +10,11 @@
 <!ENTITY HOSTNAME_PATTERN_64    "^([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])(\.([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]{0,61}[a-zA-Z0-9]))*$">
 ]>
 <CLISH_MODULE
-    xmlns="http://www.dellemc.com/force10/XMLSchema"
+    xmlns="http://www.dellemc.com/sonic/XMLSchema"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xmlns:xi="http://www.w3.org/2001/XInclude"
-    xsi:schemaLocation="http://www.dellemc.com/force10/XMLSchema
-    http://www.dellemc.com/force10/XMLSchema/clish.xsd"
+    xsi:schemaLocation="http://www.dellemc.com/sonic/XMLSchema
+                        http://www.dellemc.com/sonic/XMLSchema/clish.xsd"
     >
     <!--=======================================================-->
     <PTYPE
