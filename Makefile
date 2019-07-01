@@ -25,6 +25,7 @@ GO_DEPS_LIST = github.com/gorilla/mux \
                github.com/openconfig/ygot/ygot \
                github.com/go-redis/redis \
                github.com/golang/glog \
+               github.com/pkg/profile \
                gopkg.in/go-playground/validator.v9
 
 
