@@ -47,15 +47,10 @@ REST_GOPATH = $(GOPATH):$(CVL_GOPATH):$(TOPDIR):$(REST_DIST_DIR)
 
 #$(info REST_SRCS = $(REST_SRCS) )
 
-all: build-deps apt-deps pip-deps pip2-deps cli golang go-deps go-patch rest-server
+all: build-deps apt-deps pip-deps pip2-deps cli go-deps go-patch rest-server
 
 build-deps:
 	mkdir -p $(BUILD_DIR)
-
-golang:
-	wget https://dl.google.com/go/go1.12.6.linux-amd64.tar.gz
-	tar -zxvf go1.12.6.linux-amd64.tar.gz
-	sudo mv go /usr/local/go1.12
 
 go-deps: $(GO_DEPS_LIST)
 apt-deps: $(APT_DEPS_LIST)
@@ -89,14 +84,14 @@ $(REST_BIN): $(REST_SRCS)
 	$(MAKE) -C src/cvl/schema
 	$(MAKE) -C models/yang
 	$(MAKE) -C models
-	GOPATH=$(REST_GOPATH) /usr/local/go1.12/bin/go build -o $@ $(TOPDIR)/src/rest/main/main.go
+	GOPATH=$(REST_GOPATH) /usr/local/go/bin/go build -o $@ $(TOPDIR)/src/rest/main/main.go
 
 codegen:
 	$(MAKE) -C models
 
 go-patch:
 	cp $(TOPDIR)/ygot-modified-files/* /tmp/go/src/github.com/openconfig/ygot/ytypes/
-	/usr/local/go1.12/bin/go install -v -gcflags "-N -l" /tmp/go/src/github.com/openconfig/ygot/ygot
+	/usr/local/go/bin/go install -v -gcflags "-N -l" /tmp/go/src/github.com/openconfig/ygot/ygot
 
 
 install:
