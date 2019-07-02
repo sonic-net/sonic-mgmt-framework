@@ -9,31 +9,6 @@ import (
 )
 
 func main() {
-	jsonData :=`{
-		"VLAN": {
-			"Vlan100": {
-				"members": [
-				"Ethernet44",
-				"Ethernet64"
-				],
-				"vlanid": "100"
-			},
-			"Vlan1200": {
-				"members": [
-				"Ethernet64",
-				"Ethernet8"
-				],
-				"vlanid": "1200"
-			},
-			"Vlan2500": {
-				"members": [
-				"Ethernet8",
-				"Ethernet64"
-				],
-				"vlanid": "2500"
-			}
-		}
-	}`
 	/*
 		"ACL_TABLE": {
 			"TestACL1": {
@@ -53,6 +28,72 @@ func main() {
 			}
 		}*/
 
+/*jsonData :=  `{
+		  "DEVICE_METADATA": {
+        "localhost": {
+        "hwsku": "Force10-S6100",
+        "default_bgp_status": "up",
+        "docker_routing_config_mode": "unified",
+        "hostname": "sonic-s6100-01",
+        "platform": "x86_64-dell_s6100_c2538-r0",
+        "mac": "4c:76:25:f4:70:82",
+        "default_pfcwd_status": "disable",
+        "deployment_id": "1",
+        "type": "ToRRouter"
+    }
+  }
+	  }`*/
+/*jsonData :=  `{
+		  "DEVICE_NEIGHBOR": {
+        "ARISTA04T1": {
+                "mgmt_addr": "10.20.0.163",
+                "hwsku": "Arista",
+		"lo_addr": "2.2.2.2",
+                "local_port": "Ethernet124",
+                "type": "LeafRouter",
+                "port": "Ethernet68"
+        }
+	  }
+	  }`*/
+/*jsonData :=  `{
+		  "BGP_NEIGHBOR": {
+        "10.0.0.61": {
+            "local_addr": "10.0.0.60",
+            "asn": 64015,
+            "name": "ARISTA15T0"
+        }
+		  }
+	  }`*/
+
+jsonData :=  `{
+		  "INTERFACE": {
+        "Ethernet68|10.0.0.0/31": {},
+        "Ethernet24|10.0.0.2/31": {},
+        "Ethernet112|10.0.0.4/31": {}
+     }
+	  }`
+
+/*jsonData :=  `{
+		  "INTERFACE": {
+        "Ethernet68|10.0.0.0/31": {},
+        "Ethernet24|10.0.0.2/31": {},
+        "Ethernet112|10.0.0.4/31": {}
+     }
+	  }`*/
+/*jsonData :=  `{
+		  "PORTCHANNEL_INTERFACE": {
+        "PortChannel01|10.0.0.56/31": {},
+        "PortChannel01|FC00::71/126": {},
+        "PortChannel02|10.0.0.58/31": {},
+        "PortChannel02|FC00::75/126": {}
+    }
+
+	  }`*/
+/*jsonData :=  `{
+  "VLAN_INTERFACE": {
+        "Vlan1000|192.168.0.1/27": {}
+    }
+  }`*/
 	start := time.Now()
 
 	dataFile := ""
