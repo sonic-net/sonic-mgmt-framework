@@ -52,8 +52,8 @@ apt-deps: $(APT_DEPS_LIST)
 pip-deps: $(PIP_DEPS_LIST)
 
 $(GO_DEPS_LIST):
-	/usr/local/go/bin/go get -v $@
-	/usr/local/go/bin/go get -v $@
+	$(GO) get -v $@
+	$(GO) get -v $@
 
 $(APT_DEPS_LIST):
 	sudo apt-get install -y $@
@@ -80,7 +80,7 @@ codegen:
 
 go-patch:
 	cp $(TOPDIR)/ygot-modified-files/* /tmp/go/src/github.com/openconfig/ygot/ytypes/
-	/usr/local/go1.12/bin/go install -v -gcflags "-N -l" /tmp/go/src/github.com/openconfig/ygot/ygot
+	$(GO) install -v -gcflags "-N -l" /tmp/go/src/github.com/openconfig/ygot/ygot
 
 
 install:
