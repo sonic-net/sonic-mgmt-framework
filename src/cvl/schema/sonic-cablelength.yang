@@ -1,0 +1,66 @@
+module sonic-cablelength {
+	namespace "http://github.com/Azure/sonic-cablelength";
+	prefix scl;
+
+	import ietf-yang-types {
+		prefix yang;
+	}
+
+	import ietf-inet-types {
+                prefix inet;
+        }
+
+	import sonic-common {
+		prefix scommon;
+	}
+
+	import sonic-port {
+		prefix prt;
+	}
+
+	organization
+		"BRCM";
+
+	contact
+		"BRCM";
+
+	description
+		"SONIC CABLELENGTH";
+
+	revision 2019-07-02 {
+		description
+			"Initial revision.";
+	}
+
+	container sonic-cablelength {	
+		list CABLE_LENGTH {
+			key "name";
+			scommon:key-delim "|";
+			scommon:key-pattern "CABLE_LENGTH|{name}";
+			scommon:map-list true; //special conversion for map tables
+			scommon:map-leaf "port length"; //every key:value pair is mapped to list keys, e.g. "1":"7" ==> tc_num=1, dscp=7
+
+			leaf name {
+				type string;
+			}
+
+			list CABLE_LENGTH { //this is list inside list for storing mapping between two fields
+				key "port length";
+
+				leaf port {
+					type leafref {
+						path "/prt:sonic-port/prt:PORT/prt:ifname";
+					}
+
+				}
+
+				leaf length {
+					type string {
+						pattern "[0-9]?[0-9]m";
+					}
+				}
+			}
+
+		}
+	}
+}
