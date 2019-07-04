@@ -93,8 +93,8 @@ func getPathForTranslib(r *http.Request) string {
 	//    name value mapping is provided by mux.Vars() API
 	//    "acl-set{name}{type}" becomes "acl-set[name=TEST][type=ACL_IPV4]"
 	path = trimRestconfPrefix(path)
-	path = strings.ReplaceAll(path, "={", "{")
-	path = strings.ReplaceAll(path, "},{", "}{")
+	path = strings.Replace(path, "={", "{", -1)
+	path = strings.Replace(path, "},{", "}{", -1)
 
 	for k, v := range vars {
 		restStyle := fmt.Sprintf("{%v}", k)

@@ -924,7 +924,7 @@ func (app *AclApp) getAclBindingInfoForInterfaceData(d *db.DB, intfData *ocbinds
 	if direction == "INGRESS" {
 		if intfData.IngressAclSets != nil && len(intfData.IngressAclSets.IngressAclSet) > 0 {
 			for ingressAclSetKey, _ := range intfData.IngressAclSets.IngressAclSet {
-				aclName := strings.ReplaceAll(strings.ReplaceAll(ingressAclSetKey.SetName, " ", "_"), "-", "_")
+				aclName := strings.Replace(strings.Replace(ingressAclSetKey.SetName, " ", "_", -1), "-", "_", -1)
 				aclType := ingressAclSetKey.Type.ΛMap()["E_OpenconfigAcl_ACL_TYPE"][int64(ingressAclSetKey.Type)].Name
 				aclKey := aclName + "_" + aclType
 
@@ -947,7 +947,7 @@ func (app *AclApp) getAclBindingInfoForInterfaceData(d *db.DB, intfData *ocbinds
 	} else if direction == "EGRESS" {
 		if intfData.EgressAclSets != nil && len(intfData.EgressAclSets.EgressAclSet) > 0 {
 			for egressAclSetKey, _ := range intfData.EgressAclSets.EgressAclSet {
-				aclName := strings.ReplaceAll(strings.ReplaceAll(egressAclSetKey.SetName, " ", "_"), "-", "_")
+				aclName := strings.Replace(strings.Replace(egressAclSetKey.SetName, " ", "_", -1), "-", "_", -1)
 				aclType := egressAclSetKey.Type.ΛMap()["E_OpenconfigAcl_ACL_TYPE"][int64(egressAclSetKey.Type)].Name
 				aclKey := aclName + "_" + aclType
 
@@ -1695,7 +1695,7 @@ func getAclKeysFromStrKey(aclKey string, aclType string) (string, ocbinds.E_Open
 }
 
 func getAclKeyStrFromOCKey(aclname string, acltype ocbinds.E_OpenconfigAcl_ACL_TYPE) string {
-	aclN := strings.ReplaceAll(strings.ReplaceAll(aclname, " ", "_"), "-", "_")
+	aclN := strings.Replace(strings.Replace(aclname, " ", "_", -1), "-", "_", -1)
 	aclT := acltype.ΛMap()["E_OpenconfigAcl_ACL_TYPE"][int64(acltype)].Name
 	return aclN + "_" + aclT
 }
