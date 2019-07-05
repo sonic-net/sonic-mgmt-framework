@@ -84,12 +84,13 @@ go-patch:
 
 
 install:
-	$(INSTALL) -D $(TOPDIR)/build/rest_server/dist/main $(DESTDIR)/usr/sbin/rest_server
+	$(INSTALL) -D $(REST_BIN) $(DESTDIR)/usr/sbin/rest_server
+	$(INSTALL) -D $(CERTGEN_BIN) $(DESTDIR)/usr/sbin/generate_cert
 	$(INSTALL) -d $(DESTDIR)/usr/sbin/schema/
 	$(INSTALL) -d $(DESTDIR)/usr/sbin/lib/
 	$(INSTALL) -D $(TOPDIR)/src/cvl/schema/*.yin $(DESTDIR)/usr/sbin/schema/
 	$(INSTALL) -T $(TOPDIR)/src/cvl/build/pcre-8.43/install/lib/libpcre.so.1.2.11 $(DESTDIR)/usr/sbin/lib/libpcre.so.1
-	$(INSTALL) -T $(TOPDIR)/src/cvl/build/libyang/build/libyang.so.1.1.25 $(DESTDIR)/usr/sbin/lib/libyang.so.1
+	$(INSTALL) -T $(TOPDIR)/src/cvl/build/libyang/build/libyang.so.1.1.* $(DESTDIR)/usr/sbin/lib/libyang.so.1
 	$(INSTALL) -D $(TOPDIR)/src/cvl/build/libyang/build/extensions/*.so $(DESTDIR)/usr/sbin/lib/
 	$(INSTALL) -D $(TOPDIR)/src/cvl/build/libyang/build/user_types/*.so $(DESTDIR)/usr/sbin/lib/
 	cp -rf $(TOPDIR)/build/rest_server/dist/ui/ $(DESTDIR)/rest_ui/
