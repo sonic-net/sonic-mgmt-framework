@@ -1,5 +1,5 @@
 all: precheck deps schema tests
-GO=/usr/local/go1.12/bin/go
+GO=/usr/local/go/bin/go
 SRC_FILES=$(wildcard *.go)
 TOP_DIR := $(abspath ../..)
 GOFLAGS:=

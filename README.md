@@ -3,19 +3,26 @@
 ### Build Instruction
 Please note that the build instruction in this guide has only been tested on Ubuntu 16.04.
 #### Pre-rerequisit
+##### User permissions:
+	`sudo usermod -aG sudo $USER`
+	`sudo usermod -aG docker $USER`
 
-* Packages to be installed:
- * sudo apt-get install git
+##### Packages to be installed:
+	`sudo apt-get install git docker`
 
 #### Steps to build and create an installer
 1. git clone https://github.com/project-arlo/sonic-buildimage.git
-* cd sonic-buildimage/
-* sudo modprobe overlay
-* make init
-* make configure PLATFORM=broadcom
-* sed -i "s/SONIC_CONFIG_BUILD_JOBS = 1/SONIC_CONFIG_BUILD_JOBS = 5/g" rules/config
-* BLDENV=stretch make stretch
-* make target/sonic-broadcom.bin
+2. cd sonic-buildimage/
+3. sudo modprobe overlay
+4. make init
+5. make configure PLATFORM=broadcom
+6. Run the prefetch python script to download all binaries (see below for the script).
+7. To build mgmt-framework container:   
+	`BLDENV=stretch make target/docker-sonic-mgmt-framework.gz`
+8. To build Debian Stretch, if not already downloaded:   
+	`BLDENV=stretch make stretch`
+9. To build the ONIE installer:   
+	`BLDENV=stretch make target/sonic-broadcom.bin`
  
 #### Faster builds
 In order to speed up the process of build, you can prefetch the latest debian files from Azure server, and just build what you need.
@@ -68,22 +75,16 @@ Here is a python script you could use to fetch latest prebuilt objects (deb, gz,
     get_all_bins('target/', '.gz')
 
 
-* Follow steps 1 to 6 in the previous section.
-* Download prebuilt objects from azure jenkins server using the above script.
-* Skip step 7, and run step 8 instead.
-
 
 ##### Incremental builds 
-Just clean up the deb's that require re-build, and build again. Here is an exmple:
-
-	BLDENV=stretch make target/debs/stretch/sonic-device-data_1.0-1_all.deb-clean 
-	BLDENV=stretch make target/debs/stretch/sonic-device-data_1.0-1_all.deb
-	
+Just clean up the deb's/gz that require re-build, and build again. Here is an exmple:
 
 ##### To build deb file for sonic-mgmt-framework
 
+	BLDENV=stretch make target/debs/stretch/sonic-mgmt-framework_1.0-01_amd64.deb-clean
 	BLDENV=stretch make target/debs/stretch/sonic-mgmt-framework_1.0-01_amd64.deb
 	
 ##### To build sonic-mgmt-framework docker alone
 
-	make target/debs/stretch/sonic-mgmt-framework_1.0-01_amd64.gz
+	BLDENV=stretch make target/docker-sonic-mgmt-framework.gz-clean
+	BLDENV=stretch make target/docker-sonic-mgmt-framework.gz

@@ -17,9 +17,8 @@ all:
     	$(MAKE) -C $$dir -f Makefile $@; \
 	done
 
-	mkdir -p $(TOPDIR)/build/cli
 	rm -rf $(TOPDIR)/build/cli/*
-	mv target $(TOPDIR)/build/cli
+	mv -f target $(TOPDIR)/build/cli
 
 clean:
 	make --directory=klish clean
