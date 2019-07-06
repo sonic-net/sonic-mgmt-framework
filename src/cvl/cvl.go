@@ -78,6 +78,18 @@ type modelTableInfo struct {
 	tablesForMustExp map[string]bool
 }
 
+/* CVL Error Structure. */
+type CVLErrorInfo struct {
+	tableName string      /* Table having error */
+	errCode  CVLRetCode   /* Error Code describing type of error. */
+	keys    []string      /* Keys of the Table having error. */
+        Value 	string        /* Field Value throwing error */
+        Field 	string        /* Field Name throwing error . */
+	msg     string        /* Detailed error message. */
+	constraintErrMsg  string  /* Constraint error message. */
+
+}
+
 type modelNamespace struct {
 	prefix string
 	ns string
@@ -96,6 +108,52 @@ var modelInfo modelDataInfo
 type keyValuePairStruct struct {
 	key string
 	values []string
+}
+
+/* This function translates LIBYANG error code to valid CVL error code. */ 
+func translateLYErrToCVLErr(LYErrcode int) CVLRetCode {
+	var cvlcode CVLRetCode
+
+	switch LYErrcode {
+		case C.LYVE_SUCCESS :   /**< no error */
+			cvlcode = CVL_SUCCESS
+		case C.LYVE_XML_MISS, C.LYVE_INARG, C.LYVE_MISSELEM: /**< missing XML object */
+			cvlcode = CVL_SYNTAX_MISSING_FIELD
+		case C.LYVE_XML_INVAL, C.LYVE_XML_INCHAR, C.LYVE_INMOD, C.LYVE_INELEM , C.LYVE_INVAL, C.LYVE_MCASEDATA:/**< invalid XML object */
+			cvlcode = CVL_SYNTAX_INVALID_FIELD
+		case C.LYVE_EOF, C.LYVE_INSTMT,  C.LYVE_INPAR,  C.LYVE_INID,  C.LYVE_MISSSTMT, C.LYVE_MISSARG:   /**< invalid statement (schema) */
+			cvlcode = CVL_SYNTAX_INVALID_INPUT_DATA
+		case C.LYVE_TOOMANY:  /**< too many instances of some object */
+			cvlcode = CVL_SYNTAX_MULTIPLE_INSTANCE
+		case C.LYVE_DUPID,  C.LYVE_DUPLEAFLIST, C.LYVE_DUPLIST, C.LYVE_NOUNIQ:/**< duplicated identifier (schema) */
+			cvlcode = CVL_SYNTAX_DUPLICATE
+		case C.LYVE_ENUM_INVAL:    /**< invalid enum value (schema) */
+			cvlcode = CVL_SYNTAX_ENUM_INVALID
+		case C.LYVE_ENUM_INNAME:   /**< invalid enum name (schema) */
+			cvlcode = CVL_SYNTAX_ENUM_INVALID_NAME
+		case C.LYVE_ENUM_WS:  /**< enum name with leading/trailing whitespaces (schema) */
+			cvlcode = CVL_SYNTAX_ENUM_WHITESPACE
+		case C.LYVE_KEY_NLEAF,  C.LYVE_KEY_CONFIG, C.LYVE_KEY_TYPE : /**< list key is not a leaf (schema) */
+			cvlcode = CVL_SEMANTIC_KEY_INVALID
+		case C.LYVE_KEY_MISS, C.LYVE_PATH_MISSKEY: /**< list key not found (schema) */
+			cvlcode = CVL_SEMANTIC_KEY_NOT_EXIST
+		case C.LYVE_KEY_DUP:  /**< duplicated key identifier (schema) */
+			cvlcode = CVL_SEMANTIC_KEY_DUPLICATE
+		case C.LYVE_NOMIN:/**< min-elements constraint not honored (data) */
+			cvlcode = CVL_SYNTAX_MINIMUM_INVALID
+		case C.LYVE_NOMAX:/**< max-elements constraint not honored (data) */
+			cvlcode = CVL_SYNTAX_MAXIMUM_INVALID
+		case C.LYVE_NOMUST, C.LYVE_NOWHEN, C.LYVE_INWHEN, C.LYVE_NOLEAFREF :   /**< unsatisfied must condition (data) */
+			cvlcode = CVL_SEMANTIC_DEPENDENT_DATA_MISSING
+		case C.LYVE_NOMANDCHOICE:/**< max-elements constraint not honored (data) */
+			cvlcode = CVL_SEMANTIC_MANDATORY_DATA_MISSING
+		case C.LYVE_PATH_EXISTS:   /**< target node already exists (path) */
+			cvlcode = CVL_SEMANTIC_KEY_ALREADY_EXIST
+		default:
+			cvlcode = CVL_INTERNAL_UNKNOWN
+
+	}
+	return cvlcode
 }
 
 //package init function 
@@ -887,13 +945,97 @@ func translateToYang(jsonData string) (*xmlquery.Node, CVLRetCode) {
 	return doc, CVL_SUCCESS
 }
 
+/* This function performs parsing and processing of LIBYANG error messages. */
+func   processErrorResp(ctx *C.struct_ly_ctx){
+
+	errMsg:= C.GoString(C.ly_errmsg(ctx))
+	errPath := C.GoString(C.ly_errpath(ctx))
+	var key []string
+	var errtableName string
+	var ElemVal string
+	var errMessage string
+	var ElemName string
+	var constraintMsg string
+	var msg string
+	var cvlcode CVLRetCode
+
+       /* Example error messages. 	
+        1. Leafref "/sonic-port:sonic-port/sonic-port:PORT/sonic-port:ifname" of value "Ethernet668" points to a non-existing leaf. 
+	  (path: /sonic-interface:sonic-interface/INTERFACE[portname='Ethernet668'][ip_prefix='10.0.0.0/31']/portname)
+	2. A vlan interface member cannot be part of portchannel which is already a vlan member
+           (path: /sonic-vlan:sonic-vlan/VLAN[name='Vlan1001']/members[.='Ethernet8'])
+	3. Value "ch1" does not satisfy the constraint "Ethernet([1-3][0-9]{3}|[1-9][0-9]{2}|[1-9][0-9]|[0-9])" (range, length, or pattern). 
+	   (path: /sonic-vlan:sonic-vlan/VLAN[name='Vlan1001']/members[.='ch1'])*/ 
+
+
+	/* Fetch the TABLE Name which are in CAPS. */
+	resultTable := strings.SplitN(errPath, "[", 2)
+	resultTab := strings.Split(resultTable[0], "/")
+	errtableName = resultTab[len(resultTab) -1]
+
+	/* Fetch the Error Elem Name. */
+	resultElem := strings.Split(resultTable[1], "/")
+	ElemName = resultElem[len(resultElem) -1]
+
+	/* Fetch the invalid field name. */
+	result := strings.Split(errMsg, "\"")
+	if (len(result) > 1) {
+		for i := range result {
+			if (strings.Contains(result[i], "value")) || (strings.Contains(result[i], "Value")) {
+				ElemVal = result[i+1]
+			}
+		}
+	} else if (len(result) == 1) {
+ 	        /* Custom contraint error message.*/
+		constraintMsg = errMsg
+	}
+
+	// Find key elements 
+	resultKey := strings.Split(errPath, "=")
+	for i := range resultKey {
+		if (strings.Contains(resultKey[i], "]")) {
+			newRes := strings.Split(resultKey[i], "]")
+			key = append(key, newRes[0])
+		}
+	}
+
+	/* Form the error message. */
+	msg = "["
+	for _, elem := range key {
+		msg = msg + elem + " " 
+	}
+	msg = msg + "]"
+
+	/* For non-constraint related errors , print below error message. */
+	if (len(result) > 1) {
+		errMessage = errtableName + " with keys" + msg + " has field " + ElemName + " with invalid value " + ElemVal
+	}else {
+		/* Dependent data validation error. */
+		errMessage = "Dependent data validation failed for table " + errtableName + " with keys" + msg
+	}
+
+
+	cvlcode =  translateLYErrToCVLErr(int(C.ly_vecode(ctx)))
+
+	errst := CVLErrorInfo { tableName : errtableName,
+			  	errCode : cvlcode,
+				keys    : key,
+				Value : ElemVal,
+				Field : ElemName, 
+				msg        :  errMessage,
+				constraintErrMsg : constraintMsg, 
+			      }
+
+	TRACE_LOG(1, "CVL Error Details: %v...", errst)
+}
+
 //Validate config - syntax and semantics
 func validate (xmlData string) CVLRetCode {
 	TRACE_LOG(1, "Validating \n%v\n....", xmlData)
 
 	data := C.lyd_parse_data_mem(ctx, C.CString(xmlData), C.LYD_XML, C.LYD_OPT_EDIT)
 	if ((C.ly_errno != 0) || (data == nil)) {
-		fmt.Println("Parsing data failed\n")
+		fmt.Println("Parsing data failed\n %v", C.ly_errno)
 		return CVL_SYNTAX_ERROR
 	}
 
@@ -906,8 +1048,9 @@ func validate (xmlData string) CVLRetCode {
 		}
 	}
 
+
 	if (0 != C.lyd_data_validate(&data, C.LYD_OPT_CONFIG, ctx)) {
-		fmt.Println("Validation failed\n")
+                processErrorResp(ctx)
 		return CVL_SYNTAX_ERROR
 	}
 
@@ -921,6 +1064,7 @@ func validateSyntax(xmlData string) (CVLRetCode, *C.struct_lyd_node) {
 	//parsing only does syntacial checks
 	data := C.lyd_parse_data_mem(ctx, C.CString(xmlData), C.LYD_XML, C.LYD_OPT_EDIT)
 	if ((C.ly_errno != 0) || (data == nil)) {
+                processErrorResp(ctx)
 		fmt.Println("Parsing data failed\n")
 		return CVL_SYNTAX_ERROR, nil
 	}
@@ -956,6 +1100,7 @@ func validateSemantics(data *C.struct_lyd_node, otherDepData string) CVLRetCode 
 
 	//Check semantic validation
 	if (0 != C.lyd_data_validate(&data, C.LYD_OPT_CONFIG, ctx)) {
+                processErrorResp(ctx)
 		fmt.Println("Validation failed\n")
 		return CVL_SEMANTIC_ERROR
 	}
