@@ -47,6 +47,7 @@ CERTGEN_BIN := $(REST_DIST_DIR)/generate_cert
 $(REST_BIN): $(REST_SRCS) $(REST_PREREQ) $(CERTGEN_BIN)
 	$(MAKE) -C $(TOPDIR)/models/yang
 	$(MAKE) -C $(TOPDIR)/models
+	cd $(TOPDIR)/src/translib/ocbinds && GOPATH=$(REST_GOPATH) $(GO) generate
 	GOPATH=$(REST_GOPATH) $(GO) build -o $@ $(TOPDIR)/src/rest/main/main.go
 
 
@@ -59,6 +60,7 @@ $(CERTGEN_BIN):
 
 
 rest-clean:
+	rm -f $(TOPDIR)/src/translib/ocbinds/ocbinds.go
 	$(MAKE) -C $(TOPDIR)/models clean
 	$(MAKE) -C $(TOPDIR)/models/yang clean
 	rm -f $(REST_BIN) $(CERTGEN_BIN)
