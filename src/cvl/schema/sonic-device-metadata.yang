@@ -1,0 +1,95 @@
+module sonic-device-metadata {
+	namespace "http://github.com/Azure/sonic-device-metadata";
+	prefix sdm;
+
+	import ietf-yang-types {
+		prefix yang;
+	}
+
+	import sonic-common {
+		prefix scommon;
+	}
+
+	import sonic-bgp-neighbor {
+		prefix sbn;
+	}
+
+	organization
+		"BRCM";
+
+	contact
+		"BRCM";
+
+	description
+		"SONIC DEVICE METADATA";
+
+	revision 2019-07-02 {
+		description
+			"Initial revision.";
+	}
+
+	container sonic-device-metadata {
+		list DEVICE_METADATA {
+			key "name";
+			scommon:key-delim "|";
+			scommon:key-pattern "DEVICE_METADATA|{name}";
+
+			leaf name{
+				type string;
+			}
+
+			leaf hwsku {
+				type string;
+			}
+
+			leaf hostname {
+				type string;
+			}
+
+			leaf platform {
+				type string;
+			}
+
+			leaf mac {
+				  type yang:mac-address;
+			}
+
+			leaf bgp_asn {
+				type leafref {
+					path "/sbn:sonic-bgp-neighbor/sbn:BGP_NEIGHBOR/sbn:asn";
+				}
+			}
+
+			leaf default_pfcwd_status {
+				type enumeration {
+                                        enum enable;
+                                        enum disable;
+                                }
+			}
+
+			leaf default_bgp_status {
+				type scommon:admin-status;
+			}
+
+			leaf docker_routing_config_mode {
+				 type enumeration {
+                                        enum unified;
+                                        enum separated;
+                                }
+			}
+
+			leaf deployment_id {
+				type uint8 {
+					range "0..255";
+				}
+			}
+
+			leaf type {
+				type enumeration {
+                                        enum ToRRouter;
+                                        enum LeafRouter;
+                                }
+			}
+		}
+	}
+}

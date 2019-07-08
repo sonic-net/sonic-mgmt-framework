@@ -68,7 +68,7 @@ swaggerDict["info"]["termsOfService"] = "http://www.broadcom.com"
 swaggerDict["info"]["contact"] = {"email": "mohammed.faraaz@broadcom.com"}
 swaggerDict["info"]["license"] = {"name": "Yet to decide", "url": "http://www.broadcom.com"}
 swaggerDict["basePath"] = "/v1" + base_path
-swaggerDict["schemes"] = ["http", "https"]
+swaggerDict["schemes"] = ["https", "http"]
 swagger_tags = []
 swaggerDict["tags"] = swagger_tags
 swaggerDict["paths"] = OrderedDict()
@@ -97,7 +97,7 @@ def resetSwaggerDict():
     swaggerDict["info"]["contact"] = {"email": "mohammed.faraaz@broadcom.com"}
     swaggerDict["info"]["license"] = {"name": "Yet to decide", "url": "http://www.broadcom.com"}
     swaggerDict["basePath"] = "/v1" + base_path
-    swaggerDict["schemes"] = ["http", "https"]
+    swaggerDict["schemes"] = ["https", "http"]
     swagger_tags = []
     currentTag = None
     swaggerDict["tags"] = swagger_tags
