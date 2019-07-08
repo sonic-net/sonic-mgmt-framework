@@ -100,7 +100,8 @@ go-patch:
 
 
 install:
-	$(INSTALL) -D $(TOPDIR)/build/rest_server/dist/main $(DESTDIR)/usr/sbin/rest_server
+	$(INSTALL) -D $(REST_BIN) $(DESTDIR)/usr/sbin/rest_server
+	$(INSTALL) -D $(CERTGEN_BIN) $(DESTDIR)/usr/sbin/generate_cert
 	$(INSTALL) -d $(DESTDIR)/usr/sbin/schema/
 	$(INSTALL) -d $(DESTDIR)/usr/sbin/lib/
 	$(INSTALL) -D $(TOPDIR)/src/cvl/schema/*.yin $(DESTDIR)/usr/sbin/schema/

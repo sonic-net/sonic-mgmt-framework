@@ -40,11 +40,26 @@ const (
 	CVL_SUCCESS CVLRetCode = iota
 	CVL_SYNTAX_ERROR
 	CVL_SEMANTIC_ERROR
-	CVL_KEY_ALREADY_EXIST
-	CVL_KEY_NOT_EXIST
+	CVL_ERROR
+	CVL_SYNTAX_MISSING_FIELD
+	CVL_SYNTAX_INVALID_FIELD   /* Invalid Field  */
+	CVL_SYNTAX_INVALID_INPUT_DATA     /*Invalid Input Data */
+	CVL_SYNTAX_MULTIPLE_INSTANCE     /* Multiple Field Instances */
+	CVL_SYNTAX_DUPLICATE       /* Duplicate Fields  */
+	CVL_SYNTAX_ENUM_INVALID  /* Invalid enum value */
+	CVL_SYNTAX_ENUM_INVALID_NAME /* Invalid enum name  */
+	CVL_SYNTAX_ENUM_WHITESPACE     /* Enum name with leading/trailing whitespaces */
+	CVL_SYNTAX_OUT_OF_RANGE    /* Value out of range/length/pattern (data) */
+	CVL_SYNTAX_MINIMUM_INVALID       /* min-elements constraint not honored  */
+	CVL_SYNTAX_MAXIMUM_INVALID       /* max-elements constraint not honored */
+	CVL_SEMANTIC_DEPENDENT_DATA_MISSING   /* Dependent Data is missing */
+	CVL_SEMANTIC_MANDATORY_DATA_MISSING /* Mandatory Data is missing */
+	CVL_SEMANTIC_KEY_ALREADY_EXIST /* Key already existing. */
+	CVL_SEMANTIC_KEY_NOT_EXIST /* Key is missing. */
+	CVL_SEMANTIC_KEY_DUPLICATE  /* Duplicate key. */
+        CVL_SEMANTIC_KEY_INVALID
 	CVL_NOT_IMPLEMENTED
 	CVL_FAILURE
-	CVL_ERROR
 )
 
 //Strcture for key and data in API
@@ -174,7 +189,7 @@ func ValidateCreate(keyData []CVLEditConfigData) CVLRetCode {
 			n, err1 := redisClient.Exists(tbl+modelInfo.tableInfo[tbl].redisKeyDelim+key).Result()
 			if (err1 == nil && n > 0) {
 				TRACE_LOG(1, "\nValidateCreate(): Table = %s, Key = %s alreday exists", tbl, key)
-				return CVL_KEY_ALREADY_EXIST
+				return CVL_SEMANTIC_KEY_ALREADY_EXIST
 			}
 		}
 
@@ -245,7 +260,7 @@ func ValidateUpdate(keyData []CVLEditConfigData) CVLRetCode {
 			n, err1 := redisClient.Exists(tbl+modelInfo.tableInfo[tbl].redisKeyDelim+key).Result()
 			if (err1 != nil || n == 0) { //key must exists
 				TRACE_LOG(1, "\nValidateUpdate(): Table = %s, Key = %s does not exist", tbl, key)
-				return CVL_KEY_NOT_EXIST
+				return CVL_SEMANTIC_KEY_NOT_EXIST
 			}
 
 			//Get the existing data from Redis to cache, so that final validation can be done after merging this dependent data
@@ -314,7 +329,7 @@ func ValidateDelete(keyData []CVLEditConfigData) CVLRetCode {
 			n, err1 := redisClient.Exists(tbl+modelInfo.tableInfo[tbl].redisKeyDelim+key).Result()
 			if (err1 != nil || n == 0) { //key must exists
 				TRACE_LOG(1, "\nValidateDelete(): Table = %s, Key = %s does not exist", tbl, key)
-				return CVL_KEY_NOT_EXIST
+				return CVL_SEMANTIC_KEY_NOT_EXIST
 			}
 		}
 	}
