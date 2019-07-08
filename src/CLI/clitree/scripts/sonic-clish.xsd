@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<xs:schema xmlns="http://www.dellemc.com/sonic/XMLSchema"
+           xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:xi="http://www.w3.org/2001/XInclude"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           targetNamespace="http://www.dellemc.com/sonic/XMLSchema">
+
+<xs:import namespace="http://www.w3.org/2001/XInclude"/>
+
+<xs:simpleType name="parammodeType">
+  <xs:restriction base="xs:string">
+    <xs:enumeration value="common"/>
+    <xs:enumeration value="switch"/>
+    <xs:enumeration value="subcommand"/>
+  </xs:restriction>
+</xs:simpleType>
+
+<xs:simpleType name="booleanType">
+  <xs:restriction base="xs:string">
+    <xs:enumeration value="true"/>
+    <xs:enumeration value="false"/>
+  </xs:restriction>
+</xs:simpleType>
+
+<xs:simpleType name="stringType">
+<xs:restriction base="xs:string">
+<xs:minLength value="1"/>
+</xs:restriction>
+</xs:simpleType>
+
+<xs:simpleType name="hook_list_e">
+<xs:restriction base="xs:string">
+<xs:enumeration value="init"/>
+<xs:enumeration value="fini"/>
+<xs:enumeration value="access"/>
+<xs:enumeration value="config"/>
+<xs:enumeration value="log"/>
+</xs:restriction>
+</xs:simpleType>
+
+<xs:attributeGroup name="commandAttr">
+  <xs:attribute name="name" type="stringType" use="required"/>
+  <xs:attribute name="help" type="xs:string" use="required"/>
+  <xs:attribute name="ptype" type="stringType" use="optional"/>
+  <xs:attribute name="view" type="stringType" use="optional"/>
+  <xs:attribute name="viewid" type="stringType" use="optional"/>
+  <xs:attribute name="namespace" type="stringType" use="optional"/>
+  <xs:attribute name="access" type="stringType" use="optional"/>
+  <xs:attribute name="mode" type="stringType" use="optional"/>
+  <xs:attribute name="test" type="stringType" use="optional"/>
+  <xs:attribute name="optional" type="booleanType" use="optional"/>
+  <xs:attribute name="template" type="stringType" use="optional"/>
+  <xs:attribute name="preprocess_xml" type="stringType" use="optional"/>
+  <xs:attribute name="pfeature" type="stringType" use="optional"/>
+  <xs:attribute name="args" type="stringType" use="optional"/>
+  <xs:attribute name="args_help" type="xs:string" use="optional"/>
+  <xs:attribute name="lock" type="stringType" use="optional"/>
+  <xs:attribute name="template_param" type="stringType" use="optional"/>
+  <xs:attribute name="default" type="stringType" use="optional"/>
+  <xs:attribute name="escape_chars" type="stringType" use="optional"/>
+  <xs:attribute name="interrupt" type="stringType" use="optional"/>
+  <xs:attribute name="ref" type="stringType" use="optional"/>
+  <xs:attribute name="error_option" type="stringType" use="optional"/>
+  <xs:attribute name="test_option" type="stringType" use="optional"/>
+  <xs:attribute name="skip_preprocess" type="booleanType" use="optional"/>
+  <xs:attribute name="hidden" type="stringType" use="optional"/>
+  <xs:attribute name="usageInfo" type="stringType" use="optional"/>
+  <xs:attribute name="release" type="stringType" use="optional"/>
+  <xs:attribute name="example" type="stringType" use="optional"/>
+  <xs:attribute name="render_view" type="stringType" use="optional"/>
+</xs:attributeGroup>
+
+<xs:attributeGroup name="paramAttr">
+  <xs:attribute name="name" type="stringType" use="required"/>
+  <xs:attribute name="help" type="xs:string" use="required"/>
+  <xs:attribute name="ptype" type="stringType" use="required"/>
+  <xs:attribute name="template" type="stringType" use="optional"/>
+  <xs:attribute name="template_param" type="stringType" use="optional"/>
+  <xs:attribute name="must" type="stringType" use="optional"/>
+  <xs:attribute name="default" type="stringType" use="optional"/>
+  <xs:attribute name="mode" type="parammodeType" use="optional"/>
+  <xs:attribute name="pfeature" type="stringType" use="optional"/>
+  <xs:attribute name="namespace" type="stringType" use="optional"/>
+  <xs:attribute name="test" type="stringType" use="optional"/>
+  <xs:attribute name="order" type="stringType" use="optional"/>
+  <xs:attribute name="optional" type="booleanType" use="optional"/>
+  <xs:attribute name="viewid" type="stringType" use="optional"/>
+  <xs:attribute name="view" type="stringType" use="optional"/>
+  <xs:attribute name="recursive" type="stringType" use="optional"/>
+  <xs:attribute name="value" type="stringType" use="optional"/>
+  <xs:attribute name="prefix" type="stringType" use="optional"/>
+  <xs:attribute name="hidden" type="stringType" use="optional"/>
+  <xs:attribute name="completion" type="stringType" use="optional"/>
+  <xs:attribute name="access" type="stringType" use="optional"/>
+</xs:attributeGroup>
+
+<xs:attributeGroup name="viewAttr">
+  <xs:attribute name="name" type="stringType" use="required"/>
+  <xs:attribute name="prompt" type="stringType" use="optional"/>
+  <xs:attribute name="depth" type="stringType" use="optional"/>
+  <xs:attribute name="access" type="stringType" use="optional"/>
+  <xs:attribute name="restore" type="stringType" use="optional"/>
+
+</xs:attributeGroup>
+
+<xs:attributeGroup name="startupAttr">
+  <xs:attribute name="view" type="stringType" use="required"/>
+  <xs:attribute name="viewid" type="stringType" use="optional"/>
+  <xs:attribute name="default_shebang" type="stringType" use="optional"/>
+  <xs:attribute name="timeout" type="stringType" use="optional"/>
+  <xs:attribute name="lock" type="stringType" use="optional"/>
+  <xs:attribute name="interrupt" type="stringType" use="optional"/> 
+  <xs:attribute name="default_plugin" type="stringType" use="optional"/>
+</xs:attributeGroup>
+
+<xs:attributeGroup name="actionAttr">
+  <xs:attribute name="builtin" type="stringType" use="optional"/>
+  <xs:attribute name="shebang" type="stringType" use="optional"/>
+</xs:attributeGroup>
+
+<xs:attributeGroup name="ptypeAttr">
+  <xs:attribute name="name" type="stringType" use="required"/>
+  <xs:attribute name="pattern" type="stringType" use="required"/>
+  <xs:attribute name="help" type="xs:string" use="optional"/>
+  <xs:attribute name="method" type="stringType" use="optional"/>
+  <xs:attribute name="ext_pattern" type="stringType" use="optional"/>
+  <xs:attribute name="preprocess" type="stringType" use="optional"/>
+  <xs:attribute name="ext_help" type="xs:string" use="optional"/>
+</xs:attributeGroup>
+
+
+<xs:attributeGroup name="namespaceAttr">
+  <xs:attribute name="ref" type="stringType" use="required"/>
+  <xs:attribute name="help" type="xs:string" use="optional"/>
+  <xs:attribute name="prefix" type="stringType" use="optional"/>
+  <xs:attribute name="completion" type="stringType" use="optional"/>
+  <xs:attribute name="prefix_help" type="stringType" use="optional"/>
+  <xs:attribute name="context_help" type="stringType" use="optional"/>
+  <xs:attribute name="inherit" type="stringType" use="optional"/>
+  <xs:attribute name="access" type="stringType" use="optional"/>
+</xs:attributeGroup>
+
+
+<xs:attributeGroup name="varAttr">
+  <xs:attribute name="dynamic" type="stringType" use="required"/>
+  <xs:attribute name="name" type="stringType" use="required"/>
+  <xs:attribute name="value" type="stringType" use="optional"/>
+</xs:attributeGroup>
+
+<xs:element name="CLISH_MODULE" type="clishmoduleType"/>
+<xs:element name="VIEW" type="viewType"/>
+<xs:element name="COMMAND" type="commandType"/>
+<xs:element name="STARTUP" type="startupType"/>
+<xs:element name="ACTION" type="actionType"/>
+<xs:element name="PTYPE" type="ptypeType"/>
+<xs:element name="PARAM" type="paramType"/>
+<xs:element name="NAMESPACE" type="namespaceType"/>
+<xs:element name="VAR" type="varType"/>
+<xs:element name="HOOK" type="hookType"/>
+
+<xs:complexType name="clishmoduleType">
+  <xs:choice minOccurs="0" maxOccurs="unbounded">
+    <xs:element ref="STARTUP" minOccurs="0"/>
+    <xs:element ref="HOOK" minOccurs="0"/>
+    <xs:element ref="PTYPE" minOccurs="0" maxOccurs="unbounded"/>
+    <xs:element ref="COMMAND" minOccurs="0" maxOccurs="unbounded"/>
+    <xs:element ref="VIEW" minOccurs="0" maxOccurs="unbounded"/>
+    <xs:element ref="NAMESPACE" minOccurs="0" maxOccurs="unbounded"/>
+    <xs:element ref="VAR" minOccurs="0" maxOccurs="unbounded"/>
+  </xs:choice>
+</xs:complexType>
+
+<xs:complexType name="ptypeType">
+  <xs:attributeGroup ref="ptypeAttr"/>
+</xs:complexType>
+
+<xs:complexType name="viewType">
+  <xs:choice minOccurs="1" maxOccurs="unbounded">
+    <xs:element ref="VAR" minOccurs="0" maxOccurs="unbounded"/>
+    <xs:element ref="NAMESPACE" minOccurs="0" maxOccurs="unbounded"/>
+    <xs:element ref="COMMAND" minOccurs="0" maxOccurs="unbounded"/>
+  </xs:choice>
+  <xs:attributeGroup ref="viewAttr"/>
+</xs:complexType>
+
+<xs:complexType name="startupType">
+  <xs:sequence>
+    <xs:element ref="ACTION" minOccurs="0"/>
+  </xs:sequence>
+  <xs:attributeGroup ref="startupAttr"/>
+</xs:complexType>
+
+<xs:complexType name="commandType">
+  <xs:choice minOccurs="0" maxOccurs="unbounded">
+    <xs:element ref="PARAM" minOccurs="0" maxOccurs="unbounded"/>
+    <xs:element ref="ACTION" minOccurs="0" maxOccurs="1"/>
+    <xs:any namespace="http://www.w3.org/2001/XInclude"
+            processContents="skip" minOccurs="0" maxOccurs="unbounded"/>
+  </xs:choice>
+  <xs:attributeGroup ref="commandAttr"/>
+</xs:complexType>
+
+<xs:complexType name="paramType">
+  <xs:choice minOccurs="0" maxOccurs="unbounded">
+    <xs:element ref="PARAM" minOccurs="0" maxOccurs="unbounded"/>
+  </xs:choice>
+  <xs:attributeGroup ref="paramAttr"/>
+</xs:complexType>
+
+<xs:complexType name="actionType">
+  <xs:simpleContent>
+    <xs:extension base="xs:string">
+      <xs:attributeGroup ref="actionAttr"/>
+    </xs:extension>
+  </xs:simpleContent>
+</xs:complexType>
+
+<xs:complexType name="namespaceType">
+  <xs:attributeGroup ref="namespaceAttr"/>
+</xs:complexType>
+
+<xs:complexType name="varType">
+  <xs:sequence>
+    <xs:element ref="ACTION" minOccurs="0"/>
+  </xs:sequence>
+  <xs:attributeGroup ref="varAttr"/>
+</xs:complexType>
+
+<xs:complexType name="hookType">
+  <xs:attribute name="name" type="hook_list_e"/>
+  <xs:attribute name="builtin" type="xs:string" use="optional"/>
+</xs:complexType>
+</xs:schema>

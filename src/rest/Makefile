@@ -39,7 +39,7 @@ REST_GOPATH := $(GOPATH):$(abspath $(TOPDIR)):$(abspath $(REST_DIST_DIR))
 $(REST_BIN): $(REST_SRCS) $(REST_PREREQ)
 	$(MAKE) -C $(TOPDIR)/models/yang
 	$(MAKE) -C $(TOPDIR)/models
-	GOPATH=$(REST_GOPATH) $(GO) build -o $@ $(TOPDIR)/src/rest/main/main.go
+	GOPATH=$(REST_GOPATH) $(GO) build -gcflags=all="-N -l" -o $@ $(TOPDIR)/src/rest/main/main.go
 
 
 rest-clean:

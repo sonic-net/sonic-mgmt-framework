@@ -48,6 +48,7 @@ function insert_in()
         fi
     done < $filename
     #set -x
+    touch $outfile $filename
     mv -f $outfile $filename
 }
 
@@ -73,12 +74,12 @@ function insert_entities()
 }
 
 
-#echo Sanity check of platform config files with feature master ...
-#    xmllint --schema $FEATURES_MASTER $PLATFORM_CONFIGS >& /dev/null
-#    if [ $? -ne 0 ]; then
-#        echo Failed to validate $PLATFORM_CONFIGS
-#        exit 1
-#    fi
+echo Sanity check of platform config files with feature master ...
+    xmllint --schema $FEATURES_MASTER $PLATFORM_CONFIGS >& /dev/null
+    if [ $? -ne 0 ]; then
+        echo Failed to validate $PLATFORM_CONFIGS
+        exit 1
+    fi
 
 mkdir -p ${BUILD_DIR}
 echo Done. Generating platform specific files ...

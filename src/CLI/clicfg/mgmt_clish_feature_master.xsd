@@ -6,89 +6,8 @@
         	<xs:documentation>This contains the allowed feature names for any platform specific customizable feature names. If you are adding a new platform customizable feature, add a record in the enumerated list here.</xs:documentation>
         </xs:annotation>
         <xs:restriction base="xs:string">
-       <xs:enumeration value="FEATURE_BGP_R2"/>
-       <xs:enumeration value="FEATURE_DUPLEX"/>
-       <xs:enumeration value="FEATURE_SPEED"/>
-       <xs:enumeration value="FEATURE_PBR"/>
-       <xs:enumeration value="FEATURE_BREAKOUT"/>
-       <xs:enumeration value="FEATURE_EEE"/>
-       <xs:enumeration value="FEATURE_PORT_GROUP"/>
-       <xs:enumeration value="FEATURE_HOMOGENOUS_PORT_GROUP"/>
-       <xs:enumeration value="FEATURE_HYBRID_PORT_GROUP"/>
-       <xs:enumeration value="FEATURE_SWITCH_PROFILE"/>
-       <xs:enumeration value="FEATURE_FC"/>
-       <xs:enumeration value="FEATURE_ZONING"/>
-       <xs:enumeration value="FEATURE_FIPSNOOPING"/>
-       <xs:enumeration value="FEATURE_FCOE"/>
-       <xs:enumeration value="FEATURE_UNIT_PROVISION"/>
-       <xs:enumeration value="FEATURE_MGMT_VLAN"/>
-       <xs:enumeration value="FEATURE_MGMT_IF_IP"/>
-       <xs:enumeration value="FEATURE_UFT_MODE_SCALED_L3_ROUTES"/>
-       <xs:enumeration value="FEATURE_ACL_BYTE_COUNT"/>
-       <xs:enumeration value="FEATURE_HASH_ALGORITHM_XOR"/>
-       <xs:enumeration value="FEATURE_HASH_ALGORITHM_RANDOM"/>
-       <xs:enumeration value="FEATURE_HASH_ALGORITHM_XOR1"/>
-       <xs:enumeration value="FEATURE_HASH_ALGORITHM_XOR2"/>
-       <xs:enumeration value="FEATURE_HASH_ALGORITHM_XOR4"/>
-       <xs:enumeration value="FEATURE_HASH_ALGORITHM_XOR8"/>
-       <xs:enumeration value="FEATURE_HASH_ALGORITHM_CRC16CC"/>
-       <xs:enumeration value="FEATURE_HASH_ALGORITHM_CRC32LSB"/>
-       <xs:enumeration value="FEATURE_HASH_ALGORITHM_CRC32MSB"/>
-       <xs:enumeration value="FEATURE_IPV6_ACL"/>
-       <xs:enumeration value="FEATURE_IPV6_HOP_BY_HOP"/>
-       <xs:enumeration value="FEATURE_IP_ECMP_MAX_PATH"/>
-       <xs:enumeration value="FEATURE_RESILIENT_HASHING_LAG"/>
-       <xs:enumeration value="FEATURE_RESILIENT_HASHING_ECMP"/>
-       <xs:enumeration value="FEATURE_QOS_RATE_ADJUST"/>
-       <!-- this is for setting system identifier led display -->
-       <xs:enumeration value="FEATURE_SYSTEM_IDENTIFIER"/>
-       <xs:enumeration value="FEATURE_FABRIC_MODE"/>
-       <xs:enumeration value="FEATURE_FWD_TABLE_MODES"/>
-       <xs:enumeration value="FEATURE_PFC_SHARED_HEADROOM"/>
-       <xs:enumeration value="FEATURE_MGMT_VRF"/>
-       <xs:enumeration value="FEATURE_LOCATION_LED"/>
-       <xs:enumeration value="FEATURE_LOAD_BALANCE_INGRESS_PORT"/>
-       <xs:enumeration value="FEATURE_HASH_SEED_ALGO"/>
-       <xs:enumeration value="FEATURE_WRED_STAT_SUPPORT"/>
-       <xs:enumeration value="FEATURE_WRED_POOL_SUPPORT"/>
-       <xs:enumeration value="FEATURE_WRED_PORT_SUPPORT"/>
-       <xs:enumeration value="FEATURE_ECN_SUPPORT"/>
-       <xs:enumeration value="FEATURE_ECN_THR_SUPPORT"/>
-       <xs:enumeration value="FEATURE_ECN_QUALIFIER_SUPPORT"/>
-       <xs:enumeration value="FEATURE_SHAPE_PPS_SUPPORT"/>
-       <xs:enumeration value="FEATURE_PACKET_COLORING_SUPPORT"/>
-       <xs:enumeration value="FEATURE_BUFFER_QUEUE_LIMIT"/>
-       <xs:enumeration value="FEATURE_PFC_SHARED_BUFFER"/>
-       <xs:enumeration value="FEATURE_VTY_SUPPORT"/>
-       <xs:enumeration value="FEATURE_ACL_TBL_PROFILE"/>
-       <xs:enumeration value="FEATURE_DEEP_BUFFER_MODE"/>
-       <xs:enumeration value="FEATURE_VXLAN"/>
-       <xs:enumeration value="FEATURE_EVPN"/>
-       <xs:enumeration value="FEATURE_L3_MULTICAST"/>
-       <xs:enumeration value="FEATURE_FLOOD_RESTRICT"/>
-       <xs:enumeration value="FEATURE_DHCP_SNOOPING"/>
-       <xs:enumeration value="FEATURE_DAI_DHCP_SNOOPING"/>
-       <!-- setting for sflow options -->
-       <xs:enumeration value="FEATURE_SFLOW_OPTIONS_SUPPORT"/>
-       <!-- Openflow feature flags -->
-       <xs:enumeration value="NOT_SUPPORTED_IN_OPENFLOW_ONLY_MODE"/>
-       <xs:enumeration value="OPENFLOW_ONLY_MODE"/>
-       <xs:enumeration value="FEATURE_BST"/>
-       <xs:enumeration value="FEATURE_MMU_DETAIL"/>
-       <xs:enumeration value="FEATURE_OPENFLOW"/>
        <!-- Feature NOT_SUPPORTED -->
        <xs:enumeration value="NOT_SUPPORTED"/>
-       <!-- Setting for Copp ACL -->
-       <xs:enumeration value="FEATURE_COPP_ACL"/>
-       <!-- Setting for ERPM -->
-       <xs:enumeration value="FEATURE_ERPM_GRE"/>
-       <xs:enumeration value="FEATURE_ERPM_TTL"/>
-       <xs:enumeration value="FEATURE_ERPM_TOS"/>
-       <xs:enumeration value="FEATURE_VXLAN_ROUTING_SUPPORTED"/>
-       <xs:enumeration value="FEATURE_ACL_LOGGING_NOT_SUPPORTED"/>
-       <xs:enumeration value="FEATURE_RIOT_PROFILE_SUPPORTED"/>
-       <xs:enumeration value="FEATURE_STORM_CONTROL_NOT_SUPPORTED"/>
-       <xs:enumeration value="FEATURE_QOS_TC_TO_QUEUE_TYPE_MAP_SUPPORT"/>
       </xs:restriction>
     </xs:simpleType>
     <xs:simpleType name="entityname_t">
@@ -96,27 +15,11 @@
         	<xs:documentation>This contains the allowed feature-value names for any platform specific customizable feature-value strings. If you are adding a new platform customizable entity, add a record in the enumerated list here.</xs:documentation>
         </xs:annotation>
         <xs:restriction base="xs:string">
-       <xs:enumeration value="START_CHASSIS_ID"/>
-       <xs:enumeration value="MAC_AGE_TIMER_DEF_VALUE"/>
-       <xs:enumeration value="MAX_CHASSIS_ID"/>
-       <xs:enumeration value="START_SLOT_ID"/>
-       <xs:enumeration value="MAX_SLOT_ID"/>
        <xs:enumeration value="START_PORT_ID"/>
        <xs:enumeration value="MAX_PORT_ID"/>
        <xs:enumeration value="START_SUB_PORT_ID"/>
        <xs:enumeration value="MAX_SUB_PORT_ID"/>
-       <xs:enumeration value="START_PORT_GROUP_ID"/>
-       <xs:enumeration value="MAX_PORT_GROUP_ID"/>
-       <xs:enumeration value="PHYSICAL_SLOT_STRING"/>
        <xs:enumeration value="MAX_MTU"/>
-       <xs:enumeration value="QOS_MIN_BUFFER"/>
-       <xs:enumeration value="QOS_MAX_BUFFER"/>
-       <xs:enumeration value="QOS_RATE_UNIT"/>
-       <xs:enumeration value="MONITORING_SESSION"/>
-       <xs:enumeration value="PORT_GROUP_CFG"/>
-       <xs:enumeration value="PORT_GROUP_STATE"/>
-       <xs:enumeration value="CPU_QUEUE_MIN"/>
-       <xs:enumeration value="CPU_QUEUE_MAX"/>
       </xs:restriction>
     </xs:simpleType>
     <xs:complexType name="feature_t">

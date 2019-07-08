@@ -1,4 +1,4 @@
-#!/tools/build/bin/python2.7
+#!/usr/bin/python2.7
 ''' CLI parser tree preprocessing script before the parser xml-s are copied
     to sysroot. These are the steps performed:
     a. Macro replacement

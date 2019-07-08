@@ -64,7 +64,7 @@ END_CMD = """<COMMAND name="end"
                  help="Exit to the exec Mode"
                  view="enable-view"/>"""
 
-VIEW_TAG_STR = """{http://www.dellemc.com/force10/XMLSchema}VIEW"""
+VIEW_TAG_STR = """{http://www.dellemc.com/sonic/XMLSchema}VIEW"""
 ENABLE_VIEW_STR = """enable-view"""
 SKIP_VIEW_LIST = ["enable-view", "hidden-view", "ping-view"]
 #DBG_FLAG = False

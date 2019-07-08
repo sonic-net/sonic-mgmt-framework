@@ -9,6 +9,34 @@ import (
 )
 
 func main() {
+<<<<<<< HEAD
+=======
+	jsonData :=`{
+		"VLAN": {
+			"Vlan100": {
+				"members": [
+				"Ethernet44",
+				"Ethernet64"
+				],
+				"vlanid": "100"
+			},
+			"Vlan1200": {
+				"members": [
+				"Ethernet64",
+				"Ethernet8"
+				],
+				"vlanid": "1200"
+			},
+			"Vlan2500": {
+				"members": [
+				"Ethernet8",
+				"Ethernet64"
+				],
+				"vlanid": "2500"
+			}
+		}
+	}`
+>>>>>>> project-arlo_sonic-mgmt-framework/brcm_poc
 	/*
 		"ACL_TABLE": {
 			"TestACL1": {
@@ -28,6 +56,7 @@ func main() {
 			}
 		}*/
 
+<<<<<<< HEAD
 /*jsonData :=  `{
 		  "DEVICE_METADATA": {
         "localhost": {
@@ -94,6 +123,8 @@ jsonData :=  `{
         "Vlan1000|192.168.0.1/27": {}
     }
   }`*/
+=======
+>>>>>>> project-arlo_sonic-mgmt-framework/brcm_poc
 	start := time.Now()
 
 	dataFile := ""

@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CLISH_MODULE
-    xmlns="http://www.dellemc.com/force10/XMLSchema"
+    xmlns="http://www.dellemc.com/sonic/XMLSchema"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xmlns:xi="http://www.w3.org/2001/XInclude"
-    xsi:schemaLocation="http://www.dellemc.com/force10/XMLSchema
-						http://www.dellemc.com/force10/XMLSchema/clish.xsd"
+    xsi:schemaLocation="http://www.dellemc.com/sonic/XMLSchema
+			http://www.dellemc.com/sonic/XMLSchema/clish.xsd"
     >
     <!--=======================================================-->
     <VIEW
@@ -17,14 +17,6 @@
             name="no"
             help="To delete / disable commands in config mode"
             />
-        <COMMAND
-            name="help"
-            help="Display available commands"
-            >
-            <ACTION
-                builtin="clish_nop"
-                />
-        </COMMAND>
     </VIEW>
 </CLISH_MODULE>
 
