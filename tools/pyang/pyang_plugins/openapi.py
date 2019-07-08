@@ -373,7 +373,7 @@ def walk_child_for_list_base(child, actXpath, pathstr, metadata, nonBaseDefName=
         return
 
     defName = shortenNodeName(child)
-    defName = "list_base"+'_'+defName
+    defName = "list"+'_'+defName
 
     if child.i_config == False:
         
@@ -614,11 +614,14 @@ def shortenNodeName(node):
     name = node.i_module.i_modulename + xpath.replace('/','_')
     name = name.replace('-','_').lower()
     if name not in nodeDict:
-        nodeDict[name] = OrderedDict()
+        nodeDict[name] = xpath
     else:
         while name in nodeDict:
+            if xpath == nodeDict[name]:
+                break
             name = node.i_module.i_modulename + '_' + name
-        nodeDict[name] = OrderedDict()
+            name = name.replace('-','_').lower()
+        nodeDict[name] = xpath
     return name
 
 def get_typename(s):
