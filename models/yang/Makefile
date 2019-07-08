@@ -11,7 +11,8 @@ BUILD_DIR := $(TOPDIR)/build
 YANGAPI_DIR     := $(TOPDIR)/build/yaml
 YANGDIR         := $(TOPDIR)/models/yang
 YANGDIR_COMMON  := $(TOPDIR)/models/yang/common
-YANG_MOD_FILES  := $(shell find $(YANGDIR) -maxdepth 1 -name '*.yang' | sort)
+#YANG_MOD_FILES  := $(shell find $(YANGDIR) -maxdepth 1 -name '*.yang' | sort)
+YANG_MOD_FILES  := openconfig-acl.yang common/openconfig-interfaces.yang common/openconfig-if-ip.yang
 YANG_COMMON_FILES  := $(shell find $(YANGDIR_COMMON) -name '*.yang' | sort)
 
 TOOLS_DIR        := $(TOPDIR)/tools

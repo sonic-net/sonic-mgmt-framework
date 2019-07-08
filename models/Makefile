@@ -101,14 +101,14 @@ $(SERVER_DIST_INIT): | $$(@D)/.
 
 #======================================================================
 # Generate swagger client in Python.
-# FIXME generating only for openconfig-acl.yaml for now
+# FIXME generating only for openconfig-interfaces.yaml for now
 #======================================================================
-$(PY_CLIENT_CODEGEN_DIR)/.done: | $(CODEGEN_JAR) $$(@D)/. $(YANGAPI_DIR)/openconfig-acl.yaml
+$(PY_CLIENT_CODEGEN_DIR)/.done: | $(CODEGEN_JAR) $$(@D)/. $(YANGAPI_DIR)/openconfig-interfaces.yaml
 	rm -rf $(@D)/*
 	@echo "+++++ Generating Python client +++++"
 	java -jar $(CODEGEN_JAR) generate \
 		--lang python \
-		--input-spec $(YANGAPI_DIR)/openconfig-acl.yaml \
+		--input-spec $(YANGAPI_DIR)/openconfig-interfaces.yaml \
 		--output $(@D)
 	touch $@
 
