@@ -28,10 +28,6 @@ GO_DEPS_LIST = github.com/gorilla/mux \
                gopkg.in/go-playground/validator.v9
 
 
-APT_DEPS_LIST = default-jre-headless \
-                libxml2-dev \
-                libxslt-dev
-
 PIP_DEPS_LIST = pyang pyyaml
 
 PIP2_DEPS_LIST = connexion python_dateutil certifi six urllib3
@@ -51,22 +47,17 @@ REST_GOPATH = $(GOPATH):$(CVL_GOPATH):$(TOPDIR):$(REST_DIST_DIR)
 
 #$(info REST_SRCS = $(REST_SRCS) )
 
-all: build-deps apt-deps pip-deps pip2-deps cli go-deps go-patch rest-server
+all: build-deps pip-deps pip2-deps cli go-deps go-patch rest-server
 
 build-deps:
 	mkdir -p $(BUILD_DIR)
 
 go-deps: $(GO_DEPS_LIST)
-apt-deps: $(APT_DEPS_LIST)
 pip-deps: $(PIP_DEPS_LIST)
 pip2-deps: $(PIP2_DEPS_LIST)
 
 $(GO_DEPS_LIST):
 	$(GO) get -v $@
-
-$(APT_DEPS_LIST):
-	sudo apt-get install -y $@
-
 
 $(PIP_DEPS_LIST):
 	sudo pip3 install $@
