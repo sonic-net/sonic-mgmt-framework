@@ -10,16 +10,38 @@
 
 <VIEW name="enable-view">
 <!--show ip access-lists -->
-   <COMMAND
-         name="show ip access-lists"
-         help="Show IPv4 access-list information"
-		 >
-         <PARAM
-            name="access-list-name"
-            help="Name of access-list (Max size 140)"
-            ptype="STRING"
-            optional="true"
-            >
+<COMMAND name = "show ip access-lists"
+        help = "Show IPv4 access-lists information"
+        >
+        <PARAM name = "direction-switch"
+                help = "Configure the direction to apply the access list"
+                ptype = "SUBCOMMAND"
+                mode = "switch"
+        >
+                <PARAM name = "in"
+                        help = "show access-list in incoming direction"
+                        ptype = "SUBCOMMAND"
+                        mode = "subcommand"
+                >
+
+                        <PARAM name = "acl-table-name"
+                                help = "Name of acl-table"
+                                ptype = "STRING"
+                                optional = "true"
+                        />
+                </PARAM>
+              <PARAM name = "out"
+                        help = "show access-list in outgoing direction"
+                        ptype = "SUBCOMMAND"
+                        mode = "subcommand"
+                >
+
+                        <PARAM name = "acl-table-name"
+                                help = "Name of acl-table"
+                                ptype = "STRING"
+                                optional = "true"
+                        />
+                </PARAM>
         </PARAM>
       <ACTION>
         if test "${access-list-name}" = ""; then&#xA;
@@ -32,10 +54,15 @@
 
 
 <!--show ip access-group -->
-   <COMMAND
-         name="show ip access-group"
-         help="Show IPv4 access-group information"
-		 >
+<COMMAND name = "show ip access-group"
+        help = "Show IPv4 access-group information"
+        >
+        <PARAM name = "acl-name"
+                help = "name of acl-table"
+                ptype = "STRING"
+                optional = "true"
+                >
+        </PARAM>
       <ACTION>
         python $SONIC_CLI_ROOT/sonic-cli.py get_acl_interfaces show_access_group.j2
       </ACTION>
@@ -197,19 +224,115 @@
              </PARAM>
          </PARAM>
          <ACTION>
-             if test "${seq-options}" = "permit"; then&#xA;
-                 if test "${permit-options}" = "tcp"; then&#xA;
-                     python $SONIC_CLI_ROOT/sonic-cli.py post_list_base_acl_entries_acl_entry ${name} ACL_IPV4 ${seq-no} tcp permit ${src-prefix} ${source-port-number} ${dest-prefix} ${destination-port-number}&#xA;
-                 else&#xA;
-                     python $SONIC_CLI_ROOT/sonic-cli.py post_list_base_acl_entries_acl_entry ${name} ACL_IPV4 ${seq-no} udp permit ${src-prefix} ${source-port-number} ${dest-prefix} ${destination-port-number}&#xA;
-                 fi&#xA;
-             elif test "${seq-options}" = "deny"; then&#xA;
-                 if test "${deny-options}" = "tcp"; then&#xA;
-                      python $SONIC_CLI_ROOT/sonic-cli.py post_list_base_acl_entries_acl_entry ${name} ACL_IPV4 ${seq-no} tcp deny ${src-prefix} ${source-port-number} ${dest-prefix} ${destination-port-number}&#xA;
-                 else&#xA;
-                      python $SONIC_CLI_ROOT/sonic-cli.py post_list_base_acl_entries_acl_entry ${name} ACL_IPV4 ${seq-no} udp deny ${src-prefix} ${source-port-number} ${dest-prefix} ${destination-port-number}&#xA;
-                 fi&#xA;
-             fi&#xA;
+		if test "${seq-options}" = "permit"; then&#xA;
+		    if test "${permit-options}" = "tcp"; then&#xA;
+                        python $SONIC_CLI_ROOT/sonic-cli.py post_list_base_acl_entries_acl_entry ${name} ACL_IPV4 ${seq-no} tcp deny ${src-prefix} ${source-port-number} ${dest-prefix} ${destination-port-number}&#xA;
+                 
+		elif test "${permit-options}" = "ip"; then&#xA;
+		    if test "${src-options-switch}" = "src-prefix"; then&#xA;
+		        if test "${dest-options-switch}" = "dest-prefix"; then&#xA;
+			    python $SONIC_CLI_ROOT/sonic-cli.py post_list_base_acl_entries_acl_entry ${name} ACL_IPV4 ${seq-no} ip permit ${src-prefix} ${dest-prefix}&#xA;
+			else&#xA;
+			    python $SONIC_CLI_ROOT/sonic-cli.py post_list_base_acl_entries_acl_entry ${name} ACL_IPV4 ${seq-no} ip permit ${src-prefix} ${dest-any}&#xA;
+			fi&#xA;
+						
+		    else&#xA;
+		        if test "${dest-options-switch}" = "dest-prefix"; then&#xA;
+			    python $SONIC_CLI_ROOT/sonic-cli.py post_list_base_acl_entries_acl_entry ${name} ACL_IPV4 ${seq-no} ip permit ${src-any} ${dest-prefix}&#xA;
+			else&#xA;
+			    python $SONIC_CLI_ROOT/sonic-cli.py post_list_base_acl_entries_acl_entry ${name} ACL_IPV4 ${seq-no} ip permit ${src-any} ${dest-any}&#xA;
+			fi&#xA;
+		    fi&#xA;
+				 
+		elif test "${permit-options}" = "icmp"; then&#xA;
+		    if test "${src-options-switch}" = "src-prefix"; then&#xA;
+			if test "${dest-options-switch}" = "dest-prefix"; then&#xA;
+			    python $SONIC_CLI_ROOT/sonic-cli.py post_list_base_acl_entries_acl_entry ${name} ACL_IPV4 ${seq-no} icmp permit ${src-prefix} ${dest-prefix}&#xA;
+			else&#xA;
+			    python $SONIC_CLI_ROOT/sonic-cli.py post_list_base_acl_entries_acl_entry ${name} ACL_IPV4 ${seq-no} icmp permit ${src-prefix} ${dest-any}&#xA;
+			fi&#xA;
+		else&#xA;
+		    if test "${dest-options-switch}" = "dest-prefix"; then&#xA;
+		        python $SONIC_CLI_ROOT/sonic-cli.py post_list_base_acl_entries_acl_entry ${name} ACL_IPV4 ${seq-no} icmp permit ${src-any} ${dest-prefix}&#xA;
+		    else&#xA;
+			python $SONIC_CLI_ROOT/sonic-cli.py post_list_base_acl_entries_acl_entry ${name} ACL_IPV4 ${seq-no} icmp permit ${src-any} ${dest-any}&#xA;
+		    fi&#xA;
+		fi&#xA;
+				 
+	    elif test "${permit-options}" = "proto-num"; then&#xA;
+		if test "${src-options-switch}" = "src-prefix"; then&#xA;
+		    if test "${dest-options-switch}" = "dest-prefix"; then&#xA;
+			python $SONIC_CLI_ROOT/sonic-cli.py post_list_base_acl_entries_acl_entry ${name} ACL_IPV4 ${seq-no} proto permit ${src-prefix} ${dest-prefix}&#xA;
+		    else&#xA;
+			python $SONIC_CLI_ROOT/sonic-cli.py post_list_base_acl_entries_acl_entry ${name} ACL_IPV4 ${seq-no} proto permit ${src-prefix} ${dest-any}&#xA;
+		    fi&#xA;
+		else&#xA;
+		    if test "${dest-options-switch}" = "dest-prefix"; then&#xA;
+			python $SONIC_CLI_ROOT/sonic-cli.py post_list_base_acl_entries_acl_entry ${name} ACL_IPV4 ${seq-no} proto permit ${src-any} ${dest-prefix}&#xA;
+		    else&#xA;
+		        python $SONIC_CLI_ROOT/sonic-cli.py post_list_base_acl_entries_acl_entry ${name} ACL_IPV4 ${seq-no} proto permit ${src-any} ${dest-any}&#xA;
+		    fi&#xA;
+		fi&#xA;
+				 
+				 
+	    else&#xA;
+		python $SONIC_CLI_ROOT/sonic-cli.py post_list_base_acl_entries_acl_entry ${name} ACL_IPV4 ${seq-no} udp permit ${src-prefix} ${source-port-number} ${dest-prefix} ${destination-port-number}&#xA;
+	    fi&#xA;
+
+	elif test "${seq-options}" = "deny"; then&#xA;
+                if test "${deny-options}" = "tcp"; then&#xA;
+                    python $SONIC_CLI_ROOT/sonic-cli.py post_list_base_acl_entries_acl_entry ${name} ACL_IPV4 ${seq-no} tcp deny ${src-prefix} ${source-port-number} ${dest-prefix} ${destination-port-number}&#xA;
+                 
+		elif test "${deny-options}" = "ip"; then&#xA;
+		    if test "${src-options-switch}" = "src-prefix"; then&#xA;
+			if test "${dest-options-switch}" = "dest-prefix"; then&#xA;
+			    python $SONIC_CLI_ROOT/sonic-cli.py post_list_base_acl_entries_acl_entry ${name} ACL_IPV4 ${seq-no} ip deny ${src-prefix} ${dest-prefix}&#xA;
+			else&#xA;
+			    python $SONIC_CLI_ROOT/sonic-cli.py post_list_base_acl_entries_acl_entry ${name} ACL_IPV4 ${seq-no} ip deny ${src-prefix} ${dest-any}&#xA;
+			fi&#xA;
+		    else&#xA;
+			if test "${dest-options-switch}" = "dest-prefix"; then&#xA;
+			    python $SONIC_CLI_ROOT/sonic-cli.py post_list_base_acl_entries_acl_entry ${name} ACL_IPV4 ${seq-no} ip deny ${src-any} ${dest-prefix}&#xA;
+			else&#xA;
+			    python $SONIC_CLI_ROOT/sonic-cli.py post_list_base_acl_entries_acl_entry ${name} ACL_IPV4 ${seq-no} ip deny ${src-any} ${dest-any}&#xA;
+			fi&#xA;
+		    fi&#xA;
+				 
+		elif test "${deny-options}" = "icmp"; then&#xA;
+		    if test "${src-options-switch}" = "src-prefix"; then&#xA;
+			if test "${dest-options-switch}" = "dest-prefix"; then&#xA;
+			    python $SONIC_CLI_ROOT/sonic-cli.py post_list_base_acl_entries_acl_entry ${name} ACL_IPV4 ${seq-no} icmp deny ${src-prefix} ${dest-prefix}&#xA;
+			else&#xA;
+			    python $SONIC_CLI_ROOT/sonic-cli.py post_list_base_acl_entries_acl_entry ${name} ACL_IPV4 ${seq-no} icmp deny ${src-prefix} ${dest-any}&#xA;
+			fi&#xA;
+		    else&#xA;
+			if test "${dest-options-switch}" = "dest-prefix"; then&#xA;
+			    python $SONIC_CLI_ROOT/sonic-cli.py post_list_base_acl_entries_acl_entry ${name} ACL_IPV4 ${seq-no} icmp deny ${src-any} ${dest-prefix}&#xA;
+			else&#xA;
+			    python $SONIC_CLI_ROOT/sonic-cli.py post_list_base_acl_entries_acl_entry ${name} ACL_IPV4 ${seq-no} icmp deny ${src-any} ${dest-any}&#xA;
+			fi&#xA;
+		    fi&#xA;
+				 
+		elif test "${deny-options}" = "protocol"; then&#xA;
+		    if test "${src-options-switch}" = "src-prefix"; then&#xA;
+			if test "${dest-options-switch}" = "dest-prefix"; then&#xA;
+			    python $SONIC_CLI_ROOT/sonic-cli.py post_list_base_acl_entries_acl_entry ${name} ACL_IPV4 ${seq-no} proto deny ${src-prefix} ${dest-prefix}&#xA;
+			else&#xA;
+			    python $SONIC_CLI_ROOT/sonic-cli.py post_list_base_acl_entries_acl_entry ${name} ACL_IPV4 ${seq-no} proto deny ${src-prefix} ${dest-any}&#xA;
+			fi&#xA;
+		    else&#xA;
+			if test "${dest-options-switch}" = "dest-prefix"; then&#xA;
+			    python $SONIC_CLI_ROOT/sonic-cli.py post_list_base_acl_entries_acl_entry ${name} ACL_IPV4 ${seq-no} proto deny ${src-any} ${dest-prefix}&#xA;
+			else&#xA;
+			    python $SONIC_CLI_ROOT/sonic-cli.py post_list_base_acl_entries_acl_entry ${name} ACL_IPV4 ${seq-no} proto deny ${src-any} ${dest-any}&#xA;
+			fi&#xA;
+		    fi&#xA;
+				 
+				 
+		else&#xA;
+		     python $SONIC_CLI_ROOT/sonic-cli.py post_list_base_acl_entries_acl_entry ${name} ACL_IPV4 ${seq-no} udp deny ${src-prefix} ${source-port-number} ${dest-prefix} ${destination-port-number}&#xA;
+		fi&#xA;
+             fi&#xA;	 
          </ACTION>
      </COMMAND>
 </VIEW>

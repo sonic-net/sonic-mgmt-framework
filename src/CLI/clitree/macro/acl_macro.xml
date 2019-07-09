@@ -14,6 +14,14 @@
                 ptype="IP_ADDR_MASK"
                 >
             </PARAM>
+            <PARAM
+                name="dest-any"
+                help="Destination prefix "
+                ptype="SUBCOMMAND"
+		mode= "subcommand"
+		value="any"
+                >
+            </PARAM>
         </PARAM>
 </MACRODEF>
 
@@ -24,10 +32,18 @@
         ptype="SUBCOMMAND"
         mode="switch"
         >
+ <PARAM
+                name="src-prefix"
+                help="Source prefix "
+                ptype="IP_ADDR_MASK"
+                >
+            </PARAM>
         <PARAM
-            name="src-prefix"
-            help="Source Prefix"
-            ptype="IP_ADDR_MASK"
+            name="src-any"
+            help="Any source Address"
+            ptype="SUBCOMMAND"
+	    mode="subcommand"
+	    value="any"
             >
         </PARAM>
     </PARAM>
@@ -57,7 +73,39 @@
 </MACRODEF>
 
 <MACRODEF name="IPV4-ACL">
-    <!-- permit tcp -->
+    <!-- deny <0-255> -->
+    <PARAM
+        name="protocol"
+        help="Protocol number"
+        ptype="UINT"
+        >
+        <MACRO name="IPV4-SRC-OPTIONS" arg="" ></MACRO>
+        <MACRO name="IPV4-DEST-OPTIONS" arg="" ></MACRO>
+        <MACRO name="CMD-END-OPTIONS" arg="" ></MACRO>
+    </PARAM>
+    <!-- deny icmp -->
+    <PARAM
+        name="icmp"
+        help="ICMP address"
+        ptype="SUBCOMMAND"
+        mode="subcommand"
+        >
+        <MACRO name="IPV4-SRC-OPTIONS" arg="" ></MACRO>
+        <MACRO name="IPV4-DEST-OPTIONS" arg="" ></MACRO>
+        <MACRO name="CMD-END-OPTIONS" arg="" ></MACRO>
+    </PARAM>
+    <!-- deny ip -->
+  <PARAM
+        name="ip"
+        help="IP address"
+        ptype="SUBCOMMAND"
+        mode="subcommand"
+        >
+        <MACRO name="IPV4-SRC-OPTIONS" arg="" ></MACRO>
+        <MACRO name="IPV4-DEST-OPTIONS" arg="" ></MACRO>
+        <MACRO name="CMD-END-OPTIONS" arg="" ></MACRO>
+    </PARAM>
+    <!-- deny tcp -->
     <PARAM
         name="tcp"
         help="TCP packets"
@@ -84,6 +132,39 @@
 </MACRODEF>
 
 <MACRODEF name="IPV4-ACL-PERMIT-OPTIONS">
+
+<!-- permit <0-255> -->
+    <PARAM
+        name="proto-num"
+        help="Protocol number"
+        ptype="UINT"
+        >
+        <MACRO name="IPV4-SRC-OPTIONS" arg="" ></MACRO>
+        <MACRO name="IPV4-DEST-OPTIONS" arg="" ></MACRO>
+        <MACRO name="CMD-END-OPTIONS" arg="" ></MACRO>
+    </PARAM>
+    <!-- permit icmp -->
+    <PARAM
+        name="icmp"
+        help="ICMP address"
+        ptype="SUBCOMMAND"
+        mode="subcommand"
+        >
+        <MACRO name="IPV4-SRC-OPTIONS" arg="" ></MACRO>
+        <MACRO name="IPV4-DEST-OPTIONS" arg="" ></MACRO>
+        <MACRO name="CMD-END-OPTIONS" arg="" ></MACRO>
+    </PARAM>
+    <!-- permit ip -->
+    <PARAM
+        name="ip"
+        help="IP address"
+        ptype="SUBCOMMAND"
+        mode="subcommand"
+        >
+      <MACRO name="IPV4-SRC-OPTIONS" arg="" ></MACRO>
+        <MACRO name="IPV4-DEST-OPTIONS" arg="" ></MACRO>
+        <MACRO name="CMD-END-OPTIONS" arg="" ></MACRO>
+    </PARAM>
     <!-- permit tcp -->
     <PARAM
         name="tcp"
@@ -157,7 +238,28 @@
                     help="Apply access-list in outgoing direction"
                     ptype="SUBCOMMAND"
                     mode="subcommand"
-				    />
-	        </PARAM>
+                                    />
+                </PARAM>
+</MACRODEF>
+<MACRODEF name= "CMD-END-OPTIONS">
+        <PARAM name = "end-option"
+                help = "End-option"
+                ptype = "SUBCOMMAND"
+		optional = "true"
+                mode = "switch"
+        >
+        <PARAM
+        name="dscp"
+        help="Consider only packets matching DSCP value"
+        ptype="SUBCOMMAND"
+        mode="subcommand"
+                >
+        <PARAM
+            name="dscp-val"
+            help="Consider only packets matching DSCP value"
+            ptype="UINT"
+            />
+        </PARAM>
+	</PARAM>
 </MACRODEF>
 </ROOT>

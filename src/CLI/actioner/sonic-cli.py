@@ -49,7 +49,11 @@ def generate_body(func, args):
        keypath = [ args[0], args[1] ]
        forwarding_action = "ACCEPT" if args[4] == 'permit' else 'DROP'
        if args[3] == 'ip' : 
-          protocol = "IP"
+          protocol = "IP_PROTOCOL"
+       elif args[3] == 'icmp':
+	  protocol = "IP_ICMP"
+       elif args[3] == 'proto':
+	  protocol = "IP_PROTOCOL";
        elif args[3] == 'tcp' :
           protocol = "IP_TCP"
        else :
