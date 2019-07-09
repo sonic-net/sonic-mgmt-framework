@@ -10,9 +10,8 @@ import (
 )
 
 /*
-#cgo CFLAGS: -I build/pcre-8.43/install/include -I build/libyang/build/include
-#cgo LDFLAGS: -L build/pcre-8.43/install/lib -lpcre
-#cgo LDFLAGS: -L build/libyang/build -lyang
+#cgo LDFLAGS: -lpcre
+#cgo LDFLAGS: -lyang
 #include <libyang/libyang.h>
 #include <libyang/tree_data.h>
 #include <stdlib.h>

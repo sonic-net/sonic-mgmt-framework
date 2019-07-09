@@ -4,7 +4,8 @@ SRC_FILES=$(wildcard *.go)
 TOP_DIR := $(abspath ../..)
 GOFLAGS:=
 BUILD_DIR:=build
-GO_DEP_PATH=/tmp/go:$(abspath .)/$(BUILD_DIR)
+GO_DOWNLOAD_PATH:=/tmp/go
+GO_DEP_PATH=$(GO_DOWNLOAD_PATH):$(abspath .)/$(BUILD_DIR)
 GO_TRANSLIB_PATH=$(TOP_DIR)/sonic-mgmt-framework
 GO_SONIC_TELEMETRY_PATH=$(TOP_DIR)
 GOPATH = $(GO_DEP_PATH):$(GO_TRANSLIB_PATH):$(GO_SONIC_TELEMETRY_PATH)
@@ -36,6 +37,13 @@ $(BUILD_DIR)/.deps:
 	GOPATH=$(GO_DEP_PATH) $(GO) get -u github.com/antchfx/xmlquery
 	GOPATH=$(GO_DEP_PATH) $(GO) get -u github.com/golang/glog
 	GOPATH=$(GO_DEP_PATH) $(GO) get -u github.com/go-redis/redis
+# Patch code
+	@grep ParseJsonMap  $(GO_DOWNLOAD_PATH)/src/github.com/antchfx/jsonquery/node.go || \
+	printf "\nfunc ParseJsonMap(jsonMap *map[string]interface{}) (*Node, error) {\n \
+		doc := &Node{Type: DocumentNode}\n \
+		parseValue(*jsonMap, doc, 1)\n \
+		return doc, nil\n \
+	}\n" >> $(GO_DOWNLOAD_PATH)/src/github.com/antchfx/jsonquery/node.go
 #	touch $@
 
 cvl.a:$(BUILD_DIR)/cvl.a
