@@ -973,8 +973,10 @@ func   processErrorResp(ctx *C.struct_ly_ctx){
 	errtableName = resultTab[len(resultTab) -1]
 
 	/* Fetch the Error Elem Name. */
+	if (len(resultTable) > 2){
 	resultElem := strings.Split(resultTable[1], "/")
 	ElemName = resultElem[len(resultElem) -1]
+	}
 
 	/* Fetch the invalid field name. */
 	result := strings.Split(errMsg, "\"")
@@ -1034,7 +1036,7 @@ func validate (xmlData string) CVLRetCode {
 
 	data := C.lyd_parse_data_mem(ctx, C.CString(xmlData), C.LYD_XML, C.LYD_OPT_EDIT)
 	if ((C.ly_errno != 0) || (data == nil)) {
-		fmt.Println("Parsing data failed\n %v", C.ly_errno)
+		//fmt.Println("Parsing data failed %d\n", C.ly_errno)
 		return CVL_SYNTAX_ERROR
 	}
 
@@ -1064,7 +1066,7 @@ func validateSyntax(xmlData string) (CVLRetCode, *C.struct_lyd_node) {
 	data := C.lyd_parse_data_mem(ctx, C.CString(xmlData), C.LYD_XML, C.LYD_OPT_EDIT)
 	if ((C.ly_errno != 0) || (data == nil)) {
                 processErrorResp(ctx)
-		fmt.Println("Parsing data failed\n")
+		//fmt.Println("Parsing data failed\n")
 		return CVL_SYNTAX_ERROR, nil
 	}
 
@@ -1100,7 +1102,7 @@ func validateSemantics(data *C.struct_lyd_node, otherDepData string) CVLRetCode 
 	//Check semantic validation
 	if (0 != C.lyd_data_validate(&data, C.LYD_OPT_CONFIG, ctx)) {
                 processErrorResp(ctx)
-		fmt.Println("Validation failed\n")
+		//fmt.Println("Validation failed\n")
 		return CVL_SEMANTIC_ERROR
 	}
 
