@@ -48,11 +48,6 @@ def generate_body(func, args):
        body = {} 
 
     return keypath,body
-    if body is not None: 
-       body = json.dumps(body,ensure_ascii=False)
-       return keypath, ast.literal_eval(body)
-    else:
-       return keypath,body
 
 def run(func, args):
 
@@ -70,10 +65,13 @@ def run(func, args):
             print("Failed")
 
     except ApiException as e:
-        print("Exception when calling OpenconfigInterfacesApi->%s : %s\n" %(func.__name__, e))
+        #print("Exception when calling OpenconfigInterfacesApi->%s : %s\n" %(func.__name__, e))
+        if e.body != "":
+            print "% Error:", e.body
+        else:
+            print "Failed"
 
 if __name__ == '__main__':
 
-    #pdb.set_trace()
     func = eval(sys.argv[1], globals(), swagger_client.OpenconfigInterfacesApi.__dict__)
     run(func, sys.argv[2:])

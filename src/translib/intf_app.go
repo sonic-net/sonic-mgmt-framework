@@ -1,19 +1,16 @@
 package translib
 
 import (
-//    "fmt"
-//    "bytes"
+    "fmt"
+    "net"
     "reflect"
     "strconv"
-//    "strings"
     "encoding/json"
     "errors"
     "translib/db"
     "translib/ocbinds"
     "github.com/openconfig/ygot/ygot"
-//    "github.com/openconfig/ygot/util"
     log "github.com/golang/glog"
-//    "github.com/openconfig/gnmi/proto/gnmi"
 )
 
 type reqType int
@@ -276,9 +273,12 @@ func (app *IntfApp) translateCommon(d *db.DB, inpOp reqType) ([]db.WatchKeys, er
                     for ip, _ := range subIf.Ipv4.Addresses.Address {
                         addr := subIf.Ipv4.Addresses.Address[ip]
                         if addr.Config != nil {
-                             log.Info("Ip:=", *addr.Config.Ip)
-                             log.Info("prefix:=", *addr.Config.PrefixLength)
-                             app.translateIpv4(d, ifKey, *addr.Config.Ip, int(*addr.Config.PrefixLength))
+                            log.Info("Ip:=", *addr.Config.Ip)
+                            log.Info("prefix:=", *addr.Config.PrefixLength)
+                            err = app.translateIpv4(d, ifKey, *addr.Config.Ip, int(*addr.Config.PrefixLength))
+                            if err != nil {
+                                return keys, err
+                            }
                         }
                     }
                 }
@@ -288,7 +288,10 @@ func (app *IntfApp) translateCommon(d *db.DB, inpOp reqType) ([]db.WatchKeys, er
                         if addr.Config != nil {
                             log.Info("Ip:=", *addr.Config.Ip)
                             log.Info("prefix:=", *addr.Config.PrefixLength)
-                            app.translateIpv4(d, ifKey, *addr.Config.Ip, int(*addr.Config.PrefixLength))
+                            err = app.translateIpv4(d, ifKey, *addr.Config.Ip, int(*addr.Config.PrefixLength))
+                            if err != nil {
+                                return keys, err
+                            }
                         }
                     }
                 }
@@ -310,15 +313,41 @@ func (app *IntfApp) translateIpv4(d *db.DB, intf string, ip string, prefix int) 
 
     ifsKey.Comp = []string{intf }
 
-    ip_pref := ip + "/" + strconv.Itoa(prefix)
-    ifsKey.Comp = []string{intf, ip_pref}
+    ipPref := ip + "/" + strconv.Itoa(prefix)
+    ifsKey.Comp = []string{intf, ipPref}
 
     log.Info("ifsKey:=", ifsKey)
-    curr, err := d.GetEntry(app.intfTs, ifsKey)
 
-    if curr.IsPopulated() {
-        log.Info("curr:=", curr)
-    } else {
+    log.Info("Checking for IP overlap ....")
+    ipA, ipNetA, _ := net.ParseCIDR(ipPref)
+
+    for _, key := range app.allIpKeys {
+        ipB, ipNetB, _ := net.ParseCIDR(key.Get(1))
+
+        if ipNetA.Contains(ipB) || ipNetB.Contains(ipA) {
+            log.Info("IP ", ipPref , "overlaps with ", key.Get(1), " of ", key.Get(0))
+
+            if intf != key.Get(0) {
+                //IP overlap across different interface, reject
+                log.Info("IP ", ipPref , " overlaps with ", key.Get(1), " of ", key.Get(0))
+                err = errors.New(fmt.Sprintf("IP %s overlaps with %s of %s ", ipPref, key.Get(1), key.Get(0)))
+                return err
+            } else {
+                //IP overlap on same interface, replace
+                var entry dbEntry
+                entry.op = opDelete
+
+                log.Info("Entry ", key.Get(1), " on ", intf, " needs to be deleted")
+                if app.dbIpMap[intf]  == nil {
+                    app.dbIpMap[intf] = make(map[string]dbEntry)
+                }
+                app.dbIpMap[intf][key.Get(1)] = entry
+            }
+        }
+    }
+
+    //At this point, we need to add the entry to db
+    {
         var entry dbEntry
         entry.op = opCreate
 
@@ -326,8 +355,10 @@ func (app *IntfApp) translateIpv4(d *db.DB, intf string, ip string, prefix int) 
         m["NULL"] = "NULL"
         value := db.Value{Field: m}
         entry.entry = value
-        app.dbIpMap[intf] = make(map[string]dbEntry)
-        app.dbIpMap[intf][ip_pref] = entry
+        if app.dbIpMap[intf]  == nil {
+            app.dbIpMap[intf] = make(map[string]dbEntry)
+        }
+        app.dbIpMap[intf][ipPref] = entry
     }
     return err
 }
@@ -336,8 +367,8 @@ func (app *IntfApp) processCommon(d *db.DB) (SetResponse, error)  {
     var err error
     var resp SetResponse
 
-    log.Info("processCreate:intf:path =", app.path)
-    log.Info("ProcessCreate: Target Type is " + reflect.TypeOf(*app.ygotTarget).Elem().Name())
+    log.Info("processCommon:intf:path =", app.path)
+    log.Info("ProcessCommon: Target Type is " + reflect.TypeOf(*app.ygotTarget).Elem().Name())
 
     for key, entry := range app.dbIfMap {
         if entry.op == opUpdate {
@@ -351,11 +382,15 @@ func (app *IntfApp) processCommon(d *db.DB) (SetResponse, error)  {
             if entry.op == opCreate {
                 log.Info("Creating entry for ", key,":", ip)
                 err = d.CreateEntry(app.intfTs, db.Key{Comp: []string{key, ip}}, entry.entry)
+            } else if entry.op == opDelete {
+                log.Info("Deleting entry for ", key,":", ip)
+                err = d.DeleteEntry(app.intfTs, db.Key{Comp: []string{key, ip}})
             }
         }
     }
     return resp, err
 }
+
 func (app *IntfApp) doGetAllIpKeys(d *db.DB) ([]db.Key, error) {
 	log.Infof("in GetAllIpKeys")
         var keys    []db.Key
