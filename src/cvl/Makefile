@@ -1,10 +1,10 @@
 all: precheck deps schema tests
-GO=/tools/oss/packages/x86_64-rhel6/go/1.12.5/bin/go
+GO=/usr/local/go/bin/go
 SRC_FILES=$(wildcard *.go)
 TOP_DIR := $(abspath ../..)
 GOFLAGS:=
 BUILD_DIR:=build
-GO_DOWNLOAD_PATH:=/projects/csg_sonic/bm408846/gopath
+GO_DOWNLOAD_PATH:=/tmp/go
 GO_DEP_PATH=$(GO_DOWNLOAD_PATH):$(abspath .)/$(BUILD_DIR)
 GO_TRANSLIB_PATH=$(TOP_DIR)/sonic-mgmt-framework
 GO_SONIC_TELEMETRY_PATH=$(TOP_DIR)
