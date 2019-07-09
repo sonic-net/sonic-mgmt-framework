@@ -12,6 +12,13 @@ func main() {
 	count := 0
 
 	cvl.Initialize()
+
+	cv, ret := cvl.ValidatorSessOpen()
+	if (ret != cvl.CVL_SUCCESS) {
+		fmt.Printf("NewDB: Could not create CVL session")
+		return
+	}
+
 	if ((len(os.Args) > 1) && (os.Args[1] == "debug")) {
 		cvl.Debug(true)
 	}
@@ -33,7 +40,7 @@ func main() {
 
 		fmt.Printf("\nValidating data = %v\n\n", jsonData);
 
-		err := cvl.ValidateConfig(jsonData)
+		err := cv.ValidateConfig(jsonData)
 
 		if (err == cvl.CVL_SUCCESS) {
 			fmt.Printf("\nConfig Validation succeeded.\n\n");
@@ -55,7 +62,7 @@ func main() {
 
 		fmt.Printf("\nValidating data for external dependency check = %v\n\n", jsonData);
 
-		err := cvl.ValidateConfig(jsonData)
+		err := cv.ValidateConfig(jsonData)
 
 		if (err == cvl.CVL_SUCCESS) {
 			fmt.Printf("\nConfig Validation succeeded.\n\n");
@@ -76,7 +83,7 @@ func main() {
 
 		fmt.Printf("\nValidating data for mandatory element misssing = %v\n\n", jsonData);
 
-		err := cvl.ValidateConfig(jsonData)
+		err := cv.ValidateConfig(jsonData)
 
 		if (err == cvl.CVL_SUCCESS) {
 			fmt.Printf("\nConfig Validation succeeded.\n\n");
@@ -107,7 +114,7 @@ func main() {
 
 		fmt.Printf("\nValidating data for internal dependency check = %v\n\n", jsonData);
 
-		err := cvl.ValidateConfig(jsonData)
+		err := cv.ValidateConfig(jsonData)
 
 		if (err == cvl.CVL_SUCCESS) {
 			fmt.Printf("\nConfig Validation succeeded.\n\n");
@@ -136,7 +143,7 @@ func main() {
 
 		fmt.Printf("\nValidating data for mandatory element check = %v\n\n", jsonData);
 
-		err := cvl.ValidateConfig(jsonData)
+		err := cv.ValidateConfig(jsonData)
 
 		if (err == cvl.CVL_SUCCESS) {
 			fmt.Printf("\nConfig Validation succeeded.\n\n");
@@ -166,7 +173,7 @@ func main() {
 
 		fmt.Printf("\nValidating data for mandatory element check = %v\n\n", jsonData);
 
-		err := cvl.ValidateConfig(jsonData)
+		err := cv.ValidateConfig(jsonData)
 
 		if (err == cvl.CVL_SUCCESS) {
 			fmt.Printf("\nConfig Validation succeeded.\n\n");
@@ -200,7 +207,7 @@ func main() {
 
 		fmt.Printf("\nValidating data for pattern check = %v\n\n", jsonData);
 
-		err := cvl.ValidateConfig(jsonData)
+		err := cv.ValidateConfig(jsonData)
 
 		if (err == cvl.CVL_SUCCESS) {
 			fmt.Printf("\nConfig Validation succeeded.\n\n");
@@ -233,7 +240,7 @@ func main() {
 
 		fmt.Printf("\nValidating data for type check = %v\n\n", jsonData);
 
-		err := cvl.ValidateConfig(jsonData)
+		err := cv.ValidateConfig(jsonData)
 
 		if (err == cvl.CVL_SUCCESS) {
 			fmt.Printf("\nConfig Validation succeeded.\n\n");
@@ -242,6 +249,7 @@ func main() {
 		}
 	}
 
+	cvl.ValidatorSessClose(cv)
 	cvl.Finish()
 
 	fmt.Printf("\n\n\n Time taken for %v requests = %v\n", count, time.Since(start))
