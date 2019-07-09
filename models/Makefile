@@ -30,6 +30,11 @@ OPENAPI_SPECS := $(shell find $(OPENAPI_DIR) -name '*.yaml' | sort)
 OPENAPI_NAMES := $(basename $(notdir $(OPENAPI_SPECS)))
 OPENAPI_SERVERS := $(addsuffix /.openapi_done, $(addprefix $(SERVER_CODEGEN_DIR)/, $(OPENAPI_NAMES)))
 
+PY_CLIENT_CODEGEN_DIR  := $(BUILD_DIR)/swagger_client_py
+PY_CLIENT_TARGETS := $(addsuffix .yangapi_client, $(addprefix $(PY_CLIENT_CODEGEN_DIR)/, $(YANGAPI_NAMES))) \
+                                        $(addsuffix .openapi_client, $(addprefix $(PY_CLIENT_CODEGEN_DIR)/, $(OPENAPI_NAMES)))
+
+
 .PHONY: all clean cleanall go-server py-client
 
 all: go-server py-client
