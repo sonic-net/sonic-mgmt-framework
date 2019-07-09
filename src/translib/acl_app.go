@@ -177,7 +177,8 @@ func (app *AclApp) processCreate(d *db.DB) (SetResponse, error) {
 	var resp SetResponse
 
 	log.Info("processCreate:acl:path =", app.path)
-	log.Info("ProcessCreate: Target Type is " + reflect.TypeOf(*app.ygotTarget).Elem().Name())
+	targetType := reflect.TypeOf(*app.ygotTarget)
+	log.Infof("processCreate: Target object is a <%s> of Type: %s", targetType.Kind().String(), targetType.Elem().Name())
 
 	if app.createAclFlag {
 		err = app.setAclDataInConfigDb(d, app.aclTableMap, true)
@@ -408,8 +409,9 @@ func (app *AclApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
 	configDb := dbs[db.ConfigDB]
 	aclObj := app.getAppRootObject()
 
-	log.Info("processGet: Target Type: " + reflect.TypeOf(*app.ygotTarget).Elem().Name())
-	if reflect.TypeOf(*app.ygotTarget).Elem().Name() == "OpenconfigAcl_Acl" {
+	targetType := reflect.TypeOf(*app.ygotTarget)
+	log.Infof("processGet: Target object is a <%s> of Type: %s", targetType.Kind().String(), targetType.Elem().Name())
+	if targetType.Elem().Name() == "OpenconfigAcl_Acl" {
 		aclSubtree = true
 		intfSubtree = true
 	}
@@ -1181,12 +1183,12 @@ func convertOCAclRuleToInternalAclRule(ruleData db.Value, seqId uint32, aclName 
 
 	if ocbinds.OpenconfigAcl_ACL_TYPE_ACL_IPV4 == aclType {
 		convertOCToInternalIPv4(ruleData, aclName, ruleIndex, rule)
-	} else if ocbinds.OpenconfigAcl_ACL_TYPE_ACL_IPV4 == aclType {
+	} else if ocbinds.OpenconfigAcl_ACL_TYPE_ACL_IPV6 == aclType {
 		convertOCToInternalIPv6(ruleData, aclName, ruleIndex, rule)
 	} else if ocbinds.OpenconfigAcl_ACL_TYPE_ACL_L2 == aclType {
 		convertOCToInternalL2(ruleData, aclName, ruleIndex, rule)
 	} /*else if ocbinds.OpenconfigAcl_ACL_TYPE_ACL_MIXED == aclType {
-	  } */
+	} */
 
 	convertOCToInternalTransport(ruleData, aclName, ruleIndex, rule)
 	convertOCToInternalInputInterface(ruleData, aclName, ruleIndex, rule)

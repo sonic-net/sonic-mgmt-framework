@@ -16,6 +16,13 @@ func main() {
 	if ((len(os.Args) > 1) && (os.Args[1] == "debug")) {
 		cvl.Debug(true)
 	}
+
+	cv, ret := cvl.ValidatorSessOpen()
+	if (ret != cvl.CVL_SUCCESS) {
+		fmt.Printf("NewDB: Could not create CVL session")
+		return
+	}
+
 	{
 		count++
 		keyData :=  []cvl.CVLEditConfigData {
@@ -85,7 +92,31 @@ func main() {
 
 		fmt.Printf("\nValidating data for must = %v\n\n", keyData);
 
-		err := cvl.ValidateEditConfig(keyData)
+		err := cv.ValidateEditConfig1(keyData)
+
+		if (err == cvl.CVL_SUCCESS) {
+			fmt.Printf("\nConfig Validation succeeded.\n\n");
+		} else {
+			fmt.Printf("\nConfig Validation failed.\n\n");
+		}
+
+	}
+
+	{
+		keyData :=  []cvl.CVLEditConfigData {
+			cvl.CVLEditConfigData {
+				cvl.VALIDATE_ALL,
+				cvl.OP_DELETE,
+				"ACL_TABLE|MyACL1_ACL_IPV4",
+				map[string]string {
+					"type": "L3",
+				},
+			},
+		}
+
+		err := cv.ValidateEditConfig1(keyData)
+
+		fmt.Printf("\nValidating field delete...\n\n");
 
 		if (err == cvl.CVL_SUCCESS) {
 			fmt.Printf("\nConfig Validation succeeded.\n\n");
@@ -111,7 +142,7 @@ func main() {
 		}`
 
 
-		err := cvl.ValidateConfig(jsonData)
+		err := cv.ValidateConfig(jsonData)
 
 		fmt.Printf("\nValidating data = %v\n\n", jsonData);
 
@@ -137,7 +168,7 @@ func main() {
 		}`
 
 
-		err := cvl.ValidateConfig(jsonData)
+		err := cv.ValidateConfig(jsonData)
 
 		fmt.Printf("\nValidating data for key syntax = %v\n\n", jsonData);
 
@@ -163,7 +194,7 @@ func main() {
 		}`
 
 
-		err := cvl.ValidateConfig(jsonData)
+		err := cv.ValidateConfig(jsonData)
 
 		fmt.Printf("\nValidating data for range check = %v\n\n", jsonData);
 
@@ -188,7 +219,7 @@ func main() {
 		}`
 
 
-		err := cvl.ValidateConfig(jsonData)
+		err := cv.ValidateConfig(jsonData)
 
 		fmt.Printf("\nValidating data for internal dependency check = %v\n\n", jsonData);
 
@@ -219,7 +250,7 @@ func main() {
 			}
 		}`
 
-		err := cvl.ValidateConfig(jsonData)
+		err := cv.ValidateConfig(jsonData)
 
 		fmt.Printf("\nValidating data for external dependency check = %v\n\n", jsonData);
 
@@ -229,6 +260,8 @@ func main() {
 			fmt.Printf("\nConfig Validation failed.\n\n");
 		}
 	}
+
+	cvl.ValidatorSessClose(cv)
 
 	cvl.Finish()
 

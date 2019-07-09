@@ -20,7 +20,7 @@ endif
 precheck:
 	$(shell mkdir -p $(BUILD_DIR))
 
-deps: $(BUILD_DIR)/.lib_deps $(BUILD_DIR)/.deps cvl.a
+deps:  $(BUILD_DIR)/.deps cvl.a
 
 $(BUILD_DIR)/.lib_deps:
 	cd build && wget -O $(LIBPCRE).tar.gz https://ftp.pcre.org/pub/pcre/$(LIBPCRE).tar.gz && tar -xvzf $(LIBPCRE).tar.gz && cd -
