@@ -7,6 +7,8 @@ import (
 	"io/ioutil"
 	"strings"
 	"testing"
+	"os"
+	"github.com/go-redis/redis"
 )
 
 type testEditCfgData struct {
@@ -16,6 +18,7 @@ type testEditCfgData struct {
 	retCode         cvl.CVLRetCode
 }
 
+var rclient *redis.Client
 /* Converts JSON Data in a File to Map. */
 func convertJsonFileToMap(t *testing.T, fileName string) map[string]string {
 	var mapstr map[string]string
@@ -65,7 +68,7 @@ func convertJsonFileToString(t *testing.T, fileName string) string {
 }
 
 /* ValidateEditConfig with user input in file . */
-func validateEditConfigEachFileBased(t *testing.T) {
+func TestValidateEditConfig_CfgFile(t *testing.T) {
 
 	tests := []struct {
 		filedescription string
@@ -101,7 +104,7 @@ func validateEditConfigEachFileBased(t *testing.T) {
 }
 
 /* ValidateEditConfig with user input inline. */
-func validateEditConfigInline(t *testing.T) {
+func TestValidateEditConfig_CfgStrBuffer(t *testing.T) {
 
 	type testStruct struct {
 		filedescription string
@@ -205,6 +208,37 @@ func TestValidateConfig_CfgFile(t *testing.T) {
 
 }
 
+/* API to test edit config with valid syntax. */
+func TestValidateEditConfig_Create_Syntax_Valid_FieldValue(t *testing.T) {
+
+	t.Run("Positive - EditConfig(Create) : Valid Field Value", func(t *testing.T) {
+
+		    cfgData :=  []cvl.CVLEditConfigData {
+                        cvl.CVLEditConfigData {
+                                cvl.VALIDATE_ALL,
+                                cvl.OP_CREATE,
+                                "ACL_RULE|TestACL1|Rule1",
+                                map[string]string {
+                                        "PACKET_ACTION": "FORWARD",
+                                        "SRC_IP": "10.1.1.1/32",
+                                        "L4_SRC_PORT": "1909",
+                                        "IP_PROTOCOL": "103",
+                                        "DST_IP": "20.2.2.2/32",
+                                        "L4_DST_PORT_RANGE": "9000-12000",
+                                },
+                        },
+                }
+
+
+		err := cvl.ValidateEditConfig(cfgData)
+
+		if err != cvl.CVL_SUCCESS {
+			t.Errorf("Config Validation failed -- error details.")
+		}
+	})
+
+}
+
 /* API to test edit config with invalid syntax. */
 func TestValidateEditConfig_Create_Syntax_Invalid_FieldValue(t *testing.T) {
 
@@ -284,13 +318,117 @@ func TestValidateEditConfig_Create_Syntax_Invalid_Type(t *testing.T) {
 
 }
 
-func TestValidateConfig(t *testing.T) {
-	TestValidateConfig_CfgStrBuffer(t)
-	TestValidateConfig_CfgFile(t)
+
+/* Converts JSON config to map which can be loaded to Redis */
+func loadConfig(key string, in []byte) map[string]interface{} {
+        var fvp map[string]interface{}
+
+        err := json.Unmarshal(in, &fvp)
+        if err != nil {
+                fmt.Printf("Failed to Unmarshal %v err: %v", in, err)
+        }
+        if key != "" {
+                kv := map[string]interface{}{}
+                kv[key] = fvp
+                return kv
+        }
+        return fvp
 }
 
-/* API to invoke tests for Edit Config. */
-func TestValidateEditConfig(t *testing.T) {
-	validateEditConfigEachFileBased(t)
-	validateEditConfigInline(t)
+/* Separator for keys. */
+func getSeparator() string {
+        return "|"
+}
+
+
+/* Unloads the Config DB based on JSON File. */
+func unloadConfigDB(rclient *redis.Client, mpi map[string]interface{}) {
+        for key, fv := range mpi {
+                switch fv.(type) {
+                case map[string]interface{}:
+                        for subKey, subValue := range fv.(map[string]interface{}) {
+                                newKey := key + getSeparator() + subKey
+                                _, err := rclient.Del(newKey).Result()
+
+                                if err != nil {
+                                        fmt.Printf("Invalid data for db: %v : %v %v", newKey, subValue, err)
+                                }
+
+                        }
+                default:
+                        fmt.Printf("Invalid data for db: %v : %v", key, fv)
+                }
+        }
+
+}
+
+
+/* Loads the Config DB based on JSON File. */
+func loadConfigDB(rclient *redis.Client, mpi map[string]interface{}) {
+	  for key, fv := range mpi {
+                switch fv.(type) {
+                case map[string]interface{}:
+                        for subKey, subValue := range fv.(map[string]interface{}) {
+                                newKey := key + getSeparator() + subKey
+                                _, err := rclient.HMSet(newKey, subValue.(map[string]interface{})).Result()
+
+                                if err != nil {
+                                        fmt.Printf("Invalid data for db: %v : %v %v", newKey, subValue, err)
+                                }
+
+                        }
+                default:
+                        fmt.Printf("Invalid data for db: %v : %v", key, fv)
+                }
+        }
+}
+
+
+func getConfigDbClient() *redis.Client {
+        rclient := redis.NewClient(&redis.Options{
+                Network:     "tcp",
+                Addr:        "localhost:6379",
+                Password:    "", // no password set
+                DB:          4,
+                DialTimeout: 0,
+        })
+        _, err := rclient.Ping().Result()
+        if err != nil {
+                fmt.Printf("failed to connect to redis server %v", err)
+        }
+        return rclient
+}
+
+/* Prepares the database in Redis Server. */
+func prepareDb() {
+        rclient = getConfigDbClient()
+        defer rclient.Close()
+        rclient.FlushDb()
+
+	/* Create port table. */
+        fileName := "tests/config_db1.json"
+        countersPortAliasMapByte, err := ioutil.ReadFile(fileName)
+        if err != nil {
+                fmt.Printf("read file %v err: %v", fileName, err)
+        }
+
+        mpi_alias_map := loadConfig("", countersPortAliasMapByte)
+        loadConfigDB(rclient, mpi_alias_map)
+
+	/* Create ACL Table. */
+        fileName = "./create_acl_table.json"
+        countersACLTableMapByte, err := ioutil.ReadFile(fileName)
+        if err != nil {
+                fmt.Printf("read file %v err: %v", fileName, err)
+        }
+
+        mpi_acl_table_map := loadConfig("", countersACLTableMapByte)
+        loadConfigDB(rclient, mpi_acl_table_map)
+}
+
+/* Setup before starting of test. */ 
+func TestMain(m *testing.M) {
+	/* Prepare the Redis database. */
+	prepareDb()
+	os.Exit(m.Run())
 }
