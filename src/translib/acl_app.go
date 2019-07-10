@@ -410,10 +410,12 @@ func (app *AclApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
 	aclObj := app.getAppRootObject()
 
 	targetType := reflect.TypeOf(*app.ygotTarget)
-	log.Infof("processGet: Target object is a <%s> of Type: %s", targetType.Kind().String(), targetType.Elem().Name())
-	if targetType.Elem().Name() == "OpenconfigAcl_Acl" {
-		aclSubtree = true
-		intfSubtree = true
+	if !util.IsValueScalar(reflect.ValueOf(*app.ygotTarget)) && util.IsValuePtr(reflect.ValueOf(*app.ygotTarget)) {
+		log.Infof("processGet: Target object is a <%s> of Type: %s", targetType.Kind().String(), targetType.Elem().Name())
+		if targetType.Elem().Name() == "OpenconfigAcl_Acl" {
+			aclSubtree = true
+			intfSubtree = true
+		}
 	}
 
 	targetUriPath, err := getYangPathFromUri(app.path)
@@ -435,38 +437,6 @@ func (app *AclApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
 						}
 						ygot.BuildEmptyTree(entrySet)
 						app.convertInternalToOCAclRule(aclKey, aclSetKey.Type, int64(seqId), nil, entrySet)
-
-						if *app.ygotTarget == entrySet {
-							payload, err = dumpIetfJson(aclSet.AclEntries, false)
-						} else {
-							dummyEntrySet := &ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry{}
-							if *app.ygotTarget == entrySet.Config {
-								dummyEntrySet.Config = entrySet.Config
-								payload, err = dumpIetfJson(dummyEntrySet, false)
-							} else if *app.ygotTarget == entrySet.State {
-								dummyEntrySet.State = entrySet.State
-								payload, err = dumpIetfJson(dummyEntrySet, false)
-							} else if *app.ygotTarget == entrySet.Actions {
-								dummyEntrySet.Actions = entrySet.Actions
-								payload, err = dumpIetfJson(dummyEntrySet, false)
-							} else if *app.ygotTarget == entrySet.InputInterface {
-								dummyEntrySet.InputInterface = entrySet.InputInterface
-								payload, err = dumpIetfJson(dummyEntrySet, false)
-							} else if *app.ygotTarget == entrySet.Ipv4 {
-								dummyEntrySet.Ipv4 = entrySet.Ipv4
-								payload, err = dumpIetfJson(dummyEntrySet, false)
-							} else if *app.ygotTarget == entrySet.Ipv6 {
-								dummyEntrySet.Ipv6 = entrySet.Ipv6
-								payload, err = dumpIetfJson(dummyEntrySet, false)
-							} else if *app.ygotTarget == entrySet.L2 {
-								dummyEntrySet.L2 = entrySet.L2
-								payload, err = dumpIetfJson(dummyEntrySet, false)
-							} else if *app.ygotTarget == entrySet.Transport {
-								dummyEntrySet.Transport = entrySet.Transport
-								payload, err = dumpIetfJson(dummyEntrySet, false)
-							} else {
-							}
-						}
 					}
 				} else {
 					err = app.convertDBAclToInternal(configDb, db.Key{Comp: []string{aclKey}})
@@ -476,31 +446,6 @@ func (app *AclApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
 
 					ygot.BuildEmptyTree(aclSet)
 					app.convertInternalToOCAcl(aclKey, aclObj.AclSets, aclSet)
-
-					if *app.ygotTarget == aclSet {
-						payload, err = dumpIetfJson(aclObj.AclSets, false)
-					} else {
-						dummyAclSet := &ocbinds.OpenconfigAcl_Acl_AclSets_AclSet{}
-						if *app.ygotTarget == aclSet.Config {
-							dummyAclSet.Config = aclSet.Config
-							payload, err = dumpIetfJson(dummyAclSet, false)
-						} else if *app.ygotTarget == aclSet.State {
-							dummyAclSet.State = aclSet.State
-							payload, err = dumpIetfJson(dummyAclSet, false)
-						} else if *app.ygotTarget == aclSet.AclEntries {
-							dummyAclSet.AclEntries = aclSet.AclEntries
-							payload, err = dumpIetfJson(dummyAclSet, false)
-						} else {
-							if targetUriPath == "/openconfig-acl:acl/acl-sets/acl-set/acl-entries/acl-entry" {
-								dummyAclSet.AclEntries = aclSet.AclEntries
-								payload, err = dumpIetfJson(dummyAclSet.AclEntries, false)
-							} else if targetUriPath == "/openconfig-acl:acl/acl-sets/acl-set/config/description" {
-								dummyAclSet.Config = &ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_Config{}
-								dummyAclSet.Config.Description = aclSet.Config.Description
-								payload, err = dumpIetfJson(dummyAclSet.Config, false)
-							}
-						}
-					}
 				}
 			}
 		} else {
@@ -514,16 +459,6 @@ func (app *AclApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
 			app.convertInternalToOCAcl("", aclObj.AclSets, nil)
 			if err != nil {
 				return GetResponse{Payload: payload, ErrSrc: AppErr}, err
-			}
-
-			if reflect.TypeOf(*app.ygotTarget).Elem().Name() == "OpenconfigAcl_Acl" {
-				//payload, err = dumpIetfJson(&ocbinds.Device{Acl:aclObj})
-			} else if *app.ygotTarget == aclObj.AclSets {
-				payload, err = dumpIetfJson(aclObj, false)
-			} else {
-				if targetUriPath == "/openconfig-acl:acl/acl-sets/acl-set" {
-					payload, err = dumpIetfJson(aclObj.AclSets, false)
-				}
 			}
 		}
 	}
@@ -550,38 +485,6 @@ func (app *AclApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
 					fmt.Println("Request is for specific interface, ingress and egress ACLs")
 					app.getAclBindingInfoForInterfaceData(configDb, intfData, intfId, "INGRESS")
 					app.getAclBindingInfoForInterfaceData(configDb, intfData, intfId, "EGRESS")
-				}
-			}
-
-			if *app.ygotTarget == intfData {
-				payload, err = dumpIetfJson(aclObj.Interfaces, false)
-			} else {
-				dummyIntfData := &ocbinds.OpenconfigAcl_Acl_Interfaces_Interface{}
-				if *app.ygotTarget == intfData.Config {
-					dummyIntfData.Config = intfData.Config
-					payload, err = dumpIetfJson(dummyIntfData, false)
-				} else if *app.ygotTarget == intfData.State {
-					dummyIntfData.State = intfData.State
-					payload, err = dumpIetfJson(dummyIntfData, false)
-				} else if *app.ygotTarget == intfData.IngressAclSets {
-					dummyIntfData.IngressAclSets = intfData.IngressAclSets
-					payload, err = dumpIetfJson(dummyIntfData, false)
-				} else if *app.ygotTarget == intfData.EgressAclSets {
-					dummyIntfData.EgressAclSets = intfData.EgressAclSets
-					payload, err = dumpIetfJson(dummyIntfData, false)
-				} else if *app.ygotTarget == intfData.InterfaceRef {
-					dummyIntfData.InterfaceRef = intfData.InterfaceRef
-					payload, err = dumpIetfJson(dummyIntfData, false)
-				} else {
-					parent, _, _ := getParentNode(&(app.path), (*app.ygotRoot).(*ocbinds.Device))
-					switch reflect.TypeOf(*parent).Elem().Name() {
-					case "OpenconfigAcl_Acl_Interfaces_Interface_IngressAclSets":
-						payload, err = dumpIetfJson((*parent).(*ocbinds.OpenconfigAcl_Acl_Interfaces_Interface_IngressAclSets), false)
-						break
-					case "OpenconfigAcl_Acl_Interfaces_Interface_EgressAclSets":
-						payload, err = dumpIetfJson((*parent).(*ocbinds.OpenconfigAcl_Acl_Interfaces_Interface_EgressAclSets), false)
-						break
-					}
 				}
 			}
 		} else {
@@ -614,19 +517,12 @@ func (app *AclApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
 				app.getAclBindingInfoForInterfaceData(configDb, intfData, intfId, "INGRESS")
 				app.getAclBindingInfoForInterfaceData(configDb, intfData, intfId, "EGRESS")
 			}
-
-			if *app.ygotTarget == aclObj.Interfaces {
-				payload, err = dumpIetfJson(aclObj, false)
-			} else {
-				if targetUriPath == "/openconfig-acl:acl/interfaces/interface" {
-					payload, err = dumpIetfJson(aclObj.Interfaces, false)
-				}
-			}
 		}
 	}
 
-	if reflect.TypeOf(*app.ygotTarget).Elem().Name() == "OpenconfigAcl_Acl" {
-		payload, err = dumpIetfJson((*app.ygotRoot).(*ocbinds.Device), true)
+	payload, err = generateGetResponsePayload(app.path, (*app.ygotRoot).(*ocbinds.Device), app.ygotTarget)
+	if err != nil {
+		return GetResponse{Payload: payload, ErrSrc: AppErr}, err
 	}
 
 	return GetResponse{Payload: payload}, err
@@ -1708,45 +1604,4 @@ to visited to fill the data or not.
 */
 func isSubtreeRequest(targetUriPath string, nodePath string) bool {
 	return strings.HasPrefix(targetUriPath, nodePath)
-}
-
-func (app *AclApp) generateGetResponsePayload() ([]byte, error) {
-	var err error
-	var payload []byte
-
-	parent, _, _ := getParentNode(&(app.path), (*app.ygotRoot).(*ocbinds.Device))
-
-	switch reflect.TypeOf(*parent).Elem().Name() {
-	case "OpenconfigAcl_Acl_Interfaces":
-		payload, err = dumpIetfJson((*parent).(*ocbinds.OpenconfigAcl_Acl_Interfaces), false)
-	case "OpenconfigAcl_Acl_Interfaces_Interface":
-		payload, err = dumpIetfJson((*parent).(*ocbinds.OpenconfigAcl_Acl_Interfaces_Interface), false)
-	case "OpenconfigAcl_Acl_Interfaces_Interface_Config":
-		payload, err = dumpIetfJson((*parent).(*ocbinds.OpenconfigAcl_Acl_Interfaces_Interface_Config), false)
-	case "OpenconfigAcl_Acl_Interfaces_Interface_IngressAclSets":
-		payload, err = dumpIetfJson((*parent).(*ocbinds.OpenconfigAcl_Acl_Interfaces_Interface_IngressAclSets), false)
-	case "OpenconfigAcl_Acl_Interfaces_Interface_EgressAclSets":
-		payload, err = dumpIetfJson((*parent).(*ocbinds.OpenconfigAcl_Acl_Interfaces_Interface_EgressAclSets), false)
-	case "OpenconfigAcl_Acl_Interfaces_Interface_InterfaceRef":
-		payload, err = dumpIetfJson((*parent).(*ocbinds.OpenconfigAcl_Acl_Interfaces_Interface_InterfaceRef), false)
-	case "OpenconfigAcl_Acl_Interfaces_Interface_State":
-		payload, err = dumpIetfJson((*parent).(*ocbinds.OpenconfigAcl_Acl_Interfaces_Interface_State), false)
-	}
-
-	return payload, err
-}
-
-// remove this test method later
-func (app *AclApp) testGetParentNode() {
-	deviceObj := (*app.ygotRoot).(*ocbinds.Device)
-	// parentObjIntf, _, _ := getParentNode(app.path, deviceObj)
-	uri := "/acl/acl-sets/acl-set"
-	parentObjIntf, _, _ := getParentNode(&uri, deviceObj)
-	fmt.Println("aclSetsObj =>", reflect.TypeOf(*parentObjIntf).Elem().Name())
-	aclSetsObj, ok := (*parentObjIntf).(*ocbinds.OpenconfigAcl_Acl_AclSets)
-	if ok == true {
-		fmt.Println("OpenconfigAcl_Acl_AclSets object casting is success =>", aclSetsObj)
-	} else {
-		fmt.Println("testGetParentNode: object casting fails")
-	}
 }
