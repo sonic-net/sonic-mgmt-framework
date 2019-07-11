@@ -87,28 +87,28 @@ func Create(req SetRequest) (SetResponse, error){
     log.Info("Create request received with path =", path)
     log.Info("Create request received with payload =", string(payload))
 
-	isNative, ygotRootType, appType, err := getAppModuleInfo(path)
+	appInfo, err := getAppModuleInfo(path)
 
 	if err != nil {
 		resp.ErrSrc = ProtoErr
         return resp, err
 	}
 
-    app, err = getAppInterface(appType)
+    app, err = getAppInterface(appInfo.appType)
 
 	if err != nil {
 		resp.ErrSrc = ProtoErr
 		return resp, err
 	}
 
-    if isNative {
+    if appInfo.isNative {
         log.Info("Native MSFT format")
         data = appData{path: path, payload:payload}
         app.initialize(data)
     } else {
-		log.Info(ygotRootType)
+		log.Info(appInfo.ygotRootType)
 
-		ygotRoot, ygotTarget, err = getRequestBinder(&path, &payload, CREATE, &ygotRootType).unMarshall()
+		ygotRoot, ygotTarget, err = getRequestBinder(&path, &payload, CREATE, &(appInfo.ygotRootType)).unMarshall()
 		if err != nil {
 			log.Info("Error in request binding in the create request: ", err)
 			resp.ErrSrc = AppErr
@@ -192,28 +192,28 @@ func Update(req SetRequest) (SetResponse, error){
     log.Info("Update request received with path =", path)
     log.Info("Update request received with payload =", string(payload))
 
-	isNative, ygotRootType, appType, err := getAppModuleInfo(path)
+	appInfo, err := getAppModuleInfo(path)
 
     if err != nil {
 		resp.ErrSrc = ProtoErr
         return resp, err
     }
 
-    app, err = getAppInterface(appType)
+    app, err = getAppInterface(appInfo.appType)
 
     if err != nil {
 		resp.ErrSrc = ProtoErr
         return resp, err
     }
 
-    if isNative {
+    if appInfo.isNative {
         log.Info("Native MSFT format")
         data = appData{path: path, payload:payload}
         app.initialize(data)
     } else {
-        log.Info(ygotRootType)
+        log.Info(appInfo.ygotRootType)
 
-        ygotRoot, ygotTarget, err = getRequestBinder(&path, &payload, UPDATE, &ygotRootType).unMarshall()
+        ygotRoot, ygotTarget, err = getRequestBinder(&path, &payload, UPDATE, &(appInfo.ygotRootType)).unMarshall()
         if err != nil {
             log.Info("Error in request binding in the update request: ", err)
 			resp.ErrSrc = AppErr
@@ -296,28 +296,28 @@ func Replace(req SetRequest) (SetResponse, error){
     log.Info("Replace request received with path =", path)
     log.Info("Replace request received with payload =", string(payload))
 
-    isNative, ygotRootType, appType, err := getAppModuleInfo(path)
+    appInfo, err := getAppModuleInfo(path)
 
     if err != nil {
 		resp.ErrSrc = ProtoErr
         return resp, err
     }
 
-    app, err = getAppInterface(appType)
+    app, err = getAppInterface(appInfo.appType)
 
     if err != nil {
 		resp.ErrSrc = ProtoErr
         return resp, err
     }
 
-    if isNative {
+    if appInfo.isNative {
         log.Info("Native MSFT format")
         data = appData{path: path, payload:payload}
         app.initialize(data)
     } else {
-        log.Info(ygotRootType)
+        log.Info(appInfo.ygotRootType)
 
-        ygotRoot, ygotTarget, err = getRequestBinder(&path, &payload, REPLACE, &ygotRootType).unMarshall()
+        ygotRoot, ygotTarget, err = getRequestBinder(&path, &payload, REPLACE, &(appInfo.ygotRootType)).unMarshall()
         if err != nil {
             log.Info("Error in request binding in the replace request: ", err)
 			resp.ErrSrc = AppErr
@@ -398,28 +398,28 @@ func Delete(req SetRequest) (SetResponse, error){
 
     log.Info("Delete request received with path =", path)
 
-    isNative, ygotRootType, appType, err := getAppModuleInfo(path)
+    appInfo, err := getAppModuleInfo(path)
 
     if err != nil {
 		resp.ErrSrc = ProtoErr
         return resp, err
     }
 
-    app, err = getAppInterface(appType)
+    app, err = getAppInterface(appInfo.appType)
 
     if err != nil {
 		resp.ErrSrc = ProtoErr
         return resp, err
     }
 
-    if isNative {
+    if appInfo.isNative {
         log.Info("Native MSFT format")
         data = appData{path: path}
         app.initialize(data)
     } else {
-        log.Info(ygotRootType)
+        log.Info(appInfo.ygotRootType)
 
-        ygotRoot, ygotTarget, err = getRequestBinder(&path, nil, DELETE, &ygotRootType).unMarshall()
+        ygotRoot, ygotTarget, err = getRequestBinder(&path, nil, DELETE, &(appInfo.ygotRootType)).unMarshall()
         if err != nil {
             log.Info("Error in request binding in the delete request: ", err)
 			resp.ErrSrc = AppErr
@@ -495,26 +495,26 @@ func Get(req GetRequest) (GetResponse, error){
 
     log.Info("Received Get request for path = ",path)
 
-    isNative, ygotRootType, appType, err := getAppModuleInfo(path)
+    appInfo, err := getAppModuleInfo(path)
 
     if err != nil {
         resp = GetResponse{Payload:payload, ErrSrc:ProtoErr}
         return resp, err
     }
 
-	app, err := getAppInterface(appType)
+	app, err := getAppInterface(appInfo.appType)
 
 	if err != nil {
         resp = GetResponse{Payload:payload, ErrSrc:ProtoErr}
         return resp, err
     }
 
-    if isNative {
+    if appInfo.isNative {
         log.Info("Native MSFT format")
         data = appData{path: path}
         app.initialize(data)
     } else {
-       ygotStruct, ygotTarget, err := getRequestBinder (&path, nil, GET, &ygotRootType).unMarshall()
+       ygotStruct, ygotTarget, err := getRequestBinder (&path, nil, GET, &(appInfo.ygotRootType)).unMarshall()
         if err != nil {
                 log.Info("Error in request binding: ", err)
 				resp = GetResponse{Payload:payload, ErrSrc:AppErr}

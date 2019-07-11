@@ -80,11 +80,13 @@ type AclApp struct {
 }
 
 func init() {
-	log.Info("Init called for ACL module")
+
 	err := register("/openconfig-acl:acl",
-		&appInfo{appType: reflect.TypeOf(AclApp{}),
-			ygotRootType: reflect.TypeOf(ocbinds.OpenconfigAcl_Acl{}),
-			isNative:     false})
+        &appInfo{appType:  reflect.TypeOf(AclApp{}),
+            ygotRootType:  reflect.TypeOf(ocbinds.OpenconfigAcl_Acl{}),
+            isNative:      false,
+            tablesToWatch: []*db.TableSpec{&db.TableSpec{ACL_TABLE}, &db.TableSpec{RULE_TABLE}}})
+
 	if err != nil {
 		log.Fatal("Register ACL app module with App Interface failed with error=", err)
 	}
