@@ -19,6 +19,9 @@ type testEditCfgData struct {
 }
 
 var rclient *redis.Client
+var cv  *cvl.CVL
+
+
 /* Converts JSON Data in a File to Map. */
 func convertJsonFileToMap(t *testing.T, fileName string) map[string]string {
 	var mapstr map[string]string
@@ -66,6 +69,129 @@ func convertJsonFileToString(t *testing.T, fileName string) string {
 
 	return jsonData
 }
+
+/* Converts JSON config to map which can be loaded to Redis */
+func loadConfig(key string, in []byte) map[string]interface{} {
+        var fvp map[string]interface{}
+
+        err := json.Unmarshal(in, &fvp)
+        if err != nil {
+                fmt.Printf("Failed to Unmarshal %v err: %v", in, err)
+        }
+        if key != "" {
+                kv := map[string]interface{}{}
+                kv[key] = fvp
+                return kv
+        }
+        return fvp
+}
+
+/* Separator for keys. */
+func getSeparator() string {
+        return "|"
+}
+
+
+/* Unloads the Config DB based on JSON File. */
+func unloadConfigDB(rclient *redis.Client, mpi map[string]interface{}) {
+        for key, fv := range mpi {
+                switch fv.(type) {
+                case map[string]interface{}:
+                        for subKey, subValue := range fv.(map[string]interface{}) {
+                                newKey := key + getSeparator() + subKey
+                                _, err := rclient.Del(newKey).Result()
+
+                                if err != nil {
+                                        fmt.Printf("Invalid data for db: %v : %v %v", newKey, subValue, err)
+                                }
+
+                        }
+                default:
+                        fmt.Printf("Invalid data for db: %v : %v", key, fv)
+                }
+        }
+
+}
+
+
+/* Loads the Config DB based on JSON File. */
+func loadConfigDB(rclient *redis.Client, mpi map[string]interface{}) {
+	  for key, fv := range mpi {
+                switch fv.(type) {
+                case map[string]interface{}:
+                        for subKey, subValue := range fv.(map[string]interface{}) {
+                                newKey := key + getSeparator() + subKey
+                                _, err := rclient.HMSet(newKey, subValue.(map[string]interface{})).Result()
+
+                                if err != nil {
+                                        fmt.Printf("Invalid data for db: %v : %v %v", newKey, subValue, err)
+                                }
+
+                        }
+                default:
+                        fmt.Printf("Invalid data for db: %v : %v", key, fv)
+                }
+        }
+}
+
+
+func getConfigDbClient() *redis.Client {
+        rclient := redis.NewClient(&redis.Options{
+                Network:     "tcp",
+                Addr:        "localhost:6379",
+                Password:    "", // no password set
+                DB:          4,
+                DialTimeout: 0,
+        })
+        _, err := rclient.Ping().Result()
+        if err != nil {
+                fmt.Printf("failed to connect to redis server %v", err)
+        }
+        return rclient
+}
+
+/* Prepares the database in Redis Server. */
+func prepareDb() {
+        rclient = getConfigDbClient()
+       // defer rclient.Close()
+        //rclient.FlushDb()
+
+	/*	
+	//Create port table. 
+        fileName := "tests/config_db1.json"
+        PortsMapByte, err := ioutil.ReadFile(fileName)
+        if err != nil {
+                fmt.Printf("read file %v err: %v", fileName, err)
+        }
+
+        mpi_alias_map := loadConfig("", PortsMapByte)
+        loadConfigDB(rclient, mpi_alias_map)
+
+	// Create ACL Table. 
+        fileName = "./create_acl_table.json"
+        aclTableMapByte, err := ioutil.ReadFile(fileName)
+        if err != nil {
+                fmt.Printf("read file %v err: %v", fileName, err)
+        }
+
+        mpi_acl_table_map := loadConfig("", aclTableMapByte)
+        loadConfigDB(rclient, mpi_acl_table_map)
+	*/
+}
+
+/* Setup before starting of test. */ 
+func TestMain(m *testing.M) {
+	cv, _ := cvl.ValidatorSessOpen()
+	fmt.Printf("Main Cv Value : %v", cv) 
+	/* Prepare the Redis database. */
+	prepareDb()
+	os.Exit(m.Run())
+	cvl.ValidatorSessClose(cv)
+	cvl.Finish()
+        rclient.Close()
+        rclient.FlushDb()
+}
+
 
 /* ValidateEditConfig with user input in file . */
 func TestValidateEditConfig_CfgFile(t *testing.T) {
@@ -152,6 +278,7 @@ func TestValidateConfig_CfgStrBuffer(t *testing.T) {
 		retCode         cvl.CVLRetCode
 	}
 
+
 	tests := []testStruct{}
 
 	for index, _ := range json_validate_config_data {
@@ -162,10 +289,14 @@ func TestValidateConfig_CfgStrBuffer(t *testing.T) {
 		tests = append(tests, testStruct{filedescription: modelName, jsonString: json_validate_config_data[index], retCode: cvl.CVL_SUCCESS})
 	}
 
+	cv, _ := cvl.ValidatorSessOpen()
+
+	fmt.Printf("Cv Value : %v", cv) 
+
 	for index, tc := range tests {
 		t.Logf("Running Testcase %d with Description %s", index+1, tc.filedescription)
 		t.Run(fmt.Sprintf("%s [%d]", tc.filedescription, index+1), func(t *testing.T) {
-			err := cvl.ValidateConfig(tc.jsonString)
+			err := cv.ValidateConfig(tc.jsonString)
 
 			fmt.Printf("\nValidating data = %v\n\n", tc.jsonString)
 
@@ -186,16 +317,20 @@ func TestValidateConfig_CfgFile(t *testing.T) {
 		fileName        string
 		retCode         cvl.CVLRetCode
 	}{
-		{filedescription: "Config File - VLAN,ACL,PORTCHANNEL", fileName: "./config_db1.json", retCode: cvl.CVL_SUCCESS},
-		{filedescription: "Config File - BUFFER_PG", fileName: "./config_db2.json", retCode: cvl.CVL_SUCCESS},
+		{filedescription: "Config File - VLAN,ACL,PORTCHANNEL", fileName: "tests/config_db1.json", retCode: cvl.CVL_SUCCESS},
+		{filedescription: "Config File - BUFFER_PG", fileName: "tests/config_db2.json", retCode: cvl.CVL_SUCCESS},
+		{filedescription: "Config File - BUFFER_PG", fileName: "tests/config_db3.json", retCode: cvl.CVL_SUCCESS},
+		{filedescription: "Config File - BUFFER_PG", fileName: "tests/config_db4.json", retCode: cvl.CVL_SUCCESS},
 	}
+
+	cv, _ := cvl.ValidatorSessOpen()
 
 	for index, tc := range tests {
 
 		t.Logf("Running Testcase %d with Description %s", index+1, tc.filedescription)
 		t.Run(tc.filedescription, func(t *testing.T) {
 			jsonString := convertJsonFileToString(t, tc.fileName)
-			err := cvl.ValidateConfig(jsonString)
+			err := cv.ValidateConfig(jsonString)
 
 			fmt.Printf("\nValidating data = %v\n\n", jsonString)
 
@@ -210,6 +345,25 @@ func TestValidateConfig_CfgFile(t *testing.T) {
 
 /* API to test edit config with valid syntax. */
 func TestValidateEditConfig_Create_Syntax_Valid_FieldValue(t *testing.T) {
+
+        fileName := "tests/config_db1.json"
+        PortsMapByte, err := ioutil.ReadFile(fileName)
+        if err != nil {
+                fmt.Printf("read file %v err: %v", fileName, err)
+        }
+
+        mpi_alias_map := loadConfig("", PortsMapByte)
+        loadConfigDB(rclient, mpi_alias_map)
+
+	// Create ACL Table. 
+        fileName = "./create_acl_table.json"
+        aclTableMapByte, err := ioutil.ReadFile(fileName)
+        if err != nil {
+                fmt.Printf("read file %v err: %v", fileName, err)
+        }
+
+        mpi_acl_table_map := loadConfig("", aclTableMapByte)
+        loadConfigDB(rclient, mpi_acl_table_map)
 
 	t.Run("Positive - EditConfig(Create) : Valid Field Value", func(t *testing.T) {
 
@@ -236,10 +390,13 @@ func TestValidateEditConfig_Create_Syntax_Valid_FieldValue(t *testing.T) {
 			t.Errorf("Config Validation failed -- error details.")
 		}
 	})
+	
+	unloadConfigDB(rclient, mpi_alias_map)
+	unloadConfigDB(rclient, mpi_acl_table_map)
 
 }
 
-/* API to test edit config with invalid syntax. */
+/* API to test edit config with invalid field value. */
 func TestValidateEditConfig_Create_Syntax_Invalid_FieldValue(t *testing.T) {
 
 	t.Run("Negative - EditConfig(Create) : Invalid Field Value", func(t *testing.T) {
@@ -254,7 +411,7 @@ func TestValidateEditConfig_Create_Syntax_Invalid_FieldValue(t *testing.T) {
 
 		err := cvl.ValidateEditConfig(cfgData)
 
-		if err != cvl.CVL_SUCCESS {
+		if err == cvl.CVL_SUCCESS {
 			t.Errorf("Config Validation failed -- error details.")
 		}
 	})
@@ -262,7 +419,7 @@ func TestValidateEditConfig_Create_Syntax_Invalid_FieldValue(t *testing.T) {
 }
 
 /* API to test edit config with invalid type. */
-func TestValidateEditConfig_Create_Syntax_Invalid_Type(t *testing.T) {
+func TestValidateEditConfig_Create_Syntax_Valid_PacketAction_Negative(t *testing.T) {
 
 	type testEditCfgData struct {
 		data    []cvl.CVLEditConfigData
@@ -319,116 +476,1034 @@ func TestValidateEditConfig_Create_Syntax_Invalid_Type(t *testing.T) {
 }
 
 
-/* Converts JSON config to map which can be loaded to Redis */
-func loadConfig(key string, in []byte) map[string]interface{} {
-        var fvp map[string]interface{}
+/* API to test edit config with valid syntax. */
+func TestValidateEditConfig_Create_Syntax_Invalid_PacketAction_Negative(t *testing.T) {
 
-        err := json.Unmarshal(in, &fvp)
-        if err != nil {
-                fmt.Printf("Failed to Unmarshal %v err: %v", in, err)
-        }
-        if key != "" {
-                kv := map[string]interface{}{}
-                kv[key] = fvp
-                return kv
-        }
-        return fvp
-}
+	t.Run("Negative - EditConfig(Create) : Invalid Field Value", func(t *testing.T) {
 
-/* Separator for keys. */
-func getSeparator() string {
-        return "|"
-}
-
-
-/* Unloads the Config DB based on JSON File. */
-func unloadConfigDB(rclient *redis.Client, mpi map[string]interface{}) {
-        for key, fv := range mpi {
-                switch fv.(type) {
-                case map[string]interface{}:
-                        for subKey, subValue := range fv.(map[string]interface{}) {
-                                newKey := key + getSeparator() + subKey
-                                _, err := rclient.Del(newKey).Result()
-
-                                if err != nil {
-                                        fmt.Printf("Invalid data for db: %v : %v %v", newKey, subValue, err)
-                                }
-
-                        }
-                default:
-                        fmt.Printf("Invalid data for db: %v : %v", key, fv)
+		    cfgData :=  []cvl.CVLEditConfigData {
+                        cvl.CVLEditConfigData {
+                                cvl.VALIDATE_ALL,
+                                cvl.OP_CREATE,
+                                "ACL_RULE|TestACL1|Rule1",
+                                map[string]string {
+                                        "PACKET_ACTION": "FORWARD222",
+                                        "SRC_IP": "77.10.1.1.1/32",
+                                        "L4_SRC_PORT": "aa1909",
+                                        "IP_PROTOCOL": "10388888",
+                                        "DST_IP": "20.2.2.2/32",
+                                        "L4_DST_PORT_RANGE": "9000-12000",
+                                },
+                        },
                 }
-        }
+
+
+		err := cvl.ValidateEditConfig(cfgData)
+
+		if err == cvl.CVL_SUCCESS {
+			t.Errorf("Config Validation failed -- error details.")
+		}
+	})
 
 }
 
+/* API to test edit config with valid syntax. */
+func TestValidateEditConfig_Create_Syntax_Invalid_SrcPrefix_Negative(t *testing.T) {
 
-/* Loads the Config DB based on JSON File. */
-func loadConfigDB(rclient *redis.Client, mpi map[string]interface{}) {
-	  for key, fv := range mpi {
-                switch fv.(type) {
-                case map[string]interface{}:
-                        for subKey, subValue := range fv.(map[string]interface{}) {
-                                newKey := key + getSeparator() + subKey
-                                _, err := rclient.HMSet(newKey, subValue.(map[string]interface{})).Result()
+	t.Run("Negative - EditConfig(Create) : Invalid Field Value", func(t *testing.T) {
 
-                                if err != nil {
-                                        fmt.Printf("Invalid data for db: %v : %v %v", newKey, subValue, err)
-                                }
-
-                        }
-                default:
-                        fmt.Printf("Invalid data for db: %v : %v", key, fv)
+		    cfgData :=  []cvl.CVLEditConfigData {
+                        cvl.CVLEditConfigData {
+                                cvl.VALIDATE_ALL,
+                                cvl.OP_CREATE,
+                                "ACL_RULE|TestACL1|Rule1",
+                                map[string]string {
+                                        "PACKET_ACTION": "FORWARD777",
+                                        "SRC_IP": "10.1.1.1/3288888",
+                                        "L4_SRC_PORT": "aa1909",
+                                        "IP_PROTOCOL": "10388888",
+                                        "DST_IP": "20.2.2.2/32",
+                                        "L4_DST_PORT_RANGE": "9000-12000",
+                                },
+                        },
                 }
-        }
+
+
+		err := cvl.ValidateEditConfig(cfgData)
+
+		if err == cvl.CVL_SUCCESS {
+			t.Errorf("Config Validation failed -- error details.")
+		}
+	})
+
+}
+/* API to test edit config with valid syntax. */
+func TestValidateEditConfig_Create_Syntax_InvalidIPAddress_Negative(t *testing.T) {
+
+	t.Run("Negative - EditConfig(Create) : Invalid IP Address", func(t *testing.T) {
+
+		    cfgData :=  []cvl.CVLEditConfigData {
+                        cvl.CVLEditConfigData {
+                                cvl.VALIDATE_ALL,
+                                cvl.OP_CREATE,
+                                "ACL_RULE|TestACL1|Rule1",
+                                map[string]string {
+                                        "PACKET_ACTION": "FORWARD",
+                                        "SRC_IP": "10.1a.1.1/32888",
+                                        "L4_SRC_PORT": "1909",
+                                        "IP_PROTOCOL": "103",
+                                        "DST_IP": "20.2.2.2/32",
+                                        "L4_DST_PORT_RANGE": "9000-12000",
+                                },
+                        },
+                }
+
+
+		err := cvl.ValidateEditConfig(cfgData)
+
+		if err == cvl.CVL_SUCCESS {
+			t.Errorf("Config Validation failed -- error details.")
+		}
+	})
+
+}
+/* API to test edit config with valid syntax. */
+func TestValidateEditConfig_Create_Syntax_OutofBound_Negative(t *testing.T) {
+
+	t.Run("Negative - EditConfig(Create) : Out of Bound Value", func(t *testing.T) {
+
+		    cfgData :=  []cvl.CVLEditConfigData {
+                        cvl.CVLEditConfigData {
+                                cvl.VALIDATE_ALL,
+                                cvl.OP_CREATE,
+                                "ACL_RULE|TestACL1|Rule1",
+                                map[string]string {
+                                        "PACKET_ACTION": "FORWARD",
+                                        "SRC_IP": "10.1.1.1/32",
+                                        "L4_SRC_PORT": "19099090909090",
+                                        "IP_PROTOCOL": "103",
+                                        "DST_IP": "20.2.2.2/32",
+                                        "L4_DST_PORT_RANGE": "9000-12000",
+                                },
+                        },
+                }
+
+
+		err := cvl.ValidateEditConfig(cfgData)
+
+		if err == cvl.CVL_SUCCESS {
+			t.Errorf("Config Validation failed -- error details.")
+		}
+	})
+
+}
+/* API to test edit config with valid syntax. */
+func TestValidateEditConfig_Create_Syntax_InvalidProtocol_Negative(t *testing.T) {
+
+	t.Run("Negative - EditConfig(Create) : Invalid Field Value", func(t *testing.T) {
+
+		    cfgData :=  []cvl.CVLEditConfigData {
+                        cvl.CVLEditConfigData {
+                                cvl.VALIDATE_ALL,
+                                cvl.OP_CREATE,
+                                "ACL_RULE|TestACL1|Rule1",
+                                map[string]string {
+                                        "PACKET_ACTION": "FORWARD",
+                                        "SRC_IP": "10.1.1.1/32",
+                                        "L4_SRC_PORT": "1909",
+                                        "IP_PROTOCOL": "10388888",
+                                        "DST_IP": "20.2.2.2/32",
+                                        "L4_DST_PORT_RANGE": "9000-12000",
+                                },
+                        },
+                }
+
+
+		err := cvl.ValidateEditConfig(cfgData)
+
+		if err == cvl.CVL_SUCCESS {
+			t.Errorf("Config Validation failed -- error details.")
+		}
+	})
+
 }
 
+/* API to test edit config with valid syntax. */
+func TestValidateEditConfig_Create_Syntax_InvalidRange_Negative(t *testing.T) {
 
-func getConfigDbClient() *redis.Client {
-        rclient := redis.NewClient(&redis.Options{
-                Network:     "tcp",
-                Addr:        "localhost:6379",
-                Password:    "", // no password set
-                DB:          4,
-                DialTimeout: 0,
-        })
-        _, err := rclient.Ping().Result()
-        if err != nil {
-                fmt.Printf("failed to connect to redis server %v", err)
-        }
-        return rclient
+	t.Run("Negative - EditConfig(Create) : Invalid Field Value", func(t *testing.T) {
+
+		    cfgData :=  []cvl.CVLEditConfigData {
+                        cvl.CVLEditConfigData {
+                                cvl.VALIDATE_ALL,
+                                cvl.OP_CREATE,
+                                "ACL_RULE|TestACL1|Rule1",
+                                map[string]string {
+                                        "PACKET_ACTION": "FORWARD",
+                                        "SRC_IP": "10.1.1.1/32",
+                                        "L4_SRC_PORT": "1909",
+                                        "IP_PROTOCOL": "103",
+                                        "DST_IP": "20.2.2.2/32",
+                                        "L4_DST_PORT_RANGE": "777779000-12000",
+                                },
+                        },
+                }
+
+
+		err := cvl.ValidateEditConfig(cfgData)
+
+		if err == cvl.CVL_SUCCESS {
+			t.Errorf("Config Validation failed -- error details.")
+		}
+	})
+
 }
 
-/* Prepares the database in Redis Server. */
-func prepareDb() {
-        rclient = getConfigDbClient()
-        defer rclient.Close()
-        rclient.FlushDb()
+/* API to test edit config with valid syntax. */
+func TestValidateEditConfig_Create_Syntax_InvalidCharNEw_Negative(t *testing.T) {
 
-	/* Create port table. */
+	t.Run("Negative - EditConfig(Create) : Invalid Field Value", func(t *testing.T) {
+
+		    cfgData :=  []cvl.CVLEditConfigData {
+                        cvl.CVLEditConfigData {
+                                cvl.VALIDATE_ALL,
+                                cvl.OP_CREATE,
+                                "ACL_RULE|TestACL1jjjj|Rule1",
+                                map[string]string {
+                                        "PACKET_ACTION": "FORWARD",
+                                        "SRC_IP": "10.1.1.1/32",
+                                        "L4_SRC_PORT": "1909",
+                                        "IP_PROTOCOL": "103",
+                                        "DST_IP": "20.2.2.2/32",
+                                        "L4_DST_PORT_RANGE": "9000-12000",
+                                },
+                        },
+                }
+
+
+		err := cvl.ValidateEditConfig(cfgData)
+
+		if err == cvl.CVL_SUCCESS {
+			t.Errorf("Config Validation failed -- error details.")
+		}
+	})
+
+}
+
+func TestValidateEditConfig_Create_Syntax_InvalidChar_Negative(t *testing.T) {
+
+	t.Run("Negative - EditConfig(Create) : Invalid Field Value", func(t *testing.T) {
+
+		    cfgData :=  []cvl.CVLEditConfigData {
+                        cvl.CVLEditConfigData {
+                                cvl.VALIDATE_ALL,
+                                cvl.OP_CREATE,
+                                "ACL_RULE|TestACL1|Rule@##",
+                                map[string]string {
+                                        "PACKET_ACTION": "FORWARD",
+                                        "SRC_IP": "10.1.1.1/32",
+                                        "L4_SRC_PORT": "1909",
+                                        "IP_PROTOCOL": "103",
+                                        "DST_IP": "20.2.2.2/32",
+                                        "L4_DST_PORT_RANGE": "9000-12000",
+                                },
+                        },
+                }
+
+
+		err := cvl.ValidateEditConfig(cfgData)
+
+		if err == cvl.CVL_SUCCESS {
+			t.Errorf("Config Validation failed -- error details.")
+		}
+	})
+
+}
+
+func TestValidateEditConfig_Create_Syntax_InvalidKeyName_Negative(t *testing.T) {
+
+	t.Run("Negative - EditConfig(Create) : Invalid Field Value", func(t *testing.T) {
+
+		    cfgData :=  []cvl.CVLEditConfigData {
+                        cvl.CVLEditConfigData {
+                                cvl.VALIDATE_ALL,
+                                cvl.OP_CREATE,
+                                "AC&&***L_RULE|TestACL1|Rule1",
+                                map[string]string {
+                                        "PACKET_ACTION": "FORWARD",
+                                        "SRC_IP": "10.1.1.1/32",
+                                        "L4_SRC_PORT": "1909",
+                                        "IP_PROTOCOL": "103",
+                                        "DST_IP": "20.2.2.2/32",
+                                        "L4_DST_PORT_RANGE": "9000-12000",
+                                },
+                        },
+                }
+
+
+		err := cvl.ValidateEditConfig(cfgData)
+
+		if err == cvl.CVL_SUCCESS {
+			t.Errorf("Config Validation failed -- error details.")
+		}
+	})
+
+}
+
+func TestValidateEditConfig_Create_Semantic_AdditionalInvalidNode_Negative(t *testing.T) {
+
+	t.Run("Negative - EditConfig(Create) : Additional Node", func(t *testing.T) {
+
+		    cfgData :=  []cvl.CVLEditConfigData {
+                        cvl.CVLEditConfigData {
+                                cvl.VALIDATE_ALL,
+                                cvl.OP_CREATE,
+                                "ACL_RULE|TestACL1|Rule1",
+                                map[string]string {
+                                        "PACKET_ACTION": "FORWARD",
+                                        "SRC_IP": "10.1.1.1/32",
+                                        "L4_SRC_PORT": "1909",
+                                        "IP_PROTOCOL": "103",
+                                        "DST_IP": "20.2.2.2/32",
+                                        "L4_DST_PORT_RANGE": "9000-12000",
+					"extra"     : "shhs",
+                                },
+                        },
+                }
+
+
+		err := cvl.ValidateEditConfig(cfgData)
+
+		if err == cvl.CVL_SUCCESS {
+			t.Errorf("Config Validation failed -- error details.")
+		}
+	})
+
+}
+
+func TestValidateEditConfig_Create_Semantic_MissingMandatoryNode_Negative(t *testing.T) {
+
+	t.Run("Negative - EditConfig(Create) : Invalid Field Value", func(t *testing.T) {
+
+		    cfgData :=  []cvl.CVLEditConfigData {
+                        cvl.CVLEditConfigData {
+                                cvl.VALIDATE_ALL,
+                                cvl.OP_CREATE,
+                                "ACL_RULE|TestACL1|Rule1",
+                                map[string]string {
+                                        "PACKET_ACTION": "FORWARD",
+                                        "L4_SRC_PORT": "1909",
+                                        "IP_PROTOCOL": "103",
+                                        "DST_IP": "20.2.2.2/32",
+                                        "L4_DST_PORT_RANGE": "9000-12000",
+                                },
+                        },
+                }
+
+
+		err := cvl.ValidateEditConfig(cfgData)
+
+		if err == cvl.CVL_SUCCESS {
+			t.Errorf("Config Validation failed -- error details.")
+		}
+	})
+
+}
+
+func TestValidateEditConfig_Create_Syntax_Invalid_Negative(t *testing.T) {
+
+	t.Run("Negative - EditConfig(Create) : Invalid Field Value", func(t *testing.T) {
+
+		    cfgData :=  []cvl.CVLEditConfigData {
+                        cvl.CVLEditConfigData {
+                                cvl.VALIDATE_ALL,
+                                cvl.OP_CREATE,
+                                "ACL_RULERule1",
+                                map[string]string {
+                                        "PACKET_ACTION": "FORWARD",
+                                        "SRC_IP": "10.1.1.1/32",
+                                        "L4_SRC_PORT": "1909",
+                                        "IP_PROTOCOL": "103",
+                                        "DST_IP": "20.2.2.2/32",
+                                        "L4_DST_PORT_RANGE": "9000-12000",
+                                },
+                        },
+                }
+
+
+		err := cvl.ValidateEditConfig(cfgData)
+
+		if err == cvl.CVL_SUCCESS {
+			t.Errorf("Config Validation failed -- error details.")
+		}
+	})
+
+}
+
+func TestValidateEditConfig_Create_Syntax_IncompleteKey_Negative(t *testing.T) {
+
+	t.Run("Negative - EditConfig(Create) : Invalid Field Value", func(t *testing.T) {
+
+		    cfgData :=  []cvl.CVLEditConfigData {
+                        cvl.CVLEditConfigData {
+                                cvl.VALIDATE_ALL,
+                                cvl.OP_CREATE,
+                                "ACL_RULE|Rule1",
+                                map[string]string {
+                                        "PACKET_ACTION": "FORWARD",
+                                        "SRC_IP": "10.1.1.1/32",
+                                        "L4_SRC_PORT": "1909",
+                                        "IP_PROTOCOL": "103",
+                                        "DST_IP": "20.2.2.2/32",
+                                        "L4_DST_PORT_RANGE": "9000-12000",
+                                },
+                        },
+                }
+
+
+		err := cvl.ValidateEditConfig(cfgData)
+
+		if err == cvl.CVL_SUCCESS {
+			t.Errorf("Config Validation failed -- error details.")
+		}
+	})
+
+}
+
+func TestValidateEditConfig_Create_Syntax_InvalidKey_Negative(t *testing.T) {
+
+	t.Run("Negative - EditConfig(Create) : Invalid Field Value", func(t *testing.T) {
+
+		    cfgData :=  []cvl.CVLEditConfigData {
+                        cvl.CVLEditConfigData {
+                                cvl.VALIDATE_ALL,
+                                cvl.OP_CREATE,
+                                "|Rule1",
+                                map[string]string {
+                                        "PACKET_ACTION": "FORWARD",
+                                        "SRC_IP": "10.1.1.1/32",
+                                        "L4_SRC_PORT": "1909",
+                                        "IP_PROTOCOL": "103",
+                                        "DST_IP": "20.2.2.2/32",
+                                        "L4_DST_PORT_RANGE": "9000-12000",
+                                },
+                        },
+                }
+
+
+		err := cvl.ValidateEditConfig(cfgData)
+
+		if err == cvl.CVL_SUCCESS {
+			t.Errorf("Config Validation failed -- error details.")
+		}
+	})
+
+}
+
+func TestValidateEditConfig_Update_Syntax_DependentData_Negative(t *testing.T) {
+
+	t.Run("Negative - EditConfig(Create) : Invalid Field Value", func(t *testing.T) {
+
+
+		cfgData := []cvl.CVLEditConfigData {
+                        cvl.CVLEditConfigData {
+                                cvl.VALIDATE_NONE,
+                                cvl.OP_NONE,
+                                "MIRROR_SESSION|everflow",
+                                map[string]string {
+                                        "src_ip": "10.1.0.32",
+                                        "dst_ip": "2.2.2.2",
+                                },
+                        },
+                        cvl.CVLEditConfigData {
+                                cvl.VALIDATE_ALL,
+                                cvl.OP_UPDATE,
+                                "ACL_RULE|MyACL11_ACL_IPV4|RULE_1",
+                                map[string]string {
+                                        "MIRROR_ACTION": "everflow",
+                                },
+                        },
+                }
+
+
+		err := cvl.ValidateEditConfig(cfgData)
+
+		if err == cvl.CVL_SUCCESS {
+			t.Errorf("Config Validation failed -- error details.")
+		}
+	})
+
+}
+
+func TestValidateEditConfig_Create_Syntax_DependentData_Negative(t *testing.T) {
+
+	t.Run("Negative - EditConfig(Create) : Invalid Field Value", func(t *testing.T) {
+
+                 cfgData :=  []cvl.CVLEditConfigData {
+                        cvl.CVLEditConfigData {
+                                cvl.VALIDATE_NONE,
+                                cvl.OP_NONE,
+                                "PORTCHANNEL|ch1",
+                                map[string]string {
+                                        "admin_status": "up",
+                                        "mtu": "9100",
+                                },
+                        },
+                        cvl.CVLEditConfigData {
+                                cvl.VALIDATE_NONE,
+                                cvl.OP_NONE,
+                                "PORTCHANNEL|ch2",
+                                map[string]string {
+                                        "admin_status": "up",
+                                        "mtu": "9100",
+                                },
+                        },
+                        cvl.CVLEditConfigData {
+                                cvl.VALIDATE_NONE,
+                                cvl.OP_NONE,
+                                "PORTCHANNEL_MEMBER|ch1|Ethernet4",
+                                map[string]string {
+                                },
+                        },
+                        cvl.CVLEditConfigData {
+                                cvl.VALIDATE_NONE,
+                                cvl.OP_NONE,
+                                "PORTCHANNEL_MEMBER|ch1|Ethernet8",
+                                map[string]string {
+                                },
+                        },
+                        cvl.CVLEditConfigData {
+                                cvl.VALIDATE_NONE,
+                                cvl.OP_NONE,
+                                "PORTCHANNEL_MEMBER|ch2|Ethernet12",
+                                map[string]string {
+                                },
+                        },
+                        cvl.CVLEditConfigData {
+                                cvl.VALIDATE_NONE,
+                                cvl.OP_NONE,
+			        "PORTCHANNEL_MEMBER|ch2|Ethernet16",
+                                map[string]string {
+                                },
+                        },
+                        cvl.CVLEditConfigData {
+                                cvl.VALIDATE_NONE,
+                                cvl.OP_NONE,
+                                "PORTCHANNEL_MEMBER|ch2|Ethernet20",
+                                map[string]string {
+                                },
+                        },
+                        cvl.CVLEditConfigData {
+                                cvl.VALIDATE_ALL,
+                                cvl.OP_CREATE,
+                                "VLAN|Vlan1001",
+                                map[string]string {
+                                        "vlanid": "1001",
+                                        "members@": "Ethernet24,ch1,Ethernet8",
+                                },
+                        },
+                }
+
+		err := cvl.ValidateEditConfig(cfgData)
+
+		if err == cvl.CVL_SUCCESS {
+			t.Errorf("Config Validation failed -- error details.")
+		}
+	})
+
+}
+
+func TestValidateEditConfig_Delete_Syntax_InvalidKey_Negative(t *testing.T) {
+
+	t.Run("Negative - EditConfig(Delete) : Invalid Field Value", func(t *testing.T) {
+
+		    cfgData :=  []cvl.CVLEditConfigData {
+                        cvl.CVLEditConfigData {
+                                cvl.VALIDATE_ALL,
+                                cvl.OP_DELETE,
+                                "|Rule1",
+                                map[string]string {
+                                        "PACKET_ACTION": "FORWARD",
+                                        "SRC_IP": "10.1.1.1/32",
+                                        "L4_SRC_PORT": "1909",
+                                        "IP_PROTOCOL": "103",
+                                        "DST_IP": "20.2.2.2/32",
+                                        "L4_DST_PORT_RANGE": "9000-12000",
+                                },
+                        },
+                }
+
+
+		err := cvl.ValidateEditConfig(cfgData)
+
+		if err == cvl.CVL_SUCCESS {
+			t.Errorf("Config Validation failed -- error details.")
+		}
+	})
+
+}
+
+func TestValidateEditConfig_Update_Syntax_InvalidKey_Negative(t *testing.T) {
+
+	t.Run("Negative - EditConfig(Update) : Invalid Field Value", func(t *testing.T) {
+
+		    cfgData :=  []cvl.CVLEditConfigData {
+                        cvl.CVLEditConfigData {
+                                cvl.VALIDATE_ALL,
+                                cvl.OP_UPDATE,
+                                "|Rule1",
+                                map[string]string {
+                                        "PACKET_ACTION": "FORWARD",
+                                        "SRC_IP": "10.1.1.1/32",
+                                        "L4_SRC_PORT": "1909",
+                                        "IP_PROTOCOL": "103",
+                                        "DST_IP": "20.2.2.2/32",
+                                        "L4_DST_PORT_RANGE": "9000-12000",
+                                },
+                        },
+                }
+
+
+		err := cvl.ValidateEditConfig(cfgData)
+
+		if err == cvl.CVL_SUCCESS {
+			t.Errorf("Config Validation failed -- error details.")
+		}
+	})
+
+}
+
+func TestValidateEditConfig_Delete_InvalidKey_Negative(t *testing.T) {
+
+	t.Run("Negative - EditConfig(Delete) : Invalid Field Value", func(t *testing.T) {
+
+		    cfgData :=  []cvl.CVLEditConfigData {
+                        cvl.CVLEditConfigData {
+                                cvl.VALIDATE_ALL,
+                                cvl.OP_DELETE,
+                                "ACL_RULE|TestACL1:Rule1",
+                                map[string]string {
+                                        "PACKET_ACTION": "FORWARD",
+                                        "SRC_IP": "10.1.1.1/32",
+                                        "L4_SRC_PORT": "1909",
+                                        "IP_PROTOCOL": "103",
+                                        "DST_IP": "20.2.2.2/32",
+                                        "L4_DST_PORT_RANGE": "9000-12000",
+                                },
+                        },
+                }
+
+
+		err := cvl.ValidateEditConfig(cfgData)
+
+		if err == cvl.CVL_SUCCESS {
+			t.Errorf("Config Validation failed -- error details.")
+		}
+	})
+
+}
+
+func TestValidateEditConfig_Update_Syntax_Invalid_Field_Negative(t *testing.T) {
+
+	t.Run("Negative - EditConfig(Update) : Invalid Field Value", func(t *testing.T) {
+
+		    cfgData :=  []cvl.CVLEditConfigData {
+                        cvl.CVLEditConfigData {
+                                cvl.VALIDATE_ALL,
+                                cvl.OP_UPDATE,
+                                "ACL_RULE|TestACL1|Rule1",
+                                map[string]string {
+                                        "PACKET_ACTION": "CATCH",
+                                        "SRC_IP": "10.1.1.1/32",
+                                        "L4_SRC_PORT": "1909",
+                                        "IP_PROTOCOL": "103",
+                                        "DST_IP": "20.2.2.2/32",
+                                        "L4_DST_PORT_RANGE": "9000-12000",
+                                },
+                        },
+                }
+
+
+		err := cvl.ValidateEditConfig(cfgData)
+
+		if err == cvl.CVL_SUCCESS {
+			t.Errorf("Config Validation failed -- error details.")
+		}
+	})
+
+}
+
+func TestValidateEditConfig_Update_Semantic_Invalid_Key_Negative(t *testing.T) {
+
+	t.Run("Negative - EditConfig(Create) : Invalid Field Value", func(t *testing.T) {
+
+		    cfgData :=  []cvl.CVLEditConfigData {
+                        cvl.CVLEditConfigData {
+                                cvl.VALIDATE_ALL,
+                                cvl.OP_UPDATE,
+                                "ACL_RULE|TestACL1Rule1",
+                                map[string]string {
+                                        "PACKET_ACTION": "FORWARD",
+                                        "SRC_IP": "10.1.1.1/32",
+                                        "L4_SRC_PORT": "1909",
+                                        "IP_PROTOCOL": "103uuuu",
+                                        "DST_IP": "20.2.2.2/32",
+                                        "L4_DST_PORT_RANGE": "9000-12000",
+                                },
+                        },
+                }
+
+
+		err := cvl.ValidateEditConfig(cfgData)
+
+		if err == cvl.CVL_SUCCESS {
+			t.Errorf("Config Validation failed -- error details.")
+		}
+	})
+
+}
+
+func TestValidateEditConfig_Delete_Semantic_Positive(t *testing.T) {
+
+	t.Run("Positivee - EditConfig(Delete)", func(t *testing.T) {
+
+		 cfgData :=  []cvl.CVLEditConfigData {
+                        cvl.CVLEditConfigData {
+                                cvl.VALIDATE_ALL,
+                                cvl.OP_DELETE,
+                                "MIRROR_SESSION|everflow0",
+                                map[string]string {
+                                },
+                        },
+                }
+
+		err := cvl.ValidateEditConfig(cfgData)
+
+		if err == cvl.CVL_SUCCESS {
+			t.Errorf("Config Validation failed -- error details.")
+		}
+	})
+
+}
+
+func TestValidateEditConfig_Delete_Semantic_MissingKey_Negative(t *testing.T) {
+
+	t.Run("Negative - EditConfig(Delete) : Invalid Field Value", func(t *testing.T) {
+
+		 cfgData :=  []cvl.CVLEditConfigData {
+                        cvl.CVLEditConfigData {
+                                cvl.VALIDATE_ALL,
+                                cvl.OP_DELETE,
+                                "MIRROR_SESSION|everflow0",
+                                map[string]string {
+                                },
+                        },
+                        cvl.CVLEditConfigData {
+                                cvl.VALIDATE_ALL,
+                                cvl.OP_DELETE,
+                                "ACL_RULE|MyACL11_ACL_IPV4|RULE_1",
+                                map[string]string {
+                                },
+                        },
+                }
+
+		err := cvl.ValidateEditConfig(cfgData)
+
+		if err == cvl.CVL_SUCCESS {
+			t.Errorf("Config Validation failed -- error details.")
+		}
+	})
+
+}
+
+func TestValidateEditConfig_Update_Semantic_MissingKey_Negative(t *testing.T) {
+
+	t.Run("Negative - EditConfig(Create) : Invalid Field Value", func(t *testing.T) {
+
+		cfgData := []cvl.CVLEditConfigData {
+                        	cvl.CVLEditConfigData {
+                                cvl.VALIDATE_ALL,
+                                cvl.OP_UPDATE,
+                                "ACL_RULE|TestACL1|Rule1",
+                                map[string]string {
+                                        "MIRROR_ACTION": "everflow",
+                                },
+                        },
+                }
+
+		err := cvl.ValidateEditConfig(cfgData)
+
+		if err == cvl.CVL_SUCCESS {
+			t.Errorf("Config Validation failed -- error details.")
+		}
+	})
+
+}
+
+/* API to test edit config with valid syntax. */
+func TestValidateEditConfig_Update_Semantic_Positive(t *testing.T) {
+
+	t.Run("Positive - EditConfig(Update) : Valid Field Value", func(t *testing.T) {
+
+
+			cfgData :=  []cvl.CVLEditConfigData {
+                        cvl.CVLEditConfigData {
+                                cvl.VALIDATE_ALL,
+                                cvl.OP_UPDATE,
+                                "ACL_TABLE|TestACL1",
+                                map[string]string {
+                                        "stage": "INGRESS",
+                                        "type": "MIRROR",
+                                },
+                        },
+                }
+
+		err := cvl.ValidateEditConfig(cfgData)
+
+		if err != cvl.CVL_SUCCESS {
+			t.Errorf("Config Validation failed -- error details.")
+		}
+	})
+
+}
+
+/* API to test edit config with valid syntax. */
+func TestValidateConfig_Update_Semantic_Vlan_Negative(t *testing.T) {
+
+	cv, _ := cvl.ValidatorSessOpen()
+	t.Run("Negative - EditConfig(Update) : Valid Field Value", func(t *testing.T) {
+
+			jsonData :=`{
+                        "VLAN": {
+                                "Vlan100": {
+                                        "members": [
+                                        "Ethernet44",
+                                        "Ethernet64"
+                                        ],
+                                        "vlanid": "107"
+                                }
+                        }
+                }`
+
+
+                err := cv.ValidateConfig(jsonData)
+
+
+		if err != cvl.CVL_SUCCESS {
+			t.Errorf("Config Validation failed -- error details.")
+		}
+	})
+
+}
+
+func TestValidateEditConfig_Update_Syntax_DependentData_Redis_Positive(t *testing.T) {
+
         fileName := "tests/config_db1.json"
-        countersPortAliasMapByte, err := ioutil.ReadFile(fileName)
+        PortsMapByte, err := ioutil.ReadFile(fileName)
         if err != nil {
                 fmt.Printf("read file %v err: %v", fileName, err)
         }
 
-        mpi_alias_map := loadConfig("", countersPortAliasMapByte)
+        mpi_alias_map := loadConfig("", PortsMapByte)
         loadConfigDB(rclient, mpi_alias_map)
 
-	/* Create ACL Table. */
-        fileName = "./create_acl_table.json"
-        countersACLTableMapByte, err := ioutil.ReadFile(fileName)
+	// Create ACL Table. 
+        fileName = "./acl_rule.json"
+        aclTableMapByte, err := ioutil.ReadFile(fileName)
         if err != nil {
                 fmt.Printf("read file %v err: %v", fileName, err)
         }
 
-        mpi_acl_table_map := loadConfig("", countersACLTableMapByte)
+        mpi_acl_table_map := loadConfig("", aclTableMapByte)
         loadConfigDB(rclient, mpi_acl_table_map)
+	t.Run("Negative - EditConfig(Update) ", func(t *testing.T) {
+
+
+		/* ACL and Rule name pre-created . */
+		cfgData := []cvl.CVLEditConfigData {
+                        cvl.CVLEditConfigData {
+                                cvl.VALIDATE_ALL,
+                                cvl.OP_UPDATE,
+                                "ACL_RULE|TestACL11|Rule1",
+                                map[string]string {
+                                        "MIRROR_ACTION": "everflow0",
+                                },
+                        },
+                }
+
+
+		err := cvl.ValidateEditConfig(cfgData)
+
+		if err != cvl.CVL_SUCCESS {
+			t.Errorf("Config Validation failed -- error details.")
+		}
+	})
+
 }
 
-/* Setup before starting of test. */ 
-func TestMain(m *testing.M) {
-	/* Prepare the Redis database. */
-	prepareDb()
-	os.Exit(m.Run())
+func TestValidateEditConfig_Update_Syntax_DependentData_User_Positive(t *testing.T) {
+
+	t.Run("Positive - EditConfig(Create)", func(t *testing.T) {
+
+
+		/* ACL and Rule name pre-created . */
+		cfgData := []cvl.CVLEditConfigData {
+                        cvl.CVLEditConfigData {
+                                cvl.VALIDATE_NONE,
+                                cvl.OP_CREATE,
+                                "ACL_TABLE|TestACL13",
+                                map[string]string {
+                                        "stage": "INGRESS",
+                                        "type": "MIRROR",
+                                },
+                        },
+                        cvl.CVLEditConfigData {
+                                cvl.VALIDATE_NONE,
+                                cvl.OP_CREATE,
+                                "ACL_RULE|TestACL13|Rule1",
+                                map[string]string {
+                                        "PACKET_ACTION": "FORWARD",
+                                        "SRC_IP": "10.1.1.1/32",
+                                        "L4_SRC_PORT": "1909",
+                                        "IP_PROTOCOL": "103",
+                                        "DST_IP": "20.2.2.2/32",
+                                        "L4_DST_PORT_RANGE": "9000-12000",
+                                },
+                        },
+                        cvl.CVLEditConfigData {
+                                cvl.VALIDATE_ALL,
+                                cvl.OP_UPDATE,
+                                "ACL_RULE|TestACL13|Rule1",
+                                map[string]string {
+                                        "PACKET_ACTION": "DROP",
+                                },
+                        },
+                }
+
+
+
+		err := cvl.ValidateEditConfig(cfgData)
+
+		if err != cvl.CVL_SUCCESS {
+			t.Errorf("Config Validation failed -- error details.")
+		}
+	})
+
 }
+
+func TestValidateEditConfig_Update_Syntax_DependentData_Redis_Negative(t *testing.T) {
+
+	t.Run("Negative - EditConfig(Create) : Invalid Field Value", func(t *testing.T) {
+
+
+		/* ACL does not exist.*/
+		cfgData := []cvl.CVLEditConfigData {
+                        cvl.CVLEditConfigData {
+                                cvl.VALIDATE_ALL,
+                                cvl.OP_UPDATE,
+                                "ACL_RULE|TestACL1|Rule1",
+                                map[string]string {
+                                        "MIRROR_ACTION": "everflow0",
+                                },
+                        },
+                }
+
+
+		err := cvl.ValidateEditConfig(cfgData)
+
+		if err == cvl.CVL_SUCCESS {
+			t.Errorf("Config Validation failed -- error details.")
+		}
+	})
+
+}
+
+/* Create with User provideddependent data. */
+func TestValidateEditConfig_Create_Syntax_DependentData_Redis_Positive(t *testing.T) {
+
+	t.Run("Positive - EditConfig(Create)", func(t *testing.T) {
+
+		/* ACL and Rule name pre-created . */
+		cfgData := []cvl.CVLEditConfigData {
+                        cvl.CVLEditConfigData {
+                                cvl.VALIDATE_NONE,
+                                cvl.OP_CREATE,
+                                "ACL_TABLE|TestACL12",
+                                map[string]string {
+                                        "stage": "INGRESS",
+                                        "type": "MIRROR",
+                                },
+                        },
+                        cvl.CVLEditConfigData {
+                                cvl.VALIDATE_ALL,
+                                cvl.OP_CREATE,
+                                "ACL_RULE|TestACL12|Rule1",
+                                map[string]string {
+                                        "PACKET_ACTION": "FORWARD",
+                                        "SRC_IP": "10.1.1.1/32",
+                                        "L4_SRC_PORT": "1909",
+                                        "IP_PROTOCOL": "103",
+                                        "DST_IP": "20.2.2.2/32",
+                                        "L4_DST_PORT_RANGE": "9000-12000",
+                                },
+                        },
+                }
+
+
+		err := cvl.ValidateEditConfig(cfgData)
+
+		if err != cvl.CVL_SUCCESS {
+			t.Errorf("Config Validation failed -- error details.")
+		}
+	})
+
+}
+
+/* Delete Non-Existing Key.*/
+func TestValidateEditConfig_Delete_Semantic_ACLTableReference_Negative(t *testing.T) {
+
+	t.Run("Negative - EditConfig(Delete) : Invalid Field Value", func(t *testing.T) {
+
+		 cfgData :=  []cvl.CVLEditConfigData {
+                        cvl.CVLEditConfigData {
+                                cvl.VALIDATE_ALL,
+                                cvl.OP_DELETE,
+                                "ACL_RULE|MyACL11_ACL_IPV4|RULE_1",
+                                map[string]string {
+                                },
+                        },
+                }
+
+		err := cvl.ValidateEditConfig(cfgData)
+
+		if err == cvl.CVL_SUCCESS {
+			t.Errorf("Config Validation failed -- error details.")
+		}
+	})
+
+}
+
+/* Delete Existing Key.*/
+func TestValidateEditConfig_Delete_Semantic_ACLTableReference_Positive(t *testing.T) {
+
+	t.Run("Positive - EditConfig(Delete)", func(t *testing.T) {
+
+		 cfgData :=  []cvl.CVLEditConfigData {
+                        cvl.CVLEditConfigData {
+                                cvl.VALIDATE_ALL,
+                                cvl.OP_DELETE,
+                                "ACL_RULE|TestACL11|Rule1",
+                                map[string]string {
+                                },
+                        },
+                }
+
+		err := cvl.ValidateEditConfig(cfgData)
+
+		if err != cvl.CVL_SUCCESS {
+			t.Errorf("Config Validation failed -- error details.")
+		}
+	})
+
+}
+

@@ -6,7 +6,7 @@ import (
 	"strings"
 	"regexp"
 	 log "github.com/golang/glog"
-	"encoding/xml"
+	//"encoding/xml"
 	"encoding/json"
 	"github.com/go-redis/redis"
 	"github.com/antchfx/xmlquery"
@@ -94,7 +94,7 @@ type keyValuePairStruct struct {
 }
 
 func TRACE_LOG(level log.Level, fmtStr string, args ...interface{}) {
-	util.TRACE_LOG(level, fmtStr, args)
+	//util.TRACE_LOG(level, fmtStr, args)
 }
 
 //package init function 
@@ -347,6 +347,7 @@ func(c *CVL) addChildNode1(tableName string, parent *yparser.YParserNode, name s
 	return c.yp.AddChildNode(modelInfo.tableInfo[tableName].module, parent, name)
 }
 
+/*
 func (c *CVL) addChildNode(parent *xmlquery.Node, xmlChildNode *xmlquery.Node) {
 	xmlChildNode.Parent = parent
 	if (parent.FirstChild == nil) {
@@ -356,9 +357,7 @@ func (c *CVL) addChildNode(parent *xmlquery.Node, xmlChildNode *xmlquery.Node) {
 	}
 	parent.LastChild = xmlChildNode
 }
-
-func addDepTableData(tableName string) {
-}
+*/
 
 //Add all other table data for validating all 'must' exp for tableName
 func (c *CVL) addTableDataForMustExp(tableName string) {
@@ -529,6 +528,7 @@ func (c *CVL) addChildLeaf1(config bool, tableName string, parent *yparser.YPars
 	c.addLeafRef(config, tableName, name, value)
 }
 
+/*
 func (c *CVL) addChildLeaf(config bool, tableName string, parent *xmlquery.Node, name string, value string) *xmlquery.Node{
 	//Create leaf name
 	xmlLeafNode := &xmlquery.Node{
@@ -564,6 +564,7 @@ func (c *CVL) addChildLeaf(config bool, tableName string, parent *xmlquery.Node,
 
 	return xmlLeafNode
 }
+*/
 
 func (c *CVL) checkFieldMap(fieldMap *map[string]string) map[string]interface{} {
 	fieldMapNew := map[string]interface{}{}
@@ -661,6 +662,8 @@ func (c *CVL) fetchDataToTmpCache1() *yparser.YParserNode {
 	return root
 }
 
+
+/*
 func (c *CVL) fetchDataToTmpCache() string {
 	for tableName, dbKeys := range c.tmpDbCache { //for each table
 
@@ -754,6 +757,7 @@ func (c *CVL) fetchDataToTmpCache() string {
 	TRACE_LOG(5, "Dependent Data = %s\n", yangXml)
 	return yangXml
 }
+*/
 
 func (c *CVL) clearTmpDbCache() {
 	for key := range c.tmpDbCache {
@@ -761,6 +765,7 @@ func (c *CVL) clearTmpDbCache() {
 	}
 }
 
+/*
 //This function is not used currently
 func (c *CVL) addStatusData(tableName string) *xmlquery.Node {
 	//Get all keys from DB
@@ -838,6 +843,7 @@ func (c *CVL) addStatusData(tableName string) *xmlquery.Node {
 
 	return doc
 }
+*/
 
 func (c *CVL) generateTableFieldsData1(config bool, tableName string, jsonNode *jsonquery.Node,
 parent *yparser.YParserNode) CVLRetCode {
@@ -897,6 +903,7 @@ parent *yparser.YParserNode) CVLRetCode {
 	return CVL_SUCCESS
 }
 
+/*
 //Generate Yang xml for all fields in a hash
 func (c *CVL) generateTableFieldsData(config bool, tableName string, jsonNode *jsonquery.Node,
 parent *xmlquery.Node) CVLRetCode {
@@ -955,6 +962,7 @@ parent *xmlquery.Node) CVLRetCode {
 
 	return CVL_SUCCESS
 }
+*/
 
 func (c *CVL) generateTableData1(config bool, jsonNode *jsonquery.Node)(*yparser.YParserNode, CVLRetCode) {
 	tableName := fmt.Sprintf("%s",jsonNode.Data)
@@ -1029,6 +1037,7 @@ func (c *CVL) generateTableData1(config bool, jsonNode *jsonquery.Node)(*yparser
 	return topNode, CVL_SUCCESS
 }
 
+/*
 // Generate YANG xml instance for Redis table
 func (c *CVL) generateTableData(config bool, jsonNode *jsonquery.Node)(*xmlquery.Node, CVLRetCode) {
 
@@ -1108,6 +1117,7 @@ func (c *CVL) generateTableData(config bool, jsonNode *jsonquery.Node)(*xmlquery
 
 	return xmlTopNode, CVL_SUCCESS
 }
+*/
 
 func jsonMapToYangTree(jsonMap *map[string]interface{}) *yparser.YParserNode {
 	jsonDoc, _ := jsonquery.ParseJsonMap(jsonMap)
@@ -1141,9 +1151,9 @@ func (c *CVL) translateToYang1(jsonMap *map[string]interface{}) (*yparser.YParse
 	return root, CVL_SUCCESS
 }
 
+/*
 //Convert Redis JSON to Yang XML using translation metadata
 func (c *CVL) translateToYang(jsonData string) (*xmlquery.Node, CVLRetCode) {
-/*
 	var v interface{}
 	jsonData1 :=`{
 		"VLAN": {
@@ -1174,7 +1184,6 @@ func (c *CVL) translateToYang(jsonData string) (*xmlquery.Node, CVLRetCode) {
 			fmt.Printf("\nLYD data = %v\n", C.GoString(outBuf))
 		}
 	}
-	*/
 
 	//Parse Entire JSON file
 	data, err := jsonquery.Parse(strings.NewReader(jsonData))
@@ -1218,6 +1227,7 @@ func (c *CVL) translateToYang(jsonData string) (*xmlquery.Node, CVLRetCode) {
 
 	return doc, CVL_SUCCESS
 }
+*/
 
 //Validate config - syntax and semantics
 func (c *CVL) validate1 (data *yparser.YParserNode) CVLRetCode {
@@ -1240,8 +1250,9 @@ func (c *CVL) validate1 (data *yparser.YParserNode) CVLRetCode {
 	return CVL_SUCCESS
 }
 
+/*
+	
 func (c *CVL) validate (xmlData string) CVLRetCode {
-	/*
 	TRACE_LOG(1, "Validating \n%v\n....", xmlData)
 
 	data := C.lyd_parse_data_mem(ctx, C.CString(xmlData), C.LYD_XML, C.LYD_OPT_EDIT)
@@ -1264,10 +1275,10 @@ func (c *CVL) validate (xmlData string) CVLRetCode {
                 processErrorResp(ctx)
 		return CVL_SYNTAX_ERROR
 	}
-	*/
 
 	return CVL_SUCCESS
 }
+*/
 
 //Perform syntax checks
 func (c *CVL) validateSyntax1(data *yparser.YParserNode) CVLRetCode {
@@ -1284,9 +1295,9 @@ func (c *CVL) validateSyntax1(data *yparser.YParserNode) CVLRetCode {
 	return CVL_SUCCESS
 }
 
+/*
 func (c *CVL) validateSyntax(xmlData string) (CVLRetCode, *yparser.YParserNode) {
 	TRACE_LOG(1, "Validating syntax \n%v\n....", xmlData)
-/*
 	//parsing only does syntacial checks
 	data := C.lyd_parse_data_mem(ctx, C.CString(xmlData), C.LYD_XML, C.LYD_OPT_EDIT)
 	if ((C.ly_errno != 0) || (data == nil)) {
@@ -1295,9 +1306,10 @@ func (c *CVL) validateSyntax(xmlData string) (CVLRetCode, *yparser.YParserNode) 
 		return CVL_SYNTAX_ERROR, nil
 	}
 
-	return CVL_SUCCESS, data*/
+	return CVL_SUCCESS, data
 	return CVL_SUCCESS, nil
 }
+*/
 
 //Perform semantic checks 
 func (c *CVL) validateSemantics1(data *yparser.YParserNode, otherDepData *yparser.YParserNode) CVLRetCode {
@@ -1336,10 +1348,10 @@ func (c *CVL) validateSemantics1(data *yparser.YParserNode, otherDepData *yparse
 	return CVL_SUCCESS
 }
 
+/*
 //func (c *CVL) validateSemantics(data *yparser.YParserNode, otherDepData string) CVLRetCode {
 func (c *CVL) validateSemantics(data, otherDepData string) CVLRetCode {
 
-	/*
 	//Get dependent data from 
 	depData := c.fetchDataToTmpCache() //fetch data to temp cache for temporary validation
 	//parse dependent data
@@ -1364,14 +1376,15 @@ func (c *CVL) validateSemantics(data, otherDepData string) CVLRetCode {
 	}
 
 	//Check semantic validation
-	if (0 != C.lyd_data_validate(&data, C.LYD_OPT_CONFIG, ctx)) {*/
-	/*if (0 != C.lyd_data_validate_all(C.CString(data), C.CString(depData), C.CString(otherDepData), C.LYD_OPT_CONFIG, ctx)) {
+	if (0 != C.lyd_data_validate(&data, C.LYD_OPT_CONFIG, ctx)) {
+	if (0 != C.lyd_data_validate_all(C.CString(data), C.CString(depData), C.CString(otherDepData), C.LYD_OPT_CONFIG, ctx)) {
 		fmt.Println("Validation failed\n")
 		return CVL_SEMANTIC_ERROR
-	}*/
+	}
 
 	return CVL_SUCCESS
 }
+*/
 
 //Add config data item to accumulate per table
 func (c *CVL) addCfgDataItem(configData *map[string]interface{}, cfgDataItem CVLEditConfigData) (string, string){

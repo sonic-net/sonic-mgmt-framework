@@ -88,7 +88,7 @@ func Initialize() CVLRetCode {
 		var module *yparser.YParserModule
 		if module, _ = yparser.ParseSchemaFile(modelFilePath); module == nil {
 
-			log.Fatal("Unable to parse schema file %s", modelFile)
+			//log.Fatal("Unable to parse schema file %s", modelFile)
 			return CVL_ERROR
 		}
 
@@ -153,7 +153,22 @@ func (c *CVL) ValidateIncrementalConfig(jsonData string) CVLRetCode {
 //Validate data for operation
 func (c *CVL) ValidateConfig(jsonData string) CVLRetCode {
 	c.clearTmpDbCache()
+	var  v interface{}
 
+	b := []byte(jsonData)
+	if err := json.Unmarshal(b, &v); err == nil {
+		var value map[string]interface{} = v.(map[string]interface{})
+		root, _ := c.translateToYang1(&value)
+		//if ret == CVL_SUCCESS && root != nil {
+		if root == nil {
+			//var outBuf *C.char
+			//C.lyd_print_mem(&outBuf, root, C.LYD_XML, 0)
+			return CVL_FAILURE 
+
+		}
+	}
+
+	/*
 	//Convert JSON to YANG XML 
 	doc, err := c.translateToYang(jsonData)
 	if (err == CVL_SUCCESS) {
@@ -161,8 +176,9 @@ func (c *CVL) ValidateConfig(jsonData string) CVLRetCode {
 
 		return c.validate(yangXml)
 	}
+	*/
 
-	return  err
+	return CVL_SUCCESS
 }
 
 //Validate config data based on edit operation - no marshalling in between
@@ -306,6 +322,7 @@ func (c *CVL) ValidateEditConfig1(cfgData []CVLEditConfigData) CVLRetCode {
 	return CVL_SUCCESS
 }
 
+/*
 //Validate config data based on edit operation - xml marshalling in between
 func (c *CVL) validateEditConfig(cfgData []CVLEditConfigData) CVLRetCode {
 	c.clearTmpDbCache()
@@ -362,9 +379,9 @@ func (c *CVL) validateEditConfig(cfgData []CVLEditConfigData) CVLRetCode {
 	if (errN == CVL_SUCCESS) {
 		yangXml = doc.OutputXML(true)
 
-/*		if errN, lydData = c.validateSyntax(yangXml); errN != CVL_SUCCESS {
+		if errN, lydData = c.validateSyntax(yangXml); errN != CVL_SUCCESS {
 			return errN
-		}*/
+		}
 	}
 
 	//Step 3 : Check keys and update dependent data
@@ -450,6 +467,7 @@ func (c *CVL) validateEditConfig(cfgData []CVLEditConfigData) CVLRetCode {
 
 	return CVL_SUCCESS
 }
+*/
 
 func ValidateEditConfig(cfgData []CVLEditConfigData) CVLRetCode {
 	cv, ret := ValidatorSessOpen()

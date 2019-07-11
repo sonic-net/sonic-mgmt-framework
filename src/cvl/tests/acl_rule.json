@@ -1,0 +1,20 @@
+{
+"ACL_TABLE": {
+        "TestACL11": {
+                "type": "L3",
+                "ports": "Ethernet0"
+        }
+   },
+"ACL_RULE": {
+        "TestACL11|Rule1": {
+        "PRIORITY": "55",
+        "PACKET_ACTION": "DROP",
+        "L4_SRC_PORT": "0"
+        },
+        "TestACL11|Rule2": {
+        "PRIORITY": "55",
+        "PACKET_ACTION": "DROP",
+        "L4_SRC_PORT": "1"
+        }
+   }
+}
