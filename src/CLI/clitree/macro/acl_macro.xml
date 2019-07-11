@@ -145,17 +145,6 @@
         <MACRO name="IPV4-DEST-OPTIONS" arg="" ></MACRO>
         <MACRO name="CMD-END-OPTIONS" arg="" ></MACRO>
     </PARAM>
-    <!-- deny ip -->
-  <PARAM
-        name="ip"
-        help="IP address"
-        ptype="SUBCOMMAND"
-        mode="subcommand"
-        >
-        <MACRO name="IPV4-SRC-OPTIONS" arg="" ></MACRO>
-        <MACRO name="IPV4-DEST-OPTIONS" arg="" ></MACRO>
-        <MACRO name="CMD-END-OPTIONS" arg="" ></MACRO>
-    </PARAM>
     <!-- deny tcp -->
     <PARAM
         name="tcp"
@@ -205,17 +194,6 @@
         mode="subcommand"
         >
         <MACRO name="IPV4-SRC-OPTIONS" arg="" ></MACRO>
-        <MACRO name="IPV4-DEST-OPTIONS" arg="" ></MACRO>
-        <MACRO name="CMD-END-OPTIONS" arg="" ></MACRO>
-    </PARAM>
-    <!-- permit ip -->
-    <PARAM
-        name="ip"
-        help="IP address"
-        ptype="SUBCOMMAND"
-        mode="subcommand"
-        >
-      <MACRO name="IPV4-SRC-OPTIONS" arg="" ></MACRO>
         <MACRO name="IPV4-DEST-OPTIONS" arg="" ></MACRO>
         <MACRO name="CMD-END-OPTIONS" arg="" ></MACRO>
     </PARAM>
