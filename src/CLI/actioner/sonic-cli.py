@@ -52,9 +52,25 @@ def generate_body(func, args):
           protocol = "IP_PROTOCOL"
        elif args[3] == 'icmp':
 	  protocol = "IP_ICMP"
-       elif args[3] == 'proto':
-	  protocol = "IP_PROTOCOL";
-       elif args[3] == 'tcp' :
+       elif args[4] == "6":
+	  protocol = "IP_TCP";
+       elif args[4] == "17":
+	  protocol = "IP_UDP";
+       elif args[4] == "1":
+	  protocol = "IP_ICMP";
+       elif args[4] == "2":
+	  protocol = "IP_IGMP";
+       elif args[4] == "103":
+	  protocol = "IP_PIM";
+       elif args[4] == "46":
+	  protocol = "IP_RSVP";
+       elif args[4] == "47":
+	  protocol = "IP_GRE";
+       elif args[4] == "51":
+	  protocol = "IP_AUTH";
+       elif args[4] == "115":
+	  protocol = "IP_L2TP";
+       elif args[4] == 'tcp' :
           protocol = "IP_TCP"
        else :
           protocol = "IP_UDP"
