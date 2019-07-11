@@ -3,9 +3,12 @@ import sys
 import time
 import json
 import ast
-import swagger_client
-from swagger_client.rest import ApiException
+import openconfig_interfaces_client
+from openconfig_interfaces_client.rest import ApiException
 from scripts.render_cli import show_cli_output
+
+import urllib3
+urllib3.disable_warnings()
 
 
 plugins = dict()
@@ -51,14 +54,19 @@ def generate_body(func, args):
 
 def run(func, args):
 
+    c = openconfig_interfaces_client.Configuration()
+    c.verify_ssl = False
+    aa = openconfig_interfaces_client.OpenconfigInterfacesApi(api_client=openconfig_interfaces_client.ApiClient(configuration=c))
+
     # create a body block
     keypath, body = generate_body(func, args)
 
     try:
         if body is not None:
-           api_response = getattr(swagger_client.OpenconfigInterfacesApi(),func.__name__)(*keypath, body=body)
+           api_response = getattr(aa,func.__name__)(*keypath, body=body)
         else :
-           api_response = getattr(swagger_client.OpenconfigInterfacesApi(),func.__name__)(*keypath)
+           api_response = getattr(aa,func.__name__)(*keypath)
+
         if api_response is None:
             print ("Success")
         else:
@@ -73,5 +81,6 @@ def run(func, args):
 
 if __name__ == '__main__':
 
-    func = eval(sys.argv[1], globals(), swagger_client.OpenconfigInterfacesApi.__dict__)
+    func = eval(sys.argv[1], globals(), openconfig_interfaces_client.OpenconfigInterfacesApi.__dict__)
+
     run(func, sys.argv[2:])

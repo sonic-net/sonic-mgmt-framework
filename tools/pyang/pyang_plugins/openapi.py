@@ -68,7 +68,7 @@ swaggerDict["info"]["termsOfService"] = "http://www.broadcom.com"
 swaggerDict["info"]["contact"] = {"email": "mohammed.faraaz@broadcom.com"}
 swaggerDict["info"]["license"] = {"name": "Yet to decide", "url": "http://www.broadcom.com"}
 swaggerDict["basePath"] = "/v1" + base_path
-swaggerDict["schemes"] = ["http", "https"]
+swaggerDict["schemes"] = ["https", "http"]
 swagger_tags = []
 swaggerDict["tags"] = swagger_tags
 swaggerDict["paths"] = OrderedDict()
@@ -97,7 +97,7 @@ def resetSwaggerDict():
     swaggerDict["info"]["contact"] = {"email": "mohammed.faraaz@broadcom.com"}
     swaggerDict["info"]["license"] = {"name": "Yet to decide", "url": "http://www.broadcom.com"}
     swaggerDict["basePath"] = "/v1" + base_path
-    swaggerDict["schemes"] = ["http", "https"]
+    swaggerDict["schemes"] = ["https", "http"]
     swagger_tags = []
     currentTag = None
     swaggerDict["tags"] = swagger_tags
@@ -373,7 +373,7 @@ def walk_child_for_list_base(child, actXpath, pathstr, metadata, nonBaseDefName=
         return
 
     defName = shortenNodeName(child)
-    defName = "list_base"+'_'+defName
+    defName = "list"+'_'+defName
 
     if child.i_config == False:
         
@@ -614,11 +614,14 @@ def shortenNodeName(node):
     name = node.i_module.i_modulename + xpath.replace('/','_')
     name = name.replace('-','_').lower()
     if name not in nodeDict:
-        nodeDict[name] = OrderedDict()
+        nodeDict[name] = xpath
     else:
         while name in nodeDict:
+            if xpath == nodeDict[name]:
+                break
             name = node.i_module.i_modulename + '_' + name
-        nodeDict[name] = OrderedDict()
+            name = name.replace('-','_').lower()
+        nodeDict[name] = xpath
     return name
 
 def get_typename(s):
@@ -709,4 +712,5 @@ def typestring(node):
         if typedef != None:
             s = s + get_nontypedefstring(typedef)
     return s
+
 

@@ -53,6 +53,72 @@ func main() {
 			}
 		}*/
 
+/*jsonData :=  `{
+		  "DEVICE_METADATA": {
+        "localhost": {
+        "hwsku": "Force10-S6100",
+        "default_bgp_status": "up",
+        "docker_routing_config_mode": "unified",
+        "hostname": "sonic-s6100-01",
+        "platform": "x86_64-dell_s6100_c2538-r0",
+        "mac": "4c:76:25:f4:70:82",
+        "default_pfcwd_status": "disable",
+        "deployment_id": "1",
+        "type": "ToRRouter"
+    }
+  }
+	  }`*/
+/*jsonData :=  `{
+		  "DEVICE_NEIGHBOR": {
+        "ARISTA04T1": {
+                "mgmt_addr": "10.20.0.163",
+                "hwsku": "Arista",
+		"lo_addr": "2.2.2.2",
+                "local_port": "Ethernet124",
+                "type": "LeafRouter",
+                "port": "Ethernet68"
+        }
+	  }
+	  }`*/
+/*jsonData :=  `{
+		  "BGP_NEIGHBOR": {
+        "10.0.0.61": {
+            "local_addr": "10.0.0.60",
+            "asn": 64015,
+            "name": "ARISTA15T0"
+        }
+		  }
+	  }`*/
+
+/* jsonData :=  `{
+		  "INTERFACE": {
+        "Ethernet68|10.0.0.0/31": {},
+        "Ethernet24|10.0.0.2/31": {},
+        "Ethernet112|10.0.0.4/31": {}
+     }
+	  }`*/
+
+/*jsonData :=  `{
+		  "INTERFACE": {
+        "Ethernet68|10.0.0.0/31": {},
+        "Ethernet24|10.0.0.2/31": {},
+        "Ethernet112|10.0.0.4/31": {}
+     }
+	  }`*/
+/*jsonData :=  `{
+		  "PORTCHANNEL_INTERFACE": {
+        "PortChannel01|10.0.0.56/31": {},
+        "PortChannel01|FC00::71/126": {},
+        "PortChannel02|10.0.0.58/31": {},
+        "PortChannel02|FC00::75/126": {}
+    }
+
+	  }`*/
+/*jsonData :=  `{
+  "VLAN_INTERFACE": {
+        "Vlan1000|192.168.0.1/27": {}
+    }
+  }`*/
 	start := time.Now()
 
 	dataFile := ""
@@ -77,7 +143,13 @@ func main() {
 	}
 
 
-	err := cvl.ValidateConfig(jsonData)
+	cv, ret := cvl.ValidatorSessOpen()
+	if (ret != cvl.CVL_SUCCESS) {
+		fmt.Printf("NewDB: Could not create CVL session")
+		return
+	}
+
+	err := cv.ValidateConfig(jsonData)
 
 	fmt.Printf("\nValidating data = %v\n\n", jsonData);
 
@@ -117,7 +189,7 @@ func main() {
 	keyData[3].Data["members"] =  "Ethernet8"
 	keyData[3].Data["vlanid"] =  "901"
 
-	fmt.Printf("\n\n\n  cvl.ValidateEditConfig() = %d\n", cvl.ValidateEditConfig(keyData))
+	fmt.Printf("\n\n\n  cvl.ValidateEditConfig() = %d\n", cv.ValidateEditConfig1(keyData))
 
 	keyData1 := make([]cvl.CVLEditConfigData, 3)
 	keyData1[0].VType = cvl.VALIDATE_NONE
@@ -142,7 +214,7 @@ func main() {
 	keyData1[2].Data = make(map[string]string)
 	keyData1[2].Data["stage"] =  "INGRESS"
 
-	fmt.Printf("\n\n\n  cvl.ValidateEditConfig() = %d\n", cvl.ValidateEditConfig(keyData1))
+	fmt.Printf("\n\n\n  cvl.ValidateEditConfig() = %d\n", cv.ValidateEditConfig1(keyData1))
 
 
 	keyData2 := make([]cvl.CVLEditConfigData, 3)
@@ -161,9 +233,10 @@ func main() {
 	keyData2[2].Key = "ACL_TABLE|MyACL33_ACL_IPV4"
 	keyData2[2].Data = make(map[string]string)
 
-	fmt.Printf("\n\n\n  cvl.ValidateEditConfig() = %d\n", cvl.ValidateEditConfig(keyData2))
+	fmt.Printf("\n\n\n  cvl.ValidateEditConfig() = %d\n", cv.ValidateEditConfig1(keyData2))
 
 
+	cvl.ValidatorSessClose(cv)
 	cvl.Finish()
 	fmt.Printf("\n\n\n Time taken = %v\n", time.Since(start))
 }

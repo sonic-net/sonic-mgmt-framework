@@ -8,9 +8,11 @@
 package translib
 
 import (
+	"errors"
 	"fmt"
 	"github.com/openconfig/gnmi/proto/gnmi"
 	"github.com/openconfig/ygot/ygot"
+	"github.com/openconfig/ygot/ytypes"
 	"reflect"
 	"strings"
 	"translib/ocbinds"
@@ -48,6 +50,78 @@ func getYangPathFromYgotStruct(s ygot.GoStruct, yangPathPrefix string, appModule
 		return yPath
 	}
 	return ""
+}
+
+func generateGetResponsePayload(targetUri string, deviceObj *ocbinds.Device, ygotTarget *interface{}) ([]byte, error) {
+	var err error
+	var payload []byte
+
+	if len(targetUri) == 0 {
+		return payload, errors.New("GetResponse failed as target Uri is not valid")
+	}
+	path, err := ygot.StringToPath(targetUri, ygot.StructuredPath, ygot.StringSlicePath)
+	if err != nil {
+		fmt.Println("Error in uri to path conversion: ", err)
+		return payload, err
+	}
+
+	// Get current node (corresponds to ygotTarget) and its parent node
+	var pathList []*gnmi.PathElem = path.Elem
+	parentPath := &gnmi.Path{}
+	for i := 0; i < len(pathList); i++ {
+		fmt.Printf("pathList[%d]: %s\n", i, pathList[i])
+		pathSlice := strings.Split(pathList[i].Name, ":")
+		pathList[i].Name = pathSlice[len(pathSlice)-1]
+		if i < (len(pathList) - 1) {
+			parentPath.Elem = append(parentPath.Elem, pathList[i])
+		}
+	}
+	parentNodeList, err := ytypes.GetNode(ygSchema.RootSchema(), deviceObj, parentPath)
+	if err != nil {
+		return payload, err
+	}
+	if len(parentNodeList) == 0 {
+		return payload, errors.New("Invalid URI")
+	}
+	parentNode := parentNodeList[0].Data
+
+	currentNodeList, err := ytypes.GetNode(ygSchema.RootSchema(), deviceObj, path, &(ytypes.GetPartialKeyMatch{}))
+	if err != nil {
+		return payload, err
+	}
+	if len(currentNodeList) == 0 {
+		return payload, errors.New("Invalid URI")
+	}
+	//currentNode := currentNodeList[0].Data
+	currentNodeYangName := currentNodeList[0].Schema.Name
+
+	// Create empty clone of parent node
+	parentNodeClone := reflect.New(reflect.TypeOf(parentNode).Elem())
+	var parentCloneObj ygot.ValidatedGoStruct
+	var ok bool
+	if parentCloneObj, ok = (parentNodeClone.Interface()).(ygot.ValidatedGoStruct); ok {
+		ygot.BuildEmptyTree(parentCloneObj)
+		pcType := reflect.TypeOf(parentCloneObj).Elem()
+		pcValue := reflect.ValueOf(parentCloneObj).Elem()
+
+		var currentNodeOCFieldName string
+		for i := 0; i < pcValue.NumField(); i++ {
+			fld := pcValue.Field(i)
+			fldType := pcType.Field(i)
+			if fldType.Tag.Get("path") == currentNodeYangName {
+				currentNodeOCFieldName = fldType.Name
+				// Take value from original parent and set in parent clone
+				valueFromParent := reflect.ValueOf(parentNode).Elem().FieldByName(currentNodeOCFieldName)
+				fld.Set(valueFromParent)
+				break
+			}
+		}
+		fmt.Printf("Target yang name: %s  OC Field name: %s\n", currentNodeYangName, currentNodeOCFieldName)
+	}
+
+	payload, err = dumpIetfJson(parentCloneObj, true)
+
+	return payload, err
 }
 
 func dumpIetfJson(s ygot.ValidatedGoStruct, skipValidation bool) ([]byte, error) {
