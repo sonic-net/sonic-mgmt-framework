@@ -47,10 +47,8 @@ def generate_body(func, args):
     # Configure ACL rule specific to an ACL table
     elif func.__name__ == 'post_list_base_acl_entries_acl_entry' :
        keypath = [ args[0], args[1] ]
-       forwarding_action = "ACCEPT" if args[4] == 'permit' else 'DROP'
-       if args[3] == 'ip' : 
-          protocol = "IP_PROTOCOL"
-       elif args[3] == 'icmp':
+       forwarding_action = "ACCEPT" if args[3] == 'permit' else 'DROP'
+       if args[4] == 'icmp':
 	  protocol = "IP_ICMP"
        elif args[4] == "6":
 	  protocol = "IP_TCP";
