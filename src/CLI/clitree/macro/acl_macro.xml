@@ -10,7 +10,7 @@
             >
             <PARAM
                 name="dest-prefix"
-                help="Destination prefix "
+                help="Destination prefix"
                 ptype="IP_ADDR_MASK"
                 >
             </PARAM>
@@ -72,6 +72,57 @@
     </PARAM>
 </MACRODEF>
 
+<MACRODEF name="TCP-END-OPTIONS">
+    <PARAM
+        name="fin"
+        help="Match on the FIN bit"
+        ptype="SUBCOMMAND"
+        mode="subcommand"
+        value="TCP_FIN"
+        optional="true"
+        />
+    <PARAM
+        name="syn"
+        help="Match on the SYN bit"
+        ptype="SUBCOMMAND"
+        mode="subcommand"
+        value="TCP_SYN"
+        optional="true"
+        />
+    <PARAM
+        name="rst"
+        help="Match on the RST bit"
+        ptype="SUBCOMMAND"
+        mode="subcommand"
+        value="TCP_RST"
+        optional="true"
+        />
+    <PARAM
+        name="psh"
+        help="Match on the PSH bit"
+        ptype="SUBCOMMAND"
+        mode="subcommand"
+        value="TCP_PSH"
+        optional="true"
+        />
+    <PARAM
+        name="ack"
+        help="Match on the ACK bit"
+        ptype="SUBCOMMAND"
+        mode="subcommand"
+        value="TCP_ACK"
+        optional="true"
+        />
+    <PARAM
+        name="urg"
+        help="Match on the URG bit"
+        ptype="SUBCOMMAND"
+        mode="subcommand"
+        value="TCP_URG"
+        optional="true"
+        />
+</MACRODEF>
+
 <MACRODEF name="IPV4-ACL">
     <!-- deny <0-255> -->
     <PARAM
@@ -113,9 +164,11 @@
         mode="subcommand"
         >
         <MACRO name="IPV4-SRC-OPTIONS" arg="" ></MACRO>
-        <MACRO name="TCP-PORT-OPTIONS" arg="source"> </MACRO>
+        <MACRO name="TCP-PORT-OPTIONS" arg="src"> </MACRO>
         <MACRO name="IPV4-DEST-OPTIONS" arg="" ></MACRO>
-        <MACRO name="TCP-PORT-OPTIONS" arg="destination" > </MACRO>
+        <MACRO name="TCP-PORT-OPTIONS" arg="dst" > </MACRO>
+        <MACRO name="CMD-END-OPTIONS" arg="" ></MACRO>
+        <MACRO name="TCP-END-OPTIONS" arg="" > </MACRO>
     </PARAM>
     <!-- permit udp -->
     <PARAM
@@ -125,9 +178,10 @@
         mode="subcommand"
         >
         <MACRO name="IPV4-SRC-OPTIONS" arg="" ></MACRO>
-        <MACRO name="TCP-PORT-OPTIONS" arg="source"> </MACRO>
+        <MACRO name="TCP-PORT-OPTIONS" arg="src"> </MACRO>
         <MACRO name="IPV4-DEST-OPTIONS" arg="" ></MACRO>
-        <MACRO name="TCP-PORT-OPTIONS" arg="destination" > </MACRO>
+        <MACRO name="TCP-PORT-OPTIONS" arg="dst" > </MACRO>
+        <MACRO name="CMD-END-OPTIONS" arg="" ></MACRO>
     </PARAM>
 </MACRODEF>
 
@@ -173,9 +227,11 @@
         mode="subcommand"
         >
         <MACRO name="IPV4-SRC-OPTIONS" arg="" ></MACRO>
-        <MACRO name="TCP-PORT-OPTIONS" arg="source"> </MACRO>
+        <MACRO name="TCP-PORT-OPTIONS" arg="src"> </MACRO>
         <MACRO name="IPV4-DEST-OPTIONS" arg="" ></MACRO>
-        <MACRO name="TCP-PORT-OPTIONS" arg="destination" > </MACRO>
+        <MACRO name="TCP-PORT-OPTIONS" arg="dst" > </MACRO>
+        <MACRO name="CMD-END-OPTIONS" arg="" ></MACRO>
+        <MACRO name="TCP-END-OPTIONS" arg="" > </MACRO>
     </PARAM>
     <!-- permit udp -->
     <PARAM
@@ -185,9 +241,10 @@
         mode="subcommand"
         >
         <MACRO name="IPV4-SRC-OPTIONS" arg="" ></MACRO>
-        <MACRO name="TCP-PORT-OPTIONS" arg="source"> </MACRO>
+        <MACRO name="TCP-PORT-OPTIONS" arg="src"> </MACRO>
         <MACRO name="IPV4-DEST-OPTIONS" arg="" ></MACRO>
-        <MACRO name="TCP-PORT-OPTIONS" arg="destination" > </MACRO>
+        <MACRO name="TCP-PORT-OPTIONS" arg="dst" > </MACRO>
+        <MACRO name="CMD-END-OPTIONS" arg="" ></MACRO>
     </PARAM>
 </MACRODEF>
 
@@ -242,17 +299,12 @@
                 </PARAM>
 </MACRODEF>
 <MACRODEF name= "CMD-END-OPTIONS">
-        <PARAM name = "end-option"
-                help = "End-option"
-                ptype = "SUBCOMMAND"
-		optional = "true"
-                mode = "switch"
-        >
         <PARAM
         name="dscp"
         help="Consider only packets matching DSCP value"
         ptype="SUBCOMMAND"
         mode="subcommand"
+        optional="true"
                 >
         <PARAM
             name="dscp-val"
@@ -260,6 +312,5 @@
             ptype="UINT"
             />
         </PARAM>
-	</PARAM>
 </MACRODEF>
 </ROOT>

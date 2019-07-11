@@ -24,16 +24,16 @@
                         mode = "subcommand"
                 >
 
-                        <PARAM name = "acl-table-name"
-                                help = "Name of acl-table"
-                                ptype = "STRING"
-                                optional = "true"
-                        />
+                    <PARAM name = "acl-table-name"
+                            help = "Name of acl-table"
+                            ptype = "STRING"
+                            optional = "true"
+                    />
                 </PARAM>
               <PARAM name = "out"
-                        help = "show access-list in outgoing direction"
-                        ptype = "SUBCOMMAND"
-                        mode = "subcommand"
+                    help = "show access-list in outgoing direction"
+                    ptype = "SUBCOMMAND"
+                    mode = "subcommand"
                 >
 
                         <PARAM name = "acl-table-name"
