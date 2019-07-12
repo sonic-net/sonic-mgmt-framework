@@ -38,6 +38,21 @@ $(YANGAPI_DIR)/.done:  $(YANG_MOD_FILES) $(YANG_COMMON_FILES)
 		-p $(YANGDIR_COMMON):$(YANGDIR) \
 		$(YANG_MOD_FILES)
 	@echo "+++++ Generation of  YAML files for Yang modules completed +++++"
+
+	$(PYANG_BIN) \
+		-f tree \
+		-o $(YANGDIR)/allyangs.tree \
+		-p $(YANGDIR_COMMON):$(YANGDIR) \
+		$(YANG_MOD_FILES)
+	@echo "+++++ Generation of  YANG tree for Yang modules completed +++++"
+
+	$(PYANG_BIN) \
+		-f jstree \
+		-o $(YANGDIR)/allyangs_tree.html \
+		-p $(YANGDIR_COMMON):$(YANGDIR) \
+		$(YANG_MOD_FILES)
+	@echo "+++++ Generation of  HTML tree for Yang modules completed +++++"
+
 	touch $@
 
 #======================================================================
