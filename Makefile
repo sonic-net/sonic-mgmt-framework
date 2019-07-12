@@ -25,7 +25,9 @@ GO_DEPS_LIST = github.com/gorilla/mux \
                github.com/go-redis/redis \
                github.com/golang/glog \
                github.com/pkg/profile \
-               gopkg.in/go-playground/validator.v9
+               gopkg.in/go-playground/validator.v9 \
+               github.com/msteinert/pam \
+			   golang.org/x/crypto/ssh
 
 
 PIP2_DEPS_LIST = connexion python_dateutil certifi

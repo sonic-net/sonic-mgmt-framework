@@ -67,6 +67,10 @@ func main() {
 
 	server.SetUIDirectory(uiDir)
 
+    if clientAuth == "user" {
+        server.SetUserAuthEnable(true)
+    }
+
 	router := server.NewRouter()
 
 	address := fmt.Sprintf(":%d", port)
