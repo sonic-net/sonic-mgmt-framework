@@ -50,31 +50,10 @@ def generate_body(func, args):
     elif func.__name__ == 'post_list_base_acl_entries_acl_entry' :
        	keypath = [ args[0], args[1] ]
         forwarding_action = "ACCEPT" if args[3] == 'permit' else 'DROP'
-       if args[4] == 'icmp':
-	  protocol = "IP_ICMP"
-       elif args[4] == "6":
-	  protocol = "IP_TCP";
-       elif args[4] == "17":
-	  protocol = "IP_UDP";
-       elif args[4] == "1":
-	  protocol = "IP_ICMP";
-       elif args[4] == "2":
-	  protocol = "IP_IGMP";
-       elif args[4] == "103":
-	  protocol = "IP_PIM";
-       elif args[4] == "46":
-	  protocol = "IP_RSVP";
-       elif args[4] == "47":
-	  protocol = "IP_GRE";
-       elif args[4] == "51":
-	  protocol = "IP_AUTH";
-       elif args[4] == "115":
-	  protocol = "IP_L2TP";
-       elif args[4] == 'tcp' :
-          protocol = "IP_TCP"
-       else :
-          protocol = "IP_UDP"
-        body=collections.defaultdict(dict)
+        proto_number = {"icmp":"IP_ICMP","tcp":"IP_TCP","udp":"IP_UDP","6":"IP_TCP","17":"IP_UDP","1":"IP_ICMP",
+                       "2":"IP_IGMP","103":"IP_PIM","46":"IP_RSVP","47":"IP_GRE","51":"IP_AUTH","115":"IP_L2TP"}
+        protocol = proto_number.get(args[4])
+	body=collections.defaultdict(dict)
         body["acl-entry"]=[{
                        "sequence-id": int(args[2]),
                        "config": {
