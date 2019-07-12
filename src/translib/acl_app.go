@@ -124,17 +124,7 @@ func (app *AclApp) translateCreate(d *db.DB) ([]db.WatchKeys, error) {
 	var keys []db.WatchKeys
 	log.Info("translateCreate:acl:path =", app.path)
 
-	aclObj := app.getAppRootObject()
-	app.aclTableMap = app.convertOCAclsToInternal(aclObj)
-	app.ruleTableMap = app.convertOCAclRulesToInternal(aclObj)
-	app.bindAclFlag, err = app.convertOCAclBindingsToInternal(d, app.aclTableMap, aclObj)
-
-	if err != nil {
-		log.Error(err)
-		return keys, err
-	}
-
-	keys, err = app.generateDbWatchKeys(d, false)
+	keys, err = app.translateCRUCommon(d, CREATE)
 
 	return keys, err
 }
@@ -144,7 +134,7 @@ func (app *AclApp) translateUpdate(d *db.DB) ([]db.WatchKeys, error) {
 	var keys []db.WatchKeys
 	log.Info("translateUpdate:acl:path =", app.path)
 
-	keys, err = app.translateCreate(d)
+	keys, err = app.translateCRUCommon(d, UPDATE)
 
 	return keys, err
 }
@@ -153,7 +143,9 @@ func (app *AclApp) translateReplace(d *db.DB) ([]db.WatchKeys, error) {
 	var err error
 	var keys []db.WatchKeys
 	log.Info("translateReplace:acl:path =", app.path)
-	//keys, err = app.translateCreate(d)
+
+	//keys, err = app.translateCRUCommon(d, REPLACE)
+
 	err = errors.New("Not implemented")
 	return keys, err
 }
@@ -528,6 +520,26 @@ func (app *AclApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
 	}
 
 	return GetResponse{Payload: payload}, err
+}
+
+func (app *AclApp) translateCRUCommon(d *db.DB, opcode int) ([]db.WatchKeys, error) {
+	var err error
+	var keys []db.WatchKeys
+	log.Info("translateCRUCommon:acl:path =", app.path)
+
+	aclObj := app.getAppRootObject()
+	app.aclTableMap = app.convertOCAclsToInternal(aclObj)
+	app.ruleTableMap = app.convertOCAclRulesToInternal(aclObj)
+	app.bindAclFlag, err = app.convertOCAclBindingsToInternal(d, app.aclTableMap, aclObj)
+
+	if err != nil {
+		log.Error(err)
+		return keys, err
+	}
+
+	keys, err = app.generateDbWatchKeys(d, false)
+
+	return keys, err
 }
 
 /***********    These are Translation Helper Function   ***********/
@@ -1285,27 +1297,33 @@ func convertOCToInternalInputAction(ruleData db.Value, aclName string, ruleIndex
 func (app *AclApp) setAclDataInConfigDb(d *db.DB, aclData map[string]db.Value, createFlag bool) error {
 	var err error
 	for key := range aclData {
-
 		existingEntry, err := d.GetEntry(app.aclTs, db.Key{Comp: []string{key}})
 		// If Create ACL request comes and ACL already exists, throw error
 		if createFlag && existingEntry.IsPopulated() {
 			return errors.New("Acl " + key + " already exists")
 		}
 		if createFlag || (!createFlag && err != nil && !existingEntry.IsPopulated()) {
-			//err := d.SetEntry(app.aclTs, db.Key{Comp: []string{key}}, aclData[key])
 			err := d.CreateEntry(app.aclTs, db.Key{Comp: []string{key}}, aclData[key])
 			if err != nil {
 				log.Error(err)
 				return err
 			}
+		} else {
+			if existingEntry.IsPopulated() {
+				err := d.ModEntry(app.aclTs, db.Key{Comp: []string{key}}, aclData[key])
+				if err != nil {
+					log.Error(err)
+					return err
+				}
+				/*
+					//Merge any ACL binds already present. Validate should take care of any checks so its safe to blindly merge here
+					if len(existingEntry.Field) > 0  {
+						value.Field["ports"] += "," + existingEntry.Field["ports@"]
+					}
+					fmt.Println(value)
+				*/
+			}
 		}
-		/*
-		   //Merge any ACL binds already present. Validate should take care of any checks so its safe to blindly merge here
-		   if len(existingEntry.Field) > 0  {
-		       value.Field["ports"] += "," + existingEntry.Field["ports@"]
-		   }
-		   fmt.Println(value)
-		*/
 	}
 	return err
 }
@@ -1320,11 +1338,18 @@ func (app *AclApp) setAclRuleDataInConfigDb(d *db.DB, ruleData map[string]map[st
 				return errors.New("Rule " + ruleName + " already exists")
 			}
 			if createFlag || (!createFlag && err != nil && !existingRuleEntry.IsPopulated()) {
-				//err := d.SetEntry(app.ruleTs, db.Key{Comp: []string{aclName, ruleName}}, ruleData[aclName][ruleName])
 				err := d.CreateEntry(app.ruleTs, db.Key{Comp: []string{aclName, ruleName}}, ruleData[aclName][ruleName])
 				if err != nil {
 					log.Error(err)
 					return err
+				}
+			} else {
+				if existingRuleEntry.IsPopulated() {
+					err := d.ModEntry(app.ruleTs, db.Key{Comp: []string{aclName, ruleName}}, ruleData[aclName][ruleName])
+					if err != nil {
+						log.Error(err)
+						return err
+					}
 				}
 			}
 		}
@@ -1461,8 +1486,10 @@ func (app *AclApp) generateDbWatchKeys(d *db.DB, isDeleteOp bool) ([]db.WatchKey
 	var aclSubtree = false
 
 	aclObj := app.getAppRootObject()
-	if reflect.TypeOf(*app.ygotTarget).Elem().Name() == "OpenconfigAcl_Acl" {
-		aclSubtree = true
+	if !util.IsValueScalar(reflect.ValueOf(*app.ygotTarget)) && util.IsValuePtr(reflect.ValueOf(*app.ygotTarget)) {
+		if reflect.TypeOf(*app.ygotTarget).Elem().Name() == "OpenconfigAcl_Acl" {
+			aclSubtree = true
+		}
 	}
 
 	// These slices will store the yangPaths derived from the URI requested to help
