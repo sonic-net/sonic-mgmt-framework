@@ -9,32 +9,33 @@
 <!--=========================================================================-->
 <VIEW name="enable-view">
 <!--show ip access-lists -->
-<COMMAND name = "show ip access-lists"
+    <COMMAND name = "show ip access-lists"
         help = "Show IPv4 access-lists information"
         >
-        <PARAM name = "access-list-name"
-               help = "Name of acl-table"
-               ptype = "STRING"
-               optional = "true"
-               >
+        <PARAM 
+            name = "access-list-name"
+            help = "Access list name"
+            ptype = "STRING"
+            optional = "true"
+            >
         </PARAM>
         <ACTION>
-        if test "${access-list-name}" = ""; then&#xA;
-            python $SONIC_CLI_ROOT/sonic-cli.py get_acl_acl_sets show_access_list.j2&#xA;
-        else&#xA;
-            python $SONIC_CLI_ROOT/sonic-cli.py get_acl_set_acl_entries ${access-list-name} ACL_IPV4 show_access_list.j2&#xA;
-        fi&#xA;
+            if test "${access-list-name}" = ""; then&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli.py get_acl_acl_sets show_access_list.j2&#xA;
+            else&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli.py get_acl_set_acl_entries ${access-list-name} ACL_IPV4 show_access_list.j2&#xA;
+            fi&#xA;
         </ACTION>
-</COMMAND>
+    </COMMAND>
 
 
 <!--show ip access-group -->
-<COMMAND name = "show ip access-group"
+    <COMMAND name = "show ip access-group"
         help = "Show IPv4 access-group information"
         >
-      <ACTION>
-        python $SONIC_CLI_ROOT/sonic-cli.py get_acl_interfaces show_access_group.j2
-      </ACTION>
+        <ACTION>
+          python $SONIC_CLI_ROOT/sonic-cli.py get_acl_interfaces show_access_group.j2
+        </ACTION>
     </COMMAND>
 
 </VIEW>
@@ -91,7 +92,7 @@
              name="access-list-name"
              help="Name of the IPv4 access-list (Max size 140)"
              ptype="STRING"
-             >
+        >
         </PARAM>
         <ACTION>python $SONIC_CLI_ROOT/sonic-cli.py patch_acl_acl_sets_acl_set ${access-list-name} ACL_IPV4</ACTION>
     </COMMAND>

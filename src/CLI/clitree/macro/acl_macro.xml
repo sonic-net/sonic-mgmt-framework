@@ -32,12 +32,12 @@
         ptype="SUBCOMMAND"
         mode="switch"
         >
- <PARAM
-                name="src-prefix"
-                help="Source prefix "
-                ptype="IP_ADDR_MASK"
-                >
-            </PARAM>
+        <PARAM
+            name="src-prefix"
+            help="Source prefix "
+            ptype="IP_ADDR_MASK"
+            >
+        </PARAM>
         <PARAM
             name="src-any"
             help="Any source Address"
@@ -271,18 +271,18 @@
                 </PARAM>
 </MACRODEF>
 <MACRODEF name= "CMD-END-OPTIONS">
-        <PARAM
+    <PARAM
         name="dscp"
         help="Consider only packets matching DSCP value"
         ptype="SUBCOMMAND"
         mode="subcommand"
         optional="true"
-                >
+        >
         <PARAM
             name="dscp-val"
             help="Consider only packets matching DSCP value"
             ptype="UINT"
             />
-        </PARAM>
+    </PARAM>
 </MACRODEF>
 </ROOT>
