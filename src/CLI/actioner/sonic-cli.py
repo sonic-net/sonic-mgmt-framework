@@ -53,11 +53,11 @@ def generate_body(func, args):
         proto_number = {"icmp":"IP_ICMP","tcp":"IP_TCP","udp":"IP_UDP","6":"IP_TCP","17":"IP_UDP","1":"IP_ICMP",
                        "2":"IP_IGMP","103":"IP_PIM","46":"IP_RSVP","47":"IP_GRE","51":"IP_AUTH","115":"IP_L2TP"}
         protocol = proto_number.get(args[4])
-	body=collections.defaultdict(dict)
+        body=collections.defaultdict(dict)
         body["acl-entry"]=[{
                        "sequence-id": int(args[2]),
                        "config": {
-                                   "sequence-id": int(args[2])
+                                "sequence-id": int(args[2])
                        },
                        "ipv4":{
                            "config":{
@@ -72,33 +72,40 @@ def generate_body(func, args):
                            "config": {
                                "forwarding-action": forwarding_action
                            }
-                       } 
-                   }] 
-	re_ip = re.compile("^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}")
-	if re_ip.match(args[5]):
-	     body["acl-entry"][0]["ipv4"]["config"]["source-address"]=args[5]
-	flags_list=[]
+                       }
+                   }]
+        re_ip = re.compile("^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}")
+        if re_ip.match(args[5]):
+            body["acl-entry"][0]["ipv4"]["config"]["source-address"]=args[5]
+        elif args[5]=="any":
+            body["acl-entry"][0]["ipv4"]["config"]["source-address"]="0.0.0.0/0"
+        flags_list=[]
         i=6
         while(i<len(args)):
-            if args[i] == 'src-port-eq':
+            if args[i] == 'src-eq':
                 i+=1
-                body["acl-entry"][0]["transport"]["config"]["source-port"]=args[i]
+                body["acl-entry"][0]["transport"]["config"]["source-port"]=int(args[i])
 
             if re_ip.match(args[i]):
                 body["acl-entry"][0]["ipv4"]["config"]["destination-address"]=args[i]
-            
-            if args[i] == 'dst-port-eq':
+
+            if args[i]=="any":
+                body["acl-entry"][0]["ipv4"]["config"]["destination-address"]="0.0.0.0/0"
+
+            if args[i] == 'dst-eq':
                 i+=1
-                body["acl-entry"][0]["transport"]["config"]["destination-port"]=args[i]
+                body["acl-entry"][0]["transport"]["config"]["destination-port"]=int(args[i])
 
-	    if args[i] == 'dscp':
-        	i+=1
-        	body["acl-entry"][0]["ipv4"]["config"]["dscp"]=int(args[i])
+            if args[i] == 'dscp':
+                i+=1
+                body["acl-entry"][0]["ipv4"]["config"]["dscp"]=int(args[i])
 
-            if "tcp_" in args[i]: 
-                body["acl-entry"][0]["transport"]["config"]["tcp-flags"]=flags_list.append(args[i]) 
+            if args[i] in ['fin','syn','ack','urg','rst','psh']:
+                args[i]=("tcp_"+args[i]).upper()
+                flags_list.append(args[i])
+                body["acl-entry"][0]["transport"]["config"]["tcp-flags"]=flags_list
             i+=1
-	
+
     # Add the ACL table binding to an Interface(Ingress / Egress).
     elif func.__name__ == 'post_list_base_interfaces_interface':
         keypath = []
