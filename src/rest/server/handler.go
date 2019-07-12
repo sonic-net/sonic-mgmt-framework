@@ -23,6 +23,11 @@ import (
 ////
 // Request Id generator
 var requestCounter uint64
+var isUserAuthEnabled = false
+
+func SetUserAuthEnable(val bool) {
+    isUserAuthEnabled = val
+}
 
 // Process function is the common landing place for all REST requests.
 // Swagger code-gen should be configured to invoke this function
@@ -39,6 +44,14 @@ func Process(w http.ResponseWriter, r *http.Request) {
 
 		log.Printf("[%s] Content-type=%s; data=%s", reqID, contentType, body)
 	}
+
+    if isUserAuthEnabled {
+        err := PAMAuthenAndAuthor(w, r)
+        if err != nil {
+            log.Printf("Authentication failed")
+            return
+        }
+    }
 
 	path := getPathForTranslib(r)
 	log.Printf("[%s] Translated path = %s", reqID, path)
