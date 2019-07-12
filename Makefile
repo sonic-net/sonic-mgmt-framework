@@ -5,7 +5,7 @@
 #
 #######################################################################
 
-.PHONY: all clean cleanall codegen rest-server yamlGen cli
+.PHONY: all clean cleanall codegen rest-server rest-server-full yamlGen cli
 
 ifeq ($(GOPATH),)
 export GOPATH=/tmp/go
@@ -34,18 +34,12 @@ TOPDIR := $(abspath .)
 BUILD_DIR := $(TOPDIR)/build
 
 export TOPDIR
-# Source files affecting REST server
-REST_SRCS := $(shell find $(TOPDIR)/src -name '*.go' | sort) \
-			 $(shell find $(TOPDIR)/models/yang -name '*.yang' | sort) \
-			 $(shell find $(TOPDIR)/models/openapi -name '*.yaml' | sort)
 
 CVL_GOPATH=$(TOPDIR):$(TOPDIR)/src/cvl/build
-REST_BIN := $(REST_DIST_DIR)/main
-REST_GOPATH = $(GOPATH):$(CVL_GOPATH):$(TOPDIR):$(REST_DIST_DIR)
+GOPATH := $(GOPATH):$(CVL_GOPATH)
 
-#$(info REST_SRCS = $(REST_SRCS) )
 
-all: build-deps pip2-deps cli go-deps go-patch rest-server
+all: build-deps pip2-deps cli go-deps go-patch rest-server-full
 
 build-deps:
 	mkdir -p $(BUILD_DIR)
@@ -67,10 +61,12 @@ cvl:
 	$(MAKE) -C src/cvl/schema
 
 REST_PREREQ := cvl
-GOPATH := $(GOPATH):$(CVL_GOPATH)
 include src/rest/Makefile
 
-rest-server: $(REST_BIN)
+rest-server-full: $(REST_BIN)
+
+rest-server:
+	$(MAKE) -C src/rest
 
 yamlGen:
 	$(MAKE) -C models/yang
