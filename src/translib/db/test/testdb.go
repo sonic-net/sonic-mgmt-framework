@@ -7,6 +7,7 @@ import (
 	"github.com/golang/glog"
 	"translib/db"
 	"time"
+	"translib/tlerr"
 )
 
 func main() {
@@ -19,7 +20,7 @@ func main() {
 	flag.Parse()
 
 	fmt.Println("Creating the DB ==============")
-	d := db.NewDB(db.Options {
+	d,_ := db.NewDB(db.Options {
 	                DBNo              : db.ConfigDB,
 	                InitIndicator     : "CONFIG_DB_INITIALIZED",
 	                TableNameSeparator: "|",
@@ -34,10 +35,20 @@ func main() {
 
 	ca := make([]string, 1, 1)
 
+	fmt.Println("Testing GetEntry error ==============")
+	ca[0] = "MyACL1_ACL_IPVNOTEXIST"
+	akey = db.Key { Comp: ca}
+	avalue, e = d.GetEntry(&tsa, akey)
+	fmt.Println("ts: ", tsa, " ", akey, ": ", avalue, " error: ", e)
+	if _, ok := e.(tlerr.TranslibRedisClientEntryNotExist) ; ok {
+	    fmt.Println("Type is TranslibRedisClientEntryNotExist")
+	}
+	
+
 	fmt.Println("Testing NoTransaction SetEntry ==============")
 	ca[0] = "MyACL1_ACL_IPV4"
 	akey = db.Key { Comp: ca}
-	avalue = db.Value { map[string]string {"ports":"eth0","type":"mirror" }}
+	avalue = db.Value { map[string]string {"ports@":"Ethernet0","type":"MIRROR" }}
 
         d.SetEntry(&tsa, akey, avalue)
 
@@ -61,7 +72,7 @@ func main() {
 
 	fmt.Println("Testing 2 more ACLs ==============")
 	ca[0] = "MyACL2_ACL_IPV4"
-	avalue = db.Value { map[string]string {"ports":"eth0","type":"mirror" }}
+	avalue = db.Value { map[string]string {"ports@":"Ethernet0","type":"MIRROR" }}
         d.SetEntry(&tsa, akey, avalue)
 
 	ca[0] = "MyACL3_ACL_IPV4"
@@ -77,11 +88,13 @@ func main() {
 	rkey = db.Key { Comp: []string { "MyACL2_ACL_IPV4", "RULE_1" }}
 	rvalue = db.Value { Field: map[string]string {
 		"priority" : "0",
-		"packet_action" : "eth1",
+		"packet_action" : "DROP",
 		 	},
 		}
 
-	d.StartTx([]db.WatchKeys { {Ts: &tsr, Key: &rkey} })
+//	d.StartTx([]db.WatchKeys { {Ts: &tsr, Key: &rkey} })
+	d.StartTx([]db.WatchKeys {{Ts: &tsr, Key: &rkey} },
+		[]*db.TableSpec { &tsr, &tsa})
 
 	fmt.Println("Sleeping 5...")
 	time.Sleep(5 * time.Second)
@@ -95,7 +108,8 @@ func main() {
 
 
 	fmt.Println("Testing AbortTx =================")
-	d.StartTx([]db.WatchKeys { {Ts: &tsr, Key: &rkey} })
+//	d.StartTx([]db.WatchKeys { {Ts: &tsr, Key: &rkey} })
+	d.StartTx([]db.WatchKeys {}, []*db.TableSpec { &tsr, &tsa})
 	d.DeleteEntry( &tsa, rkey)
 	d.AbortTx()
 	avalue, e = d.GetEntry(&tsr, rkey)
@@ -110,6 +124,21 @@ func main() {
 
 
 //	d.DeleteTable(&ts)
+
+	fmt.Println("Testing Tables2TableSpecs =================")
+	var tables []string
+	tables = []string { "ACL_TABLE", "ACL_RULE" }
+	fmt.Println("Tables: ", tables)
+	fmt.Println("TableSpecs: ")
+	for _, tsi := range db.Tables2TableSpecs(tables) {
+		fmt.Println("  ", *tsi)
+	}
+
+	fmt.Println("Empty TableSpecs: ")
+	for _, tsi := range db.Tables2TableSpecs([]string { } ) {
+		fmt.Println("  ", *tsi)
+	}
+
 
 	d.DeleteDB()
 }

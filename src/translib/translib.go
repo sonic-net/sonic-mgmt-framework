@@ -120,12 +120,20 @@ func Create(req SetRequest) (SetResponse, error){
 	}
 
 	writeMutex.Lock()
-    d := db.NewDB(db.Options {
+	d, err := db.NewDB(db.Options {
                     DBNo              : db.ConfigDB,
                     InitIndicator     : "CONFIG_DB_INITIALIZED",
                     TableNameSeparator: "|",
                     KeySeparator      : "|",
                       })
+
+	if err != nil {
+		writeMutex.Unlock()
+		resp.ErrSrc = ProtoErr
+		return resp, err
+	}
+
+	defer d.DeleteDB()
 
     keys, err = app.translateCreate(d)
 
@@ -139,7 +147,7 @@ func Create(req SetRequest) (SetResponse, error){
 
 		if (len(keys) != 0) {
 			needTx = true
-			err = d.StartTx(keys)
+			err = d.StartTx(keys, app.tablesToWatch)
 
 			if err != nil {
 				writeMutex.Unlock()
@@ -225,12 +233,20 @@ func Update(req SetRequest) (SetResponse, error){
     }
 
     writeMutex.Lock()
-    d := db.NewDB(db.Options {
+    d, err := db.NewDB(db.Options {
                     DBNo              : db.ConfigDB,
                     InitIndicator     : "CONFIG_DB_INITIALIZED",
                     TableNameSeparator: "|",
                     KeySeparator      : "|",
                       })
+
+    if err != nil {
+        writeMutex.Unlock()
+        resp.ErrSrc = ProtoErr
+        return resp, err
+    }
+
+	defer d.DeleteDB()
 
     keys, err = app.translateUpdate(d)
 
@@ -244,7 +260,7 @@ func Update(req SetRequest) (SetResponse, error){
 
         if (len(keys) != 0) {
             needTx = true
-            err = d.StartTx(keys)
+            err = d.StartTx(keys, app.tablesToWatch)
 
             if err != nil {
                 writeMutex.Unlock()
@@ -329,12 +345,20 @@ func Replace(req SetRequest) (SetResponse, error){
     }
 
     writeMutex.Lock()
-    d := db.NewDB(db.Options {
+    d, err := db.NewDB(db.Options {
                     DBNo              : db.ConfigDB,
                     InitIndicator     : "CONFIG_DB_INITIALIZED",
                     TableNameSeparator: "|",
                     KeySeparator      : "|",
                       })
+
+    if err != nil {
+        writeMutex.Unlock()
+        resp.ErrSrc = ProtoErr
+        return resp, err
+    }
+
+	defer d.DeleteDB()
 
     keys, err = app.translateReplace(d)
 
@@ -348,7 +372,7 @@ func Replace(req SetRequest) (SetResponse, error){
 
         if (len(keys) != 0) {
             needTx = true
-            err = d.StartTx(keys)
+            err = d.StartTx(keys, app.tablesToWatch)
 
             if err != nil {
                 writeMutex.Unlock()
@@ -431,12 +455,20 @@ func Delete(req SetRequest) (SetResponse, error){
     }
 
     writeMutex.Lock()
-    d := db.NewDB(db.Options {
+    d, err := db.NewDB(db.Options {
                     DBNo              : db.ConfigDB,
                     InitIndicator     : "CONFIG_DB_INITIALIZED",
                     TableNameSeparator: "|",
                     KeySeparator      : "|",
                       })
+
+    if err != nil {
+        writeMutex.Unlock()
+        resp.ErrSrc = ProtoErr
+        return resp, err
+    }
+
+	defer d.DeleteDB()
 
     keys, err = app.translateDelete(d)
 
@@ -450,7 +482,7 @@ func Delete(req SetRequest) (SetResponse, error){
 
         if (len(keys) != 0) {
             needTx = true
-            err = d.StartTx(keys)
+            err = d.StartTx(keys, app.tablesToWatch)
 
             if err != nil {
                 writeMutex.Unlock()
@@ -525,7 +557,14 @@ func Get(req GetRequest) (GetResponse, error){
         app.initialize(data)
     }
 
-	dbs := getAllDbs()
+	dbs, err := getAllDbs()
+
+	if err != nil {
+		resp = GetResponse{Payload:payload, ErrSrc:ProtoErr}
+        return resp, err
+	}
+
+	defer closeAllDbs(dbs)
 
     err = app.translateGet (dbs)
 
@@ -554,16 +593,22 @@ func GetModels() ([]ModelData, error) {
 }
 
 //Creates connection will all the redis DBs. To be used for get request
-func getAllDbs() [db.MaxDB]*db.DB {
+func getAllDbs() ([db.MaxDB]*db.DB, error) {
 	var dbs [db.MaxDB]*db.DB
+    var err error
 
 	//Create Application DB connection
-    dbs[db.ApplDB] = db.NewDB(db.Options {
+    dbs[db.ApplDB], err = db.NewDB(db.Options {
                     DBNo              : db.ApplDB,
                     InitIndicator     : "",
                     TableNameSeparator: "|",
                     KeySeparator      : "|",
                       })
+
+	if err != nil {
+		closeAllDbs(dbs)
+		return dbs, err
+	}
 
     //Create ASIC DB connection
     dbs[db.AsicDB] = db.NewDB(db.Options {
@@ -573,6 +618,11 @@ func getAllDbs() [db.MaxDB]*db.DB {
                     KeySeparator      : "|",
                       })
 
+	if err != nil {
+		closeAllDbs(dbs)
+		return dbs, err
+	}
+
 	//Create Counter DB connection
     dbs[db.CountersDB] = db.NewDB(db.Options {
                     DBNo              : db.CountersDB,
@@ -580,6 +630,11 @@ func getAllDbs() [db.MaxDB]*db.DB {
                     TableNameSeparator: "|",
                     KeySeparator      : "|",
                       })
+
+	if err != nil {
+		closeAllDbs(dbs)
+		return dbs, err
+	}
 
 	//Create Log Level DB connection
     dbs[db.LogLevelDB] = db.NewDB(db.Options {
@@ -589,6 +644,11 @@ func getAllDbs() [db.MaxDB]*db.DB {
                     KeySeparator      : "|",
                       })
 
+	if err != nil {
+		closeAllDbs(dbs)
+		return dbs, err
+	}
+
 	//Create Config DB connection
     dbs[db.ConfigDB] = db.NewDB(db.Options {
                     DBNo              : db.ConfigDB,
@@ -596,6 +656,11 @@ func getAllDbs() [db.MaxDB]*db.DB {
                     TableNameSeparator: "|",
                     KeySeparator      : "|",
                       })
+
+	if err != nil {
+		closeAllDbs(dbs)
+		return dbs, err
+	}
 
 	//Create State DB connection
     dbs[db.StateDB] = db.NewDB(db.Options {
@@ -605,6 +670,21 @@ func getAllDbs() [db.MaxDB]*db.DB {
                     KeySeparator      : "|",
                       })
 
-	return dbs
+	if err != nil {
+		closeAllDbs(dbs)
+		return dbs, err
+	}
+
+	return dbs, err
+}
+
+//Closes the dbs, and nils out the arr.
+func closeAllDbs(dbs []*db.DB) {
+	for dbsi, d := range dbs {
+		if d != nil {
+			d.DeleteDB()
+			dbs[dbsi] = nil
+		}
+	}
 }
 
