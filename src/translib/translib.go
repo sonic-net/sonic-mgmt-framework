@@ -147,7 +147,7 @@ func Create(req SetRequest) (SetResponse, error){
 
 		if (len(keys) != 0) {
 			needTx = true
-			err = d.StartTx(keys, app.tablesToWatch)
+			err = d.StartTx(keys, appInfo.tablesToWatch)
 
 			if err != nil {
 				writeMutex.Unlock()
@@ -260,7 +260,7 @@ func Update(req SetRequest) (SetResponse, error){
 
         if (len(keys) != 0) {
             needTx = true
-            err = d.StartTx(keys, app.tablesToWatch)
+            err = d.StartTx(keys, appInfo.tablesToWatch)
 
             if err != nil {
                 writeMutex.Unlock()
@@ -372,7 +372,7 @@ func Replace(req SetRequest) (SetResponse, error){
 
         if (len(keys) != 0) {
             needTx = true
-            err = d.StartTx(keys, app.tablesToWatch)
+            err = d.StartTx(keys, appInfo.tablesToWatch)
 
             if err != nil {
                 writeMutex.Unlock()
@@ -482,7 +482,7 @@ func Delete(req SetRequest) (SetResponse, error){
 
         if (len(keys) != 0) {
             needTx = true
-            err = d.StartTx(keys, app.tablesToWatch)
+            err = d.StartTx(keys, appInfo.tablesToWatch)
 
             if err != nil {
                 writeMutex.Unlock()
@@ -564,7 +564,7 @@ func Get(req GetRequest) (GetResponse, error){
         return resp, err
 	}
 
-	defer closeAllDbs(dbs)
+	defer closeAllDbs(dbs[:])
 
     err = app.translateGet (dbs)
 
@@ -606,12 +606,12 @@ func getAllDbs() ([db.MaxDB]*db.DB, error) {
                       })
 
 	if err != nil {
-		closeAllDbs(dbs)
+		closeAllDbs(dbs[:])
 		return dbs, err
 	}
 
     //Create ASIC DB connection
-    dbs[db.AsicDB] = db.NewDB(db.Options {
+    dbs[db.AsicDB], err = db.NewDB(db.Options {
                     DBNo              : db.AsicDB,
                     InitIndicator     : "",
                     TableNameSeparator: "|",
@@ -619,12 +619,12 @@ func getAllDbs() ([db.MaxDB]*db.DB, error) {
                       })
 
 	if err != nil {
-		closeAllDbs(dbs)
+		closeAllDbs(dbs[:])
 		return dbs, err
 	}
 
 	//Create Counter DB connection
-    dbs[db.CountersDB] = db.NewDB(db.Options {
+    dbs[db.CountersDB], err = db.NewDB(db.Options {
                     DBNo              : db.CountersDB,
                     InitIndicator     : "",
                     TableNameSeparator: "|",
@@ -632,12 +632,12 @@ func getAllDbs() ([db.MaxDB]*db.DB, error) {
                       })
 
 	if err != nil {
-		closeAllDbs(dbs)
+		closeAllDbs(dbs[:])
 		return dbs, err
 	}
 
 	//Create Log Level DB connection
-    dbs[db.LogLevelDB] = db.NewDB(db.Options {
+    dbs[db.LogLevelDB], err = db.NewDB(db.Options {
                     DBNo              : db.LogLevelDB,
                     InitIndicator     : "",
                     TableNameSeparator: "|",
@@ -645,12 +645,12 @@ func getAllDbs() ([db.MaxDB]*db.DB, error) {
                       })
 
 	if err != nil {
-		closeAllDbs(dbs)
+		closeAllDbs(dbs[:])
 		return dbs, err
 	}
 
 	//Create Config DB connection
-    dbs[db.ConfigDB] = db.NewDB(db.Options {
+    dbs[db.ConfigDB], err = db.NewDB(db.Options {
                     DBNo              : db.ConfigDB,
                     InitIndicator     : "CONFIG_DB_INITIALIZED",
                     TableNameSeparator: "|",
@@ -658,12 +658,12 @@ func getAllDbs() ([db.MaxDB]*db.DB, error) {
                       })
 
 	if err != nil {
-		closeAllDbs(dbs)
+		closeAllDbs(dbs[:])
 		return dbs, err
 	}
 
 	//Create State DB connection
-    dbs[db.StateDB] = db.NewDB(db.Options {
+    dbs[db.StateDB], err = db.NewDB(db.Options {
                     DBNo              : db.StateDB,
                     InitIndicator     : "",
                     TableNameSeparator: "|",
@@ -671,7 +671,7 @@ func getAllDbs() ([db.MaxDB]*db.DB, error) {
                       })
 
 	if err != nil {
-		closeAllDbs(dbs)
+		closeAllDbs(dbs[:])
 		return dbs, err
 	}
 
