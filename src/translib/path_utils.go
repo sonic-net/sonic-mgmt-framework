@@ -10,9 +10,10 @@ package translib
 import (
 	"errors"
 	"fmt"
+	log "github.com/golang/glog"
+	"reflect"
 	"strconv"
 	"strings"
-        "reflect"
 
 	"github.com/openconfig/gnmi/proto/gnmi"
 	"github.com/openconfig/goyang/pkg/yang"
@@ -101,13 +102,10 @@ func getParentNode(targetUri *string, deviceObj *ocbinds.Device) (*interface{}, 
 	parentPath := &gnmi.Path{}
 
 	for i := 0; i < (len(pathList) - 1); i++ {
-		fmt.Println("pathList[i] ", pathList[i])
 		pathSlice := strings.Split(pathList[i].Name, ":")
 		pathList[i].Name = pathSlice[len(pathSlice)-1]
 		parentPath.Elem = append(parentPath.Elem, pathList[i])
 	}
-
-	fmt.Println("parentPath => ", parentPath)
 
 	treeNodeList, err2 := ytypes.GetNode(ygSchema.RootSchema(), deviceObj, parentPath)
 	if err2 != nil {
@@ -124,7 +122,7 @@ func getParentNode(targetUri *string, deviceObj *ocbinds.Device) (*interface{}, 
 func getNodeName(targetUri *string, deviceObj *ocbinds.Device) (string, error) {
 	path, err := ygot.StringToPath(*targetUri, ygot.StructuredPath, ygot.StringSlicePath)
 	if err != nil {
-		fmt.Println("Error in uri to path conversion: ", err)
+		log.Error("Error in uri to path conversion: ", err)
 		return "", err
 	}
 
@@ -136,7 +134,7 @@ func getNodeName(targetUri *string, deviceObj *ocbinds.Device) (string, error) {
 
 	treeNodeList, err := ytypes.GetNode(ygSchema.RootSchema(), deviceObj, path)
 	if err != nil {
-		fmt.Println("Error in uri to path conversion: ", err)
+		log.Error("Error in uri to path conversion: ", err)
 		return "", err
 	}
 

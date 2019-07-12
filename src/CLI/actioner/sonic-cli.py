@@ -5,10 +5,12 @@ import json
 import collections
 import re
 import ast
-import swagger_client
-from swagger_client.rest import ApiException
+import openconfig_acl_client
+from openconfig_acl_client.rest import ApiException
 from scripts.render_cli import show_cli_output
 
+import urllib3
+urllib3.disable_warnings()
 
 plugins = dict()
 
@@ -25,19 +27,19 @@ def call_method(name, args):
 def generate_body(func, args):
     body = None
     # Get the rules of all ACL table entries.
-    if func.__name__ == 'get_acl_acl_sets':
+    if func.__name__ == 'get_openconfig_acl_acl_acl_sets':
        keypath = []
 
     # Get Interface binding to ACL table info
-    elif func.__name__ == 'get_acl_interfaces':
+    elif func.__name__ == 'get_openconfig_acl_acl_interfaces':
        keypath = []
 
     # Get all the rules specific to an ACL table.
-    elif func.__name__ == 'get_acl_set_acl_entries':
+    elif func.__name__ == 'get_openconfig_acl_acl_acl_sets_acl_set_acl_entries':
        keypath = [ args[0], args[1] ]
 
     # Configure ACL table
-    elif func.__name__ == 'patch_acl_acl_sets_acl_set' :
+    elif func.__name__ == 'patch_openconfig_acl_acl_acl_sets_acl_set' :
        keypath = [ args[0], args[1] ]
        body = { "openconfig-acl:config": {
                    "name": args[0],
@@ -47,7 +49,7 @@ def generate_body(func, args):
               }
 
     # Configure ACL rule specific to an ACL table
-    elif func.__name__ == 'post_list_base_acl_entries_acl_entry' :
+    elif func.__name__ == 'patch_list_openconfig_acl_acl_acl_sets_acl_set_acl_entries_acl_entry' :
        	keypath = [ args[0], args[1] ]
         forwarding_action = "ACCEPT" if args[3] == 'permit' else 'DROP'
         proto_number = {"icmp":"IP_ICMP","tcp":"IP_TCP","udp":"IP_UDP","6":"IP_TCP","17":"IP_UDP","1":"IP_ICMP",
@@ -107,7 +109,7 @@ def generate_body(func, args):
             i+=1
 
     # Add the ACL table binding to an Interface(Ingress / Egress).
-    elif func.__name__ == 'post_list_base_interfaces_interface':
+    elif func.__name__ == 'patch_list_openconfig_acl_acl_interfaces_interface':
         keypath = []
         if args[3] == "ingress":
             body = { "openconfig-acl:interface": [ {
@@ -154,17 +156,17 @@ def generate_body(func, args):
                             } ] }
                     } ] }
     # Remove the ACL table binding to an Ingress interface.
-    elif func.__name__ == 'delete_interface_ingress_acl_sets_ingress_acl_set':
+    elif func.__name__ == 'delete_openconfig_acl_acl_interfaces_interface_ingress_acl_sets_ingress_acl_set':
         keypath = [args[0], args[1], args[2]]
 
     # Remove the ACL table binding to an Egress interface.
-    elif func.__name__ == 'delete_interface_egress_acl_sets_egress_acl_set':
+    elif func.__name__ == 'delete_openconfig_acl_acl_interfaces_interface_egress_acl_sets_egress_acl_set':
         keypath = [args[0], args[1], args[2]]
 
     # Remove all the rules and delete the ACL table.
-    elif func.__name__ == 'delete_acl_acl_sets_acl_set':
+    elif func.__name__ == 'delete_openconfig_acl_acl_acl_sets_acl_set':
         keypath = [args[0], args[1]]
-    elif func.__name__ == 'delete_acl_set_acl_entries_acl_entry':
+    elif func.__name__ == 'delete_openconfig_acl_acl_acl_sets_acl_set_acl_entries_acl_entry':
         keypath = [args[0], args[1], args[2]]
     else:
        body = {} 
@@ -177,14 +179,19 @@ def generate_body(func, args):
 
 def run(func, args):
 
+    c = openconfig_acl_client.Configuration()
+    c.verify_ssl = False
+    aa = openconfig_acl_client.OpenconfigAclApi(api_client=openconfig_acl_client.ApiClient(configuration=c))
+
     # create a body block
     keypath, body = generate_body(func, args)
 
     try:
         if body is not None:
-           api_response = getattr(swagger_client.OpenconfigAclApi(),func.__name__)(*keypath, body=body)
+           api_response = getattr(aa,func.__name__)(*keypath, body=body)
         else :
-           api_response = getattr(swagger_client.OpenconfigAclApi(),func.__name__)(*keypath)
+           api_response = getattr(aa,func.__name__)(*keypath)
+
         if api_response is None:
             print ("Success")
         else:
@@ -225,5 +232,5 @@ def run(func, args):
 if __name__ == '__main__':
 
     #pdb.set_trace()
-    func = eval(sys.argv[1], globals(), swagger_client.OpenconfigAclApi.__dict__)
+    func = eval(sys.argv[1], globals(), openconfig_acl_client.OpenconfigAclApi.__dict__)
     run(func, sys.argv[2:])
