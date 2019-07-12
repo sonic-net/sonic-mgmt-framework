@@ -7,62 +7,31 @@
                         http://www.dellemc.com/sonic/XMLSchema/clish.xsd"
     >
 <!--=========================================================================-->
-
 <VIEW name="enable-view">
 <!--show ip access-lists -->
 <COMMAND name = "show ip access-lists"
         help = "Show IPv4 access-lists information"
         >
-        <PARAM name = "direction-switch"
-                help = "Configure the direction to apply the access list"
-                ptype = "SUBCOMMAND"
-                mode = "switch"
-        >
-                <PARAM name = "in"
-                        help = "show access-list in incoming direction"
-                        ptype = "SUBCOMMAND"
-                        mode = "subcommand"
-                >
-
-                    <PARAM name = "acl-table-name"
-                            help = "Name of acl-table"
-                            ptype = "STRING"
-                            optional = "true"
-                    />
-                </PARAM>
-              <PARAM name = "out"
-                    help = "show access-list in outgoing direction"
-                    ptype = "SUBCOMMAND"
-                    mode = "subcommand"
-                >
-
-                        <PARAM name = "acl-table-name"
-                                help = "Name of acl-table"
-                                ptype = "STRING"
-                                optional = "true"
-                        />
-                </PARAM>
+        <PARAM name = "access-list-name"
+               help = "Name of acl-table"
+               ptype = "STRING"
+               optional = "true"
+               >
         </PARAM>
-      <ACTION>
+        <ACTION>
         if test "${access-list-name}" = ""; then&#xA;
             python $SONIC_CLI_ROOT/sonic-cli.py get_acl_acl_sets show_access_list.j2&#xA;
         else&#xA;
             python $SONIC_CLI_ROOT/sonic-cli.py get_acl_set_acl_entries ${access-list-name} ACL_IPV4 show_access_list.j2&#xA;
         fi&#xA;
-      </ACTION>
-    </COMMAND>
+        </ACTION>
+</COMMAND>
 
 
 <!--show ip access-group -->
 <COMMAND name = "show ip access-group"
         help = "Show IPv4 access-group information"
         >
-        <PARAM name = "acl-name"
-                help = "name of acl-table"
-                ptype = "STRING"
-                optional = "true"
-                >
-        </PARAM>
       <ACTION>
         python $SONIC_CLI_ROOT/sonic-cli.py get_acl_interfaces show_access_group.j2
       </ACTION>
