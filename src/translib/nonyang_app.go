@@ -25,33 +25,26 @@ type nonYangDemoApp struct {
 	reqData []byte
 
 	// DB client to operate on config_db
-	confDB      *db.DB
-	vlanTable   *db.TableSpec
-	memberTable *db.TableSpec
+	confDB *db.DB
 
 	// Cahce for read operation
 	respJSON interface{}
-
-	// Cache for write operations
-	watchKeys []db.WatchKeys
-	vlans     []transVlanData
-}
-
-type transVlanData struct {
-	id         int               // vlan id
-	vlanOpCode string            // VLAN table op - create, update or delete
-	delMembers map[string]bool   // Member port names for delete
-	newMembers map[string]string // Port name to tagging mode for create/update
 }
 
 type jsonObject map[string]interface{}
 type jsonArray []interface{}
 
+var (
+	vlanTable   = &db.TableSpec{"VLAN"}
+	memberTable = &db.TableSpec{"VLAN_MEMBER"}
+)
+
 func init() {
 	register(
 		"/nonyang/",
 		&appInfo{appType: reflect.TypeOf(nonYangDemoApp{}),
-			isNative: true})
+			tablesToWatch: []*db.TableSpec{vlanTable, memberTable},
+			isNative:      true})
 }
 
 // initialize function prepares this nonYangDemoApp instance
@@ -59,30 +52,11 @@ func init() {
 func (app *nonYangDemoApp) initialize(data appData) {
 	app.path = NewPathInfo(data.path)
 	app.reqData = data.payload
-
-	app.vlanTable = &db.TableSpec{"VLAN"}
-	app.memberTable = &db.TableSpec{"VLAN_MEMBER"}
 }
 
 func (app *nonYangDemoApp) translateCreate(d *db.DB) ([]db.WatchKeys, error) {
 	app.confDB = d
-	pathInfo := app.path
-	var err error
-
-	log.Infof("Received CREATE for path %s; vars=%v", pathInfo.Template, pathInfo.Vars)
-
-	switch pathInfo.Template {
-	case "/nonyang/vlan":
-		err = app.translateCreateVlans()
-
-	case "/nonyang/vlan/{id}/member":
-		err = app.translateCreateVlanMembers()
-
-	default:
-		err = errors.New("Unknown path")
-	}
-
-	return app.watchKeys, err
+	return nil, nil
 }
 
 func (app *nonYangDemoApp) translateUpdate(d *db.DB) ([]db.WatchKeys, error) {
@@ -95,23 +69,7 @@ func (app *nonYangDemoApp) translateReplace(d *db.DB) ([]db.WatchKeys, error) {
 
 func (app *nonYangDemoApp) translateDelete(d *db.DB) ([]db.WatchKeys, error) {
 	app.confDB = d
-	pathInfo := app.path
-	var err error
-
-	log.Infof("Received DELETE for path %s; vars=%v", pathInfo.Template, pathInfo.Vars)
-
-	switch pathInfo.Template {
-	case "/nonyang/vlan/{id}":
-		err = app.translateDeleteVlan()
-
-	case "/nonyang/vlan/{id}/member/{port}":
-		err = app.translateDeleteVlanMember()
-
-	default:
-		err = errors.New("Unknown path")
-	}
-
-	return app.watchKeys, err
+	return nil, nil
 }
 
 func (app *nonYangDemoApp) translateGet(dbs [db.MaxDB]*db.DB) error {
@@ -120,7 +78,22 @@ func (app *nonYangDemoApp) translateGet(dbs [db.MaxDB]*db.DB) error {
 
 func (app *nonYangDemoApp) processCreate(d *db.DB) (SetResponse, error) {
 	var resp SetResponse
-	err := app.writeToDatabase()
+	pathInfo := app.path
+	var err error
+
+	log.Infof("Received CREATE for path %s; vars=%v", pathInfo.Template, pathInfo.Vars)
+
+	switch pathInfo.Template {
+	case "/nonyang/vlan":
+		err = app.doCreateVlans()
+
+	case "/nonyang/vlan/{id}/member":
+		err = app.doCreateVlanMembers()
+
+	default:
+		err = errors.New("Unknown path")
+	}
+
 	return resp, err
 }
 
@@ -136,7 +109,22 @@ func (app *nonYangDemoApp) processReplace(d *db.DB) (SetResponse, error) {
 
 func (app *nonYangDemoApp) processDelete(d *db.DB) (SetResponse, error) {
 	var resp SetResponse
-	err := app.writeToDatabase()
+	pathInfo := app.path
+	var err error
+
+	log.Infof("Received DELETE for path %s; vars=%v", pathInfo.Template, pathInfo.Vars)
+
+	switch pathInfo.Template {
+	case "/nonyang/vlan/{id}":
+		err = app.doDeleteVlan()
+
+	case "/nonyang/vlan/{id}/member/{port}":
+		err = app.doDeleteVlanMember()
+
+	default:
+		err = errors.New("Unknown path")
+	}
+
 	return resp, err
 }
 
@@ -173,7 +161,7 @@ func (app *nonYangDemoApp) doGetAllVlans() error {
 	log.Infof("in GetAllVlans")
 
 	// Get all vlans from db
-	vlanTable, err := app.confDB.GetTable(app.vlanTable)
+	vlanTable, err := app.confDB.GetTable(vlanTable)
 	if err != nil {
 		return err
 	}
@@ -202,18 +190,11 @@ func (app *nonYangDemoApp) doGetAllVlans() error {
 // Loads data for one vlan and its members and prepares a json
 // object.
 func (app *nonYangDemoApp) doGetVlanByID() error {
-	log.Infof("in GetVlanByID()")
-
 	vlanID, _ := app.path.IntVar("id")
-	if !isValidVlan(vlanID) {
-		log.Errorf("Got invalid vlan param \"%s\"", app.path.Var("id"))
-		return errors.New("Invalid vlan id")
-	}
+	log.Infof("in GetVlanByID(), vid=%d", vlanID)
 
 	vlanName := toVlanName(vlanID)
-	log.Infof("Processing %v", vlanName)
-
-	vlanEntry, err := app.confDB.GetEntry(app.vlanTable, asKey(vlanName))
+	vlanEntry, err := app.confDB.GetEntry(vlanTable, asKey(vlanName))
 	if err == nil {
 		app.respJSON, err = app.getVlanJSON(&vlanEntry)
 	}
@@ -239,7 +220,7 @@ func (app *nonYangDemoApp) getVlanJSON(vlanEntry *db.Value) (*jsonObject, error)
 		memberJSON := make(jsonObject)
 		memberJSON["port"] = portName
 
-		memberEntry, err := app.confDB.GetEntry(app.memberTable, asKey(vlanName, portName))
+		memberEntry, err := app.confDB.GetEntry(memberTable, asKey(vlanName, portName))
 		if err != nil {
 			// ignore "not exists" error; don't fill tagging mode
 			log.Warningf("Failed to load VLAN_MEMBER %s,%s; err=%v",
@@ -258,9 +239,9 @@ func (app *nonYangDemoApp) getVlanJSON(vlanEntry *db.Value) (*jsonObject, error)
 	return &vlanJSON, nil
 }
 
-// translateCreateVlans handles CREATE operation on "/nonyang/vlan" path.
-func (app *nonYangDemoApp) translateCreateVlans() error {
-	log.Infof("in translateCreateVlans()")
+// doCreateVlans handles CREATE operation on "/nonyang/vlan" path.
+func (app *nonYangDemoApp) doCreateVlans() error {
+	log.Infof("in doCreateVlans()")
 
 	// vlan creation expects array of vlan ids.
 	var vlansJSON []int
@@ -273,18 +254,15 @@ func (app *nonYangDemoApp) translateCreateVlans() error {
 	log.Infof("Receieved %d vlan ids; %v", len(vlansJSON), vlansJSON)
 
 	for _, vid := range vlansJSON {
-		log.Infof("Processing vlan id %d", vid)
-		if !isValidVlan(vid) {
-			return errors.New("Invalid vlan id")
-		}
+		vlanName := toVlanName(vid)
+		log.Infof("NEW vlan entry '%s'", vlanName)
 
-		vlanData := transVlanData{
-			id:         vid,
-			vlanOpCode: "create",
+		entry := db.Value{Field: make(map[string]string)}
+		entry.SetInt("vlanid", vid)
+		err = app.confDB.CreateEntry(vlanTable, asKey(vlanName), entry)
+		if err != nil {
+			return err
 		}
-
-		app.vlans = append(app.vlans, vlanData)
-		app.addWatchKey(app.vlanTable, toVlanName(vid))
 	}
 
 	return nil
@@ -292,14 +270,9 @@ func (app *nonYangDemoApp) translateCreateVlans() error {
 
 // doCreateVlanMembers handles CREATE operation on path
 // "/nonyang/vlan/{id}/member"
-func (app *nonYangDemoApp) translateCreateVlanMembers() error {
-	log.Infof("in translateCreateVlanMembers()")
-
+func (app *nonYangDemoApp) doCreateVlanMembers() error {
 	vlanID, _ := app.path.IntVar("id")
-	if !isValidVlan(vlanID) {
-		log.Errorf("Got invalid vlan param \"%s\"", app.path.Var("id"))
-		return errors.New("Invalid vlan id")
-	}
+	log.Infof("in doCreateVlanMembers(), vid=%d", vlanID)
 
 	var memberListJSON []map[string]string
 	err := json.Unmarshal(app.reqData, &memberListJSON)
@@ -308,169 +281,104 @@ func (app *nonYangDemoApp) translateCreateVlanMembers() error {
 		return errors.New("Invalid input")
 	}
 
-	vlanData := transVlanData{
-		id:         vlanID,
-		vlanOpCode: "update",
-		newMembers: make(map[string]string),
+	vlanName := toVlanName(vlanID)
+	vlanKey := asKey(vlanName)
+	vlanEntry, err := app.confDB.GetEntry(vlanTable, vlanKey)
+	if err != nil {
+		return err //TODO translate not found error to meaningful message
 	}
 
-	vlanName := toVlanName(vlanID)
-	app.addWatchKey(app.vlanTable, vlanName)
+	membersList := vlanEntry.GetList("members")
 
 	for _, memberJSON := range memberListJSON {
 		log.Infof("Processing member info %v", memberJSON)
 
-		portName, ok := memberJSON["port"]
-		if !ok || len(portName) == 0 {
-			log.Infof("Invalid input - 'port' missing")
-			return errors.New("Invalid input")
-		}
+		portName, _ := memberJSON["port"]
+		membersList = append(membersList, portName)
 
 		taggingMode, ok := memberJSON["mode"]
 		if !ok {
 			taggingMode = "tagged"
-		} else if taggingMode != "tagged" && taggingMode != "untagged" {
-			log.Infof("Invalid input - bad tagging mode '%s'", taggingMode)
-			return errors.New("Invalid input")
 		}
 
-		vlanData.newMembers[portName] = taggingMode
-		app.addWatchKey(app.memberTable, vlanName, portName)
+		log.Infof("NEW vlan_member entry '%s|%s'; mode=%s", vlanName, portName, taggingMode)
+		memberEntry := db.Value{Field: make(map[string]string)}
+		memberEntry.Set("tagging_mode", taggingMode)
+		err = app.confDB.CreateEntry(memberTable, asKey(vlanName, portName), memberEntry)
+		if err != nil {
+			return err
+		}
 	}
 
-	app.vlans = append(app.vlans, vlanData)
-	return nil
+	// Update the vlan table with new member list
+	log.Infof("SET vlan entry '%s', members=%v", vlanName, membersList)
+	vlanEntry.SetList("members", membersList)
+	err = app.confDB.ModEntry(vlanTable, vlanKey, vlanEntry)
+
+	return err
 }
 
-func (app *nonYangDemoApp) translateDeleteVlan() error {
+func (app *nonYangDemoApp) doDeleteVlan() error {
 	vlanID, _ := app.path.IntVar("id")
-	log.Infof("in translateDeleteVlan(); vid=%d", vlanID)
-
-	vlanData := transVlanData{
-		id:         vlanID,
-		vlanOpCode: "delete",
-		delMembers: make(map[string]bool),
-	}
+	log.Infof("in doDeleteVlan(); vid=%d", vlanID)
 
 	vlanName := toVlanName(vlanID)
-	app.addWatchKey(app.vlanTable, vlanName)
-
-	vlanEntry, err := app.confDB.GetEntry(app.vlanTable, asKey(vlanName))
+	vlanKey := asKey(vlanName)
+	vlanEntry, err := app.confDB.GetEntry(vlanTable, vlanKey)
 	if err != nil {
 		return err //FIXME return success if not exists
 	}
 
+	// Delete VLAN_MEMBER table entry for each member port
 	for _, portName := range vlanEntry.GetList("members") {
-		vlanData.delMembers[portName] = true
-		app.addWatchKey(app.memberTable, vlanName, portName)
+		log.Infof("DEL vlan_member entry '%s|%s'", vlanName, portName)
+		err = app.confDB.DeleteEntry(memberTable, asKey(vlanName, portName))
+		if err != nil {
+			return err
+		}
 	}
 
-	app.vlans = append(app.vlans, vlanData)
-	return nil
+	// Delete VLAN table entry
+	log.Infof("DEL vlan entry '%s'", vlanName)
+	err = app.confDB.DeleteEntry(vlanTable, vlanKey)
+
+	return err
 }
 
-func (app *nonYangDemoApp) translateDeleteVlanMember() error {
+func (app *nonYangDemoApp) doDeleteVlanMember() error {
 	vlanID, _ := app.path.IntVar("id")
 	portName := app.path.Var("port")
-	log.Infof("in translateDeleteVlan(); vid=%d, member=%s", vlanID, portName)
-
-	vlanData := transVlanData{
-		id:         vlanID,
-		vlanOpCode: "update",
-		delMembers: make(map[string]bool),
-	}
-
-	vlanData.delMembers[portName] = true
+	log.Infof("in doDeleteVlanMember(); vid=%d, member=%s", vlanID, portName)
 
 	vlanName := toVlanName(vlanID)
-	app.addWatchKey(app.vlanTable, vlanName)
-	app.addWatchKey(app.memberTable, vlanName, portName)
+	vlanKey := asKey(vlanName)
+	vlanEntry, err := app.confDB.GetEntry(vlanTable, vlanKey)
+	if err != nil {
+		return err
+	}
 
-	app.vlans = append(app.vlans, vlanData)
-	return nil
-}
+	membersList := vlanEntry.GetList("members")
+	updatedList := removeElement(membersList, portName)
 
-func (app *nonYangDemoApp) addWatchKey(ts *db.TableSpec, keyParts ...string) {
-	key := asKey(keyParts...)
-	app.watchKeys = append(app.watchKeys, db.WatchKeys{Ts: ts, Key: &key})
-}
-
-func (app *nonYangDemoApp) writeToDatabase() error {
-	if app.vlans == nil {
-		log.Infof("No operations found")
+	// Ignore the request if the port is not a member
+	if len(membersList) == len(updatedList) {
+		log.Infof("Vlan %d has no member %s", vlanID, portName)
 		return nil
 	}
 
-	for _, vlanData := range app.vlans {
-		vlanName := toVlanName(vlanData.id)
-		vlanKey := asKey(vlanName)
-
-		switch vlanData.vlanOpCode {
-		case "create":
-			log.Infof("NEW vlan entry '%s'", vlanName)
-			vlanValue := db.Value{Field: make(map[string]string)}
-			vlanValue.SetInt("vlanid", vlanData.id)
-			err := app.confDB.CreateEntry(app.vlanTable, vlanKey, vlanValue)
-			if err != nil {
-				return err
-			}
-
-		case "delete":
-			log.Infof("DEL vlan entry '%s'", vlanName)
-			err := app.confDB.DeleteEntry(app.vlanTable, vlanKey)
-			if err != nil {
-				return err
-			}
-
-		case "update":
-			vlanValue, err := app.confDB.GetEntry(app.vlanTable, vlanKey)
-			if err != nil {
-				return err
-			}
-
-			var memberNames []string
-			for _, port := range vlanValue.GetList("members") {
-				if _, found := vlanData.delMembers[port]; !found {
-					memberNames = append(memberNames, port)
-				}
-			}
-
-			for port := range vlanData.newMembers {
-				memberNames = append(memberNames, port)
-			}
-
-			log.Infof("SET vlan entry '%s', members=%v", vlanName, memberNames)
-			vlanValue.SetList("members", memberNames)
-
-			err = app.confDB.SetEntry(app.vlanTable, vlanKey, vlanValue)
-			if err != nil {
-				return err
-			}
-		}
-
-		for port := range vlanData.delMembers {
-			log.Infof("DEL vlan_member entry '%s|%s'", vlanName, port)
-			memberKey := asKey(vlanName, port)
-			err := app.confDB.DeleteEntry(app.memberTable, memberKey)
-			if err != nil {
-				return err
-			}
-		}
-
-		for port, mode := range vlanData.newMembers {
-			log.Infof("NEW vlan_member entry '%s|%s'; mode=%s", vlanName, port, mode)
-			memberKey := asKey(vlanName, port)
-			memberValue := db.Value{Field: make(map[string]string)}
-			memberValue.Set("tagging_mode", mode)
-
-			err := app.confDB.CreateEntry(app.memberTable, memberKey, memberValue)
-			if err != nil {
-				return err
-			}
-		}
+	// Update VLAN entry with new member list
+	log.Infof("SET vlan entry '%s', members=%v", vlanName, updatedList)
+	vlanEntry.SetList("members", updatedList)
+	err = app.confDB.SetEntry(vlanTable, vlanKey, vlanEntry)
+	if err != nil {
+		return nil
 	}
 
-	return nil
+	// Delete VLAN_MEMBER entry
+	log.Infof("DEL vlan_member entry '%s|%s'", vlanName, portName)
+	err = app.confDB.DeleteEntry(memberTable, asKey(vlanName, portName))
+
+	return err
 }
 
 // asKey cretaes a db.Key from given key components
@@ -481,10 +389,4 @@ func asKey(parts ...string) db.Key {
 // toVlanName returns the vlan name for given vlan id.
 func toVlanName(vid int) string {
 	return fmt.Sprintf("Vlan%d", vid)
-}
-
-// isValidVlan checks if given number is within valid
-// valn id range of 1-4095.
-func isValidVlan(num int) bool {
-	return (num > 0 && num < 4096)
 }
