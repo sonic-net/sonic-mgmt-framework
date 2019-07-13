@@ -561,8 +561,8 @@ func getAllDbs() [db.MaxDB]*db.DB {
     dbs[db.ApplDB] = db.NewDB(db.Options {
                     DBNo              : db.ApplDB,
                     InitIndicator     : "",
-                    TableNameSeparator: "|",
-                    KeySeparator      : "|",
+                    TableNameSeparator: ":",
+                    KeySeparator      : ":",
                       })
 
     //Create ASIC DB connection
