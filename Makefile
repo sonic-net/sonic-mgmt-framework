@@ -34,6 +34,7 @@ TOPDIR := $(abspath .)
 BUILD_DIR := $(TOPDIR)/build
 
 export TOPDIR
+
 # Source files affecting REST server
 REST_SRCS := $(shell find $(TOPDIR)/src -name '*.go' | sort) \
 			 $(shell find $(TOPDIR)/models/yang -name '*.yang' | sort) \
@@ -101,11 +102,10 @@ $(addprefix $(DEST)/, $(MAIN_TARGET)): $(DEST)/% :
 clean:
 	$(MAKE) -C src/cvl clean
 	$(MAKE) -C src/cvl/schema clean
-	$(MAKE) -C src/CLI clean
 	$(MAKE) -C src/cvl cleanall
-	rm -rf build
+	rm -rf build/*
 	rm -rf debian/.debhelper
 
 cleanall:
 	$(MAKE) -C src/cvl cleanall
-	rm -rf build
+	rm -rf build/*
