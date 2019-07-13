@@ -67,7 +67,7 @@ swaggerDict["info"]["title"] =  "Sonic NMS"
 swaggerDict["info"]["termsOfService"] = "http://www.broadcom.com"
 swaggerDict["info"]["contact"] = {"email": "mohammed.faraaz@broadcom.com"}
 swaggerDict["info"]["license"] = {"name": "Yet to decide", "url": "http://www.broadcom.com"}
-swaggerDict["basePath"] = "/v1" + base_path
+swaggerDict["basePath"] = base_path
 swaggerDict["schemes"] = ["https", "http"]
 swagger_tags = []
 swaggerDict["tags"] = swagger_tags
@@ -96,7 +96,7 @@ def resetSwaggerDict():
     swaggerDict["info"]["termsOfService"] = "http://www.broadcom.com"
     swaggerDict["info"]["contact"] = {"email": "mohammed.faraaz@broadcom.com"}
     swaggerDict["info"]["license"] = {"name": "Yet to decide", "url": "http://www.broadcom.com"}
-    swaggerDict["basePath"] = "/v1" + base_path
+    swaggerDict["basePath"] = base_path
     swaggerDict["schemes"] = ["https", "http"]
     swagger_tags = []
     currentTag = None
