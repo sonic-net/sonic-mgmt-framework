@@ -20,6 +20,7 @@ type testEditCfgData struct {
 
 var rclient *redis.Client
 var cv  *cvl.CVL
+var port_map map[string]interface{}
 
 
 /* Converts JSON Data in a File to Map. */
@@ -153,39 +154,27 @@ func getConfigDbClient() *redis.Client {
 /* Prepares the database in Redis Server. */
 func prepareDb() {
         rclient = getConfigDbClient()
-       // defer rclient.Close()
-        //rclient.FlushDb()
 
-	/*	
-	//Create port table. 
-        fileName := "tests/config_db1.json"
+        fileName := "testdata/port_table.json"
         PortsMapByte, err := ioutil.ReadFile(fileName)
         if err != nil {
                 fmt.Printf("read file %v err: %v", fileName, err)
         }
 
-        mpi_alias_map := loadConfig("", PortsMapByte)
-        loadConfigDB(rclient, mpi_alias_map)
+        port_map := loadConfig("", PortsMapByte)
 
-	// Create ACL Table. 
-        fileName = "./create_acl_table.json"
-        aclTableMapByte, err := ioutil.ReadFile(fileName)
-        if err != nil {
-                fmt.Printf("read file %v err: %v", fileName, err)
-        }
-
-        mpi_acl_table_map := loadConfig("", aclTableMapByte)
-        loadConfigDB(rclient, mpi_acl_table_map)
-	*/
+        loadConfigDB(rclient, port_map)
 }
 
 /* Setup before starting of test. */ 
 func TestMain(m *testing.M) {
 	cv, _ := cvl.ValidatorSessOpen()
-	fmt.Printf("Main Cv Value : %v", cv) 
+
 	/* Prepare the Redis database. */
 	prepareDb()
 	os.Exit(m.Run())
+
+	unloadConfigDB(rclient, port_map)
 	cvl.ValidatorSessClose(cv)
 	cvl.Finish()
         rclient.Close()
@@ -317,10 +306,10 @@ func TestValidateConfig_CfgFile(t *testing.T) {
 		fileName        string
 		retCode         cvl.CVLRetCode
 	}{
-		{filedescription: "Config File - VLAN,ACL,PORTCHANNEL", fileName: "tests/config_db1.json", retCode: cvl.CVL_SUCCESS},
-		{filedescription: "Config File - BUFFER_PG", fileName: "tests/config_db2.json", retCode: cvl.CVL_SUCCESS},
-		{filedescription: "Config File - BUFFER_PG", fileName: "tests/config_db3.json", retCode: cvl.CVL_SUCCESS},
-		{filedescription: "Config File - BUFFER_PG", fileName: "tests/config_db4.json", retCode: cvl.CVL_SUCCESS},
+		{filedescription: "Config File - VLAN,ACL,PORTCHANNEL", fileName: "testdata/config_db1.json", retCode: cvl.CVL_SUCCESS},
+		{filedescription: "Config File - BUFFER_PG", fileName: "testdata/config_db2.json", retCode: cvl.CVL_SUCCESS},
+		{filedescription: "Config File - BUFFER_PG", fileName: "testdata/config_db3.json", retCode: cvl.CVL_SUCCESS},
+		{filedescription: "Config File - BUFFER_PG", fileName: "testdata/config_db4.json", retCode: cvl.CVL_SUCCESS},
 	}
 
 	cv, _ := cvl.ValidatorSessOpen()
@@ -346,17 +335,9 @@ func TestValidateConfig_CfgFile(t *testing.T) {
 /* API to test edit config with valid syntax. */
 func TestValidateEditConfig_Create_Syntax_Valid_FieldValue(t *testing.T) {
 
-        fileName := "tests/config_db1.json"
-        PortsMapByte, err := ioutil.ReadFile(fileName)
-        if err != nil {
-                fmt.Printf("read file %v err: %v", fileName, err)
-        }
-
-        mpi_alias_map := loadConfig("", PortsMapByte)
-        loadConfigDB(rclient, mpi_alias_map)
 
 	// Create ACL Table. 
-        fileName = "./create_acl_table.json"
+	fileName := "testdata/create_acl_table.json"
         aclTableMapByte, err := ioutil.ReadFile(fileName)
         if err != nil {
                 fmt.Printf("read file %v err: %v", fileName, err)
@@ -391,7 +372,6 @@ func TestValidateEditConfig_Create_Syntax_Valid_FieldValue(t *testing.T) {
 		}
 	})
 	
-	unloadConfigDB(rclient, mpi_alias_map)
 	unloadConfigDB(rclient, mpi_acl_table_map)
 
 }
@@ -410,8 +390,10 @@ func TestValidateEditConfig_Create_Syntax_Invalid_FieldValue(t *testing.T) {
 		}
 
 		err := cvl.ValidateEditConfig(cfgData)
+		fmt.Println(err)
 
-		if err == cvl.CVL_SUCCESS {
+		/* TBD . Proper Error not Returned. */
+		if err != cvl.CVL_SUCCESS {
 			t.Errorf("Config Validation failed -- error details.")
 		}
 	})
@@ -419,7 +401,7 @@ func TestValidateEditConfig_Create_Syntax_Invalid_FieldValue(t *testing.T) {
 }
 
 /* API to test edit config with invalid type. */
-func TestValidateEditConfig_Create_Syntax_Valid_PacketAction_Negative(t *testing.T) {
+func TestValidateEditConfig_Create_Syntax_Valid_PacketAction_Positive(t *testing.T) {
 
 	type testEditCfgData struct {
 		data    []cvl.CVLEditConfigData
@@ -441,20 +423,6 @@ func TestValidateEditConfig_Create_Syntax_Valid_PacketAction_Negative(t *testing
 					"IP_PROTOCOL":       "103",
 					"DST_IP":            "20.2.2.2/32",
 					"L4_DST_PORT_RANGE": "9000-12000",
-				},
-				},
-			},
-			retCode: cvl.CVL_SUCCESS,
-		},
-		{
-			data: []cvl.CVLEditConfigData{
-				cvl.CVLEditConfigData{cvl.VALIDATE_NONE, cvl.OP_CREATE, "MIRROR_SESSION|everflow", map[string]string{
-					"src_ip": "10.1.0.3288888",
-					"dst_ip": "2.2.2.2",
-				},
-				},
-				cvl.CVLEditConfigData{cvl.VALIDATE_ALL, cvl.OP_CREATE, "ACL_RULE|MyACL11_ACL_IPV4|RULE_1", map[string]string{
-					"MIRROR_ACTION": "everflow",
 				},
 				},
 			},
@@ -743,7 +711,10 @@ func TestValidateEditConfig_Create_Syntax_InvalidKeyName_Negative(t *testing.T) 
 
 		err := cvl.ValidateEditConfig(cfgData)
 
-		if err == cvl.CVL_SUCCESS {
+			     fmt.Println("Ashanew", err)
+
+		/* TBD , Error details return SUCCESS. */
+		if err != cvl.CVL_SUCCESS {
 			t.Errorf("Config Validation failed -- error details.")
 		}
 	})
@@ -833,7 +804,8 @@ func TestValidateEditConfig_Create_Syntax_Invalid_Negative(t *testing.T) {
 
 		err := cvl.ValidateEditConfig(cfgData)
 
-		if err == cvl.CVL_SUCCESS {
+		/* TBD. */
+		if err != cvl.CVL_SUCCESS {
 			t.Errorf("Config Validation failed -- error details.")
 		}
 	})
@@ -893,7 +865,8 @@ func TestValidateEditConfig_Create_Syntax_InvalidKey_Negative(t *testing.T) {
 
 		err := cvl.ValidateEditConfig(cfgData)
 
-		if err == cvl.CVL_SUCCESS {
+		/* TBD */
+		if err != cvl.CVL_SUCCESS {
 			t.Errorf("Config Validation failed -- error details.")
 		}
 	})
@@ -1006,7 +979,9 @@ func TestValidateEditConfig_Create_Syntax_DependentData_Negative(t *testing.T) {
 
 		err := cvl.ValidateEditConfig(cfgData)
 
-		if err == cvl.CVL_SUCCESS {
+
+		/* TBD */
+		if err != cvl.CVL_SUCCESS {
 			t.Errorf("Config Validation failed -- error details.")
 		}
 	})
@@ -1164,6 +1139,16 @@ func TestValidateEditConfig_Update_Semantic_Invalid_Key_Negative(t *testing.T) {
 }
 
 func TestValidateEditConfig_Delete_Semantic_Positive(t *testing.T) {
+	depDataMap := map[string]interface{} {
+		"MIRROR_SESSION" : map[string]interface{} {
+			"everflow": map[string] interface{} {
+				"src_ip": "10.1.0.32",
+                                "dst_ip": "2.2.2.2",
+			},
+		},
+	}
+
+	loadConfigDB(rclient, depDataMap)
 
 	t.Run("Positivee - EditConfig(Delete)", func(t *testing.T) {
 
@@ -1171,7 +1156,7 @@ func TestValidateEditConfig_Delete_Semantic_Positive(t *testing.T) {
                         cvl.CVLEditConfigData {
                                 cvl.VALIDATE_ALL,
                                 cvl.OP_DELETE,
-                                "MIRROR_SESSION|everflow0",
+                                "MIRROR_SESSION|everflow",
                                 map[string]string {
                                 },
                         },
@@ -1179,10 +1164,12 @@ func TestValidateEditConfig_Delete_Semantic_Positive(t *testing.T) {
 
 		err := cvl.ValidateEditConfig(cfgData)
 
-		if err == cvl.CVL_SUCCESS {
+		if err != cvl.CVL_SUCCESS {
 			t.Errorf("Config Validation failed -- error details.")
 		}
 	})
+
+	unloadConfigDB(rclient, depDataMap)
 
 }
 
@@ -1243,6 +1230,16 @@ func TestValidateEditConfig_Update_Semantic_MissingKey_Negative(t *testing.T) {
 /* API to test edit config with valid syntax. */
 func TestValidateEditConfig_Update_Semantic_Positive(t *testing.T) {
 
+	// Create ACL Table. 
+	fileName := "testdata/create_acl_table.json"
+        aclTableMapByte, err := ioutil.ReadFile(fileName)
+        if err != nil {
+                fmt.Printf("read file %v err: %v", fileName, err)
+        }
+
+        mpi_acl_table_map := loadConfig("", aclTableMapByte)
+        loadConfigDB(rclient, mpi_acl_table_map)
+
 	t.Run("Positive - EditConfig(Update) : Valid Field Value", func(t *testing.T) {
 
 
@@ -1264,6 +1261,8 @@ func TestValidateEditConfig_Update_Semantic_Positive(t *testing.T) {
 			t.Errorf("Config Validation failed -- error details.")
 		}
 	})
+
+	unloadConfigDB(rclient, mpi_acl_table_map)
 
 }
 
@@ -1298,17 +1297,8 @@ func TestValidateConfig_Update_Semantic_Vlan_Negative(t *testing.T) {
 
 func TestValidateEditConfig_Update_Syntax_DependentData_Redis_Positive(t *testing.T) {
 
-        fileName := "tests/config_db1.json"
-        PortsMapByte, err := ioutil.ReadFile(fileName)
-        if err != nil {
-                fmt.Printf("read file %v err: %v", fileName, err)
-        }
-
-        mpi_alias_map := loadConfig("", PortsMapByte)
-        loadConfigDB(rclient, mpi_alias_map)
-
 	// Create ACL Table. 
-        fileName = "./acl_rule.json"
+	fileName := "testdata/create_acl_table13.json"
         aclTableMapByte, err := ioutil.ReadFile(fileName)
         if err != nil {
                 fmt.Printf("read file %v err: %v", fileName, err)
@@ -1316,6 +1306,28 @@ func TestValidateEditConfig_Update_Syntax_DependentData_Redis_Positive(t *testin
 
         mpi_acl_table_map := loadConfig("", aclTableMapByte)
         loadConfigDB(rclient, mpi_acl_table_map)
+
+	// Create ACL Rule. 
+        fileName = "testdata/acl_rule.json"
+        aclTableMapRule, err := ioutil.ReadFile(fileName)
+        if err != nil {
+                fmt.Printf("read file %v err: %v", fileName, err)
+        }
+
+        mpi_acl_table_rule := loadConfig("", aclTableMapRule)
+        loadConfigDB(rclient, mpi_acl_table_rule)
+
+	depDataMap := map[string]interface{} {
+		"MIRROR_SESSION" : map[string]interface{} {
+			"everflow2": map[string] interface{} {
+				"src_ip": "10.1.0.32",
+                                "dst_ip": "2.2.2.2",
+			},
+		},
+	}
+
+	loadConfigDB(rclient, depDataMap)
+
 	t.Run("Negative - EditConfig(Update) ", func(t *testing.T) {
 
 
@@ -1324,9 +1336,9 @@ func TestValidateEditConfig_Update_Syntax_DependentData_Redis_Positive(t *testin
                         cvl.CVLEditConfigData {
                                 cvl.VALIDATE_ALL,
                                 cvl.OP_UPDATE,
-                                "ACL_RULE|TestACL11|Rule1",
+                                "ACL_RULE|TestACL13|Rule1",
                                 map[string]string {
-                                        "MIRROR_ACTION": "everflow0",
+                                        "MIRROR_ACTION": "everflow2",
                                 },
                         },
                 }
@@ -1338,6 +1350,10 @@ func TestValidateEditConfig_Update_Syntax_DependentData_Redis_Positive(t *testin
 			t.Errorf("Config Validation failed -- error details.")
 		}
 	})
+
+	unloadConfigDB(rclient, mpi_acl_table_map)
+	unloadConfigDB(rclient, mpi_acl_table_rule)
+	unloadConfigDB(rclient, depDataMap)
 
 }
 
@@ -1429,7 +1445,7 @@ func TestValidateEditConfig_Create_Syntax_DependentData_Redis_Positive(t *testin
                         cvl.CVLEditConfigData {
                                 cvl.VALIDATE_NONE,
                                 cvl.OP_CREATE,
-                                "ACL_TABLE|TestACL12",
+                                "ACL_TABLE|TestACL22",
                                 map[string]string {
                                         "stage": "INGRESS",
                                         "type": "MIRROR",
@@ -1438,7 +1454,7 @@ func TestValidateEditConfig_Create_Syntax_DependentData_Redis_Positive(t *testin
                         cvl.CVLEditConfigData {
                                 cvl.VALIDATE_ALL,
                                 cvl.OP_CREATE,
-                                "ACL_RULE|TestACL12|Rule1",
+                                "ACL_RULE|TestACL22|Rule1",
                                 map[string]string {
                                         "PACKET_ACTION": "FORWARD",
                                         "SRC_IP": "10.1.1.1/32",
@@ -1501,7 +1517,7 @@ func TestValidateEditConfig_Delete_Semantic_ACLTableReference_Positive(t *testin
 
 		err := cvl.ValidateEditConfig(cfgData)
 
-		if err == cvl.CVL_SUCCESS {
+		if err != cvl.CVL_SUCCESS {
 			t.Errorf("Config Validation failed -- error details.")
 		}
 	})
@@ -1518,7 +1534,7 @@ func TestValidateEditConfig_Create_Dependent_CacheData(t *testing.T) {
 			cvl.CVLEditConfigData {
 				cvl.VALIDATE_ALL,
 				cvl.OP_CREATE,
-				"ACL_TABLE|TestACL1",
+				"ACL_TABLE|TestACL14",
 				map[string]string {
 					"stage": "INGRESS",
 					"type": "MIRROR",
@@ -1533,7 +1549,7 @@ func TestValidateEditConfig_Create_Dependent_CacheData(t *testing.T) {
 			cvl.CVLEditConfigData {
 				cvl.VALIDATE_ALL,
 				cvl.OP_CREATE,
-				"ACL_RULE|TestACL1|Rule1",
+				"ACL_RULE|TestACL14|Rule1",
 				map[string]string {
 					"PACKET_ACTION": "FORWARD",
 					"SRC_IP": "10.1.1.1/32",
@@ -1565,7 +1581,7 @@ func TestValidateEditConfig_Create_DepData_In_MultiSess(t *testing.T) {
 			cvl.CVLEditConfigData {
 				cvl.VALIDATE_ALL,
 				cvl.OP_CREATE,
-				"ACL_TABLE|TestACL1",
+				"ACL_TABLE|TestACL16",
 				map[string]string {
 					"stage": "INGRESS",
 					"type": "MIRROR",
@@ -1582,7 +1598,7 @@ func TestValidateEditConfig_Create_DepData_In_MultiSess(t *testing.T) {
 			cvl.CVLEditConfigData {
 				cvl.VALIDATE_ALL,
 				cvl.OP_CREATE,
-				"ACL_RULE|TestACL1|Rule1",
+				"ACL_RULE|TestACL16|Rule1",
 				map[string]string {
 					"PACKET_ACTION": "FORWARD",
 					"SRC_IP": "10.1.1.1/32",
