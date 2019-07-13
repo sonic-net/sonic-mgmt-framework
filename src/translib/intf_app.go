@@ -237,6 +237,7 @@ func (app *IntfApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
 				}
 			}
 		}
+		return GetResponse{Payload: payload}, err
 	}
 
 	/* Get all Interfaces */

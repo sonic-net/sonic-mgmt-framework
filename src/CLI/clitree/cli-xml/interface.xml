@@ -6,6 +6,29 @@
     xsi:schemaLocation="http://www.dellemc.com/sonic/XMLSchema
     http://www.dellemc.com/sonic/XMLSchema/clish.xsd"
     >
+    <VIEW name="enable-view">
+	<!--show interface Ethernet <id> -->
+    <COMMAND
+         name="show interface"
+         help="Show Interface info"
+         >
+	 <PARAM
+		name="Ethernet"
+		help="Physical Interface"
+		ptype="SUBCOMMAND"
+		mode="subcommand"
+		>
+		<PARAM
+			name="phy-if-id"
+			help="Physical interface(Multiples of 4)"
+			ptype="UINT"
+			optional="true"
+			>
+		</PARAM>
+	</PARAM>
+    </COMMAND>
+    </VIEW>
+
     <VIEW
         name="configure-view"
         >
