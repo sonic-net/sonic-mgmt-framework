@@ -1341,9 +1341,9 @@ func TestValidateEditConfig_Update_Syntax_DependentData_Redis_Positive(t *testin
 
 }
 
-func TestValidateEditConfig_Update_Syntax_DependentData_User_Positive(t *testing.T) {
+func TestValidateEditConfig_Update_Syntax_DependentData_Invalid_Op_Seq(t *testing.T) {
 
-	t.Run("Positive - EditConfig(Create)", func(t *testing.T) {
+	t.Run("Negative - EditConfig(Create/Update) - same entry can't be created and updated in single request", func(t *testing.T) {
 
 
 		/* ACL and Rule name pre-created . */
@@ -1351,7 +1351,7 @@ func TestValidateEditConfig_Update_Syntax_DependentData_User_Positive(t *testing
                         cvl.CVLEditConfigData {
                                 cvl.VALIDATE_NONE,
                                 cvl.OP_CREATE,
-                                "ACL_TABLE|TestACL13",
+                                "ACL_TABLE|TestACL1",
                                 map[string]string {
                                         "stage": "INGRESS",
                                         "type": "MIRROR",
@@ -1360,7 +1360,7 @@ func TestValidateEditConfig_Update_Syntax_DependentData_User_Positive(t *testing
                         cvl.CVLEditConfigData {
                                 cvl.VALIDATE_NONE,
                                 cvl.OP_CREATE,
-                                "ACL_RULE|TestACL13|Rule1",
+                                "ACL_RULE|TestACL1|Rule1",
                                 map[string]string {
                                         "PACKET_ACTION": "FORWARD",
                                         "SRC_IP": "10.1.1.1/32",
@@ -1373,9 +1373,10 @@ func TestValidateEditConfig_Update_Syntax_DependentData_User_Positive(t *testing
                         cvl.CVLEditConfigData {
                                 cvl.VALIDATE_ALL,
                                 cvl.OP_UPDATE,
-                                "ACL_RULE|TestACL13|Rule1",
+                                "ACL_RULE|TestACL1|Rule1",
                                 map[string]string {
                                         "PACKET_ACTION": "DROP",
+                                        "L4_SRC_PORT": "781",
                                 },
                         },
                 }
@@ -1384,7 +1385,7 @@ func TestValidateEditConfig_Update_Syntax_DependentData_User_Positive(t *testing
 
 		err := cvl.ValidateEditConfig(cfgData)
 
-		if err != cvl.CVL_SUCCESS {
+		if err == cvl.CVL_SUCCESS { //Validation should fail
 			t.Errorf("Config Validation failed -- error details.")
 		}
 	})
@@ -1500,10 +1501,148 @@ func TestValidateEditConfig_Delete_Semantic_ACLTableReference_Positive(t *testin
 
 		err := cvl.ValidateEditConfig(cfgData)
 
-		if err != cvl.CVL_SUCCESS {
+		if err == cvl.CVL_SUCCESS {
 			t.Errorf("Config Validation failed -- error details.")
 		}
 	})
 
 }
 
+func TestValidateEditConfig_Create_Dependent_CacheData(t *testing.T) {
+
+	cvSess, _ := cvl.ValidatorSessOpen()
+
+	t.Run("Positive - EditConfig(Create) with dependent data from cache", func(t *testing.T) {
+		//Create ACL rule
+		cfgDataAcl := []cvl.CVLEditConfigData {
+			cvl.CVLEditConfigData {
+				cvl.VALIDATE_ALL,
+				cvl.OP_CREATE,
+				"ACL_TABLE|TestACL1",
+				map[string]string {
+					"stage": "INGRESS",
+					"type": "MIRROR",
+				},
+			},
+		}
+
+		err1 := cvSess.ValidateEditConfig1(cfgDataAcl)
+
+		//Create ACL rule
+		cfgDataRule := []cvl.CVLEditConfigData {
+			cvl.CVLEditConfigData {
+				cvl.VALIDATE_ALL,
+				cvl.OP_CREATE,
+				"ACL_RULE|TestACL1|Rule1",
+				map[string]string {
+					"PACKET_ACTION": "FORWARD",
+					"SRC_IP": "10.1.1.1/32",
+					"L4_SRC_PORT": "1909",
+					"IP_PROTOCOL": "103",
+					"DST_IP": "20.2.2.2/32",
+					"L4_DST_PORT_RANGE": "9000-12000",
+				},
+			},
+		}
+
+		err2 := cvSess.ValidateEditConfig1(cfgDataRule)
+
+		if err1 != cvl.CVL_SUCCESS || err2 != cvl.CVL_SUCCESS {
+			t.Errorf("Config Validation failed.")
+		}
+	})
+	cvl.ValidatorSessClose(cvSess)
+}
+
+func TestValidateEditConfig_Create_DepData_In_MultiSess(t *testing.T) {
+
+
+	t.Run("Negative - EditConfig(Create) with dependent data in multiple sessionsi, but no cached data", func(t *testing.T) {
+
+		//Create ACL rule - Session 1
+		cvSess, _ := cvl.ValidatorSessOpen()
+		cfgDataAcl := []cvl.CVLEditConfigData {
+			cvl.CVLEditConfigData {
+				cvl.VALIDATE_ALL,
+				cvl.OP_CREATE,
+				"ACL_TABLE|TestACL1",
+				map[string]string {
+					"stage": "INGRESS",
+					"type": "MIRROR",
+				},
+			},
+		}
+
+		err1 := cvSess.ValidateEditConfig1(cfgDataAcl)
+		cvl.ValidatorSessClose(cvSess)
+
+		//Create ACL rule - Session 2, validation should fail
+		cvSess, _ = cvl.ValidatorSessOpen()
+		cfgDataRule := []cvl.CVLEditConfigData {
+			cvl.CVLEditConfigData {
+				cvl.VALIDATE_ALL,
+				cvl.OP_CREATE,
+				"ACL_RULE|TestACL1|Rule1",
+				map[string]string {
+					"PACKET_ACTION": "FORWARD",
+					"SRC_IP": "10.1.1.1/32",
+					"L4_SRC_PORT": "1909",
+					"IP_PROTOCOL": "103",
+					"DST_IP": "20.2.2.2/32",
+					"L4_DST_PORT_RANGE": "9000-12000",
+				},
+			},
+		}
+
+		err2 := cvSess.ValidateEditConfig1(cfgDataRule)
+		cvl.ValidatorSessClose(cvSess)
+
+		if err1 != cvl.CVL_SUCCESS || err2 == cvl.CVL_SUCCESS {
+			t.Errorf("Config Validation failed.")
+		}
+	})
+
+}
+
+func TestValidateEditConfig_Create_DepData_From_Redis(t *testing.T) {
+
+	depDataMap := map[string]interface{} {
+		"ACL_TABLE" : map[string]interface{} {
+			"TestACL1": map[string] interface{} {
+				"stage": "INGRESS",
+				"type": "MIRROR",
+			},
+		},
+	}
+
+	loadConfigDB(rclient, depDataMap)
+
+	t.Run("Positive - EditConfig(Create) with dependent data from redis", func(t *testing.T) {
+		//Create ACL rule - Session 2
+		cvSess, _ := cvl.ValidatorSessOpen()
+		cfgDataRule := []cvl.CVLEditConfigData {
+			cvl.CVLEditConfigData {
+				cvl.VALIDATE_ALL,
+				cvl.OP_CREATE,
+				"ACL_RULE|TestACL1|Rule1",
+				map[string]string {
+					"PACKET_ACTION": "FORWARD",
+					"SRC_IP": "10.1.1.1/32",
+					"L4_SRC_PORT": "1909",
+					"IP_PROTOCOL": "103",
+					"DST_IP": "20.2.2.2/32",
+					"L4_DST_PORT_RANGE": "9000-12000",
+				},
+			},
+		}
+
+		err := cvSess.ValidateEditConfig1(cfgDataRule)
+		cvl.ValidatorSessClose(cvSess)
+
+		if err != cvl.CVL_SUCCESS {
+			t.Errorf("Config Validation failed.")
+		}
+	})
+
+	unloadConfigDB(rclient, depDataMap)
+}

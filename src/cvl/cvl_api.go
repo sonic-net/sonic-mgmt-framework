@@ -1,6 +1,7 @@
 package cvl
 
 import (
+	"fmt"
 	"encoding/json"
 	"github.com/go-redis/redis"
 	log "github.com/golang/glog"
@@ -88,7 +89,7 @@ func Initialize() CVLRetCode {
 		var module *yparser.YParserModule
 		if module, _ = yparser.ParseSchemaFile(modelFilePath); module == nil {
 
-			//log.Fatal("Unable to parse schema file %s", modelFile)
+			log.Fatal(fmt.Sprintf("Unable to parse schema file %s", modelFile))
 			return CVL_ERROR
 		}
 
@@ -131,6 +132,7 @@ func ValidatorSessOpen() (*CVL, CVLRetCode) {
 }
 
 func ValidatorSessClose(c *CVL) CVLRetCode {
+	c.yp.DestroyCache()
 	c = nil
 	//c.tmpDbCache = nil
 	return CVL_SUCCESS
@@ -198,7 +200,7 @@ func (c *CVL) ValidateEditConfig1(cfgData []CVLEditConfigData) CVLRetCode {
 
 		switch cfgDataItem.VOp {
 		case OP_CREATE:
-			//c.addTableDataForMustExp(tbl)
+			c.addTableDataForMustExp(tbl)
 
 		case OP_UPDATE:
 			//Get the existing data from Redis to cache, so that final validation can be done after merging this dependent data
@@ -317,6 +319,11 @@ func (c *CVL) ValidateEditConfig1(cfgData []CVLEditConfigData) CVLRetCode {
 	//Step 4 : Perform validation
 	if errN := c.validateSemantics1(yang, depYang); errN != CVL_SUCCESS {
 		return errN
+	}
+
+	//Cache validated data
+	if errObj := c.yp.CacheSubtree(yang); errObj.ErrCode != yparser.YP_SUCCESS {
+		TRACE_LOG(1, "Could not cache validated data")
 	}
 
 	return CVL_SUCCESS

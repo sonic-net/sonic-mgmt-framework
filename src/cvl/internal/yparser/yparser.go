@@ -81,11 +81,11 @@ int lyd_multi_new_leaf(struct lyd_node *parent, const struct lys_module *module,
 
 	strcpy(s, leafVal);
 
-	name = strtok(s, ",");
+	name = strtok(s, "#");
 
 	while (name != NULL)
 	{
-		val = strtok(NULL, ",");
+		val = strtok(NULL, "#");
 		if (val != NULL)
 		{
 			if (NULL == lyd_new_leaf(parent, module, name, val))
@@ -94,12 +94,33 @@ int lyd_multi_new_leaf(struct lyd_node *parent, const struct lys_module *module,
 			}
 		}
 
-		name = strtok(NULL, ",");
+		name = strtok(NULL, "#");
 	}
 
 	return 0;
 }
 
+struct lyd_node *lyd_find_node(struct lyd_node *root, const char *xpath) 
+{
+	struct ly_set *set = NULL;
+	struct lyd_node *node = NULL;
+
+	if (root == NULL)
+	{
+		return NULL;
+	}
+
+	set = lyd_find_path(root, xpath);
+	if (set == NULL || set->number == 0) {
+		return  NULL;
+	}
+
+	node = set->set.d[0];
+	ly_set_free(set);
+
+	return node;
+}
+ 
 */
 import "C"
 
@@ -191,7 +212,7 @@ func ParseSchemaFile(modelFile string) (*YParserModule, YParserError) {
 		return nil, getErrorDetails()
 	}
 
-	return (*YParserModule)(module), getErrorDetails()
+	return (*YParserModule)(module), YParserError {ErrCode : YP_SUCCESS,}
 }
 
 //Add child node to a parent node
@@ -206,7 +227,8 @@ func(yp *YParser) AddMultiLeafNodes(module *YParserModule, parent *YParserNode, 
 		return getErrorDetails()
 	}
 
-	return getErrorDetails()
+	return YParserError {ErrCode : YP_SUCCESS,}
+
 }
 
 //Return entire subtree in XML format in string
@@ -233,7 +255,32 @@ func (yp *YParser) MergeSubtree(root, node *YParserNode) (*YParserNode, YParserE
 		return (*YParserNode)(rootTmp), getErrorDetails()
 	}
 
-	return (*YParserNode)(rootTmp), getErrorDetails()
+	return (*YParserNode)(rootTmp), YParserError {ErrCode : YP_SUCCESS,}
+}
+
+//Cache subtree
+func (yp *YParser) CacheSubtree(node *YParserNode) YParserError {
+	rootTmp := (*C.struct_lyd_node)(yp.root)
+
+	if (yp.root != nil) {
+		if (0 != C.lyd_merge_to_ctx(&rootTmp, (*C.struct_lyd_node)(node), 0,
+		(*C.struct_ly_ctx)(ypCtx))) {
+			return getErrorDetails()
+		}
+	} else {
+		yp.root = node
+	}
+
+	return YParserError {ErrCode : YP_SUCCESS,}
+}
+
+func (yp *YParser) DestroyCache() YParserError {
+
+	if (yp.root != nil) {
+		C.lyd_free_withsiblings((*C.struct_lyd_node)(yp.root))
+	}
+
+	return YParserError {ErrCode : YP_SUCCESS,}
 }
 
 //Validate config - syntax and semantics
@@ -255,7 +302,7 @@ func (yp *YParser) ValidateData(data, depData *YParserNode) YParserError {
 		return getErrorDetails()
 	}
 
-	return getErrorDetails()
+	return YParserError {ErrCode : YP_SUCCESS,}
 }
 
 //Perform syntax checks
@@ -268,7 +315,7 @@ func (yp *YParser) ValidateSyntax(data *YParserNode) YParserError {
 		return  getErrorDetails()
 	}
 
-	return  getErrorDetails()
+	return YParserError {ErrCode : YP_SUCCESS,}
 }
 
 //Perform semantic checks 
@@ -287,6 +334,14 @@ func (yp *YParser) ValidateSemantics(data, depData, otherDepData *YParserNode) Y
 		}
 	}
 
+	if (yp.root != nil) { //if other dep data is provided
+		if (0 != C.lyd_merge_to_ctx(&dataTmp, (*C.struct_lyd_node)(yp.root),
+		0, (*C.struct_ly_ctx)(ypCtx))) {
+			TRACE_LOG(1, "Unable to merge cached dependent data\n")
+			return getErrorDetails()
+		}
+	}
+
 	if (otherDepData != nil) { //if other dep data is provided
 		if (0 != C.lyd_merge_to_ctx(&dataTmp, (*C.struct_lyd_node)(otherDepData),
 		C.LYD_OPT_DESTRUCT, (*C.struct_ly_ctx)(ypCtx))) {
@@ -300,8 +355,14 @@ func (yp *YParser) ValidateSemantics(data, depData, otherDepData *YParserNode) Y
 		return getErrorDetails()
 	}
 
-	return getErrorDetails()
+	return YParserError {ErrCode : YP_SUCCESS,}
+}
 
+func (yp *YParser) FreeNode(node *YParserNode) YParserError {
+
+	C.lyd_free_withsiblings((*C.struct_lyd_node)(node))
+
+	return YParserError {ErrCode : YP_SUCCESS,}
 }
 
 /* This function translates LIBYANG error code to valid YPARSER error code. */
@@ -382,12 +443,14 @@ func getErrorDetails() YParserError {
 
 	/* Fetch the TABLE Name which are in CAPS. */
 	resultTable := strings.SplitN(errPath, "[", 2)
-	resultTab := strings.Split(resultTable[0], "/")
-	errtableName = resultTab[len(resultTab) -1]
+	if (len(resultTable) >= 2) {
+		resultTab := strings.Split(resultTable[0], "/")
+		errtableName = resultTab[len(resultTab) -1]
 
-	/* Fetch the Error Elem Name. */
-	resultElem := strings.Split(resultTable[1], "/")
-	ElemName = resultElem[len(resultElem) -1]
+		/* Fetch the Error Elem Name. */
+		resultElem := strings.Split(resultTable[1], "/")
+		ElemName = resultElem[len(resultElem) -1]
+	}
 
 	/* Fetch the invalid field name. */
 	result := strings.Split(errMsg, "\"")
@@ -399,7 +462,7 @@ func getErrorDetails() YParserError {
 			}
 		}
 	} else if (len(result) == 1) {
-		/* Custom contraint error message.*/
+		/* Custom contraint error message like in must statement */
 		errText = errMsg
 	}
 
@@ -446,9 +509,6 @@ func getErrorDetails() YParserError {
 		case C.LY_EINT:
 			errText = "Internal error"
 
-		case C.LY_EVALID:
-			errText = "Validation failure"
-
 		case C.LY_EPLUGIN:
 			errText = "Error reported by a plugin"
 		}
@@ -467,4 +527,8 @@ func getErrorDetails() YParserError {
 	TRACE_LOG(1, "YParser error details: %v...", errObj)
 
 	return  errObj
+}
+
+func FindNode(root *YParserNode, xpath string) *YParserNode {
+	return  (*YParserNode)(C.lyd_find_node((*C.struct_lyd_node)(root), C.CString(xpath)))
 }

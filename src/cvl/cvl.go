@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 	"regexp"
+	"time"
 	 log "github.com/golang/glog"
 	//"encoding/xml"
 	"encoding/json"
@@ -82,6 +83,22 @@ type modelDataInfo struct {
 	tableInfo map[string]modelTableInfo //redis table to model name and keys
 }
 
+//Struct for storing global DB cache to store DB which are needed frequently like PORT
+type dbCachedData struct {
+	root *yparser.YParserNode //Root of the cached data
+	startTime time.Time  //When cache started
+	expiry uint16    //How long cache should be maintained in sec
+}
+
+//Global data cache for redis table
+type cvlGlobalSessionType struct {
+	db map[string]dbCachedData
+	pubsub *redis.PubSub
+	stopChan chan int //stop channel to stop notification listener
+	cv *CVL
+}
+var cvg cvlGlobalSessionType
+
 //Single redis client for validation
 var redisClient *redis.Client
 
@@ -94,7 +111,7 @@ type keyValuePairStruct struct {
 }
 
 func TRACE_LOG(level log.Level, fmtStr string, args ...interface{}) {
-	//util.TRACE_LOG(level, fmtStr, args)
+	util.TRACE_LOG(level, fmtStr, args...)
 }
 
 //package init function 
@@ -112,6 +129,12 @@ func init() {
 	reHashRef = regexp.MustCompile(`\[(.*)\|(.*)\]`)
 
 	Initialize()
+
+	cvg.db = make(map[string]dbCachedData)
+	//Global session keeps the global cache
+	cvg.cv, _ = ValidatorSessOpen()
+
+	dbCacheSet(false, "PORT", 0)
 }
 
 func Debug(on bool) {
@@ -280,6 +303,7 @@ func addTableNamesForMustExp() {
 		if (tblInfo.mustExp == nil) {
 			continue
 		}
+
 		for _, mustExp := range tblInfo.mustExp {
 			tblInfo.tablesForMustExp = make(map[string]bool)
 			//store the current table always so that expression check with other row
@@ -360,9 +384,20 @@ func (c *CVL) addChildNode(parent *xmlquery.Node, xmlChildNode *xmlquery.Node) {
 */
 
 //Add all other table data for validating all 'must' exp for tableName
-func (c *CVL) addTableDataForMustExp(tableName string) {
+func (c *CVL) addTableDataForMustExp(tableName string) CVLRetCode {
+	//Check in cache first and merge
+	if (cvg.db[tableName].root != nil) {
+		var errObj yparser.YParserError
+		//If global cache has the table, add to the session validation
+		if errObj = c.yp.CacheSubtree(cvg.db[tableName].root); errObj.ErrCode != yparser.YP_SUCCESS {
+			return CVL_SYNTAX_ERROR
+		}
+		return CVL_SUCCESS
+	}
+
+
 	if (modelInfo.tableInfo[tableName].mustExp == nil) {
-		return
+		return CVL_SUCCESS
 	}
 
 	for mustTblName, _ := range modelInfo.tableInfo[tableName].tablesForMustExp {
@@ -384,6 +419,8 @@ func (c *CVL) addTableDataForMustExp(tableName string) {
 			}
 		}
 	}
+
+	return CVL_SUCCESS
 }
 
 func (c *CVL) addUpdateDataToCache(tableName string, redisKey string) {
@@ -520,7 +557,7 @@ func (c *CVL) addLeafRef(config bool, tableName string, name string, value strin
 
 func (c *CVL) addChildLeaf1(config bool, tableName string, parent *yparser.YParserNode, name string, value string) {
 	//Batch leaf creation
-	c.batchLeaf = c.batchLeaf + name + "," + value + ","
+	c.batchLeaf = c.batchLeaf + name + "#" + value + "#"
 	//Check if this leaf has leafref,
 	//If so add the add redis key to its table so that those 
 	// details can be fetched for dependency validation
@@ -1415,3 +1452,94 @@ func (c *CVL) addCfgDataItem(configData *map[string]interface{}, cfgDataItem CVL
 
 	return "",""
 }
+
+//Get the table data from redis and cache it in yang node format
+//expiry =0 never expire the cache
+func dbCacheSet(update bool, tableName string, expiry uint16) CVLRetCode {
+	//Get the data from redis and save it
+	tableKeys, err:= redisClient.Keys(tableName +
+	modelInfo.tableInfo[tableName].redisKeyDelim + "*").Result()
+
+	if (err != nil) {
+		return CVL_FAILURE
+	}
+
+	tablePrefixLen := len(tableName + modelInfo.tableInfo[tableName].redisKeyDelim)
+	for _, tableKey := range tableKeys {
+		tableKey = tableKey[tablePrefixLen:] //remove table prefix
+		if (cvg.cv.tmpDbCache[tableName] == nil) {
+			cvg.cv.tmpDbCache[tableName] = map[string]interface{}{tableKey: nil}
+		} else {
+			tblMap := cvg.cv.tmpDbCache[tableName]
+			tblMap.(map[string]interface{})[tableKey] =nil
+			cvg.cv.tmpDbCache[tableName] = tblMap
+		}
+	}
+
+	cvg.db[tableName] = dbCachedData{startTime:time.Now(), expiry: expiry,
+	root: cvg.cv.fetchDataToTmpCache1()}
+
+	//install keyspace notification for the table to update the cache
+	if (update == false) {
+		installDbChgNotif()
+	}
+
+	return CVL_SUCCESS
+}
+
+//Receive all updates for all tables on a single channel
+func installDbChgNotif() {
+	if (len(cvg.db) > 1) { //notif running for at least one table added previously
+		cvg.stopChan <- 1 //stop active notification 
+	}
+
+	subList := ""
+	for tableName, _ := range cvg.db {
+		subList = subList + "__keyspace@" +
+		fmt.Sprintf("%d", modelInfo.tableInfo[tableName].dbNum) + "__:" + tableName +
+		modelInfo.tableInfo[tableName].redisKeyDelim + "*"
+
+	}
+
+	cvg.pubsub = redisClient.PSubscribe(subList)
+
+	go func() {
+		notifCh := cvg.pubsub.Channel()
+		for {
+			select  {
+			case <-cvg.stopChan:
+				//stop this routine
+				return
+			case msg:= <-notifCh:
+				//Handle update
+				dbCacheUpdate(msg.Channel, msg.Payload)
+
+			}
+		}
+	}()
+}
+
+func dbCacheUpdate(tableName, op string) CVLRetCode {
+	switch op {
+	case "hset", "hmset", "hdel":
+		//Delete the existing cache
+		dbCacheClear(tableName)
+		//Add the cache again in yang tree --> TBD:Optimie
+		dbCacheSet(true, tableName, 0)
+	case "del":
+		//Delete the entry in yang tree --> TBD:Optimize
+		dbCacheClear(tableName)
+		dbCacheSet(true, tableName, 0)
+	}
+
+	return CVL_SUCCESS
+}
+
+//Clear cache data for given table
+func dbCacheClear(tableName string) CVLRetCode {
+	cvg.cv.yp.FreeNode(cvg.db[tableName].root)
+	delete(cvg.db, tableName)
+
+	return CVL_SUCCESS
+}
+

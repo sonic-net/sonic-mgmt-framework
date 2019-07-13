@@ -44,13 +44,14 @@ $(BUILD_DIR)/.deps:
 		parseValue(*jsonMap, doc, 1)\n \
 		return doc, nil\n \
 	}\n" >> $(GO_DOWNLOAD_PATH)/src/github.com/antchfx/jsonquery/node.go
-#	touch $@
+	touch $@
 
 cvl.a:$(BUILD_DIR)/cvl.a
 
 $(BUILD_DIR)/cvl.a:
 	@echo "Building $@"
 	GOPATH=$(GOPATH) $(GO) build $(GOFLAGS) -o $@ $(SRC_FILES)
+#	GOPATH=$(GOPATH) $(GO) install
 
 install:
 	GOPATH=$(GO_DEP_PATH) $(GO) install
@@ -60,6 +61,9 @@ schema:
 
 tests:
 	make -C tests
+
+gotest:
+	CVL_SCHEMA=$(abspath .)/schema GOPATH=$(GOPATH) tests/run_test.sh
 
 clean:
 	#$(GO) clean

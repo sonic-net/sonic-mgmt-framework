@@ -106,7 +106,7 @@ module sonic-acl {
 			must "PRIORITY > /spf:sonic-pf-limits/acl/MAX_PRIORITY" {
 				error-message "Invalid ACL rule priority.";
 			}
-			 must "count(../ACL_TABLE) > 0 and count(/prt:sonic-port/prt:PORT) > 0";
+			 must "count(../ACL_TABLE) > 0 and count(/prt:sonic-port/prt:PORT) > 0"; //Temporary work-around 
 			 */
 
 
