@@ -19,7 +19,7 @@ type testEditCfgData struct {
 }
 
 var rclient *redis.Client
-var cv  *cvl.CVL
+var cvSess  *cvl.CVL
 var port_map map[string]interface{}
 
 
@@ -168,14 +168,13 @@ func prepareDb() {
 
 /* Setup before starting of test. */ 
 func TestMain(m *testing.M) {
-	cv, _ := cvl.ValidatorSessOpen()
-
+	cvSess, _ = cvl.ValidatorSessOpen()
 	/* Prepare the Redis database. */
 	prepareDb()
 	os.Exit(m.Run())
 
 	unloadConfigDB(rclient, port_map)
-	cvl.ValidatorSessClose(cv)
+	cvl.ValidatorSessClose(cvSess)
 	cvl.Finish()
         rclient.Close()
         rclient.FlushDb()
@@ -278,14 +277,10 @@ func TestValidateConfig_CfgStrBuffer(t *testing.T) {
 		tests = append(tests, testStruct{filedescription: modelName, jsonString: json_validate_config_data[index], retCode: cvl.CVL_SUCCESS})
 	}
 
-	cv, _ := cvl.ValidatorSessOpen()
-
-	fmt.Printf("Cv Value : %v", cv) 
-
 	for index, tc := range tests {
 		t.Logf("Running Testcase %d with Description %s", index+1, tc.filedescription)
 		t.Run(fmt.Sprintf("%s [%d]", tc.filedescription, index+1), func(t *testing.T) {
-			err := cv.ValidateConfig(tc.jsonString)
+			err := cvSess.ValidateConfig(tc.jsonString)
 
 			fmt.Printf("\nValidating data = %v\n\n", tc.jsonString)
 
@@ -312,14 +307,12 @@ func TestValidateConfig_CfgFile(t *testing.T) {
 		{filedescription: "Config File - BUFFER_PG", fileName: "testdata/config_db4.json", retCode: cvl.CVL_SUCCESS},
 	}
 
-	cv, _ := cvl.ValidatorSessOpen()
-
 	for index, tc := range tests {
 
 		t.Logf("Running Testcase %d with Description %s", index+1, tc.filedescription)
 		t.Run(tc.filedescription, func(t *testing.T) {
 			jsonString := convertJsonFileToString(t, tc.fileName)
-			err := cv.ValidateConfig(jsonString)
+			err := cvSess.ValidateConfig(jsonString)
 
 			fmt.Printf("\nValidating data = %v\n\n", jsonString)
 
@@ -1269,7 +1262,6 @@ func TestValidateEditConfig_Update_Semantic_Positive(t *testing.T) {
 /* API to test edit config with valid syntax. */
 func TestValidateConfig_Update_Semantic_Vlan_Negative(t *testing.T) {
 
-	cv, _ := cvl.ValidatorSessOpen()
 	t.Run("Negative - EditConfig(Update) : Valid Field Value", func(t *testing.T) {
 
 			jsonData :=`{
@@ -1285,7 +1277,7 @@ func TestValidateConfig_Update_Semantic_Vlan_Negative(t *testing.T) {
                 }`
 
 
-                err := cv.ValidateConfig(jsonData)
+                err := cvSess.ValidateConfig(jsonData)
 
 
 		if err != cvl.CVL_SUCCESS {
@@ -1526,8 +1518,6 @@ func TestValidateEditConfig_Delete_Semantic_ACLTableReference_Positive(t *testin
 
 func TestValidateEditConfig_Create_Dependent_CacheData(t *testing.T) {
 
-	cvSess, _ := cvl.ValidatorSessOpen()
-
 	t.Run("Positive - EditConfig(Create) with dependent data from cache", func(t *testing.T) {
 		//Create ACL rule
 		cfgDataAcl := []cvl.CVLEditConfigData {
@@ -1567,7 +1557,6 @@ func TestValidateEditConfig_Create_Dependent_CacheData(t *testing.T) {
 			t.Errorf("Config Validation failed.")
 		}
 	})
-	cvl.ValidatorSessClose(cvSess)
 }
 
 func TestValidateEditConfig_Create_DepData_In_MultiSess(t *testing.T) {
@@ -1576,7 +1565,7 @@ func TestValidateEditConfig_Create_DepData_In_MultiSess(t *testing.T) {
 	t.Run("Negative - EditConfig(Create) with dependent data in multiple sessionsi, but no cached data", func(t *testing.T) {
 
 		//Create ACL rule - Session 1
-		cvSess, _ := cvl.ValidatorSessOpen()
+		cvSess1, _ := cvl.ValidatorSessOpen()
 		cfgDataAcl := []cvl.CVLEditConfigData {
 			cvl.CVLEditConfigData {
 				cvl.VALIDATE_ALL,
@@ -1589,11 +1578,11 @@ func TestValidateEditConfig_Create_DepData_In_MultiSess(t *testing.T) {
 			},
 		}
 
-		err1 := cvSess.ValidateEditConfig1(cfgDataAcl)
-		cvl.ValidatorSessClose(cvSess)
+		err1 := cvSess1.ValidateEditConfig1(cfgDataAcl)
+		cvl.ValidatorSessClose(cvSess1)
 
 		//Create ACL rule - Session 2, validation should fail
-		cvSess, _ = cvl.ValidatorSessOpen()
+		cvSess1, _ = cvl.ValidatorSessOpen()
 		cfgDataRule := []cvl.CVLEditConfigData {
 			cvl.CVLEditConfigData {
 				cvl.VALIDATE_ALL,
@@ -1610,8 +1599,8 @@ func TestValidateEditConfig_Create_DepData_In_MultiSess(t *testing.T) {
 			},
 		}
 
-		err2 := cvSess.ValidateEditConfig1(cfgDataRule)
-		cvl.ValidatorSessClose(cvSess)
+		err2 := cvSess1.ValidateEditConfig1(cfgDataRule)
+		cvl.ValidatorSessClose(cvSess1)
 
 		if err1 != cvl.CVL_SUCCESS || err2 == cvl.CVL_SUCCESS {
 			t.Errorf("Config Validation failed.")
@@ -1635,7 +1624,6 @@ func TestValidateEditConfig_Create_DepData_From_Redis(t *testing.T) {
 
 	t.Run("Positive - EditConfig(Create) with dependent data from redis", func(t *testing.T) {
 		//Create ACL rule - Session 2
-		cvSess, _ := cvl.ValidatorSessOpen()
 		cfgDataRule := []cvl.CVLEditConfigData {
 			cvl.CVLEditConfigData {
 				cvl.VALIDATE_ALL,
@@ -1653,7 +1641,6 @@ func TestValidateEditConfig_Create_DepData_From_Redis(t *testing.T) {
 		}
 
 		err := cvSess.ValidateEditConfig1(cfgDataRule)
-		cvl.ValidatorSessClose(cvSess)
 
 		if err != cvl.CVL_SUCCESS {
 			t.Errorf("Config Validation failed.")
