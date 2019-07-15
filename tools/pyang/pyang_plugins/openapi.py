@@ -420,7 +420,12 @@ def walk_child_for_list_base(child, actXpath, pathstr, metadata, nonBaseDefName=
             else:
                 swagger_it(child, defName, pathstr, payload, metadata, verb, verb + '_' + defName)
 
-def build_payload(child, payloadDict, uriPath="", oneInstance=False, Xpath="", firstCall=False, config_false=False):
+def build_payload(child, payloadDict, uriPath="", oneInstance=False, Xpath="", firstCall=False, config_false=False, moduleList=[]):
+
+    nodeModuleName = child.i_module.i_modulename
+    if nodeModuleName not in moduleList:
+        moduleList.append(nodeModuleName)
+        firstCall = True
 
     global keysToLeafRefObjSet
 
@@ -493,7 +498,7 @@ def build_payload(child, payloadDict, uriPath="", oneInstance=False, Xpath="", f
 
     if hasattr(child, 'i_children'):
         for ch in child.i_children:
-            build_payload(ch,childJson,uriPath, False, Xpath, False, config_false)
+            build_payload(ch,childJson,uriPath, False, Xpath, False, config_false, copy.deepcopy(moduleList))
 
 def mk_path_refine(node, metadata):
     def mk_path(node):
