@@ -172,7 +172,6 @@ def generate_body(func, args):
        body = {} 
     if body is not None: 
        body = json.dumps(body,ensure_ascii=False, indent=4, separators=(',', ': '))
-       print body
        return keypath, ast.literal_eval(body)
     else:
        return keypath,body

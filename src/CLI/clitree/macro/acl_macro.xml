@@ -273,7 +273,7 @@
 <MACRODEF name= "CMD-END-OPTIONS">
     <PARAM
         name="dscp"
-        help="Consider only packets matching DSCP value"
+        help="Consider only packets matching DSCP value, range:0-63"
         ptype="SUBCOMMAND"
         mode="subcommand"
         optional="true"
