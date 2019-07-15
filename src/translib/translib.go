@@ -77,7 +77,6 @@ func Create(req SetRequest) (SetResponse, error){
     var ygotRoot *ygot.GoStruct
     var ygotTarget *interface{}
     var data appData
-	var needTx bool = false
 	var keys []db.WatchKeys
 	var resp SetResponse
 
@@ -143,40 +142,28 @@ func Create(req SetRequest) (SetResponse, error){
         return resp, err
 	}
 
-	if ((keys != nil)) {
+	err = d.StartTx(keys, appInfo.tablesToWatch)
 
-		if (len(keys) != 0) {
-			needTx = true
-			err = d.StartTx(keys, appInfo.tablesToWatch)
-
-			if err != nil {
-				writeMutex.Unlock()
-				resp.ErrSrc = AppErr
-                return resp, err
-			}
-		}
-
+	if err != nil {
+		writeMutex.Unlock()
+		resp.ErrSrc = AppErr
+        return resp, err
 	}
 
     resp, err = app.processCreate (d)
 
     if err != nil {
-
-		if needTx {
-			writeMutex.Unlock()
-			d.AbortTx()
-		}
+		writeMutex.Unlock()
+		d.AbortTx()
 		resp.ErrSrc = AppErr
         return resp, err
     }
 
-	if needTx {
-		err = d.CommitTx()
+	err = d.CommitTx()
 
-        if err != nil {
-            resp.ErrSrc = AppErr
-        }
-	}
+    if err != nil {
+        resp.ErrSrc = AppErr
+    }
 
 	writeMutex.Unlock()
 
@@ -190,7 +177,6 @@ func Update(req SetRequest) (SetResponse, error){
     var ygotRoot *ygot.GoStruct
     var ygotTarget *interface{}
     var data appData
-    var needTx bool = false
     var keys []db.WatchKeys
 	var resp SetResponse
 
@@ -256,39 +242,27 @@ func Update(req SetRequest) (SetResponse, error){
         return resp, err
     }
 
-    if ((keys != nil)) {
+    err = d.StartTx(keys, appInfo.tablesToWatch)
 
-        if (len(keys) != 0) {
-            needTx = true
-            err = d.StartTx(keys, appInfo.tablesToWatch)
-
-            if err != nil {
-                writeMutex.Unlock()
-				resp.ErrSrc = AppErr
-                return resp, err
-            }
-        }
-
+    if err != nil {
+        writeMutex.Unlock()
+		resp.ErrSrc = AppErr
+        return resp, err
     }
 
     resp, err = app.processUpdate (d)
 
     if err != nil {
-
-        if needTx {
-            writeMutex.Unlock()
-            d.AbortTx()
-        }
+        writeMutex.Unlock()
+        d.AbortTx()
 		resp.ErrSrc = AppErr
         return resp, err
     }
 
-    if needTx {
-        err = d.CommitTx()
+    err = d.CommitTx()
 
-        if err != nil {
-            resp.ErrSrc = AppErr
-        }
+    if err != nil {
+        resp.ErrSrc = AppErr
     }
 
     writeMutex.Unlock()
@@ -302,7 +276,6 @@ func Replace(req SetRequest) (SetResponse, error){
     var ygotRoot *ygot.GoStruct
     var ygotTarget *interface{}
     var data appData
-    var needTx bool = false
     var keys []db.WatchKeys
 	var resp SetResponse
 
@@ -368,39 +341,27 @@ func Replace(req SetRequest) (SetResponse, error){
         return resp, err
     }
 
-    if ((keys != nil)) {
+    err = d.StartTx(keys, appInfo.tablesToWatch)
 
-        if (len(keys) != 0) {
-            needTx = true
-            err = d.StartTx(keys, appInfo.tablesToWatch)
-
-            if err != nil {
-                writeMutex.Unlock()
-				resp.ErrSrc = AppErr
-                return resp, err
-            }
-        }
-
+    if err != nil {
+        writeMutex.Unlock()
+		resp.ErrSrc = AppErr
+        return resp, err
     }
 
     resp, err = app.processReplace (d)
 
     if err != nil {
-
-        if needTx {
-            writeMutex.Unlock()
-            d.AbortTx()
-        }
+        writeMutex.Unlock()
+        d.AbortTx()
 		resp.ErrSrc = AppErr
         return resp, err
     }
 
-    if needTx {
-        err = d.CommitTx()
+    err = d.CommitTx()
 
-		if err != nil {
-			resp.ErrSrc = AppErr
-		}
+	if err != nil {
+		resp.ErrSrc = AppErr
     }
 
     writeMutex.Unlock()
@@ -414,7 +375,6 @@ func Delete(req SetRequest) (SetResponse, error){
     var ygotRoot *ygot.GoStruct
     var ygotTarget *interface{}
     var data appData
-    var needTx bool = false
     var keys []db.WatchKeys
 	var resp SetResponse
 
@@ -478,39 +438,27 @@ func Delete(req SetRequest) (SetResponse, error){
         return resp, err
     }
 
-    if ((keys != nil)) {
+    err = d.StartTx(keys, appInfo.tablesToWatch)
 
-        if (len(keys) != 0) {
-            needTx = true
-            err = d.StartTx(keys, appInfo.tablesToWatch)
-
-            if err != nil {
-                writeMutex.Unlock()
-				resp.ErrSrc = AppErr
-                return resp, err
-            }
-        }
-
+    if err != nil {
+        writeMutex.Unlock()
+		resp.ErrSrc = AppErr
+        return resp, err
     }
 
     resp, err = app.processDelete(d)
 
     if err != nil {
-
-        if needTx {
-            writeMutex.Unlock()
-            d.AbortTx()
-        }
+        writeMutex.Unlock()
+        d.AbortTx()
 		resp.ErrSrc = AppErr
         return resp, err
     }
 
-    if needTx {
-        err = d.CommitTx()
+    err = d.CommitTx()
 
-        if err != nil {
-            resp.ErrSrc = AppErr
-        }
+    if err != nil {
+        resp.ErrSrc = AppErr
     }
 
     writeMutex.Unlock()
