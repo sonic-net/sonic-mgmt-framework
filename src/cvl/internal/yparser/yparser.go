@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 	log "github.com/golang/glog"
+	"fmt"
 	. "cvl/internal/util"
 )
 
@@ -138,12 +139,12 @@ type YParser struct {
 /* YParser Error Structure */
 type YParserError struct {
 	ErrCode  YParserRetCode   /* Error Code describing type of error. */
-	msg     string        /* Detailed error message. */
-	errTxt  string        /* High level error message. */
-	tableName string      /* List/Table having error */
-	keys    []string      /* Keys of the Table having error. */
-        field	string        /* Field Name throwing error . */
-        value	string        /* Field Value throwing error */
+	Msg     string        /* Detailed error message. */
+	ErrTxt  string        /* High level error message. */
+	TableName string      /* List/Table having error */
+	Keys    []string      /* Keys of the Table having error. */
+        Field	string        /* Field Name throwing error . */
+        Value	string        /* Field Value throwing error */
 }
 
 type YParserRetCode int
@@ -314,6 +315,7 @@ func (yp *YParser) ValidateSyntax(data *YParserNode) YParserError {
 	(*C.struct_ly_ctx)(ypCtx))) {
 		return  getErrorDetails()
 	}
+		 fmt.Printf("Error Code from libyang is %d\n", C.ly_errno) 
 
 	return YParserError {ErrCode : YP_SUCCESS,}
 }
@@ -515,13 +517,13 @@ func getErrorDetails() YParserError {
 	}
 
 	errObj := YParserError {
-		tableName : errtableName,
+		TableName : errtableName,
 		ErrCode : ypErrCode,
-		keys    : key,
-		value : ElemVal,
-		field : ElemName,
-		msg        :  errMessage,
-		errTxt: errText,
+		Keys    : key,
+		Value : ElemVal,
+		Field : ElemName,
+		Msg        :  errMessage,
+		ErrTxt: errText,
 	}
 
 	TRACE_LOG(1, "YParser error details: %v...", errObj)

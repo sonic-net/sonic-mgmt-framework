@@ -1,5 +1,4 @@
 package cvl
-
 import (
 	"fmt"
 	"os"
@@ -55,15 +54,16 @@ type modelTableInfo struct {
 	tablesForMustExp map[string]bool
 }
 
+
 /* CVL Error Structure. */
 type CVLErrorInfo struct {
-	tableName string      /* Table having error */
-	errCode  CVLRetCode   /* Error Code describing type of error. */
-	keys    []string      /* Keys of the Table having error. */
-        Value 	string        /* Field Value throwing error */
-        Field 	string        /* Field Name throwing error . */
-	msg     string        /* Detailed error message. */
-	constraintErrMsg  string  /* Constraint error message. */
+	TableName string      /* Table having error */
+	ErrCode  CVLRetCode   /* Error Code describing type of error. */
+	Keys    []string      /* Keys of the Table having error. */
+        Value    string        /* Field Value throwing error */
+        Field	 string        /* Field Name throwing error . */
+	Msg     string        /* Detailed error message. */
+	ConstraintErrMsg  string  /* Constraint error message. */
 }
 
 type CVL struct {
@@ -1318,18 +1318,28 @@ func (c *CVL) validate (xmlData string) CVLRetCode {
 */
 
 //Perform syntax checks
-func (c *CVL) validateSyntax1(data *yparser.YParserNode) CVLRetCode {
+func (c *CVL) validateSyntax1(data *yparser.YParserNode) (CVLErrorInfo, CVLRetCode) {
+	var cvlErrObj CVLErrorInfo
 	TRACE_LOG(1, "Validating syntax \n....")
 
-	if errObj := c.yp.ValidateSyntax(data); errObj.ErrCode != yparser.YP_SUCCESS {
-		//Just validate syntax
-		/*if (0 != C.lyd_data_validate(&data, C.LYD_OPT_EDIT | C.LYD_OPT_NOEXTDEPS, ctx)) {
-			return  CVL_SYNTAX_ERROR
-		}*/
-		return  CVL_SYNTAX_ERROR
+	if errObj  := c.yp.ValidateSyntax(data); errObj.ErrCode != yparser.YP_SUCCESS {
+
+			cvlErrObj =  CVLErrorInfo {
+		             TableName : errObj.TableName,
+			     Keys      : errObj.Keys,
+			     Value     : errObj.Value,
+			     Field     : errObj.Field,
+			     Msg       : errObj.Msg,
+			     ConstraintErrMsg : errObj.ErrTxt,
+	   		} 
+
+
+		retCode := CVLRetCode(errObj.ErrCode)
+
+		return  cvlErrObj, retCode 
 	}
 
-	return CVL_SUCCESS
+	return cvlErrObj, CVL_SUCCESS
 }
 
 /*
@@ -1349,13 +1359,27 @@ func (c *CVL) validateSyntax(xmlData string) (CVLRetCode, *yparser.YParserNode) 
 */
 
 //Perform semantic checks 
-func (c *CVL) validateSemantics1(data *yparser.YParserNode, otherDepData *yparser.YParserNode) CVLRetCode {
+func (c *CVL) validateSemantics1(data *yparser.YParserNode, otherDepData *yparser.YParserNode) (CVLErrorInfo, CVLRetCode) {
+	var cvlErrObj CVLErrorInfo
 	//Get dependent data from 
 	depData := c.fetchDataToTmpCache1() //fetch data to temp cache for temporary validation
 	TRACE_LOG(1, "Validating semantics data=%s\n depData =%s\n, otherDepData=%s\n....", c.yp.NodeDump(data), c.yp.NodeDump(depData), c.yp.NodeDump(otherDepData))
 
 	if errObj := c.yp.ValidateSemantics(data, depData, otherDepData); errObj.ErrCode != yparser.YP_SUCCESS {
-		return CVL_SEMANTIC_ERROR
+
+			cvlErrObj =  CVLErrorInfo {
+		             TableName : errObj.TableName,
+			     Keys      : errObj.Keys,
+			     Value     : errObj.Value,
+			     Field     : errObj.Field,
+			     Msg       : errObj.Msg,
+			     ConstraintErrMsg : errObj.ErrTxt,
+	   		} 
+
+
+		retCode := CVLRetCode(errObj.ErrCode)
+
+		return  cvlErrObj, retCode 
 	}
 
 /*
@@ -1382,7 +1406,7 @@ func (c *CVL) validateSemantics1(data *yparser.YParserNode, otherDepData *yparse
 		return CVL_SEMANTIC_ERROR
 	}
 */
-	return CVL_SUCCESS
+	return cvlErrObj ,CVL_SUCCESS
 }
 
 /*
