@@ -35,7 +35,6 @@ def generate_body(func, args):
            body = { "openconfig-interfaces:enabled": True }
        else:
            body = { "openconfig-interfaces:enabled": False }
-       print body	
     elif func.__name__ == 'patch_openconfig_interfaces_interfaces_interface_config_mtu':
        keypath = [ args[0] ]
        body = { "openconfig-interfaces:mtu":  int(args[1]) }
@@ -47,6 +46,10 @@ def generate_body(func, args):
        sp = args[1].split('/')
        keypath = [ args[0], 0, sp[0] ]
        body = { "openconfig-if-ip:config":  {"ip" : sp[0], "prefix-length" : int(sp[1])} }
+    elif func.__name__ == 'get_openconfig_interfaces_interfaces_interface':
+	keypath = [args[0]]
+    elif func.__name__ == 'get_openconfig_interfaces_interfaces':
+        keypath = []
     else:
        body = {} 
 
@@ -70,8 +73,17 @@ def run(func, args):
         if api_response is None:
             print ("Success")
         else:
-            print("Failed")
-
+            # Get Command Output
+            api_response = aa.api_client.sanitize_for_serialization(api_response)
+            if api_response is None:
+                print("Failed")
+            else:
+                if func.__name__ == 'get_openconfig_interfaces_interfaces_interface':
+                     show_cli_output(args[1], api_response)
+                elif func.__name__ == 'get_openconfig_interfaces_interfaces':
+                     show_cli_output(args[0], api_response)
+                else:
+                     return
     except ApiException as e:
         #print("Exception when calling OpenconfigInterfacesApi->%s : %s\n" %(func.__name__, e))
         if e.body != "":

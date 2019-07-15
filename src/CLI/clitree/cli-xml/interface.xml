@@ -26,6 +26,13 @@
 			>
 		</PARAM>
 	</PARAM>
+	<ACTION>
+            if test "${phy-if-id}" = ""; then&#xA;
+              python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces show_interface.j2&#xA;
+            else&#xA;
+              python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces_interface Ethernet${phy-if-id} show_interface_id.j2&#xA;
+            fi&#xA;
+        </ACTION>
     </COMMAND>
     </VIEW>
 
