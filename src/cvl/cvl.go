@@ -1176,6 +1176,11 @@ func (c *CVL) translateToYang1(jsonMap *map[string]interface{}) (*yparser.YParse
 		TRACE_LOG(1, "Top Node=%v\n", jsonNode.Data)
 		//Visit each top level list in a loop for creating table data
 		topNode, _ := c.generateTableData1(true, jsonNode)
+
+		if  topNode == nil {
+			return nil, CVL_SYNTAX_ERROR
+		}
+
 		if (root == nil) {
 			root = topNode
 		} else {

@@ -199,6 +199,10 @@ func (c *CVL) ValidateEditConfig1(cfgData []CVLEditConfigData) (CVLErrorInfo, CV
 
 		tbl,key := c.addCfgDataItem(&requestedData, cfgDataItem)
 
+		if key == "" { 
+			return cvlErrObj, CVL_SEMANTIC_ERROR 
+		}
+
 		switch cfgDataItem.VOp {
 		case OP_CREATE:
 			c.addTableDataForMustExp(tbl)
@@ -251,7 +255,9 @@ func (c *CVL) ValidateEditConfig1(cfgData []CVLEditConfigData) (CVLErrorInfo, CV
 		if cvlErrObj, cvlRetCode := c.validateSyntax1(yang); cvlRetCode != CVL_SUCCESS {
 			return cvlErrObj, cvlRetCode 
 		}
-	}
+	} else {
+                 return CVLErrorInfo{ErrCode: errN}, errN
+         }
 
 	//Step 3 : Check keys and update dependent data
 	dependentData := make(map[string]interface{})

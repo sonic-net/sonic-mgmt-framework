@@ -413,7 +413,7 @@ func TestValidateEditConfig_Create_Syntax_Invalid_FieldValue(t *testing.T) {
 		fmt.Println(err)
 
 		/* TBD . Proper Error not Returned. */
-		if err != cvl.CVL_SUCCESS {
+		if err == cvl.CVL_SUCCESS {
 			t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
 		}
 	})
@@ -488,7 +488,7 @@ func TestValidateEditConfig_Create_Syntax_Invalid_PacketAction_Negative(t *testi
 
 		cvlErrInfo, err := cvl.ValidateEditConfig(cfgData)
 
-		if err != cvl.CVL_SUCCESS {
+		if err == cvl.CVL_SUCCESS {
 			t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
 		}
 	})
@@ -519,7 +519,7 @@ func TestValidateEditConfig_Create_Syntax_Invalid_SrcPrefix_Negative(t *testing.
 
 		cvlErrInfo, err := cvl.ValidateEditConfig(cfgData)
 
-		if err != cvl.CVL_SUCCESS {
+		if err == cvl.CVL_SUCCESS {
 			t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
 		}
 	})
@@ -550,7 +550,7 @@ func TestValidateEditConfig_Create_Syntax_InvalidIPAddress_Negative(t *testing.T
 		cvlErrInfo, err := cvl.ValidateEditConfig(cfgData)
 
 		/* TBD. */
-		if err != cvl.CVL_SUCCESS {
+		if err == cvl.CVL_SUCCESS {
 			t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
 		}
 	})
@@ -580,7 +580,7 @@ func TestValidateEditConfig_Create_Syntax_OutofBound_Negative(t *testing.T) {
 
 		 cvlErrInfo,err := cvl.ValidateEditConfig(cfgData)
 
-		if err != cvl.CVL_SUCCESS {
+		if err == cvl.CVL_SUCCESS {
 			t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
 		}
 	})
@@ -611,7 +611,7 @@ func TestValidateEditConfig_Create_Syntax_InvalidProtocol_Negative(t *testing.T)
 		 cvlErrInfo,err := cvl.ValidateEditConfig(cfgData)
 
 		/* TBD. */
-		if err != cvl.CVL_SUCCESS {
+		if err == cvl.CVL_SUCCESS {
 			t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
 		}
 	})
@@ -643,7 +643,7 @@ func TestValidateEditConfig_Create_Syntax_InvalidRange_Negative(t *testing.T) {
 		cvlErrInfo, err := cvl.ValidateEditConfig(cfgData)
 
 		/* TBD. */
-		if err != cvl.CVL_SUCCESS {
+		if err == cvl.CVL_SUCCESS {
 			t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
 		}
 	})
@@ -737,7 +737,7 @@ func TestValidateEditConfig_Create_Syntax_InvalidKeyName_Negative(t *testing.T) 
 			     fmt.Println("Ashanew", err)
 
 		/* TBD , Error details return SUCCESS. */
-		if err != cvl.CVL_SUCCESS {
+		if err == cvl.CVL_SUCCESS {
 			t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
 		}
 	})
@@ -769,7 +769,7 @@ func TestValidateEditConfig_Create_Semantic_AdditionalInvalidNode_Negative(t *te
 		cvlErrInfo,err := cvl.ValidateEditConfig(cfgData)
 
 		/* TBD. */
-		if err != cvl.CVL_SUCCESS {
+		if err == cvl.CVL_SUCCESS {
 			t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
 		}
 	})
@@ -829,7 +829,7 @@ func TestValidateEditConfig_Create_Syntax_Invalid_Negative(t *testing.T) {
 		cvlErrInfo,err := cvl.ValidateEditConfig(cfgData)
 
 		/* TBD. */
-		if err != cvl.CVL_SUCCESS {
+		if err == cvl.CVL_SUCCESS {
 			t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
 		}
 	})
@@ -890,7 +890,7 @@ func TestValidateEditConfig_Create_Syntax_InvalidKey_Negative(t *testing.T) {
 		cvlErrInfo,err := cvl.ValidateEditConfig(cfgData)
 
 		/* TBD */
-		if err != cvl.CVL_SUCCESS {
+		if err == cvl.CVL_SUCCESS {
 			t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
 		}
 	})
@@ -1004,7 +1004,7 @@ func TestValidateEditConfig_Create_Syntax_DependentData_Negative(t *testing.T) {
 		cvlErrInfo,err := cvl.ValidateEditConfig(cfgData)
 
 
-		/* TBD */
+		/* TBD negative */
 		if err != cvl.CVL_SUCCESS {
 			t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
 		}
