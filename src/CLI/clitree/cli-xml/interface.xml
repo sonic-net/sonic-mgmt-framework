@@ -110,6 +110,11 @@
                 ptype="UINT" />
 	    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config_mtu ${iface} ${mtu} </ACTION>
         </COMMAND>
+	<COMMAND
+            name="no mtu"
+            help="Remove MTU">
+            <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config_mtu ${iface} 9100 </ACTION>
+        </COMMAND>
     </VIEW>
     </CLISH_MODULE>
 
