@@ -3,6 +3,7 @@
 *.code-workspace
 pkg/*
 build
+gopkgs
 __pycache__
 *.pyc
 *.rdb

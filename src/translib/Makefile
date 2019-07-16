@@ -32,6 +32,6 @@ all:
 	$(GO) install translib
 
 
-#rest-clean:
-#	rm -f $(TOPDIR)/src/translib/ocbinds/ocbinds.go
+translib-clean:
+	rm -f $(TOPDIR)/src/translib/ocbinds/ocbinds.go
 

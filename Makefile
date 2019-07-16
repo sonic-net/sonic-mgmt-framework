@@ -12,15 +12,17 @@ BUILD_DIR := $(TOPDIR)/build
 export TOPDIR
 
 ifeq ($(BUILD_GOPATH),)
-export BUILD_GOPATH=$(BUILD_DIR)/go
+export BUILD_GOPATH=$(TOPDIR)/gopkgs
 endif
 
 ifeq ($(GOPATH),)
 export GOPATH=$(BUILD_GOPATH)
 endif
 
+ifeq ($(GO),)
 GO := /usr/local/go/bin/go 
 export GO
+endif
 
 INSTALL := /usr/bin/install
 
@@ -72,7 +74,7 @@ cvl:
 rest-server:
 	$(MAKE) -C src/rest
 
-translib: yamlGen codegen cvl
+translib: cvl
 	$(MAKE) -C src/translib
 
 
