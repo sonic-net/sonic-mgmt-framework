@@ -45,9 +45,6 @@ CERTGEN_BIN := $(REST_DIST_DIR)/generate_cert
 # Top level makefile, which includes this makefile, can pass
 # additional pre-requisites (like cvl) by setting REST_PREREQ
 $(REST_BIN): $(REST_SRCS) $(REST_PREREQ) $(CERTGEN_BIN)
-	$(MAKE) -C $(TOPDIR)/models/yang
-	$(MAKE) -C $(TOPDIR)/models
-	cd $(TOPDIR)/src/translib/ocbinds && GOPATH=$(REST_GOPATH) $(GO) generate
 	GOPATH=$(REST_GOPATH) $(GO) build -gcflags=all="-N -l" -o $@ $(TOPDIR)/src/rest/main/main.go
 
 
