@@ -237,6 +237,7 @@ func (app *IntfApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
 				}
 			}
 		}
+		return GetResponse{Payload: payload}, err
 	}
 
 	/* Get all Interfaces */
@@ -264,7 +265,7 @@ func (app *IntfApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
 			app.convertInternalToOCIntfInfo(&ifKey, ifInfo)
 		}
 		if *app.ygotTarget == intfObj {
-			payload, err = dumpIetfJson(intfObj, false)
+			payload, err = dumpIetfJson((*app.ygotRoot).(*ocbinds.Device), true)
 		} else {
 			log.Info("Wrong request!")
 		}
