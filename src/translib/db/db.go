@@ -491,7 +491,7 @@ func (d *DB) doCVL(ts * TableSpec, cvlOps []cvl.CVLOperation, key Key, vals []Va
 		glog.Info("doCVL: calling ValidateEditConfig: ", d.cvlEditConfigData)
 	}
 
-	cvlRetCode = cvl.ValidateEditConfig(d.cvlEditConfigData)
+	_, cvlRetCode = cvl.ValidateEditConfig(d.cvlEditConfigData)
 
 	if cvl.CVL_SUCCESS != cvlRetCode {
 		glog.Error("doCVL: CVL Failure: " , cvlRetCode)
