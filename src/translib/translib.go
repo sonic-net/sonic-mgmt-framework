@@ -77,7 +77,6 @@ func Create(req SetRequest) (SetResponse, error){
     var ygotRoot *ygot.GoStruct
     var ygotTarget *interface{}
     var data appData
-	var needTx bool = false
 	var keys []db.WatchKeys
 	var resp SetResponse
 
@@ -87,28 +86,28 @@ func Create(req SetRequest) (SetResponse, error){
     log.Info("Create request received with path =", path)
     log.Info("Create request received with payload =", string(payload))
 
-	isNative, ygotRootType, appType, err := getAppModuleInfo(path)
+	appInfo, err := getAppModuleInfo(path)
 
 	if err != nil {
 		resp.ErrSrc = ProtoErr
         return resp, err
 	}
 
-    app, err = getAppInterface(appType)
+    app, err = getAppInterface(appInfo.appType)
 
 	if err != nil {
 		resp.ErrSrc = ProtoErr
 		return resp, err
 	}
 
-    if isNative {
+    if appInfo.isNative {
         log.Info("Native MSFT format")
         data = appData{path: path, payload:payload}
         app.initialize(data)
     } else {
-		log.Info(ygotRootType)
+		log.Info(appInfo.ygotRootType)
 
-		ygotRoot, ygotTarget, err = getRequestBinder(&path, &payload, CREATE, &ygotRootType).unMarshall()
+		ygotRoot, ygotTarget, err = getRequestBinder(&path, &payload, CREATE, &(appInfo.ygotRootType)).unMarshall()
 		if err != nil {
 			log.Info("Error in request binding in the create request: ", err)
 			resp.ErrSrc = AppErr
@@ -120,12 +119,20 @@ func Create(req SetRequest) (SetResponse, error){
 	}
 
 	writeMutex.Lock()
-    d := db.NewDB(db.Options {
+	d, err := db.NewDB(db.Options {
                     DBNo              : db.ConfigDB,
                     InitIndicator     : "CONFIG_DB_INITIALIZED",
                     TableNameSeparator: "|",
                     KeySeparator      : "|",
                       })
+
+	if err != nil {
+		writeMutex.Unlock()
+		resp.ErrSrc = ProtoErr
+		return resp, err
+	}
+
+	defer d.DeleteDB()
 
     keys, err = app.translateCreate(d)
 
@@ -135,40 +142,28 @@ func Create(req SetRequest) (SetResponse, error){
         return resp, err
 	}
 
-	if ((keys != nil)) {
+	err = d.StartTx(keys, appInfo.tablesToWatch)
 
-		if (len(keys) != 0) {
-			needTx = true
-			err = d.StartTx(keys)
-
-			if err != nil {
-				writeMutex.Unlock()
-				resp.ErrSrc = AppErr
-                return resp, err
-			}
-		}
-
+	if err != nil {
+		writeMutex.Unlock()
+		resp.ErrSrc = AppErr
+        return resp, err
 	}
 
     resp, err = app.processCreate (d)
 
     if err != nil {
-
-		if needTx {
-			writeMutex.Unlock()
-			d.AbortTx()
-		}
+		writeMutex.Unlock()
+		d.AbortTx()
 		resp.ErrSrc = AppErr
         return resp, err
     }
 
-	if needTx {
-		err = d.CommitTx()
+	err = d.CommitTx()
 
-        if err != nil {
-            resp.ErrSrc = AppErr
-        }
-	}
+    if err != nil {
+        resp.ErrSrc = AppErr
+    }
 
 	writeMutex.Unlock()
 
@@ -182,7 +177,6 @@ func Update(req SetRequest) (SetResponse, error){
     var ygotRoot *ygot.GoStruct
     var ygotTarget *interface{}
     var data appData
-    var needTx bool = false
     var keys []db.WatchKeys
 	var resp SetResponse
 
@@ -192,28 +186,28 @@ func Update(req SetRequest) (SetResponse, error){
     log.Info("Update request received with path =", path)
     log.Info("Update request received with payload =", string(payload))
 
-	isNative, ygotRootType, appType, err := getAppModuleInfo(path)
+	appInfo, err := getAppModuleInfo(path)
 
     if err != nil {
 		resp.ErrSrc = ProtoErr
         return resp, err
     }
 
-    app, err = getAppInterface(appType)
+    app, err = getAppInterface(appInfo.appType)
 
     if err != nil {
 		resp.ErrSrc = ProtoErr
         return resp, err
     }
 
-    if isNative {
+    if appInfo.isNative {
         log.Info("Native MSFT format")
         data = appData{path: path, payload:payload}
         app.initialize(data)
     } else {
-        log.Info(ygotRootType)
+        log.Info(appInfo.ygotRootType)
 
-        ygotRoot, ygotTarget, err = getRequestBinder(&path, &payload, UPDATE, &ygotRootType).unMarshall()
+        ygotRoot, ygotTarget, err = getRequestBinder(&path, &payload, UPDATE, &(appInfo.ygotRootType)).unMarshall()
         if err != nil {
             log.Info("Error in request binding in the update request: ", err)
 			resp.ErrSrc = AppErr
@@ -225,12 +219,20 @@ func Update(req SetRequest) (SetResponse, error){
     }
 
     writeMutex.Lock()
-    d := db.NewDB(db.Options {
+    d, err := db.NewDB(db.Options {
                     DBNo              : db.ConfigDB,
                     InitIndicator     : "CONFIG_DB_INITIALIZED",
                     TableNameSeparator: "|",
                     KeySeparator      : "|",
                       })
+
+    if err != nil {
+        writeMutex.Unlock()
+        resp.ErrSrc = ProtoErr
+        return resp, err
+    }
+
+	defer d.DeleteDB()
 
     keys, err = app.translateUpdate(d)
 
@@ -240,39 +242,27 @@ func Update(req SetRequest) (SetResponse, error){
         return resp, err
     }
 
-    if ((keys != nil)) {
+    err = d.StartTx(keys, appInfo.tablesToWatch)
 
-        if (len(keys) != 0) {
-            needTx = true
-            err = d.StartTx(keys)
-
-            if err != nil {
-                writeMutex.Unlock()
-				resp.ErrSrc = AppErr
-                return resp, err
-            }
-        }
-
+    if err != nil {
+        writeMutex.Unlock()
+		resp.ErrSrc = AppErr
+        return resp, err
     }
 
     resp, err = app.processUpdate (d)
 
     if err != nil {
-
-        if needTx {
-            writeMutex.Unlock()
-            d.AbortTx()
-        }
+        writeMutex.Unlock()
+        d.AbortTx()
 		resp.ErrSrc = AppErr
         return resp, err
     }
 
-    if needTx {
-        err = d.CommitTx()
+    err = d.CommitTx()
 
-        if err != nil {
-            resp.ErrSrc = AppErr
-        }
+    if err != nil {
+        resp.ErrSrc = AppErr
     }
 
     writeMutex.Unlock()
@@ -286,7 +276,6 @@ func Replace(req SetRequest) (SetResponse, error){
     var ygotRoot *ygot.GoStruct
     var ygotTarget *interface{}
     var data appData
-    var needTx bool = false
     var keys []db.WatchKeys
 	var resp SetResponse
 
@@ -296,28 +285,28 @@ func Replace(req SetRequest) (SetResponse, error){
     log.Info("Replace request received with path =", path)
     log.Info("Replace request received with payload =", string(payload))
 
-    isNative, ygotRootType, appType, err := getAppModuleInfo(path)
+    appInfo, err := getAppModuleInfo(path)
 
     if err != nil {
 		resp.ErrSrc = ProtoErr
         return resp, err
     }
 
-    app, err = getAppInterface(appType)
+    app, err = getAppInterface(appInfo.appType)
 
     if err != nil {
 		resp.ErrSrc = ProtoErr
         return resp, err
     }
 
-    if isNative {
+    if appInfo.isNative {
         log.Info("Native MSFT format")
         data = appData{path: path, payload:payload}
         app.initialize(data)
     } else {
-        log.Info(ygotRootType)
+        log.Info(appInfo.ygotRootType)
 
-        ygotRoot, ygotTarget, err = getRequestBinder(&path, &payload, REPLACE, &ygotRootType).unMarshall()
+        ygotRoot, ygotTarget, err = getRequestBinder(&path, &payload, REPLACE, &(appInfo.ygotRootType)).unMarshall()
         if err != nil {
             log.Info("Error in request binding in the replace request: ", err)
 			resp.ErrSrc = AppErr
@@ -329,12 +318,20 @@ func Replace(req SetRequest) (SetResponse, error){
     }
 
     writeMutex.Lock()
-    d := db.NewDB(db.Options {
+    d, err := db.NewDB(db.Options {
                     DBNo              : db.ConfigDB,
                     InitIndicator     : "CONFIG_DB_INITIALIZED",
                     TableNameSeparator: "|",
                     KeySeparator      : "|",
                       })
+
+    if err != nil {
+        writeMutex.Unlock()
+        resp.ErrSrc = ProtoErr
+        return resp, err
+    }
+
+	defer d.DeleteDB()
 
     keys, err = app.translateReplace(d)
 
@@ -344,39 +341,27 @@ func Replace(req SetRequest) (SetResponse, error){
         return resp, err
     }
 
-    if ((keys != nil)) {
+    err = d.StartTx(keys, appInfo.tablesToWatch)
 
-        if (len(keys) != 0) {
-            needTx = true
-            err = d.StartTx(keys)
-
-            if err != nil {
-                writeMutex.Unlock()
-				resp.ErrSrc = AppErr
-                return resp, err
-            }
-        }
-
+    if err != nil {
+        writeMutex.Unlock()
+		resp.ErrSrc = AppErr
+        return resp, err
     }
 
     resp, err = app.processReplace (d)
 
     if err != nil {
-
-        if needTx {
-            writeMutex.Unlock()
-            d.AbortTx()
-        }
+        writeMutex.Unlock()
+        d.AbortTx()
 		resp.ErrSrc = AppErr
         return resp, err
     }
 
-    if needTx {
-        err = d.CommitTx()
+    err = d.CommitTx()
 
-		if err != nil {
-			resp.ErrSrc = AppErr
-		}
+	if err != nil {
+		resp.ErrSrc = AppErr
     }
 
     writeMutex.Unlock()
@@ -390,7 +375,6 @@ func Delete(req SetRequest) (SetResponse, error){
     var ygotRoot *ygot.GoStruct
     var ygotTarget *interface{}
     var data appData
-    var needTx bool = false
     var keys []db.WatchKeys
 	var resp SetResponse
 
@@ -398,28 +382,28 @@ func Delete(req SetRequest) (SetResponse, error){
 
     log.Info("Delete request received with path =", path)
 
-    isNative, ygotRootType, appType, err := getAppModuleInfo(path)
+    appInfo, err := getAppModuleInfo(path)
 
     if err != nil {
 		resp.ErrSrc = ProtoErr
         return resp, err
     }
 
-    app, err = getAppInterface(appType)
+    app, err = getAppInterface(appInfo.appType)
 
     if err != nil {
 		resp.ErrSrc = ProtoErr
         return resp, err
     }
 
-    if isNative {
+    if appInfo.isNative {
         log.Info("Native MSFT format")
         data = appData{path: path}
         app.initialize(data)
     } else {
-        log.Info(ygotRootType)
+        log.Info(appInfo.ygotRootType)
 
-        ygotRoot, ygotTarget, err = getRequestBinder(&path, nil, DELETE, &ygotRootType).unMarshall()
+        ygotRoot, ygotTarget, err = getRequestBinder(&path, nil, DELETE, &(appInfo.ygotRootType)).unMarshall()
         if err != nil {
             log.Info("Error in request binding in the delete request: ", err)
 			resp.ErrSrc = AppErr
@@ -431,12 +415,20 @@ func Delete(req SetRequest) (SetResponse, error){
     }
 
     writeMutex.Lock()
-    d := db.NewDB(db.Options {
+    d, err := db.NewDB(db.Options {
                     DBNo              : db.ConfigDB,
                     InitIndicator     : "CONFIG_DB_INITIALIZED",
                     TableNameSeparator: "|",
                     KeySeparator      : "|",
                       })
+
+    if err != nil {
+        writeMutex.Unlock()
+        resp.ErrSrc = ProtoErr
+        return resp, err
+    }
+
+	defer d.DeleteDB()
 
     keys, err = app.translateDelete(d)
 
@@ -446,39 +438,27 @@ func Delete(req SetRequest) (SetResponse, error){
         return resp, err
     }
 
-    if ((keys != nil)) {
+    err = d.StartTx(keys, appInfo.tablesToWatch)
 
-        if (len(keys) != 0) {
-            needTx = true
-            err = d.StartTx(keys)
-
-            if err != nil {
-                writeMutex.Unlock()
-				resp.ErrSrc = AppErr
-                return resp, err
-            }
-        }
-
+    if err != nil {
+        writeMutex.Unlock()
+		resp.ErrSrc = AppErr
+        return resp, err
     }
 
     resp, err = app.processDelete(d)
 
     if err != nil {
-
-        if needTx {
-            writeMutex.Unlock()
-            d.AbortTx()
-        }
+        writeMutex.Unlock()
+        d.AbortTx()
 		resp.ErrSrc = AppErr
         return resp, err
     }
 
-    if needTx {
-        err = d.CommitTx()
+    err = d.CommitTx()
 
-        if err != nil {
-            resp.ErrSrc = AppErr
-        }
+    if err != nil {
+        resp.ErrSrc = AppErr
     }
 
     writeMutex.Unlock()
@@ -495,26 +475,26 @@ func Get(req GetRequest) (GetResponse, error){
 
     log.Info("Received Get request for path = ",path)
 
-    isNative, ygotRootType, appType, err := getAppModuleInfo(path)
+    appInfo, err := getAppModuleInfo(path)
 
     if err != nil {
         resp = GetResponse{Payload:payload, ErrSrc:ProtoErr}
         return resp, err
     }
 
-	app, err := getAppInterface(appType)
+	app, err := getAppInterface(appInfo.appType)
 
 	if err != nil {
         resp = GetResponse{Payload:payload, ErrSrc:ProtoErr}
         return resp, err
     }
 
-    if isNative {
+    if appInfo.isNative {
         log.Info("Native MSFT format")
         data = appData{path: path}
         app.initialize(data)
     } else {
-       ygotStruct, ygotTarget, err := getRequestBinder (&path, nil, GET, &ygotRootType).unMarshall()
+       ygotStruct, ygotTarget, err := getRequestBinder (&path, nil, GET, &(appInfo.ygotRootType)).unMarshall()
         if err != nil {
                 log.Info("Error in request binding: ", err)
 				resp = GetResponse{Payload:payload, ErrSrc:AppErr}
@@ -525,7 +505,14 @@ func Get(req GetRequest) (GetResponse, error){
         app.initialize(data)
     }
 
-	dbs := getAllDbs()
+	dbs, err := getAllDbs()
+
+	if err != nil {
+		resp = GetResponse{Payload:payload, ErrSrc:ProtoErr}
+        return resp, err
+	}
+
+	defer closeAllDbs(dbs[:])
 
     err = app.translateGet (dbs)
 
@@ -554,57 +541,98 @@ func GetModels() ([]ModelData, error) {
 }
 
 //Creates connection will all the redis DBs. To be used for get request
-func getAllDbs() [db.MaxDB]*db.DB {
+func getAllDbs() ([db.MaxDB]*db.DB, error) {
 	var dbs [db.MaxDB]*db.DB
+    var err error
 
 	//Create Application DB connection
-    dbs[db.ApplDB] = db.NewDB(db.Options {
+    dbs[db.ApplDB], err = db.NewDB(db.Options {
                     DBNo              : db.ApplDB,
                     InitIndicator     : "",
                     TableNameSeparator: ":",
                     KeySeparator      : ":",
                       })
 
+	if err != nil {
+		closeAllDbs(dbs[:])
+		return dbs, err
+	}
+
     //Create ASIC DB connection
-    dbs[db.AsicDB] = db.NewDB(db.Options {
+    dbs[db.AsicDB], err = db.NewDB(db.Options {
                     DBNo              : db.AsicDB,
                     InitIndicator     : "",
                     TableNameSeparator: "|",
                     KeySeparator      : "|",
                       })
 
+	if err != nil {
+		closeAllDbs(dbs[:])
+		return dbs, err
+	}
+
 	//Create Counter DB connection
-    dbs[db.CountersDB] = db.NewDB(db.Options {
+    dbs[db.CountersDB], err = db.NewDB(db.Options {
                     DBNo              : db.CountersDB,
                     InitIndicator     : "",
                     TableNameSeparator: "|",
                     KeySeparator      : "|",
                       })
 
+	if err != nil {
+		closeAllDbs(dbs[:])
+		return dbs, err
+	}
+
 	//Create Log Level DB connection
-    dbs[db.LogLevelDB] = db.NewDB(db.Options {
+    dbs[db.LogLevelDB], err = db.NewDB(db.Options {
                     DBNo              : db.LogLevelDB,
                     InitIndicator     : "",
                     TableNameSeparator: "|",
                     KeySeparator      : "|",
                       })
 
+	if err != nil {
+		closeAllDbs(dbs[:])
+		return dbs, err
+	}
+
 	//Create Config DB connection
-    dbs[db.ConfigDB] = db.NewDB(db.Options {
+    dbs[db.ConfigDB], err = db.NewDB(db.Options {
                     DBNo              : db.ConfigDB,
                     InitIndicator     : "CONFIG_DB_INITIALIZED",
                     TableNameSeparator: "|",
                     KeySeparator      : "|",
                       })
 
+	if err != nil {
+		closeAllDbs(dbs[:])
+		return dbs, err
+	}
+
 	//Create State DB connection
-    dbs[db.StateDB] = db.NewDB(db.Options {
+    dbs[db.StateDB], err = db.NewDB(db.Options {
                     DBNo              : db.StateDB,
                     InitIndicator     : "",
                     TableNameSeparator: "|",
                     KeySeparator      : "|",
                       })
 
-	return dbs
+	if err != nil {
+		closeAllDbs(dbs[:])
+		return dbs, err
+	}
+
+	return dbs, err
+}
+
+//Closes the dbs, and nils out the arr.
+func closeAllDbs(dbs []*db.DB) {
+	for dbsi, d := range dbs {
+		if d != nil {
+			d.DeleteDB()
+			dbs[dbsi] = nil
+		}
+	}
 }
 

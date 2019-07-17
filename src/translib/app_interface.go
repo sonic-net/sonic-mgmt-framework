@@ -28,9 +28,10 @@ import (
 
 //Structure containing app module information
 type appInfo struct {
-	appType      reflect.Type
-	ygotRootType reflect.Type
-	isNative     bool
+	appType			reflect.Type
+	ygotRootType	reflect.Type
+	isNative		bool
+	tablesToWatch   []*db.TableSpec
 }
 
 //Structure containing the app data coming from translib infra
@@ -109,24 +110,18 @@ func unregister(path string) error {
 }
 
 //Translib infra will use this function get the app info for a given path
-func getAppModuleInfo(path string) (bool, reflect.Type, reflect.Type, error) {
+func getAppModuleInfo(path string) (appInfo, error) {
 	var err error
 	log.Info("getAppModule called for path =", path)
-	var ygotRootType reflect.Type
-	var appType reflect.Type
-	isNative := false
 
-	for pattern, appInfo := range appMap {
+	for pattern, app := range appMap {
 		if !strings.HasPrefix(path, pattern) {
 			continue
 		}
 
 		log.Info("found the entry in the map for path =", pattern)
-		isNative = appInfo.isNative
-		ygotRootType = appInfo.ygotRootType
-		appType = appInfo.appType
 
-		return isNative, ygotRootType, appType, err
+		return app, err
 	}
 
 	errStr := "Unsupported path=" + path
@@ -134,7 +129,9 @@ func getAppModuleInfo(path string) (bool, reflect.Type, reflect.Type, error) {
 	err = errors.New(errStr)
 	log.Error(errStr)
 
-	return isNative, ygotRootType, appType, err
+	var app appInfo
+
+	return app, err
 }
 
 //Get all the supported models

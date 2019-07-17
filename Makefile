@@ -7,12 +7,22 @@
 
 .PHONY: all clean cleanall codegen rest-server yamlGen cli
 
-ifeq ($(GOPATH),)
-export GOPATH=/tmp/go
+TOPDIR := $(abspath .)
+BUILD_DIR := $(TOPDIR)/build
+export TOPDIR
+
+ifeq ($(BUILD_GOPATH),)
+export BUILD_GOPATH=$(TOPDIR)/gopkgs
 endif
 
+ifeq ($(GOPATH),)
+export GOPATH=$(BUILD_GOPATH)
+endif
+
+ifeq ($(GO),)
 GO := /usr/local/go/bin/go 
 export GO
+endif
 
 INSTALL := /usr/bin/install
 
@@ -25,28 +35,22 @@ GO_DEPS_LIST = github.com/gorilla/mux \
                github.com/go-redis/redis \
                github.com/golang/glog \
                github.com/pkg/profile \
-               gopkg.in/go-playground/validator.v9
+               gopkg.in/go-playground/validator.v9 \
+               github.com/msteinert/pam \
+               golang.org/x/crypto/ssh \
+	       github.com/antchfx/jsonquery \
+	       github.com/antchfx/xmlquery
 
 
 PIP2_DEPS_LIST = connexion python_dateutil certifi
-
-TOPDIR := $(abspath .)
-BUILD_DIR := $(TOPDIR)/build
-
-export TOPDIR
-
-# Source files affecting REST server
-REST_SRCS := $(shell find $(TOPDIR)/src -name '*.go' | sort) \
-			 $(shell find $(TOPDIR)/models/yang -name '*.yang' | sort) \
-			 $(shell find $(TOPDIR)/models/openapi -name '*.yaml' | sort)
+REST_BIN = $(BUILD_DIR)/rest_server/dist/main
+CERTGEN_BIN = $(BUILD_DIR)/rest_server/dist/generate_cert
 
 CVL_GOPATH=$(TOPDIR):$(TOPDIR)/src/cvl/build
-REST_BIN := $(REST_DIST_DIR)/main
-REST_GOPATH = $(GOPATH):$(CVL_GOPATH):$(TOPDIR):$(REST_DIST_DIR)
+GOPATH := $(GOPATH):$(CVL_GOPATH)
 
-#$(info REST_SRCS = $(REST_SRCS) )
 
-all: build-deps pip2-deps cli go-deps go-patch rest-server
+all: build-deps pip2-deps go-deps go-patch translib rest-server cli
 
 build-deps:
 	mkdir -p $(BUILD_DIR)
@@ -67,22 +71,22 @@ cvl:
 	$(MAKE) -C src/cvl
 	$(MAKE) -C src/cvl/schema
 
-REST_PREREQ := cvl
-GOPATH := $(GOPATH):$(CVL_GOPATH)
-include src/rest/Makefile
+rest-server:
+	$(MAKE) -C src/rest
 
-rest-server: $(REST_BIN)
-
-yamlGen:
-	$(MAKE) -C models/yang
+translib: cvl
+	$(MAKE) -C src/translib
 
 
 codegen:
 	$(MAKE) -C models
 
+yamlGen:
+	$(MAKE) -C models/yang
+
 go-patch:
-	cp $(TOPDIR)/ygot-modified-files/* /tmp/go/src/github.com/openconfig/ygot/ytypes/
-	$(GO) install -v -gcflags "-N -l" /tmp/go/src/github.com/openconfig/ygot/ygot
+	cp $(TOPDIR)/ygot-modified-files/* $(BUILD_GOPATH)/src/github.com/openconfig/ygot/ytypes/
+	$(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/openconfig/ygot/ygot
 
 
 install:
@@ -101,6 +105,8 @@ $(addprefix $(DEST)/, $(MAIN_TARGET)): $(DEST)/% :
 
 clean:
 	$(MAKE) -C src/cvl clean
+	$(MAKE) -C src/translib clean
+	$(MAKE) -C models clean
 	$(MAKE) -C src/cvl/schema clean
 	$(MAKE) -C src/cvl cleanall
 	rm -rf build/*

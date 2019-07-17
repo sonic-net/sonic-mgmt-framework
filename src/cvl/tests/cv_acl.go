@@ -15,7 +15,7 @@ func main() {
 
 	cv, ret := cvl.ValidatorSessOpen()
 	if (ret != cvl.CVL_SUCCESS) {
-		fmt.Printf("NewDB: Could not create CVL session")
+		fmt.Printf("Could not create CVL session")
 		return
 	}
 

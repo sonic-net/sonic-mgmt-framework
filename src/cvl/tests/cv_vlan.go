@@ -124,7 +124,6 @@ func main() {
 			fmt.Printf("\nConfig Validation failed.\n\n");
 		}
 
-		return
 	}
 
 	{

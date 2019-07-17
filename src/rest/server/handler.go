@@ -8,6 +8,7 @@
 package server
 
 import (
+	"bytes"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -20,9 +21,17 @@ import (
 	"github.com/gorilla/mux"
 )
 
-////
 // Request Id generator
 var requestCounter uint64
+var isUserAuthEnabled = false
+
+// SetUserAuthEnable function enables/disables the PAM based user
+// authentication for REST requests. By default user uthentication
+// is disabled. When enabled, the server expects clients to pass
+// user credentials as per HTTP Basic Autnetication method.
+func SetUserAuthEnable(val bool) {
+	isUserAuthEnabled = val
+}
 
 // Process function is the common landing place for all REST requests.
 // Swagger code-gen should be configured to invoke this function
@@ -38,6 +47,14 @@ func Process(w http.ResponseWriter, r *http.Request) {
 		body, _ = ioutil.ReadAll(r.Body)
 
 		log.Printf("[%s] Content-type=%s; data=%s", reqID, contentType, body)
+	}
+
+	if isUserAuthEnabled {
+		err := PAMAuthenAndAuthor(w, r)
+		if err != nil {
+			log.Printf("Authentication failed")
+			return
+		}
 	}
 
 	path := getPathForTranslib(r)
@@ -105,12 +122,11 @@ func getPathForTranslib(r *http.Request) string {
 	return path
 }
 
-// trimRestconfPrefix removes "/<version>/restconf/data" prefix
-// from the path.
+// trimRestconfPrefix removes "/restconf/data" prefix from the path.
 func trimRestconfPrefix(path string) string {
 	pattern := "/restconf/data/"
 	k := strings.Index(path, pattern)
-	if k > 0 {
+	if k >= 0 {
 		path = path[k+len(pattern)-1:]
 	}
 
@@ -197,4 +213,17 @@ func invokeTranslib(reqID, method, path string, payload []byte) (int, []byte) {
 	}
 
 	return status, content
+}
+
+// hostMetadataHandler function handles "GET /.well-known/host-meta"
+// request as per RFC6415. RESTCONF specification requires this for
+// advertising the RESTCONF root path ("/restconf" in our case).
+func hostMetadataHandler(w http.ResponseWriter, r *http.Request) {
+	var data bytes.Buffer
+	data.WriteString("<XRD xmlns='http://docs.oasis-open.org/ns/xri/xrd-1.0'>")
+	data.WriteString("<Link rel='restconf' href='/restconf'/>")
+	data.WriteString("</XRD>")
+
+	w.Header().Set("Content-Type", "application/xrd+xml")
+	w.Write(data.Bytes())
 }

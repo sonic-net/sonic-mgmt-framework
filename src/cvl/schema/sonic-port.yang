@@ -49,6 +49,10 @@ module sonic-port {
 			leaf mtu{
 				type uint32;
 			}
+
+			leaf lanes {
+				type string;
+			}
 		}
 	}
 }
