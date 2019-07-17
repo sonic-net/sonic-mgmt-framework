@@ -108,11 +108,10 @@ clean:
 	$(MAKE) -C src/translib clean
 	$(MAKE) -C models clean
 	$(MAKE) -C src/cvl/schema clean
-	$(MAKE) -C src/CLI clean
 	$(MAKE) -C src/cvl cleanall
-	rm -rf build
+	rm -rf build/*
 	rm -rf debian/.debhelper
 
 cleanall:
 	$(MAKE) -C src/cvl cleanall
-	rm -rf build
+	rm -rf build/*
