@@ -131,9 +131,61 @@ func (app *IntfApp) translateReplace(d *db.DB) ([]db.WatchKeys, error) {
 func (app *IntfApp) translateDelete(d *db.DB) ([]db.WatchKeys, error) {
 	var err error
 	var keys []db.WatchKeys
-	log.Info("translateDelete:intf:path =", app.path)
+	pathInfo := app.path
 
-	err = errors.New("Not implemented")
+	log.Infof("Received Delete for path %s; vars=%v", pathInfo.Template, pathInfo.Vars)
+
+	intfObj := app.getAppRootObject()
+
+	targetUriPath, err := getYangPathFromUri(app.path.Path)
+	log.Info("uripath:=", targetUriPath)
+	log.Info("err:=", err)
+
+	if intfObj.Interface != nil && len(intfObj.Interface) > 0 {
+		log.Info("len:=", len(intfObj.Interface))
+		for ifKey, _ := range intfObj.Interface {
+			log.Info("Name:=", ifKey)
+			intf := intfObj.Interface[ifKey]
+
+			if intf.Subinterfaces == nil {
+				continue
+			}
+			subIf := intf.Subinterfaces.Subinterface[0]
+			if subIf != nil {
+				if subIf.Ipv4 != nil && subIf.Ipv4.Addresses != nil {
+					for ip, _ := range subIf.Ipv4.Addresses.Address {
+						addr := subIf.Ipv4.Addresses.Address[ip]
+						if addr != nil {
+							ipAddr := addr.Ip
+							log.Info("IPv4 address = ", *ipAddr)
+							err = app.validateIp(d, ifKey, *ipAddr)
+							if err != nil {
+								continue
+							}
+						}
+					}
+				}
+				if subIf.Ipv6 != nil && subIf.Ipv6.Addresses != nil {
+					for ip, _ := range subIf.Ipv6.Addresses.Address {
+						addr := subIf.Ipv6.Addresses.Address[ip]
+						if addr != nil {
+							ipAddr := addr.Ip
+							log.Info("IPv6 address = ", *ipAddr)
+							err = app.validateIp(d, ifKey, *ipAddr)
+							if err != nil {
+								continue
+							}
+						}
+					}
+				}
+			} else {
+				err = errors.New("Only subinterface index 0 is supported")
+				return keys, err
+			}
+		}
+	} else {
+		err = errors.New("Not implemented")
+	}
 	return keys, err
 }
 
@@ -175,7 +227,15 @@ func (app *IntfApp) processDelete(d *db.DB) (SetResponse, error) {
 	var resp SetResponse
 	log.Info("processDelete:intf:path =", app.path)
 
-	err = errors.New("Not implemented")
+	if len(app.ifIPTableMap) == 0 {
+		return resp, err
+	}
+	for ifKey, entrylist := range app.ifIPTableMap {
+		for ip, _ := range entrylist {
+			err = d.DeleteEntry(app.intfIPTs, db.Key{Comp: []string{ifKey, ip}})
+			log.Infof("Deleted IP : %s for Interface : %s", ip, ifKey)
+		}
+	}
 	return resp, err
 }
 
@@ -188,8 +248,8 @@ func (app *IntfApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
 
 	log.Infof("Received GET for path %s; template: %s vars=%v", pathInfo.Path, pathInfo.Template, pathInfo.Vars)
 	var intfSubtree bool = false
-
 	app.appDB = dbs[db.ApplDB]
+
 	intfObj := app.getAppRootObject()
 
 	log.Info("processGet: Target Type: " + reflect.TypeOf(*app.ygotTarget).Elem().Name())
@@ -603,6 +663,35 @@ func (app *IntfApp) translateCommon(d *db.DB, inpOp reqType) ([]db.WatchKeys, er
 	}
 
 	return keys, err
+}
+
+/* Validates whether the IP exists in the DB */
+func (app *IntfApp) validateIp(dbCl *db.DB, ifName string, ip string) error {
+	var err error
+	app.allIpKeys, _ = app.doGetAllIpKeys(dbCl, app.intfIPTs)
+
+	for _, key := range app.allIpKeys {
+		if key.Get(0) != ifName {
+			continue
+		}
+		ipAddr, _, _ := net.ParseCIDR(key.Get(1))
+		ipStr := ipAddr.String()
+		if ipStr == ip {
+			log.Infof("IP address %s exists, updating the DS for deletion!", ipStr)
+			ipInfo, err := dbCl.GetEntry(app.intfIPTs, key)
+			if err != nil {
+				log.Info("Error found on fetching Interface IP info from App DB for Interface Name : ", ifName)
+				return err
+			}
+			if len(app.ifIPTableMap[key.Get(0)]) == 0 {
+				app.ifIPTableMap[key.Get(0)] = make(map[string]dbEntry)
+				app.ifIPTableMap[key.Get(0)][key.Get(1)] = dbEntry{entry: ipInfo}
+			} else {
+				app.ifIPTableMap[key.Get(0)][key.Get(1)] = dbEntry{entry: ipInfo}
+			}
+		}
+	}
+	return err
 }
 
 func (app *IntfApp) translateIpv4(d *db.DB, intf string, ip string, prefix int) error {
