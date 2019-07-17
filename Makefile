@@ -98,6 +98,7 @@ $(addprefix $(DEST)/, $(MAIN_TARGET)): $(DEST)/% :
 
 clean:
 	$(MAKE) -C src/cvl clean
+	$(MAKE) -C models clean
 	$(MAKE) -C src/cvl/schema clean
 	$(MAKE) -C src/CLI clean
 	$(MAKE) -C src/cvl cleanall

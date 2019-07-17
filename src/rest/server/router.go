@@ -80,6 +80,9 @@ func NewRouter() *mux.Router {
 	router.Methods("GET").Path("/ui").
 		Handler(http.RedirectHandler("/ui/index.html", 301))
 
+	router.Methods("GET").Path("/model").
+		Handler(http.RedirectHandler("/ui/model.html", 301))
+
 	// Metadata discovery handler
 	metadataHandler := http.HandlerFunc(hostMetadataHandler)
 	router.Methods("GET").Path("/.well-known/host-meta").
