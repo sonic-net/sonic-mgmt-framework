@@ -63,10 +63,7 @@ swaggerDict["swagger"] = "2.0"
 swaggerDict["info"] = OrderedDict()
 swaggerDict["info"]["description"] = "Network management Open APIs for Broadcom's Sonic."
 swaggerDict["info"]["version"] = "1.0.0"
-swaggerDict["info"]["title"] =  "Sonic NMS"
-swaggerDict["info"]["termsOfService"] = "http://www.broadcom.com"
-swaggerDict["info"]["contact"] = {"email": "mohammed.faraaz@broadcom.com"}
-swaggerDict["info"]["license"] = {"name": "Yet to decide", "url": "http://www.broadcom.com"}
+swaggerDict["info"]["title"] =  "SONiC Network Management APIs"
 swaggerDict["basePath"] = base_path
 swaggerDict["schemes"] = ["https", "http"]
 swagger_tags = []
@@ -90,12 +87,9 @@ def resetSwaggerDict():
     swaggerDict = OrderedDict()
     swaggerDict["swagger"] = "2.0"
     swaggerDict["info"] = OrderedDict()
-    swaggerDict["info"]["description"] = "Network management Open APIs for Broadcom's Sonic."
+    swaggerDict["info"]["description"] = "Network management Open APIs for Sonic."
     swaggerDict["info"]["version"] = "1.0.0"
-    swaggerDict["info"]["title"] =  "Sonic NMS"
-    swaggerDict["info"]["termsOfService"] = "http://www.broadcom.com"
-    swaggerDict["info"]["contact"] = {"email": "mohammed.faraaz@broadcom.com"}
-    swaggerDict["info"]["license"] = {"name": "Yet to decide", "url": "http://www.broadcom.com"}
+    swaggerDict["info"]["title"] =  "Sonic Network Management APIs"
     swaggerDict["basePath"] = base_path
     swaggerDict["schemes"] = ["https", "http"]
     swagger_tags = []
@@ -472,7 +466,7 @@ def build_payload(child, payloadDict, uriPath="", oneInstance=False, Xpath="", f
 
         childJson = returnJson
 
-    elif child.keyword == "leaf" or child.keyword == "leaf-list":
+    elif child.keyword == "leaf":
 
         if firstCall:
             nodeName = child.i_module.i_modulename + ':' + child.arg
@@ -495,6 +489,33 @@ def build_payload(child, payloadDict, uriPath="", oneInstance=False, Xpath="", f
 
         if 'format' in typeInfo:
             payloadDict[nodeName]["format"] = typeInfo["format"]
+
+    elif child.keyword == "leaf-list":
+
+        if firstCall:
+            nodeName = child.i_module.i_modulename + ':' + child.arg
+        else:
+            nodeName = child.arg
+
+        parentXpath = statements.mk_path_str(child.parent, True)
+        if hasattr(child, 'i_is_key') and Xpath == parentXpath:
+            if '=' in uriPath.split('/')[-1]:
+                return
+
+        payloadDict[nodeName] = OrderedDict()
+        payloadDict[nodeName]["type"] = "array"
+        payloadDict[nodeName]["items"] = OrderedDict()
+
+        typeInfo = get_node_type(child)
+        if 'type' in typeInfo:
+            dType = typeInfo["type"]
+        else:
+            dType = "string"
+        
+        payloadDict[nodeName]["items"]["type"] = dType      
+
+        if 'format' in typeInfo:
+            payloadDict[nodeName]["items"]["format"] = typeInfo["format"]            
 
     if hasattr(child, 'i_children'):
         for ch in child.i_children:
