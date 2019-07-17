@@ -11,7 +11,6 @@ import (
 )
 
 /*
-#cgo LDFLAGS: -lpcre
 #cgo LDFLAGS: -lyang
 #include <libyang/libyang.h>
 #include <libyang/tree_data.h>

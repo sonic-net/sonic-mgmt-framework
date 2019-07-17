@@ -25,6 +25,7 @@ ifeq ($(GOROOT),)
 GOROOT = $(shell $(GO) env GOROOT)
 endif
 
+TRANSLIB_PKG=$(TOP_DIR)/pkg/linux_amd64/translib.a
 
 all:
 	cd $(TOPDIR)/src/translib/ocbinds && $(GO) generate
@@ -32,6 +33,7 @@ all:
 	$(GO) install translib
 
 
-translib-clean:
+clean:
 	rm -f $(TOPDIR)/src/translib/ocbinds/ocbinds.go
+	rm -f $(TRANSLIB_PKG)
 
