@@ -5,6 +5,7 @@ TOP_DIR := $(abspath ../..)
 GOFLAGS:=
 BUILD_DIR:=build
 GO_DOWNLOAD_PATH:=$(BUILD_GOPATH)
+CVL_PKG=$(TOP_DIR)/pkg/linux_amd64/cvl.a
 
 ifdef DEBUG
 	GOFLAGS += -gcflags="all=-N -l"
@@ -13,7 +14,7 @@ endif
 precheck:
 	$(shell mkdir -p $(BUILD_DIR))
 
-deps:  $(BUILD_DIR)/.deps cvl.a
+deps:  $(BUILD_DIR)/.deps $(CVL_PKG)
 
 	
 $(BUILD_DIR)/.deps:
@@ -26,9 +27,7 @@ $(BUILD_DIR)/.deps:
 	}\n" >> $(GO_DOWNLOAD_PATH)/src/github.com/antchfx/jsonquery/node.go
 	touch $@
 
-cvl.a:$(BUILD_DIR)/cvl.a
-
-$(BUILD_DIR)/cvl.a:
+$(CVL_PKG):
 	@echo "Building $@"
 	GOPATH=$(GOPATH) $(GO) build -v $(GOFLAGS) cvl
 	GOPATH=$(GOPATH) $(GO) install cvl
@@ -47,8 +46,9 @@ gotest:
 
 clean:
 	make -C tests clean
-	rm -rf $(BUILD_DIR)/cvl.a
+	rm -rf $(CVL_PKG)
 
 cleanall:
 	rm -rf $(BUILD_DIR)
+	rm -rf $(CVL_PKG)
 
