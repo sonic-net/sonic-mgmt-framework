@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 	"os"
+	"os/exec"
 	"github.com/go-redis/redis"
 )
 
@@ -19,7 +20,7 @@ type testEditCfgData struct {
 }
 
 var rclient *redis.Client
-var cvSess  *cvl.CVL
+var cv  *cvl.CVL
 var port_map map[string]interface{}
 
 
@@ -168,16 +169,36 @@ func prepareDb() {
 
 /* Setup before starting of test. */ 
 func TestMain(m *testing.M) {
-	cvSess, _ = cvl.ValidatorSessOpen()
+
+	output, err  := exec.Command("/bin/sh", "-c", "sudo /etc/init.d/redis-server start").Output()
+
+	if err!=nil {
+		fmt.Println(err.Error())
+	}
+
+      	fmt.Println(string(output))
+
+	cv, _ := cvl.ValidatorSessOpen()
+
 	/* Prepare the Redis database. */
 	prepareDb()
-	os.Exit(m.Run())
+	code := m.Run()
+	//os.Exit(m.Run())
 
 	unloadConfigDB(rclient, port_map)
-	cvl.ValidatorSessClose(cvSess)
+	cvl.ValidatorSessClose(cv)
 	cvl.Finish()
         rclient.Close()
         rclient.FlushDb()
+
+	output, err  = exec.Command("/bin/sh", "-c", "sudo /etc/init.d/redis-server stop").Output()
+	if err!=nil {
+		fmt.Println(err.Error())
+	}
+
+        fmt.Println(string(output))
+	os.Exit(code)
+
 }
 
 
@@ -208,10 +229,10 @@ func TestValidateEditConfig_CfgFile(t *testing.T) {
 
 			fmt.Printf("\n\n Validating create data = %v\n\n", cfgData)
 
-			err := cvl.ValidateEditConfig(cfgData)
+			cvlErrObj ,err := cvl.ValidateEditConfig(cfgData)
 
 			if err != tc.retCode {
-				t.Errorf("Config Validation failed.")
+				t.Errorf("Config Validation failed. %v", cvlErrObj)
 			}
 		})
 	}
@@ -248,10 +269,10 @@ func TestValidateEditConfig_CfgStrBuffer(t *testing.T) {
 
 			fmt.Printf("\n\n Validating create data = %v\n\n", cfgData)
 
-			err := cvl.ValidateEditConfig(cfgData)
+			cvlErrObj, err := cvl.ValidateEditConfig(cfgData)
 
 			if err != tc.retCode {
-				t.Errorf("Config Validation failed.")
+				t.Errorf("Config Validation failed. %v", cvlErrObj)
 			}
 		})
 	}
@@ -277,10 +298,14 @@ func TestValidateConfig_CfgStrBuffer(t *testing.T) {
 		tests = append(tests, testStruct{filedescription: modelName, jsonString: json_validate_config_data[index], retCode: cvl.CVL_SUCCESS})
 	}
 
+	cv, _ := cvl.ValidatorSessOpen()
+
+	fmt.Printf("Cv Value : %v", cv) 
+
 	for index, tc := range tests {
 		t.Logf("Running Testcase %d with Description %s", index+1, tc.filedescription)
 		t.Run(fmt.Sprintf("%s [%d]", tc.filedescription, index+1), func(t *testing.T) {
-			err := cvSess.ValidateConfig(tc.jsonString)
+			err := cv.ValidateConfig(tc.jsonString)
 
 			fmt.Printf("\nValidating data = %v\n\n", tc.jsonString)
 
@@ -307,12 +332,14 @@ func TestValidateConfig_CfgFile(t *testing.T) {
 		{filedescription: "Config File - BUFFER_PG", fileName: "testdata/config_db4.json", retCode: cvl.CVL_SUCCESS},
 	}
 
+	cv, _ := cvl.ValidatorSessOpen()
+
 	for index, tc := range tests {
 
 		t.Logf("Running Testcase %d with Description %s", index+1, tc.filedescription)
 		t.Run(tc.filedescription, func(t *testing.T) {
 			jsonString := convertJsonFileToString(t, tc.fileName)
-			err := cvSess.ValidateConfig(jsonString)
+			err := cv.ValidateConfig(jsonString)
 
 			fmt.Printf("\nValidating data = %v\n\n", jsonString)
 
@@ -358,10 +385,10 @@ func TestValidateEditConfig_Create_Syntax_Valid_FieldValue(t *testing.T) {
                 }
 
 
-		err := cvl.ValidateEditConfig(cfgData)
+		cvlErrInfo, err := cvl.ValidateEditConfig(cfgData)
 
 		if err != cvl.CVL_SUCCESS {
-			t.Errorf("Config Validation failed -- error details.")
+			t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
 		}
 	})
 	
@@ -382,12 +409,12 @@ func TestValidateEditConfig_Create_Syntax_Invalid_FieldValue(t *testing.T) {
 			},
 		}
 
-		err := cvl.ValidateEditConfig(cfgData)
+		cvlErrInfo, err := cvl.ValidateEditConfig(cfgData)
 		fmt.Println(err)
 
 		/* TBD . Proper Error not Returned. */
-		if err != cvl.CVL_SUCCESS {
-			t.Errorf("Config Validation failed -- error details.")
+		if err == cvl.CVL_SUCCESS {
+			t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
 		}
 	})
 
@@ -426,10 +453,10 @@ func TestValidateEditConfig_Create_Syntax_Valid_PacketAction_Positive(t *testing
 	for idx, testDataItem := range testData {
 		t.Run(fmt.Sprintf("Negative - EditConfig(Create) : Invalid Field Value [%d]", idx+1), func(t *testing.T) {
 
-			err := cvl.ValidateEditConfig(testDataItem.data)
+			cvlErrInfo, err := cvl.ValidateEditConfig(testDataItem.data)
 
 			if err != testDataItem.retCode {
-				t.Errorf("Config Validation failed -- error details.")
+				t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
 			}
 		})
 	}
@@ -459,10 +486,10 @@ func TestValidateEditConfig_Create_Syntax_Invalid_PacketAction_Negative(t *testi
                 }
 
 
-		err := cvl.ValidateEditConfig(cfgData)
+		cvlErrInfo, err := cvl.ValidateEditConfig(cfgData)
 
 		if err == cvl.CVL_SUCCESS {
-			t.Errorf("Config Validation failed -- error details.")
+			t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
 		}
 	})
 
@@ -490,10 +517,10 @@ func TestValidateEditConfig_Create_Syntax_Invalid_SrcPrefix_Negative(t *testing.
                 }
 
 
-		err := cvl.ValidateEditConfig(cfgData)
+		cvlErrInfo, err := cvl.ValidateEditConfig(cfgData)
 
 		if err == cvl.CVL_SUCCESS {
-			t.Errorf("Config Validation failed -- error details.")
+			t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
 		}
 	})
 
@@ -520,10 +547,11 @@ func TestValidateEditConfig_Create_Syntax_InvalidIPAddress_Negative(t *testing.T
                 }
 
 
-		err := cvl.ValidateEditConfig(cfgData)
+		cvlErrInfo, err := cvl.ValidateEditConfig(cfgData)
 
+		/* TBD. */
 		if err == cvl.CVL_SUCCESS {
-			t.Errorf("Config Validation failed -- error details.")
+			t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
 		}
 	})
 
@@ -550,10 +578,10 @@ func TestValidateEditConfig_Create_Syntax_OutofBound_Negative(t *testing.T) {
                 }
 
 
-		err := cvl.ValidateEditConfig(cfgData)
+		 cvlErrInfo,err := cvl.ValidateEditConfig(cfgData)
 
 		if err == cvl.CVL_SUCCESS {
-			t.Errorf("Config Validation failed -- error details.")
+			t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
 		}
 	})
 
@@ -580,10 +608,11 @@ func TestValidateEditConfig_Create_Syntax_InvalidProtocol_Negative(t *testing.T)
                 }
 
 
-		err := cvl.ValidateEditConfig(cfgData)
+		 cvlErrInfo,err := cvl.ValidateEditConfig(cfgData)
 
+		/* TBD. */
 		if err == cvl.CVL_SUCCESS {
-			t.Errorf("Config Validation failed -- error details.")
+			t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
 		}
 	})
 
@@ -611,10 +640,11 @@ func TestValidateEditConfig_Create_Syntax_InvalidRange_Negative(t *testing.T) {
                 }
 
 
-		err := cvl.ValidateEditConfig(cfgData)
+		cvlErrInfo, err := cvl.ValidateEditConfig(cfgData)
 
+		/* TBD. */
 		if err == cvl.CVL_SUCCESS {
-			t.Errorf("Config Validation failed -- error details.")
+			t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
 		}
 	})
 
@@ -642,10 +672,10 @@ func TestValidateEditConfig_Create_Syntax_InvalidCharNEw_Negative(t *testing.T) 
                 }
 
 
-		err := cvl.ValidateEditConfig(cfgData)
+		cvlErrInfo, err := cvl.ValidateEditConfig(cfgData)
 
 		if err == cvl.CVL_SUCCESS {
-			t.Errorf("Config Validation failed -- error details.")
+			t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
 		}
 	})
 
@@ -672,10 +702,10 @@ func TestValidateEditConfig_Create_Syntax_InvalidChar_Negative(t *testing.T) {
                 }
 
 
-		err := cvl.ValidateEditConfig(cfgData)
+		cvlErrInfo, err := cvl.ValidateEditConfig(cfgData)
 
 		if err == cvl.CVL_SUCCESS {
-			t.Errorf("Config Validation failed -- error details.")
+			t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
 		}
 	})
 
@@ -702,13 +732,13 @@ func TestValidateEditConfig_Create_Syntax_InvalidKeyName_Negative(t *testing.T) 
                 }
 
 
-		err := cvl.ValidateEditConfig(cfgData)
+		cvlErrInfo, err := cvl.ValidateEditConfig(cfgData)
 
 			     fmt.Println("Ashanew", err)
 
 		/* TBD , Error details return SUCCESS. */
-		if err != cvl.CVL_SUCCESS {
-			t.Errorf("Config Validation failed -- error details.")
+		if err == cvl.CVL_SUCCESS {
+			t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
 		}
 	})
 
@@ -736,10 +766,11 @@ func TestValidateEditConfig_Create_Semantic_AdditionalInvalidNode_Negative(t *te
                 }
 
 
-		err := cvl.ValidateEditConfig(cfgData)
+		cvlErrInfo,err := cvl.ValidateEditConfig(cfgData)
 
+		/* TBD. */
 		if err == cvl.CVL_SUCCESS {
-			t.Errorf("Config Validation failed -- error details.")
+			t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
 		}
 	})
 
@@ -765,10 +796,10 @@ func TestValidateEditConfig_Create_Semantic_MissingMandatoryNode_Negative(t *tes
                 }
 
 
-		err := cvl.ValidateEditConfig(cfgData)
+		cvlErrInfo,err := cvl.ValidateEditConfig(cfgData)
 
 		if err == cvl.CVL_SUCCESS {
-			t.Errorf("Config Validation failed -- error details.")
+			t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
 		}
 	})
 
@@ -795,11 +826,11 @@ func TestValidateEditConfig_Create_Syntax_Invalid_Negative(t *testing.T) {
                 }
 
 
-		err := cvl.ValidateEditConfig(cfgData)
+		cvlErrInfo,err := cvl.ValidateEditConfig(cfgData)
 
 		/* TBD. */
-		if err != cvl.CVL_SUCCESS {
-			t.Errorf("Config Validation failed -- error details.")
+		if err == cvl.CVL_SUCCESS {
+			t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
 		}
 	})
 
@@ -826,10 +857,10 @@ func TestValidateEditConfig_Create_Syntax_IncompleteKey_Negative(t *testing.T) {
                 }
 
 
-		err := cvl.ValidateEditConfig(cfgData)
+		cvlErrInfo,err := cvl.ValidateEditConfig(cfgData)
 
 		if err == cvl.CVL_SUCCESS {
-			t.Errorf("Config Validation failed -- error details.")
+			t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
 		}
 	})
 
@@ -856,11 +887,11 @@ func TestValidateEditConfig_Create_Syntax_InvalidKey_Negative(t *testing.T) {
                 }
 
 
-		err := cvl.ValidateEditConfig(cfgData)
+		cvlErrInfo,err := cvl.ValidateEditConfig(cfgData)
 
 		/* TBD */
-		if err != cvl.CVL_SUCCESS {
-			t.Errorf("Config Validation failed -- error details.")
+		if err == cvl.CVL_SUCCESS {
+			t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
 		}
 	})
 
@@ -892,10 +923,10 @@ func TestValidateEditConfig_Update_Syntax_DependentData_Negative(t *testing.T) {
                 }
 
 
-		err := cvl.ValidateEditConfig(cfgData)
+		cvlErrObj, err := cvl.ValidateEditConfig(cfgData)
 
 		if err == cvl.CVL_SUCCESS {
-			t.Errorf("Config Validation failed -- error details.")
+			t.Errorf("Config Validation failed -- error details %v", cvlErrObj)
 		}
 	})
 
@@ -970,12 +1001,12 @@ func TestValidateEditConfig_Create_Syntax_DependentData_Negative(t *testing.T) {
                         },
                 }
 
-		err := cvl.ValidateEditConfig(cfgData)
+		cvlErrInfo,err := cvl.ValidateEditConfig(cfgData)
 
 
-		/* TBD */
+		/* TBD negative */
 		if err != cvl.CVL_SUCCESS {
-			t.Errorf("Config Validation failed -- error details.")
+			t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
 		}
 	})
 
@@ -1002,10 +1033,10 @@ func TestValidateEditConfig_Delete_Syntax_InvalidKey_Negative(t *testing.T) {
                 }
 
 
-		err := cvl.ValidateEditConfig(cfgData)
+		cvlErrInfo,err := cvl.ValidateEditConfig(cfgData)
 
 		if err == cvl.CVL_SUCCESS {
-			t.Errorf("Config Validation failed -- error details.")
+			t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
 		}
 	})
 
@@ -1032,10 +1063,10 @@ func TestValidateEditConfig_Update_Syntax_InvalidKey_Negative(t *testing.T) {
                 }
 
 
-		err := cvl.ValidateEditConfig(cfgData)
+		cvlErrInfo,err := cvl.ValidateEditConfig(cfgData)
 
 		if err == cvl.CVL_SUCCESS {
-			t.Errorf("Config Validation failed -- error details.")
+			t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
 		}
 	})
 
@@ -1062,10 +1093,10 @@ func TestValidateEditConfig_Delete_InvalidKey_Negative(t *testing.T) {
                 }
 
 
-		err := cvl.ValidateEditConfig(cfgData)
+		cvlErrObj, err := cvl.ValidateEditConfig(cfgData)
 
 		if err == cvl.CVL_SUCCESS {
-			t.Errorf("Config Validation failed -- error details.")
+			t.Errorf("Config Validation failed -- error details %v", cvlErrObj)
 		}
 	})
 
@@ -1092,10 +1123,10 @@ func TestValidateEditConfig_Update_Syntax_Invalid_Field_Negative(t *testing.T) {
                 }
 
 
-		err := cvl.ValidateEditConfig(cfgData)
+		cvlErrInfo,err := cvl.ValidateEditConfig(cfgData)
 
 		if err == cvl.CVL_SUCCESS {
-			t.Errorf("Config Validation failed -- error details.")
+			t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
 		}
 	})
 
@@ -1122,10 +1153,10 @@ func TestValidateEditConfig_Update_Semantic_Invalid_Key_Negative(t *testing.T) {
                 }
 
 
-		err := cvl.ValidateEditConfig(cfgData)
+		cvlErrInfo,err := cvl.ValidateEditConfig(cfgData)
 
 		if err == cvl.CVL_SUCCESS {
-			t.Errorf("Config Validation failed -- error details.")
+			t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
 		}
 	})
 
@@ -1155,10 +1186,10 @@ func TestValidateEditConfig_Delete_Semantic_Positive(t *testing.T) {
                         },
                 }
 
-		err := cvl.ValidateEditConfig(cfgData)
+		cvlErrInfo,err := cvl.ValidateEditConfig(cfgData)
 
 		if err != cvl.CVL_SUCCESS {
-			t.Errorf("Config Validation failed -- error details.")
+			t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
 		}
 	})
 
@@ -1187,10 +1218,10 @@ func TestValidateEditConfig_Delete_Semantic_MissingKey_Negative(t *testing.T) {
                         },
                 }
 
-		err := cvl.ValidateEditConfig(cfgData)
+		cvlErrInfo,err := cvl.ValidateEditConfig(cfgData)
 
 		if err == cvl.CVL_SUCCESS {
-			t.Errorf("Config Validation failed -- error details.")
+			t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
 		}
 	})
 
@@ -1211,10 +1242,10 @@ func TestValidateEditConfig_Update_Semantic_MissingKey_Negative(t *testing.T) {
                         },
                 }
 
-		err := cvl.ValidateEditConfig(cfgData)
+		cvlErrInfo,err := cvl.ValidateEditConfig(cfgData)
 
 		if err == cvl.CVL_SUCCESS {
-			t.Errorf("Config Validation failed -- error details.")
+			t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
 		}
 	})
 
@@ -1248,10 +1279,10 @@ func TestValidateEditConfig_Update_Semantic_Positive(t *testing.T) {
                         },
                 }
 
-		err := cvl.ValidateEditConfig(cfgData)
+		cvlErrInfo,err := cvl.ValidateEditConfig(cfgData)
 
 		if err != cvl.CVL_SUCCESS {
-			t.Errorf("Config Validation failed -- error details.")
+			t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
 		}
 	})
 
@@ -1262,6 +1293,7 @@ func TestValidateEditConfig_Update_Semantic_Positive(t *testing.T) {
 /* API to test edit config with valid syntax. */
 func TestValidateConfig_Update_Semantic_Vlan_Negative(t *testing.T) {
 
+	cv, _ := cvl.ValidatorSessOpen()
 	t.Run("Negative - EditConfig(Update) : Valid Field Value", func(t *testing.T) {
 
 			jsonData :=`{
@@ -1277,7 +1309,7 @@ func TestValidateConfig_Update_Semantic_Vlan_Negative(t *testing.T) {
                 }`
 
 
-                err := cvSess.ValidateConfig(jsonData)
+                err := cv.ValidateConfig(jsonData)
 
 
 		if err != cvl.CVL_SUCCESS {
@@ -1336,10 +1368,10 @@ func TestValidateEditConfig_Update_Syntax_DependentData_Redis_Positive(t *testin
                 }
 
 
-		err := cvl.ValidateEditConfig(cfgData)
+		cvlErrInfo,err := cvl.ValidateEditConfig(cfgData)
 
 		if err != cvl.CVL_SUCCESS {
-			t.Errorf("Config Validation failed -- error details.")
+			t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
 		}
 	})
 
@@ -1391,10 +1423,10 @@ func TestValidateEditConfig_Update_Syntax_DependentData_Invalid_Op_Seq(t *testin
 
 
 
-		err := cvl.ValidateEditConfig(cfgData)
+		cvlErrInfo,err := cvl.ValidateEditConfig(cfgData)
 
 		if err == cvl.CVL_SUCCESS { //Validation should fail
-			t.Errorf("Config Validation failed -- error details.")
+			t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
 		}
 	})
 
@@ -1418,10 +1450,10 @@ func TestValidateEditConfig_Update_Syntax_DependentData_Redis_Negative(t *testin
                 }
 
 
-		err := cvl.ValidateEditConfig(cfgData)
+		cvlErrInfo,err := cvl.ValidateEditConfig(cfgData)
 
 		if err == cvl.CVL_SUCCESS {
-			t.Errorf("Config Validation failed -- error details.")
+			t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
 		}
 	})
 
@@ -1459,10 +1491,10 @@ func TestValidateEditConfig_Create_Syntax_DependentData_Redis_Positive(t *testin
                 }
 
 
-		err := cvl.ValidateEditConfig(cfgData)
+		cvlErrInfo,err := cvl.ValidateEditConfig(cfgData)
 
 		if err != cvl.CVL_SUCCESS {
-			t.Errorf("Config Validation failed -- error details.")
+			t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
 		}
 	})
 
@@ -1483,10 +1515,10 @@ func TestValidateEditConfig_Delete_Semantic_ACLTableReference_Negative(t *testin
                         },
                 }
 
-		err := cvl.ValidateEditConfig(cfgData)
+		cvlErrInfo,err := cvl.ValidateEditConfig(cfgData)
 
 		if err == cvl.CVL_SUCCESS {
-			t.Errorf("Config Validation failed -- error details.")
+			t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
 		}
 	})
 
@@ -1507,16 +1539,18 @@ func TestValidateEditConfig_Delete_Semantic_ACLTableReference_Positive(t *testin
                         },
                 }
 
-		err := cvl.ValidateEditConfig(cfgData)
+		cvlErrInfo,err := cvl.ValidateEditConfig(cfgData)
 
 		if err != cvl.CVL_SUCCESS {
-			t.Errorf("Config Validation failed -- error details.")
+			t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
 		}
 	})
 
 }
 
 func TestValidateEditConfig_Create_Dependent_CacheData(t *testing.T) {
+
+	cvSess, _ := cvl.ValidatorSessOpen()
 
 	t.Run("Positive - EditConfig(Create) with dependent data from cache", func(t *testing.T) {
 		//Create ACL rule
@@ -1532,7 +1566,8 @@ func TestValidateEditConfig_Create_Dependent_CacheData(t *testing.T) {
 			},
 		}
 
-		err1 := cvSess.ValidateEditConfig1(cfgDataAcl)
+		cvlErrInfo ,err1 := cvSess.ValidateEditConfig1(cfgDataAcl)
+		fmt.Println(cvlErrInfo)
 
 		//Create ACL rule
 		cfgDataRule := []cvl.CVLEditConfigData {
@@ -1551,12 +1586,14 @@ func TestValidateEditConfig_Create_Dependent_CacheData(t *testing.T) {
 			},
 		}
 
-		err2 := cvSess.ValidateEditConfig1(cfgDataRule)
+		cvlErrInfo ,err2 := cvSess.ValidateEditConfig1(cfgDataRule)
+		fmt.Println(cvlErrInfo)
 
 		if err1 != cvl.CVL_SUCCESS || err2 != cvl.CVL_SUCCESS {
-			t.Errorf("Config Validation failed.")
+			t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
 		}
 	})
+	cvl.ValidatorSessClose(cvSess)
 }
 
 func TestValidateEditConfig_Create_DepData_In_MultiSess(t *testing.T) {
@@ -1565,7 +1602,7 @@ func TestValidateEditConfig_Create_DepData_In_MultiSess(t *testing.T) {
 	t.Run("Negative - EditConfig(Create) with dependent data in multiple sessionsi, but no cached data", func(t *testing.T) {
 
 		//Create ACL rule - Session 1
-		cvSess1, _ := cvl.ValidatorSessOpen()
+		cvSess, _ := cvl.ValidatorSessOpen()
 		cfgDataAcl := []cvl.CVLEditConfigData {
 			cvl.CVLEditConfigData {
 				cvl.VALIDATE_ALL,
@@ -1578,11 +1615,13 @@ func TestValidateEditConfig_Create_DepData_In_MultiSess(t *testing.T) {
 			},
 		}
 
-		err1 := cvSess1.ValidateEditConfig1(cfgDataAcl)
-		cvl.ValidatorSessClose(cvSess1)
+		cvlErrInfo ,err1 := cvSess.ValidateEditConfig1(cfgDataAcl)
+		fmt.Println(cvlErrInfo)
+
+		cvl.ValidatorSessClose(cvSess)
 
 		//Create ACL rule - Session 2, validation should fail
-		cvSess1, _ = cvl.ValidatorSessOpen()
+		cvSess, _ = cvl.ValidatorSessOpen()
 		cfgDataRule := []cvl.CVLEditConfigData {
 			cvl.CVLEditConfigData {
 				cvl.VALIDATE_ALL,
@@ -1599,11 +1638,14 @@ func TestValidateEditConfig_Create_DepData_In_MultiSess(t *testing.T) {
 			},
 		}
 
-		err2 := cvSess1.ValidateEditConfig1(cfgDataRule)
-		cvl.ValidatorSessClose(cvSess1)
+		cvlSessErr , err2 := cvSess.ValidateEditConfig1(cfgDataRule)
+
+		fmt.Println("Session Info", cvlSessErr)
+
+		cvl.ValidatorSessClose(cvSess)
 
 		if err1 != cvl.CVL_SUCCESS || err2 == cvl.CVL_SUCCESS {
-			t.Errorf("Config Validation failed.")
+			t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
 		}
 	})
 
@@ -1624,6 +1666,7 @@ func TestValidateEditConfig_Create_DepData_From_Redis(t *testing.T) {
 
 	t.Run("Positive - EditConfig(Create) with dependent data from redis", func(t *testing.T) {
 		//Create ACL rule - Session 2
+		cvSess, _ := cvl.ValidatorSessOpen()
 		cfgDataRule := []cvl.CVLEditConfigData {
 			cvl.CVLEditConfigData {
 				cvl.VALIDATE_ALL,
@@ -1640,10 +1683,13 @@ func TestValidateEditConfig_Create_DepData_From_Redis(t *testing.T) {
 			},
 		}
 
-		err := cvSess.ValidateEditConfig1(cfgDataRule)
+		cvlErrInfo, err := cvSess.ValidateEditConfig1(cfgDataRule)
+		fmt.Println(cvlErrInfo)
+
+		cvl.ValidatorSessClose(cvSess)
 
 		if err != cvl.CVL_SUCCESS {
-			t.Errorf("Config Validation failed.")
+			t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
 		}
 	})
 
