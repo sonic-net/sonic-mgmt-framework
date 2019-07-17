@@ -21,9 +21,25 @@ PYANG_BIN        := pyang
 
 .PHONY: all yamlGen
 
-all: yamlGen
+all: yamlGen allyangs.tree allyangs_tree.html 
 
 yamlGen: $(YANGAPI_DIR)/.done
+
+allyangs.tree:  $(YANG_MOD_FILES) $(YANG_COMMON_FILES)
+	$(PYANG_BIN) \
+		-f tree \
+		-o $(YANGDIR)/$@ \
+		-p $(YANGDIR_COMMON):$(YANGDIR) \
+		$(YANG_MOD_FILES)
+	@echo "+++++ Generation of  YANG tree for Yang modules completed +++++"
+
+allyangs_tree.html:  $(YANG_MOD_FILES) $(YANG_COMMON_FILES)
+	$(PYANG_BIN) \
+		-f jstree \
+		-o $(YANGDIR)/$@ \
+		-p $(YANGDIR_COMMON):$(YANGDIR) \
+		$(YANG_MOD_FILES)
+	@echo "+++++ Generation of  HTML tree for Yang modules completed +++++"
 
 #======================================================================
 # Generate YAML files for Yang modules
@@ -46,3 +62,4 @@ $(YANGAPI_DIR)/.done:  $(YANG_MOD_FILES) $(YANG_COMMON_FILES)
 
 clean:
 	rm -rf $(YANGAPI_DIR)
+	rm -rf allyangs.tree allyangs_tree.html

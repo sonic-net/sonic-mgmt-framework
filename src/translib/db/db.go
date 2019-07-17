@@ -13,7 +13,7 @@ Example:
 
  * Initialization:
 
-        d := db.NewDB(db.Options {
+        d, _ := db.NewDB(db.Options {
                         DBNo              : db.ConfigDB,
                         InitIndicator     : "CONFIG_DB_INITIALIZED",
                         TableNameSeparator: "|",
@@ -67,7 +67,8 @@ Example:
                         },
                 }
 
-        d.StartTx([]db.WatchKeys { {Ts: &tsr, Key: &rkey} })
+        d.StartTx([]db.WatchKeys { {Ts: &tsr, Key: &rkey} },
+                  []*db.TableSpec { &tsa, &tsr })
 
         d.SetEntry( &tsa, akey, avalue)
         d.SetEntry( &tsr, rkey, rvalue)
@@ -76,7 +77,8 @@ Example:
 
  * Transaction Abort
 
-        d.StartTx([]db.WatchKeys { {Ts: &tsr, Key: &rkey} })
+        d.StartTx([]db.WatchKeys {},
+                  []*db.TableSpec { &tsa, &tsr })
         d.DeleteEntry( &tsa, rkey)
         d.AbortTx()
 
@@ -95,6 +97,7 @@ import (
 	"github.com/go-redis/redis"
 	"github.com/golang/glog"
 	"cvl"
+	"translib/tlerr"
 )
 
 const (
@@ -237,7 +240,10 @@ func (d DB) String() string {
 }
 
 // NewDB is the factory method to create new DB's.
-func NewDB(opt Options) *DB {
+func NewDB(opt Options) (*DB, error) {
+
+	var e error
+
 	if glog.V(3) {
 		glog.Info("NewDB: Begin: opt: ", opt)
 	}
@@ -262,6 +268,7 @@ func NewDB(opt Options) *DB {
 
 	if d.client == nil {
 		glog.Error("NewDB: Could not create redis client")
+		e = tlerr.TranslibDBCannotOpen { }
 		goto NewDBExit
 	}
 
@@ -279,6 +286,7 @@ func NewDB(opt Options) *DB {
 	} else if init, _ := d.client.Get(d.Opts.InitIndicator).Int(); init != 1 {
 
 		glog.Error("NewDB: Database not inited")
+		e = tlerr.TranslibDBNotInit { }
 		goto NewDBExit
 	}
 
@@ -287,10 +295,10 @@ NewDBSkipInitIndicatorCheck:
 NewDBExit:
 
 	if glog.V(3) {
-		glog.Info("NewDB: End: d: ", d)
+		glog.Info("NewDB: End: d: ", d, " e: ", e)
 	}
 
-	return &d
+	return &d, e
 }
 
 // DeleteDB is the gentle way to close the DB connection.
@@ -329,6 +337,15 @@ func (d *DB) redis2key(ts *TableSpec, redisKey string) Key {
 
 }
 
+func (d *DB) ts2redisUpdated(ts *TableSpec) string {
+
+	if glog.V(5) {
+		glog.Info("ts2redisUpdated: Begin: ", ts.Name)
+	}
+
+	return string("CONFIG_DB_UPDATED_") + ts.Name
+}
+
 // GetEntry retrieves an entry(row) from the table.
 func (d *DB) GetEntry(ts *TableSpec, key Key) (Value, error) {
 
@@ -354,7 +371,8 @@ func (d *DB) GetEntry(ts *TableSpec, key Key) (Value, error) {
 		if glog.V(4) {
 			glog.Info("GetEntry: HGetAll(): empty map")
 		}
-		e = errors.New("Entry does not exist")
+		// e = errors.New("Entry does not exist")
+		e = tlerr.TranslibRedisClientEntryNotExist { Entry: d.key2redis(ts, key) }
 	}
 
 	if glog.V(3) {
@@ -473,11 +491,12 @@ func (d *DB) doCVL(ts * TableSpec, cvlOps []cvl.CVLOperation, key Key, vals []Va
 		glog.Info("doCVL: calling ValidateEditConfig: ", d.cvlEditConfigData)
 	}
 
-	cvlRetCode = cvl.ValidateEditConfig(d.cvlEditConfigData)
+	_, cvlRetCode = cvl.ValidateEditConfig(d.cvlEditConfigData)
 
 	if cvl.CVL_SUCCESS != cvlRetCode {
 		glog.Error("doCVL: CVL Failure: " , cvlRetCode)
-		e = errors.New("CVL Failure: " + string(cvlRetCode))
+		// e = errors.New("CVL Failure: " + string(cvlRetCode))
+		e = tlerr.TranslibCVLFailure { Code: int(cvlRetCode) }
 		glog.Error("doCVL: " , len(d.cvlEditConfigData), len(cvlOps))
 		d.cvlEditConfigData = d.cvlEditConfigData[:len(d.cvlEditConfigData) - len(cvlOps)]
 	} else {
@@ -979,10 +998,23 @@ func (w WatchKeys) String() string {
 	return fmt.Sprintf("{ Ts: %v, Key: %v }", w.Ts, w.Key)
 }
 
+func Tables2TableSpecs(tables []string) []* TableSpec {
+	var tss []*TableSpec
+
+	tss = make([]*TableSpec, 0, len(tables))
+
+	for i := 0; i < len(tables); i++ {
+		tss = append(tss, &(TableSpec{ Name: tables[i]}))
+	}
+
+	return tss
+}
+
 // StartTx method is used by infra to start a check-and-set Transaction.
-func (d *DB) StartTx(w []WatchKeys) error {
+func (d *DB) StartTx(w []WatchKeys, tss []*TableSpec) error {
+
 	if glog.V(3) {
-		glog.Info("StartTx: Begin: w: ", w)
+		glog.Info("StartTx: Begin: w: ", w, " tss: ", tss)
 	}
 
 	var e error = nil
@@ -1000,12 +1032,7 @@ func (d *DB) StartTx(w []WatchKeys) error {
 	//   Else append keys to the Cmd args
 	//   Note: (LUA scripts do not support WATCH)
 
-	if len(w) == 0 {
-		glog.Warning("StartTx: Empty WatchKeys. Skipping WATCH")
-		goto StartTxSkipWatch
-	}
-
-	args = make([]interface{}, 0, len(w)+1) // Init. est. with no wildcard
+	args = make([]interface{}, 0, len(w) + len(tss) + 1)
 	args = append(args, "WATCH")
 	for i := 0; i < len(w); i++ {
 
@@ -1024,6 +1051,17 @@ func (d *DB) StartTx(w []WatchKeys) error {
 		for j := 0; j < len(redisKeys); j++ {
 			args = append(args, d.redis2key(w[i].Ts, redisKeys[j]))
 		}
+	}
+
+	// for each TS, append to args the CONFIG_DB_UPDATED_<TABLENAME> key
+
+	for i := 0; i < len(tss); i++ {
+		args = append( args, d.ts2redisUpdated(tss[i]))
+	}
+
+	if len(args) == 1 {
+		glog.Warning("StartTx: Empty WatchKeys. Skipping WATCH")
+		goto StartTxSkipWatch
 	}
 
 	// Issue the WATCH
@@ -1053,6 +1091,8 @@ func (d *DB) CommitTx() error {
 	}
 
 	var e error = nil
+	var tsmap map[TableSpec]bool =
+		make(map[TableSpec]bool, len(d.txCmds)) // UpperBound
 
 	// Validate State
 	switch d.txState {
@@ -1092,6 +1132,9 @@ func (d *DB) CommitTx() error {
 
 		redisKey := d.key2redis(d.txCmds[i].ts, *(d.txCmds[i].key))
 
+		// Add TS to the map of watchTables
+		tsmap[*(d.txCmds[i].ts)] = true;
+
 		switch d.txCmds[i].op {
 
 		case txOpHMSet:
@@ -1129,10 +1172,6 @@ func (d *DB) CommitTx() error {
 			args = make([]interface{}, 0, 2)
 			args = append(args, "DEL", redisKey)
 
-			for k, _ := range d.txCmds[i].value.Field {
-				args = append(args, k)
-			}
-
 			if glog.V(4) {
 				glog.Info("CommitTx: Do: ", args)
 			}
@@ -1146,6 +1185,16 @@ func (d *DB) CommitTx() error {
 
 		if e != nil {
 			glog.Warning("CommitTx: Do: ", args, " e: ", e.Error())
+		}
+	}
+
+	// Flag the Tables as updated.
+	for ts, _ := range tsmap {
+		_, e = d.client.Do("SET", d.ts2redisUpdated(&ts), "1").Result()
+		if e != nil {
+			glog.Warning("CommitTx: Do: SET ",
+				d.ts2redisUpdated(&ts), " 1: e: ",
+				e.Error())
 		}
 	}
 

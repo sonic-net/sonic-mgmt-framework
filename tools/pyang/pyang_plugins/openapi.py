@@ -63,11 +63,8 @@ swaggerDict["swagger"] = "2.0"
 swaggerDict["info"] = OrderedDict()
 swaggerDict["info"]["description"] = "Network management Open APIs for Broadcom's Sonic."
 swaggerDict["info"]["version"] = "1.0.0"
-swaggerDict["info"]["title"] =  "Sonic NMS"
-swaggerDict["info"]["termsOfService"] = "http://www.broadcom.com"
-swaggerDict["info"]["contact"] = {"email": "mohammed.faraaz@broadcom.com"}
-swaggerDict["info"]["license"] = {"name": "Yet to decide", "url": "http://www.broadcom.com"}
-swaggerDict["basePath"] = "/v1" + base_path
+swaggerDict["info"]["title"] =  "SONiC Network Management APIs"
+swaggerDict["basePath"] = base_path
 swaggerDict["schemes"] = ["https", "http"]
 swagger_tags = []
 swaggerDict["tags"] = swagger_tags
@@ -90,13 +87,10 @@ def resetSwaggerDict():
     swaggerDict = OrderedDict()
     swaggerDict["swagger"] = "2.0"
     swaggerDict["info"] = OrderedDict()
-    swaggerDict["info"]["description"] = "Network management Open APIs for Broadcom's Sonic."
+    swaggerDict["info"]["description"] = "Network management Open APIs for Sonic."
     swaggerDict["info"]["version"] = "1.0.0"
-    swaggerDict["info"]["title"] =  "Sonic NMS"
-    swaggerDict["info"]["termsOfService"] = "http://www.broadcom.com"
-    swaggerDict["info"]["contact"] = {"email": "mohammed.faraaz@broadcom.com"}
-    swaggerDict["info"]["license"] = {"name": "Yet to decide", "url": "http://www.broadcom.com"}
-    swaggerDict["basePath"] = "/v1" + base_path
+    swaggerDict["info"]["title"] =  "Sonic Network Management APIs"
+    swaggerDict["basePath"] = base_path
     swaggerDict["schemes"] = ["https", "http"]
     swagger_tags = []
     currentTag = None
@@ -420,7 +414,12 @@ def walk_child_for_list_base(child, actXpath, pathstr, metadata, nonBaseDefName=
             else:
                 swagger_it(child, defName, pathstr, payload, metadata, verb, verb + '_' + defName)
 
-def build_payload(child, payloadDict, uriPath="", oneInstance=False, Xpath="", firstCall=False, config_false=False):
+def build_payload(child, payloadDict, uriPath="", oneInstance=False, Xpath="", firstCall=False, config_false=False, moduleList=[]):
+
+    nodeModuleName = child.i_module.i_modulename
+    if nodeModuleName not in moduleList:
+        moduleList.append(nodeModuleName)
+        firstCall = True
 
     global keysToLeafRefObjSet
 
@@ -467,7 +466,7 @@ def build_payload(child, payloadDict, uriPath="", oneInstance=False, Xpath="", f
 
         childJson = returnJson
 
-    elif child.keyword == "leaf" or child.keyword == "leaf-list":
+    elif child.keyword == "leaf":
 
         if firstCall:
             nodeName = child.i_module.i_modulename + ':' + child.arg
@@ -491,9 +490,36 @@ def build_payload(child, payloadDict, uriPath="", oneInstance=False, Xpath="", f
         if 'format' in typeInfo:
             payloadDict[nodeName]["format"] = typeInfo["format"]
 
+    elif child.keyword == "leaf-list":
+
+        if firstCall:
+            nodeName = child.i_module.i_modulename + ':' + child.arg
+        else:
+            nodeName = child.arg
+
+        parentXpath = statements.mk_path_str(child.parent, True)
+        if hasattr(child, 'i_is_key') and Xpath == parentXpath:
+            if '=' in uriPath.split('/')[-1]:
+                return
+
+        payloadDict[nodeName] = OrderedDict()
+        payloadDict[nodeName]["type"] = "array"
+        payloadDict[nodeName]["items"] = OrderedDict()
+
+        typeInfo = get_node_type(child)
+        if 'type' in typeInfo:
+            dType = typeInfo["type"]
+        else:
+            dType = "string"
+        
+        payloadDict[nodeName]["items"]["type"] = dType      
+
+        if 'format' in typeInfo:
+            payloadDict[nodeName]["items"]["format"] = typeInfo["format"]            
+
     if hasattr(child, 'i_children'):
         for ch in child.i_children:
-            build_payload(ch,childJson,uriPath, False, Xpath, False, config_false)
+            build_payload(ch,childJson,uriPath, False, Xpath, False, config_false, copy.deepcopy(moduleList))
 
 def mk_path_refine(node, metadata):
     def mk_path(node):

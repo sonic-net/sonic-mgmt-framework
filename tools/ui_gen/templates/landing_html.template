@@ -1,0 +1,28 @@
+<!-- HTML for static distribution bundle build -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>SONiC REST UI </title>
+  </head>
+  
+  <body>
+        <center>
+            <h1>Welcome to SONiC REST API explorer</h1>
+        </center>
+        <h2>Please click on any of the links below to explore its corresponding REST APIS</h2>
+        <table style='font-size:20px' cellspacing="15">
+            <tr style='font-size:40px'>
+                <th>Model</th>
+                <th>Description</th>
+            </tr>
+            {% for yaml in yamlList %}
+            <tr>
+                <td><a href="./model.html?urls.primaryName={{yaml}}.yaml" >{{yaml}}</a></td>
+                <td>REST APIs for {{yaml}}</td>
+            </tr> 
+            {% endfor %}         
+        </table>        
+  </body>
+</html>
+

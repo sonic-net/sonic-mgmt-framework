@@ -3,6 +3,7 @@
 *.code-workspace
 pkg/*
 build
+gopkgs
 __pycache__
 *.pyc
 *.rdb
@@ -10,4 +11,5 @@ __pycache__
 
 *.yin
 *.tree
+src/translib/ocbinds/ocbinds.go
 
