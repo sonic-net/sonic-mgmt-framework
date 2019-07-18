@@ -64,6 +64,7 @@ type CVLErrorInfo struct {
         Field	 string        /* Field Name throwing error . */
 	Msg     string        /* Detailed error message. */
 	ConstraintErrMsg  string  /* Constraint error message. */
+	ErrAppTag string
 }
 
 type CVL struct {
@@ -1336,6 +1337,7 @@ func (c *CVL) validateSyntax1(data *yparser.YParserNode) (CVLErrorInfo, CVLRetCo
 			     Field     : errObj.Field,
 			     Msg       : errObj.Msg,
 			     ConstraintErrMsg : errObj.ErrTxt,
+			     ErrAppTag	: errObj.ErrAppTag,
 	   		} 
 
 
@@ -1379,6 +1381,7 @@ func (c *CVL) validateSemantics1(data *yparser.YParserNode, otherDepData *yparse
 			     Field     : errObj.Field,
 			     Msg       : errObj.Msg,
 			     ConstraintErrMsg : errObj.ErrTxt,
+			     ErrAppTag	: errObj.ErrAppTag,
 	   		} 
 
 

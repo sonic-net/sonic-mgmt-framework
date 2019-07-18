@@ -698,6 +698,10 @@ func (app *AclApp) convertInternalToOCAclRuleProperties(ruleData db.Value, aclTy
 			port := ruleData.Get(ruleKey)
 			entrySet.Transport.Config.DestinationPort = getTransportConfigDestPort(port)
 			//entrySet.Transport.State.DestinationPort = &addr
+        } else if "TCP_FLAGS" == ruleKey {
+            tcpFlags := ruleData.Get(ruleKey)
+            entrySet.Transport.Config.TcpFlags = getTransportConfigTcpFlags(tcpFlags)
+            entrySet.Transport.State.TcpFlags = getTransportConfigTcpFlags(tcpFlags)
 		} else if "PACKET_ACTION" == ruleKey {
 			if "FORWARD" == ruleData.Get(ruleKey) {
 				entrySet.Actions.Config.ForwardingAction = ocbinds.OpenconfigAcl_FORWARDING_ACTION_ACCEPT
@@ -1478,6 +1482,39 @@ func getTransportConfigSrcPort(srcPort string) ocbinds.OpenconfigAcl_Acl_AclSets
 	srcPortCfg = new(ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_SourcePort_Union_Uint16)
 	srcPortCfg.Uint16 = uint16(portNum)
 	return srcPortCfg
+}
+
+func getTransportConfigTcpFlags(tcpFlags string) []ocbinds.E_OpenconfigPacketMatchTypes_TCP_FLAGS {
+    var flags []ocbinds.E_OpenconfigPacketMatchTypes_TCP_FLAGS
+    if len(tcpFlags) > 0 {
+        flagStr := strings.Split(tcpFlags, "/")[0]
+        flagNumber,_ := strconv.ParseUint(strings.Replace(flagStr, "0x", "", -1), 16, 32)
+        for i := 0; i < 8; i++ {
+            mask := 1 << uint(i)
+            if (int(flagNumber) & mask) > 0 {
+                switch int(flagNumber) & mask {
+                case 0x01:
+                    flags = append(flags, ocbinds.OpenconfigPacketMatchTypes_TCP_FLAGS_TCP_FIN)
+                case 0x02:
+                    flags = append(flags, ocbinds.OpenconfigPacketMatchTypes_TCP_FLAGS_TCP_SYN)
+                case 0x04:
+                    flags = append(flags, ocbinds.OpenconfigPacketMatchTypes_TCP_FLAGS_TCP_RST)
+                case 0x08:
+                    flags = append(flags, ocbinds.OpenconfigPacketMatchTypes_TCP_FLAGS_TCP_PSH)
+                case 0x10:
+                    flags = append(flags, ocbinds.OpenconfigPacketMatchTypes_TCP_FLAGS_TCP_ACK)
+                case 0x20:
+                    flags = append(flags, ocbinds.OpenconfigPacketMatchTypes_TCP_FLAGS_TCP_URG)
+                case 0x40:
+                    flags = append(flags, ocbinds.OpenconfigPacketMatchTypes_TCP_FLAGS_TCP_ECE)
+                case 0x80:
+                    flags = append(flags, ocbinds.OpenconfigPacketMatchTypes_TCP_FLAGS_TCP_CWR)
+                default:
+                }
+            }
+        }
+    }
+    return flags
 }
 
 func (app *AclApp) generateDbWatchKeys(d *db.DB, isDeleteOp bool) ([]db.WatchKeys, error) {
