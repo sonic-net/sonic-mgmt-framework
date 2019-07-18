@@ -549,8 +549,8 @@ func getAllDbs() ([db.MaxDB]*db.DB, error) {
     dbs[db.ApplDB], err = db.NewDB(db.Options {
                     DBNo              : db.ApplDB,
                     InitIndicator     : "",
-                    TableNameSeparator: "|",
-                    KeySeparator      : "|",
+                    TableNameSeparator: ":",
+                    KeySeparator      : ":",
                       })
 
 	if err != nil {
