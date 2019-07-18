@@ -184,7 +184,7 @@ func TestMain(m *testing.M) {
 
 	fmt.Println(string(output))
 
-	cv, _ := cvl.ValidatorSessOpen()
+	cv, _ = cvl.ValidatorSessOpen()
 
 	/* Prepare the Redis database. */
 	prepareDb()
@@ -1199,7 +1199,7 @@ func TestValidateConfig_Update_Semantic_Vlan_Negative(t *testing.T) {
 
 	err := cv.ValidateConfig(jsonData)
 
-	if err != cvl.CVL_SUCCESS {
+	if err == cvl.CVL_SUCCESS { //Expected semantic failure
 		t.Errorf("Config Validation failed -- error details.")
 	}
 
@@ -1389,11 +1389,33 @@ func TestValidateEditConfig_Delete_Semantic_ACLTableReference_Negative(t *testin
 /* Delete Existing Key.*/
 func TestValidateEditConfig_Delete_Semantic_ACLTableReference_Positive(t *testing.T) {
 
+	depDataMap := map[string]interface{} {
+		"ACL_TABLE" : map[string]interface{} {
+			"TestACL10": map[string] interface{} {
+				"stage": "INGRESS",
+				"type": "L3",
+			},
+		},
+		"ACL_RULE": map[string]interface{} {
+			"TestACL10|Rule1": map[string] interface{} {
+				"PACKET_ACTION": "FORWARD",
+				"SRC_IP": "10.1.1.1/32",
+				"L4_SRC_PORT": "1909",
+				"IP_PROTOCOL": "103",
+				"DST_IP": "20.2.2.2/32",
+				"L4_DST_PORT_RANGE": "9000-12000",
+			},
+		},
+	}
+
+	//Prepare data in Redis
+	loadConfigDB(rclient, depDataMap)
+
 	cfgData := []cvl.CVLEditConfigData{
 		cvl.CVLEditConfigData{
 			cvl.VALIDATE_ALL,
 			cvl.OP_DELETE,
-			"ACL_RULE|TestACL11|Rule1",
+			"ACL_RULE|TestACL10|Rule1",
 			map[string]string{},
 		},
 	}
@@ -1404,6 +1426,7 @@ func TestValidateEditConfig_Delete_Semantic_ACLTableReference_Positive(t *testin
 		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
 	}
 
+	unloadConfigDB(rclient, depDataMap)
 }
 
 func TestValidateEditConfig_Create_Dependent_CacheData(t *testing.T) {
@@ -1610,3 +1633,212 @@ func TestValidateEditConfig_Create_Syntax_InValid_FieldValue(t *testing.T) {
 		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
 	}
 }
+
+//EditConfig(Create) with dependent data from redis
+func TestValidateEditConfig_Create_DepData_From_Redis_Negative(t *testing.T) {
+
+	depDataMap := map[string]interface{} {
+		"ACL_TABLE" : map[string]interface{} {
+			"TestACL1": map[string] interface{} {
+				"stage": "INGRESS",
+				"type": "MIRROR",
+			},
+		},
+	}
+
+	loadConfigDB(rclient, depDataMap)
+
+	cfgDataRule := []cvl.CVLEditConfigData {
+		cvl.CVLEditConfigData {
+			cvl.VALIDATE_ALL,
+			cvl.OP_CREATE,
+			"ACL_RULE|TestACL2|Rule1",
+			map[string]string {
+				"PACKET_ACTION": "FORWARD",
+				"SRC_IP": "10.1.1.1/32",
+				"L4_SRC_PORT": "1909",
+				"IP_PROTOCOL": "103",
+				"DST_IP": "20.2.2.2/32",
+				"L4_DST_PORT_RANGE": "9000-12000",
+			},
+		},
+	}
+
+	_, err := cv.ValidateEditConfig1(cfgDataRule)
+
+	if err == cvl.CVL_SUCCESS { //should not succeed
+		t.Errorf("Config Validation should fail.")
+	}
+
+	unloadConfigDB(rclient, depDataMap)
+}
+
+// EditConfig(Create) with chained leafref from redis
+func TestValidateEditConfig_Create_Chained_Leafref_DepData_Positive(t *testing.T) {
+	depDataMap := map[string]interface{} {
+		"VLAN" : map[string]interface{} {
+			"Vlan100": map[string]interface{} {
+				"members@": "Ethernet1",
+				"vlanid": "100",
+			},
+		},
+		"PORT" : map[string]interface{} {
+			"Ethernet1" : map[string]interface{} {
+				"alias":"hundredGigE1",
+				"lanes": "81,82,83,84",
+				"mtu": "9100",
+			},
+			"Ethernet2" : map[string]interface{} {
+				"alias":"hundredGigE1",
+				"lanes": "85,86,87,89",
+				"mtu": "9100",
+			},
+		},
+		"ACL_TABLE" : map[string]interface{} {
+			"TestACL1": map[string] interface{} {
+				"stage": "INGRESS",
+				"type": "L3",
+				"ports@":"Ethernet2",
+			},
+		},
+	}
+
+	//Prepare data in Redis
+	loadConfigDB(rclient, depDataMap)
+
+	cfgDataVlan := []cvl.CVLEditConfigData {
+		cvl.CVLEditConfigData {
+			cvl.VALIDATE_ALL,
+			cvl.OP_CREATE,
+			"VLAN_MEMBER|Vlan100|Ethernet1",
+			map[string]string {
+				"tagging_mode" : "tagged",
+			},
+		},
+	}
+
+	_, err := cv.ValidateEditConfig1(cfgDataVlan)
+
+	if err != cvl.CVL_SUCCESS { //should succeed
+		t.Errorf("Config Validation failed.")
+		return
+	}
+
+	cfgDataAclRule :=  []cvl.CVLEditConfigData {
+		cvl.CVLEditConfigData {
+			cvl.VALIDATE_ALL,
+			cvl.OP_CREATE,
+			"ACL_RULE|TestACL1|Rule1",
+			map[string]string {
+				"PACKET_ACTION": "FORWARD",
+				"SRC_IP": "10.1.1.1/32",
+				"L4_SRC_PORT": "1909",
+				"IP_PROTOCOL": "103",
+				"DST_IP": "20.2.2.2/32",
+				"L4_DST_PORT_RANGE": "9000-12000",
+			},
+		},
+	}
+
+	_, err = cv.ValidateEditConfig1(cfgDataAclRule)
+	if err != cvl.CVL_SUCCESS { //should succeed
+		t.Errorf("Config Validation failed.")
+	}
+
+	unloadConfigDB(rclient, depDataMap)
+}
+
+//EditConfig(Delete) deleting entry already used by other table as leafref
+func TestValidateEditConfig_Delete_Dep_Leafref_Negative(t *testing.T) {
+	depDataMap := map[string]interface{} {
+		"ACL_TABLE" : map[string]interface{} {
+			"TestACL1": map[string] interface{} {
+				"stage": "INGRESS",
+				"type": "L3",
+			},
+		},
+		"ACL_RULE": map[string]interface{} {
+			"TestACL1|Rule1": map[string] interface{} {
+				"PACKET_ACTION": "FORWARD",
+				"SRC_IP": "10.1.1.1/32",
+				"L4_SRC_PORT": "1909",
+				"IP_PROTOCOL": "103",
+				"DST_IP": "20.2.2.2/32",
+				"L4_DST_PORT_RANGE": "9000-12000",
+			},
+		},
+	}
+
+	//Prepare data in Redis
+	loadConfigDB(rclient, depDataMap)
+
+	cfgDataVlan := []cvl.CVLEditConfigData {
+		cvl.CVLEditConfigData {
+			cvl.VALIDATE_ALL,
+			cvl.OP_DELETE,
+			"ACL_TABLE|TestACL1",
+			map[string]string {
+			},
+		},
+	}
+
+	_, err := cv.ValidateEditConfig1(cfgDataVlan)
+
+	if err != cvl.CVL_SEMANTIC_ERROR { //should be semantic failure
+		t.Errorf("Config Validation failed.")
+	}
+
+	unloadConfigDB(rclient, depDataMap)
+}
+
+//EditConfig(Create) with chained leafref from redis
+func TestValidateEditConfig_Create_Chained_Leafref_DepData_Negative(t *testing.T) {
+	depDataMap := map[string]interface{} {
+		"PORT" : map[string]interface{} {
+			"Ethernet3" : map[string]interface{} {
+				"alias":"hundredGigE1",
+				"lanes": "81,82,83,84",
+				"mtu": "9100",
+			},
+			"Ethernet5" : map[string]interface{} {
+				"alias":"hundredGigE1",
+				"lanes": "85,86,87,89",
+				"mtu": "9100",
+			},
+		},
+		"ACL_TABLE" : map[string]interface{} {
+			"TestACL1": map[string] interface{} {
+				"stage": "INGRESS",
+				"type": "L3",
+				"ports@":"Ethernet2",
+			},
+		},
+	}
+
+	//Prepare data in Redis
+	loadConfigDB(rclient, depDataMap)
+
+	cfgDataAclRule :=  []cvl.CVLEditConfigData {
+		cvl.CVLEditConfigData {
+			cvl.VALIDATE_ALL,
+			cvl.OP_CREATE,
+			"ACL_RULE|TestACL1|Rule1",
+			map[string]string {
+				"PACKET_ACTION": "FORWARD",
+				"SRC_IP": "10.1.1.1/32",
+				"L4_SRC_PORT": "1909",
+				"IP_PROTOCOL": "103",
+				"DST_IP": "20.2.2.2/32",
+				"L4_DST_PORT_RANGE": "9000-12000",
+			},
+		},
+	}
+
+	_, err := cv.ValidateEditConfig1(cfgDataAclRule)
+	if err != cvl.CVL_SUCCESS { //should succeed
+		t.Errorf("Config Validation failed.")
+	}
+
+	unloadConfigDB(rclient, depDataMap)
+}
+

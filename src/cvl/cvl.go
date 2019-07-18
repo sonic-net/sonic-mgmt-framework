@@ -29,6 +29,8 @@ const (
 	INVALID_DB
 )
 
+const DFEAULT_CACHE_DURATION uint16 = 60 /* 60 sec */
+
 var reLeafRef *regexp.Regexp = nil
 var reHashRef *regexp.Regexp = nil
 var cvlInitialized bool
@@ -132,8 +134,11 @@ func init() {
 	Initialize()
 
 	cvg.db = make(map[string]dbCachedData)
+
 	//Global session keeps the global cache
 	cvg.cv, _ = ValidatorSessOpen()
+	//Create buffer channel of length 1
+	cvg.stopChan = make(chan int, 1)
 
 	dbCacheSet(false, "PORT", 0)
 }
@@ -350,7 +355,7 @@ func getRedisToYangKeys(tableName string, redisKey string)[]keyValuePairStruct{
 	for  idx, keyName := range keyNames {
 
 		//check if key-pattern contains specific key pattern
-		if (keyPatterns[idx+1] == fmt.Sprintf("({%s},)*", keyName)) {   // key pattern is "({key},)*" i.e. repeating keysseperated by ','   
+		if (keyPatterns[idx+1] == fmt.Sprintf("({%s},)*", keyName)) {   // key pattern is "({key},)*" i.e. repeating keys seperated by ','   
 			repeatedKeys := strings.Split(keyVals[idx], ",")
 			mkeys = append(mkeys, keyValuePairStruct{keyName, repeatedKeys})
 
@@ -386,38 +391,57 @@ func (c *CVL) addChildNode(parent *xmlquery.Node, xmlChildNode *xmlquery.Node) {
 
 //Add all other table data for validating all 'must' exp for tableName
 func (c *CVL) addTableDataForMustExp(tableName string) CVLRetCode {
-	//Check in cache first and merge
-	if (cvg.db[tableName].root != nil) {
-		var errObj yparser.YParserError
-		//If global cache has the table, add to the session validation
-		if errObj = c.yp.CacheSubtree(cvg.db[tableName].root); errObj.ErrCode != yparser.YP_SUCCESS {
-			return CVL_SYNTAX_ERROR
-		}
-		return CVL_SUCCESS
-	}
-
 
 	if (modelInfo.tableInfo[tableName].mustExp == nil) {
 		return CVL_SUCCESS
 	}
 
 	for mustTblName, _ := range modelInfo.tableInfo[tableName].tablesForMustExp {
-		tableKeys, err:= redisClient.Keys(mustTblName +
-		modelInfo.tableInfo[mustTblName].redisKeyDelim + "*").Result()
-
-		if (err != nil) {
-			continue
-		}
-
-		for _, tableKey := range tableKeys {
-			tableKey = tableKey[len(mustTblName+ modelInfo.tableInfo[mustTblName].redisKeyDelim):] //remove table prefix
-			if (c.tmpDbCache[mustTblName] == nil) {
-				c.tmpDbCache[mustTblName] = map[string]interface{}{tableKey: nil}
-			} else {
-				tblMap := c.tmpDbCache[mustTblName]
-				tblMap.(map[string]interface{})[tableKey] =nil
-				c.tmpDbCache[mustTblName] = tblMap
+		//Check in global cache first and merge to session cache
+		if topNode, _ := dbCacheGet(mustTblName); topNode != nil {
+			var errObj yparser.YParserError
+			//If global cache has the table, add to the session validation
+			TRACE_LOG(1, "Adding global cache to session cache for table %s", tableName)
+			if errObj = c.yp.CacheSubtree(true, topNode); errObj.ErrCode != yparser.YP_SUCCESS {
+				return CVL_SYNTAX_ERROR
 			}
+		} else { //Put the must table in global table and add to session cache
+			dbCacheSet(false, mustTblName, DFEAULT_CACHE_DURATION) //Keep the cache for default duration
+			if topNode, ret := dbCacheGet(mustTblName); topNode != nil {
+				var errObj yparser.YParserError
+				//If global cache has the table, add to the session validation
+				TRACE_LOG(1, "Global cache created, add the data to session cache for table %s", tableName)
+				if errObj = c.yp.CacheSubtree(true, topNode); errObj.ErrCode != yparser.YP_SUCCESS {
+					return CVL_SYNTAX_ERROR
+				}
+			} else if (ret == CVL_SUCCESS) {
+				TRACE_LOG(1, "Global cache empty, no data in Redis for table %s", tableName)
+				return CVL_SUCCESS
+			} else {
+				log.Errorf("Could not create glocal cache for table %s", mustTblName)
+				return CVL_ERROR
+			}
+
+
+			/*
+			tableKeys, err:= redisClient.Keys(mustTblName +
+			modelInfo.tableInfo[mustTblName].redisKeyDelim + "*").Result()
+
+			if (err != nil) {
+				continue
+			}
+
+			for _, tableKey := range tableKeys {
+				tableKey = tableKey[len(mustTblName+ modelInfo.tableInfo[mustTblName].redisKeyDelim):] //remove table prefix
+				if (c.tmpDbCache[mustTblName] == nil) {
+					c.tmpDbCache[mustTblName] = map[string]interface{}{tableKey: nil}
+				} else {
+					tblMap := c.tmpDbCache[mustTblName]
+					tblMap.(map[string]interface{})[tableKey] =nil
+					c.tmpDbCache[mustTblName] = tblMap
+				}
+			}
+			*/
 		}
 	}
 
@@ -521,6 +545,7 @@ func (c *CVL) findUsedAsLeafRef(tableName, field string) []tblFieldPair {
 }
 
 //Add leafref entry for caching
+//It has to be recursive in nature, as there can be chained leafref
 func (c *CVL) addLeafRef(config bool, tableName string, name string, value string) {
 
 	if (config == false) {
@@ -539,7 +564,7 @@ func (c *CVL) addLeafRef(config bool, tableName string, name string, value strin
 				refTableName := matches[2]
 				redisKey := value
 				//only key is there, value wil be fetched and stored here, 
-				//if value can fetched this entry will be deleted that time
+				//if value can't fetched this entry will be deleted that time
 				if (c.tmpDbCache[refTableName] == nil) {
 					c.tmpDbCache[refTableName] = map[string]interface{}{redisKey: nil}
 				} else {
@@ -614,7 +639,13 @@ func (c *CVL) checkFieldMap(fieldMap *map[string]string) map[string]interface{} 
 			//last char @ means it is a leaf-list/array of fields
 			field = field[:len(field)-1] //strip @
 			//split the values seprated using ','
-			fieldMapNew[field] = strings.Split(value, ",")
+			strArr := strings.Split(value, ",")
+			//fieldMapNew[field] = strings.Split(value, ",")
+			arrMap := make([]interface{}, 0)//len(strArr))
+			for _, strArrItem := range strArr {
+				arrMap = append(arrMap, strArrItem)
+			}
+			fieldMapNew[field] = arrMap//make([]interface{}, len(strArr))
 		} else {
 			fieldMapNew[field] = value
 		}
@@ -625,70 +656,99 @@ func (c *CVL) checkFieldMap(fieldMap *map[string]string) map[string]interface{} 
 
 //populate redis data to cache
 func (c *CVL) fetchDataToTmpCache1() *yparser.YParserNode {
-	for tableName, dbKeys := range c.tmpDbCache { //for each table
-
-		if (len(dbKeys.(map[string]interface{}))  == 0) {
-			continue
-		}
-
-		mCmd := map[string]*redis.StringStringMapCmd{}
-		pipe := redisClient.Pipeline()
-
-		for dbKey, _ := range dbKeys.(map[string]interface{}) { //for all keys
-			redisKey := tableName + modelInfo.tableInfo[tableName].redisKeyDelim + dbKey
-			mCmd[dbKey] = pipe.HGetAll(redisKey) //write into pipeline
-			if mCmd[dbKey] == nil {
-				TRACE_LOG(1, "Failed pipe.HGetAll('%s')", redisKey)
-			}
-		}
-
-		_, err := pipe.Exec()
-		if err != nil {
-			TRACE_LOG(1, "Failed to fetch details for table %s", tableName)
-		}
-
-		mapTable := c.tmpDbCache[tableName]
-
-		for key, val := range mCmd {
-			res, err := val.Result()
-			if (err != nil || len(res) == 0) {
-				//no data found, don't keep blank entry
-				delete(mapTable.(map[string]interface{}), key)
-				continue
-			}
-			//exclude table name and delim
-			keyOnly := key
-			fieldMap := c.checkFieldMap(&res)
-			mapTable.(map[string]interface{})[keyOnly] = fieldMap
-		}
-
-		pipe.Close()
-	}
-
-	if (util.Tracing == true) {
-		jsonDataBytes, _ := json.Marshal(c.tmpDbCache)
-		jsonData := string(jsonDataBytes)
-		TRACE_LOG(1, "Top Node=%v\n", jsonData)
-	}
-
-	data, err := jsonquery.ParseJsonMap(&c.tmpDbCache)
-
-	if (err != nil) {
-		return nil
-	}
-
+	entryToFetch := 0
 	var root *yparser.YParserNode = nil
 	var errObj yparser.YParserError
 
-	for jsonNode := data.FirstChild; jsonNode != nil; jsonNode=jsonNode.NextSibling {
-		TRACE_LOG(1, "Top Node=%v\n", jsonNode.Data)
-		//Visit each top level list in a loop for creating table data
-		topNode, _ := c.generateTableData1(true, jsonNode)
-		if (root == nil) {
-			root = topNode
-		} else {
-			if root, errObj = c.yp.MergeSubtree(root, topNode); errObj.ErrCode != yparser.YP_SUCCESS {
-				return nil
+	for entryToFetch = 1; entryToFetch > 0; { //Force to enter the loop for first time
+		//Repeat until all entries are fetched 
+		entryToFetch = 0
+		for tableName, dbKeys := range c.tmpDbCache { //for each table
+
+			if (len(dbKeys.(map[string]interface{}))  == 0) {
+				continue
+			}
+
+			mCmd := map[string]*redis.StringStringMapCmd{}
+			pipe := redisClient.Pipeline()
+
+			for dbKey, val := range dbKeys.(map[string]interface{}) { //for all keys
+				if (val != nil) { //skip entry already fetched
+					mapTable := c.tmpDbCache[tableName]
+					delete(mapTable.(map[string]interface{}), dbKey) //delete entry already fetched
+					continue
+				}
+				entryToFetch = entryToFetch + 1
+
+				redisKey := tableName + modelInfo.tableInfo[tableName].redisKeyDelim + dbKey
+				//Check in global cache first and merge to session cache
+
+				//Otherwise fetch it from Redis
+				mCmd[dbKey] = pipe.HGetAll(redisKey) //write into pipeline
+				if mCmd[dbKey] == nil {
+					TRACE_LOG(1, "Failed pipe.HGetAll('%s')", redisKey)
+				}
+			}
+
+			_, err := pipe.Exec()
+			if err != nil {
+				TRACE_LOG(1, "Failed to fetch details for table %s", tableName)
+			}
+
+			mapTable := c.tmpDbCache[tableName]
+
+			for key, val := range mCmd {
+				res, err := val.Result()
+				if (err != nil || len(res) == 0) {
+					//no data found, don't keep blank entry
+					delete(mapTable.(map[string]interface{}), key)
+					continue
+				}
+				//exclude table name and delim
+				keyOnly := key
+				fieldMap := c.checkFieldMap(&res)
+				mapTable.(map[string]interface{})[keyOnly] = fieldMap
+			}
+
+			pipe.Close()
+		}
+
+		for tableName, dbKeys := range c.tmpDbCache { //for each table
+			//if (len(c.tmpDbCache[tableName].(map[string]interface{})) == 0) {
+			if (len(dbKeys.(map[string]interface{}))  == 0) {
+				//If no table entry delete the table entry
+				 delete(c.tmpDbCache, tableName)
+				 continue
+			}
+		}
+
+		if (entryToFetch == 0) {
+			//No more entry to fetch
+			break
+		}
+
+		if (util.Tracing == true) {
+			jsonDataBytes, _ := json.Marshal(c.tmpDbCache)
+			jsonData := string(jsonDataBytes)
+			TRACE_LOG(1, "Top Node=%v\n", jsonData)
+		}
+
+		data, err := jsonquery.ParseJsonMap(&c.tmpDbCache)
+
+		if (err != nil) {
+			return nil
+		}
+
+		for jsonNode := data.FirstChild; jsonNode != nil; jsonNode=jsonNode.NextSibling {
+			TRACE_LOG(1, "Top Node=%v\n", jsonNode.Data)
+			//Visit each top level list in a loop for creating table data
+			topNode, _ := c.generateTableData1(true, jsonNode)
+			if (root == nil) {
+				root = topNode
+			} else {
+				if root, errObj = c.yp.MergeSubtree(root, topNode); errObj.ErrCode != yparser.YP_SUCCESS {
+					return nil
+				}
 			}
 		}
 	}
@@ -1274,7 +1334,6 @@ func (c *CVL) translateToYang(jsonData string) (*xmlquery.Node, CVLRetCode) {
 }
 */
 
-/*
 //Validate config - syntax and semantics
 func (c *CVL) validate1 (data *yparser.YParserNode) CVLRetCode {
 
@@ -1289,13 +1348,16 @@ func (c *CVL) validate1 (data *yparser.YParserNode) CVLRetCode {
 	if (0 != C.lyd_data_validate(&data, C.LYD_OPT_CONFIG, ctx)) {
 		fmt.Println("Validation failed\n")
 		return CVL_SYNTAX_ERROR
-	}*
+	}*/
 
-	c.yp.ValidateData(data, depData)
+	TRACE_LOG(4, "\nValidate1 data=%v\n", c.yp.NodeDump(data))
+	errObj := c.yp.ValidateData(data, depData)
+	if yparser.YP_SUCCESS != errObj.ErrCode {
+		return CVL_FAILURE
+	}
 
 	return CVL_SUCCESS
 }
-*/
 
 /*
 	
@@ -1342,12 +1404,12 @@ func (c *CVL) validateSyntax1(data *yparser.YParserNode) (CVLErrorInfo, CVLRetCo
 			     Msg       : errObj.Msg,
 			     ConstraintErrMsg : errObj.ErrTxt,
 			     ErrAppTag	: errObj.ErrAppTag,
-	   		} 
+			}
 
 
 		retCode := CVLRetCode(errObj.ErrCode)
 
-		return  cvlErrObj, retCode 
+		return  cvlErrObj, retCode
 	}
 
 	return cvlErrObj, CVL_SUCCESS
@@ -1378,20 +1440,20 @@ func (c *CVL) validateSemantics1(data *yparser.YParserNode, otherDepData *yparse
 
 	if errObj := c.yp.ValidateSemantics(data, depData, otherDepData); errObj.ErrCode != yparser.YP_SUCCESS {
 
-			cvlErrObj =  CVLErrorInfo {
-		             TableName : errObj.TableName,
-			     Keys      : errObj.Keys,
-			     Value     : errObj.Value,
-			     Field     : errObj.Field,
-			     Msg       : errObj.Msg,
-			     ConstraintErrMsg : errObj.ErrTxt,
-			     ErrAppTag	: errObj.ErrAppTag,
-	   		} 
+		cvlErrObj =  CVLErrorInfo {
+			TableName : errObj.TableName,
+			Keys      : errObj.Keys,
+			Value     : errObj.Value,
+			Field     : errObj.Field,
+			Msg       : errObj.Msg,
+			ConstraintErrMsg : errObj.ErrTxt,
+			ErrAppTag	: errObj.ErrAppTag,
+		}
 
 
 		retCode := CVLRetCode(errObj.ErrCode)
 
-		return  cvlErrObj, retCode 
+		return  cvlErrObj, retCode
 	}
 
 /*
@@ -1489,6 +1551,65 @@ func (c *CVL) addCfgDataItem(configData *map[string]interface{}, cfgDataItem CVL
 	return "",""
 }
 
+//Get table entry from cache for redis key
+func dbCacheEntryGet(tableName, key string) (*yparser.YParserNode, CVLRetCode) {
+	//First check if the table is cached
+	topNode, _ := dbCacheGet(tableName)
+
+
+	if (topNode != nil) {
+		//Conver to Yang keys
+		keyValuePair := getRedisToYangKeys(tableName, key)
+
+		//Find if the entry is cached
+		keyCompStr := ""
+		for _, keyValItem := range keyValuePair {
+			keyCompStr = keyCompStr + fmt.Sprintf("[%s='%s']",
+			keyValItem.key, keyValItem.values[0])
+		}
+
+		entryNode := yparser.FindNode(topNode, fmt.Sprintf("//%s:%s/%s%s",
+		modelInfo.tableInfo[tableName].modelName,
+		modelInfo.tableInfo[tableName].modelName,
+		tableName, keyCompStr))
+
+		if (entryNode != nil) {
+			return entryNode, CVL_SUCCESS
+		}
+	}
+
+	return nil, CVL_ERROR
+}
+
+//Get the data from global cache
+func dbCacheGet(tableName string) (*yparser.YParserNode, CVLRetCode) {
+
+	TRACE_LOG(7, "Updating global cache for table %s", tableName)
+	dbCacheTmp, existing := cvg.db[tableName]
+
+	if (existing == false) {
+		return  nil, CVL_FAILURE //not even empty cache present
+	}
+
+	if (dbCacheTmp.root != nil) {
+		//Update the expiry if, cache is destroyable (i.e. expiry != 0)
+		if (time.Now().After(dbCacheTmp.startTime.Add(time.Second * time.Duration(dbCacheTmp.expiry)))) {
+			//Cache expired, clear the cache
+			dbCacheClear(tableName)
+
+			return nil, CVL_ERROR
+		}
+
+		//Since the cache is used actively, update the timestamp
+		dbCacheTmp.startTime = time.Now()
+		cvg.db[tableName] = dbCacheTmp
+
+		return dbCacheTmp.root, CVL_SUCCESS
+	} else {
+		return  nil, CVL_SUCCESS // return success for no entry in Redis db and hencec empty cache
+	}
+}
+
 //Get the table data from redis and cache it in yang node format
 //expiry =0 never expire the cache
 func dbCacheSet(update bool, tableName string, expiry uint16) CVLRetCode {
@@ -1499,6 +1620,8 @@ func dbCacheSet(update bool, tableName string, expiry uint16) CVLRetCode {
 	if (err != nil) {
 		return CVL_FAILURE
 	}
+
+	TRACE_LOG(7, "Building global cache for table %s", tableName)
 
 	tablePrefixLen := len(tableName + modelInfo.tableInfo[tableName].redisKeyDelim)
 	for _, tableKey := range tableKeys {
@@ -1515,7 +1638,7 @@ func dbCacheSet(update bool, tableName string, expiry uint16) CVLRetCode {
 	cvg.db[tableName] = dbCachedData{startTime:time.Now(), expiry: expiry,
 	root: cvg.cv.fetchDataToTmpCache1()}
 
-	//install keyspace notification for the table to update the cache
+	//install keyspace notification for updating the cache
 	if (update == false) {
 		installDbChgNotif()
 	}
@@ -1549,13 +1672,14 @@ func installDbChgNotif() {
 			case msg:= <-notifCh:
 				//Handle update
 				dbCacheUpdate(msg.Channel, msg.Payload)
-
 			}
 		}
 	}()
 }
 
 func dbCacheUpdate(tableName, op string) CVLRetCode {
+	TRACE_LOG(7, "Updating global cache for table %s", tableName)
+
 	switch op {
 	case "hset", "hmset", "hdel":
 		//Delete the existing cache
@@ -1575,6 +1699,8 @@ func dbCacheUpdate(tableName, op string) CVLRetCode {
 func dbCacheClear(tableName string) CVLRetCode {
 	cvg.cv.yp.FreeNode(cvg.db[tableName].root)
 	delete(cvg.db, tableName)
+
+	TRACE_LOG(7, "Clearing global cache for table %s", tableName)
 
 	return CVL_SUCCESS
 }

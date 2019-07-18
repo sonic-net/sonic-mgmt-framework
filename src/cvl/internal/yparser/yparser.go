@@ -239,7 +239,7 @@ func (yp *YParser) NodeDump(root *YParserNode) string {
 		return ""
 	} else {
 		var outBuf *C.char
-		C.lyd_print_mem(&outBuf, (*C.struct_lyd_node)(root), C.LYD_XML, 0)
+		C.lyd_print_mem(&outBuf, (*C.struct_lyd_node)(root), C.LYD_XML, C.LYP_WITHSIBLINGS)
 		return C.GoString(outBuf)
 	}
 }
@@ -261,16 +261,23 @@ func (yp *YParser) MergeSubtree(root, node *YParserNode) (*YParserNode, YParserE
 }
 
 //Cache subtree
-func (yp *YParser) CacheSubtree(node *YParserNode) YParserError {
+func (yp *YParser) CacheSubtree(dupSrc bool, node *YParserNode) YParserError {
 	rootTmp := (*C.struct_lyd_node)(yp.root)
+	var dup *C.struct_lyd_node
+
+	if (dupSrc == true) {
+		dup = C.lyd_dup_withsiblings((*C.struct_lyd_node)(node), C.LYD_DUP_OPT_RECURSIVE | C.LYD_DUP_OPT_NO_ATTR)
+	} else {
+		dup = (*C.struct_lyd_node)(node)
+	}
 
 	if (yp.root != nil) {
-		if (0 != C.lyd_merge_to_ctx(&rootTmp, (*C.struct_lyd_node)(node), 0,
+		if (0 != C.lyd_merge_to_ctx(&rootTmp, (*C.struct_lyd_node)(dup), C.LYD_OPT_DESTRUCT,
 		(*C.struct_ly_ctx)(ypCtx))) {
 			return getErrorDetails()
 		}
 	} else {
-		yp.root = node
+		yp.root = (*YParserNode)(dup)
 	}
 
 	return YParserError {ErrCode : YP_SUCCESS,}
@@ -427,19 +434,19 @@ func getErrorDetails() YParserError {
 	var errMsg, errPath, errAppTag string 
 
 	ctx := (*C.struct_ly_ctx)(ypCtx)
-
 	ypErrFirst := C.ly_err_first(ctx);
 
-	if ((ypErrFirst != nil) && ypErrFirst.prev.no == C.LY_SUCCESS) {
+
+	if ((ypErrFirst != nil) && ypErrFirst.no == C.LY_SUCCESS) {
 		return YParserError {
 			ErrCode : YP_SUCCESS,
 		}
 	}
 
 	if (ypErrFirst != nil) {
-	       errMsg = C.GoString(ypErrFirst.prev.msg)
-	       errPath = C.GoString(ypErrFirst.prev.path)
-	       errAppTag = C.GoString(ypErrFirst.prev.apptag)
+	       errMsg = C.GoString(ypErrFirst.msg)
+	       errPath = C.GoString(ypErrFirst.path)
+	       errAppTag = C.GoString(ypErrFirst.apptag)
 	}
 
 
@@ -473,7 +480,9 @@ func getErrorDetails() YParserError {
 			}
 		}
 	} else if (len(result) == 1) {
-		/* Custom contraint error message like in must statement */
+		/* Custom contraint error message like in must statement. 
+		This can be used by App to display to user.
+		*/
 		errText = errMsg
 	}
 

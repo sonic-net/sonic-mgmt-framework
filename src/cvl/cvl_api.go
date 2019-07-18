@@ -125,10 +125,10 @@ func Finish() {
 }
 
 func ValidatorSessOpen() (*CVL, CVLRetCode) {
-	cvl :=  CVL{}
+	cvl :=  &CVL{}
 	cvl.tmpDbCache = make(map[string]interface{})
 	cvl.yp = &yparser.YParser{}
-	return &cvl, CVL_SUCCESS
+	return cvl, CVL_SUCCESS
 }
 
 func ValidatorSessClose(c *CVL) CVLRetCode {
@@ -165,9 +165,14 @@ func (c *CVL) ValidateConfig(jsonData string) CVLRetCode {
 		if root == nil {
 			//var outBuf *C.char
 			//C.lyd_print_mem(&outBuf, root, C.LYD_XML, 0)
-			return CVL_FAILURE 
+			return CVL_FAILURE
 
 		}
+
+		if (c.validate1(root) != CVL_SUCCESS) {
+			return CVL_FAILURE
+		}
+
 	}
 
 	/*
@@ -220,7 +225,7 @@ func (c *CVL) ValidateEditConfig1(cfgData []CVLEditConfigData) (CVLErrorInfo, CV
 				} else {
 					for field, _ := range cfgDataItem.Data {
 						if (c.checkDeleteConstraint(tbl, key, field) != CVL_SUCCESS) {
-							return cvlErrObj, CVL_SEMANTIC_ERROR 
+							return cvlErrObj, CVL_SEMANTIC_ERROR
 						}
 						break //only one field there
 					}
@@ -256,8 +261,8 @@ func (c *CVL) ValidateEditConfig1(cfgData []CVLEditConfigData) (CVLErrorInfo, CV
 			return cvlErrObj, cvlRetCode 
 		}
 	} else {
-                 return CVLErrorInfo{ErrCode: errN}, errN
-         }
+		return CVLErrorInfo{ErrCode: errN}, errN
+	}
 
 	//Step 3 : Check keys and update dependent data
 	dependentData := make(map[string]interface{})
@@ -329,7 +334,7 @@ func (c *CVL) ValidateEditConfig1(cfgData []CVLEditConfigData) (CVLErrorInfo, CV
 	}
 
 	//Cache validated data
-	if errObj := c.yp.CacheSubtree(yang); errObj.ErrCode != yparser.YP_SUCCESS {
+	if errObj := c.yp.CacheSubtree(false, yang); errObj.ErrCode != yparser.YP_SUCCESS {
 		TRACE_LOG(1, "Could not cache validated data")
 	}
 
