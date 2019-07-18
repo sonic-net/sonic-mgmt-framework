@@ -130,6 +130,7 @@ type YParserModule C.struct_lys_module
 
 var ypCtx *YParserCtx
 
+
 type YParser struct {
 	ctx *YParserCtx
 	root *YParserNode
@@ -144,6 +145,7 @@ type YParserError struct {
 	Keys    []string      /* Keys of the Table having error. */
         Field	string        /* Field Name throwing error . */
         Value	string        /* Field Value throwing error */
+	ErrAppTag string      /* Error App Tag. */
 }
 
 type YParserRetCode int
@@ -414,16 +416,6 @@ func translateLYErrToYParserErr(LYErrcode int) YParserRetCode {
 
 /* This function performs parsing and processing of LIBYANG error messages. */
 func getErrorDetails() YParserError {
-	ctx := (*C.struct_ly_ctx)(ypCtx)
-
-	if (C.ly_errno == C.LY_SUCCESS) {
-		return YParserError {
-			ErrCode : YP_SUCCESS,
-		}
-	}
-
-	errMsg:= C.GoString(C.ly_errmsg(ctx))
-	errPath := C.GoString(C.ly_errpath(ctx))
 	var key []string
 	var errtableName string
 	var ElemVal string
@@ -432,6 +424,24 @@ func getErrorDetails() YParserError {
 	var errText string
 	var msg string
 	var ypErrCode YParserRetCode
+	var errMsg, errPath, errAppTag string 
+
+	ctx := (*C.struct_ly_ctx)(ypCtx)
+	ypErrFirst := C.ly_err_first(ctx);
+
+
+	if ((ypErrFirst != nil) && ypErrFirst.no == C.LY_SUCCESS) {
+		return YParserError {
+			ErrCode : YP_SUCCESS,
+		}
+	}
+
+	if (ypErrFirst != nil) {
+	       errMsg = C.GoString(ypErrFirst.msg)
+	       errPath = C.GoString(ypErrFirst.path)
+	       errAppTag = C.GoString(ypErrFirst.apptag)
+	}
+
 
 	/* Example error messages. 	
 	1. Leafref "/sonic-port:sonic-port/sonic-port:PORT/sonic-port:ifname" of value "Ethernet668" points to a non-existing leaf. 
@@ -523,6 +533,7 @@ func getErrorDetails() YParserError {
 		Field : ElemName,
 		Msg        :  errMessage,
 		ErrTxt: errText,
+		ErrAppTag: errAppTag,
 	}
 
 	TRACE_LOG(1, "YParser error details: %v...", errObj)

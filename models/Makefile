@@ -33,7 +33,10 @@ OPENAPI_SERVERS := $(addsuffix /.openapi_done, $(addprefix $(SERVER_CODEGEN_DIR)
 
 PY_CLIENT_CODEGEN_DIR  := $(BUILD_DIR)/swagger_client_py
 PY_CLIENT_TARGETS := $(addsuffix .yangapi_client, $(addprefix $(PY_CLIENT_CODEGEN_DIR)/, $(YANGAPI_NAMES))) \
-                                        $(addsuffix .openapi_client, $(addprefix $(PY_CLIENT_CODEGEN_DIR)/, $(OPENAPI_NAMES)))
+                     $(addsuffix .openapi_client, $(addprefix $(PY_CLIENT_CODEGEN_DIR)/, $(OPENAPI_NAMES)))
+
+UIGEN_DIR  = $(TOPDIR)/tools/ui_gen
+UIGEN_SRCS = $(shell find $(UIGEN_DIR) -type f)
 
 
 .PHONY: all clean cleanall go-server py-client
@@ -42,9 +45,9 @@ all: go-server py-client
 
 go-server: $(YANGAPI_SERVERS) $(OPENAPI_SERVERS) $(SERVER_DIST_INIT) $(SERVER_DIST_UI_HOME)
 
-$(SERVER_DIST_UI_HOME): $(YANGAPI_SERVERS) $(OPENAPI_SERVERS)
+$(SERVER_DIST_UI_HOME): $(YANGAPI_SERVERS) $(OPENAPI_SERVERS) $(UIGEN_SRCS)
 	@echo "+++ Generating  landing page for Swagger UI +++"
-	$(TOPDIR)/tools/ui_gen/src/uigen.py
+	$(UIGEN_DIR)/src/uigen.py
 
 py-client: $(PY_CLIENT_TARGETS)
 
