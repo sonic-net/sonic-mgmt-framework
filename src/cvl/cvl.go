@@ -1157,6 +1157,7 @@ func (c *CVL) generateTableData(config bool, jsonNode *jsonquery.Node)(*xmlquery
 }
 */
 
+/*
 func jsonMapToYangTree(jsonMap *map[string]interface{}) *yparser.YParserNode {
 	jsonDoc, _ := jsonquery.ParseJsonMap(jsonMap)
 
@@ -1165,6 +1166,7 @@ func jsonMapToYangTree(jsonMap *map[string]interface{}) *yparser.YParserNode {
 	}
 	return nil
 }
+*/
 
 func (c *CVL) translateToYang1(jsonMap *map[string]interface{}) (*yparser.YParserNode, CVLRetCode) {
 	//Parse the map data to json tree
@@ -1272,6 +1274,7 @@ func (c *CVL) translateToYang(jsonData string) (*xmlquery.Node, CVLRetCode) {
 }
 */
 
+/*
 //Validate config - syntax and semantics
 func (c *CVL) validate1 (data *yparser.YParserNode) CVLRetCode {
 
@@ -1286,12 +1289,13 @@ func (c *CVL) validate1 (data *yparser.YParserNode) CVLRetCode {
 	if (0 != C.lyd_data_validate(&data, C.LYD_OPT_CONFIG, ctx)) {
 		fmt.Println("Validation failed\n")
 		return CVL_SYNTAX_ERROR
-	}*/
+	}*
 
 	c.yp.ValidateData(data, depData)
 
 	return CVL_SUCCESS
 }
+*/
 
 /*
 	

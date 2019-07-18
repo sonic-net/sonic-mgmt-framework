@@ -427,19 +427,19 @@ func getErrorDetails() YParserError {
 	var errMsg, errPath, errAppTag string 
 
 	ctx := (*C.struct_ly_ctx)(ypCtx)
+
 	ypErrFirst := C.ly_err_first(ctx);
 
-
-	if ((ypErrFirst != nil) && ypErrFirst.no == C.LY_SUCCESS) {
+	if ((ypErrFirst != nil) && ypErrFirst.prev.no == C.LY_SUCCESS) {
 		return YParserError {
 			ErrCode : YP_SUCCESS,
 		}
 	}
 
 	if (ypErrFirst != nil) {
-	       errMsg = C.GoString(ypErrFirst.msg)
-	       errPath = C.GoString(ypErrFirst.path)
-	       errAppTag = C.GoString(ypErrFirst.apptag)
+	       errMsg = C.GoString(ypErrFirst.prev.msg)
+	       errPath = C.GoString(ypErrFirst.prev.path)
+	       errAppTag = C.GoString(ypErrFirst.prev.apptag)
 	}
 
 
