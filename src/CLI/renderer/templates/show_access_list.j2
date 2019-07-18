@@ -14,13 +14,7 @@
         {%- endif %}
         {% set _list = response_list.append( fwd_action ) %}
         {# Get protocol #}
-        {% set proto = seq["ipv4"]["state"]["protocol"] %}
-        {%- if "TCP" in proto %}
-            {% set proto = "tcp" %}
-        {%- endif %}
-        {%- if "UDP" in proto %}
-            {% set proto = "udp" %}
-        {%- endif %}
+        {% set proto = seq["ipv4"]["state"]["protocol"].split(':')[1].split('_')[1]|lower %}
         {% set _list = response_list.append( proto ) %}
         {# Get Source IP #}
         {% set src_ip = seq["ipv4"]["state"]["source_address"] %}
@@ -42,7 +36,10 @@
 	        {% set _list = response_list.append( dstn_port ) %}
             {%- endif %}
             {%- if seq["transport"]["config"]["tcp_flags"] %}
-	        {% set _list = response_list.append( seq["transport"]["config"]["tcp_flags"] ) %}
+		{% for var in seq["transport"]["config"]["tcp_flags"] %}
+		    {% set flag = var.split(':')[1].split('_')[1]|lower %}
+	            {% set _list = response_list.append( flag ) %}
+		{% endfor %}
             {%- endif %}
         {%- endif %}
         {%- if seq["ipv4"]["state"]["dscp"] %}
