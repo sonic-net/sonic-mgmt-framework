@@ -33,11 +33,13 @@
             {% if vars.update({'ipv6':"IPV6"}) %}{% endif %}
             {% if subif["openconfig-if-ip:ipv4"] %}
               {% set ip_list = subif["openconfig-if-ip:ipv4"]["addresses"]["address"] %}
+              {% set ip_all = [] %}
               {% for ip in ip_list %}
                 {% set ipfx = ip["state"]["ip"] + "/" + ip["state"]["prefix-length"]|string() %}
-                {% if vars.update({'ipv4_src_pfx':ipfx}) %}{% endif %}
+                {{ ip_all.append(ipfx)|default("", True)}}
                 {% if vars.update({'mode4':"MANUAL"}) %}{% endif %}
               {% endfor %}
+              {% if vars.update({'ipv4_src_pfx':ip_all|join(',')}) %}{% endif %}
             {% else %}
               {% if vars.update({'mode4':"not-set"}) %}{% endif %}
             {% endif %}
