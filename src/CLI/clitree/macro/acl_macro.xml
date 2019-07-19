@@ -16,7 +16,7 @@
             </PARAM>
             <PARAM
                 name="dest-any"
-                help="Destination prefix "
+                help="Destination prefix"
                 ptype="SUBCOMMAND"
 		mode= "subcommand"
 		value="any"
@@ -40,7 +40,7 @@
         </PARAM>
         <PARAM
             name="src-any"
-            help="Any source Address"
+            help="Any source address"
             ptype="SUBCOMMAND"
 	    mode="subcommand"
 	    value="any"
@@ -124,9 +124,9 @@
         help="Protocol number"
         ptype="UINT"
         >
-        <MACRO name="IPV4-SRC-OPTIONS" arg="" ></MACRO>
-        <MACRO name="IPV4-DEST-OPTIONS" arg="" ></MACRO>
-        <MACRO name="CMD-END-OPTIONS" arg="" ></MACRO>
+        <MACRO name="IPV4-SRC-OPTIONS" arg="" />
+        <MACRO name="IPV4-DEST-OPTIONS" arg="" />
+        <MACRO name="CMD-END-OPTIONS" arg="" />
     </PARAM>
     <!-- deny icmp -->
     <PARAM
@@ -135,9 +135,9 @@
         ptype="SUBCOMMAND"
         mode="subcommand"
         >
-        <MACRO name="IPV4-SRC-OPTIONS" arg="" ></MACRO>
-        <MACRO name="IPV4-DEST-OPTIONS" arg="" ></MACRO>
-        <MACRO name="CMD-END-OPTIONS" arg="" ></MACRO>
+        <MACRO name="IPV4-SRC-OPTIONS" arg="" />
+        <MACRO name="IPV4-DEST-OPTIONS" arg="" />
+        <MACRO name="CMD-END-OPTIONS" arg="" />
     </PARAM>
     <!-- deny tcp -->
     <PARAM
@@ -146,12 +146,12 @@
         ptype="SUBCOMMAND"
         mode="subcommand"
         >
-        <MACRO name="IPV4-SRC-OPTIONS" arg="" ></MACRO>
-        <MACRO name="TCP-PORT-OPTIONS" arg="src"> </MACRO>
-        <MACRO name="IPV4-DEST-OPTIONS" arg="" ></MACRO>
-        <MACRO name="TCP-PORT-OPTIONS" arg="dst" > </MACRO>
-        <MACRO name="CMD-END-OPTIONS" arg="" ></MACRO>
-        <MACRO name="TCP-END-OPTIONS" arg="" > </MACRO>
+        <MACRO name="IPV4-SRC-OPTIONS" arg="" />
+        <MACRO name="TCP-PORT-OPTIONS" arg="src" />
+        <MACRO name="IPV4-DEST-OPTIONS" arg="" />
+        <MACRO name="TCP-PORT-OPTIONS" arg="dst" />
+        <MACRO name="CMD-END-OPTIONS" arg="" />
+        <MACRO name="TCP-END-OPTIONS" arg=""/>
     </PARAM>
     <!-- permit udp -->
     <PARAM
@@ -160,11 +160,11 @@
         ptype="SUBCOMMAND"
         mode="subcommand"
         >
-        <MACRO name="IPV4-SRC-OPTIONS" arg="" ></MACRO>
-        <MACRO name="TCP-PORT-OPTIONS" arg="src"> </MACRO>
-        <MACRO name="IPV4-DEST-OPTIONS" arg="" ></MACRO>
-        <MACRO name="TCP-PORT-OPTIONS" arg="dst" > </MACRO>
-        <MACRO name="CMD-END-OPTIONS" arg="" ></MACRO>
+        <MACRO name="IPV4-SRC-OPTIONS" arg="" />
+        <MACRO name="TCP-PORT-OPTIONS" arg="src" />
+        <MACRO name="IPV4-DEST-OPTIONS" arg="" />
+        <MACRO name="TCP-PORT-OPTIONS" arg="dst" />
+        <MACRO name="CMD-END-OPTIONS" arg="" />
     </PARAM>
 </MACRODEF>
 

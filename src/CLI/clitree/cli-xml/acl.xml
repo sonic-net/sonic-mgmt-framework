@@ -93,7 +93,7 @@
              name="access-list-name"
              help="Name of the IPv4 access-list (Max size 140)"
              ptype="STRING"
-        >
+             >
         </PARAM>
         <ACTION>python $SONIC_CLI_ROOT/sonic-cli.py patch_openconfig_acl_acl_acl_sets_acl_set ${access-list-name} ACL_IPV4</ACTION>
     </COMMAND>
