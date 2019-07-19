@@ -1,0 +1,36 @@
+{% set vars = {'name': ""} %}
+{% set vars = {'admin_state': ""} %}
+{% set vars = {'oper_state': ""} %}
+{% set vars = {'description': ""} %}
+{% set vars = {'mtu': ""} %}
+{% set vars = {'speed': ""} %}
+{% if json_output -%}
+------------------------------------------------------------------------------------------
+{{'%-20s'|format("Name")}}{{'%-20s'|format("Description")}}{{'%-15s'|format("Admin")}}{{'%-15s'|format("Oper")}}{{'%-15s'|format("Speed")}}{{'%-15s'|format("MTU")}}
+------------------------------------------------------------------------------------------
+{% for key_json in json_output %}
+{% set interface_list = json_output[key_json]["interface"] %}
+{% for interface in interface_list %}
+    {% for key in interface %}
+      {% if "ethernet" in key %}
+        {% if vars.update({'speed':interface[key]["state"]["port-speed"]|replace("openconfig-if-ethernet:SPEED_", "")}) %}{% endif %}
+      {% endif %}
+      {% if "state" in key %}
+        {% if vars.update({'name':interface[key]["name"]}) %}{% endif %}
+        {% if vars.update({'admin_state':interface[key]["admin-status"]}) %}{% endif %}
+        {% if vars.update({'oper_state':interface[key]["oper-status"]}) %}{% endif %}
+        {% if vars.update({'mtu':interface[key]["mtu"]}) %}{% endif %}
+        {% if interface[key]["description"] != "" %}
+        {% if vars.update({'description':interface[key]["description"]}) %}{% endif %}
+        {%else %}
+        {% if vars.update({'description':"-"}) %}{% endif %}
+        {% endif %}
+      {% endif %}
+    {% endfor %}
+{% if 'Ethernet' in vars.name %}
+{{'%-20s'|format(vars.name)}}{{'%-20s'|format(vars.description)}}{{'%-15s'|format(vars.admin_state|lower())}}{{'%-15s'|format(vars.oper_state|lower())}}{{'%-15s'|format(vars.speed)}}{{'%-15s'|format(vars.mtu)}}
+{% endif %}
+{% endfor %}
+{% endfor %}
+{% endif %}
+
