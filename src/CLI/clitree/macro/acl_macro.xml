@@ -16,9 +16,9 @@
             </PARAM>
             <PARAM
                 name="dest-any"
-                help="Destination prefix"
+                help="Any destination address"
                 ptype="SUBCOMMAND"
-		mode= "subcommand"
+		mode="subcommand"
 		value="any"
                 >
             </PARAM>
@@ -34,7 +34,7 @@
         >
         <PARAM
             name="src-prefix"
-            help="Source prefix "
+            help="Source prefix"
             ptype="IP_ADDR_MASK"
             >
         </PARAM>
