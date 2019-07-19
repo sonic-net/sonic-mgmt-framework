@@ -53,6 +53,10 @@ module sonic-port {
 			leaf lanes {
 				type string;
 			}
+
+			leaf admin_status {
+				type scommon:admin-status;
+			}
 		}
 	}
 }

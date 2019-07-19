@@ -124,17 +124,22 @@ func Finish() {
 	yparser.Finish()
 }
 
-func ValidatorSessOpen() (*CVL, CVLRetCode) {
+func ValidationSessOpen() (*CVL, CVLRetCode) {
 	cvl :=  &CVL{}
 	cvl.tmpDbCache = make(map[string]interface{})
 	cvl.yp = &yparser.YParser{}
+
+	if (cvl == nil || cvl.yp == nil) {
+		return nil, CVL_FAILURE
+	}
+
 	return cvl, CVL_SUCCESS
 }
 
-func ValidatorSessClose(c *CVL) CVLRetCode {
+func ValidationSessClose(c *CVL) CVLRetCode {
 	c.yp.DestroyCache()
 	c = nil
-	//c.tmpDbCache = nil
+
 	return CVL_SUCCESS
 }
 
@@ -188,8 +193,12 @@ func (c *CVL) ValidateConfig(jsonData string) CVLRetCode {
 	return CVL_SUCCESS
 }
 
-//Validate config data based on edit operation - no marshalling in between
 func (c *CVL) ValidateEditConfig1(cfgData []CVLEditConfigData) (CVLErrorInfo, CVLRetCode) {
+	return c.ValidateEditConfig(cfgData)
+}
+
+//Validate config data based on edit operation - no marshalling in between
+func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (CVLErrorInfo, CVLRetCode) {
 	var cvlErrObj CVLErrorInfo
 	c.clearTmpDbCache()
 
@@ -486,7 +495,7 @@ func (c *CVL) validateEditConfig(cfgData []CVLEditConfigData) CVLRetCode {
 
 	return CVL_SUCCESS
 }
-*/
+
 
 func ValidateEditConfig(cfgData []CVLEditConfigData)  (CVLErrorInfo, CVLRetCode){
 	 var cvlErrObj CVLErrorInfo
@@ -504,6 +513,7 @@ func ValidateEditConfig(cfgData []CVLEditConfigData)  (CVLErrorInfo, CVLRetCode)
 
 	return cvlErrObj, ret
 }
+*/
 
 /*
 //Validate key only
