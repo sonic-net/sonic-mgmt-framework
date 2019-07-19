@@ -2,6 +2,8 @@
 import sys
 import time
 import json
+import collections
+import re
 import ast
 import openconfig_acl_client
 from openconfig_acl_client.rest import ApiException
@@ -48,58 +50,63 @@ def generate_body(func, args):
 
     # Configure ACL rule specific to an ACL table
     elif func.__name__ == 'patch_list_openconfig_acl_acl_acl_sets_acl_set_acl_entries_acl_entry' :
-       keypath = [ args[0], args[1] ]
-       forwarding_action = "ACCEPT" if args[4] == 'permit' else 'DROP'
-       if args[3] == 'ip' : 
-          protocol = "IP"
-       elif args[3] == 'tcp' :
-          protocol = "IP_TCP"
-       else :
-          protocol = "IP_UDP"
-       if (len(args) <= 7):
-            body =  { "openconfig-acl:acl-entry": [ {
-                        "sequence-id": int(args[2]),
-                        "config": {
-                            "sequence-id": int(args[2]),
-                        },
-                        "ipv4": {
-                            "config": {
-                                "source-address": args[5],
-                                "destination-address": args[6],
-                                "protocol": protocol 
-                            }
-                        },
-                        "actions": {
-                            "config": {
-                                "forwarding-action": forwarding_action 
-                            }
-                        }
-                        } ] }
-       else:
-            body =  { "acl-entry": [ {
-                        "sequence-id": int(args[2]),
-                        "config": {
-                            "sequence-id": int(args[2]),
-                        },
-                        "ipv4": {
-                            "config": {
-                                "source-address": args[5],
-                                "destination-address": args[7],
-                                "protocol": protocol
-                            }
-                        },
-                        "transport": {
-                            "config": {
-                                "source-port": int(args[6]),
-                                "destination-port": int(args[8])
-                            }
-                        },
-                        "actions": {
-                            "config": {
-                                "forwarding-action": forwarding_action
-                            }
-                        }
-                        } ] }
+       	keypath = [ args[0], args[1] ]
+        forwarding_action = "ACCEPT" if args[3] == 'permit' else 'DROP'
+        proto_number = {"icmp":"IP_ICMP","tcp":"IP_TCP","udp":"IP_UDP","6":"IP_TCP","17":"IP_UDP","1":"IP_ICMP",
+                       "2":"IP_IGMP","103":"IP_PIM","46":"IP_RSVP","47":"IP_GRE","51":"IP_AUTH","115":"IP_L2TP"}
+        protocol = proto_number.get(args[4])
+        body=collections.defaultdict(dict)
+        body["acl-entry"]=[{
+                       "sequence-id": int(args[2]),
+                       "config": {
+                                "sequence-id": int(args[2])
+                       },
+                       "ipv4":{
+                           "config":{
+                               "protocol": protocol
+                           }
+                       },
+                       "transport": {
+                           "config": {
+                           }
+                       },
+                       "actions": {
+                           "config": {
+                               "forwarding-action": forwarding_action
+                           }
+                       }
+                   }]
+        re_ip = re.compile("^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}")
+        if re_ip.match(args[5]):
+            body["acl-entry"][0]["ipv4"]["config"]["source-address"]=args[5]
+        elif args[5]=="any":
+            body["acl-entry"][0]["ipv4"]["config"]["source-address"]="0.0.0.0/0"
+        flags_list=[]
+        i=6
+        while(i<len(args)):
+            if args[i] == 'src-eq':
+                i+=1
+                body["acl-entry"][0]["transport"]["config"]["source-port"]=int(args[i])
+
+            if re_ip.match(args[i]):
+                body["acl-entry"][0]["ipv4"]["config"]["destination-address"]=args[i]
+
+            if args[i]=="any":
+                body["acl-entry"][0]["ipv4"]["config"]["destination-address"]="0.0.0.0/0"
+
+            if args[i] == 'dst-eq':
+                i+=1
+                body["acl-entry"][0]["transport"]["config"]["destination-port"]=int(args[i])
+
+            if args[i] == 'dscp':
+                i+=1
+                body["acl-entry"][0]["ipv4"]["config"]["dscp"]=int(args[i])
+
+            if args[i] in ['fin','syn','ack','urg','rst','psh']:
+                args[i]=("tcp_"+args[i]).upper()
+                flags_list.append(args[i])
+                body["acl-entry"][0]["transport"]["config"]["tcp-flags"]=flags_list
+            i+=1
 
     # Add the ACL table binding to an Interface(Ingress / Egress).
     elif func.__name__ == 'patch_list_openconfig_acl_acl_interfaces_interface':
@@ -164,7 +171,7 @@ def generate_body(func, args):
     else:
        body = {} 
     if body is not None: 
-       body = json.dumps(body,ensure_ascii=False)
+       body = json.dumps(body,ensure_ascii=False, indent=4, separators=(',', ': '))
        return keypath, ast.literal_eval(body)
     else:
        return keypath,body
