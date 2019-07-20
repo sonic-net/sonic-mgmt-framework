@@ -135,7 +135,6 @@ func loadConfigDB(rclient *redis.Client, mpi map[string]interface{}) {
 
 func compareErrorDetails(cvlErr cvl.CVLErrorInfo, errcode cvl.CVLRetCode, errAppTag string, constraintmsg string) bool {
 
-	fmt.Println("Asha", cvlErr)
 	if ((cvlErr.ErrCode == errcode) && ((cvlErr.ErrAppTag == errAppTag) || (cvlErr.ConstraintErrMsg == constraintmsg))) {
 		return true
 	}
@@ -394,6 +393,31 @@ func TestValidateEditConfig_Create_Syntax_Valid_FieldValue(t *testing.T) {
 }
 
 /* API to test edit config with invalid field value. */
+func TestValidateEditConfig_Create_Syntax_CableLength(t *testing.T) {
+
+	cfgData := []cvl.CVLEditConfigData{
+		cvl.CVLEditConfigData{
+			cvl.VALIDATE_ALL,
+			cvl.OP_CREATE,
+			"CABLE_LENGTH|AZURE",
+			map[string]string{
+			  "Ethernet8": "5m",
+			  "Ethernet12": "5m",
+			  "Ethernet16": "5m",
+			},
+		},
+	 }
+
+	cvlErrInfo, err := cv.ValidateEditConfig(cfgData)
+	fmt.Println(err)
+
+	if err == cvl.CVL_SUCCESS {
+		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
+	}
+
+}
+
+/* API to test edit config with invalid field value. */
 func TestValidateEditConfig_Create_Syntax_Invalid_FieldValue(t *testing.T) {
 
 	cfgData := []cvl.CVLEditConfigData{
@@ -407,7 +431,6 @@ func TestValidateEditConfig_Create_Syntax_Invalid_FieldValue(t *testing.T) {
 	cvlErrInfo, err := cv.ValidateEditConfig(cfgData)
 	fmt.Println(err)
 
-	/* TBD . Proper Error not Returned. */
 	if err == cvl.CVL_SUCCESS {
 		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
 	}
@@ -532,7 +555,6 @@ func TestValidateEditConfig_Create_Syntax_InvalidIPAddress_Negative(t *testing.T
 
 	cvlErrInfo, err := cv.ValidateEditConfig(cfgData)
 
-	/* TBD. */
 	if err == cvl.CVL_SUCCESS {
 		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
 	}
@@ -587,7 +609,6 @@ func TestValidateEditConfig_Create_Syntax_InvalidProtocol_Negative(t *testing.T)
 
 	cvlErrInfo, err := cv.ValidateEditConfig(cfgData)
 
-	/* TBD. */
 	if err == cvl.CVL_SUCCESS {
 		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
 	}
@@ -615,7 +636,6 @@ func TestValidateEditConfig_Create_Syntax_InvalidRange_Negative(t *testing.T) {
 
 	cvlErrInfo, err := cv.ValidateEditConfig(cfgData)
 
-	/* TBD. */
 	if err == cvl.CVL_SUCCESS {
 		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
 	}
@@ -652,6 +672,15 @@ func TestValidateEditConfig_Create_Syntax_InvalidCharNEw_Negative(t *testing.T) 
 func TestValidateEditConfig_Create_Syntax_InvalidChar_Negative(t *testing.T) {
 
 	cfgData := []cvl.CVLEditConfigData{
+	       cvl.CVLEditConfigData{
+                        cvl.VALIDATE_NONE,
+                        cvl.OP_CREATE,
+                        "ACL_TABLE|TestACL1",
+                        map[string]string{
+                                "stage": "INGRESS",
+                                "type":  "MIRROR",
+                        },
+                },
 		cvl.CVLEditConfigData{
 			cvl.VALIDATE_ALL,
 			cvl.OP_CREATE,
@@ -695,9 +724,6 @@ func TestValidateEditConfig_Create_Syntax_InvalidKeyName_Negative(t *testing.T) 
 
 	cvlErrInfo, err := cv.ValidateEditConfig(cfgData)
 
-	fmt.Println("Ashanew", err)
-
-	/* TBD , Error details return SUCCESS. */
 	if err == cvl.CVL_SUCCESS {
 		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
 	}
@@ -725,7 +751,6 @@ func TestValidateEditConfig_Create_Semantic_AdditionalInvalidNode_Negative(t *te
 
 	cvlErrInfo, err := cv.ValidateEditConfig(cfgData)
 
-	/* TBD. */
 	if err == cvl.CVL_SUCCESS {
 		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
 	}
@@ -735,6 +760,15 @@ func TestValidateEditConfig_Create_Semantic_AdditionalInvalidNode_Negative(t *te
 func TestValidateEditConfig_Create_Semantic_MissingMandatoryNode_Negative(t *testing.T) {
 
 	cfgData := []cvl.CVLEditConfigData{
+		cvl.CVLEditConfigData{
+                        cvl.VALIDATE_NONE,
+                        cvl.OP_CREATE,
+                        "ACL_TABLE|TestACL1",
+                        map[string]string{
+                                "stage": "INGRESS",
+                                "type":  "MIRROR",
+                        },
+                },
 		cvl.CVLEditConfigData{
 			cvl.VALIDATE_ALL,
 			cvl.OP_CREATE,
@@ -777,7 +811,6 @@ func TestValidateEditConfig_Create_Syntax_Invalid_Negative(t *testing.T) {
 
 	cvlErrInfo, err := cv.ValidateEditConfig(cfgData)
 
-	/* TBD. */
 	if err == cvl.CVL_SUCCESS {
 		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
 	}
@@ -830,7 +863,6 @@ func TestValidateEditConfig_Create_Syntax_InvalidKey_Negative(t *testing.T) {
 
 	cvlErrInfo, err := cv.ValidateEditConfig(cfgData)
 
-	/* TBD */
 	if err == cvl.CVL_SUCCESS {
 		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
 	}
@@ -931,7 +963,6 @@ func TestValidateEditConfig_Create_Syntax_DependentData_Negative(t *testing.T) {
 
 	cvlErrInfo, err := cv.ValidateEditConfig(cfgData)
 
-	/* TBD negative */
 	if err == cvl.CVL_SUCCESS {
 		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
 	}
@@ -1579,14 +1610,13 @@ func TestValidateEditConfig_Create_Syntax_InvalidErrAppTag_Negative(t *testing.T
 			"VLAN|Vlan1001",
 			map[string]string{
 				"vlanid":   "1002",
-				"members@": "Ethernet24,ch1,Ethernet8",
+				"members@": "Ethernet24,Ethernet8",
 			},
 		},
 	}
 
 	cvlErrInfo, _ := cv.ValidateEditConfig(cfgData)
 
-	/* TBD negative */
 	if compareErrorDetails(cvlErrInfo, cvl.CVL_SUCCESS, "vlan-invalid", "") != true {
 		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
 	}

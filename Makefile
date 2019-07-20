@@ -70,6 +70,8 @@ cli:
 cvl:
 	$(MAKE) -C src/cvl
 	$(MAKE) -C src/cvl/schema
+cvl-test:
+	$(MAKE) -C src/cvl gotest
 
 rest-server:
 	$(MAKE) -C src/rest
