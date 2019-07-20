@@ -85,9 +85,16 @@ yamlGen:
 	$(MAKE) -C models/yang
 
 go-patch:
-	cp $(TOPDIR)/ygot-modified-files/* $(BUILD_GOPATH)/src/github.com/openconfig/ygot/ytypes/
+	cp $(TOPDIR)/ygot-modified-files/debug.go /tmp/go/src/github.com/openconfig/ygot/ytypes/../util/debug.go
+	cp $(TOPDIR)/ygot-modified-files/container.go /tmp/go/src/github.com/openconfig/ygot/ytypes/container.go
+	cp $(TOPDIR)/ygot-modified-files/list.go /tmp/go/src/github.com/openconfig/ygot/ytypes/list.go
+	cp $(TOPDIR)/ygot-modified-files/leaf.go /tmp/go/src/github.com/openconfig/ygot/ytypes/leaf.go
+	cp $(TOPDIR)/ygot-modified-files/util_schema.go /tmp/go/src/github.com/openconfig/ygot/ytypes/util_schema.go
+	cp $(TOPDIR)/ygot-modified-files/schema.go /tmp/go/src/github.com/openconfig/ygot/ytypes/../util/schema.go
+	cp $(TOPDIR)/ygot-modified-files/unmarshal.go /tmp/go/src/github.com/openconfig/ygot/ytypes/unmarshal.go
+	cp $(TOPDIR)/ygot-modified-files/validate.go /tmp/go/src/github.com/openconfig/ygot/ytypes/validate.go
+	cp $(TOPDIR)/ygot-modified-files/reflect.go /tmp/go/src/github.com/openconfig/ygot/ytypes/../util/reflect.go
 	$(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/openconfig/ygot/ygot
-
 
 install:
 	$(INSTALL) -D $(REST_BIN) $(DESTDIR)/usr/sbin/rest_server

@@ -350,7 +350,9 @@ func unmarshalList(schema *yang.Entry, parent interface{}, jsonList interface{},
 			return err
 		}
 	}
-	util.DbgPrint("list after unmarshal:\n%s\n", pretty.Sprint(parent))
+	if util.IsDebugLibraryEnabled() {
+		util.DbgPrint("list after unmarshal:\n%s\n", pretty.Sprint(parent))	
+	}
 
 	return nil
 }
