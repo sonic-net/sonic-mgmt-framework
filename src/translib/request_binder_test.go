@@ -213,6 +213,13 @@ func TestUnMarshallPayload(t *testing.T) {
 		payload:     []byte{},
 		appRootType: reflect.TypeOf(ocbinds.OpenconfigAcl_Acl{}),
 		want:        "OpenconfigAcl_Acl_AclSets_AclSet",
+	}, {
+		tid:         8, //GET on leaf node
+		uri:         "/openconfig-acl:acl/acl-sets/openconfig-acl:acl-set[name=MyACL1][type=ACL_IPV4]/acl-entries/acl-entry[sequence-id=4]/ipv4/config/source-address",
+		opcode:      5,
+		payload:     []byte{},
+		appRootType: reflect.TypeOf(ocbinds.OpenconfigAcl_Acl{}),
+		want:        "SourceAddress",
 	}}
 
 	for _, tt := range tests {
