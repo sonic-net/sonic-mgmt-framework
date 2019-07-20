@@ -231,6 +231,7 @@ type DB struct {
 
 	txState _txState
 	txCmds  []_txCmd
+	cv *cvl.CVL
 	cvlEditConfigData [] cvl.CVLEditConfigData
 }
 
@@ -491,7 +492,7 @@ func (d *DB) doCVL(ts * TableSpec, cvlOps []cvl.CVLOperation, key Key, vals []Va
 		glog.Info("doCVL: calling ValidateEditConfig: ", d.cvlEditConfigData)
 	}
 
-	_, cvlRetCode = cvl.ValidateEditConfig(d.cvlEditConfigData)
+	_, cvlRetCode = d.cv.ValidateEditConfig(d.cvlEditConfigData)
 
 	if cvl.CVL_SUCCESS != cvlRetCode {
 		glog.Error("doCVL: CVL Failure: " , cvlRetCode)
@@ -1019,6 +1020,13 @@ func (d *DB) StartTx(w []WatchKeys, tss []*TableSpec) error {
 
 	var e error = nil
 	var args []interface{}
+	var ret cvl.CVLRetCode
+
+	//Start CVL session
+	if d.cv, ret = cvl.ValidationSessOpen(); ret != cvl.CVL_SUCCESS {
+		e = errors.New("StartTx: Unable to create CVL session")
+		goto StartTxExit
+	}
 
 	// Validate State
 	if d.txState != txStateNone {
@@ -1210,6 +1218,12 @@ func (d *DB) CommitTx() error {
 	d.txCmds = d.txCmds[:0]
 	d.cvlEditConfigData = d.cvlEditConfigData[:0]
 
+	//Close CVL session
+	if ret := cvl.ValidationSessClose(d.cv); ret != cvl.CVL_SUCCESS {
+		glog.Error("CommitTx: End: Error in closing CVL session")
+	}
+	d.cv = nil
+
 CommitTxExit:
 	if glog.V(3) {
 		glog.Info("CommitTx: End: e: ", e)
@@ -1259,6 +1273,12 @@ func (d *DB) AbortTx() error {
 	d.txState = txStateNone
 	d.txCmds = d.txCmds[:0]
 	d.cvlEditConfigData = d.cvlEditConfigData[:0]
+
+	//Close CVL session
+	if ret := cvl.ValidationSessClose(d.cv); ret != cvl.CVL_SUCCESS {
+		glog.Error("AbortTx: End: Error in closing CVL session")
+	}
+	d.cv = nil
 
 AbortTxExit:
 	if glog.V(3) {

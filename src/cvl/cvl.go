@@ -136,7 +136,7 @@ func init() {
 	cvg.db = make(map[string]dbCachedData)
 
 	//Global session keeps the global cache
-	cvg.cv, _ = ValidatorSessOpen()
+	cvg.cv, _ = ValidationSessOpen()
 	//Create buffer channel of length 1
 	cvg.stopChan = make(chan int, 1)
 
