@@ -5,7 +5,7 @@
 #
 #######################################################################
 
-.PHONY: all clean cleanall codegen rest-server yamlGen cli
+.PHONY: all clean cleanall codegen rest-server rest-clean yamlGen cli
 
 TOPDIR := $(abspath .)
 BUILD_DIR := $(TOPDIR)/build
@@ -15,9 +15,7 @@ ifeq ($(BUILD_GOPATH),)
 export BUILD_GOPATH=$(TOPDIR)/gopkgs
 endif
 
-ifeq ($(GOPATH),)
-export GOPATH=$(BUILD_GOPATH)
-endif
+export GOPATH=$(BUILD_GOPATH):$(TOPDIR)
 
 ifeq ($(GO),)
 GO := /usr/local/go/bin/go 
@@ -43,11 +41,9 @@ GO_DEPS_LIST = github.com/gorilla/mux \
 
 
 PIP2_DEPS_LIST = connexion python_dateutil certifi
+
 REST_BIN = $(BUILD_DIR)/rest_server/dist/main
 CERTGEN_BIN = $(BUILD_DIR)/rest_server/dist/generate_cert
-
-CVL_GOPATH=$(TOPDIR):$(TOPDIR)/src/cvl/build
-GOPATH := $(GOPATH):$(CVL_GOPATH)
 
 
 all: build-deps pip2-deps go-deps go-patch translib rest-server cli
@@ -76,9 +72,11 @@ cvl-test:
 rest-server:
 	$(MAKE) -C src/rest
 
+rest-clean:
+	$(MAKE) -C src/rest clean
+
 translib: cvl
 	$(MAKE) -C src/translib
-
 
 codegen:
 	$(MAKE) -C models
@@ -112,10 +110,9 @@ install:
 $(addprefix $(DEST)/, $(MAIN_TARGET)): $(DEST)/% :
 	mv $* $(DEST)/
 
-clean:
+clean: rest-clean
 	$(MAKE) -C src/cvl clean
 	$(MAKE) -C src/translib clean
-	$(MAKE) -C models clean
 	$(MAKE) -C src/cvl/schema clean
 	$(MAKE) -C src/cvl cleanall
 	rm -rf build/*

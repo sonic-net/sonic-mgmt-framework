@@ -18,15 +18,12 @@ GO := go
 endif
 
 ifeq ($(GOPATH),)
-GOPATH := $(shell $(GO) env GOPATH)
+ABS_TOPDIR := $(abspath $(TOPDIR))
+GOPATH := $(ABS_TOPDIR)/gopkgs:$(ABS_TOPDIR):$(shell $(GO) env GOPATH)
 endif
 
 ifeq ($(GOROOT),)
 GOROOT := $(shell $(GO) env GOROOT)
-endif
-
-ifeq ($(BUILD_GOPATH),)
-BUILD_GOPATH := $(GOPATH)
 endif
 
 REST_DIST_DIR := $(BUILD_DIR)/rest_server/dist
@@ -37,7 +34,7 @@ REST_SRCS := $(shell find $(TOPDIR)/src -name '*.go' | sort) \
 			 $(shell find $(TOPDIR)/models/yang -name '*.yang' | sort) \
 			 $(shell find $(TOPDIR)/models/openapi -name '*.yaml' | sort)
 
-REST_GOPATH := $(BUILD_GOPATH):$(abspath $(TOPDIR)):$(abspath $(REST_DIST_DIR))
+REST_GOPATH := $(GOPATH):$(abspath $(REST_DIST_DIR))
 
 # Certificate generator tool for generating temp certificates.
 # Compiled from standard crypto/tls/generate_cert.go
