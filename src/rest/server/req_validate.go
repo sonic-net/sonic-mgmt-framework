@@ -8,48 +8,41 @@
 package server
 
 import (
-	"bytes"
 	"encoding/json"
-	"io/ioutil"
-	"log"
-	"net/http"
 	"reflect"
 
+	"github.com/golang/glog"
 	"gopkg.in/go-playground/validator.v9"
 )
 
 func isSkipValidation(t reflect.Type) bool {
-	//log.Printf("IsSkipValidation type: %v\n", t)
 	if t == reflect.TypeOf([]int32{}) {
 		return true
-	} else {
-		return false
 	}
+
+	return false
 }
 
 // RequestValidate performas payload validation of request body.
-func RequestValidate(r *http.Request, v interface{}) error {
-	contentType := r.Header.Get("Content-Type")
-	if contentType == "application/json" {
-		return validateRequestJSON(r, v)
+func RequestValidate(payload []byte, ctype *MediaType, rc *RequestContext) ([]byte, error) {
+	if ctype.isJSON() {
+		return validateRequestJSON(payload, rc)
 	}
 
-	log.Printf("Skipping payload validation for content-type '%s'", contentType)
-	return nil
+	glog.Infof("[%s] Skipping payload validation for content-type '%v'", rc.ID, ctype.Type)
+	return payload, nil
 }
 
 // validateRequestJSON performs payload validation for JSON data
-func validateRequestJSON(r *http.Request, v interface{}) error {
-	jsn, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Printf("Error while reading request")
-		return err
-	}
+func validateRequestJSON(jsn []byte, rc *RequestContext) ([]byte, error) {
+	var err error
+	v := rc.Model
+	glog.Infof("[%s] Unmarshalling %d bytes into %T", rc.ID, len(jsn), v)
 
 	err = json.Unmarshal(jsn, v)
 	if err != nil {
-		log.Printf("decoding error %s\n", jsn)
-		return err
+		glog.Errorf("[%s] json decoding error; %v", rc.ID, err)
+		return nil, httpBadRequest("Invalid json")
 	}
 
 	//log.Printf("Received data: %s\n", jsn)
@@ -60,7 +53,7 @@ func validateRequestJSON(r *http.Request, v interface{}) error {
 	}
 
 	if !isSkipValidation(val.Type()) {
-		log.Println("Going to validate request")
+		glog.Infof("[%s] Going to validate request", rc.ID)
 		validate := validator.New()
 		if val.Kind() == reflect.Slice {
 			//log.Println("Validate using Var")
@@ -70,23 +63,20 @@ func validateRequestJSON(r *http.Request, v interface{}) error {
 			err = validate.Struct(v)
 		}
 		if err != nil {
-			log.Printf("validation failed: %s\n", err.Error())
-			return err
+			glog.Errorf("[%s] validation failed: %v", rc.ID, err)
+			return nil, httpBadRequest("Content not as per schema")
 		}
 	} else {
-		log.Printf("Skipping payload validation for dataType %v", val.Type())
+		glog.Infof("[%s] Skipping payload validation for dataType %v", rc.ID, val.Type())
 	}
 
 	// Get sanitized json by marshalling validated body. Removes
 	// extra fields if any..
 	newBody, err := json.Marshal(v)
 	if err != nil {
-		log.Printf("Failed to marshall; %v", err)
-		return err
+		glog.Errorf("[%s] Failed to marshall; %v", rc.ID, err)
+		return nil, httpServerError("Internal error")
 	}
 
-	// Put sanitized body back into http request object
-	r.Body = ioutil.NopCloser(bytes.NewBuffer(newBody))
-
-	return nil
+	return newBody, nil
 }

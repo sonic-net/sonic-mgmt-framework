@@ -11,18 +11,15 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"strings"
-	"sync/atomic"
 
 	"translib"
 
+	"github.com/golang/glog"
 	"github.com/gorilla/mux"
 )
 
-// Request Id generator
-var requestCounter uint64
 var isUserAuthEnabled = false
 
 // SetUserAuthEnable function enables/disables the PAM based user
@@ -37,32 +34,49 @@ func SetUserAuthEnable(val bool) {
 // Swagger code-gen should be configured to invoke this function
 // from all generated stub functions.
 func Process(w http.ResponseWriter, r *http.Request) {
-	reqID := fmt.Sprintf("REST-%d", atomic.AddUint64(&requestCounter, 1))
+	rc, r := GetContext(r)
+	reqID := rc.ID
+	path := r.URL.Path
 
-	var body []byte
+	var status int
+	var data []byte
+	var rtype string
 
-	log.Printf("[%s] Received %s %s; content-len=%d", reqID, r.Method, r.URL.Path, r.ContentLength)
-	if r.ContentLength > 0 {
-		contentType := r.Header.Get("Content-Type")
-		body, _ = ioutil.ReadAll(r.Body)
-
-		log.Printf("[%s] Content-type=%s; data=%s", reqID, contentType, body)
-	}
-
+	// FIXME make it a handler in the chain
 	if isUserAuthEnabled {
 		err := PAMAuthenAndAuthor(w, r)
 		if err != nil {
-			log.Printf("Authentication failed")
+			glog.Errorf("[%s] Authentication failed; %v", reqID, err)
 			return
 		}
 	}
 
-	path := getPathForTranslib(r)
-	log.Printf("[%s] Translated path = %s", reqID, path)
+	glog.Infof("[%s] %s %s; content-len=%d", reqID, r.Method, path, r.ContentLength)
+	_, body, err := getRequestBody(r, rc)
+	if err != nil {
+		status, data, rtype = prepareErrorResponse(err, r)
+		goto write_resp
+	}
 
-	status, data := invokeTranslib(reqID, r.Method, path, body)
+	path = getPathForTranslib(r)
+	glog.Infof("[%s] Translated path = %s", reqID, path)
 
-	log.Printf("[%s] Sending response %d, data=%s", reqID, status, data)
+	status, data, err = invokeTranslib(reqID, r.Method, path, body)
+	if err != nil {
+		glog.Errorf("[%s] Translib returned error - %v", reqID, err)
+		status, data, rtype = prepareErrorResponse(err, r)
+		goto write_resp
+	}
+
+	rtype, err = resolveResponseContentType(data, r, rc)
+	if err != nil {
+		glog.Errorf("[%s] Failed to resolve response content-type, err=%v", rc.ID, err)
+		status, data, rtype = prepareErrorResponse(err, r)
+		goto write_resp
+	}
+
+write_resp:
+	glog.Infof("[%s] Sending response %d, type=%s, data=%s", reqID, status, rtype, data)
 
 	// Write http response.. Following strict order should be
 	// maintained to form proper response.
@@ -70,13 +84,79 @@ func Process(w http.ResponseWriter, r *http.Request) {
 	//	2. Set status code via w.WriteHeader(code)
 	//	3. Finally, write response body via w.Write(bytes)
 	if len(data) != 0 {
-		w.Header().Set("Content-Type", "application/yang-data+json; charset=UTF-8")
+		w.Header().Set("Content-Type", rtype)
 		w.WriteHeader(status)
 		w.Write([]byte(data))
 	} else {
 		// No data, status only
 		w.WriteHeader(status)
 	}
+}
+
+// getRequestBody returns the validated request body
+func getRequestBody(r *http.Request, rc *RequestContext) (*MediaType, []byte, error) {
+	if r.ContentLength < 1 {
+		glog.Infof("[%s] No body", rc.ID)
+		return nil, nil, nil
+	}
+
+	// read body
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		glog.Errorf("[%s] Failed to read body; err=%v", rc.ID, err)
+		return nil, nil, httpError(http.StatusInternalServerError, "")
+	}
+
+	// Parse content-type header value
+	ctype := r.Header.Get("Content-Type")
+
+	// Guess the contet type if client did not provide it
+	if ctype == "" {
+		glog.Infof("[%s] Content-type not provided in request. Guessing it...", rc.ID)
+		ctype = http.DetectContentType(body)
+	}
+
+	ct, err := parseMediaType(ctype)
+	if err != nil {
+		glog.Errorf("[%s] Bad content-type '%s'; err=%v",
+			rc.ID, r.Header.Get("Content-Type"), err)
+		return nil, nil, httpBadRequest("Bad content-type")
+	}
+
+	// Check if content type is one of the acceptable types specified
+	// in "consumes" section in OpenAPI spec.
+	if !rc.Consumes.Contains(ct.Type) {
+		glog.Errorf("[%s] Content-type '%s' not supported. Valid types %v", rc.ID, ct.Type, rc.Consumes)
+		return nil, nil, httpError(http.StatusUnsupportedMediaType, "Unsupported content-type")
+	}
+
+	// Do payload validation if model info is set in the context.
+	if rc.Model != nil {
+		body, err = RequestValidate(body, ct, rc)
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+
+	glog.Infof("[%s] Content-type=%s; data=%s", rc.ID, ctype, body)
+	return ct, body, nil
+}
+
+// resolveResponseContentType
+func resolveResponseContentType(data []byte, r *http.Request, rc *RequestContext) (string, error) {
+	if len(data) == 0 {
+		return "", nil
+	}
+
+	// If OpenAPI spec has only one "produces" option, assume that
+	// app module will return that exact type data!!
+	if len(rc.Produces) == 1 {
+		return rc.Produces[0].Format(), nil
+	}
+
+	//TODO validate against Accept header
+
+	return http.DetectContentType(data), nil
 }
 
 // getPathForTranslib converts REST URIs into GNMI paths
@@ -89,12 +169,9 @@ func getPathForTranslib(r *http.Request) string {
 
 	path, err := mux.CurrentRoute(r).GetPathTemplate()
 	if err != nil {
-		log.Printf("No path template for this route")
+		glog.Infof("No path template for this route")
 		return trimRestconfPrefix(r.URL.Path)
 	}
-
-	//log.Printf("vars = %v", vars)
-	//log.Printf("path = %v", path)
 
 	// Path is a template.. Convert it into GNMI style path
 	// WARNING: does not handle duplicate key attribute names
@@ -102,13 +179,6 @@ func getPathForTranslib(r *http.Request) string {
 	// Template   = /openconfig-acl:acl/acl-sets/acl-set={name},{type}
 	// REST style = /openconfig-acl:acl/acl-sets/acl-set=TEST,ACL_IPV4
 	// GNMI style = /openconfig-acl:acl/acl-sets/acl-set[name=TEST][type=ACL_IPV4]
-	//
-	// Conversion logic:
-	// 1) Remove all "=" and "," from the template
-	//    "acl-set={name},{type}" becomes "acl-set{name}{type}"
-	// 2) Replace all "{ATTR}" patterns with "[ATTR=VALUE]". Attribute
-	//    name value mapping is provided by mux.Vars() API
-	//    "acl-set{name}{type}" becomes "acl-set[name=TEST][type=ACL_IPV4]"
 	path = trimRestconfPrefix(path)
 	path = strings.Replace(path, "={", "{", -1)
 	path = strings.Replace(path, "},{", "}{", -1)
@@ -133,19 +203,9 @@ func trimRestconfPrefix(path string) string {
 	return path
 }
 
-// isTranslibSuccess checks if the error object returned by TransLib
-// is indeed an error!!!!
-func isTranslibSuccess(err error) bool {
-	if err != nil && err.Error() != "Success" {
-		return false
-	}
-
-	return true
-}
-
 // invokeTranslib calls appropriate TransLib API for the given HTTP
 // method. Returns response status code and content.
-func invokeTranslib(reqID, method, path string, payload []byte) (int, []byte) {
+func invokeTranslib(reqID, method, path string, payload []byte) (int, []byte, error) {
 	var status = 400
 	var content []byte
 	var err error
@@ -154,65 +214,41 @@ func invokeTranslib(reqID, method, path string, payload []byte) (int, []byte) {
 	case "GET":
 		req := translib.GetRequest{Path: path}
 		resp, err1 := translib.Get(req)
-		if isTranslibSuccess(err1) {
-			data := resp.Payload
+		if err1 == nil {
 			status = 200
-			content = []byte(data)
+			content = []byte(resp.Payload)
+		} else {
+			err = err1
 		}
-		if err1 != nil {
-			log.Printf("Printing the ErrSrc =%v", resp.ErrSrc)
-		}
-		err = err1
 
 	case "POST":
 		//TODO return 200 for operations request
 		status = 201
 		req := translib.SetRequest{Path: path, Payload: payload}
-		resp, err1 := translib.Create(req)
-		if err1 != nil {
-			log.Printf("Printing the ErrSrc =%v", resp.ErrSrc)
-		}
-		err = err1
+		_, err = translib.Create(req)
 
 	case "PUT":
 		//TODO send 201 if PUT resulted in creation
 		status = 204
 		req := translib.SetRequest{Path: path, Payload: payload}
-		resp, err1 := translib.Replace(req)
-		if err1 != nil {
-			log.Printf("Printing the ErrSrc =%v", resp.ErrSrc)
-		}
-		err = err1
+		_, err = translib.Replace(req)
 
 	case "PATCH":
 		status = 204
 		req := translib.SetRequest{Path: path, Payload: payload}
-		resp, err1 := translib.Update(req)
-		if err1 != nil {
-			log.Printf("Printing the ErrSrc =%v", resp.ErrSrc)
-		}
-		err = err1
+		_, err = translib.Update(req)
 
 	case "DELETE":
 		status = 204
 		req := translib.SetRequest{Path: path}
-		resp, err1 := translib.Delete(req)
-		if err1 != nil {
-			log.Printf("Printing the ErrSrc =%v", resp.ErrSrc)
-		}
-		err = err1
+		_, err = translib.Delete(req)
+
 	default:
-		log.Printf("[%s] Unknown method '%v'", reqID, method)
-		status = 400
+		glog.Errorf("[%s] Unknown method '%v'", reqID, method)
+		err = httpBadRequest("Invalid method")
 	}
 
-	if !isTranslibSuccess(err) {
-		log.Printf("[%s] Translib returned error - %v", reqID, err)
-		status = 400
-		content = []byte(err.Error())
-	}
-
-	return status, content
+	return status, content, err
 }
 
 // hostMetadataHandler function handles "GET /.well-known/host-meta"

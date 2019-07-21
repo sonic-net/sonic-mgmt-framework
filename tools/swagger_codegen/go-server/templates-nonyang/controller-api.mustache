@@ -9,13 +9,16 @@ import (
 ){{#operation}}
 
 func {{nickname}}(w http.ResponseWriter, r *http.Request) {
+	rc, r := server.GetContext(r)
+	rc.Name = "{{operationId}}"
+    {{#consumes}}
+    rc.Consumes.Add("{{mediaType}}")
+    {{/consumes}}
+    {{#produces}}
+    rc.Produces.Add("{{mediaType}}")
+    {{/produces}}
 	{{#bodyParam.required}}
-	vs := {{bodyParam.dataType}}{}
-	err := server.RequestValidate(r, &vs)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
+    rc.Model = &{{bodyParam.dataType}}{}
 	{{/bodyParam.required}}
 	server.Process(w, r)
 }{{/operation}}{{/operations}}
