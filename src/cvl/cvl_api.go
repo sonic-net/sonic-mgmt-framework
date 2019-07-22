@@ -106,7 +106,8 @@ func Initialize() CVLRetCode {
 	for _, modelFilePath := range modelFiles {
 		_, modelFile := filepath.Split(modelFilePath)
 
-		TRACE_LOG(4, "Parsing schema file %s ...\n", modelFilePath)
+		//TRACE_LOG(4, "Parsing schema file %s ...\n", modelFilePath)
+		util.TRACE_LOG(4, util.TRACE_LIBYANG, "Parsing schema file %s ...\n", modelFilePath)
 		var module *yparser.YParserModule
 		if module, _ = yparser.ParseSchemaFile(modelFilePath); module == nil {
 

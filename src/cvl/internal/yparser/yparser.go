@@ -7,7 +7,7 @@ import (
 	"strings"
 	log "github.com/golang/glog"
 //	"fmt"
-	. "cvl/internal/util"
+	"cvl/internal/util"
 )
 
 /*
@@ -175,6 +175,10 @@ const (
 
 var yparserInitialized bool = false
 
+func TRACE_LOG(level log.Level, fmtStr string, args ...interface{}) {
+	util.TRACE_LOG(level, util.TRACE_CACHE, fmtStr, args...)
+}
+
 //package init function 
 func init() {
 	if (os.Getenv("CVL_DEBUG") != "") {
@@ -192,7 +196,7 @@ func Debug(on bool) {
 
 func Initialize() {
 	if (yparserInitialized != true) {
-		ypCtx = (*YParserCtx)(C.ly_ctx_new(C.CString(CVL_SCHEMA), 0))
+		ypCtx = (*YParserCtx)(C.ly_ctx_new(C.CString(util.CVL_SCHEMA), 0))
 		C.ly_verb(C.LY_LLERR)
 	}
 }
@@ -206,7 +210,8 @@ func Finish() {
 //Parse YIN schema file
 func ParseSchemaFile(modelFile string) (*YParserModule, YParserError) {
 	/* schema */
-	TRACE_LOG(4, "Parsing schema file %s ...\n", modelFile)
+	//TRACE_LOG(4, "Parsing schema file %s ...\n", modelFile)
+	util.TRACE_LOG(4, util.TRACE_YPARSER, "Parsing schema file %s ...\n", modelFile)
 
 	module :=  C.lys_parse_path((*C.struct_ly_ctx)(ypCtx), C.CString(modelFile), C.LYS_IN_YIN)
 	if module == nil {

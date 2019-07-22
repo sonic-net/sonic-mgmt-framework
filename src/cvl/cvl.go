@@ -115,7 +115,8 @@ type keyValuePairStruct struct {
 }
 
 func TRACE_LOG(level log.Level, fmtStr string, args ...interface{}) {
-	util.TRACE_LOG(level, fmtStr, args...)
+	//util.TRACE_LOG(level, ((util.TRACE_CACHE) | (util.TRACE_CREATE) | (util.TRACE_UPDATE)), fmtStr, args...)
+	util.TRACE_LOG(level, util.TRACE_CACHE, fmtStr, args...)
 }
 
 func CVL_LOG(level util.CVLLogLevel, fmtStr string, args ...interface{}) {
@@ -131,6 +132,10 @@ func init() {
 	if (os.Getenv("CVL_DEBUG") != "") {
 		util.SetTrace(true)
 	}
+
+	util.ConfigFileSyncHandler()
+	cvlCfgMap := util.ReadConfFile()
+	CVL_LOG(util.INFO ,"Current Values of CVL Configuration File %v", cvlCfgMap)
 
 	//regular expression for leafref and hashref finding
 	reLeafRef = regexp.MustCompile(`.*[/]([a-zA-Z]*:)?(.*)[/]([a-zA-Z]*:)?(.*)`)
@@ -406,7 +411,8 @@ func (c *CVL) addTableDataForMustExp(tableName string) CVLRetCode {
 		if topNode, _ := dbCacheGet(mustTblName); topNode != nil {
 			var errObj yparser.YParserError
 			//If global cache has the table, add to the session validation
-			TRACE_LOG(1, "Adding global cache to session cache for table %s", tableName)
+			//TRACE_LOG(1, "Adding global cache to session cache for table %s", tableName)
+			util.TRACE_LOG(1, util.TRACE_CACHE, "Adding global cache to session cache for table %s", tableName)
 			if errObj = c.yp.CacheSubtree(true, topNode); errObj.ErrCode != yparser.YP_SUCCESS {
 				return CVL_SYNTAX_ERROR
 			}
@@ -415,12 +421,14 @@ func (c *CVL) addTableDataForMustExp(tableName string) CVLRetCode {
 			if topNode, ret := dbCacheGet(mustTblName); topNode != nil {
 				var errObj yparser.YParserError
 				//If global cache has the table, add to the session validation
-				TRACE_LOG(1, "Global cache created, add the data to session cache for table %s", tableName)
+				//TRACE_LOG(1, "Global cache created, add the data to session cache for table %s", tableName)
+				util.TRACE_LOG(1, util.TRACE_CACHE, "Global cache created, add the data to session cache for table %s", tableName)
 				if errObj = c.yp.CacheSubtree(true, topNode); errObj.ErrCode != yparser.YP_SUCCESS {
 					return CVL_SYNTAX_ERROR
 				}
 			} else if (ret == CVL_SUCCESS) {
-				TRACE_LOG(1, "Global cache empty, no data in Redis for table %s", tableName)
+				//TRACE_LOG(1, "Global cache empty, no data in Redis for table %s", tableName)
+				util.TRACE_LOG(1, util.TRACE_CACHE, "Global cache empty, no data in Redis for table %s", tableName)
 				return CVL_SUCCESS
 			} else {
 				CVL_LOG(util.ERROR ,"Could not create glocal cache for table %s", mustTblName)
@@ -1128,7 +1136,8 @@ func (c *CVL) generateTableData1(config bool, jsonNode *jsonquery.Node)(*yparser
 				keyIndices[idx] = 0
 			}
 
-			TRACE_LOG(1, "Starting batch leaf creation - %s\n", c.batchLeaf)
+			//TRACE_LOG(1, "Starting batch leaf creation - %s\n", c.batchLeaf)
+			util.TRACE_LOG(1, util.TRACE_CACHE, "Starting batch leaf creation - %s\n", c.batchLeaf)
 			//process batch leaf creation
 			if errObj := c.yp.AddMultiLeafNodes(modelInfo.tableInfo[tableName].module, listNode, c.batchLeaf); errObj.ErrCode != yparser.YP_SUCCESS {
 				return nil, CVL_SYNTAX_ERROR
@@ -1444,7 +1453,8 @@ func (c *CVL) validateSemantics1(data *yparser.YParserNode, otherDepData *yparse
 	var cvlErrObj CVLErrorInfo
 	//Get dependent data from 
 	depData := c.fetchDataToTmpCache1() //fetch data to temp cache for temporary validation
-	TRACE_LOG(1, "Validating semantics data=%s\n depData =%s\n, otherDepData=%s\n....", c.yp.NodeDump(data), c.yp.NodeDump(depData), c.yp.NodeDump(otherDepData))
+	//TRACE_LOG(1, "Validating semantics data=%s\n depData =%s\n, otherDepData=%s\n....", c.yp.NodeDump(data), c.yp.NodeDump(depData), c.yp.NodeDump(otherDepData))
+	util.TRACE_LOG(1, util.TRACE_SEMANTIC, "Validating semantics data=%s\n depData =%s\n, otherDepData=%s\n....", c.yp.NodeDump(data), c.yp.NodeDump(depData), c.yp.NodeDump(otherDepData))
 
 	if errObj := c.yp.ValidateSemantics(data, depData, otherDepData); errObj.ErrCode != yparser.YP_SUCCESS {
 
@@ -1632,7 +1642,8 @@ func dbCacheSet(update bool, tableName string, expiry uint16) CVLRetCode {
 		return CVL_FAILURE
 	}
 
-	TRACE_LOG(7, "Building global cache for table %s", tableName)
+	//TRACE_LOG(7, "Building global cache for table %s", tableName)
+	util.TRACE_LOG(7, util.TRACE_CACHE, "Building global cache for table %s", tableName)
 
 	tablePrefixLen := len(tableName + modelInfo.tableInfo[tableName].redisKeyDelim)
 	for _, tableKey := range tableKeys {
