@@ -235,8 +235,8 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (CVLErrorInfo, CVL
 
 		tbl,key := c.addCfgDataItem(&requestedData, cfgDataItem)
 
-		if key == "" { 
-			return cvlErrObj, CVL_SEMANTIC_ERROR 
+		if key == "" {
+			return cvlErrObj, CVL_SEMANTIC_ERROR
 		}
 
 		switch cfgDataItem.VOp {
@@ -255,7 +255,7 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (CVLErrorInfo, CVL
 					CVL_LOG(util.ERROR, "Only single field is allowed for field deletion")
 				} else {
 					for field, _ := range cfgDataItem.Data {
-						if (c.checkDeleteConstraint(tbl, key, field) != CVL_SUCCESS) {
+						if (c.checkDeleteConstraint(cfgData, tbl, key, field) != CVL_SUCCESS) {
 							return cvlErrObj, CVL_SEMANTIC_ERROR
 						}
 						break //only one field there
@@ -263,7 +263,7 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (CVLErrorInfo, CVL
 				}
 			} else {
 				//Entire entry to be deleted
-				if (c.checkDeleteConstraint(tbl, key, "") != CVL_SUCCESS) {
+				if (c.checkDeleteConstraint(cfgData, tbl, key, "") != CVL_SUCCESS) {
 					return cvlErrObj, CVL_SEMANTIC_ERROR 
 				}
 			}
@@ -339,6 +339,7 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (CVLErrorInfo, CVL
 
 		} else if (cfgDataItem.VType == VALIDATE_NONE) {
 			//Step 3.2 : Get dependent data
+			/*
 			tbl,key := c.addCfgDataItem(&dependentData, cfgDataItem)
 
 			switch cfgDataItem.VOp {
@@ -351,7 +352,7 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (CVLErrorInfo, CVL
 				c.updateDeleteDataToCache(tbl, key)
 				//store deleted keys
 				deletedKeys[cfgDataItem.Key] = nil;
-			}
+			}*/
 		}
 	}
 

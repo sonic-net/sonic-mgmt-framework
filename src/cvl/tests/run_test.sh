@@ -21,7 +21,10 @@ fi
 
 #Run test and display report
 if [ "${NOREPORT}:" != ":" ] ; then
-	go test  -v -cover ${testcase}
+	go test  -v -cover ${testcase} ${coverage}
+elif [ "${COVERAGE}:" != ":" ] ; then
+	go test  -v -cover -coverprofile coverage.out -coverpkg=cvl,cvl/internal/util,cvl/internal/yparser 
+	go tool cover -html=coverage.out
 else
 	go test  -v -cover  -json ${profiling} ${testcase} | tparse -smallscreen -all
 fi

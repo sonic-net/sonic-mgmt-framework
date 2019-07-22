@@ -17,7 +17,7 @@ func main() {
 		cvl.Debug(true)
 	}
 
-	cv, ret := cvl.ValidatorSessOpen()
+	cv, ret := cvl.ValidationSessOpen()
 	if (ret != cvl.CVL_SUCCESS) {
 		fmt.Printf("NewDB: Could not create CVL session")
 		return
@@ -92,7 +92,7 @@ func main() {
 
 		fmt.Printf("\nValidating data for must = %v\n\n", keyData);
 
-		err := cv.ValidateEditConfig1(keyData)
+		_, err := cv.ValidateEditConfig1(keyData)
 
 		if (err == cvl.CVL_SUCCESS) {
 			fmt.Printf("\nConfig Validation succeeded.\n\n");
@@ -114,7 +114,7 @@ func main() {
 			},
 		}
 
-		err := cv.ValidateEditConfig1(keyData)
+		_, err := cv.ValidateEditConfig1(keyData)
 
 		fmt.Printf("\nValidating field delete...\n\n");
 
@@ -260,7 +260,7 @@ func main() {
 		}
 	}
 
-	cvl.ValidatorSessClose(cv)
+	cvl.ValidationSessClose(cv)
 
 	cvl.Finish()
 

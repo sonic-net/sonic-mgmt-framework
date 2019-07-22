@@ -53,6 +53,7 @@ module sonic-vlan {
 			}
 
 			leaf vlanid {
+				mandatory true;
 				type uint16;
 			}
 

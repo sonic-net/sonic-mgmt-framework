@@ -140,7 +140,7 @@ func TRACE_LOG(level log.Level, tracelevel CVLTraceLevel, fmtStr string, args ..
 		file, line := f.FileLine(pc[0])
 
 		fmt.Printf("%s:%d %s(): ", file, line, f.Name())
-		fmt.Printf(fmtStr, args...)
+		fmt.Printf(fmtStr+"\n", args...)
 	} else {
 		log.V(level).Infof(fmtStr, args...)
 	}
