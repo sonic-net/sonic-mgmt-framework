@@ -263,8 +263,9 @@ def swagger_it(child, defName, pathstr, payload, metadata, verb, operId=False):
     if verb in ["get", "delete"]:
         if '201' in verbPath["responses"]:
             del(verbPath["responses"]["201"])
-        verbPath["responses"]["200"]["schema"] = OrderedDict()
-        verbPath["responses"]["200"]["schema"]["$ref"] = "#/definitions/" + defName
+        if verb == "get":
+            verbPath["responses"]["200"]["schema"] = OrderedDict()
+            verbPath["responses"]["200"]["schema"]["$ref"] = "#/definitions/" + defName
     else:
         if '200' in verbPath["responses"] and verb != "delete":
             del(verbPath["responses"]["200"])
@@ -473,10 +474,10 @@ def build_payload(child, payloadDict, uriPath="", oneInstance=False, Xpath="", f
         else:
             nodeName = child.arg
 
-        parentXpath = statements.mk_path_str(child.parent, True)
-        if hasattr(child, 'i_is_key') and Xpath == parentXpath:
-            if '=' in uriPath.split('/')[-1]:
-                return
+        # parentXpath = statements.mk_path_str(child.parent, True)
+        # if hasattr(child, 'i_is_key') and Xpath == parentXpath:
+        #     if '=' in uriPath.split('/')[-1]:
+        #         return
 
         payloadDict[nodeName] = OrderedDict()
         typeInfo = get_node_type(child)
@@ -497,10 +498,10 @@ def build_payload(child, payloadDict, uriPath="", oneInstance=False, Xpath="", f
         else:
             nodeName = child.arg
 
-        parentXpath = statements.mk_path_str(child.parent, True)
-        if hasattr(child, 'i_is_key') and Xpath == parentXpath:
-            if '=' in uriPath.split('/')[-1]:
-                return
+        # parentXpath = statements.mk_path_str(child.parent, True)
+        # if hasattr(child, 'i_is_key') and Xpath == parentXpath:
+        #     if '=' in uriPath.split('/')[-1]:
+        #         return
 
         payloadDict[nodeName] = OrderedDict()
         payloadDict[nodeName]["type"] = "array"

@@ -9,5 +9,13 @@ import (
 ){{#operation}}
 
 func {{nickname}}(w http.ResponseWriter, r *http.Request) {
+    rc, r := server.GetContext(r)
+    rc.Name = "{{operationId}}"
+    {{#consumes}}
+    rc.Consumes.Add("{{mediaType}}")
+    {{/consumes}}
+    {{#produces}}
+    rc.Produces.Add("{{mediaType}}")
+    {{/produces}}
 	server.Process(w, r)
 }{{/operation}}{{/operations}}

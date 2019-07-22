@@ -42,7 +42,9 @@ module sonic-vlan {
 			scommon:key-delim "|";
 			scommon:key-pattern "VLAN|{name}";
 
-			must "./name = concat('Vlan', string(./vlanid))";
+			must "./name = concat('Vlan', string(./vlanid))"{
+				error-app-tag vlan-invalid;
+			}
 			/* must "./name = concat('Vlan', string(./vlanid)) and count(/prt:sonic-port/prt:PORT) > 0";//Temporary workaround */
 			leaf name {
 				type string {

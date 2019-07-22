@@ -5,7 +5,7 @@
 #
 #######################################################################
 
-.PHONY: all clean cleanall codegen rest-server yamlGen cli
+.PHONY: all clean cleanall codegen rest-server rest-clean yamlGen cli
 
 TOPDIR := $(abspath .)
 BUILD_DIR := $(TOPDIR)/build
@@ -15,9 +15,7 @@ ifeq ($(BUILD_GOPATH),)
 export BUILD_GOPATH=$(TOPDIR)/gopkgs
 endif
 
-ifeq ($(GOPATH),)
-export GOPATH=$(BUILD_GOPATH)
-endif
+export GOPATH=$(BUILD_GOPATH):$(TOPDIR)
 
 ifeq ($(GO),)
 GO := /usr/local/go/bin/go 
@@ -42,27 +40,19 @@ GO_DEPS_LIST = github.com/gorilla/mux \
 	       github.com/antchfx/xmlquery
 
 
-PIP2_DEPS_LIST = connexion python_dateutil certifi
 REST_BIN = $(BUILD_DIR)/rest_server/dist/main
 CERTGEN_BIN = $(BUILD_DIR)/rest_server/dist/generate_cert
 
-CVL_GOPATH=$(TOPDIR):$(TOPDIR)/src/cvl/build
-GOPATH := $(GOPATH):$(CVL_GOPATH)
 
-
-all: build-deps pip2-deps go-deps go-patch translib rest-server cli
+all: build-deps go-deps go-patch translib rest-server cli
 
 build-deps:
 	mkdir -p $(BUILD_DIR)
 
 go-deps: $(GO_DEPS_LIST)
-pip2-deps: $(PIP2_DEPS_LIST)
 
 $(GO_DEPS_LIST):
 	$(GO) get -v $@
-
-$(PIP2_DEPS_LIST):
-	sudo pip install $@
 
 cli:
 	$(MAKE) -C src/CLI
@@ -70,13 +60,17 @@ cli:
 cvl:
 	$(MAKE) -C src/cvl
 	$(MAKE) -C src/cvl/schema
+cvl-test:
+	$(MAKE) -C src/cvl gotest
 
 rest-server:
 	$(MAKE) -C src/rest
 
+rest-clean:
+	$(MAKE) -C src/rest clean
+
 translib: cvl
 	$(MAKE) -C src/translib
-
 
 codegen:
 	$(MAKE) -C models
@@ -85,9 +79,16 @@ yamlGen:
 	$(MAKE) -C models/yang
 
 go-patch:
-	cp $(TOPDIR)/ygot-modified-files/* $(BUILD_GOPATH)/src/github.com/openconfig/ygot/ytypes/
+	cp $(TOPDIR)/ygot-modified-files/debug.go $(BUILD_GOPATH)/src/github.com/openconfig/ygot/ytypes/../util/debug.go
+	cp $(TOPDIR)/ygot-modified-files/container.go $(BUILD_GOPATH)/src/github.com/openconfig/ygot/ytypes/container.go
+	cp $(TOPDIR)/ygot-modified-files/list.go $(BUILD_GOPATH)/src/github.com/openconfig/ygot/ytypes/list.go
+	cp $(TOPDIR)/ygot-modified-files/leaf.go $(BUILD_GOPATH)/src/github.com/openconfig/ygot/ytypes/leaf.go
+	cp $(TOPDIR)/ygot-modified-files/util_schema.go $(BUILD_GOPATH)/src/github.com/openconfig/ygot/ytypes/util_schema.go
+	cp $(TOPDIR)/ygot-modified-files/schema.go $(BUILD_GOPATH)/src/github.com/openconfig/ygot/ytypes/../util/schema.go
+	cp $(TOPDIR)/ygot-modified-files/unmarshal.go $(BUILD_GOPATH)/src/github.com/openconfig/ygot/ytypes/unmarshal.go
+	cp $(TOPDIR)/ygot-modified-files/validate.go $(BUILD_GOPATH)/src/github.com/openconfig/ygot/ytypes/validate.go
+	cp $(TOPDIR)/ygot-modified-files/reflect.go $(BUILD_GOPATH)/src/github.com/openconfig/ygot/ytypes/../util/reflect.go
 	$(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/openconfig/ygot/ygot
-
 
 install:
 	$(INSTALL) -D $(REST_BIN) $(DESTDIR)/usr/sbin/rest_server
@@ -103,10 +104,9 @@ install:
 $(addprefix $(DEST)/, $(MAIN_TARGET)): $(DEST)/% :
 	mv $* $(DEST)/
 
-clean:
+clean: rest-clean
 	$(MAKE) -C src/cvl clean
 	$(MAKE) -C src/translib clean
-	$(MAKE) -C models clean
 	$(MAKE) -C src/cvl/schema clean
 	$(MAKE) -C src/cvl cleanall
 	rm -rf build/*

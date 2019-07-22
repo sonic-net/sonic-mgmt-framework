@@ -4,7 +4,7 @@ out_ext=$(patsubst %.yang, %.tree, $(src_files))
 
 all:schema
 
-schema: $(out) $(out_ext)
+schema: $(out)
 
 %.yin:%.yang
 	@echo "Generating $@ ..."

@@ -95,12 +95,16 @@ func NewRouter() *mux.Router {
 // function to log time taken by it.
 func loggingWrapper(inner http.Handler, name string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		rc, r := GetContext(r)
+		rc.Name = name
+
+		log.Printf("[%s] Recevied %s request from %s", rc.ID, name, r.RemoteAddr)
+
 		start := time.Now()
 
 		inner.ServeHTTP(w, r)
 
 		log.Printf(
-			"%s %s; %s took %s",
-			r.Method, r.RequestURI, name, time.Since(start))
+			"[%s] %s took %s", rc.ID, name, time.Since(start))
 	})
 }

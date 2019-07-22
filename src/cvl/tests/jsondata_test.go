@@ -19,9 +19,9 @@ var json_edit_config_create_acl_rule_config_data = []string{
 
 var json_validate_config_data = []string{`{
 					"INTERFACE": {
-					"Ethernet668|10.0.0.0/31": {},
-					"Ethernet24|10.0.0.2/31": {},
-					"Ethernet112|10.0.0.4/31": {}
+					"Ethernet8|10.0.0.0/31": {},
+					"Ethernet12|10.0.0.2/31": {},
+					"Ethernet16|10.0.0.4/31": {}
 					}
 				}`,
 				`{
@@ -38,4 +38,13 @@ var json_validate_config_data = []string{`{
 						"type": "ToRRouter"
 						}
 					}
-				}`}
+				}`,
+                                 `{
+					"CABLE_LENGTH": {
+					    "AZURE": {
+						"Ethernet8": "5m",
+						"Ethernet12": "5m",
+						"Ethernet16": "5m",
+					    }
+					  }
+					}`}

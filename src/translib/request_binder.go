@@ -71,6 +71,35 @@ func (binder *requestBinder) unMarshallPayload(workObj *interface{}) error {
 	return nil
 }
 
+func (binder *requestBinder) validateRequest(deviceObj *ocbinds.Device) error {
+	if binder.pathTmp == nil || len(binder.pathTmp.Elem) == 0 {
+		return errors.New("Path is nil")
+	}
+	path, err := ygot.StringToPath(binder.pathTmp.Elem[0].Name, ygot.StructuredPath, ygot.StringSlicePath)
+	if err != nil {
+		return err
+	} else {
+		baseTreeNode, err := ytypes.GetNode(ygSchema.RootSchema(), deviceObj, path)
+		if err != nil {
+			return err
+		} else if len(baseTreeNode) == 0 {
+			return errors.New("Invalid base URI node")
+		} else {
+			basePathObj, ok := (baseTreeNode[0].Data).(ygot.ValidatedGoStruct)
+			if ok == true {
+				err := basePathObj.Validate(&ytypes.LeafrefOptions{IgnoreMissingData: true})
+				if err != nil {
+					return err
+				}
+			} else {
+				return errors.New("Invalid Object: Not able to cast to type ValidatedGoStruct")
+			}
+		}
+	}
+
+	return nil
+}
+
 func (binder *requestBinder) unMarshall() (*ygot.GoStruct, *interface{}, error) {
 	var deviceObj ocbinds.Device = ocbinds.Device{}
 
@@ -84,6 +113,10 @@ func (binder *requestBinder) unMarshall() (*ygot.GoStruct, *interface{}, error) 
 	ygotObj := rootIntf.(ygot.GoStruct)
 	var ygotRootObj *ygot.GoStruct = &ygotObj
 
+	if (binder.opcode == GET || binder.opcode == DELETE) {
+		return ygotRootObj, workObj, nil		
+	}
+	
 	switch binder.opcode {
 	case CREATE:
 		if reflect.ValueOf(*workObj).Kind() == reflect.Map {
@@ -93,19 +126,8 @@ func (binder *requestBinder) unMarshall() (*ygot.GoStruct, *interface{}, error) 
 			if err != nil {
 				return nil, nil, err
 			}
-			err = deviceObj.Validate(&ytypes.LeafrefOptions{IgnoreMissingData: true})
-			if err != nil {
-				return nil, nil, err
-			}
-			return ygotRootObj, workObj, nil
 		}
 
-	case GET, DELETE:
-		err = deviceObj.Validate(&ytypes.LeafrefOptions{IgnoreMissingData: true})
-		if err != nil {
-			return nil, nil, err
-		}
-		return ygotRootObj, workObj, nil
 	case UPDATE, REPLACE:
 		var tmpTargetNode *interface{}
 		if binder.pathTmp != nil {
@@ -128,16 +150,17 @@ func (binder *requestBinder) unMarshall() (*ygot.GoStruct, *interface{}, error) 
 			return nil, nil, err
 		}
 
-		err = deviceObj.Validate(&ytypes.LeafrefOptions{IgnoreMissingData: true})
-		if err != nil {
-			log.Error(err)
-			return nil, nil, err
+	default:
+		if binder.opcode != GET && binder.opcode != DELETE {
+			return nil, nil, errors.New("Unknown opcode in the request")
 		}
-
-		return ygotRootObj, workObj, nil
 	}
 
-	return nil, nil, errors.New("Unknown opcode in the request")
+	if err = binder.validateRequest(&deviceObj); err != nil {
+		return nil, nil, err
+	}
+
+	return ygotRootObj, workObj, nil
 }
 
 func (binder *requestBinder) getUriPath() (*gnmi.Path, error) {
@@ -163,6 +186,8 @@ func (binder *requestBinder) unMarshallUri(deviceObj *ocbinds.Device) (*interfac
 	path, err := binder.getUriPath()
 	if err != nil {
 		return nil, err
+	} else {
+		binder.pathTmp = path
 	}
 
 	for _, p := range path.Elem {
@@ -170,7 +195,7 @@ func (binder *requestBinder) unMarshallUri(deviceObj *ocbinds.Device) (*interfac
 		p.Name = pathSlice[len(pathSlice)-1]
 	}
 
-	ygNode, ygSchema, errYg := ytypes.GetOrCreateNode(ygSchema.RootSchema(), deviceObj, path)
+	ygNode, ygEntry, errYg := ytypes.GetOrCreateNode(ygSchema.RootSchema(), deviceObj, path)
 
 	if errYg != nil {
 		log.Error("Error in creating the target object: ", errYg)
@@ -179,7 +204,7 @@ func (binder *requestBinder) unMarshallUri(deviceObj *ocbinds.Device) (*interfac
 
 	switch binder.opcode {
 	case UPDATE, REPLACE:
-		if ygSchema.IsList() == false || reflect.ValueOf(ygNode).Kind() == reflect.Map {
+		if ygEntry.IsList() == false || reflect.ValueOf(ygNode).Kind() == reflect.Map {
 			var pathList []*gnmi.PathElem = path.Elem
 
 			gpath := &gnmi.Path{}
@@ -197,5 +222,11 @@ func (binder *requestBinder) unMarshallUri(deviceObj *ocbinds.Device) (*interfac
 		}
 	}
 
+	if (binder.opcode == GET || binder.opcode == DELETE) && (ygEntry.IsLeaf() == false && ygEntry.IsLeafList() == false) {
+		if err = binder.validateRequest(deviceObj); err != nil {
+			return nil, err
+		}
+	}
+	
 	return &ygNode, nil
 }

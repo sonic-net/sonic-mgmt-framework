@@ -15,7 +15,7 @@ func loadLuaScript() {
 	local fieldValue=ARGV[4]
 
 	-- Check if field value is part of key
-	local entries=redis.call('KEYS', tableName..sep.."*"..fieldValue.."|*")
+	local entries=redis.call('KEYS', tableName..sep.."*"..fieldValue.."*")
 
 	if (entries[1] ~= nil)
 	then
