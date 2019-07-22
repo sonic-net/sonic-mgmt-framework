@@ -133,9 +133,9 @@ func loadConfigDB(rclient *redis.Client, mpi map[string]interface{}) {
 	}
 }
 
-func compareErrorDetails(cvlErr cvl.CVLErrorInfo, errcode cvl.CVLRetCode, errAppTag string, constraintmsg string) bool {
+func compareErrorDetails(cvlErr cvl.CVLErrorInfo, expCode cvl.CVLRetCode, errAppTag string, constraintmsg string) bool {
 
-	if ((cvlErr.ErrCode == errcode) && ((cvlErr.ErrAppTag == errAppTag) || (cvlErr.ConstraintErrMsg == constraintmsg))) {
+	if ((cvlErr.ErrCode == expCode) && ((cvlErr.ErrAppTag == errAppTag) || (cvlErr.ConstraintErrMsg == constraintmsg))) {
 		return true
 	}
 
@@ -1161,7 +1161,7 @@ func TestValidateEditConfig_Update_Semantic_MissingKey_Negative(t *testing.T) {
 		cvl.CVLEditConfigData{
 			cvl.VALIDATE_ALL,
 			cvl.OP_UPDATE,
-			"ACL_RULE|TestACL1|Rule1",
+			"ACL_RULE|TestACL177|Rule1",
 			map[string]string{
 				"MIRROR_ACTION": "everflow",
 			},
@@ -1557,6 +1557,56 @@ func TestValidateEditConfig_Create_DepData_In_MultiSess(t *testing.T) {
 
 }
 
+func TestValidateEditConfig_Create_DepData_From_Redis_Negative11(t *testing.T) {
+
+	depDataMap := map[string]interface{}{
+		"ACL_TABLE": map[string]interface{}{
+			"TestACL1": map[string]interface{}{
+				"stage": "INGRESS",
+				"type":  "MIRROR",
+			},
+		},
+	}
+
+	loadConfigDB(rclient, depDataMap)
+
+	//Create ACL rule - Session 2
+	cvSess, _ := cvl.ValidationSessOpen()
+	cfgDataRule := []cvl.CVLEditConfigData{
+		cvl.CVLEditConfigData{
+			cvl.VALIDATE_ALL,
+			cvl.OP_CREATE,
+			"ACL_RULE|TestACL188|Rule1",
+			map[string]string{
+				"PACKET_ACTION":     "FORWARD",
+				"SRC_IP":            "10.1.1.1/32",
+				"L4_SRC_PORT":       "1909",
+				"IP_PROTOCOL":       "103",
+				"DST_IP":            "20.2.2.2/32",
+				"L4_DST_PORT_RANGE": "9000-12000",
+			},
+		},
+	}
+
+	cvlErrInfo, err := cvSess.ValidateEditConfig1(cfgDataRule)
+
+	fmt.Println(cvlErrInfo)
+
+        /* Check for error message. */	
+	if (err == cvl.CVL_SEMANTIC_DEPENDENT_DATA_MISSING) {
+		fmt.Println(cvl.GetErrorString(err))
+	}
+
+
+	cvl.ValidationSessClose(cvSess)
+
+	if (err != cvl.CVL_SEMANTIC_DEPENDENT_DATA_MISSING) {
+		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
+	}
+
+	unloadConfigDB(rclient, depDataMap)
+}
+
 func TestValidateEditConfig_Create_DepData_From_Redis(t *testing.T) {
 
 	depDataMap := map[string]interface{}{
@@ -1589,7 +1639,6 @@ func TestValidateEditConfig_Create_DepData_From_Redis(t *testing.T) {
 	}
 
 	cvlErrInfo, err := cvSess.ValidateEditConfig1(cfgDataRule)
-	fmt.Println(cvlErrInfo)
 
 	cvl.ValidationSessClose(cvSess)
 
@@ -1615,10 +1664,11 @@ func TestValidateEditConfig_Create_Syntax_InvalidErrAppTag_Negative(t *testing.T
 		},
 	}
 
-	cvlErrInfo, _ := cv.ValidateEditConfig(cfgData)
+	cvlErrInfo, retCode := cv.ValidateEditConfig(cfgData)
 
-	if compareErrorDetails(cvlErrInfo, cvl.CVL_SUCCESS, "vlan-invalid", "") != true {
-		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
+	/* Compare expected error details and error tag. */
+	if compareErrorDetails(cvlErrInfo, cvl.CVL_SEMANTIC_DEPENDENT_DATA_MISSING ,"vlan-invalid", "") != true {
+		t.Errorf("Config Validation failed -- error details %v %v", cvlErrInfo, retCode)
 	}
 
 }

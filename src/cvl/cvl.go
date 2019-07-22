@@ -60,7 +60,8 @@ type modelTableInfo struct {
 /* CVL Error Structure. */
 type CVLErrorInfo struct {
 	TableName string      /* Table having error */
-	ErrCode  CVLRetCode   /* Error Code describing type of error. */
+	ErrCode  CVLRetCode   /* CVL Error return Code. */
+	CVLErrDetails string  /* CVL Error Message details. */ 
 	Keys    []string      /* Keys of the Table having error. */
         Value    string        /* Field Value throwing error */
         Field	 string        /* Field Name throwing error . */
@@ -115,6 +116,10 @@ type keyValuePairStruct struct {
 
 func TRACE_LOG(level log.Level, fmtStr string, args ...interface{}) {
 	util.TRACE_LOG(level, fmtStr, args...)
+}
+
+func CVL_LOG(level util.CVLLogLevel, fmtStr string, args ...interface{}) {
+	util.CVL_LOG(level, fmtStr, args...)
 }
 
 //package init function 
@@ -418,7 +423,7 @@ func (c *CVL) addTableDataForMustExp(tableName string) CVLRetCode {
 				TRACE_LOG(1, "Global cache empty, no data in Redis for table %s", tableName)
 				return CVL_SUCCESS
 			} else {
-				log.Errorf("Could not create glocal cache for table %s", mustTblName)
+				CVL_LOG(util.ERROR ,"Could not create glocal cache for table %s", mustTblName)
 				return CVL_ERROR
 			}
 
@@ -1396,8 +1401,12 @@ func (c *CVL) validateSyntax1(data *yparser.YParserNode) (CVLErrorInfo, CVLRetCo
 
 	if errObj  := c.yp.ValidateSyntax(data); errObj.ErrCode != yparser.YP_SUCCESS {
 
+		retCode := CVLRetCode(errObj.ErrCode)
+
 			cvlErrObj =  CVLErrorInfo {
 		             TableName : errObj.TableName,
+		             ErrCode   : CVLRetCode(errObj.ErrCode),		
+			     CVLErrDetails : cvlErrorMap[retCode], 
 			     Keys      : errObj.Keys,
 			     Value     : errObj.Value,
 			     Field     : errObj.Field,
@@ -1407,7 +1416,6 @@ func (c *CVL) validateSyntax1(data *yparser.YParserNode) (CVLErrorInfo, CVLRetCo
 			}
 
 
-		retCode := CVLRetCode(errObj.ErrCode)
 
 		return  cvlErrObj, retCode
 	}
@@ -1440,8 +1448,12 @@ func (c *CVL) validateSemantics1(data *yparser.YParserNode, otherDepData *yparse
 
 	if errObj := c.yp.ValidateSemantics(data, depData, otherDepData); errObj.ErrCode != yparser.YP_SUCCESS {
 
+		retCode := CVLRetCode(errObj.ErrCode)
+
 		cvlErrObj =  CVLErrorInfo {
 			TableName : errObj.TableName,
+		        ErrCode   : CVLRetCode(errObj.ErrCode),		
+			CVLErrDetails : cvlErrorMap[retCode], 
 			Keys      : errObj.Keys,
 			Value     : errObj.Value,
 			Field     : errObj.Field,
@@ -1451,7 +1463,6 @@ func (c *CVL) validateSemantics1(data *yparser.YParserNode, otherDepData *yparse
 		}
 
 
-		retCode := CVLRetCode(errObj.ErrCode)
 
 		return  cvlErrObj, retCode
 	}

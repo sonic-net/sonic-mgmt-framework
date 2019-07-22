@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"encoding/json"
 	"github.com/go-redis/redis"
-	log "github.com/golang/glog"
 	"path/filepath"
 	"cvl/internal/yparser"
 	"cvl/internal/util"
@@ -25,6 +24,28 @@ const (
 	OP_UPDATE //For Update operation
 	OP_DELETE //For Delete operation
 )
+
+var cvlErrorMap = map[CVLRetCode]string {
+		CVL_SUCCESS					: "Config Validation Success",
+		CVL_SEMANTIC_ERROR				: "Config Validation Semantic Error",
+		CVL_SYNTAX_MISSING_FIELD			: "Required Field is Missing", 
+		CVL_SYNTAX_INVALID_FIELD			: "Invalid Field Received",
+		CVL_SYNTAX_INVALID_INPUT_DATA			: "Invalid Input Data Received", 
+		CVL_SYNTAX_MULTIPLE_INSTANCE			: "Multiple Field Instances Received", 
+		CVL_SYNTAX_DUPLICATE				: "Duplicate Instances Received", 
+		CVL_SYNTAX_ENUM_INVALID			        : "Invalid Enum Value Received",  
+		CVL_SYNTAX_ENUM_INVALID_NAME 			: "Invalid Enum Value Received", 
+		CVL_SYNTAX_ENUM_WHITESPACE		        : "Enum name with leading/trailing whitespaces Received",
+		CVL_SYNTAX_OUT_OF_RANGE                         : "Value out of range/length/pattern (data)",
+		CVL_SYNTAX_MINIMUM_INVALID        		: "min-elements constraint not honored",
+		CVL_SYNTAX_MAXIMUM_INVALID       		: "max-elements constraint not honored",
+		CVL_SEMANTIC_DEPENDENT_DATA_MISSING 		: "Dependent Data is missing",
+		CVL_SEMANTIC_MANDATORY_DATA_MISSING  		: "Mandatory Data is missing",
+		CVL_SEMANTIC_KEY_ALREADY_EXIST 			: "Key already existing.",
+		CVL_SEMANTIC_KEY_NOT_EXIST  			: "Key is missing.",
+		CVL_SEMANTIC_KEY_DUPLICATE 			: "Duplicate key received",
+		CVL_SEMANTIC_KEY_INVALID  			: "Invalid Key Received",
+}
 
 //Error code
 type CVLRetCode int
@@ -72,7 +93,7 @@ func Initialize() CVLRetCode {
 	//Scan schema directory to get all schema files
 	modelFiles, err := filepath.Glob(util.CVL_SCHEMA + "/*.yin")
 	if err != nil {
-		log.Fatal(err)
+		CVL_LOG(util.FATAL ,"Could not read schema %v", err)
 	}
 
 	yparser.Initialize()
@@ -89,7 +110,7 @@ func Initialize() CVLRetCode {
 		var module *yparser.YParserModule
 		if module, _ = yparser.ParseSchemaFile(modelFilePath); module == nil {
 
-			log.Fatal(fmt.Sprintf("Unable to parse schema file %s", modelFile))
+			CVL_LOG(util.FATAL,fmt.Sprintf("Unable to parse schema file %s", modelFile))
 			return CVL_ERROR
 		}
 
@@ -108,7 +129,7 @@ func Initialize() CVLRetCode {
 	})
 
 	if (redisClient == nil) {
-		log.Fatal("Unable to connect with Redis Config DB")
+		CVL_LOG(util.FATAL, "Unable to connect with Redis Config DB")
 		return CVL_ERROR
 	}
 
@@ -230,7 +251,7 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (CVLErrorInfo, CVL
 			if (len(cfgDataItem.Data) > 0) {
 				//Delete a single field
 				if (len(cfgDataItem.Data) != 1)  {
-					log.Errorf("Only single field is allowed for field deletion")
+					CVL_LOG(util.ERROR, "Only single field is allowed for field deletion")
 				} else {
 					for field, _ := range cfgDataItem.Data {
 						if (c.checkDeleteConstraint(tbl, key, field) != CVL_SUCCESS) {
@@ -270,7 +291,7 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (CVLErrorInfo, CVL
 			return cvlErrObj, cvlRetCode 
 		}
 	} else {
-		return CVLErrorInfo{ErrCode: errN}, errN
+		return CVLErrorInfo{}, errN
 	}
 
 	//Step 3 : Check keys and update dependent data
@@ -348,6 +369,13 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (CVLErrorInfo, CVL
 	}
 
 	return cvlErrObj, CVL_SUCCESS
+}
+
+/* Fetch the Error Message from CVL Return Code. */
+func GetErrorString(retCode CVLRetCode) string{
+
+	return cvlErrorMap[retCode] 
+
 }
 
 /*

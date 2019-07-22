@@ -16,6 +16,21 @@ func init() {
 	}
 }
 
+type CVLLogLevel uint8 
+
+const (
+        INFO  = 0 + iota
+        WARNING
+        ERROR
+        FATAL
+        INFO_API
+	INFO_TRACE
+	INFO_DEBUG
+	INFO_DATA
+	INFO_DETAIL
+	INFO_ALL
+)
+
 var Tracing bool = false
 
 var traceFlags uint16 = 0
@@ -34,6 +49,10 @@ func IsTraceSet() bool {
 	} else {
 		return true
 	}
+}
+
+func IsLogTraceSet() bool {
+	return true
 }
 
 func SetTraceLevel(level uint8) {
@@ -60,5 +79,36 @@ func TRACE_LOG(level log.Level, fmtStr string, args ...interface{}) {
 	} else {
 		log.V(level).Infof(fmtStr, args...)
 	}
+}
+
+func CVL_LOG(level CVLLogLevel, format string, args ...interface{}) {
+
+	if (IsLogTraceSet() == false) {
+		return
+	}
+
+	switch level {
+		case INFO:
+		       log.Infof(format, args...)
+		case  WARNING:
+		       log.Warningf(format, args...)
+		case  ERROR:
+		       log.Errorf(format, args...)
+		case  FATAL:
+		       log.Fatalf(format, args...)
+		case INFO_API:
+			log.V(1).Infof(format, args...)
+		case INFO_TRACE:
+			log.V(2).Infof(format, args...)
+		case INFO_DEBUG:
+			log.V(3).Infof(format, args...)
+		case INFO_DATA:
+			log.V(4).Infof(format, args...)
+		case INFO_DETAIL:
+			log.V(5).Infof(format, args...)
+		case INFO_ALL:
+			log.V(6).Infof(format, args...)
+	}	
+
 }
 

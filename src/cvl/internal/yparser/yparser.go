@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 	log "github.com/golang/glog"
-	"fmt"
+//	"fmt"
 	. "cvl/internal/util"
 )
 
@@ -323,7 +323,7 @@ func (yp *YParser) ValidateSyntax(data *YParserNode) YParserError {
 	(*C.struct_ly_ctx)(ypCtx))) {
 		return  getErrorDetails()
 	}
-		 fmt.Printf("Error Code from libyang is %d\n", C.ly_errno) 
+		 //fmt.Printf("Error Code from libyang is %d\n", C.ly_errno) 
 
 	return YParserError {ErrCode : YP_SUCCESS,}
 }
@@ -360,11 +360,13 @@ func (yp *YParser) ValidateSemantics(data, depData, otherDepData *YParserNode) Y
 		}
 	}
 
+//	fmt.Printf("Semantics REtcode from libyang %d ", C.ly_errno) 
 	//Check semantic validation
 	if (0 != C.lyd_data_validate(&dataTmp, C.LYD_OPT_CONFIG, (*C.struct_ly_ctx)(ypCtx))) {
 		return getErrorDetails()
 	}
 
+	//fmt.Printf("Semantics REtcode from libyang %d ", C.ly_errno) 
 	return YParserError {ErrCode : YP_SUCCESS,}
 }
 
@@ -435,6 +437,9 @@ func getErrorDetails() YParserError {
 
 	ctx := (*C.struct_ly_ctx)(ypCtx)
 	ypErrFirst := C.ly_err_first(ctx);
+
+
+	//fmt.Printf("REtcode from libyang %d new %d", ypErrFirst.prev.no, C.ly_errno) 
 
 
 	if ((ypErrFirst != nil) && ypErrFirst.prev.no == C.LY_SUCCESS) {
@@ -514,7 +519,8 @@ func getErrorDetails() YParserError {
 
 
 	if (C.ly_errno == C.LY_EVALID) {  //Validation failure
-		ypErrCode =  translateLYErrToYParserErr(int(C.ly_vecode(ctx)))
+		ypErrCode =  translateLYErrToYParserErr(int(ypErrFirst.prev.vecode))
+		
 	} else {
 		switch (C.ly_errno) {
 		case C.LY_EMEM:
