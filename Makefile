@@ -40,25 +40,19 @@ GO_DEPS_LIST = github.com/gorilla/mux \
 	       github.com/antchfx/xmlquery
 
 
-PIP2_DEPS_LIST = connexion python_dateutil certifi
-
 REST_BIN = $(BUILD_DIR)/rest_server/dist/main
 CERTGEN_BIN = $(BUILD_DIR)/rest_server/dist/generate_cert
 
 
-all: build-deps pip2-deps go-deps go-patch translib rest-server cli
+all: build-deps go-deps go-patch translib rest-server cli
 
 build-deps:
 	mkdir -p $(BUILD_DIR)
 
 go-deps: $(GO_DEPS_LIST)
-pip2-deps: $(PIP2_DEPS_LIST)
 
 $(GO_DEPS_LIST):
 	$(GO) get -v $@
-
-$(PIP2_DEPS_LIST):
-	sudo pip install $@
 
 cli:
 	$(MAKE) -C src/CLI
