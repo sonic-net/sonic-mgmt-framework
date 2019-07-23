@@ -838,7 +838,7 @@ func (d *DB) DeleteTable(ts *TableSpec) error {
 	// Read Keys
 	keys, e := d.GetKeys(ts)
 	if e != nil {
-		glog.Error("GetTable: GetKeys: " + e.Error())
+		glog.Error("DeleteTable: GetKeys: " + e.Error())
 		goto DeleteTableExit
 	}
 
@@ -847,7 +847,7 @@ func (d *DB) DeleteTable(ts *TableSpec) error {
 	for i := 0; i < len(keys); i++ {
 		e := d.DeleteEntry(ts, keys[i])
 		if e != nil {
-			glog.Warning("GetTable: GetKeys: " + e.Error())
+			glog.Warning("DeleteTable: DeleteEntry: " + e.Error())
 			continue
 		}
 	}
