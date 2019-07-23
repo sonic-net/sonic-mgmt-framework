@@ -59,6 +59,16 @@ def generate_body(func, args):
 
     return keypath,body
 
+def getId(item):
+    prfx = "Ethernet"
+    state_dict = item['state']
+    ifName = state_dict['name']
+
+    if ifName.startswith(prfx):
+        ifId = int(ifName[len(prfx):])
+        return ifId
+    return ifName
+
 def run(func, args):
 
     c = openconfig_interfaces_client.Configuration()
@@ -79,6 +89,12 @@ def run(func, args):
         else:
             # Get Command Output
             api_response = aa.api_client.sanitize_for_serialization(api_response)
+            if 'openconfig-interfaces:interfaces' in api_response:
+                value = api_response['openconfig-interfaces:interfaces']
+                if 'interface' in value:
+                    tup = value['interface']
+                    value['interface'] = sorted(tup, key=getId)
+
             if api_response is None:
                 print("Failed")
             else:
