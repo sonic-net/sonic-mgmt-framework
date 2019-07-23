@@ -1,12 +1,13 @@
 package server
 
 import (
-	"log"
-	"net/http"
-    "os/user"
 	"errors"
+	"net/http"
+	"os/user"
+
+	"github.com/golang/glog"
 	"github.com/msteinert/pam"
-    "golang.org/x/crypto/ssh"
+	"golang.org/x/crypto/ssh"
 )
 
 type UserCredential struct {
@@ -33,92 +34,117 @@ func (u UserCredential) PAMConvHandler(s pam.Style, msg string) (string, error) 
 
 // PAMAuthenticate performs PAM authentication for the user credentials provided
 func (u UserCredential) PAMAuthenticate() error {
-	tx, err := pam.StartFunc("login", u.Username, u.PAMConvHandler)   
+	tx, err := pam.StartFunc("login", u.Username, u.PAMConvHandler)
 	if err != nil {
 		return err
 	}
-	return tx.Authenticate(0) 
+	return tx.Authenticate(0)
 }
 
 func PAMAuthUser(u string, p string) error {
-	
-    cred := UserCredential{u, p}
+
+	cred := UserCredential{u, p}
 	err := cred.PAMAuthenticate()
-/*	if err == nil {
-		fmt.Println("PAM Authentication succeeded!")
-	} else {
-		fmt.Println("PAM Authentication failed!")
-	} */
+	/*	if err == nil {
+			fmt.Println("PAM Authentication succeeded!")
+		} else {
+			fmt.Println("PAM Authentication failed!")
+		} */
 	return err
 }
 
-func IsAdminGroup (username string) bool {
-    
+func IsAdminGroup(username string) bool {
+
 	usr, err := user.Lookup(username)
-    if err != nil {
-        return false
-    }
-    gids, err := usr.GroupIds()
-    if err != nil {
-        return false 
-    }
-	log.Printf("User:%s, groups=%s", username, gids)
-    admin, err := user.Lookup("admin")
-    if err != nil {
-        return false 
-    }
-    for _, x := range gids {
-        if x == admin.Gid {
-            return true
-        }
-    }
-    return false
+	if err != nil {
+		return false
+	}
+	gids, err := usr.GroupIds()
+	if err != nil {
+		return false
+	}
+	glog.V(2).Infof("User:%s, groups=%s", username, gids)
+	admin, err := user.Lookup("admin")
+	if err != nil {
+		return false
+	}
+	for _, x := range gids {
+		if x == admin.Gid {
+			return true
+		}
+	}
+	return false
 }
 
-func PAMAuthenAndAuthor(w http.ResponseWriter, r *http.Request) error {
+func PAMAuthenAndAuthor(r *http.Request, rc *RequestContext) error {
 
 	username, passwd, authOK := r.BasicAuth()
-    if authOK == false {
-        http.Error(w, "Not authorized", 401)
-        return errors.New("user not present")
-    }
-	log.Printf("Received user=%s, pass=%s", username, passwd)
+	if authOK == false {
+		glog.Errorf("[%s] User info not present", rc.ID)
+		return httpError(http.StatusUnauthorized, "")
+	}
 
-    /*
-     * mgmt-framework container does not have access to /etc/passwd, /etc/group,
-     * /etc/shadow and /etc/tacplus_conf files of host. One option is to share
-     * /etc of host with /etc of container. For now disable this and use ssh
-     * for authentication.
-     */
+	glog.Infof("[%s] Received user=%s", rc.ID, username)
+
+	/*
+	 * mgmt-framework container does not have access to /etc/passwd, /etc/group,
+	 * /etc/shadow and /etc/tacplus_conf files of host. One option is to share
+	 * /etc of host with /etc of container. For now disable this and use ssh
+	 * for authentication.
+	 */
 	/* err := PAMAuthUser(username, passwd)
-    if err != nil {
-		log.Printf("Authentication failed. user=%s, error:%s", username, err.Error())
-        return err
-    }*/
+	    if err != nil {
+			log.Printf("Authentication failed. user=%s, error:%s", username, err.Error())
+	        return err
+	    }*/
 
-    //Use ssh for authentication.    
-    config := &ssh.ClientConfig{
-        User: username,
-        Auth: []ssh.AuthMethod{
-            ssh.Password(passwd),
-        },
-        HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-    }
-    _, err := ssh.Dial("tcp", "127.0.0.1:22", config)
-    if err != nil {
-        log.Printf("Failed to authenticate: ", err)
-        return err
-    }
+	//Use ssh for authentication.
+	config := &ssh.ClientConfig{
+		User: username,
+		Auth: []ssh.AuthMethod{
+			ssh.Password(passwd),
+		},
+		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+	}
+	_, err := ssh.Dial("tcp", "127.0.0.1:22", config)
+	if err != nil {
+		glog.Infof("[%s] Failed to authenticate; %v", rc.ID, err)
+		return httpError(http.StatusUnauthorized, "")
+	}
 
-	log.Printf("Authentication passed. user=%s ", username)
+	glog.Infof("[%s] Authentication passed. user=%s ", rc.ID, username)
 
-    //Check if user belong to admin group.
-    adminGrp := IsAdminGroup(username)
-	log.Printf("User:%s, isAdmGrp:%d", username, adminGrp)
-    //Allow SET request only if user belong to admin group
-    if adminGrp == false && r.Method == "SET" {
-        http.Error(w, "Not authorized", 401)
-        return errors.New("authorization error")
-    }
-    return nil 
+	//Allow SET request only if user belong to admin group
+	if isWriteOperation(r) && IsAdminGroup(username) == false {
+		glog.Errorf("[%s] Not an admin; cannot allow %s", rc.ID, r.Method)
+		return httpError(http.StatusForbidden, "Not an admin user")
+	}
+
+	glog.Infof("[%s] Authorization passed", rc.ID)
+	return nil
+}
+
+// isWriteOperation checks if the HTTP request is a write operation
+func isWriteOperation(r *http.Request) bool {
+	m := r.Method
+	return m == "POST" || m == "PUT" || m == "PATCH" || m == "DELETE"
+}
+
+// authMiddleware function creates a middleware for request
+// authentication and authorization. This middleware will return
+// 401 response if authentication fails and 403 if authorization
+// fails.
+func authMiddleware(inner http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		rc, r := GetContext(r)
+		err := PAMAuthenAndAuthor(r, rc)
+		if err != nil {
+			status, data, ctype := prepareErrorResponse(err, r)
+			w.Header().Set("Content-Type", ctype)
+			w.WriteHeader(status)
+			w.Write(data)
+		} else {
+			inner.ServeHTTP(w, r)
+		}
+	})
 }

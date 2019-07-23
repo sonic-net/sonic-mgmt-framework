@@ -20,16 +20,6 @@ import (
 	"github.com/gorilla/mux"
 )
 
-var isUserAuthEnabled = false
-
-// SetUserAuthEnable function enables/disables the PAM based user
-// authentication for REST requests. By default user uthentication
-// is disabled. When enabled, the server expects clients to pass
-// user credentials as per HTTP Basic Autnetication method.
-func SetUserAuthEnable(val bool) {
-	isUserAuthEnabled = val
-}
-
 // Process function is the common landing place for all REST requests.
 // Swagger code-gen should be configured to invoke this function
 // from all generated stub functions.
@@ -41,15 +31,6 @@ func Process(w http.ResponseWriter, r *http.Request) {
 	var status int
 	var data []byte
 	var rtype string
-
-	// FIXME make it a handler in the chain
-	if isUserAuthEnabled {
-		err := PAMAuthenAndAuthor(w, r)
-		if err != nil {
-			glog.Errorf("[%s] Authentication failed; %v", reqID, err)
-			return
-		}
-	}
 
 	glog.Infof("[%s] %s %s; content-len=%d", reqID, r.Method, path, r.ContentLength)
 	_, body, err := getRequestBody(r, rc)
