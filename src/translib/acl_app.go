@@ -1314,11 +1314,13 @@ func (app *AclApp) setAclDataInConfigDb(d *db.DB, aclData map[string]db.Value, c
 			}
 		} else {
 			if existingEntry.IsPopulated() {
-				err := d.ModEntry(app.aclTs, db.Key{Comp: []string{key}}, aclData[key])
-				if err != nil {
-					log.Error(err)
-					return err
-				}
+                if existingEntry.Get(ACL_DESCRIPTION) != aclData[key].Field[ACL_DESCRIPTION] {
+                    err := d.ModEntry(app.aclTs, db.Key{Comp: []string{key}}, aclData[key])
+                    if err != nil {
+                        log.Error(err)
+                        return err
+                    }
+                }
 				/*
 					//Merge any ACL binds already present. Validate should take care of any checks so its safe to blindly merge here
 					if len(existingEntry.Field) > 0  {
@@ -1348,7 +1350,7 @@ func (app *AclApp) setAclRuleDataInConfigDb(d *db.DB, ruleData map[string]map[st
 					return err
 				}
 			} else {
-				if existingRuleEntry.IsPopulated() {
+				if existingRuleEntry.IsPopulated() && ruleName != "DEFAULT_RULE" {
 					err := d.ModEntry(app.ruleTs, db.Key{Comp: []string{aclName, ruleName}}, ruleData[aclName][ruleName])
 					if err != nil {
 						log.Error(err)
