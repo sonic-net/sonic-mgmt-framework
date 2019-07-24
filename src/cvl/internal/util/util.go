@@ -12,7 +12,7 @@ import (
 )
 
 var CVL_SCHEMA string = "schema/"
-var CVL_CFG_FILE string = "./logconf.json"
+var CVL_CFG_FILE string = "./cvl_cfg.json"
 
 //package init function 
 func init() {
@@ -114,10 +114,13 @@ func ClearTraceLevel(level uint8) {
 	traceFlags = traceFlags &^ (1 << level)
 }
 
-func TRACE_LOG(level log.Level, tracelevel CVLTraceLevel, fmtStr string, args ...interface{}) {
+func TRACE_LEVEL_LOG(level log.Level, tracelevel CVLTraceLevel, fmtStr string, args ...interface{}) {
+
 	if (IsTraceSet() == false) {
 		return
 	}
+
+	level = (level - INFO_API) + 1;
 
 	traceEnabled := false
 	var index uint8
@@ -146,7 +149,7 @@ func TRACE_LOG(level log.Level, tracelevel CVLTraceLevel, fmtStr string, args ..
 	}
 }
 
-func CVL_LOG(level CVLLogLevel, format string, args ...interface{}) {
+func CVL_LEVEL_LOG(level CVLLogLevel, format string, args ...interface{}) {
 
 	switch level {
 		case INFO:
@@ -181,7 +184,7 @@ func ConfigFileSyncHandler() {
 		for {
 			<-sigs
 			cvlCfgMap := ReadConfFile()
-			CVL_LOG(INFO ,"Received SIGUSR2. Changed configuration values are %v", cvlCfgMap)
+			CVL_LEVEL_LOG(INFO ,"Received SIGUSR2. Changed configuration values are %v", cvlCfgMap)
 		}
 	}()
 
@@ -193,11 +196,9 @@ func ReadConfFile()  map[string]bool{
         err = json.Unmarshal(data, &cvlCfgMap)
 
         if err != nil {
-		CVL_LOG(ERROR ,"Error in reading cvl configuration file %v", err)
+		CVL_LEVEL_LOG(ERROR ,"Error in reading cvl configuration file %v", err)
         }
 
-	CVL_LOG(INFO ,"Current Values of CVL Configuration File %v", cvlCfgMap)
+	CVL_LEVEL_LOG(INFO ,"Current Values of CVL Configuration File %v", cvlCfgMap)
 	return cvlCfgMap
 }
-
-

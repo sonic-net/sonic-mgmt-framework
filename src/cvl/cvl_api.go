@@ -6,7 +6,7 @@ import (
 	"github.com/go-redis/redis"
 	"path/filepath"
 	"cvl/internal/yparser"
-	"cvl/internal/util"
+	. "cvl/internal/util"
 )
 
 type CVLValidateType uint
@@ -91,9 +91,9 @@ func Initialize() CVLRetCode {
 	}
 
 	//Scan schema directory to get all schema files
-	modelFiles, err := filepath.Glob(util.CVL_SCHEMA + "/*.yin")
+	modelFiles, err := filepath.Glob(CVL_SCHEMA + "/*.yin")
 	if err != nil {
-		CVL_LOG(util.FATAL ,"Could not read schema %v", err)
+		CVL_LOG(FATAL ,"Could not read schema %v", err)
 	}
 
 	yparser.Initialize()
@@ -106,12 +106,11 @@ func Initialize() CVLRetCode {
 	for _, modelFilePath := range modelFiles {
 		_, modelFile := filepath.Split(modelFilePath)
 
-		//TRACE_LOG(4, "Parsing schema file %s ...\n", modelFilePath)
-		util.TRACE_LOG(4, util.TRACE_LIBYANG, "Parsing schema file %s ...\n", modelFilePath)
+		TRACE_LOG(INFO_DEBUG, TRACE_LIBYANG, "Parsing schema file %s ...\n", modelFilePath)
 		var module *yparser.YParserModule
 		if module, _ = yparser.ParseSchemaFile(modelFilePath); module == nil {
 
-			CVL_LOG(util.FATAL,fmt.Sprintf("Unable to parse schema file %s", modelFile))
+			CVL_LOG(FATAL,fmt.Sprintf("Unable to parse schema file %s", modelFile))
 			return CVL_ERROR
 		}
 
@@ -130,7 +129,7 @@ func Initialize() CVLRetCode {
 	})
 
 	if (redisClient == nil) {
-		CVL_LOG(util.FATAL, "Unable to connect with Redis Config DB")
+		CVL_LOG(FATAL, "Unable to connect with Redis Config DB")
 		return CVL_ERROR
 	}
 
@@ -252,7 +251,7 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (CVLErrorInfo, CVL
 			if (len(cfgDataItem.Data) > 0) {
 				//Delete a single field
 				if (len(cfgDataItem.Data) != 1)  {
-					CVL_LOG(util.ERROR, "Only single field is allowed for field deletion")
+					CVL_LOG(ERROR, "Only single field is allowed for field deletion")
 				} else {
 					for field, _ := range cfgDataItem.Data {
 						if (c.checkDeleteConstraint(cfgData, tbl, key, field) != CVL_SUCCESS) {
@@ -272,7 +271,7 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (CVLErrorInfo, CVL
 		}
 	}
 
-	if (util.IsTraceSet()) {
+	if (IsTraceSet()) {
 		jsonData := ""
 
 		jsonDataBytes, err := json.Marshal(requestedData) //Optimize TBD:
@@ -282,7 +281,7 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (CVLErrorInfo, CVL
 			return cvlErrObj, CVL_SYNTAX_ERROR 
 		}
 
-		TRACE_LOG(4, "JSON Data = %s\n", jsonData)
+		TRACE_LOG(INFO_DATA, TRACE_LIBYANG, "JSON Data = %s\n", jsonData)
 	}
 
 	//Step 2 : Perform syntax validation only
@@ -311,24 +310,24 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (CVLErrorInfo, CVL
 					//Check key should not already exist
 					n, err1 := redisClient.Exists(cfgDataItem.Key).Result()
 					if (err1 == nil && n > 0) {
-						TRACE_LOG(1, "\nValidateEditConfig(): Key = %s alreday exists", cfgDataItem.Key)
+						TRACE_LOG(INFO_API, TRACE_CREATE, "\nValidateEditConfig(): Key = %s alreday exists", cfgDataItem.Key)
 						return cvlErrObj, CVL_SEMANTIC_KEY_ALREADY_EXIST 
 					}
 				} else {
-					TRACE_LOG(1, "\nKey %s is deleted in same session, skipping key existence check for OP_CREATE operation", cfgDataItem.Key)
+					TRACE_LOG(INFO_API, TRACE_CREATE, "\nKey %s is deleted in same session, skipping key existence check for OP_CREATE operation", cfgDataItem.Key)
 				}
 
 			case OP_UPDATE:
 				n, err1 := redisClient.Exists(cfgDataItem.Key).Result()
 				if (err1 != nil || n == 0) { //key must exists
-					TRACE_LOG(1, "\nValidateEditConfig(): Key = %s does not exist", cfgDataItem.Key)
+					TRACE_LOG(INFO_API, TRACE_UPDATE, "\nValidateEditConfig(): Key = %s does not exist", cfgDataItem.Key)
 					return cvlErrObj, CVL_SEMANTIC_KEY_NOT_EXIST
 				}
 
 			case OP_DELETE:
 				n, err1 := redisClient.Exists(cfgDataItem.Key).Result()
 				if (err1 != nil || n == 0) { //key must exists
-					TRACE_LOG(1, "\nValidateDelete(): Key = %s does not exist", cfgDataItem.Key)
+					TRACE_LOG(INFO_API, TRACE_DELETE, "\nValidateDelete(): Key = %s does not exist", cfgDataItem.Key)
 					return cvlErrObj, CVL_SEMANTIC_KEY_NOT_EXIST
 				}
 
@@ -367,7 +366,7 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (CVLErrorInfo, CVL
 
 	//Cache validated data
 	if errObj := c.yp.CacheSubtree(false, yang); errObj.ErrCode != yparser.YP_SUCCESS {
-		TRACE_LOG(1, "Could not cache validated data")
+		TRACE_LOG(INFO_API, TRACE_CACHE, "Could not cache validated data")
 	}
 
 	return cvlErrObj, CVL_SUCCESS

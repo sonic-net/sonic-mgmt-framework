@@ -54,7 +54,12 @@ module sonic-vlan {
 
 			leaf vlanid {
 				mandatory true;
-				type uint16;
+				type uint16 {
+					range "1..999" {
+						error-message "Vlan ID out of range";
+					}
+    }
+				//type uint16;
 			}
 
 			leaf-list members {
