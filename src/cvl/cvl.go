@@ -1113,7 +1113,8 @@ parent *xmlquery.Node) CVLRetCode {
 }
 */
 
-func (c *CVL) generateTableData1(config bool, jsonNode *jsonquery.Node)(*yparser.YParserNode, CVLRetCode) {
+func (c *CVL) generateTableData1(config bool, jsonNode *jsonquery.Node)(*yparser.YParserNode, CVLErrorInfo) {
+	var cvlErrObj CVLErrorInfo
 	tableName := fmt.Sprintf("%s",jsonNode.Data)
 	c.batchLeaf = ""
 
@@ -1178,13 +1179,14 @@ func (c *CVL) generateTableData1(config bool, jsonNode *jsonquery.Node)(*yparser
 			util.TRACE_LOG(1, util.TRACE_CACHE, "Starting batch leaf creation - %s\n", c.batchLeaf)
 			//process batch leaf creation
 			if errObj := c.yp.AddMultiLeafNodes(modelInfo.tableInfo[tableName].module, listNode, c.batchLeaf); errObj.ErrCode != yparser.YP_SUCCESS {
-				return nil, CVL_SYNTAX_ERROR
+				cvlErrObj = CreateCVLErrObj(errObj)
+				return nil, cvlErrObj 
 			}
 			c.batchLeaf = ""
 		}
 	}
 
-	return topNode, CVL_SUCCESS
+	return topNode, cvlErrObj
 }
 
 /*
@@ -1280,7 +1282,9 @@ func jsonMapToYangTree(jsonMap *map[string]interface{}) *yparser.YParserNode {
 }
 */
 
-func (c *CVL) translateToYang1(jsonMap *map[string]interface{}) (*yparser.YParserNode, CVLRetCode) {
+func (c *CVL) translateToYang1(jsonMap *map[string]interface{}) (*yparser.YParserNode, CVLErrorInfo) {
+
+	var  cvlErrObj CVLErrorInfo
 	//Parse the map data to json tree
 	data, _ := jsonquery.ParseJsonMap(jsonMap)
 	var root *yparser.YParserNode
@@ -1290,22 +1294,22 @@ func (c *CVL) translateToYang1(jsonMap *map[string]interface{}) (*yparser.YParse
 	for jsonNode := data.FirstChild; jsonNode != nil; jsonNode=jsonNode.NextSibling {
 		TRACE_LOG(1, "Top Node=%v\n", jsonNode.Data)
 		//Visit each top level list in a loop for creating table data
-		topNode, _ := c.generateTableData1(true, jsonNode)
+		topNode, cvlErrObj  := c.generateTableData1(true, jsonNode)
 
 		if  topNode == nil {
-			return nil, CVL_SYNTAX_ERROR
+			return nil, cvlErrObj
 		}
 
 		if (root == nil) {
 			root = topNode
 		} else {
 			if root, errObj = c.yp.MergeSubtree(root, topNode); errObj.ErrCode != yparser.YP_SUCCESS {
-				return nil, CVL_SYNTAX_ERROR
+				return nil, cvlErrObj
 			}
 		}
 	}
 
-	return root, CVL_SUCCESS
+	return root, cvlErrObj
 }
 
 /*
@@ -1440,6 +1444,25 @@ func (c *CVL) validate (xmlData string) CVLRetCode {
 	return CVL_SUCCESS
 }
 */
+
+func  CreateCVLErrObj(errObj yparser.YParserError) CVLErrorInfo {
+
+	cvlErrObj :=  CVLErrorInfo {
+		TableName : errObj.TableName,
+		ErrCode   : CVLRetCode(errObj.ErrCode),
+		CVLErrDetails : cvlErrorMap[CVLRetCode(errObj.ErrCode)],
+		Keys      : errObj.Keys,
+		Value     : errObj.Value,
+		Field     : errObj.Field,
+		Msg       : errObj.Msg,
+		ConstraintErrMsg : errObj.ErrTxt,
+		ErrAppTag  : errObj.ErrAppTag,
+	}
+
+
+	return cvlErrObj
+
+}
 
 //Perform syntax checks
 func (c *CVL) validateSyntax1(data *yparser.YParserNode) (CVLErrorInfo, CVLRetCode) {
