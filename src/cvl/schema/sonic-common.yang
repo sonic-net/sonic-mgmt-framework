@@ -77,4 +77,10 @@ module sonic-common {
 			"Platform specific validation";
 		argument "handler"; //
 	}
+
+	container Operation {
+		leaf Operation {
+			type string;
+		}
+	}
 }

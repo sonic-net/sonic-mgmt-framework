@@ -173,6 +173,13 @@ const (
 	YP_INTERNAL_UNKNOWN
 )
 
+const (
+	YP_NOP = 1 + iota
+	YP_OP_CREATE
+	YP_OP_UPDATE
+	YP_OP_DELETE
+)
+
 var yparserInitialized bool = false
 
 func TRACE_LOG(level log.Level, fmtStr string, args ...interface{}) {
@@ -257,9 +264,19 @@ func (yp *YParser) MergeSubtree(root, node *YParserNode) (*YParserNode, YParserE
 		return root, YParserError {ErrCode: YP_SUCCESS}
 	}
 
+	if (util.Tracing == true) {
+		rootdumpStr := yp.NodeDump((*YParserNode)(rootTmp))
+		TRACE_LOG(1, "Root subtree = %v\n", rootdumpStr)
+	}
+
 	if (0 != C.lyd_merge_to_ctx(&rootTmp, (*C.struct_lyd_node)(node), C.LYD_OPT_DESTRUCT,
 	(*C.struct_ly_ctx)(ypCtx))) {
 		return (*YParserNode)(rootTmp), getErrorDetails()
+	}
+
+	if (util.Tracing == true) {
+		dumpStr := yp.NodeDump((*YParserNode)(rootTmp))
+		TRACE_LOG(1, "Merged subtree = %v\n", dumpStr)
 	}
 
 	return (*YParserNode)(rootTmp), YParserError {ErrCode : YP_SUCCESS,}
@@ -283,6 +300,11 @@ func (yp *YParser) CacheSubtree(dupSrc bool, node *YParserNode) YParserError {
 		}
 	} else {
 		yp.root = (*YParserNode)(dup)
+	}
+
+	if (util.Tracing == true) {
+		dumpStr := yp.NodeDump((*YParserNode)(rootTmp))
+		TRACE_LOG(1, "Cached subtree = %v\n", dumpStr)
 	}
 
 	return YParserError {ErrCode : YP_SUCCESS,}
@@ -334,9 +356,10 @@ func (yp *YParser) ValidateSyntax(data *YParserNode) YParserError {
 }
 
 //Perform semantic checks 
-func (yp *YParser) ValidateSemantics(data, depData, otherDepData *YParserNode) YParserError {
+func (yp *YParser) ValidateSemantics(data, depData, appDepData *YParserNode) YParserError {
 
 	dataTmp := (*C.struct_lyd_node)(data)
+	dataTmp1 :=  (*C.struct_lyd_node)(data)
 
 	//parse dependent data
 	if (depData != nil) {
@@ -349,7 +372,8 @@ func (yp *YParser) ValidateSemantics(data, depData, otherDepData *YParserNode) Y
 		}
 	}
 
-	if (yp.root != nil) { //if other dep data is provided
+	//Merge cached data
+	if (yp.root != nil) {
 		if (0 != C.lyd_merge_to_ctx(&dataTmp, (*C.struct_lyd_node)(yp.root),
 		0, (*C.struct_ly_ctx)(ypCtx))) {
 			TRACE_LOG(1, "Unable to merge cached dependent data\n")
@@ -357,21 +381,21 @@ func (yp *YParser) ValidateSemantics(data, depData, otherDepData *YParserNode) Y
 		}
 	}
 
-	if (otherDepData != nil) { //if other dep data is provided
-		if (0 != C.lyd_merge_to_ctx(&dataTmp, (*C.struct_lyd_node)(otherDepData),
+	//Merge appDepData
+	if (appDepData != nil) {
+		if (0 != C.lyd_merge_to_ctx(&dataTmp, (*C.struct_lyd_node)(appDepData),
 		C.LYD_OPT_DESTRUCT, (*C.struct_ly_ctx)(ypCtx))) {
 			TRACE_LOG(1, "Unable to merge other dependent data\n")
 			return getErrorDetails()
 		}
 	}
 
-//	fmt.Printf("Semantics REtcode from libyang %d ", C.ly_errno) 
 	//Check semantic validation
-	if (0 != C.lyd_data_validate(&dataTmp, C.LYD_OPT_CONFIG, (*C.struct_ly_ctx)(ypCtx))) {
+	//if (0 != C.lyd_data_validate(&dataTmp, C.LYD_OPT_CONFIG, (*C.struct_ly_ctx)(ypCtx))) {
+	if (0 != C.lyd_data_validate(&dataTmp1, C.LYD_OPT_CONFIG, (*C.struct_ly_ctx)(ypCtx))) {
 		return getErrorDetails()
 	}
 
-	//fmt.Printf("Semantics REtcode from libyang %d ", C.ly_errno) 
 	return YParserError {ErrCode : YP_SUCCESS,}
 }
 
