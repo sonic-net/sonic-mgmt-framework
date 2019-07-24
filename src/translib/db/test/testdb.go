@@ -1,6 +1,6 @@
 package main
 
-import ( 
+import (
 	"fmt"
 	// "errors"
 	"flag"
@@ -43,7 +43,7 @@ func main() {
 	if _, ok := e.(tlerr.TranslibRedisClientEntryNotExist) ; ok {
 	    fmt.Println("Type is TranslibRedisClientEntryNotExist")
 	}
-	
+
 
 	fmt.Println("Testing NoTransaction SetEntry ==============")
 	ca[0] = "MyACL1_ACL_IPV4"

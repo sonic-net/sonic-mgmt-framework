@@ -20,6 +20,7 @@ import (
 //	"fmt"
 	"golang.org/x/text/message"
 	"golang.org/x/text/language"
+	"cvl"
 //	"errors"
 //	"strings"
 )
@@ -56,9 +57,18 @@ func (e TranslibRedisClientEntryNotExist) Error() string {
 
 type TranslibCVLFailure struct {
 	Code    int
+	CVLErrorInfo  cvl.CVLErrorInfo
 }
 
 func (e TranslibCVLFailure) Error() string {
-	return p.Sprintf("Translib Redis Error: CVL Failure: %d", e.Code)
+	return p.Sprintf("Translib Redis Error: CVL Failure: %d: %v", e.Code,
+		e.CVLErrorInfo)
+}
+
+type TranslibDBSubscribeFail struct {
+}
+
+func (e TranslibDBSubscribeFail) Error() string {
+	return p.Sprintf("Translib Redis Error: DB Subscribe Fail")
 }
 
