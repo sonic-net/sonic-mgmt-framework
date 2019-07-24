@@ -82,10 +82,10 @@ func (app *IntfApp) initialize(data appData) {
 	app.ygotRoot = data.ygotRoot
 	app.ygotTarget = data.ygotTarget
 
-	app.portTs = &db.TableSpec{"PORT"}
-	app.portTblTs = &db.TableSpec{"PORT_TABLE"}
-	app.intfIPTs = &db.TableSpec{"INTERFACE"}
-	app.intfIPTblTs = &db.TableSpec{"INTF_TABLE"}
+	app.portTs = &db.TableSpec{Name: "PORT"}
+	app.portTblTs = &db.TableSpec{Name: "PORT_TABLE"}
+	app.intfIPTs = &db.TableSpec{Name: "INTERFACE"}
+	app.intfIPTblTs = &db.TableSpec{Name: "INTF_TABLE"}
 
 	app.ifTableMap = make(map[string]dbEntry)
 	app.ifIPTableMap = make(map[string]map[string]dbEntry)

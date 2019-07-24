@@ -35,8 +35,8 @@ type jsonObject map[string]interface{}
 type jsonArray []interface{}
 
 var (
-	vlanTable   = &db.TableSpec{"VLAN"}
-	memberTable = &db.TableSpec{"VLAN_MEMBER"}
+	vlanTable   = &db.TableSpec{Name: "VLAN"}
+	memberTable = &db.TableSpec{Name: "VLAN_MEMBER"}
 )
 
 func init() {
@@ -77,8 +77,8 @@ func (app *nonYangDemoApp) translateGet(dbs [db.MaxDB]*db.DB) error {
 }
 
 func (app *nonYangDemoApp) translateSubscribe(dbs [db.MaxDB]*db.DB, path string) (int, *notificationInfo, error) {
-    err := errors.New("Not supported")
-    return 0, nil, err 
+	err := errors.New("Not supported")
+	return 0, nil, err
 }
 
 func (app *nonYangDemoApp) processCreate(d *db.DB) (SetResponse, error) {
