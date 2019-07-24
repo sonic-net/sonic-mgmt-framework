@@ -56,6 +56,7 @@ type appInterface interface {
 	translateReplace(d *db.DB) ([]db.WatchKeys, error)
 	translateDelete(d *db.DB) ([]db.WatchKeys, error)
 	translateGet(dbs [db.MaxDB]*db.DB) error
+	translateSubscribe(dbs [db.MaxDB]*db.DB, path string) (int, *notificationInfo, error)
 	processCreate(d *db.DB) (SetResponse, error)
 	processUpdate(d *db.DB) (SetResponse, error)
 	processReplace(d *db.DB) (SetResponse, error)

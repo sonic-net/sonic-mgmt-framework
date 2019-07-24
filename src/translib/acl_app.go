@@ -166,6 +166,11 @@ func (app *AclApp) translateGet(dbs [db.MaxDB]*db.DB) error {
 	return err
 }
 
+func (app *AclApp) translateSubscribe(dbs [db.MaxDB]*db.DB, path string) (int, *notificationInfo, error) {
+    err := errors.New("Not supported")
+    return 0, nil, err
+}
+
 func (app *AclApp) processCreate(d *db.DB) (SetResponse, error) {
 	var err error
 	var resp SetResponse
