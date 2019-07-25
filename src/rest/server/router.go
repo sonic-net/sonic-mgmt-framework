@@ -8,21 +8,30 @@
 package server
 
 import (
-	"log"
 	"net/http"
 	"strings"
 	"time"
 
+	"github.com/golang/glog"
 	"github.com/gorilla/mux"
 )
 
 // Root directory for UI files
 var swaggerUIDir = "./ui"
+var isUserAuthEnabled = false
 
 // SetUIDirectory functions sets directiry where Swagger UI
 // resources are maintained.
 func SetUIDirectory(directory string) {
 	swaggerUIDir = directory
+}
+
+// SetUserAuthEnable function enables/disables the PAM based user
+// authentication for REST requests. By default user uthentication
+// is disabled. When enabled, the server expects clients to pass
+// user credentials as per HTTP Basic Autnetication method.
+func SetUserAuthEnable(val bool) {
+	isUserAuthEnabled = val
 }
 
 // Route registration information
@@ -55,15 +64,15 @@ func AddRoute(name, method, pattern string, handler http.HandlerFunc) {
 func NewRouter() *mux.Router {
 	router := mux.NewRouter().StrictSlash(true)
 
-	log.Printf("Server has %d paths", len(allRoutes))
+	glog.Infof("Server has %d paths", len(allRoutes))
 
 	// Collect swagger generated route information
 	for _, route := range allRoutes {
-		handler := loggingWrapper(route.Handler, route.Name)
+		handler := withMiddleware(route.Handler, route.Name)
 
-		//log.Printf(
-		//	"++ %s %s %s\n",
-		//	route.Method, route.Name, route.Pattern)
+		glog.V(2).Infof(
+			"Adding %s, %s %s",
+			route.Name, route.Method, route.Pattern)
 
 		router.
 			Methods(route.Method).
@@ -80,31 +89,40 @@ func NewRouter() *mux.Router {
 	router.Methods("GET").Path("/ui").
 		Handler(http.RedirectHandler("/ui/index.html", 301))
 
-	router.Methods("GET").Path("/model").
-		Handler(http.RedirectHandler("/ui/model.html", 301))
+	//router.Methods("GET").Path("/model").
+	//	Handler(http.RedirectHandler("/ui/model.html", 301))
 
 	// Metadata discovery handler
 	metadataHandler := http.HandlerFunc(hostMetadataHandler)
 	router.Methods("GET").Path("/.well-known/host-meta").
-		Handler(loggingWrapper(metadataHandler, "hostMetadataHandler"))
+		Handler(loggingMiddleware(metadataHandler, "hostMetadataHandler"))
 
 	return router
 }
 
-// loggingWrapper creates a new http.HandlerFunc which wraps a handler
-// function to log time taken by it.
-func loggingWrapper(inner http.Handler, name string) http.Handler {
+// loggingMiddleware returns a handler which times and logs the request.
+// It should be the top handler in the middleware chain.
+func loggingMiddleware(inner http.Handler, name string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		rc, r := GetContext(r)
 		rc.Name = name
 
-		log.Printf("[%s] Recevied %s request from %s", rc.ID, name, r.RemoteAddr)
+		glog.Infof("[%s] Recevied %s request from %s", rc.ID, name, r.RemoteAddr)
 
 		start := time.Now()
 
 		inner.ServeHTTP(w, r)
 
-		log.Printf(
-			"[%s] %s took %s", rc.ID, name, time.Since(start))
+		glog.Infof("[%s] %s took %s", rc.ID, name, time.Since(start))
 	})
+}
+
+// withMiddleware function prepares the default middleware chain for
+// REST APIs.
+func withMiddleware(h http.Handler, name string) http.Handler {
+	if isUserAuthEnabled {
+		h = authMiddleware(h)
+	}
+
+	return loggingMiddleware(h, name)
 }

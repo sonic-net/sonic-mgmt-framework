@@ -85,7 +85,7 @@ func init() {
         &appInfo{appType:  reflect.TypeOf(AclApp{}),
             ygotRootType:  reflect.TypeOf(ocbinds.OpenconfigAcl_Acl{}),
             isNative:      false,
-            tablesToWatch: []*db.TableSpec{&db.TableSpec{ACL_TABLE}, &db.TableSpec{RULE_TABLE}}})
+			tablesToWatch: []*db.TableSpec{&db.TableSpec{Name: ACL_TABLE}, &db.TableSpec{Name: RULE_TABLE}}})
 
 	if err != nil {
 		log.Fatal("Register ACL app module with App Interface failed with error=", err)
@@ -164,6 +164,61 @@ func (app *AclApp) translateGet(dbs [db.MaxDB]*db.DB) error {
 	var err error
 	log.Info("translateGet:acl:path =", app.path)
 	return err
+}
+
+func (app *AclApp) translateSubscribe(dbs [db.MaxDB]*db.DB, path string) (*notificationOpts, *notificationInfo, error) {
+    err := errors.New("Not supported")
+    configDb := dbs[db.ConfigDB]
+    pathInfo := NewPathInfo(path)
+    notifInfo := notificationInfo{dbno: db.ConfigDB}
+
+    if isSubtreeRequest(pathInfo.Template, "/openconfig-acl:acl/acl-sets") {
+        if isSubtreeRequest(pathInfo.Template, "/openconfig-acl:acl/acl-sets/acl-set{name}{type}") {
+            aclN := strings.Replace(strings.Replace(pathInfo.Var("name"), " ", "_", -1), "-", "_", -1)
+            aclT := pathInfo.Var("type")
+            if OPENCONFIG_ACL_TYPE_IPV4 != aclT && OPENCONFIG_ACL_TYPE_IPV6 != aclT && OPENCONFIG_ACL_TYPE_L2 != aclT {
+                err = errors.New("Invalid ACL Type")
+                return nil, nil, err
+            }
+            aclkey := aclN + "_" + aclT
+            if isSubtreeRequest(pathInfo.Template, "/openconfig-acl:acl/acl-sets/acl-set{name}{type}/acl-entries/acl-entry{sequence-id}") {
+                rulekey := "RULE_" + pathInfo.Var("sequence-id")
+                notifInfo.table = db.TableSpec{Name: RULE_TABLE}
+                notifInfo.key = db.Key{Comp: []string{aclkey, rulekey}}
+            } else {
+                // All Rules of a given Acl
+                if pathInfo.Template == "/openconfig-acl:acl/acl-sets/acl-set{name}{type}/acl-entries" {
+                    notifInfo.table = db.TableSpec{Name: RULE_TABLE}
+                } else {
+                    notifInfo.table = db.TableSpec{Name: ACL_TABLE}
+                    notifInfo.key = db.Key{Comp: []string{aclkey}}
+                }
+            }
+        } else {
+            // All Acls and their rules
+            notifInfo.table = db.TableSpec{Name: ACL_TABLE}
+        }
+    } else if isSubtreeRequest(pathInfo.Template, "/openconfig-acl:acl/interfaces") {
+        if isSubtreeRequest(pathInfo.Template, "/openconfig-acl:acl/interfaces/interface{id}") {
+            // With one interface, multiple ACLs can be binded. Need mehanism to pass multiple Keys
+            var notifKeys []db.Key
+            intfId := pathInfo.Var("id")
+            aclKeys, _ := configDb.GetKeys(app.aclTs)
+            for i, _ := range aclKeys {
+                aclEntry, _ := configDb.GetEntry(app.aclTs, aclKeys[i])
+                aclIntfs := aclEntry.GetList("ports")
+                if contains(aclIntfs, intfId) {
+                    notifKeys = append(notifKeys, aclKeys[i])
+                }
+            }
+        }
+        notifInfo.table = db.TableSpec{Name: ACL_TABLE}
+    } else {
+        // Topmost path
+        notifInfo.table = db.TableSpec{Name: ACL_TABLE}
+    }
+
+    return nil, &notifInfo, err
 }
 
 func (app *AclApp) processCreate(d *db.DB) (SetResponse, error) {
@@ -293,13 +348,13 @@ func (app *AclApp) processDelete(d *db.DB) (SetResponse, error) {
 			}
 		} else {
 			// Deletion of All ACLs and Rules
-			err = d.DeleteTable(app.aclTs)
+            err = d.DeleteTable(app.ruleTs)
 			if err != nil {
 				log.Error(err)
 				resp = SetResponse{ErrSrc: AppErr}
 				return resp, err
 			}
-			err = d.DeleteTable(app.ruleTs)
+            err = d.DeleteTable(app.aclTs)
 			if err != nil {
 				log.Error(err)
 				resp = SetResponse{ErrSrc: AppErr}
@@ -1314,11 +1369,13 @@ func (app *AclApp) setAclDataInConfigDb(d *db.DB, aclData map[string]db.Value, c
 			}
 		} else {
 			if existingEntry.IsPopulated() {
-				err := d.ModEntry(app.aclTs, db.Key{Comp: []string{key}}, aclData[key])
-				if err != nil {
-					log.Error(err)
-					return err
-				}
+                if existingEntry.Get(ACL_DESCRIPTION) != aclData[key].Field[ACL_DESCRIPTION] {
+                    err := d.ModEntry(app.aclTs, db.Key{Comp: []string{key}}, aclData[key])
+                    if err != nil {
+                        log.Error(err)
+                        return err
+                    }
+                }
 				/*
 					//Merge any ACL binds already present. Validate should take care of any checks so its safe to blindly merge here
 					if len(existingEntry.Field) > 0  {
@@ -1348,7 +1405,7 @@ func (app *AclApp) setAclRuleDataInConfigDb(d *db.DB, ruleData map[string]map[st
 					return err
 				}
 			} else {
-				if existingRuleEntry.IsPopulated() {
+				if existingRuleEntry.IsPopulated() && ruleName != "DEFAULT_RULE" {
 					err := d.ModEntry(app.ruleTs, db.Key{Comp: []string{aclName, ruleName}}, ruleData[aclName][ruleName])
 					if err != nil {
 						log.Error(err)

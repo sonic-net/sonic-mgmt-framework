@@ -125,6 +125,10 @@ const (
 	MaxDB // 7 The Number of DBs
 )
 
+func(dbNo DBNum) String() string {
+	return fmt.Sprintf("%d", dbNo)
+}
+
 // Options gives parameters for opening the redis client.
 type Options struct {
 	DBNo               DBNum
@@ -173,12 +177,21 @@ const (
 // (Eg: { Name: ACL_TABLE" }).
 type TableSpec struct {
 	Name string
+	// https://github.com/project-arlo/sonic-mgmt-framework/issues/29
+	// CompCt tells how many components in the key. Only the last component
+	// can have TableSeparator as part of the key. Otherwise, we cannot
+	// tell where the key component begins.
+	CompCt	int
 }
 
 // Key gives the key components.
 // (Eg: { Comp : [] string { "acl1", "rule1" } } ).
 type Key struct {
 	Comp []string
+}
+
+func (k Key) String() string {
+	return fmt.Sprintf("{ Comp: %v }", k.Comp)
 }
 
 // Value gives the fields as a map.
@@ -202,6 +215,7 @@ type Value struct {
 //                          },
 //                          }
 //        })
+
 type Table struct {
 	ts    *TableSpec
 	entry map[string]Value
@@ -233,6 +247,12 @@ type DB struct {
 	txCmds  []_txCmd
 	cv *cvl.CVL
 	cvlEditConfigData [] cvl.CVLEditConfigData
+
+	sKeys []SKey                // Subscribe Key array
+	sHandler HFunc              // Handler Function
+	sCh <-chan *redis.Message   // non-Nil implies SubscribeDB
+	sPubSub *redis.PubSub       // PubSub
+	sCIP bool                   // Close in Progress
 }
 
 func (d DB) String() string {
@@ -334,7 +354,11 @@ func (d *DB) redis2key(ts *TableSpec, redisKey string) Key {
 
 	splitTable := strings.SplitN(redisKey, d.Opts.TableNameSeparator, 2)
 
-	return Key{strings.Split(splitTable[1], d.Opts.KeySeparator)}
+	if ts.CompCt > 0 {
+		return Key{strings.SplitN(splitTable[1],d.Opts.KeySeparator, ts.CompCt)}
+	} else {
+		return Key{strings.Split(splitTable[1], d.Opts.KeySeparator)}
+	}
 
 }
 
@@ -448,6 +472,7 @@ func (d *DB) doCVL(ts * TableSpec, cvlOps []cvl.CVLOperation, key Key, vals []Va
 	var e error = nil
 
 	var cvlRetCode cvl.CVLRetCode
+	var cei cvl.CVLErrorInfo
 
 	// No Transaction case. No CVL.
 	if d.txState == txStateNone {
@@ -492,12 +517,13 @@ func (d *DB) doCVL(ts * TableSpec, cvlOps []cvl.CVLOperation, key Key, vals []Va
 		glog.Info("doCVL: calling ValidateEditConfig: ", d.cvlEditConfigData)
 	}
 
-	_, cvlRetCode = d.cv.ValidateEditConfig(d.cvlEditConfigData)
+	cei, cvlRetCode = d.cv.ValidateEditConfig(d.cvlEditConfigData)
 
 	if cvl.CVL_SUCCESS != cvlRetCode {
 		glog.Error("doCVL: CVL Failure: " , cvlRetCode)
 		// e = errors.New("CVL Failure: " + string(cvlRetCode))
-		e = tlerr.TranslibCVLFailure { Code: int(cvlRetCode) }
+		e = tlerr.TranslibCVLFailure { Code: int(cvlRetCode),
+					CVLErrorInfo: cei }
 		glog.Error("doCVL: " , len(d.cvlEditConfigData), len(cvlOps))
 		d.cvlEditConfigData = d.cvlEditConfigData[:len(d.cvlEditConfigData) - len(cvlOps)]
 	} else {
@@ -838,7 +864,7 @@ func (d *DB) DeleteTable(ts *TableSpec) error {
 	// Read Keys
 	keys, e := d.GetKeys(ts)
 	if e != nil {
-		glog.Error("GetTable: GetKeys: " + e.Error())
+		glog.Error("DeleteTable: GetKeys: " + e.Error())
 		goto DeleteTableExit
 	}
 
@@ -847,7 +873,7 @@ func (d *DB) DeleteTable(ts *TableSpec) error {
 	for i := 0; i < len(keys); i++ {
 		e := d.DeleteEntry(ts, keys[i])
 		if e != nil {
-			glog.Warning("GetTable: GetKeys: " + e.Error())
+			glog.Warning("DeleteTable: DeleteEntry: " + e.Error())
 			continue
 		}
 	}
@@ -999,6 +1025,9 @@ func (w WatchKeys) String() string {
 	return fmt.Sprintf("{ Ts: %v, Key: %v }", w.Ts, w.Key)
 }
 
+// Convenience function to make TableSpecs from strings.
+// This only works on Tables having key components without TableSeparator
+// as part of the key.
 func Tables2TableSpecs(tables []string) []* TableSpec {
 	var tss []*TableSpec
 

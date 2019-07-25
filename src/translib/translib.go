@@ -24,7 +24,7 @@ Example: TBD
 package translib
 
 import (
-		"errors"
+		//"errors"
 		"sync"
 		"translib/db"
         "github.com/openconfig/ygot/ygot"
@@ -34,6 +34,9 @@ import (
 
 //Write lock for all write operations to be synchronized
 var writeMutex = &sync.Mutex{}
+
+//minimum global interval for subscribe in secs
+var minSubsInterval = 20
 
 type ErrSource int
 
@@ -60,10 +63,36 @@ type GetResponse struct{
 	ErrSrc     ErrSource
 }
 
+type SubscribeResponse struct{
+	Path		string
+	Payload     []byte
+	Timestamp	int64
+}
+
+type NotificationType int
+
+const(
+    Sample	NotificationType = iota
+    OnChange
+)
+
+type IsSubscribeResponse struct{
+	Path				string
+	IsSupported			bool
+	MinInterval			int
+	Err					error
+	PreferredType		NotificationType
+}
+
 type ModelData struct{
 	Name      string
 	Org		  string
 	Ver		  string
+}
+
+type notificationOpts struct {
+    mInterval		int
+    pType			NotificationType  // for TARGET_DEFINED
 }
 
 //initializes logging and app modules
@@ -529,8 +558,64 @@ func Get(req GetRequest) (GetResponse, error){
 //Subscribes to the paths requested and sends notifications when the data changes in DB
 func Subscribe(paths []string, q *queue.PriorityQueue, stop chan struct{}) error {
     var err error
-	err = errors.New("Not implemented")
+	//err = errors.New("Not implemented")
+	go runSubscribe(q)
 	return err
+}
+
+//Check if subscribe is supported on the given paths
+func IsSubscribeSupported(paths []string) ([]*IsSubscribeResponse, error) {
+
+	resp := make ([]*IsSubscribeResponse, len(paths))
+
+	dbs, err := getAllDbs()
+
+	for i, _ := range resp {
+		resp[i] = &IsSubscribeResponse{Path: paths[i],
+								IsSupported: false,
+								MinInterval: minSubsInterval}
+	}
+
+    if err != nil {
+        return resp, err
+    }
+
+	defer closeAllDbs(dbs[:])
+
+	for i, path := range paths {
+
+		appInfo, err := getAppModuleInfo(path)
+
+		if err != nil {
+			resp[i].Err = err
+			continue;
+		}
+
+		app, err := getAppInterface(appInfo.appType)
+
+		if err != nil {
+			resp[i].Err = err
+			continue;
+		}
+
+		nOpts, _, errApp := app.translateSubscribe (dbs, path)
+
+		if errApp != nil {
+			resp[i].IsSupported = false
+			resp[i].Err = errApp
+			err = errApp
+            continue;
+        } else {
+			resp[i].IsSupported = true
+
+			if nOpts.mInterval != 0 {
+				resp[i].MinInterval = nOpts.mInterval
+			}
+			resp[i].PreferredType = nOpts.pType
+		}
+	}
+
+	return resp, err
 }
 
 //Gets all the models supported by Translib
@@ -549,8 +634,8 @@ func getAllDbs() ([db.MaxDB]*db.DB, error) {
     dbs[db.ApplDB], err = db.NewDB(db.Options {
                     DBNo              : db.ApplDB,
                     InitIndicator     : "",
-                    TableNameSeparator: ":",
-                    KeySeparator      : ":",
+					TableNameSeparator: ":",
+					KeySeparator      : ":",
                       })
 
 	if err != nil {
@@ -636,3 +721,13 @@ func closeAllDbs(dbs []*db.DB) {
 	}
 }
 
+// Implement Compare method for priority queue for SubscribeResponse struct
+func (val SubscribeResponse) Compare(other queue.Item) int {
+	o := other.(*SubscribeResponse)
+	if val.Timestamp > o.Timestamp {
+		return 1
+	} else if val.Timestamp == o.Timestamp {
+		return 0
+	}
+	return -1
+}

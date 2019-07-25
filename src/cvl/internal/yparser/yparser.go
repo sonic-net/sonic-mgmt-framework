@@ -6,8 +6,8 @@ import (
 	"os"
 	"strings"
 	log "github.com/golang/glog"
-	"fmt"
-	. "cvl/internal/util"
+//	"fmt"
+	"cvl/internal/util"
 )
 
 /*
@@ -173,7 +173,18 @@ const (
 	YP_INTERNAL_UNKNOWN
 )
 
+const (
+	YP_NOP = 1 + iota
+	YP_OP_CREATE
+	YP_OP_UPDATE
+	YP_OP_DELETE
+)
+
 var yparserInitialized bool = false
+
+func TRACE_LOG(level log.Level, fmtStr string, args ...interface{}) {
+	util.TRACE_LOG(level, util.TRACE_CACHE, fmtStr, args...)
+}
 
 //package init function 
 func init() {
@@ -192,7 +203,7 @@ func Debug(on bool) {
 
 func Initialize() {
 	if (yparserInitialized != true) {
-		ypCtx = (*YParserCtx)(C.ly_ctx_new(C.CString(CVL_SCHEMA), 0))
+		ypCtx = (*YParserCtx)(C.ly_ctx_new(C.CString(util.CVL_SCHEMA), 0))
 		C.ly_verb(C.LY_LLERR)
 	}
 }
@@ -206,7 +217,8 @@ func Finish() {
 //Parse YIN schema file
 func ParseSchemaFile(modelFile string) (*YParserModule, YParserError) {
 	/* schema */
-	TRACE_LOG(4, "Parsing schema file %s ...\n", modelFile)
+	//TRACE_LOG(4, "Parsing schema file %s ...\n", modelFile)
+	util.TRACE_LOG(4, util.TRACE_YPARSER, "Parsing schema file %s ...\n", modelFile)
 
 	module :=  C.lys_parse_path((*C.struct_ly_ctx)(ypCtx), C.CString(modelFile), C.LYS_IN_YIN)
 	if module == nil {
@@ -252,9 +264,19 @@ func (yp *YParser) MergeSubtree(root, node *YParserNode) (*YParserNode, YParserE
 		return root, YParserError {ErrCode: YP_SUCCESS}
 	}
 
+	if (util.Tracing == true) {
+		rootdumpStr := yp.NodeDump((*YParserNode)(rootTmp))
+		TRACE_LOG(1, "Root subtree = %v\n", rootdumpStr)
+	}
+
 	if (0 != C.lyd_merge_to_ctx(&rootTmp, (*C.struct_lyd_node)(node), C.LYD_OPT_DESTRUCT,
 	(*C.struct_ly_ctx)(ypCtx))) {
 		return (*YParserNode)(rootTmp), getErrorDetails()
+	}
+
+	if (util.Tracing == true) {
+		dumpStr := yp.NodeDump((*YParserNode)(rootTmp))
+		TRACE_LOG(1, "Merged subtree = %v\n", dumpStr)
 	}
 
 	return (*YParserNode)(rootTmp), YParserError {ErrCode : YP_SUCCESS,}
@@ -278,6 +300,11 @@ func (yp *YParser) CacheSubtree(dupSrc bool, node *YParserNode) YParserError {
 		}
 	} else {
 		yp.root = (*YParserNode)(dup)
+	}
+
+	if (util.Tracing == true) {
+		dumpStr := yp.NodeDump((*YParserNode)(rootTmp))
+		TRACE_LOG(1, "Cached subtree = %v\n", dumpStr)
 	}
 
 	return YParserError {ErrCode : YP_SUCCESS,}
@@ -323,15 +350,16 @@ func (yp *YParser) ValidateSyntax(data *YParserNode) YParserError {
 	(*C.struct_ly_ctx)(ypCtx))) {
 		return  getErrorDetails()
 	}
-		 fmt.Printf("Error Code from libyang is %d\n", C.ly_errno) 
+		 //fmt.Printf("Error Code from libyang is %d\n", C.ly_errno) 
 
 	return YParserError {ErrCode : YP_SUCCESS,}
 }
 
 //Perform semantic checks 
-func (yp *YParser) ValidateSemantics(data, depData, otherDepData *YParserNode) YParserError {
+func (yp *YParser) ValidateSemantics(data, depData, appDepData *YParserNode) YParserError {
 
 	dataTmp := (*C.struct_lyd_node)(data)
+	dataTmp1 :=  (*C.struct_lyd_node)(data)
 
 	//parse dependent data
 	if (depData != nil) {
@@ -344,7 +372,8 @@ func (yp *YParser) ValidateSemantics(data, depData, otherDepData *YParserNode) Y
 		}
 	}
 
-	if (yp.root != nil) { //if other dep data is provided
+	//Merge cached data
+	if (yp.root != nil) {
 		if (0 != C.lyd_merge_to_ctx(&dataTmp, (*C.struct_lyd_node)(yp.root),
 		0, (*C.struct_ly_ctx)(ypCtx))) {
 			TRACE_LOG(1, "Unable to merge cached dependent data\n")
@@ -352,8 +381,9 @@ func (yp *YParser) ValidateSemantics(data, depData, otherDepData *YParserNode) Y
 		}
 	}
 
-	if (otherDepData != nil) { //if other dep data is provided
-		if (0 != C.lyd_merge_to_ctx(&dataTmp, (*C.struct_lyd_node)(otherDepData),
+	//Merge appDepData
+	if (appDepData != nil) {
+		if (0 != C.lyd_merge_to_ctx(&dataTmp, (*C.struct_lyd_node)(appDepData),
 		C.LYD_OPT_DESTRUCT, (*C.struct_ly_ctx)(ypCtx))) {
 			TRACE_LOG(1, "Unable to merge other dependent data\n")
 			return getErrorDetails()
@@ -361,7 +391,8 @@ func (yp *YParser) ValidateSemantics(data, depData, otherDepData *YParserNode) Y
 	}
 
 	//Check semantic validation
-	if (0 != C.lyd_data_validate(&dataTmp, C.LYD_OPT_CONFIG, (*C.struct_ly_ctx)(ypCtx))) {
+	//if (0 != C.lyd_data_validate(&dataTmp, C.LYD_OPT_CONFIG, (*C.struct_ly_ctx)(ypCtx))) {
+	if (0 != C.lyd_data_validate(&dataTmp1, C.LYD_OPT_CONFIG, (*C.struct_ly_ctx)(ypCtx))) {
 		return getErrorDetails()
 	}
 
@@ -435,6 +466,9 @@ func getErrorDetails() YParserError {
 
 	ctx := (*C.struct_ly_ctx)(ypCtx)
 	ypErrFirst := C.ly_err_first(ctx);
+
+
+	//fmt.Printf("REtcode from libyang %d new %d", ypErrFirst.prev.no, C.ly_errno) 
 
 
 	if ((ypErrFirst != nil) && ypErrFirst.prev.no == C.LY_SUCCESS) {
@@ -514,7 +548,8 @@ func getErrorDetails() YParserError {
 
 
 	if (C.ly_errno == C.LY_EVALID) {  //Validation failure
-		ypErrCode =  translateLYErrToYParserErr(int(C.ly_vecode(ctx)))
+		ypErrCode =  translateLYErrToYParserErr(int(ypErrFirst.prev.vecode))
+		
 	} else {
 		switch (C.ly_errno) {
 		case C.LY_EMEM:

@@ -12,6 +12,8 @@ func main() {
 	count := 0
 
 	cvl.Initialize()
+	cv, _ := cvl.ValidationSessOpen()
+
 	if ((len(os.Args) > 1) && (os.Args[1] == "debug")) {
 		cvl.Debug(true)
 	}
@@ -46,7 +48,7 @@ func main() {
 
 		fmt.Printf("\n\n%d. Validating create data = %v\n\n", count, cfgData);
 
-		err := cvl.ValidateEditConfig(cfgData)
+		_, err := cv.ValidateEditConfig(cfgData)
 
 		if (err == cvl.CVL_SUCCESS) {
 			fmt.Printf("\nConfig Validation succeeded.\n\n");
@@ -71,7 +73,7 @@ func main() {
 
 		fmt.Printf("\n\n%d. Validating update data = %v\n\n", count, cfgData);
 
-		err := cvl.ValidateEditConfig(cfgData)
+		_, err := cv.ValidateEditConfig(cfgData)
 
 		if (err == cvl.CVL_SUCCESS) {
 			fmt.Printf("\nConfig Validation succeeded.\n\n");
@@ -94,7 +96,7 @@ func main() {
 		}
 
 		fmt.Printf("\n\n%d. Validating create data = %v\n\n", count, cfgData);
-		err := cvl.ValidateEditConfig(cfgData)
+		_, err := cv.ValidateEditConfig(cfgData)
 
 		if (err == cvl.CVL_SUCCESS) {
 			fmt.Printf("\nConfig Validation succeeded.\n\n");
@@ -125,7 +127,7 @@ func main() {
 
 		fmt.Printf("\n\n%d. Validating data for update = %v\n\n", count, cfgData);
 
-		err = cvl.ValidateEditConfig(cfgData)
+		_, err = cv.ValidateEditConfig(cfgData)
 
 		if (err == cvl.CVL_SUCCESS) {
 			fmt.Printf("\nConfig Validation succeeded.\n\n");
@@ -155,7 +157,7 @@ func main() {
 
 		fmt.Printf("\n\n%d. Validating data for delete = %v\n\n", count, cfgData);
 
-		err := cvl.ValidateEditConfig(cfgData)
+		_, err := cv.ValidateEditConfig(cfgData)
 
 		if (err == cvl.CVL_SUCCESS) {
 			fmt.Printf("\nConfig Validation succeeded.\n\n");
@@ -164,6 +166,7 @@ func main() {
 		}
 	}
 
+	cvl.ValidationSessClose(cv)
 	cvl.Finish()
 
 	fmt.Printf("\n\n\n Time taken for %v requests = %v\n", count, time.Since(start))

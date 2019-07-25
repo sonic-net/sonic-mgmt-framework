@@ -8,7 +8,9 @@
 package translib
 
 import (
-	"errors"
+    "bytes"
+    "encoding/json"
+    "errors"
 	"fmt"
 	"github.com/openconfig/gnmi/proto/gnmi"
 	"github.com/openconfig/ygot/ygot"
@@ -127,13 +129,15 @@ func generateGetResponsePayload(targetUri string, deviceObj *ocbinds.Device, ygo
 func dumpIetfJson(s ygot.ValidatedGoStruct, skipValidation bool) ([]byte, error) {
 	jsonStr, err := ygot.EmitJSON(s, &ygot.EmitJSONConfig{
 		Format:         ygot.RFC7951,
-		Indent:         "  ",
+        Indent:         "  ",
 		SkipValidation: skipValidation,
 		RFC7951Config: &ygot.RFC7951JSONConfig{
 			AppendModuleName: true,
 		},
 	})
-	return []byte(jsonStr), err
+    var buf bytes.Buffer
+    json.Compact(&buf, []byte(jsonStr))
+	return []byte(buf.String()), err
 }
 
 func contains(sl []string, str string) bool {

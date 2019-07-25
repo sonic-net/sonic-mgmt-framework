@@ -143,7 +143,7 @@ func main() {
 	}
 
 
-	cv, ret := cvl.ValidatorSessOpen()
+	cv, ret := cvl.ValidationSessOpen()
 	if (ret != cvl.CVL_SUCCESS) {
 		fmt.Printf("NewDB: Could not create CVL session")
 		return
@@ -189,7 +189,8 @@ func main() {
 	keyData[3].Data["members"] =  "Ethernet8"
 	keyData[3].Data["vlanid"] =  "901"
 
-	fmt.Printf("\n\n\n  cvl.ValidateEditConfig() = %d\n", cv.ValidateEditConfig1(keyData))
+	_, ret = cv.ValidateEditConfig(keyData)
+	fmt.Printf("\n\n\n  cvl.ValidateEditConfig() = %d\n", ret)
 
 	keyData1 := make([]cvl.CVLEditConfigData, 3)
 	keyData1[0].VType = cvl.VALIDATE_NONE
@@ -214,7 +215,8 @@ func main() {
 	keyData1[2].Data = make(map[string]string)
 	keyData1[2].Data["stage"] =  "INGRESS"
 
-	fmt.Printf("\n\n\n  cvl.ValidateEditConfig() = %d\n", cv.ValidateEditConfig1(keyData1))
+	_, ret = cv.ValidateEditConfig(keyData)
+	fmt.Printf("\n\n\n  cvl.ValidateEditConfig() = %d\n", ret)
 
 
 	keyData2 := make([]cvl.CVLEditConfigData, 3)
@@ -233,10 +235,20 @@ func main() {
 	keyData2[2].Key = "ACL_TABLE|MyACL33_ACL_IPV4"
 	keyData2[2].Data = make(map[string]string)
 
-	fmt.Printf("\n\n\n  cvl.ValidateEditConfig() = %d\n", cv.ValidateEditConfig1(keyData2))
+	_, ret = cv.ValidateEditConfig(keyData)
+	fmt.Printf("\n\n\n  cvl.ValidateEditConfig() = %d\n", ret)
 
 
-	cvl.ValidatorSessClose(cv)
+	cvl.ValidationSessClose(cv)
 	cvl.Finish()
 	fmt.Printf("\n\n\n Time taken = %v\n", time.Since(start))
+
+	stopChan := make(chan int, 1)
+	for {
+		select {
+		case <- stopChan:
+		}
+	}
+
+
 }
