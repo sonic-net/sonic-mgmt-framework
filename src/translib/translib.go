@@ -102,7 +102,6 @@ func init() {
 
 //Creates entries in the redis DB pertaining to the path and payload
 func Create(req SetRequest) (SetResponse, error){
-	var app appInterface
     var ygotRoot *ygot.GoStruct
     var ygotTarget *interface{}
     var data appData
@@ -115,18 +114,11 @@ func Create(req SetRequest) (SetResponse, error){
     log.Info("Create request received with path =", path)
     log.Info("Create request received with payload =", string(payload))
 
-	appInfo, err := getAppModuleInfo(path)
+	app, appInfo, err := getAppModule(path)
 
 	if err != nil {
 		resp.ErrSrc = ProtoErr
         return resp, err
-	}
-
-    app, err = getAppInterface(appInfo.appType)
-
-	if err != nil {
-		resp.ErrSrc = ProtoErr
-		return resp, err
 	}
 
     if appInfo.isNative {
@@ -134,8 +126,6 @@ func Create(req SetRequest) (SetResponse, error){
         data = appData{path: path, payload:payload}
         app.initialize(data)
     } else {
-		log.Info(appInfo.ygotRootType)
-
 		ygotRoot, ygotTarget, err = getRequestBinder(&path, &payload, CREATE, &(appInfo.ygotRootType)).unMarshall()
 		if err != nil {
 			log.Info("Error in request binding in the create request: ", err)
@@ -197,8 +187,6 @@ func Create(req SetRequest) (SetResponse, error){
 
 //Updates entries in the redis DB pertaining to the path and payload
 func Update(req SetRequest) (SetResponse, error){
-    var err error
-    var app appInterface
     var ygotRoot *ygot.GoStruct
     var ygotTarget *interface{}
     var data appData
@@ -211,14 +199,7 @@ func Update(req SetRequest) (SetResponse, error){
     log.Info("Update request received with path =", path)
     log.Info("Update request received with payload =", string(payload))
 
-	appInfo, err := getAppModuleInfo(path)
-
-    if err != nil {
-		resp.ErrSrc = ProtoErr
-        return resp, err
-    }
-
-    app, err = getAppInterface(appInfo.appType)
+	app, appInfo, err := getAppModule(path)
 
     if err != nil {
 		resp.ErrSrc = ProtoErr
@@ -230,8 +211,6 @@ func Update(req SetRequest) (SetResponse, error){
         data = appData{path: path, payload:payload}
         app.initialize(data)
     } else {
-        log.Info(appInfo.ygotRootType)
-
         ygotRoot, ygotTarget, err = getRequestBinder(&path, &payload, UPDATE, &(appInfo.ygotRootType)).unMarshall()
         if err != nil {
             log.Info("Error in request binding in the update request: ", err)
@@ -306,14 +285,7 @@ func Replace(req SetRequest) (SetResponse, error){
     log.Info("Replace request received with path =", path)
     log.Info("Replace request received with payload =", string(payload))
 
-    appInfo, err := getAppModuleInfo(path)
-
-    if err != nil {
-		resp.ErrSrc = ProtoErr
-        return resp, err
-    }
-
-    app, err = getAppInterface(appInfo.appType)
+	app, appInfo, err := getAppModule(path)
 
     if err != nil {
 		resp.ErrSrc = ProtoErr
@@ -325,8 +297,6 @@ func Replace(req SetRequest) (SetResponse, error){
         data = appData{path: path, payload:payload}
         app.initialize(data)
     } else {
-        log.Info(appInfo.ygotRootType)
-
         ygotRoot, ygotTarget, err = getRequestBinder(&path, &payload, REPLACE, &(appInfo.ygotRootType)).unMarshall()
         if err != nil {
             log.Info("Error in request binding in the replace request: ", err)
@@ -399,14 +369,7 @@ func Delete(req SetRequest) (SetResponse, error){
 
     log.Info("Delete request received with path =", path)
 
-    appInfo, err := getAppModuleInfo(path)
-
-    if err != nil {
-		resp.ErrSrc = ProtoErr
-        return resp, err
-    }
-
-    app, err = getAppInterface(appInfo.appType)
+	app, appInfo, err := getAppModule(path)
 
     if err != nil {
 		resp.ErrSrc = ProtoErr
@@ -418,8 +381,6 @@ func Delete(req SetRequest) (SetResponse, error){
         data = appData{path: path}
         app.initialize(data)
     } else {
-        log.Info(appInfo.ygotRootType)
-
         ygotRoot, ygotTarget, err = getRequestBinder(&path, nil, DELETE, &(appInfo.ygotRootType)).unMarshall()
         if err != nil {
             log.Info("Error in request binding in the delete request: ", err)
@@ -488,16 +449,9 @@ func Get(req GetRequest) (GetResponse, error){
 
     log.Info("Received Get request for path = ",path)
 
-    appInfo, err := getAppModuleInfo(path)
+	app, appInfo, err := getAppModule(path)
 
     if err != nil {
-        resp = GetResponse{Payload:payload, ErrSrc:ProtoErr}
-        return resp, err
-    }
-
-	app, err := getAppInterface(appInfo.appType)
-
-	if err != nil {
         resp = GetResponse{Payload:payload, ErrSrc:ProtoErr}
         return resp, err
     }
@@ -565,7 +519,7 @@ func Subscribe(paths []string, q *queue.PriorityQueue, stop chan struct{}) ([]*I
 
     for i, path := range paths {
 
-        appInfo, err := getAppModuleInfo(path)
+		app, _, err := getAppModule(path)
 
         if err != nil {
 
@@ -574,18 +528,6 @@ func Subscribe(paths []string, q *queue.PriorityQueue, stop chan struct{}) ([]*I
 			}
 
 			resp[i].Err = err
-			continue
-        }
-
-        app, err := getAppInterface(appInfo.appType)
-
-        if err != nil {
-
-            if sErr == nil {
-                sErr = err
-            }
-
-            resp[i].Err = err
 			continue
         }
 
@@ -655,14 +597,7 @@ func IsSubscribeSupported(paths []string) ([]*IsSubscribeResponse, error) {
 
 	for i, path := range paths {
 
-		appInfo, err := getAppModuleInfo(path)
-
-		if err != nil {
-			resp[i].Err = err
-			continue
-		}
-
-		app, err := getAppInterface(appInfo.appType)
+		app, _, err := getAppModule(path)
 
 		if err != nil {
 			resp[i].Err = err
@@ -829,4 +764,22 @@ func getDBOptions(dbNo db.DBNum) db.Options {
 	}
 
 	return opt
+}
+
+func getAppModule (path string) (appInterface, appInfo, error) {
+	var app appInterface
+
+    aInfo, err := getAppModuleInfo(path)
+
+    if err != nil {
+        return nil, aInfo, err
+    }
+
+    app, err = getAppInterface(aInfo.appType)
+
+    if err != nil {
+        return nil, aInfo, err
+    }
+
+	return app, aInfo, err
 }
