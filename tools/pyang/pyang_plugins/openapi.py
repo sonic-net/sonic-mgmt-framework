@@ -482,12 +482,7 @@ def build_payload(child, payloadDict, uriPath="", oneInstance=False, Xpath="", f
             nodeName = child.i_module.i_modulename + ':' + child.arg
         else:
             nodeName = child.arg
-
-        try:
-            payloadDict[nodeName] = OrderedDict()
-        except:
-            pdb.set_trace()
-
+        payloadDict[nodeName] = OrderedDict()
         typeInfo = get_node_type(child)
         if 'type' in typeInfo:
             dType = typeInfo["type"]
