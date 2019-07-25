@@ -8,16 +8,19 @@
 package translib
 
 import (
-    "bytes"
-    "encoding/json"
-    "errors"
+	"bytes"
+	"encoding/json"
+	"errors"
 	"fmt"
+	"reflect"
+	"strings"
+	"translib/db"
+	"translib/ocbinds"
+	"translib/tlerr"
+
 	"github.com/openconfig/gnmi/proto/gnmi"
 	"github.com/openconfig/ygot/ygot"
 	"github.com/openconfig/ygot/ytypes"
-	"reflect"
-	"strings"
-	"translib/ocbinds"
 )
 
 func getYangPathFromUri(uri string) (string, error) {
@@ -129,14 +132,14 @@ func generateGetResponsePayload(targetUri string, deviceObj *ocbinds.Device, ygo
 func dumpIetfJson(s ygot.ValidatedGoStruct, skipValidation bool) ([]byte, error) {
 	jsonStr, err := ygot.EmitJSON(s, &ygot.EmitJSONConfig{
 		Format:         ygot.RFC7951,
-        Indent:         "  ",
+		Indent:         "  ",
 		SkipValidation: skipValidation,
 		RFC7951Config: &ygot.RFC7951JSONConfig{
 			AppendModuleName: true,
 		},
 	})
-    var buf bytes.Buffer
-    json.Compact(&buf, []byte(jsonStr))
+	var buf bytes.Buffer
+	json.Compact(&buf, []byte(jsonStr))
 	return []byte(buf.String()), err
 }
 
@@ -159,4 +162,19 @@ func removeElement(sl []string, str string) []string {
 		}
 	}
 	return sl
+}
+
+// isNotFoundError return true if the error is a 'not found' error
+func isNotFoundError(err error) bool {
+	switch err.(type) {
+	case tlerr.TranslibRedisClientEntryNotExist, tlerr.NotFoundError:
+		return true
+	default:
+		return false
+	}
+}
+
+// asKey cretaes a db.Key from given key components
+func asKey(parts ...string) db.Key {
+	return db.Key{Comp: parts}
 }
