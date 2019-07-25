@@ -1,0 +1,6 @@
+{
+	"TRACE_CACHE": true,
+	"TRACE_LIBYANG": true,
+	"TRACE_SEMANTIC": true,
+	"TRACE_YPARSER":true 
+}
