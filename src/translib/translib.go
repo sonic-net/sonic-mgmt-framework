@@ -148,12 +148,8 @@ func Create(req SetRequest) (SetResponse, error){
 	}
 
 	writeMutex.Lock()
-	d, err := db.NewDB(db.Options {
-                    DBNo              : db.ConfigDB,
-                    InitIndicator     : "CONFIG_DB_INITIALIZED",
-                    TableNameSeparator: "|",
-                    KeySeparator      : "|",
-                      })
+
+	d, err := db.NewDB(getDBOptions(db.ConfigDB))
 
 	if err != nil {
 		writeMutex.Unlock()
@@ -248,12 +244,8 @@ func Update(req SetRequest) (SetResponse, error){
     }
 
     writeMutex.Lock()
-    d, err := db.NewDB(db.Options {
-                    DBNo              : db.ConfigDB,
-                    InitIndicator     : "CONFIG_DB_INITIALIZED",
-                    TableNameSeparator: "|",
-                    KeySeparator      : "|",
-                      })
+
+    d, err := db.NewDB(getDBOptions(db.ConfigDB))
 
     if err != nil {
         writeMutex.Unlock()
@@ -347,12 +339,8 @@ func Replace(req SetRequest) (SetResponse, error){
     }
 
     writeMutex.Lock()
-    d, err := db.NewDB(db.Options {
-                    DBNo              : db.ConfigDB,
-                    InitIndicator     : "CONFIG_DB_INITIALIZED",
-                    TableNameSeparator: "|",
-                    KeySeparator      : "|",
-                      })
+
+    d, err := db.NewDB(getDBOptions(db.ConfigDB))
 
     if err != nil {
         writeMutex.Unlock()
@@ -444,12 +432,8 @@ func Delete(req SetRequest) (SetResponse, error){
     }
 
     writeMutex.Lock()
-    d, err := db.NewDB(db.Options {
-                    DBNo              : db.ConfigDB,
-                    InitIndicator     : "CONFIG_DB_INITIALIZED",
-                    TableNameSeparator: "|",
-                    KeySeparator      : "|",
-                      })
+
+    d, err := db.NewDB(getDBOptions(db.ConfigDB))
 
     if err != nil {
         writeMutex.Unlock()
@@ -556,11 +540,98 @@ func Get(req GetRequest) (GetResponse, error){
 }
 
 //Subscribes to the paths requested and sends notifications when the data changes in DB
-func Subscribe(paths []string, q *queue.PriorityQueue, stop chan struct{}) error {
+func Subscribe(paths []string, q *queue.PriorityQueue, stop chan struct{}) ([]*IsSubscribeResponse, error) {
     var err error
+	var sErr error
 	//err = errors.New("Not implemented")
+
+	dbNotificationMap := make(map[db.DBNum][]*notificationInfo)
+
+	resp := make ([]*IsSubscribeResponse, len(paths))
+
+    for i, _ := range resp {
+        resp[i] = &IsSubscribeResponse{Path: paths[i],
+                                IsSupported: false,
+                                MinInterval: minSubsInterval}
+    }
+
+	dbs, err := getAllDbs()
+
+    if err != nil {
+        return resp, err
+    }
+
+	//Do NOT close the DBs here as we need to use them during subscribe notification
+
+    for i, path := range paths {
+
+        appInfo, err := getAppModuleInfo(path)
+
+        if err != nil {
+
+            if sErr == nil {
+				sErr = err
+			}
+
+			resp[i].Err = err
+			continue
+        }
+
+        app, err := getAppInterface(appInfo.appType)
+
+        if err != nil {
+
+            if sErr == nil {
+                sErr = err
+            }
+
+            resp[i].Err = err
+			continue
+        }
+
+        nOpts, nInfo, errApp := app.translateSubscribe (dbs, path)
+
+        if errApp != nil {
+            resp[i].Err = errApp
+
+			if sErr == nil {
+				sErr = errApp
+			}
+
+            continue
+        } else {
+            resp[i].IsSupported = true
+
+            if nOpts.mInterval != 0 {
+                resp[i].MinInterval = nOpts.mInterval
+            }
+
+            resp[i].PreferredType = nOpts.pType
+
+			dbNotificationMap[nInfo.dbno] = append(dbNotificationMap[nInfo.dbno], nInfo)
+        }
+
+	}
+
+	log.Info("map=", dbNotificationMap)
+
+	if sErr != nil {
+		return resp, sErr
+	}
+
+	sInfo := &subscribeInfo {syncDone:false,
+					nInfo:make([]*notificationInfo,0),
+					stop:stop,
+					dbs:dbs}
+
+	for _, value := range dbNotificationMap {
+		sInfo.nInfo = append(sInfo.nInfo, value...)
+		startSubscribe(value, sInfo)
+	}
+
 	go runSubscribe(q)
-	return err
+
+	return resp, sErr
 }
 
 //Check if subscribe is supported on the given paths
@@ -568,13 +639,13 @@ func IsSubscribeSupported(paths []string) ([]*IsSubscribeResponse, error) {
 
 	resp := make ([]*IsSubscribeResponse, len(paths))
 
-	dbs, err := getAllDbs()
-
 	for i, _ := range resp {
 		resp[i] = &IsSubscribeResponse{Path: paths[i],
 								IsSupported: false,
 								MinInterval: minSubsInterval}
 	}
+
+	dbs, err := getAllDbs()
 
     if err != nil {
         return resp, err
@@ -588,23 +659,22 @@ func IsSubscribeSupported(paths []string) ([]*IsSubscribeResponse, error) {
 
 		if err != nil {
 			resp[i].Err = err
-			continue;
+			continue
 		}
 
 		app, err := getAppInterface(appInfo.appType)
 
 		if err != nil {
 			resp[i].Err = err
-			continue;
+			continue
 		}
 
 		nOpts, _, errApp := app.translateSubscribe (dbs, path)
 
 		if errApp != nil {
-			resp[i].IsSupported = false
 			resp[i].Err = errApp
 			err = errApp
-            continue;
+            continue
         } else {
 			resp[i].IsSupported = true
 
@@ -631,12 +701,7 @@ func getAllDbs() ([db.MaxDB]*db.DB, error) {
     var err error
 
 	//Create Application DB connection
-    dbs[db.ApplDB], err = db.NewDB(db.Options {
-                    DBNo              : db.ApplDB,
-                    InitIndicator     : "",
-					TableNameSeparator: ":",
-					KeySeparator      : ":",
-                      })
+    dbs[db.ApplDB], err = db.NewDB(getDBOptions(db.ApplDB))
 
 	if err != nil {
 		closeAllDbs(dbs[:])
@@ -644,12 +709,7 @@ func getAllDbs() ([db.MaxDB]*db.DB, error) {
 	}
 
     //Create ASIC DB connection
-    dbs[db.AsicDB], err = db.NewDB(db.Options {
-                    DBNo              : db.AsicDB,
-                    InitIndicator     : "",
-                    TableNameSeparator: "|",
-                    KeySeparator      : "|",
-                      })
+    dbs[db.AsicDB], err = db.NewDB(getDBOptions(db.AsicDB))
 
 	if err != nil {
 		closeAllDbs(dbs[:])
@@ -657,12 +717,7 @@ func getAllDbs() ([db.MaxDB]*db.DB, error) {
 	}
 
 	//Create Counter DB connection
-    dbs[db.CountersDB], err = db.NewDB(db.Options {
-                    DBNo              : db.CountersDB,
-                    InitIndicator     : "",
-                    TableNameSeparator: "|",
-                    KeySeparator      : "|",
-                      })
+    dbs[db.CountersDB], err = db.NewDB(getDBOptions(db.CountersDB))
 
 	if err != nil {
 		closeAllDbs(dbs[:])
@@ -670,12 +725,7 @@ func getAllDbs() ([db.MaxDB]*db.DB, error) {
 	}
 
 	//Create Log Level DB connection
-    dbs[db.LogLevelDB], err = db.NewDB(db.Options {
-                    DBNo              : db.LogLevelDB,
-                    InitIndicator     : "",
-                    TableNameSeparator: "|",
-                    KeySeparator      : "|",
-                      })
+    dbs[db.LogLevelDB], err = db.NewDB(getDBOptions(db.LogLevelDB))
 
 	if err != nil {
 		closeAllDbs(dbs[:])
@@ -683,12 +733,7 @@ func getAllDbs() ([db.MaxDB]*db.DB, error) {
 	}
 
 	//Create Config DB connection
-    dbs[db.ConfigDB], err = db.NewDB(db.Options {
-                    DBNo              : db.ConfigDB,
-                    InitIndicator     : "CONFIG_DB_INITIALIZED",
-                    TableNameSeparator: "|",
-                    KeySeparator      : "|",
-                      })
+    dbs[db.ConfigDB], err = db.NewDB(getDBOptions(db.ConfigDB))
 
 	if err != nil {
 		closeAllDbs(dbs[:])
@@ -696,12 +741,7 @@ func getAllDbs() ([db.MaxDB]*db.DB, error) {
 	}
 
 	//Create State DB connection
-    dbs[db.StateDB], err = db.NewDB(db.Options {
-                    DBNo              : db.StateDB,
-                    InitIndicator     : "",
-                    TableNameSeparator: "|",
-                    KeySeparator      : "|",
-                      })
+    dbs[db.StateDB], err = db.NewDB(getDBOptions(db.StateDB))
 
 	if err != nil {
 		closeAllDbs(dbs[:])
@@ -730,4 +770,63 @@ func (val SubscribeResponse) Compare(other queue.Item) int {
 		return 0
 	}
 	return -1
+}
+
+func getDBOptions(dbNo db.DBNum) db.Options {
+
+	var opt db.Options
+
+	switch dbNo {
+	case db.ApplDB:
+		opt = db.Options {
+                    DBNo              : dbNo,
+                    InitIndicator     : "",
+                    TableNameSeparator: ":",
+                    KeySeparator      : ":",
+                      }
+	case db.AsicDB:
+		opt = db.Options {
+                    DBNo              : dbNo,
+                    InitIndicator     : "",
+                    TableNameSeparator: "|",
+                    KeySeparator      : "|",
+                      }
+	case db.CountersDB:
+		opt =  db.Options {
+                    DBNo              : dbNo,
+                    InitIndicator     : "",
+                    TableNameSeparator: "|",
+                    KeySeparator      : "|",
+                      }
+	case db.LogLevelDB:
+		opt = db.Options {
+                    DBNo              : dbNo,
+                    InitIndicator     : "",
+                    TableNameSeparator: "|",
+                    KeySeparator      : "|",
+                      }
+	case db.ConfigDB:
+		opt =  db.Options {
+                    DBNo              : dbNo,
+                    InitIndicator     : "",
+                    TableNameSeparator: "|",
+                    KeySeparator      : "|",
+                      }
+	case db.FlexCounterDB:
+		opt = db.Options {
+                    DBNo              : dbNo,
+                    InitIndicator     : "",
+                    TableNameSeparator: "|",
+                    KeySeparator      : "|",
+                      }
+	case db.StateDB:
+		opt = db.Options {
+                    DBNo              : dbNo,
+                    InitIndicator     : "",
+                    TableNameSeparator: "|",
+                    KeySeparator      : "|",
+                      }
+	}
+
+	return opt
 }
