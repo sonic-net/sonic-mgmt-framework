@@ -213,9 +213,11 @@ def swagger_it(child, defName, pathstr, payload, metadata, verb, operId=False):
 
         opId = swaggerDict["paths"][verbPathStr][verb]["operationId"]
         
-        desc = child.search_one('description').arg
+        desc = child.search_one('description')
         if desc is None:
             desc = ''
+        else:
+            desc = desc.arg
         desc = "OperationId: " + opId + "\n" + desc        
         swaggerDict["paths"][verbPathStr][verb]["description"] = desc        
 
@@ -481,12 +483,11 @@ def build_payload(child, payloadDict, uriPath="", oneInstance=False, Xpath="", f
         else:
             nodeName = child.arg
 
-        # parentXpath = statements.mk_path_str(child.parent, True)
-        # if hasattr(child, 'i_is_key') and Xpath == parentXpath:
-        #     if '=' in uriPath.split('/')[-1]:
-        #         return
+        try:
+            payloadDict[nodeName] = OrderedDict()
+        except:
+            pdb.set_trace()
 
-        payloadDict[nodeName] = OrderedDict()
         typeInfo = get_node_type(child)
         if 'type' in typeInfo:
             dType = typeInfo["type"]
@@ -505,11 +506,6 @@ def build_payload(child, payloadDict, uriPath="", oneInstance=False, Xpath="", f
         else:
             nodeName = child.arg
 
-        # parentXpath = statements.mk_path_str(child.parent, True)
-        # if hasattr(child, 'i_is_key') and Xpath == parentXpath:
-        #     if '=' in uriPath.split('/')[-1]:
-        #         return
-
         payloadDict[nodeName] = OrderedDict()
         payloadDict[nodeName]["type"] = "array"
         payloadDict[nodeName]["items"] = OrderedDict()
@@ -525,6 +521,9 @@ def build_payload(child, payloadDict, uriPath="", oneInstance=False, Xpath="", f
         if 'format' in typeInfo:
             payloadDict[nodeName]["items"]["format"] = typeInfo["format"]            
 
+    elif child.keyword == "choice" or child.keyword == "case":
+        childJson = payloadDict
+
     if hasattr(child, 'i_children'):
         for ch in child.i_children:
             build_payload(ch,childJson,uriPath, False, Xpath, False, config_false, copy.deepcopy(moduleList))
@@ -533,7 +532,7 @@ def mk_path_refine(node, metadata, keyNodes=[]):
     def mk_path(node):
         """Returns the XPath path of the node"""
         if node.keyword in ['choice', 'case']:
-            return mk_path(s.parent)
+            return mk_path(node.parent)
         def name(node):
             extra = ""
             if node.keyword == "list":
@@ -543,9 +542,11 @@ def mk_path_refine(node, metadata, keyNodes=[]):
                     if list_key.i_leafref is not None:
                         keyNodes.append(list_key.i_leafref_ptr[0])
                     extraKeys.append('{' + list_key.arg + '}')
-                    desc = list_key.search_one('description').arg
+                    desc = list_key.search_one('description')
                     if desc is None:
                         desc = ''
+                    else:
+                        desc = desc.arg
                     metaInfo = OrderedDict()
                     metaInfo["desc"] = desc
                     metaInfo["name"] = list_key.arg
