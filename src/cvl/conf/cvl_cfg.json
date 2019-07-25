@@ -1,6 +1,9 @@
 {
-	"TRACE_CACHE": true,
-	"TRACE_LIBYANG": true,
-	"TRACE_SEMANTIC": true,
-	"TRACE_YPARSER":true 
+	"TRACE_CACHE": "true",
+	"TRACE_LIBYANG": "true",
+	"TRACE_SEMANTIC": "true",
+	"TRACE_YPARSER":"true", 
+	"LOGTOSTDERR":"false",
+	"STDERRTHRESHOLD":"INFO",
+	"VERBOSITY":"8"
 }

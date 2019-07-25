@@ -8,6 +8,8 @@ import (
         "io/ioutil"
         "os/signal"
         "syscall"
+	"strings"
+	"flag"
 	log "github.com/golang/glog"
 )
 
@@ -25,7 +27,7 @@ func init() {
 	}
 }
 
-var cvlCfgMap map[string]bool
+var cvlCfgMap map[string]string
 
 /* Logging Level for CVL global logging. */
 type CVLLogLevel uint8 
@@ -127,7 +129,7 @@ func TRACE_LEVEL_LOG(level log.Level, tracelevel CVLTraceLevel, fmtStr string, a
 	/* Check if incoming tracelevel is enabled. */
 	for  index = TRACE_MIN ; index < TRACE_MAX ; index++  {
 		if ((tracelevel &  (1 << index)) != 0) {
-			if (cvlCfgMap[traceLevelMap[1 << index]] == true) {
+			if (strings.Compare(cvlCfgMap[traceLevelMap[1 << index]], "true") == 0) {
 				/* This log should be allowed as at least one flag is currently set */
 				traceEnabled = true
 				break
@@ -185,12 +187,18 @@ func ConfigFileSyncHandler() {
 			<-sigs
 			cvlCfgMap := ReadConfFile()
 			CVL_LEVEL_LOG(INFO ,"Received SIGUSR2. Changed configuration values are %v", cvlCfgMap)
+
+			if (strings.Compare(cvlCfgMap["LOGTOSTDERR"], "true") == 0) {
+				flag.Set("logtostderr", "true")
+				flag.Set("stderrthreshold", cvlCfgMap["STDERRTHRESHOLD"])
+				flag.Set("v", cvlCfgMap["VERBOSITY"])
+			}
 		}
 	}()
 
 }
 
-func ReadConfFile()  map[string]bool{
+func ReadConfFile()  map[string]string{
         data, err := ioutil.ReadFile(CVL_CFG_FILE)
 
         err = json.Unmarshal(data, &cvlCfgMap)

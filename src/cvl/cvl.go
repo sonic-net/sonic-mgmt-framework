@@ -14,7 +14,7 @@ import (
 	"cvl/internal/yparser"
 	. "cvl/internal/util"
 	"sync"
-//	"flag"
+	"flag"
 )
 
 //DB number 
@@ -135,17 +135,15 @@ func init() {
 		SetTrace(true)
 	}
 
-	/*
-	flag.Set("logtostderr", "true")
-	flag.Set("stderrthreshold", "INFO")
-	flag.Set("v", "8")
-	//flag.Set("log_dir", ".")
-        flag.Parse()
-        */
-
-
 	ConfigFileSyncHandler()
 	cvlCfgMap := ReadConfFile()
+
+	if (strings.Compare(cvlCfgMap["LOGTOSTDERR"], "true") == 0) {
+		flag.Set("logtostderr", "true")
+		flag.Set("stderrthreshold", cvlCfgMap["STDERRTHRESHOLD"])
+		flag.Set("v", cvlCfgMap["VERBOSITY"])
+	}
+
 	CVL_LOG(INFO ,"Current Values of CVL Configuration File %v", cvlCfgMap)
 
 	//regular expression for leafref and hashref finding
