@@ -287,12 +287,12 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (CVLErrorInfo, CVL
 
 	//Step 2 : Perform syntax validation only
 	yang, errN := c.translateToYang1(&requestedData)
-	if (errN == CVL_SUCCESS) {
+	if (errN.ErrCode == CVL_SUCCESS) {
 		if cvlErrObj, cvlRetCode := c.validateSyntax1(yang); cvlRetCode != CVL_SUCCESS {
 			return cvlErrObj, cvlRetCode 
 		}
 	} else {
-		return CVLErrorInfo{}, errN
+		return errN,errN.ErrCode 
 	}
 
 	//Step 3 : Check keys and update dependent data

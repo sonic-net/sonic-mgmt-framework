@@ -166,7 +166,7 @@ func (app *AclApp) translateGet(dbs [db.MaxDB]*db.DB) error {
 	return err
 }
 
-func (app *AclApp) translateSubscribe(dbs [db.MaxDB]*db.DB, path string) (int, *notificationInfo, error) {
+func (app *AclApp) translateSubscribe(dbs [db.MaxDB]*db.DB, path string) (*notificationOpts, *notificationInfo, error) {
     err := errors.New("Not supported")
     configDb := dbs[db.ConfigDB]
     pathInfo := NewPathInfo(path)
@@ -178,7 +178,7 @@ func (app *AclApp) translateSubscribe(dbs [db.MaxDB]*db.DB, path string) (int, *
             aclT := pathInfo.Var("type")
             if OPENCONFIG_ACL_TYPE_IPV4 != aclT && OPENCONFIG_ACL_TYPE_IPV6 != aclT && OPENCONFIG_ACL_TYPE_L2 != aclT {
                 err = errors.New("Invalid ACL Type")
-                return 0, nil, err
+                return nil, nil, err
             }
             aclkey := aclN + "_" + aclT
             if isSubtreeRequest(pathInfo.Template, "/openconfig-acl:acl/acl-sets/acl-set{name}{type}/acl-entries/acl-entry{sequence-id}") {
@@ -218,7 +218,7 @@ func (app *AclApp) translateSubscribe(dbs [db.MaxDB]*db.DB, path string) (int, *
         notifInfo.table = db.TableSpec{Name: ACL_TABLE}
     }
 
-    return 0, &notifInfo, err
+    return nil, &notifInfo, err
 }
 
 func (app *AclApp) processCreate(d *db.DB) (SetResponse, error) {

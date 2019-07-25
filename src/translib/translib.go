@@ -69,17 +69,30 @@ type SubscribeResponse struct{
 	Timestamp	int64
 }
 
+type NotificationType int
+
+const(
+    Sample	NotificationType = iota
+    OnChange
+)
+
 type IsSubscribeResponse struct{
-	Path		string
-	IsSupported bool
-	mInterval	int
-	Err			error
+	Path				string
+	IsSupported			bool
+	MinInterval			int
+	Err					error
+	PreferredType		NotificationType
 }
 
 type ModelData struct{
 	Name      string
 	Org		  string
 	Ver		  string
+}
+
+type notificationOpts struct {
+    mInterval		int
+    pType			NotificationType  // for TARGET_DEFINED
 }
 
 //initializes logging and app modules
@@ -560,7 +573,7 @@ func IsSubscribeSupported(paths []string) ([]*IsSubscribeResponse, error) {
 	for i, _ := range resp {
 		resp[i] = &IsSubscribeResponse{Path: paths[i],
 								IsSupported: false,
-								mInterval:   minSubsInterval}
+								MinInterval: minSubsInterval}
 	}
 
     if err != nil {
@@ -585,7 +598,7 @@ func IsSubscribeSupported(paths []string) ([]*IsSubscribeResponse, error) {
 			continue;
 		}
 
-		mInt, _, errApp := app.translateSubscribe (dbs, path)
+		nOpts, _, errApp := app.translateSubscribe (dbs, path)
 
 		if errApp != nil {
 			resp[i].IsSupported = false
@@ -595,9 +608,10 @@ func IsSubscribeSupported(paths []string) ([]*IsSubscribeResponse, error) {
         } else {
 			resp[i].IsSupported = true
 
-			if mInt != 0 {
-				resp[i].mInterval = mInt
+			if nOpts.mInterval != 0 {
+				resp[i].MinInterval = nOpts.mInterval
 			}
+			resp[i].PreferredType = nOpts.pType
 		}
 	}
 
