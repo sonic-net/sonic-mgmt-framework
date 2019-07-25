@@ -344,10 +344,9 @@ func (d *DB) key2redis(ts *TableSpec, key Key) string {
 				d.Opts.TableNameSeparator+
 				strings.Join(key.Comp, d.Opts.KeySeparator))
 	}
-
-	return ts.Name +
-		d.Opts.TableNameSeparator +
-		strings.Join(key.Comp, d.Opts.KeySeparator)
+        return ts.Name +
+               d.Opts.TableNameSeparator +
+               strings.Join(key.Comp, d.Opts.KeySeparator)
 }
 
 func (d *DB) redis2key(ts *TableSpec, redisKey string) Key {

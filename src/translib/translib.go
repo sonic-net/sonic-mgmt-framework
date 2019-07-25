@@ -660,8 +660,8 @@ func getAllDbs() ([db.MaxDB]*db.DB, error) {
     dbs[db.CountersDB], err = db.NewDB(db.Options {
                     DBNo              : db.CountersDB,
                     InitIndicator     : "",
-                    TableNameSeparator: "|",
-                    KeySeparator      : "|",
+                    TableNameSeparator: ":",
+                    KeySeparator      : ":",
                       })
 
 	if err != nil {
