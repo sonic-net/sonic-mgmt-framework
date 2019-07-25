@@ -268,6 +268,7 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (CVLErrorInfo, CVL
 			}
 
 			c.updateDeleteDataToCache(tbl, key)
+			c.addTableDataForMustExp(tbl)
 		}
 	}
 
@@ -317,12 +318,16 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (CVLErrorInfo, CVL
 					TRACE_LOG(INFO_API, TRACE_CREATE, "\nKey %s is deleted in same session, skipping key existence check for OP_CREATE operation", cfgDataItem.Key)
 				}
 
+				c.yp.SetOperation("CREATE")
+
 			case OP_UPDATE:
 				n, err1 := redisClient.Exists(cfgDataItem.Key).Result()
 				if (err1 != nil || n == 0) { //key must exists
 					TRACE_LOG(INFO_API, TRACE_UPDATE, "\nValidateEditConfig(): Key = %s does not exist", cfgDataItem.Key)
 					return cvlErrObj, CVL_SEMANTIC_KEY_NOT_EXIST
 				}
+
+				c.yp.SetOperation("UPDATE")
 
 			case OP_DELETE:
 				n, err1 := redisClient.Exists(cfgDataItem.Key).Result()
@@ -331,6 +336,7 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (CVLErrorInfo, CVL
 					return cvlErrObj, CVL_SEMANTIC_KEY_NOT_EXIST
 				}
 
+				c.yp.SetOperation("DELETE")
 				//store deleted keys
 				deletedKeys[cfgDataItem.Key] = nil;
 

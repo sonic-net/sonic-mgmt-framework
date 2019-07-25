@@ -119,7 +119,12 @@ struct lyd_node *lyd_find_node(struct lyd_node *root, const char *xpath)
 
 	return node;
 }
- 
+
+int lyd_change_leaf_data(struct lyd_node *leaf, const char *val_str)
+{
+  return lyd_change_leaf((struct lyd_node_leaf_list *)leaf, val_str);
+}
+
 */
 import "C"
 
@@ -128,11 +133,15 @@ type YParserNode C.struct_lyd_node
 type YParserModule C.struct_lys_module
 
 var ypCtx *YParserCtx
+var ypOpModule *YParserModule
+var ypOpRoot *YParserNode  //Operation root
+var ypOpNode *YParserNode  //Operation node 
 
 
 type YParser struct {
-	ctx *YParserCtx
-	root *YParserNode
+	ctx *YParserCtx      //Parser context
+	root *YParserNode    //Top evel root for validation
+	operation string     //Edit operation
 }
 
 /* YParser Error Structure */
@@ -222,6 +231,12 @@ func ParseSchemaFile(modelFile string) (*YParserModule, YParserError) {
 	if module == nil {
 		log.Fatal("Unable to parse schema file %s", modelFile)
 		return nil, getErrorDetails()
+	}
+
+	if (strings.Contains(modelFile, "sonic-common.yin") == true) {
+		ypOpModule = (*YParserModule)(module)
+		ypOpRoot = (*YParserNode)(C.lyd_new(nil, (*C.struct_lys_module)(ypOpModule), C.CString("operation")))
+		ypOpNode = (*YParserNode)(C.lyd_new_leaf((*C.struct_lyd_node)(ypOpRoot), (*C.struct_lys_module)(ypOpModule), C.CString("operation"), C.CString("NOP")))
 	}
 
 	return (*YParserModule)(module), YParserError {ErrCode : YP_SUCCESS,}
@@ -317,6 +332,27 @@ func (yp *YParser) DestroyCache() YParserError {
 	return YParserError {ErrCode : YP_SUCCESS,}
 }
 
+//Set operation 
+func (yp *YParser) SetOperation(op string) YParserError {
+	if (ypOpNode == nil) {
+		ypOpRoot = (*YParserNode)(C.lyd_new(nil, (*C.struct_lys_module)(ypOpModule), C.CString("operation")))
+		ypOpNode = (*YParserNode)(C.lyd_new_leaf((*C.struct_lyd_node)(ypOpRoot), (*C.struct_lys_module)(ypOpModule), C.CString("operation"), C.CString(op)))
+		if (ypOpNode == nil) {
+			return YParserError {ErrCode : YP_INTERNAL_UNKNOWN,}
+		}
+
+		yp.operation = op
+		return YParserError {ErrCode : YP_SUCCESS,}
+	}
+
+	if (0 != C.lyd_change_leaf_data((*C.struct_lyd_node)(ypOpNode), C.CString(op))) {
+		return YParserError {ErrCode : YP_INTERNAL_UNKNOWN,}
+	}
+
+	yp.operation = op
+	return YParserError {ErrCode : YP_SUCCESS,}
+}
+
 //Validate config - syntax and semantics
 func (yp *YParser) ValidateData(data, depData *YParserNode) YParserError {
 
@@ -356,25 +392,42 @@ func (yp *YParser) ValidateSyntax(data *YParserNode) YParserError {
 //Perform semantic checks 
 func (yp *YParser) ValidateSemantics(data, depData, appDepData *YParserNode) YParserError {
 
-	dataTmp := (*C.struct_lyd_node)(data)
-	dataTmp1 :=  (*C.struct_lyd_node)(data)
+	var dataTmp *C.struct_lyd_node
+	var dataTmp1 *C.struct_lyd_node
+
+	if (data != nil) {
+		dataTmp = (*C.struct_lyd_node)(data)
+		dataTmp1 =  (*C.struct_lyd_node)(data)
+	} else if (depData != nil) {
+		dataTmp = (*C.struct_lyd_node)(depData)
+		dataTmp1 =  (*C.struct_lyd_node)(depData)
+	} else if (yp.root != nil) {
+		dataTmp = (*C.struct_lyd_node)(yp.root)
+		dataTmp1 =  (*C.struct_lyd_node)(yp.root)
+	} else {
+		if (yp.operation == "CREATE") || (yp.operation == "UPDATE") {
+			return YParserError {ErrCode : YP_INTERNAL_UNKNOWN,}
+		} else {
+			return YParserError {ErrCode : YP_SUCCESS,}
+		}
+	}
 
 	//parse dependent data
-	if (depData != nil) {
+	if (data != nil && depData != nil) {
 
 		//merge input data and dependent data for semantic validation
 		if (0 != C.lyd_merge_to_ctx(&dataTmp, (*C.struct_lyd_node)(depData),
 		C.LYD_OPT_DESTRUCT, (*C.struct_ly_ctx)(ypCtx))) {
-			TRACE_LOG(INFO_API, TRACE_YPARSER, "Unable to merge dependent data\n")
+			TRACE_LOG(INFO_API, (TRACE_SEMANTIC | TRACE_LIBYANG), "Unable to merge dependent data\n")
 			return getErrorDetails()
 		}
 	}
 
 	//Merge cached data
-	if (yp.root != nil) {
+	if ((data != nil || depData != nil) && yp.root != nil) {
 		if (0 != C.lyd_merge_to_ctx(&dataTmp, (*C.struct_lyd_node)(yp.root),
 		0, (*C.struct_ly_ctx)(ypCtx))) {
-			TRACE_LOG(INFO_API, TRACE_YPARSER, "Unable to merge cached dependent data\n")
+			TRACE_LOG(INFO_API, (TRACE_SEMANTIC | TRACE_LIBYANG), "Unable to merge cached dependent data\n")
 			return getErrorDetails()
 		}
 	}
@@ -383,9 +436,23 @@ func (yp *YParser) ValidateSemantics(data, depData, appDepData *YParserNode) YPa
 	if (appDepData != nil) {
 		if (0 != C.lyd_merge_to_ctx(&dataTmp, (*C.struct_lyd_node)(appDepData),
 		C.LYD_OPT_DESTRUCT, (*C.struct_ly_ctx)(ypCtx))) {
-			TRACE_LOG(INFO_API, TRACE_YPARSER, "Unable to merge other dependent data\n")
+			TRACE_LOG(INFO_API, (TRACE_SEMANTIC | TRACE_LIBYANG), "Unable to merge other dependent data\n")
 			return getErrorDetails()
 		}
+	}
+
+	//Add operation for constraint check
+	if (ypOpRoot != nil) {
+		//if (0 != C.lyd_insert_sibling(&dataTmp, (*C.struct_lyd_node)(ypOpRoot))) {
+		if (0 != C.lyd_merge_to_ctx(&dataTmp, (*C.struct_lyd_node)(ypOpRoot),
+		0, (*C.struct_ly_ctx)(ypCtx))) {
+			TRACE_LOG(INFO_API, (TRACE_SEMANTIC | TRACE_LIBYANG), "Unable to insert operation node")
+			return getErrorDetails()
+		}
+	}
+
+	if (Tracing == true) {
+		TRACE_LOG(INFO_API, TRACE_YPARSER, "Semantics data = %v", yp.NodeDump((*YParserNode)(dataTmp)))
 	}
 
 	//Check semantic validation

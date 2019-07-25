@@ -453,7 +453,7 @@ func (c *CVL) addTableDataForMustExp(tableName string) CVLRetCode {
 				TRACE_LOG(INFO_API, TRACE_CACHE, "Global cache empty, no data in Redis for table %s", tableName)
 				return CVL_SUCCESS
 			} else {
-				CVL_LOG(ERROR ,"Could not create glocal cache for table %s", mustTblName)
+				CVL_LOG(ERROR ,"Could not create global cache for table %s", mustTblName)
 				return CVL_ERROR
 			}
 
@@ -1683,17 +1683,20 @@ func dbCacheGet(tableName string) (*yparser.YParserNode, CVLRetCode) {
 	}
 
 	if (dbCacheTmp.root != nil) {
-		//Update the expiry if, cache is destroyable (i.e. expiry != 0)
-		if (time.Now().After(dbCacheTmp.startTime.Add(time.Second * time.Duration(dbCacheTmp.expiry)))) {
-			//Cache expired, clear the cache
-			dbCacheClear(tableName)
+		if (dbCacheTmp.expiry != 0) {
+			//If cache is destroyable (i.e. expiry != 0), check if it has already expired.
+			//If not expired update the time stamp
+			if (time.Now().After(dbCacheTmp.startTime.Add(time.Second * time.Duration(dbCacheTmp.expiry)))) {
+				//Cache expired, clear the cache
+				dbCacheClear(tableName)
 
-			return nil, CVL_ERROR
+				return nil, CVL_ERROR
+			}
+
+			//Since the cache is used actively, update the timestamp
+			dbCacheTmp.startTime = time.Now()
+			cvg.db[tableName] = dbCacheTmp
 		}
-
-		//Since the cache is used actively, update the timestamp
-		dbCacheTmp.startTime = time.Now()
-		cvg.db[tableName] = dbCacheTmp
 
 		return dbCacheTmp.root, CVL_SUCCESS
 	} else {

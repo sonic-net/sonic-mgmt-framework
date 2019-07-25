@@ -395,12 +395,12 @@ func TestValidateConfig_CfgStrBuffer(t *testing.T) {
 		tests = append(tests, testStruct{filedescription: modelName, jsonString: json_validate_config_data[index], retCode: cvl.CVL_SUCCESS})
 	}
 
-	cv, _ := cvl.ValidationSessOpen()
+	cvSess, _ := cvl.ValidationSessOpen()
 
 	for index, tc := range tests {
 		t.Logf("Running Testcase %d with Description %s", index+1, tc.filedescription)
 		t.Run(fmt.Sprintf("%s [%d]", tc.filedescription, index+1), func(t *testing.T) {
-			err := cv.ValidateConfig(tc.jsonString)
+			err := cvSess.ValidateConfig(tc.jsonString)
 
 			fmt.Printf("\nValidating data = %v\n\n", tc.jsonString)
 
@@ -410,6 +410,9 @@ func TestValidateConfig_CfgStrBuffer(t *testing.T) {
 
 		})
 	}
+
+	 cvl.ValidationSessClose(cvSess)
+
 }
 
 /* API when config is given as json file. */
@@ -445,6 +448,7 @@ func TestValidateConfig_CfgFile(t *testing.T) {
 		})
 	}
 
+	 cvl.ValidationSessClose(cv)
 }
 
 //Validate invalid json data
@@ -500,7 +504,11 @@ func TestValidateEditConfig_Create_Syntax_Valid_FieldValue(t *testing.T) {
 		},
 	}
 
-	cvlErrInfo, retCode := cv.ValidateEditConfig(cfgData)
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	cvlErrInfo, retCode := cvSess.ValidateEditConfig(cfgData)
+
+	cvl.ValidationSessClose(cvSess)
 
 	if retCode != cvl.CVL_SUCCESS {
 		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
@@ -526,8 +534,11 @@ func TestValidateEditConfig_Create_Syntax_CableLength(t *testing.T) {
 		},
 	 }
 
-	cvlErrInfo, err := cv.ValidateEditConfig(cfgData)
-	fmt.Println(err)
+	 cvSess, _ := cvl.ValidationSessOpen()
+
+	 cvlErrInfo, err := cvSess.ValidateEditConfig(cfgData)
+
+	 cvl.ValidationSessClose(cvSess)
 
 	if err == cvl.CVL_SUCCESS {
 		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
@@ -546,8 +557,11 @@ func TestValidateEditConfig_Create_Syntax_Invalid_FieldValue(t *testing.T) {
 		},
 	}
 
-	cvlErrInfo, err := cv.ValidateEditConfig(cfgData)
-	fmt.Println(err)
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	cvlErrInfo, err := cvSess.ValidateEditConfig(cfgData)
+
+	cvl.ValidationSessClose(cvSess)
 
 	if err == cvl.CVL_SUCCESS {
 		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
@@ -565,36 +579,47 @@ func TestValidateEditConfig_Create_Syntax_Valid_PacketAction_Positive(t *testing
 
 	testData := []testEditCfgData{
 		{
-			data: []cvl.CVLEditConfigData{
-				cvl.CVLEditConfigData{cvl.VALIDATE_NONE, cvl.OP_CREATE, "ACL_TABLE|TestACL1", map[string]string{
+			data: []cvl.CVLEditConfigData {
+				cvl.CVLEditConfigData{cvl.VALIDATE_ALL, cvl.OP_CREATE, "ACL_TABLE|TestACL1", map[string]string{
 					"stage": "EGRESS",
 					"type":  "L3",
+					},
 				},
-				},
+			},
+			retCode: cvl.CVL_SUCCESS,
+		},
+		{
+			data: []cvl.CVLEditConfigData {
 				cvl.CVLEditConfigData{cvl.VALIDATE_ALL, cvl.OP_CREATE, "ACL_RULE|TestACL1|Rule1", map[string]string{
-					"PACKET_ACTION":     "FORWARD",
-					"SRC_IP":            "10.1.1.1/32",
-					"L4_SRC_PORT":       "1909",
-					"IP_PROTOCOL":       "103",
-					"DST_IP":            "20.2.2.2/32",
-					"L4_DST_PORT_RANGE": "9000-12000",
-				},
+						"PACKET_ACTION":     "REDIRECT",
+						"SRC_IP":            "10.1.1.1/32",
+						"L4_SRC_PORT":       "1909",
+						"IP_PROTOCOL":       "103",
+						"DST_IP":            "20.2.2.2/32",
+						"L4_DST_PORT_RANGE": "9000-12000",
+					},
 				},
 			},
 			retCode: cvl.CVL_SUCCESS,
 		},
 	}
 
-	for idx, testDataItem := range testData {
-		t.Run(fmt.Sprintf("Positive - EditConfig(Create) : Invalid Field Value [%d]", idx+1), func(t *testing.T) {
+	cvSess, _ := cvl.ValidationSessOpen()
 
-			cvlErrInfo, err := cv.ValidateEditConfig(testDataItem.data)
+	for idx, testDataItem := range testData {
+		t.Run(fmt.Sprintf("Positive - EditConfig(Create) : [%d]", idx+1), func(t *testing.T) {
+
+
+			cvlErrInfo, err := cvSess.ValidateEditConfig(testDataItem.data)
+
 
 			if err != testDataItem.retCode {
 				t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
 			}
 		})
 	}
+
+	cvl.ValidationSessClose(cvSess)
 
 }
 
@@ -617,7 +642,12 @@ func TestValidateEditConfig_Create_Syntax_Invalid_PacketAction_Negative(t *testi
 		},
 	}
 
-	cvlErrInfo, err := cv.ValidateEditConfig(cfgData)
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	cvlErrInfo, err := cvSess.ValidateEditConfig(cfgData)
+
+	cvl.ValidationSessClose(cvSess)
+
 	WriteToFile("\nTestValidateEditConfig_Create_Syntax_Invalid_PacketAction_Negative:\n", fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
 
 	if err == cvl.CVL_SUCCESS {
@@ -645,7 +675,12 @@ func TestValidateEditConfig_Create_Syntax_Invalid_SrcPrefix_Negative(t *testing.
 		},
 	}
 
-	cvlErrInfo, err := cv.ValidateEditConfig(cfgData)
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	cvl.ValidationSessClose(cvSess)
+
+	cvlErrInfo, err := cvSess.ValidateEditConfig(cfgData)
+
 	WriteToFile("\nTestValidateEditConfig_Create_Syntax_Invalid_SrcPrefix_Negative:\n", fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
 
 	if err == cvl.CVL_SUCCESS {
@@ -673,7 +708,12 @@ func TestValidateEditConfig_Create_Syntax_InvalidIPAddress_Negative(t *testing.T
 		},
 	}
 
-	cvlErrInfo, err := cv.ValidateEditConfig(cfgData)
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	cvlErrInfo, err := cvSess.ValidateEditConfig(cfgData)
+
+	cvl.ValidationSessClose(cvSess)
+
 	WriteToFile("\nTestValidateEditConfig_Create_Syntax_InvalidIPAddress_Negative:\n", fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
 
 	if err == cvl.CVL_SUCCESS {
@@ -701,7 +741,12 @@ func TestValidateEditConfig_Create_Syntax_OutofBound_Negative(t *testing.T) {
 		},
 	}
 
-	cvlErrInfo, err := cv.ValidateEditConfig(cfgData)
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	cvlErrInfo, err := cvSess.ValidateEditConfig(cfgData)
+
+	cvl.ValidationSessClose(cvSess)
+
 	WriteToFile("\nTestValidateEditConfig_Create_Syntax_OutofBound_Negative:\n", fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
 
 	if err == cvl.CVL_SUCCESS {
@@ -729,7 +774,12 @@ func TestValidateEditConfig_Create_Syntax_InvalidProtocol_Negative(t *testing.T)
 		},
 	}
 
-	cvlErrInfo, err := cv.ValidateEditConfig(cfgData)
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	cvlErrInfo, err := cvSess.ValidateEditConfig(cfgData)
+
+	cvl.ValidationSessClose(cvSess)
+
 	WriteToFile("\nTestValidateEditConfig_Create_Syntax_InvalidProtocol_Negative:\n", fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
 
 	if err == cvl.CVL_SUCCESS {
@@ -757,7 +807,12 @@ func TestValidateEditConfig_Create_Syntax_InvalidRange_Negative(t *testing.T) {
 		},
 	}
 
-	cvlErrInfo, err := cv.ValidateEditConfig(cfgData)
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	cvlErrInfo, err := cvSess.ValidateEditConfig(cfgData)
+
+	cvl.ValidationSessClose(cvSess)
+
 	WriteToFile("\nTestValidateEditConfig_Create_Syntax_InvalidRange_Negative:\n", fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
 
 	if err == cvl.CVL_SUCCESS {
@@ -785,7 +840,12 @@ func TestValidateEditConfig_Create_Syntax_InvalidCharNEw_Negative(t *testing.T) 
 		},
 	}
 
-	cvlErrInfo, err := cv.ValidateEditConfig(cfgData)
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	cvlErrInfo, err := cvSess.ValidateEditConfig(cfgData)
+
+	cvl.ValidationSessClose(cvSess)
+
 	WriteToFile("\nTestValidateEditConfig_Create_Syntax_InvalidCharNEw_Negative:\n", fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
 
 	if err == cvl.CVL_SUCCESS {
@@ -807,8 +867,9 @@ func TestValidateEditConfig_Create_Syntax_SpecialChar_Positive(t *testing.T) {
                         },
                 },
 	}
+	cvSess, _ := cvl.ValidationSessOpen()
 
-	cvlErrInfo, err := cv.ValidateEditConfig(cfgData)
+	cvlErrInfo, err := cvSess.ValidateEditConfig(cfgData)
 
 	if err != cvl.CVL_SUCCESS {
 		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
@@ -839,7 +900,9 @@ func TestValidateEditConfig_Create_Syntax_SpecialChar_Positive(t *testing.T) {
 		},
 	}
 
-	cvlErrInfo, err = cv.ValidateEditConfig(cfgData)
+	cvlErrInfo, err = cvSess.ValidateEditConfig(cfgData)
+
+	cvl.ValidationSessClose(cvSess)
 
 	if err != cvl.CVL_SUCCESS { //Should succeed
 		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
@@ -865,7 +928,12 @@ func TestValidateEditConfig_Create_Syntax_InvalidKeyName_Negative(t *testing.T) 
 		},
 	}
 
-	cvlErrInfo, err := cv.ValidateEditConfig(cfgData)
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	cvlErrInfo, err := cvSess.ValidateEditConfig(cfgData)
+
+	cvl.ValidationSessClose(cvSess)
+
 	WriteToFile("\nTestValidateEditConfig_Create_Syntax_InvalidKeyName_Negative:\n", fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
 
 	if err == cvl.CVL_SUCCESS {
@@ -893,7 +961,12 @@ func TestValidateEditConfig_Create_Semantic_AdditionalInvalidNode_Negative(t *te
 		},
 	}
 
-	cvlErrInfo, err := cv.ValidateEditConfig(cfgData)
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	cvlErrInfo, err := cvSess.ValidateEditConfig(cfgData)
+
+	cvl.ValidationSessClose(cvSess)
+
 	WriteToFile("\nTestValidateEditConfig_Create_Semantic_AdditionalInvalidNode_Negative:\n", fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
 
 	if err == cvl.CVL_SUCCESS {
@@ -914,7 +987,12 @@ func TestValidateEditConfig_Create_Semantic_MissingMandatoryNode_Negative(t *tes
 		},
 	}
 
-	cvlErrInfo, err := cv.ValidateEditConfig(cfgData)
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	cvlErrInfo, err := cvSess.ValidateEditConfig(cfgData)
+
+	cvl.ValidationSessClose(cvSess)
+
 	WriteToFile("\nTestValidateEditConfig_Create_Semantic_MissingMandatoryNode_Negative:\n", fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
 
 	if err == cvl.CVL_SUCCESS {
@@ -940,7 +1018,12 @@ func TestValidateEditConfig_Create_Syntax_Invalid_Negative(t *testing.T) {
 		},
 	}
 
-	cvlErrInfo, err := cv.ValidateEditConfig(cfgData)
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	cvlErrInfo, err := cvSess.ValidateEditConfig(cfgData)
+
+	cvl.ValidationSessClose(cvSess)
+
 	WriteToFile("\nTestValidateEditConfig_Create_Syntax_Invalid_Negative:\n", fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
 
 	if err == cvl.CVL_SUCCESS {
@@ -967,7 +1050,12 @@ func TestValidateEditConfig_Create_Syntax_IncompleteKey_Negative(t *testing.T) {
 		},
 	}
 
-	cvlErrInfo, err := cv.ValidateEditConfig(cfgData)
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	cvlErrInfo, err := cvSess.ValidateEditConfig(cfgData)
+
+	cvl.ValidationSessClose(cvSess)
+
 	WriteToFile("\nTestValidateEditConfig_Create_Syntax_IncompleteKey_Negative:\n", fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
 
 	if err == cvl.CVL_SUCCESS {
@@ -994,7 +1082,12 @@ func TestValidateEditConfig_Create_Syntax_InvalidKey_Negative(t *testing.T) {
 		},
 	}
 
-	cvlErrInfo, err := cv.ValidateEditConfig(cfgData)
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	cvlErrInfo, err := cvSess.ValidateEditConfig(cfgData)
+
+	cvl.ValidationSessClose(cvSess)
+
 	WriteToFile("\nTestValidateEditConfig_Create_Syntax_InvalidKey_Negative:\n", fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
 
 	if err == cvl.CVL_SUCCESS {
@@ -1025,7 +1118,12 @@ func TestValidateEditConfig_Update_Syntax_DependentData_Negative(t *testing.T) {
 		},
 	}
 
-	cvlErrObj, err := cv.ValidateEditConfig(cfgData)
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	cvlErrObj, err := cvSess.ValidateEditConfig(cfgData)
+
+	cvl.ValidationSessClose(cvSess)
+
 	WriteToFile("\nTestValidateEditConfig_Update_Syntax_DependentData_Negative:\n", fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrObj))
 
 	if err == cvl.CVL_SUCCESS {
@@ -1096,7 +1194,12 @@ func TestValidateEditConfig_Create_Syntax_DependentData_Negative(t *testing.T) {
 		},
 	}
 
-	cvlErrInfo, err := cv.ValidateEditConfig(cfgData)
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	cvlErrInfo, err := cvSess.ValidateEditConfig(cfgData)
+
+	cvl.ValidationSessClose(cvSess)
+
 	WriteToFile("\nTestValidateEditConfig_Create_Syntax_DependentData_Negative:\n", fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
 
 	if err == cvl.CVL_SUCCESS {
@@ -1123,7 +1226,12 @@ func TestValidateEditConfig_Delete_Syntax_InvalidKey_Negative(t *testing.T) {
 		},
 	}
 
-	cvlErrInfo, err := cv.ValidateEditConfig(cfgData)
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	cvlErrInfo, err := cvSess.ValidateEditConfig(cfgData)
+
+	cvl.ValidationSessClose(cvSess)
+
 	WriteToFile("\nTestValidateEditConfig_Delete_Syntax_InvalidKey_Negative:\n", fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
 
 	if err == cvl.CVL_SUCCESS {
@@ -1150,7 +1258,12 @@ func TestValidateEditConfig_Update_Syntax_InvalidKey_Negative(t *testing.T) {
 		},
 	}
 
-	cvlErrInfo, err := cv.ValidateEditConfig(cfgData)
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	cvlErrInfo, err := cvSess.ValidateEditConfig(cfgData)
+
+	cvl.ValidationSessClose(cvSess)
+
 	WriteToFile("\nTestValidateEditConfig_Update_Syntax_InvalidKey_Negative:\n", fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
 
 	if err == cvl.CVL_SUCCESS {
@@ -1177,7 +1290,12 @@ func TestValidateEditConfig_Delete_InvalidKey_Negative(t *testing.T) {
 		},
 	}
 
+	cvSess, _ := cvl.ValidationSessOpen()
+
 	cvlErrObj, err := cv.ValidateEditConfig(cfgData)
+
+	cvl.ValidationSessClose(cvSess)
+
 	WriteToFile("\nTestValidateEditConfig_Delete_InvalidKey_Negative:\n", fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrObj))
 
 	if err == cvl.CVL_SUCCESS {
@@ -1203,8 +1321,12 @@ func TestValidateEditConfig_Update_Syntax_Invalid_Field_Negative(t *testing.T) {
 			},
 		},
 	}
+	cvSess, _ := cvl.ValidationSessOpen()
 
-	cvlErrInfo, err := cv.ValidateEditConfig(cfgData)
+	cvlErrInfo, err := cvSess.ValidateEditConfig(cfgData)
+
+	cvl.ValidationSessClose(cvSess)
+
 	WriteToFile("\nTestValidateEditConfig_Update_Syntax_Invalid_Field_Negative:\n", fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
 
 	if err == cvl.CVL_SUCCESS {
@@ -1231,7 +1353,11 @@ func TestValidateEditConfig_Update_Semantic_Invalid_Key_Negative(t *testing.T) {
 		},
 	}
 
-	cvlErrInfo, err := cv.ValidateEditConfig(cfgData)
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	cvlErrInfo, err := cvSess.ValidateEditConfig(cfgData)
+
+	cvl.ValidationSessClose(cvSess)
 	WriteToFile("\nTestValidateEditConfig_Update_Semantic_Invalid_Key_Negative:\n", fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
 
 	if err == cvl.CVL_SUCCESS {
@@ -1261,7 +1387,11 @@ func TestValidateEditConfig_Delete_Semantic_Positive(t *testing.T) {
 		},
 	}
 
-	cvlErrInfo, err := cv.ValidateEditConfig(cfgData)
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	cvlErrInfo, err := cvSess.ValidateEditConfig(cfgData)
+
+	cvl.ValidationSessClose(cvSess)
 
 	if err != cvl.CVL_SUCCESS {
 		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
@@ -1288,7 +1418,12 @@ func TestValidateEditConfig_Delete_Semantic_MissingKey_Negative(t *testing.T) {
 		},
 	}
 
-	cvlErrInfo, err := cv.ValidateEditConfig(cfgData)
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	cvlErrInfo, err := cvSess.ValidateEditConfig(cfgData)
+
+	cvl.ValidationSessClose(cvSess)
+
 	WriteToFile("\nTestValidateEditConfig_Delete_Semantic_MissingKey_Negative:\n", fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
 
 	if err == cvl.CVL_SUCCESS {
@@ -1310,7 +1445,12 @@ func TestValidateEditConfig_Update_Semantic_MissingKey_Negative(t *testing.T) {
 		},
 	}
 
-	cvlErrInfo, err := cv.ValidateEditConfig(cfgData)
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	cvlErrInfo, err := cvSess.ValidateEditConfig(cfgData)
+
+	cvl.ValidationSessClose(cvSess)
+
 	WriteToFile("\nTestValidateEditConfig_Update_Semantic_MissingKey_Negative:\n", fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
 
 	if err == cvl.CVL_SUCCESS {
@@ -1344,7 +1484,11 @@ func TestValidateEditConfig_Create_Duplicate_Key_Negative(t *testing.T) {
 		},
 	}
 
-	cvlErrInfo, retCode := cv.ValidateEditConfig(cfgData)
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	cvlErrInfo, retCode := cvSess.ValidateEditConfig(cfgData)
+
+	cvl.ValidationSessClose(cvSess)
 	WriteToFile("\nTestValidateEditConfig_Create_Duplicate_Key_Negative:\n", fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
 
 	if retCode == cvl.CVL_SUCCESS {
@@ -1379,7 +1523,11 @@ func TestValidateEditConfig_Update_Semantic_Positive(t *testing.T) {
 		},
 	}
 
-	cvlErrInfo, retCode := cv.ValidateEditConfig(cfgData)
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	cvlErrInfo, retCode := cvSess.ValidateEditConfig(cfgData)
+
+	cvl.ValidationSessClose(cvSess)
 
 	if retCode != cvl.CVL_SUCCESS {
 		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
@@ -1392,7 +1540,7 @@ func TestValidateEditConfig_Update_Semantic_Positive(t *testing.T) {
 /* API to test edit config with valid syntax. */
 func TestValidateConfig_Update_Semantic_Vlan_Negative(t *testing.T) {
 
-	cv, _ := cvl.ValidationSessOpen()
+	cvSess, _ := cvl.ValidationSessOpen()
 
 	jsonData := `{
                         "VLAN": {
@@ -1406,12 +1554,13 @@ func TestValidateConfig_Update_Semantic_Vlan_Negative(t *testing.T) {
                         }
                 }`
 
-	err := cv.ValidateConfig(jsonData)
+	err := cvSess.ValidateConfig(jsonData)
 
 	if err == cvl.CVL_SUCCESS { //Expected semantic failure
 		t.Errorf("Config Validation failed -- error details.")
 	}
 
+	cvl.ValidationSessClose(cvSess)
 }
 
 func TestValidateEditConfig_Update_Syntax_DependentData_Redis_Positive(t *testing.T) {
@@ -1452,14 +1601,18 @@ func TestValidateEditConfig_Update_Syntax_DependentData_Redis_Positive(t *testin
 		cvl.CVLEditConfigData{
 			cvl.VALIDATE_ALL,
 			cvl.OP_UPDATE,
-			"ACL_RULE|TestACL13|Rule1",
+			"ACL_RULE|TestACL16|Rule1",
 			map[string]string{
 				"MIRROR_ACTION": "everflow2",
 			},
 		},
 	}
 
-	cvlErrInfo, retCode := cv.ValidateEditConfig(cfgData)
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	cvlErrInfo, retCode := cvSess.ValidateEditConfig(cfgData)
+
+	cvl.ValidationSessClose(cvSess)
 
 	if retCode != cvl.CVL_SUCCESS {
 		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
@@ -1508,7 +1661,11 @@ func TestValidateEditConfig_Update_Syntax_DependentData_Invalid_Op_Seq(t *testin
 		},
 	}
 
-	cvlErrInfo, err := cv.ValidateEditConfig(cfgData)
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	cvlErrInfo, err := cvSess.ValidateEditConfig(cfgData)
+
+	cvl.ValidationSessClose(cvSess)
 
 	if err == cvl.CVL_SUCCESS { //Validation should fail
 		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
@@ -1530,7 +1687,12 @@ func TestValidateEditConfig_Update_Syntax_DependentData_Redis_Negative(t *testin
 		},
 	}
 
-	cvlErrInfo, err := cv.ValidateEditConfig(cfgData)
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	cvlErrInfo, err := cvSess.ValidateEditConfig(cfgData)
+
+	cvl.ValidationSessClose(cvSess)
+
 	WriteToFile("\nTestValidateEditConfig_Update_Syntax_DependentData_Redis_Negative:\n", fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
 
 	if err == cvl.CVL_SUCCESS {
@@ -1539,7 +1701,7 @@ func TestValidateEditConfig_Update_Syntax_DependentData_Redis_Negative(t *testin
 
 }
 
-/* Create with User provideddependent data. */
+/* Create with User provided dependent data. */
 func TestValidateEditConfig_Create_Syntax_DependentData_Redis_Positive(t *testing.T) {
 
 	/* ACL and Rule name pre-created . */
@@ -1555,7 +1717,9 @@ func TestValidateEditConfig_Create_Syntax_DependentData_Redis_Positive(t *testin
 		},
 	}
 
-	cvlErrInfo, err := cv.ValidateEditConfig(cfgData)
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	cvlErrInfo, err := cvSess.ValidateEditConfig(cfgData)
 
 	if err != cvl.CVL_SUCCESS {
 		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
@@ -1577,6 +1741,10 @@ func TestValidateEditConfig_Create_Syntax_DependentData_Redis_Positive(t *testin
 		},
 	}
 
+	cvlErrInfo, err = cvSess.ValidateEditConfig(cfgData)
+
+	cvl.ValidationSessClose(cvSess)
+
 	if err != cvl.CVL_SUCCESS {
 		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
 	}
@@ -1594,7 +1762,12 @@ func TestValidateEditConfig_Delete_Semantic_ACLTableReference_Negative(t *testin
 		},
 	}
 
-	cvlErrInfo, err := cv.ValidateEditConfig(cfgData)
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	cvlErrInfo, err := cvSess.ValidateEditConfig(cfgData)
+
+	cvl.ValidationSessClose(cvSess)
+
 	WriteToFile("\nTestValidateEditConfig_Delete_Semantic_ACLTableReference_Negative:\n", fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
 
 	if err == cvl.CVL_SUCCESS {
@@ -1608,13 +1781,13 @@ func TestValidateEditConfig_Delete_Semantic_ACLTableReference_Positive(t *testin
 
 	depDataMap := map[string]interface{} {
 		"ACL_TABLE" : map[string]interface{} {
-			"TestACL10": map[string] interface{} {
+			"TestACL1005": map[string] interface{} {
 				"stage": "INGRESS",
 				"type": "L3",
 			},
 		},
 		"ACL_RULE": map[string]interface{} {
-			"TestACL10|Rule1": map[string] interface{} {
+			"TestACL1005|Rule1": map[string] interface{} {
 				"PACKET_ACTION": "FORWARD",
 				"SRC_IP": "10.1.1.1/32",
 				"L4_SRC_PORT": "1909",
@@ -1632,12 +1805,16 @@ func TestValidateEditConfig_Delete_Semantic_ACLTableReference_Positive(t *testin
 		cvl.CVLEditConfigData{
 			cvl.VALIDATE_ALL,
 			cvl.OP_DELETE,
-			"ACL_RULE|TestACL10|Rule1",
+			"ACL_RULE|TestACL1005|Rule1",
 			map[string]string{},
 		},
 	}
 
-	cvlErrInfo, err := cv.ValidateEditConfig(cfgData)
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	cvlErrInfo, err := cvSess.ValidateEditConfig(cfgData)
+
+	cvl.ValidationSessClose(cvSess)
 
 	if err != cvl.CVL_SUCCESS {
 		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
@@ -1683,7 +1860,7 @@ func TestValidateEditConfig_Create_Dependent_CacheData(t *testing.T) {
 		},
 	}
 
-	cvlErrInfo, err2 := cvSess.ValidateEditConfig1(cfgDataRule)
+	cvlErrInfo, err2 := cvSess.ValidateEditConfig(cfgDataRule)
 	fmt.Println(cvlErrInfo)
 
 	if err1 != cvl.CVL_SUCCESS || err2 != cvl.CVL_SUCCESS {
@@ -1824,7 +2001,8 @@ func TestValidateEditConfig_Create_DepData_From_Redis(t *testing.T) {
 		},
 	}
 
-	cvlErrInfo, err := cvSess.ValidateEditConfig1(cfgDataRule)
+
+	cvlErrInfo, err := cvSess.ValidateEditConfig(cfgDataRule)
 
 	cvl.ValidationSessClose(cvSess)
 
@@ -1850,7 +2028,12 @@ func TestValidateEditConfig_Create_Syntax_InvalidErrAppTag_Negative(t *testing.T
 		},
 	}
 
-	cvlErrInfo, retCode := cv.ValidateEditConfig(cfgData)
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	cvlErrInfo, retCode := cvSess.ValidateEditConfig(cfgData)
+
+	cvl.ValidationSessClose(cvSess)
+
 	WriteToFile("\nTestValidateEditConfig_Create_Syntax_InvalidErrAppTag_Negative:\n", fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
 
 	/* Compare expected error details and error tag. */
@@ -1894,7 +2077,12 @@ func TestValidateEditConfig_Create_Syntax_InValid_FieldValue(t *testing.T) {
 		},
 	}
 
-	cvlErrInfo, retCode := cv.ValidateEditConfig(cfgData)
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	cvlErrInfo, retCode := cvSess.ValidateEditConfig(cfgData)
+
+	cvl.ValidationSessClose(cvSess)
+
 	WriteToFile("\nTestValidateEditConfig_Create_Syntax_InValid_FieldValue:\n", fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
 
 	if retCode == cvl.CVL_SUCCESS {
@@ -1932,7 +2120,12 @@ func TestValidateEditConfig_Create_DepData_From_Redis_Negative(t *testing.T) {
 		},
 	}
 
-	cvlErrInfo, err := cv.ValidateEditConfig1(cfgDataRule)
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	cvlErrInfo, err := cvSess.ValidateEditConfig(cfgDataRule)
+
+	cvl.ValidationSessClose(cvSess)
+
 	WriteToFile("\nTestValidateEditConfig_Create_DepData_From_Redis_Negative:\n", fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
 
 	if err == cvl.CVL_SUCCESS { //should not succeed
@@ -1975,6 +2168,8 @@ func TestValidateEditConfig_Create_Chained_Leafref_DepData_Positive(t *testing.T
 	//Prepare data in Redis
 	loadConfigDB(rclient, depDataMap)
 
+	cvSess, _ := cvl.ValidationSessOpen()
+
 	cfgDataVlan := []cvl.CVLEditConfigData {
 		cvl.CVLEditConfigData {
 			cvl.VALIDATE_ALL,
@@ -1986,7 +2181,7 @@ func TestValidateEditConfig_Create_Chained_Leafref_DepData_Positive(t *testing.T
 		},
 	}
 
-	_, err := cv.ValidateEditConfig1(cfgDataVlan)
+	_, err := cvSess.ValidateEditConfig(cfgDataVlan)
 
 	if err != cvl.CVL_SUCCESS { //should succeed
 		t.Errorf("Config Validation failed.")
@@ -2009,7 +2204,11 @@ func TestValidateEditConfig_Create_Chained_Leafref_DepData_Positive(t *testing.T
 		},
 	}
 
-	_, err = cv.ValidateEditConfig1(cfgDataAclRule)
+
+	_, err = cvSess.ValidateEditConfig(cfgDataAclRule)
+
+	cvl.ValidationSessClose(cvSess)
+
 	if err != cvl.CVL_SUCCESS { //should succeed
 		t.Errorf("Config Validation failed.")
 	}
@@ -2051,10 +2250,15 @@ func TestValidateEditConfig_Delete_Dep_Leafref_Negative(t *testing.T) {
 		},
 	}
 
-	cvlErrInfo, err := cv.ValidateEditConfig1(cfgDataVlan)
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	cvlErrInfo, err := cvSess.ValidateEditConfig(cfgDataVlan)
+
+	cvl.ValidationSessClose(cvSess)
+
 	WriteToFile("\nTestValidateEditConfig_Delete_Dep_Leafref_Negative:\n", fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
 
-	if err != cvl.CVL_SEMANTIC_ERROR { //should be semantic failure
+	if err == cvl.CVL_SUCCESS { //should be semantic failure
 		t.Errorf("Config Validation failed.")
 	}
 
@@ -2104,8 +2308,13 @@ func TestValidateEditConfig_Create_Chained_Leafref_DepData_Negative(t *testing.T
 		},
 	}
 
-	_, err := cv.ValidateEditConfig1(cfgDataAclRule)
-	if err != cvl.CVL_SUCCESS { //should succeed
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	_, err := cvSess.ValidateEditConfig(cfgDataAclRule)
+
+	 cvl.ValidationSessClose(cvSess)
+
+	if err == cvl.CVL_SUCCESS { //should not succeed
 		t.Errorf("Config Validation failed.")
 	}
 
@@ -2124,7 +2333,11 @@ func TestValidateEditConfig_Create_Syntax_InvalidVlanRange_Negative(t *testing.T
                 },
         }
 
-	cvlErrInfo, retCode := cv.ValidateEditConfig(cfgData)
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	cvlErrInfo, retCode := cvSess.ValidateEditConfig(cfgData)
+
+	cvl.ValidationSessClose(cvSess)
 
 	WriteToFile("\nTestValidateEditConfig_Create_Syntax_InvalidVlanRange_Negative:\n", fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
 
@@ -2154,4 +2367,216 @@ func TestLogging(t *testing.T) {
         cvl.Finish()
 }
 
+func TestValidateEditConfig_DepData_Through_Cache(t *testing.T) {
+	depDataMap := map[string]interface{} {
+		"PORT" : map[string]interface{} {
+			"Ethernet3" : map[string]interface{} {
+				"alias":"hundredGigE1",
+				"lanes": "81,82,83,84",
+				"mtu": "9100",
+			},
+			"Ethernet5" : map[string]interface{} {
+				"alias":"hundredGigE1",
+				"lanes": "85,86,87,89",
+				"mtu": "9100",
+			},
+		},
+	}
 
+	//Prepare data in Redis
+	loadConfigDB(rclient, depDataMap)
+
+	//Publish the changes so that PORT table can be updated
+	rclient.Publish("__keyspace@4__:PORT|Ethernet3", "hset").Result()
+	rclient.Publish("__keyspace@4__:PORT|Ethernet5", "hset").Result()
+
+	//Modify entry
+	depDataMap = map[string]interface{} {
+		"PORT" : map[string]interface{} {
+			"Ethernet3" : map[string]interface{} {
+				"mtu": "9500",
+			},
+		},
+	}
+
+	loadConfigDB(rclient, depDataMap)
+	rclient.Publish("__keyspace@4__:PORT|Ethernet5", "hmset").Result()
+
+	cfgDataAclRule :=  []cvl.CVLEditConfigData {
+		cvl.CVLEditConfigData {
+			cvl.VALIDATE_ALL,
+			cvl.OP_CREATE,
+			"ACL_TABLE|TestACL1",
+			map[string]string {
+				"stage": "INGRESS",
+				"type": "L3",
+				"ports@":"Ethernet3,Ethernet5",
+			},
+		},
+	}
+
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	_, err := cvSess.ValidateEditConfig(cfgDataAclRule)
+
+	cvl.ValidationSessClose(cvSess)
+
+	if err != cvl.CVL_SUCCESS { //should succeed
+		t.Errorf("Config Validation failed.")
+	}
+
+	unloadConfigDB(rclient, depDataMap)
+}
+
+/* Delete field for an existing key.*/
+func TestValidateEditConfig_Delete_Single_Field_Positive(t *testing.T) {
+
+	depDataMap := map[string]interface{} {
+		"ACL_TABLE" : map[string]interface{} {
+			"TestACL1": map[string] interface{} {
+				"stage": "INGRESS",
+				"type": "L3",
+				"policy_desc":"Test ACL desc",
+			},
+		},
+	}
+
+	//Prepare data in Redis
+	loadConfigDB(rclient, depDataMap)
+
+	cfgData := []cvl.CVLEditConfigData{
+		cvl.CVLEditConfigData{
+			cvl.VALIDATE_ALL,
+			cvl.OP_DELETE,
+			"ACL_TABLE|TestACL1",
+			map[string]string{
+				"policy_desc":"Test ACL desc",
+			},
+		},
+	}
+
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	cvlErrInfo, err := cvSess.ValidateEditConfig(cfgData)
+
+	cvl.ValidationSessClose(cvSess)
+
+	if err != cvl.CVL_SUCCESS {
+		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
+	}
+
+	unloadConfigDB(rclient, depDataMap)
+}
+
+func TestValidateConfig_Repeated_Keys_Positive(t *testing.T) {
+	jsonData := `{
+		"WRED_PROFILE": {
+			"AZURE_LOSSLESS": {
+				"red_max_threshold": "312000",
+				"wred_green_enable": "true",
+				"ecn": "ecn_all",
+				"green_min_threshold": "104000",
+				"red_min_threshold": "104000",
+				"wred_yellow_enable": "true",
+				"yellow_min_threshold": "104000",
+				"wred_red_enable": "true",
+				"yellow_max_threshold": "312000",
+				"green_max_threshold": "312000"
+			}
+		},
+		"SCHEDULER": {
+			"scheduler.0": {
+				"type": "DWRR",
+				"weight": "25"
+			},
+			"scheduler.1": {
+				"type": "DWRR",
+				"weight": "30"
+			},
+			"scheduler.2": {
+				"type": "DWRR",
+				"weight": "20"
+			}
+		},
+		"QUEUE": {
+			"Ethernet0,Ethernet4,Ethernet8,Ethernet12,Ethernet16,Ethernet20,Ethernet24,Ethernet28,Ethernet32,Ethernet36,Ethernet40,Ethernet44,Ethernet48,Ethernet52,Ethernet56,Ethernet60,Ethernet64,Ethernet68,Ethernet72,Ethernet76,Ethernet80,Ethernet84,Ethernet88,Ethernet92,Ethernet96,Ethernet100,Ethernet104,Ethernet108,Ethernet112,Ethernet116,Ethernet120,Ethernet124|0": {
+				"scheduler": "[SCHEDULER|scheduler.1]"
+			},
+			"Ethernet0,Ethernet4,Ethernet8,Ethernet12,Ethernet16,Ethernet20,Ethernet24,Ethernet28,Ethernet32,Ethernet36,Ethernet40,Ethernet44,Ethernet48,Ethernet52,Ethernet56,Ethernet60,Ethernet64,Ethernet68,Ethernet72,Ethernet76,Ethernet80,Ethernet84,Ethernet88,Ethernet92,Ethernet96,Ethernet100,Ethernet104,Ethernet108,Ethernet112,Ethernet116,Ethernet120,Ethernet124|1": {
+				"scheduler": "[SCHEDULER|scheduler.2]"
+			},
+			"Ethernet0,Ethernet4,Ethernet8,Ethernet12,Ethernet16,Ethernet20,Ethernet24,Ethernet28,Ethernet32,Ethernet36,Ethernet40,Ethernet44,Ethernet48,Ethernet52,Ethernet56,Ethernet60,Ethernet64,Ethernet68,Ethernet72,Ethernet76,Ethernet80,Ethernet84,Ethernet88,Ethernet92,Ethernet96,Ethernet100,Ethernet104,Ethernet108,Ethernet112,Ethernet116,Ethernet120,Ethernet124|3-4": {
+				"wred_profile": "[WRED_PROFILE|AZURE_LOSSLESS]",
+				"scheduler": "[SCHEDULER|scheduler.0]"
+			}
+		}
+	}`
+
+	cvSess, _ := cvl.ValidationSessOpen()
+	err := cvSess.ValidateConfig(jsonData)
+
+	if err != cvl.CVL_SUCCESS {
+		t.Errorf("Config Validation failed -- error details.")
+	}
+
+	cvl.ValidationSessClose(cvSess)
+}
+
+func TestValidateEditConfig_Delete_Must_Check_Negative(t *testing.T) {
+	depDataMap := map[string]interface{} {
+		"PORT" : map[string]interface{} {
+			"Ethernet3" : map[string]interface{} {
+				"alias":"hundredGigE1",
+				"lanes": "81,82,83,84",
+				"mtu": "9100",
+			},
+			"Ethernet5" : map[string]interface{} {
+				"alias":"hundredGigE1",
+				"lanes": "85,86,87,89",
+				"mtu": "9100",
+			},
+		},
+		"ACL_TABLE" : map[string]interface{} {
+			"TestACL1": map[string] interface{} {
+				"stage": "INGRESS",
+				"type": "L3",
+				"ports@": "Ethernet3,Ethernet5",
+			},
+		},
+		"ACL_RULE" : map[string]interface{} {
+			"TestACL1|Rule1": map[string] interface{} {
+				"PACKET_ACTION": "FORWARD",
+				"SRC_IP": "10.1.1.1/32",
+				"L4_SRC_PORT": "1909",
+				"IP_PROTOCOL": "103",
+				"DST_IP": "20.2.2.2/32",
+				"L4_DST_PORT_RANGE": "9000-12000",
+			},
+		},
+	}
+
+	//Prepare data in Redis
+	loadConfigDB(rclient, depDataMap)
+
+	cfgDataAclRule :=  []cvl.CVLEditConfigData {
+		cvl.CVLEditConfigData {
+			cvl.VALIDATE_ALL,
+			cvl.OP_DELETE,
+			"ACL_RULE|TestACL1|Rule1",
+			map[string]string {
+			},
+		},
+	}
+
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	_, err := cvSess.ValidateEditConfig1(cfgDataAclRule)
+
+	 cvl.ValidationSessClose(cvSess)
+
+	if err == cvl.CVL_SUCCESS { //should not succeed
+		t.Errorf("Config Validation failed.")
+	}
+
+	unloadConfigDB(rclient, depDataMap)
+}
