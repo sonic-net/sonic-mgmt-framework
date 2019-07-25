@@ -44,23 +44,22 @@ const (
 	INFO_ALL
 )
 
+var cvlTraceFlags uint32
+
 /* Logging levels for CVL Tracing. */
-type CVLTraceLevel uint8 
+type CVLTraceLevel uint32 
 const (
-        TRACE_CACHE  = 1 << 0
+	TRACE_MIN = 0
+	TRACE_MAX = 7
+        TRACE_CACHE  = 1 << TRACE_MIN 
         TRACE_LIBYANG = 1 << 1
         TRACE_YPARSER = 1 << 2
         TRACE_CREATE = 1 << 3
         TRACE_UPDATE = 1 << 4
         TRACE_DELETE = 1 << 5
         TRACE_SEMANTIC = 1 << 6
-        TRACE_SYNTAX = 1 << 7
+        TRACE_SYNTAX = 1 << TRACE_MAX 
 
-)
-
-const (
-	TRACE_MIN = 0
-	TRACE_MAX = 7
 )
 
 
@@ -103,21 +102,6 @@ func IsTraceSet() bool {
 	}
 }
 
-/*
-func IsLogTraceSet() bool {
-	return true
-}
-
-func SetTraceLevel(level uint8) {
-	traceFlags = traceFlags | (1 << level)
-}
-
-
-func ClearTraceLevel(level uint8) {
-	traceFlags = traceFlags &^ (1 << level)
-}
-*/
-
 func TRACE_LEVEL_LOG(level log.Level, tracelevel CVLTraceLevel, fmtStr string, args ...interface{}) {
 
 	if (IsTraceSet() == false) {
@@ -127,18 +111,9 @@ func TRACE_LEVEL_LOG(level log.Level, tracelevel CVLTraceLevel, fmtStr string, a
 	level = (level - INFO_API) + 1;
 
 	traceEnabled := false
-	var index uint8
-	/* Check if incoming tracelevel is enabled. */
-	for  index = TRACE_MIN ; index < TRACE_MAX ; index++  {
-		if ((tracelevel &  (1 << index)) != 0) {
-			if (strings.Compare(cvlCfgMap[traceLevelMap[1 << index]], "true") == 0) {
-				/* This log should be allowed as at least one flag is currently set */
-				traceEnabled = true
-				break
-			}
+		if ((cvlTraceFlags & (uint32)(tracelevel)) != 0) {
+			traceEnabled = true
 		}
-	}
-
 
 	if IsTraceSet() == true && traceEnabled == true {
 		pc := make([]uintptr, 10)
@@ -210,5 +185,13 @@ func ReadConfFile()  map[string]string{
         }
 
 	CVL_LEVEL_LOG(INFO ,"Current Values of CVL Configuration File %v", cvlCfgMap)
+	var index uint32
+
+	for  index = TRACE_MIN ; index < TRACE_MAX ; index++  {
+		if (strings.Compare(cvlCfgMap[traceLevelMap[1 << index]], "true") == 0) {
+			cvlTraceFlags = cvlTraceFlags |  (1 << index) 
+		}
+	}
+
 	return cvlCfgMap
 }

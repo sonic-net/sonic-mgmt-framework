@@ -27,6 +27,7 @@ const (
 
 var cvlErrorMap = map[CVLRetCode]string {
 		CVL_SUCCESS					: "Config Validation Success",
+		CVL_SYNTAX_ERROR				: "Config Validation Syntax Error",
 		CVL_SEMANTIC_ERROR				: "Config Validation Semantic Error",
 		CVL_SYNTAX_MISSING_FIELD			: "Required Field is Missing", 
 		CVL_SYNTAX_INVALID_FIELD			: "Invalid Field Received",
@@ -45,15 +46,22 @@ var cvlErrorMap = map[CVLRetCode]string {
 		CVL_SEMANTIC_KEY_NOT_EXIST  			: "Key is missing.",
 		CVL_SEMANTIC_KEY_DUPLICATE 			: "Duplicate key received",
 		CVL_SEMANTIC_KEY_INVALID  			: "Invalid Key Received",
+		CVL_INTERNAL_UNKNOWN			 	: "Internal Unknown Error",
+		CVL_ERROR                                       : "Generic Error",
+		CVL_NOT_IMPLEMENTED                             : "Error Not Implemented",
+		CVL_FAILURE                             	: "Generic Failure",
 }
 
 //Error code
 type CVLRetCode int
 const (
 	CVL_SUCCESS CVLRetCode = iota
+	CVL_ERROR
+	CVL_NOT_IMPLEMENTED
+	CVL_INTERNAL_UNKNOWN
+	CVL_FAILURE
 	CVL_SYNTAX_ERROR =  CVLRetCode(yparser.YP_SYNTAX_ERROR)
 	CVL_SEMANTIC_ERROR = CVLRetCode(yparser.YP_SEMANTIC_ERROR)
-	CVL_ERROR
 	CVL_SYNTAX_MISSING_FIELD = CVLRetCode(yparser.YP_SYNTAX_MISSING_FIELD)
 	CVL_SYNTAX_INVALID_FIELD = CVLRetCode(yparser.YP_SYNTAX_INVALID_FIELD)   /* Invalid Field  */
 	CVL_SYNTAX_INVALID_INPUT_DATA = CVLRetCode(yparser.YP_SYNTAX_INVALID_INPUT_DATA) /*Invalid Input Data */
@@ -71,9 +79,6 @@ const (
 	CVL_SEMANTIC_KEY_NOT_EXIST = CVLRetCode(yparser.YP_SEMANTIC_KEY_NOT_EXIST) /* Key is missing. */
 	CVL_SEMANTIC_KEY_DUPLICATE  = CVLRetCode(yparser.YP_SEMANTIC_KEY_DUPLICATE) /* Duplicate key. */
         CVL_SEMANTIC_KEY_INVALID = CVLRetCode(yparser.YP_SEMANTIC_KEY_INVALID)
-	CVL_NOT_IMPLEMENTED
-	CVL_INTERNAL_UNKNOWN
-	CVL_FAILURE
 )
 
 //Strcture for key and data in API
@@ -235,7 +240,9 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (CVLErrorInfo, CVL
 		tbl,key := c.addCfgDataItem(&requestedData, cfgDataItem)
 
 		if key == "" {
-			return cvlErrObj, CVL_SEMANTIC_ERROR
+			cvlErrObj.ErrCode = CVL_SYNTAX_ERROR
+			cvlErrObj.CVLErrDetails = cvlErrorMap[cvlErrObj.ErrCode]
+			return cvlErrObj, CVL_SYNTAX_ERROR
 		}
 
 		switch cfgDataItem.VOp {
@@ -255,6 +262,8 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (CVLErrorInfo, CVL
 				} else {
 					for field, _ := range cfgDataItem.Data {
 						if (c.checkDeleteConstraint(cfgData, tbl, key, field) != CVL_SUCCESS) {
+							cvlErrObj.ErrCode = CVL_SEMANTIC_ERROR
+							cvlErrObj.CVLErrDetails = cvlErrorMap[cvlErrObj.ErrCode]
 							return cvlErrObj, CVL_SEMANTIC_ERROR
 						}
 						break //only one field there
@@ -263,6 +272,8 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (CVLErrorInfo, CVL
 			} else {
 				//Entire entry to be deleted
 				if (c.checkDeleteConstraint(cfgData, tbl, key, "") != CVL_SUCCESS) {
+					cvlErrObj.ErrCode = CVL_SEMANTIC_ERROR
+					cvlErrObj.CVLErrDetails = cvlErrorMap[cvlErrObj.ErrCode]
 					return cvlErrObj, CVL_SEMANTIC_ERROR 
 				}
 			}
@@ -278,6 +289,10 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (CVLErrorInfo, CVL
 		jsonDataBytes, err := json.Marshal(requestedData) //Optimize TBD:
 		if (err == nil) {
 			jsonData = string(jsonDataBytes)
+		} else {
+			cvlErrObj.ErrCode = CVL_SYNTAX_ERROR
+			cvlErrObj.CVLErrDetails = cvlErrorMap[cvlErrObj.ErrCode]
+			return cvlErrObj, CVL_SYNTAX_ERROR 
 		}
 
 		TRACE_LOG(INFO_DATA, TRACE_LIBYANG, "JSON Data = [%s]\n", jsonData)
@@ -309,7 +324,9 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (CVLErrorInfo, CVL
 					//Check key should not already exist
 					n, err1 := redisClient.Exists(cfgDataItem.Key).Result()
 					if (err1 == nil && n > 0) {
-						TRACE_LOG(INFO_API, TRACE_CREATE, "\nValidateEditConfig(): Key = %s alreday exists", cfgDataItem.Key)
+						CVL_LOG(ERROR, "\nValidateEditConfig(): Key = %s alreday exists", cfgDataItem.Key)
+						cvlErrObj.ErrCode = CVL_SEMANTIC_KEY_ALREADY_EXIST
+						cvlErrObj.CVLErrDetails = cvlErrorMap[cvlErrObj.ErrCode]
 						return cvlErrObj, CVL_SEMANTIC_KEY_ALREADY_EXIST 
 					}
 				} else {
@@ -321,7 +338,9 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (CVLErrorInfo, CVL
 			case OP_UPDATE:
 				n, err1 := redisClient.Exists(cfgDataItem.Key).Result()
 				if (err1 != nil || n == 0) { //key must exists
-					TRACE_LOG(INFO_API, TRACE_UPDATE, "\nValidateEditConfig(): Key = %s does not exist", cfgDataItem.Key)
+					CVL_LOG(ERROR, "\nValidateEditConfig(): Key = %s does not exist", cfgDataItem.Key)
+					cvlErrObj.ErrCode = CVL_SEMANTIC_KEY_ALREADY_EXIST
+					cvlErrObj.CVLErrDetails = cvlErrorMap[cvlErrObj.ErrCode]
 					return cvlErrObj, CVL_SEMANTIC_KEY_NOT_EXIST
 				}
 
@@ -330,7 +349,9 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (CVLErrorInfo, CVL
 			case OP_DELETE:
 				n, err1 := redisClient.Exists(cfgDataItem.Key).Result()
 				if (err1 != nil || n == 0) { //key must exists
-					TRACE_LOG(INFO_API, TRACE_DELETE, "\nValidateDelete(): Key = %s does not exist", cfgDataItem.Key)
+					CVL_LOG(ERROR, "\nValidateDelete(): Key = %s does not exist", cfgDataItem.Key)
+					cvlErrObj.ErrCode = CVL_SEMANTIC_KEY_ALREADY_EXIST
+					cvlErrObj.CVLErrDetails = cvlErrorMap[cvlErrObj.ErrCode]
 					return cvlErrObj, CVL_SEMANTIC_KEY_NOT_EXIST
 				}
 

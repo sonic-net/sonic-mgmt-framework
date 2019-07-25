@@ -11,6 +11,7 @@ import (
 	"strings"
 	"syscall"
 	"testing"
+	"runtime"
 	. "cvl/internal/util"
 //	"cvl/internal/yparser"
 )
@@ -176,9 +177,12 @@ func prepareDb() {
 	loadConfigDB(rclient, port_map)
 }
 
-func  WriteToFile(testcaseName string, message string) {
+func  WriteToFile(message string) {
+	pc := make([]uintptr, 10)
+	runtime.Callers(2, pc)
+	f := runtime.FuncForPC(pc[0])
 
-	message =  testcaseName + message
+	message =  f.Name()+ "\n"  + message
 
 	if _, err := filehandle.Write([]byte(message)); err != nil {
 		fmt.Println("Unable to write to cvl test log file")
@@ -758,7 +762,7 @@ func TestValidateEditConfig_Create_Syntax_Invalid_PacketAction_Negative(t *testi
 
 	cvl.ValidationSessClose(cvSess)
 
-	WriteToFile("\nTestValidateEditConfig_Create_Syntax_Invalid_PacketAction_Negative:\n", fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
+	WriteToFile(fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
 
 	if err == cvl.CVL_SUCCESS {
 		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
@@ -791,7 +795,7 @@ func TestValidateEditConfig_Create_Syntax_Invalid_SrcPrefix_Negative(t *testing.
 
 	cvlErrInfo, err := cvSess.ValidateEditConfig(cfgData)
 
-	WriteToFile("\nTestValidateEditConfig_Create_Syntax_Invalid_SrcPrefix_Negative:\n", fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
+	WriteToFile(fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
 
 	if err == cvl.CVL_SUCCESS {
 		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
@@ -824,7 +828,7 @@ func TestValidateEditConfig_Create_Syntax_InvalidIPAddress_Negative(t *testing.T
 
 	cvl.ValidationSessClose(cvSess)
 
-	WriteToFile("\nTestValidateEditConfig_Create_Syntax_InvalidIPAddress_Negative:\n", fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
+	WriteToFile(fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
 
 	if err == cvl.CVL_SUCCESS {
 		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
@@ -857,7 +861,7 @@ func TestValidateEditConfig_Create_Syntax_OutofBound_Negative(t *testing.T) {
 
 	cvl.ValidationSessClose(cvSess)
 
-	WriteToFile("\nTestValidateEditConfig_Create_Syntax_OutofBound_Negative:\n", fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
+	WriteToFile(fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
 
 	if err == cvl.CVL_SUCCESS {
 		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
@@ -890,7 +894,7 @@ func TestValidateEditConfig_Create_Syntax_InvalidProtocol_Negative(t *testing.T)
 
 	cvl.ValidationSessClose(cvSess)
 
-	WriteToFile("\nTestValidateEditConfig_Create_Syntax_InvalidProtocol_Negative:\n", fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
+	WriteToFile(fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
 
 	if err == cvl.CVL_SUCCESS {
 		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
@@ -925,7 +929,7 @@ func TestValidateEditConfig_Create_Syntax_InvalidRange_Negative(t *testing.T) {
 
 	cvl.ValidationSessClose(cvSess)
 
-	WriteToFile("\nTestValidateEditConfig_Create_Syntax_InvalidRange_Negative:\n", fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
+	WriteToFile(fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
 
 	if err == cvl.CVL_SUCCESS {
 		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
@@ -958,7 +962,7 @@ func TestValidateEditConfig_Create_Syntax_InvalidCharNEw_Negative(t *testing.T) 
 
 	cvl.ValidationSessClose(cvSess)
 
-	WriteToFile("\nTestValidateEditConfig_Create_Syntax_InvalidCharNEw_Negative:\n", fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
+	WriteToFile(fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
 
 	if err == cvl.CVL_SUCCESS {
 		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
@@ -1046,7 +1050,7 @@ func TestValidateEditConfig_Create_Syntax_InvalidKeyName_Negative(t *testing.T) 
 
 	cvl.ValidationSessClose(cvSess)
 
-	WriteToFile("\nTestValidateEditConfig_Create_Syntax_InvalidKeyName_Negative:\n", fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
+	WriteToFile(fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
 
 	if err == cvl.CVL_SUCCESS {
 		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
@@ -1079,7 +1083,7 @@ func TestValidateEditConfig_Create_Semantic_AdditionalInvalidNode_Negative(t *te
 
 	cvl.ValidationSessClose(cvSess)
 
-	WriteToFile("\nTestValidateEditConfig_Create_Semantic_AdditionalInvalidNode_Negative:\n", fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
+	WriteToFile(fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
 
 	if err == cvl.CVL_SUCCESS {
 		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
@@ -1105,7 +1109,7 @@ func TestValidateEditConfig_Create_Semantic_MissingMandatoryNode_Negative(t *tes
 
 	cvl.ValidationSessClose(cvSess)
 
-	WriteToFile("\nTestValidateEditConfig_Create_Semantic_MissingMandatoryNode_Negative:\n", fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
+	WriteToFile(fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
 
 	if err == cvl.CVL_SUCCESS {
 		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
@@ -1136,7 +1140,7 @@ func TestValidateEditConfig_Create_Syntax_Invalid_Negative(t *testing.T) {
 
 	cvl.ValidationSessClose(cvSess)
 
-	WriteToFile("\nTestValidateEditConfig_Create_Syntax_Invalid_Negative:\n", fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
+	WriteToFile(fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
 
 	if err == cvl.CVL_SUCCESS {
 		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
@@ -1168,7 +1172,7 @@ func TestValidateEditConfig_Create_Syntax_IncompleteKey_Negative(t *testing.T) {
 
 	cvl.ValidationSessClose(cvSess)
 
-	WriteToFile("\nTestValidateEditConfig_Create_Syntax_IncompleteKey_Negative:\n", fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
+	WriteToFile(fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
 
 	if err == cvl.CVL_SUCCESS {
 		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
@@ -1200,7 +1204,7 @@ func TestValidateEditConfig_Create_Syntax_InvalidKey_Negative(t *testing.T) {
 
 	cvl.ValidationSessClose(cvSess)
 
-	WriteToFile("\nTestValidateEditConfig_Create_Syntax_InvalidKey_Negative:\n", fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
+	WriteToFile(fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
 
 	if err == cvl.CVL_SUCCESS {
 		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
@@ -1236,7 +1240,7 @@ func TestValidateEditConfig_Update_Syntax_DependentData_Negative(t *testing.T) {
 
 	cvl.ValidationSessClose(cvSess)
 
-	WriteToFile("\nTestValidateEditConfig_Update_Syntax_DependentData_Negative:\n", fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrObj))
+	WriteToFile(fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrObj))
 
 	if err == cvl.CVL_SUCCESS {
 		t.Errorf("Config Validation failed -- error details %v", cvlErrObj)
@@ -1312,7 +1316,7 @@ func TestValidateEditConfig_Create_Syntax_DependentData_Negative(t *testing.T) {
 
 	cvl.ValidationSessClose(cvSess)
 
-	WriteToFile("\nTestValidateEditConfig_Create_Syntax_DependentData_Negative:\n", fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
+	WriteToFile(fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
 
 	if err == cvl.CVL_SUCCESS {
 		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
@@ -1344,7 +1348,7 @@ func TestValidateEditConfig_Delete_Syntax_InvalidKey_Negative(t *testing.T) {
 
 	cvl.ValidationSessClose(cvSess)
 
-	WriteToFile("\nTestValidateEditConfig_Delete_Syntax_InvalidKey_Negative:\n", fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
+	WriteToFile(fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
 
 	if err == cvl.CVL_SUCCESS {
 		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
@@ -1376,7 +1380,7 @@ func TestValidateEditConfig_Update_Syntax_InvalidKey_Negative(t *testing.T) {
 
 	cvl.ValidationSessClose(cvSess)
 
-	WriteToFile("\nTestValidateEditConfig_Update_Syntax_InvalidKey_Negative:\n", fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
+	WriteToFile(fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
 
 	if err == cvl.CVL_SUCCESS {
 		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
@@ -1408,7 +1412,7 @@ func TestValidateEditConfig_Delete_InvalidKey_Negative(t *testing.T) {
 
 	cvl.ValidationSessClose(cvSess)
 
-	WriteToFile("\nTestValidateEditConfig_Delete_InvalidKey_Negative:\n", fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrObj))
+	WriteToFile(fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrObj))
 
 	if err == cvl.CVL_SUCCESS {
 		t.Errorf("Config Validation failed -- error details %v", cvlErrObj)
@@ -1439,7 +1443,7 @@ func TestValidateEditConfig_Update_Syntax_Invalid_Field_Negative(t *testing.T) {
 
 	cvl.ValidationSessClose(cvSess)
 
-	WriteToFile("\nTestValidateEditConfig_Update_Syntax_Invalid_Field_Negative:\n", fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
+	WriteToFile(fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
 
 	if err == cvl.CVL_SUCCESS {
 		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
@@ -1470,7 +1474,7 @@ func TestValidateEditConfig_Update_Semantic_Invalid_Key_Negative(t *testing.T) {
 	cvlErrInfo, err := cvSess.ValidateEditConfig(cfgData)
 
 	cvl.ValidationSessClose(cvSess)
-	WriteToFile("\nTestValidateEditConfig_Update_Semantic_Invalid_Key_Negative:\n", fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
+	WriteToFile(fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
 
 	if err == cvl.CVL_SUCCESS {
 		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
@@ -1536,7 +1540,7 @@ func TestValidateEditConfig_Delete_Semantic_MissingKey_Negative(t *testing.T) {
 
 	cvl.ValidationSessClose(cvSess)
 
-	WriteToFile("\nTestValidateEditConfig_Delete_Semantic_MissingKey_Negative:\n", fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
+	WriteToFile(fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
 
 	if err == cvl.CVL_SUCCESS {
 		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
@@ -1563,7 +1567,7 @@ func TestValidateEditConfig_Update_Semantic_MissingKey_Negative(t *testing.T) {
 
 	cvl.ValidationSessClose(cvSess)
 
-	WriteToFile("\nTestValidateEditConfig_Update_Semantic_MissingKey_Negative:\n", fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
+	WriteToFile(fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
 
 	if err == cvl.CVL_SUCCESS {
 		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
@@ -1601,7 +1605,7 @@ func TestValidateEditConfig_Create_Duplicate_Key_Negative(t *testing.T) {
 	cvlErrInfo, retCode := cvSess.ValidateEditConfig(cfgData)
 
 	cvl.ValidationSessClose(cvSess)
-	WriteToFile("\nTestValidateEditConfig_Create_Duplicate_Key_Negative:\n", fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
+	WriteToFile(fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
 
 	if retCode == cvl.CVL_SUCCESS {
 		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
@@ -1805,7 +1809,7 @@ func TestValidateEditConfig_Update_Syntax_DependentData_Redis_Negative(t *testin
 
 	cvl.ValidationSessClose(cvSess)
 
-	WriteToFile("\nTestValidateEditConfig_Update_Syntax_DependentData_Redis_Negative:\n", fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
+	WriteToFile(fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
 
 	if err == cvl.CVL_SUCCESS {
 		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
@@ -1880,7 +1884,7 @@ func TestValidateEditConfig_Delete_Semantic_ACLTableReference_Negative(t *testin
 
 	cvl.ValidationSessClose(cvSess)
 
-	WriteToFile("\nTestValidateEditConfig_Delete_Semantic_ACLTableReference_Negative:\n", fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
+	WriteToFile(fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
 
 	if err == cvl.CVL_SUCCESS {
 		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
@@ -2018,7 +2022,7 @@ func TestValidateEditConfig_Create_DepData_From_Redis_Negative11(t *testing.T) {
 
 	cvlErrInfo, err := cvSess.ValidateEditConfig1(cfgDataRule)
 
-	WriteToFile("\nTestValidateEditConfig_Create_DepData_From_Redis_Negative11:\n", fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
+	WriteToFile(fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
 
         /* Check for error message. */	
 	if (err == cvl.CVL_SEMANTIC_DEPENDENT_DATA_MISSING) {
@@ -2099,7 +2103,7 @@ func TestValidateEditConfig_Create_Syntax_InvalidErrAppTag_Negative(t *testing.T
 
 	cvl.ValidationSessClose(cvSess)
 
-	WriteToFile("\nTestValidateEditConfig_Create_Syntax_InvalidErrAppTag_Negative:\n", fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
+	WriteToFile(fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
 
 	/* Compare expected error details and error tag. */
 	if compareErrorDetails(cvlErrInfo, cvl.CVL_SEMANTIC_DEPENDENT_DATA_MISSING ,"vlan-invalid", "") != true {
@@ -2148,7 +2152,7 @@ func TestValidateEditConfig_Create_Syntax_InValid_FieldValue(t *testing.T) {
 
 	cvl.ValidationSessClose(cvSess)
 
-	WriteToFile("\nTestValidateEditConfig_Create_Syntax_InValid_FieldValue:\n", fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
+	WriteToFile(fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
 
 	if retCode == cvl.CVL_SUCCESS {
 		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
@@ -2191,7 +2195,7 @@ func TestValidateEditConfig_Create_DepData_From_Redis_Negative(t *testing.T) {
 
 	cvl.ValidationSessClose(cvSess)
 
-	WriteToFile("\nTestValidateEditConfig_Create_DepData_From_Redis_Negative:\n", fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
+	WriteToFile(fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
 
 	if err == cvl.CVL_SUCCESS { //should not succeed
 		t.Errorf("Config Validation should fail.")
@@ -2321,7 +2325,7 @@ func TestValidateEditConfig_Delete_Dep_Leafref_Negative(t *testing.T) {
 
 	cvl.ValidationSessClose(cvSess)
 
-	WriteToFile("\nTestValidateEditConfig_Delete_Dep_Leafref_Negative:\n", fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
+	WriteToFile(fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
 
 	if err == cvl.CVL_SUCCESS { //should be semantic failure
 		t.Errorf("Config Validation failed.")
@@ -2404,7 +2408,7 @@ func TestValidateEditConfig_Create_Syntax_InvalidVlanRange_Negative(t *testing.T
 
 	cvl.ValidationSessClose(cvSess)
 
-	WriteToFile("\nTestValidateEditConfig_Create_Syntax_InvalidVlanRange_Negative:\n", fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
+	WriteToFile(fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
 
 	if retCode == cvl.CVL_SUCCESS { //should succeed
 		t.Errorf("Config Validation failed with details %v.", cvlErrInfo)
@@ -2646,7 +2650,7 @@ func TestValidateEditConfig_Delete_Entry_Then_Dep_Leafref_Positive(t *testing.T)
 
 	cvl.ValidationSessClose(cvSess)
 
-	WriteToFile("\nTestValidateEditConfig_Delete_Entry_Then_Dep_Leafref_Positive:\n", fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
+	WriteToFile(fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
 
 	if err != cvl.CVL_SUCCESS { //should be success 
 		t.Errorf("Config Validation failed.")

@@ -194,6 +194,10 @@ func TRACE_LOG(level log.Level, tracelevel CVLTraceLevel, fmtStr string, args ..
 	TRACE_LEVEL_LOG(level, tracelevel , fmtStr, args...)
 }
 
+func CVL_LOG(level CVLLogLevel, fmtStr string, args ...interface{}) {
+	CVL_LEVEL_LOG(level, fmtStr, args...)
+}
+
 //package init function 
 func init() {
 	if (os.Getenv("CVL_DEBUG") != "") {
@@ -353,7 +357,7 @@ func (yp *YParser) ValidateData(data, depData *YParserNode) YParserError {
 
 	if (depData != nil) {
 		if dataRoot, _ = yp.MergeSubtree(data, depData); dataRoot == nil {
-			TRACE_LOG(INFO_API, TRACE_YPARSER, "Failed to merge dependent data\n")
+			CVL_LOG(ERROR, "Failed to merge dependent data\n")
 			return getErrorDetails()
 		}
 	}
@@ -361,7 +365,7 @@ func (yp *YParser) ValidateData(data, depData *YParserNode) YParserError {
 	dataRootTmp := (*C.struct_lyd_node)(dataRoot)
 
 	if (0 != C.lyd_data_validate(&dataRootTmp, C.LYD_OPT_CONFIG, (*C.struct_ly_ctx)(ypCtx))) {
-		TRACE_LOG(INFO_API, TRACE_YPARSER, "Validation failed\n")
+		CVL_LOG(ERROR, "Validation failed\n")
 		return getErrorDetails()
 	}
 

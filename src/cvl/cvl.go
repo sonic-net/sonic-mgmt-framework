@@ -533,7 +533,7 @@ func (c *CVL) checkDeleteConstraint(cfgData []CVLEditConfigData,
 		refKeyVal, err := luaScripts["find_key"].Run(redisClient, nokey, leafRef.tableName,
 		modelInfo.tableInfo[leafRef.tableName].redisKeyDelim, leafRef.field, keyVal).Result()
 		if (err == nil &&  refKeyVal != "") {
-			TRACE_LOG(INFO_API, (TRACE_DELETE | TRACE_SEMANTIC), "Delete will violate the constraint as entry %s is referred in %s", tableName, refKeyVal)
+			CVL_LOG(ERROR, "Delete will violate the constraint as entry %s is referred in %s", tableName, refKeyVal)
 
 			return CVL_SEMANTIC_ERROR
 		}
@@ -742,13 +742,13 @@ func (c *CVL) fetchDataToTmpCache1() *yparser.YParserNode {
 				//Otherwise fetch it from Redis
 				mCmd[dbKey] = pipe.HGetAll(redisKey) //write into pipeline
 				if mCmd[dbKey] == nil {
-					TRACE_LOG(INFO_API, TRACE_CACHE, "Failed pipe.HGetAll('%s')", redisKey)
+					CVL_LOG(ERROR, "Failed pipe.HGetAll('%s')", redisKey)
 				}
 			}
 
 			_, err := pipe.Exec()
 			if err != nil {
-				TRACE_LOG(INFO_API, TRACE_CACHE, "Failed to fetch details for table %s", tableName)
+				CVL_LOG(ERROR, "Failed to fetch details for table %s", tableName)
 			}
 
 			mapTable := c.tmpDbCache[tableName]
@@ -1181,7 +1181,6 @@ func (c *CVL) generateTableData1(config bool, jsonNode *jsonquery.Node)(*yparser
 				keyIndices[idx] = 0
 			}
 
-			//TRACE_LOG(1, "Starting batch leaf creation - %s\n", c.batchLeaf)
 			TRACE_LOG(INFO_API, TRACE_CACHE, "Starting batch leaf creation - %s\n", c.batchLeaf)
 			//process batch leaf creation
 			if errObj := c.yp.AddMultiLeafNodes(modelInfo.tableInfo[tableName].module, listNode, c.batchLeaf); errObj.ErrCode != yparser.YP_SUCCESS {
