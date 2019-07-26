@@ -2891,7 +2891,7 @@ func TestValidateEditConfig_Two_Updates_Positive(t *testing.T) {
 
 	cvl.ValidationSessClose(cvSess)
 
-	WriteToFile("\nTestValidateEditConfig_Two_Updates_Positive:\n", fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
+	WriteToFile(fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
 
 	if err != cvl.CVL_SUCCESS { //should be success 
 		t.Errorf("Config Validation failed.")
