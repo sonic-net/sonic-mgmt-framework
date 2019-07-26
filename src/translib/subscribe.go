@@ -24,20 +24,21 @@ import (
 )
 
 type notificationInfo struct{
-	table               db.TableSpec 
+	table               db.TableSpec
 	key					db.Key
 	dbno				db.DBNum
-	isLeaf				bool
+	needCache			bool
 	path				string
 	app					*appInterface
 	cache				[]byte
-	sDB					*db.DB
+	sDB					*db.DB //Subscription DB should be used only for keyspace notification
 }
 
 type subscribeInfo struct{
 	syncDone			bool
-	nInfo				[]notificationInfo
+	nInfo				[]*notificationInfo
 	stop				chan struct{}
+	dbs [db.MaxDB]	   *db.DB //used to perform get operations
 }
 
 type notificationMap map[*db.DB][]*subscribeInfo
@@ -56,5 +57,10 @@ func runSubscribe(q *queue.PriorityQueue) error {
 
 	}
 
+	return err
+}
+
+func startSubscribe(nInfoList []*notificationInfo, sInfo *subscribeInfo) error {
+	var err error
 	return err
 }

@@ -6,6 +6,7 @@ ln -s tests/jsondata_test.go jsondata_test.go
 
 profiling=""
 testcase=""
+coverpkgs="-coverpkg=cvl,cvl/internal/util,cvl/internal/yparser"
 
 if [ "${BUILD}:" != ":" ] ; then
 	go test -v -c -gcflags="all=-N -l" 
@@ -21,12 +22,12 @@ fi
 
 #Run test and display report
 if [ "${NOREPORT}:" != ":" ] ; then
-	go test  -v -cover ${testcase} ${coverage}
+	go test  -v -cover ${coverpkgs} ${testcase}
 elif [ "${COVERAGE}:" != ":" ] ; then
-	go test  -v -cover -coverprofile coverage.out -coverpkg=cvl,cvl/internal/util,cvl/internal/yparser 
+	go test  -v -cover -coverprofile coverage.out ${coverpkgs} ${testcase}
 	go tool cover -html=coverage.out
 else
-	go test  -v -cover  -json ${profiling} ${testcase} | tparse -smallscreen -all
+	go test  -v -cover -json ${profiling} ${testcase} | tparse -smallscreen -all
 fi
 
 #With profiling 

@@ -8,11 +8,13 @@ import (
         "io/ioutil"
         "os/signal"
         "syscall"
+	"strings"
+	"flag"
 	log "github.com/golang/glog"
 )
 
 var CVL_SCHEMA string = "schema/"
-var CVL_CFG_FILE string = "./logconf.json"
+var CVL_CFG_FILE string = "./cvl_cfg.json"
 
 //package init function 
 func init() {
@@ -25,7 +27,7 @@ func init() {
 	}
 }
 
-var cvlCfgMap map[string]bool
+var cvlCfgMap map[string]string
 
 /* Logging Level for CVL global logging. */
 type CVLLogLevel uint8 
@@ -42,23 +44,22 @@ const (
 	INFO_ALL
 )
 
+var cvlTraceFlags uint32
+
 /* Logging levels for CVL Tracing. */
-type CVLTraceLevel uint8 
+type CVLTraceLevel uint32 
 const (
-        TRACE_CACHE  = 1 << 0
+	TRACE_MIN = 0
+	TRACE_MAX = 7
+        TRACE_CACHE  = 1 << TRACE_MIN 
         TRACE_LIBYANG = 1 << 1
         TRACE_YPARSER = 1 << 2
         TRACE_CREATE = 1 << 3
         TRACE_UPDATE = 1 << 4
         TRACE_DELETE = 1 << 5
         TRACE_SEMANTIC = 1 << 6
-        TRACE_SYNTAX = 1 << 7
+        TRACE_SYNTAX = 1 << TRACE_MAX 
 
-)
-
-const (
-	TRACE_MIN = 0
-	TRACE_MAX = 7
 )
 
 
@@ -101,37 +102,18 @@ func IsTraceSet() bool {
 	}
 }
 
-func IsLogTraceSet() bool {
-	return true
-}
+func TRACE_LEVEL_LOG(level log.Level, tracelevel CVLTraceLevel, fmtStr string, args ...interface{}) {
 
-func SetTraceLevel(level uint8) {
-	traceFlags = traceFlags | (1 << level)
-}
-
-
-func ClearTraceLevel(level uint8) {
-	traceFlags = traceFlags &^ (1 << level)
-}
-
-func TRACE_LOG(level log.Level, tracelevel CVLTraceLevel, fmtStr string, args ...interface{}) {
 	if (IsTraceSet() == false) {
 		return
 	}
 
-	traceEnabled := false
-	var index uint8
-	/* Check if incoming tracelevel is enabled. */
-	for  index = TRACE_MIN ; index < TRACE_MAX ; index++  {
-		if ((tracelevel &  (1 << index)) != 0) {
-			if (cvlCfgMap[traceLevelMap[1 << index]] == true) {
-				/* This log should be allowed as at least one flag is currently set */
-				traceEnabled = true
-				break
-			}
-		}
-	}
+	level = (level - INFO_API) + 1;
 
+	traceEnabled := false
+		if ((cvlTraceFlags & (uint32)(tracelevel)) != 0) {
+			traceEnabled = true
+		}
 
 	if IsTraceSet() == true && traceEnabled == true {
 		pc := make([]uintptr, 10)
@@ -146,7 +128,7 @@ func TRACE_LOG(level log.Level, tracelevel CVLTraceLevel, fmtStr string, args ..
 	}
 }
 
-func CVL_LOG(level CVLLogLevel, format string, args ...interface{}) {
+func CVL_LEVEL_LOG(level CVLLogLevel, format string, args ...interface{}) {
 
 	switch level {
 		case INFO:
@@ -181,23 +163,35 @@ func ConfigFileSyncHandler() {
 		for {
 			<-sigs
 			cvlCfgMap := ReadConfFile()
-			CVL_LOG(INFO ,"Received SIGUSR2. Changed configuration values are %v", cvlCfgMap)
+			CVL_LEVEL_LOG(INFO ,"Received SIGUSR2. Changed configuration values are %v", cvlCfgMap)
+
+			if (strings.Compare(cvlCfgMap["LOGTOSTDERR"], "true") == 0) {
+				flag.Set("logtostderr", "true")
+				flag.Set("stderrthreshold", cvlCfgMap["STDERRTHRESHOLD"])
+				flag.Set("v", cvlCfgMap["VERBOSITY"])
+			}
 		}
 	}()
 
 }
 
-func ReadConfFile()  map[string]bool{
+func ReadConfFile()  map[string]string{
         data, err := ioutil.ReadFile(CVL_CFG_FILE)
 
         err = json.Unmarshal(data, &cvlCfgMap)
 
         if err != nil {
-		CVL_LOG(ERROR ,"Error in reading cvl configuration file %v", err)
+		CVL_LEVEL_LOG(ERROR ,"Error in reading cvl configuration file %v", err)
         }
 
-	CVL_LOG(INFO ,"Current Values of CVL Configuration File %v", cvlCfgMap)
+	CVL_LEVEL_LOG(INFO ,"Current Values of CVL Configuration File %v", cvlCfgMap)
+	var index uint32
+
+	for  index = TRACE_MIN ; index < TRACE_MAX ; index++  {
+		if (strings.Compare(cvlCfgMap[traceLevelMap[1 << index]], "true") == 0) {
+			cvlTraceFlags = cvlTraceFlags |  (1 << index) 
+		}
+	}
+
 	return cvlCfgMap
 }
-
-

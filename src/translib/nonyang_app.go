@@ -9,10 +9,10 @@ package translib
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"reflect"
 	"translib/db"
+	"translib/tlerr"
 
 	log "github.com/golang/glog"
 )
@@ -60,11 +60,11 @@ func (app *nonYangDemoApp) translateCreate(d *db.DB) ([]db.WatchKeys, error) {
 }
 
 func (app *nonYangDemoApp) translateUpdate(d *db.DB) ([]db.WatchKeys, error) {
-	return nil, errors.New("Not implemented")
+	return nil, tlerr.NotSupported("Unsuppoted operation")
 }
 
 func (app *nonYangDemoApp) translateReplace(d *db.DB) ([]db.WatchKeys, error) {
-	return nil, errors.New("Not implemented")
+	return nil, tlerr.NotSupported("Unsuppoted operation")
 }
 
 func (app *nonYangDemoApp) translateDelete(d *db.DB) ([]db.WatchKeys, error) {
@@ -77,7 +77,7 @@ func (app *nonYangDemoApp) translateGet(dbs [db.MaxDB]*db.DB) error {
 }
 
 func (app *nonYangDemoApp) translateSubscribe(dbs [db.MaxDB]*db.DB, path string) (*notificationOpts, *notificationInfo, error) {
-	err := errors.New("Not supported")
+	err := tlerr.NotSupported("Unsuppoted operation")
 	return nil, nil, err
 }
 
@@ -96,7 +96,7 @@ func (app *nonYangDemoApp) processCreate(d *db.DB) (SetResponse, error) {
 		err = app.doCreateVlanMembers()
 
 	default:
-		err = errors.New("Unknown path")
+		err = tlerr.NotSupported("Unknown path")
 	}
 
 	return resp, err
@@ -104,12 +104,12 @@ func (app *nonYangDemoApp) processCreate(d *db.DB) (SetResponse, error) {
 
 func (app *nonYangDemoApp) processUpdate(d *db.DB) (SetResponse, error) {
 	var resp SetResponse
-	return resp, errors.New("Not implemented")
+	return resp, tlerr.NotSupported("Unsuppoted operation")
 }
 
 func (app *nonYangDemoApp) processReplace(d *db.DB) (SetResponse, error) {
 	var resp SetResponse
-	return resp, errors.New("Not implemented")
+	return resp, tlerr.NotSupported("Unsuppoted operation")
 }
 
 func (app *nonYangDemoApp) processDelete(d *db.DB) (SetResponse, error) {
@@ -127,7 +127,7 @@ func (app *nonYangDemoApp) processDelete(d *db.DB) (SetResponse, error) {
 		err = app.doDeleteVlanMember()
 
 	default:
-		err = errors.New("Unknown path")
+		err = tlerr.NotSupported("Unknown path")
 	}
 
 	return resp, err
@@ -148,7 +148,7 @@ func (app *nonYangDemoApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error)
 		err = app.doGetVlanByID()
 
 	default:
-		err = errors.New("Unknown path")
+		err = tlerr.NotSupported("Unknown path")
 	}
 
 	var respData []byte
@@ -166,19 +166,19 @@ func (app *nonYangDemoApp) doGetAllVlans() error {
 	log.Infof("in GetAllVlans")
 
 	// Get all vlans from db
-	vlanTable, err := app.confDB.GetTable(vlanTable)
+	t, err := app.confDB.GetTable(vlanTable)
 	if err != nil {
 		return err
 	}
 
 	var allVlansJSON jsonArray
 
-	keys, _ := vlanTable.GetKeys()
+	keys, _ := t.GetKeys()
 	log.Infof("Found %d VLAN table keys", len(keys))
 	for _, key := range keys {
 		log.Infof("Processing %v", key.Get(0))
 
-		vlanInfo, _ := vlanTable.GetEntry(key)
+		vlanInfo, _ := t.GetEntry(key)
 		vlanJSON, err := app.getVlanJSON(&vlanInfo)
 		if err != nil {
 			return err
@@ -198,8 +198,7 @@ func (app *nonYangDemoApp) doGetVlanByID() error {
 	vlanID, _ := app.path.IntVar("id")
 	log.Infof("in GetVlanByID(), vid=%d", vlanID)
 
-	vlanName := toVlanName(vlanID)
-	vlanEntry, err := app.confDB.GetEntry(vlanTable, asKey(vlanName))
+	vlanEntry, err := app.getVlanEntry(vlanID)
 	if err == nil {
 		app.respJSON, err = app.getVlanJSON(&vlanEntry)
 	}
@@ -226,10 +225,10 @@ func (app *nonYangDemoApp) getVlanJSON(vlanEntry *db.Value) (*jsonObject, error)
 		memberJSON["port"] = portName
 
 		memberEntry, err := app.confDB.GetEntry(memberTable, asKey(vlanName, portName))
-		if err != nil {
-			// ignore "not exists" error; don't fill tagging mode
-			log.Warningf("Failed to load VLAN_MEMBER %s,%s; err=%v",
-				vlanName, portName, err)
+		if isNotFoundError(err) {
+			log.Infof("Failed to load VLAN_MEMBER %s,%s; err=%v", vlanName, portName, err)
+		} else if err != nil {
+			return nil, err
 		} else {
 			memberJSON["mode"] = memberEntry.Get("tagging_mode")
 		}
@@ -253,7 +252,7 @@ func (app *nonYangDemoApp) doCreateVlans() error {
 	err := json.Unmarshal(app.reqData, &vlansJSON)
 	if err != nil {
 		log.Errorf("Failed to parse input.. err=%v", err)
-		return errors.New("Invalid input")
+		return tlerr.InvalidArgs("Invalid input")
 	}
 
 	log.Infof("Receieved %d vlan ids; %v", len(vlansJSON), vlansJSON)
@@ -283,14 +282,13 @@ func (app *nonYangDemoApp) doCreateVlanMembers() error {
 	err := json.Unmarshal(app.reqData, &memberListJSON)
 	if err != nil {
 		log.Errorf("Failed to parse input.. err=%v", err)
-		return errors.New("Invalid input")
+		return tlerr.InvalidArgs("Invalid input")
 	}
 
 	vlanName := toVlanName(vlanID)
-	vlanKey := asKey(vlanName)
-	vlanEntry, err := app.confDB.GetEntry(vlanTable, vlanKey)
+	vlanEntry, err := app.getVlanEntry(vlanID)
 	if err != nil {
-		return err //TODO translate not found error to meaningful message
+		return err
 	}
 
 	membersList := vlanEntry.GetList("members")
@@ -318,7 +316,7 @@ func (app *nonYangDemoApp) doCreateVlanMembers() error {
 	// Update the vlan table with new member list
 	log.Infof("SET vlan entry '%s', members=%v", vlanName, membersList)
 	vlanEntry.SetList("members", membersList)
-	err = app.confDB.ModEntry(vlanTable, vlanKey, vlanEntry)
+	err = app.confDB.ModEntry(vlanTable, asKey(vlanName), vlanEntry)
 
 	return err
 }
@@ -330,8 +328,11 @@ func (app *nonYangDemoApp) doDeleteVlan() error {
 	vlanName := toVlanName(vlanID)
 	vlanKey := asKey(vlanName)
 	vlanEntry, err := app.confDB.GetEntry(vlanTable, vlanKey)
-	if err != nil {
-		return err //FIXME return success if not exists
+	if isNotFoundError(err) {
+		log.Infof("Vlan %d not found.. nothing to delete", vlanID)
+		return nil
+	} else if err != nil {
+		return err
 	}
 
 	// Delete VLAN_MEMBER table entry for each member port
@@ -356,8 +357,7 @@ func (app *nonYangDemoApp) doDeleteVlanMember() error {
 	log.Infof("in doDeleteVlanMember(); vid=%d, member=%s", vlanID, portName)
 
 	vlanName := toVlanName(vlanID)
-	vlanKey := asKey(vlanName)
-	vlanEntry, err := app.confDB.GetEntry(vlanTable, vlanKey)
+	vlanEntry, err := app.getVlanEntry(vlanID)
 	if err != nil {
 		return err
 	}
@@ -374,7 +374,7 @@ func (app *nonYangDemoApp) doDeleteVlanMember() error {
 	// Update VLAN entry with new member list
 	log.Infof("SET vlan entry '%s', members=%v", vlanName, updatedList)
 	vlanEntry.SetList("members", updatedList)
-	err = app.confDB.SetEntry(vlanTable, vlanKey, vlanEntry)
+	err = app.confDB.SetEntry(vlanTable, asKey(vlanName), vlanEntry)
 	if err != nil {
 		return nil
 	}
@@ -386,9 +386,12 @@ func (app *nonYangDemoApp) doDeleteVlanMember() error {
 	return err
 }
 
-// asKey cretaes a db.Key from given key components
-func asKey(parts ...string) db.Key {
-	return db.Key{Comp: parts}
+func (app *nonYangDemoApp) getVlanEntry(vlanID int) (db.Value, error) {
+	entry, err := app.confDB.GetEntry(vlanTable, asKey(toVlanName(vlanID)))
+	if isNotFoundError(err) {
+		err = tlerr.NotFound("VLAN %v does not exists", vlanID)
+	}
+	return entry, err
 }
 
 // toVlanName returns the vlan name for given vlan id.
