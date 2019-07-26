@@ -6,7 +6,6 @@ import (
 	"regexp"
 	"time"
 	 log "github.com/golang/glog"
-	//"encoding/xml"
 	"encoding/json"
 	"github.com/go-redis/redis"
 	"github.com/antchfx/xmlquery"
@@ -408,23 +407,11 @@ func getRedisToYangKeys(tableName string, redisKey string)[]keyValuePairStruct{
 
 
 //Add child node to a parent node
-func(c *CVL) addChildNode1(tableName string, parent *yparser.YParserNode, name string) *yparser.YParserNode {
+func(c *CVL) addChildNode(tableName string, parent *yparser.YParserNode, name string) *yparser.YParserNode {
 
 	//return C.lyd_new(parent, modelInfo.tableInfo[tableName].module, C.CString(name))
 	return c.yp.AddChildNode(modelInfo.tableInfo[tableName].module, parent, name)
 }
-
-/*
-func (c *CVL) addChildNode(parent *xmlquery.Node, xmlChildNode *xmlquery.Node) {
-	xmlChildNode.Parent = parent
-	if (parent.FirstChild == nil) {
-		parent.FirstChild = xmlChildNode
-	} else  {
-		parent.LastChild.NextSibling = xmlChildNode
-	}
-	parent.LastChild = xmlChildNode
-}
-*/
 
 //Add all other table data for validating all 'must' exp for tableName
 func (c *CVL) addTableDataForMustExp(tableName string) CVLRetCode {
@@ -637,7 +624,7 @@ func (c *CVL) addLeafRef(config bool, tableName string, name string, value strin
 }
 
 
-func (c *CVL) addChildLeaf1(config bool, tableName string, parent *yparser.YParserNode, name string, value string) {
+func (c *CVL) addChildLeaf(config bool, tableName string, parent *yparser.YParserNode, name string, value string) {
 	//Batch leaf creation
 	c.batchLeaf = c.batchLeaf + name + "#" + value + "#"
 	//Check if this leaf has leafref,
@@ -647,43 +634,6 @@ func (c *CVL) addChildLeaf1(config bool, tableName string, parent *yparser.YPars
 	c.addLeafRef(config, tableName, name, value)
 }
 
-/*
-func (c *CVL) addChildLeaf(config bool, tableName string, parent *xmlquery.Node, name string, value string) *xmlquery.Node{
-	//Create leaf name
-	xmlLeafNode := &xmlquery.Node{
-		Data: name,
-		Type: xmlquery.ElementNode,
-	}
-
-	//Create leaf text
-	xmlLeafNodeText := &xmlquery.Node{
-		Data: value,
-		Type: xmlquery.TextNode,
-	}
-
-	//Attach leaf node to its parent
-	xmlLeafNode.Parent = parent
-	if (parent.FirstChild == nil) {
-		parent.FirstChild = xmlLeafNode
-	} else  {
-		parent.LastChild.NextSibling = xmlLeafNode
-	}
-	parent.LastChild = xmlLeafNode
-
-	//Attach leaf text to leaf node
-	xmlLeafNodeText.Parent = xmlLeafNode
-	xmlLeafNode.FirstChild = xmlLeafNodeText
-	xmlLeafNode.LastChild = xmlLeafNodeText
-
-	//Check if this leaf has leafref,
-	//If so add the add redis key to its table so that those 
-	// details can be fetched for dependency validation
-
-	c.addLeafRef(config, tableName, name, value)
-
-	return xmlLeafNode
-}
-*/
 
 func (c *CVL) checkFieldMap(fieldMap *map[string]string) map[string]interface{} {
 	fieldMapNew := map[string]interface{}{}
@@ -711,7 +661,7 @@ func (c *CVL) checkFieldMap(fieldMap *map[string]string) map[string]interface{} 
 }
 
 //populate redis data to cache
-func (c *CVL) fetchDataToTmpCache1() *yparser.YParserNode {
+func (c *CVL) fetchDataToTmpCache() *yparser.YParserNode {
 	entryToFetch := 0
 	var root *yparser.YParserNode = nil
 	var errObj yparser.YParserError
@@ -798,7 +748,7 @@ func (c *CVL) fetchDataToTmpCache1() *yparser.YParserNode {
 		for jsonNode := data.FirstChild; jsonNode != nil; jsonNode=jsonNode.NextSibling {
 			TRACE_LOG(INFO_API, TRACE_CACHE, "Top Node=%v\n", jsonNode.Data)
 			//Visit each top level list in a loop for creating table data
-			topNode, _ := c.generateTableData1(true, jsonNode)
+			topNode, _ := c.generateTableData(true, jsonNode)
 			if (root == nil) {
 				root = topNode
 			} else {
@@ -818,189 +768,13 @@ func (c *CVL) fetchDataToTmpCache1() *yparser.YParserNode {
 }
 
 
-/*
-func (c *CVL) fetchDataToTmpCache() string {
-	for tableName, dbKeys := range c.tmpDbCache { //for each table
-
-		if (len(dbKeys.(map[string]interface{}))  == 0) {
-			continue
-		}
-
-		mCmd := map[string]*redis.StringStringMapCmd{}
-		pipe := redisClient.Pipeline()
-
-		for dbKey, _ := range dbKeys.(map[string]interface{}) { //for all keys
-			redisKey := tableName + modelInfo.tableInfo[tableName].redisKeyDelim + dbKey
-			mCmd[dbKey] = pipe.HGetAll(redisKey) //write into pipeline
-			if mCmd[dbKey] == nil {
-				TRACE_LOG(1, "Failed pipe.HGetAll('%s')", redisKey)
-			}
-		}
-
-		_, err := pipe.Exec()
-		if err != nil {
-			TRACE_LOG(1, "Failed to fetch details for table %s", tableName)
-		}
-
-		mapTable := c.tmpDbCache[tableName]
-
-		for key, val := range mCmd {
-			res, err := val.Result()
-			if (err != nil || len(res) == 0) {
-				//no data found, don't keep blank entry
-				delete(mapTable.(map[string]interface{}), key)
-				continue
-			}
-			//exclude table name and delim
-			keyOnly := key
-			//TBD: Need to check field name like <NULL>(to be deleted)
-			//and 'members@' (strip '@')
-			//store all field values
-			fieldMap := c.checkFieldMap(&res)
-			mapTable.(map[string]interface{})[keyOnly] = fieldMap
-		}
-
-		pipe.Close()
-	}
-
-	jsonDataBytes, _ := json.Marshal(c.tmpDbCache)
-	jsonData := string(jsonDataBytes)
-
-	data, err := jsonquery.Parse(strings.NewReader(jsonData))
-
-	if (err != nil) {
-		return ""
-	}
-
-	doc := &xmlquery.Node{
-		Type: xmlquery.DeclarationNode,
-		Data: "xml",
-		Attr: []xml.Attr{
-			xml.Attr{Name: xml.Name{Local: "version"}, Value: "1.0"},
-		},
-	}
-
-	var xmlNode *xmlquery.Node
-	//Generate xml data from status JSON data
-	for jsonNode := data.FirstChild; jsonNode != nil; jsonNode=jsonNode.NextSibling {
-		//TRACE_LOG(3, "Top Status Node=%v\n", jsonNode.Data)
-		//Visit each top level list in a loop for creating table data
-		xmlNode, _= c.generateTableData(false, jsonNode)
-
-		xmlNode.Parent = doc
-		if doc.FirstChild == nil {
-			doc.FirstChild = xmlNode
-			doc.LastChild = xmlNode
-		} else {
-			//If duplicate top node exists add child subtree in the existing top node
-			dupTopNode := xmlquery.Find(doc, fmt.Sprintf("/%s", xmlNode.Data))
-			if (dupTopNode != nil) {
-				dupTopNode[0].LastChild.NextSibling = xmlNode.FirstChild
-				dupTopNode[0].LastChild = xmlNode.LastChild
-			} else {
-				doc.LastChild.NextSibling = xmlNode
-				doc.LastChild = xmlNode
-			}
-		}
-	}
-
-	if (doc.FirstChild == nil) {
-		return "";
-	}
-
-	yangXml := doc.OutputXML(true)
-	TRACE_LOG(5, "Dependent Data = %s\n", yangXml)
-	return yangXml
-}
-*/
-
 func (c *CVL) clearTmpDbCache() {
-	for key := range c.tmpDbCache {
+	for key, _ := range c.tmpDbCache {
 		delete(c.tmpDbCache, key)
 	}
 }
 
-/*
-//This function is not used currently
-func (c *CVL) addStatusData(tableName string) *xmlquery.Node {
-	//Get all keys from DB
-	pattern := tableName + modelInfo.tableInfo[tableName].redisKeyDelim + "*"
-	dbKeys, err := redisClient.Keys(pattern).Result()
-
-	if (err != nil) {
-		return nil
-	}
-
-	mCmd := map[string]*redis.StringStringMapCmd{}
-	pipe := redisClient.Pipeline()
-
-	for _, dbKey := range dbKeys {
-		if ((dbKey == "PORT_TABLE:PortConfigDone") ||
-		(dbKey == "PORT_TABLE:PortInitDone")) {
-			continue
-		}
-		mCmd[dbKey] = pipe.HGetAll(dbKey)
-		if err != nil {
-			return nil
-		}
-	}
-	_, err = pipe.Exec()
-	if err != nil {
-		return nil
-	}
-
-	mapTable := make(map[string]interface{})
-	mapData := make(map[string]interface{})
-
-	for key, val := range mCmd {
-		res, _ := val.Result()
-		//exclude table name and delim
-		keyOnly := key[len(tableName + modelInfo.tableInfo[tableName].redisKeyDelim):]
-		mapData[keyOnly] = res 
-	}
-	mapTable[tableName] = mapData
-	jsonData, err := json.Marshal(mapTable)
-
-	data, err := jsonquery.Parse(strings.NewReader(string(jsonData)))
-
-	if (err != nil) {
-		return nil
-	}
-
-	doc := &xmlquery.Node{   //module level top level node will reduce namespace repition
-		Data: "top",
-		Type: xmlquery.ElementNode,
-	}
-
-	var xmlNode *xmlquery.Node
-
-	for jsonNode := data.FirstChild; jsonNode != nil; jsonNode=jsonNode.NextSibling {
-		TRACE_LOG(1, "Leafref table top node=%v\n", jsonNode.Data)
-		//Visit each top level list in a loop for creating table data
-		xmlNode, _= c.generateTableData(false, jsonNode)
-
-		xmlNode.Parent = doc
-		if doc.FirstChild == nil {
-			doc.FirstChild = xmlNode
-			doc.LastChild = xmlNode
-		} else {
-			//If duplicate top node exists add child subtree in the existing top node
-			dupTopNode := xmlquery.Find(doc, fmt.Sprintf("/%s", xmlNode.Data))
-			if (dupTopNode != nil) {
-				dupTopNode[0].LastChild.NextSibling = xmlNode.FirstChild
-				dupTopNode[0].LastChild = xmlNode.LastChild
-			} else {
-				doc.LastChild.NextSibling = xmlNode
-				doc.LastChild = xmlNode
-			}
-		}
-	}
-
-	return doc
-}
-*/
-
-func (c *CVL) generateTableFieldsData1(config bool, tableName string, jsonNode *jsonquery.Node,
+func (c *CVL) generateTableFieldsData(config bool, tableName string, jsonNode *jsonquery.Node,
 parent *yparser.YParserNode) CVLRetCode {
 
 	//Traverse fields
@@ -1013,12 +787,12 @@ parent *yparser.YParserNode) CVLRetCode {
 
 			if (len(modelInfo.tableInfo[tableName].mapLeaf) == 2) {//mapping should have two leaf always
 				//Values should be stored inside another list as map table
-				listNode := c.addChildNode1(tableName, parent, tableName) //Add the list to the top node
-				c.addChildLeaf1(config, tableName,
+				listNode := c.addChildNode(tableName, parent, tableName) //Add the list to the top node
+				c.addChildLeaf(config, tableName,
 				listNode, modelInfo.tableInfo[tableName].mapLeaf[0],
 				jsonFieldNode.Data)
 
-				c.addChildLeaf1(config, tableName,
+				c.addChildLeaf(config, tableName,
 				listNode, modelInfo.tableInfo[tableName].mapLeaf[1],
 				jsonFieldNode.FirstChild.Data)
 
@@ -1031,11 +805,11 @@ parent *yparser.YParserNode) CVLRetCode {
 				(strings.HasSuffix(jsonFieldNode.FirstChild.Data, "]")) &&
 				(strings.Index(jsonFieldNode.FirstChild.Data, "|") > 0) {*/
 
-					c.addChildLeaf1(config, tableName,
+					c.addChildLeaf(config, tableName,
 					parent, jsonFieldNode.Data,
 					hashRefMatch[2]) //take hashref key value
 				} else {
-					c.addChildLeaf1(config, tableName,
+					c.addChildLeaf(config, tableName,
 					parent, jsonFieldNode.Data,
 					jsonFieldNode.FirstChild.Data)
 				}
@@ -1048,66 +822,6 @@ parent *yparser.YParserNode) CVLRetCode {
 			for  arrayNode:=jsonFieldNode.FirstChild; arrayNode != nil;
 
 			arrayNode = arrayNode.NextSibling {
-				c.addChildLeaf1(config, tableName,
-				parent, jsonFieldNode.Data,
-				arrayNode.FirstChild.Data)
-			}
-		}
-	}
-
-	return CVL_SUCCESS
-}
-
-/*
-//Generate Yang xml for all fields in a hash
-func (c *CVL) generateTableFieldsData(config bool, tableName string, jsonNode *jsonquery.Node,
-parent *xmlquery.Node) CVLRetCode {
-
-	//Traverse fields
-	for jsonFieldNode := jsonNode.FirstChild; jsonFieldNode!= nil;
-	jsonFieldNode = jsonFieldNode.NextSibling {
-		//Add fields as leaf to the list
-		if (jsonFieldNode.Type == jsonquery.ElementNode &&
-		jsonFieldNode.FirstChild.Type == jsonquery.TextNode) {
-
-			if (len(modelInfo.tableInfo[tableName].mapLeaf) == 2) {//mapping should have two leaf always
-				//Values should be stored inside another list as map table
-				xmlNode := &xmlquery.Node{
-					Data: tableName,
-					Type: xmlquery.ElementNode,
-				}
-				c.addChildNode(parent, xmlNode)
-
-				c.addChildLeaf(config, tableName,
-				xmlNode, modelInfo.tableInfo[tableName].mapLeaf[0],
-				jsonFieldNode.Data)
-
-				c.addChildLeaf(config, tableName,
-				xmlNode, modelInfo.tableInfo[tableName].mapLeaf[1],
-				jsonFieldNode.FirstChild.Data)
-
-			} else {
-				//check if it is hash-ref, then need to add only key from "TABLE|k1"
-				//re := regexp.MustCompile(`\[(.*)\|(.*)\]`)
-				hashRefMatch := reHashRef.FindStringSubmatch(jsonFieldNode.FirstChild.Data)
-
-				if (hashRefMatch != nil && len(hashRefMatch) == 3) {
-					c.addChildLeaf(config, tableName,
-					parent, jsonFieldNode.Data,
-					hashRefMatch[2]) //take hashref key value
-				} else {
-					c.addChildLeaf(config, tableName,
-					parent, jsonFieldNode.Data,
-					jsonFieldNode.FirstChild.Data)
-				}
-			}
-
-		} else if (jsonFieldNode.Type == jsonquery.ElementNode &&
-		jsonFieldNode.FirstChild.Type == jsonquery.ElementNode) {
-			//Array data e.g. VLAN members
-			for  arrayNode:=jsonFieldNode.FirstChild; arrayNode != nil;
-
-			arrayNode = arrayNode.NextSibling {
 				c.addChildLeaf(config, tableName,
 				parent, jsonFieldNode.Data,
 				arrayNode.FirstChild.Data)
@@ -1117,9 +831,8 @@ parent *xmlquery.Node) CVLRetCode {
 
 	return CVL_SUCCESS
 }
-*/
 
-func (c *CVL) generateTableData1(config bool, jsonNode *jsonquery.Node)(*yparser.YParserNode, CVLErrorInfo) {
+func (c *CVL) generateTableData(config bool, jsonNode *jsonquery.Node)(*yparser.YParserNode, CVLErrorInfo) {
 	var cvlErrObj CVLErrorInfo
 	tableName := fmt.Sprintf("%s",jsonNode.Data)
 	c.batchLeaf = ""
@@ -1151,18 +864,18 @@ func (c *CVL) generateTableData1(config bool, jsonNode *jsonquery.Node)(*yparser
 		for  ; totalKeyComb > 0 ; totalKeyComb-- {
 
 			//Add table i.e. create list element
-			listNode := c.addChildNode1(tableName, topNode, tableName) //Add the list to the top node
+			listNode := c.addChildNode(tableName, topNode, tableName) //Add the list to the top node
 
 			//For each key combination
 			//Add keys as leaf to the list
 			for idx = 0; idx < keyCompCount; idx++ {
-				c.addChildLeaf1(config, tableName,
+				c.addChildLeaf(config, tableName,
 				listNode, keyValuePair[idx].key,
 				keyValuePair[idx].values[keyIndices[idx]])
 			}
 
 			//Get all fields under the key field and add them as children of the list
-			c.generateTableFieldsData1(config, tableName, jsonNode, listNode)
+			c.generateTableFieldsData(config, tableName, jsonNode, listNode)
 
 			//Check which key elements left after current key element
 			var next int = keyCompCount - 1
@@ -1194,100 +907,7 @@ func (c *CVL) generateTableData1(config bool, jsonNode *jsonquery.Node)(*yparser
 	return topNode, cvlErrObj
 }
 
-/*
-// Generate YANG xml instance for Redis table
-func (c *CVL) generateTableData(config bool, jsonNode *jsonquery.Node)(*xmlquery.Node, CVLRetCode) {
-
-	tableName := fmt.Sprintf("%s",jsonNode.Data)
-
-	//Create top level container based on first list
-	xmlTopNode := &xmlquery.Node{   //module level top level node will reduce namespace repition
-		Data: modelInfo.tableInfo[tableName].modelName,
-		Type: xmlquery.ElementNode,
-		Attr: []xml.Attr{
-			xml.Attr{Name: xml.Name{Local: "xmlns"},
-			Value:  modelInfo.modelNs[modelInfo.tableInfo[tableName].modelName].ns},
-		},
-	}
-
-	//Traverse each key instance
-	for jsonNode = jsonNode.FirstChild; jsonNode != nil; jsonNode = jsonNode.NextSibling {
-
-		//For each field check if is key 
-		//If it is key, create list as child of top container
-		// Get all key name/value pairs
-		keyValuePair := getRedisToYangKeys(tableName, jsonNode.Data)
-		keyCompCount := len(keyValuePair)
-		totalKeyComb := 1
-		var keyIndices []int
-
-		//Find number of all key combinations
-		//Each key can have one or more key values, which results in nk1 * nk2 * nk2 combinations
-		idx := 0
-		for i,_ := range keyValuePair {
-			totalKeyComb = totalKeyComb * len(keyValuePair[i].values)
-			keyIndices = append(keyIndices, 0)
-		}
-
-		for  ; totalKeyComb > 0 ; totalKeyComb-- {
-
-			//Add table i.e. create list element
-			xmlNode := &xmlquery.Node{
-				Data: tableName,
-				Type: xmlquery.ElementNode,
-			}
-
-			//For each key combination
-			//Add keys as leaf to the list
-			for idx = 0; idx < keyCompCount; idx++ {
-				c.addChildLeaf(config, tableName,
-				xmlNode, keyValuePair[idx].key,
-				keyValuePair[idx].values[keyIndices[idx]])
-			}
-
-
-			c.addChildNode(xmlTopNode, xmlNode) //Add the list to the top node
-
-			//Get all fields under the key field and add them as children of the list
-			c.generateTableFieldsData(config, tableName, jsonNode, xmlNode)
-
-
-			//Check which key elements left after current key element
-			var next int = keyCompCount - 1
-			for  ((next > 0) && ((keyIndices[next] +1) >=  len(keyValuePair[next].values))) {
-				next--
-			}
-			//No more combination possible
-			if (next < 0) {
-				break
-			}
-
-			keyIndices[next]++
-
-			//Reset indices for all other key elements
-			for idx = next+1;  idx < keyCompCount; idx++ {
-				keyIndices[idx] = 0
-			}
-		}
-	}
-
-
-	return xmlTopNode, CVL_SUCCESS
-}
-*/
-
-/*
-func jsonMapToYangTree(jsonMap *map[string]interface{}) *yparser.YParserNode {
-	jsonDoc, _ := jsonquery.ParseJsonMap(jsonMap)
-
-	if (jsonDoc == nil) {
-		return nil
-	}
-	return nil
-}
-*/
-
-func (c *CVL) translateToYang1(jsonMap *map[string]interface{}) (*yparser.YParserNode, CVLErrorInfo) {
+func (c *CVL) translateToYang(jsonMap *map[string]interface{}) (*yparser.YParserNode, CVLErrorInfo) {
 
 	var  cvlErrObj CVLErrorInfo
 	//Parse the map data to json tree
@@ -1299,7 +919,7 @@ func (c *CVL) translateToYang1(jsonMap *map[string]interface{}) (*yparser.YParse
 	for jsonNode := data.FirstChild; jsonNode != nil; jsonNode=jsonNode.NextSibling {
 		TRACE_LOG(INFO_API, TRACE_LIBYANG, "Top Node=%v\n", jsonNode.Data)
 		//Visit each top level list in a loop for creating table data
-		topNode, cvlErrObj  := c.generateTableData1(true, jsonNode)
+		topNode, cvlErrObj  := c.generateTableData(true, jsonNode)
 
 		if  topNode == nil {
 			cvlErrObj.ErrCode = CVL_SYNTAX_ERROR
@@ -1318,88 +938,10 @@ func (c *CVL) translateToYang1(jsonMap *map[string]interface{}) (*yparser.YParse
 	return root, cvlErrObj
 }
 
-/*
-//Convert Redis JSON to Yang XML using translation metadata
-func (c *CVL) translateToYang(jsonData string) (*xmlquery.Node, CVLRetCode) {
-	var v interface{}
-	jsonData1 :=`{
-		"VLAN": {
-			"Vlan100": {
-				"members": [
-				"Ethernet44",
-				"Ethernet964"
-				],
-				"vlanid": "100"
-			},
-			"Vlan1200": {
-				"members": [
-				"Ethernet64",
-				"Ethernet1008"
-				],
-				"vlanid": "1200"
-			}
-		}
-	}`
-	b := []byte(jsonData1)
-	if err1 := json.Unmarshal(b, &v); err1 == nil {
-		var value map[string]interface{} = v.(map[string]interface{})
-		root, ret := c.translateToYang1(&value)
-		if ret == CVL_SUCCESS && root != nil {
-			var outBuf *C.char
-			C.lyd_print_mem(&outBuf, root, C.LYD_XML, 0)
-
-			fmt.Printf("\nLYD data = %v\n", C.GoString(outBuf))
-		}
-	}
-
-	//Parse Entire JSON file
-	data, err := jsonquery.Parse(strings.NewReader(jsonData))
-
-	if err != nil {
-		return nil, CVL_SYNTAX_ERROR
-	}
-
-	doc := &xmlquery.Node{
-		Type: xmlquery.DeclarationNode,
-		Data: "xml",
-		Attr: []xml.Attr{
-			xml.Attr{Name: xml.Name{Local: "version"}, Value: "1.0"},
-		},
-	}
-
-	//var xmlNode, prevXmlNode *xmlquery.Node
-	var xmlNode *xmlquery.Node
-
-	for jsonNode := data.FirstChild; jsonNode != nil; jsonNode=jsonNode.NextSibling {
-		TRACE_LOG(1, "Top Node=%v\n", jsonNode.Data)
-		//Visit each top level list in a loop for creating table data
-		xmlNode, _= c.generateTableData(true, jsonNode)
-
-		xmlNode.Parent = doc
-		if doc.FirstChild == nil {
-			doc.FirstChild = xmlNode
-			doc.LastChild = xmlNode
-		} else {
-			//If duplicate top node exists add child subtree in the existing top node
-			dupTopNode := xmlquery.Find(doc, fmt.Sprintf("/%s", xmlNode.Data))
-			if (dupTopNode != nil) {
-				dupTopNode[0].LastChild.NextSibling = xmlNode.FirstChild
-				dupTopNode[0].LastChild = xmlNode.LastChild
-			} else {
-				doc.LastChild.NextSibling = xmlNode
-				doc.LastChild = xmlNode
-			}
-		}
-	}
-
-	return doc, CVL_SUCCESS
-}
-*/
-
 //Validate config - syntax and semantics
-func (c *CVL) validate1 (data *yparser.YParserNode) CVLRetCode {
+func (c *CVL) validate (data *yparser.YParserNode) CVLRetCode {
 
-	depData := c.fetchDataToTmpCache1()
+	depData := c.fetchDataToTmpCache()
 	/*
 	if (depData != nil) {
 		if (0 != C.lyd_merge_to_ctx(&data, depData, C.LYD_OPT_DESTRUCT, ctx)) {
@@ -1421,36 +963,6 @@ func (c *CVL) validate1 (data *yparser.YParserNode) CVLRetCode {
 	return CVL_SUCCESS
 }
 
-/*
-	
-func (c *CVL) validate (xmlData string) CVLRetCode {
-	TRACE_LOG(1, "Validating \n%v\n....", xmlData)
-
-	data := C.lyd_parse_data_mem(ctx, C.CString(xmlData), C.LYD_XML, C.LYD_OPT_EDIT)
-	if ((C.ly_errno != 0) || (data == nil)) {
-		//fmt.Println("Parsing data failed %d\n", C.ly_errno)
-		return CVL_SYNTAX_ERROR
-	}
-
-	depData := c.fetchDataToTmpCache()
-	if (depData != "") {
-		depDataNode := C.lyd_parse_data_mem(ctx, C.CString(depData), C.LYD_XML, C.LYD_OPT_EDIT)
-
-		if (0 != C.lyd_merge_to_ctx(&data, depDataNode, C.LYD_OPT_DESTRUCT, ctx)) {
-			TRACE_LOG(1, "Failed to merge status data\n")
-		}
-	}
-
-
-	if (0 != C.lyd_data_validate(&data, C.LYD_OPT_CONFIG, ctx)) {
-                processErrorResp(ctx)
-		return CVL_SYNTAX_ERROR
-	}
-
-	return CVL_SUCCESS
-}
-*/
-
 func  CreateCVLErrObj(errObj yparser.YParserError) CVLErrorInfo {
 
 	cvlErrObj :=  CVLErrorInfo {
@@ -1471,7 +983,7 @@ func  CreateCVLErrObj(errObj yparser.YParserError) CVLErrorInfo {
 }
 
 //Perform syntax checks
-func (c *CVL) validateSyntax1(data *yparser.YParserNode) (CVLErrorInfo, CVLRetCode) {
+func (c *CVL) validateSyntax(data *yparser.YParserNode) (CVLErrorInfo, CVLRetCode) {
 	var cvlErrObj CVLErrorInfo
 	TRACE_LOG(INFO_DATA, TRACE_LIBYANG, "Validating syntax \n....")
 
@@ -1499,27 +1011,11 @@ func (c *CVL) validateSyntax1(data *yparser.YParserNode) (CVLErrorInfo, CVLRetCo
 	return cvlErrObj, CVL_SUCCESS
 }
 
-/*
-func (c *CVL) validateSyntax(xmlData string) (CVLRetCode, *yparser.YParserNode) {
-	TRACE_LOG(1, "Validating syntax \n%v\n....", xmlData)
-	//parsing only does syntacial checks
-	data := C.lyd_parse_data_mem(ctx, C.CString(xmlData), C.LYD_XML, C.LYD_OPT_EDIT)
-	if ((C.ly_errno != 0) || (data == nil)) {
-                processErrorResp(ctx)
-		//fmt.Println("Parsing data failed\n")
-		return CVL_SYNTAX_ERROR, nil
-	}
-
-	return CVL_SUCCESS, data
-	return CVL_SUCCESS, nil
-}
-*/
-
 //Perform semantic checks 
-func (c *CVL) validateSemantics1(data *yparser.YParserNode, appDepData *yparser.YParserNode) (CVLErrorInfo, CVLRetCode) {
+func (c *CVL) validateSemantics(data *yparser.YParserNode, appDepData *yparser.YParserNode) (CVLErrorInfo, CVLRetCode) {
 	var cvlErrObj CVLErrorInfo
 	//Get dependent data from 
-	depData := c.fetchDataToTmpCache1() //fetch data to temp cache for temporary validation
+	depData := c.fetchDataToTmpCache() //fetch data to temp cache for temporary validation
 	//TRACE_LOG(1, "Validating semantics data=%s\n depData =%s\n, otherDepData=%s\n....", c.yp.NodeDump(data), c.yp.NodeDump(depData), c.yp.NodeDump(otherDepData))
 	TRACE_LOG(INFO_API, TRACE_SEMANTIC, "Validating semantics data=%s\n depData =%s\n, otherDepData=%s\n....", c.yp.NodeDump(data), c.yp.NodeDump(depData), c.yp.NodeDump(appDepData))
 
@@ -1548,70 +1044,8 @@ func (c *CVL) validateSemantics1(data *yparser.YParserNode, appDepData *yparser.
 		return  cvlErrObj, retCode
 	}
 
-/*
-	//parse dependent data
-	if (depData != nil) {
-
-		//merge input data and dependent data for semantic validation
-		if (0 != C.lyd_merge_to_ctx(&data, depData, C.LYD_OPT_DESTRUCT, ctx)) {
-			TRACE_LOG(1, "Unable to merge dependent data\n")
-			return CVL_SEMANTIC_ERROR
-		}
-	}
-
-	if (appDepData != nil) { //if other dep data is provided
-		if (0 != C.lyd_merge_to_ctx(&data, appDepData, C.LYD_OPT_DESTRUCT, ctx)) {
-			TRACE_LOG(1, "Unable to merge other dependent data\n")
-			return CVL_SEMANTIC_ERROR
-		}
-	}
-
-	//Check semantic validation
-	if (0 != C.lyd_data_validate(&data, C.LYD_OPT_CONFIG, ctx)) {
-		fmt.Println("Validation failed\n")
-		return CVL_SEMANTIC_ERROR
-	}
-*/
 	return cvlErrObj ,CVL_SUCCESS
 }
-
-/*
-//func (c *CVL) validateSemantics(data *yparser.YParserNode, appDepData string) CVLRetCode {
-func (c *CVL) validateSemantics(data, appDepData string) CVLRetCode {
-
-	//Get dependent data from 
-	depData := c.fetchDataToTmpCache() //fetch data to temp cache for temporary validation
-	//parse dependent data
-	if (depData != "") {
-		depDataNode := C.lyd_parse_data_mem(ctx, C.CString(depData), C.LYD_XML, C.LYD_OPT_EDIT)
-
-		//merge input data and dependent data for semantic validation
-		if (0 != C.lyd_merge_to_ctx(&data, depDataNode, C.LYD_OPT_DESTRUCT, ctx)) {
-			TRACE_LOG(1, "Unable to merge dependent data\n")
-			return CVL_SEMANTIC_ERROR
-		}
-	}
-
-	if (appDepData != "") { //if other dep data is provided
-		appDepDataNode := C.lyd_parse_data_mem(ctx, C.CString(appDepData),
-		C.LYD_XML, C.LYD_OPT_EDIT)
-
-		if (0 != C.lyd_merge_to_ctx(&data, appDepDataNode, C.LYD_OPT_DESTRUCT, ctx)) {
-			TRACE_LOG(1, "Unable to merge other dependent data\n")
-			return CVL_SEMANTIC_ERROR
-		}
-	}
-
-	//Check semantic validation
-	if (0 != C.lyd_data_validate(&data, C.LYD_OPT_CONFIG, ctx)) {
-	if (0 != C.lyd_data_validate_all(C.CString(data), C.CString(depData), C.CString(appDepData), C.LYD_OPT_CONFIG, ctx)) {
-		fmt.Println("Validation failed\n")
-		return CVL_SEMANTIC_ERROR
-	}
-
-	return CVL_SUCCESS
-}
-*/
 
 //Add config data item to accumulate per table
 func (c *CVL) addCfgDataItem(configData *map[string]interface{}, cfgDataItem CVLEditConfigData) (string, string){
@@ -1735,7 +1169,7 @@ func dbCacheSet(update bool, tableName string, expiry uint16) CVLRetCode {
 	}
 
 	cvg.db[tableName] = dbCachedData{startTime:time.Now(), expiry: expiry,
-	root: cvg.cv.fetchDataToTmpCache1()}
+	root: cvg.cv.fetchDataToTmpCache()}
 
 	if (Tracing == true) {
 		TRACE_LOG(INFO_ALL, TRACE_CACHE, "Cached Data = %v\n", cvg.cv.yp.NodeDump(cvg.db[tableName].root))
@@ -1814,7 +1248,7 @@ func dbCacheUpdate(tableName, key, op string) CVLRetCode {
 		}
 
 		//Get the translated Yang tree
-		topNode := cvg.cv.fetchDataToTmpCache1()
+		topNode := cvg.cv.fetchDataToTmpCache()
 
 		//Merge the subtree with existing yang tree
 		var errObj yparser.YParserError
@@ -1829,14 +1263,8 @@ func dbCacheUpdate(tableName, key, op string) CVLRetCode {
 		db.root = topNode
 		cvg.db[tableName] = db
 
-		//Delete the existing cache
-		//dbCacheClear(tableName)
-		//Add the cache again in yang tree --> TBD:Optimie
-		//dbCacheSet(true, tableName, 0)
 	case "del":
 		//NOP, alreday deleted the entry
-		//dbCacheClear(tableName)
-		//dbCacheSet(true, tableName, 0)
 	}
 
 	cvg.mutex.Unlock()

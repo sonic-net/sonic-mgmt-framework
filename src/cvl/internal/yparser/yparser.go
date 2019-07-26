@@ -217,12 +217,14 @@ func Initialize() {
 	if (yparserInitialized != true) {
 		ypCtx = (*YParserCtx)(C.ly_ctx_new(C.CString(CVL_SCHEMA), 0))
 		C.ly_verb(C.LY_LLERR)
+	//	yparserInitialized = true
 	}
 }
 
 func Finish() {
 	if (yparserInitialized == true) {
 		C.ly_ctx_destroy((*C.struct_ly_ctx)(ypCtx), nil)
+	//	yparserInitialized = false
 	}
 }
 
@@ -233,7 +235,6 @@ func ParseSchemaFile(modelFile string) (*YParserModule, YParserError) {
 
 	module :=  C.lys_parse_path((*C.struct_ly_ctx)(ypCtx), C.CString(modelFile), C.LYS_IN_YIN)
 	if module == nil {
-		log.Fatal("Unable to parse schema file %s", modelFile)
 		return nil, getErrorDetails()
 	}
 

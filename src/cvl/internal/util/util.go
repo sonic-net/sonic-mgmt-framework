@@ -88,8 +88,10 @@ var traceFlags uint16 = 0
 
 func SetTrace(on bool) {
 	if (on == true) {
+		Tracing = true
 		traceFlags = 1
 	} else {
+		Tracing = false 
 		traceFlags = 0
 	}
 }

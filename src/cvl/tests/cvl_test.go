@@ -13,7 +13,7 @@ import (
 	"testing"
 	"runtime"
 	. "cvl/internal/util"
-//	"cvl/internal/yparser"
+	"cvl/internal/yparser"
 )
 
 type testEditCfgData struct {
@@ -275,6 +275,9 @@ func TestFinish(t *testing.T) {
 	}
 
 	cvl.Finish()
+
+	//Initialize again for other test cases to run
+	cvl.Initialize()
 }
 
 /* ValidateEditConfig with user input in file . */
@@ -382,7 +385,6 @@ func TestValidateEditConfig_CfgStrBuffer(t *testing.T) {
 
 	cvl.ValidationSessClose(cvSess)
 }
-
 /* API when config is given as string buffer. */
 func TestValidateConfig_CfgStrBuffer(t *testing.T) {
 	type testStruct struct {
@@ -394,7 +396,7 @@ func TestValidateConfig_CfgStrBuffer(t *testing.T) {
 	tests := []testStruct{}
 
 	for index, _ := range json_validate_config_data {
-		/* Fetch the modelName. */
+		// Fetch the modelName. 
 		result := strings.Split(json_validate_config_data[index], "{")
 		modelName := strings.Trim(strings.Replace(strings.TrimSpace(result[1]), "\"", "", -1), ":")
 
@@ -420,6 +422,7 @@ func TestValidateConfig_CfgStrBuffer(t *testing.T) {
 	 cvl.ValidationSessClose(cvSess)
 
 }
+
 
 /* API when config is given as json file. */
 func TestValidateConfig_CfgFile(t *testing.T) {
@@ -1909,7 +1912,7 @@ func TestValidateEditConfig_Create_Dependent_CacheData(t *testing.T) {
 		},
 	}
 
-	cvlErrInfo, err1 := cvSess.ValidateEditConfig1(cfgDataAcl)
+	cvlErrInfo, err1 := cvSess.ValidateEditConfig(cfgDataAcl)
 	fmt.Println(cvlErrInfo)
 
 	//Create ACL rule
@@ -1954,7 +1957,7 @@ func TestValidateEditConfig_Create_DepData_In_MultiSess(t *testing.T) {
 		},
 	}
 
-	cvlErrInfo, err1 := cvSess.ValidateEditConfig1(cfgDataAcl)
+	cvlErrInfo, err1 := cvSess.ValidateEditConfig(cfgDataAcl)
 	fmt.Println(cvlErrInfo)
 
 	cvl.ValidationSessClose(cvSess)
@@ -1977,7 +1980,7 @@ func TestValidateEditConfig_Create_DepData_In_MultiSess(t *testing.T) {
 		},
 	}
 
-	cvlSessErr, err2 := cvSess.ValidateEditConfig1(cfgDataRule)
+	cvlSessErr, err2 := cvSess.ValidateEditConfig(cfgDataRule)
 
 	fmt.Println("Session Info", cvlSessErr)
 
@@ -2020,7 +2023,7 @@ func TestValidateEditConfig_Create_DepData_From_Redis_Negative11(t *testing.T) {
 		},
 	}
 
-	cvlErrInfo, err := cvSess.ValidateEditConfig1(cfgDataRule)
+	cvlErrInfo, err := cvSess.ValidateEditConfig(cfgDataRule)
 
 	WriteToFile(fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
 
@@ -2434,6 +2437,9 @@ func TestLogging(t *testing.T) {
         }
 
         cvl.Finish()
+
+	//Initialize again for other test cases to run
+	cvl.Initialize()
 }
 
 func TestValidateEditConfig_DepData_Through_Cache(t *testing.T) {
@@ -2659,16 +2665,27 @@ func TestValidateEditConfig_Delete_Entry_Then_Dep_Leafref_Positive(t *testing.T)
 	unloadConfigDB(rclient, depDataMap)
 }
 
-/*
 func TestBadSchema(t *testing.T) {
-	yparser.ParseSchemaFile("junk")
+	env := os.Environ()
+	env[0] = env[0] + " "
+	//Corrupt some schema file 
+	exec.Command("/bin/sh", "-c", "/bin/cp schema/sonic-port.yin schema/sonic-port.yin.bad" + 
+	" && /bin/sed -i '1 a <junk>' schema/sonic-port.yin.bad").Output()
+
+	//Parse bad schema file
+	if module, _ := yparser.ParseSchemaFile("schema/sonic-port.yin.bad"); module != nil { //should fail
+		t.Errorf("Bad schema parsing should fail.")
+	}
+
+	//Revert to 
+	exec.Command("/bin/sh",  "-c", "/bin/rm schema/sonic-port.yin.bad").Output()
 }
-*/
+
 
 func TestServicability_Debug_Trace(t *testing.T) {
 
-	cvl.Debug(true)
-	SetTrace(true)
+	cvl.Debug(false)
+	SetTrace(false)
 
 	//Reload the config file by sending SIGUSR2 to ourself
 	p, err := os.FindProcess(os.Getpid())
@@ -2711,8 +2728,19 @@ func TestServicability_Debug_Trace(t *testing.T) {
 
 	unloadConfigDB(rclient, depDataMap)
 
-	SetTrace(false)
+	SetTrace(true)
+	cvl.Debug(true)
+
 	cvl.ValidationSessClose(cvSess)
+
+	//Reload the  bad config file by sending SIGUSR2 to ourself
+	exec.Command("/bin/sh", "-c", "/bin/cp conf/cvl_cfg.json conf/cvl_cfg.json.orig" + 
+	" && /bin/echo 'junk' >> conf/cvl_cfg.json").Output()
+	p, err = os.FindProcess(os.Getpid())
+	if (err == nil) {
+		p.Signal(syscall.SIGUSR2)
+	}
+	exec.Command("/bin/sh",  "-c", "/bin/mv conf/cvl_cfg.json.orig conf/cvl_cfg.json").Output()
 }
 
 // EditConfig(Create) with chained leafref from redis
@@ -2798,3 +2826,77 @@ func TestValidateIncrementalConfig_Positive(t *testing.T) {
 	cvl.ValidationSessClose(cvSess)
 }
 
+//Validate key only
+func TestValidateKeys(t *testing.T) {
+	cvSess, _ := cvl.ValidationSessOpen()
+	if cvl.CVL_NOT_IMPLEMENTED != cvSess.ValidateKeys([]string{}) {
+		t.Errorf("Not implemented yet.")
+	}
+	cvl.ValidationSessClose(cvSess)
+}
+
+//Validate key and data
+func TestValidateKeyData(t *testing.T) {
+	cvSess, _ := cvl.ValidationSessOpen()
+	if cvl.CVL_NOT_IMPLEMENTED != cvSess.ValidateKeyData("", "") {
+		t.Errorf("Not implemented yet.")
+	}
+	cvl.ValidationSessClose(cvSess)
+}
+
+//Validate key, field and value
+func TestValidateFields(t *testing.T) {
+	cvSess, _ := cvl.ValidationSessOpen()
+	if cvl.CVL_NOT_IMPLEMENTED != cvSess.ValidateFields("", "", "") {
+		t.Errorf("Not implemented yet.")
+	}
+	cvl.ValidationSessClose(cvSess)
+}
+
+func TestValidateEditConfig_Two_Updates_Positive(t *testing.T) {
+	depDataMap := map[string]interface{} {
+		"ACL_TABLE" : map[string]interface{} {
+			"TestACL1": map[string] interface{} {
+				"stage": "INGRESS",
+				"type": "L3",
+			},
+		},
+	}
+
+	//Prepare data in Redis
+	loadConfigDB(rclient, depDataMap)
+
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	cfgDataAcl := []cvl.CVLEditConfigData {
+		cvl.CVLEditConfigData {
+			cvl.VALIDATE_ALL,
+			cvl.OP_UPDATE,
+			"ACL_TABLE|TestACL1",
+			map[string]string {
+				"policy_desc": "Test ACL",
+			},
+		},
+		cvl.CVLEditConfigData {
+			cvl.VALIDATE_ALL,
+			cvl.OP_UPDATE,
+			"ACL_TABLE|TestACL1",
+			map[string]string {
+				"type": "MIRROR",
+			},
+		},
+	}
+
+	cvlErrInfo, err := cvSess.ValidateEditConfig(cfgDataAcl)
+
+	cvl.ValidationSessClose(cvSess)
+
+	WriteToFile("\nTestValidateEditConfig_Two_Updates_Positive:\n", fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
+
+	if err != cvl.CVL_SUCCESS { //should be success 
+		t.Errorf("Config Validation failed.")
+	}
+
+	unloadConfigDB(rclient, depDataMap)
+
+}
