@@ -550,6 +550,24 @@ func Subscribe(paths []string, q *queue.PriorityQueue, stop chan struct{}) ([]*I
 
             resp[i].PreferredType = nOpts.pType
 
+			nInfo.path = path
+			nInfo.app = &app
+
+			json, err1 := getJson (path)
+
+			if err1 != nil {
+
+				if sErr == nil {
+					sErr = err1
+				}
+
+				resp[i].Err = err1
+
+				continue
+			}
+
+			nInfo.cache = json
+
 			dbNotificationMap[nInfo.dbno] = append(dbNotificationMap[nInfo.dbno], nInfo)
         }
 
@@ -562,13 +580,15 @@ func Subscribe(paths []string, q *queue.PriorityQueue, stop chan struct{}) ([]*I
 	}
 
 	sInfo := &subscribeInfo {syncDone:false,
-					nInfo:make([]*notificationInfo,0),
+					q:q,
+					nInfo:make([]*notificationInfo, len(paths)),
 					stop:stop,
 					dbs:dbs}
 
-	for _, value := range dbNotificationMap {
+	for key, value := range dbNotificationMap {
 		sInfo.nInfo = append(sInfo.nInfo, value...)
-		startSubscribe(value, sInfo)
+		opt := getDBOptions(key)
+		startSubscribe(opt, value, sInfo)
 	}
 
 	go runSubscribe(q)
@@ -782,4 +802,17 @@ func getAppModule (path string) (appInterface, appInfo, error) {
     }
 
 	return app, aInfo, err
+}
+
+func getJson (path string) ([]byte, error) {
+    var payload []byte
+
+	getReq := GetRequest{Path: path}
+    getResp, err := Get(getReq)
+
+	if err == nil {
+		payload = getResp.Payload
+	}
+
+	return payload, err
 }
