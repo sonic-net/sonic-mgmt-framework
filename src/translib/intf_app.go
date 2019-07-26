@@ -170,7 +170,7 @@ func (app *IntfApp) translateDelete(d *db.DB) ([]db.WatchKeys, error) {
 							log.Info("IPv4 address = ", *ipAddr)
 							err = app.validateIp(d, ifKey, *ipAddr)
 							if err != nil {
-								continue
+								return keys, err
 							}
 						}
 					}
@@ -183,7 +183,7 @@ func (app *IntfApp) translateDelete(d *db.DB) ([]db.WatchKeys, error) {
 							log.Info("IPv6 address = ", *ipAddr)
 							err = app.validateIp(d, ifKey, *ipAddr)
 							if err != nil {
-								continue
+								return keys, err
 							}
 						}
 					}
@@ -826,7 +826,6 @@ func (app *IntfApp) translateCommon(d *db.DB, inpOp reqType) ([]db.WatchKeys, er
 
 /* Validates whether the IP exists in the DB */
 func (app *IntfApp) validateIp(dbCl *db.DB, ifName string, ip string) error {
-	var err error
 	app.allIpKeys, _ = app.doGetAllIpKeys(dbCl, app.intfIPTs)
 
 	for _, key := range app.allIpKeys {
@@ -848,9 +847,10 @@ func (app *IntfApp) validateIp(dbCl *db.DB, ifName string, ip string) error {
 			} else {
 				app.ifIPTableMap[key.Get(0)][key.Get(1)] = dbEntry{entry: ipInfo}
 			}
+			return nil
 		}
 	}
-	return err
+	return errors.New(fmt.Sprintf("IP address : %s doesn't exist!", ip))
 }
 
 func (app *IntfApp) translateIpv4(d *db.DB, intf string, ip string, prefix int) error {
