@@ -167,7 +167,7 @@ func ValidationSessClose(c *CVL) CVLRetCode {
 func (c *CVL) ValidateStartupConfig(jsonData string) CVLRetCode {
 	//Check config data syntax
 	//Finally validate
-	return CVL_SUCCESS
+	return CVL_NOT_IMPLEMENTED
 }
 
 func (c *CVL) ValidateIncrementalConfig(jsonData string) CVLRetCode {
@@ -175,7 +175,7 @@ func (c *CVL) ValidateIncrementalConfig(jsonData string) CVLRetCode {
 	//Fetch the depedent data
 	//Merge config and dependent data
 	//Finally validate
-	return CVL_SUCCESS
+	return CVL_NOT_IMPLEMENTED
 }
 
 //Validate data for operation
@@ -278,11 +278,9 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (CVLErrorInfo, CVL
 		jsonDataBytes, err := json.Marshal(requestedData) //Optimize TBD:
 		if (err == nil) {
 			jsonData = string(jsonDataBytes)
-		} else {
-			return cvlErrObj, CVL_SYNTAX_ERROR 
 		}
 
-		TRACE_LOG(INFO_DATA, TRACE_LIBYANG, "JSON Data = %s\n", jsonData)
+		TRACE_LOG(INFO_DATA, TRACE_LIBYANG, "JSON Data = [%s]\n", jsonData)
 	}
 
 	//Step 2 : Perform syntax validation only
@@ -344,8 +342,6 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (CVLErrorInfo, CVL
 
 		} else if (cfgDataItem.VType == VALIDATE_NONE) {
 			//Step 3.2 : Get dependent data
-			/*
-			tbl,key := c.addCfgDataItem(&dependentData, cfgDataItem)
 
 			switch cfgDataItem.VOp {
 			case OP_CREATE:
@@ -353,11 +349,12 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (CVLErrorInfo, CVL
 			case OP_UPDATE:
 				//NOP
 			case OP_DELETE:
+				tbl,key := c.addCfgDataItem(&dependentData, cfgDataItem)
 				//update cache by removing deleted entry
 				c.updateDeleteDataToCache(tbl, key)
 				//store deleted keys
 				deletedKeys[cfgDataItem.Key] = nil;
-			}*/
+			}
 		}
 	}
 

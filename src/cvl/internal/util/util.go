@@ -103,6 +103,7 @@ func IsTraceSet() bool {
 	}
 }
 
+/*
 func IsLogTraceSet() bool {
 	return true
 }
@@ -115,6 +116,7 @@ func SetTraceLevel(level uint8) {
 func ClearTraceLevel(level uint8) {
 	traceFlags = traceFlags &^ (1 << level)
 }
+*/
 
 func TRACE_LEVEL_LOG(level log.Level, tracelevel CVLTraceLevel, fmtStr string, args ...interface{}) {
 

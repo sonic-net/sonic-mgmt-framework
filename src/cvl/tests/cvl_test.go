@@ -9,8 +9,10 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"syscall"
 	"testing"
 	. "cvl/internal/util"
+//	"cvl/internal/yparser"
 )
 
 type testEditCfgData struct {
@@ -451,6 +453,65 @@ func TestValidateConfig_CfgFile(t *testing.T) {
 	 cvl.ValidationSessClose(cv)
 }
 
+func TestValidateEditConfig_Delete_Must_Check_Negative(t *testing.T) {
+	depDataMap := map[string]interface{} {
+		"PORT" : map[string]interface{} {
+			"Ethernet3" : map[string]interface{} {
+				"alias":"hundredGigE1",
+				"lanes": "81,82,83,84",
+				"mtu": "9100",
+			},
+			"Ethernet5" : map[string]interface{} {
+				"alias":"hundredGigE1",
+				"lanes": "85,86,87,89",
+				"mtu": "9100",
+			},
+		},
+		"ACL_TABLE" : map[string]interface{} {
+			"TestACL1": map[string] interface{} {
+				"stage": "INGRESS",
+				"type": "L3",
+				"ports@": "Ethernet3,Ethernet5",
+			},
+		},
+		"ACL_RULE" : map[string]interface{} {
+			"TestACL1|Rule1": map[string] interface{} {
+				"PACKET_ACTION": "FORWARD",
+				"SRC_IP": "10.1.1.1/32",
+				"L4_SRC_PORT": "1909",
+				"IP_PROTOCOL": "103",
+				"DST_IP": "20.2.2.2/32",
+				"L4_DST_PORT_RANGE": "9000-12000",
+			},
+		},
+	}
+
+	//Prepare data in Redis
+	loadConfigDB(rclient, depDataMap)
+
+	cfgDataAclRule :=  []cvl.CVLEditConfigData {
+		cvl.CVLEditConfigData {
+			cvl.VALIDATE_ALL,
+			cvl.OP_DELETE,
+			"ACL_RULE|TestACL1|Rule1",
+			map[string]string {
+			},
+		},
+	}
+
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	_, err := cvSess.ValidateEditConfig(cfgDataAclRule)
+
+	 cvl.ValidationSessClose(cvSess)
+
+	if err == cvl.CVL_SUCCESS { //should not succeed
+		t.Errorf("Config Validation failed.")
+	}
+
+	unloadConfigDB(rclient, depDataMap)
+}
+
 //Validate invalid json data
 func TestValidateConfig_Negative(t *testing.T) {
 	cvSess, _ := cvl.ValidationSessOpen()
@@ -474,6 +535,55 @@ func TestValidateConfig_Negative(t *testing.T) {
 
 	cvl.ValidationSessClose(cvSess)
 }
+
+/* Delete Existing Key.*/
+/*
+func TestValidateEditConfig_Delete_Semantic_ACLTableReference_Positive(t *testing.T) {
+
+	depDataMap := map[string]interface{} {
+		"ACL_TABLE" : map[string]interface{} {
+			"TestACL1005": map[string] interface{} {
+				"stage": "INGRESS",
+				"type": "L3",
+			},
+		},
+		"ACL_RULE": map[string]interface{} {
+			"TestACL1005|Rule1": map[string] interface{} {
+				"PACKET_ACTION": "FORWARD",
+				"SRC_IP": "10.1.1.1/32",
+				"L4_SRC_PORT": "1909",
+				"IP_PROTOCOL": "103",
+				"DST_IP": "20.2.2.2/32",
+				"L4_DST_PORT_RANGE": "9000-12000",
+			},
+		},
+	}
+
+	//Prepare data in Redis
+	loadConfigDB(rclient, depDataMap)
+
+	cfgData := []cvl.CVLEditConfigData{
+		cvl.CVLEditConfigData{
+			cvl.VALIDATE_ALL,
+			cvl.OP_DELETE,
+			"ACL_RULE|TestACL1005|Rule1",
+			map[string]string{},
+		},
+	}
+
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	cvlErrInfo, err := cvSess.ValidateEditConfig(cfgData)
+
+	cvl.ValidationSessClose(cvSess)
+
+	if err != cvl.CVL_SUCCESS {
+		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
+	}
+
+	unloadConfigDB(rclient, depDataMap)
+}
+*/
 
 /* API to test edit config with valid syntax. */
 func TestValidateEditConfig_Create_Syntax_Valid_FieldValue(t *testing.T) {
@@ -789,6 +899,8 @@ func TestValidateEditConfig_Create_Syntax_InvalidProtocol_Negative(t *testing.T)
 }
 
 /* API to test edit config with valid syntax. */
+//Note: Syntax check is done first before dependency check
+//hence ACL_TABLE is not required here
 func TestValidateEditConfig_Create_Syntax_InvalidRange_Negative(t *testing.T) {
 
 	cfgData := []cvl.CVLEditConfigData{
@@ -1601,7 +1713,7 @@ func TestValidateEditConfig_Update_Syntax_DependentData_Redis_Positive(t *testin
 		cvl.CVLEditConfigData{
 			cvl.VALIDATE_ALL,
 			cvl.OP_UPDATE,
-			"ACL_RULE|TestACL16|Rule1",
+			"ACL_RULE|TestACL13|Rule1",
 			map[string]string{
 				"MIRROR_ACTION": "everflow2",
 			},
@@ -1774,53 +1886,6 @@ func TestValidateEditConfig_Delete_Semantic_ACLTableReference_Negative(t *testin
 		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
 	}
 
-}
-
-/* Delete Existing Key.*/
-func TestValidateEditConfig_Delete_Semantic_ACLTableReference_Positive(t *testing.T) {
-
-	depDataMap := map[string]interface{} {
-		"ACL_TABLE" : map[string]interface{} {
-			"TestACL1005": map[string] interface{} {
-				"stage": "INGRESS",
-				"type": "L3",
-			},
-		},
-		"ACL_RULE": map[string]interface{} {
-			"TestACL1005|Rule1": map[string] interface{} {
-				"PACKET_ACTION": "FORWARD",
-				"SRC_IP": "10.1.1.1/32",
-				"L4_SRC_PORT": "1909",
-				"IP_PROTOCOL": "103",
-				"DST_IP": "20.2.2.2/32",
-				"L4_DST_PORT_RANGE": "9000-12000",
-			},
-		},
-	}
-
-	//Prepare data in Redis
-	loadConfigDB(rclient, depDataMap)
-
-	cfgData := []cvl.CVLEditConfigData{
-		cvl.CVLEditConfigData{
-			cvl.VALIDATE_ALL,
-			cvl.OP_DELETE,
-			"ACL_RULE|TestACL1005|Rule1",
-			map[string]string{},
-		},
-	}
-
-	cvSess, _ := cvl.ValidationSessOpen()
-
-	cvlErrInfo, err := cvSess.ValidateEditConfig(cfgData)
-
-	cvl.ValidationSessClose(cvSess)
-
-	if err != cvl.CVL_SUCCESS {
-		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
-	}
-
-	unloadConfigDB(rclient, depDataMap)
 }
 
 func TestValidateEditConfig_Create_Dependent_CacheData(t *testing.T) {
@@ -2522,28 +2587,16 @@ func TestValidateConfig_Repeated_Keys_Positive(t *testing.T) {
 	cvl.ValidationSessClose(cvSess)
 }
 
-func TestValidateEditConfig_Delete_Must_Check_Negative(t *testing.T) {
+//EditConfig(Delete) deleting entry already used by other table as leafref in order
+func TestValidateEditConfig_Delete_Entry_Then_Dep_Leafref_Positive(t *testing.T) {
 	depDataMap := map[string]interface{} {
-		"PORT" : map[string]interface{} {
-			"Ethernet3" : map[string]interface{} {
-				"alias":"hundredGigE1",
-				"lanes": "81,82,83,84",
-				"mtu": "9100",
-			},
-			"Ethernet5" : map[string]interface{} {
-				"alias":"hundredGigE1",
-				"lanes": "85,86,87,89",
-				"mtu": "9100",
-			},
-		},
 		"ACL_TABLE" : map[string]interface{} {
 			"TestACL1": map[string] interface{} {
 				"stage": "INGRESS",
 				"type": "L3",
-				"ports@": "Ethernet3,Ethernet5",
 			},
 		},
-		"ACL_RULE" : map[string]interface{} {
+		"ACL_RULE": map[string]interface{} {
 			"TestACL1|Rule1": map[string] interface{} {
 				"PACKET_ACTION": "FORWARD",
 				"SRC_IP": "10.1.1.1/32",
@@ -2558,7 +2611,9 @@ func TestValidateEditConfig_Delete_Must_Check_Negative(t *testing.T) {
 	//Prepare data in Redis
 	loadConfigDB(rclient, depDataMap)
 
-	cfgDataAclRule :=  []cvl.CVLEditConfigData {
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	cfgDataAcl := []cvl.CVLEditConfigData {
 		cvl.CVLEditConfigData {
 			cvl.VALIDATE_ALL,
 			cvl.OP_DELETE,
@@ -2568,15 +2623,174 @@ func TestValidateEditConfig_Delete_Must_Check_Negative(t *testing.T) {
 		},
 	}
 
-	cvSess, _ := cvl.ValidationSessOpen()
+	cvlErrInfo, err := cvSess.ValidateEditConfig(cfgDataAcl)
 
-	_, err := cvSess.ValidateEditConfig1(cfgDataAclRule)
+	cfgDataAcl = []cvl.CVLEditConfigData {
+		cvl.CVLEditConfigData {
+			cvl.VALIDATE_NONE,
+			cvl.OP_DELETE,
+			"ACL_RULE|TestACL1|Rule1",
+			map[string]string {
+			},
+		},
+		cvl.CVLEditConfigData {
+			cvl.VALIDATE_ALL,
+			cvl.OP_DELETE,
+			"ACL_TABLE|TestACL1",
+			map[string]string {
+			},
+		},
+	}
 
-	 cvl.ValidationSessClose(cvSess)
+	cvlErrInfo, err = cvSess.ValidateEditConfig(cfgDataAcl)
 
-	if err == cvl.CVL_SUCCESS { //should not succeed
+	cvl.ValidationSessClose(cvSess)
+
+	WriteToFile("\nTestValidateEditConfig_Delete_Entry_Then_Dep_Leafref_Positive:\n", fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
+
+	if err != cvl.CVL_SUCCESS { //should be success 
 		t.Errorf("Config Validation failed.")
 	}
 
 	unloadConfigDB(rclient, depDataMap)
 }
+
+/*
+func TestBadSchema(t *testing.T) {
+	yparser.ParseSchemaFile("junk")
+}
+*/
+
+func TestServicability_Debug_Trace(t *testing.T) {
+
+	cvl.Debug(true)
+	SetTrace(true)
+
+	//Reload the config file by sending SIGUSR2 to ourself
+	p, err := os.FindProcess(os.Getpid())
+	if (err == nil) {
+		p.Signal(syscall.SIGUSR2)
+	}
+
+
+	depDataMap := map[string]interface{}{
+		"ACL_TABLE": map[string]interface{}{
+			"TestACL1": map[string]interface{}{
+				"stage": "INGRESS",
+				"type":  "MIRROR",
+			},
+		},
+	}
+
+	loadConfigDB(rclient, depDataMap)
+
+	//Create ACL rule - Session 2
+	cvSess, _ := cvl.ValidationSessOpen()
+	cfgDataRule := []cvl.CVLEditConfigData{
+		cvl.CVLEditConfigData{
+			cvl.VALIDATE_ALL,
+			cvl.OP_CREATE,
+			"ACL_RULE|TestACL1|Rule1",
+			map[string]string{
+				"PACKET_ACTION":     "FORWARD",
+				"SRC_IP":            "10.1.1.1/32",
+				"L4_SRC_PORT":       "1909",
+				"IP_PROTOCOL":       "103",
+				"DST_IP":            "20.2.2.2/32",
+				"L4_DST_PORT_RANGE": "9000-12000",
+			},
+		},
+	}
+
+
+	cvSess.ValidateEditConfig(cfgDataRule)
+
+	unloadConfigDB(rclient, depDataMap)
+
+	SetTrace(false)
+	cvl.ValidationSessClose(cvSess)
+}
+
+// EditConfig(Create) with chained leafref from redis
+func TestValidateEditConfig_Delete_Create_Same_Entry_Positive(t *testing.T) {
+	depDataMap := map[string]interface{} {
+		"VLAN" : map[string]interface{} {
+			"Vlan100": map[string]interface{} {
+				"members@": "Ethernet1",
+				"vlanid": "100",
+			},
+		},
+		"PORT" : map[string]interface{} {
+			"Ethernet1" : map[string]interface{} {
+				"alias":"hundredGigE1",
+				"lanes": "81,82,83,84",
+				"mtu": "9100",
+			},
+		},
+	}
+
+	//Prepare data in Redis
+	loadConfigDB(rclient, depDataMap)
+
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	cfgDataVlan := []cvl.CVLEditConfigData {
+		cvl.CVLEditConfigData {
+			cvl.VALIDATE_ALL,
+			cvl.OP_DELETE,
+			"VLAN|Vlan100",
+			map[string]string {
+			},
+		},
+	}
+
+	_, err1 := cvSess.ValidateEditConfig(cfgDataVlan)
+
+	//Same entry getting created again
+	cfgDataVlan = []cvl.CVLEditConfigData {
+		cvl.CVLEditConfigData {
+			cvl.VALIDATE_NONE,
+			cvl.OP_DELETE,
+			"VLAN|Vlan100",
+			map[string]string {
+			},
+		},
+		cvl.CVLEditConfigData {
+			cvl.VALIDATE_ALL,
+			cvl.OP_CREATE,
+			"VLAN|Vlan100",
+			map[string]string {
+				"vlanid": "100",
+			},
+		},
+	}
+
+	_, err2 := cvSess.ValidateEditConfig(cfgDataVlan)
+
+	if err1 != cvl.CVL_SUCCESS || err2 != cvl.CVL_SUCCESS { //should succeed
+		t.Errorf("Config Validation failed.")
+		return
+	}
+
+
+	cvl.ValidationSessClose(cvSess)
+
+	unloadConfigDB(rclient, depDataMap)
+}
+
+func TestValidateStartupConfig_Positive(t *testing.T) {
+	cvSess, _ := cvl.ValidationSessOpen()
+	if cvl.CVL_NOT_IMPLEMENTED != cvSess.ValidateStartupConfig("") {
+		t.Errorf("Not implemented yet.")
+	}
+	cvl.ValidationSessClose(cvSess)
+}
+
+func TestValidateIncrementalConfig_Positive(t *testing.T) {
+	cvSess, _ := cvl.ValidationSessOpen()
+	if cvl.CVL_NOT_IMPLEMENTED != cvSess.ValidateIncrementalConfig("") {
+		t.Errorf("Not implemented yet.")
+	}
+	cvl.ValidationSessClose(cvSess)
+}
+

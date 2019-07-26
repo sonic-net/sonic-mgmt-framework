@@ -252,12 +252,14 @@ func storeModelInfo(modelFile string, module *yparser.YParserModule) { //such mo
 		}
 
 		//Find and store all leafref under each table
+		/*
 		if (listNode == nil) {
 			//Store the tableInfo in global data
 			modelInfo.tableInfo[tableName] = tableInfo
 
 			continue
 		}
+		*/
 
 		leafRefNodes := xmlquery.Find(listNode, "//type[@name='leafref']")
 		if (leafRefNodes == nil) {
