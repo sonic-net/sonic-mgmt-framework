@@ -142,6 +142,12 @@ func toErrorInfo(err error, r *http.Request) (status int, errInfo errorInfo) {
 			errInfo.Message = "Entry not found"
 		}
 
+	case tlerr.TranslibTransactionFail:
+		status = http.StatusConflict
+		errInfo.Type = errtypeProtocol
+		errInfo.Tag = errtagInUse
+		errInfo.Message = "Transaction failed. Please try again."
+
 	case tlerr.InternalError:
 		errInfo.Message = e.Error()
 		errInfo.Path = e.Path

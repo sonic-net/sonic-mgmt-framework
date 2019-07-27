@@ -376,7 +376,7 @@ func (app *nonYangDemoApp) doDeleteVlanMember() error {
 	vlanEntry.SetList("members", updatedList)
 	err = app.confDB.SetEntry(vlanTable, asKey(vlanName), vlanEntry)
 	if err != nil {
-		return nil
+		return err
 	}
 
 	// Delete VLAN_MEMBER entry
