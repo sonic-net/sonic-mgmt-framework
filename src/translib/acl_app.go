@@ -19,6 +19,7 @@ import (
 	"strings"
 	"translib/db"
 	"translib/ocbinds"
+	"translib/transformer"
 )
 
 const (
@@ -96,6 +97,12 @@ func init() {
 		Ver: "1.0.2"})
 	if err != nil {
 		log.Fatal("Adding model data to appinterface failed with error=", err)
+	}
+
+	yangFiles := []string{"../../../models/yang/openconfig-acl.yang"}
+	err = transformer.LoadYangModules(yangFiles...)
+	if err != nil {
+		log.Fatal("Loading Yang modules failed with error=", err)
 	}
 }
 
