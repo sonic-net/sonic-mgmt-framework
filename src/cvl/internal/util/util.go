@@ -197,3 +197,21 @@ func ReadConfFile()  map[string]string{
 
 	return cvlCfgMap
 }
+
+func SkipValidation() bool {
+	val, existing := cvlCfgMap["SKIP_VALIDATION"]
+	if (existing == true) && (val == "true") {
+		return true
+	}
+
+	return false
+}
+
+func SkipSemanticValidation() bool {
+	val, existing := cvlCfgMap["SKIP_SEMANTIC_VALIDATION"]
+	if (existing == true) && (val == "true") {
+		return true
+	}
+
+	return false
+}

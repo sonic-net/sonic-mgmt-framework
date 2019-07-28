@@ -30,7 +30,7 @@ const (
 	INVALID_DB
 )
 
-const DEFAULT_CACHE_DURATION uint16 = 60 /* 60 sec */
+const DEFAULT_CACHE_DURATION uint16 = 300 /* 300 sec */
 
 var reLeafRef *regexp.Regexp = nil
 var reHashRef *regexp.Regexp = nil
@@ -54,7 +54,7 @@ type modelTableInfo struct {
 	leafRef map[string][]string //for storing all leafrefs for a leaf in a table, 
 				//multiple leafref possible for union 
 	mustExp map[string]string
-	tablesForMustExp map[string]bool
+	tablesForMustExp map[string]CVLOperation
 }
 
 
@@ -333,9 +333,21 @@ func addTableNamesForMustExp() {
 		}
 
 		for _, mustExp := range tblInfo.mustExp {
-			tblInfo.tablesForMustExp = make(map[string]bool)
+			tblInfo.tablesForMustExp = make(map[string]CVLOperation)
+			var op CVLOperation = OP_NONE
+			//Check if 'must' expression should be executed for a particular operation
+			if (strings.Contains(mustExp,
+			"/scommon:operation/scommon:operation != 'CREATE'") == true) {
+				op = op | OP_CREATE
+			} else if (strings.Contains(mustExp,
+			"/scommon:operation/scommon:operation != 'UPDATE'") == true) {
+				op = op | OP_UPDATE
+			} else if (strings.Contains(mustExp,
+			"/scommon:operation/scommon:operation != 'DELETE'") == true) {
+				op = op | OP_DELETE
+			}
 			//store the current table always so that expression check with other row
-			tblInfo.tablesForMustExp[tblName] = true
+			tblInfo.tablesForMustExp[tblName] = op
 
 			//check which table name is present in the must expression
 			for tblNameSrch, _ := range modelInfo.tableInfo {
@@ -348,7 +360,7 @@ func addTableNamesForMustExp() {
 				matches := re.FindStringSubmatch(mustExp)
 				if (len(matches) > 0) {
 					//stores the table name 
-					tblInfo.tablesForMustExp[tblNameSrch] = true
+					tblInfo.tablesForMustExp[tblNameSrch] = op
 				}
 			}
 		}
@@ -414,13 +426,20 @@ func(c *CVL) addChildNode(tableName string, parent *yparser.YParserNode, name st
 }
 
 //Add all other table data for validating all 'must' exp for tableName
-func (c *CVL) addTableDataForMustExp(tableName string) CVLRetCode {
+func (c *CVL) addTableDataForMustExp(op CVLOperation, tableName string) CVLRetCode {
 
 	if (modelInfo.tableInfo[tableName].mustExp == nil) {
 		return CVL_SUCCESS
 	}
 
-	for mustTblName, _ := range modelInfo.tableInfo[tableName].tablesForMustExp {
+	for mustTblName, mustOp := range modelInfo.tableInfo[tableName].tablesForMustExp {
+		//First check if must expression should be executed for the ven operation
+		if (mustOp != OP_NONE) && ((mustOp & op) == OP_NONE) {
+			//must to be excuted for particular operation, but current operation 
+			//is not the same one
+			continue
+		}
+
 		//Check in global cache first and merge to session cache
 		if topNode, _ := dbCacheGet(mustTblName); topNode != nil {
 			var errObj yparser.YParserError
@@ -1014,10 +1033,13 @@ func (c *CVL) validateSyntax(data *yparser.YParserNode) (CVLErrorInfo, CVLRetCod
 //Perform semantic checks 
 func (c *CVL) validateSemantics(data *yparser.YParserNode, appDepData *yparser.YParserNode) (CVLErrorInfo, CVLRetCode) {
 	var cvlErrObj CVLErrorInfo
+	
+	if (SkipSemanticValidation() == true) {
+		return cvlErrObj, CVL_SUCCESS
+	}
+
 	//Get dependent data from 
 	depData := c.fetchDataToTmpCache() //fetch data to temp cache for temporary validation
-	//TRACE_LOG(1, "Validating semantics data=%s\n depData =%s\n, otherDepData=%s\n....", c.yp.NodeDump(data), c.yp.NodeDump(depData), c.yp.NodeDump(otherDepData))
-	TRACE_LOG(INFO_API, TRACE_SEMANTIC, "Validating semantics data=%s\n depData =%s\n, otherDepData=%s\n....", c.yp.NodeDump(data), c.yp.NodeDump(depData), c.yp.NodeDump(appDepData))
 
 	if (Tracing == true) {
 		TRACE_LOG(INFO_API, TRACE_SEMANTIC, "Validating semantics data=%s\n depData =%s\n, appDepData=%s\n....", c.yp.NodeDump(data), c.yp.NodeDump(depData), c.yp.NodeDump(appDepData))
@@ -1150,10 +1172,10 @@ func dbCacheSet(update bool, tableName string, expiry uint16) CVLRetCode {
 	modelInfo.tableInfo[tableName].redisKeyDelim + "*").Result()
 
 	if (err != nil) {
+		cvg.mutex.Unlock()
 		return CVL_FAILURE
 	}
 
-	//TRACE_LOG(7, "Building global cache for table %s", tableName)
 	TRACE_LOG(INFO_ALL, TRACE_CACHE, "Building global cache for table %s", tableName)
 
 	tablePrefixLen := len(tableName + modelInfo.tableInfo[tableName].redisKeyDelim)
@@ -1175,12 +1197,13 @@ func dbCacheSet(update bool, tableName string, expiry uint16) CVLRetCode {
 		TRACE_LOG(INFO_ALL, TRACE_CACHE, "Cached Data = %v\n", cvg.cv.yp.NodeDump(cvg.db[tableName].root))
 	}
 
+	cvg.mutex.Unlock()
+
 	//install keyspace notification for updating the cache
 	if (update == false) {
 		installDbChgNotif()
 	}
 
-	cvg.mutex.Unlock()
 
 	return CVL_SUCCESS
 }
@@ -1254,6 +1277,7 @@ func dbCacheUpdate(tableName, key, op string) CVLRetCode {
 		var errObj yparser.YParserError
 		if (cvg.db[tableName].root != nil) {
 			if topNode, errObj = cvg.cv.yp.MergeSubtree(cvg.db[tableName].root, topNode); errObj.ErrCode != yparser.YP_SUCCESS {
+				cvg.mutex.Unlock()
 				return CVL_ERROR
 			}
 		}

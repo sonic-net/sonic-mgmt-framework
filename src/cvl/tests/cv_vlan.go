@@ -92,7 +92,7 @@ func main() {
 
 		fmt.Printf("\nValidating data for must = %v\n\n", keyData);
 
-		_, err := cv.ValidateEditConfig1(keyData)
+		_, err := cv.ValidateEditConfig(keyData)
 
 		if (err == cvl.CVL_SUCCESS) {
 			fmt.Printf("\nConfig Validation succeeded.\n\n");
@@ -114,7 +114,7 @@ func main() {
 			},
 		}
 
-		_, err := cv.ValidateEditConfig1(keyData)
+		_, err := cv.ValidateEditConfig(keyData)
 
 		fmt.Printf("\nValidating field delete...\n\n");
 
@@ -230,7 +230,7 @@ func main() {
 	}
 	{
 		count++
-		jsonData :=`{
+		/*jsonData :=`{
 			"VLAN": {
 				"Vlan100": {
 					"members": [
@@ -245,6 +245,13 @@ func main() {
 					"Ethernet1008"
 					],
 					"vlanid": "1200"
+				}
+			}
+		}`*/
+		jsonData :=`{
+			"VLAN": {
+				"Vlan4095": {
+					"vlanid": "4995"
 				}
 			}
 		}`

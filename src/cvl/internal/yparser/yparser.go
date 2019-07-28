@@ -305,6 +305,11 @@ func (yp *YParser) CacheSubtree(dupSrc bool, node *YParserNode) YParserError {
 	rootTmp := (*C.struct_lyd_node)(yp.root)
 	var dup *C.struct_lyd_node
 
+	if (node == nil) {
+		//nothing to merge
+		return YParserError {ErrCode : YP_SUCCESS,}
+	}
+
 	if (dupSrc == true) {
 		dup = C.lyd_dup_withsiblings((*C.struct_lyd_node)(node), C.LYD_DUP_OPT_RECURSIVE | C.LYD_DUP_OPT_NO_ATTR)
 	} else {
@@ -450,7 +455,8 @@ func (yp *YParser) ValidateSemantics(data, depData, appDepData *YParserNode) YPa
 	}
 
 	if (Tracing == true) {
-		TRACE_LOG(INFO_API, TRACE_YPARSER, "Semantics data = %v", yp.NodeDump((*YParserNode)(dataTmp)))
+		strData := yp.NodeDump((*YParserNode)(dataTmp))
+		TRACE_LOG(INFO_API, TRACE_YPARSER, "Semantics data = %v", strData)
 	}
 
 	//Check semantic validation

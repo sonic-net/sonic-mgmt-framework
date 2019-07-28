@@ -19,10 +19,10 @@ const (
 
 type CVLOperation uint
 const (
-	OP_NONE   CVLOperation = iota //Used to just validate the config without any operation
-	OP_CREATE //For Create operation 
-	OP_UPDATE //For Update operation
-	OP_DELETE //For Delete operation
+	OP_NONE   CVLOperation = 0 //Used to just validate the config without any operation
+	OP_CREATE = 1 << 0//For Create operation 
+	OP_UPDATE = 1 << 1//For Update operation
+	OP_DELETE = 1 << 2//For Delete operation
 )
 
 var cvlErrorMap = map[CVLRetCode]string {
@@ -212,6 +212,12 @@ func (c *CVL) ValidateConfig(jsonData string) CVLRetCode {
 //Validate config data based on edit operation - no marshalling in between
 func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (CVLErrorInfo, CVLRetCode) {
 	var cvlErrObj CVLErrorInfo
+
+	if (SkipValidation() == true) {
+
+		return cvlErrObj, CVL_SUCCESS
+	}
+
 	c.clearTmpDbCache()
 
 	//Step 1: Get requested dat first
@@ -233,12 +239,12 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (CVLErrorInfo, CVL
 
 		switch cfgDataItem.VOp {
 		case OP_CREATE:
-			c.addTableDataForMustExp(tbl)
+			c.addTableDataForMustExp(cfgDataItem.VOp, tbl)
 
 		case OP_UPDATE:
 			//Get the existing data from Redis to cache, so that final validation can be done after merging this dependent data
 			c.addUpdateDataToCache(tbl, key)
-			c.addTableDataForMustExp(tbl)
+			c.addTableDataForMustExp(cfgDataItem.VOp, tbl)
 
 		case OP_DELETE:
 			if (len(cfgDataItem.Data) > 0) {
@@ -265,7 +271,7 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (CVLErrorInfo, CVL
 			}
 
 			c.updateDeleteDataToCache(tbl, key)
-			c.addTableDataForMustExp(tbl)
+			c.addTableDataForMustExp(cfgDataItem.VOp, tbl)
 		}
 	}
 

@@ -2085,8 +2085,93 @@ func TestValidateEditConfig_Create_DepData_From_Redis(t *testing.T) {
 	unloadConfigDB(rclient, depDataMap)
 }
 
+func TestValidateEditConfig_Create_Syntax_ErrAppTag_In_Range_Negative(t *testing.T) {
 
-func TestValidateEditConfig_Create_Syntax_InvalidErrAppTag_Negative(t *testing.T) {
+	cfgData := []cvl.CVLEditConfigData{
+		cvl.CVLEditConfigData{
+			cvl.VALIDATE_ALL,
+			cvl.OP_CREATE,
+			"VLAN|Vlan701",
+			map[string]string{
+				"vlanid":   "7001",
+			},
+		},
+	}
+
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	cvlErrInfo, retCode := cvSess.ValidateEditConfig(cfgData)
+
+	cvl.ValidationSessClose(cvSess)
+
+	WriteToFile(fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
+
+	/* Compare expected error details and error tag. */
+	if compareErrorDetails(cvlErrInfo, cvl.CVL_SYNTAX_ERROR, "vlanid-invalid", "") != true {
+		t.Errorf("Config Validation failed -- error details %v %v", cvlErrInfo, retCode)
+	}
+
+}
+
+func TestValidateEditConfig_Create_Syntax_ErrAppTag_In_Length_Negative(t *testing.T) {
+
+	cfgData := []cvl.CVLEditConfigData{
+		cvl.CVLEditConfigData{
+			cvl.VALIDATE_ALL,
+			cvl.OP_CREATE,
+			"ACL_TABLE|TestACL1",
+			map[string]string{
+				"stage": "INGRESS",
+				"type":  "MIRROR",
+				"policy_desc": "A12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890",
+			},
+		},
+	}
+
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	cvlErrInfo, retCode := cvSess.ValidateEditConfig(cfgData)
+
+	cvl.ValidationSessClose(cvSess)
+
+	WriteToFile(fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
+
+	/* Compare expected error details and error tag. */
+	if compareErrorDetails(cvlErrInfo, cvl.CVL_SYNTAX_ERROR, "policy-desc-invalid-length", "") != true {
+		t.Errorf("Config Validation failed -- error details %v %v", cvlErrInfo, retCode)
+	}
+
+}
+
+func TestValidateEditConfig_Create_Syntax_ErrAppTag_In_Pattern_Negative(t *testing.T) {
+
+	cfgData := []cvl.CVLEditConfigData{
+		cvl.CVLEditConfigData{
+			cvl.VALIDATE_ALL,
+			cvl.OP_CREATE,
+			"VLAN|Vlan5001",
+			map[string]string{
+				"vlanid":   "102",
+			},
+		},
+	}
+
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	cvlErrInfo, retCode := cvSess.ValidateEditConfig(cfgData)
+
+	cvl.ValidationSessClose(cvSess)
+
+	WriteToFile(fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
+
+	/* Compare expected error details and error tag. */
+	if compareErrorDetails(cvlErrInfo, cvl.CVL_SYNTAX_ERROR, "vlan-name-invalid", "") != true {
+		t.Errorf("Config Validation failed -- error details %v %v", cvlErrInfo, retCode)
+	}
+
+}
+
+func TestValidateEditConfig_Create_ErrAppTag_In_Must_Negative(t *testing.T) {
 
 	cfgData := []cvl.CVLEditConfigData{
 		cvl.CVLEditConfigData{
@@ -2398,9 +2483,9 @@ func TestValidateEditConfig_Create_Syntax_InvalidVlanRange_Negative(t *testing.T
                 cvl.CVLEditConfigData{
                         cvl.VALIDATE_ALL,
                         cvl.OP_CREATE,
-                        "VLAN|Vlan1002",
+                        "VLAN|Vlan5002",
                         map[string]string{
-                                "vlanid":   "1002",
+                                "vlanid":   "6002",
                         },
                 },
         }
@@ -2413,11 +2498,12 @@ func TestValidateEditConfig_Create_Syntax_InvalidVlanRange_Negative(t *testing.T
 
 	WriteToFile(fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
 
-	if retCode == cvl.CVL_SUCCESS { //should succeed
+	if retCode == cvl.CVL_SUCCESS { //should not succeed
 		t.Errorf("Config Validation failed with details %v.", cvlErrInfo)
         }
 
 }
+
 //Test Initialize() API
 func TestLogging(t *testing.T) {
         ret := cvl.Initialize()
@@ -2597,23 +2683,16 @@ func TestValidateConfig_Repeated_Keys_Positive(t *testing.T) {
 	cvl.ValidationSessClose(cvSess)
 }
 
-//EditConfig(Delete) deleting entry already used by other table as leafref in order
 func TestValidateEditConfig_Delete_Entry_Then_Dep_Leafref_Positive(t *testing.T) {
 	depDataMap := map[string]interface{} {
-		"ACL_TABLE" : map[string]interface{} {
-			"TestACL1": map[string] interface{} {
-				"stage": "INGRESS",
-				"type": "L3",
+		"VLAN" : map[string]interface{} {
+			"Vlan20": map[string] interface{} {
+				"vlanid": "20",
 			},
 		},
-		"ACL_RULE": map[string]interface{} {
-			"TestACL1|Rule1": map[string] interface{} {
-				"PACKET_ACTION": "FORWARD",
-				"SRC_IP": "10.1.1.1/32",
-				"L4_SRC_PORT": "1909",
-				"IP_PROTOCOL": "103",
-				"DST_IP": "20.2.2.2/32",
-				"L4_DST_PORT_RANGE": "9000-12000",
+		"VLAN_MEMBER": map[string]interface{} {
+			"Vlan20|Ethernet4": map[string] interface{} {
+				"tagging_mode": "tagged",
 			},
 		},
 	}
@@ -2627,7 +2706,7 @@ func TestValidateEditConfig_Delete_Entry_Then_Dep_Leafref_Positive(t *testing.T)
 		cvl.CVLEditConfigData {
 			cvl.VALIDATE_ALL,
 			cvl.OP_DELETE,
-			"ACL_RULE|TestACL1|Rule1",
+			"VLAN_MEMBER|Vlan20|Ethernet4",
 			map[string]string {
 			},
 		},
@@ -2639,14 +2718,14 @@ func TestValidateEditConfig_Delete_Entry_Then_Dep_Leafref_Positive(t *testing.T)
 		cvl.CVLEditConfigData {
 			cvl.VALIDATE_NONE,
 			cvl.OP_DELETE,
-			"ACL_RULE|TestACL1|Rule1",
+			"VLAN_MEMBER|Vlan20|Ethernet4",
 			map[string]string {
 			},
 		},
 		cvl.CVLEditConfigData {
 			cvl.VALIDATE_ALL,
 			cvl.OP_DELETE,
-			"ACL_TABLE|TestACL1",
+			"VLAN|Vlan20",
 			map[string]string {
 			},
 		},
