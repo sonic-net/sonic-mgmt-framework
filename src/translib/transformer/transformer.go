@@ -5,9 +5,19 @@ import (
 	"os"
 	"sort"
 	"github.com/openconfig/goyang/pkg/yang"
+	"github.com/openconfig/ygot/ygot"
+//	"translib/db"
+//	"translib/ocbinds"
 )
 
 var entries = map[string]*yang.Entry{}
+
+//Interface for xfmr methods
+type xfmrInterface interface {
+	tableXfmr(s *ygot.GoStruct, t *interface{}) (string, error)
+	keyXfmr(s *ygot.GoStruct, t *interface{}) (string, error)
+	fieldXfmr(s *ygot.GoStruct, t *interface{}) (string, error)
+}
 
 func reportIfError(errs []error) {
 	if len(errs) > 0 {
@@ -25,7 +35,7 @@ func LoadYangModules(files ...string) error {
 
 	var err error
 
-	paths := []string{"../../../models/yang/common", "../../../models/yang"}
+	paths := []string{"../../../models/yang/common", "../../../models/yang", "../../cvl/schema"}
 	
 	for _, path := range paths {
 		expanded, err := yang.PathsWithModules(path)
@@ -66,6 +76,8 @@ func LoadYangModules(files ...string) error {
 			entries[n] = yang.ToEntry(mods[n])
 		}
 	}
+	
+	// TODO - build the inverse map for GET, from OC to Sonic
 
 	return err
 }

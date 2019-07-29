@@ -11,6 +11,7 @@ module openconfig-acl {
   import openconfig-interfaces { prefix oc-if; }
   import openconfig-yang-types { prefix oc-yang; }
   import openconfig-extensions { prefix oc-ext; }
+  import sonic-extensions { prefix sonic-ext; }
 
   // meta
   organization "OpenConfig working group";
@@ -433,6 +434,7 @@ module openconfig-acl {
       type identityref {
         base ACL_TYPE;
       }
+      sonic-ext:field-name "type";
       description
         "The type determines the fields allowed in the ACL entries
         belonging to the ACL set (e.g., IPv4, IPv6, etc.)";
@@ -440,6 +442,7 @@ module openconfig-acl {
 
     leaf description {
       type string;
+      sonic-ext:field-name "policy_desc";
       description
         "Description, or comment, for the ACL set";
     }
@@ -460,6 +463,8 @@ module openconfig-acl {
         "Access list entries variables enclosing container";
 
       list acl-set {
+        sonic-ext:table-name "ACL_TABLE";
+        sonic-ext:key-xfmr "acl_set_key_xfmr";
         key "name type";
         description
           "List of ACL sets, each comprising of a list of ACL
@@ -535,6 +540,7 @@ module openconfig-acl {
         "Enclosing container for list of references to ACLs";
 
       list acl-entry {
+        sonic-ext:table-name "ACL_RULE";
         key "sequence-id";
         description
           "List of ACL entries assigned to an interface";
@@ -751,6 +757,7 @@ module openconfig-acl {
         ACLs are set";
 
       list interface {
+        sonic-ext:table-xfmr "port_bindings_xfmr";
         key "id";
         description
           "List of interfaces on which ACLs are set";
@@ -818,7 +825,6 @@ module openconfig-acl {
       container config {
         description
           "Global config data for ACLs";
-
         uses acl-config;
       }
 

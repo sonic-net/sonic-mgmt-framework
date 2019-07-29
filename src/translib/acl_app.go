@@ -99,7 +99,7 @@ func init() {
 		log.Fatal("Adding model data to appinterface failed with error=", err)
 	}
 
-	yangFiles := []string{"../../../models/yang/openconfig-acl.yang"}
+	yangFiles := []string{"../../../models/yang/openconfig-acl.yang", "../../cvl/schema/sonic-acl.yang"}
 	err = transformer.LoadYangModules(yangFiles...)
 	if err != nil {
 		log.Fatal("Loading Yang modules failed with error=", err)
@@ -590,6 +590,12 @@ func (app *AclApp) translateCRUCommon(d *db.DB, opcode int) ([]db.WatchKeys, err
 	log.Info("translateCRUCommon:acl:path =", app.path)
 
 	aclObj := app.getAppRootObject()
+	
+	// translate yang to db
+	//payload, err := dumpIetfJson(aclObj, false)
+	result, err := transformer.XlateToDb((*app).ygotRoot, (*app).ygotTarget)
+	fmt.Println(result)
+	
 	app.aclTableMap = app.convertOCAclsToInternal(aclObj)
 	app.ruleTableMap = app.convertOCAclRulesToInternal(aclObj)
 	app.bindAclFlag, err = app.convertOCAclBindingsToInternal(d, app.aclTableMap, aclObj)

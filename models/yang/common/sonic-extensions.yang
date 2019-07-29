@@ -1,0 +1,53 @@
+module sonic-extensions {
+
+  yang-version "1";
+
+  // namespace
+  namespace "http://openconfig.net/yang/sonic-ext";
+
+  prefix "sonic-ext";
+
+  // meta
+  organization "Sonic working group";
+
+  contact
+    "OpenConfig working group
+    www.openconfig.net";
+
+  description
+    "This module provides extensions to the YANG language to allow
+    Sonic specific functionality and meta-data to be defined.";
+
+  revision "2019-07-26" {
+    description
+      "Add extensionis for redis DB mappings for table, table-keys, table-fields and corresponding transformer methods.";
+  }
+
+
+  // extension statements
+  extension table-name {
+    argument "table-name";  
+    description "Db table name.";
+  }
+
+  extension key-xfmr {
+    argument "key-xfmr-name";  
+    description "Db table key transformer name indicating that the list keys together form db table keys.";
+  }
+
+  extension field-name {
+    argument "field-name";  
+    description "Db table field name.";
+  }
+
+  extension field-xfmr {
+    argument "field-xfmr-name";  
+    description "Db table field transformer name.This can be applied to either transform yang value to some different format 
+                 or choose a specific DB field based on the type of yang value.";
+  }
+  
+  extension table-xfmr {
+    argument "object-xfmr-name";  
+    description "Object level transformer name that will have db mappings for an object.";
+  }
+}
