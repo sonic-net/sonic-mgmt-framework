@@ -11,28 +11,55 @@
     <COMMAND
          name="show interface"
          help="Show Interface info"
-         >
+	 >
 	 <PARAM
-		name="Ethernet"
-		help="Physical Interface"
-		ptype="SUBCOMMAND"
-		mode="subcommand"
-		>
-		<PARAM
-			name="phy-if-id"
-			help="Physical interface(Multiples of 4)"
-			ptype="UINT"
-			optional="true"
-			>
-		</PARAM>
-	</PARAM>
-	<ACTION>
-            if test "${phy-if-id}" = ""; then&#xA;
-              python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces show_interface.j2&#xA;
-            else&#xA;
-              python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces_interface Ethernet${phy-if-id} show_interface_id.j2&#xA;
-            fi&#xA;
-        </ACTION>
+	     name="if-subcommands"
+	     help="Interface subcommands"
+	     mode="switch"
+	     ptype="SUBCOMMAND"
+	     >
+	     <PARAM
+		  name="counters"
+		  help="Counters for Physical Interfaces"
+		  ptype="SUBCOMMAND"
+		  mode="subcommand"
+		  >
+             </PARAM>
+	     <PARAM
+		  name="Ethernet"
+		  help="Physical Interface"
+		  ptype="SUBCOMMAND"
+		  mode="subcommand"
+		  >
+		  <PARAM
+		      name="phy-if-id"
+		      help="Physical interface(Multiples of 4)"
+	              ptype="UINT"
+		      optional="true"
+		      >
+		  </PARAM>
+	      </PARAM>
+	      <PARAM
+		  name="status"
+		  help="Physical interfaces status"
+		  ptype="SUBCOMMAND"
+		  mode="subcommand"
+		  >
+	      </PARAM>
+	 </PARAM>
+	 <ACTION>
+	    if test "${if-subcommands}" = "status"; then&#xA;
+		python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces show_interface_status.j2&#xA;
+	    elif test "${if-subcommands}" = "counters"; then&#xA;
+	        python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces show_interface_counters.j2&#xA;
+	    else&#xA;
+                if test "${phy-if-id}" = ""; then&#xA;
+                    python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces show_interface.j2&#xA;
+                else&#xA;
+                    python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces_interface Ethernet${phy-if-id} show_interface_id.j2&#xA;
+		fi&#xA;
+	    fi
+         </ACTION>
     </COMMAND>
     </VIEW>
 
