@@ -44,7 +44,7 @@ func Process(w http.ResponseWriter, r *http.Request) {
 
 	status, data, err = invokeTranslib(reqID, r.Method, path, body)
 	if err != nil {
-		glog.Errorf("[%s] Translib returned error - %v", reqID, err)
+		glog.Errorf("[%s] Translib error %T - %v", reqID, err, err)
 		status, data, rtype = prepareErrorResponse(err, r)
 		goto write_resp
 	}

@@ -19,6 +19,13 @@
 	     ptype="SUBCOMMAND"
 	     >
 	     <PARAM
+		  name="counters"
+		  help="Counters for Physical Interfaces"
+		  ptype="SUBCOMMAND"
+		  mode="subcommand"
+		  >
+             </PARAM>
+	     <PARAM
 		  name="Ethernet"
 		  help="Physical Interface"
 		  ptype="SUBCOMMAND"
@@ -43,6 +50,8 @@
 	 <ACTION>
 	    if test "${if-subcommands}" = "status"; then&#xA;
 		python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces show_interface_status.j2&#xA;
+	    elif test "${if-subcommands}" = "counters"; then&#xA;
+	        python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces show_interface_counters.j2&#xA;
 	    else&#xA;
                 if test "${phy-if-id}" = ""; then&#xA;
                     python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces show_interface.j2&#xA;

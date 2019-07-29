@@ -92,6 +92,11 @@ func prepareErrorResponse(err error, r *http.Request) (status int, data []byte, 
 // formatError translates an error object into HTTP status and an
 //  errorInfo object.
 func toErrorInfo(err error, r *http.Request) (status int, errInfo errorInfo) {
+	// By default everything is 500 Internal Server Error
+	status = http.StatusInternalServerError
+	errInfo.Type = errtypeApplication
+	errInfo.Tag = errtagOperationFailed
+
 	switch e := err.(type) {
 	case httpErrorType:
 		status = e.status
@@ -116,13 +121,11 @@ func toErrorInfo(err error, r *http.Request) (status int, errInfo errorInfo) {
 
 	case tlerr.TranslibRedisClientEntryNotExist:
 		status = http.StatusNotFound
-		errInfo.Type = errtypeApplication
 		errInfo.Tag = errtagInvalidValue
 		errInfo.Message = "Entry not found"
 
 	case tlerr.TranslibCVLFailure:
 		status = http.StatusInternalServerError
-		errInfo.Type = errtypeApplication
 		errInfo.Tag = errtagInvalidValue
 		errInfo.Message = e.CVLErrorInfo.ConstraintErrMsg
 		errInfo.AppTag = e.CVLErrorInfo.ErrAppTag
@@ -139,10 +142,39 @@ func toErrorInfo(err error, r *http.Request) (status int, errInfo errorInfo) {
 			errInfo.Message = "Entry not found"
 		}
 
-	default:
-		status = http.StatusInternalServerError
-		errInfo.Type = errtypeApplication
-		errInfo.Tag = errtagOperationFailed
+	case tlerr.TranslibTransactionFail:
+		status = http.StatusConflict
+		errInfo.Type = errtypeProtocol
+		errInfo.Tag = errtagInUse
+		errInfo.Message = "Transaction failed. Please try again."
+
+	case tlerr.InternalError:
+		errInfo.Message = e.Error()
+		errInfo.Path = e.Path
+
+	case tlerr.NotSupportedError:
+		status = http.StatusMethodNotAllowed
+		errInfo.Message = e.Error()
+		errInfo.Path = e.Path
+
+	case tlerr.InvalidArgsError:
+		status = http.StatusBadRequest
+		errInfo.Tag = errtagInvalidValue
+		errInfo.Message = e.Error()
+		errInfo.Path = e.Path
+
+	case tlerr.NotFoundError:
+		status = http.StatusNotFound
+		errInfo.Tag = errtagInvalidValue
+		errInfo.Message = e.Error()
+		errInfo.Path = e.Path
+
+	case tlerr.AlreadyExistsError:
+		status = http.StatusConflict
+		errInfo.Tag = errtagResourceDenied
+		errInfo.Message = e.Error()
+		errInfo.Path = e.Path
+
 	}
 
 	return

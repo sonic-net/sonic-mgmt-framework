@@ -248,10 +248,12 @@ type DB struct {
 	cv *cvl.CVL
 	cvlEditConfigData [] cvl.CVLEditConfigData
 
-	sKeys []SKey                // Subscribe Key array
+/*
+	sKeys []*SKey               // Subscribe Key array
 	sHandler HFunc              // Handler Function
 	sCh <-chan *redis.Message   // non-Nil implies SubscribeDB
-	sPubSub *redis.PubSub       // PubSub
+*/
+	sPubSub *redis.PubSub       // PubSub. non-Nil implies SubscribeDB
 	sCIP bool                   // Close in Progress
 }
 
@@ -344,10 +346,9 @@ func (d *DB) key2redis(ts *TableSpec, key Key) string {
 				d.Opts.TableNameSeparator+
 				strings.Join(key.Comp, d.Opts.KeySeparator))
 	}
-
-	return ts.Name +
-		d.Opts.TableNameSeparator +
-		strings.Join(key.Comp, d.Opts.KeySeparator)
+        return ts.Name +
+               d.Opts.TableNameSeparator +
+               strings.Join(key.Comp, d.Opts.KeySeparator)
 }
 
 func (d *DB) redis2key(ts *TableSpec, redisKey string) Key {
@@ -1240,6 +1241,7 @@ func (d *DB) CommitTx() error {
 
 	if e != nil {
 		glog.Warning("CommitTx: Do: EXEC e: ", e.Error())
+		e = tlerr.TranslibTransactionFail { }
 	}
 
 	// Switch State, Clear Command list

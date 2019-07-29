@@ -23,13 +23,13 @@
 		}
 	},
 	"VLAN_MEMBER": {
-		"Vlan100|Ethernet924": {
+		"Vlan100|Ethernet64": {
 			"tagging_mode": "tagged"
 		},
-		"Vlan100|Ethernet28": {
+		"Vlan100|Ethernet44": {
 			"tagging_mode": "tagged"
 		},
-		"Vlan1200|Ethernet4": {
+		"Vlan1200|Ethernet8": {
 			"tagging_mode": "tagged"
 		}
 	},
