@@ -95,7 +95,7 @@ func generateGetResponsePayload(targetUri string, deviceObj *ocbinds.Device, ygo
 		return payload, err
 	}
 	if len(currentNodeList) == 0 {
-		return payload, errors.New("Invalid URI")
+		return payload, errors.New("Resource not found")
 	}
 	//currentNode := currentNodeList[0].Data
 	currentNodeYangName := currentNodeList[0].Schema.Name
