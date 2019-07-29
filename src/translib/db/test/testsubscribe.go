@@ -34,6 +34,13 @@ func main() {
 	ca := make([]string, 1, 1)
 	ca[0] = "MyACL1_ACL_IPVNOTEXIST*"
 	akey = db.Key { Comp: ca}
+	var skeys [] *db.SKey = make([]*db.SKey, 1)
+        skeys[0] = & (db.SKey { Ts: &tsa, Key: &akey,
+		SEMap: map[db.SEvent]bool {
+			db.SEventHSet:	true,
+			db.SEventHDel:	true,
+			db.SEventDel:	true,
+		}})
 
 	fmt.Println("Creating the SubscribeDB ==============")
 	d,e := db.SubscribeDB(db.Options {
@@ -41,7 +48,7 @@ func main() {
 	                InitIndicator     : "CONFIG_DB_INITIALIZED",
 	                TableNameSeparator: "|",
 	                KeySeparator      : "|",
-                      }, []db.SKey {{ Ts: &tsa, Key: &akey}}, handler)
+                      }, skeys, handler)
 
 	if e != nil {
 		fmt.Println("Subscribe() returns error e: ", e)

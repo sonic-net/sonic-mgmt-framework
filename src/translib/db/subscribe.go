@@ -37,6 +37,8 @@ const (
 	SEventHDel   // HDEL, also SEventDel generated, if HASH is becomes empty
 	SEventDel    // DEL, & also if key gets deleted (empty HASH, expire,..)
 	SEventOther  // Some other command not covered above.
+
+	// The below two are always sent regardless of SEMap.
 	SEventClose  // Close requested due to Unsubscribe() called.
 	SEventErr    // Error condition. Call Unsubscribe, after return.
 )
@@ -54,25 +56,18 @@ func init() {
     // channels. Instead of one goroutine per Subscribe.
 }
 
-// func map[DB]
-
-
-// func handler(d *DB, skey SKey, key Key, event SEvent) error {
-// }
 
 // HFunc gives the name of the table, and other per-table customizations.
 type HFunc func( *DB, *SKey, *Key, SEvent) (error)
 
 
 // SubscribeDB is the factory method to create a subscription to the DB.
-// The returned handle can only be used for Subscription.
-func SubscribeDB(opt Options, skeys []SKey, handler HFunc) (*DB, error) {
-
-// func SubscribeDB(opt Options, skeys []SKey, handler func (*DB, WatchKeys, Value) (error)) (*DB, error) {
+// The returned instance can only be used for Subscription.
+func SubscribeDB(opt Options, skeys []*SKey, handler HFunc) (*DB, error) {
 
 	if glog.V(3) {
-		glog.Info("SubscribeDB: Begin: opt: ", opt, " skeys: ", skeys,
-			" handler: ", handler)
+		glog.Info("SubscribeDB: Begin: opt: ", opt,
+			" skeys: ", skeys, " handler: ", handler)
 	}
 
 	patterns := make([]string, len(skeys))
@@ -120,25 +115,28 @@ func SubscribeDB(opt Options, skeys []SKey, handler HFunc) (*DB, error) {
 	}
 
 
-	// Get channel for receiving messages
-
-	d.sCh = d.sPubSub.Channel()
-
-	// Keep a copy in our context.
-	d.sKeys = skeys
-	d.sHandler = handler
-
 	// Start a goroutine to read messages and call handler.
 	go func() {
-		for msg := range d.sCh {
-			glog.Info("SubscribeDB: msg: ", msg, " Pattern: ", msg.Pattern)
+		for msg := range d.sPubSub.Channel() {
+			if glog.V(4) {
+				glog.Info("SubscribeDB: msg: ", msg)
+			}
 
 			// Should this be a goroutine, in case each notification CB
 			// takes a long time to run ?
-			skey := &skeys[patMap[msg.Pattern]]
+			skey := skeys[patMap[msg.Pattern]]
 			key := d.redisChannel2key(skey.Ts, msg.Channel)
+			sevent := d.redisPayload2sEvent(msg.Payload)
 
-			d.sHandler(d, skey, &key, d.redisPayload2sEvent(msg.Payload))
+			if len(skey.SEMap) == 0 || skey.SEMap[sevent] {
+
+				if glog.V(2) {
+					glog.Info("SubscribeDB: handler( ",
+						&d, ", ", skey, ", ", key, ", ", sevent, " )")
+				}
+
+				handler(d, skey, &key, sevent)
+			}
 		}
 
 		// Send the Close|Err notification.
@@ -147,7 +145,7 @@ func SubscribeDB(opt Options, skeys []SKey, handler HFunc) (*DB, error) {
 			sEvent = SEventErr
 		}
 		glog.Info("SubscribeDB: SEventClose|Err: ", sEvent)
-		d.sHandler(d, & SKey{}, & Key {}, sEvent)
+		handler(d, & SKey{}, & Key {}, sEvent)
 	} ()
 
 
@@ -155,12 +153,14 @@ SubscribeDBExit:
 
 	if e != nil {
 		if d.sPubSub != nil {
+			d.sPubSub.Close()
 		}
 
 		if d.client != nil {
 			d.DeleteDB()
 			d.client = nil
 		}
+		d = nil
 	}
 
 	if glog.V(3) {

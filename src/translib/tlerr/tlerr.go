@@ -65,6 +65,13 @@ func (e TranslibCVLFailure) Error() string {
 		e.CVLErrorInfo)
 }
 
+type TranslibTransactionFail struct {
+}
+
+func (e TranslibTransactionFail) Error() string {
+	return p.Sprintf("Translib Redis Error: Transaction Fails")
+}
+
 type TranslibDBSubscribeFail struct {
 }
 

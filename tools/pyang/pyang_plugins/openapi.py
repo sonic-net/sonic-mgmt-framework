@@ -213,9 +213,11 @@ def swagger_it(child, defName, pathstr, payload, metadata, verb, operId=False):
 
         opId = swaggerDict["paths"][verbPathStr][verb]["operationId"]
         
-        desc = child.search_one('description').arg
+        desc = child.search_one('description')
         if desc is None:
             desc = ''
+        else:
+            desc = desc.arg
         desc = "OperationId: " + opId + "\n" + desc        
         swaggerDict["paths"][verbPathStr][verb]["description"] = desc        
 
@@ -276,8 +278,9 @@ def walk_child(child):
 
     actXpath = statements.mk_path_str(child, True)
     metadata = []
-    pathstr = mk_path_refine(child, metadata)
-
+    keyNodesInPath = []
+    pathstr = mk_path_refine(child, metadata, keyNodesInPath)
+        
     if actXpath in keysToLeafRefObjSet:
         return
 
@@ -332,6 +335,12 @@ def walk_child(child):
                 if verb == "post" and child.keyword == "list":
                     continue
                 
+                if verb == "delete" and child.keyword == "container":
+                    # Check to see if any of the child is part of
+                    # key list, if so skip delete operation
+                    if isUriKeyInPayload(child,keyNodesInPath):
+                        continue
+
                 swagger_it(child, defName, pathstr, payload, metadata, verb)
 
         if  child.keyword == "list":
@@ -473,12 +482,6 @@ def build_payload(child, payloadDict, uriPath="", oneInstance=False, Xpath="", f
             nodeName = child.i_module.i_modulename + ':' + child.arg
         else:
             nodeName = child.arg
-
-        # parentXpath = statements.mk_path_str(child.parent, True)
-        # if hasattr(child, 'i_is_key') and Xpath == parentXpath:
-        #     if '=' in uriPath.split('/')[-1]:
-        #         return
-
         payloadDict[nodeName] = OrderedDict()
         typeInfo = get_node_type(child)
         if 'type' in typeInfo:
@@ -498,11 +501,6 @@ def build_payload(child, payloadDict, uriPath="", oneInstance=False, Xpath="", f
         else:
             nodeName = child.arg
 
-        # parentXpath = statements.mk_path_str(child.parent, True)
-        # if hasattr(child, 'i_is_key') and Xpath == parentXpath:
-        #     if '=' in uriPath.split('/')[-1]:
-        #         return
-
         payloadDict[nodeName] = OrderedDict()
         payloadDict[nodeName]["type"] = "array"
         payloadDict[nodeName]["items"] = OrderedDict()
@@ -518,24 +516,32 @@ def build_payload(child, payloadDict, uriPath="", oneInstance=False, Xpath="", f
         if 'format' in typeInfo:
             payloadDict[nodeName]["items"]["format"] = typeInfo["format"]            
 
+    elif child.keyword == "choice" or child.keyword == "case":
+        childJson = payloadDict
+
     if hasattr(child, 'i_children'):
         for ch in child.i_children:
             build_payload(ch,childJson,uriPath, False, Xpath, False, config_false, copy.deepcopy(moduleList))
 
-def mk_path_refine(node, metadata):
+def mk_path_refine(node, metadata, keyNodes=[]):
     def mk_path(node):
         """Returns the XPath path of the node"""
         if node.keyword in ['choice', 'case']:
-            return mk_path(s.parent, module_name)
+            return mk_path(node.parent)
         def name(node):
             extra = ""
             if node.keyword == "list":
                 extraKeys = []            
-                for index, list_key in enumerate(node.i_key):
+                for index, list_key in enumerate(node.i_key):                    
+                    keyNodes.append(list_key)
+                    if list_key.i_leafref is not None:
+                        keyNodes.append(list_key.i_leafref_ptr[0])
                     extraKeys.append('{' + list_key.arg + '}')
-                    desc = list_key.search_one('description').arg
+                    desc = list_key.search_one('description')
                     if desc is None:
                         desc = ''
+                    else:
+                        desc = desc.arg
                     metaInfo = OrderedDict()
                     metaInfo["desc"] = desc
                     metaInfo["name"] = list_key.arg
@@ -740,4 +746,35 @@ def typestring(node):
             s = s + get_nontypedefstring(typedef)
     return s
 
+class Abort(Exception):
+    """used to abort an iteration"""
+    pass
 
+def isUriKeyInPayload(stmt, keyNodesList):
+    result = False # atleast one key is present
+
+    def checkFunc(node):
+        result = "continue"        
+        if node in keyNodesList:
+            result = "stop"
+        return result
+
+    def _iterate(stmt):
+        res = "continue"
+        if stmt.keyword == "leaf" or \
+            stmt.keyword == "leaf-list":
+            res = checkFunc(stmt)
+        if res == 'stop':
+            raise Abort
+        else:
+            # default is to recurse
+            if hasattr(stmt, 'i_children'):
+                for s in stmt.i_children:
+                    _iterate(s)
+
+    try:
+        _iterate(stmt)
+    except Abort:
+        result = True
+    
+    return result

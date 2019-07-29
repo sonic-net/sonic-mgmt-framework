@@ -61,7 +61,9 @@ module sonic-acl {
 
 			leaf policy_desc {
 				type string {
-					length 1..255;
+					length 1..255 {
+						error-app-tag policy-desc-invalid-length;
+					}
 				}
 			}
 
@@ -113,11 +115,10 @@ module sonic-acl {
 				type leafref {
 					path "../../ACL_TABLE/aclname";
 				}
-				/*
-				must "(/scommon:Operation/scommon:Operation != 'DELETE') or " +
-					"count(../ACL_TABLE[aclname=current()]/ports) != 0" {
+				must "(/scommon:operation/scommon:operation != 'DELETE') or " +
+					"count(../../ACL_TABLE[aclname=current()]/ports) = 0" {
 						error-message "Ports are already bound to this rule.";
-				}*/
+				}
 			} 
 
 			leaf rulename {

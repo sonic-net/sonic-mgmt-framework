@@ -78,8 +78,8 @@ module sonic-common {
 		argument "handler"; //
 	}
 
-	container Operation {
-		leaf Operation {
+	container operation {
+		leaf operation {
 			type string;
 		}
 	}
