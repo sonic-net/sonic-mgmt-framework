@@ -22,6 +22,7 @@ import (
 	"translib/transformer"
 )
 
+
 const (
 	TABLE_SEPARATOR          = "|"
 	KEY_SEPARATOR            = "|"
@@ -99,7 +100,8 @@ func init() {
 		log.Fatal("Adding model data to appinterface failed with error=", err)
 	}
 
-	yangFiles := []string{"../../../models/yang/openconfig-acl.yang", "../../cvl/schema/sonic-acl.yang"}
+	yangFiles := []string{transformer.YangPath + "openconfig-acl.yang", transformer.YangPath + "sonic-acl.yang"}
+        log.Info("Init transformer yang files :", yangFiles)
 	err = transformer.LoadYangModules(yangFiles...)
 	if err != nil {
 		log.Fatal("Loading Yang modules failed with error=", err)

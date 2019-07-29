@@ -10,6 +10,8 @@ import (
 //	"translib/ocbinds"
 )
 
+const YangPath = "/usr/models/yang/"   // OpenConfig-*.yang and sonic yang models path
+
 var entries = map[string]*yang.Entry{}
 
 //Interface for xfmr methods
@@ -35,7 +37,7 @@ func LoadYangModules(files ...string) error {
 
 	var err error
 
-	paths := []string{"../../../models/yang/common", "../../../models/yang", "../../cvl/schema"}
+	paths := []string{YangPath}
 	
 	for _, path := range paths {
 		expanded, err := yang.PathsWithModules(path)

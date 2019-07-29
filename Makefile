@@ -96,11 +96,11 @@ install:
 	$(INSTALL) -D $(CERTGEN_BIN) $(DESTDIR)/usr/sbin/generate_cert
 	$(INSTALL) -d $(DESTDIR)/usr/sbin/schema/
 	$(INSTALL) -d $(DESTDIR)/usr/sbin/lib/
-	$(INSTALL) -d $(DESTDIR)/models/yang/
+	$(INSTALL) -d $(DESTDIR)/usr/models/yang/
 	$(INSTALL) -D $(TOPDIR)/src/cvl/schema/*.yin $(DESTDIR)/usr/sbin/schema/
-	$(INSTALL) -D $(TOPDIR)/src/cvl/schema/*.yang $(DESTDIR)/models/yang/
-	$(INSTALL) -D $(TOPDIR)/models/yang/*.yang $(DESTDIR)/models/yang/
-	$(INSTALL) -D $(TOPDIR)/models/yang/common/*.yang $(DESTDIR)/models/yang/
+	$(INSTALL) -D $(TOPDIR)/src/cvl/schema/*.yang $(DESTDIR)/usr/models/yang/
+	$(INSTALL) -D $(TOPDIR)/models/yang/*.yang $(DESTDIR)/usr/models/yang/
+	$(INSTALL) -D $(TOPDIR)/models/yang/common/*.yang $(DESTDIR)/usr/models/yang/
 	cp -rf $(TOPDIR)/build/rest_server/dist/ui/ $(DESTDIR)/rest_ui/
 	cp -rf $(TOPDIR)/build/cli $(DESTDIR)/usr/sbin/
 	cp -rf $(TOPDIR)/build/swagger_client_py/ $(DESTDIR)/usr/sbin/lib/
