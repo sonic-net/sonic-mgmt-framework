@@ -11,14 +11,16 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	log "github.com/golang/glog"
-	"github.com/openconfig/ygot/util"
-	"github.com/openconfig/ygot/ygot"
 	"reflect"
 	"strconv"
 	"strings"
 	"translib/db"
 	"translib/ocbinds"
+	"translib/tlerr"
+
+	log "github.com/golang/glog"
+	"github.com/openconfig/ygot/util"
+	"github.com/openconfig/ygot/ygot"
 )
 
 const (
@@ -162,58 +164,63 @@ func (app *AclApp) translateGet(dbs [db.MaxDB]*db.DB) error {
 }
 
 func (app *AclApp) translateSubscribe(dbs [db.MaxDB]*db.DB, path string) (*notificationOpts, *notificationInfo, error) {
-	err := errors.New("Not supported")
-	configDb := dbs[db.ConfigDB]
 	pathInfo := NewPathInfo(path)
 	notifInfo := notificationInfo{dbno: db.ConfigDB}
+	notSupported := tlerr.NotSupportedError{
+		Format: "Subscribe not supported", Path: path}
 
 	if isSubtreeRequest(pathInfo.Template, "/openconfig-acl:acl/acl-sets") {
-		if isSubtreeRequest(pathInfo.Template, "/openconfig-acl:acl/acl-sets/acl-set{name}{type}") {
-			aclN := strings.Replace(strings.Replace(pathInfo.Var("name"), " ", "_", -1), "-", "_", -1)
-			aclT := pathInfo.Var("type")
-			if OPENCONFIG_ACL_TYPE_IPV4 != aclT && OPENCONFIG_ACL_TYPE_IPV6 != aclT && OPENCONFIG_ACL_TYPE_L2 != aclT {
-				err = errors.New("Invalid ACL Type")
-				return nil, nil, err
-			}
-			aclkey := aclN + "_" + aclT
-			if isSubtreeRequest(pathInfo.Template, "/openconfig-acl:acl/acl-sets/acl-set{name}{type}/acl-entries/acl-entry{sequence-id}") {
-				rulekey := "RULE_" + pathInfo.Var("sequence-id")
-				notifInfo.table = db.TableSpec{Name: RULE_TABLE}
-				notifInfo.key = db.Key{Comp: []string{aclkey, rulekey}}
-			} else {
-				// All Rules of a given Acl
-				if pathInfo.Template == "/openconfig-acl:acl/acl-sets/acl-set{name}{type}/acl-entries" {
-					notifInfo.table = db.TableSpec{Name: RULE_TABLE}
-				} else {
-					notifInfo.table = db.TableSpec{Name: ACL_TABLE}
-					notifInfo.key = db.Key{Comp: []string{aclkey}}
-				}
-			}
+		// Subscribing to top level ACL record is not supported. It requires listening
+		// to 2 tables (ACL and ACL_RULE); TransLib does not support it yet
+		if pathInfo.HasSuffix("/acl-sets") ||
+			pathInfo.HasSuffix("/acl-set") ||
+			pathInfo.HasSuffix("/acl-set{name}{type}") {
+			log.Errorf("Subscribe not supported for top level ACL %s", pathInfo.Template)
+			return nil, nil, notSupported
+		}
+
+		t, err := getAclTypeOCEnumFromName(pathInfo.Var("type"))
+		if err != nil {
+			return nil, nil, err
+		}
+
+		aclkey := getAclKeyStrFromOCKey(pathInfo.Var("name"), t)
+
+		if strings.Contains(pathInfo.Template, "/acl-entry{sequence-id}") {
+			// Subscribe for one rule
+			rulekey := "RULE_" + pathInfo.Var("sequence-id")
+			notifInfo.table = db.TableSpec{Name: RULE_TABLE}
+			notifInfo.key = asKey(aclkey, rulekey)
+			notifInfo.needCache = !pathInfo.HasSuffix("/acl-entry{sequence-id}")
+
+		} else if pathInfo.HasSuffix("/acl-entries") || pathInfo.HasSuffix("/acl-entry") {
+			// Subscribe for all rules of an ACL
+			notifInfo.table = db.TableSpec{Name: RULE_TABLE}
+			notifInfo.key = asKey(aclkey, "*")
+
 		} else {
-			// All Acls and their rules
+			// Subscibe for ACL fields only
 			notifInfo.table = db.TableSpec{Name: ACL_TABLE}
+			notifInfo.key = asKey(aclkey)
+			notifInfo.needCache = true
 		}
+
 	} else if isSubtreeRequest(pathInfo.Template, "/openconfig-acl:acl/interfaces") {
-		if isSubtreeRequest(pathInfo.Template, "/openconfig-acl:acl/interfaces/interface{id}") {
-			// With one interface, multiple ACLs can be binded. Need mehanism to pass multiple Keys
-			var notifKeys []db.Key
-			intfId := pathInfo.Var("id")
-			aclKeys, _ := configDb.GetKeys(app.aclTs)
-			for i, _ := range aclKeys {
-				aclEntry, _ := configDb.GetEntry(app.aclTs, aclKeys[i])
-				aclIntfs := aclEntry.GetList("ports")
-				if contains(aclIntfs, intfId) {
-					notifKeys = append(notifKeys, aclKeys[i])
-				}
-			}
-		}
+		// Right now interface binding config is maintained within ACL
+		// table itself. Multiple ACLs can be bound to one intf; one
+		// inname can occur in multiple ACL entries. So we cannot map
+		// interface binding xpaths to specific ACL table entry keys.
+		// For now subscribe for full ACL table!!
 		notifInfo.table = db.TableSpec{Name: ACL_TABLE}
+		notifInfo.key = asKey("*")
+		notifInfo.needCache = true
+
 	} else {
-		// Topmost path
-		notifInfo.table = db.TableSpec{Name: ACL_TABLE}
+		log.Errorf("Unknown path %s", pathInfo.Template)
+		return nil, nil, notSupported
 	}
 
-	return nil, &notifInfo, err
+	return nil, &notifInfo, nil
 }
 
 func (app *AclApp) processCreate(d *db.DB) (SetResponse, error) {
@@ -1642,6 +1649,21 @@ func getAclKeysFromStrKey(aclKey string, aclType string) (string, ocbinds.E_Open
 		aclOrigType = ocbinds.OpenconfigAcl_ACL_TYPE_ACL_L2
 	}
 	return aclOrigName, aclOrigType
+}
+
+// getAclTypeOCEnumFromName returns the ACL_TYPE enum from name
+func getAclTypeOCEnumFromName(val string) (ocbinds.E_OpenconfigAcl_ACL_TYPE, error) {
+	switch val {
+	case "ACL_IPV4", "openconfig-acl:ACL_IPV4":
+		return ocbinds.OpenconfigAcl_ACL_TYPE_ACL_IPV4, nil
+	case "ACL_IPV6", "openconfig-acl:ACL_IPV6":
+		return ocbinds.OpenconfigAcl_ACL_TYPE_ACL_IPV6, nil
+	case "ACL_L2", "openconfig-acl:ACL_L2":
+		return ocbinds.OpenconfigAcl_ACL_TYPE_ACL_L2, nil
+	default:
+		return ocbinds.OpenconfigAcl_ACL_TYPE_UNSET,
+			tlerr.NotSupported("ACL Type '%s' not supported", val)
+	}
 }
 
 func getAclKeyStrFromOCKey(aclname string, acltype ocbinds.E_OpenconfigAcl_ACL_TYPE) string {
