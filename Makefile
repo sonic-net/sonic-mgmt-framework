@@ -57,7 +57,7 @@ $(GO_DEPS_LIST):
 cli:
 	$(MAKE) -C src/CLI
 
-cvl: go-deps
+cvl:
 	$(MAKE) -C src/cvl
 	$(MAKE) -C src/cvl/schema
 cvl-test:

@@ -290,7 +290,7 @@ func InsertIntoStruct(parentStruct interface{}, fieldName string, fieldValue int
 		n = reflect.Zero(ft.Type)
 	}
 
-	if !isFieldTypeCompatible(ft, n) && !IsValueTypeCompatible(ft.Type, v) {
+	if !isFieldTypeCompatible(ft, n) {
 		return fmt.Errorf("cannot assign value %v (type %T) to struct field %s (type %v) in struct %T", fieldValue, fieldValue, fieldName, ft.Type, parentStruct)
 	}
 
