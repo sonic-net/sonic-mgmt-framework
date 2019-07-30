@@ -750,8 +750,8 @@ func getDBOptions(dbNo db.DBNum) db.Options {
 		opt =  db.Options {
                     DBNo              : dbNo,
                     InitIndicator     : "",
-                    TableNameSeparator: "|",
-                    KeySeparator      : "|",
+                    TableNameSeparator: ":",
+                    KeySeparator      : ":",
                       }
 	case db.LogLevelDB:
 		opt = db.Options {

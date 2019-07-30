@@ -305,6 +305,9 @@ func (app *IntfApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
 				}
 				/* Filling the tree with the info we have in Internal DS */
 				ygot.BuildEmptyTree(ifInfo)
+				if *app.ygotTarget == ifInfo.State {
+					ygot.BuildEmptyTree(ifInfo.State)
+				}
 				app.convertInternalToOCIntfInfo(&ifKey, ifInfo)
 				if *app.ygotTarget == ifInfo {
 					payload, err = dumpIetfJson(intfObj, false)
@@ -318,6 +321,7 @@ func (app *IntfApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
 						payload, err = dumpIetfJson(dummyifInfo, false)
 					} else {
 						log.Info("Not supported get type!")
+						err = errors.New("Requested get-type not supported!")
 					}
 				}
 			}
