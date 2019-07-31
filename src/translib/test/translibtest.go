@@ -51,7 +51,7 @@ func main() {
 
 		for i, path := range paths {
 			log.Info("Response returned for path=", path)
-			log.Info(resp[i])
+			log.Info(*(resp[i]))
 		}
 
 	} else if *operationPtr == "subscribe" {
@@ -79,7 +79,12 @@ func main() {
 			}
 
 			resp, _ := (items[0]).(*translib.SubscribeResponse)
-			log.Info("SubscribeResponse received", resp)
+			log.Info("SubscribeResponse received =", string(resp.Payload))
+			log.Info("IsSync complete = ", resp.SyncComplete)
+
+			if resp.SyncComplete {
+				close(stop)
+			}
 		}
 
 	} else {

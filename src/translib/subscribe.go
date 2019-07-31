@@ -38,6 +38,7 @@ type notificationInfo struct{
 	app				   *appInterface
 	appInfo			   *appInfo
 	cache			  []byte
+	sKey			   *db.SKey
 	dbs [db.MaxDB]	   *db.DB //used to perform get operations
 	sDB				   *db.DB //Subscription DB should be used only for keyspace notification
 }
@@ -47,6 +48,7 @@ type subscribeInfo struct{
 	q				   *queue.PriorityQueue
 	nInfoArr		 []*notificationInfo
 	stop				chan struct{}
+	sDBs			 []*db.DB //Subscription DB should be used only for keyspace notification unsubscription
 }
 
 var nMap map[*db.SKey]*notificationInfo
@@ -79,18 +81,17 @@ func startDBSubscribe(opt db.Options, nInfoList []*notificationInfo, sInfo *subs
 	var sKeyList []*db.SKey
 
 	for _, nInfo := range nInfoList {
-		skey := &db.SKey{ Ts: &nInfo.table, Key: &nInfo.key}
-		sKeyList = append(sKeyList, skey)
-		nMap[skey] = nInfo
+		sKey := &db.SKey{ Ts: &nInfo.table, Key: &nInfo.key}
+		sKeyList = append(sKeyList, sKey)
+		nInfo.sKey = sKey
+		nMap[sKey] = nInfo
 		sMap[nInfo] = sInfo
 	}
 
 	sDB, err := db.SubscribeDB(opt, sKeyList, notificationHandler)
 
 	if err == nil {
-		for _, nInfo := range nInfoList {
-			nInfo.sDB = sDB
-		}
+		sInfo.sDBs = append(sInfo.sDBs, sDB)
 	} else {
 		for i, nInfo := range nInfoList {
 			delete(nMap, sKeyList[i])
@@ -102,19 +103,24 @@ func startDBSubscribe(opt db.Options, nInfoList []*notificationInfo, sInfo *subs
 }
 
 func notificationHandler(d *db.DB, sKey *db.SKey, key *db.Key, event db.SEvent) error {
-    log.Info("notificationHandler: d: ", d, " skey: ", *sKey, " key: ", *key,
+    log.Info("notificationHandler: d: ", d, " sKey: ", *sKey, " key: ", *key,
         " event: ", event)
-    sMutex.Lock()
-    defer sMutex.Unlock()
+	switch event {
+	case db.SEventHSet:
+	case db.SEventHDel:
+	case db.SEventDel:
+		sMutex.Lock()
+		defer sMutex.Unlock()
 
-	if sKey != nil {
-		nInfo := nMap[sKey]
-		sInfo := sMap[nInfo]
+		if sKey != nil {
+			nInfo := nMap[sKey]
+			sInfo := sMap[nInfo]
 
-		isChanged := isCacheChanged(nInfo)
+			isChanged := isCacheChanged(nInfo)
 
-		if isChanged {
-			sendNotification(sInfo, nInfo)
+			if isChanged {
+				sendNotification(sInfo, nInfo)
+			}
 		}
 	}
 
@@ -129,7 +135,10 @@ func updateCache(nInfo *notificationInfo) error {
 	if err1 == nil {
 		nInfo.cache = json
 	} else {
-		err = err1
+		log.Error("Failed to get the Json for the path = ", nInfo.path)
+		log.Error("Error returned = ", err1)
+
+		nInfo.cache = []byte("{}")
 	}
 
 	return err
@@ -140,8 +149,10 @@ func isCacheChanged(nInfo *notificationInfo) bool {
 
     if err == nil {
         if bytes.Equal(nInfo.cache, json) {
+			log.Info("Cache is same as DB")
 			return false
 		} else {
+			log.Info("Cache is NOT same as DB")
 			nInfo.cache = json
 			return true
 		}
@@ -155,20 +166,22 @@ func startSubscribe(sInfo *subscribeInfo, dbNotificationMap map[db.DBNum][]*noti
     sMutex.Lock()
 	defer sMutex.Unlock()
 
+
     for dbno, nInfoArr := range dbNotificationMap {
         opt := getDBOptions(dbno)
         err = startDBSubscribe(opt, nInfoArr, sInfo)
+
 		if err != nil {
 			//TODO:Need to cleanup old subscriptions
 			return err
 		}
+
         sInfo.nInfoArr = append(sInfo.nInfoArr, nInfoArr...)
     }
 
 	stopMap[sInfo.stop] = sInfo
 
     for i, nInfo := range sInfo.nInfoArr {
-
         err = updateCache(nInfo)
 
 		if err != nil {
@@ -176,13 +189,15 @@ func startSubscribe(sInfo *subscribeInfo, dbNotificationMap map[db.DBNum][]*noti
             return err
         }
 
-		if i == len(sInfo.nInfoArr) {
+		if i == len(sInfo.nInfoArr)-1 {
 			sInfo.syncDone = true
 		}
 
 		sendNotification(sInfo, nInfo)
     }
-	sInfo.syncDone = true
+	printAllMaps()
+
+	go stophandler(sInfo.stop)
 
 	return err
 }
@@ -218,6 +233,8 @@ func getJson (nInfo *notificationInfo) ([]byte, error) {
 }
 
 func sendNotification(sInfo *subscribeInfo, nInfo *notificationInfo){
+	log.Info("Sending notification for sInfo = ", sInfo)
+	log.Info("payload = ", string(nInfo.cache))
 	sInfo.q.Put(&SubscribeResponse{
 			Path:nInfo.path,
 			Payload:nInfo.cache,
@@ -227,5 +244,60 @@ func sendNotification(sInfo *subscribeInfo, nInfo *notificationInfo){
 }
 
 func stophandler(stop chan struct{}) {
-	
+	for {
+		select {
+		case <-stop:
+			log.Info("stop channel signalled")
+		    sMutex.Lock()
+			defer sMutex.Unlock()
+
+			sInfo := stopMap[stop]
+
+			for _, sDB := range sInfo.sDBs {
+				sDB.UnsubscribeDB()
+			}
+
+			for _, nInfo := range sInfo.nInfoArr {
+				delete(nMap, nInfo.sKey)
+				delete(sMap, nInfo)
+			}
+
+			delete(stopMap, stop)
+			printAllMaps()
+
+			return
+		}
+	}
+
+	return
+}
+
+func printnMap() {
+	log.Info("Printing the contents of nMap")
+	for sKey, nInfo := range nMap {
+		log.Info("sKey = ", sKey)
+		log.Info("nInfo = ", nInfo)
+	}
+}
+
+func printStopMap() {
+	log.Info("Printing the contents of stopMap")
+	for stop, sInfo := range stopMap {
+		log.Info("stop = ", stop)
+		log.Info("sInfo = ", sInfo)
+	}
+}
+
+func printsMap() {
+	log.Info("Printing the contents of sMap")
+	for sInfo, nInfo := range sMap {
+		log.Info("nInfo = ", nInfo)
+		log.Info("sKey = ", sInfo)
+	}
+}
+
+func printAllMaps() {
+	printnMap()
+	printsMap()
+	printStopMap()
 }

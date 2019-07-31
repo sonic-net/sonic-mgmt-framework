@@ -446,7 +446,9 @@ func Subscribe(paths []string, q *queue.PriorityQueue, stop chan struct{}) ([]*I
     for i, _ := range resp {
         resp[i] = &IsSubscribeResponse{Path: paths[i],
                                 IsSupported: false,
-                                MinInterval: minSubsInterval}
+                                MinInterval: minSubsInterval,
+								PreferredType:Sample,
+								Err:nil}
     }
 
 	dbs, err := getAllDbs()
@@ -484,11 +486,13 @@ func Subscribe(paths []string, q *queue.PriorityQueue, stop chan struct{}) ([]*I
         } else {
             resp[i].IsSupported = true
 
-            if nOpts.mInterval != 0 {
-                resp[i].MinInterval = nOpts.mInterval
-            }
+			if nOpts != nil {
+				if nOpts.mInterval != 0 {
+					resp[i].MinInterval = nOpts.mInterval
+				}
 
-            resp[i].PreferredType = nOpts.pType
+	            resp[i].PreferredType = nOpts.pType
+			}
 
 			nInfo.path = path
 			nInfo.app = app
@@ -508,12 +512,9 @@ func Subscribe(paths []string, q *queue.PriorityQueue, stop chan struct{}) ([]*I
 
 	sInfo := &subscribeInfo {syncDone:false,
 					q:q,
-					nInfoArr:make([]*notificationInfo, len(paths)),
 					stop:stop}
 
 	sErr = startSubscribe(sInfo, dbNotificationMap)
-
-	go runSubscribe(q)
 
 	return resp, sErr
 }
@@ -524,9 +525,11 @@ func IsSubscribeSupported(paths []string) ([]*IsSubscribeResponse, error) {
 	resp := make ([]*IsSubscribeResponse, len(paths))
 
 	for i, _ := range resp {
-		resp[i] = &IsSubscribeResponse{Path: paths[i],
-								IsSupported: false,
-								MinInterval: minSubsInterval}
+        resp[i] = &IsSubscribeResponse{Path: paths[i],
+                                IsSupported: false,
+                                MinInterval: minSubsInterval,
+                                PreferredType:Sample,
+                                Err:nil}
 	}
 
 	dbs, err := getAllDbs()
@@ -555,10 +558,12 @@ func IsSubscribeSupported(paths []string) ([]*IsSubscribeResponse, error) {
         } else {
 			resp[i].IsSupported = true
 
-			if nOpts.mInterval != 0 {
-				resp[i].MinInterval = nOpts.mInterval
+			if nOpts != nil {
+				if nOpts.mInterval != 0 {
+					resp[i].MinInterval = nOpts.mInterval
+				}
+				resp[i].PreferredType = nOpts.pType
 			}
-			resp[i].PreferredType = nOpts.pType
 		}
 	}
 
