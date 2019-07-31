@@ -38,7 +38,7 @@ func LoadYangModules(files ...string) error {
 	var err error
 
 	paths := []string{YangPath}
-	
+
 	for _, path := range paths {
 		expanded, err := yang.PathsWithModules(path)
 		if err != nil {
@@ -78,7 +78,8 @@ func LoadYangModules(files ...string) error {
 			entries[n] = yang.ToEntry(mods[n])
 		}
 	}
-	
+    mapBuild(entries)
+
 	// TODO - build the inverse map for GET, from OC to Sonic
 
 	return err
