@@ -10,16 +10,17 @@ package translib
 import (
 	"errors"
 	"fmt"
-	log "github.com/golang/glog"
 	"reflect"
 	"strconv"
 	"strings"
 
+	"translib/ocbinds"
+
+	log "github.com/golang/glog"
 	"github.com/openconfig/gnmi/proto/gnmi"
 	"github.com/openconfig/goyang/pkg/yang"
 	"github.com/openconfig/ygot/ygot"
 	"github.com/openconfig/ygot/ytypes"
-	"translib/ocbinds"
 )
 
 // PathInfo structure contains parsed path information.
@@ -45,6 +46,18 @@ func (p *PathInfo) IntVar(name string) (int, error) {
 	}
 
 	return strconv.Atoi(val)
+}
+
+// HasPrefix checks if this path template starts with given
+// prefix.. Shorthand for strings.HasPrefix(p.Template, s)
+func (p *PathInfo) HasPrefix(s string) bool {
+	return strings.HasPrefix(p.Template, s)
+}
+
+// HasSuffix checks if this path template ends with given
+// suffix.. Shorthand for strings.HasSuffix(p.Template, s)
+func (p *PathInfo) HasSuffix(s string) bool {
+	return strings.HasSuffix(p.Template, s)
 }
 
 // NewPathInfo parses given path string into a PathInfo structure.
