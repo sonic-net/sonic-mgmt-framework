@@ -1,0 +1,1 @@
+/gnmi_set -replace /openconfig-interfaces:interfaces/interface[name=Ethernet0]:@./05_set_interface_mtu.json -target_addr 127.0.0.1:8080 -alsologtostderr -insecure true -pretty
