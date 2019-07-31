@@ -10,6 +10,10 @@ import (
 //	"translib/ocbinds"
 )
 
+func init () {
+    XlateFuncBind("acl_set_key_xfmr", acl_set_key_xfmr)
+    XlateFuncBind("port_bindings_xfmr", port_bindings_xfmr)
+}
 
 func acl_set_key_xfmr(json []byte) (map[string]map[string]db.Value, error) {
 
