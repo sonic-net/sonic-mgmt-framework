@@ -22,7 +22,6 @@ func fillMap (xSpecMap map[string]*yangXpathInfo, entry *yang.Entry, xpathPrefix
     xpath := xpathPrefix + "/" + entry.Name
     xpathData := new(yangXpathInfo)
 
-    fmt.Printf("MARI: pfx(%s), nd(%s)\r\n", xpathPrefix, entry.Name)
     parentXpathData, ok := xSpecMap[xpathPrefix]
     /* init current xpath table data with its parent data, change only if needed. */
     if ok {
