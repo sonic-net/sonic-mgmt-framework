@@ -1,6 +1,11 @@
-package main
+package transformer
 import (
     "fmt"
+    "os"
+    "sort"
+    "strings"
+
+    "github.com/openconfig/goyang/pkg/yang"
 )
 
 /* Data needed to construct lookup table from yang */
@@ -100,7 +105,7 @@ func fillMap (xSpecMap map[string]*yangXpathInfo, entry *yang.Entry, xpathPrefix
 }
 
 /* Build lookup hash table based of yang xpath */
-func mapBuild(entries map[string]*yang.Entry) {
+func mapBuild(entries []*yang.Entry) {
     if entries == nil {
         return
     }
