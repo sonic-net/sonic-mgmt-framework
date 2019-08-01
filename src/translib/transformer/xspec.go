@@ -105,7 +105,7 @@ func fillMap (xSpecMap map[string]*yangXpathInfo, entry *yang.Entry, xpathPrefix
 }
 
 /* Build lookup hash table based of yang xpath */
-func mapBuild(entries []*yang.Entry) {
+func mapBuild(entries map[string]*yang.Entry) {
     if entries == nil {
         return
     }
