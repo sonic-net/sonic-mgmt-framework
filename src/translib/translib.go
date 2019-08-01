@@ -126,11 +126,11 @@ func Create(req SetRequest) (SetResponse, error){
     }
 
 	writeMutex.Lock()
+	defer writeMutex.Unlock()
 
 	d, err := db.NewDB(getDBOptions(db.ConfigDB))
 
 	if err != nil {
-		writeMutex.Unlock()
 		resp.ErrSrc = ProtoErr
 		return resp, err
 	}
@@ -140,7 +140,6 @@ func Create(req SetRequest) (SetResponse, error){
     keys, err = (*app).translateCreate(d)
 
 	if err != nil {
-		writeMutex.Unlock()
 		resp.ErrSrc = AppErr
         return resp, err
 	}
@@ -148,7 +147,6 @@ func Create(req SetRequest) (SetResponse, error){
 	err = d.StartTx(keys, appInfo.tablesToWatch)
 
 	if err != nil {
-		writeMutex.Unlock()
 		resp.ErrSrc = AppErr
         return resp, err
 	}
@@ -156,7 +154,6 @@ func Create(req SetRequest) (SetResponse, error){
     resp, err = (*app).processCreate (d)
 
     if err != nil {
-		writeMutex.Unlock()
 		d.AbortTx()
 		resp.ErrSrc = AppErr
         return resp, err
@@ -167,8 +164,6 @@ func Create(req SetRequest) (SetResponse, error){
     if err != nil {
         resp.ErrSrc = AppErr
     }
-
-	writeMutex.Unlock()
 
     return resp, err
 }
@@ -199,11 +194,11 @@ func Update(req SetRequest) (SetResponse, error){
     }
 
     writeMutex.Lock()
+	defer writeMutex.Unlock()
 
     d, err := db.NewDB(getDBOptions(db.ConfigDB))
 
     if err != nil {
-        writeMutex.Unlock()
         resp.ErrSrc = ProtoErr
         return resp, err
     }
@@ -213,7 +208,6 @@ func Update(req SetRequest) (SetResponse, error){
     keys, err = (*app).translateUpdate(d)
 
     if err != nil {
-        writeMutex.Unlock()
 		resp.ErrSrc = AppErr
         return resp, err
     }
@@ -221,7 +215,6 @@ func Update(req SetRequest) (SetResponse, error){
     err = d.StartTx(keys, appInfo.tablesToWatch)
 
     if err != nil {
-        writeMutex.Unlock()
 		resp.ErrSrc = AppErr
         return resp, err
     }
@@ -229,7 +222,6 @@ func Update(req SetRequest) (SetResponse, error){
     resp, err = (*app).processUpdate (d)
 
     if err != nil {
-        writeMutex.Unlock()
         d.AbortTx()
 		resp.ErrSrc = AppErr
         return resp, err
@@ -241,7 +233,6 @@ func Update(req SetRequest) (SetResponse, error){
         resp.ErrSrc = AppErr
     }
 
-    writeMutex.Unlock()
     return resp, err
 }
 
@@ -272,11 +263,11 @@ func Replace(req SetRequest) (SetResponse, error){
     }
 
     writeMutex.Lock()
+	defer writeMutex.Unlock()
 
     d, err := db.NewDB(getDBOptions(db.ConfigDB))
 
     if err != nil {
-        writeMutex.Unlock()
         resp.ErrSrc = ProtoErr
         return resp, err
     }
@@ -286,7 +277,6 @@ func Replace(req SetRequest) (SetResponse, error){
     keys, err = (*app).translateReplace(d)
 
     if err != nil {
-        writeMutex.Unlock()
 		resp.ErrSrc = AppErr
         return resp, err
     }
@@ -294,7 +284,6 @@ func Replace(req SetRequest) (SetResponse, error){
     err = d.StartTx(keys, appInfo.tablesToWatch)
 
     if err != nil {
-        writeMutex.Unlock()
 		resp.ErrSrc = AppErr
         return resp, err
     }
@@ -302,7 +291,6 @@ func Replace(req SetRequest) (SetResponse, error){
     resp, err = (*app).processReplace (d)
 
     if err != nil {
-        writeMutex.Unlock()
         d.AbortTx()
 		resp.ErrSrc = AppErr
         return resp, err
@@ -314,7 +302,6 @@ func Replace(req SetRequest) (SetResponse, error){
 		resp.ErrSrc = AppErr
     }
 
-    writeMutex.Unlock()
     return resp, err
 }
 
@@ -343,11 +330,11 @@ func Delete(req SetRequest) (SetResponse, error){
     }
 
     writeMutex.Lock()
+	defer writeMutex.Unlock()
 
     d, err := db.NewDB(getDBOptions(db.ConfigDB))
 
     if err != nil {
-        writeMutex.Unlock()
         resp.ErrSrc = ProtoErr
         return resp, err
     }
@@ -357,7 +344,6 @@ func Delete(req SetRequest) (SetResponse, error){
     keys, err = (*app).translateDelete(d)
 
     if err != nil {
-        writeMutex.Unlock()
 		resp.ErrSrc = AppErr
         return resp, err
     }
@@ -365,7 +351,6 @@ func Delete(req SetRequest) (SetResponse, error){
     err = d.StartTx(keys, appInfo.tablesToWatch)
 
     if err != nil {
-        writeMutex.Unlock()
 		resp.ErrSrc = AppErr
         return resp, err
     }
@@ -373,7 +358,6 @@ func Delete(req SetRequest) (SetResponse, error){
     resp, err = (*app).processDelete(d)
 
     if err != nil {
-        writeMutex.Unlock()
         d.AbortTx()
 		resp.ErrSrc = AppErr
         return resp, err
@@ -385,7 +369,6 @@ func Delete(req SetRequest) (SetResponse, error){
         resp.ErrSrc = AppErr
     }
 
-    writeMutex.Unlock()
 	return resp, err
 }
 
@@ -622,6 +605,14 @@ func getAllDbs() ([db.MaxDB]*db.DB, error) {
 		return dbs, err
 	}
 
+	//Create Flex Counter DB connection
+    dbs[db.FlexCounterDB], err = db.NewDB(getDBOptions(db.FlexCounterDB))
+
+	if err != nil {
+		closeAllDbs(dbs[:])
+		return dbs, err
+	}
+
 	//Create State DB connection
     dbs[db.StateDB], err = db.NewDB(getDBOptions(db.StateDB))
 
@@ -655,62 +646,27 @@ func (val SubscribeResponse) Compare(other queue.Item) int {
 }
 
 func getDBOptions(dbNo db.DBNum) db.Options {
-
 	var opt db.Options
 
 	switch dbNo {
-	case db.ApplDB:
-		opt = db.Options {
-                    DBNo              : dbNo,
-                    InitIndicator     : "",
-                    TableNameSeparator: ":",
-                    KeySeparator      : ":",
-                      }
-	case db.AsicDB:
-		opt = db.Options {
-                    DBNo              : dbNo,
-                    InitIndicator     : "",
-                    TableNameSeparator: "|",
-                    KeySeparator      : "|",
-                      }
-	case db.CountersDB:
-		opt =  db.Options {
-                    DBNo              : dbNo,
-                    InitIndicator     : "",
-                    TableNameSeparator: ":",
-                    KeySeparator      : ":",
-                      }
-	case db.LogLevelDB:
-		opt = db.Options {
-                    DBNo              : dbNo,
-                    InitIndicator     : "",
-                    TableNameSeparator: "|",
-                    KeySeparator      : "|",
-                      }
-	case db.ConfigDB:
-		opt =  db.Options {
-                    DBNo              : dbNo,
-                    InitIndicator     : "",
-                    TableNameSeparator: "|",
-                    KeySeparator      : "|",
-                      }
-	case db.FlexCounterDB:
-		opt = db.Options {
-                    DBNo              : dbNo,
-                    InitIndicator     : "",
-                    TableNameSeparator: "|",
-                    KeySeparator      : "|",
-                      }
-	case db.StateDB:
-		opt = db.Options {
-                    DBNo              : dbNo,
-                    InitIndicator     : "",
-                    TableNameSeparator: "|",
-                    KeySeparator      : "|",
-                      }
+	case db.ApplDB, db.CountersDB:
+		opt = getDBOptionsWithSeparator(dbNo, "", ":", ":")
+		break
+	case db.FlexCounterDB, db.AsicDB, db.LogLevelDB, db.ConfigDB, db.StateDB:
+		opt = getDBOptionsWithSeparator(dbNo, "", "|", "|")
+		break
 	}
 
 	return opt
+}
+
+func getDBOptionsWithSeparator(dbNo db.DBNum, initIndicator string, tableSeparator string, keySeparator string) db.Options {
+	return(db.Options {
+                    DBNo              : dbNo,
+                    InitIndicator     : initIndicator,
+                    TableNameSeparator: tableSeparator,
+                    KeySeparator      : keySeparator,
+                      })
 }
 
 func getAppModule (path string) (*appInterface, *appInfo, error) {

@@ -106,9 +106,7 @@ func notificationHandler(d *db.DB, sKey *db.SKey, key *db.Key, event db.SEvent) 
     log.Info("notificationHandler: d: ", d, " sKey: ", *sKey, " key: ", *key,
         " event: ", event)
 	switch event {
-	case db.SEventHSet:
-	case db.SEventHDel:
-	case db.SEventDel:
+	case db.SEventHSet, db.SEventHDel, db.SEventDel:
 		sMutex.Lock()
 		defer sMutex.Unlock()
 
