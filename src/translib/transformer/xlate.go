@@ -22,20 +22,23 @@ var (
 func XlateFuncBind (name string, fn interface{}) (err error) {
     defer func() {
         if e := recover(); e != nil {
-            err = errors.New(name + " is not callable.")
+            err = errors.New(name + " is not valid Xfmr function.")
         }
     }()
 
-    v :=reflect.ValueOf(fn)
-    v.Type().NumIn()
-    XlateFuncs[name] = v
-    log.Info("XlateFuncs map: ", XlateFuncs)
+    if  _, ok := XlateFuncs[name]; !ok {
+        v :=reflect.ValueOf(fn)
+        v.Type().NumIn()
+        XlateFuncs[name] = v
+    } else {
+        log.Info("Duplicate entry found in the XlateFunc map " + name)
+    }
     return
 }
 
 func XlateFuncCall(name string, params ... interface{}) (result []reflect.Value, err error) {
     if _, ok := XlateFuncs[name]; !ok {
-        err = errors.New(name + " does not exist.")
+        err = errors.New(name + " Xfmr function does not exist.")
         return
     }
     if len(params) != XlateFuncs[name].Type().NumIn() {
