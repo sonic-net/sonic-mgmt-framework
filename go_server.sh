@@ -3,12 +3,11 @@
 set -e
 
 TOPDIR=$PWD
-SERVER_DIR=$TOPDIR/build/rest_server/dist
+SERVER_DIR=$TOPDIR/build/rest_server
 CVLDIR=$TOPDIR/src/cvl
 
 # LD_LIBRARY_PATH for CVL
 [ -z $LD_LIBRARY_PATH ] && LD_LIBRARY_PATH=/usr/local/lib
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CVLDIR/build/pcre-8.43/install/lib:$CVLDIR/build/libyang/build/lib64
 
 # Setup CVL schema directory
 if [ -z $CVL_SCHEMA_PATH ]; then
@@ -21,7 +20,7 @@ if [ $(find $CVL_SCHEMA_PATH -name *.yin | wc -l) == 0 ]; then
     echo ""
 fi
 
-EXTRA_ARGS="-ui $SERVER_DIR/ui -logtostderr"
+EXTRA_ARGS="-ui $SERVER_DIR/dist/ui -logtostderr"
 HAS_CRTFILE=
 HAS_KEYFILE=
 
