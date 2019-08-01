@@ -36,6 +36,7 @@ var writeMutex = &sync.Mutex{}
 
 //minimum global interval for subscribe in secs
 var minSubsInterval = 20
+var maxSubsInterval = 60
 
 type ErrSource int
 
@@ -77,11 +78,11 @@ const(
 )
 
 type IsSubscribeResponse struct{
-	Path				string
-	IsSupported			bool
-	MinInterval			int
-	Err					error
-	PreferredType		NotificationType
+	Path					string
+	IsOnChangeSupported		bool
+	MinInterval				int
+	Err						error
+	PreferredType			NotificationType
 }
 
 type ModelData struct{
@@ -428,7 +429,7 @@ func Subscribe(paths []string, q *queue.PriorityQueue, stop chan struct{}) ([]*I
 
     for i, _ := range resp {
         resp[i] = &IsSubscribeResponse{Path: paths[i],
-                                IsSupported: false,
+                                IsOnChangeSupported: false,
                                 MinInterval: minSubsInterval,
 								PreferredType:Sample,
 								Err:nil}
@@ -465,9 +466,19 @@ func Subscribe(paths []string, q *queue.PriorityQueue, stop chan struct{}) ([]*I
 				sErr = errApp
 			}
 
+			resp[i].MinInterval = maxSubsInterval
+
+            if nOpts != nil {
+                if nOpts.mInterval != 0 {
+                    resp[i].MinInterval = nOpts.mInterval
+                }
+
+                resp[i].PreferredType = nOpts.pType
+            }
+
             continue
         } else {
-            resp[i].IsSupported = true
+            resp[i].IsOnChangeSupported = true
 
 			if nOpts != nil {
 				if nOpts.mInterval != 0 {
@@ -509,7 +520,7 @@ func IsSubscribeSupported(paths []string) ([]*IsSubscribeResponse, error) {
 
 	for i, _ := range resp {
         resp[i] = &IsSubscribeResponse{Path: paths[i],
-                                IsSupported: false,
+                                IsOnChangeSupported: false,
                                 MinInterval: minSubsInterval,
                                 PreferredType:Sample,
                                 Err:nil}
@@ -539,7 +550,7 @@ func IsSubscribeSupported(paths []string) ([]*IsSubscribeResponse, error) {
 			err = errApp
             continue
         } else {
-			resp[i].IsSupported = true
+			resp[i].IsOnChangeSupported= true
 
 			if nOpts != nil {
 				if nOpts.mInterval != 0 {

@@ -120,6 +120,8 @@ func notificationHandler(d *db.DB, sKey *db.SKey, key *db.Key, event db.SEvent) 
 				sendNotification(sInfo, nInfo)
 			}
 		}
+	case db.SEventClose:
+	case db.SEventErr:
 	}
 
     return nil
