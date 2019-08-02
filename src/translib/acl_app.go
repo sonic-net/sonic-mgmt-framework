@@ -448,7 +448,7 @@ func (app *AclApp) processCommon(d *db.DB, opcode int) error {
 			}
 		}
 	} else {
-		app.processCommonToplevelPath(d, acl, opcode, true)
+		err = app.processCommonToplevelPath(d, acl, opcode, true)
 	}
 
 	if !topmostPath && !isSubtreeRequest(targetUriPath, "/openconfig-acl:acl/acl-sets") && !isSubtreeRequest(targetUriPath, "/openconfig-acl:acl/interfaces") {
