@@ -26,6 +26,7 @@ codegenTypesToYangTypesMap = {"int8":   {"type":"integer", "format": "int32"},
                               "string": {"type":"string"}, 
                               "binary": {"type":"string", "format": "binary"}, 
                               "boolean": {"type":"boolean"}, 
+                              "bits":  {"type":"integer", "format": "int32"}, 
                               "identityref": {"type":"string"}, 
                               "union": {"type":"string"}, 
                               "counter32": {"type":"integer", "format": "int64"},
@@ -39,14 +40,41 @@ keysToLeafRefObjSet = set()
 currentTag = None
 base_path = '/restconf/data'
 verbs = ["post", "put", "patch", "get", "delete"]
-responses = OrderedDict()
-responses["200"] =  {"description": "operation successful"}
-responses["201"] =  {"description": "Resource created/updated"}
-responses["500"] =  {"description": "Internal Server Error"}
-responses["401"] =  {"description": "Unauthorized"}
-responses["403"] =  {"description": "Forbidden"}
-responses["404"] =  {"description": "Resource Not Found"}
-responses["503"] =  {"description": "Service Unavailable"}
+responses = { # Common to all verbs
+    "500": {"description": "Internal Server Error"},
+    "401": {"description": "Unauthorized"},
+    "405": {"description": "Method Not Allowed"},
+    "400": {"description": "Bad request"},    
+    "415": {"description": "Unsupported Media Type"},          
+}
+verb_responses = {}
+verb_responses["post"] = {
+    "201": {"description": "Created"},
+    "409": {"description": "Conflict"},
+    "404": {"description": "Not Found"},
+    "403": {"description": "Forbidden"},              
+}
+verb_responses["put"] = {
+    "201": {"description": "Created"},
+    "204": {"description": "No Content"},
+    "404": {"description": "Not Found"},
+    "409": {"description": "Conflict"},
+    "403": {"description": "Forbidden"},    
+}
+verb_responses["patch"] = {
+    "204": {"description": "No Content"},
+    "404": {"description": "Not Found"},
+    "409": {"description": "Conflict"},
+    "403": {"description": "Forbidden"},         
+}
+verb_responses["delete"] = {
+    "204": {"description": "No Content"},
+    "404": {"description": "Not Found"},
+}
+verb_responses["get"] = {
+    "200": {"description": "Ok"},
+    "404": {"description": "Not Found"},
+}
 
 def ordered_dump(data, stream=None, Dumper=yaml.Dumper, **kwds):
     class OrderedDumper(Dumper):
@@ -201,7 +229,7 @@ def swagger_it(child, defName, pathstr, payload, metadata, verb, operId=False):
             swaggerDict["paths"][verbPathStr][verb]["consumes"] = ["application/yang-data+json"]
         swaggerDict["paths"][verbPathStr][verb]["produces"] = ["application/yang-data+json"]
         swaggerDict["paths"][verbPathStr][verb]["parameters"] = []
-        swaggerDict["paths"][verbPathStr][verb]["responses"] = copy.deepcopy(responses)
+        swaggerDict["paths"][verbPathStr][verb]["responses"] = copy.deepcopy({**responses, **verb_responses[verb]})
         firstEncounter = False
 
     opId = None
@@ -233,6 +261,8 @@ def swagger_it(child, defName, pathstr, payload, metadata, verb, operId=False):
             metaTag["name"] = meta["name"]
             metaTag["required"] = True
             metaTag["type"] = meta["type"]
+            if 'enums' in meta:
+                metaTag["enum"] = meta["enums"]
             if hasattr(meta,'format'):
                 if meta["format"] != "":
                     metaTag["format"] = meta["format"]
@@ -262,16 +292,9 @@ def swagger_it(child, defName, pathstr, payload, metadata, verb, operId=False):
             operationDefnName = bodyTag["schema"]["$ref"].split('/')[-1]
             swaggerDict["definitions"][operationDefnName]["allOf"].append({"$ref" : "#/definitions/" + defName})
 
-    if verb in ["get", "delete"]:
-        if '201' in verbPath["responses"]:
-            del(verbPath["responses"]["201"])
-        if verb == "get":
-            verbPath["responses"]["200"]["schema"] = OrderedDict()
-            verbPath["responses"]["200"]["schema"]["$ref"] = "#/definitions/" + defName
-    else:
-        if '200' in verbPath["responses"] and verb != "delete":
-            del(verbPath["responses"]["200"])
-
+    if verb == "get":
+        verbPath["responses"]["200"]["schema"] = OrderedDict()
+        verbPath["responses"]["200"]["schema"]["$ref"] = "#/definitions/" + defName
 
 def walk_child(child):
     global XpathToBodyTagDict
@@ -483,13 +506,20 @@ def build_payload(child, payloadDict, uriPath="", oneInstance=False, Xpath="", f
         else:
             nodeName = child.arg
         payloadDict[nodeName] = OrderedDict()
-        typeInfo = get_node_type(child)
+        typeInfo = getType(child)
+        enums = None
+        if isinstance(typeInfo, tuple):
+            enums = typeInfo[1]
+            typeInfo = typeInfo[0]
+        
         if 'type' in typeInfo:
             dType = typeInfo["type"]
         else:
             dType = "string"
         
         payloadDict[nodeName]["type"] = dType
+        if enums is not None:
+            payloadDict[nodeName]["enum"] = enums
 
         if 'format' in typeInfo:
             payloadDict[nodeName]["format"] = typeInfo["format"]
@@ -505,13 +535,20 @@ def build_payload(child, payloadDict, uriPath="", oneInstance=False, Xpath="", f
         payloadDict[nodeName]["type"] = "array"
         payloadDict[nodeName]["items"] = OrderedDict()
 
-        typeInfo = get_node_type(child)
+        typeInfo = getType(child)
+        enums = None
+        if isinstance(typeInfo, tuple):
+            enums = typeInfo[1]
+            typeInfo = typeInfo[0]
+
         if 'type' in typeInfo:
             dType = typeInfo["type"]
         else:
             dType = "string"
         
-        payloadDict[nodeName]["items"]["type"] = dType      
+        payloadDict[nodeName]["items"]["type"] = dType   
+        if enums is not None:
+            payloadDict[nodeName]["items"]["enum"] = enums           
 
         if 'format' in typeInfo:
             payloadDict[nodeName]["items"]["format"] = typeInfo["format"]            
@@ -545,7 +582,12 @@ def mk_path_refine(node, metadata, keyNodes=[]):
                     metaInfo = OrderedDict()
                     metaInfo["desc"] = desc
                     metaInfo["name"] = list_key.arg
-                    typeInfo = get_node_type(list_key)
+                    typeInfo = getType(list_key)
+                    
+                    if isinstance(typeInfo, tuple):
+                        metaInfo["enums"] = typeInfo[1]
+                        typeInfo = typeInfo[0]
+
                     if 'type' in typeInfo:
                         dType = typeInfo["type"]
                     else:
@@ -589,57 +631,14 @@ def mk_path_refine(node, metadata, keyNodes=[]):
         xpath = '/' + xpath
     return xpath
 
-
-def get_node_type(node):
-    global codegenTypesToYangTypesMap
-    xpath = statements.mk_path_str(node, True)
-    nodetype = get_typename(node)
-    
-    if nodetype == 'identityref':
-        return codegenTypesToYangTypesMap["string"]
-        
-    if nodetype in codegenTypesToYangTypesMap:
-        return codegenTypesToYangTypesMap[nodetype]
-    
-    
-    if nodetype == 'union':
-        return codegenTypesToYangTypesMap["string"]
-    
-    if "yang:date-and-time" in nodetype:
-        return {"type": "string", "format": "date-time"}
-
-    typedetails = typestring(node)
-    typedetails2 = []
-    try:
-        typedetails2 = typedetails.split("\n")
-    except:
-        print("typeinfo splitwrong")
-        sys.exit(2)
-    if typedetails2[1] in codegenTypesToYangTypesMap:
-        return codegenTypesToYangTypesMap[typedetails2[1]]
-    
-    if typedetails2[1] == 'union':
-        return codegenTypesToYangTypesMap["string"]      
-                                      
-    if "yang:date-and-time" in typedetails2[1]:
-        return {"type": "string", "format": "date-time"}
-    elif nodetype == "enumeration" or typedetails2[1] == "enumeration":
-        return codegenTypesToYangTypesMap["string"]
-    elif nodetype == "leafref" or typedetails2[1] == "leafref":
-        return handle_leafref(node,xpath)
-    elif nodetype == "empty":
-        return {"type": "boolean", "format": "boolean"}
-    else:
-        #print("unhandled type ", nodetype," xpath: ", xpath)
-        return {"type": "string", "format": "date-time"}
-
 def handle_leafref(node,xpath):
     path_type_spec = node.i_leafref
     target_node = path_type_spec.i_target_node        
     if target_node.keyword in ["leaf", "leaf-list"]:
-        return get_node_type(target_node)
+        return getType(target_node)
     else:
         print("leafref not pointing to leaf/leaflist")
+        sys.exit(2)
 
 def shortenNodeName(node):
     global nodeDict
@@ -656,13 +655,6 @@ def shortenNodeName(node):
             name = name.replace('-','_').lower()
         nodeDict[name] = xpath
     return name
-
-def get_typename(s):
-    t = s.search_one('type')
-    if t is not None:
-        return t.arg
-    else:
-        return ''
 
 def getCamelForm(moName):
     hasHiphen = False
@@ -689,42 +681,47 @@ def getCamelForm(moName):
 
     return moName  
 
-def typestring(node):
+def getType(node):
+    
+    global codegenTypesToYangTypesMap
+    xpath = statements.mk_path_str(node, True)
 
-    def get_nontypedefstring(node):
-        s = ""
-        t = node.search_one('type')
-        if t is not None:
-            s = t.arg + '\n'
-            if t.arg == 'enumeration':
-                s = s + ' : {'
-                for enums in t.substmts:
-                    s = s + enums.arg + ','
-                s = s + '}'
-            elif t.arg == 'leafref':
-                s = s + ' : '
-                p = t.search_one('path')                                                        
-                if p is not None:
-                    s = s + p.arg
-
-            elif t.arg == 'identityref':
-                b = t.search_one('base')
-                if b is not None:
-                    s = s + ' {' + b.arg + '}'
-
-            elif t.arg == 'union':
-                uniontypes = t.search('type')
-                s = s + '{' + uniontypes[0].arg
-                for uniontype in uniontypes[1:]:
-                    s = s + ', ' + uniontype.arg
-                s = s + '}'
-
-        return s
-
-    s = get_nontypedefstring(node)
-
-    if s != "":
-        t = node.search_one('type')
+    def resolveType(stmt, nodeType):
+        if nodeType == "string" \
+            or nodeType == "instance-identifier" \
+            or nodeType == "identityref":
+            return codegenTypesToYangTypesMap["string"]
+        elif nodeType == "enumeration":        
+            enums = []
+            for enum in stmt.substmts:
+                if enum.keyword == "enum":
+                    enums.append(enum.arg)
+            return codegenTypesToYangTypesMap["string"], enums
+        elif nodeType == "empty" or nodeType == "boolean":
+            return {"type": "boolean", "format": "boolean"}
+        elif nodeType == "leafref":            
+            return handle_leafref(node,xpath)
+        elif nodeType == "union":
+            return codegenTypesToYangTypesMap["string"]
+        elif nodeType == "decimal64":
+            return codegenTypesToYangTypesMap[nodeType]
+        elif nodeType in ['int8', 'int16', 'int32', 'int64',
+                  'uint8', 'uint16', 'uint32', 'uint64', 'binary', 'bits']:
+            return codegenTypesToYangTypesMap[nodeType]
+        else:
+            print("no base type found")
+            sys.exit(2)
+    
+    base_types = ['int8', 'int16', 'int32', 'int64',
+                  'uint8', 'uint16', 'uint32', 'uint64',
+                  'decimal64', 'string', 'boolean', 'enumeration',
+                  'bits', 'binary', 'leafref', 'identityref', 'empty',
+                  'union', 'instance-identifier'
+                ]
+    # Get Type of a node
+    t = node.search_one('type')
+    
+    while t.arg not in base_types:
         # chase typedef
         name = t.arg
         if name.find(":") == -1:
@@ -742,9 +739,14 @@ def typestring(node):
             if pmodule is None:
                 return
             typedef = statements.search_typedef(pmodule, name)
-        if typedef != None:
-            s = s + get_nontypedefstring(typedef)
-    return s
+        
+        if typedef is None:
+            print("Typedef ", name, " is not found, make sure all dependent modules are present")
+            sys.exit(2)
+        t=typedef.search_one('type')
+    
+    return resolveType(t, t.arg)
+
 
 class Abort(Exception):
     """used to abort an iteration"""
