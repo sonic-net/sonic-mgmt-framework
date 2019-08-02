@@ -220,6 +220,7 @@ module openconfig-acl {
 
 
     leaf forwarding-action {
+      sonic-ext:field-name "PACKET_ACTION";  
       type identityref {
         base FORWARDING_ACTION;
       }
@@ -359,6 +360,8 @@ module openconfig-acl {
         "Access list entries container";
 
       list acl-entry {
+        sonic-ext:table-name "ACL_RULE";
+        sonic-ext:key-xfmr "acl_entry_key_xfmr";
         key "sequence-id";
         description
           "List of ACL entries comprising an ACL set";
@@ -464,7 +467,7 @@ module openconfig-acl {
 
       list acl-set {
         sonic-ext:table-name "ACL_TABLE";
-        sonic-ext:key-xfmr "acl_set_key_xfmr";
+        sonic-ext:key-delimiter "_";
         key "name type";
         description
           "List of ACL sets, each comprising of a list of ACL
@@ -540,7 +543,6 @@ module openconfig-acl {
         "Enclosing container for list of references to ACLs";
 
       list acl-entry {
-        sonic-ext:table-name "ACL_RULE";
         key "sequence-id";
         description
           "List of ACL entries assigned to an interface";
@@ -757,7 +759,7 @@ module openconfig-acl {
         ACLs are set";
 
       list interface {
-        sonic-ext:table-xfmr "port_bindings_xfmr";
+        sonic-ext:subtree-xfmr "port_bindings_xfmr";
         key "id";
         description
           "List of interfaces on which ACLs are set";
