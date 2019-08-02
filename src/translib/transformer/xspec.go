@@ -1,6 +1,11 @@
-package main
+package transformer
 import (
     "fmt"
+    "os"
+    "sort"
+    "strings"
+
+    "github.com/openconfig/goyang/pkg/yang"
 )
 
 /* Data needed to construct lookup table from yang */
