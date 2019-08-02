@@ -68,6 +68,7 @@ type SubscribeResponse struct{
 	Payload      []byte
 	Timestamp	 int64
 	SyncComplete bool
+	IsTerminated bool
 }
 
 type NotificationType int
