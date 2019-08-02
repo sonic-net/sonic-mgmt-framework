@@ -121,6 +121,12 @@ func toErrorEntry(err error, r *http.Request) (status int, errInfo errorEntry) {
 			errInfo.Tag = errtagOperationFailed
 		}
 
+	case tlerr.TranslibSyntaxValidationError:
+		status = http.StatusBadRequest
+		errInfo.Type = errtypeProtocol
+		errInfo.Tag = errtagInvalidValue
+		errInfo.Message = e.ErrorStr.Error()
+
 	case tlerr.TranslibRedisClientEntryNotExist:
 		status = http.StatusNotFound
 		errInfo.Tag = errtagInvalidValue
