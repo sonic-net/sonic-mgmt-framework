@@ -7,7 +7,7 @@ SERVER_DIR=$TOPDIR/build/rest_server
 CVLDIR=$TOPDIR/src/cvl
 
 # LD_LIBRARY_PATH for CVL
-[ -z $LD_LIBRARY_PATH ] && LD_LIBRARY_PATH=/usr/local/lib
+[ -z $LD_LIBRARY_PATH ] && export LD_LIBRARY_PATH=/usr/local/lib
 
 # Setup CVL schema directory
 if [ -z $CVL_SCHEMA_PATH ]; then
