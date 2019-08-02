@@ -40,8 +40,8 @@ GO_DEPS_LIST = github.com/gorilla/mux \
 	       github.com/antchfx/xmlquery
 
 
-REST_BIN = $(BUILD_DIR)/rest_server/dist/main
-CERTGEN_BIN = $(BUILD_DIR)/rest_server/dist/generate_cert
+REST_BIN = $(BUILD_DIR)/rest_server/main
+CERTGEN_BIN = $(BUILD_DIR)/rest_server/generate_cert
 
 
 all: build-deps go-deps go-patch translib rest-server cli
