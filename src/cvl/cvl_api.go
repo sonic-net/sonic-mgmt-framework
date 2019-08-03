@@ -243,7 +243,7 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (CVLErrorInfo, CVL
 
 		case OP_UPDATE:
 			//Get the existing data from Redis to cache, so that final validation can be done after merging this dependent data
-			c.addUpdateDataToCache(tbl, key)
+			c.addTableEntryToCache(tbl, key)
 			c.addTableDataForMustExp(cfgDataItem.VOp, tbl)
 
 		case OP_DELETE:
@@ -270,7 +270,8 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (CVLErrorInfo, CVL
 				}
 			}
 
-			c.updateDeleteDataToCache(tbl, key)
+			c.addTableEntryToCache(tbl, key)
+			//c.updateDeleteDataToCache(tbl, key)
 			c.addTableDataForMustExp(cfgDataItem.VOp, tbl)
 		}
 	}
@@ -316,7 +317,7 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (CVLErrorInfo, CVL
 					//Check key should not already exist
 					n, err1 := redisClient.Exists(cfgDataItem.Key).Result()
 					if (err1 == nil && n > 0) {
-						CVL_LOG(ERROR, "\nValidateEditConfig(): Key = %s alreday exists", cfgDataItem.Key)
+						CVL_LOG(ERROR, "\nValidateEditConfig(): Key = %s already exists", cfgDataItem.Key)
 						cvlErrObj.ErrCode = CVL_SEMANTIC_KEY_ALREADY_EXIST
 						cvlErrObj.CVLErrDetails = cvlErrorMap[cvlErrObj.ErrCode]
 						return cvlErrObj, CVL_SEMANTIC_KEY_ALREADY_EXIST 
@@ -350,7 +351,6 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (CVLErrorInfo, CVL
 				c.yp.SetOperation("DELETE")
 				//store deleted keys
 				deletedKeys[cfgDataItem.Key] = nil;
-
 			}
 
 		} else if (cfgDataItem.VType == VALIDATE_NONE) {

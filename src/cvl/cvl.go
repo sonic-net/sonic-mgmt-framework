@@ -14,6 +14,7 @@ import (
 	. "cvl/internal/util"
 	"sync"
 	"flag"
+	"runtime"
 )
 
 //DB number 
@@ -353,8 +354,11 @@ func addTableNamesForMustExp() {
 			"/scommon:operation/scommon:operation != 'DELETE'") == true) {
 				op = op | OP_DELETE
 			}
-			//store the current table always so that expression check with other row
-			tblInfo.tablesForMustExp[tblName] = op
+
+			//store the current table if aggregate function like count() is used
+			/*if (strings.Contains(mustExp, "count") == true) {
+				tblInfo.tablesForMustExp[tblName] = op
+			}*/
 
 			//check which table name is present in the must expression
 			for tblNameSrch, _ := range modelInfo.tableInfo {
@@ -441,18 +445,18 @@ func (c *CVL) addTableEntryForMustExp(op CVLOperation, tableName string) CVLRetC
 	if (modelInfo.tableInfo[tableName].mustExp == nil) {
 		return CVL_SUCCESS
 	}
+
 	return CVL_SUCCESS
 }
 
 //Add all other table data for validating all 'must' exp for tableName
 func (c *CVL) addTableDataForMustExp(op CVLOperation, tableName string) CVLRetCode {
-
 	if (modelInfo.tableInfo[tableName].mustExp == nil) {
 		return CVL_SUCCESS
 	}
 
 	for mustTblName, mustOp := range modelInfo.tableInfo[tableName].tablesForMustExp {
-		//First check if must expression should be executed for the ven operation
+		//First check if must expression should be executed for the given operation
 		if (mustOp != OP_NONE) && ((mustOp & op) == OP_NONE) {
 			//must to be excuted for particular operation, but current operation 
 			//is not the same one
@@ -513,7 +517,7 @@ func (c *CVL) addTableDataForMustExp(op CVLOperation, tableName string) CVLRetCo
 	return CVL_SUCCESS
 }
 
-func (c *CVL) addUpdateDataToCache(tableName string, redisKey string) {
+func (c *CVL) addTableEntryToCache(tableName string, redisKey string) {
 	if (c.tmpDbCache[tableName] == nil) {
 		c.tmpDbCache[tableName] = map[string]interface{}{redisKey: nil}
 	} else {
@@ -785,6 +789,8 @@ func (c *CVL) fetchTableDataToTmpCache(tableName string, dbKeys map[string]inter
 			mapTable.(map[string]interface{})[keyOnly] = fieldMap
 			entryFetched = entryFetched + 1
 		}
+
+		runtime.Gosched()
 	}
 
 	TRACE_LOG(INFO_API, TRACE_CACHE,"\n%v, Exiting fetchTableDataToTmpCache", time.Now())
@@ -1358,7 +1364,7 @@ func dbCacheUpdate(tableName, key, op string) CVLRetCode {
 		cvg.db[tableName] = db
 
 	case "del":
-		//NOP, alreday deleted the entry
+		//NOP, already deleted the entry
 	}
 
 	cvg.mutex.Unlock()

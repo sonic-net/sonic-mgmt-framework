@@ -460,6 +460,77 @@ func TestValidateConfig_CfgFile(t *testing.T) {
 	 cvl.ValidationSessClose(cv)
 }
 
+func TestValidateEditConfig_Delete_Must_Check_Positive(t *testing.T) {
+	depDataMap := map[string]interface{} {
+		"PORT" : map[string]interface{} {
+			"Ethernet3" : map[string]interface{} {
+				"alias":"hundredGigE1",
+				"lanes": "81,82,83,84",
+				"mtu": "9100",
+			},
+			"Ethernet5" : map[string]interface{} {
+				"alias":"hundredGigE1",
+				"lanes": "85,86,87,89",
+				"mtu": "9100",
+			},
+		},
+		"ACL_TABLE" : map[string]interface{} {
+			"TestACL1": map[string] interface{} {
+				"stage": "INGRESS",
+				"type": "L3",
+				"ports@": "Ethernet3,Ethernet5",
+			},
+			"TestACL2": map[string] interface{} {
+				"stage": "INGRESS",
+				"type": "L3",
+			},
+		},
+		"ACL_RULE" : map[string]interface{} {
+			"TestACL1|Rule1": map[string] interface{} {
+				"PACKET_ACTION": "FORWARD",
+				"SRC_IP": "10.1.1.1/32",
+				"L4_SRC_PORT": "1909",
+				"IP_PROTOCOL": "103",
+				"DST_IP": "20.2.2.2/32",
+				"L4_DST_PORT_RANGE": "9000-12000",
+			},
+			"TestACL2|Rule2": map[string] interface{} {
+				"PACKET_ACTION": "FORWARD",
+				"SRC_IP": "10.1.1.1/32",
+				"L4_SRC_PORT": "1909",
+				"IP_PROTOCOL": "103",
+				"DST_IP": "20.2.2.2/32",
+				"L4_DST_PORT_RANGE": "9000-12000",
+			},
+		},
+	}
+
+	//Prepare data in Redis
+	loadConfigDB(rclient, depDataMap)
+
+	cfgDataAclRule :=  []cvl.CVLEditConfigData {
+		cvl.CVLEditConfigData {
+			cvl.VALIDATE_ALL,
+			cvl.OP_DELETE,
+			"ACL_RULE|TestACL2|Rule2",
+			map[string]string {
+			},
+		},
+	}
+
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	_, err := cvSess.ValidateEditConfig(cfgDataAclRule)
+
+	 cvl.ValidationSessClose(cvSess)
+
+	if err != cvl.CVL_SUCCESS { //should not succeed
+		t.Errorf("Config Validation failed.")
+	}
+
+	unloadConfigDB(rclient, depDataMap)
+}
+
 func TestValidateEditConfig_Delete_Must_Check_Negative(t *testing.T) {
 	depDataMap := map[string]interface{} {
 		"PORT" : map[string]interface{} {
