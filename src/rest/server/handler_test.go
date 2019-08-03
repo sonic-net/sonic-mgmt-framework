@@ -1,0 +1,227 @@
+///////////////////////////////////////////////////////////////////////
+//
+// Copyright 2019 Broadcom. All rights reserved.
+// The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
+//
+///////////////////////////////////////////////////////////////////////
+
+package server
+
+import (
+	"encoding/xml"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
+	"github.com/gorilla/mux"
+)
+
+func init() {
+	fmt.Println("+++++ init handler_test +++++")
+}
+
+var testRouter *mux.Router
+
+// Basic mux.Router tests
+func TestRoutes(t *testing.T) {
+	initCount := countRoutes(NewRouter())
+
+	// Add couple of test handlers
+
+	AddRoute("one", "GET", "/test/1", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(1)
+	})
+
+	AddRoute("two", "GET", "/test/2", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(2)
+	})
+
+	testRouter = NewRouter()
+	newCount := countRoutes(testRouter)
+
+	if newCount != initCount+2 {
+		t.Fatalf("Expected route count %d; found %d", initCount+2, newCount)
+	}
+
+	// Try the test URLs and an unknown URL. The unknonw path
+	// should return 404
+	t.Run("Get1", testGet("/test/1", 1))
+	t.Run("Get2", testGet("/test/2", 2))
+	t.Run("GetUnknown", testGet("/test/unknown", 404))
+	t.Run("Meta", testGet("/.well-known/host-meta", 200))
+
+	// Try the test URLs with authentication enabled.. This should
+	// fail the requests with 401 error. Unknown path should still
+	// return 404.
+	SetUserAuthEnable(true)
+	testRouter = NewRouter()
+	t.Run("Get1_auth", testGet("/test/1", 401))
+	t.Run("Get2_auth", testGet("/test/2", 401))
+	t.Run("GetUnknown_auth", testGet("/test/unknown", 404))
+
+	// Meta handler should not be affected by user auth
+	t.Run("Meta_auth", testGet("/.well-known/host-meta", 200))
+
+	// Cleanup for next tests
+	SetUserAuthEnable(false)
+	testRouter = nil
+}
+
+// countRoutes counts the registered routes in a mux.Router
+// object by walking it
+func countRoutes(r *mux.Router) int {
+	var count int
+	r.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
+		count++
+		return nil
+	})
+
+	return count
+}
+
+// Try the url and check response code
+func testGet(url string, expStatus int) func(*testing.T) {
+	return func(t *testing.T) {
+		w := httptest.NewRecorder()
+		testRouter.ServeHTTP(w, httptest.NewRequest("GET", url, nil))
+		if w.Code != expStatus {
+			t.Fatalf("Expected response code %d; found %d", expStatus, w.Code)
+		}
+	}
+}
+
+func TestMetadataHandler(t *testing.T) {
+	r := httptest.NewRequest("GET", "/.well-known/host-meta", nil)
+	w := httptest.NewRecorder()
+
+	NewRouter().ServeHTTP(w, r)
+
+	if w.Code != 200 {
+		t.Fatalf("Request failed with status %d", w.Code)
+	}
+
+	ct, _ := parseMediaType(w.Header().Get("content-type"))
+	if ct == nil || ct.Type != "application/xrd+xml" {
+		t.Fatalf("Unexpected content-type '%s'", w.Header().Get("content-type"))
+	}
+
+	data := w.Body.Bytes()
+	if len(data) == 0 {
+		t.Fatalf("No response body")
+	}
+
+	var payload struct {
+		XMLName xml.Name `xml:"XRD"`
+		Links   []struct {
+			Rel  string `xml:"rel,attr"`
+			Href string `xml:"href,attr"`
+		} `xml:"Link"`
+	}
+
+	err := xml.Unmarshal(data, &payload)
+	if err != nil {
+		t.Fatalf("Response parsing failed; err=%v", err)
+	}
+
+	if payload.XMLName.Local != "XRD" ||
+		payload.XMLName.Space != "http://docs.oasis-open.org/ns/xri/xrd-1.0" {
+		t.Fatalf("Invalid response '%s'", data)
+	}
+
+	var rcRoot string
+	for _, x := range payload.Links {
+		if x.Rel == "restconf" {
+			rcRoot = x.Href
+		}
+	}
+
+	t.Logf("Restconf root = '%s'", rcRoot)
+	if rcRoot != "/restconf" {
+		t.Fatalf("Invalid restconf root; expected '/restconf'")
+	}
+}
+
+// Test REST to Translib path conversions
+func TestPathConv(t *testing.T) {
+
+	t.Run("novar", testPathConv(
+		"/simple/url/with/no/vars",
+		"/simple/url/with/no/vars",
+		"/simple/url/with/no/vars"))
+
+	t.Run("1var", testPathConv(
+		"/sample/id={name}",
+		"/sample/id=TEST1",
+		"/sample/id[name=TEST1]"))
+
+	t.Run("1var_no=", testPathConv(
+		"/sample/{name}",
+		"/sample/TEST1",
+		"/sample/[name=TEST1]"))
+
+	t.Run("1var_middle", testPathConv(
+		"/sample/id={name}/test/suffix",
+		"/sample/id=TEST1/test/suffix",
+		"/sample/id[name=TEST1]/test/suffix"))
+
+	t.Run("2vars", testPathConv(
+		"/sample/id={name},{type}",
+		"/sample/id=TEST2,NEW",
+		"/sample/id[name=TEST2][type=NEW]"))
+
+	t.Run("2vars_middle", testPathConv(
+		"/sample/id={name},{type}/hey",
+		"/sample/id=TEST2,NEW/hey",
+		"/sample/id[name=TEST2][type=NEW]/hey"))
+
+	t.Run("5vars", testPathConv(
+		"/sample/key={name},{type},{subtype},{color},{ver}",
+		"/sample/key=TEST2,NEW,LATEST,RED,1.0",
+		"/sample/key[name=TEST2][type=NEW][subtype=LATEST][color=RED][ver=1.0]"))
+
+	t.Run("5vars_no=", testPathConv(
+		"/sample/{name},{type},{subtype},{color},{ver}",
+		"/sample/TEST2,NEW,LATEST,RED,1.0",
+		"/sample/[name=TEST2][type=NEW][subtype=LATEST][color=RED][ver=1.0]"))
+
+	t.Run("multi", testPathConv(
+		"/sample/id={name},{type},{subtype}/data/color={colorname},{rgb}/{ver}",
+		"/sample/id=TEST2,NEW,LATEST/data/color=RED,ff0000/1.0",
+		"/sample/id[name=TEST2][type=NEW][subtype=LATEST]/data/color[colorname=RED][rgb=ff0000]/[ver=1.0]"))
+
+}
+
+// test handler to invoke getPathForTranslib and write the conveted
+// path into response. Conversion logic depends on context values
+// managed by mux router. Hence should be called from a handler.
+var pathConvHandler = func(w http.ResponseWriter, r *http.Request) {
+	// t, _ := mux.CurrentRoute(r).GetPathTemplate()
+	// fmt.Printf("Patt : %v\n", t)
+	// fmt.Printf("Vars : %v\n", mux.Vars(r))
+
+	w.Write([]byte(getPathForTranslib(r)))
+}
+
+func testPathConv(template, path, expPath string) func(*testing.T) {
+	return func(t *testing.T) {
+		router := mux.NewRouter()
+		router.HandleFunc(template, pathConvHandler)
+
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, httptest.NewRequest("GET", path, nil))
+
+		convPath := w.Body.String()
+		if convPath != expPath {
+			t.Logf("Conversion for template '%s' failed", template)
+			t.Logf("Input path '%s'", path)
+			t.Logf("Converted  '%s'", convPath)
+			t.Logf("Expected   '%s'", expPath)
+			t.FailNow()
+		}
+	}
+}
+
+func TestReqContent(t *testing.T) {
+
+}
