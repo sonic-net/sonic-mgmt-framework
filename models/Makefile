@@ -12,10 +12,11 @@ BUILD_DIR := $(TOPDIR)/build
 CODEGEN_TOOLS_DIR := $(TOPDIR)/tools/swagger_codegen
 
 CODEGEN_VER	:= 2.4.5
-CODEGEN_JAR := $(BUILD_DIR)/swagger-codegen-cli-$(CODEGEN_VER).jar
+CODEGEN_JAR := $(CODEGEN_TOOLS_DIR)/swagger-codegen-cli-$(CODEGEN_VER).jar
 
-SERVER_CODEGEN_DIR	:= $(BUILD_DIR)/rest_server
-SERVER_DIST_DIR		:= $(SERVER_CODEGEN_DIR)/dist
+SERVER_BUILD_DIR	:= $(BUILD_DIR)/rest_server
+SERVER_CODEGEN_DIR	:= $(SERVER_BUILD_DIR)/codegen
+SERVER_DIST_DIR		:= $(SERVER_BUILD_DIR)/dist
 SERVER_DIST_INIT	:= $(SERVER_DIST_DIR)/.init_done
 SERVER_DIST_GO		:= $(SERVER_DIST_DIR)/src/swagger
 SERVER_DIST_UI		:= $(SERVER_DIST_DIR)/ui
@@ -137,6 +138,7 @@ $(SERVER_DIST_INIT): | $$(@D)/.
 #======================================================================
 
 clean-server:
+	rm -rf $(SERVER_DIST_DIR)
 	rm -rf $(SERVER_CODEGEN_DIR)
 
 clean-client:

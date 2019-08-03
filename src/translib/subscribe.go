@@ -21,6 +21,7 @@ import (
 	"sync"
 	"time"
 	"bytes"
+	"strconv"
 	"translib/db"
 	log "github.com/golang/glog"
 	"github.com/Workiva/go-datastructures/queue"
@@ -40,7 +41,6 @@ type notificationInfo struct{
 	cache			  []byte
 	sKey			   *db.SKey
 	dbs [db.MaxDB]	   *db.DB //used to perform get operations
-	sDB				   *db.DB //Subscription DB should be used only for keyspace notification
 }
 
 type subscribeInfo struct{
@@ -54,11 +54,13 @@ type subscribeInfo struct{
 var nMap map[*db.SKey]*notificationInfo
 var sMap map[*notificationInfo]*subscribeInfo
 var stopMap map[chan struct{}]*subscribeInfo
+var cleanupMap map[*db.DB]*subscribeInfo
 
 func init() {
 	nMap = make(map[*db.SKey]*notificationInfo)
 	sMap = make(map[*notificationInfo]*subscribeInfo)
 	stopMap	= make(map[chan struct{}]*subscribeInfo)
+	cleanupMap	= make(map[*db.DB]*subscribeInfo)
 }
 
 func runSubscribe(q *queue.PriorityQueue) error {
@@ -92,6 +94,7 @@ func startDBSubscribe(opt db.Options, nInfoList []*notificationInfo, sInfo *subs
 
 	if err == nil {
 		sInfo.sDBs = append(sInfo.sDBs, sDB)
+		cleanupMap[sDB] = sInfo
 	} else {
 		for i, nInfo := range nInfoList {
 			delete(nMap, sKeyList[i])
@@ -106,9 +109,7 @@ func notificationHandler(d *db.DB, sKey *db.SKey, key *db.Key, event db.SEvent) 
     log.Info("notificationHandler: d: ", d, " sKey: ", *sKey, " key: ", *key,
         " event: ", event)
 	switch event {
-	case db.SEventHSet:
-	case db.SEventHDel:
-	case db.SEventDel:
+	case db.SEventHSet, db.SEventHDel, db.SEventDel:
 		sMutex.Lock()
 		defer sMutex.Unlock()
 
@@ -119,9 +120,14 @@ func notificationHandler(d *db.DB, sKey *db.SKey, key *db.Key, event db.SEvent) 
 			isChanged := isCacheChanged(nInfo)
 
 			if isChanged {
-				sendNotification(sInfo, nInfo)
+				sendNotification(sInfo, nInfo, false)
 			}
 		}
+	case db.SEventClose:
+	case db.SEventErr:
+		sInfo := cleanupMap[d]
+		nInfo := sInfo.nInfoArr[0]
+		sendNotification(sInfo, nInfo, true)
 	}
 
     return nil
@@ -166,26 +172,25 @@ func startSubscribe(sInfo *subscribeInfo, dbNotificationMap map[db.DBNum][]*noti
     sMutex.Lock()
 	defer sMutex.Unlock()
 
+	stopMap[sInfo.stop] = sInfo
 
     for dbno, nInfoArr := range dbNotificationMap {
         opt := getDBOptions(dbno)
         err = startDBSubscribe(opt, nInfoArr, sInfo)
 
 		if err != nil {
-			//TODO:Need to cleanup old subscriptions
+			cleanup (sInfo.stop)
 			return err
 		}
 
         sInfo.nInfoArr = append(sInfo.nInfoArr, nInfoArr...)
     }
 
-	stopMap[sInfo.stop] = sInfo
-
     for i, nInfo := range sInfo.nInfoArr {
         err = updateCache(nInfo)
 
 		if err != nil {
-			//TODO:Need to cleanup all subscriptions
+			cleanup (sInfo.stop)
             return err
         }
 
@@ -193,9 +198,9 @@ func startSubscribe(sInfo *subscribeInfo, dbNotificationMap map[db.DBNum][]*noti
 			sInfo.syncDone = true
 		}
 
-		sendNotification(sInfo, nInfo)
+		sendNotification(sInfo, nInfo, false)
     }
-	printAllMaps()
+	//printAllMaps()
 
 	go stophandler(sInfo.stop)
 
@@ -232,14 +237,16 @@ func getJson (nInfo *notificationInfo) ([]byte, error) {
     return payload, err
 }
 
-func sendNotification(sInfo *subscribeInfo, nInfo *notificationInfo){
+func sendNotification(sInfo *subscribeInfo, nInfo *notificationInfo, isTerminated bool){
 	log.Info("Sending notification for sInfo = ", sInfo)
 	log.Info("payload = ", string(nInfo.cache))
+	log.Info("isTerminagted", strconv.FormatBool(isTerminated))
 	sInfo.q.Put(&SubscribeResponse{
 			Path:nInfo.path,
 			Payload:nInfo.cache,
 			Timestamp:    time.Now().UnixNano(),
 			SyncComplete: sInfo.syncDone,
+			IsTerminated: isTerminated,
 	})
 }
 
@@ -251,25 +258,29 @@ func stophandler(stop chan struct{}) {
 		    sMutex.Lock()
 			defer sMutex.Unlock()
 
-			sInfo := stopMap[stop]
-
-			for _, sDB := range sInfo.sDBs {
-				sDB.UnsubscribeDB()
-			}
-
-			for _, nInfo := range sInfo.nInfoArr {
-				delete(nMap, nInfo.sKey)
-				delete(sMap, nInfo)
-			}
-
-			delete(stopMap, stop)
-			printAllMaps()
+			cleanup (stop)
 
 			return
 		}
 	}
 
 	return
+}
+
+func cleanup (stop chan struct{}) {
+	sInfo := stopMap[stop]
+
+	for _, sDB := range sInfo.sDBs {
+		sDB.UnsubscribeDB()
+	}
+
+	for _, nInfo := range sInfo.nInfoArr {
+		delete(nMap, nInfo.sKey)
+		delete(sMap, nInfo)
+	}
+
+	delete(stopMap, stop)
+	printAllMaps()
 }
 
 func printnMap() {
