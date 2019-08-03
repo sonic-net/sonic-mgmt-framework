@@ -35,8 +35,6 @@ module sonic-bgp-neighbor {
 	container sonic-bgp-neighbor {
 		list BGP_NEIGHBOR {
 			key "ipaddress";
-			scommon:key-delim "|";
-			scommon:key-pattern "BGP_NEIGHBOR|{ipaddress}";
 
 			leaf ipaddress{
 				type inet:ip-address;

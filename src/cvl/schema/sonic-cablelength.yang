@@ -35,8 +35,6 @@ module sonic-cablelength {
 	container sonic-cablelength {	
 		list CABLE_LENGTH {
 			key "name";
-			scommon:key-delim "|";
-			scommon:key-pattern "CABLE_LENGTH|{name}";
 			scommon:map-list true; //special conversion for map tables
 			scommon:map-leaf "port length"; //every key:value pair is mapped to list keys, e.g. "1":"7" ==> tc_num=1, dscp=7
 

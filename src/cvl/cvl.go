@@ -243,8 +243,25 @@ func storeModelInfo(modelFile string, module *yparser.YParserModule) { //such mo
 				tableInfo.dbNum = dbNameToDbNum[node.Attr[0].Value]
 				fieldCount++
 			case "key":
+                                var keypattern string
+                                var keyname string
 				tableInfo.keys = strings.Split(node.Attr[0].Value," ")
-				fieldCount++
+                                fieldCount++
+                                keypattern = keypattern +  tableName + tableInfo.redisKeyDelim
+
+				/* Create the default key pattern . */
+				for index , key := range tableInfo.keys {
+
+					/* Add separator for all keys except last key. */
+					if (index != len(tableInfo.keys) - 1) {
+						keyname = fmt.Sprintf("{%s}%s",key, tableInfo.redisKeyDelim)
+					} else {
+						keyname = fmt.Sprintf("{%s}",key)
+					}
+					keypattern = keypattern + keyname
+				}
+
+                                tableInfo.redisKeyPattern = keypattern
 			case "key-delim":
 				tableInfo.redisKeyDelim = node.Attr[0].Value
 				fieldCount++

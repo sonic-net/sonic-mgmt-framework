@@ -36,8 +36,6 @@ module sonic-device-neighbor {
 	container sonic-device-neighbor {
 		list DEVICE_NEIGHBOR {
 			key "name";
-			scommon:key-delim "|";
-			scommon:key-pattern "DEVICE_NEIGHBOR|{name}";
 
 			leaf name{
 				type string;
