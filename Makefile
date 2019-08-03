@@ -54,16 +54,16 @@ go-deps: $(GO_DEPS_LIST)
 $(GO_DEPS_LIST):
 	$(GO) get -v $@
 
-cli:
+cli: rest-server
 	$(MAKE) -C src/CLI
 
-cvl:
+cvl: go-deps
 	$(MAKE) -C src/cvl
 	$(MAKE) -C src/cvl/schema
 cvl-test:
 	$(MAKE) -C src/cvl gotest
 
-rest-server:
+rest-server: translib
 	$(MAKE) -C src/rest
 
 rest-clean:
