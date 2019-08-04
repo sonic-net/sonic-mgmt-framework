@@ -94,10 +94,6 @@ module sonic-acl {
 
 		list ACL_RULE { 
 			key "aclname rulename";
-			/*
-			scommon:key-delim "|";
-			scommon:key-pattern "ACL_RULE|{aclname}|{rulename}";
-			*/
 			scommon:pf-check    "ACL_CheckAclLimits";	
 
 			/* Limit for number of dynamic ACL rules */	

@@ -80,8 +80,6 @@ module sonic-vlan {
 
 		list VLAN_MEMBER { 
 			key "name ifname";
-			scommon:key-delim "|";
-			scommon:key-pattern "VLAN_MEMBER|{name}|{ifname}";
 
 			leaf name {
 				type leafref {
