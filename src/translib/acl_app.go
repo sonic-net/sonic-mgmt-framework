@@ -9,7 +9,6 @@ package translib
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -291,7 +290,7 @@ func (app *AclApp) translateCRUCommon(d *db.DB, opcode int) ([]db.WatchKeys, err
 	log.Info("translateCRUCommon:acl:path =", app.pathInfo.Template)
 
 	app.convertOCAclsToInternal()
-	app.convertOCAclRulesToInternal()
+	app.convertOCAclRulesToInternal(d)
 	app.bindAclFlag = app.convertOCAclBindingsToInternal()
 
 	return keys, err
@@ -313,12 +312,14 @@ func (app *AclApp) processCommon(d *db.DB, opcode int) error {
 
 	targetUriPath, _ := getYangPathFromUri(app.pathInfo.Path)
 	if isSubtreeRequest(app.pathInfo.Template, "/openconfig-acl:acl/acl-sets") {
-		if isSubtreeRequest(app.pathInfo.Template, "/openconfig-acl:acl/acl-sets/acl-set{name}{type}") {
+		if isSubtreeRequest(app.pathInfo.Template, "/openconfig-acl:acl/acl-sets/acl-set{name}{type}") ||
+			isSubtreeRequest(app.pathInfo.Template, "/openconfig-acl:acl/acl-sets/acl-set{type}{name}") {
 			for aclSetKey, _ := range acl.AclSets.AclSet {
 				aclSet := acl.AclSets.AclSet[aclSetKey]
 				aclKey := getAclKeyStrFromOCKey(aclSetKey.Name, aclSetKey.Type)
 
-				if isSubtreeRequest(app.pathInfo.Template, "/openconfig-acl:acl/acl-sets/acl-set{name}{type}/acl-entries/acl-entry{sequence-id}") {
+				if isSubtreeRequest(app.pathInfo.Template, "/openconfig-acl:acl/acl-sets/acl-set{name}{type}/acl-entries/acl-entry{sequence-id}") ||
+					isSubtreeRequest(app.pathInfo.Template, "/openconfig-acl:acl/acl-sets/acl-set{type}{name}/acl-entries/acl-entry{sequence-id}") {
 					// Subtree of one Rule
 					for seqId, _ := range aclSet.AclEntries.AclEntry {
 						ruleKey := "RULE_" + strconv.Itoa(int(seqId))
@@ -354,7 +355,7 @@ func (app *AclApp) processCommon(d *db.DB, opcode int) error {
 						}
 					}
 				} else {
-					isAclEntriesSubtree := isSubtreeRequest(app.pathInfo.Template, "/openconfig-acl:acl/acl-sets/acl-set{name}{type}/acl-entries")
+					isAclEntriesSubtree := isSubtreeRequest(app.pathInfo.Template, "/openconfig-acl:acl/acl-sets/acl-set{name}{type}/acl-entries") || isSubtreeRequest(app.pathInfo.Template, "/openconfig-acl:acl/acl-sets/acl-set{type}{name}/acl-entries")
 					switch opcode {
 					case CREATE:
 						if *app.ygotTarget == aclSet {
@@ -417,7 +418,7 @@ func (app *AclApp) processCommon(d *db.DB, opcode int) error {
 			}
 		} else {
 			// All Acls and their rules
-			app.processCommonToplevelPath(d, acl, opcode, false)
+			err = app.processCommonToplevelPath(d, acl, opcode, false)
 		}
 	} else if isSubtreeRequest(app.pathInfo.Template, "/openconfig-acl:acl/interfaces") {
 		switch opcode {
@@ -444,7 +445,7 @@ func (app *AclApp) processCommon(d *db.DB, opcode int) error {
 					}
 				}
 			} else {
-				app.getAllBindingsInfo(d)
+				err = app.getAllBindingsInfo(d)
 			}
 		}
 	} else {
@@ -555,7 +556,7 @@ func (app *AclApp) convertDBAclToInternal(dbCl *db.DB, aclkey db.Key) error {
 				return err
 			}
 		} else {
-			return errors.New("ACL is not configured")
+			return tlerr.NotFound("Acl %s is not configured", aclkey.Get(0))
 		}
 	} else {
 		// Get all ACLs
@@ -663,6 +664,14 @@ func (app *AclApp) convertInternalToOCAclRuleProperties(ruleData db.Value, aclTy
 			port := ruleData.Get(ruleKey)
 			entrySet.Transport.Config.DestinationPort = getTransportConfigDestPort(port)
 			//entrySet.Transport.State.DestinationPort = &addr
+		} else if "L4_SRC_PORT_RANGE" == ruleKey {
+			portRange := ruleData.Get(ruleKey)
+			fmt.Printf("L4_SRC_PORT_RANGE: %s\n", portRange)
+			//entrySet.Transport.Config.SourcePort = getTransportConfigSrcPort(portRange)
+		} else if "L4_DST_PORT_RANGE" == ruleKey {
+			portRange := ruleData.Get(ruleKey)
+			fmt.Printf("L4_DST_PORT_RANGE: %s\n", portRange)
+			//entrySet.Transport.Config.DestinationPort = getTransportConfigDestPort(portRange)
 		} else if "TCP_FLAGS" == ruleKey {
 			tcpFlags := ruleData.Get(ruleKey)
 			entrySet.Transport.Config.TcpFlags = getTransportConfigTcpFlags(tcpFlags)
@@ -789,7 +798,7 @@ func (app *AclApp) convertInternalToOCAclBinding(d *db.DB, aclName string, intfI
 			return err1
 		}
 		if !contains(aclEntry.GetList("ports"), intfId) {
-			return errors.New("Acl " + aclName + " not binded with " + intfId)
+			return tlerr.InvalidArgs("Acl %s not binded with %s", aclName, intfId)
 		}
 	}
 
@@ -939,7 +948,7 @@ func (app *AclApp) findAndGetAclBindingInfoForInterfaceData(d *db.DB, intfId str
 			aclOrigName = strings.Replace(aclName, "_"+OPENCONFIG_ACL_TYPE_IPV4, "", 1)
 			aclOrigType = ocbinds.OpenconfigAcl_ACL_TYPE_ACL_IPV4
 		} else if SONIC_ACL_TYPE_IPV6 == aclType {
-			aclOrigName = strings.Replace(aclName, "_"+OPENCONFIG_ACL_TYPE_IPV4, "", 1)
+			aclOrigName = strings.Replace(aclName, "_"+OPENCONFIG_ACL_TYPE_IPV6, "", 1)
 			aclOrigType = ocbinds.OpenconfigAcl_ACL_TYPE_ACL_IPV6
 		} else if SONIC_ACL_TYPE_L2 == aclType {
 			aclOrigName = strings.Replace(aclName, "_"+OPENCONFIG_ACL_TYPE_L2, "", 1)
@@ -1023,10 +1032,10 @@ func (app *AclApp) handleBindingsDeletion(d *db.DB) error {
 			if isSubtreeRequest(app.pathInfo.Template, "/openconfig-acl:acl/interfaces/interface{id}") {
 				direction := aclEntry.Get("stage")
 				if isSubtreeRequest(app.pathInfo.Template, "/openconfig-acl:acl/interfaces/interface{id}/ingress-acl-sets") && direction != "INGRESS" {
-					return errors.New("Acl is not Ingress")
+					return tlerr.InvalidArgs("Acl %s is not Ingress", aclKeys[i].Get(0))
 				}
 				if isSubtreeRequest(app.pathInfo.Template, "/openconfig-acl:acl/interfaces/interface{id}/egress-acl-sets") && direction != "EGRESS" {
-					return errors.New("Acl is not Egress")
+					return tlerr.InvalidArgs("Acl %s is not Egress", aclKeys[i].Get(0))
 				}
 				for intfId := range acl.Interfaces.Interface {
 					aclname, acltype := getAclKeysFromStrKey(aclKeys[i].Get(0), aclEntry.Get("type"))
@@ -1037,7 +1046,7 @@ func (app *AclApp) handleBindingsDeletion(d *db.DB) error {
 								if acltype == k.Type {
 									isRequestedAclFound = true
 								} else {
-									return errors.New("Acl Type is not maching")
+									return tlerr.InvalidArgs("Acl Type is not matching")
 								}
 							} else {
 								goto SkipDBProcessing
@@ -1049,7 +1058,7 @@ func (app *AclApp) handleBindingsDeletion(d *db.DB) error {
 								if acltype == k.Type {
 									isRequestedAclFound = true
 								} else {
-									return errors.New("Acl Type is not maching")
+									return tlerr.InvalidArgs("Acl Type is not matching")
 								}
 							} else {
 								goto SkipDBProcessing
@@ -1115,7 +1124,7 @@ func (app *AclApp) convertOCAclsToInternal() {
 	}
 }
 
-func (app *AclApp) convertOCAclRulesToInternal() {
+func (app *AclApp) convertOCAclRulesToInternal(d *db.DB) {
 	acl := app.getAppRootObject()
 	if acl != nil {
 		app.ruleTableMap = make(map[string]map[string]db.Value)
@@ -1136,7 +1145,7 @@ func (app *AclApp) convertOCAclRulesToInternal() {
 
 				yangPathStr, _ := getYangPathFromUri(app.pathInfo.Path)
 				if yangPathStr != "/openconfig-acl:acl/acl-sets/acl-set/acl-entries" && yangPathStr != "/openconfig-acl:acl/acl-sets/acl-set/acl-entries/acl-entry" {
-					app.createDefaultDenyAclRule(app.ruleTableMap[aclKey])
+					app.createDefaultDenyAclRule(d, aclKey, app.ruleTableMap[aclKey])
 				}
 			}
 		}
@@ -1195,7 +1204,12 @@ func (app *AclApp) convertOCAclBindingsToInternal() bool {
 	return ret
 }
 
-func (app *AclApp) createDefaultDenyAclRule(rulesInfo map[string]db.Value) {
+func (app *AclApp) createDefaultDenyAclRule(d *db.DB, aclName string, rulesInfo map[string]db.Value) {
+	existingRuleEntry, err := d.GetEntry(app.ruleTs, db.Key{Comp: []string{aclName, "DEFAULT_RULE"}})
+	// If Default Rule already exists, Do not add new Default Rule
+	if existingRuleEntry.IsPopulated() && err == nil {
+		return
+	}
 	m := make(map[string]string)
 	rulesInfo["DEFAULT_RULE"] = db.Value{Field: m}
 	rulesInfo["DEFAULT_RULE"].Field["PRIORITY"] = strconv.FormatInt(int64(MIN_PRIORITY), 10)
@@ -1421,7 +1435,7 @@ func (app *AclApp) setAclDataInConfigDb(d *db.DB, aclData map[string]db.Value, c
 		existingEntry, err := d.GetEntry(app.aclTs, db.Key{Comp: []string{key}})
 		// If Create ACL request comes and ACL already exists, throw error
 		if createFlag && existingEntry.IsPopulated() {
-			return errors.New("Acl " + key + " already exists")
+			return tlerr.AlreadyExists("Acl %s already exists", key)
 		}
 		if createFlag || (!createFlag && err != nil && !existingEntry.IsPopulated()) {
 			err := d.CreateEntry(app.aclTs, db.Key{Comp: []string{key}}, aclData[key])
@@ -1456,7 +1470,7 @@ func (app *AclApp) setAclRuleDataInConfigDb(d *db.DB, ruleData map[string]map[st
 			existingRuleEntry, err := d.GetEntry(app.ruleTs, db.Key{Comp: []string{aclName, ruleName}})
 			// If Create Rule request comes and Rule already exists, throw error
 			if createFlag && existingRuleEntry.IsPopulated() {
-				return errors.New("Rule " + ruleName + " already exists")
+				return tlerr.AlreadyExists("Rule %s already exists", ruleName)
 			}
 			if createFlag || (!createFlag && err != nil && !existingRuleEntry.IsPopulated()) {
 				err := d.CreateEntry(app.ruleTs, db.Key{Comp: []string{aclName, ruleName}}, ruleData[aclName][ruleName])
