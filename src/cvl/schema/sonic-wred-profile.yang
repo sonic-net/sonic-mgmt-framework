@@ -27,8 +27,6 @@ module sonic-wred-profile {
 	container sonic-wred-profile {
 		list WRED_PROFILE {
 			key "name";
-			scommon:key-delim "|";
-			scommon:key-pattern "WRED_PROFILE|{name}";
 
 			leaf name{
 				type string;

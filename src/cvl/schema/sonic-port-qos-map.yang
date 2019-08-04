@@ -48,7 +48,6 @@ module sonic-port-qos-map {
 
 		list PORT_QOS_MAP {
 			key "ifname";
-			scommon:key-delim "|";
 			scommon:key-pattern "PORT_QOS_MAP|({ifname},)*"; //special pattern used for extracting keys from redis-key and fill populate the yang instance
 									   // Total list instance = number(key1) * number(key2) * number(key3)
 

@@ -35,8 +35,6 @@ module sonic-vlan-interface {
 	container sonic-vlan-interface {
 		list VLAN_INTERFACE {
 			key "portname ip_prefix";
-                        scommon:key-delim "|";
-                        scommon:key-pattern "VLAN_INTERFACE|{portname}|{ip_prefix}";
 
 			leaf portname{
 				type leafref {

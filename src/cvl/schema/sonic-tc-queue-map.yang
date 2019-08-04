@@ -27,8 +27,6 @@ module sonic-tc-queue-map {
 	container sonic-tc-queue-map {
 		list TC_TO_QUEUE_MAP {
 			key "name";
-			scommon:key-delim "|";
-			scommon:key-pattern "TC_TO_QUEUE_MAP|{name}";
 			scommon:map-list "true"; //special conversion for map tables
 			scommon:map-leaf "tc_num qindex"; //every key:value pair is mapped to list keys, e.g. "1":"7" ==> tc_num=1, qindex=7
 

@@ -35,8 +35,6 @@ module sonic-interface {
 	container sonic-interface {
 		list INTERFACE {
 			key "portname ip_prefix";
-                        scommon:key-delim "|";
-                        scommon:key-pattern "INTERFACE|{portname}|{ip_prefix}";
 
 			leaf portname{
 				type leafref {

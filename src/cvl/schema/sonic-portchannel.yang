@@ -32,8 +32,6 @@ module sonic-portchannel {
 
 		list PORTCHANNEL {
 			key "name";
-			scommon:key-delim "|";
-			scommon:key-pattern "PORTCHANNEL|{name}";
 
 			max-elements 3;
 
