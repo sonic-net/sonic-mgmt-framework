@@ -64,6 +64,14 @@ func TestErrorEntry(t *testing.T) {
 		httpError(403, "hii"),
 		403, "protocol", "access-denied", "", "hii"))
 
+	t.Run("NotFound", testErrorEntry(
+		httpError(404, "404 NotFound."),
+		404, "protocol", "invalid-value", "", "404 NotFound."))
+
+	t.Run("NotSupported", testErrorEntry(
+		httpError(405, "405 NotSupported."),
+		405, "protocol", "operation-not-supported", "", "405 NotSupported."))
+
 	t.Run("UnknownMediaType", testErrorEntry(
 		httpError(415, "hii"),
 		415, "protocol", "invalid-value", "", "hii"))
