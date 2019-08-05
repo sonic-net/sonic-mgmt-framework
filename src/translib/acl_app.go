@@ -453,7 +453,7 @@ func (app *AclApp) processCommon(d *db.DB, opcode int) error {
 	}
 
 	if !topmostPath && !isSubtreeRequest(targetUriPath, "/openconfig-acl:acl/acl-sets") && !isSubtreeRequest(targetUriPath, "/openconfig-acl:acl/interfaces") {
-		log.Infof("Inside processCommon: Path \"%s\" not handled in App module", app.pathInfo.Template)
+		err = tlerr.NotSupported("URL %s is not supported", app.pathInfo.Template)
 	}
 
 	return err
@@ -656,22 +656,16 @@ func (app *AclApp) convertInternalToOCAclRuleProperties(ruleData db.Value, aclTy
 	ygot.BuildEmptyTree(entrySet.Actions)
 
 	for ruleKey := range ruleData.Field {
-		if "L4_SRC_PORT" == ruleKey {
+		if "L4_SRC_PORT" == ruleKey || "L4_SRC_PORT_RANGE" == ruleKey {
 			port := ruleData.Get(ruleKey)
-			entrySet.Transport.Config.SourcePort = getTransportConfigSrcPort(port)
-			//entrySet.Transport.State.SourcePort = &addr
-		} else if "L4_DST_PORT" == ruleKey {
+			srcPort := getTransportSrcDestPorts(port, "src")
+			entrySet.Transport.Config.SourcePort, _ = entrySet.Transport.Config.To_OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_SourcePort_Union(srcPort)
+			entrySet.Transport.State.SourcePort, _ = entrySet.Transport.State.To_OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_State_SourcePort_Union(srcPort)
+		} else if "L4_DST_PORT" == ruleKey || "L4_DST_PORT_RANGE" == ruleKey {
 			port := ruleData.Get(ruleKey)
-			entrySet.Transport.Config.DestinationPort = getTransportConfigDestPort(port)
-			//entrySet.Transport.State.DestinationPort = &addr
-		} else if "L4_SRC_PORT_RANGE" == ruleKey {
-			portRange := ruleData.Get(ruleKey)
-			fmt.Printf("L4_SRC_PORT_RANGE: %s\n", portRange)
-			//entrySet.Transport.Config.SourcePort = getTransportConfigSrcPort(portRange)
-		} else if "L4_DST_PORT_RANGE" == ruleKey {
-			portRange := ruleData.Get(ruleKey)
-			fmt.Printf("L4_DST_PORT_RANGE: %s\n", portRange)
-			//entrySet.Transport.Config.DestinationPort = getTransportConfigDestPort(portRange)
+			destPort := getTransportSrcDestPorts(port, "dest")
+			entrySet.Transport.Config.DestinationPort, _ = entrySet.Transport.Config.To_OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_DestinationPort_Union(destPort)
+			entrySet.Transport.State.DestinationPort, _ = entrySet.Transport.State.To_OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_State_DestinationPort_Union(destPort)
 		} else if "TCP_FLAGS" == ruleKey {
 			tcpFlags := ruleData.Get(ruleKey)
 			entrySet.Transport.Config.TcpFlags = getTransportConfigTcpFlags(tcpFlags)
@@ -679,10 +673,10 @@ func (app *AclApp) convertInternalToOCAclRuleProperties(ruleData db.Value, aclTy
 		} else if "PACKET_ACTION" == ruleKey {
 			if "FORWARD" == ruleData.Get(ruleKey) {
 				entrySet.Actions.Config.ForwardingAction = ocbinds.OpenconfigAcl_FORWARDING_ACTION_ACCEPT
-				//entrySet.Actions.State.ForwardingAction = ocbinds.OpenconfigAcl_FORWARDING_ACTION_ACCEPT
+				entrySet.Actions.State.ForwardingAction = ocbinds.OpenconfigAcl_FORWARDING_ACTION_ACCEPT
 			} else {
 				entrySet.Actions.Config.ForwardingAction = ocbinds.OpenconfigAcl_FORWARDING_ACTION_DROP
-				//entrySet.Actions.State.ForwardingAction = ocbinds.OpenconfigAcl_FORWARDING_ACTION_DROP
+				entrySet.Actions.State.ForwardingAction = ocbinds.OpenconfigAcl_FORWARDING_ACTION_DROP
 			}
 		}
 	}
@@ -692,11 +686,9 @@ func (app *AclApp) convertInternalToOCAclRuleProperties(ruleData db.Value, aclTy
 		for ruleKey := range ruleData.Field {
 			if "IP_PROTOCOL" == ruleKey {
 				ipProto, _ := strconv.ParseInt(ruleData.Get(ruleKey), 10, 64)
-				ipv4ProElem := getIpProtocol(ipProto, ocbinds.OpenconfigAcl_ACL_TYPE_ACL_IPV4, "config")
-				entrySet.Ipv4.Config.Protocol = ipv4ProElem.(*ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Ipv4_Config_Protocol_Union_E_OpenconfigPacketMatchTypes_IP_PROTOCOL)
-
-				ipv4ProElem = getIpProtocol(ipProto, ocbinds.OpenconfigAcl_ACL_TYPE_ACL_IPV4, "state")
-				entrySet.Ipv4.State.Protocol = ipv4ProElem.(*ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Ipv4_State_Protocol_Union_E_OpenconfigPacketMatchTypes_IP_PROTOCOL)
+				protocolVal := getIpProtocol(ipProto)
+				entrySet.Ipv4.Config.Protocol, _ = entrySet.Ipv4.Config.To_OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Ipv4_Config_Protocol_Union(protocolVal)
+				entrySet.Ipv4.State.Protocol, _ = entrySet.Ipv4.State.To_OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Ipv4_State_Protocol_Union(protocolVal)
 			} else if "DSCP" == ruleKey {
 				var dscp uint8
 				dscpData, _ := strconv.ParseInt(ruleData.Get(ruleKey), 10, 64)
@@ -718,27 +710,33 @@ func (app *AclApp) convertInternalToOCAclRuleProperties(ruleData db.Value, aclTy
 		for ruleKey := range ruleData.Field {
 			if "IP_PROTOCOL" == ruleKey {
 				ipProto, _ := strconv.ParseInt(ruleData.Get(ruleKey), 10, 64)
-				ipv6ProElem := getIpProtocol(ipProto, ocbinds.OpenconfigAcl_ACL_TYPE_ACL_IPV6, "config")
-				entrySet.Ipv6.Config.Protocol = ipv6ProElem.(*ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Ipv6_Config_Protocol_Union_E_OpenconfigPacketMatchTypes_IP_PROTOCOL)
-
-				ipv6ProElem = getIpProtocol(ipProto, ocbinds.OpenconfigAcl_ACL_TYPE_ACL_IPV6, "state")
-				entrySet.Ipv6.State.Protocol = ipv6ProElem.(*ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Ipv6_State_Protocol_Union_E_OpenconfigPacketMatchTypes_IP_PROTOCOL)
+				protocolVal := getIpProtocol(ipProto)
+				entrySet.Ipv6.Config.Protocol, _ = entrySet.Ipv6.Config.To_OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Ipv6_Config_Protocol_Union(protocolVal)
+				entrySet.Ipv6.State.Protocol, _ = entrySet.Ipv6.State.To_OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Ipv6_State_Protocol_Union(protocolVal)
 			} else if "DSCP" == ruleKey {
 				var dscp uint8
 				dscpData, _ := strconv.ParseInt(ruleData.Get(ruleKey), 10, 64)
 				dscp = uint8(dscpData)
 				entrySet.Ipv6.Config.Dscp = &dscp
 				entrySet.Ipv6.State.Dscp = &dscp
+			} else if "SRC_IPV6" == ruleKey {
+				addr := ruleData.Get(ruleKey)
+				entrySet.Ipv6.Config.SourceAddress = &addr
+				entrySet.Ipv6.State.SourceAddress = &addr
+			} else if "DST_IPV6" == ruleKey {
+				addr := ruleData.Get(ruleKey)
+				entrySet.Ipv6.Config.DestinationAddress = &addr
+				entrySet.Ipv6.State.DestinationAddress = &addr
 			}
 		}
 	} else if aclType == ocbinds.OpenconfigAcl_ACL_TYPE_ACL_L2 {
 		ygot.BuildEmptyTree(entrySet.L2)
 		for ruleKey := range ruleData.Field {
 			if "ETHER_TYPE" == ruleKey {
-				ethType, _ := strconv.ParseInt(ruleData.Get(ruleKey), 10, 64)
-				fmt.Println(ethType)
-				//entrySet.L2.Config.Ethertype = ""
-				//entrySet.Ipv6.State.Protocol = getIpProtocolState(ipProto)
+				ethType, _ := strconv.ParseUint(strings.Replace(ruleData.Get(ruleKey), "0x", "", -1), 16, 32)
+				ethertype := getL2EtherType(ethType)
+				entrySet.L2.Config.Ethertype, _ = entrySet.L2.Config.To_OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_L2_Config_Ethertype_Union(ethertype)
+				entrySet.L2.State.Ethertype, _ = entrySet.L2.State.To_OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_L2_State_Ethertype_Union(ethertype)
 			}
 		}
 	}
@@ -992,7 +990,7 @@ func (app *AclApp) findAndGetAclBindingInfoForInterfaceData(d *db.DB, intfId str
 	return err
 }
 
-func (app *AclApp) isInterfaceBindWithACL(d *db.DB, intfId string) bool {
+/*func (app *AclApp) isInterfaceBindWithACL(d *db.DB, intfId string) bool {
 	var isFound bool = false
 
 	if len(app.aclTableMap) == 0 {
@@ -1018,7 +1016,7 @@ func (app *AclApp) isInterfaceBindWithACL(d *db.DB, intfId string) bool {
 
 	isFound = contains(interfaces, intfId)
 	return isFound
-}
+}*/
 
 func (app *AclApp) handleBindingsDeletion(d *db.DB) error {
 	var err error
@@ -1529,90 +1527,35 @@ func (app *AclApp) setAclBindDataInConfigDb(d *db.DB, aclData map[string]db.Valu
 	return err
 }
 
-func getIpProtocol(proto int64, aclType ocbinds.E_OpenconfigAcl_ACL_TYPE, contType string) interface{} {
-	foundInMap := false
-	var ptype ocbinds.E_OpenconfigPacketMatchTypes_IP_PROTOCOL = ocbinds.OpenconfigPacketMatchTypes_IP_PROTOCOL_UNSET
-
+func getIpProtocol(proto int64) interface{} {
 	for k, v := range IP_PROTOCOL_MAP {
-		if proto == int64(v) {
-			foundInMap = true
-			ptype = k
+		if uint8(proto) == v {
+			return k
 		}
 	}
+	return uint8(proto)
+}
 
-	switch aclType {
-	case ocbinds.OpenconfigAcl_ACL_TYPE_ACL_IPV4:
-		if "config" == contType {
-			if foundInMap {
-				var ipProCfg *ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Ipv4_Config_Protocol_Union_E_OpenconfigPacketMatchTypes_IP_PROTOCOL
-				ipProCfg = new(ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Ipv4_Config_Protocol_Union_E_OpenconfigPacketMatchTypes_IP_PROTOCOL)
-				ipProCfg.E_OpenconfigPacketMatchTypes_IP_PROTOCOL = ptype
-				return ipProCfg
-			} else {
-				var ipProCfgUint8 *ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Ipv4_Config_Protocol_Union_Uint8
-				ipProCfgUint8 = new(ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Ipv4_Config_Protocol_Union_Uint8)
-				ipProCfgUint8.Uint8 = uint8(proto)
-				return ipProCfgUint8
-			}
-		} else if "state" == contType {
-			if foundInMap {
-				var ipProSt *ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Ipv4_State_Protocol_Union_E_OpenconfigPacketMatchTypes_IP_PROTOCOL
-				ipProSt = new(ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Ipv4_State_Protocol_Union_E_OpenconfigPacketMatchTypes_IP_PROTOCOL)
-				ipProSt.E_OpenconfigPacketMatchTypes_IP_PROTOCOL = ptype
-				return ipProSt
-			} else {
-				var ipProStUint8 *ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Ipv4_State_Protocol_Union_Uint8
-				ipProStUint8 = new(ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Ipv4_State_Protocol_Union_Uint8)
-				ipProStUint8.Uint8 = uint8(proto)
-				return ipProStUint8
-			}
+func getTransportSrcDestPorts(portVal string, portType string) interface{} {
+	var portRange string = ""
+
+	portNum, err := strconv.Atoi(portVal)
+	if err != nil && strings.Contains(portVal, "-") {
+		portRange = portVal
+	}
+
+	if len(portRange) > 0 {
+		return portRange
+	} else if portNum > 0 {
+		return uint16(portNum)
+	} else {
+		if "src" == portType {
+			return ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_SourcePort_ANY
+		} else if "dest" == portType {
+			return ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_DestinationPort_ANY
 		}
-		break
-	case ocbinds.OpenconfigAcl_ACL_TYPE_ACL_IPV6:
-		if "config" == contType {
-			if foundInMap {
-				var ipv6ProCfg *ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Ipv6_Config_Protocol_Union_E_OpenconfigPacketMatchTypes_IP_PROTOCOL
-				ipv6ProCfg = new(ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Ipv6_Config_Protocol_Union_E_OpenconfigPacketMatchTypes_IP_PROTOCOL)
-				ipv6ProCfg.E_OpenconfigPacketMatchTypes_IP_PROTOCOL = ptype
-				return ipv6ProCfg
-			} else {
-				var ipv6ProCfgUint8 *ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Ipv6_Config_Protocol_Union_Uint8
-				ipv6ProCfgUint8 = new(ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Ipv6_Config_Protocol_Union_Uint8)
-				ipv6ProCfgUint8.Uint8 = uint8(proto)
-				return ipv6ProCfgUint8
-			}
-		} else if "state" == contType {
-			if foundInMap {
-				var ipv6ProSt *ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Ipv6_State_Protocol_Union_E_OpenconfigPacketMatchTypes_IP_PROTOCOL
-				ipv6ProSt = new(ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Ipv6_State_Protocol_Union_E_OpenconfigPacketMatchTypes_IP_PROTOCOL)
-				ipv6ProSt.E_OpenconfigPacketMatchTypes_IP_PROTOCOL = ptype
-				return ipv6ProSt
-			} else {
-				var ipv6ProStUint8 *ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Ipv6_State_Protocol_Union_Uint8
-				ipv6ProStUint8 = new(ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Ipv6_State_Protocol_Union_Uint8)
-				ipv6ProStUint8.Uint8 = uint8(proto)
-				return ipv6ProStUint8
-			}
-		}
-		break
 	}
 	return nil
-}
-
-func getTransportConfigDestPort(destPort string) ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_DestinationPort_Union {
-	portNum, _ := strconv.ParseInt(destPort, 10, 64)
-	var destPortCfg *ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_DestinationPort_Union_Uint16
-	destPortCfg = new(ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_DestinationPort_Union_Uint16)
-	destPortCfg.Uint16 = uint16(portNum)
-	return destPortCfg
-}
-
-func getTransportConfigSrcPort(srcPort string) ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_SourcePort_Union {
-	portNum, _ := strconv.ParseInt(srcPort, 10, 64)
-	var srcPortCfg *ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_SourcePort_Union_Uint16
-	srcPortCfg = new(ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_SourcePort_Union_Uint16)
-	srcPortCfg.Uint16 = uint16(portNum)
-	return srcPortCfg
 }
 
 func getTransportConfigTcpFlags(tcpFlags string) []ocbinds.E_OpenconfigPacketMatchTypes_TCP_FLAGS {
@@ -1646,6 +1589,15 @@ func getTransportConfigTcpFlags(tcpFlags string) []ocbinds.E_OpenconfigPacketMat
 		}
 	}
 	return flags
+}
+
+func getL2EtherType(etherType uint64) interface{} {
+	for k, v := range ETHERTYPE_MAP {
+		if uint32(etherType) == v {
+			return k
+		}
+	}
+	return uint16(etherType)
 }
 
 func getAclKeysFromStrKey(aclKey string, aclType string) (string, ocbinds.E_OpenconfigAcl_ACL_TYPE) {
