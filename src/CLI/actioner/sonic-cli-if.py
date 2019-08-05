@@ -46,9 +46,9 @@ def generate_body(func, args):
        sp = args[1].split('/')
        keypath = [ args[0], 0, sp[0] ]
        body = { "openconfig-if-ip:config":  {"ip" : sp[0], "prefix-length" : int(sp[1])} }
-    elif func.__name__ == 'delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config':
+    elif func.__name__ == 'delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config_prefix_length':
        keypath = [args[0], 0, args[1]]
-    elif func.__name__ == 'delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config':
+    elif func.__name__ == 'delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config_prefix_length':
        keypath = [args[0], 0, args[1]]
     elif func.__name__ == 'get_openconfig_interfaces_interfaces_interface':
 	keypath = [args[0]]
