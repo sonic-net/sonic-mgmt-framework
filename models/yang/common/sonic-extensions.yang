@@ -30,8 +30,8 @@ module sonic-extensions {
     description "Db table name.";
   }
 
-  extension key-xfmr {
-    argument "key-xfmr-name";
+  extension key-transformer {
+    argument "key-transformer-name";
     description "Db table key transformer name indicating that the list keys together form db table keys.";
   }
 
@@ -45,19 +45,19 @@ module sonic-extensions {
     description "Db table field name.";
   }
 
-  extension field-xfmr {
-    argument "field-xfmr-name";
+  extension field-transformer {
+    argument "field-transformer-name";
     description "Db table field transformer name.This can be applied to either transform yang value to some different format
                  or choose a specific DB field based on the type of yang value.";
   }
   
-  extension subtree-xfmr {
-    argument "subtree-xfmr-name";
+  extension subtree-transformer {
+    argument "subtree-transformer-name";
     description "Subtree/node level transformer name that will have db mappings for an entire yang subtree.";
   }
 
-  extension post-xfmr {
-    argument "post-xfmr-name";
+  extension post-transformer {
+    argument "post-transformer-name";
     description "Transformer name that will perform post-translation tasks.";
   }
 
