@@ -262,17 +262,10 @@ func (app *IntfApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
 	pathInfo := app.path
 
 	log.Infof("Received GET for path %s; template: %s vars=%v", pathInfo.Path, pathInfo.Template, pathInfo.Vars)
-	var intfSubtree bool = false
 	app.appDB = dbs[db.ApplDB]
 	app.countersDB = dbs[db.CountersDB]
 
 	intfObj := app.getAppRootObject()
-
-	log.Info("processGet: Target Type: " + reflect.TypeOf(*app.ygotTarget).Elem().Name())
-	if reflect.TypeOf(*app.ygotTarget).Elem().Name() == "OpenconfigInterfaces_Interfaces" {
-		intfSubtree = true
-		log.Info("subtree request = ", intfSubtree)
-	}
 
 	targetUriPath, err := getYangPathFromUri(app.path.Path)
 	log.Info("URI Path = ", targetUriPath)
@@ -289,6 +282,24 @@ func (app *IntfApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
 				if err != nil {
 					return GetResponse{Payload: payload, ErrSrc: AppErr}, err
 				}
+
+                                /*Check if the request is for a specific attribute in Interfaces state container*/
+                                oc_val := &ocbinds.OpenconfigInterfaces_Interfaces_Interface_State{}
+                                ok,e := app.getSpecificAttr(targetUriPath, ifKey, oc_val)
+                                if ok {
+                                    if e != nil {
+                                        return GetResponse{Payload: payload, ErrSrc: AppErr}, e
+                                    }
+
+                                    payload,err = dumpIetfJson(oc_val, false)
+                                    if err == nil {
+                                        return GetResponse{Payload: payload},err
+                                    } else {
+                                        return GetResponse{Payload: payload, ErrSrc: AppErr}, err
+                                    }
+                                }
+
+
 				/* Filling Interface IP info to internal DS */
 				err = app.convertDBIntfIPInfoToInternal(app.appDB, ifKey)
 				if err != nil {
@@ -396,8 +407,42 @@ func (app *IntfApp) doGetAllIpKeys(d *db.DB, dbSpec *db.TableSpec) ([]db.Key, er
 	return keys, err
 }
 
-/***********  Translation Helper fn to convert DB Interface info to Internal DS   ***********/
 
+func (app *IntfApp) getSpecificAttr(targetUriPath string, ifKey string, oc_val *ocbinds.OpenconfigInterfaces_Interfaces_Interface_State) (bool, error) {
+    switch targetUriPath {
+        case "/openconfig-interfaces:interfaces/interface/state/oper-status":
+            val,e := app.getIntfAttr(ifKey, PORT_OPER_STATUS  )
+            if len(val) > 0 {
+                switch val {
+                    case "up":
+                       oc_val.OperStatus = ocbinds.OpenconfigInterfaces_Interfaces_Interface_State_OperStatus_UP
+                    case "down":
+                       oc_val.OperStatus = ocbinds.OpenconfigInterfaces_Interfaces_Interface_State_OperStatus_DOWN
+                    default:
+                       oc_val.OperStatus = ocbinds.OpenconfigInterfaces_Interfaces_Interface_State_OperStatus_UNSET
+                }
+                return true,nil
+            }  else {
+                return true,e
+            }
+        default:
+            log.Infof("GET for " + targetUriPath + " not supported")
+    }
+    return false,nil
+}
+
+func (app *IntfApp) getIntfAttr(ifName string, attr string) (string, error) {
+
+    entry := app.ifTableMap[ifName]
+    ifData := entry.entry
+
+    if val,ok := ifData.Field[attr]; ok {
+        return val, nil
+    }
+    return "", errors.New("Attr " + attr + "doesn't exist in IF table Map!")
+}
+
+/***********  Translation Helper fn to convert DB Interface info to Internal DS   ***********/
 func (app *IntfApp) getPortOidMapForCounters(dbCl *db.DB) error {
 	var err error
 	ifCountInfo, err := dbCl.GetMapAll(app.portOidCountrTblTs)
@@ -413,6 +458,7 @@ func (app *IntfApp) getPortOidMapForCounters(dbCl *db.DB) error {
 	return err
 
 }
+
 
 func (app *IntfApp) convertDBIntfCounterInfoToInternal(dbCl *db.DB, ifKey string) error {
 	var err error
