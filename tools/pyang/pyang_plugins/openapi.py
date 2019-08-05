@@ -76,6 +76,11 @@ verb_responses["get"] = {
     "404": {"description": "Not Found"},
 }
 
+def merge_two_dicts(x, y):
+    z = x.copy()   # start with x's keys and values
+    z.update(y)    # modifies z with y's keys and values & returns None
+    return z
+
 def ordered_dump(data, stream=None, Dumper=yaml.Dumper, **kwds):
     class OrderedDumper(Dumper):
         pass
@@ -229,7 +234,7 @@ def swagger_it(child, defName, pathstr, payload, metadata, verb, operId=False):
             swaggerDict["paths"][verbPathStr][verb]["consumes"] = ["application/yang-data+json"]
         swaggerDict["paths"][verbPathStr][verb]["produces"] = ["application/yang-data+json"]
         swaggerDict["paths"][verbPathStr][verb]["parameters"] = []
-        swaggerDict["paths"][verbPathStr][verb]["responses"] = copy.deepcopy({**responses, **verb_responses[verb]})
+        swaggerDict["paths"][verbPathStr][verb]["responses"] = copy.deepcopy(merge_two_dicts(responses, verb_responses[verb]))
         firstEncounter = False
 
     opId = None
