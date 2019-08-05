@@ -30,6 +30,10 @@ const (
 var ygSchema *ytypes.Schema
 
 func init() {
+	initSchema()
+}
+
+func initSchema() {
 	log.Flush()
 	var err error
 	if ygSchema, err = ocbinds.Schema(); err != nil {
