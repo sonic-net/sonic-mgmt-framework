@@ -21,12 +21,14 @@
             {% else %}
                {% if vars.update({'oper_state':'U'}) %}{% endif %}
             {% endif %}
-            {% if vars.update({'in_packets':interface[key]["counters"]["in-pkts"]}) %}{% endif %}
-            {% if vars.update({'in_errors':interface[key]["counters"]["in-errors"]}) %}{% endif %}
-            {% if vars.update({'in_discards':interface[key]["counters"]["in-discards"]}) %}{% endif %}
-            {% if vars.update({'out_packets':interface[key]["counters"]["out-pkts"]}) %}{% endif %}
-            {% if vars.update({'out_errors':interface[key]["counters"]["out-errors"]}) %}{% endif %}
-            {% if vars.update({'out_discards':interface[key]["counters"]["out-discards"]}) %}{% endif %}
+        {% endif %}
+        {% if "counters" in interface["state"] %}
+            {% if vars.update({'in_packets':interface["state"]["counters"]["in-pkts"]}) %}{% endif %}
+            {% if vars.update({'in_errors':interface["state"]["counters"]["in-errors"]}) %}{% endif %}
+            {% if vars.update({'in_discards':interface["state"]["counters"]["in-discards"]}) %}{% endif %}
+            {% if vars.update({'out_packets':interface["state"]["counters"]["out-pkts"]}) %}{% endif %}
+            {% if vars.update({'out_errors':interface["state"]["counters"]["out-errors"]}) %}{% endif %}
+            {% if vars.update({'out_discards':interface["state"]["counters"]["out-discards"]}) %}{% endif %}
         {% endif %}
     {% endfor %}
 {% if 'Ethernet' in vars.name %}
