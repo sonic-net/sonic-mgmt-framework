@@ -116,7 +116,6 @@ func notificationHandler(d *db.DB, sKey *db.SKey, key *db.Key, event db.SEvent) 
 		if sKey != nil {
 			if nInfo, ok := nMap[sKey]; (ok && nInfo != nil) {
 				if sInfo, ok := sMap[nInfo]; (ok && sInfo != nil) {
-					log.Info("Before calling isCacheChanged")
 					isChanged := isCacheChanged(nInfo)
 
 					if isChanged {
@@ -162,7 +161,7 @@ func updateCache(nInfo *notificationInfo) error {
 func isCacheChanged(nInfo *notificationInfo) bool {
 	json, err := getJson (nInfo)
 
-    if err == nil {
+    if err != nil {
 		json = []byte("{}")
 	}
 
