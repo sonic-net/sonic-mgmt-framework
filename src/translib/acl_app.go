@@ -1251,12 +1251,10 @@ func convertOCToInternalL2(ruleData db.Value, aclName string, ruleIndex uint32, 
 			//ruleData["ETHER_TYPE"] = v.E_OpenconfigPacketMatchTypes_ETHERTYPE.ΛMap()["E_OpenconfigPacketMatchTypes_ETHERTYPE"][int64(v.E_OpenconfigPacketMatchTypes_ETHERTYPE)].Name
 			fmt.Fprintf(&b, "0x%0.4x", ETHERTYPE_MAP[v.E_OpenconfigPacketMatchTypes_ETHERTYPE])
 			ruleData.Field["ETHER_TYPE"] = b.String()
-			break
 		case reflect.TypeOf(ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_L2_Config_Ethertype_Union_Uint16{}):
 			v := (rule.L2.Config.Ethertype).(*ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_L2_Config_Ethertype_Union_Uint16)
 			fmt.Fprintf(&b, "0x%0.4x", v.Uint16)
 			ruleData.Field["ETHER_TYPE"] = b.String()
-			break
 		}
 	}
 }
@@ -1269,22 +1267,18 @@ func convertOCToInternalIPv4(ruleData db.Value, aclName string, ruleIndex uint32
 			v := (rule.Ipv4.Config.Protocol).(*ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Ipv4_Config_Protocol_Union_E_OpenconfigPacketMatchTypes_IP_PROTOCOL)
 			//ruleData["IP_PROTOCOL"] = v.E_OpenconfigPacketMatchTypes_IP_PROTOCOL.ΛMap()["E_OpenconfigPacketMatchTypes_IP_PROTOCOL"][int64(v.E_OpenconfigPacketMatchTypes_IP_PROTOCOL)].Name
 			ruleData.Field["IP_PROTOCOL"] = strconv.FormatInt(int64(IP_PROTOCOL_MAP[v.E_OpenconfigPacketMatchTypes_IP_PROTOCOL]), 10)
-			break
 		case reflect.TypeOf(ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Ipv4_Config_Protocol_Union_Uint8{}):
 			v := (rule.Ipv4.Config.Protocol).(*ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Ipv4_Config_Protocol_Union_Uint8)
 			ruleData.Field["IP_PROTOCOL"] = strconv.FormatInt(int64(v.Uint8), 10)
-			break
 		}
 	}
 
 	if rule.Ipv4.Config.Dscp != nil {
 		ruleData.Field["DSCP"] = strconv.FormatInt(int64(*rule.Ipv4.Config.Dscp), 10)
 	}
-
 	if rule.Ipv4.Config.SourceAddress != nil {
 		ruleData.Field["SRC_IP"] = *rule.Ipv4.Config.SourceAddress
 	}
-
 	if rule.Ipv4.Config.DestinationAddress != nil {
 		ruleData.Field["DST_IP"] = *rule.Ipv4.Config.DestinationAddress
 	}
@@ -1298,30 +1292,24 @@ func convertOCToInternalIPv6(ruleData db.Value, aclName string, ruleIndex uint32
 			v := (rule.Ipv6.Config.Protocol).(*ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Ipv6_Config_Protocol_Union_E_OpenconfigPacketMatchTypes_IP_PROTOCOL)
 			//ruleData["IP_PROTOCOL"] = v.E_OpenconfigPacketMatchTypes_IP_PROTOCOL.ΛMap()["E_OpenconfigPacketMatchTypes_IP_PROTOCOL"][int64(v.E_OpenconfigPacketMatchTypes_IP_PROTOCOL)].Name
 			ruleData.Field["IP_PROTOCOL"] = strconv.FormatInt(int64(IP_PROTOCOL_MAP[v.E_OpenconfigPacketMatchTypes_IP_PROTOCOL]), 10)
-			break
 		case reflect.TypeOf(ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Ipv6_Config_Protocol_Union_Uint8{}):
 			v := (rule.Ipv6.Config.Protocol).(*ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Ipv6_Config_Protocol_Union_Uint8)
 			ruleData.Field["IP_PROTOCOL"] = strconv.FormatInt(int64(v.Uint8), 10)
-			break
 		}
 	}
 
 	if rule.Ipv6.Config.Dscp != nil {
 		ruleData.Field["DSCP"] = strconv.FormatInt(int64(*rule.Ipv6.Config.Dscp), 10)
 	}
-
 	if rule.Ipv6.Config.SourceAddress != nil {
 		ruleData.Field["SRC_IPV6"] = *rule.Ipv6.Config.SourceAddress
 	}
-
 	if rule.Ipv6.Config.DestinationAddress != nil {
 		ruleData.Field["DST_IPV6"] = *rule.Ipv6.Config.DestinationAddress
 	}
-
 	if rule.Ipv6.Config.SourceFlowLabel != nil {
 		ruleData.Field["SRC_FLOWLABEL"] = strconv.FormatInt(int64(*rule.Ipv6.Config.SourceFlowLabel), 10)
 	}
-
 	if rule.Ipv6.Config.DestinationFlowLabel != nil {
 		ruleData.Field["DST_FLOWLABEL"] = strconv.FormatInt(int64(*rule.Ipv6.Config.DestinationFlowLabel), 10)
 	}
@@ -1337,15 +1325,12 @@ func convertOCToInternalTransport(ruleData db.Value, aclName string, ruleIndex u
 		case reflect.TypeOf(ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_SourcePort_Union_E_OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_SourcePort{}):
 			v := (rule.Transport.Config.SourcePort).(*ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_SourcePort_Union_E_OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_SourcePort)
 			ruleData.Field["L4_SRC_PORT"] = v.E_OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_SourcePort.ΛMap()["E_OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_SourcePort"][int64(v.E_OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_SourcePort)].Name
-			break
 		case reflect.TypeOf(ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_SourcePort_Union_String{}):
 			v := (rule.Transport.Config.SourcePort).(*ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_SourcePort_Union_String)
 			ruleData.Field["L4_SRC_PORT_RANGE"] = strings.Replace(v.String, "..", "-", 1)
-			break
 		case reflect.TypeOf(ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_SourcePort_Union_Uint16{}):
 			v := (rule.Transport.Config.SourcePort).(*ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_SourcePort_Union_Uint16)
 			ruleData.Field["L4_SRC_PORT"] = strconv.FormatInt(int64(v.Uint16), 10)
-			break
 		}
 	}
 
@@ -1355,47 +1340,35 @@ func convertOCToInternalTransport(ruleData db.Value, aclName string, ruleIndex u
 		case reflect.TypeOf(ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_DestinationPort_Union_E_OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_DestinationPort{}):
 			v := (rule.Transport.Config.DestinationPort).(*ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_DestinationPort_Union_E_OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_DestinationPort)
 			ruleData.Field["L4_DST_PORT"] = v.E_OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_DestinationPort.ΛMap()["E_OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_DestinationPort"][int64(v.E_OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_DestinationPort)].Name
-			break
 		case reflect.TypeOf(ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_DestinationPort_Union_String{}):
 			v := (rule.Transport.Config.DestinationPort).(*ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_DestinationPort_Union_String)
 			ruleData.Field["L4_DST_PORT_RANGE"] = strings.Replace(v.String, "..", "-", 1)
-			break
 		case reflect.TypeOf(ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_DestinationPort_Union_Uint16{}):
 			v := (rule.Transport.Config.DestinationPort).(*ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_DestinationPort_Union_Uint16)
 			ruleData.Field["L4_DST_PORT"] = strconv.FormatInt(int64(v.Uint16), 10)
-			break
 		}
 	}
 
 	var tcpFlags uint32 = 0x00
 	if len(rule.Transport.Config.TcpFlags) > 0 {
 		for _, flag := range rule.Transport.Config.TcpFlags {
-			fmt.Println("TCP Flag name: " + flag.ΛMap()["E_OpenconfigPacketMatchTypes_TCP_FLAGS"][int64(flag)].Name)
 			switch flag {
 			case ocbinds.OpenconfigPacketMatchTypes_TCP_FLAGS_TCP_FIN:
 				tcpFlags |= 0x01
-				break
 			case ocbinds.OpenconfigPacketMatchTypes_TCP_FLAGS_TCP_SYN:
 				tcpFlags |= 0x02
-				break
 			case ocbinds.OpenconfigPacketMatchTypes_TCP_FLAGS_TCP_RST:
 				tcpFlags |= 0x04
-				break
 			case ocbinds.OpenconfigPacketMatchTypes_TCP_FLAGS_TCP_PSH:
 				tcpFlags |= 0x08
-				break
 			case ocbinds.OpenconfigPacketMatchTypes_TCP_FLAGS_TCP_ACK:
 				tcpFlags |= 0x10
-				break
 			case ocbinds.OpenconfigPacketMatchTypes_TCP_FLAGS_TCP_URG:
 				tcpFlags |= 0x20
-				break
 			case ocbinds.OpenconfigPacketMatchTypes_TCP_FLAGS_TCP_ECE:
 				tcpFlags |= 0x40
-				break
 			case ocbinds.OpenconfigPacketMatchTypes_TCP_FLAGS_TCP_CWR:
 				tcpFlags |= 0x80
-				break
 			}
 		}
 		var b bytes.Buffer
@@ -1415,13 +1388,8 @@ func convertOCToInternalInputAction(ruleData db.Value, aclName string, ruleIndex
 		switch rule.Actions.Config.ForwardingAction {
 		case ocbinds.OpenconfigAcl_FORWARDING_ACTION_ACCEPT:
 			ruleData.Field["PACKET_ACTION"] = "FORWARD"
-			break
-		case ocbinds.OpenconfigAcl_FORWARDING_ACTION_DROP:
+		case ocbinds.OpenconfigAcl_FORWARDING_ACTION_DROP, ocbinds.OpenconfigAcl_FORWARDING_ACTION_REJECT:
 			ruleData.Field["PACKET_ACTION"] = "DROP"
-			break
-		case ocbinds.OpenconfigAcl_FORWARDING_ACTION_REJECT:
-			ruleData.Field["PACKET_ACTION"] = "DROP"
-			break
 		default:
 		}
 	}
@@ -1448,13 +1416,6 @@ func (app *AclApp) setAclDataInConfigDb(d *db.DB, aclData map[string]db.Value, c
 						return err
 					}
 				}
-				/*
-					//Merge any ACL binds already present. Validate should take care of any checks so its safe to blindly merge here
-					if len(existingEntry.Field) > 0  {
-						value.Field["ports"] += "," + existingEntry.Field["ports@"]
-					}
-					fmt.Println(value)
-				*/
 			}
 		}
 	}
