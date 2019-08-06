@@ -100,7 +100,7 @@ func init() {
 		log.Fatal("Adding model data to appinterface failed with error=", err)
 	}
 
-	yangFiles := []string{transformer.YangPath + "openconfig-acl.yang", transformer.YangPath + "sonic-acl.yang"}
+	yangFiles := []string{"openconfig-acl.yang", "sonic-acl.yang"}
         log.Info("Init transformer yang files :", yangFiles)
 	err = transformer.LoadYangModules(yangFiles...)
 	if err != nil {
