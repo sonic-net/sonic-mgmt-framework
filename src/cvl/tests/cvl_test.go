@@ -2547,10 +2547,6 @@ func TestValidateEditConfig_DepData_Through_Cache(t *testing.T) {
 	//Prepare data in Redis
 	loadConfigDB(rclient, depDataMap)
 
-	//Publish the changes so that PORT table can be updated
-	rclient.Publish("__keyspace@4__:PORT|Ethernet3", "hset").Result()
-	rclient.Publish("__keyspace@4__:PORT|Ethernet5", "hset").Result()
-
 	//Modify entry
 	depDataMap = map[string]interface{} {
 		"PORT" : map[string]interface{} {
@@ -2561,7 +2557,6 @@ func TestValidateEditConfig_DepData_Through_Cache(t *testing.T) {
 	}
 
 	loadConfigDB(rclient, depDataMap)
-	rclient.Publish("__keyspace@4__:PORT|Ethernet5", "hmset").Result()
 
 	cfgDataAclRule :=  []cvl.CVLEditConfigData {
 		cvl.CVLEditConfigData {

@@ -19,7 +19,6 @@ import (
 
 func init() {
 	fmt.Println("+++++ init error_test +++++")
-
 }
 
 func TestProtoError(t *testing.T) {
@@ -136,6 +135,12 @@ func TestErrorEntry(t *testing.T) {
 	t.Run("CVL_SemanticErr", testErrorEntry(
 		cvlError(cvl.CVL_SEMANTIC_ERROR, "hii"),
 		500, "application", "invalid-value", "", "hii"))
+
+	// errorEntry mapping for YGOT errors
+	t.Run("YGOT_400", testErrorEntry(
+		tlerr.TranslibSyntaxValidationError{ErrorStr: errors.New("ygot")},
+		400, "protocol", "invalid-value", "", "ygot"))
+
 }
 
 func testErrorEntry(err error,
