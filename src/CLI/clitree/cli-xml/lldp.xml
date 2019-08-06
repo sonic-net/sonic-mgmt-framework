@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CLISH_MODULE
+    xmlns="http://www.dellemc.com/sonic/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xi="http://www.w3.org/2001/XInclude"
+    xsi:schemaLocation="http://www.dellemc.com/sonic/XMLSchema
+    http://www.dellemc.com/sonic/XMLSchema/clish.xsd"
+    >
+
+<VIEW name="enable-view">
+   <COMMAND name="show lldp" help="Show lldp information">
+         <ACTION> python $SONIC_CLI_ROOT/sonic-cli-lldp.py get_openconfig_lldp_lldp_interfaces lldp_show.j2 </ACTION>
+   </COMMAND>
+   <COMMAND name="show lldp table" help="Show lldp table information">
+         <ACTION> python $SONIC_CLI_ROOT/sonic-cli-lldp.py get_openconfig_lldp_lldp_interfaces lldp_show.j2 </ACTION>
+   </COMMAND>
+   <COMMAND name="show lldp neighbor" help="Show lldp neighbor information">
+	 <PARAM
+            name="ifname"
+            help="Interface name"
+	        ptype="STRING"
+	        optional="true"
+           >
+        </PARAM>
+	<ACTION>
+	    if test "${ifname}" = ""; then&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-lldp.py get_openconfig_lldp_lldp_interfaces lldp_neighbor_show.j2&#xA;
+	    else&#xA;
+	        python $SONIC_CLI_ROOT/sonic-cli-lldp.py get_openconfig_lldp_lldp_interfaces_interface lldp_neighbor_show.j2 ${ifname}&#xA;
+		fi&#xA;
+    </ACTION>
+   </COMMAND>
+</VIEW>
+</CLISH_MODULE>
+
+
+
