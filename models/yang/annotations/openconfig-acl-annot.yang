@@ -28,55 +28,55 @@ module openconfig-acl-annot {
       }
     }
 
-    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-acl:ipv4/oc-acl:config/oc-acl:source-address {
+    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-pkt-match:ipv4/oc-pkt-match:config/oc-pkt-match:source-address {
       deviate add {
         sonic-ext:field-name "SRC_IP";
       }
     }
 
-    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-acl:ipv4/oc-acl:config/oc-acl:destination-address {
+    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-pkt-match:ipv4/oc-pkt-match:config/oc-pkt-match:destination-address {
       deviate add {
         sonic-ext:field-name "DST_IP";
       }
     }
 
-    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-acl:ipv4/oc-acl:config/oc-acl:protocol {
+    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-pkt-match:ipv4/oc-pkt-match:config/oc-pkt-match:protocol {
       deviate add {
         sonic-ext:field-transformer "acl_ip_protocol_xfmr";
       }
     } 
 
-    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-acl:ipv6/oc-acl:config/oc-acl:source-address {
+    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-pkt-match:ipv6/oc-pkt-match:config/oc-pkt-match:source-address {
       deviate add {
         sonic-ext:field-name "SRC_IP";
       }
     }
 
-    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-acl:ipv6/oc-acl:config/oc-acl:destination-address {
+    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-pkt-match:ipv6/oc-pkt-match:config/oc-pkt-match:destination-address {
       deviate add {
         sonic-ext:field-name "DST_IP";
       }
     }
 
-    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-acl:ipv6/oc-acl:config/oc-acl:protocol {
+    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-pkt-match:ipv6/oc-pkt-match:config/oc-pkt-match:protocol {
       deviate add {
         sonic-ext:field-transformer "acl_ip_protocol_xfmr";
       }
     }
 
-    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-acl:transport/oc-acl:config/oc-acl:source-port {
+    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-pkt-match:transport/oc-pkt-match:config/oc-pkt-match:source-port {
       deviate add {
         sonic-ext:field-transformer "acl_source_port_xfmr";
       }
     }
 
-    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-acl:transport/oc-acl:config/oc-acl:destination-port {
+    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-pkt-match:transport/oc-pkt-match:config/oc-pkt-match:destination-port {
       deviate add {
         sonic-ext:field-transformer "acl_destination_port_xfmr";
       }
     }
 
-    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-acl:transport/oc-acl:config/oc-acl:tcp_flags {
+    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-pkt-match:transport/oc-pkt-match:config/oc-pkt-match:tcp_flags {
       deviate add {
         sonic-ext:field-transformer "acl_tcp_flags_xfmr";
       }
