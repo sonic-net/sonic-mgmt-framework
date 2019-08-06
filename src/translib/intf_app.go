@@ -12,6 +12,8 @@ import (
 	"strings"
 	"translib/db"
 	"translib/ocbinds"
+	"translib/tlerr"
+	"unsafe"
 )
 
 type reqType int
@@ -170,7 +172,9 @@ func (app *IntfApp) translateDelete(d *db.DB) ([]db.WatchKeys, error) {
 							log.Info("IPv4 address = ", *ipAddr)
 							err = app.validateIp(d, ifKey, *ipAddr)
 							if err != nil {
-								return keys, err
+								errStr := "Invalid IP address:" + *ipAddr
+								ipValidErr := tlerr.InvalidArgsError{Format: errStr}
+								return keys, ipValidErr
 							}
 						}
 					}
@@ -183,7 +187,9 @@ func (app *IntfApp) translateDelete(d *db.DB) ([]db.WatchKeys, error) {
 							log.Info("IPv6 address = ", *ipAddr)
 							err = app.validateIp(d, ifKey, *ipAddr)
 							if err != nil {
-								return keys, err
+								errStr := "Invalid IPv6 address:" + *ipAddr
+								ipValidErr := tlerr.InvalidArgsError{Format: errStr}
+								return keys, ipValidErr
 							}
 						}
 					}
@@ -206,8 +212,31 @@ func (app *IntfApp) translateGet(dbs [db.MaxDB]*db.DB) error {
 }
 
 func (app *IntfApp) translateSubscribe(dbs [db.MaxDB]*db.DB, path string) (*notificationOpts, *notificationInfo, error) {
-	var err error
-	return nil, nil, err
+	log.Info("translateSubscribe fn - intf_app module called!")
+
+	pathInfo := NewPathInfo(path)
+	notifInfo := notificationInfo{dbno: db.ApplDB}
+	notSupported := tlerr.NotSupportedError{Format: "Subscribe not supported", Path: path}
+
+	if isSubtreeRequest(pathInfo.Template, "/openconfig-interfaces:interfaces") {
+		if pathInfo.HasSuffix("/interface{name}") ||
+			pathInfo.HasSuffix("/config") ||
+			pathInfo.HasSuffix("/state") {
+			log.Errorf("Subscribe not supported for %s!", pathInfo.Template)
+			return nil, nil, notSupported
+		}
+		ifKey := pathInfo.Var("name")
+		if len(ifKey) == 0 {
+			return nil, nil, errors.New("ifKey given is empty!")
+		}
+		log.Info("Interface name = ", ifKey)
+		if pathInfo.HasSuffix("/state/oper-status") {
+			notifInfo.table = db.TableSpec{Name: "PORT_TABLE"}
+			notifInfo.key = asKey(ifKey)
+			notifInfo.needCache = true
+		}
+	}
+	return nil, &notifInfo, nil
 }
 
 func (app *IntfApp) processCreate(d *db.DB) (SetResponse, error) {
@@ -423,6 +452,49 @@ func (app *IntfApp) getSpecificAttr(targetUriPath string, ifKey string, oc_val *
 		} else {
 			return true, e
 		}
+	case "/openconfig-interfaces:interfaces/interface/state/admin-status":
+		val, e := app.getIntfAttr(ifKey, PORT_ADMIN_STATUS)
+		if len(val) > 0 {
+			switch val {
+			case "up":
+				oc_val.AdminStatus = ocbinds.OpenconfigInterfaces_Interfaces_Interface_State_AdminStatus_UP
+			case "down":
+				oc_val.AdminStatus = ocbinds.OpenconfigInterfaces_Interfaces_Interface_State_AdminStatus_DOWN
+			default:
+				oc_val.AdminStatus = ocbinds.OpenconfigInterfaces_Interfaces_Interface_State_AdminStatus_UNSET
+			}
+			return true, nil
+		} else {
+			return true, e
+		}
+	case "/openconfig-interfaces:interfaces/interface/state/mtu":
+		val, e := app.getIntfAttr(ifKey, PORT_MTU)
+		if len(val) > 0 {
+			v, e := strconv.ParseUint(val, 10, 16)
+			if e == nil {
+				oc_val.Mtu = (*uint16)(unsafe.Pointer(&v))
+				return true, nil
+			}
+		}
+		return true, e
+	case "/openconfig-interfaces:interfaces/interface/state/ifindex":
+		val, e := app.getIntfAttr(ifKey, PORT_INDEX)
+		if len(val) > 0 {
+			v, e := strconv.ParseUint(val, 10, 32)
+			if e == nil {
+				oc_val.Ifindex = (*uint32)(unsafe.Pointer(&v))
+				return true, nil
+			}
+		}
+		return true, e
+	case "/openconfig-interfaces:interfaces/interface/state/description":
+		val, e := app.getIntfAttr(ifKey, PORT_DESC)
+		if e == nil {
+			oc_val.Description = &val
+			return true, nil
+		}
+		return true, e
+
 	default:
 		log.Infof("GET for " + targetUriPath + " not supported")
 	}
@@ -492,13 +564,15 @@ func (app *IntfApp) convertDBIntfInfoToInternal(dbCl *db.DB, ifName string, ifKe
 		ifInfo, err := dbCl.GetEntry(app.portTblTs, ifKey)
 		if err != nil {
 			log.Info("Error found on fetching Interface info from App DB for If Name : ", ifName)
+			errStr := "Invalid Interface:" + ifName
+			err = tlerr.InvalidArgsError{Format: errStr}
 			return err
 		}
 		if ifInfo.IsPopulated() {
 			log.Info("Interface Info populated for ifName : ", ifName)
 			app.ifTableMap[ifName] = dbEntry{entry: ifInfo}
 		} else {
-			return errors.New("IfName doesn't exist in the config DB!")
+			return errors.New("Populating Interface info for " + ifName + "failed")
 		}
 	} else {
 		log.Info("App-DB get for all the interfaces")
@@ -524,6 +598,9 @@ func (app *IntfApp) convertDBIntfIPInfoToInternal(dbCl *db.DB, ifName string) er
 	app.allIpKeys, _ = app.doGetAllIpKeys(dbCl, app.intfIPTblTs)
 
 	for _, key := range app.allIpKeys {
+		if len(key.Comp) <= 1 {
+			continue
+		}
 		ipInfo, err := dbCl.GetEntry(app.intfIPTblTs, key)
 		if err != nil {
 			log.Info("Error found on fetching Interface IP info from App DB for Interface Name : ", ifName)
@@ -804,12 +881,13 @@ func (app *IntfApp) translateCommon(d *db.DB, inpOp reqType) ([]db.WatchKeys, er
 			intf := intfObj.Interface[ifKey]
 			curr, err := d.GetEntry(app.portTs, db.Key{Comp: []string{ifKey}})
 			if err != nil {
-				return keys, err
+				errStr := "Invalid Interface:" + ifKey
+				ifValidErr := tlerr.InvalidArgsError{Format: errStr}
+				return keys, ifValidErr
 			}
 			if !curr.IsPopulated() {
-				log.Info("Interface ", ifKey, " doesnt exist in DB")
-				err = errors.New("Interface " + ifKey + " doesnt exist in DB")
-				return keys, err
+				log.Info("Interface ", ifKey, " doesn't exist in DB")
+				return keys, errors.New("Interface: " + ifKey + " doesn't exist in DB")
 			}
 			if intf.Config != nil {
 				if intf.Config.Description != nil {

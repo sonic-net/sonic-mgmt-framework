@@ -107,7 +107,22 @@ def run(func, args):
     except ApiException as e:
         #print("Exception when calling OpenconfigInterfacesApi->%s : %s\n" %(func.__name__, e))
         if e.body != "":
-            print "% Error:", e.body
+            body = json.loads(e.body)
+            if "ietf-restconf:errors" in body:
+                 err = body["ietf-restconf:errors"]
+                 if "error" in err:
+                     errList = err["error"]
+
+                     errDict = {}
+                     for dict in errList:
+                         for k, v in dict.iteritems():
+                              errDict[k] = v
+
+                     if "error-message" in errDict:
+                         print "%Error: " + errDict["error-message"]
+                         return
+                     print "%Error: Application Failure"
+            print "%Error: Application Failure"
         else:
             print "Failed"
 
