@@ -7,6 +7,7 @@ module openconfig-acl-annot {
 
     import sonic-extensions { prefix sonic-ext; }
     import openconfig-acl { prefix oc-acl; }
+    import openconfig-packet-match { prefix oc-pkt-match; }
 
     deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set {
       deviate add {
@@ -76,13 +77,13 @@ module openconfig-acl-annot {
       }
     }
 
-    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-pkt-match:transport/oc-pkt-match:config/oc-pkt-match:tcp_flags {
+    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-pkt-match:transport/oc-pkt-match:config/oc-pkt-match:tcp-flags {
       deviate add {
         sonic-ext:field-transformer "acl_tcp_flags_xfmr";
       }
     }
 
-    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-acl:actions/oc-acl:config/oc-acl:forwrding-action {
+    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-acl:actions/oc-acl:config/oc-acl:forwarding-action {
       deviate add {
         sonic-ext:field-name "PACKET_ACTION";
       }
