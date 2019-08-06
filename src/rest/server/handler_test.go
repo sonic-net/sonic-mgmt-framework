@@ -223,9 +223,9 @@ func TestPathConv(t *testing.T) {
 // path into response. Conversion logic depends on context values
 // managed by mux router. Hence should be called from a handler.
 var pathConvHandler = func(w http.ResponseWriter, r *http.Request) {
-	t, err := mux.CurrentRoute(r).GetPathTemplate()
-	fmt.Printf("Patt : %v (err=%v)\n", t, err)
-	fmt.Printf("Vars : %v\n", mux.Vars(r))
+	// t, err := mux.CurrentRoute(r).GetPathTemplate()
+	// fmt.Printf("Patt : %v (err=%v)\n", t, err)
+	// fmt.Printf("Vars : %v\n", mux.Vars(r))
 
 	w.Write([]byte(getPathForTranslib(r)))
 }
@@ -470,11 +470,24 @@ func TestProcessBadMethod(t *testing.T) {
 
 func TestProcessBadContent(t *testing.T) {
 	w := httptest.NewRecorder()
-	r := prepareRequest(t, "TEST", "/test", "{}")
+	r := prepareRequest(t, "PUT", "/test", "{}")
 	r.Header.Set("content-type", "bad/content")
 
 	Process(w, r)
 	verifyResponse(t, w, 415)
+}
+
+func TestProcessReadError(t *testing.T) {
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest("PUT", "/test", errReader("simulated error"))
+	r.Header.Set("content-type", "application/json")
+
+	rc, r := GetContext(r)
+	rc.ID = t.Name()
+	rc.Consumes.Add("application/json")
+
+	Process(w, r)
+	verifyResponse(t, w, 500)
 }
 
 func prepareRequest(t *testing.T, method, path, data string) *http.Request {
