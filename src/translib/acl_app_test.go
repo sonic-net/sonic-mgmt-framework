@@ -256,6 +256,33 @@ func TestL2AclAndRule(t *testing.T) {
 	t.Run("Verify_One_Acl_Delete", processGetRequest(aclUrl, notFoundErrorJson, http.StatusNotFound))
 }
 
+func TestNegativeTests(t *testing.T) {
+	// Verify GET returns errors for non-existing ACL
+	aclUrl := "/restconf/data/openconfig-acl:acl/acl-sets/acl-set=MyACL2,ACL_L2"
+	t.Run("Verify_Non_Existing_Acl_GET_Error", processGetRequest(aclUrl, notFoundErrorJson, http.StatusNotFound))
+
+	// Verify GET returns errors for non-existing Rule
+	ruleUrl := "/restconf/data/openconfig-acl:acl/acl-sets/acl-set=MyACL2,ACL_L2/acl-entries/acl-entry=2"
+	t.Run("Verify_Non_Existing_Rule_GET_Error", processGetRequest(ruleUrl, notFoundErrorJson, http.StatusNotFound))
+
+	// Verify Error on giving Invalid Interface in payload during binding creation
+	url := "/restconf/data/openconfig-acl:acl"
+	t.Run("Create_Acl_With_Invalid_Interface_Binding", processSetRequest(url, aclCreateWithInvalidInterfaceBinding, "POST", http.StatusInternalServerError))
+
+	// Verify error if duplicate Acl is created using POST
+	t.Run("Create_One_L2_Acl_Without_Rule", processSetRequest(aclUrl, oneL2AclCreateJsonRequest, "POST", http.StatusCreated))
+	t.Run("Verify_One_L2_Acl_Without_Rule_Creation", processGetRequest(aclUrl, oneL2AclCreateJsonResponse, http.StatusOK))
+	t.Run("Verify_Error_On_Create_Duplicate_L2_Acl", processSetRequest(aclUrl, oneL2AclCreateJsonRequest, "POST", http.StatusConflict))
+
+	// Verify error if duplicate Rule is created using POST
+	multiRuleUrl := "/restconf/data/openconfig-acl:acl/acl-sets/acl-set=MyACL3,ACL_IPV4"
+	t.Run("Create_One_Acl_With_Multiple_Rules(PATCH)", processSetRequest(multiRuleUrl, oneAclCreateWithRulesJsonRequest, "PATCH", http.StatusNoContent))
+	t.Run("Verify_Create_One_Acl_With_Multiple_Rules", processGetRequest(multiRuleUrl, oneAclCreateWithRulesJsonResponse, http.StatusOK))
+
+	duplicateRuleUrl := "/restconf/data/openconfig-acl:acl/acl-sets/acl-set=MyACL3,ACL_IPV4/acl-entries/acl-entry=1"
+	t.Run("Create_One_Duplicate_Rule", processSetRequest(duplicateRuleUrl, requestOneDuplicateRulePostJson, "POST", http.StatusConflict))
+}
+
 func processGetRequest(url string, expectedRespJson string, expHttpStatus int) func(*testing.T) {
 	return func(t *testing.T) {
 		req := httptest.NewRequest("GET", url, nil)
@@ -425,3 +452,7 @@ var getL2AclsFromAclSetListLevelResponse string = "{\"openconfig-acl:acl-set\":[
 var getL2AllPortsBindingsResponse string = "{\"openconfig-acl:interfaces\":{\"interface\":[{\"config\":{\"id\":\"Ethernet0\"},\"id\":\"Ethernet0\",\"ingress-acl-sets\":{\"ingress-acl-set\":[{\"acl-entries\":{\"acl-entry\":[{\"sequence-id\":2,\"state\":{\"matched-octets\":\"0\",\"matched-packets\":\"0\",\"sequence-id\":2}}]},\"config\":{\"set-name\":\"MyACL2\",\"type\":\"openconfig-acl:ACL_L2\"},\"set-name\":\"MyACL2\",\"state\":{\"set-name\":\"MyACL2\",\"type\":\"openconfig-acl:ACL_L2\"},\"type\":\"openconfig-acl:ACL_L2\"}]},\"state\":{\"id\":\"Ethernet0\"}}]}}"
 
 var ingressL2AclSetDeleteVerifyResponse string = "{\"ietf-restconf:errors\":{\"error\":[{\"error-type\":\"application\",\"error-tag\":\"invalid-value\",\"error-message\":\"Acl MyACL2_ACL_L2 not binded with Ethernet0\"}]}}"
+
+var aclCreateWithInvalidInterfaceBinding string = "{ \"acl-sets\": { \"acl-set\": [ { \"name\": \"MyACL1\", \"type\": \"ACL_IPV4\", \"config\": { \"name\": \"MyACL1\", \"type\": \"ACL_IPV4\", \"description\": \"Description for MyACL1\" }, \"acl-entries\": { \"acl-entry\": [ { \"sequence-id\": 1, \"config\": { \"sequence-id\": 1, \"description\": \"Description for MyACL1 Rule Seq 1\" }, \"ipv4\": { \"config\": { \"source-address\": \"11.1.1.1/32\", \"destination-address\": \"21.1.1.1/32\", \"dscp\": 1, \"protocol\": \"IP_TCP\" } }, \"transport\": { \"config\": { \"source-port\": 101, \"destination-port\": 201 } }, \"actions\": { \"config\": { \"forwarding-action\": \"ACCEPT\" } } } ] } } ] }, \"interfaces\": { \"interface\": [ { \"id\": \"Ethernet112\", \"config\": { \"id\": \"Ethernet112\" }, \"interface-ref\": { \"config\": { \"interface\": \"Ethernet112\" } }, \"ingress-acl-sets\": { \"ingress-acl-set\": [ { \"set-name\": \"MyACL1\", \"type\": \"ACL_IPV4\", \"config\": { \"set-name\": \"MyACL1\", \"type\": \"ACL_IPV4\" } } ] } } ] }}"
+
+var requestOneDuplicateRulePostJson string = "{\"sequence-id\": 1,\"config\": {\"sequence-id\": 1,\"description\": \"Description for MyACL3 Rule Seq 1\"},\"ipv4\": {\"config\": {\"source-address\": \"4.4.4.4/24\",\"destination-address\": \"5.5.5.5/24\",\"protocol\": \"IP_TCP\"}},\"transport\": {\"config\": {\"source-port\": 101,\"destination-port\": 100,\"tcp-flags\": [\"TCP_FIN\",\"TCP_ACK\"]}},\"actions\": {\"config\": {\"forwarding-action\": \"ACCEPT\"}}}"

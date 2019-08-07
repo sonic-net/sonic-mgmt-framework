@@ -74,10 +74,6 @@ type AclApp struct {
 
 	aclTableMap  map[string]db.Value
 	ruleTableMap map[string]map[string]db.Value
-
-	createAclFlag  bool
-	createRuleFlag bool
-	bindAclFlag    bool
 }
 
 func init() {
@@ -110,10 +106,6 @@ func (app *AclApp) initialize(data appData) {
 
 	app.aclTableMap = make(map[string]db.Value)
 	app.ruleTableMap = make(map[string]map[string]db.Value)
-
-	app.createAclFlag = false
-	app.createRuleFlag = false
-	app.bindAclFlag = false
 }
 
 func (app *AclApp) getAppRootObject() *ocbinds.OpenconfigAcl_Acl {
@@ -291,7 +283,7 @@ func (app *AclApp) translateCRUCommon(d *db.DB, opcode int) ([]db.WatchKeys, err
 
 	app.convertOCAclsToInternal()
 	app.convertOCAclRulesToInternal(d)
-	app.bindAclFlag = app.convertOCAclBindingsToInternal()
+	app.convertOCAclBindingsToInternal()
 
 	return keys, err
 }
@@ -1150,8 +1142,7 @@ func (app *AclApp) convertOCAclRulesToInternal(d *db.DB) {
 	}
 }
 
-func (app *AclApp) convertOCAclBindingsToInternal() bool {
-	var ret bool = false
+func (app *AclApp) convertOCAclBindingsToInternal() {
 	aclObj := app.getAppRootObject()
 
 	if aclObj.Interfaces != nil && len(aclObj.Interfaces.Interface) > 0 {
@@ -1173,7 +1164,6 @@ func (app *AclApp) convertOCAclBindingsToInternal() bool {
 							app.aclTableMap[aclName] = db.Value{Field: map[string]string{}}
 						}
 						app.aclTableMap[aclName].Field["stage"] = "INGRESS"
-						ret = true
 					}
 				}
 
@@ -1189,7 +1179,6 @@ func (app *AclApp) convertOCAclBindingsToInternal() bool {
 							app.aclTableMap[aclName] = db.Value{Field: map[string]string{}}
 						}
 						app.aclTableMap[aclName].Field["stage"] = "EGRESS"
-						ret = true
 					}
 				}
 			}
@@ -1199,7 +1188,6 @@ func (app *AclApp) convertOCAclBindingsToInternal() bool {
 			(&val).SetList("ports", aclInterfacesMap[k])
 		}
 	}
-	return ret
 }
 
 func (app *AclApp) createDefaultDenyAclRule(d *db.DB, aclName string, rulesInfo map[string]db.Value) {
