@@ -20,15 +20,15 @@ func TestMain(m *testing.M) {
 
 	ret := m.Run()
 
-	/*if err := clearAclDataFromDb(); err != nil {
-	    os.Exit(-1)
-	}*/
+	if err := clearAclDataFromDb(); err != nil {
+		os.Exit(-1)
+	}
 
 	os.Exit(ret)
 }
 
 // This will test GET on /openconfig-acl:acl
-func TestTopLevelPath(t *testing.T) {
+func Test_AclApp_TopLevelPath(t *testing.T) {
 	url := "/openconfig-acl:acl"
 
 	t.Run("Empty_Response_Top_Level", processGetRequest(url, emptyJson, false))
@@ -44,7 +44,7 @@ func TestTopLevelPath(t *testing.T) {
 	t.Run("Verify_Top_Level_Delete", processGetRequest(url, emptyJson, false))
 }
 
-func TestSingleAclOperations(t *testing.T) {
+func Test_AclApp_SingleAclOperations(t *testing.T) {
 	url := "/openconfig-acl:acl/acl-sets/acl-set[name=MyACL3][type=ACL_IPV4]"
 
 	t.Run("Create_One_Acl_With_Multiple_Rules(PATCH)", processSetRequest(url, oneAclCreateWithRulesJsonRequest, "PATCH", false))
@@ -56,7 +56,7 @@ func TestSingleAclOperations(t *testing.T) {
 	t.Run("Verify_One_Acl_Delete", processGetRequest(url, "", true))
 }
 
-func TestSingleRuleOperations(t *testing.T) {
+func Test_AclApp_SingleRuleOperations(t *testing.T) {
 	aclUrl := "/openconfig-acl:acl/acl-sets/acl-set[name=MyACL5][type=ACL_IPV4]"
 	ruleUrl := "/openconfig-acl:acl/acl-sets/acl-set[name=MyACL5][type=ACL_IPV4]/acl-entries/acl-entry[sequence-id=8]"
 
@@ -78,7 +78,7 @@ func TestSingleRuleOperations(t *testing.T) {
 }
 
 // This will test PUT (Replace) operation by  Replacing multiple Rules with one Rule in an Acl
-func TestReplaceMultipleRulesWithOneRule(t *testing.T) {
+func Test_AclApp_ReplaceMultipleRulesWithOneRule(t *testing.T) {
 	url := "/openconfig-acl:acl/acl-sets/acl-set[name=MyACL3][type=ACL_IPV4]"
 
 	t.Run("Create_One_Acl_With_Multiple_Rules(PATCH)", processSetRequest(url, oneAclCreateWithRulesJsonRequest, "PATCH", false))
@@ -92,7 +92,7 @@ func TestReplaceMultipleRulesWithOneRule(t *testing.T) {
 }
 
 // This will test PATCH operation by  modifying Description of an Acl
-func TestAclDescriptionUpdation(t *testing.T) {
+func Test_AclApp_AclDescriptionUpdation(t *testing.T) {
 	aclUrl := "/openconfig-acl:acl/acl-sets/acl-set[name=MyACL5][type=ACL_IPV4]"
 	descrUrl := "/openconfig-acl:acl/acl-sets/acl-set[name=MyACL5][type=ACL_IPV4]/config/description"
 
@@ -105,7 +105,7 @@ func TestAclDescriptionUpdation(t *testing.T) {
 	t.Run("Verify_One_Acl_Delete", processGetRequest(aclUrl, "", true))
 }
 
-func TestAclIngressBindingOperations(t *testing.T) {
+func Test_AclApp_AclIngressBindingOperations(t *testing.T) {
 	aclUrl := "/openconfig-acl:acl/acl-sets/acl-set[name=MyACL5][type=ACL_IPV4]"
 	ruleUrl := "/openconfig-acl:acl/acl-sets/acl-set[name=MyACL5][type=ACL_IPV4]/acl-entries/acl-entry[sequence-id=8]"
 	bindingUrl := "/openconfig-acl:acl/interfaces/interface[id=Ethernet4]/ingress-acl-sets/ingress-acl-set[set-name=MyACL5][type=ACL_IPV4]"
@@ -127,7 +127,7 @@ func TestAclIngressBindingOperations(t *testing.T) {
 	t.Run("Verify_One_Acl_Delete", processGetRequest(aclUrl, "", true))
 }
 
-func TestAclEgressBindingOperations(t *testing.T) {
+func Test_AclApp_AclEgressBindingOperations(t *testing.T) {
 	aclUrl := "/openconfig-acl:acl/acl-sets/acl-set[name=MyACL5][type=ACL_IPV4]"
 	ruleUrl := "/openconfig-acl:acl/acl-sets/acl-set[name=MyACL5][type=ACL_IPV4]/acl-entries/acl-entry[sequence-id=8]"
 	bindingUrl := "/openconfig-acl:acl/interfaces/interface[id=Ethernet4]/egress-acl-sets/egress-acl-set[set-name=MyACL5][type=ACL_IPV4]"
@@ -149,7 +149,7 @@ func TestAclEgressBindingOperations(t *testing.T) {
 	t.Run("Verify_One_Acl_Delete", processGetRequest(aclUrl, "", true))
 }
 
-func TestGetOperationsFromMultipleTreeLevels(t *testing.T) {
+func Test_AclApp_GetOperationsFromMultipleTreeLevels(t *testing.T) {
 	aclUrl := "/openconfig-acl:acl/acl-sets/acl-set[name=MyACL5][type=ACL_IPV4]"
 	ruleUrl := "/openconfig-acl:acl/acl-sets/acl-set[name=MyACL5][type=ACL_IPV4]/acl-entries/acl-entry[sequence-id=8]"
 	bindingUrl := "/openconfig-acl:acl/interfaces/interface[id=Ethernet4]/egress-acl-sets/egress-acl-set[set-name=MyACL5][type=ACL_IPV4]"
@@ -174,7 +174,7 @@ func TestGetOperationsFromMultipleTreeLevels(t *testing.T) {
 	t.Run("Verify_One_Acl_Delete", processGetRequest(aclUrl, "", true))
 }
 
-func TestAddNewPortBindingToAlreadyBindedAcl(t *testing.T) {
+func Test_AclApp_AddNewPortBindingToAlreadyBindedAcl(t *testing.T) {
 	aclUrl := "/openconfig-acl:acl/acl-sets/acl-set[name=MyACL5][type=ACL_IPV4]"
 	ruleUrl := "/openconfig-acl:acl/acl-sets/acl-set[name=MyACL5][type=ACL_IPV4]/acl-entries/acl-entry[sequence-id=8]"
 	bindingUrl := "/openconfig-acl:acl/interfaces/interface[id=Ethernet4]/egress-acl-sets/egress-acl-set[set-name=MyACL5][type=ACL_IPV4]"
@@ -197,7 +197,7 @@ func TestAddNewPortBindingToAlreadyBindedAcl(t *testing.T) {
 	t.Run("Verify_Top_Level_Delete", processGetRequest("/openconfig-acl:acl", emptyJson, false))
 }
 
-func TestIPv6AclAndRule(t *testing.T) {
+func Test_AclApp_IPv6AclAndRule(t *testing.T) {
 	aclUrl := "/openconfig-acl:acl/acl-sets/acl-set[name=MyACL6][type=ACL_IPV6]"
 	ruleUrl := "/openconfig-acl:acl/acl-sets/acl-set[name=MyACL6][type=ACL_IPV6]/acl-entries/acl-entry[sequence-id=6]"
 	bindingUrl := "/openconfig-acl:acl/interfaces/interface[id=Ethernet4]/ingress-acl-sets/ingress-acl-set[set-name=MyACL6][type=ACL_IPV6]"
@@ -221,7 +221,7 @@ func TestIPv6AclAndRule(t *testing.T) {
 	t.Run("Verify_One_Acl_Delete", processGetRequest(aclUrl, "", true))
 }
 
-func TestL2AclAndRule(t *testing.T) {
+func Test_AclApp_L2AclAndRule(t *testing.T) {
 	aclUrl := "/openconfig-acl:acl/acl-sets/acl-set[name=MyACL2][type=ACL_L2]"
 	ruleUrl := "/openconfig-acl:acl/acl-sets/acl-set[name=MyACL2][type=ACL_L2]/acl-entries/acl-entry[sequence-id=2]"
 	bindingUrl := "/openconfig-acl:acl/interfaces/interface[id=Ethernet0]/ingress-acl-sets/ingress-acl-set[set-name=MyACL2][type=ACL_L2]"
@@ -245,7 +245,7 @@ func TestL2AclAndRule(t *testing.T) {
 	t.Run("Verify_One_Acl_Delete", processGetRequest(aclUrl, "", true))
 }
 
-func TestNegativeTests(t *testing.T) {
+func Test_AclApp_NegativeTests(t *testing.T) {
 	// Verify GET returns errors for non-existing ACL
 	aclUrl := "/openconfig-acl:acl/acl-sets/acl-set[name=MyACL2][type=ACL_L2]"
 	t.Run("Verify_Non_Existing_Acl_GET_Error", processGetRequest(aclUrl, "", true))
@@ -270,6 +270,10 @@ func TestNegativeTests(t *testing.T) {
 
 	duplicateRuleUrl := "/openconfig-acl:acl/acl-sets/acl-set[name=MyACL3][type=ACL_IPV4]/acl-entries/acl-entry[sequence-id=1]"
 	t.Run("Create_One_Duplicate_Rule", processSetRequest(duplicateRuleUrl, requestOneDuplicateRulePostJson, "POST", true))
+
+	topLevelUrl := "/openconfig-acl:acl"
+	t.Run("Delete_Full_ACl_Tree_Top_Level", processDeleteRequest(topLevelUrl))
+	t.Run("Verify_Top_Level_Delete", processGetRequest(topLevelUrl, emptyJson, false))
 }
 
 func processGetRequest(url string, expectedRespJson string, errorCase bool) func(*testing.T) {
@@ -288,7 +292,6 @@ func processGetRequest(url string, expectedRespJson string, errorCase bool) func
 
 func processSetRequest(url string, jsonPayload string, oper string, errorCase bool) func(*testing.T) {
 	return func(t *testing.T) {
-		//var response translib.SetResponse
 		var err error
 		switch oper {
 		case "POST":
@@ -337,7 +340,6 @@ func clearAclDataFromDb() error {
 	return err
 }
 
-/*******  These are utilities functions  ********/
 func getConfigDb() *db.DB {
 	configDb, _ := db.NewDB(db.Options{
 		DBNo:               db.ConfigDB,
