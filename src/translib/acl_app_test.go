@@ -3,23 +3,12 @@ package translib
 import (
 	"errors"
 	"fmt"
-	"github.com/gorilla/mux"
-	//"io/ioutil"
-	"net/http"
-	"net/http/httptest"
 	"os"
-	"rest/server"
-	"strings"
-	"swagger"
 	"testing"
 	db "translib/db"
 )
 
-var router *mux.Router
-
 func init() {
-	swagger.Load()
-	router = server.NewRouter()
 	fmt.Println("+++++  Init acl_app_test  +++++")
 }
 
@@ -40,290 +29,289 @@ func TestMain(m *testing.M) {
 
 // This will test GET on /openconfig-acl:acl
 func TestTopLevelPath(t *testing.T) {
-	url := "/restconf/data/openconfig-acl:acl"
+	url := "/openconfig-acl:acl"
 
-	t.Run("Empty_Response_Top_Level", processGetRequest(url, emptyJson, http.StatusOK))
+	t.Run("Empty_Response_Top_Level", processGetRequest(url, emptyJson, false))
 
-	t.Run("Bulk_Create_Top_Level", processSetRequest(url, bulkAclCreateJsonRequest, "POST", http.StatusCreated))
+	t.Run("Bulk_Create_Top_Level", processSetRequest(url, bulkAclCreateJsonRequest, "POST", false))
 
-	t.Run("Get_Full_Acl_Tree_Top_Level", processGetRequest(url, bulkAclCreateJsonResponse, http.StatusOK))
+	t.Run("Get_Full_Acl_Tree_Top_Level", processGetRequest(url, bulkAclCreateJsonResponse, false))
 
 	// Delete all bindings before deleting at top level
-	t.Run("Delete_All_Bindings_Top_Level", processDeleteRequest("/restconf/data/openconfig-acl:acl/interfaces"))
+	t.Run("Delete_All_Bindings_Top_Level", processDeleteRequest("/openconfig-acl:acl/interfaces"))
 	t.Run("Delete_Full_ACl_Tree_Top_Level", processDeleteRequest(url))
 
-	t.Run("Verify_Top_Level_Delete", processGetRequest(url, emptyJson, http.StatusOK))
+	t.Run("Verify_Top_Level_Delete", processGetRequest(url, emptyJson, false))
 }
 
 func TestSingleAclOperations(t *testing.T) {
-	url := "/restconf/data/openconfig-acl:acl/acl-sets/acl-set=MyACL3,ACL_IPV4"
+	url := "/openconfig-acl:acl/acl-sets/acl-set[name=MyACL3][type=ACL_IPV4]"
 
-	t.Run("Create_One_Acl_With_Multiple_Rules(PATCH)", processSetRequest(url, oneAclCreateWithRulesJsonRequest, "PATCH", http.StatusNoContent))
+	t.Run("Create_One_Acl_With_Multiple_Rules(PATCH)", processSetRequest(url, oneAclCreateWithRulesJsonRequest, "PATCH", false))
 
-	t.Run("Verify_Create_One_Acl_With_Multiple_Rules", processGetRequest(url, oneAclCreateWithRulesJsonResponse, http.StatusOK))
+	t.Run("Verify_Create_One_Acl_With_Multiple_Rules", processGetRequest(url, oneAclCreateWithRulesJsonResponse, false))
 
 	t.Run("Delete_One_Acl_With_All_Its_Rules", processDeleteRequest(url))
 
-	t.Run("Verify_One_Acl_Delete", processGetRequest(url, notFoundErrorJson, http.StatusNotFound))
+	t.Run("Verify_One_Acl_Delete", processGetRequest(url, "", true))
 }
 
 func TestSingleRuleOperations(t *testing.T) {
-	aclUrl := "/restconf/data/openconfig-acl:acl/acl-sets/acl-set=MyACL5,ACL_IPV4"
-	ruleUrl := "/restconf/data/openconfig-acl:acl/acl-sets/acl-set=MyACL5,ACL_IPV4/acl-entries/acl-entry=8"
+	aclUrl := "/openconfig-acl:acl/acl-sets/acl-set[name=MyACL5][type=ACL_IPV4]"
+	ruleUrl := "/openconfig-acl:acl/acl-sets/acl-set[name=MyACL5][type=ACL_IPV4]/acl-entries/acl-entry[sequence-id=8]"
 
-	t.Run("Create_One_Acl_Without_Rule", processSetRequest(aclUrl, oneAclCreateJsonRequest, "POST", http.StatusCreated))
-	t.Run("Get_One_Acl_Without_Rule", processGetRequest(aclUrl, oneAclCreateJsonResponse, http.StatusOK))
+	t.Run("Create_One_Acl_Without_Rule", processSetRequest(aclUrl, oneAclCreateJsonRequest, "POST", false))
+	t.Run("Get_One_Acl_Without_Rule", processGetRequest(aclUrl, oneAclCreateJsonResponse, false))
 
-	t.Run("Create_One_Rule", processSetRequest(ruleUrl, requestOneRulePostJson, "POST", http.StatusCreated))
-	t.Run("Get_One_Rule", processGetRequest(ruleUrl, responseOneRuleJson, http.StatusOK))
+	t.Run("Create_One_Rule", processSetRequest(ruleUrl, requestOneRulePostJson, "POST", false))
+	t.Run("Get_One_Rule", processGetRequest(ruleUrl, responseOneRuleJson, false))
 
 	// Change Source/Desination address and protocol
-	t.Run("Update_Existing_Rule", processSetRequest(ruleUrl, requestOneRulePatchJson, "PATCH", http.StatusNoContent))
-	t.Run("Verify_One_Rule_Updation", processGetRequest(ruleUrl, responseOneRulePatchJson, http.StatusOK))
+	t.Run("Update_Existing_Rule", processSetRequest(ruleUrl, requestOneRulePatchJson, "PATCH", false))
+	t.Run("Verify_One_Rule_Updation", processGetRequest(ruleUrl, responseOneRulePatchJson, false))
 
 	t.Run("Delete_One_Rule", processDeleteRequest(ruleUrl))
-	t.Run("Verify_One_Rule_Delete", processGetRequest(ruleUrl, notFoundErrorJson, http.StatusNotFound))
+	t.Run("Verify_One_Rule_Delete", processGetRequest(ruleUrl, "", true))
 
 	t.Run("Delete_One_Acl", processDeleteRequest(aclUrl))
-	t.Run("Verify_One_Acl_Delete", processGetRequest(aclUrl, notFoundErrorJson, http.StatusNotFound))
+	t.Run("Verify_One_Acl_Delete", processGetRequest(aclUrl, "", true))
 }
 
 // This will test PUT (Replace) operation by  Replacing multiple Rules with one Rule in an Acl
 func TestReplaceMultipleRulesWithOneRule(t *testing.T) {
-	url := "/restconf/data/openconfig-acl:acl/acl-sets/acl-set=MyACL3,ACL_IPV4"
+	url := "/openconfig-acl:acl/acl-sets/acl-set[name=MyACL3][type=ACL_IPV4]"
 
-	t.Run("Create_One_Acl_With_Multiple_Rules(PATCH)", processSetRequest(url, oneAclCreateWithRulesJsonRequest, "PATCH", http.StatusNoContent))
-	t.Run("Verify_Create_One_Acl_With_Multiple_Rules", processGetRequest(url, oneAclCreateWithRulesJsonResponse, http.StatusOK))
+	t.Run("Create_One_Acl_With_Multiple_Rules(PATCH)", processSetRequest(url, oneAclCreateWithRulesJsonRequest, "PATCH", false))
+	t.Run("Verify_Create_One_Acl_With_Multiple_Rules", processGetRequest(url, oneAclCreateWithRulesJsonResponse, false))
 
-	t.Run("Replace_All_Rules_With_One_Rule", processSetRequest(url, replaceMultiRulesWithOneRuleJsonRequest, "PUT", http.StatusNoContent))
-	t.Run("Verify_Acl_With_Replaced_Rules", processGetRequest(url, replaceMultiRulesWithOneRuleJsonResponse, http.StatusOK))
+	t.Run("Replace_All_Rules_With_One_Rule", processSetRequest(url, replaceMultiRulesWithOneRuleJsonRequest, "PUT", false))
+	t.Run("Verify_Acl_With_Replaced_Rules", processGetRequest(url, replaceMultiRulesWithOneRuleJsonResponse, false))
 
 	t.Run("Delete_One_Acl_With_All_Its_Rules", processDeleteRequest(url))
-	t.Run("Verify_One_Acl_Delete", processGetRequest(url, notFoundErrorJson, http.StatusNotFound))
+	t.Run("Verify_One_Acl_Delete", processGetRequest(url, "", true))
 }
 
 // This will test PATCH operation by  modifying Description of an Acl
 func TestAclDescriptionUpdation(t *testing.T) {
-	aclUrl := "/restconf/data/openconfig-acl:acl/acl-sets/acl-set=MyACL5,ACL_IPV4"
-	descrUrl := "/restconf/data/openconfig-acl:acl/acl-sets/acl-set=MyACL5,ACL_IPV4/config/description"
+	aclUrl := "/openconfig-acl:acl/acl-sets/acl-set[name=MyACL5][type=ACL_IPV4]"
+	descrUrl := "/openconfig-acl:acl/acl-sets/acl-set[name=MyACL5][type=ACL_IPV4]/config/description"
 
-	t.Run("Create_One_Acl_Without_Rule", processSetRequest(aclUrl, oneAclCreateJsonRequest, "POST", http.StatusCreated))
+	t.Run("Create_One_Acl_Without_Rule", processSetRequest(aclUrl, oneAclCreateJsonRequest, "POST", false))
 
-	t.Run("Update_Description_of_Acl", processSetRequest(descrUrl, aclDescrUpdateJson, "PATCH", http.StatusNoContent))
-	t.Run("Verify_Description_of_Acl", processGetRequest(descrUrl, aclDescrUpdateJson, http.StatusOK))
+	t.Run("Update_Description_of_Acl", processSetRequest(descrUrl, aclDescrUpdateJson, "PATCH", false))
+	t.Run("Verify_Description_of_Acl", processGetRequest(descrUrl, aclDescrUpdateJson, false))
 
 	t.Run("Delete_One_Acl", processDeleteRequest(aclUrl))
-	t.Run("Verify_One_Acl_Delete", processGetRequest(aclUrl, notFoundErrorJson, http.StatusNotFound))
+	t.Run("Verify_One_Acl_Delete", processGetRequest(aclUrl, "", true))
 }
 
 func TestAclIngressBindingOperations(t *testing.T) {
-	aclUrl := "/restconf/data/openconfig-acl:acl/acl-sets/acl-set=MyACL5,ACL_IPV4"
-	ruleUrl := "/restconf/data/openconfig-acl:acl/acl-sets/acl-set=MyACL5,ACL_IPV4/acl-entries/acl-entry=8"
-	bindingUrl := "/restconf/data/openconfig-acl:acl/interfaces/interface=Ethernet4/ingress-acl-sets/ingress-acl-set=MyACL5,ACL_IPV4"
+	aclUrl := "/openconfig-acl:acl/acl-sets/acl-set[name=MyACL5][type=ACL_IPV4]"
+	ruleUrl := "/openconfig-acl:acl/acl-sets/acl-set[name=MyACL5][type=ACL_IPV4]/acl-entries/acl-entry[sequence-id=8]"
+	bindingUrl := "/openconfig-acl:acl/interfaces/interface[id=Ethernet4]/ingress-acl-sets/ingress-acl-set[set-name=MyACL5][type=ACL_IPV4]"
 
-	t.Run("Create_One_Acl_Without_Rule", processSetRequest(aclUrl, oneAclCreateJsonRequest, "POST", http.StatusCreated))
+	t.Run("Create_One_Acl_Without_Rule", processSetRequest(aclUrl, oneAclCreateJsonRequest, "POST", false))
 
-	t.Run("Create_One_Rule", processSetRequest(ruleUrl, requestOneRulePostJson, "POST", http.StatusCreated))
+	t.Run("Create_One_Rule", processSetRequest(ruleUrl, requestOneRulePostJson, "POST", false))
 
-	t.Run("Create_Ingress_Acl_set", processSetRequest(bindingUrl, ingressAclSetCreateJsonRequest, "POST", http.StatusCreated))
-	t.Run("Verify_Ingress_Aclset_Creation", processGetRequest(bindingUrl, ingressAclSetCreateJsonResponse, http.StatusOK))
-	t.Run("Get_Port_Binding_From_Ingress_AclEntry_Level", processGetRequest(bindingUrl+"/acl-entries/acl-entry=8", getBindingAclEntryResponse, http.StatusOK))
+	t.Run("Create_Ingress_Acl_set", processSetRequest(bindingUrl, ingressAclSetCreateJsonRequest, "POST", false))
+	t.Run("Verify_Ingress_Aclset_Creation", processGetRequest(bindingUrl, ingressAclSetCreateJsonResponse, false))
+	t.Run("Get_Port_Binding_From_Ingress_AclEntry_Level", processGetRequest(bindingUrl+"/acl-entries/acl-entry[sequence-id=8]", getBindingAclEntryResponse, false))
 
 	t.Run("Delete_Binding_From_Ingress_Aclset", processDeleteRequest(bindingUrl))
-	t.Run("Verify_Binding_From_Ingress_Aclset_Deletion", processGetRequest(bindingUrl, ingressAclSetDeleteVerifyResponse, http.StatusBadRequest))
+	t.Run("Verify_Binding_From_Ingress_Aclset_Deletion", processGetRequest(bindingUrl, "", true))
 	t.Run("Delete_One_Rule", processDeleteRequest(ruleUrl))
-	t.Run("Verify_One_Rule_Delete", processGetRequest(ruleUrl, notFoundErrorJson, http.StatusNotFound))
+	t.Run("Verify_One_Rule_Delete", processGetRequest(ruleUrl, "", true))
 
 	t.Run("Delete_One_Acl", processDeleteRequest(aclUrl))
-	t.Run("Verify_One_Acl_Delete", processGetRequest(aclUrl, notFoundErrorJson, http.StatusNotFound))
+	t.Run("Verify_One_Acl_Delete", processGetRequest(aclUrl, "", true))
 }
 
 func TestAclEgressBindingOperations(t *testing.T) {
-	aclUrl := "/restconf/data/openconfig-acl:acl/acl-sets/acl-set=MyACL5,ACL_IPV4"
-	ruleUrl := "/restconf/data/openconfig-acl:acl/acl-sets/acl-set=MyACL5,ACL_IPV4/acl-entries/acl-entry=8"
-	bindingUrl := "/restconf/data/openconfig-acl:acl/interfaces/interface=Ethernet4/egress-acl-sets/egress-acl-set=MyACL5,ACL_IPV4"
+	aclUrl := "/openconfig-acl:acl/acl-sets/acl-set[name=MyACL5][type=ACL_IPV4]"
+	ruleUrl := "/openconfig-acl:acl/acl-sets/acl-set[name=MyACL5][type=ACL_IPV4]/acl-entries/acl-entry[sequence-id=8]"
+	bindingUrl := "/openconfig-acl:acl/interfaces/interface[id=Ethernet4]/egress-acl-sets/egress-acl-set[set-name=MyACL5][type=ACL_IPV4]"
 
-	t.Run("Create_One_Acl_Without_Rule", processSetRequest(aclUrl, oneAclCreateJsonRequest, "POST", http.StatusCreated))
+	t.Run("Create_One_Acl_Without_Rule", processSetRequest(aclUrl, oneAclCreateJsonRequest, "POST", false))
 
-	t.Run("Create_One_Rule", processSetRequest(ruleUrl, requestOneRulePostJson, "POST", http.StatusCreated))
+	t.Run("Create_One_Rule", processSetRequest(ruleUrl, requestOneRulePostJson, "POST", false))
 
-	t.Run("Create_Egress_Acl_set", processSetRequest(bindingUrl, ingressAclSetCreateJsonRequest, "POST", http.StatusCreated))
-	t.Run("Verify_Egress_Aclset_Creation", processGetRequest(bindingUrl, egressAclSetCreateJsonResponse, http.StatusOK))
-	t.Run("Get_Port_Binding_From_Egress_AclEntry_Level", processGetRequest(bindingUrl+"/acl-entries/acl-entry=8", getBindingAclEntryResponse, http.StatusOK))
+	t.Run("Create_Egress_Acl_set", processSetRequest(bindingUrl, ingressAclSetCreateJsonRequest, "POST", false))
+	t.Run("Verify_Egress_Aclset_Creation", processGetRequest(bindingUrl, egressAclSetCreateJsonResponse, false))
+	t.Run("Get_Port_Binding_From_Egress_AclEntry_Level", processGetRequest(bindingUrl+"/acl-entries/acl-entry[sequence-id=8]", getBindingAclEntryResponse, false))
 
 	t.Run("Delete_Binding_From_Egress_Aclset", processDeleteRequest(bindingUrl))
-	t.Run("Verify_Binding_From_Egress_Aclset_Deletion", processGetRequest(bindingUrl, ingressAclSetDeleteVerifyResponse, http.StatusBadRequest))
+	t.Run("Verify_Binding_From_Egress_Aclset_Deletion", processGetRequest(bindingUrl, "", true))
 	t.Run("Delete_One_Rule", processDeleteRequest(ruleUrl))
-	t.Run("Verify_One_Rule_Delete", processGetRequest(ruleUrl, notFoundErrorJson, http.StatusNotFound))
+	t.Run("Verify_One_Rule_Delete", processGetRequest(ruleUrl, "", true))
 
 	t.Run("Delete_One_Acl", processDeleteRequest(aclUrl))
-	t.Run("Verify_One_Acl_Delete", processGetRequest(aclUrl, notFoundErrorJson, http.StatusNotFound))
+	t.Run("Verify_One_Acl_Delete", processGetRequest(aclUrl, "", true))
 }
 
 func TestGetOperationsFromMultipleTreeLevels(t *testing.T) {
-	aclUrl := "/restconf/data/openconfig-acl:acl/acl-sets/acl-set=MyACL5,ACL_IPV4"
-	ruleUrl := "/restconf/data/openconfig-acl:acl/acl-sets/acl-set=MyACL5,ACL_IPV4/acl-entries/acl-entry=8"
-	bindingUrl := "/restconf/data/openconfig-acl:acl/interfaces/interface=Ethernet4/egress-acl-sets/egress-acl-set=MyACL5,ACL_IPV4"
+	aclUrl := "/openconfig-acl:acl/acl-sets/acl-set[name=MyACL5][type=ACL_IPV4]"
+	ruleUrl := "/openconfig-acl:acl/acl-sets/acl-set[name=MyACL5][type=ACL_IPV4]/acl-entries/acl-entry[sequence-id=8]"
+	bindingUrl := "/openconfig-acl:acl/interfaces/interface[id=Ethernet4]/egress-acl-sets/egress-acl-set[set-name=MyACL5][type=ACL_IPV4]"
 
-	t.Run("Create_One_Acl_Without_Rule", processSetRequest(aclUrl, oneAclCreateJsonRequest, "POST", http.StatusCreated))
-	t.Run("Create_One_Rule", processSetRequest(ruleUrl, requestOneRulePostJson, "POST", http.StatusCreated))
-	t.Run("Create_Egress_Acl_set_Port_Binding", processSetRequest(bindingUrl, ingressAclSetCreateJsonRequest, "POST", http.StatusCreated))
+	t.Run("Create_One_Acl_Without_Rule", processSetRequest(aclUrl, oneAclCreateJsonRequest, "POST", false))
+	t.Run("Create_One_Rule", processSetRequest(ruleUrl, requestOneRulePostJson, "POST", false))
+	t.Run("Create_Egress_Acl_set_Port_Binding", processSetRequest(bindingUrl, ingressAclSetCreateJsonRequest, "POST", false))
 
-	t.Run("Get_Acl_Tree_From_AclSets_level", processGetRequest("/restconf/data/openconfig-acl:acl/acl-sets", getFromAclSetsTreeLevelResponse, http.StatusOK))
+	t.Run("Get_Acl_Tree_From_AclSets_level", processGetRequest("/openconfig-acl:acl/acl-sets", getFromAclSetsTreeLevelResponse, false))
 
-	t.Run("Get_All_Ports_Bindings_From_Interfaces_Tree_Level", processGetRequest("/restconf/data/openconfig-acl:acl/interfaces", getAllPortsFromInterfacesTreeLevelResponse, http.StatusOK))
+	t.Run("Get_All_Ports_Bindings_From_Interfaces_Tree_Level", processGetRequest("/openconfig-acl:acl/interfaces", getAllPortsFromInterfacesTreeLevelResponse, false))
 
-	t.Run("Get_One_Port_Binding_From_Interface_Tree_Level", processGetRequest("/restconf/data/openconfig-acl:acl/interfaces/interface=Ethernet4", getPortBindingFromInterfaceTreeLevelResponse, http.StatusOK))
+	t.Run("Get_One_Port_Binding_From_Interface_Tree_Level", processGetRequest("/openconfig-acl:acl/interfaces/interface[id=Ethernet4]", getPortBindingFromInterfaceTreeLevelResponse, false))
 
 	t.Run("Delete_Binding_From_Egress_Aclset", processDeleteRequest(bindingUrl))
-	t.Run("Verify_Binding_From_Egress_Aclset_Deletion", processGetRequest(bindingUrl, ingressAclSetDeleteVerifyResponse, http.StatusBadRequest))
+	t.Run("Verify_Binding_From_Egress_Aclset_Deletion", processGetRequest(bindingUrl, "", true))
 
 	t.Run("Delete_One_Rule", processDeleteRequest(ruleUrl))
-	t.Run("Verify_One_Rule_Delete", processGetRequest(ruleUrl, notFoundErrorJson, http.StatusNotFound))
+	t.Run("Verify_One_Rule_Delete", processGetRequest(ruleUrl, "", true))
 
 	t.Run("Delete_One_Acl", processDeleteRequest(aclUrl))
-	t.Run("Verify_One_Acl_Delete", processGetRequest(aclUrl, notFoundErrorJson, http.StatusNotFound))
+	t.Run("Verify_One_Acl_Delete", processGetRequest(aclUrl, "", true))
 }
 
 func TestAddNewPortBindingToAlreadyBindedAcl(t *testing.T) {
-	aclUrl := "/restconf/data/openconfig-acl:acl/acl-sets/acl-set=MyACL5,ACL_IPV4"
-	ruleUrl := "/restconf/data/openconfig-acl:acl/acl-sets/acl-set=MyACL5,ACL_IPV4/acl-entries/acl-entry=8"
-	bindingUrl := "/restconf/data/openconfig-acl:acl/interfaces/interface=Ethernet4/egress-acl-sets/egress-acl-set=MyACL5,ACL_IPV4"
+	aclUrl := "/openconfig-acl:acl/acl-sets/acl-set[name=MyACL5][type=ACL_IPV4]"
+	ruleUrl := "/openconfig-acl:acl/acl-sets/acl-set[name=MyACL5][type=ACL_IPV4]/acl-entries/acl-entry[sequence-id=8]"
+	bindingUrl := "/openconfig-acl:acl/interfaces/interface[id=Ethernet4]/egress-acl-sets/egress-acl-set[set-name=MyACL5][type=ACL_IPV4]"
 
-	t.Run("Create_One_Acl_Without_Rule", processSetRequest(aclUrl, oneAclCreateJsonRequest, "POST", http.StatusCreated))
-	t.Run("Create_One_Rule", processSetRequest(ruleUrl, requestOneRulePostJson, "POST", http.StatusCreated))
-	t.Run("Create_Egress_Acl_set_Port_Binding", processSetRequest(bindingUrl, ingressAclSetCreateJsonRequest, "POST", http.StatusCreated))
+	t.Run("Create_One_Acl_Without_Rule", processSetRequest(aclUrl, oneAclCreateJsonRequest, "POST", false))
+	t.Run("Create_One_Rule", processSetRequest(ruleUrl, requestOneRulePostJson, "POST", false))
+	t.Run("Create_Egress_Acl_set_Port_Binding", processSetRequest(bindingUrl, ingressAclSetCreateJsonRequest, "POST", false))
 
-	newBindingUrl := "/restconf/data/openconfig-acl:acl/interfaces/interface=Ethernet0/egress-acl-sets/egress-acl-set=MyACL5,ACL_IPV4"
-	t.Run("Create_New_Egress_Acl_set_Port_Binding", processSetRequest(newBindingUrl, ingressAclSetCreateJsonRequest, "POST", http.StatusCreated))
+	newBindingUrl := "/openconfig-acl:acl/interfaces/interface[id=Ethernet0]/egress-acl-sets/egress-acl-set[set-name=MyACL5][type=ACL_IPV4]"
+	t.Run("Create_New_Egress_Acl_set_Port_Binding", processSetRequest(newBindingUrl, ingressAclSetCreateJsonRequest, "POST", false))
 
-	t.Run("Get_All_Ports_Bindings_From_Interfaces_Tree_Level", processGetRequest("/restconf/data/openconfig-acl:acl/interfaces", getMultiportBindingOnSingleAclResponse, http.StatusOK))
+	t.Run("Get_All_Ports_Bindings_From_Interfaces_Tree_Level", processGetRequest("/openconfig-acl:acl/interfaces", getMultiportBindingOnSingleAclResponse, false))
 
-	t.Run("Delete_All_Bindings_Top_Level", processDeleteRequest("/restconf/data/openconfig-acl:acl/interfaces"))
-	t.Run("Delete_All_Rules_Not_Acl", processDeleteRequest("/restconf/data/openconfig-acl:acl/acl-sets/acl-set=MyACL5,ACL_IPV4/acl-entries"))
+	t.Run("Delete_All_Bindings_Top_Level", processDeleteRequest("/openconfig-acl:acl/interfaces"))
+	t.Run("Delete_All_Rules_Not_Acl", processDeleteRequest("/openconfig-acl:acl/acl-sets/acl-set[name=MyACL5][type=ACL_IPV4]/acl-entries"))
 
 	t.Run("Delete_One_Acl", processDeleteRequest(aclUrl))
-	t.Run("Verify_One_Acl_Delete", processGetRequest(aclUrl, notFoundErrorJson, http.StatusNotFound))
+	t.Run("Verify_One_Acl_Delete", processGetRequest(aclUrl, "", true))
 
-	t.Run("Verify_Top_Level_Delete", processGetRequest("/restconf/data/openconfig-acl:acl", emptyJson, http.StatusOK))
+	t.Run("Verify_Top_Level_Delete", processGetRequest("/openconfig-acl:acl", emptyJson, false))
 }
 
 func TestIPv6AclAndRule(t *testing.T) {
-	aclUrl := "/restconf/data/openconfig-acl:acl/acl-sets/acl-set=MyACL6,ACL_IPV6"
-	ruleUrl := "/restconf/data/openconfig-acl:acl/acl-sets/acl-set=MyACL6,ACL_IPV6/acl-entries/acl-entry=6"
-	bindingUrl := "/restconf/data/openconfig-acl:acl/interfaces/interface=Ethernet4/ingress-acl-sets/ingress-acl-set=MyACL6,ACL_IPV6"
+	aclUrl := "/openconfig-acl:acl/acl-sets/acl-set[name=MyACL6][type=ACL_IPV6]"
+	ruleUrl := "/openconfig-acl:acl/acl-sets/acl-set[name=MyACL6][type=ACL_IPV6]/acl-entries/acl-entry[sequence-id=6]"
+	bindingUrl := "/openconfig-acl:acl/interfaces/interface[id=Ethernet4]/ingress-acl-sets/ingress-acl-set[set-name=MyACL6][type=ACL_IPV6]"
 
-	t.Run("Create_One_IPv6_Acl_Without_Rule", processSetRequest(aclUrl, oneIPv6AclCreateJsonRequest, "POST", http.StatusCreated))
-	t.Run("Verify_One_IPv6_Acl_Without_Rule_Creation", processGetRequest(aclUrl, oneIPv6AclCreateJsonResponse, http.StatusOK))
+	t.Run("Create_One_IPv6_Acl_Without_Rule", processSetRequest(aclUrl, oneIPv6AclCreateJsonRequest, "POST", false))
+	t.Run("Verify_One_IPv6_Acl_Without_Rule_Creation", processGetRequest(aclUrl, oneIPv6AclCreateJsonResponse, false))
 
-	t.Run("Create_One_IPv6_Rule", processSetRequest(ruleUrl, oneIPv6RuleCreateJsonRequest, "POST", http.StatusCreated))
-	t.Run("Verify_One_IPv6_Rule_Creation", processGetRequest(ruleUrl, oneIPv6RuleCreateJsonResponse, http.StatusOK))
+	t.Run("Create_One_IPv6_Rule", processSetRequest(ruleUrl, oneIPv6RuleCreateJsonRequest, "POST", false))
+	t.Run("Verify_One_IPv6_Rule_Creation", processGetRequest(ruleUrl, oneIPv6RuleCreateJsonResponse, false))
 
-	t.Run("Create_Ingress_Acl_set", processSetRequest(bindingUrl, ingressIPv6AclSetCreateJsonRequest, "POST", http.StatusCreated))
-	t.Run("Verify_Ingress_Aclset_Creation", processGetRequest(bindingUrl, ingressIPv6AclSetCreateJsonResponse, http.StatusOK))
+	t.Run("Create_Ingress_Acl_set", processSetRequest(bindingUrl, ingressIPv6AclSetCreateJsonRequest, "POST", false))
+	t.Run("Verify_Ingress_Aclset_Creation", processGetRequest(bindingUrl, ingressIPv6AclSetCreateJsonResponse, false))
 
-	t.Run("Get_Acl_Tree_From_AclSet_level", processGetRequest("/restconf/data/openconfig-acl:acl/acl-sets/acl-set", getIPv6AclsFromAclSetListLevelResponse, http.StatusOK))
-	t.Run("Get_All_Ports_Bindings_From_Interfaces_Tree_Level", processGetRequest("/restconf/data/openconfig-acl:acl/interfaces", getIPv6AllPortsBindingsResponse, http.StatusOK))
+	t.Run("Get_Acl_Tree_From_AclSet_level", processGetRequest("/openconfig-acl:acl/acl-sets/acl-set", getIPv6AclsFromAclSetListLevelResponse, false))
+	t.Run("Get_All_Ports_Bindings_From_Interfaces_Tree_Level", processGetRequest("/openconfig-acl:acl/interfaces", getIPv6AllPortsBindingsResponse, false))
 
 	t.Run("Delete_Binding_From_Ingress_Aclset", processDeleteRequest(bindingUrl))
-	t.Run("Verify_Binding_From_Ingress_Aclset_Deletion", processGetRequest(bindingUrl, ingressIPv6AclSetDeleteVerifyResponse, http.StatusBadRequest))
+	t.Run("Verify_Binding_From_Ingress_Aclset_Deletion", processGetRequest(bindingUrl, "", true))
 	t.Run("Delete_One_Rule", processDeleteRequest(ruleUrl))
 	t.Run("Delete_One_Acl", processDeleteRequest(aclUrl))
-	t.Run("Verify_One_Acl_Delete", processGetRequest(aclUrl, notFoundErrorJson, http.StatusNotFound))
+	t.Run("Verify_One_Acl_Delete", processGetRequest(aclUrl, "", true))
 }
 
 func TestL2AclAndRule(t *testing.T) {
-	aclUrl := "/restconf/data/openconfig-acl:acl/acl-sets/acl-set=MyACL2,ACL_L2"
-	ruleUrl := "/restconf/data/openconfig-acl:acl/acl-sets/acl-set=MyACL2,ACL_L2/acl-entries/acl-entry=2"
-	bindingUrl := "/restconf/data/openconfig-acl:acl/interfaces/interface=Ethernet0/ingress-acl-sets/ingress-acl-set=MyACL2,ACL_L2"
+	aclUrl := "/openconfig-acl:acl/acl-sets/acl-set[name=MyACL2][type=ACL_L2]"
+	ruleUrl := "/openconfig-acl:acl/acl-sets/acl-set[name=MyACL2][type=ACL_L2]/acl-entries/acl-entry[sequence-id=2]"
+	bindingUrl := "/openconfig-acl:acl/interfaces/interface[id=Ethernet0]/ingress-acl-sets/ingress-acl-set[set-name=MyACL2][type=ACL_L2]"
 
-	t.Run("Create_One_L2_Acl_Without_Rule", processSetRequest(aclUrl, oneL2AclCreateJsonRequest, "POST", http.StatusCreated))
-	t.Run("Verify_One_L2_Acl_Without_Rule_Creation", processGetRequest(aclUrl, oneL2AclCreateJsonResponse, http.StatusOK))
+	t.Run("Create_One_L2_Acl_Without_Rule", processSetRequest(aclUrl, oneL2AclCreateJsonRequest, "POST", false))
+	t.Run("Verify_One_L2_Acl_Without_Rule_Creation", processGetRequest(aclUrl, oneL2AclCreateJsonResponse, false))
 
-	t.Run("Create_One_L2_Rule", processSetRequest(ruleUrl, oneL2RuleCreateJsonRequest, "POST", http.StatusCreated))
-	t.Run("Verify_One_L2_Rule_Creation", processGetRequest(ruleUrl, oneL2RuleCreateJsonResponse, http.StatusOK))
+	t.Run("Create_One_L2_Rule", processSetRequest(ruleUrl, oneL2RuleCreateJsonRequest, "POST", false))
+	t.Run("Verify_One_L2_Rule_Creation", processGetRequest(ruleUrl, oneL2RuleCreateJsonResponse, false))
 
-	t.Run("Create_Ingress_L2_Acl_set", processSetRequest(bindingUrl, ingressL2AclSetCreateJsonRequest, "POST", http.StatusCreated))
-	t.Run("Verify_Ingress_L2_Aclset_Creation", processGetRequest(bindingUrl, ingressL2AclSetCreateJsonResponse, http.StatusOK))
+	t.Run("Create_Ingress_L2_Acl_set", processSetRequest(bindingUrl, ingressL2AclSetCreateJsonRequest, "POST", false))
+	t.Run("Verify_Ingress_L2_Aclset_Creation", processGetRequest(bindingUrl, ingressL2AclSetCreateJsonResponse, false))
 
-	t.Run("Get_Acl_Tree_From_AclSet_level", processGetRequest("/restconf/data/openconfig-acl:acl/acl-sets/acl-set", getL2AclsFromAclSetListLevelResponse, http.StatusOK))
-	t.Run("Get_All_Ports_Bindings_From_Interfaces_Tree_Level", processGetRequest("/restconf/data/openconfig-acl:acl/interfaces", getL2AllPortsBindingsResponse, http.StatusOK))
+	t.Run("Get_Acl_Tree_From_AclSet_level", processGetRequest("/openconfig-acl:acl/acl-sets/acl-set", getL2AclsFromAclSetListLevelResponse, false))
+	t.Run("Get_All_Ports_Bindings_From_Interfaces_Tree_Level", processGetRequest("/openconfig-acl:acl/interfaces", getL2AllPortsBindingsResponse, false))
 
 	t.Run("Delete_Binding_From_Ingress_Aclset", processDeleteRequest(bindingUrl))
-	t.Run("Verify_Binding_From_Ingress_Aclset_Deletion", processGetRequest(bindingUrl, ingressL2AclSetDeleteVerifyResponse, http.StatusBadRequest))
+	t.Run("Verify_Binding_From_Ingress_Aclset_Deletion", processGetRequest(bindingUrl, "", true))
 	t.Run("Delete_One_Rule", processDeleteRequest(ruleUrl))
 	t.Run("Delete_One_Acl", processDeleteRequest(aclUrl))
-	t.Run("Verify_One_Acl_Delete", processGetRequest(aclUrl, notFoundErrorJson, http.StatusNotFound))
+	t.Run("Verify_One_Acl_Delete", processGetRequest(aclUrl, "", true))
 }
 
 func TestNegativeTests(t *testing.T) {
 	// Verify GET returns errors for non-existing ACL
-	aclUrl := "/restconf/data/openconfig-acl:acl/acl-sets/acl-set=MyACL2,ACL_L2"
-	t.Run("Verify_Non_Existing_Acl_GET_Error", processGetRequest(aclUrl, notFoundErrorJson, http.StatusNotFound))
+	aclUrl := "/openconfig-acl:acl/acl-sets/acl-set[name=MyACL2][type=ACL_L2]"
+	t.Run("Verify_Non_Existing_Acl_GET_Error", processGetRequest(aclUrl, "", true))
 
 	// Verify GET returns errors for non-existing Rule
-	ruleUrl := "/restconf/data/openconfig-acl:acl/acl-sets/acl-set=MyACL2,ACL_L2/acl-entries/acl-entry=2"
-	t.Run("Verify_Non_Existing_Rule_GET_Error", processGetRequest(ruleUrl, notFoundErrorJson, http.StatusNotFound))
+	ruleUrl := "/openconfig-acl:acl/acl-sets/acl-set[name=MyACL2][type=ACL_L2]/acl-entries/acl-entry[sequence-id=2]"
+	t.Run("Verify_Non_Existing_Rule_GET_Error", processGetRequest(ruleUrl, "", true))
 
 	// Verify Error on giving Invalid Interface in payload during binding creation
-	url := "/restconf/data/openconfig-acl:acl"
-	t.Run("Create_Acl_With_Invalid_Interface_Binding", processSetRequest(url, aclCreateWithInvalidInterfaceBinding, "POST", http.StatusInternalServerError))
+	url := "/openconfig-acl:acl"
+	t.Run("Create_Acl_With_Invalid_Interface_Binding", processSetRequest(url, aclCreateWithInvalidInterfaceBinding, "POST", true))
 
 	// Verify error if duplicate Acl is created using POST
-	t.Run("Create_One_L2_Acl_Without_Rule", processSetRequest(aclUrl, oneL2AclCreateJsonRequest, "POST", http.StatusCreated))
-	t.Run("Verify_One_L2_Acl_Without_Rule_Creation", processGetRequest(aclUrl, oneL2AclCreateJsonResponse, http.StatusOK))
-	t.Run("Verify_Error_On_Create_Duplicate_L2_Acl", processSetRequest(aclUrl, oneL2AclCreateJsonRequest, "POST", http.StatusConflict))
+	t.Run("Create_One_L2_Acl_Without_Rule", processSetRequest(aclUrl, oneL2AclCreateJsonRequest, "POST", false))
+	t.Run("Verify_One_L2_Acl_Without_Rule_Creation", processGetRequest(aclUrl, oneL2AclCreateJsonResponse, false))
+	t.Run("Verify_Error_On_Create_Duplicate_L2_Acl", processSetRequest(aclUrl, oneL2AclCreateJsonRequest, "POST", true))
 
 	// Verify error if duplicate Rule is created using POST
-	multiRuleUrl := "/restconf/data/openconfig-acl:acl/acl-sets/acl-set=MyACL3,ACL_IPV4"
-	t.Run("Create_One_Acl_With_Multiple_Rules(PATCH)", processSetRequest(multiRuleUrl, oneAclCreateWithRulesJsonRequest, "PATCH", http.StatusNoContent))
-	t.Run("Verify_Create_One_Acl_With_Multiple_Rules", processGetRequest(multiRuleUrl, oneAclCreateWithRulesJsonResponse, http.StatusOK))
+	multiRuleUrl := "/openconfig-acl:acl/acl-sets/acl-set[name=MyACL3][type=ACL_IPV4]"
+	t.Run("Create_One_Acl_With_Multiple_Rules(PATCH)", processSetRequest(multiRuleUrl, oneAclCreateWithRulesJsonRequest, "PATCH", false))
+	t.Run("Verify_Create_One_Acl_With_Multiple_Rules", processGetRequest(multiRuleUrl, oneAclCreateWithRulesJsonResponse, true))
 
-	duplicateRuleUrl := "/restconf/data/openconfig-acl:acl/acl-sets/acl-set=MyACL3,ACL_IPV4/acl-entries/acl-entry=1"
-	t.Run("Create_One_Duplicate_Rule", processSetRequest(duplicateRuleUrl, requestOneDuplicateRulePostJson, "POST", http.StatusConflict))
+	duplicateRuleUrl := "/openconfig-acl:acl/acl-sets/acl-set[name=MyACL3][type=ACL_IPV4]/acl-entries/acl-entry[sequence-id=1]"
+	t.Run("Create_One_Duplicate_Rule", processSetRequest(duplicateRuleUrl, requestOneDuplicateRulePostJson, "POST", true))
 }
 
-func processGetRequest(url string, expectedRespJson string, expHttpStatus int) func(*testing.T) {
+func processGetRequest(url string, expectedRespJson string, errorCase bool) func(*testing.T) {
 	return func(t *testing.T) {
-		req := httptest.NewRequest("GET", url, nil)
-		resp := executeRequest(req)
-		checkResponseReturnStatus(t, expHttpStatus, resp.Code)
+		response, err := Get(GetRequest{url})
+		if err != nil && !errorCase {
+			t.Errorf("Error %v received for Url: %s", err, url)
+		}
 
-		/*err := ioutil.WriteFile("TmpResp.json", resp.Body.Bytes(), 0644)
-		if err != nil {
-			fmt.Println(err)
-		}*/
-		/*jsonRespVal, err := ioutil.ReadFile(expectedRespJsonFileName)
-		  if err != nil {
-		      t.Errorf("Error occured reading file: %s. Error: %v", expectedRespJsonFileName, err)
-		  }*/
-		if resp != nil && resp.Body.String() != expectedRespJson {
+		respJson := response.Payload
+		if string(respJson) != expectedRespJson {
 			t.Errorf("Response received not matching with expected for Url: %s", url)
 		}
 	}
 }
 
-func processSetRequest(url string, jsonPayload string, oper string, expHttpStatus int) func(*testing.T) {
+func processSetRequest(url string, jsonPayload string, oper string, errorCase bool) func(*testing.T) {
 	return func(t *testing.T) {
-		/*jsonVal, err := ioutil.ReadFile(jsonFileName)
-		  if err != nil {
-		      t.Errorf("Error occured reading file: %s. Error: %v", jsonFileName, err)
-		  }*/
-		//fmt.Println("Set Data from File: \n" + string(jsonVal))
-		//req := httptest.NewRequest(oper, url, bytes.NewReader(jsonVal))
-		req := httptest.NewRequest(oper, url, strings.NewReader(jsonPayload))
-		req.Header.Set("Content-Type", "application/yang-data+json")
-		req.Header.Set("accept", "application/yang-data+json")
-		resp := executeRequest(req)
-		checkResponseReturnStatus(t, expHttpStatus, resp.Code)
+		//var response translib.SetResponse
+		var err error
+		switch oper {
+		case "POST":
+			_, err = Create(SetRequest{Path: url, Payload: []byte(jsonPayload)})
+		case "PATCH":
+			_, err = Update(SetRequest{Path: url, Payload: []byte(jsonPayload)})
+		case "PUT":
+			_, err = Replace(SetRequest{Path: url, Payload: []byte(jsonPayload)})
+		default:
+			t.Errorf("Operation not supported")
+		}
+		if err != nil && !errorCase {
+			t.Errorf("Error %v received for Url: %s", err, url)
+		}
 	}
 }
 
 func processDeleteRequest(url string) func(*testing.T) {
 	return func(t *testing.T) {
-		req := httptest.NewRequest("DELETE", url, nil)
-		resp := executeRequest(req)
-		checkResponseReturnStatus(t, http.StatusNoContent, resp.Code)
+		_, err := Delete(SetRequest{Path: url})
+		if err != nil {
+			t.Errorf("Error %v received for Url: %s", err, url)
+		}
 	}
 }
 
@@ -361,25 +349,10 @@ func getConfigDb() *db.DB {
 	return configDb
 }
 
-func executeRequest(req *http.Request) *httptest.ResponseRecorder {
-	response := httptest.NewRecorder()
-	router.ServeHTTP(response, req)
-
-	return response
-}
-
-func checkResponseReturnStatus(t *testing.T, expected, actual int) {
-	if expected != actual {
-		t.Errorf("Expected response code %d. Got %d\n", expected, actual)
-	}
-}
-
 /***************************************************************************/
 ///////////                  JSON Data for Tests              ///////////////
 /***************************************************************************/
 var emptyJson string = "{}"
-
-var notFoundErrorJson string = "{\"ietf-restconf:errors\":{\"error\":[{\"error-type\":\"application\",\"error-tag\":\"invalid-value\",\"error-message\":\"Entry not found\"}]}}"
 
 var bulkAclCreateJsonRequest string = "{\"acl-sets\":{\"acl-set\":[{\"name\":\"MyACL1\",\"type\":\"ACL_IPV4\",\"config\":{\"name\":\"MyACL1\",\"type\":\"ACL_IPV4\",\"description\":\"Description for MyACL1\"},\"acl-entries\":{\"acl-entry\":[{\"sequence-id\":1,\"config\":{\"sequence-id\":1,\"description\":\"Description for MyACL1 Rule Seq 1\"},\"ipv4\":{\"config\":{\"source-address\":\"11.1.1.1/32\",\"destination-address\":\"21.1.1.1/32\",\"dscp\":1,\"protocol\":\"IP_TCP\"}},\"transport\":{\"config\":{\"source-port\":101,\"destination-port\":201}},\"actions\":{\"config\":{\"forwarding-action\":\"ACCEPT\"}}},{\"sequence-id\":2,\"config\":{\"sequence-id\":2,\"description\":\"Description for MyACL1 Rule Seq 2\"},\"ipv4\":{\"config\":{\"source-address\":\"11.1.1.2/32\",\"destination-address\":\"21.1.1.2/32\",\"dscp\":2,\"protocol\":\"IP_TCP\"}},\"transport\":{\"config\":{\"source-port\":102,\"destination-port\":202}},\"actions\":{\"config\":{\"forwarding-action\":\"DROP\"}}},{\"sequence-id\":3,\"config\":{\"sequence-id\":3,\"description\":\"Description for MyACL1 Rule Seq 3\"},\"ipv4\":{\"config\":{\"source-address\":\"11.1.1.3/32\",\"destination-address\":\"21.1.1.3/32\",\"dscp\":3,\"protocol\":\"IP_TCP\"}},\"transport\":{\"config\":{\"source-port\":103,\"destination-port\":203}},\"actions\":{\"config\":{\"forwarding-action\":\"ACCEPT\"}}},{\"sequence-id\":4,\"config\":{\"sequence-id\":4,\"description\":\"Description for MyACL1 Rule Seq 4\"},\"ipv4\":{\"config\":{\"source-address\":\"11.1.1.4/32\",\"destination-address\":\"21.1.1.4/32\",\"dscp\":4,\"protocol\":\"IP_TCP\"}},\"transport\":{\"config\":{\"source-port\":104,\"destination-port\":204}},\"actions\":{\"config\":{\"forwarding-action\":\"DROP\"}}},{\"sequence-id\":5,\"config\":{\"sequence-id\":5,\"description\":\"Description for MyACL1 Rule Seq 5\"},\"ipv4\":{\"config\":{\"source-address\":\"11.1.1.5/32\",\"destination-address\":\"21.1.1.5/32\",\"dscp\":5,\"protocol\":\"IP_TCP\"}},\"transport\":{\"config\":{\"source-port\":105,\"destination-port\":205}},\"actions\":{\"config\":{\"forwarding-action\":\"ACCEPT\"}}}]}},{\"name\":\"MyACL2\",\"type\":\"ACL_IPV4\",\"config\":{\"name\":\"MyACL2\",\"type\":\"ACL_IPV4\",\"description\":\"Description for MyACL2\"},\"acl-entries\":{\"acl-entry\":[{\"sequence-id\":1,\"config\":{\"sequence-id\":1,\"description\":\"Description for Rule Seq 1\"},\"ipv4\":{\"config\":{\"source-address\":\"12.1.1.1/32\",\"destination-address\":\"22.1.1.1/32\",\"dscp\":1,\"protocol\":\"IP_TCP\"}},\"transport\":{\"config\":{\"source-port\":101,\"destination-port\":201}},\"actions\":{\"config\":{\"forwarding-action\":\"ACCEPT\"}}},{\"sequence-id\":2,\"config\":{\"sequence-id\":2,\"description\":\"Description for Rule Seq 2\"},\"ipv4\":{\"config\":{\"source-address\":\"12.1.1.2/32\",\"destination-address\":\"22.1.1.2/32\",\"dscp\":2,\"protocol\":\"IP_TCP\"}},\"transport\":{\"config\":{\"source-port\":102,\"destination-port\":202}},\"actions\":{\"config\":{\"forwarding-action\":\"ACCEPT\"}}},{\"sequence-id\":3,\"config\":{\"sequence-id\":3,\"description\":\"Description for Rule Seq 3\"},\"ipv4\":{\"config\":{\"source-address\":\"12.1.1.3/32\",\"destination-address\":\"22.1.1.3/32\",\"dscp\":3,\"protocol\":\"IP_TCP\"}},\"transport\":{\"config\":{\"source-port\":103,\"destination-port\":203}},\"actions\":{\"config\":{\"forwarding-action\":\"ACCEPT\"}}},{\"sequence-id\":4,\"config\":{\"sequence-id\":4,\"description\":\"Description for Rule Seq 4\"},\"ipv4\":{\"config\":{\"source-address\":\"12.1.1.4/32\",\"destination-address\":\"22.1.1.4/32\",\"dscp\":4,\"protocol\":\"IP_TCP\"}},\"transport\":{\"config\":{\"source-port\":104,\"destination-port\":204}},\"actions\":{\"config\":{\"forwarding-action\":\"ACCEPT\"}}},{\"sequence-id\":5,\"config\":{\"sequence-id\":5,\"description\":\"Description for Rule Seq 5\"},\"ipv4\":{\"config\":{\"source-address\":\"12.1.1.5/32\",\"destination-address\":\"22.1.1.5/32\",\"dscp\":5,\"protocol\":\"IP_TCP\"}},\"transport\":{\"config\":{\"source-port\":105,\"destination-port\":205}},\"actions\":{\"config\":{\"forwarding-action\":\"ACCEPT\"}}}]}}]},\"interfaces\":{\"interface\":[{\"id\":\"Ethernet0\",\"config\":{\"id\":\"Ethernet0\"},\"interface-ref\":{\"config\":{\"interface\":\"Ethernet0\"}},\"ingress-acl-sets\":{\"ingress-acl-set\":[{\"set-name\":\"MyACL1\",\"type\":\"ACL_IPV4\",\"config\":{\"set-name\":\"MyACL1\",\"type\":\"ACL_IPV4\"}}]}},{\"id\":\"Ethernet4\",\"config\":{\"id\":\"Ethernet4\"},\"interface-ref\":{\"config\":{\"interface\":\"Ethernet4\"}},\"ingress-acl-sets\":{\"ingress-acl-set\":[{\"set-name\":\"MyACL2\",\"type\":\"ACL_IPV4\",\"config\":{\"set-name\":\"MyACL2\",\"type\":\"ACL_IPV4\"}}]}}]}}"
 
@@ -404,7 +377,6 @@ var aclDescrUpdateJson string = "{\"openconfig-acl:description\":\"Verifying ACL
 
 var ingressAclSetCreateJsonRequest string = "{ \"openconfig-acl:config\": { \"set-name\": \"MyACL5\", \"type\": \"ACL_IPV4\" }}"
 var ingressAclSetCreateJsonResponse string = "{\"openconfig-acl:ingress-acl-set\":[{\"acl-entries\":{\"acl-entry\":[{\"sequence-id\":8,\"state\":{\"matched-octets\":\"0\",\"matched-packets\":\"0\",\"sequence-id\":8}}]},\"config\":{\"set-name\":\"MyACL5\",\"type\":\"openconfig-acl:ACL_IPV4\"},\"set-name\":\"MyACL5\",\"state\":{\"set-name\":\"MyACL5\",\"type\":\"openconfig-acl:ACL_IPV4\"},\"type\":\"openconfig-acl:ACL_IPV4\"}]}"
-var ingressAclSetDeleteVerifyResponse string = "{\"ietf-restconf:errors\":{\"error\":[{\"error-type\":\"application\",\"error-tag\":\"invalid-value\",\"error-message\":\"Acl MyACL5_ACL_IPV4 not binded with Ethernet4\"}]}}"
 
 var egressAclSetCreateJsonResponse string = "{\"openconfig-acl:egress-acl-set\":[{\"acl-entries\":{\"acl-entry\":[{\"sequence-id\":8,\"state\":{\"matched-octets\":\"0\",\"matched-packets\":\"0\",\"sequence-id\":8}}]},\"config\":{\"set-name\":\"MyACL5\",\"type\":\"openconfig-acl:ACL_IPV4\"},\"set-name\":\"MyACL5\",\"state\":{\"set-name\":\"MyACL5\",\"type\":\"openconfig-acl:ACL_IPV4\"},\"type\":\"openconfig-acl:ACL_IPV4\"}]}"
 
@@ -435,8 +407,6 @@ var getIPv6AclsFromAclSetListLevelResponse string = "{\"openconfig-acl:acl-set\"
 
 var getIPv6AllPortsBindingsResponse string = "{\"openconfig-acl:interfaces\":{\"interface\":[{\"config\":{\"id\":\"Ethernet4\"},\"id\":\"Ethernet4\",\"ingress-acl-sets\":{\"ingress-acl-set\":[{\"acl-entries\":{\"acl-entry\":[{\"sequence-id\":6,\"state\":{\"matched-octets\":\"0\",\"matched-packets\":\"0\",\"sequence-id\":6}}]},\"config\":{\"set-name\":\"MyACL6\",\"type\":\"openconfig-acl:ACL_IPV6\"},\"set-name\":\"MyACL6\",\"state\":{\"set-name\":\"MyACL6\",\"type\":\"openconfig-acl:ACL_IPV6\"},\"type\":\"openconfig-acl:ACL_IPV6\"}]},\"state\":{\"id\":\"Ethernet4\"}}]}}"
 
-var ingressIPv6AclSetDeleteVerifyResponse string = "{\"ietf-restconf:errors\":{\"error\":[{\"error-type\":\"application\",\"error-tag\":\"invalid-value\",\"error-message\":\"Acl MyACL6_ACL_IPV6 not binded with Ethernet4\"}]}}"
-
 var oneL2AclCreateJsonRequest string = "{\"config\": {\"name\": \"MyACL2\",\"type\": \"ACL_L2\",\"description\": \"Description for L2 ACL MyACL2\"}}"
 var oneL2AclCreateJsonResponse string = "{\"openconfig-acl:acl-set\":[{\"config\":{\"description\":\"Description for L2 ACL MyACL2\",\"name\":\"MyACL2\",\"type\":\"openconfig-acl:ACL_L2\"},\"name\":\"MyACL2\",\"state\":{\"description\":\"Description for L2 ACL MyACL2\",\"name\":\"MyACL2\",\"type\":\"openconfig-acl:ACL_L2\"},\"type\":\"openconfig-acl:ACL_L2\"}]}"
 
@@ -450,8 +420,6 @@ var ingressL2AclSetCreateJsonResponse string = "{\"openconfig-acl:ingress-acl-se
 var getL2AclsFromAclSetListLevelResponse string = "{\"openconfig-acl:acl-set\":[{\"acl-entries\":{\"acl-entry\":[{\"actions\":{\"config\":{\"forwarding-action\":\"openconfig-acl:ACCEPT\"},\"state\":{\"forwarding-action\":\"openconfig-acl:ACCEPT\"}},\"config\":{\"sequence-id\":2},\"l2\":{\"config\":{\"ethertype\":\"openconfig-packet-match-types:ETHERTYPE_VLAN\"},\"state\":{\"ethertype\":\"openconfig-packet-match-types:ETHERTYPE_VLAN\"}},\"sequence-id\":2,\"state\":{\"matched-octets\":\"0\",\"matched-packets\":\"0\",\"sequence-id\":2},\"transport\":{\"config\":{\"destination-port\":100,\"source-port\":101,\"tcp-flags\":[\"openconfig-packet-match-types:TCP_FIN\",\"openconfig-packet-match-types:TCP_ACK\"]},\"state\":{\"destination-port\":100,\"source-port\":101,\"tcp-flags\":[\"openconfig-packet-match-types:TCP_FIN\",\"openconfig-packet-match-types:TCP_ACK\"]}}}]},\"config\":{\"description\":\"Description for L2 ACL MyACL2\",\"name\":\"MyACL2\",\"type\":\"openconfig-acl:ACL_L2\"},\"name\":\"MyACL2\",\"state\":{\"description\":\"Description for L2 ACL MyACL2\",\"name\":\"MyACL2\",\"type\":\"openconfig-acl:ACL_L2\"},\"type\":\"openconfig-acl:ACL_L2\"}]}"
 
 var getL2AllPortsBindingsResponse string = "{\"openconfig-acl:interfaces\":{\"interface\":[{\"config\":{\"id\":\"Ethernet0\"},\"id\":\"Ethernet0\",\"ingress-acl-sets\":{\"ingress-acl-set\":[{\"acl-entries\":{\"acl-entry\":[{\"sequence-id\":2,\"state\":{\"matched-octets\":\"0\",\"matched-packets\":\"0\",\"sequence-id\":2}}]},\"config\":{\"set-name\":\"MyACL2\",\"type\":\"openconfig-acl:ACL_L2\"},\"set-name\":\"MyACL2\",\"state\":{\"set-name\":\"MyACL2\",\"type\":\"openconfig-acl:ACL_L2\"},\"type\":\"openconfig-acl:ACL_L2\"}]},\"state\":{\"id\":\"Ethernet0\"}}]}}"
-
-var ingressL2AclSetDeleteVerifyResponse string = "{\"ietf-restconf:errors\":{\"error\":[{\"error-type\":\"application\",\"error-tag\":\"invalid-value\",\"error-message\":\"Acl MyACL2_ACL_L2 not binded with Ethernet0\"}]}}"
 
 var aclCreateWithInvalidInterfaceBinding string = "{ \"acl-sets\": { \"acl-set\": [ { \"name\": \"MyACL1\", \"type\": \"ACL_IPV4\", \"config\": { \"name\": \"MyACL1\", \"type\": \"ACL_IPV4\", \"description\": \"Description for MyACL1\" }, \"acl-entries\": { \"acl-entry\": [ { \"sequence-id\": 1, \"config\": { \"sequence-id\": 1, \"description\": \"Description for MyACL1 Rule Seq 1\" }, \"ipv4\": { \"config\": { \"source-address\": \"11.1.1.1/32\", \"destination-address\": \"21.1.1.1/32\", \"dscp\": 1, \"protocol\": \"IP_TCP\" } }, \"transport\": { \"config\": { \"source-port\": 101, \"destination-port\": 201 } }, \"actions\": { \"config\": { \"forwarding-action\": \"ACCEPT\" } } } ] } } ] }, \"interfaces\": { \"interface\": [ { \"id\": \"Ethernet112\", \"config\": { \"id\": \"Ethernet112\" }, \"interface-ref\": { \"config\": { \"interface\": \"Ethernet112\" } }, \"ingress-acl-sets\": { \"ingress-acl-set\": [ { \"set-name\": \"MyACL1\", \"type\": \"ACL_IPV4\", \"config\": { \"set-name\": \"MyACL1\", \"type\": \"ACL_IPV4\" } } ] } } ] }}"
 
