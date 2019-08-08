@@ -80,7 +80,7 @@ func NewPathInfo(path string) *PathInfo {
 		name := readUntil(r, '=')
 		value := readUntil(r, ']')
 		if len(name) != 0 {
-			fmt.Fprintf(&template, "{%s}", name)
+			fmt.Fprintf(&template, "{}")
 			info.Vars[name] = value
 		}
 	}

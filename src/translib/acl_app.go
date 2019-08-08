@@ -165,7 +165,7 @@ func (app *AclApp) translateSubscribe(dbs [db.MaxDB]*db.DB, path string) (*notif
 		// to 2 tables (ACL and ACL_RULE); TransLib does not support it yet
 		if pathInfo.HasSuffix("/acl-sets") ||
 			pathInfo.HasSuffix("/acl-set") ||
-			pathInfo.HasSuffix("/acl-set{name}{type}") {
+			pathInfo.HasSuffix("/acl-set{}{}") {
 			log.Errorf("Subscribe not supported for top level ACL %s", pathInfo.Template)
 			return nil, nil, notSupported
 		}
@@ -177,12 +177,12 @@ func (app *AclApp) translateSubscribe(dbs [db.MaxDB]*db.DB, path string) (*notif
 
 		aclkey := getAclKeyStrFromOCKey(pathInfo.Var("name"), t)
 
-		if strings.Contains(pathInfo.Template, "/acl-entry{sequence-id}") {
+		if strings.Contains(pathInfo.Template, "/acl-entry{}") {
 			// Subscribe for one rule
 			rulekey := "RULE_" + pathInfo.Var("sequence-id")
 			notifInfo.table = db.TableSpec{Name: RULE_TABLE}
 			notifInfo.key = asKey(aclkey, rulekey)
-			notifInfo.needCache = !pathInfo.HasSuffix("/acl-entry{sequence-id}")
+			notifInfo.needCache = !pathInfo.HasSuffix("/acl-entry{}")
 
 		} else if pathInfo.HasSuffix("/acl-entries") || pathInfo.HasSuffix("/acl-entry") {
 			// Subscribe for all rules of an ACL
@@ -304,14 +304,12 @@ func (app *AclApp) processCommon(d *db.DB, opcode int) error {
 
 	targetUriPath, _ := getYangPathFromUri(app.pathInfo.Path)
 	if isSubtreeRequest(app.pathInfo.Template, "/openconfig-acl:acl/acl-sets") {
-		if isSubtreeRequest(app.pathInfo.Template, "/openconfig-acl:acl/acl-sets/acl-set{name}{type}") ||
-			isSubtreeRequest(app.pathInfo.Template, "/openconfig-acl:acl/acl-sets/acl-set{type}{name}") {
+		if isSubtreeRequest(app.pathInfo.Template, "/openconfig-acl:acl/acl-sets/acl-set{}{}") {
 			for aclSetKey, _ := range acl.AclSets.AclSet {
 				aclSet := acl.AclSets.AclSet[aclSetKey]
 				aclKey := getAclKeyStrFromOCKey(aclSetKey.Name, aclSetKey.Type)
 
-				if isSubtreeRequest(app.pathInfo.Template, "/openconfig-acl:acl/acl-sets/acl-set{name}{type}/acl-entries/acl-entry{sequence-id}") ||
-					isSubtreeRequest(app.pathInfo.Template, "/openconfig-acl:acl/acl-sets/acl-set{type}{name}/acl-entries/acl-entry{sequence-id}") {
+				if isSubtreeRequest(app.pathInfo.Template, "/openconfig-acl:acl/acl-sets/acl-set{}{}/acl-entries/acl-entry{}") {
 					// Subtree of one Rule
 					for seqId, _ := range aclSet.AclEntries.AclEntry {
 						ruleKey := "RULE_" + strconv.Itoa(int(seqId))
@@ -347,7 +345,7 @@ func (app *AclApp) processCommon(d *db.DB, opcode int) error {
 						}
 					}
 				} else {
-					isAclEntriesSubtree := isSubtreeRequest(app.pathInfo.Template, "/openconfig-acl:acl/acl-sets/acl-set{name}{type}/acl-entries") || isSubtreeRequest(app.pathInfo.Template, "/openconfig-acl:acl/acl-sets/acl-set{type}{name}/acl-entries")
+					isAclEntriesSubtree := isSubtreeRequest(app.pathInfo.Template, "/openconfig-acl:acl/acl-sets/acl-set{}{}/acl-entries")
 					switch opcode {
 					case CREATE:
 						if *app.ygotTarget == aclSet {
@@ -419,7 +417,7 @@ func (app *AclApp) processCommon(d *db.DB, opcode int) error {
 		case DELETE:
 			err = app.handleBindingsDeletion(d)
 		case GET:
-			if isSubtreeRequest(app.pathInfo.Template, "/openconfig-acl:acl/interfaces/interface{id}") {
+			if isSubtreeRequest(app.pathInfo.Template, "/openconfig-acl:acl/interfaces/interface{}") {
 				for intfId := range acl.Interfaces.Interface {
 					intfData := acl.Interfaces.Interface[intfId]
 					ygot.BuildEmptyTree(intfData)
@@ -1019,18 +1017,18 @@ func (app *AclApp) handleBindingsDeletion(d *db.DB) error {
 		aclEntry, _ := d.GetEntry(app.aclTs, aclKeys[i])
 		var isRequestedAclFound = false
 		if len(aclEntry.GetList("ports")) > 0 {
-			if isSubtreeRequest(app.pathInfo.Template, "/openconfig-acl:acl/interfaces/interface{id}") {
+			if isSubtreeRequest(app.pathInfo.Template, "/openconfig-acl:acl/interfaces/interface{}") {
 				direction := aclEntry.Get("stage")
-				if isSubtreeRequest(app.pathInfo.Template, "/openconfig-acl:acl/interfaces/interface{id}/ingress-acl-sets") && direction != "INGRESS" {
+				if isSubtreeRequest(app.pathInfo.Template, "/openconfig-acl:acl/interfaces/interface{}/ingress-acl-sets") && direction != "INGRESS" {
 					return tlerr.InvalidArgs("Acl %s is not Ingress", aclKeys[i].Get(0))
 				}
-				if isSubtreeRequest(app.pathInfo.Template, "/openconfig-acl:acl/interfaces/interface{id}/egress-acl-sets") && direction != "EGRESS" {
+				if isSubtreeRequest(app.pathInfo.Template, "/openconfig-acl:acl/interfaces/interface{}/egress-acl-sets") && direction != "EGRESS" {
 					return tlerr.InvalidArgs("Acl %s is not Egress", aclKeys[i].Get(0))
 				}
 				for intfId := range acl.Interfaces.Interface {
 					aclname, acltype := getAclKeysFromStrKey(aclKeys[i].Get(0), aclEntry.Get("type"))
 					intfData := acl.Interfaces.Interface[intfId]
-					if isSubtreeRequest(app.pathInfo.Template, "/openconfig-acl:acl/interfaces/interface{id}/ingress-acl-sets/ingress-acl-set{set-name}{type}") {
+					if isSubtreeRequest(app.pathInfo.Template, "/openconfig-acl:acl/interfaces/interface{}/ingress-acl-sets/ingress-acl-set{}{}") {
 						for k := range intfData.IngressAclSets.IngressAclSet {
 							if aclname == k.SetName {
 								if acltype == k.Type {
@@ -1042,7 +1040,7 @@ func (app *AclApp) handleBindingsDeletion(d *db.DB) error {
 								goto SkipDBProcessing
 							}
 						}
-					} else if isSubtreeRequest(app.pathInfo.Template, "/openconfig-acl:acl/interfaces/interface{id}/egress-acl-sets/egress-acl-set{set-name}{type}") {
+					} else if isSubtreeRequest(app.pathInfo.Template, "/openconfig-acl:acl/interfaces/interface{}/egress-acl-sets/egress-acl-set{}{}") {
 						for k := range intfData.EgressAclSets.EgressAclSet {
 							if aclname == k.SetName {
 								if acltype == k.Type {
