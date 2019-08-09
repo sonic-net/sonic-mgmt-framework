@@ -246,9 +246,9 @@ def run(func, args):
                      if "error-message" in errDict:
                          print "%Error: " + errDict["error-message"]
                          return
-                     print "%Error: Application Failure"
+                     print "%Error: Transaction Failure"
                      return
-            print "%Error: Application Failure"
+            print "%Error: Transaction Failure"
 
 
 if __name__ == '__main__':

@@ -108,7 +108,6 @@ func (app *IntfApp) initialize(data appData) {
 	app.ifTableMap = make(map[string]dbEntry)
 	app.ifIPTableMap = make(map[string]map[string]dbEntry)
 	app.portStatMap = make(map[string]dbEntry)
-
 }
 
 func (app *IntfApp) getAppRootObject() *ocbinds.OpenconfigInterfaces_Interfaces {
@@ -230,8 +229,7 @@ func (app *IntfApp) translateGet(dbs [db.MaxDB]*db.DB) error {
 }
 
 func (app *IntfApp) translateSubscribe(dbs [db.MaxDB]*db.DB, path string) (*notificationOpts, *notificationInfo, error) {
-	log.Info("translateSubscribe fn - intf_app module called!")
-
+	app.appDB = dbs[db.ApplDB]
 	pathInfo := NewPathInfo(path)
 	notifInfo := notificationInfo{dbno: db.ApplDB}
 	notSupported := tlerr.NotSupportedError{Format: "Subscribe not supported", Path: path}
@@ -248,6 +246,10 @@ func (app *IntfApp) translateSubscribe(dbs [db.MaxDB]*db.DB, path string) (*noti
 			return nil, nil, errors.New("ifKey given is empty!")
 		}
 		log.Info("Interface name = ", ifKey)
+		err := app.validateInterface(app.appDB, ifKey, db.Key{Comp: []string{ifKey}})
+		if err != nil {
+			return nil, nil, err
+		}
 		if pathInfo.HasSuffix("/state/oper-status") {
 			notifInfo.table = db.TableSpec{Name: "PORT_TABLE"}
 			notifInfo.key = asKey(ifKey)
@@ -716,6 +718,22 @@ func (app *IntfApp) convertDBIntfCounterInfoToInternal(dbCl *db.DB, ifKey string
 		for ifKey, _ := range app.ifTableMap {
 			app.convertDBIntfCounterInfoToInternal(dbCl, ifKey)
 		}
+	}
+	return err
+}
+
+func (app *IntfApp) validateInterface(dbCl *db.DB, ifName string, ifKey db.Key) error {
+	var err error
+	if len(ifName) == 0 {
+		return errors.New("Empty Interface name")
+	}
+	app.portTblTs = &db.TableSpec{Name: "PORT_TABLE"}
+	_, err = dbCl.GetEntry(app.portTblTs, ifKey)
+	if err != nil {
+		log.Errorf("Error found on fetching Interface info from App DB for If Name : %s", ifName)
+		errStr := "Invalid Interface:" + ifName
+		err = tlerr.InvalidArgsError{Format: errStr}
+		return err
 	}
 	return err
 }
