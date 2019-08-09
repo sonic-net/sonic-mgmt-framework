@@ -4,6 +4,7 @@ TGT_DIR := $(SONIC_CLI_ROOT)/target
 
 all:
 	mkdir -p ${TGT_DIR}/command-tree ${TGT_DIR}/cli-macro ${TGT_DIR}/render-templates ${TGT_DIR}/scripts
+	cp -r cli-xml/include ${TGT_DIR}/command-tree
 	cp cli-xml/*.xml ${TGT_DIR}/command-tree
 	cp macro/*.xml ${TGT_DIR}/cli-macro
 	(cd scripts;./klish_platform_features_process.sh ../../clicfg ${TGT_DIR})
@@ -19,4 +20,4 @@ all:
 clean:
 	rm -rf ${TGT_DIR}
 	@echo "Clitree Cleaned"
-	
+
