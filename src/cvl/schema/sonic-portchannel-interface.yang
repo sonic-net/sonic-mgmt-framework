@@ -35,8 +35,6 @@ module sonic-portchannel-interface {
 	container sonic-portchannel-interface {
 		list PORTCHANNEL_INTERFACE {
 			key "pch_name ip_prefix";
-                        scommon:key-delim "|";
-                        scommon:key-pattern "PORTCHANNEL_INTERFACE|{pch_name}|{ip_prefix}";
 
 			leaf pch_name{
 				type leafref {

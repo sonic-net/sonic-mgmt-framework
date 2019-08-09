@@ -3,11 +3,16 @@ package translib
 import (
 	"fmt"
 	"github.com/openconfig/ygot/ygot"
+	"github.com/openconfig/gnmi/proto/gnmi"
 	"reflect"
 	"strings"
 	"testing"
 	"translib/ocbinds"
 )
+
+func TestInitSchema(t *testing.T) {
+	initSchema()
+}
 
 func TestGetRequestBinder(t *testing.T) {
 	tests := []struct {
@@ -28,6 +33,57 @@ func TestGetRequestBinder(t *testing.T) {
 			t.Error("Error in creating the request binder object")
 		} else if &tt.uri != rb.uri || tt.opcode != rb.opcode || tt.payload != rb.payload || &tt.appRootType != rb.appRootNodeType {
 			t.Error("Error in creating the request binder object")
+		}
+	}
+}
+
+func TestValidateRequest(t *testing.T) {
+	tests := []struct {
+		tid         int
+		uri         string
+		opcode      int
+		payload     []byte
+		appRootType reflect.Type
+		want        string //target object name
+	}{{
+		tid:         1,
+		uri:         "",
+		opcode:      1,
+		payload:     []byte{},
+		appRootType: reflect.TypeOf(ocbinds.OpenconfigAcl_Acl{}),
+		want:        "Path is empty",
+	}, {
+		tid:         2,
+		uri:         "/openconfig-acl:cpu/acl-sets/",
+		opcode:      1,
+		payload:     []byte{},
+		appRootType: reflect.TypeOf(ocbinds.OpenconfigAcl_Acl{}),
+		want:        "no match found",
+	}}
+	
+	for _, tt := range tests {
+		deviceObj := ocbinds.Device{}
+		deviceObj.Acl = &ocbinds.OpenconfigAcl_Acl{}
+		deviceObj.Acl.AclSets = &ocbinds.OpenconfigAcl_Acl_AclSets{}
+		deviceObj.Acl.AclSets.NewAclSet ("SampleACL", ocbinds.OpenconfigAcl_ACL_TYPE_ACL_IPV4)
+		
+		binder := getRequestBinder(&tt.uri, &tt.payload, tt.opcode, &tt.appRootType)
+		
+		path, err := binder.getUriPath()
+		if err != nil {
+			tmpPath := gnmi.Path{}
+			binder.pathTmp = &tmpPath
+		} else {
+			binder.pathTmp = path
+		}
+		
+		err = binder.validateRequest(&deviceObj)
+		
+		if err != nil {
+			// Negative test case
+			if strings.Contains(err.Error(), tt.want) == false {
+				t.Error("Error in validating the object: didn't get the expected error, and the error string is", err)
+			}
 		}
 	}
 }
@@ -122,6 +178,21 @@ func TestUnMarshallUri(t *testing.T) {
 		payload:     []byte{},
 		appRootType: reflect.TypeOf(ocbinds.OpenconfigSystem_System{}),
 		want:        "OpenconfigSystem_System_Cpus_Cpu",
+	}, {
+		tid:         12,
+		uri:         "",
+		opcode:      1,
+		payload:     []byte{},
+		appRootType: reflect.TypeOf(ocbinds.OpenconfigSystem_System{}),
+		want:        "Error: URI is empty",
+	}, {
+		//Negative test case
+		tid:         13,
+		uri:         "/openconfig-acl:acl/acl-sets/openconfig-acl:acl-set[name=Sample][type=ACL_IPV4]/",
+		opcode:      3,
+		payload:     []byte{},
+		appRootType: reflect.TypeOf(ocbinds.OpenconfigAcl_Acl{}),
+		want:        "OpenconfigAcl_Acl_AclSets_AclSet",
 	}}
 
 	for _, tt := range tests {
@@ -193,6 +264,80 @@ func TestUnMarshallUri(t *testing.T) {
 }
 
 func TestUnMarshallPayload(t *testing.T) {
+	tests := []struct {
+		tid         int
+		objIntf     interface{}
+		uri         string
+		opcode      int
+		payload     []byte
+		want        string //target object name
+	}{{
+		tid:         1,
+		objIntf:     "TestObj", 
+		uri:         "/openconfig-acl:acl/acl-sets/",
+		opcode:      2,
+		payload:     []byte{},
+		want:        "Error in casting the target object",
+	}, {
+		tid:         2,
+		objIntf:     ocbinds.OpenconfigAcl_Acl{}, 
+		uri:         "/openconfig-acl:acl/acl-sets/",
+		opcode:      3,
+		payload:     []byte{},
+		want:        "Request payload is empty",
+	}}
+
+	for _, tt := range tests {
+		objType := reflect.TypeOf(tt.objIntf)
+		reqBinder := getRequestBinder(&tt.uri, &tt.payload, tt.opcode, &objType)
+		var deviceObj ocbinds.Device = ocbinds.Device{}
+		var workObj *interface{}
+		var err error
+		workObj, err = reqBinder.unMarshallUri(&deviceObj); if err != nil {
+			t.Error(err)
+		}
+
+		if (tt.tid == 1) {
+			workObj = &tt.objIntf
+		}
+		
+		err = reqBinder.unMarshallPayload(workObj); if err != nil {
+			if strings.Contains(err.Error(), tt.want) == false {
+				t.Error("Negative test case failed: ", err)
+			}
+		}
+	}
+}
+
+func TestGetUriPath(t *testing.T) {
+
+	tests := []struct {
+		tid         int
+		uri         string
+		opcode      int
+		payload     []byte
+		appRootType reflect.Type
+		want        string //target object name
+	}{{
+		tid:         1,
+		uri:         "////",
+		opcode:      2,
+		payload:     []byte{},
+		appRootType: reflect.TypeOf(ocbinds.OpenconfigAcl_Acl{}),
+		want:        "error formatting path",
+	}}
+	
+	for _, tt := range tests {
+		reqBinder := getRequestBinder(&tt.uri, &tt.payload, tt.opcode, &tt.appRootType)
+		_, err := reqBinder.getUriPath(); if err != nil {
+			if strings.Contains(err.Error(), tt.want) == false {
+				t.Error("Negative test case failed: ", err)
+			}
+		} 
+	}
+}
+
+func TestUnMarshall(t *testing.T) {
 
 	tests := []struct {
 		tid         int
@@ -259,6 +404,41 @@ func TestUnMarshallPayload(t *testing.T) {
 		payload:     []byte{},
 		appRootType: reflect.TypeOf(ocbinds.OpenconfigAcl_Acl{}),
 		want:        "SourceAddress",
+	}, {
+		tid:         9, //negative test case
+		uri:         "/openconfig-acl:acl/",
+		opcode:      3,
+		payload:     []byte{},
+		appRootType: reflect.TypeOf(ocbinds.OpenconfigAcl_Acl{}),
+		want:        "Request payload is empty",
+	}, {
+		tid:         10, //GET  - negative test case - incorrect opcode
+		uri:         "/openconfig-acl:acl/acl-sets/",
+		opcode:      7,
+		payload:     []byte("{    \"acl-set\": [    {      \"name\": \"MyACL3\",    \"type\": \"ACL_IPV4\",   \"config\": {   \"name\": \"MyACL3\",                 \"type\": \"ACL_IPV4\",                 \"description\": \"Description for MyACL3\" }    }   ] } "),
+		appRootType: reflect.TypeOf(ocbinds.OpenconfigAcl_Acl{}),
+		want:        "Unknown HTTP METHOD in the request",
+	}, {
+		tid:         11, // negative
+		uri:         "/openconfig-acl:acl/acl-sets/openconfig-acl:acl-set/",
+		opcode:      2,
+		payload:     []byte("{    \"acl-set\": [    {      \"name\": \"MyACL3\",    \"type\": \"ACL_IPV4\",   \"config\": {   \"name\": \"MyACL3\",                 \"type\": \"ACL_IPV4\",                 \"description\": \"Description for MyACL3\" }    }   ] } "),
+		appRootType: reflect.TypeOf(ocbinds.OpenconfigAcl_Acl{}),
+		want:        "URI doesn't have keys in the request",
+	}, {
+		tid:         12, // negative
+		uri:         "/openconfig-acl:acl/acl-sets/openconfig-acl:acl-set[name=MyACL1][type=ACL_IPV4]/",
+		opcode:      2,
+		payload:     []byte("{ \"acl-entries\": { \"acl-entry\": [  {  \"sequence-id\": abc, \"config\": { \"sequence-id\": 1, \"description\": \"Description for MyACL1 Rule Seq 1\"  },   \"ipv4\": {  \"config\": {  \"source-address\": \"11.1.1.1/32\",  \"destination-address\": \"21.1.1.1/32\", \"dscp\": 1, \"protocol\": \"IP_TCP\" } }, \"transport\": { \"config\": { \"source-port\": 101, \"destination-port\": 201 } }, \"actions\": { \"config\": { \"forwarding-action\": \"ACCEPT\" } } } ] } } "),
+		appRootType: reflect.TypeOf(ocbinds.OpenconfigAcl_Acl{}),
+		want:        "invalid character",
+	}, {
+		tid:         13, // negative
+		uri:         "/openconfig-acl:acl/acl-sets/acl-set[name=MyACL1]",
+		opcode:      1,
+		payload:     []byte("{ \"acl-entries\": { \"acl-entry\": [  {  \"sequence-id\": abc, \"config\": { \"sequence-id\": 1, \"description\": \"Description for MyACL1 Rule Seq 1\"  },   \"ipv4\": {  \"config\": {  \"source-address\": \"11.1.1.1/32\",  \"destination-address\": \"21.1.1.1/32\", \"dscp\": 1, \"protocol\": \"IP_TCP\" } }, \"transport\": { \"config\": { \"source-port\": 101, \"destination-port\": 201 } }, \"actions\": { \"config\": { \"forwarding-action\": \"ACCEPT\" } } } ] } } "),
+		appRootType: reflect.TypeOf(ocbinds.OpenconfigAcl_Acl{}),
+		want:        "failed to create map value for insert",
 	}}
 
 	for _, tt := range tests {

@@ -32,8 +32,6 @@ module sonic-mirror-session {
 
 		list MIRROR_SESSION {
 			key "name";
-			scommon:key-delim "|";
-			scommon:key-pattern "MIRROR_SESSION|{name}";
 
 			leaf name {
 				type string;

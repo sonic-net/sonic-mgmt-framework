@@ -31,8 +31,6 @@ module sonic-device-metadata {
 	container sonic-device-metadata {
 		list DEVICE_METADATA {
 			key "name";
-			scommon:key-delim "|";
-			scommon:key-pattern "DEVICE_METADATA|{name}";
 
 			leaf name{
 				type string;

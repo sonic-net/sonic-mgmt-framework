@@ -114,20 +114,28 @@ func notificationHandler(d *db.DB, sKey *db.SKey, key *db.Key, event db.SEvent) 
 		defer sMutex.Unlock()
 
 		if sKey != nil {
-			nInfo := nMap[sKey]
-			sInfo := sMap[nInfo]
+			if nInfo, ok := nMap[sKey]; (ok && nInfo != nil) {
+				if sInfo, ok := sMap[nInfo]; (ok && sInfo != nil) {
+					isChanged := isCacheChanged(nInfo)
 
-			isChanged := isCacheChanged(nInfo)
-
-			if isChanged {
-				sendNotification(sInfo, nInfo, false)
+					if isChanged {
+						sendNotification(sInfo, nInfo, false)
+					}
+				} else {
+					log.Info("sInfo not in map", sInfo)
+				}
+			} else {
+				log.Info("nInfo not in map", nInfo)
 			}
 		}
 	case db.SEventClose:
 	case db.SEventErr:
-		sInfo := cleanupMap[d]
-		nInfo := sInfo.nInfoArr[0]
-		sendNotification(sInfo, nInfo, true)
+		if sInfo, ok := cleanupMap[d]; (ok && sInfo != nil) {
+			nInfo := sInfo.nInfoArr[0]
+			if nInfo != nil {
+				sendNotification(sInfo, nInfo, true)
+			}
+		}
 	}
 
     return nil
@@ -153,16 +161,19 @@ func updateCache(nInfo *notificationInfo) error {
 func isCacheChanged(nInfo *notificationInfo) bool {
 	json, err := getJson (nInfo)
 
-    if err == nil {
-        if bytes.Equal(nInfo.cache, json) {
-			log.Info("Cache is same as DB")
-			return false
-		} else {
-			log.Info("Cache is NOT same as DB")
-			nInfo.cache = json
-			return true
-		}
-    }
+    if err != nil {
+		json = []byte("{}")
+	}
+
+    if bytes.Equal(nInfo.cache, json) {
+		log.Info("Cache is same as DB")
+		return false
+	} else {
+		log.Info("Cache is NOT same as DB")
+		nInfo.cache = json
+		return true
+	}
+
 	return false
 }
 
@@ -240,7 +251,7 @@ func getJson (nInfo *notificationInfo) ([]byte, error) {
 func sendNotification(sInfo *subscribeInfo, nInfo *notificationInfo, isTerminated bool){
 	log.Info("Sending notification for sInfo = ", sInfo)
 	log.Info("payload = ", string(nInfo.cache))
-	log.Info("isTerminagted", strconv.FormatBool(isTerminated))
+	log.Info("isTerminated", strconv.FormatBool(isTerminated))
 	sInfo.q.Put(&SubscribeResponse{
 			Path:nInfo.path,
 			Payload:nInfo.cache,
@@ -267,22 +278,24 @@ func stophandler(stop chan struct{}) {
 	return
 }
 
-func cleanup (stop chan struct{}) {
-	sInfo := stopMap[stop]
+func cleanup(stop chan struct{}) {
+	if sInfo,ok := stopMap[stop]; ok {
 
-	for _, sDB := range sInfo.sDBs {
-		sDB.UnsubscribeDB()
+		for _, sDB := range sInfo.sDBs {
+			sDB.UnsubscribeDB()
+		}
+
+		for _, nInfo := range sInfo.nInfoArr {
+			delete(nMap, nInfo.sKey)
+			delete(sMap, nInfo)
+		}
+
+		delete(stopMap, stop)
 	}
-
-	for _, nInfo := range sInfo.nInfoArr {
-		delete(nMap, nInfo.sKey)
-		delete(sMap, nInfo)
-	}
-
-	delete(stopMap, stop)
-	printAllMaps()
+	//printAllMaps()
 }
 
+//Debugging functions
 func printnMap() {
 	log.Info("Printing the contents of nMap")
 	for sKey, nInfo := range nMap {

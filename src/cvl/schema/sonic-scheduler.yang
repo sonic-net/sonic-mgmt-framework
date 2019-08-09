@@ -27,8 +27,6 @@ module sonic-scheduler {
 	container sonic-scheduler {
 		list SCHEDULER {
 			key "name";
-			scommon:key-delim "|";
-			scommon:key-pattern "SCHEDULER|{name}";
 
 			leaf name{
 				type string;

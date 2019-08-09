@@ -29,6 +29,7 @@ import (
 		"translib/db"
         "github.com/Workiva/go-datastructures/queue"
         log "github.com/golang/glog"
+		"translib/tlerr"
 )
 
 //Write lock for all write operations to be synchronized
@@ -479,7 +480,6 @@ func Subscribe(paths []string, q *queue.PriorityQueue, stop chan struct{}) ([]*I
 
             continue
         } else {
-            resp[i].IsOnChangeSupported = true
 
 			if nOpts != nil {
 				if nOpts.mInterval != 0 {
@@ -488,6 +488,15 @@ func Subscribe(paths []string, q *queue.PriorityQueue, stop chan struct{}) ([]*I
 
 	            resp[i].PreferredType = nOpts.pType
 			}
+
+			if nInfo == nil {
+				sErr = tlerr.NotSupportedError{
+					Format: "Subscribe not supported", Path: path}
+				resp[i].Err = sErr
+				continue
+			}
+
+            resp[i].IsOnChangeSupported = true
 
 			nInfo.path = path
 			nInfo.app = app

@@ -194,6 +194,7 @@ func TestMtypes(t *testing.T) {
 	t.Run("Match 1", testMtypesGetMatching(m, "text/xml", "[text/xml]"))
 	t.Run("Match 2", testMtypesGetMatching(m, "text/*+json", "[text/json text/v1+json]"))
 	t.Run("Match 0", testMtypesGetMatching(m, "text/plain", "[]"))
+	t.Run("Match Err", testMtypesGetMatching(m, "text plain", "[]"))
 }
 
 func testMtypesContains(m MediaTypes, v string, exp bool) func(*testing.T) {

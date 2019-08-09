@@ -46,12 +46,9 @@ module sonic-acl {
 	}
 
 	container sonic-acl {
-			scommon:db-name "CONFIG_DB";
 
 		list ACL_TABLE {
 			key "aclname";
-			scommon:key-delim "|";
-			scommon:key-pattern "ACL_TABLE|{aclname}";
 
 			/* must "count(/prt:sonic-port/prt:PORT) > 0"; */
 
@@ -97,8 +94,6 @@ module sonic-acl {
 
 		list ACL_RULE { 
 			key "aclname rulename";
-			scommon:key-delim "|";
-			scommon:key-pattern "ACL_RULE|{aclname}|{rulename}";
 			scommon:pf-check    "ACL_CheckAclLimits";	
 
 			/* Limit for number of dynamic ACL rules */	
