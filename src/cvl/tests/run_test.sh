@@ -1,9 +1,5 @@
 #!/bin/bash
 
-#create soft link
-ln -s tests/cvl_test.go cvl_test.go
-ln -s tests/jsondata_test.go jsondata_test.go
-
 profiling=""
 testcase=""
 coverpkgs="-coverpkg=cvl,cvl/internal/util,cvl/internal/yparser"
@@ -32,7 +28,4 @@ fi
 
 #With profiling 
 #go test  -v -cover -json -bench=. -benchmem -cpuprofile profile.out | tparse -smallscreen -all
-
-#delete soft link
-rm -rf cvl_test.go jsondata_test.go
 

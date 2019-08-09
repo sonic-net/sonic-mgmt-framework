@@ -42,7 +42,7 @@ tests:
 	make -C tests
 
 gotest:
-	 CVL_DEBUG=1 CVL_CFG_FILE=$(abspath .)/conf/cvl_cfg.json CVL_SCHEMA_PATH=$(abspath .)/schema GOPATH=$(GOPATH) tests/run_test.sh
+	 CVL_CFG_FILE=$(abspath .)/conf/cvl_cfg.json CVL_SCHEMA_PATH=$(abspath .)/schema GOPATH=$(GOPATH) tests/run_test.sh
 
 clean:
 	make -C tests clean
