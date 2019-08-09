@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"reflect"
+	"strings"
 	"testing"
 	db "translib/db"
 )
@@ -349,6 +351,79 @@ func getConfigDb() *db.DB {
 	})
 
 	return configDb
+}
+
+func TestAclApp_Subscribe(t *testing.T) {
+	app := new(AclApp)
+
+	t.Run("top", testSubsError(app, "/"))
+	t.Run("unknown", testSubsError(app, "/some/unknown/path"))
+	t.Run("topacl", testSubsError(app, "/openconfig-acl:acl"))
+	t.Run("aclsets", testSubsError(app, "/openconfig-acl:acl/acl-sets"))
+	t.Run("aclset*", testSubsError(app, "/openconfig-acl:acl/acl-sets/acl-set"))
+	t.Run("aclset", testSubsError(app, "/openconfig-acl:acl/acl-sets/acl-set[name=X][type=ACL_IPV4]"))
+
+	t.Run("acl_config", testSubs(app,
+		"/openconfig-acl:acl/acl-sets/acl-set[name=X][type=ACL_IPV4]/config/description",
+		"ACL_TABLE", "X_ACL_IPV4", true))
+
+	t.Run("acl_state", testSubs(app,
+		"/openconfig-acl:acl/acl-sets/acl-set[name=X][type=ACL_IPV4]/state",
+		"ACL_TABLE", "X_ACL_IPV4", true))
+
+	t.Run("entries", testSubs(app,
+		"/openconfig-acl:acl/acl-sets/acl-set[name=X][type=ACL_IPV4]/acl-entries",
+		"ACL_RULE", "X_ACL_IPV4|*", false))
+
+	t.Run("rule*", testSubs(app,
+		"/openconfig-acl:acl/acl-sets/acl-set[name=X][type=ACL_IPV4]/acl-entries/acl-entry",
+		"ACL_RULE", "X_ACL_IPV4|*", false))
+
+	t.Run("rule", testSubs(app,
+		"/openconfig-acl:acl/acl-sets/acl-set[name=X][type=ACL_IPV4]/acl-entries/acl-entry[sequence-id=1]",
+		"ACL_RULE", "X_ACL_IPV4|RULE_1", false))
+
+	t.Run("rule_state", testSubs(app,
+		"/openconfig-acl:acl/acl-sets/acl-set[name=X][type=ACL_IPV4]/acl-entries/acl-entry[sequence-id=100]/state",
+		"ACL_RULE", "X_ACL_IPV4|RULE_100", true))
+
+	t.Run("rule_sip", testSubs(app,
+		"/openconfig-acl:acl/acl-sets/acl-set[name=X][type=ACL_IPV4]/acl-entries/acl-entry[sequence-id=200]/ipv4/config/source-address",
+		"ACL_RULE", "X_ACL_IPV4|RULE_200", true))
+
+}
+
+// testSubs creates a test case which invokes translateSubscribe on an
+// app interafce and check returned notificationInfo matches given values.
+func testSubs(app appInterface, path, oTable, oKey string, oCache bool) func(*testing.T) {
+	return func(t *testing.T) {
+		_, nt, err := app.translateSubscribe([db.MaxDB]*db.DB{}, path)
+		if err != nil {
+			t.Fatalf("Unexpected error processing '%s'; err=%v", path, err)
+		}
+		if nt == nil || nt.needCache != oCache || nt.table.Name != oTable ||
+			!reflect.DeepEqual(nt.key.Comp, strings.Split(oKey, "|")) {
+			t.Logf("translateSubscribe for path '%s'", path)
+			t.Logf("Expected table '%s', key '%v', cache %v", oTable, oKey, oCache)
+			if nt == nil {
+				t.Fatalf("Found nil")
+			} else {
+				t.Fatalf("Found table '%s', key '%s', cache %v",
+					nt.table.Name, strings.Join(nt.key.Comp, "|"), nt.needCache)
+			}
+		}
+	}
+}
+
+// testSubsError creates a test case which invokes translateSubscribe on
+// an app interafce and expects it to return an error
+func testSubsError(app appInterface, path string) func(*testing.T) {
+	return func(t *testing.T) {
+		_, _, err := app.translateSubscribe([db.MaxDB]*db.DB{}, path)
+		if err == nil {
+			t.Fatalf("Expected error for path '%s'", path)
+		}
+	}
 }
 
 /***************************************************************************/
