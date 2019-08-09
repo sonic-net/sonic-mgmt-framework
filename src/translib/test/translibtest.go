@@ -39,7 +39,8 @@ func main() {
 		translib.Delete(req)
 	} else if *operationPtr == "get" {
 		req := translib.GetRequest{Path:*uriPtr}
-		translib.Get(req)
+		resp, _ := translib.Get(req)
+		log.Info("Response payload =", string(resp.Payload))
 	} else if *operationPtr == "getmodels" {
 		models,_ := translib.GetModels()
 		log.Info("Models =", models)
@@ -51,7 +52,7 @@ func main() {
 
 		for i, path := range paths {
 			log.Info("Response returned for path=", path)
-			log.Info(resp[i])
+			log.Info(*(resp[i]))
 		}
 
 	} else if *operationPtr == "subscribe" {
@@ -79,7 +80,41 @@ func main() {
 			}
 
 			resp, _ := (items[0]).(*translib.SubscribeResponse)
-			log.Info("SubscribeResponse received", resp)
+			log.Info("SubscribeResponse received =", string(resp.Payload))
+			log.Info("IsSync complete = ", resp.SyncComplete)
+
+			if resp.SyncComplete {
+				break
+			}
+		}
+
+        var q1         *queue.PriorityQueue
+        var stop1       chan struct{}
+
+        q1 = queue.NewPriorityQueue(1, false)
+        stop1 = make(chan struct{}, 1)
+        translib.Subscribe(paths, q1, stop1)
+        log.Info("Subscribe completed")
+        for {
+            log.Info("Before calling Get")
+            items, err := q1.Get(1)
+            log.Info("After calling Get")
+
+            if items == nil {
+                log.V(1).Infof("%v", err)
+                break
+            }
+            if err != nil {
+                log.V(1).Infof("%v", err)
+                break
+            }
+
+            resp, _ := (items[0]).(*translib.SubscribeResponse)
+            log.Info("SubscribeResponse received =", string(resp.Payload))
+            log.Info("IsSync complete = ", resp.SyncComplete)
+
+            if resp.SyncComplete {
+            }
 		}
 
 	} else {

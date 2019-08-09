@@ -32,8 +32,6 @@ module sonic-buffer-pool {
 
 		list BUFFER_POOL {
 			key "name";
-			scommon:key-delim "|";
-			scommon:key-pattern "BUFFER_POOL|{name}";
 
 			leaf name {
 				type string;

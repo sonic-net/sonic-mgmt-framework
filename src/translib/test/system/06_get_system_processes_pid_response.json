@@ -1,0 +1,1 @@
+{\"openconfig-system:process\":[{\"pid\":\"1\",\"state\":{\"cpu-usage-system\":\"601\",\"cpu-usage-user\":\"543\",\"cpu-utilization\":0,\"memory-usage\":\"58884096\",\"memory-utilization\":0,\"name\":\"/sbin/init\",\"pid\":\"1\",\"start-time\":\"1565051366000000000\",\"uptime\":\"81651\"}}]}

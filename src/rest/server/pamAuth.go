@@ -1,15 +1,15 @@
 package server
 
 import (
-	"errors"
 	"net/http"
 	"os/user"
 
 	"github.com/golang/glog"
-	"github.com/msteinert/pam"
+	//"github.com/msteinert/pam"
 	"golang.org/x/crypto/ssh"
 )
 
+/*
 type UserCredential struct {
 	Username string
 	Password string
@@ -45,13 +45,9 @@ func PAMAuthUser(u string, p string) error {
 
 	cred := UserCredential{u, p}
 	err := cred.PAMAuthenticate()
-	/*	if err == nil {
-			fmt.Println("PAM Authentication succeeded!")
-		} else {
-			fmt.Println("PAM Authentication failed!")
-		} */
 	return err
 }
+*/
 
 func IsAdminGroup(username string) bool {
 

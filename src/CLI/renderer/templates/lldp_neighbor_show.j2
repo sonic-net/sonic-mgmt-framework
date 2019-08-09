@@ -1,0 +1,30 @@
+{{'-----------------------------------------------------------'}}
+{{'LLDP Neighbors'.ljust(20)}}
+{{'-----------------------------------------------------------'}}
+{% for neigh in json_output %}
+{% set value = neigh['neighbors']['neighbor'][0] %}
+{{'Interface:'}}{{'   '}}{{value['id']}}{{',via:'}}{{' LLDP'}}
+{{'  Chassis:'}}
+{{'    ChassisID:    '}}{{value['state']['chassis_id']}}
+{{'    SysName:      '}}{{value['state']['system_name']}}
+{% set desc = value['state']['system_description'].split('\r\n')[1:] %}
+{{'    SysDescr:     '}}{{value['state']['system_description'].split('\r\n')[0]}}
+{% for v in desc %}
+{{'                  '}}{{v}}
+{% endfor %}
+{{'    TTL:          '}}{{value['state']['ttl']}}
+{% for cap in  value['capabilities']['capability'] %}
+{%  if cap['state']['enabled'] == true %}
+{%  set en = 'ON' %}
+{% endif %}
+{%  if cap['state']['enabled'] == false %}
+{%  set en = 'OFF' %}
+{% endif %}
+{{'    Capability:   '}}{{cap['name'].split(':')[1]}}{{', '}}{{en}}
+{% endfor %}
+{{'  Port'}}
+{{'    PortID:       '}}{{value['state']['port_id']}}
+{{'    PortDescr:    '}}{{value['state']['port_description']}}   
+{{'-----------------------------------------------------------'}}
+{% endfor %}
+

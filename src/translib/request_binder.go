@@ -16,6 +16,7 @@ import (
 	"github.com/openconfig/ygot/ytypes"
 
 	"translib/ocbinds"
+	"translib/tlerr"
 )
 
 const (
@@ -29,6 +30,10 @@ const (
 var ygSchema *ytypes.Schema
 
 func init() {
+	initSchema()
+}
+
+func initSchema() {
 	log.Flush()
 	var err error
 	if ygSchema, err = ocbinds.Schema(); err != nil {
@@ -53,19 +58,19 @@ func (binder *requestBinder) unMarshallPayload(workObj *interface{}) error {
 	if ok == false {
 		err := errors.New("Error in casting the target object")
 		log.Error(err)
-		return err
+		return tlerr.TranslibSyntaxValidationError{StatusCode: 400, ErrorStr: err}
 	}
 
 	if len(*binder.payload) == 0 {
 		err := errors.New("Request payload is empty")
 		log.Error(err)
-		return err
+		return tlerr.TranslibSyntaxValidationError{StatusCode: 400, ErrorStr: err}
 	}
 
 	err := ocbinds.Unmarshal(*binder.payload, targetObj)
 	if err != nil {
 		log.Error(err)
-		return err
+		return tlerr.TranslibSyntaxValidationError{StatusCode: 400, ErrorStr: err}
 	}
 
 	return nil
@@ -73,7 +78,7 @@ func (binder *requestBinder) unMarshallPayload(workObj *interface{}) error {
 
 func (binder *requestBinder) validateRequest(deviceObj *ocbinds.Device) error {
 	if binder.pathTmp == nil || len(binder.pathTmp.Elem) == 0 {
-		return errors.New("Path is nil")
+		return errors.New("Path is empty")
 	}
 	path, err := ygot.StringToPath(binder.pathTmp.Elem[0].Name, ygot.StructuredPath, ygot.StringSlicePath)
 	if err != nil {
@@ -92,7 +97,7 @@ func (binder *requestBinder) validateRequest(deviceObj *ocbinds.Device) error {
 					return err
 				}
 			} else {
-				return errors.New("Invalid Object: Not able to cast to type ValidatedGoStruct")
+				return errors.New("Invalid Object in the binding: Not able to cast to type ValidatedGoStruct")
 			}
 		}
 	}
@@ -106,25 +111,25 @@ func (binder *requestBinder) unMarshall() (*ygot.GoStruct, *interface{}, error) 
 	workObj, err := binder.unMarshallUri(&deviceObj)
 	if err != nil {
 		log.Error("Error in creating the target object : ", err)
-		return nil, nil, err
+		return nil, nil, tlerr.TranslibSyntaxValidationError{StatusCode: 404, ErrorStr: err}
 	}
 
 	rootIntf := reflect.ValueOf(&deviceObj).Interface()
 	ygotObj := rootIntf.(ygot.GoStruct)
 	var ygotRootObj *ygot.GoStruct = &ygotObj
 
-	if (binder.opcode == GET || binder.opcode == DELETE) {
-		return ygotRootObj, workObj, nil		
+	if binder.opcode == GET || binder.opcode == DELETE {
+		return ygotRootObj, workObj, nil
 	}
-	
+
 	switch binder.opcode {
 	case CREATE:
 		if reflect.ValueOf(*workObj).Kind() == reflect.Map {
-			return nil, nil, errors.New("URI doesn't have keys in the CREATE request")
+			return nil, nil, tlerr.TranslibSyntaxValidationError{StatusCode: 400, ErrorStr: errors.New("URI doesn't have keys in the request")}
 		} else {
 			err = binder.unMarshallPayload(workObj)
 			if err != nil {
-				return nil, nil, err
+				return nil, nil, tlerr.TranslibSyntaxValidationError{StatusCode: 400, ErrorStr: err}
 			}
 		}
 
@@ -133,11 +138,11 @@ func (binder *requestBinder) unMarshall() (*ygot.GoStruct, *interface{}, error) 
 		if binder.pathTmp != nil {
 			treeNodeList, err2 := ytypes.GetNode(ygSchema.RootSchema(), &deviceObj, binder.pathTmp)
 			if err2 != nil {
-				return nil, nil, err2
+				return nil, nil, tlerr.TranslibSyntaxValidationError{StatusCode: 400, ErrorStr: err2}
 			}
 
 			if len(treeNodeList) == 0 {
-				return nil, nil, errors.New("Invalid URI")
+				return nil, nil, tlerr.TranslibSyntaxValidationError{StatusCode: 400, ErrorStr: errors.New("Invalid URI")}
 			}
 
 			tmpTargetNode = &(treeNodeList[0].Data)
@@ -147,17 +152,17 @@ func (binder *requestBinder) unMarshall() (*ygot.GoStruct, *interface{}, error) 
 
 		err = binder.unMarshallPayload(tmpTargetNode)
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, tlerr.TranslibSyntaxValidationError{StatusCode: 400, ErrorStr: err}
 		}
 
 	default:
 		if binder.opcode != GET && binder.opcode != DELETE {
-			return nil, nil, errors.New("Unknown opcode in the request")
+			return nil, nil, tlerr.TranslibSyntaxValidationError{StatusCode: 400, ErrorStr: errors.New("Unknown HTTP METHOD in the request")}
 		}
 	}
 
 	if err = binder.validateRequest(&deviceObj); err != nil {
-		return nil, nil, err
+		return nil, nil, tlerr.TranslibSyntaxValidationError{StatusCode: 400, ErrorStr: err}
 	}
 
 	return ygotRootObj, workObj, nil
@@ -227,6 +232,6 @@ func (binder *requestBinder) unMarshallUri(deviceObj *ocbinds.Device) (*interfac
 			return nil, err
 		}
 	}
-	
+
 	return &ygNode, nil
 }

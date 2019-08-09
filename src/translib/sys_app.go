@@ -152,7 +152,7 @@ func (app *SysApp) doGetSystem(path string) (GetResponse, error)  {
         return GetResponse{Payload: payload}, perr
     }
 
-    log.Infof("targetUriPath : ", targetUriPath, "Args: ", app.path.Vars)
+    log.Info("targetUriPath : ", targetUriPath, "Args: ", app.path.Vars)
 
     if isSubtreeRequest(targetUriPath, "/openconfig-system:system/state") {
         ygot.BuildEmptyTree(sysObj)

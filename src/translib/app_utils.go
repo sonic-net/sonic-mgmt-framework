@@ -10,14 +10,13 @@ package translib
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
-	"fmt"
 	"reflect"
 	"strings"
 	"translib/db"
 	"translib/ocbinds"
 	"translib/tlerr"
 
+	log "github.com/golang/glog"
 	"github.com/openconfig/gnmi/proto/gnmi"
 	"github.com/openconfig/ygot/ygot"
 	"github.com/openconfig/ygot/ytypes"
@@ -29,13 +28,13 @@ func getYangPathFromUri(uri string) (string, error) {
 
 	path, err = ygot.StringToPath(uri, ygot.StructuredPath, ygot.StringSlicePath)
 	if err != nil {
-		fmt.Println("Error in uri to path conversion: ", err)
+		log.Errorf("Error in uri to path conversion: %v", err)
 		return "", err
 	}
 
 	yangPath, yperr := ygot.PathToSchemaPath(path)
 	if yperr != nil {
-		fmt.Println("Error in Gnmi path to Yang path conversion: ", yperr)
+		log.Errorf("Error in Gnmi path to Yang path conversion: %v", yperr)
 		return "", yperr
 	}
 
@@ -46,7 +45,7 @@ func getYangPathFromYgotStruct(s ygot.GoStruct, yangPathPrefix string, appModule
 	tn := reflect.TypeOf(s).Elem().Name()
 	schema, ok := ocbinds.SchemaTree[tn]
 	if !ok {
-		fmt.Errorf("could not find schema for type %s", tn)
+		log.Errorf("could not find schema for type %s", tn)
 		return ""
 	} else if schema != nil {
 		yPath := schema.Path()
@@ -62,19 +61,20 @@ func generateGetResponsePayload(targetUri string, deviceObj *ocbinds.Device, ygo
 	var payload []byte
 
 	if len(targetUri) == 0 {
-		return payload, errors.New("GetResponse failed as target Uri is not valid")
+		return payload, tlerr.InvalidArgs("GetResponse failed as target Uri is not valid")
 	}
 	path, err := ygot.StringToPath(targetUri, ygot.StructuredPath, ygot.StringSlicePath)
 	if err != nil {
-		fmt.Println("Error in uri to path conversion: ", err)
-		return payload, err
+		return payload, tlerr.InvalidArgs("URI to path conversion failed: %v", err)
 	}
 
 	// Get current node (corresponds to ygotTarget) and its parent node
 	var pathList []*gnmi.PathElem = path.Elem
 	parentPath := &gnmi.Path{}
 	for i := 0; i < len(pathList); i++ {
-		fmt.Printf("pathList[%d]: %s\n", i, pathList[i])
+		if log.V(3) {
+			log.Infof("pathList[%d]: %s\n", i, pathList[i])
+		}
 		pathSlice := strings.Split(pathList[i].Name, ":")
 		pathList[i].Name = pathSlice[len(pathSlice)-1]
 		if i < (len(pathList) - 1) {
@@ -86,7 +86,7 @@ func generateGetResponsePayload(targetUri string, deviceObj *ocbinds.Device, ygo
 		return payload, err
 	}
 	if len(parentNodeList) == 0 {
-		return payload, errors.New("Invalid URI")
+		return payload, tlerr.InvalidArgs("Invalid URI: %s", targetUri)
 	}
 	parentNode := parentNodeList[0].Data
 
@@ -95,7 +95,7 @@ func generateGetResponsePayload(targetUri string, deviceObj *ocbinds.Device, ygo
 		return payload, err
 	}
 	if len(currentNodeList) == 0 {
-		return payload, errors.New("Invalid URI")
+		return payload, tlerr.NotFound("Resource not found")
 	}
 	//currentNode := currentNodeList[0].Data
 	currentNodeYangName := currentNodeList[0].Schema.Name
@@ -121,7 +121,9 @@ func generateGetResponsePayload(targetUri string, deviceObj *ocbinds.Device, ygo
 				break
 			}
 		}
-		fmt.Printf("Target yang name: %s  OC Field name: %s\n", currentNodeYangName, currentNodeOCFieldName)
+		if log.V(3) {
+			log.Infof("Target yang name: %s  OC Field name: %s\n", currentNodeYangName, currentNodeOCFieldName)
+		}
 	}
 
 	payload, err = dumpIetfJson(parentCloneObj, true)

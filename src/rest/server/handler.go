@@ -76,7 +76,7 @@ write_resp:
 
 // getRequestBody returns the validated request body
 func getRequestBody(r *http.Request, rc *RequestContext) (*MediaType, []byte, error) {
-	if r.ContentLength < 1 {
+	if r.ContentLength == 0 {
 		glog.Infof("[%s] No body", rc.ID)
 		return nil, nil, nil
 	}

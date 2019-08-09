@@ -37,8 +37,6 @@ module sonic-buffer-profile {
 
 		list BUFFER_PROFILE {
 			key "name";
-			scommon:key-delim "|";
-			scommon:key-pattern "BUFFER_PROFILE|{name}";
 
 			leaf name {
 				type string;

@@ -14,6 +14,7 @@ import (
 	. "cvl/internal/util"
 	"sync"
 	"flag"
+	"runtime"
 )
 
 //DB number 
@@ -31,6 +32,7 @@ const (
 )
 
 const DEFAULT_CACHE_DURATION uint16 = 300 /* 300 sec */
+const MAX_BULK_ENTRIES_IN_PIPELINE int = 50
 
 var reLeafRef *regexp.Regexp = nil
 var reHashRef *regexp.Regexp = nil
@@ -65,7 +67,7 @@ type CVLErrorInfo struct {
 	CVLErrDetails string  /* CVL Error Message details. */ 
 	Keys    []string      /* Keys of the Table having error. */
         Value    string        /* Field Value throwing error */
-        Field	 string        /* Field Name throwing error . */
+	Field	 string        /* Field Name throwing error . */
 	Msg     string        /* Detailed error message. */
 	ConstraintErrMsg  string  /* Constraint error message. */
 	ErrAppTag string
@@ -76,6 +78,7 @@ type CVL struct {
 	yp *yparser.YParser
 	tmpDbCache map[string]interface{} //map of table storing map of key-value pair
 	batchLeaf string
+	chkLeafRefWithOthCache bool
 }
 
 type modelNamespace struct {
@@ -160,6 +163,11 @@ func init() {
 	//Initialize mutex
 	cvg.mutex = &sync.Mutex{}
 
+	_, err := redisClient.ConfigSet("notify-keyspace-events", "AKE").Result()
+	if err != nil {
+		CVL_LOG(ERROR ,"Could not enable notification error %s", err)
+	}
+
 	dbCacheSet(false, "PORT", 0)
 }
 
@@ -237,6 +245,15 @@ func storeModelInfo(modelFile string, module *yparser.YParserModule) { //such mo
 			case "key":
 				tableInfo.keys = strings.Split(node.Attr[0].Value," ")
 				fieldCount++
+				keypattern := []string{tableName}
+
+				/* Create the default key pattern of the form Table Name|{key1}|{key2}. */
+				for _ , key := range tableInfo.keys {
+					keypattern = append(keypattern, fmt.Sprintf("{%s}",key))
+				}
+
+				tableInfo.redisKeyPattern = strings.Join(keypattern, tableInfo.redisKeyDelim)
+
 			case "key-delim":
 				tableInfo.redisKeyDelim = node.Attr[0].Value
 				fieldCount++
@@ -346,8 +363,11 @@ func addTableNamesForMustExp() {
 			"/scommon:operation/scommon:operation != 'DELETE'") == true) {
 				op = op | OP_DELETE
 			}
-			//store the current table always so that expression check with other row
-			tblInfo.tablesForMustExp[tblName] = op
+
+			//store the current table if aggregate function like count() is used
+			/*if (strings.Contains(mustExp, "count") == true) {
+				tblInfo.tablesForMustExp[tblName] = op
+			}*/
 
 			//check which table name is present in the must expression
 			for tblNameSrch, _ := range modelInfo.tableInfo {
@@ -356,7 +376,7 @@ func addTableNamesForMustExp() {
 				}
 				//Table name should appear like "../VLAN_MEMBER/tagging_mode' or '
 				// "/prt:PORT/prt:ifname"
-				re := regexp.MustCompile(fmt.Sprintf(".*[/]([a-zA-Z]*:)?%s", tblNameSrch))
+				re := regexp.MustCompile(fmt.Sprintf(".*[/]([a-zA-Z]*:)?%s[\\[/]", tblNameSrch))
 				matches := re.FindStringSubmatch(mustExp)
 				if (len(matches) > 0) {
 					//stores the table name 
@@ -392,7 +412,7 @@ func getRedisToYangKeys(tableName string, redisKey string)[]keyValuePairStruct{
 	keyVals := strings.Split(redisKey, modelInfo.tableInfo[tableName].redisKeyDelim) //split by DB separator
 	//Store patterns for each key components by splitting using key delim
 	keyPatterns := strings.Split(modelInfo.tableInfo[tableName].redisKeyPattern,
-	                            modelInfo.tableInfo[tableName].redisKeyDelim) //split by DB separator
+			modelInfo.tableInfo[tableName].redisKeyDelim) //split by DB separator
 
 	if (len(keyNames) != len(keyVals)) {
 		return nil //number key names and values does not match
@@ -425,15 +445,27 @@ func(c *CVL) addChildNode(tableName string, parent *yparser.YParserNode, name st
 	return c.yp.AddChildNode(modelInfo.tableInfo[tableName].module, parent, name)
 }
 
+//Add specific entries by looking at must expression
+//Must expression may need single or multiple entries
+//It can be within same table or across multiple tables
+//Aggregate function such count() can be quite expensive and 
+//should be avoid through this function
+func (c *CVL) addTableEntryForMustExp(op CVLOperation, tableName string) CVLRetCode {
+	if (modelInfo.tableInfo[tableName].mustExp == nil) {
+		return CVL_SUCCESS
+	}
+
+	return CVL_SUCCESS
+}
+
 //Add all other table data for validating all 'must' exp for tableName
 func (c *CVL) addTableDataForMustExp(op CVLOperation, tableName string) CVLRetCode {
-
 	if (modelInfo.tableInfo[tableName].mustExp == nil) {
 		return CVL_SUCCESS
 	}
 
 	for mustTblName, mustOp := range modelInfo.tableInfo[tableName].tablesForMustExp {
-		//First check if must expression should be executed for the ven operation
+		//First check if must expression should be executed for the given operation
 		if (mustOp != OP_NONE) && ((mustOp & op) == OP_NONE) {
 			//must to be excuted for particular operation, but current operation 
 			//is not the same one
@@ -449,7 +481,10 @@ func (c *CVL) addTableDataForMustExp(op CVLOperation, tableName string) CVLRetCo
 				return CVL_SYNTAX_ERROR
 			}
 		} else { //Put the must table in global table and add to session cache
+			cvg.cv.chkLeafRefWithOthCache = true
 			dbCacheSet(false, mustTblName, 100*DEFAULT_CACHE_DURATION) //Keep the cache for default duration
+			cvg.cv.chkLeafRefWithOthCache = false
+
 			if topNode, ret := dbCacheGet(mustTblName); topNode != nil {
 				var errObj yparser.YParserError
 				//If global cache has the table, add to the session validation
@@ -491,7 +526,7 @@ func (c *CVL) addTableDataForMustExp(op CVLOperation, tableName string) CVLRetCo
 	return CVL_SUCCESS
 }
 
-func (c *CVL) addUpdateDataToCache(tableName string, redisKey string) {
+func (c *CVL) addTableEntryToCache(tableName string, redisKey string) {
 	if (c.tmpDbCache[tableName] == nil) {
 		c.tmpDbCache[tableName] = map[string]interface{}{redisKey: nil}
 	} else {
@@ -625,6 +660,22 @@ func (c *CVL) addLeafRef(config bool, tableName string, name string, value strin
 			if (matches != nil && len(matches) == 5) { //whole + 4 sub matches
 				refTableName := matches[2]
 				redisKey := value
+
+				//Check if leafref dependency can also be met from 'must' table
+				if (c.chkLeafRefWithOthCache == true) {
+					found := false
+					for mustTbl, _ := range modelInfo.tableInfo[tableName].tablesForMustExp {
+						if mustTbl == refTableName {
+							found = true
+							break
+						}
+					}
+					if (found == true) {
+						//Leafref data will be available from must table dep data, skip this leafref entry
+						continue
+					}
+				}
+
 				//only key is there, value wil be fetched and stored here, 
 				//if value can't fetched this entry will be deleted that time
 				if (c.tmpDbCache[refTableName] == nil) {
@@ -679,8 +730,87 @@ func (c *CVL) checkFieldMap(fieldMap *map[string]string) map[string]interface{} 
 	return fieldMapNew
 }
 
+//Fetch given table entries using pipeline
+func (c *CVL) fetchTableDataToTmpCache(tableName string, dbKeys map[string]interface{}) int {
+
+	TRACE_LOG(INFO_API, TRACE_CACHE, "\n%v, Entered fetchTableDataToTmpCache", time.Now())
+
+	totalCount := len(dbKeys)
+	if (totalCount == 0) {
+		//No entry to be fetched
+		return 0
+	}
+
+	entryFetched := 0
+	bulkCount := 0
+	bulkKeys := []string{}
+	for dbKey, val := range dbKeys { //for all keys
+		if (val != nil) { //skip entry already fetched
+			mapTable := c.tmpDbCache[tableName]
+			delete(mapTable.(map[string]interface{}), dbKey) //delete entry already fetched
+			continue
+		}
+
+		bulkKeys = append(bulkKeys, dbKey)
+		bulkCount = bulkCount + 1
+
+		if(bulkCount != totalCount) && ((bulkCount % MAX_BULK_ENTRIES_IN_PIPELINE) != 0) {
+			//Accumulate entries to be fetched
+			continue
+		}
+
+		mCmd := map[string]*redis.StringStringMapCmd{}
+
+		pipe := redisClient.Pipeline()
+
+		for _, dbKey := range bulkKeys {
+
+			redisKey := tableName + modelInfo.tableInfo[tableName].redisKeyDelim + dbKey
+			//Check in global cache first and merge to session cache
+
+			//Otherwise fetch it from Redis
+			mCmd[dbKey] = pipe.HGetAll(redisKey) //write into pipeline
+			if mCmd[dbKey] == nil {
+				CVL_LOG(ERROR, "Failed pipe.HGetAll('%s')", redisKey)
+			}
+		}
+
+		_, err := pipe.Exec()
+		if err != nil {
+			CVL_LOG(ERROR, "Failed to fetch details for table %s", tableName)
+			return 0
+		}
+		pipe.Close()
+		bulkKeys = nil
+
+		mapTable := c.tmpDbCache[tableName]
+
+		for key, val := range mCmd {
+			res, err := val.Result()
+			if (err != nil || len(res) == 0) {
+				//no data found, don't keep blank entry
+				delete(mapTable.(map[string]interface{}), key)
+				continue
+			}
+			//exclude table name and delim
+			keyOnly := key
+			fieldMap := c.checkFieldMap(&res)
+			mapTable.(map[string]interface{})[keyOnly] = fieldMap
+			entryFetched = entryFetched + 1
+		}
+
+		runtime.Gosched()
+	}
+
+	TRACE_LOG(INFO_API, TRACE_CACHE,"\n%v, Exiting fetchTableDataToTmpCache", time.Now())
+
+	return entryFetched
+}
+
 //populate redis data to cache
 func (c *CVL) fetchDataToTmpCache() *yparser.YParserNode {
+	TRACE_LOG(INFO_API, TRACE_CACHE, "\n%v, Entered fetchToTmpCache", time.Now())
+
 	entryToFetch := 0
 	var root *yparser.YParserNode = nil
 	var errObj yparser.YParserError
@@ -689,59 +819,12 @@ func (c *CVL) fetchDataToTmpCache() *yparser.YParserNode {
 		//Repeat until all entries are fetched 
 		entryToFetch = 0
 		for tableName, dbKeys := range c.tmpDbCache { //for each table
+			entryToFetch = entryToFetch + c.fetchTableDataToTmpCache(tableName, dbKeys.(map[string]interface{}))
+		} //for each table
 
-			if (len(dbKeys.(map[string]interface{}))  == 0) {
-				continue
-			}
-
-			mCmd := map[string]*redis.StringStringMapCmd{}
-			pipe := redisClient.Pipeline()
-
-			for dbKey, val := range dbKeys.(map[string]interface{}) { //for all keys
-				if (val != nil) { //skip entry already fetched
-					mapTable := c.tmpDbCache[tableName]
-					delete(mapTable.(map[string]interface{}), dbKey) //delete entry already fetched
-					continue
-				}
-				entryToFetch = entryToFetch + 1
-
-				redisKey := tableName + modelInfo.tableInfo[tableName].redisKeyDelim + dbKey
-				//Check in global cache first and merge to session cache
-
-				//Otherwise fetch it from Redis
-				mCmd[dbKey] = pipe.HGetAll(redisKey) //write into pipeline
-				if mCmd[dbKey] == nil {
-					CVL_LOG(ERROR, "Failed pipe.HGetAll('%s')", redisKey)
-				}
-			}
-
-			_, err := pipe.Exec()
-			if err != nil {
-				CVL_LOG(ERROR, "Failed to fetch details for table %s", tableName)
-			}
-
-			mapTable := c.tmpDbCache[tableName]
-
-			for key, val := range mCmd {
-				res, err := val.Result()
-				if (err != nil || len(res) == 0) {
-					//no data found, don't keep blank entry
-					delete(mapTable.(map[string]interface{}), key)
-					continue
-				}
-				//exclude table name and delim
-				keyOnly := key
-				fieldMap := c.checkFieldMap(&res)
-				mapTable.(map[string]interface{})[keyOnly] = fieldMap
-			}
-
-			pipe.Close()
-		}
-
+		//If no table entry delete the table  itself
 		for tableName, dbKeys := range c.tmpDbCache { //for each table
-			//if (len(c.tmpDbCache[tableName].(map[string]interface{})) == 0) {
 			if (len(dbKeys.(map[string]interface{}))  == 0) {
-				//If no table entry delete the table entry
 				 delete(c.tmpDbCache, tableName)
 				 continue
 			}
@@ -764,6 +847,7 @@ func (c *CVL) fetchDataToTmpCache() *yparser.YParserNode {
 			return nil
 		}
 
+		//Build yang tree for each table and cache it
 		for jsonNode := data.FirstChild; jsonNode != nil; jsonNode=jsonNode.NextSibling {
 			TRACE_LOG(INFO_API, TRACE_CACHE, "Top Node=%v\n", jsonNode.Data)
 			//Visit each top level list in a loop for creating table data
@@ -776,13 +860,14 @@ func (c *CVL) fetchDataToTmpCache() *yparser.YParserNode {
 				}
 			}
 		}
-	}
+	} // until all dependent data is fetched
 
 	if root != nil && Tracing == true {
 		dumpStr := c.yp.NodeDump(root)
 		TRACE_LOG(INFO_DETAIL, TRACE_CACHE, "Dependent Data = %v\n", dumpStr)
 	}
 
+	TRACE_LOG(INFO_API, TRACE_CACHE, "\n%v, Exiting fetchToTmpCache", time.Now())
 	return root
 }
 
@@ -1288,7 +1373,7 @@ func dbCacheUpdate(tableName, key, op string) CVLRetCode {
 		cvg.db[tableName] = db
 
 	case "del":
-		//NOP, alreday deleted the entry
+		//NOP, already deleted the entry
 	}
 
 	cvg.mutex.Unlock()
