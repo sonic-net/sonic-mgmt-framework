@@ -170,9 +170,14 @@ func (app *IntfApp) translateDelete(d *db.DB) ([]db.WatchKeys, error) {
 						if addr != nil {
 							ipAddr := addr.Ip
 							log.Info("IPv4 address = ", *ipAddr)
+							if !validIPv4(*ipAddr) {
+								errStr := "Invalid IPv4 address " + *ipAddr
+								ipValidErr := tlerr.InvalidArgsError{Format: errStr}
+								return keys, ipValidErr
+							}
 							err = app.validateIp(d, ifKey, *ipAddr)
 							if err != nil {
-								errStr := "Invalid IP address:" + *ipAddr
+								errStr := "Invalid IPv4 address " + *ipAddr
 								ipValidErr := tlerr.InvalidArgsError{Format: errStr}
 								return keys, ipValidErr
 							}
@@ -185,6 +190,11 @@ func (app *IntfApp) translateDelete(d *db.DB) ([]db.WatchKeys, error) {
 						if addr != nil {
 							ipAddr := addr.Ip
 							log.Info("IPv6 address = ", *ipAddr)
+							if !validIPv6(*ipAddr) {
+								errStr := "Invalid IPv6 address " + *ipAddr
+								ipValidErr := tlerr.InvalidArgsError{Format: errStr}
+								return keys, ipValidErr
+							}
 							err = app.validateIp(d, ifKey, *ipAddr)
 							if err != nil {
 								errStr := "Invalid IPv6 address:" + *ipAddr
@@ -395,7 +405,7 @@ func (app *IntfApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
 			log.Info("If Key = ", ifKey)
 			ifInfo, err := intfObj.NewInterface(ifKey)
 			if err != nil {
-				log.Infof("Creation of interface subtree for %s failed!", ifKey)
+				log.Errorf("Creation of interface subtree for %s failed!", ifKey)
 				return GetResponse{Payload: payload, ErrSrc: AppErr}, err
 			}
 			ygot.BuildEmptyTree(ifInfo)
@@ -404,7 +414,7 @@ func (app *IntfApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
 		if *app.ygotTarget == intfObj {
 			payload, err = dumpIetfJson((*app.ygotRoot).(*ocbinds.Device), true)
 		} else {
-			log.Info("Wrong request!")
+			log.Error("Wrong request!")
 		}
 	}
 	return GetResponse{Payload: payload}, err
@@ -416,6 +426,16 @@ func validIPv4(ipAddress string) bool {
 
 	re, _ := regexp.Compile(`^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$`)
 	if re.MatchString(ipAddress) {
+		return true
+	}
+	return false
+}
+
+/* Checking IP address is v6 */
+func validIPv6(ip6Address string) bool {
+	ip6Address = strings.Trim(ip6Address, " ")
+	re, _ := regexp.Compile(`(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))`)
+	if re.MatchString(ip6Address) {
 		return true
 	}
 	return false
@@ -518,7 +538,7 @@ func (app *IntfApp) getPortOidMapForCounters(dbCl *db.DB) error {
 	var err error
 	ifCountInfo, err := dbCl.GetMapAll(app.portOidCountrTblTs)
 	if err != nil {
-		log.Info("Port-OID (Counters) get for all the interfaces failed!")
+		log.Error("Port-OID (Counters) get for all the interfaces failed!")
 		return err
 	}
 	if ifCountInfo.IsPopulated() {
@@ -527,7 +547,6 @@ func (app *IntfApp) getPortOidMapForCounters(dbCl *db.DB) error {
 		return errors.New("Get for OID info from all the interfaces from Counters DB failed!")
 	}
 	return err
-
 }
 
 func (app *IntfApp) convertDBIntfCounterInfoToInternal(dbCl *db.DB, ifKey string) error {
@@ -563,7 +582,7 @@ func (app *IntfApp) convertDBIntfInfoToInternal(dbCl *db.DB, ifName string, ifKe
 		log.Info("Updating Interface info from APP-DB to Internal DS for Interface name : ", ifName)
 		ifInfo, err := dbCl.GetEntry(app.portTblTs, ifKey)
 		if err != nil {
-			log.Info("Error found on fetching Interface info from App DB for If Name : ", ifName)
+			log.Errorf("Error found on fetching Interface info from App DB for If Name : %s", ifName)
 			errStr := "Invalid Interface:" + ifName
 			err = tlerr.InvalidArgsError{Format: errStr}
 			return err
@@ -578,12 +597,11 @@ func (app *IntfApp) convertDBIntfInfoToInternal(dbCl *db.DB, ifName string, ifKe
 		log.Info("App-DB get for all the interfaces")
 		tbl, err := dbCl.GetTable(app.portTblTs)
 		if err != nil {
-			log.Info("App-DB get for list of interfaces failed!")
+			log.Error("App-DB get for list of interfaces failed!")
 			return err
 		}
 		keys, _ := tbl.GetKeys()
 		for _, key := range keys {
-			log.Info("Key = ", key.Get(0))
 			app.convertDBIntfInfoToInternal(dbCl, key.Get(0), db.Key{Comp: []string{key.Get(0)}})
 		}
 	}
@@ -603,7 +621,7 @@ func (app *IntfApp) convertDBIntfIPInfoToInternal(dbCl *db.DB, ifName string) er
 		}
 		ipInfo, err := dbCl.GetEntry(app.intfIPTblTs, key)
 		if err != nil {
-			log.Info("Error found on fetching Interface IP info from App DB for Interface Name : ", ifName)
+			log.Errorf("Error found on fetching Interface IP info from App DB for Interface Name : %s", ifName)
 			return err
 		}
 		if len(app.ifIPTableMap[key.Get(0)]) == 0 {
@@ -636,14 +654,12 @@ func (app *IntfApp) convertInternalToOCIntfAttrInfo(ifName *string, ifInfo *ocbi
 			switch ifAttr {
 			case PORT_ADMIN_STATUS:
 				adminStatus := ifData.Get(ifAttr)
-				log.Info("Admin Status = ", adminStatus)
 				ifInfo.State.AdminStatus = ocbinds.OpenconfigInterfaces_Interfaces_Interface_State_AdminStatus_DOWN
 				if adminStatus == "up" {
 					ifInfo.State.AdminStatus = ocbinds.OpenconfigInterfaces_Interfaces_Interface_State_AdminStatus_UP
 				}
 			case PORT_OPER_STATUS:
 				operStatus := ifData.Get(ifAttr)
-				log.Info("Oper Status = ", operStatus)
 				ifInfo.State.OperStatus = ocbinds.OpenconfigInterfaces_Interfaces_Interface_State_OperStatus_DOWN
 				if operStatus == "up" {
 					ifInfo.State.OperStatus = ocbinds.OpenconfigInterfaces_Interfaces_Interface_State_OperStatus_UP
@@ -652,12 +668,10 @@ func (app *IntfApp) convertInternalToOCIntfAttrInfo(ifName *string, ifInfo *ocbi
 				descVal := ifData.Get(ifAttr)
 				descr := new(string)
 				*descr = descVal
-				log.Info("Description = ", *descr)
 				ifInfo.Config.Description = descr
 				ifInfo.State.Description = descr
 			case PORT_MTU:
 				mtuStr := ifData.Get(ifAttr)
-				log.Info("MTU = ", mtuStr)
 				mtuVal, err := strconv.Atoi(mtuStr)
 				mtu := new(uint16)
 				*mtu = uint16(mtuVal)
@@ -667,7 +681,6 @@ func (app *IntfApp) convertInternalToOCIntfAttrInfo(ifName *string, ifInfo *ocbi
 				}
 			case PORT_SPEED:
 				speed := ifData.Get(ifAttr)
-				log.Info("Speed = ", speed)
 				var speedEnum ocbinds.E_OpenconfigIfEthernet_ETHERNET_SPEED
 
 				switch speed {
@@ -693,7 +706,6 @@ func (app *IntfApp) convertInternalToOCIntfAttrInfo(ifName *string, ifInfo *ocbi
 				ifInfo.Ethernet.State.PortSpeed = speedEnum
 			case PORT_INDEX:
 				ifIdxStr := ifData.Get(ifAttr)
-				log.Info("if-Index = ", ifIdxStr)
 				ifIdxNum, err := strconv.Atoi(ifIdxStr)
 				if err == nil {
 					ifIdx := new(uint32)
@@ -713,7 +725,7 @@ func (app *IntfApp) convertInternalToOCIntfIPAttrInfo(ifName *string, ifInfo *oc
 	/* Handling the Interface IP attributes */
 	subIntf, err := ifInfo.Subinterfaces.NewSubinterface(0)
 	if err != nil {
-		log.Info("Creation of subinterface subtree failed!")
+		log.Error("Creation of subinterface subtree failed!")
 		return
 	}
 	ygot.BuildEmptyTree(subIntf)
@@ -723,6 +735,7 @@ func (app *IntfApp) convertInternalToOCIntfIPAttrInfo(ifName *string, ifInfo *oc
 			ipB, ipNetB, _ := net.ParseCIDR(ipKey)
 
 			v4Flag := false
+			v6Flag := false
 
 			var v4Address *ocbinds.OpenconfigInterfaces_Interfaces_Interface_Subinterfaces_Subinterface_Ipv4_Addresses_Address
 			var v6Address *ocbinds.OpenconfigInterfaces_Interfaces_Interface_Subinterfaces_Subinterface_Ipv6_Addresses_Address
@@ -730,12 +743,16 @@ func (app *IntfApp) convertInternalToOCIntfIPAttrInfo(ifName *string, ifInfo *oc
 			if validIPv4(ipB.String()) {
 				v4Address, err = subIntf.Ipv4.Addresses.NewAddress(ipB.String())
 				v4Flag = true
-			} else {
+			} else if validIPv6(ipB.String()) {
 				v6Address, err = subIntf.Ipv6.Addresses.NewAddress(ipB.String())
+				v6Flag = true
+			} else {
+				log.Error("Invalid IP address " + ipB.String())
+				continue
 			}
 
 			if err != nil {
-				log.Info("Creation of address subtree failed!")
+				log.Error("Creation of address subtree failed!")
 				return
 			}
 			if v4Flag {
@@ -748,13 +765,12 @@ func (app *IntfApp) convertInternalToOCIntfIPAttrInfo(ifName *string, ifInfo *oc
 				v4Address.State.Ip = ipStr
 
 				ipNetBNum, _ := ipNetB.Mask.Size()
-				log.Info("Prefix Length = ", ipNetBNum)
 				prfxLen := new(uint8)
 				*prfxLen = uint8(ipNetBNum)
 				v4Address.Config.PrefixLength = prfxLen
 				v4Address.State.PrefixLength = prfxLen
-			} else {
-				/* v6 address */
+			}
+			if v6Flag {
 				ygot.BuildEmptyTree(v6Address)
 
 				ipStr := new(string)
@@ -764,7 +780,6 @@ func (app *IntfApp) convertInternalToOCIntfIPAttrInfo(ifName *string, ifInfo *oc
 				v6Address.State.Ip = ipStr
 
 				ipNetBNum, _ := ipNetB.Mask.Size()
-				log.Info("Prefix Length = ", ipNetBNum)
 				prfxLen := new(uint8)
 				*prfxLen = uint8(ipNetBNum)
 				v6Address.Config.PrefixLength = prfxLen
@@ -776,7 +791,7 @@ func (app *IntfApp) convertInternalToOCIntfIPAttrInfo(ifName *string, ifInfo *oc
 
 func (app *IntfApp) convertInternalToOCPortStatInfo(ifName *string, ifInfo *ocbinds.OpenconfigInterfaces_Interfaces_Interface) {
 	if len(app.portStatMap) == 0 {
-		log.Infof("Port stat info not present for interface : %s", *ifName)
+		log.Errorf("Port stat info not present for interface : %s", *ifName)
 		return
 	}
 	if portStatInfo, ok := app.portStatMap[*ifName]; ok {
@@ -886,18 +901,18 @@ func (app *IntfApp) translateCommon(d *db.DB, inpOp reqType) ([]db.WatchKeys, er
 				return keys, ifValidErr
 			}
 			if !curr.IsPopulated() {
-				log.Info("Interface ", ifKey, " doesn't exist in DB")
+				log.Error("Interface ", ifKey, " doesn't exist in DB")
 				return keys, errors.New("Interface: " + ifKey + " doesn't exist in DB")
 			}
 			if intf.Config != nil {
 				if intf.Config.Description != nil {
-					log.Info("descript:= ", *intf.Config.Description)
+					log.Info("Description = ", *intf.Config.Description)
 					curr.Field["description"] = *intf.Config.Description
 				} else if intf.Config.Mtu != nil {
 					log.Info("mtu:= ", *intf.Config.Mtu)
 					curr.Field["mtu"] = strconv.Itoa(int(*intf.Config.Mtu))
 				} else if intf.Config.Enabled != nil {
-					log.Info("enabled:= ", *intf.Config.Enabled)
+					log.Info("enabled = ", *intf.Config.Enabled)
 					if *intf.Config.Enabled == true {
 						curr.Field["admin_status"] = "up"
 					} else {
@@ -922,6 +937,11 @@ func (app *IntfApp) translateCommon(d *db.DB, inpOp reqType) ([]db.WatchKeys, er
 						if addr.Config != nil {
 							log.Info("Ip:=", *addr.Config.Ip)
 							log.Info("prefix:=", *addr.Config.PrefixLength)
+							if !validIPv4(*addr.Config.Ip) {
+								errStr := "Invalid IPv4 address " + *addr.Config.Ip
+								err = tlerr.InvalidArgsError{Format: errStr}
+								return keys, err
+							}
 							err = app.translateIpv4(d, ifKey, *addr.Config.Ip, int(*addr.Config.PrefixLength))
 							if err != nil {
 								return keys, err
@@ -935,6 +955,11 @@ func (app *IntfApp) translateCommon(d *db.DB, inpOp reqType) ([]db.WatchKeys, er
 						if addr.Config != nil {
 							log.Info("Ip:=", *addr.Config.Ip)
 							log.Info("prefix:=", *addr.Config.PrefixLength)
+							if !validIPv6(*addr.Config.Ip) {
+								errStr := "Invalid IPv6 address " + *addr.Config.Ip
+								err = tlerr.InvalidArgsError{Format: errStr}
+								return keys, err
+							}
 							err = app.translateIpv4(d, ifKey, *addr.Config.Ip, int(*addr.Config.PrefixLength))
 							if err != nil {
 								return keys, err
@@ -968,7 +993,7 @@ func (app *IntfApp) validateIp(dbCl *db.DB, ifName string, ip string) error {
 			log.Infof("IP address %s exists, updating the DS for deletion!", ipStr)
 			ipInfo, err := dbCl.GetEntry(app.intfIPTs, key)
 			if err != nil {
-				log.Info("Error found on fetching Interface IP info from App DB for Interface Name : ", ifName)
+				log.Error("Error found on fetching Interface IP info from App DB for Interface Name : ", ifName)
 				return err
 			}
 			if len(app.ifIPTableMap[key.Get(0)]) == 0 {
@@ -1005,8 +1030,10 @@ func (app *IntfApp) translateIpv4(d *db.DB, intf string, ip string, prefix int) 
 
 			if intf != key.Get(0) {
 				//IP overlap across different interface, reject
-				log.Info("IP ", ipPref, " overlaps with ", key.Get(1), " of ", key.Get(0))
-				err = errors.New(fmt.Sprintf("IP %s overlaps with %s of %s ", ipPref, key.Get(1), key.Get(0)))
+				log.Error("IP ", ipPref, " overlaps with ", key.Get(1), " of ", key.Get(0))
+
+				errStr := "IP " + ipPref + " overlaps with IP " + key.Get(1) + " of Interface " + key.Get(0)
+				err = tlerr.InvalidArgsError{Format: errStr}
 				return err
 			} else {
 				//IP overlap on same interface, replace

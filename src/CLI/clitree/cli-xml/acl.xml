@@ -141,7 +141,7 @@
         <PARAM
             name="seq-no"
             help="Sequence number"
-            ptype="UINT"
+            ptype="RANGE_1_4294967295"
             />
         <ACTION>python $SONIC_CLI_ROOT/sonic-cli.py delete_openconfig_acl_acl_acl_sets_acl_set_acl_entries_acl_entry ${name} ACL_IPV4 ${seq-no}</ACTION>
     </COMMAND>
@@ -149,12 +149,11 @@
      <COMMAND
          name="seq"
          help="Sequence number"
-         ptype="UINT"
          >
          <PARAM
              name="seq-no"
              help="Sequence number"
-             ptype="UINT"
+             ptype="RANGE_1_4294967295"
              >
              <PARAM
                  name="seq-options"

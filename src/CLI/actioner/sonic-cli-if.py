@@ -122,6 +122,7 @@ def run(func, args):
                          print "%Error: " + errDict["error-message"]
                          return
                      print "%Error: Application Failure"
+                     return
             print "%Error: Application Failure"
         else:
             print "Failed"
