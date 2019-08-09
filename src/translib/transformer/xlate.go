@@ -70,7 +70,12 @@ func XlateToDb(s *ygot.GoStruct, t *interface{}) (map[string]map[string]db.Value
 
     // table.key.fields
     var result = make(map[string]map[string]db.Value)
+    err = dbMapCreate("", "/openconfig-acl:acl", jsonStr, result)
 
+    if err != nil {
+	    log.Errorf("Error: Data translation from yang to db failed.")
+        return result, err
+    }
 
     // TODO - traverse ygot/JSON with the metadata to translate to DB
     // xfmr method dynamically invoked 
