@@ -1,0 +1,1 @@
+ ./gnmi_set -replace /openconfig-interfaces:interfaces/interface[name=Ethernet0]/subinterfaces/subinterface[index=0]:@./07_set_interface_ipv6.json -target_addr 127.0.0.1:8080 -alsologtostderr -insecure true -pretty
