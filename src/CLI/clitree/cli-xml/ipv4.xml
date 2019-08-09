@@ -47,7 +47,7 @@
         <PARAM
             name="addr"
             help="IP address with mask"
-            ptype="STRING" />
+            ptype="IP_ADDR_MASK" />
 	<ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config ${iface} ${addr} </ACTION>
     </COMMAND>
 
@@ -58,9 +58,9 @@
 	<PARAM
 	    name="addr"
             help="IP address"
-	    ptype="STRING" />
+	    ptype="IP_ADDR" />
     <ACTION>
-	    python $SONIC_CLI_ROOT/sonic-cli-if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config ${iface} ${addr}
+	    python $SONIC_CLI_ROOT/sonic-cli-if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config_prefix_length ${iface} ${addr}
     </ACTION>
     </COMMAND>
   </VIEW>

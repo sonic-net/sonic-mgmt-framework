@@ -67,7 +67,7 @@
             <PARAM
                 name="arg1-port-number"
                 help="port number"
-                ptype="UINT"/>
+                ptype="RANGE_0_65535"/>
         </PARAM>
     </PARAM>
 </MACRODEF>
@@ -121,8 +121,8 @@
     <!-- deny <0-255> -->
     <PARAM
         name="protocol"
-        help="Protocol number"
-        ptype="UINT"
+        help="Protocol number(1,2,6,17,46,47,51,103,115)"
+        ptype="RANGE_0_255"
         >
         <MACRO name="IPV4-SRC-OPTIONS" arg="" />
         <MACRO name="IPV4-DEST-OPTIONS" arg="" />
@@ -173,8 +173,8 @@
 <!-- permit <0-255> -->
     <PARAM
         name="proto-num"
-        help="Protocol number"
-        ptype="UINT"
+        help="Protocol number(1,2,6,17,46,47,51,103,115)"
+        ptype="RANGE_0_255"
         >
         <MACRO name="IPV4-SRC-OPTIONS" arg="" ></MACRO>
         <MACRO name="IPV4-DEST-OPTIONS" arg="" ></MACRO>
@@ -281,7 +281,7 @@
         <PARAM
             name="dscp-val"
             help="Consider only packets matching DSCP value"
-            ptype="UINT"
+            ptype="RANGE_0_63"
             />
     </PARAM>
 </MACRODEF>

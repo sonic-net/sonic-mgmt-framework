@@ -54,7 +54,11 @@ def generate_body(func, args):
         forwarding_action = "ACCEPT" if args[3] == 'permit' else 'DROP'
         proto_number = {"icmp":"IP_ICMP","tcp":"IP_TCP","udp":"IP_UDP","6":"IP_TCP","17":"IP_UDP","1":"IP_ICMP",
                        "2":"IP_IGMP","103":"IP_PIM","46":"IP_RSVP","47":"IP_GRE","51":"IP_AUTH","115":"IP_L2TP"}
-        protocol = proto_number.get(args[4])
+        if args[4] not in proto_number.keys():
+            print("%Error: Invalid protocol number")
+            exit(1)
+        else:
+            protocol = proto_number.get(args[4])
         body=collections.defaultdict(dict)
         body["acl-entry"]=[{
                        "sequence-id": int(args[2]),
@@ -226,7 +230,26 @@ def run(func, args):
                 print("Failed")
 
     except ApiException as e:
-        print("Exception when calling OpenconfigAclApi->%s : %s\n" %(func.__name__, e))
+        #print("Exception when calling OpenconfigAclApi->%s : %s\n" %(func.__name__, e))
+        if e.body != "":
+            body = json.loads(e.body)
+            if "ietf-restconf:errors" in body:
+                 err = body["ietf-restconf:errors"]
+                 if "error" in err:
+                     errList = err["error"]
+
+                     errDict = {}
+                     for dict in errList:
+                         for k, v in dict.iteritems():
+                              errDict[k] = v
+
+                     if "error-message" in errDict:
+                         print "%Error: " + errDict["error-message"]
+                         return
+                     print "%Error: Application Failure"
+                     return
+            print "%Error: Application Failure"
+
 
 if __name__ == '__main__':
 

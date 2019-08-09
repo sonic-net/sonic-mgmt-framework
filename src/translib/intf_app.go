@@ -12,6 +12,8 @@ import (
 	"strings"
 	"translib/db"
 	"translib/ocbinds"
+	"translib/tlerr"
+	"unsafe"
 )
 
 type reqType int
@@ -168,9 +170,16 @@ func (app *IntfApp) translateDelete(d *db.DB) ([]db.WatchKeys, error) {
 						if addr != nil {
 							ipAddr := addr.Ip
 							log.Info("IPv4 address = ", *ipAddr)
+							if !validIPv4(*ipAddr) {
+								errStr := "Invalid IPv4 address " + *ipAddr
+								ipValidErr := tlerr.InvalidArgsError{Format: errStr}
+								return keys, ipValidErr
+							}
 							err = app.validateIp(d, ifKey, *ipAddr)
 							if err != nil {
-								return keys, err
+								errStr := "Invalid IPv4 address " + *ipAddr
+								ipValidErr := tlerr.InvalidArgsError{Format: errStr}
+								return keys, ipValidErr
 							}
 						}
 					}
@@ -181,9 +190,16 @@ func (app *IntfApp) translateDelete(d *db.DB) ([]db.WatchKeys, error) {
 						if addr != nil {
 							ipAddr := addr.Ip
 							log.Info("IPv6 address = ", *ipAddr)
+							if !validIPv6(*ipAddr) {
+								errStr := "Invalid IPv6 address " + *ipAddr
+								ipValidErr := tlerr.InvalidArgsError{Format: errStr}
+								return keys, ipValidErr
+							}
 							err = app.validateIp(d, ifKey, *ipAddr)
 							if err != nil {
-								return keys, err
+								errStr := "Invalid IPv6 address:" + *ipAddr
+								ipValidErr := tlerr.InvalidArgsError{Format: errStr}
+								return keys, ipValidErr
 							}
 						}
 					}
@@ -206,8 +222,31 @@ func (app *IntfApp) translateGet(dbs [db.MaxDB]*db.DB) error {
 }
 
 func (app *IntfApp) translateSubscribe(dbs [db.MaxDB]*db.DB, path string) (*notificationOpts, *notificationInfo, error) {
-	var err error
-	return nil, nil, err
+	log.Info("translateSubscribe fn - intf_app module called!")
+
+	pathInfo := NewPathInfo(path)
+	notifInfo := notificationInfo{dbno: db.ApplDB}
+	notSupported := tlerr.NotSupportedError{Format: "Subscribe not supported", Path: path}
+
+	if isSubtreeRequest(pathInfo.Template, "/openconfig-interfaces:interfaces") {
+		if pathInfo.HasSuffix("/interface{name}") ||
+			pathInfo.HasSuffix("/config") ||
+			pathInfo.HasSuffix("/state") {
+			log.Errorf("Subscribe not supported for %s!", pathInfo.Template)
+			return nil, nil, notSupported
+		}
+		ifKey := pathInfo.Var("name")
+		if len(ifKey) == 0 {
+			return nil, nil, errors.New("ifKey given is empty!")
+		}
+		log.Info("Interface name = ", ifKey)
+		if pathInfo.HasSuffix("/state/oper-status") {
+			notifInfo.table = db.TableSpec{Name: "PORT_TABLE"}
+			notifInfo.key = asKey(ifKey)
+			notifInfo.needCache = true
+		}
+	}
+	return nil, &notifInfo, nil
 }
 
 func (app *IntfApp) processCreate(d *db.DB) (SetResponse, error) {
@@ -262,17 +301,10 @@ func (app *IntfApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
 	pathInfo := app.path
 
 	log.Infof("Received GET for path %s; template: %s vars=%v", pathInfo.Path, pathInfo.Template, pathInfo.Vars)
-	var intfSubtree bool = false
 	app.appDB = dbs[db.ApplDB]
 	app.countersDB = dbs[db.CountersDB]
 
 	intfObj := app.getAppRootObject()
-
-	log.Info("processGet: Target Type: " + reflect.TypeOf(*app.ygotTarget).Elem().Name())
-	if reflect.TypeOf(*app.ygotTarget).Elem().Name() == "OpenconfigInterfaces_Interfaces" {
-		intfSubtree = true
-		log.Info("subtree request = ", intfSubtree)
-	}
 
 	targetUriPath, err := getYangPathFromUri(app.path.Path)
 	log.Info("URI Path = ", targetUriPath)
@@ -289,6 +321,23 @@ func (app *IntfApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
 				if err != nil {
 					return GetResponse{Payload: payload, ErrSrc: AppErr}, err
 				}
+
+				/*Check if the request is for a specific attribute in Interfaces state container*/
+				oc_val := &ocbinds.OpenconfigInterfaces_Interfaces_Interface_State{}
+				ok, e := app.getSpecificAttr(targetUriPath, ifKey, oc_val)
+				if ok {
+					if e != nil {
+						return GetResponse{Payload: payload, ErrSrc: AppErr}, e
+					}
+
+					payload, err = dumpIetfJson(oc_val, false)
+					if err == nil {
+						return GetResponse{Payload: payload}, err
+					} else {
+						return GetResponse{Payload: payload, ErrSrc: AppErr}, err
+					}
+				}
+
 				/* Filling Interface IP info to internal DS */
 				err = app.convertDBIntfIPInfoToInternal(app.appDB, ifKey)
 				if err != nil {
@@ -356,7 +405,7 @@ func (app *IntfApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
 			log.Info("If Key = ", ifKey)
 			ifInfo, err := intfObj.NewInterface(ifKey)
 			if err != nil {
-				log.Infof("Creation of interface subtree for %s failed!", ifKey)
+				log.Errorf("Creation of interface subtree for %s failed!", ifKey)
 				return GetResponse{Payload: payload, ErrSrc: AppErr}, err
 			}
 			ygot.BuildEmptyTree(ifInfo)
@@ -365,7 +414,7 @@ func (app *IntfApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
 		if *app.ygotTarget == intfObj {
 			payload, err = dumpIetfJson((*app.ygotRoot).(*ocbinds.Device), true)
 		} else {
-			log.Info("Wrong request!")
+			log.Error("Wrong request!")
 		}
 	}
 	return GetResponse{Payload: payload}, err
@@ -377,6 +426,16 @@ func validIPv4(ipAddress string) bool {
 
 	re, _ := regexp.Compile(`^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$`)
 	if re.MatchString(ipAddress) {
+		return true
+	}
+	return false
+}
+
+/* Checking IP address is v6 */
+func validIPv6(ip6Address string) bool {
+	ip6Address = strings.Trim(ip6Address, " ")
+	re, _ := regexp.Compile(`(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))`)
+	if re.MatchString(ip6Address) {
 		return true
 	}
 	return false
@@ -396,13 +455,90 @@ func (app *IntfApp) doGetAllIpKeys(d *db.DB, dbSpec *db.TableSpec) ([]db.Key, er
 	return keys, err
 }
 
-/***********  Translation Helper fn to convert DB Interface info to Internal DS   ***********/
+func (app *IntfApp) getSpecificAttr(targetUriPath string, ifKey string, oc_val *ocbinds.OpenconfigInterfaces_Interfaces_Interface_State) (bool, error) {
+	switch targetUriPath {
+	case "/openconfig-interfaces:interfaces/interface/state/oper-status":
+		val, e := app.getIntfAttr(ifKey, PORT_OPER_STATUS)
+		if len(val) > 0 {
+			switch val {
+			case "up":
+				oc_val.OperStatus = ocbinds.OpenconfigInterfaces_Interfaces_Interface_State_OperStatus_UP
+			case "down":
+				oc_val.OperStatus = ocbinds.OpenconfigInterfaces_Interfaces_Interface_State_OperStatus_DOWN
+			default:
+				oc_val.OperStatus = ocbinds.OpenconfigInterfaces_Interfaces_Interface_State_OperStatus_UNSET
+			}
+			return true, nil
+		} else {
+			return true, e
+		}
+	case "/openconfig-interfaces:interfaces/interface/state/admin-status":
+		val, e := app.getIntfAttr(ifKey, PORT_ADMIN_STATUS)
+		if len(val) > 0 {
+			switch val {
+			case "up":
+				oc_val.AdminStatus = ocbinds.OpenconfigInterfaces_Interfaces_Interface_State_AdminStatus_UP
+			case "down":
+				oc_val.AdminStatus = ocbinds.OpenconfigInterfaces_Interfaces_Interface_State_AdminStatus_DOWN
+			default:
+				oc_val.AdminStatus = ocbinds.OpenconfigInterfaces_Interfaces_Interface_State_AdminStatus_UNSET
+			}
+			return true, nil
+		} else {
+			return true, e
+		}
+	case "/openconfig-interfaces:interfaces/interface/state/mtu":
+		val, e := app.getIntfAttr(ifKey, PORT_MTU)
+		if len(val) > 0 {
+			v, e := strconv.ParseUint(val, 10, 16)
+			if e == nil {
+				oc_val.Mtu = (*uint16)(unsafe.Pointer(&v))
+				return true, nil
+			}
+		}
+		return true, e
+	case "/openconfig-interfaces:interfaces/interface/state/ifindex":
+		val, e := app.getIntfAttr(ifKey, PORT_INDEX)
+		if len(val) > 0 {
+			v, e := strconv.ParseUint(val, 10, 32)
+			if e == nil {
+				oc_val.Ifindex = (*uint32)(unsafe.Pointer(&v))
+				return true, nil
+			}
+		}
+		return true, e
+	case "/openconfig-interfaces:interfaces/interface/state/description":
+		val, e := app.getIntfAttr(ifKey, PORT_DESC)
+		if e == nil {
+			oc_val.Description = &val
+			return true, nil
+		}
+		return true, e
 
+	default:
+		log.Infof("GET for " + targetUriPath + " not supported")
+	}
+	return false, nil
+}
+
+func (app *IntfApp) getIntfAttr(ifName string, attr string) (string, error) {
+
+	if entry, ok := app.ifTableMap[ifName]; ok {
+		ifData := entry.entry
+
+		if val, ok := ifData.Field[attr]; ok {
+			return val, nil
+		}
+	}
+	return "", errors.New("Attr " + attr + "doesn't exist in IF table Map!")
+}
+
+/***********  Translation Helper fn to convert DB Interface info to Internal DS   ***********/
 func (app *IntfApp) getPortOidMapForCounters(dbCl *db.DB) error {
 	var err error
 	ifCountInfo, err := dbCl.GetMapAll(app.portOidCountrTblTs)
 	if err != nil {
-		log.Info("Port-OID (Counters) get for all the interfaces failed!")
+		log.Error("Port-OID (Counters) get for all the interfaces failed!")
 		return err
 	}
 	if ifCountInfo.IsPopulated() {
@@ -411,7 +547,6 @@ func (app *IntfApp) getPortOidMapForCounters(dbCl *db.DB) error {
 		return errors.New("Get for OID info from all the interfaces from Counters DB failed!")
 	}
 	return err
-
 }
 
 func (app *IntfApp) convertDBIntfCounterInfoToInternal(dbCl *db.DB, ifKey string) error {
@@ -447,25 +582,26 @@ func (app *IntfApp) convertDBIntfInfoToInternal(dbCl *db.DB, ifName string, ifKe
 		log.Info("Updating Interface info from APP-DB to Internal DS for Interface name : ", ifName)
 		ifInfo, err := dbCl.GetEntry(app.portTblTs, ifKey)
 		if err != nil {
-			log.Info("Error found on fetching Interface info from App DB for If Name : ", ifName)
+			log.Errorf("Error found on fetching Interface info from App DB for If Name : %s", ifName)
+			errStr := "Invalid Interface:" + ifName
+			err = tlerr.InvalidArgsError{Format: errStr}
 			return err
 		}
 		if ifInfo.IsPopulated() {
 			log.Info("Interface Info populated for ifName : ", ifName)
 			app.ifTableMap[ifName] = dbEntry{entry: ifInfo}
 		} else {
-			return errors.New("IfName doesn't exist in the config DB!")
+			return errors.New("Populating Interface info for " + ifName + "failed")
 		}
 	} else {
 		log.Info("App-DB get for all the interfaces")
 		tbl, err := dbCl.GetTable(app.portTblTs)
 		if err != nil {
-			log.Info("App-DB get for list of interfaces failed!")
+			log.Error("App-DB get for list of interfaces failed!")
 			return err
 		}
 		keys, _ := tbl.GetKeys()
 		for _, key := range keys {
-			log.Info("Key = ", key.Get(0))
 			app.convertDBIntfInfoToInternal(dbCl, key.Get(0), db.Key{Comp: []string{key.Get(0)}})
 		}
 	}
@@ -480,9 +616,12 @@ func (app *IntfApp) convertDBIntfIPInfoToInternal(dbCl *db.DB, ifName string) er
 	app.allIpKeys, _ = app.doGetAllIpKeys(dbCl, app.intfIPTblTs)
 
 	for _, key := range app.allIpKeys {
+		if len(key.Comp) <= 1 {
+			continue
+		}
 		ipInfo, err := dbCl.GetEntry(app.intfIPTblTs, key)
 		if err != nil {
-			log.Info("Error found on fetching Interface IP info from App DB for Interface Name : ", ifName)
+			log.Errorf("Error found on fetching Interface IP info from App DB for Interface Name : %s", ifName)
 			return err
 		}
 		if len(app.ifIPTableMap[key.Get(0)]) == 0 {
@@ -504,83 +643,78 @@ func (app *IntfApp) convertInternalToOCIntfInfo(ifName *string, ifInfo *ocbinds.
 func (app *IntfApp) convertInternalToOCIntfAttrInfo(ifName *string, ifInfo *ocbinds.OpenconfigInterfaces_Interfaces_Interface) {
 
 	/* Handling the Interface attributes */
-	entry := app.ifTableMap[*ifName]
-	ifData := entry.entry
+	if entry, ok := app.ifTableMap[*ifName]; ok {
+		ifData := entry.entry
 
-	name := *ifName
-	ifInfo.Config.Name = &name
-	ifInfo.State.Name = &name
+		name := *ifName
+		ifInfo.Config.Name = &name
+		ifInfo.State.Name = &name
 
-	for ifAttr := range ifData.Field {
-		switch ifAttr {
-		case PORT_ADMIN_STATUS:
-			adminStatus := ifData.Get(ifAttr)
-			log.Info("Admin Status = ", adminStatus)
-			ifInfo.State.AdminStatus = ocbinds.OpenconfigInterfaces_Interfaces_Interface_State_AdminStatus_DOWN
-			if adminStatus == "up" {
-				ifInfo.State.AdminStatus = ocbinds.OpenconfigInterfaces_Interfaces_Interface_State_AdminStatus_UP
-			}
-		case PORT_OPER_STATUS:
-			operStatus := ifData.Get(ifAttr)
-			log.Info("Oper Status = ", operStatus)
-			ifInfo.State.OperStatus = ocbinds.OpenconfigInterfaces_Interfaces_Interface_State_OperStatus_DOWN
-			if operStatus == "up" {
-				ifInfo.State.OperStatus = ocbinds.OpenconfigInterfaces_Interfaces_Interface_State_OperStatus_UP
-			}
-		case PORT_DESC:
-			descVal := ifData.Get(ifAttr)
-			descr := new(string)
-			*descr = descVal
-			log.Info("Description = ", *descr)
-			ifInfo.Config.Description = descr
-			ifInfo.State.Description = descr
-		case PORT_MTU:
-			mtuStr := ifData.Get(ifAttr)
-			log.Info("MTU = ", mtuStr)
-			mtuVal, err := strconv.Atoi(mtuStr)
-			mtu := new(uint16)
-			*mtu = uint16(mtuVal)
-			if err == nil {
-				ifInfo.Config.Mtu = mtu
-				ifInfo.State.Mtu = mtu
-			}
-		case PORT_SPEED:
-			speed := ifData.Get(ifAttr)
-			log.Info("Speed = ", speed)
-			var speedEnum ocbinds.E_OpenconfigIfEthernet_ETHERNET_SPEED
+		for ifAttr := range ifData.Field {
+			switch ifAttr {
+			case PORT_ADMIN_STATUS:
+				adminStatus := ifData.Get(ifAttr)
+				ifInfo.State.AdminStatus = ocbinds.OpenconfigInterfaces_Interfaces_Interface_State_AdminStatus_DOWN
+				if adminStatus == "up" {
+					ifInfo.State.AdminStatus = ocbinds.OpenconfigInterfaces_Interfaces_Interface_State_AdminStatus_UP
+				}
+			case PORT_OPER_STATUS:
+				operStatus := ifData.Get(ifAttr)
+				ifInfo.State.OperStatus = ocbinds.OpenconfigInterfaces_Interfaces_Interface_State_OperStatus_DOWN
+				if operStatus == "up" {
+					ifInfo.State.OperStatus = ocbinds.OpenconfigInterfaces_Interfaces_Interface_State_OperStatus_UP
+				}
+			case PORT_DESC:
+				descVal := ifData.Get(ifAttr)
+				descr := new(string)
+				*descr = descVal
+				ifInfo.Config.Description = descr
+				ifInfo.State.Description = descr
+			case PORT_MTU:
+				mtuStr := ifData.Get(ifAttr)
+				mtuVal, err := strconv.Atoi(mtuStr)
+				mtu := new(uint16)
+				*mtu = uint16(mtuVal)
+				if err == nil {
+					ifInfo.Config.Mtu = mtu
+					ifInfo.State.Mtu = mtu
+				}
+			case PORT_SPEED:
+				speed := ifData.Get(ifAttr)
+				var speedEnum ocbinds.E_OpenconfigIfEthernet_ETHERNET_SPEED
 
-			switch speed {
-			case "40000":
-				speedEnum = ocbinds.OpenconfigIfEthernet_ETHERNET_SPEED_SPEED_40GB
-				speedEnum = ocbinds.OpenconfigIfEthernet_ETHERNET_SPEED_SPEED_40GB
-			case "25000":
-				speedEnum = ocbinds.OpenconfigIfEthernet_ETHERNET_SPEED_SPEED_25GB
-				speedEnum = ocbinds.OpenconfigIfEthernet_ETHERNET_SPEED_SPEED_25GB
-			case "10000":
-				speedEnum = ocbinds.OpenconfigIfEthernet_ETHERNET_SPEED_SPEED_10GB
-				speedEnum = ocbinds.OpenconfigIfEthernet_ETHERNET_SPEED_SPEED_10GB
-			case "5000":
-				speedEnum = ocbinds.OpenconfigIfEthernet_ETHERNET_SPEED_SPEED_5GB
-				speedEnum = ocbinds.OpenconfigIfEthernet_ETHERNET_SPEED_SPEED_5GB
-			case "1000":
-				speedEnum = ocbinds.OpenconfigIfEthernet_ETHERNET_SPEED_SPEED_1GB
-				speedEnum = ocbinds.OpenconfigIfEthernet_ETHERNET_SPEED_SPEED_1GB
+				switch speed {
+				case "40000":
+					speedEnum = ocbinds.OpenconfigIfEthernet_ETHERNET_SPEED_SPEED_40GB
+					speedEnum = ocbinds.OpenconfigIfEthernet_ETHERNET_SPEED_SPEED_40GB
+				case "25000":
+					speedEnum = ocbinds.OpenconfigIfEthernet_ETHERNET_SPEED_SPEED_25GB
+					speedEnum = ocbinds.OpenconfigIfEthernet_ETHERNET_SPEED_SPEED_25GB
+				case "10000":
+					speedEnum = ocbinds.OpenconfigIfEthernet_ETHERNET_SPEED_SPEED_10GB
+					speedEnum = ocbinds.OpenconfigIfEthernet_ETHERNET_SPEED_SPEED_10GB
+				case "5000":
+					speedEnum = ocbinds.OpenconfigIfEthernet_ETHERNET_SPEED_SPEED_5GB
+					speedEnum = ocbinds.OpenconfigIfEthernet_ETHERNET_SPEED_SPEED_5GB
+				case "1000":
+					speedEnum = ocbinds.OpenconfigIfEthernet_ETHERNET_SPEED_SPEED_1GB
+					speedEnum = ocbinds.OpenconfigIfEthernet_ETHERNET_SPEED_SPEED_1GB
+				default:
+					log.Infof("Not supported speed: %s!", speed)
+				}
+				ifInfo.Ethernet.Config.PortSpeed = speedEnum
+				ifInfo.Ethernet.State.PortSpeed = speedEnum
+			case PORT_INDEX:
+				ifIdxStr := ifData.Get(ifAttr)
+				ifIdxNum, err := strconv.Atoi(ifIdxStr)
+				if err == nil {
+					ifIdx := new(uint32)
+					*ifIdx = uint32(ifIdxNum)
+					ifInfo.State.Ifindex = ifIdx
+				}
 			default:
-				log.Infof("Not supported speed: %s!", speed)
+				log.Info("Not a valid attribute!")
 			}
-			ifInfo.Ethernet.Config.PortSpeed = speedEnum
-			ifInfo.Ethernet.State.PortSpeed = speedEnum
-		case PORT_INDEX:
-			ifIdxStr := ifData.Get(ifAttr)
-			log.Info("if-Index = ", ifIdxStr)
-			ifIdxNum, err := strconv.Atoi(ifIdxStr)
-			if err == nil {
-				ifIdx := new(uint32)
-				*ifIdx = uint32(ifIdxNum)
-				ifInfo.State.Ifindex = ifIdx
-			}
-		default:
-			log.Info("Not a valid attribute!")
 		}
 	}
 
@@ -591,147 +725,153 @@ func (app *IntfApp) convertInternalToOCIntfIPAttrInfo(ifName *string, ifInfo *oc
 	/* Handling the Interface IP attributes */
 	subIntf, err := ifInfo.Subinterfaces.NewSubinterface(0)
 	if err != nil {
-		log.Info("Creation of subinterface subtree failed!")
+		log.Error("Creation of subinterface subtree failed!")
 		return
 	}
 	ygot.BuildEmptyTree(subIntf)
-	ipMap := app.ifIPTableMap[*ifName]
-	for ipKey, _ := range ipMap {
-		log.Info("IP address = ", ipKey)
-		ipB, ipNetB, _ := net.ParseCIDR(ipKey)
+	if ipMap, ok := app.ifIPTableMap[*ifName]; ok {
+		for ipKey, _ := range ipMap {
+			log.Info("IP address = ", ipKey)
+			ipB, ipNetB, _ := net.ParseCIDR(ipKey)
 
-		v4Flag := false
+			v4Flag := false
+			v6Flag := false
 
-		var v4Address *ocbinds.OpenconfigInterfaces_Interfaces_Interface_Subinterfaces_Subinterface_Ipv4_Addresses_Address
-		var v6Address *ocbinds.OpenconfigInterfaces_Interfaces_Interface_Subinterfaces_Subinterface_Ipv6_Addresses_Address
+			var v4Address *ocbinds.OpenconfigInterfaces_Interfaces_Interface_Subinterfaces_Subinterface_Ipv4_Addresses_Address
+			var v6Address *ocbinds.OpenconfigInterfaces_Interfaces_Interface_Subinterfaces_Subinterface_Ipv6_Addresses_Address
 
-		if validIPv4(ipB.String()) {
-			v4Address, err = subIntf.Ipv4.Addresses.NewAddress(ipB.String())
-			v4Flag = true
-		} else {
-			v6Address, err = subIntf.Ipv6.Addresses.NewAddress(ipB.String())
-		}
+			if validIPv4(ipB.String()) {
+				v4Address, err = subIntf.Ipv4.Addresses.NewAddress(ipB.String())
+				v4Flag = true
+			} else if validIPv6(ipB.String()) {
+				v6Address, err = subIntf.Ipv6.Addresses.NewAddress(ipB.String())
+				v6Flag = true
+			} else {
+				log.Error("Invalid IP address " + ipB.String())
+				continue
+			}
 
-		if err != nil {
-			log.Info("Creation of address subtree failed!")
-			return
-		}
-		if v4Flag {
-			ygot.BuildEmptyTree(v4Address)
+			if err != nil {
+				log.Error("Creation of address subtree failed!")
+				return
+			}
+			if v4Flag {
+				ygot.BuildEmptyTree(v4Address)
 
-			ipStr := new(string)
-			*ipStr = ipB.String()
-			v4Address.Ip = ipStr
-			v4Address.Config.Ip = ipStr
-			v4Address.State.Ip = ipStr
+				ipStr := new(string)
+				*ipStr = ipB.String()
+				v4Address.Ip = ipStr
+				v4Address.Config.Ip = ipStr
+				v4Address.State.Ip = ipStr
 
-			ipNetBNum, _ := ipNetB.Mask.Size()
-			log.Info("Prefix Length = ", ipNetBNum)
-			prfxLen := new(uint8)
-			*prfxLen = uint8(ipNetBNum)
-			v4Address.Config.PrefixLength = prfxLen
-			v4Address.State.PrefixLength = prfxLen
-		} else {
-			/* v6 address */
-			ygot.BuildEmptyTree(v6Address)
+				ipNetBNum, _ := ipNetB.Mask.Size()
+				prfxLen := new(uint8)
+				*prfxLen = uint8(ipNetBNum)
+				v4Address.Config.PrefixLength = prfxLen
+				v4Address.State.PrefixLength = prfxLen
+			}
+			if v6Flag {
+				ygot.BuildEmptyTree(v6Address)
 
-			ipStr := new(string)
-			*ipStr = ipB.String()
-			v6Address.Ip = ipStr
-			v6Address.Config.Ip = ipStr
-			v6Address.State.Ip = ipStr
+				ipStr := new(string)
+				*ipStr = ipB.String()
+				v6Address.Ip = ipStr
+				v6Address.Config.Ip = ipStr
+				v6Address.State.Ip = ipStr
 
-			ipNetBNum, _ := ipNetB.Mask.Size()
-			log.Info("Prefix Length = ", ipNetBNum)
-			prfxLen := new(uint8)
-			*prfxLen = uint8(ipNetBNum)
-			v6Address.Config.PrefixLength = prfxLen
-			v6Address.State.PrefixLength = prfxLen
+				ipNetBNum, _ := ipNetB.Mask.Size()
+				prfxLen := new(uint8)
+				*prfxLen = uint8(ipNetBNum)
+				v6Address.Config.PrefixLength = prfxLen
+				v6Address.State.PrefixLength = prfxLen
+			}
 		}
 	}
 }
 
 func (app *IntfApp) convertInternalToOCPortStatInfo(ifName *string, ifInfo *ocbinds.OpenconfigInterfaces_Interfaces_Interface) {
-	portStatInfo := app.portStatMap[*ifName]
 	if len(app.portStatMap) == 0 {
-		log.Infof("Port stat info not present for interface : %s", *ifName)
+		log.Errorf("Port stat info not present for interface : %s", *ifName)
 		return
 	}
-	inOctet := new(uint64)
-	inOctetVal, _ := strconv.Atoi(portStatInfo.entry.Field["SAI_PORT_STAT_IF_IN_OCTETS"])
-	*inOctet = uint64(inOctetVal)
-	ifInfo.State.Counters.InOctets = inOctet
+	if portStatInfo, ok := app.portStatMap[*ifName]; ok {
 
-	inUCastPkt := new(uint64)
-	inUCastPktVal, _ := strconv.Atoi(portStatInfo.entry.Field["SAI_PORT_STAT_IF_OUT_UCAST_PKTS"])
-	*inUCastPkt = uint64(inUCastPktVal)
-	ifInfo.State.Counters.InUnicastPkts = inUCastPkt
+		inOctet := new(uint64)
+		inOctetVal, _ := strconv.Atoi(portStatInfo.entry.Field["SAI_PORT_STAT_IF_IN_OCTETS"])
+		*inOctet = uint64(inOctetVal)
+		ifInfo.State.Counters.InOctets = inOctet
 
-	inNonUCastPkt := new(uint64)
-	inNonUCastPktVal, _ := strconv.Atoi(portStatInfo.entry.Field["SAI_PORT_STAT_IF_IN_NON_UCAST_PKTS"])
-	*inNonUCastPkt = uint64(inNonUCastPktVal)
+		inUCastPkt := new(uint64)
+		inUCastPktVal, _ := strconv.Atoi(portStatInfo.entry.Field["SAI_PORT_STAT_IF_OUT_UCAST_PKTS"])
+		*inUCastPkt = uint64(inUCastPktVal)
+		ifInfo.State.Counters.InUnicastPkts = inUCastPkt
 
-	inPkt := new(uint64)
-	*inPkt = *inUCastPkt + *inNonUCastPkt
-	ifInfo.State.Counters.InPkts = inPkt
+		inNonUCastPkt := new(uint64)
+		inNonUCastPktVal, _ := strconv.Atoi(portStatInfo.entry.Field["SAI_PORT_STAT_IF_IN_NON_UCAST_PKTS"])
+		*inNonUCastPkt = uint64(inNonUCastPktVal)
 
-	inBCastPkt := new(uint64)
-	inBCastPktVal, _ := strconv.Atoi(portStatInfo.entry.Field["SAI_PORT_STAT_IF_IN_BROADCAST_PKTS"])
-	*inBCastPkt = uint64(inBCastPktVal)
-	ifInfo.State.Counters.InBroadcastPkts = inBCastPkt
+		inPkt := new(uint64)
+		*inPkt = *inUCastPkt + *inNonUCastPkt
+		ifInfo.State.Counters.InPkts = inPkt
 
-	inMCastPkt := new(uint64)
-	inMCastPktVal, _ := strconv.Atoi(portStatInfo.entry.Field["SAI_PORT_STAT_IF_IN_MULTICAST_PKTS"])
-	*inMCastPkt = uint64(inMCastPktVal)
-	ifInfo.State.Counters.InMulticastPkts = inMCastPkt
+		inBCastPkt := new(uint64)
+		inBCastPktVal, _ := strconv.Atoi(portStatInfo.entry.Field["SAI_PORT_STAT_IF_IN_BROADCAST_PKTS"])
+		*inBCastPkt = uint64(inBCastPktVal)
+		ifInfo.State.Counters.InBroadcastPkts = inBCastPkt
 
-	inErrPkt := new(uint64)
-	inErrPktVal, _ := strconv.Atoi(portStatInfo.entry.Field["SAI_PORT_STAT_IF_IN_ERRORS"])
-	*inErrPkt = uint64(inErrPktVal)
-	ifInfo.State.Counters.InErrors = inErrPkt
+		inMCastPkt := new(uint64)
+		inMCastPktVal, _ := strconv.Atoi(portStatInfo.entry.Field["SAI_PORT_STAT_IF_IN_MULTICAST_PKTS"])
+		*inMCastPkt = uint64(inMCastPktVal)
+		ifInfo.State.Counters.InMulticastPkts = inMCastPkt
 
-	inDiscPkt := new(uint64)
-	inDiscPktVal, _ := strconv.Atoi(portStatInfo.entry.Field["SAI_PORT_STAT_IF_IN_DISCARDS"])
-	*inDiscPkt = uint64(inDiscPktVal)
-	ifInfo.State.Counters.InDiscards = inDiscPkt
+		inErrPkt := new(uint64)
+		inErrPktVal, _ := strconv.Atoi(portStatInfo.entry.Field["SAI_PORT_STAT_IF_IN_ERRORS"])
+		*inErrPkt = uint64(inErrPktVal)
+		ifInfo.State.Counters.InErrors = inErrPkt
 
-	outOctet := new(uint64)
-	outOctetVal, _ := strconv.Atoi(portStatInfo.entry.Field["SAI_PORT_STAT_IF_OUT_OCTETS"])
-	*outOctet = uint64(outOctetVal)
-	ifInfo.State.Counters.OutOctets = outOctet
+		inDiscPkt := new(uint64)
+		inDiscPktVal, _ := strconv.Atoi(portStatInfo.entry.Field["SAI_PORT_STAT_IF_IN_DISCARDS"])
+		*inDiscPkt = uint64(inDiscPktVal)
+		ifInfo.State.Counters.InDiscards = inDiscPkt
 
-	outUCastPkt := new(uint64)
-	outUCastPktVal, _ := strconv.Atoi(portStatInfo.entry.Field["SAI_PORT_STAT_IF_OUT_UCAST_PKTS"])
-	*outUCastPkt = uint64(outUCastPktVal)
-	ifInfo.State.Counters.OutUnicastPkts = outUCastPkt
+		outOctet := new(uint64)
+		outOctetVal, _ := strconv.Atoi(portStatInfo.entry.Field["SAI_PORT_STAT_IF_OUT_OCTETS"])
+		*outOctet = uint64(outOctetVal)
+		ifInfo.State.Counters.OutOctets = outOctet
 
-	outNonUCastPkt := new(uint64)
-	outNonUCastPktVal, _ := strconv.Atoi(portStatInfo.entry.Field["SAI_PORT_STAT_IF_OUT_NON_UCAST_PKTS"])
-	*outNonUCastPkt = uint64(outNonUCastPktVal)
+		outUCastPkt := new(uint64)
+		outUCastPktVal, _ := strconv.Atoi(portStatInfo.entry.Field["SAI_PORT_STAT_IF_OUT_UCAST_PKTS"])
+		*outUCastPkt = uint64(outUCastPktVal)
+		ifInfo.State.Counters.OutUnicastPkts = outUCastPkt
 
-	outPkt := new(uint64)
-	*outPkt = *outUCastPkt + *outNonUCastPkt
-	ifInfo.State.Counters.OutPkts = outPkt
+		outNonUCastPkt := new(uint64)
+		outNonUCastPktVal, _ := strconv.Atoi(portStatInfo.entry.Field["SAI_PORT_STAT_IF_OUT_NON_UCAST_PKTS"])
+		*outNonUCastPkt = uint64(outNonUCastPktVal)
 
-	outBCastPkt := new(uint64)
-	outBCastPktVal, _ := strconv.Atoi(portStatInfo.entry.Field["SAI_PORT_STAT_IF_OUT_BROADCAST_PKTS"])
-	*outBCastPkt = uint64(outBCastPktVal)
-	ifInfo.State.Counters.OutBroadcastPkts = outBCastPkt
+		outPkt := new(uint64)
+		*outPkt = *outUCastPkt + *outNonUCastPkt
+		ifInfo.State.Counters.OutPkts = outPkt
 
-	outMCastPkt := new(uint64)
-	outMCastPktVal, _ := strconv.Atoi(portStatInfo.entry.Field["SAI_PORT_STAT_IF_OUT_MULTICAST_PKTS"])
-	*outMCastPkt = uint64(outMCastPktVal)
-	ifInfo.State.Counters.OutMulticastPkts = outMCastPkt
+		outBCastPkt := new(uint64)
+		outBCastPktVal, _ := strconv.Atoi(portStatInfo.entry.Field["SAI_PORT_STAT_IF_OUT_BROADCAST_PKTS"])
+		*outBCastPkt = uint64(outBCastPktVal)
+		ifInfo.State.Counters.OutBroadcastPkts = outBCastPkt
 
-	outErrPkt := new(uint64)
-	outErrPktVal, _ := strconv.Atoi(portStatInfo.entry.Field["SAI_PORT_STAT_IF_OUT_ERRORS"])
-	*outErrPkt = uint64(outErrPktVal)
-	ifInfo.State.Counters.OutErrors = outErrPkt
+		outMCastPkt := new(uint64)
+		outMCastPktVal, _ := strconv.Atoi(portStatInfo.entry.Field["SAI_PORT_STAT_IF_OUT_MULTICAST_PKTS"])
+		*outMCastPkt = uint64(outMCastPktVal)
+		ifInfo.State.Counters.OutMulticastPkts = outMCastPkt
 
-	outDiscPkt := new(uint64)
-	outDiscPktVal, _ := strconv.Atoi(portStatInfo.entry.Field["SAI_PORT_STAT_IF_OUT_DISCARDS"])
-	*outDiscPkt = uint64(outDiscPktVal)
-	ifInfo.State.Counters.OutDiscards = outDiscPkt
+		outErrPkt := new(uint64)
+		outErrPktVal, _ := strconv.Atoi(portStatInfo.entry.Field["SAI_PORT_STAT_IF_OUT_ERRORS"])
+		*outErrPkt = uint64(outErrPktVal)
+		ifInfo.State.Counters.OutErrors = outErrPkt
+
+		outDiscPkt := new(uint64)
+		outDiscPktVal, _ := strconv.Atoi(portStatInfo.entry.Field["SAI_PORT_STAT_IF_OUT_DISCARDS"])
+		*outDiscPkt = uint64(outDiscPktVal)
+		ifInfo.State.Counters.OutDiscards = outDiscPkt
+	}
 }
 
 func (app *IntfApp) translateCommon(d *db.DB, inpOp reqType) ([]db.WatchKeys, error) {
@@ -756,22 +896,23 @@ func (app *IntfApp) translateCommon(d *db.DB, inpOp reqType) ([]db.WatchKeys, er
 			intf := intfObj.Interface[ifKey]
 			curr, err := d.GetEntry(app.portTs, db.Key{Comp: []string{ifKey}})
 			if err != nil {
-				return keys, err
+				errStr := "Invalid Interface:" + ifKey
+				ifValidErr := tlerr.InvalidArgsError{Format: errStr}
+				return keys, ifValidErr
 			}
 			if !curr.IsPopulated() {
-				log.Info("Interface ", ifKey, " doesnt exist in DB")
-				err = errors.New("Interface " + ifKey + " doesnt exist in DB")
-				return keys, err
+				log.Error("Interface ", ifKey, " doesn't exist in DB")
+				return keys, errors.New("Interface: " + ifKey + " doesn't exist in DB")
 			}
 			if intf.Config != nil {
 				if intf.Config.Description != nil {
-					log.Info("descript:= ", *intf.Config.Description)
+					log.Info("Description = ", *intf.Config.Description)
 					curr.Field["description"] = *intf.Config.Description
 				} else if intf.Config.Mtu != nil {
 					log.Info("mtu:= ", *intf.Config.Mtu)
 					curr.Field["mtu"] = strconv.Itoa(int(*intf.Config.Mtu))
 				} else if intf.Config.Enabled != nil {
-					log.Info("enabled:= ", *intf.Config.Enabled)
+					log.Info("enabled = ", *intf.Config.Enabled)
 					if *intf.Config.Enabled == true {
 						curr.Field["admin_status"] = "up"
 					} else {
@@ -796,6 +937,11 @@ func (app *IntfApp) translateCommon(d *db.DB, inpOp reqType) ([]db.WatchKeys, er
 						if addr.Config != nil {
 							log.Info("Ip:=", *addr.Config.Ip)
 							log.Info("prefix:=", *addr.Config.PrefixLength)
+							if !validIPv4(*addr.Config.Ip) {
+								errStr := "Invalid IPv4 address " + *addr.Config.Ip
+								err = tlerr.InvalidArgsError{Format: errStr}
+								return keys, err
+							}
 							err = app.translateIpv4(d, ifKey, *addr.Config.Ip, int(*addr.Config.PrefixLength))
 							if err != nil {
 								return keys, err
@@ -809,6 +955,11 @@ func (app *IntfApp) translateCommon(d *db.DB, inpOp reqType) ([]db.WatchKeys, er
 						if addr.Config != nil {
 							log.Info("Ip:=", *addr.Config.Ip)
 							log.Info("prefix:=", *addr.Config.PrefixLength)
+							if !validIPv6(*addr.Config.Ip) {
+								errStr := "Invalid IPv6 address " + *addr.Config.Ip
+								err = tlerr.InvalidArgsError{Format: errStr}
+								return keys, err
+							}
 							err = app.translateIpv4(d, ifKey, *addr.Config.Ip, int(*addr.Config.PrefixLength))
 							if err != nil {
 								return keys, err
@@ -842,7 +993,7 @@ func (app *IntfApp) validateIp(dbCl *db.DB, ifName string, ip string) error {
 			log.Infof("IP address %s exists, updating the DS for deletion!", ipStr)
 			ipInfo, err := dbCl.GetEntry(app.intfIPTs, key)
 			if err != nil {
-				log.Info("Error found on fetching Interface IP info from App DB for Interface Name : ", ifName)
+				log.Error("Error found on fetching Interface IP info from App DB for Interface Name : ", ifName)
 				return err
 			}
 			if len(app.ifIPTableMap[key.Get(0)]) == 0 {
@@ -879,8 +1030,10 @@ func (app *IntfApp) translateIpv4(d *db.DB, intf string, ip string, prefix int) 
 
 			if intf != key.Get(0) {
 				//IP overlap across different interface, reject
-				log.Info("IP ", ipPref, " overlaps with ", key.Get(1), " of ", key.Get(0))
-				err = errors.New(fmt.Sprintf("IP %s overlaps with %s of %s ", ipPref, key.Get(1), key.Get(0)))
+				log.Error("IP ", ipPref, " overlaps with ", key.Get(1), " of ", key.Get(0))
+
+				errStr := "IP " + ipPref + " overlaps with IP " + key.Get(1) + " of Interface " + key.Get(0)
+				err = tlerr.InvalidArgsError{Format: errStr}
 				return err
 			} else {
 				//IP overlap on same interface, replace

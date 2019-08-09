@@ -1,0 +1,18 @@
+{{'------------------------------------------------------------------------------------------------------'}}
+{{'LocalPort'.ljust(20)}}{{'RemoteDevice'.ljust(20)}}{{'RemotePortID'.ljust(20)}}{{'Capability'.ljust(20)}} {{'RemotePortDescr'}}
+{{'-------------------------------------------------------------------------------------------------------'}}
+{% set cap_dict = {'openconfig-lldp-types:REPEATER' : 'O','openconfig-lldp-types:MAC_BRIDGE' : 'B' , 'openconfig-lldp-types:ROUTER' : 'R'} %}
+{% for neigh in json_output %}
+{% set capabilities = neigh['neighbors']['neighbor'][0]['capabilities']['capability'] %}
+{% set cap_list = [] %}
+{% for cap in capabilities %}
+{% if cap['state']['name'] in cap_dict %}
+{% if cap['state']['enabled'] == true %}
+{% do cap_list.append(cap_dict[cap['state']['name']]) %}
+{% endif %}
+{% endif %}
+{% endfor %}
+{% set value =  neigh['neighbors']['neighbor'][0] %}
+{{value['id'].ljust(20)}}{{value['state']['system_name'].ljust(20)}}{{value['state']['port_id'].ljust(20)}}{{(cap_list | join() | string).ljust(20)}}{{value['state']['port_description'].ljust(20)}}
+{% endfor %}
+
