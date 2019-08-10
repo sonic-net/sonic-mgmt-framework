@@ -41,7 +41,8 @@ func mapFillData(dbKey string, result map[string]map[string]db.Value, xpathPrefi
 
     if len(xpathInfo.xfmrFunc) > 0 {
         log.Info("Transformer function(\"%v\") invoked for yang path(\"%v\").", xpathInfo.xfmrFunc, xpath)
-        //fieldName[] = XlateFuncCall(xpathInfo.xfmrFunc, name, value)
+        // map[string]string
+        //fieldName := XlateFuncCall(xpathInfo.xfmrFunc, name, value)
         //return errors.New("Invalid field name")
         return nil
     }
@@ -113,6 +114,7 @@ func dbMapCreate(keyName string, xpathPrefix string, jsonData interface{}, resul
         for idx := 0; idx < jData.Len(); idx++ {
             dataMap[idx] = jData.Index(idx).Interface()
         }
+        // string
         for _, data := range dataMap {
             keyName := keyCreate(keyName, xpathPrefix, data)
             return dbMapCreate(keyName, xpathPrefix, data, result)
@@ -132,6 +134,7 @@ func dbMapCreate(keyName string, xpathPrefix string, jsonData interface{}, resul
 
                         if len(xSpecMap[xpath].xfmrFunc) > 0 {
                             subMap := callXfmr()
+                            // map[string]map[string]db.Value
                             //subMap := XlateFuncCall(xpathInfo.xfmrFunc, name, value)
                             mapCopy(result, subMap)
                             return nil
