@@ -78,7 +78,7 @@ func LoadYangModules(files ...string) error {
 			entries[n] = yang.ToEntry(mods[n])
 		}
 	}
-    mapBuild(entries)
+        mapBuild(entries)
 
 	// TODO - build the inverse map for GET, from OC to Sonic
 
