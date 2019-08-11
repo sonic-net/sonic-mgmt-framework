@@ -34,7 +34,7 @@ func updateDbTableData (xpathData *yangXpathInfo, tableName string) {
 }
 
 /* Recursive api to fill the map with yang details */
-func fillMap (xSpecMap map[string]*yangXpathInfo, entry *yang.Entry, xpathPrefix string) {
+func yangToDbMapFill (xSpecMap map[string]*yangXpathInfo, entry *yang.Entry, xpathPrefix string) {
     xpath := ""
     /* create the yang xpath */
     if xSpecMap[xpathPrefix] != nil  && xSpecMap[xpathPrefix].yangDataType == "module" {
@@ -97,12 +97,12 @@ func fillMap (xSpecMap map[string]*yangXpathInfo, entry *yang.Entry, xpathPrefix
     xpathData.yangEntry = entry
     /* now recurse, filling the map with current node's children info */
     for _, child := range childList {
-        fillMap(xSpecMap, entry.Dir[child], xpath)
+        yangToDbMapFill(xSpecMap, entry.Dir[child], xpath)
     }
 }
 
 /* Build lookup table based of yang xpath */
-func mapBuild(entries map[string]*yang.Entry) {
+func yangToDbMapBuild(entries map[string]*yang.Entry) {
     if entries == nil {
         return
     }
@@ -112,13 +112,13 @@ func mapBuild(entries map[string]*yang.Entry) {
         }
 
         /* Start to fill xpath based map with yang data */
-        fillMap(xSpecMap, e, "")
+        yangToDbMapFill(xSpecMap, e, "")
     }
     mapPrint(xSpecMap, "/tmp/fullSpec.txt")
 }
 
 /* Fill the map with db details */
-func fillDbMap (xDbSpecMap map[string]*yang.Entry, entry *yang.Entry) {
+func dbMapFill(xDbSpecMap map[string]*yang.Entry, entry *yang.Entry) {
     entryType := entry.Node.Statement().Keyword
     if entryType == "list" {
         xDbSpecMap[entry.Name] = entry
@@ -130,7 +130,7 @@ func fillDbMap (xDbSpecMap map[string]*yang.Entry, entry *yang.Entry) {
     }
     sort.Strings(childList)
     for _, child := range childList {
-        fillDbMap(xDbSpecMap, entry.Dir[child])
+        dbMapFill(xDbSpecMap, entry.Dir[child])
     }
 }
 
@@ -145,7 +145,7 @@ func dbMapBuild(entries []*yang.Entry) {
         if e == nil || len(e.Dir) == 0 {
             continue
         }
-        fillDbMap(xDbSpecMap, e)
+        dbMapFill(xDbSpecMap, e)
     }
     dbMapPrint(xSpecMap)
 }
@@ -202,7 +202,7 @@ func xpathFromDevCreate(path string) string {
 }
 
 /* Build lookup map based on yang xpath */
-func yangToDbMapBuilt(annotEntries []*yang.Entry) {
+func annotToDbMapBuild(annotEntries []*yang.Entry) {
     if annotEntries == nil {
         return
     }
