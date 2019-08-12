@@ -254,7 +254,7 @@ func (app *IntfApp) translateSubscribe(dbs [db.MaxDB]*db.DB, path string) (*noti
 			notifInfo.table = db.TableSpec{Name: "PORT_TABLE"}
 			notifInfo.key = asKey(ifKey)
 			notifInfo.needCache = true
-			return &notificationOpts{pType: 1}, &notifInfo, nil
+			return &notificationOpts{pType: OnChange}, &notifInfo, nil
 		}
 	}
 	return nil, nil, notSupported
