@@ -32,6 +32,7 @@ REST_BIN := $(REST_BUILD_DIR)/main
 # Source files affecting REST server
 REST_SRCS := $(shell find $(TOPDIR)/src -name '*.go' | sort) \
 			 $(shell find $(TOPDIR)/models/yang -name '*.yang' | sort) \
+			 $(shell find $(TOPDIR)/src/cvl/schema '*.yang' | sort) \
 			 $(shell find $(TOPDIR)/models/openapi -name '*.yaml' | sort)
 
 REST_GOPATH := $(GOPATH):$(abspath $(REST_BUILD_DIR)/dist)

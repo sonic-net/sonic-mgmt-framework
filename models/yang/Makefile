@@ -46,7 +46,7 @@ allyangs_tree.html:  $(YANG_MOD_FILES) $(YANG_COMMON_FILES)
 #======================================================================
 $(YANGAPI_DIR)/.done:  $(YANG_MOD_FILES) $(YANG_COMMON_FILES)
 	@echo "+++++ Generating YAML files for Yang modules +++++"
-	mkdir -p $(YANGAPI_DIR)
+	#mkdir -p $(YANGAPI_DIR)
 	$(PYANG_BIN) \
 		-f swaggerapi \
 		--outdir $(YANGAPI_DIR) \
