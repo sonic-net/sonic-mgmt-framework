@@ -102,7 +102,35 @@ func directDbMapData(tableName string, jsonData interface{}, result map[string]m
     return false
 }
 
-/* Get the data from incoming request, create map and fill with dbValue(ie. field:value 
+/* Get the db table, key and field name for the incoming delete request */
+func dbMapDelete(path string, jsonData interface{}, result map[string]map[string]db.Value) error {
+    xpathPrefix, keyName := xpathKeyExtract(path)
+    log.Info("Delete req: path(\"%v\"), key(\"%v\"), xpathPrefix(\"%v\").", path, keyName, xpathPrefix)
+    spec, ok := xSpecMap[xpathPrefix]
+    if ok && spec.tableName != nil {
+        result[*spec.tableName] = make(map[string]db.Value)
+        if len(keyName) > 0 {
+            result[*spec.tableName][keyName] = db.Value{Field: make(map[string]string)}
+            if spec.yangEntry != nil && spec.yangEntry.Node.Statement().Keyword == "leaf" {
+                result[*spec.tableName][keyName].Field[spec.fieldName] = ""
+            }
+        }
+    }
+    log.Info("Delete req: path(\"%v\") result(\"%v\").", path, result)
+    return nil
+}
+
+/* Get the data from incoming update/replace request, create map and fill with dbValue(ie. field:value 
+   to write into redis-db */
+func dbMapUpdate(path string, jsonData interface{}, result map[string]map[string]db.Value) error {
+    xpathPrefix, keyName := xpathKeyExtract(path)
+    log.Info("Update/replace req: path(\"%v\"), key(\"%v\"), xpathPrefix(\"%v\").", path, keyName, xpathPrefix)
+    dbMapCreate(keyName, parentXpathGet(xpathPrefix), jsonData, result)
+    log.Info("Update/replace req: path(\"%v\") result(\"%v\").", path, result)
+    return nil
+}
+
+/* Get the data from incoming create request, create map and fill with dbValue(ie. field:value 
    to write into redis-db */
 func dbMapCreate(keyName string, xpathPrefix string, jsonData interface{}, result map[string]map[string]db.Value) error {
     log.Info("key(\"%v\"), xpathPrefix(\"%v\").", keyName, xpathPrefix)
