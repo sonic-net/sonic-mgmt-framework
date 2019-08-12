@@ -28,7 +28,7 @@ schema: $(out)
 	@xmllint  --noblanks  $@.tmp > $@
 	@rm -rf  $@.tmp
 
-allyangs.tree:  $(YANG_MOD_FILES) $(YANG_COMMON_FILES)
+allyangs.tree:  $(CVL_YANG_MOD_FILES) $(CVL_YANG_COMMON_FILES)
 	$(CVL_PYANG_BIN) \
 		-f tree \
 		-o $(CVL_YANGDIR)/$@ \
