@@ -13,6 +13,7 @@ import (
 type yangXpathInfo  struct {
     yangDataType   string
     tableName      *string
+    childTable      []string
     dbEntry        *yang.Entry
     yangEntry      *yang.Entry
     keyXpath       map[int]*[]string
@@ -150,6 +151,23 @@ func dbMapBuild(entries []*yang.Entry) {
     dbMapPrint(xSpecMap)
 }
 
+func childToUpdateParent( xpath string, tableName string) {
+    var xpathData *yangXpathInfo
+    parent := parentXpathGet(xpath)
+    if len(parent) == 0  || parent == "/" {
+        return
+    }
+
+    fmt.Printf(" Parent Table: %v\r\n", parent)
+    _, ok := xSpecMap[parent]
+    if !ok {
+        xpathData = new(yangXpathInfo)
+        xSpecMap[parent] = xpathData
+    }
+    xSpecMap[parent].childTable = append(xSpecMap[parent].childTable, tableName)
+    childToUpdateParent(parent, tableName)
+}
+
 /* Build lookup map based on yang xpath */
 func annotEntryFill(xSpecMap map[string]*yangXpathInfo, xpath string, entry *yang.Entry) {
     xpathData := new(yangXpathInfo)
@@ -169,7 +187,8 @@ func annotEntryFill(xSpecMap map[string]*yangXpathInfo, xpath string, entry *yan
                         xpathData.tableName = new(string)
                     }
                     *xpathData.tableName = ext.NName()
-                    updateDbTableData(xpathData, ext.NName())
+                    updateDbTableData(xpathData, *xpathData.tableName)
+					childToUpdateParent(xpath, *xpathData.tableName)
                 case "field-name" :
                     xpathData.fieldName = ext.NName()
                 case "subtree-transformer" :

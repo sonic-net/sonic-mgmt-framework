@@ -7,10 +7,13 @@ import (
 )
 
 /* Create db key from datd xpath(request) */
-func keyFromXpathCreate(keys string) string {
+func keyFromXpathCreate(keyList []string) string {
     keyOut := ""
-    for i, k := range (strings.Split(keys, " ")) {
+    for i, k := range keyList {
         if i > 0 { keyOut += "_" }
+        if strings.Contains(k, ":") {
+            k = strings.Split(k, ":")[1]
+        }
         keyOut += strings.Split(k, "=")[1]
     }
     return keyOut
@@ -47,5 +50,14 @@ func mapCopy(destnMap map[string]map[string]db.Value, srcMap map[string]map[stri
             }
         }
    }
+}
+
+func parentXpathGet(xpath string) string {
+    path := ""
+    if len(xpath) > 0 {
+		p := strings.Split(xpath, "/")
+		path = strings.Join(p[:len(p)-1], "/")
+	}
+    return path
 }
 

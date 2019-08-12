@@ -130,9 +130,13 @@ func dbMapCreate(keyName string, xpathPrefix string, jsonData interface{}, resul
 					if directDbMapData(key.String(), jData.MapIndex(key).Interface(), result) {
                         continue
 					} else {
-                        xpath := xpathPrefix + "/" + key.String()
+                        pathAttr := key.String()
+                        if strings.Contains(pathAttr, ":") {
+                            pathAttr = strings.Split(pathAttr, ":")[1]
+                        }
+                        xpath := xpathPrefix + "/" + pathAttr
 
-                        if len(xSpecMap[xpath].xfmrFunc) > 0 {
+                        if xSpecMap[xpath] != nil && len(xSpecMap[xpath].xfmrFunc) > 0 {
                             subMap := callXfmr()
                             // map[string]map[string]db.Value
                             //subMap := XlateFuncCall(xpathInfo.xfmrFunc, name, value)
@@ -143,11 +147,18 @@ func dbMapCreate(keyName string, xpathPrefix string, jsonData interface{}, resul
                         }
 					}
                 } else {
+                    pathAttr := key.String()
+                    if strings.Contains(pathAttr, ":") {
+                        pathAttr = strings.Split(pathAttr, ":")[1]
+                    }
                     value := jData.MapIndex(key).Interface()
                     log.Info("data field: key(\"%v\"), value(\"%v\").", key, value)
-                    err := mapFillData(keyName, result, xpathPrefix, key.String(), fmt.Sprintf("%v", value))
-                    log.Errorf("Failed constructing data for db write: key(\"%v\"), value(\"%v\"), path(\"%v\").", key, value, xpathPrefix)
-                    return err
+                    err := mapFillData(keyName, result, xpathPrefix, pathAttr, fmt.Sprintf("%v", value))
+                    if err != nil {
+                        log.Errorf("Failed constructing data for db write: key(\"%v\"), value(\"%v\"), path(\"%v\").",
+                                    pathAttr, value, xpathPrefix)
+                        return err
+                    }
                 }
             }
         }
@@ -159,19 +170,22 @@ func dbMapCreate(keyName string, xpathPrefix string, jsonData interface{}, resul
 func xpathKeyExtract(path string) (string, string) {
     yangXpath := ""
     keyStr    := ""
-    rgp := regexp.MustCompile(`\[(.*?)\]`)
+    rgp       := regexp.MustCompile(`\[([^\[\]]*)\]`)
+
     for i, k := range (strings.Split(path, "/")) {
         if i > 0 { yangXpath += "/" }
         xpath := k
         if strings.Contains(k, "[") {
-            kval := keyFromXpathCreate(rgp.FindStringSubmatch(k)[1])
-            xpath = strings.Split(k, "[")[0]
             if len(keyStr) > 0 { keyStr += "|" }
-            keyStr += kval
+            xpath = strings.Split(k, "[")[0]
+            var keyl []string
+            for _, kname := range rgp.FindAllString(k, -1) {
+                keyl = append(keyl, strings.TrimRight(strings.TrimLeft(kname, "["), "]"))
+            }
+            keyStr += keyFromXpathCreate(keyl)
         }
         yangXpath += xpath
     }
-
     return yangXpath, keyStr
 }
 
