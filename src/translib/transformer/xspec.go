@@ -23,14 +23,21 @@ type yangXpathInfo  struct {
     xfmrKey        string
 }
 
+type dbInfo  struct {
+    fieldType    string
+    dbEntry      *yang.Entry
+    yangXpath     []string
+}
+
 var xSpecMap map[string]*yangXpathInfo
-var xDbSpecMap map[string]*yang.Entry
+var xDbSpecMap map[string]*dbInfo
 
 /* update transformer spec with db-node */
-func updateDbTableData (xpathData *yangXpathInfo, tableName string) {
+func updateDbTableData (xpath string, xpathData *yangXpathInfo, tableName string) {
     _, ok := xDbSpecMap[tableName]
     if ok {
-        xpathData.dbEntry = xDbSpecMap[tableName]
+		xDbSpecMap[tableName].yangXpath = append(xDbSpecMap[tableName].yangXpath, xpath)
+        xpathData.dbEntry = xDbSpecMap[tableName].dbEntry
     }
 }
 
@@ -61,12 +68,21 @@ func yangToDbMapFill (xSpecMap map[string]*yangXpathInfo, entry *yang.Entry, xpa
     }
 
     if xpathData.yangDataType == "leaf" && len(xpathData.fieldName) == 0 {
-        if xpathData.tableName != nil && xDbSpecMap[*xpathData.tableName] != nil &&
-           (xDbSpecMap[*xpathData.tableName].Dir[entry.Name] != nil ||
-            xDbSpecMap[*xpathData.tableName].Dir[strings.ToUpper(entry.Name)] != nil) {
-                xpathData.fieldName = strings.ToUpper(entry.Name)
-       }
+        if xpathData.tableName != nil && xDbSpecMap[*xpathData.tableName] != nil {
+			if xDbSpecMap[*xpathData.tableName].dbEntry.Dir[entry.Name] != nil {
+				xpathData.fieldName = entry.Name
+			} else if xDbSpecMap[*xpathData.tableName].dbEntry.Dir[strings.ToUpper(entry.Name)] != nil {
+				xpathData.fieldName = strings.ToUpper(entry.Name)
+			}
+		}
     }
+
+	if xpathData.yangDataType == "leaf" && len(xpathData.fieldName) > 0 && xpathData.tableName != nil {
+		dbPath := *xpathData.tableName + "/" + xpathData.fieldName
+		if xDbSpecMap[dbPath] != nil {
+			xDbSpecMap[dbPath].yangXpath = append(xDbSpecMap[dbPath].yangXpath, xpath)
+		}
+	}
 
     /* fill table with key data. */
     if len(entry.Key) != 0 {
@@ -119,10 +135,20 @@ func yangToDbMapBuild(entries map[string]*yang.Entry) {
 }
 
 /* Fill the map with db details */
-func dbMapFill(xDbSpecMap map[string]*yang.Entry, entry *yang.Entry) {
+func dbMapFill(prefixPath string, curPath string, xDbSpecMap map[string]*dbInfo, entry *yang.Entry) {
     entryType := entry.Node.Statement().Keyword
     if entryType == "list" {
-        xDbSpecMap[entry.Name] = entry
+        prefixPath = entry.Name
+    }
+
+    if !isYangResType(entryType) {
+        dbXpath := prefixPath
+        if entryType != "list" {
+            dbXpath = prefixPath + "/" + entry.Name
+        }
+        xDbSpecMap[dbXpath] = new(dbInfo)
+        xDbSpecMap[dbXpath].dbEntry   = entry
+        xDbSpecMap[dbXpath].fieldType = entryType
     }
 
     var childList []string
@@ -131,7 +157,7 @@ func dbMapFill(xDbSpecMap map[string]*yang.Entry, entry *yang.Entry) {
     }
     sort.Strings(childList)
     for _, child := range childList {
-        dbMapFill(xDbSpecMap, entry.Dir[child])
+        dbMapFill(prefixPath, prefixPath + "/" + entry.Dir[child].Name, xDbSpecMap, entry.Dir[child])
     }
 }
 
@@ -140,13 +166,13 @@ func dbMapBuild(entries []*yang.Entry) {
     if entries == nil {
         return
     }
-    xDbSpecMap = make(map[string]*yang.Entry)
+    xDbSpecMap = make(map[string]*dbInfo)
 
     for _, e := range entries {
         if e == nil || len(e.Dir) == 0 {
             continue
         }
-        dbMapFill(xDbSpecMap, e)
+        dbMapFill("", "", xDbSpecMap, e)
     }
     dbMapPrint(xSpecMap)
 }
@@ -158,13 +184,15 @@ func childToUpdateParent( xpath string, tableName string) {
         return
     }
 
-    fmt.Printf(" Parent Table: %v\r\n", parent)
     _, ok := xSpecMap[parent]
     if !ok {
         xpathData = new(yangXpathInfo)
         xSpecMap[parent] = xpathData
     }
     xSpecMap[parent].childTable = append(xSpecMap[parent].childTable, tableName)
+    if xSpecMap[parent].yangEntry != nil && xSpecMap[parent].yangEntry.Node.Statement().Keyword == "list" {
+        return
+    }
     childToUpdateParent(parent, tableName)
 }
 
@@ -187,7 +215,7 @@ func annotEntryFill(xSpecMap map[string]*yangXpathInfo, xpath string, entry *yan
                         xpathData.tableName = new(string)
                     }
                     *xpathData.tableName = ext.NName()
-                    updateDbTableData(xpathData, *xpathData.tableName)
+                    updateDbTableData(xpath, xpathData, *xpathData.tableName)
 					childToUpdateParent(xpath, *xpathData.tableName)
                 case "field-name" :
                     xpathData.fieldName = ext.NName()
@@ -236,7 +264,6 @@ func annotToDbMapBuild(annotEntries []*yang.Entry) {
                     if i == 2 {
                         for _, ye := range deviate {
                             fmt.Println(ye.Name)
-                            fmt.Printf(" Annot fill:(%v)\r\n", xpath)
                             annotEntryFill(xSpecMap, xpath, ye)
                         }
                     }

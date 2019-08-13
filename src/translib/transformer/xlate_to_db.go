@@ -76,15 +76,16 @@ func callXfmr() map[string]map[string]db.Value {
 }
 
 func directDbMapData(tableName string, jsonData interface{}, result map[string]map[string]db.Value) bool {
-    dbSpecData, ok := xDbSpecMap[tableName]
+    _, ok := xDbSpecMap[tableName]
 
-    if ok && reflect.ValueOf(jsonData).Kind() == reflect.Slice {
+    if ok && xDbSpecMap[tableName].dbEntry != nil && reflect.ValueOf(jsonData).Kind() == reflect.Slice {
+        dbSpecData := xDbSpecMap[tableName].dbEntry
         tblKeyName := strings.Split(dbSpecData.Key, " ")
         data       := reflect.ValueOf(jsonData)
-        keyName    := ""
         result[tableName] = make(map[string]db.Value)
 
         for idx := 0; idx < data.Len(); idx++ {
+            keyName    := ""
             d := data.Index(idx).Interface().(map[string]interface{})
             for i, k := range tblKeyName {
                 if i > 0 { keyName += "|" }
