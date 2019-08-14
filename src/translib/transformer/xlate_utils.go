@@ -5,6 +5,9 @@ import (
     "strings"
     "translib/db"
     "github.com/openconfig/goyang/pkg/yang"
+    "github.com/openconfig/gnmi/proto/gnmi"
+    "github.com/openconfig/ygot/ygot"
+    log "github.com/golang/glog"
 )
 
 /* Create db key from datd xpath(request) */
@@ -78,5 +81,38 @@ func yangTypeGet(entry *yang.Entry) string {
 
 func dbKeyToYangDataConvert(dbKey string, xpath string) {
     return
+}
+
+func contains(sl []string, str string) bool {
+    for _, v := range sl {
+        if v == str {
+            return true
+        }
+    }
+    return false
+}
+
+
+func isSubtreeRequest(targetUriPath string, nodePath string) bool {
+    return strings.HasPrefix(targetUriPath, nodePath)
+}
+
+func getYangPathFromUri(uri string) (string, error) {
+    var path *gnmi.Path
+    var err error
+
+    path, err = ygot.StringToPath(uri, ygot.StructuredPath, ygot.StringSlicePath)
+    if err != nil {
+        log.Errorf("Error in uri to path conversion: %v", err)
+        return "", err
+    }
+
+    yangPath, yperr := ygot.PathToSchemaPath(path)
+    if yperr != nil {
+        log.Errorf("Error in Gnmi path to Yang path conversion: %v", yperr)
+        return "", yperr
+    }
+
+    return yangPath, err
 }
 

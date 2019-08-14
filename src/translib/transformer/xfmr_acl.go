@@ -5,9 +5,6 @@ import (
     "bytes"
     "errors"
     "strings"
-    //	"os"
-    //	"sort"
-    //	"github.com/openconfig/goyang/pkg/yang"
     "github.com/openconfig/ygot/ygot"
     "strconv"
     "translib/db"
@@ -43,6 +40,10 @@ const (
     OPENCONFIG_ACL_TYPE_IPV4 = "ACL_IPV4"
     OPENCONFIG_ACL_TYPE_IPV6 = "ACL_IPV6"
     OPENCONFIG_ACL_TYPE_L2   = "ACL_L2"
+    ACL_TYPE                 = "type"
+
+     MIN_PRIORITY = 1
+     MAX_PRIORITY = 65535
 )
 
 var IP_PROTOCOL_MAP = map[ocbinds.E_OpenconfigPacketMatchTypes_IP_PROTOCOL]uint8{
@@ -72,6 +73,7 @@ func getAclRoot (s *ygot.GoStruct) *ocbinds.OpenconfigAcl_Acl {
     deviceObj := (*s).(*ocbinds.Device)
     return deviceObj.Acl
 }
+
 
 func getAclTypeOCEnumFromName(val string) (ocbinds.E_OpenconfigAcl_ACL_TYPE, error) {
     switch val {
@@ -239,27 +241,6 @@ var DbToYang_acl_entry_key_xfmr KeyXfmrDbToYang = func (d *db.DB, entry_key stri
     return res_map, err
 }
 
-func getAclRule(acl *ocbinds.OpenconfigAcl_Acl, aclName string, aclType ocbinds.E_OpenconfigAcl_ACL_TYPE, seqId uint32) (*ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry, error) {
-    var err error
-    var aclSetKey ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_Key
-    aclSetKey.Name = aclName
-    aclSetKey.Type = aclType
-
-    if _, ok := acl.AclSets.AclSet[aclSetKey]; !ok {
-        err = errors.New("AclSet not found " + aclName)
-        return nil, err
-    }
-
-    aclSet := acl.AclSets.AclSet[aclSetKey]
-    if _, ok :=  aclSet.AclEntries.AclEntry[seqId]; !ok {
-        err = errors.New("Acl Rule not found " + aclName + strconv.FormatInt(int64(seqId), 10))
-        return nil, err
-    }
-
-    rule := aclSet.AclEntries.AclEntry[seqId]
-    return rule, err
-}
-
 var YangToDb_acl_l2_ethertype_xfmr FieldXfmrYangToDb = func (d *db.DB, ygRoot *ygot.GoStruct, xpath string, ethertype interface {}) (map[string]string, error) {
     res_map := make(map[string]string)
     var err error
@@ -312,8 +293,6 @@ var DbToYang_acl_l2_ethertype_xfmr FieldXfmrDbtoYang = func (d *db.DB, data map[
         entrySet.L2.State.Ethertype, _ = entrySet.L2.State.To_OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_L2_State_Ethertype_Union(ethertype)
 
     }
-
-
     return err
 }
 
@@ -604,6 +583,86 @@ var DbToYang_acl_tcp_flags_xfmr FieldXfmrDbtoYang = func (d *db.DB, data map[str
     return err
 }
 
+func convertDBAclRulesToInternal(dbCl *db.DB, aclName string, seqId int64, ruleKey db.Key) (ruleTableMap map[string]map[string]db.Value, ferr error) {
+    ruleTs := &db.TableSpec{Name: RULE_TABLE}
+    if seqId != -1 {
+        ruleKey.Comp = []string{aclName, "RULE_" + strconv.FormatInt(int64(seqId), 10)}
+    }
+    if ruleKey.Len() > 1 {
+        ruleName := ruleKey.Get(1)
+        if ruleName != "DEFAULT_RULE" {
+            ruleData, err := dbCl.GetEntry(ruleTs, ruleKey)
+            if err != nil {
+                ferr = err
+                return
+            }
+            if ruleTableMap[aclName] == nil {
+                ruleTableMap[aclName] = make(map[string]db.Value)
+            }
+            ruleTableMap[aclName][ruleName] = ruleData
+        }
+    } else {
+        ruleKeys, err := dbCl.GetKeys(ruleTs)
+        if err != nil {
+            ferr = err
+            return
+        }
+        for i, _ := range ruleKeys {
+            if aclName == ruleKeys[i].Get(0) {
+                ruleTableMap, ferr = convertDBAclRulesToInternal(dbCl, aclName, -1, ruleKeys[i])
+            }
+        }
+    }
+    return
+}
+
+func convertDBAclToInternal(dbCl *db.DB, aclkey db.Key) (aclTableMap map[string]db.Value, ruleTableMap map[string]map[string]db.Value, ferr error) {
+    aclTs := &db.TableSpec{Name: ACL_TABLE}
+    if aclkey.Len() > 0 {
+        // Get one particular ACL
+        entry, err := dbCl.GetEntry(aclTs, aclkey)
+        if err != nil {
+            ferr = err
+            return
+        }
+        if entry.IsPopulated() {
+            aclTableMap[aclkey.Get(0)] = entry
+            ruleTableMap[aclkey.Get(0)] = make(map[string]db.Value)
+            ruleTableMap, ferr  = convertDBAclRulesToInternal(dbCl, aclkey.Get(0), -1, db.Key{})
+            if err != nil {
+                ferr = err
+                return
+            }
+        } else {
+            ferr = tlerr.NotFound("Acl %s is not configured", aclkey.Get(0))
+            return
+        }
+    } else {
+        // Get all ACLs
+        tbl, err := dbCl.GetTable(aclTs)
+        if err != nil {
+            ferr = err
+            return
+        }
+        keys, _ := tbl.GetKeys()
+        for i, _ := range keys {
+            aclTableMap, ruleTableMap, ferr = convertDBAclToInternal(dbCl, keys[i])
+        }
+    }
+    return
+}
+
+func getDbAlcTblsData (d *db.DB) (map[string]db.Value, map[string]map[string]db.Value, error) {
+    var err error
+
+    aclTableMap := make(map[string]db.Value)
+    ruleTableMap := make(map[string]map[string]db.Value)
+
+    aclTableMap, ruleTableMap, err = convertDBAclToInternal (d, db.Key{})
+
+    return aclTableMap, ruleTableMap, err
+}
+
 var YangToDb_acl_port_bindings_xfmr SubTreeXfmrYangToDb = func (d *db.DB, ygRoot *ygot.GoStruct, xpath string) (map[string]map[string]db.Value, error) {
     res_map := make(map[string]map[string]db.Value)
     aclTableMap := make(map[string]db.Value)
@@ -612,52 +671,327 @@ var YangToDb_acl_port_bindings_xfmr SubTreeXfmrYangToDb = func (d *db.DB, ygRoot
 
     aclObj := getAclRoot(ygRoot)
 
-    if aclObj.Interfaces != nil && len(aclObj.Interfaces.Interface) > 0 {
-        aclInterfacesMap := make(map[string][]string)
-        for intfId, _ := range aclObj.Interfaces.Interface {
-            intf := aclObj.Interfaces.Interface[intfId]
-            if intf != nil {
-                if intf.IngressAclSets != nil && len(intf.IngressAclSets.IngressAclSet) > 0 {
-                    for inAclKey, _ := range intf.IngressAclSets.IngressAclSet {
-                        aclName := getAclKeyStrFromOCKey(inAclKey.SetName, inAclKey.Type)
-                        if intf.InterfaceRef != nil && intf.InterfaceRef.Config.Interface != nil {
-                            aclInterfacesMap[aclName] = append(aclInterfacesMap[aclName], *intf.InterfaceRef.Config.Interface)
-                        } else {
-                            aclInterfacesMap[aclName] = append(aclInterfacesMap[aclName], *intf.Id)
+    if aclObj.Interfaces != nil {
+        if len(aclObj.Interfaces.Interface) > 0 {
+            aclInterfacesMap := make(map[string][]string)
+            for intfId, _ := range aclObj.Interfaces.Interface {
+                intf := aclObj.Interfaces.Interface[intfId]
+                if intf != nil {
+                    if intf.IngressAclSets != nil && len(intf.IngressAclSets.IngressAclSet) > 0 {
+                        for inAclKey, _ := range intf.IngressAclSets.IngressAclSet {
+                            aclName := getAclKeyStrFromOCKey(inAclKey.SetName, inAclKey.Type)
+                            if intf.InterfaceRef != nil && intf.InterfaceRef.Config.Interface != nil {
+                                aclInterfacesMap[aclName] = append(aclInterfacesMap[aclName], *intf.InterfaceRef.Config.Interface)
+                            } else {
+                                aclInterfacesMap[aclName] = append(aclInterfacesMap[aclName], *intf.Id)
+                            }
+                            if len(aclTableMap) == 0 {
+                                aclTableMap[aclName] = db.Value{Field: map[string]string{}}
+                            }
+                            aclTableMap[aclName].Field["stage"] = "INGRESS"
                         }
-                        if len(aclTableMap) == 0 {
-                            aclTableMap[aclName] = db.Value{Field: map[string]string{}}
-                        }
-                        aclTableMap[aclName].Field["stage"] = "INGRESS"
                     }
-                }
-                if intf.EgressAclSets != nil && len(intf.EgressAclSets.EgressAclSet) > 0 {
-                    for outAclKey, _ := range intf.EgressAclSets.EgressAclSet {
-                        aclName := getAclKeyStrFromOCKey(outAclKey.SetName, outAclKey.Type)
-                        if intf.InterfaceRef != nil && intf.InterfaceRef.Config.Interface != nil {
-                            aclInterfacesMap[aclName] = append(aclInterfacesMap[aclName], *intf.InterfaceRef.Config.Interface)
-                        } else {
-                            aclInterfacesMap[aclName] = append(aclInterfacesMap[aclName], *intf.Id)
+                    if intf.EgressAclSets != nil && len(intf.EgressAclSets.EgressAclSet) > 0 {
+                        for outAclKey, _ := range intf.EgressAclSets.EgressAclSet {
+                            aclName := getAclKeyStrFromOCKey(outAclKey.SetName, outAclKey.Type)
+                            if intf.InterfaceRef != nil && intf.InterfaceRef.Config.Interface != nil {
+                                aclInterfacesMap[aclName] = append(aclInterfacesMap[aclName], *intf.InterfaceRef.Config.Interface)
+                            } else {
+                                aclInterfacesMap[aclName] = append(aclInterfacesMap[aclName], *intf.Id)
+                            }
+                            if len(aclTableMap) == 0 {
+                                aclTableMap[aclName] = db.Value{Field: map[string]string{}}
+                            }
+                            aclTableMap[aclName].Field["stage"] = "EGRESS"
                         }
-                        if len(aclTableMap) == 0 {
-                            aclTableMap[aclName] = db.Value{Field: map[string]string{}}
-                        }
-                        aclTableMap[aclName].Field["stage"] = "EGRESS"
                     }
                 }
             }
-        }
-        for k, _ := range aclInterfacesMap {
-            val := aclTableMap[k]
-            (&val).SetList("ports", aclInterfacesMap[k])
+            for k, _ := range aclInterfacesMap {
+                val := aclTableMap[k]
+                (&val).SetList("ports", aclInterfacesMap[k])
+            }
+        } else {
+            aclTableMapDb := make(map[string]db.Value)
+            aclTableMapDb, _, err = convertDBAclToInternal (d, db.Key{})
+            if err != nil {
+                log.Info("YangToDb_acl_port_bindings_xfmr: getDbAlcTblsData not able to populate acl tables.")
+                err = errors.New("getDbAlcTblsData failed to populate tables.")
+                return res_map, err
+            }
+            for aclName := range aclTableMapDb {
+                if len(aclTableMap) == 0 {
+                    aclTableMap[aclName] = db.Value{Field: map[string]string{}}
+                }
+                aclEntryDb := aclTableMapDb[aclName]
+                aclTableMap[aclName].Field["stage"] = aclEntryDb.Get("stage")
+                val := aclTableMap[aclName]
+                (&val).SetList("ports", aclEntryDb.GetList("ports"))
+            }
         }
     }
     res_map[ACL_TABLE] = aclTableMap
     return res_map, err
 }
 
-var DbToYang_acl_port_bindings_xfmr SubTreeXfmrDbToYang = func (d *db.DB, data map[string]map[string]db.Value, ygRoot *ygot.GoStruct) (error) {
+var DbToYang_acl_port_bindings_xfmr SubTreeXfmrDbToYang = func (d *db.DB, data map[string]map[string]db.Value, ygRoot *ygot.GoStruct, xpath string) (error) {
     var err error
     log.Info("DbToYang_acl_port_bindings_xfmr: ", data, ygRoot)
+
+    aclTbl, ruleTbl, err := getDbAlcTblsData(d)
+
+    if err != nil {
+        log.Info("getDbAlcTblsData not able to populate acl tables.")
+        err = errors.New("getDbAlcTblsData failed to populate tables.")
+        return err
+    }
+    pathInfo := NewPathInfo(xpath)
+    acl := getAclRoot(ygRoot)
+    targetUriPath, _ := getYangPathFromUri(pathInfo.Path)
+    if isSubtreeRequest(pathInfo.Template, "/openconfig-acl:acl/interfaces/interface{}") {
+        for intfId := range acl.Interfaces.Interface {
+            intfData := acl.Interfaces.Interface[intfId]
+            ygot.BuildEmptyTree(intfData)
+            if isSubtreeRequest(targetUriPath, "/openconfig-acl:acl/interfaces/interface/ingress-acl-sets") {
+                err = getAclBindingInfoForInterfaceData(aclTbl, ruleTbl, intfData, intfId, "INGRESS")
+            } else if isSubtreeRequest(targetUriPath, "/openconfig-acl:acl/interfaces/interface/egress-acl-sets") {
+                err = getAclBindingInfoForInterfaceData(aclTbl, ruleTbl, intfData, intfId, "EGRESS")
+            } else {
+                err = getAclBindingInfoForInterfaceData(aclTbl, ruleTbl, intfData, intfId, "INGRESS")
+                if err != nil {
+                    return err
+                }
+                err = getAclBindingInfoForInterfaceData(aclTbl, ruleTbl, intfData, intfId, "EGRESS")
+            }
+        }
+    } else {
+        err = getAllBindingsInfo(aclTbl, ruleTbl, ygRoot)
+    }
+
+    return err
+}
+func convertInternalToOCAclRuleBinding(aclTableMap map[string]db.Value, ruleTableMap map[string]map[string]db.Value, priority uint32, seqId int64, direction string, aclSet ygot.GoStruct, entrySet ygot.GoStruct) {
+    if seqId == -1 {
+        seqId = int64(MAX_PRIORITY - priority)
+    }
+
+    var num uint64
+    num = 0
+    var ruleId uint32 = uint32(seqId)
+
+    if direction == "INGRESS" {
+        var ingressEntrySet *ocbinds.OpenconfigAcl_Acl_Interfaces_Interface_IngressAclSets_IngressAclSet_AclEntries_AclEntry
+        var ok bool
+        if entrySet == nil {
+            ingressAclSet := aclSet.(*ocbinds.OpenconfigAcl_Acl_Interfaces_Interface_IngressAclSets_IngressAclSet)
+            if ingressEntrySet, ok = ingressAclSet.AclEntries.AclEntry[ruleId]; !ok {
+                ingressEntrySet, _ = ingressAclSet.AclEntries.NewAclEntry(ruleId)
+            }
+        } else {
+            ingressEntrySet = entrySet.(*ocbinds.OpenconfigAcl_Acl_Interfaces_Interface_IngressAclSets_IngressAclSet_AclEntries_AclEntry)
+        }
+        if ingressEntrySet != nil {
+            ygot.BuildEmptyTree(ingressEntrySet)
+            ingressEntrySet.State.SequenceId = &ruleId
+            ingressEntrySet.State.MatchedPackets = &num
+            ingressEntrySet.State.MatchedOctets = &num
+        }
+    } else if direction == "EGRESS" {
+        var egressEntrySet *ocbinds.OpenconfigAcl_Acl_Interfaces_Interface_EgressAclSets_EgressAclSet_AclEntries_AclEntry
+        var ok bool
+        if entrySet == nil {
+            egressAclSet := aclSet.(*ocbinds.OpenconfigAcl_Acl_Interfaces_Interface_EgressAclSets_EgressAclSet)
+            if egressEntrySet, ok = egressAclSet.AclEntries.AclEntry[ruleId]; !ok {
+                egressEntrySet, _ = egressAclSet.AclEntries.NewAclEntry(ruleId)
+            }
+        } else {
+            egressEntrySet = entrySet.(*ocbinds.OpenconfigAcl_Acl_Interfaces_Interface_EgressAclSets_EgressAclSet_AclEntries_AclEntry)
+        }
+        if egressEntrySet != nil {
+            ygot.BuildEmptyTree(egressEntrySet)
+            egressEntrySet.State.SequenceId = &ruleId
+            egressEntrySet.State.MatchedPackets = &num
+            egressEntrySet.State.MatchedOctets = &num
+        }
+    }
+}
+
+func convertInternalToOCAclBinding(aclTableMap map[string]db.Value, ruleTableMap map[string]map[string]db.Value, aclName string, intfId string, direction string, intfAclSet ygot.GoStruct) error {
+    var err error
+    if _, ok := aclTableMap[aclName]; !ok {
+        err = errors.New("Acl entry not found, convertInternalToOCAclBinding")
+        return err
+    } else {
+        aclEntry := aclTableMap[aclName]
+        if !contains(aclEntry.GetList("ports"), intfId) {
+            return tlerr.InvalidArgs("Acl %s not binded with %s", aclName, intfId)
+        }
+    }
+
+    for ruleName := range ruleTableMap[aclName] {
+        if ruleName != "DEFAULT_RULE" {
+            seqId, _ := strconv.Atoi(strings.Replace(ruleName, "RULE_", "", 1))
+            convertInternalToOCAclRuleBinding(aclTableMap, ruleTableMap, 0, int64(seqId), direction, intfAclSet, nil)
+        }
+    }
+
+    return err
+}
+
+func getAllBindingsInfo(aclTableMap map[string]db.Value, ruleTableMap map[string]map[string]db.Value, ygRoot *ygot.GoStruct) error {
+    var err error
+    acl := getAclRoot(ygRoot)
+
+    var interfaces []string
+    for aclName := range aclTableMap {
+        aclData := aclTableMap[aclName]
+        if len(aclData.Get("ports@")) > 0 {
+            aclIntfs := aclData.GetList("ports")
+            for i, _ := range aclIntfs {
+                if !contains(interfaces, aclIntfs[i]) && aclIntfs[i] != "" {
+                    interfaces = append(interfaces, aclIntfs[i])
+                }
+            }
+        }
+    }
+
+    for _, intfId := range interfaces {
+        var intfData *ocbinds.OpenconfigAcl_Acl_Interfaces_Interface
+        intfData, ok := acl.Interfaces.Interface[intfId]
+        if !ok {
+            intfData, _ = acl.Interfaces.NewInterface(intfId)
+        }
+        ygot.BuildEmptyTree(intfData)
+        err = getAclBindingInfoForInterfaceData(aclTableMap, ruleTableMap, intfData, intfId, "INGRESS")
+        err = getAclBindingInfoForInterfaceData(aclTableMap, ruleTableMap, intfData, intfId, "EGRESS")
+    }
+    return err
+}
+
+func getAclBindingInfoForInterfaceData(aclTableMap map[string]db.Value, ruleTableMap map[string]map[string]db.Value, intfData *ocbinds.OpenconfigAcl_Acl_Interfaces_Interface, intfId string, direction string) error {
+    var err error
+    if intfData != nil {
+        intfData.Config.Id = intfData.Id
+        intfData.State.Id = intfData.Id
+    }
+    if direction == "INGRESS" {
+        if intfData.IngressAclSets != nil && len(intfData.IngressAclSets.IngressAclSet) > 0 {
+            for ingressAclSetKey, _ := range intfData.IngressAclSets.IngressAclSet {
+                aclName := strings.Replace(strings.Replace(ingressAclSetKey.SetName, " ", "_", -1), "-", "_", -1)
+                aclType := ingressAclSetKey.Type.ΛMap()["E_OpenconfigAcl_ACL_TYPE"][int64(ingressAclSetKey.Type)].Name
+                aclKey := aclName + "_" + aclType
+
+                ingressAclSet := intfData.IngressAclSets.IngressAclSet[ingressAclSetKey]
+                if ingressAclSet != nil && ingressAclSet.AclEntries != nil && len(ingressAclSet.AclEntries.AclEntry) > 0 {
+                    for seqId, _ := range ingressAclSet.AclEntries.AclEntry {
+                        rulekey := "RULE_" + strconv.Itoa(int(seqId))
+                        entrySet := ingressAclSet.AclEntries.AclEntry[seqId]
+                        _, ok := ruleTableMap[aclKey][rulekey]
+                        if !ok {
+                            log.Info("Acl Rule not found ", aclKey, rulekey)
+                            err = errors.New("Acl Rule not found ingress, getAclBindingInfoForInterfaceData")
+                            return err
+                        }
+                        convertInternalToOCAclRuleBinding(aclTableMap, ruleTableMap, 0, int64(seqId), direction, nil, entrySet)
+                    }
+                } else {
+                    ygot.BuildEmptyTree(ingressAclSet)
+                    ingressAclSet.Config = &ocbinds.OpenconfigAcl_Acl_Interfaces_Interface_IngressAclSets_IngressAclSet_Config{SetName: &aclName, Type: ingressAclSetKey.Type}
+                    ingressAclSet.State = &ocbinds.OpenconfigAcl_Acl_Interfaces_Interface_IngressAclSets_IngressAclSet_State{SetName: &aclName, Type: ingressAclSetKey.Type}
+                    err = convertInternalToOCAclBinding(aclTableMap, ruleTableMap, aclKey, intfId, direction, ingressAclSet)
+                }
+            }
+        } else {
+            err = findAndGetAclBindingInfoForInterfaceData(aclTableMap, ruleTableMap, intfId, direction, intfData)
+        }
+    } else if direction == "EGRESS" {
+        if intfData.EgressAclSets != nil && len(intfData.EgressAclSets.EgressAclSet) > 0 {
+            for egressAclSetKey, _ := range intfData.EgressAclSets.EgressAclSet {
+                aclName := strings.Replace(strings.Replace(egressAclSetKey.SetName, " ", "_", -1), "-", "_", -1)
+                aclType := egressAclSetKey.Type.ΛMap()["E_OpenconfigAcl_ACL_TYPE"][int64(egressAclSetKey.Type)].Name
+                aclKey := aclName + "_" + aclType
+
+                egressAclSet := intfData.EgressAclSets.EgressAclSet[egressAclSetKey]
+                if egressAclSet != nil && egressAclSet.AclEntries != nil && len(egressAclSet.AclEntries.AclEntry) > 0 {
+                    for seqId, _ := range egressAclSet.AclEntries.AclEntry {
+                        rulekey := "RULE_" + strconv.Itoa(int(seqId))
+                        entrySet := egressAclSet.AclEntries.AclEntry[seqId]
+                        _, ok := ruleTableMap[aclKey][rulekey]
+                        if !ok {
+                            log.Info("Acl Rule not found ", aclKey, rulekey)
+                            err = errors.New("Acl Rule not found egress, getAclBindingInfoForInterfaceData")
+                            return err
+                        }
+                        convertInternalToOCAclRuleBinding(aclTableMap, ruleTableMap, 0, int64(seqId), direction, nil, entrySet)
+                    }
+                } else {
+                    ygot.BuildEmptyTree(egressAclSet)
+                    egressAclSet.Config = &ocbinds.OpenconfigAcl_Acl_Interfaces_Interface_EgressAclSets_EgressAclSet_Config{SetName: &aclName, Type: egressAclSetKey.Type}
+                    egressAclSet.State = &ocbinds.OpenconfigAcl_Acl_Interfaces_Interface_EgressAclSets_EgressAclSet_State{SetName: &aclName, Type: egressAclSetKey.Type}
+                    err = convertInternalToOCAclBinding(aclTableMap, ruleTableMap, aclKey, intfId, direction, egressAclSet)
+                }
+            }
+        } else {
+            err = findAndGetAclBindingInfoForInterfaceData(aclTableMap, ruleTableMap, intfId, direction, intfData)
+        }
+    } else {
+        log.Error("Unknown direction")
+    }
+    return err
+}
+
+func findAndGetAclBindingInfoForInterfaceData(aclTableMap map[string]db.Value, ruleTableMap map[string]map[string]db.Value, intfId string, direction string, intfData *ocbinds.OpenconfigAcl_Acl_Interfaces_Interface) error {
+    var err error
+    for aclName, _ := range aclTableMap {
+        aclData := aclTableMap[aclName]
+        aclIntfs := aclData.GetList("ports")
+        aclType := aclData.Get(ACL_TYPE)
+        var aclOrigName string
+        var aclOrigType ocbinds.E_OpenconfigAcl_ACL_TYPE
+        if SONIC_ACL_TYPE_IPV4 == aclType {
+            aclOrigName = strings.Replace(aclName, "_"+OPENCONFIG_ACL_TYPE_IPV4, "", 1)
+            aclOrigType = ocbinds.OpenconfigAcl_ACL_TYPE_ACL_IPV4
+        } else if SONIC_ACL_TYPE_IPV6 == aclType {
+            aclOrigName = strings.Replace(aclName, "_"+OPENCONFIG_ACL_TYPE_IPV6, "", 1)
+            aclOrigType = ocbinds.OpenconfigAcl_ACL_TYPE_ACL_IPV6
+        } else if SONIC_ACL_TYPE_L2 == aclType {
+            aclOrigName = strings.Replace(aclName, "_"+OPENCONFIG_ACL_TYPE_L2, "", 1)
+            aclOrigType = ocbinds.OpenconfigAcl_ACL_TYPE_ACL_L2
+        }
+
+        if contains(aclIntfs, intfId) && direction == aclData.Get("stage") {
+            if direction == "INGRESS" {
+                if intfData.IngressAclSets != nil {
+                    aclSetKey := ocbinds.OpenconfigAcl_Acl_Interfaces_Interface_IngressAclSets_IngressAclSet_Key{SetName: aclOrigName, Type: aclOrigType}
+                    ingressAclSet, ok := intfData.IngressAclSets.IngressAclSet[aclSetKey]
+                    if !ok {
+                        ingressAclSet, _ = intfData.IngressAclSets.NewIngressAclSet(aclOrigName, aclOrigType)
+                        ygot.BuildEmptyTree(ingressAclSet)
+                        ingressAclSet.Config = &ocbinds.OpenconfigAcl_Acl_Interfaces_Interface_IngressAclSets_IngressAclSet_Config{SetName: &aclOrigName, Type: aclOrigType}
+                        ingressAclSet.State = &ocbinds.OpenconfigAcl_Acl_Interfaces_Interface_IngressAclSets_IngressAclSet_State{SetName: &aclOrigName, Type: aclOrigType}
+                    }
+                    err = convertInternalToOCAclBinding(aclTableMap, ruleTableMap, aclName, intfId, direction, ingressAclSet)
+                    if err != nil {
+                        return err
+                    }
+                }
+            } else if direction == "EGRESS" {
+                if intfData.EgressAclSets != nil {
+                    aclSetKey := ocbinds.OpenconfigAcl_Acl_Interfaces_Interface_EgressAclSets_EgressAclSet_Key{SetName: aclOrigName, Type: aclOrigType}
+                    egressAclSet, ok := intfData.EgressAclSets.EgressAclSet[aclSetKey]
+                    if !ok {
+                        egressAclSet, _ = intfData.EgressAclSets.NewEgressAclSet(aclOrigName, aclOrigType)
+                        ygot.BuildEmptyTree(egressAclSet)
+                        egressAclSet.Config = &ocbinds.OpenconfigAcl_Acl_Interfaces_Interface_EgressAclSets_EgressAclSet_Config{SetName: &aclOrigName, Type: aclOrigType}
+                        egressAclSet.State = &ocbinds.OpenconfigAcl_Acl_Interfaces_Interface_EgressAclSets_EgressAclSet_State{SetName: &aclOrigName, Type: aclOrigType}
+                    }
+                    err = convertInternalToOCAclBinding(aclTableMap, ruleTableMap, aclName, intfId, direction, egressAclSet)
+                    if err != nil {
+                        return err
+                    }
+                }
+            }
+        }
+    }
     return err
 }

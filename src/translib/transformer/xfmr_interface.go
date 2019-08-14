@@ -49,7 +49,7 @@ type SubTreeXfmrYangToDb func (*db.DB, *ygot.GoStruct, string) (map[string]map[s
  * Param : Database info, DB data in multidimensional map, output param YgotRoot
  * Return :  error
  **/
-type SubTreeXfmrDbToYang func (*db.DB, map[string]map[string]db.Value, *ygot.GoStruct) (error)
+type SubTreeXfmrDbToYang func (*db.DB, map[string]map[string]db.Value, *ygot.GoStruct, string) (error)
 
 /**
  * Xfmr validation interface for validating the callback registration of app modules 
