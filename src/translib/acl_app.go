@@ -154,7 +154,7 @@ func (app *AclApp) translateGet(dbs [db.MaxDB]*db.DB) (*map[db.DBNum][]transform
         var err error
         log.Info("translateGet:acl:path =", app.pathInfo.Template)
 
-        keySpec, err := transformer.XlateUriTotKeySpec(app.ygotRoot, app.ygotTarget)
+	keySpec, err := transformer.XlateUriToKeySpec(app.pathInfo.Path, app.ygotRoot, app.ygotTarget)
 
         return keySpec, err
 }
@@ -269,7 +269,7 @@ func (app *AclApp) processGet(dbs [db.MaxDB]*db.DB, keyspec *map[db.DBNum][]tran
 
     // table.key.fields
     var result = make(map[string]map[string]db.Value)
-   
+
     for dbnum, specs := range *keyspec {
         for _, spec := range specs {
             err := transformer.TraverseDb(dbs[dbnum], spec, &result, nil)

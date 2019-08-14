@@ -2,7 +2,7 @@ package transformer
 
 import (
     //"fmt"
-    //	"os"
+    //"os"
     //	"sort"
     //	"github.com/openconfig/goyang/pkg/yang"
     "github.com/openconfig/ygot/ygot"
@@ -100,20 +100,30 @@ func TraverseDb(d *db.DB, spec KeySpec, result *map[string]map[string]db.Value, 
     return err
 }
 
-func XlateUriTotKeySpec(uri *ygot.GoStruct, t *interface{}) (*map[db.DBNum][]KeySpec, error) {
-    var err error
+func XlateUriToKeySpec(path string, uri *ygot.GoStruct, t *interface{}) (*map[db.DBNum][]KeySpec, error) {
 
+    var err error
     var result = make(map[db.DBNum][]KeySpec)
+    var retdbFormat = make([]KeySpec, 1)
+    var dbFormat KeySpec
+    retdbFormat[0] = dbFormat
+
+    /* Extract the xpath and key from input xpath */
+    yangXpath, keyStr := xpathKeyExtract(path);
+
+    fillKeySpec(yangXpath, keyStr, &dbFormat)
+
+    result[db.ConfigDB] = retdbFormat
 
     // 1 - mock data for a URI /openconfig-acl:acl/acl-sets/acl-set=MyACL1,ACL_IPV4
-    result[db.ConfigDB] = []KeySpec{
-        {
-        Ts: db.TableSpec{Name: "ACL_TABLE"},
-        Key: db.Key{Comp: []string{"MyACL1_ACL_IPV4"}},
-        Child: &KeySpec{
-            Ts: db.TableSpec{Name: "ACL_RULE"},
-            Key: db.Key{}}},
-        }
+    //result[db.ConfigDB] = []KeySpec{
+    //    {
+    //    Ts: db.TableSpec{Name: "ACL_TABLE"},
+    //    Key: db.Key{Comp: []string{"MyACL1_ACL_IPV4"}},
+    //    Child: &KeySpec{
+    //        Ts: db.TableSpec{Name: "ACL_RULE"},
+    //        Key: db.Key{}}},
+    //    }
         // 2 - mock data for a URI /openconfig-acl:acl/acl-sets/acl-set=MyACL1,ACL_IPV4/acl-entires/ecl-entry=1
 //      result[db.ConfigDB] = []KeySpec{
 //                      {
@@ -132,7 +142,39 @@ func XlateUriTotKeySpec(uri *ygot.GoStruct, t *interface{}) (*map[db.DBNum][]Key
 //                                      Key: db.Key{}}},
 //                      }
 
-        return &result, err
+    return &result, err
+}
+
+func fillKeySpec(yangXpath string , keyStr string, dbFormat *KeySpec) {
+
+    if xSpecMap == nil {
+	return;
+    }
+    _, ok := xSpecMap[yangXpath]
+    if ok {
+        xpathInfo := xSpecMap[yangXpath]
+        if xpathInfo.tableName != nil {
+            dbFormat.Ts.Name = *xpathInfo.tableName
+            dbFormat.Key.Comp = append(dbFormat.Key.Comp, keyStr)
+        }
+        for _, child := range xpathInfo.childTable {
+           /* Current support for one child. Should change the KeySpec.Child
+              to array of pointers later when we support all children */
+	    if xDbSpecMap != nil {
+                if  len(xDbSpecMap[child].yangXpath) > 0 {
+                    var childXpath = xDbSpecMap[child].yangXpath[0]
+		    if xpathInfo.tableName == nil {
+                        fillKeySpec(childXpath, "", dbFormat)
+		    } else {
+                        dbFormat.Child =  new(KeySpec)
+                        fillKeySpec(childXpath, "", dbFormat.Child)
+	            }
+                }
+            }
+        }
+    } else {
+        return;
+    }
 }
 
 
