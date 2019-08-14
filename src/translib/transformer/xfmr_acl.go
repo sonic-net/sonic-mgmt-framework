@@ -18,20 +18,20 @@ import (
 )
 
 func init () {
-    XlateFuncBind("Read_acl_entry_key_xfmr", Read_acl_entry_key_xfmr)
-    XlateFuncBind("Write_acl_entry_key_xfmr", Write_acl_entry_key_xfmr)
-    XlateFuncBind("Read_acl_l2_ethertype_xfmr", Read_acl_l2_ethertype_xfmr)
-    XlateFuncBind("Write_acl_l2_ethertype_xfmr", Write_acl_l2_ethertype_xfmr)
-    XlateFuncBind("Read_acl_ip_protocol_xfmr", Read_acl_ip_protocol_xfmr)
-    XlateFuncBind("Write_acl_ip_protocol_xfmr", Write_acl_ip_protocol_xfmr)
-    XlateFuncBind("Read_acl_source_port_xfmr", Read_acl_source_port_xfmr)
-    XlateFuncBind("Write_acl_source_port_xfmr", Write_acl_source_port_xfmr)
-    XlateFuncBind("Read_acl_destination_port_xfmr", Read_acl_destination_port_xfmr)
-    XlateFuncBind("Write_acl_destination_port_xfmr", Write_acl_destination_port_xfmr)
-    XlateFuncBind("Read_acl_tcp_flags_xfmr", Read_acl_tcp_flags_xfmr)
-    XlateFuncBind("Write_acl_tcp_flags_xfmr", Write_acl_tcp_flags_xfmr)
-    XlateFuncBind("Read_acl_port_bindings_xfmr", Read_acl_port_bindings_xfmr)
-    XlateFuncBind("Write_acl_port_bindings_xfmr", Write_acl_port_bindings_xfmr)
+    XlateFuncBind("YangToDb_acl_entry_key_xfmr", YangToDb_acl_entry_key_xfmr)
+    XlateFuncBind("DbToYang_acl_entry_key_xfmr", DbToYang_acl_entry_key_xfmr)
+    XlateFuncBind("YangToDb_acl_l2_ethertype_xfmr", YangToDb_acl_l2_ethertype_xfmr)
+    XlateFuncBind("DbToYang_acl_l2_ethertype_xfmr", DbToYang_acl_l2_ethertype_xfmr)
+    XlateFuncBind("YangToDb_acl_ip_protocol_xfmr", YangToDb_acl_ip_protocol_xfmr)
+    XlateFuncBind("DbToYang_acl_ip_protocol_xfmr", DbToYang_acl_ip_protocol_xfmr)
+    XlateFuncBind("YangToDb_acl_source_port_xfmr", YangToDb_acl_source_port_xfmr)
+    XlateFuncBind("DbToYang_acl_source_port_xfmr", DbToYang_acl_source_port_xfmr)
+    XlateFuncBind("YangToDb_acl_destination_port_xfmr", YangToDb_acl_destination_port_xfmr)
+    XlateFuncBind("DbToYang_acl_destination_port_xfmr", DbToYang_acl_destination_port_xfmr)
+    XlateFuncBind("YangToDb_acl_tcp_flags_xfmr", YangToDb_acl_tcp_flags_xfmr)
+    XlateFuncBind("DbToYang_acl_tcp_flags_xfmr", DbToYang_acl_tcp_flags_xfmr)
+    XlateFuncBind("YangToDb_acl_port_bindings_xfmr", YangToDb_acl_port_bindings_xfmr)
+    XlateFuncBind("DbToYang_acl_port_bindings_xfmr", DbToYang_acl_port_bindings_xfmr)
 }
 
 const (
@@ -186,11 +186,11 @@ func getL2EtherType(etherType uint64) interface{} {
 
 
 
-var Read_acl_entry_key_xfmr KeyXfmrYangToDb = func (d *db.DB, ygRoot *ygot.GoStruct, xpath string) (string, error) {
+var YangToDb_acl_entry_key_xfmr KeyXfmrYangToDb = func (d *db.DB, ygRoot *ygot.GoStruct, xpath string) (string, error) {
     var entry_key string
     var err error
     var oc_aclType ocbinds.E_OpenconfigAcl_ACL_TYPE
-    log.Info("Read_acl_entry_key_xfmr: ", ygRoot, xpath)
+    log.Info("YangToDb_acl_entry_key_xfmr: ", ygRoot, xpath)
     pathInfo := NewPathInfo(xpath)
 
     if len(pathInfo.Vars) < 3 {
@@ -211,15 +211,15 @@ var Read_acl_entry_key_xfmr KeyXfmrYangToDb = func (d *db.DB, ygRoot *ygot.GoStr
     }
     entry_key = aclkey + "|" + rulekey
 
-    log.Info("Read_acl_entry_key_xfmr - entry_key : ", entry_key)
+    log.Info("YangToDb_acl_entry_key_xfmr - entry_key : ", entry_key)
 
     return entry_key, err
 }
 
-var Write_acl_entry_key_xfmr KeyXfmrDbToYang = func (d *db.DB, entry_key string) (map[string]map[string]string, error) {
+var DbToYang_acl_entry_key_xfmr KeyXfmrDbToYang = func (d *db.DB, entry_key string) (map[string]map[string]string, error) {
     res_map := make(map[string]map[string]string)
     var err error
-    log.Info("Write_acl_entry_key_xfmr: ", entry_key)
+    log.Info("DbToYang_acl_entry_key_xfmr: ", entry_key)
 
     key := strings.Split(entry_key, "|")
     if len(key) < 2 {
@@ -235,7 +235,7 @@ var Write_acl_entry_key_xfmr KeyXfmrDbToYang = func (d *db.DB, entry_key string)
     res_map["oc-acl:acl-set"]["type"] = aclType.ΛMap()["E_OpenconfigAcl_ACL_TYPE"][int64(aclType)].Name
     seqId := strings.Replace(dbAclRule, "RULE_", "", 1)
     res_map["acl-entry"]["sequence-id"] = seqId
-    log.Info("Write_acl_entry_key_xfmr - res_map: ", res_map)
+    log.Info("DbToYang_acl_entry_key_xfmr - res_map: ", res_map)
     return res_map, err
 }
 
@@ -260,10 +260,10 @@ func getAclRule(acl *ocbinds.OpenconfigAcl_Acl, aclName string, aclType ocbinds.
     return rule, err
 }
 
-var Read_acl_l2_ethertype_xfmr FieldXfmrYangToDb = func (d *db.DB, ygRoot *ygot.GoStruct, xpath string, ethertype interface {}) (map[string]string, error) {
+var YangToDb_acl_l2_ethertype_xfmr FieldXfmrYangToDb = func (d *db.DB, ygRoot *ygot.GoStruct, xpath string, ethertype interface {}) (map[string]string, error) {
     res_map := make(map[string]string)
     var err error
-    log.Info("Read_acl_l2_ethertype_xfmr :", ygRoot, xpath)
+    log.Info("YangToDb_acl_l2_ethertype_xfmr :", ygRoot, xpath)
 
     ethertypeType := reflect.TypeOf(ethertype).Elem()
     var b bytes.Buffer
@@ -282,9 +282,9 @@ var Read_acl_l2_ethertype_xfmr FieldXfmrYangToDb = func (d *db.DB, ygRoot *ygot.
     return res_map, err
 }
 
-var Write_acl_l2_ethertype_xfmr FieldXfmrDbtoYang = func (d *db.DB, data map[string]map[string]db.Value, ygRoot *ygot.GoStruct)  (error) {
+var DbToYang_acl_l2_ethertype_xfmr FieldXfmrDbtoYang = func (d *db.DB, data map[string]map[string]db.Value, ygRoot *ygot.GoStruct)  (error) {
     var err error
-    log.Info("Write_acl_l2_ethertype_xfmr", data, ygRoot)
+    log.Info("DbToYang_acl_l2_ethertype_xfmr", data, ygRoot)
 
     if _, ok := data[RULE_TABLE]; !ok {
         err = errors.New("RULE_TABLE entry not found in the input param")
@@ -317,10 +317,10 @@ var Write_acl_l2_ethertype_xfmr FieldXfmrDbtoYang = func (d *db.DB, data map[str
     return err
 }
 
-var Read_acl_ip_protocol_xfmr FieldXfmrYangToDb = func (d *db.DB, ygRoot *ygot.GoStruct, xpath string, protocol interface {}) (map[string]string, error) {
+var YangToDb_acl_ip_protocol_xfmr FieldXfmrYangToDb = func (d *db.DB, ygRoot *ygot.GoStruct, xpath string, protocol interface {}) (map[string]string, error) {
     res_map := make(map[string]string)
     var err error
-    log.Info("Read_acl_ip_protocol_xfmr: ", ygRoot, xpath)
+    log.Info("YangToDb_acl_ip_protocol_xfmr: ", ygRoot, xpath)
 
     protocolType := reflect.TypeOf(protocol).Elem()
     switch (protocolType) {
@@ -336,9 +336,9 @@ var Read_acl_ip_protocol_xfmr FieldXfmrYangToDb = func (d *db.DB, ygRoot *ygot.G
     return res_map, err
 }
 
-var Write_acl_ip_protocol_xfmr FieldXfmrDbtoYang = func (d *db.DB, data map[string]map[string]db.Value, ygRoot *ygot.GoStruct)  (error) {
+var DbToYang_acl_ip_protocol_xfmr FieldXfmrDbtoYang = func (d *db.DB, data map[string]map[string]db.Value, ygRoot *ygot.GoStruct)  (error) {
     var err error
-    log.Info("Write_acl_ip_protocol_xfmr ", data, ygRoot)
+    log.Info("DbToYang_acl_ip_protocol_xfmr ", data, ygRoot)
     if _, ok := data[RULE_TABLE]; !ok {
         err = errors.New("RULE_TABLE entry not found in the input param")
         return err
@@ -368,10 +368,10 @@ var Write_acl_ip_protocol_xfmr FieldXfmrDbtoYang = func (d *db.DB, data map[stri
     return err
 }
 
-var Read_acl_source_port_xfmr FieldXfmrYangToDb = func (d *db.DB, ygRoot *ygot.GoStruct, xpath string, value interface {}) (map[string]string, error) {
+var YangToDb_acl_source_port_xfmr FieldXfmrYangToDb = func (d *db.DB, ygRoot *ygot.GoStruct, xpath string, value interface {}) (map[string]string, error) {
     res_map := make(map[string]string)
     var err error;
-    log.Info("Read_acl_source_port_xfmr: ", ygRoot, xpath)
+    log.Info("YangToDb_acl_source_port_xfmr: ", ygRoot, xpath)
     sourceportType := reflect.TypeOf(value).Elem()
     switch sourceportType {
     case reflect.TypeOf(ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_SourcePort_Union_E_OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_SourcePort{}):
@@ -431,9 +431,9 @@ func getAclSetEntry (aclRuleKey string, ygRoot *ygot.GoStruct) (*ocbinds.Opencon
 
 }
 
-var Write_acl_source_port_xfmr FieldXfmrDbtoYang = func (d *db.DB, data map[string]map[string]db.Value, ygRoot *ygot.GoStruct)  (error) {
+var DbToYang_acl_source_port_xfmr FieldXfmrDbtoYang = func (d *db.DB, data map[string]map[string]db.Value, ygRoot *ygot.GoStruct)  (error) {
     var err error
-    log.Info("Write_acl_source_port_xfmr: ", data, ygRoot)
+    log.Info("DbToYang_acl_source_port_xfmr: ", data, ygRoot)
 
     if _, ok := data[RULE_TABLE]; !ok {
         err = errors.New("RULE_TABLE entry not found in the input param")
@@ -470,10 +470,10 @@ var Write_acl_source_port_xfmr FieldXfmrDbtoYang = func (d *db.DB, data map[stri
     return err
 }
 
-var Read_acl_destination_port_xfmr FieldXfmrYangToDb = func (d *db.DB, ygRoot *ygot.GoStruct, xpath string, value interface{}) (map[string]string, error) {
+var YangToDb_acl_destination_port_xfmr FieldXfmrYangToDb = func (d *db.DB, ygRoot *ygot.GoStruct, xpath string, value interface{}) (map[string]string, error) {
     res_map := make(map[string]string)
     var err error;
-    log.Info("Read_acl_destination_port_xfmr: ", ygRoot, xpath)
+    log.Info("YangToDb_acl_destination_port_xfmr: ", ygRoot, xpath)
     destportType := reflect.TypeOf(value).Elem()
     switch destportType {
     case reflect.TypeOf(ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_DestinationPort_Union_E_OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_DestinationPort{}):
@@ -492,9 +492,9 @@ var Read_acl_destination_port_xfmr FieldXfmrYangToDb = func (d *db.DB, ygRoot *y
     return res_map, err
 }
 
-var Write_acl_destination_port_xfmr FieldXfmrDbtoYang = func (d *db.DB, data map[string]map[string]db.Value, ygRoot *ygot.GoStruct)  (error) {
+var DbToYang_acl_destination_port_xfmr FieldXfmrDbtoYang = func (d *db.DB, data map[string]map[string]db.Value, ygRoot *ygot.GoStruct)  (error) {
     var err error
-    log.Info("Write_acl_destination_port_xfmr: ", data, ygRoot)
+    log.Info("DbToYang_acl_destination_port_xfmr: ", data, ygRoot)
     if _, ok := data[RULE_TABLE]; !ok {
         err = errors.New("RULE_TABLE entry not found in the input param")
         return err
@@ -530,10 +530,10 @@ var Write_acl_destination_port_xfmr FieldXfmrDbtoYang = func (d *db.DB, data map
     return err
 }
 
-var Read_acl_tcp_flags_xfmr FieldXfmrYangToDb = func (d *db.DB, ygRoot *ygot.GoStruct, xpath string, value interface {}) (map[string]string, error) {
+var YangToDb_acl_tcp_flags_xfmr FieldXfmrYangToDb = func (d *db.DB, ygRoot *ygot.GoStruct, xpath string, value interface {}) (map[string]string, error) {
     res_map := make(map[string]string)
     var err error;
-    log.Info("Read_acl_tcp_flags_xfmr: ", ygRoot, xpath)
+    log.Info("YangToDb_acl_tcp_flags_xfmr: ", ygRoot, xpath)
     var tcpFlags uint32 = 0x00
     v := reflect.ValueOf(value)
 
@@ -573,9 +573,9 @@ var Read_acl_tcp_flags_xfmr FieldXfmrYangToDb = func (d *db.DB, ygRoot *ygot.GoS
     return res_map, err
 }
 
-var Write_acl_tcp_flags_xfmr FieldXfmrDbtoYang = func (d *db.DB, data map[string]map[string]db.Value, ygRoot *ygot.GoStruct)  (error) {
+var DbToYang_acl_tcp_flags_xfmr FieldXfmrDbtoYang = func (d *db.DB, data map[string]map[string]db.Value, ygRoot *ygot.GoStruct)  (error) {
     var err error
-    log.Info("Write_acl_tcp_flags_xfmr: ", data, ygRoot)
+    log.Info("DbToYang_acl_tcp_flags_xfmr: ", data, ygRoot)
 
     if _, ok := data[RULE_TABLE]; !ok {
         err = errors.New("RULE_TABLE entry not found in the input param")
@@ -604,11 +604,11 @@ var Write_acl_tcp_flags_xfmr FieldXfmrDbtoYang = func (d *db.DB, data map[string
     return err
 }
 
-var Read_acl_port_bindings_xfmr SubTreeXfmrYangToDb = func (d *db.DB, ygRoot *ygot.GoStruct, xpath string) (map[string]map[string]db.Value, error) {
+var YangToDb_acl_port_bindings_xfmr SubTreeXfmrYangToDb = func (d *db.DB, ygRoot *ygot.GoStruct, xpath string) (map[string]map[string]db.Value, error) {
     res_map := make(map[string]map[string]db.Value)
     aclTableMap := make(map[string]db.Value)
     var err error;
-    log.Info("Read_acl_port_bindings_xfmr: ", ygRoot, xpath)
+    log.Info("YangToDb_acl_port_bindings_xfmr: ", ygRoot, xpath)
 
     aclObj := getAclRoot(ygRoot)
 
@@ -656,8 +656,8 @@ var Read_acl_port_bindings_xfmr SubTreeXfmrYangToDb = func (d *db.DB, ygRoot *yg
     return res_map, err
 }
 
-var Write_acl_port_bindings_xfmr SubTreeXfmrDbToYang = func (d *db.DB, data map[string]map[string]db.Value, ygRoot *ygot.GoStruct) (error) {
+var DbToYang_acl_port_bindings_xfmr SubTreeXfmrDbToYang = func (d *db.DB, data map[string]map[string]db.Value, ygRoot *ygot.GoStruct) (error) {
     var err error
-    log.Info("Write_acl_port_bindings_xfmr: ", data, ygRoot)
+    log.Info("DbToYang_acl_port_bindings_xfmr: ", data, ygRoot)
     return err
 }

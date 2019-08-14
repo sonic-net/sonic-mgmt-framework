@@ -43,7 +43,7 @@ type appData struct {
 }
 
 //map containing the base path to app module info
-var appMap map[string]appInfo
+var appMap map[string]*appInfo
 
 //array containg all the supported models
 var models []ModelData
@@ -70,12 +70,12 @@ func register(path string, info *appInfo) error {
     log.Info("Registering for path =", path)
 
 	if appMap == nil {
-		appMap = make(map[string]appInfo)
+		appMap = make(map[string]*appInfo)
 	}
 
 	if _, ok := appMap[path]; ok == false {
 
-		appMap[path] = *info
+		appMap[path] = info
 
 	} else {
 		log.Fatal("Duplicate path being registered. Path =", path)
@@ -111,7 +111,7 @@ func unregister(path string) error {
 }
 
 //Translib infra will use this function get the app info for a given path
-func getAppModuleInfo(path string) (appInfo, error) {
+func getAppModuleInfo(path string) (*appInfo, error) {
 	var err error
 	log.Info("getAppModule called for path =", path)
 
@@ -126,11 +126,9 @@ func getAppModuleInfo(path string) (appInfo, error) {
 	}
 
 	errStr := "Unsupported path=" + path
-
 	err = errors.New(errStr)
 	log.Error(errStr)
-
-	var app appInfo
+	var app *appInfo
 
 	return app, err
 }
