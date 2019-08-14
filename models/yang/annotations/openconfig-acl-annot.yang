@@ -91,7 +91,7 @@ module openconfig-acl-annot {
 
     deviation /oc-acl:acl/oc-acl:interfaces {
       deviate add {
-        sonic-ext:subtree-trasnformer "acl_port_bindings_xfmr";
+        sonic-ext:subtree-transformer "acl_port_bindings_xfmr";
       }
     }
 

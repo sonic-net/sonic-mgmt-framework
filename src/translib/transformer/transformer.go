@@ -72,26 +72,25 @@ func loadYangModules(files ...string) error {
 			names = append(names, m.Name)
 		}
 	}
-	
-	sonic_entries := make(map[string]*yang.Entry)
+
+	sonic_entries := make([]*yang.Entry, len(names))
 	oc_entries := make(map[string]*yang.Entry)
 	annot_entries := make([]*yang.Entry, len(names))
-	var i int
-	
+	var i, j int
+
 	for _, n := range names {
 	    if strings.Contains(n, "annot") {
 	        annot_entries[i] = yang.ToEntry(mods[n])
 	        i++
 	    } else if strings.Contains(n, "sonic") {
-	        if sonic_entries[n] == nil {
-    			sonic_entries[n] = yang.ToEntry(mods[n])
-	        }
-		} else if oc_entries[n] == nil {
-    			oc_entries[n] = yang.ToEntry(mods[n])
-    	}
+		sonic_entries[j] = yang.ToEntry(mods[n])
+		j++
+            } else if oc_entries[n] == nil {
+		oc_entries[n] = yang.ToEntry(mods[n])
+	    }
 	}
 
-    yangToDbMapBuild(sonic_entries)
+    dbMapBuild(sonic_entries)
     annotToDbMapBuild(annot_entries)
     yangToDbMapBuild(oc_entries)
 

@@ -132,7 +132,7 @@ func yangToDbMapBuild(entries map[string]*yang.Entry) {
     if xSpecMap == nil {
         xSpecMap = make(map[string]*yangXpathInfo)
     }
-    
+
     for _, e := range entries {
         if e == nil || len(e.Dir) == 0 {
             continue
@@ -313,7 +313,7 @@ func mapPrint(inMap map[string]*yangXpathInfo, fileName string) {
             fmt.Fprintf(fp, "%v\r\n", d.xfmrFunc)
         }
         fmt.Fprintf(fp, "\r\n    yangEntry: ")
-        if d.dbEntry != nil {
+        if d.yangEntry != nil {
             fmt.Fprintf(fp, "%v", *d.yangEntry)
         }
         fmt.Fprintf(fp, "\r\n    dbEntry: ")
