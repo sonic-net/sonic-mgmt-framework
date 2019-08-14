@@ -96,7 +96,7 @@ func (app *CommonApp) translateGet(dbs [db.MaxDB]*db.DB) (*map[db.DBNum][]transf
         var err error
         log.Info("translateGet:path =", app.pathInfo.Path)
 
-        keySpec, err := transformer.XlateUriTotKeySpec(app.ygotRoot, app.ygotTarget)
+        keySpec, err := transformer.XlateUriToKeySpec(app.pathInfo.Path, app.ygotRoot, app.ygotTarget)
 
         return keySpec, err
 }
