@@ -92,10 +92,13 @@ func (app *CommonApp) translateDelete(d *db.DB) ([]db.WatchKeys, error) {
 	return keys, err
 }
 
-func (app *CommonApp) translateGet(dbs [db.MaxDB]*db.DB) error {
-	var err error
-	log.Info("translateGet:path =", app.pathInfo.Path)
-	return err
+func (app *CommonApp) translateGet(dbs [db.MaxDB]*db.DB) (*map[db.DBNum][]transformer.KeySpec, error) {
+        var err error
+        log.Info("translateGet:path =", app.pathInfo.Path)
+
+        keySpec, err := transformer.XlateUriTotKeySpec(app.ygotRoot, app.ygotTarget)
+
+        return keySpec, err
 }
 
 func (app *CommonApp) translateSubscribe(dbs [db.MaxDB]*db.DB, path string) (*notificationOpts, *notificationInfo, error) {
@@ -148,12 +151,31 @@ func (app *CommonApp) processDelete(d *db.DB) (SetResponse, error) {
 	return resp, err
 }
 
-func (app *CommonApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
-	var err error
-	var payload []byte
+func (app *CommonApp) processGet(dbs [db.MaxDB]*db.DB, keyspec *map[db.DBNum][]transformer.KeySpec) (GetResponse, error) {
+    var err error
+    var payload []byte
+    log.Info("processGet:path =", app.pathInfo.Path)
 
-	return GetResponse{Payload: payload}, err
+    // table.key.fields
+    var result = make(map[string]map[string]db.Value)
+
+    for dbnum, specs := range *keyspec {
+        for _, spec := range specs {
+            err := transformer.TraverseDb(dbs[dbnum], spec, &result, nil)
+            if err != nil {
+                return GetResponse{Payload: payload}, err
+            }
+        }
+    }
+
+    payload, err = transformer.XlateFromDb(result)
+    if err != nil {
+        return GetResponse{Payload: payload, ErrSrc: AppErr}, err
+    }
+
+    return GetResponse{Payload: payload}, err
 }
+
 
 func (app *CommonApp) translateCRUCommon(d *db.DB, opcode int) ([]db.WatchKeys, error) {
 	var err error
