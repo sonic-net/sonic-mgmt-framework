@@ -186,7 +186,6 @@ func dbMapCreate(keyName string, xpathPrefix string, jsonData interface{}, resul
                     if err != nil {
                         log.Errorf("Failed constructing data for db write: key(\"%v\"), value(\"%v\"), path(\"%v\").",
                                     pathAttr, value, xpathPrefix)
-                        return err
                     }
                 }
             }

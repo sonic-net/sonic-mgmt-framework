@@ -4,6 +4,7 @@ import (
     "fmt"
     "strings"
     "translib/db"
+    "github.com/openconfig/goyang/pkg/yang"
 )
 
 /* Create db key from datd xpath(request) */
@@ -66,5 +67,16 @@ func isYangResType(ytype string) bool {
         return true
     }
     return false
+}
+
+func yangTypeGet(entry *yang.Entry) string {
+    if entry != nil && entry.Node != nil {
+        return entry.Node.Statement().Keyword
+    }
+    return ""
+}
+
+func dbKeyToYangDataConvert(dbKey string, xpath string) {
+    return
 }
 

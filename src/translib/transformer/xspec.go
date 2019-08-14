@@ -59,7 +59,11 @@ func yangToDbMapFill (xSpecMap map[string]*yangXpathInfo, entry *yang.Entry, xpa
     } else {
         xpathData = xSpecMap[xpath]
     }
+
     xpathData.yangDataType = entry.Node.Statement().Keyword
+    if entry.Node.Statement().Keyword == "list"  && xpathData.tableName != nil {
+        childToUpdateParent(xpath, *xpathData.tableName)
+    }
 
     parentXpathData, ok := xSpecMap[xpathPrefix]
     /* init current xpath table data with its parent data, change only if needed. */
@@ -89,10 +93,11 @@ func yangToDbMapFill (xSpecMap map[string]*yangXpathInfo, entry *yang.Entry, xpa
         parentKeyLen := 0
 
         /* create list with current keys */
-        keyXpath      := make([]string, len(strings.Split(entry.Key, " ")))
+        keyXpath        := make([]string, len(strings.Split(entry.Key, " ")))
         for id, keyName := range(strings.Split(entry.Key, " ")) {
             keyXpath[id] = xpath + "/" + keyName
         }
+
         xpathData.keyXpath = make(map[int]*[]string, (parentKeyLen + 1))
         k := 0
         for ; k < parentKeyLen; k++ {
@@ -132,6 +137,7 @@ func yangToDbMapBuild(entries map[string]*yang.Entry) {
         yangToDbMapFill(xSpecMap, e, "")
     }
     mapPrint(xSpecMap, "/tmp/fullSpec.txt")
+    dbMapPrint()
 }
 
 /* Fill the map with db details */
@@ -174,7 +180,6 @@ func dbMapBuild(entries []*yang.Entry) {
         }
         dbMapFill("", "", xDbSpecMap, e)
     }
-    dbMapPrint(xSpecMap)
 }
 
 func childToUpdateParent( xpath string, tableName string) {
@@ -205,7 +210,7 @@ func annotEntryFill(xSpecMap map[string]*yangXpathInfo, xpath string, entry *yan
     }
 
     /* fill table with yang extension data. */
-    if len(entry.Exts) > 0 {
+    if entry != nil && len(entry.Exts) > 0 {
         for _, ext := range entry.Exts {
             dataTagArr := strings.Split(ext.Keyword, ":")
             tagType := dataTagArr[len(dataTagArr)-1]
@@ -216,7 +221,7 @@ func annotEntryFill(xSpecMap map[string]*yangXpathInfo, xpath string, entry *yan
                     }
                     *xpathData.tableName = ext.NName()
                     updateDbTableData(xpath, xpathData, *xpathData.tableName)
-					childToUpdateParent(xpath, *xpathData.tableName)
+					//childToUpdateParent(xpath, *xpathData.tableName)
                 case "field-name" :
                     xpathData.fieldName = ext.NName()
                 case "subtree-transformer" :
@@ -239,13 +244,11 @@ func annotEntryFill(xSpecMap map[string]*yangXpathInfo, xpath string, entry *yan
 
 /* Build xpath from yang-annotation */
 func xpathFromDevCreate(path string) string {
-    xpath := ""
-    for _, k := range (strings.Split(path, "/")) {
-        if len(k) > 0 {
-            xpath += strings.Split(k, ":")[1] + "/"
-        }
-    }
-    return xpath[:len(xpath)-1]
+	p := strings.Split(path, "/")
+	for i, k := range p {
+		if len(k) > 0 { p[i] = strings.Split(k, ":")[1] }
+	}
+	return strings.Join(p[1:], "/")
 }
 
 /* Build lookup map based on yang xpath */
@@ -320,12 +323,20 @@ func mapPrint(inMap map[string]*yangXpathInfo, fileName string) {
 }
 
 /* Debug function to print redis db lookup map */
-func dbMapPrint(inMap map[string]*yangXpathInfo) {
+func dbMapPrint() {
     fp, err := os.Create("/tmp/dbTmplt.txt")
     if err != nil {
         return
     }
     defer fp.Close()
-    fmt.Fprintf(fp, "%v", xDbSpecMap)
+	fmt.Fprintf (fp, "-----------------------------------------------------------------\r\n")
+    for k, v := range xDbSpecMap {
+        fmt.Fprintf(fp, " field:%v \r\n", k)
+        fmt.Fprintf(fp, "     type :%v \r\n", v.fieldType)
+        fmt.Fprintf(fp, "     Yang :%v \r\n", v.yangXpath)
+        fmt.Fprintf(fp, "     DB   :%v \r\n", v.dbEntry)
+        fmt.Fprintf (fp, "-----------------------------------------------------------------\r\n")
+
+    }
 }
 
