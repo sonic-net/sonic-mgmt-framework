@@ -712,7 +712,7 @@ func appInitialize (app *appInterface, appInfo *appInfo, path string, payload *[
 	var err error
     if appInfo.isNative {
         log.Info("Native MSFT format")
-        data := appData{path: path}
+        data := appData{path: path, payload: *payload}
         (*app).initialize(data)
     } else {
        ygotStruct, ygotTarget, err := getRequestBinder (&path, payload, opCode, &(appInfo.ygotRootType)).unMarshall()
@@ -721,7 +721,7 @@ func appInitialize (app *appInterface, appInfo *appInfo, path string, payload *[
             return err
         }
 
-        data := appData{path: path, ygotRoot: ygotStruct, ygotTarget: ygotTarget}
+        data := appData{path: path, payload: *payload, ygotRoot: ygotStruct, ygotTarget: ygotTarget}
         (*app).initialize(data)
     }
 
