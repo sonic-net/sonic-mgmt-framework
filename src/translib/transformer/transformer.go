@@ -3,7 +3,7 @@ package transformer
 import (
 	"fmt"
 	"os"
-	"sort"
+	"strings"
 	"github.com/openconfig/goyang/pkg/yang"
 	"github.com/openconfig/ygot/ygot"
 //	"translib/db"
@@ -30,10 +30,11 @@ func reportIfError(errs []error) {
 }
 
 func init() {
-    // TODO - define the path for YANG files from container
+    yangFiles := []string{"sonic-acl.yang", "sonic-extensions.yang", "openconfig-acl-annot.yang", "openconfig-acl.yang" }
+    loadYangModules(yangFiles...)
 }
 
-func LoadYangModules(files ...string) error {
+func loadYangModules(files ...string) error {
 
 	var err error
 
@@ -71,16 +72,28 @@ func LoadYangModules(files ...string) error {
 			names = append(names, m.Name)
 		}
 	}
-	sort.Strings(names)
-	entries = make(map[string]*yang.Entry)
+	
+	sonic_entries := make(map[string]*yang.Entry)
+	oc_entries := make(map[string]*yang.Entry)
+	annot_entries := make([]*yang.Entry, len(names))
+	var i int
+	
 	for _, n := range names {
-		if entries[n] == nil {
-			entries[n] = yang.ToEntry(mods[n])
-		}
+	    if strings.Contains(n, "annot") {
+	        annot_entries[i] = yang.ToEntry(mods[n])
+	        i++
+	    } else if strings.Contains(n, "sonic") {
+	        if sonic_entries[n] == nil {
+    			sonic_entries[n] = yang.ToEntry(mods[n])
+	        }
+		} else if oc_entries[n] == nil {
+    			oc_entries[n] = yang.ToEntry(mods[n])
+    	}
 	}
-        yangToDbMapBuild(entries)
 
-	// TODO - build the inverse map for GET, from OC to Sonic
+    yangToDbMapBuild(sonic_entries)
+    annotToDbMapBuild(annot_entries)
+    yangToDbMapBuild(oc_entries)
 
 	return err
 }

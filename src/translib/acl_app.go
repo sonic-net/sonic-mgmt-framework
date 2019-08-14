@@ -96,13 +96,6 @@ func init() {
 	if err != nil {
 		log.Fatal("Adding model data to appinterface failed with error=", err)
 	}
-
-	yangFiles := []string{"openconfig-acl.yang", "sonic-acl.yang"}
-        log.Info("Init transformer yang files :", yangFiles)
-	err = transformer.LoadYangModules(yangFiles...)
-	if err != nil {
-		log.Fatal("Loading Yang modules failed with error=", err)
-	}
 }
 
 func (app *AclApp) initialize(data appData) {
@@ -157,10 +150,13 @@ func (app *AclApp) translateDelete(d *db.DB) ([]db.WatchKeys, error) {
 	return keys, err
 }
 
-func (app *AclApp) translateGet(dbs [db.MaxDB]*db.DB) error {
-	var err error
-	log.Info("translateGet:acl:path =", app.pathInfo.Template)
-	return err
+func (app *AclApp) translateGet(dbs [db.MaxDB]*db.DB) (*map[db.DBNum][]transformer.KeySpec, error) {
+        var err error
+        log.Info("translateGet:acl:path =", app.pathInfo.Template)
+
+        keySpec, err := transformer.XlateUriTotKeySpec(app.ygotRoot, app.ygotTarget)
+
+        return keySpec, err
 }
 
 func (app *AclApp) translateSubscribe(dbs [db.MaxDB]*db.DB, path string) (*notificationOpts, *notificationInfo, error) {
@@ -267,28 +263,40 @@ func (app *AclApp) processDelete(d *db.DB) (SetResponse, error) {
 	return resp, err
 }
 
-func (app *AclApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
-	var err error
-	var payload []byte
+func (app *AclApp) processGet(dbs [db.MaxDB]*db.DB, keyspec *map[db.DBNum][]transformer.KeySpec) (GetResponse, error) {
+    var err error
+    var payload []byte
 
-	configDb := dbs[db.ConfigDB]
-	err = app.processCommon(configDb, GET)
-	if err != nil {
-		return GetResponse{Payload: payload, ErrSrc: AppErr}, err
-	}
+    // table.key.fields
+    var result = make(map[string]map[string]db.Value)
+   
+    for dbnum, specs := range *keyspec {
+        for _, spec := range specs {
+            err := transformer.TraverseDb(dbs[dbnum], spec, &result, nil)
+            if err != nil {
+                return GetResponse{Payload: payload}, err
+            }
+        }
+    }
 
-	payload, err = generateGetResponsePayload(app.pathInfo.Path, (*app.ygotRoot).(*ocbinds.Device), app.ygotTarget)
-	if err != nil {
-		return GetResponse{Payload: payload, ErrSrc: AppErr}, err
-	}
+    payload, err = transformer.XlateFromDb(result)
+    if err != nil {
+        return GetResponse{Payload: payload, ErrSrc: AppErr}, err
+    }
 
-	return GetResponse{Payload: payload}, err
+    return GetResponse{Payload: payload}, err
 }
 
 func (app *AclApp) translateCRUCommon(d *db.DB, opcode int) ([]db.WatchKeys, error) {
 	var err error
 	var keys []db.WatchKeys
 	log.Info("translateCRUCommon:acl:path =", app.pathInfo.Template)
+
+    // TODO - once it's fully verfied, restrcuture the rest code
+    result, err := transformer.XlateToDb(app.pathInfo.Path, app.ygotRoot, app.ygotTarget)
+    if err != nil {
+        fmt.Println(result)
+    }
 
 	app.convertOCAclsToInternal()
 	app.convertOCAclRulesToInternal(d)

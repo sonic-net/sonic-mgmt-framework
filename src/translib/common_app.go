@@ -42,14 +42,6 @@ func init() {
 	    }
     }
 
-    // @todo : Add support for all yang models that will use common app
-    //err = addModel(&ModelData{})
-    yangFiles := []string{"sonic-acl.yang"}
-    log.Info("Init transformer yang files :", yangFiles)
-    err := transformer.LoadYangModules(yangFiles...)
-    if err != nil {
-        log.Fatal("Common App - Transformer call for loading yang modules failed with error=", err)
-    }
 }
 
 func (app *CommonApp) initialize(data appData) {
@@ -170,7 +162,7 @@ func (app *CommonApp) translateCRUCommon(d *db.DB, opcode int) ([]db.WatchKeys, 
 	log.Info("translateCRUCommon:path =", app.pathInfo.Path)
 
 	// translate yang to db
-	result, err := transformer.XlateToDb((*app).ygotRoot, (*app).ygotTarget)
+	result, err := transformer.XlateToDb(app.pathInfo.Path, (*app).ygotRoot, (*app).ygotTarget)
 	fmt.Println(result)
 	log.Info("transformer.XlateToDb() returned", result)
 

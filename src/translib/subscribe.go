@@ -233,13 +233,13 @@ func getJson (nInfo *notificationInfo) ([]byte, error) {
 
 	dbs := nInfo.dbs
 
-    err = (*app).translateGet (dbs)
+    keySpec, err := (*app).translateGet (dbs)
 
     if err != nil {
         return payload, err
     }
 
-    resp, err := (*app).processGet(dbs)
+    resp, err := (*app).processGet(dbs, keySpec)
 
     if err == nil {
         payload = resp.Payload

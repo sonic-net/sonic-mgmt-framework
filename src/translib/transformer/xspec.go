@@ -128,6 +128,11 @@ func yangToDbMapBuild(entries map[string]*yang.Entry) {
     if entries == nil {
         return
     }
+
+    if xSpecMap == nil {
+        xSpecMap = make(map[string]*yangXpathInfo)
+    }
+    
     for _, e := range entries {
         if e == nil || len(e.Dir) == 0 {
             continue
@@ -256,8 +261,10 @@ func annotToDbMapBuild(annotEntries []*yang.Entry) {
     if annotEntries == nil {
         return
     }
+    if xSpecMap == nil {
+        xSpecMap = make(map[string]*yangXpathInfo)
+    }
 
-    xSpecMap = make(map[string]*yangXpathInfo)
     for _, e := range annotEntries {
         if e != nil && len(e.Deviations) > 0 {
             for _, d := range e.Deviations {
