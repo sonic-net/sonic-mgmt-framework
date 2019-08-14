@@ -24,16 +24,18 @@ type CommonApp struct {
 	ygotTarget *interface{}
 }
 
+var cmnAppInfo = appInfo{appType: reflect.TypeOf(CommonApp{}),
+                        ygotRootType:  nil,
+                        isNative:      false,
+                        tablesToWatch: nil}
+
+
 func init() {
 
     // @todo : Optimize to register supported paths/yang via common app and report error for unsupported
     register_model_path := []string{"/sonic-"} // register yang model path(s) to be supported via common app
     for _, mdl_pth := range register_model_path {
-        err := register(mdl_pth,
-                        &appInfo{appType:  reflect.TypeOf(CommonApp{}),
-                        ygotRootType:  nil, //interface{},
-                        isNative:      false,
-                        tablesToWatch: nil})
+        err := register(mdl_pth, &cmnAppInfo)
 
         if err != nil {
 		    log.Fatal("Register Common app module with App Interface failed with error=", err, "for path=", mdl_pth)
@@ -164,16 +166,29 @@ func (app *CommonApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
 func (app *CommonApp) translateCRUCommon(d *db.DB, opcode int) ([]db.WatchKeys, error) {
 	var err error
 	var keys []db.WatchKeys
+	var tblsToWatch []*db.TableSpec
 	log.Info("translateCRUCommon:path =", app.pathInfo.Path)
 
 	// translate yang to db
 	result, err := transformer.XlateToDb((*app).ygotRoot, (*app).ygotTarget)
 	fmt.Println(result)
+	log.Info("transformer.XlateToDb() returned", result)
 
 	if err != nil {
 		log.Error(err)
 		return keys, err
 	}
+	if len(result) == 0 {
+		log.Error("XlatetoDB() returned empty map")
+		fmt.Println("XlatetoDB() returned empty map")
+	}
+	for tblnm, _  := range result {
+           log.Error("Table name ", tblnm)
+           tblsToWatch = append(tblsToWatch, &db.TableSpec{Name: tblnm})
+        }
+        log.Info("Tables to watch", tblsToWatch)
+
+        cmnAppInfo.tablesToWatch = tblsToWatch
 
 	keys, err = app.generateDbWatchKeys(d, false)
 
