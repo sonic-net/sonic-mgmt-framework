@@ -75,10 +75,25 @@ func callXfmr() map[string]map[string]db.Value {
     return result
 }
 
+func cvlYangReqToDbMapCreate(uri string, jsonData interface{}, result map[string]map[string]db.Value) error {
+    if reflect.ValueOf(jsonData).Kind() == reflect.Map {
+        data := reflect.ValueOf(jsonData)
+        for _, key := range data.MapKeys() {
+            _, ok := xDbSpecMap[key.String()]
+            if ok {
+                directDbMapData(key.String(), data.MapIndex(key).Interface(), result)
+            } else {
+                cvlYangReqToDbMapCreate(key.String(), data.MapIndex(key).Interface(), result)
+            }
+        }
+    }
+    return nil
+}
+
 func directDbMapData(tableName string, jsonData interface{}, result map[string]map[string]db.Value) bool {
     _, ok := xDbSpecMap[tableName]
 
-    if ok && xDbSpecMap[tableName].dbEntry != nil && reflect.ValueOf(jsonData).Kind() == reflect.Slice {
+    if ok && xDbSpecMap[tableName].dbEntry != nil {
         dbSpecData := xDbSpecMap[tableName].dbEntry
         tblKeyName := strings.Split(dbSpecData.Key, " ")
         data       := reflect.ValueOf(jsonData)
@@ -126,14 +141,24 @@ func dbMapDelete(path string, jsonData interface{}, result map[string]map[string
 func dbMapUpdate(path string, jsonData interface{}, result map[string]map[string]db.Value) error {
     xpathPrefix, keyName := xpathKeyExtract(path)
     log.Info("Update/replace req: path(\"%v\"), key(\"%v\"), xpathPrefix(\"%v\").", path, keyName, xpathPrefix)
-    dbMapCreate(keyName, parentXpathGet(xpathPrefix), jsonData, result)
+    dbMapCreate(parentXpathGet(xpathPrefix), jsonData, result)
     log.Info("Update/replace req: path(\"%v\") result(\"%v\").", path, result)
     return nil
 }
 
 /* Get the data from incoming create request, create map and fill with dbValue(ie. field:value 
    to write into redis-db */
-func dbMapCreate(keyName string, xpathPrefix string, jsonData interface{}, result map[string]map[string]db.Value) error {
+func dbMapCreate(uri string, jsonData interface{}, result map[string]map[string]db.Value) error {
+    xpathTmplt, keyName := xpathKeyExtract(uri)
+    if isCvlYang(uri) {
+        cvlYangReqToDbMapCreate(uri, jsonData, result)
+    } else {
+        yangReqToDbMapCreate(uri, xpathTmplt, keyName, jsonData, result)
+    }
+    return nil
+}
+
+func yangReqToDbMapCreate(uri string, xpathPrefix string, keyName string, jsonData interface{}, result map[string]map[string]db.Value) error {
     log.Info("key(\"%v\"), xpathPrefix(\"%v\").", keyName, xpathPrefix)
 
     if reflect.ValueOf(jsonData).Kind() == reflect.Slice {
@@ -146,7 +171,7 @@ func dbMapCreate(keyName string, xpathPrefix string, jsonData interface{}, resul
         // string
         for _, data := range dataMap {
             keyName := keyCreate(keyName, xpathPrefix, data)
-            return dbMapCreate(keyName, xpathPrefix, data, result)
+            yangReqToDbMapCreate(uri, xpathPrefix, keyName, data, result)
         }
     } else {
         if reflect.ValueOf(jsonData).Kind() == reflect.Map {
@@ -156,25 +181,21 @@ func dbMapCreate(keyName string, xpathPrefix string, jsonData interface{}, resul
 
                 if typeOfValue == reflect.Map || typeOfValue == reflect.Slice {
                     log.Info("slice/map data: key(\"%v\"), xpathPrefix(\"%v\").", keyName, xpathPrefix)
-					if directDbMapData(key.String(), jData.MapIndex(key).Interface(), result) {
-                        continue
-					} else {
-                        pathAttr := key.String()
-                        if strings.Contains(pathAttr, ":") {
-                            pathAttr = strings.Split(pathAttr, ":")[1]
-                        }
-                        xpath := xpathPrefix + "/" + pathAttr
+                    pathAttr := key.String()
+                    if strings.Contains(pathAttr, ":") {
+                        pathAttr = strings.Split(pathAttr, ":")[1]
+                    }
+                    xpath := xpathPrefix + "/" + pathAttr
 
-                        if xSpecMap[xpath] != nil && len(xSpecMap[xpath].xfmrFunc) > 0 {
-                            subMap := callXfmr()
-                            // map[string]map[string]db.Value
-                            //subMap := XlateFuncCall(xpathInfo.xfmrFunc, name, value)
-                            mapCopy(result, subMap)
-                            return nil
-                        } else {
-                            return dbMapCreate(keyName, xpath, jData.MapIndex(key).Interface(), result)
-                        }
-					}
+                    if xSpecMap[xpath] != nil && len(xSpecMap[xpath].xfmrFunc) > 0 {
+                        subMap := callXfmr()
+                        // map[string]map[string]db.Value
+                        //subMap := XlateFuncCall(xpathInfo.xfmrFunc, name, value)
+                        mapCopy(result, subMap)
+                        return nil
+                    } else {
+                        return yangReqToDbMapCreate(uri, xpath, keyName, jData.MapIndex(key).Interface(), result)
+                    }
                 } else {
                     pathAttr := key.String()
                     if strings.Contains(pathAttr, ":") {

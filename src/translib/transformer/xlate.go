@@ -197,7 +197,7 @@ func XlateToDb(path string, yg *ygot.GoStruct, yt *interface{}) (map[string]map[
 
     // table.key.fields
     var result = make(map[string]map[string]db.Value)
-    err = dbMapCreate("", path, jsonData, result)
+    err = dbMapCreate(path, jsonData, result)
 
     if err != nil {
 	    log.Errorf("Error: Data translation from yang to db failed.")
