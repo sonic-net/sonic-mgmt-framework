@@ -106,7 +106,7 @@ func XlateUriToKeySpec(path string, uri *ygot.GoStruct, t *interface{}) (*map[db
     var result = make(map[db.DBNum][]KeySpec)
     var retdbFormat = make([]KeySpec, 1)
     var dbFormat KeySpec
-    retdbFormat[0] = dbFormat
+    retdbFormat = append(retdbFormat, dbFormat)
 
     /* Extract the xpath and key from input xpath */
     yangXpath, keyStr := xpathKeyExtract(path);
@@ -163,12 +163,8 @@ func fillKeySpec(yangXpath string , keyStr string, dbFormat *KeySpec) {
 	    if xDbSpecMap != nil {
                 if  len(xDbSpecMap[child].yangXpath) > 0 {
                     var childXpath = xDbSpecMap[child].yangXpath[0]
-		    if xpathInfo.tableName == nil {
-                        fillKeySpec(childXpath, "", dbFormat)
-		    } else {
-                        dbFormat.Child =  new(KeySpec)
-                        fillKeySpec(childXpath, "", dbFormat.Child)
-	            }
+                    dbFormat.Child =  new(KeySpec)
+                    fillKeySpec(childXpath, "", dbFormat.Child)
                 }
             }
         }
