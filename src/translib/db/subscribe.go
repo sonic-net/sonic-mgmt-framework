@@ -70,8 +70,8 @@ func SubscribeDB(opt Options, skeys []*SKey, handler HFunc) (*DB, error) {
 			" skeys: ", skeys, " handler: ", handler)
 	}
 
-	patterns := make([]string, len(skeys))
-	patMap := make(map[string]int, len(skeys))
+	patterns := make([]string, 0, len(skeys))
+	patMap := make(map[string]([]int), len(skeys))
 	var s string
 
 	// NewDB
@@ -90,9 +90,14 @@ func SubscribeDB(opt Options, skeys []*SKey, handler HFunc) (*DB, error) {
 		goto SubscribeDBExit
 	}
 
-	for i:=0 ; i < len(skeys); i++ {
-		patterns[i] = d.key2redisChannel(skeys[i].Ts, *(skeys[i].Key))
-		patMap[patterns[i]] = i
+	for i := 0 ; i < len(skeys); i++ {
+		pattern := d.key2redisChannel(skeys[i].Ts, *(skeys[i].Key))
+		if _,present := patMap[pattern] ; ! present {
+			patMap[pattern] = make([]int,  0, 5)
+			patterns = append(patterns, pattern)
+		}
+		patMap[pattern] = append(patMap[pattern], i)
+
 	}
 
 	glog.Info("SubscribeDB: patterns: ", patterns)
@@ -124,18 +129,20 @@ func SubscribeDB(opt Options, skeys []*SKey, handler HFunc) (*DB, error) {
 
 			// Should this be a goroutine, in case each notification CB
 			// takes a long time to run ?
-			skey := skeys[patMap[msg.Pattern]]
-			key := d.redisChannel2key(skey.Ts, msg.Channel)
-			sevent := d.redisPayload2sEvent(msg.Payload)
+			for _, skeyIndex := range patMap[msg.Pattern] {
+				skey := skeys[skeyIndex]
+				key := d.redisChannel2key(skey.Ts, msg.Channel)
+				sevent := d.redisPayload2sEvent(msg.Payload)
 
-			if len(skey.SEMap) == 0 || skey.SEMap[sevent] {
+				if len(skey.SEMap) == 0 || skey.SEMap[sevent] {
 
-				if glog.V(2) {
-					glog.Info("SubscribeDB: handler( ",
-						&d, ", ", skey, ", ", key, ", ", sevent, " )")
+					if glog.V(2) {
+						glog.Info("SubscribeDB: handler( ",
+							&d, ", ", skey, ", ", key, ", ", sevent, " )")
+					}
+
+					handler(d, skey, &key, sevent)
 				}
-
-				handler(d, skey, &key, sevent)
 			}
 		}
 
