@@ -159,9 +159,6 @@ func dbMapCreate(keyName string, xpathPrefix string, jsonData interface{}, resul
 					if directDbMapData(key.String(), jData.MapIndex(key).Interface(), result) {
                         continue
 					} else {
-					    if xpathPrefix == "/"+key.String() {
-                            return dbMapCreate(keyName, xpathPrefix, jData.MapIndex(key).Interface(), result)
-                        }					    
                         pathAttr := key.String()
                         if strings.Contains(pathAttr, ":") {
                             pathAttr = strings.Split(pathAttr, ":")[1]
