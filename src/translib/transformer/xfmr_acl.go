@@ -185,9 +185,6 @@ func getL2EtherType(etherType uint64) interface{} {
     return uint16(etherType)
 }
 
-
-
-
 var YangToDb_acl_entry_key_xfmr KeyXfmrYangToDb = func (d *db.DB, ygRoot *ygot.GoStruct, xpath string) (string, error) {
     var entry_key string
     var err error
@@ -666,10 +663,14 @@ func getDbAlcTblsData (d *db.DB) (map[string]db.Value, map[string]map[string]db.
 var YangToDb_acl_port_bindings_xfmr SubTreeXfmrYangToDb = func (d *db.DB, ygRoot *ygot.GoStruct, xpath string) (map[string]map[string]db.Value, error) {
     res_map := make(map[string]map[string]db.Value)
     aclTableMap := make(map[string]db.Value)
-    var err error;
     log.Info("YangToDb_acl_port_bindings_xfmr: ", ygRoot, xpath)
 
     aclObj := getAclRoot(ygRoot)
+
+    aclTableMapDb, _, err := getDbAlcTblsData(d)
+    if err != nil {
+        log.Info("YangToDb_acl_port_bindings_xfmr: getDbAlcTblsData not able to populate acl tables.")
+    }
 
     if aclObj.Interfaces != nil {
         if len(aclObj.Interfaces.Interface) > 0 {
@@ -705,6 +706,22 @@ var YangToDb_acl_port_bindings_xfmr SubTreeXfmrYangToDb = func (d *db.DB, ygRoot
                             aclTableMap[aclName].Field["stage"] = "EGRESS"
                         }
                     }
+                    if intf.IngressAclSets == nil && intf.EgressAclSets == nil {
+                        for aclName := range aclTableMapDb {
+                            if len(aclTableMap) == 0 {
+                                aclTableMap[aclName] = db.Value{Field: map[string]string{}}
+                            }
+                            aclEntryDb := aclTableMapDb[aclName]
+                            intfsDb := aclEntryDb.GetList("ports")
+                            if contains(intfsDb, intfId) {
+                                var intfs [] string
+                                intfs = append(intfs, intfId)
+                                aclTableMap[aclName].Field["stage"] = aclEntryDb.Get("stage")
+                                val := aclTableMap[aclName]
+                                (&val).SetList("ports", intfs)
+                            }
+                        }
+                    }
                 }
             }
             for k, _ := range aclInterfacesMap {
@@ -712,13 +729,6 @@ var YangToDb_acl_port_bindings_xfmr SubTreeXfmrYangToDb = func (d *db.DB, ygRoot
                 (&val).SetList("ports", aclInterfacesMap[k])
             }
         } else {
-            aclTableMapDb := make(map[string]db.Value)
-            aclTableMapDb, _, err = convertDBAclToInternal (d, db.Key{})
-            if err != nil {
-                log.Info("YangToDb_acl_port_bindings_xfmr: getDbAlcTblsData not able to populate acl tables.")
-                err = errors.New("getDbAlcTblsData failed to populate tables.")
-                return res_map, err
-            }
             for aclName := range aclTableMapDb {
                 if len(aclTableMap) == 0 {
                     aclTableMap[aclName] = db.Value{Field: map[string]string{}}

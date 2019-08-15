@@ -104,15 +104,30 @@ func XlateUriToKeySpec(path string, uri *ygot.GoStruct, t *interface{}) (*map[db
 
     var err error
     var result = make(map[db.DBNum][]KeySpec)
-    var retdbFormat = make([]KeySpec, 1)
-    var dbFormat KeySpec
-    retdbFormat = append(retdbFormat, dbFormat)
+    var retdbFormat = make([]KeySpec, 0)
 
     /* Extract the xpath and key from input xpath */
     yangXpath, keyStr := xpathKeyExtract(path);
 
-    fillKeySpec(yangXpath, keyStr, &dbFormat)
-
+    if xSpecMap == nil {
+        return &result, err
+    }
+    _, ok := xSpecMap[yangXpath]
+    if ok {
+        xpathInfo := xSpecMap[yangXpath]
+        if xpathInfo.tableName != nil {
+	    dbFormat := KeySpec{}
+            fillKeySpec(yangXpath, keyStr, &dbFormat)
+	    retdbFormat = append(retdbFormat, dbFormat)
+        } else {
+	    for _, child := range xpathInfo.childTable {
+               dbFormat := KeySpec{}
+               var childXpath = xDbSpecMap[child].yangXpath[0]
+               fillKeySpec(childXpath, "", &dbFormat)
+	       retdbFormat = append(retdbFormat, dbFormat)
+	    }
+        }
+    }
     result[db.ConfigDB] = retdbFormat
 
     // 1 - mock data for a URI /openconfig-acl:acl/acl-sets/acl-set=MyACL1,ACL_IPV4
@@ -131,6 +146,7 @@ func XlateUriToKeySpec(path string, uri *ygot.GoStruct, t *interface{}) (*map[db
 //                              Key: db.Key{Comp: []string{"MyACL1_ACL_IPV4|RULE_1"}},
 //                      }
 //              }
+
 
         // 3 - mock data for a URI /openconfig-acl:acl
 //      result[db.ConfigDB] = []KeySpec{
@@ -158,8 +174,8 @@ func fillKeySpec(yangXpath string , keyStr string, dbFormat *KeySpec) {
             dbFormat.Key.Comp = append(dbFormat.Key.Comp, keyStr)
         }
         for _, child := range xpathInfo.childTable {
-           /* Current support for one child. Should change the KeySpec.Child
-              to array of pointers later when we support all children */
+           // Current support for one child. Should change the KeySpec.Child
+           //   to array of pointers later when we support all children 
 	    if xDbSpecMap != nil {
                 if  len(xDbSpecMap[child].yangXpath) > 0 {
                     var childXpath = xDbSpecMap[child].yangXpath[0]
@@ -172,7 +188,6 @@ func fillKeySpec(yangXpath string , keyStr string, dbFormat *KeySpec) {
         return;
     }
 }
-
 
 func XlateToDb(path string, yg *ygot.GoStruct, yt *interface{}) (map[string]map[string]db.Value, error) {
 
