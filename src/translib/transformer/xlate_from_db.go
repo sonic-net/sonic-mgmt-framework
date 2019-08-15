@@ -80,9 +80,33 @@ func listDataToJsonAdd(xpathl []string, dataMap map[string]db.Value, key string,
     return jsonData
 }
 
+/* Traverse db map and create json for cvl yang */
+func directDbToYangJsonCreate(dbDataMap map[string]map[string]db.Value, jsonData string) string {
+    for tblName, tblData := range dbDataMap {
+        dataInst := ""
+        for keyStr, dbFldValData := range tblData {
+            fldValPair := ""
+            for field, value := range dbFldValData.Field {
+                fldValPair += fmt.Sprintf("\"%v\" : \"%v\",\r\n", field, value)
+            }
+            yangKeys  := yangKeyFromEntryGet(xDbSpecMap[tblName].dbEntry)
+            fldValPair = keyJsonDataAdd(yangKeys, keyStr, fldValPair)
+            dataInst   = fmt.Sprintf("{ \r\n %v \r\n },", fldValPair)
+        }
+        dataInst  = strings.TrimRight(dataInst, ",")
+        jsonData += fmt.Sprintf("\"%v\" : [\r\n %v\r\n ],", tblName, dataInst)
+    }
+    jsonData = strings.TrimRight(jsonData, ",")
+    return jsonData
+}
+
 /* Traverse linear db-map data and add to nested json data */
-func dbDataToYangJsonCreate(dbDataMap map[string]map[string]db.Value) error {
+func dbDataToYangJsonCreate(xpath string, dbDataMap map[string]map[string]db.Value) (string, error) {
     jsonData := ""
+	if isCvlYang(xpath) {
+		jsonData := directDbToYangJsonCreate(dbDataMap, jsonData)
+		return jsonData, nil
+	}
     curXpath := ""
     for tblName, tblData := range dbDataMap {
         if len(curXpath) == 0 || strings.HasPrefix(curXpath, xDbSpecMap[tblName].yangXpath[0]) {
@@ -92,7 +116,7 @@ func dbDataToYangJsonCreate(dbDataMap map[string]map[string]db.Value) error {
     }
     jsonData = parentJsonDataUpdate(curXpath, jsonData)
 	jsonDataPrint(jsonData)
-    return nil
+    return jsonData, nil
 }
 
 func parentJsonDataUpdate(xpath string, data string) string {

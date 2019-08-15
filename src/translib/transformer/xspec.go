@@ -304,11 +304,11 @@ func mapPrint(inMap map[string]*yangXpathInfo, fileName string) {
         if len(d.fieldName) > 0 {
             fmt.Fprintf(fp, "%v", d.fieldName)
         }
-        fmt.Fprintf(fp, "\r\n    keyXfmr: ")
+        fmt.Fprintf(fp, "\r\n    xfmrKeyFn: ")
         if d.dbEntry != nil {
             fmt.Fprintf(fp, "%v\r\n", d.xfmrKey)
         }
-        fmt.Fprintf(fp, "\r\n    SubTreeXfmr: ")
+        fmt.Fprintf(fp, "\r\n    xfmrFunc: ")
         if d.dbEntry != nil {
             fmt.Fprintf(fp, "%v\r\n", d.xfmrFunc)
         }

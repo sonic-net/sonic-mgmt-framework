@@ -116,3 +116,43 @@ func getYangPathFromUri(uri string) (string, error) {
     return yangPath, err
 }
 
+func yangKeyFromEntryGet(entry *yang.Entry) []string {
+    var keyList []string
+    for _, key := range strings.Split(entry.Key, " ") {
+        keyList = append(keyList, key)
+    }
+    return keyList
+}
+
+func isCvlYang(path string) bool {
+    if strings.HasPrefix(path, "/sonic") {
+        return true
+    }
+    return false
+}
+
+func keyJsonDataAdd(keyNameList []string, keyStr string, jsonData string) string {
+    keyValList := strings.Split(keyStr, "|")
+    if len(keyNameList) != len(keyValList) {
+        return ""
+    }
+
+    for i, keyName := range keyNameList {
+        jsonData += fmt.Sprintf("\"%v\" : \"%v\",", keyName, keyValList[i])
+    }
+    jsonData = strings.TrimRight(jsonData, ",")
+    return jsonData
+}
+
+func yangToDbXfmrFunc(funcName string) string {
+    return ("YangToDB_" + funcName)
+}
+
+func uriWithKeyCreate (uri string, xpathTmplt string, data interface{}) string {
+    yangEntry := xSpecMap[xpathTmplt].yangEntry
+    for _, k := range (strings.Split(yangEntry.Key, " ")) {
+        uri += fmt.Sprintf("[%v=%v]", k, data.(map[string]interface{})[k])
+    }
+    return uri
+}
+
