@@ -149,7 +149,7 @@ func keyJsonDataAdd(keyNameList []string, keyStr string, jsonData string) string
 }
 
 func yangToDbXfmrFunc(funcName string) string {
-    return ("YangToDB_" + funcName)
+    return ("YangToDb_" + funcName)
 }
 
 func uriWithKeyCreate (uri string, xpathTmplt string, data interface{}) string {

@@ -60,10 +60,15 @@ func mapFillData(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, dbKey st
     }
 
     if len(xpathInfo.xfmrFunc) > 0 {
+        /* field transformer present */
         log.Info("Transformer function(\"%v\") invoked for yang path(\"%v\").", xpathInfo.xfmrFunc, xpath)
-        // map[string]string
-        //fieldName := XlateFuncCall(xpathInfo.xfmrFunc, name, value)
-        //return errors.New("Invalid field name")
+        ret, err := XlateFuncCall(yangToDbXfmrFunc(xSpecMap[xpath].xfmrFunc), d, ygRoot, oper, uri, value)
+        if err != nil { return err }
+        retData := ret[0].Interface().(map[string]string)
+        log.Info("Transformer function \"%v\" for \"%v\" returned(%v).", xpathInfo.xfmrFunc, xpath, retData)
+        for f, v := range retData {
+            dataToDBMapAdd(*xpathInfo.tableName, dbKey, result, f, v)
+        }
         return nil
     }
 
@@ -179,10 +184,18 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
         for idx := 0; idx < jData.Len(); idx++ {
             dataMap[idx] = jData.Index(idx).Interface()
         }
-        // string
         for _, data := range dataMap {
-            keyName := keyCreate(keyName, xpathPrefix, data)
-            yangReqToDbMapCreate(d, ygRoot, oper, uri, xpathPrefix, keyName, data, result)
+            curKey := ""
+            uri = uriWithKeyCreate(uri, xpathPrefix, data)
+            if len(xSpecMap[xpathPrefix].xfmrKey) > 0 {
+                /* key transformer present */
+                ret, err := XlateFuncCall(yangToDbXfmrFunc(xSpecMap[xpathPrefix].xfmrKey), d, ygRoot, oper, uri)
+                if err != nil { return err }
+                curKey = ret[0].Interface().(string)
+            } else {
+                curKey = keyCreate(keyName, xpathPrefix, data)
+            }
+            yangReqToDbMapCreate(d, ygRoot, oper, uri, xpathPrefix, curKey, data, result)
         }
     } else {
         if reflect.ValueOf(jsonData).Kind() == reflect.Map {
@@ -199,13 +212,15 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
                             pathAttr = strings.Split(pathAttr, ":")[1]
                         }
                         xpath = xpathPrefix + "/" + pathAttr
+                        uri   = uri + "/" + pathAttr
                     }
 
                     if xSpecMap[xpath] != nil && len(xSpecMap[xpath].xfmrFunc) > 0 {
-                        subMap := callXfmr()
-                        // map[string]map[string]db.Value
-                        //subMap := XlateFuncCall(xpathInfo.xfmrFunc, name, value)
-                        mapCopy(result, subMap)
+                        /* subtree transformer present */
+                        ret, err := XlateFuncCall(yangToDbXfmrFunc(xSpecMap[xpath].xfmrFunc), d, ygRoot, oper, uri)
+                        if err != nil { return nil }
+                        //subMap := callXfmr()
+                        mapCopy(result, ret[0].Interface().(map[string]map[string]db.Value))
                         return nil
                     } else {
                         yangReqToDbMapCreate(d, ygRoot, oper, uri, xpath, keyName, jData.MapIndex(key).Interface(), result)
