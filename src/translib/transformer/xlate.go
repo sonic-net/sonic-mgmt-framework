@@ -15,6 +15,14 @@ import (
     log "github.com/golang/glog"
 )
 
+const (
+	GET = 1 + iota
+	CREATE
+	REPLACE
+	UPDATE
+	DELETE
+)
+
 type KeySpec struct {
     Ts      db.TableSpec
     Key db.Key
@@ -189,7 +197,7 @@ func fillKeySpec(yangXpath string , keyStr string, dbFormat *KeySpec) {
     }
 }
 
-func XlateToDb(path string, yg *ygot.GoStruct, yt *interface{}) (map[string]map[string]db.Value, error) {
+func XlateToDb(path string, opcode int, yg *ygot.GoStruct, yt *interface{}) (map[string]map[string]db.Value, error) {
 
     var err error
 
@@ -212,14 +220,24 @@ func XlateToDb(path string, yg *ygot.GoStruct, yt *interface{}) (map[string]map[
 
     // table.key.fields
     var result = make(map[string]map[string]db.Value)
-    err = dbMapCreate(path, jsonData, result)
+    switch opcode {
+        case CREATE:
+            log.Info("CREATE case")
+	    err = dbMapCreate(path, jsonData, result)
+	    if err != nil {
+	        log.Errorf("Error: Data translation from yang to db failed.")
+            }
 
-    if err != nil {
-	    log.Errorf("Error: Data translation from yang to db failed.")
-        return result, err
+       case UPDATE:
+            log.Info("UPDATE case")
+
+       case REPLACE:
+            log.Info("REPLACE case")
+
+       case DELETE:
+            log.Info("DELETE case")
     }
-
-    return result, err
+   return result, err
 }
 
 func XlateFromDb(data map[string]map[string]db.Value) ([]byte, error) {

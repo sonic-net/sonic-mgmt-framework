@@ -1,0 +1,4 @@
+./translibtest -o "get" -u "/sonic-acl:sonic-acl/ACL_TABLE[aclname=MyACL1_ACL_IPV4]" -logtostderr
+
+
+
