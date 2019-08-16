@@ -406,15 +406,15 @@ func Get(req GetRequest) (GetResponse, error){
 	}
 
 	defer closeAllDbs(dbs[:])
-    
-    keySpec, err := (*app).translateGet (dbs)
+
+        err = (*app).translateGet (dbs)
 
 	if err != nil {
 		resp = GetResponse{Payload:payload, ErrSrc:AppErr}
         return resp, err
 	}
 
-    resp, err = (*app).processGet(dbs, keySpec)
+    resp, err = (*app).processGet(dbs)
 
     return resp, err
 }

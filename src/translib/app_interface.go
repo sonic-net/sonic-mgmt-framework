@@ -22,7 +22,6 @@ import (
 	"reflect"
 	"strings"
 	"translib/db"
-	"translib/transformer"
 	log "github.com/golang/glog"
 	"github.com/openconfig/ygot/ygot"
 )
@@ -56,13 +55,13 @@ type appInterface interface {
 	translateUpdate(d *db.DB) ([]db.WatchKeys, error)
 	translateReplace(d *db.DB) ([]db.WatchKeys, error)
 	translateDelete(d *db.DB) ([]db.WatchKeys, error)
-	translateGet(dbs [db.MaxDB]*db.DB) (*map[db.DBNum][]transformer.KeySpec, error)	
+	translateGet(dbs [db.MaxDB]*db.DB) error
 	translateSubscribe(dbs [db.MaxDB]*db.DB, path string) (*notificationOpts, *notificationInfo, error)
 	processCreate(d *db.DB) (SetResponse, error)
 	processUpdate(d *db.DB) (SetResponse, error)
 	processReplace(d *db.DB) (SetResponse, error)
 	processDelete(d *db.DB) (SetResponse, error)
-	processGet(dbs [db.MaxDB]*db.DB, spec *map[db.DBNum][]transformer.KeySpec) (GetResponse, error)	
+	processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error)
 }
 
 //App modules will use this function to register with App interface during boot up
