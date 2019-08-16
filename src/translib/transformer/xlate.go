@@ -197,7 +197,7 @@ func fillKeySpec(yangXpath string , keyStr string, dbFormat *KeySpec) {
     }
 }
 
-func XlateToDb(path string, opcode int, yg *ygot.GoStruct, yt *interface{}) (map[string]map[string]db.Value, error) {
+func XlateToDb(path string, opcode int, d *db.DB, yg *ygot.GoStruct, yt *interface{}) (map[string]map[string]db.Value, error) {
 
     var err error
 
@@ -223,7 +223,7 @@ func XlateToDb(path string, opcode int, yg *ygot.GoStruct, yt *interface{}) (map
     switch opcode {
         case CREATE:
             log.Info("CREATE case")
-	    err = dbMapCreate(nil, yg, opcode, path, jsonData, result)
+	    err = dbMapCreate(d, yg, opcode, path, jsonData, result)
 	    if err != nil {
 	        log.Errorf("Error: Data translation from yang to db failed.")
             }

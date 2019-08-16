@@ -194,7 +194,7 @@ func (app *CommonApp) translateCRUCommon(d *db.DB, opcode int) ([]db.WatchKeys, 
 	log.Info("translateCRUCommon:path =", app.pathInfo.Path)
 
 	// translate yang to db
-	result, err := transformer.XlateToDb(app.pathInfo.Path, opcode, (*app).ygotRoot, (*app).ygotTarget)
+	result, err := transformer.XlateToDb(app.pathInfo.Path, opcode, d, (*app).ygotRoot, (*app).ygotTarget)
 	fmt.Println(result)
 	log.Info("transformer.XlateToDb() returned", result)
 

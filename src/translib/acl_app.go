@@ -293,7 +293,7 @@ func (app *AclApp) translateCRUCommon(d *db.DB, opcode int) ([]db.WatchKeys, err
 	log.Info("translateCRUCommon:acl:path =", app.pathInfo.Template)
 
     // TODO - once it's fully verfied, restrcuture the rest code
-    result, err := transformer.XlateToDb(app.pathInfo.Path, opcode, app.ygotRoot, app.ygotTarget)
+    result, err := transformer.XlateToDb(app.pathInfo.Path, opcode, d, app.ygotRoot, app.ygotTarget)
     if err != nil {
         fmt.Println(result)
     }
