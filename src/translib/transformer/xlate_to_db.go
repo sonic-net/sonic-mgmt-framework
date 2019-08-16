@@ -8,12 +8,29 @@ import (
     "regexp"
     "strings"
     "errors"
+	"github.com/openconfig/ygot/ygot"
 
     log "github.com/golang/glog"
 )
 
+/* Fill redis-db map with field & value info */
+func dataToDBMapAdd(tableName string, dbKey string, result map[string]map[string]db.Value, field string, value string) {
+    _, ok := result[tableName]
+    if !ok {
+        result[tableName] = make(map[string]db.Value)
+    }
+
+    _, ok = result[tableName][dbKey]
+    if !ok {
+       result[tableName][dbKey] = db.Value{Field: make(map[string]string)}
+    }
+
+    result[tableName][dbKey].Field[field] = value
+    return
+}
+
 /* Fill the redis-db map with data */
-func mapFillData(dbKey string, result map[string]map[string]db.Value, xpathPrefix string, name string, value string) error {
+func mapFillData(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, dbKey string, result map[string]map[string]db.Value, xpathPrefix string, name string, value string) error {
     xpath := xpathPrefix + "/"  + name
     xpathInfo := xSpecMap[xpath]
     log.Info("name: \"%v\", xpathPrefix(\"%v\").", name, xpathPrefix)
@@ -50,17 +67,7 @@ func mapFillData(dbKey string, result map[string]map[string]db.Value, xpathPrefi
         return nil
     }
 
-    _, ok := result[*xpathInfo.tableName]
-    if !ok {
-        result[*xpathInfo.tableName] = make(map[string]db.Value)
-    }
-
-    _, ok = result[*xpathInfo.tableName][dbKey]
-    if !ok {
-       result[*xpathInfo.tableName][dbKey] = db.Value{Field: make(map[string]string)}
-    }
-
-    result[*xpathInfo.tableName][dbKey].Field[fieldName] = value
+	dataToDBMapAdd(*xpathInfo.tableName, dbKey, result, fieldName, value)
     log.Info("TblName: \"%v\", key: \"%v\", field: \"%v\", value: \"%v\".",
               *xpathInfo.tableName, dbKey, fieldName, value)
     return nil
@@ -78,7 +85,7 @@ func callXfmr() map[string]map[string]db.Value {
     return result
 }
 
-func cvlYangReqToDbMapCreate(uri string, jsonData interface{}, result map[string]map[string]db.Value) error {
+func cvlYangReqToDbMapCreate(jsonData interface{}, result map[string]map[string]db.Value) error {
     if reflect.ValueOf(jsonData).Kind() == reflect.Map {
         data := reflect.ValueOf(jsonData)
         for _, key := range data.MapKeys() {
@@ -86,7 +93,7 @@ func cvlYangReqToDbMapCreate(uri string, jsonData interface{}, result map[string
             if ok {
                 directDbMapData(key.String(), data.MapIndex(key).Interface(), result)
             } else {
-                cvlYangReqToDbMapCreate(key.String(), data.MapIndex(key).Interface(), result)
+                cvlYangReqToDbMapCreate(data.MapIndex(key).Interface(), result)
             }
         }
     }
@@ -122,7 +129,7 @@ func directDbMapData(tableName string, jsonData interface{}, result map[string]m
 }
 
 /* Get the db table, key and field name for the incoming delete request */
-func dbMapDelete(path string, jsonData interface{}, result map[string]map[string]db.Value) error {
+func dbMapDelete(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, jsonData interface{}, result map[string]map[string]db.Value) error {
     xpathPrefix, keyName := xpathKeyExtract(path)
     log.Info("Delete req: path(\"%v\"), key(\"%v\"), xpathPrefix(\"%v\").", path, keyName, xpathPrefix)
     spec, ok := xSpecMap[xpathPrefix]
@@ -141,28 +148,28 @@ func dbMapDelete(path string, jsonData interface{}, result map[string]map[string
 
 /* Get the data from incoming update/replace request, create map and fill with dbValue(ie. field:value 
    to write into redis-db */
-func dbMapUpdate(path string, jsonData interface{}, result map[string]map[string]db.Value) error {
+func dbMapUpdate(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, jsonData interface{}, result map[string]map[string]db.Value) error {
     xpathPrefix, keyName := xpathKeyExtract(path)
     log.Info("Update/replace req: path(\"%v\"), key(\"%v\"), xpathPrefix(\"%v\").", path, keyName, xpathPrefix)
-    dbMapCreate(parentXpathGet(xpathPrefix), jsonData, result)
+    dbMapCreate(d, ygRoot, oper, parentXpathGet(xpathPrefix), jsonData, result)
     log.Info("Update/replace req: path(\"%v\") result(\"%v\").", path, result)
     return nil
 }
 
 /* Get the data from incoming create request, create map and fill with dbValue(ie. field:value 
    to write into redis-db */
-func dbMapCreate(uri string, jsonData interface{}, result map[string]map[string]db.Value) error {
-    xpathTmplt, keyName := xpathKeyExtract(uri)
-    if isCvlYang(uri) {
-        cvlYangReqToDbMapCreate(uri, jsonData, result)
+func dbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, jsonData interface{}, result map[string]map[string]db.Value) error {
+    xpathTmplt, keyName := xpathKeyExtract(path)
+    if isCvlYang(path) {
+        cvlYangReqToDbMapCreate(jsonData, result)
     } else {
-        yangReqToDbMapCreate(uri, parentXpathGet(xpathTmplt), keyName, jsonData, result)
+        yangReqToDbMapCreate(d, ygRoot, oper, path, parentXpathGet(xpathTmplt), keyName, jsonData, result)
     }
     printDbData(result, "/tmp/yangToDbData.txt")
     return nil
 }
 
-func yangReqToDbMapCreate(uri string, xpathPrefix string, keyName string, jsonData interface{}, result map[string]map[string]db.Value) error {
+func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, xpathPrefix string, keyName string, jsonData interface{}, result map[string]map[string]db.Value) error {
     log.Info("key(\"%v\"), xpathPrefix(\"%v\").", keyName, xpathPrefix)
 
     if reflect.ValueOf(jsonData).Kind() == reflect.Slice {
@@ -175,7 +182,7 @@ func yangReqToDbMapCreate(uri string, xpathPrefix string, keyName string, jsonDa
         // string
         for _, data := range dataMap {
             keyName := keyCreate(keyName, xpathPrefix, data)
-            yangReqToDbMapCreate(uri, xpathPrefix, keyName, data, result)
+            yangReqToDbMapCreate(d, ygRoot, oper, uri, xpathPrefix, keyName, data, result)
         }
     } else {
         if reflect.ValueOf(jsonData).Kind() == reflect.Map {
@@ -201,7 +208,7 @@ func yangReqToDbMapCreate(uri string, xpathPrefix string, keyName string, jsonDa
                         mapCopy(result, subMap)
                         return nil
                     } else {
-                        yangReqToDbMapCreate(uri, xpath, keyName, jData.MapIndex(key).Interface(), result)
+                        yangReqToDbMapCreate(d, ygRoot, oper, uri, xpath, keyName, jData.MapIndex(key).Interface(), result)
                     }
                 } else {
                     pathAttr := key.String()
@@ -210,7 +217,8 @@ func yangReqToDbMapCreate(uri string, xpathPrefix string, keyName string, jsonDa
                     }
                     value := jData.MapIndex(key).Interface()
                     log.Info("data field: key(\"%v\"), value(\"%v\").", key, value)
-                    err := mapFillData(keyName, result, xpathPrefix, pathAttr, fmt.Sprintf("%v", value))
+                    err := mapFillData(d, ygRoot, oper, uri, keyName, result, xpathPrefix,
+                                       pathAttr, fmt.Sprintf("%v", value))
                     if err != nil {
                         log.Errorf("Failed constructing data for db write: key(\"%v\"), value(\"%v\"), path(\"%v\").",
                                     pathAttr, value, xpathPrefix)
