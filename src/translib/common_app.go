@@ -13,6 +13,7 @@ import (
 	"translib/db"
 	//"translib/ocbinds"
 	"translib/transformer"
+	"translib/tlerr"
 )
 
 var (
@@ -240,12 +241,8 @@ func (app *CommonApp) cmnAppDataDbOperation(d *db.DB, opcode int, cmnAppDataDbMa
                       log.Info("CREATE case")
                       existingEntry, err := d.GetEntry(cmnAppTs, db.Key{Comp: []string{tblKey}})
                       if existingEntry.IsPopulated() {
-                              log.Info("Entry already exists hence modifying it.")
-                              err := d.ModEntry(cmnAppTs, db.Key{Comp: []string{tblKey}}, tblRw)
-                              if err != nil {
-                                  log.Error("CREATE case - d.ModEntry() failure")
-                                  return err
-                              }
+                              log.Info("Entry already exists hence return error.")
+			      return tlerr.AlreadyExists("Entry %s already exists", tblKey)
                       } else {
                              err = d.CreateEntry(cmnAppTs, db.Key{Comp: []string{tblKey}}, tblRw)
                              if err != nil {
@@ -253,7 +250,7 @@ func (app *CommonApp) cmnAppDataDbOperation(d *db.DB, opcode int, cmnAppDataDbMa
                                  return err
                              }
                       }
-	 	 case UPDATE:
+		 case UPDATE:
                       log.Info("UPDATE case")
                       existingEntry, err := d.GetEntry(cmnAppTs, db.Key{Comp: []string{tblKey}})
                       if existingEntry.IsPopulated() {
@@ -264,11 +261,9 @@ func (app *CommonApp) cmnAppDataDbOperation(d *db.DB, opcode int, cmnAppDataDbMa
                               return err
                           }
                       } else {
-                        err = d.CreateEntry(cmnAppTs, db.Key{Comp: []string{tblKey}}, tblRw)
-                        if err != nil {
-                            log.Error("UPDATE case - d.CreateEntry() failure")
-                            return err
-                        }
+			  log.Info("Entry to be modified does not exist hence return error.")
+                          return tlerr.NotFound("Entry %s to be modified does not exist.", tblKey)
+
                       }
 
                   case REPLACE:
