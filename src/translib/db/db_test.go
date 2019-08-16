@@ -7,13 +7,13 @@ package db
 
 
 import (
-	"fmt"
+	// "fmt"
 	// "errors"
 	// "flag"
 	// "github.com/golang/glog"
 	"time"
 	// "translib/tlerr"
-	"os/exec"
+	// "os/exec"
 	"os"
 	"testing"
 	"strconv"
@@ -22,8 +22,14 @@ import (
 
 func TestMain(m * testing.M) {
 
-	redisServerAttemptedStart := false
 	exitCode := 0
+
+/* Apparently, on an actual switch the swss container will have
+ * a redis-server running, which will be in a different container than
+ * mgmt, thus this pkill stuff to find out it is running will not work.
+ *
+
+	redisServerAttemptedStart := false
 
 TestMainRedo:
 	o, e := exec.Command("/usr/bin/pkill", "-HUP", "redis-server").Output()
@@ -43,6 +49,7 @@ TestMainRedo:
 		redisServerAttemptedStart = true
 		goto TestMainRedo
 	}
+*/
 
 	if exitCode == 0 {
 		exitCode = m.Run()
@@ -339,16 +346,13 @@ func testTransaction(t * testing.T, transRun TransRun) {
 	var table []*TableSpec
 
 	switch transRun {
-	case TransRunBasic:
-	case TransRunWatchKeysAndTable:
+	case TransRunBasic, TransRunWatchKeysAndTable:
 		watchKeys = []WatchKeys{{Ts: &ts, Key: &akey}}
 		table = []*TableSpec { &ts }
-	case TransRunWatchKeys:
-	case TransRunFailWatchKeys:
+	case TransRunWatchKeys, TransRunFailWatchKeys:
 		watchKeys = []WatchKeys{{Ts: &ts, Key: &akey}}
 		table = []*TableSpec { }
-	case TransRunTable:
-	case TransRunFailTable:
+	case TransRunTable, TransRunFailTable:
 		watchKeys = []WatchKeys{}
 		table = []*TableSpec { &ts }
 	}
@@ -424,8 +428,7 @@ func testTransaction(t * testing.T, transRun TransRun) {
 	}
 
 	switch transRun {
-	case TransRunFailWatchKeys:
-	case TransRunFailTable:
+	case TransRunFailWatchKeys, TransRunFailTable:
         	d2,_ := NewDB(Options {
                         DBNo              : ConfigDB,
                         InitIndicator     : "",
@@ -444,8 +447,7 @@ func testTransaction(t * testing.T, transRun TransRun) {
 	e = d.CommitTx()
 
 	switch transRun {
-	case TransRunFailWatchKeys:
-	case TransRunFailTable:
+	case TransRunFailWatchKeys, TransRunFailTable:
 		if e == nil {
 			t.Errorf("NT CommitTx() tr: %v fails e = %v",
 				transRun, e)
@@ -516,7 +518,7 @@ func TestMap(t * testing.T) {
 	}
 }
 
-func testSubscribe(t * testing.T) {
+func TestSubscribe(t * testing.T) {
 
 	var pid int = os.Getpid()
 

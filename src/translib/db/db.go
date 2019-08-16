@@ -372,7 +372,15 @@ func (d *DB) ts2redisUpdated(ts *TableSpec) string {
 		glog.Info("ts2redisUpdated: Begin: ", ts.Name)
 	}
 
-	return string("CONFIG_DB_UPDATED_") + ts.Name
+	var updated string
+
+	if strings.Contains(ts.Name, "*") {
+		updated = string("CONFIG_DB_UPDATED")
+	} else {
+		updated = string("CONFIG_DB_UPDATED_") + ts.Name
+	}
+
+	return updated
 }
 
 // GetEntry retrieves an entry(row) from the table.
@@ -508,7 +516,11 @@ func (d *DB) doCVL(ts * TableSpec, cvlOps []cvl.CVLOperation, key Key, vals []Va
 			d.cvlEditConfigData = append(d.cvlEditConfigData, cvlEditConfigData)
 
 		case cvl.OP_DELETE:
-			cvlEditConfigData.Data = map[string]string {}
+			if len(vals[i].Field) == 0 {
+				cvlEditConfigData.Data = map[string]string {}
+			} else {
+				cvlEditConfigData.Data = vals[i].Field
+			}
 			d.cvlEditConfigData = append(d.cvlEditConfigData, cvlEditConfigData)
 
 		default:
@@ -698,7 +710,13 @@ func (d *DB) setEntry(ts *TableSpec, key Key, value Value, isCreate bool) error 
 		if glog.V(3) {
 			glog.Info("setEntry: DoCVL for UPDATE")
 		}
-		e = d.doCVL(ts, []cvl.CVLOperation {cvl.OP_UPDATE}, key, []Value { value} )
+		if len(valueComplement.Field) == 0 {
+			e = d.doCVL(ts, []cvl.CVLOperation {cvl.OP_UPDATE},
+					key, []Value { value} )
+		} else {
+			e = d.doCVL(ts, []cvl.CVLOperation {cvl.OP_UPDATE, cvl.OP_DELETE},
+					key, []Value { value, valueComplement} )
+		}
 	} else {
 		if glog.V(3) {
 			glog.Info("setEntry: DoCVL for CREATE")
@@ -796,7 +814,17 @@ func (d *DB) DeleteEntryFields(ts *TableSpec, key Key, value Value) error {
 		glog.Info("DeleteEntryFields: DoCVL for HDEL (post-POC)")
 	}
 
-	return d.doWrite(ts, txOpHDel, key, value)
+	if glog.V(3) {
+		glog.Info("DeleteEntryFields: DoCVL for HDEL")
+	}
+
+	e := d.doCVL(ts, []cvl.CVLOperation {cvl.OP_DELETE}, key, []Value{value})
+
+	if e == nil {
+		d.doWrite(ts, txOpHDel, key, value)
+	}
+
+	return e
 }
 
 
@@ -1242,6 +1270,12 @@ func (d *DB) CommitTx() error {
 				d.ts2redisUpdated(&ts), " 1: e: ",
 				e.Error())
 		}
+	}
+	_, e = d.client.Do("SET", d.ts2redisUpdated(& TableSpec{Name: "*"}),
+		"1").Result()
+	if e != nil {
+		glog.Warning("CommitTx: Do: SET ",
+			"CONFIG_DB_UPDATED", " 1: e: ", e.Error())
 	}
 
 	// Issue EXEC
