@@ -31,7 +31,11 @@ func keyCreate(keyPrefix string, xpath string, data interface{}) string {
     keyVal := ""
     for i, k := range (strings.Split(yangEntry.Key, " ")) {
         if i > 0 { keyVal = keyVal + "_" }
-        keyVal += fmt.Sprintf("%v", data.(map[string]interface{})[k])
+        val := fmt.Sprint(data.(map[string]interface{})[k])
+        if strings.Contains(val, ":") {
+            val = strings.Split(val, ":")[1]
+        }
+        keyVal += val
     }
     keyPrefix += string(keyVal)
     return keyPrefix

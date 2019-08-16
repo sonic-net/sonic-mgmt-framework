@@ -38,6 +38,9 @@ func mapFillData(dbKey string, result map[string]map[string]db.Value, xpathPrefi
         return errors.New("Invalid field name")
     }
     fieldName := xpathInfo.fieldName
+    if strings.Contains(value, ":") {
+        value = strings.Split(value, ":")[1]
+    }
 
     if len(xpathInfo.xfmrFunc) > 0 {
         log.Info("Transformer function(\"%v\") invoked for yang path(\"%v\").", xpathInfo.xfmrFunc, xpath)
@@ -153,8 +156,9 @@ func dbMapCreate(uri string, jsonData interface{}, result map[string]map[string]
     if isCvlYang(uri) {
         cvlYangReqToDbMapCreate(uri, jsonData, result)
     } else {
-        yangReqToDbMapCreate(uri, xpathTmplt, keyName, jsonData, result)
+        yangReqToDbMapCreate(uri, parentXpathGet(xpathTmplt), keyName, jsonData, result)
     }
+    printDbData(result, "/tmp/yangToDbData.txt")
     return nil
 }
 
@@ -181,11 +185,14 @@ func yangReqToDbMapCreate(uri string, xpathPrefix string, keyName string, jsonDa
 
                 if typeOfValue == reflect.Map || typeOfValue == reflect.Slice {
                     log.Info("slice/map data: key(\"%v\"), xpathPrefix(\"%v\").", keyName, xpathPrefix)
+                    xpath    := uri
                     pathAttr := key.String()
-                    if strings.Contains(pathAttr, ":") {
-                        pathAttr = strings.Split(pathAttr, ":")[1]
+                    if len(xpathPrefix) > 0 {
+                        if strings.Contains(pathAttr, ":") {
+                            pathAttr = strings.Split(pathAttr, ":")[1]
+                        }
+                        xpath = xpathPrefix + "/" + pathAttr
                     }
-                    xpath := xpathPrefix + "/" + pathAttr
 
                     if xSpecMap[xpath] != nil && len(xSpecMap[xpath].xfmrFunc) > 0 {
                         subMap := callXfmr()
@@ -194,7 +201,7 @@ func yangReqToDbMapCreate(uri string, xpathPrefix string, keyName string, jsonDa
                         mapCopy(result, subMap)
                         return nil
                     } else {
-                        return yangReqToDbMapCreate(uri, xpath, keyName, jData.MapIndex(key).Interface(), result)
+                        yangReqToDbMapCreate(uri, xpath, keyName, jData.MapIndex(key).Interface(), result)
                     }
                 } else {
                     pathAttr := key.String()
