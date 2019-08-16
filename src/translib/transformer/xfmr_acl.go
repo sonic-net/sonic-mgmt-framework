@@ -185,7 +185,7 @@ func getL2EtherType(etherType uint64) interface{} {
     return uint16(etherType)
 }
 
-var YangToDb_acl_entry_key_xfmr KeyXfmrYangToDb = func (d *db.DB, ygRoot *ygot.GoStruct, xpath string) (string, error) {
+var YangToDb_acl_entry_key_xfmr KeyXfmrYangToDb = func (d *db.DB, ygRoot *ygot.GoStruct, opType int, xpath string) (string, error) {
     var entry_key string
     var err error
     var oc_aclType ocbinds.E_OpenconfigAcl_ACL_TYPE
@@ -215,7 +215,7 @@ var YangToDb_acl_entry_key_xfmr KeyXfmrYangToDb = func (d *db.DB, ygRoot *ygot.G
     return entry_key, err
 }
 
-var DbToYang_acl_entry_key_xfmr KeyXfmrDbToYang = func (d *db.DB, entry_key string) (map[string]map[string]string, error) {
+var DbToYang_acl_entry_key_xfmr KeyXfmrDbToYang = func (d *db.DB, opType int, entry_key string) (map[string]map[string]string, error) {
     res_map := make(map[string]map[string]string)
     var err error
     log.Info("DbToYang_acl_entry_key_xfmr: ", entry_key)
@@ -238,7 +238,7 @@ var DbToYang_acl_entry_key_xfmr KeyXfmrDbToYang = func (d *db.DB, entry_key stri
     return res_map, err
 }
 
-var YangToDb_acl_l2_ethertype_xfmr FieldXfmrYangToDb = func (d *db.DB, ygRoot *ygot.GoStruct, xpath string, ethertype interface {}) (map[string]string, error) {
+var YangToDb_acl_l2_ethertype_xfmr FieldXfmrYangToDb = func (d *db.DB, ygRoot *ygot.GoStruct, opType int, xpath string, ethertype interface {}) (map[string]string, error) {
     res_map := make(map[string]string)
     var err error
     log.Info("YangToDb_acl_l2_ethertype_xfmr :", ygRoot, xpath)
@@ -260,7 +260,7 @@ var YangToDb_acl_l2_ethertype_xfmr FieldXfmrYangToDb = func (d *db.DB, ygRoot *y
     return res_map, err
 }
 
-var DbToYang_acl_l2_ethertype_xfmr FieldXfmrDbtoYang = func (d *db.DB, data map[string]map[string]db.Value, ygRoot *ygot.GoStruct)  (error) {
+var DbToYang_acl_l2_ethertype_xfmr FieldXfmrDbtoYang = func (d *db.DB, opType int, data map[string]map[string]db.Value, ygRoot *ygot.GoStruct)  (error) {
     var err error
     log.Info("DbToYang_acl_l2_ethertype_xfmr", data, ygRoot)
 
@@ -293,7 +293,7 @@ var DbToYang_acl_l2_ethertype_xfmr FieldXfmrDbtoYang = func (d *db.DB, data map[
     return err
 }
 
-var YangToDb_acl_ip_protocol_xfmr FieldXfmrYangToDb = func (d *db.DB, ygRoot *ygot.GoStruct, xpath string, protocol interface {}) (map[string]string, error) {
+var YangToDb_acl_ip_protocol_xfmr FieldXfmrYangToDb = func (d *db.DB, ygRoot *ygot.GoStruct, opType int, xpath string, protocol interface {}) (map[string]string, error) {
     res_map := make(map[string]string)
     var err error
     log.Info("YangToDb_acl_ip_protocol_xfmr: ", ygRoot, xpath)
@@ -312,7 +312,7 @@ var YangToDb_acl_ip_protocol_xfmr FieldXfmrYangToDb = func (d *db.DB, ygRoot *yg
     return res_map, err
 }
 
-var DbToYang_acl_ip_protocol_xfmr FieldXfmrDbtoYang = func (d *db.DB, data map[string]map[string]db.Value, ygRoot *ygot.GoStruct)  (error) {
+var DbToYang_acl_ip_protocol_xfmr FieldXfmrDbtoYang = func (d *db.DB, opType int, data map[string]map[string]db.Value, ygRoot *ygot.GoStruct)  (error) {
     var err error
     log.Info("DbToYang_acl_ip_protocol_xfmr ", data, ygRoot)
     if _, ok := data[RULE_TABLE]; !ok {
@@ -344,7 +344,7 @@ var DbToYang_acl_ip_protocol_xfmr FieldXfmrDbtoYang = func (d *db.DB, data map[s
     return err
 }
 
-var YangToDb_acl_source_port_xfmr FieldXfmrYangToDb = func (d *db.DB, ygRoot *ygot.GoStruct, xpath string, value interface {}) (map[string]string, error) {
+var YangToDb_acl_source_port_xfmr FieldXfmrYangToDb = func (d *db.DB, ygRoot *ygot.GoStruct, opType int, xpath string, value interface {}) (map[string]string, error) {
     res_map := make(map[string]string)
     var err error;
     log.Info("YangToDb_acl_source_port_xfmr: ", ygRoot, xpath)
@@ -407,7 +407,7 @@ func getAclSetEntry (aclRuleKey string, ygRoot *ygot.GoStruct) (*ocbinds.Opencon
 
 }
 
-var DbToYang_acl_source_port_xfmr FieldXfmrDbtoYang = func (d *db.DB, data map[string]map[string]db.Value, ygRoot *ygot.GoStruct)  (error) {
+var DbToYang_acl_source_port_xfmr FieldXfmrDbtoYang = func (d *db.DB, opType int, data map[string]map[string]db.Value, ygRoot *ygot.GoStruct)  (error) {
     var err error
     log.Info("DbToYang_acl_source_port_xfmr: ", data, ygRoot)
 
@@ -446,7 +446,7 @@ var DbToYang_acl_source_port_xfmr FieldXfmrDbtoYang = func (d *db.DB, data map[s
     return err
 }
 
-var YangToDb_acl_destination_port_xfmr FieldXfmrYangToDb = func (d *db.DB, ygRoot *ygot.GoStruct, xpath string, value interface{}) (map[string]string, error) {
+var YangToDb_acl_destination_port_xfmr FieldXfmrYangToDb = func (d *db.DB, ygRoot *ygot.GoStruct, opType int, xpath string, value interface{}) (map[string]string, error) {
     res_map := make(map[string]string)
     var err error;
     log.Info("YangToDb_acl_destination_port_xfmr: ", ygRoot, xpath)
@@ -468,7 +468,7 @@ var YangToDb_acl_destination_port_xfmr FieldXfmrYangToDb = func (d *db.DB, ygRoo
     return res_map, err
 }
 
-var DbToYang_acl_destination_port_xfmr FieldXfmrDbtoYang = func (d *db.DB, data map[string]map[string]db.Value, ygRoot *ygot.GoStruct)  (error) {
+var DbToYang_acl_destination_port_xfmr FieldXfmrDbtoYang = func (d *db.DB, opType int, data map[string]map[string]db.Value, ygRoot *ygot.GoStruct)  (error) {
     var err error
     log.Info("DbToYang_acl_destination_port_xfmr: ", data, ygRoot)
     if _, ok := data[RULE_TABLE]; !ok {
@@ -506,7 +506,7 @@ var DbToYang_acl_destination_port_xfmr FieldXfmrDbtoYang = func (d *db.DB, data 
     return err
 }
 
-var YangToDb_acl_tcp_flags_xfmr FieldXfmrYangToDb = func (d *db.DB, ygRoot *ygot.GoStruct, xpath string, value interface {}) (map[string]string, error) {
+var YangToDb_acl_tcp_flags_xfmr FieldXfmrYangToDb = func (d *db.DB, ygRoot *ygot.GoStruct, opType int, xpath string, value interface {}) (map[string]string, error) {
     res_map := make(map[string]string)
     var err error;
     log.Info("YangToDb_acl_tcp_flags_xfmr: ", ygRoot, xpath)
@@ -549,7 +549,7 @@ var YangToDb_acl_tcp_flags_xfmr FieldXfmrYangToDb = func (d *db.DB, ygRoot *ygot
     return res_map, err
 }
 
-var DbToYang_acl_tcp_flags_xfmr FieldXfmrDbtoYang = func (d *db.DB, data map[string]map[string]db.Value, ygRoot *ygot.GoStruct)  (error) {
+var DbToYang_acl_tcp_flags_xfmr FieldXfmrDbtoYang = func (d *db.DB, opType int, data map[string]map[string]db.Value, ygRoot *ygot.GoStruct)  (error) {
     var err error
     log.Info("DbToYang_acl_tcp_flags_xfmr: ", data, ygRoot)
 
@@ -660,7 +660,7 @@ func getDbAlcTblsData (d *db.DB) (map[string]db.Value, map[string]map[string]db.
     return aclTableMap, ruleTableMap, err
 }
 
-var YangToDb_acl_port_bindings_xfmr SubTreeXfmrYangToDb = func (d *db.DB, ygRoot *ygot.GoStruct, xpath string) (map[string]map[string]db.Value, error) {
+var YangToDb_acl_port_bindings_xfmr SubTreeXfmrYangToDb = func (d *db.DB, ygRoot *ygot.GoStruct, opType int, xpath string) (map[string]map[string]db.Value, error) {
     res_map := make(map[string]map[string]db.Value)
     aclTableMap := make(map[string]db.Value)
     log.Info("YangToDb_acl_port_bindings_xfmr: ", ygRoot, xpath)
@@ -744,7 +744,7 @@ var YangToDb_acl_port_bindings_xfmr SubTreeXfmrYangToDb = func (d *db.DB, ygRoot
     return res_map, err
 }
 
-var DbToYang_acl_port_bindings_xfmr SubTreeXfmrDbToYang = func (d *db.DB, data map[string]map[string]db.Value, ygRoot *ygot.GoStruct, xpath string) (error) {
+var DbToYang_acl_port_bindings_xfmr SubTreeXfmrDbToYang = func (d *db.DB, opType int, data map[string]map[string]db.Value, ygRoot *ygot.GoStruct, xpath string) (error) {
     var err error
     log.Info("DbToYang_acl_port_bindings_xfmr: ", data, ygRoot)
 
