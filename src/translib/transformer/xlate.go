@@ -242,8 +242,36 @@ func XlateToDb(path string, opcode int, d *db.DB, yg *ygot.GoStruct, yt *interfa
 
 func XlateFromDb(xpath string, data map[string]map[string]db.Value) ([]byte, error) {
     var err error
+    var dbData = make(map[string]map[string]db.Value)
 
-    payload, err := dbDataToYangJsonCreate(xpath, data)
+    yangXpath, keyStr := xpathKeyExtract(xpath);
+
+
+    if xSpecMap == nil {
+        return nil,err
+    }
+    _, ok := xSpecMap[yangXpath]
+    if !ok {
+        return nil,err
+    }
+    if xSpecMap[yangXpath].yangDataType == "leaf" {
+
+	var fieldName, tableName string
+        var dbVal db.Value
+
+	fieldName = xSpecMap[yangXpath].fieldName
+	tableName = *xSpecMap[yangXpath].tableName
+
+	if (data[tableName][keyStr].Field != nil) {
+            dbData[tableName] = make(map[string]db.Value)
+	    dbVal.Field = make(map[string]string)
+	    dbVal.Field[fieldName] = data[tableName][keyStr].Field[fieldName]
+	    dbData[tableName][keyStr] = dbVal
+         }
+    } else {
+        dbData = data
+    }
+    payload, err := dbDataToYangJsonCreate(yangXpath, dbData)
 
     if err != nil {
             log.Errorf("Error: failed to create json response from DB data.")
