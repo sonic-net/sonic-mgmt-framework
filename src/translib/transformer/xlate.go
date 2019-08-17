@@ -240,11 +240,19 @@ func XlateToDb(path string, opcode int, d *db.DB, yg *ygot.GoStruct, yt *interfa
    return result, err
 }
 
-func XlateFromDb(data map[string]map[string]db.Value) ([]byte, error) {
+func XlateFromDb(xpath string, data map[string]map[string]db.Value) ([]byte, error) {
     var err error
+
+    payload, err := dbDataToYangJsonCreate(xpath, data)
+
+    if err != nil {
+            log.Errorf("Error: failed to create json response from DB data.")
+        return nil,err
+    }
 
     // please implement me - data translated by transforme
     // here is a mock data
+    /*
     payload := `{
     "acl-sets": {
         "acl-set": [
@@ -587,7 +595,7 @@ func XlateFromDb(data map[string]map[string]db.Value) ([]byte, error) {
         ]
     }
 }`
-    
+    */
     result := []byte(payload)
 
     //TODO - implement me

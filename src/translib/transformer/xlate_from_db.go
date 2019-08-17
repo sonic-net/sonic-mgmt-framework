@@ -114,7 +114,7 @@ func dbDataToYangJsonCreate(xpath string, dbDataMap map[string]map[string]db.Val
         }
         jsonData += listDataToJsonAdd(xDbSpecMap[tblName].yangXpath, tblData, "", dbDataMap)
     }
-    jsonData = parentJsonDataUpdate(curXpath, jsonData)
+    //jsonData = parentJsonDataUpdate(curXpath, jsonData)
 	jsonDataPrint(jsonData)
     return jsonData, nil
 }

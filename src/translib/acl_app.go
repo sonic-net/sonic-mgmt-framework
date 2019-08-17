@@ -278,7 +278,7 @@ func (app *AclApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
         }
     }
 
-    payload, err = transformer.XlateFromDb(result)
+    payload, err = transformer.XlateFromDb(app.pathInfo.Path, result)
     if err != nil {
         return GetResponse{Payload: payload, ErrSrc: AppErr}, err
     }
