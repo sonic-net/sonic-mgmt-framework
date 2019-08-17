@@ -13,6 +13,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"bytes"
 
 	"translib/ocbinds"
 
@@ -176,4 +177,32 @@ func getObjectFieldName(targetUri *string, deviceObj *ocbinds.Device, ygotTarget
 		}
 	}
 	return "", errors.New("Target object not found")
+}
+
+func RemoveXPATHPredicates(s string) (string, error) {
+	var b bytes.Buffer
+	for i := 0; i < len(s); {
+		ss := s[i:]
+		si, ei := strings.Index(ss, "["), strings.Index(ss, "]")
+		switch {
+		case si == -1 && ei == -1:
+			// This substring didn't contain a [] pair, therefore write it
+			// to the buffer.
+			b.WriteString(ss)
+			// Move to the last character of the substring.
+			i += len(ss)
+		case si == -1 || ei == -1:
+			// This substring contained a mismatched pair of []s.
+			return "", fmt.Errorf("Mismatched brackets within substring %s of %s, [ pos: %d, ] pos: %d", ss, s, si, ei)
+		case si > ei:
+			// This substring contained a ] before a [.
+			return "", fmt.Errorf("Incorrect ordering of [] within substring %s of %s, [ pos: %d, ] pos: %d", ss, s, si, ei)
+		default:
+			// This substring contained a matched set of []s.
+			b.WriteString(ss[0:si])
+			i += ei + 1
+		}
+	}
+
+	return b.String(), nil
 }

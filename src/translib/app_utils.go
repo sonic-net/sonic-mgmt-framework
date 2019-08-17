@@ -180,3 +180,11 @@ func isNotFoundError(err error) bool {
 func asKey(parts ...string) db.Key {
 	return db.Key{Comp: parts}
 }
+
+/* Check if targetUriPath is child (subtree) of nodePath
+The return value can be used to decide if subtrees needs
+to visited to fill the data or not.
+*/
+func isSubtreeRequest(targetUriPath string, nodePath string) bool {
+	return strings.HasPrefix(targetUriPath, nodePath)
+}
