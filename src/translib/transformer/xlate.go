@@ -115,24 +115,32 @@ func XlateUriToKeySpec(path string, uri *ygot.GoStruct, t *interface{}) (*map[db
 	var retdbFormat = make([]KeySpec, 0)
 
 	/* Extract the xpath and key from input xpath */
-	yangXpath, keyStr := xpathKeyExtract(path)
+	yangXpath, keyStr, tableName := xpathKeyExtract(path)
 
-	if xSpecMap == nil {
-		return &result, err
-	}
-	_, ok := xSpecMap[yangXpath]
-	if ok {
-		xpathInfo := xSpecMap[yangXpath]
-		if xpathInfo.tableName != nil {
-			dbFormat := KeySpec{}
-			fillKeySpec(yangXpath, keyStr, &dbFormat)
-			retdbFormat = append(retdbFormat, dbFormat)
-		} else {
-			for _, child := range xpathInfo.childTable {
+	// In case of CVL yang, the tablename and key info is available in the xpath
+	if tableName != "" {
+		dbFormat := KeySpec{}
+		dbFormat.Ts.Name = tableName
+		dbFormat.Key.Comp = append(dbFormat.Key.Comp, keyStr)
+		retdbFormat = append(retdbFormat, dbFormat)
+	} else {
+		if xSpecMap == nil {
+			return &result, err
+		}
+		_, ok := xSpecMap[yangXpath]
+		if ok {
+			xpathInfo := xSpecMap[yangXpath]
+			if xpathInfo.tableName != nil {
 				dbFormat := KeySpec{}
-				var childXpath = xDbSpecMap[child].yangXpath[0]
-				fillKeySpec(childXpath, "", &dbFormat)
+				fillKeySpec(yangXpath, keyStr, &dbFormat)
 				retdbFormat = append(retdbFormat, dbFormat)
+			} else {
+				for _, child := range xpathInfo.childTable {
+					dbFormat := KeySpec{}
+					var childXpath = xDbSpecMap[child].yangXpath[0]
+					fillKeySpec(childXpath, "", &dbFormat)
+					retdbFormat = append(retdbFormat, dbFormat)
+				}
 			}
 		}
 	}
@@ -222,33 +230,33 @@ func XlateToDb(path string, opcode int, d *db.DB, yg *ygot.GoStruct, yt *interfa
 
 func XlateFromDb(xpath string, data map[string]map[string]db.Value) ([]byte, error) {
 	var err error
+	var fieldName, tableName string
 	var dbData = make(map[string]map[string]db.Value)
 
-	yangXpath, keyStr := xpathKeyExtract(xpath)
+	dbData = data
+	yangXpath, keyStr, tblName := xpathKeyExtract(xpath)
 
-	if xSpecMap == nil {
-		return nil, err
-	}
-	_, ok := xSpecMap[yangXpath]
-	if !ok {
-		return nil, err
-	}
-	if xSpecMap[yangXpath].yangDataType == "leaf" {
-
-		var fieldName, tableName string
-		var dbVal db.Value
-
-		fieldName = xSpecMap[yangXpath].fieldName
-		tableName = *xSpecMap[yangXpath].tableName
-
-		if data[tableName][keyStr].Field != nil {
-			dbData[tableName] = make(map[string]db.Value)
-			dbVal.Field = make(map[string]string)
-			dbVal.Field[fieldName] = data[tableName][keyStr].Field[fieldName]
-			dbData[tableName][keyStr] = dbVal
+	if isCvlYang(xpath) {
+		tableName = tblName
+		tokens:= strings.Split(xpath, "/")
+		// Format /module:container/tableName[key]/fieldName
+		if len(tokens) > 3 {
+			fieldName = tokens[len(tokens)-1]
+			dbData = extractFieldFromDb(tableName, keyStr, fieldName, data)
 		}
 	} else {
-		dbData = data
+		if xSpecMap == nil {
+			return nil, err
+		}
+		_, ok := xSpecMap[yangXpath]
+		if !ok {
+			return nil, err
+		}
+		if xSpecMap[yangXpath].yangDataType == "leaf" {
+			fieldName = xSpecMap[yangXpath].fieldName
+			tableName = *xSpecMap[yangXpath].tableName
+			dbData = extractFieldFromDb(tableName, keyStr, fieldName, data)
+		}
 	}
 	payload, err := dbDataToYangJsonCreate(yangXpath, dbData)
 
@@ -262,4 +270,20 @@ func XlateFromDb(xpath string, data map[string]map[string]db.Value) ([]byte, err
 	//TODO - implement me
 	return result, err
 
+}
+
+func extractFieldFromDb(tableName string, keyStr string, fieldName string, data map[string]map[string]db.Value) (map[string]map[string]db.Value) {
+
+	var dbVal db.Value
+	var dbData = make(map[string]map[string]db.Value)
+
+	if tableName != "" && keyStr != "" && fieldName != "" {
+		if data[tableName][keyStr].Field != nil {
+			dbData[tableName] = make(map[string]db.Value)
+			dbVal.Field = make(map[string]string)
+			dbVal.Field[fieldName] = data[tableName][keyStr].Field[fieldName]
+			dbData[tableName][keyStr] = dbVal
+		}
+	}
+	return dbData
 }

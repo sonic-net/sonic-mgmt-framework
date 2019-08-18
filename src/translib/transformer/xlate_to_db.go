@@ -127,7 +127,7 @@ func directDbMapData(tableName string, jsonData interface{}, result map[string]m
 
 /* Get the db table, key and field name for the incoming delete request */
 func dbMapDelete(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, jsonData interface{}, result map[string]map[string]db.Value) error {
-	xpathPrefix, keyName := xpathKeyExtract(path)
+	xpathPrefix, keyName, _ := xpathKeyExtract(path)
 	log.Info("Delete req: path(\"%v\"), key(\"%v\"), xpathPrefix(\"%v\").", path, keyName, xpathPrefix)
 	spec, ok := xSpecMap[xpathPrefix]
 	if ok && spec.tableName != nil {
@@ -146,7 +146,7 @@ func dbMapDelete(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, jsonDat
 /* Get the data from incoming update/replace request, create map and fill with dbValue(ie. field:value
    to write into redis-db */
 func dbMapUpdate(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, jsonData interface{}, result map[string]map[string]db.Value) error {
-	xpathPrefix, keyName := xpathKeyExtract(path)
+	xpathPrefix, keyName , _ := xpathKeyExtract(path)
 	log.Info("Update/replace req: path(\"%v\"), key(\"%v\"), xpathPrefix(\"%v\").", path, keyName, xpathPrefix)
 	dbMapCreate(d, ygRoot, oper, parentXpathGet(xpathPrefix), jsonData, result)
 	log.Info("Update/replace req: path(\"%v\") result(\"%v\").", path, result)
@@ -156,7 +156,7 @@ func dbMapUpdate(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, jsonDat
 /* Get the data from incoming create request, create map and fill with dbValue(ie. field:value
    to write into redis-db */
 func dbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, jsonData interface{}, result map[string]map[string]db.Value) error {
-	xpathTmplt, keyName := xpathKeyExtract(path)
+	xpathTmplt, keyName, _ := xpathKeyExtract(path)
 	if isCvlYang(path) {
 		cvlYangReqToDbMapCreate(jsonData, result)
 	} else {
@@ -235,9 +235,10 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
 }
 
 /* Extract key vars, create db key and xpath */
-func xpathKeyExtract(path string) (string, string) {
+func xpathKeyExtract(path string) (string, string, string) {
 	yangXpath := ""
 	keyStr := ""
+	tableName := ""
 	rgp := regexp.MustCompile(`\[([^\[\]]*)\]`)
 
 	for i, k := range strings.Split(path, "/") {
@@ -257,8 +258,17 @@ func xpathKeyExtract(path string) (string, string) {
 			keyStr += keyFromXpathCreate(keyl)
 		}
 		yangXpath += xpath
+		if i == 2 {
+			if isCvlYang(path) {
+				//Format- /module:container/table[key]/field
+				// table name is the 3rd entry in tokenized string
+				tableName = xpath
+			}
+		}
 	}
-	return yangXpath, keyStr
+
+	fmt.Println(tableName)
+	return yangXpath, keyStr, tableName
 }
 
 /* Debug function to print the map data into file */
