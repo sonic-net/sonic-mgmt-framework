@@ -687,7 +687,10 @@ var YangToDb_acl_port_bindings_xfmr SubTreeXfmrYangToDb = func (d *db.DB, ygRoot
                                 aclInterfacesMap[aclName] = append(aclInterfacesMap[aclName], *intf.Id)
                             }
                             if len(aclTableMap) == 0 {
-                                aclTableMap[aclName] = db.Value{Field: map[string]string{}}
+                                _, ok := aclTableMap[aclName]
+                                if !ok {
+                                    aclTableMap[aclName] = db.Value{Field: make(map[string]string)}
+                                }
                             }
                             aclTableMap[aclName].Field["stage"] = "INGRESS"
                         }
@@ -701,7 +704,10 @@ var YangToDb_acl_port_bindings_xfmr SubTreeXfmrYangToDb = func (d *db.DB, ygRoot
                                 aclInterfacesMap[aclName] = append(aclInterfacesMap[aclName], *intf.Id)
                             }
                             if len(aclTableMap) == 0 {
-                                aclTableMap[aclName] = db.Value{Field: map[string]string{}}
+                                _, ok := aclTableMap[aclName]
+                                if !ok {
+                                    aclTableMap[aclName] = db.Value{Field: make(map[string]string)}
+                                }
                             }
                             aclTableMap[aclName].Field["stage"] = "EGRESS"
                         }
@@ -709,7 +715,10 @@ var YangToDb_acl_port_bindings_xfmr SubTreeXfmrYangToDb = func (d *db.DB, ygRoot
                     if intf.IngressAclSets == nil && intf.EgressAclSets == nil {
                         for aclName := range aclTableMapDb {
                             if len(aclTableMap) == 0 {
-                                aclTableMap[aclName] = db.Value{Field: map[string]string{}}
+                                _, ok := aclTableMap[aclName]
+                                if !ok {
+                                    aclTableMap[aclName] = db.Value{Field: make(map[string]string)}
+                                }
                             }
                             aclEntryDb := aclTableMapDb[aclName]
                             intfsDb := aclEntryDb.GetList("ports")
@@ -731,7 +740,10 @@ var YangToDb_acl_port_bindings_xfmr SubTreeXfmrYangToDb = func (d *db.DB, ygRoot
         } else {
             for aclName := range aclTableMapDb {
                 if len(aclTableMap) == 0 {
-                    aclTableMap[aclName] = db.Value{Field: map[string]string{}}
+                    _, ok := aclTableMap[aclName]
+                    if !ok {
+                        aclTableMap[aclName] = db.Value{Field: make(map[string]string)}
+                    }
                 }
                 aclEntryDb := aclTableMapDb[aclName]
                 aclTableMap[aclName].Field["stage"] = aclEntryDb.Get("stage")

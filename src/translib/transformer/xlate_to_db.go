@@ -50,15 +50,6 @@ func mapFillData(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, dbKey st
 		return errors.New("Invalid table key")
 	}
 
-	if len(xpathInfo.fieldName) == 0 {
-		log.Info("Field for yang-path(\"%v\") not found in DB.", xpath)
-		return errors.New("Invalid field name")
-	}
-	fieldName := xpathInfo.fieldName
-	if strings.Contains(value, ":") {
-		value = strings.Split(value, ":")[1]
-	}
-
 	if len(xpathInfo.xfmrFunc) > 0 {
 		/* field transformer present */
 		log.Info("Transformer function(\"%v\") invoked for yang path(\"%v\").", xpathInfo.xfmrFunc, xpath)
@@ -74,22 +65,19 @@ func mapFillData(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, dbKey st
 		return nil
 	}
 
+	if len(xpathInfo.fieldName) == 0 {
+		log.Info("Field for yang-path(\"%v\") not found in DB.", xpath)
+		return errors.New("Invalid field name")
+	}
+	fieldName := xpathInfo.fieldName
+	if strings.Contains(value, ":") {
+		value = strings.Split(value, ":")[1]
+	}
+
 	dataToDBMapAdd(*xpathInfo.tableName, dbKey, result, fieldName, value)
 	log.Info("TblName: \"%v\", key: \"%v\", field: \"%v\", value: \"%v\".",
 		*xpathInfo.tableName, dbKey, fieldName, value)
 	return nil
-}
-
-func callXfmr() map[string]map[string]db.Value {
-	result := make(map[string]map[string]db.Value)
-	result["ACL_TABLE"] = make(map[string]db.Value)
-	result["ACL_TABLE"]["MyACL1_ACL_IPV4"] = db.Value{Field: make(map[string]string)}
-	result["ACL_TABLE"]["MyACL1_ACL_IPV4"].Field["stage"] = "INGRESS"
-	result["ACL_TABLE"]["MyACL1_ACL_IPV4"].Field["ports@"] = "Ethernet0"
-	result["ACL_TABLE"]["MyACL2_ACL_IPV4"] = db.Value{Field: make(map[string]string)}
-	result["ACL_TABLE"]["MyACL2_ACL_IPV4"].Field["stage"] = "INGRESS"
-	result["ACL_TABLE"]["MyACL2_ACL_IPV4"].Field["ports@"] = "Ethernet4"
-	return result
 }
 
 func cvlYangReqToDbMapCreate(jsonData interface{}, result map[string]map[string]db.Value) error {
@@ -190,10 +178,10 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
 		}
 		for _, data := range dataMap {
 			curKey := ""
-			uri = uriWithKeyCreate(uri, xpathPrefix, data)
+			curUri := uriWithKeyCreate(uri, xpathPrefix, data)
 			if len(xSpecMap[xpathPrefix].xfmrKey) > 0 {
 				/* key transformer present */
-				ret, err := XlateFuncCall(yangToDbXfmrFunc(xSpecMap[xpathPrefix].xfmrKey), d, ygRoot, oper, uri)
+				ret, err := XlateFuncCall(yangToDbXfmrFunc(xSpecMap[xpathPrefix].xfmrKey), d, ygRoot, oper, curUri)
 				if err != nil {
 					return err
 				}
@@ -201,7 +189,7 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
 			} else {
 				curKey = keyCreate(keyName, xpathPrefix, data)
 			}
-			yangReqToDbMapCreate(d, ygRoot, oper, uri, xpathPrefix, curKey, data, result)
+			yangReqToDbMapCreate(d, ygRoot, oper, curUri, xpathPrefix, curKey, data, result)
 		}
 	} else {
 		if reflect.ValueOf(jsonData).Kind() == reflect.Map {
@@ -222,9 +210,7 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
 						if err != nil {
 							return nil
 						}
-						//subMap := callXfmr()
 						mapCopy(result, ret[0].Interface().(map[string]map[string]db.Value))
-						return nil
 					} else {
 						yangReqToDbMapCreate(d, ygRoot, oper, uri, xpath, keyName, jData.MapIndex(key).Interface(), result)
 					}

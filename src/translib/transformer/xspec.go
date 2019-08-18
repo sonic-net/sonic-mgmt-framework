@@ -273,7 +273,6 @@ func annotToDbMapBuild(annotEntries []*yang.Entry) {
                 for i, deviate := range d.Deviate {
                     if i == 2 {
                         for _, ye := range deviate {
-                            fmt.Println(ye.Name)
                             annotEntryFill(xSpecMap, xpath, ye)
                         }
                     }
@@ -300,18 +299,9 @@ func mapPrint(inMap map[string]*yangXpathInfo, fileName string) {
         if d.tableName != nil {
             fmt.Fprintf(fp, "%v", *d.tableName)
         }
-        fmt.Fprintf(fp, "\r\n    FieldName: ")
-        if len(d.fieldName) > 0 {
-            fmt.Fprintf(fp, "%v", d.fieldName)
-        }
-        fmt.Fprintf(fp, "\r\n    xfmrKeyFn: ")
-        if d.dbEntry != nil {
-            fmt.Fprintf(fp, "%v\r\n", d.xfmrKey)
-        }
-        fmt.Fprintf(fp, "\r\n    xfmrFunc: ")
-        if d.dbEntry != nil {
-            fmt.Fprintf(fp, "%v\r\n", d.xfmrFunc)
-        }
+        fmt.Fprintf(fp, "\r\n    FieldName: %v", d.fieldName)
+        fmt.Fprintf(fp, "\r\n    xfmrKeyFn: %v", d.xfmrKey)
+        fmt.Fprintf(fp, "\r\n    xfmrFunc : %v", d.xfmrFunc)
         fmt.Fprintf(fp, "\r\n    yangEntry: ")
         if d.yangEntry != nil {
             fmt.Fprintf(fp, "%v", *d.yangEntry)

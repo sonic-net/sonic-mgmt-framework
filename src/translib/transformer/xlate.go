@@ -197,14 +197,22 @@ func XlateToDb(path string, opcode int, d *db.DB, yg *ygot.GoStruct, yt *interfa
 		log.Info("CREATE case")
 		err = dbMapCreate(d, yg, opcode, path, jsonData, result)
 		if err != nil {
-			log.Errorf("Error: Data translation from yang to db failed.")
+			log.Errorf("Error: Data translation from yang to db failed for create request.")
 		}
 
 	case UPDATE:
 		log.Info("UPDATE case")
+        err = dbMapUpdate(d, yg, opcode, path, jsonData, result)
+		if err != nil {
+			log.Errorf("Error: Data translation from yang to db failed for update request.")
+		}
 
 	case REPLACE:
 		log.Info("REPLACE case")
+        err = dbMapUpdate(d, yg, opcode, path, jsonData, result)
+		if err != nil {
+			log.Errorf("Error: Data translation from yang to db failed for replace request.")
+		}
 
 	case DELETE:
 		log.Info("DELETE case")
