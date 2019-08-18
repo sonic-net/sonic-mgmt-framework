@@ -328,7 +328,7 @@ func (app *AclApp) processCommon(d *db.DB, opcode int) error {
 
 	targetType := reflect.TypeOf(*app.ygotTarget)
 
-	xpath, err := RemoveXPATHPredicates(app.pathInfo.Path)
+	xpath, err := transformer.RemoveXPATHPredicates(app.pathInfo.Path)
 	if err != nil {
 		log.Errorf("processCommon: Failed to remove Xpath Predicates from path %s", app.pathInfo.Template)
 	}
