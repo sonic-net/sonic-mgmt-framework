@@ -263,12 +263,14 @@ func XlateFromDb(xpath string, data map[string]map[string]db.Value) ([]byte, err
 	yangXpath, keyStr, tblName := xpathKeyExtract(xpath)
 
 	if isCvlYang(xpath) {
-		tableName = tblName
-		tokens:= strings.Split(yangXpath, "/")
-		// Format /module:container/tableName[key]/fieldName
-		if tokens[len(tokens)-2] == tableName {
-			fieldName = tokens[len(tokens)-1]
-			dbData = extractFieldFromDb(tableName, keyStr, fieldName, data)
+		if (tblName != "") {
+			tableName = tblName
+			tokens:= strings.Split(yangXpath, "/")
+			// Format /module:container/tableName[key]/fieldName
+			if tokens[len(tokens)-2] == tableName {
+				fieldName = tokens[len(tokens)-1]
+				dbData = extractFieldFromDb(tableName, keyStr, fieldName, data)
+			}
 		}
 	} else {
 		if xSpecMap == nil {
