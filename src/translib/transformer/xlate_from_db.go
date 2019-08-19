@@ -93,7 +93,7 @@ func directDbToYangJsonCreate(dbDataMap map[string]map[string]db.Value, jsonData
             fldValPair = keyJsonDataAdd(yangKeys, keyStr, fldValPair)
             dataInst   = fmt.Sprintf("{ \r\n %v \r\n },", fldValPair)
         }
-        dataInst  = strings.TrimRight(dataInst, ",")
+        dataInst += strings.TrimRight(dataInst, ",")
         jsonData += fmt.Sprintf("\"%v\" : [\r\n %v\r\n ],", tblName, dataInst)
     }
     jsonData = strings.TrimRight(jsonData, ",")
@@ -105,6 +105,7 @@ func dbDataToYangJsonCreate(xpath string, dbDataMap map[string]map[string]db.Val
     jsonData := ""
 	if isCvlYang(xpath) {
 		jsonData := directDbToYangJsonCreate(dbDataMap, jsonData)
+		jsonDataPrint(jsonData)
 		return jsonData, nil
 	}
     curXpath := ""
