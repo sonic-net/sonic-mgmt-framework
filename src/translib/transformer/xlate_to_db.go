@@ -256,15 +256,13 @@ func xpathKeyExtract(path string) (string, string, string) {
 				keyl = append(keyl, strings.TrimRight(strings.TrimLeft(kname, "["), "]"))
 			}
 			keyStr += keyFromXpathCreate(keyl)
-		}
-		yangXpath += xpath
-		if i == 2 {
 			if isCvlYang(path) {
 				//Format- /module:container/table[key]/field
-				// table name is the 3rd entry in tokenized string
+				// table name extracted from the string token having key entry
 				tableName = xpath
 			}
 		}
+		yangXpath += xpath
 	}
 
 	fmt.Println(tableName)

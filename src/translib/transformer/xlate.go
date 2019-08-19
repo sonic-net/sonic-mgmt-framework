@@ -238,9 +238,9 @@ func XlateFromDb(xpath string, data map[string]map[string]db.Value) ([]byte, err
 
 	if isCvlYang(xpath) {
 		tableName = tblName
-		tokens:= strings.Split(xpath, "/")
+		tokens:= strings.Split(yangXpath, "/")
 		// Format /module:container/tableName[key]/fieldName
-		if len(tokens) > 3 {
+		if tokens[len(tokens)-2] == tableName {
 			fieldName = tokens[len(tokens)-1]
 			dbData = extractFieldFromDb(tableName, keyStr, fieldName, data)
 		}
