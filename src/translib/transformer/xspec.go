@@ -166,7 +166,7 @@ func dbMapFill(prefixPath string, curPath string, moduleNm string, trkTpCnt bool
 
 
     var childList []string
-    for k := range entry.Dir {
+    for _, k := range entry.DirOKeys {
         childList = append(childList, k)
     }
 
@@ -176,7 +176,7 @@ func dbMapFill(prefixPath string, curPath string, moduleNm string, trkTpCnt bool
             trkTpCnt = false
     }
 
-    sort.Strings(childList)
+    //sort.Strings(childList)
     for _, child := range childList {
         dbMapFill(prefixPath, prefixPath + "/" + entry.Dir[child].Name, moduleNm, trkTpCnt, xDbSpecMap, entry.Dir[child])
     }
