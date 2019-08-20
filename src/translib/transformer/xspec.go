@@ -5,6 +5,7 @@ import (
     "os"
     "sort"
     "strings"
+    log "github.com/golang/glog"
 
     "github.com/openconfig/goyang/pkg/yang"
 )
@@ -31,6 +32,7 @@ type dbInfo  struct {
 
 var xSpecMap map[string]*yangXpathInfo
 var xDbSpecMap map[string]*dbInfo
+var xDbSpecOrdTblMap map[string][]string //map of module-name to ordered list of db tables { "sonic-acl" : ["ACL_TABLE", "ACL_RULE"] }
 
 /* update transformer spec with db-node */
 func updateDbTableData (xpath string, xpathData *yangXpathInfo, tableName string) {
@@ -146,7 +148,7 @@ func yangToDbMapBuild(entries map[string]*yang.Entry) {
 }
 
 /* Fill the map with db details */
-func dbMapFill(prefixPath string, curPath string, xDbSpecMap map[string]*dbInfo, entry *yang.Entry) {
+func dbMapFill(prefixPath string, curPath string, moduleNm string, trkTpCnt bool, xDbSpecMap map[string]*dbInfo, entry *yang.Entry) {
     entryType := entry.Node.Statement().Keyword
     if entryType == "list" {
         prefixPath = entry.Name
@@ -162,13 +164,21 @@ func dbMapFill(prefixPath string, curPath string, xDbSpecMap map[string]*dbInfo,
         xDbSpecMap[dbXpath].fieldType = entryType
     }
 
+
     var childList []string
     for k := range entry.Dir {
         childList = append(childList, k)
     }
+
+    if entryType == "container" &&  trkTpCnt {
+            xDbSpecOrdTblMap[moduleNm] = childList
+            log.Info("xDbSpecOrdTblMap after appending ", xDbSpecOrdTblMap)
+            trkTpCnt = false
+    }
+
     sort.Strings(childList)
     for _, child := range childList {
-        dbMapFill(prefixPath, prefixPath + "/" + entry.Dir[child].Name, xDbSpecMap, entry.Dir[child])
+        dbMapFill(prefixPath, prefixPath + "/" + entry.Dir[child].Name, moduleNm, trkTpCnt, xDbSpecMap, entry.Dir[child])
     }
 }
 
@@ -178,14 +188,22 @@ func dbMapBuild(entries []*yang.Entry) {
         return
     }
     xDbSpecMap = make(map[string]*dbInfo)
+    xDbSpecOrdTblMap = make(map[string][]string)
 
     for _, e := range entries {
         if e == nil || len(e.Dir) == 0 {
             continue
         }
-        dbMapFill("", "", xDbSpecMap, e)
+        moduleNm := e.Name
+        log.Info("Module name", moduleNm)
+        xDbSpecOrdTblMap[moduleNm] = []string{}
+        trkTpCnt := true
+        dbMapFill("", "", moduleNm, trkTpCnt, xDbSpecMap, e)
     }
 }
+
+/***************************************/
+
 
 func childToUpdateParent( xpath string, tableName string) {
     var xpathData *yangXpathInfo

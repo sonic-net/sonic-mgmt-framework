@@ -1,7 +1,7 @@
 package transformer
 
 import (
-	//"fmt"
+	"fmt"
 	//"os"
 	//	"sort"
 	//	"github.com/openconfig/goyang/pkg/yang"
@@ -314,4 +314,30 @@ func extractFieldFromDb(tableName string, keyStr string, fieldName string, data 
 		}
 	}
 	return dbData
+}
+
+func GetModuleNmFromPath(uri string) (string, error) {
+        path, err := ygot.StringToPath(uri, ygot.StructuredPath, ygot.StringSlicePath)
+        if err != nil {
+                log.Error("Error in uri to path conversion: ", err)
+                return "", err
+        }
+        pathSlice := strings.Split(path.Elem[0].Name, ":")
+	moduleNm := pathSlice[0]
+        log.Info("Module name for given path = ", moduleNm)
+        return moduleNm, err
+}
+
+func GetSchemaOrdDBTblList(ygModuleNm string) ([]string, error) {
+        var result []string
+	var err error
+        if dbTblList, ok := xDbSpecOrdTblMap[ygModuleNm]; ok {
+                result = dbTblList
+                log.Error("Ordered DB Table list is empty for module name = ", ygModuleNm)
+                err = fmt.Errorf("Ordered DB Table list is empty for module name %v", ygModuleNm)
+        } else {
+                log.Error("No entry found in the map of module names to ordered list of DB Tables for module = ", ygModuleNm)
+                err = fmt.Errorf("No entry found in the map of module names to ordered list of DB Tables for module = %v", ygModuleNm)
+        }
+        return result, err
 }

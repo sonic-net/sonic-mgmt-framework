@@ -18,6 +18,7 @@ type CommonApp struct {
 	ygotRoot       *ygot.GoStruct
 	ygotTarget     *interface{}
 	cmnAppTableMap map[string]map[string]db.Value
+	cmnAppSchemaOrdTbllist []string
 }
 
 var cmnAppInfo = appInfo{appType: reflect.TypeOf(CommonApp{}),
@@ -180,7 +181,26 @@ func (app *CommonApp) translateCRUCommon(d *db.DB, opcode int) ([]db.WatchKeys, 
 	var err error
 	var keys []db.WatchKeys
 	var tblsToWatch []*db.TableSpec
+	var schemaOrdTblList []string
+	var moduleNm string
 	log.Info("translateCRUCommon:path =", app.pathInfo.Path)
+	d.Opts.DisableCVLCheck = true
+
+	/* retrieve schema table order for incoming maodule name request */
+	moduleNm, err = transformer.GetModuleNmFromPath(app.pathInfo.Path)
+	if (err != nil) || (len(moduleNm) == 0) {
+		log.Error("GetModuleNmFromPath() failed")
+		return keys, err
+	}
+	log.Info("getModuleNmFromPath() returned module name = ", moduleNm)
+	schemaOrdTblList, err = transformer.GetSchemaOrdDBTblList(moduleNm)
+	if (err != nil) || (len(schemaOrdTblList) == 0) {
+		log.Error("GetSchemaOrdDBTblList() failed")
+		return keys, err
+	}
+
+	log.Info("getSchemaOrdDBTblList() returned ordered table list = ", schemaOrdTblList)
+	app.cmnAppSchemaOrdTbllist = schemaOrdTblList
 
 	// translate yang to db
 	result, err := transformer.XlateToDb(app.pathInfo.Path, opcode, d, (*app).ygotRoot, (*app).ygotTarget)
@@ -220,76 +240,83 @@ func (app *CommonApp) cmnAppDataDbOperation(d *db.DB, opcode int, cmnAppDataDbMa
 	var err error
 	log.Info("Processing DB operation for ", cmnAppDataDbMap)
 	var cmnAppTs *db.TableSpec
-	for tblNm, tblInst := range cmnAppDataDbMap {
-		log.Info("Table name ", tblNm)
-		cmnAppTs = &db.TableSpec{Name: tblNm}
-		for tblKey, tblRw := range tblInst {
-			log.Info("Table key and row ", tblKey, tblRw)
-			switch opcode {
-			case CREATE:
-				log.Info("CREATE case")
-				existingEntry, err := d.GetEntry(cmnAppTs, db.Key{Comp: []string{tblKey}})
-				if existingEntry.IsPopulated() {
-					log.Info("Entry already exists hence return error.")
-					return tlerr.AlreadyExists("Entry %s already exists", tblKey)
-				} else {
-					err = d.CreateEntry(cmnAppTs, db.Key{Comp: []string{tblKey}}, tblRw)
-					if err != nil {
-						log.Error("CREATE case - d.CreateEntry() failure")
-						return err
-					}
-				}
-			case UPDATE:
-				log.Info("UPDATE case")
-				existingEntry, err := d.GetEntry(cmnAppTs, db.Key{Comp: []string{tblKey}})
-				if existingEntry.IsPopulated() {
-					log.Info("Entry already exists hence modifying it.")
-					err = d.ModEntry(cmnAppTs, db.Key{Comp: []string{tblKey}}, tblRw)
-					if err != nil {
-						log.Error("UPDATE case - d.ModEntry() failure")
-						return err
-					}
-				} else {
-					log.Info("Entry to be modified does not exist hence return error.")
-					return tlerr.NotFound("Entry %s to be modified does not exist.", tblKey)
 
-				}
+	log.Info("getSchemaOrdDBTblList() returned ordered table list = ", app.cmnAppSchemaOrdTbllist)
+	//return err
 
-			case REPLACE:
-				log.Info("REPLACE case")
-				existingEntry, err := d.GetEntry(cmnAppTs, db.Key{Comp: []string{tblKey}})
-				if existingEntry.IsPopulated() {
-					log.Info("Entry already exists hence execute db.SetEntry")
-					err := d.SetEntry(cmnAppTs, db.Key{Comp: []string{tblKey}}, tblRw)
-					if err != nil {
-						log.Error("REPLACE case - d.SetEntry() failure")
-						return err
-					}
-				} else {
-					log.Info("Entry doesn't exist hence create it.")
-					err = d.CreateEntry(cmnAppTs, db.Key{Comp: []string{tblKey}}, tblRw)
-					if err != nil {
-						log.Error("REPLACE case - d.CreateEntry() failure")
-						return err
-					}
-				}
-				//TODO : should the table level replace be handled??
-			case DELETE:
-				log.Info("DELETE case")
-				if len(tblRw.Field) == 0 {
-					log.Info("DELETE case - no fields/cols to delete hence delete the entire row.")
-					err := d.DeleteEntry(cmnAppTs, db.Key{Comp: []string{tblKey}})
-					if err != nil {
-						log.Error("DELETE case - d.DeleteEntry() failure")
-						return err
-					}
-				} else {
-					log.Info("DELETE case - fields/cols to delete hence delete only those fields.")
-					err := d.DeleteEntryFields(cmnAppTs, db.Key{Comp: []string{tblKey}}, tblRw)
-					if err != nil {
-						log.Error("DELETE case - d.DeleteEntryFields() failure")
-						return err
-					}
+	/* order by schema table order */
+	for _, tbl := range app.cmnAppSchemaOrdTbllist {
+		log.Info("In Yang to DB map returned from transformer looking for table = ", tbl)
+		if tblVal, ok := cmnAppDataDbMap[tbl]; ok {
+			log.Info("Found table entry in yang to DB map")
+			for tblKey, tblRw := range tblVal {
+				log.Info("Processing Table key and row ", tblKey, tblRw)
+				switch opcode {
+					case CREATE:
+						log.Info("CREATE case")
+						existingEntry, err := d.GetEntry(cmnAppTs, db.Key{Comp: []string{tblKey}})
+						if existingEntry.IsPopulated() {
+							log.Info("Entry already exists hence return error.")
+							return tlerr.AlreadyExists("Entry %s already exists", tblKey)
+						} else {
+							err = d.CreateEntry(cmnAppTs, db.Key{Comp: []string{tblKey}}, tblRw)
+							if err != nil {
+								log.Error("CREATE case - d.CreateEntry() failure")
+								return err
+							}
+						}
+
+					case UPDATE:
+						log.Info("UPDATE case")
+						existingEntry, err := d.GetEntry(cmnAppTs, db.Key{Comp: []string{tblKey}})
+						if existingEntry.IsPopulated() {
+							log.Info("Entry already exists hence modifying it.")
+							err = d.ModEntry(cmnAppTs, db.Key{Comp: []string{tblKey}}, tblRw)
+							if err != nil {
+								log.Error("UPDATE case - d.ModEntry() failure")
+								return err
+							}
+						} else {
+							log.Info("Entry to be modified does not exist hence return error.")
+							return tlerr.NotFound("Entry %s to be modified does not exist.", tblKey)
+						}
+
+					case REPLACE:
+						log.Info("REPLACE case")
+						existingEntry, err := d.GetEntry(cmnAppTs, db.Key{Comp: []string{tblKey}})
+						if existingEntry.IsPopulated() {
+							log.Info("Entry already exists hence execute db.SetEntry")
+							err := d.SetEntry(cmnAppTs, db.Key{Comp: []string{tblKey}}, tblRw)
+							if err != nil {
+								log.Error("REPLACE case - d.SetEntry() failure")
+								return err
+							}
+						} else {
+							log.Info("Entry doesn't exist hence create it.")
+							err = d.CreateEntry(cmnAppTs, db.Key{Comp: []string{tblKey}}, tblRw)
+							if err != nil {
+								log.Error("REPLACE case - d.CreateEntry() failure")
+								return err
+							}
+						}
+						//TODO : should the table level replace be handled??
+					case DELETE:
+						log.Info("DELETE case")
+						if len(tblRw.Field) == 0 {
+							log.Info("DELETE case - no fields/cols to delete hence delete the entire row.")
+							err := d.DeleteEntry(cmnAppTs, db.Key{Comp: []string{tblKey}})
+							if err != nil {
+								log.Error("DELETE case - d.DeleteEntry() failure")
+								return err
+							}
+						} else {
+							log.Info("DELETE case - fields/cols to delete hence delete only those fields.")
+							err := d.DeleteEntryFields(cmnAppTs, db.Key{Comp: []string{tblKey}}, tblRw)
+							if err != nil {
+								log.Error("DELETE case - d.DeleteEntryFields() failure")
+								return err
+							}
+						}
 				}
 			}
 		}
