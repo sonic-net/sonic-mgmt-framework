@@ -30,7 +30,7 @@ func dataToDBMapAdd(tableName string, dbKey string, result map[string]map[string
 }
 
 /* Fill the redis-db map with data */
-func mapFillData(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, dbKey string, result map[string]map[string]db.Value, xpathPrefix string, name string, value string) error {
+func mapFillData(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, dbKey string, result map[string]map[string]db.Value, xpathPrefix string, name string, value interface{}) error {
 	xpath := xpathPrefix + "/" + name
 	xpathInfo := xSpecMap[xpath]
 	log.Info("name: \"%v\", xpathPrefix(\"%v\").", name, xpathPrefix)
@@ -70,13 +70,14 @@ func mapFillData(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, dbKey st
 		return errors.New("Invalid field name")
 	}
 	fieldName := xpathInfo.fieldName
-	if strings.Contains(value, ":") {
-		value = strings.Split(value, ":")[1]
+    valueStr  := fmt.Sprintf("%v", value)
+	if strings.Contains(valueStr, ":") {
+		valueStr = strings.Split(valueStr, ":")[1]
 	}
 
-	dataToDBMapAdd(*xpathInfo.tableName, dbKey, result, fieldName, value)
-	log.Info("TblName: \"%v\", key: \"%v\", field: \"%v\", value: \"%v\".",
-		*xpathInfo.tableName, dbKey, fieldName, value)
+	dataToDBMapAdd(*xpathInfo.tableName, dbKey, result, fieldName, valueStr)
+	log.Info("TblName: \"%v\", key: \"%v\", field: \"%v\", valueStr: \"%v\".",
+		*xpathInfo.tableName, dbKey, fieldName, valueStr)
 	return nil
 }
 
@@ -199,10 +200,15 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
 
 				if typeOfValue == reflect.Map || typeOfValue == reflect.Slice {
 					log.Info("slice/map data: key(\"%v\"), xpathPrefix(\"%v\").", keyName, xpathPrefix)
-					xpath, err := RemoveXPATHPredicates(uri)
-					if err != nil {
-						log.Errorf("yangReqToDbMapCreate: Failed to remove Xpath Predicates from uri %s", uri)
-					}
+                    xpath    := uri
+                    pathAttr := key.String()
+                    if len(xpathPrefix) > 0 {
+                         if strings.Contains(pathAttr, ":") {
+                             pathAttr = strings.Split(pathAttr, ":")[1]
+                         }
+                         xpath = xpathPrefix + "/" + pathAttr
+                         uri   = uri + "/" + pathAttr
+                    }
 
 					if xSpecMap[xpath] != nil && len(xSpecMap[xpath].xfmrFunc) > 0 {
 						/* subtree transformer present */
@@ -222,7 +228,7 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
 					value := jData.MapIndex(key).Interface()
 					log.Info("data field: key(\"%v\"), value(\"%v\").", key, value)
 					err := mapFillData(d, ygRoot, oper, uri, keyName, result, xpathPrefix,
-						pathAttr, fmt.Sprintf("%v", value))
+						pathAttr, value)
 					if err != nil {
 						log.Errorf("Failed constructing data for db write: key(\"%v\"), value(\"%v\"), path(\"%v\").",
 							pathAttr, value, xpathPrefix)

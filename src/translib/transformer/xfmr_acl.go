@@ -243,7 +243,7 @@ var YangToDb_acl_l2_ethertype_xfmr FieldXfmrYangToDb = func (d *db.DB, ygRoot *y
     var err error
     log.Info("YangToDb_acl_l2_ethertype_xfmr :", ygRoot, xpath)
 
-    ethertypeType := reflect.TypeOf(ethertype).Elem()
+    ethertypeType := reflect.TypeOf(ethertype)
     var b bytes.Buffer
     switch ethertypeType {
     case reflect.TypeOf(ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_L2_Config_Ethertype_Union_E_OpenconfigPacketMatchTypes_ETHERTYPE{}):
@@ -298,7 +298,7 @@ var YangToDb_acl_ip_protocol_xfmr FieldXfmrYangToDb = func (d *db.DB, ygRoot *yg
     var err error
     log.Info("YangToDb_acl_ip_protocol_xfmr: ", ygRoot, xpath)
 
-    protocolType := reflect.TypeOf(protocol).Elem()
+    protocolType := reflect.TypeOf(protocol)
     switch (protocolType) {
     case reflect.TypeOf(ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Ipv4_Config_Protocol_Union_E_OpenconfigPacketMatchTypes_IP_PROTOCOL{}):
         v := (protocol).(*ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Ipv4_Config_Protocol_Union_E_OpenconfigPacketMatchTypes_IP_PROTOCOL)
@@ -348,7 +348,7 @@ var YangToDb_acl_source_port_xfmr FieldXfmrYangToDb = func (d *db.DB, ygRoot *yg
     res_map := make(map[string]string)
     var err error;
     log.Info("YangToDb_acl_source_port_xfmr: ", ygRoot, xpath)
-    sourceportType := reflect.TypeOf(value).Elem()
+    sourceportType := reflect.TypeOf(value)
     switch sourceportType {
     case reflect.TypeOf(ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_SourcePort_Union_E_OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_SourcePort{}):
         v := (value).(*ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_SourcePort_Union_E_OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_SourcePort)
@@ -450,7 +450,7 @@ var YangToDb_acl_destination_port_xfmr FieldXfmrYangToDb = func (d *db.DB, ygRoo
     res_map := make(map[string]string)
     var err error;
     log.Info("YangToDb_acl_destination_port_xfmr: ", ygRoot, xpath)
-    destportType := reflect.TypeOf(value).Elem()
+    destportType := reflect.TypeOf(value)
     switch destportType {
     case reflect.TypeOf(ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_DestinationPort_Union_E_OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_DestinationPort{}):
         v := (value).(*ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_DestinationPort_Union_E_OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_DestinationPort)
@@ -686,11 +686,9 @@ var YangToDb_acl_port_bindings_xfmr SubTreeXfmrYangToDb = func (d *db.DB, ygRoot
                             } else {
                                 aclInterfacesMap[aclName] = append(aclInterfacesMap[aclName], *intf.Id)
                             }
-                            if len(aclTableMap) == 0 {
-                                _, ok := aclTableMap[aclName]
-                                if !ok {
-                                    aclTableMap[aclName] = db.Value{Field: make(map[string]string)}
-                                }
+                            _, ok := aclTableMap[aclName]
+                            if !ok {
+                                aclTableMap[aclName] = db.Value{Field: make(map[string]string)}
                             }
                             aclTableMap[aclName].Field["stage"] = "INGRESS"
                         }
@@ -703,27 +701,23 @@ var YangToDb_acl_port_bindings_xfmr SubTreeXfmrYangToDb = func (d *db.DB, ygRoot
                             } else {
                                 aclInterfacesMap[aclName] = append(aclInterfacesMap[aclName], *intf.Id)
                             }
-                            if len(aclTableMap) == 0 {
-                                _, ok := aclTableMap[aclName]
-                                if !ok {
-                                    aclTableMap[aclName] = db.Value{Field: make(map[string]string)}
-                                }
+                            _, ok := aclTableMap[aclName]
+                            if !ok {
+                                aclTableMap[aclName] = db.Value{Field: make(map[string]string)}
                             }
                             aclTableMap[aclName].Field["stage"] = "EGRESS"
                         }
                     }
                     if intf.IngressAclSets == nil && intf.EgressAclSets == nil {
                         for aclName := range aclTableMapDb {
-                            if len(aclTableMap) == 0 {
-                                _, ok := aclTableMap[aclName]
-                                if !ok {
-                                    aclTableMap[aclName] = db.Value{Field: make(map[string]string)}
-                                }
+                            _, ok := aclTableMap[aclName]
+                            if !ok {
+                                aclTableMap[aclName] = db.Value{Field: make(map[string]string)}
                             }
                             aclEntryDb := aclTableMapDb[aclName]
                             intfsDb := aclEntryDb.GetList("ports")
                             if contains(intfsDb, intfId) {
-                                var intfs [] string
+                                var intfs []string
                                 intfs = append(intfs, intfId)
                                 aclTableMap[aclName].Field["stage"] = aclEntryDb.Get("stage")
                                 val := aclTableMap[aclName]
@@ -739,11 +733,9 @@ var YangToDb_acl_port_bindings_xfmr SubTreeXfmrYangToDb = func (d *db.DB, ygRoot
             }
         } else {
             for aclName := range aclTableMapDb {
-                if len(aclTableMap) == 0 {
-                    _, ok := aclTableMap[aclName]
-                    if !ok {
-                        aclTableMap[aclName] = db.Value{Field: make(map[string]string)}
-                    }
+                _, ok := aclTableMap[aclName]
+                if !ok {
+                    aclTableMap[aclName] = db.Value{Field: make(map[string]string)}
                 }
                 aclEntryDb := aclTableMapDb[aclName]
                 aclTableMap[aclName].Field["stage"] = aclEntryDb.Get("stage")
