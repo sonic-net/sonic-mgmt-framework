@@ -41,7 +41,7 @@ YGOT_BINDS = ocbinds/ocbinds.go
 all: $(TRANSLIB_PKG) $(TRANSLIB_TEST_BIN) $(TRANSL_DB_TEST_BIN)
 
 $(TRANSLIB_PKG): $(TRANSLIB_MAIN_SRCS) $(YGOT_BINDS)
-	$(GO) build -gcflags=all="-N -l" -v translib
+	$(GO) build -gcflags="all=-N -l" -v translib
 	$(GO) install translib
 
 $(TRANSLIB_TEST_BIN): $(TRANSLIB_MAIN_SRCS) $(TRANSLIB_TEST_SRCS) $(YGOT_BINDS)
