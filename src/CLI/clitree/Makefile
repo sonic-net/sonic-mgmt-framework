@@ -13,7 +13,8 @@ all:
 	cp ../renderer/scripts/*.py ${TGT_DIR}/scripts
 	cp ../renderer/templates/* ${TGT_DIR}/render-templates
 	cp scripts/sonic-clish.xsd ${TGT_DIR}/command-tree
-	(cd ${TGT_DIR}/command-tree;xmllint --noout --schema sonic-clish.xsd ${TGT_DIR}/command-tree/*.xml) || exit 1
+	(cd ${TGT_DIR}/command-tree ; xmllint --noout --schema sonic-clish.xsd ${TGT_DIR}/command-tree/*.xml && \
+            xmllint --noout --schema sonic-clish.xsd ${TGT_DIR}/command-tree/include/*.xml) || exit 1
 	rm -rf ${TGT_DIR}/cli-macro
 	rm -rf scripts/*.pyc
 
