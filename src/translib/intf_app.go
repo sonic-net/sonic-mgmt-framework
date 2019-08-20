@@ -1149,6 +1149,9 @@ func (app *IntfApp) validateIp(dbCl *db.DB, ifName string, ip string) error {
 	app.allIpKeys, _ = app.doGetAllIpKeys(dbCl, app.intfIPTs)
 
 	for _, key := range app.allIpKeys {
+		if len(key.Comp) < 2 {
+			continue
+		}
 		if key.Get(0) != ifName {
 			continue
 		}
@@ -1188,6 +1191,9 @@ func (app *IntfApp) translateIpv4(d *db.DB, intf string, ip string, prefix int) 
 	ipA, ipNetA, _ := net.ParseCIDR(ipPref)
 
 	for _, key := range app.allIpKeys {
+		if len(key.Comp) < 2 {
+			continue
+		}
 		ipB, ipNetB, _ := net.ParseCIDR(key.Get(1))
 
 		if ipNetA.Contains(ipB) || ipNetB.Contains(ipA) {
