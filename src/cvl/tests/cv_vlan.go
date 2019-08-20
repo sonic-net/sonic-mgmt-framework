@@ -6,7 +6,50 @@ import (
 	"os"
 	"time"
 	"cvl"
+	"github.com/go-redis/redis"
+	"strconv"
 )
+
+func getConfigDbClient() *redis.Client {
+	rclient := redis.NewClient(&redis.Options{
+		Addr:        "localhost:6379",
+		Password:    "", // no password set
+		DB:          4,
+		DialTimeout: 0,
+	})
+	_, err := rclient.Ping().Result()
+	if err != nil {
+		fmt.Printf("failed to connect to redis server %v", err)
+	}
+	return rclient
+}
+
+/* Unloads the Config DB based on JSON File. */
+func unloadConfigDB(rclient *redis.Client, key string, data map[string]string) {
+	_, err := rclient.Del(key).Result()
+
+	if err != nil {
+		fmt.Printf("Failed to delete for key %s, data %v, err %v", key, data, err)
+	}
+
+}
+
+/* Loads the Config DB based on JSON File. */
+func loadConfigDB(rclient *redis.Client, key string, data map[string]string) {
+
+	dataTmp  := make(map[string]interface{})
+
+	for k, v :=  range data {
+		dataTmp[k] = v
+	}
+
+	_, err := rclient.HMSet(key, dataTmp).Result()
+
+	if err != nil {
+		fmt.Printf("Failed to add for key %s, data %v, err %v", key, data, err)
+	}
+
+}
 
 func main() {
 	start := time.Now()
@@ -17,6 +60,117 @@ func main() {
 		cvl.Debug(true)
 	}
 
+	rclient := getConfigDbClient()
+
+	if ((len(os.Args) > 1) && (os.Args[1] == "add")) {
+
+		//Add  ACL
+		vlanNoStart, _ := strconv.Atoi(os.Args[2])
+		vlanNoEnd, _ := strconv.Atoi(os.Args[3])
+		for vlanNum:= vlanNoStart ;vlanNum <= vlanNoEnd; vlanNum++ {
+			cvSess, _ := cvl.ValidationSessOpen()
+
+			cfgDataVlan := []cvl.CVLEditConfigData {
+				cvl.CVLEditConfigData {
+					cvl.VALIDATE_ALL,
+					cvl.OP_CREATE,
+					fmt.Sprintf("VLAN|Vlan%d", vlanNum),
+					map[string]string {
+						"vlanid":  fmt.Sprintf("%d", vlanNum),
+						"members@": "Ethernet0,Ethernet4,Ethernet8,Ethernet12,Ethernet16,Ethernet20,Ethernet24,Ethernet28",
+					},
+				},
+			}
+
+			_, ret := cvSess.ValidateEditConfig(cfgDataVlan)
+
+			if (ret != cvl.CVL_SUCCESS) {
+				fmt.Printf("Validation failure\n")
+				return
+			}
+
+			cfgDataVlan[0].VType = cvl.VALIDATE_NONE
+
+			for i:=0; i<7; i++ {
+				cfgDataVlan = append(cfgDataVlan, cvl.CVLEditConfigData {
+					cvl.VALIDATE_ALL,
+					cvl.OP_CREATE,
+					fmt.Sprintf("VLAN_MEMBER|Vlan%d|Ethernet%d", vlanNum, i * 4),
+					map[string]string {
+						"tagging_mode" : "tagged",
+					},
+				})
+
+				_, ret1 := cvSess.ValidateEditConfig(cfgDataVlan)
+				if (ret1 != cvl.CVL_SUCCESS) {
+					fmt.Printf("Validation failure\n")
+					return
+				}
+
+				cfgDataVlan[1 + i].VType = cvl.VALIDATE_NONE
+			}
+
+			//Write to DB
+			for _, cfgDataItem := range cfgDataVlan {
+				loadConfigDB(rclient, cfgDataItem.Key, cfgDataItem.Data)
+			}
+
+			cvl.ValidationSessClose(cvSess)
+		}
+
+		return
+	} else if ((len(os.Args) > 1) && (os.Args[1] == "del")) {
+		vlanNoStart, _ := strconv.Atoi(os.Args[2])
+		vlanNoEnd, _ := strconv.Atoi(os.Args[3])
+		for vlanNum:= vlanNoStart ;vlanNum <= vlanNoEnd; vlanNum++ {
+			cvSess,_ := cvl.ValidationSessOpen()
+
+			//Delete ACL
+
+			cfgDataVlan := []cvl.CVLEditConfigData{}
+
+			//Create 7 ACL rules
+			for i:=0; i<7; i++ {
+				cfgDataVlan = append(cfgDataVlan, cvl.CVLEditConfigData {
+					cvl.VALIDATE_ALL,
+					cvl.OP_DELETE,
+					fmt.Sprintf("VLAN_MEMBER|Vlan%d|Ethernet%d", vlanNum, i * 4),
+					map[string]string {
+					},
+				})
+
+				_, ret := cvSess.ValidateEditConfig(cfgDataVlan)
+				if (ret != cvl.CVL_SUCCESS) {
+					fmt.Printf("Validation failure\n")
+					//return
+				}
+
+				cfgDataVlan[i].VType = cvl.VALIDATE_NONE
+			}
+
+			cfgDataVlan = append(cfgDataVlan,	cvl.CVLEditConfigData {
+				cvl.VALIDATE_ALL,
+				cvl.OP_DELETE,
+				fmt.Sprintf("VLAN|Vlan%d", vlanNum),
+				map[string]string {
+				},
+			})
+
+			_, ret := cvSess.ValidateEditConfig(cfgDataVlan)
+			if (ret != cvl.CVL_SUCCESS) {
+				fmt.Printf("Validation failure\n")
+				//return
+			}
+
+			//Write to DB
+			for _, cfgDataItem := range cfgDataVlan {
+				unloadConfigDB(rclient, cfgDataItem.Key, cfgDataItem.Data)
+			}
+
+			cvl.ValidationSessClose(cvSess)
+		}
+		return
+	}
 	cv, ret := cvl.ValidationSessOpen()
 	if (ret != cvl.CVL_SUCCESS) {
 		fmt.Printf("NewDB: Could not create CVL session")

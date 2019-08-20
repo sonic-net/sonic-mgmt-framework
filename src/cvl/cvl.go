@@ -36,6 +36,9 @@ const MAX_BULK_ENTRIES_IN_PIPELINE int = 50
 
 var reLeafRef *regexp.Regexp = nil
 var reHashRef *regexp.Regexp = nil
+var reSelKeyVal *regexp.Regexp = nil
+var reLeafInXpath *regexp.Regexp = nil
+
 var cvlInitialized bool
 var dbNameToDbNum map[string]uint8
 
@@ -151,6 +154,8 @@ func init() {
 	//regular expression for leafref and hashref finding
 	reLeafRef = regexp.MustCompile(`.*[/]([a-zA-Z]*:)?(.*)[/]([a-zA-Z]*:)?(.*)`)
 	reHashRef = regexp.MustCompile(`\[(.*)\|(.*)\]`)
+	reSelKeyVal = regexp.MustCompile("=[ ]*['\"]?([0-9_a-zA-Z]+)['\"]?|(current[(][)])")
+	reLeafInXpath = regexp.MustCompile("(.*[:/]{1})([a-zA-Z0-9_-]+)([^a-zA-Z0-9_-]*)")
 
 	Initialize()
 
@@ -445,15 +450,274 @@ func(c *CVL) addChildNode(tableName string, parent *yparser.YParserNode, name st
 	return c.yp.AddChildNode(modelInfo.tableInfo[tableName].module, parent, name)
 }
 
+//Check for path resolution
+func (c *CVL) checkPathForTableEntry(tableName string, currentValue string, cfgData *CVLEditConfigData, mustExpStk []string, token string) ([]string, string, CVLRetCode) {
+
+	n := len(mustExpStk) - 1
+	xpath := ""
+
+	if (token  == ")") {
+		for n = len(mustExpStk) - 1; mustExpStk[n] != "(";  n  = len(mustExpStk) - 1 {
+			//pop until "("
+			xpath = mustExpStk[n] + xpath
+			mustExpStk = mustExpStk[:n]
+		}
+	} else if (token == "]") {
+		//pop until "["
+		for n = len(mustExpStk) - 1; mustExpStk[n] != "[";  n  = len(mustExpStk) - 1 {
+			xpath = mustExpStk[n] + xpath
+			mustExpStk = mustExpStk[:n]
+		}
+	}
+
+	mustExpStk = mustExpStk[:n]
+	targetTbl := ""
+	//Search the table name in xpath
+	for tblNameSrch, _ := range modelInfo.tableInfo {
+		if (tblNameSrch == tableName) {
+			continue
+		}
+		//Table name should appear like "../VLAN_MEMBER/tagging_mode' or '
+		// "/prt:PORT/prt:ifname"
+		//re := regexp.MustCompile(fmt.Sprintf(".*[/]([a-zA-Z]*:)?%s[\\[/]", tblNameSrch))
+		tblSrchIdx := strings.Index(xpath, fmt.Sprintf("/%s", tblNameSrch)) //no preifx
+		if (tblSrchIdx < 0) {
+			tblSrchIdx = strings.Index(xpath, fmt.Sprintf(":%s", tblNameSrch)) //with prefix
+		}
+		if (tblSrchIdx < 0) {
+			continue
+		}
+
+		tblSrchIdxEnd := strings.Index(xpath[tblSrchIdx+len(tblNameSrch)+1:], "[")
+		if (tblSrchIdxEnd < 0) {
+			tblSrchIdxEnd = strings.Index(xpath[tblSrchIdx+len(tblNameSrch)+1:], "/")
+		}
+
+		if (tblSrchIdxEnd >= 0) { //match found
+			targetTbl = tblNameSrch
+			break
+		}
+	}
+
+	//No match with table found, could be just keys like 'aclname='TestACL1'
+	//just return the same
+	if (targetTbl == "") {
+		return mustExpStk, xpath, CVL_SUCCESS
+	}
+
+	tableKey := targetTbl
+	//Add the keys
+	keyNames := modelInfo.tableInfo[tableKey].keys
+
+	//Form the Redis Key to fetch the entry
+	for  idx, keyName := range keyNames {
+		//Key value is string/numeric literal, extract the same
+		keySrchIdx := strings.Index(xpath, keyName)
+		if (keySrchIdx < 0 ) {
+			continue
+		}
+
+		matches := reSelKeyVal.FindStringSubmatch(xpath[keySrchIdx+len(keyName):])
+		if (len(matches) > 1) {
+			if (matches[1] == "current()") {
+				//replace with current field value
+				tableKey = tableKey + "*" + modelInfo.tableInfo[tableName].redisKeyDelim + currentValue
+			} else {
+				//Use literal
+				tableKey = tableKey + "*" + modelInfo.tableInfo[tableName].redisKeyDelim + matches[1]
+			}
+
+			if  (idx != len(keyNames) - 1) {
+				tableKey = tableKey + "|*"
+			}
+		}
+	}
+
+	//Fetch the entries
+	redisTableKeys, err:= redisClient.Keys(tableKey).Result()
+
+	if (err !=nil || len (redisTableKeys) > 1) { //more than one entry is returned, can't proceed further 
+		//Just add all the entries for caching
+		for _, redisTableKey := range redisTableKeys {
+			//tbl, key := splitRedisKey(redisTableKey)
+			c.addTableEntryToCache(splitRedisKey(redisTableKey))
+		}
+
+		return mustExpStk, "", CVL_SUCCESS
+	}
+
+	for _, redisTableKey := range redisTableKeys {
+		//Get the entry fields from Redis
+		entry, err := redisClient.HGetAll(redisTableKey).Result()
+		if (err == nil) {
+			//Just add all the entries for caching
+			c.addTableEntryToCache(splitRedisKey(redisTableKey))
+
+			leafInPath := ""
+			index := strings.LastIndex(xpath, "/")
+			if (index >= 0) {
+
+				matches := reLeafInXpath.FindStringSubmatch(xpath[index:])
+				if (len(matches) > 2) { //should return atleasts two subgroup and entire match
+					leafInPath = matches[2]
+				} else {
+					//No leaf requested in xpath selection
+					return mustExpStk, "", CVL_SUCCESS
+				}
+
+				index = strings.Index(xpath, "=")
+				tblIndex := strings.Index(xpath, targetTbl)
+				if (index >= 0 && tblIndex >=0) {
+
+					if leafVal, existing := entry[leafInPath + "@"]; existing == true {
+						//Get the field value referred in the xpath
+						if (index  < tblIndex) {
+							// case like - [ifname=../../ACL_TABLE[aclname=current()]
+							return mustExpStk, xpath[:index+1] + leafVal, CVL_SUCCESS
+						} else {
+							// case like - [ifname=current()]
+							return mustExpStk, leafVal, CVL_SUCCESS
+						}
+					} else {
+
+						if (index  < tblIndex) {
+							return mustExpStk, xpath[:index+1] + entry[leafInPath], CVL_SUCCESS
+						} else {
+							return mustExpStk, entry[leafInPath], CVL_SUCCESS
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return mustExpStk, "", CVL_FAILURE
+}
+
 //Add specific entries by looking at must expression
 //Must expression may need single or multiple entries
 //It can be within same table or across multiple tables
-//Aggregate function such count() can be quite expensive and 
-//should be avoid through this function
-func (c *CVL) addTableEntryForMustExp(op CVLOperation, tableName string) CVLRetCode {
+//Node-set function such count() can be quite expensive and 
+//should be avoided through this function
+func (c *CVL) addTableEntryForMustExp(cfgData *CVLEditConfigData, tableName string) CVLRetCode {
 	if (modelInfo.tableInfo[tableName].mustExp == nil) {
 		return CVL_SUCCESS
 	}
+
+	for fieldName, mustExp := range modelInfo.tableInfo[tableName].mustExp {
+
+		currentValue := "" // Current value for current() function
+
+		//Get the current() field value from the entry being created/updated/deleted
+		keyValuePair := getRedisToYangKeys(tableName, cfgData.Key[len(tableName)+1:])
+
+		//Try to get the current() from the 'key' provided
+		if (keyValuePair != nil) {
+			for _, keyValItem := range keyValuePair {
+				if (keyValItem.key == fieldName) {
+					currentValue = keyValItem.values[0]
+				}
+			}
+		}
+
+		//current() value needs to be fetched from other field
+		if (currentValue == "") {
+			if (cfgData.VOp == OP_CREATE) {
+				if (tableName != fieldName) { //must expression is not at list level
+					currentValue = cfgData.Data[fieldName]
+					if (currentValue == "") {
+					currentValue = cfgData.Data[fieldName + "@"]
+					}
+				}
+			} else if (cfgData.VOp == OP_UPDATE || cfgData.VOp == OP_DELETE) {
+				//fetch the entry to get current() value
+				c.clearTmpDbCache()
+				entryKey := cfgData.Key[len(tableName)+1:]
+				c.tmpDbCache[tableName] = map[string]interface{}{entryKey: nil}
+
+				if (c.fetchTableDataToTmpCache(tableName,
+				map[string]interface{}{entryKey: nil}) > 0) {
+					mapTable := c.tmpDbCache[tableName]
+					if  fields, existing := mapTable.(map[string]interface{})[entryKey]; existing == true {
+						currentValue = fmt.Sprintf("%v", fields.(map[string]interface{})[fieldName])
+					}
+				}
+			}
+		}
+
+		mustExpStk := []string{} //Use the string slice as stack
+		mustExpStr := "(" + mustExp + ")"
+		strLen :=  len(mustExpStr)
+		strTmp := ""
+		//Parse the xpath expression and fetch Redis entry by looking at xpath,
+		// any xpath function call is ignored except current().
+		for i := 0; i < strLen; i++ {
+			switch mustExpStr[i] {
+			case '(':
+				if (mustExpStr[i+1] == ')') {
+					strTmp = strTmp + "()"
+					if index := strings.Index(strTmp, "current()"); index >= 0 {
+						strTmp = strTmp[:index] + currentValue
+					}
+					i = i + 1
+					continue
+				}
+				if (strTmp != "") {
+					mustExpStk = append(mustExpStk, strTmp)
+				}
+				mustExpStk = append(mustExpStk, "(")
+				strTmp = ""
+			case ')':
+				if (strTmp != "") {
+					mustExpStk = append(mustExpStk, strTmp)
+				}
+				strTmp = ""
+				//Check Path - pop until ')'
+				mustExpStk, evalPath,_ := c.checkPathForTableEntry(tableName, currentValue, cfgData,
+				mustExpStk, ")")
+				if (evalPath != "") {
+					mustExpStk = append(mustExpStk, evalPath)
+				}
+				mustExpStk = append(mustExpStk, ")")
+			case '[':
+				if (strTmp != "") {
+					mustExpStk = append(mustExpStk, strTmp)
+				}
+				mustExpStk = append(mustExpStk, "[")
+				strTmp = ""
+			case ']':
+				if (strTmp != "") {
+					mustExpStk = append(mustExpStk, strTmp)
+				}
+				//Check Path - pop until = or '['
+				mustExpStk, evalPath,_ := c.checkPathForTableEntry(tableName, currentValue, cfgData,
+				mustExpStk, "]")
+				if (evalPath != "") {
+					mustExpStk = append(mustExpStk, "[" + evalPath + "]")
+				}
+				strTmp = ""
+			default:
+				strTmp = strTmp + fmt.Sprintf("%c", mustExpStr[i])
+			}
+		}
+
+		//Get the redis data for accumulated keys and add them to session cache
+		depData := c.fetchDataToTmpCache() //fetch data to temp cache for temporary validation
+
+		if (depData != nil) {
+			if (Tracing == true) {
+				TRACE_LOG(INFO_API, TRACE_CACHE, "Adding entries for 'must' expression : %s", c.yp.NodeDump(depData))
+			}
+		} else {
+			//Could not fetch any entry from Redis after xpath evaluation
+			return CVL_FAILURE
+		}
+
+		if errObj := c.yp.CacheSubtree(false, depData); errObj.ErrCode != yparser.YP_SUCCESS {
+			return CVL_FAILURE
+		}
+
+	} //for each must expression
 
 	return CVL_SUCCESS
 }
@@ -527,6 +791,10 @@ func (c *CVL) addTableDataForMustExp(op CVLOperation, tableName string) CVLRetCo
 }
 
 func (c *CVL) addTableEntryToCache(tableName string, redisKey string) {
+	if (tableName == "" || redisKey == "") {
+		return 
+	}
+
 	if (c.tmpDbCache[tableName] == nil) {
 		c.tmpDbCache[tableName] = map[string]interface{}{redisKey: nil}
 	} else {
