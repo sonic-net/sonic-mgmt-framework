@@ -44,7 +44,7 @@ $(REST_BUILD_DIR)/:
 $(REST_BIN): $(REST_SRCS) | $(REST_BUILD_DIR)/
 	$(MAKE) -C $(TOPDIR)/models/yang
 	$(MAKE) -C $(TOPDIR)/models
-	GOPATH=$(REST_GOPATH) $(GO) build -gcflags=all="-N -l" -v -o $@ $(TOPDIR)/src/rest/main/main.go
+	GOPATH=$(REST_GOPATH) $(GO) build -gcflags="all=-N -l" -v -o $@ main/main.go
 
 # Gotest binary for REST Server
 $(REST_TEST_BIN): $(REST_TEST_SRCS) $(ALL_GO_SRCS) | $(REST_BUILD_DIR)/
