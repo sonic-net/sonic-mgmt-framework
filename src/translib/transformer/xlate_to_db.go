@@ -128,19 +128,62 @@ func directDbMapData(tableName string, jsonData interface{}, result map[string]m
 
 /* Get the db table, key and field name for the incoming delete request */
 func dbMapDelete(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, jsonData interface{}, result map[string]map[string]db.Value) error {
-	xpathPrefix, keyName, _ := xpathKeyExtract(path)
-	log.Info("Delete req: path(\"%v\"), key(\"%v\"), xpathPrefix(\"%v\").", path, keyName, xpathPrefix)
-	spec, ok := xSpecMap[xpathPrefix]
-	if ok && spec.tableName != nil {
-		result[*spec.tableName] = make(map[string]db.Value)
-		if len(keyName) > 0 {
-			result[*spec.tableName][keyName] = db.Value{Field: make(map[string]string)}
-			if spec.yangEntry != nil && spec.yangEntry.Node.Statement().Keyword == "leaf" {
-				result[*spec.tableName][keyName].Field[spec.fieldName] = ""
+	xpathPrefix, keyName, tableName := xpathKeyExtract(path)
+	log.Info("Delete req: path(\"%v\"), key(\"%v\"), xpathPrefix(\"%v\"), tableName(\"%v\").", path, keyName, xpathPrefix, tableName)
+	var err error
+	if isCvlYang(xpathPrefix) {
+		err = cvlYangReqToDbMapDelete(xpathPrefix, tableName, keyName, result)
+	} else {
+		spec, ok := xSpecMap[xpathPrefix]
+		if ok && spec.tableName != nil {
+			result[*spec.tableName] = make(map[string]db.Value)
+			if len(keyName) > 0 {
+				result[*spec.tableName][keyName] = db.Value{Field: make(map[string]string)}
+				if spec.yangEntry != nil && spec.yangEntry.Node.Statement().Keyword == "leaf" {
+					result[*spec.tableName][keyName].Field[spec.fieldName] = ""
+				}
 			}
 		}
 	}
 	log.Info("Delete req: path(\"%v\") result(\"%v\").", path, result)
+	return err
+}
+
+func cvlYangReqToDbMapDelete(xpathPrefix string, tableName string, keyName string, result map[string]map[string]db.Value) error {
+	if (tableName != "") {
+		// Specific table entry case
+		result[tableName] = make(map[string]db.Value)
+		if (keyName != "") {
+			// Specific key case
+			var dbVal db.Value
+			tokens:= strings.Split(xpathPrefix, "/")
+			// Format /module:container/tableName[key]/fieldName
+			if tokens[len(tokens)-2] == tableName {
+				// Specific leaf case
+				fieldName := tokens[len(tokens)-1]
+				dbVal.Field = make(map[string]string)
+				dbVal.Field[fieldName] = ""
+			}
+			result[tableName][keyName] = dbVal
+		} else {
+			// Get all keys
+			fmt.Println("No Key. Return table name")
+		}
+	} else {
+		// Get all table entries
+		fmt.Println("No table name. Delete all entries")
+		// If table name not available in xpath get top container name
+		tokens:= strings.Split(xpathPrefix, ":")
+		container := "/" + tokens[len(tokens)-1]
+		if xDbSpecMap[container] != nil {
+			dbInfo := xDbSpecMap[container]
+			if dbInfo.fieldType == "container" {
+				for dir, _ := range dbInfo.dbEntry.Dir {
+					result[dir] = make(map[string]db.Value)
+				}
+                       }
+		}
+	}
 	return nil
 }
 
