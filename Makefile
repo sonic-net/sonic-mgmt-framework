@@ -92,6 +92,7 @@ cp $(TOPDIR)/ygot-modified-files/reflect.go $(BUILD_GOPATH)/src/github.com/openc
 cp $(TOPDIR)/goyang-modified-files/README.md $(BUILD_GOPATH)/src/github.com/openconfig/goyang/README.md; \
 cp $(TOPDIR)/goyang-modified-files/yang.go $(BUILD_GOPATH)/src/github.com/openconfig/goyang/yang.go; \
 cp $(TOPDIR)/goyang-modified-files/annotate.go $(BUILD_GOPATH)/src/github.com/openconfig/goyang/annotate.go; \
+cp $(TOPDIR)/goyang-modified-files/entry.go $(BUILD_GOPATH)/src/github.com/openconfig/goyang/pkg/yang/entry.go; \
 $(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/openconfig/ygot/ygot; \
 $(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/openconfig/goyang
 

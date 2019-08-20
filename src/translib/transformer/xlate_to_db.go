@@ -271,7 +271,6 @@ func xpathKeyExtract(path string) (string, string, string) {
 		yangXpath += xpath
 	}
 
-	fmt.Println(tableName)
 	return yangXpath, keyStr, tableName
 }
 

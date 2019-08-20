@@ -118,11 +118,8 @@ func XlateUriToKeySpec(path string, uri *ygot.GoStruct, t *interface{}) (*map[db
 	yangXpath, keyStr, tableName := xpathKeyExtract(path)
 
 	// In case of CVL yang, the tablename and key info is available in the xpath
-	if tableName != "" {
-		dbFormat := KeySpec{}
-		dbFormat.Ts.Name = tableName
-		dbFormat.Key.Comp = append(dbFormat.Key.Comp, keyStr)
-		retdbFormat = append(retdbFormat, dbFormat)
+	if isCvlYang(yangXpath) {
+		retdbFormat = fillCvlKeySpec(yangXpath, tableName, keyStr)
 	} else {
 		if xSpecMap == nil {
 			return &result, err
@@ -147,6 +144,35 @@ func XlateUriToKeySpec(path string, uri *ygot.GoStruct, t *interface{}) (*map[db
 	result[db.ConfigDB] = retdbFormat
 
 	return &result, err
+}
+
+func fillCvlKeySpec(yangXpath string , tableName string, keyStr string) ( []KeySpec ) {
+
+	var retdbFormat = make([]KeySpec, 0)
+
+	if tableName != "" {
+		dbFormat := KeySpec{}
+		dbFormat.Ts.Name = tableName
+		if keyStr != "" {
+			dbFormat.Key.Comp = append(dbFormat.Key.Comp, keyStr)
+		}
+		retdbFormat = append(retdbFormat, dbFormat)
+	} else {
+		// If table name not available in xpath get top container name
+		tokens:= strings.Split(yangXpath, ":")
+		container := "/" + tokens[len(tokens)-1]
+		if xDbSpecMap[container] != nil {
+			dbInfo := xDbSpecMap[container]
+			if dbInfo.fieldType == "container" {
+				for dir, _ := range dbInfo.dbEntry.Dir {
+					dbFormat := KeySpec{}
+					dbFormat.Ts.Name = dir
+					retdbFormat = append(retdbFormat, dbFormat)
+				}
+			}
+		}
+	}
+	return retdbFormat
 }
 
 func fillKeySpec(yangXpath string, keyStr string, dbFormat *KeySpec) {
@@ -237,12 +263,14 @@ func XlateFromDb(xpath string, data map[string]map[string]db.Value) ([]byte, err
 	yangXpath, keyStr, tblName := xpathKeyExtract(xpath)
 
 	if isCvlYang(xpath) {
-		tableName = tblName
-		tokens:= strings.Split(yangXpath, "/")
-		// Format /module:container/tableName[key]/fieldName
-		if tokens[len(tokens)-2] == tableName {
-			fieldName = tokens[len(tokens)-1]
-			dbData = extractFieldFromDb(tableName, keyStr, fieldName, data)
+		if (tblName != "") {
+			tableName = tblName
+			tokens:= strings.Split(yangXpath, "/")
+			// Format /module:container/tableName[key]/fieldName
+			if tokens[len(tokens)-2] == tableName {
+				fieldName = tokens[len(tokens)-1]
+				dbData = extractFieldFromDb(tableName, keyStr, fieldName, data)
+			}
 		}
 	} else {
 		if xSpecMap == nil {
