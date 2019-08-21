@@ -190,23 +190,23 @@ func cvlYangReqToDbMapDelete(xpathPrefix string, tableName string, keyName strin
 /* Get the data from incoming update/replace request, create map and fill with dbValue(ie. field:value
    to write into redis-db */
 func dbMapUpdate(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, jsonData interface{}, result map[string]map[string]db.Value) error {
-	xpathPrefix, keyName , _ := xpathKeyExtract(path)
-	log.Info("Update/replace req: path(\"%v\"), key(\"%v\"), xpathPrefix(\"%v\").", path, keyName, xpathPrefix)
-	dbMapCreate(d, ygRoot, oper, parentXpathGet(xpathPrefix), jsonData, result)
+	log.Info("Update/replace req: path(\"%v\").", path)
+	dbMapCreate(d, ygRoot, oper, path, jsonData, result)
 	log.Info("Update/replace req: path(\"%v\") result(\"%v\").", path, result)
+	printDbData(result, "/tmp/yangToDbDataUpRe.txt")
 	return nil
 }
 
 /* Get the data from incoming create request, create map and fill with dbValue(ie. field:value
    to write into redis-db */
 func dbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, jsonData interface{}, result map[string]map[string]db.Value) error {
-	xpathTmplt, keyName, _ := xpathKeyExtract(path)
+	root := xpathRootNameGet(path)
 	if isCvlYang(path) {
 		cvlYangReqToDbMapCreate(jsonData, result)
 	} else {
-		yangReqToDbMapCreate(d, ygRoot, oper, path, parentXpathGet(xpathTmplt), keyName, jsonData, result)
+		yangReqToDbMapCreate(d, ygRoot, oper, root, "", "", jsonData, result)
 	}
-	printDbData(result, "/tmp/yangToDbData.txt")
+	printDbData(result, "/tmp/yangToDbDataCreate.txt")
 	return nil
 }
 

@@ -176,9 +176,9 @@ func dbMapFill(prefixPath string, curPath string, moduleNm string, trkTpCnt bool
             trkTpCnt = false
     }
 
-    //sort.Strings(childList)
     for _, child := range childList {
-        dbMapFill(prefixPath, prefixPath + "/" + entry.Dir[child].Name, moduleNm, trkTpCnt, xDbSpecMap, entry.Dir[child])
+        childPath := prefixPath + "/" + entry.Dir[child].Name
+        dbMapFill(prefixPath, childPath, moduleNm, trkTpCnt, xDbSpecMap, entry.Dir[child])
     }
 }
 
@@ -201,9 +201,6 @@ func dbMapBuild(entries []*yang.Entry) {
         dbMapFill("", "", moduleNm, trkTpCnt, xDbSpecMap, e)
     }
 }
-
-/***************************************/
-
 
 func childToUpdateParent( xpath string, tableName string) {
     var xpathData *yangXpathInfo

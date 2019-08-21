@@ -23,7 +23,7 @@ func keyFromXpathCreate(keyList []string) string {
     return keyOut
 }
 
-/* Create db key from datd xpath(request) */
+/* Create db key from data xpath(request) */
 func keyCreate(keyPrefix string, xpath string, data interface{}) string {
     yangEntry := xSpecMap[xpath].yangEntry
     if len(keyPrefix) > 0 { keyPrefix += "|" }
@@ -158,5 +158,10 @@ func uriWithKeyCreate (uri string, xpathTmplt string, data interface{}) string {
         uri += fmt.Sprintf("[%v=%v]", k, data.(map[string]interface{})[k])
     }
     return uri
+}
+
+func xpathRootNameGet(path string) string {
+    pathl := strings.Split(path, "/")
+    return ("/" + pathl[1])
 }
 
