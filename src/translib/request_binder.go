@@ -78,8 +78,23 @@ func (binder *requestBinder) unMarshallPayload(workObj *interface{}) error {
 
 func (binder *requestBinder) validateRequest(deviceObj *ocbinds.Device) error {
 	if binder.pathTmp == nil || len(binder.pathTmp.Elem) == 0 {
-		return errors.New("Path is empty")
+		if binder.opcode == UPDATE || binder.opcode == REPLACE {
+			log.Info("validateRequest: path is base node")
+			devObjTmp, ok := (reflect.ValueOf(*deviceObj).Interface()).(ygot.ValidatedGoStruct)
+			if ok == true {
+				err := devObjTmp.Validate(&ytypes.LeafrefOptions{IgnoreMissingData: true})
+				if err != nil {
+					return err
+				}
+			} else {
+				return errors.New("Invalid base Object in the binding: Not able to cast to type ValidatedGoStruct")
+			}
+			return nil
+		} else {
+			return errors.New("Path is empty")
+		}
 	}
+
 	path, err := ygot.StringToPath(binder.pathTmp.Elem[0].Name, ygot.StructuredPath, ygot.StringSlicePath)
 	if err != nil {
 		return err
