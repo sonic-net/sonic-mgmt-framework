@@ -184,7 +184,6 @@ func (app *CommonApp) translateCRUCommon(d *db.DB, opcode int) ([]db.WatchKeys, 
 	var schemaOrdTblList []string
 	var moduleNm string
 	log.Info("translateCRUCommon:path =", app.pathInfo.Path)
-	d.Opts.DisableCVLCheck = true
 
 	/* retrieve schema table order for incoming maodule name request */
 	moduleNm, err = transformer.GetModuleNmFromPath(app.pathInfo.Path)
@@ -245,15 +244,16 @@ func (app *CommonApp) cmnAppDataDbOperation(d *db.DB, opcode int, cmnAppDataDbMa
 	//return err
 
 	/* order by schema table order */
-	for _, tbl := range app.cmnAppSchemaOrdTbllist {
-		log.Info("In Yang to DB map returned from transformer looking for table = ", tbl)
-		if tblVal, ok := cmnAppDataDbMap[tbl]; ok {
+	for _, tblNm := range app.cmnAppSchemaOrdTbllist {
+		log.Info("In Yang to DB map returned from transformer looking for table = ", tblNm)
+		if tblVal, ok := cmnAppDataDbMap[tblNm]; ok {
+			cmnAppTs = &db.TableSpec{Name: tblNm}
 			log.Info("Found table entry in yang to DB map")
-			for tblKey, tblRw := range tblVal {
-				log.Info("Processing Table key and row ", tblKey, tblRw)
-				switch opcode {
-					case CREATE:
-						log.Info("CREATE case")
+			switch opcode {
+				case CREATE:
+					log.Info("CREATE case")
+					for tblKey, tblRw := range tblVal {
+						log.Info("Processing Table key and row ", tblKey, tblRw)
 						existingEntry, err := d.GetEntry(cmnAppTs, db.Key{Comp: []string{tblKey}})
 						if existingEntry.IsPopulated() {
 							log.Info("Entry already exists hence return error.")
@@ -266,8 +266,11 @@ func (app *CommonApp) cmnAppDataDbOperation(d *db.DB, opcode int, cmnAppDataDbMa
 							}
 						}
 
-					case UPDATE:
-						log.Info("UPDATE case")
+					}
+
+				case UPDATE:
+					log.Info("UPDATE case")
+					for tblKey, tblRw := range tblVal {
 						existingEntry, err := d.GetEntry(cmnAppTs, db.Key{Comp: []string{tblKey}})
 						if existingEntry.IsPopulated() {
 							log.Info("Entry already exists hence modifying it.")
@@ -280,9 +283,11 @@ func (app *CommonApp) cmnAppDataDbOperation(d *db.DB, opcode int, cmnAppDataDbMa
 							log.Info("Entry to be modified does not exist hence return error.")
 							return tlerr.NotFound("Entry %s to be modified does not exist.", tblKey)
 						}
+					}
 
-					case REPLACE:
-						log.Info("REPLACE case")
+				case REPLACE:
+					log.Info("REPLACE case")
+					for tblKey, tblRw := range tblVal {
 						existingEntry, err := d.GetEntry(cmnAppTs, db.Key{Comp: []string{tblKey}})
 						if existingEntry.IsPopulated() {
 							log.Info("Entry already exists hence execute db.SetEntry")
@@ -300,8 +305,20 @@ func (app *CommonApp) cmnAppDataDbOperation(d *db.DB, opcode int, cmnAppDataDbMa
 							}
 						}
 						//TODO : should the table level replace be handled??
-					case DELETE:
-						log.Info("DELETE case")
+					}
+				case DELETE:
+					log.Info("DELETE case")
+					if len(tblVal) == 0 {
+						log.Info("DELETE case - No table instances hence delete entire table = ", tblNm)
+						err = d.DeleteTable(cmnAppTs)
+						if err != nil {
+							log.Error("DELETE case - d.DeleteTable() failure for Table = ", tblNm)
+							return err
+						}
+						log.Info("DELETE case - Deleted entire table = ", tblNm)
+						continue
+					}
+					for tblKey, tblRw := range tblVal {
 						if len(tblRw.Field) == 0 {
 							log.Info("DELETE case - no fields/cols to delete hence delete the entire row.")
 							err := d.DeleteEntry(cmnAppTs, db.Key{Comp: []string{tblKey}})
@@ -317,7 +334,7 @@ func (app *CommonApp) cmnAppDataDbOperation(d *db.DB, opcode int, cmnAppDataDbMa
 								return err
 							}
 						}
-				}
+					}
 			}
 		}
 	}

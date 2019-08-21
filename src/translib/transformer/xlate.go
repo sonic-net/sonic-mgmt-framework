@@ -337,8 +337,11 @@ func GetSchemaOrdDBTblList(ygModuleNm string) ([]string, error) {
 	var err error
         if dbTblList, ok := xDbSpecOrdTblMap[ygModuleNm]; ok {
                 result = dbTblList
-                log.Error("Ordered DB Table list is empty for module name = ", ygModuleNm)
-                err = fmt.Errorf("Ordered DB Table list is empty for module name %v", ygModuleNm)
+		if len(dbTblList) == 0 {
+			log.Error("Ordered DB Table list is empty for module name = ", ygModuleNm)
+			err = fmt.Errorf("Ordered DB Table list is empty for module name %v", ygModuleNm)
+
+		}
         } else {
                 log.Error("No entry found in the map of module names to ordered list of DB Tables for module = ", ygModuleNm)
                 err = fmt.Errorf("No entry found in the map of module names to ordered list of DB Tables for module = %v", ygModuleNm)
