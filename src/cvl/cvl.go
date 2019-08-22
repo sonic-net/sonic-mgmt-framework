@@ -354,8 +354,9 @@ func addTableNamesForMustExp() {
 			continue
 		}
 
+		tblInfo.tablesForMustExp = make(map[string]CVLOperation)
+
 		for _, mustExp := range tblInfo.mustExp {
-			tblInfo.tablesForMustExp = make(map[string]CVLOperation)
 			var op CVLOperation = OP_NONE
 			//Check if 'must' expression should be executed for a particular operation
 			if (strings.Contains(mustExp,

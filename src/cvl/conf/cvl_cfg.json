@@ -5,7 +5,6 @@
 	"TRACE_CREATE": "false",
 	"TRACE_UPDATE": "false",
 	"TRACE_DELETE": "false",
-	"TRACE_DELETE": "false",
 	"TRACE_SEMANTIC": "false",
 	"TRACE_SYNTAX": "false",
 	"__comment1__": "Set LOGTOSTDER to 'false' to log on standard error",

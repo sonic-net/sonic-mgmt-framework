@@ -43,7 +43,10 @@ module sonic-dscp-tc-map {
 
 				leaf tc_num {
 					type string {
-						pattern "[0-9]?";
+						pattern "[0-9]?"{
+							error-message "Invalid Traffic Class number";
+							error-app-tag tc-num-invalid;
+						}
 					}
 				}
 
