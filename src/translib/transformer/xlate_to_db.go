@@ -150,12 +150,14 @@ func directDbMapData(tableName string, jsonData interface{}, result map[string]m
 
 /* Get the db table, key and field name for the incoming delete request */
 func dbMapDelete(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, jsonData interface{}, result map[string]map[string]db.Value) error {
-	xpathPrefix, keyName, tableName := xpathKeyExtract(path)
-	log.Info("Delete req: path(\"%v\"), key(\"%v\"), xpathPrefix(\"%v\"), tableName(\"%v\").", path, keyName, xpathPrefix, tableName)
 	var err error
-	if isCvlYang(xpathPrefix) {
+	if isCvlYang(path) {
+		xpathPrefix, keyName, tableName := sonicXpathKeyExtract(path)
+		log.Info("Delete req: path(\"%v\"), key(\"%v\"), xpathPrefix(\"%v\"), tableName(\"%v\").", path, keyName, xpathPrefix, tableName)
 		err = cvlYangReqToDbMapDelete(xpathPrefix, tableName, keyName, result)
 	} else {
+		xpathPrefix, keyName, tableName := xpathKeyExtract(path)
+		log.Info("Delete req: path(\"%v\"), key(\"%v\"), xpathPrefix(\"%v\"), tableName(\"%v\").", path, keyName, xpathPrefix, tableName)
 		spec, ok := xSpecMap[xpathPrefix]
 		if ok && spec.tableName != nil {
 			result[*spec.tableName] = make(map[string]db.Value)
