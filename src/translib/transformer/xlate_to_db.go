@@ -118,6 +118,28 @@ func directDbMapData(tableName string, jsonData interface{}, result map[string]m
 
 			result[tableName][keyName] = db.Value{Field: make(map[string]string)}
 			for field, value := range d {
+				fieldXpath := tableName + "/" + field
+				if _, fieldOk := xDbSpecMap[fieldXpath]; (fieldOk  && (xDbSpecMap[fieldXpath].dbEntry != nil)) {
+					log.Info("Found non-nil yang entry in xDbSpecMap for field xpath = ", fieldXpath)
+					if xDbSpecMap[fieldXpath].dbEntry.IsLeafList() {
+						log.Info("Yang type is Leaflist for field  = ", field)
+						field += "@"
+						fieldDt := reflect.ValueOf(value)
+						fieldValue := ""
+						for fidx := 0; fidx < fieldDt.Len(); fidx++ {
+							if fidx > 0 {
+								fieldValue += ","
+							}
+							fVal := fmt.Sprintf("%v", fieldDt.Index(fidx).Interface())
+							fieldValue = fieldValue + fVal
+						}
+						result[tableName][keyName].Field[field] = fieldValue
+						continue
+					}
+				} else {
+					// should ideally never happen , just adding for safety
+					log.Info("Did not find entry in xDbSpecMap for field xpath = ", fieldXpath)
+				}
 				result[tableName][keyName].Field[field] = fmt.Sprintf("%v", value)
 			}
 		}
