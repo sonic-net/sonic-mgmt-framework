@@ -2964,11 +2964,71 @@ func TestValidateStartupConfig_Positive(t *testing.T) {
 }
 
 func TestValidateIncrementalConfig_Positive(t *testing.T) {
-	cvSess, _ := cvl.ValidationSessOpen()
-	if cvl.CVL_NOT_IMPLEMENTED != cvSess.ValidateIncrementalConfig("") {
-		t.Errorf("Not implemented yet.")
+	existingDataMap := map[string]interface{} {
+		"VLAN" : map[string]interface{} {
+			"Vlan800": map[string]interface{} {
+				"members@": "Ethernet1",
+				"vlanid": "800",
+			},
+			"Vlan801": map[string]interface{} {
+				"members@": "Ethernet2",
+				"vlanid": "801",
+			},
+		},
+		"VLAN_MEMBER": map[string]interface{} {
+			"Vlan800|Ethernet1": map[string] interface{} {
+				"tagging_mode": "tagged",
+			},
+		},
+		"PORT" : map[string]interface{} {
+			"Ethernet1" : map[string]interface{} {
+				"alias":"hundredGigE1",
+				"lanes": "81,82,83,84",
+				"mtu": "9100",
+			},
+			"Ethernet2" : map[string]interface{} {
+				"alias":"hundredGigE1",
+				"lanes": "85,86,87,89",
+				"mtu": "9100",
+			},
+		},
 	}
+
+	//Prepare data in Redis
+	loadConfigDB(rclient, existingDataMap)
+
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	jsonData := `{
+		"VLAN": {
+			"Vlan800": {
+				"members": [
+				"Ethernet1",
+				"Ethernet2"
+				],
+				"vlanid": "800"
+			}
+		},
+		"VLAN_MEMBER": {
+			"Vlan800|Ethernet1": {
+				"tagging_mode": "untagged"
+			},
+			"Vlan801|Ethernet2": {
+				"tagging_mode": "tagged"
+			}
+		}
+	}`
+
+	ret := cvSess.ValidateIncrementalConfig(jsonData)
+
 	cvl.ValidationSessClose(cvSess)
+
+	unloadConfigDB(rclient, existingDataMap)
+
+	if ret != cvl.CVL_SUCCESS { //should succeed
+		t.Errorf("Config Validation failed.")
+		return
+	}
 }
 
 //Validate key only
