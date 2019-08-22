@@ -283,6 +283,22 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
 	return nil
 }
 
+func sonicXpathKeyExtract(path string) (string, string, string){
+	rgp := regexp.MustCompile(`\[([^\[\]]*)\]`)
+	tableName := strings.Split(strings.Split(path , "/")[2], "[")[0]
+	xpath, err := RemoveXPATHPredicates(path)
+    if err != nil {
+        return "", "", ""
+    }
+	keyStr := ""
+	for i, kname := range rgp.FindAllString(path, -1) {
+		if i > 0 { keyStr += "|" }
+		val := strings.Split(kname, "=")[1]
+		keyStr += strings.TrimRight(val, "]")
+	}
+	return xpath, keyStr, tableName
+}
+
 /* Extract key vars, create db key and xpath */
 func xpathKeyExtract(path string) (string, string, string) {
 	yangXpath := ""

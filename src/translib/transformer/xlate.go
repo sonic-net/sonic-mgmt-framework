@@ -185,7 +185,9 @@ func fillKeySpec(yangXpath string, keyStr string, dbFormat *KeySpec) {
 		xpathInfo := xSpecMap[yangXpath]
 		if xpathInfo.tableName != nil {
 			dbFormat.Ts.Name = *xpathInfo.tableName
-			dbFormat.Key.Comp = append(dbFormat.Key.Comp, keyStr)
+            if keyStr != "" {
+			    dbFormat.Key.Comp = append(dbFormat.Key.Comp, keyStr)
+            }
 		}
 		for _, child := range xpathInfo.childTable {
 			// Current support for one child. Should change the KeySpec.Child
