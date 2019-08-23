@@ -24,7 +24,7 @@ def filter_json_value(value):
 	    for i in temp:
 		alt_key = alt_key + i.capitalize() + ' '
 	    value[alt_key]=value.pop(key)
-     	
+
     return value
 
 def register(func):
@@ -61,10 +61,10 @@ def run(func, args):
     try:
         if body is not None:
            api_response = getattr(aa,func.__name__)(*keypath, body=body)
-           
+
         else :
            api_response = getattr(aa,func.__name__)(*keypath)
-           
+
         if api_response is None:
             print ("Success")
         else:
@@ -78,6 +78,18 @@ def run(func, args):
         print("Exception when calling OpenconfigPlatformApi->%s : %s\n" %(func.__name__, e))
 
 if __name__ == '__main__':
+    pipe_str = ''
+    has_pipe = False
+    for arg in sys.argv:
+	if has_pipe:
+	    pipe_str += (arg + ' ')
+        if arg == '|':
+            has_pipe = True
+    f = open("pipestr.txt", "w")
+    if len(pipe_str) > 0:
+        pipe_str = pipe_str[:-1]
+        f.write(pipe_str)
+    f.close()
 
     #pdb.set_trace()
     func = eval(sys.argv[1], globals(), openconfig_platform_client.OpenconfigPlatformApi.__dict__)

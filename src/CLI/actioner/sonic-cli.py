@@ -173,8 +173,8 @@ def generate_body(func, args):
     elif func.__name__ == 'delete_openconfig_acl_acl_acl_sets_acl_set_acl_entries_acl_entry':
         keypath = [args[0], args[1], args[2]]
     else:
-       body = {} 
-    if body is not None: 
+       body = {}
+    if body is not None:
        body = json.dumps(body,ensure_ascii=False, indent=4, separators=(',', ': '))
        return keypath, ast.literal_eval(body)
     else:
@@ -252,6 +252,18 @@ def run(func, args):
 
 
 if __name__ == '__main__':
+    pipe_str = ''
+    has_pipe = False
+    for arg in sys.argv:
+	if has_pipe:
+	    pipe_str += (arg + ' ')
+        if arg == '|':
+            has_pipe = True
+    f = open("pipestr.txt", "w")
+    if len(pipe_str) > 0:
+        pipe_str = pipe_str[:-1]
+        f.write(pipe_str)
+    f.close()
 
     #pdb.set_trace()
     func = eval(sys.argv[1], globals(), openconfig_acl_client.OpenconfigAclApi.__dict__)

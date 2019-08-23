@@ -55,7 +55,7 @@ def generate_body(func, args):
     elif func.__name__ == 'get_openconfig_interfaces_interfaces':
         keypath = []
     else:
-       body = {} 
+       body = {}
 
     return keypath,body
 
@@ -128,6 +128,18 @@ def run(func, args):
             print "Failed"
 
 if __name__ == '__main__':
+    pipe_str = ''
+    has_pipe = False
+    for arg in sys.argv:
+	if has_pipe:
+	    pipe_str += (arg + ' ')
+        if arg == '|':
+            has_pipe = True
+    f = open("pipestr.txt", "w")
+    if len(pipe_str) > 0:
+        pipe_str = pipe_str[:-1]
+        f.write(pipe_str)
+    f.close()
 
     func = eval(sys.argv[1], globals(), openconfig_interfaces_client.OpenconfigInterfacesApi.__dict__)
 

@@ -85,5 +85,6 @@ if __name__ == '__main__':
         pipe_str = pipe_str[:-1]
         f.write(pipe_str)
     f.close()
+
     func = eval(sys.argv[1], globals(), openconfig_lldp_client.OpenconfigLldpApi.__dict__)
     run(func, sys.argv[2:])
