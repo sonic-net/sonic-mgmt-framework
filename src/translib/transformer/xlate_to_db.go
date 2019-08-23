@@ -13,6 +13,9 @@ import (
 	log "github.com/golang/glog"
 )
 
+const SONIC_TABLE_INDEX = 2
+const SONIC_FIELD_INDEX = 3
+
 /* Fill redis-db map with field & value info */
 func dataToDBMapAdd(tableName string, dbKey string, result map[string]map[string]db.Value, field string, value string) {
 	_, ok := result[tableName]
@@ -191,11 +194,9 @@ func cvlYangReqToDbMapDelete(xpathPrefix string, tableName string, keyName strin
 			result[tableName][keyName] = dbVal
 		} else {
 			// Get all keys
-			fmt.Println("No Key. Return table name")
 		}
 	} else {
 		// Get all table entries
-		fmt.Println("No table name. Delete all entries")
 		// If table name not available in xpath get top container name
 		tokens:= strings.Split(xpathPrefix, ":")
 		container := "/" + tokens[len(tokens)-1]
@@ -307,18 +308,22 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
 	return nil
 }
 
-func sonicXpathKeyExtract(path string) (string, string, string){
+func sonicXpathKeyExtract(path string) (string, string, string) {
+	xpath, keyStr, tableName := "", "", ""
+	var err error
+	xpath, err = RemoveXPATHPredicates(path)
+	if err != nil {
+		return xpath, keyStr, tableName
+	}
 	rgp := regexp.MustCompile(`\[([^\[\]]*)\]`)
-	tableName := strings.Split(strings.Split(path , "/")[2], "[")[0]
-	xpath, err := RemoveXPATHPredicates(path)
-    if err != nil {
-        return "", "", ""
-    }
-	keyStr := ""
-	for i, kname := range rgp.FindAllString(path, -1) {
-		if i > 0 { keyStr += "|" }
-		val := strings.Split(kname, "=")[1]
-		keyStr += strings.TrimRight(val, "]")
+	pathsubStr := strings.Split(path , "/")
+	if len(pathsubStr) > SONIC_TABLE_INDEX  {
+		tableName = strings.Split(pathsubStr[SONIC_TABLE_INDEX], "[")[0]
+		for i, kname := range rgp.FindAllString(path, -1) {
+			if i > 0 { keyStr += "|" }
+			val := strings.Split(kname, "=")[1]
+			keyStr += strings.TrimRight(val, "]")
+		}
 	}
 	return xpath, keyStr, tableName
 }
