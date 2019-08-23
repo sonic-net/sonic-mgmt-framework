@@ -696,25 +696,25 @@ func getAppModule (path string) (*appInterface, *appInfo, error) {
     aInfo, err := getAppModuleInfo(path)
 
     if err != nil {
-        return nil, &aInfo, err
+        return nil, aInfo, err
     }
 
     app, err = getAppInterface(aInfo.appType)
 
     if err != nil {
-        return nil, &aInfo, err
+        return nil, aInfo, err
     }
 
-	return &app, &aInfo, err
+	return &app, aInfo, err
 }
 
 func appInitialize (app *appInterface, appInfo *appInfo, path string, payload *[]byte, opCode int) error {
-	var err error
-	var input []byte
+    var err error
+    var input []byte
 
-	if payload != nil {
-		input = *payload
-	}
+    if payload != nil {
+        input = *payload
+    }
 
     if appInfo.isNative {
         log.Info("Native MSFT format")
@@ -731,5 +731,5 @@ func appInitialize (app *appInterface, appInfo *appInfo, path string, payload *[
         (*app).initialize(data)
     }
 
-	return err
+    return err
 }
