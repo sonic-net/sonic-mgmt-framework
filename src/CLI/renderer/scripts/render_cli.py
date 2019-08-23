@@ -3,32 +3,54 @@ from jinja2 import Template, Environment, FileSystemLoader
 import os
 import json
 import sys
-import termios
+import gc
+import select
+import rpipe_utils
 
 
 # Capture our current directory
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 
 global line_count
-global page_len_local
+global ctrl_rfd
+
+def render_init(fd):
+    global ctrlc_rfd
+
+    ctrlc_rd_fd_num = int(fd)
+    try:
+        ctrlc_rfd = os.fdopen(ctrlc_rd_fd_num, 'r')
+    except IOError as e:
+        sys.stdout.write("Received error : " + str(e))
+    gc.collect()
+    return None
 
 def cli_getch():
     # Disable canonical mode of input stream
     # Set min bytes as 1 and read operation as blocking
-
     fd = sys.stdin.fileno()
-    term_settings_old = termios.tcgetattr(fd)
-    term_settings_new = term_settings_old[:]
-    term_settings_new[3] = term_settings_new[3] & ~(termios.ECHO | termios.ICANON)
+    c = None
+
+    #global ctrc_rfd
+    #fds = [fd, ctrlc_rfd]
+    fds = [fd]
     try:
-        termios.tcsetattr(fd, termios.TCSADRAIN, term_settings_new)
-        c = os.read(fd,1)
+        read_fds, write_fds, excep_fds = select.select(fds, [], [])
+        """
+        # Return immediately for Ctrl-C interrupt
+        if ctrlc_rfd in read_fds:
+            return 'q'
+        """
+
+        c = os.read(fd, 1)
     except KeyboardInterrupt:
         return 'q'
-    finally:
-        termios.tcsetattr(fd, termios.TCSADRAIN, term_settings_old)
+    except select.error as e:
+        if e[0] == 4: # Interrupted system call
+            return 'q'
+        else:
+            sys.stdout.write("Received error : " + str(e))
     return c
-
 
 def _write(string, disable_page=False):
     """
@@ -36,8 +58,9 @@ def _write(string, disable_page=False):
     like printing --more--, accepting SPACE, ENTER, q, CTRL-C
     and act accordingly
     """
-    global line_count,page_len_local
+    global line_count
 
+    page_len_local = 23
     terminal = sys.stdout
     # set length as 0 for prints without pagination
     if disable_page is True:
@@ -59,6 +82,7 @@ def _write(string, disable_page=False):
                 if c == 'q' or ord(c) == 3:
                     terminal.write('\x1b[2K'+'\x1b[0G')
                     line_count = 0
+                    #self.is_stopped = True
                     return True
                 elif c == ' ':
                     line_count = 0
@@ -68,21 +92,34 @@ def _write(string, disable_page=False):
                 # key when CLISH executes commands from non-TTY
                 # Example : clish_source plugin
                 elif c == '\n' or c == '\r':
-                    line_count = page_len_local - 1
+                    #line_count = page_len_local - 1
+                    line_count = 0
                     terminal.write('\x1b[2K'+'\x1b[0G')
                     terminal.flush()
                     break
     return False
 
 def write(t_str):
-    global line_count, page_len_local
+    global line_count
     line_count = 0
-    page_len_local = 23
+    q = False
 
-
+    render_init(0)
+    pipelst = rpipe_utils.pipelst()
+    f = open('pipestr.txt', "r")
+    pipe_str = f.readline()
+    f.close()
+    if len(pipe_str) > 0:
+        if pipelst.build_pipes(pipe_str) != 0:
+            print("error bulding pipe")
+            return
     if t_str != "":
         for s_str in t_str.split('\n'):
-            q = _write(s_str)
+	    if pipe_str:
+	        if pipelst.process_pipes(s_str):
+                    q = _write(s_str, pipelst.is_page_disabled())
+	    else:
+                q = _write(s_str)
             if q:
                 break
 

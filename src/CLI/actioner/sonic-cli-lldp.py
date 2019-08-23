@@ -52,8 +52,6 @@ def run(func, args):
         else:
             response = api_response.to_dict()
             if 'openconfig_lldpinterfaces' in response.keys():
-                if not response['openconfig_lldpinterfaces']:
-                    return
 		neigh_list = response['openconfig_lldpinterfaces']['interface']
                 if neigh_list is None:
                     return
@@ -75,5 +73,17 @@ def run(func, args):
         print("Exception when calling OpenconfigLldpApi->%s : %s\n" %(func.__name__, e))
 
 if __name__ == '__main__':
+    pipe_str = ''
+    has_pipe = False
+    for arg in sys.argv:
+	if has_pipe:
+	    pipe_str += (arg + ' ')
+        if arg == '|':
+            has_pipe = True
+    f = open("pipestr.txt", "w")
+    if len(pipe_str) > 0:
+        pipe_str = pipe_str[:-1]
+        f.write(pipe_str)
+    f.close()
     func = eval(sys.argv[1], globals(), openconfig_lldp_client.OpenconfigLldpApi.__dict__)
     run(func, sys.argv[2:])
