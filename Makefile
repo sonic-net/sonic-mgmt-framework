@@ -34,7 +34,6 @@ GO_DEPS_LIST = github.com/gorilla/mux \
                github.com/golang/glog \
                github.com/pkg/profile \
                gopkg.in/go-playground/validator.v9 \
-               github.com/msteinert/pam \
                golang.org/x/crypto/ssh \
 	       github.com/antchfx/jsonquery \
 	       github.com/antchfx/xmlquery
@@ -54,16 +53,16 @@ go-deps: $(GO_DEPS_LIST)
 $(GO_DEPS_LIST):
 	$(GO) get -v $@
 
-cli:
+cli: rest-server
 	$(MAKE) -C src/CLI
 
-cvl:
+cvl: go-deps
 	$(MAKE) -C src/cvl
 	$(MAKE) -C src/cvl/schema
 cvl-test:
 	$(MAKE) -C src/cvl gotest
 
-rest-server:
+rest-server: translib
 	$(MAKE) -C src/rest
 
 rest-clean:
@@ -81,6 +80,7 @@ yamlGen:
 go-patch: go-deps
 	cd $(BUILD_GOPATH)/src/github.com/openconfig/ygot/; git checkout 724a6b18a9224343ef04fe49199dfb6020ce132a 2>/dev/null ; true; \
 cp $(TOPDIR)/ygot-modified-files/debug.go $(BUILD_GOPATH)/src/github.com/openconfig/ygot/ytypes/../util/debug.go; \
+cp $(TOPDIR)/ygot-modified-files/node.go $(BUILD_GOPATH)/src/github.com/openconfig/ygot/ytypes/node.go; \
 cp $(TOPDIR)/ygot-modified-files/container.go $(BUILD_GOPATH)/src/github.com/openconfig/ygot/ytypes/container.go; \
 cp $(TOPDIR)/ygot-modified-files/list.go $(BUILD_GOPATH)/src/github.com/openconfig/ygot/ytypes/list.go; \
 cp $(TOPDIR)/ygot-modified-files/leaf.go $(BUILD_GOPATH)/src/github.com/openconfig/ygot/ytypes/leaf.go; \

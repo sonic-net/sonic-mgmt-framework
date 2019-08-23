@@ -28,9 +28,6 @@ module sonic-port {
 	container sonic-port {
 		list PORT {
 			key "ifname";
-			scommon:db-name "CONFIG_DB";
-			scommon:key-delim "|";
-			scommon:key-pattern "PORT|{ifname}"; 
 
 			leaf ifname {
 				type string {

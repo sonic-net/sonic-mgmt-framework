@@ -37,11 +37,7 @@ module sonic-vlan {
 	container sonic-vlan {
 
 		list VLAN { 
-			scommon:db-name "CONFIG_DB";
 			key "name";
-			scommon:key-delim "|";
-			scommon:key-pattern "VLAN|{name}";
-
 			must "./name = concat('Vlan', string(./vlanid))"{
 				error-app-tag vlan-invalid;
 			}
@@ -84,8 +80,6 @@ module sonic-vlan {
 
 		list VLAN_MEMBER { 
 			key "name ifname";
-			scommon:key-delim "|";
-			scommon:key-pattern "VLAN_MEMBER|{name}|{ifname}";
 
 			leaf name {
 				type leafref {

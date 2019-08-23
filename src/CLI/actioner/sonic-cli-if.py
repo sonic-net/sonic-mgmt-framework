@@ -121,8 +121,9 @@ def run(func, args):
                      if "error-message" in errDict:
                          print "%Error: " + errDict["error-message"]
                          return
-                     print "%Error: Application Failure"
-            print "%Error: Application Failure"
+                     print "%Error: Transaction Failure"
+                     return
+            print "%Error: Transaction Failure"
         else:
             print "Failed"
 

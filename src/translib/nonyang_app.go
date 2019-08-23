@@ -92,7 +92,7 @@ func (app *nonYangDemoApp) processCreate(d *db.DB) (SetResponse, error) {
 	case "/nonyang/vlan":
 		err = app.doCreateVlans()
 
-	case "/nonyang/vlan/{id}/member":
+	case "/nonyang/vlan/{}/member":
 		err = app.doCreateVlanMembers()
 
 	default:
@@ -120,10 +120,10 @@ func (app *nonYangDemoApp) processDelete(d *db.DB) (SetResponse, error) {
 	log.Infof("Received DELETE for path %s; vars=%v", pathInfo.Template, pathInfo.Vars)
 
 	switch pathInfo.Template {
-	case "/nonyang/vlan/{id}":
+	case "/nonyang/vlan/{}":
 		err = app.doDeleteVlan()
 
-	case "/nonyang/vlan/{id}/member/{port}":
+	case "/nonyang/vlan/{}/member/{}":
 		err = app.doDeleteVlanMember()
 
 	default:
@@ -144,7 +144,7 @@ func (app *nonYangDemoApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error)
 	case "/nonyang/vlan":
 		err = app.doGetAllVlans()
 
-	case "/nonyang/vlan/{id}":
+	case "/nonyang/vlan/{}":
 		err = app.doGetVlanByID()
 
 	default:
@@ -273,7 +273,7 @@ func (app *nonYangDemoApp) doCreateVlans() error {
 }
 
 // doCreateVlanMembers handles CREATE operation on path
-// "/nonyang/vlan/{id}/member"
+// "/nonyang/vlan/{}/member"
 func (app *nonYangDemoApp) doCreateVlanMembers() error {
 	vlanID, _ := app.path.IntVar("id")
 	log.Infof("in doCreateVlanMembers(), vid=%d", vlanID)

@@ -10,6 +10,7 @@ import (
     log "github.com/golang/glog"
     "strings"
     "encoding/hex"
+    "translib/tlerr"
 )
 
 const (
@@ -114,8 +115,30 @@ func (app *lldpApp) translateGet(dbs [db.MaxDB]*db.DB) error  {
 }
 
 func (app *lldpApp) translateSubscribe(dbs [db.MaxDB]*db.DB, path string) (*notificationOpts, *notificationInfo, error) {
-    var err error
-    return nil, nil, err
+    pathInfo := NewPathInfo(path)
+    notifInfo := notificationInfo{dbno: db.ApplDB}
+    notSupported := tlerr.NotSupportedError{Format: "Subscribe not supported", Path: path}
+
+    if isSubtreeRequest(pathInfo.Template, "/openconfig-lldp:lldp/interfaces") {
+        if pathInfo.HasSuffix("/neighbors") ||
+            pathInfo.HasSuffix("/config") ||
+            pathInfo.HasSuffix("/state") {
+                log.Errorf("Subscribe not supported for %s!", pathInfo.Template)
+                return nil, nil, notSupported
+        }
+        ifKey := pathInfo.Var("name")
+        if len(ifKey) == 0 {
+            return nil, nil, errors.New("ifKey given is empty!")
+        }
+        log.Info("Interface name = ", ifKey)
+        if pathInfo.HasSuffix("/interface{name}") {
+            notifInfo.table = db.TableSpec{Name: "LLDP_ENTRY_TABLE"}
+            notifInfo.key = asKey(ifKey)
+            notifInfo.needCache = true
+            return &notificationOpts{pType: OnChange}, &notifInfo, nil
+        }
+    }
+    return nil, nil, notSupported
 }
 
 func (app *lldpApp) processCreate(d *db.DB) (SetResponse, error)  {

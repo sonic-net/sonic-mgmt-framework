@@ -46,12 +46,9 @@ module sonic-acl {
 	}
 
 	container sonic-acl {
-			scommon:db-name "CONFIG_DB";
 
 		list ACL_TABLE {
 			key "aclname";
-			scommon:key-delim "|";
-			scommon:key-pattern "ACL_TABLE|{aclname}";
 
 			/* must "count(/prt:sonic-port/prt:PORT) > 0"; */
 
@@ -97,8 +94,6 @@ module sonic-acl {
 
 		list ACL_RULE { 
 			key "aclname rulename";
-			scommon:key-delim "|";
-			scommon:key-pattern "ACL_RULE|{aclname}|{rulename}";
 			scommon:pf-check    "ACL_CheckAclLimits";	
 
 			/* Limit for number of dynamic ACL rules */	
@@ -116,7 +111,7 @@ module sonic-acl {
 					path "../../ACL_TABLE/aclname";
 				}
 				must "(/scommon:operation/scommon:operation != 'DELETE') or " +
-					"count(../../ACL_TABLE[aclname=current()]/ports) = 0" {
+					"count(current()/../../ACL_TABLE[aclname=current()]/ports) = 0" {
 						error-message "Ports are already bound to this rule.";
 				}
 			} 
@@ -151,13 +146,13 @@ module sonic-acl {
 
 			leaf IP_TYPE {
 				type enumeration {
-					enum any;
-					enum ip;
-					enum ipv4;
-					enum ipv4any;
-					enum non_ipv4;
-					enum ipv6any;
-					enum non_ipv6;
+					enum ANY;
+					enum IP;
+					enum IPV4;
+					enum IPV4ANY;
+					enum NON_IPV4;
+					enum IPV6ANY;
+					enum NON_IPV6;
 				}
 			}
 		
@@ -175,6 +170,7 @@ module sonic-acl {
 
 			choice ip_src_dst {
 				case ipv4_src_dst {
+					//when "boolean(IP_TYPE[.='ANY' or .='IP' or .='IPV4' or .='IPV4ANY'])";
 					leaf SRC_IP {
 						mandatory true;
 						type inet:ipv4-prefix;
@@ -185,6 +181,7 @@ module sonic-acl {
 					}
 				}
 				case ipv6_src_dst {
+					//when "boolean(IP_TYPE[.='ANY' or .='IP' or .='IPV6' or .='IPV6ANY'])";
 					leaf SRC_IPV6 {
 						mandatory true;
 						type inet:ipv6-prefix;    

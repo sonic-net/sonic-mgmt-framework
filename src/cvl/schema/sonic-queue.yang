@@ -40,7 +40,6 @@ module sonic-queue {
 	container sonic-queue {
 		list QUEUE {
 			key "ifname qindex";
-			scommon:key-delim "|";
 			scommon:key-pattern "QUEUE|({ifname},)*|{qindex}"; //special pattern used for extracting keys from redis-key and populate the yang instance
 									   // Total list instances = number(key1) * number(key2) * number(key3)
 
