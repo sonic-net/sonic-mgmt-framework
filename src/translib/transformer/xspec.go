@@ -3,7 +3,6 @@ package transformer
 import (
     "fmt"
     "os"
-    "sort"
     "strings"
     log "github.com/golang/glog"
 
@@ -117,7 +116,6 @@ func yangToDbMapFill (xSpecMap map[string]*yangXpathInfo, entry *yang.Entry, xpa
         childList = append(childList, k)
     }
 
-    sort.Strings(childList)
     xpathData.yangEntry = entry
     /* now recurse, filling the map with current node's children info */
     for _, child := range childList {

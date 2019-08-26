@@ -226,7 +226,7 @@ func handleAclInterface(d *db.DB, app *AclApp, opcode int) error {
 	var err error
 	for key, data := range app.aclTableMap {
 		existingEntry, err := d.GetEntry(app.aclTs, db.Key{Comp: []string{key}})
-		if !existingEntry.IsPopulated() {
+		if opcode == CREATE && existingEntry.Field != nil {
 			return tlerr.AlreadyExists("Acl %s already exists", key)
 		}
 		// !!! Overloaded xfmr methods tale care for bindings, to set the data
@@ -250,7 +250,7 @@ func handleAclSet(d *db.DB, app *AclApp, opcode int) error {
 	// acl table
 	for key, data := range app.aclTableMap {
 		existingEntry, err := d.GetEntry(app.aclTs, db.Key{Comp: []string{key}})
-		if opcode == CREATE && existingEntry.IsPopulated() {
+		if opcode == CREATE && existingEntry.Field != nil {
 			return tlerr.AlreadyExists("Acl %s already exists", key)
 		}
 		switch opcode {
@@ -285,7 +285,7 @@ func handleAclEntry(d *db.DB, app *AclApp, opcode int) error {
 	for key, data := range app.ruleTableMap {
 		ruleName := strings.Split(key, KEY_SEPARATOR)[1]
 		existingEntry, err := d.GetEntry(app.ruleTs, db.Key{Comp: []string{key}})
-		if opcode == CREATE && existingEntry.IsPopulated() {
+		if opcode == CREATE && existingEntry.Field != nil {
 			return tlerr.AlreadyExists("Acl rule %s already exists", ruleName)
 		}
 		switch opcode {

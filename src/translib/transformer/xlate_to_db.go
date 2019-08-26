@@ -128,7 +128,7 @@ func directDbMapData(tableName string, jsonData interface{}, result map[string]m
 
 /* Get the db table, key and field name for the incoming delete request */
 func dbMapDelete(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, jsonData interface{}, result map[string]map[string]db.Value) error {
-	xpathPrefix, keyName, tableName := xpathKeyExtract(path)
+	xpathPrefix, keyName, tableName := xpathKeyExtract(d, ygRoot, oper, path)
 	log.Info("Delete req: path(\"%v\"), key(\"%v\"), xpathPrefix(\"%v\"), tableName(\"%v\").", path, keyName, xpathPrefix, tableName)
 	var err error
 	if isCvlYang(xpathPrefix) {
@@ -300,37 +300,45 @@ func sonicXpathKeyExtract(path string) (string, string, string){
 }
 
 /* Extract key vars, create db key and xpath */
-func xpathKeyExtract(path string) (string, string, string) {
-	yangXpath := ""
-	keyStr := ""
+func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string) (string, string, string) {
+	keyStr    := ""
 	tableName := ""
-	rgp := regexp.MustCompile(`\[([^\[\]]*)\]`)
+	rgp       := regexp.MustCompile(`\[([^\[\]]*)\]`)
+	curPathWithKey := ""
 
-	for i, k := range strings.Split(path, "/") {
-		if i > 0 {
-			yangXpath += "/"
-		}
+	for _, k := range strings.Split(path, "/") {
 		xpath := k
+        curPathWithKey += k
 		if strings.Contains(k, "[") {
 			if len(keyStr) > 0 {
 				keyStr += "|"
 			}
+            yangXpath, _ := RemoveXPATHPredicates(curPathWithKey)
 			xpath = strings.Split(k, "[")[0]
+            if len(xSpecMap[yangXpath].xfmrKey) > 0 {
+                ret, err := XlateFuncCall(yangToDbXfmrFunc(xSpecMap[yangXpath].xfmrKey), d, ygRoot, oper, curPathWithKey)
+                if err != nil {
+                    return "", "", ""
+                }
+                keyStr = ret[0].Interface().(string)
+            } else {
 			var keyl []string
 			for _, kname := range rgp.FindAllString(k, -1) {
 				keyl = append(keyl, strings.TrimRight(strings.TrimLeft(kname, "["), "]"))
 			}
 			keyStr += keyFromXpathCreate(keyl)
+            }
 			if isCvlYang(path) {
 				//Format- /module:container/table[key]/field
 				// table name extracted from the string token having key entry
 				tableName = xpath
 			}
 		}
-		yangXpath += xpath
+        curPathWithKey += "/"
 	}
+    pfxPath, _ := RemoveXPATHPredicates(path)
 
-	return yangXpath, keyStr, tableName
+	return pfxPath, keyStr, tableName
 }
 
 /* Debug function to print the map data into file */

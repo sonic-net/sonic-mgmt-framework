@@ -115,7 +115,7 @@ func XlateUriToKeySpec(path string, uri *ygot.GoStruct, t *interface{}) (*map[db
 	var retdbFormat = make([]KeySpec, 0)
 
 	/* Extract the xpath and key from input xpath */
-	yangXpath, keyStr, tableName := xpathKeyExtract(path)
+	yangXpath, keyStr, tableName := xpathKeyExtract(nil, uri, 0, path)
 
 	// In case of CVL yang, the tablename and key info is available in the xpath
 	if isCvlYang(yangXpath) {
@@ -266,7 +266,7 @@ func XlateFromDb(xpath string, data map[string]map[string]db.Value) ([]byte, err
 	var dbData = make(map[string]map[string]db.Value)
 
 	dbData = data
-	yangXpath, keyStr, tblName := xpathKeyExtract(xpath)
+	yangXpath, keyStr, tblName := xpathKeyExtract(nil, nil, 0, xpath)
 
 	if isCvlYang(xpath) {
 		if (tblName != "") {

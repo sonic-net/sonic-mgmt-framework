@@ -77,6 +77,7 @@ func listDataToJsonAdd(xpathl []string, dataMap map[string]db.Value, key string,
             jsonData = fmt.Sprintf("\"%v\" : [\r\n %v\r\n ]\r\n", xSpecMap[xpath].yangEntry.Name, jsonData)
         }
     }
+    jsonData = strings.TrimRight(jsonData, ",")
     return jsonData
 }
 
@@ -100,14 +101,38 @@ func directDbToYangJsonCreate(dbDataMap map[string]map[string]db.Value, jsonData
     return jsonData
 }
 
+func tableNameAndKeyFromDbMapGet(dbDataMap map[string]map[string]db.Value) (string, string, error) {
+    tableName := ""
+    tableKey  := ""
+    for tn, tblData := range dbDataMap {
+        tableName = tn
+        for kname, _ := range tblData {
+            tableKey = kname
+        }
+    }
+    return tableName, tableKey, nil
+}
+
 /* Traverse linear db-map data and add to nested json data */
 func dbDataToYangJsonCreate(xpath string, dbDataMap map[string]map[string]db.Value) (string, error) {
     jsonData := ""
+
 	if isCvlYang(xpath) {
 		jsonData := directDbToYangJsonCreate(dbDataMap, jsonData)
 		jsonDataPrint(jsonData)
 		return jsonData, nil
 	}
+
+    reqXpath, _, _ := xpathKeyExtract(nil, nil, 0, xpath)
+    ftype := yangTypeGet(xSpecMap[reqXpath].yangEntry)
+    if ftype == "leaf" {
+        fldName := xSpecMap[reqXpath].fieldName
+        tbl, key, _ := tableNameAndKeyFromDbMapGet(dbDataMap)
+        jsonData = fmt.Sprintf("{\r\n \"%v\" : \"%v\" \r\n }\r\n", xSpecMap[reqXpath].yangEntry.Name,
+                               dbDataMap[tbl][key].Field[fldName])
+        return jsonData, nil
+    }
+
     curXpath := ""
     for tblName, tblData := range dbDataMap {
         if len(curXpath) == 0 || strings.HasPrefix(curXpath, xDbSpecMap[tblName].yangXpath[0]) {
@@ -115,15 +140,45 @@ func dbDataToYangJsonCreate(xpath string, dbDataMap map[string]map[string]db.Val
         }
         jsonData += listDataToJsonAdd(xDbSpecMap[tblName].yangXpath, tblData, "", dbDataMap)
     }
-    //jsonData = parentJsonDataUpdate(curXpath, jsonData)
+    if strings.HasPrefix(reqXpath, curXpath) {
+        if ftype != "leaf" {
+            jsonData = fmt.Sprintf("{ \r\n %v \r\n }", jsonData)
+        }
+        return jsonData, nil
+    }
+    jsonData = parentJsonDataUpdate(reqXpath, curXpath, jsonData)
 	jsonDataPrint(jsonData)
     return jsonData, nil
 }
 
-func parentJsonDataUpdate(xpath string, data string) string {
+func xpathLastAttrGet(xpath string) string {
+    attrList := strings.Split(xpath, "/")
+    return attrList[len(attrList)-1]
+}
+
+func jsonPayloadComplete(reqXpath string, data string) string {
+    entry     := xSpecMap[reqXpath].yangEntry
+    entryType := entry.Node.Statement().Keyword
+    name      := xpathLastAttrGet(reqXpath)
+    switch entryType {
+        case "container":
+            data = fmt.Sprintf("\"%v\" : { \r\n %v \r\n }\r\n", name, data)
+        case "list":
+            data = fmt.Sprintf("\"%v\" : [\r\n %v\r\n ]\r\n", name, data)
+    }
+    data  = fmt.Sprintf("{\r\n %v }\r\n", data)
+    return data
+}
+
+func parentJsonDataUpdate(reqXpath string, xpath string, data string) string {
     curXpath := parentXpathGet(xpath)
-    if len(curXpath) == 0 && strings.Contains(xpath, ":") {
-        curXpath = strings.Split(xpath, ":")[0]
+    if reqXpath == xpath {
+        data  = fmt.Sprintf("{\r\n %v }\r\n", data)
+        return data
+    }
+    if reqXpath == curXpath {
+        data = jsonPayloadComplete(reqXpath, data)
+        return data
     }
     if xSpecMap[curXpath] != nil {
         entry     := xSpecMap[curXpath].yangEntry
@@ -131,10 +186,10 @@ func parentJsonDataUpdate(xpath string, data string) string {
         switch entryType {
             case "container":
                 data = fmt.Sprintf("\"%v\" : { \r\n %v \r\n }", xSpecMap[curXpath].yangEntry.Name, data)
-                return parentJsonDataUpdate(curXpath, data)
+                return parentJsonDataUpdate(reqXpath, curXpath, data)
             case "list":
                 data = fmt.Sprintf("\"%v\" : [\r\n %v\r\n ]\r\n", xSpecMap[curXpath].yangEntry.Name, data)
-                return parentJsonDataUpdate(curXpath, data)
+                return parentJsonDataUpdate(reqXpath, curXpath, data)
             case "module":
                 data = fmt.Sprintf("\"%v\" : { \r\n %v \r\n }", xSpecMap[curXpath].yangEntry.Name, data)
                 return data
