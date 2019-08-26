@@ -90,11 +90,11 @@ func directDbToYangJsonCreate(dbDataMap map[string]map[string]db.Value, jsonData
             for field, value := range dbFldValData.Field {
                 fldValPair += fmt.Sprintf("\"%v\" : \"%v\",\r\n", field, value)
             }
-            yangKeys  := yangKeyFromEntryGet(xDbSpecMap[tblName].dbEntry)
+            yangKeys := yangKeyFromEntryGet(xDbSpecMap[tblName].dbEntry)
             fldValPair = keyJsonDataAdd(yangKeys, keyStr, fldValPair)
-            dataInst   = fmt.Sprintf("{ \r\n %v \r\n },", fldValPair)
+            dataInst += fmt.Sprintf("{ \r\n %v \r\n },", fldValPair)
         }
-        dataInst += strings.TrimRight(dataInst, ",")
+        dataInst = strings.TrimRight(dataInst, ",")
         jsonData += fmt.Sprintf("\"%v\" : [\r\n %v\r\n ],", tblName, dataInst)
     }
     jsonData = strings.TrimRight(jsonData, ",")

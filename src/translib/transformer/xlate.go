@@ -114,13 +114,14 @@ func XlateUriToKeySpec(path string, uri *ygot.GoStruct, t *interface{}) (*map[db
 	var result = make(map[db.DBNum][]KeySpec)
 	var retdbFormat = make([]KeySpec, 0)
 
-	/* Extract the xpath and key from input xpath */
-	yangXpath, keyStr, tableName := xpathKeyExtract(nil, uri, 0, path)
-
 	// In case of CVL yang, the tablename and key info is available in the xpath
-	if isCvlYang(yangXpath) {
+	if isCvlYang(path) {
+		/* Extract the xpath and key from input xpath */
+		yangXpath, keyStr, tableName := sonicXpathKeyExtract(path)
 		retdbFormat = fillCvlKeySpec(yangXpath, tableName, keyStr)
 	} else {
+		/* Extract the xpath and key from input xpath */
+        yangXpath, keyStr, _ := xpathKeyExtract(nil, uri, 0, path)
 		if xSpecMap == nil {
 			return &result, err
 		}
@@ -262,15 +263,14 @@ func XlateToDb(path string, opcode int, d *db.DB, yg *ygot.GoStruct, yt *interfa
 
 func XlateFromDb(xpath string, data map[string]map[string]db.Value) ([]byte, error) {
 	var err error
-	var fieldName, tableName string
+	var fieldName, tableName, yangXpath string
 	var dbData = make(map[string]map[string]db.Value)
 
 	dbData = data
-	yangXpath, keyStr, tblName := xpathKeyExtract(nil, nil, 0, xpath)
-
 	if isCvlYang(xpath) {
-		if (tblName != "") {
-			tableName = tblName
+		yXpath, keyStr, tableName := sonicXpathKeyExtract(xpath)
+		yangXpath = yXpath
+		if (tableName != "") {
 			tokens:= strings.Split(yangXpath, "/")
 			// Format /module:container/tableName[key]/fieldName
 			if tokens[len(tokens)-2] == tableName {
@@ -279,6 +279,8 @@ func XlateFromDb(xpath string, data map[string]map[string]db.Value) ([]byte, err
 			}
 		}
 	} else {
+		yXpath, keyStr, _ := xpathKeyExtract(nil, nil, 0, xpath)
+		yangXpath = yXpath
 		if xSpecMap == nil {
 			return nil, err
 		}
@@ -334,7 +336,7 @@ func GetModuleNmFromPath(uri string) (string, error) {
         return moduleNm, err
 }
 
-func GetSchemaOrdDBTblList(ygModuleNm string) ([]string, error) {
+func GetOrdDBTblList(ygModuleNm string) ([]string, error) {
         var result []string
 	var err error
         if dbTblList, ok := xDbSpecOrdTblMap[ygModuleNm]; ok {

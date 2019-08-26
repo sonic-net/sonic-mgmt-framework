@@ -13,6 +13,9 @@ import (
 	log "github.com/golang/glog"
 )
 
+const SONIC_TABLE_INDEX = 2
+const SONIC_FIELD_INDEX = 3
+
 /* Fill redis-db map with field & value info */
 func dataToDBMapAdd(tableName string, dbKey string, result map[string]map[string]db.Value, field string, value string) {
 	_, ok := result[tableName]
@@ -118,6 +121,28 @@ func directDbMapData(tableName string, jsonData interface{}, result map[string]m
 
 			result[tableName][keyName] = db.Value{Field: make(map[string]string)}
 			for field, value := range d {
+				fieldXpath := tableName + "/" + field
+				if _, fieldOk := xDbSpecMap[fieldXpath]; (fieldOk  && (xDbSpecMap[fieldXpath].dbEntry != nil)) {
+					log.Info("Found non-nil yang entry in xDbSpecMap for field xpath = ", fieldXpath)
+					if xDbSpecMap[fieldXpath].dbEntry.IsLeafList() {
+						log.Info("Yang type is Leaflist for field  = ", field)
+						field += "@"
+						fieldDt := reflect.ValueOf(value)
+						fieldValue := ""
+						for fidx := 0; fidx < fieldDt.Len(); fidx++ {
+							if fidx > 0 {
+								fieldValue += ","
+							}
+							fVal := fmt.Sprintf("%v", fieldDt.Index(fidx).Interface())
+							fieldValue = fieldValue + fVal
+						}
+						result[tableName][keyName].Field[field] = fieldValue
+						continue
+					}
+				} else {
+					// should ideally never happen , just adding for safety
+					log.Info("Did not find entry in xDbSpecMap for field xpath = ", fieldXpath)
+				}
 				result[tableName][keyName].Field[field] = fmt.Sprintf("%v", value)
 			}
 		}
@@ -128,12 +153,14 @@ func directDbMapData(tableName string, jsonData interface{}, result map[string]m
 
 /* Get the db table, key and field name for the incoming delete request */
 func dbMapDelete(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, jsonData interface{}, result map[string]map[string]db.Value) error {
-	xpathPrefix, keyName, tableName := xpathKeyExtract(d, ygRoot, oper, path)
-	log.Info("Delete req: path(\"%v\"), key(\"%v\"), xpathPrefix(\"%v\"), tableName(\"%v\").", path, keyName, xpathPrefix, tableName)
 	var err error
-	if isCvlYang(xpathPrefix) {
+	if isCvlYang(path) {
+		xpathPrefix, keyName, tableName := sonicXpathKeyExtract(path)
+		log.Info("Delete req: path(\"%v\"), key(\"%v\"), xpathPrefix(\"%v\"), tableName(\"%v\").", path, keyName, xpathPrefix, tableName)
 		err = cvlYangReqToDbMapDelete(xpathPrefix, tableName, keyName, result)
 	} else {
+	    xpathPrefix, keyName, tableName := xpathKeyExtract(d, ygRoot, oper, path)
+		log.Info("Delete req: path(\"%v\"), key(\"%v\"), xpathPrefix(\"%v\"), tableName(\"%v\").", path, keyName, xpathPrefix, tableName)
 		spec, ok := xSpecMap[xpathPrefix]
 		if ok && spec.tableName != nil {
 			result[*spec.tableName] = make(map[string]db.Value)
@@ -167,11 +194,9 @@ func cvlYangReqToDbMapDelete(xpathPrefix string, tableName string, keyName strin
 			result[tableName][keyName] = dbVal
 		} else {
 			// Get all keys
-			fmt.Println("No Key. Return table name")
 		}
 	} else {
 		// Get all table entries
-		fmt.Println("No table name. Delete all entries")
 		// If table name not available in xpath get top container name
 		tokens:= strings.Split(xpathPrefix, ":")
 		container := "/" + tokens[len(tokens)-1]
@@ -283,18 +308,22 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
 	return nil
 }
 
-func sonicXpathKeyExtract(path string) (string, string, string){
+func sonicXpathKeyExtract(path string) (string, string, string) {
+	xpath, keyStr, tableName := "", "", ""
+	var err error
+	xpath, err = RemoveXPATHPredicates(path)
+	if err != nil {
+		return xpath, keyStr, tableName
+	}
 	rgp := regexp.MustCompile(`\[([^\[\]]*)\]`)
-	tableName := strings.Split(strings.Split(path , "/")[2], "[")[0]
-	xpath, err := RemoveXPATHPredicates(path)
-    if err != nil {
-        return "", "", ""
-    }
-	keyStr := ""
-	for i, kname := range rgp.FindAllString(path, -1) {
-		if i > 0 { keyStr += "|" }
-		val := strings.Split(kname, "=")[1]
-		keyStr += strings.TrimRight(val, "]")
+	pathsubStr := strings.Split(path , "/")
+	if len(pathsubStr) > SONIC_TABLE_INDEX  {
+		tableName = strings.Split(pathsubStr[SONIC_TABLE_INDEX], "[")[0]
+		for i, kname := range rgp.FindAllString(path, -1) {
+			if i > 0 { keyStr += "|" }
+			val := strings.Split(kname, "=")[1]
+			keyStr += strings.TrimRight(val, "]")
+		}
 	}
 	return xpath, keyStr, tableName
 }

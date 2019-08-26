@@ -18,7 +18,7 @@ type CommonApp struct {
 	ygotRoot       *ygot.GoStruct
 	ygotTarget     *interface{}
 	cmnAppTableMap map[string]map[string]db.Value
-	cmnAppSchemaOrdTbllist []string
+	cmnAppOrdTbllist []string
 }
 
 var cmnAppInfo = appInfo{appType: reflect.TypeOf(CommonApp{}),
@@ -52,7 +52,7 @@ func (app *CommonApp) translateCreate(d *db.DB) ([]db.WatchKeys, error) {
 	var keys []db.WatchKeys
 	log.Info("translateCreate:path =", app.pathInfo.Path)
 
-	keys, err = app.translateCRUCommon(d, CREATE)
+	keys, err = app.translateCRUDCommon(d, CREATE)
 
 	return keys, err
 }
@@ -62,7 +62,7 @@ func (app *CommonApp) translateUpdate(d *db.DB) ([]db.WatchKeys, error) {
 	var keys []db.WatchKeys
 	log.Info("translateUpdate:path =", app.pathInfo.Path)
 
-	keys, err = app.translateCRUCommon(d, UPDATE)
+	keys, err = app.translateCRUDCommon(d, UPDATE)
 
 	return keys, err
 }
@@ -72,7 +72,7 @@ func (app *CommonApp) translateReplace(d *db.DB) ([]db.WatchKeys, error) {
 	var keys []db.WatchKeys
 	log.Info("translateReplace:path =", app.pathInfo.Path)
 
-	keys, err = app.translateCRUCommon(d, REPLACE)
+	keys, err = app.translateCRUDCommon(d, REPLACE)
 
 	return keys, err
 }
@@ -81,7 +81,7 @@ func (app *CommonApp) translateDelete(d *db.DB) ([]db.WatchKeys, error) {
 	var err error
 	var keys []db.WatchKeys
 	log.Info("translateDelete:path =", app.pathInfo.Path)
-	keys, err = app.translateCRUCommon(d, DELETE)
+	keys, err = app.translateCRUDCommon(d, DELETE)
 
 	return keys, err
 }
@@ -157,7 +157,6 @@ func (app *CommonApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
 
 	keySpec, err := transformer.XlateUriToKeySpec(app.pathInfo.Path, app.ygotRoot, app.ygotTarget)
 
-	// table.key.fields
 	var result = make(map[string]map[string]db.Value)
 
 	for dbnum, specs := range *keySpec {
@@ -177,29 +176,29 @@ func (app *CommonApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
 	return GetResponse{Payload: payload}, err
 }
 
-func (app *CommonApp) translateCRUCommon(d *db.DB, opcode int) ([]db.WatchKeys, error) {
+func (app *CommonApp) translateCRUDCommon(d *db.DB, opcode int) ([]db.WatchKeys, error) {
 	var err error
 	var keys []db.WatchKeys
 	var tblsToWatch []*db.TableSpec
-	var schemaOrdTblList []string
+	var OrdTblList []string
 	var moduleNm string
-	log.Info("translateCRUCommon:path =", app.pathInfo.Path)
+	log.Info("translateCRUDCommon:path =", app.pathInfo.Path)
 
-	/* retrieve schema table order for incoming maodule name request */
+	/* retrieve schema table order for incoming module name request */
 	moduleNm, err = transformer.GetModuleNmFromPath(app.pathInfo.Path)
 	if (err != nil) || (len(moduleNm) == 0) {
 		log.Error("GetModuleNmFromPath() failed")
 		return keys, err
 	}
 	log.Info("getModuleNmFromPath() returned module name = ", moduleNm)
-	schemaOrdTblList, err = transformer.GetSchemaOrdDBTblList(moduleNm)
-	if (err != nil) || (len(schemaOrdTblList) == 0) {
-		log.Error("GetSchemaOrdDBTblList() failed")
+	OrdTblList, err = transformer.GetOrdDBTblList(moduleNm)
+	if (err != nil) || (len(OrdTblList) == 0) {
+		log.Error("GetOrdDBTblList() failed")
 		return keys, err
 	}
 
-	log.Info("getSchemaOrdDBTblList() returned ordered table list = ", schemaOrdTblList)
-	app.cmnAppSchemaOrdTbllist = schemaOrdTblList
+	log.Info("GetOrdDBTblList() returned ordered table list = ", OrdTblList)
+	app.cmnAppOrdTbllist = OrdTblList
 
 	// translate yang to db
 	result, err := transformer.XlateToDb(app.pathInfo.Path, opcode, d, (*app).ygotRoot, (*app).ygotTarget)
@@ -216,6 +215,8 @@ func (app *CommonApp) translateCRUCommon(d *db.DB, opcode int) ([]db.WatchKeys, 
 		return keys, err
 	}
 	app.cmnAppTableMap = result
+
+	/* enhance this to handle dependent tables - need CVL to provide list of such tables for a given request */
 	for tblnm, _ := range app.cmnAppTableMap {
 		log.Error("Table name ", tblnm)
 		tblsToWatch = append(tblsToWatch, &db.TableSpec{Name: tblnm})
@@ -223,6 +224,8 @@ func (app *CommonApp) translateCRUCommon(d *db.DB, opcode int) ([]db.WatchKeys, 
 	log.Info("Tables to watch", tblsToWatch)
 
 	cmnAppInfo.tablesToWatch = tblsToWatch
+	/* In case all related tables need to be watched
+	   cmnAppInfo.tablesToWatch = OrdTblList */
 
 	keys, err = app.generateDbWatchKeys(d, false)
 
@@ -230,117 +233,159 @@ func (app *CommonApp) translateCRUCommon(d *db.DB, opcode int) ([]db.WatchKeys, 
 }
 
 func (app *CommonApp) processCommon(d *db.DB, opcode int) error {
+
 	var err error
-	err = app.cmnAppDataDbOperation(d, opcode, app.cmnAppTableMap)
+
+	log.Info("Processing DB operation for ", app.cmnAppTableMap)
+	switch opcode {
+		case CREATE:
+			log.Info("CREATE case")
+			err = app.cmnAppCRUCommonDbOpn(d, opcode)
+		case UPDATE:
+			log.Info("UPDATE case")
+			err = app.cmnAppCRUCommonDbOpn(d, opcode)
+		case REPLACE:
+			log.Info("REPLACE case")
+			err = app.cmnAppCRUCommonDbOpn(d, opcode)
+		case DELETE:
+			log.Info("DELETE case")
+			err = app.cmnAppDelDbOpn(d, opcode)
+	}
+	if err != nil {
+		log.Info("Returning from processCommon() - fail")
+	} else {
+		log.Info("Returning from processCommon() - success")
+	}
 	return err
 }
 
-func (app *CommonApp) cmnAppDataDbOperation(d *db.DB, opcode int, cmnAppDataDbMap map[string]map[string]db.Value) error {
+func (app *CommonApp) cmnAppCRUCommonDbOpn(d *db.DB, opcode int) error {
 	var err error
-	log.Info("Processing DB operation for ", cmnAppDataDbMap)
 	var cmnAppTs *db.TableSpec
 
-	log.Info("getSchemaOrdDBTblList() returned ordered table list = ", app.cmnAppSchemaOrdTbllist)
-	//return err
-
-	/* order by schema table order */
-	for _, tblNm := range app.cmnAppSchemaOrdTbllist {
+	/* currently ordered by schema table order needs to be discussed */
+	for _, tblNm := range app.cmnAppOrdTbllist {
 		log.Info("In Yang to DB map returned from transformer looking for table = ", tblNm)
-		if tblVal, ok := cmnAppDataDbMap[tblNm]; ok {
+		if tblVal, ok := app.cmnAppTableMap[tblNm]; ok {
 			cmnAppTs = &db.TableSpec{Name: tblNm}
 			log.Info("Found table entry in yang to DB map")
-			switch opcode {
+			for tblKey, tblRw := range tblVal {
+				log.Info("Processing Table key and row ", tblKey, tblRw)
+				existingEntry, _ := d.GetEntry(cmnAppTs, db.Key{Comp: []string{tblKey}})
+				switch opcode {
 				case CREATE:
-					log.Info("CREATE case")
-					for tblKey, tblRw := range tblVal {
-						log.Info("Processing Table key and row ", tblKey, tblRw)
-						existingEntry, err := d.GetEntry(cmnAppTs, db.Key{Comp: []string{tblKey}})
-						if existingEntry.IsPopulated() {
-							log.Info("Entry already exists hence return error.")
-							return tlerr.AlreadyExists("Entry %s already exists", tblKey)
-						} else {
-							err = d.CreateEntry(cmnAppTs, db.Key{Comp: []string{tblKey}}, tblRw)
-							if err != nil {
-								log.Error("CREATE case - d.CreateEntry() failure")
-								return err
-							}
-						}
-
-					}
-
-				case UPDATE:
-					log.Info("UPDATE case")
-					for tblKey, tblRw := range tblVal {
-						existingEntry, err := d.GetEntry(cmnAppTs, db.Key{Comp: []string{tblKey}})
-						if existingEntry.IsPopulated() {
-							log.Info("Entry already exists hence modifying it.")
-							err = d.ModEntry(cmnAppTs, db.Key{Comp: []string{tblKey}}, tblRw)
-							if err != nil {
-								log.Error("UPDATE case - d.ModEntry() failure")
-								return err
-							}
-						} else {
-							log.Info("Entry to be modified does not exist hence return error.")
-							return tlerr.NotFound("Entry %s to be modified does not exist.", tblKey)
-						}
-					}
-
-				case REPLACE:
-					log.Info("REPLACE case")
-					for tblKey, tblRw := range tblVal {
-						existingEntry, err := d.GetEntry(cmnAppTs, db.Key{Comp: []string{tblKey}})
-						if existingEntry.IsPopulated() {
-							log.Info("Entry already exists hence execute db.SetEntry")
-							err := d.SetEntry(cmnAppTs, db.Key{Comp: []string{tblKey}}, tblRw)
-							if err != nil {
-								log.Error("REPLACE case - d.SetEntry() failure")
-								return err
-							}
-						} else {
-							log.Info("Entry doesn't exist hence create it.")
-							err = d.CreateEntry(cmnAppTs, db.Key{Comp: []string{tblKey}}, tblRw)
-							if err != nil {
-								log.Error("REPLACE case - d.CreateEntry() failure")
-								return err
-							}
-						}
-						//TODO : should the table level replace be handled??
-					}
-				case DELETE:
-					log.Info("DELETE case")
-					if len(tblVal) == 0 {
-						log.Info("DELETE case - No table instances hence delete entire table = ", tblNm)
-						err = d.DeleteTable(cmnAppTs)
+					if existingEntry.IsPopulated() {
+						log.Info("Entry already exists hence return error.")
+						return tlerr.AlreadyExists("Entry %s already exists", tblKey)
+					} else {
+						err = d.CreateEntry(cmnAppTs, db.Key{Comp: []string{tblKey}}, tblRw)
 						if err != nil {
-							log.Error("DELETE case - d.DeleteTable() failure for Table = ", tblNm)
+							log.Error("CREATE case - d.CreateEntry() failure")
 							return err
 						}
-						log.Info("DELETE case - Deleted entire table = ", tblNm)
-						continue
 					}
-					for tblKey, tblRw := range tblVal {
-						if len(tblRw.Field) == 0 {
-							log.Info("DELETE case - no fields/cols to delete hence delete the entire row.")
-							err := d.DeleteEntry(cmnAppTs, db.Key{Comp: []string{tblKey}})
-							if err != nil {
-								log.Error("DELETE case - d.DeleteEntry() failure")
-								return err
-							}
-						} else {
-							log.Info("DELETE case - fields/cols to delete hence delete only those fields.")
-							err := d.DeleteEntryFields(cmnAppTs, db.Key{Comp: []string{tblKey}}, tblRw)
-							if err != nil {
-								log.Error("DELETE case - d.DeleteEntryFields() failure")
-								return err
-							}
+				case UPDATE:
+					if existingEntry.IsPopulated() {
+						log.Info("Entry already exists hence modifying it.")
+						err = d.ModEntry(cmnAppTs, db.Key{Comp: []string{tblKey}}, tblRw)
+						if err != nil {
+							log.Error("UPDATE case - d.ModEntry() failure")
+							return err
+						}
+					} else {
+						return err
+					}
+				case REPLACE:
+					if existingEntry.IsPopulated() {
+						log.Info("Entry already exists hence execute db.SetEntry")
+						err := d.SetEntry(cmnAppTs, db.Key{Comp: []string{tblKey}}, tblRw)
+						if err != nil {
+							log.Error("REPLACE case - d.SetEntry() failure")
+							return err
+						}
+					} else {
+						log.Info("Entry doesn't exist hence create it.")
+						err = d.CreateEntry(cmnAppTs, db.Key{Comp: []string{tblKey}}, tblRw)
+						if err != nil {
+							log.Error("REPLACE case - d.CreateEntry() failure")
+							return err
 						}
 					}
+				}
 			}
 		}
 	}
-
 	return err
+}
 
+func (app *CommonApp) cmnAppDelDbOpn(d *db.DB, opcode int) error {
+	var err error
+	var cmnAppTs, dbTblSpec *db.TableSpec
+
+	/* needs enhancements from CVL to give table dependencies, and grouping of related tables only 
+	   if such a case where the sonic yang has unrelated tables */
+	for tblidx, tblNm := range app.cmnAppOrdTbllist {
+		log.Info("In Yang to DB map returned from transformer looking for table = ", tblNm)
+		if tblVal, ok := app.cmnAppTableMap[tblNm]; ok {
+			cmnAppTs = &db.TableSpec{Name: tblNm}
+			log.Info("Found table entry in yang to DB map")
+			if len(tblVal) == 0 {
+				log.Info("DELETE case - No table instances/rows found hence delete entire table = ", tblNm)
+				for idx := len(app.cmnAppOrdTbllist)-1; idx >= tblidx+1; idx-- {
+					log.Info("Since parent table is to be  deleted, first deleting child table = ", app.cmnAppOrdTbllist[idx])
+					dbTblSpec = &db.TableSpec{Name: app.cmnAppOrdTbllist[idx]}
+					err = d.DeleteTable(dbTblSpec)
+					if err != nil {
+						log.Warning("DELETE case - d.DeleteTable() failure for Table = ", app.cmnAppOrdTbllist[idx])
+						return err
+					}
+				}
+				err = d.DeleteTable(cmnAppTs)
+				if err != nil {
+					log.Warning("DELETE case - d.DeleteTable() failure for Table = ", tblNm)
+					return err
+				}
+				log.Info("DELETE case - Deleted entire table = ", tblNm)
+				log.Info("Done processing all tables.")
+				break
+
+			}
+
+			for tblKey, tblRw := range tblVal {
+				if len(tblRw.Field) == 0 {
+					log.Info("DELETE case - no fields/cols to delete hence delete the entire row.")
+					log.Info("First, delete child table instances that correspond to parent table instance to be deleted = ", tblKey)
+					for idx := len(app.cmnAppOrdTbllist)-1; idx >= tblidx+1; idx-- {
+						dbTblSpec = &db.TableSpec{Name: app.cmnAppOrdTbllist[idx]}
+						keyPattern := tblKey + "|*"
+						log.Info("Key pattern to be matched for deletion = ", keyPattern)
+						err = d.DeleteKeys(dbTblSpec, db.Key{Comp: []string{keyPattern}})
+						if err != nil {
+							log.Warning("DELETE case - d.DeleteTable() failure for Table = ", app.cmnAppOrdTbllist[idx])
+							return err
+						}
+						log.Info("Deleted keys matching parent table key pattern for child table = ", app.cmnAppOrdTbllist[idx])
+
+					}
+					err = d.DeleteEntry(cmnAppTs, db.Key{Comp: []string{tblKey}})
+                                        if err != nil {
+                                                log.Warning("DELETE case - d.DeleteEntry() failure")
+                                                return err
+                                        }
+					log.Info("Finally deleted the parent table row with key = ", tblKey)
+				} else {
+					log.Info("DELETE case - fields/cols to delete hence delete only those fields.")
+					err := d.DeleteEntryFields(cmnAppTs, db.Key{Comp: []string{tblKey}}, tblRw)
+					if err != nil {
+						log.Error("DELETE case - d.DeleteEntryFields() failure")
+						return err
+					}
+				}
+
+			}
+		}
+	} /* end of ordered table list for loop */
+	return err
 }
 
 func (app *CommonApp) generateDbWatchKeys(d *db.DB, isDeleteOp bool) ([]db.WatchKeys, error) {
