@@ -141,15 +141,18 @@ func init() {
 	}
 
 	ConfigFileSyncHandler()
+
 	cvlCfgMap := ReadConfFile()
 
-	if (strings.Compare(cvlCfgMap["LOGTOSTDERR"], "true") == 0) {
-		flag.Set("logtostderr", "true")
-		flag.Set("stderrthreshold", cvlCfgMap["STDERRTHRESHOLD"])
-		flag.Set("v", cvlCfgMap["VERBOSITY"])
-	}
+	if (cvlCfgMap != nil) {
+		if (strings.Compare(cvlCfgMap["LOGTOSTDERR"], "true") == 0) {
+			flag.Set("logtostderr", "true")
+			flag.Set("stderrthreshold", cvlCfgMap["STDERRTHRESHOLD"])
+			flag.Set("v", cvlCfgMap["VERBOSITY"])
+		}
 
-	CVL_LOG(INFO ,"Current Values of CVL Configuration File %v", cvlCfgMap)
+		CVL_LOG(INFO ,"Current Values of CVL Configuration File %v", cvlCfgMap)
+	}
 
 	//regular expression for leafref and hashref finding
 	reLeafRef = regexp.MustCompile(`.*[/]([a-zA-Z]*:)?(.*)[/]([a-zA-Z]*:)?(.*)`)

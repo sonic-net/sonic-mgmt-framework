@@ -62,6 +62,8 @@ func main() {
 	flag.StringVar(&caFile, "cacert", "", "CA certificate for client certificate validation")
 	flag.StringVar(&clientAuth, "client_auth", "none", "Client auth mode - none|cert|user")
 	flag.Parse()
+	// Suppress warning messages related to logging before flag parse
+        flag.CommandLine.Parse([]string{})
 
 	swagger.Load()
 
