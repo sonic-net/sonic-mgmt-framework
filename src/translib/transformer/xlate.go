@@ -337,7 +337,7 @@ func GetModuleNmFromPath(uri string) (string, error) {
         return moduleNm, err
 }
 
-func GetSchemaOrdDBTblList(ygModuleNm string) ([]string, error) {
+func GetOrdDBTblList(ygModuleNm string) ([]string, error) {
         var result []string
 	var err error
         if dbTblList, ok := xDbSpecOrdTblMap[ygModuleNm]; ok {
