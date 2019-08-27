@@ -165,6 +165,11 @@ func ConfigFileSyncHandler() {
 		for {
 			<-sigs
 			cvlCfgMap := ReadConfFile()
+
+			if cvlCfgMap == nil {
+				return
+			}
+
 			CVL_LEVEL_LOG(INFO ,"Received SIGUSR2. Changed configuration values are %v", cvlCfgMap)
 
 			if (strings.Compare(cvlCfgMap["LOGTOSTDERR"], "true") == 0) {
@@ -178,13 +183,20 @@ func ConfigFileSyncHandler() {
 }
 
 func ReadConfFile()  map[string]string{
-        data, err := ioutil.ReadFile(CVL_CFG_FILE)
 
-        err = json.Unmarshal(data, &cvlCfgMap)
+	/* Return if CVL configuration file is not present. */
+	if _, err := os.Stat(CVL_CFG_FILE); os.IsNotExist(err) {
+		return nil
+	}
 
-        if err != nil {
-		CVL_LEVEL_LOG(ERROR ,"Error in reading cvl configuration file %v", err)
-        }
+	data, err := ioutil.ReadFile(CVL_CFG_FILE)
+
+	err = json.Unmarshal(data, &cvlCfgMap)
+
+	if err != nil {
+		CVL_LEVEL_LOG(INFO ,"Error in reading cvl configuration file %v", err)
+		return nil
+	}
 
 	CVL_LEVEL_LOG(INFO ,"Current Values of CVL Configuration File %v", cvlCfgMap)
 	var index uint32

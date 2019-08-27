@@ -525,14 +525,25 @@ func getErrorDetails() YParserError {
 	var ElemName string
 	var errText string
 	var msg string
-	var ypErrCode YParserRetCode
+	var ypErrCode YParserRetCode =  YP_INTERNAL_UNKNOWN
 	var errMsg, errPath, errAppTag string 
 
 	ctx := (*C.struct_ly_ctx)(ypCtx)
 	ypErrFirst := C.ly_err_first(ctx);
 
 
-	//fmt.Printf("REtcode from libyang %d new %d", ypErrFirst.prev.no, C.ly_errno) 
+	if (ypErrFirst == nil) {
+               return  YParserError {
+                       TableName : errtableName,
+                       ErrCode : ypErrCode,
+                       Keys    : key,
+                       Value : ElemVal,
+                       Field : ElemName,
+                       Msg        :  errMessage,
+                       ErrTxt: errText,
+                       ErrAppTag: errAppTag,
+               }
+       }
 
 
 	if ((ypErrFirst != nil) && ypErrFirst.prev.no == C.LY_SUCCESS) {

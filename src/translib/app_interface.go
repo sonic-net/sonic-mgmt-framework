@@ -15,7 +15,7 @@ to the tranlib infra when it asks for the same.
 
 */
 
-package translib 
+package translib
 
 import (
 	"errors"
@@ -43,9 +43,9 @@ type appData struct {
 }
 
 //map containing the base path to app module info
-var appMap map[string]appInfo
+var appMap map[string]*appInfo
 
-//array containg all the supported models
+//array containing all the supported models
 var models []ModelData
 
 //Interface for all App Modules
@@ -70,12 +70,12 @@ func register(path string, info *appInfo) error {
     log.Info("Registering for path =", path)
 
 	if appMap == nil {
-		appMap = make(map[string]appInfo)
+		appMap = make(map[string]*appInfo)
 	}
 
 	if _, ok := appMap[path]; ok == false {
 
-		appMap[path] = *info
+		appMap[path] = info
 
 	} else {
 		log.Fatal("Duplicate path being registered. Path =", path)
@@ -111,7 +111,7 @@ func unregister(path string) error {
 }
 
 //Translib infra will use this function get the app info for a given path
-func getAppModuleInfo(path string) (appInfo, error) {
+func getAppModuleInfo(path string) (*appInfo, error) {
 	var err error
 	log.Info("getAppModule called for path =", path)
 
@@ -130,7 +130,7 @@ func getAppModuleInfo(path string) (appInfo, error) {
 	err = errors.New(errStr)
 	log.Error(errStr)
 
-	var app appInfo
+	var app *appInfo
 
 	return app, err
 }
