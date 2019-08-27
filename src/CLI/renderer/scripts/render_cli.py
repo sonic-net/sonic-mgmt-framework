@@ -5,7 +5,7 @@ import json
 import sys
 import gc
 import select
-import rpipe_utils
+from rpipe_utils import pipestr
 
 
 # Capture our current directory
@@ -60,7 +60,7 @@ def _write(string, disable_page=False):
     """
     global line_count
 
-    page_len_local = 23
+    page_len_local = 25
     terminal = sys.stdout
     # set length as 0 for prints without pagination
     if disable_page is True:
@@ -105,20 +105,13 @@ def write(t_str):
     q = False
 
     render_init(0)
-    pipelst = rpipe_utils.pipelst()
-    f = open('pipestr.txt', "r")
-    pipe_str = f.readline()
-    f.close()
-    if len(pipe_str) > 0:
-        if pipelst.build_pipes(pipe_str) != 0:
-            print("error bulding pipe")
-            return
     if t_str != "":
+        pipelst = pipestr().read();
         for s_str in t_str.split('\n'):
-	    if pipe_str:
-	        if pipelst.process_pipes(s_str):
+            if pipelst:
+                if pipelst.process_pipes(s_str):
                     q = _write(s_str, pipelst.is_page_disabled())
-	    else:
+            else:
                 q = _write(s_str)
             if q:
                 break
