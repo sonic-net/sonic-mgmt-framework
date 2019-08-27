@@ -52,6 +52,8 @@ def run(func, args):
         else:
             response = api_response.to_dict()
             if 'openconfig_lldpinterfaces' in response.keys():
+                if not response['openconfig_lldpinterfaces']:
+                    return
 		neigh_list = response['openconfig_lldpinterfaces']['interface']
                 if neigh_list is None:
                     return
@@ -66,7 +68,7 @@ def run(func, args):
 		    else:
 			show_cli_output(sys.argv[2],neigh)
 		else:
-	     	    show_cli_output(sys.argv[2],neigh)   		
+	     	    show_cli_output(sys.argv[2],neigh)
             else:
                 print("Failed")
     except ApiException as e:
