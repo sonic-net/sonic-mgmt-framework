@@ -180,7 +180,54 @@ func (c *CVL) ValidateIncrementalConfig(jsonData string) CVLRetCode {
 	//Fetch the depedent data
 	//Merge config and dependent data
 	//Finally validate
-	return CVL_NOT_IMPLEMENTED
+	c.clearTmpDbCache()
+	var  v interface{}
+
+	b := []byte(jsonData)
+	if err := json.Unmarshal(b, &v); err != nil {
+		return CVL_SYNTAX_ERROR
+	}
+
+	var dataMap map[string]interface{} = v.(map[string]interface{})
+
+	root, _ := c.translateToYang(&dataMap)
+	if root == nil {
+		return CVL_SYNTAX_ERROR
+
+	}
+
+	//Add and fetch entries if already exists in Redis
+	for tableName, data := range dataMap {
+		for key, _ := range data.(map[string]interface{}) {
+			c.addTableEntryToCache(tableName, key)
+		}
+	}
+
+	existingData := c.fetchDataToTmpCache()
+
+	//Merge existing data for update syntax or checking duplicate entries
+	var errObj yparser.YParserError
+	if (existingData != nil) {
+		if root, errObj = c.yp.MergeSubtree(root, existingData);
+				errObj.ErrCode != yparser.YP_SUCCESS {
+			return CVL_ERROR
+		}
+	}
+
+	//Clear cache
+	c.clearTmpDbCache()
+
+	//Add tables for 'must' expression
+	for tableName, _ := range dataMap {
+		c.addTableDataForMustExp(OP_NONE, tableName)
+	}
+
+	//Perform validation
+	if _, cvlRetCode := c.validateSemantics(root, nil); cvlRetCode != CVL_SUCCESS {
+		return cvlRetCode
+	}
+
+	return CVL_SUCCESS
 }
 
 //Validate data for operation
@@ -194,8 +241,6 @@ func (c *CVL) ValidateConfig(jsonData string) CVLRetCode {
 		root, _ := c.translateToYang(&value)
 		//if ret == CVL_SUCCESS && root != nil {
 		if root == nil {
-			//var outBuf *C.char
-			//C.lyd_print_mem(&outBuf, root, C.LYD_XML, 0)
 			return CVL_FAILURE
 
 		}
@@ -239,12 +284,16 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (CVLErrorInfo, CVL
 
 		switch cfgDataItem.VOp {
 		case OP_CREATE:
-			c.addTableDataForMustExp(cfgDataItem.VOp, tbl)
+			if (c.addTableEntryForMustExp(&cfgDataItem, tbl) != CVL_SUCCESS) {
+				c.addTableDataForMustExp(cfgDataItem.VOp, tbl)
+			}
 
 		case OP_UPDATE:
 			//Get the existing data from Redis to cache, so that final validation can be done after merging this dependent data
 			c.addTableEntryToCache(tbl, key)
-			c.addTableDataForMustExp(cfgDataItem.VOp, tbl)
+			if (c.addTableEntryForMustExp(&cfgDataItem, tbl) != CVL_SUCCESS) {
+				c.addTableDataForMustExp(cfgDataItem.VOp, tbl)
+			}
 
 		case OP_DELETE:
 			if (len(cfgDataItem.Data) > 0) {
@@ -271,8 +320,10 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (CVLErrorInfo, CVL
 			}
 
 			c.addTableEntryToCache(tbl, key)
-			//c.updateDeleteDataToCache(tbl, key)
-			c.addTableDataForMustExp(cfgDataItem.VOp, tbl)
+
+			if (c.addTableEntryForMustExp(&cfgDataItem, tbl) != CVL_SUCCESS) {
+				c.addTableDataForMustExp(cfgDataItem.VOp, tbl)
+			}
 		}
 	}
 

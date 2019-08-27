@@ -15,7 +15,7 @@ to the tranlib infra when it asks for the same.
 
 */
 
-package translib 
+package translib
 
 import (
 	"errors"
@@ -45,7 +45,7 @@ type appData struct {
 //map containing the base path to app module info
 var appMap map[string]*appInfo
 
-//array containg all the supported models
+//array containing all the supported models
 var models []ModelData
 
 //Interface for all App Modules
@@ -126,8 +126,10 @@ func getAppModuleInfo(path string) (*appInfo, error) {
 	}
 
 	errStr := "Unsupported path=" + path
+
 	err = errors.New(errStr)
 	log.Error(errStr)
+
 	var app *appInfo
 
 	return app, err

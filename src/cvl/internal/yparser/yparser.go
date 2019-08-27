@@ -396,17 +396,13 @@ func (yp *YParser) ValidateSyntax(data *YParserNode) YParserError {
 func (yp *YParser) ValidateSemantics(data, depData, appDepData *YParserNode) YParserError {
 
 	var dataTmp *C.struct_lyd_node
-	var dataTmp1 *C.struct_lyd_node
 
 	if (data != nil) {
 		dataTmp = (*C.struct_lyd_node)(data)
-		dataTmp1 =  (*C.struct_lyd_node)(data)
 	} else if (depData != nil) {
 		dataTmp = (*C.struct_lyd_node)(depData)
-		dataTmp1 =  (*C.struct_lyd_node)(depData)
 	} else if (yp.root != nil) {
 		dataTmp = (*C.struct_lyd_node)(yp.root)
-		dataTmp1 =  (*C.struct_lyd_node)(yp.root)
 	} else {
 		if (yp.operation == "CREATE") || (yp.operation == "UPDATE") {
 			return YParserError {ErrCode : YP_INTERNAL_UNKNOWN,}
@@ -460,8 +456,7 @@ func (yp *YParser) ValidateSemantics(data, depData, appDepData *YParserNode) YPa
 	}
 
 	//Check semantic validation
-	//if (0 != C.lyd_data_validate(&dataTmp, C.LYD_OPT_CONFIG, (*C.struct_ly_ctx)(ypCtx))) {
-	if (0 != C.lyd_data_validate(&dataTmp1, C.LYD_OPT_CONFIG, (*C.struct_ly_ctx)(ypCtx))) {
+	if (0 != C.lyd_data_validate(&dataTmp, C.LYD_OPT_CONFIG, (*C.struct_ly_ctx)(ypCtx))) {
 		return getErrorDetails()
 	}
 
@@ -530,14 +525,25 @@ func getErrorDetails() YParserError {
 	var ElemName string
 	var errText string
 	var msg string
-	var ypErrCode YParserRetCode
+	var ypErrCode YParserRetCode =  YP_INTERNAL_UNKNOWN
 	var errMsg, errPath, errAppTag string 
 
 	ctx := (*C.struct_ly_ctx)(ypCtx)
 	ypErrFirst := C.ly_err_first(ctx);
 
 
-	//fmt.Printf("REtcode from libyang %d new %d", ypErrFirst.prev.no, C.ly_errno) 
+	if (ypErrFirst == nil) {
+               return  YParserError {
+                       TableName : errtableName,
+                       ErrCode : ypErrCode,
+                       Keys    : key,
+                       Value : ElemVal,
+                       Field : ElemName,
+                       Msg        :  errMessage,
+                       ErrTxt: errText,
+                       ErrAppTag: errAppTag,
+               }
+       }
 
 
 	if ((ypErrFirst != nil) && ypErrFirst.prev.no == C.LY_SUCCESS) {

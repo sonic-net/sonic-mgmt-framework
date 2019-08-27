@@ -28,6 +28,37 @@ var cv *cvl.CVL
 var port_map map[string]interface{}
 var filehandle  *os.File
 
+/* Dependent port channel configuration. */
+var depDataMap = map[string]interface{} {
+	"PORTCHANNEL" : map[string]interface{} {
+		"PortChannel001": map[string] interface{} {
+			"admin_status": "up",
+			"mtu": "9100",
+		},
+		"PortChannel002": map[string] interface{} {
+			"admin_status": "up",
+			"mtu": "9100",
+		},
+	},
+	"PORTCHANNEL_MEMBER": map[string]interface{} {
+		"PortChannel001|Ethernet4": map[string] interface{} {
+			"NULL": "NULL",
+		},
+		"PortChannel001|Ethernet8": map[string] interface{} {
+			"NULL": "NULL",
+		},
+		"PortChannel001|Ethernet12": map[string] interface{} {
+			"NULL": "NULL",
+		},
+		"PortChannel002|Ethernet20": map[string] interface{} {
+			"NULL": "NULL",
+		},
+		"PortChannel002|Ethernet24": map[string] interface{} {
+			"NULL": "NULL",
+		},
+	},
+}
+
 /* Converts JSON Data in a File to Map. */
 func convertJsonFileToMap(t *testing.T, fileName string) map[string]string {
 	var mapstr map[string]string
@@ -175,6 +206,7 @@ func prepareDb() {
 	port_map := loadConfig("", PortsMapByte)
 
 	loadConfigDB(rclient, port_map)
+	loadConfigDB(rclient, depDataMap)
 }
 
 func  WriteToFile(message string) {
@@ -207,12 +239,11 @@ func TestMain(m *testing.M) {
 
 	if (redisAlreadyRunning == false) {
 		//Redis not running, lets start it
-		output, err := exec.Command("/bin/sh", "-c", "sudo /etc/init.d/redis-server start").Output()
+		_, err := exec.Command("/bin/sh", "-c", "sudo /etc/init.d/redis-server start").Output()
 		if err != nil {
 			fmt.Println(err.Error())
 		}
 
-		fmt.Println(string(output))
 	}
 
 	os.Remove("testdata/cvl_test_details.log")
@@ -231,6 +262,7 @@ func TestMain(m *testing.M) {
 	//os.Exit(m.Run())
 
 	unloadConfigDB(rclient, port_map)
+	unloadConfigDB(rclient, depDataMap)
 	cvl.ValidationSessClose(cv)
 	cvl.Finish()
 	rclient.Close()
@@ -242,12 +274,11 @@ func TestMain(m *testing.M) {
 
 	if (redisAlreadyRunning == false) {
 		//If Redis was not already running, close the instance that we ran
-		output, err := exec.Command("/bin/sh", "-c", "sudo /etc/init.d/redis-server stop").Output()
+		_, err := exec.Command("/bin/sh", "-c", "sudo /etc/init.d/redis-server stop").Output()
 		if err != nil {
 			fmt.Println(err.Error())
 		}
 
-		fmt.Println(string(output))
 	}
 
 	os.Exit(code)
@@ -289,7 +320,7 @@ func TestValidateEditConfig_CfgFile(t *testing.T) {
 		depDataFile     string
 		retCode         cvl.CVLRetCode
 	}{
-		{filedescription: "ACL_DATA", cfgDataFile: "./acltable.json", depDataFile: "./aclrule.json", retCode: cvl.CVL_SUCCESS},
+		{filedescription: "ACL_DATA", cfgDataFile: "testdata/aclrule.json", depDataFile: "testdata/acltable.json", retCode: cvl.CVL_SUCCESS},
 	}
 
 	cvSess, _ := cvl.ValidationSessOpen()
@@ -306,7 +337,6 @@ func TestValidateEditConfig_CfgFile(t *testing.T) {
 				cvl.CVLEditConfigData{cvl.VALIDATE_ALL, cvl.OP_CREATE, "ACL_TABLE|TestACL1", jsonEditCfg_Create_DependentMap},
 			}
 
-			fmt.Printf("\n\n Validating create data = %v\n\n", cfgData)
 
 			cvlErrObj, err := cvSess.ValidateEditConfig(cfgData)
 
@@ -318,7 +348,6 @@ func TestValidateEditConfig_CfgFile(t *testing.T) {
 				cvl.CVLEditConfigData{cvl.VALIDATE_ALL, cvl.OP_CREATE, "ACL_RULE|TestACL1|Rule1", jsonEditCfg_Create_ConfigMap},
 			}
 
-			fmt.Printf("\n\n Validating create data = %v\n\n", cfgData)
 
 			cvlErrObj, err = cvSess.ValidateEditConfig(cfgData)
 
@@ -361,7 +390,6 @@ func TestValidateEditConfig_CfgStrBuffer(t *testing.T) {
 				cvl.CVLEditConfigData{cvl.VALIDATE_ALL, cvl.OP_CREATE, "ACL_TABLE|TestACL1", jsonEditCfg_Create_DependentMap},
 			}
 
-			fmt.Printf("\n\n Validating create data = %v\n\n", cfgData)
 
 			cvlErrObj, err := cvSess.ValidateEditConfig(cfgData)
 
@@ -373,7 +401,6 @@ func TestValidateEditConfig_CfgStrBuffer(t *testing.T) {
 				cvl.CVLEditConfigData{cvl.VALIDATE_ALL, cvl.OP_CREATE, "ACL_RULE|TestACL1|Rule1", jsonEditCfg_Create_ConfigMap},
 			}
 
-			fmt.Printf("\n\n Validating create data = %v\n\n", cfgData)
 
 			cvlErrObj, err = cvSess.ValidateEditConfig(cfgData)
 
@@ -410,7 +437,6 @@ func TestValidateConfig_CfgStrBuffer(t *testing.T) {
 		t.Run(fmt.Sprintf("%s [%d]", tc.filedescription, index+1), func(t *testing.T) {
 			err := cvSess.ValidateConfig(tc.jsonString)
 
-			fmt.Printf("\nValidating data = %v\n\n", tc.jsonString)
 
 			if err != tc.retCode {
 				t.Errorf("Config Validation failed.")
@@ -434,9 +460,6 @@ func TestValidateConfig_CfgFile(t *testing.T) {
 		retCode         cvl.CVLRetCode
 	}{
 		{filedescription: "Config File - VLAN,ACL,PORTCHANNEL", fileName: "testdata/config_db1.json", retCode: cvl.CVL_SUCCESS},
-		{filedescription: "Config File - BUFFER_PG", fileName: "testdata/config_db2.json", retCode: cvl.CVL_SUCCESS},
-		{filedescription: "Config File - BUFFER_PG", fileName: "testdata/config_db3.json", retCode: cvl.CVL_SUCCESS},
-		{filedescription: "Config File - BUFFER_PG", fileName: "testdata/config_db4.json", retCode: cvl.CVL_SUCCESS},
 	}
 
 	cv, _ := cvl.ValidationSessOpen()
@@ -448,7 +471,6 @@ func TestValidateConfig_CfgFile(t *testing.T) {
 			jsonString := convertJsonFileToString(t, tc.fileName)
 			err := cv.ValidateConfig(jsonString)
 
-			fmt.Printf("\nValidating data = %v\n\n", jsonString)
 
 			if err != tc.retCode {
 				t.Errorf("Config Validation failed.")
@@ -1984,7 +2006,6 @@ func TestValidateEditConfig_Create_Dependent_CacheData(t *testing.T) {
 	}
 
 	cvlErrInfo, err1 := cvSess.ValidateEditConfig(cfgDataAcl)
-	fmt.Println(cvlErrInfo)
 
 	//Create ACL rule
 	cfgDataRule := []cvl.CVLEditConfigData{
@@ -2004,7 +2025,6 @@ func TestValidateEditConfig_Create_Dependent_CacheData(t *testing.T) {
 	}
 
 	cvlErrInfo, err2 := cvSess.ValidateEditConfig(cfgDataRule)
-	fmt.Println(cvlErrInfo)
 
 	if err1 != cvl.CVL_SUCCESS || err2 != cvl.CVL_SUCCESS {
 		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
@@ -2029,7 +2049,6 @@ func TestValidateEditConfig_Create_DepData_In_MultiSess(t *testing.T) {
 	}
 
 	cvlErrInfo, err1 := cvSess.ValidateEditConfig(cfgDataAcl)
-	fmt.Println(cvlErrInfo)
 
 	cvl.ValidationSessClose(cvSess)
 
@@ -2051,9 +2070,8 @@ func TestValidateEditConfig_Create_DepData_In_MultiSess(t *testing.T) {
 		},
 	}
 
-	cvlSessErr, err2 := cvSess.ValidateEditConfig(cfgDataRule)
+	_, err2 := cvSess.ValidateEditConfig(cfgDataRule)
 
-	fmt.Println("Session Info", cvlSessErr)
 
 	cvl.ValidationSessClose(cvSess)
 
@@ -2097,11 +2115,6 @@ func TestValidateEditConfig_Create_DepData_From_Redis_Negative11(t *testing.T) {
 	cvlErrInfo, err := cvSess.ValidateEditConfig(cfgDataRule)
 
 	WriteToFile(fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
-
-        /* Check for error message. */	
-	if (err == cvl.CVL_SEMANTIC_DEPENDENT_DATA_MISSING) {
-		fmt.Println(cvl.GetErrorString(err))
-	}
 
 
 	cvl.ValidationSessClose(cvSess)
@@ -2964,11 +2977,71 @@ func TestValidateStartupConfig_Positive(t *testing.T) {
 }
 
 func TestValidateIncrementalConfig_Positive(t *testing.T) {
-	cvSess, _ := cvl.ValidationSessOpen()
-	if cvl.CVL_NOT_IMPLEMENTED != cvSess.ValidateIncrementalConfig("") {
-		t.Errorf("Not implemented yet.")
+	existingDataMap := map[string]interface{} {
+		"VLAN" : map[string]interface{} {
+			"Vlan800": map[string]interface{} {
+				"members@": "Ethernet1",
+				"vlanid": "800",
+			},
+			"Vlan801": map[string]interface{} {
+				"members@": "Ethernet2",
+				"vlanid": "801",
+			},
+		},
+		"VLAN_MEMBER": map[string]interface{} {
+			"Vlan800|Ethernet1": map[string] interface{} {
+				"tagging_mode": "tagged",
+			},
+		},
+		"PORT" : map[string]interface{} {
+			"Ethernet1" : map[string]interface{} {
+				"alias":"hundredGigE1",
+				"lanes": "81,82,83,84",
+				"mtu": "9100",
+			},
+			"Ethernet2" : map[string]interface{} {
+				"alias":"hundredGigE1",
+				"lanes": "85,86,87,89",
+				"mtu": "9100",
+			},
+		},
 	}
+
+	//Prepare data in Redis
+	loadConfigDB(rclient, existingDataMap)
+
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	jsonData := `{
+		"VLAN": {
+			"Vlan800": {
+				"members": [
+				"Ethernet1",
+				"Ethernet2"
+				],
+				"vlanid": "800"
+			}
+		},
+		"VLAN_MEMBER": {
+			"Vlan800|Ethernet1": {
+				"tagging_mode": "untagged"
+			},
+			"Vlan801|Ethernet2": {
+				"tagging_mode": "tagged"
+			}
+		}
+	}`
+
+	ret := cvSess.ValidateIncrementalConfig(jsonData)
+
 	cvl.ValidationSessClose(cvSess)
+
+	unloadConfigDB(rclient, existingDataMap)
+
+	if ret != cvl.CVL_SUCCESS { //should succeed
+		t.Errorf("Config Validation failed.")
+		return
+	}
 }
 
 //Validate key only
@@ -3044,4 +3117,115 @@ func TestValidateEditConfig_Two_Updates_Positive(t *testing.T) {
 
 	unloadConfigDB(rclient, depDataMap)
 
+}
+
+func TestValidateEditConfig_Create_Syntax_DependentData_PositivePortChannel(t *testing.T) {
+
+	cfgData := []cvl.CVLEditConfigData{
+		cvl.CVLEditConfigData{
+			cvl.VALIDATE_ALL,
+			cvl.OP_CREATE,
+			"VLAN|Vlan1001",
+			map[string]string{
+				"vlanid":   "1001",
+				"members@": "Ethernet28,PortChannel002",
+			},
+		},
+	}
+
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	cvlErrInfo, err := cvSess.ValidateEditConfig(cfgData)
+
+	cvl.ValidationSessClose(cvSess)
+
+	WriteToFile(fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
+
+	if err != cvl.CVL_SUCCESS {
+		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
+	}
+
+}
+
+
+func TestValidateEditConfig_Create_Syntax_DependentData_PositivePortChannelIfName(t *testing.T) {
+
+	cfgData := []cvl.CVLEditConfigData{
+		cvl.CVLEditConfigData{
+			cvl.VALIDATE_ALL,
+			cvl.OP_CREATE,
+			"VLAN|Vlan1001",
+			map[string]string{
+				"vlanid":   "1001",
+				"members@": "Ethernet24,PortChannel001",
+			},
+		},
+	}
+
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	cvlErrInfo, err := cvSess.ValidateEditConfig(cfgData)
+
+	cvl.ValidationSessClose(cvSess)
+
+	WriteToFile(fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
+
+	if err != cvl.CVL_SUCCESS {
+		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
+	}
+
+}
+
+func TestValidateEditConfig_Create_Syntax_DependentData_NegativePortChannelEthernet(t *testing.T) {
+
+	cfgData := []cvl.CVLEditConfigData{
+		cvl.CVLEditConfigData{
+			cvl.VALIDATE_ALL,
+			cvl.OP_CREATE,
+			"VLAN|Vlan1001",
+			map[string]string{
+				"vlanid":   "1001",
+				"members@": "PortChannel001,Ethernet4",
+			},
+		},
+	}
+
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	cvlErrInfo, _ := cvSess.ValidateEditConfig(cfgData)
+
+	cvl.ValidationSessClose(cvSess)
+
+	WriteToFile(fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
+
+	if cvlErrInfo.ErrCode == cvl.CVL_SUCCESS {
+		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
+	}
+}
+
+func TestValidateEditConfig_Create_Syntax_DependentData_NegativePortChannelNew(t *testing.T) {
+
+	cfgData := []cvl.CVLEditConfigData{
+		cvl.CVLEditConfigData{
+			cvl.VALIDATE_ALL,
+			cvl.OP_CREATE,
+			"VLAN|Vlan1001",
+			map[string]string{
+				"vlanid":   "1001",
+				"members@": "Ethernet12,PortChannel001",
+			},
+		},
+	}
+
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	cvlErrInfo, _ := cvSess.ValidateEditConfig(cfgData)
+
+	cvl.ValidationSessClose(cvSess)
+
+	WriteToFile(fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
+
+	if cvlErrInfo.ErrCode == cvl.CVL_SUCCESS {
+		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
+	}
 }

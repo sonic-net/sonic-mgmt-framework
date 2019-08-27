@@ -81,14 +81,14 @@ module sonic-acl {
 			}
 
 			leaf-list ports {
-				/*type union { */
+				type union { 
 					type leafref {
 						path "/prt:sonic-port/prt:PORT/prt:ifname";
 					}
-			/*		type leafref {
+					type leafref {
 						path "/spc:sonic-portchannel/spc:PORTCHANNEL/spc:name";
 					}
-				}*/
+				}
 			}
 		}
 
@@ -111,7 +111,7 @@ module sonic-acl {
 					path "../../ACL_TABLE/aclname";
 				}
 				must "(/scommon:operation/scommon:operation != 'DELETE') or " +
-					"count(../../ACL_TABLE[aclname=current()]/ports) = 0" {
+					"count(current()/../../ACL_TABLE[aclname=current()]/ports) = 0" {
 						error-message "Ports are already bound to this rule.";
 				}
 			} 
@@ -122,7 +122,9 @@ module sonic-acl {
 
 			leaf PRIORITY {
 				type uint16 {
-					range "1..65535";
+					range "1..65535"{
+						error-message "Invalid ACL rule priority.";
+					}
 				}
 			}
 
@@ -146,13 +148,13 @@ module sonic-acl {
 
 			leaf IP_TYPE {
 				type enumeration {
-					enum any;
-					enum ip;
-					enum ipv4;
-					enum ipv4any;
-					enum non_ipv4;
-					enum ipv6any;
-					enum non_ipv6;
+					enum ANY;
+					enum IP;
+					enum IPV4;
+					enum IPV4ANY;
+					enum NON_IPV4;
+					enum IPV6ANY;
+					enum NON_IPV6;
 				}
 			}
 		
@@ -164,12 +166,16 @@ module sonic-acl {
 
 			leaf ETHER_TYPE {
 				type string{
-					pattern "(0x88CC)|(0x8100)|(0x8915)|(0x0806)|(0x0800)|(0x86DD)|(0x8847)";
+					pattern "(0x88CC)|(0x8100)|(0x8915)|(0x0806)|(0x0800)|(0x86DD)|(0x8847)"{
+						error-message "Invalid ACL Rule Ether Type";
+						error-app-tag ether-type-invalid;
+					}
 				}
 			}
 
 			choice ip_src_dst {
 				case ipv4_src_dst {
+					//when "boolean(IP_TYPE[.='ANY' or .='IP' or .='IPV4' or .='IPV4ANY'])";
 					leaf SRC_IP {
 						mandatory true;
 						type inet:ipv4-prefix;
@@ -180,6 +186,7 @@ module sonic-acl {
 					}
 				}
 				case ipv6_src_dst {
+					//when "boolean(IP_TYPE[.='ANY' or .='IP' or .='IPV6' or .='IPV6ANY'])";
 					leaf SRC_IPV6 {
 						mandatory true;
 						type inet:ipv6-prefix;    
