@@ -54,6 +54,7 @@ func mapFillData(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, dbKey st
 	}
 
 	if len(xpathInfo.xfmrFunc) > 0 {
+        uri = uri + "/" + name
 		/* field transformer present */
 		log.Info("Transformer function(\"%v\") invoked for yang path(\"%v\").", xpathInfo.xfmrFunc, xpath)
 		ret, err := XlateFuncCall(yangToDbXfmrFunc(xSpecMap[xpath].xfmrFunc), d, ygRoot, oper, uri, value)
@@ -269,24 +270,25 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
 				if typeOfValue == reflect.Map || typeOfValue == reflect.Slice {
 					log.Info("slice/map data: key(\"%v\"), xpathPrefix(\"%v\").", keyName, xpathPrefix)
                     xpath    := uri
+                    curUri   := uri
                     pathAttr := key.String()
                     if len(xpathPrefix) > 0 {
                          if strings.Contains(pathAttr, ":") {
                              pathAttr = strings.Split(pathAttr, ":")[1]
                          }
-                         xpath = xpathPrefix + "/" + pathAttr
-                         uri   = uri + "/" + pathAttr
+                         xpath  = xpathPrefix + "/" + pathAttr
+                         curUri = uri + "/" + pathAttr
                     }
 
 					if xSpecMap[xpath] != nil && len(xSpecMap[xpath].xfmrFunc) > 0 {
 						/* subtree transformer present */
-						ret, err := XlateFuncCall(yangToDbXfmrFunc(xSpecMap[xpath].xfmrFunc), d, ygRoot, oper, uri)
+						ret, err := XlateFuncCall(yangToDbXfmrFunc(xSpecMap[xpath].xfmrFunc), d, ygRoot, oper, curUri)
 						if err != nil {
 							return nil
 						}
 						mapCopy(result, ret[0].Interface().(map[string]map[string]db.Value))
 					} else {
-						yangReqToDbMapCreate(d, ygRoot, oper, uri, xpath, keyName, jData.MapIndex(key).Interface(), result)
+						yangReqToDbMapCreate(d, ygRoot, oper, curUri, xpath, keyName, jData.MapIndex(key).Interface(), result)
 					}
 				} else {
 					pathAttr := key.String()

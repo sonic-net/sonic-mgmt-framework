@@ -38,9 +38,9 @@ func dataToJsonAdd(xpath string, fieldData map[string]string, key string, dbData
 					/* Inner(child) list, traverse this list */
                     childMap, ok := dbDataMap[*xSpecMap[fldXpath].tableName]
                     if ok {
-                            var xpathl []string
-                            xpathl = append(xpathl, fldXpath)
-                            jsonData += listDataToJsonAdd(xpathl, childMap, key, dbDataMap)
+                        var xpathl []string
+                        xpathl = append(xpathl, fldXpath)
+                        jsonData += listDataToJsonAdd(xpathl, childMap, key, dbDataMap)
                     }
                 }
             }
