@@ -2,149 +2,40 @@
 
 import re
 import os
-#import rprint
 from time import gmtime, strftime
 
-def update_show_batch_info(action, pipe_str):
-    show_batch_obj_g.update(action, pipe_str)
-
-# Class definition - show_batch_info
-class show_batch_info:
+class pipestr:
     """
-    show_batch_info class
+    pipestr class
+    For passing the pipestr from the actioner to the renderer
     """
     def __init__(self):
-        self.is_set = False
-        self.is_debug = False
-        self.disable_page = False
-        self.print_cmd = False
-        self.cmd_str = None
-        self.pipe_str = None
-        self.file_name = None
+        pass
+   
+    def write(self, argv):
+        pipe_str = ''
+        has_pipe = False
+        for arg in argv:
+            if has_pipe:
+                pipe_str += (arg + ' ')
+            if arg == '|':
+                has_pipe = True
+        f = open("pipestr.txt", "w")
+        if len(pipe_str) > 0:
+            pipe_str = pipe_str[:-1]
+            f.write(pipe_str)
+        f.close()
 
-    def update(self, action, pipe_str):
-        if "START" == action:
-            self.set(pipe_str)
-        else:
-            self.reset()
-
-    ##
-    # @brief Preprocess the pipe string and prepares renderer
-    # for upcoming commands
-    #
-    # @param pipe_str The string following the '|' symbol in the command line
-    #
-    # @return None
-    def set(self, pipe_str):
-        self.is_set = True
-        if pipe_str.startswith("show debug all") or \
-            pipe_str.startswith("do show debug all"):
-            self.is_debug = True
-        self.cmd_str = pipe_str
-        if pipe_str.startswith("show tech-support") or pipe_str.startswith("do show tech-support") or \
-            pipe_str.startswith("show debug all") or pipe_str.startswith("do show deubg all"):
-            # By default, no pagination unless mentioned with page or no-more
-            if '| no-more' in pipe_str or (' tech-support' in pipe_str and ' page' not in pipe_str):
-                self.disable_page = True
-
-            # Extract pipes alone which will be appended for upcoming commands
-            if -1 != pipe_str.find(" | "):
-                self.pipe_str = pipe_str[pipe_str.find(" | "):]
-                if self.disable_page:
-                    self.pipe_str = self.pipe_str + " | no-more"
-            elif True == self.disable_page:
-                self.pipe_str = " | no-more"
-            else:
-                self.pipe_str = None
-
-            # Decide whether command shall be printed or not
-            if self.pipe_str is None or \
-                self.pipe_str.startswith(" | no-more") or \
-                self.pipe_str.startswith(" | save") :
-                self.print_cmd = True
-
-            # Open file for save
-            if '| save' in pipe_str:
-                # Check additional options
-                save_options = pipe_str.split('| save ')
-                if ' ' in save_options[1]:
-                    self.file_name = save_options[1].split(' ')[0]
-                    write_mode = 'a'
-                else:
-                    self.file_name = save_options[1]
-                    write_mode = 'w'
-                try :
-                    rpipe_save(self.file_name, write_mode, pipe_str, False)
-                except :
-                    return -1
-
-    def reset(self):
-        self.is_set = False
-        self.is_debug = False
-        self.disable_page = False
-        self.print_cmd = False
-        self.cmd_str = None
-        self.pipe_str = None
-        self.file_name = None
-
-    def is_obj_set(self):
-        return self.is_set
-
-    ##
-    # @brief Invoked for every command in show tech-support file
-    # Write the command on the console or to file
-    #
-    # @param cmd Command as part of "show tech-support"
-    #
-    # @return None
-    def pipe_action(self, cmd):
-        if self.is_set != True:
-            return 0
-
-        # 'save <file-name> skip-header' is internally triggered for 'show diff'
-        if cmd.startswith("save "):
-            return 0
-
-#        if self.print_cmd:
-#            # Skip cmd printing from second response onwards (ex : get-bulk rendering)
-#            if rprint.cli_rprint_is_first_response() is False:
-#                return 0
-#            # Print the command
-#            if not self.is_debug:
-#                if self.file_name != None:
-#                    str_tmp = "\n ----------------------------------- " + cmd + \
-#                    " -------------------\n"
-#                    rpipe_save(self.file_name, 'a', '', True).pipe_action(str_tmp)
-#                else:
-#                    str_tmp = "\n ----------------------------------- " + cmd + \
-#                    " -------------------\n"
-#                    if self.disable_page is True:
-#                        rprint.cli_rprint(str_tmp, True)
-#                        return 0
-#                    elif True == rprint.cli_rprint(str_tmp):
-#                        return -1
-        return 0
-
-    def get_pipe_str(self):
-        if self.pipe_str != None:
-            return self.pipe_str
-        else:
-            return ""
-
-    def get_cmd_str(self):
-        return self.cmd_str
-
-    def set_pipe_str(self, pipe_str):
-        self.pipe_str = pipe_str
-
-    def get_file_name(self):
-        return self.file_name
-
-# Object to store info about show batch
-show_batch_obj_g = show_batch_info()
-
-def get_show_batch_obj():
-    return show_batch_obj_g
+    def read(self):
+        pipe_lst = pipelst()
+        f = open('pipestr.txt', "r")
+        pipe_str = f.readline()
+        f.close()
+        if len(pipe_str) > 0:
+            if pipe_lst.build_pipes(pipe_str) != 0:
+                print("error bulding pipe")
+                return None
+        return pipe_lst
 
 class pipelst:
     """
@@ -171,10 +62,10 @@ class pipelst:
             return 0
 
         # 'save <file-name> skip-header' is internally triggered for 'show diff'
-        if not pipe_str.startswith("save ") and show_batch_obj_g.is_obj_set():
-            if -1 == show_batch_obj_g.pipe_action(pipe_str):
-                return -1
-            pipe_str = pipe_str + show_batch_obj_g.get_pipe_str()
+        #if not pipe_str.startswith("save ") and show_batch_obj_g.is_obj_set():
+        #    if -1 == show_batch_obj_g.pipe_action(pipe_str):
+        #        return -1
+        #    pipe_str = pipe_str + show_batch_obj_g.get_pipe_str()
 
         # Check for 'no-more' and disble pagination
         if "no-more" in pipe_str:
@@ -220,20 +111,6 @@ class pipelst:
                     elif save_option == "append":
                         write_mode = 'a'
                 try :
-                  # 'save <file-name> skip-header' is internally triggered for 'show diff'
-                    if not pipe_str.startswith("save "):
-                        # Use file_name from show batch info
-                        if show_batch_obj_g.is_obj_set():
-                            file_name = show_batch_obj_g.get_file_name()
-                            skip_header = True
-                            write_mode = 'a'
-                        # Set append from second response onwards (ex : get-bulk rendering)
-                        elif rprint.cli_rprint_is_first_response() is False:
-                            skip_header = True
-                            write_mode = 'a'
-                        else:
-                            pass
-
                     pipe_obj = rpipe_save(file_name, write_mode, pipe_str, skip_header)
                 except :
                     return -1

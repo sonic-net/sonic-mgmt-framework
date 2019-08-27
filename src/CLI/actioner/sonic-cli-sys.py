@@ -4,6 +4,7 @@ import time
 import json
 import ast
 import openconfig_system_client
+from rpipe_utils import pipestr
 from openconfig_system_client.rest import ApiException
 from scripts.render_cli import show_cli_output
 
@@ -120,19 +121,8 @@ def run(func, args):
         print("Exception when calling OpenconfigSystemApi->%s : %s\n" %(func.__name__, e))
 
 if __name__ == '__main__':
-    pipe_str = ''
-    has_pipe = False
-    for arg in sys.argv:
-	if has_pipe:
-	    pipe_str += (arg + ' ')
-        if arg == '|':
-            has_pipe = True
-    f = open("pipestr.txt", "w")
-    if len(pipe_str) > 0:
-        pipe_str = pipe_str[:-1]
-        f.write(pipe_str)
-    f.close()
 
+    pipestr().write(sys.argv)
     #pdb.set_trace()
     func = eval(sys.argv[1], globals(), openconfig_system_client.OpenconfigSystemApi.__dict__)
     run(func, sys.argv[2:])

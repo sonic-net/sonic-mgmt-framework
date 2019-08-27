@@ -6,6 +6,7 @@ import collections
 import re
 import ast
 import openconfig_acl_client
+from rpipe_utils import pipestr
 from openconfig_acl_client.rest import ApiException
 from scripts.render_cli import show_cli_output
 
@@ -252,19 +253,8 @@ def run(func, args):
 
 
 if __name__ == '__main__':
-    pipe_str = ''
-    has_pipe = False
-    for arg in sys.argv:
-	if has_pipe:
-	    pipe_str += (arg + ' ')
-        if arg == '|':
-            has_pipe = True
-    f = open("pipestr.txt", "w")
-    if len(pipe_str) > 0:
-        pipe_str = pipe_str[:-1]
-        f.write(pipe_str)
-    f.close()
 
+    pipestr().write(sys.argv)
     #pdb.set_trace()
     func = eval(sys.argv[1], globals(), openconfig_acl_client.OpenconfigAclApi.__dict__)
     run(func, sys.argv[2:])
