@@ -1,0 +1,186 @@
+swagger: "2.0"
+info:
+  description: "Sample OpenAPI spec for SONiC VLAN table operations."
+  version: "1.0.0"
+  title: "SONiC Management Infra PoC - VLANs"
+  termsOfService: ""
+  contact:
+    email: "noone@broadcom.com"
+  license:
+    name: "Apache 2.0"
+    url: "http://www.apache.org/licenses/LICENSE-2.0.html"
+basePath: "/nonyang"
+tags:
+- name: "vlan"
+  description: "Vlan configuration APIs"
+schemes:
+- "https"
+- "http"
+paths:
+  /vlan:
+    post:
+      tags:
+      - "vlan"
+      summary: "Create vlans"
+      description: "Create vlans by id"
+      operationId: "createVlans"
+      consumes:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "Vlans to be configured"
+        required: true
+        schema:
+          type: "array"
+          items:
+            type: "integer"
+      responses:
+        201:
+          description: "Vlans created" 
+        500:
+          description: "Vlan creation failed"
+    get:
+      tags:
+      - "vlan"
+      summary: "Get all vlan"
+      description: "Returns all vlans"
+      operationId: "getVlans"
+      produces:
+      - "application/json"
+      responses:
+        200:
+          description: "successful operation"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/VlanInfo"
+        500:
+          description: "Internal error"
+
+  /vlan/{id}:
+    get:
+      tags:
+      - "vlan"
+      summary: "Finds vlan by id"
+      description: "Returns vlan by id"
+      operationId: "getVlanById"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "id"
+        in: "path"
+        description: "Vlan id"
+        required: true
+        type: "integer"
+      responses:
+        200:
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/VlanInfo"
+        404:
+          description: "Vlan not found"
+    delete:
+      tags:
+      - "vlan"
+      summary: "Delete vlan by id"
+      description: "Delete vlan by id"
+      operationId: "deleteVlanById"
+      parameters:
+      - name: "id"
+        in: "path"
+        description: "Vlan id"
+        required: true
+        type: "integer"
+      responses:
+        204:
+          description: "Vlan deleted"
+        404:
+          description: "Vlan not found"
+          
+  /vlan/{id}/member:
+    post:
+      tags:
+      - "vlan"
+      summary: "Add member interfaces"
+      description: "Add member interfaces"
+      operationId: "addVlanMembers"
+      consumes:
+      - "application/json"
+      parameters:
+      - name: "id"
+        in: "path"
+        description: "Vlan id"
+        required: true
+        type: "integer"
+      - name: "body"
+        in: "body"
+        description: "Member info"
+        required: true
+        schema:
+          type: "array"
+          items:
+            $ref: "#/definitions/VlanMember"
+      responses:
+        201:
+          description: "Members added"
+        404:
+          description: "Vlan not found"
+
+  /vlan/{id}/member/{port}:
+    delete:
+      tags:
+      - "vlan"
+      summary: "Remove member interfaces"
+      description: "Remove member interfaces"
+      operationId: "removeVlanMembers"
+      parameters:
+      - name: "id"
+        in: "path"
+        description: "Vlan id"
+        required: true
+        type: "integer"
+      - name: "port"
+        in: "path"
+        description: "Member port name"
+        required: true
+        type: "string"
+      responses:
+        204:
+          description: "Vlan member deleted"
+        404:
+          description: "Vlan or vlan member config not found"
+
+definitions:
+  VlanInfo:
+    type: "object"
+    required: [id]
+    properties:
+      id:
+        description: "Vlan id"
+        type: "integer"
+        format: "int32"
+      name:
+        description: "Vlan name"
+        type: "string"
+        format: "string"
+      members:
+        description: "Vlan member port details"
+        type: "array"
+        items:
+           $ref: "#/definitions/VlanMember"
+
+  VlanMember:
+    type: "object"
+    required: [port]
+    properties:
+      port:
+        description: "Member port name"
+        type: "string"
+        format: "string"
+      mode:
+        description: "Tagging mode"
+        type: "string"
+        enum:
+        - "tagged"
+        - "untagged"

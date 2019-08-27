@@ -1,0 +1,24 @@
+{{>partial_header}}
+package {{packageName}}
+
+{{#operations}}
+import (
+	"net/http"
+
+	"rest/server"
+){{#operation}}
+
+func {{nickname}}(w http.ResponseWriter, r *http.Request) {
+	rc, r := server.GetContext(r)
+	rc.Name = "{{operationId}}"
+    {{#consumes}}
+    rc.Consumes.Add("{{mediaType}}")
+    {{/consumes}}
+    {{#produces}}
+    rc.Produces.Add("{{mediaType}}")
+    {{/produces}}
+	{{#bodyParam.required}}
+    rc.Model = &{{bodyParam.dataType}}{}
+	{{/bodyParam.required}}
+	server.Process(w, r)
+}{{/operation}}{{/operations}}

@@ -1,0 +1,27 @@
+{% if json_output %}
+{% for key in json_output %}
+    {# This condition checks if the JSON response has data from the acl/interface list #}
+    {% if "interface" in key %}
+        {% for interface in json_output[key] %}
+           {% set if_id = interface["id"] %}
+           {% if interface["ingress_acl_sets"] %}
+                {% set direction = "ingress" %}
+           {% elif interface["egress_acl_sets"] %}
+               {% set direction = "egress" %}
+           {% endif %}
+           {% set acl_sets = direction + "_acl_sets" %}
+           {% set acl_set = direction + "_acl_set" %}
+           {% set acl_set_list = interface[acl_sets][acl_set] %}
+           {% for acl_set in acl_set_list %}
+               {% set acl_name = acl_set["set_name"] %}
+               {% if direction == "ingress" %}
+                   {% set direction = "Ingress" %}
+               {% elif direction == "egress" %}
+                   {% set direction = "Egress" %}
+               {% endif %}
+               {{- direction }} IP access-list {{ acl_name }} on {{ if_id }}
+           {% endfor %}
+        {% endfor %}
+    {% endif %}
+{% endfor %}
+{% endif %}

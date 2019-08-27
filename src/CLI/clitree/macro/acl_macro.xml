@@ -1,0 +1,288 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ROOT>
+
+<MACRODEF name="IPV4-DEST-OPTIONS">
+        <PARAM
+            name="dest-options-switch"
+            help=""
+            ptype="SUBCOMMAND"
+            mode="switch"
+            >
+            <PARAM
+                name="dest-prefix"
+                help="Destination prefix"
+                ptype="IP_ADDR_MASK"
+                >
+            </PARAM>
+            <PARAM
+                name="dest-any"
+                help="Any destination address"
+                ptype="SUBCOMMAND"
+		mode="subcommand"
+		value="any"
+                >
+            </PARAM>
+        </PARAM>
+</MACRODEF>
+
+<MACRODEF name="IPV4-SRC-OPTIONS">
+    <PARAM
+        name="src-options-switch"
+        help=""
+        ptype="SUBCOMMAND"
+        mode="switch"
+        >
+        <PARAM
+            name="src-prefix"
+            help="Source prefix"
+            ptype="IP_ADDR_MASK"
+            >
+        </PARAM>
+        <PARAM
+            name="src-any"
+            help="Any source address"
+            ptype="SUBCOMMAND"
+	    mode="subcommand"
+	    value="any"
+            >
+        </PARAM>
+    </PARAM>
+</MACRODEF>
+
+<MACRODEF name="TCP-PORT-OPTIONS">
+    <PARAM
+        name="arg1-port-options-switch"
+        help=""
+        ptype="SUBCOMMAND"
+        mode="switch"
+        optional="true"
+        >
+        <PARAM
+            name="arg1-eq"
+            help="Match only packets on a given port number"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            optional="true"
+            >
+            <PARAM
+                name="arg1-port-number"
+                help="port number"
+                ptype="RANGE_0_65535"/>
+        </PARAM>
+    </PARAM>
+</MACRODEF>
+
+<MACRODEF name="TCP-END-OPTIONS">
+    <PARAM
+        name="fin"
+        help="Match on the FIN bit"
+        ptype="SUBCOMMAND"
+        mode="subcommand"
+        optional="true"
+        />
+    <PARAM
+        name="syn"
+        help="Match on the SYN bit"
+        ptype="SUBCOMMAND"
+        mode="subcommand"
+        optional="true"
+        />
+    <PARAM
+        name="rst"
+        help="Match on the RST bit"
+        ptype="SUBCOMMAND"
+        mode="subcommand"
+        optional="true"
+        />
+    <PARAM
+        name="psh"
+        help="Match on the PSH bit"
+        ptype="SUBCOMMAND"
+        mode="subcommand"
+        optional="true"
+        />
+    <PARAM
+        name="ack"
+        help="Match on the ACK bit"
+        ptype="SUBCOMMAND"
+        mode="subcommand"
+        optional="true"
+        />
+    <PARAM
+        name="urg"
+        help="Match on the URG bit"
+        ptype="SUBCOMMAND"
+        mode="subcommand"
+        optional="true"
+        />
+</MACRODEF>
+
+<MACRODEF name="IPV4-ACL">
+    <!-- deny <0-255> -->
+    <PARAM
+        name="protocol"
+        help="Protocol number(1,2,6,17,46,47,51,103,115)"
+        ptype="RANGE_0_255"
+        >
+        <MACRO name="IPV4-SRC-OPTIONS" arg="" />
+        <MACRO name="IPV4-DEST-OPTIONS" arg="" />
+        <MACRO name="CMD-END-OPTIONS" arg="" />
+    </PARAM>
+    <!-- deny icmp -->
+    <PARAM
+        name="icmp"
+        help="ICMP address"
+        ptype="SUBCOMMAND"
+        mode="subcommand"
+        >
+        <MACRO name="IPV4-SRC-OPTIONS" arg="" />
+        <MACRO name="IPV4-DEST-OPTIONS" arg="" />
+        <MACRO name="CMD-END-OPTIONS" arg="" />
+    </PARAM>
+    <!-- deny tcp -->
+    <PARAM
+        name="tcp"
+        help="TCP packets"
+        ptype="SUBCOMMAND"
+        mode="subcommand"
+        >
+        <MACRO name="IPV4-SRC-OPTIONS" arg="" />
+        <MACRO name="TCP-PORT-OPTIONS" arg="src" />
+        <MACRO name="IPV4-DEST-OPTIONS" arg="" />
+        <MACRO name="TCP-PORT-OPTIONS" arg="dst" />
+        <MACRO name="CMD-END-OPTIONS" arg="" />
+        <MACRO name="TCP-END-OPTIONS" arg=""/>
+    </PARAM>
+    <!-- permit udp -->
+    <PARAM
+        name="udp"
+        help="UDP packets"
+        ptype="SUBCOMMAND"
+        mode="subcommand"
+        >
+        <MACRO name="IPV4-SRC-OPTIONS" arg="" />
+        <MACRO name="TCP-PORT-OPTIONS" arg="src" />
+        <MACRO name="IPV4-DEST-OPTIONS" arg="" />
+        <MACRO name="TCP-PORT-OPTIONS" arg="dst" />
+        <MACRO name="CMD-END-OPTIONS" arg="" />
+    </PARAM>
+</MACRODEF>
+
+<MACRODEF name="IPV4-ACL-PERMIT-OPTIONS">
+
+<!-- permit <0-255> -->
+    <PARAM
+        name="proto-num"
+        help="Protocol number(1,2,6,17,46,47,51,103,115)"
+        ptype="RANGE_0_255"
+        >
+        <MACRO name="IPV4-SRC-OPTIONS" arg="" ></MACRO>
+        <MACRO name="IPV4-DEST-OPTIONS" arg="" ></MACRO>
+        <MACRO name="CMD-END-OPTIONS" arg="" ></MACRO>
+    </PARAM>
+    <!-- permit icmp -->
+    <PARAM
+        name="icmp"
+        help="ICMP address"
+        ptype="SUBCOMMAND"
+        mode="subcommand"
+        >
+        <MACRO name="IPV4-SRC-OPTIONS" arg="" ></MACRO>
+        <MACRO name="IPV4-DEST-OPTIONS" arg="" ></MACRO>
+        <MACRO name="CMD-END-OPTIONS" arg="" ></MACRO>
+    </PARAM>
+    <!-- permit tcp -->
+    <PARAM
+        name="tcp"
+        help="TCP packets"
+        ptype="SUBCOMMAND"
+        mode="subcommand"
+        >
+        <MACRO name="IPV4-SRC-OPTIONS" arg="" ></MACRO>
+        <MACRO name="TCP-PORT-OPTIONS" arg="src"> </MACRO>
+        <MACRO name="IPV4-DEST-OPTIONS" arg="" ></MACRO>
+        <MACRO name="TCP-PORT-OPTIONS" arg="dst" > </MACRO>
+        <MACRO name="CMD-END-OPTIONS" arg="" ></MACRO>
+        <MACRO name="TCP-END-OPTIONS" arg="" > </MACRO>
+    </PARAM>
+    <!-- permit udp -->
+    <PARAM
+        name="udp"
+        help="UDP packets"
+        ptype="SUBCOMMAND"
+        mode="subcommand"
+        >
+        <MACRO name="IPV4-SRC-OPTIONS" arg="" ></MACRO>
+        <MACRO name="TCP-PORT-OPTIONS" arg="src"> </MACRO>
+        <MACRO name="IPV4-DEST-OPTIONS" arg="" ></MACRO>
+        <MACRO name="TCP-PORT-OPTIONS" arg="dst" > </MACRO>
+        <MACRO name="CMD-END-OPTIONS" arg="" ></MACRO>
+    </PARAM>
+</MACRODEF>
+
+<MACRODEF name="ACG-OPTIONS">
+        <PARAM name="access-list-name"
+            help="Name of access-list (Max size 140)"
+            ptype="STRING"
+			/>
+
+        <PARAM name="direction-switch"
+            help="Configure the direction to apply the access list"
+            ptype="SUBCOMMAND"
+            mode="switch"
+	    >
+
+            <PARAM name="in"
+                help="Apply access-list in incoming direction"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+				/>
+
+            <PARAM name="out"
+                help="Apply access-list in outgoing direction"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+				/>
+	</PARAM>
+</MACRODEF>
+
+<MACRODEF name="NO-ACG-OPTIONS">
+        <PARAM name="access-list-name"
+            help="Name of access-list (Max size 140)"
+            ptype="STRING"
+			/>
+            <PARAM name="direction-switch"
+                help="Configure the direction to apply the access list"
+                ptype="SUBCOMMAND"
+                mode="switch"
+	            >
+
+                <PARAM name="in"
+                    help="Apply access-list in incoming direction"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+				    />
+
+                <PARAM name="out"
+                    help="Apply access-list in outgoing direction"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                                    />
+                </PARAM>
+</MACRODEF>
+<MACRODEF name= "CMD-END-OPTIONS">
+    <PARAM
+        name="dscp"
+        help="Consider only packets matching DSCP value, range:0-63"
+        ptype="SUBCOMMAND"
+        mode="subcommand"
+        optional="true"
+        >
+        <PARAM
+            name="dscp-val"
+            help="Consider only packets matching DSCP value"
+            ptype="RANGE_0_63"
+            />
+    </PARAM>
+</MACRODEF>
+</ROOT>

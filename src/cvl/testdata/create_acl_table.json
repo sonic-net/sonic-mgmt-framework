@@ -1,0 +1,8 @@
+{
+"ACL_TABLE": {
+        "TestACL1": {
+		"stage": "INGRESS",
+		"type": "L3"
+        }
+   }
+}

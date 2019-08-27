@@ -1,0 +1,1 @@
+./gnmi_set -delete /openconfig-acl:acl/acl-sets/acl-set[name=MyACL4][type=ACL_IPV4]/acl-entries/acl-entry[sequence-id=1] -target_addr 127.0.0.1:8080 -alsologtostderr -insecure true -pretty

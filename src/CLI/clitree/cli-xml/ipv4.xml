@@ -1,0 +1,68 @@
+<?xml version="1.0"?>
+<!DOCTYPE CLISH_MODULE [
+]>
+
+<CLISH_MODULE xmlns="http://www.dellemc.com/sonic/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xi="http://www.w3.org/2001/XInclude"
+    xsi:schemaLocation="http://www.dellemc.com/sonic/XMLSchema
+                        http://www.dellemc.com/sonic/XMLSchema/clish.xsd">
+
+<VIEW name="enable-view">
+    <COMMAND
+            name="clear ip"
+            help="Clear ip command">
+    </COMMAND>
+    <COMMAND
+            name="debug ip"
+            help="Debug ip command">
+    </COMMAND>
+    <COMMAND
+        help="show IP commands"
+        name="show ip"
+        >
+    <ACTION builtin="clish_nop"/>
+    </COMMAND>
+</VIEW>
+
+<!--=======================================================-->
+<!--                Config Interface PHY-MODE              -->
+<!--=======================================================-->
+
+<VIEW name="configure-if-view">
+
+    <COMMAND
+        name="ip"
+        help="Interface Internet Protocol config commands"
+    />
+    <COMMAND
+        name="no ip"
+	help="Interface Internet Protocol config commands"
+	>
+    </COMMAND>
+
+    <COMMAND
+        name="ip address"
+        help="IP address" >
+        <PARAM
+            name="addr"
+            help="IP address with mask"
+            ptype="IP_ADDR_MASK" />
+	<ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config ${iface} ${addr} </ACTION>
+    </COMMAND>
+
+    <COMMAND
+        name="no ip address"
+	help="Interface Internet Protocol config commands"
+	>
+	<PARAM
+	    name="addr"
+            help="IP address"
+	    ptype="IP_ADDR" />
+    <ACTION>
+	    python $SONIC_CLI_ROOT/sonic-cli-if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config_prefix_length ${iface} ${addr}
+    </ACTION>
+    </COMMAND>
+  </VIEW>
+
+</CLISH_MODULE>

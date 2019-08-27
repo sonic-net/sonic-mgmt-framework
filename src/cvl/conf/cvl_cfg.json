@@ -1,0 +1,18 @@
+{
+	"TRACE_CACHE": "false",
+	"TRACE_LIBYANG": "false",
+	"TRACE_YPARSER": "false", 
+	"TRACE_CREATE": "false",
+	"TRACE_UPDATE": "false",
+	"TRACE_DELETE": "false",
+	"TRACE_SEMANTIC": "false",
+	"TRACE_SYNTAX": "false",
+	"__comment1__": "Set LOGTOSTDER to 'false' to log on standard error",
+	"LOGTOSTDERR": "false",
+	"__comment2__": "Display log upto INFO level",
+	"STDERRTHRESHOLD": "INFO",
+	"__comment3__": "Display log upto INFO level 8",
+	"VERBOSITY": "8",
+	"SKIP_VALIDATION": "false",
+	"SKIP_SEMANTIC_VALIDATION": "false"
+}

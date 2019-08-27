@@ -1,0 +1,116 @@
+{% set vars = {'ipv4': ""} %}
+{% set vars = {'ipv6': ""} %}
+{% set vars = {'name': ""} %}
+{% set vars = {'admin_state': ""} %}
+{% set vars = {'oper_state': ""} %}
+{% set vars = {'index': ""} %}
+{% set vars = {'mtu': ""} %}
+{% set vars = {'ipv4_src_pfx': ""} %}
+{% set vars = {'ipv6_src_pfx': ""} %}
+{% set vars = {'mode4': "not-set"} %}
+{% set vars = {'mode6': "not-set"} %}
+{% set vars = {'speed': ""} %}
+{% set vars = {'in_pkts':""} %}
+{% set vars = {'in_octets':""} %}
+{% set vars = {'in_multi':""} %}
+{% set vars = {'in_broad':""} %}
+{% set vars = {'in_uni':""} %}
+{% set vars = {'in_errors':""} %}
+{% set vars = {'in_discards':""} %}
+{% set vars = {'out_pkts':""} %}
+{% set vars = {'out_octets':""} %}
+{% set vars = {'out_multi':""} %}
+{% set vars = {'out_broad':""} %}
+{% set vars = {'out_uni':""} %}
+{% set vars = {'out_errors':""} %}
+{% set vars = {'out_discards':""} %}
+{% if json_output -%}
+{% for interfaces in json_output %}
+{% set interface_list = json_output[interfaces] %}
+{% for interface in interface_list %}
+    {% for key in interface %}
+      {% if "ethernet" in key %}
+        {% if vars.update({'speed':interface[key]["state"]["port-speed"]|replace("openconfig-if-ethernet:SPEED_", "")}) %}{% endif %}
+      {% endif %}
+      {% if "state" in key %}
+        {% if vars.update({'name':interface[key]["name"]}) %}{% endif %}
+        {% if vars.update({'admin_state':interface[key]["admin-status"]}) %}{% endif %}
+        {% if vars.update({'oper_state':interface[key]["oper-status"]}) %}{% endif %}
+        {% if vars.update({'index':interface[key]["ifindex"]}) %}{% endif %}
+        {% if vars.update({'mtu':interface[key]["mtu"]}) %}{% endif %}
+        {% if vars.update({'in_pkts':interface[key]["counters"]["in-pkts"]}) %}{% endif %}
+        {% if vars.update({'in_octets':interface[key]["counters"]["in-octets"]}) %}{% endif %}
+        {% if vars.update({'in_multi':interface[key]["counters"]["in-multicast-pkts"]}) %}{% endif %}
+        {% if vars.update({'in_broad':interface[key]["counters"]["in-broadcast-pkts"]}) %}{% endif %}
+        {% if vars.update({'in_uni':interface[key]["counters"]["in-unicast-pkts"]}) %}{% endif %}
+        {% if vars.update({'in_errors':interface[key]["counters"]["in-errors"]}) %}{% endif %}
+        {% if vars.update({'in_discards':interface[key]["counters"]["in-discards"]}) %}{% endif %}
+        {% if vars.update({'out_pkts':interface[key]["counters"]["out-pkts"]}) %}{% endif %}
+        {% if vars.update({'out_octets':interface[key]["counters"]["out-octets"]}) %}{% endif %}
+        {% if vars.update({'out_multi':interface[key]["counters"]["out-multicast-pkts"]}) %}{% endif %}
+        {% if vars.update({'out_broad':interface[key]["counters"]["out-broadcast-pkts"]}) %}{% endif %}
+        {% if vars.update({'out_uni':interface[key]["counters"]["out-unicast-pkts"]}) %}{% endif %}
+        {% if vars.update({'out_errors':interface[key]["counters"]["in-errors"]}) %}{% endif %}
+        {% if vars.update({'out_discards':interface[key]["counters"]["out-discards"]}) %}{% endif %}
+      {% endif %}
+      {% if "subinterfaces" in key  %}
+        {% for subinterface in interface[key] %}
+          {% set subif_list = interface[key][subinterface] %}
+          {% for subif in subif_list %}
+            {% if vars.update({'ipv4':"IPV4"}) %}{% endif %}
+            {% if vars.update({'ipv6':"IPV6"}) %}{% endif %}
+            {% if subif["openconfig-if-ip:ipv4"] %}
+              {% set ip_list = subif["openconfig-if-ip:ipv4"]["addresses"]["address"] %}
+              {% set ip_all = [] %}
+              {% for ip in ip_list %}
+                {% set ipfx = ip["state"]["ip"] + "/" + ip["state"]["prefix-length"]|string() %}
+                {{ ip_all.append(ipfx)|default("", True)}}
+                {% if vars.update({'mode4':"MANUAL"}) %}{% endif %}
+              {% endfor %}
+              {% if vars.update({'ipv4_src_pfx':ip_all|join(',')}) %}{% endif %}
+            {% else %}
+              {% if vars.update({'mode4':"not-set"}) %}{% endif %}
+            {% endif %}
+            {% if subif["openconfig-if-ip:ipv6"] %}
+              {% set ip_list = subif["openconfig-if-ip:ipv6"]["addresses"]["address"] %}
+              {% set ipv6_all = [] %}
+              {% for ip in ip_list %}
+                {% set ipfx = ip["state"]["ip"] + "/" + ip["state"]["prefix-length"]|string() %}
+                {{ ipv6_all.append(ipfx)|default("", True)}}
+                {% if vars.update({'mode6':"MANUAL"}) %}{% endif %}
+              {% endfor %}
+              {% if vars.update({'ipv6_src_pfx':ipv6_all|join(',')}) %}{% endif %}
+            {% else %}
+              {% if vars.update({'mode6':"not-set"}) %}{% endif %}
+            {% endif %}
+          {% endfor %}
+        {% endfor %}
+      {% endif %}
+    {% endfor %}
+{% if vars.name %}
+{{ vars.name }} is {{ vars.admin_state|lower() }}, line protocol is {{vars.oper_state|lower() }}
+Hardware is Eth
+
+Interface index is {{ vars.index }}
+{% if vars.ipv4_src_pfx %}
+{{ vars.ipv4 }} address is {{ vars.ipv4_src_pfx }}
+{% endif %}
+Mode of {{ vars.ipv4 }} address assignment: {{ vars.mode4 }}
+{% if vars.ipv6_src_pfx %}
+{{ vars.ipv6 }} address is {{ vars.ipv6_src_pfx }}
+{% endif %}
+Mode of {{ vars.ipv6 }} address assignment: {{ vars.mode6 }}
+IP MTU {{ vars.mtu }} bytes
+LineSpeed {{ vars.speed }}, Auto-negotiation off
+Input statistics:
+        {{vars.in_pkts}} packets, {{vars.in_octets}} octets
+        {{vars.in_multi}} Multicasts, {{vars.in_broad}} Broadcasts, {{vars.in_uni}} Unicasts
+        {{vars.in_errors}} error, {{vars.in_discards}} discarded
+Output statistics:
+        {{vars.out_pkts}} packets, {{vars.out_octets}} octets
+        {{vars.out_multi}} Multicasts, {{vars.out_broad}} Broadcasts, {{vars.out_uni}} Unicasts
+        {{vars.out_errors}} error, {{vars.out_discards}} discarded
+{%- endif %}
+{% endfor %}
+{% endfor %}
+{% endif %}

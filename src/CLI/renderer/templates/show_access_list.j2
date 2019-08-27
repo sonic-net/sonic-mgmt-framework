@@ -1,0 +1,74 @@
+{% macro traverse_acl_entry(acl_entry_list) -%}
+    {% for seq in acl_entry_list %}
+        {% set response_list = [] %}
+        {# Get sequence id #}
+        {% set seqid = seq["sequence_id"] %}
+        {% set _list = response_list.append( seqid ) %}
+        {# Get forwarding action #}
+        {% set fwd_action = seq["actions"]["config"]["forwarding_action"] %}
+        {%- if "ACCEPT" in fwd_action %}
+            {% set fwd_action = "permit" %}
+        {%- endif %}
+        {%- if "DROP" in fwd_action %}
+            {% set fwd_action = "deny" %}
+        {%- endif %}
+        {% set _list = response_list.append( fwd_action ) %}
+        {# Get protocol #}
+        {% set proto = seq["ipv4"]["state"]["protocol"].split(':')[1].split('_')[1]|lower %}
+        {% set _list = response_list.append( proto ) %}
+        {# Get Source IP #}
+        {% set src_ip = seq["ipv4"]["state"]["source_address"] %}
+        {% set _list = response_list.append( src_ip ) %}
+        {# include src port number if available #}
+        {%- if seq["transport"] %}
+            {%- if seq["transport"]["config"]["source_port"] %}
+                {% set src_port = "eq " + seq["transport"]["config"]["source_port"] %}
+                {% set _list = response_list.append( src_port ) %}
+            {%- endif %}
+        {%- endif %}
+        {# Get Destination IP #}
+        {% set dstn_ip = seq["ipv4"]["state"]["destination_address"] %}
+        {% set _list = response_list.append( dstn_ip ) %}
+        {# include dstn port number if available #}
+        {%- if seq["transport"] %}
+            {%- if seq["transport"]["config"]["destination_port"] %}
+                {% set dstn_port = "eq " + seq["transport"]["config"]["destination_port"] %}
+	        {% set _list = response_list.append( dstn_port ) %}
+            {%- endif %}
+            {%- if seq["transport"]["config"]["tcp_flags"] %}
+		{% for var in seq["transport"]["config"]["tcp_flags"] %}
+		    {% set flag = var.split(':')[1].split('_')[1]|lower %}
+	            {% set _list = response_list.append( flag ) %}
+		{% endfor %}
+            {%- endif %}
+        {%- endif %}
+        {%- if seq["ipv4"]["state"]["dscp"] %}
+            {% set _list = response_list.append( "dscp "+seq["ipv4"]["state"]["dscp"]|string ) %}
+        {%- endif %}
+        {{- "    " }} {{ response_list|join(' ') }}
+    {% endfor %}
+{%- endmacro %}
+{% for key in json_output %}
+    {# This condition checks if the JSON response has data from the acl-entry list #}
+    {% if "acl_entry" in key -%}
+        {% set acl_entry = json_output[key] -%}
+        {{ traverse_acl_entry(acl_entry) }}
+    {%- endif %}
+{% endfor %}
+{% for acl_sets in json_output -%}
+    {% if "acl_set" in acl_sets -%}
+        {# This condition checks if the JSON response has data from the acl-sets container output -#}
+        {% for acl_set in json_output[acl_sets] %}
+            {% if acl_set["state"] -%}
+                ip access-list {{ acl_set["state"]["name"] }}
+                {% set acl_entry_list = acl_set["acl_entries"] %}
+                {% if acl_entry_list -%}
+                    {% for each in acl_entry_list -%}
+                    {% set acl_entry = acl_entry_list[each] -%}
+                    {{ traverse_acl_entry(acl_entry) }}
+                    {%- endfor %}
+                {%- endif %}
+            {%- endif %}
+        {% endfor %}
+    {%- endif %} 
+{%- endfor %}

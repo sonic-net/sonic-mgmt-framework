@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- Clish platform specific file
+     This file has two sections:
+     1. FEATURELIST - This contains list of features and their 'enabled'
+        state on this platform
+     2. ENTITYLIST - This contains the list of feature-parameters and their
+        respective values
+
+     Note: The FEATURENAME and ENTITYNAME must match a record in the schema
+     file feature_master.xsd.
+        -->
+<PLATFORMMODULE>
+ <FEATURELIST>
+ </FEATURELIST>
+ <ENTITYLIST>
+  <ENTITYNAME value="1">START_PORT_ID</ENTITYNAME>
+  <ENTITYNAME value="32">MAX_PORT_ID</ENTITYNAME>
+  <ENTITYNAME value="1">START_SUB_PORT_ID</ENTITYNAME>
+  <ENTITYNAME value="4">MAX_SUB_PORT_ID</ENTITYNAME>
+  <ENTITYNAME value="9216">MAX_MTU</ENTITYNAME>
+ </ENTITYLIST>
+</PLATFORMMODULE>

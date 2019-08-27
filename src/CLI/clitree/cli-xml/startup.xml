@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CLISH_MODULE
+    xmlns="http://www.dellemc.com/sonic/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xi="http://www.w3.org/2001/XInclude"
+    xsi:schemaLocation="http://www.dellemc.com/sonic/XMLSchema
+			http://www.dellemc.com/sonic/XMLSchema/clish.xsd"
+    >
+	<STARTUP view="enable-view">
+	</STARTUP>
+</CLISH_MODULE>
