@@ -12,8 +12,7 @@ all : $(SRC_REPLACEMENTS)
 	tar xzvf klish-$(KLISH_VERSION).tgz -C $(SONIC_CLI_ROOT)
 	./patches/scripts/patchmake.sh -p VER=${KLISH_VERSION} TSP=${SONIC_CLI_ROOT} DSP=${CURDIR}/patches TWP=${SONIC_CLI_ROOT}
 
-	cd ${KLISH_SRC} && sh autogen.sh && ./configure CFLAGS='-g -O0' CPPFLAGS='-g -O0' --with-libxml2=/usr && make
-#	cd ${KLISH_SRC} && sh autogen.sh && ./configure --enable-debug && make
+	cd ${KLISH_SRC} && sh autogen.sh && ./configure --with-libxml2=/usr && make
 
 	mkdir -p $(SONIC_CLI_ROOT)/target/.libs
 	cp $(CURDIR)/clish_start $(SONIC_CLI_ROOT)/target/.
