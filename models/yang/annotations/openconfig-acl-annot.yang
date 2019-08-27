@@ -59,6 +59,12 @@ module openconfig-acl-annot {
       }
     }
 
+    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-pkt-match:l2/oc-pkt-match:config/oc-pkt-match:ethertype {
+      deviate add {
+        sonic-ext:field-transformer "acl_l2_ethertype_xfmr";
+      }
+    }
+
     deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-pkt-match:ipv6/oc-pkt-match:config/oc-pkt-match:protocol {
       deviate add {
         sonic-ext:field-transformer "acl_ip_protocol_xfmr";
