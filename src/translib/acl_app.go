@@ -93,7 +93,7 @@ func (app *AclApp) translateCreate(d *db.DB) ([]db.WatchKeys, error) {
 	var keys []db.WatchKeys
 	log.Info("translateCreate:acl:path =", app.pathInfo.Template)
 
-	keys, err = app.translateCRUCommon(d, CREATE)
+	keys, err = app.translateCRUDCommon(d, CREATE)
 	return keys, err
 }
 
@@ -102,7 +102,7 @@ func (app *AclApp) translateUpdate(d *db.DB) ([]db.WatchKeys, error) {
 	var keys []db.WatchKeys
 	log.Info("translateUpdate:acl:path =", app.pathInfo.Template)
 
-	keys, err = app.translateCRUCommon(d, UPDATE)
+	keys, err = app.translateCRUDCommon(d, UPDATE)
 	return keys, err
 }
 
@@ -111,16 +111,16 @@ func (app *AclApp) translateReplace(d *db.DB) ([]db.WatchKeys, error) {
 	var keys []db.WatchKeys
 	log.Info("translateReplace:acl:path =", app.pathInfo.Template)
 
-	keys, err = app.translateCRUCommon(d, REPLACE)
+	keys, err = app.translateCRUDCommon(d, REPLACE)
 	return keys, err
 }
 
 func (app *AclApp) translateDelete(d *db.DB) ([]db.WatchKeys, error) {
 	var err error
 	var keys []db.WatchKeys
-	log.Info("translateDelete:acl:path =", app.pathInfo.Template)
+	log.Info("translateDelete:acl:path =", app.pathInfo.Path)
 
-	keys, err = app.translateCRUCommon(d, DELETE)
+	keys, err = app.translateCRUDCommon(d, DELETE)
 	return keys, err
 }
 
@@ -205,10 +205,10 @@ func (app *AclApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
 	return GetResponse{Payload: payload}, err
 }
 
-func (app *AclApp) translateCRUCommon(d *db.DB, opcode int) ([]db.WatchKeys, error) {
+func (app *AclApp) translateCRUDCommon(d *db.DB, opcode int) ([]db.WatchKeys, error) {
 	var err error
 	var keys []db.WatchKeys
-	log.Info("translateCRUCommon:acl:path =", app.pathInfo.Template)
+	log.Info("translateCRUDCommon:acl:path =", app.pathInfo.Path)
 
 	result, err := transformer.XlateToDb(app.pathInfo.Path, opcode, d, app.ygotRoot, app.ygotTarget)
 	if err != nil {
@@ -266,7 +266,7 @@ func handleAclSet(d *db.DB, app *AclApp, opcode int) error {
 		case UPDATE:
 			err = d.ModEntry(app.aclTs, db.Key{Comp: []string{key}}, data)
 		case DELETE:
-			err = d.DeleteKeys(app.aclTs, db.Key{Comp: []string{key}})
+			err = handleAclDelete(d, app.aclTs, key, data)
 		}
 		if err != nil {
 			break
@@ -301,7 +301,7 @@ func handleAclEntry(d *db.DB, app *AclApp, opcode int) error {
 		case UPDATE:
 			err = d.ModEntry(app.ruleTs, db.Key{Comp: []string{key}}, data)
 		case DELETE:
-			err = d.DeleteKeys(app.ruleTs, db.Key{Comp: []string{key}})
+			err = handleAclDelete(d, app.ruleTs, key, data)
 		}
 		if err != nil {
 			break
@@ -322,13 +322,12 @@ func handleAcl(d *db.DB, app *AclApp, opcode int) error {
 func (app *AclApp) processCommon(d *db.DB, opcode int) error {
 	var err error
 
-	log.Infof("processCommon--Path Received: %s", app.pathInfo.Template)
+	log.Infof("processCommon--Path Received: %s", app.pathInfo.Path)
 	// test
 	d.Opts.DisableCVLCheck = true
 
-	targetType := reflect.TypeOf(*app.ygotTarget)
-
 	xpath, err := transformer.RemoveXPATHPredicates(app.pathInfo.Path)
+	log.Infof("processCommon--xPath to process: %s", xpath)
 	if err != nil {
 		log.Errorf("processCommon: Failed to remove Xpath Predicates from path %s", app.pathInfo.Template)
 	}
@@ -341,12 +340,33 @@ func (app *AclApp) processCommon(d *db.DB, opcode int) error {
 		// fallback callpoints
 		if strings.Contains(xpath, "/openconfig-acl:acl/acl-sets/acl-set/acl-entries/acl-entry") {
 			err = handleAclEntry(d, app, opcode)
-		} else if strings.Contains(targetType.Elem().Name(), "/openconfig-acl:acl/interfaces") {
+		} else if strings.Contains(xpath, "/openconfig-acl:acl/acl-sets/acl-set") {
+			err = handleAclSet(d, app, opcode)
+		} else if strings.Contains(xpath, "/openconfig-acl:acl/interfaces") {
 			err = handleAclInterface(d, app, opcode)
+		} else {
+			err = tlerr.NotSupported("URL %s is not supported", app.pathInfo.Path)
 		}
-		if err == nil {
-			err = tlerr.NotSupported("URL %s is not supported", app.pathInfo.Template)
-		}
+	}
+
+	return err
+}
+
+func handleAclDelete(d *db.DB, ts *db.TableSpec, key string, value db.Value) error {
+	var err error
+	if len(value.Field) > 0 {
+		// Field entries exist
+		err = d.DeleteEntryFields(ts, db.Key{Comp: []string{key}}, value)
+	} else if len(key) > 0 {
+		// Delete entrire table instance with the required key
+		err = d.DeleteKeys(ts, db.Key{Comp: []string{key}})
+	} else {
+		// Delete the whole table
+		err = d.DeleteTable(ts)
+	}
+	if err != nil {
+		log.Error("DELETE case - d.DeleteTable() failure for Table = ", ts.Name)
+		return err
 	}
 
 	return err
