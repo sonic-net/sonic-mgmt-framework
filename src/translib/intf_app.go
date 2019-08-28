@@ -39,6 +39,14 @@ const (
 	PORT_OPER_STATUS  = "oper_status"
 )
 
+type Table int
+
+const (
+        IF_TABLE_MAP Table = iota
+        PORT_STAT_MAP
+)
+
+
 type IntfApp struct {
 	path       *PathInfo
 	reqData    []byte
@@ -100,7 +108,6 @@ func (app *IntfApp) initialize(data appData) {
 	app.ifTableMap = make(map[string]dbEntry)
 	app.ifIPTableMap = make(map[string]map[string]dbEntry)
 	app.portStatMap = make(map[string]dbEntry)
-
 }
 
 func (app *IntfApp) getAppRootObject() *ocbinds.OpenconfigInterfaces_Interfaces {
@@ -222,8 +229,7 @@ func (app *IntfApp) translateGet(dbs [db.MaxDB]*db.DB) error {
 }
 
 func (app *IntfApp) translateSubscribe(dbs [db.MaxDB]*db.DB, path string) (*notificationOpts, *notificationInfo, error) {
-	log.Info("translateSubscribe fn - intf_app module called!")
-
+	app.appDB = dbs[db.ApplDB]
 	pathInfo := NewPathInfo(path)
 	notifInfo := notificationInfo{dbno: db.ApplDB}
 	notSupported := tlerr.NotSupportedError{Format: "Subscribe not supported", Path: path}
@@ -240,13 +246,18 @@ func (app *IntfApp) translateSubscribe(dbs [db.MaxDB]*db.DB, path string) (*noti
 			return nil, nil, errors.New("ifKey given is empty!")
 		}
 		log.Info("Interface name = ", ifKey)
+		err := app.validateInterface(app.appDB, ifKey, db.Key{Comp: []string{ifKey}})
+		if err != nil {
+			return nil, nil, err
+		}
 		if pathInfo.HasSuffix("/state/oper-status") {
 			notifInfo.table = db.TableSpec{Name: "PORT_TABLE"}
 			notifInfo.key = asKey(ifKey)
 			notifInfo.needCache = true
+			return &notificationOpts{pType: OnChange}, &notifInfo, nil
 		}
 	}
-	return nil, &notifInfo, nil
+	return nil, nil, notSupported
 }
 
 func (app *IntfApp) processCreate(d *db.DB) (SetResponse, error) {
@@ -338,11 +349,6 @@ func (app *IntfApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
 					}
 				}
 
-				/* Filling Interface IP info to internal DS */
-				err = app.convertDBIntfIPInfoToInternal(app.appDB, ifKey)
-				if err != nil {
-					return GetResponse{Payload: payload, ErrSrc: AppErr}, err
-				}
 				/* Filling the counter Info to internal DS */
 				err = app.getPortOidMapForCounters(app.countersDB)
 				if err != nil {
@@ -352,6 +358,31 @@ func (app *IntfApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
 				if err != nil {
 					return GetResponse{Payload: payload, ErrSrc: AppErr}, err
 				}
+
+                                /*Check if the request is for a specific attribute in Interfaces state COUNTERS container*/
+                                counter_val := &ocbinds.OpenconfigInterfaces_Interfaces_Interface_State_Counters{}
+                                ok, e = app.getSpecificCounterAttr(targetUriPath, ifKey, counter_val)
+                                if ok {
+                                        if e != nil {
+                                                return GetResponse{Payload: payload, ErrSrc: AppErr}, e
+                                        }
+
+                                        payload, err = dumpIetfJson(counter_val, false)
+                                        if err == nil {
+                                                return GetResponse{Payload: payload}, err
+                                        } else {
+                                                return GetResponse{Payload: payload, ErrSrc: AppErr}, err
+                                        }
+                                }
+
+
+
+                                /* Filling Interface IP info to internal DS */
+                                 err = app.convertDBIntfIPInfoToInternal(app.appDB, ifKey)
+                                 if err != nil {
+                                         return GetResponse{Payload: payload, ErrSrc: AppErr}, err
+                                 }
+
 				/* Filling the tree with the info we have in Internal DS */
 				ygot.BuildEmptyTree(ifInfo)
 				if *app.ygotTarget == ifInfo.State {
@@ -458,7 +489,7 @@ func (app *IntfApp) doGetAllIpKeys(d *db.DB, dbSpec *db.TableSpec) ([]db.Key, er
 func (app *IntfApp) getSpecificAttr(targetUriPath string, ifKey string, oc_val *ocbinds.OpenconfigInterfaces_Interfaces_Interface_State) (bool, error) {
 	switch targetUriPath {
 	case "/openconfig-interfaces:interfaces/interface/state/oper-status":
-		val, e := app.getIntfAttr(ifKey, PORT_OPER_STATUS)
+		val, e := app.getIntfAttr(ifKey, PORT_OPER_STATUS, IF_TABLE_MAP)
 		if len(val) > 0 {
 			switch val {
 			case "up":
@@ -473,7 +504,7 @@ func (app *IntfApp) getSpecificAttr(targetUriPath string, ifKey string, oc_val *
 			return true, e
 		}
 	case "/openconfig-interfaces:interfaces/interface/state/admin-status":
-		val, e := app.getIntfAttr(ifKey, PORT_ADMIN_STATUS)
+		val, e := app.getIntfAttr(ifKey, PORT_ADMIN_STATUS, IF_TABLE_MAP)
 		if len(val) > 0 {
 			switch val {
 			case "up":
@@ -488,7 +519,7 @@ func (app *IntfApp) getSpecificAttr(targetUriPath string, ifKey string, oc_val *
 			return true, e
 		}
 	case "/openconfig-interfaces:interfaces/interface/state/mtu":
-		val, e := app.getIntfAttr(ifKey, PORT_MTU)
+		val, e := app.getIntfAttr(ifKey, PORT_MTU, IF_TABLE_MAP)
 		if len(val) > 0 {
 			v, e := strconv.ParseUint(val, 10, 16)
 			if e == nil {
@@ -498,7 +529,7 @@ func (app *IntfApp) getSpecificAttr(targetUriPath string, ifKey string, oc_val *
 		}
 		return true, e
 	case "/openconfig-interfaces:interfaces/interface/state/ifindex":
-		val, e := app.getIntfAttr(ifKey, PORT_INDEX)
+		val, e := app.getIntfAttr(ifKey, PORT_INDEX, IF_TABLE_MAP)
 		if len(val) > 0 {
 			v, e := strconv.ParseUint(val, 10, 32)
 			if e == nil {
@@ -508,7 +539,7 @@ func (app *IntfApp) getSpecificAttr(targetUriPath string, ifKey string, oc_val *
 		}
 		return true, e
 	case "/openconfig-interfaces:interfaces/interface/state/description":
-		val, e := app.getIntfAttr(ifKey, PORT_DESC)
+		val, e := app.getIntfAttr(ifKey, PORT_DESC, IF_TABLE_MAP)
 		if e == nil {
 			oc_val.Description = &val
 			return true, nil
@@ -516,22 +547,140 @@ func (app *IntfApp) getSpecificAttr(targetUriPath string, ifKey string, oc_val *
 		return true, e
 
 	default:
-		log.Infof("GET for " + targetUriPath + " not supported")
+                log.Infof(targetUriPath + " - Not an interface state attribute")
 	}
 	return false, nil
 }
 
-func (app *IntfApp) getIntfAttr(ifName string, attr string) (string, error) {
+func (app *IntfApp) getSpecificCounterAttr(targetUriPath string, ifKey string, counter_val *ocbinds.OpenconfigInterfaces_Interfaces_Interface_State_Counters) (bool, error) {
 
-	if entry, ok := app.ifTableMap[ifName]; ok {
-		ifData := entry.entry
+    var e error
 
-		if val, ok := ifData.Field[attr]; ok {
-			return val, nil
-		}
+    switch targetUriPath {
+        case "/openconfig-interfaces:interfaces/interface/state/counters/in-octets":
+                e = app.getCounters(ifKey, "SAI_PORT_STAT_IF_IN_OCTETS", &counter_val.InOctets)
+                return true, e
+
+        case "/openconfig-interfaces:interfaces/interface/state/counters/in-unicast-pkts":
+                e = app.getCounters(ifKey, "SAI_PORT_STAT_IF_IN_UCAST_PKTS", &counter_val.InUnicastPkts)
+                return true, e
+
+        case "/openconfig-interfaces:interfaces/interface/state/counters/in-broadcast-pkts":
+                e = app.getCounters(ifKey, "SAI_PORT_STAT_IF_IN_BROADCAST_PKTS", &counter_val.InBroadcastPkts)
+                return true, e
+
+        case "/openconfig-interfaces:interfaces/interface/state/counters/in-multicast-pkts":
+                e = app.getCounters(ifKey, "SAI_PORT_STAT_IF_IN_MULTICAST_PKTS", &counter_val.InMulticastPkts)
+                return true, e
+
+        case "/openconfig-interfaces:interfaces/interface/state/counters/in-errors":
+                e = app.getCounters(ifKey, "SAI_PORT_STAT_IF_IN_ERRORS", &counter_val.InErrors)
+                return true, e
+
+        case "/openconfig-interfaces:interfaces/interface/state/counters/in-discards":
+                e = app.getCounters(ifKey, "SAI_PORT_STAT_IF_IN_DISCARDS", &counter_val.InDiscards)
+                return true, e
+
+        case "/openconfig-interfaces:interfaces/interface/state/counters/in-pkts":
+                var inNonUCastPkt, inUCastPkt *uint64
+                var in_pkts uint64
+
+                e = app.getCounters(ifKey, "SAI_PORT_STAT_IF_IN_NON_UCAST_PKTS", &inNonUCastPkt)
+                if e == nil {
+                    e = app.getCounters(ifKey, "SAI_PORT_STAT_IF_IN_UCAST_PKTS", &inUCastPkt)
+                    if e != nil {
+                        return true, e
+                    }
+                    in_pkts = *inUCastPkt + *inNonUCastPkt
+                    counter_val.InPkts = &in_pkts
+                    return true, e
+                } else {
+                    return true, e
+                }
+
+        case "/openconfig-interfaces:interfaces/interface/state/counters/out-octets":
+                e = app.getCounters(ifKey, "SAI_PORT_STAT_IF_OUT_OCTETS", &counter_val.OutOctets)
+                return true, e
+
+        case "/openconfig-interfaces:interfaces/interface/state/counters/out-unicast-pkts":
+                e = app.getCounters(ifKey, "SAI_PORT_STAT_IF_OUT_UCAST_PKTS", &counter_val.OutUnicastPkts)
+                return true, e
+
+        case "/openconfig-interfaces:interfaces/interface/state/counters/out-broadcast-pkts":
+                e = app.getCounters(ifKey, "SAI_PORT_STAT_IF_OUT_BROADCAST_PKTS", &counter_val.OutBroadcastPkts)
+                return true, e
+
+        case "/openconfig-interfaces:interfaces/interface/state/counters/out-multicast-pkts":
+                e = app.getCounters(ifKey, "SAI_PORT_STAT_IF_OUT_MULTICAST_PKTS", &counter_val.OutMulticastPkts)
+                return true, e
+
+        case "/openconfig-interfaces:interfaces/interface/state/counters/out-errors":
+                e = app.getCounters(ifKey, "SAI_PORT_STAT_IF_OUT_ERRORS", &counter_val.OutErrors)
+                return true, e
+
+        case "/openconfig-interfaces:interfaces/interface/state/counters/out-discards":
+                e = app.getCounters(ifKey, "SAI_PORT_STAT_IF_OUT_DISCARDS", &counter_val.OutDiscards)
+                return true, e
+
+        case "/openconfig-interfaces:interfaces/interface/state/counters/out-pkts":
+                var outNonUCastPkt, outUCastPkt *uint64
+                var out_pkts uint64
+
+                e = app.getCounters(ifKey, "SAI_PORT_STAT_IF_OUT_NON_UCAST_PKTS", &outNonUCastPkt)
+                if e == nil {
+                    e = app.getCounters(ifKey, "SAI_PORT_STAT_IF_OUT_UCAST_PKTS", &outUCastPkt)
+                    if e != nil {
+                        return true, e
+                    }
+                    out_pkts = *outUCastPkt + *outNonUCastPkt
+                    counter_val.OutPkts = &out_pkts
+                    return true, e
+                } else {
+                    return true, e
+                }
+
+
+        default:
+                log.Infof(targetUriPath + " - Not an interface state counter attribute")
+        }
+        return false, nil
+}
+
+func (app *IntfApp)  getCounters( ifKey string, attr string, counter_val **uint64 ) error {
+    val, e := app.getIntfAttr(ifKey, attr, PORT_STAT_MAP)
+    if len(val) > 0 {
+        v, e := strconv.ParseUint(val, 10, 64)
+        if e == nil {
+            *counter_val = &v
+            return nil
+        }
+    }
+    return e
+}
+
+func (app *IntfApp) getIntfAttr(ifName string, attr string, table Table) (string, error) {
+
+        var ok bool = false
+        var entry dbEntry
+
+        if table == IF_TABLE_MAP {
+            entry, ok = app.ifTableMap[ifName];
+        }  else if table == PORT_STAT_MAP {
+            entry, ok = app.portStatMap[ifName];
+        }  else {
+            return "", errors.New("Unsupported table")
+        }
+
+	if ok {
+	    ifData := entry.entry
+
+	    if val, ok := ifData.Field[attr]; ok {
+		return val, nil
+	    }
 	}
 	return "", errors.New("Attr " + attr + "doesn't exist in IF table Map!")
 }
+
 
 /***********  Translation Helper fn to convert DB Interface info to Internal DS   ***********/
 func (app *IntfApp) getPortOidMapForCounters(dbCl *db.DB) error {
@@ -570,6 +719,22 @@ func (app *IntfApp) convertDBIntfCounterInfoToInternal(dbCl *db.DB, ifKey string
 		for ifKey, _ := range app.ifTableMap {
 			app.convertDBIntfCounterInfoToInternal(dbCl, ifKey)
 		}
+	}
+	return err
+}
+
+func (app *IntfApp) validateInterface(dbCl *db.DB, ifName string, ifKey db.Key) error {
+	var err error
+	if len(ifName) == 0 {
+		return errors.New("Empty Interface name")
+	}
+	app.portTblTs = &db.TableSpec{Name: "PORT_TABLE"}
+	_, err = dbCl.GetEntry(app.portTblTs, ifKey)
+	if err != nil {
+		log.Errorf("Error found on fetching Interface info from App DB for If Name : %s", ifName)
+		errStr := "Invalid Interface:" + ifName
+		err = tlerr.InvalidArgsError{Format: errStr}
+		return err
 	}
 	return err
 }
@@ -802,7 +967,7 @@ func (app *IntfApp) convertInternalToOCPortStatInfo(ifName *string, ifInfo *ocbi
 		ifInfo.State.Counters.InOctets = inOctet
 
 		inUCastPkt := new(uint64)
-		inUCastPktVal, _ := strconv.Atoi(portStatInfo.entry.Field["SAI_PORT_STAT_IF_OUT_UCAST_PKTS"])
+		inUCastPktVal, _ := strconv.Atoi(portStatInfo.entry.Field["SAI_PORT_STAT_IF_IN_UCAST_PKTS"])
 		*inUCastPkt = uint64(inUCastPktVal)
 		ifInfo.State.Counters.InUnicastPkts = inUCastPkt
 
@@ -984,6 +1149,9 @@ func (app *IntfApp) validateIp(dbCl *db.DB, ifName string, ip string) error {
 	app.allIpKeys, _ = app.doGetAllIpKeys(dbCl, app.intfIPTs)
 
 	for _, key := range app.allIpKeys {
+		if len(key.Comp) < 2 {
+			continue
+		}
 		if key.Get(0) != ifName {
 			continue
 		}
@@ -1023,6 +1191,9 @@ func (app *IntfApp) translateIpv4(d *db.DB, intf string, ip string, prefix int) 
 	ipA, ipNetA, _ := net.ParseCIDR(ipPref)
 
 	for _, key := range app.allIpKeys {
+		if len(key.Comp) < 2 {
+			continue
+		}
 		ipB, ipNetB, _ := net.ParseCIDR(key.Get(1))
 
 		if ipNetA.Contains(ipB) || ipNetB.Contains(ipA) {
