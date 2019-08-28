@@ -311,11 +311,21 @@ func handleAclEntry(d *db.DB, app *AclApp, opcode int) error {
 }
 func handleAcl(d *db.DB, app *AclApp, opcode int) error {
 	var err error
-	//err = app.processCommonToplevelPath(d, acl, opcode, true)
-	err = handleAclSet(d, app, opcode)
-	if err == nil {
-		err = handleAclInterface(d, app, opcode)
+	var val db.Value
+
+	// Delete all acl rules
+	err = handleAclDelete(d, app.ruleTs, "", val)
+	if err != nil {
+		log.Errorf("handleAcl: Failed to delete Acl Rule Table")
+		return err
 	}
+
+	// Delete all acl tables
+	err = handleAclDelete(d, app.aclTs, "", val)
+	if  err != nil {
+		log.Errorf("handleAcl: Failed to delete Acl Table")
+	}
+
 	return err
 }
 
