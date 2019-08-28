@@ -53,6 +53,8 @@ def run(func, args):
         else:
             response = api_response.to_dict()
             if 'openconfig_lldpinterfaces' in response.keys():
+                if not response['openconfig_lldpinterfaces']:
+                    return
 		neigh_list = response['openconfig_lldpinterfaces']['interface']
                 if neigh_list is None:
                     return
