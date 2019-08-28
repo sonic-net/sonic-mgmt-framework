@@ -6,6 +6,9 @@ import (
 	"github.com/openconfig/ygot/ygot"
 	"os"
 	"strings"
+        "bufio"
+        "path/filepath"
+        "io/ioutil"
 )
 
 const YangPath = "/usr/models/yang/" // OpenConfig-*.yang and sonic yang models path
@@ -27,8 +30,48 @@ func reportIfError(errs []error) {
 	}
 }
 
+func getOcModelsList () ([] string) {
+    var fileList [] string
+    file, err := os.Open(YangPath + "models_list")
+    if err != nil {
+        return fileList
+    }
+    defer file.Close()
+    scanner := bufio.NewScanner(file)
+    for scanner.Scan() {
+        fileEntry := scanner.Text()
+        if strings.HasPrefix(fileEntry, "#") != true {
+            _, err := os.Stat(YangPath + fileEntry)
+            if err != nil {
+                continue
+            }
+            fileList = append(fileList, fileEntry)
+        }
+    }
+    return fileList
+}
+
+func getDefaultModelsList () ([] string) {
+    var files []string
+    fileInfo, err := ioutil.ReadDir(YangPath)
+    if err != nil {
+        return files
+    }
+
+    for _, file := range fileInfo {
+        if strings.HasPrefix(file.Name(), "sonic-") && !strings.HasSuffix(file.Name(), "-dev.yang") &&  filepath.Ext(file.Name()) == ".yang" {
+            files = append(files, file.Name())
+        }
+    }
+    return files
+}
+
 func init() {
-	yangFiles := []string{"sonic-acl.yang", "sonic-extensions.yang", "openconfig-acl-annot.yang", "openconfig-acl.yang"}
+	yangFiles := []string{}
+        ocList := getOcModelsList()
+        yangFiles = getDefaultModelsList()
+        yangFiles = append(yangFiles, ocList...)
+        fmt.Println("Yang model List:", yangFiles)
 	loadYangModules(yangFiles...)
 }
 
