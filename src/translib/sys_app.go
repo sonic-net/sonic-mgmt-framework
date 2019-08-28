@@ -12,6 +12,7 @@ import (
     "time"
     "io/ioutil"
     "syscall"
+    "translib/tlerr"
     log "github.com/golang/glog"
 )
 
@@ -262,7 +263,9 @@ func getSystemInfoFromFile () (JSONSystem, error) {
     jsonFile, err := os.Open("/mnt/platform/system")
     if err != nil {
         log.Infof("system json open failed")
-        return jsonsystem, err
+        errStr := "Information not available or Platform support not added"
+        terr := tlerr.NotFoundError{Format: errStr}
+        return jsonsystem, terr
     }
     syscall.Flock(int(jsonFile.Fd()),syscall.LOCK_EX)
     log.Infof("syscall.Flock done")

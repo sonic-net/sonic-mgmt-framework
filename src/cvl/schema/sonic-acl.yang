@@ -81,14 +81,14 @@ module sonic-acl {
 			}
 
 			leaf-list ports {
-				/*type union { */
+				type union { 
 					type leafref {
 						path "/prt:sonic-port/prt:PORT/prt:ifname";
 					}
-			/*		type leafref {
+					type leafref {
 						path "/spc:sonic-portchannel/spc:PORTCHANNEL/spc:name";
 					}
-				}*/
+				}
 			}
 		}
 
@@ -122,7 +122,9 @@ module sonic-acl {
 
 			leaf PRIORITY {
 				type uint16 {
-					range "1..65535";
+					range "1..65535"{
+						error-message "Invalid ACL rule priority.";
+					}
 				}
 			}
 
@@ -164,7 +166,10 @@ module sonic-acl {
 
 			leaf ETHER_TYPE {
 				type string{
-					pattern "(0x88CC)|(0x8100)|(0x8915)|(0x0806)|(0x0800)|(0x86DD)|(0x8847)";
+					pattern "(0x88CC)|(0x8100)|(0x8915)|(0x0806)|(0x0800)|(0x86DD)|(0x8847)"{
+						error-message "Invalid ACL Rule Ether Type";
+						error-app-tag ether-type-invalid;
+					}
 				}
 			}
 

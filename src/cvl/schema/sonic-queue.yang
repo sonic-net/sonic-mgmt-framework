@@ -51,7 +51,10 @@ module sonic-queue {
 
 			leaf qindex {
 				type string {
-					pattern "[0-8]((-)[0-8])?";
+					pattern "[0-8]((-)[0-8])?"{
+						error-message "Invalid Q-index";
+						error-app-tag qindex-invalid;
+					}
 				}
 			}
 

@@ -62,19 +62,22 @@ module sonic-vlan {
 			}
 
 			leaf-list members {
-				/*must "count(../members[text()=/spc:sonic-portchannel/" + 
-					"spc:PORTCHANNEL_MEMBER[spc:ifname=current()]/spc:name]) = 0" {  
-					error-message "A vlan interface member cannot be part of portchannel which is already a vlan member";
-				}
+				 must "count(../members[text()=/spc:sonic-portchannel/" +
+                                      "spc:PORTCHANNEL_MEMBER[spc:ifname=current()]/spc:name]) = 0 and " +
+                                      "count(../members[text()=/spc:sonic-portchannel/" +
+                                      "spc:PORTCHANNEL_MEMBER[spc:name=current()]/spc:ifname]) = 0 " {
+                                       error-message "A vlan interface member cannot be part of portchannel which is already a vlan member";
+                                }
 
-				type union {*/
+
+				type union {
 					type leafref {
 						path "/prt:sonic-port/prt:PORT/prt:ifname";
 					}
-					/*type leafref {
+					type leafref {
 						path "/spc:sonic-portchannel/spc:PORTCHANNEL/spc:name";
 					}
-				}*/
+				}
 			}
 		}
 
