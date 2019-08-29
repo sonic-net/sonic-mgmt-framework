@@ -1017,19 +1017,26 @@ func (c *CVL) fetchTableDataToTmpCache(tableName string, dbKeys map[string]inter
 	bulkCount := 0
 	bulkKeys := []string{}
 	for dbKey, val := range dbKeys { //for all keys
-		if (val != nil) { //skip entry already fetched
-			mapTable := c.tmpDbCache[tableName]
-			delete(mapTable.(map[string]interface{}), dbKey) //delete entry already fetched
-			continue
-		}
 
-		bulkKeys = append(bulkKeys, dbKey)
-		bulkCount = bulkCount + 1
+		 if (val != nil) { //skip entry already fetched
+                        mapTable := c.tmpDbCache[tableName]
+                        delete(mapTable.(map[string]interface{}), dbKey) //delete entry already fetched
+                        totalCount = totalCount - 1
+                        if(bulkCount != totalCount) {
+                                //If some entries are remaining go back to 'for' loop
+                                continue
+                        }
+                } else {
+                        //Accumulate entries to be fetched
+                        bulkKeys = append(bulkKeys, dbKey)
+                        bulkCount = bulkCount + 1
+                }
 
-		if(bulkCount != totalCount) && ((bulkCount % MAX_BULK_ENTRIES_IN_PIPELINE) != 0) {
-			//Accumulate entries to be fetched
-			continue
-		}
+                if(bulkCount != totalCount) && ((bulkCount % MAX_BULK_ENTRIES_IN_PIPELINE) != 0) {
+                        //If some entries are remaining and bulk bucket is not filled,
+                        //go back to 'for' loop
+                        continue
+                }
 
 		mCmd := map[string]*redis.StringStringMapCmd{}
 

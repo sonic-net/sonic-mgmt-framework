@@ -14,7 +14,7 @@ import (
 )
 
 var CVL_SCHEMA string = "schema/"
-var CVL_CFG_FILE string = "./cvl_cfg.json"
+var CVL_CFG_FILE string = "/usr/sbin/cvl_cfg.json"
 
 //package init function 
 func init() {
@@ -172,7 +172,9 @@ func ConfigFileSyncHandler() {
 
 			CVL_LEVEL_LOG(INFO ,"Received SIGUSR2. Changed configuration values are %v", cvlCfgMap)
 
+
 			if (strings.Compare(cvlCfgMap["LOGTOSTDERR"], "true") == 0) {
+				os.Setenv("CVL_DEBUG", "1")
 				flag.Set("logtostderr", "true")
 				flag.Set("stderrthreshold", cvlCfgMap["STDERRTHRESHOLD"])
 				flag.Set("v", cvlCfgMap["VERBOSITY"])
