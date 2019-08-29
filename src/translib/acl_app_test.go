@@ -53,6 +53,14 @@ func Test_AclApp_SingleAclOperations(t *testing.T) {
 
 	t.Run("Verify_Create_One_Acl_With_Multiple_Rules", processGetRequest(url, oneAclCreateWithRulesJsonResponse, false))
 
+	aclDescrUrl := url + "/config/description"
+	t.Run("Delete Acl_Description", processDeleteRequest(aclDescrUrl))
+	t.Run("Verify_Acl_Description_Deletion", processGetRequest(aclDescrUrl, emptyAclDescriptionJson, false))
+
+	createAclDescrUrl := url + "/config"
+	t.Run("Create_new_Acl_Description", processSetRequest(createAclDescrUrl, aclDescrUpdateJson, "POST", false))
+	t.Run("Verify_Description_of_Acl", processGetRequest(aclDescrUrl, aclDescrUpdateJson, false))
+
 	t.Run("Delete_One_Acl_With_All_Its_Rules", processDeleteRequest(url))
 
 	t.Run("Verify_One_Acl_Delete", processGetRequest(url, "", true))
@@ -71,6 +79,26 @@ func Test_AclApp_SingleRuleOperations(t *testing.T) {
 	// Change Source/Desination address and protocol
 	t.Run("Update_Existing_Rule", processSetRequest(ruleUrl, requestOneRulePatchJson, "PATCH", false))
 	t.Run("Verify_One_Rule_Updation", processGetRequest(ruleUrl, responseOneRulePatchJson, false))
+
+	tcpFlagsUrl := ruleUrl + "/transport/config/tcp-flags"
+	t.Run("Delete_Tcp_Flags_Field", processDeleteRequest(tcpFlagsUrl))
+	t.Run("Verify_Tcp_Flags_Deletion", processGetRequest(tcpFlagsUrl, emptyJson, false))
+
+	dscpUrl := ruleUrl + "/ipv4/config/dscp"
+	t.Run("Delete_IPv4_Dscp_Field", processDeleteRequest(dscpUrl))
+	t.Run("Verify_IPv4_Dscp_Deletion", processGetRequest(dscpUrl, emptyRuleDscpJson, false))
+
+	protocolUrl := ruleUrl + "/ipv4/config/protocol"
+	t.Run("Delete_IPv4_Protocol_Field", processDeleteRequest(protocolUrl))
+	t.Run("Verify_IPv4_Protocol_Deletion", processGetRequest(protocolUrl, emptyJson, false))
+
+	transportConfigUrl := ruleUrl + "/transport"
+	t.Run("Delete_Transport_Container", processDeleteRequest(transportConfigUrl))
+	t.Run("Verify_Transport_Container_Deletion", processGetRequest(transportConfigUrl, emptyJson, false))
+
+	ipv4ConfigUrl := ruleUrl + "/ipv4/config"
+	t.Run("Delete_IPv4_Config_Container", processDeleteRequest(ipv4ConfigUrl))
+	t.Run("Verify_IPv4_Config_Container_Deletion", processGetRequest(ipv4ConfigUrl, emptyJson, false))
 
 	t.Run("Delete_One_Rule", processDeleteRequest(ruleUrl))
 	t.Run("Verify_One_Rule_Delete", processGetRequest(ruleUrl, "", true))
@@ -218,6 +246,15 @@ func Test_AclApp_IPv6AclAndRule(t *testing.T) {
 
 	t.Run("Delete_Binding_From_Ingress_Aclset", processDeleteRequest(bindingUrl))
 	t.Run("Verify_Binding_From_Ingress_Aclset_Deletion", processGetRequest(bindingUrl, "", true))
+
+	pktActionUrl := ruleUrl + "/actions/config/forwarding-action"
+	t.Run("Delete_Packet_Action_Field", processDeleteRequest(pktActionUrl))
+	t.Run("Verify_Packet_Action_Field_Deletion", processGetRequest(pktActionUrl, emptyJson, false))
+
+	ipv6ConfigUrl := ruleUrl + "/ipv6/config"
+	t.Run("Delete_IPv6_Config", processDeleteRequest(ipv6ConfigUrl))
+	t.Run("Verify_IPv6_Config_Deletion", processGetRequest(ipv6ConfigUrl, emptyJson, false))
+
 	t.Run("Delete_One_Rule", processDeleteRequest(ruleUrl))
 	t.Run("Delete_One_Acl", processDeleteRequest(aclUrl))
 	t.Run("Verify_One_Acl_Delete", processGetRequest(aclUrl, "", true))
@@ -242,6 +279,16 @@ func Test_AclApp_L2AclAndRule(t *testing.T) {
 
 	t.Run("Delete_Binding_From_Ingress_Aclset", processDeleteRequest(bindingUrl))
 	t.Run("Verify_Binding_From_Ingress_Aclset_Deletion", processGetRequest(bindingUrl, "", true))
+
+	etherTypeUrl := ruleUrl + "/l2/config/ethertype"
+	t.Run("Delete_Ethertype_Field", processDeleteRequest(etherTypeUrl))
+	t.Run("Verify_L2_Ethertype_Field_Deletion", processGetRequest(ruleUrl+"/l2/config", emptyJson, false))
+
+	t.Run("Delete_Transport_Src_Port_Field", processDeleteRequest(ruleUrl+"/transport/config/source-port"))
+	t.Run("Delete_Transport_Dst_Port_Field", processDeleteRequest(ruleUrl+"/transport/config/destination-port"))
+	t.Run("Delete_Transport_Tcp_Flags_Field", processDeleteRequest(ruleUrl+"/transport/config/tcp-flags"))
+	t.Run("Verify_Transport_Src_Dst_Fields_Deletion", processGetRequest(ruleUrl+"/transport/config", emptyJson, false))
+
 	t.Run("Delete_One_Rule", processDeleteRequest(ruleUrl))
 	t.Run("Delete_One_Acl", processDeleteRequest(aclUrl))
 	t.Run("Verify_One_Acl_Delete", processGetRequest(aclUrl, "", true))
@@ -287,7 +334,7 @@ func processGetRequest(url string, expectedRespJson string, errorCase bool) func
 
 		respJson := response.Payload
 		if string(respJson) != expectedRespJson {
-			t.Errorf("Response received not matching with expected for Url: %s", url)
+			t.Errorf("Response for Url: %s received is not expected:\n%s", url, string(respJson))
 		}
 	}
 }
@@ -353,7 +400,7 @@ func getConfigDb() *db.DB {
 	return configDb
 }
 
-func TestAclApp_Subscribe(t *testing.T) {
+func Test_AclApp_Subscribe(t *testing.T) {
 	app := new(AclApp)
 
 	t.Run("top", testSubsError(app, "/"))
@@ -442,6 +489,8 @@ var oneAclCreateWithRulesJsonResponse string = "{\"openconfig-acl:acl-set\":[{\"
 var oneAclCreateJsonRequest string = "{\"config\": {\"name\": \"MyACL5\",\"type\": \"ACL_IPV4\",\"description\": \"Description for MyACL5\"}}"
 var oneAclCreateJsonResponse string = "{\"openconfig-acl:acl-set\":[{\"config\":{\"description\":\"Description for MyACL5\",\"name\":\"MyACL5\",\"type\":\"openconfig-acl:ACL_IPV4\"},\"name\":\"MyACL5\",\"state\":{\"description\":\"Description for MyACL5\",\"name\":\"MyACL5\",\"type\":\"openconfig-acl:ACL_IPV4\"},\"type\":\"openconfig-acl:ACL_IPV4\"}]}"
 
+var aclDescrUpdateJson string = "{\"openconfig-acl:description\":\"Verifying ACL Description Update\"}"
+
 var requestOneRulePostJson string = "{\"sequence-id\": 8,\"config\": {\"sequence-id\": 8,\"description\": \"Description for MyACL5 Rule Seq 8\"},\"ipv4\": {\"config\": {\"source-address\": \"4.4.4.4/24\",\"destination-address\": \"5.5.5.5/24\",\"protocol\": \"IP_TCP\"}},\"transport\": {\"config\": {\"source-port\": 101,\"destination-port\": 100,\"tcp-flags\": [\"TCP_FIN\",\"TCP_ACK\"]}},\"actions\": {\"config\": {\"forwarding-action\": \"ACCEPT\"}}}"
 
 var requestOneRulePatchJson string = "{\"sequence-id\": 8,\"config\": {\"sequence-id\": 8,\"description\": \"Description for MyACL5 Rule Seq 8\"},\"ipv4\": {\"config\": {\"source-address\": \"4.8.4.8/24\",\"destination-address\": \"15.5.15.5/24\",\"protocol\": \"IP_L2TP\"}},\"transport\": {\"config\": {\"source-port\": 101,\"destination-port\": 100,\"tcp-flags\": [\"TCP_FIN\",\"TCP_ACK\",\"TCP_RST\",\"TCP_ECE\"]}},\"actions\": {\"config\": {\"forwarding-action\": \"ACCEPT\"}}}"
@@ -450,7 +499,8 @@ var responseOneRuleJson string = "{\"openconfig-acl:acl-entry\":[{\"actions\":{\
 
 var responseOneRulePatchJson string = "{\"openconfig-acl:acl-entry\":[{\"actions\":{\"config\":{\"forwarding-action\":\"openconfig-acl:ACCEPT\"},\"state\":{\"forwarding-action\":\"openconfig-acl:ACCEPT\"}},\"config\":{\"sequence-id\":8},\"ipv4\":{\"config\":{\"destination-address\":\"15.5.15.5/24\",\"protocol\":\"openconfig-packet-match-types:IP_L2TP\",\"source-address\":\"4.8.4.8/24\"},\"state\":{\"destination-address\":\"15.5.15.5/24\",\"protocol\":\"openconfig-packet-match-types:IP_L2TP\",\"source-address\":\"4.8.4.8/24\"}},\"sequence-id\":8,\"state\":{\"matched-octets\":\"0\",\"matched-packets\":\"0\",\"sequence-id\":8},\"transport\":{\"config\":{\"destination-port\":100,\"source-port\":101,\"tcp-flags\":[\"openconfig-packet-match-types:TCP_FIN\",\"openconfig-packet-match-types:TCP_RST\",\"openconfig-packet-match-types:TCP_ACK\",\"openconfig-packet-match-types:TCP_ECE\"]},\"state\":{\"destination-port\":100,\"source-port\":101,\"tcp-flags\":[\"openconfig-packet-match-types:TCP_FIN\",\"openconfig-packet-match-types:TCP_RST\",\"openconfig-packet-match-types:TCP_ACK\",\"openconfig-packet-match-types:TCP_ECE\"]}}}]}"
 
-var aclDescrUpdateJson string = "{\"openconfig-acl:description\":\"Verifying ACL Description Update\"}"
+var emptyAclDescriptionJson string = "{\"openconfig-acl:description\":\"\"}"
+var emptyRuleDscpJson string = "{\"openconfig-acl:dscp\":0}"
 
 var ingressAclSetCreateJsonRequest string = "{ \"openconfig-acl:config\": { \"set-name\": \"MyACL5\", \"type\": \"ACL_IPV4\" }}"
 var ingressAclSetCreateJsonResponse string = "{\"openconfig-acl:ingress-acl-set\":[{\"acl-entries\":{\"acl-entry\":[{\"sequence-id\":8,\"state\":{\"matched-octets\":\"0\",\"matched-packets\":\"0\",\"sequence-id\":8}}]},\"config\":{\"set-name\":\"MyACL5\",\"type\":\"openconfig-acl:ACL_IPV4\"},\"set-name\":\"MyACL5\",\"state\":{\"set-name\":\"MyACL5\",\"type\":\"openconfig-acl:ACL_IPV4\"},\"type\":\"openconfig-acl:ACL_IPV4\"}]}"
