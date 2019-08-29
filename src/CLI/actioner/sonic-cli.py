@@ -6,6 +6,7 @@ import collections
 import re
 import ast
 import openconfig_acl_client
+from rpipe_utils import pipestr
 from openconfig_acl_client.rest import ApiException
 from scripts.render_cli import show_cli_output
 
@@ -173,8 +174,8 @@ def generate_body(func, args):
     elif func.__name__ == 'delete_openconfig_acl_acl_acl_sets_acl_set_acl_entries_acl_entry':
         keypath = [args[0], args[1], args[2]]
     else:
-       body = {} 
-    if body is not None: 
+       body = {}
+    if body is not None:
        body = json.dumps(body,ensure_ascii=False, indent=4, separators=(',', ': '))
        return keypath, ast.literal_eval(body)
     else:
@@ -253,6 +254,7 @@ def run(func, args):
 
 if __name__ == '__main__':
 
+    pipestr().write(sys.argv)
     #pdb.set_trace()
     func = eval(sys.argv[1], globals(), openconfig_acl_client.OpenconfigAclApi.__dict__)
     run(func, sys.argv[2:])

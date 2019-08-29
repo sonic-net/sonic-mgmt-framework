@@ -4,6 +4,7 @@ import time
 import json
 import ast
 import openconfig_platform_client
+from rpipe_utils import pipestr
 from openconfig_platform_client.rest import ApiException
 from scripts.render_cli import show_cli_output
 
@@ -24,7 +25,7 @@ def filter_json_value(value):
 	    for i in temp:
 		alt_key = alt_key + i.capitalize() + ' '
 	    value[alt_key]=value.pop(key)
-     	
+
     return value
 
 def register(func):
@@ -61,10 +62,10 @@ def run(func, args):
     try:
         if body is not None:
            api_response = getattr(aa,func.__name__)(*keypath, body=body)
-           
+
         else :
            api_response = getattr(aa,func.__name__)(*keypath)
-           
+
         if api_response is None:
             print ("Success")
         else:
@@ -98,6 +99,7 @@ def run(func, args):
 
 if __name__ == '__main__':
 
+    pipestr().write(sys.argv)
     #pdb.set_trace()
     func = eval(sys.argv[1], globals(), openconfig_platform_client.OpenconfigPlatformApi.__dict__)
     run(func, sys.argv[2:])
