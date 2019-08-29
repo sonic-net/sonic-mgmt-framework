@@ -199,6 +199,14 @@ func (app *CommonApp) translateCRUDCommon(d *db.DB, opcode int) ([]db.WatchKeys,
 	log.Info("GetOrdDBTblList() returned ordered table list = ", OrdTblList)
 	app.cmnAppOrdTbllist = OrdTblList
 
+	/* enhance this to handle dependent tables - need CVL to provide list of such tables for a given request */
+	for _, tblnm := range OrdTblList { // OrdTblList already has has all tables corresponding to a module
+		tblsToWatch = append(tblsToWatch, &db.TableSpec{Name: tblnm})
+	}
+	log.Info("Tables to watch", tblsToWatch)
+
+	cmnAppInfo.tablesToWatch = tblsToWatch
+
 	// translate yang to db
 	result, err := transformer.XlateToDb(app.pathInfo.Path, opcode, d, (*app).ygotRoot, (*app).ygotTarget)
 	fmt.Println(result)
@@ -214,17 +222,6 @@ func (app *CommonApp) translateCRUDCommon(d *db.DB, opcode int) ([]db.WatchKeys,
 		return keys, err
 	}
 	app.cmnAppTableMap = result
-
-	/* enhance this to handle dependent tables - need CVL to provide list of such tables for a given request */
-	for tblnm, _ := range app.cmnAppTableMap {
-		log.Error("Table name ", tblnm)
-		tblsToWatch = append(tblsToWatch, &db.TableSpec{Name: tblnm})
-	}
-	log.Info("Tables to watch", tblsToWatch)
-
-	cmnAppInfo.tablesToWatch = tblsToWatch
-	/* In case all related tables need to be watched
-	   cmnAppInfo.tablesToWatch = OrdTblList */
 
 	keys, err = app.generateDbWatchKeys(d, false)
 
