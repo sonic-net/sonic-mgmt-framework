@@ -4,6 +4,7 @@ import time
 import json
 import ast
 import openconfig_interfaces_client
+from rpipe_utils import pipestr
 from openconfig_interfaces_client.rest import ApiException
 from scripts.render_cli import show_cli_output
 
@@ -55,7 +56,7 @@ def generate_body(func, args):
     elif func.__name__ == 'get_openconfig_interfaces_interfaces':
         keypath = []
     else:
-       body = {} 
+       body = {}
 
     return keypath,body
 
@@ -129,6 +130,7 @@ def run(func, args):
 
 if __name__ == '__main__':
 
+    pipestr().write(sys.argv)
     func = eval(sys.argv[1], globals(), openconfig_interfaces_client.OpenconfigInterfacesApi.__dict__)
 
     run(func, sys.argv[2:])

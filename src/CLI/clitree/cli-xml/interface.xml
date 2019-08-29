@@ -49,14 +49,14 @@
 	 </PARAM>
 	 <ACTION>
 	    if test "${if-subcommands}" = "status"; then&#xA;
-		python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces show_interface_status.j2&#xA;
+		python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces show_interface_status.j2 ${__full_line}&#xA;
 	    elif test "${if-subcommands}" = "counters"; then&#xA;
-	        python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces show_interface_counters.j2&#xA;
+	        python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces show_interface_counters.j2 ${__full_line}&#xA;
 	    else&#xA;
                 if test "${phy-if-id}" = ""; then&#xA;
-                    python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces show_interface.j2&#xA;
+                    python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces show_interface.j2 ${__full_line}&#xA;
                 else&#xA;
-                    python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces_interface Ethernet${phy-if-id} show_interface_id.j2&#xA;
+                    python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces_interface Ethernet${phy-if-id} show_interface_id.j2 ${__full_line}&#xA;
 		fi&#xA;
 	    fi
          </ACTION>
@@ -104,20 +104,20 @@
             name="no"
             help="Negate a command or set its defaults"
             />
-        <COMMAND 
+        <COMMAND
             name="shutdown"
             help="Disable the interface">
 	    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config_enabled ${iface} False </ACTION>
         </COMMAND>
-        <COMMAND 
+        <COMMAND
             name="no shutdown"
             help="Enable the interface">
 	    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config_enabled ${iface} True </ACTION>
         </COMMAND>
-        <COMMAND 
+        <COMMAND
             name="description"
             help="Textual description">
-	    <PARAM 
+	    <PARAM
                 name="desc"
                 help="Textual description of the interface"
                 ptype="STRING" />
@@ -131,8 +131,8 @@
         <COMMAND
             name="mtu"
             help="Configure MTU">
-	    <PARAM 
-                name="mtu" 
+	    <PARAM
+                name="mtu"
                 help="MTU of the interface"
                 ptype="RANGE_MTU" />
 	    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config_mtu ${iface} ${mtu} </ACTION>
