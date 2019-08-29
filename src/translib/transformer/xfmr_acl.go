@@ -241,9 +241,9 @@ var DbToYang_acl_entry_key_xfmr KeyXfmrDbToYang = func (d *db.DB, opType int, en
 var YangToDb_acl_l2_ethertype_xfmr FieldXfmrYangToDb = func (d *db.DB, ygRoot *ygot.GoStruct, opType int, xpath string, ethertype interface {}) (map[string]string, error) {
     res_map := make(map[string]string)
     var err error
-    log.Info("YangToDb_acl_l2_ethertype_xfmr :", ygRoot, xpath)
 
-    ethertypeType := reflect.TypeOf(ethertype)
+    ethertypeType := reflect.TypeOf(ethertype).Elem()
+    log.Info("YangToDb_acl_ip_protocol_xfmr: ", ygRoot, " Xpath: ", xpath, " ethertypeType: ", ethertypeType)
     var b bytes.Buffer
     switch ethertypeType {
     case reflect.TypeOf(ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_L2_Config_Ethertype_Union_E_OpenconfigPacketMatchTypes_ETHERTYPE{}):
@@ -296,9 +296,9 @@ var DbToYang_acl_l2_ethertype_xfmr FieldXfmrDbtoYang = func (d *db.DB, opType in
 var YangToDb_acl_ip_protocol_xfmr FieldXfmrYangToDb = func (d *db.DB, ygRoot *ygot.GoStruct, opType int, xpath string, protocol interface {}) (map[string]string, error) {
     res_map := make(map[string]string)
     var err error
-    log.Info("YangToDb_acl_ip_protocol_xfmr: ", ygRoot, xpath)
 
-    protocolType := reflect.TypeOf(protocol)
+    protocolType := reflect.TypeOf(protocol).Elem()
+    log.Info("YangToDb_acl_ip_protocol_xfmr: ", ygRoot, " Xpath: ", xpath, " protocolType: ", protocolType)
     switch (protocolType) {
     case reflect.TypeOf(ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Ipv4_Config_Protocol_Union_E_OpenconfigPacketMatchTypes_IP_PROTOCOL{}):
         v := (protocol).(*ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Ipv4_Config_Protocol_Union_E_OpenconfigPacketMatchTypes_IP_PROTOCOL)
@@ -347,8 +347,8 @@ var DbToYang_acl_ip_protocol_xfmr FieldXfmrDbtoYang = func (d *db.DB, opType int
 var YangToDb_acl_source_port_xfmr FieldXfmrYangToDb = func (d *db.DB, ygRoot *ygot.GoStruct, opType int, xpath string, value interface {}) (map[string]string, error) {
     res_map := make(map[string]string)
     var err error;
-    log.Info("YangToDb_acl_source_port_xfmr: ", ygRoot, xpath)
-    sourceportType := reflect.TypeOf(value)
+    sourceportType := reflect.TypeOf(value).Elem()
+    log.Info("YangToDb_acl_ip_protocol_xfmr: ", ygRoot, " Xpath: ", xpath, " sourceportType: ", sourceportType)
     switch sourceportType {
     case reflect.TypeOf(ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_SourcePort_Union_E_OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_SourcePort{}):
         v := (value).(*ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_SourcePort_Union_E_OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_SourcePort)
@@ -449,8 +449,8 @@ var DbToYang_acl_source_port_xfmr FieldXfmrDbtoYang = func (d *db.DB, opType int
 var YangToDb_acl_destination_port_xfmr FieldXfmrYangToDb = func (d *db.DB, ygRoot *ygot.GoStruct, opType int, xpath string, value interface{}) (map[string]string, error) {
     res_map := make(map[string]string)
     var err error;
-    log.Info("YangToDb_acl_destination_port_xfmr: ", ygRoot, xpath)
-    destportType := reflect.TypeOf(value)
+    destportType := reflect.TypeOf(value).Elem()
+    log.Info("YangToDb_acl_ip_protocol_xfmr: ", ygRoot, " Xpath: ", xpath, " destportType: ", destportType)
     switch destportType {
     case reflect.TypeOf(ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_DestinationPort_Union_E_OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_DestinationPort{}):
         v := (value).(*ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_DestinationPort_Union_E_OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_DestinationPort)
@@ -593,8 +593,13 @@ func convertDBAclRulesToInternal(dbCl *db.DB, aclName string, seqId int64, ruleK
                 ferr = err
                 return
             }
-            if ruleTableMap[aclName] == nil {
+            if len(ruleTableMap) == 0 {
+                ruleTableMap = make(map[string]map[string]db.Value)
+            }
+            _, ok := ruleTableMap[aclName]
+            if !ok {
                 ruleTableMap[aclName] = make(map[string]db.Value)
+                ruleTableMap[aclName][ruleName] =  db.Value{Field: make(map[string]string)}
             }
             ruleTableMap[aclName][ruleName] = ruleData
         }
@@ -623,8 +628,23 @@ func convertDBAclToInternal(dbCl *db.DB, aclkey db.Key) (aclTableMap map[string]
             return
         }
         if entry.IsPopulated() {
+            log.Info("convertDBAclToInternal : ", aclkey, aclTableMap, " ", aclTableMap[aclkey.Get(0)], " ", entry)
+            _, ok := aclTableMap[aclkey.Get(0)]
+            if !ok {
+                if len(aclTableMap) == 0 {
+                    aclTableMap = make(map[string]db.Value)
+                }
+                aclTableMap[aclkey.Get(0)] = db.Value{Field: make(map[string]string)}
+            }
+
             aclTableMap[aclkey.Get(0)] = entry
-            ruleTableMap[aclkey.Get(0)] = make(map[string]db.Value)
+            if len(ruleTableMap) == 0 {
+                ruleTableMap = make(map[string]map[string]db.Value)
+            }
+            _, rok := ruleTableMap[aclkey.Get(0)]
+            if !rok {
+                ruleTableMap[aclkey.Get(0)] = make(map[string]db.Value)
+            }
             ruleTableMap, ferr  = convertDBAclRulesToInternal(dbCl, aclkey.Get(0), -1, db.Key{})
             if err != nil {
                 ferr = err
