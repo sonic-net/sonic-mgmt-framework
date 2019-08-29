@@ -4,6 +4,7 @@ import time
 import json
 import ast
 import openconfig_lldp_client
+from rpipe_utils import pipestr
 from openconfig_lldp_client.rest import ApiException
 from scripts.render_cli import show_cli_output
 
@@ -75,5 +76,6 @@ def run(func, args):
         print("Exception when calling OpenconfigLldpApi->%s : %s\n" %(func.__name__, e))
 
 if __name__ == '__main__':
+    pipestr().write(sys.argv)
     func = eval(sys.argv[1], globals(), openconfig_lldp_client.OpenconfigLldpApi.__dict__)
     run(func, sys.argv[2:])

@@ -1,0 +1,102 @@
+diff --git a/clish/shell/shell_libxml2.c b/clish/shell/shell_libxml2.c
+index 7acca05..0d51607 100644
+--- a/clish/shell/shell_libxml2.c
++++ b/clish/shell/shell_libxml2.c
+@@ -2,7 +2,7 @@
+  * ------------------------------------------------------
+  * shell_roxml.c
+  *
+- * This file implements the means to read an XML encoded file 
++ * This file implements the means to read an XML encoded file
+  * and populate the CLI tree based on the contents. It implements
+  * the clish_xml API using roxml
+  * ------------------------------------------------------
+@@ -17,6 +17,7 @@
+ #include <string.h>
+ #include <libxml/parser.h>
+ #include <libxml/tree.h>
++#include <libxml/xinclude.h>
+ #include "xmlapi.h"
+ 
+ #ifdef HAVE_LIB_LIBXSLT
+@@ -69,7 +70,7 @@ static inline clish_xmlnode_t *node_to_xmlnode(xmlNode *node)
+ int clish_xmldoc_start(void)
+ {
+ #ifdef HAVE_LIB_LIBXSLT
+-	/* The XSLT example contain these settings but I doubt 
++	/* The XSLT example contain these settings but I doubt
+ 	 * it's really necessary.
+ 	 */
+ /*	xmlSubstituteEntitiesDefault(1);
+@@ -91,7 +92,8 @@ int clish_xmldoc_stop(void)
+ clish_xmldoc_t *clish_xmldoc_read(const char *filename)
+ {
+ 	xmlDoc *doc;
+-	doc = xmlReadFile(filename, NULL, 0);
++	doc = xmlReadFile(filename, NULL, 1026);
++	xmlXIncludeProcess(doc);
+ 	return doc_to_xmldoc(doc);
+ }
+ 
+@@ -131,15 +133,15 @@ int clish_xmlnode_get_type(clish_xmlnode_t *node)
+ 	if (node) {
+ 		xmlNode *n = xmlnode_to_node(node);
+ 		switch (n->type) {
+-		case XML_ELEMENT_NODE: 
++		case XML_ELEMENT_NODE:
+ 			return CLISH_XMLNODE_ELM;
+-		case XML_TEXT_NODE: 
++		case XML_TEXT_NODE:
+ 			return CLISH_XMLNODE_TEXT;
+-		case XML_COMMENT_NODE: 
++		case XML_COMMENT_NODE:
+ 			return CLISH_XMLNODE_COMMENT;
+-		case XML_PI_NODE: 
++		case XML_PI_NODE:
+ 			return CLISH_XMLNODE_PI;
+-		case XML_ATTRIBUTE_NODE: 
++		case XML_ATTRIBUTE_NODE:
+ 			return CLISH_XMLNODE_ATTR;
+ 		default:
+ 			break;
+@@ -169,7 +171,7 @@ clish_xmlnode_t *clish_xmlnode_parent(clish_xmlnode_t *node)
+ 	return NULL;
+ }
+ 
+-clish_xmlnode_t *clish_xmlnode_next_child(clish_xmlnode_t *parent, 
++clish_xmlnode_t *clish_xmlnode_next_child(clish_xmlnode_t *parent,
+ 					  clish_xmlnode_t *curchild)
+ {
+ 	xmlNode *child;
+@@ -208,11 +210,11 @@ char *clish_xmlnode_fetch_attr(clish_xmlnode_t *node,
+ 			a = a->next;
+ 		}
+ 	}
+-		
++
+ 	return NULL;
+ }
+ 
+-int clish_xmlnode_get_content(clish_xmlnode_t *node, char *content, 
++int clish_xmlnode_get_content(clish_xmlnode_t *node, char *content,
+ 			      unsigned int *contentlen)
+ {
+ 	xmlNode *n;
+@@ -258,7 +260,7 @@ int clish_xmlnode_get_content(clish_xmlnode_t *node, char *content,
+ 	}
+ }
+ 
+-int clish_xmlnode_get_name(clish_xmlnode_t *node, char *name, 
++int clish_xmlnode_get_name(clish_xmlnode_t *node, char *name,
+ 			    unsigned int *namelen)
+ {
+ 	int rlen;
+@@ -276,7 +278,7 @@ int clish_xmlnode_get_name(clish_xmlnode_t *node, char *name,
+ 	*name = 0;
+ 	n = xmlnode_to_node(node);
+ 	rlen = strlen((char*)n->name) + 1;
+-	
++
+ 	if (rlen <= *namelen) {
+ 		snprintf(name, *namelen, "%s", (char*)n->name);
+ 		name[*namelen - 1] = '\0';
