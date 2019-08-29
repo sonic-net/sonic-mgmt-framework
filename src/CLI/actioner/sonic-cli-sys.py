@@ -4,6 +4,7 @@ import time
 import json
 import ast
 import openconfig_system_client
+from rpipe_utils import pipestr
 from openconfig_system_client.rest import ApiException
 from scripts.render_cli import show_cli_output
 
@@ -22,7 +23,7 @@ def util_capitalize(value):
         	alt_key = alt_key + i.capitalize() + ' '
         value[alt_key]=value.pop(key)
     return value
-    
+
 def system_state_key_change(value):
     value.pop('motd_banner')
     value.pop('login_banner')
@@ -78,7 +79,7 @@ def run(func, args):
     try:
         if body is not None:
            api_response = getattr(aa,func.__name__)(*keypath, body=body)
-           
+
         else :
            api_response = getattr(aa,func.__name__)(*keypath)
            #print(api_response)
@@ -113,7 +114,7 @@ def run(func, args):
 			if proc['pid'] == int(sys.argv[3]):
 			    show_cli_output(sys.argv[2],util_capitalize(proc['state']))
 			    return
-	    	    print("command works")	
+	    	    print("command works")
             else:
                 print("Failed")
     except ApiException as e:
@@ -140,6 +141,7 @@ def run(func, args):
 
 if __name__ == '__main__':
 
+    pipestr().write(sys.argv)
     #pdb.set_trace()
     func = eval(sys.argv[1], globals(), openconfig_system_client.OpenconfigSystemApi.__dict__)
     run(func, sys.argv[2:])
