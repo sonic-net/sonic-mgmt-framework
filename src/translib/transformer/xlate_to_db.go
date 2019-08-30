@@ -367,6 +367,8 @@ func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string) (st
             }
             yangXpath, _ := RemoveXPATHPredicates(curPathWithKey)
             xpath = strings.Split(k, "[")[0]
+	    _, ok := xSpecMap[yangXpath]
+	    if ok {
             if len(xSpecMap[yangXpath].xfmrKey) > 0 {
                 ret, err := XlateFuncCall(yangToDbXfmrFunc(xSpecMap[yangXpath].xfmrKey), d, ygRoot, oper, curPathWithKey)
                 if err != nil {
@@ -380,6 +382,7 @@ func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string) (st
                 }
                 keyStr += keyFromXpathCreate(keyl)
             }
+	    }
             if isCvlYang(path) {
                 //Format- /module:container/table[key]/field
                 // table name extracted from the string token having key entry

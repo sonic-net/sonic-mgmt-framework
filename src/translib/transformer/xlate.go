@@ -26,7 +26,7 @@ const (
 type KeySpec struct {
 	Ts    db.TableSpec
 	Key   db.Key
-	Child *KeySpec
+	Child []KeySpec
 }
 
 var XlateFuncs = make(map[string]reflect.Value)
@@ -85,8 +85,10 @@ func TraverseDb(d *db.DB, spec KeySpec, result *map[string]map[string]db.Value, 
 			(*result)[spec.Ts.Name][strings.Join(spec.Key.Comp, "|")] = data
 		}
 
-		if spec.Child != nil {
-			err = TraverseDb(d, *spec.Child, result, &spec.Key)
+		if len(spec.Child) > 0 {
+			for _, ch := range spec.Child {
+				err = TraverseDb(d, ch, result, &spec.Key)
+			}
 		}
 	} else {
 		// TODO - GetEntry suuport with regex patten, 'abc*' for optimization
@@ -121,30 +123,54 @@ func XlateUriToKeySpec(path string, uri *ygot.GoStruct, t *interface{}) (*map[db
 		retdbFormat = fillCvlKeySpec(yangXpath, tableName, keyStr)
 	} else {
 		/* Extract the xpath and key from input xpath */
-        yangXpath, keyStr, _ := xpathKeyExtract(nil, uri, 0, path)
-		if xSpecMap == nil {
-			return &result, err
-		}
-		_, ok := xSpecMap[yangXpath]
-		if ok {
-			xpathInfo := xSpecMap[yangXpath]
-			if xpathInfo.tableName != nil {
-				dbFormat := KeySpec{}
-				fillKeySpec(yangXpath, keyStr, &dbFormat)
-				retdbFormat = append(retdbFormat, dbFormat)
-			} else {
-				for _, child := range xpathInfo.childTable {
-					dbFormat := KeySpec{}
-					var childXpath = xDbSpecMap[child].yangXpath[0]
-					fillKeySpec(childXpath, "", &dbFormat)
-					retdbFormat = append(retdbFormat, dbFormat)
-				}
-			}
-		}
+		yangXpath, keyStr, _ := xpathKeyExtract(nil, uri, 0, path)
+		retdbFormat = FillKeySpecs(yangXpath, keyStr, &retdbFormat)
 	}
 	result[db.ConfigDB] = retdbFormat
 
 	return &result, err
+}
+
+func FillKeySpecs(yangXpath string , keyStr string, retdbFormat *[]KeySpec) ([]KeySpec){
+    if xSpecMap == nil {
+        return *retdbFormat
+    }
+    _, ok := xSpecMap[yangXpath]
+    if ok {
+        xpathInfo := xSpecMap[yangXpath]
+        if xpathInfo.tableName != nil {
+            dbFormat := KeySpec{}
+            dbFormat.Ts.Name = *xpathInfo.tableName
+	    if keyStr != "" {
+		dbFormat.Key.Comp = append(dbFormat.Key.Comp, keyStr)
+	    }
+            for _, child := range xpathInfo.childTable {
+                if xDbSpecMap != nil {
+		    chlen := len(xDbSpecMap[child].yangXpath)
+                    if chlen > 0 {
+			children := make([]KeySpec, 0)
+			for _, childXpath := range xDbSpecMap[child].yangXpath {
+			        children = FillKeySpecs(childXpath, "", &children)
+				dbFormat.Child = append(dbFormat.Child, children...)
+			}
+                    }
+                 }
+            }
+            *retdbFormat = append(*retdbFormat, dbFormat)
+        } else {
+            for _, child := range xpathInfo.childTable {
+                if xDbSpecMap != nil {
+		    chlen := len(xDbSpecMap[child].yangXpath)
+                    if chlen > 0 {
+                        for _, childXpath := range xDbSpecMap[child].yangXpath {
+                                 *retdbFormat = FillKeySpecs(childXpath, "", retdbFormat)
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return *retdbFormat
 }
 
 func fillCvlKeySpec(yangXpath string , tableName string, keyStr string) ( []KeySpec ) {
@@ -174,36 +200,6 @@ func fillCvlKeySpec(yangXpath string , tableName string, keyStr string) ( []KeyS
 		}
 	}
 	return retdbFormat
-}
-
-func fillKeySpec(yangXpath string, keyStr string, dbFormat *KeySpec) {
-
-	if xSpecMap == nil {
-		return
-	}
-	_, ok := xSpecMap[yangXpath]
-	if ok {
-		xpathInfo := xSpecMap[yangXpath]
-		if xpathInfo.tableName != nil {
-			dbFormat.Ts.Name = *xpathInfo.tableName
-            if keyStr != "" {
-			    dbFormat.Key.Comp = append(dbFormat.Key.Comp, keyStr)
-            }
-		}
-		for _, child := range xpathInfo.childTable {
-			// Current support for one child. Should change the KeySpec.Child
-			//   to array of pointers later when we support all children
-			if xDbSpecMap != nil {
-				if len(xDbSpecMap[child].yangXpath) > 0 {
-					var childXpath = xDbSpecMap[child].yangXpath[0]
-					dbFormat.Child = new(KeySpec)
-					fillKeySpec(childXpath, "", dbFormat.Child)
-				}
-			}
-		}
-	} else {
-		return
-	}
 }
 
 func XlateToDb(path string, opcode int, d *db.DB, yg *ygot.GoStruct, yt *interface{}) (map[string]map[string]db.Value, error) {

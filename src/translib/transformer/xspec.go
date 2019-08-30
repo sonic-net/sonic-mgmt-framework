@@ -133,13 +133,16 @@ func yangToDbMapBuild(entries map[string]*yang.Entry) {
         xSpecMap = make(map[string]*yangXpathInfo)
     }
 
-    for _, e := range entries {
+    for module, e := range entries {
         if e == nil || len(e.Dir) == 0 {
             continue
         }
 
-        /* Start to fill xpath based map with yang data */
+	/* Start to fill xpath based map with yang data */
         yangToDbMapFill(xSpecMap, e, "")
+
+	// Fill the ordered map of child tables list for oc yangs
+	updateSchemaOrderedMap(module, e)
     }
     mapPrint(xSpecMap, "/tmp/fullSpec.txt")
     dbMapPrint()
@@ -350,3 +353,41 @@ func dbMapPrint() {
     }
 }
 
+func updateSchemaOrderedMap(module string, entry *yang.Entry) {
+    var children []string
+    if entry.Node.Statement().Keyword == "module" {
+        for _, dir := range entry.DirOKeys {
+            // Gives the yang xpath for the top level container
+            xpath := "/" + module + ":" + dir
+            _, ok := xSpecMap[xpath]
+            if ok {
+		yentry := xSpecMap[xpath].yangEntry
+		if yentry.Node.Statement().Keyword == "container" {
+                    var keyspec = make([]KeySpec, 0)
+                    keyspec = FillKeySpecs(xpath, "" , &keyspec)
+		    children = updateChildTable(keyspec, &children)
+                }
+            }
+	}
+    }
+    xDbSpecOrdTblMap[module] = children
+}
+
+func updateChildTable(keyspec []KeySpec, chlist *[]string) ([]string) {
+	for _, ks := range keyspec {
+		if (ks.Ts.Name != "") {
+			var insert bool = true;
+			for _, tbl := range *chlist {
+			    if tbl == ks.Ts.Name {
+				    insert = false
+				    break;
+			    }
+			}
+			if insert {
+			    *chlist = append(*chlist, ks.Ts.Name)
+		        }
+		}
+                *chlist = updateChildTable(ks.Child, chlist)
+	}
+	return *chlist
+}
