@@ -165,3 +165,12 @@ func xpathRootNameGet(path string) string {
     return ("/" + pathl[1])
 }
 
+func getDbNum(xpath string ) db.DBNum {
+    _, ok := xSpecMap[xpath]
+    if ok {
+        xpathInfo := xSpecMap[xpath]
+        return xpathInfo.dbIndex
+    }
+    // Default is ConfigDB
+    return db.ConfigDB
+}

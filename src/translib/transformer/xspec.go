@@ -5,6 +5,7 @@ import (
     "os"
     "strings"
     log "github.com/golang/glog"
+    "translib/db"
 
     "github.com/openconfig/goyang/pkg/yang"
 )
@@ -21,6 +22,7 @@ type yangXpathInfo  struct {
     fieldName      string
     xfmrFunc       string
     xfmrKey        string
+    dbIndex        db.DBNum
 }
 
 type dbInfo  struct {
@@ -57,6 +59,7 @@ func yangToDbMapFill (xSpecMap map[string]*yangXpathInfo, entry *yang.Entry, xpa
     if !ok {
         xpathData = new(yangXpathInfo)
         xSpecMap[xpath] = xpathData
+        xpathData.dbIndex = db.ConfigDB // default value
     } else {
         xpathData = xSpecMap[xpath]
     }
@@ -70,6 +73,10 @@ func yangToDbMapFill (xSpecMap map[string]*yangXpathInfo, entry *yang.Entry, xpa
     /* init current xpath table data with its parent data, change only if needed. */
     if ok && xpathData.tableName == nil && parentXpathData.tableName != nil {
         xpathData.tableName = parentXpathData.tableName
+    }
+
+    if ok && parentXpathData.dbIndex != db.ConfigDB {
+	    xpathData.dbIndex = parentXpathData.dbIndex
     }
 
     if xpathData.yangDataType == "leaf" && len(xpathData.fieldName) == 0 {
@@ -230,6 +237,7 @@ func annotEntryFill(xSpecMap map[string]*yangXpathInfo, xpath string, entry *yan
         fmt.Printf("Xpath not found(%v) \r\n", xpath)
     }
 
+    xpathData.dbIndex = db.ConfigDB // default value
     /* fill table with yang extension data. */
     if entry != nil && len(entry.Exts) > 0 {
         for _, ext := range entry.Exts {
@@ -257,6 +265,24 @@ func annotEntryFill(xSpecMap map[string]*yangXpathInfo, xpath string, entry *yan
                     xpathData.xfmrFunc  = ext.NName()
                 case "use-self-key" :
                     xpathData.keyXpath  = nil
+                case "redis-db-name" :
+                        if ext.NName() == "APPL_DB" {
+                                xpathData.dbIndex  = db.ApplDB
+                        } else if ext.NName() == "ASIC_DB" {
+                                xpathData.dbIndex  = db.AsicDB
+                        } else if ext.NName() == "COUNTERS_DB" {
+                                xpathData.dbIndex  = db.CountersDB
+                        } else if ext.NName() == "LOGLEVEL_DB" {
+                                xpathData.dbIndex  = db.LogLevelDB
+                        } else if ext.NName() == "CONFIG_DB" {
+                                xpathData.dbIndex  = db.ConfigDB
+                        } else if ext.NName() == "FLEX_COUNTER_DB" {
+                                xpathData.dbIndex  = db.FlexCounterDB
+                        } else if ext.NName() == "STATE_DB" {
+                                xpathData.dbIndex  = db.StateDB
+                        } else {
+                                xpathData.dbIndex  = db.ConfigDB
+			}
             }
         }
     }
@@ -318,6 +344,7 @@ func mapPrint(inMap map[string]*yangXpathInfo, fileName string) {
         fmt.Fprintf(fp, "\r\n    FieldName: %v", d.fieldName)
         fmt.Fprintf(fp, "\r\n    xfmrKeyFn: %v", d.xfmrKey)
         fmt.Fprintf(fp, "\r\n    xfmrFunc : %v", d.xfmrFunc)
+        fmt.Fprintf(fp, "\r\n    dbIndex  : %v", d.dbIndex)
         fmt.Fprintf(fp, "\r\n    yangEntry: ")
         if d.yangEntry != nil {
             fmt.Fprintf(fp, "%v", *d.yangEntry)
@@ -376,16 +403,9 @@ func updateSchemaOrderedMap(module string, entry *yang.Entry) {
 func updateChildTable(keyspec []KeySpec, chlist *[]string) ([]string) {
 	for _, ks := range keyspec {
 		if (ks.Ts.Name != "") {
-			var insert bool = true;
-			for _, tbl := range *chlist {
-			    if tbl == ks.Ts.Name {
-				    insert = false
-				    break;
-			    }
+			if !contains(*chlist, ks.Ts.Name) {
+				*chlist = append(*chlist, ks.Ts.Name)
 			}
-			if insert {
-			    *chlist = append(*chlist, ks.Ts.Name)
-		        }
 		}
                 *chlist = updateChildTable(ks.Child, chlist)
 	}

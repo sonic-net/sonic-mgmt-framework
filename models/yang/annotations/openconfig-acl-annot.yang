@@ -59,12 +59,6 @@ module openconfig-acl-annot {
       }
     }
 
-    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-pkt-match:l2/oc-pkt-match:config/oc-pkt-match:ethertype {
-      deviate add {
-        sonic-ext:field-transformer "acl_l2_ethertype_xfmr";
-      }
-    }
-
     deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-pkt-match:ipv6/oc-pkt-match:config/oc-pkt-match:protocol {
       deviate add {
         sonic-ext:field-transformer "acl_ip_protocol_xfmr";
@@ -89,6 +83,12 @@ module openconfig-acl-annot {
       }
     }
 
+    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-pkt-match:l2/oc-pkt-match:config/oc-pkt-match:ethertype {
+      deviate add {
+        sonic-ext:field-transformer "acl_l2_ethertype_xfmr";
+      }
+    }
+
     deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-acl:actions/oc-acl:config/oc-acl:forwarding-action {
       deviate add {
         sonic-ext:field-name "PACKET_ACTION";
@@ -101,5 +101,46 @@ module openconfig-acl-annot {
       }
     }
 
+    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:state {
+      deviate add {
+        sonic-ext:redis-db-name "STATE_DB";
+      }
+    }
+
+    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-acl:state {
+      deviate add {
+        sonic-ext:redis-db-name "STATE_DB";
+      }
+    }
+
+    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-acl:l2/oc-acl:state {
+      deviate add {
+        sonic-ext:redis-db-name "STATE_DB";
+      }
+    }
+
+    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-acl:ipv4/oc-acl:state {
+      deviate add {
+        sonic-ext:redis-db-name "STATE_DB";
+      }
+    }
+
+    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-acl:ipv6/oc-acl:state {
+      deviate add {
+        sonic-ext:redis-db-name "STATE_DB";
+      }
+    }
+
+    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-acl:transport/oc-acl:state {
+      deviate add {
+        sonic-ext:redis-db-name "STATE_DB";
+      }
+    }
+
+    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-acl:actions/oc-acl:state {
+      deviate add {
+        sonic-ext:redis-db-name "STATE_DB";
+      }
+    }
 }
 
