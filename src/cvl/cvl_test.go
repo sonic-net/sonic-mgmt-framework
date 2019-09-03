@@ -2955,13 +2955,6 @@ func TestValidateEditConfig_Delete_Create_Same_Entry_Positive(t *testing.T) {
 	//Same entry getting created again
 	cfgDataVlan = []cvl.CVLEditConfigData {
 		cvl.CVLEditConfigData {
-			cvl.VALIDATE_NONE,
-			cvl.OP_DELETE,
-			"VLAN|Vlan100",
-			map[string]string {
-			},
-		},
-		cvl.CVLEditConfigData {
 			cvl.VALIDATE_ALL,
 			cvl.OP_CREATE,
 			"VLAN|Vlan100",
@@ -3242,6 +3235,112 @@ func TestValidateEditConfig_Create_Syntax_DependentData_NegativePortChannelNew(t
 	WriteToFile(fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
 
 	if cvlErrInfo.ErrCode == cvl.CVL_SUCCESS {
+		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
+	}
+}
+
+func TestValidateEditConfig_Use_Updated_Data_As_Create_DependentData_Positive(t *testing.T) {
+	depDataMap := map[string]interface{} {
+		"VLAN" : map[string]interface{} {
+			"Vlan201": map[string] interface{} {
+				"vlanid":   "201",
+				"members@": "Ethernet8",
+			},
+		},
+	}
+
+	//Prepare data in Redis
+	loadConfigDB(rclient, depDataMap)
+
+	cvSess, _ := cvl.ValidationSessOpen()
+
+
+	cfgData := []cvl.CVLEditConfigData{
+		cvl.CVLEditConfigData{
+			cvl.VALIDATE_ALL,
+			cvl.OP_UPDATE,
+			"VLAN|Vlan201",
+			map[string]string{
+				"members@": "Ethernet8,Ethernet12",
+			},
+		},
+	}
+
+	cvlErrInfo, _ := cvSess.ValidateEditConfig(cfgData)
+	if cvlErrInfo.ErrCode != cvl.CVL_SUCCESS {
+		unloadConfigDB(rclient, depDataMap)
+		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
+		return
+	}
+
+	cfgData = []cvl.CVLEditConfigData{
+		cvl.CVLEditConfigData{
+			cvl.VALIDATE_ALL,
+			cvl.OP_CREATE,
+			"VLAN_MEMBER|Vlan201|Ethernet8",
+			map[string]string{
+				"tagging_mode": "tagged",
+			},
+		},
+	}
+
+	cvlErrInfo, _ = cvSess.ValidateEditConfig(cfgData)
+
+	cvl.ValidationSessClose(cvSess)
+
+	unloadConfigDB(rclient, depDataMap)
+
+	WriteToFile(fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
+
+	if cvlErrInfo.ErrCode != cvl.CVL_SUCCESS {
+		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
+	}
+}
+
+func TestValidateEditConfig_Use_Updated_Data_As_Create_DependentData_Single_Call_Positive(t *testing.T) {
+	depDataMap := map[string]interface{} {
+		"VLAN" : map[string]interface{} {
+			"Vlan201": map[string] interface{} {
+				"vlanid":   "201",
+				"members@": "Ethernet8",
+			},
+		},
+	}
+
+	//Prepare data in Redis
+	loadConfigDB(rclient, depDataMap)
+
+	cvSess, _ := cvl.ValidationSessOpen()
+
+
+	cfgData := []cvl.CVLEditConfigData{
+		cvl.CVLEditConfigData{
+			cvl.VALIDATE_ALL,
+			cvl.OP_UPDATE,
+			"VLAN|Vlan201",
+			map[string]string{
+				"members@": "Ethernet8,Ethernet12",
+			},
+		},
+		cvl.CVLEditConfigData{
+			cvl.VALIDATE_ALL,
+			cvl.OP_CREATE,
+			"VLAN_MEMBER|Vlan201|Ethernet8",
+			map[string]string{
+				"tagging_mode": "tagged",
+			},
+		},
+	}
+
+	cvlErrInfo, _ := cvSess.ValidateEditConfig(cfgData)
+
+	cvl.ValidationSessClose(cvSess)
+
+	unloadConfigDB(rclient, depDataMap)
+
+	WriteToFile(fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
+
+	if cvlErrInfo.ErrCode != cvl.CVL_SUCCESS {
 		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
 	}
 }
