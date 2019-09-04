@@ -83,9 +83,49 @@ func yangTypeGet(entry *yang.Entry) string {
     return ""
 }
 
-func dbKeyToYangDataConvert(dbKey string, xpath string) {
-    return
-}
+func dbKeyToYangDataConvert(uri string, xpath string, dbKey string) (string, string, error) {
+    fmt.Printf("MARI [in] (uri:%v)(xp:%v)\r\n", uri, xpath)
+    var kLvlValList []string
+    keyDataList := strings.Split(dbKey, "|")
+    keyNameList := yangKeyFromEntryGet(xSpecMap[xpath].yangEntry)
+    id          := xSpecMap[xpath].keyLevel
+    jsonData    := ""
+    uriWithKey  := fmt.Sprintf("%v", xpath)
+
+    /* if uri contins key, use it else use xpath */
+    if strings.Contains(uri, "[") {
+        uriWithKey  = fmt.Sprintf("%v", uri)
+    }
+    kLvlValList = append(kLvlValList, keyDataList[id])
+
+    if len(keyNameList) > 1 {
+        kLvlValList = strings.Split(keyDataList[id], "_")
+    }
+
+    /* TODO: Need to add leaf-ref related code in here and remove this code*/
+    kvalExceedFlag := false
+    chgId := -1
+    if len(keyNameList) < len(kLvlValList) {
+        kvalExceedFlag = true
+        chgId = len(keyNameList) - 1
+    }
+
+    for i, kname := range keyNameList {
+        kval := kLvlValList[i]
+
+        /* TODO: Need to add leaf-ref related code in here and remove this code*/
+        if kvalExceedFlag && (i == chgId) {
+            kval = strings.Join(kLvlValList[chgId:], "_")
+        }
+
+        jsonData   += fmt.Sprintf("\"%v\" : \"%v\",", kname, kval)
+        uriWithKey += fmt.Sprintf("[%v=%v]", kname, kval)
+    }
+
+    fmt.Printf("MARI [out] (uri:%v)(xp:%v)\r\n", uriWithKey, xpath)
+    return uriWithKey, jsonData, nil
+ }
+
 
 func contains(sl []string, str string) bool {
     for _, v := range sl {
@@ -174,3 +214,9 @@ func getDbNum(xpath string ) db.DBNum {
     // Default is ConfigDB
     return db.ConfigDB
 }
+
+func dbToYangXfmrFunc(funcName string) string {
+    return ("DbToYang_" + funcName)
+}
+
+

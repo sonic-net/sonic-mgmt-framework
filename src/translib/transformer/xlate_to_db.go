@@ -370,7 +370,13 @@ func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string) (st
 	    _, ok := xSpecMap[yangXpath]
 	    if ok {
             if len(xSpecMap[yangXpath].xfmrKey) > 0 {
-                ret, err := XlateFuncCall(yangToDbXfmrFunc(xSpecMap[yangXpath].xfmrKey), d, ygRoot, oper, curPathWithKey)
+                xfmrFuncName := ""
+                if oper == GET {
+                    xfmrFuncName = dbToYangXfmrFunc(xSpecMap[yangXpath].xfmrKey)
+                } else {
+                    xfmrFuncName = yangToDbXfmrFunc(xSpecMap[yangXpath].xfmrKey)
+                }
+                ret, err := XlateFuncCall(xfmrFuncName, d, ygRoot, oper, curPathWithKey)
                 if err != nil {
                     return "", "", ""
                 }

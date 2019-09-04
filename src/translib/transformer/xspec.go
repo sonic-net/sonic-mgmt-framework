@@ -23,6 +23,7 @@ type yangXpathInfo  struct {
     xfmrFunc       string
     xfmrKey        string
     dbIndex        db.DBNum
+    keyLevel       int
 }
 
 type dbInfo  struct {
@@ -45,7 +46,7 @@ func updateDbTableData (xpath string, xpathData *yangXpathInfo, tableName string
 }
 
 /* Recursive api to fill the map with yang details */
-func yangToDbMapFill (xSpecMap map[string]*yangXpathInfo, entry *yang.Entry, xpathPrefix string) {
+func yangToDbMapFill (keyLevel int, xSpecMap map[string]*yangXpathInfo, entry *yang.Entry, xpathPrefix string) {
     xpath := ""
     /* create the yang xpath */
     if xSpecMap[xpathPrefix] != nil  && xSpecMap[xpathPrefix].yangDataType == "module" {
@@ -97,6 +98,7 @@ func yangToDbMapFill (xSpecMap map[string]*yangXpathInfo, entry *yang.Entry, xpa
 	}
 
     /* fill table with key data. */
+    curKeyLevel := keyLevel
     if len(entry.Key) != 0 {
         parentKeyLen := 0
 
@@ -113,6 +115,7 @@ func yangToDbMapFill (xSpecMap map[string]*yangXpathInfo, entry *yang.Entry, xpa
             xpathData.keyXpath[k] = parentXpathData.keyXpath[k]
         }
         xpathData.keyXpath[k] = &keyXpath
+        xpathData.keyLevel    = curKeyLevel
     } else if parentXpathData != nil && parentXpathData.keyXpath != nil {
         xpathData.keyXpath = parentXpathData.keyXpath
     }
@@ -126,7 +129,7 @@ func yangToDbMapFill (xSpecMap map[string]*yangXpathInfo, entry *yang.Entry, xpa
     xpathData.yangEntry = entry
     /* now recurse, filling the map with current node's children info */
     for _, child := range childList {
-        yangToDbMapFill(xSpecMap, entry.Dir[child], xpath)
+        yangToDbMapFill(curKeyLevel, xSpecMap, entry.Dir[child], xpath)
     }
 }
 
@@ -146,7 +149,8 @@ func yangToDbMapBuild(entries map[string]*yang.Entry) {
         }
 
 	/* Start to fill xpath based map with yang data */
-        yangToDbMapFill(xSpecMap, e, "")
+    keyLevel := 0
+    yangToDbMapFill(keyLevel, xSpecMap, e, "")
 
 	// Fill the ordered map of child tables list for oc yangs
 	updateSchemaOrderedMap(module, e)
@@ -342,6 +346,7 @@ func mapPrint(inMap map[string]*yangXpathInfo, fileName string) {
             fmt.Fprintf(fp, "%v", *d.tableName)
         }
         fmt.Fprintf(fp, "\r\n    FieldName: %v", d.fieldName)
+        fmt.Fprintf(fp, "\r\n    keyLevel : %v", d.keyLevel)
         fmt.Fprintf(fp, "\r\n    xfmrKeyFn: %v", d.xfmrKey)
         fmt.Fprintf(fp, "\r\n    xfmrFunc : %v", d.xfmrFunc)
         fmt.Fprintf(fp, "\r\n    dbIndex  : %v", d.dbIndex)
