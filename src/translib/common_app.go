@@ -154,21 +154,9 @@ func (app *CommonApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
 	var payload []byte
 	log.Info("processGet:path =", app.pathInfo.Path)
 
-	keySpec, err := transformer.XlateUriToKeySpec(app.pathInfo.Path, app.ygotRoot, app.ygotTarget)
-
-	var result = make(map[string]map[string]db.Value)
-
-	for dbnum, specs := range *keySpec {
-		for _, spec := range specs {
-			err := transformer.TraverseDb(dbs[dbnum], spec, &result, nil)
-			if err != nil {
-				return GetResponse{Payload: payload}, err
-			}
-		}
-	}
-
-	payload, err = transformer.XlateFromDb(app.pathInfo.Path, result)
+	payload, err = transformer.GetAndXlateFromDB(app.pathInfo.Path, app.ygotRoot, dbs)
 	if err != nil {
+		log.Error("transformer.XlateFromDb() failure")
 		return GetResponse{Payload: payload, ErrSrc: AppErr}, err
 	}
 

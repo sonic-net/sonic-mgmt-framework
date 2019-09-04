@@ -261,6 +261,33 @@ func XlateToDb(path string, opcode int, d *db.DB, yg *ygot.GoStruct, yt *interfa
 	return result, err
 }
 
+func GetAndXlateFromDB(xpath string, uri *ygot.GoStruct, dbs [db.MaxDB]*db.DB) ([]byte, error) {
+	var err error
+	var payload []byte
+	log.Info("received xpath =", xpath)
+
+	keySpec, err := XlateUriToKeySpec(xpath, uri, nil)
+	var result = make(map[string]map[string]db.Value)
+
+	for dbnum, specs := range *keySpec {
+		for _, spec := range specs {
+			err := TraverseDb(dbs[dbnum], spec, &result, nil)
+			if err != nil {
+				log.Error("TraverseDb() failure")
+				return payload, err
+			}
+		}
+	}
+
+	payload, err = XlateFromDb(xpath, result)
+	if err != nil {
+		log.Error("XlateFromDb() failure.")
+		return payload, err
+	}
+
+	return payload, err
+}
+
 func XlateFromDb(xpath string, data map[string]map[string]db.Value) ([]byte, error) {
 	var err error
 	var fieldName, tableName, yangXpath string
