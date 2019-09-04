@@ -256,6 +256,9 @@ func(yp *YParser) AddChildNode(module *YParserModule, parent *YParserNode, name 
 //Add child node to a parent node
 func(yp *YParser) AddMultiLeafNodes(module *YParserModule, parent *YParserNode, multiLeaf string) YParserError {
 	if (0 != C.lyd_multi_new_leaf((*C.struct_lyd_node)(parent), (*C.struct_lys_module)(module), C.CString(multiLeaf))) {
+		if (Tracing == true) {
+			TRACE_LOG(INFO_API, TRACE_ONERROR, "Failed to create Multi Leaf Data = %v", multiLeaf)
+		}
 		return getErrorDetails()
 	}
 
@@ -371,6 +374,11 @@ func (yp *YParser) ValidateData(data, depData *YParserNode) YParserError {
 	dataRootTmp := (*C.struct_lyd_node)(dataRoot)
 
 	if (0 != C.lyd_data_validate(&dataRootTmp, C.LYD_OPT_CONFIG, (*C.struct_ly_ctx)(ypCtx))) {
+		if (Tracing == true) {
+			strData := yp.NodeDump((*YParserNode)(dataRootTmp))
+			TRACE_LOG(INFO_API, TRACE_ONERROR, "Failed to validate data = %v", strData)
+		}
+
 		CVL_LOG(ERROR, "Validation failed\n")
 		return getErrorDetails()
 	}
@@ -385,6 +393,10 @@ func (yp *YParser) ValidateSyntax(data *YParserNode) YParserError {
 	//Just validate syntax
 	if (0 != C.lyd_data_validate(&dataTmp, C.LYD_OPT_EDIT | C.LYD_OPT_NOEXTDEPS,
 	(*C.struct_ly_ctx)(ypCtx))) {
+		if (Tracing == true) {
+			strData := yp.NodeDump((*YParserNode)(dataTmp))
+			TRACE_LOG(INFO_API, TRACE_ONERROR, "Failed to validate Syntax, data = %v", strData)
+		}
 		return  getErrorDetails()
 	}
 		 //fmt.Printf("Error Code from libyang is %d\n", C.ly_errno) 
@@ -457,6 +469,10 @@ func (yp *YParser) ValidateSemantics(data, depData, appDepData *YParserNode) YPa
 
 	//Check semantic validation
 	if (0 != C.lyd_data_validate(&dataTmp, C.LYD_OPT_CONFIG, (*C.struct_ly_ctx)(ypCtx))) {
+		if (Tracing == true) {
+			strData1 := yp.NodeDump((*YParserNode)(dataTmp))
+			TRACE_LOG(INFO_API, TRACE_ONERROR, "Failed to validate Semantics, data = %v", strData1)
+		}
 		return getErrorDetails()
 	}
 
