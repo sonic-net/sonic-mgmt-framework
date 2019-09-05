@@ -110,7 +110,7 @@ func TraverseDb(d *db.DB, spec KeySpec, result *map[string]map[string]db.Value, 
 	return err
 }
 
-func XlateUriToKeySpec(path string, uri *ygot.GoStruct, t *interface{}) (*map[db.DBNum][]KeySpec, error) {
+func XlateUriToKeySpec(path string, ygRoot *ygot.GoStruct, t *interface{}) (*map[db.DBNum][]KeySpec, error) {
 
 	var err error
 	var result = make(map[db.DBNum][]KeySpec)
@@ -125,7 +125,7 @@ func XlateUriToKeySpec(path string, uri *ygot.GoStruct, t *interface{}) (*map[db
 		retdbFormat = fillCvlKeySpec(yangXpath, tableName, keyStr)
 	} else {
 		/* Extract the xpath and key from input xpath */
-		yangXpath, keyStr, _ := xpathKeyExtract(nil, uri, 0, path)
+		yangXpath, keyStr, _ := xpathKeyExtract(nil, ygRoot, 0, path)
 		retdbFormat = FillKeySpecs(yangXpath, keyStr, &retdbFormat)
 		dbInx = getDbNum(yangXpath)
 	}
@@ -261,12 +261,12 @@ func XlateToDb(path string, opcode int, d *db.DB, yg *ygot.GoStruct, yt *interfa
 	return result, err
 }
 
-func GetAndXlateFromDB(xpath string, uri *ygot.GoStruct, dbs [db.MaxDB]*db.DB) ([]byte, error) {
+func GetAndXlateFromDB(xpath string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db.DB) ([]byte, error) {
 	var err error
 	var payload []byte
 	log.Info("received xpath =", xpath)
 
-	keySpec, err := XlateUriToKeySpec(xpath, uri, nil)
+	keySpec, err := XlateUriToKeySpec(xpath, ygRoot, nil)
 	var result = make(map[string]map[string]db.Value)
 
 	for dbnum, specs := range *keySpec {
@@ -279,7 +279,7 @@ func GetAndXlateFromDB(xpath string, uri *ygot.GoStruct, dbs [db.MaxDB]*db.DB) (
 		}
 	}
 
-	payload, err = XlateFromDb(xpath, result)
+	payload, err = XlateFromDb(xpath, ygRoot, result)
 	if err != nil {
 		log.Error("XlateFromDb() failure.")
 		return payload, err
@@ -288,7 +288,7 @@ func GetAndXlateFromDB(xpath string, uri *ygot.GoStruct, dbs [db.MaxDB]*db.DB) (
 	return payload, err
 }
 
-func XlateFromDb(xpath string, data map[string]map[string]db.Value) ([]byte, error) {
+func XlateFromDb(xpath string, ygRoot *ygot.GoStruct, data map[string]map[string]db.Value) ([]byte, error) {
 	var err error
 	var fieldName, tableName, yangXpath string
 	var dbData = make(map[string]map[string]db.Value)
@@ -321,7 +321,7 @@ func XlateFromDb(xpath string, data map[string]map[string]db.Value) ([]byte, err
 			dbData = extractFieldFromDb(tableName, keyStr, fieldName, data)
 		}
 	}
-	payload, err := dbDataToYangJsonCreate(yangXpath, dbData)
+	payload, err := dbDataToYangJsonCreate(yangXpath, ygRoot, dbData)
 
 	if err != nil {
 		log.Errorf("Error: failed to create json response from DB data.")

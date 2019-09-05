@@ -12,10 +12,10 @@ import (
     log "github.com/golang/glog"
 )
 
-func xfmrHandlerFunc(d *db.DB, xpath string, uri string, dbDataMap map[string]map[string]db.Value) (string, error) {
-    var root ygot.ValidatedGoStruct
-    ygRoot  := &root
-    ygot.BuildEmptyTree(root)
+func xfmrHandlerFunc(d *db.DB, xpath string, uri string, ygRoot *ygot.GoStruct, dbDataMap map[string]map[string]db.Value) (string, error) {
+    //var root ygot.ValidatedGoStruct
+    //ygRoot  := &root
+    /*ygot.BuildEmptyTree(root)*/
     ret, err := XlateFuncCall(dbToYangXfmrFunc(xSpecMap[xpath].xfmrFunc), d, ygRoot, GET, uri, dbDataMap)
     if err != nil {
         return "", err
@@ -56,7 +56,7 @@ func xfmrHandlerFunc(d *db.DB, xpath string, uri string, dbDataMap map[string]ma
 }
 
 /* Traverse db map and add data to json */
-func dataToJsonAdd(uri string, xpath string, fieldData map[string]string, key string, dbDataMap map[string]map[string]db.Value) (string, error) {
+func dataToJsonAdd(uri string, xpath string, ygRoot *ygot.GoStruct, fieldData map[string]string, key string, dbDataMap map[string]map[string]db.Value) (string, error) {
     spec, ok := xSpecMap[xpath]
     jsonData := ""
 
@@ -69,7 +69,7 @@ func dataToJsonAdd(uri string, xpath string, fieldData map[string]string, key st
                 if ftype == "leaf" {
                     if len(xSpecMap[fldXpath].xfmrFunc) > 0 {
                         /* field transformer present */
-                        jsonStr, err  := xfmrHandlerFunc(nil, fldXpath, curUri, dbDataMap)
+                        jsonStr, err  := xfmrHandlerFunc(nil, fldXpath, curUri, ygRoot, dbDataMap)
                         if err != nil {
                             return "", err
                         }
@@ -86,11 +86,11 @@ func dataToJsonAdd(uri string, xpath string, fieldData map[string]string, key st
                     }
                 } else if ftype == "container" && xSpecMap[fldXpath].yangEntry.Name != "state" {
                     if len(xSpecMap[fldXpath].xfmrFunc) > 0 {
-                        jsonStr, _  := xfmrHandlerFunc(nil, fldXpath, curUri, dbDataMap)
+                        jsonStr, _  := xfmrHandlerFunc(nil, fldXpath, curUri, ygRoot, dbDataMap)
                         jsonData += jsonStr
                     } else {
                         /* Create container enclosure and attach container name and add to json */
-                        data, _:= dataToJsonAdd(curUri, fldXpath, fieldData, key, dbDataMap)
+                        data, _:= dataToJsonAdd(curUri, fldXpath, ygRoot, fieldData, key, dbDataMap)
                         if len(data) > 0 {
                             jsonData += fmt.Sprintf("\"%v\" : { \r\n %v \r\n },",
                                                     xSpecMap[fldXpath].yangEntry.Name, data)
@@ -98,7 +98,7 @@ func dataToJsonAdd(uri string, xpath string, fieldData map[string]string, key st
 					}
                 } else if ftype == "list" {
 					if len(xSpecMap[fldXpath].xfmrFunc) > 0 {
-						jsonStr , _ := xfmrHandlerFunc(nil, fldXpath, curUri, dbDataMap)
+						jsonStr , _ := xfmrHandlerFunc(nil, fldXpath, curUri, ygRoot, dbDataMap)
 						jsonData += jsonStr
 					} else {
 						/* Inner(child) list, traverse this list */
@@ -106,7 +106,7 @@ func dataToJsonAdd(uri string, xpath string, fieldData map[string]string, key st
                         if ok {
                             var xpathl []string
                             xpathl = append(xpathl, fldXpath)
-                            jsonData += listDataToJsonAdd(curUri, xpathl, childMap, key, dbDataMap)
+                            jsonData += listDataToJsonAdd(curUri, ygRoot, xpathl, childMap, key, dbDataMap)
 						}
 					}
 				}
@@ -119,7 +119,7 @@ func dataToJsonAdd(uri string, xpath string, fieldData map[string]string, key st
 }
 
 /* Traverse list data and add to json */
-func listDataToJsonAdd(uri string, xpathl []string, dataMap map[string]db.Value, key string, dbDataMap map[string]map[string]db.Value) string {
+func listDataToJsonAdd(uri string, ygRoot *ygot.GoStruct, xpathl []string, dataMap map[string]db.Value, key string, dbDataMap map[string]map[string]db.Value) string {
     jsonData := ""
 
     for _, xpath := range xpathl {
@@ -129,7 +129,7 @@ func listDataToJsonAdd(uri string, xpathl []string, dataMap map[string]db.Value,
             }
 			curUri, kdata, _ := dbKeyToYangDataConvert(uri, xpath, kval)
 			/* Traverse list members and add to json */
-			data, _ := dataToJsonAdd(curUri, xpath, data.Field, kval, dbDataMap)
+			data, _ := dataToJsonAdd(curUri, xpath, ygRoot, data.Field, kval, dbDataMap)
 			data    += kdata
             if len(data) > 0 {
 				/* Enclose all list instances with {} */
@@ -182,7 +182,7 @@ func tableNameAndKeyFromDbMapGet(dbDataMap map[string]map[string]db.Value) (stri
 }
 
 /* Traverse linear db-map data and add to nested json data */
-func dbDataToYangJsonCreate(uri string, dbDataMap map[string]map[string]db.Value) (string, error) {
+func dbDataToYangJsonCreate(uri string, ygRoot *ygot.GoStruct, dbDataMap map[string]map[string]db.Value) (string, error) {
     jsonData := ""
 
 	if isCvlYang(uri) {
@@ -209,7 +209,7 @@ func dbDataToYangJsonCreate(uri string, dbDataMap map[string]map[string]db.Value
             if len(curXpath) == 0 || strings.HasPrefix(curXpath, xDbSpecMap[tblName].yangXpath[0]) {
                 curXpath = xDbSpecMap[tblName].yangXpath[0]
             }
-            jsonData += listDataToJsonAdd(uri, xDbSpecMap[tblName].yangXpath, dbDataMap[tblName], "", dbDataMap)
+            jsonData += listDataToJsonAdd(uri, ygRoot, xDbSpecMap[tblName].yangXpath, dbDataMap[tblName], "", dbDataMap)
          }
     }
     if strings.HasPrefix(reqXpath, curXpath) {
