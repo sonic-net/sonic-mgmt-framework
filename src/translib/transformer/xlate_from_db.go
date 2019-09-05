@@ -13,9 +13,6 @@ import (
 )
 
 func xfmrHandlerFunc(d *db.DB, xpath string, uri string, ygRoot *ygot.GoStruct, dbDataMap map[string]map[string]db.Value) (string, error) {
-    //var root ygot.ValidatedGoStruct
-    //ygRoot  := &root
-    /*ygot.BuildEmptyTree(root)*/
     ret, err := XlateFuncCall(dbToYangXfmrFunc(xSpecMap[xpath].xfmrFunc), d, ygRoot, GET, uri, dbDataMap)
     if err != nil {
         return "", err
