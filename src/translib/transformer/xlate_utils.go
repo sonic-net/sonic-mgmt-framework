@@ -219,4 +219,24 @@ func dbToYangXfmrFunc(funcName string) string {
     return ("DbToYang_" + funcName)
 }
 
-
+func uriModuleNameGet(uri string) (string, error) {
+	var err error
+	result := ""
+	if len(uri) == 0 {
+		log.Error("Empty uri string supplied")
+		return result, err
+	}
+	urislice := strings.Split(uri, ":")
+	if len(urislice) == 1 {
+		log.Errorf("uri string %s does not have module name", uri)
+		return result, err
+	}
+	moduleNm := strings.Split(urislice[0], "/")
+	result = moduleNm[1]
+	if len(strings.Trim(result, " ")) == 0 {
+		log.Error("Empty module name")
+		err = fmt.Errorf("No module name found in uri %s", uri)
+        }
+	log.Info("module name = ", result)
+	return result, err
+}

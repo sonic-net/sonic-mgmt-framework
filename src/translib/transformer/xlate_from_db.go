@@ -181,7 +181,14 @@ func tableNameAndKeyFromDbMapGet(dbDataMap map[string]map[string]db.Value) (stri
 /* Traverse linear db-map data and add to nested json data */
 func dbDataToYangJsonCreate(uri string, ygRoot *ygot.GoStruct, dbDataMap map[string]map[string]db.Value) (string, error) {
     jsonData := ""
-
+	moduleNm, err := uriModuleNameGet(uri)
+	if err != nil {
+		return jsonData, err
+	}
+	tableOrder, err := GetOrdDBTblList(moduleNm)
+	if err != nil {
+		return jsonData, err
+	}
 	if isCvlYang(uri) {
 		jsonData := directDbToYangJsonCreate(dbDataMap, jsonData)
 		jsonDataPrint(jsonData)
@@ -199,7 +206,7 @@ func dbDataToYangJsonCreate(uri string, ygRoot *ygot.GoStruct, dbDataMap map[str
     }
 
     curXpath := ""
-    tableOrder := [...]string{"ACL_TABLE", "ACL_RULE"}
+    //tableOrder := [...]string{"ACL_TABLE", "ACL_RULE"}
     for tblId := range tableOrder {
         tblName := tableOrder[tblId]
         if dbDataMap[tblName] != nil {
