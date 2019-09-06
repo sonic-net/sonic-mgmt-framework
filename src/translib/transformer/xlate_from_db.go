@@ -206,7 +206,6 @@ func dbDataToYangJsonCreate(uri string, ygRoot *ygot.GoStruct, dbDataMap map[str
     }
 
     curXpath := ""
-    //tableOrder := [...]string{"ACL_TABLE", "ACL_RULE"}
     for tblId := range tableOrder {
         tblName := tableOrder[tblId]
         if dbDataMap[tblName] != nil {
