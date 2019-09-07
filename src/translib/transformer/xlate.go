@@ -352,15 +352,9 @@ func extractFieldFromDb(tableName string, keyStr string, fieldName string, data 
 }
 
 func GetModuleNmFromPath(uri string) (string, error) {
-        path, err := ygot.StringToPath(uri, ygot.StructuredPath, ygot.StringSlicePath)
-        if err != nil {
-                log.Error("Error in uri to path conversion: ", err)
-                return "", err
-        }
-        pathSlice := strings.Split(path.Elem[0].Name, ":")
-	moduleNm := pathSlice[0]
-        log.Info("Module name for given path = ", moduleNm)
-        return moduleNm, err
+	log.Infof("received uri %s to extract module name from ", uri)
+	moduleNm, err := uriModuleNameGet(uri)
+	return moduleNm, err
 }
 
 func GetOrdDBTblList(ygModuleNm string) ([]string, error) {
