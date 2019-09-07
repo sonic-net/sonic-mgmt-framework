@@ -19,7 +19,7 @@ type KeyXfmrYangToDb func (*db.DB, *ygot.GoStruct, int, string) (string, error)
  * Param: Database info, operation, Database keys to access db entry
  * Return: multi dimensional map to hold the yang key attributes of complete xpath, error
  **/
-type KeyXfmrDbToYang func (*db.DB, int, string) (map[string]map[string]string, error)
+type KeyXfmrDbToYang func (*db.DB, int, string) (map[string]string, error)
 
 /**
  * FieldXfmrYangToDb type is defined to use for conversion of yang Field to DB field
@@ -34,7 +34,7 @@ type FieldXfmrYangToDb func (*db.DB, *ygot.GoStruct, int, string, interface {}) 
  * Param: Database info, operation, DB data in multidimensional map, output param YgotRoot
  * Return: error
  **/
-type FieldXfmrDbtoYang func (*db.DB, int, map[string]map[string]db.Value, *ygot.GoStruct)  (error)
+type FieldXfmrDbtoYang func (*db.DB, int, map[string]map[string]db.Value, *ygot.GoStruct, string)  (map[string]interface{}, error)
 
 /**
  * SubTreeXfmrYangToDb type is defined to use for handling the yang subtree to DB

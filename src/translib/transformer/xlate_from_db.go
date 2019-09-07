@@ -13,15 +13,11 @@ import (
 )
 
 func xfmrHandlerFunc(d *db.DB, xpath string, uri string, ygRoot *ygot.GoStruct, dbDataMap map[string]map[string]db.Value) (string, error) {
-    ret, err := XlateFuncCall(dbToYangXfmrFunc(xSpecMap[xpath].xfmrFunc), d, ygRoot, GET, uri, dbDataMap)
+    _, err := XlateFuncCall(dbToYangXfmrFunc(xSpecMap[xpath].xfmrFunc), d, GET, dbDataMap, ygRoot)
     if err != nil {
         return "", err
     }
 
-    errData    := ret[0].Interface().(error)
-    if errData != nil {
-        return "", errData
-    }
     ocbSch, _  := ocbinds.Schema()
     schRoot    := ocbSch.RootSchema()
     device     := (*ygRoot).(*ocbinds.Device)
@@ -52,6 +48,21 @@ func xfmrHandlerFunc(d *db.DB, xpath string, uri string, ygRoot *ygot.GoStruct, 
     return payload, err
 }
 
+func leafXfmrHandlerFunc(d *db.DB, xpath string, uri string, ygRoot *ygot.GoStruct, dbDataMap map[string]map[string]db.Value) (string, error) {
+    _, keyName, _ := xpathKeyExtract(d, ygRoot, GET, uri)
+    ret, err := XlateFuncCall(dbToYangXfmrFunc(xSpecMap[xpath].xfmrFunc), d, GET, dbDataMap, ygRoot, keyName)
+    if err != nil {
+        return "", err
+    }
+    fldValMap := ret[0].Interface().(map[string]interface{})
+    data      := ""
+    for f, v  :=  range fldValMap {
+        value := fmt.Sprintf("%v", v)
+        data += fmt.Sprintf("\"%v\" : \"%v\",", f, value)
+    }
+    return data, nil
+}
+
 /* Traverse db map and add data to json */
 func dataToJsonAdd(uri string, xpath string, ygRoot *ygot.GoStruct, fieldData map[string]string, key string, dbDataMap map[string]map[string]db.Value) (string, error) {
     spec, ok := xSpecMap[xpath]
@@ -66,7 +77,7 @@ func dataToJsonAdd(uri string, xpath string, ygRoot *ygot.GoStruct, fieldData ma
                 if ftype == "leaf" {
                     if len(xSpecMap[fldXpath].xfmrFunc) > 0 {
                         /* field transformer present */
-                        jsonStr, err  := xfmrHandlerFunc(nil, fldXpath, curUri, ygRoot, dbDataMap)
+                        jsonStr, err  := leafXfmrHandlerFunc(nil, fldXpath, curUri, ygRoot, dbDataMap)
                         if err != nil {
                             return "", err
                         }
@@ -74,7 +85,7 @@ func dataToJsonAdd(uri string, xpath string, ygRoot *ygot.GoStruct, fieldData ma
                     } else {
                         /* Add db field and value to json, call xfmr if needed */
                         fldName := xSpecMap[fldXpath].fieldName
-                        if len(fldName) > 0 {
+                        if len(fldName) > 0  && !xSpecMap[fldXpath].isKey {
                             val, ok := fieldData[fldName]
                             if ok {
                                 jsonData += fmt.Sprintf("\"%v\" : \"%v\",", xSpecMap[fldXpath].yangEntry.Name, val)
@@ -127,7 +138,7 @@ func listDataToJsonAdd(uri string, ygRoot *ygot.GoStruct, xpathl []string, dataM
 			curUri, kdata, _ := dbKeyToYangDataConvert(uri, xpath, kval)
 			/* Traverse list members and add to json */
 			data, _ := dataToJsonAdd(curUri, xpath, ygRoot, data.Field, kval, dbDataMap)
-			data    += kdata
+			data    = kdata + data
             if len(data) > 0 {
 				/* Enclose all list instances with {} */
                 jsonData += fmt.Sprintf("{\r\n %v },", data)

@@ -24,6 +24,7 @@ type yangXpathInfo  struct {
     xfmrKey        string
     dbIndex        db.DBNum
     keyLevel       int
+    isKey          bool
 }
 
 type dbInfo  struct {
@@ -106,6 +107,9 @@ func yangToDbMapFill (keyLevel int, xSpecMap map[string]*yangXpathInfo, entry *y
         keyXpath        := make([]string, len(strings.Split(entry.Key, " ")))
         for id, keyName := range(strings.Split(entry.Key, " ")) {
             keyXpath[id] = xpath + "/" + keyName
+            keyXpathData := new(yangXpathInfo)
+            xSpecMap[xpath + "/" + keyName] = keyXpathData
+            xSpecMap[xpath + "/" + keyName].isKey = true
         }
 
         xpathData.keyXpath = make(map[int]*[]string, (parentKeyLen + 1))
@@ -116,6 +120,7 @@ func yangToDbMapFill (keyLevel int, xSpecMap map[string]*yangXpathInfo, entry *y
         }
         xpathData.keyXpath[k] = &keyXpath
         xpathData.keyLevel    = curKeyLevel
+        curKeyLevel++
     } else if parentXpathData != nil && parentXpathData.keyXpath != nil {
         xpathData.keyXpath = parentXpathData.keyXpath
     }
@@ -362,6 +367,7 @@ func mapPrint(inMap map[string]*yangXpathInfo, fileName string) {
         for i, kd := range d.keyXpath {
             fmt.Fprintf(fp, "        %d. %#v\r\n", i, kd)
         }
+        fmt.Fprintf(fp, "\r\n    isKey   : %v\r\n", d.isKey)
     }
     fmt.Fprintf (fp, "-----------------------------------------------------------------\r\n")
 

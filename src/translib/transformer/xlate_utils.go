@@ -84,7 +84,6 @@ func yangTypeGet(entry *yang.Entry) string {
 }
 
 func dbKeyToYangDataConvert(uri string, xpath string, dbKey string) (string, string, error) {
-    fmt.Printf("MARI [in] (uri:%v)(xp:%v)\r\n", uri, xpath)
     var kLvlValList []string
     keyDataList := strings.Split(dbKey, "|")
     keyNameList := yangKeyFromEntryGet(xSpecMap[xpath].yangEntry)
@@ -95,6 +94,20 @@ func dbKeyToYangDataConvert(uri string, xpath string, dbKey string) (string, str
     /* if uri contins key, use it else use xpath */
     if strings.Contains(uri, "[") {
         uriWithKey  = fmt.Sprintf("%v", uri)
+    }
+
+    if len(xSpecMap[xpath].xfmrKey) > 0 {
+        var d *db.DB
+        ret, err := XlateFuncCall(dbToYangXfmrFunc(xSpecMap[xpath].xfmrKey), d, GET, dbKey)
+        if err != nil {
+            return "","",err
+        }
+        rmap  := ret[0].Interface().(map[string]string)
+        for k, v := range rmap {
+            jsonData += fmt.Sprintf("\"%v\" : \"%v\",\r\n", k, v)
+            uriWithKey += fmt.Sprintf("[%v=%v]", k, v)
+        }
+        return uriWithKey, jsonData, nil
     }
     kLvlValList = append(kLvlValList, keyDataList[id])
 
@@ -122,7 +135,6 @@ func dbKeyToYangDataConvert(uri string, xpath string, dbKey string) (string, str
         uriWithKey += fmt.Sprintf("[%v=%v]", kname, kval)
     }
 
-    fmt.Printf("MARI [out] (uri:%v)(xp:%v)\r\n", uriWithKey, xpath)
     return uriWithKey, jsonData, nil
  }
 
@@ -218,5 +230,3 @@ func getDbNum(xpath string ) db.DBNum {
 func dbToYangXfmrFunc(funcName string) string {
     return ("DbToYang_" + funcName)
 }
-
-
