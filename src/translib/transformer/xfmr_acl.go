@@ -15,8 +15,12 @@ import (
 )
 
 func init () {
+    XlateFuncBind("YangToDb_acl_set_name_xfmr", YangToDb_acl_set_name_xfmr)
+    XlateFuncBind("DbToYang_acl_set_name_xfmr", DbToYang_acl_set_name_xfmr)
     XlateFuncBind("YangToDb_acl_entry_key_xfmr", YangToDb_acl_entry_key_xfmr)
     XlateFuncBind("DbToYang_acl_entry_key_xfmr", DbToYang_acl_entry_key_xfmr)
+    XlateFuncBind("YangToDb_acl_entry_sequenceid_xfmr", YangToDb_acl_entry_sequenceid_xfmr)
+    XlateFuncBind("DbToYang_acl_entry_sequenceid_xfmr", DbToYang_acl_entry_sequenceid_xfmr)
     XlateFuncBind("YangToDb_acl_l2_ethertype_xfmr", YangToDb_acl_l2_ethertype_xfmr)
     XlateFuncBind("DbToYang_acl_l2_ethertype_xfmr", DbToYang_acl_l2_ethertype_xfmr)
     XlateFuncBind("YangToDb_acl_ip_protocol_xfmr", YangToDb_acl_ip_protocol_xfmr)
@@ -185,6 +189,26 @@ func getL2EtherType(etherType uint64) interface{} {
     return uint16(etherType)
 }
 
+var YangToDb_acl_set_name_xfmr FieldXfmrYangToDb = func (d *db.DB, ygRoot *ygot.GoStruct, opType int, xpath string, name interface {}) (map[string]string, error) {
+    res_map := make(map[string]string)
+    var err error
+    log.Info("YangToDb_acl_set_name_xfmr: ")
+    /*no-op since there is no redis table field to be filled corresponding to name attribute since its part of key */
+    return res_map, err
+}
+
+var DbToYang_acl_set_name_xfmr FieldXfmrDbtoYang = func (d *db.DB, opType int, data map[string]map[string]db.Value, ygRoot *ygot.GoStruct, key string)  (map[string]interface{}, error) {
+    res_map := make(map[string]interface{})
+    var err error
+    log.Info("DbToYang_acl_set_name_xfmr: ", key)
+    /*name attribute corresponds to key in redis table*/
+    aclName, _ := getOCAclKeysFromStrDBKey(key)
+    res_map["name"] = aclName
+    log.Info("acl-set/config/name  ", res_map)
+    return res_map, err
+}
+
+
 var YangToDb_acl_entry_key_xfmr KeyXfmrYangToDb = func (d *db.DB, ygRoot *ygot.GoStruct, opType int, xpath string) (string, error) {
     var entry_key string
     var err error
@@ -231,6 +255,33 @@ var DbToYang_acl_entry_key_xfmr KeyXfmrDbToYang = func (d *db.DB, opType int, en
     seqId := strings.Replace(dbAclRule, "RULE_", "", 1)
     rmap["sequence-id"] = seqId
     return rmap, err
+}
+
+var YangToDb_acl_entry_sequenceid_xfmr FieldXfmrYangToDb = func (d *db.DB, ygRoot *ygot.GoStruct, opType int, xpath string, sequence_id interface {}) (map[string]string, error) {
+    res_map := make(map[string]string)
+    var err error
+    log.Info("YangToDb_acl_entry_sequenceid_xfmr: ")
+    /*no-op since there is no redis table field to be filled corresponding to sequenec-id attribute since its part of key */
+    return res_map, err
+}
+
+var DbToYang_acl_entry_sequenceid_xfmr FieldXfmrDbtoYang = func (d *db.DB, opType int, data map[string]map[string]db.Value, ygRoot *ygot.GoStruct, key string)  (map[string]interface{}, error) {
+    res_map := make(map[string]interface{})
+    var err error
+    log.Info("DbToYang_acl_entry_sequenceid_xfmr: ", key)
+    /*sequenec-id attribute corresponds to key in redis table*/
+    res, err := DbToYang_acl_entry_key_xfmr(d, opType, key)
+    log.Info("acl-entry/config/sequence-id ", res)
+    if err != nil {
+	    return res_map, err
+    }
+    if seqId, ok := res["sequence-id"]; !ok {
+	    log.Error("sequence-id not found in acl entry")
+	    return res_map, err
+    } else {
+	    res_map["sequence-id"] = seqId
+    }
+    return res_map, err
 }
 
 var YangToDb_acl_l2_ethertype_xfmr FieldXfmrYangToDb = func (d *db.DB, ygRoot *ygot.GoStruct, opType int, xpath string, ethertype interface {}) (map[string]string, error) {
@@ -978,7 +1029,7 @@ func getAllBindingsInfo(aclTableMap map[string]db.Value, ruleTableMap map[string
             }
         }
     }
-
+    //ygot.BuildEmptyTree(acl)
     for _, intfId := range interfaces {
         var intfData *ocbinds.OpenconfigAcl_Acl_Interfaces_Interface
         intfData, ok := acl.Interfaces.Interface[intfId]
