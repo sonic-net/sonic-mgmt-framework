@@ -3,6 +3,7 @@ package transformer
 import (
     "fmt"
     "strings"
+    "reflect"
     "translib/db"
     "github.com/openconfig/goyang/pkg/yang"
     "github.com/openconfig/gnmi/proto/gnmi"
@@ -83,7 +84,7 @@ func yangTypeGet(entry *yang.Entry) string {
     return ""
 }
 
-func dbKeyToYangDataConvert(uri string, xpath string, dbKey string) (string, string, error) {
+func dbKeyToYangDataConvert(uri string, xpath string, dbKey string) (map[string]string, string, string, error) {
     var kLvlValList []string
     keyDataList := strings.Split(dbKey, "|")
     keyNameList := yangKeyFromEntryGet(xSpecMap[xpath].yangEntry)
@@ -100,14 +101,14 @@ func dbKeyToYangDataConvert(uri string, xpath string, dbKey string) (string, str
         var d *db.DB
         ret, err := XlateFuncCall(dbToYangXfmrFunc(xSpecMap[xpath].xfmrKey), d, GET, dbKey)
         if err != nil {
-            return "","",err
+            return nil, "","",err
         }
         rmap  := ret[0].Interface().(map[string]string)
         for k, v := range rmap {
             jsonData += fmt.Sprintf("\"%v\" : \"%v\",\r\n", k, v)
             uriWithKey += fmt.Sprintf("[%v=%v]", k, v)
         }
-        return uriWithKey, jsonData, nil
+        return rmap, uriWithKey, jsonData, nil
     }
     kLvlValList = append(kLvlValList, keyDataList[id])
 
@@ -123,6 +124,7 @@ func dbKeyToYangDataConvert(uri string, xpath string, dbKey string) (string, str
         chgId = len(keyNameList) - 1
     }
 
+    rmap := make(map[string]string)
     for i, kname := range keyNameList {
         kval := kLvlValList[i]
 
@@ -133,9 +135,10 @@ func dbKeyToYangDataConvert(uri string, xpath string, dbKey string) (string, str
 
         jsonData   += fmt.Sprintf("\"%v\" : \"%v\",", kname, kval)
         uriWithKey += fmt.Sprintf("[%v=%v]", kname, kval)
+        rmap[kname] = kval
     }
 
-    return uriWithKey, jsonData, nil
+    return rmap, uriWithKey, jsonData, nil
  }
 
 
@@ -251,4 +254,58 @@ func uriModuleNameGet(uri string) (string, error) {
         }
 	log.Info("module name = ", result)
 	return result, err
+}
+
+func recMap(rMap interface{}, name []string, id int, max int) {
+    if id == max {
+        return
+    }
+    val := name[id]
+       if reflect.ValueOf(rMap).Kind() == reflect.Map {
+               data := reflect.ValueOf(rMap)
+               dMap := data.Interface().(map[string]interface{})
+               _, ok := dMap[val]
+               if ok {
+                       recMap(dMap[val], name, id+1, max)
+               } else {
+                       dMap[val] = make(map[string]interface{})
+                       recMap(dMap[val], name, id+1, max)
+               }
+       }
+       return
+}
+
+func mapCreate(xpath string) map[string]interface{} {
+    retMap   := make(map[string]interface{})
+    attrList := strings.Split(xpath, "/")
+    alLen    := len(attrList)
+    recMap(retMap, attrList, 1, alLen)
+    return retMap
+}
+
+func mapInstGet(name []string, id int, max int, inMap interface{}) map[string]interface{} {
+    result := reflect.ValueOf(inMap).Interface().(map[string]interface{})
+    if id == max {
+        return result
+    }
+    val := name[id]
+    if reflect.ValueOf(inMap).Kind() == reflect.Map {
+        data := reflect.ValueOf(inMap)
+        dMap := data.Interface().(map[string]interface{})
+        _, ok := dMap[val]
+        if ok {
+            result = mapInstGet(name, id+1, max, dMap[val])
+        } else {
+            return result
+        }
+    }
+    return result
+}
+
+func mapGet(xpath string, inMap map[string]interface{}) map[string]interface{} {
+    attrList := strings.Split(xpath, "/")
+    alLen    := len(attrList)
+    recMap(inMap, attrList, 1, alLen)
+    retMap := mapInstGet(attrList, 1, alLen, inMap)
+    return retMap
 }

@@ -860,7 +860,6 @@ var YangToDb_acl_port_bindings_xfmr SubTreeXfmrYangToDb = func (d *db.DB, ygRoot
 var DbToYang_acl_port_bindings_xfmr SubTreeXfmrDbToYang = func (d *db.DB, opType int, data map[string]map[string]db.Value, ygRoot *ygot.GoStruct, xpath string) (error) {
     var err error
     log.Info("DbToYang_acl_port_bindings_xfmr: ", data, ygRoot)
-    return nil
 
     aclTbl, ruleTbl, err := getDbAlcTblsData(d)
 
@@ -978,7 +977,7 @@ func getAllBindingsInfo(aclTableMap map[string]db.Value, ruleTableMap map[string
             }
         }
     }
-
+    ygot.BuildEmptyTree(acl)
     for _, intfId := range interfaces {
         var intfData *ocbinds.OpenconfigAcl_Acl_Interfaces_Interface
         intfData, ok := acl.Interfaces.Interface[intfId]
