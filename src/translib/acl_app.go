@@ -1549,6 +1549,11 @@ func (app *AclApp) setAclBindDataInConfigDb(d *db.DB, aclData map[string]db.Valu
 		} else {
 			dbAclIntfs := dbAcl.GetList("ports")
 			if len(dbAclIntfs) > 0 {
+				dbAclDirec := dbAcl.Get("stage")
+				newDirec := aclInfo.Get("stage")
+				if (UPDATE == opcode) && (len(dbAclDirec) > 0) && (len(newDirec) > 0) && (dbAclDirec != newDirec) {
+					return tlerr.InvalidArgs("Acl direction of %s not allowed when it is already configured as %s", newDirec, dbAclDirec)
+				}
 				// Merge interfaces from DB to list in aclInfo and set back in DB
 				intfs := aclInfo.GetList("ports")
 				for _, ifId := range dbAclIntfs {
