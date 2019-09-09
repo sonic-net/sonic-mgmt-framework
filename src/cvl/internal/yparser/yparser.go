@@ -340,6 +340,7 @@ func (yp *YParser) DestroyCache() YParserError {
 
 	if (yp.root != nil) {
 		C.lyd_free_withsiblings((*C.struct_lyd_node)(yp.root))
+		yp.root = nil
 	}
 
 	return YParserError {ErrCode : YP_SUCCESS,}
