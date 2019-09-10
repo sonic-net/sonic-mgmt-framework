@@ -4,6 +4,7 @@
 {% set vars = {'admin_state': ""} %}
 {% set vars = {'oper_state': ""} %}
 {% set vars = {'index': ""} %}
+{% set vars = {'description':""} %}
 {% set vars = {'mtu': ""} %}
 {% set vars = {'ipv4_src_pfx': ""} %}
 {% set vars = {'ipv6_src_pfx': ""} %}
@@ -37,6 +38,7 @@
         {% if vars.update({'admin_state':interface[key]["admin-status"]}) %}{% endif %}
         {% if vars.update({'oper_state':interface[key]["oper-status"]}) %}{% endif %}
         {% if vars.update({'index':interface[key]["ifindex"]}) %}{% endif %}
+	{% if vars.update({'description':interface[key]["description"]}) %}{% endif %}
         {% if vars.update({'mtu':interface[key]["mtu"]}) %}{% endif %}
         {% if vars.update({'in_pkts':interface[key]["counters"]["in-pkts"]}) %}{% endif %}
         {% if vars.update({'in_octets':interface[key]["counters"]["in-octets"]}) %}{% endif %}
@@ -92,6 +94,9 @@
 Hardware is Eth
 
 Interface index is {{ vars.index }}
+{% if vars.description %}
+Description: {{ vars.description }}
+{% endif %}
 {% if vars.ipv4_src_pfx %}
 {{ vars.ipv4 }} address is {{ vars.ipv4_src_pfx }}
 {% endif %}
