@@ -3,12 +3,14 @@ package translib
 import (
 	"errors"
 	"fmt"
+	"strings"
 	log "github.com/golang/glog"
 	"github.com/openconfig/ygot/ygot"
 	"reflect"
 	"translib/db"
 	"translib/tlerr"
 	"translib/transformer"
+	"encoding/json"
 )
 
 var ()
@@ -159,6 +161,10 @@ func (app *CommonApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
 		log.Error("transformer.XlateFromDb() failure")
 		return GetResponse{Payload: payload, ErrSrc: AppErr}, err
 	}
+	var dat map[string]interface{}
+        err = json.Unmarshal(payload, &dat)
+        fmt.Println("RESULT *******  ", dat)
+
 
 	return GetResponse{Payload: payload}, err
 }
@@ -170,6 +176,7 @@ func (app *CommonApp) translateCRUDCommon(d *db.DB, opcode int) ([]db.WatchKeys,
 	var OrdTblList []string
 	var moduleNm string
 	log.Info("translateCRUDCommon:path =", app.pathInfo.Path)
+	d.Opts.DisableCVLCheck = true
 
 	/* retrieve schema table order for incoming module name request */
 	moduleNm, err = transformer.GetModuleNmFromPath(app.pathInfo.Path)
@@ -259,7 +266,7 @@ func (app *CommonApp) cmnAppCRUCommonDbOpn(d *db.DB, opcode int) error {
 				switch opcode {
 				case CREATE:
 					if existingEntry.IsPopulated() {
-						log.Info("Entry already exists hence return error.")
+						log.Info("Entry already exists hence return do an update.")
 						return tlerr.AlreadyExists("Entry %s already exists", tblKey)
 					} else {
 						err = d.CreateEntry(cmnAppTs, db.Key{Comp: []string{tblKey}}, tblRw)
@@ -271,7 +278,12 @@ func (app *CommonApp) cmnAppCRUCommonDbOpn(d *db.DB, opcode int) error {
 				case UPDATE:
 					if existingEntry.IsPopulated() {
 						log.Info("Entry already exists hence modifying it.")
-						err = d.ModEntry(cmnAppTs, db.Key{Comp: []string{tblKey}}, tblRw)
+						/* Handle leaf-list merge 
+						   A leaf-list field in redis has "@" suffix as per swsssdk convention.
+						 */
+						resTblRw := db.Value{Field: map[string]string{}}
+						resTblRw = processLeafList(existingEntry, tblRw, UPDATE, d, tblNm, tblKey)
+						err = d.ModEntry(cmnAppTs, db.Key{Comp: []string{tblKey}}, resTblRw)
 						if err != nil {
 							log.Error("UPDATE case - d.ModEntry() failure")
 							return err
@@ -359,7 +371,14 @@ func (app *CommonApp) cmnAppDelDbOpn(d *db.DB, opcode int) error {
 					log.Info("Finally deleted the parent table row with key = ", tblKey)
 				} else {
 					log.Info("DELETE case - fields/cols to delete hence delete only those fields.")
-					err := d.DeleteEntryFields(cmnAppTs, db.Key{Comp: []string{tblKey}}, tblRw)
+					existingEntry, _ := d.GetEntry(cmnAppTs, db.Key{Comp: []string{tblKey}})
+					if !existingEntry.IsPopulated() {
+						log.Info("Table Entry from which the fields are to be deleted does not exist")
+						return err
+					}
+					/*handle leaf-list merge*/
+					resTblRw := processLeafList(existingEntry, tblRw, DELETE, d, tblNm, tblKey)
+					err := d.DeleteEntryFields(cmnAppTs, db.Key{Comp: []string{tblKey}}, resTblRw)
 					if err != nil {
 						log.Error("DELETE case - d.DeleteEntryFields() failure")
 						return err
@@ -378,3 +397,48 @@ func (app *CommonApp) generateDbWatchKeys(d *db.DB, isDeleteOp bool) ([]db.Watch
 
 	return keys, err
 }
+
+func processLeafList(existingEntry db.Value, tblRw db.Value, opcode int, d *db.DB, tblNm string, tblKey string) db.Value {
+	log.Info("process leaf-list Fields in table row.")
+	dbTblSpec := &db.TableSpec{Name: tblNm}
+	mergeTblRw := db.Value{Field: map[string]string{}}
+	for field, value := range tblRw.Field {
+		if strings.HasSuffix(field, "@") {
+			exstLst := existingEntry.GetList(field)
+			if len(exstLst) != 0 {
+				valueLst := strings.Split(value, ",")
+				for _, item := range valueLst {
+					if !contains(exstLst, item) {
+						if opcode == UPDATE {
+							exstLst = append(exstLst, item)
+						}
+					} else {
+						if opcode == DELETE {
+                                                        exstLst = removeElement(exstLst, item)
+                                                }
+
+					}
+				}
+				log.Infof("For field %v value after merge %v", field, exstLst)
+				if opcode == DELETE {
+					mergeTblRw.SetList(field, exstLst)
+					delete(tblRw.Field, field)
+				}
+			}
+			tblRw.SetList(field, exstLst)
+		}
+	}
+	/* delete specific item from leaf-list */
+	if opcode == DELETE {
+		if mergeTblRw.Field == nil {
+			return tblRw
+		}
+		err := d.ModEntry(dbTblSpec, db.Key{Comp: []string{tblKey}}, mergeTblRw)
+		if err != nil {
+			log.Warning("DELETE case(merge leaf-list) - d.ModEntry() failure")
+		}
+	}
+	log.Infof("Returning Table Row %v", tblRw)
+	return tblRw
+}
+
