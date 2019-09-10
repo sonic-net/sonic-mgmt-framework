@@ -43,12 +43,16 @@ REST_BIN = $(BUILD_DIR)/rest_server/main
 CERTGEN_BIN = $(BUILD_DIR)/rest_server/generate_cert
 
 
-all: build-deps go-deps go-patch translib rest-server cli
+all: build-deps go-deps go-redis-patch go-patch translib rest-server cli
 
 build-deps:
 	mkdir -p $(BUILD_DIR)
 
 go-deps: $(GO_DEPS_LIST)
+
+go-redis-patch: go-deps
+	cd $(BUILD_GOPATH)/src/github.com/go-redis/redis; git checkout d19aba07b47683ef19378c4a4d43959672b7cec8 2>/dev/null ; true; \
+$(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/go-redis/redis
 
 $(GO_DEPS_LIST):
 	$(GO) get -v $@
@@ -78,7 +82,7 @@ yamlGen:
 	$(MAKE) -C models/yang
 
 go-patch: go-deps
-	cd $(BUILD_GOPATH)/src/github.com/openconfig/ygot/; git checkout 724a6b18a9224343ef04fe49199dfb6020ce132a 2>/dev/null ; true; \
+	cd $(BUILD_GOPATH)/src/github.com/openconfig/ygot/; git reset --hard HEAD; git checkout 724a6b18a9224343ef04fe49199dfb6020ce132a 2>/dev/null ; true; \
 cp $(TOPDIR)/ygot-modified-files/debug.go $(BUILD_GOPATH)/src/github.com/openconfig/ygot/ytypes/../util/debug.go; \
 cp $(TOPDIR)/ygot-modified-files/node.go $(BUILD_GOPATH)/src/github.com/openconfig/ygot/ytypes/node.go; \
 cp $(TOPDIR)/ygot-modified-files/container.go $(BUILD_GOPATH)/src/github.com/openconfig/ygot/ytypes/container.go; \
@@ -100,7 +104,11 @@ install:
 	cp -rf $(TOPDIR)/build/rest_server/dist/ui/ $(DESTDIR)/rest_ui/
 	cp -rf $(TOPDIR)/build/cli $(DESTDIR)/usr/sbin/
 	cp -rf $(TOPDIR)/build/swagger_client_py/ $(DESTDIR)/usr/sbin/lib/
+	cp -rf $(TOPDIR)/src/cvl/conf/cvl_cfg.json $(DESTDIR)/usr/sbin/cvl_cfg.json
 
+ifeq ($(SONIC_COVERAGE_ON),y)
+	echo "" > $(DESTDIR)/usr/sbin/.test
+endif
 
 $(addprefix $(DEST)/, $(MAIN_TARGET)): $(DEST)/% :
 	mv $* $(DEST)/

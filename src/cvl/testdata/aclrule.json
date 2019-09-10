@@ -1,0 +1,8 @@
+{
+	"PACKET_ACTION": "FORWARD",
+		"SRC_IP": "10.1.1.1/32",
+		"L4_SRC_PORT": "1909",
+		"IP_PROTOCOL": "103",
+		"DST_IP": "20.2.2.2/32",
+		"L4_DST_PORT_RANGE": "9000-12000"
+}

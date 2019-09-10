@@ -18,6 +18,7 @@ import (
 
 	log "github.com/golang/glog"
 	"github.com/openconfig/gnmi/proto/gnmi"
+	"github.com/openconfig/goyang/pkg/yang"
 	"github.com/openconfig/ygot/ygot"
 	"github.com/openconfig/ygot/ytypes"
 )
@@ -131,6 +132,38 @@ func generateGetResponsePayload(targetUri string, deviceObj *ocbinds.Device, ygo
 	return payload, err
 }
 
+func getTargetNodeYangSchema(targetUri string, deviceObj *ocbinds.Device) (*yang.Entry, error) {
+	if len(targetUri) == 0 {
+		return nil, tlerr.InvalidArgs("GetResponse failed as target Uri is not valid")
+	}
+	path, err := ygot.StringToPath(targetUri, ygot.StructuredPath, ygot.StringSlicePath)
+	if err != nil {
+		return nil, tlerr.InvalidArgs("URI to path conversion failed: %v", err)
+	}
+	// Get current node (corresponds to ygotTarget)
+	var pathList []*gnmi.PathElem = path.Elem
+	for i := 0; i < len(pathList); i++ {
+		if log.V(3) {
+			log.Infof("pathList[%d]: %s\n", i, pathList[i])
+		}
+		pathSlice := strings.Split(pathList[i].Name, ":")
+		pathList[i].Name = pathSlice[len(pathSlice)-1]
+	}
+	targetNodeList, err := ytypes.GetNode(ygSchema.RootSchema(), deviceObj, path, &(ytypes.GetPartialKeyMatch{}))
+	if err != nil {
+		return nil, tlerr.InvalidArgs("Getting node information failed: %v", err)
+	}
+	if len(targetNodeList) == 0 {
+		return nil, tlerr.NotFound("Resource not found")
+	}
+	targetNodeSchema := targetNodeList[0].Schema
+	//targetNode := targetNodeList[0].Data
+	if log.V(3) {
+		log.Infof("Target node yang name: %s\n", targetNodeSchema.Name)
+	}
+	return targetNodeSchema, nil
+}
+
 func dumpIetfJson(s ygot.ValidatedGoStruct, skipValidation bool) ([]byte, error) {
 	jsonStr, err := ygot.EmitJSON(s, &ygot.EmitJSONConfig{
 		Format:         ygot.RFC7951,
@@ -179,4 +212,8 @@ func isNotFoundError(err error) bool {
 // asKey cretaes a db.Key from given key components
 func asKey(parts ...string) db.Key {
 	return db.Key{Comp: parts}
+}
+
+func createEmptyDbValue(fieldName string) db.Value {
+	return db.Value{Field: map[string]string{fieldName: ""}}
 }

@@ -155,7 +155,7 @@ func TestUnMarshallUri(t *testing.T) {
 		opcode:      1,
 		payload:     []byte{},
 		appRootType: reflect.TypeOf(ocbinds.OpenconfigAcl_Acl{}),
-		want:        "failed to create map value for insert, root map[ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_Key]*ocbinds.OpenconfigAcl_Acl_AclSets_AclSet, keys map[name:Sample type:ACL_IPVX]: no enum matching with ACL_IPVX: <nil>",
+		want:        "no enum matching with ACL_IPVX: <nil>",
 	}, {
 		//Negative test case
 		tid:         9,

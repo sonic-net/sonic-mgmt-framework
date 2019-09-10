@@ -34,6 +34,19 @@ var (
 	clientAuth string // Client auth mode
 )
 
+func init() {
+	// Parse command line
+	flag.IntVar(&port, "port", 443, "Listen port")
+	flag.StringVar(&uiDir, "ui", "/rest_ui", "UI directory")
+	flag.StringVar(&certFile, "cert", "", "Server certificate file path")
+	flag.StringVar(&keyFile, "key", "", "Server private key file path")
+	flag.StringVar(&caFile, "cacert", "", "CA certificate for client certificate validation")
+	flag.StringVar(&clientAuth, "client_auth", "none", "Client auth mode - none|cert|user")
+	flag.Parse()
+	// Suppress warning messages related to logging before flag parse
+	flag.CommandLine.Parse([]string{})
+}
+
 // Start REST server
 func main() {
 
@@ -54,24 +67,13 @@ func main() {
 		prof.Stop()
 	}()
 
-	// Parse command line
-	flag.IntVar(&port, "port", 443, "Listen port")
-	flag.StringVar(&uiDir, "ui", "/rest_ui", "UI directory")
-	flag.StringVar(&certFile, "cert", "", "Server certificate file path")
-	flag.StringVar(&keyFile, "key", "", "Server private key file path")
-	flag.StringVar(&caFile, "cacert", "", "CA certificate for client certificate validation")
-	flag.StringVar(&clientAuth, "client_auth", "none", "Client auth mode - none|cert|user")
-	flag.Parse()
-	// Suppress warning messages related to logging before flag parse
-        flag.CommandLine.Parse([]string{})
-
 	swagger.Load()
 
 	server.SetUIDirectory(uiDir)
 
-    if clientAuth == "user" {
-        server.SetUserAuthEnable(true)
-    }
+	if clientAuth == "user" {
+		server.SetUserAuthEnable(true)
+	}
 
 	router := server.NewRouter()
 

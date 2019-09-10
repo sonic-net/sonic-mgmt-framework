@@ -331,10 +331,14 @@ func (app *AclApp) processCommon(d *db.DB, opcode int) error {
 						case UPDATE:
 							err = d.ModEntry(app.ruleTs, db.Key{Comp: []string{aclKey, ruleKey}}, app.ruleTableMap[aclKey][ruleKey])
 						case DELETE:
-							if isRuleNodeSubtree {
-								err = d.SetEntry(app.ruleTs, db.Key{Comp: []string{aclKey, ruleKey}}, app.ruleTableMap[aclKey][ruleKey])
-							} else if *app.ygotTarget == entrySet {
+							if *app.ygotTarget == entrySet {
 								err = d.DeleteEntry(app.ruleTs, db.Key{Comp: []string{aclKey, ruleKey}})
+							} else if isRuleNodeSubtree {
+								err = app.handleRuleFieldsDeletion(d, aclKey, ruleKey)
+								if err != nil {
+									return err
+								}
+								//err = d.SetEntry(app.ruleTs, db.Key{Comp: []string{aclKey, ruleKey}}, app.ruleTableMap[aclKey][ruleKey])
 							} else {
 								log.Errorf("processCommon: Given DELETE path %s not handled", targetUriPath)
 							}
@@ -361,7 +365,7 @@ func (app *AclApp) processCommon(d *db.DB, opcode int) error {
 						}
 					case REPLACE:
 						if *app.ygotTarget == aclSet || isAclEntriesSubtree {
-							err = d.DeleteKeys(app.ruleTs, db.Key{Comp: []string{aclKey + TABLE_SEPARATOR + "*"}})
+							err = d.DeleteKeys(app.ruleTs, db.Key{Comp: []string{aclKey + TABLE_SEPARATOR + "RULE_*"}})
 							if err != nil {
 								return err
 							}
@@ -371,7 +375,7 @@ func (app *AclApp) processCommon(d *db.DB, opcode int) error {
 							}
 						}
 						if !isAclEntriesSubtree {
-							err = d.SetEntry(app.aclTs, db.Key{Comp: []string{aclKey}}, app.aclTableMap[aclKey])
+							err = d.ModEntry(app.aclTs, db.Key{Comp: []string{aclKey}}, app.aclTableMap[aclKey])
 						}
 					case UPDATE:
 						if !isAclEntriesSubtree {
@@ -392,9 +396,16 @@ func (app *AclApp) processCommon(d *db.DB, opcode int) error {
 							}
 							err = d.DeleteEntry(app.aclTs, db.Key{Comp: []string{aclKey}})
 						} else if isAclEntriesSubtree {
-							err = d.DeleteKeys(app.ruleTs, db.Key{Comp: []string{aclKey + TABLE_SEPARATOR + "*"}})
+							err = d.DeleteKeys(app.ruleTs, db.Key{Comp: []string{aclKey + TABLE_SEPARATOR + "RULE_*"}})
 						} else {
-							err = d.SetEntry(app.aclTs, db.Key{Comp: []string{aclKey}}, app.aclTableMap[aclKey])
+							nodeInfo, err := getTargetNodeYangSchema(app.pathInfo.Path, (*app.ygotRoot).(*ocbinds.Device))
+							if err != nil {
+								return err
+							}
+							if nodeInfo != nil && nodeInfo.IsLeaf() && nodeInfo.Name == "description" {
+								err = d.DeleteEntryFields(app.aclTs, asKey(aclKey), createEmptyDbValue(ACL_DESCRIPTION))
+							}
+							//err = d.SetEntry(app.aclTs, db.Key{Comp: []string{aclKey}}, app.aclTableMap[aclKey])
 						}
 					case GET:
 						err = app.convertDBAclToInternal(d, db.Key{Comp: []string{aclKey}})
@@ -1381,6 +1392,95 @@ func convertOCToInternalInputAction(ruleData db.Value, aclName string, ruleIndex
 	}
 }
 
+func (app *AclApp) handleRuleFieldsDeletion(d *db.DB, aclKey string, ruleKey string) error {
+	var err error
+
+	ruleEntry, err := d.GetEntry(app.ruleTs, asKey(aclKey, ruleKey))
+	if err != nil {
+		return err
+	}
+	nodeInfo, err := getTargetNodeYangSchema(app.pathInfo.Path, (*app.ygotRoot).(*ocbinds.Device))
+	if err != nil {
+		return err
+	}
+	if nodeInfo.IsLeaf() {
+		switch nodeInfo.Name {
+		case "description":
+			(&ruleEntry).Remove("RULE_DESCRIPTION")
+		// L2
+		case "ethertype":
+			(&ruleEntry).Remove("ETHER_TYPE")
+			// IPv4/IPv6
+		case "source-address":
+			if strings.Contains(app.pathInfo.Path, "ipv4/config") {
+				(&ruleEntry).Remove("SRC_IP")
+			} else if strings.Contains(app.pathInfo.Path, "ipv6/config") {
+				(&ruleEntry).Remove("SRC_IPV6")
+			}
+		case "destination-address":
+			if strings.Contains(app.pathInfo.Path, "ipv4/config") {
+				(&ruleEntry).Remove("DST_IP")
+			} else if strings.Contains(app.pathInfo.Path, "ipv6/config") {
+				(&ruleEntry).Remove("DST_IPV6")
+			}
+		case "dscp":
+			(&ruleEntry).Remove("DSCP")
+		case "protocol":
+			(&ruleEntry).Remove("IP_PROTOCOL")
+			// transport
+		case "source-port":
+			(&ruleEntry).Remove("L4_SRC_PORT")
+			(&ruleEntry).Remove("L4_SRC_PORT_RANGE")
+		case "destination-port":
+			(&ruleEntry).Remove("L4_DST_PORT")
+			(&ruleEntry).Remove("L4_DST_PORT_RANGE")
+			// actions
+		case "forwarding-action":
+			(&ruleEntry).Remove("PACKET_ACTION")
+			//input-interface
+		case "interface":
+			(&ruleEntry).Remove("IN_PORTS")
+			//case "subinterface":
+		}
+	} else if nodeInfo.IsContainer() {
+		targetType := reflect.TypeOf(*app.ygotTarget)
+		switch targetType.Elem().Name() {
+		case "OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_L2", "OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_L2_Config":
+			(&ruleEntry).Remove("ETHER_TYPE")
+		case "OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Ipv4", "OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Ipv4_Config":
+			(&ruleEntry).Remove("IP_PROTOCOL")
+			(&ruleEntry).Remove("SRC_IP")
+			(&ruleEntry).Remove("DST_IP")
+			(&ruleEntry).Remove("DSCP")
+		case "OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Ipv6", "OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Ipv6_Config":
+			(&ruleEntry).Remove("IP_PROTOCOL")
+			(&ruleEntry).Remove("SRC_IPV6")
+			(&ruleEntry).Remove("DST_IPV6")
+			(&ruleEntry).Remove("DSCP")
+		case "OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport", "OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config":
+			(&ruleEntry).Remove("L4_SRC_PORT")
+			(&ruleEntry).Remove("L4_SRC_PORT_RANGE")
+			(&ruleEntry).Remove("L4_DST_PORT")
+			(&ruleEntry).Remove("L4_DST_PORT_RANGE")
+			(&ruleEntry).Remove("TCP_FLAGS")
+		case "OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_InputInterface", "OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_InputInterface_InterfaceRef", "OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_InputInterface_InterfaceRef_Config":
+			(&ruleEntry).Remove("IN_PORTS")
+		case "OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Actions", "OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Actions_Config":
+			(&ruleEntry).Remove("PACKET_ACTION")
+		}
+	} else if nodeInfo.IsLeafList() {
+		switch nodeInfo.Name {
+		case "tcp-flags":
+			(&ruleEntry).Remove("TCP_FLAGS")
+		}
+	} else {
+		log.Error("This yang type is not handled currently")
+	}
+	err = d.SetEntry(app.ruleTs, asKey(aclKey, ruleKey), ruleEntry)
+
+	return err
+}
+
 func (app *AclApp) setAclDataInConfigDb(d *db.DB, aclData map[string]db.Value, createFlag bool) error {
 	var err error
 	for key := range aclData {
@@ -1449,6 +1549,11 @@ func (app *AclApp) setAclBindDataInConfigDb(d *db.DB, aclData map[string]db.Valu
 		} else {
 			dbAclIntfs := dbAcl.GetList("ports")
 			if len(dbAclIntfs) > 0 {
+				dbAclDirec := dbAcl.Get("stage")
+				newDirec := aclInfo.Get("stage")
+				if (UPDATE == opcode) && (len(dbAclDirec) > 0) && (len(newDirec) > 0) && (dbAclDirec != newDirec) {
+					return tlerr.InvalidArgs("Acl direction of %s not allowed when it is already configured as %s", newDirec, dbAclDirec)
+				}
 				// Merge interfaces from DB to list in aclInfo and set back in DB
 				intfs := aclInfo.GetList("ports")
 				for _, ifId := range dbAclIntfs {
