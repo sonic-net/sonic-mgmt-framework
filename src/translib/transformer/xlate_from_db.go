@@ -113,12 +113,12 @@ func yangListDataFill(d *db.DB, ygRoot *ygot.GoStruct, uri string, xpath string,
             } else {
                 _, keyFromCurUri, _ := xpathKeyExtract(d, ygRoot, GET, curUri)
                 if dbKey == keyFromCurUri {
-                for k, kv := range curKeyMap {
-                    curMap[k] = kv
-                }
-                curXpath, _ := RemoveXPATHPredicates(curUri)
-                yangDataFill(d, ygRoot, curUri, curXpath, dbDataMap, curMap, tbl, dbKey)
-                mapSlice = append(mapSlice, curMap)
+                    for k, kv := range curKeyMap {
+                        curMap[k] = kv
+                    }
+                    curXpath, _ := RemoveXPATHPredicates(curUri)
+                    yangDataFill(d, ygRoot, curUri, curXpath, dbDataMap, curMap, tbl, dbKey)
+                    mapSlice = append(mapSlice, curMap)
                 }
             }
         }
@@ -202,19 +202,23 @@ func dbDataToYangJsonCreate(uri string, ygRoot *ygot.GoStruct, dbDataMap map[str
 		return jsonData, nil
 	}
 
-    reqXpath, keyName, tableName := xpathKeyExtract(nil, nil, GET, uri)
-    ftype := yangTypeGet(xSpecMap[reqXpath].yangEntry)
-    if ftype == "leaf" {
-        fldName := xSpecMap[reqXpath].fieldName
-        tbl, key, _ := tableNameAndKeyFromDbMapGet(dbDataMap)
-        jsonData = fmt.Sprintf("{\r\n \"%v\" : \"%v\" \r\n }\r\n", xSpecMap[reqXpath].yangEntry.Name,
+    var d *db.DB
+    resultMap := make(map[string]interface{})
+    reqXpath, keyName, tableName := xpathKeyExtract(d, ygRoot, GET, uri)
+    yangNode, ok := xSpecMap[reqXpath]
+    if ok {
+        yangType := yangTypeGet(yangNode.yangEntry)
+        if yangType == "leaf" {
+            fldName := xSpecMap[reqXpath].fieldName
+            tbl, key, _ := tableNameAndKeyFromDbMapGet(dbDataMap)
+            jsonData = fmt.Sprintf("{\r\n \"%v\" : \"%v\" \r\n }\r\n", xSpecMap[reqXpath].yangEntry.Name,
                                dbDataMap[tbl][key].Field[fldName])
-        return jsonData, nil
+            return jsonData, nil
+        } else {
+            yangDataFill(d, ygRoot, uri, reqXpath, dbDataMap, resultMap, tableName, keyName)
+        }
     }
 
-    resultMap := make(map[string]interface{})
-    var d *db.DB
-    yangDataFill(d, ygRoot, uri, reqXpath, dbDataMap, resultMap, tableName, keyName)
     jsonMapData, _ := json.Marshal(resultMap)
     jsonData        = fmt.Sprintf("%v", string(jsonMapData))
     jsonDataPrint(jsonData)

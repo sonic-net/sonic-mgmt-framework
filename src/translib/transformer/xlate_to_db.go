@@ -359,15 +359,13 @@ func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string) (st
     curPathWithKey := ""
 
     for _, k := range strings.Split(path, "/") {
-        xpath := k
         curPathWithKey += k
         if strings.Contains(k, "[") {
             if len(keyStr) > 0 {
                 keyStr += "|"
             }
             yangXpath, _ := RemoveXPATHPredicates(curPathWithKey)
-            xpath = strings.Split(k, "[")[0]
-	    _, ok := xSpecMap[yangXpath]
+	        _, ok := xSpecMap[yangXpath]
 	    if ok {
             if len(xSpecMap[yangXpath].xfmrKey) > 0 {
                 xfmrFuncName := yangToDbXfmrFunc(xSpecMap[yangXpath].xfmrKey)
@@ -384,15 +382,14 @@ func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string) (st
                 keyStr += keyFromXpathCreate(keyl)
             }
 	    }
-            if isCvlYang(path) {
-                //Format- /module:container/table[key]/field
-                // table name extracted from the string token having key entry
-                tableName = xpath
-            }
         }
         curPathWithKey += "/"
     }
     pfxPath, _ := RemoveXPATHPredicates(path)
+    tblPtr     := xSpecMap[pfxPath].tableName
+    if tblPtr != nil {
+        tableName = *tblPtr
+    }
 
     return pfxPath, keyStr, tableName
 }

@@ -2,9 +2,6 @@ package transformer
 
 import (
 	"fmt"
-	//"os"
-	//	"sort"
-	//	"github.com/openconfig/goyang/pkg/yang"
 	"encoding/json"
 	"errors"
 	log "github.com/golang/glog"
@@ -290,38 +287,21 @@ func GetAndXlateFromDB(xpath string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db.DB
 
 func XlateFromDb(xpath string, ygRoot *ygot.GoStruct, data map[string]map[string]db.Value) ([]byte, error) {
 	var err error
-	var fieldName, tableName, yangXpath string
 	var dbData = make(map[string]map[string]db.Value)
 
 	dbData = data
 	if isCvlYang(xpath) {
-		yXpath, keyStr, tableName := sonicXpathKeyExtract(xpath)
-		yangXpath = yXpath
+		yangXpath, keyStr, tableName := sonicXpathKeyExtract(xpath)
 		if (tableName != "") {
 			tokens:= strings.Split(yangXpath, "/")
 			// Format /module:container/tableName[key]/fieldName
 			if tokens[len(tokens)-2] == tableName {
-				fieldName = tokens[len(tokens)-1]
+                fieldName := tokens[len(tokens)-1]
 				dbData = extractFieldFromDb(tableName, keyStr, fieldName, data)
 			}
 		}
-	} else {
-		yXpath, keyStr, _ := xpathKeyExtract(nil, nil, 0, xpath)
-		yangXpath = yXpath
-		if xSpecMap == nil {
-			return nil, err
-		}
-		_, ok := xSpecMap[yangXpath]
-		if !ok {
-			return nil, err
-		}
-		if xSpecMap[yangXpath].yangDataType == "leaf" {
-			fieldName = xSpecMap[yangXpath].fieldName
-			tableName = *xSpecMap[yangXpath].tableName
-			dbData = extractFieldFromDb(tableName, keyStr, fieldName, data)
-		}
 	}
-	payload, err := dbDataToYangJsonCreate(yangXpath, ygRoot, dbData)
+	payload, err := dbDataToYangJsonCreate(xpath, ygRoot, dbData)
 
 	if err != nil {
 		log.Errorf("Error: failed to create json response from DB data.")
@@ -329,8 +309,6 @@ func XlateFromDb(xpath string, ygRoot *ygot.GoStruct, data map[string]map[string
 	}
 
 	result := []byte(payload)
-
-	//TODO - implement me
 	return result, err
 
 }

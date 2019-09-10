@@ -350,6 +350,7 @@ func mapPrint(inMap map[string]*yangXpathInfo, fileName string) {
         if d.tableName != nil {
             fmt.Fprintf(fp, "%v", *d.tableName)
         }
+        fmt.Fprintf(fp, "\r\n    childTbl : %v", d.childTable)
         fmt.Fprintf(fp, "\r\n    FieldName: %v", d.fieldName)
         fmt.Fprintf(fp, "\r\n    keyLevel : %v", d.keyLevel)
         fmt.Fprintf(fp, "\r\n    xfmrKeyFn: %v", d.xfmrKey)
