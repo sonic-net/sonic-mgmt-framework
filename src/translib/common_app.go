@@ -176,7 +176,6 @@ func (app *CommonApp) translateCRUDCommon(d *db.DB, opcode int) ([]db.WatchKeys,
 	var OrdTblList []string
 	var moduleNm string
 	log.Info("translateCRUDCommon:path =", app.pathInfo.Path)
-	d.Opts.DisableCVLCheck = true
 
 	/* retrieve schema table order for incoming module name request */
 	moduleNm, err = transformer.GetModuleNmFromPath(app.pathInfo.Path)
@@ -266,7 +265,7 @@ func (app *CommonApp) cmnAppCRUCommonDbOpn(d *db.DB, opcode int) error {
 				switch opcode {
 				case CREATE:
 					if existingEntry.IsPopulated() {
-						log.Info("Entry already exists hence return do an update.")
+						log.Info("Entry already exists hence return.")
 						return tlerr.AlreadyExists("Entry %s already exists", tblKey)
 					} else {
 						err = d.CreateEntry(cmnAppTs, db.Key{Comp: []string{tblKey}}, tblRw)
