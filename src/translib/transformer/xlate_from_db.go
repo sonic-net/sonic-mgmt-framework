@@ -99,8 +99,8 @@ func tableNameAndKeyFromDbMapGet(dbDataMap map[string]map[string]db.Value) (stri
     return tableName, tableKey, nil
 }
 
-func yangListDataFill(d *db.DB, ygRoot *ygot.GoStruct, uri string, xpath string, dbDataMap map[string]map[string]db.Value, resultMap map[string]interface{}, tbl string, tblKey string) error {
-    tblData, ok := dbDataMap[tbl]
+func yangListDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, xpath string, dbDataMap map[db.DBNum]map[string]map[string]db.Value, resultMap map[string]interface{}, tbl string, tblKey string, cdb db.DBNum) error {
+    tblData, ok := dbDataMap[cdb][tbl]
 
     if ok {
         var mapSlice []typeMapOfInterface
@@ -108,16 +108,16 @@ func yangListDataFill(d *db.DB, ygRoot *ygot.GoStruct, uri string, xpath string,
             curMap := make(map[string]interface{})
 			curKeyMap, curUri, _, _ := dbKeyToYangDataConvert(uri, xpath, dbKey)
             if len(xSpecMap[xpath].xfmrFunc) > 0 {
-                jsonStr, _ := xfmrHandlerFunc(d, xpath, curUri, ygRoot, dbDataMap)
+                jsonStr, _ := xfmrHandlerFunc(dbs[cdb], xpath, curUri, ygRoot, dbDataMap[cdb])
                 fmt.Printf("From leaf-xfmr(%v)\r\n", jsonStr)
             } else {
-                _, keyFromCurUri, _ := xpathKeyExtract(d, ygRoot, GET, curUri)
+                _, keyFromCurUri, _ := xpathKeyExtract(dbs[cdb], ygRoot, GET, curUri)
                 if dbKey == keyFromCurUri {
                     for k, kv := range curKeyMap {
                         curMap[k] = kv
                     }
                     curXpath, _ := RemoveXPATHPredicates(curUri)
-                    yangDataFill(d, ygRoot, curUri, curXpath, dbDataMap, curMap, tbl, dbKey)
+                    yangDataFill(dbs, ygRoot, curUri, curXpath, dbDataMap, curMap, tbl, dbKey, cdb)
                     mapSlice = append(mapSlice, curMap)
                 }
             }
@@ -131,7 +131,7 @@ func yangListDataFill(d *db.DB, ygRoot *ygot.GoStruct, uri string, xpath string,
     return nil
 }
 
-func yangDataFill(d *db.DB, ygRoot *ygot.GoStruct, uri string, xpath string, dbDataMap map[string]map[string]db.Value, resultMap map[string]interface{}, tbl string, tblKey string) error {
+func yangDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, xpath string, dbDataMap map[db.DBNum]map[string]map[string]db.Value, resultMap map[string]interface{}, tbl string, tblKey string, cdb db.DBNum) error {
     var err error
     yangNode, ok := xSpecMap[xpath]
 
@@ -143,7 +143,7 @@ func yangDataFill(d *db.DB, ygRoot *ygot.GoStruct, uri string, xpath string, dbD
                 chldYangType := yangTypeGet(xSpecMap[chldXpath].yangEntry)
                 if chldYangType == "leaf" {
                     if len(xSpecMap[chldXpath].xfmrFunc) > 0 {
-                        fldValMap, _, err := leafXfmrHandlerFunc(nil, chldXpath, chldUri, ygRoot, dbDataMap)
+                        fldValMap, _, err := leafXfmrHandlerFunc(dbs[cdb], chldXpath, chldUri, ygRoot, dbDataMap[cdb])
                         if err != nil {
                             return err
                         }
@@ -153,7 +153,7 @@ func yangDataFill(d *db.DB, ygRoot *ygot.GoStruct, uri string, xpath string, dbD
                     } else {
                         dbFldName := xSpecMap[chldXpath].fieldName
                         if len(dbFldName) > 0  && !xSpecMap[chldXpath].isKey {
-                            val, ok := dbDataMap[tbl][tblKey].Field[dbFldName]
+                            val, ok := dbDataMap[cdb][tbl][tblKey].Field[dbFldName]
                             if ok {
                                 resultMap[xSpecMap[chldXpath].yangEntry.Name] = val
                             }
@@ -161,12 +161,12 @@ func yangDataFill(d *db.DB, ygRoot *ygot.GoStruct, uri string, xpath string, dbD
                     }
                 } else if chldYangType == "container" {
                     if len(xSpecMap[chldXpath].xfmrFunc) > 0 {
-                        jsonStr, _  := xfmrHandlerFunc(nil, chldXpath, chldUri, ygRoot, dbDataMap)
+                        jsonStr, _  := xfmrHandlerFunc(dbs[cdb], chldXpath, chldUri, ygRoot, dbDataMap[cdb])
                         fmt.Printf("From container-xfmr(%v)\r\n", jsonStr)
                     } else {
                         cname := xSpecMap[chldXpath].yangEntry.Name
                         cmap  := make(map[string]interface{})
-                        err    = yangDataFill(d, ygRoot, chldUri, chldXpath, dbDataMap, cmap, tbl, tblKey)
+                        err    = yangDataFill(dbs, ygRoot, chldUri, chldXpath, dbDataMap, cmap, tbl, tblKey, cdb)
                         if len(cmap) > 0 {
                             resultMap[cname] = cmap
                         } else {
@@ -175,13 +175,13 @@ func yangDataFill(d *db.DB, ygRoot *ygot.GoStruct, uri string, xpath string, dbD
                     }
                 } else if chldYangType == "list" {
                     if len(xSpecMap[chldXpath].xfmrFunc) > 0 {
-						jsonStr , _ := xfmrHandlerFunc(nil, chldXpath, chldUri, ygRoot, dbDataMap)
+						jsonStr , _ := xfmrHandlerFunc(dbs[cdb], chldXpath, chldUri, ygRoot, dbDataMap[cdb])
                         fmt.Printf("From list-xfmr(%v)\r\n", jsonStr)
                     } else {
                         ynode, ok := xSpecMap[chldXpath]
                         if ok && ynode.tableName != nil {
                             lTblName := *ynode.tableName
-                            yangListDataFill(d, ygRoot, chldUri, chldXpath, dbDataMap, resultMap, lTblName, "")
+                            yangListDataFill(dbs, ygRoot, chldUri, chldXpath, dbDataMap, resultMap, lTblName, "", cdb)
                         }
                     }
                 } else {
@@ -194,10 +194,10 @@ func yangDataFill(d *db.DB, ygRoot *ygot.GoStruct, uri string, xpath string, dbD
 }
 
 /* Traverse linear db-map data and add to nested json data */
-func dbDataToYangJsonCreate(uri string, ygRoot *ygot.GoStruct, dbDataMap map[string]map[string]db.Value) (string, error) {
+func dbDataToYangJsonCreate(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db.DB, dbDataMap map[db.DBNum]map[string]map[string]db.Value, cdb db.DBNum) (string, error) {
     jsonData := ""
 	if isCvlYang(uri) {
-		jsonData := directDbToYangJsonCreate(dbDataMap, jsonData)
+		jsonData := directDbToYangJsonCreate(dbDataMap[cdb], jsonData)
 		jsonDataPrint(jsonData)
 		return jsonData, nil
 	}
@@ -210,12 +210,12 @@ func dbDataToYangJsonCreate(uri string, ygRoot *ygot.GoStruct, dbDataMap map[str
         yangType := yangTypeGet(yangNode.yangEntry)
         if yangType == "leaf" {
             fldName := xSpecMap[reqXpath].fieldName
-            tbl, key, _ := tableNameAndKeyFromDbMapGet(dbDataMap)
+            tbl, key, _ := tableNameAndKeyFromDbMapGet(dbDataMap[cdb])
             jsonData = fmt.Sprintf("{\r\n \"%v\" : \"%v\" \r\n }\r\n", xSpecMap[reqXpath].yangEntry.Name,
-                               dbDataMap[tbl][key].Field[fldName])
+                               dbDataMap[cdb][tbl][key].Field[fldName])
             return jsonData, nil
         } else {
-            yangDataFill(d, ygRoot, uri, reqXpath, dbDataMap, resultMap, tableName, keyName)
+            yangDataFill(dbs, ygRoot, uri, reqXpath, dbDataMap, resultMap, tableName, keyName, cdb)
         }
     }
 

@@ -21,6 +21,7 @@ const (
 )
 
 type KeySpec struct {
+	dbNum db.DBNum
 	Ts    db.TableSpec
 	Key   db.Key
 	Child []KeySpec
@@ -66,30 +67,30 @@ func XlateFuncCall(name string, params ...interface{}) (result []reflect.Value, 
 	return
 }
 
-func TraverseDb(d *db.DB, spec KeySpec, result *map[string]map[string]db.Value, parentKey *db.Key) error {
+func TraverseDb(dbs [db.MaxDB]*db.DB, spec KeySpec, result *map[db.DBNum]map[string]map[string]db.Value, parentKey *db.Key) error {
 	var err error
 
 	if spec.Key.Len() > 0 {
 		// get an entry with a specific key
-		data, err := d.GetEntry(&spec.Ts, spec.Key)
+		data, err := dbs[spec.dbNum].GetEntry(&spec.Ts, spec.Key)
 		if err != nil {
 			return err
 		}
 
-		if (*result)[spec.Ts.Name] == nil {
-			(*result)[spec.Ts.Name] = map[string]db.Value{strings.Join(spec.Key.Comp, "|"): data}
+		if (*result)[spec.dbNum][spec.Ts.Name] == nil {
+			(*result)[spec.dbNum][spec.Ts.Name] = map[string]db.Value{strings.Join(spec.Key.Comp, "|"): data}
 		} else {
-			(*result)[spec.Ts.Name][strings.Join(spec.Key.Comp, "|")] = data
+			(*result)[spec.dbNum][spec.Ts.Name][strings.Join(spec.Key.Comp, "|")] = data
 		}
 
 		if len(spec.Child) > 0 {
 			for _, ch := range spec.Child {
-				err = TraverseDb(d, ch, result, &spec.Key)
+				err = TraverseDb(dbs, ch, result, &spec.Key)
 			}
 		}
 	} else {
 		// TODO - GetEntry suuport with regex patten, 'abc*' for optimization
-		keys, err := d.GetKeys(&spec.Ts)
+		keys, err := dbs[spec.dbNum].GetKeys(&spec.Ts)
 		if err != nil {
 			return err
 		}
@@ -101,35 +102,29 @@ func TraverseDb(d *db.DB, spec KeySpec, result *map[string]map[string]db.Value, 
 				}
 			}
 			spec.Key = keys[i]
-			err = TraverseDb(d, spec, result, parentKey)
+			err = TraverseDb(dbs, spec, result, parentKey)
 		}
 	}
 	return err
 }
 
-func XlateUriToKeySpec(path string, ygRoot *ygot.GoStruct, t *interface{}) (*map[db.DBNum][]KeySpec, error) {
+func XlateUriToKeySpec(uri string, ygRoot *ygot.GoStruct, t *interface{}) (*[]KeySpec, error) {
 
 	var err error
-	var result = make(map[db.DBNum][]KeySpec)
 	var retdbFormat = make([]KeySpec, 0)
-	// default DB number to read from
-	var dbInx db.DBNum = db.ConfigDB
 
 	// In case of CVL yang, the tablename and key info is available in the xpath
-	if isCvlYang(path) {
+	if isCvlYang(uri) {
 		/* Extract the xpath and key from input xpath */
-		yangXpath, keyStr, tableName := sonicXpathKeyExtract(path)
+		yangXpath, keyStr, tableName := sonicXpathKeyExtract(uri)
 		retdbFormat = fillCvlKeySpec(yangXpath, tableName, keyStr)
 	} else {
 		/* Extract the xpath and key from input xpath */
-		yangXpath, keyStr, _ := xpathKeyExtract(nil, ygRoot, 0, path)
+		yangXpath, keyStr, _ := xpathKeyExtract(nil, ygRoot, 0, uri)
 		retdbFormat = FillKeySpecs(yangXpath, keyStr, &retdbFormat)
-		dbInx = getDbNum(yangXpath)
 	}
 
-	result[dbInx] = retdbFormat
-
-	return &result, err
+	return &retdbFormat, err
 }
 
 func FillKeySpecs(yangXpath string , keyStr string, retdbFormat *[]KeySpec) ([]KeySpec){
@@ -142,6 +137,7 @@ func FillKeySpecs(yangXpath string , keyStr string, retdbFormat *[]KeySpec) ([]K
         if xpathInfo.tableName != nil {
             dbFormat := KeySpec{}
             dbFormat.Ts.Name = *xpathInfo.tableName
+	    dbFormat.dbNum = xpathInfo.dbIndex
 	    if keyStr != "" {
 		dbFormat.Key.Comp = append(dbFormat.Key.Comp, keyStr)
 	    }
@@ -181,6 +177,7 @@ func fillCvlKeySpec(yangXpath string , tableName string, keyStr string) ( []KeyS
 	if tableName != "" {
 		dbFormat := KeySpec{}
 		dbFormat.Ts.Name = tableName
+		dbFormat.dbNum = db.ConfigDB
 		if keyStr != "" {
 			dbFormat.Key.Comp = append(dbFormat.Key.Comp, keyStr)
 		}
@@ -195,6 +192,7 @@ func fillCvlKeySpec(yangXpath string , tableName string, keyStr string) ( []KeyS
 				for dir, _ := range dbInfo.dbEntry.Dir {
 					dbFormat := KeySpec{}
 					dbFormat.Ts.Name = dir
+					dbFormat.dbNum = db.ConfigDB
 					retdbFormat = append(retdbFormat, dbFormat)
 				}
 			}
@@ -258,25 +256,26 @@ func XlateToDb(path string, opcode int, d *db.DB, yg *ygot.GoStruct, yt *interfa
 	return result, err
 }
 
-func GetAndXlateFromDB(xpath string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db.DB) ([]byte, error) {
+func GetAndXlateFromDB(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db.DB) ([]byte, error) {
 	var err error
 	var payload []byte
-	log.Info("received xpath =", xpath)
+	log.Info("received xpath =", uri)
 
-	keySpec, err := XlateUriToKeySpec(xpath, ygRoot, nil)
-	var result = make(map[string]map[string]db.Value)
+	keySpec, err := XlateUriToKeySpec(uri, ygRoot, nil)
+	var dbresult = make(map[db.DBNum]map[string]map[string]db.Value)
+        for i := db.ApplDB; i < db.MaxDB; i++ {
+                dbresult[i] = make(map[string]map[string]db.Value)
+	}
 
-	for dbnum, specs := range *keySpec {
-		for _, spec := range specs {
-			err := TraverseDb(dbs[dbnum], spec, &result, nil)
-			if err != nil {
-				log.Error("TraverseDb() failure")
-				return payload, err
-			}
+	for _, spec := range *keySpec {
+		err := TraverseDb(dbs, spec, &dbresult, nil)
+		if err != nil {
+			log.Error("TraverseDb() failure")
+			return payload, err
 		}
 	}
 
-	payload, err = XlateFromDb(xpath, ygRoot, result)
+	payload, err = XlateFromDb(uri, ygRoot, dbs, dbresult)
 	if err != nil {
 		log.Error("XlateFromDb() failure.")
 		return payload, err
@@ -285,23 +284,28 @@ func GetAndXlateFromDB(xpath string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db.DB
 	return payload, err
 }
 
-func XlateFromDb(xpath string, ygRoot *ygot.GoStruct, data map[string]map[string]db.Value) ([]byte, error) {
+func XlateFromDb(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db.DB, data map[db.DBNum]map[string]map[string]db.Value) ([]byte, error) {
+
 	var err error
-	var dbData = make(map[string]map[string]db.Value)
+	var dbData = make(map[db.DBNum]map[string]map[string]db.Value)
+	var cdb db.DBNum
 
 	dbData = data
-	if isCvlYang(xpath) {
-		yangXpath, keyStr, tableName := sonicXpathKeyExtract(xpath)
+	if isCvlYang(uri) {
+		yangXpath, keyStr, tableName := sonicXpathKeyExtract(uri)
 		if (tableName != "") {
 			tokens:= strings.Split(yangXpath, "/")
 			// Format /module:container/tableName[key]/fieldName
 			if tokens[len(tokens)-2] == tableName {
-                fieldName := tokens[len(tokens)-1]
-				dbData = extractFieldFromDb(tableName, keyStr, fieldName, data)
+		                fieldName := tokens[len(tokens)-1]
+				cdb = xSpecMap[yangXpath].dbIndex
+				dbData[cdb] = extractFieldFromDb(tableName, keyStr, fieldName, data[cdb])
 			}
 		}
 	}
-	payload, err := dbDataToYangJsonCreate(xpath, ygRoot, dbData)
+        xpath, _ := RemoveXPATHPredicates(uri)
+	cdb = xSpecMap[xpath].dbIndex
+	payload, err := dbDataToYangJsonCreate(uri, ygRoot, dbs, dbData, cdb)
 
 	if err != nil {
 		log.Errorf("Error: failed to create json response from DB data.")

@@ -183,25 +183,10 @@ func (app *AclApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
 	var err error
 	var payload []byte
 
-	keyspec, err := transformer.XlateUriToKeySpec(app.pathInfo.Path, app.ygotRoot, app.ygotTarget)
-
-	// table.key.fields
-	var result = make(map[string]map[string]db.Value)
-
-	for dbnum, specs := range *keyspec {
-		for _, spec := range specs {
-			err := transformer.TraverseDb(dbs[dbnum], spec, &result, nil)
-			if err != nil {
-				return GetResponse{Payload: payload}, err
-			}
-		}
-	}
-
-	payload, err = transformer.XlateFromDb(app.pathInfo.Path, app.ygotRoot, result)
+	payload, err = transformer.GetAndXlateFromDB(app.pathInfo.Path, app.ygotRoot, dbs)
 	if err != nil {
 		return GetResponse{Payload: payload, ErrSrc: AppErr}, err
 	}
-
 	return GetResponse{Payload: payload}, err
 }
 
@@ -209,6 +194,7 @@ func (app *AclApp) translateCRUDCommon(d *db.DB, opcode int) ([]db.WatchKeys, er
 	var err error
 	var keys []db.WatchKeys
 	log.Info("translateCRUDCommon:acl:path =", app.pathInfo.Path)
+	d.Opts.DisableCVLCheck = true;
 
 	result, err := transformer.XlateToDb(app.pathInfo.Path, opcode, d, app.ygotRoot, app.ygotTarget)
 	if err != nil {
