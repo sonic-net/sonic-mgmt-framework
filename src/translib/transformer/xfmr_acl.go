@@ -360,36 +360,6 @@ var DbToYang_acl_l2_ethertype_xfmr FieldXfmrDbtoYang = func (inParams XfmrParams
         err = errors.New("ETHER_TYPE field not found in DB")
     }
     return result, nil
-
-    /*
-    if _, ok := data[RULE_TABLE]; !ok {
-        err = errors.New("RULE_TABLE entry not found in the input param")
-        return err
-    }
-    ruleTbl := data[RULE_TABLE]
-
-    for aclRuleKey := range ruleTbl {
-        ruleData := ruleTbl[aclRuleKey]
-        var entrySet *ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry
-        entrySet, err = getAclSetEntry(aclRuleKey, ygRoot)
-        if err != nil {
-            log.Info("getAclSetEntry failed for :", aclRuleKey)
-            continue // If its not map doesnt need to loop just return from here.
-        }
-        ruleKey := "ETHER_TYPE"
-        if !ruleData.Has(ruleKey) {
-            log.Info("No entry found for the field ", ruleKey)
-            err = errors.New("ETHER_TYPE field not found in DB")
-            continue
-        }
-        ethType, _ := strconv.ParseUint(strings.Replace(ruleData.Get(ruleKey), "0x", "", -1), 16, 32)
-        ethertype := getL2EtherType(ethType)
-        entrySet.L2.Config.Ethertype, _ = entrySet.L2.Config.To_OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_L2_Config_Ethertype_Union(ethertype)
-        entrySet.L2.State.Ethertype, _ = entrySet.L2.State.To_OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_L2_State_Ethertype_Union(ethertype)
-
-    }
-    return err
-    */
 }
 
 var YangToDb_acl_ip_protocol_xfmr FieldXfmrYangToDb = func (inParams XfmrParams) (map[string]string, error) {
@@ -432,29 +402,6 @@ var DbToYang_acl_ip_protocol_xfmr FieldXfmrDbtoYang = func (inParams XfmrParams)
         err = errors.New("IP_PROTOCOL field not found in DB")
     }
     return result, err
-
-    /*
-    for aclRuleKey := range ruleTbl {
-        ruleData := ruleTbl[aclRuleKey]
-        var entrySet *ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry
-        entrySet, err = getAclSetEntry(aclRuleKey, ygRoot)
-        if err != nil {
-            log.Info("getAclSetEntry failed for :", aclRuleKey)
-            continue // If its not map doesnt need to loop just return from here.
-        }
-        ruleKey := "IP_PROTOCOL"
-        if !ruleData.Has(ruleKey) {
-            log.Info("No entry found for the field ", ruleKey)
-            err = errors.New("IP_PROTOCOL field not found in DB")
-            continue
-        }
-
-        ipProto, _ := strconv.ParseInt(ruleData.Get(ruleKey), 10, 64)
-        protocolVal := getIpProtocol(ipProto)
-        entrySet.Ipv6.Config.Protocol, _ = entrySet.Ipv6.Config.To_OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Ipv6_Config_Protocol_Union(protocolVal)
-        entrySet.Ipv6.State.Protocol, _ = entrySet.Ipv6.State.To_OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Ipv6_State_Protocol_Union(protocolVal)
-    }
-    */
 }
 
 var YangToDb_acl_source_port_xfmr FieldXfmrYangToDb = func (inParams XfmrParams) (map[string]string, error) {
@@ -545,42 +492,6 @@ var DbToYang_acl_source_port_xfmr FieldXfmrDbtoYang = func (inParams XfmrParams)
         err = errors.New("PORT/PORT_RANGE field not found in DB")
     }
     return result, err
-        /*
-
-    if _, ok := data[RULE_TABLE]; !ok {
-        err = errors.New("RULE_TABLE entry not found in the input param")
-        return err
-    }
-    ruleTbl := data[RULE_TABLE]
-
-    for aclRuleKey := range ruleTbl {
-        ruleData := ruleTbl[aclRuleKey]
-        sp :=  ruleData.Has("L4_SRC_PORT")
-        spr := ruleData.Has("L4_SRC_PORT_RANGE")
-
-        if !sp && !spr {
-            log.Info("Src port field is not present in the field.")
-            continue
-        }
-        var entrySet *ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry
-        entrySet, err = getAclSetEntry(aclRuleKey, ygRoot)
-        if err != nil {
-            log.Info("getAclSetEntry failed for :", aclRuleKey)
-            continue // If its not map doesnt need to loop just return from here.
-        }
-        var ruleKey string
-        if sp  {
-            ruleKey = "L4_SRC_PORT"
-        } else {
-            ruleKey = "L4_SRC_PORT_RANGE"
-        }
-        port := ruleData.Get(ruleKey)
-        srcPort := getTransportSrcDestPorts(port, "src")
-        entrySet.Transport.Config.SourcePort, _ = entrySet.Transport.Config.To_OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_SourcePort_Union(srcPort)
-        entrySet.Transport.State.SourcePort, _ = entrySet.Transport.State.To_OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_State_SourcePort_Union(srcPort)
-    }
-    return err
-    */
 }
 
 var YangToDb_acl_destination_port_xfmr FieldXfmrYangToDb = func (inParams XfmrParams) (map[string]string, error) {
@@ -630,41 +541,6 @@ var DbToYang_acl_destination_port_xfmr FieldXfmrDbtoYang = func (inParams XfmrPa
         err = errors.New("DST PORT/PORT_RANGE field not found in DB")
     }
     return result, err
-        /*
-    if _, ok := data[RULE_TABLE]; !ok {
-        err = errors.New("RULE_TABLE entry not found in the input param")
-        return err
-    }
-    ruleTbl := data[RULE_TABLE]
-    for aclRuleKey := range ruleTbl {
-        ruleData := ruleTbl[aclRuleKey]
-        dp :=  ruleData.Has("L4_DST_PORT")
-        dpr := ruleData.Has("L4_DST_PORT_RANGE")
-        if !dp && !dpr {
-            log.Info("DST port field is not present in the field.")
-            continue
-        }
-
-        var entrySet *ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry
-        entrySet, err = getAclSetEntry(aclRuleKey, ygRoot)
-        if err != nil {
-            log.Info("getAclSetEntry failed for :", aclRuleKey)
-            continue // If its not map doesnt need to loop just return from here.
-            var ruleKey string
-            if dp  {
-                ruleKey = "L4_DST_PORT"
-            } else {
-                ruleKey = "L4_DST_PORT_RANGE"
-            }
-            port := ruleData.Get(ruleKey)
-            destPort := getTransportSrcDestPorts(port, "dest")
-            entrySet.Transport.Config.DestinationPort, _ = entrySet.Transport.Config.To_OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_DestinationPort_Union(destPort)
-            entrySet.Transport.State.DestinationPort, _ = entrySet.Transport.State.To_OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_State_DestinationPort_Union(destPort)
-        }
-
-    }
-    return err
-    */
 }
 
 var YangToDb_acl_tcp_flags_xfmr FieldXfmrYangToDb = func (inParams XfmrParams) (map[string]string, error) {
@@ -727,34 +603,6 @@ var DbToYang_acl_tcp_flags_xfmr FieldXfmrDbtoYang = func (inParams XfmrParams)  
         return result, nil
     }
     return result, nil
-        /*
-
-    if _, ok := data[RULE_TABLE]; !ok {
-        err = errors.New("RULE_TABLE entry not found in the input param")
-        return err
-    }
-    ruleTbl := data[RULE_TABLE]
-
-    for aclRuleKey := range ruleTbl {
-        ruleData := ruleTbl[aclRuleKey]
-        var entrySet *ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry
-        entrySet, err = getAclSetEntry(aclRuleKey, ygRoot)
-        if err != nil {
-            log.Info("getAclSetEntry failed for :", aclRuleKey)
-            continue // If its not map doesnt need to loop just return from here.
-        }
-        ruleKey := "TCP_FLAGS"
-        if !ruleData.Has(ruleKey) {
-            log.Info("No entry found for the field ", ruleKey)
-            err = errors.New("TCP_FLAGS field not found in DB")
-            continue
-        }
-        tcpFlags := ruleData.Get(ruleKey)
-        entrySet.Transport.Config.TcpFlags = getTransportConfigTcpFlags(tcpFlags)
-        entrySet.Transport.State.TcpFlags = getTransportConfigTcpFlags(tcpFlags)
-    }
-    return err
-    */
 }
 
 func convertDBAclRulesToInternal(dbCl *db.DB, aclName string, seqId int64, ruleKey db.Key) (ruleTableMap map[string]map[string]db.Value, ferr error) {
