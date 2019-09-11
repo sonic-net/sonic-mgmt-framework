@@ -444,7 +444,12 @@ func getRedisToYangKeys(tableName string, redisKey string)[]keyValuePairStruct{
 	keyPatterns := strings.Split(modelInfo.tableInfo[tableName].redisKeyPattern,
 			modelInfo.tableInfo[tableName].redisKeyDelim) //split by DB separator
 
-	if (len(keyNames) != len(keyVals)) {
+	/* TBD. Workaround for optional keys in INTERFACE Table.
+	   Code will be removed once model is finalized. */
+	if  ((tableName == "INTERFACE") && (len(keyNames) != len(keyVals))) {
+		keyVals = append(keyVals, "0.0.0.0/0")
+
+	} else if (len(keyNames) != len(keyVals)) {
 		return nil //number key names and values does not match
 	}
 
