@@ -3,8 +3,7 @@ package transformer
 import (
 	"github.com/openconfig/ygot/ygot"
 	"translib/db"
-        log "github.com/golang/glog"
-//	"translib/ocbinds"
+    log "github.com/golang/glog"
 )
 
 type XfmrParams struct {
@@ -32,7 +31,7 @@ type KeyXfmrYangToDb func (inParams XfmrParams) (string, error)
  * Param: Database info, operation, Database keys to access db entry
  * Return: multi dimensional map to hold the yang key attributes of complete xpath, error
  **/
-type KeyXfmrDbToYang func (inParams XfmrParams) (map[string]string, error)
+type KeyXfmrDbToYang func (inParams XfmrParams) (map[string]interface{}, error)
 
 /**
  * FieldXfmrYangToDb type is defined to use for conversion of yang Field to DB field

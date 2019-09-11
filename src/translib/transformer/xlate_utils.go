@@ -84,7 +84,7 @@ func yangTypeGet(entry *yang.Entry) string {
     return ""
 }
 
-func dbKeyToYangDataConvert(uri string, xpath string, dbKey string) (map[string]string, string, string, error) {
+func dbKeyToYangDataConvert(uri string, xpath string, dbKey string) (map[string]interface{}, string, string, error) {
     var kLvlValList []string
     keyDataList := strings.Split(dbKey, "|")
     keyNameList := yangKeyFromEntryGet(xSpecMap[xpath].yangEntry)
@@ -104,7 +104,7 @@ func dbKeyToYangDataConvert(uri string, xpath string, dbKey string) (map[string]
         if err != nil {
             return nil, "","",err
         }
-        rmap  := ret[0].Interface().(map[string]string)
+        rmap  := ret[0].Interface().(map[string]interface{})
         for k, v := range rmap {
             jsonData += fmt.Sprintf("\"%v\" : \"%v\",\r\n", k, v)
             uriWithKey += fmt.Sprintf("[%v=%v]", k, v)
@@ -125,7 +125,7 @@ func dbKeyToYangDataConvert(uri string, xpath string, dbKey string) (map[string]
         chgId = len(keyNameList) - 1
     }
 
-    rmap := make(map[string]string)
+    rmap := make(map[string]interface{})
     for i, kname := range keyNameList {
         kval := kLvlValList[i]
 

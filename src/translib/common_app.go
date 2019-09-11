@@ -8,6 +8,7 @@ import (
 	"github.com/openconfig/ygot/ygot"
 	"reflect"
 	"translib/db"
+    "translib/ocbinds"
 	"translib/tlerr"
 	"translib/transformer"
 	"encoding/json"
@@ -152,19 +153,30 @@ func (app *CommonApp) processDelete(d *db.DB) (SetResponse, error) {
 }
 
 func (app *CommonApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
-	var err error
-	var payload []byte
-	log.Info("processGet:path =", app.pathInfo.Path)
+    var err error
+    var payload []byte
+    log.Info("processGet:path =", app.pathInfo.Path)
 
-	payload, err = transformer.GetAndXlateFromDB(app.pathInfo.Path, app.ygotRoot, dbs)
-	if err != nil {
-		log.Error("transformer.XlateFromDb() failure")
-		return GetResponse{Payload: payload, ErrSrc: AppErr}, err
-	}
-	var dat map[string]interface{}
-        err = json.Unmarshal(payload, &dat)
-        fmt.Println("RESULT *******  ", dat)
+    payload, err = transformer.GetAndXlateFromDB(app.pathInfo.Path, app.ygotRoot, dbs)
+    if err != nil {
+        log.Error("transformer.XlateFromDb() failure")
+        return GetResponse{Payload: payload, ErrSrc: AppErr}, err
+    }
 
+    targetObj, _ := (*app.ygotTarget).(ygot.GoStruct)
+    err = ocbinds.Unmarshal(payload, targetObj)
+    if err != nil {
+        log.Error("ocbinds.Unmarshal()  failed")
+        return GetResponse{Payload: payload, ErrSrc: AppErr}, err
+    }
+
+   payload, err = generateGetResponsePayload(app.pathInfo.Path, (*app.ygotRoot).(*ocbinds.Device), app.ygotTarget)
+    if err != nil {
+        log.Error("generateGetResponsePayload()  failed")
+        return GetResponse{Payload: payload, ErrSrc: AppErr}, err
+    }
+    var dat map[string]interface{}
+    err = json.Unmarshal(payload, &dat)
 
 	return GetResponse{Payload: payload}, err
 }

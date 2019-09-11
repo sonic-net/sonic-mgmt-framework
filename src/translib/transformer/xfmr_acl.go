@@ -238,8 +238,8 @@ var YangToDb_acl_entry_key_xfmr KeyXfmrYangToDb = func (inParams XfmrParams) (st
     return entry_key, err
 }
 
-var DbToYang_acl_entry_key_xfmr KeyXfmrDbToYang = func (inParams XfmrParams) (map[string]string, error) {
-    rmap := make(map[string]string)
+var DbToYang_acl_entry_key_xfmr KeyXfmrDbToYang = func (inParams XfmrParams) (map[string]interface{}, error) {
+    rmap := make(map[string]interface{})
     var err error
     entry_key := inParams.key
     log.Info("DbToYang_acl_entry_key_xfmr: ", entry_key)
@@ -253,7 +253,7 @@ var DbToYang_acl_entry_key_xfmr KeyXfmrDbToYang = func (inParams XfmrParams) (ma
 
     dbAclRule := key[1]
     seqId := strings.Replace(dbAclRule, "RULE_", "", 1)
-    rmap["sequence-id"] = seqId
+    rmap["sequence-id"], _ = strconv.ParseFloat(seqId, 64)
     return rmap, err
 }
 

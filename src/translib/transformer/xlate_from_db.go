@@ -6,6 +6,7 @@ import (
     "strings"
     "encoding/json"
     "os"
+    "strconv"
     "translib/ocbinds"
     "github.com/openconfig/ygot/ygot"
     "github.com/openconfig/ygot/ytypes"
@@ -160,7 +161,12 @@ func yangDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, xpath
                         if len(dbFldName) > 0  && !xSpecMap[chldXpath].isKey {
                             val, ok := (*dbDataMap)[cdb][tbl][tblKey].Field[dbFldName]
                             if ok {
-                                resultMap[xSpecMap[chldXpath].yangEntry.Name] = val
+                                valInt, err := strconv.Atoi(val)
+                                if err == nil {
+                                    resultMap[xSpecMap[chldXpath].yangEntry.Name] = valInt
+                                } else {
+                                    resultMap[xSpecMap[chldXpath].yangEntry.Name] = val
+                                }
                             }
                         }
                     }
