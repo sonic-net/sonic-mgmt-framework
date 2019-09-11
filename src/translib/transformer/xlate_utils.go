@@ -325,3 +325,32 @@ func formXfmrInputRequest(d *db.DB, dbs [db.MaxDB]*db.DB, cdb db.DBNum, ygRoot *
 
 	return inParams
 }
+
+func findByValue(m map[string]string, value string) string {
+	for key, val := range m {
+		if val == value {
+			return key
+		}
+	}
+	return ""
+}
+func findByKey(m map[string]string, key string) string {
+	if val, found := m[key]; found {
+		return val
+	}
+	return ""
+}
+func findInMap(m map[string]string, str string) string {
+	// Check if str exists as a value in map m.
+	if val := findByKey(m, str); val != "" {
+		return val
+	}
+
+	// Check if str exists as a key in map m.
+	if val := findByValue(m, str); val != "" {
+		return val
+	}
+
+	// str doesn't exist in map m.
+	return ""
+}

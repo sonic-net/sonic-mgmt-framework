@@ -17,6 +17,8 @@ import (
 func init () {
     XlateFuncBind("YangToDb_acl_set_name_xfmr", YangToDb_acl_set_name_xfmr)
     XlateFuncBind("DbToYang_acl_set_name_xfmr", DbToYang_acl_set_name_xfmr)
+    XlateFuncBind("YangToDb_acl_type_field_xfmr", YangToDb_acl_type_field_xfmr)
+    XlateFuncBind("DbToYang_acl_type_field_xfmr", DbToYang_acl_type_field_xfmr)
     XlateFuncBind("YangToDb_acl_entry_key_xfmr", YangToDb_acl_entry_key_xfmr)
     XlateFuncBind("DbToYang_acl_entry_key_xfmr", DbToYang_acl_entry_key_xfmr)
     XlateFuncBind("YangToDb_acl_entry_sequenceid_xfmr", YangToDb_acl_entry_sequenceid_xfmr)
@@ -49,6 +51,13 @@ const (
      MIN_PRIORITY = 1
      MAX_PRIORITY = 65535
 )
+
+/* E_OpenconfigAcl_ACL_TYPE */
+var ACL_TYPE_MAP = map[string]string{
+    strconv.FormatInt(int64(ocbinds.OpenconfigAcl_ACL_TYPE_ACL_IPV4), 10):  SONIC_ACL_TYPE_IPV4,
+    strconv.FormatInt(int64(ocbinds.OpenconfigAcl_ACL_TYPE_ACL_IPV6), 10): SONIC_ACL_TYPE_IPV6,
+    strconv.FormatInt(int64(ocbinds.OpenconfigAcl_ACL_TYPE_ACL_L2), 10): SONIC_ACL_TYPE_L2,
+}
 
 var IP_PROTOCOL_MAP = map[ocbinds.E_OpenconfigPacketMatchTypes_IP_PROTOCOL]uint8{
     ocbinds.OpenconfigPacketMatchTypes_IP_PROTOCOL_IP_ICMP: 1,
@@ -187,6 +196,30 @@ func getL2EtherType(etherType uint64) interface{} {
         }
     }
     return uint16(etherType)
+}
+
+////////////////////////////////////////////
+// Bi-directoonal overloaded methods
+////////////////////////////////////////////
+
+var YangToDb_acl_type_field_xfmr FieldXfmrYangToDb = func (inParams XfmrParams) (map[string]string, error) {
+    res_map := make(map[string]string)
+    var err error
+
+    acltype, _ := inParams.param.(ocbinds.E_OpenconfigAcl_ACL_TYPE)
+    log.Info("YangToDb_acl_type_field_xfmr: ", inParams.ygRoot, " Xpath: ", inParams.uri, " acltype: ", acltype)
+    res_map[ACL_TYPE] = findInMap(ACL_TYPE_MAP, strconv.FormatInt(int64(acltype), 10))
+    return res_map, err
+}
+var DbToYang_acl_type_field_xfmr FieldXfmrDbtoYang = func (inParams XfmrParams)  (map[string]interface{}, error) {
+    var err error
+    result := make(map[string]interface{})
+    data:= (*inParams.dbDataMap)[inParams.curDb]
+    log.Info("DbToYang_acl_type_field_xfmr", data, inParams.ygRoot)
+    oc_acltype := findInMap(ACL_TYPE_MAP, data[ACL_TABLE][inParams.key].Field[ACL_TYPE])
+    n, err := strconv.ParseInt(oc_acltype, 10, 64)
+    result[ACL_TYPE] = n
+    return result, err
 }
 
 var YangToDb_acl_set_name_xfmr FieldXfmrYangToDb = func (inParams XfmrParams) (map[string]string, error) {

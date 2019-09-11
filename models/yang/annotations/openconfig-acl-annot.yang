@@ -22,6 +22,12 @@ module openconfig-acl-annot {
       }
     }
 
+    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:config/oc-acl:type {
+        deviate add {
+          sonic-ext:field-transformer "acl_type_field_xfmr";
+        }
+    }
+
     deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:config/oc-acl:description {
       deviate add {
         sonic-ext:field-name "policy_desc";

@@ -300,7 +300,13 @@ func (app *CommonApp) cmnAppCRUCommonDbOpn(d *db.DB, opcode int) error {
 							return err
 						}
 					} else {
-						return err
+                                                // workaround to patch operation from CLI
+                                                log.Info("Create(pathc) an entry.")
+                                                err = d.CreateEntry(cmnAppTs, db.Key{Comp: []string{tblKey}}, tblRw)
+						if err != nil {
+							log.Error("UPDATE case - d.CreateEntry() failure")
+							return err
+						}
 					}
 				case REPLACE:
 					if existingEntry.IsPopulated() {

@@ -110,6 +110,20 @@ func RemoveXPATHPredicates(s string) (string, error) {
 
 	return b.String(), nil
 }
+
+// stripPrefix removes the prefix from a YANG path element. For example, removing
+// foo from "foo:bar". Such qualified paths are used in YANG modules where remote
+// paths are referenced.
+func stripPrefix(name string) (string, error) {
+        ps := strings.Split(name, ":")
+        switch len(ps) {
+        case 1:
+                return name, nil
+        case 2:
+                return ps[1], nil
+        }
+        return "", fmt.Errorf("path element did not form a valid name (name, prefix:name): %v", name)
+}
 /*
 func getParentNode(targetUri *string, deviceObj *ocbinds.Device) (*interface{}, *yang.Entry, error) {
 	path, err := ygot.StringToPath(*targetUri, ygot.StructuredPath, ygot.StringSlicePath)
