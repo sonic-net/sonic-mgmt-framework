@@ -189,7 +189,7 @@ func getL2EtherType(etherType uint64) interface{} {
     return uint16(etherType)
 }
 
-var YangToDb_acl_set_name_xfmr FieldXfmrYangToDb = func (d *db.DB, ygRoot *ygot.GoStruct, opType int, xpath string, name interface {}) (map[string]string, error) {
+var YangToDb_acl_set_name_xfmr FieldXfmrYangToDb = func (inParams XfmrParams) (map[string]string, error) {
     res_map := make(map[string]string)
     var err error
     log.Info("YangToDb_acl_set_name_xfmr: ")
@@ -197,24 +197,23 @@ var YangToDb_acl_set_name_xfmr FieldXfmrYangToDb = func (d *db.DB, ygRoot *ygot.
     return res_map, err
 }
 
-var DbToYang_acl_set_name_xfmr FieldXfmrDbtoYang = func (d *db.DB, opType int, data map[string]map[string]db.Value, ygRoot *ygot.GoStruct, key string)  (map[string]interface{}, error) {
+var DbToYang_acl_set_name_xfmr FieldXfmrDbtoYang = func (inParams XfmrParams)  (map[string]interface{}, error) {
     res_map := make(map[string]interface{})
     var err error
-    log.Info("DbToYang_acl_set_name_xfmr: ", key)
+    log.Info("DbToYang_acl_set_name_xfmr: ", inParams.key)
     /*name attribute corresponds to key in redis table*/
-    aclName, _ := getOCAclKeysFromStrDBKey(key)
+    aclName, _ := getOCAclKeysFromStrDBKey(inParams.key)
     res_map["name"] = aclName
     log.Info("acl-set/config/name  ", res_map)
     return res_map, err
 }
 
-
-var YangToDb_acl_entry_key_xfmr KeyXfmrYangToDb = func (d *db.DB, ygRoot *ygot.GoStruct, opType int, xpath string) (string, error) {
+var YangToDb_acl_entry_key_xfmr KeyXfmrYangToDb = func (inParams XfmrParams) (string, error) {
     var entry_key string
     var err error
     var oc_aclType ocbinds.E_OpenconfigAcl_ACL_TYPE
-    log.Info("YangToDb_acl_entry_key_xfmr: ", ygRoot, xpath)
-    pathInfo := NewPathInfo(xpath)
+    log.Info("YangToDb_acl_entry_key_xfmr: ", inParams.ygRoot, inParams.uri)
+    pathInfo := NewPathInfo(inParams.uri)
 
     if len(pathInfo.Vars) < 3 {
         err = errors.New("Invalid xpath, key attributes not found")
@@ -239,9 +238,10 @@ var YangToDb_acl_entry_key_xfmr KeyXfmrYangToDb = func (d *db.DB, ygRoot *ygot.G
     return entry_key, err
 }
 
-var DbToYang_acl_entry_key_xfmr KeyXfmrDbToYang = func (d *db.DB, opType int, entry_key string) (map[string]string, error) {
+var DbToYang_acl_entry_key_xfmr KeyXfmrDbToYang = func (inParams XfmrParams) (map[string]string, error) {
     rmap := make(map[string]string)
     var err error
+    entry_key := inParams.key
     log.Info("DbToYang_acl_entry_key_xfmr: ", entry_key)
 
     key := strings.Split(entry_key, "|")
@@ -257,7 +257,7 @@ var DbToYang_acl_entry_key_xfmr KeyXfmrDbToYang = func (d *db.DB, opType int, en
     return rmap, err
 }
 
-var YangToDb_acl_entry_sequenceid_xfmr FieldXfmrYangToDb = func (d *db.DB, ygRoot *ygot.GoStruct, opType int, xpath string, sequence_id interface {}) (map[string]string, error) {
+var YangToDb_acl_entry_sequenceid_xfmr FieldXfmrYangToDb = func (inParams XfmrParams) (map[string]string, error) {
     res_map := make(map[string]string)
     var err error
     log.Info("YangToDb_acl_entry_sequenceid_xfmr: ")
@@ -265,12 +265,12 @@ var YangToDb_acl_entry_sequenceid_xfmr FieldXfmrYangToDb = func (d *db.DB, ygRoo
     return res_map, err
 }
 
-var DbToYang_acl_entry_sequenceid_xfmr FieldXfmrDbtoYang = func (d *db.DB, opType int, data map[string]map[string]db.Value, ygRoot *ygot.GoStruct, key string)  (map[string]interface{}, error) {
+var DbToYang_acl_entry_sequenceid_xfmr FieldXfmrDbtoYang = func (inParams XfmrParams)  (map[string]interface{}, error) {
     res_map := make(map[string]interface{})
     var err error
-    log.Info("DbToYang_acl_entry_sequenceid_xfmr: ", key)
+    log.Info("DbToYang_acl_entry_sequenceid_xfmr: ", inParams.key)
     /*sequenec-id attribute corresponds to key in redis table*/
-    res, err := DbToYang_acl_entry_key_xfmr(d, opType, key)
+    res, err := DbToYang_acl_entry_key_xfmr(inParams)
     log.Info("acl-entry/config/sequence-id ", res)
     if err != nil {
 	    return res_map, err
@@ -284,21 +284,21 @@ var DbToYang_acl_entry_sequenceid_xfmr FieldXfmrDbtoYang = func (d *db.DB, opTyp
     return res_map, err
 }
 
-var YangToDb_acl_l2_ethertype_xfmr FieldXfmrYangToDb = func (d *db.DB, ygRoot *ygot.GoStruct, opType int, xpath string, ethertype interface {}) (map[string]string, error) {
+var YangToDb_acl_l2_ethertype_xfmr FieldXfmrYangToDb = func (inParams XfmrParams) (map[string]string, error) {
     res_map := make(map[string]string)
     var err error
 
-    ethertypeType := reflect.TypeOf(ethertype).Elem()
-    log.Info("YangToDb_acl_ip_protocol_xfmr: ", ygRoot, " Xpath: ", xpath, " ethertypeType: ", ethertypeType)
+    ethertypeType := reflect.TypeOf(inParams.param).Elem()
+    log.Info("YangToDb_acl_ip_protocol_xfmr: ", inParams.ygRoot, " Xpath: ", inParams.uri, " ethertypeType: ", ethertypeType)
     var b bytes.Buffer
     switch ethertypeType {
     case reflect.TypeOf(ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_L2_Config_Ethertype_Union_E_OpenconfigPacketMatchTypes_ETHERTYPE{}):
-        v := (ethertype).(*ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_L2_Config_Ethertype_Union_E_OpenconfigPacketMatchTypes_ETHERTYPE)
+        v := (inParams.param).(*ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_L2_Config_Ethertype_Union_E_OpenconfigPacketMatchTypes_ETHERTYPE)
         fmt.Fprintf(&b, "0x%0.4x", ETHERTYPE_MAP[v.E_OpenconfigPacketMatchTypes_ETHERTYPE])
         res_map["ETHER_TYPE"] = b.String()
         break
     case reflect.TypeOf(ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_L2_Config_Ethertype_Union_Uint16{}):
-        v := (ethertype).(*ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_L2_Config_Ethertype_Union_Uint16)
+        v := (inParams.param).(*ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_L2_Config_Ethertype_Union_Uint16)
         fmt.Fprintf(&b, "0x%0.4x", v.Uint16)
         res_map["ETHER_TYPE"] = b.String()
         break
@@ -306,17 +306,18 @@ var YangToDb_acl_l2_ethertype_xfmr FieldXfmrYangToDb = func (d *db.DB, ygRoot *y
     return res_map, err
 }
 
-var DbToYang_acl_l2_ethertype_xfmr FieldXfmrDbtoYang = func (d *db.DB, opType int, data map[string]map[string]db.Value, ygRoot *ygot.GoStruct, key string)  (map[string]interface{}, error) {
+var DbToYang_acl_l2_ethertype_xfmr FieldXfmrDbtoYang = func (inParams XfmrParams)  (map[string]interface{}, error) {
     var err error
     result := make(map[string]interface{})
-    log.Info("DbToYang_acl_l2_ethertype_xfmr", data, ygRoot)
+    data:= (*inParams.dbDataMap)[inParams.curDb]
+    log.Info("DbToYang_acl_l2_ethertype_xfmr", data, inParams.ygRoot)
     if _, ok := data[RULE_TABLE]; !ok {
         err = errors.New("RULE_TABLE entry not found in the input param")
         return result, err
     }
 
     ruleTbl   := data[RULE_TABLE]
-    ruleInst  := ruleTbl[key]
+    ruleInst  := ruleTbl[inParams.key]
     etype, ok := ruleInst.Field["ETHER_TYPE"]
 
     if ok {
@@ -358,36 +359,37 @@ var DbToYang_acl_l2_ethertype_xfmr FieldXfmrDbtoYang = func (d *db.DB, opType in
     */
 }
 
-var YangToDb_acl_ip_protocol_xfmr FieldXfmrYangToDb = func (d *db.DB, ygRoot *ygot.GoStruct, opType int, xpath string, protocol interface {}) (map[string]string, error) {
+var YangToDb_acl_ip_protocol_xfmr FieldXfmrYangToDb = func (inParams XfmrParams) (map[string]string, error) {
     res_map := make(map[string]string)
     var err error
 
-    protocolType := reflect.TypeOf(protocol).Elem()
-    log.Info("YangToDb_acl_ip_protocol_xfmr: ", ygRoot, " Xpath: ", xpath, " protocolType: ", protocolType)
+    protocolType := reflect.TypeOf(inParams.param).Elem()
+    log.Info("YangToDb_acl_ip_protocol_xfmr: ", inParams.ygRoot, " Xpath: ", inParams.uri, " protocolType: ", protocolType)
     switch (protocolType) {
     case reflect.TypeOf(ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Ipv4_Config_Protocol_Union_E_OpenconfigPacketMatchTypes_IP_PROTOCOL{}):
-        v := (protocol).(*ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Ipv4_Config_Protocol_Union_E_OpenconfigPacketMatchTypes_IP_PROTOCOL)
+        v := (inParams.param).(*ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Ipv4_Config_Protocol_Union_E_OpenconfigPacketMatchTypes_IP_PROTOCOL)
         res_map["IP_PROTOCOL"] = strconv.FormatInt(int64(IP_PROTOCOL_MAP[v.E_OpenconfigPacketMatchTypes_IP_PROTOCOL]), 10)
         break
     case reflect.TypeOf(ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Ipv4_Config_Protocol_Union_Uint8{}):
-        v := (protocol).(*ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Ipv4_Config_Protocol_Union_Uint8)
+        v := (inParams.param).(*ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Ipv4_Config_Protocol_Union_Uint8)
         res_map["IP_PROTOCOL"] = strconv.FormatInt(int64(v.Uint8), 10)
         break
     }
     return res_map, err
 }
 
-var DbToYang_acl_ip_protocol_xfmr FieldXfmrDbtoYang = func (d *db.DB, opType int, data map[string]map[string]db.Value, ygRoot *ygot.GoStruct, key string)  (map[string]interface{}, error) {
+var DbToYang_acl_ip_protocol_xfmr FieldXfmrDbtoYang = func (inParams XfmrParams)  (map[string]interface{}, error) {
     var err error
     result   := make(map[string]interface{})
-    log.Info("DbToYang_acl_ip_protocol_xfmr ", data, ygRoot)
+    data:= (*inParams.dbDataMap)[inParams.curDb]
+    log.Info("DbToYang_acl_ip_protocol_xfmr ", data, inParams.ygRoot)
     if _, ok := data[RULE_TABLE]; !ok {
         err = errors.New("RULE_TABLE entry not found in the input param")
         return result, err
     }
 
     ruleTbl  := data[RULE_TABLE]
-    ruleInst := ruleTbl[key]
+    ruleInst := ruleTbl[inParams.key]
     prot, ok := ruleInst.Field["IP_PROTOCOL"]
 
     if ok {
@@ -422,29 +424,28 @@ var DbToYang_acl_ip_protocol_xfmr FieldXfmrDbtoYang = func (d *db.DB, opType int
     */
 }
 
-var YangToDb_acl_source_port_xfmr FieldXfmrYangToDb = func (d *db.DB, ygRoot *ygot.GoStruct, opType int, xpath string, value interface {}) (map[string]string, error) {
+var YangToDb_acl_source_port_xfmr FieldXfmrYangToDb = func (inParams XfmrParams) (map[string]string, error) {
     res_map := make(map[string]string)
     var err error;
-    sourceportType := reflect.TypeOf(value).Elem()
-    log.Info("YangToDb_acl_ip_protocol_xfmr: ", ygRoot, " Xpath: ", xpath, " sourceportType: ", sourceportType)
+    sourceportType := reflect.TypeOf(inParams.param).Elem()
+    log.Info("YangToDb_acl_ip_protocol_xfmr: ", inParams.ygRoot, " Xpath: ", inParams.uri, " sourceportType: ", sourceportType)
     switch sourceportType {
     case reflect.TypeOf(ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_SourcePort_Union_E_OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_SourcePort{}):
-        v := (value).(*ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_SourcePort_Union_E_OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_SourcePort)
+        v := (inParams.param).(*ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_SourcePort_Union_E_OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_SourcePort)
         res_map["L4_SRC_PORT"] = v.E_OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_SourcePort.ΛMap()["E_OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_SourcePort"][int64(v.E_OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_SourcePort)].Name
         break
     case reflect.TypeOf(ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_SourcePort_Union_String{}):
-        v := (value).(*ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_SourcePort_Union_String)
+        v := (inParams.param).(*ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_SourcePort_Union_String)
         res_map["L4_SRC_PORT_RANGE"] = strings.Replace(v.String, "..", "-", 1)
         break
     case reflect.TypeOf(ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_SourcePort_Union_Uint16{}):
-        v := (value).(*ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_SourcePort_Union_Uint16)
+        v := (inParams.param).(*ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_SourcePort_Union_Uint16)
         res_map["L4_SRC_PORT"] = strconv.FormatInt(int64(v.Uint16), 10)
         break
     }
 
     return res_map, err
 }
-
 
 func getAclSetEntry (aclRuleKey string, ygRoot *ygot.GoStruct) (*ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry, error) {
     var err error
@@ -486,16 +487,17 @@ func getAclSetEntry (aclRuleKey string, ygRoot *ygot.GoStruct) (*ocbinds.Opencon
 
 }
 
-var DbToYang_acl_source_port_xfmr FieldXfmrDbtoYang = func (d *db.DB, opType int, data map[string]map[string]db.Value, ygRoot *ygot.GoStruct, key string)  (map[string]interface{}, error) {
+var DbToYang_acl_source_port_xfmr FieldXfmrDbtoYang = func (inParams XfmrParams)  (map[string]interface{}, error) {
     var err error
-    log.Info("DbToYang_acl_source_port_xfmr: ", data, ygRoot)
+    data:= (*inParams.dbDataMap)[inParams.curDb]
+    log.Info("DbToYang_acl_source_port_xfmr: ", data, inParams.ygRoot)
     result := make(map[string]interface{})
     if _, ok := data[RULE_TABLE]; !ok {
         err = errors.New("RULE_TABLE entry not found in the input param")
         return result, err
     }
     ruleTbl  := data[RULE_TABLE]
-    ruleInst := ruleTbl[key]
+    ruleInst := ruleTbl[inParams.key]
     port, ok := ruleInst.Field["L4_SRC_PORT"]
     if ok {
         result["source-port"] = port
@@ -548,38 +550,39 @@ var DbToYang_acl_source_port_xfmr FieldXfmrDbtoYang = func (d *db.DB, opType int
     */
 }
 
-var YangToDb_acl_destination_port_xfmr FieldXfmrYangToDb = func (d *db.DB, ygRoot *ygot.GoStruct, opType int, xpath string, value interface{}) (map[string]string, error) {
+var YangToDb_acl_destination_port_xfmr FieldXfmrYangToDb = func (inParams XfmrParams) (map[string]string, error) {
     res_map := make(map[string]string)
     var err error;
-    destportType := reflect.TypeOf(value).Elem()
-    log.Info("YangToDb_acl_ip_protocol_xfmr: ", ygRoot, " Xpath: ", xpath, " destportType: ", destportType)
+    destportType := reflect.TypeOf(inParams.param).Elem()
+    log.Info("YangToDb_acl_ip_protocol_xfmr: ", inParams.ygRoot, " Xpath: ", inParams.uri, " destportType: ", destportType)
     switch destportType {
     case reflect.TypeOf(ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_DestinationPort_Union_E_OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_DestinationPort{}):
-        v := (value).(*ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_DestinationPort_Union_E_OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_DestinationPort)
+        v := (inParams.param).(*ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_DestinationPort_Union_E_OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_DestinationPort)
         res_map["L4_DST_PORT"] = v.E_OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_DestinationPort.ΛMap()["E_OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_DestinationPort"][int64(v.E_OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_DestinationPort)].Name
         break
     case reflect.TypeOf(ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_DestinationPort_Union_String{}):
-        v := (value).(*ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_DestinationPort_Union_String)
+        v := (inParams.param).(*ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_DestinationPort_Union_String)
         res_map["L4_DST_PORT_RANGE"] = strings.Replace(v.String, "..", "-", 1)
         break
     case reflect.TypeOf(ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_DestinationPort_Union_Uint16{}):
-        v := (value).(*ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_DestinationPort_Union_Uint16)
+        v := (inParams.param).(*ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry_Transport_Config_DestinationPort_Union_Uint16)
         res_map["L4_DST_PORT"] = strconv.FormatInt(int64(v.Uint16), 10)
         break
     }
     return res_map, err
 }
 
-var DbToYang_acl_destination_port_xfmr FieldXfmrDbtoYang = func (d *db.DB, opType int, data map[string]map[string]db.Value, ygRoot *ygot.GoStruct, key string)  (map[string]interface{}, error) {
+var DbToYang_acl_destination_port_xfmr FieldXfmrDbtoYang = func (inParams XfmrParams)  (map[string]interface{}, error) {
     var err error
-    log.Info("DbToYang_acl_destination_port_xfmr: ", data, ygRoot)
+    data:= (*inParams.dbDataMap)[inParams.curDb]
+    log.Info("DbToYang_acl_destination_port_xfmr: ", data, inParams.ygRoot)
     result := make(map[string]interface{})
     if _, ok := data[RULE_TABLE]; !ok {
         err = errors.New("RULE_TABLE entry not found in the input param")
         return result, err
     }
     ruleTbl  := data[RULE_TABLE]
-    ruleInst := ruleTbl[key]
+    ruleInst := ruleTbl[inParams.key]
     port, ok := ruleInst.Field["L4_DST_PORT"]
     if ok {
         result["destination-port"] = port
@@ -631,12 +634,12 @@ var DbToYang_acl_destination_port_xfmr FieldXfmrDbtoYang = func (d *db.DB, opTyp
     */
 }
 
-var YangToDb_acl_tcp_flags_xfmr FieldXfmrYangToDb = func (d *db.DB, ygRoot *ygot.GoStruct, opType int, xpath string, value interface {}) (map[string]string, error) {
+var YangToDb_acl_tcp_flags_xfmr FieldXfmrYangToDb = func (inParams XfmrParams) (map[string]string, error) {
     res_map := make(map[string]string)
     var err error;
-    log.Info("YangToDb_acl_tcp_flags_xfmr: ", ygRoot, xpath)
+    log.Info("YangToDb_acl_tcp_flags_xfmr: ", inParams.ygRoot, inParams.uri)
     var tcpFlags uint32 = 0x00
-    v := reflect.ValueOf(value)
+    v := reflect.ValueOf(inParams.param)
 
     flags := v.Interface().([]ocbinds.E_OpenconfigPacketMatchTypes_TCP_FLAGS)
     for _, flag := range flags {
@@ -674,16 +677,17 @@ var YangToDb_acl_tcp_flags_xfmr FieldXfmrYangToDb = func (d *db.DB, ygRoot *ygot
     return res_map, err
 }
 
-var DbToYang_acl_tcp_flags_xfmr FieldXfmrDbtoYang = func (d *db.DB, opType int, data map[string]map[string]db.Value, ygRoot *ygot.GoStruct, key string)  (map[string]interface{}, error) {
+var DbToYang_acl_tcp_flags_xfmr FieldXfmrDbtoYang = func (inParams XfmrParams)  (map[string]interface{}, error) {
     var err error
-    log.Info("DbToYang_acl_tcp_flags_xfmr: ", data, ygRoot)
+    data:= (*inParams.dbDataMap)[inParams.curDb]
+    log.Info("DbToYang_acl_tcp_flags_xfmr: ", data, inParams.ygRoot)
     result := make(map[string]interface{})
     if _, ok := data[RULE_TABLE]; !ok {
         err = errors.New("RULE_TABLE entry not found in the input param")
         return result, err
     }
     ruleTbl  := data[RULE_TABLE]
-    ruleInst := ruleTbl[key]
+    ruleInst := ruleTbl[inParams.key]
     tcpFlag, ok := ruleInst.Field["TCP_FLAGS"]
     if ok {
         result["tcp-flags"] = getTransportConfigTcpFlags(tcpFlag)
@@ -820,14 +824,14 @@ func getDbAlcTblsData (d *db.DB) (map[string]db.Value, map[string]map[string]db.
     return aclTableMap, ruleTableMap, err
 }
 
-var YangToDb_acl_port_bindings_xfmr SubTreeXfmrYangToDb = func (d *db.DB, ygRoot *ygot.GoStruct, opType int, xpath string) (map[string]map[string]db.Value, error) {
+var YangToDb_acl_port_bindings_xfmr SubTreeXfmrYangToDb = func (inParams XfmrParams) (map[string]map[string]db.Value, error) {
     res_map := make(map[string]map[string]db.Value)
     aclTableMap := make(map[string]db.Value)
-    log.Info("YangToDb_acl_port_bindings_xfmr: ", ygRoot, xpath)
+    log.Info("YangToDb_acl_port_bindings_xfmr: ", inParams.ygRoot, inParams.uri)
 
-    aclObj := getAclRoot(ygRoot)
+    aclObj := getAclRoot(inParams.ygRoot)
 
-    aclTableMapDb, _, err := getDbAlcTblsData(d)
+    aclTableMapDb, _, err := getDbAlcTblsData(inParams.d)
     if err != nil {
         log.Info("YangToDb_acl_port_bindings_xfmr: getDbAlcTblsData not able to populate acl tables.")
     }
@@ -908,19 +912,20 @@ var YangToDb_acl_port_bindings_xfmr SubTreeXfmrYangToDb = func (d *db.DB, ygRoot
     return res_map, err
 }
 
-var DbToYang_acl_port_bindings_xfmr SubTreeXfmrDbToYang = func (d *db.DB, opType int, data map[string]map[string]db.Value, ygRoot *ygot.GoStruct, xpath string) (error) {
+var DbToYang_acl_port_bindings_xfmr SubTreeXfmrDbToYang = func (inParams XfmrParams) (error) {
     var err error
-    log.Info("DbToYang_acl_port_bindings_xfmr: ", data, ygRoot)
+    data:= (*inParams.dbDataMap)[inParams.curDb]
+    log.Info("DbToYang_acl_port_bindings_xfmr: ", data, inParams.ygRoot)
 
-    aclTbl, ruleTbl, err := getDbAlcTblsData(d)
+    aclTbl, ruleTbl, err := getDbAlcTblsData(inParams.d)
 
     if err != nil {
         log.Info("getDbAlcTblsData not able to populate acl tables.")
         err = errors.New("getDbAlcTblsData failed to populate tables.")
         return err
     }
-    pathInfo := NewPathInfo(xpath)
-    acl := getAclRoot(ygRoot)
+    pathInfo := NewPathInfo(inParams.uri)
+    acl := getAclRoot(inParams.ygRoot)
     targetUriPath, _ := getYangPathFromUri(pathInfo.Path)
     if isSubtreeRequest(pathInfo.Template, "/openconfig-acl:acl/interfaces/interface{}") {
         for intfId := range acl.Interfaces.Interface {
@@ -939,7 +944,7 @@ var DbToYang_acl_port_bindings_xfmr SubTreeXfmrDbToYang = func (d *db.DB, opType
             }
         }
     } else {
-        err = getAllBindingsInfo(aclTbl, ruleTbl, ygRoot)
+        err = getAllBindingsInfo(aclTbl, ruleTbl, inParams.ygRoot)
     }
 
     return err

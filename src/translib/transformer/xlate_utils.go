@@ -98,8 +98,9 @@ func dbKeyToYangDataConvert(uri string, xpath string, dbKey string) (map[string]
     }
 
     if len(xSpecMap[xpath].xfmrKey) > 0 {
-        var d *db.DB
-        ret, err := XlateFuncCall(dbToYangXfmrFunc(xSpecMap[xpath].xfmrKey), d, GET, dbKey)
+	var dbs [db.MaxDB]*db.DB
+	inParams := formXfmrInputRequest(nil, dbs, db.MaxDB, nil, uri, GET, dbKey, nil, nil)
+        ret, err := XlateFuncCall(dbToYangXfmrFunc(xSpecMap[xpath].xfmrKey), inParams)
         if err != nil {
             return nil, "","",err
         }
@@ -308,4 +309,19 @@ func mapGet(xpath string, inMap map[string]interface{}) map[string]interface{} {
     recMap(inMap, attrList, 1, alLen)
     retMap := mapInstGet(attrList, 1, alLen, inMap)
     return retMap
+}
+
+func formXfmrInputRequest(d *db.DB, dbs [db.MaxDB]*db.DB, cdb db.DBNum, ygRoot *ygot.GoStruct, uri string, oper int, key string, dbDataMap *map[db.DBNum]map[string]map[string]db.Value, param interface{}) XfmrParams {
+	var inParams XfmrParams
+	inParams.d = d
+	inParams.dbs = dbs
+	inParams.curDb = cdb
+	inParams.ygRoot = ygRoot
+	inParams.uri = uri
+	inParams.oper = oper
+	inParams.key = key
+	inParams.dbDataMap = dbDataMap
+	inParams.param = param // generic param
+
+	return inParams
 }

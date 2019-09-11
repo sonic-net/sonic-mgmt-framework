@@ -6,20 +6,33 @@ import (
         log "github.com/golang/glog"
 //	"translib/ocbinds"
 )
+
+type XfmrParams struct {
+	d *db.DB
+	dbs [db.MaxDB]*db.DB
+	curDb db.DBNum
+	ygRoot *ygot.GoStruct
+	uri string
+	oper int
+	key string
+	dbDataMap *map[db.DBNum]map[string]map[string]db.Value
+	param interface{}
+}
+
 /**
  * KeyXfmrYangToDb type is defined to use for conversion of Yang key to DB Key 
  * Transformer function definition.
  * Param: Database info, YgotRoot, operation, Xpath
  * Return: Database keys to access db entry, error
  **/
-type KeyXfmrYangToDb func (*db.DB, *ygot.GoStruct, int, string) (string, error)
+type KeyXfmrYangToDb func (inParams XfmrParams) (string, error)
 /**
  * KeyXfmrDbToYang type is defined to use for conversion of DB key to Yang key
  * Transformer function definition.
  * Param: Database info, operation, Database keys to access db entry
  * Return: multi dimensional map to hold the yang key attributes of complete xpath, error
  **/
-type KeyXfmrDbToYang func (*db.DB, int, string) (map[string]string, error)
+type KeyXfmrDbToYang func (inParams XfmrParams) (map[string]string, error)
 
 /**
  * FieldXfmrYangToDb type is defined to use for conversion of yang Field to DB field
@@ -27,14 +40,14 @@ type KeyXfmrDbToYang func (*db.DB, int, string) (map[string]string, error)
  * Param: Database info, YgotRoot, operation, Xpath
  * Return: multi dimensional map to hold the DB data, error
  **/
-type FieldXfmrYangToDb func (*db.DB, *ygot.GoStruct, int, string, interface {}) (map[string]string, error)
+type FieldXfmrYangToDb func (inParams XfmrParams) (map[string]string, error)
 /**
  * FieldXfmrDbtoYang type is defined to use for conversion of DB field to Yang field
  * Transformer function definition.
  * Param: Database info, operation, DB data in multidimensional map, output param YgotRoot
  * Return: error
  **/
-type FieldXfmrDbtoYang func (*db.DB, int, map[string]map[string]db.Value, *ygot.GoStruct, string)  (map[string]interface{}, error)
+type FieldXfmrDbtoYang func (inParams XfmrParams)  (map[string]interface{}, error)
 
 /**
  * SubTreeXfmrYangToDb type is defined to use for handling the yang subtree to DB
@@ -42,14 +55,14 @@ type FieldXfmrDbtoYang func (*db.DB, int, map[string]map[string]db.Value, *ygot.
  * Param: Database info, YgotRoot, operation, Xpath
  * Return: multi dimensional map to hold the DB data, error
  **/
-type SubTreeXfmrYangToDb func (*db.DB, *ygot.GoStruct, int, string) (map[string]map[string]db.Value, error)
+type SubTreeXfmrYangToDb func (inParams XfmrParams) (map[string]map[string]db.Value, error)
 /**
  * SubTreeXfmrDbToYang type is defined to use for handling the DB to Yang subtree
  * Transformer function definition.
- * Param : Database info, operation, DB data in multidimensional map, output param YgotRoot
+ * Param : Database pointers, current db, operation, DB data in multidimensional map, output param YgotRoot, uri
  * Return :  error
  **/
-type SubTreeXfmrDbToYang func (*db.DB, int, map[string]map[string]db.Value, *ygot.GoStruct, string) (error)
+type SubTreeXfmrDbToYang func (inParams XfmrParams) (error)
 
 /**
  * Xfmr validation interface for validating the callback registration of app modules 

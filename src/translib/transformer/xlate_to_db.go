@@ -78,7 +78,9 @@ func mapFillData(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, dbKey st
         if nErr != nil {
             return nErr
         }
-        ret, err := XlateFuncCall(yangToDbXfmrFunc(xSpecMap[xpath].xfmrFunc), d, ygRoot, oper, uri, node[0].Data)
+	var dbs [db.MaxDB]*db.DB
+	inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, uri, oper, "", nil, node[0].Data)
+        ret, err := XlateFuncCall(yangToDbXfmrFunc(xSpecMap[xpath].xfmrFunc), inParams)
         if err != nil {
             return err
         }
@@ -259,6 +261,7 @@ func dbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, jsonDat
 
 func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, xpathPrefix string, keyName string, jsonData interface{}, result map[string]map[string]db.Value) error {
     log.Info("key(\"%v\"), xpathPrefix(\"%v\").", keyName, xpathPrefix)
+    var dbs [db.MaxDB]*db.DB
 
     if reflect.ValueOf(jsonData).Kind() == reflect.Slice {
         log.Info("slice data: key(\"%v\"), xpathPrefix(\"%v\").", keyName, xpathPrefix)
@@ -272,7 +275,8 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
             curUri := uriWithKeyCreate(uri, xpathPrefix, data)
             if len(xSpecMap[xpathPrefix].xfmrKey) > 0 {
                 /* key transformer present */
-                ret, err := XlateFuncCall(yangToDbXfmrFunc(xSpecMap[xpathPrefix].xfmrKey), d, ygRoot, oper, curUri)
+		inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, curUri, oper, "", nil, nil)
+                ret, err := XlateFuncCall(yangToDbXfmrFunc(xSpecMap[xpathPrefix].xfmrKey), inParams)
                 if err != nil {
                     return err
                 }
@@ -303,7 +307,8 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
 
                     if xSpecMap[xpath] != nil && len(xSpecMap[xpath].xfmrFunc) > 0 {
                         /* subtree transformer present */
-                        ret, err := XlateFuncCall(yangToDbXfmrFunc(xSpecMap[xpath].xfmrFunc), d, ygRoot, oper, curUri)
+			inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, curUri, oper, "", nil, nil)
+                        ret, err := XlateFuncCall(yangToDbXfmrFunc(xSpecMap[xpath].xfmrFunc), inParams)
                         if err != nil {
                             return nil
                         }
@@ -357,6 +362,7 @@ func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string) (st
     tableName := ""
     rgp       := regexp.MustCompile(`\[([^\[\]]*)\]`)
     curPathWithKey := ""
+    var dbs [db.MaxDB]*db.DB
 
     for _, k := range strings.Split(path, "/") {
         curPathWithKey += k
@@ -369,7 +375,8 @@ func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string) (st
 	    if ok {
             if len(xSpecMap[yangXpath].xfmrKey) > 0 {
                 xfmrFuncName := yangToDbXfmrFunc(xSpecMap[yangXpath].xfmrKey)
-                ret, err := XlateFuncCall(xfmrFuncName, d, ygRoot, oper, curPathWithKey)
+		inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, curPathWithKey, oper, "", nil, nil)
+                ret, err := XlateFuncCall(xfmrFuncName, inParams)
                 if err != nil {
                     return "", "", ""
                 }

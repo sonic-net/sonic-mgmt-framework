@@ -305,7 +305,7 @@ func XlateFromDb(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db.DB, data m
 	}
         xpath, _ := RemoveXPATHPredicates(uri)
 	cdb = xSpecMap[xpath].dbIndex
-	payload, err := dbDataToYangJsonCreate(uri, ygRoot, dbs, dbData, cdb)
+	payload, err := dbDataToYangJsonCreate(uri, ygRoot, dbs, &dbData, cdb)
 
 	if err != nil {
 		log.Errorf("Error: failed to create json response from DB data.")
