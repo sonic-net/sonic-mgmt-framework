@@ -844,22 +844,22 @@ func (app *IntfApp) convertInternalToOCIntfAttrInfo(ifName *string, ifInfo *ocbi
 				var speedEnum ocbinds.E_OpenconfigIfEthernet_ETHERNET_SPEED
 
 				switch speed {
-				case "40000":
-					speedEnum = ocbinds.OpenconfigIfEthernet_ETHERNET_SPEED_SPEED_40GB
-				case "25000":
-					speedEnum = ocbinds.OpenconfigIfEthernet_ETHERNET_SPEED_SPEED_25GB
-				case "10000":
-					speedEnum = ocbinds.OpenconfigIfEthernet_ETHERNET_SPEED_SPEED_10GB
-				case "5000":
-					speedEnum = ocbinds.OpenconfigIfEthernet_ETHERNET_SPEED_SPEED_5GB
-				case "1000":
-					speedEnum = ocbinds.OpenconfigIfEthernet_ETHERNET_SPEED_SPEED_1GB
-				case "100000":
-					speedEnum = ocbinds.OpenconfigIfEthernet_ETHERNET_SPEED_SPEED_100GB
 				case "2500":
 					speedEnum = ocbinds.OpenconfigIfEthernet_ETHERNET_SPEED_SPEED_2500MB
+				case "1000":
+					speedEnum = ocbinds.OpenconfigIfEthernet_ETHERNET_SPEED_SPEED_1GB
+				case "5000":
+					speedEnum = ocbinds.OpenconfigIfEthernet_ETHERNET_SPEED_SPEED_5GB
+				case "10000":
+					speedEnum = ocbinds.OpenconfigIfEthernet_ETHERNET_SPEED_SPEED_10GB
+				case "25000":
+					speedEnum = ocbinds.OpenconfigIfEthernet_ETHERNET_SPEED_SPEED_25GB
+				case "40000":
+					speedEnum = ocbinds.OpenconfigIfEthernet_ETHERNET_SPEED_SPEED_40GB
 				case "50000":
 					speedEnum = ocbinds.OpenconfigIfEthernet_ETHERNET_SPEED_SPEED_50GB
+				case "100000":
+					speedEnum = ocbinds.OpenconfigIfEthernet_ETHERNET_SPEED_SPEED_100GB
 				default:
 					log.Infof("Not supported speed: %s!", speed)
 				}
