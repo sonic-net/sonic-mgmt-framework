@@ -65,14 +65,18 @@ def run(func, args):
 
         else :
            api_response = getattr(aa,func.__name__)(*keypath)
-
+     
         if api_response is None:
             print ("Success")
         else:
-            response = api_response.to_dict()
-            value =  response['openconfig_platformcomponents']['component'][0]['state']
-            if value is None:
+            api_response = aa.api_client.sanitize_for_serialization(api_response)
+            value =  api_response['openconfig-platform:components']['component'][0]['state']
+	    if value is None:
                 return
+	    if 'oper-status' in value:
+		temp = value['oper-status'].split(':')
+		if temp[len(temp) - 1] is not None:
+	            value['oper-status'] = temp[len(temp) - 1]
             show_cli_output(sys.argv[2],filter_json_value(value))
 
     except ApiException as e:
