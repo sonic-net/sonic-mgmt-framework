@@ -235,7 +235,7 @@ func (app *IntfApp) translateSubscribe(dbs [db.MaxDB]*db.DB, path string) (*noti
 	notSupported := tlerr.NotSupportedError{Format: "Subscribe not supported", Path: path}
 
 	if isSubtreeRequest(pathInfo.Template, "/openconfig-interfaces:interfaces") {
-		if pathInfo.HasSuffix("/interface{name}") ||
+		if pathInfo.HasSuffix("/interface{}") ||
 			pathInfo.HasSuffix("/config") ||
 			pathInfo.HasSuffix("/state") {
 			log.Errorf("Subscribe not supported for %s!", pathInfo.Template)
