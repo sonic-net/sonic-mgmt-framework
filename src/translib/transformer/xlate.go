@@ -288,7 +288,7 @@ func XlateFromDb(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db.DB, data m
 
 	var err error
 	var dbData = make(map[db.DBNum]map[string]map[string]db.Value)
-	var cdb db.DBNum
+	var cdb db.DBNum = db.ConfigDB
 
 	dbData = data
 	if isCvlYang(uri) {
@@ -298,14 +298,15 @@ func XlateFromDb(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db.DB, data m
 			// Format /module:container/tableName[key]/fieldName
 			if tokens[len(tokens)-2] == tableName {
 		                fieldName := tokens[len(tokens)-1]
-				cdb = xSpecMap[yangXpath].dbIndex
 				dbData[cdb] = extractFieldFromDb(tableName, keyStr, fieldName, data[cdb])
 			}
 		}
+	} else {
+	        xpath, _ := RemoveXPATHPredicates(uri)
+		cdb = xSpecMap[xpath].dbIndex
 	}
-        xpath, _ := RemoveXPATHPredicates(uri)
-	cdb = xSpecMap[xpath].dbIndex
 	payload, err := dbDataToYangJsonCreate(uri, ygRoot, dbs, &dbData, cdb)
+	log.Info("Payload generated:", payload)
 
 	if err != nil {
 		log.Errorf("Error: failed to create json response from DB data.")
