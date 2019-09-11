@@ -14,7 +14,7 @@ import (
 )
 
 var CVL_SCHEMA string = "schema/"
-var CVL_CFG_FILE string = "./cvl_cfg.json"
+var CVL_CFG_FILE string = "/usr/sbin/cvl_cfg.json"
 
 //package init function 
 func init() {
@@ -50,7 +50,7 @@ var cvlTraceFlags uint32
 type CVLTraceLevel uint32 
 const (
 	TRACE_MIN = 0
-	TRACE_MAX = 7
+	TRACE_MAX = 8 
         TRACE_CACHE  = 1 << TRACE_MIN 
         TRACE_LIBYANG = 1 << 1
         TRACE_YPARSER = 1 << 2
@@ -58,6 +58,7 @@ const (
         TRACE_UPDATE = 1 << 4
         TRACE_DELETE = 1 << 5
         TRACE_SEMANTIC = 1 << 6
+        TRACE_ONERROR = 1 << 7 
         TRACE_SYNTAX = 1 << TRACE_MAX 
 
 )
@@ -80,6 +81,8 @@ var traceLevelMap = map[int]string {
 	TRACE_SEMANTIC : "TRACE_SEMANTIC",
 	/* Syntax Validation traces. */
 	TRACE_SYNTAX : "TRACE_SYNTAX", 
+	/* Trace on Error. */
+	TRACE_ONERROR : "TRACE_ONERROR",
 }
 
 var Tracing bool = false
@@ -126,7 +129,9 @@ func TRACE_LEVEL_LOG(level log.Level, tracelevel CVLTraceLevel, fmtStr string, a
 		fmt.Printf("%s:%d %s(): ", file, line, f.Name())
 		fmt.Printf(fmtStr+"\n", args...)
 	} else {
-		log.V(level).Infof(fmtStr, args...)
+		if (traceEnabled == true) {
+			log.V(level).Infof(fmtStr, args...)
+		}
 	}
 }
 
@@ -172,7 +177,9 @@ func ConfigFileSyncHandler() {
 
 			CVL_LEVEL_LOG(INFO ,"Received SIGUSR2. Changed configuration values are %v", cvlCfgMap)
 
+
 			if (strings.Compare(cvlCfgMap["LOGTOSTDERR"], "true") == 0) {
+				SetTrace(true)
 				flag.Set("logtostderr", "true")
 				flag.Set("stderrthreshold", cvlCfgMap["STDERRTHRESHOLD"])
 				flag.Set("v", cvlCfgMap["VERBOSITY"])

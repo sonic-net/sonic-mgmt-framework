@@ -44,7 +44,11 @@ $(REST_BUILD_DIR)/:
 $(REST_BIN): $(REST_SRCS) | $(REST_BUILD_DIR)/
 	$(MAKE) -C $(TOPDIR)/models/yang
 	$(MAKE) -C $(TOPDIR)/models
+ifeq ($(SONIC_COVERAGE_ON),y)
+	GOPATH=$(REST_GOPATH) $(GO) test -coverpkg=".././..." -c -o $@ main/main.go main/main_test.go
+else
 	GOPATH=$(REST_GOPATH) $(GO) build -gcflags="all=-N -l" -v -o $@ main/main.go
+endif
 
 # Gotest binary for REST Server
 $(REST_TEST_BIN): $(REST_TEST_SRCS) $(ALL_GO_SRCS) | $(REST_BUILD_DIR)/
