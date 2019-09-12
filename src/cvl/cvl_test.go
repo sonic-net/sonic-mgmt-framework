@@ -2612,7 +2612,7 @@ func TestValidateEditConfig_DepData_Through_Cache(t *testing.T) {
 	depDataMap = map[string]interface{} {
 		"PORT" : map[string]interface{} {
 			"Ethernet3" : map[string]interface{} {
-				"mtu": "9500",
+				"mtu": "9200",
 			},
 		},
 	}
@@ -3104,7 +3104,6 @@ func TestValidateEditConfig_Two_Updates_Positive(t *testing.T) {
 	unloadConfigDB(rclient, depDataMap)
 
 }
-
 func TestValidateEditConfig_Create_Syntax_DependentData_PositivePortChannel(t *testing.T) {
 
 	cfgData := []cvl.CVLEditConfigData{
