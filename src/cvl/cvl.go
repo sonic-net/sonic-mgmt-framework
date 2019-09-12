@@ -1003,6 +1003,12 @@ func (c *CVL) addLeafRef(config bool, tableName string, name string, value strin
 
 
 func (c *CVL) addChildLeaf(config bool, tableName string, parent *yparser.YParserNode, name string, value string) {
+
+	/* If there is no value then assign default space string. */
+	if len(value) == 0 {
+                value = " "
+        }
+
 	//Batch leaf creation
 	c.batchLeaf = c.batchLeaf + name + "#" + value + "#"
 	//Check if this leaf has leafref,
