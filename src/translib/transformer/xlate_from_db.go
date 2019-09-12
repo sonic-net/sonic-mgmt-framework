@@ -72,6 +72,14 @@ func leafXfmrHandlerFunc(inParams XfmrParams) (map[string]interface{}, string, e
     return fldValMap, data, nil
 }
 
+func validateHandlerFunc(inParams XfmrParams) (bool) {
+    xpath, _ := RemoveXPATHPredicates(inParams.uri)
+    ret, err := XlateFuncCall(xSpecMap[xpath].validateFunc, inParams)
+    if err != nil {
+        return false
+    }
+    return ret[0].Interface().(bool)
+}
 
 /* Traverse db map and create json for cvl yang */
 func directDbToYangJsonCreate(dbDataMap map[string]map[string]db.Value, jsonData string) string {
@@ -147,6 +155,14 @@ func yangDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, xpath
             chldXpath := xpath+"/"+yangChldName
             chldUri   := uri+"/"+yangChldName
             if xSpecMap[chldXpath] != nil && xSpecMap[chldXpath].yangEntry != nil {
+                if len(xSpecMap[chldXpath].validateFunc) > 0 {
+                   // TODO - handle non CONFIG-DB
+                   inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, chldUri, GET, "", dbDataMap, nil)
+                   res := validateHandlerFunc(inParams)
+                   if res != true {
+                      continue
+                   }
+                }
                 chldYangType := yangTypeGet(xSpecMap[chldXpath].yangEntry)
 		cdb = xSpecMap[chldXpath].dbIndex
                 if chldYangType == "leaf" {

@@ -41,6 +41,18 @@ module openconfig-acl-annot {
       }
     }
 
+    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-acl:ipv4 {
+        deviate add {
+          sonic-ext:get-validate "validate_ipv4";
+        }
+    }
+
+    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-acl:ipv6 {
+        deviate add {
+          sonic-ext:get-validate "validate_ipv6";
+        }
+    }
+
     deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-acl:config/oc-acl:sequence-id {
       deviate add {
         sonic-ext:field-transformer "acl_entry_sequenceid_xfmr";

@@ -21,6 +21,7 @@ type yangXpathInfo  struct {
     delim          string
     fieldName      string
     xfmrFunc       string
+    validateFunc   string
     xfmrKey        string
     dbIndex        db.DBNum
     keyLevel       int
@@ -272,6 +273,8 @@ func annotEntryFill(xSpecMap map[string]*yangXpathInfo, xpath string, entry *yan
                     xpathData.xfmrFunc  = ext.NName()
                 case "post-transformer" :
                     xpathData.xfmrFunc  = ext.NName()
+                case "get-validate" :
+                    xpathData.validateFunc  = ext.NName()
                 case "use-self-key" :
                     xpathData.keyXpath  = nil
                 case "redis-db-name" :

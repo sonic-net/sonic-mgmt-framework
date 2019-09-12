@@ -35,6 +35,8 @@ func init() {
 	XlateFuncBind("DbToYang_acl_tcp_flags_xfmr", DbToYang_acl_tcp_flags_xfmr)
 	XlateFuncBind("YangToDb_acl_port_bindings_xfmr", YangToDb_acl_port_bindings_xfmr)
 	XlateFuncBind("DbToYang_acl_port_bindings_xfmr", DbToYang_acl_port_bindings_xfmr)
+	XlateFuncBind("validate_ipv4", validate_ipv4)
+	XlateFuncBind("validate_ipv6", validate_ipv6)
 }
 
 const (
@@ -164,6 +166,18 @@ func getL2EtherType(etherType uint64) interface{} {
 		}
 	}
 	return uint16(etherType)
+}
+
+////////////////////////////////////////////
+// Validate callpoints
+////////////////////////////////////////////
+var validate_ipv4 ValidateCallpoint = func(inParams XfmrParams) (bool) {
+	var res bool = true
+	return res
+}
+var validate_ipv6 ValidateCallpoint = func(inParams XfmrParams) (bool) {
+	var res bool = false
+	return res
 }
 
 ////////////////////////////////////////////
