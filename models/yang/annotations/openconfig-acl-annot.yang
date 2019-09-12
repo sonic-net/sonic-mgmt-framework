@@ -119,46 +119,5 @@ module openconfig-acl-annot {
       }
     }
 
-    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:state {
-      deviate add {
-        sonic-ext:redis-db-name "STATE_DB";
-      }
-    }
-
-    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-acl:state {
-      deviate add {
-        sonic-ext:redis-db-name "STATE_DB";
-      }
-    }
-
-    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-acl:l2/oc-acl:state {
-      deviate add {
-        sonic-ext:redis-db-name "STATE_DB";
-      }
-    }
-
-    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-acl:ipv4/oc-acl:state {
-      deviate add {
-        sonic-ext:redis-db-name "STATE_DB";
-      }
-    }
-
-    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-acl:ipv6/oc-acl:state {
-      deviate add {
-        sonic-ext:redis-db-name "STATE_DB";
-      }
-    }
-
-    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-acl:transport/oc-acl:state {
-      deviate add {
-        sonic-ext:redis-db-name "STATE_DB";
-      }
-    }
-
-    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-acl:actions/oc-acl:state {
-      deviate add {
-        sonic-ext:redis-db-name "STATE_DB";
-      }
-    }
 }
 
