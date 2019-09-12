@@ -55,6 +55,9 @@ func mapFillData(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, dbKey st
         return errors.New("Invalid table key")
     }
 
+    if xpathInfo.isKey {
+        return nil
+    }
     if len(xpathInfo.xfmrFunc) > 0 {
         uri = uri + "/" + name
 
@@ -78,8 +81,8 @@ func mapFillData(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, dbKey st
         if nErr != nil {
             return nErr
         }
-	var dbs [db.MaxDB]*db.DB
-	inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, uri, oper, "", nil, node[0].Data)
+	    var dbs [db.MaxDB]*db.DB
+	    inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, uri, oper, "", nil, node[0].Data)
         ret, err := XlateFuncCall(yangToDbXfmrFunc(xSpecMap[xpath].xfmrFunc), inParams)
         if err != nil {
             return err
@@ -275,7 +278,7 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
             curUri := uriWithKeyCreate(uri, xpathPrefix, data)
             if len(xSpecMap[xpathPrefix].xfmrKey) > 0 {
                 /* key transformer present */
-		inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, curUri, oper, "", nil, nil)
+		        inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, curUri, oper, "", nil, nil)
                 ret, err := XlateFuncCall(yangToDbXfmrFunc(xSpecMap[xpathPrefix].xfmrKey), inParams)
                 if err != nil {
                     return err

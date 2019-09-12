@@ -16,6 +16,10 @@ import (
 
 type typeMapOfInterface map[string]interface{}
 
+const (
+    Yuint8 = 5
+)
+
 func xfmrHandlerFunc(inParams XfmrParams) (string, error) {
     xpath, _ := RemoveXPATHPredicates(inParams.uri)
     _, err := XlateFuncCall(dbToYangXfmrFunc(xSpecMap[xpath].xfmrFunc), inParams)
@@ -161,11 +165,14 @@ func yangDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, xpath
                         if len(dbFldName) > 0  && !xSpecMap[chldXpath].isKey {
                             val, ok := (*dbDataMap)[cdb][tbl][tblKey].Field[dbFldName]
                             if ok {
-                                valInt, err := strconv.Atoi(val)
-                                if err == nil {
+                                /* this will be enhanced to support all yang data types */
+                                yNode := xSpecMap[chldXpath]
+                                yDataType := yNode.yangEntry.Type.Kind
+                                if yDataType == Yuint8 {
+                                    valInt, _ := strconv.Atoi(val)
                                     resultMap[xSpecMap[chldXpath].yangEntry.Name] = valInt
                                 } else {
-                                    resultMap[xSpecMap[chldXpath].yangEntry.Name] = val
+                                    resultMap[yNode.yangEntry.Name] = val
                                 }
                             }
                         }
