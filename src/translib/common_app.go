@@ -163,14 +163,12 @@ func (app *CommonApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
         return GetResponse{Payload: payload, ErrSrc: AppErr}, err
     }
 
-    if  targetObj != nil {
 	targetObj, _ := (*app.ygotTarget).(ygot.GoStruct)
 	err = ocbinds.Unmarshal(payload, targetObj)
 	if err != nil {
 	    log.Error("ocbinds.Unmarshal()  failed")
 	    return GetResponse{Payload: payload, ErrSrc: AppErr}, err
 	}
-    }
 
    payload, err = generateGetResponsePayload(app.pathInfo.Path, (*app.ygotRoot).(*ocbinds.Device), app.ygotTarget)
     if err != nil {
