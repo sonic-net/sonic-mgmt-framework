@@ -295,19 +295,19 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
             for _, key := range jData.MapKeys() {
                 typeOfValue := reflect.TypeOf(jData.MapIndex(key).Interface()).Kind()
 
-                if typeOfValue == reflect.Map || typeOfValue == reflect.Slice {
-                    log.Info("slice/map data: key(\"%v\"), xpathPrefix(\"%v\").", keyName, xpathPrefix)
-                    xpath    := uri
-                    curUri   := uri
-                    pathAttr := key.String()
-                    if len(xpathPrefix) > 0 {
-                        if strings.Contains(pathAttr, ":") {
-                            pathAttr = strings.Split(pathAttr, ":")[1]
-                        }
-                        xpath  = xpathPrefix + "/" + pathAttr
-                        curUri = uri + "/" + pathAttr
+                log.Info("slice/map data: key(\"%v\"), xpathPrefix(\"%v\").", keyName, xpathPrefix)
+                xpath    := uri
+                curUri   := uri
+                pathAttr := key.String()
+                if len(xpathPrefix) > 0 {
+                    if strings.Contains(pathAttr, ":") {
+                         pathAttr = strings.Split(pathAttr, ":")[1]
                     }
+                    xpath  = xpathPrefix + "/" + pathAttr
+                    curUri = uri + "/" + pathAttr
+                }
 
+                if (typeOfValue == reflect.Map || typeOfValue == reflect.Slice) && xSpecMap[xpath].yangDataType != "leaf-list" {
                     if xSpecMap[xpath] != nil && len(xSpecMap[xpath].xfmrFunc) > 0 {
                         /* subtree transformer present */
 			inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, curUri, oper, "", nil, nil)
