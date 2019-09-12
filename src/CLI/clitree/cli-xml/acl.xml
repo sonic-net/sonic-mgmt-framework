@@ -91,8 +91,8 @@
          >
          <PARAM
              name="access-list-name"
-             help="Name of the IPv4 access-list (Max size 140)"
-             ptype="STRING"
+             help="Name of the IPv4 access-list (Max size 63)"
+             ptype="STRING_63"
              >
         </PARAM>
         <ACTION>python $SONIC_CLI_ROOT/sonic-cli.py patch_openconfig_acl_acl_acl_sets_acl_set ${access-list-name} ACL_IPV4</ACTION>
@@ -103,8 +103,8 @@
          help="Configure IPv4 access-list"
 		 >
          <PARAM name="access-list-name"
-             help="Name of the IPv4 access-list (Max size 140)"
-             ptype="STRING"
+             help="Name of the IPv4 access-list (Max size 63)"
+             ptype="STRING_63"
 			 >
         </PARAM>
     <ACTION>python $SONIC_CLI_ROOT/sonic-cli.py delete_openconfig_acl_acl_acl_sets_acl_set ${access-list-name} ACL_IPV4</ACTION>

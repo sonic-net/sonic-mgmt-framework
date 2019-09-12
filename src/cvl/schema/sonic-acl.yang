@@ -53,7 +53,10 @@ module sonic-acl {
 			/* must "count(/prt:sonic-port/prt:PORT) > 0"; */
 
 			leaf aclname {
-				type string;
+                type string {
+                    pattern '[a-zA-Z0-9]{1}([-a-zA-Z0-9_]{0,71})';
+                    length 1..72;
+                }
 			}
 
 			leaf policy_desc {
