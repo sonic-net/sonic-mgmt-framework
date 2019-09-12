@@ -62,6 +62,12 @@ type SubTreeXfmrYangToDb func (inParams XfmrParams) (map[string]map[string]db.Va
  * Return :  error
  **/
 type SubTreeXfmrDbToYang func (inParams XfmrParams) (error)
+/**
+ * ValidateCallpoint is used to validate a YANG node during data translation back to YANG as a response to GET
+ * Param : Database pointers, current db, operation, DB data in multidimensional map, output param YgotRoot, uri
+ * Return :  bool
+ **/
+type ValidateCallpoint func (inParams XfmrParams) (bool)
 
 /**
  * Xfmr validation interface for validating the callback registration of app modules 
