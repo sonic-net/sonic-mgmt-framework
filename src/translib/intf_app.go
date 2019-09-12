@@ -42,10 +42,9 @@ const (
 type Table int
 
 const (
-        IF_TABLE_MAP Table = iota
-        PORT_STAT_MAP
+	IF_TABLE_MAP Table = iota
+	PORT_STAT_MAP
 )
-
 
 type IntfApp struct {
 	path       *PathInfo
@@ -235,7 +234,7 @@ func (app *IntfApp) translateSubscribe(dbs [db.MaxDB]*db.DB, path string) (*noti
 	notSupported := tlerr.NotSupportedError{Format: "Subscribe not supported", Path: path}
 
 	if isSubtreeRequest(pathInfo.Template, "/openconfig-interfaces:interfaces") {
-		if pathInfo.HasSuffix("/interface{name}") ||
+		if pathInfo.HasSuffix("/interface{}") ||
 			pathInfo.HasSuffix("/config") ||
 			pathInfo.HasSuffix("/state") {
 			log.Errorf("Subscribe not supported for %s!", pathInfo.Template)
@@ -359,29 +358,27 @@ func (app *IntfApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
 					return GetResponse{Payload: payload, ErrSrc: AppErr}, err
 				}
 
-                                /*Check if the request is for a specific attribute in Interfaces state COUNTERS container*/
-                                counter_val := &ocbinds.OpenconfigInterfaces_Interfaces_Interface_State_Counters{}
-                                ok, e = app.getSpecificCounterAttr(targetUriPath, ifKey, counter_val)
-                                if ok {
-                                        if e != nil {
-                                                return GetResponse{Payload: payload, ErrSrc: AppErr}, e
-                                        }
+				/*Check if the request is for a specific attribute in Interfaces state COUNTERS container*/
+				counter_val := &ocbinds.OpenconfigInterfaces_Interfaces_Interface_State_Counters{}
+				ok, e = app.getSpecificCounterAttr(targetUriPath, ifKey, counter_val)
+				if ok {
+					if e != nil {
+						return GetResponse{Payload: payload, ErrSrc: AppErr}, e
+					}
 
-                                        payload, err = dumpIetfJson(counter_val, false)
-                                        if err == nil {
-                                                return GetResponse{Payload: payload}, err
-                                        } else {
-                                                return GetResponse{Payload: payload, ErrSrc: AppErr}, err
-                                        }
-                                }
+					payload, err = dumpIetfJson(counter_val, false)
+					if err == nil {
+						return GetResponse{Payload: payload}, err
+					} else {
+						return GetResponse{Payload: payload, ErrSrc: AppErr}, err
+					}
+				}
 
-
-
-                                /* Filling Interface IP info to internal DS */
-                                 err = app.convertDBIntfIPInfoToInternal(app.appDB, ifKey)
-                                 if err != nil {
-                                         return GetResponse{Payload: payload, ErrSrc: AppErr}, err
-                                 }
+				/* Filling Interface IP info to internal DS */
+				err = app.convertDBIntfIPInfoToInternal(app.appDB, ifKey)
+				if err != nil {
+					return GetResponse{Payload: payload, ErrSrc: AppErr}, err
+				}
 
 				/* Filling the tree with the info we have in Internal DS */
 				ygot.BuildEmptyTree(ifInfo)
@@ -547,140 +544,138 @@ func (app *IntfApp) getSpecificAttr(targetUriPath string, ifKey string, oc_val *
 		return true, e
 
 	default:
-                log.Infof(targetUriPath + " - Not an interface state attribute")
+		log.Infof(targetUriPath + " - Not an interface state attribute")
 	}
 	return false, nil
 }
 
 func (app *IntfApp) getSpecificCounterAttr(targetUriPath string, ifKey string, counter_val *ocbinds.OpenconfigInterfaces_Interfaces_Interface_State_Counters) (bool, error) {
 
-    var e error
+	var e error
 
-    switch targetUriPath {
-        case "/openconfig-interfaces:interfaces/interface/state/counters/in-octets":
-                e = app.getCounters(ifKey, "SAI_PORT_STAT_IF_IN_OCTETS", &counter_val.InOctets)
-                return true, e
+	switch targetUriPath {
+	case "/openconfig-interfaces:interfaces/interface/state/counters/in-octets":
+		e = app.getCounters(ifKey, "SAI_PORT_STAT_IF_IN_OCTETS", &counter_val.InOctets)
+		return true, e
 
-        case "/openconfig-interfaces:interfaces/interface/state/counters/in-unicast-pkts":
-                e = app.getCounters(ifKey, "SAI_PORT_STAT_IF_IN_UCAST_PKTS", &counter_val.InUnicastPkts)
-                return true, e
+	case "/openconfig-interfaces:interfaces/interface/state/counters/in-unicast-pkts":
+		e = app.getCounters(ifKey, "SAI_PORT_STAT_IF_IN_UCAST_PKTS", &counter_val.InUnicastPkts)
+		return true, e
 
-        case "/openconfig-interfaces:interfaces/interface/state/counters/in-broadcast-pkts":
-                e = app.getCounters(ifKey, "SAI_PORT_STAT_IF_IN_BROADCAST_PKTS", &counter_val.InBroadcastPkts)
-                return true, e
+	case "/openconfig-interfaces:interfaces/interface/state/counters/in-broadcast-pkts":
+		e = app.getCounters(ifKey, "SAI_PORT_STAT_IF_IN_BROADCAST_PKTS", &counter_val.InBroadcastPkts)
+		return true, e
 
-        case "/openconfig-interfaces:interfaces/interface/state/counters/in-multicast-pkts":
-                e = app.getCounters(ifKey, "SAI_PORT_STAT_IF_IN_MULTICAST_PKTS", &counter_val.InMulticastPkts)
-                return true, e
+	case "/openconfig-interfaces:interfaces/interface/state/counters/in-multicast-pkts":
+		e = app.getCounters(ifKey, "SAI_PORT_STAT_IF_IN_MULTICAST_PKTS", &counter_val.InMulticastPkts)
+		return true, e
 
-        case "/openconfig-interfaces:interfaces/interface/state/counters/in-errors":
-                e = app.getCounters(ifKey, "SAI_PORT_STAT_IF_IN_ERRORS", &counter_val.InErrors)
-                return true, e
+	case "/openconfig-interfaces:interfaces/interface/state/counters/in-errors":
+		e = app.getCounters(ifKey, "SAI_PORT_STAT_IF_IN_ERRORS", &counter_val.InErrors)
+		return true, e
 
-        case "/openconfig-interfaces:interfaces/interface/state/counters/in-discards":
-                e = app.getCounters(ifKey, "SAI_PORT_STAT_IF_IN_DISCARDS", &counter_val.InDiscards)
-                return true, e
+	case "/openconfig-interfaces:interfaces/interface/state/counters/in-discards":
+		e = app.getCounters(ifKey, "SAI_PORT_STAT_IF_IN_DISCARDS", &counter_val.InDiscards)
+		return true, e
 
-        case "/openconfig-interfaces:interfaces/interface/state/counters/in-pkts":
-                var inNonUCastPkt, inUCastPkt *uint64
-                var in_pkts uint64
+	case "/openconfig-interfaces:interfaces/interface/state/counters/in-pkts":
+		var inNonUCastPkt, inUCastPkt *uint64
+		var in_pkts uint64
 
-                e = app.getCounters(ifKey, "SAI_PORT_STAT_IF_IN_NON_UCAST_PKTS", &inNonUCastPkt)
-                if e == nil {
-                    e = app.getCounters(ifKey, "SAI_PORT_STAT_IF_IN_UCAST_PKTS", &inUCastPkt)
-                    if e != nil {
-                        return true, e
-                    }
-                    in_pkts = *inUCastPkt + *inNonUCastPkt
-                    counter_val.InPkts = &in_pkts
-                    return true, e
-                } else {
-                    return true, e
-                }
+		e = app.getCounters(ifKey, "SAI_PORT_STAT_IF_IN_NON_UCAST_PKTS", &inNonUCastPkt)
+		if e == nil {
+			e = app.getCounters(ifKey, "SAI_PORT_STAT_IF_IN_UCAST_PKTS", &inUCastPkt)
+			if e != nil {
+				return true, e
+			}
+			in_pkts = *inUCastPkt + *inNonUCastPkt
+			counter_val.InPkts = &in_pkts
+			return true, e
+		} else {
+			return true, e
+		}
 
-        case "/openconfig-interfaces:interfaces/interface/state/counters/out-octets":
-                e = app.getCounters(ifKey, "SAI_PORT_STAT_IF_OUT_OCTETS", &counter_val.OutOctets)
-                return true, e
+	case "/openconfig-interfaces:interfaces/interface/state/counters/out-octets":
+		e = app.getCounters(ifKey, "SAI_PORT_STAT_IF_OUT_OCTETS", &counter_val.OutOctets)
+		return true, e
 
-        case "/openconfig-interfaces:interfaces/interface/state/counters/out-unicast-pkts":
-                e = app.getCounters(ifKey, "SAI_PORT_STAT_IF_OUT_UCAST_PKTS", &counter_val.OutUnicastPkts)
-                return true, e
+	case "/openconfig-interfaces:interfaces/interface/state/counters/out-unicast-pkts":
+		e = app.getCounters(ifKey, "SAI_PORT_STAT_IF_OUT_UCAST_PKTS", &counter_val.OutUnicastPkts)
+		return true, e
 
-        case "/openconfig-interfaces:interfaces/interface/state/counters/out-broadcast-pkts":
-                e = app.getCounters(ifKey, "SAI_PORT_STAT_IF_OUT_BROADCAST_PKTS", &counter_val.OutBroadcastPkts)
-                return true, e
+	case "/openconfig-interfaces:interfaces/interface/state/counters/out-broadcast-pkts":
+		e = app.getCounters(ifKey, "SAI_PORT_STAT_IF_OUT_BROADCAST_PKTS", &counter_val.OutBroadcastPkts)
+		return true, e
 
-        case "/openconfig-interfaces:interfaces/interface/state/counters/out-multicast-pkts":
-                e = app.getCounters(ifKey, "SAI_PORT_STAT_IF_OUT_MULTICAST_PKTS", &counter_val.OutMulticastPkts)
-                return true, e
+	case "/openconfig-interfaces:interfaces/interface/state/counters/out-multicast-pkts":
+		e = app.getCounters(ifKey, "SAI_PORT_STAT_IF_OUT_MULTICAST_PKTS", &counter_val.OutMulticastPkts)
+		return true, e
 
-        case "/openconfig-interfaces:interfaces/interface/state/counters/out-errors":
-                e = app.getCounters(ifKey, "SAI_PORT_STAT_IF_OUT_ERRORS", &counter_val.OutErrors)
-                return true, e
+	case "/openconfig-interfaces:interfaces/interface/state/counters/out-errors":
+		e = app.getCounters(ifKey, "SAI_PORT_STAT_IF_OUT_ERRORS", &counter_val.OutErrors)
+		return true, e
 
-        case "/openconfig-interfaces:interfaces/interface/state/counters/out-discards":
-                e = app.getCounters(ifKey, "SAI_PORT_STAT_IF_OUT_DISCARDS", &counter_val.OutDiscards)
-                return true, e
+	case "/openconfig-interfaces:interfaces/interface/state/counters/out-discards":
+		e = app.getCounters(ifKey, "SAI_PORT_STAT_IF_OUT_DISCARDS", &counter_val.OutDiscards)
+		return true, e
 
-        case "/openconfig-interfaces:interfaces/interface/state/counters/out-pkts":
-                var outNonUCastPkt, outUCastPkt *uint64
-                var out_pkts uint64
+	case "/openconfig-interfaces:interfaces/interface/state/counters/out-pkts":
+		var outNonUCastPkt, outUCastPkt *uint64
+		var out_pkts uint64
 
-                e = app.getCounters(ifKey, "SAI_PORT_STAT_IF_OUT_NON_UCAST_PKTS", &outNonUCastPkt)
-                if e == nil {
-                    e = app.getCounters(ifKey, "SAI_PORT_STAT_IF_OUT_UCAST_PKTS", &outUCastPkt)
-                    if e != nil {
-                        return true, e
-                    }
-                    out_pkts = *outUCastPkt + *outNonUCastPkt
-                    counter_val.OutPkts = &out_pkts
-                    return true, e
-                } else {
-                    return true, e
-                }
+		e = app.getCounters(ifKey, "SAI_PORT_STAT_IF_OUT_NON_UCAST_PKTS", &outNonUCastPkt)
+		if e == nil {
+			e = app.getCounters(ifKey, "SAI_PORT_STAT_IF_OUT_UCAST_PKTS", &outUCastPkt)
+			if e != nil {
+				return true, e
+			}
+			out_pkts = *outUCastPkt + *outNonUCastPkt
+			counter_val.OutPkts = &out_pkts
+			return true, e
+		} else {
+			return true, e
+		}
 
-
-        default:
-                log.Infof(targetUriPath + " - Not an interface state counter attribute")
-        }
-        return false, nil
+	default:
+		log.Infof(targetUriPath + " - Not an interface state counter attribute")
+	}
+	return false, nil
 }
 
-func (app *IntfApp)  getCounters( ifKey string, attr string, counter_val **uint64 ) error {
-    val, e := app.getIntfAttr(ifKey, attr, PORT_STAT_MAP)
-    if len(val) > 0 {
-        v, e := strconv.ParseUint(val, 10, 64)
-        if e == nil {
-            *counter_val = &v
-            return nil
-        }
-    }
-    return e
+func (app *IntfApp) getCounters(ifKey string, attr string, counter_val **uint64) error {
+	val, e := app.getIntfAttr(ifKey, attr, PORT_STAT_MAP)
+	if len(val) > 0 {
+		v, e := strconv.ParseUint(val, 10, 64)
+		if e == nil {
+			*counter_val = &v
+			return nil
+		}
+	}
+	return e
 }
 
 func (app *IntfApp) getIntfAttr(ifName string, attr string, table Table) (string, error) {
 
-        var ok bool = false
-        var entry dbEntry
+	var ok bool = false
+	var entry dbEntry
 
-        if table == IF_TABLE_MAP {
-            entry, ok = app.ifTableMap[ifName];
-        }  else if table == PORT_STAT_MAP {
-            entry, ok = app.portStatMap[ifName];
-        }  else {
-            return "", errors.New("Unsupported table")
-        }
+	if table == IF_TABLE_MAP {
+		entry, ok = app.ifTableMap[ifName]
+	} else if table == PORT_STAT_MAP {
+		entry, ok = app.portStatMap[ifName]
+	} else {
+		return "", errors.New("Unsupported table")
+	}
 
 	if ok {
-	    ifData := entry.entry
+		ifData := entry.entry
 
-	    if val, ok := ifData.Field[attr]; ok {
-		return val, nil
-	    }
+		if val, ok := ifData.Field[attr]; ok {
+			return val, nil
+		}
 	}
 	return "", errors.New("Attr " + attr + "doesn't exist in IF table Map!")
 }
-
 
 /***********  Translation Helper fn to convert DB Interface info to Internal DS   ***********/
 func (app *IntfApp) getPortOidMapForCounters(dbCl *db.DB) error {
@@ -849,21 +844,22 @@ func (app *IntfApp) convertInternalToOCIntfAttrInfo(ifName *string, ifInfo *ocbi
 				var speedEnum ocbinds.E_OpenconfigIfEthernet_ETHERNET_SPEED
 
 				switch speed {
-				case "40000":
-					speedEnum = ocbinds.OpenconfigIfEthernet_ETHERNET_SPEED_SPEED_40GB
-					speedEnum = ocbinds.OpenconfigIfEthernet_ETHERNET_SPEED_SPEED_40GB
-				case "25000":
-					speedEnum = ocbinds.OpenconfigIfEthernet_ETHERNET_SPEED_SPEED_25GB
-					speedEnum = ocbinds.OpenconfigIfEthernet_ETHERNET_SPEED_SPEED_25GB
-				case "10000":
-					speedEnum = ocbinds.OpenconfigIfEthernet_ETHERNET_SPEED_SPEED_10GB
-					speedEnum = ocbinds.OpenconfigIfEthernet_ETHERNET_SPEED_SPEED_10GB
-				case "5000":
-					speedEnum = ocbinds.OpenconfigIfEthernet_ETHERNET_SPEED_SPEED_5GB
-					speedEnum = ocbinds.OpenconfigIfEthernet_ETHERNET_SPEED_SPEED_5GB
+				case "2500":
+					speedEnum = ocbinds.OpenconfigIfEthernet_ETHERNET_SPEED_SPEED_2500MB
 				case "1000":
 					speedEnum = ocbinds.OpenconfigIfEthernet_ETHERNET_SPEED_SPEED_1GB
-					speedEnum = ocbinds.OpenconfigIfEthernet_ETHERNET_SPEED_SPEED_1GB
+				case "5000":
+					speedEnum = ocbinds.OpenconfigIfEthernet_ETHERNET_SPEED_SPEED_5GB
+				case "10000":
+					speedEnum = ocbinds.OpenconfigIfEthernet_ETHERNET_SPEED_SPEED_10GB
+				case "25000":
+					speedEnum = ocbinds.OpenconfigIfEthernet_ETHERNET_SPEED_SPEED_25GB
+				case "40000":
+					speedEnum = ocbinds.OpenconfigIfEthernet_ETHERNET_SPEED_SPEED_40GB
+				case "50000":
+					speedEnum = ocbinds.OpenconfigIfEthernet_ETHERNET_SPEED_SPEED_50GB
+				case "100000":
+					speedEnum = ocbinds.OpenconfigIfEthernet_ETHERNET_SPEED_SPEED_100GB
 				default:
 					log.Infof("Not supported speed: %s!", speed)
 				}
