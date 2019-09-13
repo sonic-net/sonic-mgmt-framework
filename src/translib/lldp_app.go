@@ -270,12 +270,7 @@ func (app *lldpApp) getLldpNeighInfoFromInternalMap(ifName *string, ifInfo *ocbi
                 *sdesc = value
                 ngInfo.State.SystemDescription = sdesc
             case LLDP_REMOTE_REM_TIME:
-                ttlVal , err:=strconv.Atoi(value)
-                if err == nil  {
-                    ttlPtr := new(uint16)
-                    *ttlPtr = uint16(ttlVal)
-                    ngInfo.State.Ttl = ttlPtr
-                }
+            /* Ignore Remote System time */
             case LLDP_REMOTE_PORT_ID:
                 remPortIdPtr := new(string)
                 *remPortIdPtr = value
