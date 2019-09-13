@@ -1209,6 +1209,7 @@ func (app *AclApp) createDefaultDenyAclRule(d *db.DB, aclName string, rulesInfo 
 	rulesInfo["DEFAULT_RULE"] = db.Value{Field: m}
 	rulesInfo["DEFAULT_RULE"].Field["PRIORITY"] = strconv.FormatInt(int64(MIN_PRIORITY), 10)
 	rulesInfo["DEFAULT_RULE"].Field["PACKET_ACTION"] = "DROP"
+	rulesInfo["DEFAULT_RULE"].Field["IP_TYPE"] = "ANY"
 }
 
 func convertOCAclRuleToInternalAclRule(ruleData db.Value, seqId uint32, aclName string, aclType ocbinds.E_OpenconfigAcl_ACL_TYPE, rule *ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry) {

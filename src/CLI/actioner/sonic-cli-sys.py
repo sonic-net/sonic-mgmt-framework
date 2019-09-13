@@ -79,10 +79,9 @@ def run(func, args):
     try:
         if body is not None:
            api_response = getattr(aa,func.__name__)(*keypath, body=body)
-
+           
         else :
            api_response = getattr(aa,func.__name__)(*keypath)
-           #print(api_response)
         if api_response is None:
             print ("Success")
         else:
@@ -105,7 +104,7 @@ def run(func, args):
                 show_cli_output(sys.argv[2], value['cpu'])
             elif 'openconfig_systemprocesses' in response.keys():
                 value = response['openconfig_systemprocesses']
-		if len(sys.argv) < 4:
+		if 'pid' not in sys.argv:
                     if value is None:
                     	return
 	    	    show_cli_output(sys.argv[2],value['process'])
@@ -114,7 +113,6 @@ def run(func, args):
 			if proc['pid'] == int(sys.argv[3]):
 			    show_cli_output(sys.argv[2],util_capitalize(proc['state']))
 			    return
-	    	    print("command works")
             else:
                 print("Failed")
     except ApiException as e:

@@ -11,9 +11,9 @@
 	"__comment1__": "Set LOGTOSTDER to 'true' to log on standard error",
 	"LOGTOSTDERR": "false",
 	"__comment2__": "Display log upto INFO level",
-	"STDERRTHRESHOLD": "INFO",
+	"STDERRTHRESHOLD": "ERROR",
 	"__comment3__": "Display log upto INFO level 8",
-	"VERBOSITY": "8",
+	"VERBOSITY": "0",
 	"SKIP_VALIDATION": "false",
 	"SKIP_SEMANTIC_VALIDATION": "false"
 }

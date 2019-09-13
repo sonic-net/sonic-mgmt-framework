@@ -59,7 +59,12 @@ module sonic-port {
 			}
 
 			leaf mtu{
-				type uint32;
+				type uint32 {
+					range "1312..9216" {
+						error-message "Invalid MTU value";
+						error-app-tag mtu-invalid;
+					}
+				}
 			}
 
 			leaf lanes {
