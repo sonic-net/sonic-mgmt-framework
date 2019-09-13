@@ -187,6 +187,10 @@ var validate_ipv6 ValidateCallpoint = func(inParams XfmrParams) (bool) {
 var YangToDb_acl_type_field_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
 	res_map := make(map[string]string)
 	var err error
+	if inParams.param == nil {
+	    res_map[ACL_TYPE] = ""
+	    return res_map, err
+	}
 
 	acltype, _ := inParams.param.(ocbinds.E_OpenconfigAcl_ACL_TYPE)
 	log.Info("YangToDb_acl_type_field_xfmr: ", inParams.ygRoot, " Xpath: ", inParams.uri, " acltype: ", acltype)
@@ -303,6 +307,10 @@ var YangToDb_acl_l2_ethertype_xfmr FieldXfmrYangToDb = func(inParams XfmrParams)
 	res_map := make(map[string]string)
 	var err error
 
+	if inParams.param == nil {
+	    res_map["ETHER_TYPE"] = ""
+	    return res_map, err
+	}
 	ethertypeType := reflect.TypeOf(inParams.param).Elem()
 	log.Info("YangToDb_acl_ip_protocol_xfmr: ", inParams.ygRoot, " Xpath: ", inParams.uri, " ethertypeType: ", ethertypeType)
 	var b bytes.Buffer
@@ -348,6 +356,10 @@ var YangToDb_acl_ip_protocol_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) 
 	res_map := make(map[string]string)
 	var err error
 
+	if inParams.param == nil {
+	    res_map["IP_PROTOCOL"] = ""
+	    return res_map, err
+	}
 	protocolType := reflect.TypeOf(inParams.param).Elem()
 	log.Info("YangToDb_acl_ip_protocol_xfmr: ", inParams.ygRoot, " Xpath: ", inParams.uri, " protocolType: ", protocolType)
 	switch protocolType {
@@ -378,6 +390,10 @@ var DbToYang_acl_ip_protocol_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) 
 var YangToDb_acl_source_port_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
 	res_map := make(map[string]string)
 	var err error
+	if inParams.param == nil {
+	    res_map["L4_SRC_PORT"] = ""
+	    return res_map, err
+	}
 	sourceportType := reflect.TypeOf(inParams.param).Elem()
 	log.Info("YangToDb_acl_ip_protocol_xfmr: ", inParams.ygRoot, " Xpath: ", inParams.uri, " sourceportType: ", sourceportType)
 	switch sourceportType {
@@ -428,6 +444,10 @@ var DbToYang_acl_source_port_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) 
 var YangToDb_acl_destination_port_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
 	res_map := make(map[string]string)
 	var err error
+	if inParams.param == nil {
+	    res_map["L4_DST_PORT_RANGE"] = ""
+	    return res_map, err
+	}
 	destportType := reflect.TypeOf(inParams.param).Elem()
 	log.Info("YangToDb_acl_ip_protocol_xfmr: ", inParams.ygRoot, " Xpath: ", inParams.uri, " destportType: ", destportType)
 	switch destportType {
@@ -449,9 +469,9 @@ var YangToDb_acl_destination_port_xfmr FieldXfmrYangToDb = func(inParams XfmrPar
 
 var DbToYang_acl_destination_port_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (map[string]interface{}, error) {
 	var err error
+	result := make(map[string]interface{})
 	data := (*inParams.dbDataMap)[inParams.curDb]
 	log.Info("DbToYang_acl_destination_port_xfmr: ", data, inParams.ygRoot)
-	result := make(map[string]interface{})
 	if _, ok := data[RULE_TABLE]; !ok {
 		err = errors.New("RULE_TABLE entry not found in the input param")
 		return result, err
@@ -477,8 +497,14 @@ var DbToYang_acl_destination_port_xfmr FieldXfmrDbtoYang = func(inParams XfmrPar
 var YangToDb_acl_tcp_flags_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
 	res_map := make(map[string]string)
 	var err error
-	log.Info("YangToDb_acl_tcp_flags_xfmr: ", inParams.ygRoot, inParams.uri)
+	log.Info("YangToDb_acl_tcp_flags_xfmr: ")
 	var tcpFlags uint32 = 0x00
+	var b bytes.Buffer
+	if inParams.param == nil {
+	    res_map["TCP_FLAGS"] = b.String()
+	    return res_map, err
+	}
+	log.Info("YangToDb_acl_tcp_flags_xfmr: ", inParams.ygRoot, inParams.uri)
 	v := reflect.ValueOf(inParams.param)
 
 	flags := v.Interface().([]ocbinds.E_OpenconfigPacketMatchTypes_TCP_FLAGS)
@@ -511,7 +537,6 @@ var YangToDb_acl_tcp_flags_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (m
 			break
 		}
 	}
-	var b bytes.Buffer
 	fmt.Fprintf(&b, "0x%0.2x/0x%0.2x", tcpFlags, tcpFlags)
 	res_map["TCP_FLAGS"] = b.String()
 	return res_map, err
