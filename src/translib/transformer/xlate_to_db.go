@@ -180,27 +180,33 @@ func directDbMapData(tableName string, jsonData interface{}, result map[string]m
 
 /* Get the db table, key and field name for the incoming delete request */
 func dbMapDelete(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, jsonData interface{}, result map[string]map[string]db.Value) error {
-    var err error
-    if isCvlYang(path) {
-        xpathPrefix, keyName, tableName := sonicXpathKeyExtract(path)
-        log.Info("Delete req: path(\"%v\"), key(\"%v\"), xpathPrefix(\"%v\"), tableName(\"%v\").", path, keyName, xpathPrefix, tableName)
-        err = cvlYangReqToDbMapDelete(xpathPrefix, tableName, keyName, result)
-    } else {
-        xpathPrefix, keyName, tableName := xpathKeyExtract(d, ygRoot, oper, path)
-        log.Info("Delete req: path(\"%v\"), key(\"%v\"), xpathPrefix(\"%v\"), tableName(\"%v\").", path, keyName, xpathPrefix, tableName)
-        spec, ok := xSpecMap[xpathPrefix]
-        if ok && spec.tableName != nil {
-            result[*spec.tableName] = make(map[string]db.Value)
-            if len(keyName) > 0 {
-                result[*spec.tableName][keyName] = db.Value{Field: make(map[string]string)}
-                if spec.yangEntry != nil && spec.yangEntry.Node.Statement().Keyword == "leaf" {
-                    result[*spec.tableName][keyName].Field[spec.fieldName] = ""
-                }
-            }
-        }
-    }
-    log.Info("Delete req: path(\"%v\") result(\"%v\").", path, result)
-    return err
+	var err error
+	if isCvlYang(path) {
+		xpathPrefix, keyName, tableName := sonicXpathKeyExtract(path)
+		log.Info("Delete req: path(\"%v\"), key(\"%v\"), xpathPrefix(\"%v\"), tableName(\"%v\").", path, keyName, xpathPrefix, tableName)
+		err = cvlYangReqToDbMapDelete(xpathPrefix, tableName, keyName, result)
+	} else {
+		xpathPrefix, keyName, tableName := xpathKeyExtract(d, ygRoot, oper, path)
+		log.Info("Delete req: path(\"%v\"), key(\"%v\"), xpathPrefix(\"%v\"), tableName(\"%v\").", path, keyName, xpathPrefix, tableName)
+		spec, ok := xSpecMap[xpathPrefix]
+		if ok {
+			if  spec.tableName != nil {
+				result[*spec.tableName] = make(map[string]db.Value)
+				if len(keyName) > 0 {
+					result[*spec.tableName][keyName] = db.Value{Field: make(map[string]string)}
+					if spec.yangEntry != nil && spec.yangEntry.Node.Statement().Keyword == "leaf" {
+						result[*spec.tableName][keyName].Field[spec.fieldName] = ""
+					}
+				}
+			} else if len(spec.childTable) > 0 {
+				for _, child := range spec.childTable {
+					result[child] = make(map[string]db.Value)
+				}
+			}
+		}
+	}
+	log.Info("Delete req: path(\"%v\") result(\"%v\").", path, result)
+	return err
 }
 
 func cvlYangReqToDbMapDelete(xpathPrefix string, tableName string, keyName string, result map[string]map[string]db.Value) error {
