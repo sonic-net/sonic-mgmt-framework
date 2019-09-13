@@ -100,9 +100,31 @@ func mapFillData(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, dbKey st
         return errors.New("Invalid field name")
     }
     fieldName := xpathInfo.fieldName
-    valueStr  := fmt.Sprintf("%v", value)
-    if strings.Contains(valueStr, ":") {
-        valueStr = strings.Split(valueStr, ":")[1]
+    valueStr := ""
+    if xpathInfo.yangEntry.IsLeafList() {
+	/* Both yang side and Db side('@' suffix field) the data type is leaf-list */
+	log.Info("Yang type iand Db type is Leaflist for field  = ", xpath)
+	fieldName += "@"
+	if reflect.ValueOf(value).Kind() != reflect.Slice {
+	    logStr := fmt.Sprintf("Value for yang xpath %v which is a leaf-list should be a slice", xpath)
+	    log.Error(logStr)
+	    err := errors.New(logStr)
+	    return err
+	}
+	valData := reflect.ValueOf(value)
+	for fidx := 0; fidx < valData.Len(); fidx++ {
+	    if fidx > 0 {
+		valueStr += ","
+	    }
+	    fVal := fmt.Sprintf("%v", valData.Index(fidx).Interface())
+	    valueStr = valueStr + fVal
+	}
+
+    } else { // xpath is a leaf
+	valueStr  := fmt.Sprintf("%v", value)
+	if strings.Contains(valueStr, ":") {
+	    valueStr = strings.Split(valueStr, ":")[1]
+	}
     }
 
     dataToDBMapAdd(*xpathInfo.tableName, dbKey, result, fieldName, valueStr)

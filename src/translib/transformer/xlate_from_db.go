@@ -7,7 +7,9 @@ import (
     "encoding/json"
     "os"
     "strconv"
+    "errors"
     "translib/ocbinds"
+    "github.com/openconfig/goyang/pkg/yang"
     "github.com/openconfig/ygot/ygot"
     "github.com/openconfig/ygot/ytypes"
 
@@ -85,6 +87,84 @@ func validateHandlerFunc(inParams XfmrParams) (bool) {
     return ret[0].Interface().(bool)
 }
 
+func DbValToInt(dbFldVal string, base int, size int, isUint bool) (interface{}, error) {
+	var res interface{}
+	var err error
+	if res, err = strconv.ParseInt(dbFldVal, base, size); err != nil {
+		log.Warning("Non Yint%v type for yang leaf-list item %v", size, dbFldVal)
+	}
+	return res, err
+}
+
+func DbToYangType(yngTerminalNdDtType yang.TypeKind, fldXpath string, dbFldVal string) (interface{}, error) {
+	log.Infof("Received FieldXpath %v, yngTerminalNdDtType %v and Db field value %v to be converted to yang data-type.", fldXpath, yngTerminalNdDtType, dbFldVal)
+	var res interface{}
+	var err error
+	const INTBASE = 10
+	switch yngTerminalNdDtType {
+        case yang.Ynone:
+                log.Warning("Yang node data-type is non base yang type")
+		//TODO - enhance to handle non base data types depending on future use case
+		err = errors.New("Yang node data-type is non base yang type")
+        case yang.Yint8:
+                res, err = DbValToInt(dbFldVal, INTBASE, 8, false)
+        case yang.Yint16:
+                res, err = DbValToInt(dbFldVal, INTBASE, 16, false)
+        case yang.Yint32:
+                res, err = DbValToInt(dbFldVal, INTBASE, 32, false)
+        case yang.Yint64:
+                res, err = DbValToInt(dbFldVal, INTBASE, 64, false)
+        case yang.Yuint8:
+                res, err = DbValToInt(dbFldVal, INTBASE, 8, true)
+        case yang.Yuint16:
+                res, err = DbValToInt(dbFldVal, INTBASE, 16, true)
+        case yang.Yuint32:
+                res, err = DbValToInt(dbFldVal, INTBASE, 32, true)
+        case yang.Yuint64:
+                res, err = DbValToInt(dbFldVal, INTBASE, 64, true)
+        case yang.Ybool:
+		if res, err = strconv.ParseBool(dbFldVal); err != nil {
+			log.Warning("Non Bool type for yang leaf-list item %v", dbFldVal)
+		}
+        //TODO enhance Yunion using yangEntry way
+        case yang.Yenum, yang.Ystring, yang.Yidentityref, yang.Yunion:
+                log.Info("Yenum/Ystring/Yunion(having all members as strings) type for yangXpath ", fldXpath)
+                res = dbFldVal
+	case yang.Yempty:
+		logStr := fmt.Sprintf("Yang data type for xpath %v is Yempty.", fldXpath)
+		log.Error(logStr)
+		err = errors.New(logStr)
+        default:
+		logStr := fmt.Sprintf("Unrecognized/Unhandled yang-data type(%v) for xpath %v.", fldXpath, yang.TypeKindToName[yngTerminalNdDtType])
+                log.Error(logStr)
+                err = errors.New(logStr)
+        }
+	return res, err
+}
+
+/*convert leaf-list in Db to leaf-list in yang*/
+func processLfLstDbToYang(fieldXpath string, dbFldVal string) []interface{} {
+	valLst := strings.Split(dbFldVal, ",")
+	var resLst []interface{}
+	const INTBASE = 10
+	yngTerminalNdDtType := xDbSpecMap[fieldXpath].dbEntry.Type.Kind
+	switch  yngTerminalNdDtType {
+	case yang.Yenum, yang.Ystring, yang.Yunion:
+		log.Info("DB leaf-list and Yang leaf-list are of same data-type")
+		for _, fldVal := range valLst {
+			resLst = append(resLst, fldVal)
+		}
+	default:
+		for _, fldVal := range valLst {
+			resVal, err := DbToYangType(yngTerminalNdDtType, fieldXpath, fldVal)
+			if err == nil {
+				resLst = append(resLst, resVal)
+			}
+		}
+	}
+	return resLst
+}
+
 /* Traverse db map and create json for cvl yang */
 func directDbToYangJsonCreate(dbDataMap map[string]map[string]db.Value, jsonData string) string {
     for tblName, tblData := range dbDataMap {
@@ -92,7 +172,25 @@ func directDbToYangJsonCreate(dbDataMap map[string]map[string]db.Value, jsonData
         for keyStr, dbFldValData := range tblData {
             fldValPair := ""
             for field, value := range dbFldValData.Field {
-                fldValPair += fmt.Sprintf("\"%v\" : \"%v\",\r\n", field, value)
+			if strings.HasSuffix(field, "@") {
+                                fldVals := strings.Split(field, "@")
+                                field = fldVals[0]
+                                fieldXpath := tblName + "/" + field
+                                if xDbSpecMap[fieldXpath].dbEntry.IsLeafList() {
+                                        resLst := processLfLstDbToYang(fieldXpath, value)
+                                        fldValPair += fmt.Sprintf("\"%v\" : \"%v\",\r\n", field, resLst)
+                                        continue
+                                }
+                        } else {
+                                fieldXpath := tblName + "/" + field
+                                yngTerminalNdDtType := xDbSpecMap[fieldXpath].dbEntry.Type.Kind
+                                resVal, err := DbToYangType(yngTerminalNdDtType, fieldXpath, value)
+                                if err != nil {
+                                        log.Warning("Failure in converting Db value type to yang type for field", field)
+                                } else {
+                                        fldValPair += fmt.Sprintf("\"%v\" : \"%v\",\r\n", field, resVal)
+                                }
+                        }
             }
             yangKeys := yangKeyFromEntryGet(xDbSpecMap[tblName].dbEntry)
             fldValPair = keyJsonDataAdd(yangKeys, keyStr, fldValPair)
@@ -173,7 +271,7 @@ func yangDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, xpath
                 }
                 chldYangType := yangTypeGet(xSpecMap[chldXpath].yangEntry)
 		cdb = xSpecMap[chldXpath].dbIndex
-                if chldYangType == "leaf" {
+                if xSpecMap[chldXpath].yangEntry.IsLeaf() || xSpecMap[chldXpath].yangEntry.IsLeafList() {
                     if len(xSpecMap[chldXpath].xfmrFunc) > 0 {
 			_, key, _ := xpathKeyExtract(dbs[cdb], ygRoot, GET, chldUri)
 			inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, chldUri, GET, key, dbDataMap, nil)
@@ -186,19 +284,28 @@ func yangDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, xpath
                         }
                     } else {
                         dbFldName := xSpecMap[chldXpath].fieldName
+			/* if there is no transformer extension/annotation then it means leaf-list in yang is also leaflist in db */
                         if len(dbFldName) > 0  && !xSpecMap[chldXpath].isKey {
-                            val, ok := (*dbDataMap)[cdb][tbl][tblKey].Field[dbFldName]
-                            if ok {
-                                /* this will be enhanced to support all yang data types */
-                                yNode := xSpecMap[chldXpath]
-                                yDataType := yNode.yangEntry.Type.Kind
-                                if yDataType == Yuint8 {
-                                    valInt, _ := strconv.Atoi(val)
-                                    resultMap[xSpecMap[chldXpath].yangEntry.Name] = valInt
-                                } else {
-                                    resultMap[yNode.yangEntry.Name] = val
-                                }
-                            }
+				if xSpecMap[chldXpath].yangEntry.IsLeafList() {
+				    dbFldName += "@"
+                                    val, ok := (*dbDataMap)[cdb][tbl][tblKey].Field[dbFldName]
+				    if ok {
+					resLst := processLfLstDbToYang(chldXpath, val)
+					resultMap[xSpecMap[chldXpath].yangEntry.Name] = resLst
+				    }
+				} else {
+				    val, ok := (*dbDataMap)[cdb][tbl][tblKey].Field[dbFldName]
+				    if ok {
+					/* this will be enhanced to support all yang data types */
+					yngTerminalNdDtType := xSpecMap[chldXpath].yangEntry.Type.Kind
+                                        resVal, err := DbToYangType(yngTerminalNdDtType, chldXpath, val)
+					if err != nil {
+					    log.Warning("Failure in converting Db value type to yang type for field", chldXpath)
+					} else {
+					    resultMap[xSpecMap[chldXpath].yangEntry.Name] = resVal
+					}
+				    }
+				}
                         }
                     }
                 } else if chldYangType == "container" {
@@ -237,8 +344,8 @@ func yangDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, xpath
                             yangListDataFill(dbs, ygRoot, chldUri, chldXpath, dbDataMap, resultMap, lTblName, "", cdb)
                         }
                     }
-                } else if chldYangType == "leaf-list" {
-                    //Handle leaf-list
+                } else {
+                    return err
                 }
             }
         }
