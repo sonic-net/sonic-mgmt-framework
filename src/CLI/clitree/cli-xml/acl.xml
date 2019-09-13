@@ -15,7 +15,7 @@
         <PARAM 
             name = "access-list-name"
             help = "Access list name"
-            ptype = "STRING"
+            ptype = "STRING_63"
             optional = "true"
             >
         </PARAM>
