@@ -170,12 +170,14 @@ module openconfig-acl-annot {
     deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-acl:actions/oc-acl:config/oc-acl:forwarding-action {
       deviate add {
         sonic-ext:field-name "PACKET_ACTION";
+        sonic-ext:field-transformer "acl_forwarding_action_xfmr";
       }
     }
 
     deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-acl:actions/oc-acl:state/oc-acl:forwarding-action {
       deviate add {
         sonic-ext:field-name "PACKET_ACTION";
+        sonic-ext:field-transformer "acl_forwarding_action_xfmr";
       }
     }
 

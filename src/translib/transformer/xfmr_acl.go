@@ -35,6 +35,8 @@ func init() {
 	XlateFuncBind("DbToYang_acl_tcp_flags_xfmr", DbToYang_acl_tcp_flags_xfmr)
 	XlateFuncBind("YangToDb_acl_port_bindings_xfmr", YangToDb_acl_port_bindings_xfmr)
 	XlateFuncBind("DbToYang_acl_port_bindings_xfmr", DbToYang_acl_port_bindings_xfmr)
+        XlateFuncBind("YangToDb_acl_forwarding_action_xfmr", YangToDb_acl_forwarding_action_xfmr)
+	XlateFuncBind("DbToYang_acl_forwarding_action_xfmr", DbToYang_acl_forwarding_action_xfmr)
 	XlateFuncBind("validate_ipv4", validate_ipv4)
 	XlateFuncBind("validate_ipv6", validate_ipv6)
 }
@@ -59,6 +61,13 @@ var ACL_TYPE_MAP = map[string]string{
 	strconv.FormatInt(int64(ocbinds.OpenconfigAcl_ACL_TYPE_ACL_IPV4), 10): SONIC_ACL_TYPE_IPV4,
 	strconv.FormatInt(int64(ocbinds.OpenconfigAcl_ACL_TYPE_ACL_IPV6), 10): SONIC_ACL_TYPE_IPV6,
 	strconv.FormatInt(int64(ocbinds.OpenconfigAcl_ACL_TYPE_ACL_L2), 10):   SONIC_ACL_TYPE_L2,
+}
+
+/* E_OpenconfigAcl_FORWARDING_ACTION */
+var ACL_FORWARDING_ACTION_MAP = map[string]string{
+	strconv.FormatInt(int64(ocbinds.OpenconfigAcl_FORWARDING_ACTION_ACCEPT), 10): "FORWARD",
+	strconv.FormatInt(int64(ocbinds.OpenconfigAcl_FORWARDING_ACTION_DROP), 10): "DROP",
+	strconv.FormatInt(int64(ocbinds.OpenconfigAcl_FORWARDING_ACTION_REJECT), 10): "REDIRECT",
 }
 
 /* E_OpenconfigPacketMatchTypes_IP_PROTOCOL */
@@ -183,6 +192,28 @@ var validate_ipv6 ValidateCallpoint = func(inParams XfmrParams) (bool) {
 ////////////////////////////////////////////
 // Bi-directoonal overloaded methods
 ////////////////////////////////////////////
+var YangToDb_acl_forwarding_action_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
+	res_map := make(map[string]string)
+	var err error
+	if inParams.param == nil {
+	    res_map["PACKET_ACTION"] = ""
+	    return res_map, err
+	}
+	action, _ := inParams.param.(ocbinds.E_OpenconfigAcl_FORWARDING_ACTION)
+	log.Info("YangToDb_acl_forwarding_action_xfmr: ", inParams.ygRoot, " Xpath: ", inParams.uri, " forwarding_action: ", action)
+	res_map["PACKET_ACTION"] = findInMap(ACL_FORWARDING_ACTION_MAP, strconv.FormatInt(int64(action), 10))
+	return res_map, err
+}
+var DbToYang_acl_forwarding_action_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (map[string]interface{}, error) {
+	var err error
+	result := make(map[string]interface{})
+	data := (*inParams.dbDataMap)[inParams.curDb]
+	log.Info("DbToYang_acl_forwarding_action_xfmr", data, inParams.ygRoot)
+	oc_action := findInMap(ACL_FORWARDING_ACTION_MAP, data[RULE_TABLE][inParams.key].Field["PACKET_ACTION"])
+	n, err := strconv.ParseInt(oc_action, 10, 64)
+	result["forwarding-action"] = ocbinds.E_OpenconfigAcl_FORWARDING_ACTION(n).ΛMap()["E_OpenconfigAcl_FORWARDING_ACTION"][n].Name
+	return result, err
+}
 
 var YangToDb_acl_type_field_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
 	res_map := make(map[string]string)
