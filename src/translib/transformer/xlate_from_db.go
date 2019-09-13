@@ -221,8 +221,8 @@ func yangDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, xpath
                             yangListDataFill(dbs, ygRoot, chldUri, chldXpath, dbDataMap, resultMap, lTblName, "", cdb)
                         }
                     }
-                } else {
-                    return err
+                } else if chldYangType == "leaf-list" {
+                    //Handle leaf-list
                 }
             }
         }
