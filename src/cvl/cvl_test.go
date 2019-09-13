@@ -2612,7 +2612,7 @@ func TestValidateEditConfig_DepData_Through_Cache(t *testing.T) {
 	depDataMap = map[string]interface{} {
 		"PORT" : map[string]interface{} {
 			"Ethernet3" : map[string]interface{} {
-				"mtu": "9500",
+				"mtu": "9200",
 			},
 		},
 	}
@@ -3104,7 +3104,6 @@ func TestValidateEditConfig_Two_Updates_Positive(t *testing.T) {
 	unloadConfigDB(rclient, depDataMap)
 
 }
-
 func TestValidateEditConfig_Create_Syntax_DependentData_PositivePortChannel(t *testing.T) {
 
 	cfgData := []cvl.CVLEditConfigData{
@@ -3320,4 +3319,107 @@ func TestValidateEditConfig_Use_Updated_Data_As_Create_DependentData_Single_Call
 	if cvlErrInfo.ErrCode != cvl.CVL_SUCCESS {
 		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
 	}
+}
+
+func TestValidateEditConfig_Create_Syntax_Interface_AllKeys_Positive(t *testing.T) {
+
+	cfgData := []cvl.CVLEditConfigData{
+		cvl.CVLEditConfigData{
+			cvl.VALIDATE_ALL,
+			cvl.OP_CREATE,
+			"INTERFACE|Ethernet24|10.0.0.0/31",
+			map[string]string{
+			},
+		},
+	}
+
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	cvlErrInfo, _ := cvSess.ValidateEditConfig(cfgData)
+
+	cvl.ValidationSessClose(cvSess)
+
+	WriteToFile(fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
+
+	if cvlErrInfo.ErrCode != cvl.CVL_SUCCESS {
+		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
+	}
+}
+
+func TestValidateEditConfig_Create_Syntax_Interface_OptionalKey_Positive(t *testing.T) {
+
+	cfgData := []cvl.CVLEditConfigData{
+		cvl.CVLEditConfigData{
+			cvl.VALIDATE_ALL,
+			cvl.OP_CREATE,
+			"INTERFACE|Ethernet24",
+			map[string]string{
+			},
+		},
+	}
+
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	cvlErrInfo, _ := cvSess.ValidateEditConfig(cfgData)
+
+	cvl.ValidationSessClose(cvSess)
+
+	WriteToFile(fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
+
+	if cvlErrInfo.ErrCode != cvl.CVL_SUCCESS {
+		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
+	}
+}
+
+func TestValidateEditConfig_Create_Syntax_Interface_IncorrectKey_Negative(t *testing.T) {
+
+	cfgData := []cvl.CVLEditConfigData{
+		cvl.CVLEditConfigData{
+			cvl.VALIDATE_ALL,
+			cvl.OP_CREATE,
+			"INTERFACE|10.0.0.0/31",
+			map[string]string{
+			},
+		},
+	}
+
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	cvlErrInfo, _ := cvSess.ValidateEditConfig(cfgData)
+
+	cvl.ValidationSessClose(cvSess)
+
+	WriteToFile(fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
+
+	if cvlErrInfo.ErrCode == cvl.CVL_SUCCESS {
+		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
+	}
+}
+
+func TestValidateEditConfig_EmptyNode_Positive(t *testing.T) {
+        cvSess, _ := cvl.ValidationSessOpen()
+
+
+        cfgData := []cvl.CVLEditConfigData{
+                cvl.CVLEditConfigData{
+                        cvl.VALIDATE_ALL,
+                        cvl.OP_UPDATE,
+                        "PORT|Ethernet0",
+                        map[string]string{
+                                "description": "",
+                                "index": "3",
+                        },
+                },
+        }
+
+        cvlErrInfo, _ := cvSess.ValidateEditConfig(cfgData)
+
+        cvl.ValidationSessClose(cvSess)
+
+        WriteToFile(fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
+
+        if cvlErrInfo.ErrCode != cvl.CVL_SUCCESS {
+                t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
+        }
+
 }
