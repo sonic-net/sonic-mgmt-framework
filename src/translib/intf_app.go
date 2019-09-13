@@ -1248,6 +1248,17 @@ func (app *IntfApp) processCommon(d *db.DB) (SetResponse, error) {
 	}
 
 	for key, entry1 := range app.ifIPTableMap {
+		ifEntry, err := d.GetEntry(app.intfIPTs, db.Key{Comp: []string{key}})
+		if err != nil || !ifEntry.IsPopulated() {
+			log.Infof("Interface Entry not present for Key:%s for IP config!", key)
+			m := make(map[string]string)
+			m["NULL"] = "NULL"
+			err = d.CreateEntry(app.intfIPTs, db.Key{Comp: []string{key}}, db.Value{Field: m})
+			if err != nil {
+				return resp, err
+			}
+			log.Infof("Created Interface entry with Interface name : %s alone!", key)
+		}
 		for ip, entry := range entry1 {
 			if entry.op == opCreate {
 				log.Info("Creating entry for ", key, ":", ip)
