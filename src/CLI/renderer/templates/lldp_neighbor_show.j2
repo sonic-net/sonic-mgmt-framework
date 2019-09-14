@@ -12,7 +12,6 @@
 {% for v in desc %}
 {{'                  '}}{{v}}
 {% endfor %}
-{{'    TTL:          '}}{{value['state']['ttl']}}
 {% for cap in  value['capabilities']['capability'] %}
 {%  if cap['state']['enabled'] == true %}
 {%  set en = 'ON' %}
@@ -24,7 +23,7 @@
 {% endfor %}
 {{'  Port'}}
 {{'    PortID:       '}}{{value['state']['port_id']}}
-{{'    PortDescr:    '}}{{value['state']['port_description']}}   
+{{'    PortDescr:    '}}{{value['state']['port_description']}}
 {{'-----------------------------------------------------------'}}
 {% endfor %}
 
