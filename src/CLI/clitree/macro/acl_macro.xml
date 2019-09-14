@@ -222,8 +222,8 @@
 
 <MACRODEF name="ACG-OPTIONS">
         <PARAM name="access-list-name"
-            help="Name of access-list (Max size 140)"
-            ptype="STRING"
+            help="Name of access-list (Max size 63)"
+            ptype="STRING_63"
 			/>
 
         <PARAM name="direction-switch"
@@ -248,8 +248,8 @@
 
 <MACRODEF name="NO-ACG-OPTIONS">
         <PARAM name="access-list-name"
-            help="Name of access-list (Max size 140)"
-            ptype="STRING"
+            help="Name of access-list (Max size 63)"
+            ptype="STRING_63"
 			/>
             <PARAM name="direction-switch"
                 help="Configure the direction to apply the access list"

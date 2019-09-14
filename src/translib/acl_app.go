@@ -39,7 +39,7 @@ const (
 	OC_ACL_YANG_PATH_PREFIX  = "/device/acl"
 
 	MIN_PRIORITY = 1
-	MAX_PRIORITY = 65535
+	MAX_PRIORITY = 65536
 )
 
 var IP_PROTOCOL_MAP = map[ocbinds.E_OpenconfigPacketMatchTypes_IP_PROTOCOL]uint8{

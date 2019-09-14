@@ -5,22 +5,35 @@
         {% for interface in json_output[key] %}
            {% set if_id = interface["id"] %}
            {% if interface["ingress_acl_sets"] %}
-                {% set direction = "ingress" %}
-           {% elif interface["egress_acl_sets"] %}
-               {% set direction = "egress" %}
+                {% set idirection = "ingress" %}
            {% endif %}
-           {% set acl_sets = direction + "_acl_sets" %}
-           {% set acl_set = direction + "_acl_set" %}
-           {% set acl_set_list = interface[acl_sets][acl_set] %}
-           {% for acl_set in acl_set_list %}
-               {% set acl_name = acl_set["set_name"] %}
-               {% if direction == "ingress" %}
-                   {% set direction = "Ingress" %}
-               {% elif direction == "egress" %}
-                   {% set direction = "Egress" %}
-               {% endif %}
-               {{- direction }} IP access-list {{ acl_name }} on {{ if_id }}
-           {% endfor %}
+           {% if interface["egress_acl_sets"] %}
+               {% set edirection = "egress" %}
+           {% endif %}
+           {% if idirection %}
+               {% set ing_acl_sets = idirection + "_acl_sets" %}
+               {% set ing_acl_set = idirection + "_acl_set" %}
+               {% set ing_acl_set_list = interface[ing_acl_sets][ing_acl_set] %}
+               {% for ing_acl_set in ing_acl_set_list %}
+                   {% set i_acl_name = ing_acl_set["set_name"] %}
+                   {% if idirection == "ingress" %}
+                       {% set idirection = "Ingress" %}
+                   {% endif %}
+                   {{- idirection }} IP access-list {{ i_acl_name }} on {{ if_id }}
+               {% endfor %}
+           {% endif %}
+           {% if edirection %}
+               {% set eg_acl_sets = edirection + "_acl_sets" %}
+               {% set eg_acl_set = edirection + "_acl_set" %}
+               {% set eg_acl_set_list = interface[eg_acl_sets][eg_acl_set] %}
+               {% for eg_acl_set in eg_acl_set_list %}
+                   {% set e_acl_name = eg_acl_set["set_name"] %}
+                   {% if edirection == "egress" %}
+                       {% set edirection = "Egress" %}
+                   {% endif %}
+                   {{- edirection }} IP access-list {{ e_acl_name }} on {{ if_id }}
+               {% endfor %}
+           {% endif %}
         {% endfor %}
     {% endif %}
 {% endfor %}
