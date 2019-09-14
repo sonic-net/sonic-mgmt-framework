@@ -103,7 +103,7 @@ func mapFillData(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, dbKey st
     valueStr := ""
     if xpathInfo.yangEntry.IsLeafList() {
 	/* Both yang side and Db side('@' suffix field) the data type is leaf-list */
-	log.Info("Yang type iand Db type is Leaflist for field  = ", xpath)
+	log.Info("Yang type and Db type is Leaflist for field  = ", xpath)
 	fieldName += "@"
 	if reflect.ValueOf(value).Kind() != reflect.Slice {
 	    logStr := fmt.Sprintf("Value for yang xpath %v which is a leaf-list should be a slice", xpath)
@@ -119,9 +119,10 @@ func mapFillData(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, dbKey st
 	    fVal := fmt.Sprintf("%v", valData.Index(fidx).Interface())
 	    valueStr = valueStr + fVal
 	}
+	log.Infof("leaf-list value after conversion to DB format %v  :  %v", fieldName, valueStr)
 
     } else { // xpath is a leaf
-	valueStr  := fmt.Sprintf("%v", value)
+	valueStr  = fmt.Sprintf("%v", value)
 	if strings.Contains(valueStr, ":") {
 	    valueStr = strings.Split(valueStr, ":")[1]
 	}
