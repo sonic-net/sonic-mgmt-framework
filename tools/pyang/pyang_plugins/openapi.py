@@ -38,7 +38,6 @@ nodeDict = OrderedDict()
 XpathToBodyTagDict = OrderedDict()
 keysToLeafRefObjSet = set()
 currentTag = None
-base_path = '/restconf/data'
 verbs = ["post", "put", "patch", "get", "delete"]
 responses = { # Common to all verbs
     "500": {"description": "Internal Server Error"},
@@ -48,6 +47,11 @@ responses = { # Common to all verbs
     "415": {"description": "Unsupported Media Type"},          
 }
 verb_responses = {}
+verb_responses["rpc"] = {
+    "204": {"description": "No Content"},
+    "404": {"description": "Not Found"},
+    "403": {"description": "Forbidden"},              
+}
 verb_responses["post"] = {
     "201": {"description": "Created"},
     "409": {"description": "Conflict"},
@@ -97,7 +101,6 @@ swaggerDict["info"] = OrderedDict()
 swaggerDict["info"]["description"] = "Network management Open APIs for Broadcom's Sonic."
 swaggerDict["info"]["version"] = "1.0.0"
 swaggerDict["info"]["title"] =  "SONiC Network Management APIs"
-swaggerDict["basePath"] = base_path
 swaggerDict["schemes"] = ["https", "http"]
 swagger_tags = []
 swaggerDict["tags"] = swagger_tags
@@ -123,7 +126,6 @@ def resetSwaggerDict():
     swaggerDict["info"]["description"] = "Network management Open APIs for Sonic."
     swaggerDict["info"]["version"] = "1.0.0"
     swaggerDict["info"]["title"] =  "Sonic Network Management APIs"
-    swaggerDict["basePath"] = base_path
     swaggerDict["schemes"] = ["https", "http"]
     swagger_tags = []
     currentTag = None
@@ -174,8 +176,8 @@ class OpenApiPlugin(plugin.PyangPlugin):
         # delete root '/' as we dont support it.
             
         if len(swaggerDict["paths"]) > 0:
-            if "/" in swaggerDict["paths"]:
-                del(swaggerDict["paths"]["/"])
+            if "/restconf/data/" in swaggerDict["paths"]:
+                del(swaggerDict["paths"]["/restconf/data/"])
 
         if len(swaggerDict["paths"]) <= 0:
             continue
@@ -224,6 +226,7 @@ def swagger_it(child, defName, pathstr, payload, metadata, verb, operId=False):
         if not verbPathStr.startswith("/"):
             verbPathStr = "/" + verbPathStr
 
+    verbPathStr = "/restconf/data" + verbPathStr
     if verbPathStr not in swaggerDict["paths"]:
         swaggerDict["paths"][verbPathStr] = OrderedDict()
 
@@ -301,6 +304,74 @@ def swagger_it(child, defName, pathstr, payload, metadata, verb, operId=False):
         verbPath["responses"]["200"]["schema"] = OrderedDict()
         verbPath["responses"]["200"]["schema"]["$ref"] = "#/definitions/" + defName
 
+def handle_rpc(child, actXpath, pathstr):
+    global currentTag
+    verbPathStr = "/restconf/operations" + pathstr
+    verb = "post"
+    DefName = shortenNodeName(child)
+    opId = "rpc_" + DefName
+    add_swagger_tag(child.i_module)
+    
+    # build input payload
+    input_payload = OrderedDict()       
+    input_child = child.search_one('input', None, child.i_children)
+    if input_child is None:
+        print("There is no input node for RPC ", "Xpath: ", actXpath)    
+    build_payload(input_child, input_payload, pathstr, True, actXpath, True)    
+    input_Defn = "rpc_input_" + DefName
+    swaggerDict["definitions"][input_Defn] = OrderedDict()
+    swaggerDict["definitions"][input_Defn]["type"] = "object"
+    swaggerDict["definitions"][input_Defn]["properties"] = copy.deepcopy(input_payload)    
+
+    # build output payload
+    output_payload = OrderedDict()       
+    output_child = child.search_one('output', None, child.i_children)
+    if output_child is None:
+        print("There is no output node for RPC ", "Xpath: ", actXpath)
+    build_payload(output_child, output_payload, pathstr, True, actXpath, True) 
+    output_Defn = "rpc_output_" + DefName
+    swaggerDict["definitions"][output_Defn] = OrderedDict()
+    swaggerDict["definitions"][output_Defn]["type"] = "object"
+    swaggerDict["definitions"][output_Defn]["properties"] = copy.deepcopy(output_payload)        
+
+    if verbPathStr not in swaggerDict["paths"]:
+        swaggerDict["paths"][verbPathStr] = OrderedDict()
+
+    swaggerDict["paths"][verbPathStr][verb] = OrderedDict()
+    swaggerDict["paths"][verbPathStr][verb]["tags"] = [currentTag]
+    
+    # Set Operation ID
+    swaggerDict["paths"][verbPathStr][verb]["operationId"] = opId
+    
+    # Set Description
+    desc = child.search_one('description')
+    if desc is None:
+        desc = ''
+    else:
+        desc = desc.arg
+    desc = "OperationId: " + opId + "\n" + desc        
+    swaggerDict["paths"][verbPathStr][verb]["description"] = desc
+    verbPath = swaggerDict["paths"][verbPathStr][verb]
+    
+    # Request payload
+    if len(input_payload[child.i_module.i_modulename + ':input']['properties']) > 0:
+        verbPath["parameters"] = []    
+        verbPath["consumes"] = ["application/yang-data+json"]
+        bodyTag = OrderedDict()
+        bodyTag["in"] = "body"
+        bodyTag["name"] = "body"
+        bodyTag["required"] = True
+        bodyTag["schema"] = OrderedDict()
+        bodyTag["schema"]["$ref"] = "#/definitions/" + input_Defn
+        verbPath["parameters"].append(bodyTag)
+
+    # Response payload
+    verbPath["responses"] = copy.deepcopy(merge_two_dicts(responses, verb_responses["rpc"]))        
+    if len(output_payload[child.i_module.i_modulename + ':output']['properties']) > 0:
+        verbPath["produces"] = ["application/yang-data+json"]    
+        verbPath["responses"]["204"]["schema"] = OrderedDict()    
+        verbPath["responses"]["204"]["schema"]["$ref"] = "#/definitions/" + output_Defn    
+
 def walk_child(child):
     global XpathToBodyTagDict
 
@@ -311,6 +382,11 @@ def walk_child(child):
         
     if actXpath in keysToLeafRefObjSet:
         return
+
+    if child.keyword == "rpc":
+        add_swagger_tag(child.i_module)
+        handle_rpc(child, actXpath, pathstr)
+        return 
 
     if child.keyword in ["list", "container", "leaf", "leaf-list"]:
         payload = OrderedDict()       
@@ -348,6 +424,11 @@ def walk_child(child):
             swaggerDict["definitions"][defName]["properties"] = copy.deepcopy(payload)            
 
             for verb in verbs:
+                if child.keyword == "leaf-list":
+                    metadata_leaf_list = []
+                    keyNodesInPath_leaf_list = []
+                    pathstr_leaf_list = mk_path_refine(child, metadata_leaf_list, keyNodesInPath_leaf_list, True)                    
+
                 if verb == "get":
                     payload_get = OrderedDict()
                     build_payload(child, payload_get, pathstr, True, actXpath, True, True)
@@ -358,6 +439,11 @@ def walk_child(child):
                     swaggerDict["definitions"][defName_get]["type"] = "object"
                     swaggerDict["definitions"][defName_get]["properties"] = copy.deepcopy(payload_get)
                     swagger_it(child, defName_get, pathstr, payload_get, metadata, verb, defName_get)
+
+                    if child.keyword == "leaf-list":
+                        defName_get_leaf_list = "get" + '_llist_' + defName
+                        swagger_it(child, defName_get, pathstr_leaf_list, payload_get, metadata_leaf_list, verb, defName_get_leaf_list)
+
                     continue
                 
                 if verb == "post" and child.keyword == "list":
@@ -370,6 +456,9 @@ def walk_child(child):
                         continue
 
                 swagger_it(child, defName, pathstr, payload, metadata, verb)
+                if verb == "delete" and child.keyword == "leaf-list":
+                    defName_del_leaf_list = "del" + '_llist_' + defName
+                    swagger_it(child, defName, pathstr_leaf_list, payload, metadata_leaf_list, verb, defName_del_leaf_list)
 
         if  child.keyword == "list":
             listMetaData = copy.deepcopy(metadata)
@@ -560,18 +649,45 @@ def build_payload(child, payloadDict, uriPath="", oneInstance=False, Xpath="", f
 
     elif child.keyword == "choice" or child.keyword == "case":
         childJson = payloadDict
+    
+    elif child.keyword == "input" or child.keyword == "output":
+        if firstCall:
+            nodeName = child.i_module.i_modulename + ':' + child.keyword
+        else:
+            nodeName = child.keyword
+
+        payloadDict[nodeName] = OrderedDict()
+        payloadDict[nodeName]["type"] = "object"
+        payloadDict[nodeName]["properties"] = OrderedDict()
+        childJson = payloadDict[nodeName]["properties"]            
 
     if hasattr(child, 'i_children'):
         for ch in child.i_children:
             build_payload(ch,childJson,uriPath, False, Xpath, False, config_false, copy.deepcopy(moduleList))
 
-def mk_path_refine(node, metadata, keyNodes=[]):
+def mk_path_refine(node, metadata, keyNodes=[], restconf_leaflist=False):
     def mk_path(node):
         """Returns the XPath path of the node"""
         if node.keyword in ['choice', 'case']:
             return mk_path(node.parent)
         def name(node):
             extra = ""
+            if node.keyword == "leaf-list" and restconf_leaflist:
+                extraKeys = []      
+                extraKeys.append('{' + node.arg + '}')
+                desc = node.search_one('description')
+                if desc is None:
+                    desc = ''
+                else:
+                    desc = desc.arg
+                metaInfo = OrderedDict()
+                metaInfo["desc"] = desc
+                metaInfo["name"] = node.arg 
+                metaInfo["type"] = "string"
+                metaInfo["format"] = ""
+                metadata.append(metaInfo)
+                extra = ",".join(extraKeys)
+
             if node.keyword == "list":
                 extraKeys = []            
                 for index, list_key in enumerate(node.i_key):                    
