@@ -82,6 +82,10 @@ func yangToDbMapFill (keyLevel int, xSpecMap map[string]*yangXpathInfo, entry *y
 	    xpathData.dbIndex = parentXpathData.dbIndex
     }
 
+    if ok && len(parentXpathData.validateFunc) > 0 {
+            xpathData.validateFunc = parentXpathData.validateFunc
+    }
+
     if xpathData.yangDataType == "leaf" && len(xpathData.fieldName) == 0 {
         if xpathData.tableName != nil && xDbSpecMap[*xpathData.tableName] != nil {
 			if xDbSpecMap[*xpathData.tableName].dbEntry.Dir[entry.Name] != nil {
@@ -359,6 +363,7 @@ func mapPrint(inMap map[string]*yangXpathInfo, fileName string) {
         fmt.Fprintf(fp, "\r\n    xfmrKeyFn: %v", d.xfmrKey)
         fmt.Fprintf(fp, "\r\n    xfmrFunc : %v", d.xfmrFunc)
         fmt.Fprintf(fp, "\r\n    dbIndex  : %v", d.dbIndex)
+        fmt.Fprintf(fp, "\r\n    validateFunc  : %v", d.validateFunc)
         fmt.Fprintf(fp, "\r\n    yangEntry: ")
         if d.yangEntry != nil {
             fmt.Fprintf(fp, "%v", *d.yangEntry)

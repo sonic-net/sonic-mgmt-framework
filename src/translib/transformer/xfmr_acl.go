@@ -181,12 +181,18 @@ func getL2EtherType(etherType uint64) interface{} {
 // Validate callpoints
 ////////////////////////////////////////////
 var validate_ipv4 ValidateCallpoint = func(inParams XfmrParams) (bool) {
-	var res bool = true
-	return res
+	if strings.Contains(inParams.key, "ACL_IPV4") {
+		return true
+	} else {
+		return false
+	}
 }
 var validate_ipv6 ValidateCallpoint = func(inParams XfmrParams) (bool) {
-	var res bool = false
-	return res
+	if strings.Contains(inParams.key, "ACL_IPV6") {
+		return true
+	} else {
+		return false
+	}
 }
 
 ////////////////////////////////////////////
