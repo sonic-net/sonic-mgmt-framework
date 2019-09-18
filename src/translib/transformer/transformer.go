@@ -72,7 +72,10 @@ func init() {
         yangFiles = getDefaultModelsList()
         yangFiles = append(yangFiles, ocList...)
         fmt.Println("Yang model List:", yangFiles)
-	loadYangModules(yangFiles...)
+	err := loadYangModules(yangFiles...)
+    if err != nil {
+	    fmt.Fprintln(os.Stderr, err)
+    }
 }
 
 func loadYangModules(files ...string) error {
