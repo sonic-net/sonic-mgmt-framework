@@ -143,11 +143,11 @@ module sonic-acl {
 			}
 
 			leaf ETHER_TYPE {
-				type string{
-					pattern "(0x88CC)|(0x8100)|(0x8915)|(0x0806)|(0x0800)|(0x86DD)|(0x8847)"{
+				type string {
+					pattern "(0x88CC)|(0x8100)|(0x8915)|(0x0806)|(0x0800)|(0x86DD)|(0x8847)" {
 						error-message "Invalid ACL Rule Ether Type";
-					error-app-tag ether-type-invalid;
-				}
+						error-app-tag ether-type-invalid;
+					}
 				}
 			}
 
