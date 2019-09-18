@@ -9,6 +9,7 @@ all:tests
 tests: $(OUT)
 
 %:%.go
+	make -C ../testdata/schema
 	@echo "Building $@ ..."
 	GOPATH=$(GOPATH) $(GO) build -gcflags="all=-N -l" $<
 

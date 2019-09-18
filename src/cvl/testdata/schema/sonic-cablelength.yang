@@ -19,10 +19,10 @@ module sonic-cablelength {
 	}
 
 	organization
-		"BRCM";
+		"SONiC";
 
 	contact
-		"BRCM";
+		"SONiC";
 
 	description
 		"SONIC CABLELENGTH";

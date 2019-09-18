@@ -50,7 +50,11 @@ tests:
 	make -C tests
 
 gotest:
-	 CVL_CFG_FILE=$(abspath .)/conf/cvl_cfg.json CVL_SCHEMA_PATH=$(abspath .)/schema GOPATH=$(GOPATH) tests/run_test.sh
+	make -C schema
+	make -C testdata/schema
+	cp schema/*.yin testdata/schema
+	#CVL_CFG_FILE=$(abspath .)/conf/cvl_cfg.json CVL_SCHEMA_PATH=$(abspath .)/schema:$(abspath .)/testdata/schema GOPATH=$(GOPATH) tests/run_test.sh
+	CVL_CFG_FILE=$(abspath .)/conf/cvl_cfg.json CVL_SCHEMA_PATH=$(abspath .)/schema GOPATH=$(GOPATH) tests/run_test.sh
 
 clean:
 	make -C tests clean

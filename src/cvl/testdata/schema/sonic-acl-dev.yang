@@ -21,10 +21,10 @@ module sonic-acl-dev {
 
 
 	organization
-		"BRCM";
+		"SONiC";
 
 	contact
-		"BRCM";
+		"SONiC";
 
 	description
 		"SONIC ACLi Deviations";

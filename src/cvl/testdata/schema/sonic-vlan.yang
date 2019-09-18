@@ -20,10 +20,10 @@ module sonic-vlan {
 	}
 
 	organization
-		"BRCM";
+		"SONiC";
 
 	contact
-		"BRCM";
+		"SONiC";
 
 	description
 		"SONIC VLAN";

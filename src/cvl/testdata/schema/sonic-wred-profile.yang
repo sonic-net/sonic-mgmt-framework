@@ -11,10 +11,10 @@ module sonic-wred-profile {
 	}
 
 	organization
-		"BRCM";
+		"SONiC";
 
 	contact
-		"BRCM";
+		"SONiC";
 
 	description
 		"SONIC WRED_PROFILE";

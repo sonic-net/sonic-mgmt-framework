@@ -12,10 +12,10 @@ module sonic-vlan-dev {
 	}
 
 	organization
-		"BRCM";
+		"SONiC";
 
 	contact
-		"BRCM";
+		"SONiC";
 
 	description
 		"SONIC VLAN deviation file";

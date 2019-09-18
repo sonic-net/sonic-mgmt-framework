@@ -16,10 +16,10 @@ module sonic-pf-limits {
 	}
 
 	organization
-		"BRCM";
+		"SONiC";
 
 	contact
-		"BRCM";
+		"SONiC";
 
 	description
 		"SONIC Platform constrainst";

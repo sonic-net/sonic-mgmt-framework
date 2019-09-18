@@ -23,10 +23,10 @@ module sonic-buffer-pg {
 	}
 
 	organization
-		"BRCM";
+		"SONiC";
 
 	contact
-		"BRCM";
+		"SONiC";
 
 	description
 		"SONIC BUFFER PG";
