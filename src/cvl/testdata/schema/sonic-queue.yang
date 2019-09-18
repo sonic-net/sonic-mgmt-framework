@@ -23,10 +23,10 @@ module sonic-queue {
 	}
 
 	organization
-		"BRCM";
+		"SONiC";
 
 	contact
-		"BRCM";
+		"SONiC";
 
 	description
 		"SONIC QUEUE";

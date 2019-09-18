@@ -2825,16 +2825,16 @@ func TestBadSchema(t *testing.T) {
 
 	if _, err := os.Stat("/usr/sbin/schema"); os.IsNotExist(err) {
 		//Corrupt some schema file 
-		exec.Command("/bin/sh", "-c", "/bin/cp schema/sonic-port.yin schema/sonic-port.yin.bad" + 
-		" && /bin/sed -i '1 a <junk>' schema/sonic-port.yin.bad").Output()
+		exec.Command("/bin/sh", "-c", "/bin/cp testdata/schema/sonic-port.yin testdata/schema/sonic-port.yin.bad" + 
+		" && /bin/sed -i '1 a <junk>' testdata/schema/sonic-port.yin.bad").Output()
 
 		//Parse bad schema file
-		if module, _ := yparser.ParseSchemaFile("schema/sonic-port.yin.bad.1"); module != nil { //should fail
+		if module, _ := yparser.ParseSchemaFile("testdata/schema/sonic-port.yin.bad"); module != nil { //should fail
 			t.Errorf("Bad schema parsing should fail.")
 		}
 
 		//Revert to 
-		exec.Command("/bin/sh",  "-c", "/bin/rm schema/sonic-port.yin.bad").Output()
+		exec.Command("/bin/sh",  "-c", "/bin/rm testdata/schema/sonic-port.yin.bad").Output()
 	} else {
 		//Corrupt some schema file 
 		exec.Command("/bin/sh", "-c", "/bin/cp /usr/sbin/schema/sonic-port.yin /usr/sbin/schema/sonic-port.yin.bad" + 

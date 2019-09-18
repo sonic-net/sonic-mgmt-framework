@@ -19,10 +19,10 @@ module sonic-bgp-neighbor {
 	}
 
 	organization
-		"BRCM";
+		"SONiC";
 
 	contact
-		"BRCM";
+		"SONiC";
 
 	description
 		"SONIC BGP NEIGHBOR";

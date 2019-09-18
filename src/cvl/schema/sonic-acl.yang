@@ -19,23 +19,15 @@ module sonic-acl {
 		prefix prt;
 	}
 
-	import sonic-portchannel {
-		prefix spc;
-	}
-
 	import sonic-mirror-session {
 		prefix sms;
 	}
 
-	import sonic-pf-limits {
-		prefix spf;
-	}
-
 	organization
-		"BRCM";
+		"SONiC";
 
 	contact
-		"BRCM";
+		"SONiC";
 
 	description
 		"SONIC ACL";
@@ -50,13 +42,12 @@ module sonic-acl {
 		list ACL_TABLE {
 			key "aclname";
 
-			/* must "count(/prt:sonic-port/prt:PORT) > 0"; */
 
 			leaf aclname {
-                type string {
-                    pattern '[a-zA-Z0-9]{1}([-a-zA-Z0-9_]{0,71})';
-                    length 1..72;
-                }
+				type string {
+					pattern '[a-zA-Z0-9]{1}([-a-zA-Z0-9_]{0,71})';
+					length 1..72;
+				}
 			}
 
 			leaf policy_desc {
@@ -84,30 +75,14 @@ module sonic-acl {
 			}
 
 			leaf-list ports {
-				type union { 
-					type leafref {
-						path "/prt:sonic-port/prt:PORT/prt:ifname";
-					}
-					type leafref {
-						path "/spc:sonic-portchannel/spc:PORTCHANNEL/spc:name";
-					}
+				type leafref {
+					path "/prt:sonic-port/prt:PORT/prt:ifname";
 				}
 			}
 		}
 
 		list ACL_RULE { 
 			key "aclname rulename";
-			scommon:pf-check    "ACL_CheckAclLimits";	
-
-			/* Limit for number of dynamic ACL rules */	
-			/*must "count(../ACL_RULE) > /spf:sonic-pf-limits/acl/MAX_ACL_RULES" {
-				error-message "Number of ACL rules reached max platform limit.";
-			}
-			must "PRIORITY > /spf:sonic-pf-limits/acl/MAX_PRIORITY" {
-				error-message "Invalid ACL rule priority.";
-			}
-			 must "count(../ACL_TABLE) > 0 and count(/prt:sonic-port/prt:PORT) > 0"; //Temporary work-around 
-			 */
 
 			leaf aclname {
 				type leafref {
@@ -116,7 +91,7 @@ module sonic-acl {
 				must "(/scommon:operation/scommon:operation != 'DELETE') or " +
 					"count(current()/../../ACL_TABLE[aclname=current()]/ports) = 0" {
 						error-message "Ports are already bound to this rule.";
-				}
+					}
 			} 
 
 			leaf rulename {
@@ -127,7 +102,7 @@ module sonic-acl {
 				type uint16 {
 					range "1..65535"{
 						error-message "Invalid ACL rule priority.";
-					}
+				}
 				}
 			}
 
@@ -160,7 +135,7 @@ module sonic-acl {
 					enum NON_IPV6;
 				}
 			}
-		
+
 			leaf IP_PROTOCOL {
 				type uint8 {
 					range "1|2|6|17|46|47|51|103|115";
@@ -168,8 +143,8 @@ module sonic-acl {
 			}
 
 			leaf ETHER_TYPE {
-				type string{
-					pattern "(0x88CC)|(0x8100)|(0x8915)|(0x0806)|(0x0800)|(0x86DD)|(0x8847)"{
+				type string {
+					pattern "(0x88CC)|(0x8100)|(0x8915)|(0x0806)|(0x0800)|(0x86DD)|(0x8847)" {
 						error-message "Invalid ACL Rule Ether Type";
 						error-app-tag ether-type-invalid;
 					}

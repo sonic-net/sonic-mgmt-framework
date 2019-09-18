@@ -17,21 +17,28 @@
 #                                                                              #
 ################################################################################
 
-SRC_FILES=$(wildcard *.go)
-OUT=$(patsubst %.go, %, $(SRC_FILES)) 
-TOPDIR := $(abspath ../../..)
-GO=/usr/local/go/bin/go
-GOPATH = $(TOPDIR):$(shell go env GOPATH)
+src_files=$(wildcard *.yang)
+out=$(patsubst %.yang, %.yin, $(src_files)) 
+out_ext=$(patsubst %.yang, %.tree, $(src_files)) 
 
-all:tests
+all:schema
 
-tests: $(OUT)
+schema: $(out)
 
-%:%.go
-	make -C ../testdata/schema
-	@echo "Building $@ ..."
-	GOPATH=$(GOPATH) $(GO) build -gcflags="all=-N -l" $<
+%.yin:%.yang
+	@echo "Generating $@ ..."
+	@devFile="`echo $< | cut -d . -f1`-dev.yang"; \
+	if [ -f $$devFile ] ; then devOpt="--deviation-module $$devFile"; fi; \
+	pyang -p ../../schema/:../../schema/ietf/ -f yin $$devOpt $< -o $@.tmp
+	@xmllint  --noblanks  $@.tmp > $@
+	@rm -rf  $@.tmp
+
+%.tree:%.yang
+	@echo "Generating $@ ..."
+	@devFile="`echo $< | cut -d . -f1`-dev.yang"; \
+	if [ -f $$devFile ] ; then devOpt="--deviation-module $$devFile"; fi; \
+	pyang -p ../../schema/:../../schema/ietf/ -f tree $$devOpt $< -o $@
 
 clean:
 	@echo "Removing files ..."
-	rm -rf $(OUT)
+	rm -rf *.yin
