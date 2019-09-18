@@ -101,6 +101,7 @@ install:
 	$(INSTALL) -d $(DESTDIR)/usr/sbin/schema/
 	$(INSTALL) -d $(DESTDIR)/usr/sbin/lib/
 	$(INSTALL) -D $(TOPDIR)/src/cvl/schema/*.yin $(DESTDIR)/usr/sbin/schema/
+	$(INSTALL) -D $(TOPDIR)/src/cvl/testdata/schema/*.yin $(DESTDIR)/usr/sbin/schema/
 	cp -rf $(TOPDIR)/build/rest_server/dist/ui/ $(DESTDIR)/rest_ui/
 	cp -rf $(TOPDIR)/build/cli $(DESTDIR)/usr/sbin/
 	cp -rf $(TOPDIR)/build/swagger_client_py/ $(DESTDIR)/usr/sbin/lib/

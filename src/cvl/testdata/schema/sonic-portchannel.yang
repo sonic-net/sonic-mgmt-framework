@@ -15,10 +15,10 @@ module sonic-portchannel {
 	}
 
 	organization
-		"BRCM";
+		"SONiC";
 
 	contact
-		"BRCM";
+		"SONiC";
 
 	description
 		"SONIC PORTCHANNEL";
