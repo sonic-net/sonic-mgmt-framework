@@ -1,3 +1,22 @@
+////////////////////////////////////////////////////////////////////////////////
+//                                                                            //
+//  Copyright 2019 Broadcom. The term Broadcom refers to Broadcom Inc. and/or //
+//  its subsidiaries.                                                         //
+//                                                                            //
+//  Licensed under the Apache License, Version 2.0 (the "License");           //
+//  you may not use this file except in compliance with the License.          //
+//  You may obtain a copy of the License at                                   //
+//                                                                            //
+//     http://www.apache.org/licenses/LICENSE-2.0                             //
+//                                                                            //
+//  Unless required by applicable law or agreed to in writing, software       //
+//  distributed under the License is distributed on an "AS IS" BASIS,         //
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  //
+//  See the License for the specific language governing permissions and       //
+//  limitations under the License.                                            //
+//                                                                            //
+////////////////////////////////////////////////////////////////////////////////
+
 package yparser
 
 /* Yang parser using libyang library */
@@ -250,7 +269,12 @@ func ParseSchemaFile(modelFile string) (*YParserModule, YParserError) {
 //Add child node to a parent node
 func(yp *YParser) AddChildNode(module *YParserModule, parent *YParserNode, name string) *YParserNode {
 
-	return (*YParserNode)(C.lyd_new((*C.struct_lyd_node)(parent), (*C.struct_lys_module)(module), C.CString(name)))
+	ret := (*YParserNode)(C.lyd_new((*C.struct_lyd_node)(parent), (*C.struct_lys_module)(module), C.CString(name)))
+	if (ret == nil) {
+		TRACE_LOG(INFO_DEBUG, TRACE_YPARSER, "Failed parsing node %s\n", name)
+	}
+
+	return ret
 }
 
 //Add child node to a parent node

@@ -20,10 +20,10 @@ module sonic-device-neighbor {
 
 
 	organization
-		"BRCM";
+		"SONiC";
 
 	contact
-		"BRCM";
+		"SONiC";
 
 	description
 		"SONIC DEVICE NEIGHBOR";

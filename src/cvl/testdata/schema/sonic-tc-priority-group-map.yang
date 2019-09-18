@@ -11,10 +11,10 @@ module sonic-tc-priority-group-map {
 	}
 
 	organization
-		"BRCM";
+		"SONiC";
 
 	contact
-		"BRCM";
+		"SONiC";
 
 	description
 		"SONIC TC_TO_PRIORITY_GROUP_MAP";

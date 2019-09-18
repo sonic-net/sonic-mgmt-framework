@@ -11,10 +11,10 @@ module sonic-scheduler {
 	}
 
 	organization
-		"BRCM";
+		"SONiC";
 
 	contact
-		"BRCM";
+		"SONiC";
 
 	description
 		"SONIC SCHEDULER";

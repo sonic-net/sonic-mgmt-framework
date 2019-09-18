@@ -15,10 +15,10 @@ module sonic-device-metadata {
 	}
 
 	organization
-		"BRCM";
+		"SONiC";
 
 	contact
-		"BRCM";
+		"SONiC";
 
 	description
 		"SONIC DEVICE METADATA";

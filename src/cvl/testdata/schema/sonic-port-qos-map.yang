@@ -31,10 +31,10 @@ module sonic-port-qos-map {
 	}
 
 	organization
-		"BRCM";
+		"SONiC";
 
 	contact
-		"BRCM";
+		"SONiC";
 
 	description
 		"SONIC PORT_QOS_MAP";

@@ -15,10 +15,10 @@ module sonic-mirror-session {
 	}
 
 	organization
-		"BRCM";
+		"SONiC";
 
 	contact
-		"BRCM";
+		"SONiC";
 
 	description
 		"SONIC MIRROR SESSION";

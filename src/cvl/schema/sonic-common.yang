@@ -8,10 +8,10 @@ module sonic-common {
 	}
 
 	organization
-		"BRCM";
+		"SONiC";
 
 	contact
-		"BRCM";
+		"SONiC";
 
 	description
 		"SONIC VLAN";
@@ -22,18 +22,18 @@ module sonic-common {
 	}
 
 	typedef tagging_mode {
-			type enumeration {
-				enum untagged;
-				enum tagged;
-				enum priority_tagged;
-			}
+		type enumeration {
+			enum untagged;
+			enum tagged;
+			enum priority_tagged;
+		}
 	}
 
 	typedef admin-status {
-			type enumeration {
-				enum up;
-				enum down;
-			}
+		type enumeration {
+			enum up;
+			enum down;
+		}
 	}
 
 	extension custom-handler {
@@ -63,19 +63,19 @@ module sonic-common {
 	extension map-list {
 		description
 			"If it is a map list";
-		argument "value"; //
+		argument "value"; 
 	}
 
 	extension map-leaf {
 		description
 			"Map leaf names";
-		argument "value"; //
+		argument "value"; 
 	}
 
 	extension pf-check {
 		description
 			"Platform specific validation";
-		argument "handler"; //
+		argument "handler"; 
 	}
 
 	container operation {

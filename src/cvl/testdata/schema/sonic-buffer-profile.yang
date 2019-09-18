@@ -19,10 +19,10 @@ module sonic-buffer-profile {
 	}
 
 	organization
-		"BRCM";
+		"SONiC";
 
 	contact
-		"BRCM";
+		"SONiC";
 
 	description
 		"SONIC BUFFER PROFILE";
