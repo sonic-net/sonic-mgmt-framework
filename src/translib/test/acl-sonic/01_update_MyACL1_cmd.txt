@@ -1,0 +1,1 @@
+./translibtest -o "update" -u "/sonic-acl:sonic-acl" -p "./acl-sonic/01_update_MyACL1.json" -logtostderr

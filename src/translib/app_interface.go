@@ -125,12 +125,9 @@ func getAppModuleInfo(path string) (*appInfo, error) {
 		return app, err
 	}
 
-	errStr := "Unsupported path=" + path
-
-	err = errors.New(errStr)
-	log.Error(errStr)
-
-	var app *appInfo
+	/* If no specific app registered fallback to default/common app */
+	log.Infof("No app module registered for path %s hence fallback to default/common app", path)
+	app := appMap["*"]
 
 	return app, err
 }
