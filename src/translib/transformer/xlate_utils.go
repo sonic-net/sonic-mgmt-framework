@@ -191,7 +191,7 @@ func isCvlYang(path string) bool {
     return false
 }
 
-func keyJsonDataAdd(keyNameList []string, keyStr string, jsonData string) string {
+func keyJsonDataAdd(keyNameList []string, keyStr string, jsonData string, resultMap map[string]interface{}) string {
     keyValList := strings.Split(keyStr, "|")
     if len(keyNameList) != len(keyValList) {
         return ""
@@ -199,6 +199,7 @@ func keyJsonDataAdd(keyNameList []string, keyStr string, jsonData string) string
 
     for i, keyName := range keyNameList {
         jsonData += fmt.Sprintf("\"%v\" : \"%v\",", keyName, keyValList[i])
+        resultMap[keyName] = keyValList[i]
     }
     jsonData = strings.TrimRight(jsonData, ",")
     return jsonData

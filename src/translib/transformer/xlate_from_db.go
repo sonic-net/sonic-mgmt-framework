@@ -18,10 +18,6 @@ import (
 
 type typeMapOfInterface map[string]interface{}
 
-const (
-    Yuint8 = 5
-)
-
 func xfmrHandlerFunc(inParams XfmrParams) (map[string]interface{}, error) {
     result := make(map[string]interface{})
     xpath, _ := RemoveXPATHPredicates(inParams.uri)
@@ -166,10 +162,12 @@ func processLfLstDbToYang(fieldXpath string, dbFldVal string) []interface{} {
 }
 
 /* Traverse db map and create json for cvl yang */
-func directDbToYangJsonCreate(dbDataMap map[string]map[string]db.Value, jsonData string) string {
+func directDbToYangJsonCreate(dbDataMap map[string]map[string]db.Value, jsonData string, resultMap map[string]interface{}) string {
     for tblName, tblData := range dbDataMap {
         dataInst := ""
+        var mapSlice []typeMapOfInterface
         for keyStr, dbFldValData := range tblData {
+            curMap := make(map[string]interface{})
             fldValPair := ""
             for field, value := range dbFldValData.Field {
 			if strings.HasSuffix(field, "@") {
@@ -179,6 +177,7 @@ func directDbToYangJsonCreate(dbDataMap map[string]map[string]db.Value, jsonData
                                 if xDbSpecMap[fieldXpath].dbEntry.IsLeafList() {
                                         resLst := processLfLstDbToYang(fieldXpath, value)
                                         fldValPair += fmt.Sprintf("\"%v\" : \"%v\",\r\n", field, resLst)
+                                        curMap[field] = resLst
                                         continue
                                 }
                         } else {
@@ -189,15 +188,20 @@ func directDbToYangJsonCreate(dbDataMap map[string]map[string]db.Value, jsonData
                                         log.Warning("Failure in converting Db value type to yang type for field", field)
                                 } else {
                                         fldValPair += fmt.Sprintf("\"%v\" : \"%v\",\r\n", field, resVal)
+                                        curMap[field] = resVal
                                 }
                         }
             }
             yangKeys := yangKeyFromEntryGet(xDbSpecMap[tblName].dbEntry)
-            fldValPair = keyJsonDataAdd(yangKeys, keyStr, fldValPair)
+            fldValPair = keyJsonDataAdd(yangKeys, keyStr, fldValPair, curMap)
             dataInst += fmt.Sprintf("{ \r\n %v \r\n },", fldValPair)
+            if curMap != nil {
+                mapSlice = append(mapSlice, curMap)
+            }
         }
         dataInst = strings.TrimRight(dataInst, ",")
         jsonData += fmt.Sprintf("\"%v\" : [\r\n %v\r\n ],", tblName, dataInst)
+        resultMap[tblName] = mapSlice
     }
     jsonData = strings.TrimRight(jsonData, ",")
     return jsonData
@@ -356,43 +360,42 @@ func yangDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, xpath
 /* Traverse linear db-map data and add to nested json data */
 func dbDataToYangJsonCreate(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db.DB, dbDataMap *map[db.DBNum]map[string]map[string]db.Value, cdb db.DBNum) (string, error) {
     jsonData := ""
-	if isCvlYang(uri) {
-		jsonData := directDbToYangJsonCreate((*dbDataMap)[cdb], jsonData)
-		jsonDataPrint(jsonData)
-		return jsonData, nil
-	}
-
-    var d *db.DB
     resultMap := make(map[string]interface{})
-    reqXpath, keyName, tableName := xpathKeyExtract(d, ygRoot, GET, uri)
-    yangNode, ok := xSpecMap[reqXpath]
-    if ok {
-        yangType := yangTypeGet(yangNode.yangEntry)
-        if yangType == "leaf" {
-            fldName := xSpecMap[reqXpath].fieldName
-            tbl, key, _ := tableNameAndKeyFromDbMapGet((*dbDataMap)[cdb])
-            jsonData = fmt.Sprintf("{\r\n \"%v\" : \"%v\" \r\n }\r\n", xSpecMap[reqXpath].yangEntry.Name,
+	if isCvlYang(uri) {
+		jsonData := directDbToYangJsonCreate((*dbDataMap)[cdb], jsonData, resultMap)
+		jsonDataPrint(jsonData)
+	} else {
+        var d *db.DB
+        reqXpath, keyName, tableName := xpathKeyExtract(d, ygRoot, GET, uri)
+        yangNode, ok := xSpecMap[reqXpath]
+        if ok {
+            yangType := yangTypeGet(yangNode.yangEntry)
+            if yangType == "leaf" {
+                fldName := xSpecMap[reqXpath].fieldName
+                tbl, key, _ := tableNameAndKeyFromDbMapGet((*dbDataMap)[cdb])
+                jsonData = fmt.Sprintf("{\r\n \"%v\" : \"%v\" \r\n }\r\n", xSpecMap[reqXpath].yangEntry.Name,
                                (*dbDataMap)[cdb][tbl][key].Field[fldName])
-            resultMap[fldName] = (*dbDataMap)[cdb][tbl][key].Field[fldName]
-        } else if yangType == "container" {
-                cname := xSpecMap[reqXpath].yangEntry.Name
-                cmap  := make(map[string]interface{})
-            if len(xSpecMap[reqXpath].xfmrFunc) > 0 {
-                inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, uri, GET, "", dbDataMap, nil)
-                cmap, _   = xfmrHandlerFunc(inParams)
-                if len(cmap) > 0 {
-                    resultMap[cname] = cmap
+                resultMap[xSpecMap[reqXpath].yangEntry.Name] = (*dbDataMap)[cdb][tbl][key].Field[fldName]
+            } else if yangType == "container" {
+                    cname := xSpecMap[reqXpath].yangEntry.Name
+                    cmap  := make(map[string]interface{})
+                if len(xSpecMap[reqXpath].xfmrFunc) > 0 {
+                    inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, uri, GET, "", dbDataMap, nil)
+                    cmap, _   = xfmrHandlerFunc(inParams)
+                    if len(cmap) > 0 {
+                        resultMap[cname] = cmap
+                    } else {
+                        log.Info("Empty container(\"%v\").\r\n", uri)
+                    }
                 } else {
-                    log.Info("Empty container(\"%v\").\r\n", uri)
+                    err    := yangDataFill(dbs, ygRoot, uri, reqXpath, dbDataMap, resultMap, tableName, keyName, cdb)
+                    if err != nil {
+                        log.Info("Empty container(\"%v\").\r\n", uri)
+                    }
                 }
             } else {
-                err    := yangDataFill(dbs, ygRoot, uri, reqXpath, dbDataMap, resultMap, tableName, keyName, cdb)
-                if err != nil {
-                    log.Info("Empty container(\"%v\").\r\n", uri)
-                }
+                yangDataFill(dbs, ygRoot, uri, reqXpath, dbDataMap, resultMap, tableName, keyName, cdb)
             }
-        } else {
-            yangDataFill(dbs, ygRoot, uri, reqXpath, dbDataMap, resultMap, tableName, keyName, cdb)
         }
     }
 
