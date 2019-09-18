@@ -10,7 +10,7 @@ schema: $(out)
 	@echo "Generating $@ ..."
 	@devFile="`echo $< | cut -d . -f1`-dev.yang"; \
 	if [ -f $$devFile ] ; then devOpt="--deviation-module $$devFile"; fi; \
-	pyang -p /home/pd945169/mgmt_framework_pr/sonic-mgmt-framework/src/cvl/schema:../../schema/:../../schema/ietf/ -f yin $$devOpt $< -o $@.tmp
+	pyang -p ../../schema/:../../schema/ietf/ -f yin $$devOpt $< -o $@.tmp
 	@xmllint  --noblanks  $@.tmp > $@
 	@rm -rf  $@.tmp
 
@@ -22,5 +22,4 @@ schema: $(out)
 
 clean:
 	@echo "Removing files ..."
-	rm -rf $(out)
-	rm -rf $(out_ext)
+	rm -rf *.yin

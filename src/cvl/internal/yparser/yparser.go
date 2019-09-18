@@ -7,7 +7,6 @@ import (
 	"strings"
 	log "github.com/golang/glog"
 	. "cvl/internal/util"
-	"fmt"
 )
 
 /*
@@ -236,10 +235,7 @@ func ParseSchemaFile(modelFile string) (*YParserModule, YParserError) {
 
 	module :=  C.lys_parse_path((*C.struct_ly_ctx)(ypCtx), C.CString(modelFile), C.LYS_IN_YIN)
 	if module == nil {
-		fmt.Printf("\n\nFailed Parsed file .... %s\n\n", modelFile)
 		return nil, getErrorDetails()
-	} else {
-		fmt.Printf("\n\nParsed file .... %s\n\n", modelFile)
 	}
 
 	if (strings.Contains(modelFile, "sonic-common.yin") == true) {
@@ -254,11 +250,11 @@ func ParseSchemaFile(modelFile string) (*YParserModule, YParserError) {
 //Add child node to a parent node
 func(yp *YParser) AddChildNode(module *YParserModule, parent *YParserNode, name string) *YParserNode {
 
-	//return (*YParserNode)(C.lyd_new((*C.struct_lyd_node)(parent), (*C.struct_lys_module)(module), C.CString(name)))
 	ret := (*YParserNode)(C.lyd_new((*C.struct_lyd_node)(parent), (*C.struct_lys_module)(module), C.CString(name)))
 	if (ret == nil) {
-		fmt.Printf("\n\nFailed parsing  .... %s\n\n", name)
+		TRACE_LOG(INFO_DEBUG, TRACE_YPARSER, "Failed parsing node %s\n", name)
 	}
+
 	return ret
 }
 
