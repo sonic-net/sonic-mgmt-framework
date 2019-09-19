@@ -304,7 +304,7 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
         }
         for _, data := range dataMap {
             curKey := ""
-            curUri := uriWithKeyCreate(uri, xpathPrefix, data)
+            curUri, _ := uriWithKeyCreate(uri, xpathPrefix, data)
             if len(xSpecMap[xpathPrefix].xfmrKey) > 0 {
                 /* key transformer present */
 		        inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, curUri, oper, "", nil, nil)
