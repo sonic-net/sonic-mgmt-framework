@@ -26,20 +26,24 @@ func keyFromXpathCreate(keyList []string) string {
 
 /* Create db key from data xpath(request) */
 func keyCreate(keyPrefix string, xpath string, data interface{}) string {
-    yangEntry := xSpecMap[xpath].yangEntry
-    if len(keyPrefix) > 0 { keyPrefix += "|" }
-
-    keyVal := ""
-    for i, k := range (strings.Split(yangEntry.Key, " ")) {
-        if i > 0 { keyVal = keyVal + "_" }
-        val := fmt.Sprint(data.(map[string]interface{})[k])
-        if strings.Contains(val, ":") {
-            val = strings.Split(val, ":")[1]
-        }
-        keyVal += val
-    }
-    keyPrefix += string(keyVal)
-    return keyPrefix
+	_, ok := xSpecMap[xpath]
+	if ok {
+		if xSpecMap[xpath].yangEntry != nil {
+			yangEntry := xSpecMap[xpath].yangEntry
+			if len(keyPrefix) > 0 { keyPrefix += "|" }
+			keyVal := ""
+			for i, k := range (strings.Split(yangEntry.Key, " ")) {
+				if i > 0 { keyVal = keyVal + "_" }
+				val := fmt.Sprint(data.(map[string]interface{})[k])
+				if strings.Contains(val, ":") {
+					val = strings.Split(val, ":")[1]
+				}
+				keyVal += val
+			}
+			keyPrefix += string(keyVal)
+		}
+	}
+	return keyPrefix
 }
 
 /* Copy redis-db source to destn map */
@@ -85,6 +89,19 @@ func yangTypeGet(entry *yang.Entry) string {
 }
 
 func dbKeyToYangDataConvert(uri string, xpath string, dbKey string) (map[string]interface{}, string, string, error) {
+    var err error
+    if len(uri) == 0 && len(xpath) == 0 && len(dbKey) == 0 {
+	err = fmt.Errorf("Insufficient input")
+        return nil, "", "", err
+    }
+
+    if _, ok := xSpecMap[xpath]; ok {
+	if xSpecMap[xpath].yangEntry == nil {
+            err = fmt.Errorf("Yang Entry not available for xpath ", xpath)
+            return nil, "", "", nil
+	}
+    }
+
     var kLvlValList []string
     keyDataList := strings.Split(dbKey, "|")
     keyNameList := yangKeyFromEntryGet(xSpecMap[xpath].yangEntry)
@@ -104,7 +121,7 @@ func dbKeyToYangDataConvert(uri string, xpath string, dbKey string) (map[string]
         if err != nil {
             return nil, "","",err
         }
-        rmap  := ret[0].Interface().(map[string]interface{})
+        rmap := ret[0].Interface().(map[string]interface{})
         for k, v := range rmap {
             jsonData += fmt.Sprintf("\"%v\" : \"%v\",\r\n", k, v)
             uriWithKey += fmt.Sprintf("[%v=%v]", k, v)
@@ -140,8 +157,7 @@ func dbKeyToYangDataConvert(uri string, xpath string, dbKey string) (map[string]
     }
 
     return rmap, uriWithKey, jsonData, nil
- }
-
+}
 
 func contains(sl []string, str string) bool {
     for _, v := range sl {
@@ -152,9 +168,11 @@ func contains(sl []string, str string) bool {
     return false
 }
 
-
 func isSubtreeRequest(targetUriPath string, nodePath string) bool {
-    return strings.HasPrefix(targetUriPath, nodePath)
+    if len(targetUriPath) > 0 && len(nodePath) > 0 {
+        return strings.HasPrefix(targetUriPath, nodePath)
+    }
+    return false
 }
 
 func getYangPathFromUri(uri string) (string, error) {
@@ -209,17 +227,29 @@ func yangToDbXfmrFunc(funcName string) string {
     return ("YangToDb_" + funcName)
 }
 
-func uriWithKeyCreate (uri string, xpathTmplt string, data interface{}) string {
-    yangEntry := xSpecMap[xpathTmplt].yangEntry
-    for _, k := range (strings.Split(yangEntry.Key, " ")) {
-        uri += fmt.Sprintf("[%v=%v]", k, data.(map[string]interface{})[k])
+func uriWithKeyCreate (uri string, xpathTmplt string, data interface{}) (string, error) {
+    var err error
+    if _, ok := xSpecMap[xpathTmplt]; ok {
+         yangEntry := xSpecMap[xpathTmplt].yangEntry
+         if yangEntry != nil {
+              for _, k := range (strings.Split(yangEntry.Key, " ")) {
+                  uri += fmt.Sprintf("[%v=%v]", k, data.(map[string]interface{})[k])
+              }
+	 } else {
+            err = fmt.Errorf("Yang Entry not available for xpath ", xpathTmplt)
+	 }
+    } else {
+        err = fmt.Errorf("No entry in xSpecMap for xpath ", xpathTmplt)
     }
-    return uri
+    return uri, err
 }
 
 func xpathRootNameGet(path string) string {
-    pathl := strings.Split(path, "/")
-    return ("/" + pathl[1])
+    if len(path) > 0 {
+        pathl := strings.Split(path, "/")
+        return ("/" + pathl[1])
+    }
+    return ""
 }
 
 func getDbNum(xpath string ) db.DBNum {
@@ -241,11 +271,13 @@ func uriModuleNameGet(uri string) (string, error) {
 	result := ""
 	if len(uri) == 0 {
 		log.Error("Empty uri string supplied")
+                err = fmt.Errorf("Empty uri string supplied")
 		return result, err
 	}
 	urislice := strings.Split(uri, ":")
 	if len(urislice) == 1 {
 		log.Errorf("uri string %s does not have module name", uri)
+		err = fmt.Errorf("uri string does not have module name: ", uri)
 		return result, err
 	}
 	moduleNm := strings.Split(urislice[0], "/")
@@ -259,7 +291,7 @@ func uriModuleNameGet(uri string) (string, error) {
 }
 
 func recMap(rMap interface{}, name []string, id int, max int) {
-    if id == max {
+    if id == max || id < 0 {
         return
     }
     val := name[id]
@@ -279,13 +311,18 @@ func recMap(rMap interface{}, name []string, id int, max int) {
 
 func mapCreate(xpath string) map[string]interface{} {
     retMap   := make(map[string]interface{})
-    attrList := strings.Split(xpath, "/")
-    alLen    := len(attrList)
-    recMap(retMap, attrList, 1, alLen)
+    if  len(xpath) > 0 {
+        attrList := strings.Split(xpath, "/")
+        alLen    := len(attrList)
+        recMap(retMap, attrList, 1, alLen)
+    }
     return retMap
 }
 
 func mapInstGet(name []string, id int, max int, inMap interface{}) map[string]interface{} {
+    if inMap == nil {
+        return nil
+    }
     result := reflect.ValueOf(inMap).Interface().(map[string]interface{})
     if id == max {
         return result
