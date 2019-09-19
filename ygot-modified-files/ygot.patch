@@ -1,8 +1,18 @@
 Binary files ygot-dir-orig/ygot/.git/index and ygot-dir/ygot/.git/index differ
 diff -ruN ygot-dir-orig/ygot/util/debug.go ygot-dir/ygot/util/debug.go
 --- ygot-dir-orig/ygot/util/debug.go	2019-09-19 13:30:08.402915000 -0700
-+++ ygot-dir/ygot/util/debug.go	2019-09-19 11:04:09.098659000 -0700
-@@ -53,6 +53,14 @@
++++ ygot-dir/ygot/util/debug.go	2019-09-19 16:11:34.544512000 -0700
+@@ -12,6 +12,9 @@
+ // See the License for the specific language governing permissions and
+ // limitations under the License.
+ 
++// This file is changed by Broadcom.
++// Modifications - Copyright 2019 Broadcom. The term Broadcom refers to Broadcom Inc. and/or its subsidiaries.
++
+ package util
+ 
+ import (
+@@ -53,6 +56,14 @@
  	fmt.Println(globalIndent + out)
  }
  
@@ -17,7 +27,7 @@ diff -ruN ygot-dir-orig/ygot/util/debug.go ygot-dir/ygot/util/debug.go
  // DbgSchema prints v if the package global variable debugSchema is set.
  // v has the same format as Printf.
  func DbgSchema(v ...interface{}) {
-@@ -177,6 +185,9 @@
+@@ -177,6 +188,9 @@
  
  // YangTypeToDebugString returns a debug string representation of a YangType.
  func YangTypeToDebugString(yt *yang.YangType) string {
@@ -29,8 +39,18 @@ diff -ruN ygot-dir-orig/ygot/util/debug.go ygot-dir/ygot/util/debug.go
  		out += fmt.Sprintf(", Pattern: %s", strings.Join(yt.Pattern, " or "))
 diff -ruN ygot-dir-orig/ygot/util/reflect.go ygot-dir/ygot/util/reflect.go
 --- ygot-dir-orig/ygot/util/reflect.go	2019-09-19 13:30:08.407695000 -0700
-+++ ygot-dir/ygot/util/reflect.go	2019-09-19 11:04:09.118335000 -0700
-@@ -196,8 +196,10 @@
++++ ygot-dir/ygot/util/reflect.go	2019-09-19 16:12:05.207782000 -0700
+@@ -12,6 +12,9 @@
+ // See the License for the specific language governing permissions and
+ // limitations under the License.
+ 
++// This file is changed by Broadcom.
++// Modifications - Copyright 2019 Broadcom. The term Broadcom refers to Broadcom Inc. and/or its subsidiaries.
++
+ package util
+ 
+ import (
+@@ -196,8 +199,10 @@
  
  // InsertIntoMap inserts value with key into parent which must be a map.
  func InsertIntoMap(parentMap interface{}, key interface{}, value interface{}) error {
@@ -43,7 +63,7 @@ diff -ruN ygot-dir-orig/ygot/util/reflect.go ygot-dir/ygot/util/reflect.go
  
  	v := reflect.ValueOf(parentMap)
  	t := reflect.TypeOf(parentMap)
-@@ -288,7 +290,7 @@
+@@ -288,7 +293,7 @@
  		n = reflect.Zero(ft.Type)
  	}
  
@@ -54,8 +74,18 @@ diff -ruN ygot-dir-orig/ygot/util/reflect.go ygot-dir/ygot/util/reflect.go
  
 diff -ruN ygot-dir-orig/ygot/util/schema.go ygot-dir/ygot/util/schema.go
 --- ygot-dir-orig/ygot/util/schema.go	2019-09-19 13:30:08.411894000 -0700
-+++ ygot-dir/ygot/util/schema.go	2019-09-19 11:04:09.133009000 -0700
-@@ -233,7 +233,9 @@
++++ ygot-dir/ygot/util/schema.go	2019-09-19 16:12:18.706934000 -0700
+@@ -12,6 +12,9 @@
+ // See the License for the specific language governing permissions and
+ // limitations under the License.
+ 
++// This file is changed by Broadcom.
++// Modifications - Copyright 2019 Broadcom. The term Broadcom refers to Broadcom Inc. and/or its subsidiaries.
++
+ package util
+ 
+ import (
+@@ -233,7 +236,9 @@
  	found := true
  	DbgSchema("traversing schema Dirs...")
  	for ; len(p) > 0; p = p[1:] {
@@ -66,7 +96,7 @@ diff -ruN ygot-dir-orig/ygot/util/schema.go ygot-dir/ygot/util/schema.go
  		var ok bool
  		s, ok = s.Dir[p[0]]
  		if !ok {
-@@ -261,10 +263,13 @@
+@@ -261,10 +266,13 @@
  		return nil, nil
  	}
  	entries := FindFirstNonChoiceOrCase(schema)
@@ -85,8 +115,16 @@ diff -ruN ygot-dir-orig/ygot/util/schema.go ygot-dir/ygot/util/schema.go
  			return entry, nil
 diff -ruN ygot-dir-orig/ygot/ytypes/container.go ygot-dir/ygot/ytypes/container.go
 --- ygot-dir-orig/ygot/ytypes/container.go	2019-09-19 13:30:08.416535000 -0700
-+++ ygot-dir/ygot/ytypes/container.go	2019-09-19 11:04:09.144144000 -0700
-@@ -17,7 +17,7 @@
++++ ygot-dir/ygot/ytypes/container.go	2019-09-19 16:11:22.883975000 -0700
+@@ -12,12 +12,15 @@
+ // See the License for the specific language governing permissions and
+ // limitations under the License.
+ 
++// This file is changed by Broadcom.
++// Modifications - Copyright 2019 Broadcom. The term Broadcom refers to Broadcom Inc. and/or its subsidiaries.
++
+ package ytypes
+ 
  import (
  	"fmt"
  	"reflect"
@@ -95,7 +133,7 @@ diff -ruN ygot-dir-orig/ygot/ytypes/container.go ygot-dir/ygot/ytypes/container.
  	"github.com/kylelemons/godebug/pretty"
  	"github.com/openconfig/goyang/pkg/yang"
  	"github.com/openconfig/ygot/util"
-@@ -71,7 +71,7 @@
+@@ -71,7 +74,7 @@
  				if errs := Validate(cschema, fieldValue); errs != nil {
  					errors = util.AppendErrs(errors, util.PrefixErrors(errs, cschema.Path()))
  				}
@@ -104,7 +142,7 @@ diff -ruN ygot-dir-orig/ygot/ytypes/container.go ygot-dir/ygot/ytypes/container.
  				// Either an element in choice schema subtree, or bad field.
  				// If the former, it will be found in the choice check below.
  				extraFields[fieldName] = nil
-@@ -217,7 +217,10 @@
+@@ -217,7 +220,10 @@
  		}
  	}
  
@@ -118,8 +156,18 @@ diff -ruN ygot-dir-orig/ygot/ytypes/container.go ygot-dir/ygot/ytypes/container.
  
 diff -ruN ygot-dir-orig/ygot/ytypes/leaf.go ygot-dir/ygot/ytypes/leaf.go
 --- ygot-dir-orig/ygot/ytypes/leaf.go	2019-09-19 13:30:08.421645000 -0700
-+++ ygot-dir/ygot/ytypes/leaf.go	2019-09-19 11:04:09.170862000 -0700
-@@ -79,7 +79,7 @@
++++ ygot-dir/ygot/ytypes/leaf.go	2019-09-19 16:11:40.554385000 -0700
+@@ -12,6 +12,9 @@
+ // See the License for the specific language governing permissions and
+ // limitations under the License.
+ 
++// This file is changed by Broadcom.
++// Modifications - Copyright 2019 Broadcom. The term Broadcom refers to Broadcom Inc. and/or its subsidiaries.
++
+ package ytypes
+ 
+ import (
+@@ -79,7 +82,7 @@
  
  	switch ykind {
  	case yang.Ybinary:
@@ -128,7 +176,7 @@ diff -ruN ygot-dir-orig/ygot/ytypes/leaf.go ygot-dir/ygot/ytypes/leaf.go
  	case yang.Ybits:
  		return nil
  		// TODO(mostrowski): restore when representation is decided.
-@@ -418,12 +418,10 @@
+@@ -418,12 +421,10 @@
  	return nil
  }
  
@@ -143,7 +191,7 @@ diff -ruN ygot-dir-orig/ygot/ytypes/leaf.go ygot-dir/ygot/ytypes/leaf.go
  // unmarshalLeaf unmarshals a scalar value (determined by json.Unmarshal) into
  // the parent containing the leaf.
  //   schema points to the schema for the leaf type.
-@@ -720,7 +718,9 @@
+@@ -720,7 +721,9 @@
  		return nil, fmt.Errorf("%s ΛEnumTypes function returned wrong type %T, want map[string][]reflect.Type", t, ei)
  	}
  
@@ -156,8 +204,18 @@ diff -ruN ygot-dir-orig/ygot/ytypes/leaf.go ygot-dir/ygot/ytypes/leaf.go
  }
 diff -ruN ygot-dir-orig/ygot/ytypes/list.go ygot-dir/ygot/ytypes/list.go
 --- ygot-dir-orig/ygot/ytypes/list.go	2019-09-19 13:30:08.426123000 -0700
-+++ ygot-dir/ygot/ytypes/list.go	2019-09-19 11:04:09.184244000 -0700
-@@ -350,7 +350,9 @@
++++ ygot-dir/ygot/ytypes/list.go	2019-09-19 16:11:45.587618000 -0700
+@@ -12,6 +12,9 @@
+ // See the License for the specific language governing permissions and
+ // limitations under the License.
+ 
++// This file is changed by Broadcom.
++// Modifications - Copyright 2019 Broadcom. The term Broadcom refers to Broadcom Inc. and/or its subsidiaries.
++
+ package ytypes
+ 
+ import (
+@@ -350,7 +353,9 @@
  			return err
  		}
  	}
@@ -168,7 +226,7 @@ diff -ruN ygot-dir-orig/ygot/ytypes/list.go ygot-dir/ygot/ytypes/list.go
  
  	return nil
  }
-@@ -388,17 +390,96 @@
+@@ -388,17 +393,96 @@
  		if err != nil {
  			return err
  		}
@@ -268,7 +326,7 @@ diff -ruN ygot-dir-orig/ygot/ytypes/list.go ygot-dir/ygot/ytypes/list.go
  		return util.InsertIntoStruct(val.Interface(), fn, nv.Interface())
  	}
  
-@@ -494,6 +575,9 @@
+@@ -494,6 +578,9 @@
  	}
  
  	// TODO(yusufsn): When the key is a leafref, its target should be filled out.
@@ -280,8 +338,18 @@ diff -ruN ygot-dir-orig/ygot/ytypes/list.go ygot-dir/ygot/ytypes/list.go
  		return nil, fmt.Errorf("failed to create map value for insert, root %T, keys %v: %v", root, keys, err)
 diff -ruN ygot-dir-orig/ygot/ytypes/node.go ygot-dir/ygot/ytypes/node.go
 --- ygot-dir-orig/ygot/ytypes/node.go	2019-09-19 13:30:08.431085000 -0700
-+++ ygot-dir/ygot/ytypes/node.go	2019-09-19 11:04:09.204588000 -0700
-@@ -286,6 +286,11 @@
++++ ygot-dir/ygot/ytypes/node.go	2019-09-19 16:11:51.435738000 -0700
+@@ -12,6 +12,9 @@
+ // See the License for the specific language governing permissions and
+ // limitations under the License.
+ 
++// This file is changed by Broadcom.
++// Modifications - Copyright 2019 Broadcom. The term Broadcom refers to Broadcom Inc. and/or its subsidiaries.
++
+ package ytypes
+ 
+ import (
+@@ -286,6 +289,11 @@
  		if err != nil {
  			return nil, err
  		}
@@ -295,8 +363,18 @@ diff -ruN ygot-dir-orig/ygot/ytypes/node.go ygot-dir/ygot/ytypes/node.go
  			return nil, err
 diff -ruN ygot-dir-orig/ygot/ytypes/unmarshal.go ygot-dir/ygot/ytypes/unmarshal.go
 --- ygot-dir-orig/ygot/ytypes/unmarshal.go	2019-09-19 13:30:08.436899000 -0700
-+++ ygot-dir/ygot/ytypes/unmarshal.go	2019-09-19 11:04:09.221983000 -0700
-@@ -73,7 +73,10 @@
++++ ygot-dir/ygot/ytypes/unmarshal.go	2019-09-19 16:12:24.257821000 -0700
+@@ -12,6 +12,9 @@
+ // See the License for the specific language governing permissions and
+ // limitations under the License.
+ 
++// This file is changed by Broadcom.
++// Modifications - Copyright 2019 Broadcom. The term Broadcom refers to Broadcom Inc. and/or its subsidiaries.
++
+ package ytypes
+ 
+ import (
+@@ -73,7 +76,10 @@
  	if schema == nil {
  		return fmt.Errorf("nil schema for parent type %T, value %v (%T)", parent, value, value)
  	}
@@ -310,8 +388,18 @@ diff -ruN ygot-dir-orig/ygot/ytypes/unmarshal.go ygot-dir/ygot/ytypes/unmarshal.
  		return errors.New("unmarshalling a non leaf node isn't supported in GNMIEncoding mode")
 diff -ruN ygot-dir-orig/ygot/ytypes/util_schema.go ygot-dir/ygot/ytypes/util_schema.go
 --- ygot-dir-orig/ygot/ytypes/util_schema.go	2019-09-19 13:30:08.441339000 -0700
-+++ ygot-dir/ygot/ytypes/util_schema.go	2019-09-19 11:04:09.233347000 -0700
-@@ -137,8 +137,10 @@
++++ ygot-dir/ygot/ytypes/util_schema.go	2019-09-19 16:12:30.149209000 -0700
+@@ -12,6 +12,9 @@
+ // See the License for the specific language governing permissions and
+ // limitations under the License.
+ 
++// This file is changed by Broadcom.
++// Modifications - Copyright 2019 Broadcom. The term Broadcom refers to Broadcom Inc. and/or its subsidiaries.
++
+ package ytypes
+ 
+ import (
+@@ -137,8 +140,10 @@
  // if the struct tag is invalid, or nil if tag is valid but the schema is not
  // found in the tree at the specified path.
  func childSchema(schema *yang.Entry, f reflect.StructField) (*yang.Entry, error) {
@@ -324,7 +412,7 @@ diff -ruN ygot-dir-orig/ygot/ytypes/util_schema.go ygot-dir/ygot/ytypes/util_sch
  	p, err := pathToSchema(f)
  	if err != nil {
  		return nil, err
-@@ -186,8 +188,9 @@
+@@ -186,8 +191,9 @@
  		return nil, nil
  	}
  	entries := util.FindFirstNonChoiceOrCase(schema)
@@ -338,8 +426,18 @@ diff -ruN ygot-dir-orig/ygot/ytypes/util_schema.go ygot-dir/ygot/ytypes/util_sch
  
 diff -ruN ygot-dir-orig/ygot/ytypes/validate.go ygot-dir/ygot/ytypes/validate.go
 --- ygot-dir-orig/ygot/ytypes/validate.go	2019-09-19 13:30:08.445376000 -0700
-+++ ygot-dir/ygot/ytypes/validate.go	2019-09-19 11:04:09.245482000 -0700
-@@ -74,7 +74,7 @@
++++ ygot-dir/ygot/ytypes/validate.go	2019-09-19 16:12:40.050604000 -0700
+@@ -12,6 +12,9 @@
+ // See the License for the specific language governing permissions and
+ // limitations under the License.
+ 
++// This file is changed by Broadcom.
++// Modifications - Copyright 2019 Broadcom. The term Broadcom refers to Broadcom Inc. and/or its subsidiaries.
++
+ package ytypes
+ 
+ import (
+@@ -74,7 +77,7 @@
  		errs = ValidateLeafRefData(schema, value, leafrefOpt)
  	}
  
