@@ -86,8 +86,14 @@ func validateHandlerFunc(inParams XfmrParams) (bool) {
 func DbValToInt(dbFldVal string, base int, size int, isUint bool) (interface{}, error) {
 	var res interface{}
 	var err error
-	if res, err = strconv.ParseInt(dbFldVal, base, size); err != nil {
-		log.Warning("Non Yint%v type for yang leaf-list item %v", size, dbFldVal)
+	if isUint {
+		if res, err = strconv.ParseUint(dbFldVal, base, size); err != nil {
+			log.Warningf("Non Yint%v type for yang leaf-list item %v", size, dbFldVal)
+		}
+	} else {
+		if res, err = strconv.ParseInt(dbFldVal, base, size); err != nil {
+			log.Warningf("Non Yint %v type for yang leaf-list item %v", size, dbFldVal)
+		}
 	}
 	return res, err
 }
@@ -120,7 +126,7 @@ func DbToYangType(yngTerminalNdDtType yang.TypeKind, fldXpath string, dbFldVal s
                 res, err = DbValToInt(dbFldVal, INTBASE, 64, true)
         case yang.Ybool:
 		if res, err = strconv.ParseBool(dbFldVal); err != nil {
-			log.Warning("Non Bool type for yang leaf-list item %v", dbFldVal)
+			log.Warningf("Non Bool type for yang leaf-list item %v", dbFldVal)
 		}
         //TODO enhance Yunion using yangEntry way
         case yang.Yenum, yang.Ystring, yang.Yidentityref, yang.Yunion:
@@ -166,32 +172,47 @@ func directDbToYangJsonCreate(dbDataMap map[string]map[string]db.Value, jsonData
     for tblName, tblData := range dbDataMap {
         dataInst := ""
         var mapSlice []typeMapOfInterface
+	//var resVal interface{}
         for keyStr, dbFldValData := range tblData {
             curMap := make(map[string]interface{})
             fldValPair := ""
             for field, value := range dbFldValData.Field {
-			if strings.HasSuffix(field, "@") {
-                                fldVals := strings.Split(field, "@")
-                                field = fldVals[0]
-                                fieldXpath := tblName + "/" + field
-                                if xDbSpecMap[fieldXpath].dbEntry.IsLeafList() {
-                                        resLst := processLfLstDbToYang(fieldXpath, value)
-                                        fldValPair += fmt.Sprintf("\"%v\" : \"%v\",\r\n", field, resLst)
-                                        curMap[field] = resLst
-                                        continue
-                                }
-                        } else {
-                                fieldXpath := tblName + "/" + field
-                                yngTerminalNdDtType := xDbSpecMap[fieldXpath].dbEntry.Type.Kind
-                                resVal, err := DbToYangType(yngTerminalNdDtType, fieldXpath, value)
-                                if err != nil {
-                                        log.Warning("Failure in converting Db value type to yang type for field", field)
-                                } else {
-                                        fldValPair += fmt.Sprintf("\"%v\" : \"%v\",\r\n", field, resVal)
-                                        curMap[field] = resVal
-                                }
-                        }
-            }
+		    resField := field
+		    if strings.HasSuffix(field, "@") {
+			    fldVals := strings.Split(field, "@")
+                            resField = fldVals[0]
+		    }
+		    fieldXpath := tblName + "/" + resField
+		    xDbSpecMapEntry, ok := xDbSpecMap[fieldXpath]
+		    if !ok {
+			    log.Warningf("No entry found in xDbSpecMap for xpath %v", fieldXpath)
+			    continue
+		    }
+		    if xDbSpecMapEntry.dbEntry == nil {
+			    log.Warningf("Yang entry is nil in xDbSpecMap for xpath %v", fieldXpath)
+			    continue
+		    }
+		    yangType := yangTypeGet(xDbSpecMapEntry.dbEntry)
+		    if yangType == "leaf-list" {
+			    /* this should never happen but just adding for safetty */
+			    if !strings.HasSuffix(field, "@") {
+				    log.Warningf("Leaf-list in Sonic yang should also be a leaf-list in DB, its not for xpath %v", fieldXpath)
+				    continue
+			    }
+			    resLst := processLfLstDbToYang(fieldXpath, value)
+			    fldValPair += fmt.Sprintf("\"%v\" : \"%v\",\r\n", field, resLst)
+			    curMap[field] = resLst
+		    } else { /* yangType is leaf - there are only 2 types of yang terminal node leaf and leaf-list */
+			    yngTerminalNdDtType := xDbSpecMapEntry.dbEntry.Type.Kind
+			    resVal, err := DbToYangType(yngTerminalNdDtType, fieldXpath, value)
+			    if err != nil {
+				    log.Warningf("Failure in converting Db value type to yang type for xpath", fieldXpath)
+			    } else {
+				    fldValPair += fmt.Sprintf("\"%v\" : \"%v\",\r\n", field, resVal)
+				    curMap[field] = resVal
+			    }
+		    }
+	    } //end of for
             yangKeys := yangKeyFromEntryGet(xDbSpecMap[tblName].dbEntry)
             fldValPair = keyJsonDataAdd(yangKeys, keyStr, fldValPair, curMap)
             dataInst += fmt.Sprintf("{ \r\n %v \r\n },", fldValPair)
@@ -257,6 +278,59 @@ func yangListDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, x
     return nil
 }
 
+func terminalNodeProcess(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, xpath string, dbDataMap *map[db.DBNum]map[string]map[string]db.Value, tbl string, tblKey string) (map[string]interface{}, error) {
+        log.Info("Received xpath - %v, uri - %v, dbDataMap - %v, table - %v, table key - %v", xpath, uri, (*dbDataMap), tbl, tblKey)
+        var err error
+	resFldValMap := make(map[string]interface{})
+        if xSpecMap[xpath].yangEntry == nil {
+		logStr := fmt.Sprintf("No yang entry found for xpath %v.", xpath)
+                err = fmt.Errorf("%v", logStr)
+                return resFldValMap, err
+        }
+
+        cdb := xSpecMap[xpath].dbIndex
+        if len(xSpecMap[xpath].xfmrFunc) > 0 {
+                _, key, _ := xpathKeyExtract(dbs[cdb], ygRoot, GET, uri)
+                inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, uri, GET, key, dbDataMap, nil)
+		fldValMap, _, err := leafXfmrHandlerFunc(inParams)
+                if err != nil {
+			logStr := fmt.Sprintf("%Failed to get data from overloaded function for %v -v.", uri, err)
+			err = fmt.Errorf("%v", logStr)
+			return resFldValMap, err
+                }
+                for lf, val := range fldValMap {
+                    resFldValMap[lf] = val
+                }
+        } else {
+                dbFldName := xSpecMap[xpath].fieldName
+                /* if there is no transformer extension/annotation then it means leaf-list in yang is also leaflist in db */
+                if len(dbFldName) > 0  && !xSpecMap[xpath].isKey {
+                        yangType := yangTypeGet(xSpecMap[xpath].yangEntry)
+                        if yangType == "leaf-list" {
+                            dbFldName += "@"
+                            val, ok := (*dbDataMap)[cdb][tbl][tblKey].Field[dbFldName]
+                            if ok {
+                                resLst := processLfLstDbToYang(xpath, val)
+                                resFldValMap[xSpecMap[xpath].yangEntry.Name] = resLst
+                            }
+                        } else {
+                            val, ok := (*dbDataMap)[cdb][tbl][tblKey].Field[dbFldName]
+                            if ok {
+                                yngTerminalNdDtType := xSpecMap[xpath].yangEntry.Type.Kind
+				resVal, err := DbToYangType(yngTerminalNdDtType, xpath, val)
+                                if err != nil {
+                                    log.Error("Failure in converting Db value type to yang type for field", xpath)
+                                } else {
+                                    resFldValMap[xSpecMap[xpath].yangEntry.Name] = resVal
+                                }
+                            }
+                        }
+                }
+        }
+	return resFldValMap, err
+}
+
+
 func yangDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, xpath string, dbDataMap *map[db.DBNum]map[string]map[string]db.Value, resultMap map[string]interface{}, tbl string, tblKey string, cdb db.DBNum, validate bool) error {
     var err error
     isValid := validate
@@ -280,42 +354,15 @@ func yangDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, xpath
                 }
                 chldYangType := yangTypeGet(xSpecMap[chldXpath].yangEntry)
 		cdb = xSpecMap[chldXpath].dbIndex
-                if xSpecMap[chldXpath].yangEntry.IsLeaf() || xSpecMap[chldXpath].yangEntry.IsLeafList() {
-                    if len(xSpecMap[chldXpath].xfmrFunc) > 0 {
-			inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, chldUri, GET, key, dbDataMap, nil)
-                        fldValMap, _, err := leafXfmrHandlerFunc(inParams)
-                        if err != nil {
-                            log.Info("Failed to get data(\"%v\").\r\n", chldUri)
-                        }
-                        for lf, val := range fldValMap {
-                            resultMap[lf] = val
-                        }
-                    } else {
-                        dbFldName := xSpecMap[chldXpath].fieldName
-			/* if there is no transformer extension/annotation then it means leaf-list in yang is also leaflist in db */
-                        if len(dbFldName) > 0  && !xSpecMap[chldXpath].isKey {
-				if xSpecMap[chldXpath].yangEntry.IsLeafList() {
-				    dbFldName += "@"
-                                    val, ok := (*dbDataMap)[cdb][tbl][tblKey].Field[dbFldName]
-				    if ok {
-					resLst := processLfLstDbToYang(chldXpath, val)
-					resultMap[xSpecMap[chldXpath].yangEntry.Name] = resLst
-				    }
-				} else {
-				    val, ok := (*dbDataMap)[cdb][tbl][tblKey].Field[dbFldName]
-				    if ok {
-					/* this will be enhanced to support all yang data types */
-					yngTerminalNdDtType := xSpecMap[chldXpath].yangEntry.Type.Kind
-                                        resVal, err := DbToYangType(yngTerminalNdDtType, chldXpath, val)
-					if err != nil {
-					    log.Warning("Failure in converting Db value type to yang type for field", chldXpath)
-					} else {
-					    resultMap[xSpecMap[chldXpath].yangEntry.Name] = resVal
-					}
-				    }
-				}
-                        }
+                if  chldYangType == "leaf" || chldYangType == "leaf-list" {
+                    fldValMap, err := terminalNodeProcess(dbs, ygRoot, chldUri, chldXpath, dbDataMap, tbl, tblKey)
+                    if err != nil {
+                        log.Info("Failed to get data(\"%v\").", chldUri)
                     }
+                    for lf, val := range fldValMap {
+                        resultMap[lf] = val
+                    }
+
                 } else if chldYangType == "container" {
                     cname := xSpecMap[chldXpath].yangEntry.Name
                     if len(xSpecMap[chldXpath].xfmrFunc) > 0 {
@@ -375,20 +422,29 @@ func dbDataToYangJsonCreate(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db
 
         if ok {
             yangType := yangTypeGet(yangNode.yangEntry)
-            if yangType == "leaf" {
-                fldName := xSpecMap[reqXpath].fieldName
+            if yangType == "leaf" || yangType == "leaf-list" {
+                //fldName := xSpecMap[reqXpath].fieldName
                 yangName := xSpecMap[reqXpath].yangEntry.Name
                 tbl, key, _ := tableNameAndKeyFromDbMapGet((*dbDataMap)[cdb])
+		validateHandlerFlag := false
                 if len(xSpecMap[reqXpath].validateFunc) > 0 {
                    // TODO - handle non CONFIG-DB
                    inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, uri, GET, key, dbDataMap, nil)
                    res := validateHandlerFunc(inParams)
-                   if res == true {
-			           resultMap[yangName] = (*dbDataMap)[cdb][tbl][key].Field[fldName]
-                   } else {
-			           resultMap[yangName] = ""
-		           }
+                   if !res {
+		       validateHandlerFlag = true
+		       resultMap[yangName] = ""
+                   }
                 }
+		if !validateHandlerFlag {
+		       fldValMap, err := terminalNodeProcess(dbs, ygRoot, uri, reqXpath, dbDataMap, tbl, key)
+                       //err := terminalNodeProcess(dbs, ygRoot, uri, reqXpath, dbDataMap, tbl, key)
+                       if err != nil {
+                           log.Infof("Empty terminal node (\"%v\").", uri)
+                       }
+                       resultMap = fldValMap
+		}
+
             } else if yangType == "container" {
                 cname := xSpecMap[reqXpath].yangEntry.Name
                 cmap  := make(map[string]interface{})
