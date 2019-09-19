@@ -88,17 +88,17 @@ func yangTypeGet(entry *yang.Entry) string {
     return ""
 }
 
-func dbKeyToYangDataConvert(uri string, xpath string, dbKey string) (map[string]interface{}, string, string, error) {
+func dbKeyToYangDataConvert(uri string, xpath string, dbKey string) (map[string]interface{}, string, error) {
     var err error
     if len(uri) == 0 && len(xpath) == 0 && len(dbKey) == 0 {
 	err = fmt.Errorf("Insufficient input")
-        return nil, "", "", err
+        return nil, "", err
     }
 
     if _, ok := xSpecMap[xpath]; ok {
 	if xSpecMap[xpath].yangEntry == nil {
             err = fmt.Errorf("Yang Entry not available for xpath ", xpath)
-            return nil, "", "", nil
+            return nil, "", nil
 	}
     }
 
@@ -106,7 +106,6 @@ func dbKeyToYangDataConvert(uri string, xpath string, dbKey string) (map[string]
     keyDataList := strings.Split(dbKey, "|")
     keyNameList := yangKeyFromEntryGet(xSpecMap[xpath].yangEntry)
     id          := xSpecMap[xpath].keyLevel
-    jsonData    := ""
     uriWithKey  := fmt.Sprintf("%v", xpath)
 
     /* if uri contins key, use it else use xpath */
@@ -119,14 +118,13 @@ func dbKeyToYangDataConvert(uri string, xpath string, dbKey string) (map[string]
 	inParams := formXfmrInputRequest(nil, dbs, db.MaxDB, nil, uri, GET, dbKey, nil, nil)
         ret, err := XlateFuncCall(dbToYangXfmrFunc(xSpecMap[xpath].xfmrKey), inParams)
         if err != nil {
-            return nil, "","",err
+            return nil, "", err
         }
         rmap := ret[0].Interface().(map[string]interface{})
         for k, v := range rmap {
-            jsonData += fmt.Sprintf("\"%v\" : \"%v\",\r\n", k, v)
             uriWithKey += fmt.Sprintf("[%v=%v]", k, v)
         }
-        return rmap, uriWithKey, jsonData, nil
+        return rmap, uriWithKey, nil
     }
     kLvlValList = append(kLvlValList, keyDataList[id])
 
@@ -151,12 +149,11 @@ func dbKeyToYangDataConvert(uri string, xpath string, dbKey string) (map[string]
             kval = strings.Join(kLvlValList[chgId:], "_")
         }
 
-        jsonData   += fmt.Sprintf("\"%v\" : \"%v\",", kname, kval)
         uriWithKey += fmt.Sprintf("[%v=%v]", kname, kval)
         rmap[kname] = kval
     }
 
-    return rmap, uriWithKey, jsonData, nil
+    return rmap, uriWithKey, nil
 }
 
 func contains(sl []string, str string) bool {
@@ -209,18 +206,15 @@ func isCvlYang(path string) bool {
     return false
 }
 
-func keyJsonDataAdd(keyNameList []string, keyStr string, jsonData string, resultMap map[string]interface{}) string {
+func sonicKeyDataAdd(keyNameList []string, keyStr string, resultMap map[string]interface{}) {
     keyValList := strings.Split(keyStr, "|")
     if len(keyNameList) != len(keyValList) {
-        return ""
+        return
     }
 
     for i, keyName := range keyNameList {
-        jsonData += fmt.Sprintf("\"%v\" : \"%v\",", keyName, keyValList[i])
         resultMap[keyName] = keyValList[i]
     }
-    jsonData = strings.TrimRight(jsonData, ",")
-    return jsonData
 }
 
 func yangToDbXfmrFunc(funcName string) string {

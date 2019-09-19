@@ -38,7 +38,7 @@ func dataToDBMapAdd(tableName string, dbKey string, result map[string]map[string
 func mapFillData(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, dbKey string, result map[string]map[string]db.Value, xpathPrefix string, name string, value interface{}) error {
     xpath := xpathPrefix + "/" + name
     xpathInfo := xSpecMap[xpath]
-    log.Info("name: \"%v\", xpathPrefix(\"%v\").", name, xpathPrefix)
+    log.Infof("name: \"%v\", xpathPrefix(\"%v\").", name, xpathPrefix)
 
     if xpathInfo == nil {
         log.Errorf("Yang path(\"%v\") not found.", xpath)
@@ -62,7 +62,7 @@ func mapFillData(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, dbKey st
         uri = uri + "/" + name
 
         /* field transformer present */
-        log.Info("Transformer function(\"%v\") invoked for yang path(\"%v\").", xpathInfo.xfmrFunc, xpath)
+        log.Infof("Transformer function(\"%v\") invoked for yang path(\"%v\").", xpathInfo.xfmrFunc, xpath)
         path, _ := ygot.StringToPath(uri, ygot.StructuredPath, ygot.StringSlicePath)
         for _, p := range path.Elem {
             pathSlice := strings.Split(p.Name, ":")
@@ -96,7 +96,7 @@ func mapFillData(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, dbKey st
     }
 
     if len(xpathInfo.fieldName) == 0 {
-        log.Info("Field for yang-path(\"%v\") not found in DB.", xpath)
+        log.Infof("Field for yang-path(\"%v\") not found in DB.", xpath)
         return errors.New("Invalid field name")
     }
     fieldName := xpathInfo.fieldName
@@ -129,7 +129,7 @@ func mapFillData(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, dbKey st
     }
 
     dataToDBMapAdd(*xpathInfo.tableName, dbKey, result, fieldName, valueStr)
-    log.Info("TblName: \"%v\", key: \"%v\", field: \"%v\", valueStr: \"%v\".",
+    log.Infof("TblName: \"%v\", key: \"%v\", field: \"%v\", valueStr: \"%v\".",
     *xpathInfo.tableName, dbKey, fieldName, valueStr)
     return nil
 }
@@ -206,11 +206,11 @@ func dbMapDelete(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, jsonDat
 	var err error
 	if isCvlYang(path) {
 		xpathPrefix, keyName, tableName := sonicXpathKeyExtract(path)
-		log.Info("Delete req: path(\"%v\"), key(\"%v\"), xpathPrefix(\"%v\"), tableName(\"%v\").", path, keyName, xpathPrefix, tableName)
+		log.Infof("Delete req: path(\"%v\"), key(\"%v\"), xpathPrefix(\"%v\"), tableName(\"%v\").", path, keyName, xpathPrefix, tableName)
 		err = cvlYangReqToDbMapDelete(xpathPrefix, tableName, keyName, result)
 	} else {
 		xpathPrefix, keyName, tableName := xpathKeyExtract(d, ygRoot, oper, path)
-		log.Info("Delete req: path(\"%v\"), key(\"%v\"), xpathPrefix(\"%v\"), tableName(\"%v\").", path, keyName, xpathPrefix, tableName)
+		log.Infof("Delete req: path(\"%v\"), key(\"%v\"), xpathPrefix(\"%v\"), tableName(\"%v\").", path, keyName, xpathPrefix, tableName)
 		spec, ok := xSpecMap[xpathPrefix]
 		if ok {
 			if  spec.tableName != nil {
@@ -228,7 +228,7 @@ func dbMapDelete(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, jsonDat
 			}
 		}
 	}
-	log.Info("Delete req: path(\"%v\") result(\"%v\").", path, result)
+	log.Infof("Delete req: path(\"%v\") result(\"%v\").", path, result)
 	return err
 }
 
@@ -271,9 +271,9 @@ func cvlYangReqToDbMapDelete(xpathPrefix string, tableName string, keyName strin
 /* Get the data from incoming update/replace request, create map and fill with dbValue(ie. field:value
 to write into redis-db */
 func dbMapUpdate(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, jsonData interface{}, result map[string]map[string]db.Value) error {
-    log.Info("Update/replace req: path(\"%v\").", path)
+    log.Infof("Update/replace req: path(\"%v\").", path)
     dbMapCreate(d, ygRoot, oper, path, jsonData, result)
-    log.Info("Update/replace req: path(\"%v\") result(\"%v\").", path, result)
+    log.Infof("Update/replace req: path(\"%v\") result(\"%v\").", path, result)
     printDbData(result, "/tmp/yangToDbDataUpRe.txt")
     return nil
 }
@@ -292,11 +292,11 @@ func dbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, jsonDat
 }
 
 func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, xpathPrefix string, keyName string, jsonData interface{}, result map[string]map[string]db.Value) error {
-    log.Info("key(\"%v\"), xpathPrefix(\"%v\").", keyName, xpathPrefix)
+    log.Infof("key(\"%v\"), xpathPrefix(\"%v\").", keyName, xpathPrefix)
     var dbs [db.MaxDB]*db.DB
 
     if reflect.ValueOf(jsonData).Kind() == reflect.Slice {
-        log.Info("slice data: key(\"%v\"), xpathPrefix(\"%v\").", keyName, xpathPrefix)
+        log.Infof("slice data: key(\"%v\"), xpathPrefix(\"%v\").", keyName, xpathPrefix)
         jData := reflect.ValueOf(jsonData)
         dataMap := make([]interface{}, jData.Len())
         for idx := 0; idx < jData.Len(); idx++ {
@@ -324,7 +324,7 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
             for _, key := range jData.MapKeys() {
                 typeOfValue := reflect.TypeOf(jData.MapIndex(key).Interface()).Kind()
 
-                log.Info("slice/map data: key(\"%v\"), xpathPrefix(\"%v\").", keyName, xpathPrefix)
+                log.Infof("slice/map data: key(\"%v\"), xpathPrefix(\"%v\").", keyName, xpathPrefix)
                 xpath    := uri
                 curUri   := uri
                 pathAttr := key.String()
@@ -354,7 +354,7 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
                         pathAttr = strings.Split(pathAttr, ":")[1]
                     }
                     value := jData.MapIndex(key).Interface()
-                    log.Info("data field: key(\"%v\"), value(\"%v\").", key, value)
+                    log.Infof("data field: key(\"%v\"), value(\"%v\").", key, value)
                     err := mapFillData(d, ygRoot, oper, uri, keyName, result, xpathPrefix,
                     pathAttr, value)
                     if err != nil {

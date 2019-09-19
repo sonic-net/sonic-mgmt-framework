@@ -159,7 +159,7 @@ func (app *CommonApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
 
     payload, err = transformer.GetAndXlateFromDB(app.pathInfo.Path, app.ygotRoot, dbs)
     if err != nil {
-        log.Error("transformer.XlateFromDb() failure")
+	    log.Error("transformer.transformer.GetAndXlateFromDB failure. error:", err)
         return GetResponse{Payload: payload, ErrSrc: AppErr}, err
     }
 
@@ -167,7 +167,7 @@ func (app *CommonApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
     if targetObj != nil {
 	    err = ocbinds.Unmarshal(payload, targetObj)
 	    if err != nil {
-		    log.Error("ocbinds.Unmarshal()  failed")
+		    log.Error("ocbinds.Unmarshal()  failed. error:", err)
 		    return GetResponse{Payload: payload, ErrSrc: AppErr}, err
 	    }
     }
