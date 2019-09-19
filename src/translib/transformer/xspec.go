@@ -14,6 +14,7 @@ import (
 type yangXpathInfo  struct {
     yangDataType   string
     tableName      *string
+    xfmrTbl        *string
     childTable      []string
     dbEntry        *yang.Entry
     yangEntry      *yang.Entry
@@ -74,8 +75,12 @@ func yangToDbMapFill (keyLevel int, xSpecMap map[string]*yangXpathInfo, entry *y
 
     parentXpathData, ok := xSpecMap[xpathPrefix]
     /* init current xpath table data with its parent data, change only if needed. */
-    if ok && xpathData.tableName == nil && parentXpathData.tableName != nil {
-        xpathData.tableName = parentXpathData.tableName
+    if ok {
+        if xpathData.tableName == nil && parentXpathData.tableName != nil && xpathData.xfmrTbl == nil {
+            xpathData.tableName = parentXpathData.tableName
+        } else if xpathData.xfmrTbl == nil && parentXpathData.xfmrTbl != nil {
+            xpathData.xfmrTbl = parentXpathData.xfmrTbl
+        }
     }
 
     if ok && parentXpathData.dbIndex != db.ConfigDB {
@@ -93,7 +98,10 @@ func yangToDbMapFill (keyLevel int, xSpecMap map[string]*yangXpathInfo, entry *y
 			} else if xDbSpecMap[*xpathData.tableName].dbEntry.Dir[strings.ToUpper(entry.Name)] != nil {
 				xpathData.fieldName = strings.ToUpper(entry.Name)
 			}
-		}
+		} else if xpathData.xfmrTbl != nil {
+            /* table transformer present */
+            xpathData.fieldName = entry.Name
+        }
     }
 
 	if xpathData.yangDataType == "leaf" && len(xpathData.fieldName) > 0 && xpathData.tableName != nil {
@@ -265,6 +273,11 @@ func annotEntryFill(xSpecMap map[string]*yangXpathInfo, xpath string, entry *yan
                     *xpathData.tableName = ext.NName()
                     updateDbTableData(xpath, xpathData, *xpathData.tableName)
 					//childToUpdateParent(xpath, *xpathData.tableName)
+                case "table-transformer" :
+                    if xpathData.xfmrTbl == nil {
+                        xpathData.xfmrTbl = new(string)
+                    }
+                    *xpathData.xfmrTbl  = ext.NName()
                 case "field-name" :
                     xpathData.fieldName = ext.NName()
                 case "subtree-transformer" :
@@ -298,7 +311,7 @@ func annotEntryFill(xSpecMap map[string]*yangXpathInfo, xpath string, entry *yan
                                 xpathData.dbIndex  = db.StateDB
                         } else {
                                 xpathData.dbIndex  = db.ConfigDB
-			}
+			            }
             }
         }
     }
@@ -356,6 +369,10 @@ func mapPrint(inMap map[string]*yangXpathInfo, fileName string) {
         fmt.Fprintf(fp, "    tableName: ")
         if d.tableName != nil {
             fmt.Fprintf(fp, "%v", *d.tableName)
+        }
+        fmt.Fprintf(fp, "\r\n    xfmrTbl  : ")
+        if d.xfmrTbl != nil {
+            fmt.Fprintf(fp, "%v", *d.xfmrTbl)
         }
         fmt.Fprintf(fp, "\r\n    childTbl : %v", d.childTable)
         fmt.Fprintf(fp, "\r\n    FieldName: %v", d.fieldName)
