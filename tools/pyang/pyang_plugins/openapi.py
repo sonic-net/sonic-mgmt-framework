@@ -1,6 +1,21 @@
-## Open Api Spec output plugin(swagger 2.0)
-## Author: Mohammed Faraaz C
-## Company: Broadcom Inc.
+################################################################################
+#                                                                              #
+#  Copyright 2019 Broadcom. The term Broadcom refers to Broadcom Inc. and/or   #
+#  its subsidiaries.                                                           #
+#                                                                              #
+#  Licensed under the Apache License, Version 2.0 (the "License");             #
+#  you may not use this file except in compliance with the License.            #
+#  You may obtain a copy of the License at                                     #
+#                                                                              #
+#     http://www.apache.org/licenses/LICENSE-2.0                               #
+#                                                                              #
+#  Unless required by applicable law or agreed to in writing, software         #
+#  distributed under the License is distributed on an "AS IS" BASIS,           #
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.    #
+#  See the License for the specific language governing permissions and         #
+#  limitations under the License.                                              #
+#                                                                              #
+################################################################################
 
 import optparse
 import sys
@@ -348,6 +363,11 @@ def walk_child(child):
             swaggerDict["definitions"][defName]["properties"] = copy.deepcopy(payload)            
 
             for verb in verbs:
+                if child.keyword == "leaf-list":
+                    metadata_leaf_list = []
+                    keyNodesInPath_leaf_list = []
+                    pathstr_leaf_list = mk_path_refine(child, metadata_leaf_list, keyNodesInPath_leaf_list, True)                    
+
                 if verb == "get":
                     payload_get = OrderedDict()
                     build_payload(child, payload_get, pathstr, True, actXpath, True, True)
@@ -358,6 +378,11 @@ def walk_child(child):
                     swaggerDict["definitions"][defName_get]["type"] = "object"
                     swaggerDict["definitions"][defName_get]["properties"] = copy.deepcopy(payload_get)
                     swagger_it(child, defName_get, pathstr, payload_get, metadata, verb, defName_get)
+
+                    if child.keyword == "leaf-list":
+                        defName_get_leaf_list = "get" + '_llist_' + defName
+                        swagger_it(child, defName_get, pathstr_leaf_list, payload_get, metadata_leaf_list, verb, defName_get_leaf_list)
+
                     continue
                 
                 if verb == "post" and child.keyword == "list":
@@ -370,6 +395,9 @@ def walk_child(child):
                         continue
 
                 swagger_it(child, defName, pathstr, payload, metadata, verb)
+                if verb == "delete" and child.keyword == "leaf-list":
+                    defName_del_leaf_list = "del" + '_llist_' + defName
+                    swagger_it(child, defName, pathstr_leaf_list, payload, metadata_leaf_list, verb, defName_del_leaf_list)
 
         if  child.keyword == "list":
             listMetaData = copy.deepcopy(metadata)
@@ -565,13 +593,29 @@ def build_payload(child, payloadDict, uriPath="", oneInstance=False, Xpath="", f
         for ch in child.i_children:
             build_payload(ch,childJson,uriPath, False, Xpath, False, config_false, copy.deepcopy(moduleList))
 
-def mk_path_refine(node, metadata, keyNodes=[]):
+def mk_path_refine(node, metadata, keyNodes=[], restconf_leaflist=False):
     def mk_path(node):
         """Returns the XPath path of the node"""
         if node.keyword in ['choice', 'case']:
             return mk_path(node.parent)
         def name(node):
             extra = ""
+            if node.keyword == "leaf-list" and restconf_leaflist:
+                extraKeys = []      
+                extraKeys.append('{' + node.arg + '}')
+                desc = node.search_one('description')
+                if desc is None:
+                    desc = ''
+                else:
+                    desc = desc.arg
+                metaInfo = OrderedDict()
+                metaInfo["desc"] = desc
+                metaInfo["name"] = node.arg 
+                metaInfo["type"] = "string"
+                metaInfo["format"] = ""
+                metadata.append(metaInfo)
+                extra = ",".join(extraKeys)
+
             if node.keyword == "list":
                 extraKeys = []            
                 for index, list_key in enumerate(node.i_key):                    
@@ -785,3 +829,4 @@ def isUriKeyInPayload(stmt, keyNodesList):
         result = True
     
     return result
+

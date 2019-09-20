@@ -1,3 +1,22 @@
+////////////////////////////////////////////////////////////////////////////////
+//                                                                            //
+//  Copyright 2019 Broadcom. The term Broadcom refers to Broadcom Inc. and/or //
+//  its subsidiaries.                                                         //
+//                                                                            //
+//  Licensed under the Apache License, Version 2.0 (the "License");           //
+//  you may not use this file except in compliance with the License.          //
+//  You may obtain a copy of the License at                                   //
+//                                                                            //
+//     http://www.apache.org/licenses/LICENSE-2.0                             //
+//                                                                            //
+//  Unless required by applicable law or agreed to in writing, software       //
+//  distributed under the License is distributed on an "AS IS" BASIS,         //
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  //
+//  See the License for the specific language governing permissions and       //
+//  limitations under the License.                                            //
+//                                                                            //
+////////////////////////////////////////////////////////////////////////////////
+
 package cvl
 import (
 	"fmt"
@@ -80,6 +99,8 @@ type CVL struct {
 	redisClient *redis.Client
 	yp *yparser.YParser
 	tmpDbCache map[string]interface{} //map of table storing map of key-value pair
+	requestCache map[string]map[string][]CVLEditConfigData //Cache of validated data,
+						//might be used as dependent data in next request
 	batchLeaf string
 	chkLeafRefWithOthCache bool
 }
@@ -92,6 +113,7 @@ type modelNamespace struct {
 type modelDataInfo struct {
 	modelNs map[string]modelNamespace//model namespace 
 	tableInfo map[string]modelTableInfo //redis table to model name and keys
+	allKeyDelims map[string]bool
 }
 
 //Struct for storing global DB cache to store DB which are needed frequently like PORT
@@ -265,6 +287,8 @@ func storeModelInfo(modelFile string, module *yparser.YParserModule) { //such mo
 			case "key-delim":
 				tableInfo.redisKeyDelim = node.Attr[0].Value
 				fieldCount++
+				//store all possible key delims
+				 modelInfo.allKeyDelims[tableInfo.redisKeyDelim] = true
 			case "key-pattern":
 				tableInfo.redisKeyPattern = node.Attr[0].Value
 				fieldCount++
@@ -401,16 +425,32 @@ func addTableNamesForMustExp() {
 
 //Split key into table prefix and key
 func splitRedisKey(key string) (string, string) {
-	for tblName,_ := range modelInfo.tableInfo {
-		//Check if table prefix matches to any schema table
-		//i.e. has 'VLAN|' or 'PORT|' etc.
-		if (strings.HasPrefix(key, tblName + modelInfo.tableInfo[tblName].redisKeyDelim)) {
-			prefixLen := len(tblName) + 1
-			return tblName, key[prefixLen:]
+
+	var foundIdx int = -1
+	//Check with all key delim
+	for keyDelim, _ := range modelInfo.allKeyDelims {
+		foundIdx = strings.Index(key, keyDelim)
+		if (foundIdx >= 0) {
+			//Matched with key delim
+			break
 		}
 	}
 
-	return "",""
+	if (foundIdx < 0) {
+		//No matches
+		return "", ""
+	}
+
+	tblName := key[:foundIdx]
+
+	if _, exists := modelInfo.tableInfo[tblName]; exists == false {
+		//Wrong table name
+		return "", ""
+	}
+
+	prefixLen := foundIdx + 1
+
+	return tblName, key[prefixLen:]
 }
 
 //Convert Redis key to Yang keys, if multiple key components are there,
@@ -423,7 +463,12 @@ func getRedisToYangKeys(tableName string, redisKey string)[]keyValuePairStruct{
 	keyPatterns := strings.Split(modelInfo.tableInfo[tableName].redisKeyPattern,
 			modelInfo.tableInfo[tableName].redisKeyDelim) //split by DB separator
 
-	if (len(keyNames) != len(keyVals)) {
+	/* TBD. Workaround for optional keys in INTERFACE Table.
+	   Code will be removed once model is finalized. */
+	if  ((tableName == "INTERFACE") && (len(keyNames) != len(keyVals))) {
+		keyVals = append(keyVals, "0.0.0.0/0")
+
+	} else if (len(keyNames) != len(keyVals)) {
 		return nil //number key names and values does not match
 	}
 
@@ -543,7 +588,6 @@ func (c *CVL) checkPathForTableEntry(tableName string, currentValue string, cfgD
 	if (err !=nil || len (redisTableKeys) > 1) { //more than one entry is returned, can't proceed further 
 		//Just add all the entries for caching
 		for _, redisTableKey := range redisTableKeys {
-			//tbl, key := splitRedisKey(redisTableKey)
 			c.addTableEntryToCache(splitRedisKey(redisTableKey))
 		}
 
@@ -551,9 +595,20 @@ func (c *CVL) checkPathForTableEntry(tableName string, currentValue string, cfgD
 	}
 
 	for _, redisTableKey := range redisTableKeys {
+
+		var entry map[string]string
+
+		if tmpEntry, mergeNeeded := c.fetchDataFromRequestCache(splitRedisKey(redisTableKey)); (tmpEntry == nil || mergeNeeded == true)  {
+			//If data is not available in validated cache fetch from Redis DB
+			entry, err = redisClient.HGetAll(redisTableKey).Result()
+
+			if (mergeNeeded) {
+				mergeMap(entry, tmpEntry)
+			}
+		}
+
 		//Get the entry fields from Redis
-		entry, err := redisClient.HGetAll(redisTableKey).Result()
-		if (err == nil) {
+		if (entry != nil) {
 			//Just add all the entries for caching
 			c.addTableEntryToCache(splitRedisKey(redisTableKey))
 
@@ -701,7 +756,7 @@ func (c *CVL) addTableEntryForMustExp(cfgData *CVLEditConfigData, tableName stri
 				}
 				strTmp = ""
 			default:
-				strTmp = strTmp + fmt.Sprintf("%c", mustExpStr[i])
+				strTmp = fmt.Sprintf("%s%c", strTmp, mustExpStr[i])
 			}
 		}
 
@@ -796,7 +851,7 @@ func (c *CVL) addTableDataForMustExp(op CVLOperation, tableName string) CVLRetCo
 
 func (c *CVL) addTableEntryToCache(tableName string, redisKey string) {
 	if (tableName == "" || redisKey == "") {
-		return 
+		return
 	}
 
 	if (c.tmpDbCache[tableName] == nil) {
@@ -864,8 +919,8 @@ func (c *CVL) updateDeleteDataToCache(tableName string, redisKey string) {
 		tblMap := c.tmpDbCache[tableName]
 		if _, existing := tblMap.(map[string]interface{})[redisKey]; existing == true {
 			delete(tblMap.(map[string]interface{}), redisKey)
+			c.tmpDbCache[tableName] = tblMap
 		}
-		c.tmpDbCache[tableName] = tblMap
 	}
 }
 
@@ -967,6 +1022,12 @@ func (c *CVL) addLeafRef(config bool, tableName string, name string, value strin
 
 
 func (c *CVL) addChildLeaf(config bool, tableName string, parent *yparser.YParserNode, name string, value string) {
+
+	/* If there is no value then assign default space string. */
+	if len(value) == 0 {
+                value = " "
+        }
+
 	//Batch leaf creation
 	c.batchLeaf = c.batchLeaf + name + "#" + value + "#"
 	//Check if this leaf has leafref,
@@ -1002,6 +1063,32 @@ func (c *CVL) checkFieldMap(fieldMap *map[string]string) map[string]interface{} 
 	return fieldMapNew
 }
 
+//Merge 'src' map to 'dest' map of map[string]string type
+func mergeMap(dest map[string]string, src map[string]string) {
+	for key, data := range src {
+		dest[key] = data
+	}
+}
+
+// Fetch dependent data from validated data cache,
+// Returns the data and flag to indicate that if requested data 
+// is found in update request, the data should be merged with Redis data
+func (c *CVL) fetchDataFromRequestCache(tableName string, key string) (map[string]string, bool) {
+	cfgDataArr := c.requestCache[tableName][key]
+	if (cfgDataArr != nil) {
+		for _, cfgReqData := range cfgDataArr {
+			//Delete request doesn't have depedent data
+			if (cfgReqData.VOp == OP_CREATE) {
+				return cfgReqData.Data, false
+			} else	if (cfgReqData.VOp == OP_UPDATE) {
+				return cfgReqData.Data, true
+			}
+		}
+	}
+
+	return nil, false
+}
+
 //Fetch given table entries using pipeline
 func (c *CVL) fetchTableDataToTmpCache(tableName string, dbKeys map[string]interface{}) int {
 
@@ -1017,19 +1104,26 @@ func (c *CVL) fetchTableDataToTmpCache(tableName string, dbKeys map[string]inter
 	bulkCount := 0
 	bulkKeys := []string{}
 	for dbKey, val := range dbKeys { //for all keys
-		if (val != nil) { //skip entry already fetched
-			mapTable := c.tmpDbCache[tableName]
-			delete(mapTable.(map[string]interface{}), dbKey) //delete entry already fetched
-			continue
-		}
 
-		bulkKeys = append(bulkKeys, dbKey)
-		bulkCount = bulkCount + 1
+		 if (val != nil) { //skip entry already fetched
+                        mapTable := c.tmpDbCache[tableName]
+                        delete(mapTable.(map[string]interface{}), dbKey) //delete entry already fetched
+                        totalCount = totalCount - 1
+                        if(bulkCount != totalCount) {
+                                //If some entries are remaining go back to 'for' loop
+                                continue
+                        }
+                } else {
+                        //Accumulate entries to be fetched
+                        bulkKeys = append(bulkKeys, dbKey)
+                        bulkCount = bulkCount + 1
+                }
 
-		if(bulkCount != totalCount) && ((bulkCount % MAX_BULK_ENTRIES_IN_PIPELINE) != 0) {
-			//Accumulate entries to be fetched
-			continue
-		}
+                if(bulkCount != totalCount) && ((bulkCount % MAX_BULK_ENTRIES_IN_PIPELINE) != 0) {
+                        //If some entries are remaining and bulk bucket is not filled,
+                        //go back to 'for' loop
+                        continue
+                }
 
 		mCmd := map[string]*redis.StringStringMapCmd{}
 
@@ -1038,7 +1132,16 @@ func (c *CVL) fetchTableDataToTmpCache(tableName string, dbKeys map[string]inter
 		for _, dbKey := range bulkKeys {
 
 			redisKey := tableName + modelInfo.tableInfo[tableName].redisKeyDelim + dbKey
-			//Check in global cache first and merge to session cache
+			//Check in validated cache first and add as dependent data
+			if entry, mergeNeeded := c.fetchDataFromRequestCache(tableName, dbKey); (entry != nil) {
+				 c.tmpDbCache[tableName].(map[string]interface{})[dbKey] = entry 
+				 entryFetched = entryFetched + 1
+				 //Entry found in validated cache, so skip fetching from Redis
+				 //if merging is not required with Redis DB
+				 if (mergeNeeded == false) {
+					 continue
+				 }
+			}
 
 			//Otherwise fetch it from Redis
 			mCmd[dbKey] = pipe.HGetAll(redisKey) //write into pipeline
@@ -1066,8 +1169,18 @@ func (c *CVL) fetchTableDataToTmpCache(tableName string, dbKeys map[string]inter
 			}
 			//exclude table name and delim
 			keyOnly := key
-			fieldMap := c.checkFieldMap(&res)
-			mapTable.(map[string]interface{})[keyOnly] = fieldMap
+
+			if (mapTable.(map[string]interface{})[keyOnly] != nil) {
+				tmpFieldMap := (mapTable.(map[string]interface{})[keyOnly]).(map[string]string)
+				//merge with validated cache data
+				mergeMap(res, tmpFieldMap)
+				fieldMap := c.checkFieldMap(&res)
+				mapTable.(map[string]interface{})[keyOnly] = fieldMap
+			} else {
+				fieldMap := c.checkFieldMap(&res)
+				mapTable.(map[string]interface{})[keyOnly] = fieldMap
+			}
+
 			entryFetched = entryFetched + 1
 		}
 
@@ -1427,33 +1540,32 @@ func (c *CVL) validateSemantics(data *yparser.YParserNode, appDepData *yparser.Y
 }
 
 //Add config data item to accumulate per table
-func (c *CVL) addCfgDataItem(configData *map[string]interface{}, cfgDataItem CVLEditConfigData) (string, string){
-	var cfgData map[string]interface{}//:= map[string]interface{}
+func (c *CVL) addCfgDataItem(configData *map[string]interface{},
+			cfgDataItem CVLEditConfigData) (string, string){
+	var cfgData map[string]interface{}
 	cfgData = *configData
 
-	for tblName,_ := range modelInfo.tableInfo {
-		//Check if table prefix matches to any schema table
-		//i.e. has 'VLAN|' or 'PORT|' etc.
-		if (strings.HasPrefix(cfgDataItem.Key, tblName + modelInfo.tableInfo[tblName].redisKeyDelim)) {
-			prefixLen := len(tblName) + 1
-			if (cfgDataItem.VOp == OP_DELETE) {
-				//Don't add data it is delete operation
-				return tblName, cfgDataItem.Key[prefixLen:]
-			}
-			if _, existing := cfgData[tblName]; existing {
-				fieldsMap := cfgData[tblName].(map[string]interface{})
-				fieldsMap[cfgDataItem.Key[prefixLen:]] = c.checkFieldMap(&cfgDataItem.Data)
-			} else {
-				fieldsMap := make(map[string]interface{})
-				fieldsMap[cfgDataItem.Key[prefixLen:]] = c.checkFieldMap(&cfgDataItem.Data)
-				cfgData[tblName] = fieldsMap
-			}
-
-			return tblName, cfgDataItem.Key[prefixLen:]
-		}
+	tblName, key := splitRedisKey(cfgDataItem.Key)
+	if (tblName == "" || key == "") {
+		//Bad redis key
+		return "", ""
 	}
 
-	return "",""
+	if (cfgDataItem.VOp == OP_DELETE) {
+		//Don't add data it is delete operation
+		return tblName, key
+	}
+
+	if _, existing := cfgData[tblName]; existing {
+		fieldsMap := cfgData[tblName].(map[string]interface{})
+		fieldsMap[key] = c.checkFieldMap(&cfgDataItem.Data)
+	} else {
+		fieldsMap := make(map[string]interface{})
+		fieldsMap[key] = c.checkFieldMap(&cfgDataItem.Data)
+		cfgData[tblName] = fieldsMap
+	}
+
+	return tblName, key
 }
 
 //Get table entry from cache for redis key

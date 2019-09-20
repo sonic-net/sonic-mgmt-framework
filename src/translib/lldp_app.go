@@ -1,3 +1,21 @@
+//////////////////////////////////////////////////////////////////////////
+//
+// Copyright 2019 Dell, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+//////////////////////////////////////////////////////////////////////////
+
 package translib
 
 import (
@@ -131,7 +149,7 @@ func (app *lldpApp) translateSubscribe(dbs [db.MaxDB]*db.DB, path string) (*noti
             return nil, nil, errors.New("ifKey given is empty!")
         }
         log.Info("Interface name = ", ifKey)
-        if pathInfo.HasSuffix("/interface{name}") {
+        if pathInfo.HasSuffix("/interface{}") {
             notifInfo.table = db.TableSpec{Name: "LLDP_ENTRY_TABLE"}
             notifInfo.key = asKey(ifKey)
             notifInfo.needCache = true
@@ -270,12 +288,7 @@ func (app *lldpApp) getLldpNeighInfoFromInternalMap(ifName *string, ifInfo *ocbi
                 *sdesc = value
                 ngInfo.State.SystemDescription = sdesc
             case LLDP_REMOTE_REM_TIME:
-                ttlVal , err:=strconv.Atoi(value)
-                if err == nil  {
-                    ttlPtr := new(uint16)
-                    *ttlPtr = uint16(ttlVal)
-                    ngInfo.State.Ttl = ttlPtr
-                }
+            /* Ignore Remote System time */
             case LLDP_REMOTE_PORT_ID:
                 remPortIdPtr := new(string)
                 *remPortIdPtr = value

@@ -1,3 +1,22 @@
+////////////////////////////////////////////////////////////////////////////////
+//                                                                            //
+//  Copyright 2019 Broadcom. The term Broadcom refers to Broadcom Inc. and/or //
+//  its subsidiaries.                                                         //
+//                                                                            //
+//  Licensed under the Apache License, Version 2.0 (the "License");           //
+//  you may not use this file except in compliance with the License.          //
+//  You may obtain a copy of the License at                                   //
+//                                                                            //
+//     http://www.apache.org/licenses/LICENSE-2.0                             //
+//                                                                            //
+//  Unless required by applicable law or agreed to in writing, software       //
+//  distributed under the License is distributed on an "AS IS" BASIS,         //
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  //
+//  See the License for the specific language governing permissions and       //
+//  limitations under the License.                                            //
+//                                                                            //
+////////////////////////////////////////////////////////////////////////////////
+
 package yparser
 
 /* Yang parser using libyang library */
@@ -250,12 +269,20 @@ func ParseSchemaFile(modelFile string) (*YParserModule, YParserError) {
 //Add child node to a parent node
 func(yp *YParser) AddChildNode(module *YParserModule, parent *YParserNode, name string) *YParserNode {
 
-	return (*YParserNode)(C.lyd_new((*C.struct_lyd_node)(parent), (*C.struct_lys_module)(module), C.CString(name)))
+	ret := (*YParserNode)(C.lyd_new((*C.struct_lyd_node)(parent), (*C.struct_lys_module)(module), C.CString(name)))
+	if (ret == nil) {
+		TRACE_LOG(INFO_DEBUG, TRACE_YPARSER, "Failed parsing node %s\n", name)
+	}
+
+	return ret
 }
 
 //Add child node to a parent node
 func(yp *YParser) AddMultiLeafNodes(module *YParserModule, parent *YParserNode, multiLeaf string) YParserError {
 	if (0 != C.lyd_multi_new_leaf((*C.struct_lyd_node)(parent), (*C.struct_lys_module)(module), C.CString(multiLeaf))) {
+		if (Tracing == true) {
+			TRACE_LOG(INFO_API, TRACE_ONERROR, "Failed to create Multi Leaf Data = %v", multiLeaf)
+		}
 		return getErrorDetails()
 	}
 
@@ -337,6 +364,7 @@ func (yp *YParser) DestroyCache() YParserError {
 
 	if (yp.root != nil) {
 		C.lyd_free_withsiblings((*C.struct_lyd_node)(yp.root))
+		yp.root = nil
 	}
 
 	return YParserError {ErrCode : YP_SUCCESS,}
@@ -371,6 +399,11 @@ func (yp *YParser) ValidateData(data, depData *YParserNode) YParserError {
 	dataRootTmp := (*C.struct_lyd_node)(dataRoot)
 
 	if (0 != C.lyd_data_validate(&dataRootTmp, C.LYD_OPT_CONFIG, (*C.struct_ly_ctx)(ypCtx))) {
+		if (Tracing == true) {
+			strData := yp.NodeDump((*YParserNode)(dataRootTmp))
+			TRACE_LOG(INFO_API, TRACE_ONERROR, "Failed to validate data = %v", strData)
+		}
+
 		CVL_LOG(ERROR, "Validation failed\n")
 		return getErrorDetails()
 	}
@@ -385,6 +418,10 @@ func (yp *YParser) ValidateSyntax(data *YParserNode) YParserError {
 	//Just validate syntax
 	if (0 != C.lyd_data_validate(&dataTmp, C.LYD_OPT_EDIT | C.LYD_OPT_NOEXTDEPS,
 	(*C.struct_ly_ctx)(ypCtx))) {
+		if (Tracing == true) {
+			strData := yp.NodeDump((*YParserNode)(dataTmp))
+			TRACE_LOG(INFO_API, TRACE_ONERROR, "Failed to validate Syntax, data = %v", strData)
+		}
 		return  getErrorDetails()
 	}
 		 //fmt.Printf("Error Code from libyang is %d\n", C.ly_errno) 
@@ -457,6 +494,10 @@ func (yp *YParser) ValidateSemantics(data, depData, appDepData *YParserNode) YPa
 
 	//Check semantic validation
 	if (0 != C.lyd_data_validate(&dataTmp, C.LYD_OPT_CONFIG, (*C.struct_ly_ctx)(ypCtx))) {
+		if (Tracing == true) {
+			strData1 := yp.NodeDump((*YParserNode)(dataTmp))
+			TRACE_LOG(INFO_API, TRACE_ONERROR, "Failed to validate Semantics, data = %v", strData1)
+		}
 		return getErrorDetails()
 	}
 

@@ -1,3 +1,22 @@
+////////////////////////////////////////////////////////////////////////////////
+//                                                                            //
+//  Copyright 2019 Broadcom. The term Broadcom refers to Broadcom Inc. and/or //
+//  its subsidiaries.                                                         //
+//                                                                            //
+//  Licensed under the Apache License, Version 2.0 (the "License");           //
+//  you may not use this file except in compliance with the License.          //
+//  You may obtain a copy of the License at                                   //
+//                                                                            //
+//     http://www.apache.org/licenses/LICENSE-2.0                             //
+//                                                                            //
+//  Unless required by applicable law or agreed to in writing, software       //
+//  distributed under the License is distributed on an "AS IS" BASIS,         //
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  //
+//  See the License for the specific language governing permissions and       //
+//  limitations under the License.                                            //
+//                                                                            //
+////////////////////////////////////////////////////////////////////////////////
+
 package cvl
 
 import (
@@ -26,30 +45,30 @@ const (
 )
 
 var cvlErrorMap = map[CVLRetCode]string {
-		CVL_SUCCESS					: "Config Validation Success",
-		CVL_SYNTAX_ERROR				: "Config Validation Syntax Error",
-		CVL_SEMANTIC_ERROR				: "Config Validation Semantic Error",
-		CVL_SYNTAX_MISSING_FIELD			: "Required Field is Missing", 
-		CVL_SYNTAX_INVALID_FIELD			: "Invalid Field Received",
-		CVL_SYNTAX_INVALID_INPUT_DATA			: "Invalid Input Data Received", 
-		CVL_SYNTAX_MULTIPLE_INSTANCE			: "Multiple Field Instances Received", 
-		CVL_SYNTAX_DUPLICATE				: "Duplicate Instances Received", 
-		CVL_SYNTAX_ENUM_INVALID			        : "Invalid Enum Value Received",  
-		CVL_SYNTAX_ENUM_INVALID_NAME 			: "Invalid Enum Value Received", 
-		CVL_SYNTAX_ENUM_WHITESPACE		        : "Enum name with leading/trailing whitespaces Received",
-		CVL_SYNTAX_OUT_OF_RANGE                         : "Value out of range/length/pattern (data)",
-		CVL_SYNTAX_MINIMUM_INVALID        		: "min-elements constraint not honored",
-		CVL_SYNTAX_MAXIMUM_INVALID       		: "max-elements constraint not honored",
-		CVL_SEMANTIC_DEPENDENT_DATA_MISSING 		: "Dependent Data is missing",
-		CVL_SEMANTIC_MANDATORY_DATA_MISSING  		: "Mandatory Data is missing",
-		CVL_SEMANTIC_KEY_ALREADY_EXIST 			: "Key already existing.",
-		CVL_SEMANTIC_KEY_NOT_EXIST  			: "Key is missing.",
-		CVL_SEMANTIC_KEY_DUPLICATE 			: "Duplicate key received",
-		CVL_SEMANTIC_KEY_INVALID  			: "Invalid Key Received",
-		CVL_INTERNAL_UNKNOWN			 	: "Internal Unknown Error",
-		CVL_ERROR                                       : "Generic Error",
-		CVL_NOT_IMPLEMENTED                             : "Error Not Implemented",
-		CVL_FAILURE                             	: "Generic Failure",
+	CVL_SUCCESS					: "Config Validation Success",
+	CVL_SYNTAX_ERROR				: "Config Validation Syntax Error",
+	CVL_SEMANTIC_ERROR				: "Config Validation Semantic Error",
+	CVL_SYNTAX_MISSING_FIELD			: "Required Field is Missing", 
+	CVL_SYNTAX_INVALID_FIELD			: "Invalid Field Received",
+	CVL_SYNTAX_INVALID_INPUT_DATA			: "Invalid Input Data Received", 
+	CVL_SYNTAX_MULTIPLE_INSTANCE			: "Multiple Field Instances Received", 
+	CVL_SYNTAX_DUPLICATE				: "Duplicate Instances Received", 
+	CVL_SYNTAX_ENUM_INVALID			        : "Invalid Enum Value Received",  
+	CVL_SYNTAX_ENUM_INVALID_NAME 			: "Invalid Enum Value Received", 
+	CVL_SYNTAX_ENUM_WHITESPACE		        : "Enum name with leading/trailing whitespaces Received",
+	CVL_SYNTAX_OUT_OF_RANGE                         : "Value out of range/length/pattern (data)",
+	CVL_SYNTAX_MINIMUM_INVALID        		: "min-elements constraint not honored",
+	CVL_SYNTAX_MAXIMUM_INVALID       		: "max-elements constraint not honored",
+	CVL_SEMANTIC_DEPENDENT_DATA_MISSING 		: "Dependent Data is missing",
+	CVL_SEMANTIC_MANDATORY_DATA_MISSING  		: "Mandatory Data is missing",
+	CVL_SEMANTIC_KEY_ALREADY_EXIST 			: "Key already existing.",
+	CVL_SEMANTIC_KEY_NOT_EXIST  			: "Key is missing.",
+	CVL_SEMANTIC_KEY_DUPLICATE 			: "Duplicate key received",
+	CVL_SEMANTIC_KEY_INVALID  			: "Invalid Key Received",
+	CVL_INTERNAL_UNKNOWN			 	: "Internal Unknown Error",
+	CVL_ERROR                                       : "Generic Error",
+	CVL_NOT_IMPLEMENTED                             : "Error Not Implemented",
+	CVL_FAILURE                             	: "Generic Failure",
 }
 
 //Error code
@@ -105,6 +124,7 @@ func Initialize() CVLRetCode {
 
 	modelInfo.modelNs =  make(map[string]modelNamespace) //redis table to model name
 	modelInfo.tableInfo = make(map[string]modelTableInfo) //model namespace 
+	modelInfo.allKeyDelims = make(map[string]bool) //all key delimiter
 	dbNameToDbNum = map[string]uint8{"APPL_DB": APPL_DB, "CONFIG_DB": CONFIG_DB}
 
 	/* schema */
@@ -153,6 +173,7 @@ func Finish() {
 func ValidationSessOpen() (*CVL, CVLRetCode) {
 	cvl :=  &CVL{}
 	cvl.tmpDbCache = make(map[string]interface{})
+	cvl.requestCache = make(map[string]map[string][]CVLEditConfigData)
 	cvl.yp = &yparser.YParser{}
 
 	if (cvl == nil || cvl.yp == nil) {
@@ -274,8 +295,21 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (CVLErrorInfo, CVL
 			continue
 		}
 
+		//Add config data item to be validated
 		tbl,key := c.addCfgDataItem(&requestedData, cfgDataItem)
 
+		//Add to request cache
+		reqTbl, exists := c.requestCache[tbl]
+		if (exists == false) {
+			//Create new table key data
+			reqTbl = make(map[string][]CVLEditConfigData)
+		}
+		cfgDataItemArr, _ := reqTbl[key]
+		cfgDataItemArr = append(cfgDataItemArr, cfgDataItem)
+		reqTbl[key] = cfgDataItemArr
+		c.requestCache[tbl] = reqTbl
+
+		//Invalid table name or invalid key separator 
 		if key == "" {
 			cvlErrObj.ErrCode = CVL_SYNTAX_ERROR
 			cvlErrObj.CVLErrDetails = cvlErrorMap[cvlErrObj.ErrCode]
@@ -290,10 +324,10 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (CVLErrorInfo, CVL
 
 		case OP_UPDATE:
 			//Get the existing data from Redis to cache, so that final validation can be done after merging this dependent data
-			c.addTableEntryToCache(tbl, key)
 			if (c.addTableEntryForMustExp(&cfgDataItem, tbl) != CVL_SUCCESS) {
 				c.addTableDataForMustExp(cfgDataItem.VOp, tbl)
 			}
+			c.addTableEntryToCache(tbl, key)
 
 		case OP_DELETE:
 			if (len(cfgDataItem.Data) > 0) {
@@ -317,20 +351,25 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (CVLErrorInfo, CVL
 					cvlErrObj.CVLErrDetails = cvlErrorMap[cvlErrObj.ErrCode]
 					return cvlErrObj, CVL_SEMANTIC_ERROR 
 				}
+				//TBD : Can we do this ?
+				//No entry has depedency on this key, 
+				//remove from requestCache, we don't need any more as depedent data
+				//delete(c.requestCache[tbl], key)
 			}
-
-			c.addTableEntryToCache(tbl, key)
 
 			if (c.addTableEntryForMustExp(&cfgDataItem, tbl) != CVL_SUCCESS) {
 				c.addTableDataForMustExp(cfgDataItem.VOp, tbl)
 			}
+
+			c.addTableEntryToCache(tbl, key)
 		}
 	}
 
+	//Only for tracing
 	if (IsTraceSet()) {
 		jsonData := ""
 
-		jsonDataBytes, err := json.Marshal(requestedData) //Optimize TBD:
+		jsonDataBytes, err := json.Marshal(requestedData)
 		if (err == nil) {
 			jsonData = string(jsonDataBytes)
 		} else {
@@ -339,7 +378,7 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (CVLErrorInfo, CVL
 			return cvlErrObj, CVL_SYNTAX_ERROR 
 		}
 
-		TRACE_LOG(INFO_DATA, TRACE_LIBYANG, "JSON Data = [%s]\n", jsonData)
+		TRACE_LOG(INFO_DATA, TRACE_LIBYANG, "Requested JSON Data = [%s]\n", jsonData)
 	}
 
 	//Step 2 : Perform syntax validation only
@@ -354,7 +393,6 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (CVLErrorInfo, CVL
 
 	//Step 3 : Check keys and update dependent data
 	dependentData := make(map[string]interface{})
-	deletedKeys := make(map[string]interface{}) //will store deleted key
 
         for _, cfgDataItem := range cfgData {
 
@@ -362,19 +400,31 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (CVLErrorInfo, CVL
 			//Step 3.1 : Check keys
 			switch cfgDataItem.VOp {
 			case OP_CREATE:
-				//If key is deleted and CREATE is done in same session, no need to check for key existence in case of create
-				if  _, deleted := deletedKeys[cfgDataItem.Key]; deleted == false {
+				//Check key should not already exist
+				n, err1 := redisClient.Exists(cfgDataItem.Key).Result()
+				if (err1 == nil && n > 0) {
+					//Check if key deleted and CREATE done in same session, 
+					//allow to create the entry
+					tbl, key := splitRedisKey(cfgDataItem.Key)
+					deletedInSameSession := false
+					if  tbl != ""  && key != "" {
+						for _, cachedCfgData := range c.requestCache[tbl][key] {
+							if cachedCfgData.VOp == OP_DELETE {
+								deletedInSameSession = true
+								break
+							}
+						}
+					}
 
-					//Check key should not already exist
-					n, err1 := redisClient.Exists(cfgDataItem.Key).Result()
-					if (err1 == nil && n > 0) {
+					if deletedInSameSession == false {
 						CVL_LOG(ERROR, "\nValidateEditConfig(): Key = %s already exists", cfgDataItem.Key)
 						cvlErrObj.ErrCode = CVL_SEMANTIC_KEY_ALREADY_EXIST
 						cvlErrObj.CVLErrDetails = cvlErrorMap[cvlErrObj.ErrCode]
 						return cvlErrObj, CVL_SEMANTIC_KEY_ALREADY_EXIST 
+
+					} else {
+						TRACE_LOG(INFO_API, TRACE_CREATE, "\nKey %s is deleted in same session, skipping key existence check for OP_CREATE operation", cfgDataItem.Key)
 					}
-				} else {
-					TRACE_LOG(INFO_API, TRACE_CREATE, "\nKey %s is deleted in same session, skipping key existence check for OP_CREATE operation", cfgDataItem.Key)
 				}
 
 				c.yp.SetOperation("CREATE")
@@ -393,7 +443,7 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (CVLErrorInfo, CVL
 			case OP_DELETE:
 				n, err1 := redisClient.Exists(cfgDataItem.Key).Result()
 				if (err1 != nil || n == 0) { //key must exists
-					CVL_LOG(ERROR, "\nValidateDelete(): Key = %s does not exist", cfgDataItem.Key)
+					CVL_LOG(ERROR, "\nValidateEditConfig(): Key = %s does not exist", cfgDataItem.Key)
 					cvlErrObj.ErrCode = CVL_SEMANTIC_KEY_ALREADY_EXIST
 					cvlErrObj.CVLErrDetails = cvlErrorMap[cvlErrObj.ErrCode]
 					return cvlErrObj, CVL_SEMANTIC_KEY_NOT_EXIST
@@ -401,10 +451,9 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (CVLErrorInfo, CVL
 
 				c.yp.SetOperation("DELETE")
 				//store deleted keys
-				deletedKeys[cfgDataItem.Key] = nil;
 			}
 
-		} else if (cfgDataItem.VType == VALIDATE_NONE) {
+		}/* else if (cfgDataItem.VType == VALIDATE_NONE) {
 			//Step 3.2 : Get dependent data
 
 			switch cfgDataItem.VOp {
@@ -417,9 +466,8 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (CVLErrorInfo, CVL
 				//update cache by removing deleted entry
 				c.updateDeleteDataToCache(tbl, key)
 				//store deleted keys
-				deletedKeys[cfgDataItem.Key] = nil;
 			}
-		}
+		}*/
 	}
 
 	var depYang *yparser.YParserNode = nil
@@ -432,10 +480,13 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (CVLErrorInfo, CVL
 	}
 
 	//Cache validated data
+	/*
 	if errObj := c.yp.CacheSubtree(false, yang); errObj.ErrCode != yparser.YP_SUCCESS {
 		TRACE_LOG(INFO_API, TRACE_CACHE, "Could not cache validated data")
 	}
+	*/
 
+	c.yp.DestroyCache()
 	return cvlErrObj, CVL_SUCCESS
 }
 

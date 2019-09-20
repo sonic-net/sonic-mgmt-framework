@@ -1,4 +1,20 @@
 <?xml version='1.0' encoding='UTF-8'?>
+<!--
+Copyright 2019 Dell, Inc.  
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+--> 
+
 <!DOCTYPE CLISH_MODULE [
 <!ENTITY START_PORT_ID "1">
 <!ENTITY MAX_PORT_ID "32">
@@ -9,19 +25,19 @@
 <CLISH_MODULE xmlns="http://www.dellemc.com/sonic/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xi="http://www.w3.org/2001/XInclude" xsi:schemaLocation="http://www.dellemc.com/sonic/XMLSchema http://www.dellemc.com/sonic/XMLSchema/clish.xsd">
   <VIEW name="enable-view">
     <COMMAND name="show system" help="Show system information">
-      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-sys.py get_openconfig_system_system_state system_show.j2 </ACTION>
+      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-sys.py get_openconfig_system_system_state system_show.j2 ${__full_line} </ACTION>
       <xi:include href="include/pipe.xml"/>
     </COMMAND>
     <COMMAND name="show system memory" help="Show system memory information">
-      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-sys.py get_openconfig_system_system_memory system_show.j2 </ACTION>
+      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-sys.py get_openconfig_system_system_memory system_show.j2 ${__full_line} </ACTION>
       <xi:include href="include/pipe.xml"/>
     </COMMAND>
     <COMMAND name="show system cpu" help="Show system cpu information">
-      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-sys.py get_openconfig_system_system_cpus system_cpu_show.j2 </ACTION>
+      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-sys.py get_openconfig_system_system_cpus system_cpu_show.j2 ${__full_line} </ACTION>
       <xi:include href="include/pipe.xml"/>
     </COMMAND>
     <COMMAND name="show system processes" help="Show system processes information">
-      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-sys.py get_openconfig_system_system_processes system_processes_show.j2 </ACTION>
+      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-sys.py get_openconfig_system_system_processes system_processes_show.j2 ${__full_line} </ACTION>
       <xi:include href="include/pipe.xml"/>
     </COMMAND>
     <COMMAND name="show system processes pid" help="Show system process information of a particular PID">
@@ -31,7 +47,7 @@
             ptype="UINT"
            >
         </PARAM>
-      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-sys.py get_openconfig_system_system_processes system_show.j2  ${pid-no} </ACTION>
+      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-sys.py get_openconfig_system_system_processes system_show.j2  ${pid-no} ${__full_line} </ACTION>
       <xi:include href="include/pipe.xml"/>
     </COMMAND>
   </VIEW>

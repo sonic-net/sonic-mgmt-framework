@@ -11,10 +11,10 @@ module sonic-tc-queue-map {
 	}
 
 	organization
-		"BRCM";
+		"SONiC";
 
 	contact
-		"BRCM";
+		"SONiC";
 
 	description
 		"SONIC TC_TO_QUEUE_MAP";

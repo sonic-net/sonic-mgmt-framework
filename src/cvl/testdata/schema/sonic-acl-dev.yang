@@ -21,13 +21,13 @@ module sonic-acl-dev {
 
 
 	organization
-		"BRCM";
+		"SONiC";
 
 	contact
-		"BRCM";
+		"SONiC";
 
 	description
-		"SONIC ACLi Deviations";
+		"SONIC ACL Deviations";
 
 	revision 2019-05-15 {
 		description

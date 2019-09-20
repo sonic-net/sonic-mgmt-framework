@@ -7,8 +7,8 @@ module sonic-interface {
 	}
 
 	import ietf-inet-types {
-                prefix inet;
-        }
+		prefix inet;
+	}
 
 	import sonic-common {
 		prefix scommon;
@@ -19,10 +19,10 @@ module sonic-interface {
 	}
 
 	organization
-		"BRCM";
+		"SONiC";
 
 	contact
-		"BRCM";
+		"SONiC";
 
 	description
 		"SONIC INTERFACE";
@@ -38,13 +38,13 @@ module sonic-interface {
 
 			leaf portname{
 				type leafref {
-                                        path "/prt:sonic-port/prt:PORT/prt:ifname";
-                                }
+					path "/prt:sonic-port/prt:PORT/prt:ifname";
+				}
 			}
 
 			leaf ip_prefix {
-				 mandatory true;
-                                 type inet:ip-prefix;
+				mandatory true;
+				type inet:ip-prefix;
 
 			}
 		}

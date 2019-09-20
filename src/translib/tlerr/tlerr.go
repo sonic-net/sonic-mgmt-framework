@@ -1,7 +1,21 @@
-/*
-Copyright 2019 Broadcom. All rights reserved.
-The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
-*/
+////////////////////////////////////////////////////////////////////////////////
+//                                                                            //
+//  Copyright 2019 Broadcom. The term Broadcom refers to Broadcom Inc. and/or //
+//  its subsidiaries.                                                         //
+//                                                                            //
+//  Licensed under the Apache License, Version 2.0 (the "License");           //
+//  you may not use this file except in compliance with the License.          //
+//  You may obtain a copy of the License at                                   //
+//                                                                            //
+//     http://www.apache.org/licenses/LICENSE-2.0                             //
+//                                                                            //
+//  Unless required by applicable law or agreed to in writing, software       //
+//  distributed under the License is distributed on an "AS IS" BASIS,         //
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  //
+//  See the License for the specific language governing permissions and       //
+//  limitations under the License.                                            //
+//                                                                            //
+////////////////////////////////////////////////////////////////////////////////
 
 /*
 Package tlerr defines the errors of the translib library.
@@ -17,15 +31,15 @@ Hence, it cannot occur here.
 package tlerr
 
 import (
-//	"fmt"
-	"golang.org/x/text/message"
-	"golang.org/x/text/language"
+	//	"fmt"
 	"cvl"
-//	"errors"
-//	"strings"
+	"golang.org/x/text/language"
+	"golang.org/x/text/message"
+	//	"errors"
+	//	"strings"
 )
 
-var p * message.Printer
+var p *message.Printer
 
 func init() {
 	p = message.NewPrinter(language.English)
@@ -48,7 +62,7 @@ func (e TranslibDBNotInit) Error() string {
 }
 
 type TranslibRedisClientEntryNotExist struct {
-	Entry    string
+	Entry string
 }
 
 func (e TranslibRedisClientEntryNotExist) Error() string {
@@ -56,8 +70,8 @@ func (e TranslibRedisClientEntryNotExist) Error() string {
 }
 
 type TranslibCVLFailure struct {
-	Code    int
-	CVLErrorInfo  cvl.CVLErrorInfo
+	Code         int
+	CVLErrorInfo cvl.CVLErrorInfo
 }
 
 func (e TranslibCVLFailure) Error() string {
@@ -80,10 +94,10 @@ func (e TranslibDBSubscribeFail) Error() string {
 }
 
 type TranslibSyntaxValidationError struct {
-    StatusCode     int // status code
-    ErrorStr error // error message
+	StatusCode int   // status code
+	ErrorStr   error // error message
 }
 
 func (e TranslibSyntaxValidationError) Error() string {
-    return p.Sprintf("%s", e.ErrorStr)
+	return p.Sprintf("%s", e.ErrorStr)
 }

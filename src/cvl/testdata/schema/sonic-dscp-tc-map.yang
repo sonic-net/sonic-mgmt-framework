@@ -15,10 +15,10 @@ module sonic-dscp-tc-map {
 	}
 
 	organization
-		"BRCM";
+		"SONiC";
 
 	contact
-		"BRCM";
+		"SONiC";
 
 	description
 		"SONIC DSCP_TO_TC_MAP";

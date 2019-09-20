@@ -1,4 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+Copyright 2019 Dell, Inc.  
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+--> 
+
 <CLISH_MODULE
     xmlns="http://www.dellemc.com/sonic/XMLSchema"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -15,7 +31,7 @@
         <PARAM 
             name = "access-list-name"
             help = "Access list name"
-            ptype = "STRING"
+            ptype = "STRING_63"
             optional = "true"
             >
         </PARAM>
@@ -91,8 +107,8 @@
          >
          <PARAM
              name="access-list-name"
-             help="Name of the IPv4 access-list (Max size 140)"
-             ptype="STRING"
+             help="Name of the IPv4 access-list (Max size 63)"
+             ptype="STRING_63"
              >
         </PARAM>
         <ACTION>python $SONIC_CLI_ROOT/sonic-cli.py patch_openconfig_acl_acl_acl_sets_acl_set ${access-list-name} ACL_IPV4</ACTION>
@@ -103,8 +119,8 @@
          help="Configure IPv4 access-list"
 		 >
          <PARAM name="access-list-name"
-             help="Name of the IPv4 access-list (Max size 140)"
-             ptype="STRING"
+             help="Name of the IPv4 access-list (Max size 63)"
+             ptype="STRING_63"
 			 >
         </PARAM>
     <ACTION>python $SONIC_CLI_ROOT/sonic-cli.py delete_openconfig_acl_acl_acl_sets_acl_set ${access-list-name} ACL_IPV4</ACTION>
@@ -141,7 +157,7 @@
         <PARAM
             name="seq-no"
             help="Sequence number"
-            ptype="RANGE_1_4294967295"
+            ptype="RANGE_1_65535"
             />
         <ACTION>python $SONIC_CLI_ROOT/sonic-cli.py delete_openconfig_acl_acl_acl_sets_acl_set_acl_entries_acl_entry ${name} ACL_IPV4 ${seq-no}</ACTION>
     </COMMAND>
@@ -153,7 +169,7 @@
          <PARAM
              name="seq-no"
              help="Sequence number"
-             ptype="RANGE_1_4294967295"
+             ptype="RANGE_1_65535"
              >
              <PARAM
                  name="seq-options"

@@ -1,0 +1,501 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Copyright 2019 Dell, Inc.  
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+--> 
+
+<!-- 1st pipe -->
+<PARAM xmlns="http://www.dellemc.com/sonic/XMLSchema"
+    name="1_pipe"
+    value="|"
+    help="Pipe through a command"
+    ptype="SUBCOMMAND"
+    order="true"
+    optional="true"
+    mode="subcommand">
+
+    <PARAM name="1_switch_var"
+        help="pipe switch_var"
+        ptype="STRING"
+        mode="switch">
+
+        <PARAM name="display-xml"
+            help="Display in XML format"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            test='"${__cmd}" != "show diff" -a "${__cmd}" != "do show diff"'>
+            <PARAM name="1_xpath"
+                value="xpath"
+                help="Show only text that does match a xpath expression"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                optional="true"
+                >
+                <PARAM name="1_LINE"
+                    help="Xpath expression"
+                    ptype="STRING">
+                </PARAM>
+            </PARAM>
+        </PARAM>
+
+        <PARAM name="except"
+            help="Show only text that does not match a pattern"
+            ptype="SUBCOMMAND"
+            mode="subcommand">
+            <PARAM name="1_LINE"
+            help="Regular expression"
+            ptype="STRING_WITH_PIPE">
+            </PARAM>
+
+            <PARAM name="1_ignore-case"
+                value="ignore-case"
+                help="Case insensitive"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                optional="true">
+            </PARAM>
+        </PARAM>
+
+        <PARAM name="find"
+            help="Search for the 1st occurrence of a pattern and display all the subsequent configs"
+            ptype="SUBCOMMAND"
+            mode="subcommand">
+            <PARAM name="1_LINE"
+                help="Regular expression"
+                ptype="STRING_WITH_PIPE">
+            </PARAM>
+
+            <PARAM name="1_ignore-case"
+                value="ignore-case"
+                help="Case insensitive"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                optional="true">
+            </PARAM>
+        </PARAM>
+
+        <PARAM name="grep"
+            help="Show only text that matches a pattern"
+                ptype="SUBCOMMAND"
+                mode="subcommand">
+                <PARAM name="1_LINE"
+                    help="Regular expression"
+                    ptype="STRING_WITH_PIPE">
+                </PARAM>
+
+            <PARAM name="1_ignore-case"
+                value="ignore-case"
+                help="Case insensitive"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                optional="true">
+            </PARAM>
+        </PARAM>
+
+        <PARAM name="no-more"
+            help="Don't paginate output"
+            ptype="SUBCOMMAND"
+            mode="subcommand">
+        </PARAM>
+
+        <PARAM name="save"
+            help="Save output to a file"
+            ptype="SUBCOMMAND"
+            optional="true"
+            mode="subcommand">
+            <PARAM name="filename"
+                help="Save to the file"
+                ptype="STRING">
+                <PARAM name="append"
+                    help="Append output"
+                    optional="true"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"/>
+            </PARAM>
+        </PARAM>
+    </PARAM>
+<!-- end of 1st pipe -->
+<!-- 2nd pipe -->
+    <PARAM name="2_pipe"
+        help="Pipe through a command"
+        ptype="SUBCOMMAND"
+        optional="true"
+        order="true"
+        value="|"
+        mode="subcommand"
+        test='${1_switch_var} != save -a ${1_switch_var} != no-more'
+        >
+        <PARAM name="2_switch_var"
+            help="pipe switch_var"
+            ptype="STRING"
+            mode="switch">
+
+            <PARAM name="except"
+                help="Show only text that does not match a pattern"
+                ptype="SUBCOMMAND"
+                mode="subcommand">
+                <PARAM name="2_LINE"
+                    help="Regular expression"
+                    ptype="STRING_WITH_PIPE">
+                </PARAM>
+
+                <PARAM name="2_ignore-case"
+                    value="ignore-case"
+                    help="Case insensitive"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    optional="true">
+                </PARAM>
+            </PARAM>
+
+            <PARAM name="find"
+                help="Search for the 1st occurrence of a pattern and display all the subsequent configs"
+                ptype="SUBCOMMAND"
+                mode="subcommand">
+                <PARAM name="2_LINE"
+                    help="Regular expression"
+                    ptype="STRING_WITH_PIPE">
+                </PARAM>
+
+                <PARAM name="2_ignore-case"
+                    value="ignore-case"
+                    help="Case insensitive"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    optional="true">
+                </PARAM>
+            </PARAM>
+
+            <PARAM name="grep"
+                help="Show only text that matches a pattern"
+                ptype="SUBCOMMAND"
+                mode="subcommand">
+                <PARAM name="2_LINE"
+                    help="Regular expression"
+                    ptype="STRING_WITH_PIPE">
+                </PARAM>
+
+                <PARAM name="2_ignore-case"
+                    value="ignore-case"
+                    help="Case insensitive"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    optional="true">
+                </PARAM>
+            </PARAM>
+
+            <PARAM name="no-more"
+                help="Don't paginate output"
+                ptype="SUBCOMMAND"
+                mode="subcommand">
+            </PARAM>
+
+            <PARAM name="save"
+                help="Save output to a file"
+                ptype="SUBCOMMAND"
+                optional="true"
+                mode="subcommand">
+                <PARAM name="filename"
+                help="Save to the file"
+                ptype="STRING">
+                <PARAM name="append"
+                    help="Append output"
+                    optional="true"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"/>
+                </PARAM>
+            </PARAM>
+        </PARAM>
+    </PARAM>
+<!-- end of 2nd pipe -->
+<!-- 3rd pipe -->
+    <PARAM name="3_pipe"
+        help="Pipe through a command"
+        ptype="SUBCOMMAND"
+        optional="true"
+        order="true"
+        value="|"
+        mode="subcommand"
+        test='${2_switch_var} != save -a ${2_switch_var} != no-more'
+        >
+        <PARAM name="3_switch_var"
+            help="pipe switch_var"
+            ptype="STRING"
+            mode="switch">
+
+            <PARAM name="except"
+                help="Show only text that does not match a pattern"
+                ptype="SUBCOMMAND"
+                mode="subcommand">
+                <PARAM name="3_LINE"
+                    help="Regular expression"
+                    ptype="STRING_WITH_PIPE">
+                </PARAM>
+
+                <PARAM name="3_ignore-case"
+                    value="ignore-case"
+                    help="Case insensitive"
+                    ptype="SUBCOMMAND"
+                    optional="true"
+                    mode="subcommand">
+                </PARAM>
+            </PARAM>
+
+            <PARAM name="find"
+                help="Search for the 1st occurrence of a pattern and display all the subsequent configs"
+                ptype="SUBCOMMAND"
+                mode="subcommand">
+                <PARAM name="3_LINE"
+                    help="Regular expression"
+                    ptype="STRING_WITH_PIPE">
+                </PARAM>
+
+                <PARAM name="3_ignore-case"
+                    value="ignore-case"
+                    help="Case insensitive"
+                    ptype="SUBCOMMAND"
+                    optional="true"
+                    mode="subcommand">
+                </PARAM>
+            </PARAM>
+
+            <PARAM name="grep"
+                help="Show only text that matches a pattern"
+                ptype="SUBCOMMAND"
+                mode="subcommand">
+                <PARAM name="3_LINE"
+                    help="Regular expression"
+                    ptype="STRING_WITH_PIPE">
+                </PARAM>
+
+                <PARAM name="3_ignore-case"
+                    value="ignore-case"
+                    help="Case insensitive"
+                    ptype="SUBCOMMAND"
+                    optional="true"
+                    mode="subcommand">
+                </PARAM>
+            </PARAM>
+
+            <PARAM name="no-more"
+                help="Don't paginate output"
+                ptype="SUBCOMMAND"
+                mode="subcommand">
+            </PARAM>
+
+            <PARAM name="save"
+                help="Save output to a file"
+                ptype="SUBCOMMAND"
+                optional="true"
+                mode="subcommand">
+                <PARAM name="filename"
+                    help="Save to the file"
+                    ptype="STRING">
+                    <PARAM name="append"
+                        help="Append output"
+                        optional="true"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"/>
+                </PARAM>
+            </PARAM>
+        </PARAM>
+    </PARAM>
+<!-- end of 3rd pipe -->
+<!-- 4th pipe -->
+    <PARAM name="4_pipe"
+        help="Pipe through a command"
+        ptype="SUBCOMMAND"
+        optional="true"
+        order="true"
+        value="|"
+        mode="subcommand"
+        test='${3_switch_var} != save -a ${3_switch_var} != no-more'
+        >
+        <PARAM name="4_switch_var"
+            help="pipe switch_var"
+            ptype="STRING"
+            mode="switch">
+
+            <PARAM name="except"
+                help="Show only text that does not match a pattern"
+                ptype="SUBCOMMAND"
+                mode="subcommand">
+                <PARAM name="4_LINE"
+                    help="Regular expression"
+                    ptype="STRING_WITH_PIPE">
+                </PARAM>
+
+                <PARAM name="4_ignore-case"
+                    value="ignore-case"
+                    help="Case insensitive"
+                    ptype="SUBCOMMAND"
+                    optional="true"
+                    mode="subcommand">
+                </PARAM>
+            </PARAM>
+
+            <PARAM name="find"
+                help="Search for the 1st occurrence of a pattern and display all the subsequent configs"
+                ptype="SUBCOMMAND"
+                mode="subcommand">
+                <PARAM name="4_LINE"
+                    help="Regular expression"
+                    ptype="STRING_WITH_PIPE">
+                </PARAM>
+
+                <PARAM name="4_ignore-case"
+                    value="ignore-case"
+                    help="Case insensitive"
+                    ptype="SUBCOMMAND"
+                    optional="true"
+                    mode="subcommand">
+                </PARAM>
+            </PARAM>
+
+            <PARAM name="grep"
+                help="Show only text that matches a pattern"
+                ptype="SUBCOMMAND"
+                mode="subcommand">
+                <PARAM name="4_LINE"
+                    help="Regular expression"
+                    ptype="STRING_WITH_PIPE">
+                </PARAM>
+
+                <PARAM name="4_ignore-case"
+                    value="ignore-case"
+                    help="Case insensitive"
+                    ptype="SUBCOMMAND"
+                    optional="true"
+                    mode="subcommand">
+                </PARAM>
+            </PARAM>
+
+            <PARAM name="no-more"
+                help="Don't paginate output"
+                ptype="SUBCOMMAND"
+                mode="subcommand">
+            </PARAM>
+
+            <PARAM name="save"
+                help="Save output to a file"
+                ptype="SUBCOMMAND"
+                optional="true"
+                mode="subcommand">
+                <PARAM name="filename"
+                    help="Save to the file"
+                    ptype="STRING">
+                    <PARAM name="append"
+                        help="Append output"
+                        optional="true"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"/>
+                </PARAM>
+            </PARAM>
+        </PARAM>
+    </PARAM>
+<!-- end of 4th pipe -->
+<!-- 5th  pipe -->
+    <PARAM name="5_pipe"
+        help="Pipe through a command"
+        ptype="SUBCOMMAND"
+        optional="true"
+        order="true"
+        value="|"
+        mode="subcommand"
+        test='${4_switch_var} != save -a ${4_switch_var} != no-more'
+        >
+        <PARAM name="5_switch_var"
+            help="pipe switch_var"
+            ptype="STRING"
+            mode="switch">
+
+            <PARAM name="except"
+                help="Show only text that does not match a pattern"
+                ptype="SUBCOMMAND"
+                mode="subcommand">
+                <PARAM name="5_LINE"
+                    help="Regular expression"
+                    ptype="STRING_WITH_PIPE">
+                </PARAM>
+
+                <PARAM name="5_ignore-case"
+                    value="ignore-case"
+                    help="Case insensitive"
+                    ptype="SUBCOMMAND"
+                    optional="true"
+                    mode="subcommand">
+                </PARAM>
+            </PARAM>
+
+            <PARAM name="find"
+                help="Search for the 1st occurrence of a pattern and display all the subsequent configs"
+                ptype="SUBCOMMAND"
+                mode="subcommand">
+                <PARAM name="5_LINE"
+                    help="Regular expression"
+                    ptype="STRING_WITH_PIPE">
+                </PARAM>
+
+                <PARAM name="5_ignore-case"
+                    value="ignore-case"
+                    help="Case insensitive"
+                    ptype="SUBCOMMAND"
+                    optional="true"
+                    mode="subcommand">
+                </PARAM>
+            </PARAM>
+
+            <PARAM name="grep"
+                help="Show only text that matches a pattern"
+                ptype="SUBCOMMAND"
+                mode="subcommand">
+                <PARAM name="5_LINE"
+                    help="Regular expression"
+                    ptype="STRING_WITH_PIPE">
+                </PARAM>
+
+                <PARAM name="5_ignore-case"
+                    value="ignore-case"
+                    help="Case insensitive"
+                    ptype="SUBCOMMAND"
+                    optional="true"
+                    mode="subcommand">
+                </PARAM>
+            </PARAM>
+
+            <PARAM name="no-more"
+                help="Don't paginate output"
+                ptype="SUBCOMMAND"
+                mode="subcommand">
+            </PARAM>
+
+            <PARAM name="save"
+                help="Save output to a file"
+                ptype="SUBCOMMAND"
+                optional="true"
+                mode="subcommand">
+                <PARAM name="filename"
+                    help="Save to the file"
+                    ptype="STRING">
+                    <PARAM name="append"
+                        help="Append output"
+                        optional="true"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"/>
+                </PARAM>
+            </PARAM>
+        </PARAM>
+    </PARAM>
+<!-- end of 5th pipe -->
+</PARAM>
