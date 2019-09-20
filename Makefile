@@ -95,16 +95,8 @@ yamlGen:
 
 go-patch: go-deps
 	cd $(BUILD_GOPATH)/src/github.com/openconfig/ygot/; git reset --hard HEAD; git checkout 724a6b18a9224343ef04fe49199dfb6020ce132a 2>/dev/null ; true; \
-cp $(TOPDIR)/ygot-modified-files/debug.go $(BUILD_GOPATH)/src/github.com/openconfig/ygot/ytypes/../util/debug.go; \
-cp $(TOPDIR)/ygot-modified-files/node.go $(BUILD_GOPATH)/src/github.com/openconfig/ygot/ytypes/node.go; \
-cp $(TOPDIR)/ygot-modified-files/container.go $(BUILD_GOPATH)/src/github.com/openconfig/ygot/ytypes/container.go; \
-cp $(TOPDIR)/ygot-modified-files/list.go $(BUILD_GOPATH)/src/github.com/openconfig/ygot/ytypes/list.go; \
-cp $(TOPDIR)/ygot-modified-files/leaf.go $(BUILD_GOPATH)/src/github.com/openconfig/ygot/ytypes/leaf.go; \
-cp $(TOPDIR)/ygot-modified-files/util_schema.go $(BUILD_GOPATH)/src/github.com/openconfig/ygot/ytypes/util_schema.go; \
-cp $(TOPDIR)/ygot-modified-files/schema.go $(BUILD_GOPATH)/src/github.com/openconfig/ygot/ytypes/../util/schema.go; \
-cp $(TOPDIR)/ygot-modified-files/unmarshal.go $(BUILD_GOPATH)/src/github.com/openconfig/ygot/ytypes/unmarshal.go; \
-cp $(TOPDIR)/ygot-modified-files/validate.go $(BUILD_GOPATH)/src/github.com/openconfig/ygot/ytypes/validate.go; \
-cp $(TOPDIR)/ygot-modified-files/reflect.go $(BUILD_GOPATH)/src/github.com/openconfig/ygot/ytypes/../util/reflect.go; \
+cd ../; cp $(TOPDIR)/ygot-modified-files/ygot.patch .; \
+patch -p1 < ygot.patch; rm -f ygot.patch; \
 $(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/openconfig/ygot/ygot
 
 install:

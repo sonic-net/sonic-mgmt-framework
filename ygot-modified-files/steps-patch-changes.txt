@@ -1,8 +1,0 @@
-
-Steps: To support the URI binding for which the URI comes from REST and GNMI server without keys and values, we need to make the changes as mentioned below to get the fix.
-======
-
-1. copy the files list.go, and node.go from this directory /godev/ygot-modified-files/ to this /godev/src/github.com/openconfig/ygot/ytypes/
-
-2. compile and build the ygot package using the command "go install -v -gcflags "-N -l" github.com/openconfig/..." from the /godev/src/ directory
-
