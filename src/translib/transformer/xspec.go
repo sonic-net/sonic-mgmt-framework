@@ -22,6 +22,7 @@ type yangXpathInfo  struct {
     delim          string
     fieldName      string
     xfmrFunc       string
+    xfmrPost       string
     validateFunc   string
     xfmrKey        string
     dbIndex        db.DBNum
@@ -289,7 +290,7 @@ func annotEntryFill(xSpecMap map[string]*yangXpathInfo, xpath string, entry *yan
                 case "field-transformer" :
                     xpathData.xfmrFunc  = ext.NName()
                 case "post-transformer" :
-                    xpathData.xfmrFunc  = ext.NName()
+                    xpathData.xfmrPost  = ext.NName()
                 case "get-validate" :
                     xpathData.validateFunc  = ext.NName()
                 case "use-self-key" :

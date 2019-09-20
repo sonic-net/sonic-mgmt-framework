@@ -18,6 +18,18 @@ import (
 const SONIC_TABLE_INDEX = 2
 const SONIC_FIELD_INDEX = 3
 
+/* Invoke the post tansformer */
+func postXfmrHandlerFunc(inParams XfmrParams) (map[string]map[string]db.Value, error) {
+    xpath, _ := RemoveXPATHPredicates(inParams.uri)
+    ret, err := XlateFuncCall(xSpecMap[xpath].xfmrPost, inParams)
+    if err != nil {
+        return nil, err
+    }
+    retData := ret[0].Interface().(map[string]map[string]db.Value)
+    log.Info("Post Transformer function :", xSpecMap[xpath].xfmrPost, " Xpath: ", xpath, " retData: ", retData)
+    return retData, err
+}
+
 /* Fill redis-db map with field & value info */
 func dataToDBMapAdd(tableName string, dbKey string, result map[string]map[string]db.Value, field string, value string) {
     _, ok := result[tableName]
@@ -281,14 +293,35 @@ func dbMapUpdate(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, jsonDat
 /* Get the data from incoming create request, create map and fill with dbValue(ie. field:value
 to write into redis-db */
 func dbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, jsonData interface{}, result map[string]map[string]db.Value) error {
-    root := xpathRootNameGet(path)
-    if isCvlYang(path) {
-        cvlYangReqToDbMapCreate(jsonData, result)
-    } else {
-        yangReqToDbMapCreate(d, ygRoot, oper, root, "", "", jsonData, result)
-    }
-    printDbData(result, "/tmp/yangToDbDataCreate.txt")
-    return nil
+	var err error
+	root := xpathRootNameGet(path)
+	if isCvlYang(path) {
+		err = cvlYangReqToDbMapCreate(jsonData, result)
+	} else {
+		err = yangReqToDbMapCreate(d, ygRoot, oper, root, "", "", jsonData, result)
+	}
+	if err == nil {
+		if oper == CREATE {
+			moduleNm := "/" + strings.Split(path, "/")[1]
+			log.Infof("Module name for path %s is %s", path, moduleNm)
+			if _, ok := xSpecMap[moduleNm]; ok {
+				if xSpecMap[moduleNm].yangDataType == "container" {
+					log.Info("Invoke post transformer: ", xSpecMap[moduleNm].xfmrPost)
+					dbDataMap := make(map[db.DBNum]map[string]map[string]db.Value)
+					dbDataMap[db.ConfigDB] = result
+					var dbs [db.MaxDB]*db.DB
+					inParams := formXfmrInputRequest(d, dbs, db.ConfigDB, ygRoot, path, oper, "", &dbDataMap, nil)
+					result, err = postXfmrHandlerFunc(inParams)
+				}
+			} else {
+				log.Errorf("No Entry exists for module %s in XSpecMap. Unable to process post xfmr (\"%v\") path(\"%v\") error (\"%v\").", oper, path, err)
+			}
+		}
+		printDbData(result, "/tmp/yangToDbDataCreate.txt")
+	} else {
+		log.Errorf("DBMapCreate req failed for oper (\"%v\") path(\"%v\") error (\"%v\").", oper, path, err)
+	}
+	return err
 }
 
 func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, xpathPrefix string, keyName string, jsonData interface{}, result map[string]map[string]db.Value) error {

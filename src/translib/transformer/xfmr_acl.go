@@ -39,6 +39,7 @@ func init() {
 	XlateFuncBind("DbToYang_acl_forwarding_action_xfmr", DbToYang_acl_forwarding_action_xfmr)
 	XlateFuncBind("validate_ipv4", validate_ipv4)
 	XlateFuncBind("validate_ipv6", validate_ipv6)
+	XlateFuncBind("acl_post_xfmr", acl_post_xfmr)
 }
 
 const (
@@ -51,7 +52,6 @@ const (
 	OPENCONFIG_ACL_TYPE_IPV6 = "ACL_IPV6"
 	OPENCONFIG_ACL_TYPE_L2   = "ACL_L2"
 	ACL_TYPE                 = "type"
-
 	MIN_PRIORITY = 1
 	MAX_PRIORITY = 65535
 )
@@ -183,16 +183,24 @@ func getL2EtherType(etherType uint64) interface{} {
 var validate_ipv4 ValidateCallpoint = func(inParams XfmrParams) (bool) {
 	if strings.Contains(inParams.key, "ACL_IPV4") {
 		return true
-	} else {
-		return false
 	}
+	return false
 }
 var validate_ipv6 ValidateCallpoint = func(inParams XfmrParams) (bool) {
 	if strings.Contains(inParams.key, "ACL_IPV6") {
 		return true
-	} else {
-		return false
 	}
+	return false
+}
+
+////////////////////////////////////////////
+// Post Transformer
+////////////////////////////////////////////
+var acl_post_xfmr PostXfmrFunc = func(inParams XfmrParams) (map[string]map[string]db.Value, error) {
+	log.Info("In Post transformer")
+	//TODO: check if a default ACL Rule exists, else create one and update the resultMap with default rule
+	// Return will be the updated result map
+	return (*inParams.dbDataMap)[inParams.curDb], nil
 }
 
 ////////////////////////////////////////////

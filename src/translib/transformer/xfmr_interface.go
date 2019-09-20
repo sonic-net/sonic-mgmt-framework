@@ -21,14 +21,14 @@ type XfmrParams struct {
 /**
  * KeyXfmrYangToDb type is defined to use for conversion of Yang key to DB Key 
  * Transformer function definition.
- * Param: Database info, YgotRoot, operation, Xpath
+ * Param: XfmrParams structure having Database info, YgotRoot, operation, Xpath
  * Return: Database keys to access db entry, error
  **/
 type KeyXfmrYangToDb func (inParams XfmrParams) (string, error)
 /**
  * KeyXfmrDbToYang type is defined to use for conversion of DB key to Yang key
  * Transformer function definition.
- * Param: Database info, operation, Database keys to access db entry
+ * Param: XfmrParams structure having Database info, operation, Database keys to access db entry
  * Return: multi dimensional map to hold the yang key attributes of complete xpath, error
  **/
 type KeyXfmrDbToYang func (inParams XfmrParams) (map[string]interface{}, error)
@@ -43,7 +43,7 @@ type FieldXfmrYangToDb func (inParams XfmrParams) (map[string]string, error)
 /**
  * FieldXfmrDbtoYang type is defined to use for conversion of DB field to Yang field
  * Transformer function definition.
- * Param: Database info, operation, DB data in multidimensional map, output param YgotRoot
+ * Param: XfmrParams structure having Database info, operation, DB data in multidimensional map, output param YgotRoot
  * Return: error
  **/
 type FieldXfmrDbtoYang func (inParams XfmrParams)  (map[string]interface{}, error)
@@ -51,23 +51,32 @@ type FieldXfmrDbtoYang func (inParams XfmrParams)  (map[string]interface{}, erro
 /**
  * SubTreeXfmrYangToDb type is defined to use for handling the yang subtree to DB
  * Transformer function definition.
- * Param: Database info, YgotRoot, operation, Xpath
+ * Param: XfmrParams structure having Database info, YgotRoot, operation, Xpath
  * Return: multi dimensional map to hold the DB data, error
  **/
 type SubTreeXfmrYangToDb func (inParams XfmrParams) (map[string]map[string]db.Value, error)
 /**
  * SubTreeXfmrDbToYang type is defined to use for handling the DB to Yang subtree
  * Transformer function definition.
- * Param : Database pointers, current db, operation, DB data in multidimensional map, output param YgotRoot, uri
+ * Param : XfmrParams structure having Database pointers, current db, operation, DB data in multidimensional map, output param YgotRoot, uri
  * Return :  error
  **/
 type SubTreeXfmrDbToYang func (inParams XfmrParams) (error)
 /**
  * ValidateCallpoint is used to validate a YANG node during data translation back to YANG as a response to GET
- * Param : Database pointers, current db, operation, DB data in multidimensional map, output param YgotRoot, uri
+ * Param : XfmrParams structure having Database pointers, current db, operation, DB data in multidimensional map, output param YgotRoot, uri
  * Return :  bool
  **/
 type ValidateCallpoint func (inParams XfmrParams) (bool)
+
+/**
+ * PostXfmrFunc type is defined to use for handling any default handling operations required as part of the CREATE
+ * Transformer function definition.
+ * Param: XfmrParams structure having database pointers, current db, operation, DB data in multidimensional map, YgotRoot, uri
+ * Return: multi dimensional map to hold the DB data, error
+ **/
+type PostXfmrFunc func (inParams XfmrParams) (map[string]map[string]db.Value, error)
+
 
 /**
  * Xfmr validation interface for validating the callback registration of app modules 

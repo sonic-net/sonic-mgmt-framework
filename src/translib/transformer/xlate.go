@@ -53,18 +53,18 @@ func XlateFuncBind(name string, fn interface{}) (err error) {
 func XlateFuncCall(name string, params ...interface{}) (result []reflect.Value, err error) {
 	if _, ok := XlateFuncs[name]; !ok {
 		err = errors.New(name + " Xfmr function does not exist.")
-		return
+		return nil, nil
 	}
 	if len(params) != XlateFuncs[name].Type().NumIn() {
 		err = ErrParamsNotAdapted
-		return
+		return nil, nil
 	}
 	in := make([]reflect.Value, len(params))
 	for k, param := range params {
 		in[k] = reflect.ValueOf(param)
 	}
 	result = XlateFuncs[name].Call(in)
-	return
+	return result, nil
 }
 
 func TraverseDb(dbs [db.MaxDB]*db.DB, spec KeySpec, result *map[db.DBNum]map[string]map[string]db.Value, parentKey *db.Key) error {
