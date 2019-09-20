@@ -94,28 +94,30 @@ int lyd_data_validate_all(const char *data, const char *depData, const char *oth
 
 int lyd_multi_new_leaf(struct lyd_node *parent, const struct lys_module *module, const char *leafVal)
 {
-	char s[4048];
-	char *name, *val;
+	 char s[4048];
+        char *name, *val;
+        char *saveptr1;
 
-	strcpy(s, leafVal);
+        strcpy(s, leafVal);
 
-	name = strtok(s, "#");
+        name = strtok_r(s, "#",  &saveptr1);
 
-	while (name != NULL)
-	{
-		val = strtok(NULL, "#");
-		if (val != NULL)
-		{
-			if (NULL == lyd_new_leaf(parent, module, name, val))
-			{
-				return -1;
-			}
-		}
+        while (name != NULL)
+        {
+                val = strtok_r(NULL, "#", &saveptr1);
+                if (val != NULL)
+                {
+                        if (NULL == lyd_new_leaf(parent, module, name, val))
+                        {
+                                return -1;
+                        }
+                }
 
-		name = strtok(NULL, "#");
-	}
+                name = strtok_r(NULL, "#", &saveptr1);
+        }
 
-	return 0;
+        return 0;
+
 }
 
 struct lyd_node *lyd_find_node(struct lyd_node *root, const char *xpath) 
