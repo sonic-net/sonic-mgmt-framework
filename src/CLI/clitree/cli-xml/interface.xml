@@ -90,7 +90,9 @@ limitations under the License.
 			optional="true"
 			>
 		</PARAM>
-		<ACTION builtin="clish_nop"></ACTION>
+		<ACTION>
+			python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_vlan_interfaces_interface_ethernet_switched_vlan_state show_vlan.j2
+		</ACTION>
 	</COMMAND>
 
     </VIEW>

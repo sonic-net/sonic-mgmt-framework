@@ -44,6 +44,7 @@ def call_method(name, args):
 
 def generate_body(func, args):
     body = None
+    keypath = []
     # Get the rules of all ACL table entries.
     if func.__name__ == 'patch_openconfig_interfaces_interfaces_interface_config_description':
        keypath = [ args[0] ]
@@ -98,6 +99,11 @@ def run(func, args):
     keypath, body = generate_body(func, args)
 
     try:
+        # Temporary code for #show vlan command with dummy data
+        if func.__name__ == "get_openconfig_vlan_interfaces_interface_ethernet_switched_vlan_state":
+            api_response = {'Vlan100': {'Ethernet20': 'tagged', 'Ethernet40': 'untagged'}}
+            show_cli_output(args[0], api_response)
+            return
         if body is not None:
            api_response = getattr(aa,func.__name__)(*keypath, body=body)
         else :
