@@ -97,7 +97,7 @@ int lyd_multi_new_leaf(struct lyd_node *parent, const struct lys_module *module,
 	char s[4048];
 	char *name, *val, *saveptr;
 
-	strcpy(s, leafVal);
+        strcpy(s, leafVal);
 
 	name = strtok_r(s, "#", &saveptr);
 
@@ -114,8 +114,6 @@ int lyd_multi_new_leaf(struct lyd_node *parent, const struct lys_module *module,
 
 		name = strtok_r(NULL, "#", &saveptr);
 	}
-
-	return 0;
 }
 
 struct lyd_node *lyd_find_node(struct lyd_node *root, const char *xpath) 
