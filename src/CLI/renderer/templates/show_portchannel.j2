@@ -1,0 +1,9 @@
+{% set just_var = 2 %}
+
+Flags: A - Active, Dw - Oper status down
+{{'----------------------------------------------------------------------------------------------------------------------------'}}
+{{'%-20s'|format("Port-Channel")}}{{'%-20s'|format("min-links")}}{{'%-20s'|format("Protocol")}}{{'%-15s'|format("MTU")}}{{'%-15s'|format("Admin")}}{{'%-15s'|format("port-members")}}
+{{'----------------------------------------------------------------------------------------------------------------------------'}}
+{% for dict in json_output['openconfig-interfaces:interface'] %} 
+{{'%-20s'|format(dict['name']|string)}}{{'%-20s'|format(dict['min-links'])}}{{'%-20s'|format("LACP(A)(Dw)")}}{{'%-15s'|format(dict['mtu'])}}{{'%-15s'|format(dict['admin-status'])}}{{'%-15s'|format(dict['members']|string|replace("[", "")|replace("]", ""))}}
+{% endfor %}

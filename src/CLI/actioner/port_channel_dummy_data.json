@@ -1,0 +1,48 @@
+{
+    "openconfig-interfaces:interface": [
+        {
+            "members": [
+                "Ethernet56",
+                "Ethernet60"
+            ], 
+            "min-links": 2,
+            "mtu": 9100,
+            "admin-status": "up",
+            "name": "Portchannel0"
+        }, 
+        {
+            "members": [
+                "Ethernet64",
+                "Ethernet68"
+            ], 
+            "min-links": 1,
+            "mtu": 9100, 
+            "admin-status": "up",
+            "name": "Portchannel1"
+        }, 
+        {
+            "members": [
+                "Ethernet24",
+                "Ethernet12"
+            ], 
+            "min-links": 1,
+            "mtu": 9100,
+            "admin-status": "up",
+            "name": "Portchannel2"
+        }, 
+        {
+            "members": [], 
+            "min-links": 1,
+            "mtu": 9100,
+            "admin-status": "up",
+            "name": "Portchannel3"
+        }, 
+        {
+            "members": [],
+            "min-links": 1,
+            "mtu": 9100, 
+            "admin-status": "up",
+            "name": "Portchannel4"
+        }
+    ]
+}
