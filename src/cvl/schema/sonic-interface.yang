@@ -2,16 +2,8 @@ module sonic-interface {
 	namespace "http://github.com/Azure/sonic-interface";
 	prefix sint;
 
-	import ietf-yang-types {
-		prefix yang;
-	}
-
 	import ietf-inet-types {
 		prefix inet;
-	}
-
-	import sonic-common {
-		prefix scommon;
 	}
 
 	import sonic-port {

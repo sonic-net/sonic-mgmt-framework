@@ -10,9 +10,7 @@ schema: $(out)
 	@echo "Generating $@ ..."
 	@devFile="`echo $< | cut -d . -f1`-dev.yang"; \
 	if [ -f $$devFile ] ; then devOpt="--deviation-module $$devFile"; fi; \
-	pyang -p ./ietf/ -f yin $$devOpt $< -o $@.tmp
-	@xmllint  --noblanks  $@.tmp > $@
-	@rm -rf  $@.tmp
+	pyang -p ./ietf/ --plugindir ../../../tools/pyang/pyang_plugins/ -f yin-cvl $$devOpt $< -o $@
 
 %.tree:%.yang
 	@echo "Generating $@ ..."

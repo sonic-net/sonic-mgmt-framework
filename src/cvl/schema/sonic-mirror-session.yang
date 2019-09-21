@@ -2,16 +2,8 @@ module sonic-mirror-session {
 	namespace "http://github.com/Azure/sonic-mirror-session";
 	prefix sms;
 
-	import ietf-yang-types {
-		prefix yang;
-	}
-
 	import ietf-inet-types {
 		prefix inet;
-	}
-
-	import sonic-common {
-		prefix scommon;
 	}
 
 	organization
