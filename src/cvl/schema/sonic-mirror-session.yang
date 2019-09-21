@@ -30,35 +30,38 @@ module sonic-mirror-session {
 
 	container sonic-mirror-session {
 
-		list MIRROR_SESSION {
-			key "name";
+		container MIRROR_SESSION {
 
-			leaf name {
-				type string;
-			}
+			list MIRROR_SESSION_LIST {
+				key "name";
 
-			leaf src_ip {
-				type inet:ipv4-address;
-			}
+				leaf name {
+					type string;
+				}
 
-			leaf dst_ip {
-				type inet:ipv4-address;
-			}
+				leaf src_ip {
+					type inet:ipv4-address;
+				}
 
-			leaf gre_type {
-				type string;
-			}
+				leaf dst_ip {
+					type inet:ipv4-address;
+				}
 
-			leaf dscp {
-				type uint8;
-			}
+				leaf gre_type {
+					type string;
+				}
 
-			leaf ttl {
-				type uint8;
-			}
+				leaf dscp {
+					type uint8;
+				}
 
-			leaf queue {
-				type uint8;
+				leaf ttl {
+					type uint8;
+				}
+
+				leaf queue {
+					type uint8;
+				}
 			}
 		}
 	}

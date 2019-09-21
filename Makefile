@@ -63,6 +63,7 @@ cli: rest-server
 cvl: go-deps
 	$(MAKE) -C src/cvl
 	$(MAKE) -C src/cvl/schema
+	$(MAKE) -C src/cvl/testdata/schema
 cvl-test:
 	$(MAKE) -C src/cvl gotest
 

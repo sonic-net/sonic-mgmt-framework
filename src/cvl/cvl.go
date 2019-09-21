@@ -227,14 +227,17 @@ func storeModelInfo(modelFile string, module *yparser.YParserModule) { //such mo
 	modelInfo.modelNs[modelName] = modelNs
 
 	//Store metadata present in each list
-	nodes = xmlquery.Find(root, "//module/container/list")
+	nodes = xmlquery.Find(root, "//module/container/container/list")
 	if (nodes == nil) {
 		return
 	}
 
 	for  _, node := range nodes {
-		//for each list
+		//for each list, remove "_LIST" suffix
 		tableName :=  node.Attr[0].Value
+		if (strings.HasSuffix(tableName, "_LIST")) {
+			tableName = tableName[0:len(tableName) - len("_LIST")]
+		}
 		tableInfo := modelTableInfo{modelName: modelName}
 		//Store the reference for list node to be used later
 		listNode := node
@@ -244,6 +247,7 @@ func storeModelInfo(modelFile string, module *yparser.YParserModule) { //such mo
 		tableInfo.dbNum = CONFIG_DB
 		//default delim '|'
 		tableInfo.redisKeyDelim = "|"
+		modelInfo.allKeyDelims[tableInfo.redisKeyDelim] = true
 
 		fieldCount := 0
 
@@ -510,9 +514,9 @@ func (c *CVL) checkPathForTableEntry(tableName string, currentValue string, cfgD
 		//Table name should appear like "../VLAN_MEMBER/tagging_mode' or '
 		// "/prt:PORT/prt:ifname"
 		//re := regexp.MustCompile(fmt.Sprintf(".*[/]([a-zA-Z]*:)?%s[\\[/]", tblNameSrch))
-		tblSrchIdx := strings.Index(xpath, fmt.Sprintf("/%s", tblNameSrch)) //no preifx
+		tblSrchIdx := strings.Index(xpath, fmt.Sprintf("/%s_LIST", tblNameSrch)) //no preifx
 		if (tblSrchIdx < 0) {
-			tblSrchIdx = strings.Index(xpath, fmt.Sprintf(":%s", tblNameSrch)) //with prefix
+			tblSrchIdx = strings.Index(xpath, fmt.Sprintf(":%s_LIST", tblNameSrch)) //with prefix
 		}
 		if (tblSrchIdx < 0) {
 			continue
@@ -986,14 +990,16 @@ func (c *CVL) addLeafRef(config bool, tableName string, name string, value strin
 
 				//only key is there, value wil be fetched and stored here, 
 				//if value can't fetched this entry will be deleted that time
-				if (c.tmpDbCache[refTableName] == nil) {
-					c.tmpDbCache[refTableName] = map[string]interface{}{redisKey: nil}
+				//Strip "_LIST" suffix
+				refRedisTableName := refTableName[0:len(refTableName) - len("_LIST")]
+				if (c.tmpDbCache[refRedisTableName] == nil) {
+					c.tmpDbCache[refRedisTableName] = map[string]interface{}{redisKey: nil}
 				} else {
-					tblMap := c.tmpDbCache[refTableName]
+					tblMap := c.tmpDbCache[refRedisTableName]
 					_, exist := tblMap.(map[string]interface{})[redisKey]
 					if (exist == false) {
 						tblMap.(map[string]interface{})[redisKey] = nil
-						c.tmpDbCache[refTableName] = tblMap
+						c.tmpDbCache[refRedisTableName] = tblMap
 					}
 				}
 			}
@@ -1307,10 +1313,16 @@ func (c *CVL) generateTableData(config bool, jsonNode *jsonquery.Node)(*yparser.
 	tableName := fmt.Sprintf("%s",jsonNode.Data)
 	c.batchLeaf = ""
 
+	//Every Redis table is mapped as list within a container,
+	//E.g. ACL_RULE is mapped as 
+	// container ACL_RULE { list ACL_RULE_LIST {} }
 	var topNode *yparser.YParserNode
+
 	topNode = c.yp.AddChildNode(modelInfo.tableInfo[tableName].module,
 	nil, modelInfo.tableInfo[tableName].modelName)
 
+	listConatinerNode := c.yp.AddChildNode(modelInfo.tableInfo[tableName].module,
+	topNode, tableName)
 
 	//Traverse each key instance
 	for jsonNode = jsonNode.FirstChild; jsonNode != nil; jsonNode = jsonNode.NextSibling {
@@ -1334,7 +1346,7 @@ func (c *CVL) generateTableData(config bool, jsonNode *jsonquery.Node)(*yparser.
 		for  ; totalKeyComb > 0 ; totalKeyComb-- {
 
 			//Add table i.e. create list element
-			listNode := c.addChildNode(tableName, topNode, tableName) //Add the list to the top node
+			listNode := c.addChildNode(tableName, listConatinerNode, tableName + "_LIST") //Add the list to the top node
 
 			//For each key combination
 			//Add keys as leaf to the list
