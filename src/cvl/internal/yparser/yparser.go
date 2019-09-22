@@ -100,23 +100,21 @@ int lyd_multi_new_leaf(struct lyd_node *parent, const struct lys_module *module,
 
         strcpy(s, leafVal);
 
-        name = strtok_r(s, "#",  &saveptr1);
+	name = strtok_r(s, "#", &saveptr);
 
-        while (name != NULL)
-        {
-                val = strtok_r(NULL, "#", &saveptr1);
-                if (val != NULL)
-                {
-                        if (NULL == lyd_new_leaf(parent, module, name, val))
-                        {
-                                return -1;
-                        }
-                }
+	while (name != NULL)
+	{
+		val = strtok_r(NULL, "#", &saveptr);
+		if (val != NULL)
+		{
+			if (NULL == lyd_new_leaf(parent, module, name, val))
+			{
+				return -1;
+			}
+		}
 
-                name = strtok_r(NULL, "#", &saveptr1);
-        }
-
-        return 0;
+		name = strtok_r(NULL, "#", &saveptr);
+	}
 
 }
 

@@ -33,19 +33,23 @@ module sonic-interface {
 	}
 
 	container sonic-interface {
-		list INTERFACE {
-			key "portname ip_prefix";
 
-			leaf portname{
-				type leafref {
-					path "/prt:sonic-port/prt:PORT/prt:ifname";
+		container INTERFACE {
+
+			list INTERFACE_LIST {
+				key "portname ip_prefix";
+
+				leaf portname{
+					type leafref {
+						path "/prt:sonic-port/prt:PORT/prt:PORT_LIST/prt:ifname";
+					}
 				}
-			}
 
-			leaf ip_prefix {
-				mandatory true;
-				type inet:ip-prefix;
+				leaf ip_prefix {
+					mandatory true;
+					type inet:ip-prefix;
 
+				}
 			}
 		}
 	}
