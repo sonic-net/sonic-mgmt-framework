@@ -78,6 +78,17 @@ func validateHandlerFunc(inParams XfmrParams) (bool) {
     return ret[0].Interface().(bool)
 }
 
+func xfmrTblHandlerFunc(xfmrTblNm string, inParams XfmrParams) []string {
+    //xpath, _ := RemoveXPATHPredicates(inParams.uri)
+    ret, err := XlateFuncCall(xfmrTblNm, inParams)
+    if err != nil {
+        return []string{}
+    }
+    return ret[0].Interface().([]string)
+
+}
+
+
 func DbValToInt(dbFldVal string, base int, size int, isUint bool) (interface{}, error) {
 	var res interface{}
 	var err error
@@ -224,7 +235,71 @@ func tableNameAndKeyFromDbMapGet(dbDataMap map[string]map[string]db.Value) (stri
     return tableName, tableKey, nil
 }
 
+/*db num ??, key ??*/
+func fillDbDataMapForTbl(uri string, xpath string, tblName string, tblKey string, cdb db.DBNum, dbs [db.MaxDB]*db.DB, resDbDataMap *map[string]map[string]db.Value) error {
+    var err error
+    var dbresult = make(map[db.DBNum]map[string]map[string]db.Value)
+    dbresult[cdb] = make(map[string]map[string]db.Value)
+    dbFormat := KeySpec{}
+    dbFormat.Ts.Name = tblName
+    dbFormat.dbNum = cdb
+    /* TODO - handle key 
+    dbFormat.Key.Comp = append(dbFormat.Key.Comp, tblKey) */
+    err = TraverseDb(dbs, dbFormat, &dbresult, nil)
+    if err != nil {
+	log.Errorf("TraverseDb() failure for tbl(DB num) %v(%v) for xpath %v", tblName, cdb, xpath)
+	return err
+    }
+    if _, ok := dbresult[cdb]; !ok {
+	logStr := fmt.Sprintf("TraverseDb() did not populate Db data for tbl(DB num) %v(%v) for xpath %v", tblName, cdb, xpath)
+	err = fmt.Errorf("%v", logStr)
+	return err
+    }
+    for tblNm := range(dbresult[cdb]) {
+	for tblky := range(dbresult[cdb][tblNm]) {
+	    for fld, val := range(dbresult[cdb][tblNm]) {
+	        (*resDbDataMap)[tblNm][tblky].Field[fld] = val
+            }
+	}
+    }
+    return err
+
+}
+
 func yangListDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, xpath string, dbDataMap *map[db.DBNum]map[string]map[string]db.Value, resultMap map[string]interface{}, tbl string, tblKey string, cdb db.DBNum, validate bool) error {
+
+    tblXfmr := false
+    var tblList []string
+    if tbl == "" && xSpecMap[xpath].xfmrTbl != nil {
+	lxfmrTblName := *xSpecMap[xpath].xfmrTbl
+	if len(lxfmrTblName) > 0 {
+	    inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, chldUri, GET, "", dbDataMap, nil)
+	    // call table transformer
+	    tblList = xfmrTblHandlerFunc(inParams)
+	    if len(tblList) == 0 {
+		log.Warningf("Table transformer did not return any table for xpath %v", xpath)
+		return nil
+	    }
+	    for _, tbl := range(tblList) {
+		var resDbDataMap = make(map[string]map[string]db.Value)
+		err := fillDbDataMapForTbl(uri, xpath, tbl, dbs, cdb, &resDbDataMap)
+		if err != nil {
+		    log.Wraningf("Could not retrieve DB data for table %v for xpath %v", tbl, xpath)
+		    continue
+		}
+		mapCopy((*dbDataMap), resDbDataMap)
+	    }
+            tblXfmr = true
+        } else {
+	    log.Warningf("Empty table transformer name for xpath %v", xpath)
+	    return nil
+	}
+    }
+    if tbl != "" && !tblXfmr {
+	tblList[0] = tbl
+    }
+
+    for _, tbl = range(tblList) {
     tblData, ok := (*dbDataMap)[cdb][tbl]
 
     if ok {
@@ -258,6 +333,7 @@ func yangListDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, x
             log.Infof("Empty slice for (\"%v\").\r\n", uri)
         }
     }
+    }// end of tblList for
     return nil
 }
 
@@ -356,6 +432,37 @@ func yangDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, xpath
                         } else {
                             log.Infof("Empty container(\"%v\").\r\n", chldUri)
                         }
+                    } else if xSpecMap[chldXpath].xfmrTbl != nil {
+                        lxfmrTblName := *xSpecMap[chldXpath].tableName
+                        if len(lxfmrTblName) > 0 {
+			    inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, chldUri, GET, "", dbDataMap, nil)
+			    tblList = xfmrTblHandlerFunc(inParams) // should be a list containing a single table ???
+			    if len(tblList) == 0 {
+				log.Warningf("Table transformer did not return any table for xpath %v", chldXpath)
+				continue
+			    }
+			    // TODO - add check of single tbale in list ???
+			    if len(tblList) > 1 {
+				log.Warningf("Table transformer returned returned more than one table for container %v", chldXpath)
+				continue
+			    }
+			    for _, tbl := range(tblList) {
+				var resDbDataMap = make(map[string]map[string]db.Value)
+				//err := fillDbDataMapForTbl(chldUri, chldXpath, tbl, parentTblKey, dbs, cdb, &resDbDataMap)
+				err := fillDbDataMapForTbl(chldUri, chldXpath, tbl, tblKey, cdb, &resDbDataMap)
+				if err != nil {
+				    log.Wraningf("Could not retrieve DB data for table %v for xpath %v", tbl, xpath)
+				    continue
+				}
+				mapCopy((*dbDataMap), resDbDataMap)
+			    }
+			    tblXfmr = true
+
+			} else {
+			    log.Warningf("Table transformer name is empty for xpath %v", chldXpath)
+			}
+
+
                     } else {
                         cmap  := make(map[string]interface{})
                         err    = yangDataFill(dbs, ygRoot, chldUri, chldXpath, dbDataMap, cmap, tbl, tblKey, cdb, isValid)
@@ -377,10 +484,11 @@ func yangDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, xpath
                         }
                     } else {
                         ynode, ok := xSpecMap[chldXpath]
+                        lTblName := ""
                         if ok && ynode.tableName != nil {
                             lTblName := *ynode.tableName
-                            yangListDataFill(dbs, ygRoot, chldUri, chldXpath, dbDataMap, resultMap, lTblName, "", cdb, isValid)
                         }
+                        yangListDataFill(dbs, ygRoot, chldUri, chldXpath, dbDataMap, resultMap, lTblName, "", cdb, isValid)
                     }
                 } else {
                     return err
