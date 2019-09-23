@@ -17,6 +17,18 @@
 #                                                                              #
 ################################################################################
 
+TOPDIR := ../../..
+CVL_YANGAPI_DIR     := $(TOPDIR)/build/yaml
+CVL_YANGDIR         := $(TOPDIR)/src/cvl/schema
+CVL_YANGDIR_COMMON  := $(TOPDIR)/src/cvl/schema/ietf
+CVL_YANG_MOD_FILES  := $(shell find $(CVL_YANGDIR) -maxdepth 1 -name '*.yang' | sort)
+CVL_YANG_COMMON_FILES  := $(shell find $(CVL_YANGDIR_COMMON) -name '*.yang' | sort)
+
+CVL_TOOLS_DIR        := $(TOPDIR)/tools
+CVL_PYANG_DIR        := $(CVL_TOOLS_DIR)/pyang
+CVL_PYANG_PLUGIN_DIR := $(CVL_PYANG_DIR)/pyang_plugins
+CVL_PYANG_BIN        := pyang
+
 src_files=$(wildcard *.yang)
 out=$(patsubst %.yang, %.yin, $(src_files)) 
 out_ext=$(patsubst %.yang, %.tree, $(src_files)) 
