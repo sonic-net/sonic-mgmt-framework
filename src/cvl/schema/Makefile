@@ -21,7 +21,7 @@ src_files=$(wildcard *.yang)
 out=$(patsubst %.yang, %.yin, $(src_files)) 
 out_ext=$(patsubst %.yang, %.tree, $(src_files)) 
 
-all:schema
+all:schema 
 
 schema: $(out)
 

@@ -1,0 +1,1 @@
+./translibtest -o "create" -u "/sonic-acl:sonic-acl" -p "./acl-sonic/01_create_MyACL1_1Rule.json" -logtostderr
