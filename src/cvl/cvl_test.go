@@ -3442,3 +3442,55 @@ func TestValidateEditConfig_EmptyNode_Positive(t *testing.T) {
         }
 
 }
+
+func TestSortDepTables(t *testing.T) {
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	result, _ := cvSess.SortDepTables([]string{"PORT", "ACL_RULE", "ACL_TABLE"})
+
+	expectedResult := []string{"ACL_RULE", "ACL_TABLE", "PORT"}
+
+	for i := 0; i < len(expectedResult) ; i++ {
+		if result[i] != expectedResult[i] {
+			t.Errorf("Validation failed, returned value = %v", result)
+			break
+		}
+	}
+
+	cvl.ValidationSessClose(cvSess)
+}
+
+func TestGetOrderedTables(t *testing.T) {
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	result, _ := cvSess.GetOrderedTables("sonic-vlan")
+
+	expectedResult := []string{"VLAN_MEMBER", "VLAN"}
+
+	for i := 0; i < len(expectedResult) ; i++ {
+		if result[i] != expectedResult[i] {
+			t.Errorf("Validation failed, returned value = %v", result)
+			break
+		}
+	}
+
+	cvl.ValidationSessClose(cvSess)
+}
+
+func TestGetDepTables(t *testing.T) {
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	result, _ := cvSess.GetDepTables("sonic-acl", "ACL_RULE")
+
+	expectedResult := []string{"ACL_RULE", "ACL_TABLE", "MIRROR_SESSION"}
+
+	for i := 0; i < len(expectedResult) ; i++ {
+		if result[i] != expectedResult[i] {
+			t.Errorf("Validation failed, returned value = %v", result)
+			break
+		}
+	}
+
+	cvl.ValidationSessClose(cvSess)
+
+}

@@ -64,6 +64,11 @@ var dbNameToDbNum map[string]uint8
 //map of lua script loaded
 var luaScripts map[string]*redis.Script
 
+type tblFieldPair struct {
+	tableName string
+	field string
+}
+
 //var tmpDbCache map[string]interface{} //map of table storing map of key-value pair
 					//m["PORT_TABLE] = {"key" : {"f1": "v1"}}
 //Important schema information to be loaded at bootup time
@@ -80,6 +85,7 @@ type modelTableInfo struct {
 				//multiple leafref possible for union 
 	mustExp map[string]string
 	tablesForMustExp map[string]CVLOperation
+	refFromTables []tblFieldPair //list of table or table/field referring to this table
 }
 
 
@@ -199,6 +205,9 @@ func init() {
 	if err != nil {
 		CVL_LOG(ERROR ,"Could not enable notification error %s", err)
 	}
+
+	//Build reverse leafref info i.e. which table/field uses one table through leafref
+	buildRefTableInfo()
 
 	dbCacheSet(false, "PORT", 0)
 }
@@ -394,6 +403,75 @@ func storeModelInfo(modelFile string, module *yparser.YParserModule) { //such mo
 		modelInfo.tableInfo[tableName] = &tableInfo
 
 	}
+}
+
+func yangToRedisTblName(yangListName string) string {
+	if (strings.HasSuffix(yangListName, "_LIST")) {
+		return yangListName[0:len(yangListName) - len("_LIST")]
+	}
+	return yangListName
+}
+
+//This functions build info of depdent table/fields which uses a particulat table through leafref
+func buildRefTableInfo() {
+	for tblName, tblInfo := range modelInfo.tableInfo {
+		if (len(tblInfo.leafRef) == 0) {
+			continue
+		}
+
+		//For each leafref update the table used through leafref
+		for fieldName, leafRefs  := range tblInfo.leafRef {
+			for _, leafRef := range leafRefs {
+				matches := reLeafRef.FindStringSubmatch(leafRef)
+
+				//We have the leafref table name
+				if (matches != nil && len(matches) == 5) { //whole + 4 sub matches
+					refTable := yangToRedisTblName(matches[2])
+					refTblInfo :=  modelInfo.tableInfo[refTable]
+
+					refFromTables := &refTblInfo.refFromTables
+					*refFromTables = append(*refFromTables, tblFieldPair{tblName, fieldName})
+					modelInfo.tableInfo[refTable] = refTblInfo 
+				}
+			}
+		}
+
+	}
+
+	//Now sort list 'refFromTables' under each table based on dependency among them 
+	for tblName, tblInfo := range modelInfo.tableInfo {
+		if (len(tblInfo.refFromTables) == 0) {
+			continue
+		}
+
+		depTableList := []string{}
+		for i:=0; i < len(tblInfo.refFromTables); i++ {
+			depTableList = append(depTableList, tblInfo.refFromTables[i].tableName)
+		}
+
+		sortedTableList, _ := cvg.cv.SortDepTables(depTableList)
+		if (len(sortedTableList) == 0) {
+			continue
+		}
+
+		newRefFromTables := []tblFieldPair{}
+
+		for i:=0; i < len(sortedTableList); i++ {
+			//Find fieldName
+			fieldName := ""
+			for j :=0; j < len(tblInfo.refFromTables); j++ {
+				if (sortedTableList[i] == tblInfo.refFromTables[j].tableName) {
+					fieldName =  tblInfo.refFromTables[j].field
+					break
+				}
+			}
+			newRefFromTables = append(newRefFromTables, tblFieldPair{sortedTableList[i], fieldName})
+		}
+		//Update sorted refFromTables
+		tblInfo.refFromTables = newRefFromTables
+		modelInfo.tableInfo[tblName] = tblInfo 
+	}
+
 }
 
 //Find the tables names in must expression, these tables data need to be fetched 
@@ -994,10 +1072,6 @@ func (c *CVL) updateDeleteDataToCache(tableName string, redisKey string) {
 // as leafref
 //Use LUA script to find if table has any entry for this leafref
 
-type tblFieldPair struct {
-	tableName string
-	field string
-}
 
 func (c *CVL) findUsedAsLeafRef(tableName, field string) []tblFieldPair {
 
