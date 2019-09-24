@@ -33,9 +33,11 @@ src_files=$(wildcard *.yang)
 out=$(patsubst %.yang, %.yin, $(src_files)) 
 out_ext=$(patsubst %.yang, %.tree, $(src_files)) 
 
-all:schema 
+all: yamlGen allyangs.tree allyangs_tree.html schema
 
 schema: $(out)
+
+#yamlGen: $(CVL_YANGAPI_DIR)/.done
 
 %.yin:%.yang
 	@echo "Generating $@ ..."
@@ -44,6 +46,38 @@ schema: $(out)
 	pyang -p ./ietf/ -f yin $$devOpt $< -o $@.tmp
 	@xmllint  --noblanks  $@.tmp > $@
 	@rm -rf  $@.tmp
+
+allyangs.tree:  $(CVL_YANG_MOD_FILES) $(CVL_YANG_COMMON_FILES)
+	$(CVL_PYANG_BIN) \
+		-f tree \
+		-o $(CVL_YANGDIR)/$@ \
+		-p $(CVL_YANGDIR_COMMON):$(CVL_YANGDIR) \
+		$(CVL_YANG_MOD_FILES)
+	@echo "+++++ Generation of  YANG tree for Sonic Yang modules completed +++++"
+
+allyangs_tree.html:  $(CVL_YANG_MOD_FILES) $(CVL_YANG_COMMON_FILES)
+	$(CVL_PYANG_BIN) \
+		-f jstree \
+		-o $(CVL_YANGDIR)/$@ \
+		-p $(CVL_YANGDIR_COMMON):$(CVL_YANGDIR) \
+		$(CVL_YANG_MOD_FILES)
+	@echo "+++++ Generation of  HTML tree for Sonic Yang modules completed +++++"
+
+#======================================================================
+# Generate YAML files for Sonic Yang modules
+#======================================================================
+yamlGen:
+	@echo "+++++ Generating YAML files for Sonic Yang modules +++++"
+	mkdir -p $(CVL_YANGAPI_DIR)
+	$(CVL_PYANG_BIN) \
+		-f swaggerapi \
+		--outdir $(CVL_YANGAPI_DIR) \
+		--plugindir $(CVL_PYANG_PLUGIN_DIR) \
+		-p $(CVL_YANGDIR_COMMON):$(CVL_YANGDIR) \
+		$(CVL_YANG_MOD_FILES)
+	@echo "+++++ Generation of  YAML files for Sonic Yang modules completed +++++"
+	# touch $@
+
 
 %.tree:%.yang
 	@echo "Generating $@ ..."
@@ -55,3 +89,5 @@ clean:
 	@echo "Removing files ..."
 	rm -rf $(out)
 	rm -rf $(out_ext)
+	rm -rf $(CVL_YANGAPI_DIR)
+	rm -rf allyangs.tree allyangs_tree.html
