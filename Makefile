@@ -48,7 +48,8 @@ GO_DEPS_LIST = github.com/gorilla/mux \
                gopkg.in/go-playground/validator.v9 \
                golang.org/x/crypto/ssh \
 	       github.com/antchfx/jsonquery \
-	       github.com/antchfx/xmlquery
+	       github.com/antchfx/xmlquery \
+	       github.com/philopon/go-toposort
 
 
 REST_BIN = $(BUILD_DIR)/rest_server/main
@@ -76,6 +77,7 @@ cvl: go-deps
 	$(MAKE) -C src/cvl
 	$(MAKE) -C src/cvl/schema
 	$(MAKE) -C src/cvl/testdata/schema
+
 cvl-test:
 	$(MAKE) -C src/cvl gotest
 
