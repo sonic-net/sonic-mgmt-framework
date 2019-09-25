@@ -80,13 +80,13 @@ limitations under the License.
 
    <COMMAND
        name="show vlan"
-       help="show vlan commands"
+       help="Show vlan commands"
        ptype="SUBCOMMAND"
        mode="subcommand"
        >
        <PARAM
            name="id"
-           help="vlan identifier"
+           help="Vlan identifier"
            ptype="VLAN_ID"
            optional="true"
            >
