@@ -24,6 +24,7 @@ import (
 
 var allimports = make(map[string]string)
 var modules = make(map[string]*yang.Module)
+var allmodules = make(map[string]*yang.Module)
 
 func init() {
 	register(&formatter{
@@ -36,6 +37,7 @@ func init() {
 
 // Get the modules for which annotation file needs to be generated
 func getFile(files []string, mods map[string]*yang.Module) {
+    allmodules = mods
     for _, name := range files {
         slash := strings.Split(name, "/")
             modname := slash[len(slash)-1]
@@ -134,6 +136,15 @@ func GetAllImports(entries []*yang.Entry) {
     }
 }
 
+func GetModuleFromPrefix(prefix string) string {
+    for m, p := range allimports {
+	    if prefix == p {
+		    return m
+	    }
+    }
+    return ""
+}
+
 //Get Yang version from the yang.Modules
 func getYangVersion(modname string, mods map[string]*yang.Module) string {
     if (mods[modname].YangVersion != nil) {
@@ -186,6 +197,14 @@ func handleAugments(w io.Writer, a *yang.Augment, grp []*yang.Grouping, prefix s
 func handleUses(w io.Writer, u []*yang.Uses, grp []*yang.Grouping, prefix string, path string) {
     for _, u := range u {
             grpN := u.Name
+	    if  strings.Contains(grpN, ":") {
+	        tokens := strings.Split(grpN, ":")
+		nprefix := tokens[0]
+		grpN = tokens[1]
+		mod := GetModuleFromPrefix(nprefix)
+	        grp = allmodules[mod].Grouping
+		prefix = nprefix
+	    }
             for _, g := range grp {
                 if grpN == g.Name {
                     if len(g.Container) > 0 {
@@ -203,6 +222,10 @@ func handleUses(w io.Writer, u []*yang.Uses, grp []*yang.Grouping, prefix string
                     if len(g.Choice) > 0 {
                         handleChoice(w, g.Choice, grp, prefix, path)
                     }
+                    if len(g.Uses) > 0 {
+                        handleUses(w, g.Uses, grp, prefix, path)
+                    }
+
                 }
             }
     }
