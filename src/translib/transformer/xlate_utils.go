@@ -89,71 +89,76 @@ func yangTypeGet(entry *yang.Entry) string {
 }
 
 func dbKeyToYangDataConvert(uri string, xpath string, dbKey string) (map[string]interface{}, string, error) {
-    var err error
-    if len(uri) == 0 && len(xpath) == 0 && len(dbKey) == 0 {
-	err = fmt.Errorf("Insufficient input")
-        return nil, "", err
-    }
-
-    if _, ok := xSpecMap[xpath]; ok {
-	if xSpecMap[xpath].yangEntry == nil {
-            err = fmt.Errorf("Yang Entry not available for xpath ", xpath)
-            return nil, "", nil
+	var err error
+	if len(uri) == 0 && len(xpath) == 0 && len(dbKey) == 0 {
+		err = fmt.Errorf("Insufficient input")
+		return nil, "", err
 	}
-    }
 
-    var kLvlValList []string
-    keyDataList := strings.Split(dbKey, "|")
-    keyNameList := yangKeyFromEntryGet(xSpecMap[xpath].yangEntry)
-    id          := xSpecMap[xpath].keyLevel
-    uriWithKey  := fmt.Sprintf("%v", xpath)
+	if _, ok := xSpecMap[xpath]; ok {
+		if xSpecMap[xpath].yangEntry == nil {
+			err = fmt.Errorf("Yang Entry not available for xpath ", xpath)
+			return nil, "", nil
+		}
+	}
 
-    /* if uri contins key, use it else use xpath */
-    if strings.Contains(uri, "[") {
-        uriWithKey  = fmt.Sprintf("%v", uri)
-    }
+	var kLvlValList []string
+	keyDataList := strings.Split(dbKey, "|")
+	keyNameList := yangKeyFromEntryGet(xSpecMap[xpath].yangEntry)
+	id          := xSpecMap[xpath].keyLevel
+	uriWithKey  := fmt.Sprintf("%v", xpath)
 
-    if len(xSpecMap[xpath].xfmrKey) > 0 {
-	var dbs [db.MaxDB]*db.DB
-	inParams := formXfmrInputRequest(nil, dbs, db.MaxDB, nil, uri, GET, dbKey, nil, nil)
-        ret, err := XlateFuncCall(dbToYangXfmrFunc(xSpecMap[xpath].xfmrKey), inParams)
-        if err != nil {
-            return nil, "", err
-        }
-        rmap := ret[0].Interface().(map[string]interface{})
-        for k, v := range rmap {
-            uriWithKey += fmt.Sprintf("[%v=%v]", k, v)
-        }
-        return rmap, uriWithKey, nil
-    }
-    kLvlValList = append(kLvlValList, keyDataList[id])
+	/* if uri contins key, use it else use xpath */
+	if strings.Contains(uri, "[") {
+		uriWithKey  = fmt.Sprintf("%v", uri)
+	}
 
-    if len(keyNameList) > 1 {
-        kLvlValList = strings.Split(keyDataList[id], "_")
-    }
+	if len(xSpecMap[xpath].xfmrKey) > 0 {
+		var dbs [db.MaxDB]*db.DB
+		inParams := formXfmrInputRequest(nil, dbs, db.MaxDB, nil, uri, GET, dbKey, nil, nil)
+		ret, err := XlateFuncCall(dbToYangXfmrFunc(xSpecMap[xpath].xfmrKey), inParams)
+		if err != nil {
+			return nil, "", err
+		}
+		rmap := ret[0].Interface().(map[string]interface{})
+		for k, v := range rmap {
+			uriWithKey += fmt.Sprintf("[%v=%v]", k, v)
+		}
+		return rmap, uriWithKey, nil
+	}
 
-    /* TODO: Need to add leaf-ref related code in here and remove this code*/
-    kvalExceedFlag := false
-    chgId := -1
-    if len(keyNameList) < len(kLvlValList) {
-        kvalExceedFlag = true
-        chgId = len(keyNameList) - 1
-    }
+	if len(keyDataList) == 0 || len(keyNameList) == 0 {
+		return nil, "", nil
+	}
 
-    rmap := make(map[string]interface{})
-    for i, kname := range keyNameList {
-        kval := kLvlValList[i]
+	kLvlValList = append(kLvlValList, keyDataList[id])
 
-        /* TODO: Need to add leaf-ref related code in here and remove this code*/
-        if kvalExceedFlag && (i == chgId) {
-            kval = strings.Join(kLvlValList[chgId:], "_")
-        }
+	if len(keyNameList) > 1 {
+		kLvlValList = strings.Split(keyDataList[id], "_")
+	}
 
-        uriWithKey += fmt.Sprintf("[%v=%v]", kname, kval)
-        rmap[kname] = kval
-    }
+	/* TODO: Need to add leaf-ref related code in here and remove this code*/
+	kvalExceedFlag := false
+	chgId := -1
+	if len(keyNameList) < len(kLvlValList) {
+		kvalExceedFlag = true
+		chgId = len(keyNameList) - 1
+	}
 
-    return rmap, uriWithKey, nil
+	rmap := make(map[string]interface{})
+	for i, kname := range keyNameList {
+		kval := kLvlValList[i]
+
+		/* TODO: Need to add leaf-ref related code in here and remove this code*/
+		if kvalExceedFlag && (i == chgId) {
+			kval = strings.Join(kLvlValList[chgId:], "_")
+		}
+
+		uriWithKey += fmt.Sprintf("[%v=%v]", kname, kval)
+		rmap[kname] = kval
+	}
+
+	return rmap, uriWithKey, nil
 }
 
 func contains(sl []string, str string) bool {
