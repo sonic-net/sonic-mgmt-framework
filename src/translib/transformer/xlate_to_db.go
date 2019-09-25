@@ -371,7 +371,7 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
                 }
                 curKey = ret[0].Interface().(string)
             } else {
-                curKey = keyCreate(keyName, xpathPrefix, data)
+                curKey = keyCreate(keyName, xpathPrefix, data, d.Opts.KeySeparator)
             }
             yangReqToDbMapCreate(d, ygRoot, oper, curUri, xpathPrefix, curKey, data, result)
         }
