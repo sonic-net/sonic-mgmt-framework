@@ -131,7 +131,7 @@ limitations under the License.
 			<PARAM
 				name="vlan-id"
 				help="Vlan identifier(1-4094)"
-				ptype="UINT"
+				ptype="VLAN_ID"
 				>
 			</PARAM>
 		<ACTION builtin="clish_nop"></ACTION>
@@ -157,7 +157,7 @@ limitations under the License.
 					<PARAM
 						name="vlan-id"
 						help="Vlan identifier(1-4094)"
-						ptype="UINT"
+						ptype="VLAN_ID"
 						/>
 				</PARAM>
 			</PARAM>
@@ -242,7 +242,7 @@ limitations under the License.
 						<PARAM
 							name="vlan-id"
 							help="VLAN ID of the VLAN when this port is in access mode"
-							ptype="UINT"
+							ptype="VLAN_ID"
 							>
 						</PARAM>
 					</PARAM>
@@ -268,8 +268,8 @@ limitations under the License.
 							>
 							<PARAM
 								name="vlan-id"
-                            	help="VLAN ID of the VLAN when this port is in access mode"
-                            	ptype="UINT"
+                            	help="VLAN ID of the VLAN when this port is in trunk mode"
+                            	ptype="VLAN_ID"
                             	>
                         	</PARAM>
 						</PARAM>
@@ -301,7 +301,7 @@ limitations under the License.
 					ptype="SUBCOMMAND"
 					mode="subcommand"
 					>
-					</PARAM>
+				</PARAM>
 			</PARAM>
 
 			<PARAM
@@ -324,8 +324,8 @@ limitations under the License.
 						>
 						<PARAM
 							name="vlan-id"
-							help="VLAN ID of the VLAN when this port is in access mode"
-							ptype="UINT"
+							help="VLAN ID of the VLAN when this port is in trunk mode"
+							ptype="VLAN_ID"
 							>
 						</PARAM>
 					</PARAM>
@@ -348,5 +348,5 @@ limitations under the License.
             completion="false"
             />
 	</VIEW>
-    </CLISH_MODULE>
+</CLISH_MODULE>
 
