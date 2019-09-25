@@ -1,0 +1,23 @@
+{% set vars = {'vlanName': ""} %}
+{% set vars = {'ifName': ""} %}
+{% set vars = {'tagMode': ""} %}
+{% set vars = {'tagLetter': ""} %}
+{% if json_output -%}
+Q: A - Access (Untagged), T - Tagged
+{{'%-11s'|format("NUM")}}{{'%-2s'|format("Q Ports")}}
+{% for vlanKey, memberEntries in json_output.items() %}
+{% if vars.update({'vlanName':vlanKey}) %}{% endif %}
+{% for ifKey, ifMode in memberEntries.items() %}
+{% if vars.update({'ifName':ifKey}) %}{% endif %}
+{% if vars.update({'tagMode':ifMode}) %}{% endif %}
+{% if ifMode == "untagged" %}
+{% if vars.update({'tagLetter':" U "}) %}{% endif %}
+{% else %}
+{% if vars.update({'tagLetter':" T "}) %}{% endif %}
+{% endif %}
+{{'%-10s'|format(vars.vlanName)}}{{'%-2s'|format(vars.tagLetter)}}{{'%-10s'|format(vars.ifName)}}
+{% if vars.update({'vlanName':''}) %}{% endif %}
+{% endfor %}
+{% endfor %}
+{% endif %}
+	

@@ -75,6 +75,8 @@ cli: rest-server
 cvl: go-deps
 	$(MAKE) -C src/cvl
 	$(MAKE) -C src/cvl/schema
+	$(MAKE) -C src/cvl/testdata/schema
+
 cvl-test:
 	$(MAKE) -C src/cvl gotest
 
@@ -105,15 +107,26 @@ cp $(TOPDIR)/ygot-modified-files/schema.go $(BUILD_GOPATH)/src/github.com/openco
 cp $(TOPDIR)/ygot-modified-files/unmarshal.go $(BUILD_GOPATH)/src/github.com/openconfig/ygot/ytypes/unmarshal.go; \
 cp $(TOPDIR)/ygot-modified-files/validate.go $(BUILD_GOPATH)/src/github.com/openconfig/ygot/ytypes/validate.go; \
 cp $(TOPDIR)/ygot-modified-files/reflect.go $(BUILD_GOPATH)/src/github.com/openconfig/ygot/ytypes/../util/reflect.go; \
-$(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/openconfig/ygot/ygot
+cp $(TOPDIR)/goyang-modified-files/README.md $(BUILD_GOPATH)/src/github.com/openconfig/goyang/README.md; \
+cp $(TOPDIR)/goyang-modified-files/yang.go $(BUILD_GOPATH)/src/github.com/openconfig/goyang/yang.go; \
+cp $(TOPDIR)/goyang-modified-files/annotate.go $(BUILD_GOPATH)/src/github.com/openconfig/goyang/annotate.go; \
+cp $(TOPDIR)/goyang-modified-files/entry.go $(BUILD_GOPATH)/src/github.com/openconfig/goyang/pkg/yang/entry.go; \
+$(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/openconfig/ygot/ygot; \
+$(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/openconfig/goyang
 
 install:
 	$(INSTALL) -D $(REST_BIN) $(DESTDIR)/usr/sbin/rest_server
 	$(INSTALL) -D $(CERTGEN_BIN) $(DESTDIR)/usr/sbin/generate_cert
 	$(INSTALL) -d $(DESTDIR)/usr/sbin/schema/
 	$(INSTALL) -d $(DESTDIR)/usr/sbin/lib/
+	$(INSTALL) -d $(DESTDIR)/usr/models/yang/
 	$(INSTALL) -D $(TOPDIR)/src/cvl/schema/*.yin $(DESTDIR)/usr/sbin/schema/
 	$(INSTALL) -D $(TOPDIR)/src/cvl/testdata/schema/*.yin $(DESTDIR)/usr/sbin/schema/
+	$(INSTALL) -D $(TOPDIR)/src/cvl/schema/*.yang $(DESTDIR)/usr/models/yang/
+	$(INSTALL) -D $(TOPDIR)/models/yang/*.yang $(DESTDIR)/usr/models/yang/
+	$(INSTALL) -D $(TOPDIR)/config/transformer/models_list $(DESTDIR)/usr/models/yang/
+	$(INSTALL) -D $(TOPDIR)/models/yang/common/*.yang $(DESTDIR)/usr/models/yang/
+	$(INSTALL) -D $(TOPDIR)/models/yang/annotations/*.yang $(DESTDIR)/usr/models/yang/
 	cp -rf $(TOPDIR)/build/rest_server/dist/ui/ $(DESTDIR)/rest_ui/
 	cp -rf $(TOPDIR)/build/cli $(DESTDIR)/usr/sbin/
 	cp -rf $(TOPDIR)/build/swagger_client_py/ $(DESTDIR)/usr/sbin/lib/

@@ -1,0 +1,1 @@
+./translibtest -o "get" -u "/sonic-acl:sonic-acl/ACL_RULE[aclname=MyACL1_ACL_IPV4][rulename=RULE_1]" -logtostderr
