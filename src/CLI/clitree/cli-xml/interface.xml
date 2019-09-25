@@ -63,7 +63,7 @@ limitations under the License.
 		  	>
                         <PARAM
                           name="lag-id"
-                          help="Portchannel identifier"
+                          help="PortChannel identifier"
                           ptype="UINT"
                           optional="true"
                           >
@@ -84,9 +84,9 @@ limitations under the License.
 	        python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces show_interface_counters.j2&#xA;
 	    elif test "${if-subcommands}" = "port-channel"; then&#xA;
                 if test "${lag-id}" = ""; then&#xA;
-                    python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces Portchannel show_portchannel.j2&#xA;
+                    python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces PortChannel show_portchannel.j2&#xA;
                 else&#xA;
-	            python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_if_aggregate_interfaces_interface_aggregation_state Portchannel${lag-id} show_portchannel_id.j2#xA;
+	            python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_if_aggregate_interfaces_interface_aggregation_state PortChannel${lag-id} show_portchannel_id.j2#xA;
                 fi
 	    else&#xA;
                 if test "${phy-if-id}" = ""; then&#xA;
@@ -151,7 +151,7 @@ limitations under the License.
                                 ptype="UINT"
                                 >
                         </PARAM>
-                        <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface Portchannel${lag-id}</ACTION>
+                        <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface PortChannel${lag-id}</ACTION>
                 </COMMAND>
 
 		<!-- no interface commands -->
@@ -195,7 +195,7 @@ limitations under the License.
               python $SONIC_CLI_ROOT/sonic-cli-if.py delete_openconfig_interfaces_interfaces_interface Vlan${vlan-id}&#xA;
           fi&#xA;
           if test "${if-subcommands}" = "port-channel"; then&#xA;
-              python $SONIC_CLI_ROOT/sonic-cli-if.py delete_openconfig_interfaces_interfaces_interface Portchannel${lag-id}&#xA;
+              python $SONIC_CLI_ROOT/sonic-cli-if.py delete_openconfig_interfaces_interfaces_interface PortChannel${lag-id}&#xA;
           fi
       </ACTION>
     </COMMAND>
