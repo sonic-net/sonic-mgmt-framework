@@ -23,89 +23,150 @@ limitations under the License.
     http://www.dellemc.com/sonic/XMLSchema/clish.xsd"
     >
     <VIEW name="enable-view">
-	<!--show interface Ethernet <id> -->
+    <!--show interface Ethernet <id> -->
     <COMMAND
          name="show interface"
          help="Show Interface info"
-	 >
-	 <PARAM
-	     name="if-subcommands"
-	     help="Interface subcommands"
-	     mode="switch"
-	     ptype="SUBCOMMAND"
-	     >
-	     <PARAM
-		  name="counters"
-		  help="Counters for Physical Interfaces"
-		  ptype="SUBCOMMAND"
-		  mode="subcommand"
-		  >
+         >
+         <PARAM
+             name="if-subcommands"
+             help="Interface subcommands"
+             mode="switch"
+             ptype="SUBCOMMAND"
+             >
+             <PARAM
+                 name="counters"
+                 help="Counters for Physical Interfaces"
+                 ptype="SUBCOMMAND"
+                 mode="subcommand"
+                 >
              </PARAM>
-	     <PARAM
-		  name="Ethernet"
-		  help="Physical Interface"
-		  ptype="SUBCOMMAND"
-		  mode="subcommand"
-		  >
-		  <PARAM
-		      name="phy-if-id"
-		      help="Physical interface(Multiples of 4)"
-	              ptype="UINT"
-		      optional="true"
-		      >
-		  </PARAM>
-	      </PARAM>
-	      <PARAM
-		  name="status"
-		  help="Physical interfaces status"
-		  ptype="SUBCOMMAND"
-		  mode="subcommand"
-		  >
-	      </PARAM>
-	 </PARAM>
-	 <ACTION>
-	    if test "${if-subcommands}" = "status"; then&#xA;
-		python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces show_interface_status.j2 ${__full_line}&#xA;
-	    elif test "${if-subcommands}" = "counters"; then&#xA;
-	        python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces show_interface_counters.j2 ${__full_line}&#xA;
-	    else&#xA;
-                if test "${phy-if-id}" = ""; then&#xA;
-                    python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces show_interface.j2 ${__full_line}&#xA;
-                else&#xA;
-                    python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces_interface Ethernet${phy-if-id} show_interface_id.j2 ${__full_line}&#xA;
-		fi&#xA;
-	    fi
-         </ACTION>
-    </COMMAND>
-    </VIEW>
+             <PARAM
+                 name="Ethernet"
+                 help="Physical Interface"
+                 ptype="SUBCOMMAND"
+                 mode="subcommand"
+                 >
+                 <PARAM
+                    name="phy-if-id"
+                    help="Physical interface(Multiples of 4)"
+                    ptype="UINT"
+                    optional="true"
+                    >
+                 </PARAM>
+             </PARAM>
+             <PARAM
+                 name="status"
+                 help="Physical interfaces status"
+                 ptype="SUBCOMMAND"
+                 mode="subcommand"
+                 >
+             </PARAM>
+         </PARAM>
+   <ACTION>
+        if test "${if-subcommands}" = "status"; then&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces show_interface_status.j2 ${__full_line}&#xA;
+        elif test "${if-subcommands}" = "counters"; then&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces show_interface_counters.j2 ${__full_line}&#xA;
+        else&#xA;
+            if test "${phy-if-id}" = ""; then&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces show_interface.j2 ${__full_line}&#xA;
+            else&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces_interface Ethernet${phy-if-id} show_interface_id.j2 ${__full_line}&#xA;
+            fi&#xA;
+        fi
+   </ACTION>
+   </COMMAND>
+
+   <COMMAND
+       name="show vlan"
+       help="Show vlan commands"
+       ptype="SUBCOMMAND"
+       mode="subcommand"
+       >
+       <PARAM
+           name="id"
+           help="Vlan identifier"
+           ptype="VLAN_ID"
+           optional="true"
+           >
+       </PARAM>
+   <ACTION>
+       python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_vlan_interfaces_interface_ethernet_switched_vlan_state show_vlan.j2
+   </ACTION>
+   </COMMAND>
+
+   </VIEW>
 
     <VIEW
         name="configure-view"
         >
-        <COMMAND
-            name="interface"
-            help="Select an interface"
-            view="configure-if-view"
-            viewid="iface=Ethernet${phy-if-name}"
+    <!-- interface commands -->
+    <COMMAND
+        name="interface"
+        help="Select an interface"
+        />
+
+    <COMMAND
+        name="interface Ethernet"
+        help="Select an interface"
+        view="configure-if-view"
+        viewid="iface=Ethernet${phy-if-name}"
+        >
+        <PARAM
+            name="phy-if-name"
+            help="Physical interface(Multiples of 4)"
+            ptype="UINT"
             >
-            <PARAM
-                name="Ethernet"
-                help="Interface commands"
+        </PARAM>
+     <ACTION builtin="clish_nop"></ACTION>
+     </COMMAND>
+
+     <COMMAND
+         name="interface vlan"
+         help="Vlan Interface Configuration"
+         mode="subcommand"
+         ptype="SUBCOMMAND"
+         view="configure-vlan-view"
+         viewid="vlan_id=vlan${vlan-id}"
+         >
+         <PARAM
+             name="vlan-id"
+             help="Vlan identifier(1-4094)"
+             ptype="VLAN_ID"
+             >
+         </PARAM>
+     <ACTION builtin="clish_nop"></ACTION>
+     </COMMAND>
+
+     <!-- no interface commands -->
+     <COMMAND
+         name="no interface"
+         help="Delete interface"
+         >
+         <PARAM
+             name="if-subcommands"
+             help="Interface sub-commands"
+             mode="switch"
+             ptype="SUBCOMMAND"
+             >
+             <PARAM
+                name="vlan"
+                help="Delete vlan"
                 mode="subcommand"
                 ptype="SUBCOMMAND"
                 >
                 <PARAM
-                    name="phy-if-name"
-                    help="Physical interface(Multiples of 4)"
-                    ptype="UINT"
-                    view="configure-if-view"
-                    viewid="iface=Ethernet${phyifname}"
-                    />
-            </PARAM>
-            <ACTION builtin="clish_nop"></ACTION>
-        </COMMAND>
-    </VIEW>
-    <VIEW
+                    name="vlan-id"
+                    help="Vlan identifier(1-4094)"
+                    ptype="VLAN_ID"
+                />
+             </PARAM>
+         </PARAM>
+     <ACTION builtin="clish_nop"></ACTION>
+     </COMMAND>
+     </VIEW>
+     <VIEW
         name="configure-if-view"
         prompt="${SYSTEM_NAME}(conf-if-${iface})# "
         depth="2"
@@ -120,44 +181,174 @@ limitations under the License.
             name="no"
             help="Negate a command or set its defaults"
             />
-        <COMMAND
-            name="shutdown"
-            help="Disable the interface">
-	    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config_enabled ${iface} False </ACTION>
-        </COMMAND>
-        <COMMAND
-            name="no shutdown"
-            help="Enable the interface">
-	    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config_enabled ${iface} True </ACTION>
-        </COMMAND>
-        <COMMAND
+        <COMMAND 
             name="description"
             help="Textual description">
-	    <PARAM
+            <PARAM
                 name="desc"
                 help="Textual description of the interface"
                 ptype="STRING" />
-	    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config_description ${iface} ${desc} </ACTION>
+        <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config_description ${iface} ${desc} </ACTION>
         </COMMAND>
         <COMMAND
             name="no description"
             help="Remove description" >
-	    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config_description ${iface} "" </ACTION>
+        <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config_description ${iface} "" </ACTION>
         </COMMAND>
         <COMMAND
             name="mtu"
             help="Configure MTU">
-	    <PARAM
+            <PARAM
                 name="mtu"
                 help="MTU of the interface"
                 ptype="RANGE_MTU" />
-	    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config_mtu ${iface} ${mtu} </ACTION>
+        <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config_mtu ${iface} ${mtu} </ACTION>
         </COMMAND>
-	<COMMAND
+        <COMMAND
             name="no mtu"
             help="Remove MTU">
             <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config_mtu ${iface} 9100 </ACTION>
         </COMMAND>
-    </VIEW>
-    </CLISH_MODULE>
+        <COMMAND 
+            name="shutdown"
+            help="Disable the interface">
+        <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config_enabled ${iface} False </ACTION>
+        </COMMAND>
+        <COMMAND 
+            name="no shutdown"
+            help="Enable the interface">
+        <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config_enabled ${iface} True </ACTION>
+        </COMMAND>
+
+        <COMMAND
+            name="switchport"
+            help="Configure switchport parameters"
+            >
+            <PARAM
+                name="switchport-subcommands"
+                help="Switchport subcommands"
+                ptype="SUBCOMMAND"
+                mode="switch"
+                >
+                <PARAM
+                    name="access"
+                    help="Set access mode characteristics of the interface"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    >
+                    <PARAM
+                        name="vlan"
+                        help="Set VLAN when interface is in access mode"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        >
+                        <PARAM
+                            name="vlan-id"
+                            help="VLAN ID of the VLAN when this port is in access mode"
+                            ptype="VLAN_ID"
+                            >
+                        </PARAM>
+                    </PARAM>
+                </PARAM>
+
+                <PARAM
+                    name="trunk"
+                    help="Configure trunking parameters on an interface"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    >
+                    <PARAM
+                        name="allowed"
+                        help="Configure trunking parameters on an interface"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        >
+                        <PARAM
+                            name="vlan"
+                            help="Configure trunking parameters on an interface"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            >
+                            <PARAM
+                                name="vlan-id"
+                                help="VLAN ID of the VLAN when this port is in trunk mode"
+                                ptype="VLAN_ID"
+                                >
+                            </PARAM>
+                        </PARAM>
+                    </PARAM>
+                </PARAM>
+          </PARAM>
+       <ACTION builtin="clish_nop"></ACTION>
+       </COMMAND>
+
+       <COMMAND 
+           name="no switchport"
+           help="Remove switchport parameters"
+           >
+           <PARAM
+               name="switchport-subcommands"
+               help="Switchport subcommands"
+               ptype="SUBCOMMAND"
+               mode="switch"
+               >
+               <PARAM
+                   name="access"
+                   help="Remove access mode characteristics of the interface"
+                   ptype="SUBCOMMAND"
+                   mode="subcommand"
+                   >
+                   <PARAM
+                       name="vlan"
+                       help="Remove VLAN when interface is in access mode"
+                       ptype="SUBCOMMAND"
+                       mode="subcommand"
+                       >
+                   </PARAM>
+               </PARAM>
+
+               <PARAM
+                    name="trunk"
+                    help="Remove trunking parameters on an interface"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    >
+                    <PARAM
+                        name="allowed"
+                        help="Remove trunking parameters on an interface"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        >
+                        <PARAM
+                            name="vlan"
+                            help="Remove trunking parameters on an interface"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            >
+                            <PARAM
+                                name="vlan-id"
+                                help="VLAN ID of the VLAN when this port is in trunk mode"
+                                ptype="VLAN_ID"
+                                >
+                            </PARAM>
+                        </PARAM>
+                    </PARAM>
+               </PARAM>
+           </PARAM>
+      <ACTION builtin="clish_nop"></ACTION>
+      </COMMAND>
+</VIEW>
+<VIEW
+     name="configure-vlan-view"
+     prompt="${SYSTEM_NAME}(conf-if-${vlan_id})# "
+     depth="2"
+     >
+        <!-- Inheritance -->
+     <NAMESPACE
+         ref="configure-view"
+         help="false"
+         completion="false"
+         />
+</VIEW>
+</CLISH_MODULE>
 
