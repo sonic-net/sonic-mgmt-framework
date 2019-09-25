@@ -128,12 +128,12 @@ func XlateUriToKeySpec(uri string, ygRoot *ygot.GoStruct, t *interface{}) (*[]Ke
 }
 
 func FillKeySpecs(yangXpath string , keyStr string, retdbFormat *[]KeySpec) ([]KeySpec){
-    if xSpecMap == nil {
+    if xYangSpecMap == nil {
         return *retdbFormat
     }
-    _, ok := xSpecMap[yangXpath]
+    _, ok := xYangSpecMap[yangXpath]
     if ok {
-        xpathInfo := xSpecMap[yangXpath]
+        xpathInfo := xYangSpecMap[yangXpath]
         if xpathInfo.tableName != nil {
             dbFormat := KeySpec{}
             dbFormat.Ts.Name = *xpathInfo.tableName
@@ -303,7 +303,7 @@ func XlateFromDb(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db.DB, data m
 		}
 	} else {
 	        xpath, _ := RemoveXPATHPredicates(uri)
-		cdb = xSpecMap[xpath].dbIndex
+		cdb = xYangSpecMap[xpath].dbIndex
 	}
 	payload, err := dbDataToYangJsonCreate(uri, ygRoot, dbs, &dbData, cdb)
 	log.Info("Payload generated:", payload)
