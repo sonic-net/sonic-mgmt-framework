@@ -26,10 +26,10 @@ func keyFromXpathCreate(keyList []string) string {
 
 /* Create db key from data xpath(request) */
 func keyCreate(keyPrefix string, xpath string, data interface{}) string {
-	_, ok := xSpecMap[xpath]
+	_, ok := xYangSpecMap[xpath]
 	if ok {
-		if xSpecMap[xpath].yangEntry != nil {
-			yangEntry := xSpecMap[xpath].yangEntry
+		if xYangSpecMap[xpath].yangEntry != nil {
+			yangEntry := xYangSpecMap[xpath].yangEntry
 			if len(keyPrefix) > 0 { keyPrefix += "|" }
 			keyVal := ""
 			for i, k := range (strings.Split(yangEntry.Key, " ")) {
@@ -95,8 +95,8 @@ func dbKeyToYangDataConvert(uri string, xpath string, dbKey string) (map[string]
 		return nil, "", err
 	}
 
-	if _, ok := xSpecMap[xpath]; ok {
-		if xSpecMap[xpath].yangEntry == nil {
+	if _, ok := xYangSpecMap[xpath]; ok {
+		if xYangSpecMap[xpath].yangEntry == nil {
 			err = fmt.Errorf("Yang Entry not available for xpath ", xpath)
 			return nil, "", nil
 		}
@@ -104,8 +104,8 @@ func dbKeyToYangDataConvert(uri string, xpath string, dbKey string) (map[string]
 
 	var kLvlValList []string
 	keyDataList := strings.Split(dbKey, "|")
-	keyNameList := yangKeyFromEntryGet(xSpecMap[xpath].yangEntry)
-	id          := xSpecMap[xpath].keyLevel
+	keyNameList := yangKeyFromEntryGet(xYangSpecMap[xpath].yangEntry)
+	id          := xYangSpecMap[xpath].keyLevel
 	uriWithKey  := fmt.Sprintf("%v", xpath)
 
 	/* if uri contins key, use it else use xpath */
@@ -113,10 +113,10 @@ func dbKeyToYangDataConvert(uri string, xpath string, dbKey string) (map[string]
 		uriWithKey  = fmt.Sprintf("%v", uri)
 	}
 
-	if len(xSpecMap[xpath].xfmrKey) > 0 {
+	if len(xYangSpecMap[xpath].xfmrKey) > 0 {
 		var dbs [db.MaxDB]*db.DB
 		inParams := formXfmrInputRequest(nil, dbs, db.MaxDB, nil, uri, GET, dbKey, nil, nil)
-		ret, err := XlateFuncCall(dbToYangXfmrFunc(xSpecMap[xpath].xfmrKey), inParams)
+		ret, err := XlateFuncCall(dbToYangXfmrFunc(xYangSpecMap[xpath].xfmrKey), inParams)
 		if err != nil {
 			return nil, "", err
 		}
@@ -228,8 +228,8 @@ func yangToDbXfmrFunc(funcName string) string {
 
 func uriWithKeyCreate (uri string, xpathTmplt string, data interface{}) (string, error) {
     var err error
-    if _, ok := xSpecMap[xpathTmplt]; ok {
-         yangEntry := xSpecMap[xpathTmplt].yangEntry
+    if _, ok := xYangSpecMap[xpathTmplt]; ok {
+         yangEntry := xYangSpecMap[xpathTmplt].yangEntry
          if yangEntry != nil {
               for _, k := range (strings.Split(yangEntry.Key, " ")) {
                   uri += fmt.Sprintf("[%v=%v]", k, data.(map[string]interface{})[k])
@@ -238,7 +238,7 @@ func uriWithKeyCreate (uri string, xpathTmplt string, data interface{}) (string,
             err = fmt.Errorf("Yang Entry not available for xpath ", xpathTmplt)
 	 }
     } else {
-        err = fmt.Errorf("No entry in xSpecMap for xpath ", xpathTmplt)
+        err = fmt.Errorf("No entry in xYangSpecMap for xpath ", xpathTmplt)
     }
     return uri, err
 }
@@ -252,9 +252,9 @@ func xpathRootNameGet(path string) string {
 }
 
 func getDbNum(xpath string ) db.DBNum {
-    _, ok := xSpecMap[xpath]
+    _, ok := xYangSpecMap[xpath]
     if ok {
-        xpathInfo := xSpecMap[xpath]
+        xpathInfo := xYangSpecMap[xpath]
         return xpathInfo.dbIndex
     }
     // Default is ConfigDB

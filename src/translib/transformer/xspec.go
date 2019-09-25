@@ -36,7 +36,7 @@ type dbInfo  struct {
     yangXpath     []string
 }
 
-var xSpecMap map[string]*yangXpathInfo
+var xYangSpecMap map[string]*yangXpathInfo
 var xDbSpecMap map[string]*dbInfo
 var xDbSpecOrdTblMap map[string][]string //map of module-name to ordered list of db tables { "sonic-acl" : ["ACL_TABLE", "ACL_RULE"] }
 
@@ -50,23 +50,23 @@ func updateDbTableData (xpath string, xpathData *yangXpathInfo, tableName string
 }
 
 /* Recursive api to fill the map with yang details */
-func yangToDbMapFill (keyLevel int, xSpecMap map[string]*yangXpathInfo, entry *yang.Entry, xpathPrefix string) {
+func yangToDbMapFill (keyLevel int, xYangSpecMap map[string]*yangXpathInfo, entry *yang.Entry, xpathPrefix string) {
 	xpath := ""
 	/* create the yang xpath */
-	if xSpecMap[xpathPrefix] != nil  && xSpecMap[xpathPrefix].yangDataType == "module" {
+	if xYangSpecMap[xpathPrefix] != nil  && xYangSpecMap[xpathPrefix].yangDataType == "module" {
 		/* module name is separated from the rest of xpath with ":" */
 		xpath = xpathPrefix + ":" + entry.Name
 	} else {
 		xpath = xpathPrefix + "/" + entry.Name
 	}
 
-	xpathData, ok := xSpecMap[xpath]
+	xpathData, ok := xYangSpecMap[xpath]
 	if !ok {
 		xpathData = new(yangXpathInfo)
-		xSpecMap[xpath] = xpathData
+		xYangSpecMap[xpath] = xpathData
 		xpathData.dbIndex = db.ConfigDB // default value
 	} else {
-		xpathData = xSpecMap[xpath]
+		xpathData = xYangSpecMap[xpath]
 	}
 
 	xpathData.yangDataType = entry.Node.Statement().Keyword
@@ -74,7 +74,7 @@ func yangToDbMapFill (keyLevel int, xSpecMap map[string]*yangXpathInfo, entry *y
 		childToUpdateParent(xpath, *xpathData.tableName)
 	}
 
-	parentXpathData, ok := xSpecMap[xpathPrefix]
+	parentXpathData, ok := xYangSpecMap[xpathPrefix]
 	/* init current xpath table data with its parent data, change only if needed. */
 	if ok {
 		if xpathData.tableName == nil && parentXpathData.tableName != nil && xpathData.xfmrTbl == nil {
@@ -126,8 +126,8 @@ func yangToDbMapFill (keyLevel int, xSpecMap map[string]*yangXpathInfo, entry *y
 		for id, keyName := range(strings.Split(entry.Key, " ")) {
 			keyXpath[id] = xpath + "/" + keyName
 			keyXpathData := new(yangXpathInfo)
-			xSpecMap[xpath + "/" + keyName] = keyXpathData
-			xSpecMap[xpath + "/" + keyName].isKey = true
+			xYangSpecMap[xpath + "/" + keyName] = keyXpathData
+			xYangSpecMap[xpath + "/" + keyName].isKey = true
 		}
 
 		xpathData.keyXpath = make(map[int]*[]string, (parentKeyLen + 1))
@@ -152,7 +152,7 @@ func yangToDbMapFill (keyLevel int, xSpecMap map[string]*yangXpathInfo, entry *y
 	xpathData.yangEntry = entry
 	/* now recurse, filling the map with current node's children info */
 	for _, child := range childList {
-		yangToDbMapFill(curKeyLevel, xSpecMap, entry.Dir[child], xpath)
+		yangToDbMapFill(curKeyLevel, xYangSpecMap, entry.Dir[child], xpath)
 	}
 }
 
@@ -162,8 +162,8 @@ func yangToDbMapBuild(entries map[string]*yang.Entry) {
         return
     }
 
-    if xSpecMap == nil {
-        xSpecMap = make(map[string]*yangXpathInfo)
+    if xYangSpecMap == nil {
+        xYangSpecMap = make(map[string]*yangXpathInfo)
     }
 
     for module, e := range entries {
@@ -173,12 +173,12 @@ func yangToDbMapBuild(entries map[string]*yang.Entry) {
 
 	/* Start to fill xpath based map with yang data */
     keyLevel := 0
-    yangToDbMapFill(keyLevel, xSpecMap, e, "")
+    yangToDbMapFill(keyLevel, xYangSpecMap, e, "")
 
 	// Fill the ordered map of child tables list for oc yangs
 	updateSchemaOrderedMap(module, e)
     }
-    mapPrint(xSpecMap, "/tmp/fullSpec.txt")
+    mapPrint(xYangSpecMap, "/tmp/fullSpec.txt")
     dbMapPrint()
 }
 
@@ -243,22 +243,23 @@ func childToUpdateParent( xpath string, tableName string) {
 		return
 	}
 
-	_, ok := xSpecMap[parent]
+	_, ok := xYangSpecMap[parent]
 	if !ok {
 		xpathData = new(yangXpathInfo)
-		xSpecMap[parent] = xpathData
+		xYangSpecMap[parent] = xpathData
 	}
-	xSpecMap[parent].childTable = append(xSpecMap[parent].childTable, tableName)
-	if xSpecMap[parent].yangEntry != nil && xSpecMap[parent].yangEntry.Node.Statement().Keyword == "list" {
+	xYangSpecMap[parent].childTable = append(xYangSpecMap[parent].childTable, tableName)
+	if xYangSpecMap[parent].yangEntry != nil &&
+	   xYangSpecMap[parent].yangEntry.Node.Statement().Keyword == "list" {
 		return
 	}
 	childToUpdateParent(parent, tableName)
 }
 
 /* Build lookup map based on yang xpath */
-func annotEntryFill(xSpecMap map[string]*yangXpathInfo, xpath string, entry *yang.Entry) {
+func annotEntryFill(xYangSpecMap map[string]*yangXpathInfo, xpath string, entry *yang.Entry) {
 	xpathData := new(yangXpathInfo)
-	_, ok := xSpecMap[xpath]
+	_, ok := xYangSpecMap[xpath]
 	if !ok {
 		fmt.Printf("Xpath not found(%v) \r\n", xpath)
 	}
@@ -319,7 +320,7 @@ func annotEntryFill(xSpecMap map[string]*yangXpathInfo, xpath string, entry *yan
 			}
 		}
 	}
-	xSpecMap[xpath] = xpathData
+	xYangSpecMap[xpath] = xpathData
 }
 
 /* Build xpath from yang-annotation */
@@ -336,8 +337,8 @@ func annotToDbMapBuild(annotEntries []*yang.Entry) {
     if annotEntries == nil {
         return
     }
-    if xSpecMap == nil {
-        xSpecMap = make(map[string]*yangXpathInfo)
+    if xYangSpecMap == nil {
+        xYangSpecMap = make(map[string]*yangXpathInfo)
     }
 
     for _, e := range annotEntries {
@@ -348,14 +349,14 @@ func annotToDbMapBuild(annotEntries []*yang.Entry) {
                 for i, deviate := range d.Deviate {
                     if i == 2 {
                         for _, ye := range deviate {
-                            annotEntryFill(xSpecMap, xpath, ye)
+                            annotEntryFill(xYangSpecMap, xpath, ye)
                         }
                     }
                 }
             }
         }
     }
-    mapPrint(xSpecMap, "/tmp/annotSpec.txt")
+    mapPrint(xYangSpecMap, "/tmp/annotSpec.txt")
 }
 
 /* Debug function to print the yang xpath lookup map */
@@ -427,9 +428,9 @@ func updateSchemaOrderedMap(module string, entry *yang.Entry) {
         for _, dir := range entry.DirOKeys {
             // Gives the yang xpath for the top level container
             xpath := "/" + module + ":" + dir
-            _, ok := xSpecMap[xpath]
+            _, ok := xYangSpecMap[xpath]
             if ok {
-		yentry := xSpecMap[xpath].yangEntry
+		yentry := xYangSpecMap[xpath].yangEntry
 		if yentry.Node.Statement().Keyword == "container" {
                     var keyspec = make([]KeySpec, 0)
                     keyspec = FillKeySpecs(xpath, "" , &keyspec)
