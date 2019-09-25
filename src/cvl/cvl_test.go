@@ -202,7 +202,7 @@ func prepareDb() {
 		fmt.Printf("read file %v err: %v", fileName, err)
 	}
 
-	port_map := loadConfig("", PortsMapByte)
+	port_map = loadConfig("", PortsMapByte)
 
 	loadConfigDB(rclient, port_map)
 	loadConfigDB(rclient, depDataMap)
@@ -2609,7 +2609,7 @@ func TestValidateEditConfig_DepData_Through_Cache(t *testing.T) {
 	loadConfigDB(rclient, depDataMap)
 
 	//Modify entry
-	depDataMap = map[string]interface{} {
+	modDepDataMap := map[string]interface{} {
 		"PORT" : map[string]interface{} {
 			"Ethernet3" : map[string]interface{} {
 				"mtu": "9200",
@@ -2617,7 +2617,7 @@ func TestValidateEditConfig_DepData_Through_Cache(t *testing.T) {
 		},
 	}
 
-	loadConfigDB(rclient, depDataMap)
+	loadConfigDB(rclient, modDepDataMap)
 
 	cfgDataAclRule :=  []cvl.CVLEditConfigData {
 		cvl.CVLEditConfigData {
@@ -2643,6 +2643,7 @@ func TestValidateEditConfig_DepData_Through_Cache(t *testing.T) {
 	}
 
 	unloadConfigDB(rclient, depDataMap)
+	unloadConfigDB(rclient, modDepDataMap)
 }
 
 /* Delete field for an existing key.*/

@@ -1691,10 +1691,3 @@ func getAclKeyStrFromOCKey(aclname string, acltype ocbinds.E_OpenconfigAcl_ACL_T
 	return aclN + "_" + aclT
 }
 
-/* Check if targetUriPath is child (subtree) of nodePath
-The return value can be used to decide if subtrees needs
-to visited to fill the data or not.
-*/
-func isSubtreeRequest(targetUriPath string, nodePath string) bool {
-	return strings.HasPrefix(targetUriPath, nodePath)
-}

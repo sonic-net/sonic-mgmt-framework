@@ -5,21 +5,13 @@
 //
 ///////////////////////////////////////////////////////////////////////
 
-package translib
+package transformer
 
 import (
-	"errors"
+	"bytes"
 	"fmt"
-	"reflect"
 	"strconv"
 	"strings"
-	"translib/ocbinds"
-
-	log "github.com/golang/glog"
-	"github.com/openconfig/gnmi/proto/gnmi"
-	"github.com/openconfig/goyang/pkg/yang"
-	"github.com/openconfig/ygot/ygot"
-	"github.com/openconfig/ygot/ytypes"
 )
 
 // PathInfo structure contains parsed path information.
@@ -47,18 +39,6 @@ func (p *PathInfo) IntVar(name string) (int, error) {
 	return strconv.Atoi(val)
 }
 
-// HasPrefix checks if this path template starts with given
-// prefix.. Shorthand for strings.HasPrefix(p.Template, s)
-func (p *PathInfo) HasPrefix(s string) bool {
-	return strings.HasPrefix(p.Template, s)
-}
-
-// HasSuffix checks if this path template ends with given
-// suffix.. Shorthand for strings.HasSuffix(p.Template, s)
-func (p *PathInfo) HasSuffix(s string) bool {
-	return strings.HasSuffix(p.Template, s)
-}
-
 // NewPathInfo parses given path string into a PathInfo structure.
 func NewPathInfo(path string) *PathInfo {
 	var info PathInfo
@@ -79,7 +59,7 @@ func NewPathInfo(path string) *PathInfo {
 		name := readUntil(r, '=')
 		value := readUntil(r, ']')
 		if len(name) != 0 {
-			fmt.Fprintf(&template, "{}")
+			fmt.Fprintf(&template, "{%s}", name)
 			info.Vars[name] = value
 		}
 	}
@@ -103,6 +83,48 @@ func readUntil(r *strings.Reader, delim byte) string {
 	return buff.String()
 }
 
+func RemoveXPATHPredicates(s string) (string, error) {
+	var b bytes.Buffer
+	for i := 0; i < len(s); {
+		ss := s[i:]
+		si, ei := strings.Index(ss, "["), strings.Index(ss, "]")
+		switch {
+		case si == -1 && ei == -1:
+			// This substring didn't contain a [] pair, therefore write it
+			// to the buffer.
+			b.WriteString(ss)
+			// Move to the last character of the substring.
+			i += len(ss)
+		case si == -1 || ei == -1:
+			// This substring contained a mismatched pair of []s.
+			return "", fmt.Errorf("Mismatched brackets within substring %s of %s, [ pos: %d, ] pos: %d", ss, s, si, ei)
+		case si > ei:
+			// This substring contained a ] before a [.
+			return "", fmt.Errorf("Incorrect ordering of [] within substring %s of %s, [ pos: %d, ] pos: %d", ss, s, si, ei)
+		default:
+			// This substring contained a matched set of []s.
+			b.WriteString(ss[0:si])
+			i += ei + 1
+		}
+	}
+
+	return b.String(), nil
+}
+
+// stripPrefix removes the prefix from a YANG path element. For example, removing
+// foo from "foo:bar". Such qualified paths are used in YANG modules where remote
+// paths are referenced.
+func stripPrefix(name string) (string, error) {
+        ps := strings.Split(name, ":")
+        switch len(ps) {
+        case 1:
+                return name, nil
+        case 2:
+                return ps[1], nil
+        }
+        return "", fmt.Errorf("path element did not form a valid name (name, prefix:name): %v", name)
+}
+/*
 func getParentNode(targetUri *string, deviceObj *ocbinds.Device) (*interface{}, *yang.Entry, error) {
 	path, err := ygot.StringToPath(*targetUri, ygot.StructuredPath, ygot.StringSlicePath)
 	if err != nil {
@@ -176,5 +198,4 @@ func getObjectFieldName(targetUri *string, deviceObj *ocbinds.Device, ygotTarget
 	}
 	return "", errors.New("Target object not found")
 }
-
-
+*/
