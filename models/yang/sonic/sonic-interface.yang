@@ -29,6 +29,21 @@ module sonic-interface {
 		container INTERFACE {
 
 			list INTERFACE_LIST {
+				key "portname";
+
+				leaf portname{
+					type leafref {
+						path "/prt:sonic-port/prt:PORT/prt:PORT_LIST/prt:ifname";
+					}
+				}
+
+				leaf vrf-name {
+					type string;
+				}
+
+			}
+
+			list INTERFACE_IPADDR_LIST {
 				key "portname ip_prefix";
 
 				leaf portname{

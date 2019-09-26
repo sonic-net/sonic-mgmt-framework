@@ -6,10 +6,6 @@ module sonic-dscp-tc-map {
 		prefix sonic-ext;
 	}
 
-	import sonic-port {
-		prefix sif;
-	}
-
 	organization
 		"SONiC";
 

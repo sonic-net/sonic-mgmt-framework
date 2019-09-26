@@ -30,9 +30,9 @@ from pyang import grammar
 from pyang import syntax
 from pyang import statements
 
-new_line='' #replace with '\n' for adding new line
-indent_space= '' #replace with ' ' for indentation
-ns_indent_space= '' #replace with ' ' for indentation
+new_line ='' #replace with '\n' for adding new line
+indent_space = '' #replace with ' ' for indentation
+ns_indent_space = '' #replace with ' ' for indentation
 yin_namespace = "urn:ietf:params:xml:ns:yang:yin:1"
 revision_added = False
 
