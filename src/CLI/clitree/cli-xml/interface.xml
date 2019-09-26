@@ -98,23 +98,15 @@ limitations under the License.
 
    <COMMAND
        name="show port-channel"
-       help="Show vlan commands"
+       help="LAG status and configuration"
        ptype="SUBCOMMAND"
-       mode="subcommand"
-       >
-       <PARAM
-          name="lag-id"
-          help="PortChannel identifier"
-          ptype="UINT"
-          optional="true"
-          >
-       </PARAM>
-       <ACTION> 
-            if test "${lag-id}" = ""; then&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces PortChannel show_portchannel.j2&#xA;
-            else&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_if_aggregate_interfaces_interface_aggregation_state PortChannel${lag-id} show_portchannel_id.j2#xA;
-            fi
+       mode="subcommand" />
+    <COMMAND
+        name="show port-channel summary"
+        help="LAG status and configurationn"
+        mode="subcommand">
+       <ACTION>
+            python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces PortChannel show_portchannel.j2
        </ACTION>
    </COMMAND>
 
@@ -163,7 +155,7 @@ limitations under the License.
 
     <COMMAND
         name="interface port-channel"
-        help="port-channel Interface Configuration"
+        help="Port channel Interface Configuration"
         mode="subcommand"
         ptype="SUBCOMMAND"
         view="configure-lag-view"
@@ -171,8 +163,8 @@ limitations under the License.
         >
         <PARAM
                 name="lag-id"
-                help="port-channel identifier(1-128)"
-                ptype="UINT"
+                help="PortChannel identifier"
+                ptype="LAG_ID"
                 >
         </PARAM>
         <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface PortChannel${lag-id}</ACTION>
@@ -209,8 +201,8 @@ limitations under the License.
                 >
                 <PARAM
                     name="lag-id"
-                    help="port-channel identifier(1-128)"
-                    ptype="UINT"
+                    help="port-channel identifier"
+                    ptype="LAG_ID"
                 />
              </PARAM>
          </PARAM>
@@ -263,19 +255,45 @@ limitations under the License.
         </COMMAND>
         <COMMAND
             name="channel-group"
-            help="Configure port channel parameters">
-	    <PARAM 
-                name="lag-id" 
+            help="Configure port channel parameters"
+            >
+            <!-- channel-group <number> -->
+            <PARAM
+                name="lag-id"
                 help="Specify a port channel number"
-                ptype="UINT" />
-	    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_aggregate_interfaces_interface_ethernet_config_aggregate_id ${iface} ${lag-id} </ACTION>
+                ptype="LAG_ID"
+            >
+            <!-- channel-group <number> mode [active] -->
+            <PARAM
+                name="mode"
+                help="Set the LACP actor mode, default: ACTIVE"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                optional="true">
+                <PARAM
+                    name="portchannel-mode-switch"
+                    help="Specify channeling mode"
+                    ptype="SUBCOMMAND"
+                    mode="switch"
+                    >
+                    <PARAM
+                        name="active"
+                        help="Set channeling mode to ACTIVE"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        />
+                </PARAM>
+            </PARAM> 
+        </PARAM>
+        <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_aggregate_interfaces_interface_ethernet_config_aggregate_id ${iface} ${lag-id} </ACTION>
         </COMMAND>
+
         <COMMAND
             name="no channel-group"
             help="Remove from port channel group">
-	    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py delete_openconfig_if_aggregate_interfaces_interface_ethernet_config_aggregate_id ${iface} </ACTION>
+        <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py delete_openconfig_if_aggregate_interfaces_interface_ethernet_config_aggregate_id ${iface} </ACTION>
         </COMMAND>
-        <COMMAND 
+        <COMMAND
             name="shutdown"
             help="Disable the interface">
         <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config_enabled ${iface} False </ACTION>
@@ -438,7 +456,7 @@ limitations under the License.
         <PARAM 
             name="min-links"
             help="Configure the minimum number of links in a port-channel"
-            ptype="UINT" />
+            ptype="MIN_LINK" />
         <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_aggregate_interfaces_interface_aggregation_config_min_links ${po_id} ${min-links} </ACTION>
     </COMMAND>
     <COMMAND
@@ -463,10 +481,12 @@ limitations under the License.
     <COMMAND 
         name="shutdown"
         help="Disable the interface">
+     <ACTION builtin="clish_nop"></ACTION>
     </COMMAND>
     <COMMAND 
         name="no shutdown"
         help="Enable the interface">
+     <ACTION builtin="clish_nop"></ACTION>
     </COMMAND>
     <COMMAND
         name="ip"
@@ -477,7 +497,6 @@ limitations under the License.
         help="Interface Internet Protocol config commands"
         >
     </COMMAND>
-
     <COMMAND
         name="ip address"
         help="IP address" >
@@ -485,6 +504,7 @@ limitations under the License.
             name="addr"
             help="IP address with mask"
             ptype="IP_ADDR_MASK" />
+     <ACTION builtin="clish_nop"></ACTION>
     </COMMAND>
 
     <COMMAND
@@ -495,6 +515,7 @@ limitations under the License.
             name="addr"
             help="IP address"
             ptype="IP_ADDR" />
+     <ACTION builtin="clish_nop"></ACTION>
     </COMMAND>
     </VIEW>
 </CLISH_MODULE>

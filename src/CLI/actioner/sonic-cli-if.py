@@ -101,50 +101,44 @@ def run(func, args):
     if "PortChannel" in args[0] and func.__name__ == 'patch_openconfig_interfaces_interfaces_interface':
         return
 
-    dummy_data= {
-    "openconfig-interfaces:interface": [
-        {
-            "members": [
-                "Ethernet56",
-                "Ethernet60"
-            ], 
-            "min-links": 2,
-            "mtu": 9100,
-            "admin_status": "up",
-            "oper_status": "down",
-            "name": "PortChannel1"
-        },
-        {
-            "members": [],
-            "min-links": 1,
-            "mtu": 9100,
-            "admin_status": "up",
-            "oper_status": "down",
-            "name": "PortChannel2"
-        }, 
-        {
-            "members": [],
-            "min-links": 1,
-            "mtu": 9100, 
-            "admin_status": "up",
-            "oper_status": "down",
-            "name": "PortChannel3"
-        }
-    ]
-}
-
-    #show given port-channel details
-    if "PortChannel" in args[0] and func.__name__ == 'get_openconfig_if_aggregate_interfaces_interface_aggregation_state':
-        for dict in dummy_data['openconfig-interfaces:interface']:
-            if dict["name"] == "PortChannel3":
-                show_cli_output("show_portchannel_id.j2", dict)
-                return
-        print("%Error: Entry not found")
-        return
-
     #show port-channels summary
     if "PortChannel" in args[0] and func.__name__ == 'get_openconfig_interfaces_interfaces':
-        show_cli_output("show_portchannel.j2", dummy_data)
+
+        dummy_resp= {
+            "PORTCHANNEL": [
+                {
+                    "members": [
+                        "Ethernet56",
+                        "Ethernet60"
+                    ],
+                    "min-links": 2,
+                    "mtu": 9100,
+                    "admin_status": "up",
+                    "oper_status": "down",
+                    "name": "PortChannel1",
+                    "id": "1"
+                },
+                {
+                    "members": [],
+                    "min-links": 1,
+                    "mtu": 9100,
+                    "admin_status": "up",
+                    "oper_status": "down",
+                    "name": "PortChannel12",
+                    "id": "12"
+                },
+                {
+                    "members": [],
+                    "min-links": 1,
+                    "mtu": 9100, 
+                    "admin_status": "up",
+                    "oper_status": "down",
+                    "name": "PortChannel3",
+                    "id": "3"
+                }
+            ]
+        }
+        show_cli_output(args[1], dummy_resp)
         return
 
     #add members to port-channel
