@@ -31,9 +31,11 @@ type yangXpathInfo  struct {
 }
 
 type dbInfo  struct {
+    dbIndex      db.DBNum
+    keyName      *string
     fieldType    string
     dbEntry      *yang.Entry
-    yangXpath     []string
+    yangXpath    []string
 }
 
 var xYangSpecMap map[string]*yangXpathInfo
@@ -179,41 +181,44 @@ func yangToDbMapBuild(entries map[string]*yang.Entry) {
 	updateSchemaOrderedMap(module, e)
     }
     mapPrint(xYangSpecMap, "/tmp/fullSpec.txt")
-    dbMapPrint()
+    dbMapPrint("/tmp/dbSpecMap.txt")
 }
 
 /* Fill the map with db details */
 func dbMapFill(prefixPath string, curPath string, moduleNm string, trkTpCnt bool, xDbSpecMap map[string]*dbInfo, entry *yang.Entry) {
-    entryType := entry.Node.Statement().Keyword
-    if entryType == "list" {
-        prefixPath = entry.Name
-    }
+	entryType := entry.Node.Statement().Keyword
+	if entryType == "list" {
+		prefixPath = entry.Name
+	}
 
-    if !isYangResType(entryType) {
-        dbXpath := prefixPath
-        if entryType != "list" {
-            dbXpath = prefixPath + "/" + entry.Name
-        }
-        xDbSpecMap[dbXpath] = new(dbInfo)
-        xDbSpecMap[dbXpath].dbEntry   = entry
-        xDbSpecMap[dbXpath].fieldType = entryType
-    }
+	if !isYangResType(entryType) {
+		dbXpath := prefixPath
+		if entryType != "list" {
+			dbXpath = prefixPath + "/" + entry.Name
+		}
+		xDbSpecMap[dbXpath] = new(dbInfo)
+		xDbSpecMap[dbXpath].dbEntry   = entry
+		xDbSpecMap[dbXpath].fieldType = entryType
+		if entryType == "list" {
+			xDbSpecMap[dbXpath].dbIndex = db.ConfigDB 
+		}
+	}
 
-    var childList []string
-    for _, k := range entry.DirOKeys {
-        childList = append(childList, k)
-    }
+	var childList []string
+	for _, k := range entry.DirOKeys {
+		childList = append(childList, k)
+	}
 
-    if entryType == "container" &&  trkTpCnt {
-            xDbSpecOrdTblMap[moduleNm] = childList
-            log.Info("xDbSpecOrdTblMap after appending ", xDbSpecOrdTblMap)
-            trkTpCnt = false
-    }
+	if entryType == "container" &&  trkTpCnt {
+		xDbSpecOrdTblMap[moduleNm] = childList
+		log.Info("xDbSpecOrdTblMap after appending ", xDbSpecOrdTblMap)
+		trkTpCnt = false
+	}
 
-    for _, child := range childList {
-        childPath := prefixPath + "/" + entry.Dir[child].Name
-        dbMapFill(prefixPath, childPath, moduleNm, trkTpCnt, xDbSpecMap, entry.Dir[child])
-    }
+	for _, child := range childList {
+		childPath := prefixPath + "/" + entry.Dir[child].Name
+		dbMapFill(prefixPath, childPath, moduleNm, trkTpCnt, xDbSpecMap, entry.Dir[child])
+	}
 }
 
 /* Build redis db lookup map */
@@ -359,6 +364,84 @@ func annotToDbMapBuild(annotEntries []*yang.Entry) {
     mapPrint(xYangSpecMap, "/tmp/annotSpec.txt")
 }
 
+func annotDbSpecMapFill(xDbSpecMap map[string]*dbInfo, dbXpath string, entry *yang.Entry) error {
+	var err error
+	var dbXpathData *dbInfo
+	var ok bool
+
+	//Currently sonic-yang annotation is supported for "list" type only.
+	listName := strings.Split(dbXpath, "/")
+	if len(listName) < 2 {
+		log.Errorf("Invalid list xpath length(%v) \r\n", dbXpath)
+		return err
+	}
+	dbXpathData, ok = xDbSpecMap[listName[2]]
+	if !ok {
+		log.Errorf("DB spec-map data not found(%v) \r\n", dbXpath)
+		return err
+	}
+	log.Infof("Annotate dbSpecMap for (%v)(listName:%v)\r\n", dbXpath, listName[2])
+	dbXpathData.dbIndex = db.ConfigDB // default value 
+
+	/* fill table with cvl yang extension data. */
+	if entry != nil && len(entry.Exts) > 0 {
+		for _, ext := range entry.Exts {
+			dataTagArr := strings.Split(ext.Keyword, ":")
+			tagType := dataTagArr[len(dataTagArr)-1]
+			switch tagType {
+			case "key-name" :
+				if dbXpathData.keyName == nil {
+					dbXpathData.keyName = new(string)
+				}
+				*dbXpathData.keyName = ext.NName()
+			case "db-name" :
+				if ext.NName() == "APPL_DB" {
+					dbXpathData.dbIndex  = db.ApplDB
+				} else if ext.NName() == "ASIC_DB" {
+					dbXpathData.dbIndex  = db.AsicDB
+				} else if ext.NName() == "COUNTERS_DB" {
+					dbXpathData.dbIndex  = db.CountersDB
+				} else if ext.NName() == "LOGLEVEL_DB" {
+					dbXpathData.dbIndex  = db.LogLevelDB
+				} else if ext.NName() == "CONFIG_DB" {
+					dbXpathData.dbIndex  = db.ConfigDB
+				} else if ext.NName() == "FLEX_COUNTER_DB" {
+					dbXpathData.dbIndex  = db.FlexCounterDB
+				} else if ext.NName() == "STATE_DB" {
+					dbXpathData.dbIndex  = db.StateDB
+				} else {
+					dbXpathData.dbIndex  = db.ConfigDB
+				}
+			default :
+			}
+		}
+	}
+
+    dbMapPrint("/tmp/dbSpecMapFull.txt")
+	return err
+}
+
+func annotDbSpecMap(annotEntries []*yang.Entry) {
+	if annotEntries == nil || xDbSpecMap == nil {
+		return
+	}
+	for _, e := range annotEntries {
+		if e != nil && len(e.Deviations) > 0 {
+			for _, d := range e.Deviations {
+				xpath := xpathFromDevCreate(d.Name)
+				xpath = "/" + strings.Replace(e.Name, "-annot", "", -1) + ":" + xpath
+				for i, deviate := range d.Deviate {
+					if i == 2 {
+						for _, ye := range deviate {
+							annotDbSpecMapFill(xDbSpecMap, xpath, ye)
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
 /* Debug function to print the yang xpath lookup map */
 func mapPrint(inMap map[string]*yangXpathInfo, fileName string) {
     fp, err := os.Create(fileName)
@@ -405,8 +488,8 @@ func mapPrint(inMap map[string]*yangXpathInfo, fileName string) {
 }
 
 /* Debug function to print redis db lookup map */
-func dbMapPrint() {
-    fp, err := os.Create("/tmp/dbTmplt.txt")
+func dbMapPrint( fname string) {
+    fp, err := os.Create(fname)
     if err != nil {
         return
     }
@@ -414,9 +497,14 @@ func dbMapPrint() {
 	fmt.Fprintf (fp, "-----------------------------------------------------------------\r\n")
     for k, v := range xDbSpecMap {
         fmt.Fprintf(fp, " field:%v \r\n", k)
-        fmt.Fprintf(fp, "     type :%v \r\n", v.fieldType)
-        fmt.Fprintf(fp, "     Yang :%v \r\n", v.yangXpath)
-        fmt.Fprintf(fp, "     DB   :%v \r\n", v.dbEntry)
+        fmt.Fprintf(fp, "     type     :%v \r\n", v.fieldType)
+        fmt.Fprintf(fp, "     db-type  :%v \r\n", v.dbIndex)
+        fmt.Fprintf(fp, "     KeyName: ")
+        if v.keyName != nil {
+            fmt.Fprintf(fp, "%v", *v.keyName)
+        }
+        fmt.Fprintf(fp, "\r\n     oc-yang  :%v \r\n", v.yangXpath)
+        fmt.Fprintf(fp, "     cvl-yang :%v \r\n", v.dbEntry)
         fmt.Fprintf (fp, "-----------------------------------------------------------------\r\n")
 
     }
