@@ -83,6 +83,19 @@ func mapFillData(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, dbKey st
     if xpathInfo.isKey {
         return nil
     }
+
+    tableName := ""
+    if xpathInfo.xfmrTbl != nil {
+	    inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, uri, oper, "", nil, "")
+	    // expecting only one table name from tbl-xfmr
+	    tableName, err = tblNameFromTblXfmrGet(*xYangSpecMap[xpath].xfmrTbl, inParams)
+	    if err != nil {
+		    return err
+	    }
+    } else {
+	    tableName = *xpathInfo.tableName
+    }
+
     if len(xpathInfo.xfmrFunc) > 0 {
         uri = uri + "/" + name
 
@@ -114,7 +127,7 @@ func mapFillData(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, dbKey st
         retData := ret[0].Interface().(map[string]string)
         log.Info("Transformer function :", xpathInfo.xfmrFunc, " Xpath: ", xpath, " retData: ", retData)
         for f, v := range retData {
-            dataToDBMapAdd(*xpathInfo.tableName, dbKey, result, f, v)
+            dataToDBMapAdd(tableName, dbKey, result, f, v)
         }
         return nil
     }
@@ -151,18 +164,6 @@ func mapFillData(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, dbKey st
 			valueStr = strings.Split(valueStr, ":")[1]
 		}
     }
-
-	tableName := ""
-	if xpathInfo.xfmrTbl != nil {
-	    inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, uri, oper, "", nil, "")
-		// expecting only one table name from tbl-xfmr
-		tableName, err = tblNameFromTblXfmrGet(*xYangSpecMap[xpath].xfmrTbl, inParams)
-		if err != nil {
-			return err
-		}
-	} else {
-		tableName = *xpathInfo.tableName
-	}
 
     dataToDBMapAdd(tableName, dbKey, result, fieldName, valueStr)
     log.Infof("TblName: \"%v\", key: \"%v\", field: \"%v\", valueStr: \"%v\".", tableName, dbKey,

@@ -371,7 +371,7 @@ func annotDbSpecMapFill(xDbSpecMap map[string]*dbInfo, dbXpath string, entry *ya
 
 	//Currently sonic-yang annotation is supported for "list" type only.
 	listName := strings.Split(dbXpath, "/")
-	if len(listName) < 2 {
+	if len(listName) < 3 {
 		log.Errorf("Invalid list xpath length(%v) \r\n", dbXpath)
 		return err
 	}

@@ -116,12 +116,12 @@ func XlateUriToKeySpec(uri string, ygRoot *ygot.GoStruct, t *interface{}) (*[]Ke
 	// In case of CVL yang, the tablename and key info is available in the xpath
 	if isCvlYang(uri) {
 		/* Extract the xpath and key from input xpath */
-		yangXpath, keyStr, tableName := sonicXpathKeyExtract(uri)
-		retdbFormat = fillCvlKeySpec(yangXpath, tableName, keyStr)
+		xpath, keyStr, tableName := sonicXpathKeyExtract(uri)
+		retdbFormat = fillCvlKeySpec(xpath, tableName, keyStr)
 	} else {
 		/* Extract the xpath and key from input xpath */
-		yangXpath, keyStr, _ := xpathKeyExtract(nil, ygRoot, 0, uri)
-		retdbFormat = FillKeySpecs(yangXpath, keyStr, &retdbFormat)
+		xpath, keyStr, _ := xpathKeyExtract(nil, ygRoot, 0, uri)
+		retdbFormat = FillKeySpecs(xpath, keyStr, &retdbFormat)
 	}
 
 	return &retdbFormat, err
@@ -170,29 +170,31 @@ func FillKeySpecs(yangXpath string , keyStr string, retdbFormat *[]KeySpec) ([]K
     return *retdbFormat
 }
 
-func fillCvlKeySpec(yangXpath string , tableName string, keyStr string) ( []KeySpec ) {
+func fillCvlKeySpec(xpath string , tableName string, keyStr string) ( []KeySpec ) {
 
 	var retdbFormat = make([]KeySpec, 0)
 
 	if tableName != "" {
 		dbFormat := KeySpec{}
 		dbFormat.Ts.Name = tableName
-		dbFormat.dbNum = db.ConfigDB
+	        cdb := xDbSpecMap[xpath].dbIndex
+		dbFormat.dbNum = cdb
 		if keyStr != "" {
 			dbFormat.Key.Comp = append(dbFormat.Key.Comp, keyStr)
 		}
 		retdbFormat = append(retdbFormat, dbFormat)
 	} else {
 		// If table name not available in xpath get top container name
-		tokens:= strings.Split(yangXpath, ":")
+		tokens:= strings.Split(xpath, ":")
 		container := "/" + tokens[len(tokens)-1]
 		if xDbSpecMap[container] != nil {
 			dbInfo := xDbSpecMap[container]
 			if dbInfo.fieldType == "container" {
 				for dir, _ := range dbInfo.dbEntry.Dir {
+					cdb := xDbSpecMap[dir].dbIndex
 					dbFormat := KeySpec{}
 					dbFormat.Ts.Name = dir
-					dbFormat.dbNum = db.ConfigDB
+					dbFormat.dbNum = cdb
 					retdbFormat = append(retdbFormat, dbFormat)
 				}
 			}
