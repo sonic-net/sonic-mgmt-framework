@@ -295,7 +295,7 @@ func yangListDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, x
 			var mapSlice []typeMapOfInterface
 			for dbKey, _ := range tblData {
 				curMap := make(map[string]interface{})
-				curKeyMap, curUri, _ := dbKeyToYangDataConvert(uri, xpath, dbKey)
+				curKeyMap, curUri, _ := dbKeyToYangDataConvert(uri, xpath, dbKey, dbs[cdb].Opts.KeySeparator)
 				if len(xYangSpecMap[xpath].xfmrFunc) > 0 {
 					inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, curUri, GET, "", dbDataMap, nil)
 					cmap, _  := xfmrHandlerFunc(inParams)

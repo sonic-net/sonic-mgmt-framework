@@ -25,15 +25,21 @@ func keyFromXpathCreate(keyList []string) string {
 }
 
 /* Create db key from data xpath(request) */
-func keyCreate(keyPrefix string, xpath string, data interface{}) string {
+func keyCreate(keyPrefix string, xpath string, data interface{}, dbKeySep string) string {
 	_, ok := xYangSpecMap[xpath]
 	if ok {
 		if xYangSpecMap[xpath].yangEntry != nil {
 			yangEntry := xYangSpecMap[xpath].yangEntry
-			if len(keyPrefix) > 0 { keyPrefix += "|" }
+			keyConcat := dbKeySep
+			if len(xYangSpecMap[xpath].delim) > 0 {
+				keyConcat = xYangSpecMap[xpath].delim
+				log.Infof("key concatenater(\"%v\") found for xpath %v ", keyConcat, xpath)
+			}
+
+			if len(keyPrefix) > 0 { keyPrefix += dbKeySep }
 			keyVal := ""
 			for i, k := range (strings.Split(yangEntry.Key, " ")) {
-				if i > 0 { keyVal = keyVal + "_" }
+				if i > 0 { keyVal = keyVal + keyConcat }
 				val := fmt.Sprint(data.(map[string]interface{})[k])
 				if strings.Contains(val, ":") {
 					val = strings.Split(val, ":")[1]
@@ -88,7 +94,7 @@ func yangTypeGet(entry *yang.Entry) string {
     return ""
 }
 
-func dbKeyToYangDataConvert(uri string, xpath string, dbKey string) (map[string]interface{}, string, error) {
+func dbKeyToYangDataConvert(uri string, xpath string, dbKey string, dbKeySep string) (map[string]interface{}, string, error) {
 	var err error
 	if len(uri) == 0 && len(xpath) == 0 && len(dbKey) == 0 {
 		err = fmt.Errorf("Insufficient input")
@@ -103,7 +109,7 @@ func dbKeyToYangDataConvert(uri string, xpath string, dbKey string) (map[string]
 	}
 
 	var kLvlValList []string
-	keyDataList := strings.Split(dbKey, "|")
+	keyDataList := strings.Split(dbKey, dbKeySep)
 	keyNameList := yangKeyFromEntryGet(xYangSpecMap[xpath].yangEntry)
 	id          := xYangSpecMap[xpath].keyLevel
 	uriWithKey  := fmt.Sprintf("%v", xpath)
@@ -111,6 +117,11 @@ func dbKeyToYangDataConvert(uri string, xpath string, dbKey string) (map[string]
 	/* if uri contins key, use it else use xpath */
 	if strings.Contains(uri, "[") {
 		uriWithKey  = fmt.Sprintf("%v", uri)
+	}
+	keyConcat := dbKeySep
+	if len(xYangSpecMap[xpath].delim) > 0 {
+		keyConcat = xYangSpecMap[xpath].delim
+		log.Infof("Found key concatenater(\"%v\") for xpath %v", keyConcat, xpath)
 	}
 
 	if len(xYangSpecMap[xpath].xfmrKey) > 0 {
@@ -134,7 +145,7 @@ func dbKeyToYangDataConvert(uri string, xpath string, dbKey string) (map[string]
 	kLvlValList = append(kLvlValList, keyDataList[id])
 
 	if len(keyNameList) > 1 {
-		kLvlValList = strings.Split(keyDataList[id], "_")
+		kLvlValList = strings.Split(keyDataList[id], keyConcat)
 	}
 
 	/* TODO: Need to add leaf-ref related code in here and remove this code*/
@@ -151,7 +162,7 @@ func dbKeyToYangDataConvert(uri string, xpath string, dbKey string) (map[string]
 
 		/* TODO: Need to add leaf-ref related code in here and remove this code*/
 		if kvalExceedFlag && (i == chgId) {
-			kval = strings.Join(kLvlValList[chgId:], "_")
+			kval = strings.Join(kLvlValList[chgId:], keyConcat)
 		}
 
 		uriWithKey += fmt.Sprintf("[%v=%v]", kname, kval)
