@@ -385,6 +385,7 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
                 log.Infof("slice/map data: key(\"%v\"), xpathPrefix(\"%v\").", keyName, xpathPrefix)
                 xpath    := uri
                 curUri   := uri
+				curKey   := keyName
                 pathAttr := key.String()
                 if len(xpathPrefix) > 0 {
                     if strings.Contains(pathAttr, ":") {
@@ -393,7 +394,17 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
                     xpath  = xpathPrefix + "/" + pathAttr
                     curUri = uri + "/" + pathAttr
                 }
-
+				log.Infof("slice/map data: curKey(\"%v\"), xpath(\"%v\"), curUri(\"%v\").",
+				          curKey, xpath, curUri)
+			    if len(xYangSpecMap[xpath].xfmrKey) > 0 {
+					/* key transformer present */
+					inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, curUri, oper, "", nil, nil)
+					ret, err := XlateFuncCall(yangToDbXfmrFunc(xYangSpecMap[xpath].xfmrKey), inParams)
+					if err != nil {
+						return err
+					}
+					curKey = ret[0].Interface().(string)
+				}
                 if (typeOfValue == reflect.Map || typeOfValue == reflect.Slice) && xYangSpecMap[xpath].yangDataType != "leaf-list" {
                     if xYangSpecMap[xpath] != nil && len(xYangSpecMap[xpath].xfmrFunc) > 0 {
                         /* subtree transformer present */
@@ -404,7 +415,7 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
                         }
                         mapCopy(result, ret[0].Interface().(map[string]map[string]db.Value))
                     } else {
-                        yangReqToDbMapCreate(d, ygRoot, oper, curUri, xpath, keyName, jData.MapIndex(key).Interface(), result)
+                        yangReqToDbMapCreate(d, ygRoot, oper, curUri, xpath, curKey, jData.MapIndex(key).Interface(), result)
                     }
                 } else {
                     pathAttr := key.String()
@@ -413,7 +424,7 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
                     }
                     value := jData.MapIndex(key).Interface()
                     log.Infof("data field: key(\"%v\"), value(\"%v\").", key, value)
-                    err := mapFillData(d, ygRoot, oper, uri, keyName, result, xpathPrefix,
+                    err := mapFillData(d, ygRoot, oper, uri, curKey, result, xpathPrefix,
                     pathAttr, value)
                     if err != nil {
                         log.Errorf("Failed constructing data for db write: key(\"%v\"), value(\"%v\"), path(\"%v\").",
