@@ -69,10 +69,11 @@ func XlateFuncCall(name string, params ...interface{}) (result []reflect.Value, 
 
 func TraverseDb(dbs [db.MaxDB]*db.DB, spec KeySpec, result *map[db.DBNum]map[string]map[string]db.Value, parentKey *db.Key) error {
 	var err error
-	separator := ":"
-	if spec.dbNum == db.ConfigDB {
-		separator = "|"
-	}
+	var dbOpts db.Options
+
+	dbOpts = getDBOptions(spec.dbNum)
+	separator := dbOpts.KeySeparator
+	log.Infof("key separator for table %v in Db %v is %v", spec.Ts.Name, spec.dbNum, separator)
 
 	if spec.Key.Len() > 0 {
 		// get an entry with a specific key
@@ -101,7 +102,7 @@ func TraverseDb(dbs [db.MaxDB]*db.DB, spec KeySpec, result *map[db.DBNum]map[str
 		for i, _ := range keys {
 			if parentKey != nil {
 				// TODO - multi-depth with a custom delimiter
-				if strings.Index(strings.Join(keys[i].Comp, separator), strings.Join((*parentKey).Comp, "|")) == -1 {
+				if strings.Index(strings.Join(keys[i].Comp, separator), strings.Join((*parentKey).Comp, separator)) == -1 {
 					continue
 				}
 			}
@@ -182,8 +183,8 @@ func fillCvlKeySpec(xpath string , tableName string, keyStr string) ( []KeySpec 
 		dbFormat := KeySpec{}
 		dbFormat.Ts.Name = tableName
                 cdb := db.ConfigDB
-                if _, ok := xDbSpecMap[xpath]; ok {
-			cdb = xDbSpecMap[xpath].dbIndex
+                if _, ok := xDbSpecMap[tableName]; ok {
+			cdb = xDbSpecMap[tableName].dbIndex
                 }
 		dbFormat.dbNum = cdb
 		if keyStr != "" {
@@ -296,14 +297,21 @@ func GetAndXlateFromDB(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db.DB) 
 func XlateFromDb(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db.DB, data map[db.DBNum]map[string]map[string]db.Value) ([]byte, error) {
 
 	var err error
+	var result []byte
 	var dbData = make(map[db.DBNum]map[string]map[string]db.Value)
 	var cdb db.DBNum = db.ConfigDB
 
 	dbData = data
 	if isCvlYang(uri) {
-		yangXpath, keyStr, tableName := sonicXpathKeyExtract(uri)
+		xpath, keyStr, tableName := sonicXpathKeyExtract(uri)
 		if (tableName != "") {
-			tokens:= strings.Split(yangXpath, "/")
+			dbInfo, ok := xDbSpecMap[tableName]
+			if !ok {
+				log.Warningf("No entry in xDbSpecMap for xpath %v", tableName)
+			} else {
+				cdb =  dbInfo.dbIndex
+			}
+			tokens:= strings.Split(xpath, "/")
 			// Format /module:container/tableName[key]/fieldName
 			if tokens[len(tokens)-2] == tableName {
 		                fieldName := tokens[len(tokens)-1]
@@ -322,7 +330,7 @@ func XlateFromDb(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db.DB, data m
 		return nil, err
 	}
 
-	result := []byte(payload)
+	result = []byte(payload)
 	return result, err
 
 }

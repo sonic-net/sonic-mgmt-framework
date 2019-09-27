@@ -364,7 +364,7 @@ func yangNodeForUriGet(uri string, ygRoot *ygot.GoStruct) (interface{}, error) {
 	ocbSch, _ := ocbinds.Schema()
 	schRoot := ocbSch.RootSchema()
 	node, nErr := ytypes.GetNode(schRoot, (*ygRoot).(*ocbinds.Device), path)
-	log.Info("GetNode data: ", node[0].Data, " nErr :", nErr)
+	//log.Info("GetNode data: ", node[0].Data, " nErr :", nErr)
 	if nErr != nil {
 		return nil, nErr
 	}
@@ -481,13 +481,21 @@ func sonicXpathKeyExtract(path string) (string, string, string) {
     rgp := regexp.MustCompile(`\[([^\[\]]*)\]`)
     pathsubStr := strings.Split(path , "/")
     if len(pathsubStr) > SONIC_TABLE_INDEX  {
-	if strings.Contains(pathsubStr[2], ":") {
+	if strings.Contains(pathsubStr[2], "[") {
 	    tableName = strings.Split(pathsubStr[SONIC_TABLE_INDEX], "[")[0]
 	} else {
 	    tableName = pathsubStr[SONIC_TABLE_INDEX]
 	}
+		dbInfo, ok := xDbSpecMap[tableName]
+                cdb := db.ConfigDB
+                if !ok {
+                        log.Errorf("No entry in xDbSpecMap for xpath %v in order to fetch DB index.", tableName)
+                } else {
+			cdb = dbInfo.dbIndex
+		}
+		dbOpts := getDBOptions(cdb)
         for i, kname := range rgp.FindAllString(path, -1) {
-            if i > 0 { keyStr += "|" }
+            if i > 0 { keyStr += dbOpts.KeySeparator }
             val := strings.Split(kname, "=")[1]
             keyStr += strings.TrimRight(val, "]")
         }
