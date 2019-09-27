@@ -436,7 +436,11 @@ func sonicXpathKeyExtract(path string) (string, string, string) {
     rgp := regexp.MustCompile(`\[([^\[\]]*)\]`)
     pathsubStr := strings.Split(path , "/")
     if len(pathsubStr) > SONIC_TABLE_INDEX  {
-        tableName = strings.Split(pathsubStr[SONIC_TABLE_INDEX], "[")[0]
+	if strings.Contains(pathsubStr[2], ":") {
+	    tableName = strings.Split(pathsubStr[SONIC_TABLE_INDEX], "[")[0]
+	} else {
+	    tableName = pathsubStr[SONIC_TABLE_INDEX]
+	}
         for i, kname := range rgp.FindAllString(path, -1) {
             if i > 0 { keyStr += "|" }
             val := strings.Split(kname, "=")[1]

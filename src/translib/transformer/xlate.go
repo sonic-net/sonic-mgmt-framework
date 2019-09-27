@@ -69,6 +69,10 @@ func XlateFuncCall(name string, params ...interface{}) (result []reflect.Value, 
 
 func TraverseDb(dbs [db.MaxDB]*db.DB, spec KeySpec, result *map[db.DBNum]map[string]map[string]db.Value, parentKey *db.Key) error {
 	var err error
+	separator := ":"
+	if spec.dbNum == db.ConfigDB {
+		separator = "|"
+	}
 
 	if spec.Key.Len() > 0 {
 		// get an entry with a specific key
@@ -78,9 +82,9 @@ func TraverseDb(dbs [db.MaxDB]*db.DB, spec KeySpec, result *map[db.DBNum]map[str
 		}
 
 		if (*result)[spec.dbNum][spec.Ts.Name] == nil {
-			(*result)[spec.dbNum][spec.Ts.Name] = map[string]db.Value{strings.Join(spec.Key.Comp, "|"): data}
+			(*result)[spec.dbNum][spec.Ts.Name] = map[string]db.Value{strings.Join(spec.Key.Comp, separator): data}
 		} else {
-			(*result)[spec.dbNum][spec.Ts.Name][strings.Join(spec.Key.Comp, "|")] = data
+			(*result)[spec.dbNum][spec.Ts.Name][strings.Join(spec.Key.Comp, separator)] = data
 		}
 
 		if len(spec.Child) > 0 {
@@ -97,7 +101,7 @@ func TraverseDb(dbs [db.MaxDB]*db.DB, spec KeySpec, result *map[db.DBNum]map[str
 		for i, _ := range keys {
 			if parentKey != nil {
 				// TODO - multi-depth with a custom delimiter
-				if strings.Index(strings.Join(keys[i].Comp, "|"), strings.Join((*parentKey).Comp, "|")) == -1 {
+				if strings.Index(strings.Join(keys[i].Comp, separator), strings.Join((*parentKey).Comp, "|")) == -1 {
 					continue
 				}
 			}
@@ -177,7 +181,10 @@ func fillCvlKeySpec(xpath string , tableName string, keyStr string) ( []KeySpec 
 	if tableName != "" {
 		dbFormat := KeySpec{}
 		dbFormat.Ts.Name = tableName
-	        cdb := xDbSpecMap[xpath].dbIndex
+                cdb := db.ConfigDB
+                if _, ok := xDbSpecMap[xpath]; ok {
+			cdb = xDbSpecMap[xpath].dbIndex
+                }
 		dbFormat.dbNum = cdb
 		if keyStr != "" {
 			dbFormat.Key.Comp = append(dbFormat.Key.Comp, keyStr)
