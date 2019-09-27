@@ -349,6 +349,28 @@ func dbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, jsonDat
 	return err
 }
 
+func yangNodeForUriGet(uri string, ygRoot *ygot.GoStruct) (interface{}, error) {
+	path, _ := ygot.StringToPath(uri, ygot.StructuredPath, ygot.StringSlicePath)
+	for _, p := range path.Elem {
+		pathSlice := strings.Split(p.Name, ":")
+		p.Name = pathSlice[len(pathSlice)-1]
+		if len(p.Key) > 0 {
+			for ekey, ent := range p.Key {
+				eslice := strings.Split(ent, ":")
+				p.Key[ekey] = eslice[len(eslice)-1]
+			}
+		}
+	}
+	ocbSch, _ := ocbinds.Schema()
+	schRoot := ocbSch.RootSchema()
+	node, nErr := ytypes.GetNode(schRoot, (*ygRoot).(*ocbinds.Device), path)
+	log.Info("GetNode data: ", node[0].Data, " nErr :", nErr)
+	if nErr != nil {
+		return nil, nErr
+	}
+	return node[0].Data, nil
+}
+
 func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, xpathPrefix string, keyName string, jsonData interface{}, result map[string]map[string]db.Value) error {
     log.Infof("key(\"%v\"), xpathPrefix(\"%v\").", keyName, xpathPrefix)
     var dbs [db.MaxDB]*db.DB
@@ -365,10 +387,14 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
             curUri, _ := uriWithKeyCreate(uri, xpathPrefix, data)
             if len(xYangSpecMap[xpathPrefix].xfmrKey) > 0 {
                 /* key transformer present */
-		        inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, curUri, oper, "", nil, nil)
+				curYgotNode, nodeErr := yangNodeForUriGet(curUri, ygRoot)
+				if nodeErr != nil {
+					curYgotNode = nil
+				}
+		        inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, curUri, oper, "", nil, curYgotNode)
                 ret, err := XlateFuncCall(yangToDbXfmrFunc(xYangSpecMap[xpathPrefix].xfmrKey), inParams)
                 if err != nil {
-                    return err
+					return err
                 }
                 curKey = ret[0].Interface().(string)
             } else {
@@ -398,7 +424,11 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
 				          curKey, xpath, curUri)
 			    if len(xYangSpecMap[xpath].xfmrKey) > 0 {
 					/* key transformer present */
-					inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, curUri, oper, "", nil, nil)
+					curYgotNode, nodeErr := yangNodeForUriGet(curUri, ygRoot)
+					if nodeErr != nil {
+						curYgotNode = nil
+					}
+					inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, curUri, oper, "", nil, curYgotNode)
 					ret, err := XlateFuncCall(yangToDbXfmrFunc(xYangSpecMap[xpath].xfmrKey), inParams)
 					if err != nil {
 						return err
@@ -408,7 +438,11 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
                 if (typeOfValue == reflect.Map || typeOfValue == reflect.Slice) && xYangSpecMap[xpath].yangDataType != "leaf-list" {
                     if xYangSpecMap[xpath] != nil && len(xYangSpecMap[xpath].xfmrFunc) > 0 {
                         /* subtree transformer present */
-                        inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, curUri, oper, "", nil, nil)
+						curYgotNode, nodeErr := yangNodeForUriGet(curUri, ygRoot)
+						if nodeErr != nil {
+							curYgotNode = nil
+						}
+                        inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, curUri, oper, "", nil, curYgotNode)
                         ret, err := XlateFuncCall(yangToDbXfmrFunc(xYangSpecMap[xpath].xfmrFunc), inParams)
                         if err != nil {
                             return nil
