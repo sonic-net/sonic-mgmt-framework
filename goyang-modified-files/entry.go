@@ -116,6 +116,10 @@ type Entry struct {
 	// the augmenting entity per RFC6020 Section 7.15.2. The namespace
 	// of the Entry should be accessed using the Namespace function.
 	namespace *Value
+
+	ChildSchemaCache map[reflect.StructTag]*Entry `json:"-"` 
+
+	IsSchemaValidated bool `json:"-"`
 }
 
 // An RPCEntry contains information related to an RPC Node.
