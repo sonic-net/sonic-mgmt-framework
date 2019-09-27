@@ -169,38 +169,40 @@ func processLfLstDbToYang(fieldXpath string, dbFldVal string) []interface{} {
 }
 
 /* Traverse db map and create json for cvl yang */
-func directDbToYangJsonCreate(dbDataMap map[string]map[string]db.Value, jsonData string, resultMap map[string]interface{}) error {
+func directDbToYangJsonCreate(dbDataMap *map[db.DBNum]map[string]map[string]db.Value, jsonData string, resultMap map[string]interface{}) error {
     var err error
-	for tblName, tblData := range dbDataMap {
-		var mapSlice []typeMapOfInterface
-		for keyStr, dbFldValData := range tblData {
-			curMap := make(map[string]interface{})
-			for field, value := range dbFldValData.Field {
-				resField := field
-				if strings.HasSuffix(field, "@") {
-					fldVals := strings.Split(field, "@")
-					resField = fldVals[0]
-				}
-				fieldXpath := tblName + "/" + resField
-				xDbSpecMapEntry, ok := xDbSpecMap[fieldXpath]
-				if !ok {
-					log.Warningf("No entry found in xDbSpecMap for xpath %v", fieldXpath)
-					continue
-				}
-				if xDbSpecMapEntry.dbEntry == nil {
-					log.Warningf("Yang entry is nil in xDbSpecMap for xpath %v", fieldXpath)
-					continue
-				}
-				yangType := yangTypeGet(xDbSpecMapEntry.dbEntry)
-				if yangType == "leaf-list" {
-					/* this should never happen but just adding for safetty */
-					if !strings.HasSuffix(field, "@") {
-						log.Warningf("Leaf-list in Sonic yang should also be a leaf-list in DB, its not for xpath %v", fieldXpath)
+	for curDbIdx := db.ApplDB; curDbIdx < db.MaxDB; curDbIdx++ {
+		dbTblData := (*dbDataMap)[curDbIdx]
+		for tblName, tblData := range dbTblData {
+			var mapSlice []typeMapOfInterface
+			for keyStr, dbFldValData := range tblData {
+				curMap := make(map[string]interface{})
+				for field, value := range dbFldValData.Field {
+					resField := field
+					if strings.HasSuffix(field, "@") {
+						fldVals := strings.Split(field, "@")
+						resField = fldVals[0]
+					}
+					fieldXpath := tblName + "/" + resField
+					xDbSpecMapEntry, ok := xDbSpecMap[fieldXpath]
+					if !ok {
+						log.Warningf("No entry found in xDbSpecMap for xpath %v", fieldXpath)
 						continue
 					}
-					resLst := processLfLstDbToYang(fieldXpath, value)
-					curMap[resField] = resLst
-				} else { /* yangType is leaf - there are only 2 types of yang terminal node leaf and leaf-list */
+					if xDbSpecMapEntry.dbEntry == nil {
+						log.Warningf("Yang entry is nil in xDbSpecMap for xpath %v", fieldXpath)
+						continue
+					}
+					yangType := yangTypeGet(xDbSpecMapEntry.dbEntry)
+					if yangType == "leaf-list" {
+						/* this should never happen but just adding for safetty */
+						if !strings.HasSuffix(field, "@") {
+							log.Warningf("Leaf-list in Sonic yang should also be a leaf-list in DB, its not for xpath %v", fieldXpath)
+							continue
+						}
+						resLst := processLfLstDbToYang(fieldXpath, value)
+						curMap[resField] = resLst
+					} else { /* yangType is leaf - there are only 2 types of yang terminal node leaf and leaf-list */
 					yngTerminalNdDtType := xDbSpecMapEntry.dbEntry.Type.Kind
 					resVal, err := DbToYangType(yngTerminalNdDtType, fieldXpath, value)
 					if err != nil {
@@ -210,14 +212,20 @@ func directDbToYangJsonCreate(dbDataMap map[string]map[string]db.Value, jsonData
 					}
 				}
 			} //end of for
+			dbSpecData, ok := xDbSpecMap[tblName]
+			dbIndex := db.ConfigDB
+			if ok {
+				dbIndex = dbSpecData.dbIndex
+			}
 			yangKeys := yangKeyFromEntryGet(xDbSpecMap[tblName].dbEntry)
-			sonicKeyDataAdd(yangKeys, keyStr, curMap)
+			sonicKeyDataAdd(dbIndex, yangKeys, keyStr, curMap)
 			if curMap != nil {
 				mapSlice = append(mapSlice, curMap)
 			}
 		}
 		resultMap[tblName] = mapSlice
 	}
+}
 	return err
 }
 
@@ -470,7 +478,7 @@ func dbDataToYangJsonCreate(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db
 	jsonData := ""
 	resultMap := make(map[string]interface{})
 	if isCvlYang(uri) {
-		directDbToYangJsonCreate((*dbDataMap)[cdb], jsonData, resultMap)
+		directDbToYangJsonCreate(dbDataMap, jsonData, resultMap)
 	} else {
 		var d *db.DB
 		reqXpath, keyName, tableName := xpathKeyExtract(d, ygRoot, GET, uri)

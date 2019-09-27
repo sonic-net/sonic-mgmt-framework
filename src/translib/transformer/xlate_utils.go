@@ -222,8 +222,12 @@ func isCvlYang(path string) bool {
     return false
 }
 
-func sonicKeyDataAdd(keyNameList []string, keyStr string, resultMap map[string]interface{}) {
-    keyValList := strings.Split(keyStr, "|")
+func sonicKeyDataAdd(dbIndex db.DBNum, keyNameList []string, keyStr string, resultMap map[string]interface{}) {
+    keyValList := strings.Split(keyStr, ":")
+	if dbIndex == db.ConfigDB {
+    	keyValList = strings.Split(keyStr, "|")
+	}
+	
     if len(keyNameList) != len(keyValList) {
         return
     }
