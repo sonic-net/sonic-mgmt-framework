@@ -133,46 +133,50 @@ func XlateUriToKeySpec(uri string, ygRoot *ygot.GoStruct, t *interface{}) (*[]Ke
 }
 
 func FillKeySpecs(yangXpath string , keyStr string, retdbFormat *[]KeySpec) ([]KeySpec){
-    if xYangSpecMap == nil {
-        return *retdbFormat
-    }
-    _, ok := xYangSpecMap[yangXpath]
-    if ok {
-        xpathInfo := xYangSpecMap[yangXpath]
-        if xpathInfo.tableName != nil {
-            dbFormat := KeySpec{}
-            dbFormat.Ts.Name = *xpathInfo.tableName
-	    dbFormat.dbNum = xpathInfo.dbIndex
-	    if keyStr != "" {
-		dbFormat.Key.Comp = append(dbFormat.Key.Comp, keyStr)
-	    }
-            for _, child := range xpathInfo.childTable {
-                if xDbSpecMap != nil {
-		    chlen := len(xDbSpecMap[child].yangXpath)
-                    if chlen > 0 {
-			children := make([]KeySpec, 0)
-			for _, childXpath := range xDbSpecMap[child].yangXpath {
-			        children = FillKeySpecs(childXpath, "", &children)
-				dbFormat.Child = append(dbFormat.Child, children...)
+	if xYangSpecMap == nil {
+		return *retdbFormat
+	}
+	_, ok := xYangSpecMap[yangXpath]
+	if ok {
+		xpathInfo := xYangSpecMap[yangXpath]
+		if xpathInfo.tableName != nil {
+			dbFormat := KeySpec{}
+			dbFormat.Ts.Name = *xpathInfo.tableName
+			dbFormat.dbNum = xpathInfo.dbIndex
+			if keyStr != "" {
+				dbFormat.Key.Comp = append(dbFormat.Key.Comp, keyStr)
 			}
-                    }
-                 }
-            }
-            *retdbFormat = append(*retdbFormat, dbFormat)
-        } else {
-            for _, child := range xpathInfo.childTable {
-                if xDbSpecMap != nil {
-		    chlen := len(xDbSpecMap[child].yangXpath)
-                    if chlen > 0 {
-                        for _, childXpath := range xDbSpecMap[child].yangXpath {
-                                 *retdbFormat = FillKeySpecs(childXpath, "", retdbFormat)
-                        }
-                    }
-                }
-            }
-        }
-    }
-    return *retdbFormat
+			for _, child := range xpathInfo.childTable {
+				if xDbSpecMap != nil {
+					if _, ok := xDbSpecMap[child]; ok {
+						chlen := len(xDbSpecMap[child].yangXpath)
+						if chlen > 0 {
+							children := make([]KeySpec, 0)
+							for _, childXpath := range xDbSpecMap[child].yangXpath {
+								children = FillKeySpecs(childXpath, "", &children)
+								dbFormat.Child = append(dbFormat.Child, children...)
+							}
+						}
+					}
+				}
+			}
+			*retdbFormat = append(*retdbFormat, dbFormat)
+		} else {
+			for _, child := range xpathInfo.childTable {
+				if xDbSpecMap != nil {
+					if _, ok := xDbSpecMap[child]; ok {
+						chlen := len(xDbSpecMap[child].yangXpath)
+						if chlen > 0 {
+							for _, childXpath := range xDbSpecMap[child].yangXpath {
+								*retdbFormat = FillKeySpecs(childXpath, "", retdbFormat)
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	return *retdbFormat
 }
 
 func fillCvlKeySpec(xpath string , tableName string, keyStr string) ( []KeySpec ) {
@@ -195,15 +199,19 @@ func fillCvlKeySpec(xpath string , tableName string, keyStr string) ( []KeySpec 
 		// If table name not available in xpath get top container name
 		tokens:= strings.Split(xpath, ":")
 		container := "/" + tokens[len(tokens)-1]
-		if xDbSpecMap[container] != nil {
-			dbInfo := xDbSpecMap[container]
-			if dbInfo.fieldType == "container" {
-				for dir, _ := range dbInfo.dbEntry.Dir {
-					cdb := xDbSpecMap[dir].dbIndex
-					dbFormat := KeySpec{}
-					dbFormat.Ts.Name = dir
-					dbFormat.dbNum = cdb
-					retdbFormat = append(retdbFormat, dbFormat)
+		if xDbSpecMap != nil {
+			if _, ok := xDbSpecMap[container]; ok {
+				dbInfo := xDbSpecMap[container]
+				if dbInfo.fieldType == "container" {
+					for dir, _ := range dbInfo.dbEntry.Dir {
+						if _, ok := xDbSpecMap[dir]; ok {
+						cdb := xDbSpecMap[dir].dbIndex
+						dbFormat := KeySpec{}
+						dbFormat.Ts.Name = dir
+						dbFormat.dbNum = cdb
+						retdbFormat = append(retdbFormat, dbFormat)
+						}
+					}
 				}
 			}
 		}
@@ -320,7 +328,9 @@ func XlateFromDb(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db.DB, data m
 		}
 	} else {
 	        xpath, _ := RemoveXPATHPredicates(uri)
-		cdb = xYangSpecMap[xpath].dbIndex
+		if _, ok := xYangSpecMap[xpath]; ok {
+			cdb = xYangSpecMap[xpath].dbIndex
+		}
 	}
 	payload, err := dbDataToYangJsonCreate(uri, ygRoot, dbs, &dbData, cdb)
 	log.Info("Payload generated:", payload)
