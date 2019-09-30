@@ -204,7 +204,8 @@ func fillCvlKeySpec(xpath string , tableName string, keyStr string) ( []KeySpec 
 				dbInfo := xDbSpecMap[container]
 				if dbInfo.fieldType == "container" {
 					for dir, _ := range dbInfo.dbEntry.Dir {
-						if _, ok := xDbSpecMap[dir]; ok {
+						_, ok := xDbSpecMap[dir]
+						if ok && xDbSpecMap[dir].dbEntry.Node.Statement().Keyword == "list" {
 						cdb := xDbSpecMap[dir].dbIndex
 						dbFormat := KeySpec{}
 						dbFormat.Ts.Name = dir
