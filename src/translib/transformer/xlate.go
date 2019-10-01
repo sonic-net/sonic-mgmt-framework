@@ -69,10 +69,11 @@ func XlateFuncCall(name string, params ...interface{}) (result []reflect.Value, 
 
 func TraverseDb(dbs [db.MaxDB]*db.DB, spec KeySpec, result *map[db.DBNum]map[string]map[string]db.Value, parentKey *db.Key) error {
 	var err error
-	separator := ":"
-	if spec.dbNum == db.ConfigDB {
-		separator = "|"
-	}
+	var dbOpts db.Options
+
+	dbOpts = getDBOptions(spec.dbNum)
+	separator := dbOpts.KeySeparator
+	log.Infof("key separator for table %v in Db %v is %v", spec.Ts.Name, spec.dbNum, separator)
 
 	if spec.Key.Len() > 0 {
 		// get an entry with a specific key
@@ -101,7 +102,7 @@ func TraverseDb(dbs [db.MaxDB]*db.DB, spec KeySpec, result *map[db.DBNum]map[str
 		for i, _ := range keys {
 			if parentKey != nil {
 				// TODO - multi-depth with a custom delimiter
-				if strings.Index(strings.Join(keys[i].Comp, separator), strings.Join((*parentKey).Comp, "|")) == -1 {
+				if strings.Index(strings.Join(keys[i].Comp, separator), strings.Join((*parentKey).Comp, separator)) == -1 {
 					continue
 				}
 			}
@@ -132,46 +133,50 @@ func XlateUriToKeySpec(uri string, ygRoot *ygot.GoStruct, t *interface{}) (*[]Ke
 }
 
 func FillKeySpecs(yangXpath string , keyStr string, retdbFormat *[]KeySpec) ([]KeySpec){
-    if xYangSpecMap == nil {
-        return *retdbFormat
-    }
-    _, ok := xYangSpecMap[yangXpath]
-    if ok {
-        xpathInfo := xYangSpecMap[yangXpath]
-        if xpathInfo.tableName != nil {
-            dbFormat := KeySpec{}
-            dbFormat.Ts.Name = *xpathInfo.tableName
-	    dbFormat.dbNum = xpathInfo.dbIndex
-	    if keyStr != "" {
-		dbFormat.Key.Comp = append(dbFormat.Key.Comp, keyStr)
-	    }
-            for _, child := range xpathInfo.childTable {
-                if xDbSpecMap != nil {
-		    chlen := len(xDbSpecMap[child].yangXpath)
-                    if chlen > 0 {
-			children := make([]KeySpec, 0)
-			for _, childXpath := range xDbSpecMap[child].yangXpath {
-			        children = FillKeySpecs(childXpath, "", &children)
-				dbFormat.Child = append(dbFormat.Child, children...)
+	if xYangSpecMap == nil {
+		return *retdbFormat
+	}
+	_, ok := xYangSpecMap[yangXpath]
+	if ok {
+		xpathInfo := xYangSpecMap[yangXpath]
+		if xpathInfo.tableName != nil {
+			dbFormat := KeySpec{}
+			dbFormat.Ts.Name = *xpathInfo.tableName
+			dbFormat.dbNum = xpathInfo.dbIndex
+			if keyStr != "" {
+				dbFormat.Key.Comp = append(dbFormat.Key.Comp, keyStr)
 			}
-                    }
-                 }
-            }
-            *retdbFormat = append(*retdbFormat, dbFormat)
-        } else {
-            for _, child := range xpathInfo.childTable {
-                if xDbSpecMap != nil {
-		    chlen := len(xDbSpecMap[child].yangXpath)
-                    if chlen > 0 {
-                        for _, childXpath := range xDbSpecMap[child].yangXpath {
-                                 *retdbFormat = FillKeySpecs(childXpath, "", retdbFormat)
-                        }
-                    }
-                }
-            }
-        }
-    }
-    return *retdbFormat
+			for _, child := range xpathInfo.childTable {
+				if xDbSpecMap != nil {
+					if _, ok := xDbSpecMap[child]; ok {
+						chlen := len(xDbSpecMap[child].yangXpath)
+						if chlen > 0 {
+							children := make([]KeySpec, 0)
+							for _, childXpath := range xDbSpecMap[child].yangXpath {
+								children = FillKeySpecs(childXpath, "", &children)
+								dbFormat.Child = append(dbFormat.Child, children...)
+							}
+						}
+					}
+				}
+			}
+			*retdbFormat = append(*retdbFormat, dbFormat)
+		} else {
+			for _, child := range xpathInfo.childTable {
+				if xDbSpecMap != nil {
+					if _, ok := xDbSpecMap[child]; ok {
+						chlen := len(xDbSpecMap[child].yangXpath)
+						if chlen > 0 {
+							for _, childXpath := range xDbSpecMap[child].yangXpath {
+								*retdbFormat = FillKeySpecs(childXpath, "", retdbFormat)
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	return *retdbFormat
 }
 
 func fillCvlKeySpec(xpath string , tableName string, keyStr string) ( []KeySpec ) {
@@ -182,8 +187,8 @@ func fillCvlKeySpec(xpath string , tableName string, keyStr string) ( []KeySpec 
 		dbFormat := KeySpec{}
 		dbFormat.Ts.Name = tableName
                 cdb := db.ConfigDB
-                if _, ok := xDbSpecMap[xpath]; ok {
-			cdb = xDbSpecMap[xpath].dbIndex
+                if _, ok := xDbSpecMap[tableName]; ok {
+			cdb = xDbSpecMap[tableName].dbIndex
                 }
 		dbFormat.dbNum = cdb
 		if keyStr != "" {
@@ -194,15 +199,20 @@ func fillCvlKeySpec(xpath string , tableName string, keyStr string) ( []KeySpec 
 		// If table name not available in xpath get top container name
 		tokens:= strings.Split(xpath, ":")
 		container := "/" + tokens[len(tokens)-1]
-		if xDbSpecMap[container] != nil {
-			dbInfo := xDbSpecMap[container]
-			if dbInfo.fieldType == "container" {
-				for dir, _ := range dbInfo.dbEntry.Dir {
-					cdb := xDbSpecMap[dir].dbIndex
-					dbFormat := KeySpec{}
-					dbFormat.Ts.Name = dir
-					dbFormat.dbNum = cdb
-					retdbFormat = append(retdbFormat, dbFormat)
+		if xDbSpecMap != nil {
+			if _, ok := xDbSpecMap[container]; ok {
+				dbInfo := xDbSpecMap[container]
+				if dbInfo.fieldType == "container" {
+					for dir, _ := range dbInfo.dbEntry.Dir {
+						_, ok := xDbSpecMap[dir]
+						if ok && xDbSpecMap[dir].dbEntry.Node.Statement().Keyword == "list" {
+						cdb := xDbSpecMap[dir].dbIndex
+						dbFormat := KeySpec{}
+						dbFormat.Ts.Name = dir
+						dbFormat.dbNum = cdb
+						retdbFormat = append(retdbFormat, dbFormat)
+						}
+					}
 				}
 			}
 		}
@@ -296,14 +306,21 @@ func GetAndXlateFromDB(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db.DB) 
 func XlateFromDb(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db.DB, data map[db.DBNum]map[string]map[string]db.Value) ([]byte, error) {
 
 	var err error
+	var result []byte
 	var dbData = make(map[db.DBNum]map[string]map[string]db.Value)
 	var cdb db.DBNum = db.ConfigDB
 
 	dbData = data
 	if isCvlYang(uri) {
-		yangXpath, keyStr, tableName := sonicXpathKeyExtract(uri)
+		xpath, keyStr, tableName := sonicXpathKeyExtract(uri)
 		if (tableName != "") {
-			tokens:= strings.Split(yangXpath, "/")
+			dbInfo, ok := xDbSpecMap[tableName]
+			if !ok {
+				log.Warningf("No entry in xDbSpecMap for xpath %v", tableName)
+			} else {
+				cdb =  dbInfo.dbIndex
+			}
+			tokens:= strings.Split(xpath, "/")
 			// Format /module:container/tableName[key]/fieldName
 			if tokens[len(tokens)-2] == tableName {
 		                fieldName := tokens[len(tokens)-1]
@@ -312,7 +329,9 @@ func XlateFromDb(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db.DB, data m
 		}
 	} else {
 	        xpath, _ := RemoveXPATHPredicates(uri)
-		cdb = xYangSpecMap[xpath].dbIndex
+		if _, ok := xYangSpecMap[xpath]; ok {
+			cdb = xYangSpecMap[xpath].dbIndex
+		}
 	}
 	payload, err := dbDataToYangJsonCreate(uri, ygRoot, dbs, &dbData, cdb)
 	log.Info("Payload generated:", payload)
@@ -322,7 +341,7 @@ func XlateFromDb(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db.DB, data m
 		return nil, err
 	}
 
-	result := []byte(payload)
+	result = []byte(payload)
 	return result, err
 
 }

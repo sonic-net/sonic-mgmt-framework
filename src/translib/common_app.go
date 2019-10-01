@@ -172,15 +172,15 @@ func (app *CommonApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
 	    }
     }
 
-   payload, err = generateGetResponsePayload(app.pathInfo.Path, (*app.ygotRoot).(*ocbinds.Device), app.ygotTarget)
+    resPayload, err := generateGetResponsePayload(app.pathInfo.Path, (*app.ygotRoot).(*ocbinds.Device), app.ygotTarget)
     if err != nil {
         log.Error("generateGetResponsePayload()  failed")
         return GetResponse{Payload: payload, ErrSrc: AppErr}, err
     }
     var dat map[string]interface{}
-    err = json.Unmarshal(payload, &dat)
+    err = json.Unmarshal(resPayload, &dat)
 
-	return GetResponse{Payload: payload}, err
+	return GetResponse{Payload: resPayload}, err
 }
 
 func (app *CommonApp) translateCRUDCommon(d *db.DB, opcode int) ([]db.WatchKeys, error) {

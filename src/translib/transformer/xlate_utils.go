@@ -223,10 +223,10 @@ func isCvlYang(path string) bool {
 }
 
 func sonicKeyDataAdd(dbIndex db.DBNum, keyNameList []string, keyStr string, resultMap map[string]interface{}) {
-    keyValList := strings.Split(keyStr, ":")
-	if dbIndex == db.ConfigDB {
-    	keyValList = strings.Split(keyStr, "|")
-	}
+	var dbOpts db.Options
+	dbOpts = getDBOptions(dbIndex)
+	keySeparator := dbOpts.KeySeparator
+    keyValList := strings.Split(keyStr, keySeparator)
 	
     if len(keyNameList) != len(keyValList) {
         return
@@ -405,4 +405,28 @@ func findInMap(m map[string]string, str string) string {
 
 	// str doesn't exist in map m.
 	return ""
+}
+
+func getDBOptions(dbNo db.DBNum) db.Options {
+        var opt db.Options
+
+        switch dbNo {
+        case db.ApplDB, db.CountersDB:
+                opt = getDBOptionsWithSeparator(dbNo, "", ":", ":")
+                break
+        case db.FlexCounterDB, db.AsicDB, db.LogLevelDB, db.ConfigDB, db.StateDB:
+                opt = getDBOptionsWithSeparator(dbNo, "", "|", "|")
+                break
+        }
+
+        return opt
+}
+
+func getDBOptionsWithSeparator(dbNo db.DBNum, initIndicator string, tableSeparator string, keySeparator string) db.Options {
+        return(db.Options {
+                    DBNo              : dbNo,
+                    InitIndicator     : initIndicator,
+                    TableNameSeparator: tableSeparator,
+                    KeySeparator      : keySeparator,
+                      })
 }
