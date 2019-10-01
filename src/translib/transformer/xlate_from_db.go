@@ -65,8 +65,12 @@ func leafXfmrHandlerFunc(inParams XfmrParams) (map[string]interface{}, error) {
     if err != nil {
         return nil, err
     }
-    fldValMap := ret[0].Interface().(map[string]interface{})
-    return fldValMap, nil
+    if ret != nil {
+        fldValMap := ret[0].Interface().(map[string]interface{})
+        return fldValMap, nil
+    } else {
+        return nil, nil
+    }
 }
 
 func validateHandlerFunc(inParams XfmrParams) (bool) {
@@ -307,7 +311,7 @@ func yangListDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, x
 				if len(xYangSpecMap[xpath].xfmrFunc) > 0 {
 					inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, curUri, GET, "", dbDataMap, nil)
 					cmap, _  := xfmrHandlerFunc(inParams)
-					if len(cmap) > 0 {
+					if cmap != nil && len(cmap) > 0 {
 						mapSlice = append(mapSlice, curMap)
 					} else {
 						log.Infof("Empty container returned from overloaded transformer for(\"%v\")", curUri)
@@ -354,9 +358,11 @@ func terminalNodeProcess(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string
 			err = fmt.Errorf("%v", logStr)
 			return resFldValMap, err
 		}
-		for lf, val := range fldValMap {
+		if fldValMap != nil {
+		    for lf, val := range fldValMap {
 			resFldValMap[lf] = val
-		}
+		    }
+	        }
 	} else {
 		dbFldName := xYangSpecMap[xpath].fieldName
 		if dbFldName == "NONE" {
@@ -426,7 +432,7 @@ func yangDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, xpath
 					if len(xYangSpecMap[chldXpath].xfmrFunc) > 0 {
 						inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, chldUri, GET, "", dbDataMap, nil)
 						cmap, _  := xfmrHandlerFunc(inParams)
-						if len(cmap) > 0 {
+						if cmap != nil && len(cmap) > 0 {
 							resultMap[cname] = cmap
 						} else {
 							log.Infof("Empty container(\"%v\").\r\n", chldUri)
@@ -454,7 +460,7 @@ func yangDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, xpath
 					if len(xYangSpecMap[chldXpath].xfmrFunc) > 0 {
 						inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, chldUri, GET, "", dbDataMap, nil)
 						cmap, _  := xfmrHandlerFunc(inParams)
-						if len(cmap) > 0 {
+						if cmap != nil && len(cmap) > 0 {
 							resultMap = cmap
 						} else {
 							log.Infof("Empty list(\"%v\").\r\n", chldUri)
@@ -516,7 +522,7 @@ func dbDataToYangJsonCreate(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db
 				if len(xYangSpecMap[reqXpath].xfmrFunc) > 0 {
 					inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, uri, GET, "", dbDataMap, nil)
 					cmap, _   = xfmrHandlerFunc(inParams)
-					if len(cmap) > 0 {
+					if cmap != nil && len(cmap) > 0 {
 						resultMap[cname] = cmap
 					} else {
 						err    := yangDataFill(dbs, ygRoot, uri, reqXpath, dbDataMap, resultMap, tableName, keyName, cdb, false)

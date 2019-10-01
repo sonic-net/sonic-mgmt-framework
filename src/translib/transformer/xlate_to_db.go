@@ -128,10 +128,12 @@ func mapFillData(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, dbKey st
         if err != nil {
             return err
         }
-        retData := ret[0].Interface().(map[string]string)
-        log.Info("Transformer function :", xpathInfo.xfmrFunc, " Xpath: ", xpath, " retData: ", retData)
-        for f, v := range retData {
-            dataToDBMapAdd(tableName, dbKey, result, f, v)
+	if ret != nil {
+            retData := ret[0].Interface().(map[string]string)
+            log.Info("Transformer function :", xpathInfo.xfmrFunc, " Xpath: ", xpath, " retData: ", retData)
+            for f, v := range retData {
+                dataToDBMapAdd(tableName, dbKey, result, f, v)
+            }
         }
         return nil
     }
@@ -402,7 +404,9 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
                 if err != nil {
 					return err
                 }
-                curKey = ret[0].Interface().(string)
+		if ret != nil {
+                    curKey = ret[0].Interface().(string)
+	        }
             } else if xYangSpecMap[xpathPrefix].keyName != nil {
 				curKey = *xYangSpecMap[xpathPrefix].keyName
             } else {
@@ -442,7 +446,9 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
 					if err != nil {
 						return err
 					}
-					curKey = ret[0].Interface().(string)
+					if ret != nil {
+					    curKey = ret[0].Interface().(string)
+					}
 				} else if xYangSpecMap[xpath].keyName != nil {
 					curKey = *xYangSpecMap[xpath].keyName
 				}
@@ -459,7 +465,9 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
                         if err != nil {
                             return nil
                         }
-                        mapCopy(result, ret[0].Interface().(map[string]map[string]db.Value))
+			if  ret != nil {
+	                    mapCopy(result, ret[0].Interface().(map[string]map[string]db.Value))
+			}
                     } else {
                         yangReqToDbMapCreate(d, ygRoot, oper, curUri, xpath, curKey, jData.MapIndex(key).Interface(), result)
                     }
@@ -554,7 +562,9 @@ func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string) (st
                 if err != nil {
                     return "", "", ""
                 }
-                keyStr = ret[0].Interface().(string)
+		if ret != nil {
+                    keyStr = ret[0].Interface().(string)
+		}
             } else if xYangSpecMap[yangXpath].keyName != nil {
 		    keyStr += *xYangSpecMap[yangXpath].keyName
 	    } else {
