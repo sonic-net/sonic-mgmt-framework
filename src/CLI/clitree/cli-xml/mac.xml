@@ -26,207 +26,207 @@ limitations under the License.
 <VIEW name="enable-view">
     <COMMAND
         name="show mac"
-        help="show mac"
+        help="Show mac"
         >
-        <ACTION> 
-            builtin="clish_nop"
-        </ACTION>
+    <ACTION> 
+        builtin="clish_nop"
+    </ACTION>
     </COMMAND>
 
 <!--====================show mac address-table command======================-->
     <COMMAND
-        help="show mac address table"
+        help="Mac address table"
         name="show mac address-table"
         >
-        <ACTION> 
-	    python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_interfaces_interfaces show_mac.j2 show
-        </ACTION>
+    <ACTION> 
+        python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_interfaces_interfaces show_mac.j2 show
+    </ACTION>
     </COMMAND>
 
 <!--====================show mac address-table count command ======================-->
     <COMMAND
-        help="show mac address table count"
+        help="Count keyword"
         name="show mac address-table count"
         >
-        <ACTION> 
-            python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_interfaces_interfaces show_mac_count.j2 count 
-        </ACTION>
+    <ACTION> 
+        python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_interfaces_interfaces show_mac_count.j2 count 
+    </ACTION>
     </COMMAND>
 
 
 <!--====================show mac address-table address <mac-address> command ======================-->
     <COMMAND
-        help="show mac address table address mac-address"
+        help="Show mac address table address for mac-address"
         name="show mac address-table address"
         >
         <PARAM
             name="mac-addr"
             help="48 bit MAC address"
             ptype="MAC_ADDR"
-	    >
-	</PARAM>
-        <ACTION>
-		python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_interfaces_interfaces show_mac.j2 mac-addr ${mac-addr}
-        </ACTION>
+            >
+        </PARAM>
+    <ACTION>
+        python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_interfaces_interfaces show_mac.j2 mac-addr ${mac-addr}
+    </ACTION>
     </COMMAND>
 
 <!--====================show mac address-table vlan <vlan-id> command ======================-->
     <COMMAND
-        help="mac address-table for VLAN"
+        help="Show mac address-table for VLAN"
         name="show mac address-table vlan"
         >
         <PARAM
             name="vlan-id"
-            help="VLAN identifier (1-4094)"
+            help="VLAN identifier"
             ptype="VLAN_ID"
-	    >
-	</PARAM>
-        <ACTION>
-		python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_interfaces_interfaces show_mac.j2 vlan ${vlan-id}
-        </ACTION>
+            >
+        </PARAM>
+    <ACTION>
+        python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_interfaces_interfaces show_mac.j2 vlan ${vlan-id}
+    </ACTION>
     </COMMAND>
 
 <!--====================show mac address-table interface <p-id> command ======================-->
     <COMMAND
-        help="mac address-table for interfaces"
+        help="Show mac address-table for interfaces"
         name="show mac address-table interface">
-	<PARAM
-	    name="if-subcommands"
-	    help="Interface subcommands"
-	    mode="switch"
-	    ptype="SUBCOMMAND"
-	    >
-	    <PARAM
-	        name="Ethernet"
-		help="Ethernet IEEE 802.3"
-		ptype="SUBCOMMAND"
-		mode="subcommand"
-		>
-		<PARAM
-		    name="phy-if-id"
+        <PARAM
+            name="if-subcommands"
+            help="Interface subcommands"
+            mode="switch"
+            ptype="SUBCOMMAND"
+            >
+            <PARAM
+                name="ethernet"
+                help="Ethernet IEEE 802.3"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                >
+                <PARAM
+                    name="phy-if-id"
                     help="Physical interface(Multiples of 4)"
-		    ptype="UINT"
-		    >
+                    ptype="UINT"
+                    >
                 </PARAM>
             </PARAM>
-	    <PARAM
-	        name="Port-channel"
-		help="Port-channel ID (1-128)"
-		ptype="SUBCOMMAND"
-		mode="subcommand"
-		>
-		<PARAM
-		    name="po-id"
-                    help="port-channel id (1-128)"
-		    ptype="UINT"
-		    >
+            <PARAM
+                name="port-channel"
+                help="Port-channel ID"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                >
+                <PARAM
+                    name="port-channel-id"
+                    help="Port-channel id"
+                    ptype="LAG_ID"
+                    >
                 </PARAM>
-	    </PARAM>
             </PARAM>
-        <ACTION>
-		if test "${if-subcommands}" = "Ethernet"; then&#xA;
-		    python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_interfaces_interfaces show_mac.j2 interface Ethernet${phy-if-id}&#xA; 
-		elif test "${if-subcommands}" = "Port-channel"; then&#xA;
-		    python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_interfaces_interfaces show_mac.j2 interface Port-channel${po-id}&#xA; 
-                else&#xA;
-		    python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_interfaces_interfaces show_mac.j2 ${__full_line}&#xA;
-	        fi	
-        </ACTION>
+        </PARAM>
+    <ACTION>
+        if test "${if-subcommands}" = "ethernet"; then&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_interfaces_interfaces show_mac.j2 interface Ethernet${phy-if-id}&#xA; 
+        elif test "${if-subcommands}" = "port-channel"; then&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_interfaces_interfaces show_mac.j2 interface Port-channel${port-channel-id}&#xA; 
+        else&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_interfaces_interfaces show_mac.j2 ${__full_line}&#xA;
+        fi	
+    </ACTION>
     </COMMAND>
 
 <!--====================show mac address-table static commands ======================-->
     <COMMAND
-        help="mac address-table for static commands"
+        help="Mac address-table for static commands"
         name="show mac address-table static">
-	<PARAM
-	    name="s-subcommands"
-	    help="static subcommands"
-	    mode="switch"
-	    ptype="SUBCOMMAND"
-	    optional="true"
-	    >
-	    <PARAM
-	        name="Address"
-		help="Address of static mac"
-		ptype="SUBCOMMAND"
-		mode="subcommand"
-		>
-		<PARAM
-		    name="mac-addr"
-                    help="Static Mac address"
-		    ptype="MAC_ADDR"
-		    >
-                </PARAM>
-            </PARAM>
-	    <PARAM
-	        name="VLAN"
-		help="VLAN ID (1-128)"
-		ptype="SUBCOMMAND"
-		mode="subcommand"
-		>
-		<PARAM
-		    name="vlan-id"
-                    help="static vlan id"
-		    ptype="VLAN_ID"
-		    >
+        <PARAM
+            name="s-subcommands"
+            help="Static subcommands"
+            mode="switch"
+            ptype="SUBCOMMAND"
+            optional="true"
+            >
+            <PARAM
+                name="address"
+                help="Mac-address of static interface"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                >
+                <PARAM
+                    name="mac-addr"
+                    help="48 bit mac-address"
+                    ptype="MAC_ADDR"
+                    >
                 </PARAM>
             </PARAM>
             <PARAM
-                name="Interface"
-                help="Static Interface"
-		ptype="SUBCOMMAND"
-		mode="subcommand"
-		>
-		<PARAM
-		    name="interface-subcommand"
-	            help="static interface subcommands"
-	            ptype="SUBCOMMAND"
-	            mode="switch"	    
-		    >
+                name="vlan"
+                help="VLAN ID"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                >
+                <PARAM
+                    name="vlan-id"
+                    help="Vlan id"
+                    ptype="VLAN_ID"
+                    >
+                </PARAM>
+            </PARAM>
+            <PARAM
+                name="interface"
+                help="Interface ethernet or port-channel"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                >
+                <PARAM
+                    name="interface-subcommand"
+                    help="Static interface subcommands"
+                    ptype="SUBCOMMAND"
+                    mode="switch"
+                    >
                     <PARAM
-                        name="Ethernet"
-                        help="static interface Ethernet id - ethernet"
-		        ptype="SUBCOMMAND"
-		        mode="subcommand"
-		        >
-		        <PARAM
-		            name="phy-if-id"
-                            help="Static interface ethernet id-phy-if-id"
-			    ptype="UINT"
-			    >
-	                 </PARAM>
-		    </PARAM>
+                        name="ethernet"
+                        help="Ethernet IEEE 802.3"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        >
+                        <PARAM
+                            name="phy-if-id"
+                            help="Physical interface(Multiples of 4)"
+                            ptype="UINT"
+                            >
+                        </PARAM>
+                    </PARAM>
                     <PARAM
-                        name="Port-channel"
-                        help="static port-channel id - pc"
-		        ptype="SUBCOMMAND"
-		        mode="subcommand"
-		        >
-		        <PARAM
-		            name="po-id"
-                            help="Static interface port-channel id po-id"
-			    ptype="UINT"
-			    >
-		        </PARAM>
-	            </PARAM>
-		</PARAM>
+                        name="port-channel"
+                        help="Port-channel id"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        >
+                        <PARAM
+                            name="port-channel-id"
+                            help="Port-channel id"
+                            ptype="LAG_ID"
+                            >
+                        </PARAM>
+                    </PARAM>
+                </PARAM>
             </PARAM>
         </PARAM>
-        <ACTION>
-		if test "${s-subcommands}" = "Address"; then&#xA;
-		    python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_interfaces_interfaces show_mac.j2 static address ${mac-addr}&#xA; 
-		elif test "${s-subcommands}" = "VLAN"; then&#xA;
-		    python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_interfaces_interfaces show_mac.j2 static vlan ${vlan-id}&#xA; 
-                elif test "${s-subcommands}" = "Interface"; then&#xA;
-                    if test "${interface-subcommand}" = "Port-channel"; then&#xA;
-                        python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_interfaces_interfaces show_mac.j2 static interface Port-channel${po-id}&#xA;
-                    else&#xA;
-                        python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_interfaces_interfaces show_mac.j2 static interface Ethernet${phy-if-id}&#xA;
-                    fi&#xA;
-                else&#xA;
-		    python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_interfaces_interfaces show_mac.j2 static ${__full_line}&#xA;
-	        fi	
-        </ACTION>
+    <ACTION>
+        if test "${s-subcommands}" = "address"; then&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_interfaces_interfaces show_mac.j2 static address ${mac-addr}&#xA; 
+        elif test "${s-subcommands}" = "vlan"; then&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_interfaces_interfaces show_mac.j2 static vlan ${vlan-id}&#xA; 
+        elif test "${s-subcommands}" = "interface"; then&#xA;
+            if test "${interface-subcommand}" = "port-channel"; then&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_interfaces_interfaces show_mac.j2 static interface Port-channel${port-channel-id}&#xA;
+            else&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_interfaces_interfaces show_mac.j2 static interface Ethernet${phy-if-id}&#xA;
+            fi&#xA;
+        else&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_interfaces_interfaces show_mac.j2 static ${__full_line}&#xA;
+        fi
+    </ACTION>
     </COMMAND>
 
 <!--====================show mac address-table dynamic commands ======================-->
@@ -235,93 +235,93 @@ limitations under the License.
         name="show mac address-table dynamic">
         <PARAM
             name="d-subcommands"
-            help="dynamic subcommands"
+            help="Dynamic subcommands"
             mode="switch"
-	    ptype="SUBCOMMAND"
-	    optional="true"
+            ptype="SUBCOMMAND"
+            optional="true"
             >
             <PARAM
-                name="Address"
-                help="Address of dynamic mac"
+                name="address"
+                help="Mac address of dynamic interface"
                 ptype="SUBCOMMAND"
                 mode="subcommand"
                 >
                 <PARAM
                     name="mac-addr"
-                    help="dynamic Mac address"
+                    help="48 bit mac-address"
                     ptype="MAC_ADDR"
                     >
                 </PARAM>
             </PARAM>
             <PARAM
-                name="VLAN"
-                help="VLAN ID (1-128)"
+                name="vlan"
+                help="VLAN ID"
                 ptype="SUBCOMMAND"
                 mode="subcommand"
                 >
                 <PARAM
                     name="vlan-id"
-                    help="dynamic vlan id"
+                    help="VLAN ID"
                     ptype="VLAN_ID"
                     >
                 </PARAM>
             </PARAM>
             <PARAM
-                name="Interface"
-                help="dynamic Interface"
+                name="interface"
+                help="Dynamic Interface ethernet or port-channel"
                 ptype="SUBCOMMAND"
                 mode="subcommand"
                 >
                 <PARAM
                     name="interface-subcommand"
-                    help="dynamic interface subcommands"
+                    help="Dynamic interface subcommands"
                     ptype="SUBCOMMAND"
                     mode="switch"           
                     >
                     <PARAM
-                        name="Ethernet"
-                        help="dynamic interface Ethernet id - ethernet"
+                        name="ethernet"
+                        help="Ethernet IEEE 802.3"
                         ptype="SUBCOMMAND"
                         mode="subcommand"
                         >
                         <PARAM
                             name="phy-if-id"
-                            help="dynamic interface ethernet id-phy-if-id"
+                            help="Physical interface(Multiples of 4)"
                             ptype="UINT"
                             >
                          </PARAM>
                     </PARAM>
                     <PARAM
-                        name="Port-channel"
-                        help="dynamic port-channel id - pc"
+                        name="port-channel"
+                        help="Dynamic port-channel"
                         ptype="SUBCOMMAND"
                         mode="subcommand"
                         >
                         <PARAM
-                            name="po-id"
-                            help="dynamic interface port-channel id po-id"
-                            ptype="UINT"
+                            name="port-channel-id"
+                            help="port-channel id"
+                            ptype="LAG_ID"
                             >
                         </PARAM>
                     </PARAM>
                 </PARAM>
             </PARAM>
         </PARAM>
-        <ACTION>
-                if test "${d-subcommands}" = "Address"; then&#xA;
-                    python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_interfaces_interfaces show_mac.j2 dynamic address ${mac-addr}&#xA;
-                elif test "${d-subcommands}" = "VLAN"; then&#xA;
-                    python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_interfaces_interfaces show_mac.j2 dynamic vlan ${vlan-id}&#xA;
-                elif test "${d-subcommands}" = "Interface"; then&#xA;
-                    if test "${interface-subcommand}" = "Port-channel"; then&#xA;
-                        python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_interfaces_interfaces show_mac.j2 dynamic interface Port-channel${po-id}&#xA;
-                    else&#xA;
-                        python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_interfaces_interfaces show_mac.j2 dynamic interface Ethernet${phy-if-id}&#xA;
-                    fi&#xA;
-                else&#xA;
-                    python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_interfaces_interfaces show_mac.j2 dynamic ${__full_line}&#xA;
-                fi
-        </ACTION>
+    <ACTION>
+        if test "${d-subcommands}" = "address"; then&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_interfaces_interfaces show_mac.j2 dynamic address ${mac-addr}&#xA;
+        elif test "${d-subcommands}" = "vlan"; then&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_interfaces_interfaces show_mac.j2 dynamic vlan ${vlan-id}&#xA;
+        elif test "${d-subcommands}" = "interface"; then&#xA;
+            if test "${interface-subcommand}" = "port-channel"; then&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_interfaces_interfaces show_mac.j2 dynamic interface Port-channel${port-channel-id}&#xA;
+            else&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_interfaces_interfaces show_mac.j2 dynamic interface Ethernet${phy-if-id}&#xA;
+            fi&#xA;
+        else&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_interfaces_interfaces show_mac.j2 dynamic ${__full_line}&#xA;
+        fi
+    </ACTION>
     </COMMAND>
 
 </VIEW>

@@ -61,18 +61,6 @@ def generate_body(func, args):
 
     return keypath,body
 
-def getId(item):
-    prfx = "Ethernet"
-    state_dict = item['state']
-    ifName = state_dict['name']
-
-    if ifName.startswith(prfx):
-        ifId = int(ifName[len(prfx):])
-        return ifId
-    return ifName
-
-
-
 def run(func, args):
 
     c = openconfig_interfaces_client.Configuration()
