@@ -2,12 +2,8 @@ module sonic-pfc-priority-queue-map {
 	namespace "http://github.com/Azure/sonic-pfc-priority-queue-map";
 	prefix ppq;
 
-	import ietf-yang-types {
-		prefix yang;
-	}
-
-	import sonic-common {
-		prefix scommon;
+	import sonic-extension {
+		prefix sonic-ext;
 	}
 
 	organization
@@ -25,31 +21,35 @@ module sonic-pfc-priority-queue-map {
 	}
 
 	container sonic-pfc-priority-queue-map {	
-		list MAP_PFC_PRIORITY_TO_QUEUE {
-			key "name";
-			scommon:map-list true; //special conversion for map tables
-			scommon:map-leaf "pfc_priority qindex"; //every key:value pair is mapped to list keys, e.g. "1":"7" ==> tc_num=1, dscp=7
 
-			leaf name {
-				type string;
-			}
+		container MAP_PFC_PRIORITY_TO_QUEUE {
 
-			list MAP_PFC_PRIORITY_TO_QUEUE { //this is list inside list for storing mapping between two fields
-				key "pfc_priority qindex";
+			list MAP_PFC_PRIORITY_TO_QUEUE_LIST {
+				key "name";
+				sonic-ext:map-list true; //special conversion for map tables
+				sonic-ext:map-leaf "pfc_priority qindex"; //every key:value pair is mapped to list keys, e.g. "1":"7" ==> tc_num=1, dscp=7
 
-				leaf pfc_priority {
-					type string {
-						pattern "[0-9]?";
+				leaf name {
+					type string;
+				}
+
+				list MAP_PFC_PRIORITY_TO_QUEUE { //this is list inside list for storing mapping between two fields
+					key "pfc_priority qindex";
+
+					leaf pfc_priority {
+						type string {
+							pattern "[0-9]?";
+						}
+					}
+
+					leaf qindex {
+						type string {
+							pattern "[0-9]?";
+						}
 					}
 				}
 
-				leaf qindex {
-					type string {
-						pattern "[0-9]?";
-					}
-				}
 			}
-
 		}
 	}
 }

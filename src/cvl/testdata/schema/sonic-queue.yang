@@ -2,12 +2,8 @@ module sonic-queue {
 	namespace "http://github.com/Azure/sonic-queue";
 	prefix squeue;
 
-	import ietf-yang-types {
-		prefix yang;
-	}
-
-	import sonic-common {
-		prefix scommon;
+	import sonic-extension {
+		prefix sonic-ext;
 	}
 
 	import sonic-port {
@@ -38,35 +34,39 @@ module sonic-queue {
 
 
 	container sonic-queue {
-		list QUEUE {
-			key "ifname qindex";
-			scommon:key-pattern "QUEUE|({ifname},)*|{qindex}"; //special pattern used for extracting keys from redis-key and populate the yang instance
-									   // Total list instances = number(key1) * number(key2) * number(key3)
 
-			leaf ifname {
-				type leafref {
-					path "/prt:sonic-port/prt:PORT/prt:ifname";
-				}
-			}
+		container QUEUE {
 
-			leaf qindex {
-				type string {
-					pattern "[0-8]((-)[0-8])?"{
-						error-message "Invalid Q-index";
-						error-app-tag qindex-invalid;
+			list QUEUE_LIST {
+				key "ifname qindex";
+				sonic-ext:key-pattern "QUEUE|({ifname},)*|{qindex}"; //special pattern used for extracting keys from redis-key and populate the yang instance
+										   // Total list instances = number(key1) * number(key2) * number(key3)
+
+				leaf ifname {
+					type leafref {
+						path "/prt:sonic-port/prt:PORT/prt:PORT_LIST/prt:ifname";
 					}
 				}
-			}
 
-			leaf scheduler {
-				type leafref {
-					path "/sch:sonic-scheduler/sch:SCHEDULER/sch:name";
+				leaf qindex {
+					type string {
+						pattern "[0-8]((-)[0-8])?"{
+							error-message "Invalid Q-index";
+							error-app-tag qindex-invalid;
+						}
+					}
 				}
-			}
 
-			leaf wred_profile {
-				type leafref {
-					path "/wrd:sonic-wred-profile/wrd:WRED_PROFILE/wrd:name";
+				leaf scheduler {
+					type leafref {
+						path "/sch:sonic-scheduler/sch:SCHEDULER/sch:SCHEDULER_LIST/sch:name";
+					}
+				}
+
+				leaf wred_profile {
+					type leafref {
+						path "/wrd:sonic-wred-profile/wrd:WRED_PROFILE/wrd:WRED_PROFILE_LIST/wrd:name";
+					}
 				}
 			}
 		}

@@ -2,16 +2,8 @@ module sonic-dscp-tc-map {
 	namespace "http://github.com/Azure/sonic-dscp-tc-map";
 	prefix dtm;
 
-	import ietf-yang-types {
-		prefix yang;
-	}
-
-	import sonic-common {
-		prefix scommon;
-	}
-
-	import sonic-port {
-		prefix sif;
+	import sonic-extension {
+		prefix sonic-ext;
 	}
 
 	organization
@@ -29,34 +21,38 @@ module sonic-dscp-tc-map {
 	}
 
 	container sonic-dscp-tc-map {	
-		list DSCP_TO_TC_MAP {
-			key "name";
-			scommon:map-list true; //special conversion for map tables
-			scommon:map-leaf "dscp tc_num"; //every key:value pair is mapped to list keys, e.g. "1":"7" ==> tc_num=1, dscp=7
 
-			leaf name {
-				type string;
-			}
+		container DSCP_TO_TC_MAP {
 
-			list DSCP_TO_TC_MAP { //this is list inside list for storing mapping between two fields
-				key "dscp tc_num";
+			list DSCP_TO_TC_MAP_LIST {
+				key "name";
+				sonic-ext:map-list true; //special conversion for map tables
+				sonic-ext:map-leaf "dscp tc_num"; //every key:value pair is mapped to list keys, e.g. "1":"7" ==> tc_num=1, dscp=7
 
-				leaf tc_num {
-					type string {
-						pattern "[0-9]?"{
-							error-message "Invalid Traffic Class number";
-							error-app-tag tc-num-invalid;
+				leaf name {
+					type string;
+				}
+
+				list DSCP_TO_TC_MAP { //this is list inside list for storing mapping between two fields
+					key "dscp tc_num";
+
+					leaf tc_num {
+						type string {
+							pattern "[0-9]?"{
+								error-message "Invalid Traffic Class number";
+								error-app-tag tc-num-invalid;
+							}
+						}
+					}
+
+					leaf dscp {
+						type string {
+							pattern "[1-9][0-9]?|[0-9]?";
 						}
 					}
 				}
 
-				leaf dscp {
-					type string {
-						pattern "[1-9][0-9]?|[0-9]?";
-					}
-				}
 			}
-
 		}
 	}
 }
