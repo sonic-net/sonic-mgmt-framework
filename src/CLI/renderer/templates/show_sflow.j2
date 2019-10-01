@@ -1,0 +1,9 @@
+{{'---------------------------------------------------------'}}
+{{'Global sFlow Information'.ljust(20)}}
+{{'---------------------------------------------------------'}}
+{% if json_output and 'sflow' in json_output -%}
+{% set sflow_info = json_output['sflow'] %}
+{{'	admin state: '}}{{sflow_info['admin_state']}}
+{{'	polling-interval: '}}{{sflow_info['polling-interval']}}
+{{'	agent-id: '}} {{sflow_info['agent-id']}}
+{% endif %}

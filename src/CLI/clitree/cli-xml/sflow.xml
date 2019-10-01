@@ -1,0 +1,42 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE CLISH_MODULE [
+<!ENTITY START_PORT_ID "1">
+<!ENTITY MAX_PORT_ID "32">
+<!ENTITY START_SUB_PORT_ID "1">
+<!ENTITY MAX_SUB_PORT_ID "4">
+<!ENTITY MAX_MTU "9276">
+]>
+<CLISH_MODULE xmlns="http://www.dellemc.com/sonic/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xi="http://www.w3.org/2001/XInclude" xsi:schemaLocation="http://www.dellemc.com/sonic/XMLSchema http://www.dellemc.com/sonic/XMLSchema/clish.xsd">
+  <VIEW name="enable-view">
+    <COMMAND name="show sflow" help="Show sFlow information">
+      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-sflow.py get_openconfig_lldp_lldp_interfaces show_sflow.j2 </ACTION>
+      <xi:include href="include/pipe.xml"/>
+    </COMMAND>
+    <COMMAND name="show sflow interface" help="Show sFlow interface information">
+      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-sflow.py get_openconfig_lldp_lldp_interfaces show_sflow_intf.j2 </ACTION>
+      <xi:include href="include/pipe.xml"/>
+    </COMMAND>
+  </VIEW>
+  <VIEW name="configure-view">
+    <COMMAND name="sflow" help="enable sflow">
+      <PARAM name="collector" help="Collector name" ptype="SUBCOMMAND" mode="subcommand" optional="true">
+      	<PARAM name="collector-name" help="Collector name" ptype="STRING"/>
+      	<PARAM name="collector-ip" help="Collector IP address" ptype="STRING"/>
+      	<PARAM name="collector-port" help="Collector port number" ptype="UINT" optional="true"/>
+      </PARAM>
+      <PARAM name="agent-id" help="Collector agent interface" ptype="SUBCOMMAND" mode="subcommand" optional="true">
+      	<PARAM name="interface" help="Interface name" ptype="STRING"/>
+      </PARAM>
+      <ACTION builtin="clish_nop"/>
+      <PARAM name="polling-interval" help="Collector polling interval" ptype="SUBCOMMAND" mode="subcommand" optional="true">
+      	<PARAM name="interval" help="Interval" ptype="UINT"/>
+      </PARAM>
+    </COMMAND>
+    <COMMAND name="no sflow" help="disable sflow">
+      <PARAM name="collector" help="Collector name" ptype="SUBCOMMAND" mode="subcommand" optional="true">
+      	<PARAM name="collector-name" help="Collector name" ptype="STRING"/>
+      </PARAM>
+      <ACTION builtin="clish_nop"/>
+    </COMMAND>
+  </VIEW>
+</CLISH_MODULE>
