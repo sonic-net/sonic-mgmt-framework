@@ -16,6 +16,7 @@ schema: $(out) $(out_common)
 
 schema-tree: $(out_tree)
 
+#Build YANG models
 %.yin:$(sonic_yang)/%.yang
 	@echo "Generating `basename $@` ..."
 	@devFile="`echo $@ | cut -d . -f1`-deviation.yang"; \
@@ -23,6 +24,7 @@ schema-tree: $(out_tree)
 	pyang -p $(search_path)	--plugindir $(pyang_plugin_dir) \
 		-f yin-cvl $$devOpt $< -o `basename $@`
 
+#Build common YANG models
 %.yin:$(sonic_yang_common)/%.yang
 	@echo "Generating `basename $@` ..."
 	@devFile="`echo $@ | cut -d . -f1`-deviation.yang"; \
