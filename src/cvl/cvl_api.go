@@ -123,8 +123,9 @@ func Initialize() CVLRetCode {
 	yparser.Initialize()
 
 	modelInfo.modelNs =  make(map[string]modelNamespace) //redis table to model name
-	modelInfo.tableInfo = make(map[string]modelTableInfo) //model namespace 
+	modelInfo.tableInfo = make(map[string]*modelTableInfo) //model namespace 
 	modelInfo.allKeyDelims = make(map[string]bool) //all key delimiter
+	modelInfo.redisTableToYangList = make(map[string][]string) //Redis table to Yang list map
 	dbNameToDbNum = map[string]uint8{"APPL_DB": APPL_DB, "CONFIG_DB": CONFIG_DB}
 
 	/* schema */

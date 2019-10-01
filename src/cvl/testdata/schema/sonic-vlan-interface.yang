@@ -2,16 +2,8 @@ module sonic-vlan-interface {
 	namespace "http://github.com/Azure/sonic-vlan-interface";
 	prefix svint;
 
-	import ietf-yang-types {
-		prefix yang;
-	}
-
 	import ietf-inet-types {
-                prefix inet;
-        }
-
-	import sonic-common {
-		prefix scommon;
+		prefix inet;
 	}
 
 	import sonic-vlan {
@@ -33,19 +25,23 @@ module sonic-vlan-interface {
 	}
 
 	container sonic-vlan-interface {
-		list VLAN_INTERFACE {
-			key "portname ip_prefix";
 
-			leaf portname{
-				type leafref {
-					path "/svlan:sonic-vlan/svlan:VLAN/svlan:name";
-                                }
-			}
+		container VLAN_INTERFACE {
 
-			leaf ip_prefix {
-				 mandatory true;
-                                 type inet:ip-prefix;
+			list VLAN_INTERFACE_LIST {
+				key "portname ip_prefix";
 
+				leaf portname{
+					type leafref {
+						path "/svlan:sonic-vlan/svlan:VLAN/svlan:VLAN_LIST/svlan:name";
+					}
+				}
+
+				leaf ip_prefix {
+					mandatory true;
+					type inet:ip-prefix;
+
+				}
 			}
 		}
 	}

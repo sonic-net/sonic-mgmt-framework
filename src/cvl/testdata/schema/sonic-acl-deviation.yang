@@ -1,24 +1,11 @@
-module sonic-acl-dev {
-	namespace "http://github.com/Azure/sonic-acl-dev";
+module sonic-acl-deviation {
+	namespace "http://github.com/Azure/sonic-acl-deviation";
 	prefix acld;
 	yang-version 1.1;
-
-	import ietf-yang-types {
-		prefix yang;
-	}
-
-	import ietf-inet-types {
-		prefix inet;
-	}
 
 	import sonic-acl {
 		prefix sacl;
 	}
-
-	import sonic-common {
-		prefix scommon;
-	}
-
 
 	organization
 		"SONiC";

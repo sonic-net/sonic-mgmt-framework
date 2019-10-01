@@ -221,7 +221,7 @@ func prepareDb() {
 		fmt.Printf("read file %v err: %v", fileName, err)
 	}
 
-	port_map := loadConfig("", PortsMapByte)
+	port_map = loadConfig("", PortsMapByte)
 
 	loadConfigDB(rclient, port_map)
 	loadConfigDB(rclient, depDataMap)
