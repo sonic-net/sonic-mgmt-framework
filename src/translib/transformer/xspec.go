@@ -25,6 +25,7 @@ type yangXpathInfo  struct {
     xfmrPost       string
     validateFunc   string
     xfmrKey        string
+    keyName        *string
     dbIndex        db.DBNum
     keyLevel       int
     isKey          bool
@@ -283,6 +284,11 @@ func annotEntryFill(xYangSpecMap map[string]*yangXpathInfo, xpath string, entry 
 				*xpathData.tableName = ext.NName()
 				updateDbTableData(xpath, xpathData, *xpathData.tableName)
 				//childToUpdateParent(xpath, *xpathData.tableName)
+			case "key-name" :
+				if xpathData.keyName == nil {
+					xpathData.keyName = new(string)
+				}
+				*xpathData.keyName = ext.NName()
 			case "table-transformer" :
 				if xpathData.xfmrTbl == nil {
 					xpathData.xfmrTbl = new(string)
@@ -461,6 +467,10 @@ func mapPrint(inMap map[string]*yangXpathInfo, fileName string) {
         fmt.Fprintf(fp, "\r\n    xfmrTbl  : ")
         if d.xfmrTbl != nil {
             fmt.Fprintf(fp, "%v", *d.xfmrTbl)
+        }
+        fmt.Fprintf(fp, "\r\n    keyName  : ")
+        if d.keyName != nil {
+            fmt.Fprintf(fp, "%v", *d.keyName)
         }
         fmt.Fprintf(fp, "\r\n    childTbl : %v", d.childTable)
         fmt.Fprintf(fp, "\r\n    FieldName: %v", d.fieldName)

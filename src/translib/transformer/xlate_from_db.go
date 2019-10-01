@@ -44,13 +44,13 @@ func xfmrHandlerFunc(inParams XfmrParams) (map[string]interface{}, error) {
         }
     }
 
-    nodeList, nErr := ytypes.GetNode(schRoot, device, path)
-    if nErr != nil {
+    nodeList, nodeErr := ytypes.GetNode(schRoot, device, path)
+    if nodeErr != nil {
         log.Infof("Failed to get node for xpath(\"%v\") err(%v).", inParams.uri, err)
         return result, err
     }
     node := nodeList[0].Data
-    nodeYgot, _:= (node).(ygot.ValidatedGoStruct)
+    nodeYgot, _ := (node).(ygot.ValidatedGoStruct)
     payload, err := ygot.EmitJSON(nodeYgot, &ygot.EmitJSONConfig{ Format: ygot.RFC7951,
                                   Indent: "  ", SkipValidation: true,
                                   RFC7951Config: &ygot.RFC7951JSONConfig{ AppendModuleName: false, },
@@ -216,9 +216,9 @@ func directDbToYangJsonCreate(dbDataMap *map[db.DBNum]map[string]map[string]db.V
 			dbIndex := db.ConfigDB
 			if ok {
 				dbIndex = dbSpecData.dbIndex
+				yangKeys := yangKeyFromEntryGet(xDbSpecMap[tblName].dbEntry)
+				sonicKeyDataAdd(dbIndex, yangKeys, keyStr, curMap)
 			}
-			yangKeys := yangKeyFromEntryGet(xDbSpecMap[tblName].dbEntry)
-			sonicKeyDataAdd(dbIndex, yangKeys, keyStr, curMap)
 			if curMap != nil {
 				mapSlice = append(mapSlice, curMap)
 			}
@@ -359,6 +359,9 @@ func terminalNodeProcess(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string
 		}
 	} else {
 		dbFldName := xYangSpecMap[xpath].fieldName
+		if dbFldName == "NONE" {
+			return resFldValMap, err
+		}
 		/* if there is no transformer extension/annotation then it means leaf-list in yang is also leaflist in db */
 		if len(dbFldName) > 0  && !xYangSpecMap[xpath].isKey {
 			yangType := yangTypeGet(xYangSpecMap[xpath].yangEntry)

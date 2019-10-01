@@ -42,6 +42,10 @@ func dataToDBMapAdd(tableName string, dbKey string, result map[string]map[string
         result[tableName][dbKey] = db.Value{Field: make(map[string]string)}
     }
 
+	if field == "NONE" {
+		result[tableName][dbKey].Field["NULL"] = "NULL"
+	}
+
     result[tableName][dbKey].Field[field] = value
     return
 }
@@ -397,6 +401,8 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
 					return err
                 }
                 curKey = ret[0].Interface().(string)
+            } else if xYangSpecMap[xpathPrefix].keyName != nil {
+				curKey = *xYangSpecMap[xpathPrefix].keyName
             } else {
                 curKey = keyCreate(keyName, xpathPrefix, data, d.Opts.KeySeparator)
             }
@@ -434,7 +440,10 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
 						return err
 					}
 					curKey = ret[0].Interface().(string)
+				} else if xYangSpecMap[xpath].keyName != nil {
+					curKey = *xYangSpecMap[xpath].keyName
 				}
+
                 if (typeOfValue == reflect.Map || typeOfValue == reflect.Slice) && xYangSpecMap[xpath].yangDataType != "leaf-list" {
                     if xYangSpecMap[xpath] != nil && len(xYangSpecMap[xpath].xfmrFunc) > 0 {
                         /* subtree transformer present */
@@ -520,7 +529,9 @@ func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string) (st
                     return "", "", ""
                 }
                 keyStr = ret[0].Interface().(string)
-            } else {
+            } else if xYangSpecMap[yangXpath].keyName != nil {
+				keyStr += *xYangSpecMap[yangXpath].keyName
+			} else {
                 var keyl []string
                 for _, kname := range rgp.FindAllString(k, -1) {
                     keyl = append(keyl, strings.TrimRight(strings.TrimLeft(kname, "["), "]"))
