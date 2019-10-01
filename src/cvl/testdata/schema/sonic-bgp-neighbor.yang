@@ -2,20 +2,12 @@ module sonic-bgp-neighbor {
 	namespace "http://github.com/Azure/sonic-bgp-neighbor";
 	prefix sbn;
 
-	import ietf-yang-types {
-		prefix yang;
-	}
-
 	import ietf-inet-types {
-                prefix inet;
-        }
+		prefix inet;
+	}
 
 	import sonic-common {
 		prefix scommon;
-	}
-
-	import sonic-port {
-		prefix prt;
 	}
 
 	organization
@@ -33,54 +25,58 @@ module sonic-bgp-neighbor {
 	}
 
 	container sonic-bgp-neighbor {
-		list BGP_NEIGHBOR {
-			key "ipaddress";
 
-			leaf ipaddress{
-				type inet:ip-address;
-			}
+		container BGP_NEIGHBOR {
 
-			leaf rrclient {
-				type uint8 {
-					range "0..255";
+			list BGP_NEIGHBOR_LIST {
+				key "ipaddress";
+
+				leaf ipaddress{
+					type inet:ip-address;
 				}
-			}
 
-			leaf admin_status{
-				type scommon:admin-status;
-			}
-
-			leaf peer_addr{
-				type inet:ip-address;
-			}
-
-			leaf name {
-				type string;
-			}
-
-			leaf local_addr {
-				type inet:ipv4-address;
-			}
-
-			leaf nhopself {
-				type uint8 {
-					range "0..255";
+				leaf rrclient {
+					type uint8 {
+						range "0..255";
+					}
 				}
-			}
 
-			leaf holdtime {
-				type uint8 {
-					range "0..255";
+				leaf admin_status{
+					type scommon:admin-status;
 				}
-			}
 
-			leaf asn {
-				type uint64;
-			}
+				leaf peer_addr{
+					type inet:ip-address;
+				}
 
-			leaf keepalive {
-				type uint8 {
-					range "0..255";
+				leaf name {
+					type string;
+				}
+
+				leaf local_addr {
+					type inet:ipv4-address;
+				}
+
+				leaf nhopself {
+					type uint8 {
+						range "0..255";
+					}
+				}
+
+				leaf holdtime {
+					type uint8 {
+						range "0..255";
+					}
+				}
+
+				leaf asn {
+					type uint64;
+				}
+
+				leaf keepalive {
+					type uint8 {
+						range "0..255";
+					}
 				}
 			}
 		}

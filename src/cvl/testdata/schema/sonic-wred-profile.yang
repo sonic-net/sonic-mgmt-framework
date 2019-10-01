@@ -2,14 +2,6 @@ module sonic-wred-profile {
 	namespace "http://github.com/Azure/sonic-wred-profile";
 	prefix wrd;
 
-	import ietf-yang-types {
-		prefix yang;
-	}
-
-	import sonic-common {
-		prefix scommon;
-	}
-
 	organization
 		"SONiC";
 
@@ -25,59 +17,63 @@ module sonic-wred-profile {
 	}
 
 	container sonic-wred-profile {
-		list WRED_PROFILE {
-			key "name";
 
-			leaf name{
-				type string;
-			}
+		container WRED_PROFILE {
 
-			leaf yellow_min_threshold {
-				type uint64;
-			}
+			list WRED_PROFILE_LIST {
+				key "name";
 
-			leaf green_min_threshold {
-				type uint64;
-			}
-
-			leaf red_min_threshold {
-				type uint64;
-			}
-			leaf yellow_max_threshold {
-				type uint64;
-			}
-
-			leaf green_max_threshold {
-				type uint64;
-			}
-
-			leaf red_max_threshold {
-				type uint64;
-			}
-
-			leaf ecn {
-				type enumeration {
-					enum ecn_none;
-					enum ecn_green;
-					enum ecn_yellow;
-					enum ecn_red;
-					enum ecn_green_yellow;
-					enum ecn_green_red;
-					enum ecn_yellow_red; 
-					enum ecn_all;
+				leaf name{
+					type string;
 				}
-			}
 
-			leaf wred_green_enable {
-				type boolean;
-			}
+				leaf yellow_min_threshold {
+					type uint64;
+				}
 
-			leaf wred_yellow_enable {
-				type boolean;
-			}
+				leaf green_min_threshold {
+					type uint64;
+				}
 
-			leaf wred_red_enable {
-				type boolean;
+				leaf red_min_threshold {
+					type uint64;
+				}
+				leaf yellow_max_threshold {
+					type uint64;
+				}
+
+				leaf green_max_threshold {
+					type uint64;
+				}
+
+				leaf red_max_threshold {
+					type uint64;
+				}
+
+				leaf ecn {
+					type enumeration {
+						enum ecn_none;
+						enum ecn_green;
+						enum ecn_yellow;
+						enum ecn_red;
+						enum ecn_green_yellow;
+						enum ecn_green_red;
+						enum ecn_yellow_red; 
+						enum ecn_all;
+					}
+				}
+
+				leaf wred_green_enable {
+					type boolean;
+				}
+
+				leaf wred_yellow_enable {
+					type boolean;
+				}
+
+				leaf wred_red_enable {
+					type boolean;
+				}
 			}
 		}
 	}

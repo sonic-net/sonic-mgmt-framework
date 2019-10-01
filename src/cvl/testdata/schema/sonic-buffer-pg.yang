@@ -2,16 +2,8 @@ module sonic-buffer-pg {
 	namespace "http://github.com/Azure/sonic-buffer-pg";
 	prefix bpg;
 
-	import ietf-yang-types {
-		prefix yang;
-	}
-
-	import ietf-inet-types {
-		prefix inet;
-	}
-
-	import sonic-common {
-		prefix scommon;
+	import sonic-extension {
+		prefix sonic-ext;
 	}
 
 	import sonic-port {
@@ -38,32 +30,37 @@ module sonic-buffer-pg {
 
 
 	container sonic-buffer-pg {
-		list BUFFER_PG {
-			key "ifname pg_num";
-			scommon:key-pattern "BUFFER_PG|({ifname},)*|{pg_num}"; //special pattern used for extracting keys from redis-key and fill populate the yang instance
-									   // Total list instance = number(key1) * number(key2) * number(key3)
 
-			leaf ifname {
-				type leafref {
-					path "/prt:sonic-port/prt:PORT/prt:ifname";
-				}
-			}
+		container BUFFER_PG {
 
-			leaf pg_num {
-				type string {
-					pattern "[0-7]((-)[0-7])?"{
-						error-message "Invalid Buffer PG number";
-						error-app-tag pg-num-invalid;
+			list BUFFER_PG_LIST {
+				key "ifname pg_num";
+				sonic-ext:key-pattern "BUFFER_PG|({ifname},)*|{pg_num}"; //special pattern used for extracting keys from
+				//redis-key and fill populate the yang instance
+				// Total list instance = number(key1) * number(key2) * number(key3)
+
+				leaf ifname {
+					type leafref {
+						path "/prt:sonic-port/prt:PORT/prt:PORT_LIST/prt:ifname";
 					}
 				}
-			}
 
-			leaf profile { //Hash reference key
-				type leafref {
-					path "/bpf:sonic-buffer-profile/bpf:BUFFER_PROFILE/bpf:name";
+				leaf pg_num {
+					type string {
+						pattern "[0-7]((-)[0-7])?" {
+							error-message "Invalid Buffer PG number";
+							error-app-tag pg-num-invalid;
+						}
+					}
 				}
-			}
 
+				leaf profile { //Hash reference key
+					type leafref {
+						path "/bpf:sonic-buffer-profile/bpf:BUFFER_PROFILE/bpf:BUFFER_PROFILE_LIST/bpf:name";
+					}
+				}
+
+			}
 		}
 	}
 }

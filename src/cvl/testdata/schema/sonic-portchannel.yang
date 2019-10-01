@@ -2,10 +2,6 @@ module sonic-portchannel {
 	namespace "http://github.com/Azure/sonic-portchannel";
 	prefix spc;
 
-	import ietf-yang-types {
-		prefix yang;
-	}
-
 	import sonic-common {
 		prefix scommon;
 	}
@@ -30,48 +26,52 @@ module sonic-portchannel {
 
 	container sonic-portchannel {
 
-		list PORTCHANNEL {
-			key "name";
+		container PORTCHANNEL {
 
-			max-elements 3;
+			list PORTCHANNEL_LIST {
+				key "name";
 
-			leaf name {
-				type string;
-			}
+				max-elements 3;
 
-			leaf admin_status {
-				type scommon:admin-status;
-			}
-
-			leaf mtu {
-				type uint16;
-			}
-
-			leaf min_links {
-				type uint8;
-			}
-
-			leaf fallback {
-				type boolean;
-			}
-		}
-
-		list PORTCHANNEL_MEMBER { 
-			key "name ifname";
-			scommon:key-delim "|";
-			scommon:key-pattern "PORTCHANNEL|{name}|{ifname}";
-
-			leaf name {
-				type leafref {
-					path "../../PORTCHANNEL/name";
+				leaf name {
+					type string;
 				}
-			}
 
-			leaf ifname {
-				type leafref {
-					path "/prt:sonic-port/prt:PORT/prt:ifname";
+				leaf admin_status {
+					type scommon:admin-status;
+				}
+
+				leaf mtu {
+					type uint16;
+				}
+
+				leaf min_links {
+					type uint8;
+				}
+
+				leaf fallback {
+					type boolean;
 				}
 			}
 		}
-	 }
+
+		container PORTCHANNEL_MEMBER { 
+
+			list PORTCHANNEL_MEMBER_LIST { 
+				key "name ifname";
+
+				leaf name {
+					type leafref {
+						path "../../../PORTCHANNEL/PORTCHANNEL_LIST/name";
+					}
+				}
+
+				leaf ifname {
+					type leafref {
+						path "/prt:sonic-port/prt:PORT/prt:PORT_LIST/prt:ifname";
+					}
+				}
+			}
+		}
+	}
 }

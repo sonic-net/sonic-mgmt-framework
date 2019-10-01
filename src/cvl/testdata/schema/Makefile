@@ -17,6 +17,8 @@
 #                                                                              #
 ################################################################################
 
+sonic_yang=../../../../models/yang/sonic
+pyang_plugin_dir=../../../../tools/pyang/pyang_plugins
 src_files=$(wildcard *.yang)
 out=$(patsubst %.yang, %.yin, $(src_files)) 
 out_ext=$(patsubst %.yang, %.tree, $(src_files)) 
@@ -25,20 +27,22 @@ all:schema
 
 schema: $(out)
 
+schema-tree: $(out_ext)
+
 %.yin:%.yang
-	@echo "Generating $@ ..."
+	@echo "Generating `basename $@` ..."
 	@devFile="`echo $< | cut -d . -f1`-dev.yang"; \
 	if [ -f $$devFile ] ; then devOpt="--deviation-module $$devFile"; fi; \
-	pyang -p ../../schema/:../../schema/ietf/ -f yin $$devOpt $< -o $@.tmp
-	@xmllint  --noblanks  $@.tmp > $@
-	@rm -rf  $@.tmp
+	pyang -p $(sonic_yang):$(sonic_yang)/common:$(sonic_yang)/common/ietf \
+		--plugindir $(pyang_plugin_dir) -f yin-cvl $$devOpt $< -o `basename $@`
 
 %.tree:%.yang
-	@echo "Generating $@ ..."
+	@echo "Generating `basename $@` ..."
 	@devFile="`echo $< | cut -d . -f1`-dev.yang"; \
 	if [ -f $$devFile ] ; then devOpt="--deviation-module $$devFile"; fi; \
-	pyang -p ../../schema/:../../schema/ietf/ -f tree $$devOpt $< -o $@
+	pyang -p $(sonic_yang):$(sonic_yang)/common:$(sonic_yang)/common/ietf \
+       		-f tree $$devOpt $< -o `basename $@`
 
 clean:
 	@echo "Removing files ..."
-	rm -rf *.yin
+	rm -rf *.yin *.tree
