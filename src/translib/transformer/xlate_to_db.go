@@ -519,15 +519,30 @@ func sonicXpathKeyExtract(path string) (string, string, string) {
 func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string) (string, string, string) {
     keyStr    := ""
     tableName := ""
+    pfxPath := ""
     rgp       := regexp.MustCompile(`\[([^\[\]]*)\]`)
     curPathWithKey := ""
+    cdb := db.ConfigDB
     var dbs [db.MaxDB]*db.DB
+
+    pfxPath, _ = RemoveXPATHPredicates(path)
+    xpathInfo, ok := xYangSpecMap[pfxPath]
+    if !ok {
+           log.Errorf("No entry found in xYangSpecMap for xpath %v.", pfxPath)
+          return pfxPath, keyStr, tableName
+    }
+    cdb = xpathInfo.dbIndex
+    dbOpts := getDBOptions(cdb)
+    keySeparator := dbOpts.KeySeparator
+    if len(xpathInfo.delim) > 0 {
+	    keySeparator = xpathInfo.delim
+    }
 
     for _, k := range strings.Split(path, "/") {
         curPathWithKey += k
         if strings.Contains(k, "[") {
             if len(keyStr) > 0 {
-                keyStr += "|"
+		keyStr += keySeparator
             }
             yangXpath, _ := RemoveXPATHPredicates(curPathWithKey)
 	        _, ok := xYangSpecMap[yangXpath]
@@ -541,27 +556,32 @@ func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string) (st
                 }
                 keyStr = ret[0].Interface().(string)
             } else if xYangSpecMap[yangXpath].keyName != nil {
-				keyStr += *xYangSpecMap[yangXpath].keyName
-			} else {
-                var keyl []string
-                for _, kname := range rgp.FindAllString(k, -1) {
-                    keyl = append(keyl, strings.TrimRight(strings.TrimLeft(kname, "["), "]"))
+		    keyStr += *xYangSpecMap[yangXpath].keyName
+	    } else {
+		/* multi-leaf yang key together forms a single key-string in redis.
+		   There should be key-transformer, if not then the yang key leaves
+		   will be concatenated with respective default DB type key-delimiter
+		*/
+                for idx, kname := range rgp.FindAllString(k, -1) {
+			if idx > 0 { keyStr += keySeparator }
+			keyl := strings.TrimRight(strings.TrimLeft(kname, "["), "]")
+			if strings.Contains(keyl, ":") {
+				keyl = strings.Split(keyl, ":")[1]
+			}
+			keyStr += strings.Split(keyl, "=")[1]
                 }
-                keyStr += keyFromXpathCreate(keyl)
             }
 	    }
         }
         curPathWithKey += "/"
     }
-    pfxPath, _ := RemoveXPATHPredicates(path)
-    if _, ok := xYangSpecMap[pfxPath]; ok {
-        tblPtr     := xYangSpecMap[pfxPath].tableName
-        if tblPtr != nil {
-            tableName = *tblPtr
-        } else if xYangSpecMap[pfxPath].xfmrTbl != nil {
+    //pfxPath, _ := RemoveXPATHPredicates(path)
+    tblPtr     := xpathInfo.tableName
+    if tblPtr != nil {
+        tableName = *tblPtr
+    } else if xpathInfo.xfmrTbl != nil {
 		inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, curPathWithKey, oper, "", nil, nil)
-		tableName, _ = tblNameFromTblXfmrGet(*xYangSpecMap[pfxPath].xfmrTbl, inParams)
-	}
+		tableName, _ = tblNameFromTblXfmrGet(*xpathInfo.xfmrTbl, inParams)
     }
     return pfxPath, keyStr, tableName
 }

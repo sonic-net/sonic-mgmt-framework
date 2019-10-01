@@ -11,35 +11,22 @@ import (
     log "github.com/golang/glog"
 )
 
-/* Create db key from datd xpath(request) */
-func keyFromXpathCreate(keyList []string) string {
-    keyOut := ""
-    for i, k := range keyList {
-        if i > 0 { keyOut += "_" }
-        if strings.Contains(k, ":") {
-            k = strings.Split(k, ":")[1]
-        }
-        keyOut += strings.Split(k, "=")[1]
-    }
-    return keyOut
-}
-
 /* Create db key from data xpath(request) */
 func keyCreate(keyPrefix string, xpath string, data interface{}, dbKeySep string) string {
 	_, ok := xYangSpecMap[xpath]
 	if ok {
 		if xYangSpecMap[xpath].yangEntry != nil {
 			yangEntry := xYangSpecMap[xpath].yangEntry
-			keyConcat := dbKeySep
+			delim := dbKeySep
 			if len(xYangSpecMap[xpath].delim) > 0 {
-				keyConcat = xYangSpecMap[xpath].delim
-				log.Infof("key concatenater(\"%v\") found for xpath %v ", keyConcat, xpath)
+				delim = xYangSpecMap[xpath].delim
+				log.Infof("key concatenater(\"%v\") found for xpath %v ", delim, xpath)
 			}
 
-			if len(keyPrefix) > 0 { keyPrefix += dbKeySep }
+			if len(keyPrefix) > 0 { keyPrefix += delim }
 			keyVal := ""
 			for i, k := range (strings.Split(yangEntry.Key, " ")) {
-				if i > 0 { keyVal = keyVal + keyConcat }
+				if i > 0 { keyVal = keyVal + delim }
 				val := fmt.Sprint(data.(map[string]interface{})[k])
 				if strings.Contains(val, ":") {
 					val = strings.Split(val, ":")[1]
