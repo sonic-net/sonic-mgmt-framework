@@ -87,7 +87,8 @@ func yangToDbMapFill (keyLevel int, xYangSpecMap map[string]*yangXpathInfo, entr
 		}
 	}
 
-	if ok && parentXpathData.dbIndex != db.ConfigDB {
+        // If DB Index is not annotated and parent DB index is annotated inherit the DB Index of the parent
+        if ok && xpathData.dbIndex == db.ConfigDB && parentXpathData.dbIndex != db.ConfigDB {
 		xpathData.dbIndex = parentXpathData.dbIndex
 	}
 
