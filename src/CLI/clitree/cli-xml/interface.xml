@@ -97,12 +97,12 @@ limitations under the License.
    </COMMAND>
 
    <COMMAND
-       name="show port-channel"
+       name="show PortChannel"
        help="LAG status and configuration"
        ptype="SUBCOMMAND"
        mode="subcommand" />
     <COMMAND
-        name="show port-channel summary"
+        name="show PortChannel summary"
         help="LAG status and configurationn"
         mode="subcommand">
        <ACTION>
@@ -154,7 +154,7 @@ limitations under the License.
      </COMMAND>
 
     <COMMAND
-        name="interface port-channel"
+        name="interface PortChannel"
         help="Port channel Interface Configuration"
         mode="subcommand"
         ptype="SUBCOMMAND"
@@ -194,14 +194,14 @@ limitations under the License.
                 />
              </PARAM>
              <PARAM
-                name="port-channel"
-                help="Delete port-channel"
+                name="PortChannel"
+                help="Delete PortChannel"
                 mode="subcommand"
                 ptype="SUBCOMMAND"
                 >
                 <PARAM
                     name="lag-id"
-                    help="port-channel identifier"
+                    help="PortChannel identifier"
                     ptype="LAG_ID"
                 />
              </PARAM>
@@ -452,10 +452,10 @@ limitations under the License.
         />
     <COMMAND 
         name="min-links"
-        help="Configure the minimum number of links in a port-channel">
+        help="Configure the minimum number of links in a PortChannel">
         <PARAM 
             name="min-links"
-            help="Configure the minimum number of links in a port-channel"
+            help="Configure the minimum number of links in a PortChannel"
             ptype="MIN_LINK" />
         <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_aggregate_interfaces_interface_aggregation_config_min_links ${po_id} ${min-links} </ACTION>
     </COMMAND>
