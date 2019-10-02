@@ -2,8 +2,8 @@ package translib
 
 import (
 	"fmt"
-	"github.com/openconfig/ygot/ygot"
 	"github.com/openconfig/gnmi/proto/gnmi"
+	"github.com/openconfig/ygot/ygot"
 	"reflect"
 	"strings"
 	"testing"
@@ -60,15 +60,15 @@ func TestValidateRequest(t *testing.T) {
 		appRootType: reflect.TypeOf(ocbinds.OpenconfigAcl_Acl{}),
 		want:        "no match found",
 	}}
-	
+
 	for _, tt := range tests {
 		deviceObj := ocbinds.Device{}
 		deviceObj.Acl = &ocbinds.OpenconfigAcl_Acl{}
 		deviceObj.Acl.AclSets = &ocbinds.OpenconfigAcl_Acl_AclSets{}
-		deviceObj.Acl.AclSets.NewAclSet ("SampleACL", ocbinds.OpenconfigAcl_ACL_TYPE_ACL_IPV4)
-		
+		deviceObj.Acl.AclSets.NewAclSet("SampleACL", ocbinds.OpenconfigAcl_ACL_TYPE_ACL_IPV4)
+
 		binder := getRequestBinder(&tt.uri, &tt.payload, tt.opcode, &tt.appRootType)
-		
+
 		path, err := binder.getUriPath()
 		if err != nil {
 			tmpPath := gnmi.Path{}
@@ -76,9 +76,9 @@ func TestValidateRequest(t *testing.T) {
 		} else {
 			binder.pathTmp = path
 		}
-		
+
 		err = binder.validateRequest(&deviceObj)
-		
+
 		if err != nil {
 			// Negative test case
 			if strings.Contains(err.Error(), tt.want) == false {
@@ -193,6 +193,13 @@ func TestUnMarshallUri(t *testing.T) {
 		payload:     []byte{},
 		appRootType: reflect.TypeOf(ocbinds.OpenconfigAcl_Acl{}),
 		want:        "OpenconfigAcl_Acl_AclSets_AclSet",
+	}, {
+		tid:         14,
+		uri:         "/openconfig-acl:acl/acl-sets/acl-set[name=MyACL1][type=ACL_IPV4]/acl-entries/acl-entry[sequence-id=8]/transport/config/tcp-flags[tcp-flags=TCP_PSH]",
+		opcode:      4,
+		payload:     []byte{},
+		appRootType: reflect.TypeOf(ocbinds.OpenconfigAcl_Acl{}),
+		want:        "5",
 	}}
 
 	for _, tt := range tests {
@@ -204,15 +211,25 @@ func TestUnMarshallUri(t *testing.T) {
 			if strings.Contains(err.Error(), tt.want) == false {
 				t.Error("Error in unmarshalling the URI: didn't get the expected error, and the error string is", err)
 			}
+		} else if tt.tid == 14 {
+			leafList, ok := (*workObj).([]ocbinds.E_OpenconfigPacketMatchTypes_TCP_FLAGS)
+			fmt.Println("leaf list target node value is :", leafList)
+			if ok == true {
+				if len(leafList) != 1 {
+					t.Error("Error in unmarshalling the URI with the target node as leaf-list - type is ", reflect.ValueOf(leafList).Type())
+				}
+			} else {
+				t.Error("Error in unmarshalling the URI with the target node as leaf-list - faile for test case id : ", tt.tid)
+			}
 		} else {
 			_, ok := (*workObj).(ygot.GoStruct)
 			if ok == false {
-//				objFieldName, err := getObjectFieldName(&tt.uri, &deviceObj, workObj)
-//				if err != nil {
-//					t.Error("Error in unmarshalling the URI: ", err)
-//				} else if objFieldName != tt.want {
-//					t.Error("Error in unmarshalling the URI: Invalid target node: ", objFieldName)
-//				}
+				//				objFieldName, err := getObjectFieldName(&tt.uri, &deviceObj, workObj)
+				//				if err != nil {
+				//					t.Error("Error in unmarshalling the URI: ", err)
+				//				} else if objFieldName != tt.want {
+				//					t.Error("Error in unmarshalling the URI: Invalid target node: ", objFieldName)
+				//				}
 			} else if tt.tid == 4 {
 				aclSet, ok := (*workObj).(*ocbinds.OpenconfigAcl_Acl_AclSets_AclSet)
 				if ok == true {
@@ -265,26 +282,26 @@ func TestUnMarshallUri(t *testing.T) {
 
 func TestUnMarshallPayload(t *testing.T) {
 	tests := []struct {
-		tid         int
-		objIntf     interface{}
-		uri         string
-		opcode      int
-		payload     []byte
-		want        string //target object name
+		tid     int
+		objIntf interface{}
+		uri     string
+		opcode  int
+		payload []byte
+		want    string //target object name
 	}{{
-		tid:         1,
-		objIntf:     "TestObj", 
-		uri:         "/openconfig-acl:acl/acl-sets/",
-		opcode:      2,
-		payload:     []byte{},
-		want:        "Error in casting the target object",
+		tid:     1,
+		objIntf: "TestObj",
+		uri:     "/openconfig-acl:acl/acl-sets/",
+		opcode:  2,
+		payload: []byte{},
+		want:    "Error in casting the target object",
 	}, {
-		tid:         2,
-		objIntf:     ocbinds.OpenconfigAcl_Acl{}, 
-		uri:         "/openconfig-acl:acl/acl-sets/",
-		opcode:      3,
-		payload:     []byte{},
-		want:        "Request payload is empty",
+		tid:     2,
+		objIntf: ocbinds.OpenconfigAcl_Acl{},
+		uri:     "/openconfig-acl:acl/acl-sets/",
+		opcode:  3,
+		payload: []byte{},
+		want:    "Request payload is empty",
 	}}
 
 	for _, tt := range tests {
@@ -293,15 +310,17 @@ func TestUnMarshallPayload(t *testing.T) {
 		var deviceObj ocbinds.Device = ocbinds.Device{}
 		var workObj *interface{}
 		var err error
-		workObj, err = reqBinder.unMarshallUri(&deviceObj); if err != nil {
+		workObj, err = reqBinder.unMarshallUri(&deviceObj)
+		if err != nil {
 			t.Error(err)
 		}
 
-		if (tt.tid == 1) {
+		if tt.tid == 1 {
 			workObj = &tt.objIntf
 		}
-		
-		err = reqBinder.unMarshallPayload(workObj); if err != nil {
+
+		err = reqBinder.unMarshallPayload(workObj)
+		if err != nil {
 			if strings.Contains(err.Error(), tt.want) == false {
 				t.Error("Negative test case failed: ", err)
 			}
@@ -326,14 +345,15 @@ func TestGetUriPath(t *testing.T) {
 		appRootType: reflect.TypeOf(ocbinds.OpenconfigAcl_Acl{}),
 		want:        "error formatting path",
 	}}
-	
+
 	for _, tt := range tests {
 		reqBinder := getRequestBinder(&tt.uri, &tt.payload, tt.opcode, &tt.appRootType)
-		_, err := reqBinder.getUriPath(); if err != nil {
+		_, err := reqBinder.getUriPath()
+		if err != nil {
 			if strings.Contains(err.Error(), tt.want) == false {
 				t.Error("Negative test case failed: ", err)
 			}
-		} 
+		}
 	}
 }
 
@@ -480,12 +500,12 @@ func TestUnMarshall(t *testing.T) {
 			} else {
 				_, ok := (*workObj).(ygot.GoStruct)
 				if ok == false {
-//					objFieldName, err := getObjectFieldName(&tt.uri, (*rootObj).(*ocbinds.Device), workObj)
-//					if err != nil {
-//						t.Error("Error in unmarshalling the URI: ", err)
-//					} else if objFieldName != tt.want {
-//						t.Error("Error in unmarshalling the payload: Invalid target node: ", objFieldName)
-//					}
+					//					objFieldName, err := getObjectFieldName(&tt.uri, (*rootObj).(*ocbinds.Device), workObj)
+					//					if err != nil {
+					//						t.Error("Error in unmarshalling the URI: ", err)
+					//					} else if objFieldName != tt.want {
+					//						t.Error("Error in unmarshalling the payload: Invalid target node: ", objFieldName)
+					//					}
 				} else if reflect.TypeOf(*workObj).Elem().Name() != tt.want {
 					t.Error("Error in unmarshalling the payload: Invalid target node: ", reflect.TypeOf(*workObj).Elem().Name())
 				}
