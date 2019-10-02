@@ -437,6 +437,7 @@ func yangDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, xpath
 						} else {
 							log.Infof("Empty container(\"%v\").\r\n", chldUri)
 						}
+						continue
 					} else if xYangSpecMap[chldXpath].xfmrTbl != nil {
 						xfmrTblFunc := *xYangSpecMap[chldXpath].xfmrTbl
 						if len(xfmrTblFunc) > 0 {
@@ -444,6 +445,9 @@ func yangDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, xpath
 							tblList := xfmrTblHandlerFunc(xfmrTblFunc, inParams)
 							if len(tblList) > 1 {
 								log.Warningf("Table transformer returned more than one table for container %v", chldXpath)
+							}
+							if len(tblList) == 0 {
+								continue
 							}
 							dbDataFromTblXfmrGet(tblList[0], inParams, dbDataMap)
 						}
