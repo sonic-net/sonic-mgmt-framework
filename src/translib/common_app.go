@@ -8,7 +8,7 @@ import (
 	"github.com/openconfig/ygot/ygot"
 	"reflect"
 	"translib/db"
-    "translib/ocbinds"
+	"translib/ocbinds"
 	"translib/tlerr"
 	"translib/transformer"
 	"encoding/json"
@@ -291,11 +291,11 @@ func (app *CommonApp) cmnAppCRUCommonDbOpn(d *db.DB, opcode int) error {
 				case UPDATE:
 					if existingEntry.IsPopulated() {
 						log.Info("Entry already exists hence modifying it.")
-						/* Handle leaf-list merge 
+						/* Handle leaf-list merge if any leaf-list exists 
 						   A leaf-list field in redis has "@" suffix as per swsssdk convention.
 						 */
 						resTblRw := db.Value{Field: map[string]string{}}
-						resTblRw = processLeafList(existingEntry, tblRw, UPDATE, d, tblNm, tblKey)
+						resTblRw = checkAndProcessLeafList(existingEntry, tblRw, UPDATE, d, tblNm, tblKey)
 						err = d.ModEntry(cmnAppTs, db.Key{Comp: []string{tblKey}}, resTblRw)
 						if err != nil {
 							log.Error("UPDATE case - d.ModEntry() failure")
@@ -395,8 +395,8 @@ func (app *CommonApp) cmnAppDelDbOpn(d *db.DB, opcode int) error {
 						log.Info("Table Entry from which the fields are to be deleted does not exist")
 						return err
 					}
-					/*handle leaf-list merge*/
-					resTblRw := processLeafList(existingEntry, tblRw, DELETE, d, tblNm, tblKey)
+					/* handle leaf-list merge if any leaf-list exists */
+					resTblRw := checkAndProcessLeafList(existingEntry, tblRw, DELETE, d, tblNm, tblKey)
 					err := d.DeleteEntryFields(cmnAppTs, db.Key{Comp: []string{tblKey}}, resTblRw)
 					if err != nil {
 						log.Error("DELETE case - d.DeleteEntryFields() failure")
@@ -417,8 +417,8 @@ func (app *CommonApp) generateDbWatchKeys(d *db.DB, isDeleteOp bool) ([]db.Watch
 	return keys, err
 }
 
-func processLeafList(existingEntry db.Value, tblRw db.Value, opcode int, d *db.DB, tblNm string, tblKey string) db.Value {
-	log.Info("process leaf-list Fields in table row.")
+/*check if any field is leaf-list , if yes perform merge*/
+func checkAndProcessLeafList(existingEntry db.Value, tblRw db.Value, opcode int, d *db.DB, tblNm string, tblKey string) db.Value {
 	dbTblSpec := &db.TableSpec{Name: tblNm}
 	mergeTblRw := db.Value{Field: map[string]string{}}
 	for field, value := range tblRw.Field {
