@@ -155,6 +155,7 @@ func (app *CommonApp) processDelete(d *db.DB) (SetResponse, error) {
 func (app *CommonApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
     var err error
     var payload []byte
+    var resPayload []byte
     log.Info("processGet:path =", app.pathInfo.Path)
 
     payload, err = transformer.GetAndXlateFromDB(app.pathInfo.Path, app.ygotRoot, dbs)
@@ -170,17 +171,20 @@ func (app *CommonApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
 		    log.Error("ocbinds.Unmarshal()  failed. error:", err)
 		    return GetResponse{Payload: payload, ErrSrc: AppErr}, err
 	    }
+
+	    resPayload, err = generateGetResponsePayload(app.pathInfo.Path, (*app.ygotRoot).(*ocbinds.Device), app.ygotTarget)
+	    if err != nil {
+		    log.Error("generateGetResponsePayload()  failed")
+		    return GetResponse{Payload: payload, ErrSrc: AppErr}, err
+	    }
+	    var dat map[string]interface{}
+	    err = json.Unmarshal(resPayload, &dat)
+    } else {
+	log.Warning("processGet. targetObj is null. Unable to Unmarshal payload")
+	resPayload = payload
     }
 
-    resPayload, err := generateGetResponsePayload(app.pathInfo.Path, (*app.ygotRoot).(*ocbinds.Device), app.ygotTarget)
-    if err != nil {
-        log.Error("generateGetResponsePayload()  failed")
-        return GetResponse{Payload: payload, ErrSrc: AppErr}, err
-    }
-    var dat map[string]interface{}
-    err = json.Unmarshal(resPayload, &dat)
-
-	return GetResponse{Payload: resPayload}, err
+    return GetResponse{Payload: resPayload}, err
 }
 
 func (app *CommonApp) translateCRUDCommon(d *db.DB, opcode int) ([]db.WatchKeys, error) {

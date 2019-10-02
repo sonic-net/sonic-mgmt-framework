@@ -173,8 +173,13 @@ func processLfLstDbToYang(fieldXpath string, dbFldVal string) []interface{} {
 }
 
 /* Traverse db map and create json for cvl yang */
-func directDbToYangJsonCreate(dbDataMap *map[db.DBNum]map[string]map[string]db.Value, jsonData string, resultMap map[string]interface{}) error {
+func directDbToYangJsonCreate(uri string, dbDataMap *map[db.DBNum]map[string]map[string]db.Value) (string, error) {
     var err error
+    resultMap := make(map[string]interface{})
+    instanceMap := make(map[string]interface{})
+    terminalNode := false
+    _, key, table := sonicXpathKeyExtract(uri)
+
 	for curDbIdx := db.ApplDB; curDbIdx < db.MaxDB; curDbIdx++ {
 		dbTblData := (*dbDataMap)[curDbIdx]
 		for tblName, tblData := range dbTblData {
@@ -213,12 +218,18 @@ func directDbToYangJsonCreate(dbDataMap *map[db.DBNum]map[string]map[string]db.V
 						log.Warningf("Failure in converting Db value type to yang type for xpath", fieldXpath)
 					} else {
 						curMap[resField] = resVal
+                                                if table != "" && key != "" && table == tblName && key == keyStr {
+                                                       instanceMap = curMap
+                                                       if strings.Contains(uri, resField) {
+                                                               terminalNode = true
+                                                       }
+                                                }
 					}
 				}
 			} //end of for
 			dbSpecData, ok := xDbSpecMap[tblName]
 			dbIndex := db.ConfigDB
-			if ok {
+			if ok && !terminalNode {
 				dbIndex = dbSpecData.dbIndex
 				yangKeys := yangKeyFromEntryGet(xDbSpecMap[tblName].dbEntry)
 				sonicKeyDataAdd(dbIndex, yangKeys, keyStr, curMap)
@@ -229,8 +240,16 @@ func directDbToYangJsonCreate(dbDataMap *map[db.DBNum]map[string]map[string]db.V
 		}
 		resultMap[tblName] = mapSlice
 	}
-}
-	return err
+	}
+        jsonMapData, _ := json.Marshal(resultMap)
+        if table != "" && key != "" && len(instanceMap) > 0 {
+                jsonMapData, _ = json.Marshal(instanceMap)
+        }
+
+        jsonData := fmt.Sprintf("%v", string(jsonMapData))
+        jsonDataPrint(jsonData)
+        return jsonData, err
+
 }
 
 func tableNameAndKeyFromDbMapGet(dbDataMap map[string]map[string]db.Value) (string, string, error) {
@@ -491,7 +510,7 @@ func dbDataToYangJsonCreate(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db
 	jsonData := ""
 	resultMap := make(map[string]interface{})
 	if isCvlYang(uri) {
-		directDbToYangJsonCreate(dbDataMap, jsonData, resultMap)
+		return directDbToYangJsonCreate(uri, dbDataMap)
 	} else {
 		var d *db.DB
 		reqXpath, keyName, tableName := xpathKeyExtract(d, ygRoot, GET, uri)
