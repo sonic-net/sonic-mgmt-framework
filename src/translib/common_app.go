@@ -100,6 +100,11 @@ func (app *CommonApp) translateSubscribe(dbs [db.MaxDB]*db.DB, path string) (*no
 	return nil, &notifInfo, err
 }
 
+func (app *CommonApp) translateAction(dbs [db.MaxDB]*db.DB) error {
+    err := errors.New("Not supported")
+	return err
+}
+
 func (app *CommonApp) processCreate(d *db.DB) (SetResponse, error) {
 	var err error
 	var resp SetResponse
@@ -181,6 +186,13 @@ func (app *CommonApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
     err = json.Unmarshal(payload, &dat)
 
 	return GetResponse{Payload: payload}, err
+}
+
+func (app *CommonApp) processAction(dbs [db.MaxDB]*db.DB) (ActionResponse, error) {
+    var resp ActionResponse
+	err := errors.New("Not implemented")
+
+	return resp, err
 }
 
 func (app *CommonApp) translateCRUDCommon(d *db.DB, opcode int) ([]db.WatchKeys, error) {

@@ -8,6 +8,7 @@
 package translib
 
 import (
+	"errors"
 	"bytes"
 	"fmt"
 	"reflect"
@@ -154,6 +155,11 @@ func (app *AclApp) translateGet(dbs [db.MaxDB]*db.DB) error {
 	return err
 }
 
+func (app *AclApp) translateAction(dbs [db.MaxDB]*db.DB) error {
+    err := errors.New("Not supported")
+    return err
+}
+
 func (app *AclApp) translateSubscribe(dbs [db.MaxDB]*db.DB, path string) (*notificationOpts, *notificationInfo, error) {
 	pathInfo := NewPathInfo(path)
 	notifInfo := notificationInfo{dbno: db.ConfigDB}
@@ -274,6 +280,13 @@ func (app *AclApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
 	}
 
 	return GetResponse{Payload: payload}, err
+}
+
+func (app *AclApp) processAction(dbs [db.MaxDB]*db.DB) (ActionResponse, error) {
+    var resp ActionResponse
+    err := errors.New("Not implemented")
+
+    return resp, err
 }
 
 func (app *AclApp) translateCRUCommon(d *db.DB, opcode int) ([]db.WatchKeys, error) {
