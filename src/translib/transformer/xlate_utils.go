@@ -202,7 +202,7 @@ func yangKeyFromEntryGet(entry *yang.Entry) []string {
     return keyList
 }
 
-func isCvlYang(path string) bool {
+func isSonicYang(path string) bool {
     if strings.HasPrefix(path, "/sonic") {
         return true
     }

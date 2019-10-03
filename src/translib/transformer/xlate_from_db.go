@@ -509,7 +509,7 @@ func yangDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, xpath
 func dbDataToYangJsonCreate(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db.DB, dbDataMap *map[db.DBNum]map[string]map[string]db.Value, cdb db.DBNum) (string, error) {
 	jsonData := ""
 	resultMap := make(map[string]interface{})
-	if isCvlYang(uri) {
+	if isSonicYang(uri) {
 		return directDbToYangJsonCreate(uri, dbDataMap)
 	} else {
 		var d *db.DB
