@@ -107,7 +107,15 @@ func generate(w io.Writer, e *yang.Entry, path string) {
     if (e.Node.Kind() == "module") {
 	    if len(e.Node.(*yang.Module).Augment) > 0 {
 		    for _,a := range e.Node.(*yang.Module).Augment {
-			    path = a.Name
+			    pathList := strings.Split(a.Name, "/")
+			    pathList = pathList[1:]
+			    for i, pvar := range pathList {
+				    if len(pvar) > 0 && !strings.Contains(pvar, ":") {
+					    pvar = e.Prefix.Name + ":" + pvar
+					    pathList[i] = pvar
+				    }
+			    }
+			    path = "/" + strings.Join(pathList, "/")
 			    handleAugments(w, a, e.Node.(*yang.Module).Grouping, e.Prefix.Name, path)
 		    }
 	    }
@@ -202,7 +210,6 @@ func handleUses(w io.Writer, u []*yang.Uses, grp []*yang.Grouping, prefix string
 		grpN = tokens[1]
 		mod := GetModuleFromPrefix(nprefix)
 	        grp = allmodules[mod].Grouping
-		prefix = nprefix
 	    }
             for _, g := range grp {
                 if grpN == g.Name {
