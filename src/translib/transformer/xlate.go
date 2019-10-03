@@ -205,7 +205,7 @@ func fillSonicKeySpec(xpath string , tableName string, keyStr string) ( []KeySpe
 				if dbInfo.fieldType == "container" {
 					for dir, _ := range dbInfo.dbEntry.Dir {
 						_, ok := xDbSpecMap[dir]
-						if ok && xDbSpecMap[dir].dbEntry.Node.Statement().Keyword == "list" {
+						if ok && xDbSpecMap[dir].dbEntry.Node.Statement().Keyword == "container" {
 						cdb := xDbSpecMap[dir].dbIndex
 						dbFormat := KeySpec{}
 						dbFormat.Ts.Name = dir

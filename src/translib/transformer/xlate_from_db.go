@@ -218,12 +218,12 @@ func directDbToYangJsonCreate(uri string, dbDataMap *map[db.DBNum]map[string]map
 						log.Warningf("Failure in converting Db value type to yang type for xpath", fieldXpath)
 					} else {
 						curMap[resField] = resVal
-                                                if table != "" && key != "" && table == tblName && key == keyStr {
-                                                       instanceMap = curMap
-                                                       if strings.Contains(uri, resField) {
-                                                               terminalNode = true
-                                                       }
-                                                }
+						if table != "" && key != "" && table == tblName && key == keyStr {
+							instanceMap = curMap
+							if strings.Contains(uri, resField) {
+								terminalNode = true
+							}
+						}
 					}
 				}
 			} //end of for
