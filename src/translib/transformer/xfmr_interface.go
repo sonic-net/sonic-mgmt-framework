@@ -79,6 +79,14 @@ type PostXfmrFunc func (inParams XfmrParams) (map[string]map[string]db.Value, er
 
 
 /**
+ * TableXfmrFunc type is defined to use for table transformer function for dynamic derviation of redis table.
+ * Param: XfmrParams structure having database pointers, current db, operation, DB data in multidimensional map, YgotRoot, uri
+ * Return: List of table names, error
+ **/
+type TableXfmrFunc func (inParams XfmrParams) ([]string, error)
+
+
+/**
  * Xfmr validation interface for validating the callback registration of app modules 
  * transformer methods.
  **/
@@ -103,4 +111,7 @@ func (SubTreeXfmrYangToDb) xfmrInterfaceValiidate () {
 }
 func (SubTreeXfmrDbToYang) xfmrInterfaceValiidate () {
     log.Info("xfmrInterfaceValiidate for SubTreeXfmrDbToYang")
+}
+func (TableXfmrFunc) xfmrInterfaceValiidate () {
+    log.Info("xfmrInterfaceValiidate for TableXfmrFunc")
 }
