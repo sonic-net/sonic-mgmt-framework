@@ -18,7 +18,6 @@ module openconfig-acl-annot {
     deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set {
       deviate add {
         sonic-ext:table-name "ACL_TABLE";
-        sonic-ext:key-delimiter "_";
       }
     }
 

@@ -75,4 +75,9 @@ module sonic-extensions {
     argument "db-name";
     description "DB name that will indicate where data is stored. Eg: Config DB, App DB etc";
   }
+  extension table-transformer {
+    argument "table-transformer-name";
+    description "Db table transformer name.This can be applied to either transform yang value to some different format
+                 or choose a specific DB table based on the type.";
+  }
 }
