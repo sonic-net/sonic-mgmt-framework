@@ -82,6 +82,8 @@ func generate(w io.Writer, e *yang.Entry, path string) {
                     fmt.Fprintf(w, "    import %s { prefix %s; }\n", k, allimports[k])
 	        }
             }
+	    // Include the module for which annotation is being generated
+            fmt.Fprintf(w, "    import %s { prefix %s; }\n", e.Name, e.Prefix.Name)
 
             fmt.Fprintln(w)
         }
@@ -92,13 +94,10 @@ func generate(w io.Writer, e *yang.Entry, path string) {
 	name = e.Prefix.Name + ":" + name
     }
 
-    delim := ""
-    if path != "" {
-	delim = "/"
+    if (e.Node.Kind() != "module") {
+        path = path + "/" + name
+        printDeviation(w, path)
     }
-    path = path + delim + name
-
-    printDeviation(w, path)
 
     var names []string
     for k := range e.Dir {
