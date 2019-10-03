@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-Copyright 2019 Dell, Inc.  
+Copyright 2019 Dell, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
---> 
+-->
 
 <CLISH_MODULE
     xmlns="http://www.dellemc.com/sonic/XMLSchema"
@@ -261,7 +261,7 @@ limitations under the License.
             name="no"
             help="Negate a command or set its defaults"
             />
-        <COMMAND 
+        <COMMAND
             name="description"
             help="Textual description">
             <PARAM
@@ -319,7 +319,7 @@ limitations under the License.
                         mode="subcommand"
                         />
                 </PARAM>
-            </PARAM> 
+            </PARAM>
         </PARAM>
         <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_aggregate_interfaces_interface_ethernet_config_aggregate_id ${iface} ${lag-id} </ACTION>
         </COMMAND>
@@ -334,7 +334,7 @@ limitations under the License.
             help="Disable the interface">
         <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config_enabled ${iface} False </ACTION>
         </COMMAND>
-        <COMMAND 
+        <COMMAND
             name="no shutdown"
             help="Enable the interface">
         <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config_enabled ${iface} True </ACTION>
@@ -401,8 +401,23 @@ limitations under the License.
           </PARAM>
        <ACTION builtin="clish_nop"></ACTION>
        </COMMAND>
-
-       <COMMAND 
+       <COMMAND name="sflow" help="interface sFlow settings"/>
+            <COMMAND name="sflow sampling-rate" help="Set sampling-rate" ptype="SUBCOMMAND" mode="subcommand">
+                <PARAM name="rate" help="sampling rate" ptype="UINT"/>
+            	<ACTION builtin="clish_nop"/>
+            </COMMAND>
+            <COMMAND name="sflow enable" help="enable sflow" ptype="SUBCOMMAND" mode="subcommand">
+            	<ACTION builtin="clish_nop"/>
+            </COMMAND>
+       <COMMAND name="no sflow" help="disable sflow"/>
+            <COMMAND name="no sflow sampling-rate" help="set sampling rate to default" ptype="SUBCOMMAND" mode="subcommand">
+                <PARAM name="rate" help="sampling rate" ptype="UINT"/>
+            	<ACTION builtin="clish_nop"/>
+            </COMMAND>
+            <COMMAND name="no sflow enable" help="disable sFlow" ptype="SUBCOMMAND" mode="subcommand">
+            	<ACTION builtin="clish_nop"/>
+            </COMMAND>
+       <COMMAND
            name="no switchport"
            help="Remove switchport parameters"
            >
@@ -486,10 +501,10 @@ limitations under the License.
         name="no"
         help="Negate a command or set its defaults"
         />
-    <COMMAND 
+    <COMMAND
         name="min-links"
         help="Configure the minimum number of links in a PortChannel">
-        <PARAM 
+        <PARAM
             name="min-links"
             help="Configure the minimum number of links in a PortChannel"
             ptype="MIN_LINK" />
@@ -503,8 +518,8 @@ limitations under the License.
     <COMMAND
         name="mtu"
         help="Configure MTU">
-        <PARAM 
-            name="mtu" 
+        <PARAM
+            name="mtu"
             help="MTU of the interface"
             ptype="RANGE_MTU" />
         <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config_mtu ${po_id} ${mtu} </ACTION>
@@ -514,12 +529,12 @@ limitations under the License.
         help="Remove MTU">
         <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config_mtu ${po_id} 9100 </ACTION>
     </COMMAND>
-    <COMMAND 
+    <COMMAND
         name="shutdown"
         help="Disable the interface">
      <ACTION builtin="clish_nop"></ACTION>
     </COMMAND>
-    <COMMAND 
+    <COMMAND
         name="no shutdown"
         help="Enable the interface">
      <ACTION builtin="clish_nop"></ACTION>
