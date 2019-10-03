@@ -1403,8 +1403,8 @@ func (s sortedErrors) Less(i, j int) bool {
 		}
 		return nless(fi[x], fj[x])
 	}
-	for x := 1; x < 4; x++ {
-		switch compare(1) {
+	for x := 0; x < len(fi) && x < len(fj); x++ {
+		switch compare(x) {
 		case -1:
 			return true
 		case 1:
