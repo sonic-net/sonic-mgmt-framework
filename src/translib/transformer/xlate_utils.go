@@ -11,29 +11,22 @@ import (
     log "github.com/golang/glog"
 )
 
-/* Create db key from datd xpath(request) */
-func keyFromXpathCreate(keyList []string) string {
-    keyOut := ""
-    for i, k := range keyList {
-        if i > 0 { keyOut += "_" }
-        if strings.Contains(k, ":") {
-            k = strings.Split(k, ":")[1]
-        }
-        keyOut += strings.Split(k, "=")[1]
-    }
-    return keyOut
-}
-
 /* Create db key from data xpath(request) */
-func keyCreate(keyPrefix string, xpath string, data interface{}) string {
-	_, ok := xSpecMap[xpath]
+func keyCreate(keyPrefix string, xpath string, data interface{}, dbKeySep string) string {
+	_, ok := xYangSpecMap[xpath]
 	if ok {
-		if xSpecMap[xpath].yangEntry != nil {
-			yangEntry := xSpecMap[xpath].yangEntry
-			if len(keyPrefix) > 0 { keyPrefix += "|" }
+		if xYangSpecMap[xpath].yangEntry != nil {
+			yangEntry := xYangSpecMap[xpath].yangEntry
+			delim := dbKeySep
+			if len(xYangSpecMap[xpath].delim) > 0 {
+				delim = xYangSpecMap[xpath].delim
+				log.Infof("key concatenater(\"%v\") found for xpath %v ", delim, xpath)
+			}
+
+			if len(keyPrefix) > 0 { keyPrefix += delim }
 			keyVal := ""
 			for i, k := range (strings.Split(yangEntry.Key, " ")) {
-				if i > 0 { keyVal = keyVal + "_" }
+				if i > 0 { keyVal = keyVal + delim }
 				val := fmt.Sprint(data.(map[string]interface{})[k])
 				if strings.Contains(val, ":") {
 					val = strings.Split(val, ":")[1]
@@ -88,72 +81,82 @@ func yangTypeGet(entry *yang.Entry) string {
     return ""
 }
 
-func dbKeyToYangDataConvert(uri string, xpath string, dbKey string) (map[string]interface{}, string, error) {
-    var err error
-    if len(uri) == 0 && len(xpath) == 0 && len(dbKey) == 0 {
-	err = fmt.Errorf("Insufficient input")
-        return nil, "", err
-    }
-
-    if _, ok := xSpecMap[xpath]; ok {
-	if xSpecMap[xpath].yangEntry == nil {
-            err = fmt.Errorf("Yang Entry not available for xpath ", xpath)
-            return nil, "", nil
+func dbKeyToYangDataConvert(uri string, xpath string, dbKey string, dbKeySep string) (map[string]interface{}, string, error) {
+	var err error
+	if len(uri) == 0 && len(xpath) == 0 && len(dbKey) == 0 {
+		err = fmt.Errorf("Insufficient input")
+		return nil, "", err
 	}
-    }
 
-    var kLvlValList []string
-    keyDataList := strings.Split(dbKey, "|")
-    keyNameList := yangKeyFromEntryGet(xSpecMap[xpath].yangEntry)
-    id          := xSpecMap[xpath].keyLevel
-    uriWithKey  := fmt.Sprintf("%v", xpath)
+	if _, ok := xYangSpecMap[xpath]; ok {
+		if xYangSpecMap[xpath].yangEntry == nil {
+			err = fmt.Errorf("Yang Entry not available for xpath ", xpath)
+			return nil, "", nil
+		}
+	}
 
-    /* if uri contins key, use it else use xpath */
-    if strings.Contains(uri, "[") {
-        uriWithKey  = fmt.Sprintf("%v", uri)
-    }
+	var kLvlValList []string
+	keyDataList := strings.Split(dbKey, dbKeySep)
+	keyNameList := yangKeyFromEntryGet(xYangSpecMap[xpath].yangEntry)
+	id          := xYangSpecMap[xpath].keyLevel
+	uriWithKey  := fmt.Sprintf("%v", xpath)
 
-    if len(xSpecMap[xpath].xfmrKey) > 0 {
-	var dbs [db.MaxDB]*db.DB
-	inParams := formXfmrInputRequest(nil, dbs, db.MaxDB, nil, uri, GET, dbKey, nil, nil)
-        ret, err := XlateFuncCall(dbToYangXfmrFunc(xSpecMap[xpath].xfmrKey), inParams)
-        if err != nil {
-            return nil, "", err
-        }
-        rmap := ret[0].Interface().(map[string]interface{})
-        for k, v := range rmap {
-            uriWithKey += fmt.Sprintf("[%v=%v]", k, v)
-        }
-        return rmap, uriWithKey, nil
-    }
-    kLvlValList = append(kLvlValList, keyDataList[id])
+	/* if uri contins key, use it else use xpath */
+	if strings.Contains(uri, "[") {
+		uriWithKey  = fmt.Sprintf("%v", uri)
+	}
+	keyConcat := dbKeySep
+	if len(xYangSpecMap[xpath].delim) > 0 {
+		keyConcat = xYangSpecMap[xpath].delim
+		log.Infof("Found key concatenater(\"%v\") for xpath %v", keyConcat, xpath)
+	}
 
-    if len(keyNameList) > 1 {
-        kLvlValList = strings.Split(keyDataList[id], "_")
-    }
+	if len(xYangSpecMap[xpath].xfmrKey) > 0 {
+		var dbs [db.MaxDB]*db.DB
+		inParams := formXfmrInputRequest(nil, dbs, db.MaxDB, nil, uri, GET, dbKey, nil, nil)
+		ret, err := XlateFuncCall(dbToYangXfmrFunc(xYangSpecMap[xpath].xfmrKey), inParams)
+		if err != nil {
+			return nil, "", err
+		}
+		rmap := ret[0].Interface().(map[string]interface{})
+		for k, v := range rmap {
+			uriWithKey += fmt.Sprintf("[%v=%v]", k, v)
+		}
+		return rmap, uriWithKey, nil
+	}
 
-    /* TODO: Need to add leaf-ref related code in here and remove this code*/
-    kvalExceedFlag := false
-    chgId := -1
-    if len(keyNameList) < len(kLvlValList) {
-        kvalExceedFlag = true
-        chgId = len(keyNameList) - 1
-    }
+	if len(keyDataList) == 0 || len(keyNameList) == 0 {
+		return nil, "", nil
+	}
 
-    rmap := make(map[string]interface{})
-    for i, kname := range keyNameList {
-        kval := kLvlValList[i]
+	kLvlValList = append(kLvlValList, keyDataList[id])
 
-        /* TODO: Need to add leaf-ref related code in here and remove this code*/
-        if kvalExceedFlag && (i == chgId) {
-            kval = strings.Join(kLvlValList[chgId:], "_")
-        }
+	if len(keyNameList) > 1 {
+		kLvlValList = strings.Split(keyDataList[id], keyConcat)
+	}
 
-        uriWithKey += fmt.Sprintf("[%v=%v]", kname, kval)
-        rmap[kname] = kval
-    }
+	/* TODO: Need to add leaf-ref related code in here and remove this code*/
+	kvalExceedFlag := false
+	chgId := -1
+	if len(keyNameList) < len(kLvlValList) {
+		kvalExceedFlag = true
+		chgId = len(keyNameList) - 1
+	}
 
-    return rmap, uriWithKey, nil
+	rmap := make(map[string]interface{})
+	for i, kname := range keyNameList {
+		kval := kLvlValList[i]
+
+		/* TODO: Need to add leaf-ref related code in here and remove this code*/
+		if kvalExceedFlag && (i == chgId) {
+			kval = strings.Join(kLvlValList[chgId:], keyConcat)
+		}
+
+		uriWithKey += fmt.Sprintf("[%v=%v]", kname, kval)
+		rmap[kname] = kval
+	}
+
+	return rmap, uriWithKey, nil
 }
 
 func contains(sl []string, str string) bool {
@@ -206,8 +209,12 @@ func isCvlYang(path string) bool {
     return false
 }
 
-func sonicKeyDataAdd(keyNameList []string, keyStr string, resultMap map[string]interface{}) {
-    keyValList := strings.Split(keyStr, "|")
+func sonicKeyDataAdd(dbIndex db.DBNum, keyNameList []string, keyStr string, resultMap map[string]interface{}) {
+	var dbOpts db.Options
+	dbOpts = getDBOptions(dbIndex)
+	keySeparator := dbOpts.KeySeparator
+    keyValList := strings.Split(keyStr, keySeparator)
+	
     if len(keyNameList) != len(keyValList) {
         return
     }
@@ -223,8 +230,8 @@ func yangToDbXfmrFunc(funcName string) string {
 
 func uriWithKeyCreate (uri string, xpathTmplt string, data interface{}) (string, error) {
     var err error
-    if _, ok := xSpecMap[xpathTmplt]; ok {
-         yangEntry := xSpecMap[xpathTmplt].yangEntry
+    if _, ok := xYangSpecMap[xpathTmplt]; ok {
+         yangEntry := xYangSpecMap[xpathTmplt].yangEntry
          if yangEntry != nil {
               for _, k := range (strings.Split(yangEntry.Key, " ")) {
                   uri += fmt.Sprintf("[%v=%v]", k, data.(map[string]interface{})[k])
@@ -233,7 +240,7 @@ func uriWithKeyCreate (uri string, xpathTmplt string, data interface{}) (string,
             err = fmt.Errorf("Yang Entry not available for xpath ", xpathTmplt)
 	 }
     } else {
-        err = fmt.Errorf("No entry in xSpecMap for xpath ", xpathTmplt)
+        err = fmt.Errorf("No entry in xYangSpecMap for xpath ", xpathTmplt)
     }
     return uri, err
 }
@@ -247,9 +254,9 @@ func xpathRootNameGet(path string) string {
 }
 
 func getDbNum(xpath string ) db.DBNum {
-    _, ok := xSpecMap[xpath]
+    _, ok := xYangSpecMap[xpath]
     if ok {
-        xpathInfo := xSpecMap[xpath]
+        xpathInfo := xYangSpecMap[xpath]
         return xpathInfo.dbIndex
     }
     // Default is ConfigDB
@@ -385,4 +392,28 @@ func findInMap(m map[string]string, str string) string {
 
 	// str doesn't exist in map m.
 	return ""
+}
+
+func getDBOptions(dbNo db.DBNum) db.Options {
+        var opt db.Options
+
+        switch dbNo {
+        case db.ApplDB, db.CountersDB:
+                opt = getDBOptionsWithSeparator(dbNo, "", ":", ":")
+                break
+        case db.FlexCounterDB, db.AsicDB, db.LogLevelDB, db.ConfigDB, db.StateDB:
+                opt = getDBOptionsWithSeparator(dbNo, "", "|", "|")
+                break
+        }
+
+        return opt
+}
+
+func getDBOptionsWithSeparator(dbNo db.DBNum, initIndicator string, tableSeparator string, keySeparator string) db.Options {
+        return(db.Options {
+                    DBNo              : dbNo,
+                    InitIndicator     : initIndicator,
+                    TableNameSeparator: tableSeparator,
+                    KeySeparator      : keySeparator,
+                      })
 }
