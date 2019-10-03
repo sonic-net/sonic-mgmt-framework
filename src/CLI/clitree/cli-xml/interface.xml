@@ -56,6 +56,20 @@ limitations under the License.
                  </PARAM>
              </PARAM>
              <PARAM
+                 name="Management"
+                 help="Management Interface"
+                 ptype="SUBCOMMAND"
+                 mode="subcommand"
+                 >
+                 <PARAM
+                    name="mgmt-if-id"
+                    help="Management interface id"
+                    ptype="MGMT_INTF_ID"
+                    optional="true"
+                    >
+                </PARAM>
+             </PARAM>
+             <PARAM
                  name="status"
                  help="Physical interfaces status"
                  ptype="SUBCOMMAND"
@@ -68,6 +82,12 @@ limitations under the License.
             python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces show_interface_status.j2 ${__full_line}&#xA;
         elif test "${if-subcommands}" = "counters"; then&#xA;
             python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces show_interface_counters.j2 ${__full_line}&#xA;
+        elif test "${if-subcommands}" = "Management"; then&#xA;
+            if test "${mgmt-if-id}" = ""; then&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces show_interface.j2 ${__full_line}&#xA;
+            else&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces_interface eth${mgmt-if-id} show_interface_id.j2 ${__full_line}&#xA;
+            fi&#xA;
         else&#xA;
             if test "${phy-if-id}" = ""; then&#xA;
                 python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces show_interface.j2 ${__full_line}&#xA;
@@ -136,6 +156,22 @@ limitations under the License.
      <ACTION builtin="clish_nop"></ACTION>
      </COMMAND>
 
+     <COMMAND
+         name="interface Management"
+         help="Management Interface commands"
+         view="configure-if-mgmt-view"
+         viewid="iface=eth${mgmt-if-id}"
+         mode="subcommand"
+         ptype="SUBCOMMAND"
+         >
+         <PARAM
+             name="mgmt-if-id"
+             help="Management interface"
+             ptype="MGMT_INTF_ID"
+             >
+         </PARAM>
+         <ACTION builtin="clish_nop"></ACTION>
+     </COMMAND>
      <COMMAND
          name="interface vlan"
          help="Vlan Interface Configuration"
@@ -517,6 +553,88 @@ limitations under the License.
             ptype="IP_ADDR" />
      <ACTION builtin="clish_nop"></ACTION>
     </COMMAND>
+    </VIEW>
+    <VIEW
+        name="configure-if-mgmt-view"
+        prompt="${SYSTEM_NAME}(conf-if-${iface})# "
+        depth="2"
+        >
+
+        <NAMESPACE
+            ref="configure-view"
+            help="false"
+            completion="false"
+            />
+        <COMMAND
+            name="no"
+            help="Negate a command or set its defaults"
+            />
+        <COMMAND
+            name="shutdown"
+            help="Disable the interface">
+            <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config_enabled ${iface} False </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="no shutdown"
+            help="Enable the interface">
+            <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config_enabled ${iface} True </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="description"
+            help="Textual description">
+            <PARAM
+                name="desc"
+                help="Textual description of the interface"
+                ptype="STRING" />
+            <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config_description ${iface} ${desc} </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="no description"
+            help="Remove description" >
+            <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config_description ${iface} "" </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="mtu"
+            help="Configure MTU">
+            <PARAM
+                name="mtu" 
+                help="MTU of the interface"
+                ptype="RANGE_MTU" />
+            <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config_mtu ${iface} ${mtu} </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="no mtu"
+            help="Remove MTU">
+            <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config_mtu ${iface} 9100 </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="autoneg"
+            help="Configure autoneg">
+            <PARAM 
+                name="autoneg" 
+                help="Autoneg config of the interface"
+                ptype="ON_OFF" />
+            <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_ethernet_interfaces_interface_ethernet_config_auto_negotiate ${iface} ${autoneg} </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="no autoneg"
+            help="Set default autoneg config">
+            <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_ethernet_interfaces_interface_ethernet_config_auto_negotiate ${iface} false </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="speed"
+            help="Configure speed">
+            <PARAM 
+                name="speed" 
+                help="Speed config of the interface"
+                ptype="INTF_SPEED" />
+            <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_ethernet_interfaces_interface_ethernet_config_port_speed ${iface} ${speed} </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="no speed"
+            help="Set default speed config">
+            <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_ethernet_interfaces_interface_ethernet_config_port_speed ${iface} 1000 </ACTION>
+        </COMMAND>
     </VIEW>
 </CLISH_MODULE>
 

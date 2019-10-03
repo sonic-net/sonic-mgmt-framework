@@ -79,6 +79,42 @@ limitations under the License.
 	    python $SONIC_CLI_ROOT/sonic-cli-if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config_prefix_length ${iface} ${addr}
     </ACTION>
     </COMMAND>
-  </VIEW>
+</VIEW>
+
+<VIEW name="configure-if-mgmt-view">
+
+    <COMMAND
+        name="ip"
+        help="Interface Internet Protocol config commands"
+    />
+    <COMMAND
+        name="no ip"
+        help="Interface Internet Protocol config commands"
+	>
+    </COMMAND>
+
+    <COMMAND
+        name="ip address"
+        help="IP address" >
+        <PARAM
+            name="addr"
+            help="IP address with mask"
+            ptype="IP_ADDR_MASK" />
+        <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config ${iface} ${addr} </ACTION>
+    </COMMAND>
+
+    <COMMAND
+        name="no ip address"
+	help="Interface Internet Protocol config commands"
+	>
+	<PARAM
+	    name="addr"
+            help="IP address"
+	    ptype="IP_ADDR" />
+    <ACTION>
+        python $SONIC_CLI_ROOT/sonic-cli-if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config_prefix_length ${iface} ${addr}
+    </ACTION>
+    </COMMAND>
+</VIEW>
 
 </CLISH_MODULE>
