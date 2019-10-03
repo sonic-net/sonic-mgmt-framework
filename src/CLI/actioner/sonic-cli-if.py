@@ -58,6 +58,22 @@ def generate_body(func, args):
     elif func.__name__ == 'patch_openconfig_interfaces_interfaces_interface_config_mtu':
        keypath = [ args[0] ]
        body = { "openconfig-interfaces:mtu":  int(args[1]) }
+    elif func.__name__ == 'patch_openconfig_if_ethernet_interfaces_interface_ethernet_config_auto_negotiate':
+        keypath = [ args[0] ]
+        if args[1] == "true":
+            body = { "openconfig-if-ethernet:auto-negotiate": True }
+        else :
+            body = { "openconfig-if-ethernet:auto-negotiate": False }
+    elif func.__name__ == 'patch_openconfig_if_ethernet_interfaces_interface_ethernet_config_port_speed':
+        keypath = [ args[0] ]
+        speed_map = {"10MBPS":"SPEED_10MB", "100MBPS":"SPEED_100MB", "1GIGE":"SPEED_1GB", "auto":"SPEED_1GB" }
+        if args[1] not in speed_map.keys():
+            print("%Error: Invalid port speed config")
+            exit(1)
+        else:
+            speed = speed_map.get(args[1])
+
+        body = { "openconfig-if-ethernet:port-speed": speed }
     elif func.__name__ == 'patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config':
        sp = args[1].split('/')
        keypath = [ args[0], 0, sp[0] ]
