@@ -218,12 +218,12 @@ func directDbToYangJsonCreate(uri string, dbDataMap *map[db.DBNum]map[string]map
 						log.Warningf("Failure in converting Db value type to yang type for xpath", fieldXpath)
 					} else {
 						curMap[resField] = resVal
-                                                if table != "" && key != "" && table == tblName && key == keyStr {
-                                                       instanceMap = curMap
-                                                       if strings.Contains(uri, resField) {
-                                                               terminalNode = true
-                                                       }
-                                                }
+						if table != "" && key != "" && table == tblName && key == keyStr {
+							instanceMap = curMap
+							if strings.Contains(uri, resField) {
+								terminalNode = true
+							}
+						}
 					}
 				}
 			} //end of for
@@ -446,16 +446,7 @@ func yangDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, xpath
 					}
 				} else if chldYangType == "container" {
 					cname := xYangSpecMap[chldXpath].yangEntry.Name
-					if len(xYangSpecMap[chldXpath].xfmrFunc) > 0 {
-						inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, chldUri, GET, "", dbDataMap, nil)
-						cmap, _  := xfmrHandlerFunc(inParams)
-						if cmap != nil && len(cmap) > 0 {
-							resultMap[cname] = cmap
-						} else {
-							log.Infof("Empty container(\"%v\").\r\n", chldUri)
-						}
-						continue
-					} else if xYangSpecMap[chldXpath].xfmrTbl != nil {
+					if xYangSpecMap[chldXpath].xfmrTbl != nil {
 						xfmrTblFunc := *xYangSpecMap[chldXpath].xfmrTbl
 						if len(xfmrTblFunc) > 0 {
 							inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, chldUri, GET, "", dbDataMap, nil)
@@ -467,14 +458,26 @@ func yangDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, xpath
 								continue
 							}
 							dbDataFromTblXfmrGet(tblList[0], inParams, dbDataMap)
+							tbl = tblList[0]
 						}
 					}
-					cmap := make(map[string]interface{})
-					err  = yangDataFill(dbs, ygRoot, chldUri, chldXpath, dbDataMap, cmap, tbl, tblKey, cdb, isValid)
-					if len(cmap) > 0 {
-						resultMap[cname] = cmap
+					if len(xYangSpecMap[chldXpath].xfmrFunc) > 0 {
+						inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, chldUri, GET, "", dbDataMap, nil)
+						cmap, _  := xfmrHandlerFunc(inParams)
+						if cmap != nil && len(cmap) > 0 {
+							resultMap[cname] = cmap
+						} else {
+							log.Infof("Empty container(\"%v\").\r\n", chldUri)
+						}
+						continue
 					} else {
-						log.Infof("Empty container(\"%v\").\r\n", chldUri)
+						cmap := make(map[string]interface{})
+						err  = yangDataFill(dbs, ygRoot, chldUri, chldXpath, dbDataMap, cmap, tbl, tblKey, cdb, isValid)
+						if len(cmap) > 0 {
+							resultMap[cname] = cmap
+						} else {
+							log.Infof("Empty container(\"%v\").\r\n", chldUri)
+						}
 					}
 				} else if chldYangType == "list" {
 					cdb = xYangSpecMap[chldXpath].dbIndex
@@ -507,7 +510,7 @@ func yangDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, xpath
 func dbDataToYangJsonCreate(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db.DB, dbDataMap *map[db.DBNum]map[string]map[string]db.Value, cdb db.DBNum) (string, error) {
 	jsonData := ""
 	resultMap := make(map[string]interface{})
-	if isCvlYang(uri) {
+	if isSonicYang(uri) {
 		return directDbToYangJsonCreate(uri, dbDataMap)
 	} else {
 		var d *db.DB
