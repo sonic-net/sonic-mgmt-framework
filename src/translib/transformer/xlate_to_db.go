@@ -567,6 +567,9 @@ func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string) (st
     var dbs [db.MaxDB]*db.DB
 
     pfxPath, _ = RemoveXPATHPredicates(path)
+    if strings.Count(path, ":") > 1 {
+        pfxPath = stripAugmentedModuleNames(pfxPath)
+    }
     xpathInfo, ok := xYangSpecMap[pfxPath]
     if !ok {
            log.Errorf("No entry found in xYangSpecMap for xpath %v.", pfxPath)
