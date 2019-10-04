@@ -585,12 +585,11 @@ func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string) (st
         }
         curPathWithKey += "/"
     }
-    //pfxPath, _ := RemoveXPATHPredicates(path)
     tblPtr     := xpathInfo.tableName
     if tblPtr != nil {
         tableName = *tblPtr
     } else if xpathInfo.xfmrTbl != nil {
-		inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, curPathWithKey, oper, "", nil, nil)
+		inParams := formXfmrInputRequest(d, dbs, cdb, ygRoot, curPathWithKey, oper, "", nil, nil)
 		tableName, _ = tblNameFromTblXfmrGet(*xpathInfo.xfmrTbl, inParams)
     }
     return pfxPath, keyStr, tableName
