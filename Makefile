@@ -60,9 +60,10 @@ $(GO_DEPS_LIST):
 cli: rest-server
 	$(MAKE) -C src/CLI
 
-cvl: go-deps
+cvl: go-deps go-patch go-redis-patch
 	$(MAKE) -C src/cvl
 	$(MAKE) -C src/cvl/schema
+
 cvl-test:
 	$(MAKE) -C src/cvl gotest
 
