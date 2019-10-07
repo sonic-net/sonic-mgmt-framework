@@ -313,13 +313,16 @@ func sonicYangReqToDbMapDelete(xpathPrefix string, tableName string, keyName str
             // Specific key case
             var dbVal db.Value
             tokens:= strings.Split(xpathPrefix, "/")
-            // Format /module:container/tableName[key]/fieldName
-            if tokens[len(tokens)-2] == tableName {
-                // Specific leaf case
-                fieldName := tokens[len(tokens)-1]
-                dbVal.Field = make(map[string]string)
-                dbVal.Field[fieldName] = ""
-            }
+            if tokens[SONIC_TABLE_INDEX] == tableName {
+               fieldName := tokens[len(tokens)-1]
+               dbSpecField := "/" + fieldName
+               _, ok := xDbSpecMap[dbSpecField]
+               if ok && xDbSpecMap[dbSpecField].fieldType == "leaf" {
+                       // Specific leaf case
+                        dbVal.Field = make(map[string]string)
+                        dbVal.Field[fieldName] = ""
+               }
+	    }
             result[tableName][keyName] = dbVal
         } else {
             // Get all keys
@@ -539,7 +542,7 @@ func sonicXpathKeyExtract(path string) (string, string, string) {
 		dbInfo, ok := xDbSpecMap[tableName]
 		cdb := db.ConfigDB
 		if !ok {
-			log.Errorf("No entry in xDbSpecMap for xpath %v in order to fetch DB index.", tableName)
+			log.Infof("No entry in xDbSpecMap for xpath %v in order to fetch DB index.", tableName)
 		} else {
 			cdb = dbInfo.dbIndex
 		}
@@ -564,6 +567,9 @@ func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string) (st
     var dbs [db.MaxDB]*db.DB
 
     pfxPath, _ = RemoveXPATHPredicates(path)
+    if strings.Count(path, ":") > 1 {
+        pfxPath = stripAugmentedModuleNames(pfxPath)
+    }
     xpathInfo, ok := xYangSpecMap[pfxPath]
     if !ok {
            log.Errorf("No entry found in xYangSpecMap for xpath %v.", pfxPath)
@@ -615,12 +621,11 @@ func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string) (st
         }
         curPathWithKey += "/"
     }
-    //pfxPath, _ := RemoveXPATHPredicates(path)
     tblPtr     := xpathInfo.tableName
     if tblPtr != nil {
         tableName = *tblPtr
     } else if xpathInfo.xfmrTbl != nil {
-		inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, curPathWithKey, oper, "", nil, nil)
+		inParams := formXfmrInputRequest(d, dbs, cdb, ygRoot, curPathWithKey, oper, "", nil, nil)
 		tableName, _ = tblNameFromTblXfmrGet(*xpathInfo.xfmrTbl, inParams)
     }
     return pfxPath, keyStr, tableName
