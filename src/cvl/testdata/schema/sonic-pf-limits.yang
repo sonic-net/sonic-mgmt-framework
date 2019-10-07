@@ -3,16 +3,8 @@ module sonic-pf-limits {
 	prefix spf;
 	yang-version 1.1;
 
-	import ietf-yang-types {
-		prefix yang;
-	}
-
-	import ietf-inet-types {
-		prefix inet;
-	}
-
-	import sonic-common {
-		prefix scommon;
+	import sonic-extension {
+		prefix sonic-ext;
 	}
 
 	organization
@@ -30,7 +22,7 @@ module sonic-pf-limits {
 	}
 
 	container sonic-pf-limits {
-		scommon:db-name "APPL_DB";
+		sonic-ext:db-name "APPL_DB";
 
 		container acl { 
 			leaf MAX_ACL_RULES {
