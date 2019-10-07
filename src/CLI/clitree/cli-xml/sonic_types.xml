@@ -49,6 +49,13 @@ limitations under the License.
         />
     <!--=======================================================-->
     <PTYPE
+        name="MGMT_INTF_ID"
+        method="integer"
+        pattern="0..0"
+        help=""
+        />
+    <!--=======================================================-->
+    <PTYPE
         name="MIN_LINK"
         method="integer"
         pattern="1..255"

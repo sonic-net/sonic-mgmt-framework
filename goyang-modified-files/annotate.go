@@ -53,7 +53,8 @@ func genAnnotate(w io.Writer, entries []*yang.Entry) {
     for _, e := range entries {
         if _, ok := modules[e.Name]; ok {
             var path string = ""
-            generate(w, e, path)
+            var prefix string = ""
+            generate(w, e, path, prefix)
             // { Add closing brace for each module 
             fmt.Fprintln(w, "}")
             fmt.Fprintln(w)
@@ -62,14 +63,14 @@ func genAnnotate(w io.Writer, entries []*yang.Entry) {
 }
 
 // generate writes to stdoutput a template annotation file entry for the selected modules.
-func generate(w io.Writer, e *yang.Entry, path string) {
+func generate(w io.Writer, e *yang.Entry, path string, prefix string) {
     if e.Parent == nil {
         if e.Name != "" {
             fmt.Fprintf(w, "module %s-annot {\n", e.Name) //}
             fmt.Fprintln(w)
             fmt.Fprintf(w, "    yang-version \"%s\";\n", getYangVersion(e.Name, modules))
             fmt.Fprintln(w)
-            fmt.Fprintf(w, "    namespace \"http://openconfig.net/yang/annotation\";\n")
+            fmt.Fprintf(w, "    namespace \"http://openconfig.net/yang/annotation/%s-annot\";\n", e.Prefix.Name)
             if e.Prefix != nil {
                 fmt.Fprintf(w, "    prefix \"%s-annot\";\n", e.Prefix.Name)
             }
@@ -90,9 +91,10 @@ func generate(w io.Writer, e *yang.Entry, path string) {
     }
 
     name := e.Name
-    if e.Prefix != nil {
-	name = e.Prefix.Name + ":" + name
+    if prefix == "" && e.Prefix != nil {
+	prefix = e.Prefix.Name
     }
+    name = prefix + ":" + name
 
     if (e.Node.Kind() != "module") {
         path = path + "/" + name
@@ -107,14 +109,22 @@ func generate(w io.Writer, e *yang.Entry, path string) {
     if (e.Node.Kind() == "module") {
 	    if len(e.Node.(*yang.Module).Augment) > 0 {
 		    for _,a := range e.Node.(*yang.Module).Augment {
-			    path = a.Name
+			    pathList := strings.Split(a.Name, "/")
+			    pathList = pathList[1:]
+			    for i, pvar := range pathList {
+				    if len(pvar) > 0 && !strings.Contains(pvar, ":") {
+					    pvar = e.Prefix.Name + ":" + pvar
+					    pathList[i] = pvar
+				    }
+			    }
+			    path = "/" + strings.Join(pathList, "/")
 			    handleAugments(w, a, e.Node.(*yang.Module).Grouping, e.Prefix.Name, path)
 		    }
 	    }
     }
 
     for _, k := range names {
-        generate(w, e.Dir[k], path)
+        generate(w, e.Dir[k], path, prefix)
     }
 
 }
@@ -202,7 +212,6 @@ func handleUses(w io.Writer, u []*yang.Uses, grp []*yang.Grouping, prefix string
 		grpN = tokens[1]
 		mod := GetModuleFromPrefix(nprefix)
 	        grp = allmodules[mod].Grouping
-		prefix = nprefix
 	    }
             for _, g := range grp {
                 if grpN == g.Name {
