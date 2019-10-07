@@ -2,18 +2,6 @@ module sonic-buffer-pool {
 	namespace "http://github.com/Azure/sonic-buffer-pool";
 	prefix bpl;
 
-	import ietf-yang-types {
-		prefix yang;
-	}
-
-	import ietf-inet-types {
-		prefix inet;
-	}
-
-	import sonic-common {
-		prefix scommon;
-	}
-
 	organization
 		"SONiC";
 
@@ -30,31 +18,34 @@ module sonic-buffer-pool {
 
 	container sonic-buffer-pool {
 
-		list BUFFER_POOL {
-			key "name";
+		container BUFFER_POOL {
 
-			leaf name {
-				type string;
-			}
+			list BUFFER_POOL_LIST {
+				key "name";
 
-			leaf type {
-				type enumeration {
-					enum ingress;
-					enum egress;
+				leaf name {
+					type string;
 				}
-			}
 
-			leaf mode {
-				type enumeration {
-					enum static;
-					enum dynamic;
+				leaf type {
+					type enumeration {
+						enum ingress;
+						enum egress;
+					}
 				}
-			}
 
-			leaf size {
-				type uint64;
-			}
+				leaf mode {
+					type enumeration {
+						enum static;
+						enum dynamic;
+					}
+				}
 
+				leaf size {
+					type uint64;
+				}
+
+			}
 		}
 	}
 }

@@ -29,64 +29,68 @@ module sonic-device-metadata {
 	}
 
 	container sonic-device-metadata {
-		list DEVICE_METADATA {
-			key "name";
 
-			leaf name{
-				type string;
-			}
+		container DEVICE_METADATA {
 
-			leaf hwsku {
-				type string;
-			}
+			list DEVICE_METADATA_LIST {
+				key "name";
 
-			leaf hostname {
-				type string;
-			}
-
-			leaf platform {
-				type string;
-			}
-
-			leaf mac {
-				  type yang:mac-address;
-			}
-
-			leaf bgp_asn {
-				type leafref {
-					path "/sbn:sonic-bgp-neighbor/sbn:BGP_NEIGHBOR/sbn:asn";
+				leaf name{
+					type string;
 				}
-			}
 
-			leaf default_pfcwd_status {
-				type enumeration {
-                                        enum enable;
-                                        enum disable;
-                                }
-			}
-
-			leaf default_bgp_status {
-				type scommon:admin-status;
-			}
-
-			leaf docker_routing_config_mode {
-				 type enumeration {
-                                        enum unified;
-                                        enum separated;
-                                }
-			}
-
-			leaf deployment_id {
-				type uint8 {
-					range "0..255";
+				leaf hwsku {
+					type string;
 				}
-			}
 
-			leaf type {
-				type enumeration {
-                                        enum ToRRouter;
-                                        enum LeafRouter;
-                                }
+				leaf hostname {
+					type string;
+				}
+
+				leaf platform {
+					type string;
+				}
+
+				leaf mac {
+					type yang:mac-address;
+				}
+
+				leaf bgp_asn {
+					type leafref {
+						path "/sbn:sonic-bgp-neighbor/sbn:BGP_NEIGHBOR/sbn:BGP_NEIGHBOR_LIST/sbn:asn";
+					}
+				}
+
+				leaf default_pfcwd_status {
+					type enumeration {
+						enum enable;
+						enum disable;
+					}
+				}
+
+				leaf default_bgp_status {
+					type scommon:admin-status;
+				}
+
+				leaf docker_routing_config_mode {
+					type enumeration {
+						enum unified;
+						enum separated;
+					}
+				}
+
+				leaf deployment_id {
+					type uint8 {
+						range "0..255";
+					}
+				}
+
+				leaf type {
+					type enumeration {
+						enum ToRRouter;
+						enum LeafRouter;
+					}
+				}
 			}
 		}
 	}

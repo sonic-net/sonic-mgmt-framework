@@ -2,12 +2,8 @@ module sonic-port-qos-map {
 	namespace "http://github.com/Azure/sonic-port-qos-map";
 	prefix pqm;
 
-	import ietf-yang-types {
-		prefix yang;
-	}
-
-	import sonic-common {
-		prefix scommon;
+	import sonic-extension {
+		prefix sonic-ext;
 	}
 
 	import sonic-port {
@@ -48,24 +44,24 @@ module sonic-port-qos-map {
 
 		list PORT_QOS_MAP {
 			key "ifname";
-			scommon:key-pattern "PORT_QOS_MAP|({ifname},)*"; //special pattern used for extracting keys from redis-key and fill populate the yang instance
+			sonic-ext:key-pattern "PORT_QOS_MAP|({ifname},)*"; //special pattern used for extracting keys from redis-key and fill populate the yang instance
 									   // Total list instance = number(key1) * number(key2) * number(key3)
 
 			leaf ifname {
 				type leafref {
-					path "/prt:sonic-port/prt:PORT/prt:ifname";
+					path "/prt:sonic-port/prt:PORT/prt:PORT_LIST/prt:ifname";
 				}
 			}
 
 			leaf tc_to_pg_map {
 				type leafref {
-					path "/tpg:sonic-tc-priority-group-map/tpg:TC_TO_PRIORITY_GROUP_MAP/tpg:name";
+					path "/tpg:sonic-tc-priority-group-map/tpg:TC_TO_PRIORITY_GROUP_MAP/tpg:TC_TO_PRIORITY_GROUP_MAP_LIST/tpg:name";
 				}
 			}
 
 			leaf tc_to_queue_map {
 				type leafref {
-					path "/tqm:sonic-tc-queue-map/tqm:TC_TO_QUEUE_MAP/tqm:name";
+					path "/tqm:sonic-tc-queue-map/tqm:TC_TO_QUEUE_MAP/tqm:TC_TO_QUEUE_MAP_LIST/tqm:name";
 				}
 			}
 
@@ -77,13 +73,13 @@ module sonic-port-qos-map {
 
 			leaf pfc_to_queue_map {
 				type leafref {
-					path "/ppq:sonic-pfc-priority-queue-map/ppq:MAP_PFC_PRIORITY_TO_QUEUE/ppq:name";
+					path "/ppq:sonic-pfc-priority-queue-map/ppq:MAP_PFC_PRIORITY_TO_QUEUE/ppq:MAP_PFC_PRIORITY_TO_QUEUE_LIST/ppq:name";
 				}
 			}
 
 			leaf dscp_to_tc_map {
 				type leafref {
-					path "/dtm:sonic-dscp-tc-map/dtm:DSCP_TO_TC_MAP/dtm:name";
+					path "/dtm:sonic-dscp-tc-map/dtm:DSCP_TO_TC_MAP/dtm:DSCP_TO_TC_MAP_LIST/dtm:name";
 				}
 			}
 		}
