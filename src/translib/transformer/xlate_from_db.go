@@ -280,14 +280,24 @@ func sonicDbToYangDataFill(uri string, xpath string, dbIdx db.DBNum, table strin
 
 /* Traverse db map and create json for cvl yang */
 func directDbToYangJsonCreate(uri string, dbDataMap *map[db.DBNum]map[string]map[string]db.Value, resultMap map[string]interface{}) (string, error) {
-	xpath, _  := RemoveXPATHPredicates(uri)
+	xpath, key, table := sonicXpathKeyExtract(uri)
 
 	if len(xpath) > 0 {
 		var dbNode *dbInfo
 
-		xpath, key, table := sonicXpathKeyExtract(xpath)
 		if len(table) > 0 {
-			dbNode = xDbSpecMap[table]
+			tokens:= strings.Split(xpath, "/")
+			if tokens[SONIC_TABLE_INDEX] == table {
+				fieldName := tokens[len(tokens)-1]
+				dbSpecField := table + "/" + fieldName
+				_, ok := xDbSpecMap[dbSpecField]
+				if ok && xDbSpecMap[dbSpecField].fieldType == "leaf" {
+					dbNode = xDbSpecMap[dbSpecField]
+					xpath = dbSpecField
+				} else {
+					dbNode = xDbSpecMap[table]
+				}
+			}
 		} else {
 			dbNode, _ = xDbSpecMap[xpath]
 		}

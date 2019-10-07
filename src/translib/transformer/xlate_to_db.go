@@ -16,9 +16,6 @@ import (
     log "github.com/golang/glog"
 )
 
-const SONIC_TABLE_INDEX = 2
-const SONIC_FIELD_INDEX = 3
-
 /* Invoke the post tansformer */
 func postXfmrHandlerFunc(inParams XfmrParams) (map[string]map[string]db.Value, error) {
     xpath, _ := RemoveXPATHPredicates(inParams.uri)

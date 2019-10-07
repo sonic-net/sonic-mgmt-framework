@@ -320,10 +320,14 @@ func XlateFromDb(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db.DB, data m
 				cdb =  dbInfo.dbIndex
 			}
 			tokens:= strings.Split(xpath, "/")
-			// Format /module:container/tableName[key]/fieldName
-			if tokens[len(tokens)-2] == tableName {
+			// Format /module:container/tableName/listname[key]/fieldName
+			if tokens[SONIC_TABLE_INDEX] == tableName {
 		                fieldName := tokens[len(tokens)-1]
-				dbData[cdb] = extractFieldFromDb(tableName, keyStr, fieldName, data[cdb])
+				dbSpecField := tableName + "/" + fieldName
+				_, ok := xDbSpecMap[dbSpecField]
+				if ok && xDbSpecMap[dbSpecField].fieldType == "leaf" {
+					dbData[cdb] = extractFieldFromDb(tableName, keyStr, fieldName, data[cdb])
+				}
 			}
 		}
 	} else {
