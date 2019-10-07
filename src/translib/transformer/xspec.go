@@ -224,7 +224,7 @@ func dbMapFill(tableName string, curPath string, moduleNm string, trkTpCnt bool,
 			}
 		}
 	} else {
-		moduleXpath := "/" + entry.Name
+		moduleXpath := "/" + moduleNm + ":" + entry.Name
 		xDbSpecMap[moduleXpath] = new(dbInfo)
 		xDbSpecMap[moduleXpath].dbEntry   = entry
 		xDbSpecMap[moduleXpath].fieldType = entryType

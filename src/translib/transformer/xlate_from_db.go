@@ -172,84 +172,153 @@ func processLfLstDbToYang(fieldXpath string, dbFldVal string) []interface{} {
 	return resLst
 }
 
-/* Traverse db map and create json for cvl yang */
-func directDbToYangJsonCreate(uri string, dbDataMap *map[db.DBNum]map[string]map[string]db.Value) (string, error) {
-    var err error
-    resultMap := make(map[string]interface{})
-    instanceMap := make(map[string]interface{})
-    terminalNode := false
-    _, key, table := sonicXpathKeyExtract(uri)
+func sonicDbToYangTerminalNodeFill(tblName string, field string, value string, resultMap map[string]interface{}) {
+	resField := field
+	if len(value) == 0 {
+		return
+	}
+	if strings.HasSuffix(field, "@") {
+		fldVals := strings.Split(field, "@")
+		resField = fldVals[0]
+	}
+	fieldXpath := tblName + "/" + resField
+	xDbSpecMapEntry, ok := xDbSpecMap[fieldXpath]
+	if !ok {
+		log.Warningf("No entry found in xDbSpecMap for xpath %v", fieldXpath)
+		return
+	}
+	if xDbSpecMapEntry.dbEntry == nil {
+		log.Warningf("Yang entry is nil in xDbSpecMap for xpath %v", fieldXpath)
+		return
+	}
 
-	for curDbIdx := db.ApplDB; curDbIdx < db.MaxDB; curDbIdx++ {
-		dbTblData := (*dbDataMap)[curDbIdx]
-		for tblName, tblData := range dbTblData {
-			var mapSlice []typeMapOfInterface
-			for keyStr, dbFldValData := range tblData {
-				curMap := make(map[string]interface{})
-				for field, value := range dbFldValData.Field {
-					resField := field
-					if strings.HasSuffix(field, "@") {
-						fldVals := strings.Split(field, "@")
-						resField = fldVals[0]
-					}
-					fieldXpath := tblName + "/" + resField
-					xDbSpecMapEntry, ok := xDbSpecMap[fieldXpath]
-					if !ok {
-						log.Warningf("No entry found in xDbSpecMap for xpath %v", fieldXpath)
-						continue
-					}
-					if xDbSpecMapEntry.dbEntry == nil {
-						log.Warningf("Yang entry is nil in xDbSpecMap for xpath %v", fieldXpath)
-						continue
-					}
-					yangType := yangTypeGet(xDbSpecMapEntry.dbEntry)
-					if yangType == "leaf-list" {
-						/* this should never happen but just adding for safetty */
-						if !strings.HasSuffix(field, "@") {
-							log.Warningf("Leaf-list in Sonic yang should also be a leaf-list in DB, its not for xpath %v", fieldXpath)
-							continue
-						}
-						resLst := processLfLstDbToYang(fieldXpath, value)
-						curMap[resField] = resLst
-					} else { /* yangType is leaf - there are only 2 types of yang terminal node leaf and leaf-list */
-					yngTerminalNdDtType := xDbSpecMapEntry.dbEntry.Type.Kind
-					resVal, err := DbToYangType(yngTerminalNdDtType, fieldXpath, value)
-					if err != nil {
-						log.Warningf("Failure in converting Db value type to yang type for xpath", fieldXpath)
+	yangType := yangTypeGet(xDbSpecMapEntry.dbEntry)
+	if yangType == "leaf-list" {
+		/* this should never happen but just adding for safetty */
+		if !strings.HasSuffix(field, "@") {
+			log.Warningf("Leaf-list in Sonic yang should also be a leaf-list in DB, its not for xpath %v", fieldXpath)
+			return
+		}
+		resLst := processLfLstDbToYang(fieldXpath, value)
+		resultMap[resField] = resLst
+	} else { /* yangType is leaf - there are only 2 types of yang terminal node leaf and leaf-list */
+		yngTerminalNdDtType := xDbSpecMapEntry.dbEntry.Type.Kind
+		resVal, err := DbToYangType(yngTerminalNdDtType, fieldXpath, value)
+		if err != nil {
+			log.Warningf("Failure in converting Db value type to yang type for xpath", fieldXpath)
+		} else {
+			resultMap[resField] = resVal
+		}
+	}
+	return
+}
+
+func sonicDbToYangListFill(uri string, xpath string, dbIdx db.DBNum, table string, key string, dbDataMap *map[db.DBNum]map[string]map[string]db.Value) []typeMapOfInterface {
+	var mapSlice []typeMapOfInterface
+	dbTblData := (*dbDataMap)[dbIdx][table]
+
+	for keyStr, _ := range dbTblData {
+		curMap := make(map[string]interface{})
+		sonicDbToYangDataFill(uri, xpath, dbIdx, table, keyStr, dbDataMap, curMap)
+		dbSpecData, ok := xDbSpecMap[table]
+		if ok && dbSpecData.keyName == nil {
+			yangKeys := yangKeyFromEntryGet(xDbSpecMap[xpath].dbEntry)
+			sonicKeyDataAdd(dbIdx, yangKeys, keyStr, curMap)
+		}
+		if curMap != nil {
+			mapSlice = append(mapSlice, curMap)
+		}
+	}
+	return mapSlice
+}
+
+func sonicDbToYangDataFill(uri string, xpath string, dbIdx db.DBNum, table string, key string, dbDataMap *map[db.DBNum]map[string]map[string]db.Value, resultMap map[string]interface{}) {
+	yangNode, ok := xDbSpecMap[xpath]
+
+	if ok  && yangNode.dbEntry != nil {
+		xpathPrefix := table
+		if len(table) > 0 { xpathPrefix += "/" }
+
+		for yangChldName := range yangNode.dbEntry.Dir {
+			chldXpath := xpathPrefix+yangChldName
+			if xDbSpecMap[chldXpath] != nil && xDbSpecMap[chldXpath].dbEntry != nil {
+				chldYangType := yangTypeGet(xDbSpecMap[chldXpath].dbEntry)
+
+				if  chldYangType == YANG_LEAF || chldYangType == YANG_LEAF_LIST {
+					log.Infof("tbl(%v), k(%v), yc(%v)", table, key, yangChldName)
+					sonicDbToYangTerminalNodeFill(table, yangChldName, (*dbDataMap)[dbIdx][table][key].Field[yangChldName], resultMap)
+				} else if chldYangType == YANG_CONTAINER {
+					curMap := make(map[string]interface{})
+					curUri := xpath + "/" + yangChldName
+					// container can have a static key, so extract key for current container
+					_, curKey, curTable := sonicXpathKeyExtract(curUri)
+					// use table-name as xpath from now on
+					sonicDbToYangDataFill(curUri, curTable, xDbSpecMap[curTable].dbIndex, curTable, curKey, dbDataMap, curMap)
+					if len(curMap) > 0 {
+						resultMap[yangChldName] = curMap
 					} else {
-						curMap[resField] = resVal
-						if table != "" && key != "" && table == tblName && key == keyStr {
-							instanceMap = curMap
-							if strings.Contains(uri, resField) {
-								terminalNode = true
-							}
-						}
+						log.Infof("Empty container for xpath(%v)", curUri)
+					}
+				} else if chldYangType == YANG_LIST {
+					var mapSlice []typeMapOfInterface
+					curUri := xpath + "/" + yangChldName
+					mapSlice = sonicDbToYangListFill(curUri, curUri, dbIdx, table, key, dbDataMap)
+					if len(mapSlice) > 0 {
+						resultMap[yangChldName] = mapSlice
+					} else {
+						log.Infof("Empty list for xpath(%v)", curUri)
 					}
 				}
-			} //end of for
-			dbSpecData, ok := xDbSpecMap[tblName]
-			dbIndex := db.ConfigDB
-			if ok && !terminalNode {
-				dbIndex = dbSpecData.dbIndex
-				yangKeys := yangKeyFromEntryGet(xDbSpecMap[tblName].dbEntry)
-				sonicKeyDataAdd(dbIndex, yangKeys, keyStr, curMap)
-			}
-			if curMap != nil {
-				mapSlice = append(mapSlice, curMap)
 			}
 		}
-		resultMap[tblName] = mapSlice
 	}
+	return
+}
+
+/* Traverse db map and create json for cvl yang */
+func directDbToYangJsonCreate(uri string, dbDataMap *map[db.DBNum]map[string]map[string]db.Value, resultMap map[string]interface{}) (string, error) {
+	xpath, _  := RemoveXPATHPredicates(uri)
+
+	if len(xpath) > 0 {
+		var dbNode *dbInfo
+
+		xpath, key, table := sonicXpathKeyExtract(xpath)
+		if len(table) > 0 {
+			dbNode = xDbSpecMap[table]
+		} else {
+			dbNode, _ = xDbSpecMap[xpath]
+		}
+
+		if dbNode != nil && dbNode.dbEntry != nil {
+			cdb   := db.ConfigDB
+			yangType := yangTypeGet(dbNode.dbEntry)
+			if len(table) > 0 {
+				cdb = xDbSpecMap[table].dbIndex
+			}
+
+			if yangType == YANG_LEAF || yangType == YANG_LEAF_LIST {
+				fldName := xDbSpecMap[xpath].dbEntry.Name
+				sonicDbToYangTerminalNodeFill(table, fldName, (*dbDataMap)[cdb][table][key].Field[fldName], resultMap)
+			} else if yangType == YANG_CONTAINER {
+				if len(table) > 0 {
+					xpath = table
+				}
+				sonicDbToYangDataFill(uri, xpath, cdb, table, key, dbDataMap, resultMap)
+			} else if yangType == YANG_LIST {
+				mapSlice := sonicDbToYangListFill(uri, xpath, cdb, table, key, dbDataMap)
+				if len(mapSlice) > 0 {
+					pathl := strings.Split(xpath, "/")
+					lname := pathl[len(pathl) - 1]
+					resultMap[lname] = mapSlice
+				}
+			}
+		}
 	}
-        jsonMapData, _ := json.Marshal(resultMap)
-        if table != "" && key != "" && len(instanceMap) > 0 {
-                jsonMapData, _ = json.Marshal(instanceMap)
-        }
 
-        jsonData := fmt.Sprintf("%v", string(jsonMapData))
-        jsonDataPrint(jsonData)
-        return jsonData, err
-
+	jsonMapData, _ := json.Marshal(resultMap)
+	jsonData := fmt.Sprintf("%v", string(jsonMapData))
+	jsonDataPrint(jsonData)
+	return jsonData, nil
 }
 
 func tableNameAndKeyFromDbMapGet(dbDataMap map[string]map[string]db.Value) (string, string, error) {
@@ -513,7 +582,7 @@ func dbDataToYangJsonCreate(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db
 	jsonData := ""
 	resultMap := make(map[string]interface{})
 	if isSonicYang(uri) {
-		return directDbToYangJsonCreate(uri, dbDataMap)
+		return directDbToYangJsonCreate(uri, dbDataMap, resultMap)
 	} else {
 		var d *db.DB
 		reqXpath, keyName, tableName := xpathKeyExtract(d, ygRoot, GET, uri)

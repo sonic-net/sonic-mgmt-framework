@@ -197,8 +197,7 @@ func fillSonicKeySpec(xpath string , tableName string, keyStr string) ( []KeySpe
 		retdbFormat = append(retdbFormat, dbFormat)
 	} else {
 		// If table name not available in xpath get top container name
-		tokens:= strings.Split(xpath, ":")
-		container := "/" + tokens[len(tokens)-1]
+		container := xpath
 		if xDbSpecMap != nil {
 			if _, ok := xDbSpecMap[container]; ok {
 				dbInfo := xDbSpecMap[container]
