@@ -61,6 +61,9 @@ func xfmrHandlerFunc(inParams XfmrParams) (map[string]interface{}, error) {
 
 func leafXfmrHandlerFunc(inParams XfmrParams) (map[string]interface{}, error) {
     xpath, _ := RemoveXPATHPredicates(inParams.uri)
+    if strings.Count(xpath, ":") > 1 {
+        xpath = stripAugmentedModuleNames(xpath)
+    }
     ret, err := XlateFuncCall(dbToYangXfmrFunc(xYangSpecMap[xpath].xfmrFunc), inParams)
     if err != nil {
         return nil, err
@@ -623,7 +626,7 @@ func dbDataToYangJsonCreate(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db
 				} else if xYangSpecMap[reqXpath].xfmrTbl != nil {
 					xfmrTblFunc := *xYangSpecMap[reqXpath].xfmrTbl
 					if len(xfmrTblFunc) > 0 {
-						inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, reqXpath, GET, "", dbDataMap, nil)
+						inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, uri, GET, "", dbDataMap, nil)
 						tblList := xfmrTblHandlerFunc(xfmrTblFunc, inParams)
 						if len(tblList) > 1 {
 							log.Warningf("Table transformer returned more than one table for container %v", reqXpath)

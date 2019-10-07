@@ -315,7 +315,7 @@ func sonicYangReqToDbMapDelete(xpathPrefix string, tableName string, keyName str
             tokens:= strings.Split(xpathPrefix, "/")
             if tokens[SONIC_TABLE_INDEX] == tableName {
                fieldName := tokens[len(tokens)-1]
-               dbSpecField := "/" + fieldName
+               dbSpecField := tableName + "/" + fieldName
                _, ok := xDbSpecMap[dbSpecField]
                if ok && xDbSpecMap[dbSpecField].fieldType == "leaf" {
                        // Specific leaf case
@@ -330,11 +330,9 @@ func sonicYangReqToDbMapDelete(xpathPrefix string, tableName string, keyName str
     } else {
         // Get all table entries
         // If table name not available in xpath get top container name
-        tokens:= strings.Split(xpathPrefix, ":")
-        container := "/" + tokens[len(tokens)-1]
-	_, ok := xDbSpecMap[container]
-        if ok && xDbSpecMap[container] != nil {
-            dbInfo := xDbSpecMap[container]
+	_, ok := xDbSpecMap[xpathPrefix]
+        if ok && xDbSpecMap[xpathPrefix] != nil {
+            dbInfo := xDbSpecMap[xpathPrefix]
             if dbInfo.fieldType == "container" {
                 for dir, _ := range dbInfo.dbEntry.Dir {
                     result[dir] = make(map[string]db.Value)
