@@ -55,7 +55,7 @@ module sonic-sflow {
                 }
 
                 container SFLOW {
-                    sonic-ext:key-name "global";
+                    container GLOBAL {
 
                     leaf admin_state {
                         type scommon:admin-status;
@@ -67,6 +67,7 @@ module sonic-sflow {
 
                     leaf agent_id {
                         type string;
+                    }
                     }
                 }
         }
