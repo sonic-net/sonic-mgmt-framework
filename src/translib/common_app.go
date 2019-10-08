@@ -453,7 +453,7 @@ func checkAndProcessLeafList(existingEntry db.Value, tblRw db.Value, opcode int,
 	}
 	/* delete specific item from leaf-list */
 	if opcode == DELETE {
-		if mergeTblRw.Field == nil {
+		if len(mergeTblRw.Field) == 0 {
 			return tblRw
 		}
 		err := d.ModEntry(dbTblSpec, db.Key{Comp: []string{tblKey}}, mergeTblRw)

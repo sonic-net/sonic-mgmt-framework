@@ -53,7 +53,7 @@ func XlateFuncBind(name string, fn interface{}) (err error) {
 func XlateFuncCall(name string, params ...interface{}) (result []reflect.Value, err error) {
 	if _, ok := XlateFuncs[name]; !ok {
 		err = errors.New(name + " Xfmr function does not exist.")
-		return nil, nil
+		return nil, err
 	}
 	if len(params) != XlateFuncs[name].Type().NumIn() {
 		err = ErrParamsNotAdapted
@@ -118,11 +118,11 @@ func XlateUriToKeySpec(uri string, ygRoot *ygot.GoStruct, t *interface{}) (*[]Ke
 	var err error
 	var retdbFormat = make([]KeySpec, 0)
 
-	// In case of CVL yang, the tablename and key info is available in the xpath
-	if isCvlYang(uri) {
+	// In case of SONIC yang, the tablename and key info is available in the xpath
+	if isSonicYang(uri) {
 		/* Extract the xpath and key from input xpath */
 		xpath, keyStr, tableName := sonicXpathKeyExtract(uri)
-		retdbFormat = fillCvlKeySpec(xpath, tableName, keyStr)
+		retdbFormat = fillSonicKeySpec(xpath, tableName, keyStr)
 	} else {
 		/* Extract the xpath and key from input xpath */
 		xpath, keyStr, _ := xpathKeyExtract(nil, ygRoot, 0, uri)
@@ -179,7 +179,7 @@ func FillKeySpecs(yangXpath string , keyStr string, retdbFormat *[]KeySpec) ([]K
 	return *retdbFormat
 }
 
-func fillCvlKeySpec(xpath string , tableName string, keyStr string) ( []KeySpec ) {
+func fillSonicKeySpec(xpath string , tableName string, keyStr string) ( []KeySpec ) {
 
 	var retdbFormat = make([]KeySpec, 0)
 
@@ -197,15 +197,14 @@ func fillCvlKeySpec(xpath string , tableName string, keyStr string) ( []KeySpec 
 		retdbFormat = append(retdbFormat, dbFormat)
 	} else {
 		// If table name not available in xpath get top container name
-		tokens:= strings.Split(xpath, ":")
-		container := "/" + tokens[len(tokens)-1]
+		container := xpath
 		if xDbSpecMap != nil {
 			if _, ok := xDbSpecMap[container]; ok {
 				dbInfo := xDbSpecMap[container]
 				if dbInfo.fieldType == "container" {
 					for dir, _ := range dbInfo.dbEntry.Dir {
 						_, ok := xDbSpecMap[dir]
-						if ok && xDbSpecMap[dir].dbEntry.Node.Statement().Keyword == "list" {
+						if ok && xDbSpecMap[dir].dbEntry.Node.Statement().Keyword == "container" {
 						cdb := xDbSpecMap[dir].dbIndex
 						dbFormat := KeySpec{}
 						dbFormat.Ts.Name = dir
@@ -311,7 +310,7 @@ func XlateFromDb(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db.DB, data m
 	var cdb db.DBNum = db.ConfigDB
 
 	dbData = data
-	if isCvlYang(uri) {
+	if isSonicYang(uri) {
 		xpath, keyStr, tableName := sonicXpathKeyExtract(uri)
 		if (tableName != "") {
 			dbInfo, ok := xDbSpecMap[tableName]
@@ -321,10 +320,14 @@ func XlateFromDb(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db.DB, data m
 				cdb =  dbInfo.dbIndex
 			}
 			tokens:= strings.Split(xpath, "/")
-			// Format /module:container/tableName[key]/fieldName
-			if tokens[len(tokens)-2] == tableName {
+			// Format /module:container/tableName/listname[key]/fieldName
+			if tokens[SONIC_TABLE_INDEX] == tableName {
 		                fieldName := tokens[len(tokens)-1]
-				dbData[cdb] = extractFieldFromDb(tableName, keyStr, fieldName, data[cdb])
+				dbSpecField := tableName + "/" + fieldName
+				_, ok := xDbSpecMap[dbSpecField]
+				if ok && xDbSpecMap[dbSpecField].fieldType == "leaf" {
+					dbData[cdb] = extractFieldFromDb(tableName, keyStr, fieldName, data[cdb])
+				}
 			}
 		}
 	} else {
