@@ -202,7 +202,7 @@ func yangKeyFromEntryGet(entry *yang.Entry) []string {
     return keyList
 }
 
-func isCvlYang(path string) bool {
+func isSonicYang(path string) bool {
     if strings.HasPrefix(path, "/sonic") {
         return true
     }
@@ -417,3 +417,17 @@ func getDBOptionsWithSeparator(dbNo db.DBNum, initIndicator string, tableSeparat
                     KeySeparator      : keySeparator,
                       })
 }
+
+func stripAugmentedModuleNames(xpath string) string {
+        pathList := strings.Split(xpath, "/")
+        pathList = pathList[1:]
+        for i, pvar := range pathList {
+                if (i > 0) && strings.Contains(pvar, ":") {
+                        pvar = strings.Split(pvar,":")[1]
+                        pathList[i] = pvar
+                }
+        }
+        path := "/" + strings.Join(pathList, "/")
+        return path
+}
+

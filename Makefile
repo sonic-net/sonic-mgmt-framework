@@ -94,6 +94,7 @@ codegen:
 
 yamlGen:
 	$(MAKE) -C models/yang
+	$(MAKE) -C models/yang/sonic
 
 go-patch: go-deps
 	cd $(BUILD_GOPATH)/src/github.com/openconfig/ygot/; git reset --hard HEAD; git checkout 724a6b18a9224343ef04fe49199dfb6020ce132a 2>/dev/null ; true; \
@@ -120,6 +121,8 @@ install:
 	$(INSTALL) -d $(DESTDIR)/usr/sbin/schema/
 	$(INSTALL) -d $(DESTDIR)/usr/sbin/lib/
 	$(INSTALL) -d $(DESTDIR)/usr/models/yang/
+	$(INSTALL) -D $(TOPDIR)/models/yang/sonic/*.yang $(DESTDIR)/usr/models/yang/
+	$(INSTALL) -D $(TOPDIR)/models/yang/sonic/common/*.yang $(DESTDIR)/usr/models/yang/
 	$(INSTALL) -D $(TOPDIR)/src/cvl/schema/*.yin $(DESTDIR)/usr/sbin/schema/
 	$(INSTALL) -D $(TOPDIR)/src/cvl/testdata/schema/*.yin $(DESTDIR)/usr/sbin/schema/
 	$(INSTALL) -D $(TOPDIR)/src/cvl/schema/*.yang $(DESTDIR)/usr/models/yang/

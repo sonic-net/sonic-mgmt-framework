@@ -2,14 +2,6 @@ module sonic-scheduler {
 	namespace "http://github.com/Azure/sonic-scheduler";
 	prefix sch;
 
-	import ietf-yang-types {
-		prefix yang;
-	}
-
-	import sonic-common {
-		prefix scommon;
-	}
-
 	organization
 		"SONiC";
 
@@ -25,30 +17,34 @@ module sonic-scheduler {
 	}
 
 	container sonic-scheduler {
-		list SCHEDULER {
-			key "name";
 
-			leaf name{
-				type string;
-			}
+		container SCHEDULER {
 
-			leaf type {
-				type enumeration {
-					enum DWRR;
-					enum WRR;
-					enum PRIORITY;
+			list SCHEDULER_LIST {
+				key "name";
+
+				leaf name{
+					type string;
 				}
-			}
 
-			leaf weight {
-				type uint8 {
-					range "0..255";
+				leaf type {
+					type enumeration {
+						enum DWRR;
+						enum WRR;
+						enum PRIORITY;
+					}
 				}
-			}
 
-			leaf priority {
-				type uint8 {
-					range "0..9";
+				leaf weight {
+					type uint8 {
+						range "0..255";
+					}
+				}
+
+				leaf priority {
+					type uint8 {
+						range "0..9";
+					}
 				}
 			}
 		}
