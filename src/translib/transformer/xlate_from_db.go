@@ -353,10 +353,9 @@ func fillDbDataMapForTbl(uri string, xpath string, tblName string, tblKey string
 	dbFormat := KeySpec{}
 	dbFormat.Ts.Name = tblName
 	dbFormat.dbNum = cdb
-	/* TODO - handle key 
 	if tblKey != "" {
 		dbFormat.Key.Comp = append(dbFormat.Key.Comp, tblKey)
-	} */
+	}
 	err = TraverseDb(dbs, dbFormat, &dbresult, nil)
 	if err != nil {
 		log.Errorf("TraverseDb() failure for tbl(DB num) %v(%v) for xpath %v", tblName, cdb, xpath)
@@ -374,7 +373,7 @@ func fillDbDataMapForTbl(uri string, xpath string, tblName string, tblKey string
 // Assumption: All tables are from the same DB
 func dbDataFromTblXfmrGet(tbl string, inParams XfmrParams, dbDataMap *map[db.DBNum]map[string]map[string]db.Value) error {
     xpath, _ := RemoveXPATHPredicates(inParams.uri)
-    curDbDataMap, err := fillDbDataMapForTbl(inParams.uri, xpath, tbl, "", inParams.curDb, inParams.dbs)
+    curDbDataMap, err := fillDbDataMapForTbl(inParams.uri, xpath, tbl, inParams.key, inParams.curDb, inParams.dbs)
     if err == nil {
         mapCopy((*dbDataMap)[inParams.curDb], curDbDataMap[inParams.curDb])
     }
@@ -389,7 +388,7 @@ func yangListDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, x
 		xfmrTblFunc := *xYangSpecMap[xpath].xfmrTbl
 		if len(xfmrTblFunc) > 0 {
 			tblXfmr   = true
-			inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, uri, GET, "", dbDataMap, nil)
+			inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, uri, GET, tblKey, dbDataMap, nil)
 			tblList   = xfmrTblHandlerFunc(xfmrTblFunc, inParams)
 			if len(tblList) != 0 {
 				for _, curTbl := range tblList {
@@ -518,7 +517,7 @@ func yangDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, xpath
 					}
 				}
 				chldYangType := yangTypeGet(xYangSpecMap[chldXpath].yangEntry)
-				if  chldYangType == "leaf" || chldYangType == "leaf-list" {
+				if  chldYangType == YANG_LEAF || chldYangType == YANG_LEAF_LIST {
 					fldValMap, err := terminalNodeProcess(dbs, ygRoot, chldUri, chldXpath, dbDataMap, tbl, tblKey)
 					if err != nil {
 						log.Infof("Failed to get data(\"%v\").", chldUri)
@@ -526,12 +525,13 @@ func yangDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, xpath
 					for lf, val := range fldValMap {
 						resultMap[lf] = val
 					}
-				} else if chldYangType == "container" {
+				} else if chldYangType == YANG_CONTAINER {
 					cname := xYangSpecMap[chldXpath].yangEntry.Name
 					if xYangSpecMap[chldXpath].xfmrTbl != nil {
 						xfmrTblFunc := *xYangSpecMap[chldXpath].xfmrTbl
 						if len(xfmrTblFunc) > 0 {
-							inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, chldUri, GET, "", dbDataMap, nil)
+							//inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, chldUri, GET, "", dbDataMap, nil)
+							inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, chldUri, GET, tblKey, dbDataMap, nil)
 							tblList := xfmrTblHandlerFunc(xfmrTblFunc, inParams)
 							if len(tblList) > 1 {
 								log.Warningf("Table transformer returned more than one table for container %v", chldXpath)
@@ -561,7 +561,7 @@ func yangDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, xpath
 							log.Infof("Empty container(\"%v\").\r\n", chldUri)
 						}
 					}
-				} else if chldYangType == "list" {
+				} else if chldYangType ==  YANG_LIST {
 					cdb = xYangSpecMap[chldXpath].dbIndex
 					if len(xYangSpecMap[chldXpath].xfmrFunc) > 0 {
 						inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, chldUri, GET, "", dbDataMap, nil)
@@ -600,71 +600,113 @@ func dbDataToYangJsonCreate(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db
 		yangNode, ok := xYangSpecMap[reqXpath]
 		if ok {
 			yangType := yangTypeGet(yangNode.yangEntry)
-			if yangType == "leaf" || yangType == "leaf-list" {
-				//fldName := xYangSpecMap[reqXpath].fieldName
+			validateHandlerFlag := false
+			tableXfmrFlag := false
+			IsValidate := false
+			if len(xYangSpecMap[reqXpath].validateFunc) > 0 {
+				inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, uri, GET, keyName, dbDataMap, nil)
+				res := validateHandlerFunc(inParams)
+				if !res {
+					validateHandlerFlag = true
+					/* cannot immediately return from her since reXpath yangtype decides the return type */
+				} else {
+					IsValidate = res
+				}
+			}
+			isList := false
+			switch yangType {
+			case YANG_LIST:
+				isList = true
+			case YANG_LEAF, YANG_LEAF_LIST, YANG_CONTAINER:
+				isList = false
+			default:
+				log.Infof("Unknown yang object type for path %v", reqXpath)
+				isList = true //do not want non-list processing to happen
+			}
+			/*If yangtype is a list separate code path is to be taken in case of table transformer
+			  since that code path already handles the calling of table transformer and subsequent processing
+                        */
+                        if (!validateHandlerFlag) && (!isList) {
+                                if xYangSpecMap[reqXpath].xfmrTbl != nil {
+                                        xfmrTblFunc := *xYangSpecMap[reqXpath].xfmrTbl
+                                        if len(xfmrTblFunc) > 0 {
+						inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, uri, GET, keyName, dbDataMap, nil)
+						tblList := xfmrTblHandlerFunc(xfmrTblFunc, inParams)
+						if len(tblList) > 1 {
+							log.Warningf("Table transformer returned more than one table for container %v", reqXpath)
+							tableXfmrFlag = true
+						}
+						if len(tblList) == 0 {
+							log.Warningf("Table transformer returned no table for conatiner %v", reqXpath)
+							tableXfmrFlag = true
+						}
+						if !tableXfmrFlag {
+							dbDataFromTblXfmrGet(tblList[0], inParams, dbDataMap)
+						}
+                                         } else {
+                                                 log.Warningf("empty table transformer function name for xpath - %v", reqXpath)
+                                                 tableXfmrFlag = true
+                                         }
+                                }
+                        }
+			for {
+			if yangType ==  YANG_LEAF || yangType == YANG_LEAF_LIST {
 				yangName := xYangSpecMap[reqXpath].yangEntry.Name
+				if validateHandlerFlag || tableXfmrFlag {
+                                        resultMap[yangName] = ""
+                                        break
+                                }
 				tbl, key, _ := tableNameAndKeyFromDbMapGet((*dbDataMap)[cdb])
-				validateHandlerFlag := false
-				if len(xYangSpecMap[reqXpath].validateFunc) > 0 {
-					// TODO - handle non CONFIG-DB
-					inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, uri, GET, key, dbDataMap, nil)
-					res := validateHandlerFunc(inParams)
-					if !res {
-						validateHandlerFlag = true
-						resultMap[yangName] = ""
-					}
-				}
-				if !validateHandlerFlag {
-					fldValMap, err := terminalNodeProcess(dbs, ygRoot, uri, reqXpath, dbDataMap, tbl, key)
-					//err := terminalNodeProcess(dbs, ygRoot, uri, reqXpath, dbDataMap, tbl, key)
-					if err != nil {
-						log.Infof("Empty terminal node (\"%v\").", uri)
-					}
-					resultMap = fldValMap
-				}
-			} else if yangType == "container" {
+				fldValMap, err := terminalNodeProcess(dbs, ygRoot, uri, reqXpath, dbDataMap, tbl, key)
+                                if err != nil {
+                                        log.Infof("Empty terminal node (\"%v\").", uri)
+                                }
+				resultMap = fldValMap
+				break
+
+			} else if yangType == YANG_CONTAINER {
 				cname := xYangSpecMap[reqXpath].yangEntry.Name
 				cmap  := make(map[string]interface{})
-				IsYangDataFill := true
+				if validateHandlerFlag || tableXfmrFlag {
+                                        resultMap[cname] = cmap
+                                        break
+                                }
 				if len(xYangSpecMap[reqXpath].xfmrFunc) > 0 {
 					inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, uri, GET, "", dbDataMap, nil)
 					cmap, _   = xfmrHandlerFunc(inParams)
 					if cmap != nil && len(cmap) > 0 {
 						resultMap[cname] = cmap
-						IsYangDataFill = false
-					}
-				} else if xYangSpecMap[reqXpath].xfmrTbl != nil {
-					xfmrTblFunc := *xYangSpecMap[reqXpath].xfmrTbl
-					if len(xfmrTblFunc) > 0 {
-						inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, uri, GET, "", dbDataMap, nil)
-						tblList := xfmrTblHandlerFunc(xfmrTblFunc, inParams)
-						if len(tblList) > 1 {
-							log.Warningf("Table transformer returned more than one table for container %v", reqXpath)
-							IsYangDataFill = false
-						}
-						if len(tblList) != 0 {
-							dbDataFromTblXfmrGet(tblList[0], inParams, dbDataMap)
-							err    := yangDataFill(dbs, ygRoot, uri, reqXpath, dbDataMap, resultMap, tableName, keyName, cdb, false)
-							if err != nil {
-								log.Infof("Empty container(\"%v\").\r\n", uri)
-							}
-
-						}
-
-					} else {
-						log.Warningf("empty table transformer function name for xpath - %v", reqXpath)
-						IsYangDataFill = false
+						break
 					}
 				}
-				if IsYangDataFill {
-					err    := yangDataFill(dbs, ygRoot, uri, reqXpath, dbDataMap, resultMap, tableName, keyName, cdb, false)
-					if err != nil {
-						log.Infof("Empty container(\"%v\").\r\n", uri)
-					}
+				err    := yangDataFill(dbs, ygRoot, uri, reqXpath, dbDataMap, resultMap, tableName, keyName, cdb, IsValidate)
+                                if err != nil {
+                                        log.Infof("Empty container(\"%v\").\r\n", uri)
+                                }
+				break
+                        } else if yangType == YANG_LIST {
+				var err error
+				var logStr string
+                                if xYangSpecMap[reqXpath].xfmrTbl != nil {
+                                        /* pass empty table string since in case of list table transformer can have multiple tables returned,
+                                           which are already being fetched and handled in yangListDataFill
+                                        */
+					err = yangListDataFill(dbs, ygRoot, uri, reqXpath, dbDataMap, resultMap, "", keyName, cdb, IsValidate)
+					logStr = fmt.Sprintf("yangListDataFill failed for list case(\"%v\").\r\n", uri)
+                                } else {
+					err = yangDataFill(dbs, ygRoot, uri, reqXpath, dbDataMap, resultMap, tableName, keyName, cdb, IsValidate)
+					logStr = fmt.Sprintf("yangDataFill failed for list(\"%v\").\r\n", uri)
+
 				}
+				if err != nil {
+                                        log.Infof("%v", logStr)
+                                }
+				break
 			} else {
-				yangDataFill(dbs, ygRoot, uri, reqXpath, dbDataMap, resultMap, tableName, keyName, cdb, false)
+				log.Warningf("Unknown yang object type for path %v", reqXpath)
+				break
 			}
+		       } //end of for
 		}
 	}
 
