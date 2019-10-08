@@ -56,6 +56,7 @@ $(REST_BUILD_DIR)/:
 # Invokes yang and model make to generate swagger artifcats.
 $(REST_BIN): $(REST_SRCS) | $(REST_BUILD_DIR)/
 	$(MAKE) -C $(TOPDIR)/models/yang
+	$(MAKE) -C $(TOPDIR)/models/yang/sonic
 	$(MAKE) -C $(TOPDIR)/models
 ifeq ($(SONIC_COVERAGE_ON),y)
 	GOPATH=$(REST_GOPATH) $(GO) test -coverpkg=".././..." -c -o $@ main/main.go main/main_test.go
