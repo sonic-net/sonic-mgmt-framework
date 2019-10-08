@@ -15,6 +15,7 @@ import (
 	"github.com/openconfig/ygot/ygot"
 	"github.com/openconfig/ygot/ytypes"
 
+	"github.com/openconfig/goyang/pkg/yang"
 	"translib/ocbinds"
 	"translib/tlerr"
 )
@@ -47,10 +48,11 @@ type requestBinder struct {
 	opcode          int
 	appRootNodeType *reflect.Type
 	pathTmp         *gnmi.Path
+	targetNodePath  *gnmi.Path
 }
 
 func getRequestBinder(uri *string, payload *[]byte, opcode int, appRootNodeType *reflect.Type) *requestBinder {
-	return &requestBinder{uri, payload, opcode, appRootNodeType, nil}
+	return &requestBinder{uri, payload, opcode, appRootNodeType, nil, nil}
 }
 
 func (binder *requestBinder) unMarshallPayload(workObj *interface{}) error {
@@ -150,6 +152,7 @@ func (binder *requestBinder) unMarshall() (*ygot.GoStruct, *interface{}, error) 
 
 	case UPDATE, REPLACE:
 		var tmpTargetNode *interface{}
+		var ygEntry *yang.Entry
 		if binder.pathTmp != nil {
 			treeNodeList, err2 := ytypes.GetNode(ygSchema.RootSchema(), &deviceObj, binder.pathTmp)
 			if err2 != nil {
@@ -161,6 +164,7 @@ func (binder *requestBinder) unMarshall() (*ygot.GoStruct, *interface{}, error) 
 			}
 
 			tmpTargetNode = &(treeNodeList[0].Data)
+			ygEntry = treeNodeList[0].Schema
 		} else {
 			tmpTargetNode = workObj
 		}
@@ -168,6 +172,15 @@ func (binder *requestBinder) unMarshall() (*ygot.GoStruct, *interface{}, error) 
 		err = binder.unMarshallPayload(tmpTargetNode)
 		if err != nil {
 			return nil, nil, tlerr.TranslibSyntaxValidationError{StatusCode: 400, ErrorStr: err}
+		} else {
+			if treeNodeList, err2 := ytypes.GetNode(ygEntry, *tmpTargetNode, binder.targetNodePath); err2 != nil {
+				return nil, nil, tlerr.TranslibSyntaxValidationError{StatusCode: 400, ErrorStr: err}
+			} else {
+				if len(treeNodeList) == 0 {
+					return nil, nil, tlerr.TranslibSyntaxValidationError{StatusCode: 400, ErrorStr: errors.New("Invalid URI")}
+				}
+				workObj = &(treeNodeList[0].Data)
+			}
 		}
 
 	default:
@@ -233,6 +246,9 @@ func (binder *requestBinder) unMarshallUri(deviceObj *ocbinds.Device) (*interfac
 				log.Info("pathList[i] ", pathList[i])
 				gpath.Elem = append(gpath.Elem, pathList[i])
 			}
+
+			binder.targetNodePath = &gnmi.Path{}
+			binder.targetNodePath.Elem = append(binder.targetNodePath.Elem, pathList[(len(pathList)-1)])
 
 			log.Info("modified path is: ", gpath)
 

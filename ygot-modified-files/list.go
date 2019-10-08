@@ -417,7 +417,7 @@ func makeValForInsert(schema *yang.Entry, parent interface{}, keys map[string]st
 		}
 
 		var nv reflect.Value
-		if keyLeafKind == yang.Yunion {
+		if keyLeafKind == yang.Yunion && strings.HasSuffix(keyT.Name(), "_Union") {
 			sks, err := getUnionKindsNotEnums(cschema)
 			if err != nil {
 				return err
