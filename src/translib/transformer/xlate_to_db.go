@@ -18,7 +18,7 @@ import (
 
 /* Invoke the post tansformer */
 func postXfmrHandlerFunc(inParams XfmrParams) (map[string]map[string]db.Value, error) {
-    xpath, _ := RemoveXPATHPredicates(inParams.uri)
+    xpath, _ := XfmrRemoveXPATHPredicates(inParams.uri)
     ret, err := XlateFuncCall(xYangSpecMap[xpath].xfmrPost, inParams)
     if err != nil {
         return nil, err
@@ -522,7 +522,7 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
 func sonicXpathKeyExtract(path string) (string, string, string) {
 	xpath, keyStr, tableName := "", "", ""
 	var err error
-	xpath, err = RemoveXPATHPredicates(path)
+	xpath, err = XfmrRemoveXPATHPredicates(path)
 	if err != nil {
 		return xpath, keyStr, tableName
 	}
@@ -561,10 +561,7 @@ func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string) (st
     cdb := db.ConfigDB
     var dbs [db.MaxDB]*db.DB
 
-    pfxPath, _ = RemoveXPATHPredicates(path)
-    if strings.Count(path, ":") > 1 {
-        pfxPath = stripAugmentedModuleNames(pfxPath)
-    }
+    pfxPath, _ = XfmrRemoveXPATHPredicates(path)
     xpathInfo, ok := xYangSpecMap[pfxPath]
     if !ok {
            log.Errorf("No entry found in xYangSpecMap for xpath %v.", pfxPath)
@@ -583,7 +580,7 @@ func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string) (st
             if len(keyStr) > 0 {
 				keyStr += keySeparator
             }
-            yangXpath, _ := RemoveXPATHPredicates(curPathWithKey)
+            yangXpath, _ := XfmrRemoveXPATHPredicates(curPathWithKey)
 	        _, ok := xYangSpecMap[yangXpath]
 	    if ok {
             if len(xYangSpecMap[yangXpath].xfmrKey) > 0 {

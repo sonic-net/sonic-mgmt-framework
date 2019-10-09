@@ -331,7 +331,7 @@ func XlateFromDb(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db.DB, data m
 			}
 		}
 	} else {
-	        xpath, _ := RemoveXPATHPredicates(uri)
+	        xpath, _ := XfmrRemoveXPATHPredicates(uri)
 		if _, ok := xYangSpecMap[xpath]; ok {
 			cdb = xYangSpecMap[xpath].dbIndex
 		}

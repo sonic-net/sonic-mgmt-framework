@@ -431,3 +431,31 @@ func stripAugmentedModuleNames(xpath string) string {
         return path
 }
 
+func XfmrRemoveXPATHPredicates(xpath string) (string, error) {
+        pathList := strings.Split(xpath, "/")
+        pathList = pathList[1:]
+        for i, pvar := range pathList {
+                if strings.Contains(pvar, "[") && strings.Contains(pvar, "]") {
+                        si, ei := strings.Index(pvar, "["), strings.Index(pvar, "]")
+                        // substring contains [] entries
+                        if (si < ei) {
+                                pvar = strings.Split(pvar, "[")[0]
+                                pathList[i] = pvar
+
+                        } else {
+                                // This substring contained a ] before a [.
+                                return "", fmt.Errorf("Incorrect ordering of [] within substring %s of %s, [ pos: %d, ] pos: %d", pvar, xpath, si, ei)
+                        }
+                } else if strings.Contains(pvar, "[") || strings.Contains(pvar, "]") {
+                        // This substring contained a mismatched pair of []s.
+                        return "", fmt.Errorf("Mismatched brackets within substring %s of %s", pvar, xpath)
+                }
+                if (i > 0) && strings.Contains(pvar, ":") {
+                        pvar = strings.Split(pvar,":")[1]
+                        pathList[i] = pvar
+                }
+        }
+        path := "/" + strings.Join(pathList, "/")
+        return path,nil
+}
+

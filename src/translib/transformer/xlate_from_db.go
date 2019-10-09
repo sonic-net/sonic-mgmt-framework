@@ -20,7 +20,7 @@ type typeMapOfInterface map[string]interface{}
 
 func xfmrHandlerFunc(inParams XfmrParams) (map[string]interface{}, error) {
     result := make(map[string]interface{})
-    xpath, _ := RemoveXPATHPredicates(inParams.uri)
+    xpath, _ := XfmrRemoveXPATHPredicates(inParams.uri)
     log.Infof("Subtree transformer function(\"%v\") invoked for yang path(\"%v\").", xYangSpecMap[xpath].xfmrFunc, xpath)
     _, err := XlateFuncCall(dbToYangXfmrFunc(xYangSpecMap[xpath].xfmrFunc), inParams)
     if err != nil {
@@ -60,10 +60,7 @@ func xfmrHandlerFunc(inParams XfmrParams) (map[string]interface{}, error) {
 }
 
 func leafXfmrHandlerFunc(inParams XfmrParams) (map[string]interface{}, error) {
-    xpath, _ := RemoveXPATHPredicates(inParams.uri)
-    if strings.Count(xpath, ":") > 1 {
-        xpath = stripAugmentedModuleNames(xpath)
-    }
+    xpath, _ := XfmrRemoveXPATHPredicates(inParams.uri)
     ret, err := XlateFuncCall(dbToYangXfmrFunc(xYangSpecMap[xpath].xfmrFunc), inParams)
     if err != nil {
         return nil, err
@@ -77,7 +74,7 @@ func leafXfmrHandlerFunc(inParams XfmrParams) (map[string]interface{}, error) {
 }
 
 func validateHandlerFunc(inParams XfmrParams) (bool) {
-    xpath, _ := RemoveXPATHPredicates(inParams.uri)
+    xpath, _ := XfmrRemoveXPATHPredicates(inParams.uri)
     ret, err := XlateFuncCall(xYangSpecMap[xpath].validateFunc, inParams)
     if err != nil {
         return false
@@ -382,7 +379,7 @@ func fillDbDataMapForTbl(uri string, xpath string, tblName string, tblKey string
 
 // Assumption: All tables are from the same DB
 func dbDataFromTblXfmrGet(tbl string, inParams XfmrParams, dbDataMap *map[db.DBNum]map[string]map[string]db.Value) error {
-    xpath, _ := RemoveXPATHPredicates(inParams.uri)
+    xpath, _ := XfmrRemoveXPATHPredicates(inParams.uri)
     curDbDataMap, err := fillDbDataMapForTbl(inParams.uri, xpath, tbl, inParams.key, inParams.curDb, inParams.dbs)
     if err == nil {
         mapCopy((*dbDataMap)[inParams.curDb], curDbDataMap[inParams.curDb])
@@ -432,7 +429,7 @@ func yangListDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, x
 						for k, kv := range curKeyMap {
 							curMap[k] = kv
 						}
-						curXpath, _ := RemoveXPATHPredicates(curUri)
+						curXpath, _ := XfmrRemoveXPATHPredicates(curUri)
 						yangDataFill(dbs, ygRoot, curUri, curXpath, dbDataMap, curMap, tbl, dbKey, cdb, validate)
 						mapSlice = append(mapSlice, curMap)
 					}
