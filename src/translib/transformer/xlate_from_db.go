@@ -266,7 +266,12 @@ func sonicDbToYangDataFill(uri string, xpath string, dbIdx db.DBNum, table strin
 					var mapSlice []typeMapOfInterface
 					curUri := xpath + "/" + yangChldName
 					mapSlice = sonicDbToYangListFill(curUri, curUri, dbIdx, table, key, dbDataMap)
-					if len(mapSlice) > 0 {
+                                       if len(key) > 0 && len(mapSlice) == 1 {// Single instance query. Don't return array of maps
+                                               for k, val := range mapSlice[0] {
+                                                       resultMap[k] = val
+                                               }
+
+                                        } else if len(mapSlice) > 0 {
 						resultMap[yangChldName] = mapSlice
 					} else {
 						log.Infof("Empty list for xpath(%v)", curUri)
@@ -319,7 +324,12 @@ func directDbToYangJsonCreate(uri string, dbDataMap *map[db.DBNum]map[string]map
 				sonicDbToYangDataFill(uri, xpath, cdb, table, key, dbDataMap, resultMap)
 			} else if yangType == YANG_LIST {
 				mapSlice := sonicDbToYangListFill(uri, xpath, cdb, table, key, dbDataMap)
-				if len(mapSlice) > 0 {
+				if len(key) > 0 && len(mapSlice) == 1 {// Single instance query. Don't return array of maps
+                                                for k, val := range mapSlice[0] {
+                                                        resultMap[k] = val
+                                                }
+
+                                } else if len(mapSlice) > 0 {
 					pathl := strings.Split(xpath, "/")
 					lname := pathl[len(pathl) - 1]
 					resultMap[lname] = mapSlice
