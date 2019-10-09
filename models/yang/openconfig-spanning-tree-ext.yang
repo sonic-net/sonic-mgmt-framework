@@ -150,11 +150,7 @@ module openconfig-spanning-tree-ext {
                 uses stp-instance-state;
             }
 
-            uses oc-stp:stp-interfaces-top {
-                augment "interfaces/interface/state" {
-                    uses vlan-interface-extra-state-field;
-                }
-            }
+            uses oc-stp:stp-interfaces-top;
         }
     }
 
@@ -190,6 +186,10 @@ module openconfig-spanning-tree-ext {
 
     augment /oc-stp:stp/oc-stp:rapid-pvst/oc-stp:vlan/oc-stp:interfaces/oc-stp:interface/oc-stp:state/oc-stp:counters {
         uses vlan-interface-extra-counters;
+    }
+
+    augment /oc-stp:stp/oc-stp-ext:pvst/oc-stp-ext:vlan/oc-stp-ext:interfaces/oc-stp-ext:interface/oc-stp-ext:state {
+        uses vlan-interface-extra-state-field;
     }
 
     augment /oc-stp:stp/oc-stp-ext:pvst/oc-stp-ext:vlan/oc-stp-ext:interfaces/oc-stp-ext:interface/oc-stp-ext:state/oc-stp-ext:counters {

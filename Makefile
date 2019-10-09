@@ -35,8 +35,9 @@ GO_DEPS_LIST = github.com/gorilla/mux \
                github.com/pkg/profile \
                gopkg.in/go-playground/validator.v9 \
                golang.org/x/crypto/ssh \
-	       github.com/antchfx/jsonquery \
-	       github.com/antchfx/xmlquery
+               github.com/antchfx/jsonquery \
+               github.com/antchfx/xmlquery \
+               github.com/facette/natsort
 
 
 REST_BIN = $(BUILD_DIR)/rest_server/main

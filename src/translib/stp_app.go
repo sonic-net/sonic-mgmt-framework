@@ -16,6 +16,7 @@ import (
 	"translib/ocbinds"
 	"translib/tlerr"
 
+	"github.com/facette/natsort"
 	log "github.com/golang/glog"
 	"github.com/openconfig/ygot/util"
 	"github.com/openconfig/ygot/ygot"
@@ -26,9 +27,13 @@ const (
 	VLAN_TABLE              = "STP_VLAN"
 	VLAN_INTF_TABLE         = "STP_VLAN_INTF"
 	INTF_TABLE              = "STP_INTF"
+	VLAN_OPER_TABLE         = "_STP_VLAN_TABLE"
+	VLAN_INTF_OPER_TABLE    = "_STP_VLAN_INTF_TABLE"
+	INTF_OPER_TABLE         = "_STP_INTF_TABLE"
 	STP_MODE                = "mode"
 	OC_STP_APP_MODULE_NAME  = "/openconfig-spanning-tree:stp"
 	OC_STP_YANG_PATH_PREFIX = "/device/stp"
+	PVST_MAX_INSTANCES      = 255
 )
 
 type StpApp struct {
@@ -41,10 +46,20 @@ type StpApp struct {
 	vlanIntfTable  *db.TableSpec
 	interfaceTable *db.TableSpec
 
+	vlanOperTable     *db.TableSpec
+	vlanIntfOperTable *db.TableSpec
+	intfOperTable     *db.TableSpec
+
 	globalInfo       db.Value
 	vlanTableMap     map[string]db.Value
 	vlanIntfTableMap map[string]map[string]db.Value
 	intfTableMap     map[string]db.Value
+
+	vlanOperTableMap     map[string]db.Value
+	vlanIntfOperTableMap map[string]map[string]db.Value
+	intfOperTableMap     map[string]db.Value
+
+	appDB *db.DB
 }
 
 func init() {
@@ -75,10 +90,18 @@ func (app *StpApp) initialize(data appData) {
 	app.vlanIntfTable = &db.TableSpec{Name: VLAN_INTF_TABLE}
 	app.interfaceTable = &db.TableSpec{Name: INTF_TABLE}
 
+	app.vlanOperTable = &db.TableSpec{Name: VLAN_OPER_TABLE}
+	app.vlanIntfOperTable = &db.TableSpec{Name: VLAN_INTF_OPER_TABLE}
+	app.intfOperTable = &db.TableSpec{Name: INTF_OPER_TABLE}
+
 	app.globalInfo = db.Value{Field: map[string]string{}}
 	app.vlanTableMap = make(map[string]db.Value)
 	app.intfTableMap = make(map[string]db.Value)
 	app.vlanIntfTableMap = make(map[string]map[string]db.Value)
+
+	app.vlanOperTableMap = make(map[string]db.Value)
+	app.vlanIntfOperTableMap = make(map[string]map[string]db.Value)
+	app.intfOperTableMap = make(map[string]db.Value)
 }
 
 func (app *StpApp) getAppRootObject() *ocbinds.OpenconfigSpanningTree_Stp {
@@ -177,6 +200,8 @@ func (app *StpApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
 	var err error
 	var payload []byte
 
+	app.appDB = dbs[db.ApplDB]
+
 	configDb := dbs[db.ConfigDB]
 	err = app.processCommon(configDb, GET)
 	if err != nil {
@@ -231,6 +256,14 @@ func (app *StpApp) processCommon(d *db.DB, opcode int) error {
 		switch opcode {
 		case CREATE:
 			err = app.setStpGlobalConfigInDB(d)
+			if err != nil {
+				return err
+			}
+			err = app.enableStpForInterfaces(d)
+			if err != nil {
+				return err
+			}
+			err = app.enableStpForVlans(d)
 		case REPLACE:
 		case UPDATE:
 		case DELETE:
@@ -570,32 +603,40 @@ func (app *StpApp) convertDBStpGlobalConfigToInternal(d *db.DB) error {
 
 func (app *StpApp) convertInternalToOCStpGlobalConfig(stpGlobal *ocbinds.OpenconfigSpanningTree_Stp_Global) {
 	if stpGlobal != nil {
+		var priority uint32
+		var forDelay, helloTime, maxAge uint8
+		var rootGTimeout uint16
 		if stpGlobal.Config != nil {
 			stpGlobal.Config.EnabledProtocol = app.convertInternalStpModeToOC((&app.globalInfo).Get(STP_MODE))
 
 			var num uint64
 			num, _ = strconv.ParseUint((&app.globalInfo).Get("priority"), 10, 32)
-			priority := uint32(num)
+			priority = uint32(num)
 			stpGlobal.Config.BridgePriority = &priority
 
 			num, _ = strconv.ParseUint((&app.globalInfo).Get("forward_delay"), 10, 8)
-			forDelay := uint8(num)
+			forDelay = uint8(num)
 			stpGlobal.Config.ForwardingDelay = &forDelay
 
 			num, _ = strconv.ParseUint((&app.globalInfo).Get("hello_time"), 10, 8)
-			helloTime := uint8(num)
+			helloTime = uint8(num)
 			stpGlobal.Config.HelloTime = &helloTime
 
 			num, _ = strconv.ParseUint((&app.globalInfo).Get("max_age"), 10, 8)
-			maxAge := uint8(num)
+			maxAge = uint8(num)
 			stpGlobal.Config.MaxAge = &maxAge
 
 			num, _ = strconv.ParseUint((&app.globalInfo).Get("rootguard_timeout"), 10, 16)
-			rootGTimeout := uint16(num)
+			rootGTimeout = uint16(num)
 			stpGlobal.Config.RootguardTimeout = &rootGTimeout
 		}
 		if stpGlobal.State != nil {
 			stpGlobal.State.EnabledProtocol = app.convertInternalStpModeToOC((&app.globalInfo).Get(STP_MODE))
+			stpGlobal.State.BridgePriority = &priority
+			stpGlobal.State.ForwardingDelay = &forDelay
+			stpGlobal.State.HelloTime = &helloTime
+			stpGlobal.State.MaxAge = &maxAge
+			stpGlobal.State.RootguardTimeout = &rootGTimeout
 		}
 	}
 }
@@ -648,6 +689,8 @@ func (app *StpApp) convertOCRpvstConfToInternal() {
 					app.vlanIntfTableMap[vlanName][intfId] = db.Value{Field: map[string]string{}}
 					if rpvstVlanIntfConf.Config != nil {
 						dbVal := app.vlanIntfTableMap[vlanName][intfId]
+						(&dbVal).Set("vlan-name", vlanName)
+						(&dbVal).Set("ifname", intfId)
 						if rpvstVlanIntfConf.Config.Cost != nil {
 							(&dbVal).Set("path_cost", strconv.Itoa(int(*rpvstVlanIntfConf.Config.Cost)))
 						} else {
@@ -719,6 +762,8 @@ func (app *StpApp) convertDBRpvstVlanConfigToInternal(d *db.DB, vlanKey db.Key) 
 			if err != nil {
 				return err
 			}
+			// Collect operational info from application DB
+			err = app.convertApplDBRpvstVlanToInternal(vlanName)
 		} else {
 			return tlerr.NotFound("Vlan %s is not configured", vlanName)
 		}
@@ -741,10 +786,12 @@ func (app *StpApp) convertDBRpvstVlanConfigToInternal(d *db.DB, vlanKey db.Key) 
 
 func (app *StpApp) convertInternalToOCRpvstVlanConfig(vlanName string, rpvst *ocbinds.OpenconfigSpanningTree_Stp_RapidPvst, rpvstVlanConf *ocbinds.OpenconfigSpanningTree_Stp_RapidPvst_Vlan) {
 	if len(vlanName) > 0 {
+		var num uint64
 		if rpvstVlanData, ok := app.vlanTableMap[vlanName]; ok {
 			if rpvstVlanConf != nil {
 				vlanId, _ := strconv.Atoi(strings.Replace(vlanName, "Vlan", "", 1))
 				vlan := uint16(vlanId)
+				rpvstVlanConf.VlanId = &vlan
 				rpvstVlanConf.Config.VlanId = &vlan
 				rpvstVlanConf.State.VlanId = &vlan
 
@@ -752,7 +799,6 @@ func (app *StpApp) convertInternalToOCRpvstVlanConfig(vlanName string, rpvst *oc
 				rpvstVlanConf.Config.SpanningTreeEnable = &stpEnabled
 				//rpvstVlanConf.State.SpanningTreeEnable = &stpEnabled
 
-				var num uint64
 				num, _ = strconv.ParseUint((&rpvstVlanData).Get("priority"), 10, 32)
 				priority := uint32(num)
 				rpvstVlanConf.Config.BridgePriority = &priority
@@ -761,20 +807,75 @@ func (app *StpApp) convertInternalToOCRpvstVlanConfig(vlanName string, rpvst *oc
 				num, _ = strconv.ParseUint((&rpvstVlanData).Get("forward_delay"), 10, 8)
 				forDelay := uint8(num)
 				rpvstVlanConf.Config.ForwardingDelay = &forDelay
-				rpvstVlanConf.State.ForwardingDelay = &forDelay
 
 				num, _ = strconv.ParseUint((&rpvstVlanData).Get("hello_time"), 10, 8)
 				helloTime := uint8(num)
 				rpvstVlanConf.Config.HelloTime = &helloTime
-				rpvstVlanConf.State.HelloTime = &helloTime
 
 				num, _ = strconv.ParseUint((&rpvstVlanData).Get("max_age"), 10, 8)
 				maxAge := uint8(num)
 				rpvstVlanConf.Config.MaxAge = &maxAge
-				rpvstVlanConf.State.MaxAge = &maxAge
 
 				app.convertInternalToOCRpvstVlanInterface(vlanName, "", rpvstVlanConf, nil)
 			}
+		}
+
+		// populate operational information
+		//ygot.BuildEmptyTree(rpvstVlanConf.State)
+		operDbVal := app.vlanOperTableMap[vlanName]
+		if operDbVal.IsPopulated() && rpvstVlanConf != nil {
+			num, _ = strconv.ParseUint((&operDbVal).Get("max_age"), 10, 8)
+			opMaxAge := uint8(num)
+			rpvstVlanConf.State.MaxAge = &opMaxAge
+
+			num, _ = strconv.ParseUint((&operDbVal).Get("hello_time"), 10, 8)
+			opHelloTime := uint8(num)
+			rpvstVlanConf.State.HelloTime = &opHelloTime
+
+			num, _ = strconv.ParseUint((&operDbVal).Get("forward_delay"), 10, 8)
+			opForwardDelay := uint8(num)
+			rpvstVlanConf.State.ForwardingDelay = &opForwardDelay
+
+			num, _ = strconv.ParseUint((&operDbVal).Get("hold_time"), 10, 8)
+			opHoldTime := uint8(num)
+			rpvstVlanConf.State.HoldTime = &opHoldTime
+
+			/*num, _ = strconv.ParseUint((&operDbVal).Get("root_max_age"), 10, 8)
+			opRootMaxAge := uint8(num)
+			rpvstVlanConf.State.RootMaxAge = &opRootMaxAge
+
+			num, _ = strconv.ParseUint((&operDbVal).Get("root_hello_time"), 10, 8)
+			opRootHelloTime := uint8(num)
+			rpvstVlanConf.State.RootHelloTime = &opRootHelloTime
+
+			num, _ = strconv.ParseUint((&operDbVal).Get("root_forward_delay"), 10, 8)
+			opRootForwardDelay := uint8(num)
+			rpvstVlanConf.State.RootForwardingDelay = &opRootForwardDelay  */
+
+			num, _ = strconv.ParseUint((&operDbVal).Get("stp_instance"), 10, 16)
+			opStpInstance := uint16(num)
+			rpvstVlanConf.State.StpInstance = &opStpInstance
+
+			num, _ = strconv.ParseUint((&operDbVal).Get("root_path_cost"), 10, 32)
+			opRootCost := uint32(num)
+			rpvstVlanConf.State.RootCost = &opRootCost
+
+			num, _ = strconv.ParseUint((&operDbVal).Get("last_topology_change"), 10, 64)
+			opLastTopologyChange := num
+			rpvstVlanConf.State.LastTopologyChange = &opLastTopologyChange
+
+			num, _ = strconv.ParseUint((&operDbVal).Get("topology_change_count"), 10, 64)
+			opTopologyChanges := num
+			rpvstVlanConf.State.TopologyChanges = &opTopologyChanges
+
+			bridgeId := (&operDbVal).Get("bridge_id")
+			rpvstVlanConf.State.BridgeAddress = &bridgeId
+
+			desigRootAddr := (&operDbVal).Get("desig_bridge_id")
+			rpvstVlanConf.State.DesignatedRootAddress = &desigRootAddr
+
+			//rootPortStr := (&operDbVal).Get("root_port")
+			//rpvstVlanConf.State.RootPort = &rootPortStr
 		}
 	} else {
 		for vlanName := range app.vlanTableMap {
@@ -799,6 +900,8 @@ func (app *StpApp) convertDBRpvstVlanInterfaceToInternal(d *db.DB, vlanName stri
 			app.vlanIntfTableMap[vlanName] = make(map[string]db.Value)
 		}
 		app.vlanIntfTableMap[vlanName][intfId] = rpvstVlanIntfConf
+		// Collect operational info from application DB
+		err = app.convertApplDBRpvstVlanInterfaceToInternal(vlanName, intfId)
 	} else {
 		keys, err := d.GetKeys(app.vlanIntfTable)
 		if err != nil {
@@ -834,15 +937,86 @@ func (app *StpApp) convertInternalToOCRpvstVlanInterface(vlanName string, intfId
 		num, _ = strconv.ParseUint((&dbVal).Get("path_cost"), 10, 32)
 		cost := uint32(num)
 		rpvstVlanIntfConf.Config.Cost = &cost
-		rpvstVlanIntfConf.State.Cost = &cost
 
 		num, _ = strconv.ParseUint((&dbVal).Get("priority"), 10, 8)
 		portPriority := uint8(num)
 		rpvstVlanIntfConf.Config.PortPriority = &portPriority
-		rpvstVlanIntfConf.State.PortPriority = &portPriority
 
 		rpvstVlanIntfConf.Config.Name = &intfId
+
+		// populate operational information
+		ygot.BuildEmptyTree(rpvstVlanIntfConf.State)
+
 		rpvstVlanIntfConf.State.Name = &intfId
+		operDbVal := app.vlanIntfOperTableMap[vlanName][intfId]
+
+		if operDbVal.IsPopulated() {
+			num, _ = strconv.ParseUint((&operDbVal).Get("port_num"), 10, 16)
+			opPortNum := uint16(num)
+			rpvstVlanIntfConf.State.PortNum = &opPortNum
+
+			num, _ = strconv.ParseUint((&operDbVal).Get("path_cost"), 10, 32)
+			opcost := uint32(num)
+			rpvstVlanIntfConf.State.Cost = &opcost
+
+			num, _ = strconv.ParseUint((&operDbVal).Get("priority"), 10, 8)
+			opPortPriority := uint8(num)
+			rpvstVlanIntfConf.State.PortPriority = &opPortPriority
+
+			num, _ = strconv.ParseUint((&operDbVal).Get("desig_cost"), 10, 32)
+			opDesigCost := uint32(num)
+			rpvstVlanIntfConf.State.DesignatedCost = &opDesigCost
+
+			num, _ = strconv.ParseUint((&operDbVal).Get("desig_port"), 10, 16)
+			opDesigPortNum := uint16(num)
+			rpvstVlanIntfConf.State.DesignatedPortNum = &opDesigPortNum
+
+			num, _ = strconv.ParseUint((&operDbVal).Get("root_guard_timer"), 10, 16)
+			opRootGuardTimer := uint16(num)
+			rpvstVlanIntfConf.State.RootGuardTimer = &opRootGuardTimer
+
+			num, _ = strconv.ParseUint((&operDbVal).Get("fwd_transitions"), 10, 64)
+			opFwtrans := num
+			rpvstVlanIntfConf.State.ForwardTransisitions = &opFwtrans
+
+			desigRootAddr := (&operDbVal).Get("desig_root")
+			rpvstVlanIntfConf.State.DesignatedRootAddress = &desigRootAddr
+
+			desigBridgeAddr := (&operDbVal).Get("desig_bridge")
+			rpvstVlanIntfConf.State.DesignatedBridgeAddress = &desigBridgeAddr
+
+			switch (&operDbVal).Get("port_state") {
+			case "disabled":
+				rpvstVlanIntfConf.State.PortState = ocbinds.OpenconfigSpanningTreeTypes_STP_PORT_STATE_DISABLED
+			case "block":
+				rpvstVlanIntfConf.State.PortState = ocbinds.OpenconfigSpanningTreeTypes_STP_PORT_STATE_BLOCKING
+			case "listen":
+				rpvstVlanIntfConf.State.PortState = ocbinds.OpenconfigSpanningTreeTypes_STP_PORT_STATE_LISTENING
+			case "learn":
+				rpvstVlanIntfConf.State.PortState = ocbinds.OpenconfigSpanningTreeTypes_STP_PORT_STATE_LEARNING
+			case "forward":
+				rpvstVlanIntfConf.State.PortState = ocbinds.OpenconfigSpanningTreeTypes_STP_PORT_STATE_FORWARDING
+			}
+
+			//Counters
+			if rpvstVlanIntfConf.State.Counters != nil {
+				num, _ = strconv.ParseUint((&operDbVal).Get("bpdu_sent"), 10, 64)
+				opBpduSent := num
+				rpvstVlanIntfConf.State.Counters.BpduSent = &opBpduSent
+
+				num, _ = strconv.ParseUint((&operDbVal).Get("bpdu_received"), 10, 64)
+				opBpduReceived := num
+				rpvstVlanIntfConf.State.Counters.BpduReceived = &opBpduReceived
+
+				num, _ = strconv.ParseUint((&operDbVal).Get("tcn_sent"), 10, 64)
+				opTcnSent := num
+				rpvstVlanIntfConf.State.Counters.TcnSent = &opTcnSent
+
+				num, _ = strconv.ParseUint((&operDbVal).Get("tcn_received"), 10, 64)
+				opTcnReceived := num
+				rpvstVlanIntfConf.State.Counters.TcnReceived = &opTcnReceived
+			}
+		}
 	}
 }
 
@@ -894,6 +1068,8 @@ func (app *StpApp) convertOCPvstToInternal() {
 					app.vlanIntfTableMap[vlanName][intfId] = db.Value{Field: map[string]string{}}
 					if pvstVlanIntf.Config != nil {
 						dbVal := app.vlanIntfTableMap[vlanName][intfId]
+						(&dbVal).Set("vlan-name", vlanName)
+						(&dbVal).Set("ifname", intfId)
 						if pvstVlanIntf.Config.Cost != nil {
 							(&dbVal).Set("path_cost", strconv.Itoa(int(*pvstVlanIntf.Config.Cost)))
 						} else {
@@ -913,10 +1089,12 @@ func (app *StpApp) convertOCPvstToInternal() {
 
 func (app *StpApp) convertInternalToOCPvstVlan(vlanName string, pvst *ocbinds.OpenconfigSpanningTree_Stp_Pvst, pvstVlan *ocbinds.OpenconfigSpanningTree_Stp_Pvst_Vlan) {
 	if len(vlanName) > 0 {
+		var num uint64
 		if pvstVlanData, ok := app.vlanTableMap[vlanName]; ok {
 			if pvstVlan != nil {
 				vlanId, _ := strconv.Atoi(strings.Replace(vlanName, "Vlan", "", 1))
 				vlan := uint16(vlanId)
+				pvstVlan.VlanId = &vlan
 				pvstVlan.Config.VlanId = &vlan
 				pvstVlan.State.VlanId = &vlan
 
@@ -924,7 +1102,6 @@ func (app *StpApp) convertInternalToOCPvstVlan(vlanName string, pvst *ocbinds.Op
 				pvstVlan.Config.SpanningTreeEnable = &stpEnabled
 				//pvstVlan.State.SpanningTreeEnable = &stpEnabled
 
-				var num uint64
 				num, _ = strconv.ParseUint((&pvstVlanData).Get("priority"), 10, 32)
 				priority := uint32(num)
 				pvstVlan.Config.BridgePriority = &priority
@@ -933,20 +1110,75 @@ func (app *StpApp) convertInternalToOCPvstVlan(vlanName string, pvst *ocbinds.Op
 				num, _ = strconv.ParseUint((&pvstVlanData).Get("forward_delay"), 10, 8)
 				forDelay := uint8(num)
 				pvstVlan.Config.ForwardingDelay = &forDelay
-				pvstVlan.State.ForwardingDelay = &forDelay
 
 				num, _ = strconv.ParseUint((&pvstVlanData).Get("hello_time"), 10, 8)
 				helloTime := uint8(num)
 				pvstVlan.Config.HelloTime = &helloTime
-				pvstVlan.State.HelloTime = &helloTime
 
 				num, _ = strconv.ParseUint((&pvstVlanData).Get("max_age"), 10, 8)
 				maxAge := uint8(num)
 				pvstVlan.Config.MaxAge = &maxAge
-				pvstVlan.State.MaxAge = &maxAge
 
 				app.convertInternalToOCPvstVlanInterface(vlanName, "", pvstVlan, nil)
 			}
+		}
+
+		// populate operational information
+		//ygot.BuildEmptyTree(pvstVlan.State)
+		operDbVal := app.vlanOperTableMap[vlanName]
+		if operDbVal.IsPopulated() && pvstVlan != nil {
+			num, _ = strconv.ParseUint((&operDbVal).Get("max_age"), 10, 8)
+			opMaxAge := uint8(num)
+			pvstVlan.State.MaxAge = &opMaxAge
+
+			num, _ = strconv.ParseUint((&operDbVal).Get("hello_time"), 10, 8)
+			opHelloTime := uint8(num)
+			pvstVlan.State.HelloTime = &opHelloTime
+
+			num, _ = strconv.ParseUint((&operDbVal).Get("forward_delay"), 10, 8)
+			opForwardDelay := uint8(num)
+			pvstVlan.State.ForwardingDelay = &opForwardDelay
+
+			num, _ = strconv.ParseUint((&operDbVal).Get("hold_time"), 10, 8)
+			opHoldTime := uint8(num)
+			pvstVlan.State.HoldTime = &opHoldTime
+
+			/*num, _ = strconv.ParseUint((&operDbVal).Get("root_max_age"), 10, 8)
+			opRootMaxAge := uint8(num)
+			pvstVlan.State.RootMaxAge = &opRootMaxAge
+
+			num, _ = strconv.ParseUint((&operDbVal).Get("root_hello_time"), 10, 8)
+			opRootHelloTime := uint8(num)
+			pvstVlan.State.RootHelloTime = &opRootHelloTime
+
+			num, _ = strconv.ParseUint((&operDbVal).Get("root_forward_delay"), 10, 8)
+			opRootForwardDelay := uint8(num)
+			pvstVlan.State.RootForwardingDelay = &opRootForwardDelay  */
+
+			num, _ = strconv.ParseUint((&operDbVal).Get("stp_instance"), 10, 16)
+			opStpInstance := uint16(num)
+			pvstVlan.State.StpInstance = &opStpInstance
+
+			num, _ = strconv.ParseUint((&operDbVal).Get("root_path_cost"), 10, 32)
+			opRootCost := uint32(num)
+			pvstVlan.State.RootCost = &opRootCost
+
+			num, _ = strconv.ParseUint((&operDbVal).Get("last_topology_change"), 10, 64)
+			opLastTopologyChange := num
+			pvstVlan.State.LastTopologyChange = &opLastTopologyChange
+
+			num, _ = strconv.ParseUint((&operDbVal).Get("topology_change_count"), 10, 64)
+			opTopologyChanges := num
+			pvstVlan.State.TopologyChanges = &opTopologyChanges
+
+			bridgeId := (&operDbVal).Get("bridge_id")
+			pvstVlan.State.BridgeAddress = &bridgeId
+
+			desigRootAddr := (&operDbVal).Get("desig_bridge_id")
+			pvstVlan.State.DesignatedRootAddress = &desigRootAddr
+
+			//rootPortStr := (&operDbVal).Get("root_port")
+			//pvstVlan.State.RootPort = &rootPortStr
 		}
 	} else {
 		for vlanName := range app.vlanTableMap {
@@ -981,15 +1213,86 @@ func (app *StpApp) convertInternalToOCPvstVlanInterface(vlanName string, intfId 
 		num, _ = strconv.ParseUint((&dbVal).Get("path_cost"), 10, 32)
 		cost := uint32(num)
 		pvstVlanIntf.Config.Cost = &cost
-		pvstVlanIntf.State.Cost = &cost
 
 		num, _ = strconv.ParseUint((&dbVal).Get("priority"), 10, 8)
 		portPriority := uint8(num)
 		pvstVlanIntf.Config.PortPriority = &portPriority
-		pvstVlanIntf.State.PortPriority = &portPriority
 
 		pvstVlanIntf.Config.Name = &intfId
+
+		// populate operational information
+		ygot.BuildEmptyTree(pvstVlanIntf.State)
+
 		pvstVlanIntf.State.Name = &intfId
+		operDbVal := app.vlanIntfOperTableMap[vlanName][intfId]
+
+		if operDbVal.IsPopulated() {
+			num, _ = strconv.ParseUint((&operDbVal).Get("port_num"), 10, 16)
+			opPortNum := uint16(num)
+			pvstVlanIntf.State.PortNum = &opPortNum
+
+			num, _ = strconv.ParseUint((&operDbVal).Get("path_cost"), 10, 32)
+			opcost := uint32(num)
+			pvstVlanIntf.State.Cost = &opcost
+
+			num, _ = strconv.ParseUint((&operDbVal).Get("priority"), 10, 8)
+			opPortPriority := uint8(num)
+			pvstVlanIntf.State.PortPriority = &opPortPriority
+
+			num, _ = strconv.ParseUint((&operDbVal).Get("desig_cost"), 10, 32)
+			opDesigCost := uint32(num)
+			pvstVlanIntf.State.DesignatedCost = &opDesigCost
+
+			num, _ = strconv.ParseUint((&operDbVal).Get("desig_port"), 10, 16)
+			opDesigPortNum := uint16(num)
+			pvstVlanIntf.State.DesignatedPortNum = &opDesigPortNum
+
+			num, _ = strconv.ParseUint((&operDbVal).Get("root_guard_timer"), 10, 16)
+			opRootGuardTimer := uint16(num)
+			pvstVlanIntf.State.RootGuardTimer = &opRootGuardTimer
+
+			num, _ = strconv.ParseUint((&operDbVal).Get("fwd_transitions"), 10, 64)
+			opFwtrans := num
+			pvstVlanIntf.State.ForwardTransisitions = &opFwtrans
+
+			desigRootAddr := (&operDbVal).Get("desig_root")
+			pvstVlanIntf.State.DesignatedRootAddress = &desigRootAddr
+
+			desigBridgeAddr := (&operDbVal).Get("desig_bridge")
+			pvstVlanIntf.State.DesignatedBridgeAddress = &desigBridgeAddr
+
+			switch (&operDbVal).Get("port_state") {
+			case "disabled":
+				pvstVlanIntf.State.PortState = ocbinds.OpenconfigSpanningTreeTypes_STP_PORT_STATE_DISABLED
+			case "block":
+				pvstVlanIntf.State.PortState = ocbinds.OpenconfigSpanningTreeTypes_STP_PORT_STATE_BLOCKING
+			case "listen":
+				pvstVlanIntf.State.PortState = ocbinds.OpenconfigSpanningTreeTypes_STP_PORT_STATE_LISTENING
+			case "learn":
+				pvstVlanIntf.State.PortState = ocbinds.OpenconfigSpanningTreeTypes_STP_PORT_STATE_LEARNING
+			case "forward":
+				pvstVlanIntf.State.PortState = ocbinds.OpenconfigSpanningTreeTypes_STP_PORT_STATE_FORWARDING
+			}
+
+			//Counters
+			if pvstVlanIntf.State.Counters != nil {
+				num, _ = strconv.ParseUint((&operDbVal).Get("bpdu_sent"), 10, 64)
+				opBpduSent := num
+				pvstVlanIntf.State.Counters.BpduSent = &opBpduSent
+
+				num, _ = strconv.ParseUint((&operDbVal).Get("bpdu_received"), 10, 64)
+				opBpduReceived := num
+				pvstVlanIntf.State.Counters.BpduReceived = &opBpduReceived
+
+				num, _ = strconv.ParseUint((&operDbVal).Get("tcn_sent"), 10, 64)
+				opTcnSent := num
+				pvstVlanIntf.State.Counters.TcnSent = &opTcnSent
+
+				num, _ = strconv.ParseUint((&operDbVal).Get("tcn_received"), 10, 64)
+				opTcnReceived := num
+				pvstVlanIntf.State.Counters.TcnReceived = &opTcnReceived
+			}
+		}
 	}
 }
 
@@ -1109,6 +1412,7 @@ func (app *StpApp) convertDBStpInterfacesToInternal(d *db.DB, intfKey db.Key) er
 		} else {
 			return tlerr.NotFound("STP interface %s is not configured", intfName)
 		}
+		err = app.convertApplDBStpInterfacesToInternal(intfName)
 	} else {
 		tbl, err := d.GetTable(app.interfaceTable)
 		if err != nil {
@@ -1127,6 +1431,7 @@ func (app *StpApp) convertDBStpInterfacesToInternal(d *db.DB, intfKey db.Key) er
 }
 
 func (app *StpApp) convertInternalToOCStpInterfaces(intfName string, interfaces *ocbinds.OpenconfigSpanningTree_Stp_Interfaces, intf *ocbinds.OpenconfigSpanningTree_Stp_Interfaces_Interface) {
+	var err error
 	if len(intfName) > 0 {
 		if stpIntfData, ok := app.intfTableMap[intfName]; ok {
 			if intf != nil {
@@ -1135,7 +1440,7 @@ func (app *StpApp) convertInternalToOCStpInterfaces(intfName string, interfaces 
 
 				stpEnabled, _ := strconv.ParseBool((&stpIntfData).Get("enabled"))
 				intf.Config.SpanningTreeEnable = &stpEnabled
-				//intf.State.SpanningTreeEnable = &stpEnabled
+				intf.State.SpanningTreeEnable = &stpEnabled
 
 				bpduGuardEnabled, _ := strconv.ParseBool((&stpIntfData).Get("bpdu_guard"))
 				intf.Config.BpduGuard = &bpduGuardEnabled
@@ -1151,43 +1456,70 @@ func (app *StpApp) convertInternalToOCStpInterfaces(intfName string, interfaces 
 
 				portFast, _ := strconv.ParseBool((&stpIntfData).Get("portfast"))
 				intf.Config.Portfast = &portFast
-				intf.State.Portfast = &portFast
 
 				rootGuardEnabled, _ := strconv.ParseBool((&stpIntfData).Get("root_guard"))
 				if rootGuardEnabled {
 					intf.Config.Guard = ocbinds.OpenconfigSpanningTree_StpGuardType_ROOT
 					intf.State.Guard = ocbinds.OpenconfigSpanningTree_StpGuardType_ROOT
+				} else {
+					intf.Config.Guard = ocbinds.OpenconfigSpanningTree_StpGuardType_NONE
+					intf.State.Guard = ocbinds.OpenconfigSpanningTree_StpGuardType_NONE
 				}
 
-				edgePortEnabled, _ := strconv.ParseBool((&stpIntfData).Get("edge_port"))
-				if edgePortEnabled {
-					intf.Config.EdgePort = ocbinds.OpenconfigSpanningTreeTypes_STP_EDGE_PORT_EDGE_ENABLE
-					intf.State.EdgePort = ocbinds.OpenconfigSpanningTreeTypes_STP_EDGE_PORT_EDGE_ENABLE
-				} else {
-					intf.Config.EdgePort = ocbinds.OpenconfigSpanningTreeTypes_STP_EDGE_PORT_EDGE_DISABLE
-					intf.State.EdgePort = ocbinds.OpenconfigSpanningTreeTypes_STP_EDGE_PORT_EDGE_DISABLE
+				if edgePortEnabled, err := strconv.ParseBool((&stpIntfData).Get("edge_port")); err == nil {
+					if edgePortEnabled {
+						intf.Config.EdgePort = ocbinds.OpenconfigSpanningTreeTypes_STP_EDGE_PORT_EDGE_ENABLE
+						intf.State.EdgePort = ocbinds.OpenconfigSpanningTreeTypes_STP_EDGE_PORT_EDGE_ENABLE
+					} else {
+						intf.Config.EdgePort = ocbinds.OpenconfigSpanningTreeTypes_STP_EDGE_PORT_EDGE_DISABLE
+						intf.State.EdgePort = ocbinds.OpenconfigSpanningTreeTypes_STP_EDGE_PORT_EDGE_DISABLE
+					}
 				}
 
-				linkTypeEnabled, _ := strconv.ParseBool((&stpIntfData).Get("pt2pt_mac"))
-				if linkTypeEnabled {
-					intf.Config.LinkType = ocbinds.OpenconfigSpanningTree_StpLinkType_P2P
-					intf.State.LinkType = ocbinds.OpenconfigSpanningTree_StpLinkType_P2P
-				} else {
-					intf.Config.LinkType = ocbinds.OpenconfigSpanningTree_StpLinkType_SHARED
-					intf.State.LinkType = ocbinds.OpenconfigSpanningTree_StpLinkType_SHARED
+				if linkTypeEnabled, err := strconv.ParseBool((&stpIntfData).Get("pt2pt_mac")); err == nil {
+					if linkTypeEnabled {
+						intf.Config.LinkType = ocbinds.OpenconfigSpanningTree_StpLinkType_P2P
+						intf.State.LinkType = ocbinds.OpenconfigSpanningTree_StpLinkType_P2P
+					} else {
+						intf.Config.LinkType = ocbinds.OpenconfigSpanningTree_StpLinkType_SHARED
+						intf.State.LinkType = ocbinds.OpenconfigSpanningTree_StpLinkType_SHARED
+					}
 				}
 
 				var num uint64
-				num, _ = strconv.ParseUint((&stpIntfData).Get("priority"), 10, 8)
-				priority := uint8(num)
-				intf.Config.PortPriority = &priority
-				intf.State.PortPriority = &priority
+				if num, err = strconv.ParseUint((&stpIntfData).Get("priority"), 10, 8); err == nil {
+					priority := uint8(num)
+					intf.Config.PortPriority = &priority
+					intf.State.PortPriority = &priority
+				}
 
-				num, _ = strconv.ParseUint((&stpIntfData).Get("path_cost"), 10, 32)
-				cost := uint32(num)
-				intf.Config.Cost = &cost
-				intf.State.Cost = &cost
+				if num, err = strconv.ParseUint((&stpIntfData).Get("path_cost"), 10, 32); err == nil {
+					cost := uint32(num)
+					intf.Config.Cost = &cost
+					intf.State.Cost = &cost
+				}
 			}
+		}
+
+		operDbVal := app.intfOperTableMap[intfName]
+		if operDbVal.IsPopulated() && intf != nil {
+			var boolVal bool
+
+			bpduGuardShut := (&operDbVal).Get("bpdu_guard_shutdown")
+			if bpduGuardShut == "yes" {
+				boolVal = true
+			} else if bpduGuardShut == "no" {
+				boolVal = false
+			}
+			intf.State.BpduGuardShutdown = &boolVal
+
+			opPortfast := (&operDbVal).Get("port_fast")
+			if opPortfast == "yes" {
+				boolVal = true
+			} else if opPortfast == "no" {
+				boolVal = false
+			}
+			intf.State.Portfast = &boolVal
 		}
 	} else {
 		for intfName := range app.intfTableMap {
@@ -1196,6 +1528,45 @@ func (app *StpApp) convertInternalToOCStpInterfaces(intfName string, interfaces 
 			app.convertInternalToOCStpInterfaces(intfName, interfaces, intfPtr)
 		}
 	}
+}
+
+func (app *StpApp) convertApplDBRpvstVlanToInternal(vlanName string) error {
+	var err error
+
+	rpvstVlanOperState, err := app.appDB.GetEntry(app.vlanOperTable, asKey(vlanName))
+	if err != nil {
+		return err
+	}
+	app.vlanOperTableMap[vlanName] = rpvstVlanOperState
+
+	return err
+}
+
+func (app *StpApp) convertApplDBRpvstVlanInterfaceToInternal(vlanName string, intfId string) error {
+	var err error
+
+	rpvstVlanIntfOperState, err := app.appDB.GetEntry(app.vlanIntfOperTable, asKey(vlanName, intfId))
+	if err != nil {
+		return err
+	}
+	if app.vlanIntfOperTableMap[vlanName] == nil {
+		app.vlanIntfOperTableMap[vlanName] = make(map[string]db.Value)
+	}
+	app.vlanIntfOperTableMap[vlanName][intfId] = rpvstVlanIntfOperState
+
+	return err
+}
+
+func (app *StpApp) convertApplDBStpInterfacesToInternal(intfId string) error {
+	var err error
+
+	intfOperState, err := app.appDB.GetEntry(app.intfOperTable, asKey(intfId))
+	if err != nil {
+		return err
+	}
+	app.intfOperTableMap[intfId] = intfOperState
+
+	return err
 }
 
 func (app *StpApp) convertOCStpModeToInternal(config *ocbinds.OpenconfigSpanningTree_Stp_Global_Config) string {
@@ -1236,4 +1607,97 @@ func (app *StpApp) getStpModeFromConfigDB(d *db.DB) (string, error) {
 		return "", err
 	}
 	return (&stpGlobalDbEntry).Get(STP_MODE), nil
+}
+
+func (app *StpApp) getAllInterfacesFromVlanMemberTable(d *db.DB) ([]string, error) {
+	var intfList []string
+
+	keys, err := d.GetKeys(&db.TableSpec{Name: "VLAN_MEMBER"})
+	if err != nil {
+		return intfList, err
+	}
+	for i, _ := range keys {
+		key := keys[i]
+		if !contains(intfList, (&key).Get(1)) {
+			intfList = append(intfList, (&key).Get(1))
+		}
+	}
+	return intfList, err
+}
+
+func (app *StpApp) enableStpForInterfaces(d *db.DB) error {
+	defaultDBValues := db.Value{Field: map[string]string{}}
+	(&defaultDBValues).Set("enabled", "true")
+	(&defaultDBValues).Set("root_guard", "false")
+	(&defaultDBValues).Set("bpdu_guard", "false")
+	(&defaultDBValues).Set("bpdu_guard_do_disable", "false")
+	(&defaultDBValues).Set("portfast", "true")
+	(&defaultDBValues).Set("uplink_fast", "false")
+
+	intfList, err := app.getAllInterfacesFromVlanMemberTable(d)
+	if err != nil {
+		return err
+	}
+
+	portKeys, err := d.GetKeys(&db.TableSpec{Name: "PORT"})
+	if err != nil {
+		return err
+	}
+	for i, _ := range portKeys {
+		portKey := portKeys[i]
+		if contains(intfList, (&portKey).Get(0)) {
+			d.CreateEntry(app.interfaceTable, portKey, defaultDBValues)
+		}
+	}
+
+	// For portchannels
+	portchKeys, err := d.GetKeys(&db.TableSpec{Name: "PORTCHANNEL"})
+	if err != nil {
+		return err
+	}
+	for i, _ := range portchKeys {
+		portchKey := portchKeys[i]
+		if contains(intfList, (&portchKey).Get(0)) {
+			d.CreateEntry(app.interfaceTable, portchKey, defaultDBValues)
+		}
+	}
+	return err
+}
+
+func (app *StpApp) enableStpForVlans(d *db.DB) error {
+	stpGlobalVal := app.globalInfo
+	fDelay := (&stpGlobalVal).Get("forward_delay")
+	helloTime := (&stpGlobalVal).Get("hello_time")
+	maxAge := (&stpGlobalVal).Get("max_age")
+	priority := (&stpGlobalVal).Get("priority")
+
+	vlanKeys, err := d.GetKeys(&db.TableSpec{Name: "VLAN"})
+	if err != nil {
+		return err
+	}
+
+	var vlanList []string
+	for i, _ := range vlanKeys {
+		vlanKey := vlanKeys[i]
+		vlanList = append(vlanList, (&vlanKey).Get(0))
+	}
+
+	// Sort vlanList in natural order such that 'Vlan2' < 'Vlan10'
+	natsort.Sort(vlanList)
+
+	for i, _ := range vlanList {
+		if i < PVST_MAX_INSTANCES {
+			defaultDBValues := db.Value{Field: map[string]string{}}
+			(&defaultDBValues).Set("enabled", "true")
+			(&defaultDBValues).Set("forward_delay", fDelay)
+			(&defaultDBValues).Set("hello_time", helloTime)
+			(&defaultDBValues).Set("max_age", maxAge)
+			(&defaultDBValues).Set("priority", priority)
+
+			vlanId := strings.Replace(vlanList[i], "Vlan", "", 1)
+			(&defaultDBValues).Set("vlanid", vlanId)
+			d.CreateEntry(app.vlanTable, asKey(vlanList[i]), defaultDBValues)
+		}
+	}
+	return err
 }
