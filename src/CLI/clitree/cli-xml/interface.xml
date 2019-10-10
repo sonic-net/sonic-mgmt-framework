@@ -116,9 +116,9 @@ limitations under the License.
        </PARAM>
    <ACTION>
        if test "${id}" = ""; then&#xA;
-          python $SONIC_CLI_ROOT/sonic-cli-vlan.py get_sonic_vlan_sonic_vlan_state "" show_vlan.j2 ${__full_line}&#xA;
+          python $SONIC_CLI_ROOT/sonic-cli-vlan.py get_sonic_vlan_sonic_vlan "" show_vlan.j2 ${__full_line}&#xA;
        else&#xA;
-          python $SONIC_CLI_ROOT/sonic-cli-vlan.py get_sonic_vlan_sonic_vlan_state Vlan${id} show_vlan.j2 ${__full_line}&#xA;
+          python $SONIC_CLI_ROOT/sonic-cli-vlan.py get_sonic_vlan_sonic_vlan Vlan${id} show_vlan.j2 ${__full_line}&#xA;
        fi&#xA;
    </ACTION>
    </COMMAND>
@@ -185,7 +185,7 @@ limitations under the License.
          mode="subcommand"
          ptype="SUBCOMMAND"
          view="configure-vlan-view"
-         viewid="vlan_id=vlan${vlan-id}"
+         viewid="vlan_id=Vlan${vlan-id}"
          >
          <PARAM
              name="vlan-id"
@@ -543,7 +543,36 @@ limitations under the License.
          ref="configure-view"
          help="false"
          completion="false"
-         />
+      />
+      <COMMAND
+        name="no"
+        help="Negate a command or set its defaults"
+      />
+      <COMMAND
+            name="mtu"
+            help="Configure MTU">
+            <PARAM
+                name="mtu"
+                help="MTU of the Vlan interface"
+                ptype="RANGE_MTU"
+            />
+       <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config_mtu ${vlan_id} ${mtu} </ACTION>
+       </COMMAND>
+       <COMMAND
+            name="no mtu"
+            help="Remove MTU of Vlan interface">
+        <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config_mtu ${vlan_id} 9100 </ACTION>
+       </COMMAND>
+       <COMMAND
+            name="shutdown"
+            help="Disable the Vlan interface">
+        <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config_enabled ${vlan_id} False </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="no shutdown"
+            help="Enable the Vlan interface">
+        <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config_enabled ${vlan_id} True </ACTION>
+        </COMMAND>
 </VIEW>
 <VIEW
     name="configure-lag-view"

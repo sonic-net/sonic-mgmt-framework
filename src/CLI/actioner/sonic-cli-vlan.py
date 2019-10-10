@@ -54,7 +54,7 @@ def call_method(name, args):
 
 def generate_body(func, args):
     body = None
-    if func.__name__ == 'get_sonic_vlan_sonic_vlan_state':
+    if func.__name__ == 'get_sonic_vlan_sonic_vlan':
         keypath = []
     else:
        body = {}
@@ -141,14 +141,18 @@ def run(func, args):
         else:
             # Get Command Output
             api_response = aa.api_client.sanitize_for_serialization(api_response)
-            if 'sonic-vlan:sonic-vlan-state' in api_response:
-                value = api_response['sonic-vlan:sonic-vlan-state']
+            if 'sonic-vlan:sonic-vlan' in api_response:
+                value = api_response['sonic-vlan:sonic-vlan']
                 if 'VLAN_MEMBER_TABLE' in value:
-                    vlanMemberTup = value['VLAN_MEMBER_TABLE']
-                    updateVlanToIntfMap(vlanMemberTup, args[0])
+                    vlanMemberCont = value['VLAN_MEMBER_TABLE']
+                    if 'VLAN_MEMBER_TABLE_LIST' in vlanMemberCont:
+                        vlanMemberTup = vlanMemberCont['VLAN_MEMBER_TABLE_LIST']
+                        updateVlanToIntfMap(vlanMemberTup, args[0])
                 if 'VLAN_TABLE' in value:
-                    vlanTup = value['VLAN_TABLE']
-                    updateVlanInfoMap(vlanTup, args[0])
+                    vlanCont = value['VLAN_TABLE']
+                    if 'VLAN_TABLE_LIST' in vlanCont:
+                         vlanTup = vlanCont['VLAN_TABLE_LIST']
+                         updateVlanInfoMap(vlanTup, args[0])
             if api_response is None:
                 print("Failed")
             else:
@@ -159,7 +163,7 @@ def run(func, args):
                     sortMembers = collections.OrderedDict(sorted(val['vlanMembers'].items(), key=lambda t: t[1]))
                     val['vlanMembers'] = sortMembers
                 vDictSorted = collections.OrderedDict(sorted(vDict.items(), key = lambda t: getVlanId(t[0])))
-                if func.__name__ == 'get_sonic_vlan_sonic_vlan_state':
+                if func.__name__ == 'get_sonic_vlan_sonic_vlan':
                      show_cli_output(args[1], vDictSorted)
                 else:
                      return
