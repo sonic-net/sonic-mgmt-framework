@@ -428,38 +428,76 @@ func testRespData(r *http.Request, rc *RequestContext, data []byte, expType stri
 
 func TestProcessGET(t *testing.T) {
 	w := httptest.NewRecorder()
-	Process(w, prepareRequest(t, "GET", "/test", ""))
-	verifyResponse(t, w, 500)
+	Process(w, prepareRequest(t, "GET", "/api-tests:sample", ""))
+	verifyResponse(t, w, 200)
 }
 
-func TestProcessGET_ACL(t *testing.T) {
+func TestProcessGET_error(t *testing.T) {
 	w := httptest.NewRecorder()
-	Process(w, prepareRequest(t, "GET", "/openconfig-acl:acl", ""))
-	verifyResponse(t, w, 200)
+	Process(w, prepareRequest(t, "GET", "/api-tests:sample/error/not-found", ""))
+	verifyResponse(t, w, 404)
 }
 
 func TestProcessPUT(t *testing.T) {
 	w := httptest.NewRecorder()
-	Process(w, prepareRequest(t, "PUT", "/test", "{}"))
-	verifyResponse(t, w, 500)
+	Process(w, prepareRequest(t, "PUT", "/api-tests:sample", "{}"))
+	verifyResponse(t, w, 204)
+}
+
+func TestProcessPUT_error(t *testing.T) {
+	w := httptest.NewRecorder()
+	Process(w, prepareRequest(t, "PUT", "/api-tests:sample/error/not-supported", "{}"))
+	verifyResponse(t, w, 405)
 }
 
 func TestProcessPOST(t *testing.T) {
 	w := httptest.NewRecorder()
-	Process(w, prepareRequest(t, "POST", "/test", "{}"))
-	verifyResponse(t, w, 500)
+	Process(w, prepareRequest(t, "POST", "/api-tests:sample", "{}"))
+	verifyResponse(t, w, 201)
+}
+
+func TestProcessPOST_error(t *testing.T) {
+	w := httptest.NewRecorder()
+	Process(w, prepareRequest(t, "POST", "/api-tests:sample/error/invalid-args", "{}"))
+	verifyResponse(t, w, 400)
 }
 
 func TestProcessPATCH(t *testing.T) {
 	w := httptest.NewRecorder()
-	Process(w, prepareRequest(t, "PATCH", "/test", "{}"))
+	Process(w, prepareRequest(t, "PATCH", "/api-tests:sample", "{}"))
+	verifyResponse(t, w, 204)
+}
+
+func TestProcessPATCH_error(t *testing.T) {
+	w := httptest.NewRecorder()
+	Process(w, prepareRequest(t, "PATCH", "/api-tests:sample/error/unknown", "{}"))
 	verifyResponse(t, w, 500)
 }
 
 func TestProcessDELETE(t *testing.T) {
 	w := httptest.NewRecorder()
-	Process(w, prepareRequest(t, "DELETE", "/test", "{}"))
-	verifyResponse(t, w, 500)
+	Process(w, prepareRequest(t, "DELETE", "/api-tests:sample", ""))
+	verifyResponse(t, w, 204)
+}
+
+func TestProcessDELETE_error(t *testing.T) {
+	w := httptest.NewRecorder()
+	Process(w, prepareRequest(t, "DELETE", "/api-tests:sample/error/not-found", ""))
+	verifyResponse(t, w, 404)
+}
+
+func TestProcessRPC(t *testing.T) {
+	w := httptest.NewRecorder()
+	Process(w, prepareRequest(t, "POST", "/restconf/operations/api-tests:my-echo",
+		"{\"/api-tests:input\":{\"message\":\"Hii\"}}"))
+	verifyResponse(t, w, 200)
+}
+
+func TestProcessRPC_error(t *testing.T) {
+	w := httptest.NewRecorder()
+	Process(w, prepareRequest(t, "POST", "/restconf/operations/api-tests:my-echo",
+		"{\"api-tests:input\":{\"error-type\":\"not-supported\"}}"))
+	verifyResponse(t, w, 405)
 }
 
 func TestProcessBadMethod(t *testing.T) {
@@ -491,6 +529,10 @@ func TestProcessReadError(t *testing.T) {
 }
 
 func prepareRequest(t *testing.T, method, path, data string) *http.Request {
+	if !strings.Contains(path, "/restconf/") {
+		path = "/restconf/data" + path
+	}
+
 	r := httptest.NewRequest(method, path, strings.NewReader(data))
 	rc, r := GetContext(r)
 	rc.ID = t.Name()

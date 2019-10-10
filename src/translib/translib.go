@@ -25,11 +25,12 @@ package translib
 
 import (
 	//"errors"
-	"github.com/Workiva/go-datastructures/queue"
-	log "github.com/golang/glog"
 	"sync"
 	"translib/db"
 	"translib/tlerr"
+
+	"github.com/Workiva/go-datastructures/queue"
+	log "github.com/golang/glog"
 )
 
 //Write lock for all write operations to be synchronized
@@ -448,7 +449,7 @@ func Action(req ActionRequest) (ActionResponse, error) {
 
 	aInfo.isNative = true
 
-	err = appInitialize(app, &aInfo, path, nil, GET)
+	err = appInitialize(app, &aInfo, path, &req.Payload, GET)
 
 	if err != nil {
 		resp = ActionResponse{Payload: payload, ErrSrc: AppErr}

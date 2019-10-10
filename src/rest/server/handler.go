@@ -42,7 +42,7 @@ func Process(w http.ResponseWriter, r *http.Request) {
 	path = getPathForTranslib(r)
 	glog.Infof("[%s] Translated path = %s", reqID, path)
 
-	status, data, err = invokeTranslib(reqID, r.Method, path, body)
+	status, data, err = invokeTranslib(r, path, body)
 	if err != nil {
 		glog.Errorf("[%s] Translib error %T - %v", reqID, err, err)
 		status, data, rtype = prepareErrorResponse(err, r)
@@ -177,6 +177,10 @@ func getPathForTranslib(r *http.Request) string {
 func trimRestconfPrefix(path string) string {
 	pattern := "/restconf/data/"
 	k := strings.Index(path, pattern)
+	if k < 0 {
+		pattern = "/restconf/operations/"
+		k = strings.Index(path, pattern)
+	}
 	if k >= 0 {
 		path = path[k+len(pattern)-1:]
 	}
@@ -184,14 +188,29 @@ func trimRestconfPrefix(path string) string {
 	return path
 }
 
+// isOperationsRequest checks if a request is a RESTCONF operations
+// request (rpc or action)
+func isOperationsRequest(r *http.Request) bool {
+	k := strings.Index(r.URL.Path, "/restconf/operations/")
+	return k >= 0
+	//FIXME URI pattern will not help identifying yang action APIs.
+	//Use swagger generated API name instead???
+}
+
+// getRequestID returns the request id encoded in the context
+func getRequestID(r *http.Request) string {
+	rc, _ := GetContext(r)
+	return rc.ID
+}
+
 // invokeTranslib calls appropriate TransLib API for the given HTTP
 // method. Returns response status code and content.
-func invokeTranslib(reqID, method, path string, payload []byte) (int, []byte, error) {
+func invokeTranslib(r *http.Request, path string, payload []byte) (int, []byte, error) {
 	var status = 400
 	var content []byte
 	var err error
 
-	switch method {
+	switch r.Method {
 	case "GET":
 		req := translib.GetRequest{Path: path}
 		resp, err1 := translib.Get(req)
@@ -203,10 +222,20 @@ func invokeTranslib(reqID, method, path string, payload []byte) (int, []byte, er
 		}
 
 	case "POST":
-		//TODO return 200 for operations request
-		status = 201
-		req := translib.SetRequest{Path: path, Payload: payload}
-		_, err = translib.Create(req)
+		if isOperationsRequest(r) {
+			req := translib.ActionRequest{Path: path, Payload: payload}
+			res, err1 := translib.Action(req)
+			if err1 == nil {
+				status = 200
+				content = res.Payload
+			} else {
+				err = err1
+			}
+		} else {
+			status = 201
+			req := translib.SetRequest{Path: path, Payload: payload}
+			_, err = translib.Create(req)
+		}
 
 	case "PUT":
 		//TODO send 201 if PUT resulted in creation
@@ -225,7 +254,7 @@ func invokeTranslib(reqID, method, path string, payload []byte) (int, []byte, er
 		_, err = translib.Delete(req)
 
 	default:
-		glog.Errorf("[%s] Unknown method '%v'", reqID, method)
+		glog.Errorf("[%s] Unknown method '%v'", getRequestID(r), r.Method)
 		err = httpBadRequest("Invalid method")
 	}
 
