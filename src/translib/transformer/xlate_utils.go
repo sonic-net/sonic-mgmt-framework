@@ -232,7 +232,7 @@ func sonicKeyDataAdd(dbIndex db.DBNum, keyNameList []string, keyStr string, resu
 	dbOpts = getDBOptions(dbIndex)
 	keySeparator := dbOpts.KeySeparator
     keyValList := strings.Split(keyStr, keySeparator)
-	
+
     if len(keyNameList) != len(keyValList) {
         return
     }
