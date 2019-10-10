@@ -2,3 +2,8 @@
 
 openconfig-acl.yang
 openconfig-acl-annot.yang
+openconfig-interfaces.yang
+openconfig-if-ip.yang
+openconfig-if-ethernet.yang
+openconfig-interfaces-annot.yang
+

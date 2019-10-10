@@ -1,0 +1,80 @@
+module sonic-mgmt-interface {
+    namespace "http://github.com/Azure/sonic-mgmt-interface";
+    prefix smgmtint;
+
+    import ietf-yang-types {
+        prefix yang;
+    }
+
+    import ietf-inet-types {
+        prefix inet;
+    }
+
+    import sonic-common {
+        prefix scommon;
+    }
+
+    import sonic-mgmt-port {
+        prefix mgmtprt;
+    }
+
+    organization
+        "SONiC";
+
+    contact
+        "SONiC";
+
+    description
+        "SONiC MANAGEMENT INTERFACE";
+
+    revision 2019-07-02 {
+        description
+            "Initial revision.";
+    }
+
+    container sonic-mgmt-interface {
+
+        container MGMT_INTERFACE {
+
+            list MGMT_INTERFACE_LIST {
+
+                key "portname";
+
+                leaf portname{
+                    type leafref {
+                        path "/mgmtprt:sonic-mgmt-port/mgmtprt:MGMT_PORT/mgmtprt:MGMT_PORT_LIST/mgmtprt:ifname";
+                    }
+                }
+
+                leaf vrf-name {
+                    type string;
+                }
+            }
+
+            list MGMT_INTERFACE_IPADDR_LIST {
+
+                key "portname ip_prefix";
+
+                leaf portname{
+                    type leafref {
+                        path "/mgmtprt:sonic-mgmt-port/mgmtprt:MGMT_PORT/mgmtprt:MGMT_PORT_LIST/mgmtprt:ifname";
+                    }
+                }
+
+                leaf ip_prefix {
+                    mandatory true;
+                    type inet:ip-prefix;
+
+                }
+
+                leaf gwaddr {
+                    type inet:ip-prefix;
+                }
+
+            }
+
+        }
+
+    }
+
+}
