@@ -23,7 +23,6 @@ import (
 	"fmt"
 	"encoding/json"
 	"github.com/go-redis/redis"
-	//toposort "github.com/stevenle/topsort"
 	toposort "github.com/philopon/go-toposort"
 	"path/filepath"
 	"cvl/internal/yparser"

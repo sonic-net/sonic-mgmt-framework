@@ -418,7 +418,7 @@ func yangToRedisTblName(yangListName string) string {
 	return yangListName
 }
 
-//This functions build info of depdent table/fields which uses a particulat table through leafref
+//This functions build info of dependent table/fields which uses a particulat table through leafref
 func buildRefTableInfo() {
 	for tblName, tblInfo := range modelInfo.tableInfo {
 		if (len(tblInfo.leafRef) == 0) {
@@ -1064,7 +1064,7 @@ func (c *CVL) checkDeleteConstraint(cfgData []CVLEditConfigData,
 //This function should be called before adding any new entry
 //Checks max-elements defined with (current number of entries
 //getting added + entries already added and present in request
-//cache + entries present in Redis DB
+//cache + entries present in Redis DB)
 func (c *CVL) checkMaxElemConstraint(tableName string) CVLRetCode {
 	var nokey []string
 
