@@ -322,6 +322,13 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (CVLErrorInfo, CVL
 
 		switch cfgDataItem.VOp {
 		case OP_CREATE:
+			//Check max-element constraint 
+			if ret := c.checkMaxElemConstraint(tbl); ret != CVL_SUCCESS {
+				cvlErrObj.ErrCode = CVL_SYNTAX_ERROR
+				cvlErrObj.CVLErrDetails = cvlErrorMap[cvlErrObj.ErrCode]
+				return cvlErrObj, CVL_SYNTAX_ERROR
+			}
+
 			if (c.addTableEntryForMustExp(&cfgDataItem, tbl) != CVL_SUCCESS) {
 				c.addTableDataForMustExp(cfgDataItem.VOp, tbl)
 			}
