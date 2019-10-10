@@ -1,0 +1,1 @@
+./translibtest -o "replace" -u "/sonic-acl:sonic-acl" -p "./acl-sonic/01_replace_MyACL1.json" -logtostderr

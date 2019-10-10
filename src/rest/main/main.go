@@ -1,9 +1,21 @@
-///////////////////////////////////////////////////////////////////////
-//
-// Copyright 2019 Broadcom. All rights reserved.
-// The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
-//
-///////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+//                                                                            //
+//  Copyright 2019 Broadcom. The term Broadcom refers to Broadcom Inc. and/or //
+//  its subsidiaries.                                                         //
+//                                                                            //
+//  Licensed under the Apache License, Version 2.0 (the "License");           //
+//  you may not use this file except in compliance with the License.          //
+//  You may obtain a copy of the License at                                   //
+//                                                                            //
+//     http://www.apache.org/licenses/LICENSE-2.0                             //
+//                                                                            //
+//  Unless required by applicable law or agreed to in writing, software       //
+//  distributed under the License is distributed on an "AS IS" BASIS,         //
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  //
+//  See the License for the specific language governing permissions and       //
+//  limitations under the License.                                            //
+//                                                                            //
+////////////////////////////////////////////////////////////////////////////////
 
 package main
 
@@ -81,9 +93,13 @@ func main() {
 
 	// Prepare TLSConfig from the parameters
 	tlsConfig := tls.Config{
-		ClientAuth:   getTLSClientAuthType(),
-		Certificates: prepareServerCertificate(),
-		ClientCAs:    prepareCACertificates(),
+		ClientAuth:               getTLSClientAuthType(),
+		Certificates:             prepareServerCertificate(),
+		ClientCAs:                prepareCACertificates(),
+		MinVersion:               tls.VersionTLS12,
+		CurvePreferences:         getPreferredCurveIDs(),
+		PreferServerCipherSuites: true,
+		CipherSuites:             getPreferredCipherSuites(),
 	}
 
 	// Prepare HTTPS server
@@ -167,5 +183,24 @@ func getTLSClientAuthType() tls.ClientAuthType {
 		glog.Fatalf("Invalid '--client_auth' value '%s'. "+
 			"Expecting one of 'none', 'cert' or 'user'", clientAuth)
 		return tls.RequireAndVerifyClientCert // dummy
+	}
+}
+
+func getPreferredCurveIDs() []tls.CurveID {
+	return []tls.CurveID{
+		tls.CurveP521,
+		tls.CurveP384,
+		tls.CurveP256,
+	}
+}
+
+func getPreferredCipherSuites() []uint16 {
+	return []uint16{
+		tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+		tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+		tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,
+		tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,
+		tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+		tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
 	}
 }

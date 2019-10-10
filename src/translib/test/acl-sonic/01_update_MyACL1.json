@@ -1,0 +1,33 @@
+{
+    "ACL_TABLE": [
+      {
+        "aclname": "MyACL1_ACL_IPV4",
+        "policy_desc": "Updated MyACL1",
+        "type": "L3"
+      }
+    ],
+    "ACL_RULE": [
+      {
+        "aclname": "MyACL1_ACL_IPV4",
+        "rulename": "RULE_1",
+        "PRIORITY": 65534,
+        "RULE_DESCRIPTION": "Description for MyACL1 Rule1",
+        "PACKET_ACTION": "FORWARD",
+        "IP_TYPE": "ipv4",
+        "IP_PROTOCOL": 6,
+        "SRC_IP": "11.1.1.1/32",
+        "DST_IP": "22.2.2.2/32"
+      },
+      {
+        "aclname": "MyACL1_ACL_IPV4",
+        "rulename": "RULE_2",
+        "PRIORITY": 65536,
+        "RULE_DESCRIPTION": "Description for MyACL1 Rule2",
+        "PACKET_ACTION": "FORWARD",
+        "IP_TYPE": "ipv4",
+        "IP_PROTOCOL": 6,
+        "SRC_IP": "any",
+        "DST_IP": "any"
+      }
+    ]
+} 

@@ -252,7 +252,7 @@ func validateUnion(schema *yang.Entry, value interface{}) util.Errors {
 // during validation against each matching schema otherwise.
 func validateMatchingSchemas(schema *yang.Entry, value interface{}) util.Errors {
 	var errors []error
-	ss := findMatchingSchemasInUnion(schema.Type, value)
+	ss := findMatchingSchemasInUnion(schema, schema.Type, value)
 	var kk []yang.TypeKind
 	for _, s := range ss {
 		kk = append(kk, s.Type.Kind)
@@ -283,17 +283,25 @@ func validateMatchingSchemas(schema *yang.Entry, value interface{}) util.Errors 
 // findMatchingSchemasInUnion returns all schemas in the given union type,
 // including those within nested unions, that match the Go type of value.
 // value must not be nil.
-func findMatchingSchemasInUnion(ytype *yang.YangType, value interface{}) []*yang.Entry {
+func findMatchingSchemasInUnion(schema *yang.Entry, ytype *yang.YangType, value interface{}) []*yang.Entry {
 	var matches []*yang.Entry
 
 	util.DbgPrint("findMatchingSchemasInUnion for type %T, kind %s", value, reflect.TypeOf(value).Kind())
 	for _, t := range ytype.Type {
 		if t.Kind == yang.Yunion {
 			// Recursively check all union types within this union.
-			matches = append(matches, findMatchingSchemasInUnion(t, value)...)
+			matches = append(matches, findMatchingSchemasInUnion(schema, t, value)...)
 			continue
 		}
 
+		if t.Kind == yang.Yleafref {
+			ns, err := findLeafRefSchema(schema, t.Path)
+			if err != nil {
+				log.Warningf("not found base Go type for type %v in union value %s", t.Kind, util.ValueStr(value))
+				continue
+			}
+			t = ns.Type
+		}
 		ybt := yangBuiltinTypeToGoType(t.Kind)
 		if reflect.ValueOf(value).Kind() == reflect.Ptr {
 			ybt = ygot.ToPtr(yangBuiltinTypeToGoType(t.Kind))
