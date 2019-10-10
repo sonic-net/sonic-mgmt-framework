@@ -4,6 +4,7 @@
 {% set vars = {'description': ""} %}
 {% set vars = {'mtu': ""} %}
 {% set vars = {'speed': ""} %}
+{% set vars = {'parsedSpeed': ""} %}
 {% if json_output -%}
 ------------------------------------------------------------------------------------------
 {{'%-20s'|format("Name")}}{{'%-20s'|format("Description")}}{{'%-15s'|format("Admin")}}{{'%-15s'|format("Oper")}}{{'%-15s'|format("Speed")}}{{'%-15s'|format("MTU")}}
@@ -13,7 +14,8 @@
 {% for interface in interface_list %}
     {% for key in interface %}
       {% if "ethernet" in key %}
-        {% if vars.update({'speed':interface[key]["state"]["port-speed"]|replace("openconfig-if-ethernet:SPEED_", "")}) %}{% endif %}
+        {% if vars.update({'speed':interface[key]["state"]["port-speed"]|replace("openconfig-if-ethernet:SPEED_", "")}) %} {% endif %}
+        {% if vars.update({'parsedSpeed':vars.speed|replace("B", "")}) %} {% endif %}
       {% endif %}
       {% if "state" in key %}
         {% if vars.update({'name':interface[key]["name"]}) %}{% endif %}
@@ -28,7 +30,7 @@
       {% endif %}
     {% endfor %}
 {% if 'Ethernet' in vars.name %}
-{{'%-20s'|format(vars.name)}}{{'%-20s'|format(vars.description)}}{{'%-15s'|format(vars.admin_state|lower())}}{{'%-15s'|format(vars.oper_state|lower())}}{{'%-15s'|format(vars.speed)}}{{'%-15s'|format(vars.mtu)}}
+{{'%-20s'|format(vars.name)}}{{'%-20s'|format(vars.description)}}{{'%-15s'|format(vars.admin_state|lower())}}{{'%-15s'|format(vars.oper_state|lower())}}{{'%-15s'|format(vars.parsedSpeed)}}{{'%-15s'|format(vars.mtu)}}
 {% endif %}
 {% endfor %}
 {% endfor %}
