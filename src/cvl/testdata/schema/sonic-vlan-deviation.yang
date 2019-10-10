@@ -1,15 +1,13 @@
-module sonic-vlan-dev {
-	namespace "http://github.com/Azure/sonic-vlan-dev";
+module sonic-vlan-deviation {
+	namespace "http://github.com/Azure/sonic-vlan-deviation";
 	prefix svd;
 	yang-version 1.1;
 
-	import ietf-yang-types {
-		prefix yang;
-	}
-
+	/*
 	import sonic-vlan {
 		prefix svlan;
 	}
+	*/
 
 	organization
 		"SONiC";

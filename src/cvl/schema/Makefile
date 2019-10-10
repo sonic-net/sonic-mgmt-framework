@@ -17,77 +17,48 @@
 #                                                                              #
 ################################################################################
 
-TOPDIR := ../../..
-CVL_YANGAPI_DIR     := $(TOPDIR)/build/yaml
-CVL_YANGDIR         := $(TOPDIR)/src/cvl/schema
-CVL_YANGDIR_COMMON  := $(TOPDIR)/src/cvl/schema/ietf
-CVL_YANG_MOD_FILES  := $(shell find $(CVL_YANGDIR) -maxdepth 1 -name '*.yang' | sort)
-CVL_YANG_COMMON_FILES  := $(shell find $(CVL_YANGDIR_COMMON) -name '*.yang' | sort)
+sonic_yang=../../../models/yang/sonic
+sonic_yang_common=../../../models/yang/sonic/common
+pyang_plugin_dir=../../../tools/pyang/pyang_plugins
 
-CVL_TOOLS_DIR        := $(TOPDIR)/tools
-CVL_PYANG_DIR        := $(CVL_TOOLS_DIR)/pyang
-CVL_PYANG_PLUGIN_DIR := $(CVL_PYANG_DIR)/pyang_plugins
-CVL_PYANG_BIN        := pyang
+src_files=$(wildcard $(sonic_yang)/*.yang)
+src_files += $(wildcard $(sonic_yang_common)/*.yang)
+out=$(patsubst %.yang, %.yin, $(shell ls -1 $(sonic_yang)/*.yang | cut -d'/' -f7)) 
+out_common=$(patsubst %.yang, %.yin, $(shell ls -1 $(sonic_yang_common)/*.yang | cut -d'/' -f8)) 
+out_tree=$(patsubst %.yang, %.tree, $(src_files)) 
+search_path=$(sonic_yang):$(sonic_yang_common):$(sonic_yang_common)/ietf
 
-src_files=$(wildcard *.yang)
-out=$(patsubst %.yang, %.yin, $(src_files)) 
-out_ext=$(patsubst %.yang, %.tree, $(src_files)) 
+#all: yamlGen allyangs.tree allyangs_tree.html schema
+all: schema
 
-all: yamlGen allyangs.tree allyangs_tree.html schema
+schema: $(out) $(out_common)
 
-schema: $(out)
 
-#yamlGen: $(CVL_YANGAPI_DIR)/.done
+schema-tree: $(out_tree)
 
-%.yin:%.yang
-	@echo "Generating $@ ..."
-	@devFile="`echo $< | cut -d . -f1`-dev.yang"; \
+#Build YANG models
+%.yin:$(sonic_yang)/%.yang
+	@echo "Generating `basename $@` ..."
+	@devFile="`echo $@ | cut -d . -f1`-deviation.yang"; \
 	if [ -f $$devFile ] ; then devOpt="--deviation-module $$devFile"; fi; \
-	pyang -p ./ietf/ -f yin $$devOpt $< -o $@.tmp
-	@xmllint  --noblanks  $@.tmp > $@
-	@rm -rf  $@.tmp
+	pyang -p $(search_path)	--plugindir $(pyang_plugin_dir) \
+		-f yin-cvl $$devOpt $< -o `basename $@`
 
-allyangs.tree:  $(CVL_YANG_MOD_FILES) $(CVL_YANG_COMMON_FILES)
-	$(CVL_PYANG_BIN) \
-		-f tree \
-		-o $(CVL_YANGDIR)/$@ \
-		-p $(CVL_YANGDIR_COMMON):$(CVL_YANGDIR) \
-		$(CVL_YANG_MOD_FILES)
-	@echo "+++++ Generation of  YANG tree for Sonic Yang modules completed +++++"
 
-allyangs_tree.html:  $(CVL_YANG_MOD_FILES) $(CVL_YANG_COMMON_FILES)
-	$(CVL_PYANG_BIN) \
-		-f jstree \
-		-o $(CVL_YANGDIR)/$@ \
-		-p $(CVL_YANGDIR_COMMON):$(CVL_YANGDIR) \
-		$(CVL_YANG_MOD_FILES)
-	@echo "+++++ Generation of  HTML tree for Sonic Yang modules completed +++++"
-
-#======================================================================
-# Generate YAML files for Sonic Yang modules
-#======================================================================
-yamlGen:
-	@echo "+++++ Generating YAML files for Sonic Yang modules +++++"
-	mkdir -p $(CVL_YANGAPI_DIR)
-	$(CVL_PYANG_BIN) \
-		-f swaggerapi \
-		--outdir $(CVL_YANGAPI_DIR) \
-		--plugindir $(CVL_PYANG_PLUGIN_DIR) \
-		-p $(CVL_YANGDIR_COMMON):$(CVL_YANGDIR) \
-		$(CVL_YANG_MOD_FILES)
-	@echo "+++++ Generation of  YAML files for Sonic Yang modules completed +++++"
-	# touch $@
-
+#Build common YANG models
+%.yin:$(sonic_yang_common)/%.yang
+	@echo "Generating `basename $@` ..."
+	@devFile="`echo $@ | cut -d . -f1`-deviation.yang"; \
+	if [ -f $$devFile ] ; then devOpt="--deviation-module $$devFile"; fi; \
+	pyang -p $(search_path)	--plugindir $(pyang_plugin_dir) \
+		-f yin-cvl $$devOpt $< -o `basename $@`
 
 %.tree:%.yang
-	@echo "Generating $@ ..."
+	@echo "Generating `basename $@` ..."
 	@devFile="`echo $< | cut -d . -f1`-dev.yang"; \
 	if [ -f $$devFile ] ; then devOpt="--deviation-module $$devFile"; fi; \
-	pyang -p ./ietf/ -f tree $$devOpt $< -o $@
+	pyang -p $(search_path) -f tree $$devOpt $< -o `basename $@`
 
 clean:
 	@echo "Removing files ..."
-	rm -rf $(out)
-	rm -rf $(out_ext)
-	rm -rf $(CVL_YANGAPI_DIR)
-	rm -rf allyangs.tree allyangs_tree.html
+	rm -rf *.yin *.tree

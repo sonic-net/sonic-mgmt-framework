@@ -2,16 +2,8 @@ module sonic-device-neighbor {
 	namespace "http://github.com/Azure/sonic-device-neighbor";
 	prefix sdn;
 
-	import ietf-yang-types {
-		prefix yang;
-	}
-
 	import ietf-inet-types {
-                prefix inet;
-        }
-
-	import sonic-common {
-		prefix scommon;
+		prefix inet;
 	}
 
 	import sonic-port {
@@ -34,42 +26,46 @@ module sonic-device-neighbor {
 	}
 
 	container sonic-device-neighbor {
-		list DEVICE_NEIGHBOR {
-			key "name";
 
-			leaf name{
-				type string;
-			}
+		container DEVICE_NEIGHBOR {
 
-			leaf mgmt_addr{
-				type inet:ip-address;
-			}
+			list DEVICE_NEIGHBOR_LIST {
+				key "name";
 
-			leaf hwsku {
-				type string;
-			}
+				leaf name{
+					type string;
+				}
 
-			leaf lo_addr {
-				type inet:ip-address;
-			}
+				leaf mgmt_addr{
+					type inet:ip-address;
+				}
 
-			leaf local_port {
-				type leafref {
-                                        path "/prt:sonic-port/prt:PORT/prt:ifname";
-                                }
-			}
+				leaf hwsku {
+					type string;
+				}
 
-			leaf type {
-				type enumeration {
-                                        enum ToRRouter;
-                                        enum LeafRouter;
-                                }
-			}
+				leaf lo_addr {
+					type inet:ip-address;
+				}
 
-			leaf port {
-				type leafref {
-                                        path "/prt:sonic-port/prt:PORT/prt:ifname";
-                                }
+				leaf local_port {
+					type leafref {
+						path "/prt:sonic-port/prt:PORT/prt:PORT_LIST/prt:ifname";
+					}
+				}
+
+				leaf type {
+					type enumeration {
+						enum ToRRouter;
+						enum LeafRouter;
+					}
+				}
+
+				leaf port {
+					type leafref {
+						path "/prt:sonic-port/prt:PORT/prt:PORT_LIST/prt:ifname";
+					}
+				}
 			}
 		}
 	}

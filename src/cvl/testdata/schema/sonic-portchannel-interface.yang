@@ -2,16 +2,8 @@ module sonic-portchannel-interface {
 	namespace "http://github.com/Azure/sonic-portchannel-interface";
 	prefix spchint;
 
-	import ietf-yang-types {
-		prefix yang;
-	}
-
 	import ietf-inet-types {
-                prefix inet;
-        }
-
-	import sonic-common {
-		prefix scommon;
+		prefix inet;
 	}
 
 	import sonic-portchannel {
@@ -33,19 +25,23 @@ module sonic-portchannel-interface {
 	}
 
 	container sonic-portchannel-interface {
-		list PORTCHANNEL_INTERFACE {
-			key "pch_name ip_prefix";
 
-			leaf pch_name{
-				type leafref {
-					path "/spc:sonic-portchannel/spc:PORTCHANNEL/spc:name";
-                                }
-			}
+		container PORTCHANNEL_INTERFACE {
 
-			leaf ip_prefix {
-				 mandatory true;
-                                 type inet:ip-prefix;
+			list PORTCHANNEL_INTERFACE_LIST {
+				key "pch_name ip_prefix";
 
+				leaf pch_name{
+					type leafref {
+						path "/spc:sonic-portchannel/spc:PORTCHANNEL/spc:PORTCHANNEL_LIST/spc:name";
+					}
+				}
+
+				leaf ip_prefix {
+					mandatory true;
+					type inet:ip-prefix;
+
+				}
 			}
 		}
 	}
