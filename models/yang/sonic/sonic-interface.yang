@@ -1,0 +1,63 @@
+module sonic-interface {
+	namespace "http://github.com/Azure/sonic-interface";
+	prefix sint;
+
+	import ietf-inet-types {
+		prefix inet;
+	}
+
+	import sonic-port {
+		prefix prt;
+	}
+
+	organization
+		"SONiC";
+
+	contact
+		"SONiC";
+
+	description
+		"SONIC INTERFACE";
+
+	revision 2019-07-02 {
+		description
+			"Initial revision.";
+	}
+
+	container sonic-interface {
+
+		container INTERFACE {
+
+			list INTERFACE_LIST {
+				key "portname";
+
+				leaf portname{
+					type leafref {
+						path "/prt:sonic-port/prt:PORT/prt:PORT_LIST/prt:ifname";
+					}
+				}
+
+				leaf vrf-name {
+					type string;
+				}
+
+			}
+
+			list INTERFACE_IPADDR_LIST {
+				key "portname ip_prefix";
+
+				leaf portname{
+					type leafref {
+						path "/prt:sonic-port/prt:PORT/prt:PORT_LIST/prt:ifname";
+					}
+				}
+
+				leaf ip_prefix {
+					mandatory true;
+					type inet:ip-prefix;
+
+				}
+			}
+		}
+	}
+}

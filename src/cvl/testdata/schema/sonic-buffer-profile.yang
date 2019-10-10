@@ -2,18 +2,6 @@ module sonic-buffer-profile {
 	namespace "http://github.com/Azure/sonic-buffer-profile";
 	prefix bpf;
 
-	import ietf-yang-types {
-		prefix yang;
-	}
-
-	import ietf-inet-types {
-		prefix inet;
-	}
-
-	import sonic-common {
-		prefix scommon;
-	}
-
 	import sonic-buffer-pool {
 		prefix bpl;
 	}
@@ -35,41 +23,44 @@ module sonic-buffer-profile {
 
 	container sonic-buffer-profile {
 
-		list BUFFER_PROFILE {
-			key "name";
+		container BUFFER_PROFILE {
 
-			leaf name {
-				type string;
-			}
+			list BUFFER_PROFILE_LIST {
+				key "name";
 
-			leaf static_th {
-				type uint64;
-			}
-
-			leaf dynamic_th {
-				type int64;
-			}
-
-			leaf size {
-				type uint64;
-			}
-
-			leaf pool {
-				type leafref {
-					path "/bpl:sonic-buffer-pool/bpl:BUFFER_POOL/bpl:name";
+				leaf name {
+					type string;
 				}
-			}
 
-			leaf xon_offset {
-				type uint64;
-			}
+				leaf static_th {
+					type uint64;
+				}
 
-			leaf xon {
-				type uint64;
-			}
+				leaf dynamic_th {
+					type int64;
+				}
 
-			leaf xoff {
-				type uint64;
+				leaf size {
+					type uint64;
+				}
+
+				leaf pool {
+					type leafref {
+						path "/bpl:sonic-buffer-pool/bpl:BUFFER_POOL/bpl:BUFFER_POOL_LIST/bpl:name";
+					}
+				}
+
+				leaf xon_offset {
+					type uint64;
+				}
+
+				leaf xon {
+					type uint64;
+				}
+
+				leaf xoff {
+					type uint64;
+				}
 			}
 		}
 	}

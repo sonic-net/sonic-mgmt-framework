@@ -1,0 +1,35 @@
+{
+    "ACL_TABLE": [
+      {
+        "aclname": "MyACL3_ACL_IPV4",
+        "policy_desc": "Description for MyACL3",
+        "stage": "EGRESS",
+        "type": "L3",
+        "ports": ["Ethernet0"]
+      },
+      {
+        "aclname": "MyACL4_ACL_IPV4",
+        "policy_desc": "Description for MyACL4",
+        "stage": "EGRESS",
+        "type": "L3",
+        "ports": ["Ethernet4","Ethernet8"]
+      }
+    ],
+    "ACL_RULE": [
+      {
+        "aclname": "MyACL3_ACL_IPV4",
+        "rulename": "RULE_1",
+        "PRIORITY": 65536,
+        "RULE_DESCRIPTION": "MyACL3_ACL_IPV4 rule description",
+        "PACKET_ACTION": "FORWARD",
+        "IP_TYPE": "ipv4",
+        "IP_PROTOCOL": 6,
+        "SRC_IP": "10.1.1.1/32",
+        "DST_IP": "20.2.2.2/32",
+        "L4_SRC_PORT_RANGE": "13000-14000",
+        "L4_DST_PORT_RANGE": "9000-12000",
+        "DSCP": 2
+      }
+    ]
+
+} 

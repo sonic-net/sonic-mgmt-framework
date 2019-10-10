@@ -1,0 +1,196 @@
+module openconfig-acl-annot {
+
+    yang-version "1";
+
+    namespace "http://openconfig.net/yang/annotation";
+    prefix "oc-acl-annot";
+
+    import sonic-extensions { prefix sonic-ext; }
+    import openconfig-acl { prefix oc-acl; }
+    import openconfig-packet-match { prefix oc-pkt-match; }
+
+    deviation /oc-acl:acl {
+      deviate add {
+        sonic-ext:post-transformer "acl_post_xfmr";
+      }
+    }
+
+    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set {
+      deviate add {
+        sonic-ext:table-name "ACL_TABLE";
+      }
+    }
+
+    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:config/oc-acl:name {
+      deviate add {
+        sonic-ext:field-transformer "acl_set_name_xfmr";
+      }
+    }
+
+    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:config/oc-acl:type {
+        deviate add {
+          sonic-ext:field-transformer "acl_type_field_xfmr";
+        }
+    }
+
+    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:config/oc-acl:description {
+      deviate add {
+        sonic-ext:field-name "policy_desc";
+      }
+    }
+
+    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:state/oc-acl:name {
+      deviate add {
+        sonic-ext:field-transformer "acl_set_name_xfmr";
+      }
+    }
+
+    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:state/oc-acl:type {
+        deviate add {
+          sonic-ext:field-transformer "acl_type_field_xfmr";
+        }
+    }
+
+    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:state/oc-acl:description {
+      deviate add {
+        sonic-ext:field-name "policy_desc";
+      }
+    }
+
+    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry {
+      deviate add {
+        sonic-ext:table-name "ACL_RULE";
+        sonic-ext:key-transformer "acl_entry_key_xfmr";
+      }
+    }
+
+    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-acl:ipv4 {
+        deviate add {
+          sonic-ext:get-validate "validate_ipv4";
+        }
+    }
+
+    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-acl:ipv6 {
+        deviate add {
+          sonic-ext:get-validate "validate_ipv6";
+        }
+    }
+
+    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-acl:config/oc-acl:sequence-id {
+      deviate add {
+        sonic-ext:field-transformer "acl_entry_sequenceid_xfmr";
+      }
+    }
+
+    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-pkt-match:ipv4/oc-pkt-match:config/oc-pkt-match:source-address {
+      deviate add {
+        sonic-ext:field-name "SRC_IP";
+      }
+    }
+
+    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-pkt-match:ipv4/oc-pkt-match:config/oc-pkt-match:destination-address {
+      deviate add {
+        sonic-ext:field-name "DST_IP";
+      }
+    }
+
+    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-pkt-match:ipv4/oc-pkt-match:config/oc-pkt-match:protocol {
+      deviate add {
+        sonic-ext:field-transformer "acl_ip_protocol_xfmr";
+      }
+    }
+
+    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-pkt-match:ipv4/oc-pkt-match:state/oc-pkt-match:source-address {
+      deviate add {
+        sonic-ext:field-name "SRC_IP";
+      }
+    }
+
+    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-pkt-match:ipv4/oc-pkt-match:state/oc-pkt-match:destination-address {
+      deviate add {
+        sonic-ext:field-name "DST_IP";
+      }
+    }
+
+    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-pkt-match:ipv4/oc-pkt-match:state/oc-pkt-match:protocol {
+      deviate add {
+        sonic-ext:field-transformer "acl_ip_protocol_xfmr";
+      }
+    }
+
+    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-pkt-match:ipv6/oc-pkt-match:config/oc-pkt-match:source-address {
+      deviate add {
+        sonic-ext:field-name "SRC_IP";
+      }
+    }
+
+    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-pkt-match:ipv6/oc-pkt-match:config/oc-pkt-match:destination-address {
+      deviate add {
+        sonic-ext:field-name "DST_IP";
+      }
+    }
+
+    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-pkt-match:ipv6/oc-pkt-match:config/oc-pkt-match:protocol {
+      deviate add {
+        sonic-ext:field-transformer "acl_ip_protocol_xfmr";
+      }
+    }
+
+    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-pkt-match:transport/oc-pkt-match:config/oc-pkt-match:source-port {
+      deviate add {
+        sonic-ext:field-transformer "acl_source_port_xfmr";
+      }
+    }
+
+    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-pkt-match:transport/oc-pkt-match:config/oc-pkt-match:destination-port {
+      deviate add {
+        sonic-ext:field-transformer "acl_destination_port_xfmr";
+      }
+    }
+
+    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-pkt-match:transport/oc-pkt-match:state/oc-pkt-match:source-port {
+      deviate add {
+        sonic-ext:field-transformer "acl_source_port_xfmr";
+      }
+    }
+
+    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-pkt-match:transport/oc-pkt-match:state/oc-pkt-match:destination-port {
+      deviate add {
+        sonic-ext:field-transformer "acl_destination_port_xfmr";
+      }
+    }
+
+    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-pkt-match:transport/oc-pkt-match:config/oc-pkt-match:tcp-flags {
+      deviate add {
+        sonic-ext:field-transformer "acl_tcp_flags_xfmr";
+      }
+    }
+
+    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-pkt-match:l2/oc-pkt-match:config/oc-pkt-match:ethertype {
+      deviate add {
+        sonic-ext:field-transformer "acl_l2_ethertype_xfmr";
+      }
+    }
+
+    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-acl:actions/oc-acl:config/oc-acl:forwarding-action {
+      deviate add {
+        sonic-ext:field-name "PACKET_ACTION";
+        sonic-ext:field-transformer "acl_forwarding_action_xfmr";
+      }
+    }
+
+    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-acl:actions/oc-acl:state/oc-acl:forwarding-action {
+      deviate add {
+        sonic-ext:field-name "PACKET_ACTION";
+        sonic-ext:field-transformer "acl_forwarding_action_xfmr";
+      }
+    }
+
+    deviation /oc-acl:acl/oc-acl:interfaces {
+      deviate add {
+        sonic-ext:subtree-transformer "acl_port_bindings_xfmr";
+      }
+    }
+
+}
+
