@@ -20,7 +20,8 @@ module sonic-sflow {
         }
 
         container sonic-sflow {
-                list SFLOW_COLLECTOR {
+            container SFLOW_COLLECTOR {
+                list SFLOW_COLLECTOR_LIST {
                     max-elements 3;
                     key "collector_name";
 
@@ -37,8 +38,10 @@ module sonic-sflow {
                     }
 
                 }
+            }
 
-                list SFLOW_SESSION {
+            container SFLOW_SESSION {
+                list SFLOW_SESSION_LIST {
                     key "ifname";
 
                     leaf ifname {
@@ -53,9 +56,10 @@ module sonic-sflow {
                         type uint32;
                     }
                 }
+            }
 
-                container SFLOW {
-                    container GLOBAL {
+            container SFLOW {
+              //sonic-ext:key-name "GLOBAL";
 
                     leaf admin_state {
                         type scommon:admin-status;
@@ -68,7 +72,6 @@ module sonic-sflow {
                     leaf agent_id {
                         type string;
                     }
-                    }
-                }
+           }
         }
 }
