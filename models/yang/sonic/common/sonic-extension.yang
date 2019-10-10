@@ -1,0 +1,61 @@
+
+module sonic-extension {
+	namespace "http://github.com/Azure/sonic-extension";
+	prefix sonic-ext;
+
+	organization
+		"SONiC";
+
+	contact
+		"SONiC";
+
+	description
+		"SONIC Extension";
+
+	revision 2019-09-18 {
+		description
+			"Initial revision.";
+	}
+
+	extension custom-handler {
+		description
+			"Node should be handled by custom handler";
+		argument "name";
+	}
+
+	extension db-name {
+		description
+			"DB name, e.g. APPL_DB, CONFIG_DB";
+		argument "value";
+	}
+
+	extension key-delim {
+		description
+			"Key delimeter, e.g. - |, :";
+		argument "value";
+	}
+
+	extension key-pattern {
+		description
+			"Key pattern, e.g. - ACL_RULE|{aclname}|{rulename}";
+		argument "value";
+	}
+
+	extension map-list {
+		description
+			"If it is a map list";
+		argument "value";
+	}
+
+	extension map-leaf {
+		description
+			"Map leaf names";
+		argument "value";
+	}
+
+	extension pf-check {
+		description
+			"Platform specific validation";
+		argument "handler"; 
+	}
+}

@@ -1,4 +1,20 @@
 <?xml version="1.0"?>
+<!--
+Copyright 2019 Dell, Inc.  
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+--> 
+
 <!DOCTYPE CLISH_MODULE [
 ]>
 
@@ -63,6 +79,42 @@
 	    python $SONIC_CLI_ROOT/sonic-cli-if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config_prefix_length ${iface} ${addr}
     </ACTION>
     </COMMAND>
-  </VIEW>
+</VIEW>
+
+<VIEW name="configure-if-mgmt-view">
+
+    <COMMAND
+        name="ip"
+        help="Interface Internet Protocol config commands"
+    />
+    <COMMAND
+        name="no ip"
+        help="Interface Internet Protocol config commands"
+	>
+    </COMMAND>
+
+    <COMMAND
+        name="ip address"
+        help="IP address" >
+        <PARAM
+            name="addr"
+            help="IP address with mask"
+            ptype="IP_ADDR_MASK" />
+        <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config ${iface} ${addr} </ACTION>
+    </COMMAND>
+
+    <COMMAND
+        name="no ip address"
+	help="Interface Internet Protocol config commands"
+	>
+	<PARAM
+	    name="addr"
+            help="IP address"
+	    ptype="IP_ADDR" />
+    <ACTION>
+        python $SONIC_CLI_ROOT/sonic-cli-if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config_prefix_length ${iface} ${addr}
+    </ACTION>
+    </COMMAND>
+</VIEW>
 
 </CLISH_MODULE>

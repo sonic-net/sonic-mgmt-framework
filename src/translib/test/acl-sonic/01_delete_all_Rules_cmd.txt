@@ -1,0 +1,1 @@
+./translibtest -o "delete" -u "/sonic-acl:sonic-acl" -logtostderr
