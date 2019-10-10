@@ -1,3 +1,21 @@
+////////////////////////////////////////////////////////////////////////////////
+//                                                                            //
+//  Copyright 2019 Dell, Inc.                                                 //
+//                                                                            //
+//  Licensed under the Apache License, Version 2.0 (the "License");           //
+//  you may not use this file except in compliance with the License.          //
+//  You may obtain a copy of the License at                                   //
+//                                                                            //
+//  http://www.apache.org/licenses/LICENSE-2.0                                //
+//                                                                            //
+//  Unless required by applicable law or agreed to in writing, software       //
+//  distributed under the License is distributed on an "AS IS" BASIS,         //
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  //
+//  See the License for the specific language governing permissions and       //
+//  limitations under the License.                                            //
+//                                                                            //
+////////////////////////////////////////////////////////////////////////////////
+
 package transformer
 
 import (
@@ -429,5 +447,33 @@ func stripAugmentedModuleNames(xpath string) string {
         }
         path := "/" + strings.Join(pathList, "/")
         return path
+}
+
+func XfmrRemoveXPATHPredicates(xpath string) (string, error) {
+        pathList := strings.Split(xpath, "/")
+        pathList = pathList[1:]
+        for i, pvar := range pathList {
+                if strings.Contains(pvar, "[") && strings.Contains(pvar, "]") {
+                        si, ei := strings.Index(pvar, "["), strings.Index(pvar, "]")
+                        // substring contains [] entries
+                        if (si < ei) {
+                                pvar = strings.Split(pvar, "[")[0]
+                                pathList[i] = pvar
+
+                        } else {
+                                // This substring contained a ] before a [.
+                                return "", fmt.Errorf("Incorrect ordering of [] within substring %s of %s, [ pos: %d, ] pos: %d", pvar, xpath, si, ei)
+                        }
+                } else if strings.Contains(pvar, "[") || strings.Contains(pvar, "]") {
+                        // This substring contained a mismatched pair of []s.
+                        return "", fmt.Errorf("Mismatched brackets within substring %s of %s", pvar, xpath)
+                }
+                if (i > 0) && strings.Contains(pvar, ":") {
+                        pvar = strings.Split(pvar,":")[1]
+                        pathList[i] = pvar
+                }
+        }
+        path := "/" + strings.Join(pathList, "/")
+        return path,nil
 }
 

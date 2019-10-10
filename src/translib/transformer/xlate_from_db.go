@@ -1,3 +1,21 @@
+////////////////////////////////////////////////////////////////////////////////
+//                                                                            //
+//  Copyright 2019 Dell, Inc.                                                 //
+//                                                                            //
+//  Licensed under the Apache License, Version 2.0 (the "License");           //
+//  you may not use this file except in compliance with the License.          //
+//  You may obtain a copy of the License at                                   //
+//                                                                            //
+//  http://www.apache.org/licenses/LICENSE-2.0                                //
+//                                                                            //
+//  Unless required by applicable law or agreed to in writing, software       //
+//  distributed under the License is distributed on an "AS IS" BASIS,         //
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  //
+//  See the License for the specific language governing permissions and       //
+//  limitations under the License.                                            //
+//                                                                            //
+////////////////////////////////////////////////////////////////////////////////
+
 package transformer
 
 import (
@@ -20,7 +38,7 @@ type typeMapOfInterface map[string]interface{}
 
 func xfmrHandlerFunc(inParams XfmrParams) (map[string]interface{}, error) {
     result := make(map[string]interface{})
-    xpath, _ := RemoveXPATHPredicates(inParams.uri)
+    xpath, _ := XfmrRemoveXPATHPredicates(inParams.uri)
     log.Infof("Subtree transformer function(\"%v\") invoked for yang path(\"%v\").", xYangSpecMap[xpath].xfmrFunc, xpath)
     _, err := XlateFuncCall(dbToYangXfmrFunc(xYangSpecMap[xpath].xfmrFunc), inParams)
     if err != nil {
@@ -60,10 +78,7 @@ func xfmrHandlerFunc(inParams XfmrParams) (map[string]interface{}, error) {
 }
 
 func leafXfmrHandlerFunc(inParams XfmrParams) (map[string]interface{}, error) {
-    xpath, _ := RemoveXPATHPredicates(inParams.uri)
-    if strings.Count(xpath, ":") > 1 {
-        xpath = stripAugmentedModuleNames(xpath)
-    }
+    xpath, _ := XfmrRemoveXPATHPredicates(inParams.uri)
     ret, err := XlateFuncCall(dbToYangXfmrFunc(xYangSpecMap[xpath].xfmrFunc), inParams)
     if err != nil {
         return nil, err
@@ -77,7 +92,7 @@ func leafXfmrHandlerFunc(inParams XfmrParams) (map[string]interface{}, error) {
 }
 
 func validateHandlerFunc(inParams XfmrParams) (bool) {
-    xpath, _ := RemoveXPATHPredicates(inParams.uri)
+    xpath, _ := XfmrRemoveXPATHPredicates(inParams.uri)
     ret, err := XlateFuncCall(xYangSpecMap[xpath].validateFunc, inParams)
     if err != nil {
         return false
@@ -271,7 +286,12 @@ func sonicDbToYangDataFill(uri string, xpath string, dbIdx db.DBNum, table strin
 					var mapSlice []typeMapOfInterface
 					curUri := xpath + "/" + yangChldName
 					mapSlice = sonicDbToYangListFill(curUri, curUri, dbIdx, table, key, dbDataMap)
-					if len(mapSlice) > 0 {
+                                       if len(key) > 0 && len(mapSlice) == 1 {// Single instance query. Don't return array of maps
+                                               for k, val := range mapSlice[0] {
+                                                       resultMap[k] = val
+                                               }
+
+                                        } else if len(mapSlice) > 0 {
 						resultMap[yangChldName] = mapSlice
 					} else {
 						log.Infof("Empty list for xpath(%v)", curUri)
@@ -327,7 +347,12 @@ func directDbToYangJsonCreate(uri string, dbDataMap *map[db.DBNum]map[string]map
 				sonicDbToYangDataFill(uri, xpath, cdb, table, key, dbDataMap, resultMap)
 			} else if yangType == YANG_LIST {
 				mapSlice := sonicDbToYangListFill(uri, xpath, cdb, table, key, dbDataMap)
-				if len(mapSlice) > 0 {
+				if len(key) > 0 && len(mapSlice) == 1 {// Single instance query. Don't return array of maps
+                                                for k, val := range mapSlice[0] {
+                                                        resultMap[k] = val
+                                                }
+
+                                } else if len(mapSlice) > 0 {
 					pathl := strings.Split(xpath, "/")
 					lname := pathl[len(pathl) - 1]
 					resultMap[lname] = mapSlice
@@ -380,7 +405,7 @@ func fillDbDataMapForTbl(uri string, xpath string, tblName string, tblKey string
 
 // Assumption: All tables are from the same DB
 func dbDataFromTblXfmrGet(tbl string, inParams XfmrParams, dbDataMap *map[db.DBNum]map[string]map[string]db.Value) error {
-    xpath, _ := RemoveXPATHPredicates(inParams.uri)
+    xpath, _ := XfmrRemoveXPATHPredicates(inParams.uri)
     curDbDataMap, err := fillDbDataMapForTbl(inParams.uri, xpath, tbl, inParams.key, inParams.curDb, inParams.dbs)
     if err == nil {
         mapCopy((*dbDataMap)[inParams.curDb], curDbDataMap[inParams.curDb])
@@ -430,7 +455,7 @@ func yangListDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, x
 						for k, kv := range curKeyMap {
 							curMap[k] = kv
 						}
-						curXpath, _ := RemoveXPATHPredicates(curUri)
+						curXpath, _ := XfmrRemoveXPATHPredicates(curUri)
 						yangDataFill(dbs, ygRoot, curUri, curXpath, dbDataMap, curMap, tbl, dbKey, cdb, validate)
 						mapSlice = append(mapSlice, curMap)
 					}
