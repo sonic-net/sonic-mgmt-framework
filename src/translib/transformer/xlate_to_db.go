@@ -314,11 +314,20 @@ func sonicYangReqToDbMapDelete(xpathPrefix string, tableName string, keyName str
                fieldName := tokens[len(tokens)-1]
                dbSpecField := tableName + "/" + fieldName
                _, ok := xDbSpecMap[dbSpecField]
-               if ok && xDbSpecMap[dbSpecField].fieldType == "leaf" {
-                       // Specific leaf case
-                        dbVal.Field = make(map[string]string)
-                        dbVal.Field[fieldName] = ""
-               }
+	       if ok {
+		       yangType := xDbSpecMap[dbSpecField].fieldType
+		       // terminal node case
+		       if yangType == YANG_LEAF_LIST {
+			       fieldName = fieldName + "@"
+			       dbVal.Field = make(map[string]string)
+			       dbVal.Field[fieldName] = ""
+		       }
+		       if yangType == YANG_LEAF {
+			       dbVal.Field = make(map[string]string)
+			       dbVal.Field[fieldName] = ""
+		       }
+
+	       }
 	    }
             result[tableName][keyName] = dbVal
         } else {

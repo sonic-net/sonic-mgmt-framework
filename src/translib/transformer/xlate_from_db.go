@@ -159,7 +159,8 @@ func processLfLstDbToYang(fieldXpath string, dbFldVal string) []interface{} {
 	const INTBASE = 10
 	yngTerminalNdDtType := xDbSpecMap[fieldXpath].dbEntry.Type.Kind
 	switch  yngTerminalNdDtType {
-	case yang.Yenum, yang.Ystring, yang.Yunion:
+	case yang.Yenum, yang.Ystring, yang.Yunion, yang.Yleafref:
+		// TODO handle leaf-ref base type
 		log.Info("DB leaf-list and Yang leaf-list are of same data-type")
 		for _, fldVal := range valLst {
 			resLst = append(resLst, fldVal)
@@ -196,7 +197,7 @@ func sonicDbToYangTerminalNodeFill(tblName string, field string, value string, r
 	}
 
 	yangType := yangTypeGet(xDbSpecMapEntry.dbEntry)
-	if yangType == "leaf-list" {
+	if yangType ==  YANG_LEAF_LIST {
 		/* this should never happen but just adding for safetty */
 		if !strings.HasSuffix(field, "@") {
 			log.Warningf("Leaf-list in Sonic yang should also be a leaf-list in DB, its not for xpath %v", fieldXpath)
@@ -249,7 +250,11 @@ func sonicDbToYangDataFill(uri string, xpath string, dbIdx db.DBNum, table strin
 
 				if  chldYangType == YANG_LEAF || chldYangType == YANG_LEAF_LIST {
 					log.Infof("tbl(%v), k(%v), yc(%v)", table, key, yangChldName)
-					sonicDbToYangTerminalNodeFill(table, yangChldName, (*dbDataMap)[dbIdx][table][key].Field[yangChldName], resultMap)
+					fldName := yangChldName
+					if chldYangType == YANG_LEAF_LIST  {
+						fldName = fldName + "@"
+					}
+					sonicDbToYangTerminalNodeFill(table, fldName, (*dbDataMap)[dbIdx][table][key].Field[fldName], resultMap)
 				} else if chldYangType == YANG_CONTAINER {
 					curMap := make(map[string]interface{})
 					curUri := xpath + "/" + yangChldName
@@ -291,7 +296,7 @@ func directDbToYangJsonCreate(uri string, dbDataMap *map[db.DBNum]map[string]map
 				fieldName := tokens[len(tokens)-1]
 				dbSpecField := table + "/" + fieldName
 				_, ok := xDbSpecMap[dbSpecField]
-				if ok && xDbSpecMap[dbSpecField].fieldType == "leaf" {
+				if ok && (xDbSpecMap[dbSpecField].fieldType == YANG_LEAF || xDbSpecMap[dbSpecField].fieldType == YANG_LEAF_LIST) {
 					dbNode = xDbSpecMap[dbSpecField]
 					xpath = dbSpecField
 				} else {
@@ -311,6 +316,9 @@ func directDbToYangJsonCreate(uri string, dbDataMap *map[db.DBNum]map[string]map
 
 			if yangType == YANG_LEAF || yangType == YANG_LEAF_LIST {
 				fldName := xDbSpecMap[xpath].dbEntry.Name
+				if yangType == YANG_LEAF_LIST  {
+					fldName = fldName + "@"
+				}
 				sonicDbToYangTerminalNodeFill(table, fldName, (*dbDataMap)[cdb][table][key].Field[fldName], resultMap)
 			} else if yangType == YANG_CONTAINER {
 				if len(table) > 0 {
@@ -470,7 +478,7 @@ func terminalNodeProcess(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string
 		/* if there is no transformer extension/annotation then it means leaf-list in yang is also leaflist in db */
 		if len(dbFldName) > 0  && !xYangSpecMap[xpath].isKey {
 			yangType := yangTypeGet(xYangSpecMap[xpath].yangEntry)
-			if yangType == "leaf-list" {
+			if yangType ==  YANG_LEAF_LIST {
 				dbFldName += "@"
 				val, ok := (*dbDataMap)[cdb][tbl][tblKey].Field[dbFldName]
 				if ok {

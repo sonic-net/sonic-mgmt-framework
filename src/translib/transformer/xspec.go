@@ -41,7 +41,9 @@ type dbInfo  struct {
 
 var xYangSpecMap  map[string]*yangXpathInfo
 var xDbSpecMap    map[string]*dbInfo
-var xDbSpecOrdTblMap map[string][]string //map of module-name to ordered list of db tables { "sonic-acl" : ["ACL_TABLE", "ACL_RULE"] }
+//var xDbSpecOrdTblMap map[string][]string //map of module-name to ordered list of db tables { "sonic-acl" : ["ACL_TABLE", "ACL_RULE"] }
+//map of module-name to ordered list of db tables { "sonic-acl" : {"ACL_TABLE", "ACL_RULE"} }
+var xDbSpecOrdTblMap = map[string][]string { "openconfig-interfaces" : {"PORT", "INTERFACE", "MGMT_PORT", "MGMT_INTERFACE", "PORT_TABLE", "INTF_TABLE", "MGMT_PORT_TABLE", "MGMT_INTF_TABLE"}}
 
 /* update transformer spec with db-node */
 func updateDbTableData (xpath string, xpathData *yangXpathInfo, tableName string) {
@@ -253,7 +255,7 @@ func dbMapBuild(entries []*yang.Entry) {
 		return
 	}
 	xDbSpecMap = make(map[string]*dbInfo)
-	xDbSpecOrdTblMap = make(map[string][]string)
+	//xDbSpecOrdTblMap = make(map[string][]string)
 
 	for _, e := range entries {
 		if e == nil || len(e.Dir) == 0 {
@@ -261,7 +263,9 @@ func dbMapBuild(entries []*yang.Entry) {
 		}
 		moduleNm := e.Name
 		log.Infof("Module name(%v)", moduleNm)
-		xDbSpecOrdTblMap[moduleNm] = []string{}
+		/*if _, ok := xDbSpecOrdTblMap[moduleNm]; !ok {
+			xDbSpecOrdTblMap[moduleNm] = []string{}
+		}*/
 		trkTpCnt := true
 		dbMapFill("", "", moduleNm, trkTpCnt, xDbSpecMap, e)
 	}
@@ -562,7 +566,9 @@ func updateSchemaOrderedMap(module string, entry *yang.Entry) {
 			}
 		}
 	}
-	xDbSpecOrdTblMap[module] = children
+	if _, ok := xDbSpecOrdTblMap[module]; !ok {
+		xDbSpecOrdTblMap[module] = children
+	}
 }
 
 func updateChildTable(keyspec []KeySpec, chlist *[]string) ([]string) {
