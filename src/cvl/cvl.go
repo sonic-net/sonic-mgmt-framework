@@ -375,7 +375,7 @@ func storeModelInfo(modelFile string, module *yparser.YParserModule) { //such mo
 		maxElemVal := xmlquery.Find(listNode, "/max-elements/@value")
 		if maxElemVal != nil {
 			//Update list size
-			tableInfo.redisTableSize, _ = strconv.Atoi(maxElemVal[0].Data)
+			tableInfo.redisTableSize, _ = strconv.Atoi(maxElemVal[0].FirstChild.Data)
 		}
 
 		//Find all 'must' expression and store the against its parent node

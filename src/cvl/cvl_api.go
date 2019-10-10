@@ -599,16 +599,6 @@ func (c *CVL) GetDepTables(yangModule string, tableName string) ([]string, CVLRe
 
 	c.addDepTables(tblMap, tableName)
 
-	/*
-	//Get all the table names under this model
-	for tblName, _ := range modelInfo.tableInfo {
-		//if (tblNameInfo.modelName == yangModule) {
-		//	tableList = append(tableList, tblName)
-		//}
-		tableList = append(tableList, tblName)
-	}
-	*/
-
 	for tblName, _ := range tblMap {
 		tableList = append(tableList, tblName)
 	}
