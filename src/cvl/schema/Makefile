@@ -28,7 +28,6 @@ out_common=$(patsubst %.yang, %.yin, $(shell ls -1 $(sonic_yang_common)/*.yang |
 out_tree=$(patsubst %.yang, %.tree, $(src_files)) 
 search_path=$(sonic_yang):$(sonic_yang_common):$(sonic_yang_common)/ietf
 
-#all: yamlGen allyangs.tree allyangs_tree.html schema
 all: schema
 
 schema: $(out) $(out_common)

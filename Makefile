@@ -48,7 +48,8 @@ GO_DEPS_LIST = github.com/gorilla/mux \
                gopkg.in/go-playground/validator.v9 \
                golang.org/x/crypto/ssh \
 	       github.com/antchfx/jsonquery \
-	       github.com/antchfx/xmlquery
+	       github.com/antchfx/xmlquery \
+	       github.com/philopon/go-toposort
 
 
 REST_BIN = $(BUILD_DIR)/rest_server/main
@@ -125,7 +126,6 @@ install:
 	$(INSTALL) -D $(TOPDIR)/models/yang/sonic/common/*.yang $(DESTDIR)/usr/models/yang/
 	$(INSTALL) -D $(TOPDIR)/src/cvl/schema/*.yin $(DESTDIR)/usr/sbin/schema/
 	$(INSTALL) -D $(TOPDIR)/src/cvl/testdata/schema/*.yin $(DESTDIR)/usr/sbin/schema/
-	$(INSTALL) -D $(TOPDIR)/src/cvl/schema/*.yang $(DESTDIR)/usr/models/yang/
 	$(INSTALL) -D $(TOPDIR)/models/yang/*.yang $(DESTDIR)/usr/models/yang/
 	$(INSTALL) -D $(TOPDIR)/config/transformer/models_list $(DESTDIR)/usr/models/yang/
 	$(INSTALL) -D $(TOPDIR)/models/yang/common/*.yang $(DESTDIR)/usr/models/yang/
