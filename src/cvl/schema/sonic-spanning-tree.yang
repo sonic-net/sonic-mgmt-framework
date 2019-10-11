@@ -325,6 +325,10 @@ module sonic-spanning-tree {
                 type boolean;
             }
 
+            leaf bpdu_filter {
+                type boolean;
+            }
+
             leaf bpdu_guard_do_disable {
                 type boolean;
             }
