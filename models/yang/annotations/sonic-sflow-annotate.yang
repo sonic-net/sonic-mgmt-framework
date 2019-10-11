@@ -1,0 +1,22 @@
+module sonic-sflow-annot {
+
+    yang-version "";
+
+    namespace "http://openconfig.net/yang/annotation/sflow-annot";
+    prefix "sflow-annot";
+
+    import ietf-yang-types { prefix yang; }
+    import ietf-inet-types { prefix inet; }
+    import sonic-common { prefix scommon; }
+    import sonic-sflow { prefix sflow; }
+
+
+    deviation /sflow:sonic-sflow/sflow:SFLOW {
+      deviate add {
+        sonic-ext:key-name "GLOBAL";
+      }
+    }
+
+
+}
+
