@@ -84,10 +84,10 @@ limitations under the License.
         />
     <!--=======================================================-->
     <PTYPE
-        help=""
-		method="integer"
         name="RANGE_MTU"
-		pattern="1312..&MAX_MTU;"
+        method="integer"
+        pattern="1312..&MAX_MTU;"
+        help=""
 	/>
     <!--=======================================================-->
     <PTYPE
