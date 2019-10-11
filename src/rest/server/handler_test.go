@@ -217,6 +217,31 @@ func TestPathConv(t *testing.T) {
 		"*",
 		"/test/id=NOTEMPLATE",
 		"/test/id=NOTEMPLATE"))
+
+	t.Run("no_empty_params", testPathConv2(
+		map[string]string{},
+		"/test/id={name}",
+		"/test/id=X",
+		"/test/id[name=X]"))
+
+	t.Run("no_one_param", testPathConv2(
+		map[string]string{"name1": "name"},
+		"/test/id={name1}",
+		"/test/id=X",
+		"/test/id[name=X]"))
+
+	t.Run("no_multi_params", testPathConv2(
+		map[string]string{"name1": "name", "name2": "name"},
+		"/test/id={name1}/data/ref={name2}",
+		"/test/id=X/data/ref=Y",
+		"/test/id[name=X]/data/ref[name=Y]"))
+
+	t.Run("no_extra_params", testPathConv2(
+		map[string]string{"name1": "name", "name2": "name"},
+		"/test/id={name1}",
+		"/test/id=X",
+		"/test/id[name=X]"))
+
 }
 
 // test handler to invoke getPathForTranslib and write the conveted
@@ -231,6 +256,10 @@ var pathConvHandler = func(w http.ResponseWriter, r *http.Request) {
 }
 
 func testPathConv(template, path, expPath string) func(*testing.T) {
+	return testPathConv2(nil, template, path, expPath)
+}
+
+func testPathConv2(m map[string]string, template, path, expPath string) func(*testing.T) {
 	return func(t *testing.T) {
 		router := mux.NewRouter()
 		if template == "*" {
@@ -240,8 +269,16 @@ func testPathConv(template, path, expPath string) func(*testing.T) {
 			router.HandleFunc(template, pathConvHandler)
 		}
 
+		r := httptest.NewRequest("GET", path, nil)
 		w := httptest.NewRecorder()
-		router.ServeHTTP(w, httptest.NewRequest("GET", path, nil))
+
+		if m != nil {
+			rc, r1 := GetContext(r)
+			rc.PMap = m
+			r = r1
+		}
+
+		router.ServeHTTP(w, r)
 
 		convPath := w.Body.String()
 		if convPath != expPath {
