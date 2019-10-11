@@ -112,7 +112,7 @@ func TraverseDb(dbs [db.MaxDB]*db.DB, spec KeySpec, result *map[db.DBNum]map[str
 			}
 		}
 	} else {
-		// TODO - GetEntry suuport with regex patten, 'abc*' for optimization
+		// TODO - GetEntry support with regex patten, 'abc*' for optimization
 		keys, err := dbs[spec.dbNum].GetKeys(&spec.Ts)
 		if err != nil {
 			return err
@@ -258,7 +258,7 @@ func XlateToDb(path string, opcode int, d *db.DB, yg *ygot.GoStruct, yt *interfa
 		return nil, err
 	}
 
-	// table.key.fields
+	// Map contains table.key.fields
 	var result = make(map[string]map[string]db.Value)
 	switch opcode {
 	case CREATE:
