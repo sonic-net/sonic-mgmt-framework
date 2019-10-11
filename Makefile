@@ -1,9 +1,21 @@
-#######################################################################
-#
-# Copyright 2019 Broadcom. All rights reserved.
-# The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
-#
-#######################################################################
+################################################################################
+#                                                                              #
+#  Copyright 2019 Broadcom. The term Broadcom refers to Broadcom Inc. and/or   #
+#  its subsidiaries.                                                           #
+#                                                                              #
+#  Licensed under the Apache License, Version 2.0 (the "License");             #
+#  you may not use this file except in compliance with the License.            #
+#  You may obtain a copy of the License at                                     #
+#                                                                              #
+#     http://www.apache.org/licenses/LICENSE-2.0                               #
+#                                                                              #
+#  Unless required by applicable law or agreed to in writing, software         #
+#  distributed under the License is distributed on an "AS IS" BASIS,           #
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.    #
+#  See the License for the specific language governing permissions and         #
+#  limitations under the License.                                              #
+#                                                                              #
+################################################################################
 
 .PHONY: all clean cleanall codegen rest-server rest-clean yamlGen cli
 
@@ -64,6 +76,7 @@ cli: rest-server
 cvl: go-deps go-patch go-redis-patch
 	$(MAKE) -C src/cvl
 	$(MAKE) -C src/cvl/schema
+	$(MAKE) -C src/cvl/testdata/schema
 
 cvl-test:
 	$(MAKE) -C src/cvl gotest
@@ -82,6 +95,7 @@ codegen:
 
 yamlGen:
 	$(MAKE) -C models/yang
+	$(MAKE) -C models/yang/sonic
 
 go-patch: go-deps
 	cd $(BUILD_GOPATH)/src/github.com/openconfig/ygot/; git reset --hard HEAD; git checkout 724a6b18a9224343ef04fe49199dfb6020ce132a 2>/dev/null ; true; \
@@ -109,7 +123,10 @@ install:
 	$(INSTALL) -d $(DESTDIR)/usr/sbin/schema/
 	$(INSTALL) -d $(DESTDIR)/usr/sbin/lib/
 	$(INSTALL) -d $(DESTDIR)/usr/models/yang/
+	$(INSTALL) -D $(TOPDIR)/models/yang/sonic/*.yang $(DESTDIR)/usr/models/yang/
+	$(INSTALL) -D $(TOPDIR)/models/yang/sonic/common/*.yang $(DESTDIR)/usr/models/yang/
 	$(INSTALL) -D $(TOPDIR)/src/cvl/schema/*.yin $(DESTDIR)/usr/sbin/schema/
+	$(INSTALL) -D $(TOPDIR)/src/cvl/testdata/schema/*.yin $(DESTDIR)/usr/sbin/schema/
 	$(INSTALL) -D $(TOPDIR)/src/cvl/schema/*.yang $(DESTDIR)/usr/models/yang/
 	$(INSTALL) -D $(TOPDIR)/models/yang/*.yang $(DESTDIR)/usr/models/yang/
 	$(INSTALL) -D $(TOPDIR)/config/transformer/models_list $(DESTDIR)/usr/models/yang/

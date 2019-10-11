@@ -1,3 +1,22 @@
+////////////////////////////////////////////////////////////////////////////////
+//                                                                            //
+//  Copyright 2019 Broadcom. The term Broadcom refers to Broadcom Inc. and/or //
+//  its subsidiaries.                                                         //
+//                                                                            //
+//  Licensed under the Apache License, Version 2.0 (the "License");           //
+//  you may not use this file except in compliance with the License.          //
+//  You may obtain a copy of the License at                                   //
+//                                                                            //
+//     http://www.apache.org/licenses/LICENSE-2.0                             //
+//                                                                            //
+//  Unless required by applicable law or agreed to in writing, software       //
+//  distributed under the License is distributed on an "AS IS" BASIS,         //
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  //
+//  See the License for the specific language governing permissions and       //
+//  limitations under the License.                                            //
+//                                                                            //
+////////////////////////////////////////////////////////////////////////////////
+
 package cvl_test
 
 import (
@@ -2817,16 +2836,16 @@ func TestBadSchema(t *testing.T) {
 
 	if _, err := os.Stat("/usr/sbin/schema"); os.IsNotExist(err) {
 		//Corrupt some schema file 
-		exec.Command("/bin/sh", "-c", "/bin/cp schema/sonic-port.yin schema/sonic-port.yin.bad" + 
-		" && /bin/sed -i '1 a <junk>' schema/sonic-port.yin.bad").Output()
+		exec.Command("/bin/sh", "-c", "/bin/cp testdata/schema/sonic-port.yin testdata/schema/sonic-port.yin.bad" + 
+		" && /bin/sed -i '1 a <junk>' testdata/schema/sonic-port.yin.bad").Output()
 
 		//Parse bad schema file
-		if module, _ := yparser.ParseSchemaFile("schema/sonic-port.yin.bad.1"); module != nil { //should fail
+		if module, _ := yparser.ParseSchemaFile("testdata/schema/sonic-port.yin.bad"); module != nil { //should fail
 			t.Errorf("Bad schema parsing should fail.")
 		}
 
 		//Revert to 
-		exec.Command("/bin/sh",  "-c", "/bin/rm schema/sonic-port.yin.bad").Output()
+		exec.Command("/bin/sh",  "-c", "/bin/rm testdata/schema/sonic-port.yin.bad").Output()
 	} else {
 		//Corrupt some schema file 
 		exec.Command("/bin/sh", "-c", "/bin/cp /usr/sbin/schema/sonic-port.yin /usr/sbin/schema/sonic-port.yin.bad" + 

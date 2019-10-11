@@ -9,10 +9,15 @@ module openconfig-acl-annot {
     import openconfig-acl { prefix oc-acl; }
     import openconfig-packet-match { prefix oc-pkt-match; }
 
+    deviation /oc-acl:acl {
+      deviate add {
+        sonic-ext:post-transformer "acl_post_xfmr";
+      }
+    }
+
     deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set {
       deviate add {
         sonic-ext:table-name "ACL_TABLE";
-        sonic-ext:key-delimiter "_";
       }
     }
 
