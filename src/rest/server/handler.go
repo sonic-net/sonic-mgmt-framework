@@ -163,10 +163,11 @@ func getPathForTranslib(r *http.Request) string {
 	path = trimRestconfPrefix(path)
 	path = strings.Replace(path, "={", "{", -1)
 	path = strings.Replace(path, "},{", "}{", -1)
+	rc, _ := GetContext(r)
 
 	for k, v := range vars {
 		restStyle := fmt.Sprintf("{%v}", k)
-		gnmiStyle := fmt.Sprintf("[%v=%v]", k, v)
+		gnmiStyle := fmt.Sprintf("[%v=%v]", rc.PMap.Get(k), v)
 		path = strings.Replace(path, restStyle, gnmiStyle, 1)
 	}
 
