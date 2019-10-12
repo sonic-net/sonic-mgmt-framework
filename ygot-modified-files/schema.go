@@ -22,6 +22,8 @@ import (
 	"github.com/openconfig/goyang/pkg/yang"
 )
 
+var schemaPathCache map[reflect.StructTag][][]string = make(map[reflect.StructTag][][]string)
+
 // IsLeafRef reports whether schema is a leafref schema node type.
 func IsLeafRef(schema *yang.Entry) bool {
 	if schema == nil || schema.Type == nil {
@@ -68,17 +70,22 @@ func IsYgotAnnotation(s reflect.StructField) bool {
 
 // SchemaPaths returns all the paths in the path tag.
 func SchemaPaths(f reflect.StructField) ([][]string, error) {
-	var out [][]string
-	pathTag, ok := f.Tag.Lookup("path")
-	if !ok || pathTag == "" {
-		return nil, fmt.Errorf("field %s did not specify a path", f.Name)
+	if tmpOut, ok := schemaPathCache[f.Tag]; ok {
+		return tmpOut, nil
+	} else {
+		var out [][]string
+		pathTag, ok := f.Tag.Lookup("path")
+		if !ok || pathTag == "" {
+			return nil, fmt.Errorf("field %s did not specify a path", f.Name)
+		}
+	
+		ps := strings.Split(pathTag, "|")
+		for _, p := range ps {
+			out = append(out, StripModulePrefixes(strings.Split(p, "/")))
+		}
+		schemaPathCache[f.Tag] = out
+		return out, nil
 	}
-
-	ps := strings.Split(pathTag, "|")
-	for _, p := range ps {
-		out = append(out, StripModulePrefixes(strings.Split(p, "/")))
-	}
-	return out, nil
 }
 
 // ChildSchema returns the first child schema that matches path from the given

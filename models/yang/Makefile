@@ -20,11 +20,13 @@
 TOPDIR := ../..
 BUILD_DIR := $(TOPDIR)/build
 
-YANGAPI_DIR     := $(TOPDIR)/build/yaml
-YANGDIR         := $(TOPDIR)/models/yang
-YANGDIR_COMMON  := $(TOPDIR)/models/yang/common
-YANG_MOD_FILES  := $(shell find $(YANGDIR) -maxdepth 1 -name '*.yang' | sort)
-YANG_COMMON_FILES  := $(shell find $(YANGDIR_COMMON) -name '*.yang' | sort)
+YANGAPI_DIR                 := $(TOPDIR)/build/yaml
+YANGDIR                     := $(TOPDIR)/models/yang
+YANGDIR_COMMON              := $(TOPDIR)/models/yang/common
+YANGDIR_ANNOTATIONS         := $(TOPDIR)/models/yang/annotations/openapi_annotations
+YANG_MOD_FILES              := $(shell find $(YANGDIR) -maxdepth 1 -name '*.yang' | sort)
+YANG_ANNOTATIONS_FILES      := $(shell find $(YANGDIR_ANNOTATIONS) -maxdepth 1 -name '*.yang' | sort)
+YANG_COMMON_FILES           := $(shell find $(YANGDIR_COMMON) -name '*.yang' | sort)
 
 TOOLS_DIR        := $(TOPDIR)/tools
 PYANG_DIR        := $(TOOLS_DIR)/pyang
@@ -42,7 +44,7 @@ allyangs.tree:  $(YANG_MOD_FILES) $(YANG_COMMON_FILES)
 		-f tree \
 		-o $(YANGDIR)/$@ \
 		-p $(YANGDIR_COMMON):$(YANGDIR) \
-		$(YANG_MOD_FILES)
+		$(YANG_MOD_FILES) $(YANG_ANNOTATIONS_FILES)
 	@echo "+++++ Generation of  YANG tree for Yang modules completed +++++"
 
 allyangs_tree.html:  $(YANG_MOD_FILES) $(YANG_COMMON_FILES)
@@ -50,7 +52,7 @@ allyangs_tree.html:  $(YANG_MOD_FILES) $(YANG_COMMON_FILES)
 		-f jstree \
 		-o $(YANGDIR)/$@ \
 		-p $(YANGDIR_COMMON):$(YANGDIR) \
-		$(YANG_MOD_FILES)
+		$(YANG_MOD_FILES) $(YANG_ANNOTATIONS_FILES) 
 	@echo "+++++ Generation of  HTML tree for Yang modules completed +++++"
 
 #======================================================================
@@ -64,7 +66,7 @@ $(YANGAPI_DIR)/.done:  $(YANG_MOD_FILES) $(YANG_COMMON_FILES)
 		--outdir $(YANGAPI_DIR) \
 		--plugindir $(PYANG_PLUGIN_DIR) \
 		-p $(YANGDIR_COMMON):$(YANGDIR) \
-		$(YANG_MOD_FILES)
+		$(YANG_MOD_FILES) $(YANG_ANNOTATIONS_FILES)
 	@echo "+++++ Generation of  YAML files for Yang modules completed +++++"
 	touch $@
 
