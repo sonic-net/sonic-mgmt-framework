@@ -34,6 +34,7 @@ all: schema
 schema: $(out) $(out_common)
 
 
+
 schema-tree: $(out_tree)
 
 #Build YANG models
@@ -49,10 +50,18 @@ schema-tree: $(out_tree)
 %.yin:$(sonic_yang_common)/%.yang
 	@echo "Generating `basename $@` ..."
 	@devFile="`echo $@ | cut -d . -f1`-deviation.yang"; \
+
 	if [ -f $$devFile ] ; then devOpt="--deviation-module $$devFile"; fi; \
 	pyang -p $(search_path)	--plugindir $(pyang_plugin_dir) \
 		-f yin-cvl $$devOpt $< -o `basename $@`
 
+#Build common YANG models
+%.yin:$(sonic_yang_common)/%.yang
+	@echo "Generating `basename $@` ..."
+	@devFile="`echo $@ | cut -d . -f1`-deviation.yang"; \
+	if [ -f $$devFile ] ; then devOpt="--deviation-module $$devFile"; fi; \
+	pyang -p $(search_path)	--plugindir $(pyang_plugin_dir) \
+		-f yin-cvl $$devOpt $< -o `basename $@`
 %.tree:%.yang
 	@echo "Generating `basename $@` ..."
 	@devFile="`echo $< | cut -d . -f1`-dev.yang"; \
