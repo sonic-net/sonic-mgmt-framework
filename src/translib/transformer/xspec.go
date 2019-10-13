@@ -1,3 +1,21 @@
+////////////////////////////////////////////////////////////////////////////////
+//                                                                            //
+//  Copyright 2019 Dell, Inc.                                                 //
+//                                                                            //
+//  Licensed under the Apache License, Version 2.0 (the "License");           //
+//  you may not use this file except in compliance with the License.          //
+//  You may obtain a copy of the License at                                   //
+//                                                                            //
+//  http://www.apache.org/licenses/LICENSE-2.0                                //
+//                                                                            //
+//  Unless required by applicable law or agreed to in writing, software       //
+//  distributed under the License is distributed on an "AS IS" BASIS,         //
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  //
+//  See the License for the specific language governing permissions and       //
+//  limitations under the License.                                            //
+//                                                                            //
+////////////////////////////////////////////////////////////////////////////////
+
 package transformer
 
 import (
@@ -25,19 +43,22 @@ type yangXpathInfo  struct {
     xfmrPost       string
     validateFunc   string
     xfmrKey        string
+    keyName        *string
     dbIndex        db.DBNum
     keyLevel       int
     isKey          bool
 }
 
 type dbInfo  struct {
+    dbIndex      db.DBNum
+    keyName      *string
     fieldType    string
     dbEntry      *yang.Entry
-    yangXpath     []string
+    yangXpath    []string
 }
 
-var xYangSpecMap map[string]*yangXpathInfo
-var xDbSpecMap map[string]*dbInfo
+var xYangSpecMap  map[string]*yangXpathInfo
+var xDbSpecMap    map[string]*dbInfo
 var xDbSpecOrdTblMap map[string][]string //map of module-name to ordered list of db tables { "sonic-acl" : ["ACL_TABLE", "ACL_RULE"] }
 
 /* update transformer spec with db-node */
@@ -84,7 +105,8 @@ func yangToDbMapFill (keyLevel int, xYangSpecMap map[string]*yangXpathInfo, entr
 		}
 	}
 
-	if ok && parentXpathData.dbIndex != db.ConfigDB {
+	if ok && xpathData.dbIndex == db.ConfigDB && parentXpathData.dbIndex != db.ConfigDB {
+		// If DB Index is not annotated and parent DB index is annotated inherit the DB Index of the parent
 		xpathData.dbIndex = parentXpathData.dbIndex
 	}
 
@@ -179,41 +201,68 @@ func yangToDbMapBuild(entries map[string]*yang.Entry) {
 	updateSchemaOrderedMap(module, e)
     }
     mapPrint(xYangSpecMap, "/tmp/fullSpec.txt")
-    dbMapPrint()
+    dbMapPrint("/tmp/dbSpecMap.txt")
 }
 
 /* Fill the map with db details */
-func dbMapFill(prefixPath string, curPath string, moduleNm string, trkTpCnt bool, xDbSpecMap map[string]*dbInfo, entry *yang.Entry) {
-    entryType := entry.Node.Statement().Keyword
-    if entryType == "list" {
-        prefixPath = entry.Name
-    }
+func dbMapFill(tableName string, curPath string, moduleNm string, trkTpCnt bool, xDbSpecMap map[string]*dbInfo, entry *yang.Entry) {
+	entryType := entry.Node.Statement().Keyword
 
-    if !isYangResType(entryType) {
-        dbXpath := prefixPath
-        if entryType != "list" {
-            dbXpath = prefixPath + "/" + entry.Name
-        }
-        xDbSpecMap[dbXpath] = new(dbInfo)
-        xDbSpecMap[dbXpath].dbEntry   = entry
-        xDbSpecMap[dbXpath].fieldType = entryType
-    }
+	if entry.Name != moduleNm {
+		if entryType == "container" {
+			tableName = entry.Name
+		}
 
-    var childList []string
-    for _, k := range entry.DirOKeys {
-        childList = append(childList, k)
-    }
+		if !isYangResType(entryType) {
+			dbXpath := tableName
+			if entryType != "container" {
+				dbXpath = tableName + "/" + entry.Name
+			}
+			xDbSpecMap[dbXpath] = new(dbInfo)
+			xDbSpecMap[dbXpath].dbIndex   = db.MaxDB
+			xDbSpecMap[dbXpath].dbEntry   = entry
+			xDbSpecMap[dbXpath].fieldType = entryType
+			if entryType == "container" {
+				xDbSpecMap[dbXpath].dbIndex = db.ConfigDB
+				if entry.Exts != nil && len(entry.Exts) > 0 {
+					for _, ext := range entry.Exts {
+						dataTagArr := strings.Split(ext.Keyword, ":")
+						tagType := dataTagArr[len(dataTagArr)-1]
+						switch tagType {
+						case "key-name" :
+							if xDbSpecMap[dbXpath].keyName == nil {
+								xDbSpecMap[dbXpath].keyName = new(string)
+							}
+							*xDbSpecMap[dbXpath].keyName = ext.NName()
+						default :
+							log.Infof("Unsupported ext type(%v) for xpath(%v).", tagType, dbXpath)
+						}
+					}
+				}
+			}
+		}
+	} else {
+		moduleXpath := "/" + moduleNm + ":" + entry.Name
+		xDbSpecMap[moduleXpath] = new(dbInfo)
+		xDbSpecMap[moduleXpath].dbEntry   = entry
+		xDbSpecMap[moduleXpath].fieldType = entryType
+	}
 
-    if entryType == "container" &&  trkTpCnt {
-            xDbSpecOrdTblMap[moduleNm] = childList
-            log.Info("xDbSpecOrdTblMap after appending ", xDbSpecOrdTblMap)
-            trkTpCnt = false
-    }
+	var childList []string
+	for _, k := range entry.DirOKeys {
+		childList = append(childList, k)
+	}
 
-    for _, child := range childList {
-        childPath := prefixPath + "/" + entry.Dir[child].Name
-        dbMapFill(prefixPath, childPath, moduleNm, trkTpCnt, xDbSpecMap, entry.Dir[child])
-    }
+	if entryType == "container" &&  trkTpCnt {
+		xDbSpecOrdTblMap[moduleNm] = childList
+		log.Info("xDbSpecOrdTblMap after appending ", xDbSpecOrdTblMap)
+		trkTpCnt = false
+	}
+
+	for _, child := range childList {
+		childPath := tableName + "/" + entry.Dir[child].Name
+		dbMapFill(tableName, childPath, moduleNm, trkTpCnt, xDbSpecMap, entry.Dir[child])
+	}
 }
 
 /* Build redis db lookup map */
@@ -229,8 +278,7 @@ func dbMapBuild(entries []*yang.Entry) {
 			continue
 		}
 		moduleNm := e.Name
-		log.Info("Module name", moduleNm)
-		xDbSpecOrdTblMap[moduleNm] = []string{}
+		log.Infof("Module name(%v)", moduleNm)
 		trkTpCnt := true
 		dbMapFill("", "", moduleNm, trkTpCnt, xDbSpecMap, e)
 	}
@@ -277,7 +325,11 @@ func annotEntryFill(xYangSpecMap map[string]*yangXpathInfo, xpath string, entry 
 				}
 				*xpathData.tableName = ext.NName()
 				updateDbTableData(xpath, xpathData, *xpathData.tableName)
-				//childToUpdateParent(xpath, *xpathData.tableName)
+			case "key-name" :
+				if xpathData.keyName == nil {
+					xpathData.keyName = new(string)
+				}
+				*xpathData.keyName = ext.NName()
 			case "table-transformer" :
 				if xpathData.xfmrTbl == nil {
 					xpathData.xfmrTbl = new(string)
@@ -299,7 +351,7 @@ func annotEntryFill(xYangSpecMap map[string]*yangXpathInfo, xpath string, entry 
 				xpathData.validateFunc  = ext.NName()
 			case "use-self-key" :
 				xpathData.keyXpath  = nil
-			case "redis-db-name" :
+			case "db-name" :
 				if ext.NName() == "APPL_DB" {
 					xpathData.dbIndex  = db.ApplDB
 				} else if ext.NName() == "ASIC_DB" {
@@ -359,6 +411,84 @@ func annotToDbMapBuild(annotEntries []*yang.Entry) {
     mapPrint(xYangSpecMap, "/tmp/annotSpec.txt")
 }
 
+func annotDbSpecMapFill(xDbSpecMap map[string]*dbInfo, dbXpath string, entry *yang.Entry) error {
+	var err error
+	var dbXpathData *dbInfo
+	var ok bool
+
+	//Currently sonic-yang annotation is supported for "list" type only.
+	listName := strings.Split(dbXpath, "/")
+	if len(listName) < 3 {
+		log.Errorf("Invalid list xpath length(%v) \r\n", dbXpath)
+		return err
+	}
+	dbXpathData, ok = xDbSpecMap[listName[2]]
+	if !ok {
+		log.Errorf("DB spec-map data not found(%v) \r\n", dbXpath)
+		return err
+	}
+	log.Infof("Annotate dbSpecMap for (%v)(listName:%v)\r\n", dbXpath, listName[2])
+	dbXpathData.dbIndex = db.ConfigDB // default value 
+
+	/* fill table with cvl yang extension data. */
+	if entry != nil && len(entry.Exts) > 0 {
+		for _, ext := range entry.Exts {
+			dataTagArr := strings.Split(ext.Keyword, ":")
+			tagType := dataTagArr[len(dataTagArr)-1]
+			switch tagType {
+			case "key-name" :
+				if dbXpathData.keyName == nil {
+					dbXpathData.keyName = new(string)
+				}
+				*dbXpathData.keyName = ext.NName()
+			case "db-name" :
+				if ext.NName() == "APPL_DB" {
+					dbXpathData.dbIndex  = db.ApplDB
+				} else if ext.NName() == "ASIC_DB" {
+					dbXpathData.dbIndex  = db.AsicDB
+				} else if ext.NName() == "COUNTERS_DB" {
+					dbXpathData.dbIndex  = db.CountersDB
+				} else if ext.NName() == "LOGLEVEL_DB" {
+					dbXpathData.dbIndex  = db.LogLevelDB
+				} else if ext.NName() == "CONFIG_DB" {
+					dbXpathData.dbIndex  = db.ConfigDB
+				} else if ext.NName() == "FLEX_COUNTER_DB" {
+					dbXpathData.dbIndex  = db.FlexCounterDB
+				} else if ext.NName() == "STATE_DB" {
+					dbXpathData.dbIndex  = db.StateDB
+				} else {
+					dbXpathData.dbIndex  = db.ConfigDB
+				}
+			default :
+			}
+		}
+	}
+
+    dbMapPrint("/tmp/dbSpecMapFull.txt")
+	return err
+}
+
+func annotDbSpecMap(annotEntries []*yang.Entry) {
+	if annotEntries == nil || xDbSpecMap == nil {
+		return
+	}
+	for _, e := range annotEntries {
+		if e != nil && len(e.Deviations) > 0 {
+			for _, d := range e.Deviations {
+				xpath := xpathFromDevCreate(d.Name)
+				xpath = "/" + strings.Replace(e.Name, "-annot", "", -1) + ":" + xpath
+				for i, deviate := range d.Deviate {
+					if i == 2 {
+						for _, ye := range deviate {
+							annotDbSpecMapFill(xDbSpecMap, xpath, ye)
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
 /* Debug function to print the yang xpath lookup map */
 func mapPrint(inMap map[string]*yangXpathInfo, fileName string) {
     fp, err := os.Create(fileName)
@@ -378,6 +508,10 @@ func mapPrint(inMap map[string]*yangXpathInfo, fileName string) {
         fmt.Fprintf(fp, "\r\n    xfmrTbl  : ")
         if d.xfmrTbl != nil {
             fmt.Fprintf(fp, "%v", *d.xfmrTbl)
+        }
+        fmt.Fprintf(fp, "\r\n    keyName  : ")
+        if d.keyName != nil {
+            fmt.Fprintf(fp, "%v", *d.keyName)
         }
         fmt.Fprintf(fp, "\r\n    childTbl : %v", d.childTable)
         fmt.Fprintf(fp, "\r\n    FieldName: %v", d.fieldName)
@@ -405,8 +539,8 @@ func mapPrint(inMap map[string]*yangXpathInfo, fileName string) {
 }
 
 /* Debug function to print redis db lookup map */
-func dbMapPrint() {
-    fp, err := os.Create("/tmp/dbTmplt.txt")
+func dbMapPrint( fname string) {
+    fp, err := os.Create(fname)
     if err != nil {
         return
     }
@@ -414,32 +548,37 @@ func dbMapPrint() {
 	fmt.Fprintf (fp, "-----------------------------------------------------------------\r\n")
     for k, v := range xDbSpecMap {
         fmt.Fprintf(fp, " field:%v \r\n", k)
-        fmt.Fprintf(fp, "     type :%v \r\n", v.fieldType)
-        fmt.Fprintf(fp, "     Yang :%v \r\n", v.yangXpath)
-        fmt.Fprintf(fp, "     DB   :%v \r\n", v.dbEntry)
+        fmt.Fprintf(fp, "     type     :%v \r\n", v.fieldType)
+        fmt.Fprintf(fp, "     db-type  :%v \r\n", v.dbIndex)
+        fmt.Fprintf(fp, "     KeyName: ")
+        if v.keyName != nil {
+            fmt.Fprintf(fp, "%v", *v.keyName)
+        }
+        fmt.Fprintf(fp, "\r\n     oc-yang  :%v \r\n", v.yangXpath)
+        fmt.Fprintf(fp, "     cvl-yang :%v \r\n", v.dbEntry)
         fmt.Fprintf (fp, "-----------------------------------------------------------------\r\n")
 
     }
 }
 
 func updateSchemaOrderedMap(module string, entry *yang.Entry) {
-    var children []string
-    if entry.Node.Statement().Keyword == "module" {
-        for _, dir := range entry.DirOKeys {
-            // Gives the yang xpath for the top level container
-            xpath := "/" + module + ":" + dir
-            _, ok := xYangSpecMap[xpath]
-            if ok {
-		yentry := xYangSpecMap[xpath].yangEntry
-		if yentry.Node.Statement().Keyword == "container" {
-                    var keyspec = make([]KeySpec, 0)
-                    keyspec = FillKeySpecs(xpath, "" , &keyspec)
-		    children = updateChildTable(keyspec, &children)
-                }
-            }
+	var children []string
+	if entry.Node.Statement().Keyword == "module" {
+		for _, dir := range entry.DirOKeys {
+			// Gives the yang xpath for the top level container
+			xpath := "/" + module + ":" + dir
+			_, ok := xYangSpecMap[xpath]
+			if ok {
+				yentry := xYangSpecMap[xpath].yangEntry
+				if yentry.Node.Statement().Keyword == "container" {
+					var keyspec = make([]KeySpec, 0)
+					keyspec = FillKeySpecs(xpath, "" , &keyspec)
+					children = updateChildTable(keyspec, &children)
+				}
+			}
+		}
 	}
-    }
-    xDbSpecOrdTblMap[module] = children
+	xDbSpecOrdTblMap[module] = children
 }
 
 func updateChildTable(keyspec []KeySpec, chlist *[]string) ([]string) {
@@ -449,7 +588,7 @@ func updateChildTable(keyspec []KeySpec, chlist *[]string) ([]string) {
 				*chlist = append(*chlist, ks.Ts.Name)
 			}
 		}
-                *chlist = updateChildTable(ks.Child, chlist)
+		*chlist = updateChildTable(ks.Child, chlist)
 	}
 	return *chlist
 }

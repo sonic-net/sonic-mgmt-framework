@@ -1,3 +1,21 @@
+////////////////////////////////////////////////////////////////////////////////
+//                                                                            //
+//  Copyright 2019 Dell, Inc.                                                 //
+//                                                                            //
+//  Licensed under the Apache License, Version 2.0 (the "License");           //
+//  you may not use this file except in compliance with the License.          //
+//  You may obtain a copy of the License at                                   //
+//                                                                            //
+//  http://www.apache.org/licenses/LICENSE-2.0                                //
+//                                                                            //
+//  Unless required by applicable law or agreed to in writing, software       //
+//  distributed under the License is distributed on an "AS IS" BASIS,         //
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  //
+//  See the License for the specific language governing permissions and       //
+//  limitations under the License.                                            //
+//                                                                            //
+////////////////////////////////////////////////////////////////////////////////
+
 package transformer
 
 import (
@@ -30,8 +48,8 @@ func reportIfError(errs []error) {
 	}
 }
 
-func getOcModelsList () ([] string) {
-    var fileList [] string
+func getOcModelsList () ([]string) {
+    var fileList []string
     file, err := os.Open(YangPath + "models_list")
     if err != nil {
         return fileList
@@ -51,7 +69,7 @@ func getOcModelsList () ([] string) {
     return fileList
 }
 
-func getDefaultModelsList () ([] string) {
+func getDefaultModelsList () ([]string) {
     var files []string
     fileInfo, err := ioutil.ReadDir(YangPath)
     if err != nil {
@@ -117,13 +135,16 @@ func loadYangModules(files ...string) error {
 		}
 	}
 
-	sonic_entries := make([]*yang.Entry, len(names))
-	oc_entries := make(map[string]*yang.Entry)
-	annot_entries := make([]*yang.Entry, len(names))
+	sonic_entries       := make([]*yang.Entry, len(names))
+	oc_entries          := make(map[string]*yang.Entry)
+	oc_annot_entries    := make([]*yang.Entry, len(names))
+	sonic_annot_entries := make([]*yang.Entry, len(names))
 
 	for _, n := range names {
-		if strings.Contains(n, "annot") {
-			annot_entries = append(annot_entries, yang.ToEntry(mods[n]))
+		if strings.Contains(n, "annot") && strings.Contains(n, "sonic") {
+			sonic_annot_entries = append(sonic_annot_entries, yang.ToEntry(mods[n]))
+		} else if strings.Contains(n, "annot") {
+			oc_annot_entries = append(oc_annot_entries, yang.ToEntry(mods[n]))
 		} else if strings.Contains(n, "sonic") {
 			sonic_entries = append(sonic_entries, yang.ToEntry(mods[n]))
 		} else if oc_entries[n] == nil {
@@ -132,7 +153,8 @@ func loadYangModules(files ...string) error {
 	}
 
 	dbMapBuild(sonic_entries)
-	annotToDbMapBuild(annot_entries)
+	annotDbSpecMap(sonic_annot_entries)
+	annotToDbMapBuild(oc_annot_entries)
 	yangToDbMapBuild(oc_entries)
 
 	return err

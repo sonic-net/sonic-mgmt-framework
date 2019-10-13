@@ -1,3 +1,21 @@
+////////////////////////////////////////////////////////////////////////////////
+//                                                                            //
+//  Copyright 2019 Dell, Inc.                                                 //
+//                                                                            //
+//  Licensed under the Apache License, Version 2.0 (the "License");           //
+//  you may not use this file except in compliance with the License.          //
+//  You may obtain a copy of the License at                                   //
+//                                                                            //
+//  http://www.apache.org/licenses/LICENSE-2.0                                //
+//                                                                            //
+//  Unless required by applicable law or agreed to in writing, software       //
+//  distributed under the License is distributed on an "AS IS" BASIS,         //
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  //
+//  See the License for the specific language governing permissions and       //
+//  limitations under the License.                                            //
+//                                                                            //
+////////////////////////////////////////////////////////////////////////////////
+
 package translib
 
 import (
@@ -8,7 +26,7 @@ import (
 	"github.com/openconfig/ygot/ygot"
 	"reflect"
 	"translib/db"
-    "translib/ocbinds"
+	"translib/ocbinds"
 	"translib/tlerr"
 	"translib/transformer"
 	"encoding/json"
@@ -155,6 +173,7 @@ func (app *CommonApp) processDelete(d *db.DB) (SetResponse, error) {
 func (app *CommonApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
     var err error
     var payload []byte
+    var resPayload []byte
     log.Info("processGet:path =", app.pathInfo.Path)
 
     payload, err = transformer.GetAndXlateFromDB(app.pathInfo.Path, app.ygotRoot, dbs)
@@ -170,17 +189,20 @@ func (app *CommonApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
 		    log.Error("ocbinds.Unmarshal()  failed. error:", err)
 		    return GetResponse{Payload: payload, ErrSrc: AppErr}, err
 	    }
+
+	    resPayload, err = generateGetResponsePayload(app.pathInfo.Path, (*app.ygotRoot).(*ocbinds.Device), app.ygotTarget)
+	    if err != nil {
+		    log.Error("generateGetResponsePayload()  failed")
+		    return GetResponse{Payload: payload, ErrSrc: AppErr}, err
+	    }
+	    var dat map[string]interface{}
+	    err = json.Unmarshal(resPayload, &dat)
+    } else {
+	log.Warning("processGet. targetObj is null. Unable to Unmarshal payload")
+	resPayload = payload
     }
 
-   payload, err = generateGetResponsePayload(app.pathInfo.Path, (*app.ygotRoot).(*ocbinds.Device), app.ygotTarget)
-    if err != nil {
-        log.Error("generateGetResponsePayload()  failed")
-        return GetResponse{Payload: payload, ErrSrc: AppErr}, err
-    }
-    var dat map[string]interface{}
-    err = json.Unmarshal(payload, &dat)
-
-	return GetResponse{Payload: payload}, err
+    return GetResponse{Payload: resPayload}, err
 }
 
 func (app *CommonApp) translateCRUDCommon(d *db.DB, opcode int) ([]db.WatchKeys, error) {
@@ -291,11 +313,11 @@ func (app *CommonApp) cmnAppCRUCommonDbOpn(d *db.DB, opcode int) error {
 				case UPDATE:
 					if existingEntry.IsPopulated() {
 						log.Info("Entry already exists hence modifying it.")
-						/* Handle leaf-list merge 
+						/* Handle leaf-list merge if any leaf-list exists 
 						   A leaf-list field in redis has "@" suffix as per swsssdk convention.
 						 */
 						resTblRw := db.Value{Field: map[string]string{}}
-						resTblRw = processLeafList(existingEntry, tblRw, UPDATE, d, tblNm, tblKey)
+						resTblRw = checkAndProcessLeafList(existingEntry, tblRw, UPDATE, d, tblNm, tblKey)
 						err = d.ModEntry(cmnAppTs, db.Key{Comp: []string{tblKey}}, resTblRw)
 						if err != nil {
 							log.Error("UPDATE case - d.ModEntry() failure")
@@ -395,8 +417,8 @@ func (app *CommonApp) cmnAppDelDbOpn(d *db.DB, opcode int) error {
 						log.Info("Table Entry from which the fields are to be deleted does not exist")
 						return err
 					}
-					/*handle leaf-list merge*/
-					resTblRw := processLeafList(existingEntry, tblRw, DELETE, d, tblNm, tblKey)
+					/* handle leaf-list merge if any leaf-list exists */
+					resTblRw := checkAndProcessLeafList(existingEntry, tblRw, DELETE, d, tblNm, tblKey)
 					err := d.DeleteEntryFields(cmnAppTs, db.Key{Comp: []string{tblKey}}, resTblRw)
 					if err != nil {
 						log.Error("DELETE case - d.DeleteEntryFields() failure")
@@ -417,8 +439,8 @@ func (app *CommonApp) generateDbWatchKeys(d *db.DB, isDeleteOp bool) ([]db.Watch
 	return keys, err
 }
 
-func processLeafList(existingEntry db.Value, tblRw db.Value, opcode int, d *db.DB, tblNm string, tblKey string) db.Value {
-	log.Info("process leaf-list Fields in table row.")
+/*check if any field is leaf-list , if yes perform merge*/
+func checkAndProcessLeafList(existingEntry db.Value, tblRw db.Value, opcode int, d *db.DB, tblNm string, tblKey string) db.Value {
 	dbTblSpec := &db.TableSpec{Name: tblNm}
 	mergeTblRw := db.Value{Field: map[string]string{}}
 	for field, value := range tblRw.Field {
@@ -449,7 +471,7 @@ func processLeafList(existingEntry db.Value, tblRw db.Value, opcode int, d *db.D
 	}
 	/* delete specific item from leaf-list */
 	if opcode == DELETE {
-		if mergeTblRw.Field == nil {
+		if len(mergeTblRw.Field) == 0 {
 			return tblRw
 		}
 		err := d.ModEntry(dbTblSpec, db.Key{Comp: []string{tblKey}}, mergeTblRw)

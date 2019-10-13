@@ -1,3 +1,21 @@
+////////////////////////////////////////////////////////////////////////////////
+//                                                                            //
+//  Copyright 2019 Dell, Inc.                                                 //
+//                                                                            //
+//  Licensed under the Apache License, Version 2.0 (the "License");           //
+//  you may not use this file except in compliance with the License.          //
+//  You may obtain a copy of the License at                                   //
+//                                                                            //
+//  http://www.apache.org/licenses/LICENSE-2.0                                //
+//                                                                            //
+//  Unless required by applicable law or agreed to in writing, software       //
+//  distributed under the License is distributed on an "AS IS" BASIS,         //
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  //
+//  See the License for the specific language governing permissions and       //
+//  limitations under the License.                                            //
+//                                                                            //
+////////////////////////////////////////////////////////////////////////////////
+
 package transformer
 
 import (
@@ -53,7 +71,7 @@ func XlateFuncBind(name string, fn interface{}) (err error) {
 func XlateFuncCall(name string, params ...interface{}) (result []reflect.Value, err error) {
 	if _, ok := XlateFuncs[name]; !ok {
 		err = errors.New(name + " Xfmr function does not exist.")
-		return nil, nil
+		return nil, err
 	}
 	if len(params) != XlateFuncs[name].Type().NumIn() {
 		err = ErrParamsNotAdapted
@@ -69,6 +87,11 @@ func XlateFuncCall(name string, params ...interface{}) (result []reflect.Value, 
 
 func TraverseDb(dbs [db.MaxDB]*db.DB, spec KeySpec, result *map[db.DBNum]map[string]map[string]db.Value, parentKey *db.Key) error {
 	var err error
+	var dbOpts db.Options
+
+	dbOpts = getDBOptions(spec.dbNum)
+	separator := dbOpts.KeySeparator
+	log.Infof("key separator for table %v in Db %v is %v", spec.Ts.Name, spec.dbNum, separator)
 
 	if spec.Key.Len() > 0 {
 		// get an entry with a specific key
@@ -78,9 +101,9 @@ func TraverseDb(dbs [db.MaxDB]*db.DB, spec KeySpec, result *map[db.DBNum]map[str
 		}
 
 		if (*result)[spec.dbNum][spec.Ts.Name] == nil {
-			(*result)[spec.dbNum][spec.Ts.Name] = map[string]db.Value{strings.Join(spec.Key.Comp, "|"): data}
+			(*result)[spec.dbNum][spec.Ts.Name] = map[string]db.Value{strings.Join(spec.Key.Comp, separator): data}
 		} else {
-			(*result)[spec.dbNum][spec.Ts.Name][strings.Join(spec.Key.Comp, "|")] = data
+			(*result)[spec.dbNum][spec.Ts.Name][strings.Join(spec.Key.Comp, separator)] = data
 		}
 
 		if len(spec.Child) > 0 {
@@ -89,7 +112,7 @@ func TraverseDb(dbs [db.MaxDB]*db.DB, spec KeySpec, result *map[db.DBNum]map[str
 			}
 		}
 	} else {
-		// TODO - GetEntry suuport with regex patten, 'abc*' for optimization
+		// TODO - GetEntry support with regex patten, 'abc*' for optimization
 		keys, err := dbs[spec.dbNum].GetKeys(&spec.Ts)
 		if err != nil {
 			return err
@@ -97,7 +120,7 @@ func TraverseDb(dbs [db.MaxDB]*db.DB, spec KeySpec, result *map[db.DBNum]map[str
 		for i, _ := range keys {
 			if parentKey != nil {
 				// TODO - multi-depth with a custom delimiter
-				if strings.Index(strings.Join(keys[i].Comp, "|"), strings.Join((*parentKey).Comp, "|")) == -1 {
+				if strings.Index(strings.Join(keys[i].Comp, separator), strings.Join((*parentKey).Comp, separator)) == -1 {
 					continue
 				}
 			}
@@ -113,87 +136,100 @@ func XlateUriToKeySpec(uri string, ygRoot *ygot.GoStruct, t *interface{}) (*[]Ke
 	var err error
 	var retdbFormat = make([]KeySpec, 0)
 
-	// In case of CVL yang, the tablename and key info is available in the xpath
-	if isCvlYang(uri) {
+	// In case of SONIC yang, the tablename and key info is available in the xpath
+	if isSonicYang(uri) {
 		/* Extract the xpath and key from input xpath */
-		yangXpath, keyStr, tableName := sonicXpathKeyExtract(uri)
-		retdbFormat = fillCvlKeySpec(yangXpath, tableName, keyStr)
+		xpath, keyStr, tableName := sonicXpathKeyExtract(uri)
+		retdbFormat = fillSonicKeySpec(xpath, tableName, keyStr)
 	} else {
 		/* Extract the xpath and key from input xpath */
-		yangXpath, keyStr, _ := xpathKeyExtract(nil, ygRoot, 0, uri)
-		retdbFormat = FillKeySpecs(yangXpath, keyStr, &retdbFormat)
+		xpath, keyStr, _ := xpathKeyExtract(nil, ygRoot, 0, uri)
+		retdbFormat = FillKeySpecs(xpath, keyStr, &retdbFormat)
 	}
 
 	return &retdbFormat, err
 }
 
 func FillKeySpecs(yangXpath string , keyStr string, retdbFormat *[]KeySpec) ([]KeySpec){
-    if xYangSpecMap == nil {
-        return *retdbFormat
-    }
-    _, ok := xYangSpecMap[yangXpath]
-    if ok {
-        xpathInfo := xYangSpecMap[yangXpath]
-        if xpathInfo.tableName != nil {
-            dbFormat := KeySpec{}
-            dbFormat.Ts.Name = *xpathInfo.tableName
-	    dbFormat.dbNum = xpathInfo.dbIndex
-	    if keyStr != "" {
-		dbFormat.Key.Comp = append(dbFormat.Key.Comp, keyStr)
-	    }
-            for _, child := range xpathInfo.childTable {
-                if xDbSpecMap != nil {
-		    chlen := len(xDbSpecMap[child].yangXpath)
-                    if chlen > 0 {
-			children := make([]KeySpec, 0)
-			for _, childXpath := range xDbSpecMap[child].yangXpath {
-			        children = FillKeySpecs(childXpath, "", &children)
-				dbFormat.Child = append(dbFormat.Child, children...)
+	if xYangSpecMap == nil {
+		return *retdbFormat
+	}
+	_, ok := xYangSpecMap[yangXpath]
+	if ok {
+		xpathInfo := xYangSpecMap[yangXpath]
+		if xpathInfo.tableName != nil {
+			dbFormat := KeySpec{}
+			dbFormat.Ts.Name = *xpathInfo.tableName
+			dbFormat.dbNum = xpathInfo.dbIndex
+			if keyStr != "" {
+				dbFormat.Key.Comp = append(dbFormat.Key.Comp, keyStr)
 			}
-                    }
-                 }
-            }
-            *retdbFormat = append(*retdbFormat, dbFormat)
-        } else {
-            for _, child := range xpathInfo.childTable {
-                if xDbSpecMap != nil {
-		    chlen := len(xDbSpecMap[child].yangXpath)
-                    if chlen > 0 {
-                        for _, childXpath := range xDbSpecMap[child].yangXpath {
-                                 *retdbFormat = FillKeySpecs(childXpath, "", retdbFormat)
-                        }
-                    }
-                }
-            }
-        }
-    }
-    return *retdbFormat
+			for _, child := range xpathInfo.childTable {
+				if xDbSpecMap != nil {
+					if _, ok := xDbSpecMap[child]; ok {
+						chlen := len(xDbSpecMap[child].yangXpath)
+						if chlen > 0 {
+							children := make([]KeySpec, 0)
+							for _, childXpath := range xDbSpecMap[child].yangXpath {
+								children = FillKeySpecs(childXpath, "", &children)
+								dbFormat.Child = append(dbFormat.Child, children...)
+							}
+						}
+					}
+				}
+			}
+			*retdbFormat = append(*retdbFormat, dbFormat)
+		} else {
+			for _, child := range xpathInfo.childTable {
+				if xDbSpecMap != nil {
+					if _, ok := xDbSpecMap[child]; ok {
+						chlen := len(xDbSpecMap[child].yangXpath)
+						if chlen > 0 {
+							for _, childXpath := range xDbSpecMap[child].yangXpath {
+								*retdbFormat = FillKeySpecs(childXpath, "", retdbFormat)
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	return *retdbFormat
 }
 
-func fillCvlKeySpec(yangXpath string , tableName string, keyStr string) ( []KeySpec ) {
+func fillSonicKeySpec(xpath string , tableName string, keyStr string) ( []KeySpec ) {
 
 	var retdbFormat = make([]KeySpec, 0)
 
 	if tableName != "" {
 		dbFormat := KeySpec{}
 		dbFormat.Ts.Name = tableName
-		dbFormat.dbNum = db.ConfigDB
+                cdb := db.ConfigDB
+                if _, ok := xDbSpecMap[tableName]; ok {
+			cdb = xDbSpecMap[tableName].dbIndex
+                }
+		dbFormat.dbNum = cdb
 		if keyStr != "" {
 			dbFormat.Key.Comp = append(dbFormat.Key.Comp, keyStr)
 		}
 		retdbFormat = append(retdbFormat, dbFormat)
 	} else {
 		// If table name not available in xpath get top container name
-		tokens:= strings.Split(yangXpath, ":")
-		container := "/" + tokens[len(tokens)-1]
-		if xDbSpecMap[container] != nil {
-			dbInfo := xDbSpecMap[container]
-			if dbInfo.fieldType == "container" {
-				for dir, _ := range dbInfo.dbEntry.Dir {
-					dbFormat := KeySpec{}
-					dbFormat.Ts.Name = dir
-					dbFormat.dbNum = db.ConfigDB
-					retdbFormat = append(retdbFormat, dbFormat)
+		container := xpath
+		if xDbSpecMap != nil {
+			if _, ok := xDbSpecMap[container]; ok {
+				dbInfo := xDbSpecMap[container]
+				if dbInfo.fieldType == "container" {
+					for dir, _ := range dbInfo.dbEntry.Dir {
+						_, ok := xDbSpecMap[dir]
+						if ok && xDbSpecMap[dir].dbEntry.Node.Statement().Keyword == "container" {
+						cdb := xDbSpecMap[dir].dbIndex
+						dbFormat := KeySpec{}
+						dbFormat.Ts.Name = dir
+						dbFormat.dbNum = cdb
+						retdbFormat = append(retdbFormat, dbFormat)
+						}
+					}
 				}
 			}
 		}
@@ -222,7 +258,7 @@ func XlateToDb(path string, opcode int, d *db.DB, yg *ygot.GoStruct, yt *interfa
 		return nil, err
 	}
 
-	// table.key.fields
+	// Map contains table.key.fields
 	var result = make(map[string]map[string]db.Value)
 	switch opcode {
 	case CREATE:
@@ -287,23 +323,36 @@ func GetAndXlateFromDB(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db.DB) 
 func XlateFromDb(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db.DB, data map[db.DBNum]map[string]map[string]db.Value) ([]byte, error) {
 
 	var err error
+	var result []byte
 	var dbData = make(map[db.DBNum]map[string]map[string]db.Value)
 	var cdb db.DBNum = db.ConfigDB
 
 	dbData = data
-	if isCvlYang(uri) {
-		yangXpath, keyStr, tableName := sonicXpathKeyExtract(uri)
+	if isSonicYang(uri) {
+		xpath, keyStr, tableName := sonicXpathKeyExtract(uri)
 		if (tableName != "") {
-			tokens:= strings.Split(yangXpath, "/")
-			// Format /module:container/tableName[key]/fieldName
-			if tokens[len(tokens)-2] == tableName {
+			dbInfo, ok := xDbSpecMap[tableName]
+			if !ok {
+				log.Warningf("No entry in xDbSpecMap for xpath %v", tableName)
+			} else {
+				cdb =  dbInfo.dbIndex
+			}
+			tokens:= strings.Split(xpath, "/")
+			// Format /module:container/tableName/listname[key]/fieldName
+			if tokens[SONIC_TABLE_INDEX] == tableName {
 		                fieldName := tokens[len(tokens)-1]
-				dbData[cdb] = extractFieldFromDb(tableName, keyStr, fieldName, data[cdb])
+				dbSpecField := tableName + "/" + fieldName
+				_, ok := xDbSpecMap[dbSpecField]
+				if ok && xDbSpecMap[dbSpecField].fieldType == "leaf" {
+					dbData[cdb] = extractFieldFromDb(tableName, keyStr, fieldName, data[cdb])
+				}
 			}
 		}
 	} else {
-	        xpath, _ := RemoveXPATHPredicates(uri)
-		cdb = xYangSpecMap[xpath].dbIndex
+	        xpath, _ := XfmrRemoveXPATHPredicates(uri)
+		if _, ok := xYangSpecMap[xpath]; ok {
+			cdb = xYangSpecMap[xpath].dbIndex
+		}
 	}
 	payload, err := dbDataToYangJsonCreate(uri, ygRoot, dbs, &dbData, cdb)
 	log.Info("Payload generated:", payload)
@@ -313,7 +362,7 @@ func XlateFromDb(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db.DB, data m
 		return nil, err
 	}
 
-	result := []byte(payload)
+	result = []byte(payload)
 	return result, err
 
 }

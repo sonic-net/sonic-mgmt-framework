@@ -1,3 +1,21 @@
+////////////////////////////////////////////////////////////////////////////////
+//                                                                            //
+//  Copyright 2019 Dell, Inc.                                                 //
+//                                                                            //
+//  Licensed under the Apache License, Version 2.0 (the "License");           //
+//  you may not use this file except in compliance with the License.          //
+//  You may obtain a copy of the License at                                   //
+//                                                                            //
+//  http://www.apache.org/licenses/LICENSE-2.0                                //
+//                                                                            //
+//  Unless required by applicable law or agreed to in writing, software       //
+//  distributed under the License is distributed on an "AS IS" BASIS,         //
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  //
+//  See the License for the specific language governing permissions and       //
+//  limitations under the License.                                            //
+//                                                                            //
+////////////////////////////////////////////////////////////////////////////////
+
 package transformer
 
 import (
@@ -11,29 +29,22 @@ import (
     log "github.com/golang/glog"
 )
 
-/* Create db key from datd xpath(request) */
-func keyFromXpathCreate(keyList []string) string {
-    keyOut := ""
-    for i, k := range keyList {
-        if i > 0 { keyOut += "_" }
-        if strings.Contains(k, ":") {
-            k = strings.Split(k, ":")[1]
-        }
-        keyOut += strings.Split(k, "=")[1]
-    }
-    return keyOut
-}
-
 /* Create db key from data xpath(request) */
-func keyCreate(keyPrefix string, xpath string, data interface{}) string {
+func keyCreate(keyPrefix string, xpath string, data interface{}, dbKeySep string) string {
 	_, ok := xYangSpecMap[xpath]
 	if ok {
 		if xYangSpecMap[xpath].yangEntry != nil {
 			yangEntry := xYangSpecMap[xpath].yangEntry
-			if len(keyPrefix) > 0 { keyPrefix += "|" }
+			delim := dbKeySep
+			if len(xYangSpecMap[xpath].delim) > 0 {
+				delim = xYangSpecMap[xpath].delim
+				log.Infof("key concatenater(\"%v\") found for xpath %v ", delim, xpath)
+			}
+
+			if len(keyPrefix) > 0 { keyPrefix += delim }
 			keyVal := ""
 			for i, k := range (strings.Split(yangEntry.Key, " ")) {
-				if i > 0 { keyVal = keyVal + "_" }
+				if i > 0 { keyVal = keyVal + delim }
 				val := fmt.Sprint(data.(map[string]interface{})[k])
 				if strings.Contains(val, ":") {
 					val = strings.Split(val, ":")[1]
@@ -88,7 +99,7 @@ func yangTypeGet(entry *yang.Entry) string {
     return ""
 }
 
-func dbKeyToYangDataConvert(uri string, xpath string, dbKey string) (map[string]interface{}, string, error) {
+func dbKeyToYangDataConvert(uri string, xpath string, dbKey string, dbKeySep string) (map[string]interface{}, string, error) {
 	var err error
 	if len(uri) == 0 && len(xpath) == 0 && len(dbKey) == 0 {
 		err = fmt.Errorf("Insufficient input")
@@ -102,14 +113,18 @@ func dbKeyToYangDataConvert(uri string, xpath string, dbKey string) (map[string]
 		}
 	}
 
-	var kLvlValList []string
-	keyDataList := strings.Split(dbKey, "|")
 	keyNameList := yangKeyFromEntryGet(xYangSpecMap[xpath].yangEntry)
 	id          := xYangSpecMap[xpath].keyLevel
+	keyDataList := strings.SplitN(dbKey, dbKeySep, id)
 	uriWithKey  := fmt.Sprintf("%v", xpath)
+	uriWithKeyCreate := true
 
 	/* if uri contins key, use it else use xpath */
 	if strings.Contains(uri, "[") {
+		uriXpath, _ := XfmrRemoveXPATHPredicates(uri)
+		if (uriXpath == xpath  && (strings.HasSuffix(uri, "]") || strings.HasSuffix(uri, "]/"))) {
+                        uriWithKeyCreate = false
+                }
 		uriWithKey  = fmt.Sprintf("%v", uri)
 	}
 
@@ -121,9 +136,11 @@ func dbKeyToYangDataConvert(uri string, xpath string, dbKey string) (map[string]
 			return nil, "", err
 		}
 		rmap := ret[0].Interface().(map[string]interface{})
-		for k, v := range rmap {
-			uriWithKey += fmt.Sprintf("[%v=%v]", k, v)
-		}
+                if uriWithKeyCreate {
+                        for k, v := range rmap {
+                                uriWithKey += fmt.Sprintf("[%v=%v]", k, v)
+                        }
+                }
 		return rmap, uriWithKey, nil
 	}
 
@@ -131,32 +148,13 @@ func dbKeyToYangDataConvert(uri string, xpath string, dbKey string) (map[string]
 		return nil, "", nil
 	}
 
-	kLvlValList = append(kLvlValList, keyDataList[id])
-
-	if len(keyNameList) > 1 {
-		kLvlValList = strings.Split(keyDataList[id], "_")
-	}
-
-	/* TODO: Need to add leaf-ref related code in here and remove this code*/
-	kvalExceedFlag := false
-	chgId := -1
-	if len(keyNameList) < len(kLvlValList) {
-		kvalExceedFlag = true
-		chgId = len(keyNameList) - 1
-	}
 
 	rmap := make(map[string]interface{})
-	for i, kname := range keyNameList {
-		kval := kLvlValList[i]
-
-		/* TODO: Need to add leaf-ref related code in here and remove this code*/
-		if kvalExceedFlag && (i == chgId) {
-			kval = strings.Join(kLvlValList[chgId:], "_")
-		}
-
-		uriWithKey += fmt.Sprintf("[%v=%v]", kname, kval)
-		rmap[kname] = kval
+	if len(keyNameList) > 1 {
+		log.Infof("No key transformer found for multi element yang key mapping to a single redis key string.")
+	        return rmap, uriWithKey, nil
 	}
+	rmap[keyNameList[0]] = keyDataList[0]
 
 	return rmap, uriWithKey, nil
 }
@@ -204,15 +202,19 @@ func yangKeyFromEntryGet(entry *yang.Entry) []string {
     return keyList
 }
 
-func isCvlYang(path string) bool {
+func isSonicYang(path string) bool {
     if strings.HasPrefix(path, "/sonic") {
         return true
     }
     return false
 }
 
-func sonicKeyDataAdd(keyNameList []string, keyStr string, resultMap map[string]interface{}) {
-    keyValList := strings.Split(keyStr, "|")
+func sonicKeyDataAdd(dbIndex db.DBNum, keyNameList []string, keyStr string, resultMap map[string]interface{}) {
+	var dbOpts db.Options
+	dbOpts = getDBOptions(dbIndex)
+	keySeparator := dbOpts.KeySeparator
+    keyValList := strings.Split(keyStr, keySeparator)
+
     if len(keyNameList) != len(keyValList) {
         return
     }
@@ -391,3 +393,69 @@ func findInMap(m map[string]string, str string) string {
 	// str doesn't exist in map m.
 	return ""
 }
+
+func getDBOptions(dbNo db.DBNum) db.Options {
+        var opt db.Options
+
+        switch dbNo {
+        case db.ApplDB, db.CountersDB:
+                opt = getDBOptionsWithSeparator(dbNo, "", ":", ":")
+                break
+        case db.FlexCounterDB, db.AsicDB, db.LogLevelDB, db.ConfigDB, db.StateDB:
+                opt = getDBOptionsWithSeparator(dbNo, "", "|", "|")
+                break
+        }
+
+        return opt
+}
+
+func getDBOptionsWithSeparator(dbNo db.DBNum, initIndicator string, tableSeparator string, keySeparator string) db.Options {
+        return(db.Options {
+                    DBNo              : dbNo,
+                    InitIndicator     : initIndicator,
+                    TableNameSeparator: tableSeparator,
+                    KeySeparator      : keySeparator,
+                      })
+}
+
+func stripAugmentedModuleNames(xpath string) string {
+        pathList := strings.Split(xpath, "/")
+        pathList = pathList[1:]
+        for i, pvar := range pathList {
+                if (i > 0) && strings.Contains(pvar, ":") {
+                        pvar = strings.Split(pvar,":")[1]
+                        pathList[i] = pvar
+                }
+        }
+        path := "/" + strings.Join(pathList, "/")
+        return path
+}
+
+func XfmrRemoveXPATHPredicates(xpath string) (string, error) {
+        pathList := strings.Split(xpath, "/")
+        pathList = pathList[1:]
+        for i, pvar := range pathList {
+                if strings.Contains(pvar, "[") && strings.Contains(pvar, "]") {
+                        si, ei := strings.Index(pvar, "["), strings.Index(pvar, "]")
+                        // substring contains [] entries
+                        if (si < ei) {
+                                pvar = strings.Split(pvar, "[")[0]
+                                pathList[i] = pvar
+
+                        } else {
+                                // This substring contained a ] before a [.
+                                return "", fmt.Errorf("Incorrect ordering of [] within substring %s of %s, [ pos: %d, ] pos: %d", pvar, xpath, si, ei)
+                        }
+                } else if strings.Contains(pvar, "[") || strings.Contains(pvar, "]") {
+                        // This substring contained a mismatched pair of []s.
+                        return "", fmt.Errorf("Mismatched brackets within substring %s of %s", pvar, xpath)
+                }
+                if (i > 0) && strings.Contains(pvar, ":") {
+                        pvar = strings.Split(pvar,":")[1]
+                        pathList[i] = pvar
+                }
+        }
+        path := "/" + strings.Join(pathList, "/")
+        return path,nil
+}
+
