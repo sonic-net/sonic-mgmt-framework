@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Copyright 2019 Dell, Inc.  
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+--> 
+
+<CLISH_MODULE
+    xmlns="http://www.dellemc.com/sonic/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xi="http://www.w3.org/2001/XInclude"
+    xsi:schemaLocation="http://www.dellemc.com/sonic/XMLSchema
+                        http://www.dellemc.com/sonic/XMLSchema/clish.xsd"
+    >
+    <!--=======================================================-->
+
+<VIEW name="configure-router-bgp-nbr-l2vpn-view" prompt="${SYSTEM_NAME}(config-router-bgp-neighbor-af)# " depth="4">
+  <NAMESPACE ref="configure-view" help="false" completion="false" />
+  <NAMESPACE ref="configure-router-bgp-view" help="false" completion="false" />
+  <NAMESPACE ref="configure-router-bgp-nbr-view" help="false" completion="false" />
+  <COMMAND name="activate" help="Enable the Address Family for this Neighbor">
+    <ACTION builtin="clish_nop"/>
+  </COMMAND>
+  <COMMAND name="allowas-in" help="Allow local AS number in as-path">
+    <PARAM name="value" help="as-number" ptype="RANGE_1_10"/>
+    <ACTION builtin="clish_nop"/>
+  </COMMAND>
+  <COMMAND name="no" help="no commands"/>
+  <COMMAND name="no activate" help="Disable the Address Family for this Neighbor">
+    <ACTION builtin="clish_nop"/>
+  </COMMAND>
+  <COMMAND name="no allowas-in" help="Allow local AS number in as-path">
+    <PARAM name="value" help="as-number" ptype="RANGE_1_10" optional="true"/>
+    <ACTION builtin="clish_nop"/>
+  </COMMAND>
+</VIEW>
+
+</CLISH_MODULE>
+

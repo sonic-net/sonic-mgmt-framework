@@ -1,0 +1,288 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Copyright 2019 Dell, Inc.  
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+--> 
+
+<CLISH_MODULE
+    xmlns="http://www.dellemc.com/sonic/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xi="http://www.w3.org/2001/XInclude"
+    xsi:schemaLocation="http://www.dellemc.com/sonic/XMLSchema
+                        http://www.dellemc.com/sonic/XMLSchema/clish.xsd"
+    >
+    <!--=======================================================-->
+
+<VIEW name="enable-view">
+  <COMMAND name="show ip bgp" help="BGP information"/>
+  <COMMAND name="show ip bgp neighbors" help="BGP information">
+    <ACTION builtin="clish_nop"/>
+  </COMMAND>
+  <COMMAND name="show ip bgp summary" help="BGP information">
+    <ACTION builtin="clish_nop"/>
+  </COMMAND>
+  <COMMAND name="show ip bgp peer-group" help="BGP information">
+    <ACTION builtin="clish_nop"/>
+  </COMMAND>
+  <COMMAND name="show ip bgp ipv4" help="IPv4 route information">
+    <PARAM name="unicast" help="Unicast route information" mode="subcommand" ptype="SUBCOMMAND"/>
+    <ACTION builtin="clish_nop"/>
+  </COMMAND>
+  <COMMAND name="show ip bgp ipv6" help="IPv6 route information">
+    <PARAM name="unicast" help="Unicast route information" mode="subcommand" ptype="SUBCOMMAND"/>
+    <ACTION builtin="clish_nop"/>
+  </COMMAND>
+  <COMMAND name="show ip bgp l2vpn" help="L2VPN route information">
+    <PARAM name="evpn" help="EVPN route information" mode="subcommand" ptype="SUBCOMMAND"/>
+    <ACTION builtin="clish_nop"/>
+  </COMMAND>
+</VIEW>
+
+<VIEW name="configure-view">
+  <COMMAND name="router" help="Router mode" view="configure-router-bgp-view" viewid="instance=${as-num-dot};vrf-name=default">
+    <PARAM name="bgp" help="Border Gateway protocol (BGP)" mode="subcommand" ptype="SUBCOMMAND">
+      <PARAM name="as-num-dot" help="Autonomous system number" ptype="AS_NUM_DOT"
+             view="configure-router-bgp-view" viewid="instance=${as-num-dot};vrf-name=default" optional="true"/>
+    </PARAM>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_config_router_id ${vrf-name} ${as-num-dot} True None</ACTION>
+  </COMMAND>
+  <COMMAND name="no router" help="Border Gateway protocol (BGP)">
+    <PARAM name="bgp" help="Border Gateway protocol (BGP)" mode="subcommand" ptype="SUBCOMMAND"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_bgp_global_config_router_id default ${as-num-dot} False None</ACTION>
+  </COMMAND>
+</VIEW>
+
+<VIEW name="configure-router-bgp-view" prompt="${SYSTEM_NAME}(config-router-bgp-${instance})# "
+      depth="2">
+  <NAMESPACE ref="configure-view" help="false" completion="false" />
+  
+  <COMMAND name="router-id" help="Override configured router identifier">
+    <PARAM name="ip-addr" help="Router identifier" ptype="IP_ADDR"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_bgp_global_config_router_id ${vrf-name} ${ip-addr} True None</ACTION>
+  </COMMAND>
+  
+  <COMMAND name="graceful-restart" help="Enable BGP graceful restart feature">
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_bgp_global_config_router_id ${vrf-name} True None</ACTION>
+  </COMMAND>
+  
+  <COMMAND name="bestpath" help="best path">
+    <PARAM name="as-path" help="as=path" mode="subcommand" ptype="SUBCOMMAND">
+      <PARAM name="multipath-relax" help="Multipath relax command" mode="subcommand" ptype="SUBCOMMAND" />
+    </PARAM>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_bgp_global_config_router_id ${vrf-name} True None</ACTION>
+  </COMMAND>
+  
+  <COMMAND name="neighbor" help="Specify a neighbor router" view="configure-router-bgp-nbr-view" viewid="nbr-addr=${ip};vrf-name=default">
+    <PARAM name="nbr-switch" help="switch" mode="switch" ptype="SUBCOMMAND">
+    <PARAM name="ip" help="neighbor router" ptype="IPV4V6_ADDR" view="configure-router-bgp-nbr-view" viewid="nbr-addr=${ip};vrf-name=default;intf=0" optional="true"/>
+      <PARAM name="interface" help="IP unnumbered interface" view="configure-router-bgp-nbr-view" viewid="nbr-addr=0;vrf-name=default;intf=Ethernet${phy-if-id}" mode="subcommand" ptype="SUBCOMMAND">
+        <PARAM
+            name="Ethernet"
+            help="Ethernet IEEE 802.3"
+            mode="subcommand"
+            ptype="SUBCOMMAND">
+            <PARAM
+                name="phy-if-id"
+                help="Physical interface(Multiples of 4)"
+                ptype="UINT"/>
+        </PARAM>        
+      </PARAM>        
+    </PARAM>        
+    <ACTION builtin="clish_nop"/>
+  </COMMAND>
+
+  <COMMAND name="template" help="Specify a neighbor router" view="configure-router-bgp-template-view" viewid="template-name=${template-str}">
+    <PARAM name="template-str" help="neighbor router" ptype="STRING" view="configure-router-bgp-template-view" viewid="template-name=${template-str}"/>
+    <ACTION builtin="clish_nop"/>
+  </COMMAND>
+  <COMMAND name="address-family" help="Enter Address Family command mode"/>
+  <COMMAND name="address-family ipv4" help="Enter Address Family command mode" view="configure-router-bgp-ipv4-view" viewid="family=ipv4">
+    <PARAM name="unicast" help="Address Family" mode="subcommand" ptype="SUBCOMMAND" view="configure-router-bgp-ipv4-view" viewid="family=ipv4"/>
+    <ACTION builtin="clish_nop"/>
+  </COMMAND>
+  <COMMAND name="address-family ipv6" help="Enter Address Family command mode" view="configure-router-bgp-ipv6-view" viewid="family=ipv6">
+    <PARAM name="unicast" help="Address Family" mode="subcommand" ptype="SUBCOMMAND" view="configure-router-bgp-ipv6-view" viewid="family=ipv6"/>
+    <ACTION builtin="clish_nop"/>
+  </COMMAND>
+  <COMMAND name="vrf" help="VRF instance" view="configure-router-bgp-vrf-view" viewid="vrf-name=${vrf-str};instance">
+  <PARAM name="vrf-str" help="VRF name" ptype="STRING" view="configure-router-bgp-vrf-view" viewid="vrf-name=${vrf-str};instance"/>
+    <ACTION builtin="clish_nop"/>
+  </COMMAND>
+
+    <COMMAND name="no" help="no commands"/>
+  <COMMAND name="no router-id" help="Override configured router identifier">
+    <PARAM name="ip-addr" help="Router identifier" ptype="IP_ADDR"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_bgp_global_config_router_id ${vrf-name} ${ip-addr} False</ACTION>
+  </COMMAND>
+  <COMMAND name="no graceful-restart" help="Enable BGP graceful restart feature" >
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_bgp_global_config_router_id ${vrf-name} False None</ACTION>
+  </COMMAND>
+  <COMMAND name="no bestpath" help="best path">
+    <PARAM name="as-path" help="as=path" mode="subcommand" ptype="SUBCOMMAND">
+      <PARAM name="multipath-relax" help="Multipath relax command" mode="subcommand" ptype="SUBCOMMAND" />
+    </PARAM>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_bgp_global_config_router_id ${vrf-name} False None</ACTION>
+  </COMMAND>
+  <COMMAND name="no neighbor" help="Specify a neighbor router">
+    <PARAM name="nbr-switch" help="switch" mode="switch" ptype="SUBCOMMAND">
+      <PARAM name="ip" help="neighbor router" ptype="IPV4V6_ADDR" optional="true"/>
+      <PARAM name="interface" help="IP unnumbered interface" mode="subcommand" ptype="SUBCOMMAND">
+        <PARAM
+            name="Ethernet"
+            help="Ethernet IEEE 802.3"
+            ptype="SUBCOMMAND"
+            mode="subcommand">
+            <PARAM
+                name="phy-if-id"
+                help="Physical interface(Multiples of 4)"
+                ptype="UINT"/>
+        </PARAM>        
+      </PARAM>        
+    </PARAM>        
+    <ACTION builtin="clish_nop"/>
+  </COMMAND>
+  <COMMAND name="no template" help="Specify a neighbor router">
+    <PARAM name="template" help="neighbor router" ptype="STRING"/>
+    <ACTION builtin="clish_nop"/>
+  </COMMAND>
+  <COMMAND name="no address-family" help="Enter Address Family command mode"/>
+  <COMMAND name="no address-family ipv4" help="Enter Address Family command mode">
+    <PARAM name="unicast" help="Address Family" mode="subcommand" ptype="SUBCOMMAND"/>
+    <ACTION builtin="clish_nop"/>
+  </COMMAND>
+  <COMMAND name="no address-family ipv6" help="Enter Address Family command mode">
+    <PARAM name="unicast" help="Address Family" mode="subcommand" ptype="SUBCOMMAND"/>
+    <ACTION builtin="clish_nop"/>
+  </COMMAND>
+  <COMMAND name="no address-family l2vpn" help="Enter Address Family command mode">
+    <PARAM name="evpn" help="Address Family" mode="subcommand" ptype="SUBCOMMAND"/>
+    <ACTION builtin="clish_nop"/>
+  </COMMAND>
+  <COMMAND name="no vrf" help="VRF instance">
+    <PARAM name="vrf-name" help="VRF name" mode="subcommand" ptype="SUBCOMMAND"/>
+    <ACTION builtin="clish_nop"/>
+  </COMMAND>
+</VIEW>
+
+
+<VIEW name="configure-router-bgp-nbr-view" prompt="${SYSTEM_NAME}(config-router-neighbor)# " depth="3">
+  <NAMESPACE ref="configure-view" help="false" completion="false" />
+  <NAMESPACE ref="configure-router-bgp-view" help="false" completion="false" />
+  <COMMAND name="description" help="Assign a string describing the neighbor or the peer template">
+    <PARAM name="String" help="Enter the string (max 80 characters) to describe neighbor/Peer Template" ptype="STRING"/>  
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_bgp_global_config_router_id ${vrf-name} ${nbr-addr} ${description}</ACTION>
+  </COMMAND>
+  <COMMAND name="ebgp-multihop" help="Allow EBGP neighbors not on directly connected networks">
+    <PARAM name="hop-count" help="Maximum hop count (default=1)" ptype="RANGE_1_255"/>
+    <ACTION builtin="clish_nop"/>
+  </COMMAND>
+  <COMMAND name="inherit" help="Inherit a template">
+    <PARAM name="template" help="Inherit configuration of peer-group" mode="subcommand" ptype="SUBCOMMAND">
+    <PARAM name="template-name" help="Name of peer-group from which to inherit" ptype="STRING"/>
+    </PARAM>
+    <ACTION builtin="clish_nop"/>
+  </COMMAND>
+  <COMMAND name="remote-as" help="Specify a BGP neighbor AS">
+      <PARAM name="as-num-dot" help="Autonomous system number" ptype="AS_NUM_DOT"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_bgp_global_config_router_id ${vrf-name} ${nbr-addr} ${remote-as}</ACTION>
+  </COMMAND>
+  <COMMAND name="timers" help="Adjust routing timers">
+    <PARAM name="keepalive-intvl" help="Keepalive interval (default=60)" ptype="RANGE_1_65535">
+      <PARAM name="hold-time" help="Holdtime (default=180)" ptype="RANGE_3_65535"/>
+    </PARAM>  
+    <ACTION builtin="clish_nop"/>
+  </COMMAND>    
+  <COMMAND name="update-source" help="Source of routing updates">
+    <PARAM name="loopback" help="Loopback interface identifier" mode="subcommand" ptype="SUBCOMMAND">
+      <PARAM name="loopback-num" help="Loopback interface identifier" ptype="LOOPBACK_NUM"/>
+    </PARAM>  
+    <ACTION builtin="clish_nop"/>
+  </COMMAND>
+  <COMMAND name="address-family" help="Enter Address Family command mode" />
+  <COMMAND name="address-family ipv4" help="Enter Address Family command mode" view="configure-router-bgp-nbr-ipv4-view" viewid="nbr-family=nbr-ipv4">
+    <PARAM name="unicast" help="Address Family" mode="subcommand" ptype="SUBCOMMAND" view="configure-router-bgp-nbr-ipv4-view" viewid="nbr-family=nbr-ipv4"/>
+    <ACTION builtin="clish_nop"/>
+  </COMMAND>
+  <COMMAND name="address-family ipv6" help="Enter Address Family command mode" view="configure-router-bgp-nbr-ipv6-view" viewid="nbr-family=nbr-ipv6">
+    <PARAM name="unicast" help="Address Family" mode="subcommand" ptype="SUBCOMMAND" view="configure-router-bgp-ipv6-view" viewid="nbr-family=nbr-ipv6"/>
+    <ACTION builtin="clish_nop"/>
+  </COMMAND>
+  <COMMAND name="address-family l2vpn" help="Enter Address Family command mode" view="configure-router-bgp-nbr-l2vpn-view" viewid="nbr-family=nbr-l2vpn">
+    <PARAM name="evpn" help="Address Family" mode="subcommand" ptype="SUBCOMMAND" view="configure-router-bgp-nbr-l2vpn-view" viewid="nbr-family=nbr-l2vpn"/>
+    <ACTION builtin="clish_nop"/>
+  </COMMAND>
+
+  <COMMAND name="no" help="no commands"/>
+  <COMMAND name="no address-family" help="Enter Address Family command mode"/>
+  <COMMAND name="no address-family ipv4" help="Enter Address Family command mode">
+    <PARAM name="unicast" help="Enter Address Family command mode" mode="subcommand" ptype="SUBCOMMAND"/>
+    <ACTION builtin="clish_nop"/>
+  </COMMAND>  
+  <COMMAND name="no address-family ipv6" help="Enter Address Family command mode">
+    <PARAM name="unicast" help="Enter Address Family command mode" mode="subcommand" ptype="SUBCOMMAND"/>
+    <ACTION builtin="clish_nop"/>
+  </COMMAND>  
+  <COMMAND name="no address-family l2vpn" help="Enter Address Family command mode">
+    <PARAM name="evpn" help="Enter Address Family command mode" mode="subcommand" ptype="SUBCOMMAND"/>
+    <ACTION builtin="clish_nop"/>
+  </COMMAND>  
+  <COMMAND name="no description" help="Remove the string describing the neighbor or the peer template">
+    <PARAM name="String" help="Enter the string (max 80 characters) to describe neighbor/Peer Template" ptype="STRING" optional="true"/>  
+    <ACTION builtin="clish_nop"/>
+  </COMMAND>
+  <COMMAND name="no ebgp-multihop" help="Allow EBGP neighbors not on directly connected networks">
+    <PARAM name="hop-count" help="Maximum hop count (default=1)" ptype="RANGE_1_255" optional="true"/>
+    <ACTION builtin="clish_nop"/>
+  </COMMAND>
+  <COMMAND name="no inherit" help="Inherit a template">
+    <PARAM name="template" help="Inherit configuration of peer-group" mode="subcommand" ptype="SUBCOMMAND">
+    <PARAM name="template-name" help="Name of peer-group from which to inherit" ptype="STRING"/>
+    </PARAM>
+    <ACTION builtin="clish_nop"/>
+  </COMMAND>
+  <COMMAND name="no remote-as" help="Specify a BGP neighbor AS">
+      <PARAM name="as-num-dot" help="Autonomous system number" ptype="AS_NUM_DOT"/>
+    <ACTION builtin="clish_nop"/>
+  </COMMAND>
+  <COMMAND name="no timers" help="Adjust routing timers">
+    <PARAM name="keepalive-intvl" help="Keepalive interval (default=60)" ptype="RANGE_1_65535" optional="true">
+      <PARAM name="hold-time" help="Holdtime (default=180)" ptype="RANGE_3_65535" optional="true"/>
+    </PARAM>  
+    <ACTION builtin="clish_nop"/>
+  </COMMAND>    
+  <COMMAND name="no update-source" help="Source of routing updates">
+    <PARAM name="loopback" help="Loopback interface identifier" mode="subcommand" ptype="SUBCOMMAND"/>
+    <ACTION builtin="clish_nop"/>
+  </COMMAND>
+</VIEW>
+
+<VIEW name="configure-router-bgp-template-view" prompt="${SYSTEM_NAME}(config-router-template)# " depth="3">
+  <NAMESPACE ref="configure-view" help="false" completion="false" />
+  <NAMESPACE ref="configure-router-bgp-view" help="false" completion="false" />
+  <COMMAND name="remote-as" help="Specify a BGP neighbor AS">
+      <PARAM name="as-num-dot" help="Autonomous system number" ptype="AS_NUM_DOT"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_bgp_global_config_router_id ${vrf-name} ${as-num-dot}${template-name} ${remote-as}</ACTION>
+  </COMMAND>
+</VIEW>
+
+<VIEW name="configure-router-bgp-vrf-view" prompt="${SYSTEM_NAME}(config-router-bgp-${instance}-vrf)# " depth="3">
+  <NAMESPACE ref="configure-view" help="false" completion="false" />
+  <NAMESPACE ref="configure-router-bgp-view" help="false" completion="false" />
+  <COMMAND name="router-id" help="Override configured router identifier">
+    <PARAM name="ip-addr" help="Router identifier" ptype="IP_ADDR"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_bgp_global_config_router_id ${vrf-name} ${instance} ${ip-addr} True </ACTION>
+  </COMMAND>
+</VIEW>
+</CLISH_MODULE>
+

@@ -1,21 +1,6 @@
-################################################################################
-#                                                                              #
-#  Copyright 2019 Broadcom. The term Broadcom refers to Broadcom Inc. and/or   #
-#  its subsidiaries.                                                           #
-#                                                                              #
-#  Licensed under the Apache License, Version 2.0 (the "License");             #
-#  you may not use this file except in compliance with the License.            #
-#  You may obtain a copy of the License at                                     #
-#                                                                              #
-#     http://www.apache.org/licenses/LICENSE-2.0                               #
-#                                                                              #
-#  Unless required by applicable law or agreed to in writing, software         #
-#  distributed under the License is distributed on an "AS IS" BASIS,           #
-#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.    #
-#  See the License for the specific language governing permissions and         #
-#  limitations under the License.                                              #
-#                                                                              #
-################################################################################
+## Open Api Spec output plugin(swagger 2.0)
+## Author: Mohammed Faraaz C
+## Company: Broadcom Inc.
 
 import optparse
 import sys
@@ -27,6 +12,7 @@ import yaml
 from collections import OrderedDict
 import copy
 import os
+import mmh3
 
 # globals
 codegenTypesToYangTypesMap = {"int8":   {"type":"integer", "format": "int32"}, 
@@ -53,7 +39,7 @@ nodeDict = OrderedDict()
 XpathToBodyTagDict = OrderedDict()
 keysToLeafRefObjSet = set()
 currentTag = None
-base_path = '/restconf/data'
+errorList = []
 verbs = ["post", "put", "patch", "get", "delete"]
 responses = { # Common to all verbs
     "500": {"description": "Internal Server Error"},
@@ -63,6 +49,11 @@ responses = { # Common to all verbs
     "415": {"description": "Unsupported Media Type"},          
 }
 verb_responses = {}
+verb_responses["rpc"] = {
+    "204": {"description": "No Content"},
+    "404": {"description": "Not Found"},
+    "403": {"description": "Forbidden"},              
+}
 verb_responses["post"] = {
     "201": {"description": "Created"},
     "409": {"description": "Conflict"},
@@ -112,7 +103,6 @@ swaggerDict["info"] = OrderedDict()
 swaggerDict["info"]["description"] = "Network management Open APIs for Broadcom's Sonic."
 swaggerDict["info"]["version"] = "1.0.0"
 swaggerDict["info"]["title"] =  "SONiC Network Management APIs"
-swaggerDict["basePath"] = base_path
 swaggerDict["schemes"] = ["https", "http"]
 swagger_tags = []
 swaggerDict["tags"] = swagger_tags
@@ -138,7 +128,6 @@ def resetSwaggerDict():
     swaggerDict["info"]["description"] = "Network management Open APIs for Sonic."
     swaggerDict["info"]["version"] = "1.0.0"
     swaggerDict["info"]["title"] =  "Sonic Network Management APIs"
-    swaggerDict["basePath"] = base_path
     swaggerDict["schemes"] = ["https", "http"]
     swagger_tags = []
     currentTag = None
@@ -170,6 +159,7 @@ class OpenApiPlugin(plugin.PyangPlugin):
     def emit(self, ctx, modules, fd):
     
       global currentTag
+      global errorList
 
       if ctx.opts.outdir is None:
         print("[Error]: Output directory is not mentioned")
@@ -189,8 +179,8 @@ class OpenApiPlugin(plugin.PyangPlugin):
         # delete root '/' as we dont support it.
             
         if len(swaggerDict["paths"]) > 0:
-            if "/" in swaggerDict["paths"]:
-                del(swaggerDict["paths"]["/"])
+            if "/restconf/data/" in swaggerDict["paths"]:
+                del(swaggerDict["paths"]["/restconf/data/"])
 
         if len(swaggerDict["paths"]) <= 0:
             continue
@@ -213,10 +203,17 @@ class OpenApiPlugin(plugin.PyangPlugin):
         else:        
             with open(ctx.opts.outdir + '/' + module.i_modulename + ".yaml", "w") as spec:
               spec.write(ordered_dump(swaggerDict, Dumper=yaml.SafeDumper))      
+    
+        if len(errorList) > 0:
+            print("========= Errors observed =======")
+            for err in errorList:
+                print(err)
+            print("========= Exiting due to above Errors =======")
+            sys.exit(2)
 
 def walk_module(module):
     for child in module.i_children:
-        walk_child(child)
+        walk_child(child, None)
 
 def add_swagger_tag(module):
     if module.i_modulename not in moduleDict:
@@ -239,6 +236,7 @@ def swagger_it(child, defName, pathstr, payload, metadata, verb, operId=False):
         if not verbPathStr.startswith("/"):
             verbPathStr = "/" + verbPathStr
 
+    verbPathStr = "/restconf/data" + verbPathStr
     if verbPathStr not in swaggerDict["paths"]:
         swaggerDict["paths"][verbPathStr] = OrderedDict()
 
@@ -316,8 +314,78 @@ def swagger_it(child, defName, pathstr, payload, metadata, verb, operId=False):
         verbPath["responses"]["200"]["schema"] = OrderedDict()
         verbPath["responses"]["200"]["schema"]["$ref"] = "#/definitions/" + defName
 
-def walk_child(child):
+def handle_rpc(child, actXpath, pathstr, overriddenParentName):
+    global currentTag
+    verbPathStr = "/restconf/operations" + pathstr
+    verb = "post"
+    customName = getOpId(child, overriddenParentName)
+    DefName = shortenNodeName(child, customName)
+    opId = "rpc_" + DefName
+    add_swagger_tag(child.i_module)
+    
+    # build input payload
+    input_payload = OrderedDict()       
+    input_child = child.search_one('input', None, child.i_children)
+    if input_child is None:
+        print("There is no input node for RPC ", "Xpath: ", actXpath)    
+    build_payload(input_child, input_payload, pathstr, True, actXpath, True)    
+    input_Defn = "rpc_input_" + DefName
+    swaggerDict["definitions"][input_Defn] = OrderedDict()
+    swaggerDict["definitions"][input_Defn]["type"] = "object"
+    swaggerDict["definitions"][input_Defn]["properties"] = copy.deepcopy(input_payload)    
+
+    # build output payload
+    output_payload = OrderedDict()       
+    output_child = child.search_one('output', None, child.i_children)
+    if output_child is None:
+        print("There is no output node for RPC ", "Xpath: ", actXpath)
+    build_payload(output_child, output_payload, pathstr, True, actXpath, True) 
+    output_Defn = "rpc_output_" + DefName
+    swaggerDict["definitions"][output_Defn] = OrderedDict()
+    swaggerDict["definitions"][output_Defn]["type"] = "object"
+    swaggerDict["definitions"][output_Defn]["properties"] = copy.deepcopy(output_payload)        
+
+    if verbPathStr not in swaggerDict["paths"]:
+        swaggerDict["paths"][verbPathStr] = OrderedDict()
+
+    swaggerDict["paths"][verbPathStr][verb] = OrderedDict()
+    swaggerDict["paths"][verbPathStr][verb]["tags"] = [currentTag]
+    
+    # Set Operation ID
+    swaggerDict["paths"][verbPathStr][verb]["operationId"] = opId
+    
+    # Set Description
+    desc = child.search_one('description')
+    if desc is None:
+        desc = ''
+    else:
+        desc = desc.arg
+    desc = "OperationId: " + opId + "\n" + desc        
+    swaggerDict["paths"][verbPathStr][verb]["description"] = desc
+    verbPath = swaggerDict["paths"][verbPathStr][verb]
+    
+    # Request payload
+    if len(input_payload[child.i_module.i_modulename + ':input']['properties']) > 0:
+        verbPath["parameters"] = []    
+        verbPath["consumes"] = ["application/yang-data+json"]
+        bodyTag = OrderedDict()
+        bodyTag["in"] = "body"
+        bodyTag["name"] = "body"
+        bodyTag["required"] = True
+        bodyTag["schema"] = OrderedDict()
+        bodyTag["schema"]["$ref"] = "#/definitions/" + input_Defn
+        verbPath["parameters"].append(bodyTag)
+
+    # Response payload
+    verbPath["responses"] = copy.deepcopy(merge_two_dicts(responses, verb_responses["rpc"]))        
+    if len(output_payload[child.i_module.i_modulename + ':output']['properties']) > 0:
+        verbPath["produces"] = ["application/yang-data+json"]    
+        verbPath["responses"]["204"]["schema"] = OrderedDict()    
+        verbPath["responses"]["204"]["schema"]["$ref"] = "#/definitions/" + output_Defn    
+
+def walk_child(child, overriddenParentName=None):
     global XpathToBodyTagDict
+    customName =  None
 
     actXpath = statements.mk_path_str(child, True)
     metadata = []
@@ -326,6 +394,11 @@ def walk_child(child):
         
     if actXpath in keysToLeafRefObjSet:
         return
+
+    if child.keyword == "rpc":
+        add_swagger_tag(child.i_module)
+        handle_rpc(child, actXpath, pathstr, overriddenParentName)
+        return 
 
     if child.keyword in ["list", "container", "leaf", "leaf-list"]:
         payload = OrderedDict()       
@@ -344,7 +417,8 @@ def walk_child(child):
                         keysToLeafRefObjSet.add(listKeyPath)
                 return
 
-        defName = shortenNodeName(child)
+        customName = getOpId(child, overriddenParentName)
+        defName = shortenNodeName(child, customName)
 
         if child.i_config == False:   
             payload_get = OrderedDict()
@@ -401,13 +475,13 @@ def walk_child(child):
 
         if  child.keyword == "list":
             listMetaData = copy.deepcopy(metadata)
-            walk_child_for_list_base(child,actXpath,pathstr, listMetaData, defName)
+            walk_child_for_list_base(child,actXpath,pathstr, listMetaData, defName, customName)
 
     if hasattr(child, 'i_children'):
         for ch in child.i_children:
-            walk_child(ch)
+            walk_child(ch, customName)
 
-def walk_child_for_list_base(child, actXpath, pathstr, metadata, nonBaseDefName=None):
+def walk_child_for_list_base(child, actXpath, pathstr, metadata, nonBaseDefName=None, customParentName=None):
 
     payload = OrderedDict()
     pathstrList = pathstr.split('/')
@@ -432,7 +506,8 @@ def walk_child_for_list_base(child, actXpath, pathstr, metadata, nonBaseDefName=
     if len(payload) == 0 and child.i_config == True:
         return
 
-    defName = shortenNodeName(child)
+    customName = getOpId(child, customParentName)
+    defName = shortenNodeName(child, customName)
     defName = "list"+'_'+defName
 
     if child.i_config == False:
@@ -588,6 +663,17 @@ def build_payload(child, payloadDict, uriPath="", oneInstance=False, Xpath="", f
 
     elif child.keyword == "choice" or child.keyword == "case":
         childJson = payloadDict
+    
+    elif child.keyword == "input" or child.keyword == "output":
+        if firstCall:
+            nodeName = child.i_module.i_modulename + ':' + child.keyword
+        else:
+            nodeName = child.keyword
+
+        payloadDict[nodeName] = OrderedDict()
+        payloadDict[nodeName]["type"] = "object"
+        payloadDict[nodeName]["properties"] = OrderedDict()
+        childJson = payloadDict[nodeName]["properties"]            
 
     if hasattr(child, 'i_children'):
         for ch in child.i_children:
@@ -689,20 +775,51 @@ def handle_leafref(node,xpath):
         print("leafref not pointing to leaf/leaflist")
         sys.exit(2)
 
-def shortenNodeName(node):
+def getOpId(node, overriddenParentName):
+    name = None
+    for substmt in node.substmts: 
+        if substmt.keyword.__class__.__name__ == 'tuple':
+            if substmt.keyword[0] == 'sonic-extensions':
+                if substmt.keyword[1] == 'openapi-opid':
+                    name = substmt.arg
+                    return name
+    if overriddenParentName is not None:
+        name = overriddenParentName + '_' + node.arg
+    return name
+
+def shortenNodeName(node, overridenName=None):
     global nodeDict
+    global errorList
+
     xpath = statements.mk_path_str(node, False)
-    name = node.i_module.i_modulename + xpath.replace('/','_')
+    xpath_prefix = statements.mk_path_str(node, False)
+    if overridenName is None:
+        name = node.i_module.i_modulename + xpath.replace('/','_')
+    else:
+        name = overridenName
+
     name = name.replace('-','_').lower()
     if name not in nodeDict:
         nodeDict[name] = xpath
     else:
-        while name in nodeDict:
-            if xpath == nodeDict[name]:
-                break
-            name = node.i_module.i_modulename + '_' + name
-            name = name.replace('-','_').lower()
-        nodeDict[name] = xpath
+        if overridenName is None:
+            while name in nodeDict:
+                if xpath == nodeDict[name]:
+                    break
+                name = node.i_module.i_modulename + '_' + name
+                name = name.replace('-','_').lower()
+            nodeDict[name] = xpath
+        else:
+            if xpath != nodeDict[name]:
+                print("[Name collision] at ", xpath, " name: ", name, " is used, override using openapi-opid annotation")
+                sys.exit(2)
+    if len(name) > 150:
+        if overridenName is None:
+            # Generate unique hash
+            mmhash = mmh3.hash(name, signed=False)
+            name = node.i_module.i_modulename + '_' + str(mmhash)
+        if len(name) > 150:
+            errorList.append("[Error: ] OpID is too big for " + str(xpath_prefix) +" please provide unique manual input through openapi-opid annotation using deviation file")
     return name
 
 def getCamelForm(moName):
@@ -829,4 +946,3 @@ def isUriKeyInPayload(stmt, keyNodesList):
         result = True
     
     return result
-

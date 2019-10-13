@@ -1,0 +1,59 @@
+module sonic-bgp-neighbor {
+	namespace "http://github.com/Azure/sonic-bgp-neighbor";
+	prefix sbnbr;
+	yang-version 1.1;
+
+	import ietf-yang-types {
+		prefix yang;
+	}
+
+	import ietf-inet-types {
+		prefix inet;
+	}
+
+	organization
+		"SONiC";
+
+	contact
+		"SONiC";
+
+	description
+		"SONIC BGP Neighbor";
+
+	revision 2019-09-23 {
+		description
+			"Initial revision.";
+	}
+
+	container sonic-bgp-neighbor {
+
+		list BGP_NEIGHBOR {
+			key "neighbor_ip";
+
+			leaf local_asn {
+                type uint32;
+                description "Local ASN";
+			}
+
+            leaf peer_asn {
+                type uint32;
+                description "Peer ASN";
+			}
+
+            leaf ebgp-multihop {
+                type uint32;
+                description "TTL";
+			}
+
+            leaf neighbor_ip {
+                type inet:ipv4-address;
+                description "Neighbor description";
+            }
+
+            leaf description {
+                type string;
+                description "Neighbor information";
+			}
+        }
+    }
+}
