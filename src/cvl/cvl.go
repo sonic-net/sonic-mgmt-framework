@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"strconv"
 	"regexp"
 	"time"
 	 log "github.com/golang/glog"
@@ -64,6 +65,11 @@ var dbNameToDbNum map[string]uint8
 //map of lua script loaded
 var luaScripts map[string]*redis.Script
 
+type tblFieldPair struct {
+	tableName string
+	field string
+}
+
 //var tmpDbCache map[string]interface{} //map of table storing map of key-value pair
 					//m["PORT_TABLE] = {"key" : {"f1": "v1"}}
 //Important schema information to be loaded at bootup time
@@ -75,11 +81,13 @@ type modelTableInfo struct {
 	keys []string
 	redisKeyDelim string
 	redisKeyPattern string
+	redisTableSize int
 	mapLeaf []string //for 'mapping  list'
 	leafRef map[string][]string //for storing all leafrefs for a leaf in a table, 
 				//multiple leafref possible for union 
 	mustExp map[string]string
 	tablesForMustExp map[string]CVLOperation
+	refFromTables []tblFieldPair //list of table or table/field referring to this table
 }
 
 
@@ -200,6 +208,9 @@ func init() {
 		CVL_LOG(ERROR ,"Could not enable notification error %s", err)
 	}
 
+	//Build reverse leafref info i.e. which table/field uses one table through leafref
+	buildRefTableInfo()
+
 	dbCacheSet(false, "PORT", 0)
 }
 
@@ -275,6 +286,8 @@ func storeModelInfo(modelFile string, module *yparser.YParserModule) { //such mo
 		tableInfo.dbNum = CONFIG_DB
 		//default delim '|'
 		tableInfo.redisKeyDelim = "|"
+		//Default table size is -1 i.e. size limit
+		tableInfo.redisTableSize = -1 
 		modelInfo.allKeyDelims[tableInfo.redisKeyDelim] = true
 
 		fieldCount := 0
@@ -333,34 +346,36 @@ func storeModelInfo(modelFile string, module *yparser.YParserModule) { //such mo
 		}
 
 		leafRefNodes := xmlquery.Find(listNode, "//type[@name='leafref']")
-		if (leafRefNodes == nil) {
-			//Store the tableInfo in global data
-			modelInfo.tableInfo[tableName] = &tableInfo
+		if (leafRefNodes != nil) {
+			tableInfo.leafRef = make(map[string][]string)
+			for _, leafRefNode := range leafRefNodes {
+				if (leafRefNode.Parent == nil || leafRefNode.FirstChild == nil) {
+					continue
+				}
 
-			continue
-		}
+				//Get the leaf/leaf-list name holding this leafref
+				//Note that leaf can have union of leafrefs
+				leafName := ""
+				for node := leafRefNode.Parent; node != nil; node = node.Parent {
+					if  (node.Data == "leaf" || node.Data == "leaf-list") {
+						leafName = getXmlNodeAttr(node, "name")
+						break
+					}
+				}
 
-		tableInfo.leafRef = make(map[string][]string)
-		for _, leafRefNode := range leafRefNodes {
-			if (leafRefNode.Parent == nil || leafRefNode.FirstChild == nil) {
-				continue
-			}
-
-			//Get the leaf/leaf-list name holding this leafref
-			//Note that leaf can have union of leafrefs
-			leafName := ""
-			for node := leafRefNode.Parent; node != nil; node = node.Parent {
-				if  (node.Data == "leaf" || node.Data == "leaf-list") {
-					leafName = getXmlNodeAttr(node, "name")
-					break
+				//Store the leafref path
+				if (leafName != "") {
+					tableInfo.leafRef[leafName] = append(tableInfo.leafRef[leafName],
+					getXmlNodeAttr(leafRefNode.FirstChild, "value"))
 				}
 			}
+		}
 
-			//Store the leafref path
-			if (leafName != "") {
-				tableInfo.leafRef[leafName] = append(tableInfo.leafRef[leafName],
-				getXmlNodeAttr(leafRefNode.FirstChild, "value"))
-			}
+		//Find if any 'max-elements' is there, this syntax should be handled as special case
+		maxElemVal := xmlquery.Find(listNode, "/max-elements/@value")
+		if maxElemVal != nil {
+			//Update list size
+			tableInfo.redisTableSize, _ = strconv.Atoi(maxElemVal[0].FirstChild.Data)
 		}
 
 		//Find all 'must' expression and store the against its parent node
@@ -394,6 +409,75 @@ func storeModelInfo(modelFile string, module *yparser.YParserModule) { //such mo
 		modelInfo.tableInfo[tableName] = &tableInfo
 
 	}
+}
+
+func yangToRedisTblName(yangListName string) string {
+	if (strings.HasSuffix(yangListName, "_LIST")) {
+		return yangListName[0:len(yangListName) - len("_LIST")]
+	}
+	return yangListName
+}
+
+//This functions build info of dependent table/fields which uses a particulat table through leafref
+func buildRefTableInfo() {
+	for tblName, tblInfo := range modelInfo.tableInfo {
+		if (len(tblInfo.leafRef) == 0) {
+			continue
+		}
+
+		//For each leafref update the table used through leafref
+		for fieldName, leafRefs  := range tblInfo.leafRef {
+			for _, leafRef := range leafRefs {
+				matches := reLeafRef.FindStringSubmatch(leafRef)
+
+				//We have the leafref table name
+				if (matches != nil && len(matches) == 5) { //whole + 4 sub matches
+					refTable := yangToRedisTblName(matches[2])
+					refTblInfo :=  modelInfo.tableInfo[refTable]
+
+					refFromTables := &refTblInfo.refFromTables
+					*refFromTables = append(*refFromTables, tblFieldPair{tblName, fieldName})
+					modelInfo.tableInfo[refTable] = refTblInfo 
+				}
+			}
+		}
+
+	}
+
+	//Now sort list 'refFromTables' under each table based on dependency among them 
+	for tblName, tblInfo := range modelInfo.tableInfo {
+		if (len(tblInfo.refFromTables) == 0) {
+			continue
+		}
+
+		depTableList := []string{}
+		for i:=0; i < len(tblInfo.refFromTables); i++ {
+			depTableList = append(depTableList, tblInfo.refFromTables[i].tableName)
+		}
+
+		sortedTableList, _ := cvg.cv.SortDepTables(depTableList)
+		if (len(sortedTableList) == 0) {
+			continue
+		}
+
+		newRefFromTables := []tblFieldPair{}
+
+		for i:=0; i < len(sortedTableList); i++ {
+			//Find fieldName
+			fieldName := ""
+			for j :=0; j < len(tblInfo.refFromTables); j++ {
+				if (sortedTableList[i] == tblInfo.refFromTables[j].tableName) {
+					fieldName =  tblInfo.refFromTables[j].field
+					break
+				}
+			}
+			newRefFromTables = append(newRefFromTables, tblFieldPair{sortedTableList[i], fieldName})
+		}
+		//Update sorted refFromTables
+		tblInfo.refFromTables = newRefFromTables
+		modelInfo.tableInfo[tblName] = tblInfo 
+	}
+
 }
 
 //Find the tables names in must expression, these tables data need to be fetched 
@@ -977,6 +1061,44 @@ func (c *CVL) checkDeleteConstraint(cfgData []CVLEditConfigData,
 	return CVL_SUCCESS
 }
 
+//This function should be called before adding any new entry
+//Checks max-elements defined with (current number of entries
+//getting added + entries already added and present in request
+//cache + entries present in Redis DB)
+func (c *CVL) checkMaxElemConstraint(tableName string) CVLRetCode {
+	var nokey []string
+
+	if modelInfo.tableInfo[tableName].redisTableSize == -1 {
+		//No limit for table size
+		return CVL_SUCCESS
+	}
+
+	redisEntries, err := luaScripts["count_entries"].Run(redisClient, nokey, tableName).Result()
+	curSize := int(redisEntries.(int64))
+
+	if err != nil {
+		return CVL_FAILURE
+	}
+
+	//Count only the entries getting created
+	for _, cfgDataArr := range c.requestCache[tableName] {
+		for _, cfgReqData := range cfgDataArr {
+			if (cfgReqData.VOp != OP_CREATE) {
+				continue
+			}
+
+			curSize = curSize + 1
+			if (curSize >  modelInfo.tableInfo[tableName].redisTableSize) {
+				//Does not meet the constraint
+				return CVL_SYNTAX_ERROR
+			}
+		}
+	}
+
+
+	return CVL_SUCCESS
+}
+
 //Add the data which are referring this key
 func (c *CVL) updateDeleteDataToCache(tableName string, redisKey string) {
 	if _, existing := c.tmpDbCache[tableName]; existing == false {
@@ -993,12 +1115,6 @@ func (c *CVL) updateDeleteDataToCache(tableName string, redisKey string) {
 //Find which all tables (and which field) is using given (tableName/field)
 // as leafref
 //Use LUA script to find if table has any entry for this leafref
-
-type tblFieldPair struct {
-	tableName string
-	field string
-}
-
 func (c *CVL) findUsedAsLeafRef(tableName, field string) []tblFieldPair {
 
 	var tblFieldPairArr []tblFieldPair

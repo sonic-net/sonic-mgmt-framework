@@ -34,6 +34,7 @@ module sonic-device-metadata {
 
 			list DEVICE_METADATA_LIST {
 				key "name";
+				max-elements 1;
 
 				leaf name{
 					type string;

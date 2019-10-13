@@ -62,4 +62,8 @@ func loadLuaScript() {
 	return ""
 	`)
 
+	//Find current number of entries in a table
+	luaScripts["count_entries"] = redis.NewScript(`
+	  return #redis.call('KEYS', ARGV[1].."*")
+	`)
 }

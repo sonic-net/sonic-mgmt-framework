@@ -1,0 +1,80 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE CLISH_MODULE [
+]>
+<CLISH_MODULE
+      xmlns="http://www.dellemc.com/sonic/XMLSchema"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xsi:schemaLocation="http://www.dellemc.com/sonic/XMLSchema 
+      http://www.dellemc.com/sonic/XMLSchema/clish.xsd"
+      >
+  <VIEW name="enable-view">
+    <COMMAND
+         name="show image-list"
+         help="Show list of images"
+         >
+         <ACTION>
+              python $SONIC_CLI_ROOT/sonic-cli-img.py get_openconfig_platform_components show_image.j2 ${__full_line}
+         </ACTION>
+    </COMMAND>
+
+    <COMMAND
+         name="image"
+         help="Image related commands"
+         >
+         <ACTION builtin="clish_nop"/>
+    </COMMAND> 
+    <COMMAND
+	 name="image set-default"
+	 help="Set default image">
+         <PARAM
+	      name="img-name"
+	      help="Image name"
+	      ptype="STRING"
+	      >
+	 </PARAM>
+         <ACTION>
+	      python $SONIC_CLI_ROOT/sonic-cli-img.py get_openconfig_platform_components ${img-name} ${__full_line}
+	 </ACTION>
+    </COMMAND>
+    <COMMAND
+	 name="image install"
+	 help="Install image">
+         <PARAM
+	      name="img-path"
+	      help="Path or url to image"
+	      ptype="STRING"
+	      >
+	 </PARAM>
+         <ACTION>
+	      python $SONIC_CLI_ROOT/sonic-cli-img.py get_openconfig_platform_components ${img-path} ${__full_line}
+	 </ACTION>
+    </COMMAND>
+    <COMMAND
+	 name="image set-nextboot"
+	 help="Set image for nextboot">
+         <PARAM
+	      name="img-name"
+	      help="Image name"
+	      ptype="STRING"
+	      >
+	 </PARAM>
+         <ACTION>
+	      python $SONIC_CLI_ROOT/sonic-cli-img.py get_openconfig_platform_components ${img-name} ${__full_line}
+	 </ACTION>
+    </COMMAND>
+    <COMMAND
+	 name="image remove"
+	 help="Remove an image ">
+         <PARAM
+	      name="img-name"
+	      help="Image name"
+	      ptype="STRING"
+	      >
+	 </PARAM>
+         <ACTION>
+	      python $SONIC_CLI_ROOT/sonic-cli-img.py get_openconfig_platform_components ${img-name} ${__full_line}
+	 </ACTION>
+    </COMMAND>
+  </VIEW>
+</CLISH_MODULE>

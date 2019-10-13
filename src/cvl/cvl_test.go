@@ -3453,3 +3453,167 @@ func TestValidateEditConfig_EmptyNode_Positive(t *testing.T) {
         }
 
 }
+
+func TestSortDepTables(t *testing.T) {
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	result, _ := cvSess.SortDepTables([]string{"PORT", "ACL_RULE", "ACL_TABLE"})
+
+	expectedResult := []string{"ACL_RULE", "ACL_TABLE", "PORT"}
+
+	if len(expectedResult) != len(result) {
+		t.Errorf("Validation failed, returned value = %v", result)
+		return 
+	}
+
+	for i := 0; i < len(expectedResult) ; i++ {
+		if result[i] != expectedResult[i] {
+			t.Errorf("Validation failed, returned value = %v", result)
+			break
+		}
+	}
+
+	cvl.ValidationSessClose(cvSess)
+}
+
+func TestGetOrderedTables(t *testing.T) {
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	result, _ := cvSess.GetOrderedTables("sonic-vlan")
+
+	expectedResult := []string{"VLAN_MEMBER", "VLAN"}
+
+	if len(expectedResult) != len(result) {
+		t.Errorf("Validation failed, returned value = %v", result)
+		return 
+	}
+
+	for i := 0; i < len(expectedResult) ; i++ {
+		if result[i] != expectedResult[i] {
+			t.Errorf("Validation failed, returned value = %v", result)
+			break
+		}
+	}
+
+	cvl.ValidationSessClose(cvSess)
+}
+
+func TestGetDepTables(t *testing.T) {
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	result, _ := cvSess.GetDepTables("sonic-acl", "ACL_RULE")
+
+	expectedResult := []string{"ACL_RULE", "ACL_TABLE", "MIRROR_SESSION", "PORT"}
+
+	if len(expectedResult) != len(result) {
+		t.Errorf("Validation failed, returned value = %v", result)
+		return 
+	}
+
+	for i := 0; i < len(expectedResult) ; i++ {
+		if result[i] != expectedResult[i] {
+			t.Errorf("Validation failed, returned value = %v", result)
+			break
+		}
+	}
+
+	cvl.ValidationSessClose(cvSess)
+}
+
+func TestMaxElements_All_Entries_In_Request(t *testing.T) {
+        cvSess, _ := cvl.ValidationSessOpen()
+
+        cfgData := []cvl.CVLEditConfigData{
+                cvl.CVLEditConfigData{
+                        cvl.VALIDATE_ALL,
+                        cvl.OP_CREATE,
+                        "DEVICE_METADATA|localhost",
+			map[string]string{
+				"hwsku": "Force10-S6100",
+				"hostname": "sonic-s6100-01",
+				"platform": "x86_64-dell_s6100_c2538-r0",
+				"mac": "4c:76:25:f4:70:82",
+				"deployment_id": "1",
+			},
+                },
+        }
+
+	//Add first element
+        cvlErrInfo, _ := cvSess.ValidateEditConfig(cfgData)
+
+        if cvlErrInfo.ErrCode != cvl.CVL_SUCCESS {
+                t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
+        }
+
+        cfgData1 := []cvl.CVLEditConfigData{
+                cvl.CVLEditConfigData{
+                        cvl.VALIDATE_ALL,
+                        cvl.OP_CREATE,
+                        "DEVICE_METADATA|localhost1",
+			map[string]string{
+				"hwsku": "Force10-S6101",
+				"hostname": "sonic-s6100-02",
+				"platform": "x86_64-dell_s6100_c2538-r0",
+				"mac": "4c:76:25:f4:70:83",
+				"deployment_id": "2",
+			},
+                },
+        }
+
+	//Try to add second element
+        cvlErrInfo, _ = cvSess.ValidateEditConfig(cfgData1)
+
+        cvl.ValidationSessClose(cvSess)
+
+	//Should fail as "DEVICE_METADATA" has max-elements as '1'
+        if cvlErrInfo.ErrCode == cvl.CVL_SUCCESS {
+                t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
+        }
+
+}
+
+func TestMaxElements_Entries_In_Redis(t *testing.T) {
+	depDataMap := map[string]interface{} {
+		"DEVICE_METADATA" : map[string]interface{} {
+			"localhost": map[string] interface{} {
+				"hwsku": "Force10-S6100",
+				"hostname": "sonic-s6100-01",
+				"platform": "x86_64-dell_s6100_c2538-r0",
+				"mac": "4c:76:25:f4:70:82",
+				"deployment_id": "1",
+			},
+		},
+	}
+
+	loadConfigDB(rclient, depDataMap)
+
+        cvSess, _ := cvl.ValidationSessOpen()
+
+        cfgData := []cvl.CVLEditConfigData{
+                cvl.CVLEditConfigData{
+                        cvl.VALIDATE_ALL,
+                        cvl.OP_CREATE,
+                        "DEVICE_METADATA|localhost1",
+			map[string]string{
+				"hwsku": "Force10-S6101",
+				"hostname": "sonic-s6100-02",
+				"platform": "x86_64-dell_s6100_c2538-r0",
+				"mac": "4c:76:25:f4:70:83",
+				"deployment_id": "2",
+			},
+                },
+        }
+
+	//Try to add second element
+	cvlErrInfo, _ := cvSess.ValidateEditConfig(cfgData)
+
+	unloadConfigDB(rclient, depDataMap)
+
+        cvl.ValidationSessClose(cvSess)
+
+	//Should fail as "DEVICE_METADATA" has max-elements as '1'
+        if cvlErrInfo.ErrCode == cvl.CVL_SUCCESS {
+                t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
+        }
+
+}
