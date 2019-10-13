@@ -29,7 +29,7 @@ out_tree=$(patsubst %.yang, %.tree, $(src_files))
 search_path=$(sonic_yang):$(sonic_yang_common):$(sonic_yang_common)/ietf
 
 
-all:schema
+all:schema 
 
 schema: $(out) $(out_common)
 
