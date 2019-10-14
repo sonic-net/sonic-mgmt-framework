@@ -1,17 +1,17 @@
 
 module sonic-common {
 	namespace "http://github.com/Azure/sonic-common";
-	prefix sv;
+	prefix scommon;
 
 	import ietf-yang-types {
 		prefix yang;
 	}
 
 	organization
-		"BRCM";
+		"SONiC";
 
 	contact
-		"BRCM";
+		"SONiC";
 
 	description
 		"SONIC VLAN";

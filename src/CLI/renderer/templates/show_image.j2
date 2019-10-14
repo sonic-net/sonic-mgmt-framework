@@ -1,0 +1,13 @@
+{{'-----------------------------------------------------------'}}
+{% for key,value in json_output.items() %}
+{% if key == 'Available' %}
+{{key.ljust(20)}}:
+{% for img in value %}
+{{img}}
+{% endfor %}
+{% else %}
+{{key.ljust(20)}}:{{value}}
+{% endif %}
+{% endfor %}
+{{'-----------------------------------------------------------'}}
+

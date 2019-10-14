@@ -33,13 +33,13 @@ import (
 )
 
 func init() {
-	XlateFuncBind("YangToDb_acl_set_name_xfmr", YangToDb_acl_set_name_xfmr)
 	XlateFuncBind("DbToYang_acl_set_name_xfmr", DbToYang_acl_set_name_xfmr)
 	XlateFuncBind("YangToDb_acl_type_field_xfmr", YangToDb_acl_type_field_xfmr)
 	XlateFuncBind("DbToYang_acl_type_field_xfmr", DbToYang_acl_type_field_xfmr)
+        XlateFuncBind("YangToDb_acl_set_key_xfmr", YangToDb_acl_set_key_xfmr)
+        XlateFuncBind("DbToYang_acl_set_key_xfmr", DbToYang_acl_set_key_xfmr)
 	XlateFuncBind("YangToDb_acl_entry_key_xfmr", YangToDb_acl_entry_key_xfmr)
 	XlateFuncBind("DbToYang_acl_entry_key_xfmr", DbToYang_acl_entry_key_xfmr)
-	XlateFuncBind("YangToDb_acl_entry_sequenceid_xfmr", YangToDb_acl_entry_sequenceid_xfmr)
 	XlateFuncBind("DbToYang_acl_entry_sequenceid_xfmr", DbToYang_acl_entry_sequenceid_xfmr)
 	XlateFuncBind("YangToDb_acl_l2_ethertype_xfmr", YangToDb_acl_l2_ethertype_xfmr)
 	XlateFuncBind("DbToYang_acl_l2_ethertype_xfmr", DbToYang_acl_l2_ethertype_xfmr)
@@ -271,12 +271,53 @@ var DbToYang_acl_type_field_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (
 	return result, err
 }
 
-var YangToDb_acl_set_name_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
-	res_map := make(map[string]string)
+var YangToDb_acl_set_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (string, error) {
+	var aclkey string
 	var err error
-	log.Info("YangToDb_acl_set_name_xfmr: ")
-	/*no-op since there is no redis table field to be filled corresponding to name attribute since its part of key */
-	return res_map, err
+	var oc_aclType ocbinds.E_OpenconfigAcl_ACL_TYPE
+	log.Info("YangToDb_acl_set_key_xfmr: ", inParams.ygRoot, inParams.uri)
+	pathInfo := NewPathInfo(inParams.uri)
+
+	if len(pathInfo.Vars) < 2 {
+		err = errors.New("Invalid xpath, key attributes not found")
+		return aclkey, err
+	}
+
+	oc_aclType, err = getAclTypeOCEnumFromName(pathInfo.Var("type"))
+	if err != nil {
+		err = errors.New("OC Acl type name to OC Acl Enum failed")
+		return aclkey, err
+	}
+
+	aclkey = getAclKeyStrFromOCKey(pathInfo.Var("name"), oc_aclType)
+	log.Info("YangToDb_acl_set_key_xfmr - acl_set_key : ", aclkey)
+
+	return aclkey, err
+}
+
+var DbToYang_acl_set_key_xfmr KeyXfmrDbToYang = func(inParams XfmrParams) (map[string]interface{}, error) {
+	rmap := make(map[string]interface{})
+	var err error
+	var aclNameStr string
+	var aclTypeStr string
+	aclkey := inParams.key
+	log.Info("DbToYang_acl_set_key_xfmr: ", aclkey)
+	if strings.Contains(aclkey, "_"+OPENCONFIG_ACL_TYPE_IPV4) {
+		aclNameStr = strings.Replace(aclkey, "_"+OPENCONFIG_ACL_TYPE_IPV4, "", 1)
+		aclTypeStr = "ACL_IPV4"
+	} else if strings.Contains(aclkey, "_"+OPENCONFIG_ACL_TYPE_IPV6) {
+		aclNameStr = strings.Replace(aclkey, "_"+OPENCONFIG_ACL_TYPE_IPV6, "", 1)
+		aclTypeStr = "ACL_IPV6"
+	} else if strings.Contains(aclkey, "_"+OPENCONFIG_ACL_TYPE_L2) {
+		aclNameStr = strings.Replace(aclkey, "_"+OPENCONFIG_ACL_TYPE_L2, "", 1)
+		aclTypeStr = "ACL_L2"
+	} else {
+		err = errors.New("Invalid key for acl set.")
+		log.Info("Invalid Keys for acl acl set", aclkey)
+	}
+	rmap["name"] = aclNameStr
+	rmap["type"] = aclTypeStr
+	return rmap, err
 }
 
 var DbToYang_acl_set_name_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (map[string]interface{}, error) {
@@ -337,14 +378,6 @@ var DbToYang_acl_entry_key_xfmr KeyXfmrDbToYang = func(inParams XfmrParams) (map
 	seqId := strings.Replace(dbAclRule, "RULE_", "", 1)
 	rmap["sequence-id"], _ = strconv.ParseFloat(seqId, 64)
 	return rmap, err
-}
-
-var YangToDb_acl_entry_sequenceid_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
-	res_map := make(map[string]string)
-	var err error
-	log.Info("YangToDb_acl_entry_sequenceid_xfmr: ")
-	/*no-op since there is no redis table field to be filled corresponding to sequenec-id attribute since its part of key */
-	return res_map, err
 }
 
 var DbToYang_acl_entry_sequenceid_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (map[string]interface{}, error) {
@@ -473,7 +506,6 @@ var YangToDb_acl_source_port_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) 
 		res_map["L4_SRC_PORT"] = strconv.FormatInt(int64(v.Uint16), 10)
 		break
 	}
-
 	return res_map, err
 }
 
@@ -634,7 +666,6 @@ var YangToDb_acl_port_bindings_xfmr SubTreeXfmrYangToDb = func(inParams XfmrPara
 	if aclObj.Interfaces == nil {
 		return res_map, err
 	}
-	//aclset := &ocbinds.OpenconfigAcl_Acl_AclSets_AclSet{}
 	aclInterfacesMap := make(map[string][]string)
 	for intfId, _ := range aclObj.Interfaces.Interface {
 		intf := aclObj.Interfaces.Interface[intfId]
@@ -679,7 +710,7 @@ var DbToYang_acl_port_bindings_xfmr SubTreeXfmrDbToYang = func(inParams XfmrPara
 	aclTbl := data["ACL_TABLE"]
 	var ruleTbl map[string]map[string]db.Value
 
-	// repoluate to use existing code
+	// repopulate to use existing code
 	ruleTbl = make(map[string]map[string]db.Value)
 	for key, element := range data["ACL_RULE"] {
 		// split into aclKey and ruleKey

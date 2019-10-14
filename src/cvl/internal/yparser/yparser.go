@@ -95,9 +95,10 @@ int lyd_data_validate_all(const char *data, const char *depData, const char *oth
 int lyd_multi_new_leaf(struct lyd_node *parent, const struct lys_module *module, const char *leafVal)
 {
 	char s[4048];
-	char *name, *val, *saveptr;
+        char *name, *val;
+        char *saveptr;
 
-	strcpy(s, leafVal);
+        strcpy(s, leafVal);
 
 	name = strtok_r(s, "#", &saveptr);
 
@@ -114,8 +115,6 @@ int lyd_multi_new_leaf(struct lyd_node *parent, const struct lys_module *module,
 
 		name = strtok_r(NULL, "#", &saveptr);
 	}
-
-	return 0;
 }
 
 struct lyd_node *lyd_find_node(struct lyd_node *root, const char *xpath) 
