@@ -132,6 +132,11 @@ func (app *lldpApp) translateGet(dbs [db.MaxDB]*db.DB) error  {
     return err
 }
 
+func (app *lldpApp) translateAction(dbs [db.MaxDB]*db.DB) error {
+    err := errors.New("Not supported")
+    return err
+}
+
 func (app *lldpApp) translateSubscribe(dbs [db.MaxDB]*db.DB, path string) (*notificationOpts, *notificationInfo, error) {
     pathInfo := NewPathInfo(path)
     notifInfo := notificationInfo{dbno: db.ApplDB}
@@ -252,6 +257,13 @@ func (app *lldpApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error)  {
    }
 
    return GetResponse{Payload:payload}, err
+}
+
+func (app *lldpApp) processAction(dbs [db.MaxDB]*db.DB) (ActionResponse, error) {
+    var resp ActionResponse
+    err := errors.New("Not implemented")
+
+    return resp, err
 }
 
 /** Helper function to populate JSON response for GET request **/

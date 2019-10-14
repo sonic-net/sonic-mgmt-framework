@@ -18,7 +18,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 /*
-Package translib defines the interface for all the app modules 
+Package translib defines the interface for all the app modules
 
 It exposes register function for all the app modules to register
 
@@ -31,19 +31,19 @@ package translib
 
 import (
 	"errors"
+	log "github.com/golang/glog"
+	"github.com/openconfig/ygot/ygot"
 	"reflect"
 	"strings"
 	"translib/db"
-	log "github.com/golang/glog"
-	"github.com/openconfig/ygot/ygot"
 )
 
 //Structure containing app module information
 type appInfo struct {
-	appType			reflect.Type
-	ygotRootType	reflect.Type
-	isNative		bool
-	tablesToWatch   []*db.TableSpec
+	appType       reflect.Type
+	ygotRootType  reflect.Type
+	isNative      bool
+	tablesToWatch []*db.TableSpec
 }
 
 //Structure containing the app data coming from translib infra
@@ -68,18 +68,20 @@ type appInterface interface {
 	translateReplace(d *db.DB) ([]db.WatchKeys, error)
 	translateDelete(d *db.DB) ([]db.WatchKeys, error)
 	translateGet(dbs [db.MaxDB]*db.DB) error
+	translateAction(dbs [db.MaxDB]*db.DB) error
 	translateSubscribe(dbs [db.MaxDB]*db.DB, path string) (*notificationOpts, *notificationInfo, error)
 	processCreate(d *db.DB) (SetResponse, error)
 	processUpdate(d *db.DB) (SetResponse, error)
 	processReplace(d *db.DB) (SetResponse, error)
 	processDelete(d *db.DB) (SetResponse, error)
 	processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error)
+	processAction(dbs [db.MaxDB]*db.DB) (ActionResponse, error)
 }
 
 //App modules will use this function to register with App interface during boot up
 func register(path string, info *appInfo) error {
 	var err error
-    log.Info("Registering for path =", path)
+	log.Info("Registering for path =", path)
 
 	if appMap == nil {
 		appMap = make(map[string]*appInfo)
@@ -152,16 +154,16 @@ func getModels() []ModelData {
 
 //Creates a new app from the appType and returns it as an appInterface
 func getAppInterface(appType reflect.Type) (appInterface, error) {
-    var err error
-    appInstance := reflect.New(appType)
-    app, ok := appInstance.Interface().(appInterface)
+	var err error
+	appInstance := reflect.New(appType)
+	app, ok := appInstance.Interface().(appInterface)
 
-    if !ok {
-        err = errors.New("Invalid appType")
-        log.Fatal("Appmodule does not confirm to appInterface method conventions for appType=", appType)
-    } else {
-        log.Info("cast to appInterface worked", app)
-    }
+	if !ok {
+		err = errors.New("Invalid appType")
+		log.Fatal("Appmodule does not confirm to appInterface method conventions for appType=", appType)
+	} else {
+		log.Info("cast to appInterface worked", app)
+	}
 
 	return app, err
 }

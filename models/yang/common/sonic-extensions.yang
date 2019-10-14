@@ -50,6 +50,11 @@ module sonic-extensions {
     description "Db table field name.";
   }
 
+  extension openapi-opid {
+    argument "openapi-opid";
+    description "Custom Operation ID for OpenAPI";
+  }
+
   extension field-transformer {
     argument "field-transformer-name";
     description "Db table field transformer name.This can be applied to either transform yang value to some different format
