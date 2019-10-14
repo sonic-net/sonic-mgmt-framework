@@ -636,6 +636,7 @@ func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string) (st
         }
         curPathWithKey += "/"
     }
+    curPathWithKey = strings.TrimSuffix(curPathWithKey, "/")
     tblPtr     := xpathInfo.tableName
     if tblPtr != nil {
         tableName = *tblPtr

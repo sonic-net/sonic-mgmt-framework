@@ -415,12 +415,10 @@ func dbDataFromTblXfmrGet(tbl string, inParams XfmrParams, dbDataMap *map[db.DBN
 
 func yangListDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, xpath string, dbDataMap *map[db.DBNum]map[string]map[string]db.Value, resultMap map[string]interface{}, tbl string, tblKey string, cdb db.DBNum, validate bool) error {
 	var tblList []string
-	tblXfmr   := false
 
 	if tbl == "" && xYangSpecMap[xpath].xfmrTbl != nil {
 		xfmrTblFunc := *xYangSpecMap[xpath].xfmrTbl
 		if len(xfmrTblFunc) > 0 {
-			tblXfmr   = true
 			inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, uri, GET, tblKey, dbDataMap, nil)
 			tblList   = xfmrTblHandlerFunc(xfmrTblFunc, inParams)
 			if len(tblList) != 0 {
@@ -429,8 +427,14 @@ func yangListDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, x
 				}
 			}
 		}
-	} else if tbl != "" && !tblXfmr {
+	} else if tbl != "" && xYangSpecMap[xpath].xfmrTbl == nil {
 		tblList = append(tblList, tbl)
+	} else if tbl != "" && xYangSpecMap[xpath].xfmrTbl != nil {
+		/*key instance level GET, table name and table key filled from xpathKeyExtract which internally calls table transformer*/
+		inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, uri, GET, tblKey, dbDataMap, nil)
+		dbDataFromTblXfmrGet(tbl, inParams, dbDataMap)
+		tblList = append(tblList, tbl)
+
 	}
 
 	for _, tbl = range(tblList) {
