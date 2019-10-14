@@ -264,6 +264,11 @@ func (app *IntfApp) translateGet(dbs [db.MaxDB]*db.DB) error {
 	return err
 }
 
+func (app *IntfApp) translateAction(dbs [db.MaxDB]*db.DB) error {
+	err := errors.New("Not supported")
+	return err
+}
+
 func (app *IntfApp) translateSubscribe(dbs [db.MaxDB]*db.DB, path string) (*notificationOpts, *notificationInfo, error) {
 	app.appDB = dbs[db.ApplDB]
 	pathInfo := NewPathInfo(path)
@@ -379,4 +384,11 @@ func (app *IntfApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
 		return app.processGetAllInterfaces(dbs)
 	}
 	return GetResponse{Payload: payload}, err
+}
+
+func (app *IntfApp) processAction(dbs [db.MaxDB]*db.DB) (ActionResponse, error) {
+	var resp ActionResponse
+	err := errors.New("Not implemented")
+
+	return resp, err
 }

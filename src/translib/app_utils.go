@@ -229,3 +229,11 @@ func asKey(parts ...string) db.Key {
 func createEmptyDbValue(fieldName string) db.Value {
 	return db.Value{Field: map[string]string{fieldName: ""}}
 }
+
+/* Check if targetUriPath is child (subtree) of nodePath
+The return value can be used to decide if subtrees needs
+to visited to fill the data or not.
+*/
+func isSubtreeRequest(targetUriPath string, nodePath string) bool {
+	return strings.HasPrefix(targetUriPath, nodePath)
+}

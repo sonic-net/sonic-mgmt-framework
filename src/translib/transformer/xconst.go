@@ -23,7 +23,7 @@ const (
 	YANG_LIST      = "list"
 	YANG_CONTAINER = "container"
 	YANG_LEAF      = "leaf"
-	YANG_LEAF_LIST = "leaflist"
+	YANG_LEAF_LIST = "leaf-list"
 
 	YANG_ANNOT_DB_NAME    = "db-name"
 	YANG_ANNOT_TABLE_NAME = "table-name"
