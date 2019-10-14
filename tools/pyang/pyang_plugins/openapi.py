@@ -1,6 +1,21 @@
-## Open Api Spec output plugin(swagger 2.0)
-## Author: Mohammed Faraaz C
-## Company: Broadcom Inc.
+################################################################################
+#                                                                              #
+#  Copyright 2019 Broadcom. The term Broadcom refers to Broadcom Inc. and/or   #
+#  its subsidiaries.                                                           #
+#                                                                              #
+#  Licensed under the Apache License, Version 2.0 (the "License");             #
+#  you may not use this file except in compliance with the License.            #
+#  You may obtain a copy of the License at                                     #
+#                                                                              #
+#     http://www.apache.org/licenses/LICENSE-2.0                               #
+#                                                                              #
+#  Unless required by applicable law or agreed to in writing, software         #
+#  distributed under the License is distributed on an "AS IS" BASIS,           #
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.    #
+#  See the License for the specific language governing permissions and         #
+#  limitations under the License.                                              #
+#                                                                              #
+################################################################################
 
 import optparse
 import sys
@@ -220,7 +235,7 @@ class OpenApiPlugin(plugin.PyangPlugin):
 
 def walk_module(module):
     for child in module.i_children:
-        walk_child(child, None)
+        walk_child(child)
 
 def add_swagger_tag(module):
     if module.i_modulename not in moduleDict:
@@ -321,11 +336,11 @@ def swagger_it(child, defName, pathstr, payload, metadata, verb, operId=False):
         verbPath["responses"]["200"]["schema"] = OrderedDict()
         verbPath["responses"]["200"]["schema"]["$ref"] = "#/definitions/" + defName
 
-def handle_rpc(child, actXpath, pathstr, overriddenParentName):
+def handle_rpc(child, actXpath, pathstr):
     global currentTag
     verbPathStr = "/restconf/operations" + pathstr
     verb = "post"
-    customName = getOpId(child, overriddenParentName)
+    customName = getOpId(child)
     DefName = shortenNodeName(child, customName)
     opId = "rpc_" + DefName
     add_swagger_tag(child.i_module)
@@ -390,7 +405,7 @@ def handle_rpc(child, actXpath, pathstr, overriddenParentName):
         verbPath["responses"]["204"]["schema"] = OrderedDict()    
         verbPath["responses"]["204"]["schema"]["$ref"] = "#/definitions/" + output_Defn    
 
-def walk_child(child, overriddenParentName=None):
+def walk_child(child):
     global XpathToBodyTagDict
     customName =  None
 
@@ -404,7 +419,7 @@ def walk_child(child, overriddenParentName=None):
 
     if child.keyword == "rpc":
         add_swagger_tag(child.i_module)
-        handle_rpc(child, actXpath, pathstr, overriddenParentName)
+        handle_rpc(child, actXpath, pathstr)
         return 
 
     if child.keyword in ["list", "container", "leaf", "leaf-list"]:
@@ -424,7 +439,7 @@ def walk_child(child, overriddenParentName=None):
                         keysToLeafRefObjSet.add(listKeyPath)
                 return
 
-        customName = getOpId(child, overriddenParentName)
+        customName = getOpId(child)
         defName = shortenNodeName(child, customName)
 
         if child.i_config == False:   
@@ -482,13 +497,13 @@ def walk_child(child, overriddenParentName=None):
 
         if  child.keyword == "list":
             listMetaData = copy.deepcopy(metadata)
-            walk_child_for_list_base(child,actXpath,pathstr, listMetaData, defName, customName)
+            walk_child_for_list_base(child,actXpath,pathstr, listMetaData, defName)
 
     if hasattr(child, 'i_children'):
         for ch in child.i_children:
-            walk_child(ch, customName)
+            walk_child(ch)
 
-def walk_child_for_list_base(child, actXpath, pathstr, metadata, nonBaseDefName=None, customParentName=None):
+def walk_child_for_list_base(child, actXpath, pathstr, metadata, nonBaseDefName=None):
 
     payload = OrderedDict()
     pathstrList = pathstr.split('/')
@@ -513,7 +528,7 @@ def walk_child_for_list_base(child, actXpath, pathstr, metadata, nonBaseDefName=
     if len(payload) == 0 and child.i_config == True:
         return
 
-    customName = getOpId(child, customParentName)
+    customName = getOpId(child)
     defName = shortenNodeName(child, customName)
     defName = "list"+'_'+defName
 
@@ -782,16 +797,13 @@ def handle_leafref(node,xpath):
         print("leafref not pointing to leaf/leaflist")
         sys.exit(2)
 
-def getOpId(node, overriddenParentName):
+def getOpId(node):
     name = None
     for substmt in node.substmts: 
         if substmt.keyword.__class__.__name__ == 'tuple':
             if substmt.keyword[0] == 'sonic-extensions':
                 if substmt.keyword[1] == 'openapi-opid':
                     name = substmt.arg
-                    return name
-    if overriddenParentName is not None:
-        name = overriddenParentName + '_' + node.arg
     return name
 
 def shortenNodeName(node, overridenName=None):
@@ -801,7 +813,6 @@ def shortenNodeName(node, overridenName=None):
 
     xpath = statements.mk_path_str(node, False)
     xpath_prefix = statements.mk_path_str(node, True)
-
     if overridenName is None:
         name = node.i_module.i_modulename + xpath.replace('/','_')
     else:
