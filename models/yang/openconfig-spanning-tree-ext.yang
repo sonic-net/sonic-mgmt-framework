@@ -1,0 +1,273 @@
+module openconfig-spanning-tree-ext {
+
+    yang-version "1";
+
+    // namespace
+    namespace "http://openconfig.net/yang/spanning-tree/extension";
+
+    prefix "oc-stp-ext";
+
+	import openconfig-spanning-tree { prefix oc-stp; }
+    import openconfig-spanning-tree-types { prefix oc-stp-types; }
+
+
+    identity PVST {
+        base  oc-stp-types:STP_PROTOCOL;
+        description
+            "Per Vlan Spanning Tree Protocol";
+    }
+
+    grouping stp-global-ext-config {
+        leaf rootguard-timeout {
+            type uint16 {
+                range 5..600;
+            }
+            units "seconds";
+            default 30;
+        }
+        uses oc-stp:stp-timer-config;
+        uses oc-stp:bridge-priority-config;
+    }
+
+    grouping spanning-tree-enable-config {
+        leaf spanning-tree-enable {
+            type boolean;
+            description
+                "Enable/Disable spanning tree protocol on an interface or Vlan";
+        }
+    }
+
+    grouping stp-interface-common-ext-config {
+        leaf portfast {
+            type boolean;
+            description
+                "Enable/Disable portfast";
+        }
+
+        leaf uplink-fast {
+            type boolean;
+            description
+                "Enable/Disable uplink fast";
+        }
+
+        leaf bpdu-guard-port-shutdown {
+            type boolean;
+            description
+                "Port to be shutdown when it receives a BPDU";
+        }
+
+        leaf cost {
+            type uint32 {
+                range 1..200000000;
+            }
+            description
+                "The port's contribution, when it is the Root Port,
+                to the Root Path Cost for the Bridge";
+            reference
+                "IEEE 802.1D 17.13.11 PortPathCost";
+        }
+
+        leaf port-priority {
+            type oc-stp-types:stp-port-priority-type;
+            description
+                "The manageable component of the Port Identifier,
+                also known as the Port Priority";
+            reference
+                "IEEE 802.1D 17.13.10 Port Identifier Priority";
+        }
+
+        uses spanning-tree-enable-config;
+    }
+
+    grouping stp-instance-state {
+        leaf stp-instance {
+            type uint16;
+            description
+                "Instance identifier of STP";
+        }
+    }
+
+    grouping vlan-interface-extra-state-field {
+        leaf root-guard-timer {
+            type uint16;
+            description
+                "Root guard current timer value";
+        }
+    }
+
+    grouping vlan-interface-extra-counters {
+        leaf tcn-sent {
+            type uint64;
+            description
+                "Tcn transmitted";
+        }
+
+        leaf tcn-received {
+            type uint64;
+            description
+                "Tcn received";
+        }
+    }
+
+    grouping stp-pvst-top {
+        description
+            "Top grouping for per vlan spanning tree configuration
+            and operation data";
+
+        list vlan {
+            key "vlan-id";
+            description
+                "List of the vlans";
+
+            leaf vlan-id {
+                type leafref {
+                    path "../config/vlan-id";
+                }
+                description
+                    "Reference to the list key";
+            }
+
+            container config {
+                description
+                    "Configuration data for each vlan";
+
+                uses oc-stp:stp-rapid-pvst-config;
+                uses oc-stp:stp-timer-config;
+                uses oc-stp:bridge-priority-config;
+                uses spanning-tree-enable-config;
+            }
+
+            container state {
+                config false;
+                description
+                    "Operational data for each vlan";
+
+                uses oc-stp:stp-rapid-pvst-config;
+                uses oc-stp:stp-timer-config;
+                uses oc-stp:bridge-priority-config;
+                uses oc-stp:stp-common-state;
+                uses spanning-tree-enable-config;
+                uses stp-instance-state;
+            }
+
+            uses oc-stp:stp-interfaces-top;
+        }
+    }
+
+    augment /oc-stp:stp {
+        container pvst {
+            description
+                "Per vlan Spanning-tree protocol configuration and
+                operational data";
+
+            uses stp-pvst-top;
+        }
+    }
+
+    augment /oc-stp:stp/oc-stp:global/oc-stp:config {
+        uses stp-global-ext-config;
+    }
+
+    augment /oc-stp:stp/oc-stp:global/oc-stp:state {
+        uses stp-global-ext-config;
+    }
+
+    augment /oc-stp:stp/oc-stp:rapid-pvst/oc-stp:vlan/oc-stp:config {
+        uses spanning-tree-enable-config;
+    }
+
+    augment /oc-stp:stp/oc-stp:rapid-pvst/oc-stp:vlan/oc-stp:state {
+        uses stp-instance-state;
+    }
+
+    augment /oc-stp:stp/oc-stp:rapid-pvst/oc-stp:vlan/oc-stp:interfaces/oc-stp:interface/oc-stp:state {
+        uses vlan-interface-extra-state-field;
+    }
+
+    augment /oc-stp:stp/oc-stp:rapid-pvst/oc-stp:vlan/oc-stp:interfaces/oc-stp:interface/oc-stp:state/oc-stp:counters {
+        uses vlan-interface-extra-counters;
+    }
+
+    augment /oc-stp:stp/oc-stp-ext:pvst/oc-stp-ext:vlan/oc-stp-ext:interfaces/oc-stp-ext:interface/oc-stp-ext:state {
+        uses vlan-interface-extra-state-field;
+    }
+
+    augment /oc-stp:stp/oc-stp-ext:pvst/oc-stp-ext:vlan/oc-stp-ext:interfaces/oc-stp-ext:interface/oc-stp-ext:state/oc-stp-ext:counters {
+        uses vlan-interface-extra-counters;
+    }
+
+    augment /oc-stp:stp/oc-stp:interfaces/oc-stp:interface/oc-stp:config {
+        uses stp-interface-common-ext-config;
+    }
+
+    augment /oc-stp:stp/oc-stp:interfaces/oc-stp:interface/oc-stp:state {
+        leaf bpdu-guard-shutdown {
+            type boolean;
+            description
+                "Port disabled due to bpdu-guard";
+        }
+        uses stp-interface-common-ext-config;
+    }
+
+
+    deviation /oc-stp:stp/oc-stp:global/oc-stp:config/oc-stp:bridge-assurance {
+        deviate not-supported;
+    }
+    deviation /oc-stp:stp/oc-stp:global/oc-stp:state/oc-stp:bridge-assurance {
+        deviate not-supported;
+    }
+    deviation /oc-stp:stp/oc-stp:global/oc-stp:config/oc-stp:etherchannel-misconfig-guard {
+        deviate not-supported;
+    }
+    deviation /oc-stp:stp/oc-stp:global/oc-stp:state/oc-stp:etherchannel-misconfig-guard {
+        deviate not-supported;
+    }
+    deviation /oc-stp:stp/oc-stp:global/oc-stp:config/oc-stp:bpduguard-timeout-recovery {
+        deviate not-supported;
+    }
+    deviation /oc-stp:stp/oc-stp:global/oc-stp:state/oc-stp:bpduguard-timeout-recovery {
+        deviate not-supported;
+    }
+    deviation /oc-stp:stp/oc-stp:global/oc-stp:config/oc-stp-ext:hold-count {
+        deviate not-supported;
+    }
+    deviation /oc-stp:stp/oc-stp:global/oc-stp:config/oc-stp:loop-guard {
+        deviate not-supported;
+    }
+    deviation /oc-stp:stp/oc-stp:global/oc-stp:state/oc-stp:loop-guard {
+        deviate not-supported;
+    }
+    deviation /oc-stp:stp/oc-stp:global/oc-stp:config/oc-stp:bpdu-guard {
+        deviate not-supported;
+    }
+    deviation /oc-stp:stp/oc-stp:global/oc-stp:state/oc-stp:bpdu-guard {
+        deviate not-supported;
+    }
+    deviation /oc-stp:stp/oc-stp:global/oc-stp:config/oc-stp:bpdu-filter {
+        deviate not-supported;
+    }
+    deviation /oc-stp:stp/oc-stp:global/oc-stp:state/oc-stp:bpdu-filter {
+        deviate not-supported;
+    }
+
+    deviation /oc-stp:stp/oc-stp-ext:pvst/oc-stp-ext:vlan/oc-stp-ext:config/oc-stp-ext:hold-count {
+        deviate not-supported;
+    }
+    deviation /oc-stp:stp/oc-stp-ext:pvst/oc-stp-ext:vlan/oc-stp-ext:state/oc-stp-ext:hold-count {
+        deviate not-supported;
+    }
+    deviation /oc-stp:stp/oc-stp:rapid-pvst/oc-stp:vlan/oc-stp:config/oc-stp:hold-count {
+        deviate not-supported;
+    }
+    deviation /oc-stp:stp/oc-stp:rapid-pvst/oc-stp:vlan/oc-stp:state/oc-stp:hold-count {
+        deviate not-supported;
+    }
+
+    deviation /oc-stp:stp/oc-stp:rstp {
+        deviate not-supported;
+    }
+
+    deviation /oc-stp:stp/oc-stp:mstp {
+        deviate not-supported;
+    }
+}

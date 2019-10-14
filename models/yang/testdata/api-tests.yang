@@ -1,0 +1,34 @@
+module api-tests {
+
+    yang-version "1";
+    namespace "http://github.com/Azure/sonic-api-tests";
+    prefix "api-tests";
+
+    description
+        "Test module for SONiC Management REST Server";
+
+
+    container home {
+        leaf name {
+            type string;
+        }
+    }
+
+    rpc my-echo {
+        input {
+            leaf message {
+                type string;
+            }
+            leaf error-type {
+                type string;
+            }
+        }
+
+        output {
+            leaf message {
+                type string;
+            }
+        }
+    }
+
+}
