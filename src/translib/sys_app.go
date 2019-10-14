@@ -118,6 +118,11 @@ func (app *SysApp) translateGet(dbs [db.MaxDB]*db.DB) error  {
     return err
 }
 
+func (app *SysApp) translateAction(dbs [db.MaxDB]*db.DB) error {
+    err := errors.New("Not supported")
+    return err
+}
+
 func (app *SysApp) processCreate(d *db.DB) (SetResponse, error)  {
     var err error
     var resp SetResponse
@@ -153,6 +158,13 @@ func (app *SysApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error)  {
     log.Info("SysApp: processGet Path: ", app.path.Path)
 
     return app.doGetSystem(app.path.Path)
+}
+
+func (app *SysApp) processAction(dbs [db.MaxDB]*db.DB) (ActionResponse, error) {
+    var resp ActionResponse
+    err := errors.New("Not implemented")
+
+    return resp, err
 }
 
 func (app *SysApp) doGetSystem(path string) (GetResponse, error)  {

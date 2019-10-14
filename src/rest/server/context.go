@@ -45,6 +45,14 @@ type RequestContext struct {
 	// the body. When set, the request handler can validate the
 	// request payload by loading the body into this model object.
 	Model interface{}
+
+	// PMap is the mapping of URI parameter names to actual yang
+	// leaf names. Yang xpaths can have duplicate parameter names,
+	// which is not supported by swagger and mux libraries. We
+	// work around it by assigning different parameter names in
+	// swagger and map them back to yang names while converting
+	// REST paths to TransLib paths.
+	PMap NameMap
 }
 
 type contextkey int
@@ -187,4 +195,18 @@ func (m MediaTypes) String() string {
 		types = append(types, entry.Type)
 	}
 	return fmt.Sprintf("%v", types)
+}
+
+//////////
+
+// NameMap is a simple mapping of names (string to string)
+type NameMap map[string]string
+
+// Get function returns the mapped name for a given name.
+// Returns given name itself if no mapping exists.
+func (m *NameMap) Get(name string) string {
+	if mappedName, ok := (*m)[name]; ok {
+		return mappedName
+	}
+	return name
 }

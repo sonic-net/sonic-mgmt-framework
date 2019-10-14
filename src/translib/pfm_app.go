@@ -116,6 +116,11 @@ func (app *PlatformApp) translateGet(dbs [db.MaxDB]*db.DB) error  {
     return err
 }
 
+func (app *PlatformApp) translateAction(dbs [db.MaxDB]*db.DB) error {
+    err := errors.New("Not supported")
+    return err
+}
+
 func (app *PlatformApp) processCreate(d *db.DB) (SetResponse, error)  {
     var err error
     var resp SetResponse
@@ -164,6 +169,13 @@ func (app *PlatformApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error)  {
     }
     err := errors.New("Not supported component")
     return GetResponse{Payload: payload}, err
+}
+
+func (app *PlatformApp) processAction(dbs [db.MaxDB]*db.DB) (ActionResponse, error) {
+    var resp ActionResponse
+    err := errors.New("Not implemented")
+
+    return resp, err
 }
 
 ///////////////////////////

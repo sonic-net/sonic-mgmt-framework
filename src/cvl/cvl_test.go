@@ -221,7 +221,18 @@ func prepareDb() {
 		fmt.Printf("read file %v err: %v", fileName, err)
 	}
 
-	port_map := loadConfig("", PortsMapByte)
+	port_map = loadConfig("", PortsMapByte)
+
+	portKeys, err:= rclient.Keys("PORT|*").Result()
+	//Load only the port config which are not there in Redis
+	if err == nil {
+		portMapKeys := port_map["PORT"].(map[string]interface{})
+		for _, portKey := range portKeys {
+			//Delete the port key which is already there in Redis
+			delete(portMapKeys, portKey[len("PORTS|") - 1:])
+		}
+		port_map["PORT"] = portMapKeys
+	}
 
 	loadConfigDB(rclient, port_map)
 	loadConfigDB(rclient, depDataMap)
@@ -2115,7 +2126,7 @@ func TestValidateEditConfig_Create_DepData_From_Redis_Negative11(t *testing.T) {
 
 	cvl.ValidationSessClose(cvSess)
 
-	if (err != cvl.CVL_SEMANTIC_DEPENDENT_DATA_MISSING) {
+	if err == cvl.CVL_SUCCESS {
 		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
 	}
 
@@ -2273,8 +2284,7 @@ func TestValidateEditConfig_Create_ErrAppTag_In_Must_Negative(t *testing.T) {
 
 	WriteToFile(fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
 
-	/* Compare expected error details and error tag. */
-	if compareErrorDetails(cvlErrInfo, cvl.CVL_SEMANTIC_DEPENDENT_DATA_MISSING ,"vlan-invalid", "") != true {
+	if retCode == cvl.CVL_SUCCESS {
 		t.Errorf("Config Validation failed -- error details %v %v", cvlErrInfo, retCode)
 	}
 
@@ -2628,7 +2638,7 @@ func TestValidateEditConfig_DepData_Through_Cache(t *testing.T) {
 	loadConfigDB(rclient, depDataMap)
 
 	//Modify entry
-	depDataMap = map[string]interface{} {
+	modDepDataMap := map[string]interface{} {
 		"PORT" : map[string]interface{} {
 			"Ethernet3" : map[string]interface{} {
 				"mtu": "9200",
@@ -2636,7 +2646,7 @@ func TestValidateEditConfig_DepData_Through_Cache(t *testing.T) {
 		},
 	}
 
-	loadConfigDB(rclient, depDataMap)
+	loadConfigDB(rclient, modDepDataMap)
 
 	cfgDataAclRule :=  []cvl.CVLEditConfigData {
 		cvl.CVLEditConfigData {
@@ -2662,6 +2672,7 @@ func TestValidateEditConfig_DepData_Through_Cache(t *testing.T) {
 	}
 
 	unloadConfigDB(rclient, depDataMap)
+	unloadConfigDB(rclient, modDepDataMap)
 }
 
 /* Delete field for an existing key.*/
@@ -3438,6 +3449,170 @@ func TestValidateEditConfig_EmptyNode_Positive(t *testing.T) {
         WriteToFile(fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
 
         if cvlErrInfo.ErrCode != cvl.CVL_SUCCESS {
+                t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
+        }
+
+}
+
+func TestSortDepTables(t *testing.T) {
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	result, _ := cvSess.SortDepTables([]string{"PORT", "ACL_RULE", "ACL_TABLE"})
+
+	expectedResult := []string{"ACL_RULE", "ACL_TABLE", "PORT"}
+
+	if len(expectedResult) != len(result) {
+		t.Errorf("Validation failed, returned value = %v", result)
+		return 
+	}
+
+	for i := 0; i < len(expectedResult) ; i++ {
+		if result[i] != expectedResult[i] {
+			t.Errorf("Validation failed, returned value = %v", result)
+			break
+		}
+	}
+
+	cvl.ValidationSessClose(cvSess)
+}
+
+func TestGetOrderedTables(t *testing.T) {
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	result, _ := cvSess.GetOrderedTables("sonic-vlan")
+
+	expectedResult := []string{"VLAN_MEMBER", "VLAN"}
+
+	if len(expectedResult) != len(result) {
+		t.Errorf("Validation failed, returned value = %v", result)
+		return 
+	}
+
+	for i := 0; i < len(expectedResult) ; i++ {
+		if result[i] != expectedResult[i] {
+			t.Errorf("Validation failed, returned value = %v", result)
+			break
+		}
+	}
+
+	cvl.ValidationSessClose(cvSess)
+}
+
+func TestGetDepTables(t *testing.T) {
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	result, _ := cvSess.GetDepTables("sonic-acl", "ACL_RULE")
+
+	expectedResult := []string{"ACL_RULE", "ACL_TABLE", "MIRROR_SESSION", "PORT"}
+
+	if len(expectedResult) != len(result) {
+		t.Errorf("Validation failed, returned value = %v", result)
+		return 
+	}
+
+	for i := 0; i < len(expectedResult) ; i++ {
+		if result[i] != expectedResult[i] {
+			t.Errorf("Validation failed, returned value = %v", result)
+			break
+		}
+	}
+
+	cvl.ValidationSessClose(cvSess)
+}
+
+func TestMaxElements_All_Entries_In_Request(t *testing.T) {
+        cvSess, _ := cvl.ValidationSessOpen()
+
+        cfgData := []cvl.CVLEditConfigData{
+                cvl.CVLEditConfigData{
+                        cvl.VALIDATE_ALL,
+                        cvl.OP_CREATE,
+                        "DEVICE_METADATA|localhost",
+			map[string]string{
+				"hwsku": "Force10-S6100",
+				"hostname": "sonic-s6100-01",
+				"platform": "x86_64-dell_s6100_c2538-r0",
+				"mac": "4c:76:25:f4:70:82",
+				"deployment_id": "1",
+			},
+                },
+        }
+
+	//Add first element
+        cvlErrInfo, _ := cvSess.ValidateEditConfig(cfgData)
+
+        if cvlErrInfo.ErrCode != cvl.CVL_SUCCESS {
+                t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
+        }
+
+        cfgData1 := []cvl.CVLEditConfigData{
+                cvl.CVLEditConfigData{
+                        cvl.VALIDATE_ALL,
+                        cvl.OP_CREATE,
+                        "DEVICE_METADATA|localhost1",
+			map[string]string{
+				"hwsku": "Force10-S6101",
+				"hostname": "sonic-s6100-02",
+				"platform": "x86_64-dell_s6100_c2538-r0",
+				"mac": "4c:76:25:f4:70:83",
+				"deployment_id": "2",
+			},
+                },
+        }
+
+	//Try to add second element
+        cvlErrInfo, _ = cvSess.ValidateEditConfig(cfgData1)
+
+        cvl.ValidationSessClose(cvSess)
+
+	//Should fail as "DEVICE_METADATA" has max-elements as '1'
+        if cvlErrInfo.ErrCode == cvl.CVL_SUCCESS {
+                t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
+        }
+
+}
+
+func TestMaxElements_Entries_In_Redis(t *testing.T) {
+	depDataMap := map[string]interface{} {
+		"DEVICE_METADATA" : map[string]interface{} {
+			"localhost": map[string] interface{} {
+				"hwsku": "Force10-S6100",
+				"hostname": "sonic-s6100-01",
+				"platform": "x86_64-dell_s6100_c2538-r0",
+				"mac": "4c:76:25:f4:70:82",
+				"deployment_id": "1",
+			},
+		},
+	}
+
+	loadConfigDB(rclient, depDataMap)
+
+        cvSess, _ := cvl.ValidationSessOpen()
+
+        cfgData := []cvl.CVLEditConfigData{
+                cvl.CVLEditConfigData{
+                        cvl.VALIDATE_ALL,
+                        cvl.OP_CREATE,
+                        "DEVICE_METADATA|localhost1",
+			map[string]string{
+				"hwsku": "Force10-S6101",
+				"hostname": "sonic-s6100-02",
+				"platform": "x86_64-dell_s6100_c2538-r0",
+				"mac": "4c:76:25:f4:70:83",
+				"deployment_id": "2",
+			},
+                },
+        }
+
+	//Try to add second element
+	cvlErrInfo, _ := cvSess.ValidateEditConfig(cfgData)
+
+	unloadConfigDB(rclient, depDataMap)
+
+        cvl.ValidationSessClose(cvSess)
+
+	//Should fail as "DEVICE_METADATA" has max-elements as '1'
+        if cvlErrInfo.ErrCode == cvl.CVL_SUCCESS {
                 t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
         }
 

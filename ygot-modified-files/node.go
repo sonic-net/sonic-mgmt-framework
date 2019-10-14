@@ -15,14 +15,13 @@
 package ytypes
 
 import (
-	"reflect"
-
 	"github.com/golang/protobuf/proto"
 	"github.com/openconfig/goyang/pkg/yang"
 	"github.com/openconfig/ygot/util"
 	"github.com/openconfig/ygot/ygot"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"reflect"
 
 	gpb "github.com/openconfig/gnmi/proto/gnmi"
 )
@@ -128,6 +127,16 @@ func retrieveNodeContainer(schema *yang.Entry, root interface{}, path *gpb.Path,
 			if args.modifyRoot {
 				if err := util.InitializeStructField(root, ft.Name); err != nil {
 					return nil, status.Errorf(codes.Unknown, "failed to initialize struct field %s in %T, child schema %v, path %v", ft.Name, root, cschema, path)
+				}
+
+				if cschema.IsLeaf() || cschema.IsLeafList() {
+					if len(path.Elem) == 1 && len(path.Elem[0].Key) == 1 {
+						var vals []string
+						vals = append(vals, path.Elem[0].Key[path.Elem[0].Name])
+						if args.val, err = ygot.EncodeTypedValue(vals, gpb.Encoding_JSON_IETF); err != nil {
+							return nil, status.Errorf(codes.Unknown, "failed to get the typed value '%v' for leaf/leaf-list => %s in %T ; because of %v", vals, ft.Name, root, err)
+						}
+					}
 				}
 			}
 

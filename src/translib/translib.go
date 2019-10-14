@@ -22,7 +22,7 @@ Package translib implements APIs like Create, Get, Subscribe etc.
 
 to be consumed by the north bound management server implementations
 
-This package take care of translating the incoming requests to 
+This package take care of translating the incoming requests to
 
 Redis ABNF format and persisting them in the Redis DB.
 
@@ -34,12 +34,13 @@ This package can also talk to non-DB clients.
 package translib
 
 import (
-		//"errors"
-		"sync"
-		"translib/db"
-        "github.com/Workiva/go-datastructures/queue"
-        log "github.com/golang/glog"
-		"translib/tlerr"
+	//"errors"
+	"sync"
+	"translib/db"
+	"translib/tlerr"
+
+	"github.com/Workiva/go-datastructures/queue"
+	log "github.com/golang/glog"
 )
 
 //Write lock for all write operations to be synchronized
@@ -51,92 +52,102 @@ var maxSubsInterval = 60
 
 type ErrSource int
 
-const(
+const (
 	ProtoErr ErrSource = iota
 	AppErr
 )
 
-type SetRequest struct{
-    Path       string
-    Payload    []byte
+type SetRequest struct {
+	Path    string
+	Payload []byte
 }
 
-type SetResponse struct{
-	ErrSrc     ErrSource
+type SetResponse struct {
+	ErrSrc ErrSource
 }
 
-type GetRequest struct{
-    Path       string
+type GetRequest struct {
+	Path string
 }
 
-type GetResponse struct{
-    Payload    []byte
-	ErrSrc     ErrSource
+type GetResponse struct {
+	Payload []byte
+	ErrSrc  ErrSource
 }
 
-type SubscribeResponse struct{
-	Path		 string
+type ActionRequest struct {
+	Path    string
+	Payload []byte
+}
+
+type ActionResponse struct {
+	Payload []byte
+	ErrSrc  ErrSource
+}
+
+type SubscribeResponse struct {
+	Path         string
 	Payload      []byte
-	Timestamp	 int64
+	Timestamp    int64
 	SyncComplete bool
 	IsTerminated bool
 }
 
 type NotificationType int
 
-const(
-    Sample	NotificationType = iota
-    OnChange
+const (
+	Sample NotificationType = iota
+	OnChange
 )
 
-type IsSubscribeResponse struct{
-	Path					string
-	IsOnChangeSupported		bool
-	MinInterval				int
-	Err						error
-	PreferredType			NotificationType
+type IsSubscribeResponse struct {
+	Path                string
+	IsOnChangeSupported bool
+	MinInterval         int
+	Err                 error
+	PreferredType       NotificationType
 }
 
-type ModelData struct{
-	Name      string
-	Org		  string
-	Ver		  string
+type ModelData struct {
+	Name string
+	Org  string
+	Ver  string
 }
 
 type notificationOpts struct {
-    mInterval		int
-    pType			NotificationType  // for TARGET_DEFINED
+	mInterval int
+	pType     NotificationType // for TARGET_DEFINED
 }
 
 //initializes logging and app modules
 func init() {
-    log.Flush()
+	log.Flush()
 }
 
 //Creates entries in the redis DB pertaining to the path and payload
-func Create(req SetRequest) (SetResponse, error){
+func Create(req SetRequest) (SetResponse, error) {
 	var keys []db.WatchKeys
 	var resp SetResponse
 
-	path	:= req.Path
-    payload := req.Payload
+	path := req.Path
+	payload := req.Payload
 
-    log.Info("Create request received with path =", path)
-    log.Info("Create request received with payload =", string(payload))
+	log.Info("Create request received with path =", path)
+	log.Info("Create request received with payload =", string(payload))
 
 	app, appInfo, err := getAppModule(path)
 
 	if err != nil {
 		resp.ErrSrc = ProtoErr
-        return resp, err
+		return resp, err
 	}
 
-    err = appInitialize(app, appInfo, path, &payload, CREATE)
+	err = appInitialize(app, appInfo, path, &payload, CREATE)
 
-    if  err != nil {
+	if err != nil {
 		resp.ErrSrc = AppErr
 		return resp, err
-    }
+	}
 
 	writeMutex.Lock()
 	defer writeMutex.Unlock()
@@ -150,329 +161,376 @@ func Create(req SetRequest) (SetResponse, error){
 
 	defer d.DeleteDB()
 
-    keys, err = (*app).translateCreate(d)
+	keys, err = (*app).translateCreate(d)
 
 	if err != nil {
 		resp.ErrSrc = AppErr
-        return resp, err
+		return resp, err
 	}
 
 	err = d.StartTx(keys, appInfo.tablesToWatch)
 
 	if err != nil {
 		resp.ErrSrc = AppErr
-        return resp, err
+		return resp, err
 	}
 
-    resp, err = (*app).processCreate (d)
+	resp, err = (*app).processCreate(d)
 
-    if err != nil {
+	if err != nil {
 		d.AbortTx()
 		resp.ErrSrc = AppErr
-        return resp, err
-    }
+		return resp, err
+	}
 
 	err = d.CommitTx()
 
-    if err != nil {
-        resp.ErrSrc = AppErr
-    }
+	if err != nil {
+		resp.ErrSrc = AppErr
+	}
 
-    return resp, err
+	return resp, err
 }
 
 //Updates entries in the redis DB pertaining to the path and payload
-func Update(req SetRequest) (SetResponse, error){
-    var keys []db.WatchKeys
+func Update(req SetRequest) (SetResponse, error) {
+	var keys []db.WatchKeys
 	var resp SetResponse
 
-    path    := req.Path
-    payload := req.Payload
+	path := req.Path
+	payload := req.Payload
 
-    log.Info("Update request received with path =", path)
-    log.Info("Update request received with payload =", string(payload))
+	log.Info("Update request received with path =", path)
+	log.Info("Update request received with payload =", string(payload))
 
 	app, appInfo, err := getAppModule(path)
 
-    if err != nil {
+	if err != nil {
 		resp.ErrSrc = ProtoErr
-        return resp, err
-    }
+		return resp, err
+	}
 
-    err = appInitialize(app, appInfo, path, &payload, UPDATE)
-
-    if  err != nil {
-        resp.ErrSrc = AppErr
-        return resp, err
-    }
-
-    writeMutex.Lock()
-	defer writeMutex.Unlock()
-
-    d, err := db.NewDB(getDBOptions(db.ConfigDB))
-
-    if err != nil {
-        resp.ErrSrc = ProtoErr
-        return resp, err
-    }
-
-	defer d.DeleteDB()
-
-    keys, err = (*app).translateUpdate(d)
-
-    if err != nil {
-		resp.ErrSrc = AppErr
-        return resp, err
-    }
-
-    err = d.StartTx(keys, appInfo.tablesToWatch)
-
-    if err != nil {
-		resp.ErrSrc = AppErr
-        return resp, err
-    }
-
-    resp, err = (*app).processUpdate (d)
-
-    if err != nil {
-        d.AbortTx()
-		resp.ErrSrc = AppErr
-        return resp, err
-    }
-
-    err = d.CommitTx()
-
-    if err != nil {
-        resp.ErrSrc = AppErr
-    }
-
-    return resp, err
-}
-
-//Replaces entries in the redis DB pertaining to the path and payload
-func Replace(req SetRequest) (SetResponse, error){
-    var err error
-    var keys []db.WatchKeys
-	var resp SetResponse
-
-    path    := req.Path
-    payload := req.Payload
-
-    log.Info("Replace request received with path =", path)
-    log.Info("Replace request received with payload =", string(payload))
-
-	app, appInfo, err := getAppModule(path)
-
-    if err != nil {
-		resp.ErrSrc = ProtoErr
-        return resp, err
-    }
-
-    err = appInitialize(app, appInfo, path, &payload, REPLACE)
-
-    if  err != nil {
-        resp.ErrSrc = AppErr
-        return resp, err
-    }
-
-    writeMutex.Lock()
-	defer writeMutex.Unlock()
-
-    d, err := db.NewDB(getDBOptions(db.ConfigDB))
-
-    if err != nil {
-        resp.ErrSrc = ProtoErr
-        return resp, err
-    }
-
-	defer d.DeleteDB()
-
-    keys, err = (*app).translateReplace(d)
-
-    if err != nil {
-		resp.ErrSrc = AppErr
-        return resp, err
-    }
-
-    err = d.StartTx(keys, appInfo.tablesToWatch)
-
-    if err != nil {
-		resp.ErrSrc = AppErr
-        return resp, err
-    }
-
-    resp, err = (*app).processReplace (d)
-
-    if err != nil {
-        d.AbortTx()
-		resp.ErrSrc = AppErr
-        return resp, err
-    }
-
-    err = d.CommitTx()
+	err = appInitialize(app, appInfo, path, &payload, UPDATE)
 
 	if err != nil {
 		resp.ErrSrc = AppErr
-    }
+		return resp, err
+	}
 
-    return resp, err
-}
-
-//Deletes entries in the redis DB pertaining to the path
-func Delete(req SetRequest) (SetResponse, error){
-    var err error
-    var keys []db.WatchKeys
-	var resp SetResponse
-
-    path    := req.Path
-
-    log.Info("Delete request received with path =", path)
-
-	app, appInfo, err := getAppModule(path)
-
-    if err != nil {
-		resp.ErrSrc = ProtoErr
-        return resp, err
-    }
-
-    err = appInitialize(app, appInfo, path, nil, DELETE)
-
-    if  err != nil {
-        resp.ErrSrc = AppErr
-        return resp, err
-    }
-
-    writeMutex.Lock()
+	writeMutex.Lock()
 	defer writeMutex.Unlock()
 
-    d, err := db.NewDB(getDBOptions(db.ConfigDB))
+	d, err := db.NewDB(getDBOptions(db.ConfigDB))
 
-    if err != nil {
-        resp.ErrSrc = ProtoErr
-        return resp, err
-    }
+	if err != nil {
+		resp.ErrSrc = ProtoErr
+		return resp, err
+	}
 
 	defer d.DeleteDB()
 
-    keys, err = (*app).translateDelete(d)
+	keys, err = (*app).translateUpdate(d)
 
-    if err != nil {
+	if err != nil {
 		resp.ErrSrc = AppErr
-        return resp, err
-    }
+		return resp, err
+	}
 
-    err = d.StartTx(keys, appInfo.tablesToWatch)
+	err = d.StartTx(keys, appInfo.tablesToWatch)
 
-    if err != nil {
+	if err != nil {
 		resp.ErrSrc = AppErr
-        return resp, err
-    }
+		return resp, err
+	}
 
-    resp, err = (*app).processDelete(d)
+	resp, err = (*app).processUpdate(d)
 
-    if err != nil {
-        d.AbortTx()
+	if err != nil {
+		d.AbortTx()
 		resp.ErrSrc = AppErr
-        return resp, err
-    }
+		return resp, err
+	}
 
-    err = d.CommitTx()
+	err = d.CommitTx()
 
-    if err != nil {
-        resp.ErrSrc = AppErr
-    }
+	if err != nil {
+		resp.ErrSrc = AppErr
+	}
+
+	return resp, err
+}
+
+//Replaces entries in the redis DB pertaining to the path and payload
+func Replace(req SetRequest) (SetResponse, error) {
+	var err error
+	var keys []db.WatchKeys
+	var resp SetResponse
+
+	path := req.Path
+	payload := req.Payload
+
+	log.Info("Replace request received with path =", path)
+	log.Info("Replace request received with payload =", string(payload))
+
+	app, appInfo, err := getAppModule(path)
+
+	if err != nil {
+		resp.ErrSrc = ProtoErr
+		return resp, err
+	}
+
+	err = appInitialize(app, appInfo, path, &payload, REPLACE)
+
+	if err != nil {
+		resp.ErrSrc = AppErr
+		return resp, err
+	}
+
+	writeMutex.Lock()
+	defer writeMutex.Unlock()
+
+	d, err := db.NewDB(getDBOptions(db.ConfigDB))
+
+	if err != nil {
+		resp.ErrSrc = ProtoErr
+		return resp, err
+	}
+
+	defer d.DeleteDB()
+
+	keys, err = (*app).translateReplace(d)
+
+	if err != nil {
+		resp.ErrSrc = AppErr
+		return resp, err
+	}
+
+	err = d.StartTx(keys, appInfo.tablesToWatch)
+
+	if err != nil {
+		resp.ErrSrc = AppErr
+		return resp, err
+	}
+
+	resp, err = (*app).processReplace(d)
+
+	if err != nil {
+		d.AbortTx()
+		resp.ErrSrc = AppErr
+		return resp, err
+	}
+
+	err = d.CommitTx()
+
+	if err != nil {
+		resp.ErrSrc = AppErr
+	}
+
+	return resp, err
+}
+
+//Deletes entries in the redis DB pertaining to the path
+func Delete(req SetRequest) (SetResponse, error) {
+	var err error
+	var keys []db.WatchKeys
+	var resp SetResponse
+
+	path := req.Path
+
+	log.Info("Delete request received with path =", path)
+
+	app, appInfo, err := getAppModule(path)
+
+	if err != nil {
+		resp.ErrSrc = ProtoErr
+		return resp, err
+	}
+
+	err = appInitialize(app, appInfo, path, nil, DELETE)
+
+	if err != nil {
+		resp.ErrSrc = AppErr
+		return resp, err
+	}
+
+	writeMutex.Lock()
+	defer writeMutex.Unlock()
+
+	d, err := db.NewDB(getDBOptions(db.ConfigDB))
+
+	if err != nil {
+		resp.ErrSrc = ProtoErr
+		return resp, err
+	}
+
+	defer d.DeleteDB()
+
+	keys, err = (*app).translateDelete(d)
+
+	if err != nil {
+		resp.ErrSrc = AppErr
+		return resp, err
+	}
+
+	err = d.StartTx(keys, appInfo.tablesToWatch)
+
+	if err != nil {
+		resp.ErrSrc = AppErr
+		return resp, err
+	}
+
+	resp, err = (*app).processDelete(d)
+
+	if err != nil {
+		d.AbortTx()
+		resp.ErrSrc = AppErr
+		return resp, err
+	}
+
+	err = d.CommitTx()
+
+	if err != nil {
+		resp.ErrSrc = AppErr
+	}
 
 	return resp, err
 }
 
 //Gets data from the redis DB and converts it to northbound format
-func Get(req GetRequest) (GetResponse, error){
-    var payload []byte
+func Get(req GetRequest) (GetResponse, error) {
+	var payload []byte
 	var resp GetResponse
 
 	path := req.Path
 
-    log.Info("Received Get request for path = ",path)
+	log.Info("Received Get request for path = ", path)
 
 	app, appInfo, err := getAppModule(path)
 
-    if err != nil {
-        resp = GetResponse{Payload:payload, ErrSrc:ProtoErr}
-        return resp, err
-    }
+	if err != nil {
+		resp = GetResponse{Payload: payload, ErrSrc: ProtoErr}
+		return resp, err
+	}
 
 	err = appInitialize(app, appInfo, path, nil, GET)
 
-	if  err != nil {
-		resp = GetResponse{Payload:payload, ErrSrc:AppErr}
+	if err != nil {
+		resp = GetResponse{Payload: payload, ErrSrc: AppErr}
 		return resp, err
 	}
 
 	dbs, err := getAllDbs()
 
 	if err != nil {
-		resp = GetResponse{Payload:payload, ErrSrc:ProtoErr}
-        return resp, err
+		resp = GetResponse{Payload: payload, ErrSrc: ProtoErr}
+		return resp, err
 	}
 
 	defer closeAllDbs(dbs[:])
 
-        err = (*app).translateGet (dbs)
+	err = (*app).translateGet(dbs)
 
 	if err != nil {
-		resp = GetResponse{Payload:payload, ErrSrc:AppErr}
-        return resp, err
+		resp = GetResponse{Payload: payload, ErrSrc: AppErr}
+		return resp, err
 	}
 
-    resp, err = (*app).processGet(dbs)
+	resp, err = (*app).processGet(dbs)
 
-    return resp, err
+	return resp, err
+}
+
+func Action(req ActionRequest) (ActionResponse, error) {
+	var payload []byte
+	var resp ActionResponse
+
+	path := req.Path
+
+	log.Info("Received Action request for path = ", path)
+
+	app, appInfo, err := getAppModule(path)
+
+	if err != nil {
+		resp = ActionResponse{Payload: payload, ErrSrc: ProtoErr}
+		return resp, err
+	}
+
+	aInfo := *appInfo
+
+	aInfo.isNative = true
+
+	err = appInitialize(app, &aInfo, path, &req.Payload, GET)
+
+	if err != nil {
+		resp = ActionResponse{Payload: payload, ErrSrc: AppErr}
+		return resp, err
+	}
+
+	dbs, err := getAllDbs()
+
+	if err != nil {
+		resp = ActionResponse{Payload: payload, ErrSrc: ProtoErr}
+		return resp, err
+	}
+
+	defer closeAllDbs(dbs[:])
+
+	err = (*app).translateAction(dbs)
+
+	if err != nil {
+		resp = ActionResponse{Payload: payload, ErrSrc: AppErr}
+		return resp, err
+	}
+
+	resp, err = (*app).processAction(dbs)
+
+	return resp, err
 }
 
 //Subscribes to the paths requested and sends notifications when the data changes in DB
 func Subscribe(paths []string, q *queue.PriorityQueue, stop chan struct{}) ([]*IsSubscribeResponse, error) {
-    var err error
+	var err error
 	var sErr error
 	//err = errors.New("Not implemented")
 
 	dbNotificationMap := make(map[db.DBNum][]*notificationInfo)
 
-	resp := make ([]*IsSubscribeResponse, len(paths))
+	resp := make([]*IsSubscribeResponse, len(paths))
 
-    for i, _ := range resp {
-        resp[i] = &IsSubscribeResponse{Path: paths[i],
-                                IsOnChangeSupported: false,
-                                MinInterval: minSubsInterval,
-								PreferredType:Sample,
-								Err:nil}
-    }
+	for i, _ := range resp {
+		resp[i] = &IsSubscribeResponse{Path: paths[i],
+			IsOnChangeSupported: false,
+			MinInterval:         minSubsInterval,
+			PreferredType:       Sample,
+			Err:                 nil}
+	}
 
 	dbs, err := getAllDbs()
 
-    if err != nil {
-        return resp, err
-    }
+	if err != nil {
+		return resp, err
+	}
 
 	//Do NOT close the DBs here as we need to use them during subscribe notification
 
-    for i, path := range paths {
+	for i, path := range paths {
 
 		app, appInfo, err := getAppModule(path)
 
-        if err != nil {
+		if err != nil {
 
-            if sErr == nil {
+			if sErr == nil {
 				sErr = err
 			}
 
 			resp[i].Err = err
 			continue
-        }
+		}
 
-        nOpts, nInfo, errApp := (*app).translateSubscribe (dbs, path)
+		nOpts, nInfo, errApp := (*app).translateSubscribe(dbs, path)
 
-        if errApp != nil {
-            resp[i].Err = errApp
+		if errApp != nil {
+			resp[i].Err = errApp
 
 			if sErr == nil {
 				sErr = errApp
@@ -480,23 +538,23 @@ func Subscribe(paths []string, q *queue.PriorityQueue, stop chan struct{}) ([]*I
 
 			resp[i].MinInterval = maxSubsInterval
 
-            if nOpts != nil {
-                if nOpts.mInterval != 0 {
-                    resp[i].MinInterval = nOpts.mInterval
-                }
+			if nOpts != nil {
+				if nOpts.mInterval != 0 {
+					resp[i].MinInterval = nOpts.mInterval
+				}
 
-                resp[i].PreferredType = nOpts.pType
-            }
+				resp[i].PreferredType = nOpts.pType
+			}
 
-            continue
-        } else {
+			continue
+		} else {
 
 			if nOpts != nil {
 				if nOpts.mInterval != 0 {
 					resp[i].MinInterval = nOpts.mInterval
 				}
 
-	            resp[i].PreferredType = nOpts.pType
+				resp[i].PreferredType = nOpts.pType
 			}
 
 			if nInfo == nil {
@@ -506,7 +564,7 @@ func Subscribe(paths []string, q *queue.PriorityQueue, stop chan struct{}) ([]*I
 				continue
 			}
 
-            resp[i].IsOnChangeSupported = true
+			resp[i].IsOnChangeSupported = true
 
 			nInfo.path = path
 			nInfo.app = app
@@ -514,7 +572,7 @@ func Subscribe(paths []string, q *queue.PriorityQueue, stop chan struct{}) ([]*I
 			nInfo.dbs = dbs
 
 			dbNotificationMap[nInfo.dbno] = append(dbNotificationMap[nInfo.dbno], nInfo)
-        }
+		}
 
 	}
 
@@ -524,9 +582,9 @@ func Subscribe(paths []string, q *queue.PriorityQueue, stop chan struct{}) ([]*I
 		return resp, sErr
 	}
 
-	sInfo := &subscribeInfo {syncDone:false,
-					q:q,
-					stop:stop}
+	sInfo := &subscribeInfo{syncDone: false,
+		q:    q,
+		stop: stop}
 
 	sErr = startSubscribe(sInfo, dbNotificationMap)
 
@@ -536,21 +594,21 @@ func Subscribe(paths []string, q *queue.PriorityQueue, stop chan struct{}) ([]*I
 //Check if subscribe is supported on the given paths
 func IsSubscribeSupported(paths []string) ([]*IsSubscribeResponse, error) {
 
-	resp := make ([]*IsSubscribeResponse, len(paths))
+	resp := make([]*IsSubscribeResponse, len(paths))
 
 	for i, _ := range resp {
-        resp[i] = &IsSubscribeResponse{Path: paths[i],
-                                IsOnChangeSupported: false,
-                                MinInterval: minSubsInterval,
-                                PreferredType:Sample,
-                                Err:nil}
+		resp[i] = &IsSubscribeResponse{Path: paths[i],
+			IsOnChangeSupported: false,
+			MinInterval:         minSubsInterval,
+			PreferredType:       Sample,
+			Err:                 nil}
 	}
 
 	dbs, err := getAllDbs()
 
-    if err != nil {
-        return resp, err
-    }
+	if err != nil {
+		return resp, err
+	}
 
 	defer closeAllDbs(dbs[:])
 
@@ -563,14 +621,14 @@ func IsSubscribeSupported(paths []string) ([]*IsSubscribeResponse, error) {
 			continue
 		}
 
-		nOpts, _, errApp := (*app).translateSubscribe (dbs, path)
+		nOpts, _, errApp := (*app).translateSubscribe(dbs, path)
 
 		if errApp != nil {
 			resp[i].Err = errApp
 			err = errApp
-            continue
-        } else {
-			resp[i].IsOnChangeSupported= true
+			continue
+		} else {
+			resp[i].IsOnChangeSupported = true
 
 			if nOpts != nil {
 				if nOpts.mInterval != 0 {
@@ -594,18 +652,18 @@ func GetModels() ([]ModelData, error) {
 //Creates connection will all the redis DBs. To be used for get request
 func getAllDbs() ([db.MaxDB]*db.DB, error) {
 	var dbs [db.MaxDB]*db.DB
-    var err error
+	var err error
 
 	//Create Application DB connection
-    dbs[db.ApplDB], err = db.NewDB(getDBOptions(db.ApplDB))
+	dbs[db.ApplDB], err = db.NewDB(getDBOptions(db.ApplDB))
 
 	if err != nil {
 		closeAllDbs(dbs[:])
 		return dbs, err
 	}
 
-    //Create ASIC DB connection
-    dbs[db.AsicDB], err = db.NewDB(getDBOptions(db.AsicDB))
+	//Create ASIC DB connection
+	dbs[db.AsicDB], err = db.NewDB(getDBOptions(db.AsicDB))
 
 	if err != nil {
 		closeAllDbs(dbs[:])
@@ -613,7 +671,7 @@ func getAllDbs() ([db.MaxDB]*db.DB, error) {
 	}
 
 	//Create Counter DB connection
-    dbs[db.CountersDB], err = db.NewDB(getDBOptions(db.CountersDB))
+	dbs[db.CountersDB], err = db.NewDB(getDBOptions(db.CountersDB))
 
 	if err != nil {
 		closeAllDbs(dbs[:])
@@ -621,7 +679,7 @@ func getAllDbs() ([db.MaxDB]*db.DB, error) {
 	}
 
 	//Create Log Level DB connection
-    dbs[db.LogLevelDB], err = db.NewDB(getDBOptions(db.LogLevelDB))
+	dbs[db.LogLevelDB], err = db.NewDB(getDBOptions(db.LogLevelDB))
 
 	if err != nil {
 		closeAllDbs(dbs[:])
@@ -629,7 +687,7 @@ func getAllDbs() ([db.MaxDB]*db.DB, error) {
 	}
 
 	//Create Config DB connection
-    dbs[db.ConfigDB], err = db.NewDB(getDBOptions(db.ConfigDB))
+	dbs[db.ConfigDB], err = db.NewDB(getDBOptions(db.ConfigDB))
 
 	if err != nil {
 		closeAllDbs(dbs[:])
@@ -637,7 +695,7 @@ func getAllDbs() ([db.MaxDB]*db.DB, error) {
 	}
 
 	//Create Flex Counter DB connection
-    dbs[db.FlexCounterDB], err = db.NewDB(getDBOptions(db.FlexCounterDB))
+	dbs[db.FlexCounterDB], err = db.NewDB(getDBOptions(db.FlexCounterDB))
 
 	if err != nil {
 		closeAllDbs(dbs[:])
@@ -645,7 +703,7 @@ func getAllDbs() ([db.MaxDB]*db.DB, error) {
 	}
 
 	//Create State DB connection
-    dbs[db.StateDB], err = db.NewDB(getDBOptions(db.StateDB))
+	dbs[db.StateDB], err = db.NewDB(getDBOptions(db.StateDB))
 
 	if err != nil {
 		closeAllDbs(dbs[:])
@@ -692,54 +750,54 @@ func getDBOptions(dbNo db.DBNum) db.Options {
 }
 
 func getDBOptionsWithSeparator(dbNo db.DBNum, initIndicator string, tableSeparator string, keySeparator string) db.Options {
-	return(db.Options {
-                    DBNo              : dbNo,
-                    InitIndicator     : initIndicator,
-                    TableNameSeparator: tableSeparator,
-                    KeySeparator      : keySeparator,
-                      })
+	return (db.Options{
+		DBNo:               dbNo,
+		InitIndicator:      initIndicator,
+		TableNameSeparator: tableSeparator,
+		KeySeparator:       keySeparator,
+	})
 }
 
-func getAppModule (path string) (*appInterface, *appInfo, error) {
+func getAppModule(path string) (*appInterface, *appInfo, error) {
 	var app appInterface
 
-    aInfo, err := getAppModuleInfo(path)
+	aInfo, err := getAppModuleInfo(path)
 
-    if err != nil {
-        return nil, aInfo, err
-    }
+	if err != nil {
+		return nil, aInfo, err
+	}
 
-    app, err = getAppInterface(aInfo.appType)
+	app, err = getAppInterface(aInfo.appType)
 
-    if err != nil {
-        return nil, aInfo, err
-    }
+	if err != nil {
+		return nil, aInfo, err
+	}
 
 	return &app, aInfo, err
 }
 
-func appInitialize (app *appInterface, appInfo *appInfo, path string, payload *[]byte, opCode int) error {
-    var err error
-    var input []byte
+func appInitialize(app *appInterface, appInfo *appInfo, path string, payload *[]byte, opCode int) error {
+	var err error
+	var input []byte
 
-    if payload != nil {
-        input = *payload
-    }
+	if payload != nil {
+		input = *payload
+	}
 
-    if appInfo.isNative {
-        log.Info("Native MSFT format")
-        data := appData{path: path, payload: input}
-        (*app).initialize(data)
-    } else {
-       ygotStruct, ygotTarget, err := getRequestBinder (&path, payload, opCode, &(appInfo.ygotRootType)).unMarshall()
-        if err != nil {
-            log.Info("Error in request binding: ", err)
-            return err
-        }
+	if appInfo.isNative {
+		log.Info("Native MSFT format")
+		data := appData{path: path, payload: input}
+		(*app).initialize(data)
+	} else {
+		ygotStruct, ygotTarget, err := getRequestBinder(&path, payload, opCode, &(appInfo.ygotRootType)).unMarshall()
+		if err != nil {
+			log.Info("Error in request binding: ", err)
+			return err
+		}
 
-        data := appData{path: path, payload: input, ygotRoot: ygotStruct, ygotTarget: ygotTarget}
-        (*app).initialize(data)
-    }
+		data := appData{path: path, payload: input, ygotRoot: ygotStruct, ygotTarget: ygotTarget}
+		(*app).initialize(data)
+	}
 
-    return err
+	return err
 }
