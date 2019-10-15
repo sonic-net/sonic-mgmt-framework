@@ -17,5 +17,10 @@ func {{nickname}}(w http.ResponseWriter, r *http.Request) {
     {{#produces}}
     rc.Produces.Add("{{mediaType}}")
     {{/produces}}
+    {{#vendorExtensions}}
+    {{#x-params}}
+    rc.PMap = server.NameMap{ {{#varMapping}}"{{uriName}}":"{{yangName}}", {{/varMapping}} }
+    {{/x-params}}
+    {{/vendorExtensions}}
 	server.Process(w, r)
 }{{/operation}}{{/operations}}
