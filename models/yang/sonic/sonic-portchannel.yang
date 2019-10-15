@@ -1,77 +1,77 @@
 module sonic-portchannel {
-	namespace "http://github.com/Azure/sonic-portchannel";
-	prefix spc;
+    namespace "http://github.com/Azure/sonic-portchannel";
+    prefix spc;
 
-	import sonic-common {
-		prefix scommon;
-	}
+    import sonic-common {
+        prefix scommon;
+    }
 
-	import sonic-port {
-		prefix prt;
-	}
+    import sonic-port {
+        prefix prt;
+    }
 
-	organization
-		"SONiC";
+    organization
+        "SONiC";
 
-	contact
-		"SONiC";
+    contact
+        "SONiC";
 
-	description
-		"SONIC PORTCHANNEL";
+    description
+        "SONIC PORTCHANNEL";
 
-	revision 2019-05-15 {
-		description
-			"Initial revision.";
-	}
+    revision 2019-05-15 {
+        description
+            "Initial revision.";
+    }
 
-	container sonic-portchannel {
+    container sonic-portchannel {
 
-		container PORTCHANNEL {
+        container PORTCHANNEL {
 
-			list PORTCHANNEL_LIST {
-				key "name";
+            list PORTCHANNEL_LIST {
+                key "name";
 
-				max-elements 3;
+                max-elements 3;
 
-				leaf name {
-					type string;
-				}
+                leaf name {
+                    type string;
+                }
 
-				leaf admin_status {
-					type scommon:admin-status;
-				}
+                leaf admin_status {
+                    type scommon:admin-status;
+                }
 
-				leaf mtu {
-					type uint16;
-				}
+                leaf mtu {
+                    type uint16;
+                }
 
-				leaf min_links {
-					type uint8;
-				}
+                leaf min_links {
+                    type uint8;
+                }
 
-				leaf fallback {
-					type boolean;
-				}
-			}
-		}
+                leaf fallback {
+                    type boolean;
+                }
+            }
+        }
 
-		container PORTCHANNEL_MEMBER { 
+        container PORTCHANNEL_MEMBER { 
 
-			list PORTCHANNEL_MEMBER_LIST { 
-				key "name ifname";
+            list PORTCHANNEL_MEMBER_LIST { 
+                key "name ifname";
 
-				leaf name {
-					type leafref {
-						path "../../../PORTCHANNEL/PORTCHANNEL_LIST/name";
-					}
-				}
+                leaf name {
+                    type leafref {
+                        path "../../../PORTCHANNEL/PORTCHANNEL_LIST/name";
+                    }
+                }
 
-				leaf ifname {
-					type leafref {
-						path "/prt:sonic-port/prt:PORT/prt:PORT_LIST/prt:ifname";
-					}
-				}
-			}
-		}
-	}
+                leaf ifname {
+                    type leafref {
+                        path "/prt:sonic-port/prt:PORT/prt:PORT_LIST/prt:ifname";
+                    }
+                }
+            }
+        }
+    }
 }

@@ -250,7 +250,7 @@ limitations under the License.
              </PARAM>
          </PARAM>
       <ACTION>
-          if test "${if-subcommands}" = "vlan"; then&#xA;
+          if test "${if-subcommands}" = "Vlan"; then&#xA;
               python $SONIC_CLI_ROOT/sonic-cli-if.py delete_openconfig_interfaces_interfaces_interface Vlan${vlan-id}&#xA;
           fi
      </ACTION>
@@ -420,7 +420,7 @@ limitations under the License.
 
        <COMMAND
            name="sflow"
-           help="interface sFlow settings"
+           help="Interface sFlow settings"
            />
        <COMMAND
            name="sflow sampling-rate"
@@ -430,7 +430,7 @@ limitations under the License.
            >
            <PARAM
                name="rate"
-               help="sampling rate" 
+               help="Sampling rate"
                ptype="UINT"
                />
             <ACTION builtin="clish_nop"/>
@@ -438,7 +438,7 @@ limitations under the License.
 
       <COMMAND
           name="sflow enable"
-          help="enable sflow"
+          help="Enable sflow"
           ptype="SUBCOMMAND"
           mode="subcommand"
           >
@@ -447,24 +447,24 @@ limitations under the License.
 
     <COMMAND
         name="no sflow"
-        help="disable sflow"
+        help="Disable sflow"
         />
     <COMMAND
         name="no sflow sampling-rate"
-        help="set sampling rate to default"
+        help="Set sampling rate to default"
         ptype="SUBCOMMAND"
         mode="subcommand"
         >
         <PARAM
             name="rate"
-            help="sampling rate"
+            help="Sampling rate"
             ptype="UINT"
             />
         <ACTION builtin="clish_nop"/>
     </COMMAND>
     <COMMAND
         name="no sflow enable"
-        help="disable sFlow"
+        help="Disable sFlow"
         ptype="SUBCOMMAND"
         mode="subcommand"
         >
