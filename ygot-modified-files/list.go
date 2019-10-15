@@ -217,6 +217,9 @@ func validateListSchema(schema *yang.Entry) error {
 		if len(schema.Key) == 0 {
 			return fmt.Errorf("list %s with config set must have a key", schema.Name)
 		}
+		if schema.IsSchemaValidated == true {
+			return nil
+		}
 		keys := strings.Split(schema.Key, " ")
 		keysMissing := make(map[string]bool)
 		for _, v := range keys {
@@ -232,6 +235,7 @@ func validateListSchema(schema *yang.Entry) error {
 		}
 	}
 
+	schema.IsSchemaValidated = true
 	return nil
 }
 
@@ -282,10 +286,10 @@ func unmarshalList(schema *yang.Entry, parent interface{}, jsonList interface{},
 	if util.IsValueNil(jsonList) {
 		return nil
 	}
-	// Check that the schema itself is valid.
+
 	if err := validateListSchema(schema); err != nil {
 		return err
-	}
+	}	
 
 	util.DbgPrint("unmarshalList jsonList %v, type %T, into parent type %T, schema name %s", util.ValueStrDebug(jsonList), jsonList, parent, schema.Name)
 
@@ -413,7 +417,7 @@ func makeValForInsert(schema *yang.Entry, parent interface{}, keys map[string]st
 		}
 
 		var nv reflect.Value
-		if keyLeafKind == yang.Yunion {
+		if keyLeafKind == yang.Yunion && strings.HasSuffix(keyT.Name(), "_Union") {
 			sks, err := getUnionKindsNotEnums(cschema)
 			if err != nil {
 				return err
