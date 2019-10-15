@@ -118,6 +118,9 @@ func dbKeyToYangDataConvert(uri string, xpath string, dbKey string, dbKeySep str
 	keyDataList := strings.SplitN(dbKey, dbKeySep, id)
 	uriWithKey  := fmt.Sprintf("%v", xpath)
 	uriWithKeyCreate := true
+	if len(keyDataList) == 0 {
+		keyDataList = append(keyDataList, dbKey)
+	}
 
 	/* if uri contins key, use it else use xpath */
 	if strings.Contains(uri, "[") {
@@ -144,7 +147,7 @@ func dbKeyToYangDataConvert(uri string, xpath string, dbKey string, dbKeySep str
 		return rmap, uriWithKey, nil
 	}
 
-	if len(keyDataList) == 0 || len(keyNameList) == 0 {
+	if len(keyNameList) == 0 {
 		return nil, "", nil
 	}
 
