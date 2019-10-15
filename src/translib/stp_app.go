@@ -129,6 +129,7 @@ func (app *StpApp) translateUpdate(d *db.DB) ([]db.WatchKeys, error) {
 	var keys []db.WatchKeys
 	log.Info("translateUpdate:stp:path =", app.pathInfo.Template)
 
+	keys, err = app.translateCRUCommon(d, UPDATE)
 	return keys, err
 }
 
@@ -137,6 +138,7 @@ func (app *StpApp) translateReplace(d *db.DB) ([]db.WatchKeys, error) {
 	var keys []db.WatchKeys
 	log.Info("translateReplace:stp:path =", app.pathInfo.Template)
 
+	keys, err = app.translateCRUCommon(d, REPLACE)
 	return keys, err
 }
 
@@ -179,7 +181,10 @@ func (app *StpApp) processUpdate(d *db.DB) (SetResponse, error) {
 	var err error
 	var resp SetResponse
 
-	err = errors.New("Not Implemented")
+	if err = app.processCommon(d, UPDATE); err != nil {
+		log.Error(err)
+		resp = SetResponse{ErrSrc: AppErr}
+	}
 	return resp, err
 }
 
@@ -187,7 +192,10 @@ func (app *StpApp) processReplace(d *db.DB) (SetResponse, error) {
 	var err error
 	var resp SetResponse
 
-	err = errors.New("Not Implemented")
+	if err = app.processCommon(d, REPLACE); err != nil {
+		log.Error(err)
+		resp = SetResponse{ErrSrc: AppErr}
+	}
 	return resp, err
 }
 
@@ -234,7 +242,7 @@ func (app *StpApp) translateCRUCommon(d *db.DB, opcode int) ([]db.WatchKeys, err
 	var keys []db.WatchKeys
 	log.Info("translateCRUCommon:STP:path =", app.pathInfo.Template)
 
-	app.convertOCStpGlobalConfToInternal()
+	app.convertOCStpGlobalConfToInternal(opcode)
 	app.convertOCPvstToInternal()
 	app.convertOCRpvstConfToInternal()
 	app.convertOCStpInterfacesToInternal()
@@ -261,17 +269,22 @@ func (app *StpApp) processCommon(d *db.DB, opcode int) error {
 	if isSubtreeRequest(app.pathInfo.Template, "/openconfig-spanning-tree:stp/global") {
 		switch opcode {
 		case CREATE:
-			err = app.setStpGlobalConfigInDB(d)
-			if err != nil {
-				return err
+			err = app.enableStpMode(d)
+		case REPLACE, UPDATE:
+			mode, _ := app.getStpModeFromConfigDB(d)
+			if *app.ygotTarget == stp.Global || *app.ygotTarget == stp.Global.Config || targetUriPath == "/openconfig-spanning-tree:stp/global/config/enabled-protocol" {
+				if len(mode) == 0 {
+					err = app.enableStpMode(d)
+				} else {
+					if mode != app.convertOCStpModeToInternal(stp.Global.Config.EnabledProtocol[0]) {
+						return tlerr.InvalidArgs("STP mode is configured as %s", mode)
+					} else {
+						app.handleStpGlobalFieldsUpdation(d, opcode)
+					}
+				}
+			} else {
+				app.handleStpGlobalFieldsUpdation(d, opcode)
 			}
-			err = app.enableStpForInterfaces(d)
-			if err != nil {
-				return err
-			}
-			err = app.enableStpForVlans(d)
-		case REPLACE:
-		case UPDATE:
 		case DELETE:
 			if *app.ygotTarget == stp.Global || *app.ygotTarget == stp.Global.Config || targetUriPath == "/openconfig-spanning-tree:stp/global/config/enabled-protocol" {
 				if app.pathInfo.Template == "/openconfig-spanning-tree:stp/global/config/enabled-protocol{}" {
@@ -373,6 +386,8 @@ func (app *StpApp) processCommon(d *db.DB, opcode int) error {
 			}
 		} else {
 			// Handle top PVST
+			log.Infof("Implementation in progress for URL: %s", app.pathInfo.Template)
+			return tlerr.NotSupported("Implementation in progress")
 		}
 	} else if isSubtreeRequest(app.pathInfo.Template, "/openconfig-spanning-tree:stp/rapid-pvst") {
 		mode, _ := app.getStpModeFromConfigDB(d)
@@ -454,7 +469,9 @@ func (app *StpApp) processCommon(d *db.DB, opcode int) error {
 			}
 		} else {
 			// Handle both rapid-pvst and rapid-pvst/vlan
-			err = app.processCommonRpvstVlanToplevelPath(d, stp, opcode)
+			log.Infof("Implementation in progress for URL: %s", app.pathInfo.Template)
+			return tlerr.NotSupported("Implementation in progress")
+			//err = app.processCommonRpvstVlanToplevelPath(d, stp, opcode)
 		}
 	} else if isSubtreeRequest(app.pathInfo.Template, "/openconfig-spanning-tree:stp/mstp") {
 		mode, _ := app.getStpModeFromConfigDB(d)
@@ -494,12 +511,24 @@ func (app *StpApp) processCommon(d *db.DB, opcode int) error {
 	} else if topmostPath {
 		switch opcode {
 		case CREATE:
+			err = app.enableStpMode(d)
+			if err != nil {
+				return err
+			}
+			err = app.setRpvstVlanDataInDB(d, true)
+			if err != nil {
+				return err
+			}
+			err = app.setRpvstVlanInterfaceDataInDB(d, true)
+			if err != nil {
+				return err
+			}
+			err = app.setStpInterfacesDataInDB(d, true)
 		case DELETE:
 			err = app.disableStpMode(d)
 		case GET:
 			ygot.BuildEmptyTree(stp)
 			//////////////////////
-			ygot.BuildEmptyTree(stp.Global)
 			err = app.convertDBStpGlobalConfigToInternal(d)
 			if err != nil {
 				return err
@@ -560,39 +589,42 @@ func (app *StpApp) setStpGlobalConfigInDB(d *db.DB) error {
 	return err
 }
 
-func (app *StpApp) convertOCStpGlobalConfToInternal() {
+func (app *StpApp) convertOCStpGlobalConfToInternal(opcode int) {
 	stp := app.getAppRootObject()
+	setDefaultFlag := (opcode == CREATE || opcode == REPLACE)
 	if stp != nil {
 		if stp.Global != nil && stp.Global.Config != nil {
 			if stp.Global.Config.BridgePriority != nil {
 				(&app.globalInfo).Set("priority", strconv.Itoa(int(*stp.Global.Config.BridgePriority)))
-			} else {
+			} else if setDefaultFlag {
 				(&app.globalInfo).Set("priority", STP_DEFAULT_BRIDGE_PRIORITY)
 			}
 			if stp.Global.Config.ForwardingDelay != nil {
 				(&app.globalInfo).Set("forward_delay", strconv.Itoa(int(*stp.Global.Config.ForwardingDelay)))
-			} else {
+			} else if setDefaultFlag {
 				(&app.globalInfo).Set("forward_delay", STP_DEFAULT_FORWARD_DELAY)
 			}
 			if stp.Global.Config.HelloTime != nil {
 				(&app.globalInfo).Set("hello_time", strconv.Itoa(int(*stp.Global.Config.HelloTime)))
-			} else {
+			} else if setDefaultFlag {
 				(&app.globalInfo).Set("hello_time", STP_DEFAULT_HELLO_INTERVAL)
 			}
 			if stp.Global.Config.MaxAge != nil {
 				(&app.globalInfo).Set("max_age", strconv.Itoa(int(*stp.Global.Config.MaxAge)))
-			} else {
+			} else if setDefaultFlag {
 				(&app.globalInfo).Set("max_age", STP_DEFAULT_MAX_AGE)
 			}
 			if stp.Global.Config.RootguardTimeout != nil {
 				(&app.globalInfo).Set("rootguard_timeout", strconv.Itoa(int(*stp.Global.Config.RootguardTimeout)))
-			} else {
+			} else if setDefaultFlag {
 				(&app.globalInfo).Set("rootguard_timeout", STP_DEFAULT_ROOT_GUARD_TIMEOUT)
 			}
 
-			mode := app.convertOCStpModeToInternal(stp.Global.Config.EnabledProtocol[0])
-			if len(mode) > 0 {
-				(&app.globalInfo).Set(STP_MODE, mode)
+			if len(stp.Global.Config.EnabledProtocol) > 0 {
+				mode := app.convertOCStpModeToInternal(stp.Global.Config.EnabledProtocol[0])
+				if len(mode) > 0 {
+					(&app.globalInfo).Set(STP_MODE, mode)
+				}
 			}
 
 			log.Infof("convertOCStpGlobalConfToInternal -- Internal Stp global config: %v", app.globalInfo)
@@ -615,6 +647,8 @@ func (app *StpApp) convertInternalToOCStpGlobalConfig(stpGlobal *ocbinds.Opencon
 		var priority uint32
 		var forDelay, helloTime, maxAge uint8
 		var rootGTimeout uint16
+		ygot.BuildEmptyTree(stpGlobal)
+
 		if stpGlobal.Config != nil {
 			stpGlobal.Config.EnabledProtocol = app.convertInternalStpModeToOC((&app.globalInfo).Get(STP_MODE))
 
@@ -698,8 +732,6 @@ func (app *StpApp) convertOCRpvstConfToInternal() {
 					app.vlanIntfTableMap[vlanName][intfId] = db.Value{Field: map[string]string{}}
 					if rpvstVlanIntfConf.Config != nil {
 						dbVal := app.vlanIntfTableMap[vlanName][intfId]
-						(&dbVal).Set("vlan-name", vlanName)
-						(&dbVal).Set("ifname", intfId)
 						if rpvstVlanIntfConf.Config.Cost != nil {
 							(&dbVal).Set("path_cost", strconv.Itoa(int(*rpvstVlanIntfConf.Config.Cost)))
 						} else {
@@ -1007,8 +1039,6 @@ func (app *StpApp) convertOCPvstToInternal() {
 					app.vlanIntfTableMap[vlanName][intfId] = db.Value{Field: map[string]string{}}
 					if pvstVlanIntf.Config != nil {
 						dbVal := app.vlanIntfTableMap[vlanName][intfId]
-						(&dbVal).Set("vlan-name", vlanName)
-						(&dbVal).Set("ifname", intfId)
 						if pvstVlanIntf.Config.Cost != nil {
 							(&dbVal).Set("path_cost", strconv.Itoa(int(*pvstVlanIntf.Config.Cost)))
 						} else {
@@ -1737,28 +1767,43 @@ func (app *StpApp) enableStpForVlans(d *db.DB) error {
 	return err
 }
 
-func (app *StpApp) updateGlobalFieldsToStpVlanTable(d *db.DB, fldName string, valStr string) error {
-	stpGlobalDbEntry, err := d.GetEntry(app.globalTable, asKey("GLOBAL"))
-	if err != nil {
-		return err
-	}
-	globalFldVal := (&stpGlobalDbEntry).Get(fldName)
-
+func (app *StpApp) updateGlobalFieldsToStpVlanTable(d *db.DB, fldValuePair map[string]string, stpGlobalDbEntry db.Value) error {
 	vlanKeys, err := d.GetKeys(app.vlanTable)
 	if err != nil {
 		return err
 	}
 	for i, _ := range vlanKeys {
 		vlanEntry, _ := d.GetEntry(app.vlanTable, vlanKeys[i])
-		if (&vlanEntry).Get(fldName) == globalFldVal {
-			(&vlanEntry).Set(fldName, valStr)
-			err := d.ModEntry(app.vlanTable, vlanKeys[i], vlanEntry)
-			if err != nil {
-				return err
+
+		for fldName := range fldValuePair {
+			valStr := fldValuePair[fldName]
+			globalFldVal := (&stpGlobalDbEntry).Get(fldName)
+
+			if (&vlanEntry).Get(fldName) == globalFldVal {
+				(&vlanEntry).Set(fldName, valStr)
+				err := d.ModEntry(app.vlanTable, vlanKeys[i], vlanEntry)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
 	return nil
+}
+
+func (app *StpApp) enableStpMode(d *db.DB) error {
+	var err error
+	err = app.setStpGlobalConfigInDB(d)
+	if err != nil {
+		return err
+	}
+	err = app.enableStpForInterfaces(d)
+	if err != nil {
+		return err
+	}
+	err = app.enableStpForVlans(d)
+
+	return err
 }
 
 func (app *StpApp) disableStpMode(d *db.DB) error {
@@ -1778,6 +1823,40 @@ func (app *StpApp) disableStpMode(d *db.DB) error {
 	err = d.DeleteTable(app.globalTable)
 
 	return err
+}
+
+func (app *StpApp) handleStpGlobalFieldsUpdation(d *db.DB, opcode int) error {
+	stpGlobalDBEntry, err := d.GetEntry(app.globalTable, asKey("GLOBAL"))
+	if err != nil {
+		return err
+	}
+	// Make a copy of StpGlobalDBEntry to modify fields value.
+	tmpDbEntry := db.Value{Field: map[string]string{}}
+	for field, value := range stpGlobalDBEntry.Field {
+		tmpDbEntry.Field[field] = value
+	}
+	fldValuePair := make(map[string]string)
+
+	for fld := range app.globalInfo.Field {
+		valStr := app.globalInfo.Field[fld]
+		(&tmpDbEntry).Set(fld, valStr)
+
+		if fld != "rootguard_timeout" {
+			fldValuePair[fld] = valStr
+		}
+	}
+
+	err = d.ModEntry(app.globalTable, asKey("GLOBAL"), tmpDbEntry)
+	if err != nil {
+		return err
+	}
+
+	err = app.updateGlobalFieldsToStpVlanTable(d, fldValuePair, stpGlobalDBEntry)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (app *StpApp) handleStpGlobalFieldsDeletion(d *db.DB) error {
@@ -1811,17 +1890,26 @@ func (app *StpApp) handleStpGlobalFieldsDeletion(d *db.DB) error {
 			valStr = STP_DEFAULT_BRIDGE_PRIORITY
 		}
 
-		(&stpGlobalDBEntry).Set(fldName, valStr)
-		err := d.ModEntry(app.globalTable, asKey("GLOBAL"), stpGlobalDBEntry)
+		// Make a copy of StpGlobalDBEntry to modify fields value.
+		tmpDbEntry := db.Value{Field: map[string]string{}}
+		for field, value := range stpGlobalDBEntry.Field {
+			tmpDbEntry.Field[field] = value
+		}
+		fldValuePair := make(map[string]string)
+
+		(&tmpDbEntry).Set(fldName, valStr)
+		err = d.ModEntry(app.globalTable, asKey("GLOBAL"), tmpDbEntry)
 		if err != nil {
 			return err
 		}
 
 		if fldName != "rootguard_timeout" {
-			err := app.updateGlobalFieldsToStpVlanTable(d, fldName, valStr)
-			if err != nil {
-				return err
-			}
+			fldValuePair[fldName] = valStr
+		}
+
+		err = app.updateGlobalFieldsToStpVlanTable(d, fldValuePair, stpGlobalDBEntry)
+		if err != nil {
+			return err
 		}
 	}
 	return nil
