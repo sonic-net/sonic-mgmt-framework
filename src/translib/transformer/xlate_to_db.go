@@ -60,6 +60,7 @@ func dataToDBMapAdd(tableName string, dbKey string, result map[string]map[string
 
 	if field == "NONE" {
 		result[tableName][dbKey].Field["NULL"] = "NULL"
+		return
 	}
 
     result[tableName][dbKey].Field[field] = value
