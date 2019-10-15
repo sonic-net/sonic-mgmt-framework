@@ -23,6 +23,8 @@ import (
 	"github.com/openconfig/ygot/util"
 )
 
+var pathToSchemaCache map[reflect.StructTag][]string = make(map[reflect.StructTag][]string)
+
 // validateLengthSchema validates whether the given schema has a valid length
 // specification.
 func validateLengthSchema(schema *yang.Entry) error {
@@ -137,6 +139,12 @@ func isValueScalar(v reflect.Value) bool {
 // if the struct tag is invalid, or nil if tag is valid but the schema is not
 // found in the tree at the specified path.
 func childSchema(schema *yang.Entry, f reflect.StructField) (*yang.Entry, error) {
+	if (schema.ChildSchemaCache == nil) {
+		schema.ChildSchemaCache = make(map[reflect.StructTag]*yang.Entry)
+	} else if cschema, ok := schema.ChildSchemaCache[f.Tag]; ok {
+		return cschema, nil
+	}
+	
 	if util.IsDebugSchemaEnabled() {
 		pathTag, _ := f.Tag.Lookup("path")
 		util.DbgSchema("childSchema for schema %s, field %s, tag %s\n", schema.Name, f.Name, pathTag)	
@@ -170,6 +178,7 @@ func childSchema(schema *yang.Entry, f reflect.StructField) (*yang.Entry, error)
 	}
 	if foundSchema {
 		util.DbgSchema(" - found\n")
+		schema.ChildSchemaCache[f.Tag] = childSchema
 		return childSchema, nil
 	}
 	util.DbgSchema(" - not found\n")
@@ -185,6 +194,7 @@ func childSchema(schema *yang.Entry, f reflect.StructField) (*yang.Entry, error)
 		// path element i.e. choice1/case1/leaf1 path in the schema will have
 		// struct tag `path:"leaf1"`. This implies that only paths with length
 		// 1 are eligible for this matching.
+		schema.ChildSchemaCache[f.Tag] = nil
 		return nil, nil
 	}
 	entries := util.FindFirstNonChoiceOrCase(schema)
@@ -196,11 +206,13 @@ func childSchema(schema *yang.Entry, f reflect.StructField) (*yang.Entry, error)
 
 		if util.StripModulePrefix(name) == p[0] {
 			util.DbgSchema(" - match\n")
+			schema.ChildSchemaCache[f.Tag] = entry
 			return entry, nil
 		}
 	}
 
 	util.DbgSchema(" - no matches\n")
+	schema.ChildSchemaCache[f.Tag] = nil
 	return nil, nil
 }
 
@@ -242,25 +254,32 @@ func absoluteSchemaDataPath(schema *yang.Entry) string {
 // leafref. In the latter case, this function returns {"config", "a"}, and the
 // schema *yang.Entry for the field is given by schema.Dir["config"].Dir["a"].
 func pathToSchema(f reflect.StructField) ([]string, error) {
-	pathAnnotation, ok := f.Tag.Lookup("path")
-	if !ok {
-		return nil, fmt.Errorf("field %s did not specify a path", f.Name)
-	}
-
-	paths := strings.Split(pathAnnotation, "|")
-	if len(paths) == 1 {
-		pathAnnotation = strings.TrimPrefix(pathAnnotation, "/")
-		return strings.Split(pathAnnotation, "/"), nil
-	}
-	for _, pv := range paths {
-		pv = strings.TrimPrefix(pv, "/")
-		pe := strings.Split(pv, "/")
-		if len(pe) > 1 {
+	if pe, ok := pathToSchemaCache[f.Tag]; ok {
+		return pe, nil
+	} else {
+		pathAnnotation, ok := f.Tag.Lookup("path")
+		if !ok {
+			return nil, fmt.Errorf("field %s did not specify a path", f.Name)
+		}
+	
+		paths := strings.Split(pathAnnotation, "|")
+		if len(paths) == 1 {
+			pathAnnotation = strings.TrimPrefix(pathAnnotation, "/")
+			pe := strings.Split(pathAnnotation, "/")
+			pathToSchemaCache[f.Tag] = pe
 			return pe, nil
 		}
+		for _, pv := range paths {
+			pv = strings.TrimPrefix(pv, "/")
+			pe := strings.Split(pv, "/")
+			if len(pe) > 1 {
+				pathToSchemaCache[f.Tag] = pe
+				return pe, nil
+			}
+		}
+	
+		return nil, fmt.Errorf("field %s had path tag %s with |, but no elements of form a/b", f.Name, pathAnnotation)
 	}
-
-	return nil, fmt.Errorf("field %s had path tag %s with |, but no elements of form a/b", f.Name, pathAnnotation)
 }
 
 // directDescendantSchema returns the direct descendant schema for the struct
