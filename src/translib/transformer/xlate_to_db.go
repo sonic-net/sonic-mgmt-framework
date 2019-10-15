@@ -562,14 +562,18 @@ func sonicXpathKeyExtract(path string) (string, string, string) {
 		cdb := db.ConfigDB
 		if !ok {
 			log.Infof("No entry in xDbSpecMap for xpath %v in order to fetch DB index.", tableName)
-		} else {
-			cdb = dbInfo.dbIndex
+			return xpath, keyStr, tableName
 		}
+		cdb = dbInfo.dbIndex
 		dbOpts := getDBOptions(cdb)
-		for i, kname := range rgp.FindAllString(path, -1) {
-			if i > 0 { keyStr += dbOpts.KeySeparator }
-			val := strings.Split(kname, "=")[1]
-			keyStr += strings.TrimRight(val, "]")
+		if dbInfo.keyName != nil {
+			keyStr = *dbInfo.keyName
+		} else {
+			for i, kname := range rgp.FindAllString(path, -1) {
+				if i > 0 { keyStr += dbOpts.KeySeparator }
+				val := strings.Split(kname, "=")[1]
+				keyStr += strings.TrimRight(val, "]")
+			}
 		}
 	}
 	return xpath, keyStr, tableName
