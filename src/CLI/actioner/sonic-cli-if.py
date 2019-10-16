@@ -46,7 +46,12 @@ def generate_body(func, args):
     body = None
     keypath = []
     # Get the rules of all ACL table entries.
-    if func.__name__ == 'patch_openconfig_interfaces_interfaces_interface_config_description':
+    if func.__name__ == 'patch_openconfig_interfaces_interfaces_interface':
+       keypath = [ args[0] ]
+       body = {}
+    elif func.__name__ == 'delete_openconfig_interfaces_interfaces_interface':
+       keypath = [ args[0] ]
+    elif func.__name__ == 'patch_openconfig_interfaces_interfaces_interface_config_description':
        keypath = [ args[0] ]
        body = { "openconfig-interfaces:description": args[1] }
     elif func.__name__ == 'patch_openconfig_interfaces_interfaces_interface_config_enabled':
@@ -82,6 +87,16 @@ def generate_body(func, args):
        sp = args[1].split('/')
        keypath = [ args[0], 0, sp[0] ]
        body = { "openconfig-if-ip:config":  {"ip" : sp[0], "prefix-length" : int(sp[1])} }
+    elif func.__name__ == 'patch_openconfig_vlan_interfaces_interface_ethernet_switched_vlan_config':
+       keypath = [args[0]]
+       if args[1] == "ACCESS":
+           body = {"openconfig-vlan:config": {"interface-mode": "ACCESS","access-vlan": int(args[2])}}
+       else:
+           body = {"openconfig-vlan:config": {"interface-mode": "TRUNK","trunk-vlans": [int(args[2])]}}
+    elif func.__name__ == 'delete_openconfig_vlan_interfaces_interface_ethernet_switched_vlan_config_access_vlan':
+        keypath = [args[0]]
+    elif func.__name__ == 'del_llist_openconfig_vlan_interfaces_interface_ethernet_switched_vlan_config_trunk_vlans':
+        keypath = [args[0], args[2]]
     elif func.__name__ == 'delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config_prefix_length':
        keypath = [args[0], 0, args[1]]
     elif func.__name__ == 'delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config_prefix_length':
@@ -182,10 +197,6 @@ def run(func, args):
 
     try:
         # Temporary code for #show vlan command with dummy data
-        if func.__name__ == "get_openconfig_vlan_interfaces_interface_ethernet_switched_vlan_state":
-            api_response = {'Vlan100': {'Ethernet20': 'tagged', 'Ethernet40': 'untagged'}}
-            show_cli_output(args[0], api_response)
-            return
         if body is not None:
            api_response = getattr(aa,func.__name__)(*keypath, body=body)
         else :
