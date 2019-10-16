@@ -24,7 +24,6 @@ import (
     "github.com/openconfig/ygot/ygot"
     "os"
     "reflect"
-    "regexp"
     "strings"
     "translib/db"
     "translib/ocbinds"
@@ -541,115 +540,6 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
         }
     }
     return nil
-}
-
-func sonicXpathKeyExtract(path string) (string, string, string) {
-	xpath, keyStr, tableName := "", "", ""
-	var err error
-	xpath, err = XfmrRemoveXPATHPredicates(path)
-	if err != nil {
-		return xpath, keyStr, tableName
-	}
-	rgp := regexp.MustCompile(`\[([^\[\]]*)\]`)
-	pathsubStr := strings.Split(path , "/")
-	if len(pathsubStr) > SONIC_TABLE_INDEX  {
-		if strings.Contains(pathsubStr[2], "[") {
-			tableName = strings.Split(pathsubStr[SONIC_TABLE_INDEX], "[")[0]
-		} else {
-			tableName = pathsubStr[SONIC_TABLE_INDEX]
-		}
-		dbInfo, ok := xDbSpecMap[tableName]
-		cdb := db.ConfigDB
-		if !ok {
-			log.Infof("No entry in xDbSpecMap for xpath %v in order to fetch DB index.", tableName)
-			return xpath, keyStr, tableName
-		}
-		cdb = dbInfo.dbIndex
-		dbOpts := getDBOptions(cdb)
-		if dbInfo.keyName != nil {
-			keyStr = *dbInfo.keyName
-		} else {
-			for i, kname := range rgp.FindAllString(path, -1) {
-				if i > 0 { keyStr += dbOpts.KeySeparator }
-				val := strings.Split(kname, "=")[1]
-				keyStr += strings.TrimRight(val, "]")
-			}
-		}
-	}
-	return xpath, keyStr, tableName
-}
-
-/* Extract key vars, create db key and xpath */
-func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string) (string, string, string) {
-    keyStr    := ""
-    tableName := ""
-    pfxPath := ""
-    rgp       := regexp.MustCompile(`\[([^\[\]]*)\]`)
-    curPathWithKey := ""
-    cdb := db.ConfigDB
-    var dbs [db.MaxDB]*db.DB
-
-    pfxPath, _ = XfmrRemoveXPATHPredicates(path)
-    xpathInfo, ok := xYangSpecMap[pfxPath]
-    if !ok {
-           log.Errorf("No entry found in xYangSpecMap for xpath %v.", pfxPath)
-          return pfxPath, keyStr, tableName
-    }
-    cdb = xpathInfo.dbIndex
-    dbOpts := getDBOptions(cdb)
-    keySeparator := dbOpts.KeySeparator
-    if len(xpathInfo.delim) > 0 {
-	    keySeparator = xpathInfo.delim
-    }
-
-    for _, k := range strings.Split(path, "/") {
-        curPathWithKey += k
-        if strings.Contains(k, "[") {
-            if len(keyStr) > 0 {
-				keyStr += keySeparator
-            }
-            yangXpath, _ := XfmrRemoveXPATHPredicates(curPathWithKey)
-	        _, ok := xYangSpecMap[yangXpath]
-	    if ok {
-            if len(xYangSpecMap[yangXpath].xfmrKey) > 0 {
-                xfmrFuncName := yangToDbXfmrFunc(xYangSpecMap[yangXpath].xfmrKey)
-				inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, curPathWithKey, oper, "", nil, nil)
-                ret, err := XlateFuncCall(xfmrFuncName, inParams)
-                if err != nil {
-                    return "", "", ""
-                }
-		if ret != nil {
-                    keyStr = ret[0].Interface().(string)
-		}
-            } else if xYangSpecMap[yangXpath].keyName != nil {
-		    keyStr += *xYangSpecMap[yangXpath].keyName
-	    } else {
-		/* multi-leaf yang key together forms a single key-string in redis.
-		   There should be key-transformer, if not then the yang key leaves
-		   will be concatenated with respective default DB type key-delimiter
-		*/
-                for idx, kname := range rgp.FindAllString(k, -1) {
-			if idx > 0 { keyStr += keySeparator }
-			keyl := strings.TrimRight(strings.TrimLeft(kname, "["), "]")
-			if strings.Contains(keyl, ":") {
-				keyl = strings.Split(keyl, ":")[1]
-			}
-			keyStr += strings.Split(keyl, "=")[1]
-                }
-            }
-	    }
-        }
-        curPathWithKey += "/"
-    }
-    curPathWithKey = strings.TrimSuffix(curPathWithKey, "/")
-    tblPtr     := xpathInfo.tableName
-    if tblPtr != nil {
-        tableName = *tblPtr
-    } else if xpathInfo.xfmrTbl != nil {
-		inParams := formXfmrInputRequest(d, dbs, cdb, ygRoot, curPathWithKey, oper, "", nil, nil)
-		tableName, _ = tblNameFromTblXfmrGet(*xpathInfo.xfmrTbl, inParams)
-    }
-    return pfxPath, keyStr, tableName
 }
 
 /* Debug function to print the map data into file */
