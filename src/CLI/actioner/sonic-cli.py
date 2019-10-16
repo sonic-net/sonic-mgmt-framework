@@ -59,14 +59,17 @@ def generate_body(func, args):
 
     # Configure ACL table
     elif func.__name__ == 'patch_openconfig_acl_acl_acl_sets_acl_set' :
-       keypath = [ args[0], args[1] ]
-       body = { "openconfig-acl:config": {
-                   "name": args[0],
-                   "type": args[1],
-                   "description": ""
-                 }
-              }
-
+        keypath = [ args[0], args[1] ]
+        body=collections.defaultdict(dict)
+        body["acl-set"]=[{
+                        "name": args[0],
+                        "type": args[1],
+                       "config": {
+                                "name": args[0],
+                                "type": args[1],
+                                "description": ""
+                       }
+                    }]
     # Configure ACL rule specific to an ACL table
     elif func.__name__ == 'patch_list_openconfig_acl_acl_acl_sets_acl_set_acl_entries_acl_entry' :
        	keypath = [ args[0], args[1] ]
