@@ -36,7 +36,6 @@ REST_TEST_SRCS = $(shell find . -name '*_test.go')
 # Source files affecting REST server
 REST_SRCS := $(ALL_GO_SRCS) \
 			 $(shell find $(TOPDIR)/models/yang -name '*.yang' | sort) \
-			 $(shell find $(TOPDIR)/src/cvl/schema '*.yang' | sort) \
 			 $(shell find $(TOPDIR)/models/openapi -name '*.yaml' | sort)
 
 REST_GOPATH := $(GOPATH):$(abspath $(REST_BUILD_DIR)/dist)

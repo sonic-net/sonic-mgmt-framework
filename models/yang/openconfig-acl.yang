@@ -818,6 +818,7 @@ module openconfig-acl {
       container config {
         description
           "Global config data for ACLs";
+
         uses acl-config;
       }
 
