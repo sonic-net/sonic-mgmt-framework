@@ -28,12 +28,10 @@ out_common=$(patsubst %.yang, %.yin, $(shell ls -1 $(sonic_yang_common)/*.yang |
 out_tree=$(patsubst %.yang, %.tree, $(src_files)) 
 search_path=$(sonic_yang):$(sonic_yang_common):$(sonic_yang_common)/ietf
 
-#all: yamlGen allyangs.tree allyangs_tree.html schema
-all: schema
+
+all:schema 
 
 schema: $(out) $(out_common)
-
-
 
 schema-tree: $(out_tree)
 
@@ -41,16 +39,6 @@ schema-tree: $(out_tree)
 %.yin:$(sonic_yang)/%.yang
 	@echo "Generating `basename $@` ..."
 	@devFile="`echo $@ | cut -d . -f1`-deviation.yang"; \
-	if [ -f $$devFile ] ; then devOpt="--deviation-module $$devFile"; fi; \
-	pyang -p $(search_path)	--plugindir $(pyang_plugin_dir) \
-		-f yin-cvl $$devOpt $< -o `basename $@`
-
-
-#Build common YANG models
-%.yin:$(sonic_yang_common)/%.yang
-	@echo "Generating `basename $@` ..."
-	@devFile="`echo $@ | cut -d . -f1`-deviation.yang"; \
-
 	if [ -f $$devFile ] ; then devOpt="--deviation-module $$devFile"; fi; \
 	pyang -p $(search_path)	--plugindir $(pyang_plugin_dir) \
 		-f yin-cvl $$devOpt $< -o `basename $@`
