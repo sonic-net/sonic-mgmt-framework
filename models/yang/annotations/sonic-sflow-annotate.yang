@@ -13,7 +13,7 @@ module sonic-sflow-annot {
 
     deviation /sflow:sonic-sflow/sflow:SFLOW {
       deviate add {
-        sonic-ext:key-name "GLOBAL";
+        sonic-ext:key-name "global";
       }
     }
 
