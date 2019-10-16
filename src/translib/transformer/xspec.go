@@ -55,6 +55,7 @@ type dbInfo  struct {
     fieldType    string
     dbEntry      *yang.Entry
     yangXpath    []string
+    module       string
 }
 
 var xYangSpecMap  map[string]*yangXpathInfo
@@ -222,6 +223,7 @@ func dbMapFill(tableName string, curPath string, moduleNm string, trkTpCnt bool,
 			xDbSpecMap[dbXpath].dbIndex   = db.MaxDB
 			xDbSpecMap[dbXpath].dbEntry   = entry
 			xDbSpecMap[dbXpath].fieldType = entryType
+			xDbSpecMap[dbXpath].module = moduleNm
 			if entryType == "container" {
 				xDbSpecMap[dbXpath].dbIndex = db.ConfigDB
 				if entry.Exts != nil && len(entry.Exts) > 0 {
@@ -246,6 +248,7 @@ func dbMapFill(tableName string, curPath string, moduleNm string, trkTpCnt bool,
 		xDbSpecMap[moduleXpath] = new(dbInfo)
 		xDbSpecMap[moduleXpath].dbEntry   = entry
 		xDbSpecMap[moduleXpath].fieldType = entryType
+		xDbSpecMap[moduleXpath].module = moduleNm
 	}
 
 	var childList []string
@@ -550,6 +553,7 @@ func dbMapPrint( fname string) {
         fmt.Fprintf(fp, " field:%v \r\n", k)
         fmt.Fprintf(fp, "     type     :%v \r\n", v.fieldType)
         fmt.Fprintf(fp, "     db-type  :%v \r\n", v.dbIndex)
+        fmt.Fprintf(fp, "     module   :%v \r\n", v.module)
         fmt.Fprintf(fp, "     KeyName: ")
         if v.keyName != nil {
             fmt.Fprintf(fp, "%v", *v.keyName)
