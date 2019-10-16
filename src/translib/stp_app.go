@@ -243,8 +243,8 @@ func (app *StpApp) translateCRUCommon(d *db.DB, opcode int) ([]db.WatchKeys, err
 	log.Info("translateCRUCommon:STP:path =", app.pathInfo.Template)
 
 	app.convertOCStpGlobalConfToInternal(opcode)
-	app.convertOCPvstToInternal()
-	app.convertOCRpvstConfToInternal()
+	app.convertOCPvstToInternal(opcode)
+	app.convertOCRpvstConfToInternal(opcode)
 	app.convertOCStpInterfacesToInternal()
 
 	return keys, err
@@ -327,6 +327,7 @@ func (app *StpApp) processCommon(d *db.DB, opcode int) error {
 							}
 						case REPLACE:
 						case UPDATE:
+							err = app.setRpvstVlanInterfaceDataInDB(d, false)
 						case DELETE:
 							if *app.ygotTarget == pvstVlanIntf {
 								err = d.DeleteEntry(app.vlanIntfTable, asKey(vlanName, intfId))
@@ -342,6 +343,9 @@ func (app *StpApp) processCommon(d *db.DB, opcode int) error {
 							app.convertInternalToOCPvstVlanInterface(vlanName, intfId, pvstVlan, pvstVlanIntf)
 							// populate operational data
 							app.convertOperInternalToOCVlanInterface(vlanName, intfId, pvstVlan, pvstVlanIntf)
+						}
+						if err != nil {
+							return err
 						}
 					}
 				} else {
@@ -362,6 +366,17 @@ func (app *StpApp) processCommon(d *db.DB, opcode int) error {
 						}
 					case REPLACE:
 					case UPDATE:
+						if *app.ygotTarget == pvstVlan {
+							err = app.setRpvstVlanDataInDB(d, false)
+							if err != nil {
+								return err
+							}
+							err = app.setRpvstVlanInterfaceDataInDB(d, false)
+						} else if isInterfacesSubtree {
+							err = app.setRpvstVlanInterfaceDataInDB(d, false)
+						} else {
+							err = d.ModEntry(app.vlanTable, asKey(vlanName), app.vlanTableMap[vlanName])
+						}
 					case DELETE:
 						if *app.ygotTarget == pvstVlan {
 							err = d.DeleteKeys(app.vlanIntfTable, asKey(vlanName+TABLE_SEPARATOR+"*"))
@@ -411,6 +426,7 @@ func (app *StpApp) processCommon(d *db.DB, opcode int) error {
 							}
 						case REPLACE:
 						case UPDATE:
+							err = app.setRpvstVlanInterfaceDataInDB(d, false)
 						case DELETE:
 							if *app.ygotTarget == rpvstVlanIntfConf {
 								err = d.DeleteEntry(app.vlanIntfTable, asKey(vlanName, intfId))
@@ -445,6 +461,17 @@ func (app *StpApp) processCommon(d *db.DB, opcode int) error {
 						}
 					case REPLACE:
 					case UPDATE:
+						if *app.ygotTarget == rpvstVlanConf {
+							err = app.setRpvstVlanDataInDB(d, false)
+							if err != nil {
+								return err
+							}
+							err = app.setRpvstVlanInterfaceDataInDB(d, false)
+						} else if isInterfacesSubtree {
+							err = app.setRpvstVlanInterfaceDataInDB(d, false)
+						} else {
+							err = d.ModEntry(app.vlanTable, asKey(vlanName), app.vlanTableMap[vlanName])
+						}
 					case DELETE:
 						if *app.ygotTarget == rpvstVlanConf {
 							err = d.DeleteKeys(app.vlanIntfTable, asKey(vlanName+TABLE_SEPARATOR+"*"))
@@ -491,6 +518,7 @@ func (app *StpApp) processCommon(d *db.DB, opcode int) error {
 					}
 				case REPLACE:
 				case UPDATE:
+					err = app.setStpInterfacesDataInDB(d, false)
 				case DELETE:
 					if *app.ygotTarget == intfData {
 						err = d.DeleteEntry(app.interfaceTable, asKey(intfId))
@@ -507,6 +535,8 @@ func (app *StpApp) processCommon(d *db.DB, opcode int) error {
 				}
 			}
 		} else {
+			log.Infof("Implementation in progress for URL: %s", app.pathInfo.Template)
+			return tlerr.NotSupported("Implementation in progress")
 		}
 	} else if topmostPath {
 		switch opcode {
@@ -685,8 +715,9 @@ func (app *StpApp) convertInternalToOCStpGlobalConfig(stpGlobal *ocbinds.Opencon
 }
 
 /////////////////    RPVST //////////////////////
-func (app *StpApp) convertOCRpvstConfToInternal() {
+func (app *StpApp) convertOCRpvstConfToInternal(opcode int) {
 	stp := app.getAppRootObject()
+	setDefaultFlag := (opcode == CREATE || opcode == REPLACE)
 	if stp != nil && stp.RapidPvst != nil && len(stp.RapidPvst.Vlan) > 0 {
 		for vlanId, _ := range stp.RapidPvst.Vlan {
 			vlanName := "Vlan" + strconv.Itoa(int(vlanId))
@@ -697,22 +728,22 @@ func (app *StpApp) convertOCRpvstConfToInternal() {
 				(&dbVal).Set("vlanid", strconv.Itoa(int(vlanId)))
 				if rpvstVlanConf.Config.BridgePriority != nil {
 					(&dbVal).Set("priority", strconv.Itoa(int(*rpvstVlanConf.Config.BridgePriority)))
-				} else {
+				} else if setDefaultFlag {
 					(&dbVal).Set("priority", "32768")
 				}
 				if rpvstVlanConf.Config.ForwardingDelay != nil {
 					(&dbVal).Set("forward_delay", strconv.Itoa(int(*rpvstVlanConf.Config.ForwardingDelay)))
-				} else {
+				} else if setDefaultFlag {
 					(&dbVal).Set("forward_delay", "15")
 				}
 				if rpvstVlanConf.Config.HelloTime != nil {
 					(&dbVal).Set("hello_time", strconv.Itoa(int(*rpvstVlanConf.Config.HelloTime)))
-				} else {
+				} else if setDefaultFlag {
 					(&dbVal).Set("hello_time", "2")
 				}
 				if rpvstVlanConf.Config.MaxAge != nil {
 					(&dbVal).Set("max_age", strconv.Itoa(int(*rpvstVlanConf.Config.MaxAge)))
-				} else {
+				} else if setDefaultFlag {
 					(&dbVal).Set("max_age", "20")
 				}
 				if rpvstVlanConf.Config.SpanningTreeEnable != nil {
@@ -721,7 +752,7 @@ func (app *StpApp) convertOCRpvstConfToInternal() {
 					} else {
 						(&dbVal).Set("enabled", "false")
 					}
-				} else {
+				} else if setDefaultFlag {
 					(&dbVal).Set("enabled", "false")
 				}
 			}
@@ -734,12 +765,12 @@ func (app *StpApp) convertOCRpvstConfToInternal() {
 						dbVal := app.vlanIntfTableMap[vlanName][intfId]
 						if rpvstVlanIntfConf.Config.Cost != nil {
 							(&dbVal).Set("path_cost", strconv.Itoa(int(*rpvstVlanIntfConf.Config.Cost)))
-						} else {
+						} else if setDefaultFlag {
 							(&dbVal).Set("path_cost", "200")
 						}
 						if rpvstVlanIntfConf.Config.PortPriority != nil {
 							(&dbVal).Set("priority", strconv.Itoa(int(*rpvstVlanIntfConf.Config.PortPriority)))
-						} else {
+						} else if setDefaultFlag {
 							(&dbVal).Set("priority", "128")
 						}
 					}
@@ -777,7 +808,6 @@ func (app *StpApp) setRpvstVlanInterfaceDataInDB(d *db.DB, createFlag bool) erro
 			}
 			if createFlag || (!createFlag && err != nil && !existingEntry.IsPopulated()) {
 				err = d.CreateEntry(app.vlanIntfTable, asKey(vlanName, intfId), app.vlanIntfTableMap[vlanName][intfId])
-				log.Error(err)
 			} else {
 				if existingEntry.IsPopulated() {
 					err = d.ModEntry(app.vlanIntfTable, asKey(vlanName, intfId), app.vlanIntfTableMap[vlanName][intfId])
@@ -992,8 +1022,9 @@ func (app *StpApp) convertInternalToOCRpvstVlanInterface(vlanName string, intfId
 }
 
 ///////////   PVST   //////////////////////
-func (app *StpApp) convertOCPvstToInternal() {
+func (app *StpApp) convertOCPvstToInternal(opcode int) {
 	stp := app.getAppRootObject()
+	setDefaultFlag := (opcode == CREATE || opcode == REPLACE)
 	if stp != nil && stp.Pvst != nil && len(stp.Pvst.Vlan) > 0 {
 		for vlanId, _ := range stp.Pvst.Vlan {
 			vlanName := "Vlan" + strconv.Itoa(int(vlanId))
@@ -1004,22 +1035,22 @@ func (app *StpApp) convertOCPvstToInternal() {
 				(&dbVal).Set("vlanid", strconv.Itoa(int(vlanId)))
 				if pvstVlan.Config.BridgePriority != nil {
 					(&dbVal).Set("priority", strconv.Itoa(int(*pvstVlan.Config.BridgePriority)))
-				} else {
+				} else if setDefaultFlag {
 					(&dbVal).Set("priority", "32768")
 				}
 				if pvstVlan.Config.ForwardingDelay != nil {
 					(&dbVal).Set("forward_delay", strconv.Itoa(int(*pvstVlan.Config.ForwardingDelay)))
-				} else {
+				} else if setDefaultFlag {
 					(&dbVal).Set("forward_delay", "15")
 				}
 				if pvstVlan.Config.HelloTime != nil {
 					(&dbVal).Set("hello_time", strconv.Itoa(int(*pvstVlan.Config.HelloTime)))
-				} else {
+				} else if setDefaultFlag {
 					(&dbVal).Set("hello_time", "2")
 				}
 				if pvstVlan.Config.MaxAge != nil {
 					(&dbVal).Set("max_age", strconv.Itoa(int(*pvstVlan.Config.MaxAge)))
-				} else {
+				} else if setDefaultFlag {
 					(&dbVal).Set("max_age", "20")
 				}
 				if pvstVlan.Config.SpanningTreeEnable != nil {
@@ -1028,7 +1059,7 @@ func (app *StpApp) convertOCPvstToInternal() {
 					} else {
 						(&dbVal).Set("enabled", "false")
 					}
-				} else {
+				} else if setDefaultFlag {
 					(&dbVal).Set("enabled", "false")
 				}
 			}
@@ -1041,12 +1072,12 @@ func (app *StpApp) convertOCPvstToInternal() {
 						dbVal := app.vlanIntfTableMap[vlanName][intfId]
 						if pvstVlanIntf.Config.Cost != nil {
 							(&dbVal).Set("path_cost", strconv.Itoa(int(*pvstVlanIntf.Config.Cost)))
-						} else {
+						} else if setDefaultFlag {
 							(&dbVal).Set("path_cost", "200")
 						}
 						if pvstVlanIntf.Config.PortPriority != nil {
 							(&dbVal).Set("priority", strconv.Itoa(int(*pvstVlanIntf.Config.PortPriority)))
-						} else {
+						} else if setDefaultFlag {
 							(&dbVal).Set("priority", "128")
 						}
 					}
@@ -1202,7 +1233,6 @@ func (app *StpApp) convertOCStpInterfacesToInternal() {
 			stpIntfConf := stp.Interfaces.Interface[intfId]
 			if stpIntfConf.Config != nil {
 				dbVal := app.intfTableMap[intfId]
-				(&dbVal).Set("ifname", intfId)
 
 				if stpIntfConf.Config.BpduGuard != nil {
 					if *stpIntfConf.Config.BpduGuard == true {
@@ -1450,7 +1480,10 @@ func (app *StpApp) convertOperInternalToOCVlanInterface(vlanName string, intfId 
 		case "OpenconfigSpanningTree_Stp_Pvst_Vlan":
 			pvstVlan, _ = vlan.(*ocbinds.OpenconfigSpanningTree_Stp_Pvst_Vlan)
 			if vlanIntf == nil {
-				pvstVlanIntf, _ = pvstVlan.Interfaces.NewInterface(intfId)
+				pvstVlanIntf = pvstVlan.Interfaces.Interface[intfId]
+				if pvstVlanIntf == nil {
+					pvstVlanIntf, _ = pvstVlan.Interfaces.NewInterface(intfId)
+				}
 				ygot.BuildEmptyTree(pvstVlanIntf)
 				ygot.BuildEmptyTree(pvstVlanIntf.State)
 			} else {
@@ -1459,7 +1492,10 @@ func (app *StpApp) convertOperInternalToOCVlanInterface(vlanName string, intfId 
 		case "OpenconfigSpanningTree_Stp_RapidPvst_Vlan":
 			rpvstVlan, _ = vlan.(*ocbinds.OpenconfigSpanningTree_Stp_RapidPvst_Vlan)
 			if vlanIntf == nil {
-				rpvstVlanIntf, _ = rpvstVlan.Interfaces.NewInterface(intfId)
+				rpvstVlanIntf = rpvstVlan.Interfaces.Interface[intfId]
+				if rpvstVlanIntf == nil {
+					rpvstVlanIntf, _ = rpvstVlan.Interfaces.NewInterface(intfId)
+				}
 				ygot.BuildEmptyTree(rpvstVlanIntf)
 				ygot.BuildEmptyTree(rpvstVlanIntf.State)
 			} else {
