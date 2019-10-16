@@ -139,6 +139,9 @@ func (app *IntfApp) getSpecificIfVlanAttr(targetUriPath *string, ifKey *string, 
 		if e != nil {
 			return true, e
 		}
+		if accessVlanName == nil {
+			return true, nil
+		}
 		vlanName := *accessVlanName
 		vlanIdStr := vlanName[len("Vlan"):len(vlanName)]
 		vlanId, err := strconv.Atoi(vlanIdStr)
@@ -933,6 +936,9 @@ func (app *IntfApp) processGetSpecificIntf(dbs [db.MaxDB]*db.DB, targetUriPath *
 			}
 
 			ifInfo := intfObj.Interface[ifKey]
+			if *app.ygotTarget != ifInfo || *app.ygotTarget != ifInfo.Config || *app.ygotTarget != ifInfo.State {
+				return GetResponse{Payload: payload}, errors.New("Requested get type not supported!")
+			}
 			app.processBuildTree(ifInfo, &ifKey)
 
 			if *app.ygotTarget == ifInfo {
