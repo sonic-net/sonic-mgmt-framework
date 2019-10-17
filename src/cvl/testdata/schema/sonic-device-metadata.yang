@@ -57,9 +57,10 @@ module sonic-device-metadata {
 				}
 
 				leaf bgp_asn {
-					type leafref {
-						path "/sbn:sonic-bgp-neighbor/sbn:BGP_NEIGHBOR/sbn:BGP_NEIGHBOR_LIST/sbn:asn";
-					}
+					//type leafref {
+						//path "/sbn:sonic-bgp-neighbor/sbn:BGP_NEIGHBOR/sbn:BGP_NEIGHBOR_LIST/sbn:asn";
+					//}
+                    type uint64;
 				}
 
 				leaf default_pfcwd_status {

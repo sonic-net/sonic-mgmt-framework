@@ -142,5 +142,10 @@ module openconfig-network-instance-annot {
 			sonic-ext:field-name "ibgp_route_distance";
       }
     }
-}
 
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-bgp:bgp/oc-bgp:neighbors/oc-bgp:neighbor/oc-bgp:state {
+        deviate add {
+//            sonic-ext:subtree-transformer "bgp_nbrs_nbr_state_xfmr";
+        }
+    }
+}

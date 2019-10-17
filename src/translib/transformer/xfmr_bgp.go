@@ -16,7 +16,19 @@ func init () {
     XlateFuncBind("DbToYang_bgp_allow_multiple_as_xfmr", DbToYang_bgp_allow_multiple_as_xfmr)
     XlateFuncBind("YangToDb_bgp_graceful_restart_status_xfmr", YangToDb_bgp_graceful_restart_status_xfmr)
     XlateFuncBind("DbToYang_bgp_graceful_restart_status_xfmr", DbToYang_bgp_graceful_restart_status_xfmr)
+/*    XlateFuncBind("DbToYang_bgp_nbrs_nbr_state_xfmr", DbToYang_bgp_nbrs_nbr_state_xfmr) */
 }
+
+/*
+func getBgpRoot (inParams XfmrParams) *ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp, error {
+    pathInfo := NewPathInfo(inParams.uri)
+    niName := pathInfo.Var("name")
+    if len(niName) == 0 {return "", errors.New("Network-instance-name missing")}
+
+    deviceObj := (*inParams.ygRoot).(*ocbinds.Device)
+    return deviceObj.Lacp
+}
+*/
 
 var YangToDb_bgp_gbl_tbl_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (string, error) {
     var err error
@@ -167,7 +179,11 @@ var DbToYang_bgp_graceful_restart_status_xfmr FieldXfmrDbtoYang = func(inParams 
     return result, err
 }
 
+/*
+var DbToYang_bgp_nbrs_nbr_state_xfmr SubTreeXfmrDbToYang = func(inParams XfmrParams) error {
+    pathInfo := NewPathInfo(inParams.uri)
+    vrfName := pathInfo.Var("name")
 
 
-
-
+}
+*/
