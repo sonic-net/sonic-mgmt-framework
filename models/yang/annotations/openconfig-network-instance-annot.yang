@@ -8,24 +8,16 @@ module openconfig-network-instance-annot {
     import openconfig-network-instance { prefix oc-netinst; }
     import openconfig-network-instance-l3 { prefix oc-ni-l3; }
     import openconfig-types { prefix oc-types; }
-    import openconfig-mpls { prefix oc-mpls; }
     import openconfig-vlan { prefix oc-vlan; }
     import openconfig-network-instance-types { prefix oc-ni-types; }
     import openconfig-policy-types { prefix oc-pol-types; }
     import openconfig-local-routing { prefix oc-loc-rt; }
-    import openconfig-interfaces { prefix oc-if; }
     import ietf-inet-types { prefix inet; }
     import openconfig-extensions { prefix oc-ext; }
-    import openconfig-pim { prefix oc-pim; }
     import openconfig-routing-policy { prefix oc-rpol; }
     import openconfig-bgp { prefix oc-bgp; }
     import openconfig-policy-forwarding { prefix oc-pf; }
-    import openconfig-isis { prefix oc-isis; }
-    import openconfig-igmp { prefix oc-igmp; }
     import ietf-yang-types { prefix yang; }
-    import openconfig-ospfv2 { prefix oc-ospfv2; }
-    import openconfig-segment-routing { prefix oc-sr; }
-    import openconfig-aft { prefix oc-aft; }
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-bgp:bgp/oc-bgp:global {
 		deviate add {
@@ -68,6 +60,30 @@ module openconfig-network-instance-annot {
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-bgp:bgp/oc-bgp:global/oc-bgp:route-selection-options/oc-bgp:state/oc-bgp:always-compare-med {
       deviate add {
             sonic-ext:field-transformer "bgp_always_compare_med_enable_xfmr";
+      }
+    }
+
+    deviation oc-netinst:openconfig-network-instance/oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-bgp:bgp/oc-bgp:global/oc-bgp:route-selection-options/oc-bgp:config/oc-bgp:ignore-as-path-length {
+      deviate add {
+            sonic-ext:field-transformer "bgp_ignore_as_path_length_xfmr";
+      }
+    }
+
+    deviation oc-netinst:openconfig-network-instance/oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-bgp:bgp/oc-bgp:global/oc-bgp:route-selection-options/oc-bgp:state/oc-bgp:ignore-as-path-length {
+      deviate add {
+            sonic-ext:field-transformer "bgp_ignore_as_path_length_xfmr";
+      }
+    }
+
+    deviation oc-netinst:openconfig-network-instance/oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-bgp:bgp/oc-bgp:global/oc-bgp:route-selection-options/oc-bgp:config/oc-bgp:external-compare-router-id {
+      deviate add {
+            sonic-ext:field-transformer "bgp_external_compare_router_id_xfmr";
+      }
+    }
+
+    deviation oc-netinst:openconfig-network-instance/oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-bgp:bgp/oc-bgp:global/oc-bgp:route-selection-options/oc-bgp:state/oc-bgp:external-compare-router-id {
+      deviate add {
+            sonic-ext:field-transformer "bgp_external_compare_router_id_xfmr";
       }
     }
 
