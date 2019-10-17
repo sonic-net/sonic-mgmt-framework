@@ -25,6 +25,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+
 	"translib/ocbinds"
 
 	log "github.com/golang/glog"
@@ -188,5 +189,3 @@ func getObjectFieldName(targetUri *string, deviceObj *ocbinds.Device, ygotTarget
 	}
 	return "", errors.New("Target object not found")
 }
-
-
