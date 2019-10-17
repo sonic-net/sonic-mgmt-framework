@@ -2,9 +2,55 @@ package transformer
 
 import (
     "errors"
+    "translib/ocbinds"
     "reflect"
     log "github.com/golang/glog"
 )
+
+func getBgpRoot (inParams XfmrParams) (*ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp, error) {
+    pathInfo := NewPathInfo(inParams.uri)
+    niName := pathInfo.Var("name")
+    bgpId := pathInfo.Var("identifier")
+    protoName := pathInfo.Var("name1")
+    var err error
+
+    if len(niName) == 0 {
+        return nil, errors.New("Network-instance-name missing")
+    }
+
+    if bgpId != "BGP" {
+        return nil, errors.New("Network-instance-name missing")
+    }
+
+    if len(protoName) == 0 {
+        return nil, errors.New("Network-instance-name missing")
+    }
+
+	deviceObj := (*inParams.ygRoot).(*ocbinds.Device)
+    netInstsObj := deviceObj.NetworkInstances
+
+    if netInstsObj.NetworkInstance == nil {
+        return nil, errors.New("Network-instance-name missing")
+    }
+
+    netInstObj := netInstsObj.NetworkInstance[niName]
+    if netInstObj == nil {
+        return nil, errors.New("Network-instance-name missing")
+    }
+
+    if netInstObj.Protocols == nil || len(netInstObj.Protocols.Protocol) == 0 {
+        return nil, errors.New("Network-instance-name missing")
+    }
+
+    var protoKey ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Key
+    protoKey.Identifier = ocbinds.OpenconfigPolicyTypes_INSTALL_PROTOCOL_TYPE_BGP
+    protoKey.Name1 = protoName
+    protoInstObj := netInstObj.Protocols.Protocol[protoKey]
+    if protoInstObj == nil {
+        return nil, errors.New("Network-instance-name missing")
+    }
+    return protoInstObj.Bgp, err
+}
 
 
 func init () {
@@ -23,12 +69,12 @@ var YangToDb_bgp_gbl_tbl_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (s
 
     pathInfo := NewPathInfo(inParams.uri)
     /* @@TODO Make sure name is vrf-name instead of BGP protocol name in the URI */
-    vrfName := pathInfo.Var("name")
+    niName := pathInfo.Var("name")
 
     /* @@TODO Return error for protocols other than BGP here */
-    log.Info("URI VRF", vrfName)
+    log.Info("URI VRF ", niName)
 
-    return vrfName, err
+    return niName, err
 }
 
 var DbToYang_bgp_gbl_tbl_key_xfmr KeyXfmrDbToYang = func(inParams XfmrParams) (map[string]interface{}, error) {
