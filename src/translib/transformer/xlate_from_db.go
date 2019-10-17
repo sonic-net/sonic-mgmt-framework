@@ -73,7 +73,7 @@ func xfmrHandlerFunc(inParams XfmrParams) (map[string]interface{}, error) {
                                   Indent: "  ", SkipValidation: true,
                                   RFC7951Config: &ygot.RFC7951JSONConfig{ AppendModuleName: false, },
                                   })
-    err = json.Unmarshal([]byte(payload), result)
+    err = json.Unmarshal([]byte(payload), &result)
     return result, err
 }
 
@@ -150,7 +150,7 @@ func DbToYangType(yngTerminalNdDtType yang.TypeKind, fldXpath string, dbFldVal s
 		if res, err = strconv.ParseBool(dbFldVal); err != nil {
 			log.Warningf("Non Bool type for yang leaf-list item %v", dbFldVal)
 		}
-        case yang.Ybinary, yang.Ydecimal64, yang.Yenum, yang.Yidentityref, yang.Yint64, yang.Yuint64,     yang.Ystring, yang.Yunion:
+        case yang.Ybinary, yang.Ydecimal64, yang.Yenum, yang.Yidentityref, yang.Yint64, yang.Yuint64,     yang.Ystring, yang.Yunion,yang.Yleafref:
                 // TODO - handle the union type
                 // Make sure to encode as string, expected by util_types.go: ytypes.yangToJSONType
                 log.Info("Yenum/Ystring/Yunion(having all members as strings) type for yangXpath ", fldXpath)
