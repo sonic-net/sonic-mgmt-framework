@@ -159,6 +159,9 @@ func dbKeyToYangDataConvert(uri string, xpath string, dbKey string, dbKeySep str
 	        return rmap, uriWithKey, nil
 	}
 	rmap[keyNameList[0]] = keyDataList[0]
+	if uriWithKeyCreate {
+		uriWithKey += fmt.Sprintf("[%v=%v]", keyNameList[0], keyDataList[0])
+	}
 
 	return rmap, uriWithKey, nil
 }
