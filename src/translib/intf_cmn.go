@@ -936,7 +936,12 @@ func (app *IntfApp) processGetSpecificIntf(dbs [db.MaxDB]*db.DB, targetUriPath *
 			}
 
 			ifInfo := intfObj.Interface[ifKey]
-			if *app.ygotTarget != ifInfo || *app.ygotTarget != ifInfo.Config || *app.ygotTarget != ifInfo.State {
+			/*  Attribute level handling is done at the top and returned. Any container level handling
+			    needs to be updated here. This is done, just to avoid un-necessary building of tree for any
+			    incoming request */
+			/* TODO: Need to handle these conditions in a cleaner way */
+			if *app.ygotTarget != ifInfo && *app.ygotTarget != ifInfo.Config && *app.ygotTarget != ifInfo.State &&
+				*app.ygotTarget != ifInfo.State.Counters {
 				return GetResponse{Payload: payload}, errors.New("Requested get type not supported!")
 			}
 			app.processBuildTree(ifInfo, &ifKey)
@@ -951,6 +956,10 @@ func (app *IntfApp) processGetSpecificIntf(dbs [db.MaxDB]*db.DB, targetUriPath *
 				} else if *app.ygotTarget == ifInfo.State {
 					dummyifInfo.State = ifInfo.State
 					payload, err = dumpIetfJson(dummyifInfo, false)
+				} else if *app.ygotTarget == ifInfo.State.Counters {
+					dummyifStateInfo := &ocbinds.OpenconfigInterfaces_Interfaces_Interface_State{}
+					dummyifStateInfo.Counters = ifInfo.State.Counters
+					payload, err = dumpIetfJson(dummyifStateInfo, false)
 				} else {
 					log.Info("Not supported get type!")
 					err = errors.New("Requested get-type not supported!")
