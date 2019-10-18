@@ -1,9 +1,21 @@
-///////////////////////////////////////////////////////////////////////
-//
-// Copyright 2019 Broadcom. All rights reserved.
-// The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
-//
-///////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+//                                                                            //
+//  Copyright 2019 Broadcom. The term Broadcom refers to Broadcom Inc. and/or //
+//  its subsidiaries.                                                         //
+//                                                                            //
+//  Licensed under the Apache License, Version 2.0 (the "License");           //
+//  you may not use this file except in compliance with the License.          //
+//  You may obtain a copy of the License at                                   //
+//                                                                            //
+//     http://www.apache.org/licenses/LICENSE-2.0                             //
+//                                                                            //
+//  Unless required by applicable law or agreed to in writing, software       //
+//  distributed under the License is distributed on an "AS IS" BASIS,         //
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  //
+//  See the License for the specific language governing permissions and       //
+//  limitations under the License.                                            //
+//                                                                            //
+////////////////////////////////////////////////////////////////////////////////
 
 package translib
 
@@ -23,17 +35,17 @@ import (
 )
 
 const (
-	GLOBAL_TABLE            = "STP"
-	VLAN_TABLE              = "STP_VLAN"
-	VLAN_INTF_TABLE         = "STP_VLAN_INTF"
-	INTF_TABLE              = "STP_INTF"
-	VLAN_OPER_TABLE         = "_STP_VLAN_TABLE"
-	VLAN_INTF_OPER_TABLE    = "_STP_VLAN_INTF_TABLE"
-	INTF_OPER_TABLE         = "_STP_INTF_TABLE"
-	STP_MODE                = "mode"
-	OC_STP_APP_MODULE_NAME  = "/openconfig-spanning-tree:stp"
-	OC_STP_YANG_PATH_PREFIX = "/device/stp"
-	PVST_MAX_INSTANCES      = 255
+	STP_GLOBAL_TABLE         = "STP"
+	STP_VLAN_TABLE           = "STP_VLAN"
+	STP_VLAN_INTF_TABLE      = "STP_VLAN_INTF"
+	STP_INTF_TABLE           = "STP_INTF"
+	STP_VLAN_OPER_TABLE      = "_STP_VLAN_TABLE"
+	STP_VLAN_INTF_OPER_TABLE = "_STP_VLAN_INTF_TABLE"
+	STP_INTF_OPER_TABLE      = "_STP_INTF_TABLE"
+	STP_MODE                 = "mode"
+	OC_STP_APP_MODULE_NAME   = "/openconfig-spanning-tree:stp"
+	OC_STP_YANG_PATH_PREFIX  = "/device/stp"
+	PVST_MAX_INSTANCES       = 255
 
 	STP_DEFAULT_ROOT_GUARD_TIMEOUT = "30"
 	STP_DEFAULT_FORWARD_DELAY      = "15"
@@ -73,7 +85,7 @@ func init() {
 		&appInfo{appType: reflect.TypeOf(StpApp{}),
 			ygotRootType:  reflect.TypeOf(ocbinds.OpenconfigSpanningTree_Stp{}),
 			isNative:      false,
-			tablesToWatch: []*db.TableSpec{&db.TableSpec{Name: GLOBAL_TABLE}, &db.TableSpec{Name: VLAN_TABLE}, &db.TableSpec{Name: VLAN_INTF_TABLE}, &db.TableSpec{Name: INTF_TABLE}}})
+			tablesToWatch: []*db.TableSpec{&db.TableSpec{Name: STP_GLOBAL_TABLE}, &db.TableSpec{Name: STP_VLAN_TABLE}, &db.TableSpec{Name: STP_VLAN_INTF_TABLE}, &db.TableSpec{Name: STP_INTF_TABLE}}})
 
 	if err != nil {
 		log.Fatal("Register STP app module with App Interface failed with error=", err)
@@ -91,14 +103,14 @@ func (app *StpApp) initialize(data appData) {
 	app.ygotRoot = data.ygotRoot
 	app.ygotTarget = data.ygotTarget
 
-	app.globalTable = &db.TableSpec{Name: GLOBAL_TABLE}
-	app.vlanTable = &db.TableSpec{Name: VLAN_TABLE}
-	app.vlanIntfTable = &db.TableSpec{Name: VLAN_INTF_TABLE}
-	app.interfaceTable = &db.TableSpec{Name: INTF_TABLE}
+	app.globalTable = &db.TableSpec{Name: STP_GLOBAL_TABLE}
+	app.vlanTable = &db.TableSpec{Name: STP_VLAN_TABLE}
+	app.vlanIntfTable = &db.TableSpec{Name: STP_VLAN_INTF_TABLE}
+	app.interfaceTable = &db.TableSpec{Name: STP_INTF_TABLE}
 
-	app.vlanOperTable = &db.TableSpec{Name: VLAN_OPER_TABLE}
-	app.vlanIntfOperTable = &db.TableSpec{Name: VLAN_INTF_OPER_TABLE}
-	app.intfOperTable = &db.TableSpec{Name: INTF_OPER_TABLE}
+	app.vlanOperTable = &db.TableSpec{Name: STP_VLAN_OPER_TABLE}
+	app.vlanIntfOperTable = &db.TableSpec{Name: STP_VLAN_INTF_OPER_TABLE}
+	app.intfOperTable = &db.TableSpec{Name: STP_INTF_OPER_TABLE}
 
 	app.globalInfo = db.Value{Field: map[string]string{}}
 	app.vlanTableMap = make(map[string]db.Value)
@@ -401,8 +413,18 @@ func (app *StpApp) processCommon(d *db.DB, opcode int) error {
 			}
 		} else {
 			// Handle top PVST
-			log.Infof("Implementation in progress for URL: %s", app.pathInfo.Template)
-			return tlerr.NotSupported("Implementation in progress")
+			switch opcode {
+			case CREATE, REPLACE, UPDATE, DELETE:
+				log.Infof("Implementation in progress for URL: %s", app.pathInfo.Template)
+				return tlerr.NotSupported("Implementation in progress")
+			case GET:
+				ygot.BuildEmptyTree(stp.Pvst)
+				err = app.convertDBRpvstVlanConfigToInternal(d, db.Key{})
+				if err != nil {
+					return err
+				}
+				app.convertInternalToOCPvstVlan("", stp.Pvst, nil)
+			}
 		}
 	} else if isSubtreeRequest(app.pathInfo.Template, "/openconfig-spanning-tree:stp/rapid-pvst") {
 		mode, _ := app.getStpModeFromConfigDB(d)
@@ -496,9 +518,18 @@ func (app *StpApp) processCommon(d *db.DB, opcode int) error {
 			}
 		} else {
 			// Handle both rapid-pvst and rapid-pvst/vlan
-			log.Infof("Implementation in progress for URL: %s", app.pathInfo.Template)
-			return tlerr.NotSupported("Implementation in progress")
-			//err = app.processCommonRpvstVlanToplevelPath(d, stp, opcode)
+			switch opcode {
+			case CREATE, REPLACE, UPDATE, DELETE:
+				log.Infof("Implementation in progress for URL: %s", app.pathInfo.Template)
+				return tlerr.NotSupported("Implementation in progress")
+			case GET:
+				ygot.BuildEmptyTree(stp.RapidPvst)
+				err = app.convertDBRpvstVlanConfigToInternal(d, db.Key{})
+				if err != nil {
+					return err
+				}
+				app.convertInternalToOCRpvstVlanConfig("", stp.RapidPvst, nil)
+			}
 		}
 	} else if isSubtreeRequest(app.pathInfo.Template, "/openconfig-spanning-tree:stp/mstp") {
 		mode, _ := app.getStpModeFromConfigDB(d)
@@ -535,8 +566,18 @@ func (app *StpApp) processCommon(d *db.DB, opcode int) error {
 				}
 			}
 		} else {
-			log.Infof("Implementation in progress for URL: %s", app.pathInfo.Template)
-			return tlerr.NotSupported("Implementation in progress")
+			switch opcode {
+			case CREATE, REPLACE, UPDATE, DELETE:
+				log.Infof("Implementation in progress for URL: %s", app.pathInfo.Template)
+				return tlerr.NotSupported("Implementation in progress")
+			case GET:
+				ygot.BuildEmptyTree(stp.Interfaces)
+				err = app.convertDBStpInterfacesToInternal(d, db.Key{})
+				if err != nil {
+					return err
+				}
+				app.convertInternalToOCStpInterfaces("", stp.Interfaces, nil)
+			}
 		}
 	} else if topmostPath {
 		switch opcode {
@@ -1802,6 +1843,47 @@ func (app *StpApp) enableStpForVlans(d *db.DB) error {
 	}
 	return err
 }
+
+func enableStpOnVlanCreation(d *db.DB, vlanList []string) {
+	if len(vlanList) == 0 {
+		return
+	}
+	vlanKeys, _ := d.GetKeys(&db.TableSpec{Name: STP_VLAN_TABLE})
+	existingEntriesCount := len(vlanKeys)
+	if existingEntriesCount < PVST_MAX_INSTANCES {
+		stpGlobalDBEntry, err := d.GetEntry(&db.TableSpec{Name: STP_GLOBAL_TABLE}, asKey("GLOBAL"))
+		if err != nil {
+			return
+		}
+		fDelay := (&stpGlobalDBEntry).Get("forward_delay")
+		helloTime := (&stpGlobalDBEntry).Get("hello_time")
+		maxAge := (&stpGlobalDBEntry).Get("max_age")
+		priority := (&stpGlobalDBEntry).Get("priority")
+
+		// Sort vlanList in natural order such that 'Vlan2' < 'Vlan10'
+		natsort.Sort(vlanList)
+
+		for i, _ := range vlanList {
+			if (existingEntriesCount + i) < PVST_MAX_INSTANCES {
+				defaultDBValues := db.Value{Field: map[string]string{}}
+				(&defaultDBValues).Set("enabled", "true")
+				(&defaultDBValues).Set("forward_delay", fDelay)
+				(&defaultDBValues).Set("hello_time", helloTime)
+				(&defaultDBValues).Set("max_age", maxAge)
+				(&defaultDBValues).Set("priority", priority)
+
+				vlanId := strings.Replace(vlanList[i], "Vlan", "", 1)
+				(&defaultDBValues).Set("vlanid", vlanId)
+				d.CreateEntry(&db.TableSpec{Name: STP_VLAN_TABLE}, asKey(vlanList[i]), defaultDBValues)
+			}
+		}
+	}
+}
+
+// This function accepts map where key is Interface name (i.e. Eth or Portchannel)
+// and value will be slice of VlanIds
+//func enableStpOnInterfaceVlanMembership(d *db.DB, intfVlansMap map[string][]string) {
+//}
 
 func (app *StpApp) updateGlobalFieldsToStpVlanTable(d *db.DB, fldValuePair map[string]string, stpGlobalDbEntry db.Value) error {
 	vlanKeys, err := d.GetKeys(app.vlanTable)
