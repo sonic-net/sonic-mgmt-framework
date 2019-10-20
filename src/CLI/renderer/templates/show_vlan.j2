@@ -2,12 +2,23 @@
 {% set vars = {'ifName': ""} %}
 {% set vars = {'tagMode': ""} %}
 {% set vars = {'tagLetter': ""} %}
+{% set vars = {'status': ""} %}
+{% set vars = {'statusWord': ""} %}
 {% if json_output -%}
 Q: A - Access (Untagged), T - Tagged
-{{'%-11s'|format("NUM")}}{{'%-2s'|format("Q Ports")}}
-{% for vlanKey, memberEntries in json_output.items() %}
+{{'%-11s'|format("NUM")}}{{'%-12s'|format("Status")}}{{'%-7s'|format("Q Ports")}}
+{% for vlanKey, vlanInfo in json_output.items() %}
 {% if vars.update({'vlanName':vlanKey}) %}{% endif %}
-{% for ifKey, ifMode in memberEntries.items() %}
+{% if 'oper_status' in vlanInfo %}
+{% if vars.update({'status':vlanInfo.oper_status}) %}{% endif %}
+{% endif %}
+{% if vars.status == 'up' %}
+{% if vars.update({'statusWord':" Active "}) %}{% endif %}
+{% else %}
+{% if vars.update({'statusWord':" Inactive "}) %}{% endif %}
+{% endif %}
+{% if vlanInfo.vlanMembers is defined and vlanInfo.vlanMembers|length > 0 %}
+{% for ifKey, ifMode in vlanInfo.vlanMembers.items() %}
 {% if vars.update({'ifName':ifKey}) %}{% endif %}
 {% if vars.update({'tagMode':ifMode}) %}{% endif %}
 {% if ifMode == "untagged" %}
@@ -15,9 +26,15 @@ Q: A - Access (Untagged), T - Tagged
 {% else %}
 {% if vars.update({'tagLetter':" T "}) %}{% endif %}
 {% endif %}
-{{'%-10s'|format(vars.vlanName)}}{{'%-2s'|format(vars.tagLetter)}}{{'%-10s'|format(vars.ifName)}}
+{{'%-10s'|format(vars.vlanName)}}{{'%-12s'|format(vars.statusWord)}}{{'%-4s'|format(vars.tagLetter)}}{{'%-11s'|format(vars.ifName)}}
 {% if vars.update({'vlanName':''}) %}{% endif %}
+{% if vars.update({'statusWord':""}) %}{% endif %}
 {% endfor %}
+{% else %}
+{{'%-10s'|format(vars.vlanName)}}{{'%-12s'|format(vars.statusWord)}}
+{% if vars.update({'vlanName':''}) %}{% endif %}
+{% if vars.update({'statusWord':""}) %}{% endif %}
+{% endif %}
 {% endfor %}
 {% endif %}
 	
