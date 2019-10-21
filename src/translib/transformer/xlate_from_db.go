@@ -703,8 +703,8 @@ func dbDataToYangJsonCreate(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db
 			} else if yangType == YANG_CONTAINER {
 				cname := xYangSpecMap[reqXpath].yangEntry.Name
 				cmap  := make(map[string]interface{})
+                                resultMap[cname] = cmap
 				if validateHandlerFlag || tableXfmrFlag {
-                                        resultMap[cname] = cmap
                                         break
                                 }
 				if len(xYangSpecMap[reqXpath].xfmrFunc) > 0 {
@@ -712,8 +712,8 @@ func dbDataToYangJsonCreate(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db
 					cmap, _   = xfmrHandlerFunc(inParams)
 					if cmap != nil && len(cmap) > 0 {
 						resultMap[cname] = cmap
-						break
 					}
+					break
 				}
 				err    := yangDataFill(dbs, ygRoot, uri, reqXpath, dbDataMap, resultMap, tableName, keyName, cdb, IsValidate)
                                 if err != nil {
