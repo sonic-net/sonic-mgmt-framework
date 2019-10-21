@@ -11,6 +11,10 @@ module sonic-spanning-tree {
         prefix prt;
     }
 
+    import sonic-portchannel {
+        prefix spc;
+    }
+
     import sonic-vlan {
         prefix svlan;
     }
@@ -28,17 +32,6 @@ module sonic-spanning-tree {
         description
             "Initial revision.";
     }
-
-    /*typedef interface-type {
-        type union { 
-            type leafref {
-                path "/prt:sonic-port/prt:PORT/prt:PORT_LIST/prt:ifname";
-            }
-            type leafref {
-                path "/spc:sonic-portchannel/spc:PORTCHANNEL/spc:PORTCHANNEL_LIST/spc:name";
-            }
-        }
-    }*/
 
     grouping vlanModeAttr {
         leaf forward_delay {
@@ -193,9 +186,13 @@ module sonic-spanning-tree {
                 key "ifname";
 
                 leaf ifname {
-                    //type interface-type;
-                    type leafref {
-                        path "/prt:sonic-port/prt:PORT/prt:PORT_LIST/prt:ifname";
+                    type union {
+                        type leafref {
+                            path "/prt:sonic-port/prt:PORT/prt:PORT_LIST/prt:ifname";
+                        }
+                        type leafref {
+                            path "/spc:sonic-portchannel/spc:PORTCHANNEL/spc:PORTCHANNEL_LIST/spc:name";
+                        }
                     }
                 }
 

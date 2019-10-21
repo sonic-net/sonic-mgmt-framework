@@ -85,6 +85,12 @@ module openconfig-spanning-tree-ext {
             description
                 "Instance identifier of STP";
         }
+
+        leaf root-port-name {
+            type string;
+            description
+                "Name of root port";
+        }
     }
 
     grouping vlan-interface-extra-state-field {

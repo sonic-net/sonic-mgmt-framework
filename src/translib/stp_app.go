@@ -331,20 +331,10 @@ func (app *StpApp) processCommon(d *db.DB, opcode int) error {
 					for intfId, _ := range pvstVlan.Interfaces.Interface {
 						pvstVlanIntf := pvstVlan.Interfaces.Interface[intfId]
 						switch opcode {
-						case CREATE:
-							if *app.ygotTarget == pvstVlanIntf {
-								err = app.setRpvstVlanInterfaceDataInDB(d, true)
-							} else {
-								err = app.setRpvstVlanInterfaceDataInDB(d, false)
-							}
-						case REPLACE:
-						case UPDATE:
-							err = app.setRpvstVlanInterfaceDataInDB(d, false)
-						case DELETE:
-							if *app.ygotTarget == pvstVlanIntf {
-								err = d.DeleteEntry(app.vlanIntfTable, asKey(vlanName, intfId))
-							} else {
-								err = app.handleVlanInterfaceFieldsDeletion(d, vlanName, intfId)
+						case CREATE, REPLACE, UPDATE, DELETE:
+							err = app.handleRpvstCRUDOperationsAtVlanInterfaceLevel(d, opcode, vlanName, intfId, pvstVlan, pvstVlanIntf)
+							if err != nil {
+								return err
 							}
 						case GET:
 							err = app.convertDBRpvstVlanInterfaceToInternal(d, vlanName, intfId, asKey(vlanName, intfId), true)
@@ -356,50 +346,14 @@ func (app *StpApp) processCommon(d *db.DB, opcode int) error {
 							// populate operational data
 							app.convertOperInternalToOCVlanInterface(vlanName, intfId, pvstVlan, pvstVlanIntf)
 						}
-						if err != nil {
-							return err
-						}
 					}
 				} else {
 					isInterfacesSubtree := isSubtreeRequest(app.pathInfo.Template, "/openconfig-spanning-tree:stp/openconfig-spanning-tree-ext:pvst/vlan{}/interfaces")
 					switch opcode {
-					case CREATE:
-						if *app.ygotTarget == pvstVlan {
-							log.Info("ygotTarget is pvstVlan")
-							err = app.setRpvstVlanDataInDB(d, true)
-							if err != nil {
-								return err
-							}
-							err = app.setRpvstVlanInterfaceDataInDB(d, true)
-						} else if isInterfacesSubtree {
-							err = app.setRpvstVlanInterfaceDataInDB(d, true)
-						} else {
-							err = d.SetEntry(app.vlanTable, asKey(vlanName), app.vlanTableMap[vlanName])
-						}
-					case REPLACE:
-					case UPDATE:
-						if *app.ygotTarget == pvstVlan {
-							err = app.setRpvstVlanDataInDB(d, false)
-							if err != nil {
-								return err
-							}
-							err = app.setRpvstVlanInterfaceDataInDB(d, false)
-						} else if isInterfacesSubtree {
-							err = app.setRpvstVlanInterfaceDataInDB(d, false)
-						} else {
-							err = d.ModEntry(app.vlanTable, asKey(vlanName), app.vlanTableMap[vlanName])
-						}
-					case DELETE:
-						if *app.ygotTarget == pvstVlan {
-							err = d.DeleteKeys(app.vlanIntfTable, asKey(vlanName+TABLE_SEPARATOR+"*"))
-							if err != nil {
-								return err
-							}
-							err = d.DeleteEntry(app.vlanTable, asKey(vlanName))
-						} else if isInterfacesSubtree {
-							err = d.DeleteKeys(app.vlanIntfTable, asKey(vlanName+TABLE_SEPARATOR+"*"))
-						} else {
-							err = app.handleVlanFieldsDeletion(d, vlanName)
+					case CREATE, REPLACE, UPDATE, DELETE:
+						err = app.handleRpvstCRUDOperationsAtVlanLevel(d, opcode, vlanName, isInterfacesSubtree, stp.Pvst, pvstVlan)
+						if err != nil {
+							return err
 						}
 					case GET:
 						err = app.convertDBRpvstVlanConfigToInternal(d, asKey(vlanName))
@@ -440,20 +394,10 @@ func (app *StpApp) processCommon(d *db.DB, opcode int) error {
 					for intfId, _ := range rpvstVlanConf.Interfaces.Interface {
 						rpvstVlanIntfConf := rpvstVlanConf.Interfaces.Interface[intfId]
 						switch opcode {
-						case CREATE:
-							if *app.ygotTarget == rpvstVlanIntfConf {
-								err = app.setRpvstVlanInterfaceDataInDB(d, true)
-							} else {
-								err = app.setRpvstVlanInterfaceDataInDB(d, false)
-							}
-						case REPLACE:
-						case UPDATE:
-							err = app.setRpvstVlanInterfaceDataInDB(d, false)
-						case DELETE:
-							if *app.ygotTarget == rpvstVlanIntfConf {
-								err = d.DeleteEntry(app.vlanIntfTable, asKey(vlanName, intfId))
-							} else {
-								err = app.handleVlanInterfaceFieldsDeletion(d, vlanName, intfId)
+						case CREATE, REPLACE, UPDATE, DELETE:
+							err = app.handleRpvstCRUDOperationsAtVlanInterfaceLevel(d, opcode, vlanName, intfId, rpvstVlanConf, rpvstVlanIntfConf)
+							if err != nil {
+								return err
 							}
 						case GET:
 							err = app.convertDBRpvstVlanInterfaceToInternal(d, vlanName, intfId, asKey(vlanName, intfId), true)
@@ -469,42 +413,10 @@ func (app *StpApp) processCommon(d *db.DB, opcode int) error {
 				} else {
 					isInterfacesSubtree := isSubtreeRequest(app.pathInfo.Template, "/openconfig-spanning-tree:stp/rapid-pvst/vlan{}/interfaces")
 					switch opcode {
-					case CREATE:
-						if *app.ygotTarget == rpvstVlanConf {
-							err = app.setRpvstVlanDataInDB(d, true)
-							if err != nil {
-								return err
-							}
-							err = app.setRpvstVlanInterfaceDataInDB(d, true)
-						} else if isInterfacesSubtree {
-							err = app.setRpvstVlanInterfaceDataInDB(d, true)
-						} else {
-							err = d.SetEntry(app.vlanTable, asKey(vlanName), app.vlanTableMap[vlanName])
-						}
-					case REPLACE:
-					case UPDATE:
-						if *app.ygotTarget == rpvstVlanConf {
-							err = app.setRpvstVlanDataInDB(d, false)
-							if err != nil {
-								return err
-							}
-							err = app.setRpvstVlanInterfaceDataInDB(d, false)
-						} else if isInterfacesSubtree {
-							err = app.setRpvstVlanInterfaceDataInDB(d, false)
-						} else {
-							err = d.ModEntry(app.vlanTable, asKey(vlanName), app.vlanTableMap[vlanName])
-						}
-					case DELETE:
-						if *app.ygotTarget == rpvstVlanConf {
-							err = d.DeleteKeys(app.vlanIntfTable, asKey(vlanName+TABLE_SEPARATOR+"*"))
-							if err != nil {
-								return err
-							}
-							err = d.DeleteEntry(app.vlanTable, asKey(vlanName))
-						} else if isInterfacesSubtree {
-							err = d.DeleteKeys(app.vlanIntfTable, asKey(vlanName+TABLE_SEPARATOR+"*"))
-						} else {
-							err = app.handleVlanFieldsDeletion(d, vlanName)
+					case CREATE, REPLACE, UPDATE, DELETE:
+						err = app.handleRpvstCRUDOperationsAtVlanLevel(d, opcode, vlanName, isInterfacesSubtree, stp.RapidPvst, rpvstVlanConf)
+						if err != nil {
+							return err
 						}
 					case GET:
 						err = app.convertDBRpvstVlanConfigToInternal(d, asKey(vlanName))
@@ -542,12 +454,17 @@ func (app *StpApp) processCommon(d *db.DB, opcode int) error {
 				intfData := stp.Interfaces.Interface[intfId]
 				switch opcode {
 				case CREATE:
+					err = app.setStpInterfacesDataInDB(d, true)
+				case REPLACE:
 					if *app.ygotTarget == intfData {
+						err = d.DeleteEntry(app.interfaceTable, asKey(intfId))
+						if err != nil {
+							return err
+						}
 						err = app.setStpInterfacesDataInDB(d, true)
 					} else {
 						err = app.setStpInterfacesDataInDB(d, false)
 					}
-				case REPLACE:
 				case UPDATE:
 					err = app.setStpInterfacesDataInDB(d, false)
 				case DELETE:
@@ -595,6 +512,24 @@ func (app *StpApp) processCommon(d *db.DB, opcode int) error {
 				return err
 			}
 			err = app.setStpInterfacesDataInDB(d, true)
+		case REPLACE:
+			err = app.disableStpMode(d)
+			if err != nil {
+				return err
+			}
+			err = app.enableStpMode(d)
+			if err != nil {
+				return err
+			}
+			err = app.setRpvstVlanDataInDB(d, true)
+			if err != nil {
+				return err
+			}
+			err = app.setRpvstVlanInterfaceDataInDB(d, true)
+			if err != nil {
+				return err
+			}
+			err = app.setStpInterfacesDataInDB(d, true)
 		case DELETE:
 			err = app.disableStpMode(d)
 		case GET:
@@ -606,21 +541,18 @@ func (app *StpApp) processCommon(d *db.DB, opcode int) error {
 			}
 			app.convertInternalToOCStpGlobalConfig(stp.Global)
 
+			//////////////////////
+			err = app.convertDBRpvstVlanConfigToInternal(d, db.Key{})
+			if err != nil {
+				return err
+			}
 			stpMode := (&app.globalInfo).Get(STP_MODE)
 			switch stpMode {
 			case "pvst":
 				ygot.BuildEmptyTree(stp.Pvst)
-				err = app.convertDBRpvstVlanConfigToInternal(d, db.Key{})
-				if err != nil {
-					return err
-				}
 				app.convertInternalToOCPvstVlan("", stp.Pvst, nil)
 			case "rpvst":
 				ygot.BuildEmptyTree(stp.RapidPvst)
-				err = app.convertDBRpvstVlanConfigToInternal(d, db.Key{})
-				if err != nil {
-					return err
-				}
 				app.convertInternalToOCRpvstVlanConfig("", stp.RapidPvst, nil)
 			case "mstp":
 			}
@@ -646,6 +578,114 @@ func (app *StpApp) processCommonRpvstVlanToplevelPath(d *db.DB, stp *ocbinds.Ope
 	case UPDATE:
 	case DELETE:
 	case GET:
+	}
+
+	return err
+}
+
+func (app *StpApp) handleRpvstCRUDOperationsAtVlanLevel(d *db.DB, opcode int, vlanName string, isInterfacesSubtree bool, mode interface{}, vlan interface{}) error {
+	var err error
+
+	log.Infof("handleRpvstCRUDOperationsAtVlanLevel --> Perform CRUD for %s", reflect.TypeOf(vlan).Elem().Name())
+	switch opcode {
+	case CREATE:
+		if *app.ygotTarget == vlan {
+			err = app.setRpvstVlanDataInDB(d, true)
+			if err != nil {
+				return err
+			}
+			err = app.setRpvstVlanInterfaceDataInDB(d, true)
+		} else if isInterfacesSubtree {
+			err = app.setRpvstVlanInterfaceDataInDB(d, true)
+		} else {
+			err = d.SetEntry(app.vlanTable, asKey(vlanName), app.vlanTableMap[vlanName])
+		}
+	case REPLACE:
+		if *app.ygotTarget == vlan {
+			err = d.DeleteKeys(app.vlanIntfTable, asKey(vlanName+TABLE_SEPARATOR+"*"))
+			if err != nil {
+				return err
+			}
+			err = d.DeleteEntry(app.vlanTable, asKey(vlanName))
+			if err != nil {
+				return err
+			}
+			err = app.setRpvstVlanDataInDB(d, true)
+			if err != nil {
+				return err
+			}
+			err = app.setRpvstVlanInterfaceDataInDB(d, true)
+		} else if isInterfacesSubtree {
+			err = d.DeleteKeys(app.vlanIntfTable, asKey(vlanName+TABLE_SEPARATOR+"*"))
+			if err != nil {
+				return err
+			}
+			err = app.setRpvstVlanInterfaceDataInDB(d, true)
+		} else {
+			err = d.SetEntry(app.vlanTable, asKey(vlanName), app.vlanTableMap[vlanName])
+		}
+	case UPDATE:
+		if *app.ygotTarget == vlan {
+			err = app.setRpvstVlanDataInDB(d, false)
+			if err != nil {
+				return err
+			}
+			err = app.setRpvstVlanInterfaceDataInDB(d, false)
+		} else if isInterfacesSubtree {
+			err = app.setRpvstVlanInterfaceDataInDB(d, false)
+		} else {
+			err = d.ModEntry(app.vlanTable, asKey(vlanName), app.vlanTableMap[vlanName])
+		}
+	case DELETE:
+		if *app.ygotTarget == vlan {
+			err = d.DeleteKeys(app.vlanIntfTable, asKey(vlanName+TABLE_SEPARATOR+"*"))
+			if err != nil {
+				return err
+			}
+			err = d.DeleteEntry(app.vlanTable, asKey(vlanName))
+		} else if isInterfacesSubtree {
+			err = d.DeleteKeys(app.vlanIntfTable, asKey(vlanName+TABLE_SEPARATOR+"*"))
+		} else {
+			err = app.handleVlanFieldsDeletion(d, vlanName)
+		}
+	}
+
+	return err
+}
+
+func (app *StpApp) handleRpvstCRUDOperationsAtVlanInterfaceLevel(d *db.DB, opcode int, vlanName string, intfId string, vlan interface{}, vlanIntf interface{}) error {
+	var err error
+
+	log.Infof("handleRpvstCRUDOperationsAtVlanInterfaceLevel --> Perform CRUD for %s", reflect.TypeOf(vlanIntf).Elem().Name())
+	switch opcode {
+	case CREATE:
+		if *app.ygotTarget == vlanIntf {
+			err = app.setRpvstVlanInterfaceDataInDB(d, true)
+		} else {
+			err = app.setRpvstVlanInterfaceDataInDB(d, false)
+		}
+	case REPLACE:
+		if *app.ygotTarget == vlanIntf {
+			err = d.DeleteEntry(app.vlanIntfTable, asKey(vlanName, intfId))
+			if err != nil {
+				return err
+			}
+			err = app.setRpvstVlanInterfaceDataInDB(d, true)
+		} else {
+			err = app.handleVlanInterfaceFieldsDeletion(d, vlanName, intfId)
+			if err != nil {
+				return err
+			}
+			err = app.setRpvstVlanInterfaceDataInDB(d, false)
+		}
+	case UPDATE:
+		err = app.setRpvstVlanInterfaceDataInDB(d, false)
+	case DELETE:
+		if *app.ygotTarget == vlanIntf {
+			err = d.DeleteEntry(app.vlanIntfTable, asKey(vlanName, intfId))
+		} else {
+			err = app.handleVlanInterfaceFieldsDeletion(d, vlanName, intfId)
+		}
 	}
 
 	return err
@@ -983,8 +1023,8 @@ func (app *StpApp) convertInternalToOCRpvstVlanConfig(vlanName string, rpvst *oc
 				desigRootAddr := (&operDbVal).Get("desig_bridge_id")
 				rpvstVlanConf.State.DesignatedRootAddress = &desigRootAddr
 
-				//rootPortStr := (&operDbVal).Get("root_port")
-				//rpvstVlanConf.State.RootPort = &rootPortStr
+				rootPortStr := (&operDbVal).Get("root_port")
+				rpvstVlanConf.State.RootPortName = &rootPortStr
 			}
 
 			app.convertInternalToOCRpvstVlanInterface(vlanName, "", rpvstVlanConf, nil)
@@ -1214,8 +1254,8 @@ func (app *StpApp) convertInternalToOCPvstVlan(vlanName string, pvst *ocbinds.Op
 				desigRootAddr := (&operDbVal).Get("desig_bridge_id")
 				pvstVlan.State.DesignatedRootAddress = &desigRootAddr
 
-				//rootPortStr := (&operDbVal).Get("root_port")
-				//pvstVlan.State.RootPort = &rootPortStr
+				rootPortStr := (&operDbVal).Get("root_port")
+				pvstVlan.State.RootPortName = &rootPortStr
 			}
 
 			app.convertInternalToOCPvstVlanInterface(vlanName, "", pvstVlan, nil)
@@ -1358,7 +1398,21 @@ func (app *StpApp) convertOCStpInterfacesToInternal() {
 
 func (app *StpApp) setStpInterfacesDataInDB(d *db.DB, createFlag bool) error {
 	var err error
+	// Fetch list of interfaces which are L2 i.e. members of any Vlan
+	l2IntfList, err1 := app.getAllInterfacesFromVlanMemberTable(d)
+	if err1 != nil {
+		return tlerr.InvalidArgs("There are no L2 interfaces configured")
+	}
+	// Fetch list of interfaces which are members of port-channel
+	poMemberIntfList, _ := app.getAllInterfacesFromPortChannelMemberTable(d)
+
 	for intfName := range app.intfTableMap {
+		if !contains(l2IntfList, intfName) {
+			return tlerr.InvalidArgs("%s has no VLAN configured - It's not a L2 interface", intfName)
+		}
+		if contains(poMemberIntfList, intfName) {
+			return tlerr.InvalidArgs("%s is a portchannel member port - STP can't be configured", intfName)
+		}
 		existingEntry, err := d.GetEntry(app.interfaceTable, asKey(intfName))
 		if createFlag && existingEntry.IsPopulated() {
 			return tlerr.AlreadyExists("Stp Interface %s already configured", intfName)
@@ -1599,15 +1653,15 @@ func (app *StpApp) convertOperInternalToOCVlanInterface(vlanName string, intfId 
 				pvstVlanIntf.State.DesignatedRootAddress = &desigRootAddr
 				pvstVlanIntf.State.DesignatedBridgeAddress = &desigBridgeAddr
 				switch portState {
-				case "disabled":
+				case "DISABLED":
 					pvstVlanIntf.State.PortState = ocbinds.OpenconfigSpanningTreeTypes_STP_PORT_STATE_DISABLED
-				case "block":
+				case "BLOCKING":
 					pvstVlanIntf.State.PortState = ocbinds.OpenconfigSpanningTreeTypes_STP_PORT_STATE_BLOCKING
-				case "listen":
+				case "LISTENING":
 					pvstVlanIntf.State.PortState = ocbinds.OpenconfigSpanningTreeTypes_STP_PORT_STATE_LISTENING
-				case "learn":
+				case "LEARNING":
 					pvstVlanIntf.State.PortState = ocbinds.OpenconfigSpanningTreeTypes_STP_PORT_STATE_LEARNING
-				case "forward":
+				case "FORWARDING":
 					pvstVlanIntf.State.PortState = ocbinds.OpenconfigSpanningTreeTypes_STP_PORT_STATE_FORWARDING
 				}
 				if pvstVlanIntf.State.Counters != nil {
@@ -1628,15 +1682,15 @@ func (app *StpApp) convertOperInternalToOCVlanInterface(vlanName string, intfId 
 				rpvstVlanIntf.State.DesignatedRootAddress = &desigRootAddr
 				rpvstVlanIntf.State.DesignatedBridgeAddress = &desigBridgeAddr
 				switch portState {
-				case "disabled":
+				case "DISABLED":
 					rpvstVlanIntf.State.PortState = ocbinds.OpenconfigSpanningTreeTypes_STP_PORT_STATE_DISABLED
-				case "block":
+				case "BLOCKING":
 					rpvstVlanIntf.State.PortState = ocbinds.OpenconfigSpanningTreeTypes_STP_PORT_STATE_BLOCKING
-				case "listen":
+				case "LISTENING":
 					rpvstVlanIntf.State.PortState = ocbinds.OpenconfigSpanningTreeTypes_STP_PORT_STATE_LISTENING
-				case "learn":
+				case "LEARNING":
 					rpvstVlanIntf.State.PortState = ocbinds.OpenconfigSpanningTreeTypes_STP_PORT_STATE_LEARNING
-				case "forward":
+				case "FORWARDING":
 					rpvstVlanIntf.State.PortState = ocbinds.OpenconfigSpanningTreeTypes_STP_PORT_STATE_FORWARDING
 				}
 				if rpvstVlanIntf.State.Counters != nil {
@@ -1754,6 +1808,22 @@ func (app *StpApp) getAllInterfacesFromVlanMemberTable(d *db.DB) ([]string, erro
 	var intfList []string
 
 	keys, err := d.GetKeys(&db.TableSpec{Name: "VLAN_MEMBER"})
+	if err != nil {
+		return intfList, err
+	}
+	for i, _ := range keys {
+		key := keys[i]
+		if !contains(intfList, (&key).Get(1)) {
+			intfList = append(intfList, (&key).Get(1))
+		}
+	}
+	return intfList, err
+}
+
+func (app *StpApp) getAllInterfacesFromPortChannelMemberTable(d *db.DB) ([]string, error) {
+	var intfList []string
+
+	keys, err := d.GetKeys(&db.TableSpec{Name: "PORTCHANNEL_MEMBER"})
 	if err != nil {
 		return intfList, err
 	}
@@ -2062,6 +2132,15 @@ func (app *StpApp) handleVlanInterfaceFieldsDeletion(d *db.DB, vlanName string, 
 }
 
 func (app *StpApp) handleVlanFieldsDeletion(d *db.DB, vlanName string) error {
+	stpGlobalDBEntry, err := d.GetEntry(app.globalTable, asKey("GLOBAL"))
+	if err != nil {
+		return err
+	}
+	fDelay := (&stpGlobalDBEntry).Get("forward_delay")
+	helloTime := (&stpGlobalDBEntry).Get("hello_time")
+	maxAge := (&stpGlobalDBEntry).Get("max_age")
+	priority := (&stpGlobalDBEntry).Get("priority")
+
 	dbEntry, err := d.GetEntry(app.vlanTable, asKey(vlanName))
 	if err != nil {
 		return err
@@ -2075,19 +2154,19 @@ func (app *StpApp) handleVlanFieldsDeletion(d *db.DB, vlanName string) error {
 	if nodeInfo.IsLeaf() {
 		switch nodeInfo.Name {
 		case "hello-time":
-			(&dbEntry).Remove("hello_time")
+			(&dbEntry).Set("hello_time", helloTime)
 		case "max-age":
-			(&dbEntry).Remove("max_age")
+			(&dbEntry).Set("max_age", maxAge)
 		case "bridge-priority":
-			(&dbEntry).Remove("priority")
+			(&dbEntry).Set("priority", priority)
 		case "forwarding-delay":
-			(&dbEntry).Remove("forward_delay")
+			(&dbEntry).Set("forward_delay", fDelay)
 		case "spanning-tree-enable":
-			(&dbEntry).Remove("enabled")
+			(&dbEntry).Set("enabled", "false")
 		}
 	}
 
-	err = d.SetEntry(app.vlanTable, asKey(vlanName), dbEntry)
+	err = d.ModEntry(app.vlanTable, asKey(vlanName), dbEntry)
 	if err != nil {
 		return err
 	}
