@@ -1,0 +1,104 @@
+module sonic-ifa {
+    namespace "http://github.com/Azure/sonic-ifa";
+    prefix ifa;
+
+    import ietf-inet-types {
+        prefix inet;
+    }
+
+    import sonic-acl {
+        prefix sacl;
+    }
+
+    organization
+        "SONiC";
+
+    contact
+        "SONiC";
+
+    description
+        "SONIC IFA";
+
+    revision 2019-05-15 {
+        description
+            "Initial revision.";
+    }
+
+
+    container sonic-ifa {
+
+        container IFA_DEVICE_TABLE {
+
+            list IFA_DEVICE_TABLE_LIST {
+                key "device";
+                max-elements "1";
+
+                leaf device {
+                    type string;
+                    default "device";
+                }
+
+                leaf deviceid {
+                    type uint16;
+                }
+
+                leaf devicetype {
+                    type enumeration {
+                        enum intermediate;
+                    }
+                }
+            }
+        }
+
+        container IFA_COLLECTOR_TABLE {
+
+            list IFA_COLLECTOR_TABLE_LIST {
+                key "name";
+
+                leaf name {
+                    type string;
+                }
+
+                leaf ipaddress-type {
+                    type enumeration {
+                        enum ipv4;
+                        enum ipv6;
+                    }
+                }
+
+                leaf ipaddress {
+                    type inet:ipv4-prefix;
+                }
+                leaf port {
+                    type uint16;
+                }
+            }
+        }
+
+
+        container IFA_FLOW_TABLE {
+
+            list IFA_FLOW_TABLE_LIST {
+                key "name";
+
+                leaf name {
+                    type string;
+                }
+
+                leaf acl-name {
+                    type leafref {
+                        path "/sacl:sonic-acl/sacl:ACL_TABLE/sacl:ACL_TABLE_LIST/sacl:aclname";
+                    }
+                }
+
+                leaf sampling-rate {
+                    type uint16 {
+                        range "1..10000"{
+                            error-message "Invalid IFA flow sampling rate.";
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

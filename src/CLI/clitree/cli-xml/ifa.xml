@@ -1,0 +1,72 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!--
+Copyright 2019 Dell, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+<CLISH_MODULE
+    xmlns="http://www.dellemc.com/sonic/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xi="http://www.w3.org/2001/XInclude"
+    xsi:schemaLocation="http://www.dellemc.com/sonic/XMLSchema
+                        http://www.dellemc.com/sonic/XMLSchema/clish.xsd"
+    >
+<!--=========================================================================-->
+  <VIEW name="configure-view">
+    <!-- ifa -->
+    <COMMAND
+        name="ifa"
+        help="IFA Device Configuration"
+        />
+    <COMMAND
+        name="ifa device-id"
+        help="Configure device-id"
+        >
+        <PARAM
+            name="device-id"
+            help="Device ID"
+            ptype="UINT16"
+            >
+        </PARAM>
+        <ACTION>python $SONIC_CLI_ROOT/sonic-cli-ifa.py patch_sonic_ifa_sonic_ifa_ifa_device_table_ifa_device_table_list_deviceid device ${device-id}</ACTION>
+    </COMMAND>
+
+    <COMMAND
+        name="ifa device-type"
+        help="Configure device type to be 'intermediate'"
+        >
+        <PARAM
+            name="device-type"
+            help="Type of the device"
+            ptype="IFA_DEVICE_TYPE"
+            optional="true"
+            >
+        </PARAM>
+        <ACTION>python $SONIC_CLI_ROOT/sonic-cli-ifa.py patch_sonic_ifa_sonic_ifa_ifa_device_table_ifa_device_table_list_devicetype device ${device-type}</ACTION>
+    </COMMAND>
+
+    <!-- no ifa device -->
+    <COMMAND name="no ifa" help="Unconfigure IFA device properties"/>
+    <COMMAND name="no ifa device-id" help="Clear IFA device ID">
+      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-ifa.py delete_sonic_ifa_sonic_ifa_ifa_device_table_ifa_device_table_list_deviceid device</ACTION>
+    </COMMAND>
+    <COMMAND name="no ifa device-type" help="Clear IFA device type"/>
+    <COMMAND name="no ifa device-type intermediate" help="Clear IFA device type intermediate configuration">
+      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-ifa.py delete_sonic_ifa_sonic_ifa_ifa_device_table_ifa_device_table_list_devicetype device</ACTION>
+    </COMMAND>
+
+  </VIEW>
+
+</CLISH_MODULE>
+
