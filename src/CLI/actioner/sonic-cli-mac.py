@@ -17,15 +17,13 @@
 #
 ###########################################################################
 
-## TODO: Update with network instance l2 yang
-
 import sys
 import time
 import json
 import ast
-import openconfig_interfaces_client #update with network instance client
+import openconfig_network_instance_client 
 from rpipe_utils import pipestr
-from openconfig_interfaces_client.rest import ApiException 
+from openconfig_network_instance_client.rest import ApiException 
 from scripts.render_cli import show_cli_output
 
 import urllib3
@@ -47,15 +45,8 @@ def call_method(name, args):
 # Update with network instance API
 def generate_body(func, args):
     body = None
-    if func.__name__ == 'patch_openconfig_interfaces_interfaces_interface_config_description':
-       keypath = [ args[0] ]
-       body = { "openconfig-interfaces:description": args[1] }
-    elif func.__name__ == 'patch_openconfig_interfaces_interfaces_interface_config_enabled':
-       keypath = [ args[0] ]
-       if args[1] == "True":
-           body = { "openconfig-interfaces:enabled": True }
-       else:
-           body = { "openconfig-interfaces:enabled": False }
+    if func.__name__ == 'get_openconfig_network_instance_network_instances_network_instance_fdb_mac_table_entries':
+        keypath = ['default']
     else:
        body = {}
 
@@ -63,16 +54,29 @@ def generate_body(func, args):
 
 def run(func, args):
 
-    c = openconfig_interfaces_client.Configuration()
+    c = openconfig_network_instance_client.Configuration()
     c.verify_ssl = False
-    aa = openconfig_interfaces_client.OpenconfigInterfacesApi(api_client=openconfig_interfaces_client.ApiClient(configuration=c))
+    aa = openconfig_network_instance_client.OpenconfigNetworkInstanceApi(api_client=openconfig_network_instance_client.ApiClient(configuration=c))
 
     # create a body block
-    #keypath, body = generate_body(func, args)
+    keypath, body = generate_body(func, args)
 
     try:
-        if func.__name__ == 'get_openconfig_interfaces_interfaces':
+        if body is not None:
+            api_response = getattr(aa, func.__name__)(*keypath, body=body)
+
+        else:
+            api_response = getattr(aa,func.__name__)(*keypath)
+
+        if api_response is None:
+            print ("Success")
+        else:
+            response = api_response.to_dict()
+            print ('\nFinal Response:'+str(response))
+            api_response = {} #TODO: Filter on the basis of sys.argv
+        if func.__name__ == 'get_openconfig_network_instance_network_instances_network_instance_fdb_mac_table_entries':
             if args[1] == 'show':
+                
                 api_response ={"1":{"VLAN":"1" , "MAC":"90:b1:1c:f4:9d:83", "Type":"dynamic", "Interface":"Ethernet0"},
                                "2":{"VLAN":"2" , "MAC":"20:b1:1c:f4:9d:83", "Type":"static", "Interface":"Ethernet4"},
                                "3":{"VLAN":"3" , "MAC":"30:b1:1c:f4:9d:83", "Type":"static", "Interface":"Ethernet8"},
@@ -142,6 +146,6 @@ def run(func, args):
 if __name__ == '__main__':
 
     pipestr().write(sys.argv)
-    func = eval(sys.argv[1], globals(), openconfig_interfaces_client.OpenconfigInterfacesApi.__dict__) #Update with network instance API
+    func = eval(sys.argv[1], globals(), openconfig_network_instance_client.OpenconfigNetworkInstanceApi.__dict__)
 
     run(func, sys.argv[2:])

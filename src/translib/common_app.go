@@ -235,9 +235,9 @@ func (app *CommonApp) translateCRUDCommon(d *db.DB, opcode int) ([]db.WatchKeys,
 	OrdTblList, err = transformer.GetOrdDBTblList(moduleNm)
 	if (err != nil) || (len(OrdTblList) == 0) {
 		log.Error("GetOrdDBTblList() failed")
-		return keys, err
+		//return keys, err
 	}
-
+        OrdTblList = []string {"FDB_TABLE"}
 	log.Info("GetOrdDBTblList() returned ordered table list = ", OrdTblList)
 	app.cmnAppOrdTbllist = OrdTblList
 

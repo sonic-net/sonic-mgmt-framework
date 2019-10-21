@@ -1,0 +1,17 @@
+module acme-system-annot { 
+
+    yang-version "1";
+
+    namespace "http://openconfig.net/yang/acme-annotation";
+    prefix "acme-annot";
+
+    import sonic-extensions { prefix sonic-ext; }
+    import acme-system { prefix acme; }
+
+    deviation /acme:acme-system/acme:login/acme:user { 
+      deviate add {
+        sonic-ext:openapi-opid "superUser";
+      }
+    }
+}
+
