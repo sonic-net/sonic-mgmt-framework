@@ -53,7 +53,7 @@ module sonic-bgp-global {
                     type boolean;
                 }
 
-                leaf grace_restart_enable {
+                leaf graceful_restart_enable {
                     type boolean;
                 }
 
@@ -79,6 +79,14 @@ module sonic-bgp-global {
                     type uint8 {
                         range "1..255";
                     }
+                }
+
+                leaf external_compare_router_id {
+                    type boolean;
+                }
+
+                leaf ignore_as_path_length {
+                    type boolean;
                 }
             }
         }
