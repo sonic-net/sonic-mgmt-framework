@@ -71,5 +71,24 @@ module sonic-sflow {
                         type string;
                     }
            }
+
+           container SFLOW_SESSION_TABLE {
+               list SFLOW_SESSION_LIST {
+                   key "ifname";
+                   config false;
+
+                   leaf ifname {
+                       type string;
+                   }
+
+                   leaf admin_state {
+                       type string;
+                   }
+
+                   leaf sample_rate {
+                       type uint32;
+                   }
+               }
+           }
         }
 }

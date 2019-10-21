@@ -17,6 +17,12 @@ module sonic-sflow-annot {
       }
     }
 
+    deviation /sflow:sonic-sflow/sflow:SFLOW_SESSION_TABLE/sflow:SFLOW_SESSION_LIST {
+      deviate add {
+        sonic-ext:db-name "APPL_DB";
+      }
+    }
+
 
 }
 
