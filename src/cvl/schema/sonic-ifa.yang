@@ -17,19 +17,35 @@ module sonic-ifa {
         "SONiC";
 
     description
-        "SONIC IFA";
+        "SONIC TAM IFA";
 
     revision 2019-05-15 {
         description
             "Initial revision.";
     }
 
-
     container sonic-ifa {
 
-        container IFA_DEVICE_TABLE {
+        container TAM_INT_FEATURE_TABLE {
 
-            list IFA_DEVICE_TABLE_LIST {
+            list TAM_INT_FEATURE_TABLE_LIST {
+                key "feature";
+                max-elements "1";
+
+                leaf feature {
+                    type string;
+                    default "feature";
+                }
+
+                leaf enable {
+                    type boolean;
+                }
+            }
+        }
+
+        container TAM_DEVICE_TABLE {
+
+            list TAM_DEVICE_TABLE_LIST {
                 key "device";
                 max-elements "1";
 
@@ -41,18 +57,12 @@ module sonic-ifa {
                 leaf deviceid {
                     type uint16;
                 }
-
-                leaf devicetype {
-                    type enumeration {
-                        enum intermediate;
-                    }
-                }
             }
         }
 
-        container IFA_COLLECTOR_TABLE {
+        container TAM_COLLECTOR_TABLE {
 
-            list IFA_COLLECTOR_TABLE_LIST {
+            list TAM_COLLECTOR_TABLE_LIST {
                 key "name";
 
                 leaf name {
@@ -76,18 +86,24 @@ module sonic-ifa {
         }
 
 
-        container IFA_FLOW_TABLE {
+        container TAM_INT_IFA_FLOW_TABLE {
 
-            list IFA_FLOW_TABLE_LIST {
+            list TAM_INT_IFA_FLOW_TABLE_LIST {
                 key "name";
 
                 leaf name {
                     type string;
                 }
 
-                leaf acl-name {
+                leaf acl-table-name {
                     type leafref {
                         path "/sacl:sonic-acl/sacl:ACL_TABLE/sacl:ACL_TABLE_LIST/sacl:aclname";
+                    }
+                }
+
+                leaf acl-rule-name {
+                    type leafref {
+                        path "/sacl:sonic-acl/sacl:ACL_RULE/sacl:ACL_RULE_LIST/sacl:rulename";
                     }
                 }
 
@@ -96,6 +112,12 @@ module sonic-ifa {
                         range "1..10000"{
                             error-message "Invalid IFA flow sampling rate.";
                         }
+                    }
+                }
+
+                leaf collector {
+                    type leafref {
+                        path "../../../TAM_COLLECTOR_TABLE/TAM_COLLECTOR_TABLE_LIST/name";
                     }
                 }
             }

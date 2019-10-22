@@ -31,16 +31,19 @@ def generate_body(func, args):
         keypath = [args[0]]
     elif func.__name__ == 'get_sonic_wred_profile_sonic_wred_profile':
         keypath = []
-    elif func.__name__ == 'patch_sonic_ifa_sonic_ifa_ifa_device_table_ifa_device_table_list_deviceid':
+    elif func.__name__ == 'patch_sonic_ifa_sonic_ifa_tam_device_table_tam_device_table_list_deviceid':
        keypath = [ args[0] ]
-       body = { "sonic-ifa:deviceid": ((int) args[1]) }
-    elif func.__name__ == 'patch_sonic_ifa_sonic_ifa_ifa_device_table_ifa_device_table_list_devicetype':
+       body = { "sonic-ifa:deviceid": int(args[1]) }
+    elif func.__name__ == 'delete_sonic_ifa_sonic_ifa_tam_device_table_tam_device_table_list_deviceid':
        keypath = [args[0]]
-       body = { "sonic-ifa:devicetype": args[1] }
-    elif func.__name__ == 'delete_sonic_ifa_sonic_ifa_ifa_device_table_ifa_device_table_list_devicetype':
-       keypath = [args[0]]
-    elif func.__name__ == 'delete_sonic_ifa_sonic_ifa_ifa_device_table_ifa_device_table_list_deviceid':
-       keypath = [args[0]]
+    elif func.__name__ == 'patch_sonic_ifa_sonic_ifa_tam_int_ifa_feature_table_tam_int_ifa_feature_table_list':
+       keypath = [ args[0] ]
+       body = { "sonic-ifa:enable": args[1] }
+    elif func.__name__ == 'patch_sonic_ifa_sonic_ifa_tam_collector_table_tam_collector_table_list':
+       keypath = [ args[0] ]
+       body = { "sonic-ifa:name": args[0] , "sonic-ifa:ipaddress-type": args[1], "sonic-ifa:ipaddress": args[2], "sonic-ifa:port": args[3]}
+    elif func.__name__ == 'delete_sonic_ifa_sonic_ifa_tam_collector_table_tam_collector_table_list':
+       keypath = [ args[0] ]
     else:
        body = {}
 
@@ -68,8 +71,16 @@ def run(func, args):
             api_response = aa.api_client.sanitize_for_serialization(api_response)
             if 'sonic-ifa:sonic-ifa' in api_response:
                 value = api_response['sonic-ifa:sonic-ifa']
-                if 'IFA_DEVICE_TABLE' in value:
-                    tup = value['IFA_DEVICE_TABLE']
+                if 'TAM_DEVICE_TABLE' in value:
+                    tup = value['TAM_DEVICE_TABLE']
+                elif 'TAM_INT_IFA_FEATURE_TABLE' in value:
+                    tup = value['TAM_INT_IFA_FEATURE_TABLE']
+                elif 'TAM_COLLECTOR_TABLE' in value:
+                    tup = value['TAM_COLLECTOR_TABLE']
+                elif 'TAM_INT_IFA_FLOW_TABLE' in value:
+                    tup = value['TAM_INT_IFA_FLOW_TABLE']
+                else:
+                    api_response = None
 
             if api_response is None:
                 print("Failed")
