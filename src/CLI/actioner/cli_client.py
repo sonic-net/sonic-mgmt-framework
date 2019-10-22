@@ -18,6 +18,7 @@
 ################################################################################
 import json
 import urllib3
+from six.moves.urllib.parse import quote
 
 class ApiClient(object):
 	"""
@@ -65,42 +66,59 @@ class ApiClient(object):
 		from requests import request
 
 		url = '{0}{1}'.format(self.api_uri, path)
-		params = {}
 		headers = self.merge_dicts(self.set_headers(), headers)
 
 		if method == "GET":
-			params.update(data)
+			params = {}
+			if data is not None:
+				params.update(data)
 			return request(method, url, headers=headers, params=params, verify=self.checkCertificate)
 		else:
-			return request(method, url, headers=headers, params=params, data=json.dumps(data), verify=self.checkCertificate)
+			body = None
+			if data is not None:
+				body = json.dumps(data)
+			return request(method, url, headers=headers, data=body, verify=self.checkCertificate)
 
 	def post(self, path, data = {}):
-		return Response(self.request("POST", path, data, {'Content-Type': 'application/json'}))
+		return Response(self.request("POST", path, data, {'Content-Type': 'application/yang-data+json'}))
 
-	def get(self, path, data = {}):
-		return Response(self.request("GET", path, data))
+	def get(self, path, params = {}):
+		return Response(self.request("GET", path, params))
 
 	def put(self, path, data = {}):
-		return Response(self.request("PUT", path, data, {'Content-Type': 'application/json'}))
+		return Response(self.request("PUT", path, data, {'Content-Type': 'application/yang-data+json'}))
 
 	def patch(self, path, data = {}):
-		return Response(self.request("PATCH", path, data, {'Content-Type': 'application/json'}))
+		return Response(self.request("PATCH", path, data, {'Content-Type': 'application/yang-data+json'}))
 
-	def delete(self, path, data = {}):
-		return Response(self.request("DELETE", path, data))
+	def delete(self, path):
+		return Response(self.request("DELETE", path, None))
+
+class Path(object):
+	def __init__(self, template, **kwargs):
+		self.template = template
+		self.params = kwargs
+		self.path = template
+		for k, v in kwargs.items():
+			self.path = self.path.replace('{%s}'%k, quote(v, safe=''))
+
+	def __str__(self):
+		return self.path
 
 class Response(object):
 	def __init__(self, response):
 		self.response = response
 
 		try:
-			self.content = self.response.json()
+			if len(response.content) == 0:
+				self.content = None
+			else:
+				self.content = self.response.json()
 		except ValueError:
 			self.content = self.response.text
 
 	def ok(self):
-		import requests
-		return self.response.status_code == requests.codes.ok
+		return self.response.status_code >= 200 and self.response.status_code <= 299
 
 	def errors(self):
 		if self.ok():
@@ -110,10 +128,36 @@ class Response(object):
 
 		if(not isinstance(errors, dict)):
 			errors = {"error": errors} # convert to dict for consistency
-		elif('errors' in errors):
+		elif('ietf-restconf:errors' in errors):
 			errors = errors['ietf-restconf:errors']
 
 		return errors
 
+	def error_message(self, formatter_func=None):
+		err = self.errors().get('error')
+		if err == None:
+			return None
+		if isinstance(err, list):
+			err = err[0]
+		if isinstance(err, dict):
+			if formatter_func is not None:
+				return formatter_func(err)
+			return default_error_message_formatter(err)
+		return str(err)
+
 	def __getitem__(self, key):
 		return self.content[key]
+
+def default_error_message_formatter(err_entry):
+	if 'error-message' in err_entry:
+		return err_entry['error-message']
+	err_tag = err_entry.get('error-tag')
+	if err_tag == 'invalid-value':
+		return '%Error: validation failed'
+	if err_tag == 'operation-not-supported':
+		return '%Error: not supported'
+	if err_tag == 'access-denied':
+		return '%Error: not authorized'
+	return '%Error: operation failed'
+
+
