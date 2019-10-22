@@ -455,9 +455,11 @@ func yangListDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, x
 					}
 				} else {
 					_, keyFromCurUri, _ := xpathKeyExtract(dbs[cdb], ygRoot, GET, curUri)
-					if dbKey == keyFromCurUri {
-						for k, kv := range curKeyMap {
-							curMap[k] = kv
+					if dbKey == keyFromCurUri || keyFromCurUri == "" {
+						if dbKey == keyFromCurUri {
+							for k, kv := range curKeyMap {
+								curMap[k] = kv
+							}
 						}
 						curXpath, _ := XfmrRemoveXPATHPredicates(curUri)
 						yangDataFill(dbs, ygRoot, curUri, curXpath, dbDataMap, curMap, tbl, dbKey, cdb, validate)
