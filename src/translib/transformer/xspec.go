@@ -47,6 +47,7 @@ type yangXpathInfo  struct {
     dbIndex        db.DBNum
     keyLevel       int
     isKey          bool
+    defVal         string
 }
 
 type dbInfo  struct {
@@ -130,6 +131,9 @@ func yangToDbMapFill (keyLevel int, xYangSpecMap map[string]*yangXpathInfo, entr
 			/* table transformer present */
 			xpathData.fieldName = entry.Name
 		}
+	}
+	if xpathData.yangDataType == YANG_LEAF && len(entry.Default) > 0 {
+		xpathData.defVal = entry.Default
 	}
 
 	if xpathData.yangDataType == "leaf" && len(xpathData.fieldName) > 0 && xpathData.tableName != nil {
@@ -518,6 +522,7 @@ func mapPrint(inMap map[string]*yangXpathInfo, fileName string) {
         }
         fmt.Fprintf(fp, "\r\n    childTbl : %v", d.childTable)
         fmt.Fprintf(fp, "\r\n    FieldName: %v", d.fieldName)
+        fmt.Fprintf(fp, "\r\n    defVal   : %v", d.defVal)
         fmt.Fprintf(fp, "\r\n    keyLevel : %v", d.keyLevel)
         fmt.Fprintf(fp, "\r\n    xfmrKeyFn: %v", d.xfmrKey)
         fmt.Fprintf(fp, "\r\n    xfmrFunc : %v", d.xfmrFunc)
