@@ -1,0 +1,30 @@
+{{'-----------------------------------------------------------'}}
+{{'Attribute'.ljust(20)}} {{'Value/State'}}
+{{'-----------------------------------------------------------'}}
+{% for key,value in json_output.items() %}
+{% if 'current-utc-offset-valid' in value.keys() %}
+{{ 'Curr UTC Offset Vld'.ljust(20)}} {{ value['current-utc-offset-valid']}}
+{% endif %}
+{% if 'current-utc-offset' in value.keys() %}
+{{ 'Curr UTC Offset'.ljust(20)}} {{ value['current-utc-offset']}}
+{% endif %}
+{% if 'leap59' in value.keys() %}
+{{ 'Leap59'.ljust(20)}} {{ value['leap59']}}
+{% endif %}
+{% if 'leap61' in value.keys() %}
+{{ 'Leap61'.ljust(20)}} {{ value['leap61']}}
+{% endif %}
+{% if 'time-traceable' in value.keys() %}
+{{ 'Time Traceable'.ljust(20)}} {{ value['time-traceable']}}
+{% endif %}
+{% if 'frequency-traceable' in value.keys() %}
+{{ 'Freq Traceable'.ljust(20)}} {{ value['frequency-traceable']}}
+{% endif %}
+{% if 'ptp-timescale' in value.keys() %}
+{{ 'PTP Timescale'.ljust(20)}} {{ value['ptp-timescale']}}
+{% endif %}
+{% if 'time-source' in value.keys() %}
+{{ 'Time Source'.ljust(20)}} {{ value['time-source']}}
+{% endif %}
+{% endfor %}
+

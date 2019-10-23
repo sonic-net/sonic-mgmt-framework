@@ -77,6 +77,13 @@ limitations under the License.
         />
     <!--=======================================================-->
     <PTYPE
+        name="ENA_DISA"
+        method="select"
+        pattern="enable(enable) disable(disable)"
+        help="enable|disable"
+        />
+    <!--=======================================================-->
+    <PTYPE
         name="LOOPBACK_NUM"
         method="integer"
         pattern="0..16383"
@@ -105,6 +112,13 @@ limitations under the License.
         />
     <!--=======================================================-->
     <PTYPE
+        name="RANGE_1_255"
+        method="integer"
+        pattern="1..255"
+        help=""
+        />
+    <!--=======================================================-->
+    <PTYPE
 	name="RANGE_0_65535"
 	method="integer"
 	pattern="0..65535"
@@ -124,6 +138,13 @@ limitations under the License.
         pattern="1..4294967295"
         help=""
         />
+    <!--=======================================================-->
+    <PTYPE
+	name="RANGE_1_128"
+	method="integer"
+	pattern="1..128"
+	help=""
+	/>
     <!--=======================================================-->
     <PTYPE
         name="IPADDR_NN"
@@ -482,5 +503,40 @@ limitations under the License.
         pattern="0[xX][0-9a-fA-F]+"
         help="Hexadecimal Type"
 	/>
+    <!--=======================================================-->
+    <PTYPE
+        name="PTP_MODE"
+        method="select"
+        pattern="boundary-clock(BC) peer-to-peer-transparent-clock(P2P_TC) end-to-end-transparent-clock(E2E_TC) disable(disable)"
+        help="PTP mode"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="PTP_DELAY_MECHANISM"
+        method="select"
+		pattern="e2e(E2E) p2p(P2P)"
+        help=""
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="PTP_TRANSPORT"
+        method="select"
+		pattern="l2(L2) ipv4(UDPv4) ipv6(UDPv6)"
+        help=""
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="PTP_DOMAIN_PROFILE"
+        method="select"
+		pattern="default(ieee1588) g8275.1(G.8275.x) g8275.2(G.8275.x)"
+        help=""
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="PTP_PORT_MODE"
+        method="select"
+		pattern="transparent(transparent) boundary(boundary) disable(disable)"
+        help=""
+        />
     <!--=======================================================-->
 </CLISH_MODULE>

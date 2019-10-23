@@ -1,0 +1,19 @@
+{{'-----------------------------------------------------------'}}
+{{'Interface'.ljust(20)}} {{'State'}}
+{{'-----------------------------------------------------------'}}
+{% for key,value in json_output.items() %}
+{% for i in value %}
+
+{% for key2,value2 in i.items() %}
+{% for i2 in value2 %}
+
+{% if 'port-number' in i2.keys() and 'port-state' in i2.keys() %}
+{{ i2['port-number'].ljust(20)}}{{ i2['port-state']}}
+{% endif %}
+
+{% endfor %}
+{% endfor %}
+
+{% endfor %}
+{% endfor %}
+
