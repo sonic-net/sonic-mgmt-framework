@@ -1,0 +1,90 @@
+module openconfig-interfaces-ext {
+
+    yang-version "1";
+
+    // namespace
+    namespace "http://openconfig.net/yang/interfaces/extension";
+
+    prefix "oc-intf-ext";
+
+    import openconfig-interfaces { prefix oc-intf; }
+    import openconfig-vlan { prefix oc-vlan; }
+    import openconfig-if-ip {prefix oc-ip; }
+    import openconfig-if-ip-ext {prefix oc-ip-ext; }
+    import openconfig-if-ethernet {prefix oc-eth; }
+    import openconfig-if-poe {prefix oc-poe; }
+    import openconfig-if-tunnel {prefix oc-tun; }
+    import openconfig-if-aggregate {prefix oc-lag; }
+
+
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:hold-time {
+        deviate not-supported;
+    }
+
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-intf:state {
+        deviate not-supported;
+    }
+
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-vlan:vlan {
+        deviate not-supported;
+    }
+
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv4/oc-ip:addresses/oc-ip:address/oc-ip:vrrp {
+        deviate not-supported;
+    }
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv4/oc-ip:proxy-arp {
+        deviate not-supported;
+    }
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv4/oc-ip:neighbors {
+        deviate not-supported;
+    }
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv4/oc-ip:unnumbered {
+        deviate not-supported;
+    }
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv4/oc-ip:config {
+        deviate not-supported;
+    }
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv4/oc-ip:state {
+        deviate not-supported;
+    }
+
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv6/oc-ip:addresses/oc-ip:address/oc-ip:vrrp {
+        deviate not-supported;
+    }
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv6/oc-ip:router-advertisement {
+        deviate not-supported;
+    }
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv6/oc-ip:neighbors {
+        deviate not-supported;
+    }
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv6/oc-ip:unnumbered {
+        deviate not-supported;
+    }
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv6/oc-ip:config {
+        deviate not-supported;
+    }
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv6/oc-ip:state {
+        deviate not-supported;
+    }
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv6/oc-ip-ext:autoconf {
+        deviate not-supported;
+    }
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-eth:ethernet/oc-eth:state/oc-eth:counters {
+        deviate not-supported;
+    }
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-eth:ethernet/oc-vlan:switched-vlan {
+        deviate not-supported;
+    }
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-eth:ethernet/oc-poe:poe {
+        deviate not-supported;
+    }
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-lag:aggregation {
+        deviate not-supported;
+    }
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-vlan:routed-vlan {
+        deviate not-supported;
+    }
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-tun:tunnel {
+        deviate not-supported;
+    }
+}

@@ -21,7 +21,7 @@ module openconfig-interfaces-annot {
 
     deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:config {
         deviate add {
-            sonic-ext:redis-db-name "CONFIG_DB";
+            sonic-ext:db-name "CONFIG_DB";
         }
     }
 
@@ -39,7 +39,7 @@ module openconfig-interfaces-annot {
     
     deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:state {
         deviate add {
-            sonic-ext:redis-db-name "APPL_DB";
+            sonic-ext:db-name "APPL_DB";
         }
     }
     deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:state/oc-intf:name {
@@ -66,7 +66,7 @@ module openconfig-interfaces-annot {
 
     deviation /oc-intf:interfaces/oc-intf:interface/oc-eth:ethernet/oc-eth:config {
         deviate add {
-            sonic-ext:redis-db-name "CONFIG_DB";
+            sonic-ext:db-name "CONFIG_DB";
         }
     }
     deviation /oc-intf:interfaces/oc-intf:interface/oc-eth:ethernet/oc-eth:config/oc-eth:auto-negotiate {
@@ -81,7 +81,7 @@ module openconfig-interfaces-annot {
     }
     deviation /oc-intf:interfaces/oc-intf:interface/oc-eth:ethernet/oc-eth:state {
         deviate add {
-            sonic-ext:redis-db-name "APPL_DB";
+            sonic-ext:db-name "APPL_DB";
         }
     }
 
@@ -96,80 +96,26 @@ module openconfig-interfaces-annot {
         }
     }
 
-    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv4/oc-ip:addresses/oc-ip:address/oc-ip:config {
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface {
         deviate add {
-            sonic-ext:redis-db-name "CONFIG_DB";
-            sonic-ext:key-transformer "intf_tbl_ip_key";
+            sonic-ext:key-transformer "intf_subintfs_xfmr";
         }
     }
-    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv4/oc-ip:addresses/oc-ip:address/oc-ip:config/oc-ip:ip {
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv4/oc-ip:addresses {
         deviate add {
-            sonic-ext:field-name "NONE";
+            sonic-ext:subtree-transformer "intf_ip_addr_xfmr";
         }
     }
-    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv4/oc-ip:addresses/oc-ip:address/oc-ip:config/oc-ip:prefix-length {
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv6/oc-ip:addresses {
         deviate add {
-            sonic-ext:field-name "NONE";
-        }
-    }
-
-    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv6/oc-ip:addresses/oc-ip:address/oc-ip:config {
-        deviate add {
-            sonic-ext:redis-db-name "CONFIG_DB";
-            sonic-ext:key-transformer "intf_tbl_ip_key";
-        }
-    }
-    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv6/oc-ip:addresses/oc-ip:address/oc-ip:config/oc-ip:ip {
-        deviate add {
-            sonic-ext:field-name "NONE";
-        }
-    }
-    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv6/oc-ip:addresses/oc-ip:address/oc-ip:config/oc-ip:prefix-length {
-        deviate add {
-            sonic-ext:field-name "NONE";
-        }
-    }
-
-
-    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv4/oc-ip:addresses/oc-ip:address/oc-ip:state {
-        deviate add {
-            sonic-ext:redis-db-name "APPL_DB";
-            sonic-ext:key-transformer "intf_tbl_ip_key";
-        }
-    }
-    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv4/oc-ip:addresses/oc-ip:address/oc-ip:state/oc-ip:ip {
-        deviate add {
-            sonic-ext:field-name "NONE";
-        }
-    }
-    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv4/oc-ip:addresses/oc-ip:address/oc-ip:state/oc-ip:prefix-length {
-        deviate add {
-            sonic-ext:field-name "NONE";
-        }
-    }
-
-
-    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv6/oc-ip:addresses/oc-ip:address/oc-ip:state {
-        deviate add {
-            sonic-ext:redis-db-name "APPL_DB";
-            sonic-ext:key-transformer "intf_tbl_ip_key";
-        }
-    }
-    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv6/oc-ip:addresses/oc-ip:address/oc-ip:state/oc-ip:ip {
-        deviate add {
-            sonic-ext:field-name "NONE";
-        }
-    }
-    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv6/oc-ip:addresses/oc-ip:address/oc-ip:state/oc-ip:prefix-length {
-        deviate add {
-            sonic-ext:field-name "NONE";
+            sonic-ext:subtree-transformer "intf_ip_addr_xfmr";
         }
     }
 
     deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:state/oc-intf:counters {
         deviate add {
             sonic-ext:subtree-transformer "intf_get_counters_xfmr";
-            sonic-ext:redis-db-name "COUNTERS_DB";
+            sonic-ext:db-name "COUNTERS_DB";
         }
     }
 }
