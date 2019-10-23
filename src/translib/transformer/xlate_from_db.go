@@ -468,7 +468,20 @@ func yangListDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, x
 				}
 			}
 			if len(mapSlice) > 0 {
-				resultMap[xYangSpecMap[xpath].yangEntry.Name] = mapSlice
+				listInstanceGet := false
+                                /*Check if it is a list instance level Get*/
+                                if strings.Contains(uri, "[") {
+                                        uriXpath, _ := XfmrRemoveXPATHPredicates(uri)
+                                        if (uriXpath == xpath  && (strings.HasSuffix(uri, "]") || strings.HasSuffix(uri, "]/"))) {
+                                                listInstanceGet = true
+                                                for k, v := range mapSlice[0] {
+                                                        resultMap[k] = v
+                                                }
+                                        }
+                                }
+                                if !listInstanceGet {
+                                        resultMap[xYangSpecMap[xpath].yangEntry.Name] = mapSlice
+                                }
 			} else {
 				log.Infof("Empty slice for (\"%v\").\r\n", uri)
 			}
@@ -705,9 +718,8 @@ func dbDataToYangJsonCreate(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db
 					break
 
 				} else if yangType == YANG_CONTAINER {
-					cname := xYangSpecMap[reqXpath].yangEntry.Name
 					cmap  := make(map[string]interface{})
-					resultMap[cname] = cmap
+					resultMap = cmap
 					if validateHandlerFlag || tableXfmrFlag {
 						break
 					}
@@ -715,7 +727,7 @@ func dbDataToYangJsonCreate(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db
 						inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, uri, GET, "", dbDataMap, nil)
 						cmap, _   = xfmrHandlerFunc(inParams)
 						if cmap != nil && len(cmap) > 0 {
-							resultMap[cname] = cmap
+							resultMap = cmap
 						}
 						break
 					}
