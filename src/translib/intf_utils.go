@@ -329,6 +329,11 @@ func (app *IntfApp) removeUntaggedVlanAndUpdateVlanMembTbl(d *db.DB, ifName *str
 			if err != nil {
 				return nil, err
 			}
+			// Disable STP configuration for ports which are removed from VLan membership
+			var memberPorts []string
+			memberPorts = append(memberPorts, *ifName)
+			removeStpOnInterfaceSwitchportDeletion(d, memberPorts)
+
 			return &vlanName, nil
 		}
 	}
@@ -355,6 +360,10 @@ func (app *IntfApp) removeTaggedVlanAndUpdateVlanMembTbl(d *db.DB, trunkVlan *st
 		if err != nil {
 			return err
 		}
+		// Disable STP configuration for ports which are removed from VLan membership
+		var memberPorts []string
+		memberPorts = append(memberPorts, *ifName)
+		removeStpOnInterfaceSwitchportDeletion(d, memberPorts)
 	} else {
 		vlanId := vlanName[len("Vlan"):len(vlanName)]
 		errStr := "Tagged VLAN: " + vlanId + " configuration doesn't exist for Interface: " + *ifName

@@ -1918,6 +1918,7 @@ func enableStpOnVlanCreation(d *db.DB, vlanList []string) {
 	if len(vlanList) == 0 {
 		return
 	}
+	log.Infof("enableStpOnVlanCreation --> Enable Stp on Vlans: %v", vlanList)
 	vlanKeys, _ := d.GetKeys(&db.TableSpec{Name: STP_VLAN_TABLE})
 	existingEntriesCount := len(vlanKeys)
 	if existingEntriesCount < PVST_MAX_INSTANCES {
@@ -1950,10 +1951,75 @@ func enableStpOnVlanCreation(d *db.DB, vlanList []string) {
 	}
 }
 
-// This function accepts map where key is Interface name (i.e. Eth or Portchannel)
-// and value will be slice of VlanIds
-//func enableStpOnInterfaceVlanMembership(d *db.DB, intfVlansMap map[string][]string) {
-//}
+func removeStpConfigOnVlanDeletion(d *db.DB, vlanList []string) {
+	if len(vlanList) == 0 {
+		return
+	}
+	log.Infof("removeStpConfigOnVlanDeletion --> Disable Stp on Vlans: %v", vlanList)
+	for i, _ := range vlanList {
+		err := d.DeleteEntry(&db.TableSpec{Name: STP_VLAN_INTF_TABLE}, asKey(vlanList[i], "*"))
+		if err != nil {
+			log.Error(err)
+		}
+		err = d.DeleteEntry(&db.TableSpec{Name: STP_VLAN_TABLE}, asKey(vlanList[i]))
+		if err != nil {
+			log.Error(err)
+		}
+	}
+}
+
+// This function accepts list of Interface names (i.e. Eth or Portchannel)
+// on which switchport is enabled
+func enableStpOnInterfaceVlanMembership(d *db.DB, intfList []string) {
+	if len(intfList) == 0 {
+		return
+	}
+	log.Infof("enableStpOnInterfaceVlanMembership --> Enable Stp on Interfaces: %v", intfList)
+	defaultDBValues := db.Value{Field: map[string]string{}}
+	(&defaultDBValues).Set("enabled", "true")
+	(&defaultDBValues).Set("root_guard", "false")
+	(&defaultDBValues).Set("bpdu_guard", "false")
+	(&defaultDBValues).Set("bpdu_filter", "false")
+	(&defaultDBValues).Set("bpdu_guard_do_disable", "false")
+	(&defaultDBValues).Set("portfast", "true")
+	(&defaultDBValues).Set("uplink_fast", "false")
+
+	var stpEnabledIntfList []string
+	intfKeys, err := d.GetKeys(&db.TableSpec{Name: STP_INTF_TABLE})
+	if err != nil {
+		log.Error(err)
+	} else {
+		for i, _ := range intfKeys {
+			dbKey := intfKeys[i]
+			stpEnabledIntfList = append(stpEnabledIntfList, (&dbKey).Get(0))
+		}
+
+		for i, _ := range intfList {
+			if !contains(stpEnabledIntfList, intfList[i]) {
+				d.CreateEntry(&db.TableSpec{Name: STP_INTF_TABLE}, asKey(intfList[i]), defaultDBValues)
+			}
+		}
+	}
+}
+
+// This function accepts list of Interface names (i.e. Eth or Portchannel)
+// on which switchport is disabled
+func removeStpOnInterfaceSwitchportDeletion(d *db.DB, intfList []string) {
+	if len(intfList) == 0 {
+		return
+	}
+	log.Infof("removeStpOnInterfaceSwitchportDeletion --> Disable Stp on Interfaces: %v", intfList)
+	for i, _ := range intfList {
+		err := d.DeleteEntry(&db.TableSpec{Name: STP_VLAN_INTF_TABLE}, asKey("*", intfList[i]))
+		if err != nil {
+			log.Error(err)
+		}
+		err = d.DeleteEntry(&db.TableSpec{Name: STP_INTF_TABLE}, asKey(intfList[i]))
+		if err != nil {
+			log.Error(err)
+		}
+	}
+}
 
 func (app *StpApp) updateGlobalFieldsToStpVlanTable(d *db.DB, fldValuePair map[string]string, stpGlobalDbEntry db.Value) error {
 	vlanKeys, err := d.GetKeys(app.vlanTable)

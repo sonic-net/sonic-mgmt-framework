@@ -326,7 +326,7 @@ func (app *IntfApp) processUpdatePhyIntfVlanAdd(d *db.DB) error {
 
 	for vlanName, ifEntries := range app.vlanD.vlanMembersTableMap {
 		var memberPortsListStrB strings.Builder
-		var memberPortsList []string
+		var memberPortsList, stpInterfacesList []string
 		isMembersListUpdate = false
 
 		vlanEntry, err := d.GetEntry(app.vlanD.vlanTs, db.Key{Comp: []string{vlanName}})
@@ -384,6 +384,8 @@ func (app *IntfApp) processUpdatePhyIntfVlanAdd(d *db.DB) error {
 					errStr := "Creating entry for VLAN member table with vlan : " + vlanName + " If : " + ifName + " failed"
 					return errors.New(errStr)
 				}
+				// Make a list of interfaces which got switchport enabled to have STP enabled
+				stpInterfacesList = append(stpInterfacesList, ifName)
 			case opUpdate:
 				err = d.SetEntry(app.vlanD.vlanMemberTs, db.Key{Comp: []string{vlanName, ifName}}, ifEntry.entry)
 				if err != nil {
@@ -407,6 +409,8 @@ func (app *IntfApp) processUpdatePhyIntfVlanAdd(d *db.DB) error {
 		if err != nil {
 			return errors.New("Updating VLAN table with member ports failed")
 		}
+		// Enable STP on L2 intefaces
+		enableStpOnInterfaceVlanMembership(d, stpInterfacesList)
 	}
 	return err
 }
