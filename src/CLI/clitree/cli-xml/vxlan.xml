@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CLISH_MODULE
+    xmlns="http://www.dellemc.com/sonic/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xi="http://www.w3.org/2001/XInclude"
+    xsi:schemaLocation="http://www.dellemc.com/sonic/XMLSchema
+    http://www.dellemc.com/sonic/XMLSchema/clish.xsd"
+    >
+
+    <VIEW name="configure-view">
+        <COMMAND
+            name="interface Vxlan"
+            help="VXLAN Configuration mode"
+            view="configure-vxlan-view"
+            viewid="iface=Vxlan${vxlan-if-name}"
+            >
+            <PARAM
+                name="vxlan-if-name"
+                help="VTEP Name"
+                ptype="STRING_63"
+              >
+            </PARAM>
+            <ACTION builtin="clish_nop"></ACTION>
+        </COMMAND>
+        <COMMAND name="evpn" help="EVPN Global Configuration" view="configure-evpn-view" viewid="iface=EVPN${evpn_name}">
+        <PARAM name="evpn_name" help="EVPN Name" ptype="STRING_63"> </PARAM>
+        <ACTION builtin="clish_nop"/>
+        </COMMAND>
+    </VIEW>
+    <VIEW name="configure-evpn-view" prompt="${SYSTEM_NAME}(conf-if-evpn)# " depth="2">
+      <!-- Inheritance -->
+      <NAMESPACE ref="configure-view" help="false" completion="false"/>
+      <COMMAND name="no" help="Negate a command or set its defaults"> </COMMAND>
+      <COMMAND name="no nvo" help="Unset the NVO object">
+        <ACTION> python $SONIC_CLI_ROOT/sonic-cli-vxlan.py delete_sonic_vxlan_sonic_vxlan_evpn_nvo ${iface} </ACTION>
+      </COMMAND>
+      <COMMAND name="nvo" help="Set the NVO Object">
+        <PARAM name="vxlan_name" help="VTEP Name" ptype="STRING_63"> </PARAM>
+        <ACTION> python $SONIC_CLI_ROOT/sonic-cli-vxlan.py patch_list_sonic_vxlan_sonic_vxlan_evpn_nvo_evpn_nvo_list ${iface} ${vxlan_name} </ACTION>
+      </COMMAND>
+    </VIEW>
+    <VIEW
+        name="configure-vxlan-view"
+        prompt="${SYSTEM_NAME}(conf-if-${iface})# "
+        depth="2"
+        >
+        <!-- Inheritance -->
+        <NAMESPACE
+            ref="configure-view"
+            help="false"
+            completion="false"
+            />
+        <COMMAND
+            name="no"
+            help="Negate a command or set its defaults"
+            >
+        </COMMAND>
+        <COMMAND
+            name="no source-ip"
+            help="Unset the source Ipv4 address">
+           <ACTION> python $SONIC_CLI_ROOT/sonic-cli-vxlan.py delete_sonic_vxlan_sonic_vxlan_vxlan_tunnel ${iface} </ACTION>
+        </COMMAND>
+    <COMMAND name="no map" help="Delete VLAN VNI Mapping">
+      <PARAM name="vni" help="Configure VNI mapping" ptype="SUBCOMMAND" mode="subcommand"> 
+       <PARAM name="vnid" help="VNID" ptype="RANGE_1_65535"> 
+        <PARAM name="mapoptions" help="" ptype="SUBCOMMAND" mode="switch"> 
+         <PARAM name="vlan" help="Configure VLAN" ptype="SUBCOMMAND" mode="subcommand"> 
+         <PARAM name="vid" help="VLAN ID" ptype="VLAN_ID"> </PARAM>
+         </PARAM>
+        </PARAM>
+       </PARAM>
+      </PARAM>
+      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-vxlan.py delete_sonic_vxlan_sonic_vxlan_vxlan_tunnel_map_vxlan_tunnel_map_list ${iface}  ${vnid} ${vid} </ACTION>
+    </COMMAND>
+        <COMMAND
+            name="source-ip"
+            help="Set the source IPv4 address">
+            <PARAM
+                name="SIP"
+                help="Source IPv4 address"
+                ptype="IP_ADDR"
+                >
+            </PARAM>
+            <ACTION> python $SONIC_CLI_ROOT/sonic-cli-vxlan.py patch_list_sonic_vxlan_sonic_vxlan_vxlan_tunnel_vxlan_tunnel_list ${iface} ${SIP}
+            </ACTION>
+        </COMMAND>
+    <COMMAND name="map" help="Configure Mapping">
+      <PARAM name="vni" help="Configure VNI mapping" ptype="SUBCOMMAND" mode="subcommand"> 
+       <PARAM name="vnid" help="VNID" ptype="RANGE_1_65535"> 
+        <PARAM name="mapoptions" help="" ptype="SUBCOMMAND" mode="switch"> 
+         <PARAM name="vlan" help="Configure VLAN" ptype="SUBCOMMAND" mode="subcommand"> 
+         <PARAM name="vid" help="VLAN ID" ptype="VLAN_ID"> </PARAM>
+         </PARAM>
+        </PARAM>
+       </PARAM>
+      </PARAM>
+      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-vxlan.py patch_list_sonic_vxlan_sonic_vxlan_vxlan_tunnel_map_vxlan_tunnel_map_list ${iface} ${vnid} ${vid} </ACTION>
+    </COMMAND>
+    </VIEW>
+
+</CLISH_MODULE>
+
