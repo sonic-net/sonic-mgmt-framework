@@ -224,32 +224,35 @@ func exec_vtysh_cmd (vtysh_cmd string) (map[string]interface{}, error) {
     var err error
     oper_err := errors.New("Opertational error")
 
-    cmd := exec.Command("docker", "exec", "bgp", "vtysh -c \"", vtysh_cmd, "\"")
+    log.Infof("Going to execute vtysh cmd ==> \"%s\"", vtysh_cmd)
+
+    cmd := exec.Command("/usr/bin/docker", "exec", "bgp", "vtysh", "-c", vtysh_cmd)
     out_stream, err := cmd.StdoutPipe()
     if err != nil {
-        log.Fatalf("Can't get stdout pipe: %s\n", err)
+        log.Errorf("Can't get stdout pipe: %s\n", err)
         return nil, oper_err
     }
+
     err = cmd.Start()
     if err != nil {
-        log.Fatalf("cmd.Start() failed with %s\n", err)
+        log.Errorf("cmd.Start() failed with %s\n", err)
         return nil, oper_err
     }
 
     var outputJson map[string]interface{}
-
     err = json.NewDecoder(out_stream).Decode(&outputJson)
     if err != nil {
-        log.Fatalf("Not able to decode teamd json output: %s\n", err)
+        log.Errorf("Not able to decode vtysh json output: %s\n", err)
         return nil, oper_err
     }
 
     err = cmd.Wait()
     if err != nil {
-        log.Fatalf("Command execution completion failed with %s\n", err)
+        log.Errorf("Command execution completion failed with %s\n", err)
         return nil, oper_err
     }
 
+    log.Infof("Successfully executed vtysh-cmd ==> \"%s\"", vtysh_cmd)
     return outputJson, err
 }
 
@@ -259,9 +262,12 @@ func fill_nbr_state_info (nbrAddr string, nbrDataValue interface{},
 
     nbrDataJson := nbrDataValue.(map[string]interface{})
 
-    bgp_session_state := nbrDataJson["bgpState"]
-    if bgp_session_state == "Established" {
-        nbr_obj.State.SessionState = ocbinds.OpenconfigBgp_Bgp_Neighbors_Neighbor_State_SessionState_ESTABLISHED
+    switch bgp_session_state := nbrDataJson["bgpState"] ; bgp_session_state {
+        case "Established":
+            log.Infof("bgp_session_state for nbrAddr:%s ==> %s", nbrAddr, bgp_session_state)
+            nbr_obj.State.SessionState = ocbinds.OpenconfigBgp_Bgp_Neighbors_Neighbor_State_SessionState_ESTABLISHED
+        default:
+            log.Infof("bgp_session_state for nbrAddr:%s ==> %s", nbrAddr, bgp_session_state)
     }
 }
 
@@ -272,7 +278,7 @@ func get_specific_nbr_state (nbrs_obj *ocbinds.OpenconfigNetworkInstance_Network
     vtysh_cmd := "show ip bgp vrf " + niName + " neighbors " + nbrAddr + " json"
     nbrMapJson, cmd_err := exec_vtysh_cmd (vtysh_cmd)
     if cmd_err != nil {
-        log.Fatalf("Failed to fetch bgp neighbors state info for niName:%s nbrAddr:%s. Err: %s\n", niName, nbrAddr, err)
+        log.Errorf("Failed to fetch bgp neighbors state info for niName:%s nbrAddr:%s. Err: %s\n", niName, nbrAddr, err)
         return cmd_err
     }
 
@@ -300,7 +306,7 @@ func get_all_nbr_state (nbrs_obj *ocbinds.OpenconfigNetworkInstance_NetworkInsta
     vtysh_cmd := "show ip bgp vrf " + niName + " neighbors " + " json"
     nbrsMapJson, cmd_err := exec_vtysh_cmd (vtysh_cmd)
     if cmd_err != nil {
-        log.Fatalf("Failed to fetch all bgp neighbors state info for niName:%s. Err: %s\n", niName, err)
+        log.Errorf("Failed to fetch all bgp neighbors state info for niName:%s. Err: %s\n", niName, err)
         return cmd_err
     }
 
@@ -405,21 +411,26 @@ var DbToYang_bgp_nbrs_nbr_state_xfmr SubTreeXfmrDbToYang = func(inParams XfmrPar
     bgp_obj, niName, err := getBgpRoot (inParams)
     if err != nil {
         log.Errorf ("%s failed !! Error:%s", cmn_log , err);
-        return err;
-    }
-
-    nbrs_obj := bgp_obj.Neighbors
-    if nbrs_obj == nil {
-        log.Fatalf("Neighbors container missing")
-        return oper_err
+        return err
     }
 
     pathInfo := NewPathInfo(inParams.uri)
     targetUriPath, err := getYangPathFromUri(pathInfo.Path)
-    nbrAddr := pathInfo.Var("NeighborAddress")
-
+    nbrAddr := pathInfo.Var("neighbor-address")
     log.Infof("%s : path:%s; template:%s targetUriPath:%s niName:%s nbrAddr:%s",
               cmn_log, pathInfo.Path, pathInfo.Template, targetUriPath, niName, nbrAddr)
+
+    supportedTgtUri := "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/neighbors/neighbor/state"
+    if targetUriPath != supportedTgtUri {
+        log.Infof ("%s : Target-URI:%s is not %s !! Returning ok !!", cmn_log, targetUriPath, supportedTgtUri);
+        return err
+    }
+
+    nbrs_obj := bgp_obj.Neighbors
+    if nbrs_obj == nil {
+        log.Errorf("Neighbors container missing")
+        return oper_err
+    }
 
     if len(nbrAddr) != 0 {
         err = get_specific_nbr_state (nbrs_obj, niName, nbrAddr);
