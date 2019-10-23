@@ -25,24 +25,32 @@ limitations under the License.
     >
   <VIEW name="enable-view">
     <COMMAND name="show sflow" help="Show sFlow information">
-      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-sflow.py get_sflow show_sflow.j2 </ACTION>
+      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-sflow.py get_sonic_sflow_sonic_sflow show_sflow.j2 ${__full_line} </ACTION>
       <xi:include href="include/pipe.xml"/>
     </COMMAND>
     <COMMAND name="show sflow interface" help="Show sFlow interface information">
-      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-sflow.py get_sflow_interface show_sflow_intf.j2 </ACTION>
+      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-sflow.py get_sonic_sflow_sonic_sflow_sflow_session_table show_sflow_intf.j2 ${__full_line} </ACTION>
       <xi:include href="include/pipe.xml"/>
     </COMMAND>
   </VIEW>
   <VIEW name="configure-view">
     <COMMAND name="sflow" help="sFlow Configurations"/>
       <COMMAND name="sflow collector" help="Collector name" ptype="SUBCOMMAND" mode="subcommand">
-        <PARAM name="collector-name" help="Collector name" ptype="STRING"/>
-        <PARAM name="collector-ip" help="Collector IP address" ptype="STRING"/>
-        <PARAM name="collector-port" help="Collector port number" ptype="UINT" optional="true"/>
-        <ACTION builtin="clish_nop"/>
+        <PARAM name="name" help="Collector name" ptype="STRING"/>
+        <PARAM name="ip" help="Collector IP address" ptype="STRING"/>
+        <PARAM name="port" help="Collector port number" ptype="UINT" optional="true"/>
+        <ACTION>
+          if "${port}" == ""; then
+	    python $SONIC_CLI_ROOT/sonic-cli-sflow.py put_sonic_sflow_sonic_sflow_sflow_collector_sflow_collector_list ${name} ${ip}
+          else
+	    python $SONIC_CLI_ROOT/sonic-cli-sflow.py put_sonic_sflow_sonic_sflow_sflow_collector_sflow_collector_list ${name} ${ip} ${port}
+          fi
+	</ACTION>
       </COMMAND>
       <COMMAND name="sflow enable" help="Enable sFlow" ptype="SUBCOMMAND" mode="subcommand">
-        <ACTION builtin="clish_nop"/>
+        <ACTION>
+	    python $SONIC_CLI_ROOT/sonic-cli-sflow.py post_sonic_sflow_sonic_sflow_sflow_admin_state up
+        </ACTION>
       </COMMAND>
       <COMMAND name="sflow agent-id" help="Collector agent interface" ptype="SUBCOMMAND" mode="subcommand">
         <PARAM name="interface" help="Interface name" ptype="STRING"/>
@@ -55,13 +63,15 @@ limitations under the License.
 
       <COMMAND name="no sflow" help="Negate sFlow configurations"/>
       <COMMAND name="no sflow collector" help="Remove a collector" ptype="SUBCOMMAND" mode="subcommand">
-        <PARAM name="collector-name" help="Collector name" ptype="STRING"/>
-        <PARAM name="collector-ip" help="Collector IP address" ptype="STRING"/>
-        <PARAM name="collector-port" help="Collector port number" ptype="UINT" optional="true"/>
-        <ACTION builtin="clish_nop"/>
+        <PARAM name="name" help="Collector name" ptype="STRING"/>
+        <ACTION>
+	    python $SONIC_CLI_ROOT/sonic-cli-sflow.py delete_sonic_sflow_sonic_sflow_sflow_collector_sflow_collector_list ${name}
+        </ACTION>
       </COMMAND>
       <COMMAND name="no sflow enable" help="Disable sFlow" ptype="SUBCOMMAND" mode="subcommand">
-        <ACTION builtin="clish_nop"/>
+        <ACTION>
+	    python $SONIC_CLI_ROOT/sonic-cli-sflow.py post_sonic_sflow_sonic_sflow_sflow_admin_state down
+        </ACTION>
       </COMMAND>
       <COMMAND name="no sflow agent-id" help="Set default agent-id" ptype="SUBCOMMAND" mode="subcommand">
         <PARAM name="interface" help="Interface name" ptype="STRING"/>

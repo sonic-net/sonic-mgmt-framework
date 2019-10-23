@@ -22,7 +22,7 @@ module sonic-sflow {
         container sonic-sflow {
             container SFLOW_COLLECTOR {
                 list SFLOW_COLLECTOR_LIST {
-                    max-elements 3;
+                    max-elements 2;
                     key "collector_name";
 
                     leaf collector_name {
