@@ -73,7 +73,7 @@ func xfmrHandlerFunc(inParams XfmrParams) (map[string]interface{}, error) {
                                   Indent: "  ", SkipValidation: true,
                                   RFC7951Config: &ygot.RFC7951JSONConfig{ AppendModuleName: false, },
                                   })
-    err = json.Unmarshal([]byte(payload), &result)
+    err = json.Unmarshal([]byte(payload), result)
     return result, err
 }
 
@@ -707,8 +707,8 @@ func dbDataToYangJsonCreate(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db
 				} else if yangType == YANG_CONTAINER {
 					cname := xYangSpecMap[reqXpath].yangEntry.Name
 					cmap  := make(map[string]interface{})
-					resultMap[cname] = cmap
 					if validateHandlerFlag || tableXfmrFlag {
+                        resultMap[cname] = cmap
 						break
 					}
 					if len(xYangSpecMap[reqXpath].xfmrFunc) > 0 {

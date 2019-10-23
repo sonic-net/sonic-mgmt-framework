@@ -258,16 +258,84 @@ func exec_vtysh_cmd (vtysh_cmd string) (map[string]interface{}, error) {
 
 func fill_nbr_state_info (nbrAddr string, nbrDataValue interface{},
                           nbr_obj *ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Neighbors_Neighbor) {
-    nbr_obj.State.NeighborAddress = &nbrAddr
+    nbrState := nbr_obj.State
+
+    nbrState.NeighborAddress = &nbrAddr
 
     nbrDataJson := nbrDataValue.(map[string]interface{})
 
-    switch bgp_session_state := nbrDataJson["bgpState"] ; bgp_session_state {
-        case "Established":
-            log.Infof("bgp_session_state for nbrAddr:%s ==> %s", nbrAddr, bgp_session_state)
-            nbr_obj.State.SessionState = ocbinds.OpenconfigBgp_Bgp_Neighbors_Neighbor_State_SessionState_ESTABLISHED
-        default:
-            log.Infof("bgp_session_state for nbrAddr:%s ==> %s", nbrAddr, bgp_session_state)
+    if value, ok := nbrDataJson["bgpState"] ; ok {
+        switch value {
+            case "Idle":
+                nbrState.SessionState = ocbinds.OpenconfigBgp_Bgp_Neighbors_Neighbor_State_SessionState_IDLE
+            case "Connect":
+                nbrState.SessionState = ocbinds.OpenconfigBgp_Bgp_Neighbors_Neighbor_State_SessionState_CONNECT
+            case "Active":
+                nbrState.SessionState = ocbinds.OpenconfigBgp_Bgp_Neighbors_Neighbor_State_SessionState_ACTIVE
+            case "OpenSent":
+                nbrState.SessionState = ocbinds.OpenconfigBgp_Bgp_Neighbors_Neighbor_State_SessionState_OPENSENT
+            case "OpenConfirm":
+                nbrState.SessionState = ocbinds.OpenconfigBgp_Bgp_Neighbors_Neighbor_State_SessionState_OPENCONFIRM
+            case "Established":
+                nbrState.SessionState = ocbinds.OpenconfigBgp_Bgp_Neighbors_Neighbor_State_SessionState_ESTABLISHED
+            default:
+                log.Infof("bgp_session_state for nbrAddr:%s ==> %s", nbrAddr, value)
+        }
+    }
+
+    if value, ok := nbrDataJson["localAs"] ; ok {
+        _localAs := uint32(value.(float64))
+        nbrState.LocalAs = &_localAs
+    }
+
+    if value, ok := nbrDataJson["remoteAs"] ; ok {
+        _peerAs := uint32(value.(float64))
+        nbrState.PeerAs = &_peerAs
+    }
+
+    if value, ok := nbrDataJson["bgpTimerUpEstablishedEpoch"] ; ok {
+        _lastEstablished := uint64(value.(float64))
+        nbrState.LastEstablished = &_lastEstablished
+    }
+
+    if value, ok := nbrDataJson["connectionsEstablished"] ; ok {
+        _establishedTransitions := uint64(value.(float64))
+        nbrState.EstablishedTransitions = &_establishedTransitions
+    }
+
+    if statsMap, ok := nbrDataJson["messageStats"].(map[string]interface{}) ; ok {
+        var _rcvd_msgs ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Neighbors_Neighbor_State_Messages_Received
+        var _sent_msgs ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Neighbors_Neighbor_State_Messages_Sent
+        var fill bool
+
+        if value, ok := statsMap["updatesRecv"] ; ok {
+            _updates_rcvd := uint64(value.(float64))
+            _rcvd_msgs.UPDATE = &_updates_rcvd
+            fill = true
+        }
+        if value, ok := statsMap["notificationsRecv"] ; ok {
+            _notifs_rcvd := uint64(value.(float64))
+            _rcvd_msgs.NOTIFICATION = &_notifs_rcvd
+            fill = true
+        }
+        if value, ok := statsMap["updatesSent"] ; ok {
+            _updates_sent := uint64(value.(float64))
+            _sent_msgs.UPDATE = &_updates_sent
+            fill = true
+        }
+        if value, ok := statsMap["notificationsSent"] ; ok {
+            _notifs_sent := uint64(value.(float64))
+            _sent_msgs.NOTIFICATION = &_notifs_sent
+            fill = true
+        }
+
+
+        if fill {
+            var _msgs ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Neighbors_Neighbor_State_Messages
+            _msgs.Received = &_rcvd_msgs
+            _msgs.Sent = &_sent_msgs
+            nbrState.Messages = &_msgs
+        }
     }
 }
 
