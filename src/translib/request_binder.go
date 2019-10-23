@@ -1,7 +1,21 @@
-/*
-Copyright 2019 Broadcom. All rights reserved.
-The term “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
-*/
+////////////////////////////////////////////////////////////////////////////////
+//                                                                            //
+//  Copyright 2019 Broadcom. The term Broadcom refers to Broadcom Inc. and/or //
+//  its subsidiaries.                                                         //
+//                                                                            //
+//  Licensed under the Apache License, Version 2.0 (the "License");           //
+//  you may not use this file except in compliance with the License.          //
+//  You may obtain a copy of the License at                                   //
+//                                                                            //
+//     http://www.apache.org/licenses/LICENSE-2.0                             //
+//                                                                            //
+//  Unless required by applicable law or agreed to in writing, software       //
+//  distributed under the License is distributed on an "AS IS" BASIS,         //
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  //
+//  See the License for the specific language governing permissions and       //
+//  limitations under the License.                                            //
+//                                                                            //
+////////////////////////////////////////////////////////////////////////////////
 
 package translib
 
@@ -15,6 +29,7 @@ import (
 	"github.com/openconfig/ygot/ygot"
 	"github.com/openconfig/ygot/ytypes"
 
+	"github.com/openconfig/goyang/pkg/yang"
 	"translib/ocbinds"
 	"translib/tlerr"
 )
@@ -42,15 +57,17 @@ func initSchema() {
 }
 
 type requestBinder struct {
-	uri             *string
-	payload         *[]byte
-	opcode          int
-	appRootNodeType *reflect.Type
-	pathTmp         *gnmi.Path
+	uri                *string
+	payload            *[]byte
+	opcode             int
+	appRootNodeType    *reflect.Type
+	pathTmp            *gnmi.Path
+	targetNodePath     *gnmi.Path
+	targetNodeListInst bool
 }
 
 func getRequestBinder(uri *string, payload *[]byte, opcode int, appRootNodeType *reflect.Type) *requestBinder {
-	return &requestBinder{uri, payload, opcode, appRootNodeType, nil}
+	return &requestBinder{uri, payload, opcode, appRootNodeType, nil, nil, false}
 }
 
 func (binder *requestBinder) unMarshallPayload(workObj *interface{}) error {
@@ -79,15 +96,9 @@ func (binder *requestBinder) unMarshallPayload(workObj *interface{}) error {
 func (binder *requestBinder) validateRequest(deviceObj *ocbinds.Device) error {
 	if binder.pathTmp == nil || len(binder.pathTmp.Elem) == 0 {
 		if binder.opcode == UPDATE || binder.opcode == REPLACE {
-			log.Info("validateRequest: path is base node")
-			devObjTmp, ok := (reflect.ValueOf(*deviceObj).Interface()).(ygot.ValidatedGoStruct)
-			if ok == true {
-				err := devObjTmp.Validate(&ytypes.LeafrefOptions{IgnoreMissingData: true})
-				if err != nil {
-					return err
-				}
-			} else {
-				return errors.New("Invalid base Object in the binding: Not able to cast to type ValidatedGoStruct")
+			err := deviceObj.Validate(&ytypes.LeafrefOptions{IgnoreMissingData: true})
+			if err != nil {
+				return err
 			}
 			return nil
 		} else {
@@ -150,6 +161,7 @@ func (binder *requestBinder) unMarshall() (*ygot.GoStruct, *interface{}, error) 
 
 	case UPDATE, REPLACE:
 		var tmpTargetNode *interface{}
+		var ygEntry *yang.Entry
 		if binder.pathTmp != nil {
 			treeNodeList, err2 := ytypes.GetNode(ygSchema.RootSchema(), &deviceObj, binder.pathTmp)
 			if err2 != nil {
@@ -161,6 +173,7 @@ func (binder *requestBinder) unMarshall() (*ygot.GoStruct, *interface{}, error) 
 			}
 
 			tmpTargetNode = &(treeNodeList[0].Data)
+			ygEntry = treeNodeList[0].Schema
 		} else {
 			tmpTargetNode = workObj
 		}
@@ -168,6 +181,43 @@ func (binder *requestBinder) unMarshall() (*ygot.GoStruct, *interface{}, error) 
 		err = binder.unMarshallPayload(tmpTargetNode)
 		if err != nil {
 			return nil, nil, tlerr.TranslibSyntaxValidationError{StatusCode: 400, ErrorStr: err}
+		} else if ygEntry != nil {
+			var workObjIntf interface{}
+			if ygEntry.IsContainer() && binder.targetNodeListInst == false {
+				v := reflect.ValueOf(*tmpTargetNode).Elem()
+				for i := 0; i < v.NumField(); i++ {
+					ft := v.Type().Field(i)
+					tagVal, _ := ft.Tag.Lookup("path")
+					if len(binder.targetNodePath.Elem) > 0 && tagVal == binder.targetNodePath.Elem[0].Name {
+						fv := v.Field(i)
+						workObjIntf = fv.Interface()
+						break
+					}
+				}
+			} else if ygEntry.IsList() || binder.targetNodeListInst == true {
+				if treeNodeList, err2 := ytypes.GetNode(ygEntry, *tmpTargetNode, binder.targetNodePath); err2 != nil {
+					return nil, nil, tlerr.TranslibSyntaxValidationError{StatusCode: 400, ErrorStr: err2}
+				} else {
+					if len(treeNodeList) == 0 {
+						return nil, nil, tlerr.TranslibSyntaxValidationError{StatusCode: 400, ErrorStr: errors.New("Invalid URI")}
+					}
+					workObjIntf = treeNodeList[0].Data
+				}
+			}
+
+			if workObjIntf != nil {
+				workObj = &workObjIntf
+			} else {
+				return nil, nil, tlerr.TranslibSyntaxValidationError{StatusCode: 400, ErrorStr: errors.New("Target node not found.")}
+			}
+		}
+
+		targetObj, ok := (*tmpTargetNode).(ygot.ValidatedGoStruct)
+		if ok == true {
+			err := targetObj.Validate(&ytypes.LeafrefOptions{IgnoreMissingData: true})
+			if err != nil {
+				return nil, nil, tlerr.TranslibSyntaxValidationError{StatusCode: 400, ErrorStr: err}
+			}
 		}
 
 	default:
@@ -176,8 +226,10 @@ func (binder *requestBinder) unMarshall() (*ygot.GoStruct, *interface{}, error) 
 		}
 	}
 
-	if err = binder.validateRequest(&deviceObj); err != nil {
-		return nil, nil, tlerr.TranslibSyntaxValidationError{StatusCode: 400, ErrorStr: err}
+	if binder.opcode != UPDATE && binder.opcode != REPLACE {
+		if err = binder.validateRequest(&deviceObj); err != nil {
+			return nil, nil, tlerr.TranslibSyntaxValidationError{StatusCode: 400, ErrorStr: err}
+		}
 	}
 
 	return ygotRootObj, workObj, nil
@@ -224,22 +276,24 @@ func (binder *requestBinder) unMarshallUri(deviceObj *ocbinds.Device) (*interfac
 
 	switch binder.opcode {
 	case UPDATE, REPLACE:
-		if ygEntry.IsList() == false || reflect.ValueOf(ygNode).Kind() == reflect.Map {
-			var pathList []*gnmi.PathElem = path.Elem
-
-			gpath := &gnmi.Path{}
-
-			for i := 0; i < (len(pathList) - 1); i++ {
-				log.Info("pathList[i] ", pathList[i])
-				gpath.Elem = append(gpath.Elem, pathList[i])
-			}
-
-			log.Info("modified path is: ", gpath)
-
-			binder.pathTmp = gpath
-		} else {
-			log.Info("ygot type of the node is Map")
+		if ygEntry.IsList() && reflect.ValueOf(ygNode).Kind() != reflect.Map {
+			binder.targetNodeListInst = true
 		}
+		var pathList []*gnmi.PathElem = path.Elem
+
+		gpath := &gnmi.Path{}
+
+		for i := 0; i < (len(pathList) - 1); i++ {
+			log.Info("pathList[i] ", pathList[i])
+			gpath.Elem = append(gpath.Elem, pathList[i])
+		}
+
+		binder.targetNodePath = &gnmi.Path{}
+		binder.targetNodePath.Elem = append(binder.targetNodePath.Elem, pathList[(len(pathList)-1)])
+
+		log.Info("modified path is: ", gpath)
+
+		binder.pathTmp = gpath
 	}
 
 	if (binder.opcode == GET || binder.opcode == DELETE) && (ygEntry.IsLeaf() == false && ygEntry.IsLeafList() == false) {

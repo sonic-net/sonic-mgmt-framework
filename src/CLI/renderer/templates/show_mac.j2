@@ -1,0 +1,7 @@
+{{'-----------------------------------------------------------'}}
+{{'VLAN'.ljust(12)}} {{'MAC-ADDRESS'.ljust(20)}}{{'TYPE'.ljust(14)}} {{'INTERFACE'.ljust(20)}}
+{{'-----------------------------------------------------------'}}
+{% for key,value in json_output.items() %}
+{{key.ljust(12)}}{{value['MAC'].ljust(20)}}{{value['Type'].ljust(14)}}{{value['Interface'].ljust(20)}}
+{% endfor %}
+

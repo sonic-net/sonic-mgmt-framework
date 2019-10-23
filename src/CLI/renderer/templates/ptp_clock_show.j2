@@ -1,0 +1,35 @@
+{{'-----------------------------------------------------------'}}
+{{'Attribute'.ljust(21)}} {{'Value/State'}}
+{{'-----------------------------------------------------------'}}
+{% for key,value in json_output.items() %}
+{% if 'domain-number' in value.keys() %}
+{{ 'Domain Number'.ljust(21)}} {{ value['domain-number']}}
+{% endif %}
+{% if 'priority1' in value.keys() %}
+{{ 'Priority1'.ljust(21)}} {{ value['priority1']}}
+{% endif %}
+{% if 'priority2' in value.keys() %}
+{{ 'Priority2'.ljust(21)}} {{ value['priority2']}}
+{% endif %}
+{% if 'two-step-flag' in value.keys() %}
+{{ 'Two Step'.ljust(21)}} {{ value['two-step-flag']}}
+{% endif %}
+{% if 'slave-only' in value.keys() %}
+{{ 'Slave Only'.ljust(21)}} {{ value['slave-only']}}
+{% endif %}
+{% if 'number-ports' in value.keys() %}
+{{ 'Number Ports'.ljust(21)}} {{ value['number-ports']}}
+{% endif %}
+{% if 'clock-quality' in value.keys() %}
+{{ 'Clock Quality:'.ljust(21)}}
+{% if 'clock-class' in value['clock-quality'].keys() %}
+{{ '  Clock Class'.ljust(21)}} {{ value['clock-quality']['clock-class']}}
+{% endif %}
+{% if 'clock-accuracy' in value['clock-quality'].keys() %}
+{{ '  Clock Accuracy'.ljust(21)}} {{ value['clock-quality']['clock-accuracy']}}
+{% endif %}
+{% if 'offset-scaled-log-variance' in value['clock-quality'].keys() %}
+{{ '  Ofst Scaled Log Var'.ljust(21)}} {{ value['clock-quality']['offset-scaled-log-variance']}}
+{% endif %}
+{% endif %}
+{% endfor %}

@@ -23,9 +23,11 @@ import (
 	"fmt"
 	"encoding/json"
 	"github.com/go-redis/redis"
+	toposort "github.com/philopon/go-toposort"
 	"path/filepath"
 	"cvl/internal/yparser"
 	. "cvl/internal/util"
+	"strings"
 )
 
 type CVLValidateType uint
@@ -319,6 +321,13 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (CVLErrorInfo, CVL
 
 		switch cfgDataItem.VOp {
 		case OP_CREATE:
+			//Check max-element constraint 
+			if ret := c.checkMaxElemConstraint(tbl); ret != CVL_SUCCESS {
+				cvlErrObj.ErrCode = CVL_SYNTAX_ERROR
+				cvlErrObj.CVLErrDetails = cvlErrorMap[cvlErrObj.ErrCode]
+				return cvlErrObj, CVL_SYNTAX_ERROR
+			}
+
 			if (c.addTableEntryForMustExp(&cfgDataItem, tbl) != CVL_SUCCESS) {
 				c.addTableDataForMustExp(cfgDataItem.VOp, tbl)
 			}
@@ -511,4 +520,151 @@ func (c *CVL) ValidateKeyData(key string, data string) CVLRetCode {
 //Validate key, field and value
 func (c *CVL) ValidateFields(key string, field string, value string) CVLRetCode {
 	return CVL_NOT_IMPLEMENTED
+}
+
+//Sort list of given tables as per their dependency
+func (c *CVL) SortDepTables(tableList []string) ([]string, CVLRetCode) {
+
+	//Add all the table names in graph nodes
+	graph := toposort.NewGraph(len(tableList))
+	for ti := 0; ti < len(tableList); ti++ {
+		graph.AddNodes(tableList[ti])
+	}
+
+	//Add all the depedency edges for graph nodes
+	for ti :=0; ti < len(tableList); ti++ {
+		for tj :=0; tj < len(tableList); tj++ {
+			if (tableList[ti] == tableList[tj]) {
+				continue
+			}
+
+			for _, leafRefs := range modelInfo.tableInfo[tableList[tj]].leafRef {
+				for _, leafRef := range leafRefs {
+					if (strings.Contains(leafRef, tableList[ti])) {
+						graph.AddEdge(yangToRedisTblName(tableList[tj]),
+						 yangToRedisTblName(tableList[ti]))
+					}
+				}
+			}
+		}
+	}
+
+	//Now perform topological sort
+	result, ret := graph.Toposort()
+	if ret == false {
+		return nil, CVL_ERROR
+	}
+
+	return result, CVL_SUCCESS
+}
+
+//Get the order list(parent then child) of tables in a given YANG module
+//within a single model this is obtained using leafref relation
+func (c *CVL) GetOrderedTables(yangModule string) ([]string, CVLRetCode) {
+	tableList := []string{}
+
+	//Get all the table names under this model
+	for tblName, tblNameInfo := range modelInfo.tableInfo {
+		if (tblNameInfo.modelName == yangModule) {
+			tableList = append(tableList, tblName)
+		}
+	}
+
+	return c.SortDepTables(tableList)
+}
+
+func (c *CVL) addDepTables(tableMap map[string]bool, tableName string) {
+
+	//Mark it is added in list
+	tableMap[tableName] = true
+
+	//Now find all tables referred in leafref from this table
+	for _, leafRefs := range modelInfo.tableInfo[tableName].leafRef {
+		for _, leafRef := range leafRefs {
+			matches := reLeafRef.FindStringSubmatch(leafRef)
+
+			//We have the leafref table name
+			if (matches != nil && len(matches) == 5) { //whole + 4 sub matches
+				c.addDepTables(tableMap, yangToRedisTblName(matches[2])) //call recursively
+			}
+		}
+	}
+}
+
+//Get the list of dependent tables for a given table in a YANG module
+func (c *CVL) GetDepTables(yangModule string, tableName string) ([]string, CVLRetCode) {
+	tableList := []string{}
+	tblMap := make(map[string]bool)
+
+	c.addDepTables(tblMap, tableName)
+
+	for tblName, _ := range tblMap {
+		tableList = append(tableList, tblName)
+	}
+
+	//Add all the table names in graph nodes
+	graph := toposort.NewGraph(len(tableList))
+	for ti := 0; ti < len(tableList); ti++ {
+		graph.AddNodes(tableList[ti])
+	}
+
+	//Add all the depedency edges for graph nodes
+	for ti :=0; ti < len(tableList); ti++ {
+		for tj :=0; tj < len(tableList); tj++ {
+			if (tableList[ti] == tableList[tj]) {
+				continue
+			}
+
+			for _, leafRefs := range modelInfo.tableInfo[tableList[tj]].leafRef {
+				for _, leafRef := range leafRefs {
+					if (strings.Contains(leafRef, tableList[ti]+"/")) {
+						graph.AddEdge(yangToRedisTblName(tableList[tj]),
+						yangToRedisTblName(tableList[ti]))
+					}
+				}
+			}
+		}
+	}
+
+	//Now perform topological sort
+	result, ret := graph.Toposort()
+	if ret == false {
+		return nil, CVL_ERROR
+	}
+
+	return result, CVL_SUCCESS
+}
+
+//Get the dependent data (redis keys) for an entry
+func (c *CVL) GetDepDataForDelete(redisKey string) []string {
+
+	tableName, key := splitRedisKey(redisKey)
+
+	mCmd := map[string]*redis.StringSliceCmd{}
+	pipe := redisClient.Pipeline()
+
+	for  _, refTbl := range modelInfo.tableInfo[tableName].refFromTables {
+		mCmd[refTbl.tableName] = pipe.Keys(fmt.Sprintf("%s|*%s*", refTbl.tableName, key)) //write into pipeline
+	}
+	_, err := pipe.Exec()
+	if err != nil {
+		CVL_LOG(ERROR, "Failed to fetch dependent key details for table %s", tableName)
+	}
+	pipe.Close()
+
+	depKeys := []string{}
+	for tblName, keys := range mCmd {
+		res, err := keys.Result()
+		if (err != nil) {
+			CVL_LOG(ERROR, "Failed to fetch dependent key details for table %s", tblName)
+			continue
+		}
+
+		//Find dependent data for delete recursively
+		for i :=0; i< len(res); i++ {
+			depKeys = append(depKeys, c.GetDepDataForDelete(res[i])...)
+		}
+	}
+
+	return depKeys
 }

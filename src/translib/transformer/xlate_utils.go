@@ -113,20 +113,22 @@ func dbKeyToYangDataConvert(uri string, xpath string, dbKey string, dbKeySep str
 		}
 	}
 
-	var kLvlValList []string
-	keyDataList := strings.Split(dbKey, dbKeySep)
 	keyNameList := yangKeyFromEntryGet(xYangSpecMap[xpath].yangEntry)
 	id          := xYangSpecMap[xpath].keyLevel
+	keyDataList := strings.SplitN(dbKey, dbKeySep, id)
 	uriWithKey  := fmt.Sprintf("%v", xpath)
+	uriWithKeyCreate := true
+	if len(keyDataList) == 0 {
+		keyDataList = append(keyDataList, dbKey)
+	}
 
 	/* if uri contins key, use it else use xpath */
 	if strings.Contains(uri, "[") {
+		uriXpath, _ := XfmrRemoveXPATHPredicates(uri)
+		if (uriXpath == xpath  && (strings.HasSuffix(uri, "]") || strings.HasSuffix(uri, "]/"))) {
+                        uriWithKeyCreate = false
+                }
 		uriWithKey  = fmt.Sprintf("%v", uri)
-	}
-	keyConcat := dbKeySep
-	if len(xYangSpecMap[xpath].delim) > 0 {
-		keyConcat = xYangSpecMap[xpath].delim
-		log.Infof("Found key concatenater(\"%v\") for xpath %v", keyConcat, xpath)
 	}
 
 	if len(xYangSpecMap[xpath].xfmrKey) > 0 {
@@ -137,42 +139,25 @@ func dbKeyToYangDataConvert(uri string, xpath string, dbKey string, dbKeySep str
 			return nil, "", err
 		}
 		rmap := ret[0].Interface().(map[string]interface{})
-		for k, v := range rmap {
-			uriWithKey += fmt.Sprintf("[%v=%v]", k, v)
-		}
+                if uriWithKeyCreate {
+                        for k, v := range rmap {
+                                uriWithKey += fmt.Sprintf("[%v=%v]", k, v)
+                        }
+                }
 		return rmap, uriWithKey, nil
 	}
 
-	if len(keyDataList) == 0 || len(keyNameList) == 0 {
+	if len(keyNameList) == 0 {
 		return nil, "", nil
 	}
 
-	kLvlValList = append(kLvlValList, keyDataList[id])
-
-	if len(keyNameList) > 1 {
-		kLvlValList = strings.Split(keyDataList[id], keyConcat)
-	}
-
-	/* TODO: Need to add leaf-ref related code in here and remove this code*/
-	kvalExceedFlag := false
-	chgId := -1
-	if len(keyNameList) < len(kLvlValList) {
-		kvalExceedFlag = true
-		chgId = len(keyNameList) - 1
-	}
 
 	rmap := make(map[string]interface{})
-	for i, kname := range keyNameList {
-		kval := kLvlValList[i]
-
-		/* TODO: Need to add leaf-ref related code in here and remove this code*/
-		if kvalExceedFlag && (i == chgId) {
-			kval = strings.Join(kLvlValList[chgId:], keyConcat)
-		}
-
-		uriWithKey += fmt.Sprintf("[%v=%v]", kname, kval)
-		rmap[kname] = kval
+	if len(keyNameList) > 1 {
+		log.Infof("No key transformer found for multi element yang key mapping to a single redis key string.")
+	        return rmap, uriWithKey, nil
 	}
+	rmap[keyNameList[0]] = keyDataList[0]
 
 	return rmap, uriWithKey, nil
 }
@@ -232,7 +217,7 @@ func sonicKeyDataAdd(dbIndex db.DBNum, keyNameList []string, keyStr string, resu
 	dbOpts = getDBOptions(dbIndex)
 	keySeparator := dbOpts.KeySeparator
     keyValList := strings.Split(keyStr, keySeparator)
-	
+
     if len(keyNameList) != len(keyValList) {
         return
     }

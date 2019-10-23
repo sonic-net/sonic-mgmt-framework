@@ -415,12 +415,10 @@ func dbDataFromTblXfmrGet(tbl string, inParams XfmrParams, dbDataMap *map[db.DBN
 
 func yangListDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, xpath string, dbDataMap *map[db.DBNum]map[string]map[string]db.Value, resultMap map[string]interface{}, tbl string, tblKey string, cdb db.DBNum, validate bool) error {
 	var tblList []string
-	tblXfmr   := false
 
 	if tbl == "" && xYangSpecMap[xpath].xfmrTbl != nil {
 		xfmrTblFunc := *xYangSpecMap[xpath].xfmrTbl
 		if len(xfmrTblFunc) > 0 {
-			tblXfmr   = true
 			inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, uri, GET, tblKey, dbDataMap, nil)
 			tblList   = xfmrTblHandlerFunc(xfmrTblFunc, inParams)
 			if len(tblList) != 0 {
@@ -429,8 +427,14 @@ func yangListDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, x
 				}
 			}
 		}
-	} else if tbl != "" && !tblXfmr {
+	} else if tbl != "" && xYangSpecMap[xpath].xfmrTbl == nil {
 		tblList = append(tblList, tbl)
+	} else if tbl != "" && xYangSpecMap[xpath].xfmrTbl != nil {
+		/*key instance level GET, table name and table key filled from xpathKeyExtract which internally calls table transformer*/
+		inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, uri, GET, tblKey, dbDataMap, nil)
+		dbDataFromTblXfmrGet(tbl, inParams, dbDataMap)
+		tblList = append(tblList, tbl)
+
 	}
 
 	for _, tbl = range(tblList) {
@@ -472,7 +476,7 @@ func yangListDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, x
 }
 
 func terminalNodeProcess(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, xpath string, dbDataMap *map[db.DBNum]map[string]map[string]db.Value, tbl string, tblKey string) (map[string]interface{}, error) {
-	log.Infof("Received xpath - %v, uri - %v, dbDataMap - %v, table - %v, table key - %v", xpath, uri, (*dbDataMap), tbl, tblKey)
+	log.Infof("Received xpath - %v, uri - %v, table - %v, table key - %v", xpath, uri, tbl, tblKey)
 	var err error
 	resFldValMap := make(map[string]interface{})
 	if xYangSpecMap[xpath].yangEntry == nil {
@@ -563,7 +567,6 @@ func yangDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, xpath
 					if xYangSpecMap[chldXpath].xfmrTbl != nil {
 						xfmrTblFunc := *xYangSpecMap[chldXpath].xfmrTbl
 						if len(xfmrTblFunc) > 0 {
-							//inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, chldUri, GET, "", dbDataMap, nil)
 							inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, chldUri, GET, tblKey, dbDataMap, nil)
 							tblList := xfmrTblHandlerFunc(xfmrTblFunc, inParams)
 							if len(tblList) > 1 {
@@ -641,7 +644,7 @@ func dbDataToYangJsonCreate(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db
 				res := validateHandlerFunc(inParams)
 				if !res {
 					validateHandlerFlag = true
-					/* cannot immediately return from her since reXpath yangtype decides the return type */
+					/* cannot immediately return from here since reXpath yangtype decides the return type */
 				} else {
 					IsValidate = res
 				}
@@ -719,20 +722,9 @@ func dbDataToYangJsonCreate(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db
 				break
                         } else if yangType == YANG_LIST {
 				var err error
-				var logStr string
-                                if xYangSpecMap[reqXpath].xfmrTbl != nil {
-                                        /* pass empty table string since in case of list table transformer can have multiple tables returned,
-                                           which are already being fetched and handled in yangListDataFill
-                                        */
-					err = yangListDataFill(dbs, ygRoot, uri, reqXpath, dbDataMap, resultMap, "", keyName, cdb, IsValidate)
-					logStr = fmt.Sprintf("yangListDataFill failed for list case(\"%v\").\r\n", uri)
-                                } else {
-					err = yangDataFill(dbs, ygRoot, uri, reqXpath, dbDataMap, resultMap, tableName, keyName, cdb, IsValidate)
-					logStr = fmt.Sprintf("yangDataFill failed for list(\"%v\").\r\n", uri)
-
-				}
+			        err = yangListDataFill(dbs, ygRoot, uri, reqXpath, dbDataMap, resultMap, tableName, keyName, cdb, IsValidate)
 				if err != nil {
-                                        log.Infof("%v", logStr)
+                                        log.Infof("yangListDataFill failed for list case(\"%v\").\r\n", uri)
                                 }
 				break
 			} else {

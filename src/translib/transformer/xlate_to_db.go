@@ -60,6 +60,7 @@ func dataToDBMapAdd(tableName string, dbKey string, result map[string]map[string
 
 	if field == "NONE" {
 		result[tableName][dbKey].Field["NULL"] = "NULL"
+		return
 	}
 
     result[tableName][dbKey].Field[field] = value
@@ -344,7 +345,6 @@ func sonicYangReqToDbMapDelete(xpathPrefix string, tableName string, keyName str
 			       dbVal.Field = make(map[string]string)
 			       dbVal.Field[fieldName] = ""
 		       }
-
 	       }
 	    }
             result[tableName][keyName] = dbVal
@@ -367,8 +367,7 @@ func sonicYangReqToDbMapDelete(xpathPrefix string, tableName string, keyName str
     return nil
 }
 
-/* Get the data from incoming update/replace request, create map and fill with dbValue(ie. field:value
-to write into redis-db */
+/* Get the data from incoming update/replace request, create map and fill with dbValue(ie. field:value to write into redis-db */
 func dbMapUpdate(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, jsonData interface{}, result map[string]map[string]db.Value) error {
     log.Infof("Update/replace req: path(\"%v\").", path)
     dbMapCreate(d, ygRoot, oper, path, jsonData, result)
@@ -377,8 +376,7 @@ func dbMapUpdate(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, jsonDat
     return nil
 }
 
-/* Get the data from incoming create request, create map and fill with dbValue(ie. field:value
-to write into redis-db */
+/* Get the data from incoming create request, create map and fill with dbValue(ie. field:value to write into redis-db */
 func dbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, jsonData interface{}, result map[string]map[string]db.Value) error {
 	var err error
 	root := xpathRootNameGet(path)
@@ -426,7 +424,6 @@ func yangNodeForUriGet(uri string, ygRoot *ygot.GoStruct) (interface{}, error) {
 	ocbSch, _ := ocbinds.Schema()
 	schRoot := ocbSch.RootSchema()
 	node, nErr := ytypes.GetNode(schRoot, (*ygRoot).(*ocbinds.Device), path)
-	//log.Info("GetNode data: ", node[0].Data, " nErr :", nErr)
 	if nErr != nil {
 		return nil, nErr
 	}
@@ -450,10 +447,10 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
 	    _, ok := xYangSpecMap[xpathPrefix]
             if ok && len(xYangSpecMap[xpathPrefix].xfmrKey) > 0 {
                 /* key transformer present */
-				curYgotNode, nodeErr := yangNodeForUriGet(curUri, ygRoot)
-				if nodeErr != nil {
-					curYgotNode = nil
-				}
+			curYgotNode, nodeErr := yangNodeForUriGet(curUri, ygRoot)
+			if nodeErr != nil {
+				curYgotNode = nil
+			}
 		        inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, curUri, oper, "", nil, curYgotNode)
                 ret, err := XlateFuncCall(yangToDbXfmrFunc(xYangSpecMap[xpathPrefix].xfmrKey), inParams)
                 if err != nil {
@@ -565,14 +562,18 @@ func sonicXpathKeyExtract(path string) (string, string, string) {
 		cdb := db.ConfigDB
 		if !ok {
 			log.Infof("No entry in xDbSpecMap for xpath %v in order to fetch DB index.", tableName)
-		} else {
-			cdb = dbInfo.dbIndex
+			return xpath, keyStr, tableName
 		}
+		cdb = dbInfo.dbIndex
 		dbOpts := getDBOptions(cdb)
-		for i, kname := range rgp.FindAllString(path, -1) {
-			if i > 0 { keyStr += dbOpts.KeySeparator }
-			val := strings.Split(kname, "=")[1]
-			keyStr += strings.TrimRight(val, "]")
+		if dbInfo.keyName != nil {
+			keyStr = *dbInfo.keyName
+		} else {
+			for i, kname := range rgp.FindAllString(path, -1) {
+				if i > 0 { keyStr += dbOpts.KeySeparator }
+				val := strings.Split(kname, "=")[1]
+				keyStr += strings.TrimRight(val, "]")
+			}
 		}
 	}
 	return xpath, keyStr, tableName
@@ -640,6 +641,7 @@ func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string) (st
         }
         curPathWithKey += "/"
     }
+    curPathWithKey = strings.TrimSuffix(curPathWithKey, "/")
     tblPtr     := xpathInfo.tableName
     if tblPtr != nil {
         tableName = *tblPtr
