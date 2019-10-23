@@ -8,16 +8,6 @@ module sonic-fdb-annot {
     import ietf-yang-types { prefix yang; }
     import sonic-fdb { prefix sfdb; }
 
-    deviation /sfdb:sonic-fdb {
-      deviate add {
-      }
-    }
-
-    deviation /sfdb:sonic-fdb/sfdb:FDB_TABLE {
-      deviate add {
-      }
-    }
-
     deviation /sfdb:sonic-fdb/sfdb:FDB_TABLE/sfdb:FDB_TABLE_LIST {
       deviate add {
             sonic-ext:db-name "APPL_DB";
