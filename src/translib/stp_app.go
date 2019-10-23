@@ -1047,16 +1047,18 @@ func (app *StpApp) convertDBRpvstVlanInterfaceToInternal(d *db.DB, vlanName stri
 	var err error
 	if vlanInterfaceKey.Len() > 1 {
 		rpvstVlanIntfConf, err := d.GetEntry(app.vlanIntfTable, asKey(vlanName, intfId))
-		if err != nil {
-			return err
-		}
 		if app.vlanIntfTableMap[vlanName] == nil {
 			app.vlanIntfTableMap[vlanName] = make(map[string]db.Value)
 		}
-		app.vlanIntfTableMap[vlanName][intfId] = rpvstVlanIntfConf
+		if err == nil {
+			app.vlanIntfTableMap[vlanName][intfId] = rpvstVlanIntfConf
+		}
 		// Collect operational info from application DB
 		if doGetOperData {
 			err = app.convertApplDBRpvstVlanInterfaceToInternal(vlanName, intfId)
+		}
+		if err != nil {
+			return err
 		}
 	} else {
 		keys, err := d.GetKeys(app.vlanIntfTable)
@@ -1090,13 +1092,18 @@ func (app *StpApp) convertInternalToOCRpvstVlanInterface(vlanName string, intfId
 			}
 		}
 
-		num, _ = strconv.ParseUint((&dbVal).Get("path_cost"), 10, 32)
-		cost := uint32(num)
-		rpvstVlanIntfConf.Config.Cost = &cost
+		var err error
+		num, err = strconv.ParseUint((&dbVal).Get("path_cost"), 10, 32)
+		if err == nil {
+			cost := uint32(num)
+			rpvstVlanIntfConf.Config.Cost = &cost
+		}
 
-		num, _ = strconv.ParseUint((&dbVal).Get("priority"), 10, 8)
-		portPriority := uint8(num)
-		rpvstVlanIntfConf.Config.PortPriority = &portPriority
+		num, err = strconv.ParseUint((&dbVal).Get("priority"), 10, 8)
+		if err == nil {
+			portPriority := uint8(num)
+			rpvstVlanIntfConf.Config.PortPriority = &portPriority
+		}
 
 		rpvstVlanIntfConf.Config.Name = &intfId
 	}
@@ -1292,13 +1299,18 @@ func (app *StpApp) convertInternalToOCPvstVlanInterface(vlanName string, intfId 
 			}
 		}
 
-		num, _ = strconv.ParseUint((&dbVal).Get("path_cost"), 10, 32)
-		cost := uint32(num)
-		pvstVlanIntf.Config.Cost = &cost
+		var err error
+		num, err = strconv.ParseUint((&dbVal).Get("path_cost"), 10, 32)
+		if err == nil {
+			cost := uint32(num)
+			pvstVlanIntf.Config.Cost = &cost
+		}
 
-		num, _ = strconv.ParseUint((&dbVal).Get("priority"), 10, 8)
-		portPriority := uint8(num)
-		pvstVlanIntf.Config.PortPriority = &portPriority
+		num, err = strconv.ParseUint((&dbVal).Get("priority"), 10, 8)
+		if err == nil {
+			portPriority := uint8(num)
+			pvstVlanIntf.Config.PortPriority = &portPriority
+		}
 
 		pvstVlanIntf.Config.Name = &intfId
 	}
@@ -1580,10 +1592,10 @@ func (app *StpApp) convertOperInternalToOCVlanInterface(vlanName string, intfId 
 					pvstVlanIntf, _ = pvstVlan.Interfaces.NewInterface(intfId)
 				}
 				ygot.BuildEmptyTree(pvstVlanIntf)
-				ygot.BuildEmptyTree(pvstVlanIntf.State)
 			} else {
 				pvstVlanIntf, _ = vlanIntf.(*ocbinds.OpenconfigSpanningTree_Stp_Pvst_Vlan_Interfaces_Interface)
 			}
+			ygot.BuildEmptyTree(pvstVlanIntf.State)
 		case "OpenconfigSpanningTree_Stp_RapidPvst_Vlan":
 			rpvstVlan, _ = vlan.(*ocbinds.OpenconfigSpanningTree_Stp_RapidPvst_Vlan)
 			if vlanIntf == nil {
@@ -1592,10 +1604,10 @@ func (app *StpApp) convertOperInternalToOCVlanInterface(vlanName string, intfId 
 					rpvstVlanIntf, _ = rpvstVlan.Interfaces.NewInterface(intfId)
 				}
 				ygot.BuildEmptyTree(rpvstVlanIntf)
-				ygot.BuildEmptyTree(rpvstVlanIntf.State)
 			} else {
 				rpvstVlanIntf, _ = vlanIntf.(*ocbinds.OpenconfigSpanningTree_Stp_RapidPvst_Vlan_Interfaces_Interface)
 			}
+			ygot.BuildEmptyTree(rpvstVlanIntf.State)
 		}
 
 		operDbVal := app.vlanIntfOperTableMap[vlanName][intfId]
@@ -1972,6 +1984,10 @@ func removeStpConfigOnVlanDeletion(d *db.DB, vlanList []string) {
 // on which switchport is enabled
 func enableStpOnInterfaceVlanMembership(d *db.DB, intfList []string) {
 	if len(intfList) == 0 {
+		return
+	}
+	_, serr := d.GetEntry(&db.TableSpec{Name: STP_GLOBAL_TABLE}, asKey("GLOBAL"))
+	if serr != nil {
 		return
 	}
 	log.Infof("enableStpOnInterfaceVlanMembership --> Enable Stp on Interfaces: %v", intfList)
