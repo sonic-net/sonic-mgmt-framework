@@ -7,7 +7,6 @@ import (
     "translib/ocbinds"
 )
 
-
 func init () {
     XlateFuncBind("YangToDb_fdb_tbl_key_xfmr", YangToDb_fdb_tbl_key_xfmr)
     XlateFuncBind("DbToYang_fdb_tbl_key_xfmr", DbToYang_fdb_tbl_key_xfmr)
@@ -70,14 +69,7 @@ var DbToYang_fdb_tbl_key_xfmr KeyXfmrDbToYang = func(inParams XfmrParams) (map[s
 var YangToDb_entry_type_field_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
     res_map := make(map[string]string)
     var err error
-    /*if inParams.param == nil {
-        res_map[ENTRY_TYPE] = ""
-	return res_map, err
-    }
 
-    entrytype, _ := inParams.param.(ocbinds.E_OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Fdb_MacTable_Entries_Entry_State_EntryType)
-    res_map[ENTRY_TYPE] = findInMap(FDB_ENTRY_TYPE_MAP, strconv.FormatInt(int64(entrytype), 10))
-    */
     return res_map, err
 }
 
@@ -87,16 +79,19 @@ var DbToYang_entry_type_field_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams)
     data := (*inParams.dbDataMap)[inParams.curDb]
     fdbTableMap := data["FDB_TABLE"]
     var entryTypeFinal = ""
-    for k, v := range fdbTableMap {
-        if inParams.key == k {
-            entryType, ok := v.Field["type"]
-	    if ok {
-		entryTypeFinal = entryType
-	    }
+    v, k := fdbTableMap[inParams.key]
+    if val, keyExist := fdbTableMap[inParams.key]; keyExist {
+        if entryType, ok := val.Field["type"]; ok {
+            entryTypeFinal = entryType
+        } else {
+            return result, err
         }
+    } else {
+        return result, err
     }
     oc_entrytype := findInMap(FDB_ENTRY_TYPE_MAP, entryTypeFinal)
     n, err := strconv.ParseInt(oc_entrytype, 10, 64)
     result[ENTRY_TYPE] = ocbinds.E_OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Fdb_MacTable_Entries_Entry_State_EntryType(n).ΛMap()["E_OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Fdb_MacTable_Entries_Entry_State_EntryType"][n].Name
+
     return result, err
 }
