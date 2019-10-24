@@ -325,7 +325,6 @@ func annotEntryFill(xYangSpecMap map[string]*yangXpathInfo, xpath string, entry 
 				}
 				*xpathData.tableName = ext.NName()
 				updateDbTableData(xpath, xpathData, *xpathData.tableName)
-				//childToUpdateParent(xpath, *xpathData.tableName)
 			case "key-name" :
 				if xpathData.keyName == nil {
 					xpathData.keyName = new(string)
@@ -579,6 +578,7 @@ func updateSchemaOrderedMap(module string, entry *yang.Entry) {
 			}
 		}
 	}
+	xDbSpecOrdTblMap[module] = children
 }
 
 func updateChildTable(keyspec []KeySpec, chlist *[]string) ([]string) {

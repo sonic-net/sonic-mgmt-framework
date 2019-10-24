@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CLISH_MODULE xmlns="http://www.dellemc.com/sonic/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xi="http://www.w3.org/2001/XInclude" xsi:schemaLocation="http://www.dellemc.com/sonic/XMLSchema http://www.dellemc.com/sonic/XMLSchema/clish.xsd">
+  <VIEW name="enable-view">
+    <!--show ptp -->
+    <COMMAND name="show ptp" help="Show PTP config info/status">
+      <PARAM name="ptp-subcommands" help="PTP subcommands" mode="switch" ptype="SUBCOMMAND" optional="true">
+        <PARAM name="time-property" help="time property" ptype="SUBCOMMAND" mode="subcommand"> </PARAM>
+        <PARAM name="clock" help="clock" ptype="SUBCOMMAND" mode="subcommand"> </PARAM>
+        <PARAM name="parent" help="parent" ptype="SUBCOMMAND" mode="subcommand"> </PARAM>
+        <PARAM name="port" help="PTP port config" ptype="SUBCOMMAND" mode="subcommand">
+          <PARAM name="Ethernet" help="Interface type" ptype="SUBCOMMAND" mode="subcommand">
+            <PARAM name="ptp_port_number" help="Enter PTP number" ptype="UINT"/>
+          </PARAM>
+          <PARAM name="ptp_port_mode" help="Enter ptp port mode" ptype="PTP_PORT_MODE"/>
+        </PARAM>
+        <PARAM name="foreign-masters-record" help="foreign masters record" ptype="SUBCOMMAND" mode="subcommand"> </PARAM>
+      </PARAM>
+      <ACTION>if test "${ptp-subcommands}" = "time-property"; then&#xA;
+ python $SONIC_CLI_ROOT/sonic-cli-ptp.py get_ietf_ptp_ptp_instance_list_time_properties_ds 0 ptp_tp_show.j2 &#xA;
+ elif test "${ptp-subcommands}" = "clock"; then&#xA;
+ python $SONIC_CLI_ROOT/sonic-cli-ptp.py get_ietf_ptp_ptp_instance_list_default_ds 0 ptp_clock_show.j2 &#xA;
+ elif test "${ptp-subcommands}" = "parent"; then&#xA;
+ python $SONIC_CLI_ROOT/sonic-cli-ptp.py get_ietf_ptp_ptp_instance_list_parent_ds 0 ptp_parent_show.j2 &#xA;
+ elif test "${ptp-subcommands}" = "foreign-masters-record"; then&#xA;
+ echo "nothing"&#xA;
+ elif test "${ptp-subcommands}" = "port"; then&#xA;
+ python $SONIC_CLI_ROOT/sonic-cli-ptp.py get_ietf_ptp_ptp_instance_list_port_ds_list 0 ${ptp_port_number} ptp_port_show.j2 &#xA;
+ elif test "${ptp-subcommands}" = ""; then&#xA;
+ python $SONIC_CLI_ROOT/sonic-cli-ptp.py get_ietf_ptp_ptp_instance_list 0 ptp_show.j2&#xA; 
+ else&#xA;
+ python $SONIC_CLI_ROOT/sonic-cli-ptp.py get_ietf_ptp_ptp_instance_list 0 ptp_port_show.j2 &#xA;
+ fi&#xA;
+      </ACTION>
+    </COMMAND>
+  </VIEW>
+  <VIEW name="configure-view">
+    <COMMAND name="ptp" help="PTP commands">
+      <PARAM name="cfg-ptp-subcommands" help="PTP subcommands" mode="switch" ptype="SUBCOMMAND">
+        <PARAM name="mode" help="PTP mode" ptype="SUBCOMMAND" mode="subcommand">
+          <PARAM name="mode_type" help="Enter ptp mode" ptype="PTP_MODE"/>
+        </PARAM>
+        <PARAM name="delay-mechanism" help="PTP delay mechanism" ptype="SUBCOMMAND" mode="subcommand">
+          <PARAM name="ptp_delay_mechanism_type" help="Enter PTP delay mechanism type" ptype="PTP_DELAY_MECHANISM"/>
+        </PARAM>
+        <PARAM name="network-transport" help="PTP network transport" ptype="SUBCOMMAND" mode="subcommand">
+          <PARAM name="ptp_network_transport_type" help="Enter PTP network transport type" ptype="PTP_TRANSPORT"/>
+        </PARAM>
+        <PARAM name="source-ip" help="PTP source ip address" ptype="SUBCOMMAND" mode="subcommand">
+          <PARAM name="ptp_source_ip" help="Enter PTP source IP address" ptype="IPV4_OR_IPV6_ADDR"/>
+        </PARAM>
+        <PARAM name="domain" help="PTP domain" ptype="SUBCOMMAND" mode="subcommand">
+          <PARAM name="ptp_domain" help="Enter PTP domain value" ptype="RANGE_1_255"/>
+        </PARAM>
+        <PARAM name="domain-profile" help="PTP domain profile" ptype="SUBCOMMAND" mode="subcommand">
+          <PARAM name="ptp_domain_profile" help="Enter PTP domain profile type" ptype="PTP_DOMAIN_PROFILE"/>
+        </PARAM>
+        <PARAM name="two-step" help="PTP two step enable" ptype="SUBCOMMAND" mode="subcommand">
+          <PARAM name="ptp_two_step" help="Enable/Disable " ptype="ENA_DISA"/>
+        </PARAM>
+        <PARAM name="priority1" help="PTP priority1" ptype="SUBCOMMAND" mode="subcommand">
+          <PARAM name="ptp_priority1" help="Enter PTP priority1 value" ptype="RANGE_1_255"/>
+        </PARAM>
+        <PARAM name="priority2" help="PTP priority2" ptype="SUBCOMMAND" mode="subcommand">
+          <PARAM name="ptp_priority2" help="Enter PTP priority2 value" ptype="RANGE_1_255"/>
+        </PARAM>
+        <PARAM name="log-announce-interval" help="PTP announce interval" ptype="SUBCOMMAND" mode="subcommand">
+          <PARAM name="ptp_announce_interval" help="Enter PTP announce interval value" ptype="RANGE_1_255"/>
+        </PARAM>
+        <PARAM name="announce-timeout" help="PTP announce timeout" ptype="SUBCOMMAND" mode="subcommand">
+          <PARAM name="ptp_announce_timeout" help="Enter PTP announce timeout value" ptype="RANGE_1_255"/>
+        </PARAM>
+        <PARAM name="log-sync-interval" help="PTP sync interval" ptype="SUBCOMMAND" mode="subcommand">
+          <PARAM name="ptp_sync_interval" help="Enter PTP sync interval value" ptype="RANGE_1_255"/>
+        </PARAM>
+        <PARAM name="log-min-delay-req-interval" help="PTP delay request interval" ptype="SUBCOMMAND" mode="subcommand">
+          <PARAM name="ptp_delay_request_interval" help="Enter PTP delay request interval value" ptype="RANGE_1_255"/>
+        </PARAM>
+        <PARAM name="port" help="PTP port config" ptype="SUBCOMMAND" mode="subcommand">
+          <PARAM name="cfg-ptp-port-subcommands" help="PTP subcommands" mode="switch" ptype="SUBCOMMAND">
+            <PARAM name="add" help="Add Interface" ptype="SUBCOMMAND" mode="subcommand"/>
+            <PARAM name="del" help="Add Interface" ptype="SUBCOMMAND" mode="subcommand"/>
+          </PARAM>
+          <PARAM name="Ethernet" help="Interface type" ptype="SUBCOMMAND" mode="subcommand">
+            <PARAM name="ptp_port_number" help="Enter PTP number" ptype="UINT"/>
+          </PARAM>
+        </PARAM>
+      </PARAM>
+      <ACTION> if test "${cfg-ptp-subcommands}" = "mode"; then&#xA;
+ python $SONIC_CLI_ROOT/sonic-cli-ptp.py "clock-type" ${mode_type}&#xA;
+ elif test "${cfg-ptp-subcommands}" = "delay-mechanism"; then&#xA;
+ python $SONIC_CLI_ROOT/sonic-cli-ptp.py patch_ietf_ptp_ptp_transparent_clock_default_ds_delay_mechanism ${ptp_delay_mechanism_type}&#xA;
+ elif test "${cfg-ptp-subcommands}" = "network-transport"; then&#xA;
+ python $SONIC_CLI_ROOT/sonic-cli-ptp.py "network-transport" ${ptp_network_transport_type}&#xA;
+ elif test "${cfg-ptp-subcommands}" = "source-ip"; then&#xA;
+ python $SONIC_CLI_ROOT/sonic-cli-ptp.py "source-ip" ${ptp_source_ip}&#xA;
+ elif test "${cfg-ptp-subcommands}" = "domain"; then&#xA;
+ python $SONIC_CLI_ROOT/sonic-cli-ptp.py patch_ietf_ptp_ptp_instance_list_default_ds_domain_number 0 ${ptp_domain}&#xA;
+ elif test "${cfg-ptp-subcommands}" = "domain-profile"; then&#xA;
+ python $SONIC_CLI_ROOT/sonic-cli-ptp.py "domain-profile" ${ptp_domain_profile}&#xA;
+ elif test "${cfg-ptp-subcommands}" = "two-step"; then&#xA;
+ python $SONIC_CLI_ROOT/sonic-cli-ptp.py patch_ietf_ptp_ptp_instance_list_default_ds_two_step_flag 0 ${ptp_two_step}&#xA;
+ elif test "${cfg-ptp-subcommands}" = "priority1"; then&#xA;
+ python $SONIC_CLI_ROOT/sonic-cli-ptp.py patch_ietf_ptp_ptp_instance_list_default_ds_priority1 0 ${ptp_priority1}&#xA;
+ elif test "${cfg-ptp-subcommands}" = "priority2"; then&#xA;
+ python $SONIC_CLI_ROOT/sonic-cli-ptp.py patch_ietf_ptp_ptp_instance_list_default_ds_priority2 0 ${ptp_priority2}&#xA;
+ elif test "${cfg-ptp-subcommands}" = "log-announce-interval"; then&#xA;
+ python $SONIC_CLI_ROOT/sonic-cli-ptp.py "log-announce-interval" ${ptp_announce_interval}&#xA;
+ elif test "${cfg-ptp-subcommands}" = "announce-timeout"; then&#xA;
+ python $SONIC_CLI_ROOT/sonic-cli-ptp.py "announce-receipt-timeout" ${ptp_announce_timeout}&#xA;
+ elif test "${cfg-ptp-subcommands}" = "log-sync-interval"; then&#xA;
+ python $SONIC_CLI_ROOT/sonic-cli-ptp.py "log-sync-interval" ${ptp_sync_interval}&#xA;
+ elif test "${cfg-ptp-subcommands}" = "log-min-delay-req-interval"; then&#xA;
+ python $SONIC_CLI_ROOT/sonic-cli-ptp.py "log-min-delay-req-interval" ${ptp_delay_request_interval}&#xA;
+ elif test "${cfg-ptp-subcommands}" = "port"; then&#xA;
+ if test "${add}" = "add"; then&#xA;
+ python $SONIC_CLI_ROOT/sonic-cli-ptp.py "add_port" ${Ethernet}${ptp_port_number}&#xA;
+ elif test "${del}" = "del"; then&#xA;
+ python $SONIC_CLI_ROOT/sonic-cli-ptp.py "del_port" ${Ethernet}${ptp_port_number}&#xA;
+ fi&#xA;
+ fi&#xA;
+      </ACTION>
+    </COMMAND>
+  </VIEW>
+</CLISH_MODULE>

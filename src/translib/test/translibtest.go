@@ -31,7 +31,7 @@ import (
 
 func main() {
     var err error
-    operationPtr := flag.String("o", "get", "Operation: create,update,replace,delete,get,getmodels,subscribe,supportsubscribe")
+    operationPtr := flag.String("o", "get", "Operation: create,update,replace,delete,get,action,getmodels,subscribe,supportsubscribe")
     uriPtr := flag.String("u", "", "URI string")
     payloadFilePtr := flag.String("p", "", "JSON payload file")
     flag.Parse()
@@ -59,6 +59,10 @@ func main() {
 	} else if *operationPtr == "get" {
 		req := translib.GetRequest{Path:*uriPtr}
 		resp, _ := translib.Get(req)
+		log.Info("Response payload =", string(resp.Payload))
+	} else if *operationPtr == "action" {
+		req := translib.ActionRequest{Path:*uriPtr}
+		resp, _ := translib.Action(req)
 		log.Info("Response payload =", string(resp.Payload))
 	} else if *operationPtr == "getmodels" {
 		models,_ := translib.GetModels()
