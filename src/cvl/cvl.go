@@ -1034,7 +1034,7 @@ func (c *CVL) checkDeleteConstraint(cfgData []CVLEditConfigData,
 		for _, cfgDataItem := range cfgData {
 			if (cfgDataItem.VType == VALIDATE_NONE) &&
 			(cfgDataItem.VOp == OP_DELETE ) &&
-			(strings.HasPrefix(cfgDataItem.Key, (leafRef.tableName + modelInfo.tableInfo[leafRef.tableName].redisKeyDelim + keyVal + modelInfo.tableInfo[leafRef.tableName].redisKeyDelim))) {
+			(strings.HasPrefix(cfgDataItem.Key, (leafRef.tableName + modelInfo.tableInfo[leafRef.tableName].redisKeyDelim + keyVal))) {
 				//Currently, checking for one entry is being deleted in same session
 				//We should check for all entries
 				leafRefDeleted = true
