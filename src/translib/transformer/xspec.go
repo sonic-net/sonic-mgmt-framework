@@ -93,7 +93,7 @@ func yangToDbMapFill (keyLevel int, xYangSpecMap map[string]*yangXpathInfo, entr
 	}
 
 	xpathData.yangDataType = entry.Node.Statement().Keyword
-	if entry.Node.Statement().Keyword == "list"  && xpathData.tableName != nil {
+	if (xpathData.tableName != nil && *xpathData.tableName != "") {
 		childToUpdateParent(xpath, *xpathData.tableName)
 	}
 
@@ -303,9 +303,14 @@ func childToUpdateParent( xpath string, tableName string) {
 		xpathData = new(yangXpathInfo)
 		xYangSpecMap[parent] = xpathData
 	}
-	xYangSpecMap[parent].childTable = append(xYangSpecMap[parent].childTable, tableName)
-	if xYangSpecMap[parent].yangEntry != nil &&
-	   xYangSpecMap[parent].yangEntry.Node.Statement().Keyword == "list" {
+
+       parentXpathData := xYangSpecMap[parent]
+       if !contains(parentXpathData.childTable, tableName) {
+               parentXpathData.childTable = append(parentXpathData.childTable, tableName)
+       }
+
+       if parentXpathData.yangEntry != nil && parentXpathData.yangEntry.Node.Statement().Keyword == "list" &&
+       (parentXpathData.tableName != nil || parentXpathData.xfmrTbl != nil) {
 		return
 	}
 	childToUpdateParent(parent, tableName)
