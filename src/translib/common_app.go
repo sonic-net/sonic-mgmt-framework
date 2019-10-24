@@ -29,7 +29,6 @@ import (
 	"translib/ocbinds"
 	"translib/tlerr"
 	"translib/transformer"
-	"encoding/json"
 )
 
 var ()
@@ -181,30 +180,58 @@ func (app *CommonApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
     var resPayload []byte
     log.Info("processGet:path =", app.pathInfo.Path)
 
-    payload, err = transformer.GetAndXlateFromDB(app.pathInfo.Path, app.ygotRoot, dbs)
-    if err != nil {
-	    log.Error("transformer.transformer.GetAndXlateFromDB failure. error:", err)
-        return GetResponse{Payload: payload, ErrSrc: AppErr}, err
-    }
-
-    targetObj, _ := (*app.ygotTarget).(ygot.GoStruct)
-    if targetObj != nil {
-	    err = ocbinds.Unmarshal(payload, targetObj)
+    for {
+	    payload, err = transformer.GetAndXlateFromDB(app.pathInfo.Path, app.ygotRoot, dbs)
 	    if err != nil {
-		    log.Error("ocbinds.Unmarshal()  failed. error:", err)
-		    return GetResponse{Payload: payload, ErrSrc: AppErr}, err
+		    log.Error("transformer.transformer.GetAndXlateFromDB failure. error:", err)
+		    resPayload = payload
+		    break
 	    }
 
-	    resPayload, err = generateGetResponsePayload(app.pathInfo.Path, (*app.ygotRoot).(*ocbinds.Device), app.ygotTarget)
-	    if err != nil {
-		    log.Error("generateGetResponsePayload()  failed")
-		    return GetResponse{Payload: payload, ErrSrc: AppErr}, err
+	    targetObj, tgtObjCastOk := (*app.ygotTarget).(ygot.GoStruct)
+	    if tgtObjCastOk == false {
+		    /*For ygotTarget populated by tranlib, for query on leaf level and list(without instance) level, 
+		      casting to GoStruct fails so use the parent node of ygotTarget to Unmarshall the payload into*/
+		    log.Infof("Use GetParentNode() since casting ygotTarget to GoStruct failed(uri - %v", app.pathInfo.Path)
+		    targetUri := app.pathInfo.Path
+		    parentTargetObj, _, getParentNodeErr := getParentNode(&targetUri, (*app.ygotRoot).(*ocbinds.Device))
+		    if getParentNodeErr != nil {
+			    log.Warningf("getParentNode() failure for uri %v", app.pathInfo.Path)
+			    resPayload = payload
+			    break
+		    }
+		    if parentTargetObj != nil {
+			    targetObj, tgtObjCastOk = (*parentTargetObj).(ygot.GoStruct)
+			    if tgtObjCastOk == false {
+				    log.Warningf("Casting of parent object returned from getParentNode() to GoStruct failed(uri - %v)", app.pathInfo.Path)
+				    resPayload = payload
+				    break
+			    }
+		    } else {
+			    log.Warningf("getParentNode() returned a nil Object for uri %v", app.pathInfo.Path)
+                            resPayload = payload
+                            break
+		    }
 	    }
-	    var dat map[string]interface{}
-	    err = json.Unmarshal(resPayload, &dat)
-    } else {
-	log.Warning("processGet. targetObj is null. Unable to Unmarshal payload")
-	resPayload = payload
+	    if targetObj != nil {
+		    err = ocbinds.Unmarshal(payload, targetObj)
+		    if err != nil {
+			    log.Error("ocbinds.Unmarshal()  failed. error:", err)
+			    resPayload = payload
+			    break
+		    }
+
+		    resPayload, err = generateGetResponsePayload(app.pathInfo.Path, (*app.ygotRoot).(*ocbinds.Device), app.ygotTarget)
+		    if err != nil {
+			    log.Error("generateGetResponsePayload()  failed")
+			    resPayload = payload
+		    }
+		    break
+	    } else {
+		log.Warning("processGet. targetObj is null. Unable to Unmarshal payload")
+		resPayload = payload
+		break
+	    }
     }
 
     return GetResponse{Payload: resPayload}, err

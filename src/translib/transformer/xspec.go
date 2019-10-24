@@ -47,6 +47,7 @@ type yangXpathInfo  struct {
     dbIndex        db.DBNum
     keyLevel       int
     isKey          bool
+    defVal         string
 }
 
 type dbInfo  struct {
@@ -92,7 +93,7 @@ func yangToDbMapFill (keyLevel int, xYangSpecMap map[string]*yangXpathInfo, entr
 	}
 
 	xpathData.yangDataType = entry.Node.Statement().Keyword
-	if entry.Node.Statement().Keyword == "list"  && xpathData.tableName != nil {
+	if (xpathData.tableName != nil && *xpathData.tableName != "") {
 		childToUpdateParent(xpath, *xpathData.tableName)
 	}
 
@@ -130,6 +131,9 @@ func yangToDbMapFill (keyLevel int, xYangSpecMap map[string]*yangXpathInfo, entr
 			/* table transformer present */
 			xpathData.fieldName = entry.Name
 		}
+	}
+	if xpathData.yangDataType == YANG_LEAF && len(entry.Default) > 0 {
+		xpathData.defVal = entry.Default
 	}
 
 	if xpathData.yangDataType == "leaf" && len(xpathData.fieldName) > 0 && xpathData.tableName != nil {
@@ -299,9 +303,14 @@ func childToUpdateParent( xpath string, tableName string) {
 		xpathData = new(yangXpathInfo)
 		xYangSpecMap[parent] = xpathData
 	}
-	xYangSpecMap[parent].childTable = append(xYangSpecMap[parent].childTable, tableName)
-	if xYangSpecMap[parent].yangEntry != nil &&
-	   xYangSpecMap[parent].yangEntry.Node.Statement().Keyword == "list" {
+
+       parentXpathData := xYangSpecMap[parent]
+       if !contains(parentXpathData.childTable, tableName) {
+               parentXpathData.childTable = append(parentXpathData.childTable, tableName)
+       }
+
+       if parentXpathData.yangEntry != nil && parentXpathData.yangEntry.Node.Statement().Keyword == "list" &&
+       (parentXpathData.tableName != nil || parentXpathData.xfmrTbl != nil) {
 		return
 	}
 	childToUpdateParent(parent, tableName)
@@ -518,6 +527,7 @@ func mapPrint(inMap map[string]*yangXpathInfo, fileName string) {
         }
         fmt.Fprintf(fp, "\r\n    childTbl : %v", d.childTable)
         fmt.Fprintf(fp, "\r\n    FieldName: %v", d.fieldName)
+        fmt.Fprintf(fp, "\r\n    defVal   : %v", d.defVal)
         fmt.Fprintf(fp, "\r\n    keyLevel : %v", d.keyLevel)
         fmt.Fprintf(fp, "\r\n    xfmrKeyFn: %v", d.xfmrKey)
         fmt.Fprintf(fp, "\r\n    xfmrFunc : %v", d.xfmrFunc)
