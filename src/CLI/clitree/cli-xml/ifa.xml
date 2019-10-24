@@ -52,16 +52,16 @@ limitations under the License.
     <!-- tam collector -->
     <COMMAND name="collector" help="Configure TAM collector" ptype="SUBCOMMAND" mode="subcommand">
       <PARAM name="name" help="Collector name" ptype="STRING"> </PARAM>
-      <PARAM name="ip-type-hdr" help="Collector ip address type" ptype="SUBCOMMAND" mode="subcommand">
-        <PARAM name="ip-type" help="IP Address Type" ptype="IP_TYPE"> </PARAM>
+      <PARAM name="ip-type" help="Collector ip address type" ptype="SUBCOMMAND" mode="subcommand">
+        <PARAM name="ip-type-val" help="IP Address Type" ptype="IP_TYPE"> </PARAM>
       </PARAM>
-      <PARAM name="ip-addr-hdr" help="Collector ip address" ptype="SUBCOMMAND" mode="subcommand">
-        <PARAM name="ip-addr" help="Collector IP Address" ptype="IPV4V6_ADDR"> </PARAM>
+      <PARAM name="ip-addr" help="Collector ip address" ptype="SUBCOMMAND" mode="subcommand">
+        <PARAM name="ip-addr-val" help="Collector IP Address" ptype="IPV4V6_ADDR"> </PARAM>
       </PARAM>
-      <PARAM name="port-hdr" help="Collector port" ptype="SUBCOMMAND" mode="subcommand">
-        <PARAM name="port" help="Collector Port" ptype="UINT"> </PARAM>
+      <PARAM name="port" help="Collector port" ptype="SUBCOMMAND" mode="subcommand">
+        <PARAM name="port-val" help="Collector Port" ptype="UINT"> </PARAM>
       </PARAM>
-      <ACTION>python $SONIC_CLI_ROOT/sonic-cli-ifa.py patch_list_sonic_ifa_sonic_ifa_tam_collector_table_tam_collector_table_list ${name} ${ip-type} ${ip-addr} ${port}</ACTION>
+      <ACTION>python $SONIC_CLI_ROOT/sonic-cli-ifa.py patch_list_sonic_ifa_sonic_ifa_tam_collector_table_tam_collector_table_list ${name} ${ip-type-val} ${ip-addr-val} ${port-val}</ACTION>
     </COMMAND>
 
     <!-- no tam device -->
@@ -104,19 +104,19 @@ limitations under the License.
     <!-- tam-int-ifa flow-->
     <COMMAND name="flow" help="Configure TAM IFA flow" ptype="SUBCOMMAND" mode="subcommand">
       <PARAM name="flow-name" help="Flow name" ptype="STRING"> </PARAM>
-      <PARAM name="acl-rule-hdr" help="ACL rule name" ptype="SUBCOMMAND" mode="subcommand">
-        <PARAM name="acl-rule-name" help="ACL rule name" ptype="STRING"> </PARAM>
+      <PARAM name="acl-rule" help="ACL rule name" ptype="SUBCOMMAND" mode="subcommand">
+        <PARAM name="acl-rule-val" help="ACL rule name" ptype="STRING"> </PARAM>
       </PARAM>
-      <PARAM name="acl-table-hdr" help="ACL table name" ptype="SUBCOMMAND" mode="subcommand">
-        <PARAM name="acl-table-name" help="ACL table name" ptype="STRING"> </PARAM>
+      <PARAM name="acl-table" help="ACL table name" ptype="SUBCOMMAND" mode="subcommand">
+        <PARAM name="acl-table-val" help="ACL table name" ptype="STRING"> </PARAM>
       </PARAM>
-      <PARAM name="sampling-rate-hdr" help="Sampling rate" ptype="SUBCOMMAND" mode="subcommand">
-        <PARAM name="sampling-rate" help="Sampling rate" ptype="UINT"> </PARAM>
+      <PARAM name="sampling-rate" help="Sampling rate" ptype="SUBCOMMAND" mode="subcommand">
+        <PARAM name="sampling-rate-val" help="Sampling rate" ptype="UINT"> </PARAM>
       </PARAM>
-      <PARAM name="collector-hdr" help="Sampling rate" ptype="SUBCOMMAND" mode="subcommand">
-        <PARAM name="collector" help="Collector name" ptype="STRING"> </PARAM>
+      <PARAM name="collector" help="Sampling rate" ptype="SUBCOMMAND" mode="subcommand">
+        <PARAM name="collector-val" help="Collector name" ptype="STRING"> </PARAM>
       </PARAM>
-      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-ifa.py patch_sonic_ifa_sonic_ifa_tam_int_ifa_flow_table_tam_int_ifa_flow_table_list ${flow-name} ${acl-rule-name} ${acl-table-name} ${sampling-rate} ${collector} </ACTION>
+      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-ifa.py patch_sonic_ifa_sonic_ifa_tam_int_ifa_flow_table_tam_int_ifa_flow_table_list ${flow-name} ${acl-rule-val} ${acl-table-val} ${sampling-rate-val} ${collector-val} </ACTION>
     </COMMAND>
 
     <!-- no tam-int-ifa flow -->
