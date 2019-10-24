@@ -53,7 +53,8 @@ const (
 
     ETHERNET                 = "Ethernet"
     MGMT                     = "eth"
-    VLAN                     = "vlan"
+    VLAN                     = "Vlan"
+    PORTCHANNEL              = "PortChannel"
 )
 
 type TblData  struct  {
@@ -90,11 +91,17 @@ var IntfTypeTblMap = map[E_InterfaceType]IntfTblData {
         stateDb:TblData{portTN:"MGMT_PORT_TABLE", intfTN:"MGMT_INTERFACE_TABLE", keySep: PIPE},
         CountersHdl:CounterData{OIDTN: "", CountersTN:"", PopulateCounters: populateMGMTPortCounters},
     },
+    IntfTypePortChannel : IntfTblData{
+        cfgDb:TblData{portTN:"PORTCHANNEL", intfTN:"PORTCHANNEL_INTERFACE", keySep: PIPE},
+        appDb:TblData{portTN:"LAG_TABLE", intfTN:"INTF_TABLE", keySep: COLON},
+        stateDb:TblData{portTN:"LAG_TABLE", intfTN:"INTERFACE_TABLE", keySep: PIPE},
+        CountersHdl:CounterData{OIDTN: "COUNTERS_PORT_NAME_MAP", CountersTN:"COUNTERS", PopulateCounters: populatePortCounters},
+    },
 }
 var dbIdToTblMap = map[db.DBNum][]string {
-    db.ConfigDB: {"PORT", "INTERFACE", "MGMT_PORT", "MGMT_INTERFACE"},
-    db.ApplDB  : {"PORT_TABLE", "INTF_TABLE", "MGMT_PORT_TABLE", "MGMT_INTF_TABLE"},
-    db.StateDB : {"PORT_TABLE", "INTERFACE_TABLE", "MGMT_PORT_TABLE", "MGMT_INTERFACE_TABLE"},
+    db.ConfigDB: {"PORT", "INTERFACE", "MGMT_PORT", "MGMT_INTERFACE", , "PORTCHANNEL", "PORTCHANNEL_INTERFACE"},
+    db.ApplDB  : {"PORT_TABLE", "INTF_TABLE", "MGMT_PORT_TABLE", "MGMT_INTF_TABLE", "LAG_TABLE"},
+    db.StateDB : {"PORT_TABLE", "INTERFACE_TABLE", "MGMT_PORT_TABLE", "MGMT_INTERFACE_TABLE", "LAG_TABLE"},
 }
 
 var intfOCToSpeedMap = map[ocbinds.E_OpenconfigIfEthernet_ETHERNET_SPEED] string {
@@ -118,6 +125,7 @@ const (
     IntfTypeEthernet        E_InterfaceType = 1
     IntfTypeMgmt            E_InterfaceType = 2
     IntfTypeVlan            E_InterfaceType = 3
+    IntfTypePortChannel        E_InterfaceType = 4
 
 )
 type E_InterfaceSubType int64
@@ -136,6 +144,8 @@ func getIntfTypeByName (name string) (E_InterfaceType, E_InterfaceSubType, error
         return IntfTypeMgmt, IntfSubTypeUnset, err
     } else if strings.HasPrefix(name, VLAN) == true {
         return IntfTypeVlan, IntfSubTypeUnset, err
+    } else if strings.HasPrefix(name, PORTCHANNEL) == true {
+        return IntfTypePortChannel, IntfSubTypeUnset, err
     }
     err = errors.New("Interface name prefix not matched with supported types")
     return IntfTypeUnset, IntfSubTypeUnset, err
