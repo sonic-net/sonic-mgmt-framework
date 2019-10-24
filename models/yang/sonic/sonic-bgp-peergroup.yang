@@ -1,0 +1,123 @@
+module sonic-bgp-peergroup {
+  namespace "http://github.com/Azure/sonic-bgp-peergroup";
+  prefix sbgppg;
+
+  import ietf-yang-types {
+    prefix yang;
+  }
+
+  import ietf-inet-types {
+    prefix inet;
+  }
+
+  import sonic-common {
+    prefix scommon;
+  }
+
+  organization
+    "SONiC";
+
+  contact
+    "SONiC";
+
+  description
+    "SONIC BGP Peer Group YANG";
+
+  revision 2019-10-16 {
+    description
+      "Initial revision.";
+  }
+
+  typedef bgp_peer_type {
+    type enumeration {
+      enum INTERNAL {
+        value 0;
+      }
+      enum EXTERNAL {
+        value 1;
+      }
+    }
+  }
+
+  container sonic-bgp-peergroup {
+    container BGP_PEER_GROUPS {
+      list BGP_PEER_GROUPS_LIST {
+        key "vrf pgrp_name";
+
+        leaf vrf {
+          type string;
+        }
+
+        leaf pgrp_name {
+          type string;
+        }
+
+        leaf local_asn {
+          type uint32;
+        }
+
+        leaf descr {
+          type string;
+        }
+
+        leaf peer_asn {
+          type uint32;
+        }
+
+        leaf peer_type {
+          type bgp_peer_type;
+        }
+
+        leaf ebgp_multihop {
+          type boolean;
+        }
+
+        leaf ebgp_multihop_ttl {
+          type uint8 {
+            range "1..255";
+          }
+        }
+
+        leaf admin {
+          type boolean;
+        }
+
+        leaf passwd {
+          type string;
+        }
+
+        leaf keepalive_intrvl {
+          type uint16 {
+            range "1..3600";
+          }
+        }
+
+        leaf hold_time {
+          type uint16 {
+            range "1..3600";
+          }
+        }
+
+        leaf conn_retry {
+          type uint16 {
+            range "1..3600";
+          }
+        }
+
+        leaf min_adv_intrvl {
+          type uint16 {
+            range "1..3600";
+          }
+        }
+
+        leaf local_address {
+          type inet:ipv4-address;
+        }
+
+        leaf passive_mode {
+          type boolean;
+        }
+      }
+    }
+  }
+}

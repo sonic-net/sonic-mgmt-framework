@@ -47,7 +47,7 @@ func getBgpRoot (inParams XfmrParams) (*ocbinds.OpenconfigNetworkInstance_Networ
 
     var protoKey ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Key
     protoKey.Identifier = ocbinds.OpenconfigPolicyTypes_INSTALL_PROTOCOL_TYPE_BGP
-    protoKey.Name1 = protoName
+    protoKey.Name = protoName
     protoInstObj := netInstObj.Protocols.Protocol[protoKey]
     if protoInstObj == nil {
         return nil, "", errors.New("Network-instance-name missing")
