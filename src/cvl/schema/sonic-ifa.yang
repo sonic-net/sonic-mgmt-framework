@@ -77,7 +77,7 @@ module sonic-ifa {
                 }
 
                 leaf ipaddress {
-                    type inet:ipv4-prefix;
+                    type inet:ipv4-address;
                 }
                 leaf port {
                     type uint16;

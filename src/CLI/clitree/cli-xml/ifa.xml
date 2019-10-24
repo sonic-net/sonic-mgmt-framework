@@ -24,61 +24,103 @@ limitations under the License.
     >
 <!--=========================================================================-->
   <VIEW name="configure-view">
-    <!-- tam device-id -->
-    <COMMAND name="tam" help="TAM Device Configuration"/>
-    <COMMAND name="tam device-id" help="Configure device-id" ptype="SUBCOMMAND" mode="subcommand">
+    <!-- tam -->
+    <COMMAND name="tam" help="TAM Device Configuration" mode="subcommand" ptype="SUBCOMMAND" view="config-tam-view"/>
+    <!-- tam-int-ifa -->
+    <COMMAND name="tam-int-ifa" help="TAM IFA Configuration" mode="subcommand" ptype="SUBCOMMAND" view="config-tam-int-ifa-view"/>
+  </VIEW>
+
+  <VIEW name="config-tam-view" prompt="${SYSTEM_NAME}(config-tam-view)# " depth="2">
+    <NAMESPACE ref="hidden-view" help="false" completion="false"/>
+    <NAMESPACE ref="enable-view" help="false" completion="false"/>
+    <NAMESPACE ref="enable-view" help="true" prefix="do" completion="true"/>
+
+    <COMMAND name="exit" help="Exit from current mode" lock="false">
+                  <ACTION builtin="clish_nested_up"/>
+    </COMMAND>
+
+    <COMMAND name="end" help="Exit to the exec Mode" view="enable-view"/>
+
+    <COMMAND name="no" help="Negate a command or set its defaults" />
+
+    <!-- tam deviceid -->
+    <COMMAND name="device-id" help="Configure device-id" ptype="SUBCOMMAND" mode="subcommand">
       <PARAM name="device-id" help="Device ID" ptype="UINT16"> </PARAM>
       <ACTION>python $SONIC_CLI_ROOT/sonic-cli-ifa.py patch_sonic_ifa_sonic_ifa_tam_device_table_tam_device_table_list_deviceid device ${device-id}</ACTION>
     </COMMAND>
 
     <!-- tam collector -->
-    <COMMAND name="tam collector" help="Configure TAM collector" ptype="SUBCOMMAND" mode="subcommand">
-      <PARAM name="name" help="Collector Name" ptype="STRING"> </PARAM>
-      <PARAM name="ip-type" help="Collector IP Address Type" ptype="IP_TYPE"> </PARAM>
-      <PARAM name="ip-addr" help="Collector IP Address" ptype="IPV4V6_ADDR"> </PARAM>
-      <PARAM name="port" help="Collector Port" ptype="UINT"> </PARAM>
-      <ACTION>python $SONIC_CLI_ROOT/sonic-cli-ifa.py patch_sonic_ifa_sonic_ifa_tam_collector_table_tam_collector_table_list ${name} ${ip-type} ${ip-addr} ${port}</ACTION>
+    <COMMAND name="collector" help="Configure TAM collector" ptype="SUBCOMMAND" mode="subcommand">
+      <PARAM name="name" help="Collector name" ptype="STRING"> </PARAM>
+      <PARAM name="ip-type-hdr" help="Collector ip address type" ptype="SUBCOMMAND" mode="subcommand">
+        <PARAM name="ip-type" help="IP Address Type" ptype="IP_TYPE"> </PARAM>
+      </PARAM>
+      <PARAM name="ip-addr-hdr" help="Collector ip address" ptype="SUBCOMMAND" mode="subcommand">
+        <PARAM name="ip-addr" help="Collector IP Address" ptype="IPV4V6_ADDR"> </PARAM>
+      </PARAM>
+      <PARAM name="port-hdr" help="Collector port" ptype="SUBCOMMAND" mode="subcommand">
+        <PARAM name="port" help="Collector Port" ptype="UINT"> </PARAM>
+      </PARAM>
+      <ACTION>python $SONIC_CLI_ROOT/sonic-cli-ifa.py patch_list_sonic_ifa_sonic_ifa_tam_collector_table_tam_collector_table_list ${name} ${ip-type} ${ip-addr} ${port}</ACTION>
     </COMMAND>
 
     <!-- no tam device -->
-    <COMMAND name="no tam" help="Unconfigure TAM device properties"/>
-    <COMMAND name="no tam device-id" help="Clear TAM device ID" ptype="SUBCOMMAND" mode="subcommand">
+    <COMMAND name="no device-id" help="Clear TAM device ID" ptype="SUBCOMMAND" mode="subcommand">
       <ACTION> python $SONIC_CLI_ROOT/sonic-cli-ifa.py delete_sonic_ifa_sonic_ifa_tam_device_table_tam_device_table_list_deviceid device</ACTION>
     </COMMAND>
 
     <!-- no tam collector -->
-    <COMMAND name="no tam collector" help="Clear TAM Collector information" ptype="SUBCOMMAND" mode="subcommand">
-      <PARAM name="name" help="Collector Name" ptype="STRING"> </PARAM>
+    <COMMAND name="no collector" help="Clear TAM Collector information" ptype="SUBCOMMAND" mode="subcommand">
+      <PARAM name="name" help="Collector name" ptype="STRING"> </PARAM>
       <ACTION> python $SONIC_CLI_ROOT/sonic-cli-ifa.py delete_sonic_ifa_sonic_ifa_tam_collector_table_tam_collector_table_list ${name}</ACTION>
     </COMMAND>
 
+  </VIEW>
+
+  <VIEW name="config-tam-int-ifa-view" prompt="${SYSTEM_NAME}(config-tam-int-ifa)# " depth="2">
+    <NAMESPACE ref="hidden-view" help="false" completion="false"/>
+    <NAMESPACE ref="enable-view" help="false" completion="false"/>
+    <NAMESPACE ref="enable-view" help="true" prefix="do" completion="true"/>
+
+    <COMMAND name="exit" help="Exit from current mode" lock="false">
+                  <ACTION builtin="clish_nested_up"/>
+    </COMMAND>
+
+    <COMMAND name="end" help="Exit to the exec Mode" view="enable-view"/>
+
+    <COMMAND name="no" help="Negate a command or set its defaults" />
+
     <!-- tam-int-ifa enable/disable -->
-    <COMMAND name="tam-int-ifa" help="TAM IFA Configuration"/>
-    <COMMAND name="tam-int-ifa feature" help="Enable/disable TAM IFA" ptype="SUBCOMMAND" mode="subcommand">
+    <COMMAND name="feature" help="Enable/disable TAM IFA" ptype="SUBCOMMAND" mode="subcommand">
       <PARAM name="enable" help="Device ID" ptype="ENA_DISA"> </PARAM>
       <ACTION> if test "${enable}" = "enable" ; then&#xA;
-python $SONIC_CLI_ROOT/sonic-cli-ifa.py patch_sonic_ifa_sonic_ifa_tam_int_ifa_feature_table_tam_int_ifa_feature_table_list feature true&#xA;
-else&#xA;
-python $SONIC_CLI_ROOT/sonic-cli-ifa.py patch_sonic_ifa_sonic_ifa_tam_int_ifa_feature_table_tam_int_ifa_feature_table_list feature false&#xA;
-fi&#xA;
+        python $SONIC_CLI_ROOT/sonic-cli-ifa.py patch_sonic_ifa_sonic_ifa_tam_int_feature_table_tam_int_feature_table_list_enable feature True&#xA;
+          else&#xA;
+        python $SONIC_CLI_ROOT/sonic-cli-ifa.py patch_sonic_ifa_sonic_ifa_tam_int_feature_table_tam_int_feature_table_list_enable feature False&#xA;
+          fi&#xA;
       </ACTION>
     </COMMAND>
 
     <!-- tam-int-ifa flow-->
-    <COMMAND name="tam-int-ifa flow" help="Configure TAM IFA flow" ptype="SUBCOMMAND" mode="subcommand">
+    <COMMAND name="flow" help="Configure TAM IFA flow" ptype="SUBCOMMAND" mode="subcommand">
       <PARAM name="flow-name" help="Flow name" ptype="STRING"> </PARAM>
-      <PARAM name="acl-rule-name" help="ACL Rule name" ptype="STRING"> </PARAM>
-      <PARAM name="acl-table-name" help="ACL table name" ptype="STRING"> </PARAM>
-      <PARAM name="type-switch" help="Select an option" ptype="SUBCOMMAND" mode="switch" >
+      <PARAM name="acl-rule-hdr" help="ACL rule name" ptype="SUBCOMMAND" mode="subcommand">
+        <PARAM name="acl-rule-name" help="ACL rule name" ptype="STRING"> </PARAM>
+      </PARAM>
+      <PARAM name="acl-table-hdr" help="ACL table name" ptype="SUBCOMMAND" mode="subcommand">
+        <PARAM name="acl-table-name" help="ACL table name" ptype="STRING"> </PARAM>
+      </PARAM>
+      <PARAM name="sampling-rate-hdr" help="Sampling rate" ptype="SUBCOMMAND" mode="subcommand">
         <PARAM name="sampling-rate" help="Sampling rate" ptype="UINT"> </PARAM>
+      </PARAM>
+      <PARAM name="collector-hdr" help="Sampling rate" ptype="SUBCOMMAND" mode="subcommand">
         <PARAM name="collector" help="Collector name" ptype="STRING"> </PARAM>
       </PARAM>
       <ACTION> python $SONIC_CLI_ROOT/sonic-cli-ifa.py patch_sonic_ifa_sonic_ifa_tam_int_ifa_flow_table_tam_int_ifa_flow_table_list ${flow-name} ${acl-rule-name} ${acl-table-name} ${sampling-rate} ${collector} </ACTION>
     </COMMAND>
 
     <!-- no tam-int-ifa flow -->
-    <COMMAND name="no tam-int-ifa" help="Unconfigure TAM IFA Flow properties"/>
-    <COMMAND name="no tam-int-ifa flow" help="Clear TAM IFA flow information" ptype="SUBCOMMAND" mode="subcommand">
+    <COMMAND name="no flow" help="Clear TAM IFA flow information" ptype="SUBCOMMAND" mode="subcommand">
       <PARAM name="name" help="Flow Name" ptype="STRING"> </PARAM>
       <ACTION> python $SONIC_CLI_ROOT/sonic-cli-ifa.py delete_sonic_ifa_sonic_ifa_tam_int_ifa_flow_table_tam_int_ifa_flow_table_list ${name}</ACTION>
     </COMMAND>

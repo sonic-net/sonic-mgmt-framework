@@ -36,13 +36,33 @@ def generate_body(func, args):
        body = { "sonic-ifa:deviceid": int(args[1]) }
     elif func.__name__ == 'delete_sonic_ifa_sonic_ifa_tam_device_table_tam_device_table_list_deviceid':
        keypath = [args[0]]
-    elif func.__name__ == 'patch_sonic_ifa_sonic_ifa_tam_int_ifa_feature_table_tam_int_ifa_feature_table_list':
+    elif func.__name__ == 'patch_sonic_ifa_sonic_ifa_tam_int_feature_table_tam_int_feature_table_list_enable':
        keypath = [ args[0] ]
-       body = { "sonic-ifa:enable": args[1] }
-    elif func.__name__ == 'patch_sonic_ifa_sonic_ifa_tam_collector_table_tam_collector_table_list':
-       keypath = [ args[0] ]
-       body = { "sonic-ifa:name": args[0] , "sonic-ifa:ipaddress-type": args[1], "sonic-ifa:ipaddress": args[2], "sonic-ifa:port": args[3]}
+       if args[1] == 'True':
+           body = { "sonic-ifa:enable": True }
+       else:
+           body = { "sonic-ifa:enable": False }
+    elif func.__name__ == 'patch_list_sonic_ifa_sonic_ifa_tam_collector_table_tam_collector_table_list':
+       keypath = [ ]
+       body = {
+                  "sonic-ifa:TAM_COLLECTOR_TABLE_LIST": [
+                       {
+                           "name": args[0], "ipaddress-type": args[1], "ipaddress": args[2], "port": int(args[3])
+                       }
+                  ]
+              }
     elif func.__name__ == 'delete_sonic_ifa_sonic_ifa_tam_collector_table_tam_collector_table_list':
+       keypath = [ args[0] ]
+    elif func.__name__ == 'patch_sonic_ifa_sonic_ifa_tam_int_ifa_flow_table_tam_int_ifa_flow_table_list':
+       keypath = [ args[0] ]
+       body = {
+                  "sonic-ifa:TAM_INT_IFA_FLOW_TABLE_LIST": [
+                       {
+                           "name": args[0], "acl-rule-name": args[1], "acl-table-name": args[2], "sampling-rate": int(args[3]), "collector":args[4]
+                       }
+                  ]
+              }
+    elif func.__name__ == 'delete_sonic_ifa_sonic_ifa_tam_int_ifa_flow_table_tam_int_ifa_flow_table_list':
        keypath = [ args[0] ]
     else:
        body = {}

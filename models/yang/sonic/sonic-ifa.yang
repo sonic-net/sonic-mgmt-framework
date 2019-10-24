@@ -26,9 +26,9 @@ module sonic-ifa {
 
     container sonic-ifa {
 
-        container TAM_INT_IFA_FEATURE_TABLE {
+        container TAM_INT_FEATURE_TABLE {
 
-            list TAM_INT_IFA_FEATURE_TABLE_LIST {
+            list TAM_INT_FEATURE_TABLE_LIST {
                 key "feature";
                 max-elements "1";
 
@@ -77,7 +77,7 @@ module sonic-ifa {
                 }
 
                 leaf ipaddress {
-                    type inet:ipv4-prefix;
+                    type inet:ipv4-address;
                 }
                 leaf port {
                     type uint16;
