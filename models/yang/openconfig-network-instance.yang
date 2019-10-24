@@ -638,7 +638,7 @@ module openconfig-network-instance {
             network-instance.";
 
           list protocol {
-            key "identifier name1";
+            key "identifier name";
 
             description
               "A process (instance) of a routing protocol. Some
@@ -654,7 +654,7 @@ module openconfig-network-instance {
                 protocol to be instantiated";
             }
 
-            leaf name1 {
+            leaf name {
               type leafref {
                 path "../config/name";
               }

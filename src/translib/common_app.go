@@ -238,6 +238,7 @@ func (app *CommonApp) translateCRUDCommon(d *db.DB, opcode int) ([]db.WatchKeys,
 		//return keys, err
 	}
     OrdTblList = []string {"BGP_GLOBALS"}
+    OrdTblList = []string {"BGP_GLOBALS", "BGP_PEER_GROUPS"}
 
 	log.Info("GetOrdDBTblList() returned ordered table list = ", OrdTblList)
 	app.cmnAppOrdTbllist = OrdTblList
