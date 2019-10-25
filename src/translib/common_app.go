@@ -443,7 +443,7 @@ func (app *CommonApp) cmnAppDelDbOpn(d *db.DB, opcode int) error {
 					log.Info("Since parent table is to be deleted, first deleting child table = ", ordtbl)
 					if ordtbl == tblNm {
 						// Handle the child tables only till you reach the parent table entry
-						break;
+						break
 					}
 					dbTblSpec = &db.TableSpec{Name: ordtbl}
 					err = d.DeleteTable(dbTblSpec)
@@ -458,8 +458,8 @@ func (app *CommonApp) cmnAppDelDbOpn(d *db.DB, opcode int) error {
 					return err
 				}
 				log.Info("DELETE case - Deleted entire table = ", tblNm)
-				log.Info("Done processing all tables.")
-				break
+				// Continue to repeat ordered deletion for all tables
+				continue
 
 			}
 
