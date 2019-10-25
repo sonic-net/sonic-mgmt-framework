@@ -1,0 +1,204 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE CLISH_MODULE [
+<!ENTITY START_PORT_ID "1">
+<!ENTITY MAX_PORT_ID "32">
+<!ENTITY START_SUB_PORT_ID "1">
+<!ENTITY MAX_SUB_PORT_ID "4">
+<!ENTITY MAX_MTU "9216">
+]>
+<CLISH_MODULE xmlns="http://www.dellemc.com/sonic/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xi="http://www.w3.org/2001/XInclude" xsi:schemaLocation="http://www.dellemc.com/sonic/XMLSchema http://www.dellemc.com/sonic/XMLSchema/clish.xsd">
+  <VIEW name="configure-view">
+         <COMMAND name="no sample"
+                help="Remove Sample"
+         >
+         <PARAM name="sample-name"
+             help="Name of the sample"
+             ptype="STRING"
+          >
+        </PARAM>
+        <ACTION>
+          python $SONIC_CLI_ROOT/drop-monitor.py -clear -sample ${sample-name}
+        </ACTION>
+        </COMMAND>
+
+        <COMMAND
+         name="sample"
+         help="Sample Name"
+        >
+              <PARAM
+                   name="sample-name"
+                   help="Sample Name"
+                   ptype="STRING"
+                   >
+              </PARAM>
+              <PARAM
+                   name="rate"
+                   help="Configure sample rate"
+                   ptype="SUBCOMMAND"
+                   mode="subcommand"
+                   >
+              </PARAM>
+              <PARAM
+                   name="rate-name"
+                   help="Configure Sampling rate"
+                   ptype="UINT16"
+                   >
+              </PARAM>
+              <ACTION>
+               python $SONIC_CLI_ROOT/drop-monitor.py -config -sample ${sample-name} -rate ${rate-name}
+              </ACTION>
+        </COMMAND>
+
+  </VIEW>
+  <VIEW name="configure-tam-view">
+
+         <COMMAND name="no drop-monitor"
+                help="Remove Flow"
+         >
+          <PARAM
+                 name="drop-options"
+                 help=""
+                 ptype="SUBCOMMAND"
+                 mode="switch"
+                 >
+
+                <PARAM
+                   name="flow"
+                   help="Delete Flow name"
+                   ptype="SUBCOMMAND"
+                   mode="subcommand"
+                   >
+
+       <PARAM
+         name="flow-name"
+         help="Name of the flow"
+         ptype="STRING"
+        >
+        </PARAM>
+                </PARAM>
+
+                <PARAM
+                   name="aging-interval"
+                   help="Delete Aging Interval"
+                   ptype="SUBCOMMAND"
+                   mode="subcommand"
+                   >
+                </PARAM>
+         </PARAM>
+
+        <ACTION>
+              if test "${drop-options}" = "flow"; then&#xA;
+                 python $SONIC_CLI_ROOT/drop-monitor.py -clear -dropmonitor -flow ${flow-name}
+              elif test "${drop-options}" = "aging-interval"; then&#xA;
+                 python $SONIC_CLI_ROOT/drop-monitor.py -clear -dropmonitor --aginginterval 0
+              fi&#xA;
+        </ACTION>
+        </COMMAND>
+
+        <COMMAND
+         name="drop-monitor"
+         help="Drop Monitor configurations"
+         view="configure-tam-view"
+        >
+
+          <PARAM
+                 name="drop-options"
+                 help=""
+                 ptype="SUBCOMMAND"
+                 mode="switch"
+                 >
+
+                <PARAM
+                   name="flow"
+                   help="Configure flow name"
+                   ptype="SUBCOMMAND"
+                   mode="subcommand"
+                   >
+
+               <PARAM
+                   name="flow-name"
+                   help="Name of the flow"
+                   ptype="STRING"
+                   >
+               </PARAM>
+
+               <PARAM
+                   name="acl-table"
+                   help="Configure acl table name"
+                   ptype="SUBCOMMAND"
+                   mode="subcommand"
+                   >
+               </PARAM>
+
+              <PARAM
+                   name="acl-table-name"
+                   help="ACL Table Name"
+                   ptype="STRING"
+                   >
+              </PARAM>
+               <PARAM
+                   name="acl-rule"
+                   help="Configure acl rule name"
+                   ptype="SUBCOMMAND"
+                   mode="subcommand"
+                   >
+              </PARAM>
+              <PARAM
+                   name="acl-rule-name"
+                   help="ACL Rule Name"
+                   ptype="STRING"
+                   >
+              </PARAM>
+               <PARAM
+                   name="collector"
+                   help="Configure Collector name"
+                   ptype="SUBCOMMAND"
+                   mode="subcommand"
+                   >
+              </PARAM>
+              <PARAM
+                   name="collector-name"
+                   help="Collector Name"
+                   ptype="STRING"
+                   >
+              </PARAM>
+              <PARAM
+                   name="sample"
+                   help="Configure Sampling Name"
+                   ptype="SUBCOMMAND"
+                   mode="subcommand"
+                   >
+              </PARAM>
+              <PARAM
+                   name="sampling-name"
+                   help="Sampling Name"
+                   ptype="STRING"
+                   >
+              </PARAM>
+              </PARAM>
+
+              <PARAM
+                   name="aging-interval"
+                   help="Configure Aging Interval Name "
+                   ptype="SUBCOMMAND"
+                   mode="subcommand"
+                   >
+
+              <PARAM
+                   name="aging-interval-name"
+                   help="Specify aging Interval Name"
+                   ptype="UINT16"
+                   >
+              </PARAM>
+              </PARAM>
+           </PARAM>
+           <ACTION>
+              if test "${drop-options}" = "flow"; then&#xA;
+                 python $SONIC_CLI_ROOT/drop-monitor.py -config -dropmonitor -flow ${flow-name} --acl_table ${acl-table-name} --acl_rule ${acl-rule-name} --dropcollector ${collector-name} --dropsample ${sampling-name}
+              elif test "${drop-options}" = "aging-interval"; then&#xA;
+               python $SONIC_CLI_ROOT/drop-monitor.py -config -dropmonitor --aginginterval ${aging-interval-name}
+              fi&#xA;
+           </ACTION>
+        </COMMAND>
+  </VIEW>
+</CLISH_MODULE>
