@@ -162,3 +162,58 @@ func TestGetObjectFieldName(t *testing.T) {
 		}
 	}
 }
+
+func TestNewPathInfo_empty(t *testing.T) {
+	testPathInfo(t, "", "", mkmap())
+}
+
+func TestNewPathInfo_novar(t *testing.T) {
+	testPathInfo(t, "/test/simple", "/test/simple", mkmap())
+}
+
+func TestNewPathInfo_var1(t *testing.T) {
+	testPathInfo(t, "/test/xx[one=1]", "/test/xx{}", mkmap("one", "1"))
+}
+
+func TestNewPathInfo_vars(t *testing.T) {
+	testPathInfo(t, "/test/xx[one=1][two=2]/new[three=3]", "/test/xx{}{}/new{}",
+		mkmap("one", "1", "two", "2", "three", "3"))
+}
+
+func TestNewPathInfo_dup1(t *testing.T) {
+	testPathInfo(t, "/test/xx[one=1][two=2]/new[one=0001]", "/test/xx{}{}/new{}",
+		mkmap("one", "1", "two", "2", "one#2", "0001"))
+}
+
+func TestNewPathInfo_dups(t *testing.T) {
+	testPathInfo(t, "/test/one[xx=1]/two[yy=2]/three[xx=3]/four[zz=4]/five[yy=5]/six[xx=6]",
+		"/test/one{}/two{}/three{}/four{}/five{}/six{}",
+		mkmap("xx", "1", "yy", "2", "xx#2", "3", "zz", "4", "yy#2", "5", "xx#3", "6"))
+}
+
+func testPathInfo(t *testing.T, path, expTemplate string, expVars map[string]string) {
+	info := NewPathInfo(path)
+	if info == nil {
+		t.Errorf("NewPathInfo() returned null!")
+	} else if info.Path != path {
+		t.Errorf("Expected info.Path = %s", path)
+		t.Errorf("Actual info.Path   = %s", info.Path)
+	} else if info.Template != expTemplate {
+		t.Errorf("Expected info.Template = %s", expTemplate)
+		t.Errorf("Actual info.Template   = %s", info.Template)
+	} else if reflect.DeepEqual(info.Vars, expVars) == false {
+		t.Errorf("Expected info.Vars = %v", expVars)
+		t.Errorf("Actual info.Vars   = %v", info.Vars)
+	}
+	if t.Failed() {
+		t.Fatalf("NewPathInfo() failed to parse \"%s\"", path)
+	}
+}
+
+func mkmap(args ...string) map[string]string {
+	m := make(map[string]string)
+	for i := 0; i < len(args); i += 2 {
+		m[args[i]] = args[i+1]
+	}
+	return m
+}
