@@ -2,7 +2,10 @@
 
 export SONIC_MGMT_ROOT=/usr/sbin
 export SONIC_CLI_ROOT=$SONIC_MGMT_ROOT/cli
-export SYSTEM_NAME="${HOSTNAME%%.*}"
+if [ -z $SYSTEM_NAME ]
+then
+ export SYSTEM_NAME="${HOSTNAME%%.*}"
+fi
 export PYTHONPATH=$SONIC_MGMT_ROOT:$SONIC_MGMT_ROOT/lib/swagger_client_py:$SONIC_CLI_ROOT:$SONIC_CLI_ROOT/scripts:$PYTHONPATH
 export CLISH_PATH=$SONIC_CLI_ROOT/command-tree
 export LD_LIBRARY_PATH=/usr/local/lib:$SONIC_CLI_ROOT/.libs:$LD_LIBRARY_PATH

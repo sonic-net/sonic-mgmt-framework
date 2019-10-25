@@ -1,0 +1,38 @@
+{{'========================================'}}
+{{'ZTP'}}
+{{'========================================'}}
+{% if 'ZTP Admin Mode' in json_output %}
+{{'ZTP Admin Mode'.ljust(20)}}:{{json_output['ZTP Admin Mode']}}
+{% endif %}
+{% if 'ZTP Service' in json_output %}
+{{'ZTP Service'.ljust(20)}}:{{json_output['ZTP Service']}}
+{% endif %}
+{% if 'ZTP Status' in json_output %}
+{{'ZTP Status'.ljust(20)}}:{{json_output['ZTP Status']}}
+{% endif %}
+{% if 'ZTP Source' in json_output %}
+{{'ZTP Source'.ljust(20)}}:{{json_output['ZTP Source']}}
+{% endif %}
+{% if 'Runtime' in json_output %}
+{{'Runtime'.ljust(20)}}:{{json_output['Runtime']}}
+{% endif %}
+{% if 'Timestamp' in json_output %}
+{{'Timestamp'.ljust(20)}}:{{json_output['Timestamp']}}
+{% endif %}
+{% if 'ZTP JSON Version' in json_output %}
+{{'ZTP JSON Version'.ljust(20)}}:{{json_output['ZTP JSON Version']}}
+{% endif %}
+{% if 'activity-string' in json_output %}
+{{json_output['activity']}}
+{% endif %}
+{% if 'config-list' in json_output %}
+{% set c_dict = json_output['config-list'] %}
+{% for key,val in c_dict.items() %}
+{{'---------------------------------------------'}}
+{{key.ljust(20)}}
+{{'---------------------------------------------'}}
+{% for k,v in val.items() %}
+{{k.ljust(20)}}:{{v}}
+{% endfor %}
+{% endfor %}
+{% endif %}
