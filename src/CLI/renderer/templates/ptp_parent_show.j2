@@ -1,0 +1,24 @@
+{{'-----------------------------------------------------------'}}
+{{'Attribute'.ljust(30)}} {{'Value/State'}}
+{{'-----------------------------------------------------------'}}
+{% for key,value in json_output.items() %}
+{% if 'grandmaster-identity' in value.keys() %}
+{{ 'Grandmaster Identity'.ljust(30)}} {{ value['grandmaster-identity']}}
+{% endif %}
+{% if 'grandmaster-priority1' in value.keys() %}
+{{ 'Grandmaster Priority1'.ljust(30)}} {{ value['grandmaster-priority1']}}
+{% endif %}
+{% if 'grandmaster-priority2' in value.keys() %}
+{{ 'Grandmaster Priority2'.ljust(30)}} {{ value['grandmaster-priority2']}}
+{% endif %}
+{% if 'parent-stats' in value.keys() %}
+{{ 'Stats Valid'.ljust(30)}} {{ value['parent-stats']}}
+{% endif %}
+{% if 'observed-parent-offset-scaled-log-variance' in value.keys() %}
+{{ 'Observed Off Scaled Log Var'.ljust(30)}} {{ value['observed-parent-offset-scaled-log-variance']}}
+{% endif %}
+{% if 'observed-parent-clock-phase-change-rate' in value.keys() %}
+{{ 'Observed Clock Phase Chg Rate'.ljust(30)}} {{ value['observed-parent-clock-phase-change-rate']}}
+{% endif %}
+{% endfor %}
+
