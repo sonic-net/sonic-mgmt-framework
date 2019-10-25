@@ -9,6 +9,7 @@ module openconfig-spanning-tree-ext {
 
 	import openconfig-spanning-tree { prefix oc-stp; }
     import openconfig-spanning-tree-types { prefix oc-stp-types; }
+    import openconfig-yang-types { prefix oc-yang; }
 
 
     identity PVST {
@@ -103,15 +104,29 @@ module openconfig-spanning-tree-ext {
 
     grouping vlan-interface-extra-counters {
         leaf tcn-sent {
-            type uint64;
+            type oc-yang:counter64;
             description
                 "Tcn transmitted";
         }
 
         leaf tcn-received {
-            type uint64;
+            type oc-yang:counter64;
             description
                 "Tcn received";
+        }
+    }
+
+    grouping rpvst-vlan-interface-extra-counters {
+        leaf config-bpdu-sent {
+            type oc-yang:counter64;
+            description
+                "Config BPDU transmitted";
+        }
+
+        leaf config-bpdu-received {
+            type oc-yang:counter64;
+            description
+                "Config BPDU received";
         }
     }
 
@@ -192,6 +207,7 @@ module openconfig-spanning-tree-ext {
 
     augment /oc-stp:stp/oc-stp:rapid-pvst/oc-stp:vlan/oc-stp:interfaces/oc-stp:interface/oc-stp:state/oc-stp:counters {
         uses vlan-interface-extra-counters;
+        uses rpvst-vlan-interface-extra-counters;
     }
 
     augment /oc-stp:stp/oc-stp-ext:pvst/oc-stp-ext:vlan/oc-stp-ext:interfaces/oc-stp-ext:interface/oc-stp-ext:state {
@@ -247,12 +263,6 @@ module openconfig-spanning-tree-ext {
         deviate not-supported;
     }
     deviation /oc-stp:stp/oc-stp:global/oc-stp:state/oc-stp:bpdu-guard {
-        deviate not-supported;
-    }
-    deviation /oc-stp:stp/oc-stp:global/oc-stp:config/oc-stp:bpdu-filter {
-        deviate not-supported;
-    }
-    deviation /oc-stp:stp/oc-stp:global/oc-stp:state/oc-stp:bpdu-filter {
         deviate not-supported;
     }
 
