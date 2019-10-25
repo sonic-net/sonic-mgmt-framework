@@ -32,16 +32,12 @@ limitations under the License.
 <!--=========================================================================-->
   <VIEW name="configure-view">
     <!-- tam -->
-    <COMMAND name="tam" help="TAM Device Configuration" mode="subcommand" ptype="SUBCOMMAND" view="config-tam-view"/>
+    <COMMAND name="tam" help="TAM Device Configuration" mode="subcommand" ptype="SUBCOMMAND" view="config-tam"/>
     <!-- tam-int-ifa -->
-    <COMMAND name="tam-int-ifa" help="TAM IFA Configuration" mode="subcommand" ptype="SUBCOMMAND" view="config-tam-int-ifa-view"/>
+    <COMMAND name="tam-int-ifa" help="TAM IFA Configuration" mode="subcommand" ptype="SUBCOMMAND" view="config-tam-int-ifa"/>
   </VIEW>
 
-  <VIEW name="config-tam-view" prompt="${SYSTEM_NAME}(config-tam-view)# " depth="2">
-    <NAMESPACE ref="hidden-view" help="false" completion="false"/>
-    <NAMESPACE ref="enable-view" help="false" completion="false"/>
-    <NAMESPACE ref="enable-view" help="true" prefix="do" completion="true"/>
-
+  <VIEW name="config-tam" prompt="${SYSTEM_NAME}(config-tam)# " depth="2">
     <COMMAND name="exit" help="Exit from current mode" lock="false">
                   <ACTION builtin="clish_nested_up"/>
     </COMMAND>
@@ -84,11 +80,7 @@ limitations under the License.
 
   </VIEW>
 
-  <VIEW name="config-tam-int-ifa-view" prompt="${SYSTEM_NAME}(config-tam-int-ifa)# " depth="2">
-    <NAMESPACE ref="hidden-view" help="false" completion="false"/>
-    <NAMESPACE ref="enable-view" help="false" completion="false"/>
-    <NAMESPACE ref="enable-view" help="true" prefix="do" completion="true"/>
-
+  <VIEW name="config-tam-int-ifa" prompt="${SYSTEM_NAME}(config-tam-int-ifa)# " depth="2">
     <COMMAND name="exit" help="Exit from current mode" lock="false">
                   <ACTION builtin="clish_nested_up"/>
     </COMMAND>

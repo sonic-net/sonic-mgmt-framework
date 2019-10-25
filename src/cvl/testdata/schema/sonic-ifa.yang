@@ -76,9 +76,19 @@ module sonic-ifa {
                     }
                 }
 
-                leaf ipaddress {
-                    type inet:ipv4-address;
+                choice ipaddr {
+                    case ipv4_addr {
+                        leaf v4addr {
+                            type inet:ipv4-address;
+                        }
+                    }
+                    case ipv6_addr {
+                        leaf v6addr {
+                            type inet:ipv6-address;
+                        }
+                    }
                 }
+
                 leaf port {
                     type uint16;
                 }

@@ -44,13 +44,22 @@ def generate_body(func, args):
            body = { "sonic-ifa:enable": False }
     elif func.__name__ == 'patch_list_sonic_ifa_sonic_ifa_tam_collector_table_tam_collector_table_list':
        keypath = [ ]
-       body = {
-                  "sonic-ifa:TAM_COLLECTOR_TABLE_LIST": [
+       if args[1] == 'ipv4':
+           body = {
+                    "sonic-ifa:TAM_COLLECTOR_TABLE_LIST": [
                        {
-                           "name": args[0], "ipaddress-type": args[1], "ipaddress": args[2], "port": int(args[3])
+                           "name": args[0], "ipaddress-type": args[1], "v4addr": args[2], "port": int(args[3])
                        }
-                  ]
-              }
+                    ]
+                  }
+       else:
+           body = {
+                    "sonic-ifa:TAM_COLLECTOR_TABLE_LIST": [
+                       {
+                           "name": args[0], "ipaddress-type": args[1], "v6addr": args[2], "port": int(args[3])
+                       }
+                    ]
+                  }
     elif func.__name__ == 'delete_sonic_ifa_sonic_ifa_tam_collector_table_tam_collector_table_list':
        keypath = [ args[0] ]
     elif func.__name__ == 'patch_sonic_ifa_sonic_ifa_tam_int_ifa_flow_table_tam_int_ifa_flow_table_list':
