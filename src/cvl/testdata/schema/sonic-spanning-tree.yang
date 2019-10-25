@@ -133,9 +133,6 @@ module sonic-spanning-tree {
         container STP_VLAN {
             list STP_VLAN_LIST {
                 key "name";
-                must "./name = concat('Vlan', string(./vlanid))" {
-                    error-app-tag vlan-invalid;
-                }
 
                 leaf name {
                     type leafref {
@@ -144,7 +141,6 @@ module sonic-spanning-tree {
                 }
 
                 leaf vlanid {
-                    mandatory true;
                     type uint16 {
                         range "1..4095" {
                             error-message "Vlan ID out of range";
