@@ -26,12 +26,8 @@ def generate_body(func, args):
     body = None
     keypath = []
 
-    # Get the rules of all ECN table entries.
-    if func.__name__ == 'get_sonic_wred_profile_sonic_wred_profile_wred_profile':
-        keypath = [args[0]]
-    elif func.__name__ == 'get_sonic_wred_profile_sonic_wred_profile':
-        keypath = []
-    elif func.__name__ == 'patch_sonic_ifa_sonic_ifa_tam_device_table_tam_device_table_list_deviceid':
+    # Set/Get the rules of all IFA table entries.
+    if func.__name__ == 'patch_sonic_ifa_sonic_ifa_tam_device_table_tam_device_table_list_deviceid':
        keypath = [ args[0] ]
        body = { "sonic-ifa:deviceid": int(args[1]) }
     elif func.__name__ == 'delete_sonic_ifa_sonic_ifa_tam_device_table_tam_device_table_list_deviceid':
@@ -114,12 +110,7 @@ def run(func, args):
             if api_response is None:
                 print("Failed")
             else:
-                if func.__name__ == 'get_sonic_wred_profile_sonic_wred_profile_wred_profile_wred_profile_list':
-                     show_cli_output(args[1], api_response)
-                elif func.__name__ == 'get_sonic_wred_profile_sonic_wred_profile':
-                     show_cli_output(args[0], api_response)
-                else:
-                     return
+                return
     except ApiException as e:
         print("Exception when calling get_sonic_ifa ->%s : %s\n" %(func.__name__, e))
         if e.body != "":
