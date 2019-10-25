@@ -589,3 +589,20 @@ func XfmrRemoveXPATHPredicates(xpath string) (string, error) {
 	 return xpath, keyStr, tableName
  }
 
+func getYangMdlToSonicMdlList(moduleNm string) []string {
+	var sncMdlList []string
+        if xDbSpecTblSeqnMap == nil || len(xDbSpecTblSeqnMap) == 0 {
+                log.Info("xDbSpecTblSeqnMap is empty.")
+                return sncMdlList
+        }
+        if strings.HasPrefix(moduleNm, SONIC_MDL_PFX) {
+                sncMdlList = append(sncMdlList, moduleNm)
+        } else {
+                //can be optimized if there is a way to know sonic modules, a given OC-Yang spans over
+                for sncMdl := range(xDbSpecTblSeqnMap) {
+                        sncMdlList = append(sncMdlList, sncMdl)
+                }
+        }
+	return sncMdlList
+}
+

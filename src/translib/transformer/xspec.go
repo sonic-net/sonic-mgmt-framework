@@ -23,6 +23,7 @@ import (
     "os"
     "strings"
     log "github.com/golang/glog"
+    "cvl"
     "translib/db"
 
     "github.com/openconfig/goyang/pkg/yang"
@@ -59,9 +60,15 @@ type dbInfo  struct {
     module       string
 }
 
+type sonicTblSeqnInfo struct {
+       OrdTbl []string
+       DepTbl map[string][]string
+}
+
 var xYangSpecMap  map[string]*yangXpathInfo
 var xDbSpecMap    map[string]*dbInfo
 var xDbSpecOrdTblMap map[string][]string //map of module-name to ordered list of db tables { "sonic-acl" : ["ACL_TABLE", "ACL_RULE"] }
+var xDbSpecTblSeqnMap  map[string]*sonicTblSeqnInfo
 
 /* update transformer spec with db-node */
 func updateDbTableData (xpath string, xpathData *yangXpathInfo, tableName string) {
@@ -210,7 +217,7 @@ func yangToDbMapBuild(entries map[string]*yang.Entry) {
 }
 
 /* Fill the map with db details */
-func dbMapFill(tableName string, curPath string, moduleNm string, trkTpCnt bool, xDbSpecMap map[string]*dbInfo, entry *yang.Entry) {
+func dbMapFill(tableName string, curPath string, moduleNm string, xDbSpecMap map[string]*dbInfo, entry *yang.Entry) {
 	entryType := entry.Node.Statement().Keyword
 
 	if entry.Name != moduleNm {
@@ -253,6 +260,43 @@ func dbMapFill(tableName string, curPath string, moduleNm string, trkTpCnt bool,
 		xDbSpecMap[moduleXpath].dbEntry   = entry
 		xDbSpecMap[moduleXpath].fieldType = entryType
 		xDbSpecMap[moduleXpath].module = moduleNm
+                for {
+			sncTblInfo := new(sonicTblSeqnInfo)
+			if sncTblInfo == nil {
+				log.Warningf("Memory allocation failure for storing Tbl order and dependency info for sonic module %v", moduleNm)
+				break
+			}
+			cvlSess, cvlRetSess := cvl.ValidationSessOpen()
+			if cvlRetSess != cvl.CVL_SUCCESS {
+				log.Warningf("Failure in creating CVL validation session object required to use CVl API to get Tbl info for module %v - %v", moduleNm, cvlRetSess)
+				break
+			}
+			var cvlRetOrdTbl cvl.CVLRetCode
+			sncTblInfo.OrdTbl, cvlRetOrdTbl = cvlSess.GetOrderedTables(moduleNm)
+			if cvlRetOrdTbl != cvl.CVL_SUCCESS {
+				log.Warningf("Failure in cvlSess.GetOrderedTables(%v) - %v", cvlRetOrdTbl)
+
+			}
+			sncTblInfo.DepTbl = make(map[string][]string)
+			if sncTblInfo.DepTbl == nil {
+				log.Warningf("sncTblInfo.DepTbl is nill , no space to store dependency table list for sonic module %v", moduleNm)
+				cvl.ValidationSessClose(cvlSess)
+				break
+			}
+			for _, tbl := range(sncTblInfo.OrdTbl) {
+				var cvlRetDepTbl cvl.CVLRetCode
+				sncTblInfo.DepTbl[tbl], cvlRetDepTbl = cvlSess.GetDepTables(moduleNm, tbl)
+				if cvlRetDepTbl != cvl.CVL_SUCCESS {
+					log.Warningf("Failure in cvlSess.GetDepTables(%v, %v) - %v", moduleNm, tbl, cvlRetDepTbl)
+				}
+
+
+			}
+			xDbSpecTblSeqnMap[moduleNm] = sncTblInfo
+			cvl.ValidationSessClose(cvlSess)
+			break
+		}
+
 	}
 
 	var childList []string
@@ -260,15 +304,10 @@ func dbMapFill(tableName string, curPath string, moduleNm string, trkTpCnt bool,
 		childList = append(childList, k)
 	}
 
-	if entryType == "container" &&  trkTpCnt {
-		xDbSpecOrdTblMap[moduleNm] = childList
-		log.Info("xDbSpecOrdTblMap after appending ", xDbSpecOrdTblMap)
-		trkTpCnt = false
-	}
 
 	for _, child := range childList {
 		childPath := tableName + "/" + entry.Dir[child].Name
-		dbMapFill(tableName, childPath, moduleNm, trkTpCnt, xDbSpecMap, entry.Dir[child])
+		dbMapFill(tableName, childPath, moduleNm, xDbSpecMap, entry.Dir[child])
 	}
 }
 
@@ -279,15 +318,14 @@ func dbMapBuild(entries []*yang.Entry) {
 	}
 	xDbSpecMap = make(map[string]*dbInfo)
 	xDbSpecOrdTblMap = make(map[string][]string)
+	xDbSpecTblSeqnMap =  make(map[string]*sonicTblSeqnInfo)
 
 	for _, e := range entries {
 		if e == nil || len(e.Dir) == 0 {
 			continue
 		}
 		moduleNm := e.Name
-		log.Infof("Module name(%v)", moduleNm)
-		trkTpCnt := true
-		dbMapFill("", "", moduleNm, trkTpCnt, xDbSpecMap, e)
+		dbMapFill("", "", moduleNm, xDbSpecMap, e)
 	}
 }
 
