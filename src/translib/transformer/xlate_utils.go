@@ -404,7 +404,7 @@ func getDBOptions(dbNo db.DBNum) db.Options {
         case db.ApplDB, db.CountersDB:
                 opt = getDBOptionsWithSeparator(dbNo, "", ":", ":")
                 break
-        case db.FlexCounterDB, db.AsicDB, db.LogLevelDB, db.ConfigDB, db.StateDB:
+        case db.FlexCounterDB, db.AsicDB, db.LogLevelDB, db.ConfigDB, db.StateDB, db.ErrorDB:
                 opt = getDBOptionsWithSeparator(dbNo, "", "|", "|")
                 break
         }
