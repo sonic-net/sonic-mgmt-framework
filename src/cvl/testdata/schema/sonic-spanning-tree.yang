@@ -126,6 +126,10 @@ module sonic-spanning-tree {
                     default 30;
                 }
 
+                leaf bpdu_filter {
+                    type boolean;
+                }
+
                 uses vlanModeAttr;
             }
         }
@@ -205,7 +209,11 @@ module sonic-spanning-tree {
                 }
 
                 leaf bpdu_filter {
-                    type boolean;
+                    type enumeration {
+                        enum enable;
+                        enum disable;
+                        enum global;
+                    }
                 }
 
                 leaf bpdu_guard_do_disable {
@@ -228,9 +236,13 @@ module sonic-spanning-tree {
                     type boolean;
                 }
 
-                leaf pt2pt_mac {
+                leaf link_type {
                     //when ("../../../STP/STP_LIST/mode='rpvst'");
-                    type boolean;
+                    type enumeration {
+                        enum auto;
+                        enum shared;
+                        enum point-to-point;
+                    }
                 }
             }
         }

@@ -52,6 +52,7 @@ const (
 	STP_DEFAULT_HELLO_INTERVAL     = "2"
 	STP_DEFAULT_MAX_AGE            = "20"
 	STP_DEFAULT_BRIDGE_PRIORITY    = "32768"
+	STP_DEFAULT_BPDU_FILTER        = "false"
 )
 
 type StpApp struct {
@@ -730,6 +731,15 @@ func (app *StpApp) convertOCStpGlobalConfToInternal(opcode int) {
 			} else if setDefaultFlag {
 				(&app.globalInfo).Set("rootguard_timeout", STP_DEFAULT_ROOT_GUARD_TIMEOUT)
 			}
+			if stp.Global.Config.BpduFilter != nil {
+				if *stp.Global.Config.BpduFilter == true {
+					(&app.globalInfo).Set("bpdu_filter", "true")
+				} else {
+					(&app.globalInfo).Set("bpdu_filter", "false")
+				}
+			} else if setDefaultFlag {
+				(&app.globalInfo).Set("bpdu_filter", STP_DEFAULT_BPDU_FILTER)
+			}
 
 			if len(stp.Global.Config.EnabledProtocol) > 0 {
 				mode := app.convertOCStpModeToInternal(stp.Global.Config.EnabledProtocol[0])
@@ -758,6 +768,7 @@ func (app *StpApp) convertInternalToOCStpGlobalConfig(stpGlobal *ocbinds.Opencon
 		var priority uint32
 		var forDelay, helloTime, maxAge uint8
 		var rootGTimeout uint16
+		var bpduFilter bool
 		ygot.BuildEmptyTree(stpGlobal)
 
 		if stpGlobal.Config != nil {
@@ -783,6 +794,9 @@ func (app *StpApp) convertInternalToOCStpGlobalConfig(stpGlobal *ocbinds.Opencon
 			num, _ = strconv.ParseUint((&app.globalInfo).Get("rootguard_timeout"), 10, 16)
 			rootGTimeout = uint16(num)
 			stpGlobal.Config.RootguardTimeout = &rootGTimeout
+
+			bpduFilter, _ = strconv.ParseBool((&app.globalInfo).Get("bpdu_filter"))
+			stpGlobal.Config.BpduFilter = &bpduFilter
 		}
 		if stpGlobal.State != nil {
 			stpGlobal.State.EnabledProtocol = app.convertInternalStpModeToOC((&app.globalInfo).Get(STP_MODE))
@@ -791,6 +805,7 @@ func (app *StpApp) convertInternalToOCStpGlobalConfig(stpGlobal *ocbinds.Opencon
 			stpGlobal.State.HelloTime = &helloTime
 			stpGlobal.State.MaxAge = &maxAge
 			stpGlobal.State.RootguardTimeout = &rootGTimeout
+			stpGlobal.State.BpduFilter = &bpduFilter
 		}
 	}
 }
@@ -1337,10 +1352,12 @@ func (app *StpApp) convertOCStpInterfacesToInternal() {
 
 				if stpIntfConf.Config.BpduFilter != nil {
 					if *stpIntfConf.Config.BpduFilter == true {
-						(&dbVal).Set("bpdu_filter", "true")
+						(&dbVal).Set("bpdu_filter", "enable")
 					} else {
-						(&dbVal).Set("bpdu_filter", "false")
+						(&dbVal).Set("bpdu_filter", "disable")
 					}
+				} else {
+					(&dbVal).Set("bpdu_filter", "global")
 				}
 
 				if stpIntfConf.Config.BpduGuardPortShutdown != nil {
@@ -1399,9 +1416,11 @@ func (app *StpApp) convertOCStpInterfacesToInternal() {
 				}
 
 				if stpIntfConf.Config.LinkType == ocbinds.OpenconfigSpanningTree_StpLinkType_P2P {
-					(&dbVal).Set("pt2pt_mac", "true")
+					(&dbVal).Set("link_type", "point-to-point")
 				} else if stpIntfConf.Config.LinkType == ocbinds.OpenconfigSpanningTree_StpLinkType_SHARED {
-					(&dbVal).Set("pt2pt_mac", "false")
+					(&dbVal).Set("link_type", "shared")
+				} else {
+					(&dbVal).Set("link_type", "auto")
 				}
 			}
 		}
@@ -1487,9 +1506,17 @@ func (app *StpApp) convertInternalToOCStpInterfaces(intfName string, interfaces 
 				intf.Config.BpduGuard = &bpduGuardEnabled
 				intf.State.BpduGuard = &bpduGuardEnabled
 
-				bpduFilterEnabled, _ := strconv.ParseBool((&stpIntfData).Get("bpdu_filter"))
-				intf.Config.BpduFilter = &bpduFilterEnabled
-				intf.State.BpduFilter = &bpduFilterEnabled
+				var bpduFilterEnabled bool
+				bpduFilterVal := (&stpIntfData).Get("bpdu_filter")
+				if bpduFilterVal == "enable" {
+					bpduFilterEnabled = true
+					intf.Config.BpduFilter = &bpduFilterEnabled
+					intf.State.BpduFilter = &bpduFilterEnabled
+				} else if bpduFilterVal == "disable" {
+					bpduFilterEnabled = false
+					intf.Config.BpduFilter = &bpduFilterEnabled
+					intf.State.BpduFilter = &bpduFilterEnabled
+				}
 
 				bpduGuardPortShut, _ := strconv.ParseBool((&stpIntfData).Get("bpdu_guard_do_disable"))
 				intf.Config.BpduGuardPortShutdown = &bpduGuardPortShut
@@ -1521,14 +1548,14 @@ func (app *StpApp) convertInternalToOCStpInterfaces(intfName string, interfaces 
 					}
 				}
 
-				if linkTypeEnabled, err := strconv.ParseBool((&stpIntfData).Get("pt2pt_mac")); err == nil {
-					if linkTypeEnabled {
-						intf.Config.LinkType = ocbinds.OpenconfigSpanningTree_StpLinkType_P2P
-						intf.State.LinkType = ocbinds.OpenconfigSpanningTree_StpLinkType_P2P
-					} else {
-						intf.Config.LinkType = ocbinds.OpenconfigSpanningTree_StpLinkType_SHARED
-						intf.State.LinkType = ocbinds.OpenconfigSpanningTree_StpLinkType_SHARED
-					}
+				linkTypeVal := (&stpIntfData).Get("link_type")
+				switch linkTypeVal {
+				case "shared":
+					intf.Config.LinkType = ocbinds.OpenconfigSpanningTree_StpLinkType_SHARED
+					intf.State.LinkType = ocbinds.OpenconfigSpanningTree_StpLinkType_SHARED
+				case "point-to-point":
+					intf.Config.LinkType = ocbinds.OpenconfigSpanningTree_StpLinkType_P2P
+					intf.State.LinkType = ocbinds.OpenconfigSpanningTree_StpLinkType_P2P
 				}
 
 				var num uint64
@@ -1565,6 +1592,28 @@ func (app *StpApp) convertInternalToOCStpInterfaces(intfName string, interfaces 
 				boolVal = false
 			}
 			intf.State.Portfast = &boolVal
+
+			opBpduFilter := (&operDbVal).Get("bpdu_filter")
+			if opBpduFilter == "yes" {
+				boolVal = true
+			} else if opBpduFilter == "no" {
+				boolVal = false
+			}
+			intf.State.BpduFilter = &boolVal
+
+			opEdgePortType := (&operDbVal).Get("edge_port")
+			if opEdgePortType == "yes" {
+				intf.State.EdgePort = ocbinds.OpenconfigSpanningTreeTypes_STP_EDGE_PORT_EDGE_ENABLE
+			} else if opEdgePortType == "no" {
+				intf.State.EdgePort = ocbinds.OpenconfigSpanningTreeTypes_STP_EDGE_PORT_EDGE_DISABLE
+			}
+
+			opLinkType := (&operDbVal).Get("link_type")
+			if opLinkType == "shared" {
+				intf.State.LinkType = ocbinds.OpenconfigSpanningTree_StpLinkType_SHARED
+			} else if opLinkType == "point-to-point" {
+				intf.State.LinkType = ocbinds.OpenconfigSpanningTree_StpLinkType_P2P
+			}
 		}
 	} else {
 		for intfName := range app.intfTableMap {
@@ -1653,6 +1702,13 @@ func (app *StpApp) convertOperInternalToOCVlanInterface(vlanName string, intfId 
 			num, _ = strconv.ParseUint((&operDbVal).Get("tcn_received"), 10, 64)
 			opTcnReceived := num
 
+			// For RPVST+ only
+			num, _ = strconv.ParseUint((&operDbVal).Get("config_bpdu_sent"), 10, 64)
+			opConfigBpduSent := num
+
+			num, _ = strconv.ParseUint((&operDbVal).Get("config_bpdu_received"), 10, 64)
+			opConfigBpduReceived := num
+
 			if pvstVlanIntf != nil && pvstVlanIntf.State != nil {
 				pvstVlanIntf.State.Name = &intfId
 				pvstVlanIntf.State.PortNum = &opPortNum
@@ -1710,6 +1766,8 @@ func (app *StpApp) convertOperInternalToOCVlanInterface(vlanName string, intfId 
 					rpvstVlanIntf.State.Counters.BpduReceived = &opBpduReceived
 					rpvstVlanIntf.State.Counters.TcnSent = &opTcnSent
 					rpvstVlanIntf.State.Counters.TcnReceived = &opTcnReceived
+					rpvstVlanIntf.State.Counters.ConfigBpduSent = &opConfigBpduSent
+					rpvstVlanIntf.State.Counters.ConfigBpduReceived = &opConfigBpduReceived
 				}
 			}
 		}
@@ -1853,7 +1911,7 @@ func (app *StpApp) enableStpForInterfaces(d *db.DB) error {
 	(&defaultDBValues).Set("enabled", "true")
 	(&defaultDBValues).Set("root_guard", "false")
 	(&defaultDBValues).Set("bpdu_guard", "false")
-	(&defaultDBValues).Set("bpdu_filter", "false")
+	(&defaultDBValues).Set("bpdu_filter", "global")
 	(&defaultDBValues).Set("bpdu_guard_do_disable", "false")
 	(&defaultDBValues).Set("portfast", "true")
 	(&defaultDBValues).Set("uplink_fast", "false")
@@ -1995,7 +2053,7 @@ func enableStpOnInterfaceVlanMembership(d *db.DB, intfList []string) {
 	(&defaultDBValues).Set("enabled", "true")
 	(&defaultDBValues).Set("root_guard", "false")
 	(&defaultDBValues).Set("bpdu_guard", "false")
-	(&defaultDBValues).Set("bpdu_filter", "false")
+	(&defaultDBValues).Set("bpdu_filter", "global")
 	(&defaultDBValues).Set("bpdu_guard_do_disable", "false")
 	(&defaultDBValues).Set("portfast", "true")
 	(&defaultDBValues).Set("uplink_fast", "false")
@@ -2111,7 +2169,7 @@ func (app *StpApp) handleStpGlobalFieldsUpdation(d *db.DB, opcode int) error {
 		valStr := app.globalInfo.Field[fld]
 		(&tmpDbEntry).Set(fld, valStr)
 
-		if fld != "rootguard_timeout" {
+		if fld != "rootguard_timeout" && fld != "bpdu_filter" {
 			fldValuePair[fld] = valStr
 		}
 	}
@@ -2158,6 +2216,9 @@ func (app *StpApp) handleStpGlobalFieldsDeletion(d *db.DB) error {
 		case "bridge-priority":
 			fldName = "priority"
 			valStr = STP_DEFAULT_BRIDGE_PRIORITY
+		case "bpdu-filter":
+			fldName = "bpdu_filter"
+			valStr = STP_DEFAULT_BPDU_FILTER
 		}
 
 		// Make a copy of StpGlobalDBEntry to modify fields value.
@@ -2173,7 +2234,7 @@ func (app *StpApp) handleStpGlobalFieldsDeletion(d *db.DB) error {
 			return err
 		}
 
-		if fldName != "rootguard_timeout" {
+		if fldName != "rootguard_timeout" && fldName != "bpdu_filter" {
 			fldValuePair[fldName] = valStr
 		}
 
@@ -2274,7 +2335,7 @@ func (app *StpApp) handleInterfacesFieldsDeletion(d *db.DB, intfId string) error
 		case "bpdu-guard":
 			(&dbEntry).Remove("bpdu_guard")
 		case "bpdu-filter":
-			(&dbEntry).Remove("bpdu_filter")
+			(&dbEntry).Set("bpdu_filter", "global")
 		case "portfast":
 			(&dbEntry).Remove("portfast")
 		case "uplink-fast":
@@ -2290,7 +2351,7 @@ func (app *StpApp) handleInterfacesFieldsDeletion(d *db.DB, intfId string) error
 		case "edge-port":
 			(&dbEntry).Remove("edge_port")
 		case "link-type":
-			(&dbEntry).Remove("pt2pt_mac")
+			(&dbEntry).Set("link_type", "auto")
 		}
 	}
 
