@@ -362,7 +362,7 @@ def handle_rpc(child, actXpath, pathstr):
     input_child = child.search_one('input', None, child.i_children)
     if input_child is None:
         print("There is no input node for RPC ", "Xpath: ", actXpath)    
-    build_payload(input_child, input_payload, pathstr, True, actXpath, True)    
+    build_payload(input_child, input_payload, pathstr, True, actXpath, True, False, [])    
     input_Defn = "rpc_input_" + DefName
     swaggerDict["definitions"][input_Defn] = OrderedDict()
     swaggerDict["definitions"][input_Defn]["type"] = "object"
@@ -373,7 +373,7 @@ def handle_rpc(child, actXpath, pathstr):
     output_child = child.search_one('output', None, child.i_children)
     if output_child is None:
         print("There is no output node for RPC ", "Xpath: ", actXpath)
-    build_payload(output_child, output_payload, pathstr, True, actXpath, True) 
+    build_payload(output_child, output_payload, pathstr, True, actXpath, True, False, []) 
     output_Defn = "rpc_output_" + DefName
     swaggerDict["definitions"][output_Defn] = OrderedDict()
     swaggerDict["definitions"][output_Defn]["type"] = "object"
@@ -439,7 +439,7 @@ def walk_child(child):
         payload = OrderedDict()       
 
         add_swagger_tag(child.i_module)
-        build_payload(child, payload, pathstr, True, actXpath, True)
+        build_payload(child, payload, pathstr, True, actXpath, True, False, [])
 
         if len(payload) == 0 and child.i_config == True:
             return
@@ -457,7 +457,7 @@ def walk_child(child):
 
         if child.i_config == False:   
             payload_get = OrderedDict()
-            build_payload(child, payload_get, pathstr, True, actXpath, True, True)
+            build_payload(child, payload_get, pathstr, True, actXpath, True, True, [])
             if len(payload_get) == 0:
                 return  
 
@@ -480,7 +480,7 @@ def walk_child(child):
 
                 if verb == "get":
                     payload_get = OrderedDict()
-                    build_payload(child, payload_get, pathstr, True, actXpath, True, True)
+                    build_payload(child, payload_get, pathstr, True, actXpath, True, True, [])
                     if len(payload_get) == 0:
                         continue  
                     defName_get = "get" + '_' + defName
@@ -540,7 +540,7 @@ def walk_child_for_list_base(child, actXpath, pathstr, metadata, nonBaseDefName=
             paramsList.pop()
 
     add_swagger_tag(child.i_module)    
-    build_payload(child, payload, pathstr, False, "", True)
+    build_payload(child, payload, pathstr, False, "", True, False, [])
 
     if len(payload) == 0 and child.i_config == True:
         return
@@ -552,7 +552,7 @@ def walk_child_for_list_base(child, actXpath, pathstr, metadata, nonBaseDefName=
     if child.i_config == False:
         
         payload_get = OrderedDict()
-        build_payload(child, payload_get, pathstr, False, "", True, True)
+        build_payload(child, payload_get, pathstr, False, "", True, True, [])
         
         if len(payload_get) == 0:
             return
@@ -574,7 +574,7 @@ def walk_child_for_list_base(child, actXpath, pathstr, metadata, nonBaseDefName=
         for verb in verbs:
             if verb == "get":
                 payload_get = OrderedDict()                
-                build_payload(child, payload_get, pathstr, False, "", True, True)
+                build_payload(child, payload_get, pathstr, False, "", True, True, [])
                 
                 if len(payload_get) == 0:
                     continue
