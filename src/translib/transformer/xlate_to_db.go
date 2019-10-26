@@ -377,6 +377,7 @@ func dbMapUpdate(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, jsonDat
 
 func dbMapDefaultFieldValFill(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, result map[string]map[string]db.Value, yangXpathList []string, tblName string, dbKey string) error {
 	tblData := result[tblName]
+	var dbs [db.MaxDB]*db.DB
 	for _, yangXpath := range yangXpathList {
 		yangNode, ok := xYangSpecMap[yangXpath]
 		if ok {
@@ -394,7 +395,18 @@ func dbMapDefaultFieldValFill(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri str
 						if !ok && len(childNode.defVal) > 0  && len(childNode.fieldName) > 0 {
 							log.Infof("Update(\"%v\") default: tbl[\"%v\"]key[\"%v\"]fld[\"%v\"] = val(\"%v\").",
 							childXpath, tblName, dbKey, childNode.fieldName, childNode.defVal)
-							mapFillData(d, ygRoot, oper, uri, dbKey, result, yangXpath, childName, childNode.defVal)
+							if len(childNode.xfmrFunc) > 0 {
+								inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, uri+"/"+childName, oper, "", nil, childNode.defVal)
+								ret, err := XlateFuncCall(yangToDbXfmrFunc(xYangSpecMap[childXpath].xfmrFunc), inParams)
+								if err == nil {
+									retData := ret[0].Interface().(map[string]string)
+									for f, v := range retData {
+										dataToDBMapAdd(tblName, dbKey, result, f, v)
+									}
+								}
+							} else {
+								mapFillData(d, ygRoot, oper, uri, dbKey, result, yangXpath, childName, childNode.defVal)
+							}
 						}
 					}
 				}
