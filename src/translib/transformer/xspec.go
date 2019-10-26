@@ -129,10 +129,12 @@ func yangToDbMapFill (keyLevel int, xYangSpecMap map[string]*yangXpathInfo, entr
 
 	if xpathData.yangDataType == "leaf" && len(xpathData.fieldName) == 0 {
 		if xpathData.tableName != nil && xDbSpecMap[*xpathData.tableName] != nil {
-			if xDbSpecMap[*xpathData.tableName].dbEntry.Dir[entry.Name] != nil {
+			if _, ok := xDbSpecMap[*xpathData.tableName + "/" + entry.Name]; ok {
 				xpathData.fieldName = entry.Name
-			} else if xDbSpecMap[*xpathData.tableName].dbEntry.Dir[strings.ToUpper(entry.Name)] != nil {
-				xpathData.fieldName = strings.ToUpper(entry.Name)
+			} else {
+				if _, ok := xDbSpecMap[*xpathData.tableName + "/" + strings.ToUpper(entry.Name)]; ok {
+					xpathData.fieldName = strings.ToUpper(entry.Name)
+				}
 			}
 		} else if xpathData.xfmrTbl != nil {
 			/* table transformer present */
@@ -606,7 +608,9 @@ func dbMapPrint( fname string) {
         if v.keyName != nil {
             fmt.Fprintf(fp, "%v", *v.keyName)
         }
-        fmt.Fprintf(fp, "\r\n     oc-yang  :%v \r\n", v.yangXpath)
+		for _, yxpath := range v.yangXpath {
+			fmt.Fprintf(fp, "\r\n     oc-yang  :%v \r\n", yxpath)
+		}
         fmt.Fprintf(fp, "     cvl-yang :%v \r\n", v.dbEntry)
         fmt.Fprintf (fp, "-----------------------------------------------------------------\r\n")
 
