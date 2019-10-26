@@ -63,6 +63,7 @@ func init() {
 const (
 	ACL_TABLE                = "ACL_TABLE"
 	RULE_TABLE               = "ACL_RULE"
+	DEFAULT_RULE             = "DEFAULT_RULE"
 	SONIC_ACL_TYPE_IPV4      = "L3"
 	SONIC_ACL_TYPE_L2        = "L2"
 	SONIC_ACL_TYPE_IPV6      = "L3V6"
@@ -70,8 +71,11 @@ const (
 	OPENCONFIG_ACL_TYPE_IPV6 = "ACL_IPV6"
 	OPENCONFIG_ACL_TYPE_L2   = "ACL_L2"
 	ACL_TYPE                 = "type"
+	ACTION_DROP              = "DROP"
+	IP_TYPE_ANY              = "ANY"
 	MIN_PRIORITY = 1
 	MAX_PRIORITY = 65535
+
 )
 
 /* E_OpenconfigAcl_ACL_TYPE */
@@ -216,9 +220,30 @@ var validate_ipv6 ValidateCallpoint = func(inParams XfmrParams) (bool) {
 ////////////////////////////////////////////
 var acl_post_xfmr PostXfmrFunc = func(inParams XfmrParams) (map[string]map[string]db.Value, error) {
 	log.Info("In Post transformer")
-	//TODO: check if a default ACL Rule exists, else create one and update the resultMap with default rule
-	// Return will be the updated result map
-	return (*inParams.dbDataMap)[inParams.curDb], nil
+	retDbDataMap := (*inParams.dbDataMap)[inParams.curDb]
+	//Check if a default ACL Rule exists, else create one and update the resultMap with default rule
+	for tblName, tblData := range retDbDataMap {
+		if tblName == ACL_TABLE {
+			ruleTs := &db.TableSpec{Name: RULE_TABLE}
+			for aclName, dbFldValData := range tblData {
+				keyStr := aclName + "|" + DEFAULT_RULE
+				existingEntry, err := inParams.d.GetEntry(ruleTs, db.Key{Comp: []string{keyStr}})
+				// If Default Rule already exists, Do not add new Default Rule
+				if existingEntry.IsPopulated() && err == nil {
+					log.Info("DEFAULT_RULE exists", dbFldValData)
+				}  else {
+					// Create default rule entry
+					aclRule := retDbDataMap[RULE_TABLE]
+					val := make(map[string]string)
+					aclRule[keyStr] = db.Value{Field: val}
+					aclRule[keyStr].Field["PRIORITY"] = strconv.FormatInt(int64(MIN_PRIORITY), 10)
+					aclRule[keyStr].Field["PACKET_ACTION"] = ACTION_DROP
+					aclRule[keyStr].Field["IP_TYPE"] = IP_TYPE_ANY
+				}
+			}
+		}
+	}
+	return retDbDataMap, nil
 }
 
 ////////////////////////////////////////////
