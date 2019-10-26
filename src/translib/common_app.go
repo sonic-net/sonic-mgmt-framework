@@ -282,7 +282,7 @@ func (app *CommonApp) translateCRUDCommon(d *db.DB, opcode int) ([]db.WatchKeys,
 	// Get list of tables to watch
 	depTbls := transformer.GetTablesToWatch(resultTblList, moduleNm)
 	if len(depTbls) == 0 {
-		log.Error("Failure to get Tables to watch for module ", moduleNm)
+		log.Errorf("Failure to get Tables to watch for module %v", moduleNm)
 		err = errors.New("GetTablesToWatch returned empty slice")
                 return keys, err
 	}
