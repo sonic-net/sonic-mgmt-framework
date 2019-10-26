@@ -246,7 +246,7 @@ def add_swagger_tag(module):
     else:
         return
 
-def swagger_it(child, defName, pathstr, payload, metadata, verb, operId=False):
+def swagger_it(child, defName, pathstr, payload, metadata, verb, operId=False, xParamsList=[]):
 
     firstEncounter = True
     verbPathStr = pathstr
@@ -271,6 +271,18 @@ def swagger_it(child, defName, pathstr, payload, metadata, verb, operId=False):
         swaggerDict["paths"][verbPathStr][verb]["parameters"] = []
         swaggerDict["paths"][verbPathStr][verb]["responses"] = copy.deepcopy(merge_two_dicts(responses, verb_responses[verb]))
         firstEncounter = False
+
+    haveXParams = False
+    tempParamsList = []     
+    for entry in xParamsList:
+        if entry["yangName"] not in tempParamsList:
+            tempParamsList.append(entry["yangName"])
+        else:
+            haveXParams = True
+            break
+
+    if haveXParams:
+        swaggerDict["paths"][verbPathStr][verb]["x-params"] = {"varMapping":copy.deepcopy(xParamsList)}
 
     opId = None
     if "operationId" not in swaggerDict["paths"][verbPathStr][verb]:
@@ -412,7 +424,8 @@ def walk_child(child):
     actXpath = statements.mk_path_str(child, True)
     metadata = []
     keyNodesInPath = []
-    pathstr = mk_path_refine(child, metadata, keyNodesInPath)
+    paramsList = []
+    pathstr = mk_path_refine(child, metadata, keyNodesInPath, False, paramsList)
         
     if actXpath in keysToLeafRefObjSet:
         return
@@ -452,7 +465,7 @@ def walk_child(child):
             swaggerDict["definitions"][defName_get] = OrderedDict()
             swaggerDict["definitions"][defName_get]["type"] = "object"
             swaggerDict["definitions"][defName_get]["properties"] = copy.deepcopy(payload_get)
-            swagger_it(child, defName_get, pathstr, payload_get, metadata, "get", defName_get)
+            swagger_it(child, defName_get, pathstr, payload_get, metadata, "get", defName_get, paramsList)
         else:
             swaggerDict["definitions"][defName] = OrderedDict()
             swaggerDict["definitions"][defName]["type"] = "object"
@@ -462,7 +475,8 @@ def walk_child(child):
                 if child.keyword == "leaf-list":
                     metadata_leaf_list = []
                     keyNodesInPath_leaf_list = []
-                    pathstr_leaf_list = mk_path_refine(child, metadata_leaf_list, keyNodesInPath_leaf_list, True)                    
+                    paramsLeafList = []
+                    pathstr_leaf_list = mk_path_refine(child, metadata_leaf_list, keyNodesInPath_leaf_list, True, paramsLeafList)                    
 
                 if verb == "get":
                     payload_get = OrderedDict()
@@ -473,11 +487,11 @@ def walk_child(child):
                     swaggerDict["definitions"][defName_get] = OrderedDict()
                     swaggerDict["definitions"][defName_get]["type"] = "object"
                     swaggerDict["definitions"][defName_get]["properties"] = copy.deepcopy(payload_get)
-                    swagger_it(child, defName_get, pathstr, payload_get, metadata, verb, defName_get)
+                    swagger_it(child, defName_get, pathstr, payload_get, metadata, verb, defName_get, paramsList)
 
                     if child.keyword == "leaf-list":
                         defName_get_leaf_list = "get" + '_llist_' + defName
-                        swagger_it(child, defName_get, pathstr_leaf_list, payload_get, metadata_leaf_list, verb, defName_get_leaf_list)
+                        swagger_it(child, defName_get, pathstr_leaf_list, payload_get, metadata_leaf_list, verb, defName_get_leaf_list, paramsLeafList)
 
                     continue
                 
@@ -490,20 +504,21 @@ def walk_child(child):
                     if isUriKeyInPayload(child,keyNodesInPath):
                         continue
 
-                swagger_it(child, defName, pathstr, payload, metadata, verb)
+                swagger_it(child, defName, pathstr, payload, metadata, verb, False, paramsList)
                 if verb == "delete" and child.keyword == "leaf-list":
                     defName_del_leaf_list = "del" + '_llist_' + defName
-                    swagger_it(child, defName, pathstr_leaf_list, payload, metadata_leaf_list, verb, defName_del_leaf_list)
+                    swagger_it(child, defName, pathstr_leaf_list, payload, metadata_leaf_list, verb, defName_del_leaf_list, paramsLeafList)
 
         if  child.keyword == "list":
             listMetaData = copy.deepcopy(metadata)
-            walk_child_for_list_base(child,actXpath,pathstr, listMetaData, defName)
+            listparamsList = copy.deepcopy(paramsList)
+            walk_child_for_list_base(child,actXpath,pathstr, listMetaData, defName, listparamsList)
 
     if hasattr(child, 'i_children'):
         for ch in child.i_children:
             walk_child(ch)
 
-def walk_child_for_list_base(child, actXpath, pathstr, metadata, nonBaseDefName=None):
+def walk_child_for_list_base(child, actXpath, pathstr, metadata, nonBaseDefName=None, paramsList=[]):
 
     payload = OrderedDict()
     pathstrList = pathstr.split('/')
@@ -521,6 +536,8 @@ def walk_child_for_list_base(child, actXpath, pathstr, metadata, nonBaseDefName=
 
     for key in child.i_key:
         metadata.pop()
+        if len(paramsList) > 0:
+            paramsList.pop()
 
     add_swagger_tag(child.i_module)    
     build_payload(child, payload, pathstr, False, "", True)
@@ -542,12 +559,12 @@ def walk_child_for_list_base(child, actXpath, pathstr, metadata, nonBaseDefName=
 
         defName_get = "get" + '_' + defName
         if nonBaseDefName is not None:
-            swagger_it(child, "get" + '_' + nonBaseDefName, pathstr, payload_get, metadata, "get", defName_get)
+            swagger_it(child, "get" + '_' + nonBaseDefName, pathstr, payload_get, metadata, "get", defName_get, paramsList)
         else:
             swaggerDict["definitions"][defName_get] = OrderedDict()
             swaggerDict["definitions"][defName_get]["type"] = "object"
             swaggerDict["definitions"][defName_get]["properties"] = copy.deepcopy(payload_get)            
-            swagger_it(child, defName_get, pathstr, payload_get, metadata, "get", defName_get)
+            swagger_it(child, defName_get, pathstr, payload_get, metadata, "get", defName_get, paramsList)
     else:
         if nonBaseDefName is None:
             swaggerDict["definitions"][defName] = OrderedDict()
@@ -564,18 +581,18 @@ def walk_child_for_list_base(child, actXpath, pathstr, metadata, nonBaseDefName=
 
                 defName_get = "get" + '_' + defName
                 if nonBaseDefName is not None:
-                    swagger_it(child, "get" + '_' + nonBaseDefName, pathstr, payload_get, metadata, verb, defName_get)
+                    swagger_it(child, "get" + '_' + nonBaseDefName, pathstr, payload_get, metadata, verb, defName_get, paramsList)
                 else:
                     swaggerDict["definitions"][defName_get] = OrderedDict()
                     swaggerDict["definitions"][defName_get]["type"] = "object"
                     swaggerDict["definitions"][defName_get]["properties"] = copy.deepcopy(payload_get)
-                    swagger_it(child, defName_get, pathstr, payload_get, metadata, verb, defName_get)
+                    swagger_it(child, defName_get, pathstr, payload_get, metadata, verb, defName_get, paramsList)
                 continue
             
             if nonBaseDefName is not None:
-                swagger_it(child, nonBaseDefName, pathstr, payload, metadata, verb, verb + '_' + defName)
+                swagger_it(child, nonBaseDefName, pathstr, payload, metadata, verb, verb + '_' + defName, paramsList)
             else:
-                swagger_it(child, defName, pathstr, payload, metadata, verb, verb + '_' + defName)
+                swagger_it(child, defName, pathstr, payload, metadata, verb, verb + '_' + defName, paramsList)
 
 def build_payload(child, payloadDict, uriPath="", oneInstance=False, Xpath="", firstCall=False, config_false=False, moduleList=[]):
 
@@ -701,7 +718,36 @@ def build_payload(child, payloadDict, uriPath="", oneInstance=False, Xpath="", f
         for ch in child.i_children:
             build_payload(ch,childJson,uriPath, False, Xpath, False, config_false, copy.deepcopy(moduleList))
 
-def mk_path_refine(node, metadata, keyNodes=[], restconf_leaflist=False):
+def handleDuplicateParams(node, paramMeta={}):
+    paramNamesList = paramMeta["paramNamesList"]
+    paramsList = paramMeta["paramsList"]
+    paramName = node.arg
+    paramNamesList.append(paramName)
+    paramNameCount = paramNamesList.count(paramName)
+    paramDictEntry = OrderedDict()
+
+    if paramNameCount > 1:
+        origParamName = paramName
+        paramName = paramName + str(paramNameCount-1)
+        while paramName in paramNamesList:
+            paramNameCount = paramNameCount + 1
+            paramName = origParamName + str(paramNameCount-1)
+        paramNamesList.append(paramName)
+    
+    paramDictEntry["uriName"] = paramName
+    paramDictEntry["yangName"] = node.arg 
+    if paramName != node.arg:
+        paramMeta["sameParams"] = True
+    paramsList.append(paramDictEntry)
+    
+    return paramName
+
+def mk_path_refine(node, metadata, keyNodes=[], restconf_leaflist=False, paramsList=[]):
+    paramMeta={}
+    paramMeta["paramNamesList"] = []
+    paramMeta["paramsList"] = []
+    paramMeta["sameParams"] = False
+
     def mk_path(node):
         """Returns the XPath path of the node"""
         if node.keyword in ['choice', 'case']:
@@ -709,8 +755,9 @@ def mk_path_refine(node, metadata, keyNodes=[], restconf_leaflist=False):
         def name(node):
             extra = ""
             if node.keyword == "leaf-list" and restconf_leaflist:
-                extraKeys = []      
-                extraKeys.append('{' + node.arg + '}')
+                extraKeys = []     
+                paramName = handleDuplicateParams(node,paramMeta)
+                extraKeys.append('{' + paramName + '}')
                 desc = node.search_one('description')
                 if desc is None:
                     desc = ''
@@ -718,7 +765,7 @@ def mk_path_refine(node, metadata, keyNodes=[], restconf_leaflist=False):
                     desc = desc.arg
                 metaInfo = OrderedDict()
                 metaInfo["desc"] = desc
-                metaInfo["name"] = node.arg 
+                metaInfo["name"] = paramName
                 metaInfo["type"] = "string"
                 metaInfo["format"] = ""
                 metadata.append(metaInfo)
@@ -729,8 +776,9 @@ def mk_path_refine(node, metadata, keyNodes=[], restconf_leaflist=False):
                 for index, list_key in enumerate(node.i_key):                    
                     keyNodes.append(list_key)
                     if list_key.i_leafref is not None:
-                        keyNodes.append(list_key.i_leafref_ptr[0])
-                    extraKeys.append('{' + list_key.arg + '}')
+                        keyNodes.append(list_key.i_leafref_ptr[0])                    
+                    paramName = handleDuplicateParams(list_key,paramMeta)
+                    extraKeys.append('{' + paramName + '}')
                     desc = list_key.search_one('description')
                     if desc is None:
                         desc = ''
@@ -738,7 +786,7 @@ def mk_path_refine(node, metadata, keyNodes=[], restconf_leaflist=False):
                         desc = desc.arg
                     metaInfo = OrderedDict()
                     metaInfo["desc"] = desc
-                    metaInfo["name"] = list_key.arg
+                    metaInfo["name"] = paramName
                     typeInfo = getType(list_key)
                     
                     if isinstance(typeInfo, tuple):
@@ -786,6 +834,11 @@ def mk_path_refine(node, metadata, keyNodes=[], restconf_leaflist=False):
     xpath = "/".join(final_xpathList)
     if not xpath.startswith('/'):
         xpath = '/' + xpath
+    
+    if paramMeta["sameParams"]:
+        for entry in paramMeta["paramsList"]:
+            paramsList.append(copy.deepcopy(entry))
+
     return xpath
 
 def handle_leafref(node,xpath):
