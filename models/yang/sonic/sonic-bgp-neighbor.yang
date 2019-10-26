@@ -25,35 +25,56 @@ module sonic-bgp-neighbor {
 			"Initial revision.";
 	}
 
-	container sonic-bgp-neighbor {
+    container sonic-bgp-neighbor {
+        container BGP_NEIGHBOR {
+            list BGP_NEIGHBOR_LIST {
+                key "vrf neighbor_ip";
 
-		list BGP_NEIGHBOR {
-			key "neighbor_ip";
+                leaf vrf {
+                    type string;
+                    description "Network-instance/VRF name";
+                }
 
-			leaf local_asn {
-                type uint32;
-                description "Local ASN";
-			}
+                leaf local_asn {
+                    type uint32;
+                    description "Local ASN";
+                }
 
-            leaf peer_asn {
-                type uint32;
-                description "Peer ASN";
-			}
+                leaf peer_asn {
+                    type uint32;
+                    description "Peer ASN";
+                }
 
-            leaf ebgp-multihop {
-                type uint32;
-                description "TTL";
-			}
+                leaf peer_group_name {
+                    type string;
+                    description "Peer-group name";
+                }
 
-            leaf neighbor_ip {
-                type inet:ipv4-address;
-                description "Neighbor description";
+                leaf enabled {
+                    type boolean;
+                    description "To enable BGP peer";
+                }
+
+                leaf ebgp_multihop {
+                    type uint32;
+                    description "TTL";
+                }
+
+                leaf neighbor_ip {
+                    type inet:ipv4-address;
+                    description "Neighbor description";
+                }
+
+                leaf description {
+                    type string;
+                    description "Neighbor information";
+                }
+
+                leaf auth_password {
+                    type string;
+                    description "MD5 Authentication password to use with nbr devices";
+                }
             }
-
-            leaf description {
-                type string;
-                description "Neighbor information";
-			}
         }
     }
 }
