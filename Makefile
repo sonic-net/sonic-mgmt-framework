@@ -142,6 +142,7 @@ clean: rest-clean
 	$(MAKE) -C src/cvl cleanall
 	rm -rf build/*
 	rm -rf debian/.debhelper
+	rm -rf $(BUILD_GOPATH)/src/github.com/openconfig/goyang/annotate.go
 
 cleanall:
 	$(MAKE) -C src/cvl cleanall
