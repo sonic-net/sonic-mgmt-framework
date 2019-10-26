@@ -3,6 +3,7 @@ package transformer
 import (
     "errors"
     "strings"
+    "translib/ocbinds"
     log "github.com/golang/glog"
 )
 
@@ -20,16 +21,53 @@ func init () {
 
 var YangToDb_bgp_pgrp_peer_type_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
     res_map := make(map[string]string)
-    
+
+    var err error
+    if inParams.param == nil {
+        err = errors.New("No Params");
+        return res_map, err
+        res_map["peer_type"] = ""
+        return res_map, err
+    }
+    peer_type, _ := inParams.param.(ocbinds.E_OpenconfigBgp_PeerType)
+    log.Info("YangToDb_bgp_pgrp_peer_type_xfmr: ", inParams.ygRoot, " Xpath: ", inParams.uri, " peer-type: ", peer_type)
+
+    if (peer_type == ocbinds.OpenconfigBgp_PeerType_INTERNAL) {
+        res_map["peer_type"] = "INTERNAL"
+    }  else if (peer_type == ocbinds.OpenconfigBgp_PeerType_EXTERNAL) {
+        res_map["peer_type"] = "EXTERNAL"
+    } else {
+        err = errors.New("Peer Type Missing");
+        res_map["peer_type"] = ""
+        return res_map, err
+    }
+
     return res_map, nil
-    
+
 }
 
 var DbToYang_bgp_pgrp_peer_type_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (map[string]interface{}, error) {
+
+    var err error
     result := make(map[string]interface{})
 
+    data := (*inParams.dbDataMap)[inParams.curDb]
+    log.Info("DbToYang_bgp_pgrp_peer_type_xfmr", data, "inParams : ", inParams)
 
-    return result, nil
+    pTbl := data["BGP_PEER_GROUPS"]
+    if _, ok := pTbl[inParams.key]; !ok {
+        log.Info("DbToYang_bgp_pgrp_peer_type_xfmr BGP peer-groups not found : ", inParams.key)
+        return result, errors.New("BGP peer-groups not found : " + inParams.key)
+    }
+    pGrpKey := pTbl[inParams.key]
+    peer_type, ok := pGrpKey.Field["peer_type"]
+
+    if ok {
+        result["peer-type"] = peer_type
+    } else {
+        log.Info("peer_type field not found in DB")
+    }
+    return result, err
 }
 
 var YangToDb_ni_tbl_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (string, error) {
@@ -39,18 +77,18 @@ var YangToDb_ni_tbl_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (string
 
     pathInfo := NewPathInfo(inParams.uri)
 
-    /* Key should contain, <vrf name, protocol name, peer group name> */
+    /* Key should contain, <vrf name> */
 
     vrfName    =  pathInfo.Var("name")
 
     if len(pathInfo.Vars) <  1 {
         err = errors.New("Invalid Key length");
-	return vrfName, err
+        return vrfName, err
     }
 
     if len(vrfName) == 0 {
         err = errors.New("vrf name is missing");
-	    return vrfName, err
+            return vrfName, err
     }
 
     return vrfName, nil
@@ -63,7 +101,7 @@ var YangToDb_ni_proto_tbl_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (
 
     pathInfo := NewPathInfo(inParams.uri)
 
-    /* Key should contain, <vrf name, protocol name, peer group name> */
+    /* Key should contain, <vrf name, protocol name> */
 
     vrfName    =  pathInfo.Var("name")
     bgpId      := pathInfo.Var("identifier")
@@ -71,23 +109,23 @@ var YangToDb_ni_proto_tbl_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (
 
     if len(pathInfo.Vars) <  3 {
         err = errors.New("Invalid Key length");
-	return vrfName, err
+        return vrfName, err
     }
 
     if len(vrfName) == 0 {
         err = errors.New("vrf name is missing");
         log.Info("vrf name is missing")
-	return vrfName, err
+        return vrfName, err
     }
     if strings.Contains(bgpId,"BGP") == false {
         err = errors.New("BGP ID is missing");
         log.Info("BGP ID is missing")
-	return bgpId, err
+        return bgpId, err
     }
     if len(protoName) == 0 {
         err = errors.New("Protocol Name is missing");
         log.Info("Protocol Name is missing")
-	return protoName, err
+        return protoName, err
     }
 
     var protoKey string
@@ -115,28 +153,28 @@ var YangToDb_bgp_pgrp_tbl_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (
     if len(pathInfo.Vars) <  3 {
         err = errors.New("Invalid Key length");
         log.Info("Invalid Key length", len(pathInfo.Vars))
-	return vrfName, err
+        return vrfName, err
     }
 
     if len(vrfName) == 0 {
         err = errors.New("vrf name is missing");
         log.Info("VRF Name is Missing")
-	return vrfName, err
+        return vrfName, err
     }
     if strings.Contains(bgpId,"BGP") == false {
         err = errors.New("BGP ID is missing");
         log.Info("BGP ID is missing")
-	return bgpId, err
+        return bgpId, err
     }
     if len(protoName) == 0 {
         err = errors.New("Protocol Name is missing");
         log.Info("Protocol Name is Missing")
-	return protoName, err
+        return protoName, err
     }
     if len(pGrpName) == 0 {
         err = errors.New("Peer Group Name is missing")
         log.Info("Peer Group Name is Missing")
-	return pGrpName, err
+        return pGrpName, err
     }
 
     log.Info("URI VRF", vrfName)
