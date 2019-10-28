@@ -63,6 +63,9 @@ func dataToDBMapAdd(tableName string, dbKey string, result map[string]map[string
 	}
 
     result[tableName][dbKey].Field[field] = value
+    if _, ok = result[tableName][dbKey].Field["NULL"]; ok {
+	    delete(result[tableName][dbKey].Field, "NULL")
+    }
     return
 }
 
@@ -100,10 +103,6 @@ func mapFillData(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, dbKey st
         return errors.New("Invalid table key")
     }
 
-    if xpathInfo.isKey {
-        return nil
-    }
-
     tableName := ""
     if xpathInfo.xfmrTbl != nil {
 	    inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, uri, oper, "", nil, "")
@@ -116,6 +115,11 @@ func mapFillData(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, dbKey st
     } else {
 	    tableName = *xpathInfo.tableName
     }
+    if xpathInfo.isKey {
+	     dataToDBMapAdd(tableName, dbKey, result, "NONE", "NULL")
+	     return nil
+    }
+
 	mapFillDataUtil(d, ygRoot, oper, uri, xpath, tableName, dbKey, result, name, value);
 	return nil
 }
