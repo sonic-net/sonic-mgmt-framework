@@ -79,7 +79,6 @@ var DbToYang_entry_type_field_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams)
     data := (*inParams.dbDataMap)[inParams.curDb]
     fdbTableMap := data["FDB_TABLE"]
     var entryTypeFinal = ""
-    v, k := fdbTableMap[inParams.key]
     if val, keyExist := fdbTableMap[inParams.key]; keyExist {
         if entryType, ok := val.Field["type"]; ok {
             entryTypeFinal = entryType
