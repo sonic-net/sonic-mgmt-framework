@@ -20,12 +20,9 @@
 import sys
 import time
 import json
-import collections
-import re
 import ast
-import openconfig_acl_client
-from rpipe_utils import pipestr
-from openconfig_acl_client.rest import ApiException
+import openconfig_network_instance_client
+from  openconfig_network_instance_client.rest import ApiException
 from scripts.render_cli import show_cli_output
 
 import urllib3
