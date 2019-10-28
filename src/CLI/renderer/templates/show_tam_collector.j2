@@ -1,0 +1,33 @@
+{% set vars = {'name': ""} %}
+{% set vars = {'ipaddresstype': ""} %}
+{% set vars = {'address': ""} %}
+{% set vars = {'port': ""} %}
+{% if json_output -%}
+{% for key_json in json_output %}
+    {% if key_json == "sonic-ifa:TAM_COLLECTOR_TABLE" %}
+        {% set collector_list = json_output[key_json]["TAM_COLLECTOR_TABLE_LIST"] %}
+    {% else %}
+        {% set collector_list = json_output[key_json] %}
+    {% endif %}
+{{'---------------------------------------------------'}}
+{{'TAM Collector Information'.ljust(20)}}
+{% for collector in collector_list %}
+    {% if vars.update({'name':collector["name"]}) %}{% endif %}
+    {% if vars.update({'ipaddresstype':collector["ipaddress-type"]}) %}{% endif %}
+    {% if vars.update({'port':collector["port"]}) %}{% endif %}
+    {% if vars.update({'address':collector["port"]}) %}{% endif %}
+---------------------------------------------------
+Collector                : {{ vars.name }}
+{% if vars.ipaddresstype %}
+ipaddress-type           : {{ vars.ipaddresstype }}
+{% endif %}
+{% if vars.address %}
+address                  : {{ vars.address }}
+{% endif %}
+{% if vars.port %}
+port                     : {{ vars.port }}
+{% endif %}
+{% endfor %}
+{% endfor %}
+{% endif %}
+

@@ -27,7 +27,15 @@ def generate_body(func, args):
     keypath = []
 
     # Set/Get the rules of all IFA table entries.
-    if func.__name__ == 'patch_sonic_ifa_sonic_ifa_tam_device_table_tam_device_table_list_deviceid':
+    if func.__name__ == 'get_sonic_ifa_sonic_ifa_tam_device_table':
+       keypath = []
+    elif func.__name__ == 'get_sonic_ifa_sonic_ifa_tam_int_feature_table':
+       keypath = []
+    elif func.__name__ == 'get_sonic_ifa_sonic_ifa_tam_collector_table':
+       keypath = []
+    elif func.__name__ == 'get_sonic_ifa_sonic_ifa_tam_int_ifa_flow_table':
+       keypath = []
+    elif func.__name__ == 'patch_sonic_ifa_sonic_ifa_tam_device_table_tam_device_table_list_deviceid':
        keypath = [ args[0] ]
        body = { "sonic-ifa:deviceid": int(args[1]) }
     elif func.__name__ == 'delete_sonic_ifa_sonic_ifa_tam_device_table_tam_device_table_list_deviceid':
@@ -109,6 +117,14 @@ def run(func, args):
 
             if api_response is None:
                 print("Failed")
+            elif func.__name__ == 'get_sonic_ifa_sonic_ifa_tam_device_table':
+                show_cli_output(args[0], api_response)
+            elif func.__name__ == 'get_sonic_ifa_sonic_ifa_tam_int_feature_table':
+                show_cli_output(args[0], api_response)
+            elif func.__name__ == 'get_sonic_ifa_sonic_ifa_tam_collector_table':
+                show_cli_output(args[0], api_response)
+            elif func.__name__ == 'get_sonic_ifa_sonic_ifa_tam_int_ifa_flow_table':
+                show_cli_output(args[0], api_response)
             else:
                 return
     except ApiException as e:
