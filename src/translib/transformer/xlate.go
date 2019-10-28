@@ -43,6 +43,7 @@ type KeySpec struct {
 	Ts    db.TableSpec
 	Key   db.Key
 	Child []KeySpec
+	ignoreParentKey bool
 }
 
 var XlateFuncs = make(map[string]reflect.Value)
@@ -117,8 +118,9 @@ func TraverseDb(dbs [db.MaxDB]*db.DB, spec KeySpec, result *map[db.DBNum]map[str
 		if err != nil {
 			return err
 		}
+		log.Infof("keys for table %v in Db %v are %v", spec.Ts.Name, spec.dbNum, keys)
 		for i, _ := range keys {
-			if parentKey != nil {
+			if parentKey != nil && (spec.ignoreParentKey == false) {
 				// TODO - multi-depth with a custom delimiter
 				if strings.Index(strings.Join(keys[i].Comp, separator), strings.Join((*parentKey).Comp, separator)) == -1 {
 					continue
@@ -161,6 +163,11 @@ func FillKeySpecs(yangXpath string , keyStr string, retdbFormat *[]KeySpec) ([]K
 			dbFormat := KeySpec{}
 			dbFormat.Ts.Name = *xpathInfo.tableName
 			dbFormat.dbNum = xpathInfo.dbIndex
+			if len(xYangSpecMap[yangXpath].xfmrKey) > 0 || xYangSpecMap[yangXpath].keyName != nil {
+				dbFormat.ignoreParentKey = true
+			} else {
+				dbFormat.ignoreParentKey = false
+			}
 			if keyStr != "" {
 				dbFormat.Key.Comp = append(dbFormat.Key.Comp, keyStr)
 			}
