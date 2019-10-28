@@ -375,8 +375,9 @@ func dbMapUpdate(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, jsonDat
     return nil
 }
 
-func dbMapDefaultFieldValFill(result map[string]map[string]db.Value, yangXpathList []string, tblName string, dbKey string) error {
+func dbMapDefaultFieldValFill(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, result map[string]map[string]db.Value, yangXpathList []string, tblName string, dbKey string) error {
 	tblData := result[tblName]
+	var dbs [db.MaxDB]*db.DB
 	for _, yangXpath := range yangXpathList {
 		yangNode, ok := xYangSpecMap[yangXpath]
 		if ok {
@@ -387,15 +388,25 @@ func dbMapDefaultFieldValFill(result map[string]map[string]db.Value, yangXpathLi
 					if childNode.yangDataType == YANG_LIST || childNode.yangDataType == YANG_CONTAINER {
 						var tblList []string
 						tblList = append(tblList, childXpath)
-						dbMapDefaultFieldValFill(result, tblList, tblName, dbKey)
+						dbMapDefaultFieldValFill(d, ygRoot, oper, uri, result, tblList, tblName, dbKey)
 					}
 					if childNode.tableName != nil && *childNode.tableName == tblName {
 						_, ok := tblData[dbKey].Field[childName]
 						if !ok && len(childNode.defVal) > 0  && len(childNode.fieldName) > 0 {
-							//tblData[dbKey].Field[childName] = childNode.defVal
 							log.Infof("Update(\"%v\") default: tbl[\"%v\"]key[\"%v\"]fld[\"%v\"] = val(\"%v\").",
 							childXpath, tblName, dbKey, childNode.fieldName, childNode.defVal)
-							dataToDBMapAdd(tblName, dbKey, result, childNode.fieldName, childNode.defVal)
+							if len(childNode.xfmrFunc) > 0 {
+								inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, uri+"/"+childName, oper, "", nil, childNode.defVal)
+								ret, err := XlateFuncCall(yangToDbXfmrFunc(xYangSpecMap[childXpath].xfmrFunc), inParams)
+								if err == nil {
+									retData := ret[0].Interface().(map[string]string)
+									for f, v := range retData {
+										dataToDBMapAdd(tblName, dbKey, result, f, v)
+									}
+								}
+							} else {
+								mapFillData(d, ygRoot, oper, uri, dbKey, result, yangXpath, childName, childNode.defVal)
+							}
 						}
 					}
 				}
@@ -405,11 +416,11 @@ func dbMapDefaultFieldValFill(result map[string]map[string]db.Value, yangXpathLi
 	return nil
 }
 
-func dbMapDefaultValFill(result map[string]map[string]db.Value) error {
+func dbMapDefaultValFill(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, result map[string]map[string]db.Value) error {
 	for tbl, tblData := range result {
 		for dbKey, _ := range tblData {
 			yxpathList := xDbSpecMap[tbl].yangXpath
-			dbMapDefaultFieldValFill(result, yxpathList, tbl, dbKey)
+			dbMapDefaultFieldValFill(d, ygRoot, oper, uri, result, yxpathList, tbl, dbKey)
 		}
 	}
 	return nil
@@ -427,23 +438,21 @@ func dbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, jsonDat
 	if !isSonicYang(path) && err == nil {
 		if oper == CREATE || oper == REPLACE {
 			log.Infof("Fill default value for %v, oper(%v)\r\n", path, oper)
-			dbMapDefaultValFill(result)
+			dbMapDefaultValFill(d, ygRoot, oper, path, result)
 		}
-		if oper == CREATE {
-			moduleNm := "/" + strings.Split(path, "/")[1]
-			log.Infof("Module name for path %s is %s", path, moduleNm)
-			if _, ok := xYangSpecMap[moduleNm]; ok {
-				if xYangSpecMap[moduleNm].yangDataType == "container" && len(xYangSpecMap[moduleNm].xfmrPost) > 0 {
-					log.Info("Invoke post transformer: ", xYangSpecMap[moduleNm].xfmrPost)
-					dbDataMap := make(map[db.DBNum]map[string]map[string]db.Value)
-					dbDataMap[db.ConfigDB] = result
-					var dbs [db.MaxDB]*db.DB
-					inParams := formXfmrInputRequest(d, dbs, db.ConfigDB, ygRoot, path, oper, "", &dbDataMap, nil)
-					result, err = postXfmrHandlerFunc(inParams)
-				}
-			} else {
-				log.Errorf("No Entry exists for module %s in xYangSpecMap. Unable to process post xfmr (\"%v\") path(\"%v\") error (\"%v\").", oper, path, err)
+		moduleNm := "/" + strings.Split(path, "/")[1]
+		log.Infof("Module name for path %s is %s", path, moduleNm)
+		if _, ok := xYangSpecMap[moduleNm]; ok {
+			if xYangSpecMap[moduleNm].yangDataType == "container" && len(xYangSpecMap[moduleNm].xfmrPost) > 0 {
+				log.Info("Invoke post transformer: ", xYangSpecMap[moduleNm].xfmrPost)
+				dbDataMap := make(map[db.DBNum]map[string]map[string]db.Value)
+				dbDataMap[db.ConfigDB] = result
+				var dbs [db.MaxDB]*db.DB
+				inParams := formXfmrInputRequest(d, dbs, db.ConfigDB, ygRoot, path, oper, "", &dbDataMap, nil)
+				result, err = postXfmrHandlerFunc(inParams)
 			}
+		} else {
+			log.Errorf("No Entry exists for module %s in xYangSpecMap. Unable to process post xfmr (\"%v\") path(\"%v\") error (\"%v\").", oper, path, err)
 		}
 		printDbData(result, "/tmp/yangToDbDataCreate.txt")
 	} else {

@@ -442,21 +442,16 @@ func yangListDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, x
 			if len(mapSlice) > 0 {
 				listInstanceGet := false
 				// Check if it is a list instance level Get
-				if strings.Contains(uri, "[") {
-					uriXpath, _ := XfmrRemoveXPATHPredicates(uri)
-					if (uriXpath == xpath  && (strings.HasSuffix(uri, "]") || strings.HasSuffix(uri, "]/"))) {
-						listInstanceGet = true
-						for k, v := range mapSlice[0] {
-							resultMap[k] = v
-						}
-					}
-				}
+				if ((strings.HasSuffix(uri, "]")) || (strings.HasSuffix(uri, "]/"))) {
+                                                listInstanceGet = true
+                                                for k, v := range mapSlice[0] {
+                                                        resultMap[k] = v
+                                                }
+                                }
 				if !listInstanceGet {
 					resultMap[xYangSpecMap[xpath].yangEntry.Name] = mapSlice
 				}
 			}
-		} else {
-			yangDataFill(dbs, ygRoot, uri, xpath, dbDataMap, resultMap, tbl, tblKey, cdb, validate)
 		}
 	}
 
