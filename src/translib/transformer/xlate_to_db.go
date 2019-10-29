@@ -453,7 +453,9 @@ func dbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, jsonDat
 		err = yangReqToDbMapCreate(d, ygRoot, oper, root, "", "", jsonData, result, tblXpathMap)
 	}
 	if !isSonicYang(path) && err == nil {
-		if oper == CREATE || oper == REPLACE {
+               xpath, _ := XfmrRemoveXPATHPredicates(path)
+               yangNode, ok := xYangSpecMap[xpath]
+               if ok && yangNode.yangDataType != YANG_LEAF && (oper == CREATE || oper == REPLACE) {
 			log.Infof("Fill default value for %v, oper(%v)\r\n", path, oper)
 			dbMapDefaultValFill(d, ygRoot, oper, path, result, tblXpathMap)
 		}
