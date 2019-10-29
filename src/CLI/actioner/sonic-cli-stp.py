@@ -209,6 +209,11 @@ def generate_body(func, args):
        keypath = [args[1]]
     elif func.__name__ == 'delete_openconfig_spanning_tree_ext_stp_interfaces_interface_config_port_priority':
        keypath = [args[1]]
+    elif func.__name__ == 'patch_openconfig_spanning_tree_stp_interfaces_interface_config_link_type':
+       keypath = [args[1]]
+       body = { "openconfig-spanning-tree:link-type": args[2] }
+    elif func.__name__ == 'delete_openconfig_spanning_tree_stp_interfaces_interface_config_link_type':
+       keypath = [args[1]]
     elif func.__name__ == 'patch_openconfig_spanning_tree_stp_interfaces_interface_config_edge_port':
        keypath = [args[1]]
        if args[2] == "True":

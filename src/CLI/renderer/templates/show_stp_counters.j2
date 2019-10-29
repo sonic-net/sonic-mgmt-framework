@@ -60,8 +60,8 @@ VLAN {{'%s'| format(vars.vlan_name)}} - {{mode}} instance {{'%s'| format(vars.st
 {{" " }}
 VLAN {{'%s'| format(vars.vlan_name)}} - {{mode}} instance {{'%s'| format(vars.stp_instance)}}
 --------------------------------------------------------------------------------
-{{'%-16s'|format("PortNum")}}{{'%-10s'|format("BPDU Tx")}}{{'%-10s'|format("BPDU Rx")}}{{'%-10s'|format("TCN Tx")}}{{'%-10s'|format("TCN Rx")}}{{'%-12s'|format("Config BPDU")}}{{'%-12s'|format("Config BPDU")}}
-{{'%-16s'|format("")}}{{'%-10s'|format(" ")}}{{'%-10s'|format(" ")}}{{'%-10s'|format(" ")}}{{'%-10s'|format(" ")}}{{'%-12s'|format("Tx")}}{{'%-12s'|format("Rx")}}
+{{'%-16s'|format("PortNum")}}{{'%-10s'|format("BPDU Tx")}}{{'%-10s'|format("BPDU Rx")}}{{'%-12s'|format("Config BPDU")}}{{'%-12s'|format("Config BPDU")}}
+{{'%-16s'|format("")}}{{'%-10s'|format(" ")}}{{'%-10s'|format(" ")}}{{'%-12s'|format("Tx")}}{{'%-12s'|format("Rx")}}
 --------------------------------------------------------------------------------
 {% set interface_list  = {} %}
 {% if "interfaces" in vlan and "interface" in vlan['interfaces'] %}
@@ -74,10 +74,8 @@ VLAN {{'%s'| format(vars.vlan_name)}} - {{mode}} instance {{'%s'| format(vars.st
             {% if vars.update({'bpdu_rx':intf['state']['counters']['bpdu-received']}) %}{% endif %}
             {% if vars.update({'tcn_rx': intf['state']['counters']['openconfig-spanning-tree-ext:tcn-received']}) %}{% endif %}
             {% if vars.update({'tcn_tx': intf['state']['counters']['openconfig-spanning-tree-ext:tcn-sent']}) %}{% endif %}
-            {% if vars.update({'config_bpdu_tx': intf['state']['counters']['openconfig-spanning-tree-ext:config-bpdu-sent']}) %}{% endif %}
-            {% if vars.update({'config_bpdu_rx': intf['state']['counters']['openconfig-spanning-tree-ext:config-bpdu-received']}) %}{% endif %}
         {% endif %}
-{{'%-16s'|format(vars.intf_name)}}{{'%-10s'|format(vars.bpdu_tx)}}{{'%-10s'|format(vars.bpdu_rx)}}{{'%-10s'|format(vars.tcn_tx)}}{{'%-10s'|format(vars.tcn_rx)}}{{'%-10s'|format(vars.config_bpdu_rx)}}{{'%-10s'|format(vars.config_bpdu_tx)}}
+{{'%-16s'|format(vars.intf_name)}}{{'%-10s'|format(vars.bpdu_tx)}}{{'%-10s'|format(vars.bpdu_rx)}}{{'%-10s'|format(vars.config_bpdu_rx)}}{{'%-10s'|format(vars.config_bpdu_tx)}}
     {% endfor %}
 {% endfor %}
 {%endif%}

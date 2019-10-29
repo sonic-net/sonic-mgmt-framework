@@ -572,7 +572,7 @@ limitations under the License.
                 >
             </PARAM>
         </PARAM>
-    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-stp.py delete_openconfig_spanning_tree_ext_stp_global_config_root_guard_timeout&#xA;
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-stp.py delete_openconfig_spanning_tree_ext_stp_global_config_rootguard_timeout&#xA;
     </ACTION>
     </COMMAND>
 
@@ -622,20 +622,6 @@ limitations under the License.
             mode="switch"
             >
             <PARAM
-                name="bpdufilter"
-                help="Spanning-tree BPDU filter on the interface"
-                ptype="SUBCOMMAND"
-                mode="subcommand"
-                >
-                <PARAM
-                    name="enable"
-                    help="Enables spanning-tree BPDU filter on the interface"
-                    ptype="SUBCOMMAND"
-                    mode="subcommand"
-                    >
-                </PARAM>
-            </PARAM>
-            <PARAM
                 name="bpduguard"
                 help="Enables bpdu guard on the interface"
                 ptype="SUBCOMMAND"
@@ -671,6 +657,41 @@ limitations under the License.
                 >
             </PARAM>
             <PARAM
+                name="link-type"
+                help="Set link type of the interface"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                >
+                <PARAM
+                    name="link-sub-cmds"
+                    help = "link type sub commands."
+                    ptype="SUBCOMMAND"
+                    mode="switch"
+                    >
+                    <PARAM
+                        name="auto"
+                        help = "link type is set based on the duplex setting of the interface."
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        >
+                    </PARAM>
+                    <PARAM
+                        name="point-to-point"
+                        help = "link type of given interface is point-to-point."
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        >
+                    </PARAM>
+                    <PARAM
+                        name="shared"
+                        help = "link type of given interface is shared."
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        >
+                    </PARAM>
+                </PARAM>
+            </PARAM>
+            <PARAM
                 name="portfast"
                 help="Enables portfast on the interface"
                 ptype="SUBCOMMAND"
@@ -692,6 +713,28 @@ limitations under the License.
                 </PARAM>
             </PARAM>
 
+            <PARAM
+                name="port"
+                help="Set Spanning tree port"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                >
+                <PARAM
+                    name="type"
+                    help="Spanning Tree port type"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    >
+                    <PARAM
+                        name="edge"
+                        help="Edge port"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        >
+                    </PARAM>
+                </PARAM>
+            </PARAM>
+
         <PARAM
             name="uplinkfast"
             help="Enables port fast on the interface"
@@ -701,26 +744,70 @@ limitations under the License.
         </PARAM>
     </PARAM>
     <ACTION>
-        if test "${port-shutdown}" != "";then&#xA;
-        python $SONIC_CLI_ROOT/sonic-cli-stp.py patch_openconfig_spanning_tree_ext_stp_interfaces_interface_config_bpdu_guard_port_shutdown ${iface} True&#xA;
-        elif test "${stp-if-subcmds}" = "bpduguard";then&#xA;
-        python $SONIC_CLI_ROOT/sonic-cli-stp.py patch_openconfig_spanning_tree_ext_stp_interfaces_interface_config_bpdu_guard_port_shutdown ${iface} True&#xA;
-        elif test "${stp-if-subcmds}" = "edgeport";then&#xA;
-        python $SONIC_CLI_ROOT/sonic-cli-stp.py  patch_openconfig_spanning_tree_stp_interfaces_interface_config_edge_port ${iface} True&#xA;
+        if test "${stp-if-subcmds}" = "bpduguard";then&#xA;
+            if test "${port-shutdown}" != "";then&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-stp.py patch_openconfig_spanning_tree_ext_stp_interfaces_interface_config_bpdu_guard_port_shutdown ${iface} True&#xA;
+            else&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-stp.py patch_openconfig_spanning_tree_stp_interfaces_interface_config_bpdu_guard ${iface} True&#xA;
+            fi&#xA;
         elif test "${stp-if-subcmds}" = "portfast";then&#xA;
         python $SONIC_CLI_ROOT/sonic-cli-stp.py patch_openconfig_spanning_tree_ext_stp_interfaces_interface_config_portfast ${iface} True&#xA;
         elif test "${stp-if-subcmds}" = "uplinkfast";then&#xA;
         python $SONIC_CLI_ROOT/sonic-cli-stp.py patch_openconfig_spanning_tree_ext_stp_interfaces_interface_config_portfast ${iface} True&#xA;
-        elif test "${stp-if-subcmds}" = "bpdufilter";then&#xA;
-        python $SONIC_CLI_ROOT/sonic-cli-stp.py patch_openconfig_spanning_tree_stp_interfaces_interface_config_bpdu_filter ${iface} True&#xA;
         elif test "${stp-if-subcmds}" = "enable";then&#xA;
         python $SONIC_CLI_ROOT/sonic-cli-stp.py patch_openconfig_spanning_tree_ext_stp_interfaces_interface_config_spanning_tree_enable ${iface} True&#xA;
         elif test "${stp-if-subcmds}" = "cost";then&#xA;
         python $SONIC_CLI_ROOT/sonic-cli-stp.py patch_openconfig_spanning_tree_ext_stp_interfaces_interface_config_cost ${iface} ${value}&#xA;
         elif test "${stp-if-subcmds}" = "port-priority";then&#xA;
         python $SONIC_CLI_ROOT/sonic-cli-stp.py patch_openconfig_spanning_tree_ext_stp_interfaces_interface_config_port_priority ${iface} ${value}&#xA;
+        elif test "${stp-if-subcmds}" = "link-type";then&#xA;
+            if test "${link-sub-cmds}" = "auto";then&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-stp.py delete_openconfig_spanning_tree_stp_interfaces_interface_config_link_type ${iface}&#xA;
+            elif test "${link-sub-cmds}" = "point-to-point";then&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-stp.py patch_openconfig_spanning_tree_stp_interfaces_interface_config_link_type ${iface} "P2P"&#xA;
+            elif test "${link-sub-cmds}" = "shared";then&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-stp.py patch_openconfig_spanning_tree_stp_interfaces_interface_config_link_type ${iface} "SHARED"&#xA;
+            fi&#xA;
+        elif test "${stp-if-subcmds}" = "port";then&#xA;
+            if test "${edge}" != "";then&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-stp.py patch_openconfig_spanning_tree_stp_interfaces_interface_config_edge_port ${iface} True&#xA;
+            fi&#xA;
         fi&#xA;
         builtin="clish_nop"
+    </ACTION>
+    </COMMAND>
+
+    <COMMAND
+        name="spanning-tree bpdufilter"
+        help="Spanning-tree BPDU filter on the interface"
+        >
+        <PARAM
+            name="bpdufilt_sub_cmds"
+            help="Spanning-tree BPDU filter subcommands"
+            ptype="SUBCOMMAND"
+            mode="switch"
+            >
+            <PARAM
+                name="enable"
+                help="Enables spanning-tree BPDU filter on the interface"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                >
+            </PARAM>
+            <PARAM
+                name="disable"
+                help="Disable spanning-tree BPDU filter on the interface"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                >
+            </PARAM>
+        </PARAM>
+    <ACTION>
+        if test "${bpdufilt_sub_cmds}" = "enable";then&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-stp.py patch_openconfig_spanning_tree_stp_interfaces_interface_config_bpdu_filter ${iface} True&#xA;
+        elif test "${bpdufilt_sub_cmds}" = "disable";then&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-stp.py patch_openconfig_spanning_tree_stp_interfaces_interface_config_bpdu_filter ${iface} False&#xA;
+        fi&#xA;
     </ACTION>
     </COMMAND>
 
@@ -811,16 +898,7 @@ limitations under the License.
                 ptype="SUBCOMMAND"
                 mode="subcommand"
                 >
-                <PARAM
-                    name="disable"
-                    help="Disable spanning-tree BPDU filter on the interface"
-                    ptype="SUBCOMMAND"
-                    mode="subcommand"
-                    optional="true"
-                    >
-                </PARAM>
             </PARAM>
-
             <PARAM
                 name="bpduguard"
                 help="Disabled bpdu guard on the interface"
@@ -854,6 +932,14 @@ limitations under the License.
             </PARAM>
 
             <PARAM
+                name="link-type"
+                help="Unset link type of the interface"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                >
+            </PARAM>
+
+            <PARAM
                 name="portfast"
                 help="Disables portfast on the interface"
                 ptype="SUBCOMMAND"
@@ -870,6 +956,20 @@ limitations under the License.
             </PARAM>
 
             <PARAM
+                name="port"
+                help="Unset Spanning Tree port info"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                >
+                <PARAM
+                    name="type"
+                    help="Unset port type of the interface"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    >
+                </PARAM>
+            </PARAM>
+            <PARAM
                 name="uplinkfast"
                 help="Disables port fast on the interface"
                 ptype="SUBCOMMAND"
@@ -878,16 +978,14 @@ limitations under the License.
             </PARAM>
         </PARAM>
     <ACTION>
-       if test "${port-shutdown}" != "";then&#xA;
-        python $SONIC_CLI_ROOT/sonic-cli-stp.py patch_openconfig_spanning_tree_ext_stp_interfaces_interface_config_bpdu_guard_port_shutdown ${iface} False&#xA;
-       elif test "${stp-if-subcmds}" = "bpduguard";then&#xA;
-        python $SONIC_CLI_ROOT/sonic-cli-stp.py patch_openconfig_spanning_tree_ext_stp_interfaces_interface_config_bpdu_guard_port_shutdown ${iface} False&#xA;
-        elif test "${stp-if-subcmds}" = "edgeport";then&#xA;
-        python $SONIC_CLI_ROOT/sonic-cli-stp.py  patch_openconfig_spanning_tree_stp_interfaces_interface_config_edge_port ${iface} False&#xA;
+       if test "${stp-if-subcmds}" = "bpduguard";then&#xA;
+            if test "${port-shutdown}" != "";then&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-stp.py patch_openconfig_spanning_tree_ext_stp_interfaces_interface_config_bpdu_guard_port_shutdown ${iface} False&#xA;
+            else&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-stp.py patch_openconfig_spanning_tree_stp_interfaces_interface_config_bpdu_guard ${iface} False&#xA;
+            fi&#xA;
         elif test "${stp-if-subcmds}" = "uplinkfast";then&#xA;
         python $SONIC_CLI_ROOT/sonic-cli-stp.py patch_openconfig_spanning_tree_ext_stp_interfaces_interface_config_uplink_fast ${iface} False&#xA;
-        elif test "${disable}" = "";then&#xA;
-        python $SONIC_CLI_ROOT/sonic-cli-stp.py patch_openconfig_spanning_tree_stp_interfaces_interface_config_bpdu_filter ${iface} False&#xA;
         elif test "${stp-if-subcmds}" = "bpdufilter";then&#xA;
         python $SONIC_CLI_ROOT/sonic-cli-stp.py delete_openconfig_spanning_tree_stp_interfaces_interface_config_bpdu_filter ${iface}&#xA;
         elif test "${stp-if-subcmds}" = "portfast";then&#xA;
@@ -898,6 +996,12 @@ limitations under the License.
         python $SONIC_CLI_ROOT/sonic-cli-stp.py delete_openconfig_spanning_tree_ext_stp_interfaces_interface_config_cost ${iface}&#xA;
         elif test "${stp-if-subcmds}" = "port-priority";then&#xA;
         python $SONIC_CLI_ROOT/sonic-cli-stp.py delete_openconfig_spanning_tree_ext_stp_interfaces_interface_config_port_priority ${iface}&#xA;
+        elif test "${stp-if-subcmds}" = "link-type";then&#xA;
+        python $SONIC_CLI_ROOT/sonic-cli-stp.py delete_openconfig_spanning_tree_stp_interfaces_interface_config_link_type ${iface}&#xA;
+        elif test "${stp-if-subcmds}" = "port";then&#xA;
+            if test "${type}" != "";then&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-stp.py patch_openconfig_spanning_tree_stp_interfaces_interface_config_edge_port ${iface} False&#xA;
+            fi&#xA;
         fi&#xA;
         builtin="clish_nop"
     </ACTION>
