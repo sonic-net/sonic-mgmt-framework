@@ -1,4 +1,4 @@
-module sonic-bgp-af-peergroup {
+module sonic-bgp-peergroup-af {
   namespace "http://github.com/Azure/sonic-bgp-af-peergroup";
   prefix sbgpafpg;
 
@@ -28,16 +28,16 @@ module sonic-bgp-af-peergroup {
       "Initial revision.";
   }
 
-  container sonic-bgp-af-peergroup {
-    container BGP_AF_PEER_GROUP {
-      list BGP_AF_PEER_GROUP_LIST {
-        key "vrf af pgrp_name";
+  container sonic-bgp-peergroup-af {
+    container BGP_PEER_GROUP_AF {
+      list BGP_PEER_GROUP_AF_LIST {
+        key "vrf afi_safi pgrp_name";
 
         leaf vrf {
           type string;
         }
 
-        leaf af {
+        leaf afi_safi {
           type string;
         }
 

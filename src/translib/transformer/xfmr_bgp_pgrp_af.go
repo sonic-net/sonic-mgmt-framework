@@ -11,7 +11,43 @@ import (
 func init () {
     XlateFuncBind("YangToDb_bgp_af_pgrp_tbl_key_xfmr", YangToDb_bgp_af_pgrp_tbl_key_xfmr)
     XlateFuncBind("DbToYang_bgp_af_pgrp_tbl_key_xfmr", DbToYang_bgp_af_pgrp_tbl_key_xfmr)
+    XlateFuncBind("YangToDb_bgp_pgrp_afi_safi_name_fld_xfmr", YangToDb_bgp_pgrp_afi_safi_name_fld_xfmr)
+    XlateFuncBind("DbToYang_bgp_pgrp_afi_safi_name_fld_xfmr", DbToYang_bgp_pgrp_afi_safi_name_fld_xfmr)
 }
+
+var YangToDb_bgp_pgrp_afi_safi_name_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
+    res_map := make(map[string]string)
+
+    return res_map, nil
+}
+
+var DbToYang_bgp_pgrp_afi_safi_name_fld_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (map[string]interface{}, error) {
+
+    var err error
+    result := make(map[string]interface{})
+
+    data := (*inParams.dbDataMap)[inParams.curDb]
+    log.Info("DbToYang_bgp_pgrp_afi_safi_name_fld_xfmr: ", data, "inParams : ", inParams)
+
+    pTbl := data["BGP_PEER_GROUP_AF"]
+    if _, ok := pTbl[inParams.key]; !ok {
+        log.Info("DbToYang_bgp_pgrp_afi_safi_name_fld_xfmr BGP peer-groups AF not found : ", inParams.key)
+        return result, errors.New("BGP Peer Group AF Table not found : " + inParams.key)
+    }
+
+    pgrpAfKey := pTbl[inParams.key]
+    afiSafiName, ok := pgrpAfKey.Field["afi_safi"]
+
+    if ok {
+        result["afi-safi-name"] = afiSafiName 
+    } else {
+        log.Info("afi_safi field not found in DB")
+        err = errors.New("afi_safi field not found in DB")
+    }
+
+    return result, err
+}
+
 
 var YangToDb_bgp_af_pgrp_tbl_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (string, error) {
     var err error

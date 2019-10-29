@@ -29,6 +29,7 @@ import (
 	"translib/ocbinds"
 	"translib/tlerr"
 	"translib/transformer"
+	"cvl"
 )
 
 var ()
@@ -248,34 +249,7 @@ func (app *CommonApp) translateCRUDCommon(d *db.DB, opcode int) ([]db.WatchKeys,
 	var err error
 	var keys []db.WatchKeys
 	var tblsToWatch []*db.TableSpec
-	var OrdTblList []string
-	var moduleNm string
 	log.Info("translateCRUDCommon:path =", app.pathInfo.Path)
-
-	/* retrieve schema table order for incoming module name request */
-	moduleNm, err = transformer.GetModuleNmFromPath(app.pathInfo.Path)
-	if (err != nil) || (len(moduleNm) == 0) {
-		log.Error("GetModuleNmFromPath() failed")
-		return keys, err
-	}
-	log.Info("getModuleNmFromPath() returned module name = ", moduleNm)
-	OrdTblList, err = transformer.GetOrdDBTblList(moduleNm)
-	if (err != nil) || (len(OrdTblList) == 0) {
-		log.Error("GetOrdDBTblList() failed")
-		//return keys, err
-	}
-        OrdTblList = []string {"BGP_GLOBALS", "BGP_PEER_GROUP", "BGP_AF_PEER_GROUP"}
-
-	log.Info("GetOrdDBTblList() returned ordered table list = ", OrdTblList)
-	app.cmnAppOrdTbllist = OrdTblList
-
-	/* enhance this to handle dependent tables - need CVL to provide list of such tables for a given request */
-	for _, tblnm := range OrdTblList { // OrdTblList already has has all tables corresponding to a module
-		tblsToWatch = append(tblsToWatch, &db.TableSpec{Name: tblnm})
-	}
-	log.Info("Tables to watch", tblsToWatch)
-
-	cmnAppInfo.tablesToWatch = tblsToWatch
 
 	// translate yang to db
 	result, err := transformer.XlateToDb(app.pathInfo.Path, opcode, d, (*app).ygotRoot, (*app).ygotTarget)
@@ -292,6 +266,48 @@ func (app *CommonApp) translateCRUDCommon(d *db.DB, opcode int) ([]db.WatchKeys,
 		return keys, err
 	}
 	app.cmnAppTableMap = result
+
+	moduleNm, err := transformer.GetModuleNmFromPath(app.pathInfo.Path)
+        if (err != nil) || (len(moduleNm) == 0) {
+                log.Error("GetModuleNmFromPath() failed")
+                return keys, err
+        }
+
+	var resultTblList []string
+        for tblnm, _ := range result { //Get dependency list for all tables in result
+		resultTblList = append(resultTblList, tblnm)
+	}
+        log.Info("Result Tables List", resultTblList)
+
+	// Get list of tables to watch
+	depTbls := transformer.GetTablesToWatch(resultTblList, moduleNm)
+	if len(depTbls) == 0 {
+		log.Errorf("Failure to get Tables to watch for module %v", moduleNm)
+		err = errors.New("GetTablesToWatch returned empty slice")
+                return keys, err
+	}
+	for _, tbl := range depTbls {
+		tblsToWatch = append(tblsToWatch, &db.TableSpec{Name: tbl})
+	}
+        log.Info("Tables to watch", tblsToWatch)
+        cmnAppInfo.tablesToWatch = tblsToWatch
+
+	// Get sorted dependency tables to be used for CRUD operations
+	cvSess, cvlRetSess := cvl.ValidationSessOpen()
+	if cvlRetSess != cvl.CVL_SUCCESS {
+		log.Errorf("Failure in creating CVL validation session object required to use CVl API to get Tbl info for module %v - %v", moduleNm, cvlRetSess)
+		return keys, err
+	}
+	cvlSortDepTblList, cvlRetDepTbl := cvSess.SortDepTables(resultTblList)
+	if cvlRetDepTbl != cvl.CVL_SUCCESS {
+		log.Warningf("Failure in cvlSess.SortDepTables: %v", cvlRetDepTbl)
+		cvl.ValidationSessClose(cvSess)
+		return keys, err
+	}
+	log.Info("cvlSortDepTblList = ", cvlSortDepTblList)
+	app.cmnAppOrdTbllist = cvlSortDepTblList
+
+	cvl.ValidationSessClose(cvSess)
 
 	keys, err = app.generateDbWatchKeys(d, false)
 	return keys, err

@@ -15,6 +15,39 @@ func init () {
     XlateFuncBind("DbToYang_bgp_pgrp_tbl_key_xfmr", DbToYang_bgp_pgrp_tbl_key_xfmr)
     XlateFuncBind("YangToDb_bgp_pgrp_peer_type_xfmr", YangToDb_bgp_pgrp_peer_type_xfmr)
     XlateFuncBind("DbToYang_bgp_pgrp_peer_type_xfmr", DbToYang_bgp_pgrp_peer_type_xfmr)
+    XlateFuncBind("YangToDb_bgp_pgrp_name_fld_xfmr", YangToDb_bgp_pgrp_name_fld_xfmr)
+    XlateFuncBind("DbToYang_bgp_pgrp_name_fld_xfmr", DbToYang_bgp_pgrp_name_fld_xfmr)
+}
+
+var YangToDb_bgp_pgrp_name_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
+    res_map := make(map[string]string)
+
+    return res_map, nil
+}
+
+var DbToYang_bgp_pgrp_name_fld_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (map[string]interface{}, error) {
+
+    var err error
+    result := make(map[string]interface{})
+
+    data := (*inParams.dbDataMap)[inParams.curDb]
+    log.Info("DbToYang_bgp_pgrp_name_fld_xfmr", data, "inParams : ", inParams)
+
+    pTbl := data["BGP_PEER_GROUP"]
+    if _, ok := pTbl[inParams.key]; !ok {
+        log.Info("DbToYang_bgp_pgrp_name_fld_xfmr BGP peer-groups not found : ", inParams.key)
+        return result, errors.New("BGP peer-groups not found : " + inParams.key)
+    }
+
+    pGrpKey := pTbl[inParams.key]
+    peer_group_name, ok := pGrpKey.Field["pgrp_name"]
+
+    if ok {
+        result["peer-group-name"] = peer_group_name
+    } else {
+        log.Info("peer_group_name field not found in DB")
+    }
+    return result, err
 }
 
 var YangToDb_bgp_pgrp_peer_type_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
