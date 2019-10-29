@@ -104,7 +104,7 @@ limitations under the License.
             name="addr"
             help="IPv6 address with mask"
             ptype="IPV6_ADDR_MASK" />
-        <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config ${po_id} ${addr} </ACTION>
+        <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config ${po_name} ${addr} </ACTION>
     </COMMAND>
 
     <COMMAND
@@ -114,7 +114,7 @@ limitations under the License.
             name="addr"
             help="IPv6 address"
             ptype="IPV6_ADDR" />
-        <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config_prefix_length ${po_id} ${addr} </ACTION>
+        <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config_prefix_length ${po_name} ${addr} </ACTION>
     </COMMAND>
 </VIEW>
 
