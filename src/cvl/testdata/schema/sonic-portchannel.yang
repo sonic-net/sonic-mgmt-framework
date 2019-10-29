@@ -78,6 +78,7 @@ module sonic-portchannel {
         }
 
         container LAG_TABLE {
+            config false;
 
             list LAG_TABLE_LIST {
                 key "lagname";
@@ -114,6 +115,7 @@ module sonic-portchannel {
         }
 
         container LAG_MEMBER_TABLE {
+            config false;
             list LAG_MEMBER_TABLE_LIST {
                 key "name ifname";
 

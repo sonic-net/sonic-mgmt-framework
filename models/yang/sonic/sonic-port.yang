@@ -76,6 +76,7 @@ module sonic-port {
             }
         }
         container PORT_TABLE {
+            config false;
 
             list PORT_TABLE_LIST {
                 key "ifname";
