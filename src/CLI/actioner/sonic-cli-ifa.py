@@ -33,8 +33,12 @@ def generate_body(func, args):
        keypath = []
     elif func.__name__ == 'get_sonic_ifa_sonic_ifa_tam_collector_table':
        keypath = []
+    elif func.__name__ == 'get_sonic_ifa_sonic_ifa_tam_collector_table_tam_collector_table_list':
+       keypath = [args[0]]
     elif func.__name__ == 'get_sonic_ifa_sonic_ifa_tam_int_ifa_flow_table':
        keypath = []
+    elif func.__name__ == 'get_sonic_ifa_sonic_ifa_tam_int_ifa_flow_table_tam_int_ifa_flow_table_list':
+       keypath = [args[0]]
     elif func.__name__ == 'patch_sonic_ifa_sonic_ifa_tam_device_table_tam_device_table_list_deviceid':
        keypath = [ args[0] ]
        body = { "sonic-ifa:deviceid": int(args[1]) }
@@ -123,8 +127,12 @@ def run(func, args):
                 show_cli_output(args[0], api_response)
             elif func.__name__ == 'get_sonic_ifa_sonic_ifa_tam_collector_table':
                 show_cli_output(args[0], api_response)
+            elif func.__name__ == 'get_sonic_ifa_sonic_ifa_tam_collector_table_tam_collector_table_list':
+                show_cli_output(args[1], api_response)
             elif func.__name__ == 'get_sonic_ifa_sonic_ifa_tam_int_ifa_flow_table':
                 show_cli_output(args[0], api_response)
+            elif func.__name__ == 'get_sonic_ifa_sonic_ifa_tam_int_ifa_flow_table_tam_int_ifa_flow_table_list':
+                show_cli_output(args[1], api_response)
             else:
                 return
     except ApiException as e:
