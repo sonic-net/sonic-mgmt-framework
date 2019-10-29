@@ -535,6 +535,68 @@ var DbToYang_intf_subintfs_xfmr KeyXfmrDbToYang = func(inParams XfmrParams) (map
 }
 
 
+func intf_ip_addr_del (d *db.DB , ifName string, tblName string, subIntf *ocbinds.OpenconfigInterfaces_Interfaces_Interface_Subinterfaces_Subinterface) (map[string]map[string]db.Value, error) {
+    var err error
+    subIntfmap := make(map[string]map[string]db.Value)
+    intfIpMap := make(map[string]db.Value)
+
+    if subIntf.Ipv4 != nil && subIntf.Ipv4.Addresses != nil {
+        if len(subIntf.Ipv4.Addresses.Address) < 1 {
+            ipMap, _:= getIntfIpByName(d, tblName, ifName, true, false, "")
+            if ipMap != nil && len(ipMap) > 0 {
+                for k, v := range ipMap {
+                    intfIpMap[k] = v
+                }
+            }
+        } else {
+            for ip, _ := range subIntf.Ipv4.Addresses.Address {
+                ipMap, _ := getIntfIpByName(d, tblName, ifName, true, false, ip)
+
+                if ipMap != nil && len(ipMap) > 0 {
+                    for k, v := range ipMap {
+                        intfIpMap[k] = v
+                    }
+                }
+            }
+        }
+    }
+
+    if subIntf.Ipv6 != nil && subIntf.Ipv6.Addresses != nil {
+        if len(subIntf.Ipv6.Addresses.Address) < 1 {
+            ipMap, _ := getIntfIpByName(d, tblName, ifName, true, false, "")
+            if ipMap != nil && len(ipMap) > 0 {
+                for k, v := range ipMap {
+                    intfIpMap[k] = v
+                }
+            }
+        } else {
+            for ip, _ := range subIntf.Ipv6.Addresses.Address {
+                ipMap, _ := getIntfIpByName(d, tblName, ifName, true, false, ip)
+
+                if ipMap != nil && len(ipMap) > 0 {
+                    for k, v := range ipMap {
+                        intfIpMap[k] = v
+                    }
+                }
+            }
+        }
+    }
+    if len(intfIpMap) > 0 {
+        if _, ok := subIntfmap[tblName]; !ok {
+            subIntfmap[tblName] = make (map[string]db.Value)
+        }
+
+        for k, _ := range intfIpMap {
+            ifKey := ifName + "|" + k
+            var data db.Value
+            subIntfmap[tblName][ifKey] = data
+        }
+    }
+    log.Info("Delete IP address list ", subIntfmap,  " ", err)
+    return subIntfmap, err
+}
+
+
 var YangToDb_intf_ip_addr_xfmr SubTreeXfmrYangToDb = func(inParams XfmrParams) (map[string]map[string]db.Value, error) {
     var err error
     subIntfmap := make(map[string]map[string]db.Value)
@@ -581,6 +643,10 @@ var YangToDb_intf_ip_addr_xfmr SubTreeXfmrYangToDb = func(inParams XfmrParams) (
     tblName, _ := getIntfTableNameByDBId(intTbl, inParams.curDb)
 
     subIntfObj := intfObj.Subinterfaces.Subinterface[0]
+    if inParams.oper == DELETE {
+        return intf_ip_addr_del(inParams.d, ifName, tblName, subIntfObj)
+    }
+
     if subIntfObj.Ipv4 != nil && subIntfObj.Ipv4.Addresses != nil {
         for ip, _ := range subIntfObj.Ipv4.Addresses.Address {
             addr := subIntfObj.Ipv4.Addresses.Address[ip]
