@@ -17,8 +17,6 @@ func init () {
     XlateFuncBind("DbToYang_bgp_pgrp_peer_type_xfmr", DbToYang_bgp_pgrp_peer_type_xfmr)
 }
 
-
-
 var YangToDb_bgp_pgrp_peer_type_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
     res_map := make(map[string]string)
 

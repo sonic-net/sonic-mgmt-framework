@@ -1,0 +1,86 @@
+module sonic-bgp-af-peergroup {
+  namespace "http://github.com/Azure/sonic-bgp-af-peergroup";
+  prefix sbgpafpg;
+
+  import ietf-yang-types {
+    prefix yang;
+  }
+
+  import ietf-inet-types {
+    prefix inet;
+  }
+
+  import sonic-common {
+    prefix scommon;
+  }
+
+  organization
+    "SONiC";
+
+  contact
+    "SONiC";
+
+  description
+    "SONIC BGP Peer Group AF YANG";
+
+  revision 2019-10-27 {
+    description
+      "Initial revision.";
+  }
+
+  container sonic-bgp-af-peergroup {
+    container BGP_AF_PEER_GROUP {
+      list BGP_AF_PEER_GROUP_LIST {
+        key "vrf af pgrp_name";
+
+        leaf vrf {
+          type string;
+        }
+
+        leaf af {
+          type string;
+        }
+
+        leaf pgrp_name {
+          type string;
+        }
+
+        leaf admin {
+          type boolean;
+        }
+       
+        leaf send_dflt_route {
+          type boolean;
+        }
+
+        leaf max_pfx_limit {
+          type uint32;
+        }
+
+        leaf max_pfx_warn_only {
+          type boolean;
+        }
+
+        leaf max_pfx_warn_thrshld {
+          type uint8 {
+            range "0..100";
+          }
+        }
+
+        leaf max_pfx_restart_timer {
+          type uint16 {
+            range "1..3600";
+          }
+        }
+
+        leaf route_map_in {
+          type string;
+        }
+
+        leaf route_map_out {
+          type string;
+        }
+      }
+    }
+  }
+}

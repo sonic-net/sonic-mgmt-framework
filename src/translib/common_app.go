@@ -249,7 +249,34 @@ func (app *CommonApp) translateCRUDCommon(d *db.DB, opcode int) ([]db.WatchKeys,
 	var err error
 	var keys []db.WatchKeys
 	var tblsToWatch []*db.TableSpec
+	var OrdTblList []string
+	var moduleNm string
 	log.Info("translateCRUDCommon:path =", app.pathInfo.Path)
+
+	/* retrieve schema table order for incoming module name request */
+	moduleNm, err = transformer.GetModuleNmFromPath(app.pathInfo.Path)
+	if (err != nil) || (len(moduleNm) == 0) {
+		log.Error("GetModuleNmFromPath() failed")
+		return keys, err
+	}
+	log.Info("getModuleNmFromPath() returned module name = ", moduleNm)
+	OrdTblList, err = transformer.GetOrdDBTblList(moduleNm)
+	if (err != nil) || (len(OrdTblList) == 0) {
+		log.Error("GetOrdDBTblList() failed")
+		//return keys, err
+	}
+        OrdTblList = []string {"BGP_GLOBALS", "BGP_PEER_GROUP", "BGP_AF_PEER_GROUP"}
+
+	log.Info("GetOrdDBTblList() returned ordered table list = ", OrdTblList)
+	app.cmnAppOrdTbllist = OrdTblList
+
+	/* enhance this to handle dependent tables - need CVL to provide list of such tables for a given request */
+	for _, tblnm := range OrdTblList { // OrdTblList already has has all tables corresponding to a module
+		tblsToWatch = append(tblsToWatch, &db.TableSpec{Name: tblnm})
+	}
+	log.Info("Tables to watch", tblsToWatch)
+
+	cmnAppInfo.tablesToWatch = tblsToWatch
 
 	// translate yang to db
 	result, err := transformer.XlateToDb(app.pathInfo.Path, opcode, d, (*app).ygotRoot, (*app).ygotTarget)
@@ -267,7 +294,7 @@ func (app *CommonApp) translateCRUDCommon(d *db.DB, opcode int) ([]db.WatchKeys,
 	}
 	app.cmnAppTableMap = result
 
-	moduleNm, err := transformer.GetModuleNmFromPath(app.pathInfo.Path)
+	moduleNm, err = transformer.GetModuleNmFromPath(app.pathInfo.Path)
         if (err != nil) || (len(moduleNm) == 0) {
                 log.Error("GetModuleNmFromPath() failed")
                 return keys, err
