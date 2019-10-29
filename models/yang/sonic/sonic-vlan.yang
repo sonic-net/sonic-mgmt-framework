@@ -118,6 +118,7 @@ module sonic-vlan {
 
 
         container VLAN_TABLE {
+            config false;
 
             list VLAN_TABLE_LIST {
                 key "name";
@@ -154,6 +155,7 @@ module sonic-vlan {
         }
 
         container VLAN_MEMBER_TABLE {
+            config false;
 
             list VLAN_MEMBER_TABLE_LIST {
                 key "name ifname";
