@@ -28,6 +28,7 @@ import (
 	"strings"
 	"translib/db"
 	"translib/ocbinds"
+	"translib/tlerr"
 )
 
 const (
@@ -469,5 +470,26 @@ func GetTablesToWatch(xfmrTblList []string, uriModuleNm string) []string {
                 depTblList = append(depTblList, depTbl)
         }
 	return depTblList
+}
+
+func CallRpcMethod(path string, body []byte, dbs [db.MaxDB]*db.DB) ([]byte, error) {
+	var err error
+	var ret []byte
+
+	// TODO - check module name
+	rpcName := strings.Split(path, ":")
+	if dbXpathData, ok := xDbSpecMap[rpcName[1]]; ok {
+		log.Info("RPC callback invoked (%v) \r\n", rpcName)
+		data, err := XlateFuncCall(dbXpathData.rpcFunc, body, dbs)
+		if err != nil {
+			return nil, err
+		}
+		ret = data[0].Interface().([]byte)
+	} else {
+		log.Error("No tsupported RPC", path)
+		err = tlerr.NotSupported("Not supported RPC")
+	}
+
+	return ret, err
 }
 
