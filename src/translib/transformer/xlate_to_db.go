@@ -540,13 +540,10 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
 		log.Infof("slice/map data: curKey(\"%v\"), xpath(\"%v\"), curUri(\"%v\").",
 				          curKey, xpath, curUri)
 			    if ok && xYangSpecMap[xpath] != nil && len(xYangSpecMap[xpath].xfmrKey) > 0 {
-					/* key transformer present */
-                    log.Info("Key transformer present")
 					curYgotNode, nodeErr := yangNodeForUriGet(curUri, ygRoot)
 					if nodeErr != nil {
 						curYgotNode = nil
 					}
-					log.Info("Variable = ", xYangSpecMap[xpath].xfmrKey)
 					inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, curUri, oper, "", nil, curYgotNode)
 					ret, err := XlateFuncCall(yangToDbXfmrFunc(xYangSpecMap[xpath].xfmrKey), inParams)
 					if err != nil {
@@ -556,15 +553,11 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
 					    curKey = ret[0].Interface().(string)
 					}
 				} else if xYangSpecMap[xpath].keyName != nil {
-                    log.Info("====> Key transformer not present: ", xpath)
 					curKey = *xYangSpecMap[xpath].keyName
 				}
-                log.Info("====> Current Key = ", curKey)
-                log.Info("Path = ", xpath)
                 if (typeOfValue == reflect.Map || typeOfValue == reflect.Slice) && xYangSpecMap[xpath].yangDataType != "leaf-list" {
                     if ok && xYangSpecMap[xpath] != nil && len(xYangSpecMap[xpath].xfmrFunc) > 0 {
                         /* subtree transformer present */
-                        log.Info("====> Subtree transformer present")
 						curYgotNode, nodeErr := yangNodeForUriGet(curUri, ygRoot)
 						if nodeErr != nil {
 							curYgotNode = nil
@@ -572,14 +565,12 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
                         inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, curUri, oper, "", nil, curYgotNode)
                         ret, err := XlateFuncCall(yangToDbXfmrFunc(xYangSpecMap[xpath].xfmrFunc), inParams)
                         if err != nil {
-                            log.Info("Returning! ", xpath)
                             return nil
                         }
 			if  ret != nil {
 	                    mapCopy(result, ret[0].Interface().(map[string]map[string]db.Value))
 			}
                     } else {
-                        log.Info("PAth is ", xpath)
                         yangReqToDbMapCreate(d, ygRoot, oper, curUri, xpath, curKey, jData.MapIndex(key).Interface(), result)
                     }
                 } else {
