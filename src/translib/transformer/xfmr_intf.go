@@ -33,7 +33,6 @@ func init () {
     XlateFuncBind("YangToDb_intf_subintfs_xfmr", YangToDb_intf_subintfs_xfmr)
     XlateFuncBind("DbToYang_intf_subintfs_xfmr", DbToYang_intf_subintfs_xfmr)
     XlateFuncBind("DbToYang_intf_get_counters_xfmr", DbToYang_intf_get_counters_xfmr)
-    XlateFuncBind("YangToDb_intf_name_xfmr", YangToDb_intf_name_xfmr)
 	XlateFuncBind("YangToDb_intf_tbl_key_xfmr", YangToDb_intf_tbl_key_xfmr)
 }
 
@@ -251,7 +250,8 @@ var YangToDb_intf_name_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[s
         vlanId := ifName[len("Vlan"):len(ifName)]
         res_map["vlanid"] = vlanId
     }
-    log.Info("JJ res_map:", res_map)
+
+    log.Info("YangToDb_intf_name_xfm: rres_map:", res_map)
     return res_map, err
 }
 

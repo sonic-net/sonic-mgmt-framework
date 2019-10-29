@@ -72,9 +72,7 @@ module openconfig-interfaces-ext {
     deviation /oc-intf:interfaces/oc-intf:interface/oc-eth:ethernet/oc-eth:state/oc-eth:counters {
         deviate not-supported;
     }
-    //deviation /oc-intf:interfaces/oc-intf:interface/oc-eth:ethernet/oc-vlan:switched-vlan {
-        //deviate not-supported;
-    //}
+
     deviation /oc-intf:interfaces/oc-intf:interface/oc-eth:ethernet/oc-poe:poe {
         deviate not-supported;
     }

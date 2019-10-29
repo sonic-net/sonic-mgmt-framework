@@ -49,6 +49,9 @@ def generate_body(func, args):
     if func.__name__ == 'patch_openconfig_interfaces_interfaces_interface':
        keypath = [ args[0] ]
        body = {}
+    elif func.__name__ == 'patch_openconfig_interfaces_interfaces_interface_config':
+       keypath = [ args[0] ]
+       body = { "openconfig-interfaces:config": { "name": args[0] }}
     elif func.__name__ == 'delete_openconfig_interfaces_interfaces_interface':
        keypath = [ args[0] ]
     elif func.__name__ == 'patch_openconfig_interfaces_interfaces_interface_config_description':

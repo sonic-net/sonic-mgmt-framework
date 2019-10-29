@@ -184,6 +184,7 @@ TRUNKCONFIG:
 	}
     res_map[VLAN_TABLE] = vlanMap
     res_map[VLAN_MEM_TABLE] = vlanMemberMap
-	log.Info("JJ vlan res map:", res_map)
+
+    log.Info("YangToDb_sw_vlans_xfmr: vlan res map:", res_map)
     return res_map, err
-}
+
