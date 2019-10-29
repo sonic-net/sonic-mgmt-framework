@@ -315,7 +315,17 @@ func dbMapDelete(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, jsonDat
 		log.Infof("Delete req: path(\"%v\"), key(\"%v\"), xpathPrefix(\"%v\"), tableName(\"%v\").", path, keyName, xpathPrefix, tableName)
 		spec, ok := xYangSpecMap[xpathPrefix]
 		if ok {
-			if  spec.tableName != nil {
+			if len(spec.xfmrFunc) > 0 {
+				var dbs [db.MaxDB]*db.DB
+				cdb := spec.dbIndex
+				inParams := formXfmrInputRequest(d, dbs, cdb, ygRoot, path, oper, "", nil, nil)
+				ret, err := XlateFuncCall(yangToDbXfmrFunc(spec.xfmrFunc), inParams)
+				if err == nil {
+					mapCopy(result, ret[0].Interface().(map[string]map[string]db.Value))
+				} else {
+					return err
+				}
+			} else if  spec.tableName != nil {
 				result[*spec.tableName] = make(map[string]db.Value)
 				if len(keyName) > 0 {
 					result[*spec.tableName][keyName] = db.Value{Field: make(map[string]string)}
