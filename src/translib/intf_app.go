@@ -97,7 +97,7 @@ type IntfApp struct {
 
 func init() {
 	log.Info("Init called for INTF module")
-	err := register("/openconfig-interfaces:interfaces",
+	/* err := register("/openconfig-interfaces:interfaces",
 		&appInfo{appType: reflect.TypeOf(IntfApp{}),
 			ygotRootType: reflect.TypeOf(ocbinds.OpenconfigInterfaces_Interfaces{}),
 			isNative:     false})
@@ -110,7 +110,7 @@ func init() {
 		Ver: "1.0.2"})
 	if err != nil {
 		log.Fatal("Adding model data to appinterface failed with error=", err)
-	}
+	} */
 }
 
 func (app *IntfApp) initializeInterface() {
