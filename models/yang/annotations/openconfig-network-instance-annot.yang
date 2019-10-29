@@ -46,12 +46,6 @@ module openconfig-network-instance-annot {
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:fdb/oc-netinst:mac-table/oc-netinst:entries/oc-netinst:entry/oc-netinst:state/oc-netinst:vlan {
-      deviate add {
-            sonic-ext:field-name "Vlan";
-      }
-    }
-
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:fdb/oc-netinst:mac-table/oc-netinst:entries/oc-netinst:entry/oc-netinst:interface/oc-if:interface-ref/oc-if:state/oc-if:interface {
       deviate add {
             sonic-ext:field-name "port";

@@ -38,17 +38,22 @@ module sonic-fdb {
 
                                 leaf mac-address {
                                         type yang:mac-address;
+                                        description
+                                            "MAC address for the dynamic or static MAC table entry";
                                 }
 
                                 leaf port {
                                         type string;
+                                        description
+                                            "Reference to the base and/or subinterface for the MAC table entry";
                                 }
 
                                 leaf type {
                                         type string;
+                                        description
+                                            "Statically or dynamically programmed MAC table entry";
                                 }
 			}
 		}
-
 	}
 }
