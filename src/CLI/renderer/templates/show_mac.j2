@@ -1,7 +1,7 @@
 {{'-----------------------------------------------------------'}}
-{{'VLAN'.ljust(12)}} {{'MAC-ADDRESS'.ljust(20)}}{{'TYPE'.ljust(14)}} {{'INTERFACE'.ljust(20)}}
+{{'VLAN'.ljust(12)}} {{'MAC-ADDRESS'.ljust(20)}}{{'TYPE'.ljust(12)}} {{'INTERFACE'.ljust(20)}}
 {{'-----------------------------------------------------------'}}
-{% for key,value in json_output.items() %}
-{{key.ljust(12)}}{{value['MAC'].ljust(20)}}{{value['Type'].ljust(14)}}{{value['Interface'].ljust(20)}}
+{% for mac_list in json_output %}
+{{(mac_list['Vlan'] | string).ljust(12)}}{{(mac_list['mac-address'] | string).ljust(20)}}{{(mac_list['entry-type'] | string).ljust(14)}}{{(mac_list['port'] | string).ljust(20)}}
 {% endfor %}
 
