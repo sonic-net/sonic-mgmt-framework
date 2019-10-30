@@ -1,5 +1,5 @@
 module sonic-bgp-peergroup-af {
-  namespace "http://github.com/Azure/sonic-bgp-af-peergroup";
+  namespace "http://github.com/Azure/sonic-bgp-peergroup-af";
   prefix sbgpafpg;
 
   import ietf-yang-types {
