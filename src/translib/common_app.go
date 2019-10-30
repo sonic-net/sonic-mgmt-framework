@@ -525,8 +525,8 @@ func checkAndProcessLeafList(existingEntry db.Value, tblRw db.Value, opcode int,
 	for field, value := range tblRw.Field {
 		if strings.HasSuffix(field, "@") {
 			exstLst := existingEntry.GetList(field)
+			valueLst := strings.Split(value, ",")
 			if len(exstLst) != 0 {
-				valueLst := strings.Split(value, ",")
 				for _, item := range valueLst {
 					if !contains(exstLst, item) {
 						if opcode == UPDATE {
@@ -544,7 +544,10 @@ func checkAndProcessLeafList(existingEntry db.Value, tblRw db.Value, opcode int,
 					mergeTblRw.SetList(field, exstLst)
 					delete(tblRw.Field, field)
 				}
-			}
+			} else if opcode == UPDATE {
+            	exstLst = valueLst
+            }
+
 			tblRw.SetList(field, exstLst)
 		}
 	}

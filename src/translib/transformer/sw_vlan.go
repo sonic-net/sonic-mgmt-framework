@@ -7,8 +7,22 @@ import (
     "translib/ocbinds"
     "translib/tlerr"
     "reflect"
+  "strings"
     log "github.com/golang/glog"
 )
+
+type intfModeType int
+
+const (
+  MODE_UNSET intfModeType = iota
+  ACCESS
+  TRUNK
+)
+
+type intfModeCfgAlone struct {
+  ifName string
+  mode   intfModeType
+}
 
 func init () {
     XlateFuncBind("YangToDb_sw_vlans_xfmr", YangToDb_sw_vlans_xfmr)
@@ -19,21 +33,52 @@ func validateVlanExists(d *db.DB, vlanTs *string, vlanName *string) error {
     if len(*vlanName) == 0 {
         return errors.New("Length of VLAN name is zero")
     }
-	log.Info("DB = ", d)
-	log.Info("VlanTs = ", *vlanTs)
-	log.Info("VlanName = ", *vlanName)
     entry, err := d.GetEntry(&db.TableSpec{Name:*vlanTs}, db.Key{Comp: []string{*vlanName}})
     if err != nil || !entry.IsPopulated() {
         errStr := "Invalid Vlan:" + *vlanName
-		log.Info("Invalid VLAN: ", *vlanName)
+		log.Error(errStr)
         return errors.New(errStr)
     }
     return nil
 }
 
+/* Generate list of member-ports from string */
+func generateMemberPortsSliceFromString(memberPortsStr *string) []string {
+    if len(*memberPortsStr) == 0 {
+        return nil
+    }
+    memberPorts := strings.Split(*memberPortsStr, ",")
+    return memberPorts
+}
+
+/* Check member port exists in the list and get Interface mode */
+func checkMemberPortExistsInListAndGetMode(d *db.DB, memberPortsList []string, memberPort *string, vlanName *string, ifMode *intfModeType) bool {
+    for _, port := range memberPortsList {
+        if *memberPort == port {
+            tagModeEntry, err := d.GetEntry(&db.TableSpec{Name: VLAN_MEMBER_TN}, db.Key{Comp: []string{*vlanName, *memberPort}})
+            if err != nil {
+                return false
+            }
+            tagMode := tagModeEntry.Field["tagging_mode"]
+            convertTaggingModeToInterfaceModeType(&tagMode, ifMode)
+            return true
+        }
+    }
+    return false
+}
+
+/* Convert tagging mode to Interface Mode type */
+func convertTaggingModeToInterfaceModeType(tagMode *string, ifMode *intfModeType) {
+    switch *tagMode {
+    case "untagged":
+        *ifMode = ACCESS
+    case "tagged":
+        *ifMode = TRUNK
+    }
+}
+
 /* Validate whether Port has any Untagged VLAN Config existing */
 func validateUntaggedVlanCfgredForIf(d *db.DB, vlanMemberTs *string, ifName *string, accessVlan *string) (bool, error) {
-	log.Info("validateUntaggedVlanCfgredForIf() called")
     var err error
 
     var vlanMemberKeys []db.Key
@@ -55,11 +100,13 @@ func validateUntaggedVlanCfgredForIf(d *db.DB, vlanMemberTs *string, ifName *str
         memberPortEntry, err := d.GetEntry(&db.TableSpec{Name:*vlanMemberTs}, vlanMember)
         if err != nil || !memberPortEntry.IsPopulated() {
             errStr := "Get from VLAN_MEMBER table for Vlan: + " + vlanMember.Get(0) + " Interface:" + *ifName + " failed!"
+			log.Error(errStr)
             return false, errors.New(errStr)
         }
         tagMode, ok := memberPortEntry.Field["tagging_mode"]
         if !ok {
             errStr := "tagging_mode entry is not present for VLAN: " + vlanMember.Get(0) + " Interface: " + *ifName
+			log.Error(errStr)
             return false, errors.New(errStr)
         }
         if tagMode == "untagged" {
@@ -70,11 +117,95 @@ func validateUntaggedVlanCfgredForIf(d *db.DB, vlanMemberTs *string, ifName *str
     return false, nil
 }
 
+/* Adding member to VLAN requires updation of VLAN Table and VLAN Member Table */
+func processIntfVlanAdd(d *db.DB, vlanMembersMap map[string]map[string]db.Value, vlanMap map[string]db.Value, vlanMemberMap map[string]db.Value) error {
+  log.Info("processIntfVlanAdd() called")
+  var err error
+  var isMembersListUpdate bool
+
+  /* Updating the VLAN member table */
+  for vlanName, ifEntries := range vlanMembersMap {
+    log.Info("Processing VLAN: ", vlanName)
+    var memberPortsListStrB strings.Builder
+    var memberPortsList []string
+    isMembersListUpdate = false
+
+    vlanEntry, _ := d.GetEntry(&db.TableSpec{Name:VLAN_TN}, db.Key{Comp: []string{vlanName}})
+    if !vlanEntry.IsPopulated() {
+      errStr := "Failed to retrieve memberPorts info of VLAN : " + vlanName
+	  log.Error(errStr)
+      return errors.New(errStr)
+    }
+    memberPortsExists := false
+    memberPortsListStr, ok := vlanEntry.Field["members@"]
+    if ok {
+      if len(memberPortsListStr) != 0 {
+        memberPortsListStrB.WriteString(vlanEntry.Field["members@"])
+        memberPortsList = generateMemberPortsSliceFromString(&memberPortsListStr)
+        memberPortsExists = true
+      }
+    }
+
+    for ifName, ifEntry := range ifEntries {
+      log.Infof("Processing Interface: %s for VLAN: %s", ifName, vlanName)
+      /* Adding the following validation, just to avoid an another db-get in translate fn */
+      /* Reason why it's ignored is, if we return, it leads to sync data issues between VlanT and VlanMembT */
+      if memberPortsExists {
+        var existingIfMode intfModeType
+        if checkMemberPortExistsInListAndGetMode(d, memberPortsList, &ifName, &vlanName, &existingIfMode) {
+          /* Since translib doesn't support rollback, we need to keep the DB consistent at this point,
+          and throw the error message */
+          var cfgReqIfMode intfModeType
+          tagMode := ifEntry.Field["tagging_mode"]
+          convertTaggingModeToInterfaceModeType(&tagMode, &cfgReqIfMode)
+
+          if cfgReqIfMode == existingIfMode {
+            continue
+          } else {
+            vlanMap[vlanName].Field["members@"] = memberPortsListStrB.String()
+
+            vlanId := vlanName[len("Vlan"):len(vlanName)]
+            var errStr string
+            switch existingIfMode {
+            case ACCESS:
+              errStr = "Untagged VLAN: " + vlanId + " configuration exists for Interface: " + ifName
+            case TRUNK:
+              errStr = "Tagged VLAN: " + vlanId + " configuration exists for Interface: " + ifName
+            }
+            return tlerr.InvalidArgsError{Format: errStr}
+          }
+        }
+      }
+
+      isMembersListUpdate = true
+      vlanMemberKey := vlanName + "|" + ifName
+	  vlanMemberMap[vlanMemberKey] = db.Value{Field:make(map[string]string)}
+      vlanMemberMap[vlanMemberKey].Field["tagging_mode"] = ifEntry.Field["tagging_mode"] 
+      log.Infof("Updated Vlan Member Map with vlan member key: %s and tagging-mode: %s", vlanMemberKey, ifEntry.Field["tagging_mode"])
+
+      if len(memberPortsList) == 0 && len(ifEntries) == 1 {
+        memberPortsListStrB.WriteString(ifName)
+      } else {
+        memberPortsListStrB.WriteString("," + ifName)
+      }
+    }
+    log.Infof("Member ports = %s", memberPortsListStrB.String())
+    if !isMembersListUpdate {
+      continue
+    }
+	vlanMap[vlanName] = db.Value{Field:make(map[string]string)}
+    vlanMap[vlanName].Field["members@"] = memberPortsListStrB.String()
+    log.Info("Updated VLAN Map with VLAN: %s and Member-ports: %s", vlanName, memberPortsListStrB.String())
+  }
+  return err
+}
+
 var YangToDb_sw_vlans_xfmr SubTreeXfmrYangToDb = func(inParams XfmrParams) (map[string]map[string]db.Value, error) {
     var err error
     res_map := make(map[string]map[string]db.Value)
-    vlanMap := make(map[string]db.Value)
+  vlanMap := make(map[string]db.Value)
     vlanMemberMap := make(map[string]db.Value)
+  vlanMembersListMap := make(map[string]map[string]db.Value)
 
     log.Info("YangToDb_sw_vlans_xfmr: ", inParams.uri)
 
@@ -134,6 +265,7 @@ var YangToDb_sw_vlans_xfmr SubTreeXfmrYangToDb = func(inParams XfmrParams) (map[
         if err != nil {
             errStr := "Invalid VLAN: " + strconv.Itoa(int(accessVlanId))
             err = tlerr.InvalidArgsError{Format: errStr}
+			log.Error(err)
             return res_map, err
         }
         var cfgredAccessVlan string
@@ -148,18 +280,15 @@ var YangToDb_sw_vlans_xfmr SubTreeXfmrYangToDb = func(inParams XfmrParams) (map[
             }
             vlanId := cfgredAccessVlan[len("Vlan"):len(cfgredAccessVlan)]
             errStr := "Untagged VLAN: " + vlanId + " configuration exists"
+			log.Error(errStr)
             err = tlerr.InvalidArgsError{Format: errStr}
             return res_map, err
         }
-
-        key := accessVlan + "|" + ifName
-        vlanMemberMap[key] =  db.Value{Field: make(map[string]string)}
-        vlanMemberMap[key].Field["tagging_mode"] = "untagged"
-
-        vlanMap[accessVlan] = db.Value{Field: make(map[string]string)}
-        vlanMap[accessVlan].Field["members@"] = ifName
-
-        log.Info("Untagged key: ", key)
+    if vlanMembersListMap[accessVlan] == nil {
+      vlanMembersListMap[accessVlan] = make(map[string]db.Value)
+    }
+        vlanMembersListMap[accessVlan][ifName] = db.Value{Field:make(map[string]string)}
+    vlanMembersListMap[accessVlan][ifName].Field["tagging_mode"] = "untagged"
     }
 
     TRUNKCONFIG:
@@ -169,26 +298,30 @@ var YangToDb_sw_vlans_xfmr SubTreeXfmrYangToDb = func(inParams XfmrParams) (map[
         memberPortEntry.Field["tagging_mode"] = "tagged"
         for _, vlanId := range trunkVlanSlice {
 
-            err = validateVlanExists(inParams.dbs[db.ConfigDB], &intTbl.cfgDb.portTN, &vlanId)
+            err = validateVlanExists(inParams.d, &intTbl.cfgDb.portTN, &vlanId)
             if err != nil {
                 id := vlanId[len("Vlan"):len(vlanId)]
                 errStr := "Invalid VLAN: " + id
+				log.Error(errStr)
                 err = tlerr.InvalidArgsError{Format: errStr}
                 return res_map, err
             }
 
-            key := vlanId + "|" + ifName
-            vlanMemberMap[key] =  db.Value{Field: make(map[string]string)}
-            vlanMemberMap[key].Field["tagging_mode"] = "tagged"
-
-            vlanMap[vlanId] = db.Value{Field: make(map[string]string)}
-            vlanMap[vlanId].Field["members@"] = ifName
-
-            log.Info("Tagged key ", key)
+      if vlanMembersListMap[vlanId] == nil {
+        vlanMembersListMap[vlanId] = make(map[string]db.Value)
+      }
+      vlanMembersListMap[vlanId][ifName] = db.Value{Field:make(map[string]string)}
+      vlanMembersListMap[vlanId][ifName].Field["tagging_mode"] = "tagged"
         }
     }
-    res_map[VLAN_TABLE] = vlanMap
-    res_map[VLAN_MEM_TABLE] = vlanMemberMap
+  err = processIntfVlanAdd(inParams.d, vlanMembersListMap, vlanMap, vlanMemberMap)
+  if err != nil {
+    log.Info("Processing Interface VLAN addition failed!")
+    return res_map, err
+  }
+
+    res_map[VLAN_TN] = vlanMap
+    res_map[VLAN_MEMBER_TN] = vlanMemberMap
 
     log.Info("YangToDb_sw_vlans_xfmr: vlan res map:", res_map)
     return res_map, err

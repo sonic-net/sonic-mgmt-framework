@@ -44,8 +44,8 @@ const (
     PORT_DESC          = "description"
     PORT_OPER_STATUS   = "oper_status"
     PORT_AUTONEG       = "autoneg"
-    VLAN_TABLE         = "VLAN"
-    VLAN_MEM_TABLE     = "VLAN_MEMBER"
+    VLAN_TN            = "VLAN"
+    VLAN_MEMBER_TN     = "VLAN_MEMBER"
 )
 
 const (
