@@ -4,6 +4,7 @@ import (
     "errors"
     "encoding/json"
     "translib/ocbinds"
+    "translib/db"
     "reflect"
     "os/exec"
     log "github.com/golang/glog"
@@ -22,27 +23,27 @@ func getBgpRoot (inParams XfmrParams) (*ocbinds.OpenconfigNetworkInstance_Networ
     }
 
     if bgpId != "BGP" {
-        return nil, "", errors.New("Network-instance-name missing")
+        return nil, "", errors.New("Protocol-id is not BGP!! Incoming Protocol-id:" + bgpId)
     }
 
     if len(protoName) == 0 {
-        return nil, "", errors.New("Network-instance-name missing")
+        return nil, "", errors.New("Network-instance Protocol-name missing")
     }
 
 	deviceObj := (*inParams.ygRoot).(*ocbinds.Device)
     netInstsObj := deviceObj.NetworkInstances
 
     if netInstsObj.NetworkInstance == nil {
-        return nil, "", errors.New("Network-instance-name missing")
+        return nil, "", errors.New("Network-instances container missing")
     }
 
     netInstObj := netInstsObj.NetworkInstance[niName]
     if netInstObj == nil {
-        return nil, "", errors.New("Network-instance-name missing")
+        return nil, "", errors.New("Network-instance obj missing")
     }
 
     if netInstObj.Protocols == nil || len(netInstObj.Protocols.Protocol) == 0 {
-        return nil, "", errors.New("Network-instance-name missing")
+        return nil, "", errors.New("Network-instance protocols-container missing or protocol-list empty")
     }
 
     var protoKey ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Key
@@ -50,7 +51,7 @@ func getBgpRoot (inParams XfmrParams) (*ocbinds.OpenconfigNetworkInstance_Networ
     protoKey.Name = protoName
     protoInstObj := netInstObj.Protocols.Protocol[protoKey]
     if protoInstObj == nil {
-        return nil, "", errors.New("Network-instance-name missing")
+        return nil, "", errors.New("Network-instance BGP-Protocol obj missing")
     }
     return protoInstObj.Bgp, niName, err
 }
@@ -253,18 +254,37 @@ func exec_vtysh_cmd (vtysh_cmd string) (map[string]interface{}, error) {
     }
 
     log.Infof("Successfully executed vtysh-cmd ==> \"%s\"", vtysh_cmd)
+
+    if outputJson == nil {
+        log.Errorf("VTYSH output empty !!!")
+        return nil, oper_err
+    }
+
     return outputJson, err
 }
 
-func fill_nbr_state_info (nbrAddr string, nbrDataValue interface{},
-                          nbr_obj *ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Neighbors_Neighbor) {
+func get_spec_nbr_cfg_tbl_entry (cfgDb *db.DB, niName string, nbrAddr string) (map[string]string, error) {
+    var err error
+
+    nbrCfgTblTs := &db.TableSpec{Name: "BGP_NEIGHBOR"}
+    nbrEntryKey := db.Key{Comp: []string{niName,nbrAddr}}
+
+    var entryValue db.Value
+    if entryValue, err = cfgDb.GetEntry(nbrCfgTblTs, nbrEntryKey) ; err != nil {
+        return nil, err
+    }
+
+    return entryValue.Field, err
+}
+
+func fill_nbr_state_info (niName string, nbrAddr string, frrNbrDataValue interface{}, cfgDb *db.DB,
+                          nbr_obj *ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Neighbors_Neighbor) error {
+    var err error
     nbrState := nbr_obj.State
-
     nbrState.NeighborAddress = &nbrAddr
+    frrNbrDataJson := frrNbrDataValue.(map[string]interface{})
 
-    nbrDataJson := nbrDataValue.(map[string]interface{})
-
-    if value, ok := nbrDataJson["bgpState"] ; ok {
+    if value, ok := frrNbrDataJson["bgpState"] ; ok {
         switch value {
             case "Idle":
                 nbrState.SessionState = ocbinds.OpenconfigBgp_Bgp_Neighbors_Neighbor_State_SessionState_IDLE
@@ -283,64 +303,115 @@ func fill_nbr_state_info (nbrAddr string, nbrDataValue interface{},
         }
     }
 
-    if value, ok := nbrDataJson["localAs"] ; ok {
+    if value, ok := frrNbrDataJson["localAs"] ; ok {
         _localAs := uint32(value.(float64))
         nbrState.LocalAs = &_localAs
     }
 
-    if value, ok := nbrDataJson["remoteAs"] ; ok {
+    if value, ok := frrNbrDataJson["remoteAs"] ; ok {
         _peerAs := uint32(value.(float64))
         nbrState.PeerAs = &_peerAs
     }
 
-    if value, ok := nbrDataJson["bgpTimerUpEstablishedEpoch"] ; ok {
+    if value, ok := frrNbrDataJson["bgpTimerUpEstablishedEpoch"] ; ok {
         _lastEstablished := uint64(value.(float64))
         nbrState.LastEstablished = &_lastEstablished
     }
 
-    if value, ok := nbrDataJson["connectionsEstablished"] ; ok {
+    if value, ok := frrNbrDataJson["connectionsEstablished"] ; ok {
         _establishedTransitions := uint64(value.(float64))
         nbrState.EstablishedTransitions = &_establishedTransitions
     }
 
-    if statsMap, ok := nbrDataJson["messageStats"].(map[string]interface{}) ; ok {
+    if statsMap, ok := frrNbrDataJson["messageStats"].(map[string]interface{}) ; ok {
         var _rcvd_msgs ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Neighbors_Neighbor_State_Messages_Received
         var _sent_msgs ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Neighbors_Neighbor_State_Messages_Sent
-        var fill bool
+        var _msgs ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Neighbors_Neighbor_State_Messages
+        var _queues ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Neighbors_Neighbor_State_Queues
+        _msgs.Received = &_rcvd_msgs
+        _msgs.Sent = &_sent_msgs
+        nbrState.Messages = &_msgs
+        nbrState.Queues = &_queues
 
         if value, ok := statsMap["updatesRecv"] ; ok {
             _updates_rcvd := uint64(value.(float64))
             _rcvd_msgs.UPDATE = &_updates_rcvd
-            fill = true
         }
         if value, ok := statsMap["notificationsRecv"] ; ok {
             _notifs_rcvd := uint64(value.(float64))
             _rcvd_msgs.NOTIFICATION = &_notifs_rcvd
-            fill = true
         }
         if value, ok := statsMap["updatesSent"] ; ok {
             _updates_sent := uint64(value.(float64))
             _sent_msgs.UPDATE = &_updates_sent
-            fill = true
         }
         if value, ok := statsMap["notificationsSent"] ; ok {
             _notifs_sent := uint64(value.(float64))
             _sent_msgs.NOTIFICATION = &_notifs_sent
-            fill = true
         }
-
-
-        if fill {
-            var _msgs ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Neighbors_Neighbor_State_Messages
-            _msgs.Received = &_rcvd_msgs
-            _msgs.Sent = &_sent_msgs
-            nbrState.Messages = &_msgs
+        if value, ok := statsMap["depthOutq"] ; ok {
+            _output := uint32(value.(float64))
+            _queues.Output = &_output
+        }
+        if value, ok := statsMap["depthInq"] ; ok {
+            _input := uint32(value.(float64))
+            _queues.Input = &_input
         }
     }
+
+    if capabMap, ok := frrNbrDataJson["neighborCapabilities"].(map[string]interface{}) ; ok {
+        log.Infof("capabMap : %v", capabMap)
+        for capability,_ := range capabMap {
+            switch capability {
+                case "4byteAs":
+                    nbrState.SupportedCapabilities = append(nbrState.SupportedCapabilities, ocbinds.OpenconfigBgpTypes_BGP_CAPABILITY_ASN32)
+                case "addPath":
+                    nbrState.SupportedCapabilities = append(nbrState.SupportedCapabilities, ocbinds.OpenconfigBgpTypes_BGP_CAPABILITY_ADD_PATHS)
+                case "routeRefresh":
+                    nbrState.SupportedCapabilities = append(nbrState.SupportedCapabilities, ocbinds.OpenconfigBgpTypes_BGP_CAPABILITY_ROUTE_REFRESH)
+                case "multiprotocolExtensions":
+                    nbrState.SupportedCapabilities = append(nbrState.SupportedCapabilities, ocbinds.OpenconfigBgpTypes_BGP_CAPABILITY_MPBGP)
+                case "gracefulRestart":
+                    nbrState.SupportedCapabilities = append(nbrState.SupportedCapabilities, ocbinds.OpenconfigBgpTypes_BGP_CAPABILITY_GRACEFUL_RESTART)
+                default:
+            }
+        }
+    }
+
+    if cfgDbEntry, get_err := get_spec_nbr_cfg_tbl_entry (cfgDb, niName, nbrAddr) ; get_err == nil {
+        var db_out string
+        for k,v := range cfgDbEntry {db_out = db_out + k + ":" + v + " "}
+        log.Infof("Fetched config-info from Config-DB for BGP-Nbr{niName:%s nbrAddr:%s} ==> %s", niName, nbrAddr, db_out)
+
+        if value, ok := cfgDbEntry["peer_group_name"] ; ok {
+            nbrState.PeerGroup = &value
+        }
+
+        if value, ok := cfgDbEntry["enabled"] ; ok {
+            switch value {
+                case "true":
+                    _enabled := true
+                    nbrState.Enabled = &_enabled
+                case "false":
+                    _enabled := false
+                    nbrState.Enabled = &_enabled
+            }
+        }
+
+        if value, ok := cfgDbEntry["description"] ; ok {
+            nbrState.Description = &value
+        }
+
+        if value, ok := cfgDbEntry["auth_password"] ; ok {
+            nbrState.AuthPassword = &value
+        }
+    }
+
+    return err
 }
 
 func get_specific_nbr_state (nbrs_obj *ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Neighbors,
-                             niName string, nbrAddr string) error {
+                             cfgDb *db.DB, niName string, nbrAddr string) error {
     var err error
 
     vtysh_cmd := "show ip bgp vrf " + niName + " neighbors " + nbrAddr + " json"
@@ -361,14 +432,15 @@ func get_specific_nbr_state (nbrs_obj *ocbinds.OpenconfigNetworkInstance_Network
     }
     ygot.BuildEmptyTree(nbr_obj)
 
-    nbrDataJson := nbrMapJson[nbrAddr].(map[string]interface{})
-    fill_nbr_state_info (nbrAddr, nbrDataJson, nbr_obj)
+    if frrNbrDataJson, ok := nbrMapJson[nbrAddr].(map[string]interface{}) ; ok {
+        err = fill_nbr_state_info (niName, nbrAddr, frrNbrDataJson, cfgDb, nbr_obj)
+    }
 
     return err
 }
 
 func get_all_nbr_state (nbrs_obj *ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Neighbors,
-                        niName string) error {
+                        cfgDb *db.DB, niName string) error {
     var err error
 
     vtysh_cmd := "show ip bgp vrf " + niName + " neighbors " + " json"
@@ -378,10 +450,10 @@ func get_all_nbr_state (nbrs_obj *ocbinds.OpenconfigNetworkInstance_NetworkInsta
         return cmd_err
     }
 
-    for nbrAddr, nbrDataJson := range nbrsMapJson {
+    for nbrAddr, frrNbrDataJson := range nbrsMapJson {
         nbr_obj, _ := nbrs_obj.NewNeighbor (nbrAddr)
         ygot.BuildEmptyTree(nbr_obj)
-        fill_nbr_state_info (nbrAddr, nbrDataJson, nbr_obj)
+        err = fill_nbr_state_info (niName, nbrAddr, frrNbrDataJson, cfgDb, nbr_obj)
     }
 
     return err
@@ -501,9 +573,9 @@ var DbToYang_bgp_nbrs_nbr_state_xfmr SubTreeXfmrDbToYang = func(inParams XfmrPar
     }
 
     if len(nbrAddr) != 0 {
-        err = get_specific_nbr_state (nbrs_obj, niName, nbrAddr);
+        err = get_specific_nbr_state (nbrs_obj, inParams.dbs[db.ConfigDB], niName, nbrAddr);
     } else {
-        err = get_all_nbr_state (nbrs_obj, niName);
+        err = get_all_nbr_state (nbrs_obj, inParams.dbs[db.ConfigDB], niName);
     }
 
     return err;
