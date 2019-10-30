@@ -565,7 +565,18 @@ limitations under the License.
             name="no mtu"
             help="Remove MTU of Vlan interface">
         <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config_mtu ${vlan_id} 9100 </ACTION>
-       </COMMAND>
+    </COMMAND>
+    <COMMAND
+        name="no neigh_suppress"
+        help="Disable Arp and ND Suppression">
+        <ACTION> python $SONIC_CLI_ROOT/sonic-cli-vxlan.py delete_sonic_vxlan_sonic_vxlan_suppress_vlan_neigh_suppress_vlan_neigh_list ${vlan_id} </ACTION>
+    </COMMAND>
+    <COMMAND
+        name="neigh_suppress"
+        help="Enable Arp and ND Suppression">
+       <ACTION> python $SONIC_CLI_ROOT/sonic-cli-vxlan.py patch_list_sonic_vxlan_sonic_vxlan_suppress_vlan_neigh_suppress_vlan_neigh_list ${vlan_id}
+        </ACTION>
+    </COMMAND>
        <COMMAND
             name="shutdown"
             help="Disable the Vlan interface">
