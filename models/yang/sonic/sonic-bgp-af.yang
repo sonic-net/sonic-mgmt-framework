@@ -1,0 +1,51 @@
+module sonic-bgp-af {
+  namespace "http://github.com/Azure/sonic-bgp-af";
+  prefix sbgpaf;
+
+  organization
+    "SONiC";
+
+  contact
+    "SONiC";
+
+  description
+    "SONIC BGP Peer Group YANG";
+
+  revision 2019-10-16 {
+    description
+      "Initial revision.";
+  }
+
+  container sonic-bgp-af {
+    container BGP_AF {
+      list BGP_AF_LIST {
+        key "vrf af_name";
+
+        leaf vrf {
+          type string;
+        }
+
+        leaf af_name {
+          type string;
+        }
+
+        leaf max_ebgp_paths {
+          type uint32;
+        }
+
+        leaf max_ibgp_paths {
+          type uint32;
+        }
+
+        leaf source {
+          type string;
+        }
+
+        leaf-list route-map {
+          type string;
+        }
+
+      }
+    }
+  }
+}
