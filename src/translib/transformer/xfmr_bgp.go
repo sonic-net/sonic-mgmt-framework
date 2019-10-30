@@ -14,7 +14,7 @@ func getBgpRoot (inParams XfmrParams) (*ocbinds.OpenconfigNetworkInstance_Networ
     pathInfo := NewPathInfo(inParams.uri)
     niName := pathInfo.Var("name")
     bgpId := pathInfo.Var("identifier")
-    protoName := pathInfo.Var("name1")
+    protoName := pathInfo.Var("name#2")
     var err error
 
     if len(niName) == 0 {

@@ -375,6 +375,57 @@ func dbMapUpdate(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, jsonDat
     return nil
 }
 
+func dbMapDefaultFieldValFill(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, result map[string]map[string]db.Value, yangXpathList []string, tblName string, dbKey string) error {
+	tblData := result[tblName]
+	var dbs [db.MaxDB]*db.DB
+	for _, yangXpath := range yangXpathList {
+		yangNode, ok := xYangSpecMap[yangXpath]
+		if ok {
+			for childName  := range yangNode.yangEntry.Dir {
+				childXpath := yangXpath + "/" + childName
+				childNode, ok := xYangSpecMap[childXpath]
+				if ok {
+					if childNode.yangDataType == YANG_LIST || childNode.yangDataType == YANG_CONTAINER {
+						var tblList []string
+						tblList = append(tblList, childXpath)
+						dbMapDefaultFieldValFill(d, ygRoot, oper, uri, result, tblList, tblName, dbKey)
+					}
+					if childNode.tableName != nil && *childNode.tableName == tblName {
+						_, ok := tblData[dbKey].Field[childName]
+						if !ok && len(childNode.defVal) > 0  && len(childNode.fieldName) > 0 {
+							log.Infof("Update(\"%v\") default: tbl[\"%v\"]key[\"%v\"]fld[\"%v\"] = val(\"%v\").",
+							childXpath, tblName, dbKey, childNode.fieldName, childNode.defVal)
+							if len(childNode.xfmrFunc) > 0 {
+								inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, uri+"/"+childName, oper, "", nil, childNode.defVal)
+								ret, err := XlateFuncCall(yangToDbXfmrFunc(xYangSpecMap[childXpath].xfmrFunc), inParams)
+								if err == nil {
+									retData := ret[0].Interface().(map[string]string)
+									for f, v := range retData {
+										dataToDBMapAdd(tblName, dbKey, result, f, v)
+									}
+								}
+							} else {
+								mapFillData(d, ygRoot, oper, uri, dbKey, result, yangXpath, childName, childNode.defVal)
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	return nil
+}
+
+func dbMapDefaultValFill(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, result map[string]map[string]db.Value) error {
+	for tbl, tblData := range result {
+		for dbKey, _ := range tblData {
+			yxpathList := xDbSpecMap[tbl].yangXpath
+			dbMapDefaultFieldValFill(d, ygRoot, oper, uri, result, yxpathList, tbl, dbKey)
+		}
+	}
+	return nil
+}
+
 /* Get the data from incoming create request, create map and fill with dbValue(ie. field:value to write into redis-db */
 func dbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, jsonData interface{}, result map[string]map[string]db.Value) error {
 	var err error
@@ -384,22 +435,24 @@ func dbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, jsonDat
 	} else {
 		err = yangReqToDbMapCreate(d, ygRoot, oper, root, "", "", jsonData, result)
 	}
-	if err == nil {
-		if oper == CREATE {
-			moduleNm := "/" + strings.Split(path, "/")[1]
-			log.Infof("Module name for path %s is %s", path, moduleNm)
-			if _, ok := xYangSpecMap[moduleNm]; ok {
-				if xYangSpecMap[moduleNm].yangDataType == "container" && len(xYangSpecMap[moduleNm].xfmrPost) > 0 {
-					log.Info("Invoke post transformer: ", xYangSpecMap[moduleNm].xfmrPost)
-					dbDataMap := make(map[db.DBNum]map[string]map[string]db.Value)
-					dbDataMap[db.ConfigDB] = result
-					var dbs [db.MaxDB]*db.DB
-					inParams := formXfmrInputRequest(d, dbs, db.ConfigDB, ygRoot, path, oper, "", &dbDataMap, nil)
-					result, err = postXfmrHandlerFunc(inParams)
-				}
-			} else {
-				log.Errorf("No Entry exists for module %s in xYangSpecMap. Unable to process post xfmr (\"%v\") path(\"%v\") error (\"%v\").", oper, path, err)
+	if !isSonicYang(path) && err == nil {
+		if oper == CREATE || oper == REPLACE {
+			log.Infof("Fill default value for %v, oper(%v)\r\n", path, oper)
+			dbMapDefaultValFill(d, ygRoot, oper, path, result)
+		}
+		moduleNm := "/" + strings.Split(path, "/")[1]
+		log.Infof("Module name for path %s is %s", path, moduleNm)
+		if _, ok := xYangSpecMap[moduleNm]; ok {
+			if xYangSpecMap[moduleNm].yangDataType == "container" && len(xYangSpecMap[moduleNm].xfmrPost) > 0 {
+				log.Info("Invoke post transformer: ", xYangSpecMap[moduleNm].xfmrPost)
+				dbDataMap := make(map[db.DBNum]map[string]map[string]db.Value)
+				dbDataMap[db.ConfigDB] = result
+				var dbs [db.MaxDB]*db.DB
+				inParams := formXfmrInputRequest(d, dbs, db.ConfigDB, ygRoot, path, oper, "", &dbDataMap, nil)
+				result, err = postXfmrHandlerFunc(inParams)
 			}
+		} else {
+			log.Errorf("No Entry exists for module %s in xYangSpecMap. Unable to process post xfmr (\"%v\") path(\"%v\") error (\"%v\").", oper, path, err)
 		}
 		printDbData(result, "/tmp/yangToDbDataCreate.txt")
 	} else {
