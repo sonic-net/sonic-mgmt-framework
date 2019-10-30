@@ -1,0 +1,202 @@
+{% set vars = {'stp_instance': ""} %}
+{% set vars = {'vlan_name': ""} %}
+{% set vars = {'intf_name': ""} %}
+{% set vars = {'intf_pri': ""} %}
+{% set vars = {'intf_path_cost': ""} %}
+{% set vars = {'intf_p2p': ""} %}
+{% set vars = {'intf_edge': ""} %}
+{% set vars = {'intf_bpdu_filter': ""} %}
+{% set vars = {'intf_role': ""} %}
+{% set vars = {'intf_state': "" } %}
+{% set vars = {'intf_desig_cost': "" } %}
+{% set vars = {'intf_desig_bridge': "" } %}
+{% set vars = {'br_id':"" } %}
+{% set vars = {'br_mAge':""} %}
+{% set vars = {'br_hello':""} %}
+{% set vars = {'br_fDly':""} %}
+{% set vars = {'br_holdtime':""} %}
+{% set vars = {'lastTc':""} %}
+{% set vars = {'tcChgCnt':""} %}
+{% set vars = {'root_br':""}%}
+{% set vars = {'root_path':""}%}
+{% set vars = {'desig_br':""}%}
+{% set vars = {'root_port_name':""}%}
+{% set vars = {'max_age':""}%}
+{% set vars = {'hello':""}%}
+{% set vars = {'fDly':""}%}
+{% if json_output -%}
+{% if json_output is iterable %}
+{% if "openconfig-spanning-tree:enabled-protocol" is in json_output %}
+{% set stp_protocol = json_output['openconfig-spanning-tree:enabled-protocol'][0]%}
+{%endif%}
+{% set stp_intfs = {} %}
+{% set vlan_list = {} %}
+{% if "openconfig-spanning-tree:interfaces" is in json_output and json_output['openconfig-spanning-tree:interfaces'] is not none %}
+{% set stp_intfs =  json_output['openconfig-spanning-tree:interfaces']['interface'] %}
+{%endif%}
+{% if "openconfig-spanning-tree:interface" is in json_output and json_output['openconfig-spanning-tree:interface'] is not none %}
+{% set stp_intfs =  json_output['openconfig-spanning-tree:interface'] %}
+{%endif%}
+{% if stp_protocol == "openconfig-spanning-tree-ext:PVST" %}
+Spanning-tree Mode: PVST
+{% if "openconfig-spanning-tree-ext:pvst" is in json_output %}
+{% set vlan_list = json_output['openconfig-spanning-tree-ext:pvst']['vlan'] %}
+{%endif%}
+{% if "openconfig-spanning-tree-ext:vlan" is in json_output %}
+{% set vlan_list = json_output['openconfig-spanning-tree-ext:vlan'] %}
+{%endif%}
+{% for vlan in vlan_list %}
+    {% if vars.update({'vlan_name':vlan['vlan-id']}) %}{% endif %}
+    {% if vars.update({'stp_instance':vlan['state']['stp-instance']}) %}{% endif %}
+{{' '}}
+VLAN {{'%s'| format(vars.vlan_name)}} - STP instance {{'%s'| format(vars.stp_instance)}}
+{{ '------------------------------------------------------------------------------------------------------------ ' }}
+STP Bridge Parameters:
+{{ ' ' }}
+{{'%-18s'|format("Bridge")}}{{'%-10s'|format("Bridge")}}{{'%-10s'|format("Bridge")}}{{'%-10s'|format("Bridge")}}{{'%-6s'|format("Hold")}}{{'%-14s'|format("LastTopology")}}{{'%-10s'|format("Topology")}}
+{{'%-18s'|format("Identifier")}}{{'%-10s'|format("MaxAge")}}{{'%-10s'|format("Hello")}}{{'%-10s'|format("FwdDly")}}{{'%-6s'|format("Time")}}{{'%-14s'|format("Change")}}{{'%-10s'|format("Change")}}
+{{'%-18s'|format("hex")}}{{'%-10s'|format("sec")}}{{'%-10s'|format("sec")}}{{'%-10s'|format("sec")}}{{'%-6s'|format("sec")}}{{'%-14s'|format("sec")}}{{'%-10s'|format("cnt")}}
+        {% if vars.update({'br_id':vlan['state']['bridge-address']}) %}{% endif %}
+        {% if vars.update({'br_mAge':vlan['config']['max-age']}) %}{% endif %}
+        {% if vars.update({'br_hello':vlan['config']['hello-time']}) %}{% endif %}
+        {% if vars.update({'br_fDly':vlan['config']['forwarding-delay']}) %}{% endif %}
+        {% if vars.update({'br_holdtime':vlan['state']['hold-time']}) %}{% endif %}
+        {% if vars.update({'lastTc':vlan['state']['last-topology-change']}) %}{% endif %}
+        {% if vars.update({'tcChgCnt':vlan['state']['topology-changes']}) %}{% endif %}
+{{'%-18s'|format(vars.br_id)}}{{'%-10s'|format(vars.br_mAge)}}{{'%-10s'|format(vars.br_hello)}}{{'%-10s'|format(vars.br_fDly)}}{{'%-6s'|format(vars.br_holdtime)}}{{'%-14s'|format(vars.lastTc)}}{{'%-10s'|format(vars.tcChgCnt)}}
+{{ ' ' }}
+{{'%-18s'|format("RootBridge")}}{{'%-10s'|format("RootPath")}}{{'%-18s'|format("DesignatedBridge")}}{{'%-12s'|format("Root")}}{{'%-5s'|format("Max")}}{{'%-5s'|format("Hel")}}{{'%-5s'|format("Fwd")}}
+{{'%-18s'|format("Identifier")}}{{'%-10s'|format("Cost")}}{{'%-18s'|format("Identifier")}}{{'%-12s'|format("Port")}}{{'%-5s'|format("Age")}}{{'%-4s'|format("lo")}} {{'%-5s'|format("Dly")}}
+{{'%-18s'|format("hex")}}{{'%-10s'|format("")}}{{'%-18s'|format("hex")}}{{'%-12s'|format("")}}{{'%-5s'|format("sec")}}{{'%-4s'|format("sec")}} {{'%-5s'|format("sec")}}
+        {% if vars.update({'root_br':vlan['state']['bridge-address']}) %}{% endif %}
+        {% if vars.update({'root_path':vlan['state']['root-cost']}) %}{% endif %}
+        {% if vars.update({'desig_br':vlan['state']['designated-root-address']}) %}{% endif %}
+        {% if vars.update({'root_port_name':vlan['state']['root-port-name']}) %}{% endif %}
+        {% if vars.update({'max_age':vlan['state']['max-age']}) %}{% endif %}
+        {% if vars.update({'hello':vlan['state']['hello-time']}) %}{% endif %}
+        {% if vars.update({'fDly':vlan['state']['forwarding-delay']}) %}{% endif %}
+{{'%-18s'|format(vars.root_br)}}{{'%-10s'|format(vars.root_path)}}{{'%-18s'|format(vars.desig_br)}}{{'%-12s'|format(vars.root_port_name)}}{{'%-5s'|format(vars.max_age)}}{{'%-5s'|format(vars.hello)}}{{'%-5s'|format(vars.fDly)}}
+{{' ' }}
+STP Port Parameters:
+{{'%-16s'|format("Port")}}{{'%-5s'|format("Prio")}}{{'%-10s'|format("Path")}}{{'%-5s'|format("Port")}}{{'%-7s'|format("Uplink")}}{{'%-7s'|format("BPDU")}}{{'%-11s'|format("State")}}{{'%-11s'|format("Designated")}}{{'%-17s'|format("Designated")}}{{'%-17s'|format("Designated")}}
+{{'%-16s'|format("Num")}}{{'%-5s'|format("rity")}}{{'%-10s'|format("Cost")}}{{'%-5s'|format("Fast")}}{{'%-7s'|format("Fast")}}{{'%-7s'|format("Filter")}}{{'%-11s'|format("")}}{{'%-11s'|format("Cost")}}{{'%-17s'|format("Root")}}{{'%-17s'|format("bridge")}}
+{% set interface_list  = {} %}
+{% if "interfaces" in vlan and "interface" in vlan['interfaces'] %}    
+    {% set interface_list = vlan['interfaces']['interface'] %}
+{%endif%}
+    {% for stp_intf in stp_intfs %}
+    {% for intf in interface_list %}
+    {% if stp_intf['name'] == intf['name'] %}
+        {% set vars = {'intf_fast': ""} %}
+        {% set vars = {'intf_ufast':""} %}
+        {% if vars.update({'intf_name':intf['name']}) %}{% endif %}
+        {% if vars.update({'intf_pri':intf['config']['port-priority']}) %}{% endif %}
+        {% if vars.update({'intf_path_cost':intf['config']['cost']}) %}{% endif %}
+                {% if stp_intf['config']['bpdu-filter'] == true %}
+                   {% if vars.update({'intf_bpdu_filter': "Y"}) %}{% endif %}
+                {%else %}
+                   {% if vars.update({'intf_bpdu_filter': "N"}) %}{% endif %}
+                {%endif %}
+                {% if stp_intf['config']['portfast'] == true %}
+                   {% if vars.update({'intf_fast': "Y"}) %}{% endif %}
+                {%else %}
+                   {% if vars.update({'intf_fast': "N"}) %}{% endif %}
+                {%endif %}
+                {% if stp_intf['config']['uplink-fast'] == true %}
+                   {% if vars.update({'intf_ufast': "Y"}) %}{% endif %}
+                {%else %}
+                   {% if vars.update({'intf_ufast': "N"}) %}{% endif %}
+                {%endif %}
+        {% if vars.update({'intf_state':intf['state']['port-state']| replace('openconfig-spanning-tree-types:',"")}) %}{% endif %}
+        {% if vars.update({'intf_desig_cost':intf['state']['designated-cost']}) %}{% endif %}
+        {% if vars.update({'intf_desig_root':intf['state']['designated-root-address']}) %}{% endif %}
+        {% if vars.update({'intf_desig_bridge':intf['state']['designated-bridge-address']}) %}{% endif %}
+{{'%-16s'|format(vars.intf_name)}}{{'%-5s'|format(vars.intf_pri)}}{{'%-10s'|format(vars.intf_path_cost)}}{{'%-5s'|format(vars.intf_fast)}}{{'%-7s'|format(vars.intf_ufast)}}{{'%-7s'|format(vars.intf_bpdu_filter)}}{{'%-11s'|format(vars.intf_state)}}{{'%-11s'|format(vars.intf_desig_cost)}}{{'%-17s'|format(vars.intf_desig_root)}}{{'%-17s'|format(vars.intf_desig_bridge)}}
+        {%endif %}
+        {%endfor %}
+    {% endfor %}
+    {% endfor %}
+{% endif %}
+{% if stp_protocol == "openconfig-spanning-tree-types:RAPID_PVST" %}
+{% if "openconfig-spanning-tree:rapid-pvst" is in json_output and json_output['openconfig-spanning-tree:rapid-pvst'] is not none %}
+{% set vlan_list = json_output['openconfig-spanning-tree:rapid-pvst']['vlan'] %}
+{%endif%}
+{% if "openconfig-spanning-tree:vlan" is in json_output and json_output['openconfig-spanning-tree:vlan']is not none %}
+{% set vlan_list = json_output['openconfig-spanning-tree:vlan'] %}
+{%endif%}
+Spanning-tree Mode: RPVST
+{% for vlan in vlan_list %}
+   {% set vars = {'br_txHCnt':""} %}
+   {% if vars.update({'vlan_name':vlan['vlan-id']}) %}{% endif %}
+   {% if vars.update({'stp_instance':vlan['state']['openconfig-spanning-tree-ext:stp-instance']}) %}{% endif %}
+{{ " " }}
+VLAN {{'%s'| format(vars.vlan_name)}} - RSTP instance {{'%s'| format(vars.stp_instance)}}
+{{ '------------------------------------------------------------------------------------------------------------ ' }}
+{{ ' ' }}
+RSTP (IEEE 802.1w) Bridge Parameters:
+{{ ' ' }}
+{{'%-18s'|format("Bridge")}}{{'%-10s'|format("Bridge")}}{{'%-10s'|format("Bridge")}}{{'%-10s'|format("Bridge")}}{{'%-6s'|format("tx")}}
+{{'%-18s'|format("Identifier")}}{{'%-10s'|format("MaxAge")}}{{'%-10s'|format("Hello")}}{{'%-10s'|format("FwdDly")}}{{'%-6s'|format("Hold")}}
+{{'%-18s'|format("hex")}}{{'%-10s'|format("sec")}}{{'%-10s'|format("sec")}}{{'%-10s'|format("sec")}}{{'%-6s'|format("cnt")}}
+        {% if vars.update({'br_id':vlan['state']['bridge-address']}) %}{% endif %}
+        {% if vars.update({'br_mAge':vlan['config']['max-age']}) %}{% endif %}
+        {% if vars.update({'br_hello':vlan['config']['hello-time']}) %}{% endif %}
+        {% if vars.update({'br_fDly':vlan['config']['forwarding-delay']}) %}{% endif %}
+        {% if vars.update({'br_txHCnt':vlan['state']['tx-hold-count']}) %}{% endif %}
+{{'%-18s'|format(vars.br_id)}}{{'%-10s'|format(vars.br_mAge)}}{{'%-10s'|format(vars.br_hello)}}{{'%-10s'|format(vars.br_fDly)}}{{'%-6s'|format(vars.br_txHCnt)}}
+{{ ' ' }}
+{{'%-18s'|format("RootBridge")}}{{'%-10s'|format("RootPath")}}{{'%-18s'|format("DesignatedBridge")}}{{'%-12s'|format("Root")}}{{'%-5s'|format("Max")}}{{'%-5s'|format("Hel")}}{{'%-5s'|format("Fwd")}}
+{{'%-18s'|format("Identifier")}}{{'%-10s'|format("Cost")}}{{'%-18s'|format("Identifier")}}{{'%-12s'|format("Port")}}{{'%-5s'|format("Age")}}{{'%-4s'|format("lo")}} {{'%-5s'|format("Dly")}}
+{{'%-18s'|format("hex")}}{{'%-10s'|format("")}}{{'%-18s'|format("hex")}}{{'%-12s'|format("")}}{{'%-5s'|format("sec")}}{{'%-4s'|format("sec")}} {{'%-5s'|format("sec")}}
+        {% if vars.update({'root_br':vlan['state']['bridge-address']}) %}{% endif %}
+        {% if vars.update({'root_path':vlan['state']['root-cost']}) %}{% endif %}
+        {% if vars.update({'desig_br':vlan['state']['designated-root-address']}) %}{% endif %}
+        {% if vars.update({'root_port_name_name':vlan['state']['openconfig-spanning-tree-ext:root-port-name']}) %}{% endif %}
+        {% if vars.update({'max_age':vlan['state']['max-age']}) %}{% endif %}
+        {% if vars.update({'hello':vlan['state']['hello-time']}) %}{% endif %}
+        {% if vars.update({'fDly':vlan['state']['forwarding-delay']}) %}{% endif %}
+{{'%-18s'|format(vars.root_br)}}{{'%-10s'|format(vars.root_path)}}{{'%-18s'|format(vars.desig_br)}}{{'%-12s'|format(vars.root_port_name)}}{{'%-5s'|format(vars.max_age)}}{{'%-5s'|format(vars.hello)}}{{'%-5s'|format(vars.fDly)}}
+{{' ' }}
+RSTP (IEEE 802.1w) Port Parameters:
+{{'%-16s'|format("Port")}}{{'%-5s'|format("Prio")}}{{'%-10s'|format("Path")}}{{'%-4s'|format("P2P")}}{{'%-5s'|format("Edge")}}{{'%-7s'|format("BPDU")}}{{'%-10s'|format("Role")}}{{'%-11s'|format("State")}}{{'%-11s'|format("Designa-")}}{{'%-17s'|format("Designated")}}
+{{'%-16s'|format("Num")}}{{'%-5s'|format("rity")}}{{'%-10s'|format("Cost")}}{{'%-4s'|format("Mac")}}{{'%-5s'|format("Port")}}{{'%-7s'|format("Filter")}}{{'%-10s'|format("")}}{{'%-11s'|format("")}}{{'%-11s'|format("ted cost")}}{{'%-17s'|format("bridge")}}
+
+{% set interface_list  = {} %}
+{% if "interfaces" in vlan and "interface" in vlan['interfaces'] %}    
+    {% set interface_list = vlan['interfaces']['interface'] %}
+{%endif%}
+    {% for stp_intf in stp_intfs %}
+    {% for intf in interface_list %}
+    {% if stp_intf['name'] == intf['name'] %}
+        {% set vars = {'intf_p2pmac': ""} %}
+        {% set vars = {'intf_edge': ""} %}
+        {% if vars.update({'intf_name':intf['name']}) %}{% endif %}
+        {% if vars.update({'intf_pri':intf['config']['port-priority']}) %}{% endif %}
+        {% if vars.update({'intf_path_cost':intf['config']['cost']}) %}{% endif %}
+               {% if stp_intf['config']['bpdu-filter'] == true %}
+                  {% if vars.update({'intf_bpdu_filter': "Y"}) %}{% endif %}
+               {%else %}
+                  {% if vars.update({'intf_bpdu_filter': "N"}) %}{% endif %}
+               {%endif %}
+               {% if stp_intf['config']['link-type'] == "P2P" %}
+                     {% if vars.update({'intf_p2pmac': "Y"}) %}{% endif %}
+               {%else %}
+                     {% if vars.update({'intf_p2pmac': "N"}) %}{% endif %}
+               {%endif %}
+               {% if stp_intf['config']['edge-port'] == "EDGE_ENABLE" %}
+                     {% if vars.update({'intf_edge': "Y"}) %}{% endif %}
+               {%else %}
+                     {% if vars.update({'intf_edge': "N"}) %}{% endif %}
+               {%endif %}
+        {% if vars.update({'intf_role':intf['state']['role']}) %}{% endif %}
+        {% if vars.update({'intf_state':intf['state']['port-state']| replace('openconfig-spanning-tree-types:',"")}) %}{% endif %}
+        {% if vars.update({'intf_desig_cost':intf['state']['designated-cost']}) %}{% endif %}
+        {% if vars.update({'intf_desig_bridge':intf['state']['designated-bridge-address']}) %}{% endif %}
+{{'%-16s'|format(vars.intf_name)}}{{'%-5s'|format(vars.intf_pri)}}{{'%-10s'|format(vars.intf_path_cost)}}{{'%-5s'|format(vars.intf_p2pmac)}}{{'%-7s'|format(vars.intf_edge)}}{{'%-7s'|format(vars.intf_bpdu_filter)}}{{'%-10s'|format(vars.intf_role)}}{{'%-11s'|format(vars.intf_state)}}{{'%-11s'|format(vars.intf_desig_cost)}}{{'%-17s'|format(vars.intf_desig_bridge)}}
+        {%endif %}
+        {%endfor %}
+    {% endfor %}
+{% endfor %}
+{% endif %}
+{% endif %}
+{% endif %}
