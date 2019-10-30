@@ -11,12 +11,6 @@ module sonic-sflow-annot {
     import sonic-sflow { prefix sflow; }
 
 
-    deviation /sflow:sonic-sflow/sflow:SFLOW {
-      deviate add {
-        sonic-ext:key-name "global";
-      }
-    }
-
     deviation /sflow:sonic-sflow/sflow:SFLOW_SESSION_TABLE/sflow:SFLOW_SESSION_LIST {
       deviate add {
         sonic-ext:db-name "APPL_DB";

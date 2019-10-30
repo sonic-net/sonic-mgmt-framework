@@ -59,6 +59,14 @@ module sonic-sflow {
             }
 
             container SFLOW {
+                list SFLOW_LIST {
+                    key "sflow_key";
+                    leaf sflow_key {
+                        type enumeration {
+                            enum global;
+                        }
+                    }
+
                     leaf admin_state {
                         type string;
                     }
@@ -70,6 +78,7 @@ module sonic-sflow {
                     leaf agent_id {
                         type string;
                     }
+                }
            }
 
            container SFLOW_SESSION_TABLE {
