@@ -108,7 +108,7 @@ func yangToDbMapFill (keyLevel int, xYangSpecMap map[string]*yangXpathInfo, entr
 
 	parentXpathData, ok := xYangSpecMap[xpathPrefix]
 	/* init current xpath table data with its parent data, change only if needed. */
-	if ok {
+	if ok && xpathData.tableName == nil {
 		if xpathData.tableName == nil && parentXpathData.tableName != nil && xpathData.xfmrTbl == nil {
 			xpathData.tableName = parentXpathData.tableName
 		} else if xpathData.xfmrTbl == nil && parentXpathData.xfmrTbl != nil {
