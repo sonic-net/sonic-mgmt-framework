@@ -40,8 +40,8 @@ module sonic-bgp-peergroup {
   }
 
   container sonic-bgp-peergroup {
-    container BGP_PEER_GROUPS {
-      list BGP_PEER_GROUPS_LIST {
+    container BGP_PEER_GROUP {
+      list BGP_PEER_GROUP_LIST {
         key "vrf pgrp_name";
 
         leaf vrf {
