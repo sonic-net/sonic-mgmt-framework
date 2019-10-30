@@ -1,0 +1,18 @@
+module sonic-port-annot {
+
+    yang-version "1.1";
+
+    namespace "http://openconfig.net/yang/annotation/prt-annot";
+    prefix "prt-annot";
+
+    import sonic-extensions { prefix sonic-ext; }
+    import sonic-port { prefix prt; }
+
+    deviation /prt:sonic-port/prt:PORT_TABLE {
+        deviate add {
+            sonic-ext:db-name "APPL_DB";
+        }
+    }
+
+}
+
