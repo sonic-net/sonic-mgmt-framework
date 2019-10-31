@@ -160,7 +160,6 @@ func (app *IntfApp) processUpdateIntfSubInterfaces(d *db.DB) error {
 }
 
 func (app *IntfApp) translateDeleteIntfSubInterfaces(d *db.DB, intf *ocbinds.OpenconfigInterfaces_Interfaces_Interface, ifName *string) error {
-	log.Info("Inside translateDeleteIntfSubInterfaces")
 	var err error
 	if intf.Subinterfaces == nil {
 		return err
