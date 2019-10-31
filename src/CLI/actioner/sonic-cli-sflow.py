@@ -26,31 +26,42 @@ def call_method(name, args):
     return method(args)
 
 def get_sflow_admin_state(resp):
-    if ('sonic-sflow:sonic-sflow' in resp and
-        'SFLOW' in resp['sonic-sflow:sonic-sflow'] and
-        'admin_state' in resp['sonic-sflow:sonic-sflow']['SFLOW']):
-        return resp['sonic-sflow:sonic-sflow']['SFLOW']['admin_state']
+    if 'sonic-sflow:sonic-sflow' not in resp:
+        return 'down'
+    resp = resp['sonic-sflow:sonic-sflow']
+    if ('SFLOW' in resp and
+        'SFLOW_LIST' in resp['SFLOW'] and
+        'admin_state' in resp['SFLOW']['SFLOW_LIST'][0]):
+        return resp['SFLOW']['SFLOW_LIST'][0]['admin_state']
     return 'down'
 
 def get_sflow_polling_interval(resp):
-    if ('sonic-sflow:sonic-sflow' in resp and
-        'SFLOW' in resp['sonic-sflow:sonic-sflow'] and
-        'polling_interval' in resp['sonic-sflow:sonic-sflow']['SFLOW']):
-        return resp['sonic-sflow:sonic-sflow']['SFLOW']['polling_interval']
+    if 'sonic-sflow:sonic-sflow' not in resp:
+        return 'default'
+    resp = resp['sonic-sflow:sonic-sflow']
+    if ('SFLOW' in resp and
+        'SFLOW_LIST' in resp['SFLOW'] and
+        'polling_interval' in resp['SFLOW']['SFLOW_LIST'][0]):
+        return resp['SFLOW']['SFLOW_LIST'][0]['polling_interval']
     return 'default'
 
 def get_sflow_agent_id(resp):
-    if ('sonic-sflow:sonic-sflow' in resp and
-        'SFLOW' in resp['sonic-sflow:sonic-sflow'] and
-        'agent_id' in resp['sonic-sflow:sonic-sflow']['SFLOW']):
-        return resp['sonic-sflow:sonic-sflow']['SFLOW']['agent_id']
+    if 'sonic-sflow:sonic-sflow' not in resp:
+        return 'default'
+    resp = resp['sonic-sflow:sonic-sflow']
+    if ('SFLOW' in resp and
+        'SFLOW_LIST' in resp['SFLOW'] and
+        'agent_id' in resp['SFLOW']['SFLOW_LIST'][0]):
+        return resp['SFLOW']['SFLOW_LIST'][0]['agent_id']
     return 'default'
 
 def get_collector_list(resp):
-    if ('sonic-sflow:sonic-sflow' in resp and
-        'SFLOW_COLLECTOR' in resp['sonic-sflow:sonic-sflow'] and
-        'SFLOW_COLLECTOR_LIST' in resp['sonic-sflow:sonic-sflow']['SFLOW_COLLECTOR']):
-        return resp['sonic-sflow:sonic-sflow']['SFLOW_COLLECTOR']['SFLOW_COLLECTOR_LIST']
+    if 'sonic-sflow:sonic-sflow' not in resp:
+        return []
+    resp = resp['sonic-sflow:sonic-sflow']
+    if ('SFLOW_COLLECTOR' in resp and
+        'SFLOW_COLLECTOR_LIST' in resp['SFLOW_COLLECTOR']):
+        return resp['SFLOW_COLLECTOR']['SFLOW_COLLECTOR_LIST']
     return []
 
 def get_session_list(resp, table_name):
@@ -100,6 +111,26 @@ def generate_body(func, args):
 	body = {
 	  "sonic-sflow:admin_state": args[1]
 	  }
+    elif func.__name__ == 'patch_sonic_sflow_sonic_sflow_sflow_sflow_list_admin_state':
+        keypath = ['global']
+        body = {
+	  "sonic-sflow:admin_state": args[0]
+	  }
+    elif func.__name__ == 'patch_sonic_sflow_sonic_sflow_sflow_sflow_list_agent_id':
+        keypath = ['global']
+        body = {
+	  "sonic-sflow:agent_id": args[0]
+	  }
+    elif func.__name__ == 'patch_sonic_sflow_sonic_sflow_sflow_sflow_list_polling_interval':
+        keypath = ['global']
+        body = {
+	  "sonic-sflow:polling_interval": int(args[0])
+	  }
+    elif func.__name__ == 'delete_sonic_sflow_sonic_sflow_sflow_sflow_list_polling_interval':
+        keypath = ['global']
+    elif func.__name__ == 'delete_sonic_sflow_sonic_sflow_sflow_sflow_list_agent_id':
+        keypath = ['global']
+
     return keypath, body;
 
 def run(func, args):
@@ -129,15 +160,15 @@ def run(func, args):
         show_cli_output(sys.argv[2], sess_lst)
         return
 
-    # TODO sFlow global config commands
     # sFlow collector config commands
     keypath, body = generate_body(func, args)
-    if func.__name__ == 'put_sonic_sflow_sonic_sflow_sflow_collector_sflow_collector_list':
-	#name = args[0]
-        #sflow_col_lst = get_collector_list(resp)
-	#for col in sflow_col_lst:
-	#    if name in col['collector_name']:
-	#        cresp = getattr(aa, 'delete_sonic_sflow_sonic_sflow_sflow_collector_sflow_collector_list')(*keypath)
+    if func.__name__ == 'patch_sonic_sflow_sonic_sflow_sflow_sflow_list_admin_state':
+	cresp = getattr(aa, func.__name__)(*keypath, body=body)
+    elif func.__name__ == 'patch_sonic_sflow_sonic_sflow_sflow_sflow_list_agent_id':
+	cresp = getattr(aa, func.__name__)(*keypath, body=body)
+    elif func.__name__ == 'put_sonic_sflow_sonic_sflow_sflow_collector_sflow_collector_list':
+	cresp = getattr(aa, func.__name__)(*keypath, body=body)
+    elif func.__name__ == 'patch_sonic_sflow_sonic_sflow_sflow_sflow_list_polling_interval':
 	cresp = getattr(aa, func.__name__)(*keypath, body=body)
     elif func.__name__ == 'delete_sonic_sflow_sonic_sflow_sflow_collector_sflow_collector_list':
 	name = args[0]
@@ -145,6 +176,10 @@ def run(func, args):
 	for col in sflow_col_lst:
 	    if name in col['collector_name']:
 	        cresp = getattr(aa,func.__name__)(*keypath)
+    elif func.__name__ == 'delete_sonic_sflow_sonic_sflow_sflow_sflow_list_polling_interval':
+	cresp = getattr(aa,func.__name__)(*keypath)
+    elif func.__name__ == 'delete_sonic_sflow_sonic_sflow_sflow_sflow_list_agent_id':
+	cresp = getattr(aa,func.__name__)(*keypath)
 
     # sFlow session config commands
     elif func.__name__ == 'patch_sonic_sflow_sonic_sflow_sflow_session_sflow_session_list_admin_state':
