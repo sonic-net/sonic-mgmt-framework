@@ -63,25 +63,25 @@ module openconfig-network-instance-annot {
       }
     }
 
-    deviation oc-netinst:openconfig-network-instance/oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-bgp:bgp/oc-bgp:global/oc-bgp:route-selection-options/oc-bgp:config/oc-bgp:ignore-as-path-length {
+    deviation /oc-netinst:openconfig-network-instance/oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-bgp:bgp/oc-bgp:global/oc-bgp:route-selection-options/oc-bgp:config/oc-bgp:ignore-as-path-length {
       deviate add {
             sonic-ext:field-transformer "bgp_ignore_as_path_length_xfmr";
       }
     }
 
-    deviation oc-netinst:openconfig-network-instance/oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-bgp:bgp/oc-bgp:global/oc-bgp:route-selection-options/oc-bgp:state/oc-bgp:ignore-as-path-length {
+    deviation /oc-netinst:openconfig-network-instance/oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-bgp:bgp/oc-bgp:global/oc-bgp:route-selection-options/oc-bgp:state/oc-bgp:ignore-as-path-length {
       deviate add {
             sonic-ext:field-transformer "bgp_ignore_as_path_length_xfmr";
       }
     }
 
-    deviation oc-netinst:openconfig-network-instance/oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-bgp:bgp/oc-bgp:global/oc-bgp:route-selection-options/oc-bgp:config/oc-bgp:external-compare-router-id {
+    deviation /oc-netinst:openconfig-network-instance/oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-bgp:bgp/oc-bgp:global/oc-bgp:route-selection-options/oc-bgp:config/oc-bgp:external-compare-router-id {
       deviate add {
             sonic-ext:field-transformer "bgp_external_compare_router_id_xfmr";
       }
     }
 
-    deviation oc-netinst:openconfig-network-instance/oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-bgp:bgp/oc-bgp:global/oc-bgp:route-selection-options/oc-bgp:state/oc-bgp:external-compare-router-id {
+    deviation /oc-netinst:openconfig-network-instance/oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-bgp:bgp/oc-bgp:global/oc-bgp:route-selection-options/oc-bgp:state/oc-bgp:external-compare-router-id {
       deviate add {
             sonic-ext:field-transformer "bgp_external_compare_router_id_xfmr";
       }
