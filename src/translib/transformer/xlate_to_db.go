@@ -325,12 +325,12 @@ func dbMapDelete(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, jsonDat
 				} else {
 					return err
 				}
-			} else if  spec.tableName != nil {
-				result[*spec.tableName] = make(map[string]db.Value)
+			} else if  len(tableName) > 0 {
+				result[tableName] = make(map[string]db.Value)
 				if len(keyName) > 0 {
-					result[*spec.tableName][keyName] = db.Value{Field: make(map[string]string)}
+					result[tableName][keyName] = db.Value{Field: make(map[string]string)}
 					if spec.yangEntry != nil && spec.yangEntry.Node.Statement().Keyword == "leaf" {
-						result[*spec.tableName][keyName].Field[spec.fieldName] = ""
+						result[tableName][keyName].Field[spec.fieldName] = ""
 					}
 				}
 			} else if len(spec.childTable) > 0 {
@@ -586,12 +586,12 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
 					if ret != nil {
 					    curKey = ret[0].Interface().(string)
 					}
-				} else if xYangSpecMap[xpath].keyName != nil {
+				} else if ok && xYangSpecMap[xpath].keyName != nil {
 					curKey = *xYangSpecMap[xpath].keyName
 				}
 
-                if (typeOfValue == reflect.Map || typeOfValue == reflect.Slice) && xYangSpecMap[xpath].yangDataType != "leaf-list" {
-                    if ok && xYangSpecMap[xpath] != nil && len(xYangSpecMap[xpath].xfmrFunc) > 0 {
+                if ok && (typeOfValue == reflect.Map || typeOfValue == reflect.Slice) && xYangSpecMap[xpath].yangDataType != "leaf-list" {
+                    if xYangSpecMap[xpath] != nil && len(xYangSpecMap[xpath].xfmrFunc) > 0 {
                         /* subtree transformer present */
 						curYgotNode, nodeErr := yangNodeForUriGet(curUri, ygRoot)
 						if nodeErr != nil {
