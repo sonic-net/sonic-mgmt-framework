@@ -217,14 +217,14 @@ module openconfig-network-instance-annot {
 /* peer-groups->timers->state->keepalive-interval */
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:timers/oc-netinst:state/oc-netinst:keepalive-interval {
       deviate add {
-            sonic-ext:field-name "keepalive_intrvl";
+            sonic-ext:field-name "keepalive_interval";
       }
     }
 
 /* peer-groups->timers->state->minimum-advertisement-interval */
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:timers/oc-netinst:state/oc-netinst:minimum-advertisement-interval {
-      deviate add {
-            sonic-ext:field-name "min_adv_intrvl";
+	      deviate add {
+		    sonic-ext:field-name "min_adv_interval";
       }
     }
 
@@ -268,7 +268,7 @@ module openconfig-network-instance-annot {
 /* peer-group->config->description */
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:config/oc-netinst:description {
       deviate add {
-            sonic-ext:field-name "descr";
+            sonic-ext:field-name "description";
       }
     }
 
@@ -282,7 +282,7 @@ module openconfig-network-instance-annot {
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:config/oc-netinst:auth-password {
       deviate add {
-            sonic-ext:field-name "passwd";
+            sonic-ext:field-name "auth_password";
       }
     }
 
@@ -310,7 +310,7 @@ module openconfig-network-instance-annot {
 /* peer-group->state->auth-password */
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:state/oc-netinst:auth-password {
       deviate add {
-            sonic-ext:field-name "passwd";
+            sonic-ext:field-name "auth_password";
       }
     }
 
@@ -329,7 +329,7 @@ module openconfig-network-instance-annot {
 /* peer-group->state->description */
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:state/oc-netinst:description {
       deviate add {
-            sonic-ext:field-name "descr";
+            sonic-ext:field-name "description";
       }
     }
 
@@ -388,49 +388,49 @@ module openconfig-network-instance-annot {
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:l2vpn-evpn/oc-netinst:prefix-limit/oc-netinst:config/oc-netinst:prevent-teardown {
       deviate add {
-            sonic-ext:field-name "max_pfx_warn_only";
+            sonic-ext:field-name "max_prefix_warn_only";
       }
     }
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:l2vpn-evpn/oc-netinst:prefix-limit/oc-netinst:config/oc-netinst:warning-threshold-pct {
       deviate add {
-            sonic-ext:field-name "max_pfx_warn_thrshld";
+            sonic-ext:field-name "max_prefix_warning_threshold";
       }
     }
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:l2vpn-evpn/oc-netinst:prefix-limit/oc-netinst:config/oc-netinst:restart-timer {
       deviate add {
-            sonic-ext:field-name "max_pfx_restart_timer";
+            sonic-ext:field-name "max_prefix_restart_timer";
       }
     }
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:l2vpn-evpn/oc-netinst:prefix-limit/oc-netinst:config/oc-netinst:max-prefixes {
       deviate add {
-            sonic-ext:field-name "max_pfx_limit";
+            sonic-ext:field-name "max_prefix_limit";
       }
     }
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:l2vpn-evpn/oc-netinst:prefix-limit/oc-netinst:state/oc-netinst:warning-threshold-pct {
       deviate add {
-            sonic-ext:field-name "max_pfx_warn_thrshld";
+            sonic-ext:field-name "max_prefix_warn_threshold";
       }
     }
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:l2vpn-evpn/oc-netinst:prefix-limit/oc-netinst:state/oc-netinst:restart-timer {
       deviate add {
-            sonic-ext:field-name "max_pfx_restart_timer";
+            sonic-ext:field-name "max_prefix_restart_timer";
       }
     }
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:l2vpn-evpn/oc-netinst:prefix-limit/oc-netinst:state/oc-netinst:max-prefixes {
       deviate add {
-            sonic-ext:field-name "max_pfx_limit";
+            sonic-ext:field-name "max_prefix_limit";
       }
     }
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:l2vpn-evpn/oc-netinst:prefix-limit/oc-netinst:state/oc-netinst:prevent-teardown {
       deviate add {
-            sonic-ext:field-name "max_pfx_warn_only";
+            sonic-ext:field-name "max_prefix_warn_only";
       }
     }
 
@@ -448,61 +448,61 @@ module openconfig-network-instance-annot {
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:ipv4-unicast/oc-netinst:config/oc-netinst:send-default-route {
       deviate add {
-            sonic-ext:field-name "send_dflt_route";
+            sonic-ext:field-name "send_default_route";
       }
     }
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:ipv4-unicast/oc-netinst:state/oc-netinst:send-default-route {
       deviate add {
-            sonic-ext:field-name "send_dflt_route";
+            sonic-ext:field-name "send_default_route";
       }
     }
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:ipv4-unicast/oc-netinst:prefix-limit/oc-netinst:state/oc-netinst:prevent-teardown {
       deviate add {
-            sonic-ext:field-name "max_pfx_warn_only";
+            sonic-ext:field-name "max_prefix_warning_only";
       }
     }
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:ipv4-unicast/oc-netinst:prefix-limit/oc-netinst:state/oc-netinst:warning-threshold-pct {
       deviate add {
-            sonic-ext:field-name "max_pfx_warn_thrshld";
+            sonic-ext:field-name "max_prefix_warning_threshold";
       }
     }
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:ipv4-unicast/oc-netinst:prefix-limit/oc-netinst:state/oc-netinst:restart-timer {
       deviate add {
-            sonic-ext:field-name "max_pfx_restart_timer";
+            sonic-ext:field-name "max_prefix_restart_timer";
       }
     }
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:ipv4-unicast/oc-netinst:prefix-limit/oc-netinst:state/oc-netinst:max-prefixes {
       deviate add {
-            sonic-ext:field-name "max_pfx_limit";
+            sonic-ext:field-name "max_prefix_limit";
       }
     }
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:ipv4-unicast/oc-netinst:prefix-limit/oc-netinst:config/oc-netinst:max-prefixes {
       deviate add {
-            sonic-ext:field-name "max_pfx_limit";
+            sonic-ext:field-name "max_prefix_limit";
       }
     }
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:ipv4-unicast/oc-netinst:prefix-limit/oc-netinst:config/oc-netinst:prevent-teardown {
       deviate add {
-            sonic-ext:field-name "max_pfx_warn_only";
+            sonic-ext:field-name "max_prefix_warning_only";
       }
     }
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:ipv4-unicast/oc-netinst:prefix-limit/oc-netinst:config/oc-netinst:warning-threshold-pct {
       deviate add {
-            sonic-ext:field-name "max_pfx_warn_thrshld";
+            sonic-ext:field-name "max_prefix_warning_thrshold";
       }
     }
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:ipv4-unicast/oc-netinst:prefix-limit/oc-netinst:config/oc-netinst:restart-timer {
       deviate add {
-            sonic-ext:field-name "max_pfx_restart_timer";
+            sonic-ext:field-name "max_prefix_restart_timer";
       }
     }
 
@@ -520,61 +520,61 @@ module openconfig-network-instance-annot {
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:ipv6-unicast/oc-netinst:state/oc-netinst:send-default-route {
       deviate add {
-            sonic-ext:field-name "send_dflt_route";
+            sonic-ext:field-name "send_default_route";
       }
     }
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:ipv6-unicast/oc-netinst:prefix-limit/oc-netinst:config/oc-netinst:restart-timer {
       deviate add {
-            sonic-ext:field-name "max_pfx_restart_timer";
+            sonic-ext:field-name "max_prefix_restart_timer";
       }
     }
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:ipv6-unicast/oc-netinst:prefix-limit/oc-netinst:config/oc-netinst:max-prefixes {
       deviate add {
-            sonic-ext:field-name "max_pfx_limit";
+            sonic-ext:field-name "max_prefix_limit";
       }
     }
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:ipv6-unicast/oc-netinst:prefix-limit/oc-netinst:config/oc-netinst:prevent-teardown {
       deviate add {
-            sonic-ext:field-name "max_pfx_warn_only";
+            sonic-ext:field-name "max_prefix_warning_only";
       }
     }
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:ipv6-unicast/oc-netinst:prefix-limit/oc-netinst:config/oc-netinst:warning-threshold-pct {
       deviate add {
-            sonic-ext:field-name "max_pfx_warn_thrshld";
+            sonic-ext:field-name "max_prefix_warning_threshold";
       }
     }
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:ipv6-unicast/oc-netinst:prefix-limit/oc-netinst:state/oc-netinst:restart-timer {
       deviate add {
-            sonic-ext:field-name "max_pfx_restart_timer";
+            sonic-ext:field-name "max_prefix_restart_timer";
       }
     }
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:ipv6-unicast/oc-netinst:prefix-limit/oc-netinst:state/oc-netinst:max-prefixes {
       deviate add {
-            sonic-ext:field-name "max_pfx_limit";
+            sonic-ext:field-name "max_prefix_limit";
       }
     }
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:ipv6-unicast/oc-netinst:prefix-limit/oc-netinst:state/oc-netinst:prevent-teardown {
       deviate add {
-            sonic-ext:field-name "max_pfx_warn_only";
+            sonic-ext:field-name "max_prefix_warning_only";
       }
     }
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:ipv6-unicast/oc-netinst:prefix-limit/oc-netinst:state/oc-netinst:warning-threshold-pct {
       deviate add {
-            sonic-ext:field-name "max_pfx_warn_thrshld";
+            sonic-ext:field-name "max_prefix_warning_threshold";
       }
     }
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:ipv6-unicast/oc-netinst:config/oc-netinst:send-default-route {
       deviate add {
-            sonic-ext:field-name "send_dflt_route";
+            sonic-ext:field-name "send_default_route";
       }
     }
 
