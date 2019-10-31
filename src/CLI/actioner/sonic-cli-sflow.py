@@ -15,6 +15,7 @@ import urllib3
 urllib3.disable_warnings()
 plugins = dict()
 
+SFLOW_DEFAULT_PORT = 6343
 
 def register(func):
     """Register sdk client method as a plug-in"""
@@ -86,7 +87,7 @@ def get_all_sflow_sess_info(aa):
 def generate_body(func, args):
     body = None
     keypath = []
-    port = 6634
+    port = SFLOW_DEFAULT_PORT
     if len(args) == 3:
        port = int(args[2])
     if func.__name__ == 'put_sonic_sflow_sonic_sflow_sflow_collector_sflow_collector_list':
