@@ -2,13 +2,8 @@ package transformer
 
 import (
     "errors"
-	"strings"
-//    "encoding/json"
-//    "translib/ocbinds"
-//    "reflect"
-//    "os/exec"
+    "strings"
     log "github.com/golang/glog"
-//    ygot "github.com/openconfig/ygot/ygot"
 )
 
 func init () {
@@ -29,7 +24,7 @@ var YangToDb_bgp_afi_safi_use_multi_path_key_xfmr KeyXfmrYangToDb = func(inParam
 	if strings.Contains(afiName, "IPV4_UNICAST") {
 		afi = "ipv4"
 	} else if strings.Contains(afiName, "IPV6_UNICAST") {
-		afi = "ipv4"
+		afi = "ipv6"
 	} else if strings.Contains(afiName, "L2VPN") {
 		afi = "l2vpn"
 	} else {
@@ -115,4 +110,3 @@ var DbToYang_bgp_table_conn_key_xfmr KeyXfmrDbToYang = func(inParams XfmrParams)
 	log.Info("DbToYang_bgp_table_conn_key_xfmr: rmap:", rmap)
     return rmap, nil
 }
-
