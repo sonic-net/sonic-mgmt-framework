@@ -158,9 +158,24 @@ func dbKeyToYangDataConvert(uri string, xpath string, dbKey string, dbKeySep str
 		log.Infof("No key transformer found for multi element yang key mapping to a single redis key string.")
 	        return rmap, uriWithKey, nil
 	}
-	rmap[keyNameList[0]] = keyDataList[0]
+	keyXpath := xpath + "/" + keyNameList[0]
+	xyangSpecInfo, ok := xYangSpecMap[keyXpath]
+	if !ok  || xyangSpecInfo == nil {
+		errStr := fmt.Sprintf("Failed to find key xpath %v in xYangSpecMap or is nil, needed to fetch the yangEntry data-type", keyXpath)
+		err = fmt.Errorf("%v", errStr)
+		return rmap, uriWithKey, err
+	}
+	yngTerminalNdDtType := xyangSpecInfo.yangEntry.Type.Kind
+	resVal, err := DbToYangType(yngTerminalNdDtType, keyXpath, keyDataList[0])
+	if err != nil {
+		errStr := fmt.Sprintf("Failure in converting Db value type to yang type for field", keyXpath)
+		err = fmt.Errorf("%v", errStr)
+		return rmap, uriWithKey, err
+	} else {
+		 rmap[keyNameList[0]] = resVal
+	}
 	if uriWithKeyCreate {
-		uriWithKey += fmt.Sprintf("[%v=%v]", keyNameList[0], keyDataList[0])
+		uriWithKey += fmt.Sprintf("[%v=%v]", keyNameList[0], resVal)
 	}
 
 	return rmap, uriWithKey, nil
