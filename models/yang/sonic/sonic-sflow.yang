@@ -26,7 +26,9 @@ module sonic-sflow {
                     key "collector_name";
 
                     leaf collector_name {
-                        type string;
+                        type string {
+                            length 1..16;
+                        }
                     }
 
                     leaf collector_ip {
@@ -49,11 +51,15 @@ module sonic-sflow {
                     }
 
                     leaf admin_state {
-                        type string;
+                        type scommon:admin-status;
                     }
 
                     leaf sample_rate {
-                        type uint32;
+                        type uint32 {
+                            range "256..8388608" {
+                                error-message "sFlow polling interval must be [256-8388608]";
+                            }
+                        }
                     }
                 }
             }
@@ -68,15 +74,19 @@ module sonic-sflow {
                     }
 
                     leaf admin_state {
-                        type string;
+                        type scommon:admin-status;
                     }
 
                     leaf polling_interval {
-                        type uint32;
+                        type uint32 {
+                            range "0..300" {
+                                error-message "sFlow sample rate must be [0-300]";
+                            }
+                        }
                     }
 
                     leaf agent_id {
-                        type string;
+                       type string;
                     }
                 }
            }
@@ -91,11 +101,15 @@ module sonic-sflow {
                    }
 
                    leaf admin_state {
-                       type string;
+                       type scommon:admin-status;
                    }
 
                    leaf sample_rate {
-                       type uint32;
+                       type uint32 {
+                           range "256..8388608" {
+                               error-message "sFlow polling interval must be [256-8388608]";
+                           }
+                       }
                    }
                }
            }
