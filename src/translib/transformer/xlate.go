@@ -405,3 +405,62 @@ func GetOrdDBTblList(ygModuleNm string) ([]string, error) {
         }
         return result, err
 }
+
+func GetOrdTblList(xfmrTbl string, uriModuleNm string) []string {
+        var ordTblList []string
+        processedTbl := false
+        var sncMdlList []string
+
+	sncMdlList = getYangMdlToSonicMdlList(uriModuleNm)
+        for _, sonicMdlNm := range(sncMdlList) {
+                sonicMdlTblInfo := xDbSpecTblSeqnMap[sonicMdlNm]
+                for _, ordTblNm := range(sonicMdlTblInfo.OrdTbl) {
+                                if xfmrTbl == ordTblNm {
+                                        log.Infof("Found sonic module(%v) whose ordered table list contains table %v", sonicMdlNm, xfmrTbl)
+                                        ordTblList = sonicMdlTblInfo.OrdTbl
+                                        processedTbl = true
+                                        break
+                                }
+                }
+                if processedTbl {
+                        break
+                }
+        }
+        return ordTblList
+}
+
+func GetTablesToWatch(xfmrTblList []string, uriModuleNm string) []string {
+        var depTblList []string
+        depTblMap := make(map[string]bool) //create to avoid duplicates in depTblList, serves as a Set
+        processedTbl := false
+	var sncMdlList []string
+
+	sncMdlList = getYangMdlToSonicMdlList(uriModuleNm)
+
+        for _, xfmrTbl := range(xfmrTblList) {
+                //can be optimized if there is a way to know all sonic modules, a given OC-Yang spans over
+                for _, sonicMdlNm := range(sncMdlList) {
+                        sonicMdlTblInfo := xDbSpecTblSeqnMap[sonicMdlNm]
+                        for _, ordTblNm := range(sonicMdlTblInfo.OrdTbl) {
+                                if xfmrTbl == ordTblNm {
+                                        log.Infof("Found sonic module(%v) whose ordered table list contains table %v", sonicMdlNm, xfmrTbl)
+                                        ldepTblList := sonicMdlTblInfo.DepTbl[xfmrTbl]
+                                        for _, depTblNm := range(ldepTblList) {
+                                                depTblMap[depTblNm] = true
+                                        }
+                                        //assumption that a table belongs to only one sonic module
+                                        processedTbl = true
+                                        break
+                                }
+                        }
+                        if processedTbl {
+                                break
+                        }
+                }
+        }
+        for depTbl := range(depTblMap) {
+                depTblList = append(depTblList, depTbl)
+        }
+	return depTblList
+}
+

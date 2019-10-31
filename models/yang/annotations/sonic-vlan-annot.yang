@@ -7,7 +7,6 @@ module sonic-vlan-annot {
 
     import sonic-vlan { prefix svlan; }
 
-
     deviation /svlan:sonic-vlan/svlan:VLAN_TABLE/svlan:VLAN_TABLE_LIST  {
       deviate add {
 		sonic-ext:db-name "APPL_DB";

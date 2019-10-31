@@ -1,10 +1,32 @@
 {% set just_var = 2 %}
+{% set vars = {'oper_state': ""} %}
+{% set vars = {'protocol': ""} %}
+
 Flags:  D - Down
-        U - Up (PortChannel)
+        U - Up
 
 {{'----------------------------------------------------------------------------------------------------------------------------'}}
-{{'%-20s'|format("Group")}}{{'%-30s'|format("Port-Channel")}}{{'%-20s'|format("Type")}}{{'%-15s'|format("Protocol")}}{{'%-15s'|format("Member Ports")}}
+{{'%-20s'|format("Group")}}{{'%-30s'|format("PortChannel")}}{{'%-20s'|format("Type")}}{{'%-15s'|format("Protocol")}}{{'%-15s'|format("Member Ports")}}
 {{'----------------------------------------------------------------------------------------------------------------------------'}}
-{% for dict in json_output['PORTCHANNEL'] %}
-{{'%-20s'|format(dict['id']|string)}}{{'%-18s'|format(dict['name'])}}{{'%-12s'|format("(D)")}}{{'%-20s'|format("Eth")}}{{'%-15s'|format("LACP")}}{{'%-15s'|format(dict['members']|string|replace("[", "")|replace("]", ""))}}
+{% for dict in json_output %}
+{% if dict["name"] == 'lacp' %}
+{% if vars.update({'protocol':'DYNAMIC'}) %}{% endif %}
+{% else %}
+{% if vars.update({'protocol':'STATIC'}) %}{% endif %}
+{% endif %}
+{% if dict["oper_status"] == 'down' %}
+{% if vars.update({'oper_state':'D'}) %}{% endif %}
+{% else %}
+{% if vars.update({'oper_state':'U'}) %}{% endif %}
+{% endif %}
+{% if dict['members']|length > 0 %}
+{{'%-20s'|format(dict['lagname'].strip('PortChannel'))}}{{'%-15s'|format(dict['lagname'])}}{{'%-15s'|format("("+vars.oper_state+")")}}{{'%-20s'|format(dict['type'])}}{{'%-15s'|format(vars.protocol)}}{{'%-15s'|format(dict['members'][0]|string|replace("[", "")|replace("]", ""))}}
+{% if dict['members']|length > 1 %}
+{% for i in dict['members'][1:] %}
+{{ '%95s'|format(i) }} 
+{% endfor %}
+{% endif %}
+{% else %}
+{{'%-20s'|format(dict['lagname'].strip('PortChannel'))}}{{'%-15s'|format(dict['lagname'])}}{{'%-15s'|format("("+vars.oper_state+")")}}{{'%-20s'|format(dict['type'])}}{{'%-15s'|format(vars.protocol)}}{{'%-15s'|format(dict['members']|string|replace("[", "")|replace("]", ""))}}
+{% endif %}
 {% endfor %}
