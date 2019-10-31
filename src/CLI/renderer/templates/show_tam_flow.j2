@@ -18,7 +18,7 @@
     {% if vars.update({'aclrule':flow["acl-rule-name"]}) %}{% endif %}
     {% if vars.update({'acltable':flow["acl-table-name"]}) %}{% endif %}
     {% if vars.update({'samplingrate':flow["sampling-rate"]}) %}{% endif %}
-    {% if vars.update({'collector':flow["collector"]}) %}{% endif %}
+    {% if vars.update({'collector':flow["collector-name"]}) %}{% endif %}
 ---------------------------------------------------
 Flow                : {{ vars.name }}
 {% if vars.aclrule %}
@@ -31,7 +31,7 @@ acl-table:          : {{ vars.acltable }}
 sampling-rate       : {{ vars.samplingrate }}
 {% endif %}
 {% if vars.collector %}
-collector           : {{ vars.collector }}
+collector-name      : {{ vars.collector }}
 {% endif %}
 {% endfor %}
 {% endfor %}

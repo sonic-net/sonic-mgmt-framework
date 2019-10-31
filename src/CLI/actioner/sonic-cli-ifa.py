@@ -29,7 +29,7 @@ def generate_body(func, args):
     # Set/Get the rules of all IFA table entries.
     if func.__name__ == 'get_sonic_ifa_sonic_ifa_tam_device_table':
        keypath = []
-    elif func.__name__ == 'get_sonic_ifa_sonic_ifa_tam_int_feature_table':
+    elif func.__name__ == 'get_sonic_ifa_sonic_ifa_tam_int_ifa_feature_table':
        keypath = []
     elif func.__name__ == 'get_sonic_ifa_sonic_ifa_tam_collector_table':
        keypath = []
@@ -44,7 +44,7 @@ def generate_body(func, args):
        body = { "sonic-ifa:deviceid": int(args[1]) }
     elif func.__name__ == 'delete_sonic_ifa_sonic_ifa_tam_device_table_tam_device_table_list_deviceid':
        keypath = [args[0]]
-    elif func.__name__ == 'patch_sonic_ifa_sonic_ifa_tam_int_feature_table_tam_int_feature_table_list_enable':
+    elif func.__name__ == 'patch_sonic_ifa_sonic_ifa_tam_int_ifa_feature_table_tam_int_ifa_feature_table_list_enable':
        keypath = [ args[0] ]
        if args[1] == 'True':
            body = { "sonic-ifa:enable": True }
@@ -52,22 +52,13 @@ def generate_body(func, args):
            body = { "sonic-ifa:enable": False }
     elif func.__name__ == 'patch_list_sonic_ifa_sonic_ifa_tam_collector_table_tam_collector_table_list':
        keypath = [ ]
-       if args[1] == 'ipv4':
-           body = {
-                    "sonic-ifa:TAM_COLLECTOR_TABLE_LIST": [
-                       {
-                           "name": args[0], "ipaddress-type": args[1], "v4addr": args[2], "port": int(args[3])
-                       }
-                    ]
-                  }
-       else:
-           body = {
-                    "sonic-ifa:TAM_COLLECTOR_TABLE_LIST": [
-                       {
-                           "name": args[0], "ipaddress-type": args[1], "v6addr": args[2], "port": int(args[3])
-                       }
-                    ]
-                  }
+       body = {
+           "sonic-ifa:TAM_COLLECTOR_TABLE_LIST": [
+              {
+                  "name": args[0], "ipaddress-type": args[1], "ipaddress": args[2], "port": int(args[3])
+              }
+           ]
+       }
     elif func.__name__ == 'delete_sonic_ifa_sonic_ifa_tam_collector_table_tam_collector_table_list':
        keypath = [ args[0] ]
     elif func.__name__ == 'patch_sonic_ifa_sonic_ifa_tam_int_ifa_flow_table_tam_int_ifa_flow_table_list':
@@ -75,7 +66,7 @@ def generate_body(func, args):
        body = {
                   "sonic-ifa:TAM_INT_IFA_FLOW_TABLE_LIST": [
                        {
-                           "name": args[0], "acl-rule-name": args[1], "acl-table-name": args[2], "sampling-rate": int(args[3]), "collector":args[4]
+                           "name": args[0], "acl-rule-name": args[1], "acl-table-name": args[2], "sampling-rate": int(args[3]), "collector-name":args[4]
                        }
                   ]
               }
@@ -123,7 +114,7 @@ def run(func, args):
                 print("Failed")
             elif func.__name__ == 'get_sonic_ifa_sonic_ifa_tam_device_table':
                 show_cli_output(args[0], api_response)
-            elif func.__name__ == 'get_sonic_ifa_sonic_ifa_tam_int_feature_table':
+            elif func.__name__ == 'get_sonic_ifa_sonic_ifa_tam_int_ifa_feature_table':
                 show_cli_output(args[0], api_response)
             elif func.__name__ == 'get_sonic_ifa_sonic_ifa_tam_collector_table':
                 show_cli_output(args[0], api_response)

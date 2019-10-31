@@ -26,9 +26,9 @@ module sonic-ifa {
 
     container sonic-ifa {
 
-        container TAM_INT_FEATURE_TABLE {
+        container TAM_INT_IFA_FEATURE_TABLE {
 
-            list TAM_INT_FEATURE_TABLE_LIST {
+            list TAM_INT_IFA_FEATURE_TABLE_LIST {
                 key "feature";
                 max-elements "1";
 
@@ -56,6 +56,7 @@ module sonic-ifa {
 
                 leaf deviceid {
                     type uint16;
+                    default 0;
                 }
             }
         }
@@ -76,17 +77,8 @@ module sonic-ifa {
                     }
                 }
 
-                choice ipaddr {
-                    case ipv4_addr {
-                        leaf v4addr {
-                            type inet:ipv4-address;
-                        }
-                    }
-                    case ipv6_addr {
-                        leaf v6addr {
-                            type inet:ipv6-address;
-                        }
-                    }
+                leaf ipaddress {
+                    type inet:ip-address;
                 }
 
                 leaf port {
@@ -109,6 +101,7 @@ module sonic-ifa {
                     type leafref {
                         path "/sacl:sonic-acl/sacl:ACL_TABLE/sacl:ACL_TABLE_LIST/sacl:aclname";
                     }
+
                 }
 
                 leaf acl-rule-name {
@@ -118,6 +111,7 @@ module sonic-ifa {
                 }
 
                 leaf sampling-rate {
+                    mandatory false;
                     type uint16 {
                         range "1..10000"{
                             error-message "Invalid IFA flow sampling rate.";
@@ -125,7 +119,8 @@ module sonic-ifa {
                     }
                 }
 
-                leaf collector {
+                leaf collector-name {
+                    mandatory false;
                     type leafref {
                         path "../../../TAM_COLLECTOR_TABLE/TAM_COLLECTOR_TABLE_LIST/name";
                     }

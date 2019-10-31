@@ -15,14 +15,14 @@
     {% if vars.update({'name':collector["name"]}) %}{% endif %}
     {% if vars.update({'ipaddresstype':collector["ipaddress-type"]}) %}{% endif %}
     {% if vars.update({'port':collector["port"]}) %}{% endif %}
-    {% if vars.update({'address':collector["port"]}) %}{% endif %}
+    {% if vars.update({'address':collector["ipaddress"]}) %}{% endif %}
 ---------------------------------------------------
 Collector                : {{ vars.name }}
 {% if vars.ipaddresstype %}
 ipaddress-type           : {{ vars.ipaddresstype }}
 {% endif %}
 {% if vars.address %}
-address                  : {{ vars.address }}
+ipaddress                : {{ vars.address }}
 {% endif %}
 {% if vars.port %}
 port                     : {{ vars.port }}
