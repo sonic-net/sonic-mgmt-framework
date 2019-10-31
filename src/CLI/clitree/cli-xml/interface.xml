@@ -421,58 +421,31 @@ limitations under the License.
        </ACTION>
        </COMMAND>
 
-       <COMMAND
-           name="sflow"
-           help="Interface sFlow settings"
-           />
-       <COMMAND
-           name="sflow sampling-rate"
-           help="Set sampling-rate"
-           ptype="SUBCOMMAND"
-           mode="subcommand"
-           >
-           <PARAM
-               name="rate"
-               help="Sampling rate"
-               ptype="UINT"
-               />
-            <ACTION builtin="clish_nop"/>
-            </COMMAND>
+       <COMMAND name="sflow" help="Interface sFlow settings"/>
+           <COMMAND name="sflow sampling-rate" help="Set sampling-rate" ptype="SUBCOMMAND" mode="subcommand">
+               <PARAM name="rate" help="Sampling rate" ptype="UINT"/>
+                  <ACTION>
+                       python $SONIC_CLI_ROOT/sonic-cli-sflow.py patch_sonic_sflow_sonic_sflow_sflow_session_sflow_session_list_sample_rate ${iface} ${rate}
+                  </ACTION>
+       </COMMAND>
 
-      <COMMAND
-          name="sflow enable"
-          help="Enable sflow"
-          ptype="SUBCOMMAND"
-          mode="subcommand"
-          >
-          <ACTION builtin="clish_nop"/>
-      </COMMAND>
+       <COMMAND name="sflow enable" help="Enable sflow" ptype="SUBCOMMAND" mode="subcommand">
+            <ACTION>
+                python $SONIC_CLI_ROOT/sonic-cli-sflow.py patch_sonic_sflow_sonic_sflow_sflow_session_sflow_session_list_admin_state ${iface} up
+            </ACTION>
+       </COMMAND>
 
-    <COMMAND
-        name="no sflow"
-        help="Disable sflow"
-        />
-    <COMMAND
-        name="no sflow sampling-rate"
-        help="Set sampling rate to default"
-        ptype="SUBCOMMAND"
-        mode="subcommand"
-        >
-        <PARAM
-            name="rate"
-            help="Sampling rate"
-            ptype="UINT"
-            />
-        <ACTION builtin="clish_nop"/>
-    </COMMAND>
-    <COMMAND
-        name="no sflow enable"
-        help="Disable sFlow"
-        ptype="SUBCOMMAND"
-        mode="subcommand"
-        >
-        <ACTION builtin="clish_nop"/>
-    </COMMAND>
+       <COMMAND name="no sflow" help="Disable sflow">
+           <ACTION>
+               python $SONIC_CLI_ROOT/sonic-cli-sflow.py patch_sonic_sflow_sonic_sflow_sflow_session_sflow_session_list_admin_state ${iface} down
+           </ACTION>
+       </COMMAND>
+
+       <COMMAND name="no sflow sampling-rate" help="Set sampling rate to default" ptype="SUBCOMMAND" mode="subcommand">
+           <ACTION>
+               python $SONIC_CLI_ROOT/sonic-cli-sflow.py delete_sonic_sflow_sonic_sflow_sflow_session_sflow_session_list_sample_rate ${iface}
+           </ACTION>
+       </COMMAND>
 
        <COMMAND
            name="no switchport"
@@ -726,7 +699,7 @@ limitations under the License.
             name="mtu"
             help="Configure MTU">
             <PARAM
-                name="mtu" 
+                name="mtu"
                 help="MTU of the interface"
                 ptype="RANGE_MTU" />
             <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config_mtu ${iface} ${mtu} </ACTION>
@@ -739,8 +712,8 @@ limitations under the License.
         <COMMAND
             name="autoneg"
             help="Configure autoneg">
-            <PARAM 
-                name="autoneg" 
+            <PARAM
+                name="autoneg"
                 help="Autoneg config of the interface"
                 ptype="ON_OFF" />
             <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_ethernet_interfaces_interface_ethernet_config_auto_negotiate ${iface} ${autoneg} </ACTION>
@@ -753,8 +726,8 @@ limitations under the License.
         <COMMAND
             name="speed"
             help="Configure speed">
-            <PARAM 
-                name="speed" 
+            <PARAM
+                name="speed"
                 help="Speed config of the interface"
                 ptype="INTF_SPEED" />
             <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_ethernet_interfaces_interface_ethernet_config_port_speed ${iface} ${speed} </ACTION>

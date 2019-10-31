@@ -1,0 +1,103 @@
+module sonic-sflow {
+        namespace "http://github.com/Azure/sonic-sflow";
+        prefix sflow;
+
+	import ietf-yang-types {
+		prefix yang;
+	}
+
+	import ietf-inet-types {
+		prefix inet;
+	}
+
+	import sonic-common {
+		prefix scommon;
+	}
+
+        revision 2019-09-09 {
+                description
+                        "Initial revision.";
+        }
+
+        container sonic-sflow {
+            container SFLOW_COLLECTOR {
+                list SFLOW_COLLECTOR_LIST {
+                    max-elements 2;
+                    key "collector_name";
+
+                    leaf collector_name {
+                        type string;
+                    }
+
+                    leaf collector_ip {
+                        type inet:ip-address;
+                    }
+
+                    leaf collector_port {
+                        type inet:port-number;
+                    }
+
+                }
+            }
+
+            container SFLOW_SESSION {
+                list SFLOW_SESSION_LIST {
+                    key "ifname";
+
+                    leaf ifname {
+                        type string;
+                    }
+
+                    leaf admin_state {
+                        type string;
+                    }
+
+                    leaf sample_rate {
+                        type uint32;
+                    }
+                }
+            }
+
+            container SFLOW {
+                list SFLOW_LIST {
+                    key "sflow_key";
+                    leaf sflow_key {
+                        type enumeration {
+                            enum global;
+                        }
+                    }
+
+                    leaf admin_state {
+                        type string;
+                    }
+
+                    leaf polling_interval {
+                        type uint32;
+                    }
+
+                    leaf agent_id {
+                        type string;
+                    }
+                }
+           }
+
+           container SFLOW_SESSION_TABLE {
+               list SFLOW_SESSION_LIST {
+                   key "ifname";
+                   config false;
+
+                   leaf ifname {
+                       type string;
+                   }
+
+                   leaf admin_state {
+                       type string;
+                   }
+
+                   leaf sample_rate {
+                       type uint32;
+                   }
+               }
+           }
+        }
+}
