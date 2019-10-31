@@ -264,7 +264,6 @@ func (app *IntfApp) translateUpdatePhyIntf(d *db.DB, ifKey *string, inpOp reqTyp
 
 	/* Handling Interface Ethernet updates specific to LAG*/
 	err = app.translateUpdatePhyIntfEthernetLag(d, ifKey, intf)
-	log.Error("err returned -- , keys returned --", err, keys)
 	if err != nil {
 		return keys, err
 	}
