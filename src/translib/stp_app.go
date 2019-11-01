@@ -255,9 +255,18 @@ func (app *StpApp) translateCRUCommon(d *db.DB, opcode int) ([]db.WatchKeys, err
 	var keys []db.WatchKeys
 	log.Info("translateCRUCommon:STP:path =", app.pathInfo.Template)
 
-	app.convertOCStpGlobalConfToInternal(opcode)
-	app.convertOCPvstToInternal(opcode)
-	app.convertOCRpvstConfToInternal(opcode)
+	err = app.convertOCStpGlobalConfToInternal(opcode)
+	if err != nil {
+		return keys, err
+	}
+	err = app.convertOCPvstToInternal(opcode)
+	if err != nil {
+		return keys, err
+	}
+	err = app.convertOCRpvstConfToInternal(opcode)
+	if err != nil {
+		return keys, err
+	}
 	app.convertOCStpInterfacesToInternal()
 
 	return keys, err
@@ -701,13 +710,18 @@ func (app *StpApp) setStpGlobalConfigInDB(d *db.DB) error {
 	return err
 }
 
-func (app *StpApp) convertOCStpGlobalConfToInternal(opcode int) {
+func (app *StpApp) convertOCStpGlobalConfToInternal(opcode int) error {
+	var err error
 	stp := app.getAppRootObject()
 	setDefaultFlag := (opcode == CREATE || opcode == REPLACE)
 	if stp != nil {
 		if stp.Global != nil && stp.Global.Config != nil {
 			if stp.Global.Config.BridgePriority != nil {
-				(&app.globalInfo).Set("priority", strconv.Itoa(int(*stp.Global.Config.BridgePriority)))
+				priorityVal := int(*stp.Global.Config.BridgePriority)
+				if (priorityVal % 4096) != 0 {
+					return tlerr.InvalidArgs("Priority value should be multiple of 4096")
+				}
+				(&app.globalInfo).Set("priority", strconv.Itoa(priorityVal))
 			} else if setDefaultFlag {
 				(&app.globalInfo).Set("priority", STP_DEFAULT_BRIDGE_PRIORITY)
 			}
@@ -751,6 +765,7 @@ func (app *StpApp) convertOCStpGlobalConfToInternal(opcode int) {
 			log.Infof("convertOCStpGlobalConfToInternal -- Internal Stp global config: %v", app.globalInfo)
 		}
 	}
+	return err
 }
 
 func (app *StpApp) convertDBStpGlobalConfigToInternal(d *db.DB) error {
@@ -811,7 +826,8 @@ func (app *StpApp) convertInternalToOCStpGlobalConfig(stpGlobal *ocbinds.Opencon
 }
 
 /////////////////    RPVST //////////////////////
-func (app *StpApp) convertOCRpvstConfToInternal(opcode int) {
+func (app *StpApp) convertOCRpvstConfToInternal(opcode int) error {
+	var err error
 	stp := app.getAppRootObject()
 	setDefaultFlag := (opcode == CREATE || opcode == REPLACE)
 	if stp != nil && stp.RapidPvst != nil && len(stp.RapidPvst.Vlan) > 0 {
@@ -823,7 +839,11 @@ func (app *StpApp) convertOCRpvstConfToInternal(opcode int) {
 				dbVal := app.vlanTableMap[vlanName]
 				(&dbVal).Set("vlanid", strconv.Itoa(int(vlanId)))
 				if rpvstVlanConf.Config.BridgePriority != nil {
-					(&dbVal).Set("priority", strconv.Itoa(int(*rpvstVlanConf.Config.BridgePriority)))
+					priorityVal := int(*rpvstVlanConf.Config.BridgePriority)
+					if (priorityVal % 4096) != 0 {
+						return tlerr.InvalidArgs("Priority value should be multiple of 4096")
+					}
+					(&dbVal).Set("priority", strconv.Itoa(priorityVal))
 				} else if setDefaultFlag {
 					(&dbVal).Set("priority", "32768")
 				}
@@ -874,6 +894,7 @@ func (app *StpApp) convertOCRpvstConfToInternal(opcode int) {
 			}
 		}
 	}
+	return err
 }
 
 func (app *StpApp) setRpvstVlanDataInDB(d *db.DB, createFlag bool) error {
@@ -1125,7 +1146,8 @@ func (app *StpApp) convertInternalToOCRpvstVlanInterface(vlanName string, intfId
 }
 
 ///////////   PVST   //////////////////////
-func (app *StpApp) convertOCPvstToInternal(opcode int) {
+func (app *StpApp) convertOCPvstToInternal(opcode int) error {
+	var err error
 	stp := app.getAppRootObject()
 	setDefaultFlag := (opcode == CREATE || opcode == REPLACE)
 	if stp != nil && stp.Pvst != nil && len(stp.Pvst.Vlan) > 0 {
@@ -1137,7 +1159,11 @@ func (app *StpApp) convertOCPvstToInternal(opcode int) {
 				dbVal := app.vlanTableMap[vlanName]
 				(&dbVal).Set("vlanid", strconv.Itoa(int(vlanId)))
 				if pvstVlan.Config.BridgePriority != nil {
-					(&dbVal).Set("priority", strconv.Itoa(int(*pvstVlan.Config.BridgePriority)))
+					priorityVal := int(*pvstVlan.Config.BridgePriority)
+					if (priorityVal % 4096) != 0 {
+						return tlerr.InvalidArgs("Priority value should be multiple of 4096")
+					}
+					(&dbVal).Set("priority", strconv.Itoa(priorityVal))
 				} else if setDefaultFlag {
 					(&dbVal).Set("priority", "32768")
 				}
@@ -1188,6 +1214,7 @@ func (app *StpApp) convertOCPvstToInternal(opcode int) {
 			}
 		}
 	}
+	return err
 }
 
 func (app *StpApp) convertInternalToOCPvstVlan(vlanName string, pvst *ocbinds.OpenconfigSpanningTree_Stp_Pvst, pvstVlan *ocbinds.OpenconfigSpanningTree_Stp_Pvst_Vlan) {
