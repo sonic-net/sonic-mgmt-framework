@@ -1,0 +1,41 @@
+module sonic-bgp-listen-prefix {
+  namespace "http://github.com/Azure/sonic-bgp-listen-prefix";
+  prefix sbgp-lp;
+
+  import ietf-inet-types { prefix inet; }
+
+  organization
+    "SONiC";
+
+  contact
+    "SONiC";
+
+  description
+    "SONIC BGP Listen Prefix Yang";
+
+  revision 2019-11-01 {
+    description
+      "Initial revision.";
+  }
+
+  container sonic-bgp-listen-prefix {
+    container BGP_LISTEN_PREFIX {
+      list BGP_LISTEN_PREFIX_LIST {
+        key "vrf ip_prefix";
+
+        leaf vrf {
+          type string;
+        }
+
+        leaf ip_prefix {
+            type inet:ip-prefix;
+        }
+
+        leaf peer_group {
+          type string;
+        }
+
+      }
+    }
+  }
+}

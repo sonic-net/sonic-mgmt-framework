@@ -655,7 +655,18 @@ module openconfig-network-instance-annot {
     }
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:table-connections/oc-netinst:table-connection/oc-netinst:config/oc-netinst:import-policy {
       deviate add {
-        sonic-ext:field-name "route-map";
+        sonic-ext:field-name "route_map";
+      }
+    }
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:dynamic-neighbor-prefixes/oc-netinst:dynamic-neighbor-prefix {
+      deviate add {
+        sonic-ext:table-name "BGP_LISTEN_PREFIX";
+        sonic-ext:key-transformer "bgp_dyn_neigh_listen_key_xfmr";
+      }
+    }
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:dynamic-neighbor-prefixes/oc-netinst:dynamic-neighbor-prefix/oc-netinst:config/oc-netinst:peer-group {
+      deviate add {
+        sonic-ext:field-name "peer_group";
       }
     }
 }
