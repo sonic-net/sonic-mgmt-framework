@@ -673,6 +673,7 @@ module openconfig-network-instance-annot {
     import openconfig-ospfv2 { prefix oc-ospfv2; }
     import openconfig-segment-routing { prefix oc-sr; }
     import openconfig-aft { prefix oc-aft; }
+    import sonic-extensions { prefix sonic-ext; }
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:fdb/oc-netinst:mac-table/oc-netinst:entries {
       deviate add {
@@ -693,7 +694,7 @@ module openconfig-network-instance-annot {
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:fdb/oc-netinst:mac-table/oc-netinst:entries/oc-netinst:entry/oc-netinst:interface/oc-if:interface-ref/oc-if:state/oc-if:interface {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:fdb/oc-netinst:mac-table/oc-netinst:entries/oc-netinst:entry/oc-netinst:interface/oc-netinst:interface-ref/oc-netinst:state/oc-netinst:interface {
       deviate add {
             sonic-ext:field-name "port";
       }
