@@ -420,13 +420,20 @@ func dbMapDefaultFieldValFill(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri str
 							log.Infof("Update(\"%v\") default: tbl[\"%v\"]key[\"%v\"]fld[\"%v\"] = val(\"%v\").",
 							childXpath, tblName, dbKey, childNode.fieldName, childNode.defVal)
 							if len(childNode.xfmrFunc) > 0 {
-								inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, uri+"/"+childName, oper, "", nil, childNode.defVal)
-								ret, err := XlateFuncCall(yangToDbXfmrFunc(xYangSpecMap[childXpath].xfmrFunc), inParams)
-								if err == nil {
-									retData := ret[0].Interface().(map[string]string)
-									for f, v := range retData {
-										dataToDBMapAdd(tblName, dbKey, result, f, v)
+								childYangType := childNode.yangEntry.Type.Kind
+								_, defValPtr, err := DbToYangType(childYangType, childXpath, childNode.defVal)
+								if err == nil && defValPtr != nil {
+									inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, childXpath, oper, "", nil, defValPtr)
+									ret, err := XlateFuncCall(yangToDbXfmrFunc(xYangSpecMap[childXpath].xfmrFunc), inParams)
+									if err == nil {
+										retData := ret[0].Interface().(map[string]string)
+										for f, v := range retData {
+											dataToDBMapAdd(tblName, dbKey, result, f, v)
+										}
 									}
+								} else {
+									log.Infof("Failed to update(\"%v\") default: tbl[\"%v\"]key[\"%v\"]fld[\"%v\"] = val(\"%v\").",
+									childXpath, tblName, dbKey, childNode.fieldName, childNode.defVal)
 								}
 							} else {
 								mapFillDataUtil(d, ygRoot, oper, uri, childXpath, tblName, dbKey, result, childName, childNode.defVal)
@@ -470,7 +477,7 @@ func dbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, jsonDat
 			xpath, _ := XfmrRemoveXPATHPredicates(path)
 			yangNode, ok := xYangSpecMap[xpath]
 			if ok && yangNode.yangDataType != YANG_LEAF && (oper == CREATE || oper == REPLACE) {
-				log.Infof("Fill default value for %v, oper(%v)\r\n", path, oper)
+				log.Infof("Fill default value for %v, oper(%v), tbl(%v)\r\n", path, oper, tblXpathMap)
 				dbMapDefaultValFill(d, ygRoot, oper, path, result, tblXpathMap)
 			}
 			moduleNm := "/" + strings.Split(path, "/")[1]

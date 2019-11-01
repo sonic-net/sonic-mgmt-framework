@@ -166,7 +166,7 @@ func dbKeyToYangDataConvert(uri string, xpath string, dbKey string, dbKeySep str
 		return rmap, uriWithKey, err
 	}
 	yngTerminalNdDtType := xyangSpecInfo.yangEntry.Type.Kind
-	resVal, err := DbToYangType(yngTerminalNdDtType, keyXpath, keyDataList[0])
+	resVal, _, err := DbToYangType(yngTerminalNdDtType, keyXpath, keyDataList[0])
 	if err != nil {
 		errStr := fmt.Sprintf("Failure in converting Db value type to yang type for field", keyXpath)
 		err = fmt.Errorf("%v", errStr)

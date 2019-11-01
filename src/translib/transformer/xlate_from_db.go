@@ -124,9 +124,10 @@ func DbValToInt(dbFldVal string, base int, size int, isUint bool) (interface{}, 
 	return res, err
 }
 
-func DbToYangType(yngTerminalNdDtType yang.TypeKind, fldXpath string, dbFldVal string) (interface{}, error) {
+func DbToYangType(yngTerminalNdDtType yang.TypeKind, fldXpath string, dbFldVal string) (interface{}, interface{}, error) {
 	log.Infof("Received FieldXpath %v, yngTerminalNdDtType %v and Db field value %v to be converted to yang data-type.", fldXpath, yngTerminalNdDtType, dbFldVal)
 	var res interface{}
+	var resPtr interface{}
 	var err error
 	const INTBASE = 10
 	switch yngTerminalNdDtType {
@@ -136,25 +137,49 @@ func DbToYangType(yngTerminalNdDtType yang.TypeKind, fldXpath string, dbFldVal s
 		err = errors.New("Yang node data-type is non base yang type")
         case yang.Yint8:
                 res, err = DbValToInt(dbFldVal, INTBASE, 8, false)
+		var resInt8 int8 = res.(int8)
+		resPtr = &resInt8
         case yang.Yint16:
                 res, err = DbValToInt(dbFldVal, INTBASE, 16, false)
+		var resInt16 int16 = res.(int16)
+		resPtr = &resInt16
         case yang.Yint32:
                 res, err = DbValToInt(dbFldVal, INTBASE, 32, false)
+		var resInt32 int32 = res.(int32)
+		resPtr = &resInt32
+        case yang.Yint64, yang.Yenum, yang.Yidentityref:
+                res, err = DbValToInt(dbFldVal, INTBASE, 64, false)
+		var resInt64 int64 = res.(int64)
+		resPtr = &resInt64
         case yang.Yuint8:
                 res, err = DbValToInt(dbFldVal, INTBASE, 8, true)
+		var resUint8 uint8 = res.(uint8)
+		resPtr = &resUint8
         case yang.Yuint16:
                 res, err = DbValToInt(dbFldVal, INTBASE, 16, true)
+		var resUint16 uint16 = res.(uint16)
+		resPtr = &resUint16
         case yang.Yuint32:
                 res, err = DbValToInt(dbFldVal, INTBASE, 32, true)
+		var resUint32 uint32 = res.(uint32)
+		resPtr = &resUint32
+        case yang.Yuint64:
+                res, err = DbValToInt(dbFldVal, INTBASE, 64, true)
+		var resUint64 uint64 = res.(uint64)
+		resPtr = &resUint64
         case yang.Ybool:
 		if res, err = strconv.ParseBool(dbFldVal); err != nil {
 			log.Warningf("Non Bool type for yang leaf-list item %v", dbFldVal)
 		}
-        case yang.Ybinary, yang.Ydecimal64, yang.Yenum, yang.Yidentityref, yang.Yint64, yang.Yuint64,     yang.Ystring, yang.Yunion,yang.Yleafref:
+		var resBool bool = res.(bool)
+		resPtr = &resBool
+        case yang.Ybinary, yang.Ydecimal64, yang.Ystring, yang.Yunion,yang.Yleafref:
                 // TODO - handle the union type
                 // Make sure to encode as string, expected by util_types.go: ytypes.yangToJSONType
                 log.Info("Yenum/Ystring/Yunion(having all members as strings) type for yangXpath ", fldXpath)
                 res = dbFldVal
+		var resString string = res.(string)
+		resPtr = &resString
 	case yang.Yempty:
 		logStr := fmt.Sprintf("Yang data type for xpath %v is Yempty.", fldXpath)
 		log.Error(logStr)
@@ -164,7 +189,7 @@ func DbToYangType(yngTerminalNdDtType yang.TypeKind, fldXpath string, dbFldVal s
                 log.Error(logStr)
                 err = errors.New(logStr)
         }
-	return res, err
+	return res, resPtr, err
 }
 
 /*convert leaf-list in Db to leaf-list in yang*/
@@ -182,7 +207,7 @@ func processLfLstDbToYang(fieldXpath string, dbFldVal string) []interface{} {
 		}
 	default:
 		for _, fldVal := range valLst {
-			resVal, err := DbToYangType(yngTerminalNdDtType, fieldXpath, fldVal)
+			resVal, _, err := DbToYangType(yngTerminalNdDtType, fieldXpath, fldVal)
 			if err == nil {
 				resLst = append(resLst, resVal)
 			}
@@ -222,7 +247,7 @@ func sonicDbToYangTerminalNodeFill(tblName string, field string, value string, r
 		resultMap[resField] = resLst
 	} else { /* yangType is leaf - there are only 2 types of yang terminal node leaf and leaf-list */
 		yngTerminalNdDtType := xDbSpecMapEntry.dbEntry.Type.Kind
-		resVal, err := DbToYangType(yngTerminalNdDtType, fieldXpath, value)
+		resVal, _, err := DbToYangType(yngTerminalNdDtType, fieldXpath, value)
 		if err != nil {
 			log.Warningf("Failure in converting Db value type to yang type for xpath", fieldXpath)
 		} else {
@@ -578,7 +603,7 @@ func terminalNodeProcess(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string
 				val, ok := (*dbDataMap)[cdb][tbl][tblKey].Field[dbFldName]
 				if ok {
 					yngTerminalNdDtType := xYangSpecMap[xpath].yangEntry.Type.Kind
-					resVal, err := DbToYangType(yngTerminalNdDtType, xpath, val)
+					resVal, _, err := DbToYangType(yngTerminalNdDtType, xpath, val)
 					if err != nil {
 						log.Error("Failure in converting Db value type to yang type for field", xpath)
 					} else {
