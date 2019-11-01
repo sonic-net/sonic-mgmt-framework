@@ -34,6 +34,7 @@ type XfmrParams struct {
 	key string
 	dbDataMap *map[db.DBNum]map[string]map[string]db.Value
 	param interface{}
+	txCache interface{}
 }
 
 /**

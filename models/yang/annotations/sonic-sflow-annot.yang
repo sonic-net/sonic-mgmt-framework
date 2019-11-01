@@ -1,0 +1,20 @@
+module sonic-sflow-annot {
+
+    yang-version "1.1";
+
+    namespace "http://openconfig.net/yang/annotation/sflow-annot";
+    prefix "sflow-annot";
+
+    import sonic-sflow { prefix sflow; }
+    import sonic-extensions { prefix sonic-ext; }
+
+
+    deviation /sflow:sonic-sflow/sflow:SFLOW_SESSION_TABLE/sflow:SFLOW_SESSION_LIST {
+      deviate add {
+        sonic-ext:db-name "APPL_DB";
+      }
+    }
+
+
+}
+

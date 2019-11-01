@@ -1,0 +1,83 @@
+{% set vars = {'stp_instance': ""} %}
+{% set vars = {'vlan_name': ""} %}
+{% set vars = {'intf_name': ""} %}
+{% set vars = {'bpdu_tx': ""} %}
+{% set vars = {'bpdu_rx': ""} %}
+{% set vars = {'tcn_tx': ""} %}
+{% set vars = {'tcn_rx': ""} %}
+{% set vars = {'conf_bpdu_tx': ""} %}
+{% set vars = {'conf_bpdu_rx': ""} %}
+{% if json_output -%}
+{% if json_output is iterable %}
+{% if "openconfig-spanning-tree:enabled-protocol" is in json_output %}
+{% set stp_protocol = json_output['openconfig-spanning-tree:enabled-protocol'][0]%}
+{%endif%}
+{% set vlan_list = {} %}
+{% if stp_protocol == "openconfig-spanning-tree-ext:PVST" %}
+{% set mode ="STP" %}
+{% if "openconfig-spanning-tree-ext:pvst" is in json_output %}
+{% set vlan_list = json_output['openconfig-spanning-tree-ext:pvst']['vlan'] %}
+{% endif %}
+{% if "openconfig-spanning-tree-ext:vlan" is in json_output %}
+{% set vlan_list = json_output['openconfig-spanning-tree-ext:vlan'] %}
+{% endif %}
+{% for vlan in vlan_list %}
+    {% if vars.update({'vlan_name':vlan['vlan-id']}) %}{% endif %}
+    {% if vars.update({'stp_instance':vlan['state']['stp-instance']}) %}{% endif %}
+{{" " }}
+VLAN {{'%s'| format(vars.vlan_name)}} - {{mode}} instance {{'%s'| format(vars.stp_instance)}}
+----------------------------------------------------------------------
+{{'%-16s'|format("PortNum")}}{{'%-10s'|format("BPDU Tx")}}{{'%-10s'|format("BPDU Rx")}}{{'%-10s'|format("TCN Tx")}}{{'%-10s'|format("TCN Rx")}}
+{{'%-16s'|format("")}}{{'%-10s'|format(" ")}}{{'%-10s'|format(" ")}}{{'%-10s'|format(" ")}}{{'%-10s'|format(" ")}}
+----------------------------------------------------------------------
+{% set interface_list  = {} %}
+{% if "interfaces" in vlan and "interface" in vlan['interfaces'] %}
+    {% set interface_list = vlan['interfaces']['interface'] %}
+{%endif%}
+    {% for intf in interface_list %}
+        {% if vars.update({'intf_name':intf['name']}) %}{% endif %}
+        {% if "counters" in intf['state'] %}
+            {% if vars.update({'bpdu_tx':intf['state']['counters']['bpdu-sent']}) %}{% endif %}
+            {% if vars.update({'bpdu_rx':intf['state']['counters']['bpdu-received']}) %}{% endif %}
+            {% if vars.update({'tcn_rx': intf['state']['counters']['tcn-received']}) %}{% endif %}
+            {% if vars.update({'tcn_tx': intf['state']['counters']['tcn-sent']}) %}{% endif %}
+        {% endif %}
+{{'%-16s'|format(vars.intf_name)}}{{'%-10s'|format(vars.bpdu_tx)}}{{'%-10s'|format(vars.bpdu_rx)}}{{'%-10s'|format(vars.tcn_tx)}}{{'%-10s'|format(vars.tcn_rx)}}
+    {% endfor %}
+{% endfor %}
+{% endif %}
+{% if stp_protocol == "openconfig-spanning-tree-types:RAPID_PVST" %}
+{% set mode ="RSTP" %}
+{% if "openconfig-spanning-tree:rapid-pvst" is in json_output %}
+{% set vlan_list = json_output['openconfig-spanning-tree:rapid-pvst']['vlan'] %}
+{%endif%}
+{% if "openconfig-spanning-tree:vlan" is in json_output %}
+{% set vlan_list = json_output['openconfig-spanning-tree:vlan'] %}
+{%endif%}
+{% for vlan in vlan_list %}
+    {% if vars.update({'vlan_name':vlan['vlan-id']}) %}{% endif %}
+    {% if vars.update({'stp_instance':vlan['state']['openconfig-spanning-tree-ext:stp-instance']}) %}{% endif %}
+{{" " }}
+VLAN {{'%s'| format(vars.vlan_name)}} - {{mode}} instance {{'%s'| format(vars.stp_instance)}}
+--------------------------------------------------------------------------------
+{{'%-16s'|format("PortNum")}}{{'%-10s'|format("BPDU Tx")}}{{'%-10s'|format("BPDU Rx")}}{{'%-12s'|format("Config BPDU")}}{{'%-12s'|format("Config BPDU")}}
+{{'%-16s'|format("")}}{{'%-10s'|format(" ")}}{{'%-10s'|format(" ")}}{{'%-12s'|format("Tx")}}{{'%-12s'|format("Rx")}}
+--------------------------------------------------------------------------------
+{% set interface_list  = {} %}
+{% if "interfaces" in vlan and "interface" in vlan['interfaces'] %}
+    {% set interface_list = vlan['interfaces']['interface'] %}
+{%endif%}
+    {% for intf in interface_list %}
+        {% if vars.update({'intf_name':intf['name']}) %}{% endif %}
+        {% if "counters" in intf['state'] %}
+            {% if vars.update({'bpdu_tx':intf['state']['counters']['bpdu-sent']}) %}{% endif %}
+            {% if vars.update({'bpdu_rx':intf['state']['counters']['bpdu-received']}) %}{% endif %}
+            {% if vars.update({'tcn_rx': intf['state']['counters']['openconfig-spanning-tree-ext:tcn-received']}) %}{% endif %}
+            {% if vars.update({'tcn_tx': intf['state']['counters']['openconfig-spanning-tree-ext:tcn-sent']}) %}{% endif %}
+        {% endif %}
+{{'%-16s'|format(vars.intf_name)}}{{'%-10s'|format(vars.bpdu_tx)}}{{'%-10s'|format(vars.bpdu_rx)}}{{'%-10s'|format(vars.config_bpdu_rx)}}{{'%-10s'|format(vars.config_bpdu_tx)}}
+    {% endfor %}
+{% endfor %}
+{%endif%}
+{% endif %}
+{% endif %}

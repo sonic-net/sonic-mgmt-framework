@@ -22,6 +22,7 @@ func init () {
 var YangToDb_bgp_pgrp_name_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
     res_map := make(map[string]string)
 
+    res_map["NULL"] = "NULL"
     return res_map, nil
 }
 
@@ -40,7 +41,7 @@ var DbToYang_bgp_pgrp_name_fld_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams
     }
 
     pGrpKey := pTbl[inParams.key]
-    peer_group_name, ok := pGrpKey.Field["pgrp_name"]
+    peer_group_name, ok := pGrpKey.Field["peer_group_name"]
 
     if ok {
         result["peer-group-name"] = peer_group_name
