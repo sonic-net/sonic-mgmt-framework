@@ -550,6 +550,9 @@ func (app *IntfApp) translateDeletePhyIntfEthernetLag(d *db.DB, intf *ocbinds.Op
 	if intf.Ethernet == nil {
 		return err
 	}
+	if intf.Ethernet.Config == nil {
+		return err
+	}
 	if intf.Ethernet.Config.AggregateId == nil {
 		return err
 	}
