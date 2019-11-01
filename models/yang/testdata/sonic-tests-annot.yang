@@ -1,0 +1,18 @@
+module sonic-tests-annot {
+
+    yang-version "1";
+
+    namespace "http://openconfig.net/yang/annotation";
+    prefix "sflow-annot";
+
+    import sonic-extensions { prefix sonic-ext; }
+    import sonic-tests { prefix tests; }
+
+    deviation /tests:sum {
+      deviate add {
+        sonic-ext:rpc-callback "rpc_sum_cb";
+      }
+    }
+
+}
+
