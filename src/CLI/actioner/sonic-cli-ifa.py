@@ -63,13 +63,17 @@ def generate_body(func, args):
        keypath = [ args[0] ]
     elif func.__name__ == 'patch_sonic_ifa_sonic_ifa_tam_int_ifa_flow_table_tam_int_ifa_flow_table_list':
        keypath = [ args[0] ]
-       body = {
-                  "sonic-ifa:TAM_INT_IFA_FLOW_TABLE_LIST": [
-                       {
-                           "name": args[0], "acl-rule-name": args[1], "acl-table-name": args[2], "sampling-rate": int(args[3]), "collector-name":args[4]
-                       }
-                  ]
-              }
+       bodydict = {"name": args[0], "acl-rule-name": args[1], "acl-table-name": args[2]}
+       for i in range(len(args)):
+           if args[i] == "sv":
+               if args[i+1] != "cv":
+                   bodydict["sampling-rate"] = int(args[i+1])
+           elif args[i] == "cv":
+               if i+1 < len(args):
+                   bodydict["collector-name"] = args[i+1]
+           else:
+               pass
+       body = { "sonic-ifa:TAM_INT_IFA_FLOW_TABLE_LIST": [ bodydict ] }
     elif func.__name__ == 'delete_sonic_ifa_sonic_ifa_tam_int_ifa_flow_table_tam_int_ifa_flow_table_list':
        keypath = [ args[0] ]
     else:

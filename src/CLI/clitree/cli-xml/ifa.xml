@@ -69,12 +69,6 @@ limitations under the License.
   </VIEW>
 
   <VIEW name="config-tam" prompt="${SYSTEM_NAME}(config-tam)# " depth="2">
-    <COMMAND name="exit" help="Exit from current mode" lock="false">
-                  <ACTION builtin="clish_nested_up"/>
-    </COMMAND>
-
-    <COMMAND name="end" help="Exit to the exec Mode" view="enable-view"/>
-
     <COMMAND name="no" help="Negate a command or set its defaults" />
 
     <!-- tam deviceid -->
@@ -112,12 +106,6 @@ limitations under the License.
   </VIEW>
 
   <VIEW name="config-tam-int-ifa" prompt="${SYSTEM_NAME}(config-tam-int-ifa)# " depth="2">
-    <COMMAND name="exit" help="Exit from current mode" lock="false">
-                  <ACTION builtin="clish_nested_up"/>
-    </COMMAND>
-
-    <COMMAND name="end" help="Exit to the exec Mode" view="enable-view"/>
-
     <COMMAND name="no" help="Negate a command or set its defaults" />
 
     <!-- tam-int-ifa enable/disable -->
@@ -140,13 +128,13 @@ limitations under the License.
       <PARAM name="acl-rule" help="ACL rule name" ptype="SUBCOMMAND" mode="subcommand">
         <PARAM name="acl-rule-val" help="ACL rule name" ptype="STRING"> </PARAM>
       </PARAM>
-      <PARAM name="sampling-rate" help="Sampling rate" ptype="SUBCOMMAND" mode="subcommand">
+      <PARAM name="sampling-rate" help="Sampling rate" ptype="SUBCOMMAND" mode="subcommand" optional="true">
         <PARAM name="sampling-rate-val" help="Sampling rate" ptype="UINT"> </PARAM>
       </PARAM>
-      <PARAM name="collector-name" help="Sampling rate" ptype="SUBCOMMAND" mode="subcommand">
+      <PARAM name="collector-name" help="Sampling rate" ptype="SUBCOMMAND" mode="subcommand" optional="true">
         <PARAM name="collector-val" help="Collector name" ptype="STRING"> </PARAM>
       </PARAM>
-      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-ifa.py patch_sonic_ifa_sonic_ifa_tam_int_ifa_flow_table_tam_int_ifa_flow_table_list ${flow-name} ${acl-rule-val} ${acl-table-val} ${sampling-rate-val} ${collector-val} </ACTION>
+      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-ifa.py patch_sonic_ifa_sonic_ifa_tam_int_ifa_flow_table_tam_int_ifa_flow_table_list ${flow-name} ${acl-rule-val} ${acl-table-val} sv ${sampling-rate-val} cv ${collector-val} </ACTION>
     </COMMAND>
 
     <!-- no tam-int-ifa flow -->
