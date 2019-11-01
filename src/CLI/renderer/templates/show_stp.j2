@@ -90,8 +90,10 @@ STP Port Parameters:
         {% set vars = {'intf_fast': ""} %}
         {% set vars = {'intf_ufast':""} %}
         {% if vars.update({'intf_name':intf['name']}) %}{% endif %}
-        {% if vars.update({'intf_pri':intf['config']['port-priority']}) %}{% endif %}
-        {% if vars.update({'intf_path_cost':intf['config']['cost']}) %}{% endif %}
+        {% if intf['config'] %}
+            {% if vars.update({'intf_pri':intf['config']['port-priority']}) %}{% endif %}
+            {% if vars.update({'intf_path_cost':intf['config']['cost']}) %}{% endif %}
+        {%endif %}
                 {% if stp_intf['config']['bpdu-filter'] == true %}
                    {% if vars.update({'intf_bpdu_filter': "Y"}) %}{% endif %}
                 {%else %}
