@@ -137,27 +137,27 @@ func DbToYangType(yngTerminalNdDtType yang.TypeKind, fldXpath string, dbFldVal s
 		err = errors.New("Yang node data-type is non base yang type")
         case yang.Yint8:
                 res, err = DbValToInt(dbFldVal, INTBASE, 8, false)
-		var resInt8 int8 = res.(int8)
+		var resInt8 int8 = int8(res.(int64))
 		resPtr = &resInt8
         case yang.Yint16:
                 res, err = DbValToInt(dbFldVal, INTBASE, 16, false)
-		var resInt16 int16 = res.(int16)
+		var resInt16 int16 = int16(res.(int64))
 		resPtr = &resInt16
         case yang.Yint32:
                 res, err = DbValToInt(dbFldVal, INTBASE, 32, false)
-		var resInt32 int32 = res.(int32)
+		var resInt32 int32 = int32(res.(int64))
 		resPtr = &resInt32
         case yang.Yuint8:
                 res, err = DbValToInt(dbFldVal, INTBASE, 8, true)
-		var resUint8 uint8 = res.(uint8)
+		var resUint8 uint8 = uint8(res.(uint64))
 		resPtr = &resUint8
         case yang.Yuint16:
                 res, err = DbValToInt(dbFldVal, INTBASE, 16, true)
-		var resUint16 uint16 = res.(uint16)
+		var resUint16 uint16 = uint16(res.(uint64))
 		resPtr = &resUint16
         case yang.Yuint32:
                 res, err = DbValToInt(dbFldVal, INTBASE, 32, true)
-		var resUint32 uint32 = res.(uint32)
+		var resUint32 uint32 = uint32(res.(uint64))
 		resPtr = &resUint32
         case yang.Ybool:
 		if res, err = strconv.ParseBool(dbFldVal); err != nil {
