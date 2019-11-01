@@ -177,10 +177,10 @@ func init() {
 	cvlCfgMap := ReadConfFile()
 
 	if (cvlCfgMap != nil) {
+		flag.Set("v", cvlCfgMap["VERBOSITY"])
 		if (strings.Compare(cvlCfgMap["LOGTOSTDERR"], "true") == 0) {
 			flag.Set("logtostderr", "true")
 			flag.Set("stderrthreshold", cvlCfgMap["STDERRTHRESHOLD"])
-			flag.Set("v", cvlCfgMap["VERBOSITY"])
 		}
 
 		CVL_LOG(INFO ,"Current Values of CVL Configuration File %v", cvlCfgMap)
@@ -546,6 +546,8 @@ func splitRedisKey(key string) (string, string) {
 
 	if (foundIdx < 0) {
 		//No matches
+		CVL_LOG(ERROR, "Could not find any of key delimeter %v in key '%s'",
+		modelInfo.allKeyDelims, key)
 		return "", ""
 	}
 
@@ -553,21 +555,32 @@ func splitRedisKey(key string) (string, string) {
 
 	if _, exists := modelInfo.tableInfo[tblName]; exists == false {
 		//Wrong table name
+		CVL_LOG(ERROR, "Could not find table '%s' in schema", tblName)
 		return "", ""
 	}
 
 	prefixLen := foundIdx + 1
 
+
+	TRACE_LOG(INFO_API, TRACE_SYNTAX, "Split Redis Key %s into (%s, %s)",
+	key, tblName, key[prefixLen:])
+
 	return tblName, key[prefixLen:]
 }
 
-//Get the YANG list name from Redis key
+//Get the YANG list name from Redis key and table name
 //This just returns same YANG list name as Redis table name
 //when 1:1 mapping is there. For one Redis table to 
 //multiple YANG list, it returns appropriate YANG list name
 //INTERFACE:Ethernet12 returns ==> INTERFACE
 //INTERFACE:Ethernet12:1.1.1.0/32 ==> INTERFACE_IPADDR
-func getRedisKeyToYangList(tableName, key string) string {
+func getRedisKeyToYangList(tableName, key string) (yangList string) {
+	defer func() {
+		pYangList := &yangList
+		TRACE_LOG(INFO_TRACE, TRACE_SYNTAX, "Got YANG list '%s' " +
+		"from Redis Table '%s', Key '%s'", *pYangList, tableName, key)
+	}()
+
 	mapArr, exists := modelInfo.redisTableToYangList[tableName]
 
 	if exists == false {
@@ -637,6 +650,9 @@ func getRedisToYangKeys(tableName string, redisKey string)[]keyValuePairStruct{
 			mkeys = append(mkeys, keyValuePairStruct{keyName,  []string{keyVals[idx]}})
 		}
 	}
+
+	TRACE_LOG(INFO_API, TRACE_SYNTAX, "getRedisToYangKeys() returns %v " +
+	"from Redis Table '%s', Key '%s'", mkeys, tableName, redisKey)
 
 	return mkeys
 }
@@ -1020,9 +1036,15 @@ func (c *CVL) checkDeleteConstraint(cfgData []CVLEditConfigData,
 	if (field != "") {
 		//Leaf or field is getting deleted
 		leafRefs = c.findUsedAsLeafRef(tableName, field)
+		TRACE_LOG(INFO_TRACE, TRACE_SEMANTIC,
+		"(Table %s, field %s) getting used by leafRefs %v",
+		tableName, field, leafRefs)
 	} else {
 		//Entire entry is getting deleted
 		leafRefs = c.findUsedAsLeafRef(tableName, modelInfo.tableInfo[tableName].keys[0])
+		TRACE_LOG(INFO_TRACE, TRACE_SEMANTIC,
+		"(Table %s, key %s) getting used by leafRefs %v",
+		tableName, keyVal, leafRefs)
 	}
 
 	//The entry getting deleted might have been referred from multiple tables
@@ -1090,6 +1112,11 @@ func (c *CVL) checkMaxElemConstraint(tableName string) CVLRetCode {
 			curSize = curSize + 1
 			if (curSize >  modelInfo.tableInfo[tableName].redisTableSize) {
 				//Does not meet the constraint
+				TRACE_LOG(INFO_TRACE, TRACE_SYNTAX,
+				"Max-elements check failed for table '%s'," + 
+				" current size = %v, size in schema = %v",
+				tableName, curSize, modelInfo.tableInfo[tableName].redisTableSize)
+
 				return CVL_SYNTAX_ERROR
 			}
 		}
@@ -1249,6 +1276,9 @@ func (c *CVL) checkFieldMap(fieldMap *map[string]string) map[string]interface{} 
 
 //Merge 'src' map to 'dest' map of map[string]string type
 func mergeMap(dest map[string]string, src map[string]string) {
+	TRACE_LOG(INFO_TRACE, TRACE_SEMANTIC,
+	"Merging map %v into %v", src, dest)
+
 	for key, data := range src {
 		dest[key] = data
 	}
@@ -1257,7 +1287,16 @@ func mergeMap(dest map[string]string, src map[string]string) {
 // Fetch dependent data from validated data cache,
 // Returns the data and flag to indicate that if requested data 
 // is found in update request, the data should be merged with Redis data
-func (c *CVL) fetchDataFromRequestCache(tableName string, key string) (map[string]string, bool) {
+func (c *CVL) fetchDataFromRequestCache(tableName string, key string) (d map[string]string, m bool) {
+	defer func() {
+		pd := &d
+		pm := &m
+
+		TRACE_LOG(INFO_TRACE, TRACE_CACHE,
+		"Returning data from request cache, data = %v, merge needed = %v",
+		*pd, *pm)
+	}()
+
 	cfgDataArr := c.requestCache[tableName][key]
 	if (cfgDataArr != nil) {
 		for _, cfgReqData := range cfgDataArr {
@@ -1318,13 +1357,15 @@ func (c *CVL) fetchTableDataToTmpCache(tableName string, dbKeys map[string]inter
 			redisKey := tableName + modelInfo.tableInfo[tableName].redisKeyDelim + dbKey
 			//Check in validated cache first and add as dependent data
 			if entry, mergeNeeded := c.fetchDataFromRequestCache(tableName, dbKey); (entry != nil) {
-				 c.tmpDbCache[tableName].(map[string]interface{})[dbKey] = entry 
-				 entryFetched = entryFetched + 1
-				 //Entry found in validated cache, so skip fetching from Redis
-				 //if merging is not required with Redis DB
-				 if (mergeNeeded == false) {
-					 continue
-				 }
+				entryFetched = entryFetched + 1
+				//Entry found in validated cache, so skip fetching from Redis
+				//if merging is not required with Redis DB
+				if (mergeNeeded == false) {
+					fieldMap := c.checkFieldMap(&entry)
+					c.tmpDbCache[tableName].(map[string]interface{})[dbKey] = fieldMap
+					continue
+				}
+				c.tmpDbCache[tableName].(map[string]interface{})[dbKey] = entry
 			}
 
 			//Otherwise fetch it from Redis
@@ -1609,7 +1650,7 @@ func (c *CVL) translateToYang(jsonMap *map[string]interface{}) (*yparser.YParser
 	var errObj yparser.YParserError
 
 	for jsonNode := data.FirstChild; jsonNode != nil; jsonNode=jsonNode.NextSibling {
-		TRACE_LOG(INFO_API, TRACE_LIBYANG, "Top Node=%v\n", jsonNode.Data)
+		TRACE_LOG(INFO_API, TRACE_LIBYANG, "Translating, Top Node=%v\n", jsonNode.Data)
 		//Visit each top level list in a loop for creating table data
 		topNode, cvlErrObj  := c.generateTableData(true, jsonNode)
 
