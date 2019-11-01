@@ -24,6 +24,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"translib"
@@ -178,6 +179,12 @@ func getPathForTranslib(r *http.Request) string {
 	rc, _ := GetContext(r)
 
 	for k, v := range vars {
+		v, err = url.PathUnescape(v)
+		if err != nil {
+			glog.Warningf("Failed to unescape path var \"%s\". err=%v", v, err)
+			v = vars[k]
+		}
+
 		restStyle := fmt.Sprintf("{%v}", k)
 		gnmiStyle := fmt.Sprintf("[%v=%v]", rc.PMap.Get(k), v)
 		path = strings.Replace(path, restStyle, gnmiStyle, 1)
