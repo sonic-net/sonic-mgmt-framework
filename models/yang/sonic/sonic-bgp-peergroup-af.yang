@@ -13,6 +13,10 @@ module sonic-bgp-peergroup-af {
   import sonic-common {
     prefix scommon;
   }
+  
+  import sonic-bgp-peergroup {
+    prefix pg;
+  }
 
   organization
     "SONiC";
@@ -31,9 +35,9 @@ module sonic-bgp-peergroup-af {
   container sonic-bgp-peergroup-af {
     container BGP_PEER_GROUP_AF {
       list BGP_PEER_GROUP_AF_LIST {
-        key "vrf afi_safi pgrp_name";
+        key "vrf_name peer_group_name afi_safi";
 
-        leaf vrf {
+        leaf vrf_name {
           type string;
         }
 
@@ -41,43 +45,45 @@ module sonic-bgp-peergroup-af {
           type string;
         }
 
-        leaf pgrp_name {
-          type string;
+        leaf peer_group_name {
+            type string;
+            // TODO leafref to peer_group_name at
+            // "/pg:sonic-bgp-peergroup/pg:BGP_PEER_GROUP/pg:BGP_PEER_GROUP_LIST/pg:peer_group_name";
         }
 
         leaf admin {
           type boolean;
         }
        
-        leaf send_dflt_route {
+        leaf send_default_route {
           type boolean;
         }
 
-        leaf max_pfx_limit {
+        leaf max_prefix_limit {
           type uint32;
         }
 
-        leaf max_pfx_warn_only {
+        leaf max_prefix_warning_only {
           type boolean;
         }
 
-        leaf max_pfx_warn_thrshld {
+        leaf max_prefix_warning_threshold {
           type uint8 {
             range "0..100";
           }
         }
 
-        leaf max_pfx_restart_timer {
+        leaf max_prefix_restart_interval {
           type uint16 {
             range "1..3600";
           }
         }
 
-        leaf route_map_in {
+        leaf-list route_map_in {
           type string;
         }
 
-        leaf route_map_out {
+        leaf-list route_map_out {
           type string;
         }
       }

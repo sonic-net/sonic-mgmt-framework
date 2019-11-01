@@ -3,7 +3,6 @@ package transformer
 import (
     "errors"
     "strings"
-    /* "translib/ocbinds" */
     log "github.com/golang/glog"
 )
 
@@ -18,6 +17,7 @@ func init () {
 var YangToDb_bgp_pgrp_afi_safi_name_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
     res_map := make(map[string]string)
 
+    res_map["NULL"] = "NULL"
     return res_map, nil
 }
 
@@ -97,20 +97,16 @@ var YangToDb_bgp_af_pgrp_tbl_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams
         return pGrpName, err
     }
 
-    if strings.Contains(afName, "IPV4_UNICAST") == false {
-        if strings.Contains(afName, "IPV6_UNICAST") == false { 
-          if strings.Contains(afName, "L2VPN_EVPN"  ) == false  {
-            err = errors.New("Unsupported AFI SAFI")
-            log.Info("Unsupported AFI SAFI ", afName);
-            return afName, err
-         } else {
-             afName = "L2VPN_EVPN"
-         }
-       } else {
-           afName = "IPV6_UNICAST"
-       }
-    } else {
+    if strings.Contains(afName, "IPV4_UNICAST") {
         afName = "IPV4_UNICAST"
+    } else if strings.Contains(afName, "IPV6_UNICAST") { 
+        afName = "IPV6_UNICAST"
+    } else if strings.Contains(afName, "L2VPN_EVPN") {
+        afName = "L2VPN_EVPN"
+    } else  {
+	err = errors.New("Unsupported AFI SAFI")
+	log.Info("Unsupported AFI SAFI ", afName);
+	return afName, err
     }
 
     log.Info("URI VRF ", vrfName)
