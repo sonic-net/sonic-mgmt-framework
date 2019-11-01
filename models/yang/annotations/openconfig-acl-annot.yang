@@ -2,12 +2,26 @@ module openconfig-acl-annot {
 
     yang-version "1";
 
-    namespace "http://openconfig.net/yang/annotation";
+    namespace "http://openconfig.net/yang/acl-annot";
     prefix "oc-acl-annot";
 
     import sonic-extensions { prefix sonic-ext; }
     import openconfig-acl { prefix oc-acl; }
-    import openconfig-packet-match { prefix oc-pkt-match; }
+
+    // meta
+    organization
+       "SONiC";
+
+    contact
+       "SONiC";
+
+    description
+       "SONIC VLAN";
+
+    revision 2019-10-31 {
+       description
+          "Initial revision.";
+    }
 
     deviation /oc-acl:acl {
       deviate add {
@@ -83,91 +97,91 @@ module openconfig-acl-annot {
       }
     }
 
-    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-pkt-match:ipv4/oc-pkt-match:config/oc-pkt-match:source-address {
+    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-acl:ipv4/oc-acl:config/oc-acl:source-address {
       deviate add {
         sonic-ext:field-name "SRC_IP";
       }
     }
 
-    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-pkt-match:ipv4/oc-pkt-match:config/oc-pkt-match:destination-address {
+    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-acl:ipv4/oc-acl:config/oc-acl:destination-address {
       deviate add {
         sonic-ext:field-name "DST_IP";
       }
     }
 
-    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-pkt-match:ipv4/oc-pkt-match:config/oc-pkt-match:protocol {
+    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-acl:ipv4/oc-acl:config/oc-acl:protocol {
       deviate add {
         sonic-ext:field-transformer "acl_ip_protocol_xfmr";
       }
     }
 
-    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-pkt-match:ipv4/oc-pkt-match:state/oc-pkt-match:source-address {
+    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-acl:ipv4/oc-acl:state/oc-acl:source-address {
       deviate add {
         sonic-ext:field-name "SRC_IP";
       }
     }
 
-    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-pkt-match:ipv4/oc-pkt-match:state/oc-pkt-match:destination-address {
+    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-acl:ipv4/oc-acl:state/oc-acl:destination-address {
       deviate add {
         sonic-ext:field-name "DST_IP";
       }
     }
 
-    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-pkt-match:ipv4/oc-pkt-match:state/oc-pkt-match:protocol {
+    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-acl:ipv4/oc-acl:state/oc-acl:protocol {
       deviate add {
         sonic-ext:field-transformer "acl_ip_protocol_xfmr";
       }
     }
 
-    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-pkt-match:ipv6/oc-pkt-match:config/oc-pkt-match:source-address {
+    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-acl:ipv6/oc-acl:config/oc-acl:source-address {
       deviate add {
         sonic-ext:field-name "SRC_IP";
       }
     }
 
-    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-pkt-match:ipv6/oc-pkt-match:config/oc-pkt-match:destination-address {
+    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-acl:ipv6/oc-acl:config/oc-acl:destination-address {
       deviate add {
         sonic-ext:field-name "DST_IP";
       }
     }
 
-    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-pkt-match:ipv6/oc-pkt-match:config/oc-pkt-match:protocol {
+    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-acl:ipv6/oc-acl:config/oc-acl:protocol {
       deviate add {
         sonic-ext:field-transformer "acl_ip_protocol_xfmr";
       }
     }
 
-    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-pkt-match:transport/oc-pkt-match:config/oc-pkt-match:source-port {
+    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-acl:transport/oc-acl:config/oc-acl:source-port {
       deviate add {
         sonic-ext:field-transformer "acl_source_port_xfmr";
       }
     }
 
-    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-pkt-match:transport/oc-pkt-match:config/oc-pkt-match:destination-port {
+    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-acl:transport/oc-acl:config/oc-acl:destination-port {
       deviate add {
         sonic-ext:field-transformer "acl_destination_port_xfmr";
       }
     }
 
-    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-pkt-match:transport/oc-pkt-match:state/oc-pkt-match:source-port {
+    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-acl:transport/oc-acl:state/oc-acl:source-port {
       deviate add {
         sonic-ext:field-transformer "acl_source_port_xfmr";
       }
     }
 
-    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-pkt-match:transport/oc-pkt-match:state/oc-pkt-match:destination-port {
+    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-acl:transport/oc-acl:state/oc-acl:destination-port {
       deviate add {
         sonic-ext:field-transformer "acl_destination_port_xfmr";
       }
     }
 
-    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-pkt-match:transport/oc-pkt-match:config/oc-pkt-match:tcp-flags {
+    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-acl:transport/oc-acl:config/oc-acl:tcp-flags {
       deviate add {
         sonic-ext:field-transformer "acl_tcp_flags_xfmr";
       }
     }
 
-    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-pkt-match:l2/oc-pkt-match:config/oc-pkt-match:ethertype {
+    deviation /oc-acl:acl/oc-acl:acl-sets/oc-acl:acl-set/oc-acl:acl-entries/oc-acl:acl-entry/oc-acl:l2/oc-acl:config/oc-acl:ethertype {
       deviate add {
         sonic-ext:field-transformer "acl_l2_ethertype_xfmr";
       }

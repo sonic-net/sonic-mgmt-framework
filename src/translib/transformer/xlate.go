@@ -28,6 +28,7 @@ import (
 	"strings"
 	"translib/db"
 	"translib/ocbinds"
+	"translib/tlerr"
 )
 
 const (
@@ -43,6 +44,7 @@ type KeySpec struct {
 	Ts    db.TableSpec
 	Key   db.Key
 	Child []KeySpec
+	ignoreParentKey bool
 }
 
 var XlateFuncs = make(map[string]reflect.Value)
@@ -117,8 +119,9 @@ func TraverseDb(dbs [db.MaxDB]*db.DB, spec KeySpec, result *map[db.DBNum]map[str
 		if err != nil {
 			return err
 		}
+		log.Infof("keys for table %v in Db %v are %v", spec.Ts.Name, spec.dbNum, keys)
 		for i, _ := range keys {
-			if parentKey != nil {
+			if parentKey != nil && (spec.ignoreParentKey == false) {
 				// TODO - multi-depth with a custom delimiter
 				if strings.Index(strings.Join(keys[i].Comp, separator), strings.Join((*parentKey).Comp, separator)) == -1 {
 					continue
@@ -131,7 +134,7 @@ func TraverseDb(dbs [db.MaxDB]*db.DB, spec KeySpec, result *map[db.DBNum]map[str
 	return err
 }
 
-func XlateUriToKeySpec(uri string, ygRoot *ygot.GoStruct, t *interface{}) (*[]KeySpec, error) {
+func XlateUriToKeySpec(uri string, ygRoot *ygot.GoStruct, t *interface{}, txCache interface{}) (*[]KeySpec, error) {
 
 	var err error
 	var retdbFormat = make([]KeySpec, 0)
@@ -143,7 +146,7 @@ func XlateUriToKeySpec(uri string, ygRoot *ygot.GoStruct, t *interface{}) (*[]Ke
 		retdbFormat = fillSonicKeySpec(xpath, tableName, keyStr)
 	} else {
 		/* Extract the xpath and key from input xpath */
-		xpath, keyStr, _ := xpathKeyExtract(nil, ygRoot, 0, uri)
+		xpath, keyStr, _ := xpathKeyExtract(nil, ygRoot, 0, uri, txCache)
 		retdbFormat = FillKeySpecs(xpath, keyStr, &retdbFormat)
 	}
 
@@ -161,6 +164,11 @@ func FillKeySpecs(yangXpath string , keyStr string, retdbFormat *[]KeySpec) ([]K
 			dbFormat := KeySpec{}
 			dbFormat.Ts.Name = *xpathInfo.tableName
 			dbFormat.dbNum = xpathInfo.dbIndex
+			if len(xYangSpecMap[yangXpath].xfmrKey) > 0 || xYangSpecMap[yangXpath].keyName != nil {
+				dbFormat.ignoreParentKey = true
+			} else {
+				dbFormat.ignoreParentKey = false
+			}
 			if keyStr != "" {
 				dbFormat.Key.Comp = append(dbFormat.Key.Comp, keyStr)
 			}
@@ -237,7 +245,7 @@ func fillSonicKeySpec(xpath string , tableName string, keyStr string) ( []KeySpe
 	return retdbFormat
 }
 
-func XlateToDb(path string, opcode int, d *db.DB, yg *ygot.GoStruct, yt *interface{}) (map[string]map[string]db.Value, error) {
+func XlateToDb(path string, opcode int, d *db.DB, yg *ygot.GoStruct, yt *interface{}, txCache interface{}) (map[string]map[string]db.Value, error) {
 
 	var err error
 
@@ -263,28 +271,28 @@ func XlateToDb(path string, opcode int, d *db.DB, yg *ygot.GoStruct, yt *interfa
 	switch opcode {
 	case CREATE:
 		log.Info("CREATE case")
-		err = dbMapCreate(d, yg, opcode, path, jsonData, result)
+		err = dbMapCreate(d, yg, opcode, path, jsonData, result, txCache)
 		if err != nil {
 			log.Errorf("Error: Data translation from yang to db failed for create request.")
 		}
 
 	case UPDATE:
 		log.Info("UPDATE case")
-		err = dbMapUpdate(d, yg, opcode, path, jsonData, result)
+		err = dbMapUpdate(d, yg, opcode, path, jsonData, result, txCache)
 		if err != nil {
 			log.Errorf("Error: Data translation from yang to db failed for update request.")
 		}
 
 	case REPLACE:
 		log.Info("REPLACE case")
-		err = dbMapUpdate(d, yg, opcode, path, jsonData, result)
+		err = dbMapUpdate(d, yg, opcode, path, jsonData, result, txCache)
 		if err != nil {
 			log.Errorf("Error: Data translation from yang to db failed for replace request.")
 		}
 
 	case DELETE:
 		log.Info("DELETE case")
-		err = dbMapDelete(d, yg, opcode, path, jsonData, result)
+		err = dbMapDelete(d, yg, opcode, path, jsonData, result, txCache)
 		if err != nil {
 			log.Errorf("Error: Data translation from yang to db failed for delete request.")
 		}
@@ -292,12 +300,12 @@ func XlateToDb(path string, opcode int, d *db.DB, yg *ygot.GoStruct, yt *interfa
 	return result, err
 }
 
-func GetAndXlateFromDB(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db.DB) ([]byte, error) {
+func GetAndXlateFromDB(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db.DB, txCache interface{}) ([]byte, error) {
 	var err error
 	var payload []byte
 	log.Info("received xpath =", uri)
 
-	keySpec, err := XlateUriToKeySpec(uri, ygRoot, nil)
+	keySpec, err := XlateUriToKeySpec(uri, ygRoot, nil, txCache)
 	var dbresult = make(map[db.DBNum]map[string]map[string]db.Value)
         for i := db.ApplDB; i < db.MaxDB; i++ {
                 dbresult[i] = make(map[string]map[string]db.Value)
@@ -311,7 +319,7 @@ func GetAndXlateFromDB(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db.DB) 
 		}
 	}
 
-	payload, err = XlateFromDb(uri, ygRoot, dbs, dbresult)
+	payload, err = XlateFromDb(uri, ygRoot, dbs, dbresult, txCache)
 	if err != nil {
 		log.Error("XlateFromDb() failure.")
 		return payload, err
@@ -320,7 +328,7 @@ func GetAndXlateFromDB(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db.DB) 
 	return payload, err
 }
 
-func XlateFromDb(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db.DB, data map[db.DBNum]map[string]map[string]db.Value) ([]byte, error) {
+func XlateFromDb(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db.DB, data map[db.DBNum]map[string]map[string]db.Value, txCache interface{}) ([]byte, error) {
 
 	var err error
 	var result []byte
@@ -354,7 +362,7 @@ func XlateFromDb(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db.DB, data m
 			cdb = xYangSpecMap[xpath].dbIndex
 		}
 	}
-	payload, err := dbDataToYangJsonCreate(uri, ygRoot, dbs, &dbData, cdb)
+	payload, err := dbDataToYangJsonCreate(uri, ygRoot, dbs, &dbData, cdb, txCache)
 	log.Info("Payload generated:", payload)
 
 	if err != nil {
@@ -462,5 +470,26 @@ func GetTablesToWatch(xfmrTblList []string, uriModuleNm string) []string {
                 depTblList = append(depTblList, depTbl)
         }
 	return depTblList
+}
+
+func CallRpcMethod(path string, body []byte, dbs [db.MaxDB]*db.DB) ([]byte, error) {
+	var err error
+	var ret []byte
+
+	// TODO - check module name
+	rpcName := strings.Split(path, ":")
+	if dbXpathData, ok := xDbSpecMap[rpcName[1]]; ok {
+		log.Info("RPC callback invoked (%v) \r\n", rpcName)
+		data, err := XlateFuncCall(dbXpathData.rpcFunc, body, dbs)
+		if err != nil {
+			return nil, err
+		}
+		ret = data[0].Interface().([]byte)
+	} else {
+		log.Error("No tsupported RPC", path)
+		err = tlerr.NotSupported("Not supported RPC")
+	}
+
+	return ret, err
 }
 
