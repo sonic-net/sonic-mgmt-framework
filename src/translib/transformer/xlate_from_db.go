@@ -147,10 +147,6 @@ func DbToYangType(yngTerminalNdDtType yang.TypeKind, fldXpath string, dbFldVal s
                 res, err = DbValToInt(dbFldVal, INTBASE, 32, false)
 		var resInt32 int32 = res.(int32)
 		resPtr = &resInt32
-        case yang.Yint64, yang.Yenum, yang.Yidentityref:
-                res, err = DbValToInt(dbFldVal, INTBASE, 64, false)
-		var resInt64 int64 = res.(int64)
-		resPtr = &resInt64
         case yang.Yuint8:
                 res, err = DbValToInt(dbFldVal, INTBASE, 8, true)
 		var resUint8 uint8 = res.(uint8)
@@ -163,17 +159,13 @@ func DbToYangType(yngTerminalNdDtType yang.TypeKind, fldXpath string, dbFldVal s
                 res, err = DbValToInt(dbFldVal, INTBASE, 32, true)
 		var resUint32 uint32 = res.(uint32)
 		resPtr = &resUint32
-        case yang.Yuint64:
-                res, err = DbValToInt(dbFldVal, INTBASE, 64, true)
-		var resUint64 uint64 = res.(uint64)
-		resPtr = &resUint64
         case yang.Ybool:
 		if res, err = strconv.ParseBool(dbFldVal); err != nil {
 			log.Warningf("Non Bool type for yang leaf-list item %v", dbFldVal)
 		}
 		var resBool bool = res.(bool)
 		resPtr = &resBool
-        case yang.Ybinary, yang.Ydecimal64, yang.Ystring, yang.Yunion,yang.Yleafref:
+        case yang.Ybinary, yang.Ydecimal64, yang.Yenum, yang.Yidentityref, yang.Yint64, yang.Yuint64, yang.Ystring, yang.Yunion,yang.Yleafref:
                 // TODO - handle the union type
                 // Make sure to encode as string, expected by util_types.go: ytypes.yangToJSONType
                 log.Info("Yenum/Ystring/Yunion(having all members as strings) type for yangXpath ", fldXpath)
