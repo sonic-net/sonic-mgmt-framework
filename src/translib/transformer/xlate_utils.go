@@ -491,6 +491,7 @@ func XfmrRemoveXPATHPredicates(xpath string) (string, error) {
 	 cdb := db.ConfigDB
 	 var dbs [db.MaxDB]*db.DB
 
+	 log.Errorf("*******************path ", path)
 	 pfxPath, _ = XfmrRemoveXPATHPredicates(path)
 	 xpathInfo, ok := xYangSpecMap[pfxPath]
 	 if !ok {

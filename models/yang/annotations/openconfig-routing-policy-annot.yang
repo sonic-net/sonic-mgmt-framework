@@ -1,0 +1,78 @@
+module openconfig-routing-policy-annot {
+
+    yang-version "1";
+
+    namespace "http://openconfig.net/yang/annotation/oc-rpol-annot";
+    prefix "oc-rpol-annot";
+
+    import openconfig-extensions { prefix oc-ext; }
+    import openconfig-inet-types { prefix oc-inet; }
+    import openconfig-interfaces { prefix oc-if; }
+    import openconfig-policy-types { prefix oc-pol-types; }
+    import openconfig-routing-policy { prefix oc-rpol; }
+
+    /* Annotation for prefix-sets */
+    deviation /oc-rpol:routing-policy/oc-rpol:defined-sets/oc-rpol:prefix-sets/oc-rpol:prefix-set {
+      deviate add {
+        sonic-ext:table-name "PREFIX_SET";
+        sonic-ext:key-transformer "prefix_set_key_xfmr";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:defined-sets/oc-rpol:prefix-sets/oc-rpol:prefix-set/oc-rpol:config/oc-rpol:name {
+      deviate add {
+        sonic-ext:field-transformer "prefix_set_name_xfmr";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:defined-sets/oc-rpol:prefix-sets/oc-rpol:prefix-set/oc-rpol:config/oc-rpol:mode {
+        deviate add {
+          sonic-ext:field-transformer "prefix_set_mode_field_xfmr";
+        }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:defined-sets/oc-rpol:prefix-sets/oc-rpol:prefix-set/oc-rpol:state/oc-rpol:name {
+      deviate add {
+        sonic-ext:field-transformer "prefix_set_name_xfmr";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:defined-sets/oc-rpol:prefix-sets/oc-rpol:prefix-set/oc-rpol:state/oc-rpol:mode {
+        deviate add {
+          sonic-ext:field-transformer "prefix_set_mode_field_xfmr";
+        }
+    }
+
+    /* prefix table */
+
+    deviation /oc-rpol:routing-policy/oc-rpol:defined-sets/oc-rpol:prefix-sets/oc-rpol:prefix-set/oc-rpol:prefixes/oc-rpol:prefix {
+      deviate add {
+        sonic-ext:table-name "PREFIX";
+        sonic-ext:key-transformer "prefix_key_xfmr";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:defined-sets/oc-rpol:prefix-sets/oc-rpol:prefix-set/oc-rpol:prefixes/oc-rpol:prefix/oc-rpol:config/oc-rpol:ip-prefix {
+      deviate add {
+        sonic-ext:field-transformer "prefix_ip_prefix_xfmr";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:defined-sets/oc-rpol:prefix-sets/oc-rpol:prefix-set/oc-rpol:prefixes/oc-rpol:prefix/oc-rpol:config/oc-rpol:masklength-range {
+      deviate add {
+        sonic-ext:field-transformer "prefix_masklength_range_xfmr";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:defined-sets/oc-rpol:prefix-sets/oc-rpol:prefix-set/oc-rpol:prefixes/oc-rpol:prefix/oc-rpol:state/oc-rpol:ip-prefix {
+      deviate add {
+        sonic-ext:field-transformer "prefix_ip_prefix_xfmr";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:defined-sets/oc-rpol:prefix-sets/oc-rpol:prefix-set/oc-rpol:prefixes/oc-rpol:prefix/oc-rpol:state/oc-rpol:masklength-range {
+      deviate add {
+        sonic-ext:field-transformer "prefix_masklength_range_xfmr";
+      }
+    }
+}
