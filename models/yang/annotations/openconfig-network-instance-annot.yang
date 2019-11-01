@@ -6,20 +6,9 @@ module openconfig-network-instance-annot {
     prefix "oc-netinst-annot";
 
     import openconfig-network-instance { prefix oc-netinst; }
-    import openconfig-network-instance-l3 { prefix oc-ni-l3; }
-    import openconfig-types { prefix oc-types; }
-    import openconfig-vlan { prefix oc-vlan; }
-    import openconfig-network-instance-types { prefix oc-ni-types; }
-    import openconfig-policy-types { prefix oc-pol-types; }
-    import openconfig-local-routing { prefix oc-loc-rt; }
-    import ietf-inet-types { prefix inet; }
-    import openconfig-extensions { prefix oc-ext; }
-    import openconfig-routing-policy { prefix oc-rpol; }
-    import openconfig-bgp { prefix oc-bgp; }
-    import openconfig-policy-forwarding { prefix oc-pf; }
-    import ietf-yang-types { prefix yang; }
+    import sonic-extensions {prefix sonic-ext; }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-bgp:bgp/oc-bgp:global {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global {
         deviate add {
             sonic-ext:db-name "CONFIG_DB";
             sonic-ext:table-name "BGP_GLOBALS";
@@ -27,139 +16,139 @@ module openconfig-network-instance-annot {
         }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-bgp:bgp/oc-bgp:global/oc-bgp:config/oc-bgp:router-id {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:config/oc-netinst:router-id {
         deviate add {
             sonic-ext:field-name "router_id";
         }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-bgp:bgp/oc-bgp:global/oc-bgp:state/oc-bgp:router-id {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:state/oc-netinst:router-id {
       deviate add {
             sonic-ext:field-name "router_id";
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-bgp:bgp/oc-bgp:global/oc-bgp:config/oc-bgp:as {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:config/oc-netinst:as {
         deviate add {
             sonic-ext:field-name "local_asn";
         }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-bgp:bgp/oc-bgp:global/oc-bgp:state/oc-bgp:as {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:state/oc-netinst:as {
         deviate add {
             sonic-ext:field-name "local_asn";
         }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-bgp:bgp/oc-bgp:global/oc-bgp:route-selection-options/oc-bgp:config/oc-bgp:always-compare-med {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:route-selection-options/oc-netinst:config/oc-netinst:always-compare-med {
       deviate add {
             sonic-ext:field-transformer "bgp_always_compare_med_enable_xfmr";
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-bgp:bgp/oc-bgp:global/oc-bgp:route-selection-options/oc-bgp:state/oc-bgp:always-compare-med {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:route-selection-options/oc-netinst:state/oc-netinst:always-compare-med {
       deviate add {
             sonic-ext:field-transformer "bgp_always_compare_med_enable_xfmr";
       }
     }
 
-    deviation /oc-netinst:openconfig-network-instance/oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-bgp:bgp/oc-bgp:global/oc-bgp:route-selection-options/oc-bgp:config/oc-bgp:ignore-as-path-length {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:route-selection-options/oc-netinst:config/oc-netinst:ignore-as-path-length {
       deviate add {
             sonic-ext:field-transformer "bgp_ignore_as_path_length_xfmr";
       }
     }
 
-    deviation /oc-netinst:openconfig-network-instance/oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-bgp:bgp/oc-bgp:global/oc-bgp:route-selection-options/oc-bgp:state/oc-bgp:ignore-as-path-length {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:route-selection-options/oc-netinst:state/oc-netinst:ignore-as-path-length {
       deviate add {
             sonic-ext:field-transformer "bgp_ignore_as_path_length_xfmr";
       }
     }
 
-    deviation /oc-netinst:openconfig-network-instance/oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-bgp:bgp/oc-bgp:global/oc-bgp:route-selection-options/oc-bgp:config/oc-bgp:external-compare-router-id {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:route-selection-options/oc-netinst:config/oc-netinst:external-compare-router-id {
       deviate add {
             sonic-ext:field-transformer "bgp_external_compare_router_id_xfmr";
       }
     }
 
-    deviation /oc-netinst:openconfig-network-instance/oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-bgp:bgp/oc-bgp:global/oc-bgp:route-selection-options/oc-bgp:state/oc-bgp:external-compare-router-id {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:route-selection-options/oc-netinst:state/oc-netinst:external-compare-router-id {
       deviate add {
             sonic-ext:field-transformer "bgp_external_compare_router_id_xfmr";
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-bgp:bgp/oc-bgp:global/oc-bgp:use-multiple-paths/oc-bgp:ebgp/oc-bgp:config/oc-bgp:allow-multiple-as {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:use-multiple-paths/oc-netinst:ebgp/oc-netinst:config/oc-netinst:allow-multiple-as {
       deviate add {
             sonic-ext:field-transformer "bgp_allow_multiple_as_xfmr";
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-bgp:bgp/oc-bgp:global/oc-bgp:use-multiple-paths/oc-bgp:ebgp/oc-bgp:state/oc-bgp:allow-multiple-as {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:use-multiple-paths/oc-netinst:ebgp/oc-netinst:state/oc-netinst:allow-multiple-as {
       deviate add {
             sonic-ext:field-transformer "bgp_allow_multiple_as_xfmr";
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-bgp:bgp/oc-bgp:global/oc-bgp:graceful-restart/oc-bgp:config/oc-bgp:enabled {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:graceful-restart/oc-netinst:config/oc-netinst:enabled {
       deviate add {
             sonic-ext:field-transformer "bgp_graceful_restart_status_xfmr";
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-bgp:bgp/oc-bgp:global/oc-bgp:graceful-restart/oc-bgp:state/oc-bgp:enabled {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:graceful-restart/oc-netinst:state/oc-netinst:enabled {
         deviate add {
             sonic-ext:field-transformer "bgp_graceful_restart_status_xfmr";
         }
     }
 
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-bgp:bgp/oc-bgp:global/oc-bgp:graceful-restart/oc-bgp:config/oc-bgp:restart-time {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:graceful-restart/oc-netinst:config/oc-netinst:restart-time {
       deviate add {
             sonic-ext:field-name "gr_restart_time";
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-bgp:bgp/oc-bgp:global/oc-bgp:graceful-restart/oc-bgp:state/oc-bgp:restart-time {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:graceful-restart/oc-netinst:state/oc-netinst:restart-time {
       deviate add {
             sonic-ext:field-name "gr_restart_time";
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-bgp:bgp/oc-bgp:global/oc-bgp:graceful-restart/oc-bgp:config/oc-bgp:stale-routes-time {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:graceful-restart/oc-netinst:config/oc-netinst:stale-routes-time {
       deviate add {
             sonic-ext:field-name "gr_stale_routes_time";
       }
     }
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-bgp:bgp/oc-bgp:global/oc-bgp:graceful-restart/oc-bgp:state/oc-bgp:stale-routes-time {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:graceful-restart/oc-netinst:state/oc-netinst:stale-routes-time {
       deviate add {
             sonic-ext:field-name "gr_stale_routes_time";
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-bgp:bgp/oc-bgp:global/oc-bgp:default-route-distance/oc-bgp:config/oc-bgp:external-route-distance {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:default-route-distance/oc-netinst:config/oc-netinst:external-route-distance {
       deviate add {
             sonic-ext:field-name "ebgp_route_distance";
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-bgp:bgp/oc-bgp:global/oc-bgp:default-route-distance/oc-bgp:state/oc-bgp:external-route-distance {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:default-route-distance/oc-netinst:state/oc-netinst:external-route-distance {
       deviate add {
             sonic-ext:field-name "ebgp_route_distance";
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-bgp:bgp/oc-bgp:global/oc-bgp:default-route-distance/oc-bgp:config/oc-bgp:internal-route-distance {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:default-route-distance/oc-netinst:config/oc-netinst:internal-route-distance {
       deviate add {
             sonic-ext:field-name "ibgp_route_distance";
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-bgp:bgp/oc-bgp:global/oc-bgp:default-route-distance/oc-bgp:state/oc-bgp:internal-route-distance {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:default-route-distance/oc-netinst:state/oc-netinst:internal-route-distance {
       deviate add {
             sonic-ext:field-name "ibgp_route_distance";
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-bgp:bgp/oc-bgp:neighbors/oc-bgp:neighbor/oc-bgp:state {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:state {
         deviate add {
             sonic-ext:subtree-transformer "bgp_nbrs_nbr_state_xfmr";
         }
@@ -658,4 +647,30 @@ module openconfig-network-instance-annot {
         sonic-ext:field-name "route-map";
       }
     }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:fdb/oc-netinst:mac-table/oc-netinst:entries {
+      deviate add {
+            sonic-ext:db-name "APPL_DB";
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:fdb/oc-netinst:mac-table/oc-netinst:entries/oc-netinst:entry {
+      deviate add {
+            sonic-ext:table-name "FDB_TABLE";
+            sonic-ext:key-transformer "fdb_tbl_key_xfmr";    
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:fdb/oc-netinst:mac-table/oc-netinst:entries/oc-netinst:entry/oc-netinst:state/oc-netinst:entry-type {
+      deviate add {
+            sonic-ext:field-transformer "entry_type_field_xfmr";
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:fdb/oc-netinst:mac-table/oc-netinst:entries/oc-netinst:entry/oc-netinst:interface/oc-netinst:interface-ref/oc-netinst:state/oc-netinst:interface {
+      deviate add {
+            sonic-ext:field-name "port";
+      }
+    }
 }
+

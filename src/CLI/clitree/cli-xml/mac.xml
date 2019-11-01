@@ -11,9 +11,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 --> 
 
-<!-- TODO: Update with network instance l2 yang  -->
-
-
 <!DOCTYPE CLISH_MODULE [
 ]>
 
@@ -39,7 +36,7 @@ limitations under the License.
         name="show mac address-table"
         >
     <ACTION> 
-        python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_interfaces_interfaces show_mac.j2 show
+        python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_network_instance_network_instances_network_instance_fdb_mac_table_entries show_mac.j2 show
     </ACTION>
     </COMMAND>
 
@@ -49,7 +46,7 @@ limitations under the License.
         name="show mac address-table count"
         >
     <ACTION> 
-        python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_interfaces_interfaces show_mac_count.j2 count 
+        python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_network_instance_network_instances_network_instance_fdb_mac_table_entries show_mac_count.j2 count 
     </ACTION>
     </COMMAND>
 
@@ -65,7 +62,7 @@ limitations under the License.
             >
         </PARAM>
     <ACTION>
-        python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_interfaces_interfaces show_mac.j2 mac-addr ${mac-addr}
+        python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_network_instance_network_instances_network_instance_fdb_mac_table_entries show_mac.j2 mac-addr ${mac-addr}
     </ACTION>
     </COMMAND>
 
@@ -81,7 +78,7 @@ limitations under the License.
             >
         </PARAM>
     <ACTION>
-        python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_interfaces_interfaces show_mac.j2 vlan ${vlan-id}
+        python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_network_instance_network_instances_network_instance_fdb_mac_table_entries show_mac.j2 vlan ${vlan-id}
     </ACTION>
     </COMMAND>
 
@@ -124,11 +121,11 @@ limitations under the License.
         </PARAM>
     <ACTION>
         if test "${if-subcommands}" = "Ethernet"; then&#xA;
-            python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_interfaces_interfaces show_mac.j2 interface Ethernet${phy-if-id}&#xA; 
+            python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_network_instance_network_instances_network_instance_fdb_mac_table_entries show_mac.j2 interface Ethernet${phy-if-id}&#xA; 
         elif test "${if-subcommands}" = "PortChannel"; then&#xA;
-            python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_interfaces_interfaces show_mac.j2 interface PortChannel${port-channel-id}&#xA; 
+            python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_network_instance_network_instances_network_instance_fdb_mac_table_entries show_mac.j2 interface PortChannel${port-channel-id}&#xA; 
         else&#xA;
-            python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_interfaces_interfaces show_mac.j2 ${__full_line}&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_network_instance_network_instances_network_instance_fdb_mac_table_entries show_mac.j2 ${__full_line}&#xA;
         fi	
     </ACTION>
     </COMMAND>
@@ -213,17 +210,17 @@ limitations under the License.
         </PARAM>
     <ACTION>
         if test "${s-subcommands}" = "address"; then&#xA;
-            python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_interfaces_interfaces show_mac.j2 static address ${mac-addr}&#xA; 
+            python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_network_instance_network_instances_network_instance_fdb_mac_table_entries show_mac.j2 static address ${mac-addr}&#xA; 
         elif test "${s-subcommands}" = "Vlan"; then&#xA;
-            python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_interfaces_interfaces show_mac.j2 static vlan ${vlan-id}&#xA; 
+            python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_network_instance_network_instances_network_instance_fdb_mac_table_entries show_mac.j2 static vlan ${vlan-id}&#xA; 
         elif test "${s-subcommands}" = "interface"; then&#xA;
             if test "${interface-subcommand}" = "PortChannel"; then&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_interfaces_interfaces show_mac.j2 static interface PortChannel${port-channel-id}&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_network_instance_network_instances_network_instance_fdb_mac_table_entries show_mac.j2 static interface PortChannel${port-channel-id}&#xA;
             else&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_interfaces_interfaces show_mac.j2 static interface Ethernet${phy-if-id}&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_network_instance_network_instances_network_instance_fdb_mac_table_entries show_mac.j2 static interface Ethernet${phy-if-id}&#xA;
             fi&#xA;
         else&#xA;
-            python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_interfaces_interfaces show_mac.j2 static ${__full_line}&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_network_instance_network_instances_network_instance_fdb_mac_table_entries show_mac.j2 static ${__full_line}&#xA;
         fi
     </ACTION>
     </COMMAND>
@@ -308,17 +305,17 @@ limitations under the License.
         </PARAM>
     <ACTION>
         if test "${d-subcommands}" = "address"; then&#xA;
-            python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_interfaces_interfaces show_mac.j2 dynamic address ${mac-addr}&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_network_instance_network_instances_network_instance_fdb_mac_table_entries show_mac.j2 dynamic address ${mac-addr}&#xA;
         elif test "${d-subcommands}" = "Vlan"; then&#xA;
-            python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_interfaces_interfaces show_mac.j2 dynamic vlan ${vlan-id}&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_network_instance_network_instances_network_instance_fdb_mac_table_entries show_mac.j2 dynamic vlan ${vlan-id}&#xA;
         elif test "${d-subcommands}" = "interface"; then&#xA;
             if test "${interface-subcommand}" = "PortChannel"; then&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_interfaces_interfaces show_mac.j2 dynamic interface PortChannel${port-channel-id}&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_network_instance_network_instances_network_instance_fdb_mac_table_entries show_mac.j2 dynamic interface PortChannel${port-channel-id}&#xA;
             else&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_interfaces_interfaces show_mac.j2 dynamic interface Ethernet${phy-if-id}&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_network_instance_network_instances_network_instance_fdb_mac_table_entries show_mac.j2 dynamic interface Ethernet${phy-if-id}&#xA;
             fi&#xA;
         else&#xA;
-            python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_interfaces_interfaces show_mac.j2 dynamic ${__full_line}&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_network_instance_network_instances_network_instance_fdb_mac_table_entries show_mac.j2 dynamic ${__full_line}&#xA;
         fi
     </ACTION>
     </COMMAND>

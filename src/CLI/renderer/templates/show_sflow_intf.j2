@@ -1,10 +1,9 @@
 {{'-----------------------------------------------------------'}}
 {{'sFlow interface configurations'.ljust(20)}}
 {{'%40s'|format('Interface		Admin State		Sampling Rate')}}
-{% if json_output and 'sflow' in json_output -%}
-{% set sflow_info = json_output['sflow'] %}
-{% for intf, values in sflow_info.items() %}
-{{'%13s'|format(intf.ljust(10))}}		{{sflow_info[intf]['admin_state']}}			{{sflow_info[intf]['sampling_rate']}}
+{% if json_output -%}
+{% for sess in json_output %}
+{{'%12s'|format(sess['ifname'])}}		{{sess['admin_state']}}			{{sess['sample_rate']}}
 {% endfor %}
 {% endif %}
 
