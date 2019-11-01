@@ -1,0 +1,55 @@
+module openconfig-network-instance-annot {
+
+    yang-version "1";
+
+    namespace "http://openconfig.net/yang/annotation";
+    prefix "oc-netinst-annot";
+
+    import openconfig-network-instance { prefix oc-netinst; }
+    import openconfig-network-instance-l3 { prefix oc-ni-l3; }
+    import openconfig-types { prefix oc-types; }
+    import openconfig-mpls { prefix oc-mpls; }
+    import openconfig-vlan { prefix oc-vlan; }
+    import openconfig-network-instance-types { prefix oc-ni-types; }
+    import openconfig-policy-types { prefix oc-pol-types; }
+    import openconfig-local-routing { prefix oc-loc-rt; }
+    import openconfig-interfaces { prefix oc-if; }
+    import ietf-inet-types { prefix inet; }
+    import openconfig-extensions { prefix oc-ext; }
+    import openconfig-pim { prefix oc-pim; }
+    import openconfig-routing-policy { prefix oc-rpol; }
+    import openconfig-bgp { prefix oc-bgp; }
+    import openconfig-policy-forwarding { prefix oc-pf; }
+    import openconfig-isis { prefix oc-isis; }
+    import openconfig-igmp { prefix oc-igmp; }
+    import ietf-yang-types { prefix yang; }
+    import openconfig-ospfv2 { prefix oc-ospfv2; }
+    import openconfig-segment-routing { prefix oc-sr; }
+    import openconfig-aft { prefix oc-aft; }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:fdb/oc-netinst:mac-table/oc-netinst:entries {
+      deviate add {
+            sonic-ext:db-name "APPL_DB";
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:fdb/oc-netinst:mac-table/oc-netinst:entries/oc-netinst:entry {
+      deviate add {
+            sonic-ext:table-name "FDB_TABLE";
+            sonic-ext:key-transformer "fdb_tbl_key_xfmr";    
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:fdb/oc-netinst:mac-table/oc-netinst:entries/oc-netinst:entry/oc-netinst:state/oc-netinst:entry-type {
+      deviate add {
+            sonic-ext:field-transformer "entry_type_field_xfmr";
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:fdb/oc-netinst:mac-table/oc-netinst:entries/oc-netinst:entry/oc-netinst:interface/oc-if:interface-ref/oc-if:state/oc-if:interface {
+      deviate add {
+            sonic-ext:field-name "port";
+      }
+    }
+}
+

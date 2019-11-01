@@ -45,24 +45,34 @@ def call_method(name, args):
 def generate_body(func, args):
     body = None
     keypath = []
-    # Get the rules of all ACL table entries.
+    
+    # Create interface
     if func.__name__ == 'patch_openconfig_interfaces_interfaces_interface':
        keypath = [ args[0] ]
        body = {}
+
+    # Delete interface
     elif func.__name__ == 'delete_openconfig_interfaces_interfaces_interface':
        keypath = [ args[0] ]
+
+    #Configure description 
     elif func.__name__ == 'patch_openconfig_interfaces_interfaces_interface_config_description':
        keypath = [ args[0] ]
        body = { "openconfig-interfaces:description": args[1] }
+
+    # Enable or diable interface
     elif func.__name__ == 'patch_openconfig_interfaces_interfaces_interface_config_enabled':
        keypath = [ args[0] ]
        if args[1] == "True":
            body = { "openconfig-interfaces:enabled": True }
        else:
            body = { "openconfig-interfaces:enabled": False }
-    elif func.__name__ == 'patch_openconfig_interfaces_interfaces_interface_config_mtu':
-       keypath = [ args[0] ]
-       body = { "openconfig-interfaces:mtu":  int(args[1]) }
+
+    # Configure MTU
+    elif func.__name__ == 'patch_openconfig_interfaces_interfaces_interface_config_mtu':     
+        keypath = [ args[0] ]
+        body = { "openconfig-interfaces:mtu":  int(args[1]) }
+
     elif func.__name__ == 'patch_openconfig_if_ethernet_interfaces_interface_ethernet_config_auto_negotiate':
         keypath = [ args[0] ]
         if args[1] == "true":
@@ -105,6 +115,28 @@ def generate_body(func, args):
 	keypath = [args[0]]
     elif func.__name__ == 'get_openconfig_interfaces_interfaces':
         keypath = []
+
+    # Add members to port-channel
+    elif func.__name__ == 'patch_openconfig_if_aggregate_interfaces_interface_ethernet_config_aggregate_id': 
+        keypath = [ args[0] ]
+        body = { "openconfig-if-aggregate:aggregate-id": args[1] }
+
+    # Remove members from port-channel
+    elif func.__name__ == 'delete_openconfig_if_aggregate_interfaces_interface_ethernet_config_aggregate_id':
+        keypath = [ args[0] ]
+
+    # Config min-links for port-channel
+    elif func.__name__ == 'patch_openconfig_if_aggregate_interfaces_interface_aggregation_config_min_links':
+        keypath = [ args[0] ]
+        body = { "openconfig-if-aggregate:min-links": int(args[1]) }
+
+    # Config fallback mode for port-channel
+    elif func.__name__ == 'patch_dell_intf_augments_interfaces_interface_aggregation_config_fallback':
+        keypath = [ args[0] ]
+        if args[1] == "True":
+            body = { "dell-intf-augments:fallback": True }
+        else :
+            body = { "dell-intf-augments:fallback": False }
     else:
        body = {}
 
@@ -126,81 +158,12 @@ def run(func, args):
     c.verify_ssl = False
     aa = openconfig_interfaces_client.OpenconfigInterfacesApi(api_client=openconfig_interfaces_client.ApiClient(configuration=c))
 
-# Code for PortChannel cli skeleton
 
-    #create a port-channel        
-    if "PortChannel" in args[0] and func.__name__ == 'patch_openconfig_interfaces_interfaces_interface':
-        return
-
-    #show port-channels summary
-    if "PortChannel" in args[0] and func.__name__ == 'get_openconfig_interfaces_interfaces':
-
-        dummy_resp= {
-            "PORTCHANNEL": [
-                {
-                    "members": [
-                        "Ethernet56",
-                        "Ethernet60"
-                    ],
-                    "min-links": 2,
-                    "mtu": 9100,
-                    "admin_status": "up",
-                    "oper_status": "down",
-                    "name": "PortChannel1",
-                    "id": "1"
-                },
-                {
-                    "members": [],
-                    "min-links": 1,
-                    "mtu": 9100,
-                    "admin_status": "up",
-                    "oper_status": "down",
-                    "name": "PortChannel12",
-                    "id": "12"
-                },
-                {
-                    "members": [],
-                    "min-links": 1,
-                    "mtu": 9100, 
-                    "admin_status": "up",
-                    "oper_status": "down",
-                    "name": "PortChannel3",
-                    "id": "3"
-                }
-            ]
-        }
-        show_cli_output(args[1], dummy_resp)
-        return
-
-    #add members to port-channel
-    if func.__name__ == 'patch_openconfig_if_aggregate_interfaces_interface_ethernet_config_aggregate_id':
-        return
-
-    #remove members from port-channel
-    if func.__name__ == 'delete_openconfig_if_aggregate_interfaces_interface_ethernet_config_aggregate_id':
-        return
-
-    #config mtu for port-channel
-    if "po" in args[0] and func.__name__ == 'patch_openconfig_interfaces_interfaces_interface_config_mtu':
-        return
-
-    #delete port-channel
-    if "PortChannel" in args[0] and func.__name__ == 'delete_openconfig_interfaces_interfaces_interface':
-        return
-
-    #config min-links in port-channel
-    if func.__name__ == 'patch_openconfig_if_aggregate_interfaces_interface_aggregation_config_min_links':
-        return
 
     # create a body block
     keypath, body = generate_body(func, args)
 
     try:
-        # Temporary code for #show vlan command with dummy data
-        if func.__name__ == "get_openconfig_vlan_interfaces_interface_ethernet_switched_vlan_state":
-            api_response = {'Vlan100': {'Ethernet20': 'tagged', 'Ethernet40': 'untagged'}}
-            show_cli_output(args[0], api_response)
-            return
         if body is not None:
            api_response = getattr(aa,func.__name__)(*keypath, body=body)
         else :
@@ -211,6 +174,7 @@ def run(func, args):
         else:
             # Get Command Output
             api_response = aa.api_client.sanitize_for_serialization(api_response)
+
             if 'openconfig-interfaces:interfaces' in api_response:
                 value = api_response['openconfig-interfaces:interfaces']
                 if 'interface' in value:

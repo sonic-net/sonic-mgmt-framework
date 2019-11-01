@@ -58,6 +58,14 @@ type vlanData struct {
 	vlanMembersTableMap map[string]map[string]dbEntry
 }
 
+type lagData struct {
+	lagTs              *db.TableSpec
+	lagMemberTs        *db.TableSpec
+	lagTblTs           *db.TableSpec
+	lagIPTs            *db.TableSpec
+	lagMembersTableMap map[string]map[string]dbEntry
+}
+
 type intfData struct {
 	portTs             *db.TableSpec
 	portTblTs          *db.TableSpec
@@ -70,7 +78,6 @@ type intfData struct {
 	intfIPTblTs     *db.TableSpec
 	intfCountrTblTs *db.TableSpec
 
-	ifIPTableMap   map[string]map[string]dbEntry
 	ifVlanInfoList []*ifVlan
 }
 
@@ -85,14 +92,17 @@ type IntfApp struct {
 
 	appDB      *db.DB
 	countersDB *db.DB
+	configDB   *db.DB
 
 	intfType ifType
 	mode     intfModeCfgAlone
 
 	intfD intfData
 	vlanD vlanData
+	lagD  lagData
 
-	ifTableMap map[string]dbEntry
+	ifTableMap   map[string]dbEntry
+	ifIPTableMap map[string]map[string]dbEntry
 }
 
 func init() {
@@ -124,7 +134,6 @@ func (app *IntfApp) initializeInterface() {
 	app.intfD.intfIPTblTs = &db.TableSpec{Name: "INTF_TABLE", CompCt: 2}
 	app.intfD.intfCountrTblTs = &db.TableSpec{Name: "COUNTERS"}
 
-	app.intfD.ifIPTableMap = make(map[string]map[string]dbEntry)
 }
 
 func (app *IntfApp) initializeVlan() {
@@ -136,6 +145,15 @@ func (app *IntfApp) initializeVlan() {
 	app.vlanD.vlanMembersTableMap = make(map[string]map[string]dbEntry)
 }
 
+func (app *IntfApp) initializeLag() {
+	app.lagD.lagTs = &db.TableSpec{Name: "PORTCHANNEL"}
+	app.lagD.lagMemberTs = &db.TableSpec{Name: "PORTCHANNEL_MEMBER"}
+	app.lagD.lagIPTs = &db.TableSpec{Name: "PORTCHANNEL_INTERFACE"}
+	app.lagD.lagTblTs = &db.TableSpec{Name: "LAG_TABLE"}
+
+	app.lagD.lagMembersTableMap = make(map[string]map[string]dbEntry)
+}
+
 func (app *IntfApp) initialize(data appData) {
 	log.Info("initialize:if:path =", data.path)
 
@@ -145,9 +163,11 @@ func (app *IntfApp) initialize(data appData) {
 	app.ygotTarget = data.ygotTarget
 
 	app.ifTableMap = make(map[string]dbEntry)
+	app.ifIPTableMap = make(map[string]map[string]dbEntry)
 
 	app.initializeInterface()
 	app.initializeVlan()
+	app.initializeLag()
 }
 
 func (app *IntfApp) getAppRootObject() *ocbinds.OpenconfigInterfaces_Interfaces {
@@ -201,6 +221,11 @@ func (app *IntfApp) translateUpdate(d *db.DB) ([]db.WatchKeys, error) {
 				if err != nil {
 					return keys, err
 				}
+			case LAG:
+				keys, err = app.translateUpdateLagIntf(d, &ifKey, opUpdate)
+				if err != nil {
+					return keys, err
+				}
 			}
 		}
 	}
@@ -247,6 +272,11 @@ func (app *IntfApp) translateDelete(d *db.DB) ([]db.WatchKeys, error) {
 				}
 			case VLAN:
 				keys, err = app.translateDeleteVlanIntf(d, &ifKey)
+				if err != nil {
+					return keys, err
+				}
+			case LAG:
+				keys, err = app.translateDeleteLagIntf(d, &ifKey)
 				if err != nil {
 					return keys, err
 				}
@@ -332,6 +362,11 @@ func (app *IntfApp) processUpdate(d *db.DB) (SetResponse, error) {
 		if err != nil {
 			return resp, err
 		}
+	case LAG:
+		err = app.processUpdateLagIntf(d)
+		if err != nil {
+			return resp, err
+		}
 	}
 	return resp, err
 }
@@ -360,6 +395,11 @@ func (app *IntfApp) processDelete(d *db.DB) (SetResponse, error) {
 		if err != nil {
 			return resp, err
 		}
+	case LAG:
+		err = app.processDeleteLagIntf(d)
+		if err != nil {
+			return resp, err
+		}
 	}
 	return resp, err
 }
@@ -373,6 +413,7 @@ func (app *IntfApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
 	log.Infof("Received GET for path %s; template: %s vars=%v", pathInfo.Path, pathInfo.Template, pathInfo.Vars)
 	app.appDB = dbs[db.ApplDB]
 	app.countersDB = dbs[db.CountersDB]
+	app.configDB = dbs[db.ConfigDB]
 
 	targetUriPath, err := getYangPathFromUri(app.path.Path)
 	log.Info("URI Path = ", targetUriPath)
