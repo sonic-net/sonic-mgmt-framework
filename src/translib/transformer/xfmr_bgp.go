@@ -360,7 +360,6 @@ func fill_nbr_state_info (niName string, nbrAddr string, frrNbrDataValue interfa
     }
 
     if capabMap, ok := frrNbrDataJson["neighborCapabilities"].(map[string]interface{}) ; ok {
-        log.Infof("capabMap : %v", capabMap)
         for capability,_ := range capabMap {
             switch capability {
                 case "4byteAs":
@@ -373,12 +372,13 @@ func fill_nbr_state_info (niName string, nbrAddr string, frrNbrDataValue interfa
                     nbrState.SupportedCapabilities = append(nbrState.SupportedCapabilities, ocbinds.OpenconfigBgpTypes_BGP_CAPABILITY_MPBGP)
                 case "gracefulRestart":
                     nbrState.SupportedCapabilities = append(nbrState.SupportedCapabilities, ocbinds.OpenconfigBgpTypes_BGP_CAPABILITY_GRACEFUL_RESTART)
-                default:
             }
         }
     }
 
-    if cfgDbEntry, get_err := get_spec_nbr_cfg_tbl_entry (cfgDb, niName, nbrAddr) ; get_err == nil {
+    _dynamically_cfred := true
+
+    if cfgDbEntry, cfgdb_get_err := get_spec_nbr_cfg_tbl_entry (cfgDb, niName, nbrAddr) ; cfgdb_get_err == nil {
         var db_out string
         for k,v := range cfgDbEntry {db_out = db_out + k + ":" + v + " "}
         log.Infof("Fetched config-info from Config-DB for BGP-Nbr{niName:%s nbrAddr:%s} ==> %s", niName, nbrAddr, db_out)
@@ -405,6 +405,20 @@ func fill_nbr_state_info (niName string, nbrAddr string, frrNbrDataValue interfa
         if value, ok := cfgDbEntry["auth_password"] ; ok {
             nbrState.AuthPassword = &value
         }
+
+        if value, ok := cfgDbEntry["peer_type"] ; ok {
+            switch value {
+                case "internal":
+                    nbrState.PeerType = ocbinds.OpenconfigBgp_PeerType_INTERNAL
+                case "external":
+                    nbrState.PeerType = ocbinds.OpenconfigBgp_PeerType_EXTERNAL
+            }
+        }
+
+        _dynamically_cfred = false
+        nbrState.DynamicallyConfigured = &_dynamically_cfred
+    } else {
+        nbrState.DynamicallyConfigured = &_dynamically_cfred
     }
 
     return err
