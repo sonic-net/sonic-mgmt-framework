@@ -7,10 +7,16 @@ import (
 )
 
 func init () {
+	XlateFuncBind("YangToDb_bgp_gbl_afi_safi_key_xfmr", YangToDb_bgp_gbl_afi_safi_key_xfmr)
 	XlateFuncBind("YangToDb_bgp_afi_safi_use_multi_path_key_xfmr", YangToDb_bgp_afi_safi_use_multi_path_key_xfmr)
 	XlateFuncBind("DbToYang_bgp_afi_safi_use_multi_path_key_xfmr", DbToYang_bgp_afi_safi_use_multi_path_key_xfmr) 
 	XlateFuncBind("YangToDb_bgp_table_conn_key_xfmr", YangToDb_bgp_table_conn_key_xfmr)
 	XlateFuncBind("DbToYang_bgp_table_conn_key_xfmr", DbToYang_bgp_table_conn_key_xfmr)
+}
+
+var YangToDb_bgp_gbl_afi_safi_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (string, error) {
+	log.Info("YangToDb_bgp_gbl_afi_safi_key_xfmr: Returning empty key")
+	return "", nil
 }
 
 var YangToDb_bgp_afi_safi_use_multi_path_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (string, error) {

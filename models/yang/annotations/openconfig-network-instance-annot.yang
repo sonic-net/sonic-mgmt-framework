@@ -647,6 +647,12 @@ module openconfig-network-instance-annot {
         sonic-ext:field-name "route_map";
       }
     }
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi {
+      deviate add {
+        sonic-ext:key-transformer "bgp_gbl_afi_safi_key_xfmr";
+      }
+    }
+
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:dynamic-neighbor-prefixes/oc-netinst:dynamic-neighbor-prefix {
       deviate add {
         sonic-ext:table-name "BGP_LISTEN_PREFIX";
