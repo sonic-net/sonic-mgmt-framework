@@ -198,10 +198,10 @@ func processLfLstDbToYang(fieldXpath string, dbFldVal string) []interface{} {
 	}
 
 	dbPath := *xpathData.tableName + "/" + xpathData.fieldName
-	jj1 := xDbSpecMap[dbPath]
-	log.Info("xDbSpecMap[",dbPath,"]:", jj1)
+	dbNode := xDbSpecMap[dbPath]
+	log.Info("xDbSpecMap[",dbPath,"]:",dbNode)
 
-	if jj1 == nil {
+	if dbNode == nil {
 		log.Info("xDbSpecMap[", dbPath, "] is NULL")
 		return resLst
 	}
