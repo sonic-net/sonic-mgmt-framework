@@ -1,6 +1,6 @@
 module sonic-bgp-peergroup-af {
   namespace "http://github.com/Azure/sonic-bgp-peergroup-af";
-  prefix sbgpafpg;
+  prefix pgaf;
 
   import ietf-yang-types {
     prefix yang;
@@ -38,17 +38,15 @@ module sonic-bgp-peergroup-af {
         key "vrf_name peer_group_name afi_safi";
 
         leaf vrf_name {
-          type string;
-        }
-
-        leaf afi_safi {
-          type string;
+            type string;
         }
 
         leaf peer_group_name {
             type string;
-            // TODO leafref to peer_group_name at
-            // "/pg:sonic-bgp-peergroup/pg:BGP_PEER_GROUP/pg:BGP_PEER_GROUP_LIST/pg:peer_group_name";
+        }
+
+        leaf afi_safi {
+          type string;
         }
 
         leaf admin {
