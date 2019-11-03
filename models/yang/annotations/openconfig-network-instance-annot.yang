@@ -389,7 +389,7 @@ module openconfig-network-instance-annot {
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:l2vpn-evpn/oc-netinst:prefix-limit/oc-netinst:config/oc-netinst:restart-timer {
       deviate add {
-            sonic-ext:field-name "max_prefix_restart_timer";
+            sonic-ext:field-name "max_prefix_restart_interval";
       }
     }
 
@@ -407,7 +407,7 @@ module openconfig-network-instance-annot {
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:l2vpn-evpn/oc-netinst:prefix-limit/oc-netinst:state/oc-netinst:restart-timer {
       deviate add {
-            sonic-ext:field-name "max_prefix_restart_timer";
+            sonic-ext:field-name "max_prefix_restart_interval";
       }
     }
 
@@ -461,7 +461,7 @@ module openconfig-network-instance-annot {
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:ipv4-unicast/oc-netinst:prefix-limit/oc-netinst:state/oc-netinst:restart-timer {
       deviate add {
-            sonic-ext:field-name "max_prefix_restart_timer";
+            sonic-ext:field-name "max_prefix_restart_interval";
       }
     }
 
@@ -485,13 +485,13 @@ module openconfig-network-instance-annot {
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:ipv4-unicast/oc-netinst:prefix-limit/oc-netinst:config/oc-netinst:warning-threshold-pct {
       deviate add {
-            sonic-ext:field-name "max_prefix_warning_thrshold";
+            sonic-ext:field-name "max_prefix_warning_threshold";
       }
     }
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:ipv4-unicast/oc-netinst:prefix-limit/oc-netinst:config/oc-netinst:restart-timer {
       deviate add {
-            sonic-ext:field-name "max_prefix_restart_timer";
+            sonic-ext:field-name "max_prefix_restart_interval";
       }
     }
 
@@ -515,7 +515,7 @@ module openconfig-network-instance-annot {
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:ipv6-unicast/oc-netinst:prefix-limit/oc-netinst:config/oc-netinst:restart-timer {
       deviate add {
-            sonic-ext:field-name "max_prefix_restart_timer";
+            sonic-ext:field-name "max_prefix_restart_interval";
       }
     }
 
@@ -539,7 +539,7 @@ module openconfig-network-instance-annot {
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:ipv6-unicast/oc-netinst:prefix-limit/oc-netinst:state/oc-netinst:restart-timer {
       deviate add {
-            sonic-ext:field-name "max_prefix_restart_timer";
+            sonic-ext:field-name "max_prefix_restart_interval";
       }
     }
 

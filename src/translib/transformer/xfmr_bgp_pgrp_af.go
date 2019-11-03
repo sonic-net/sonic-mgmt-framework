@@ -26,24 +26,11 @@ var DbToYang_bgp_pgrp_afi_safi_name_fld_xfmr FieldXfmrDbtoYang = func(inParams X
     var err error
     result := make(map[string]interface{})
 
-    data := (*inParams.dbDataMap)[inParams.curDb]
-    log.Info("DbToYang_bgp_pgrp_afi_safi_name_fld_xfmr: ", data, "inParams : ", inParams)
+    entry_key := inParams.key
+    pgrpAfKey := strings.Split(entry_key, "|")
+    pgrpAfName:= pgrpAfKey[2]
 
-    pTbl := data["BGP_PEER_GROUP_AF"]
-    if _, ok := pTbl[inParams.key]; !ok {
-        log.Info("DbToYang_bgp_pgrp_afi_safi_name_fld_xfmr BGP peer-groups AF not found : ", inParams.key)
-        return result, errors.New("BGP Peer Group AF Table not found : " + inParams.key)
-    }
-
-    pgrpAfKey := pTbl[inParams.key]
-    afiSafiName, ok := pgrpAfKey.Field["afi_safi"]
-
-    if ok {
-        result["afi-safi-name"] = afiSafiName 
-    } else {
-        log.Info("afi_safi field not found in DB")
-        err = errors.New("afi_safi field not found in DB")
-    }
+    result["afi-safi-name"] = pgrpAfName
 
     return result, err
 }
@@ -115,7 +102,7 @@ var YangToDb_bgp_af_pgrp_tbl_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams
 
     var afPgrpKey string
 
-    afPgrpKey = vrfName + "|" + afName + "|" + pGrpName 
+    afPgrpKey = vrfName + "|" + pGrpName + "|" + afName
 
     log.Info("YangToDb_bgp_af_pgrp_tbl_key_xfmr: afPgrpKey:", afPgrpKey)
     return afPgrpKey, nil
@@ -127,13 +114,8 @@ var DbToYang_bgp_af_pgrp_tbl_key_xfmr KeyXfmrDbToYang = func(inParams XfmrParams
     log.Info("DbToYang_bgp_af_pgrp_tbl_key: ", entry_key)
 
     afPgrpKey := strings.Split(entry_key, "|")
-    vrfName := afPgrpKey[0]
-    afName  := afPgrpKey[1]
-    pgrpName:= afPgrpKey[2]
+    afName  := afPgrpKey[2]
 
-    rmap["name"] = vrfName
-    rmap["name#2"] = "BGP"
-    rmap["peer-group-name"] = pgrpName
     rmap["afi-safi-name"]   = afName
 
     return rmap, nil
