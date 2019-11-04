@@ -66,6 +66,18 @@ def invoke(func, args):
     if func == 'udldInterfaceNormalEnableHandler' :
         return udldConfigHandler("interface_normal", args)
 
+    # enable/disable debug udld at global level
+    if func == 'udldGlobalDebugHandler' :
+        return udldGlobalDebugHandler(args)
+
+    # enable/disable debug udld at interface level
+    if func == 'udldInterfaceDebugHandler' :
+        return udldInterfaceDebugHandler(args)
+
+    # clear udld statistics 
+    if func == 'udldInterfaceCountersClearHandler' :
+        return udldInterfaceCountersClearHandler(args)
+
 
 def udldConfigHandler(option, args):
     if option == "global_enable":
@@ -146,6 +158,27 @@ def udldShowHandler(option, args):
             print("Frames with error:          3")
 
     return ""
+
+
+def udldGlobalDebugHandler(args):
+    if args[0] == '1':
+        print("Enabled Debug at global level")
+    else:
+        print("Disable Debug at global level")
+
+
+def udldInterfaceDebugHandler(args):
+    if args[0] == '1':
+        print("Enabled Debug at interface level for " + args[1])
+    else:
+        print("Disable Debug at interface level for " + args[1])
+
+
+def udldInterfaceCountersClearHandler(args):
+    if len(args) == 0:
+        print("Clearing counters for all interfaces")
+    else:
+        print("Clearing counters for interface: " + args[0])
 
 
 def run(func, args):
