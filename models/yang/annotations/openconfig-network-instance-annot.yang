@@ -12,12 +12,21 @@ module openconfig-network-instance-annot {
     import openconfig-network-instance-types { prefix oc-ni-types; }
     import openconfig-policy-types { prefix oc-pol-types; }
     import openconfig-local-routing { prefix oc-loc-rt; }
+ //   import openconfig-interfaces { prefix oc-if; }
     import ietf-inet-types { prefix inet; }
     import openconfig-extensions { prefix oc-ext; }
+//   import openconfig-pim { prefix oc-pim; }
     import openconfig-routing-policy { prefix oc-rpol; }
     import openconfig-bgp { prefix oc-bgp; }
     import openconfig-policy-forwarding { prefix oc-pf; }
+//    import openconfig-isis { prefix oc-isis; }
+//    import openconfig-igmp { prefix oc-igmp; }
     import ietf-yang-types { prefix yang; }
+//    import openconfig-ospfv2 { prefix oc-ospfv2; }
+//    import openconfig-segment-routing { prefix oc-sr; }
+ //   import openconfig-aft { prefix oc-aft; }
+    import sonic-extensions { prefix sonic-ext; }
+
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-bgp:bgp/oc-bgp:global {
         deviate add {
@@ -634,6 +643,7 @@ module openconfig-network-instance-annot {
         sonic-ext:field-name "max_ebgp_paths";
       }
     }
+
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:use-multiple-paths/oc-netinst:ibgp/oc-netinst:config/oc-netinst:maximum-paths {
       deviate add {
         sonic-ext:field-name "max_ibgp_paths";
@@ -658,22 +668,6 @@ module openconfig-network-instance-annot {
         sonic-ext:field-name "route-map";
       }
     }
-}
-=======
-    import openconfig-interfaces { prefix oc-if; }
-    import ietf-inet-types { prefix inet; }
-    import openconfig-extensions { prefix oc-ext; }
-    import openconfig-pim { prefix oc-pim; }
-    import openconfig-routing-policy { prefix oc-rpol; }
-    import openconfig-bgp { prefix oc-bgp; }
-    import openconfig-policy-forwarding { prefix oc-pf; }
-    import openconfig-isis { prefix oc-isis; }
-    import openconfig-igmp { prefix oc-igmp; }
-    import ietf-yang-types { prefix yang; }
-    import openconfig-ospfv2 { prefix oc-ospfv2; }
-    import openconfig-segment-routing { prefix oc-sr; }
-    import openconfig-aft { prefix oc-aft; }
-    import sonic-extensions { prefix sonic-ext; }
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:fdb/oc-netinst:mac-table/oc-netinst:entries {
       deviate add {
@@ -701,4 +695,3 @@ module openconfig-network-instance-annot {
     }
 }
 
->>>>>>> d948c5d0282f8dc301d19371b533a43c4bd35aa1

@@ -36,7 +36,7 @@ PYANG_BIN        := pyang
 
 .PHONY: all yamlGen annot
 
-all: yamlGen annot allyangs.tree allyangs_tree.html
+all: yamlGen allyangs.tree allyangs_tree.html
 
 yamlGen: $(YANGAPI_DIR)/.done
 

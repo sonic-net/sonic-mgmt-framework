@@ -119,7 +119,6 @@ func mapFillData(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, dbKey st
     }
     if xpathInfo.isKey {
 	     dataToDBMapAdd(tableName, dbKey, result, "NONE", "NULL")
-             log.Info("Adding ******** :")
              return nil
     }
 
