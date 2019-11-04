@@ -87,11 +87,11 @@
          </PARAM>
 
         <ACTION>
-              if test "${drop-options}" = "flow"; then&#xA;
-                 python $SONIC_CLI_ROOT/drop-monitor.py -clear -dropmonitor -flow ${flow-name}
-              elif test "${drop-options}" = "aging-interval"; then&#xA;
-                 python $SONIC_CLI_ROOT/drop-monitor.py -clear -dropmonitor --aginginterval 0
-              fi&#xA;
+              if test "${drop-options}" = "flow"; then
+                 python $SONIC_CLI_ROOT/drop-monitor.py -clear -dropmonitor -flow ${flow-name};
+              elif test "${drop-options}" = "aging-interval"; then
+                 python $SONIC_CLI_ROOT/drop-monitor.py -clear -dropmonitor --aginginterval 0;
+              fi
         </ACTION>
         </COMMAND>
 
@@ -193,11 +193,11 @@
               </PARAM>
            </PARAM>
            <ACTION>
-              if test "${drop-options}" = "flow"; then&#xA;
-                 python $SONIC_CLI_ROOT/drop-monitor.py -config -dropmonitor -flow ${flow-name} --acl_table ${acl-table-name} --acl_rule ${acl-rule-name} --dropcollector ${collector-name} --dropsample ${sampling-name}
-              elif test "${drop-options}" = "aging-interval"; then&#xA;
-               python $SONIC_CLI_ROOT/drop-monitor.py -config -dropmonitor --aginginterval ${aging-interval-name}
-              fi&#xA;
+              if test "${drop-options}" = "flow"; then
+                 python $SONIC_CLI_ROOT/drop-monitor.py -config -dropmonitor -flow ${flow-name} --acl_table ${acl-table-name} --acl_rule ${acl-rule-name} --dropcollector ${collector-name} --dropsample ${sampling-name};
+              elif test "${drop-options}" = "aging-interval"; then
+               python $SONIC_CLI_ROOT/drop-monitor.py -config -dropmonitor --aginginterval ${aging-interval-name};
+              fi
            </ACTION>
         </COMMAND>
   </VIEW>

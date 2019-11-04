@@ -50,14 +50,10 @@
                    >
                 </PARAM>
          </PARAM>
-         <ACTION>
-              if test "${flow-options}" = "flow-name"; then&#xA;
-               python $SONIC_CLI_ROOT/ts.py -clear -flow ${flow-name}
-              elif test "${drop-options}" = "aging-interval"; then&#xA;
-               python $SONIC_CLI_ROOT/ts.py -clear -flow all
-              fi&#xA;
-           </ACTION>
-
+      <ACTION> if test "${flow-options}" = "flow-name"; then
+       python $SONIC_CLI_ROOT/ts.py -clear -flow ${flow-name}; elif test "${flow-options}" = "all"; then
+       python $SONIC_CLI_ROOT/ts.py -clear -flow all; fi
+       </ACTION>
          </COMMAND>
 
           <COMMAND name="feature"
@@ -86,14 +82,12 @@
                    >
                 </PARAM>
          </PARAM>
-         <ACTION>
-              if test "${feature-options}" = "enable"; then&#xA;
-               python $SONIC_CLI_ROOT/ts.py -config -enable 
-              elif test "${feature-options}" = "disable"; then&#xA;
-               python $SONIC_CLI_ROOT/ts.py -config -disable 
-              fi&#xA;
-           </ACTION>
-
+         <ACTION> if test "${feature-options}" = "enable"; then
+		  python $SONIC_CLI_ROOT/ts.py -config -enable;
+	          elif test "${feature-options}" = "disable"; then
+		  python $SONIC_CLI_ROOT/ts.py -config -disable;
+	          fi 
+         </ACTION>
          </COMMAND>
 
          <COMMAND
