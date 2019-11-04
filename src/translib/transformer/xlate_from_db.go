@@ -259,7 +259,7 @@ func sonicDbToYangListFill(uri string, xpath string, dbIdx db.DBNum, table strin
 		dbSpecData, ok := xDbSpecMap[table]
 		if ok && dbSpecData.keyName == nil {
 			yangKeys := yangKeyFromEntryGet(xDbSpecMap[xpath].dbEntry)
-			sonicKeyDataAdd(dbIdx, yangKeys, keyStr, curMap)
+			sonicKeyDataAdd(dbIdx, yangKeys, table, keyStr, curMap)
 		}
 		if curMap != nil {
 			mapSlice = append(mapSlice, curMap)
