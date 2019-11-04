@@ -12,19 +12,12 @@ module openconfig-network-instance-annot {
     import openconfig-network-instance-types { prefix oc-ni-types; }
     import openconfig-policy-types { prefix oc-pol-types; }
     import openconfig-local-routing { prefix oc-loc-rt; }
- //   import openconfig-interfaces { prefix oc-if; }
     import ietf-inet-types { prefix inet; }
     import openconfig-extensions { prefix oc-ext; }
-//   import openconfig-pim { prefix oc-pim; }
     import openconfig-routing-policy { prefix oc-rpol; }
     import openconfig-bgp { prefix oc-bgp; }
     import openconfig-policy-forwarding { prefix oc-pf; }
-//    import openconfig-isis { prefix oc-isis; }
-//    import openconfig-igmp { prefix oc-igmp; }
     import ietf-yang-types { prefix yang; }
-//    import openconfig-ospfv2 { prefix oc-ospfv2; }
-//    import openconfig-segment-routing { prefix oc-sr; }
- //   import openconfig-aft { prefix oc-aft; }
     import sonic-extensions { prefix sonic-ext; }
 
 
