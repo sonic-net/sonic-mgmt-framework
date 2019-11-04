@@ -36,6 +36,7 @@ var ()
 
 type CommonApp struct {
 	pathInfo       *PathInfo
+	body           []byte
 	ygotRoot       *ygot.GoStruct
 	ygotTarget     *interface{}
 	cmnAppTableMap map[string]map[string]db.Value
@@ -63,7 +64,7 @@ func init() {
 func (app *CommonApp) initialize(data appData) {
 	log.Info("initialize:path =", data.path)
 	pathInfo := NewPathInfo(data.path)
-	*app = CommonApp{pathInfo: pathInfo, ygotRoot: data.ygotRoot, ygotTarget: data.ygotTarget}
+	*app = CommonApp{pathInfo: pathInfo, body: data.payload, ygotRoot: data.ygotRoot, ygotTarget: data.ygotTarget}
 
 }
 
@@ -119,8 +120,9 @@ func (app *CommonApp) translateSubscribe(dbs [db.MaxDB]*db.DB, path string) (*no
 }
 
 func (app *CommonApp) translateAction(dbs [db.MaxDB]*db.DB) error {
-    err := errors.New("Not supported")
-	return err
+    var err error
+    log.Info("translateAction:path =", app.pathInfo.Path, app.body)
+    return err
 }
 
 func (app *CommonApp) processCreate(d *db.DB) (SetResponse, error) {
@@ -180,9 +182,10 @@ func (app *CommonApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
     var payload []byte
     var resPayload []byte
     log.Info("processGet:path =", app.pathInfo.Path)
+    var txCache interface{}
 
     for {
-	    payload, err = transformer.GetAndXlateFromDB(app.pathInfo.Path, app.ygotRoot, dbs)
+	    payload, err = transformer.GetAndXlateFromDB(app.pathInfo.Path, app.ygotRoot, dbs, txCache)
 	    if err != nil {
 		    log.Error("transformer.transformer.GetAndXlateFromDB failure. error:", err)
 		    resPayload = payload
@@ -242,6 +245,9 @@ func (app *CommonApp) processAction(dbs [db.MaxDB]*db.DB) (ActionResponse, error
     var resp ActionResponse
 	err := errors.New("Not implemented")
 
+	resp.Payload, err = transformer.CallRpcMethod(app.pathInfo.Path, app.body, dbs)
+	log.Info("transformer.XlateToDb() returned", resp.Payload)
+
 	return resp, err
 }
 
@@ -249,10 +255,11 @@ func (app *CommonApp) translateCRUDCommon(d *db.DB, opcode int) ([]db.WatchKeys,
 	var err error
 	var keys []db.WatchKeys
 	var tblsToWatch []*db.TableSpec
+	var txCache interface{}
 	log.Info("translateCRUDCommon:path =", app.pathInfo.Path)
 
 	// translate yang to db
-	result, err := transformer.XlateToDb(app.pathInfo.Path, opcode, d, (*app).ygotRoot, (*app).ygotTarget)
+	result, err := transformer.XlateToDb(app.pathInfo.Path, opcode, d, (*app).ygotRoot, (*app).ygotTarget, txCache)
 	fmt.Println(result)
 	log.Info("transformer.XlateToDb() returned", result)
 
@@ -525,8 +532,8 @@ func checkAndProcessLeafList(existingEntry db.Value, tblRw db.Value, opcode int,
 	for field, value := range tblRw.Field {
 		if strings.HasSuffix(field, "@") {
 			exstLst := existingEntry.GetList(field)
+			valueLst := strings.Split(value, ",")
 			if len(exstLst) != 0 {
-				valueLst := strings.Split(value, ",")
 				for _, item := range valueLst {
 					if !contains(exstLst, item) {
 						if opcode == UPDATE {
@@ -544,6 +551,8 @@ func checkAndProcessLeafList(existingEntry db.Value, tblRw db.Value, opcode int,
 					mergeTblRw.SetList(field, exstLst)
 					delete(tblRw.Field, field)
 				}
+			} else if opcode == UPDATE {
+				exstLst = valueLst
 			}
 			tblRw.SetList(field, exstLst)
 		}

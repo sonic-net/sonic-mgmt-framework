@@ -4,7 +4,8 @@ import (
     "errors"
     "encoding/json"
     "translib/ocbinds"
-    "reflect"
+    "translib/db"
+    "strconv"
     "os/exec"
     log "github.com/golang/glog"
     ygot "github.com/openconfig/ygot/ygot"
@@ -22,27 +23,27 @@ func getBgpRoot (inParams XfmrParams) (*ocbinds.OpenconfigNetworkInstance_Networ
     }
 
     if bgpId != "BGP" {
-        return nil, "", errors.New("Network-instance-name missing")
+        return nil, "", errors.New("Protocol-id is not BGP!! Incoming Protocol-id:" + bgpId)
     }
 
     if len(protoName) == 0 {
-        return nil, "", errors.New("Network-instance-name missing")
+        return nil, "", errors.New("Network-instance Protocol-name missing")
     }
 
 	deviceObj := (*inParams.ygRoot).(*ocbinds.Device)
     netInstsObj := deviceObj.NetworkInstances
 
     if netInstsObj.NetworkInstance == nil {
-        return nil, "", errors.New("Network-instance-name missing")
+        return nil, "", errors.New("Network-instances container missing")
     }
 
     netInstObj := netInstsObj.NetworkInstance[niName]
     if netInstObj == nil {
-        return nil, "", errors.New("Network-instance-name missing")
+        return nil, "", errors.New("Network-instance obj missing")
     }
 
     if netInstObj.Protocols == nil || len(netInstObj.Protocols.Protocol) == 0 {
-        return nil, "", errors.New("Network-instance-name missing")
+        return nil, "", errors.New("Network-instance protocols-container missing or protocol-list empty")
     }
 
     var protoKey ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Key
@@ -50,7 +51,7 @@ func getBgpRoot (inParams XfmrParams) (*ocbinds.OpenconfigNetworkInstance_Networ
     protoKey.Name = protoName
     protoInstObj := netInstObj.Protocols.Protocol[protoKey]
     if protoInstObj == nil {
-        return nil, "", errors.New("Network-instance-name missing")
+        return nil, "", errors.New("Network-instance BGP-Protocol obj missing")
     }
     return protoInstObj.Bgp, niName, err
 }
@@ -75,10 +76,13 @@ var YangToDb_bgp_gbl_tbl_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (s
     var err error
 
     pathInfo := NewPathInfo(inParams.uri)
-    /* @@TODO Make sure name is vrf-name instead of BGP protocol name in the URI */
     niName := pathInfo.Var("name")
+    protoName := pathInfo.Var("name#2")
 
-    /* @@TODO Return error for protocols other than BGP here */
+    if protoName != "bgp" {
+        return niName, errors.New("Invalid protocol name : " + protoName)
+    }
+
     log.Info("URI VRF ", niName)
 
     return niName, err
@@ -97,7 +101,12 @@ var DbToYang_bgp_gbl_tbl_key_xfmr KeyXfmrDbToYang = func(inParams XfmrParams) (m
 var YangToDb_bgp_always_compare_med_enable_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
     res_map := make(map[string]string)
 
-    log.Info("YangToDb_bgp_always_compare_med_enable_xfmr Entry - ", reflect.ValueOf(inParams.param), "Type of : ", reflect.TypeOf(inParams.param));
+    log.Info("YangToDb_bgp_always_compare_med_enable_xfmr: ")
+    if inParams.param == nil {
+	    res_map["always_compare_med"] = ""
+	    return res_map, nil
+	}
+
     enabled, _ := inParams.param.(*bool)
     var enStr string
     if *enabled == true {
@@ -139,7 +148,12 @@ var DbToYang_bgp_always_compare_med_enable_xfmr FieldXfmrDbtoYang = func(inParam
 var YangToDb_bgp_allow_multiple_as_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
     res_map := make(map[string]string)
 
-    log.Info("YangToDb_bgp_allow_multiple_as_xfmr Entry - ", reflect.ValueOf(inParams.param), "Type of : ", reflect.TypeOf(inParams.param));
+    log.Info("YangToDb_bgp_allow_multiple_as_xfmr: ")
+    if inParams.param == nil {
+	    res_map["load_balance_mp_relax"] = ""
+	    return res_map, nil
+	}
+
     allow_multiple_as, _ := inParams.param.(*bool)
     var allowMultipleAsStr string
     if *allow_multiple_as == true {
@@ -181,7 +195,12 @@ var DbToYang_bgp_allow_multiple_as_xfmr FieldXfmrDbtoYang = func(inParams XfmrPa
 var YangToDb_bgp_graceful_restart_status_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
     res_map := make(map[string]string)
 
-    log.Info("YangToDb_bgp_graceful_restart_status_xfmr Entry - ", reflect.ValueOf(inParams.param), "Type of : ", reflect.TypeOf(inParams.param));
+    log.Info("YangToDb_bgp_graceful_restart_status_xfmr: ")
+    if inParams.param == nil {
+	    res_map["graceful_restart_enable"] = ""
+	    return res_map, nil
+	}
+
     gr_status, _ := inParams.param.(*bool)
     var gr_statusStr string
     if *gr_status == true {
@@ -253,18 +272,37 @@ func exec_vtysh_cmd (vtysh_cmd string) (map[string]interface{}, error) {
     }
 
     log.Infof("Successfully executed vtysh-cmd ==> \"%s\"", vtysh_cmd)
+
+    if outputJson == nil {
+        log.Errorf("VTYSH output empty !!!")
+        return nil, oper_err
+    }
+
     return outputJson, err
 }
 
-func fill_nbr_state_info (nbrAddr string, nbrDataValue interface{},
-                          nbr_obj *ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Neighbors_Neighbor) {
+func get_spec_nbr_cfg_tbl_entry (cfgDb *db.DB, niName string, nbrAddr string) (map[string]string, error) {
+    var err error
+
+    nbrCfgTblTs := &db.TableSpec{Name: "BGP_NEIGHBOR"}
+    nbrEntryKey := db.Key{Comp: []string{niName,nbrAddr}}
+
+    var entryValue db.Value
+    if entryValue, err = cfgDb.GetEntry(nbrCfgTblTs, nbrEntryKey) ; err != nil {
+        return nil, err
+    }
+
+    return entryValue.Field, err
+}
+
+func fill_nbr_state_cmn_info (niName string, nbrAddr string, frrNbrDataValue interface{}, cfgDb *db.DB,
+                              nbr_obj *ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Neighbors_Neighbor) error {
+    var err error
     nbrState := nbr_obj.State
-
     nbrState.NeighborAddress = &nbrAddr
+    frrNbrDataJson := frrNbrDataValue.(map[string]interface{})
 
-    nbrDataJson := nbrDataValue.(map[string]interface{})
-
-    if value, ok := nbrDataJson["bgpState"] ; ok {
+    if value, ok := frrNbrDataJson["bgpState"] ; ok {
         switch value {
             case "Idle":
                 nbrState.SessionState = ocbinds.OpenconfigBgp_Bgp_Neighbors_Neighbor_State_SessionState_IDLE
@@ -283,64 +321,201 @@ func fill_nbr_state_info (nbrAddr string, nbrDataValue interface{},
         }
     }
 
-    if value, ok := nbrDataJson["localAs"] ; ok {
+    if value, ok := frrNbrDataJson["localAs"] ; ok {
         _localAs := uint32(value.(float64))
         nbrState.LocalAs = &_localAs
     }
 
-    if value, ok := nbrDataJson["remoteAs"] ; ok {
+    if value, ok := frrNbrDataJson["remoteAs"] ; ok {
         _peerAs := uint32(value.(float64))
         nbrState.PeerAs = &_peerAs
     }
 
-    if value, ok := nbrDataJson["bgpTimerUpEstablishedEpoch"] ; ok {
+    if value, ok := frrNbrDataJson["bgpTimerUpEstablishedEpoch"] ; ok {
         _lastEstablished := uint64(value.(float64))
         nbrState.LastEstablished = &_lastEstablished
     }
 
-    if value, ok := nbrDataJson["connectionsEstablished"] ; ok {
+    if value, ok := frrNbrDataJson["connectionsEstablished"] ; ok {
         _establishedTransitions := uint64(value.(float64))
         nbrState.EstablishedTransitions = &_establishedTransitions
     }
 
-    if statsMap, ok := nbrDataJson["messageStats"].(map[string]interface{}) ; ok {
+    if statsMap, ok := frrNbrDataJson["messageStats"].(map[string]interface{}) ; ok {
         var _rcvd_msgs ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Neighbors_Neighbor_State_Messages_Received
         var _sent_msgs ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Neighbors_Neighbor_State_Messages_Sent
-        var fill bool
+        var _msgs ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Neighbors_Neighbor_State_Messages
+        var _queues ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Neighbors_Neighbor_State_Queues
+        _msgs.Received = &_rcvd_msgs
+        _msgs.Sent = &_sent_msgs
+        nbrState.Messages = &_msgs
+        nbrState.Queues = &_queues
 
         if value, ok := statsMap["updatesRecv"] ; ok {
             _updates_rcvd := uint64(value.(float64))
             _rcvd_msgs.UPDATE = &_updates_rcvd
-            fill = true
         }
         if value, ok := statsMap["notificationsRecv"] ; ok {
             _notifs_rcvd := uint64(value.(float64))
             _rcvd_msgs.NOTIFICATION = &_notifs_rcvd
-            fill = true
         }
         if value, ok := statsMap["updatesSent"] ; ok {
             _updates_sent := uint64(value.(float64))
             _sent_msgs.UPDATE = &_updates_sent
-            fill = true
         }
         if value, ok := statsMap["notificationsSent"] ; ok {
             _notifs_sent := uint64(value.(float64))
             _sent_msgs.NOTIFICATION = &_notifs_sent
-            fill = true
         }
-
-
-        if fill {
-            var _msgs ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Neighbors_Neighbor_State_Messages
-            _msgs.Received = &_rcvd_msgs
-            _msgs.Sent = &_sent_msgs
-            nbrState.Messages = &_msgs
+        if value, ok := statsMap["depthOutq"] ; ok {
+            _output := uint32(value.(float64))
+            _queues.Output = &_output
+        }
+        if value, ok := statsMap["depthInq"] ; ok {
+            _input := uint32(value.(float64))
+            _queues.Input = &_input
         }
     }
+
+    if capabMap, ok := frrNbrDataJson["neighborCapabilities"].(map[string]interface{}) ; ok {
+        for capability,_ := range capabMap {
+            switch capability {
+                case "4byteAs":
+                    nbrState.SupportedCapabilities = append(nbrState.SupportedCapabilities, ocbinds.OpenconfigBgpTypes_BGP_CAPABILITY_ASN32)
+                case "addPath":
+                    nbrState.SupportedCapabilities = append(nbrState.SupportedCapabilities, ocbinds.OpenconfigBgpTypes_BGP_CAPABILITY_ADD_PATHS)
+                case "routeRefresh":
+                    nbrState.SupportedCapabilities = append(nbrState.SupportedCapabilities, ocbinds.OpenconfigBgpTypes_BGP_CAPABILITY_ROUTE_REFRESH)
+                case "multiprotocolExtensions":
+                    nbrState.SupportedCapabilities = append(nbrState.SupportedCapabilities, ocbinds.OpenconfigBgpTypes_BGP_CAPABILITY_MPBGP)
+                case "gracefulRestart":
+                    nbrState.SupportedCapabilities = append(nbrState.SupportedCapabilities, ocbinds.OpenconfigBgpTypes_BGP_CAPABILITY_GRACEFUL_RESTART)
+            }
+        }
+    }
+
+    _dynamically_cfred := true
+
+    if cfgDbEntry, cfgdb_get_err := get_spec_nbr_cfg_tbl_entry (cfgDb, niName, nbrAddr) ; cfgdb_get_err == nil {
+        if value, ok := cfgDbEntry["peer_group_name"] ; ok {
+            nbrState.PeerGroup = &value
+        }
+
+        if value, ok := cfgDbEntry["enabled"] ; ok {
+            _enabled, _ := strconv.ParseBool(value)
+            nbrState.Enabled = &_enabled
+        }
+
+        if value, ok := cfgDbEntry["description"] ; ok {
+            nbrState.Description = &value
+        }
+
+        if value, ok := cfgDbEntry["auth_password"] ; ok {
+            nbrState.AuthPassword = &value
+        }
+
+        if value, ok := cfgDbEntry["peer_type"] ; ok {
+            switch value {
+                case "internal":
+                    nbrState.PeerType = ocbinds.OpenconfigBgp_PeerType_INTERNAL
+                case "external":
+                    nbrState.PeerType = ocbinds.OpenconfigBgp_PeerType_EXTERNAL
+            }
+        }
+
+        _dynamically_cfred = false
+        nbrState.DynamicallyConfigured = &_dynamically_cfred
+    } else {
+        nbrState.DynamicallyConfigured = &_dynamically_cfred
+    }
+
+    return err
 }
 
-func get_specific_nbr_state (nbrs_obj *ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Neighbors,
-                             niName string, nbrAddr string) error {
+func fill_nbr_state_timers_info (niName string, nbrAddr string, frrNbrDataValue interface{}, cfgDb *db.DB,
+                                 nbr_obj *ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Neighbors_Neighbor) error {
+    var err error
+    nbrTimersState := nbr_obj.Timers.State
+    frrNbrDataJson := frrNbrDataValue.(map[string]interface{})
+
+    if value, ok := frrNbrDataJson["bgpTimerHoldTimeMsecs"] ; ok {
+        _neg_hold_time := (value.(float64))/1000
+        nbrTimersState.NegotiatedHoldTime = &_neg_hold_time
+    }
+
+    if cfgDbEntry, cfgdb_get_err := get_spec_nbr_cfg_tbl_entry (cfgDb, niName, nbrAddr) ; cfgdb_get_err == nil {
+        if value, ok := cfgDbEntry["connect_retry"] ; ok {
+            _connectRetry, _ := strconv.ParseFloat(value, 64)
+            nbrTimersState.ConnectRetry = &_connectRetry
+        }
+        if value, ok := cfgDbEntry["hold_time"] ; ok {
+            _holdTime, _ := strconv.ParseFloat(value, 64)
+            nbrTimersState.HoldTime = &_holdTime
+        }
+        if value, ok := cfgDbEntry["keepalive_interval"] ; ok {
+            _keepaliveInterval, _ := strconv.ParseFloat(value, 64)
+            nbrTimersState.KeepaliveInterval = &_keepaliveInterval
+        }
+        if value, ok := cfgDbEntry["minimum-advertisement-interval"] ; ok {
+            _minimumAdvertisementInterval, _ := strconv.ParseFloat(value, 64)
+            nbrTimersState.MinimumAdvertisementInterval = &_minimumAdvertisementInterval
+        }
+    }
+
+    return err
+}
+
+func fill_nbr_state_transport_info (niName string, nbrAddr string, frrNbrDataValue interface{}, cfgDb *db.DB,
+                                    nbr_obj *ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Neighbors_Neighbor) error {
+    var err error
+
+    nbrTransportState := nbr_obj.Transport.State
+    frrNbrDataJson := frrNbrDataValue.(map[string]interface{})
+
+    if value, ok := frrNbrDataJson["hostLocal"] ; ok {
+        _localAddress := string(value.(string))
+        nbrTransportState.LocalAddress = &_localAddress
+    }
+    if value, ok := frrNbrDataJson["portLocal"] ; ok {
+        _localPort := uint16(value.(float64))
+        nbrTransportState.LocalPort = &_localPort
+    }
+    if value, ok := frrNbrDataJson["hostForeign"] ; ok {
+        _remoteAddress := string(value.(string))
+        nbrTransportState.RemoteAddress = &_remoteAddress
+    }
+    if value, ok := frrNbrDataJson["portForeign"] ; ok {
+        _remotePort := uint16(value.(float64))
+        nbrTransportState.RemotePort = &_remotePort
+    }
+
+    if cfgDbEntry, cfgdb_get_err := get_spec_nbr_cfg_tbl_entry (cfgDb, niName, nbrAddr) ; cfgdb_get_err == nil {
+        if value, ok := cfgDbEntry["passive_mode"] ; ok {
+            _passiveMode, _ := strconv.ParseBool(value)
+            nbrTransportState.PassiveMode = &_passiveMode
+        }
+    }
+
+    return err
+}
+
+func fill_nbr_state_info (get_req_uri_type E_bgp_nbr_state_get_req_uri_t, niName string, nbrAddr string, frrNbrDataValue interface{}, cfgDb *db.DB,
+                          nbr_obj *ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Neighbors_Neighbor) error {
+    switch get_req_uri_type {
+        case E_bgp_nbr_state_get_req_uri_nbr_state:
+            return fill_nbr_state_cmn_info (niName, nbrAddr, frrNbrDataValue, cfgDb, nbr_obj)
+        case E_bgp_nbr_state_get_req_uri_nbr_timers_state:
+            return fill_nbr_state_timers_info (niName, nbrAddr, frrNbrDataValue, cfgDb, nbr_obj)
+        case E_bgp_nbr_state_get_req_uri_nbr_transport_state:
+            return fill_nbr_state_transport_info (niName, nbrAddr, frrNbrDataValue, cfgDb, nbr_obj)
+    }
+
+    return errors.New("Opertational error")
+}
+
+func get_specific_nbr_state (get_req_uri_type E_bgp_nbr_state_get_req_uri_t,
+                             nbrs_obj *ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Neighbors,
+                             cfgDb *db.DB, niName string, nbrAddr string) error {
     var err error
 
     vtysh_cmd := "show ip bgp vrf " + niName + " neighbors " + nbrAddr + " json"
@@ -361,14 +536,16 @@ func get_specific_nbr_state (nbrs_obj *ocbinds.OpenconfigNetworkInstance_Network
     }
     ygot.BuildEmptyTree(nbr_obj)
 
-    nbrDataJson := nbrMapJson[nbrAddr].(map[string]interface{})
-    fill_nbr_state_info (nbrAddr, nbrDataJson, nbr_obj)
+    if frrNbrDataJson, ok := nbrMapJson[nbrAddr].(map[string]interface{}) ; ok {
+        err = fill_nbr_state_info (get_req_uri_type, niName, nbrAddr, frrNbrDataJson, cfgDb, nbr_obj)
+    }
 
     return err
 }
 
-func get_all_nbr_state (nbrs_obj *ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Neighbors,
-                        niName string) error {
+func get_all_nbr_state (get_req_uri_type E_bgp_nbr_state_get_req_uri_t,
+                        nbrs_obj *ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Neighbors,
+                        cfgDb *db.DB, niName string) error {
     var err error
 
     vtysh_cmd := "show ip bgp vrf " + niName + " neighbors " + " json"
@@ -378,10 +555,10 @@ func get_all_nbr_state (nbrs_obj *ocbinds.OpenconfigNetworkInstance_NetworkInsta
         return cmd_err
     }
 
-    for nbrAddr, nbrDataJson := range nbrsMapJson {
+    for nbrAddr, frrNbrDataJson := range nbrsMapJson {
         nbr_obj, _ := nbrs_obj.NewNeighbor (nbrAddr)
         ygot.BuildEmptyTree(nbr_obj)
-        fill_nbr_state_info (nbrAddr, nbrDataJson, nbr_obj)
+        err = fill_nbr_state_info (get_req_uri_type, niName, nbrAddr, frrNbrDataJson, cfgDb, nbr_obj)
     }
 
     return err
@@ -390,7 +567,12 @@ func get_all_nbr_state (nbrs_obj *ocbinds.OpenconfigNetworkInstance_NetworkInsta
 var YangToDb_bgp_ignore_as_path_length_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
     res_map := make(map[string]string)
 
-    log.Info("YangToDb_bgp_ignore_as_path_length_xfmr Entry - ", reflect.ValueOf(inParams.param), "Type of : ", reflect.TypeOf(inParams.param));
+    log.Info("YangToDb_bgp_ignore_as_path_length_xfmr: ")
+    if inParams.param == nil {
+	    res_map["ignore_as_path_length"] = ""
+	    return res_map, nil
+	}
+
     ignore_as_path_length, _ := inParams.param.(*bool)
     var ignoreAsPathLen string
     if *ignore_as_path_length == true {
@@ -432,7 +614,12 @@ var DbToYang_bgp_ignore_as_path_length_xfmr FieldXfmrDbtoYang = func(inParams Xf
 var YangToDb_bgp_external_compare_router_id_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
     res_map := make(map[string]string)
 
-    log.Info("YangToDb_bgp_external_compare_router_id_xfmr Entry - ", reflect.ValueOf(inParams.param), "Type of : ", reflect.TypeOf(inParams.param));
+    log.Info("YangToDb_bgp_external_compare_router_id_xfmr: ")
+    if inParams.param == nil {
+	    res_map["external_compare_router_id"] = ""
+	    return res_map, nil
+	}
+
     external_compare_router_id, _ := inParams.param.(*bool)
     var externalCompareRouterIdStr string
     if *external_compare_router_id == true {
@@ -471,39 +658,63 @@ var DbToYang_bgp_external_compare_router_id_xfmr FieldXfmrDbtoYang = func(inPara
     return result, err
 }
 
-var DbToYang_bgp_nbrs_nbr_state_xfmr SubTreeXfmrDbToYang = func(inParams XfmrParams) error {
+func validate_nbr_state_get (inParams XfmrParams, dbg_log string) (*ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Neighbors, string, string, error) {
     var err error
     oper_err := errors.New("Opertational error")
-    cmn_log := "GET: xfmr for BGP-nbrs state"
 
     bgp_obj, niName, err := getBgpRoot (inParams)
     if err != nil {
-        log.Errorf ("%s failed !! Error:%s", cmn_log , err);
-        return err
+        log.Errorf ("%s failed !! Error:%s", dbg_log , err);
+        return nil, "", "", err
     }
 
     pathInfo := NewPathInfo(inParams.uri)
     targetUriPath, err := getYangPathFromUri(pathInfo.Path)
     nbrAddr := pathInfo.Var("neighbor-address")
     log.Infof("%s : path:%s; template:%s targetUriPath:%s niName:%s nbrAddr:%s",
-              cmn_log, pathInfo.Path, pathInfo.Template, targetUriPath, niName, nbrAddr)
-
-    supportedTgtUri := "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/neighbors/neighbor/state"
-    if targetUriPath != supportedTgtUri {
-        log.Infof ("%s : Target-URI:%s is not %s !! Returning ok !!", cmn_log, targetUriPath, supportedTgtUri);
-        return err
-    }
+              dbg_log, pathInfo.Path, pathInfo.Template, targetUriPath, niName, nbrAddr)
 
     nbrs_obj := bgp_obj.Neighbors
     if nbrs_obj == nil {
-        log.Errorf("Neighbors container missing")
-        return oper_err
+        log.Errorf("%s failed !! Error: Neighbors container missing", dbg_log)
+        return nil, "", "", oper_err
+    }
+
+    return nbrs_obj, niName, nbrAddr, err
+}
+
+type E_bgp_nbr_state_get_req_uri_t string
+const (
+    E_bgp_nbr_state_get_req_uri_nbr_state E_bgp_nbr_state_get_req_uri_t = "GET_REQ_URI_BGP_NBR_STATE"
+    E_bgp_nbr_state_get_req_uri_nbr_timers_state E_bgp_nbr_state_get_req_uri_t = "GET_REQ_URI_BGP_NBR_TIMERS_STATE"
+    E_bgp_nbr_state_get_req_uri_nbr_transport_state E_bgp_nbr_state_get_req_uri_t = "GET_REQ_URI_BGP_NBR_TRANSPORT_STATE"
+)
+
+var DbToYang_bgp_nbrs_nbr_state_xfmr SubTreeXfmrDbToYang = func(inParams XfmrParams) error {
+    var err error
+    cmn_log := "GET: xfmr for BGP-nbrs state"
+    get_req_uri_type := E_bgp_nbr_state_get_req_uri_nbr_state
+
+    pathInfo := NewPathInfo(inParams.uri)
+    targetUriPath, err := getYangPathFromUri(pathInfo.Path)
+    switch targetUriPath {
+        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/neighbors/neighbor/timers/state":
+            cmn_log = "GET: xfmr for BGP-nbrs timers state"
+            get_req_uri_type = E_bgp_nbr_state_get_req_uri_nbr_timers_state
+        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/neighbors/neighbor/transport/state":
+            cmn_log = "GET: xfmr for BGP-nbrs transport state"
+            get_req_uri_type = E_bgp_nbr_state_get_req_uri_nbr_transport_state
+    }
+
+    nbrs_obj, niName, nbrAddr, get_err := validate_nbr_state_get (inParams, cmn_log);
+    if get_err != nil {
+        return get_err
     }
 
     if len(nbrAddr) != 0 {
-        err = get_specific_nbr_state (nbrs_obj, niName, nbrAddr);
+        err = get_specific_nbr_state (get_req_uri_type, nbrs_obj, inParams.dbs[db.ConfigDB], niName, nbrAddr);
     } else {
-        err = get_all_nbr_state (nbrs_obj, niName);
+        err = get_all_nbr_state (get_req_uri_type, nbrs_obj, inParams.dbs[db.ConfigDB], niName);
     }
 
     return err;

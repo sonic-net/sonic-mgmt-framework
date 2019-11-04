@@ -1,0 +1,61 @@
+module openconfig-network-instance-ext {
+
+  yang-version "1";
+
+  // namespace
+  namespace "http://openconfig.net/yang/network-instance/extension";
+
+  prefix "oc-netinst-ext";
+
+  // import some basic types
+  import openconfig-network-instance { prefix "oc-netinst"; }
+
+  // meta
+  organization "OpenConfig working group";
+
+  contact
+    "OpenConfig working group
+    www.openconfig.net";
+
+  description
+    "An OpenConfig description of a network-instance. This may be
+    a Layer 3 forwarding construct such as a virtual routing and
+    forwarding (VRF) instance, or a Layer 2 instance such as a
+    virtual switch instance (VSI). Mixed Layer 2 and Layer 3
+    instances are also supported.";
+
+  revision "2019-04-16" {
+    description
+      "Move BGP RIB into the protocol/bgp container.";
+    reference "0.12.0";
+  }
+
+  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:inter-instance-policies {
+      deviate not-supported;
+  }
+
+  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:mpls {
+      deviate not-supported;
+  }
+  
+  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:segment-routing {
+      deviate not-supported;
+  }
+
+  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:igmp {
+      deviate not-supported;
+  }
+
+  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:pim {
+      deviate not-supported;
+  }
+
+  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:isis {
+      deviate not-supported;
+  }
+  
+  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:policy-forwarding {
+	  deviate not-supported;
+  }
+  
+}

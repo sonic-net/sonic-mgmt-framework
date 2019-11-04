@@ -22,6 +22,7 @@ func init () {
 var YangToDb_bgp_pgrp_name_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
     res_map := make(map[string]string)
 
+    res_map["NULL"] = "NULL"
     return res_map, nil
 }
 
@@ -31,23 +32,14 @@ var DbToYang_bgp_pgrp_name_fld_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams
     result := make(map[string]interface{})
 
     data := (*inParams.dbDataMap)[inParams.curDb]
-    log.Info("DbToYang_bgp_pgrp_name_fld_xfmr", data, "inParams : ", inParams)
+    log.Info("DbToYang_bgp_pgrp_name_fld_xfmr : ", data, "inParams : ", inParams)
 
-    pTbl := data["BGP_PEER_GROUP"]
-    if _, ok := pTbl[inParams.key]; !ok {
-        log.Info("DbToYang_bgp_pgrp_name_fld_xfmr BGP peer-groups not found : ", inParams.key)
-        return result, errors.New("BGP peer-groups not found : " + inParams.key)
-    }
+    entry_key := inParams.key
+    peer_group_Key := strings.Split(entry_key, "|")
+    peer_group_name:= peer_group_Key[1]
+    result["peer-group-name"] = peer_group_name
 
-    pGrpKey := pTbl[inParams.key]
-    peer_group_name, ok := pGrpKey.Field["pgrp_name"]
-
-    if ok {
-        result["peer-group-name"] = peer_group_name
-    } else {
-        log.Info("peer_group_name field not found in DB")
-    }
-    return result, err
+    return result, err 
 }
 
 var YangToDb_bgp_pgrp_peer_type_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
@@ -83,7 +75,7 @@ var DbToYang_bgp_pgrp_peer_type_xfmr FieldXfmrDbtoYang = func(inParams XfmrParam
     result := make(map[string]interface{})
 
     data := (*inParams.dbDataMap)[inParams.curDb]
-    log.Info("DbToYang_bgp_pgrp_peer_type_xfmr", data, "inParams : ", inParams)
+    log.Info("DbToYang_bgp_pgrp_peer_type_xfmr : ", data, "inParams : ", inParams)
 
     pTbl := data["BGP_PEER_GROUPS"]
     if _, ok := pTbl[inParams.key]; !ok {
@@ -225,11 +217,8 @@ var DbToYang_bgp_pgrp_tbl_key_xfmr KeyXfmrDbToYang = func(inParams XfmrParams) (
     log.Info("DbToYang_bgp_pgrp_tbl_key: ", entry_key)
 
     pgrpKey := strings.Split(entry_key, "|")
-    vrfName := pgrpKey[0]
     pgrpName:= pgrpKey[1]
 
-    rmap["name"] = vrfName
-    rmap["name#2"] = "BGP"
     rmap["peer-group-name"] = pgrpName
 
     return rmap, nil

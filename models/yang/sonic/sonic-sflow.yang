@@ -1,0 +1,113 @@
+module sonic-sflow {
+        namespace "http://github.com/Azure/sonic-sflow";
+        prefix sflow;
+
+	import ietf-inet-types {
+		prefix inet;
+	}
+
+	import sonic-common {
+		prefix scommon;
+	}
+
+        revision 2019-09-09 {
+                description
+                        "Initial revision.";
+        }
+
+        container sonic-sflow {
+            container SFLOW_COLLECTOR {
+                list SFLOW_COLLECTOR_LIST {
+                    max-elements 2;
+                    key "collector_name";
+
+                    leaf collector_name {
+                        type string {
+                            length 1..16;
+                        }
+                    }
+
+                    leaf collector_ip {
+                        type inet:ip-address;
+                    }
+
+                    leaf collector_port {
+                        type inet:port-number;
+                    }
+
+                }
+            }
+
+            container SFLOW_SESSION {
+                list SFLOW_SESSION_LIST {
+                    key "ifname";
+
+                    leaf ifname {
+                        type string;
+                    }
+
+                    leaf admin_state {
+                        type scommon:admin-status;
+                    }
+
+                    leaf sample_rate {
+                        type uint32 {
+                            range "256..8388608" {
+                                error-message "sFlow polling interval must be [256-8388608]";
+                            }
+                        }
+                    }
+                }
+            }
+
+            container SFLOW {
+                list SFLOW_LIST {
+                    key "sflow_key";
+                    leaf sflow_key {
+                        type enumeration {
+                            enum global;
+                        }
+                    }
+
+                    leaf admin_state {
+                        type scommon:admin-status;
+                    }
+
+                    leaf polling_interval {
+                        type uint32 {
+                            range "0..300" {
+                                error-message "sFlow sample rate must be [0-300]";
+                            }
+                        }
+                    }
+
+                    leaf agent_id {
+                       type string;
+                    }
+                }
+           }
+
+           container SFLOW_SESSION_TABLE {
+               list SFLOW_SESSION_LIST {
+                   key "ifname";
+                   config false;
+
+                   leaf ifname {
+                       type string;
+                   }
+
+                   leaf admin_state {
+                       type scommon:admin-status;
+                   }
+
+                   leaf sample_rate {
+                       type uint32 {
+                           range "256..8388608" {
+                               error-message "sFlow polling interval must be [256-8388608]";
+                           }
+                       }
+                   }
+               }
+           }
+        }
+}

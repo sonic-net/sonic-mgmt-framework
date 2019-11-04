@@ -34,6 +34,7 @@ type XfmrParams struct {
 	key string
 	dbDataMap *map[db.DBNum]map[string]map[string]db.Value
 	param interface{}
+	txCache interface{}
 }
 
 /**
@@ -86,7 +87,12 @@ type SubTreeXfmrDbToYang func (inParams XfmrParams) (error)
  * Return :  bool
  **/
 type ValidateCallpoint func (inParams XfmrParams) (bool)
-
+/**
+ * RpcCallpoint is used to invoke a callback for action
+ * Param : []byte input payload, dbi indices
+ * Return :  []byte output payload, error
+ **/
+type RpcCallpoint func (body []byte, dbs [db.MaxDB]*db.DB) ([]byte, error)
 /**
  * PostXfmrFunc type is defined to use for handling any default handling operations required as part of the CREATE
  * Transformer function definition.

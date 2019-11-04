@@ -3,7 +3,6 @@ package transformer
 import (
     "errors"
     "strings"
-    /* "translib/ocbinds" */
     log "github.com/golang/glog"
 )
 
@@ -18,6 +17,7 @@ func init () {
 var YangToDb_bgp_pgrp_afi_safi_name_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
     res_map := make(map[string]string)
 
+    res_map["NULL"] = "NULL"
     return res_map, nil
 }
 
@@ -26,24 +26,11 @@ var DbToYang_bgp_pgrp_afi_safi_name_fld_xfmr FieldXfmrDbtoYang = func(inParams X
     var err error
     result := make(map[string]interface{})
 
-    data := (*inParams.dbDataMap)[inParams.curDb]
-    log.Info("DbToYang_bgp_pgrp_afi_safi_name_fld_xfmr: ", data, "inParams : ", inParams)
+    entry_key := inParams.key
+    pgrpAfKey := strings.Split(entry_key, "|")
+    pgrpAfName:= pgrpAfKey[2]
 
-    pTbl := data["BGP_PEER_GROUP_AF"]
-    if _, ok := pTbl[inParams.key]; !ok {
-        log.Info("DbToYang_bgp_pgrp_afi_safi_name_fld_xfmr BGP peer-groups AF not found : ", inParams.key)
-        return result, errors.New("BGP Peer Group AF Table not found : " + inParams.key)
-    }
-
-    pgrpAfKey := pTbl[inParams.key]
-    afiSafiName, ok := pgrpAfKey.Field["afi_safi"]
-
-    if ok {
-        result["afi-safi-name"] = afiSafiName 
-    } else {
-        log.Info("afi_safi field not found in DB")
-        err = errors.New("afi_safi field not found in DB")
-    }
+    result["afi-safi-name"] = pgrpAfName
 
     return result, err
 }
@@ -97,20 +84,16 @@ var YangToDb_bgp_af_pgrp_tbl_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams
         return pGrpName, err
     }
 
-    if strings.Contains(afName, "IPV4_UNICAST") == false {
-        if strings.Contains(afName, "IPV6_UNICAST") == false { 
-          if strings.Contains(afName, "L2VPN_EVPN"  ) == false  {
-            err = errors.New("Unsupported AFI SAFI")
-            log.Info("Unsupported AFI SAFI ", afName);
-            return afName, err
-         } else {
-             afName = "L2VPN_EVPN"
-         }
-       } else {
-           afName = "IPV6_UNICAST"
-       }
-    } else {
+    if strings.Contains(afName, "IPV4_UNICAST") {
         afName = "IPV4_UNICAST"
+    } else if strings.Contains(afName, "IPV6_UNICAST") { 
+        afName = "IPV6_UNICAST"
+    } else if strings.Contains(afName, "L2VPN_EVPN") {
+        afName = "L2VPN_EVPN"
+    } else  {
+	err = errors.New("Unsupported AFI SAFI")
+	log.Info("Unsupported AFI SAFI ", afName);
+	return afName, err
     }
 
     log.Info("URI VRF ", vrfName)
@@ -119,7 +102,7 @@ var YangToDb_bgp_af_pgrp_tbl_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams
 
     var afPgrpKey string
 
-    afPgrpKey = vrfName + "|" + afName + "|" + pGrpName 
+    afPgrpKey = vrfName + "|" + pGrpName + "|" + afName
 
     log.Info("YangToDb_bgp_af_pgrp_tbl_key_xfmr: afPgrpKey:", afPgrpKey)
     return afPgrpKey, nil
@@ -131,13 +114,8 @@ var DbToYang_bgp_af_pgrp_tbl_key_xfmr KeyXfmrDbToYang = func(inParams XfmrParams
     log.Info("DbToYang_bgp_af_pgrp_tbl_key: ", entry_key)
 
     afPgrpKey := strings.Split(entry_key, "|")
-    vrfName := afPgrpKey[0]
-    afName  := afPgrpKey[1]
-    pgrpName:= afPgrpKey[2]
+    afName  := afPgrpKey[2]
 
-    rmap["name"] = vrfName
-    rmap["name#2"] = "BGP"
-    rmap["peer-group-name"] = pgrpName
     rmap["afi-safi-name"]   = afName
 
     return rmap, nil
