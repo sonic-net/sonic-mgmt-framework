@@ -149,13 +149,6 @@ module openconfig-routing-policy-annot {
     }
 
 
-
-
-
-
-
-
-
     deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-bgp-pol:bgp-conditions/oc-bgp-pol:config/oc-bgp-pol:next-hop-in {
       deviate add {
             sonic-ext:field-name "match_next_hop";
