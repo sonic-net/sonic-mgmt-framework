@@ -6,4 +6,6 @@ openconfig-interfaces.yang
 openconfig-if-ip.yang
 openconfig-if-ethernet.yang
 openconfig-interfaces-annot.yang
+openconfig-network-instance.yang
+openconfig-network-instance-annot.yang
 sonic-vxlan.yang

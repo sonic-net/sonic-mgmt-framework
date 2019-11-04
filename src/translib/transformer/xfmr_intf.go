@@ -33,6 +33,7 @@ func init () {
     XlateFuncBind("YangToDb_intf_subintfs_xfmr", YangToDb_intf_subintfs_xfmr)
     XlateFuncBind("DbToYang_intf_subintfs_xfmr", DbToYang_intf_subintfs_xfmr)
     XlateFuncBind("DbToYang_intf_get_counters_xfmr", DbToYang_intf_get_counters_xfmr)
+	XlateFuncBind("YangToDb_intf_tbl_key_xfmr", YangToDb_intf_tbl_key_xfmr)
 }
 
 const (
@@ -43,6 +44,8 @@ const (
     PORT_DESC          = "description"
     PORT_OPER_STATUS   = "oper_status"
     PORT_AUTONEG       = "autoneg"
+    VLAN_TN            = "VLAN"
+    VLAN_MEMBER_TN     = "VLAN_MEMBER"
 )
 
 const (
@@ -57,6 +60,7 @@ const (
 
 type TblData  struct  {
     portTN           string
+    memberTN         string
     intfTN           string
     keySep           string
 }
@@ -89,17 +93,15 @@ var IntfTypeTblMap = map[E_InterfaceType]IntfTblData {
         stateDb:TblData{portTN:"MGMT_PORT_TABLE", intfTN:"MGMT_INTERFACE_TABLE", keySep: PIPE},
         CountersHdl:CounterData{OIDTN: "", CountersTN:"", PopulateCounters: populateMGMTPortCounters},
     },
-    IntfTypePortChannel : IntfTblData{
-        cfgDb:TblData{portTN:"PORTCHANNEL", intfTN:"PORTCHANNEL_INTERFACE", keySep: PIPE},
-        appDb:TblData{portTN:"LAG_TABLE", intfTN:"INTF_TABLE", keySep: COLON},
-        stateDb:TblData{portTN:"LAG_TABLE", intfTN:"INTERFACE_TABLE", keySep: PIPE},
-        CountersHdl:CounterData{OIDTN: "COUNTERS_PORT_NAME_MAP", CountersTN:"COUNTERS", PopulateCounters: populatePortCounters},
+    IntfTypeVlan : IntfTblData{
+        cfgDb:TblData{portTN:"VLAN", memberTN: "VLAN_MEMBER", intfTN:"VLAN_INTERFACE", keySep: PIPE},
+        appDb:TblData{portTN:"VLAN_TABLE", memberTN: "VLAN_MEMBER_TABLE", intfTN:"INTF_TABLE", keySep: COLON},
     },
 }
 var dbIdToTblMap = map[db.DBNum][]string {
-    db.ConfigDB: {"PORT", "INTERFACE", "MGMT_PORT", "MGMT_INTERFACE", , "PORTCHANNEL", "PORTCHANNEL_INTERFACE"},
-    db.ApplDB  : {"PORT_TABLE", "INTF_TABLE", "MGMT_PORT_TABLE", "MGMT_INTF_TABLE", "LAG_TABLE"},
-    db.StateDB : {"PORT_TABLE", "INTERFACE_TABLE", "MGMT_PORT_TABLE", "MGMT_INTERFACE_TABLE", "LAG_TABLE"},
+    db.ConfigDB: {"PORT", "INTERFACE", "MGMT_PORT", "MGMT_INTERFACE","VLAN", "VLAN_MEMBER", "VLAN_INTERFACE", "PORTCHANNEL", "PORTCHANNEL_INTERFACE"},
+    db.ApplDB  : {"PORT_TABLE", "INTF_TABLE", "MGMT_PORT_TABLE", "MGMT_INTF_TABLE", "VLAN_TABLE", "VLAN_MEMBER_TABLE", "LAG_TABLE"},
+    db.StateDB : {"PORT_TABLE", "INTERFACE_TABLE", "MGMT_PORT_TABLE", "MGMT_INTERFACE_TABLE"},
 }
 
 var intfOCToSpeedMap = map[ocbinds.E_OpenconfigIfEthernet_ETHERNET_SPEED] string {
@@ -123,7 +125,7 @@ const (
     IntfTypeEthernet        E_InterfaceType = 1
     IntfTypeMgmt            E_InterfaceType = 2
     IntfTypeVlan            E_InterfaceType = 3
-    IntfTypePortChannel        E_InterfaceType = 4
+    IntfTypePortChannel     E_InterfaceType = 4
 
 )
 type E_InterfaceSubType int64
@@ -144,14 +146,28 @@ func getIntfTypeByName (name string) (E_InterfaceType, E_InterfaceSubType, error
         return IntfTypeVlan, IntfSubTypeUnset, err
     } else if strings.HasPrefix(name, PORTCHANNEL) == true {
         return IntfTypePortChannel, IntfSubTypeUnset, err
+    } else {
+        err = errors.New("Interface name prefix not matched with supported types")
+        return IntfTypeUnset, IntfSubTypeUnset, err
     }
-    err = errors.New("Interface name prefix not matched with supported types")
-    return IntfTypeUnset, IntfSubTypeUnset, err
 }
 
 func getIntfsRoot (s *ygot.GoStruct) *ocbinds.OpenconfigInterfaces_Interfaces {
     deviceObj := (*s).(*ocbinds.Device)
     return deviceObj.Interfaces
+}
+
+var YangToDb_intf_tbl_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (string, error) {
+	log.Info("Entering YangToDb_intf_tbl_key_xfmr")
+    var err error
+
+    pathInfo := NewPathInfo(inParams.uri)
+    ifName := pathInfo.Var("name")
+
+    log.Info("Intf name ", ifName)
+	log.Info("Exiting YangToDb_intf_tbl_key_xfmr")
+
+    return ifName, err
 }
 
 var intf_table_xfmr TableXfmrFunc = func (inParams XfmrParams) ([]string, error) {
@@ -226,8 +242,19 @@ var intf_table_xfmr TableXfmrFunc = func (inParams XfmrParams) ([]string, error)
 var YangToDb_intf_name_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
     res_map := make(map[string]string)
     var err error
+
+    pathInfo := NewPathInfo(inParams.uri)
+    ifName := pathInfo.Var("name")
+
+    if strings.HasPrefix(ifName, VLAN) == true {
+        vlanId := ifName[len("Vlan"):len(ifName)]
+        res_map["vlanid"] = vlanId
+    }
+
+    log.Info("YangToDb_intf_name_xfm: rres_map:", res_map)
     return res_map, err
 }
+
 
 var DbToYang_intf_name_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (map[string]interface{}, error) {
     var err error
@@ -508,6 +535,68 @@ var DbToYang_intf_subintfs_xfmr KeyXfmrDbToYang = func(inParams XfmrParams) (map
 }
 
 
+func intf_ip_addr_del (d *db.DB , ifName string, tblName string, subIntf *ocbinds.OpenconfigInterfaces_Interfaces_Interface_Subinterfaces_Subinterface) (map[string]map[string]db.Value, error) {
+    var err error
+    subIntfmap := make(map[string]map[string]db.Value)
+    intfIpMap := make(map[string]db.Value)
+
+    if subIntf.Ipv4 != nil && subIntf.Ipv4.Addresses != nil {
+        if len(subIntf.Ipv4.Addresses.Address) < 1 {
+            ipMap, _:= getIntfIpByName(d, tblName, ifName, true, false, "")
+            if ipMap != nil && len(ipMap) > 0 {
+                for k, v := range ipMap {
+                    intfIpMap[k] = v
+                }
+            }
+        } else {
+            for ip, _ := range subIntf.Ipv4.Addresses.Address {
+                ipMap, _ := getIntfIpByName(d, tblName, ifName, true, false, ip)
+
+                if ipMap != nil && len(ipMap) > 0 {
+                    for k, v := range ipMap {
+                        intfIpMap[k] = v
+                    }
+                }
+            }
+        }
+    }
+
+    if subIntf.Ipv6 != nil && subIntf.Ipv6.Addresses != nil {
+        if len(subIntf.Ipv6.Addresses.Address) < 1 {
+            ipMap, _ := getIntfIpByName(d, tblName, ifName, true, false, "")
+            if ipMap != nil && len(ipMap) > 0 {
+                for k, v := range ipMap {
+                    intfIpMap[k] = v
+                }
+            }
+        } else {
+            for ip, _ := range subIntf.Ipv6.Addresses.Address {
+                ipMap, _ := getIntfIpByName(d, tblName, ifName, true, false, ip)
+
+                if ipMap != nil && len(ipMap) > 0 {
+                    for k, v := range ipMap {
+                        intfIpMap[k] = v
+                    }
+                }
+            }
+        }
+    }
+    if len(intfIpMap) > 0 {
+        if _, ok := subIntfmap[tblName]; !ok {
+            subIntfmap[tblName] = make (map[string]db.Value)
+        }
+
+        for k, _ := range intfIpMap {
+            ifKey := ifName + "|" + k
+            var data db.Value
+            subIntfmap[tblName][ifKey] = data
+        }
+    }
+    log.Info("Delete IP address list ", subIntfmap,  " ", err)
+    return subIntfmap, err
+}
+
+
 var YangToDb_intf_ip_addr_xfmr SubTreeXfmrYangToDb = func(inParams XfmrParams) (map[string]map[string]db.Value, error) {
     var err error
     subIntfmap := make(map[string]map[string]db.Value)
@@ -554,6 +643,10 @@ var YangToDb_intf_ip_addr_xfmr SubTreeXfmrYangToDb = func(inParams XfmrParams) (
     tblName, _ := getIntfTableNameByDBId(intTbl, inParams.curDb)
 
     subIntfObj := intfObj.Subinterfaces.Subinterface[0]
+    if inParams.oper == DELETE {
+        return intf_ip_addr_del(inParams.d, ifName, tblName, subIntfObj)
+    }
+
     if subIntfObj.Ipv4 != nil && subIntfObj.Ipv4.Addresses != nil {
         for ip, _ := range subIntfObj.Ipv4.Addresses.Address {
             addr := subIntfObj.Ipv4.Addresses.Address[ip]

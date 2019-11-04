@@ -249,12 +249,6 @@ module openconfig-spanning-tree-ext {
     deviation /oc-stp:stp/oc-stp:global/oc-stp:state/oc-stp:bpdu-guard {
         deviate not-supported;
     }
-    deviation /oc-stp:stp/oc-stp:global/oc-stp:config/oc-stp:bpdu-filter {
-        deviate not-supported;
-    }
-    deviation /oc-stp:stp/oc-stp:global/oc-stp:state/oc-stp:bpdu-filter {
-        deviate not-supported;
-    }
 
     deviation /oc-stp:stp/oc-stp-ext:pvst/oc-stp-ext:vlan/oc-stp-ext:config/oc-stp-ext:hold-count {
         deviate not-supported;

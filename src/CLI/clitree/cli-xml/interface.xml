@@ -133,7 +133,7 @@ limitations under the License.
         help="LAG status and configurationn"
         mode="subcommand">
        <ACTION>
-            python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces PortChannel show_portchannel.j2
+            python $SONIC_CLI_ROOT/sonic-cli-portchannel.py get_sonic_portchannel_sonic_portchannel_lag_table show_portchannel.j2 ${__full_line}&#xA;
        </ACTION>
    </COMMAND>
 
@@ -193,7 +193,7 @@ limitations under the License.
              ptype="VLAN_ID"
              >
          </PARAM>
-     <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface Vlan${vlan-id}</ACTION>
+     <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config Vlan${vlan-id}</ACTION>
      </COMMAND>
 
     <COMMAND
@@ -202,7 +202,7 @@ limitations under the License.
         mode="subcommand"
         ptype="SUBCOMMAND"
         view="configure-lag-view"
-        viewid="po_id=po${lag-id}"
+        viewid="po_id=po${lag-id};po_name=PortChannel${lag-id};"
         >
         <PARAM
                 name="lag-id"
@@ -249,10 +249,13 @@ limitations under the License.
                 />
              </PARAM>
          </PARAM>
-      <ACTION>
-          if test "${if-subcommands}" = "Vlan"; then&#xA;
-              python $SONIC_CLI_ROOT/sonic-cli-if.py delete_openconfig_interfaces_interfaces_interface Vlan${vlan-id}&#xA;
-          fi
+     <ACTION>
+        if test "${if-subcommands}" = "PortChannel"; then&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-if.py delete_openconfig_interfaces_interfaces_interface PortChannel${lag-id}&#xA;
+        fi&#xA;
+        if test "${if-subcommands}" = "Vlan"; then&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-if.py delete_openconfig_interfaces_interfaces_interface Vlan${vlan-id}&#xA;
+        fi
      </ACTION>
      </COMMAND>
      </VIEW>
@@ -301,12 +304,12 @@ limitations under the License.
         </COMMAND>
         <COMMAND
             name="channel-group"
-            help="Configure port channel parameters"
+            help="Configure PortChannel parameters"
             >
             <!-- channel-group <number> -->
             <PARAM
                 name="lag-id"
-                help="Specify a port channel number"
+                help="Specify a PortChannel number"
                 ptype="LAG_ID"
             >
             <!-- channel-group <number> mode [active] -->
@@ -336,7 +339,7 @@ limitations under the License.
 
         <COMMAND
             name="no channel-group"
-            help="Remove from port channel group">
+            help="Remove from PortChannel group">
         <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py delete_openconfig_if_aggregate_interfaces_interface_ethernet_config_aggregate_id ${iface} </ACTION>
         </COMMAND>
         <COMMAND
@@ -418,58 +421,31 @@ limitations under the License.
        </ACTION>
        </COMMAND>
 
-       <COMMAND
-           name="sflow"
-           help="Interface sFlow settings"
-           />
-       <COMMAND
-           name="sflow sampling-rate"
-           help="Set sampling-rate"
-           ptype="SUBCOMMAND"
-           mode="subcommand"
-           >
-           <PARAM
-               name="rate"
-               help="Sampling rate"
-               ptype="UINT"
-               />
-            <ACTION builtin="clish_nop"/>
-            </COMMAND>
+       <COMMAND name="sflow" help="Interface sFlow settings"/>
+           <COMMAND name="sflow sampling-rate" help="Set sampling-rate" ptype="SUBCOMMAND" mode="subcommand">
+               <PARAM name="rate" help="Sampling rate" ptype="UINT"/>
+                  <ACTION>
+                       python $SONIC_CLI_ROOT/sonic-cli-sflow.py patch_sonic_sflow_sonic_sflow_sflow_session_sflow_session_list_sample_rate ${iface} ${rate}
+                  </ACTION>
+       </COMMAND>
 
-      <COMMAND
-          name="sflow enable"
-          help="Enable sflow"
-          ptype="SUBCOMMAND"
-          mode="subcommand"
-          >
-          <ACTION builtin="clish_nop"/>
-      </COMMAND>
+       <COMMAND name="sflow enable" help="Enable sflow" ptype="SUBCOMMAND" mode="subcommand">
+            <ACTION>
+                python $SONIC_CLI_ROOT/sonic-cli-sflow.py patch_sonic_sflow_sonic_sflow_sflow_session_sflow_session_list_admin_state ${iface} up
+            </ACTION>
+       </COMMAND>
 
-    <COMMAND
-        name="no sflow"
-        help="Disable sflow"
-        />
-    <COMMAND
-        name="no sflow sampling-rate"
-        help="Set sampling rate to default"
-        ptype="SUBCOMMAND"
-        mode="subcommand"
-        >
-        <PARAM
-            name="rate"
-            help="Sampling rate"
-            ptype="UINT"
-            />
-        <ACTION builtin="clish_nop"/>
-    </COMMAND>
-    <COMMAND
-        name="no sflow enable"
-        help="Disable sFlow"
-        ptype="SUBCOMMAND"
-        mode="subcommand"
-        >
-        <ACTION builtin="clish_nop"/>
-    </COMMAND>
+       <COMMAND name="no sflow" help="Disable sflow">
+           <ACTION>
+               python $SONIC_CLI_ROOT/sonic-cli-sflow.py patch_sonic_sflow_sonic_sflow_sflow_session_sflow_session_list_admin_state ${iface} down
+           </ACTION>
+       </COMMAND>
+
+       <COMMAND name="no sflow sampling-rate" help="Set sampling rate to default" ptype="SUBCOMMAND" mode="subcommand">
+           <ACTION>
+               python $SONIC_CLI_ROOT/sonic-cli-sflow.py delete_sonic_sflow_sonic_sflow_sflow_session_sflow_session_list_sample_rate ${iface}
+           </ACTION>
+       </COMMAND>
 
        <COMMAND
            name="no switchport"
@@ -597,12 +573,12 @@ limitations under the License.
             name="min-links"
             help="Configure the minimum number of links in a PortChannel"
             ptype="MIN_LINK" />
-        <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_aggregate_interfaces_interface_aggregation_config_min_links ${po_id} ${min-links} </ACTION>
+        <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_aggregate_interfaces_interface_aggregation_config_min_links ${po_name} ${min-links} </ACTION>
     </COMMAND>
     <COMMAND
         name="no min-links"
-        help="Default the minimum number of links in a port channel" >
-        <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_aggregate_interfaces_interface_aggregation_config_min_links ${po_id} 1 </ACTION>
+        help="Default the minimum number of links in a PortChannel" >
+        <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_aggregate_interfaces_interface_aggregation_config_min_links ${po_name} 0 </ACTION>
     </COMMAND>
     <COMMAND
         name="mtu"
@@ -611,22 +587,22 @@ limitations under the License.
             name="mtu"
             help="MTU of the interface"
             ptype="RANGE_MTU" />
-        <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config_mtu ${po_id} ${mtu} </ACTION>
+        <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config_mtu ${po_name} ${mtu} </ACTION>
     </COMMAND>
     <COMMAND
         name="no mtu"
-        help="Remove MTU">
-        <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config_mtu ${po_id} 9100 </ACTION>
+        help="Configure default MTU">
+        <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config_mtu ${po_name} 9100 </ACTION>
     </COMMAND>
     <COMMAND
         name="shutdown"
         help="Disable the interface">
-     <ACTION builtin="clish_nop"></ACTION>
+        <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config_enabled ${po_name} False </ACTION>
     </COMMAND>
     <COMMAND
         name="no shutdown"
         help="Enable the interface">
-     <ACTION builtin="clish_nop"></ACTION>
+        <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config_enabled ${po_name} True </ACTION>
     </COMMAND>
     <COMMAND
         name="ip"
@@ -644,7 +620,7 @@ limitations under the License.
             name="addr"
             help="IP address with mask"
             ptype="IP_ADDR_MASK" />
-     <ACTION builtin="clish_nop"></ACTION>
+	<ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config ${po_name} ${addr} </ACTION>
     </COMMAND>
 
     <COMMAND
@@ -655,9 +631,30 @@ limitations under the License.
             name="addr"
             help="IP address"
             ptype="IP_ADDR" />
-     <ACTION builtin="clish_nop"></ACTION>
+        <ACTION>
+	    python $SONIC_CLI_ROOT/sonic-cli-if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config_prefix_length ${po_name} ${addr}
+</ACTION>
     </COMMAND>
-    </VIEW>
+    <!-- lacp fallback -->
+    <COMMAND
+        help="Configure LACP fallback"
+        name="fallback"
+        >
+        <!-- lacp fallback enable -->
+        <PARAM
+            name="enable"
+            help="Enable lacp fallback"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            /> <!-- lacp fallback enable -->
+        <ACTION> python $SONIC_CLI_ROOT/sonic-cli-if.py patch_dell_intf_augments_interfaces_interface_aggregation_config_fallback ${po_name} True </ACTION>
+    </COMMAND>
+    <COMMAND
+        name="no fallback"
+        help="Disable fallback">
+        <ACTION> python $SONIC_CLI_ROOT/sonic-cli-if.py patch_dell_intf_augments_interfaces_interface_aggregation_config_fallback ${po_name} False </ACTION>
+    </COMMAND>
+    </VIEW> <!-- End of Configure View for PortChannel-->
 
     <VIEW
         name="configure-if-mgmt-view"
@@ -702,7 +699,7 @@ limitations under the License.
             name="mtu"
             help="Configure MTU">
             <PARAM
-                name="mtu" 
+                name="mtu"
                 help="MTU of the interface"
                 ptype="RANGE_MTU" />
             <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config_mtu ${iface} ${mtu} </ACTION>
@@ -715,8 +712,8 @@ limitations under the License.
         <COMMAND
             name="autoneg"
             help="Configure autoneg">
-            <PARAM 
-                name="autoneg" 
+            <PARAM
+                name="autoneg"
                 help="Autoneg config of the interface"
                 ptype="ON_OFF" />
             <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_ethernet_interfaces_interface_ethernet_config_auto_negotiate ${iface} ${autoneg} </ACTION>
@@ -729,8 +726,8 @@ limitations under the License.
         <COMMAND
             name="speed"
             help="Configure speed">
-            <PARAM 
-                name="speed" 
+            <PARAM
+                name="speed"
                 help="Speed config of the interface"
                 ptype="INTF_SPEED" />
             <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_ethernet_interfaces_interface_ethernet_config_port_speed ${iface} ${speed} </ACTION>
