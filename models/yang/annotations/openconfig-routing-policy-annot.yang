@@ -1,0 +1,364 @@
+module openconfig-routing-policy-annot {
+
+    yang-version "1";
+
+    namespace "http://openconfig.net/yang/annotation/oc-rpol-annot";
+    prefix "oc-rpol-annot";
+
+    import openconfig-extensions { prefix oc-ext; }
+    import openconfig-inet-types { prefix oc-inet; }
+    import openconfig-interfaces { prefix oc-if; }
+    import openconfig-policy-types { prefix oc-pol-types; }
+    import openconfig-routing-policy { prefix oc-rpol; }
+    import openconfig-bgp-policy { prefix oc-bgp-pol; }
+    import sonic-extensions {prefix sonic-ext; }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions {
+      deviate add {
+			sonic-ext:table-name "ROUTE_MAP";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement {
+      deviate add {
+            sonic-ext:key-transformer "route_map_key_xfmr";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:actions/oc-rpol:config/oc-rpol:policy-result {
+      deviate add {
+            sonic-ext:field-transformer "route_map_action_policy_result_xfmr";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:actions/oc-rpol:state/oc-rpol:policy-result {
+      deviate add {
+            sonic-ext:field-transformer "route_map_action_policy_result_xfmr";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-rpol:config/oc-rpol:install-protocol-eq {
+      deviate add {
+            sonic-ext:field-transformer "route_map_match_protocol_xfmr";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-rpol:state/oc-rpol:install-protocol-eq {
+      deviate add {
+            sonic-ext:field-transformer "route_map_match_protocol_xfmr";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-rpol:match-prefix-set/oc-rpol:config/oc-rpol:match-set-options {
+      deviate add {
+            sonic-ext:field-transformer "route_map_match_set_options_xfmr";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-rpol:match-prefix-set/oc-rpol:config/oc-rpol:prefix-set {
+      deviate add {
+            sonic-ext:field-name "match_prefix_set";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-rpol:match-prefix-set/oc-rpol:state/oc-rpol:match-set-options {
+      deviate add {
+            sonic-ext:field-transformer "route_map_match_set_options_xfmr";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-rpol:match-prefix-set/oc-rpol:state/oc-rpol:prefix-set {
+      deviate add {
+            sonic-ext:field-name "match_prefix_set";
+      }
+    }
+
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-rpol:match-interface/oc-rpol:config/oc-rpol:interface {
+      deviate add {
+            sonic-ext:field-name "match_interface";
+      }
+    }
+
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-rpol:match-interface/oc-rpol:state/oc-rpol:interface {
+      deviate add {
+            sonic-ext:field-name "match_interface";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-rpol:match-neighbor-set/oc-rpol:config/oc-rpol:match-set-options {
+      deviate add {
+            sonic-ext:field-transformer "route_map_match_set_options_xfmr";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-rpol:match-neighbor-set/oc-rpol:config/oc-rpol:neighbor-set {
+      deviate add {
+            sonic-ext:field-name "match_neighbor_set";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-rpol:match-neighbor-set/oc-rpol:state/oc-rpol:match-set-options {
+      deviate add {
+            sonic-ext:field-transformer "route_map_match_set_options_xfmr";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-rpol:match-neighbor-set/oc-rpol:state/oc-rpol:neighbor-set {
+      deviate add {
+            sonic-ext:field-name "match_neighbor_set";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-rpol:match-tag-set/oc-rpol:config/oc-rpol:match-set-options {
+      deviate add {
+            sonic-ext:field-transformer "route_map_match_set_options_xfmr";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-rpol:match-tag-set/oc-rpol:config/oc-rpol:tag-set {
+      deviate add {
+            sonic-ext:field-name "match_tag_set";
+      }
+    }
+
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-rpol:match-tag-set/oc-rpol:state/oc-rpol:match-set-options {
+      deviate add {
+            sonic-ext:field-transformer "route_map_match_set_options_xfmr";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-rpol:match-tag-set/oc-rpol:state/oc-rpol:tag-set {
+      deviate add {
+            sonic-ext:field-name "match_tag_set";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-rpol:config/oc-rpol:call-policy {
+      deviate add {
+            sonic-ext:field-name "call_route_map";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-rpol:state/oc-rpol:call-policy {
+      deviate add {
+            sonic-ext:field-name "call_route_map";
+      }
+    }
+
+
+
+
+
+
+
+
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-bgp-pol:bgp-conditions/oc-bgp-pol:config/oc-bgp-pol:next-hop-in {
+      deviate add {
+            sonic-ext:field-name "match_next_hop";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-bgp-pol:bgp-conditions/oc-bgp-pol:config/oc-bgp-pol:afi-safi-in {
+      deviate add {
+            sonic-ext:field-name "match_address_family";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-bgp-pol:bgp-conditions/oc-bgp-pol:config/oc-bgp-pol:med-eq {
+      deviate add {
+            sonic-ext:field-name "match_med";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-bgp-pol:bgp-conditions/oc-bgp-pol:config/oc-bgp-pol:origin-eq {
+      deviate add {
+            sonic-ext:field-name "match_origin";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-bgp-pol:bgp-conditions/oc-bgp-pol:config/oc-bgp-pol:local-pref-eq {
+      deviate add {
+            sonic-ext:field-name "match_local_pref";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-bgp-pol:bgp-conditions/oc-bgp-pol:config/oc-bgp-pol:route-type {
+      deviate add {
+            sonic-ext:field-name "match_route_type";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-bgp-pol:bgp-conditions/oc-bgp-pol:config/oc-bgp-pol:community-set {
+      deviate add {
+            sonic-ext:field-name "match_community";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-bgp-pol:bgp-conditions/oc-bgp-pol:config/oc-bgp-pol:ext-community-set {
+      deviate add {
+            sonic-ext:field-name "match_ext_community";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-bgp-pol:bgp-conditions/oc-bgp-pol:state/oc-bgp-pol:next-hop-in {
+      deviate add {
+            sonic-ext:field-name "match_next_hop";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-bgp-pol:bgp-conditions/oc-bgp-pol:state/oc-bgp-pol:afi-safi-in {
+      deviate add {
+            sonic-ext:field-name "match_address_family";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-bgp-pol:bgp-conditions/oc-bgp-pol:state/oc-bgp-pol:med-eq {
+      deviate add {
+            sonic-ext:field-name "match_med";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-bgp-pol:bgp-conditions/oc-bgp-pol:state/oc-bgp-pol:origin-eq {
+      deviate add {
+            sonic-ext:field-name "match_origin";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-bgp-pol:bgp-conditions/oc-bgp-pol:state/oc-bgp-pol:local-pref-eq {
+      deviate add {
+            sonic-ext:field-name "match_local_pref";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-bgp-pol:bgp-conditions/oc-bgp-pol:state/oc-bgp-pol:route-type {
+      deviate add {
+            sonic-ext:field-name "match_route_type";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-bgp-pol:bgp-conditions/oc-bgp-pol:state/oc-bgp-pol:community-set {
+      deviate add {
+            sonic-ext:field-name "match_community";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-bgp-pol:bgp-conditions/oc-bgp-pol:state/oc-bgp-pol:ext-community-set {
+      deviate add {
+            sonic-ext:field-name "match_ext_community";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-bgp-pol:bgp-conditions/oc-bgp-pol:match-as-path-set/oc-bgp-pol:config/oc-bgp-pol:as-path-set {
+      deviate add {
+            sonic-ext:field-name "match_as_path";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-bgp-pol:bgp-conditions/oc-bgp-pol:match-as-path-set/oc-bgp-pol:config/oc-bgp-pol:match-set-options {
+      deviate add {
+            sonic-ext:field-transformer "route_map_match_set_options_xfmr";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-bgp-pol:bgp-conditions/oc-bgp-pol:match-as-path-set/oc-bgp-pol:state/oc-bgp-pol:as-path-set {
+      deviate add {
+            sonic-ext:field-name "match_as_path";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-bgp-pol:bgp-conditions/oc-bgp-pol:match-as-path-set/oc-bgp-pol:state/oc-bgp-pol:match-set-options {
+      deviate add {
+            sonic-ext:field-transformer "route_map_match_set_options_xfmr";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:actions/oc-bgp-pol:bgp-actions/oc-bgp-pol:config/oc-bgp-pol:set-route-origin {
+      deviate add {
+            sonic-ext:field-name "set_origin";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:actions/oc-bgp-pol:bgp-actions/oc-bgp-pol:config/oc-bgp-pol:set-local-pref {
+      deviate add {
+            sonic-ext:field-name "set_local_pref";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:actions/oc-bgp-pol:bgp-actions/oc-bgp-pol:config/oc-bgp-pol:set-next-hop {
+      deviate add {
+            sonic-ext:field-name "set_next_hop";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:actions/oc-bgp-pol:bgp-actions/oc-bgp-pol:config/oc-bgp-pol:set-med {
+      deviate add {
+            sonic-ext:field-name "set_med";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:actions/oc-bgp-pol:bgp-actions/oc-bgp-pol:state/oc-bgp-pol:set-route-origin {
+      deviate add {
+            sonic-ext:field-name "set_origin";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:actions/oc-bgp-pol:bgp-actions/oc-bgp-pol:state/oc-bgp-pol:set-local-pref {
+      deviate add {
+            sonic-ext:field-name "set_local_pref";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:actions/oc-bgp-pol:bgp-actions/oc-bgp-pol:state/oc-bgp-pol:set-next-hop {
+      deviate add {
+            sonic-ext:field-name "set_next_hop";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:actions/oc-bgp-pol:bgp-actions/oc-bgp-pol:state/oc-bgp-pol:set-med {
+      deviate add {
+            sonic-ext:field-name "set_med";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:actions/oc-bgp-pol:bgp-actions/oc-bgp-pol:set-as-path-prepend/oc-bgp-pol:config/oc-bgp-pol:repeat-n {
+      deviate add {
+            sonic-ext:field-name "set_repeat_asn";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:actions/oc-bgp-pol:bgp-actions/oc-bgp-pol:set-as-path-prepend/oc-bgp-pol:config/oc-bgp-pol:asn {
+      deviate add {
+            sonic-ext:field-name "set_asn";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:actions/oc-bgp-pol:bgp-actions/oc-bgp-pol:set-as-path-prepend/oc-bgp-pol:state/oc-bgp-pol:repeat-n {
+      deviate add {
+            sonic-ext:field-name "set_repeat_asn";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:actions/oc-bgp-pol:bgp-actions/oc-bgp-pol:set-as-path-prepend/oc-bgp-pol:state/oc-bgp-pol:asn {
+      deviate add {
+            sonic-ext:field-name "set_asn";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:actions/oc-bgp-pol:bgp-actions/oc-bgp-pol:set-community {
+      deviate add {
+          sonic-ext:subtree-transformer "route_map_bgp_action_set_community";          
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:actions/oc-bgp-pol:bgp-actions/oc-bgp-pol:set-ext-community {
+      deviate add {
+          sonic-ext:subtree-transformer "route_map_bgp_action_set_ext_community";          
+      }
+    }
+
+}
+

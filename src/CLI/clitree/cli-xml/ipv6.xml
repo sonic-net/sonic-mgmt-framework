@@ -88,4 +88,34 @@ limitations under the License.
     </COMMAND>
 </VIEW>
 
+<VIEW name="configure-lag-view">
+    <COMMAND
+        name="ipv6"
+        help="Interface Internet Protocol config commands"
+    />
+    <COMMAND
+        name="no ipv6"
+        help="Interface Internet Protocol config commands"
+    />
+    <COMMAND
+        name="ipv6 address"
+        help="IPv6 address" >
+        <PARAM
+            name="addr"
+            help="IPv6 address with mask"
+            ptype="IPV6_ADDR_MASK" />
+        <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config ${po_name} ${addr} </ACTION>
+    </COMMAND>
+
+    <COMMAND
+        name="no ipv6 address"
+        help="IPv6 address" >
+        <PARAM
+            name="addr"
+            help="IPv6 address"
+            ptype="IPV6_ADDR" />
+        <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config_prefix_length ${po_name} ${addr} </ACTION>
+    </COMMAND>
+</VIEW>
+
 </CLISH_MODULE>

@@ -5,7 +5,6 @@ import (
     "encoding/json"
     "translib/ocbinds"
     "translib/db"
-    "reflect"
     "strconv"
     "os/exec"
     log "github.com/golang/glog"
@@ -99,7 +98,7 @@ var DbToYang_bgp_gbl_tbl_key_xfmr KeyXfmrDbToYang = func(inParams XfmrParams) (m
 var YangToDb_bgp_always_compare_med_enable_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
     res_map := make(map[string]string)
 
-    log.Info("YangToDb_bgp_always_compare_med_enable_xfmr Entry - ", reflect.ValueOf(inParams.param), "Type of : ", reflect.TypeOf(inParams.param));
+    log.Info("YangToDb_bgp_always_compare_med_enable_xfmr: ", inParams.ygRoot, " Xpath: ", inParams.uri)
     enabled, _ := inParams.param.(*bool)
     var enStr string
     if *enabled == true {
@@ -141,7 +140,7 @@ var DbToYang_bgp_always_compare_med_enable_xfmr FieldXfmrDbtoYang = func(inParam
 var YangToDb_bgp_allow_multiple_as_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
     res_map := make(map[string]string)
 
-    log.Info("YangToDb_bgp_allow_multiple_as_xfmr Entry - ", reflect.ValueOf(inParams.param), "Type of : ", reflect.TypeOf(inParams.param));
+    log.Info("YangToDb_bgp_allow_multiple_as_xfmr: ", inParams.ygRoot, " Xpath: ", inParams.uri)
     allow_multiple_as, _ := inParams.param.(*bool)
     var allowMultipleAsStr string
     if *allow_multiple_as == true {
@@ -183,7 +182,7 @@ var DbToYang_bgp_allow_multiple_as_xfmr FieldXfmrDbtoYang = func(inParams XfmrPa
 var YangToDb_bgp_graceful_restart_status_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
     res_map := make(map[string]string)
 
-    log.Info("YangToDb_bgp_graceful_restart_status_xfmr Entry - ", reflect.ValueOf(inParams.param), "Type of : ", reflect.TypeOf(inParams.param));
+    log.Info("YangToDb_bgp_graceful_restart_status_xfmr: ", inParams.ygRoot, " Xpath: ", inParams.uri)
     gr_status, _ := inParams.param.(*bool)
     var gr_statusStr string
     if *gr_status == true {
@@ -550,7 +549,7 @@ func get_all_nbr_state (get_req_uri_type E_bgp_nbr_state_get_req_uri_t,
 var YangToDb_bgp_ignore_as_path_length_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
     res_map := make(map[string]string)
 
-    log.Info("YangToDb_bgp_ignore_as_path_length_xfmr Entry - ", reflect.ValueOf(inParams.param), "Type of : ", reflect.TypeOf(inParams.param));
+    log.Info("YangToDb_bgp_ignore_as_path_length_xfmr: ", inParams.ygRoot, " Xpath: ", inParams.uri)
     ignore_as_path_length, _ := inParams.param.(*bool)
     var ignoreAsPathLen string
     if *ignore_as_path_length == true {
@@ -592,7 +591,7 @@ var DbToYang_bgp_ignore_as_path_length_xfmr FieldXfmrDbtoYang = func(inParams Xf
 var YangToDb_bgp_external_compare_router_id_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
     res_map := make(map[string]string)
 
-    log.Info("YangToDb_bgp_external_compare_router_id_xfmr Entry - ", reflect.ValueOf(inParams.param), "Type of : ", reflect.TypeOf(inParams.param));
+    log.Info("YangToDb_bgp_external_compare_router_id_xfmr: ", inParams.ygRoot, " Xpath: ", inParams.uri)
     external_compare_router_id, _ := inParams.param.(*bool)
     var externalCompareRouterIdStr string
     if *external_compare_router_id == true {

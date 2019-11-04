@@ -152,13 +152,9 @@ func loadYangModules(files ...string) error {
 		}
 	}
 
-	fmt.Println(".........................................")
 	dbMapBuild(sonic_entries)
-	fmt.Println("...................1......................")
 	annotDbSpecMap(sonic_annot_entries)
-	fmt.Println("....................2.....................")
 	annotToDbMapBuild(oc_annot_entries)
-	fmt.Println(".....................3....................")
 	yangToDbMapBuild(oc_entries)
 
 	return err
