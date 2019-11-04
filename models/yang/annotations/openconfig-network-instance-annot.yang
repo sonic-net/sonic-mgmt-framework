@@ -6,18 +6,6 @@ module openconfig-network-instance-annot {
     prefix "oc-netinst-annot";
 
     import openconfig-network-instance { prefix oc-netinst; }
-    import openconfig-network-instance-l3 { prefix oc-ni-l3; }
-    import openconfig-types { prefix oc-types; }
-    import openconfig-vlan { prefix oc-vlan; }
-    import openconfig-network-instance-types { prefix oc-ni-types; }
-    import openconfig-policy-types { prefix oc-pol-types; }
-    import openconfig-local-routing { prefix oc-loc-rt; }
-    import ietf-inet-types { prefix inet; }
-    import openconfig-extensions { prefix oc-ext; }
-    import openconfig-routing-policy { prefix oc-rpol; }
-    import openconfig-bgp { prefix oc-bgp; }
-    import openconfig-policy-forwarding { prefix oc-pf; }
-    import ietf-yang-types { prefix yang; }
     import sonic-extensions { prefix sonic-ext; }
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global {

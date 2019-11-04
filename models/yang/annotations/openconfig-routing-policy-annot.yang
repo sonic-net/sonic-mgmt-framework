@@ -5,7 +5,6 @@ module openconfig-routing-policy-annot {
     namespace "http://openconfig.net/yang/annotation/oc-rpol-annot";
     prefix "oc-rpol-annot";
 
-    import sonic-extensions { prefix sonic-ext; }
     import openconfig-policy-types { prefix oc-pol-types; }
     import openconfig-routing-policy { prefix oc-rpol; }
     import openconfig-bgp-policy { prefix oc-bgp-pol; }
