@@ -4,7 +4,6 @@ import (
     "errors"
     "encoding/json"
     "translib/ocbinds"
-    "reflect"
     "os/exec"
     log "github.com/golang/glog"
     ygot "github.com/openconfig/ygot/ygot"
@@ -75,10 +74,13 @@ var YangToDb_bgp_gbl_tbl_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (s
     var err error
 
     pathInfo := NewPathInfo(inParams.uri)
-    /* @@TODO Make sure name is vrf-name instead of BGP protocol name in the URI */
     niName := pathInfo.Var("name")
+    protoName := pathInfo.Var("name#2")
 
-    /* @@TODO Return error for protocols other than BGP here */
+    if protoName != "bgp" {
+        return niName, errors.New("Invalid protocol name : " + protoName)
+    }
+
     log.Info("URI VRF ", niName)
 
     return niName, err
@@ -97,7 +99,12 @@ var DbToYang_bgp_gbl_tbl_key_xfmr KeyXfmrDbToYang = func(inParams XfmrParams) (m
 var YangToDb_bgp_always_compare_med_enable_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
     res_map := make(map[string]string)
 
-    log.Info("YangToDb_bgp_always_compare_med_enable_xfmr Entry - ", reflect.ValueOf(inParams.param), "Type of : ", reflect.TypeOf(inParams.param));
+    log.Info("YangToDb_bgp_always_compare_med_enable_xfmr: ")
+    if inParams.param == nil {
+	    res_map["always_compare_med"] = ""
+	    return res_map, nil
+	}
+
     enabled, _ := inParams.param.(*bool)
     var enStr string
     if *enabled == true {
@@ -139,7 +146,12 @@ var DbToYang_bgp_always_compare_med_enable_xfmr FieldXfmrDbtoYang = func(inParam
 var YangToDb_bgp_allow_multiple_as_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
     res_map := make(map[string]string)
 
-    log.Info("YangToDb_bgp_allow_multiple_as_xfmr Entry - ", reflect.ValueOf(inParams.param), "Type of : ", reflect.TypeOf(inParams.param));
+    log.Info("YangToDb_bgp_allow_multiple_as_xfmr: ")
+    if inParams.param == nil {
+	    res_map["load_balance_mp_relax"] = ""
+	    return res_map, nil
+	}
+
     allow_multiple_as, _ := inParams.param.(*bool)
     var allowMultipleAsStr string
     if *allow_multiple_as == true {
@@ -181,7 +193,12 @@ var DbToYang_bgp_allow_multiple_as_xfmr FieldXfmrDbtoYang = func(inParams XfmrPa
 var YangToDb_bgp_graceful_restart_status_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
     res_map := make(map[string]string)
 
-    log.Info("YangToDb_bgp_graceful_restart_status_xfmr Entry - ", reflect.ValueOf(inParams.param), "Type of : ", reflect.TypeOf(inParams.param));
+    log.Info("YangToDb_bgp_graceful_restart_status_xfmr: ")
+    if inParams.param == nil {
+	    res_map["graceful_restart_enable"] = ""
+	    return res_map, nil
+	}
+
     gr_status, _ := inParams.param.(*bool)
     var gr_statusStr string
     if *gr_status == true {
@@ -390,7 +407,12 @@ func get_all_nbr_state (nbrs_obj *ocbinds.OpenconfigNetworkInstance_NetworkInsta
 var YangToDb_bgp_ignore_as_path_length_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
     res_map := make(map[string]string)
 
-    log.Info("YangToDb_bgp_ignore_as_path_length_xfmr Entry - ", reflect.ValueOf(inParams.param), "Type of : ", reflect.TypeOf(inParams.param));
+    log.Info("YangToDb_bgp_ignore_as_path_length_xfmr: ")
+    if inParams.param == nil {
+	    res_map["ignore_as_path_length"] = ""
+	    return res_map, nil
+	}
+
     ignore_as_path_length, _ := inParams.param.(*bool)
     var ignoreAsPathLen string
     if *ignore_as_path_length == true {
@@ -432,7 +454,12 @@ var DbToYang_bgp_ignore_as_path_length_xfmr FieldXfmrDbtoYang = func(inParams Xf
 var YangToDb_bgp_external_compare_router_id_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
     res_map := make(map[string]string)
 
-    log.Info("YangToDb_bgp_external_compare_router_id_xfmr Entry - ", reflect.ValueOf(inParams.param), "Type of : ", reflect.TypeOf(inParams.param));
+    log.Info("YangToDb_bgp_external_compare_router_id_xfmr: ")
+    if inParams.param == nil {
+	    res_map["external_compare_router_id"] = ""
+	    return res_map, nil
+	}
+
     external_compare_router_id, _ := inParams.param.(*bool)
     var externalCompareRouterIdStr string
     if *external_compare_router_id == true {

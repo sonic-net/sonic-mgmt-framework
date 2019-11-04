@@ -1,6 +1,6 @@
 module sonic-bgp-peergroup {
   namespace "http://github.com/Azure/sonic-bgp-peergroup";
-  prefix sbgppg;
+  prefix pg;
 
   import ietf-inet-types {
     prefix inet;

@@ -2,10 +2,6 @@ module sonic-sflow {
         namespace "http://github.com/Azure/sonic-sflow";
         prefix sflow;
 
-	import ietf-yang-types {
-		prefix yang;
-	}
-
 	import ietf-inet-types {
 		prefix inet;
 	}

@@ -106,8 +106,7 @@ type IntfApp struct {
 }
 
 func init() {
-	log.Info("JJ Init called for INTF module")
-	return 
+	log.Info("Init called for INTF module")
 	err := register("/openconfig-interfaces:interfaces",
 		&appInfo{appType: reflect.TypeOf(IntfApp{}),
 			ygotRootType: reflect.TypeOf(ocbinds.OpenconfigInterfaces_Interfaces{}),

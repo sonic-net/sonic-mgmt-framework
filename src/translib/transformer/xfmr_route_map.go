@@ -11,6 +11,7 @@ import (
 	"reflect"
 	"github.com/openconfig/ygot/ygot"
 	"translib/db"
+	"translib/tlerr"
 )
 
 func init () {
@@ -32,12 +33,16 @@ var YangToDb_route_map_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (str
     var err error
 
     pathInfo := NewPathInfo(inParams.uri)
-    /* @@TODO Make sure name is vrf-name instead of BGP protocol name in the URI */
     rtMapName := pathInfo.Var("name")
     stmtName := pathInfo.Var("name#2")
 
+    /* @@TODO For now, due to infra. ordering issue, always assuming statement name is uint16 value. */
+    _, err = strconv.ParseUint(stmtName, 10, 16)
+    if err != nil {
+        log.Info("URI route-map invalid statement name type, use values in range (1-65535)", stmtName)
+	    return entry_key, tlerr.InvalidArgs("Statement '%s' not supported, use values in range (1-65535)", stmtName)
+    }
     entry_key = rtMapName + "|" + stmtName
-    /* @@TODO Return error for protocols other than BGP here */
     log.Info("URI route-map ", entry_key)
 
     return entry_key, err
@@ -218,7 +223,9 @@ var YangToDb_route_map_bgp_action_set_community SubTreeXfmrYangToDb = func(inPar
             return res_map, errors.New("Routing policy invalid action parameters")
         }
 
+        log.Info("YangToDb_route_map_bgp_action_set_community: ", rtStmtActionCommObj.Inline.Config.Communities)
         for _, commUnion := range rtStmtActionCommObj.Inline.Config.Communities {
+            log.Info("YangToDb_route_map_bgp_action_set_community individual community value: ", commUnion)
             var b bytes.Buffer
             commType := reflect.TypeOf(commUnion).Elem()
             var std_community string
@@ -320,13 +327,15 @@ var DbToYang_route_map_bgp_action_set_community SubTreeXfmrDbToYang = func (inPa
     }
     rtMapInst := pTbl[entry_key]
 
-    if targetUriPath == "openconfig-routing-policy:routing-policy/policy-definitions/policy-definition/statements/statement/actions/openconfig-bgp-policy:bgp-actions/set-community" {
+    if targetUriPath == "/openconfig-routing-policy:routing-policy/policy-definitions/policy-definition/statements/statement/actions/openconfig-bgp-policy:bgp-actions/set-community" {
          communityInlineVal, ok := rtMapInst.Field["set_community_inline"]
+         log.Info("DbToYang_route_map_bgp_action_set_community: ", communityInlineVal)
          if ok {    
             rtStmtActionCommObj.Config.Method = ocbinds.OpenconfigRoutingPolicy_RoutingPolicy_PolicyDefinitions_PolicyDefinition_Statements_Statement_Actions_BgpActions_SetCommunity_Config_Method_INLINE
                 var CfgCommunities []ocbinds.OpenconfigRoutingPolicy_RoutingPolicy_PolicyDefinitions_PolicyDefinition_Statements_Statement_Actions_BgpActions_SetCommunity_Inline_Config_Communities_Union
                 var StateCommunities []ocbinds.OpenconfigRoutingPolicy_RoutingPolicy_PolicyDefinitions_PolicyDefinition_Statements_Statement_Actions_BgpActions_SetCommunity_Inline_State_Communities_Union
             for _, comm_val := range strings.Split(communityInlineVal, ",") {
+                log.Info("DbToYang_route_map_bgp_action_set_community individual community value: ", comm_val)
                 if (comm_val == "no_peer") {
                          cfg_val, _ := rtStmtActionCommObj.Inline.Config.To_OpenconfigRoutingPolicy_RoutingPolicy_PolicyDefinitions_PolicyDefinition_Statements_Statement_Actions_BgpActions_SetCommunity_Inline_Config_Communities_Union(ocbinds.OpenconfigBgpTypes_BGP_WELL_KNOWN_STD_COMMUNITY_NOPEER)
                          state_val, _ := rtStmtActionCommObj.Inline.State.To_OpenconfigRoutingPolicy_RoutingPolicy_PolicyDefinitions_PolicyDefinition_Statements_Statement_Actions_BgpActions_SetCommunity_Inline_State_Communities_Union(ocbinds.OpenconfigBgpTypes_BGP_WELL_KNOWN_STD_COMMUNITY_NOPEER)
@@ -363,6 +372,7 @@ var DbToYang_route_map_bgp_action_set_community SubTreeXfmrDbToYang = func (inPa
          } else {
             rtStmtActionCommObj.Config.Method = ocbinds.OpenconfigRoutingPolicy_RoutingPolicy_PolicyDefinitions_PolicyDefinition_Statements_Statement_Actions_BgpActions_SetCommunity_Config_Method_REFERENCE
             communityRef, ok := rtMapInst.Field["set_community_ref"]
+            log.Info("DbToYang_route_map_bgp_action_set_community reference: ", communityRef)
             if ok {
                 rtStmtActionCommObj.Reference.Config.CommunitySetRef = &communityRef
                 rtStmtActionCommObj.Reference.State.CommunitySetRef = &communityRef
@@ -416,7 +426,9 @@ var YangToDb_route_map_bgp_action_set_ext_community SubTreeXfmrYangToDb = func(i
             return res_map, errors.New("Routing policy invalid action parameters")
         }
 
+        log.Info("YangToDb_route_map_bgp_action_set_ext_community: ", rtStmtActionCommObj.Inline.Config.Communities)
         for _, commUnion := range rtStmtActionCommObj.Inline.Config.Communities {
+            log.Info("YangToDb_route_map_bgp_action_set_ext_community individual community: ",commUnion) 
             commType := reflect.TypeOf(commUnion).Elem()
             var std_community string
             switch commType {
@@ -512,8 +524,9 @@ var DbToYang_route_map_bgp_action_set_ext_community SubTreeXfmrDbToYang = func (
     }
     rtMapInst := pTbl[entry_key]
 
-    if targetUriPath == "openconfig-routing-policy:routing-policy/policy-definitions/policy-definition/statements/statement/actions/openconfig-bgp-policy:bgp-actions/set-ext-community" {
+    if targetUriPath == "/openconfig-routing-policy:routing-policy/policy-definitions/policy-definition/statements/statement/actions/openconfig-bgp-policy:bgp-actions/set-ext-community" {
          communityInlineVal, ok := rtMapInst.Field["set_ext_community_inline"]
+         log.Info("DbToYang_route_map_bgp_action_set_ext_community inline value: ", communityInlineVal)
          if ok {    
             rtStmtActionCommObj.Config.Method = ocbinds.OpenconfigRoutingPolicy_RoutingPolicy_PolicyDefinitions_PolicyDefinition_Statements_Statement_Actions_BgpActions_SetCommunity_Config_Method_INLINE
                 var CfgCommunities [] ocbinds.OpenconfigRoutingPolicy_RoutingPolicy_PolicyDefinitions_PolicyDefinition_Statements_Statement_Actions_BgpActions_SetExtCommunity_Inline_Config_Communities_Union
@@ -546,6 +559,7 @@ var DbToYang_route_map_bgp_action_set_ext_community SubTreeXfmrDbToYang = func (
          } else {
             rtStmtActionCommObj.Config.Method = ocbinds.OpenconfigRoutingPolicy_RoutingPolicy_PolicyDefinitions_PolicyDefinition_Statements_Statement_Actions_BgpActions_SetCommunity_Config_Method_REFERENCE
             communityRef, ok := rtMapInst.Field["set_ext_community_ref"]
+            log.Info("DbToYang_route_map_bgp_action_set_ext_community reference value: ", communityRef)
             if ok {
                 rtStmtActionCommObj.Reference.Config.ExtCommunitySetRef = &communityRef
                 rtStmtActionCommObj.Reference.State.ExtCommunitySetRef = &communityRef

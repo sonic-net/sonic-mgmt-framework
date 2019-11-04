@@ -41,7 +41,7 @@ module sonic-bgp-af {
           type string;
         }
 
-        leaf-list route-map {
+        leaf-list route_map {
           type string;
         }
 
