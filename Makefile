@@ -50,7 +50,8 @@ GO_DEPS_LIST = github.com/gorilla/mux \
                github.com/antchfx/jsonquery \
                github.com/antchfx/xmlquery \
                github.com/facette/natsort \
-	             github.com/philopon/go-toposort
+	           github.com/philopon/go-toposort \
+			   gopkg.in/godbus/dbus.v5
 
 
 REST_BIN = $(BUILD_DIR)/rest_server/main
@@ -130,6 +131,17 @@ install:
 	cp -rf $(TOPDIR)/build/cli $(DESTDIR)/usr/sbin/
 	cp -rf $(TOPDIR)/build/swagger_client_py/ $(DESTDIR)/usr/sbin/lib/
 	cp -rf $(TOPDIR)/src/cvl/conf/cvl_cfg.json $(DESTDIR)/usr/sbin/cvl_cfg.json
+
+	# Scripts for host service
+	$(INSTALL) -d $(DESTDIR)/usr/lib/sonic_host_service/host_modules
+	$(INSTALL) -D $(TOPDIR)/scripts/sonic_host_server.py $(DESTDIR)/usr/lib/sonic_host_service
+	$(INSTALL) -D $(TOPDIR)/scripts/host_modules/*.py $(DESTDIR)/usr/lib/sonic_host_service/host_modules
+	$(INSTALL) -d $(DESTDIR)/etc/dbus-1/system.d
+	$(INSTALL) -D $(TOPDIR)/scripts/org.sonic.hostservice.conf $(DESTDIR)/etc/dbus-1/system.d
+	$(INSTALL) -d $(DESTDIR)/lib/systemd/system
+	$(INSTALL) -D $(TOPDIR)/scripts/sonic-hostservice.service $(DESTDIR)/lib/systemd/system
+
+
 
 ifeq ($(SONIC_COVERAGE_ON),y)
 	echo "" > $(DESTDIR)/usr/sbin/.test

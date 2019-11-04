@@ -264,7 +264,6 @@ func (app *IntfApp) translateUpdatePhyIntf(d *db.DB, ifKey *string, inpOp reqTyp
 
 	/* Handling Interface Ethernet updates specific to LAG*/
 	err = app.translateUpdatePhyIntfEthernetLag(d, ifKey, intf)
-	log.Error("err returned -- , keys returned --", err, keys)
 	if err != nil {
 		return keys, err
 	}
@@ -553,6 +552,9 @@ func (app *IntfApp) translateDeletePhyIntfEthernet(d *db.DB, intf *ocbinds.Openc
 func (app *IntfApp) translateDeletePhyIntfEthernetLag(d *db.DB, intf *ocbinds.OpenconfigInterfaces_Interfaces_Interface, ifName *string) error {
 	var err error
 	if intf.Ethernet == nil {
+		return err
+	}
+	if intf.Ethernet.Config == nil {
 		return err
 	}
 	if intf.Ethernet.Config.AggregateId == nil {

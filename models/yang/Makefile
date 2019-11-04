@@ -23,9 +23,10 @@ BUILD_DIR := $(TOPDIR)/build
 YANGAPI_DIR                 := $(TOPDIR)/build/yaml
 YANGDIR                     := $(TOPDIR)/models/yang
 YANGDIR_COMMON              := $(TOPDIR)/models/yang/common
-YANGDIR_ANNOTATIONS         := $(TOPDIR)/models/yang/annotations/openapi_annotations
+YANGDIR_OPENAPI             := $(TOPDIR)/models/openapi
+YANGDIR_ANNOTATIONS         := $(TOPDIR)/models/yang/annotations
 YANG_MOD_FILES              := $(shell find $(YANGDIR) -maxdepth 1 -name '*.yang' | sort)
-YANG_ANNOTATIONS_FILES      := $(shell find $(YANGDIR_ANNOTATIONS) -maxdepth 1 -name '*.yang' | sort)
+YANG_ANNOTATIONS_FILES      := $(shell find $(YANGDIR_ANNOTATIONS) -name '*.yang' | sort)
 YANG_COMMON_FILES           := $(shell find $(YANGDIR_COMMON) -name '*.yang' | sort)
 
 TOOLS_DIR        := $(TOPDIR)/tools
@@ -33,18 +34,22 @@ PYANG_DIR        := $(TOOLS_DIR)/pyang
 PYANG_PLUGIN_DIR := $(PYANG_DIR)/pyang_plugins
 PYANG_BIN        := pyang
 
-.PHONY: all yamlGen
+.PHONY: all yamlGen annot
 
-all: yamlGen allyangs.tree allyangs_tree.html 
+all: yamlGen annot allyangs.tree allyangs_tree.html
 
 yamlGen: $(YANGAPI_DIR)/.done
+
+annot:
+	$(PYANG_BIN) --strict \
+		-p $(YANGDIR_COMMON):$(YANGDIR) $(YANG_ANNOTATIONS_FILES)
 
 allyangs.tree:  $(YANG_MOD_FILES) $(YANG_COMMON_FILES)
 	$(PYANG_BIN) \
 		-f tree \
 		-o $(YANGDIR)/$@ \
 		-p $(YANGDIR_COMMON):$(YANGDIR) \
-		$(YANG_MOD_FILES) $(YANG_ANNOTATIONS_FILES)
+		$(YANG_MOD_FILES)
 	@echo "+++++ Generation of  YANG tree for Yang modules completed +++++"
 
 allyangs_tree.html:  $(YANG_MOD_FILES) $(YANG_COMMON_FILES)
@@ -52,7 +57,7 @@ allyangs_tree.html:  $(YANG_MOD_FILES) $(YANG_COMMON_FILES)
 		-f jstree \
 		-o $(YANGDIR)/$@ \
 		-p $(YANGDIR_COMMON):$(YANGDIR) \
-		$(YANG_MOD_FILES) $(YANG_ANNOTATIONS_FILES) 
+		$(YANG_MOD_FILES)
 	@echo "+++++ Generation of  HTML tree for Yang modules completed +++++"
 
 #======================================================================
@@ -66,7 +71,7 @@ $(YANGAPI_DIR)/.done:  $(YANG_MOD_FILES) $(YANG_COMMON_FILES)
 		--outdir $(YANGAPI_DIR) \
 		--plugindir $(PYANG_PLUGIN_DIR) \
 		-p $(YANGDIR_COMMON):$(YANGDIR) \
-		$(YANG_MOD_FILES) $(YANG_ANNOTATIONS_FILES)
+		$(YANG_MOD_FILES)
 	@echo "+++++ Generation of  YAML files for Yang modules completed +++++"
 	touch $@
 
