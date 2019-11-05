@@ -422,38 +422,6 @@ func (app *IntfApp) processUpdatePhyIntfLagAdd(d *db.DB) error {
 	return err
 }
 
-/* Adding member to LAG requires adding new entry in PORTCHANNEL_MEMBER Table */
-func (app *IntfApp) processUpdatePhyIntfLagAdd(d *db.DB) error {
-	var err error
-	/* Updating the PORTCHANNEL MEMBER table */
-	for lagName, ifEntries := range app.lagD.lagMembersTableMap {
-		_, err := d.GetEntry(app.lagD.lagTs, db.Key{Comp: []string{lagName}})
-		/* PortChannel should exist before configuring aggregate-id to Ethernet Interface */
-		if err != nil {
-			log.Info("PortChannel does not exist")
-			return err
-		}
-		for ifName, ifEntry := range ifEntries {
-			log.Info("Adding interface to PortChannel:", ifName)
-			switch ifEntry.op {
-			case opCreate:
-				err = d.CreateEntry(app.lagD.lagMemberTs, db.Key{Comp: []string{lagName, ifName}}, ifEntry.entry)
-				if err != nil {
-					errStr := "Creating entry for LAG member table with lag : " + lagName + " If : " + ifName + " failed"
-					return errors.New(errStr)
-				}
-			case opUpdate:
-				err = d.SetEntry(app.lagD.lagMemberTs, db.Key{Comp: []string{lagName, ifName}}, ifEntry.entry)
-				if err != nil {
-					errStr := "Set entry for LAG member table with lag : " + lagName + " If : " + ifName + " failed"
-					return errors.New(errStr)
-				}
-			}
-		}
-	}
-	return err
-}
-
 func (app *IntfApp) updateAccessModeConfig(d *db.DB, ifName *string) error {
 	var err error
 
