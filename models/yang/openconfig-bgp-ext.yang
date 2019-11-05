@@ -453,6 +453,7 @@ module openconfig-bgp-ext {
               uses bgp-ext-neighbor-group-afi-safi-allowas-in-config; 
           }
           container state {
+              config false;
               uses bgp-ext-neighbor-group-afi-safi-allowas-in-config; 
           }
       }
@@ -464,6 +465,7 @@ module openconfig-bgp-ext {
               uses bgp-ext-attribute-unchanged-config;
           }
           container state {
+              config false;
               uses bgp-ext-attribute-unchanged-config;
           }
       }
@@ -475,6 +477,7 @@ module openconfig-bgp-ext {
               uses bgp-ext-originate-default-config; 
           }
           container state {
+              config false;
               uses bgp-ext-originate-default-config; 
           }
       }
@@ -486,6 +489,7 @@ module openconfig-bgp-ext {
               uses bgp-ext-filter-list-config; 
           }
           container state {
+              config false;
               uses bgp-ext-filter-list-config; 
           }
       }
@@ -497,6 +501,7 @@ module openconfig-bgp-ext {
               uses bgp-ext-next-hop-self-config; 
           }
           container state {
+              config false;
               uses bgp-ext-next-hop-self-config; 
           }
       }
@@ -508,6 +513,7 @@ module openconfig-bgp-ext {
               uses bgp-ext-prefix-list-config; 
           }
           container state {
+              config false;
               uses bgp-ext-prefix-list-config; 
           }
       }
@@ -519,6 +525,7 @@ module openconfig-bgp-ext {
               uses bgp-ext-remove-private-as-config; 
           }
           container state {
+              config false;
               uses bgp-ext-remove-private-as-config; 
           }
       }
@@ -597,11 +604,11 @@ module openconfig-bgp-ext {
 	  deviate not-supported;
   }
 
-  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:ipv4-unicast {
+  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:ipv4-unicast/oc-netinst:prefix-limit {
 	  deviate not-supported;
   }
 
-  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:ipv6-unicast {
+  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:ipv6-unicast/oc-netinst:prefix-limit {
 	  deviate not-supported;
   }
 
@@ -796,10 +803,47 @@ module openconfig-bgp-ext {
   deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:rib/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:ipv6-srte-policy {
 	  deviate not-supported;
   }
+ 
+/*
+  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:rib/oc-netinst:attr-sets {
+	  deviate not-supported;
+  }
+
+  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:rib/oc-netinst:communities {
+	  deviate not-supported;
+  }
+
+  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:rib/oc-netinst:ext-communities {
+	  deviate not-supported;
+  }
+
+  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:rib/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:ipv4-unicast/oc-netinst:loc-rib/oc-netinst:routes/oc-netinst:route/oc-netinst:state/oc-netinst:attr-index {
+	  deviate not-supported;
+  }
 
 
 
+  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:rib/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:ipv4-unicast/oc-netinst:loc-rib/oc-netinst:routes/oc-netinst:route/oc-netinst:state/oc-netinst:community-index {
+	  deviate not-supported;
+  }
 
+
+  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:rib/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:ipv4-unicast/oc-netinst:loc-rib/oc-netinst:routes/oc-netinst:route/oc-netinst:state/oc-netinst:ext-community-index {
+	  deviate not-supported;
+  }
+  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:rib/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:ipv4-unicast/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:adj-rib-in-pre/oc-netinst:routes/oc-netinst:route/oc-netinst:state/oc-netinst:attr-index {
+	  deviate not-supported;
+  }
+
+  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:rib/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:ipv4-unicast/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:adj-rib-in-pre/oc-netinst:routes/oc-netinst:route/oc-netinst:state/oc-netinst:community-index {
+	  deviate not-supported;
+  }
+
+  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:rib/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:ipv4-unicast/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:adj-rib-in-pre/oc-netinst:routes/oc-netinst:route/oc-netinst:state/oc-netinst:ext-community-index {
+	  deviate not-supported;
+  }
+
+*/
 
   augment /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global {
       uses oc-bgp:bgp-common-structure-neighbor-group-logging-options;
@@ -814,6 +858,14 @@ module openconfig-bgp-ext {
       uses bgp-ext-global-config;
   }
   
+ 
+  augment /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:ipv4-unicast  {
+      uses bgp-ext-global-afi-safi;
+  }
+
+  augment /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:ipv6-unicast {
+      uses bgp-ext-global-afi-safi;
+  }
 
   augment /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:ipv4-unicast/oc-netinst:config  {
       uses bgp-ext-global-afi-safi-config;
@@ -822,15 +874,7 @@ module openconfig-bgp-ext {
   augment /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:ipv6-unicast/oc-netinst:config  {
       uses bgp-ext-global-afi-safi-config;
   }
-  
-  augment /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:ipv4-unicast  {
-      uses bgp-ext-global-afi-safi;
-  }
 
-  augment /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:ipv6-unicast {
-      uses bgp-ext-global-afi-safi;
-  }
-  
   augment /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:config {
       uses bgp-ext-neighbor-group-config;
   }
@@ -878,4 +922,6 @@ module openconfig-bgp-ext {
   augment /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:ipv6-unicast {
       uses bgp-ext-neighbor-group-afi-safi;
   }
+
+
 }
