@@ -191,6 +191,16 @@ func TestNewPathInfo_dups(t *testing.T) {
 		mkmap("xx", "1", "yy", "2", "xx#2", "3", "zz", "4", "yy#2", "5", "xx#3", "6"))
 }
 
+func TestNewPathInfo_escaped_name(t *testing.T) {
+	testPathInfo(t, "/test/xx[one\\==1][two[\\]=2]", "/test/xx{}{}",
+		mkmap("one=", "1", "two[]", "2"))
+}
+
+func TestNewPathInfo_escaped_valu(t *testing.T) {
+	testPathInfo(t, "/test/xx[one=[1\\]][two=\\0\\02 [\\.\\D]", "/test/xx{}{}",
+		mkmap("one", "[1]", "two", "002 [.D"))
+}
+
 func testPathInfo(t *testing.T, path, expTemplate string, expVars map[string]string) {
 	info := NewPathInfo(path)
 	if info == nil {

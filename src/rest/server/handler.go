@@ -186,11 +186,20 @@ func getPathForTranslib(r *http.Request) string {
 		}
 
 		restStyle := fmt.Sprintf("{%v}", k)
-		gnmiStyle := fmt.Sprintf("[%v=%v]", rc.PMap.Get(k), v)
+		gnmiStyle := fmt.Sprintf("[%v=%v]", rc.PMap.Get(k), escapeKeyValue(v))
 		path = strings.Replace(path, restStyle, gnmiStyle, 1)
 	}
 
 	return path
+}
+
+// escapeKeyValue function escapes a path key's value as per gNMI path
+// conventions -- prefixes '\' to ']' and '\'
+func escapeKeyValue(val string) string {
+	val = strings.Replace(val, "\\", "\\\\", -1)
+	val = strings.Replace(val, "]", "\\]", -1)
+
+	return val
 }
 
 // trimRestconfPrefix removes "/restconf/data" prefix from the path.
