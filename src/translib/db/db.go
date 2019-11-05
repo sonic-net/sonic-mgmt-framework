@@ -211,6 +211,15 @@ func (k Key) String() string {
 	return fmt.Sprintf("{ Comp: %v }", k.Comp)
 }
 
+func (v Value) String () string {
+	var str string
+	for k, v1 := range v.Field {
+		str = str + fmt.Sprintf("\"%s\": \"%s\"\n", k, v1)
+	}
+
+	return str
+}
+
 // Value gives the fields as a map.
 // (Eg: { Field: map[string]string { "type" : "l3v6", "ports" : "eth0" } } ).
 type Value struct {
@@ -925,7 +934,7 @@ func (d *DB) DeleteTable(ts *TableSpec) error {
 		e := d.DeleteEntry(ts, keys[i])
 		if e != nil {
 			glog.Warning("DeleteTable: DeleteEntry: " + e.Error())
-			continue
+			break	
 		}
 	}
 DeleteTableExit:
@@ -1094,82 +1103,114 @@ func Tables2TableSpecs(tables []string) []* TableSpec {
 // StartTx method is used by infra to start a check-and-set Transaction.
 func (d *DB) StartTx(w []WatchKeys, tss []*TableSpec) error {
 
-	if glog.V(3) {
-		glog.Info("StartTx: Begin: w: ", w, " tss: ", tss)
-	}
+    if glog.V(3) {
+        glog.Info("StartTx: Begin: w: ", w, " tss: ", tss) 
+    }    
 
-	var e error = nil
-	var args []interface{}
-	var ret cvl.CVLRetCode
+    var e error = nil
+    var ret cvl.CVLRetCode
 
-	//Start CVL session
-	if d.cv, ret = cvl.ValidationSessOpen(); ret != cvl.CVL_SUCCESS {
-		e = errors.New("StartTx: Unable to create CVL session")
-		goto StartTxExit
-	}
+    //Start CVL session
+    if d.cv, ret = cvl.ValidationSessOpen(); ret != cvl.CVL_SUCCESS {
+        e = errors.New("StartTx: Unable to create CVL session")
+        goto StartTxExit
+    }
 
-	// Validate State
-	if d.txState != txStateNone {
-		glog.Error("StartTx: Incorrect State, txState: ", d.txState)
-		e = errors.New("Transaction already in progress")
-		goto StartTxExit
-	}
+    // Validate State
+    if d.txState != txStateNone {
+        glog.Error("StartTx: Incorrect State, txState: ", d.txState)
+        e = errors.New("Transaction already in progress")
+        goto StartTxExit
+    }    
 
-	// For each watchkey
-	//   If a pattern, Get the keys, appending results to Cmd args.
-	//   Else append keys to the Cmd args
-	//   Note: (LUA scripts do not support WATCH)
-
-	args = make([]interface{}, 0, len(w) + len(tss) + 1)
-	args = append(args, "WATCH")
-	for i := 0; i < len(w); i++ {
-
-		redisKey := d.key2redis(w[i].Ts, *(w[i].Key))
-
-		if !strings.Contains(redisKey, "*") {
-			args = append(args, redisKey)
-			continue
-		}
-
-		redisKeys, e := d.client.Keys(redisKey).Result()
-		if e != nil {
-			glog.Warning("StartTx: Keys: " + e.Error())
-			continue
-		}
-		for j := 0; j < len(redisKeys); j++ {
-			args = append(args, d.redis2key(w[i].Ts, redisKeys[j]))
-		}
-	}
-
-	// for each TS, append to args the CONFIG_DB_UPDATED_<TABLENAME> key
-
-	for i := 0; i < len(tss); i++ {
-		args = append( args, d.ts2redisUpdated(tss[i]))
-	}
-
-	if len(args) == 1 {
-		glog.Warning("StartTx: Empty WatchKeys. Skipping WATCH")
-		goto StartTxSkipWatch
-	}
-
-	// Issue the WATCH
-	_, e = d.client.Do(args...).Result()
-
-	if e != nil {
-		glog.Warning("StartTx: Do: WATCH ", args, " e: ", e.Error())
-	}
-
-StartTxSkipWatch:
-
-	// Switch State
-	d.txState = txStateWatch
+    e = d.performWatch(w, tss) 
 
 StartTxExit:
 
-	if glog.V(3) {
-		glog.Info("StartTx: End: e: ", e)
-	}
-	return e
+    if glog.V(3) {
+        glog.Info("StartTx: End: e: ", e)
+    }    
+    return e
+}
+
+func (d *DB) AppendWatchTx(w []WatchKeys, tss []*TableSpec) error {
+    if glog.V(3) {
+        glog.Info("AppendWatchTx: Begin: w: ", w, " tss: ", tss) 
+    }    
+
+    var e error = nil
+
+    // Validate State
+    if d.txState == txStateNone {
+        glog.Error("AppendWatchTx: Incorrect State, txState: ", d.txState)
+        e = errors.New("Transaction has not started")
+        goto AppendWatchTxExit
+    }
+
+    e = d.performWatch(w, tss)
+
+AppendWatchTxExit:
+
+    if glog.V(3) {
+        glog.Info("AppendWatchTx: End: e: ", e)
+    }
+    return e
+}
+
+func (d *DB) performWatch(w []WatchKeys, tss []*TableSpec) error {
+    var e error
+    var args []interface{}
+
+    // For each watchkey
+    //   If a pattern, Get the keys, appending results to Cmd args.
+    //   Else append keys to the Cmd args
+    //   Note: (LUA scripts do not support WATCH)
+
+    args = make([]interface{}, 0, len(w) + len(tss) + 1)
+    args = append(args, "WATCH")
+    for i := 0; i < len(w); i++ {
+
+        redisKey := d.key2redis(w[i].Ts, *(w[i].Key))
+
+        if !strings.Contains(redisKey, "*") {
+            args = append(args, redisKey)
+            continue
+        }
+
+        redisKeys, e := d.client.Keys(redisKey).Result()
+        if e != nil {
+            glog.Warning("performWatch: Keys: " + e.Error())
+            continue
+        }
+        for j := 0; j < len(redisKeys); j++ {
+            args = append(args, d.redis2key(w[i].Ts, redisKeys[j]))
+        }
+    }
+
+    // for each TS, append to args the CONFIG_DB_UPDATED_<TABLENAME> key
+
+    for i := 0; i < len(tss); i++ {
+        args = append( args, d.ts2redisUpdated(tss[i]))
+    }
+
+    if len(args) == 1 {
+        glog.Warning("performWatch: Empty WatchKeys. Skipping WATCH")
+        goto SkipWatch
+    }
+
+    // Issue the WATCH
+    _, e = d.client.Do(args...).Result()
+
+    if e != nil {
+        glog.Warning("performWatch: Do: WATCH ", args, " e: ", e.Error())
+    }
+
+SkipWatch:
+
+    // Switch State
+    d.txState = txStateWatch
+
+    return e
 }
 
 // CommitTx method is used by infra to commit a check-and-set Transaction.

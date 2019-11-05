@@ -301,7 +301,7 @@ func (app *IntfApp) processUpdatePhyIntfVlanAdd(d *db.DB) error {
 
 	for vlanName, ifEntries := range app.vlanD.vlanMembersTableMap {
 		var memberPortsListStrB strings.Builder
-		var memberPortsList []string
+		var memberPortsList, stpInterfacesList []string
 		isMembersListUpdate = false
 
 		vlanEntry, err := d.GetEntry(app.vlanD.vlanTs, db.Key{Comp: []string{vlanName}})
@@ -359,6 +359,8 @@ func (app *IntfApp) processUpdatePhyIntfVlanAdd(d *db.DB) error {
 					errStr := "Creating entry for VLAN member table with vlan : " + vlanName + " If : " + ifName + " failed"
 					return errors.New(errStr)
 				}
+				// Make a list of interfaces which got switchport enabled to have STP enabled
+				stpInterfacesList = append(stpInterfacesList, ifName)
 			case opUpdate:
 				err = d.SetEntry(app.vlanD.vlanMemberTs, db.Key{Comp: []string{vlanName, ifName}}, ifEntry.entry)
 				if err != nil {
@@ -381,6 +383,40 @@ func (app *IntfApp) processUpdatePhyIntfVlanAdd(d *db.DB) error {
 		err = d.SetEntry(app.vlanD.vlanTs, db.Key{Comp: []string{vlanName}}, vlanEntry)
 		if err != nil {
 			return errors.New("Updating VLAN table with member ports failed")
+		}
+		// Enable STP on L2 intefaces
+		enableStpOnInterfaceVlanMembership(d, stpInterfacesList)
+	}
+	return err
+}
+
+/* Adding member to LAG requires adding new entry in PORTCHANNEL_MEMBER Table */
+func (app *IntfApp) processUpdatePhyIntfLagAdd(d *db.DB) error {
+	var err error
+	/* Updating the PORTCHANNEL MEMBER table */
+	for lagName, ifEntries := range app.lagD.lagMembersTableMap {
+		_, err := d.GetEntry(app.lagD.lagTs, db.Key{Comp: []string{lagName}})
+		/* PortChannel should exist before configuring aggregate-id to Ethernet Interface */
+		if err != nil {
+			log.Info("PortChannel does not exist")
+			return err
+		}
+		for ifName, ifEntry := range ifEntries {
+			log.Info("Adding interface to PortChannel:", ifName)
+			switch ifEntry.op {
+			case opCreate:
+				err = d.CreateEntry(app.lagD.lagMemberTs, db.Key{Comp: []string{lagName, ifName}}, ifEntry.entry)
+				if err != nil {
+					errStr := "Creating entry for LAG member table with lag : " + lagName + " If : " + ifName + " failed"
+					return errors.New(errStr)
+				}
+			case opUpdate:
+				err = d.SetEntry(app.lagD.lagMemberTs, db.Key{Comp: []string{lagName, ifName}}, ifEntry.entry)
+				if err != nil {
+					errStr := "Set entry for LAG member table with lag : " + lagName + " If : " + ifName + " failed"
+					return errors.New(errStr)
+				}
+			}
 		}
 	}
 	return err

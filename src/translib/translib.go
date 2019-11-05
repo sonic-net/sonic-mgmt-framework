@@ -38,7 +38,6 @@ import (
 	"sync"
 	"translib/db"
 	"translib/tlerr"
-
 	"github.com/Workiva/go-datastructures/queue"
 	log "github.com/golang/glog"
 )
@@ -64,6 +63,7 @@ type SetRequest struct {
 
 type SetResponse struct {
 	ErrSrc ErrSource
+	Err    error
 }
 
 type GetRequest struct {
@@ -83,6 +83,20 @@ type ActionRequest struct {
 type ActionResponse struct {
 	Payload []byte
 	ErrSrc  ErrSource
+}
+
+type BulkRequest struct {
+	DeleteRequest  []SetRequest
+	ReplaceRequest []SetRequest
+	UpdateRequest  []SetRequest
+	CreateRequest  []SetRequest
+}
+
+type BulkResponse struct {
+	DeleteResponse  []SetResponse
+	ReplaceResponse []SetResponse
+	UpdateResponse  []SetResponse
+	CreateResponse  []SetResponse
 }
 
 type SubscribeResponse struct {
@@ -483,6 +497,246 @@ func Action(req ActionRequest) (ActionResponse, error) {
 	}
 
 	resp, err = (*app).processAction(dbs)
+
+	return resp, err
+}
+
+func Bulk(req BulkRequest) (BulkResponse, error) {
+	var err error
+	var keys []db.WatchKeys
+	var errSrc ErrSource
+
+	delResp := make([]SetResponse, len(req.DeleteRequest))
+	replaceResp := make([]SetResponse, len(req.ReplaceRequest))
+	updateResp := make([]SetResponse, len(req.UpdateRequest))
+	createResp := make([]SetResponse, len(req.CreateRequest))
+
+	resp := BulkResponse{DeleteResponse: delResp,
+		ReplaceResponse: replaceResp,
+		UpdateResponse: updateResp,
+		CreateResponse: createResp}
+
+	writeMutex.Lock()
+	defer writeMutex.Unlock()
+
+	d, err := db.NewDB(getDBOptions(db.ConfigDB))
+
+	if err != nil {
+		return resp, err
+	}
+
+	defer d.DeleteDB()
+
+	//Start the transaction without any keys or tables to watch will be added later using AppendWatchTx
+	err = d.StartTx(nil, nil)
+
+	if err != nil {
+        return resp, err
+    }
+
+	for i, _ := range req.DeleteRequest {
+		path := req.DeleteRequest[i].Path
+
+		log.Info("Delete request received with path =", path)
+
+		app, appInfo, err := getAppModule(path)
+
+		if err != nil {
+			errSrc = ProtoErr
+			goto BulkDeleteError
+		}
+
+		err = appInitialize(app, appInfo, path, nil, DELETE)
+
+		if err != nil {
+			errSrc = AppErr
+			goto BulkDeleteError
+		}
+
+		keys, err = (*app).translateDelete(d)
+
+		if err != nil {
+			errSrc = AppErr
+			goto BulkDeleteError
+		}
+
+		err = d.AppendWatchTx(keys, appInfo.tablesToWatch)
+
+		if err != nil {
+			errSrc = AppErr
+			goto BulkDeleteError
+		}
+
+		resp.DeleteResponse[i], err = (*app).processDelete(d)
+
+		if err != nil {
+			errSrc = AppErr
+		}
+
+	BulkDeleteError:
+
+		if err != nil {
+			d.AbortTx()
+			resp.DeleteResponse[i].ErrSrc = errSrc
+			resp.DeleteResponse[i].Err = err
+			return resp, err
+		}
+	}
+
+    for i, _ := range req.ReplaceRequest {
+        path := req.ReplaceRequest[i].Path
+		payload := req.ReplaceRequest[i].Payload
+
+        log.Info("Replace request received with path =", path)
+
+        app, appInfo, err := getAppModule(path)
+
+        if err != nil {
+            errSrc = ProtoErr
+            goto BulkReplaceError
+        }
+
+		log.Info("Bulk replace request received with path =", path)
+		log.Info("Bulk replace request received with payload =", string(payload))
+
+		err = appInitialize(app, appInfo, path, &payload, REPLACE)
+
+        if err != nil {
+            errSrc = AppErr
+            goto BulkReplaceError
+        }
+
+        keys, err = (*app).translateReplace(d)
+
+        if err != nil {
+            errSrc = AppErr
+            goto BulkReplaceError
+        }
+
+        err = d.AppendWatchTx(keys, appInfo.tablesToWatch)
+
+        if err != nil {
+            errSrc = AppErr
+            goto BulkReplaceError
+        }
+
+        resp.ReplaceResponse[i], err = (*app).processReplace(d)
+
+        if err != nil {
+            errSrc = AppErr
+        }
+
+    BulkReplaceError:
+
+        if err != nil {
+            d.AbortTx()
+            resp.ReplaceResponse[i].ErrSrc = errSrc
+            resp.ReplaceResponse[i].Err = err
+            return resp, err
+        }
+    }
+
+	for i, _ := range req.UpdateRequest {
+		path := req.UpdateRequest[i].Path
+		payload := req.UpdateRequest[i].Payload
+
+		log.Info("Update request received with path =", path)
+
+		app, appInfo, err := getAppModule(path)
+
+		if err != nil {
+			errSrc = ProtoErr
+			goto BulkUpdateError
+		}
+
+		err = appInitialize(app, appInfo, path, &payload, UPDATE)
+
+		if err != nil {
+			errSrc = AppErr
+			goto BulkUpdateError
+		}
+
+		keys, err = (*app).translateUpdate(d)
+
+		if err != nil {
+			errSrc = AppErr
+			goto BulkUpdateError
+		}
+
+		err = d.AppendWatchTx(keys, appInfo.tablesToWatch)
+
+		if err != nil {
+			errSrc = AppErr
+			goto BulkUpdateError
+		}
+
+		resp.UpdateResponse[i], err = (*app).processUpdate(d)
+
+		if err != nil {
+			errSrc = AppErr
+		}
+
+	BulkUpdateError:
+
+		if err != nil {
+			d.AbortTx()
+			resp.UpdateResponse[i].ErrSrc = errSrc
+			resp.UpdateResponse[i].Err = err
+			return resp, err
+		}
+	}
+
+	for i, _ := range req.CreateRequest {
+		path := req.CreateRequest[i].Path
+		payload := req.CreateRequest[i].Payload
+
+		log.Info("Create request received with path =", path)
+
+		app, appInfo, err := getAppModule(path)
+
+		if err != nil {
+			errSrc = ProtoErr
+			goto BulkCreateError
+		}
+
+		err = appInitialize(app, appInfo, path, &payload, CREATE)
+
+		if err != nil {
+			errSrc = AppErr
+			goto BulkCreateError
+		}
+
+		keys, err = (*app).translateCreate(d)
+
+		if err != nil {
+			errSrc = AppErr
+			goto BulkCreateError
+		}
+
+		err = d.AppendWatchTx(keys, appInfo.tablesToWatch)
+
+		if err != nil {
+			errSrc = AppErr
+			goto BulkCreateError
+		}
+
+		resp.CreateResponse[i], err = (*app).processCreate(d)
+
+		if err != nil {
+			errSrc = AppErr
+		}
+
+	BulkCreateError:
+
+		if err != nil {
+			d.AbortTx()
+			resp.CreateResponse[i].ErrSrc = errSrc
+			resp.CreateResponse[i].Err = err
+			return resp, err
+		}
+	}
+
+	err = d.CommitTx()
 
 	return resp, err
 }

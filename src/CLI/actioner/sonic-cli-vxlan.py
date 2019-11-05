@@ -40,6 +40,18 @@ def generate_body(func, args):
     elif func.__name__ == 'delete_sonic_vxlan_sonic_vxlan_vxlan_tunnel':
        #keypath = [ args[0][5:] ]
        keypath = []
+    elif func.__name__ == 'patch_list_sonic_vxlan_sonic_vxlan_suppress_vlan_neigh_suppress_vlan_neigh_list':
+       keypath = []
+       body = {
+         "sonic-vxlan:SUPPRESS_VLAN_NEIGH_LIST": [
+           {
+             "name": args[0],
+             "suppress": 'on'
+           }
+         ]
+       }
+    elif func.__name__ == 'delete_sonic_vxlan_sonic_vxlan_suppress_vlan_neigh_suppress_vlan_neigh_list':
+       keypath = [ args[0] ]
     elif func.__name__ == 'patch_list_sonic_vxlan_sonic_vxlan_evpn_nvo_evpn_nvo_list':
        keypath = []
        body = {
