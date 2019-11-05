@@ -126,9 +126,20 @@ limitations under the License.
     <PARAM name="ip-addr" help="Router identifier" ptype="IP_ADDR" optional="true"/>
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_config_router_id ${vrf-name} ${ip-addr}</ACTION>
   </COMMAND>
-  <COMMAND name="no graceful-restart" help="Enable BGP graceful restart feature" >
+  <COMMAND name="no graceful-restart" help="BGP graceful restart feature"/>
+  <COMMAND name="no graceful-restart enable" help="Disable BGP graceful restart">
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_graceful_restart_config_enabled ${vrf-name}</ACTION>
   </COMMAND>
+  <COMMAND name="no graceful-restart preserve-fw-state" help="Disable BGP graceful restart preserve FW state">
+    <ACTION builtin="clish_nop"/>
+  </COMMAND>
+  <COMMAND name="no graceful-restart restart-time" help="Unconfigure BGP graceful restart restart-time">
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_graceful_restart_config_restart_time ${vrf-name}</ACTION>
+  </COMMAND>
+  <COMMAND name="no graceful-restart stalepath-time" help="Unconfigure BGP graceful restart stalepath-time">
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_graceful_restart_config_stale_routes_time ${vrf-name}</ACTION>
+  </COMMAND>
+  
   <COMMAND name="no bestpath" help="best path">
     <PARAM name="as-path" help="as=path" mode="subcommand" ptype="SUBCOMMAND">
       <PARAM name="multipath-relax" help="Multipath relax command" mode="subcommand" ptype="SUBCOMMAND" />

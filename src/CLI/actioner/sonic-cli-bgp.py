@@ -96,29 +96,21 @@ def generate_body(func, args):
     elif func.__name__ == 'patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_config':
         keypath = [ args[0], IDENTIFIER, NAME1, args[1] ]
         body = { "openconfig-network-instance:afi-safi-name": args[1] }
-    elif func.__name__ == 'delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_config':
+    elif func.__name__ == 'delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_config' or \
+         func.__name__ == 'delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_config_router_id' or \
+         func.__name__ == 'delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_graceful_restart_config_enabled' or \
+         func.__name__ == 'delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_graceful_restart_config_restart_time' or \
+         func.__name__ == 'delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_graceful_restart_config_stale_routes_time' or \
+         func.__name__ == 'delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_use_multiple_paths_ebgp_config_allow_multiple_as' or \
+         func.__name__ == 'delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_route_selection_options_config_always_compare_med' or \
+         func.__name__ == 'delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_route_selection_options_config_ignore_as_path_length' or \
+         func.__name__ == 'delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_route_selection_options_config_external_compare_router_id' or \
+         func.__name__ == 'delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_default_route_distance_config_external_route_distance' or \
+         func.__name__ == 'delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_default_route_distance_config_internal_route_distance':
         keypath = [ args[0], IDENTIFIER, NAME1 ]
-    elif func.__name__ == 'delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_config_router_id':
-        keypath = [ args[0], IDENTIFIER, NAME1 ]
-    elif func.__name__ == 'delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_graceful_restart_config_enabled':
-        keypath = [ args[0], IDENTIFIER, NAME1 ]
-    elif func.__name__ == 'delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_use_multiple_paths_ebgp_config_allow_multiple_as':
-        keypath = [ args[0], IDENTIFIER, NAME1 ]
-    elif func.__name__ == 'delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_route_selection_options_config_always_compare_med':
-        keypath = [ args[0], IDENTIFIER, NAME1 ]
-    elif func.__name__ == 'delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_route_selection_options_config_ignore_as_path_length':
-        keypath = [ args[0], IDENTIFIER, NAME1 ]
-    elif func.__name__ == 'delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_route_selection_options_config_external_compare_router_id':
-        keypath = [ args[0], IDENTIFIER, NAME1 ]
-    elif func.__name__ == 'delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_default_route_distance_config_external_route_distance':
-        keypath = [ args[0], IDENTIFIER, NAME1 ]
-    elif func.__name__ == 'delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_default_route_distance_config_internal_route_distance':
-        keypath = [ args[0], IDENTIFIER, NAME1 ]
-    elif func.__name__ == 'delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_local_as':
-        keypath = [ args[0], IDENTIFIER, NAME1, args[1] ]
-    elif func.__name__ == 'delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_config_local_as':
-        keypath = [ args[0], IDENTIFIER, NAME1, args[1] ]
-    elif func.__name__ == 'delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_config':
+    elif func.__name__ == 'delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_local_as' or \
+         func.__name__ == 'delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_config_local_as' or \
+         func.__name__ == 'delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_config':
         keypath = [ args[0], IDENTIFIER, NAME1, args[1] ]
     else:
         body = {}
