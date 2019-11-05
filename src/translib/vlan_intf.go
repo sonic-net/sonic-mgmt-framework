@@ -63,9 +63,9 @@ func (app *IntfApp) processUpdateVlanIntfConfig(d *db.DB) error {
 				return errors.New(errStr)
 			}
 			// Enable STP on newly created Vlans
-			//var vlanList []string
-			//vlanList = append(vlanList, vlanId)
-			//enableStpOnVlanCreation(d, vlanList)
+			var vlanList []string
+			vlanList = append(vlanList, vlanId)
+			enableStpOnVlanCreation(d, vlanList)
 		case opUpdate:
 			err = d.SetEntry(app.vlanD.vlanTs, db.Key{Comp: []string{vlanId}}, vlanEntry.entry)
 			if err != nil {
@@ -123,12 +123,12 @@ func (app *IntfApp) processDeleteVlanIntfAndMembers(d *db.DB) error {
 				}
 			}
 			// Disable STP configuration for ports which are removed from VLan membership
-			//removeStpOnInterfaceSwitchportDeletion(d, memberPorts)
+			removeStpOnInterfaceSwitchportDeletion(d, memberPorts)
 		}
 		// Disable STP configuration for Vlans which are deleted
-		//var vlanList []string
-		//vlanList = append(vlanList, vlanKey)
-		//removeStpConfigOnVlanDeletion(d, vlanList)
+		var vlanList []string
+		vlanList = append(vlanList, vlanKey)
+		removeStpConfigOnVlanDeletion(d, vlanList)
 
 		err = d.DeleteEntry(app.vlanD.vlanTs, db.Key{Comp: []string{vlanKey}})
 		if err != nil {

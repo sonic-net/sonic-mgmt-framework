@@ -60,6 +60,60 @@
                 python $SONIC_CLI_ROOT/sonic-cli-udld.py udldInterfaceCountersShowHandler ${interface-name}&#xA;
             </ACTION>
         </COMMAND>
+
+        <COMMAND name = "debug udld" help = "UDLD debug commands" />
+        <COMMAND name = "no debug udld" help = "UDLD debug commands" />
+        <COMMAND name = "debug udld dump" help = "Dump UDLD info commands" />
+        <COMMAND name = "no debug udld dump" help = "Dump UDLD info commands" />
+        <COMMAND name = "debug udld dump global" help = "Dump UDLD global debug information">
+            <ACTION>
+                python $SONIC_CLI_ROOT/sonic-cli-udld.py udldGlobalDebugHandler 1&#xA;
+            </ACTION>
+        </COMMAND>
+        <COMMAND name = "no debug udld dump global" help = "Dump UDLD global debug information">
+            <ACTION>
+                python $SONIC_CLI_ROOT/sonic-cli-udld.py udldGlobalDebugHandler 0&#xA;
+            </ACTION>
+        </COMMAND>
+        <COMMAND name = "debug udld dump interface" help = "Dump UDLD interface debug information">
+            <PARAM 
+                name = "interface-name"
+                help = "Interface name"
+                ptype = "STRING">
+            </PARAM>
+            <ACTION>
+                python $SONIC_CLI_ROOT/sonic-cli-udld.py udldInterfaceDebugHandler 1 ${interface-name}&#xA;
+            </ACTION>
+        </COMMAND>
+        <COMMAND name = "no debug udld dump interface" help = "Dump UDLD interface debug information">
+            <PARAM 
+                name = "interface-name"
+                help = "Interface name"
+                ptype = "STRING">
+            </PARAM>
+            <ACTION>
+                python $SONIC_CLI_ROOT/sonic-cli-udld.py udldInterfaceDebugHandler 0 ${interface-name}&#xA;
+            </ACTION>
+        </COMMAND>
+
+        <COMMAND name = "clear udld" help = "UDLD Clear commands" />
+        <COMMAND name = "clear udld statistics" help = "Clear UDLD statistics">
+            <ACTION>
+                python $SONIC_CLI_ROOT/sonic-cli-udld.py udldInterfaceCountersClearHandler&#xA;
+            </ACTION>
+        </COMMAND>
+        <!-- clear udld counters interface <ifname> -->
+        <COMMAND name = "clear udld statistics interface"
+            help = "Clear UDLD interface level statistics">
+            <PARAM 
+                name = "interface-name"
+                help = "Interface name"
+                ptype = "STRING">
+            </PARAM>
+            <ACTION>
+                python $SONIC_CLI_ROOT/sonic-cli-udld.py udldInterfaceCountersClearHandler ${interface-name}&#xA;
+            </ACTION>
+        </COMMAND>
     </VIEW>
 
 
