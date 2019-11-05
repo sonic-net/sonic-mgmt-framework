@@ -26,10 +26,10 @@ import (
     "os"
     "strconv"
     "errors"
-    "translib/ocbinds"
+    //"translib/ocbinds"
     "github.com/openconfig/goyang/pkg/yang"
     "github.com/openconfig/ygot/ygot"
-    "github.com/openconfig/ygot/ytypes"
+    //"github.com/openconfig/ygot/ytypes"
 
     log "github.com/golang/glog"
 )
@@ -45,7 +45,7 @@ func xfmrHandlerFunc(inParams XfmrParams) (map[string]interface{}, error) {
         log.Infof("Failed to retrieve data for xpath(\"%v\") err(%v).", inParams.uri, err)
         return result, err
     }
-
+/*
     ocbSch, _  := ocbinds.Schema()
     schRoot    := ocbSch.RootSchema()
     device     := (*inParams.ygRoot).(*ocbinds.Device)
@@ -71,15 +71,16 @@ func xfmrHandlerFunc(inParams XfmrParams) (map[string]interface{}, error) {
     nodeYgot, _ := (node).(ygot.ValidatedGoStruct)
     payload, err := ygot.EmitJSON(nodeYgot, &ygot.EmitJSONConfig{ Format: ygot.RFC7951,
                                   Indent: "  ", SkipValidation: true,
+					resultMap = fldValMap
                                   RFC7951Config: &ygot.RFC7951JSONConfig{ AppendModuleName: false, },
                                   })
-    err = json.Unmarshal([]byte(payload), &result)
+    err = json.Unmarshal([]byte(payload), &result)*/
     return result, err
 }
 
 func leafXfmrHandlerFunc(inParams XfmrParams) (map[string]interface{}, error) {
     xpath, _ := XfmrRemoveXPATHPredicates(inParams.uri)
-    ret, err := XlateFuncCall(dbToYangXfmrFunc(xYangSpecMap[xpath].xfmrFunc), inParams)
+    ret, err := XlateFuncCall(dbToYangXfmrFunc(xYangSpecMap[xpath].xfmrField), inParams)
     if err != nil {
         return nil, err
     }
@@ -566,7 +567,7 @@ func terminalNodeProcess(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string
 	}
 
 	cdb := xYangSpecMap[xpath].dbIndex
-	if len(xYangSpecMap[xpath].xfmrFunc) > 0 {
+	if len(xYangSpecMap[xpath].xfmrField) > 0 {
 		inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, uri, GET, tblKey, dbDataMap, nil, txCache)
 		fldValMap, err := leafXfmrHandlerFunc(inParams)
 		if err != nil {
@@ -794,12 +795,20 @@ func dbDataToYangJsonCreate(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db
 						resultMap[yangName] = ""
 						break
 					}
-					tbl, key, _ := tableNameAndKeyFromDbMapGet((*dbDataMap)[cdb])
-					fldValMap, err := terminalNodeProcess(dbs, ygRoot, uri, reqXpath, dbDataMap, tbl, key, txCache)
-					if err != nil {
-						log.Infof("Empty terminal node (\"%v\").", uri)
+                                        if len(xYangSpecMap[reqXpath].xfmrFunc) > 0 {
+                                                inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, uri, GET, "", dbDataMap, nil, txCache)
+						cmap, _ := xfmrHandlerFunc(inParams)
+                                                if cmap != nil && len(cmap) > 0 {
+                                                        resultMap = cmap
+                                                }
+                                        } else {
+						tbl, key, _ := tableNameAndKeyFromDbMapGet((*dbDataMap)[cdb])
+						fldValMap, err := terminalNodeProcess(dbs, ygRoot, uri, reqXpath, dbDataMap, tbl, key, txCache)
+						if err != nil {
+							log.Infof("Empty terminal node (\"%v\").", uri)
+						}
+						resultMap = fldValMap
 					}
-					resultMap = fldValMap
 					break
 
 				} else if yangType == YANG_CONTAINER {
