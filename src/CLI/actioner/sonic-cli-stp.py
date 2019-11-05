@@ -144,7 +144,7 @@ def generate_body(func, args):
        body = { "openconfig-spanning-tree:bridge-priority": int(args[2]) }
     elif func.__name__ == 'delete_openconfig_spanning_tree_stp_rapid_pvst_vlan_config_bridge_priority' or func.__name__ == 'delete_openconfig_spanning_tree_ext_stp_pvst_vlan_config_bridge_priority':
        keypath = [ int(args[1]) ]
-    elif func.__name__ == 'patch_openconfig_spanning_tree_stp_global_config_enabled_protocol':
+    elif func.__name__ == 'post_openconfig_spanning_tree_stp_global_config_enabled_protocol':
        keypath = []
        if (len(args) > 1):
           if args[1] == 'pvst':
