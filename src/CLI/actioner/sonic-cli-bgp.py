@@ -96,6 +96,15 @@ def generate_body(func, args):
     elif func.__name__ == 'patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_config':
         keypath = [ args[0], IDENTIFIER, NAME1, args[1] ]
         body = { "openconfig-network-instance:afi-safi-name": args[1] }
+    elif func.__name__ == 'patch_openconfig_network_instance1348121867':
+        keypath = [ args[0], IDENTIFIER, NAME1, args[1] ]
+        body = { "openconfig-network-instance:maximum-paths": int(args[2]) }
+    elif func.__name__ == 'patch_openconfig_network_instance1543452951':
+        keypath = [ args[0], IDENTIFIER, NAME1, args[1] ]
+        body = { "openconfig-network-instance:maximum-paths": int(args[2]) }
+    elif func.__name__ == 'patch_openconfig_network_instance1717438887':
+        keypath = [ args[0], IDENTIFIER, NAME1, args[1] ]
+        body = { "openconfig-network-instance:peer-group": args[2] }
     elif func.__name__ == 'delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_config' or \
          func.__name__ == 'delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_config_router_id' or \
          func.__name__ == 'delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_graceful_restart_config_enabled' or \

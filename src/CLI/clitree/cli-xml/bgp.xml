@@ -112,13 +112,22 @@ limitations under the License.
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_config_local_as ${vrf-name} ${template-str} ${instance}</ACTION>
   </COMMAND>
   <COMMAND name="address-family" help="Enter Address Family command mode"/>
-  <COMMAND name="address-family ipv4" help="Enter Address Family command mode" view="configure-router-bgp-ipv4-view" viewid="family=ipv4">
-    <PARAM name="unicast" help="Address Family" mode="subcommand" ptype="SUBCOMMAND" view="configure-router-bgp-ipv4-view" viewid="family=ipv4"/>
+  <COMMAND name="address-family ipv4" help="Enter Address Family command mode" view="configure-router-bgp-ipv4-view" viewid="vrf-name=${vrf-name};family=ipv4">
+    <PARAM name="unicast" help="Address Family" mode="subcommand" ptype="SUBCOMMAND" view="configure-router-bgp-ipv4-view" viewid="vrf-family=ipv4"/>
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_config ${vrf-name} IPV4_UNICAST</ACTION>
   </COMMAND>
-  <COMMAND name="address-family ipv6" help="Enter Address Family command mode" view="configure-router-bgp-ipv6-view" viewid="family=ipv6">
+  <COMMAND name="address-family ipv6" help="Enter Address Family command mode" view="configure-router-bgp-ipv6-view" viewid="vrf-name=${vrf-name};family=ipv6">
     <PARAM name="unicast" help="Address Family" mode="subcommand" ptype="SUBCOMMAND" view="configure-router-bgp-ipv6-view" viewid="family=ipv6"/>
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_config ${vrf-name} IPV6_UNICAST</ACTION>
+  </COMMAND>
+
+  <COMMAND name="listen" help="Set the prefix range for dynamic peers">
+    <PARAM name="addr" help="Neighbor prefix" ptype="IP_ADDR_MASK">
+      <PARAM name="peer-group" help="Member of the peer-group" mode="subcommand" ptype="SUBCOMMAND">
+        <PARAM name="pgname" help="Peer-group name" ptype="STRING"/>
+      </PARAM>
+    </PARAM>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance1717438887 ${vrf-name} ${addr} ${pgname} </ACTION>
   </COMMAND>
 
     <COMMAND name="no" help="no commands"/>

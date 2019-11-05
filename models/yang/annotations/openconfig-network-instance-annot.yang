@@ -623,13 +623,13 @@ module openconfig-network-instance-annot {
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:use-multiple-paths {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi {
       deviate add {
-        sonic-ext:db-name "CONFIG_DB";
         sonic-ext:table-name "BGP_AF";
-        sonic-ext:key-transformer "bgp_afi_safi_use_multi_path_key_xfmr";
+        sonic-ext:key-transformer "bgp_gbl_afi_safi_key_xfmr";
       }
     }
+
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:use-multiple-paths/oc-netinst:ebgp/oc-netinst:config/oc-netinst:maximum-paths {
       deviate add {
         sonic-ext:field-name "max_ebgp_paths";
@@ -657,11 +657,6 @@ module openconfig-network-instance-annot {
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:table-connections/oc-netinst:table-connection/oc-netinst:config/oc-netinst:import-policy {
       deviate add {
         sonic-ext:field-name "route_map";
-      }
-    }
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi {
-      deviate add {
-        sonic-ext:key-transformer "bgp_gbl_afi_safi_key_xfmr";
       }
     }
 
