@@ -95,13 +95,19 @@ limitations under the License.
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_graceful_restart_config_stale_routes_time ${vrf-name} ${stalepath-time}</ACTION>
   </COMMAND>
   
-  <COMMAND name="bestpath" help="best path">
-    <PARAM name="as-path" help="as=path" mode="subcommand" ptype="SUBCOMMAND">
-      <PARAM name="multipath-relax" help="Multipath relax command" mode="subcommand" ptype="SUBCOMMAND" />
-    </PARAM>
-    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_use_multiple_paths_ebgp_config_allow_multiple_as ${vrf-name} True</ACTION>
+  <COMMAND name="always-compare-med" help="Allow comparing MED from different neighbors">
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_route_selection_options_config_always_compare_med ${vrf-name} True</ACTION>
   </COMMAND>
   
+  <COMMAND name="bestpath" help="Change the default bestpath selection"/>
+  <COMMAND name="bestpath as-path" help="AS-path for best path computation"/>
+  <COMMAND name="bestpath as-path multipath-relax" help="Include prefixes received from different AS path during multipath calculation">
+  <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_use_multiple_paths_ebgp_config_allow_multiple_as ${vrf-name} True</ACTION>
+  </COMMAND>
+  <COMMAND name="bestpath as-path ignore" help="Ignore AS path for best path computation">
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_route_selection_options_config_ignore_as_path_length ${vrf-name} True</ACTION>
+  </COMMAND>
+
   <COMMAND name="neighbor" help="Specify a neighbor router" view="configure-router-bgp-nbr-view" viewid="nbr-addr=${ip};vrf-name=default">
     <PARAM name="ip" help="neighbor router" ptype="IPV4V6_ADDR" view="configure-router-bgp-nbr-view" viewid="nbr-addr=${ip};vrf-name=${vrf-name}"/>
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_local_as ${vrf-name} ${ip} ${instance}</ACTION>
@@ -149,12 +155,19 @@ limitations under the License.
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_graceful_restart_config_stale_routes_time ${vrf-name}</ACTION>
   </COMMAND>
   
-  <COMMAND name="no bestpath" help="best path">
-    <PARAM name="as-path" help="as=path" mode="subcommand" ptype="SUBCOMMAND">
-      <PARAM name="multipath-relax" help="Multipath relax command" mode="subcommand" ptype="SUBCOMMAND" />
-    </PARAM>
-    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_use_multiple_paths_ebgp_config_allow_multiple_as ${vrf-name}</ACTION>
+  <COMMAND name="no always-compare-med" help="Allow comparing MED from different neighbors">
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_route_selection_options_config_always_compare_med ${vrf-name}</ACTION>
   </COMMAND>
+
+  <COMMAND name="no bestpath" help="Change the default bestpath selection"/>
+  <COMMAND name="no bestpath as-path" help="AS-path for best path computation"/>
+  <COMMAND name="no bestpath as-path multipath-relax" help="Include prefixes received from different AS path during multipath calculation">
+  <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_use_multiple_paths_ebgp_config_allow_multiple_as ${vrf-name}</ACTION>
+  </COMMAND>
+  <COMMAND name="no bestpath as-path ignore" help="Ignore AS path for best path computation">
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_route_selection_options_config_ignore_as_path_length ${vrf-name}</ACTION>
+  </COMMAND>
+
   <COMMAND name="no neighbor" help="Specify a neighbor router">
     <PARAM name="ip" help="neighbor router" ptype="IPV4V6_ADDR" optional="true"/>
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_local_as ${vrf-name} ${ip}</ACTION>
