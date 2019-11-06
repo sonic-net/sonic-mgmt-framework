@@ -65,9 +65,6 @@ func dataToDBMapAdd(tableName string, dbKey string, result map[string]map[string
 	}
 
     result[tableName][dbKey].Field[field] = value
-    if _, ok = result[tableName][dbKey].Field["NULL"]; ok {
-	    delete(result[tableName][dbKey].Field, "NULL")
-    }
     return
 }
 
@@ -122,6 +119,7 @@ func mapFillData(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, dbKey st
 	return nil
 }
 
+var ocbSch, _ = ocbinds.Schema()
 func mapFillDataUtil(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, xpath string, tableName string, dbKey string, result map[string]map[string]db.Value, name string, value interface{}, txCache interface{}) error {
 	var dbs [db.MaxDB]*db.DB
 	xpathInfo := xYangSpecMap[xpath]
@@ -130,7 +128,7 @@ func mapFillDataUtil(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, xpat
 		uri = uri + "/" + name
 
 		/* field transformer present */
-		log.Infof("Transformer function(\"%v\") invoked for yang path(\"%v\").", xpathInfo.xfmrFunc, xpath)
+		log.Infof("Transformer function(\"%v\") invoked for yang path(\"%v\").", xpathInfo.xfmrField, xpath)
 		path, _ := ygot.StringToPath(uri, ygot.StructuredPath, ygot.StringSlicePath)
 		for _, p := range path.Elem {
 			pathSlice := strings.Split(p.Name, ":")
@@ -142,7 +140,6 @@ func mapFillDataUtil(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, xpat
 				}
 			}
 		}
-		ocbSch, _ := ocbinds.Schema()
 		schRoot := ocbSch.RootSchema()
 		node, nErr := ytypes.GetNode(schRoot, (*ygRoot).(*ocbinds.Device), path)
 		log.Info("GetNode data: ", node[0].Data, " nErr :", nErr)
@@ -150,7 +147,7 @@ func mapFillDataUtil(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, xpat
 			return nErr
 		}
 		inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, uri, oper, "", nil, node[0].Data, txCache)
-		ret, err := XlateFuncCall(yangToDbXfmrFunc(xYangSpecMap[xpath].xfmrField), inParams)
+		ret, err := XlateFuncCall(yangToDbXfmrFunc(xpathInfo.xfmrField), inParams)
 		if err != nil {
 			return err
 		}
@@ -509,7 +506,6 @@ func yangNodeForUriGet(uri string, ygRoot *ygot.GoStruct) (interface{}, error) {
 			}
 		}
 	}
-	ocbSch, _ := ocbinds.Schema()
 	schRoot := ocbSch.RootSchema()
 	node, nErr := ytypes.GetNode(schRoot, (*ygRoot).(*ocbinds.Device), path)
 	if nErr != nil {
