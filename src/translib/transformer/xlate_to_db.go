@@ -117,10 +117,6 @@ func mapFillData(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, dbKey st
     } else {
 	    tableName = *xpathInfo.tableName
     }
-    if xpathInfo.isKey {
-	     dataToDBMapAdd(tableName, dbKey, result, "NONE", "NULL")
-	     return nil
-    }
 
 	mapFillDataUtil(d, ygRoot, oper, uri, xpath, tableName, dbKey, result, name, value, txCache);
 	return nil
@@ -130,7 +126,7 @@ func mapFillDataUtil(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, xpat
 	var dbs [db.MaxDB]*db.DB
 	xpathInfo := xYangSpecMap[xpath]
 
-	if len(xpathInfo.xfmrFunc) > 0 {
+	if len(xpathInfo.xfmrField) > 0 {
 		uri = uri + "/" + name
 
 		/* field transformer present */
@@ -154,7 +150,7 @@ func mapFillDataUtil(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, xpat
 			return nErr
 		}
 		inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, uri, oper, "", nil, node[0].Data, txCache)
-		ret, err := XlateFuncCall(yangToDbXfmrFunc(xYangSpecMap[xpath].xfmrFunc), inParams)
+		ret, err := XlateFuncCall(yangToDbXfmrFunc(xYangSpecMap[xpath].xfmrField), inParams)
 		if err != nil {
 			return err
 		}
@@ -419,12 +415,12 @@ func dbMapDefaultFieldValFill(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri str
 						if !ok && len(childNode.defVal) > 0  && len(childNode.fieldName) > 0 {
 							log.Infof("Update(\"%v\") default: tbl[\"%v\"]key[\"%v\"]fld[\"%v\"] = val(\"%v\").",
 							childXpath, tblName, dbKey, childNode.fieldName, childNode.defVal)
-							if len(childNode.xfmrFunc) > 0 {
+							if len(childNode.xfmrField) > 0 {
 								childYangType := childNode.yangEntry.Type.Kind
 								_, defValPtr, err := DbToYangType(childYangType, childXpath, childNode.defVal)
 								if err == nil && defValPtr != nil {
 									inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, childXpath, oper, "", nil, defValPtr, txCache)
-									ret, err := XlateFuncCall(yangToDbXfmrFunc(xYangSpecMap[childXpath].xfmrFunc), inParams)
+									ret, err := XlateFuncCall(yangToDbXfmrFunc(xYangSpecMap[childXpath].xfmrField), inParams)
 									if err == nil {
 										retData := ret[0].Interface().(map[string]string)
 										for f, v := range retData {

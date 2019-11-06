@@ -34,6 +34,8 @@ func init () {
     XlateFuncBind("DbToYang_intf_subintfs_xfmr", DbToYang_intf_subintfs_xfmr)
     XlateFuncBind("DbToYang_intf_get_counters_xfmr", DbToYang_intf_get_counters_xfmr)
 	XlateFuncBind("YangToDb_intf_tbl_key_xfmr", YangToDb_intf_tbl_key_xfmr)
+    XlateFuncBind("YangToDb_intf_name_empty_xfmr", YangToDb_intf_name_empty_xfmr)
+
 }
 
 const (
@@ -56,6 +58,7 @@ const (
     MGMT                     = "eth"
     VLAN                     = "Vlan"
     PORTCHANNEL              = "PortChannel"
+	LOOPBACK                 = "Loopback"
 )
 
 type TblData  struct  {
@@ -97,9 +100,13 @@ var IntfTypeTblMap = map[E_InterfaceType]IntfTblData {
         cfgDb:TblData{portTN:"VLAN", memberTN: "VLAN_MEMBER", intfTN:"VLAN_INTERFACE", keySep: PIPE},
         appDb:TblData{portTN:"VLAN_TABLE", memberTN: "VLAN_MEMBER_TABLE", intfTN:"INTF_TABLE", keySep: COLON},
     },
+    IntfTypeLoopback : IntfTblData {
+       cfgDb:TblData{portTN:"LOOPBACK_INTERFACE", keySep: PIPE},
+	   appDb:TblData{intfTN: "INTF_TABLE", keySep: COLON},
+   },
 }
 var dbIdToTblMap = map[db.DBNum][]string {
-    db.ConfigDB: {"PORT", "INTERFACE", "MGMT_PORT", "MGMT_INTERFACE","VLAN", "VLAN_MEMBER", "VLAN_INTERFACE", "PORTCHANNEL", "PORTCHANNEL_INTERFACE"},
+    db.ConfigDB: {"PORT", "INTERFACE", "MGMT_PORT", "MGMT_INTERFACE","VLAN", "VLAN_MEMBER", "VLAN_INTERFACE", "PORTCHANNEL", "PORTCHANNEL_INTERFACE", "LOOPBACK_INTERFACE"},
     db.ApplDB  : {"PORT_TABLE", "INTF_TABLE", "MGMT_PORT_TABLE", "MGMT_INTF_TABLE", "VLAN_TABLE", "VLAN_MEMBER_TABLE", "LAG_TABLE"},
     db.StateDB : {"PORT_TABLE", "INTERFACE_TABLE", "MGMT_PORT_TABLE", "MGMT_INTERFACE_TABLE"},
 }
@@ -126,7 +133,7 @@ const (
     IntfTypeMgmt            E_InterfaceType = 2
     IntfTypeVlan            E_InterfaceType = 3
     IntfTypePortChannel     E_InterfaceType = 4
-
+    IntfTypeLoopback        E_InterfaceType = 5
 )
 type E_InterfaceSubType int64
 const (
@@ -146,6 +153,8 @@ func getIntfTypeByName (name string) (E_InterfaceType, E_InterfaceSubType, error
         return IntfTypeVlan, IntfSubTypeUnset, err
     } else if strings.HasPrefix(name, PORTCHANNEL) == true {
         return IntfTypePortChannel, IntfSubTypeUnset, err
+    } else if strings.HasPrefix(name, LOOPBACK) == true {
+        return IntfTypeLoopback, IntfSubTypeUnset, err
     } else {
         err = errors.New("Interface name prefix not matched with supported types")
         return IntfTypeUnset, IntfSubTypeUnset, err
@@ -155,6 +164,12 @@ func getIntfTypeByName (name string) (E_InterfaceType, E_InterfaceSubType, error
 func getIntfsRoot (s *ygot.GoStruct) *ocbinds.OpenconfigInterfaces_Interfaces {
     deviceObj := (*s).(*ocbinds.Device)
     return deviceObj.Interfaces
+}
+
+var YangToDb_intf_name_empty_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
+    res_map := make(map[string]string)
+    var err error
+    return res_map, err
 }
 
 var YangToDb_intf_tbl_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (string, error) {
@@ -249,9 +264,10 @@ var YangToDb_intf_name_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[s
     if strings.HasPrefix(ifName, VLAN) == true {
         vlanId := ifName[len("Vlan"):len(ifName)]
         res_map["vlanid"] = vlanId
-    }
-
-    log.Info("YangToDb_intf_name_xfm: rres_map:", res_map)
+    } else if strings.HasPrefix(ifName, LOOPBACK) == true {
+        res_map["NULL"] = "NULL"
+	}
+    log.Info("YangToDb_intf_name_xfm: res_map:", res_map)
     return res_map, err
 }
 

@@ -231,7 +231,7 @@ func isSonicYang(path string) bool {
     return false
 }
 
-func sonicKeyDataAdd(dbIndex db.DBNum, keyNameList []string, keyStr string, resultMap map[string]interface{}) {
+func sonicKeyDataAdd(dbIndex db.DBNum, keyNameList []string, xpathPrefix string, keyStr string, resultMap map[string]interface{}) {
 	var dbOpts db.Options
 	dbOpts = getDBOptions(dbIndex)
 	keySeparator := dbOpts.KeySeparator
@@ -242,7 +242,23 @@ func sonicKeyDataAdd(dbIndex db.DBNum, keyNameList []string, keyStr string, resu
     }
 
     for i, keyName := range keyNameList {
-        resultMap[keyName] = keyValList[i]
+	    keyXpath := xpathPrefix + "/" + keyName
+	    dbInfo, ok := xDbSpecMap[keyXpath]
+	    var resVal interface{}
+	    resVal = keyValList[i]
+	    if !ok || dbInfo == nil {
+		    log.Warningf("xDbSpecMap entry not found or is nil for xpath %v, hence data-type conversion cannot happen", keyXpath)
+	    } else {
+		    yngTerminalNdDtType := dbInfo.dbEntry.Type.Kind
+		    var err error
+		    resVal, _, err = DbToYangType(yngTerminalNdDtType, keyXpath, keyValList[i])
+		    if err != nil {
+			    log.Warningf("Data-type conversion unsuccessfull for xpath %v", keyXpath)
+			    resVal = keyValList[i]
+		    }
+	    }
+
+        resultMap[keyName] = resVal
     }
 }
 
@@ -455,34 +471,29 @@ func stripAugmentedModuleNames(xpath string) string {
 }
 
 func XfmrRemoveXPATHPredicates(xpath string) (string, error) {
-        pathList := strings.Split(xpath, "/")
-        pathList = pathList[1:]
-        for i, pvar := range pathList {
-                if strings.Contains(pvar, "[") && strings.Contains(pvar, "]") {
-                        si, ei := strings.Index(pvar, "["), strings.Index(pvar, "]")
-                        // substring contains [] entries
-                        if (si < ei) {
-                                pvar = strings.Split(pvar, "[")[0]
-                                pathList[i] = pvar
-
-                        } else {
-                                // This substring contained a ] before a [.
-                                return "", fmt.Errorf("Incorrect ordering of [] within substring %s of %s, [ pos: %d, ] pos: %d", pvar, xpath, si, ei)
-                        }
-                } else if strings.Contains(pvar, "[") || strings.Contains(pvar, "]") {
-                        // This substring contained a mismatched pair of []s.
-                        return "", fmt.Errorf("Mismatched brackets within substring %s of %s", pvar, xpath)
-                }
-                if (i > 0) && strings.Contains(pvar, ":") {
-                        pvar = strings.Split(pvar,":")[1]
-                        pathList[i] = pvar
-                }
-        }
-        path := "/" + strings.Join(pathList, "/")
-        return path,nil
+	// Strip keys from xpath
+	for {
+		si, ei := strings.IndexAny(xpath, "["), strings.Index(xpath, "]")
+		if si != -1 && ei != -1 {
+			if si < ei {
+				newpath := xpath[:si] + xpath[ei+1:]
+				xpath = newpath
+			} else {
+				return "", fmt.Errorf("Incorrect ordering of [] in %s , [ pos: %d, ] pos: %d", xpath, si, ei)
+			}
+		} else if si != -1 || ei != -1 {
+			return "", fmt.Errorf("Mismatched brackets within string %s, si:%d ei:%d", xpath, si, ei)
+		} else {
+			// No more keys available
+			break
+		}
+	}
+	path := stripAugmentedModuleNames(xpath)
+	fmt.Println("new path:", path)
+	return path, nil
 }
 
- /* Extract key vars, create db key and xpath */
+/* Extract key vars, create db key and xpath */
  func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, txCache interface{}) (string, string, string) {
 	 keyStr    := ""
 	 tableName := ""
