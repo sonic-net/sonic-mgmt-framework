@@ -45,7 +45,8 @@ func xfmrHandlerFunc(inParams XfmrParams) (map[string]interface{}, error) {
         log.Infof("Failed to retrieve data for xpath(\"%v\") err(%v).", inParams.uri, err)
         return result, err
     }
-/*
+
+    /*
     ocbSch, _  := ocbinds.Schema()
     schRoot    := ocbSch.RootSchema()
     device     := (*inParams.ygRoot).(*ocbinds.Device)
@@ -71,7 +72,6 @@ func xfmrHandlerFunc(inParams XfmrParams) (map[string]interface{}, error) {
     nodeYgot, _ := (node).(ygot.ValidatedGoStruct)
     payload, err := ygot.EmitJSON(nodeYgot, &ygot.EmitJSONConfig{ Format: ygot.RFC7951,
                                   Indent: "  ", SkipValidation: true,
-					resultMap = fldValMap
                                   RFC7951Config: &ygot.RFC7951JSONConfig{ AppendModuleName: false, },
                                   })
     err = json.Unmarshal([]byte(payload), &result)*/
