@@ -231,7 +231,7 @@ func isSonicYang(path string) bool {
     return false
 }
 
-func sonicKeyDataAdd(dbIndex db.DBNum, keyNameList []string, keyStr string, resultMap map[string]interface{}) {
+func sonicKeyDataAdd(dbIndex db.DBNum, keyNameList []string, xpathPrefix string, keyStr string, resultMap map[string]interface{}) {
 	var dbOpts db.Options
 	dbOpts = getDBOptions(dbIndex)
 	keySeparator := dbOpts.KeySeparator
@@ -242,7 +242,23 @@ func sonicKeyDataAdd(dbIndex db.DBNum, keyNameList []string, keyStr string, resu
     }
 
     for i, keyName := range keyNameList {
-        resultMap[keyName] = keyValList[i]
+	    keyXpath := xpathPrefix + "/" + keyName
+	    dbInfo, ok := xDbSpecMap[keyXpath]
+	    var resVal interface{}
+	    resVal = keyValList[i]
+	    if !ok || dbInfo == nil {
+		    log.Warningf("xDbSpecMap entry not found or is nil for xpath %v, hence data-type conversion cannot happen", keyXpath)
+	    } else {
+		    yngTerminalNdDtType := dbInfo.dbEntry.Type.Kind
+		    var err error
+		    resVal, _, err = DbToYangType(yngTerminalNdDtType, keyXpath, keyValList[i])
+		    if err != nil {
+			    log.Warningf("Data-type conversion unsuccessfull for xpath %v", keyXpath)
+			    resVal = keyValList[i]
+		    }
+	    }
+
+        resultMap[keyName] = resVal
     }
 }
 
