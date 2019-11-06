@@ -2,10 +2,9 @@ module sonic-bgp-peergroup {
   namespace "http://github.com/Azure/sonic-bgp-peergroup";
   prefix pg;
 
-  import ietf-inet-types {
-    prefix inet;
+  import sonic-bgp-common {
+    prefix sbc;
   }
-
   organization
     "SONiC";
 
@@ -20,93 +19,34 @@ module sonic-bgp-peergroup {
       "Initial revision.";
   }
 
-  typedef bgp_peer_type {
-    type enumeration {
-      enum INTERNAL {
-        value 0;
-      }
-      enum EXTERNAL {
-        value 1;
-      }
-    }
-  }
-
   container sonic-bgp-peergroup {
     container BGP_PEER_GROUP {
       list BGP_PEER_GROUP_LIST {
         key "vrf_name peer_group_name";
 
-        leaf vrf_name {
-          type string;
-        }
-
-        leaf peer_group_name {
-          type string;
-        }
-
-        leaf local_asn {
-          type uint32;
-        }
-
-        leaf description {
-          type string;
-        }
-
-        leaf peer_asn {
-          type uint32;
-        }
-
-        leaf peer_type {
-          type bgp_peer_type;
-        }
-
-        leaf ebgp_multihop {
-          type boolean;
-        }
-
-        leaf ebgp_multihop_ttl {
-          type uint8 {
-            range "1..255";
-          }
-        }
+        uses sbc:sonic-bgp-cmn;
 
         leaf admin {
           type boolean;
         }
 
-        leaf auth_password {
-          type string;
-        }
+      }
+    }
+  }
 
-        leaf keepalive_interval {
-          type uint16 {
-            range "1..3600";
-          }
-        }
+  container sonic-bgp-peergroup-af {
+    container BGP_PEER_GROUP_AF {
+      list BGP_PEER_GROUP_AF_LIST {
+        key "vrf_name peer_group_name afi_safi";
 
-        leaf hold_time {
-          type uint16 {
-            range "1..3600";
-          }
+        leaf peer_group_name {
+            type string;
+            description "Peer group name";
         }
+        
+        uses sbc:sonic-bgp-cmn-af;
 
-        leaf conn_retry {
-          type uint16 {
-            range "1..3600";
-          }
-        }
-
-        leaf min_adv_interval {
-          type uint16 {
-            range "1..3600";
-          }
-        }
-
-        leaf local_address {
-          type inet:ipv4-address;
-        }
-
-        leaf passive_mode {
+        leaf admin {
           type boolean;
         }
       }
