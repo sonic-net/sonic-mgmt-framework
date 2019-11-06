@@ -1,0 +1,15 @@
+{{'-----------------------------------------------------------'}}
+{{'Attribute'.ljust(20)}} {{'Value/State'}}
+{{'-----------------------------------------------------------'}}
+{% for key,value in json_output.items() %}
+{% if 'num-of-flows' in value.keys() %}
+{{ 'Number of flows'.ljust(21)}} - {{ value['num-of-flows']}}
+{% endif %}
+{% if 'enable' in value.keys() %}
+{{ 'Feature Enabled'.ljust(21)}} - {{ value['enable']}}
+{% endif %}
+{% if 'deviceid' in value.keys() %}
+{{ 'Device Identifier'.ljust(21)}} - {{ value['deviceid']}}
+{% endif %}
+{% endfor %}
+

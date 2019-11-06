@@ -12,6 +12,30 @@
     <ACTION builtin="clish_nop"></ACTION>
     </COMMAND>
   </VIEW>
+ 
+  <VIEW name="enable-view">
+    <!--show tam collector -->
+    <COMMAND name="show tam" help="Show TAM Collector config info/status ">
+       <PARAM name="tam-subcommands" help="TAM subcommands" mode="switch" ptype="SUBCOMMAND">
+		<PARAM name="collector" help="TAM Collector Configurations"  ptype="SUBCOMMAND" mode="subcommand"> 
+			<PARAM name="collector-options" help="TAM Collector Options" mode="switch" ptype="SUBCOMMAND">
+			   <PARAM name="collector-name" help="Show TAM Collector config for each collector"  ptype="STRING"> </PARAM>
+			   <PARAM name="all" help="Show TAM Collector config for all collectors"  ptype="SUBCOMMAND" mode="subcommand"> </PARAM>
+			</PARAM>
+		</PARAM>
+		<PARAM name="device" help="TAM Device Configurations"  ptype="SUBCOMMAND" mode="subcommand"> 
+		</PARAM>
+       </PARAM>
+       <ACTION>
+         if test "${tam-subcommands}" = "collector"; then
+            python $SONIC_CLI_ROOT/tam.py -show --collector ${collector-name} -templ -showcollector.j2;
+         elif test "${tam-subcommands}" = "device"; then
+            python $SONIC_CLI_ROOT/tam.py -show -device;
+         fi
+       </ACTION>
+    </COMMAND>
+  </VIEW>
+
   <VIEW name="configure-tam-view"
         prompt="${SYSTEM_NAME}(config-tam)# "
         depth="2">

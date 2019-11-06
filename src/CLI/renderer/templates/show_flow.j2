@@ -1,0 +1,27 @@
+{% set vars = {'flowName': ""} %}
+{% set vars = {'aclTableName': ""} %}
+{% set vars = {'aclRuleName': ""} %}
+{{'-----------------------------------------------------------------------'}}
+{{'NAME'.ljust(20)}} {{'ACL TABLE NAME'.ljust(30)}} {{'ACL RULE NAME'}}
+{{'-----------------------------------------------------------------------'}}
+{% for key,value in json_output.items() %}
+{% for item in value %} 
+{% for key2,value2 in item.items() %}
+{% if 'ietf-ts:flow-key' == key2 %}
+{% if vars.update({'flowName':value2}) %}{% endif %}
+{% endif %}
+{% if 'ietf-ts:each-flow-data' == key2 %}
+{% for key,value in value2.items() %}
+{% if 'acl-rule-name' == key %}
+{% if vars.update({'aclRuleName':value}) %}{% endif %}
+{% endif %}
+{% if 'acl-table-name' == key %}
+{% if vars.update({'aclTableName':value}) %}{% endif %}
+{% endif %}
+{% endfor %}
+{% endif %}
+{% endfor %}
+{{'%-25s'|format(vars.flowName)}}{{'%-30s'|format(vars.aclTableName)}}{{'%-4s'|format(vars.aclRuleName)}}
+{% endfor %}
+{% endfor %}
+
