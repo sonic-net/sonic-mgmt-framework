@@ -446,6 +446,7 @@ func GetTablesToWatch(xfmrTblList []string, uriModuleNm string) []string {
 	sncMdlList = getYangMdlToSonicMdlList(uriModuleNm)
 
         for _, xfmrTbl := range(xfmrTblList) {
+		processedTbl = false
                 //can be optimized if there is a way to know all sonic modules, a given OC-Yang spans over
                 for _, sonicMdlNm := range(sncMdlList) {
                         sonicMdlTblInfo := xDbSpecTblSeqnMap[sonicMdlNm]
