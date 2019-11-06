@@ -98,7 +98,12 @@ def run(func, args):
         else:
             response = api_response.to_dict()
         
-        mac_entries = response['openconfig_network_instanceentries']['entry']
+        if response['openconfig_network_instanceentries'] is not None:
+            mac_entries = response['openconfig_network_instanceentries']['entry']
+        else:
+            print('No MAC entries present')
+            return
+
         mac_table_list = [] 
         if func.__name__ == 'get_openconfig_network_instance_network_instances_network_instance_fdb_mac_table_entries':
             if args[1] == 'show': #### -- show mac address table --- ###
