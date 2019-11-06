@@ -167,8 +167,10 @@ func yangToDbMapFill (keyLevel int, xYangSpecMap map[string]*yangXpathInfo, entr
 		keyXpath        := make([]string, len(strings.Split(entry.Key, " ")))
 		for id, keyName := range(strings.Split(entry.Key, " ")) {
 			keyXpath[id] = xpath + "/" + keyName
-			keyXpathData := new(yangXpathInfo)
-			xYangSpecMap[xpath + "/" + keyName] = keyXpathData
+			if _, ok := xYangSpecMap[xpath + "/" + keyName]; !ok {
+				keyXpathData := new(yangXpathInfo)
+				xYangSpecMap[xpath + "/" + keyName] = keyXpathData
+			}
 			xYangSpecMap[xpath + "/" + keyName].isKey = true
 		}
 
