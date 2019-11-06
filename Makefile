@@ -112,9 +112,9 @@ cp $(TOPDIR)/goyang-modified-files/annotate.go $(BUILD_GOPATH)/src/github.com/op
 cp $(TOPDIR)/goyang-modified-files/goyang.patch .; \
 patch -p1 < goyang.patch; rm -f goyang.patch; \
 $(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/openconfig/goyang
-	#Patch for jsonquery
-	cd $(BUILD_GOPATH)/src/github.com/antchfx/jsonquery; git reset --hard HEAD; \
-	git checkout 3b69d31134d889b501e166a035a4d5ecb8c6c367; git apply $(TOPDIR)/patches/jsonquery.patch
+
+#Apply CVL related patches
+	$(apply_cvl_dep_patches)
 
 install:
 	$(INSTALL) -D $(REST_BIN) $(DESTDIR)/usr/sbin/rest_server
@@ -124,8 +124,6 @@ install:
 	$(INSTALL) -d $(DESTDIR)/usr/models/yang/
 	$(INSTALL) -D $(TOPDIR)/models/yang/sonic/*.yang $(DESTDIR)/usr/models/yang/
 	$(INSTALL) -D $(TOPDIR)/models/yang/sonic/common/*.yang $(DESTDIR)/usr/models/yang/
-	$(INSTALL) -D $(TOPDIR)/src/cvl/schema/*.yin $(DESTDIR)/usr/sbin/schema/
-	$(INSTALL) -D $(TOPDIR)/src/cvl/testdata/schema/*.yin $(DESTDIR)/usr/sbin/schema/
 	$(INSTALL) -D $(TOPDIR)/models/yang/*.yang $(DESTDIR)/usr/models/yang/
 	$(INSTALL) -D $(TOPDIR)/config/transformer/models_list $(DESTDIR)/usr/models/yang/
 	$(INSTALL) -D $(TOPDIR)/models/yang/common/*.yang $(DESTDIR)/usr/models/yang/
@@ -134,6 +132,9 @@ install:
 	cp -rf $(TOPDIR)/build/cli $(DESTDIR)/usr/sbin/
 	cp -rf $(TOPDIR)/build/swagger_client_py/ $(DESTDIR)/usr/sbin/lib/
 	cp -rf $(TOPDIR)/src/cvl/conf/cvl_cfg.json $(DESTDIR)/usr/sbin/cvl_cfg.json
+
+# Copy all CVL schema files
+	$(install_cvl_schema)
 
 	# Scripts for host service
 	$(INSTALL) -d $(DESTDIR)/usr/lib/sonic_host_service/host_modules
@@ -165,3 +166,38 @@ clean: rest-clean
 cleanall:
 	$(MAKE) -C src/cvl cleanall
 	rm -rf build/*
+
+#Function to apply CVL related patches
+define apply_cvl_dep_patches
+
+	cd $(BUILD_GOPATH)/src/github.com/antchfx/jsonquery; git reset --hard HEAD; \
+	git checkout 3b69d31134d889b501e166a035a4d5ecb8c6c367; git apply $(TOPDIR)/patches/jsonquery.patch
+	cd $(BUILD_GOPATH)/src/github.com/antchfx/xmlquery; git reset --hard HEAD; \
+	git checkout fe009d4cc63c3011f05e1dfa75a27899acccdf11; git apply $(TOPDIR)/patches/xmlquery.patch
+
+endef
+
+#Function to install CVL schema files
+define install_cvl_schema
+	$(INSTALL) -d $(DESTDIR)/usr/sbin/schema/
+	$(INSTALL) -D $(TOPDIR)/src/cvl/schema/*.yin $(DESTDIR)/usr/sbin/schema/
+	$(INSTALL) -D $(TOPDIR)/src/cvl/testdata/schema/*.yin $(DESTDIR)/usr/sbin/schema/
+
+#Find all platform directories first and create them in destination
+	if [ -d $(TOPDIR)/src/cvl/schema/platform ] ; then \
+		for dd in $$(find $(TOPDIR)/src/cvl/schema/platform -type d) ; \
+		do  \
+		dds=$$(echo $${dd} | sed 's/^.*\(schema\/.*\)/\1/g') ; \
+		$(INSTALL) -d $(DESTDIR)/usr/sbin/$${dds} ; \
+		done  ; \
+	fi
+#For each platform directory, copy all platform YANG files to destination
+	if [ -d $(TOPDIR)/src/cvl/schema/platform ] ; then \
+		for ff in $$(find $(TOPDIR)/src/cvl/schema/platform -name '*.yin') ; \
+		do  \
+		ffs=$$(echo $${ff} | sed 's/^.*\(schema\/.*\)/\1/g') ; \
+		$(INSTALL) -T $(TOPDIR)/src/cvl/$${ffs} $(DESTDIR)/usr/sbin/$${ffs} ; \
+		done ; \
+	fi
+endef
+
