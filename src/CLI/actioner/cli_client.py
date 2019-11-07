@@ -16,27 +16,26 @@
 #  limitations under the License.                                              #
 #                                                                              #
 ################################################################################
+
+import os
 import json
 import urllib3
 from six.moves.urllib.parse import quote
 
+urllib3.disable_warnings()
 
 class ApiClient(object):
     """
     A client for accessing a RESTful API
     """
 
-    def __init__(self, api_uri=None):
+    def __init__(self):
         """
         Create a RESTful API client.
         """
-        api_uri = "https://localhost:443"
-        self.api_uri = api_uri
+        self.api_uri = os.getenv('REST_API_ROOT', 'https://localhost')
 
         self.checkCertificate = False
-
-        if not self.checkCertificate:
-            urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
         self.version = "0.0.1"
 
