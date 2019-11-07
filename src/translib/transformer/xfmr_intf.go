@@ -15,29 +15,27 @@ import (
     "os"
 )
 
-
 func init () {
     XlateFuncBind("intf_table_xfmr", intf_table_xfmr)
     XlateFuncBind("YangToDb_intf_name_xfmr", YangToDb_intf_name_xfmr)
-    XlateFuncBind("DbToYang_intf_name_xfmr", DbToYang_intf_name_xfmr)
+    XlateFuncBind("YangToDb_intf_name_empty_xfmr", YangToDb_intf_name_empty_xfmr)
     XlateFuncBind("YangToDb_intf_enabled_xfmr", YangToDb_intf_enabled_xfmr)
     XlateFuncBind("DbToYang_intf_enabled_xfmr", DbToYang_intf_enabled_xfmr)
     XlateFuncBind("DbToYang_intf_admin_status_xfmr", DbToYang_intf_admin_status_xfmr)
     XlateFuncBind("DbToYang_intf_oper_status_xfmr", DbToYang_intf_oper_status_xfmr)
-    XlateFuncBind("YangToDb_intf_eth_auto_neg_xfmr", YangToDb_intf_eth_auto_neg_xfmr)
     XlateFuncBind("DbToYang_intf_eth_auto_neg_xfmr", DbToYang_intf_eth_auto_neg_xfmr)
-    XlateFuncBind("YangToDb_intf_eth_port_speed_xfmr", YangToDb_intf_eth_port_speed_xfmr)
     XlateFuncBind("DbToYang_intf_eth_port_speed_xfmr", DbToYang_intf_eth_port_speed_xfmr)
+    XlateFuncBind("YangToDb_intf_eth_port_aggregate_xfmr", YangToDb_intf_eth_port_aggregate_xfmr)
+    XlateFuncBind("YangToDb_lag_min_links_xfmr", YangToDb_lag_min_links_xfmr)
+    XlateFuncBind("YangToDb_lag_fallback_xfmr", YangToDb_lag_fallback_xfmr)
     XlateFuncBind("YangToDb_intf_ip_addr_xfmr", YangToDb_intf_ip_addr_xfmr)
     XlateFuncBind("DbToYang_intf_ip_addr_xfmr", DbToYang_intf_ip_addr_xfmr)
     XlateFuncBind("YangToDb_intf_subintfs_xfmr", YangToDb_intf_subintfs_xfmr)
     XlateFuncBind("DbToYang_intf_subintfs_xfmr", DbToYang_intf_subintfs_xfmr)
     XlateFuncBind("DbToYang_intf_get_counters_xfmr", DbToYang_intf_get_counters_xfmr)
 	XlateFuncBind("YangToDb_intf_tbl_key_xfmr", YangToDb_intf_tbl_key_xfmr)
-    XlateFuncBind("YangToDb_intf_name_empty_xfmr", YangToDb_intf_name_empty_xfmr)
 
 }
-
 const (
     PORT_INDEX         = "index"
     PORT_MTU           = "mtu"
@@ -86,7 +84,7 @@ type IntfTblData struct {
 var IntfTypeTblMap = map[E_InterfaceType]IntfTblData {
     IntfTypeEthernet: IntfTblData{
         cfgDb:TblData{portTN:"PORT", intfTN: "INTERFACE", keySep:PIPE},
-        appDb:TblData{portTN:"PORT_TABLE", intfTN: "INTF_TABLE", keySep: COLON}, 
+        appDb:TblData{portTN:"PORT_TABLE", intfTN: "INTF_TABLE", keySep: COLON},
         stateDb:TblData{portTN: "PORT_TABLE", intfTN: "INTERFACE_TABLE", keySep: PIPE},
         CountersHdl:CounterData{OIDTN: "COUNTERS_PORT_NAME_MAP", CountersTN: "COUNTERS", PopulateCounters: populatePortCounters},
     },
@@ -95,6 +93,12 @@ var IntfTypeTblMap = map[E_InterfaceType]IntfTblData {
         appDb:TblData{portTN:"MGMT_PORT_TABLE", intfTN:"MGMT_INTF_TABLE", keySep: COLON},
         stateDb:TblData{portTN:"MGMT_PORT_TABLE", intfTN:"MGMT_INTERFACE_TABLE", keySep: PIPE},
         CountersHdl:CounterData{OIDTN: "", CountersTN:"", PopulateCounters: populateMGMTPortCounters},
+    },
+    IntfTypePortChannel : IntfTblData{
+        cfgDb:TblData{portTN:"PORTCHANNEL", intfTN:"PORTCHANNEL_INTERFACE", memberTN:"PORTCHANNEL_MEMBER", keySep: PIPE},
+        appDb:TblData{portTN:"LAG_TABLE", intfTN:"INTF_TABLE", keySep: COLON, memberTN:"LAG_MEMBER_TABLE"},
+        stateDb:TblData{portTN:"LAG_TABLE", intfTN:"INTERFACE_TABLE", keySep: PIPE},
+        CountersHdl:CounterData{OIDTN: "COUNTERS_PORT_NAME_MAP", CountersTN:"COUNTERS", PopulateCounters: populatePortCounters},
     },
     IntfTypeVlan : IntfTblData{
         cfgDb:TblData{portTN:"VLAN", memberTN: "VLAN_MEMBER", intfTN:"VLAN_INTERFACE", keySep: PIPE},
@@ -105,10 +109,11 @@ var IntfTypeTblMap = map[E_InterfaceType]IntfTblData {
 	   appDb:TblData{intfTN: "INTF_TABLE", keySep: COLON},
    },
 }
+
 var dbIdToTblMap = map[db.DBNum][]string {
-    db.ConfigDB: {"PORT", "INTERFACE", "MGMT_PORT", "MGMT_INTERFACE","VLAN", "VLAN_MEMBER", "VLAN_INTERFACE", "PORTCHANNEL", "PORTCHANNEL_INTERFACE", "LOOPBACK_INTERFACE"},
+    db.ConfigDB: {"PORT", "INTERFACE", "MGMT_PORT", "MGMT_INTERFACE","VLAN", "VLAN_MEMBER", "VLAN_INTERFACE", "PORTCHANNEL", "PORTCHANNEL_INTERFACE", "PORTCHANNEL_MEMBER", "LOOPBACK_INTERFACE"},
     db.ApplDB  : {"PORT_TABLE", "INTF_TABLE", "MGMT_PORT_TABLE", "MGMT_INTF_TABLE", "VLAN_TABLE", "VLAN_MEMBER_TABLE", "LAG_TABLE"},
-    db.StateDB : {"PORT_TABLE", "INTERFACE_TABLE", "MGMT_PORT_TABLE", "MGMT_INTERFACE_TABLE"},
+    db.StateDB : {"PORT_TABLE", "INTERFACE_TABLE", "MGMT_PORT_TABLE", "MGMT_INTERFACE_TABLE", "LAG_TABLE"},
 }
 
 var intfOCToSpeedMap = map[ocbinds.E_OpenconfigIfEthernet_ETHERNET_SPEED] string {
@@ -166,11 +171,6 @@ func getIntfsRoot (s *ygot.GoStruct) *ocbinds.OpenconfigInterfaces_Interfaces {
     return deviceObj.Interfaces
 }
 
-var YangToDb_intf_name_empty_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
-    res_map := make(map[string]string)
-    var err error
-    return res_map, err
-}
 
 var YangToDb_intf_tbl_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (string, error) {
 	log.Info("Entering YangToDb_intf_tbl_key_xfmr")
@@ -213,12 +213,9 @@ var intf_table_xfmr TableXfmrFunc = func (inParams XfmrParams) ([]string, error)
         return tblList, errors.New("Invalid interface type IntfTypeUnset");
     }
     intTbl := IntfTypeTblMap[intfType]
-
     log.Info("TableXfmrFunc - targetUriPath : ", targetUriPath)
 
-    if strings.HasPrefix(targetUriPath, "/openconfig-interfaces:interfaces/interface/config") ||
-        strings.HasPrefix(targetUriPath, "/openconfig-interfaces:interfaces/interface/ethernet/config") ||
-        strings.HasPrefix(targetUriPath, "/openconfig-interfaces:interfaces/interface/openconfig-if-ethernet:ethernet/config") {
+    if strings.HasPrefix(targetUriPath, "/openconfig-interfaces:interfaces/interface/config"){ 
         tblList = append(tblList, intTbl.cfgDb.portTN)
     } else if  strings.HasPrefix(targetUriPath, "/openconfig-interfaces:interfaces/interface/state/counters") {
         tblList = append(tblList, intTbl.CountersHdl.CountersTN)
@@ -246,8 +243,7 @@ var intf_table_xfmr TableXfmrFunc = func (inParams XfmrParams) ([]string, error)
         tblList = append(tblList, intTbl.cfgDb.portTN)
     } else if strings.HasPrefix(targetUriPath, "/openconfig-interfaces:interfaces/interface") {
         tblList = append(tblList, intTbl.cfgDb.portTN)
-    } else {
-        err = errors.New("Invalid URI")
+    } else {       err = errors.New("Invalid URI")
     }
 
     log.Infof("TableXfmrFunc - uri(%v), tblList(%v)\r\n", inParams.uri, tblList);
@@ -264,18 +260,18 @@ var YangToDb_intf_name_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[s
     if strings.HasPrefix(ifName, VLAN) == true {
         vlanId := ifName[len("Vlan"):len(ifName)]
         res_map["vlanid"] = vlanId
+    } else if strings.HasPrefix(ifName, PORTCHANNEL) == true {
+        res_map["NULL"] = "NULL"
     } else if strings.HasPrefix(ifName, LOOPBACK) == true {
         res_map["NULL"] = "NULL"
-	}
+    }
     log.Info("YangToDb_intf_name_xfm: res_map:", res_map)
     return res_map, err
 }
 
-
-var DbToYang_intf_name_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (map[string]interface{}, error) {
+var YangToDb_intf_name_empty_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
+    res_map := make(map[string]string)
     var err error
-    res_map := make(map[string]interface{})
-    res_map["name"] =  inParams.key
     return res_map, err
 }
 
@@ -292,6 +288,24 @@ var YangToDb_intf_enabled_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (ma
     res_map[PORT_ADMIN_STATUS] = enStr
 
     return res_map, nil
+}
+
+var YangToDb_lag_min_links_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
+    res_map := make(map[string]string)
+    var err error
+
+    minLinks, _ := inParams.param.(*uint16)
+    res_map["min_links"] = strconv.Itoa(int(*minLinks))
+    return res_map, err
+}
+
+var YangToDb_lag_fallback_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
+    res_map := make(map[string]string)
+    var err error
+
+    fallback, _ := inParams.param.(*bool)
+    res_map["fallback"] = strconv.FormatBool(*fallback)
+    return res_map, err
 }
 
 func getPortTableNameByDBId (intftbl IntfTblData, curDb db.DBNum) (string, error) {
@@ -433,7 +447,7 @@ var DbToYang_intf_oper_status_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams)
     return result, err
 }
 
-
+/*
 var YangToDb_intf_eth_auto_neg_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
     res_map := make(map[string]string)
 
@@ -448,6 +462,7 @@ var YangToDb_intf_eth_auto_neg_xfmr FieldXfmrYangToDb = func(inParams XfmrParams
 
     return res_map, nil
 }
+*/
 
 var DbToYang_intf_eth_auto_neg_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (map[string]interface{}, error) {
     var err error
@@ -477,7 +492,7 @@ var DbToYang_intf_eth_auto_neg_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams
     return result, err
 }
 
-
+/*
 var YangToDb_intf_eth_port_speed_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
     res_map := make(map[string]string)
     var err error
@@ -490,8 +505,9 @@ var YangToDb_intf_eth_port_speed_xfmr FieldXfmrYangToDb = func(inParams XfmrPara
         err = errors.New("Invalid/Unsupported speed.")
     }
 
-    return res_map, err 
+    return res_map, err
 }
+*/
 
 var DbToYang_intf_eth_port_speed_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (map[string]interface{}, error) {
     var err error
@@ -519,6 +535,8 @@ var DbToYang_intf_eth_port_speed_xfmr FieldXfmrDbtoYang = func(inParams XfmrPara
 
     return result, err
 }
+
+
 
 func getDbToYangSpeed (speed string) (ocbinds.E_OpenconfigIfEthernet_ETHERNET_SPEED, error) {
     portSpeed := ocbinds.OpenconfigIfEthernet_ETHERNET_SPEED_SPEED_UNKNOWN
@@ -953,6 +971,24 @@ func doGetAllIpKeys(d *db.DB, dbSpec *db.TableSpec) ([]db.Key, error) {
     return keys, err
 }
 
+func getMemTableNameByDBId (intftbl IntfTblData, curDb db.DBNum) (string, error) {
+
+    var tblName string
+
+    switch (curDb) {
+    case db.ConfigDB:
+        tblName = intftbl.cfgDb.memberTN
+    case db.ApplDB:
+        tblName = intftbl.appDb.memberTN
+    case db.StateDB:
+        tblName = intftbl.stateDb.memberTN
+    default:
+        tblName = intftbl.cfgDb.memberTN
+    }
+
+    return tblName, nil
+}
+
 func getIntfTableNameByDBId (intftbl IntfTblData, curDb db.DBNum) (string, error) {
 
     var tblName string
@@ -1330,4 +1366,157 @@ var DbToYang_intf_get_counters_xfmr SubTreeXfmrDbToYang = func(inParams XfmrPara
     log.Info("DbToYang_intf_get_counters_xfmr - ", state_counters)
 
     return err
+}
+
+/* Validate whether LAG exists in DB */
+func validateLagExists(d *db.DB, lagTs *string, lagName *string) error {
+    if len(*lagName) == 0 {
+        return errors.New("Length of PortChannel name is zero")
+    }
+    entry, err := d.GetEntry(&db.TableSpec{Name:*lagTs}, db.Key{Comp: []string{*lagName}})
+    if err != nil || !entry.IsPopulated() {
+        errStr := "Invalid PortChannel:" + *lagName
+        return errors.New(errStr)
+    }
+    return nil
+}
+
+/* Handle port-speed, auto-neg and aggregate-id config */
+var YangToDb_intf_eth_port_aggregate_xfmr SubTreeXfmrYangToDb = func(inParams XfmrParams) (map[string]map[string]db.Value, error) {
+
+    pathInfo := NewPathInfo(inParams.uri)
+    ifName := pathInfo.Var("name")
+    intfsObj := getIntfsRoot(inParams.ygRoot)
+    intfObj := intfsObj.Interface[ifName]
+    if intfObj.Ethernet == nil  {
+        return nil, errors.New("Invalid request")
+    }
+    if intfObj.Ethernet.Config == nil {
+        return nil, errors.New("Invalid config request")
+    }
+
+    var err error
+
+    intfType, _, ierr := getIntfTypeByName(ifName)
+    if ierr != nil {
+        errStr := "Invalid Interface"
+        err = tlerr.InvalidArgsError{Format: errStr}
+        return nil, err
+    }
+
+    memMap := make(map[string]map[string]db.Value)
+
+    /* Handle AggregateId config */
+    if intfObj.Ethernet.Config.AggregateId != nil {
+        if strings.HasPrefix(ifName, ETHERNET) == false {
+            return nil, errors.New("Invalid config request")
+        }
+        intTbl := IntfTypeTblMap[IntfTypePortChannel]
+        tblName, _ := getMemTableNameByDBId(intTbl, inParams.curDb)
+        var lagStr string
+        switch inParams.oper {
+            case CREATE:
+            case UPDATE:
+                log.Info("Add member port")
+                lagId := intfObj.Ethernet.Config.AggregateId
+                lagStr = "PortChannel" + (*lagId)
+                /* Check if PortChannel exists */
+                err = validateLagExists(inParams.d, &intTbl.cfgDb.portTN, &lagStr)
+                if err != nil {
+                    errStr := "Invalid PortChannel: " + lagStr
+                    err = tlerr.InvalidArgsError{Format: errStr}
+                    return nil, err
+                }
+                /* Check if given iface already part of a PortChannel */
+                lagKeys, err := inParams.d.GetKeys(&db.TableSpec{Name:tblName})
+                if err == nil {
+                    for i, _ := range lagKeys {
+                        if ifName == lagKeys[i].Get(1) {
+                            errStr := "Given interface already part of " + lagKeys[i].Get(0)
+                            err = tlerr.InvalidArgsError{Format: errStr}
+                            return nil, err
+                        }
+                    }
+                }
+
+            case DELETE:
+                log.Info("Delete member port")
+                lagKeys, err := inParams.d.GetKeys(&db.TableSpec{Name:tblName})
+                /* Find the port-channel the given ifname is part of */
+                if err != nil {
+                    log.Info("No entries in PORTCHANNEL_MEMBER TABLE")
+                    return nil, errors.New("No entries in PORTCHANNEL_MEMBER TABLE")
+                }
+                var flag bool = false
+                for i, _ := range lagKeys {
+                    if ifName == lagKeys[i].Get(1) {
+                        log.Info("Found Entry in PORTCHANNEL_MEMBER TABLE")
+                        flag = true
+                        lagStr = lagKeys[i].Get(0)
+                        log.Info("Given interface part of PortChannel", lagStr)
+                        break
+                    }
+                }
+                if flag == false {
+                    log.Info("Given Interface not part of any PortChannel")
+                    err = errors.New("Given Interface not part of any PortChannel")
+                    return nil, err
+                }
+        }/* End of switch case */
+        m := make(map[string]string)
+        value := db.Value{Field: m}
+        m["NULL"] = "NULL"
+        intfKey := lagStr + "|" + ifName
+        if _, ok := memMap[tblName]; !ok {
+            memMap[tblName] = make(map[string]db.Value)
+        }
+        memMap[tblName][intfKey] = value
+    }
+    /* Handle PortSpeed config */
+    if intfObj.Ethernet.Config.PortSpeed != 0 {
+        if intfType != IntfTypeMgmt {
+            return nil, errors.New("PortSpeed config not supported for given interface type")
+        }
+        res_map := make(map[string]string)
+        value := db.Value{Field: res_map}
+        intTbl := IntfTypeTblMap[IntfTypeMgmt]
+
+        portSpeed := intfObj.Ethernet.Config.PortSpeed
+        val, ok := intfOCToSpeedMap[portSpeed]
+        if ok {
+            res_map[PORT_SPEED] = val
+        } else {
+            err = errors.New("Invalid/Unsupported speed.")
+        }
+
+        if _, ok := memMap[intTbl.cfgDb.portTN]; !ok {
+            memMap[intTbl.cfgDb.portTN] = make(map[string]db.Value)
+        }
+        memMap[intTbl.cfgDb.portTN][ifName] = value
+
+    }
+    /* Handle AutoNegotiate config */
+    if intfObj.Ethernet.Config.AutoNegotiate != nil {
+        if intfType != IntfTypeMgmt {
+            return nil, errors.New("AutoNegotiate config not supported for given Interface type")
+        }
+        res_map := make(map[string]string)
+        value := db.Value{Field: res_map}
+        intTbl := IntfTypeTblMap[IntfTypeMgmt]
+
+        autoNeg := intfObj.Ethernet.Config.AutoNegotiate
+        var enStr string
+        if *autoNeg == true {
+            enStr = "true"
+        } else {
+            enStr = "false"
+        }
+        res_map[PORT_AUTONEG] = enStr
+
+        if _, ok := memMap[intTbl.cfgDb.portTN]; !ok {
+            memMap[intTbl.cfgDb.portTN] = make(map[string]db.Value)
+        }
+        memMap[intTbl.cfgDb.portTN][ifName] = value
+    }
+    return memMap, err
 }
