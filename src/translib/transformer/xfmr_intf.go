@@ -663,6 +663,18 @@ var YangToDb_intf_ip_addr_xfmr SubTreeXfmrYangToDb = func(inParams XfmrParams) (
         return intf_ip_addr_del(inParams.d, ifName, tblName, subIntfObj)
     }
 
+    entry, dbErr := inParams.d.GetEntry(&db.TableSpec{Name:intTbl.cfgDb.intfTN}, db.Key{Comp: []string{ifName}})
+    if dbErr != nil || !entry.IsPopulated() {
+        ifdb := make(map[string]string)
+        ifdb["NULL"] = "NULL"
+        value := db.Value{Field: ifdb}
+        if _, ok := subIntfmap[tblName]; !ok {
+            subIntfmap[tblName] = make(map[string]db.Value)
+        }
+        subIntfmap[tblName][ifName] = value
+
+    }
+
     if subIntfObj.Ipv4 != nil && subIntfObj.Ipv4.Addresses != nil {
         for ip, _ := range subIntfObj.Ipv4.Addresses.Address {
             addr := subIntfObj.Ipv4.Addresses.Address[ip]
