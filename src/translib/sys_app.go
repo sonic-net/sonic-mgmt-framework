@@ -44,6 +44,8 @@ type SysApp struct {
 }
 
 func init() {
+    //TODO return so TACACS can go through transformer
+    return
     log.Info("SysApp: Init called for System module")
     err := register("/openconfig-system:system",
     &appInfo{appType: reflect.TypeOf(SysApp{}),
@@ -289,7 +291,7 @@ type Proc struct {
 func getSystemInfoFromFile () (JSONSystem, error) {
     log.Infof("getSystemInfoFromFile Enter")
 
-    var jsonsystem JSONSystem 
+    var jsonsystem JSONSystem
     jsonFile, err := os.Open("/mnt/platform/system")
     if err != nil {
         log.Infof("system json open failed")
@@ -462,7 +464,7 @@ func (app *SysApp) getSystemProcess (proc *Proc, sysproc *ocbinds.OpenconfigSyst
     case "/openconfig-system:system/processes/process/state/memory-utilization":
         sysproc.State.MemoryUtilization = &procstate.MemoryUtilization
     default:
-        sysproc.Pid = &procstate.Pid 
+        sysproc.Pid = &procstate.Pid
         sysproc.State.CpuUsageSystem = &procstate.CpuUsageSystem
         sysproc.State.CpuUsageUser = &procstate.CpuUsageUser
         sysproc.State.CpuUtilization =  &procstate.CpuUtilization
