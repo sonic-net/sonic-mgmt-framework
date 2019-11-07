@@ -24,9 +24,33 @@ import ast
 from rpipe_utils import pipestr
 import cli_client as cc
 from scripts.render_cli import show_cli_output
+from bgp_openconfig_to_restconf_map import restconf_map 
 
 IDENTIFIER='BGP'
 NAME1='bgp'
+
+DELETE_OCPREFIX='delete_'
+DELETE_OCPREFIX_LEN=len(DELETE_OCPREFIX)
+
+GLOBAL_OCSTRG='openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_'
+GLOBAL_OCSTRG_LEN=len(GLOBAL_OCSTRG)
+DELETE_GLOBAL_OCPREFIX=DELETE_OCPREFIX+GLOBAL_OCSTRG
+DELETE_GLOBAL_OCPREFIX_LEN=len(DELETE_GLOBAL_OCPREFIX)
+
+NEIGHB_OCSTRG='openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_'
+NEIGHB_OCSTRG_LEN=len(NEIGHB_OCSTRG)
+DELETE_NEIGHB_OCPREFIX=DELETE_OCPREFIX+NEIGHB_OCSTRG
+DELETE_NEIGHB_OCPREFIX_LEN=len(DELETE_NEIGHB_OCPREFIX)
+
+PEERGP_OCSTRG='openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_'
+PEERGP_OCSTRG_LEN=len(PEERGP_OCSTRG)
+DELETE_PEERGP_OCPREFIX=DELETE_OCPREFIX+PEERGP_OCSTRG
+DELETE_PEERGP_OCPREFIX_LEN=len(DELETE_PEERGP_OCPREFIX)
+
+GLOBAF_OCSTRG='openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi'
+GLOBAF_OCSTRG_LEN=len(GLOBAF_OCSTRG)
+DELETE_GLOBAF_OCPREFIX=DELETE_OCPREFIX+GLOBAF_OCSTRG
+DELETE_GLOBAF_OCPREFIX_LEN=len(DELETE_GLOBAF_OCPREFIX)
 
 def invoke_api(func, args=[]):
     api = cc.ApiClient()
@@ -39,41 +63,65 @@ def invoke_api(func, args=[]):
         body = { "openconfig-network-instance:as": int(args[1]) }
         return api.patch(keypath, body)
     elif func == 'patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_config_router_id':
-        keypath = [ args[0], IDENTIFIER, NAME1 ]
+        keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/config/router-id',
+                name=args[0], identifier=IDENTIFIER, name1=NAME1)
         body = { "openconfig-network-instance:router-id": args[1] }
+        return api.patch(keypath, body)
     elif func == 'patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_graceful_restart_config_enabled':
-        keypath = [ args[0], IDENTIFIER, NAME1 ]
+        keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/graceful-restart/config/enabled',
+                name=args[0], identifier=IDENTIFIER, name1=NAME1)
         body = { "openconfig-network-instance:enabled": True if args[1] == 'True' else False }
+        return api.patch(keypath, body)
     elif func == 'patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_graceful_restart_config_restart_time':
-        keypath = [ args[0], IDENTIFIER, NAME1 ]
+        keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/graceful-restart/config/restart-time',
+                name=args[0], identifier=IDENTIFIER, name1=NAME1)
         body = { "openconfig-network-instance:restart-time": int(args[1]) }
+        return api.patch(keypath, body)
     elif func == 'patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_graceful_restart_config_stale_routes_time':
-        keypath = [ args[0], IDENTIFIER, NAME1 ]
+        keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/graceful-restart/config/stale-routes-time',
+                name=args[0], identifier=IDENTIFIER, name1=NAME1)
         body = { "openconfig-network-instance:stale-routes-time": args[1] }
+        return api.patch(keypath, body)
     elif func == 'patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_use_multiple_paths_ebgp_config_allow_multiple_as':
-        keypath = [ args[0], IDENTIFIER, NAME1 ]
+        keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/use-multiple-paths/ebgp/config/allow-multiple-as',
+                name=args[0], identifier=IDENTIFIER, name1=NAME1)
         body = { "openconfig-network-instance:allow-multiple-as": True if args[1] == 'True' else False }
+        return api.patch(keypath, body)
     elif func == 'patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_route_selection_options_config_always_compare_med':
-        keypath = [ args[0], IDENTIFIER, NAME1 ]
+        keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/route-selection-options/config/always-compare-med',
+                name=args[0], identifier=IDENTIFIER, name1=NAME1)
         body = { "openconfig-network-instance:always-compare-med": True if args[1] == 'True' else False }
+        return api.patch(keypath, body)
     elif func == 'patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_route_selection_options_config_ignore_as_path_length':
-        keypath = [ args[0], IDENTIFIER, NAME1 ]
+        keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/route-selection-options/config/ignore-as-path-length',
+                name=args[0], identifier=IDENTIFIER, name1=NAME1)
         body = { "openconfig-network-instance:ignore-as-path-length": True if args[1] == 'True' else False }
+        return api.patch(keypath, body)
     elif func == 'patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_route_selection_options_config_external_compare_router_id':
-        keypath = [ args[0], IDENTIFIER, NAME1 ]
+        keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/route-selection-options/config/external-compare-router-id',
+                name=args[0], identifier=IDENTIFIER, name1=NAME1)
         body = { "openconfig-network-instance:external-compare-router-id": True if args[1] == 'True' else False }
+        return api.patch(keypath, body)
     elif func == 'patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_default_route_distance_config_external_route_distance':
-        keypath = [ args[0], IDENTIFIER, NAME1 ]
+        keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/default-route-distance/config/external-route-distance',
+                name=args[0], identifier=IDENTIFIER, name1=NAME1)
         body = { "openconfig-network-instance:external-route-distance": int(args[1]) }
+        return api.patch(keypath, body)
     elif func == 'patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_default_route_distance_config_internal_route_distance':
-        keypath = [ args[0], IDENTIFIER, NAME1 ]
+        keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/default-route-distance/config/internal-route-distance',
+                name=args[0], identifier=IDENTIFIER, name1=NAME1)
         body = { "openconfig-network-instance:internal-route-distance": int(args[1]) }
+        return api.patch(keypath, body)
     elif func == 'patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_local_as':
-        keypath = [ args[0], IDENTIFIER, NAME1, args[1] ]
+        keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/neighbors/neighbor={neighbor_address}/config/local-as',
+                name=args[0], identifier=IDENTIFIER, name1=NAME1, neighbor_address=args[1])
         body = { "openconfig-network-instance:local-as": int(args[2]) }
+        return api.patch(keypath, body)
     elif func == 'patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_config_local_as':
-        keypath = [ args[0], IDENTIFIER, NAME1, args[1] ]
+        keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/peer-groups/peer-group={peer_group_name}/config/local-as',
+                name=args[0], identifier=IDENTIFIER, name1=NAME1, peer_group_name=args[1])
         body = { "openconfig-network-instance:local-as": int(args[2]) }
+        return api.patch(keypath, body)
     elif func == 'patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_config':
 	keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi_safi_name}/config',
 		name=args[0], identifier=IDENTIFIER, name1=NAME1, afi_safi_name=args[1])
@@ -95,22 +143,26 @@ def invoke_api(func, args=[]):
 		name=args[0], identifier=IDENTIFIER, name1=NAME1, prefix=args[1])
         body = { "openconfig-network-instance:peer-group": args[2] }
         return api.patch(keypath, body)
-    elif func == 'delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_config' or \
-         func == 'delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_config_router_id' or \
-         func == 'delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_graceful_restart_config_enabled' or \
-         func == 'delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_graceful_restart_config_restart_time' or \
-         func == 'delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_graceful_restart_config_stale_routes_time' or \
-         func == 'delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_use_multiple_paths_ebgp_config_allow_multiple_as' or \
-         func == 'delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_route_selection_options_config_always_compare_med' or \
-         func == 'delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_route_selection_options_config_ignore_as_path_length' or \
-         func == 'delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_route_selection_options_config_external_compare_router_id' or \
-         func == 'delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_default_route_distance_config_external_route_distance' or \
-         func == 'delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_default_route_distance_config_internal_route_distance':
-        keypath = [ args[0], IDENTIFIER, NAME1 ]
-    elif func == 'delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_local_as' or \
-         func == 'delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_config_local_as' or \
-         func == 'delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_config':
-        keypath = [ args[0], IDENTIFIER, NAME1, args[1] ]
+    elif func[0:DELETE_NEIGHB_OCPREFIX_LEN] == DELETE_NEIGHB_OCPREFIX:
+        uri = restconf_map[func[DELETE_OCPREFIX_LEN:]]
+        keypath = cc.Path(uri.replace('{neighbor-address}', '{neighbor_address}'),
+               name=args[0], identifier=IDENTIFIER, name1=NAME1, neighbor_address=args[1])
+        return api.delete(keypath)
+    elif func[0:DELETE_PEERGP_OCPREFIX_LEN] == DELETE_PEERGP_OCPREFIX:
+        uri = restconf_map[func[DELETE_OCPREFIX_LEN:]]
+        keypath = cc.Path(uri.replace('{peer-group-name}', '{peer_group_name}'),
+               name=args[0], identifier=IDENTIFIER, name1=NAME1, peer_group_name=args[1])
+        return api.delete(keypath)
+    elif func[0:DELETE_GLOBAF_OCPREFIX_LEN] == DELETE_GLOBAF_OCPREFIX:
+        uri = restconf_map[func[DELETE_OCPREFIX_LEN:]]
+        keypath = cc.Path(uri.replace('{afi-safi-name}', '{afi_safi_name}'),
+               name=args[0], identifier=IDENTIFIER, name1=NAME1, afi_safi_name=args[1])
+        return api.delete(keypath)
+    elif func[0:DELETE_GLOBAL_OCPREFIX_LEN] == DELETE_GLOBAL_OCPREFIX:
+        # GLOBAL is substring of GLOBAF, so must be after GLOBAF
+        keypath = cc.Path(restconf_map[func[DELETE_OCPREFIX_LEN:]],
+               name=args[0], identifier=IDENTIFIER, name1=NAME1)
+        return api.delete(keypath)
     else:
         body = {}
 
