@@ -31,6 +31,41 @@ module sonic-bgp-common {
     }
   }
 
+  typedef bgp_community_type {
+    type enumeration {
+      enum STANDARD {
+        description "Standard communities";
+      }
+      enum EXTENDED {
+        description "Extended communities";
+      }
+      enum BOTH {
+        description "Both standard and extended communities";
+      }
+      enum NONE {
+        description "No community attribute";
+      }
+    }
+    description
+      "type describing variations of community attributes";
+  }
+
+  typedef sonic_bgp_direction {
+    type enumeration {
+      enum INBOUND {
+        description
+          "Refers to information received from the BGP peer";
+      }
+      enum OUTBOUND {
+        description
+          "Refers to information advertised to the BGP peer";
+      }
+    }
+    description
+        "Type to describe the direction";
+  }
+
+
   grouping sonic-bgp-cmn {
 
     leaf vrf_name {
@@ -165,6 +200,11 @@ module sonic-bgp-common {
         description "Send default route";
     }
 
+    leaf default_rmap {
+      type string;
+        description "Default route map to originate";
+    }
+
     leaf max_prefix_limit {
       type uint32;
         description "Maximum prefix limit";
@@ -202,18 +242,8 @@ module sonic-bgp-common {
         description "Inbound soft reconfiguration";
     }
 
-    leaf route_map_name {
+    leaf unsuppress_map_name {
       type string;
-        description "Route map name";
-    }
-
-    leaf route_map_direction {
-      type string;
-        description "Route map direction, IN or OUT";
-    }
-
-    leaf unsuppress_map {
-      type boolean;
         description "Route map";
     }
 
@@ -227,6 +257,20 @@ module sonic-bgp-common {
 
     leaf as_override {
       type boolean;
+    }
+
+    leaf send_community {
+      type bgp_community_type;
+    }
+
+    leaf add_path_tx_all {
+      type boolean;
+        description "Advertise all paths using add path";
+    }
+
+    leaf add_path_tx_bestpath {
+      type boolean;
+        description "Advertise best path per AS using add path";
     }
 
     leaf unchanged_as_path {
@@ -244,24 +288,24 @@ module sonic-bgp-common {
         description "nexthop attribute unchanged";
     }
 
-    leaf originate_default_enabled {
-      type boolean;
-        description "Originate default route";
-    }
-
-    leaf originate_default_rmap {
-      type string;
-        description "Route map for originating default route";
-    }
-
     leaf filter_list_name {
       type string;
         description "Filter list name";
     }
 
     leaf filter_list_direction {
-      type string;
+      type sonic_bgp_direction;
         description "Filter list direction";
+    }
+
+    leaf nexthop_self_enabled {
+      type boolean;
+        description "Nexthop is self, no nexthop calculation";
+    }
+
+    leaf nexthop_self_force {
+      type boolean;
+        description "Force nexthop to be self for reflected routes";
     }
 
     leaf prefix_list_name {
@@ -270,7 +314,7 @@ module sonic-bgp-common {
     }
 
     leaf prefix_list_direction {
-      type string;
+      type sonic_bgp_direction;
         description "Prefix list direction";
     }
 
@@ -282,10 +326,6 @@ module sonic-bgp-common {
     leaf replace_private_as {
       type boolean;
         description "Replace private ASN's with our ASN in outbound updates";
-    }
-
-    leaf send_community {
-      type boolean;
     }
 
     leaf allow_as_in {
@@ -301,11 +341,6 @@ module sonic-bgp-common {
     leaf allow_as_origin {
       type boolean;
         description "Allow own AS in AS path, if route originated in own AS";
-    }
-
-    leaf send_default_rmap {
-      type boolean;
-        description "Send dfault route map";
     }
   }
 }

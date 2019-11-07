@@ -25,11 +25,6 @@ module sonic-bgp-peergroup {
         key "vrf_name peer_group_name";
 
         uses sbc:sonic-bgp-cmn;
-
-        leaf admin {
-          type boolean;
-        }
-
       }
     }
   }
@@ -45,10 +40,6 @@ module sonic-bgp-peergroup {
         }
         
         uses sbc:sonic-bgp-cmn-af;
-
-        leaf admin {
-          type boolean;
-        }
       }
     }
   }
