@@ -39,7 +39,7 @@ type CommonApp struct {
 	body           []byte
 	ygotRoot       *ygot.GoStruct
 	ygotTarget     *interface{}
-	cmnAppTableMap map[string]map[string]db.Value
+	cmnAppTableMap map[int]map[db.DBNum]map[string]map[string]db.Value
 	cmnAppOrdTbllist []string
 }
 
@@ -281,8 +281,12 @@ func (app *CommonApp) translateCRUDCommon(d *db.DB, opcode int) ([]db.WatchKeys,
         }
 
 	var resultTblList []string
-        for tblnm, _ := range result { //Get dependency list for all tables in result
-		resultTblList = append(resultTblList, tblnm)
+        for _, dbMap := range result { //Get dependency list for all tables in result
+		for _, resMap := range dbMap { //Get dependency list for all tables in result
+		        for tblnm, _ := range resMap { //Get dependency list for all tables in result
+				resultTblList = append(resultTblList, tblnm)
+			}
+		}
 	}
         log.Info("Result Tables List", resultTblList)
 
@@ -355,60 +359,67 @@ func (app *CommonApp) cmnAppCRUCommonDbOpn(d *db.DB, opcode int) error {
 	for idx := len(app.cmnAppOrdTbllist)-1; idx >= 0; idx-- {
 		tblNm := app.cmnAppOrdTbllist[idx]
 		log.Info("In Yang to DB map returned from transformer looking for table = ", tblNm)
-		if tblVal, ok := app.cmnAppTableMap[tblNm]; ok {
-			cmnAppTs = &db.TableSpec{Name: tblNm}
-			log.Info("Found table entry in yang to DB map")
-			for tblKey, tblRw := range tblVal {
-				log.Info("Processing Table key and row ", tblKey, tblRw)
-				existingEntry, _ := d.GetEntry(cmnAppTs, db.Key{Comp: []string{tblKey}})
-				switch opcode {
-				case CREATE:
-					if existingEntry.IsPopulated() {
-						log.Info("Entry already exists hence return.")
-						return tlerr.AlreadyExists("Entry %s already exists", tblKey)
-					} else {
-						err = d.CreateEntry(cmnAppTs, db.Key{Comp: []string{tblKey}}, tblRw)
-						if err != nil {
-							log.Error("CREATE case - d.CreateEntry() failure")
-							return err
-						}
-					}
-				case UPDATE:
-					if existingEntry.IsPopulated() {
-						log.Info("Entry already exists hence modifying it.")
-						/* Handle leaf-list merge if any leaf-list exists 
-						   A leaf-list field in redis has "@" suffix as per swsssdk convention.
-						 */
-						resTblRw := db.Value{Field: map[string]string{}}
-						resTblRw = checkAndProcessLeafList(existingEntry, tblRw, UPDATE, d, tblNm, tblKey)
-						err = d.ModEntry(cmnAppTs, db.Key{Comp: []string{tblKey}}, resTblRw)
-						if err != nil {
-							log.Error("UPDATE case - d.ModEntry() failure")
-							return err
-						}
-					} else {
-                                                // workaround to patch operation from CLI
-                                                log.Info("Create(pathc) an entry.")
-                                                err = d.CreateEntry(cmnAppTs, db.Key{Comp: []string{tblKey}}, tblRw)
-						if err != nil {
-							log.Error("UPDATE case - d.CreateEntry() failure")
-							return err
-						}
-					}
-				case REPLACE:
-					if existingEntry.IsPopulated() {
-						log.Info("Entry already exists hence execute db.SetEntry")
-						err := d.SetEntry(cmnAppTs, db.Key{Comp: []string{tblKey}}, tblRw)
-						if err != nil {
-							log.Error("REPLACE case - d.SetEntry() failure")
-							return err
-						}
-					} else {
-						log.Info("Entry doesn't exist hence create it.")
-						err = d.CreateEntry(cmnAppTs, db.Key{Comp: []string{tblKey}}, tblRw)
-						if err != nil {
-							log.Error("REPLACE case - d.CreateEntry() failure")
-							return err
+		for oper, dbMap := range app.cmnAppTableMap {
+			for dbNum, _ := range dbMap {
+				if  oper == DELETE {
+					continue
+				}
+				if tblVal, ok := app.cmnAppTableMap[oper][dbNum][tblNm]; ok {
+					cmnAppTs = &db.TableSpec{Name: tblNm}
+					log.Info("Found table entry in yang to DB map")
+					for tblKey, tblRw := range tblVal {
+						log.Info("Processing Table key and row ", tblKey, tblRw)
+						existingEntry, _ := d.GetEntry(cmnAppTs, db.Key{Comp: []string{tblKey}})
+						switch opcode {
+						case CREATE:
+							if existingEntry.IsPopulated() {
+								log.Info("Entry already exists hence return.")
+								return tlerr.AlreadyExists("Entry %s already exists", tblKey)
+							} else {
+								err = d.CreateEntry(cmnAppTs, db.Key{Comp: []string{tblKey}}, tblRw)
+								if err != nil {
+									log.Error("CREATE case - d.CreateEntry() failure")
+									return err
+								}
+							}
+						case UPDATE:
+							if existingEntry.IsPopulated() {
+								log.Info("Entry already exists hence modifying it.")
+								/* Handle leaf-list merge if any leaf-list exists 
+								A leaf-list field in redis has "@" suffix as per swsssdk convention.
+								*/
+								resTblRw := db.Value{Field: map[string]string{}}
+								resTblRw = checkAndProcessLeafList(existingEntry, tblRw, UPDATE, d, tblNm, tblKey)
+								err = d.ModEntry(cmnAppTs, db.Key{Comp: []string{tblKey}}, resTblRw)
+								if err != nil {
+									log.Error("UPDATE case - d.ModEntry() failure")
+									return err
+								}
+							} else {
+								// workaround to patch operation from CLI
+								log.Info("Create(pathc) an entry.")
+								err = d.CreateEntry(cmnAppTs, db.Key{Comp: []string{tblKey}}, tblRw)
+								if err != nil {
+									log.Error("UPDATE case - d.CreateEntry() failure")
+									return err
+								}
+							}
+						case REPLACE:
+							if existingEntry.IsPopulated() {
+								log.Info("Entry already exists hence execute db.SetEntry")
+								err := d.SetEntry(cmnAppTs, db.Key{Comp: []string{tblKey}}, tblRw)
+								if err != nil {
+									log.Error("REPLACE case - d.SetEntry() failure")
+									return err
+								}
+							} else {
+								log.Info("Entry doesn't exist hence create it.")
+								err = d.CreateEntry(cmnAppTs, db.Key{Comp: []string{tblKey}}, tblRw)
+								if err != nil {
+									log.Error("REPLACE case - d.CreateEntry() failure")
+									return err
+								}
+							}
 						}
 					}
 				}
@@ -434,84 +445,91 @@ func (app *CommonApp) cmnAppDelDbOpn(d *db.DB, opcode int) error {
 	/* app.cmnAppOrdTbllist has child first, parent later order */
 	for _, tblNm := range app.cmnAppOrdTbllist {
 		log.Info("In Yang to DB map returned from transformer looking for table = ", tblNm)
-		if tblVal, ok := app.cmnAppTableMap[tblNm]; ok {
-			cmnAppTs = &db.TableSpec{Name: tblNm}
-			log.Info("Found table entry in yang to DB map")
-			ordTblList := transformer.GetOrdTblList(tblNm, moduleNm)
-			if len(ordTblList) == 0 {
-				log.Error("GetOrdTblList returned empty slice")
-				err = errors.New("GetOrdTblList returned empty slice. Insufficient information to process request")
-				return err
-			}
-			log.Infof("GetOrdTblList for table - %v, module %v returns %v", tblNm, moduleNm, ordTblList)
-			if len(tblVal) == 0 {
-				log.Info("DELETE case - No table instances/rows found hence delete entire table = ", tblNm)
-				for _, ordtbl := range ordTblList {
-					log.Info("Since parent table is to be deleted, first deleting child table = ", ordtbl)
-					if ordtbl == tblNm {
-						// Handle the child tables only till you reach the parent table entry
-						break
-					}
-					dbTblSpec = &db.TableSpec{Name: ordtbl}
-					err = d.DeleteTable(dbTblSpec)
-					if err != nil {
-						log.Warning("DELETE case - d.DeleteTable() failure for Table = ", ordtbl)
+		for oper, dbMap := range app.cmnAppTableMap {
+			for dbNum, _ := range dbMap {
+				if  oper != opcode {
+					continue
+				}
+				if tblVal, ok := app.cmnAppTableMap[oper][dbNum][tblNm]; ok {
+					cmnAppTs = &db.TableSpec{Name: tblNm}
+					log.Info("Found table entry in yang to DB map")
+					ordTblList := transformer.GetOrdTblList(tblNm, moduleNm)
+					if len(ordTblList) == 0 {
+						log.Error("GetOrdTblList returned empty slice")
+						err = errors.New("GetOrdTblList returned empty slice. Insufficient information to process request")
 						return err
 					}
-				}
-				err = d.DeleteTable(cmnAppTs)
-				if err != nil {
-					log.Warning("DELETE case - d.DeleteTable() failure for Table = ", tblNm)
-					return err
-				}
-				log.Info("DELETE case - Deleted entire table = ", tblNm)
-				// Continue to repeat ordered deletion for all tables
-				continue
-
-			}
-
-			for tblKey, tblRw := range tblVal {
-				if len(tblRw.Field) == 0 {
-					log.Info("DELETE case - no fields/cols to delete hence delete the entire row.")
-					log.Info("First, delete child table instances that correspond to parent table instance to be deleted = ", tblKey)
-					for _, ordtbl := range ordTblList {
-						if ordtbl == tblNm {
-							// Handle the child tables only till you reach the parent table entry
-							break;
+					log.Infof("GetOrdTblList for table - %v, module %v returns %v", tblNm, moduleNm, ordTblList)
+					if len(tblVal) == 0 {
+						log.Info("DELETE case - No table instances/rows found hence delete entire table = ", tblNm)
+						for _, ordtbl := range ordTblList {
+							log.Info("Since parent table is to be deleted, first deleting child table = ", ordtbl)
+							if ordtbl == tblNm {
+								// Handle the child tables only till you reach the parent table entry
+								break
+							}
+							dbTblSpec = &db.TableSpec{Name: ordtbl}
+							err = d.DeleteTable(dbTblSpec)
+							if err != nil {
+								log.Warning("DELETE case - d.DeleteTable() failure for Table = ", ordtbl)
+								return err
+							}
 						}
-						dbTblSpec = &db.TableSpec{Name: ordtbl}
-						keyPattern := tblKey + "|*"
-						log.Info("Key pattern to be matched for deletion = ", keyPattern)
-						err = d.DeleteKeys(dbTblSpec, db.Key{Comp: []string{keyPattern}})
+						err = d.DeleteTable(cmnAppTs)
 						if err != nil {
-							log.Warning("DELETE case - d.DeleteTable() failure for Table = ", ordtbl)
+							log.Warning("DELETE case - d.DeleteTable() failure for Table = ", tblNm)
 							return err
 						}
-						log.Info("Deleted keys matching parent table key pattern for child table = ", ordtbl)
+						log.Info("DELETE case - Deleted entire table = ", tblNm)
+						// Continue to repeat ordered deletion for all tables
+						continue
 
 					}
-					err = d.DeleteEntry(cmnAppTs, db.Key{Comp: []string{tblKey}})
-                                        if err != nil {
-                                                log.Warning("DELETE case - d.DeleteEntry() failure")
-                                                return err
-                                        }
-					log.Info("Finally deleted the parent table row with key = ", tblKey)
-				} else {
-					log.Info("DELETE case - fields/cols to delete hence delete only those fields.")
-					existingEntry, _ := d.GetEntry(cmnAppTs, db.Key{Comp: []string{tblKey}})
-					if !existingEntry.IsPopulated() {
-						log.Info("Table Entry from which the fields are to be deleted does not exist")
-						return err
-					}
-					/* handle leaf-list merge if any leaf-list exists */
-					resTblRw := checkAndProcessLeafList(existingEntry, tblRw, DELETE, d, tblNm, tblKey)
-					err := d.DeleteEntryFields(cmnAppTs, db.Key{Comp: []string{tblKey}}, resTblRw)
-					if err != nil {
-						log.Error("DELETE case - d.DeleteEntryFields() failure")
-						return err
+
+					for tblKey, tblRw := range tblVal {
+						if len(tblRw.Field) == 0 {
+							log.Info("DELETE case - no fields/cols to delete hence delete the entire row.")
+							log.Info("First, delete child table instances that correspond to parent table instance to be deleted = ", tblKey)
+							for _, ordtbl := range ordTblList {
+								if ordtbl == tblNm {
+									// Handle the child tables only till you reach the parent table entry
+									break;
+								}
+								dbTblSpec = &db.TableSpec{Name: ordtbl}
+								keyPattern := tblKey + "|*"
+								log.Info("Key pattern to be matched for deletion = ", keyPattern)
+								err = d.DeleteKeys(dbTblSpec, db.Key{Comp: []string{keyPattern}})
+								if err != nil {
+									log.Warning("DELETE case - d.DeleteTable() failure for Table = ", ordtbl)
+									return err
+								}
+								log.Info("Deleted keys matching parent table key pattern for child table = ", ordtbl)
+
+							}
+							err = d.DeleteEntry(cmnAppTs, db.Key{Comp: []string{tblKey}})
+							if err != nil {
+								log.Warning("DELETE case - d.DeleteEntry() failure")
+								return err
+							}
+							log.Info("Finally deleted the parent table row with key = ", tblKey)
+						} else {
+							log.Info("DELETE case - fields/cols to delete hence delete only those fields.")
+							existingEntry, _ := d.GetEntry(cmnAppTs, db.Key{Comp: []string{tblKey}})
+							if !existingEntry.IsPopulated() {
+								log.Info("Table Entry from which the fields are to be deleted does not exist")
+								return err
+							}
+							/* handle leaf-list merge if any leaf-list exists */
+							resTblRw := checkAndProcessLeafList(existingEntry, tblRw, DELETE, d, tblNm, tblKey)
+							err := d.DeleteEntryFields(cmnAppTs, db.Key{Comp: []string{tblKey}}, resTblRw)
+							if err != nil {
+								log.Error("DELETE case - d.DeleteEntryFields() failure")
+								return err
+							}
+						}
+
 					}
 				}
-
 			}
 		}
 	} /* end of ordered table list for loop */
