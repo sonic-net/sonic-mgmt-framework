@@ -134,9 +134,10 @@ const (
 	ConfigDB                   // 4
 	FlexCounterDB              // 5
 	StateDB                    // 6
-
+    SnmpDB                     // 7
+    ErrorDB                    // 8 
 	// All DBs added above this line, please ----
-	MaxDB // 7 The Number of DBs
+	MaxDB //  The Number of DBs
 )
 
 func(dbNo DBNum) String() string {
@@ -773,6 +774,12 @@ func (d * DB) CreateEntry(ts * TableSpec, key Key, value Value) error {
 // SetEntry sets an entry(row) in the table.
 func (d *DB) SetEntry(ts *TableSpec, key Key, value Value) error {
 	return d.setEntry(ts, key, value, false)
+}
+
+
+func (d* DB) Publish(channel string, message interface{}) error  {
+    e := d.client.Publish(channel, message).Err()
+    return e
 }
 
 // DeleteEntry deletes an entry(row) in the table.
