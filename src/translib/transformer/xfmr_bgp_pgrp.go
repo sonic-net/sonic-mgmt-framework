@@ -77,7 +77,7 @@ var DbToYang_bgp_pgrp_peer_type_xfmr FieldXfmrDbtoYang = func(inParams XfmrParam
     data := (*inParams.dbDataMap)[inParams.curDb]
     log.Info("DbToYang_bgp_pgrp_peer_type_xfmr : ", data, "inParams : ", inParams)
 
-    pTbl := data["BGP_PEER_GROUPS"]
+    pTbl := data["BGP_PEER_GROUP"]
     if _, ok := pTbl[inParams.key]; !ok {
         log.Info("DbToYang_bgp_pgrp_peer_type_xfmr BGP peer-groups not found : ", inParams.key)
         return result, errors.New("BGP peer-groups not found : " + inParams.key)
