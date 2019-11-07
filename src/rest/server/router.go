@@ -102,8 +102,11 @@ func NewRouter() *mux.Router {
 	//	Handler(http.RedirectHandler("/ui/model.html", 301))
 
 	if UserAuth.Jwt {
-		router.Methods("PST").Path("/authenticate").Handler(http.HandlerFunc(Authenticate))
+		router.Methods("POST").Path("/authenticate").Handler(http.HandlerFunc(Authenticate))
+		router.Methods("POST").Path("/refresh").Handler(http.HandlerFunc(Refresh))
+		
 	}
+
 
 	// Metadata discovery handler
 	metadataHandler := http.HandlerFunc(hostMetadataHandler)

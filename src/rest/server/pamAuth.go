@@ -177,6 +177,7 @@ func UserAuthenAndAuthor(r *http.Request, rc *RequestContext) error {
 	glog.Infof("[%s] Authorization passed", rc.ID)
 	return nil
 }
+
 func JwtAuthenAndAuthor(r *http.Request, rc *RequestContext) error {
 	c, err := r.Cookie("token")
 	if err != nil {
