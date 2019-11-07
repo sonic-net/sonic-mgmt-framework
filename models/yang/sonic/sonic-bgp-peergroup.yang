@@ -27,9 +27,7 @@ module sonic-bgp-peergroup {
         uses sbc:sonic-bgp-cmn;
       }
     }
-  }
 
-  container sonic-bgp-peergroup-af {
     container BGP_PEER_GROUP_AF {
       list BGP_PEER_GROUP_AF_LIST {
         key "vrf_name peer_group_name afi_safi";
