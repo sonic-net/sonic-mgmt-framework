@@ -34,7 +34,7 @@ This package can also talk to non-DB clients.
 package translib
 
 import (
-	//"errors"
+	"errors"
 	"sync"
 	"translib/db"
 	"translib/tlerr"
@@ -59,6 +59,7 @@ const (
 type SetRequest struct {
 	Path    string
 	Payload []byte
+	User    string
 }
 
 type SetResponse struct {
@@ -67,7 +68,8 @@ type SetResponse struct {
 }
 
 type GetRequest struct {
-	Path string
+	Path    string
+	User    string
 }
 
 type GetResponse struct {
@@ -78,6 +80,7 @@ type GetResponse struct {
 type ActionRequest struct {
 	Path    string
 	Payload []byte
+	User    string
 }
 
 type ActionResponse struct {
@@ -90,6 +93,7 @@ type BulkRequest struct {
 	ReplaceRequest []SetRequest
 	UpdateRequest  []SetRequest
 	CreateRequest  []SetRequest
+	User           string
 }
 
 type BulkResponse struct {
@@ -97,6 +101,13 @@ type BulkResponse struct {
 	ReplaceResponse []SetResponse
 	UpdateResponse  []SetResponse
 	CreateResponse  []SetResponse
+}
+
+type SubscribeRequest struct {
+	Paths			[]string
+	Q				*queue.PriorityQueue
+	Stop			chan struct{}
+	User			string
 }
 
 type SubscribeResponse struct {
@@ -113,6 +124,11 @@ const (
 	Sample NotificationType = iota
 	OnChange
 )
+
+type IsSubscribeRequest struct {
+	Paths				[]string
+	User				string
+}
 
 type IsSubscribeResponse struct {
 	Path                string
@@ -142,6 +158,11 @@ func init() {
 func Create(req SetRequest) (SetResponse, error) {
 	var keys []db.WatchKeys
 	var resp SetResponse
+
+	if (!isUserAuthorizedForSet(req.User)) {
+		resp.ErrSrc = ProtoErr
+		return resp, errors.New("User is not authorized to perform this operation")
+	}
 
 	path := req.Path
 	payload := req.Payload
@@ -211,6 +232,11 @@ func Create(req SetRequest) (SetResponse, error) {
 func Update(req SetRequest) (SetResponse, error) {
 	var keys []db.WatchKeys
 	var resp SetResponse
+
+    if (!isUserAuthorizedForSet(req.User)) {
+        resp.ErrSrc = ProtoErr
+        return resp, errors.New("User is not authorized to perform this operation")
+    }
 
 	path := req.Path
 	payload := req.Payload
@@ -282,6 +308,11 @@ func Replace(req SetRequest) (SetResponse, error) {
 	var keys []db.WatchKeys
 	var resp SetResponse
 
+    if (!isUserAuthorizedForSet(req.User)) {
+        resp.ErrSrc = ProtoErr
+        return resp, errors.New("User is not authorized to perform this operation")
+    }
+
 	path := req.Path
 	payload := req.Payload
 
@@ -352,6 +383,11 @@ func Delete(req SetRequest) (SetResponse, error) {
 	var keys []db.WatchKeys
 	var resp SetResponse
 
+    if (!isUserAuthorizedForSet(req.User)) {
+        resp.ErrSrc = ProtoErr
+        return resp, errors.New("User is not authorized to perform this operation")
+    }
+
 	path := req.Path
 
 	log.Info("Delete request received with path =", path)
@@ -419,6 +455,11 @@ func Get(req GetRequest) (GetResponse, error) {
 	var payload []byte
 	var resp GetResponse
 
+    if (!isUserAuthorizedForGet(req.User)) {
+		resp = GetResponse{Payload: payload, ErrSrc: ProtoErr}
+        return resp, errors.New("User is not authorized to perform this operation")
+    }
+
 	path := req.Path
 
 	log.Info("Received Get request for path = ", path)
@@ -462,6 +503,11 @@ func Get(req GetRequest) (GetResponse, error) {
 func Action(req ActionRequest) (ActionResponse, error) {
 	var payload []byte
 	var resp ActionResponse
+
+    if (!isUserAuthorizedForAction(req.User)) {
+        resp = ActionResponse{Payload: payload, ErrSrc: ProtoErr}
+        return resp, errors.New("User is not authorized to perform this operation")
+    }
 
 	path := req.Path
 
@@ -521,6 +567,10 @@ func Bulk(req BulkRequest) (BulkResponse, error) {
 		ReplaceResponse: replaceResp,
 		UpdateResponse: updateResp,
 		CreateResponse: createResp}
+
+    if (!isUserAuthorizedForSet(req.User)) {
+        return resp, errors.New("User is not authorized to perform this operation")
+    }
 
 	writeMutex.Lock()
 	defer writeMutex.Unlock()
@@ -749,10 +799,13 @@ func Bulk(req BulkRequest) (BulkResponse, error) {
 }
 
 //Subscribes to the paths requested and sends notifications when the data changes in DB
-func Subscribe(paths []string, q *queue.PriorityQueue, stop chan struct{}) ([]*IsSubscribeResponse, error) {
+func Subscribe(req SubscribeRequest) ([]*IsSubscribeResponse, error) {
 	var err error
 	var sErr error
-	//err = errors.New("Not implemented")
+
+	paths := req.Paths
+	q     := req.Q
+	stop  := req.Stop
 
 	dbNotificationMap := make(map[db.DBNum][]*notificationInfo)
 
@@ -765,6 +818,10 @@ func Subscribe(paths []string, q *queue.PriorityQueue, stop chan struct{}) ([]*I
 			PreferredType:       Sample,
 			Err:                 nil}
 	}
+
+    if (!isUserAuthorizedForGet(req.User)) {
+        return resp, errors.New("User is not authorized to perform this operation")
+    }
 
 	isGetCase := true
 	dbs, err := getAllDbs(isGetCase)
@@ -854,8 +911,9 @@ func Subscribe(paths []string, q *queue.PriorityQueue, stop chan struct{}) ([]*I
 }
 
 //Check if subscribe is supported on the given paths
-func IsSubscribeSupported(paths []string) ([]*IsSubscribeResponse, error) {
+func IsSubscribeSupported(req IsSubscribeRequest) ([]*IsSubscribeResponse, error) {
 
+	paths := req.Paths
 	resp := make([]*IsSubscribeResponse, len(paths))
 
 	for i, _ := range resp {
@@ -865,6 +923,10 @@ func IsSubscribeSupported(paths []string) ([]*IsSubscribeResponse, error) {
 			PreferredType:       Sample,
 			Err:                 nil}
 	}
+
+    if (!isUserAuthorizedForGet(req.User)) {
+        return resp, errors.New("User is not authorized to perform this operation")
+    }
 
 	isGetCase := true
 	dbs, err := getAllDbs(isGetCase)
