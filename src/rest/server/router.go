@@ -30,7 +30,11 @@ import (
 
 // Root directory for UI files
 var swaggerUIDir = "./ui"
-var isUserAuthEnabled = false
+var UserAuth struct {
+	User bool
+	Cert bool
+	Jwt bool
+}
 
 // SetUIDirectory functions sets directiry where Swagger UI
 // resources are maintained.
@@ -38,13 +42,6 @@ func SetUIDirectory(directory string) {
 	swaggerUIDir = directory
 }
 
-// SetUserAuthEnable function enables/disables the PAM based user
-// authentication for REST requests. By default user uthentication
-// is disabled. When enabled, the server expects clients to pass
-// user credentials as per HTTP Basic Autnetication method.
-func SetUserAuthEnable(val bool) {
-	isUserAuthEnabled = val
-}
 
 // Route registration information
 type Route struct {
@@ -104,6 +101,10 @@ func NewRouter() *mux.Router {
 	//router.Methods("GET").Path("/model").
 	//	Handler(http.RedirectHandler("/ui/model.html", 301))
 
+	if UserAuth.Jwt {
+		router.Methods("PST").Path("/authenticate").Handler(http.HandlerFunc(Authenticate))
+	}
+
 	// Metadata discovery handler
 	metadataHandler := http.HandlerFunc(hostMetadataHandler)
 	router.Methods("GET").Path("/.well-known/host-meta").
@@ -132,7 +133,7 @@ func loggingMiddleware(inner http.Handler, name string) http.Handler {
 // withMiddleware function prepares the default middleware chain for
 // REST APIs.
 func withMiddleware(h http.Handler, name string) http.Handler {
-	if isUserAuthEnabled {
+	if UserAuth.User || UserAuth.Jwt {
 		h = authMiddleware(h)
 	}
 

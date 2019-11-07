@@ -53,7 +53,7 @@ func init() {
 	flag.StringVar(&certFile, "cert", "", "Server certificate file path")
 	flag.StringVar(&keyFile, "key", "", "Server private key file path")
 	flag.StringVar(&caFile, "cacert", "", "CA certificate for client certificate validation")
-	flag.StringVar(&clientAuth, "client_auth", "none", "Client auth mode - none|cert|user")
+	flag.StringVar(&clientAuth, "client_auth", "none", "Client auth mode - none|cert|user|jwt")
 	flag.Parse()
 	// Suppress warning messages related to logging before flag parse
 	flag.CommandLine.Parse([]string{})
@@ -84,7 +84,11 @@ func main() {
 	server.SetUIDirectory(uiDir)
 
 	if clientAuth == "user" {
-		server.SetUserAuthEnable(true)
+		server.UserAuth.User = true
+	}
+	if clientAuth == "jwt" {
+		server.UserAuth.Jwt = true
+		server.GenerateJwtSecretKey()
 	}
 
 	router := server.NewRouter()
@@ -179,9 +183,11 @@ func getTLSClientAuthType() tls.ClientAuthType {
 			glog.Fatal("--cacert option is mandatory when --client_auth is 'cert'")
 		}
 		return tls.RequireAndVerifyClientCert
+	case "jwt":
+		return tls.RequestClientCert
 	default:
 		glog.Fatalf("Invalid '--client_auth' value '%s'. "+
-			"Expecting one of 'none', 'cert' or 'user'", clientAuth)
+			"Expecting one of 'none', 'cert', 'user' or 'jwt'", clientAuth)
 		return tls.RequireAndVerifyClientCert // dummy
 	}
 }
