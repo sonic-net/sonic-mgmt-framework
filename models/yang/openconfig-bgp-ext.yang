@@ -301,7 +301,7 @@ module openconfig-bgp-ext {
   }
 
   grouping bgp-ext-neighbor-group-afi-safi-originate-default-config {
-      leaf policy-name {
+      leaf default-policy-name {
           type leafref {
               path "/oc-rpol:routing-policy/oc-rpol:policy-definitions/" +
                   "oc-rpol:policy-definition/oc-rpol:name";
@@ -654,11 +654,6 @@ module openconfig-bgp-ext {
 	  deviate not-supported;
   }
 
-
-
-
-
-
   deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:route-selection-options {
 	  deviate not-supported;
   }
@@ -714,15 +709,6 @@ module openconfig-bgp-ext {
   deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:srte-policy-ipv6 {
 	  deviate not-supported;
   }
-/*
-  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:config/oc-netinst:peer-type {
-	  deviate not-supported;
-  }
-
-  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:state/oc-netinst:peer-type {
-	  deviate not-supported;
-  }
-*/
 
   deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:config/oc-netinst:remove-private-as {
 	  deviate not-supported;
@@ -797,10 +783,6 @@ module openconfig-bgp-ext {
 	  deviate not-supported;
   }
 
-
-
-
-
   deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:graceful-restart {
 	  deviate not-supported;
   }
@@ -825,6 +807,10 @@ module openconfig-bgp-ext {
   }
 
   deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:use-multiple-paths {
+	  deviate not-supported;
+  }
+
+  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:state/oc-netinst:prefixes/oc-netinst:installed {
 	  deviate not-supported;
   }
 
@@ -868,6 +854,21 @@ module openconfig-bgp-ext {
 	  deviate not-supported;
   }
 
+  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:config/oc-netinst:peer-type {
+	  deviate not-supported;
+  }
+
+  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:state/oc-netinst:peer-type {
+	  deviate not-supported;
+  }
+
+  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:config/oc-netinst:peer-type {
+	  deviate not-supported;
+  }
+
+  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:state/oc-netinst:peer-type {
+	  deviate not-supported;
+  }
 
   deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:config/oc-netinst:remove-private-as {
 	  deviate not-supported;
@@ -1206,10 +1207,43 @@ deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:p
 	  deviate not-supported;
   }
 
+  typedef bgp-neighbor {
+      type union {
+          type oc-inet:ip-address;
 
+          // TODO: in YANG 1.1, unions support leafref types which
+          // should be used here to reference a configured interface by
+          // name
+          // type leafref {
+          //    path "/oc-if:interfaces/oc-if:interface/oc-if:name";
+          // }
+          type string;
+      }
+  }
+  
+  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:config/oc-netinst:neighbor-address {
+	  deviate replace {
+          type bgp-neighbor;
+	  }
+  }
+ 
+  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:state/oc-netinst:neighbor-address {
+	  deviate replace {
+          type bgp-neighbor;
+	  }
+  }
 
+  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:rib/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:ipv4-unicast/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:state/oc-netinst:neighbor-address {
+	  deviate replace {
+          type bgp-neighbor;
+	  }
+  }
 
-
+  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:rib/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:ipv6-unicast/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:state/oc-netinst:neighbor-address {
+	  deviate replace {
+          type bgp-neighbor;
+	  }
+  }
 
   augment /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global {
       uses oc-bgp:bgp-common-structure-neighbor-group-logging-options;
