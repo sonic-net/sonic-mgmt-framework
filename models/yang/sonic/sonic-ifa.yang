@@ -98,16 +98,11 @@ module sonic-ifa {
                 }
 
                 leaf acl-table-name {
-                    type leafref {
-                        path "/sacl:sonic-acl/sacl:ACL_TABLE/sacl:ACL_TABLE_LIST/sacl:aclname";
-                    }
-
+                    type string;
                 }
 
                 leaf acl-rule-name {
-                    type leafref {
-                        path "/sacl:sonic-acl/sacl:ACL_RULE/sacl:ACL_RULE_LIST/sacl:rulename";
-                    }
+                    type string;
                 }
 
                 leaf sampling-rate {
