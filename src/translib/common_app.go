@@ -39,8 +39,7 @@ type CommonApp struct {
 	body           []byte
 	ygotRoot       *ygot.GoStruct
 	ygotTarget     *interface{}
-	cmnAppTableMap map[string]map[string]db.Value
-	cmnAppOrdTbllist []string
+	cmnAppTableMap map[int]map[db.DBNum]map[string]map[string]db.Value
 }
 
 var cmnAppInfo = appInfo{appType: reflect.TypeOf(CommonApp{}),
@@ -281,8 +280,12 @@ func (app *CommonApp) translateCRUDCommon(d *db.DB, opcode int) ([]db.WatchKeys,
         }
 
 	var resultTblList []string
-        for tblnm, _ := range result { //Get dependency list for all tables in result
-		resultTblList = append(resultTblList, tblnm)
+        for _, dbMap := range result { //Get dependency list for all tables in result
+		for _, resMap := range dbMap { //Get dependency list for all tables in result
+		        for tblnm, _ := range resMap { //Get dependency list for all tables in result
+				resultTblList = append(resultTblList, tblnm)
+			}
+		}
 	}
         log.Info("Result Tables List", resultTblList)
 
@@ -299,23 +302,6 @@ func (app *CommonApp) translateCRUDCommon(d *db.DB, opcode int) ([]db.WatchKeys,
         log.Info("Tables to watch", tblsToWatch)
         cmnAppInfo.tablesToWatch = tblsToWatch
 
-	// Get sorted dependency tables to be used for CRUD operations
-	cvSess, cvlRetSess := cvl.ValidationSessOpen()
-	if cvlRetSess != cvl.CVL_SUCCESS {
-		log.Errorf("Failure in creating CVL validation session object required to use CVl API to get Tbl info for module %v - %v", moduleNm, cvlRetSess)
-		return keys, err
-	}
-	cvlSortDepTblList, cvlRetDepTbl := cvSess.SortDepTables(resultTblList)
-	if cvlRetDepTbl != cvl.CVL_SUCCESS {
-		log.Warningf("Failure in cvlSess.SortDepTables: %v", cvlRetDepTbl)
-		cvl.ValidationSessClose(cvSess)
-		return keys, err
-	}
-	log.Info("cvlSortDepTblList = ", cvlSortDepTblList)
-	app.cmnAppOrdTbllist = cvlSortDepTblList
-
-	cvl.ValidationSessClose(cvSess)
-
 	keys, err = app.generateDbWatchKeys(d, false)
 	return keys, err
 }
@@ -323,39 +309,100 @@ func (app *CommonApp) translateCRUDCommon(d *db.DB, opcode int) ([]db.WatchKeys,
 func (app *CommonApp) processCommon(d *db.DB, opcode int) error {
 
 	var err error
-
 	log.Info("Processing DB operation for ", app.cmnAppTableMap)
 	switch opcode {
 		case CREATE:
 			log.Info("CREATE case")
-			err = app.cmnAppCRUCommonDbOpn(d, opcode)
 		case UPDATE:
 			log.Info("UPDATE case")
-			err = app.cmnAppCRUCommonDbOpn(d, opcode)
 		case REPLACE:
 			log.Info("REPLACE case")
-			err = app.cmnAppCRUCommonDbOpn(d, opcode)
 		case DELETE:
 			log.Info("DELETE case")
-			err = app.cmnAppDelDbOpn(d, opcode)
 	}
-	if err != nil {
-		log.Info("Returning from processCommon() - fail")
-	} else {
-		log.Info("Returning from processCommon() - success")
+
+	// Handle delete first if any available
+	if _, ok := app.cmnAppTableMap[DELETE][db.ConfigDB]; ok {
+		err = app.cmnAppDelDbOpn(d, DELETE, app.cmnAppTableMap[DELETE][db.ConfigDB])
+		if err != nil {
+			log.Info("Process delete fail. cmnAppDelDbOpn error:", err)
+			return err
+		}
 	}
+	// Handle create operation next
+	if _, ok := app.cmnAppTableMap[CREATE][db.ConfigDB]; ok {
+		err = app.cmnAppCRUCommonDbOpn(d, CREATE, app.cmnAppTableMap[CREATE][db.ConfigDB])
+		if err != nil {
+			log.Info("Process create fail. cmnAppCRUCommonDbOpn error:", err)
+			return err
+		}
+	}
+	// Handle update and replace operation next
+	if _, ok := app.cmnAppTableMap[UPDATE][db.ConfigDB]; ok {
+		err = app.cmnAppCRUCommonDbOpn(d, UPDATE, app.cmnAppTableMap[UPDATE][db.ConfigDB])
+		if err != nil {
+			log.Info("Process update fail. cmnAppCRUCommonDbOpn error:", err)
+			return err
+		}
+	}
+	if _, ok := app.cmnAppTableMap[REPLACE][db.ConfigDB]; ok {
+		err = app.cmnAppCRUCommonDbOpn(d, REPLACE, app.cmnAppTableMap[REPLACE][db.ConfigDB])
+		if err != nil {
+			log.Info("Process replace fail. cmnAppCRUCommonDbOpn error:", err)
+			return err
+		}
+	}
+	log.Info("Returning from processCommon() - success")
 	return err
 }
 
-func (app *CommonApp) cmnAppCRUCommonDbOpn(d *db.DB, opcode int) error {
+//sort transformer result table list based on dependenciesi(using CVL API) tables to be used for CRUD operations
+func sortAsPerTblDeps(tblLst []string) ([]string, error) {
+	var resultTblLst []string
+	var err error
+	logStr := "Failure in CVL API to sort table list as per dependencies."
+
+	cvSess, cvlRetSess := cvl.ValidationSessOpen()
+	if cvlRetSess != cvl.CVL_SUCCESS {
+
+		log.Errorf("Failure in creating CVL validation session object required to use CVl API(sort table list as per dependencies) - %v", cvlRetSess)
+		err = fmt.Errorf("%v", logStr)
+		return resultTblLst, err
+	}
+	cvlSortDepTblList, cvlRetDepTbl := cvSess.SortDepTables(tblLst)
+	if cvlRetDepTbl != cvl.CVL_SUCCESS {
+		log.Warningf("Failure in cvlSess.SortDepTables: %v", cvlRetDepTbl)
+		cvl.ValidationSessClose(cvSess)
+		err = fmt.Errorf("%v", logStr)
+		return resultTblLst, err
+	}
+	log.Info("cvlSortDepTblList = ", cvlSortDepTblList)
+	resultTblLst = cvlSortDepTblList
+
+	cvl.ValidationSessClose(cvSess)
+	return resultTblLst, err
+
+}
+
+func (app *CommonApp) cmnAppCRUCommonDbOpn(d *db.DB, opcode int, dbMap map[string]map[string]db.Value) error {
 	var err error
 	var cmnAppTs *db.TableSpec
+	var xfmrTblLst []string
+	var resultTblLst []string
+
+	for tblNm, _ := range(dbMap) {
+		xfmrTblLst = append(xfmrTblLst, tblNm)
+	}
+	resultTblLst, err = sortAsPerTblDeps(xfmrTblLst)
+	if err != nil {
+		return err
+	}
 
 	/* CVL sorted order is in child first, parent later order. CRU ops from parent first order */
-	for idx := len(app.cmnAppOrdTbllist)-1; idx >= 0; idx-- {
-		tblNm := app.cmnAppOrdTbllist[idx]
+	for idx := len(resultTblLst)-1; idx >= 0; idx-- {
+		tblNm := resultTblLst[idx]
 		log.Info("In Yang to DB map returned from transformer looking for table = ", tblNm)
-		if tblVal, ok := app.cmnAppTableMap[tblNm]; ok {
+		if tblVal, ok := dbMap[tblNm]; ok {
 			cmnAppTs = &db.TableSpec{Name: tblNm}
 			log.Info("Found table entry in yang to DB map")
 			for tblKey, tblRw := range tblVal {
@@ -377,8 +424,8 @@ func (app *CommonApp) cmnAppCRUCommonDbOpn(d *db.DB, opcode int) error {
 					if existingEntry.IsPopulated() {
 						log.Info("Entry already exists hence modifying it.")
 						/* Handle leaf-list merge if any leaf-list exists 
-						   A leaf-list field in redis has "@" suffix as per swsssdk convention.
-						 */
+						A leaf-list field in redis has "@" suffix as per swsssdk convention.
+						*/
 						resTblRw := db.Value{Field: map[string]string{}}
 						resTblRw = checkAndProcessLeafList(existingEntry, tblRw, UPDATE, d, tblNm, tblKey)
 						err = d.ModEntry(cmnAppTs, db.Key{Comp: []string{tblKey}}, resTblRw)
@@ -387,9 +434,9 @@ func (app *CommonApp) cmnAppCRUCommonDbOpn(d *db.DB, opcode int) error {
 							return err
 						}
 					} else {
-                                                // workaround to patch operation from CLI
-                                                log.Info("Create(pathc) an entry.")
-                                                err = d.CreateEntry(cmnAppTs, db.Key{Comp: []string{tblKey}}, tblRw)
+						// workaround to patch operation from CLI
+						log.Info("Create(pathc) an entry.")
+						err = d.CreateEntry(cmnAppTs, db.Key{Comp: []string{tblKey}}, tblRw)
 						if err != nil {
 							log.Error("UPDATE case - d.CreateEntry() failure")
 							return err
@@ -418,10 +465,21 @@ func (app *CommonApp) cmnAppCRUCommonDbOpn(d *db.DB, opcode int) error {
 	return err
 }
 
-func (app *CommonApp) cmnAppDelDbOpn(d *db.DB, opcode int) error {
+func (app *CommonApp) cmnAppDelDbOpn(d *db.DB, opcode int, dbMap map[string]map[string]db.Value) error {
 	var err error
 	var cmnAppTs, dbTblSpec *db.TableSpec
 	var moduleNm string
+	var xfmrTblLst []string
+	var resultTblLst []string
+
+	for tblNm, _ := range(dbMap) {
+		xfmrTblLst = append(xfmrTblLst, tblNm)
+	}
+	resultTblLst, err = sortAsPerTblDeps(xfmrTblLst)
+	if err != nil {
+		return err
+	}
+
 
 	/* Retrieve module Name */
 	moduleNm, err = transformer.GetModuleNmFromPath(app.pathInfo.Path)
@@ -431,10 +489,10 @@ func (app *CommonApp) cmnAppDelDbOpn(d *db.DB, opcode int) error {
 	}
 	log.Info("getModuleNmFromPath() returned module name = ", moduleNm)
 
-	/* app.cmnAppOrdTbllist has child first, parent later order */
-	for _, tblNm := range app.cmnAppOrdTbllist {
+	/* resultTblLst has child first, parent later order */
+	for _, tblNm := range resultTblLst {
 		log.Info("In Yang to DB map returned from transformer looking for table = ", tblNm)
-		if tblVal, ok := app.cmnAppTableMap[tblNm]; ok {
+		if tblVal, ok := dbMap[tblNm]; ok {
 			cmnAppTs = &db.TableSpec{Name: tblNm}
 			log.Info("Found table entry in yang to DB map")
 			ordTblList := transformer.GetOrdTblList(tblNm, moduleNm)
@@ -491,10 +549,10 @@ func (app *CommonApp) cmnAppDelDbOpn(d *db.DB, opcode int) error {
 
 					}
 					err = d.DeleteEntry(cmnAppTs, db.Key{Comp: []string{tblKey}})
-                                        if err != nil {
-                                                log.Warning("DELETE case - d.DeleteEntry() failure")
-                                                return err
-                                        }
+					if err != nil {
+						log.Warning("DELETE case - d.DeleteEntry() failure")
+						return err
+					}
 					log.Info("Finally deleted the parent table row with key = ", tblKey)
 				} else {
 					log.Info("DELETE case - fields/cols to delete hence delete only those fields.")
