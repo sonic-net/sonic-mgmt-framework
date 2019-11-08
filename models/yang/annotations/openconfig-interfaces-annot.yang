@@ -67,7 +67,7 @@ module openconfig-interfaces-annot {
 
     deviation /oc-intf:interfaces/oc-intf:interface/oc-lag:aggregation/oc-lag:state {
       deviate add {
-            sonic-ext:db-name "APPL_DB";
+            sonic-ext:subtree-transformer "intf_lag_state_xfmr";
       }
     }
 
@@ -102,7 +102,7 @@ module openconfig-interfaces-annot {
     deviation /oc-intf:interfaces/oc-intf:interface/oc-eth:ethernet/oc-eth:config {
         deviate add {
             sonic-ext:db-name "CONFIG_DB";
-            sonic-ext:subtree-transformer "intf_eth_port_aggregate_xfmr";
+            sonic-ext:subtree-transformer "intf_eth_port_config_xfmr";
         }
     }
 //    deviation /oc-intf:interfaces/oc-intf:interface/oc-eth:ethernet/oc-eth:config/oc-eth:auto-negotiate {
@@ -143,6 +143,7 @@ module openconfig-interfaces-annot {
             sonic-ext:key-transformer "intf_subintfs_xfmr";
         }
     }
+
     deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv4/oc-ip:addresses {
         deviate add {
             sonic-ext:subtree-transformer "intf_ip_addr_xfmr";
