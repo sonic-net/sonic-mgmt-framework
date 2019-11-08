@@ -144,7 +144,14 @@ limitations under the License.
 	method="integer"
 	pattern="1..128"
 	help=""
-	/>
+    />
+    <PTYPE
+    name="RANGE_1_4095"
+    method="integer"
+    pattern="1..4095"
+    help=""
+    />
+
     <!--=======================================================-->
     <PTYPE
         name="IPADDR_NN"
@@ -559,4 +566,21 @@ limitations under the License.
         help=""
         />
     <!--=======================================================-->
+    <!--=======================================================-->
+    <PTYPE
+        name="MCLAG_KA_INTERVAL_RANGE"
+        method="integer"
+        pattern="1..60"
+        help="Keepalive Interval"
+        />
+    <!--=======================================================-->
+    <!--=======================================================-->
+    <PTYPE
+        name="MCLAG_SESSION_TIMEOUT_RANGE"
+        method="integer"
+        pattern="1..3600"
+        help=""
+        />
+    <!--=======================================================-->
+
 </CLISH_MODULE>
