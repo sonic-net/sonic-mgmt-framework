@@ -18,6 +18,7 @@ import (
 func init () {
     XlateFuncBind("intf_table_xfmr", intf_table_xfmr)
     XlateFuncBind("YangToDb_intf_name_xfmr", YangToDb_intf_name_xfmr)
+    XlateFuncBind("DbToYang_intf_name_xfmr", DbToYang_intf_name_xfmr)
     XlateFuncBind("YangToDb_intf_name_empty_xfmr", YangToDb_intf_name_empty_xfmr)
     XlateFuncBind("YangToDb_intf_enabled_xfmr", YangToDb_intf_enabled_xfmr)
     XlateFuncBind("DbToYang_intf_enabled_xfmr", DbToYang_intf_enabled_xfmr)
@@ -296,6 +297,17 @@ var YangToDb_intf_name_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[s
     }
     log.Info("YangToDb_intf_name_xfm: res_map:", res_map)
     return res_map, err
+}
+
+var DbToYang_intf_name_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (map[string]interface{}, error) {
+    log.Info("Entering DbToYang_intf_tbl_key_xfmr")
+    res_map := make(map[string]interface{})
+
+    pathInfo := NewPathInfo(inParams.uri)
+    ifName:= pathInfo.Var("name")
+	log.Info("Interface Name = ", ifName)
+	res_map["name"] = ifName
+    return res_map, nil
 }
 
 var YangToDb_intf_name_empty_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
@@ -869,6 +881,14 @@ func getIntfIpByName(dbCl *db.DB, tblName string, ifName string, ipv4 bool, ipv6
         if key.Get(0) != ifName {
             continue
         }
+        if len(key.Comp) > 2 {
+            for i, _ := range key.Comp {
+                if i == 0 || i == 1 {
+                    continue
+                }
+                key.Comp[1] = key.Comp[1] + ":" + key.Comp[i]
+            }
+        }
         if all == false {
             ipB, _, _ := net.ParseCIDR(key.Get(1))
             if ((validIPv4(ipB.String()) && (ipv4 == false)) ||
@@ -882,7 +902,7 @@ func getIntfIpByName(dbCl *db.DB, tblName string, ifName string, ipv4 bool, ipv6
             }
         }
 
-        ipInfo, _ := dbCl.GetEntry(&db.TableSpec{Name:tblName}, key)
+        ipInfo, _ := dbCl.GetEntry(&db.TableSpec{Name:tblName}, db.Key{Comp: []string{key.Get(0), key.Get(1)}})
         intfIpMap[key.Get(1)]= ipInfo
     }
     return intfIpMap, err 
@@ -922,12 +942,21 @@ func handleIntfIPGetByTargetURI (inParams XfmrParams, targetUriPath string, ifNa
            ipMap, err = getIntfIpByName(inParams.dbs[db.ApplDB], intTbl.appDb.intfTN, ifName, false, true, ipAddr)
            log.Info("handleIntfIPGetByTargetURI : ipv6 state ipMap - : ", ipMap)
            convertIpMapToOC(ipMap, intfObj, true)
-    } else if strings.HasPrefix(targetUriPath, "/openconfig-interfaces:interfaces/interface/subinterfaces/subinterface") {
-        ipMap, err = getIntfIpByName(inParams.dbs[db.ConfigDB], intTbl.cfgDb.intfTN, ifName, true, true, ipAddr)
-           log.Info("handleIntfIPGetByTargetURI : ipv4 and ipv6 config ipMap - : ", ipMap)
+    } else if strings.HasPrefix(targetUriPath, "/openconfig-interfaces:interfaces/interface/subinterfaces/subinterface/ipv4/addresses") ||
+        strings.HasPrefix(targetUriPath, "/openconfig-interfaces:interfaces/interface/subinterfaces/subinterface/openconfig-if-ip:ipv4/addresses") {
+        ipMap, err = getIntfIpByName(inParams.dbs[db.ConfigDB], intTbl.cfgDb.intfTN, ifName, true, false, ipAddr)
+           log.Info("handleIntfIPGetByTargetURI : ipv4 config ipMap - : ", ipMap)
         convertIpMapToOC(ipMap, intfObj, false)
-        ipMap, err = getIntfIpByName(inParams.dbs[db.ApplDB], intTbl.appDb.intfTN, ifName, true, true, ipAddr)
-           log.Info("handleIntfIPGetByTargetURI : ipv4 and ipv6 state ipMap - : ", ipMap)
+        ipMap, err = getIntfIpByName(inParams.dbs[db.ApplDB], intTbl.appDb.intfTN, ifName, true, false, ipAddr)
+           log.Info("handleIntfIPGetByTargetURI : ipv4 state ipMap - : ", ipMap)
+        convertIpMapToOC(ipMap, intfObj, true)
+    } else if strings.HasPrefix(targetUriPath, "/openconfig-interfaces:interfaces/interface/subinterfaces/subinterface/ipv6/addresses") ||
+        strings.HasPrefix(targetUriPath, "/openconfig-interfaces:interfaces/interface/subinterfaces/subinterface/openconfig-if-ip:ipv6/addresses") {
+        ipMap, err = getIntfIpByName(inParams.dbs[db.ConfigDB], intTbl.cfgDb.intfTN, ifName, false, true, ipAddr)
+           log.Info("handleIntfIPGetByTargetURI : ipv6 config ipMap - : ", ipMap)
+        convertIpMapToOC(ipMap, intfObj, false)
+        ipMap, err = getIntfIpByName(inParams.dbs[db.ApplDB], intTbl.appDb.intfTN, ifName, false, true, ipAddr)
+           log.Info("handleIntfIPGetByTargetURI : ipv6 state ipMap - : ", ipMap)
         convertIpMapToOC(ipMap, intfObj, true)
     }
     return err
