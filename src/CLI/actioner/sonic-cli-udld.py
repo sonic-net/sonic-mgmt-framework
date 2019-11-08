@@ -43,28 +43,52 @@ def invoke(func, args):
         return udldShowHandler("counters_show", args)
 
     # Configure UDLD global
-    if func == 'udldGlobalEnableHandler' :
-        return udldConfigHandler("global_enable", args)
+    if func == 'patch_sonic_udld_sonic_udld_udld_udld_list' :
+        keypath = cc.Path('/restconf/data/sonic-udld:sonic-udld/UDLD/UDLD_LIST={id}', id='GLOBAL')
+        body=collections.defaultdict(dict)
+        body["UDLD_LIST"] = [{
+            "id": "GLOBAL",
+            "msg_time": 1,
+            "multiplier":3,
+            "admin_enable":str2bool(args[0])
+            }]
+        return aa.patch(keypath, body)
 
-    # Configure UDLD normal
-    if func == 'udldGlobalNormalEnableHandler' :
-        return udldConfigHandler("global_normal", args)
+    # Configure UDLD aggressive
+    if func == 'patch_sonic_udld_sonic_udld_udld_udld_list_aggressive' :
+        keypath = cc.Path('/restconf/data/sonic-udld:sonic-udld/UDLD/UDLD_LIST={id}/aggressive', id='GLOBAL')
+        body = { "sonic-udld:aggressive": str2bool(args[0]) }
+        return aa.patch(keypath, body)
 
     # Configure UDLD message-time
-    if func == 'udldMsgTimeHandler' :
-        return udldConfigHandler("global_msg_time", args)
+    if func == 'patch_sonic_udld_sonic_udld_udld_udld_list_msg_time' :
+        keypath = cc.Path('/restconf/data/sonic-udld:sonic-udld/UDLD/UDLD_LIST={id}/msg_time', id='GLOBAL')
+        if args[0] == '0':
+            body = { "sonic-udld:msg_time": 1 }
+        else:
+            body = { "sonic-udld:msg_time": int(args[0]) }
+        return aa.patch(keypath, body)
 
     # Configure UDLD multiplier
-    if func == 'udldMultiplierHandler' :
-        return udldConfigHandler("global_multiplier", args)
+    if func == 'patch_sonic_udld_sonic_udld_udld_udld_list_multiplier' :
+        keypath = cc.Path('/restconf/data/sonic-udld:sonic-udld/UDLD/UDLD_LIST={id}/multiplier', id='GLOBAL')
+        if args[0] == '0':
+            body = { "sonic-udld:multiplier": 3 }
+        else:
+            body = { "sonic-udld:multiplier": int(args[0]) }
+        return aa.patch(keypath, body)
 
     # Configure UDLD enable/disable at Interface
-    if func == 'udldInterfaceEnableHandler' :
-        return udldConfigHandler("interface_enable", args)
+    if func == 'patch_sonic_udld_sonic_udld_udld_port_udld_port_list_admin_enable' :
+        keypath = cc.Path('/restconf/data/sonic-udld:sonic-udld/UDLD_PORT/UDLD_PORT_LIST={ifname}/admin_enable', ifname=args[1])
+        body = { "sonic-udld:admin_enable": str2bool(args[0]) }
+        return aa.patch(keypath, body)
 
     # Configure UDLD normal at Interface
-    if func == 'udldInterfaceNormalEnableHandler' :
-        return udldConfigHandler("interface_normal", args)
+    if func == 'patch_sonic_udld_sonic_udld_udld_port_udld_port_list_aggressive' :
+        keypath = cc.Path('/restconf/data/sonic-udld:sonic-udld/UDLD_PORT/UDLD_PORT_LIST={ifname}/aggressive', ifname=args[1])
+        body = { "sonic-udld:aggressive": str2bool(args[0]) }
+        return aa.patch(keypath, body)
 
     # enable/disable debug udld at global level
     if func == 'udldGlobalDebugHandler' :
@@ -87,9 +111,9 @@ def udldConfigHandler(option, args):
             print("Disabled UDLD globally")
     elif option == "global_normal":
         if args[0] == '1':
-            print("Enabled UDLD globally in Normal mode")
+            print("Enabled UDLD globally in Aggressive mode")
         else:    
-            print("Disabled UDLD globally in Normal mode")
+            print("Disabled UDLD globally in Aggressive mode")
     elif option == "global_msg_time":
         print("Set UDLD Message Time to: " + args[0])
     elif option == "global_multiplier":
@@ -101,9 +125,9 @@ def udldConfigHandler(option, args):
             print("Disabled UDLD on interface: " + args[0])
     elif option == "interface_normal":
         if args[1] == '1':
-            print("Enabled UDLD in Normal mode on interface: " + args[0])
+            print("Enabled UDLD in Aggressive mode on interface: " + args[0])
         else:    
-            print("Disabled UDLD in Normal mode on interface: " + args[0])
+            print("Disabled UDLD in Aggressive mode on interface: " + args[0])
 
     return ""
 
@@ -181,8 +205,16 @@ def udldInterfaceCountersClearHandler(args):
         print("Clearing counters for interface: " + args[0])
 
 
+def str2bool(s):
+    return s.lower() in ("yes", "true", "t", "1")
+
+
 def run(func, args):
         api_response = invoke(func, args)
+        if api_response.ok():
+            response = api_response.content
+            if response is None:
+                print "Success"
 
 
 if __name__ == '__main__':
