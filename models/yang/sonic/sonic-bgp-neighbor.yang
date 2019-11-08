@@ -45,7 +45,7 @@ module sonic-bgp-neighbor {
         }
 
         container BGP_NEIGHBOR_AF {
-            list BGP_NEIGHBOR__AF_LIST {
+            list BGP_NEIGHBOR_AF_LIST {
                 key "vrf_name neighbor_ip afi_safi";
 
                 leaf neighbor_ip {
