@@ -24,6 +24,8 @@ import (
     log "github.com/golang/glog"
 )
 
+type RedisDbMap = map[db.DBNum]map[string]map[string]db.Value
+
 type XfmrParams struct {
 	d *db.DB
 	dbs [db.MaxDB]*db.DB
@@ -33,6 +35,7 @@ type XfmrParams struct {
 	oper int
 	key string
 	dbDataMap *map[db.DBNum]map[string]map[string]db.Value
+	subOpDataMap map[int]*RedisDbMap // used to add an in-flight data with a sub-op
 	param interface{}
 	txCache interface{}
 }
@@ -97,7 +100,7 @@ type RpcCallpoint func (body []byte, dbs [db.MaxDB]*db.DB) ([]byte, error)
  * PostXfmrFunc type is defined to use for handling any default handling operations required as part of the CREATE
  * Transformer function definition.
  * Param: XfmrParams structure having database pointers, current db, operation, DB data in multidimensional map, YgotRoot, uri
- * Return: multi dimensional map to hold the DB data, error
+ * Return: Multi dimensional map to hold the DB data Map (tblName, key and Fields), error
  **/
 type PostXfmrFunc func (inParams XfmrParams) (map[string]map[string]db.Value, error)
 

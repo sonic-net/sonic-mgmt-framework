@@ -146,7 +146,7 @@ func XlateUriToKeySpec(uri string, ygRoot *ygot.GoStruct, t *interface{}, txCach
 		retdbFormat = fillSonicKeySpec(xpath, tableName, keyStr)
 	} else {
 		/* Extract the xpath and key from input xpath */
-		xpath, keyStr, _ := xpathKeyExtract(nil, ygRoot, 0, uri, txCache)
+		xpath, keyStr, _ := xpathKeyExtract(nil, ygRoot, 0, uri, nil, txCache)
 		retdbFormat = FillKeySpecs(xpath, keyStr, &retdbFormat)
 	}
 
@@ -245,7 +245,7 @@ func fillSonicKeySpec(xpath string , tableName string, keyStr string) ( []KeySpe
 	return retdbFormat
 }
 
-func XlateToDb(path string, opcode int, d *db.DB, yg *ygot.GoStruct, yt *interface{}, txCache interface{}) (map[string]map[string]db.Value, error) {
+func XlateToDb(path string, opcode int, d *db.DB, yg *ygot.GoStruct, yt *interface{}, txCache interface{}) (map[int]map[db.DBNum]map[string]map[string]db.Value, error) {
 
 	var err error
 
@@ -267,7 +267,7 @@ func XlateToDb(path string, opcode int, d *db.DB, yg *ygot.GoStruct, yt *interfa
 	}
 
 	// Map contains table.key.fields
-	var result = make(map[string]map[string]db.Value)
+	var result = make(map[int]map[db.DBNum]map[string]map[string]db.Value)
 	switch opcode {
 	case CREATE:
 		log.Info("CREATE case")
@@ -306,7 +306,7 @@ func GetAndXlateFromDB(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db.DB, 
 	log.Info("received xpath =", uri)
 
 	keySpec, err := XlateUriToKeySpec(uri, ygRoot, nil, txCache)
-	var dbresult = make(map[db.DBNum]map[string]map[string]db.Value)
+	var dbresult = make(RedisDbMap)
         for i := db.ApplDB; i < db.MaxDB; i++ {
                 dbresult[i] = make(map[string]map[string]db.Value)
 	}
@@ -328,11 +328,11 @@ func GetAndXlateFromDB(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db.DB, 
 	return payload, err
 }
 
-func XlateFromDb(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db.DB, data map[db.DBNum]map[string]map[string]db.Value, txCache interface{}) ([]byte, error) {
+func XlateFromDb(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db.DB, data RedisDbMap, txCache interface{}) ([]byte, error) {
 
 	var err error
 	var result []byte
-	var dbData = make(map[db.DBNum]map[string]map[string]db.Value)
+	var dbData = make(RedisDbMap)
 	var cdb db.DBNum = db.ConfigDB
 
 	dbData = data
