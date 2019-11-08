@@ -78,12 +78,8 @@ def run(func, args):
                 value = api_response['sonic-tam:sonic-tam']
                 if 'TAM_DEVICE_TABLE' in value:
                     tup = value['TAM_DEVICE_TABLE']
-                elif 'TAM_INT_IFA_FEATURE_TABLE' in value:
-                    tup = value['TAM_INT_IFA_FEATURE_TABLE']
                 elif 'TAM_COLLECTOR_TABLE' in value:
                     tup = value['TAM_COLLECTOR_TABLE']
-                elif 'TAM_INT_IFA_FLOW_TABLE' in value:
-                    tup = value['TAM_INT_IFA_FLOW_TABLE']
                 else:
                     api_response = None
 
