@@ -399,7 +399,7 @@ func tableNameAndKeyFromDbMapGet(dbDataMap map[string]map[string]db.Value) (stri
 
 func fillDbDataMapForTbl(uri string, xpath string, tblName string, tblKey string, cdb db.DBNum, dbs [db.MaxDB]*db.DB) (map[db.DBNum]map[string]map[string]db.Value, error) {
 	var err error
-	dbresult  := make(map[db.DBNum]map[string]map[string]db.Value)
+	dbresult  := make(RedisDbMap)
 	dbresult[cdb] = make(map[string]map[string]db.Value)
 	dbFormat := KeySpec{}
 	dbFormat.Ts.Name = tblName
@@ -437,7 +437,7 @@ func yangListDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, x
 	if tbl == "" && xYangSpecMap[xpath].xfmrTbl != nil {
 		xfmrTblFunc := *xYangSpecMap[xpath].xfmrTbl
 		if len(xfmrTblFunc) > 0 {
-			inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, uri, GET, tblKey, dbDataMap, nil, txCache)
+			inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, uri, GET, tblKey, dbDataMap, nil, nil, txCache)
 			tblList   = xfmrTblHandlerFunc(xfmrTblFunc, inParams)
 			if len(tblList) != 0 {
 				for _, curTbl := range tblList {
@@ -449,7 +449,7 @@ func yangListDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, x
 		tblList = append(tblList, tbl)
 	} else if tbl != "" && xYangSpecMap[xpath].xfmrTbl != nil {
 		/*key instance level GET, table name and table key filled from xpathKeyExtract which internally calls table transformer*/
-		inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, uri, GET, tblKey, dbDataMap, nil, txCache)
+		inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, uri, GET, tblKey, dbDataMap, nil, nil, txCache)
 		dbDataFromTblXfmrGet(tbl, inParams, dbDataMap)
 		tblList = append(tblList, tbl)
 
@@ -482,7 +482,7 @@ func yangListDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, x
 				curMap := make(map[string]interface{})
 				curKeyMap, curUri, _ := dbKeyToYangDataConvert(uri, xpath, dbKey, dbs[cdb].Opts.KeySeparator, txCache)
 				if len(xYangSpecMap[xpath].xfmrFunc) > 0 {
-					inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, curUri, GET, "", dbDataMap, nil, txCache)
+					inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, curUri, GET, "", dbDataMap, nil, nil, txCache)
 					cmap, _  := xfmrHandlerFunc(inParams)
 					if cmap != nil && len(cmap) > 0 {
 						mapSlice = append(mapSlice, curMap)
@@ -493,7 +493,7 @@ func yangListDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, x
 					yangDataFill(dbs, ygRoot, curUri, xpath, dbDataMap, curMap, tbl, dbKey, cdb, validate, txCache)
 					mapSlice = append(mapSlice, curMap)
 				} else {
-					_, keyFromCurUri, _ := xpathKeyExtract(dbs[cdb], ygRoot, GET, curUri, txCache)
+					_, keyFromCurUri, _ := xpathKeyExtract(dbs[cdb], ygRoot, GET, curUri, nil, txCache)
 					if dbKey == keyFromCurUri || keyFromCurUri == "" {
 						if dbKey == keyFromCurUri {
 							for k, kv := range curKeyMap {
@@ -533,7 +533,7 @@ func yangListInstanceDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri s
         curMap := make(map[string]interface{})
         curKeyMap, curUri, _ := dbKeyToYangDataConvert(uri, xpath, dbKey, dbs[cdb].Opts.KeySeparator, txCache)
         if len(xYangSpecMap[xpath].xfmrFunc) > 0 {
-                inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, curUri, GET, "", dbDataMap, nil, txCache)
+                inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, curUri, GET, "", dbDataMap, nil, nil, txCache)
                 cmap, _  := xfmrHandlerFunc(inParams)
                 if cmap != nil && len(cmap) > 0 {
                         mapSlice = append(mapSlice, curMap)
@@ -541,7 +541,7 @@ func yangListInstanceDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri s
                         log.Infof("Empty container returned from overloaded transformer for(\"%v\")", curUri)
                 }
         } else {
-                _, keyFromCurUri, _ := xpathKeyExtract(dbs[cdb], ygRoot, GET, curUri, txCache)
+                _, keyFromCurUri, _ := xpathKeyExtract(dbs[cdb], ygRoot, GET, curUri, nil, txCache)
                 if dbKey == keyFromCurUri || keyFromCurUri == "" {
                         if dbKey == keyFromCurUri {
                                 for k, kv := range curKeyMap {
@@ -568,7 +568,7 @@ func terminalNodeProcess(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string
 
 	cdb := xYangSpecMap[xpath].dbIndex
 	if len(xYangSpecMap[xpath].xfmrField) > 0 {
-		inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, uri, GET, tblKey, dbDataMap, nil, txCache)
+		inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, uri, GET, tblKey, dbDataMap, nil, nil, txCache)
 		fldValMap, err := leafXfmrHandlerFunc(inParams)
 		if err != nil {
 			logStr := fmt.Sprintf("%Failed to get data from overloaded function for %v -v.", uri, err)
@@ -632,9 +632,9 @@ func yangDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, xpath
 			if xYangSpecMap[chldXpath] != nil && xYangSpecMap[chldXpath].yangEntry != nil {
 				cdb = xYangSpecMap[chldXpath].dbIndex
 				if len(xYangSpecMap[chldXpath].validateFunc) > 0 && !validate {
-					_, key, _ := xpathKeyExtract(dbs[cdb], ygRoot, GET, chldUri, txCache)
+					_, key, _ := xpathKeyExtract(dbs[cdb], ygRoot, GET, chldUri, nil, txCache)
 					// TODO - handle non CONFIG-DB
-					inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, chldUri, GET, key, dbDataMap, nil, txCache)
+					inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, chldUri, GET, key, dbDataMap, nil, nil, txCache)
 					res := validateHandlerFunc(inParams)
 					if res != true {
 						continue
@@ -655,12 +655,12 @@ func yangDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, xpath
 						resultMap[lf] = val
 					}
 				} else if chldYangType == YANG_CONTAINER {
-					_, tblKey, tbl = xpathKeyExtract(dbs[cdb], ygRoot, GET, chldUri, txCache)
+					_, tblKey, tbl = xpathKeyExtract(dbs[cdb], ygRoot, GET, chldUri, nil, txCache)
 					cname := xYangSpecMap[chldXpath].yangEntry.Name
 					if xYangSpecMap[chldXpath].xfmrTbl != nil {
 						xfmrTblFunc := *xYangSpecMap[chldXpath].xfmrTbl
 						if len(xfmrTblFunc) > 0 {
-							inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, chldUri, GET, tblKey, dbDataMap, nil, txCache)
+							inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, chldUri, GET, tblKey, dbDataMap, nil, nil, txCache)
 							tblList := xfmrTblHandlerFunc(xfmrTblFunc, inParams)
 							if len(tblList) > 1 {
 								log.Warningf("Table transformer returned more than one table for container %v", chldXpath)
@@ -677,7 +677,7 @@ func yangDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, xpath
 						if (len(xYangSpecMap[xpath].xfmrFunc) == 0) ||
 						(len(xYangSpecMap[xpath].xfmrFunc) > 0   &&
 						(xYangSpecMap[xpath].xfmrFunc != xYangSpecMap[chldXpath].xfmrFunc)) {
-							inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, chldUri, GET, "", dbDataMap, nil, txCache)
+							inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, chldUri, GET, "", dbDataMap, nil, nil, txCache)
 							cmap1, _  = xfmrHandlerFunc(inParams)
 							if cmap1 != nil && len(cmap1) == 0 {
 								log.Infof("Empty container(\"%v\").\r\n", chldUri)
@@ -695,13 +695,13 @@ func yangDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, xpath
 						resultMap[cname] = mergeMaps(maps...)
 					}
 				} else if chldYangType ==  YANG_LIST {
-					_, tblKey, tbl = xpathKeyExtract(dbs[cdb], ygRoot, GET, chldUri, txCache)
+					_, tblKey, tbl = xpathKeyExtract(dbs[cdb], ygRoot, GET, chldUri, nil, txCache)
 					cdb = xYangSpecMap[chldXpath].dbIndex
 					if len(xYangSpecMap[chldXpath].xfmrFunc) > 0 {
 						if (len(xYangSpecMap[xpath].xfmrFunc) == 0) ||
 						   (len(xYangSpecMap[xpath].xfmrFunc) > 0   &&
 						   (xYangSpecMap[xpath].xfmrFunc != xYangSpecMap[chldXpath].xfmrFunc)) {
-							inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, chldUri, GET, "", dbDataMap, nil, txCache)
+							inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, chldUri, GET, "", dbDataMap, nil, nil, txCache)
 							cmap, _  := xfmrHandlerFunc(inParams)
 							if cmap != nil && len(cmap) > 0 {
 								resultMap = cmap
@@ -734,7 +734,7 @@ func dbDataToYangJsonCreate(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db
 		return directDbToYangJsonCreate(uri, dbDataMap, resultMap)
 	} else {
 		var d *db.DB
-		reqXpath, keyName, tableName := xpathKeyExtract(d, ygRoot, GET, uri, txCache)
+		reqXpath, keyName, tableName := xpathKeyExtract(d, ygRoot, GET, uri, nil, txCache)
 		yangNode, ok := xYangSpecMap[reqXpath]
 		if ok {
 			yangType := yangTypeGet(yangNode.yangEntry)
@@ -742,7 +742,7 @@ func dbDataToYangJsonCreate(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db
 			tableXfmrFlag := false
 			IsValidate := false
 			if len(xYangSpecMap[reqXpath].validateFunc) > 0 {
-				inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, uri, GET, keyName, dbDataMap, nil, txCache)
+				inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, uri, GET, keyName, dbDataMap, nil, nil, txCache)
 				res := validateHandlerFunc(inParams)
 				if !res {
 					validateHandlerFlag = true
@@ -768,7 +768,7 @@ func dbDataToYangJsonCreate(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db
 				if xYangSpecMap[reqXpath].xfmrTbl != nil {
 					xfmrTblFunc := *xYangSpecMap[reqXpath].xfmrTbl
 					if len(xfmrTblFunc) > 0 {
-						inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, uri, GET, keyName, dbDataMap, nil, txCache)
+						inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, uri, GET, keyName, dbDataMap, nil, nil, txCache)
 						tblList := xfmrTblHandlerFunc(xfmrTblFunc, inParams)
 						if len(tblList) > 1 {
 							log.Warningf("Table transformer returned more than one table for container %v", reqXpath)
@@ -796,7 +796,7 @@ func dbDataToYangJsonCreate(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db
 						break
 					}
                                         if len(xYangSpecMap[reqXpath].xfmrFunc) > 0 {
-                                                inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, uri, GET, "", dbDataMap, nil, txCache)
+                                                inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, uri, GET, "", dbDataMap, nil, nil, txCache)
 						cmap, _ := xfmrHandlerFunc(inParams)
                                                 if cmap != nil && len(cmap) > 0 {
                                                         resultMap = cmap
@@ -818,7 +818,7 @@ func dbDataToYangJsonCreate(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db
 						break
 					}
 					if len(xYangSpecMap[reqXpath].xfmrFunc) > 0 {
-						inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, uri, GET, "", dbDataMap, nil, txCache)
+						inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, uri, GET, "", dbDataMap, nil, nil, txCache)
 						cmap, _   = xfmrHandlerFunc(inParams)
 						if cmap != nil && len(cmap) > 0 {
 							resultMap = cmap
@@ -831,7 +831,7 @@ func dbDataToYangJsonCreate(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db
 					break
 				} else if yangType == YANG_LIST {
 					if len(xYangSpecMap[reqXpath].xfmrFunc) > 0 {
-						inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, uri, GET, "", dbDataMap, nil, txCache)
+						inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, uri, GET, "", dbDataMap, nil, nil, txCache)
 						cmap, _  := xfmrHandlerFunc(inParams)
 						if cmap != nil && len(cmap) > 0 {
 							resultMap = cmap

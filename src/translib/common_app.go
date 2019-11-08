@@ -39,7 +39,7 @@ type CommonApp struct {
 	body           []byte
 	ygotRoot       *ygot.GoStruct
 	ygotTarget     *interface{}
-	cmnAppTableMap map[string]map[string]db.Value
+	cmnAppTableMap map[int]map[db.DBNum]map[string]map[string]db.Value
 	cmnAppOrdTbllist []string
 }
 
@@ -281,8 +281,12 @@ func (app *CommonApp) translateCRUDCommon(d *db.DB, opcode int) ([]db.WatchKeys,
         }
 
 	var resultTblList []string
-        for tblnm, _ := range result { //Get dependency list for all tables in result
-		resultTblList = append(resultTblList, tblnm)
+        for _, dbMap := range result { //Get dependency list for all tables in result
+		for _, resMap := range dbMap { //Get dependency list for all tables in result
+		        for tblnm, _ := range resMap { //Get dependency list for all tables in result
+				resultTblList = append(resultTblList, tblnm)
+			}
+		}
 	}
         log.Info("Result Tables List", resultTblList)
 
@@ -323,31 +327,54 @@ func (app *CommonApp) translateCRUDCommon(d *db.DB, opcode int) ([]db.WatchKeys,
 func (app *CommonApp) processCommon(d *db.DB, opcode int) error {
 
 	var err error
-
 	log.Info("Processing DB operation for ", app.cmnAppTableMap)
 	switch opcode {
 		case CREATE:
 			log.Info("CREATE case")
-			err = app.cmnAppCRUCommonDbOpn(d, opcode)
 		case UPDATE:
 			log.Info("UPDATE case")
-			err = app.cmnAppCRUCommonDbOpn(d, opcode)
 		case REPLACE:
 			log.Info("REPLACE case")
-			err = app.cmnAppCRUCommonDbOpn(d, opcode)
 		case DELETE:
 			log.Info("DELETE case")
-			err = app.cmnAppDelDbOpn(d, opcode)
 	}
-	if err != nil {
-		log.Info("Returning from processCommon() - fail")
-	} else {
-		log.Info("Returning from processCommon() - success")
+
+	// Handle delete first if any available
+	if _, ok := app.cmnAppTableMap[DELETE][db.ConfigDB]; ok {
+		err = app.cmnAppDelDbOpn(d, opcode, app.cmnAppTableMap[DELETE][db.ConfigDB])
+		if err != nil {
+			log.Info("Process delete fail. cmnAppDelDbOpn error:", err)
+			return err
+		}
 	}
+	// Handle create operation next
+	if _, ok := app.cmnAppTableMap[CREATE][db.ConfigDB]; ok {
+		err = app.cmnAppCRUCommonDbOpn(d, opcode, app.cmnAppTableMap[CREATE][db.ConfigDB])
+		if err != nil {
+			log.Info("Process create fail. cmnAppCRUCommonDbOpn error:", err)
+			return err
+		}
+	}
+	// Handle update and replace operation next
+	if _, ok := app.cmnAppTableMap[UPDATE][db.ConfigDB]; ok {
+		err = app.cmnAppCRUCommonDbOpn(d, opcode, app.cmnAppTableMap[UPDATE][db.ConfigDB])
+		if err != nil {
+			log.Info("Process update fail. cmnAppCRUCommonDbOpn error:", err)
+			return err
+		}
+	}
+	if _, ok := app.cmnAppTableMap[REPLACE][db.ConfigDB]; ok {
+		err = app.cmnAppCRUCommonDbOpn(d, opcode, app.cmnAppTableMap[REPLACE][db.ConfigDB])
+		if err != nil {
+			log.Info("Process replace fail. cmnAppCRUCommonDbOpn error:", err)
+			return err
+		}
+	}
+	log.Info("Returning from processCommon() - success")
 	return err
 }
 
-func (app *CommonApp) cmnAppCRUCommonDbOpn(d *db.DB, opcode int) error {
+func (app *CommonApp) cmnAppCRUCommonDbOpn(d *db.DB, opcode int, dbMap map[string]map[string]db.Value) error {
 	var err error
 	var cmnAppTs *db.TableSpec
 
@@ -355,7 +382,7 @@ func (app *CommonApp) cmnAppCRUCommonDbOpn(d *db.DB, opcode int) error {
 	for idx := len(app.cmnAppOrdTbllist)-1; idx >= 0; idx-- {
 		tblNm := app.cmnAppOrdTbllist[idx]
 		log.Info("In Yang to DB map returned from transformer looking for table = ", tblNm)
-		if tblVal, ok := app.cmnAppTableMap[tblNm]; ok {
+		if tblVal, ok := dbMap[tblNm]; ok {
 			cmnAppTs = &db.TableSpec{Name: tblNm}
 			log.Info("Found table entry in yang to DB map")
 			for tblKey, tblRw := range tblVal {
@@ -377,8 +404,8 @@ func (app *CommonApp) cmnAppCRUCommonDbOpn(d *db.DB, opcode int) error {
 					if existingEntry.IsPopulated() {
 						log.Info("Entry already exists hence modifying it.")
 						/* Handle leaf-list merge if any leaf-list exists 
-						   A leaf-list field in redis has "@" suffix as per swsssdk convention.
-						 */
+						A leaf-list field in redis has "@" suffix as per swsssdk convention.
+						*/
 						resTblRw := db.Value{Field: map[string]string{}}
 						resTblRw = checkAndProcessLeafList(existingEntry, tblRw, UPDATE, d, tblNm, tblKey)
 						err = d.ModEntry(cmnAppTs, db.Key{Comp: []string{tblKey}}, resTblRw)
@@ -387,9 +414,9 @@ func (app *CommonApp) cmnAppCRUCommonDbOpn(d *db.DB, opcode int) error {
 							return err
 						}
 					} else {
-                                                // workaround to patch operation from CLI
-                                                log.Info("Create(pathc) an entry.")
-                                                err = d.CreateEntry(cmnAppTs, db.Key{Comp: []string{tblKey}}, tblRw)
+						// workaround to patch operation from CLI
+						log.Info("Create(pathc) an entry.")
+						err = d.CreateEntry(cmnAppTs, db.Key{Comp: []string{tblKey}}, tblRw)
 						if err != nil {
 							log.Error("UPDATE case - d.CreateEntry() failure")
 							return err
@@ -418,7 +445,7 @@ func (app *CommonApp) cmnAppCRUCommonDbOpn(d *db.DB, opcode int) error {
 	return err
 }
 
-func (app *CommonApp) cmnAppDelDbOpn(d *db.DB, opcode int) error {
+func (app *CommonApp) cmnAppDelDbOpn(d *db.DB, opcode int, dbMap map[string]map[string]db.Value) error {
 	var err error
 	var cmnAppTs, dbTblSpec *db.TableSpec
 	var moduleNm string
@@ -434,7 +461,7 @@ func (app *CommonApp) cmnAppDelDbOpn(d *db.DB, opcode int) error {
 	/* app.cmnAppOrdTbllist has child first, parent later order */
 	for _, tblNm := range app.cmnAppOrdTbllist {
 		log.Info("In Yang to DB map returned from transformer looking for table = ", tblNm)
-		if tblVal, ok := app.cmnAppTableMap[tblNm]; ok {
+		if tblVal, ok := dbMap[tblNm]; ok {
 			cmnAppTs = &db.TableSpec{Name: tblNm}
 			log.Info("Found table entry in yang to DB map")
 			ordTblList := transformer.GetOrdTblList(tblNm, moduleNm)
@@ -491,10 +518,10 @@ func (app *CommonApp) cmnAppDelDbOpn(d *db.DB, opcode int) error {
 
 					}
 					err = d.DeleteEntry(cmnAppTs, db.Key{Comp: []string{tblKey}})
-                                        if err != nil {
-                                                log.Warning("DELETE case - d.DeleteEntry() failure")
-                                                return err
-                                        }
+					if err != nil {
+						log.Warning("DELETE case - d.DeleteEntry() failure")
+						return err
+					}
 					log.Info("Finally deleted the parent table row with key = ", tblKey)
 				} else {
 					log.Info("DELETE case - fields/cols to delete hence delete only those fields.")
