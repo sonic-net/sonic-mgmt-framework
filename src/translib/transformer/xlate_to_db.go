@@ -297,26 +297,26 @@ func directDbMapData(uri string, tableName string, jsonData interface{}, result 
 }
 
 /* Get the db table, key and field name for the incoming delete request */
-func dbMapDelete(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, jsonData interface{}, resultMap map[int]map[db.DBNum]map[string]map[string]db.Value, txCache interface{}) error {
+func dbMapDelete(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, jsonData interface{}, resultMap map[int]map[db.DBNum]map[string]map[string]db.Value, txCache interface{}) error {
 	var err error
-        var result = make(map[string]map[string]db.Value)
-        resultMap[oper] = make(map[db.DBNum]map[string]map[string]db.Value)
-	resultMap[oper][db.ConfigDB] = result
+	var result = make(map[string]map[string]db.Value)
+	resultMap[oper] = make(map[db.DBNum]map[string]map[string]db.Value)
 	subOpDataMap := make(map[int]*RedisDbMap)
 
-	if isSonicYang(path) {
-		xpathPrefix, keyName, tableName := sonicXpathKeyExtract(path)
-		log.Infof("Delete req: path(\"%v\"), key(\"%v\"), xpathPrefix(\"%v\"), tableName(\"%v\").", path, keyName, xpathPrefix, tableName)
+	if isSonicYang(uri) {
+		xpathPrefix, keyName, tableName := sonicXpathKeyExtract(uri)
+		log.Infof("Delete req: uri(\"%v\"), key(\"%v\"), xpathPrefix(\"%v\"), tableName(\"%v\").", uri, keyName, xpathPrefix, tableName)
+		resultMap[oper][db.ConfigDB] = result
 		err = sonicYangReqToDbMapDelete(xpathPrefix, tableName, keyName, result)
 	} else {
-		xpathPrefix, keyName, tableName := xpathKeyExtract(d, ygRoot, oper, path, subOpDataMap, txCache)
-		log.Infof("Delete req: path(\"%v\"), key(\"%v\"), xpathPrefix(\"%v\"), tableName(\"%v\").", path, keyName, xpathPrefix, tableName)
+		xpathPrefix, keyName, tableName := xpathKeyExtract(d, ygRoot, oper, uri, subOpDataMap, txCache)
+		log.Infof("Delete req: uri(\"%v\"), key(\"%v\"), xpathPrefix(\"%v\"), tableName(\"%v\").", uri, keyName, xpathPrefix, tableName)
 		spec, ok := xYangSpecMap[xpathPrefix]
 		if ok {
 			if len(spec.xfmrFunc) > 0 {
 				var dbs [db.MaxDB]*db.DB
 				cdb := spec.dbIndex
-				inParams := formXfmrInputRequest(d, dbs, cdb, ygRoot, path, oper, "", nil, subOpDataMap, nil, txCache)
+				inParams := formXfmrInputRequest(d, dbs, cdb, ygRoot, uri, oper, "", nil, subOpDataMap, nil, txCache)
 				ret, err := XlateFuncCall(yangToDbXfmrFunc(spec.xfmrFunc), inParams)
 				if err == nil {
 					mapCopy(result, ret[0].Interface().(map[string]map[string]db.Value))
@@ -328,7 +328,15 @@ func dbMapDelete(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, jsonDat
 				if len(keyName) > 0 {
 					result[tableName][keyName] = db.Value{Field: make(map[string]string)}
 					if spec.yangEntry != nil && spec.yangEntry.Node.Statement().Keyword == "leaf" {
-						result[tableName][keyName].Field[spec.fieldName] = ""
+						xpath, _ := XfmrRemoveXPATHPredicates(uri)
+						if len(xYangSpecMap[xpath].defVal) > 0 {
+							mapFillDataUtil(d, ygRoot, oper, uri, xpath, tableName, keyName, result, subOpDataMap, spec.fieldName, xYangSpecMap[xpath].defVal, txCache)
+							var redisMap = new(RedisDbMap)
+							(*redisMap)[db.ConfigDB] = result
+							subOpDataMap[UPDATE]     = redisMap
+						} else {
+							result[tableName][keyName].Field[spec.fieldName] = ""
+						}
 					}
 				}
 			} else if len(spec.childTable) > 0 {
@@ -336,9 +344,20 @@ func dbMapDelete(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, jsonDat
 					result[child] = make(map[string]db.Value)
 				}
 			}
+			if len(result) > 0 {
+				resultMap[oper][db.ConfigDB] = result
+			}
+			if len(subOpDataMap) > 0 {
+				for o, d := range subOpDataMap {
+					resultMap[o] = *d
+				}
+
+			}
+			/* for container/list delete req , it should go through, even if there are any leaf default-yang-values */
 		}
 	}
-	log.Infof("Delete req: path(\"%v\") resultMap(\"%v\").", path, resultMap)
+
+	log.Infof("Delete req: uri(\"%v\") resultMap(\"%v\").", uri, resultMap)
 	return err
 }
 
@@ -486,8 +505,6 @@ func dbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, jsonDat
 			if _, ok := xYangSpecMap[moduleNm]; ok {
 				if xYangSpecMap[moduleNm].yangDataType == "container" && len(xYangSpecMap[moduleNm].xfmrPost) > 0 {
 					log.Info("Invoke post transformer: ", xYangSpecMap[moduleNm].xfmrPost)
-					//dbDataMap := make(map[db.DBNum]map[string]map[string]db.Value)
-					//dbDataMap[db.ConfigDB] = result
 					var dbDataMap = resultMap[oper]
 					var dbs [db.MaxDB]*db.DB
 					inParams := formXfmrInputRequest(d, dbs, db.ConfigDB, ygRoot, path, oper, "", &dbDataMap, subOpDataMap, nil, txCache)
