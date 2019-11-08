@@ -26,9 +26,7 @@ func init () {
     XlateFuncBind("DbToYang_intf_oper_status_xfmr", DbToYang_intf_oper_status_xfmr)
     XlateFuncBind("DbToYang_intf_eth_auto_neg_xfmr", DbToYang_intf_eth_auto_neg_xfmr)
     XlateFuncBind("DbToYang_intf_eth_port_speed_xfmr", DbToYang_intf_eth_port_speed_xfmr)
-    XlateFuncBind("YangToDb_intf_eth_port_aggregate_xfmr", YangToDb_intf_eth_port_aggregate_xfmr)
-    XlateFuncBind("YangToDb_lag_min_links_xfmr", YangToDb_lag_min_links_xfmr)
-    XlateFuncBind("YangToDb_lag_fallback_xfmr", YangToDb_lag_fallback_xfmr)
+    XlateFuncBind("YangToDb_intf_eth_port_config_xfmr", YangToDb_intf_eth_port_config_xfmr)
     XlateFuncBind("YangToDb_intf_ip_addr_xfmr", YangToDb_intf_ip_addr_xfmr)
     XlateFuncBind("DbToYang_intf_ip_addr_xfmr", DbToYang_intf_ip_addr_xfmr)
     XlateFuncBind("YangToDb_intf_subintfs_xfmr", YangToDb_intf_subintfs_xfmr)
@@ -291,7 +289,7 @@ var YangToDb_intf_name_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[s
         vlanId := ifName[len("Vlan"):len(ifName)]
         res_map["vlanid"] = vlanId
     } else if strings.HasPrefix(ifName, PORTCHANNEL) == true {
-        res_map["NULL"] = "NULL"
+        res_map["admin_status"] = "up"
     } else if strings.HasPrefix(ifName, LOOPBACK) == true {
         res_map["NULL"] = "NULL"
     }
@@ -331,23 +329,6 @@ var YangToDb_intf_enabled_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (ma
     return res_map, nil
 }
 
-var YangToDb_lag_min_links_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
-    res_map := make(map[string]string)
-    var err error
-
-    minLinks, _ := inParams.param.(*uint16)
-    res_map["min_links"] = strconv.Itoa(int(*minLinks))
-    return res_map, err
-}
-
-var YangToDb_lag_fallback_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
-    res_map := make(map[string]string)
-    var err error
-
-    fallback, _ := inParams.param.(*bool)
-    res_map["fallback"] = strconv.FormatBool(*fallback)
-    return res_map, err
-}
 
 func getPortTableNameByDBId (intftbl IntfTblData, curDb db.DBNum) (string, error) {
 
@@ -1426,21 +1407,8 @@ var DbToYang_intf_get_counters_xfmr SubTreeXfmrDbToYang = func(inParams XfmrPara
     return err
 }
 
-/* Validate whether LAG exists in DB */
-func validateLagExists(d *db.DB, lagTs *string, lagName *string) error {
-    if len(*lagName) == 0 {
-        return errors.New("Length of PortChannel name is zero")
-    }
-    entry, err := d.GetEntry(&db.TableSpec{Name:*lagTs}, db.Key{Comp: []string{*lagName}})
-    if err != nil || !entry.IsPopulated() {
-        errStr := "Invalid PortChannel:" + *lagName
-        return errors.New(errStr)
-    }
-    return nil
-}
-
 /* Handle port-speed, auto-neg and aggregate-id config */
-var YangToDb_intf_eth_port_aggregate_xfmr SubTreeXfmrYangToDb = func(inParams XfmrParams) (map[string]map[string]db.Value, error) {
+var YangToDb_intf_eth_port_config_xfmr SubTreeXfmrYangToDb = func(inParams XfmrParams) (map[string]map[string]db.Value, error) {
 
     pathInfo := NewPathInfo(inParams.uri)
     ifName := pathInfo.Var("name")
