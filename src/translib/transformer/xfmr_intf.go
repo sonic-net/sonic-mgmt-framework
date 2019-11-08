@@ -33,7 +33,9 @@ func init () {
     XlateFuncBind("YangToDb_intf_subintfs_xfmr", YangToDb_intf_subintfs_xfmr)
     XlateFuncBind("DbToYang_intf_subintfs_xfmr", DbToYang_intf_subintfs_xfmr)
     XlateFuncBind("DbToYang_intf_get_counters_xfmr", DbToYang_intf_get_counters_xfmr)
-	XlateFuncBind("YangToDb_intf_tbl_key_xfmr", YangToDb_intf_tbl_key_xfmr)
+    XlateFuncBind("YangToDb_intf_tbl_key_xfmr", YangToDb_intf_tbl_key_xfmr)
+    XlateFuncBind("DbToYang_intf_tbl_key_xfmr", DbToYang_intf_tbl_key_xfmr)
+    XlateFuncBind("YangToDb_intf_name_empty_xfmr", YangToDb_intf_name_empty_xfmr)
 
 }
 const (
@@ -56,7 +58,7 @@ const (
     MGMT                     = "eth"
     VLAN                     = "Vlan"
     PORTCHANNEL              = "PortChannel"
-	LOOPBACK                 = "Loopback"
+  LOOPBACK                 = "Loopback"
 )
 
 type TblData  struct  {
@@ -106,7 +108,7 @@ var IntfTypeTblMap = map[E_InterfaceType]IntfTblData {
     },
     IntfTypeLoopback : IntfTblData {
        cfgDb:TblData{portTN:"LOOPBACK_INTERFACE", keySep: PIPE},
-	   appDb:TblData{intfTN: "INTF_TABLE", keySep: COLON},
+     appDb:TblData{intfTN: "INTF_TABLE", keySep: COLON},
    },
 }
 
@@ -173,16 +175,43 @@ func getIntfsRoot (s *ygot.GoStruct) *ocbinds.OpenconfigInterfaces_Interfaces {
 
 
 var YangToDb_intf_tbl_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (string, error) {
-	log.Info("Entering YangToDb_intf_tbl_key_xfmr")
+    log.Info("Entering YangToDb_intf_tbl_key_xfmr")
     var err error
 
     pathInfo := NewPathInfo(inParams.uri)
     ifName := pathInfo.Var("name")
 
     log.Info("Intf name ", ifName)
-	log.Info("Exiting YangToDb_intf_tbl_key_xfmr")
+    log.Info("Exiting YangToDb_intf_tbl_key_xfmr")
 
+    intfType, _, ierr := getIntfTypeByName(ifName)
+  if ierr != nil {
+      log.Errorf("Extracting Interface type for Interface: %s failed!", ifName)
+    return "", ierr
+    }
+    /* VLAN Interface Delete Handling */
+    /* TODO: Code needs to be added for Port Channel deletion too */
+    if intfType == IntfTypeVlan {
+        /* Update the map for VLAN and VLAN MEMBER table */
+        err := deleteVlanIntfAndMembers(&inParams, &ifName)
+        if err != nil {
+            log.Errorf("Deleting VLAN: %s failed!", ifName)
+            return "", err
+        }
+    }
     return ifName, err
+}
+
+// Code for DBToYang - Key xfmr
+var DbToYang_intf_tbl_key_xfmr  KeyXfmrDbToYang = func(inParams XfmrParams) (map[string]interface{}, error) {
+    log.Info("Entering DbToYang_intf_tbl_key_xfmr")
+    res_map := make(map[string]interface{})
+
+    pathInfo := NewPathInfo(inParams.uri)
+    ifName:= pathInfo.Var("name")
+	log.Info("Interface Name = ", ifName)
+	res_map["name"] = ifName
+    return res_map, nil
 }
 
 var intf_table_xfmr TableXfmrFunc = func (inParams XfmrParams) ([]string, error) {

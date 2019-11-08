@@ -656,6 +656,52 @@ func intfVlanMemberAdd(swVlanConfig *ocbinds.OpenconfigInterfaces_Interfaces_Int
     return nil
 }
 
+/* Function to delete VLAN and all its member ports */
+func deleteVlanIntfAndMembers(inParams *XfmrParams, vlanName *string) error {
+    var err error
+    subOpMap := make(map[db.DBNum]map[string]map[string]db.Value)
+    resMap := make(map[string]map[string]db.Value)
+    vlanMap := make(map[string]db.Value)
+    vlanMemberMap := make(map[string]db.Value)
+
+    vlanEntry, err := inParams.d.GetEntry(&db.TableSpec{Name:VLAN_TN}, db.Key{Comp: []string{*vlanName}})
+    if err != nil {
+        log.Errorf("Retrieving data from VLAN table for VLAN: %s failed!", *vlanName)
+        return err
+    }
+    memberPortsVal, ok := vlanEntry.Field["members@"]
+    if ok {
+        memberPorts := generateMemberPortsSliceFromString(&memberPortsVal)
+        if memberPorts == nil {
+            return nil
+        }
+        log.Infof("MemberPorts for VLAN: %s = %s", *vlanName, memberPortsVal)
+
+        for _, memberPort := range memberPorts {
+            log.Infof("Member Port:%s part of vlan:%s to be deleted!", memberPort, *vlanName)
+
+            vlanMemberEntry, err := inParams.d.GetEntry(&db.TableSpec{Name:VLAN_MEMBER_TN}, db.Key{Comp: []string{*vlanName, memberPort}})
+            if err != nil {
+                log.Errorf("Get for VLAN_MEMBER table for VLAN: %s and Interface: %s failed!", *vlanName, memberPort)
+                return err
+            }
+            vlanMemberKey := *vlanName + "|" + memberPort
+            vlanMemberMap[vlanMemberKey] = vlanMemberEntry 
+            if err != nil {
+                return err
+            }
+        }
+    }
+    vlanMap[*vlanName] = vlanEntry
+    resMap[VLAN] = vlanMap
+    resMap[VLAN_MEMBER_TN] = vlanMemberMap
+
+    subOpMap[db.ConfigDB] = resMap
+    /* Note Uncomment this section for VLAN delete after xfmr support */
+    //inParams.subOpDataMap[DELETE] = subOpMap
+    return err
+}
+
 /* Subtree transformer supports CREATE, UPDATE and DELETE operations */
 var YangToDb_sw_vlans_xfmr SubTreeXfmrYangToDb = func(inParams XfmrParams) (map[string]map[string]db.Value, error) {
     var err error
@@ -687,15 +733,19 @@ var YangToDb_sw_vlans_xfmr SubTreeXfmrYangToDb = func(inParams XfmrParams) (map[
             log.Errorf("Interface VLAN member port addition failed for Interface: %s!", ifName)
             return nil, err
         }
+        res_map[VLAN_TN] = vlanMap
+        res_map[VLAN_MEMBER_TN] = vlanMemberMap
     case DELETE:
         err = intfVlanMemberRemoval(swVlanConfig, &inParams, &ifName, vlanMap, vlanMemberMap)
         if err != nil {
             log.Errorf("Interface VLAN member port removal failed for INterface: %s!", ifName)
             return nil, err
         }
+        res_map[VLAN_MEMBER_TN] = vlanMemberMap
+        /* Need to delete the VLAN Member table and update the VLAN table with Members list, so adding the data to
+       subOpDataMap with UPDATE operation. */
+        // inParams.subOpDataMap[UPDATE] = vlanMap
     }
-    res_map[VLAN_TN] = vlanMap
-    res_map[VLAN_MEMBER_TN] = vlanMemberMap
 
     log.Info("YangToDb_sw_vlans_xfmr: vlan res map:", res_map)
     return res_map, err
@@ -866,6 +916,7 @@ func getSwitchedVlanState(ifKey *string, vlanMemberMap map[string]map[string]db.
   return nil 
 }
 
+
 /* Subtree transformer supports GET operation */
 var DbToYang_sw_vlans_xfmr SubTreeXfmrDbToYang = func (inParams XfmrParams) (error) {
     var err error
@@ -916,12 +967,12 @@ var DbToYang_sw_vlans_xfmr SubTreeXfmrDbToYang = func (inParams XfmrParams) (err
                 log.Errorf(errStr)
                 return errors.New(errStr)
             }
-			// log.Info("Access VLAN before = ", *ocEthernetVlanStateVal.AccessVlan)
+            // log.Info("Access VLAN before = ", *ocEthernetVlanStateVal.AccessVlan)
             attrPresent, err := getSpecificSwitchedVlanStateAttr(&targetUriPath, &ifName, vlanMemberMap, ocEthernetVlanStateVal)
             if(err != nil) {
                 return err
             }
-			// log.Info("Access VLAN after = ", *ocEthernetVlanStateVal.AccessVlan)
+            // log.Info("Access VLAN after = ", *ocEthernetVlanStateVal.AccessVlan)
             if(!attrPresent) {
                 log.Infof("Get is for Switched Vlan State Container!")
                 err = getSwitchedVlanState(&ifName, vlanMemberMap, ocEthernetVlanStateVal)
