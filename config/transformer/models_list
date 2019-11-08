@@ -5,3 +5,5 @@ openconfig-acl-annot.yang
 openconfig-network-instance.yang
 openconfig-network-instance-annot.yang
 sonic-vxlan.yang
+sonic-ifa.yang
+sonic-tam.yang
