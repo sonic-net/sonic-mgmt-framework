@@ -19,7 +19,6 @@ func init () {
     XlateFuncBind("intf_table_xfmr", intf_table_xfmr)
     XlateFuncBind("YangToDb_intf_name_xfmr", YangToDb_intf_name_xfmr)
     XlateFuncBind("DbToYang_intf_name_xfmr", DbToYang_intf_name_xfmr)
-    XlateFuncBind("YangToDb_intf_name_empty_xfmr", YangToDb_intf_name_empty_xfmr)
     XlateFuncBind("YangToDb_intf_enabled_xfmr", YangToDb_intf_enabled_xfmr)
     XlateFuncBind("DbToYang_intf_enabled_xfmr", DbToYang_intf_enabled_xfmr)
     XlateFuncBind("DbToYang_intf_admin_status_xfmr", DbToYang_intf_admin_status_xfmr)
