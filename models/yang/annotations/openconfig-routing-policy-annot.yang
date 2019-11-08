@@ -414,4 +414,52 @@ module openconfig-routing-policy-annot {
         sonic-ext:field-transformer "prefix_masklength_range_fld_xfmr";
       }
     }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:defined-sets/oc-bgp-pol:bgp-defined-sets/oc-bgp-pol:community-sets/oc-bgp-pol:community-set {
+        deviate add {
+            sonic-ext:table-name "COMMUNITY_SET";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:defined-sets/oc-bgp-pol:bgp-defined-sets/oc-bgp-pol:community-sets/oc-bgp-pol:community-set/oc-bgp-pol:community-set-name {
+        deviate add {
+            sonic-ext:field-name "name";
+        }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:defined-sets/oc-bgp-pol:bgp-defined-sets/oc-bgp-pol:community-sets/oc-bgp-pol:community-set/oc-bgp-pol:config/oc-bgp-pol:community-set-name {
+      deviate add {
+        sonic-ext:field-transformer "community_set_name_fld_xfmr";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:defined-sets/oc-bgp-pol:bgp-defined-sets/oc-bgp-pol:community-sets/oc-bgp-pol:community-set/oc-bgp-pol:config/oc-bgp-pol:match-set-options {
+      deviate add {
+        sonic-ext:field-transformer "community_match_set_options_fld_xfmr";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:defined-sets/oc-bgp-pol:bgp-defined-sets/oc-bgp-pol:community-sets/oc-bgp-pol:community-set/oc-bgp-pol:config/oc-bgp-pol:community-member {
+        deviate add {
+            sonic-ext:field-transformer "community_member_fld_xfmr";
+        }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:defined-sets/oc-bgp-pol:bgp-defined-sets/oc-bgp-pol:community-sets/oc-bgp-pol:community-set/oc-bgp-pol:state/oc-bgp-pol:match-set-options {
+      deviate add {
+        sonic-ext:field-transformer "community_match_set_options_fld_xfmr";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:defined-sets/oc-bgp-pol:bgp-defined-sets/oc-bgp-pol:community-sets/oc-bgp-pol:community-set/oc-bgp-pol:state/oc-bgp-pol:community-member {
+        deviate add {
+            sonic-ext:field-transformer "community_member_fld_xfmr";
+        }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:defined-sets/oc-bgp-pol:bgp-defined-sets/oc-bgp-pol:community-sets/oc-bgp-pol:community-set/oc-bgp-pol:state/oc-bgp-pol:community-set-name {
+      deviate add {
+        sonic-ext:field-transformer "community_set_name_fld_xfmr";
+      }
+    }
 }

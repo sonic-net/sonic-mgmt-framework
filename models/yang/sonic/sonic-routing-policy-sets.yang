@@ -85,5 +85,76 @@ module sonic-routing-policy-sets {
                 }
             }
         }
+
+        container COMMUNITY_SET {
+
+            list COMMUNITY_SET_LIST { 
+                key "name";
+
+                leaf name {
+                    mandatory true;
+                    type string {
+                        pattern '[a-zA-Z0-9]{1}([-a-zA-Z0-9_]{0,71})';
+                        length 1..72;
+                    }
+                }
+
+                leaf type {
+                    type enumeration {
+                        enum STANDARD;
+                        enum EXPANDED;
+                    }
+                }
+
+                leaf-list community_member {
+                    type string;
+                }
+            }
+        }
+
+        container EXTCOMMUNITY_SET {
+
+            list EXTCOMMUNITY_SET_LIST { 
+                key "name";
+
+                leaf name {
+                    mandatory true;
+                    type string {
+                        pattern '[a-zA-Z0-9]{1}([-a-zA-Z0-9_]{0,71})';
+                        length 1..72;
+                    }
+                }
+
+                leaf type {
+                    type enumeration {
+                        enum STANDARD;
+                        enum EXPANDED;
+                    }
+                }
+
+                leaf-list community_member {
+                    type string;
+                }
+            }
+        }
+
+        container AS_PATH_SET {
+
+            list AS_PATH_SET { 
+                key "name";
+
+                leaf name {
+                    mandatory true;
+                    type string {
+                        pattern '[a-zA-Z0-9]{1}([-a-zA-Z0-9_]{0,71})';
+                        length 1..72;
+                    }
+                }
+
+                leaf-list as_path_member {
+                    type string;
+                }
+            }
+        }
     }
 }
