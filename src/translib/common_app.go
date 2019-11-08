@@ -343,7 +343,7 @@ func (app *CommonApp) processCommon(d *db.DB, opcode int) error {
 	if _, ok := app.cmnAppTableMap[DELETE][db.ConfigDB]; ok {
 		err = app.cmnAppDelDbOpn(d, opcode, app.cmnAppTableMap[DELETE][db.ConfigDB])
 		if err != nil {
-			log.Info("Process delete Fail. cmnAppDelDbOpn error:", err)
+			log.Info("Process delete fail. cmnAppDelDbOpn error:", err)
 			return err
 		}
 	}
@@ -351,7 +351,7 @@ func (app *CommonApp) processCommon(d *db.DB, opcode int) error {
 	if _, ok := app.cmnAppTableMap[CREATE][db.ConfigDB]; ok {
 		err = app.cmnAppCRUCommonDbOpn(d, opcode, app.cmnAppTableMap[CREATE][db.ConfigDB])
 		if err != nil {
-			log.Info("Process create Fail. cmnAppCRUCommonDbOpn error:", err)
+			log.Info("Process create fail. cmnAppCRUCommonDbOpn error:", err)
 			return err
 		}
 	}
@@ -359,14 +359,14 @@ func (app *CommonApp) processCommon(d *db.DB, opcode int) error {
 	if _, ok := app.cmnAppTableMap[UPDATE][db.ConfigDB]; ok {
 		err = app.cmnAppCRUCommonDbOpn(d, opcode, app.cmnAppTableMap[UPDATE][db.ConfigDB])
 		if err != nil {
-			log.Info("Process create Fail. cmnAppCRUCommonDbOpn error:", err)
+			log.Info("Process update fail. cmnAppCRUCommonDbOpn error:", err)
 			return err
 		}
 	}
 	if _, ok := app.cmnAppTableMap[REPLACE][db.ConfigDB]; ok {
 		err = app.cmnAppCRUCommonDbOpn(d, opcode, app.cmnAppTableMap[REPLACE][db.ConfigDB])
 		if err != nil {
-			log.Info("Process create Fail. cmnAppCRUCommonDbOpn error:", err)
+			log.Info("Process replace fail. cmnAppCRUCommonDbOpn error:", err)
 			return err
 		}
 	}
