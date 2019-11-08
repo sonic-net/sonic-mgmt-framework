@@ -149,6 +149,7 @@ type Options struct {
 	InitIndicator      string
 	TableNameSeparator string
 	KeySeparator       string
+    IsWriteDisabled    bool         //Indicated if write is allowed
 
 	DisableCVLCheck    bool
 }
@@ -588,6 +589,12 @@ doCVLExit:
 func (d *DB) doWrite(ts * TableSpec, op _txOp, key Key, val interface{}) error {
 	var e error = nil
 	var value Value
+
+    if d.Opts.IsWriteDisabled {
+        glog.Error("doWrite: Write to DB disabled")
+        e = errors.New("Write to DB disabled during this operation")
+        goto doWriteExit
+    }   
 
 	switch d.txState {
 	case txStateNone:
