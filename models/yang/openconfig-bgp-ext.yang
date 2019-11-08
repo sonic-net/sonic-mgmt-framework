@@ -47,24 +47,39 @@ module openconfig-bgp-ext {
         "Type to describe the direction";
   }
 
+  grouping bgp-ext-global-afi-safi-route-reflector-config {
+      leaf route-reflector-cluster-id {
+          type oc-bgp-types:rr-cluster-id-type;
+          description
+              "route-reflector cluster id to use when local router is
+              configured as a route reflector.";
+      }
+
+      leaf allow-outbound-policy {
+          type boolean;
+          description
+              "This leaf indicates whether to allow the outbound policy.";
+      }
+  }
+
   grouping bgp-ext-global-route-reflector{
       description
           "Configuration parameters determining whether the behaviour of
           the local system when acting as a route-reflector";
 
       container bgp-ext-route-reflector {
-
-          leaf route-reflector-cluster-id {
-              type oc-bgp-types:rr-cluster-id-type;
+          description
+              "Parameters relating to BGP route reflector";
+          container config {
               description
-                  "route-reflector cluster id to use when local router is
-                  configured as a route reflector.";
+                  "Configuration options for BGP route reflector";
+              uses bgp-ext-global-afi-safi-route-reflector-config;
           }
-
-          leaf allow-outbound-policy {
-              type boolean;
+          container state {
+              config false;
               description
-                  "This leaf indicates whether to allow the outbound policy.";
+                  "State information for BGP route reflector";
+              uses bgp-ext-global-afi-safi-route-reflector-config;
           }
       }
   }
