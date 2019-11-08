@@ -331,9 +331,15 @@ func dbMapDelete(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, jsonData
 						xpath, _ := XfmrRemoveXPATHPredicates(uri)
 						if len(xYangSpecMap[xpath].defVal) > 0 {
 							mapFillDataUtil(d, ygRoot, oper, uri, xpath, tableName, keyName, result, subOpDataMap, spec.fieldName, xYangSpecMap[xpath].defVal, txCache)
-							var redisMap = new(RedisDbMap)
-							(*redisMap)[db.ConfigDB] = result
-							subOpDataMap[UPDATE]     = redisMap
+							if len(subOpDataMap) > 0 && subOpDataMap[UPDATE] != nil {
+								subOperMap := subOpDataMap[UPDATE]
+								mapCopy((*subOperMap)[db.ConfigDB], result)
+							} else {
+								var redisMap = new(RedisDbMap)
+								(*redisMap)[db.ConfigDB] = result
+								subOpDataMap[UPDATE]     = redisMap
+							}
+							result = make(map[string]map[string]db.Value)
 						} else {
 							result[tableName][keyName].Field[spec.fieldName] = ""
 						}
@@ -482,7 +488,7 @@ func dbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, jsonDat
 	var err error
 	tblXpathMap := make(map[string][]string)
 	var result = make(map[string]map[string]db.Value)
-	resultMap[oper] = make(map[db.DBNum]map[string]map[string]db.Value)
+	resultMap[oper] = make(RedisDbMap)
 	resultMap[oper][db.ConfigDB] = result
 	subOpDataMap := make(map[int]*RedisDbMap)
 
@@ -513,6 +519,10 @@ func dbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, jsonDat
 			} else {
 				log.Errorf("No Entry exists for module %s in xYangSpecMap. Unable to process post xfmr (\"%v\") path(\"%v\") error (\"%v\").", oper, path, err)
 			}
+			for op, redisMap := range subOpDataMap {
+				resultMap[op] = *(redisMap)
+			}
+
 		}
 		printDbData(resultMap, "/tmp/yangToDbDataCreate.txt")
 	} else {

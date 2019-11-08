@@ -490,7 +490,6 @@ func XfmrRemoveXPATHPredicates(xpath string) (string, error) {
 		}
 	}
 	path := stripAugmentedModuleNames(xpath)
-	fmt.Println("new path:", path)
 	return path, nil
 }
 
