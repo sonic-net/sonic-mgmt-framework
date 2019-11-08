@@ -442,10 +442,20 @@ func GetTablesToWatch(xfmrTblList []string, uriModuleNm string) []string {
         depTblMap := make(map[string]bool) //create to avoid duplicates in depTblList, serves as a Set
         processedTbl := false
 	var sncMdlList []string
+	var lXfmrTblList []string
 
 	sncMdlList = getYangMdlToSonicMdlList(uriModuleNm)
 
-        for _, xfmrTbl := range(xfmrTblList) {
+	// remove duplicates from incoming list of tables
+	xfmrTblMap := make(map[string]bool) //create to avoid duplicates in xfmrTblList
+	for _, xfmrTblNm :=range(xfmrTblList) {
+		xfmrTblMap[xfmrTblNm] = true
+	}
+	for xfmrTblNm, _ := range(xfmrTblMap) {
+		lXfmrTblList = append(lXfmrTblList, xfmrTblNm)
+	}
+
+        for _, xfmrTbl := range(lXfmrTblList) {
 		processedTbl = false
                 //can be optimized if there is a way to know all sonic modules, a given OC-Yang spans over
                 for _, sonicMdlNm := range(sncMdlList) {
