@@ -563,10 +563,12 @@ func (app *CommonApp) cmnAppDelDbOpn(d *db.DB, opcode int, dbMap map[string]map[
 					}
 					/* handle leaf-list merge if any leaf-list exists */
 					resTblRw := checkAndProcessLeafList(existingEntry, tblRw, DELETE, d, tblNm, tblKey)
-					err := d.DeleteEntryFields(cmnAppTs, db.Key{Comp: []string{tblKey}}, resTblRw)
-					if err != nil {
-						log.Error("DELETE case - d.DeleteEntryFields() failure")
-						return err
+					if len(resTblRw.Field) > 0 {
+						err := d.DeleteEntryFields(cmnAppTs, db.Key{Comp: []string{tblKey}}, resTblRw)
+						if err != nil {
+							log.Error("DELETE case - d.DeleteEntryFields() failure")
+							return err
+						}
 					}
 				}
 
@@ -612,7 +614,9 @@ func checkAndProcessLeafList(existingEntry db.Value, tblRw db.Value, opcode int,
 			} else if opcode == UPDATE {
 				exstLst = valueLst
 			}
-			tblRw.SetList(field, exstLst)
+			if opcode == UPDATE {
+				tblRw.SetList(field, exstLst)
+			}
 		}
 	}
 	/* delete specific item from leaf-list */
