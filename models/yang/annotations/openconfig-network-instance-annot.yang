@@ -922,5 +922,246 @@ module openconfig-network-instance-annot {
             sonic-ext:field-name "route_download_filter";
       }
     }
+
+/* BGP Neighbors*/
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor {
+      deviate add {
+        sonic-ext:table-name "BGP_NEIGHBOR";
+        sonic-ext:key-transformer "bgp_nbr_tbl_key_xfmr";
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:neighbor-address {
+      deviate add {
+            sonic-ext:field-name "neighbor_ip";
+      }
+    }
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:config/oc-netinst:peer-group {
+      deviate add {
+            sonic-ext:field-name "peer_group_name";
+      }
+    }
+
+/* neighbor->ebgp-multihop */
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:ebgp-multihop/oc-netinst:config/oc-netinst:multihop-ttl {
+      deviate add {
+            sonic-ext:field-name "ebgp_multihop_ttl";
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:ebgp-multihop/oc-netinst:config/oc-netinst:enabled {
+      deviate add {
+            sonic-ext:field-name "ebgp_multihop";
+      }
+    }
+
+/* neighbor->timers->config */
+/* neighbor->timers->config->minimum-advertisement-interval */
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:timers/oc-netinst:config/oc-netinst:minimum-advertisement-interval {
+      deviate add {
+            sonic-ext:field-name "min_adv_interval";
+      }
+    }
+
+/* neighbor->timers->config->connect-retry */
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:timers/oc-netinst:config/oc-netinst:connect-retry {
+      deviate add {
+            sonic-ext:field-name "conn_retry";
+      }
+    }
+
+/* neighbor->timers->config->hold-time */
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:timers/oc-netinst:config/oc-netinst:hold-time {
+      deviate add {
+            sonic-ext:field-name "hold_time";
+      }
+    }
+
+/* neighbor->timers->config->keepalive-interval */
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:timers/oc-netinst:config/oc-netinst:keepalive-interval {
+      deviate add {
+            sonic-ext:field-name "keepalive_interval";
+      }
+    }
+
+/* neighbor->config */
+/* neighbor->config->description */
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:config/oc-netinst:description {
+      deviate add {
+            sonic-ext:field-name "description";
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:config/oc-netinst:auth-password {
+      deviate add {
+            sonic-ext:field-name "auth_password";
+      }
+    }
+
+/* neighbor->config->peer-as */
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:config/oc-netinst:peer-as {
+      deviate add {
+            sonic-ext:field-name "peer_asn";
+      }
+    }
+
+/* neighbor->config->local-as */
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:config/oc-netinst:local-as {
+      deviate add {
+            sonic-ext:field-name "local_asn";
+      }
+    }
+
+/* neighbor->transport->config */
+/* neighbor->transport->config->passive-mode */
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:transport/oc-netinst:config/oc-netinst:passive-mode {
+      deviate add {
+            sonic-ext:field-name "passive_mode";
+      }
+    }
+
+/* neighbor->transport->config->local-address */
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:transport/oc-netinst:config/oc-netinst:local-address {
+      deviate add {
+            sonic-ext:field-name "local_address";
+      }
+    }
+
+/* BGP NBR AFI SAFI */
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:afi-safis/oc-netinst:afi-safi {
+      deviate add {
+        sonic-ext:table-name "BGP_NEIGHBOR_AF";
+        sonic-ext:key-transformer "bgp_af_nbr_tbl_key_xfmr";
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:l2vpn-evpn {
+      deviate add {
+        sonic-ext:key-transformer "bgp_af_nbr_proto_tbl_key_xfmr";
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:ipv4-unicast {
+      deviate add {
+        sonic-ext:key-transformer "bgp_af_nbr_proto_tbl_key_xfmr";
+      }
+    }
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:ipv6-unicast {
+      deviate add {
+        sonic-ext:key-transformer "bgp_af_nbr_proto_tbl_key_xfmr";
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:l2vpn-evpn/oc-netinst:prefix-limit/oc-netinst:config/oc-netinst:prevent-teardown {
+      deviate add {
+            sonic-ext:field-name "max_prefix_warning_only";
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:l2vpn-evpn/oc-netinst:prefix-limit/oc-netinst:config/oc-netinst:warning-threshold-pct {
+      deviate add {
+            sonic-ext:field-name "max_prefix_warning_threshold";
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:l2vpn-evpn/oc-netinst:prefix-limit/oc-netinst:config/oc-netinst:restart-timer {
+      deviate add {
+            sonic-ext:field-name "max_prefix_restart_interval";
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:l2vpn-evpn/oc-netinst:prefix-limit/oc-netinst:config/oc-netinst:max-prefixes {
+      deviate add {
+            sonic-ext:field-name "max_prefix_limit";
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:config/oc-netinst:afi-safi-name {
+      deviate add {
+            sonic-ext:field-transformer "bgp_nbr_afi_safi_name_fld_xfmr";
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:ipv4-unicast/oc-netinst:config/oc-netinst:send-default-route {
+      deviate add {
+            sonic-ext:field-name "send_default_route";
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:ipv4-unicast/oc-netinst:prefix-limit/oc-netinst:config/oc-netinst:max-prefixes {
+      deviate add {
+            sonic-ext:field-name "max_prefix_limit";
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:ipv4-unicast/oc-netinst:prefix-limit/oc-netinst:config/oc-netinst:prevent-teardown {
+      deviate add {
+            sonic-ext:field-name "max_prefix_warning_only";
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:ipv4-unicast/oc-netinst:prefix-limit/oc-netinst:config/oc-netinst:warning-threshold-pct {
+      deviate add {
+            sonic-ext:field-name "max_prefix_warning_threshold";
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:ipv4-unicast/oc-netinst:prefix-limit/oc-netinst:config/oc-netinst:restart-timer {
+      deviate add {
+            sonic-ext:field-name "max_prefix_restart_interval";
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:ipv6-unicast/oc-netinst:prefix-limit/oc-netinst:config/oc-netinst:restart-timer {
+      deviate add {
+            sonic-ext:field-name "max_prefix_restart_interval";
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:ipv6-unicast/oc-netinst:prefix-limit/oc-netinst:config/oc-netinst:max-prefixes {
+      deviate add {
+            sonic-ext:field-name "max_prefix_limit";
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:ipv6-unicast/oc-netinst:prefix-limit/oc-netinst:config/oc-netinst:prevent-teardown {
+      deviate add {
+            sonic-ext:field-name "max_prefix_warning_only";
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:ipv6-unicast/oc-netinst:prefix-limit/oc-netinst:config/oc-netinst:warning-threshold-pct {
+      deviate add {
+            sonic-ext:field-name "max_prefix_warning_threshold";
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:ipv6-unicast/oc-netinst:config/oc-netinst:send-default-route {
+      deviate add {
+            sonic-ext:field-name "send_default_route";
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:apply-policy/oc-netinst:config/oc-netinst:default-import-policy {
+      deviate add {
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:apply-policy/oc-netinst:config/oc-netinst:import-policy {
+      deviate add {
+            sonic-ext:field-name "route_map_in";
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:apply-policy/oc-netinst:config/oc-netinst:export-policy {
+      deviate add {
+            sonic-ext:field-name "route_map_out";
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:apply-policy/oc-netinst:config/oc-netinst:default-export-policy {
+      deviate add {
+      }
+    }
 }
 
