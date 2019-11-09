@@ -25,16 +25,9 @@ module sonic-bgp-peergroup {
         key "vrf_name peer_group_name";
 
         uses sbc:sonic-bgp-cmn;
-
-        leaf admin {
-          type boolean;
-        }
-
       }
     }
-  }
 
-  container sonic-bgp-peergroup-af {
     container BGP_PEER_GROUP_AF {
       list BGP_PEER_GROUP_AF_LIST {
         key "vrf_name peer_group_name afi_safi";
@@ -45,10 +38,6 @@ module sonic-bgp-peergroup {
         }
         
         uses sbc:sonic-bgp-cmn-af;
-
-        leaf admin {
-          type boolean;
-        }
       }
     }
   }
