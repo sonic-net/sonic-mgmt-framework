@@ -17,7 +17,7 @@
 #                                                                              #
 ################################################################################
 
-.PHONY: all clean cleanall codegen rest-server rest-clean yamlGen cli
+.PHONY: all clean cleanall codegen rest-server rest-clean yamlGen cli clitree
 
 TOPDIR := $(abspath .)
 BUILD_DIR := $(TOPDIR)/build
@@ -72,8 +72,11 @@ $(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/go-redis/redis
 $(GO_DEPS_LIST):
 	$(GO) get -v $@
 
-cli: rest-server
+cli: 
 	$(MAKE) -C src/CLI
+
+clitree:
+	 TGT_DIR=$(BUILD_DIR)/cli $(MAKE) -C src/CLI/clitree
 
 cvl: go-deps go-patch go-redis-patch
 	$(MAKE) -C src/cvl

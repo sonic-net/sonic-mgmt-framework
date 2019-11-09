@@ -37,7 +37,7 @@ if response.ok() {
     respJson = response.content
     # invoke renderer to display respJson
 } else {
-    print response.error_message()
+    print(response.error_message())
 }
 ```
 
@@ -73,7 +73,7 @@ Default error formatter is sufficient for most of the cases.
 
 ```python
 if not response.ok():
-     print response.error_message(formatter_func=my_new_error_message_formatter)
+     print(response.error_message(formatter_func=my_new_error_message_formatter))
 ```
 
 The custom formtter function would receive RESTCONF error json and should return a string.
