@@ -423,7 +423,7 @@ limitations under the License.
 
        <COMMAND name="sflow" help="Interface sFlow settings"/>
            <COMMAND name="sflow sampling-rate" help="Set sampling-rate" ptype="SUBCOMMAND" mode="subcommand">
-               <PARAM name="rate" help="Sampling rate" ptype="UINT"/>
+               <PARAM name="rate" help="Sampling rate" ptype="SFLOW_SAMPLING_RATE"/>
                   <ACTION>
                        python $SONIC_CLI_ROOT/sonic-cli-sflow.py patch_sonic_sflow_sonic_sflow_sflow_session_sflow_session_list_sample_rate ${iface} ${rate}
                   </ACTION>
