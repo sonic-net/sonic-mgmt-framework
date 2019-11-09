@@ -56,6 +56,8 @@ def invoke_api(func, args=[]):
     api = cc.ApiClient()
     keypath = []
     body = None
+    # Override global NAME1 and use vrf-name (temporarily needed for new transformer)
+    NAME1=args[0]
 
     if func == 'patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_config_as':
 	keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/config/as', 
@@ -143,6 +145,53 @@ def invoke_api(func, args=[]):
 		name=args[0], identifier=IDENTIFIER, name1=NAME1, prefix=args[1])
         body = { "openconfig-network-instance:peer-group": args[2] }
         return api.patch(keypath, body)
+
+    elif func == 'patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_description':
+        keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/neighbors/neighbor={neighbor_address}/config/description',
+		name=args[0], identifier=IDENTIFIER, name1=NAME1, neighbor_address=args[1])
+        body = { "openconfig-network-instance:description": args[2] }
+        return api.patch(keypath, body)
+    elif func == 'patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_ebgp_multihop_config_multihop_ttl':
+        keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/neighbors/neighbor={neighbor_address}/ebgp-multihop/config/multihop-ttl',
+		name=args[0], identifier=IDENTIFIER, name1=NAME1, neighbor_address=args[1])
+        body = { "openconfig-network-instance:multihop-ttl": int(args[2]) }
+        return api.patch(keypath, body)
+    elif func == 'patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_ebgp_multihop_config_enabled':
+        keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/neighbors/neighbor={neighbor_address}/ebgp-multihop/config/enabled',
+		name=args[0], identifier=IDENTIFIER, name1=NAME1, neighbor_address=args[1])
+        body = { "openconfig-network-instance:enabled": True if args[2] == 'True' else False }
+        return api.patch(keypath, body)
+    elif func == 'patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_peer_group':
+        keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/neighbors/neighbor={neighbor_address}/config/peer-group',
+		name=args[0], identifier=IDENTIFIER, name1=NAME1, neighbor_address=args[1])
+        body = { "openconfig-network-instance:peer-group": args[2] }
+        return api.patch(keypath, body)
+    elif func == 'patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_peer_as':
+        keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/neighbors/neighbor={neighbor_address}/config/peer-as',
+		name=args[0], identifier=IDENTIFIER, name1=NAME1, neighbor_address=args[1])
+        body = { "openconfig-network-instance:peer-as": int(args[2]) }
+        return api.patch(keypath, body)
+    elif func == 'patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_timers_config_keepalive_interval':
+        keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/neighbors/neighbor={neighbor_address}/timers/config/keepalive-interval',
+		name=args[0], identifier=IDENTIFIER, name1=NAME1, neighbor_address=args[1])
+        body = { "openconfig-network-instance:keepalive-interval": int(args[2]) }
+        return api.patch(keypath, body)
+    elif func == 'patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_timers_config_hold_time':
+        keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/neighbors/neighbor={neighbor_address}/timers/config/hold-time',
+		name=args[0], identifier=IDENTIFIER, name1=NAME1, neighbor_address=args[1])
+        body = { "openconfig-network-instance:hold-time": int(args[2]) }
+        return api.patch(keypath, body)
+    elif func == 'patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_transport_config_local_address':
+        keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/neighbors/neighbor={neighbor_address}/transport/config/local-address',
+		name=args[0], identifier=IDENTIFIER, name1=NAME1, neighbor_address=args[1])
+        body = { "openconfig-network-instance:local-address": args[2] }
+        return api.patch(keypath, body)
+    elif func == 'patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_config_enabled':
+        keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/neighbors/neighbor={neighbor_address}/afi-safis/afi-safi={afi_safi_name}/config/enabled',
+		name=args[0], identifier=IDENTIFIER, name1=NAME1, neighbor_address=args[1], afi_safi_name=args[2])
+        body = { "openconfig-network-instance:enabled": True }
+        return api.patch(keypath, body)
+
     elif func[0:DELETE_NEIGHB_OCPREFIX_LEN] == DELETE_NEIGHB_OCPREFIX:
         uri = restconf_map[func[DELETE_OCPREFIX_LEN:]]
         keypath = cc.Path(uri.replace('{neighbor-address}', '{neighbor_address}'),
