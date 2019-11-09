@@ -66,6 +66,7 @@ func init () {
     XlateFuncBind("YangToDb_bgp_graceful_restart_status_xfmr", YangToDb_bgp_graceful_restart_status_xfmr)
     XlateFuncBind("DbToYang_bgp_graceful_restart_status_xfmr", DbToYang_bgp_graceful_restart_status_xfmr)
     XlateFuncBind("DbToYang_bgp_nbrs_nbr_state_xfmr", DbToYang_bgp_nbrs_nbr_state_xfmr)
+    XlateFuncBind("DbToYang_bgp_nbrs_nbr_af_state_xfmr", DbToYang_bgp_nbrs_nbr_af_state_xfmr)
     XlateFuncBind("YangToDb_bgp_ignore_as_path_length_xfmr", YangToDb_bgp_ignore_as_path_length_xfmr)
     XlateFuncBind("DbToYang_bgp_ignore_as_path_length_xfmr", DbToYang_bgp_ignore_as_path_length_xfmr)
     XlateFuncBind("YangToDb_bgp_external_compare_router_id_xfmr", YangToDb_bgp_external_compare_router_id_xfmr)
@@ -445,7 +446,7 @@ func fill_nbr_state_timers_info (niName string, nbrAddr string, frrNbrDataValue 
     }
 
     if cfgDbEntry, cfgdb_get_err := get_spec_nbr_cfg_tbl_entry (cfgDb, niName, nbrAddr) ; cfgdb_get_err == nil {
-        if value, ok := cfgDbEntry["connect_retry"] ; ok {
+        if value, ok := cfgDbEntry["conn_retry"] ; ok {
             _connectRetry, _ := strconv.ParseFloat(value, 64)
             nbrTimersState.ConnectRetry = &_connectRetry
         }
@@ -457,7 +458,7 @@ func fill_nbr_state_timers_info (niName string, nbrAddr string, frrNbrDataValue 
             _keepaliveInterval, _ := strconv.ParseFloat(value, 64)
             nbrTimersState.KeepaliveInterval = &_keepaliveInterval
         }
-        if value, ok := cfgDbEntry["minimum-advertisement-interval"] ; ok {
+        if value, ok := cfgDbEntry["min_adv_interval"] ; ok {
             _minimumAdvertisementInterval, _ := strconv.ParseFloat(value, 64)
             nbrTimersState.MinimumAdvertisementInterval = &_minimumAdvertisementInterval
         }
@@ -717,6 +718,172 @@ var DbToYang_bgp_nbrs_nbr_state_xfmr SubTreeXfmrDbToYang = func(inParams XfmrPar
     } else {
         err = get_all_nbr_state (get_req_uri_type, nbrs_obj, inParams.dbs[db.ConfigDB], niName);
     }
+
+    return err;
+}
+
+type _xfmr_bgp_nbr_af_state_key struct {
+    niName string
+    nbrAddr string
+    afiSafiNameStr string
+    afiSafiNameEnum ocbinds.E_OpenconfigBgpTypes_AFI_SAFI_TYPE
+}
+
+func get_afi_safi_name_enum_for_str (afiSafiNameStr string) (ocbinds.E_OpenconfigBgpTypes_AFI_SAFI_TYPE, bool) {
+    switch afiSafiNameStr {
+        case "IPV4_UNICAST":
+            return ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_IPV4_UNICAST, true
+        case "IPV6_UNICAST":
+            return ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_IPV6_UNICAST, true
+        default:
+            return ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_UNSET, false
+    }
+}
+
+func validate_nbr_af_state_get (inParams XfmrParams, dbg_log string) (*ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Neighbors_Neighbor_AfiSafis_AfiSafi_State,
+                                                                      _xfmr_bgp_nbr_af_state_key, error) {
+    var err error
+    var ok bool
+    oper_err := errors.New("Opertational error")
+    var nbr_af_key _xfmr_bgp_nbr_af_state_key
+    var bgp_obj *ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp
+
+    bgp_obj, nbr_af_key.niName, err = getBgpRoot (inParams)
+    if err != nil {
+        log.Errorf ("%s failed !! Error:%s", dbg_log , err);
+        return nil, nbr_af_key, err
+    }
+
+    pathInfo := NewPathInfo(inParams.uri)
+    targetUriPath, err := getYangPathFromUri(pathInfo.Path)
+    nbr_af_key.nbrAddr = pathInfo.Var("neighbor-address")
+    nbr_af_key.afiSafiNameStr = pathInfo.Var("afi-safi-name")
+    nbr_af_key.afiSafiNameEnum, ok = get_afi_safi_name_enum_for_str (nbr_af_key.afiSafiNameStr)
+    if !ok {
+        log.Errorf("%s failed !! Error: AFI-SAFI ==> %s not supported", dbg_log, nbr_af_key.afiSafiNameStr)
+        return nil, nbr_af_key, oper_err
+    }
+
+    log.Infof("%s : path:%s; template:%s targetUriPath:%s niName:%s nbrAddr:%s afiSafiNameStr:%s afiSafiNameEnum:%d",
+              dbg_log, pathInfo.Path, pathInfo.Template, targetUriPath, nbr_af_key.niName, nbr_af_key.nbrAddr, nbr_af_key.afiSafiNameStr, nbr_af_key.afiSafiNameEnum)
+
+    nbrs_obj := bgp_obj.Neighbors
+    if nbrs_obj == nil {
+        log.Errorf("%s failed !! Error: Neighbors container missing", dbg_log)
+        return nil, nbr_af_key, oper_err
+    }
+
+    nbr_obj, ok := nbrs_obj.Neighbor[nbr_af_key.nbrAddr]
+    if !ok {
+        log.Errorf("%s failed !! Error: Neighbor object missing", dbg_log)
+        return nil, nbr_af_key, oper_err
+    }
+
+    afiSafis_obj := nbr_obj.AfiSafis
+    if afiSafis_obj == nil {
+        log.Errorf("%s failed !! Error: Neighbors AfiSafis container missing", dbg_log)
+        return nil, nbr_af_key, oper_err
+    }
+
+    afiSafi_obj, ok := afiSafis_obj.AfiSafi[nbr_af_key.afiSafiNameEnum]
+    if !ok {
+        log.Errorf("%s failed !! Error: Neighbor AfiSafi object missing", dbg_log)
+        return nil, nbr_af_key, oper_err
+    }
+
+    afiSafiState_obj := afiSafi_obj.State
+    if afiSafiState_obj == nil {
+        log.Errorf("%s failed !! Error: Neighbor AfiSafi State object missing", dbg_log)
+        return nil, nbr_af_key, oper_err
+    }
+
+    return afiSafiState_obj, nbr_af_key, err
+}
+
+func get_spec_nbr_af_cfg_tbl_entry (cfgDb *db.DB, key _xfmr_bgp_nbr_af_state_key) (map[string]string, error) {
+    var err error
+
+    nbrAfCfgTblTs := &db.TableSpec{Name: "BGP_NEIGHBOR_AF"}
+    nbrAfEntryKey := db.Key{Comp: []string{key.niName, key.nbrAddr, key.afiSafiNameStr}}
+
+    var entryValue db.Value
+    if entryValue, err = cfgDb.GetEntry(nbrAfCfgTblTs, nbrAfEntryKey) ; err != nil {
+        return nil, err
+    }
+
+    return entryValue.Field, err
+}
+
+var DbToYang_bgp_nbrs_nbr_af_state_xfmr SubTreeXfmrDbToYang = func(inParams XfmrParams) error {
+    var err error
+    cmn_log := "GET: xfmr for BGP-nbrs-nbr-af state"
+
+    nbrs_af_state_obj, nbr_af_key, get_err := validate_nbr_af_state_get (inParams, cmn_log);
+    if get_err != nil {
+        return get_err
+    }
+
+    var afiSafi_cmd string
+    switch (nbr_af_key.afiSafiNameEnum) {
+        case ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_IPV4_UNICAST:
+            afiSafi_cmd = "ipv4 unicast"
+        case ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_IPV6_UNICAST:
+            afiSafi_cmd = "ipv6 unicast"
+    }
+
+    vtysh_cmd := "show ip bgp vrf " + nbr_af_key.niName + " " + afiSafi_cmd + " neighbors " + nbr_af_key.nbrAddr + " received-routes json"
+    rcvdRoutesJson, cmd_err := exec_vtysh_cmd (vtysh_cmd)
+    if cmd_err != nil {
+        log.Errorf("Failed to fetch bgp neighbors received-routes state info for niName:%s nbrAddr:%s afi-safi-name:%s. Err: %s\n",
+                   nbr_af_key.niName, nbr_af_key.nbrAddr, afiSafi_cmd, err)
+        return cmd_err
+    }
+
+    vtysh_cmd = "show ip bgp vrf " + nbr_af_key.niName + " " + afiSafi_cmd + " neighbors " + nbr_af_key.nbrAddr + " advertised-routes json"
+    advRoutesJson, cmd_err := exec_vtysh_cmd (vtysh_cmd)
+    if cmd_err != nil {
+        log.Errorf("Failed to fetch bgp neighbors advertised-routes state info for niName:%s nbrAddr:%s afi-safi-name:%s. Err: %s\n",
+                   nbr_af_key.niName, nbr_af_key.nbrAddr, afiSafi_cmd, err)
+        return cmd_err
+    }
+
+    nbrs_af_state_obj.AfiSafiName = nbr_af_key.afiSafiNameEnum
+
+    if cfgDbEntry, cfgdb_get_err := get_spec_nbr_af_cfg_tbl_entry (inParams.dbs[db.ConfigDB], nbr_af_key) ; cfgdb_get_err == nil {
+        if value, ok := cfgDbEntry["enabled"] ; ok {
+            _enabled, _ := strconv.ParseBool(value)
+            nbrs_af_state_obj.Enabled = &_enabled
+        }
+    }
+
+    _active := false
+    var _prefixes ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Neighbors_Neighbor_AfiSafis_AfiSafi_State_Prefixes
+
+    var _receivedPrePolicy, _rcvdFilteredByPolicy, _activeRcvdPrefixes uint32
+    if value, ok := rcvdRoutesJson["totalPrefixCounter"] ; ok {
+        _active = true
+        _receivedPrePolicy = uint32(value.(float64))
+        _prefixes.ReceivedPrePolicy = &_receivedPrePolicy
+    }
+    if value, ok := rcvdRoutesJson["filteredPrefixCounter"] ; ok {
+        _rcvdFilteredByPolicy = uint32(value.(float64))
+    }
+    _activeRcvdPrefixes = _receivedPrePolicy - _rcvdFilteredByPolicy
+    _prefixes.Received = &_activeRcvdPrefixes
+
+    var _sentPrePolicy, _sentFilteredByPolicy, _activeSentPrefixes uint32
+    if value, ok := advRoutesJson["totalPrefixCounter"] ; ok {
+        _active = true
+        _sentPrePolicy = uint32(value.(float64))
+    }
+    if value, ok := advRoutesJson["filteredPrefixCounter"] ; ok {
+        _sentFilteredByPolicy = uint32(value.(float64))
+    }
+    _activeSentPrefixes = _sentPrePolicy - _sentFilteredByPolicy
+    _prefixes.Sent = &_activeSentPrefixes
+
+    nbrs_af_state_obj.Active = &_active
+    nbrs_af_state_obj.Prefixes = &_prefixes
 
     return err;
 }

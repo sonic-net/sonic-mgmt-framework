@@ -166,6 +166,12 @@ module openconfig-network-instance-annot {
         }
     }
 
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:state {
+        deviate add {
+            sonic-ext:subtree-transformer "bgp_nbrs_nbr_af_state_xfmr";
+        }
+    }
+
 /* peer-groups->peer-group */
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group {
       deviate add {
