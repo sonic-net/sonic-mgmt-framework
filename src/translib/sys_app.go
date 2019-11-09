@@ -45,6 +45,7 @@ type SysApp struct {
 
 func init() {
     log.Info("SysApp: Init called for System module")
+	return
     err := register("/openconfig-system:system",
     &appInfo{appType: reflect.TypeOf(SysApp{}),
     ygotRootType: reflect.TypeOf(ocbinds.OpenconfigSystem_System{}),

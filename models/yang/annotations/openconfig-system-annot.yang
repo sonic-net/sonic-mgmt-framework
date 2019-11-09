@@ -1,0 +1,31 @@
+module openconfig-system-annot {
+
+    yang-version "1";
+
+    namespace "http://openconfig.net/yang/openconfig-system-annot";
+    prefix "oc-sys-annot";
+
+    import openconfig-system { prefix oc-sys; }
+    import sonic-extensions {prefix sonic-ext; }
+
+    deviation /oc-sys:system/oc-sys:state {
+        deviate add {
+            sonic-ext:subtree-transformer "sys_state_xfmr";
+        }
+    }
+    deviation /oc-sys:system/oc-sys:memory {
+        deviate add {
+            sonic-ext:subtree-transformer "sys_memory_xfmr";
+        }
+    }
+    deviation /oc-sys:system/oc-sys:cpus {
+        deviate add {
+            sonic-ext:subtree-transformer "sys_cpus_xfmr";
+        }
+    }
+    deviation /oc-sys:system/oc-sys:processes {
+        deviate add {
+            sonic-ext:subtree-transformer "sys_procs_xfmr";
+        }
+    }
+}
