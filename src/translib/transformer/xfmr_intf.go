@@ -197,6 +197,13 @@ var YangToDb_intf_tbl_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (stri
             return "", err
         }
     }
+    if intfType == IntfTypePortChannel {
+        err := deleteLagIntfAndMembers(&inParams, &ifName)
+        if err != nil {
+            log.Errorf("Deleting LAG: %s failed!", ifName)
+            return "", err
+        }
+    }
     return ifName, err
 }
 
