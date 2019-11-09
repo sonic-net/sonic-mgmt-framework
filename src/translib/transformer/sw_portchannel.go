@@ -230,3 +230,44 @@ var DbToYang_intf_lag_state_xfmr SubTreeXfmrDbToYang = func (inParams XfmrParams
     }
     return err
 }
+
+/* Handle PortChannel Delete */
+func deleteLagIntfAndMembers(inParams *XfmrParams, lagName *string) error {
+    var err error
+
+    subOpMap := make(map[db.DBNum]map[string]map[string]db.Value)
+    resMap := make(map[string]map[string]db.Value)
+    lagMap := make(map[string]db.Value)
+    lagMemberMap := make(map[string]db.Value)
+    intTbl := IntfTypeTblMap[IntfTypePortChannel]
+    /* Validate given PortChannel exits */
+    err = validateLagExists(inParams.d, &intTbl.cfgDb.portTN, lagName)
+    if err != nil {
+        errStr := "Invalid PortChannel: " + *lagName
+        err = tlerr.InvalidArgsError{Format: errStr}
+        return  err
+    }
+    /* Get entries from PORTCHANNEL_MEMBER TABLE */
+    var flag bool = false
+    lagKeys, err := inParams.d.GetKeys(&db.TableSpec{Name:intTbl.cfgDb.memberTN})
+    if err == nil {
+        for key, _ := range lagKeys {
+            if *lagName == lagKeys[key].Get(0) {
+                flag = true
+                log.Info("Removing member port", lagKeys[key].Get(1))
+                memberKey := *lagName + "|" + lagKeys[key].Get(1)
+                lagMemberMap[memberKey] = db.Value{Field:map[string]string{}}
+            }
+        }
+    }
+    lagMap[*lagName] = db.Value{Field:map[string]string{}}
+    resMap["PORTCHANNEL"] = lagMap
+    if flag == true {
+        resMap["PORTCHANNEL_MEMBER"] = lagMemberMap
+    }
+    log.Info("resMap", resMap)
+    subOpMap[db.ConfigDB] = resMap
+    inParams.subOpDataMap[DELETE] = &subOpMap
+    return err
+}
+
