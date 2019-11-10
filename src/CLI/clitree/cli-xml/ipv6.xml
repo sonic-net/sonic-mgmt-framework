@@ -118,4 +118,89 @@ limitations under the License.
     </COMMAND>
 </VIEW>
 
+<!--====================show ipv6 neighbors interface <intf> [summary] ============-->
+<VIEW name="enable-view">
+    <COMMAND
+        help="show IPv6 commands"
+        name="show ipv6"
+        >
+    <ACTION builtin="clish_nop"/>
+    </COMMAND>
+
+    <COMMAND
+        help="show IPv6 neighbors commands"
+        name="show ipv6 neighbors"
+        >
+        <ACTION builtin="clish_nop"/>
+    </COMMAND>
+
+    <COMMAND
+        help="ARP entries for this interface"
+        name="show ipv6 neighbors interface">
+        <PARAM
+            name="Ethernet"
+            help="Ethernet IEEE 802.3"
+            ptype="SUBCOMMAND"
+            mode="subcommand">
+            <PARAM
+                name="phy-if-id"
+                help="Physical interface(Multiples of 4)"
+                ptype="UINT">
+
+                <PARAM name="choice"
+                    help="Available options"
+                    ptype="STRING"
+                    optional="true"
+                    mode="switch">
+                    <PARAM
+                        help="Summary of ARP entries"
+                        name="summary"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        optional="true">
+                    </PARAM>
+                    <PARAM
+                       help="IP address"
+                       name="ipv6"
+                       ptype="SUBCOMMAND"
+                       mode="subcommand"
+                       optional="true">
+                       <PARAM
+                            help="ARP entry for this IPv6 address"
+                            name="ip-addr"
+                            ptype="IPV6_ADDR">
+                       </PARAM>
+                    </PARAM>
+                    <PARAM
+                       help="HW address"
+                       name="mac-address"
+                       ptype="SUBCOMMAND"
+                       mode="subcommand"
+                       optional="true">
+                       <PARAM
+                          help="48 bit MAC address"
+                          name="mac-addr"
+                          ptype="MAC_ADDR">
+                      </PARAM>
+                    </PARAM>
+                </PARAM>
+            </PARAM>
+        </PARAM>
+        <ACTION>
+            if test "${summary}" = "" -a "${ip-addr}" = "" -a "${mac-addr}" = ""; then&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-arp-neigh.py get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_neighbors arp_show.j2 Ethernet${phy-if-id} None&#xA;
+            elif test "${summary}" = "summary" -a "${ip-addr}" = "" -a "${mac-addr}" = ""; then&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-arp-neigh.py get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_neighbors arp_summary_show.j2 Ethernet${phy-if-id} summary&#xA;
+            elif test "${summary}" = "" -a "${ip-addr}" != "" -a "${mac-addr}" = ""; then&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-arp-neigh.py get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_neighbors_neighbor arp_show.j2 Ethernet${phy-if-id} ip ${ip-addr}&#xA;
+            elif test "${summary}" = "summary" -a "${ip-addr}" != "" -a "${mac-addr}" = ""; then&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-arp-neigh.py get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_neighbors_neighbor arp_summary_show.j2 Ethernet${phy-if-id} ip ${ip-addr} summary&#xA;
+            elif test "${summary}" = "" -a "${ip-addr}" = "" -a "${mac-addr}" != ""; then&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-arp-neigh.py get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_neighbors arp_show.j2 Ethernet${phy-if-id} mac ${mac-addr}&#xA;
+            elif test "${summary}" = "summary" -a "${ip-addr}" = "" -a "${mac-addr}" != ""; then&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-arp-neigh.py get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_neighbors arp_summary_show.j2 Ethernet${phy-if-id} mac ${mac-addr} summary&#xA;
+            fi&#xA;
+        </ACTION>
+    </COMMAND>
+</VIEW>
 </CLISH_MODULE>

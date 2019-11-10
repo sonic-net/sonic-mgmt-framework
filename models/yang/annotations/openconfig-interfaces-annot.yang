@@ -161,4 +161,80 @@ module openconfig-interfaces-annot {
         }
     }
 
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv4/oc-ip:neighbors {
+        deviate add {
+            sonic-ext:db-name "APPL_DB";
+            sonic-ext:table-name "NEIGH_TABLE";
+            sonic-ext:subtree-transformer "neigh_tbl_get_all_ipv4_xfmr";
+        }
+    }
+
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv4/oc-ip:neighbors/oc-ip:neighbor {
+        deviate add {
+            sonic-ext:key-transformer "neigh_tbl_key_xfmr";
+        }
+    }
+
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv4/oc-ip:neighbors/oc-ip:neighbor/oc-ip:state {
+        deviate add {
+        }
+    }
+
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv4/oc-ip:neighbors/oc-ip:neighbor/oc-ip:state/oc-ip:ip {
+        deviate add {
+        }
+    }
+
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv4/oc-ip:neighbors/oc-ip:neighbor/oc-ip:state/oc-ip:link-layer-address {
+        deviate add {
+            sonic-ext:field-name "neigh";
+        }
+    }
+
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv4/oc-ip:neighbors/oc-ip:neighbor/oc-ip:state/oc-ip:origin {
+        deviate add {
+            sonic-ext:field-name "NONE";
+        }
+    }
+
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv4/oc-ip:neighbors/oc-ip:neighbor/oc-ip:ip {
+        deviate add {
+        }
+    }
+
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv6/oc-ip:neighbors {
+        deviate add {
+            sonic-ext:db-name "APPL_DB";
+            sonic-ext:table-name "NEIGH_TABLE";
+            sonic-ext:subtree-transformer "neigh_tbl_get_all_ipv6_xfmr";
+        }
+    }
+
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv6/oc-ip:neighbors/oc-ip:neighbor {
+        deviate add {
+            sonic-ext:key-transformer "neigh_tbl_key_xfmr";
+        }
+    }
+
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv6/oc-ip:neighbors/oc-ip:neighbor/oc-ip:state {
+        deviate add {
+        }
+    }
+
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv6/oc-ip:neighbors/oc-ip:neighbor/oc-ip:state/oc-ip:ip {
+        deviate add {
+        }
+    }
+
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv6/oc-ip:neighbors/oc-ip:neighbor/oc-ip:state/oc-ip:link-layer-address {
+        deviate add {
+            sonic-ext:field-name "neigh";
+        }
+    }
+
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv6/oc-ip:neighbors/oc-ip:neighbor/oc-ip:state/oc-ip:origin {
+        deviate add {
+            sonic-ext:field-name "NONE";
+        }
+    }
 }
