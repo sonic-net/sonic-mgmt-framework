@@ -85,7 +85,8 @@ cvl-test:
 
 rest-server: translib
 	$(MAKE) -C src/rest
-
+rest:
+	$(MAKE) -C src/rest
 rest-clean:
 	$(MAKE) -C src/rest clean
 

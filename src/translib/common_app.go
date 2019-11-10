@@ -40,7 +40,6 @@ type CommonApp struct {
 	ygotRoot       *ygot.GoStruct
 	ygotTarget     *interface{}
 	cmnAppTableMap map[int]map[db.DBNum]map[string]map[string]db.Value
-	cmnAppOrdTbllist []string
 }
 
 var cmnAppInfo = appInfo{appType: reflect.TypeOf(CommonApp{}),
@@ -303,23 +302,6 @@ func (app *CommonApp) translateCRUDCommon(d *db.DB, opcode int) ([]db.WatchKeys,
         log.Info("Tables to watch", tblsToWatch)
         cmnAppInfo.tablesToWatch = tblsToWatch
 
-	// Get sorted dependency tables to be used for CRUD operations
-	cvSess, cvlRetSess := cvl.ValidationSessOpen()
-	if cvlRetSess != cvl.CVL_SUCCESS {
-		log.Errorf("Failure in creating CVL validation session object required to use CVl API to get Tbl info for module %v - %v", moduleNm, cvlRetSess)
-		return keys, err
-	}
-	cvlSortDepTblList, cvlRetDepTbl := cvSess.SortDepTables(resultTblList)
-	if cvlRetDepTbl != cvl.CVL_SUCCESS {
-		log.Warningf("Failure in cvlSess.SortDepTables: %v", cvlRetDepTbl)
-		cvl.ValidationSessClose(cvSess)
-		return keys, err
-	}
-	log.Info("cvlSortDepTblList = ", cvlSortDepTblList)
-	app.cmnAppOrdTbllist = cvlSortDepTblList
-
-	cvl.ValidationSessClose(cvSess)
-
 	keys, err = app.generateDbWatchKeys(d, false)
 	return keys, err
 }
@@ -341,7 +323,7 @@ func (app *CommonApp) processCommon(d *db.DB, opcode int) error {
 
 	// Handle delete first if any available
 	if _, ok := app.cmnAppTableMap[DELETE][db.ConfigDB]; ok {
-		err = app.cmnAppDelDbOpn(d, opcode, app.cmnAppTableMap[DELETE][db.ConfigDB])
+		err = app.cmnAppDelDbOpn(d, DELETE, app.cmnAppTableMap[DELETE][db.ConfigDB])
 		if err != nil {
 			log.Info("Process delete fail. cmnAppDelDbOpn error:", err)
 			return err
@@ -349,7 +331,7 @@ func (app *CommonApp) processCommon(d *db.DB, opcode int) error {
 	}
 	// Handle create operation next
 	if _, ok := app.cmnAppTableMap[CREATE][db.ConfigDB]; ok {
-		err = app.cmnAppCRUCommonDbOpn(d, opcode, app.cmnAppTableMap[CREATE][db.ConfigDB])
+		err = app.cmnAppCRUCommonDbOpn(d, CREATE, app.cmnAppTableMap[CREATE][db.ConfigDB])
 		if err != nil {
 			log.Info("Process create fail. cmnAppCRUCommonDbOpn error:", err)
 			return err
@@ -357,14 +339,14 @@ func (app *CommonApp) processCommon(d *db.DB, opcode int) error {
 	}
 	// Handle update and replace operation next
 	if _, ok := app.cmnAppTableMap[UPDATE][db.ConfigDB]; ok {
-		err = app.cmnAppCRUCommonDbOpn(d, opcode, app.cmnAppTableMap[UPDATE][db.ConfigDB])
+		err = app.cmnAppCRUCommonDbOpn(d, UPDATE, app.cmnAppTableMap[UPDATE][db.ConfigDB])
 		if err != nil {
 			log.Info("Process update fail. cmnAppCRUCommonDbOpn error:", err)
 			return err
 		}
 	}
 	if _, ok := app.cmnAppTableMap[REPLACE][db.ConfigDB]; ok {
-		err = app.cmnAppCRUCommonDbOpn(d, opcode, app.cmnAppTableMap[REPLACE][db.ConfigDB])
+		err = app.cmnAppCRUCommonDbOpn(d, REPLACE, app.cmnAppTableMap[REPLACE][db.ConfigDB])
 		if err != nil {
 			log.Info("Process replace fail. cmnAppCRUCommonDbOpn error:", err)
 			return err
@@ -374,13 +356,51 @@ func (app *CommonApp) processCommon(d *db.DB, opcode int) error {
 	return err
 }
 
+//sort transformer result table list based on dependenciesi(using CVL API) tables to be used for CRUD operations
+func sortAsPerTblDeps(tblLst []string) ([]string, error) {
+	var resultTblLst []string
+	var err error
+	logStr := "Failure in CVL API to sort table list as per dependencies."
+
+	cvSess, cvlRetSess := cvl.ValidationSessOpen()
+	if cvlRetSess != cvl.CVL_SUCCESS {
+
+		log.Errorf("Failure in creating CVL validation session object required to use CVl API(sort table list as per dependencies) - %v", cvlRetSess)
+		err = fmt.Errorf("%v", logStr)
+		return resultTblLst, err
+	}
+	cvlSortDepTblList, cvlRetDepTbl := cvSess.SortDepTables(tblLst)
+	if cvlRetDepTbl != cvl.CVL_SUCCESS {
+		log.Warningf("Failure in cvlSess.SortDepTables: %v", cvlRetDepTbl)
+		cvl.ValidationSessClose(cvSess)
+		err = fmt.Errorf("%v", logStr)
+		return resultTblLst, err
+	}
+	log.Info("cvlSortDepTblList = ", cvlSortDepTblList)
+	resultTblLst = cvlSortDepTblList
+
+	cvl.ValidationSessClose(cvSess)
+	return resultTblLst, err
+
+}
+
 func (app *CommonApp) cmnAppCRUCommonDbOpn(d *db.DB, opcode int, dbMap map[string]map[string]db.Value) error {
 	var err error
 	var cmnAppTs *db.TableSpec
+	var xfmrTblLst []string
+	var resultTblLst []string
+
+	for tblNm, _ := range(dbMap) {
+		xfmrTblLst = append(xfmrTblLst, tblNm)
+	}
+	resultTblLst, err = sortAsPerTblDeps(xfmrTblLst)
+	if err != nil {
+		return err
+	}
 
 	/* CVL sorted order is in child first, parent later order. CRU ops from parent first order */
-	for idx := len(app.cmnAppOrdTbllist)-1; idx >= 0; idx-- {
-		tblNm := app.cmnAppOrdTbllist[idx]
+	for idx := len(resultTblLst)-1; idx >= 0; idx-- {
+		tblNm := resultTblLst[idx]
 		log.Info("In Yang to DB map returned from transformer looking for table = ", tblNm)
 		if tblVal, ok := dbMap[tblNm]; ok {
 			cmnAppTs = &db.TableSpec{Name: tblNm}
@@ -449,6 +469,17 @@ func (app *CommonApp) cmnAppDelDbOpn(d *db.DB, opcode int, dbMap map[string]map[
 	var err error
 	var cmnAppTs, dbTblSpec *db.TableSpec
 	var moduleNm string
+	var xfmrTblLst []string
+	var resultTblLst []string
+
+	for tblNm, _ := range(dbMap) {
+		xfmrTblLst = append(xfmrTblLst, tblNm)
+	}
+	resultTblLst, err = sortAsPerTblDeps(xfmrTblLst)
+	if err != nil {
+		return err
+	}
+
 
 	/* Retrieve module Name */
 	moduleNm, err = transformer.GetModuleNmFromPath(app.pathInfo.Path)
@@ -458,8 +489,8 @@ func (app *CommonApp) cmnAppDelDbOpn(d *db.DB, opcode int, dbMap map[string]map[
 	}
 	log.Info("getModuleNmFromPath() returned module name = ", moduleNm)
 
-	/* app.cmnAppOrdTbllist has child first, parent later order */
-	for _, tblNm := range app.cmnAppOrdTbllist {
+	/* resultTblLst has child first, parent later order */
+	for _, tblNm := range resultTblLst {
 		log.Info("In Yang to DB map returned from transformer looking for table = ", tblNm)
 		if tblVal, ok := dbMap[tblNm]; ok {
 			cmnAppTs = &db.TableSpec{Name: tblNm}
@@ -532,10 +563,12 @@ func (app *CommonApp) cmnAppDelDbOpn(d *db.DB, opcode int, dbMap map[string]map[
 					}
 					/* handle leaf-list merge if any leaf-list exists */
 					resTblRw := checkAndProcessLeafList(existingEntry, tblRw, DELETE, d, tblNm, tblKey)
-					err := d.DeleteEntryFields(cmnAppTs, db.Key{Comp: []string{tblKey}}, resTblRw)
-					if err != nil {
-						log.Error("DELETE case - d.DeleteEntryFields() failure")
-						return err
+					if len(resTblRw.Field) > 0 {
+						err := d.DeleteEntryFields(cmnAppTs, db.Key{Comp: []string{tblKey}}, resTblRw)
+						if err != nil {
+							log.Error("DELETE case - d.DeleteEntryFields() failure")
+							return err
+						}
 					}
 				}
 
@@ -581,8 +614,9 @@ func checkAndProcessLeafList(existingEntry db.Value, tblRw db.Value, opcode int,
 			} else if opcode == UPDATE {
             	exstLst = valueLst
             }
-
-			tblRw.SetList(field, exstLst)
+			if opcode == UPDATE {
+				tblRw.SetList(field, exstLst)
+			}
 		}
 	}
 	/* delete specific item from leaf-list */

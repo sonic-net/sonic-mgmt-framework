@@ -18,22 +18,22 @@ import (
 func init () {
     XlateFuncBind("intf_table_xfmr", intf_table_xfmr)
     XlateFuncBind("YangToDb_intf_name_xfmr", YangToDb_intf_name_xfmr)
-    XlateFuncBind("YangToDb_intf_name_empty_xfmr", YangToDb_intf_name_empty_xfmr)
+    XlateFuncBind("DbToYang_intf_name_xfmr", DbToYang_intf_name_xfmr)
     XlateFuncBind("YangToDb_intf_enabled_xfmr", YangToDb_intf_enabled_xfmr)
     XlateFuncBind("DbToYang_intf_enabled_xfmr", DbToYang_intf_enabled_xfmr)
     XlateFuncBind("DbToYang_intf_admin_status_xfmr", DbToYang_intf_admin_status_xfmr)
     XlateFuncBind("DbToYang_intf_oper_status_xfmr", DbToYang_intf_oper_status_xfmr)
     XlateFuncBind("DbToYang_intf_eth_auto_neg_xfmr", DbToYang_intf_eth_auto_neg_xfmr)
     XlateFuncBind("DbToYang_intf_eth_port_speed_xfmr", DbToYang_intf_eth_port_speed_xfmr)
-    XlateFuncBind("YangToDb_intf_eth_port_aggregate_xfmr", YangToDb_intf_eth_port_aggregate_xfmr)
-    XlateFuncBind("YangToDb_lag_min_links_xfmr", YangToDb_lag_min_links_xfmr)
-    XlateFuncBind("YangToDb_lag_fallback_xfmr", YangToDb_lag_fallback_xfmr)
+    XlateFuncBind("YangToDb_intf_eth_port_config_xfmr", YangToDb_intf_eth_port_config_xfmr)
     XlateFuncBind("YangToDb_intf_ip_addr_xfmr", YangToDb_intf_ip_addr_xfmr)
     XlateFuncBind("DbToYang_intf_ip_addr_xfmr", DbToYang_intf_ip_addr_xfmr)
     XlateFuncBind("YangToDb_intf_subintfs_xfmr", YangToDb_intf_subintfs_xfmr)
     XlateFuncBind("DbToYang_intf_subintfs_xfmr", DbToYang_intf_subintfs_xfmr)
     XlateFuncBind("DbToYang_intf_get_counters_xfmr", DbToYang_intf_get_counters_xfmr)
-	XlateFuncBind("YangToDb_intf_tbl_key_xfmr", YangToDb_intf_tbl_key_xfmr)
+    XlateFuncBind("YangToDb_intf_tbl_key_xfmr", YangToDb_intf_tbl_key_xfmr)
+    XlateFuncBind("DbToYang_intf_tbl_key_xfmr", DbToYang_intf_tbl_key_xfmr)
+    XlateFuncBind("YangToDb_intf_name_empty_xfmr", YangToDb_intf_name_empty_xfmr)
 
 }
 const (
@@ -56,7 +56,7 @@ const (
     MGMT                     = "eth"
     VLAN                     = "Vlan"
     PORTCHANNEL              = "PortChannel"
-	LOOPBACK                 = "Loopback"
+  LOOPBACK                 = "Loopback"
 )
 
 type TblData  struct  {
@@ -106,7 +106,7 @@ var IntfTypeTblMap = map[E_InterfaceType]IntfTblData {
     },
     IntfTypeLoopback : IntfTblData {
        cfgDb:TblData{portTN:"LOOPBACK_INTERFACE", keySep: PIPE},
-	   appDb:TblData{intfTN: "INTF_TABLE", keySep: COLON},
+     appDb:TblData{intfTN: "INTF_TABLE", keySep: COLON},
    },
 }
 
@@ -173,16 +173,52 @@ func getIntfsRoot (s *ygot.GoStruct) *ocbinds.OpenconfigInterfaces_Interfaces {
 
 
 var YangToDb_intf_tbl_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (string, error) {
-	log.Info("Entering YangToDb_intf_tbl_key_xfmr")
+    log.Info("Entering YangToDb_intf_tbl_key_xfmr")
     var err error
 
     pathInfo := NewPathInfo(inParams.uri)
     ifName := pathInfo.Var("name")
 
     log.Info("Intf name ", ifName)
-	log.Info("Exiting YangToDb_intf_tbl_key_xfmr")
-
+    log.Info("Exiting YangToDb_intf_tbl_key_xfmr")
+    if inParams.oper == UPDATE || inParams.oper == CREATE {
+        log.Info("Update/Create operation")
+        return ifName, err
+    }
+    intfType, _, ierr := getIntfTypeByName(ifName)
+    if ierr != nil {
+      log.Errorf("Extracting Interface type for Interface: %s failed!", ifName)
+    return "", ierr
+    }
+    /* VLAN Interface Delete Handling */
+    if intfType == IntfTypeVlan {
+        /* Update the map for VLAN and VLAN MEMBER table */
+        err := deleteVlanIntfAndMembers(&inParams, &ifName)
+        if err != nil {
+            log.Errorf("Deleting VLAN: %s failed!", ifName)
+            return "", err
+        }
+    }
+    if intfType == IntfTypePortChannel {
+        err := deleteLagIntfAndMembers(&inParams, &ifName)
+        if err != nil {
+            log.Errorf("Deleting LAG: %s failed!", ifName)
+            return "", err
+        }
+    }
     return ifName, err
+}
+
+// Code for DBToYang - Key xfmr
+var DbToYang_intf_tbl_key_xfmr  KeyXfmrDbToYang = func(inParams XfmrParams) (map[string]interface{}, error) {
+    log.Info("Entering DbToYang_intf_tbl_key_xfmr")
+    res_map := make(map[string]interface{})
+
+    pathInfo := NewPathInfo(inParams.uri)
+    ifName:= pathInfo.Var("name")
+	log.Info("Interface Name = ", ifName)
+	res_map["name"] = ifName
+    return res_map, nil
 }
 
 var intf_table_xfmr TableXfmrFunc = func (inParams XfmrParams) ([]string, error) {
@@ -261,12 +297,23 @@ var YangToDb_intf_name_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[s
         vlanId := ifName[len("Vlan"):len(ifName)]
         res_map["vlanid"] = vlanId
     } else if strings.HasPrefix(ifName, PORTCHANNEL) == true {
-        res_map["NULL"] = "NULL"
+        res_map["admin_status"] = "up"
     } else if strings.HasPrefix(ifName, LOOPBACK) == true {
         res_map["NULL"] = "NULL"
     }
     log.Info("YangToDb_intf_name_xfm: res_map:", res_map)
     return res_map, err
+}
+
+var DbToYang_intf_name_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (map[string]interface{}, error) {
+    log.Info("Entering DbToYang_intf_tbl_key_xfmr")
+    res_map := make(map[string]interface{})
+
+    pathInfo := NewPathInfo(inParams.uri)
+    ifName:= pathInfo.Var("name")
+	log.Info("Interface Name = ", ifName)
+	res_map["name"] = ifName
+    return res_map, nil
 }
 
 var YangToDb_intf_name_empty_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
@@ -290,23 +337,6 @@ var YangToDb_intf_enabled_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (ma
     return res_map, nil
 }
 
-var YangToDb_lag_min_links_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
-    res_map := make(map[string]string)
-    var err error
-
-    minLinks, _ := inParams.param.(*uint16)
-    res_map["min_links"] = strconv.Itoa(int(*minLinks))
-    return res_map, err
-}
-
-var YangToDb_lag_fallback_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
-    res_map := make(map[string]string)
-    var err error
-
-    fallback, _ := inParams.param.(*bool)
-    res_map["fallback"] = strconv.FormatBool(*fallback)
-    return res_map, err
-}
 
 func getPortTableNameByDBId (intftbl IntfTblData, curDb db.DBNum) (string, error) {
 
@@ -840,6 +870,14 @@ func getIntfIpByName(dbCl *db.DB, tblName string, ifName string, ipv4 bool, ipv6
         if key.Get(0) != ifName {
             continue
         }
+        if len(key.Comp) > 2 {
+            for i, _ := range key.Comp {
+                if i == 0 || i == 1 {
+                    continue
+                }
+                key.Comp[1] = key.Comp[1] + ":" + key.Comp[i]
+            }
+        }
         if all == false {
             ipB, _, _ := net.ParseCIDR(key.Get(1))
             if ((validIPv4(ipB.String()) && (ipv4 == false)) ||
@@ -853,7 +891,7 @@ func getIntfIpByName(dbCl *db.DB, tblName string, ifName string, ipv4 bool, ipv6
             }
         }
 
-        ipInfo, _ := dbCl.GetEntry(&db.TableSpec{Name:tblName}, key)
+        ipInfo, _ := dbCl.GetEntry(&db.TableSpec{Name:tblName}, db.Key{Comp: []string{key.Get(0), key.Get(1)}})
         intfIpMap[key.Get(1)]= ipInfo
     }
     return intfIpMap, err 
@@ -893,12 +931,21 @@ func handleIntfIPGetByTargetURI (inParams XfmrParams, targetUriPath string, ifNa
            ipMap, err = getIntfIpByName(inParams.dbs[db.ApplDB], intTbl.appDb.intfTN, ifName, false, true, ipAddr)
            log.Info("handleIntfIPGetByTargetURI : ipv6 state ipMap - : ", ipMap)
            convertIpMapToOC(ipMap, intfObj, true)
-    } else if strings.HasPrefix(targetUriPath, "/openconfig-interfaces:interfaces/interface/subinterfaces/subinterface") {
-        ipMap, err = getIntfIpByName(inParams.dbs[db.ConfigDB], intTbl.cfgDb.intfTN, ifName, true, true, ipAddr)
-           log.Info("handleIntfIPGetByTargetURI : ipv4 and ipv6 config ipMap - : ", ipMap)
+    } else if strings.HasPrefix(targetUriPath, "/openconfig-interfaces:interfaces/interface/subinterfaces/subinterface/ipv4/addresses") ||
+        strings.HasPrefix(targetUriPath, "/openconfig-interfaces:interfaces/interface/subinterfaces/subinterface/openconfig-if-ip:ipv4/addresses") {
+        ipMap, err = getIntfIpByName(inParams.dbs[db.ConfigDB], intTbl.cfgDb.intfTN, ifName, true, false, ipAddr)
+           log.Info("handleIntfIPGetByTargetURI : ipv4 config ipMap - : ", ipMap)
         convertIpMapToOC(ipMap, intfObj, false)
-        ipMap, err = getIntfIpByName(inParams.dbs[db.ApplDB], intTbl.appDb.intfTN, ifName, true, true, ipAddr)
-           log.Info("handleIntfIPGetByTargetURI : ipv4 and ipv6 state ipMap - : ", ipMap)
+        ipMap, err = getIntfIpByName(inParams.dbs[db.ApplDB], intTbl.appDb.intfTN, ifName, true, false, ipAddr)
+           log.Info("handleIntfIPGetByTargetURI : ipv4 state ipMap - : ", ipMap)
+        convertIpMapToOC(ipMap, intfObj, true)
+    } else if strings.HasPrefix(targetUriPath, "/openconfig-interfaces:interfaces/interface/subinterfaces/subinterface/ipv6/addresses") ||
+        strings.HasPrefix(targetUriPath, "/openconfig-interfaces:interfaces/interface/subinterfaces/subinterface/openconfig-if-ip:ipv6/addresses") {
+        ipMap, err = getIntfIpByName(inParams.dbs[db.ConfigDB], intTbl.cfgDb.intfTN, ifName, false, true, ipAddr)
+           log.Info("handleIntfIPGetByTargetURI : ipv6 config ipMap - : ", ipMap)
+        convertIpMapToOC(ipMap, intfObj, false)
+        ipMap, err = getIntfIpByName(inParams.dbs[db.ApplDB], intTbl.appDb.intfTN, ifName, false, true, ipAddr)
+           log.Info("handleIntfIPGetByTargetURI : ipv6 state ipMap - : ", ipMap)
         convertIpMapToOC(ipMap, intfObj, true)
     }
     return err
@@ -1368,21 +1415,8 @@ var DbToYang_intf_get_counters_xfmr SubTreeXfmrDbToYang = func(inParams XfmrPara
     return err
 }
 
-/* Validate whether LAG exists in DB */
-func validateLagExists(d *db.DB, lagTs *string, lagName *string) error {
-    if len(*lagName) == 0 {
-        return errors.New("Length of PortChannel name is zero")
-    }
-    entry, err := d.GetEntry(&db.TableSpec{Name:*lagTs}, db.Key{Comp: []string{*lagName}})
-    if err != nil || !entry.IsPopulated() {
-        errStr := "Invalid PortChannel:" + *lagName
-        return errors.New(errStr)
-    }
-    return nil
-}
-
 /* Handle port-speed, auto-neg and aggregate-id config */
-var YangToDb_intf_eth_port_aggregate_xfmr SubTreeXfmrYangToDb = func(inParams XfmrParams) (map[string]map[string]db.Value, error) {
+var YangToDb_intf_eth_port_config_xfmr SubTreeXfmrYangToDb = func(inParams XfmrParams) (map[string]map[string]db.Value, error) {
 
     pathInfo := NewPathInfo(inParams.uri)
     ifName := pathInfo.Var("name")
