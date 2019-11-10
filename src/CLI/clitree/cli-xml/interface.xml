@@ -57,6 +57,21 @@ limitations under the License.
                     >
                  </PARAM>
              </PARAM>
+	     <!-- show interface PortChannel-->
+	     <PARAM
+                 name="PortChannel"
+                 help="PortChannel Interface"
+                 ptype="SUBCOMMAND"
+                 mode="subcommand"
+                 >
+                 <PARAM
+                    name="po-id"
+                    help="Port Channel ID"
+                    ptype="LAG_ID"
+                    optional="true"
+                    >
+                 </PARAM>
+             </PARAM>
              <!-- show interface Management -->
              <PARAM
                  name="Management"
@@ -85,11 +100,17 @@ limitations under the License.
             python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces show_interface_status.j2 ${__full_line}&#xA;
         elif test "${if-subcommands}" = "counters"; then&#xA;
             python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces show_interface_counters.j2 ${__full_line}&#xA;
+	elif test "${if-subcommands}" = "PortChannel"; then&#xA;
+            if test "${po-id}" = ""; then&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-interface-port-channel.py get_all_portchannels show_interface_portchannel.j2 ${__full_line}&#xA;
+            else&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-interface-port-channel.py get_specific_portchannel PortChannel${po-id} show_interface_portchannel.j2 ${__full_line}&#xA;
+            fi&#xA;
         elif test "${if-subcommands}" = "Management"; then&#xA;
             if test "${mgmt-if-id}" = ""; then&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces show_interface.j2 ${__full_line}&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces_interface eth0 show_mgmt_interface_id.j2 ${__full_line}&#xA;
             else&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces_interface eth${mgmt-if-id} show_interface_id.j2 ${__full_line}&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces_interface eth${mgmt-if-id} show_mgmt_interface_id.j2 ${__full_line}&#xA;
             fi&#xA;
         else&#xA;
             if test "${phy-if-id}" = ""; then&#xA;
@@ -706,8 +727,8 @@ limitations under the License.
         </COMMAND>
         <COMMAND
             name="no mtu"
-            help="Remove MTU">
-            <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config_mtu ${iface} 9100 </ACTION>
+            help="Set Default MTU (1500)">
+            <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config_mtu ${iface} 1500 </ACTION>
         </COMMAND>
         <COMMAND
             name="autoneg"

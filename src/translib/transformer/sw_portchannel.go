@@ -255,12 +255,8 @@ func deleteLagIntfAndMembers(inParams *XfmrParams, lagName *string) error {
             if *lagName == lagKeys[key].Get(0) {
                 flag = true
                 log.Info("Removing member port", lagKeys[key].Get(1))
-                memberEntry, err := inParams.d.GetEntry(&db.TableSpec{Name:intTbl.cfgDb.memberTN}, lagKeys[key])
-                if err != nil {
-                    return err
-                }
                 memberKey := *lagName + "|" + lagKeys[key].Get(1)
-                lagMemberMap[memberKey] = memberEntry
+                lagMemberMap[memberKey] = db.Value{Field:map[string]string{}}
             }
         }
     }
