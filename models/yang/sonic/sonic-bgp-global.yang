@@ -140,14 +140,6 @@ module sonic-bgp-global {
                     type uint32;
                 }
 
-                leaf source {
-                    type string;
-                }
-
-                leaf-list route_map {
-                    type string;
-                }
-
                 leaf route_flap_dampen {
                     type boolean;
                 }
@@ -177,7 +169,7 @@ module sonic-bgp-global {
                 }
 
                 leaf aggregate_prefix {
-                    type inet:ip-address;
+					type inet:ip-prefix;
                 }
 
                 leaf aggregate_as_set {
@@ -189,7 +181,7 @@ module sonic-bgp-global {
                 }
 
                 leaf network_prefix{
-                    type inet:ip-address;
+					type inet:ip-prefix;
                 }
 
                 leaf network_policy {
