@@ -159,24 +159,15 @@ func removeFromMembersListForVlan(d *db.DB, vlan *string, ifName *string, vlanMa
         if memberPortsList == nil {
             return nil
         }
-        //idx := 0
         memberFound := false
 
         for _, memberName := range memberPortsList {
             if memberName == *ifName {
                 memberFound = true
-                //idx = idxVal
                 break
             }
         }
         if memberFound {
-            //memberPortsList = append(memberPortsList[:idx], memberPortsList[idx+1:]...)
-            //if len(memberPortsList) == 0 {
-                //log.Info("Deleting the members@")
-                //delete(vlanEntry.Field, "members@")
-            //} else {
-                //memberPortsStr := generateMemberPortsStringFromSlice(memberPortsList)
-                //log.Infof("Updated Member ports = %s for VLAN: %s", *memberPortsStr, *vlan)
 			updatedVlanEntry := db.Value{Field:make(map[string]string)}
             updatedVlanEntry.Field["members@"] = *ifName
             vlanMap[*vlan] = updatedVlanEntry
@@ -392,8 +383,6 @@ func processIntfVlanMemberAdd(d *db.DB, vlanMembersMap map[string]map[string]db.
                     if cfgReqIfMode == existingIfMode {
                         continue
                     } else {
-                        vlanMap[vlanName].Field["members@"] = memberPortsListStrB.String()
-
                         vlanId := vlanName[len("Vlan"):len(vlanName)]
                         var errStr string
                         switch existingIfMode {
@@ -402,6 +391,7 @@ func processIntfVlanMemberAdd(d *db.DB, vlanMembersMap map[string]map[string]db.
                         case TRUNK:
                             errStr = "Tagged VLAN: " + vlanId + " configuration exists for Interface: " + ifName
                         }
+						log.Error(errStr)
                         return tlerr.InvalidArgsError{Format: errStr}
                     }
                 }
@@ -741,12 +731,6 @@ var YangToDb_sw_vlans_xfmr SubTreeXfmrYangToDb = func(inParams XfmrParams) (map[
 
         res_map[VLAN_MEMBER_TN] = vlanMemberMap
         res_map[VLAN_TN] = vlanMap
-		//subOpResMap := make(map[string]map[string]db.Value)
-		//subOpResMap[VLAN_TN] = vlanMap
-
-        //subOpMap := make(map[db.DBNum]map[string]map[string]db.Value)
-        //subOpMap[db.ConfigDB] = subOpResMap
-        //inParams.subOpDataMap[UPDATE] = &subOpMap
     }
 
     log.Info("YangToDb_sw_vlans_xfmr: vlan res map:", res_map)
@@ -969,12 +953,10 @@ var DbToYang_sw_vlans_xfmr SubTreeXfmrDbToYang = func (inParams XfmrParams) (err
                 log.Errorf(errStr)
                 return errors.New(errStr)
             }
-            // log.Info("Access VLAN before = ", *ocEthernetVlanStateVal.AccessVlan)
             attrPresent, err := getSpecificSwitchedVlanStateAttr(&targetUriPath, &ifName, vlanMemberMap, ocEthernetVlanStateVal)
             if(err != nil) {
                 return err
             }
-            // log.Info("Access VLAN after = ", *ocEthernetVlanStateVal.AccessVlan)
             if(!attrPresent) {
                 log.Infof("Get is for Switched Vlan State Container!")
                 err = getSwitchedVlanState(&ifName, vlanMemberMap, ocEthernetVlanStateVal)
