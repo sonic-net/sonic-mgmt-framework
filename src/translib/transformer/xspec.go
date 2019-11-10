@@ -41,6 +41,7 @@ type yangXpathInfo  struct {
     delim          string
     fieldName      string
     xfmrFunc       string
+    xfmrField      string
     xfmrPost       string
     validateFunc   string
     rpcFunc        string
@@ -130,6 +131,9 @@ func yangToDbMapFill (keyLevel int, xYangSpecMap map[string]*yangXpathInfo, entr
 	}
 
 	if xpathData.yangDataType == "leaf" && len(xpathData.fieldName) == 0 {
+		if len(xpathData.xfmrField) != 0 {
+			xpathData.xfmrFunc = ""
+		}
 		if xpathData.tableName != nil && xDbSpecMap[*xpathData.tableName] != nil {
 			if _, ok := xDbSpecMap[*xpathData.tableName + "/" + entry.Name]; ok {
 				xpathData.fieldName = entry.Name
@@ -400,7 +404,7 @@ func annotEntryFill(xYangSpecMap map[string]*yangXpathInfo, xpath string, entry 
 			case "key-delimiter" :
 				xpathData.delim     = ext.NName()
 			case "field-transformer" :
-				xpathData.xfmrFunc  = ext.NName()
+				xpathData.xfmrField  = ext.NName()
 			case "post-transformer" :
 				xpathData.xfmrPost  = ext.NName()
 			case "get-validate" :
@@ -603,6 +607,7 @@ func mapPrint(inMap map[string]*yangXpathInfo, fileName string) {
         fmt.Fprintf(fp, "\r\n    keyLevel : %v", d.keyLevel)
         fmt.Fprintf(fp, "\r\n    xfmrKeyFn: %v", d.xfmrKey)
         fmt.Fprintf(fp, "\r\n    xfmrFunc : %v", d.xfmrFunc)
+        fmt.Fprintf(fp, "\r\n    xfmrField :%v", d.xfmrField)
         fmt.Fprintf(fp, "\r\n    dbIndex  : %v", d.dbIndex)
         fmt.Fprintf(fp, "\r\n    validateFunc  : %v", d.validateFunc)
         fmt.Fprintf(fp, "\r\n    rpcFunc  : %v", d.rpcFunc)
