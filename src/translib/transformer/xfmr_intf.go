@@ -181,19 +181,28 @@ var YangToDb_intf_tbl_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (stri
 
     log.Info("Intf name ", ifName)
     log.Info("Exiting YangToDb_intf_tbl_key_xfmr")
-
+    if inParams.oper == UPDATE || inParams.oper == CREATE {
+        log.Info("Update/Create operation")
+        return ifName, err
+    }
     intfType, _, ierr := getIntfTypeByName(ifName)
-  if ierr != nil {
+    if ierr != nil {
       log.Errorf("Extracting Interface type for Interface: %s failed!", ifName)
     return "", ierr
     }
     /* VLAN Interface Delete Handling */
-    /* TODO: Code needs to be added for Port Channel deletion too */
     if intfType == IntfTypeVlan {
         /* Update the map for VLAN and VLAN MEMBER table */
         err := deleteVlanIntfAndMembers(&inParams, &ifName)
         if err != nil {
             log.Errorf("Deleting VLAN: %s failed!", ifName)
+            return "", err
+        }
+    }
+    if intfType == IntfTypePortChannel {
+        err := deleteLagIntfAndMembers(&inParams, &ifName)
+        if err != nil {
+            log.Errorf("Deleting LAG: %s failed!", ifName)
             return "", err
         }
     }
