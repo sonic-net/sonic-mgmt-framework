@@ -125,30 +125,6 @@ module openconfig-network-instance-annot {
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:default-route-distance/oc-netinst:config/oc-netinst:external-route-distance {
-      deviate add {
-            sonic-ext:field-name "ebgp_route_distance";
-      }
-    }
-
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:default-route-distance/oc-netinst:state/oc-netinst:external-route-distance {
-      deviate add {
-            sonic-ext:field-name "ebgp_route_distance";
-      }
-    }
-
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:default-route-distance/oc-netinst:config/oc-netinst:internal-route-distance {
-      deviate add {
-            sonic-ext:field-name "ibgp_route_distance";
-      }
-    }
-
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:default-route-distance/oc-netinst:state/oc-netinst:internal-route-distance {
-      deviate add {
-            sonic-ext:field-name "ibgp_route_distance";
-      }
-    }
-
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:state {
         deviate add {
             sonic-ext:subtree-transformer "bgp_nbrs_nbr_state_xfmr";
@@ -629,6 +605,7 @@ module openconfig-network-instance-annot {
         sonic-ext:field-name "max_ebgp_paths";
       }
     }
+
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:use-multiple-paths/oc-netinst:ibgp/oc-netinst:config/oc-netinst:maximum-paths {
       deviate add {
         sonic-ext:field-name "max_ibgp_paths";
@@ -643,7 +620,6 @@ module openconfig-network-instance-annot {
       }
     }
 
-/*
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:table-connections/oc-netinst:table-connection/oc-netinst:config/oc-netinst:src-protocol {
       deviate add {
         sonic-ext:field-name "src_protocol";
@@ -655,7 +631,7 @@ module openconfig-network-instance-annot {
         sonic-ext:field-name "dst_protocol";
       }
     }
-*/
+    
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:table-connections/oc-netinst:table-connection/oc-netinst:config/oc-netinst:address-family {
       deviate add {
         sonic-ext:field-transformer "route_table_addr_family_xfmr";
@@ -915,6 +891,30 @@ module openconfig-network-instance-annot {
       deviate add {
             sonic-ext:field-name "aggregate_summary_only";
       }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:default-route-distance/oc-bgp-ext:config/oc-bgp-ext:external-route-distance {
+        deviate add {
+            sonic-ext:field-name "ebgp_route_distance";
+        }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:default-route-distance/oc-bgp-ext:state/oc-bgp-ext:external-route-distance {
+        deviate add {
+            sonic-ext:field-name "ebgp_route_distance";
+        }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:default-route-distance/oc-bgp-ext:config/oc-bgp-ext:internal-route-distance {
+        deviate add {
+            sonic-ext:field-name "ibgp_route_distance";
+        }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:default-route-distance/oc-bgp-ext:state/oc-bgp-ext:internal-route-distance {
+        deviate add {
+            sonic-ext:field-name "ibgp_route_distance";
+        }
     }
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:network/oc-bgp-ext:config/oc-bgp-ext:prefix {

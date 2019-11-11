@@ -16,13 +16,6 @@ module openconfig-bgp-ext {
   import openconfig-bgp { prefix oc-bgp; }
   import openconfig-rib-bgp { prefix oc-rib-bgp; }
 
-  // meta
-  organization "OpenConfig working group";
-
-  contact
-    "OpenConfig working group
-    www.openconfig.net";
-
   description
     "This module describes a YANG model for BGP protocol
     configuration extensions.";
@@ -169,6 +162,26 @@ module openconfig-bgp-ext {
               description
                   "State information for BGP network.";
               uses bgp-ext-global-afi-safi-network-config;
+          }
+      }
+
+      container default-route-distance {
+          description
+              "Administrative distance (or preference) assigned to
+              routes received from different sources
+              (external, internal, and local).";
+
+          container config {
+              description
+                  "Configuration parameters relating to the default route
+                  distance";
+              uses oc-bgp:bgp-global-default-route-distance-config;
+          }
+          container state {
+              config false;
+              description
+                  "State information relating to the default route distance";
+              uses oc-bgp:bgp-global-default-route-distance-config;
           }
       }
   }
@@ -581,6 +594,10 @@ module openconfig-bgp-ext {
   }
 
   deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:confederation {
+	  deviate not-supported;
+  }
+
+  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:default-route-distance {
 	  deviate not-supported;
   }
 
