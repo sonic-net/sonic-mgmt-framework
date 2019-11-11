@@ -200,8 +200,8 @@ var YangToDb_intf_tbl_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (stri
 
     log.Info("Intf name ", ifName)
     log.Info("Exiting YangToDb_intf_tbl_key_xfmr")
-    if inParams.oper == UPDATE || inParams.oper == CREATE {
-        log.Info("Update/Create operation")
+    if inParams.oper != DELETE {
+        log.Info("Not a DELETE operation, returning interface name: ", ifName)
         return ifName, err
     }
     intfType, _, ierr := getIntfTypeByName(ifName)
