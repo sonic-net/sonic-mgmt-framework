@@ -22,16 +22,11 @@ import time
 import json
 import ast
 import collections
-import sonic_vlan_client
+import cli_client as cc
 from rpipe_utils import pipestr
-from sonic_vlan_client.rest import ApiException
 from scripts.render_cli import show_cli_output
 
-import urllib3
-urllib3.disable_warnings()
-
 vlanDict = {}
-plugins = dict()
 
 class ifInfo:
     ifModeDict = {}
@@ -43,23 +38,14 @@ class ifInfo:
     def asdict(self):
         return {'vlanMembers':self.ifModeDict, 'oper_status':self.oper_status}
 
-def register(func):
-    plugins[func.__name__] = func
-    return func
+def invoke_api(func, args=[]):
+    api = cc.ApiClient()
 
+    if func == 'get_sonic_vlan_sonic_vlan':
+        path = cc.Path('/restconf/data/sonic-vlan:sonic-vlan')
+        return api.get(path)
 
-def call_method(name, args):
-    method = plugins[name]
-    return method(args)
-
-def generate_body(func, args):
-    body = None
-    if func.__name__ == 'get_sonic_vlan_sonic_vlan':
-        keypath = []
-    else:
-       body = {}
-
-    return keypath,body
+    return api.cli_not_implemented(func)
 
 def getVlanId(key):
     try:
@@ -123,24 +109,12 @@ def updateVlanInfoMap(vlanTuple, vlanId):
             ifData.oper_status = operStatus
 
 def run(func, args):
+    response = invoke_api(func, args)
 
-    c = sonic_vlan_client.Configuration()
-    c.verify_ssl = False
-    aa = sonic_vlan_client.SonicVlanApi(api_client=sonic_vlan_client.ApiClient(configuration=c))
-
-    keypath, body = generate_body(func, args)
-
-    try:
-        if body is not None:
-           api_response = getattr(aa,func.__name__)(*keypath, body=body)
-        else :
-           api_response = getattr(aa,func.__name__)(*keypath)
-
-        if api_response is None:
-            print ("Success")
-        else:
+    if response.ok():
+        if response.content is not None:
             # Get Command Output
-            api_response = aa.api_client.sanitize_for_serialization(api_response)
+            api_response = response.content
             if 'sonic-vlan:sonic-vlan' in api_response:
                 value = api_response['sonic-vlan:sonic-vlan']
                 if 'VLAN_MEMBER_TABLE' in value:
@@ -163,35 +137,17 @@ def run(func, args):
                     sortMembers = collections.OrderedDict(sorted(val['vlanMembers'].items(), key=lambda t: t[1]))
                     val['vlanMembers'] = sortMembers
                 vDictSorted = collections.OrderedDict(sorted(vDict.items(), key = lambda t: getVlanId(t[0])))
-                if func.__name__ == 'get_sonic_vlan_sonic_vlan':
+                if func == 'get_sonic_vlan_sonic_vlan':
                      show_cli_output(args[1], vDictSorted)
                 else:
                      return
-    except ApiException as e:
-        if e.body != "":
-            body = json.loads(e.body)
-            if "ietf-restconf:errors" in body:
-                 err = body["ietf-restconf:errors"]
-                 if "error" in err:
-                     errList = err["error"]
 
-                     errDict = {}
-                     for dict in errList:
-                         for k, v in dict.iteritems():
-                              errDict[k] = v
-
-                     if "error-message" in errDict:
-                         print "%Error: " + errDict["error-message"]
-                         return
-                     print "%Error: Transaction Failure"
-                     return
-            print "%Error: Transaction Failure"
-        else:
-            print "Failed"
+    else:
+        print response.error_message()
 
 if __name__ == '__main__':
 
     pipestr().write(sys.argv)
-    func = eval(sys.argv[1], globals(), sonic_vlan_client.SonicVlanApi.__dict__)
+    func = sys.argv[1]
 
     run(func, sys.argv[2:])

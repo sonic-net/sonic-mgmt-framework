@@ -14,7 +14,7 @@ class ZTP(host_service.HostModule):
         cmd = ['/usr/bin/ztp']
         if isinstance(commands, list):
             cmd.extend(commands)
-        else
+        else:
             cmd.append(commands)
 
         try:
@@ -28,15 +28,15 @@ class ZTP(host_service.HostModule):
 
     @host_service.method(host_service.bus_name(MOD_NAME), in_signature='', out_signature='')
     def enable(self):
-        _run_command("enable")
+        self._run_command("enable")
 
     @host_service.method(host_service.bus_name(MOD_NAME), in_signature='', out_signature='')
     def disable(self):
-        _run_command(["disable", "-y"])
+        self._run_command(["disable", "-y"])
 
     @host_service.method(host_service.bus_name(MOD_NAME), in_signature='', out_signature='is')
     def status(self):
-        return _run_command("status")
+        return self._run_command("status")
 
 def register():
     """Return the class name"""
