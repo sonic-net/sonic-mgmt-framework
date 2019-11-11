@@ -39,6 +39,16 @@ if [ $(find $CVL_SCHEMA_PATH -name *.yin | wc -l) == 0 ]; then
     echo ""
 fi
 
+# Prepare yang files directiry for transformer
+if [ -z $YANG_MODELS_PATH ]; then
+    export YANG_MODELS_PATH=$TOPDIR/build/all_yangs
+    mkdir -p $YANG_MODELS_PATH
+    pushd $YANG_MODELS_PATH > /dev/null
+    find $TOPDIR/models/yang -name "*.yang" -not -path "*/testdata/*" -exec ln -sf {} \;
+    ln -sf $TOPDIR/config/transformer/models_list
+    popd > /dev/null
+fi
+
 EXTRA_ARGS="-ui $SERVER_DIR/dist/ui -logtostderr"
 HAS_CRTFILE=
 HAS_KEYFILE=
