@@ -18,48 +18,38 @@
 ###########################################################################
 
 import sys
-import time
 import json
 import collections
 import re
-import ast
-import openconfig_acl_client
+import cli_client as cc
 from rpipe_utils import pipestr
-from openconfig_acl_client.rest import ApiException
 from scripts.render_cli import show_cli_output
 
-import urllib3
-urllib3.disable_warnings()
 
-plugins = dict()
-
-def register(func):
-    """Register sdk client method as a plug-in"""
-    plugins[func.__name__] = func
-    return func
-
-
-def call_method(name, args):
-    method = plugins[name]
-    return method(args)
-
-def generate_body(func, args):
+def invoke(func, args):
     body = None
+    aa = cc.ApiClient()
+
     # Get the rules of all ACL table entries.
-    if func.__name__ == 'get_openconfig_acl_acl_acl_sets':
-       keypath = []
+    if func == 'get_openconfig_acl_acl_acl_sets':
+        keypath = cc.Path('/restconf/data/openconfig-acl:acl/acl-sets')
+        return aa.get(keypath)
 
     # Get Interface binding to ACL table info
-    elif func.__name__ == 'get_openconfig_acl_acl_interfaces':
-       keypath = []
+    if func == 'get_openconfig_acl_acl_interfaces':
+        keypath = cc.Path('/restconf/data/openconfig-acl:acl/interfaces')
+        return aa.get(keypath)
 
     # Get all the rules specific to an ACL table.
-    elif func.__name__ == 'get_openconfig_acl_acl_acl_sets_acl_set_acl_entries':
-       keypath = [ args[0], args[1] ]
+    if func == 'get_openconfig_acl_acl_acl_sets_acl_set_acl_entries':
+        keypath = cc.Path('/restconf/data/openconfig-acl:acl/acl-sets/acl-set={name},{type}/acl-entries',
+                name=args[0], type=args[1] )
+        return aa.get(keypath)
 
     # Configure ACL table
-    elif func.__name__ == 'patch_openconfig_acl_acl_acl_sets_acl_set' :
-        keypath = [ args[0], args[1] ]
+    if func == 'patch_openconfig_acl_acl_acl_sets_acl_set' :
+        keypath = cc.Path('/restconf/data/openconfig-acl:acl/acl-sets/acl-set={name},{type}',
+                name=args[0], type=args[1] )
         body=collections.defaultdict(dict)
         body["acl-set"]=[{
                         "name": args[0],
@@ -70,9 +60,13 @@ def generate_body(func, args):
                                 "description": ""
                        }
                     }]
+
+        return aa.patch(keypath, body)
+
     # Configure ACL rule specific to an ACL table
-    elif func.__name__ == 'patch_list_openconfig_acl_acl_acl_sets_acl_set_acl_entries_acl_entry' :
-       	keypath = [ args[0], args[1] ]
+    if func == 'patch_list_openconfig_acl_acl_acl_sets_acl_set_acl_entries_acl_entry' :
+        keypath = cc.Path('/restconf/data/openconfig-acl:acl/acl-sets/acl-set={name},{type}/acl-entries/acl-entry',
+                name=args[0], type=args[1] )
         forwarding_action = "ACCEPT" if args[3] == 'permit' else 'DROP'
         proto_number = {"icmp":"IP_ICMP","tcp":"IP_TCP","udp":"IP_UDP","6":"IP_TCP","17":"IP_UDP","1":"IP_ICMP",
                        "2":"IP_IGMP","103":"IP_PIM","46":"IP_RSVP","47":"IP_GRE","51":"IP_AUTH","115":"IP_L2TP"}
@@ -134,9 +128,11 @@ def generate_body(func, args):
                 body["acl-entry"][0]["transport"]["config"]["tcp-flags"]=flags_list
             i+=1
 
+        return aa.patch(keypath, body)
+
     # Add the ACL table binding to an Interface(Ingress / Egress).
-    elif func.__name__ == 'patch_list_openconfig_acl_acl_interfaces_interface':
-        keypath = []
+    if func == 'patch_list_openconfig_acl_acl_interfaces_interface':
+        keypath = cc.Path('/restconf/data/openconfig-acl:acl/interfaces/interface')
         if args[3] == "ingress":
             body = { "openconfig-acl:interface": [ {
                         "id": args[2],
@@ -181,101 +177,84 @@ def generate_body(func, args):
                                 }
                             } ] }
                     } ] }
+
+        return aa.patch(keypath, body)
+
     # Remove the ACL table binding to an Ingress interface.
-    elif func.__name__ == 'delete_openconfig_acl_acl_interfaces_interface_ingress_acl_sets_ingress_acl_set':
-        keypath = [args[0], args[1], args[2]]
+    if func == 'delete_openconfig_acl_acl_interfaces_interface_ingress_acl_sets_ingress_acl_set':
+        keypath = cc.Path('/restconf/data/openconfig-acl:acl/interfaces/interface={id}/ingress-acl-sets/ingress-acl-set={set_name},{type}',
+                id=args[0], set_name=args[1], type=args[2] )
+        return aa.delete(keypath)
 
     # Remove the ACL table binding to an Egress interface.
-    elif func.__name__ == 'delete_openconfig_acl_acl_interfaces_interface_egress_acl_sets_egress_acl_set':
-        keypath = [args[0], args[1], args[2]]
+    if func == 'delete_openconfig_acl_acl_interfaces_interface_egress_acl_sets_egress_acl_set':
+        keypath = cc.Path('/restconf/data/openconfig-acl:acl/interfaces/interface={id}/egress-acl-sets/egress-acl-set={set_name},{type}',
+                id=args[0], set_name=args[1], type=args[2] )
+        return aa.delete(keypath)
 
     # Remove all the rules and delete the ACL table.
-    elif func.__name__ == 'delete_openconfig_acl_acl_acl_sets_acl_set':
-        keypath = [args[0], args[1]]
-    elif func.__name__ == 'delete_openconfig_acl_acl_acl_sets_acl_set_acl_entries_acl_entry':
-        keypath = [args[0], args[1], args[2]]
+    if func == 'delete_openconfig_acl_acl_acl_sets_acl_set':
+        keypath = cc.Path('/restconf/data/openconfig-acl:acl/acl-sets/acl-set={name},{type}',
+                name=args[0], type=args[1] )
+        return aa.delete(keypath)
+
+    # Remove a rule from ACL
+    if func == 'delete_openconfig_acl_acl_acl_sets_acl_set_acl_entries_acl_entry':
+        keypath = cc.Path('/restconf/data/openconfig-acl:acl/acl-sets/acl-set={name},{type}/acl-entries/acl-entry={sequence_id}',
+                name=args[0], type=args[1], sequence_id=args[2] )
+        return aa.delete(keypath)
+
     else:
-       body = {}
-    if body is not None:
-       body = json.dumps(body,ensure_ascii=False, indent=4, separators=(',', ': '))
-       return keypath, ast.literal_eval(body)
-    else:
-       return keypath,body
+        print("%Error: not implemented")
+        exit(1)
 
 def run(func, args):
-
-    c = openconfig_acl_client.Configuration()
-    c.verify_ssl = False
-    aa = openconfig_acl_client.OpenconfigAclApi(api_client=openconfig_acl_client.ApiClient(configuration=c))
-
-    # create a body block
-    keypath, body = generate_body(func, args)
-
     try:
-        if body is not None:
-           api_response = getattr(aa,func.__name__)(*keypath, body=body)
-        else :
-           api_response = getattr(aa,func.__name__)(*keypath)
+        api_response = invoke(func, args)
 
-        if api_response is None:
-            print ("Success")
-        else:
-            response = api_response.to_dict()
-            if 'openconfig_aclacl_entry' in response.keys():
-                value = response['openconfig_aclacl_entry']
+        if api_response.ok():
+            response = api_response.content
+            if response is None:
+                print "Success"
+            elif 'openconfig-acl:acl-entry' in response.keys():
+                value = response['openconfig-acl:acl-entry']
                 if value is None:
                     print("Success")
                 else:
                     print ("Failed")
-            elif 'openconfig_aclacl_set' in response.keys():
-                value = response['openconfig_aclacl_set']
+            elif 'openconfig-acl:acl-set' in response.keys():
+                value = response['openconfig-acl:acl-set']
                 if value is None:
                     print("Success")
                 else:
                     print("Failed")
-            elif 'openconfig_aclacl_entries' in response.keys():
-                value = response['openconfig_aclacl_entries']
+            elif 'openconfig-acl:acl-entries' in response.keys():
+                value = response['openconfig-acl:acl-entries']
                 if value is None:
                     return
                 show_cli_output(args[2], value)
-            elif 'openconfig_aclacl_sets' in response.keys():
-                value = response['openconfig_aclacl_sets']
+            elif 'openconfig-acl:acl-sets' in response.keys():
+                value = response['openconfig-acl:acl-sets']
                 if value is None:
                     return
                 show_cli_output(args[0], value)
-            elif 'openconfig_aclinterfaces' in response.keys():
-                value = response['openconfig_aclinterfaces']
+            elif 'openconfig-acl:interfaces' in response.keys():
+                value = response['openconfig-acl:interfaces']
                 if value is None:
                     return
                 show_cli_output(args[0], value)
-            else:
-                print("Failed")
 
-    except ApiException as e:
-        #print("Exception when calling OpenconfigAclApi->%s : %s\n" %(func.__name__, e))
-        if e.body != "":
-            body = json.loads(e.body)
-            if "ietf-restconf:errors" in body:
-                 err = body["ietf-restconf:errors"]
-                 if "error" in err:
-                     errList = err["error"]
+        else:
+            #error response
+            print api_response.error_message()
 
-                     errDict = {}
-                     for dict in errList:
-                         for k, v in dict.iteritems():
-                              errDict[k] = v
-
-                     if "error-message" in errDict:
-                         print "%Error: " + errDict["error-message"]
-                         return
-                     print "%Error: Transaction Failure"
-                     return
+    except:
+            # system/network error
             print "%Error: Transaction Failure"
 
 
 if __name__ == '__main__':
-
     pipestr().write(sys.argv)
     #pdb.set_trace()
-    func = eval(sys.argv[1], globals(), openconfig_acl_client.OpenconfigAclApi.__dict__)
-    run(func, sys.argv[2:])
+    run(sys.argv[1], sys.argv[2:])
+

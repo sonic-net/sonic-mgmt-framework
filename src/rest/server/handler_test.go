@@ -230,29 +230,45 @@ func TestPathConv(t *testing.T) {
 		"/test/id=NOTEMPLATE",
 		"/test/id=NOTEMPLATE"))
 
-	t.Run("no_empty_params", testPathConv2(
+	t.Run("empty_params", testPathConv2(
 		map[string]string{},
 		"/test/id={name}",
 		"/test/id=X",
 		"/test/id[name=X]"))
 
-	t.Run("no_one_param", testPathConv2(
+	t.Run("1param", testPathConv2(
 		map[string]string{"name1": "name"},
 		"/test/id={name1}",
 		"/test/id=X",
 		"/test/id[name=X]"))
 
-	t.Run("no_multi_params", testPathConv2(
+	t.Run("nparams", testPathConv2(
 		map[string]string{"name1": "name", "name2": "name"},
 		"/test/id={name1}/data/ref={name2}",
 		"/test/id=X/data/ref=Y",
 		"/test/id[name=X]/data/ref[name=Y]"))
 
-	t.Run("no_extra_params", testPathConv2(
+	t.Run("extra_params", testPathConv2(
 		map[string]string{"name1": "name", "name2": "name"},
 		"/test/id={name1}",
 		"/test/id=X",
 		"/test/id[name=X]"))
+
+	t.Run("escaped", testPathConv(
+		"/test/interface={name}/ip={addr}",
+		"/test/interface=Ethernet%200%2f1/ip=10.0.0.1%2f24",
+		"/test/interface[name=Ethernet 0/1]/ip[addr=10.0.0.1/24]"))
+
+	t.Run("escaped2", testPathConv(
+		"/test/interface={name},{ip}",
+		"/test/interface=Eth0%2f1%5b2%5c%5d,1::1",
+		"/test/interface[name=Eth0/1[2\\\\\\]][ip=1::1]"))
+
+	t.Run("escaped+param", testPathConv2(
+		map[string]string{"name1": "name"},
+		"/test/interface={name1},{type}",
+		"/test/interface=Eth0%2f1:1,PHY",
+		"/test/interface[name=Eth0/1:1][type=PHY]"))
 
 }
 
@@ -273,7 +289,7 @@ func testPathConv(template, path, expPath string) func(*testing.T) {
 
 func testPathConv2(m map[string]string, template, path, expPath string) func(*testing.T) {
 	return func(t *testing.T) {
-		router := mux.NewRouter()
+		router := NewRouter() //mux.NewRouter()
 		if template == "*" {
 			t.Logf("No template...")
 			router.Methods("GET").HandlerFunc(pathConvHandler)

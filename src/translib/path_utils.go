@@ -41,6 +41,12 @@ type PathInfo struct {
 	Vars     map[string]string
 }
 
+// HasVar checks if the PathInfo contains given variable.
+func (p *PathInfo) HasVar(name string) bool {
+	_, exists := p.Vars[name]
+	return exists
+}
+
 // Var returns the string value for a path variable. Returns
 // empty string if no such variable exists.
 func (p *PathInfo) Var(name string) string {
@@ -90,6 +96,16 @@ func NewPathInfo(path string) *PathInfo {
 
 		name := readUntil(r, '=')
 		value := readUntil(r, ']')
+
+		// Handle duplicate parameter names by suffixing "#N" to it.
+		// N is the number of occurance of that parameter name.
+		if info.HasVar(name) {
+			namePrefix := name
+			for k := 2; info.HasVar(name); k++ {
+				name = fmt.Sprintf("%s#%d", namePrefix, k)
+			}
+		}
+
 		if len(name) != 0 {
 			fmt.Fprintf(&template, "{}")
 			info.Vars[name] = value
@@ -103,12 +119,17 @@ func NewPathInfo(path string) *PathInfo {
 
 func readUntil(r *strings.Reader, delim byte) string {
 	var buff strings.Builder
+	var escaped bool
+
 	for {
 		c, err := r.ReadByte()
-		if err == nil && c != delim {
-			buff.WriteByte(c)
-		} else {
+		if err != nil || (c == delim && !escaped) {
 			break
+		} else if c == '\\' && !escaped {
+			escaped = true
+		} else {
+			escaped = false
+			buff.WriteByte(c)
 		}
 	}
 
@@ -188,5 +209,3 @@ func getObjectFieldName(targetUri *string, deviceObj *ocbinds.Device, ygotTarget
 	}
 	return "", errors.New("Target object not found")
 }
-
-
