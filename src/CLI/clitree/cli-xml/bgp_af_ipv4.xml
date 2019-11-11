@@ -42,6 +42,14 @@ limitations under the License.
     </PARAM>      
     <ACTION builtin="clish_nop"/>
   </COMMAND>
+    <COMMAND name="maximum-paths" help="Forward packets over multiple paths">
+      <PARAM name="paths" help="Number of paths" ptype="RANGE_1_256"/>
+      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance1348121867 ${vrf-name} IPV4_UNICAST ${paths}</ACTION>
+    </COMMAND>
+    <COMMAND name="maximum-paths ibgp" help="iBGP-multipath">
+       <PARAM name="ipaths" help="Number of paths" ptype="RANGE_1_256"/>
+       <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance1543452951 ${vrf-name} IPV4_UNICAST ${ipaths}</ACTION>
+    </COMMAND>
   <COMMAND name="network" help="Enable routing on an IP network">
     <PARAM name="prefix" help="Network number" ptype="IP_ADDR">
         <PARAM name="route-map" help="Route-map reference" mode="subcommand" ptype="SUBCOMMAND" optional="true">

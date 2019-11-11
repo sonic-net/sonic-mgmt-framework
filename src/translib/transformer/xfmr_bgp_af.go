@@ -8,18 +8,12 @@ import (
 
 func init () {
 	XlateFuncBind("YangToDb_bgp_gbl_afi_safi_key_xfmr", YangToDb_bgp_gbl_afi_safi_key_xfmr)
-	XlateFuncBind("YangToDb_bgp_afi_safi_use_multi_path_key_xfmr", YangToDb_bgp_afi_safi_use_multi_path_key_xfmr)
-	XlateFuncBind("DbToYang_bgp_afi_safi_use_multi_path_key_xfmr", DbToYang_bgp_afi_safi_use_multi_path_key_xfmr) 
+	XlateFuncBind("DbToYang_bgp_gbl_afi_safi_key_xfmr", DbToYang_bgp_gbl_afi_safi_key_xfmr) 
 	XlateFuncBind("YangToDb_bgp_table_conn_key_xfmr", YangToDb_bgp_table_conn_key_xfmr)
 	XlateFuncBind("DbToYang_bgp_table_conn_key_xfmr", DbToYang_bgp_table_conn_key_xfmr)
 }
 
 var YangToDb_bgp_gbl_afi_safi_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (string, error) {
-	log.Info("YangToDb_bgp_gbl_afi_safi_key_xfmr: Returning empty key")
-	return "", nil
-}
-
-var YangToDb_bgp_afi_safi_use_multi_path_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (string, error) {
 
     pathInfo := NewPathInfo(inParams.uri)
 
@@ -45,10 +39,10 @@ var YangToDb_bgp_afi_safi_use_multi_path_key_xfmr KeyXfmrYangToDb = func(inParam
     return key, nil
 }
 
-var DbToYang_bgp_afi_safi_use_multi_path_key_xfmr KeyXfmrDbToYang = func(inParams XfmrParams) (map[string]interface{}, error) {
+var DbToYang_bgp_gbl_afi_safi_key_xfmr KeyXfmrDbToYang = func(inParams XfmrParams) (map[string]interface{}, error) {
     rmap := make(map[string]interface{})
     entry_key := inParams.key
-    log.Info("DbToYang_bgp_afi_safi_use_multi_path_key_xfmr: ", entry_key)
+    log.Info("DbToYang_bgp_gbl_afi_safi_key_xfmr: ", entry_key)
 
     mpathKey := strings.Split(entry_key, "|")
 	afi := ""
@@ -62,11 +56,9 @@ var DbToYang_bgp_afi_safi_use_multi_path_key_xfmr KeyXfmrDbToYang = func(inParam
 		afi = "L2VPN_EVPN"
 	}
 
-    rmap["name"] = mpathKey[0]
-    rmap["name#2"] = "BGP"
     rmap["afi-safi-name"] = afi
 
-	log.Info("DbToYang_bgp_afi_safi_use_multi_path_key_xfmr: rmap:", rmap)
+	log.Info("DbToYang_bgp_gbl_afi_safi_key_xfmr: rmap:", rmap)
     return rmap, nil
 }
 
