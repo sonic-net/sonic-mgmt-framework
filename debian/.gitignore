@@ -1,0 +1,6 @@
+.debhelper/
+files
+sonic-mgmt-framework.debhelper.log
+sonic-mgmt-framework.substvars
+sonic-mgmt-framework/
+

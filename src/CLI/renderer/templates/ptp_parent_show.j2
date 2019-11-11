@@ -2,6 +2,29 @@
 {{'Attribute'.ljust(30)}} {{'Value/State'}}
 {{'-----------------------------------------------------------'}}
 {% for key,value in json_output.items() %}
+{% if 'parent-port-identity' in value.keys() %}
+{% for key2,value2 in value['parent-port-identity'].items() %}
+{% if 'clock-identity' == key2 %}
+{{ 'Parent Clock Identity'.ljust(30)}} {{ value2 }}
+{% endif %}
+{% if 'port-number' == key2 %}
+{{ 'Port Number'.ljust(30)}} {{ value2 }}
+{% endif %}
+{% endfor %}
+{% endif %}
+{% if 'grandmaster-clock-quality' in value.keys() %}
+{% for key2,value2 in value['grandmaster-clock-quality'].items() %}
+{% if 'clock-class' == key2 %}
+{{ 'Grandmaster Clock Class'.ljust(30)}} {{ value2 }}
+{% endif %}
+{% if 'clock-accuracy' == key2 %}
+{{ 'Grandmaster Clock Accuracy'.ljust(30)}} {{ value2 }}
+{% endif %}
+{% if 'offset-scaled-log-variance' == key2 %}
+{{ 'Grandmaster Off Scaled Log Var'.ljust(30)}} {{ value2 }}
+{% endif %}
+{% endfor %}
+{% endif %}
 {% if 'grandmaster-identity' in value.keys() %}
 {{ 'Grandmaster Identity'.ljust(30)}} {{ value['grandmaster-identity']}}
 {% endif %}
@@ -21,4 +44,3 @@
 {{ 'Observed Clock Phase Chg Rate'.ljust(30)}} {{ value['observed-parent-clock-phase-change-rate']}}
 {% endif %}
 {% endfor %}
-
