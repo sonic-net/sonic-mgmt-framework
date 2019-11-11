@@ -34,19 +34,23 @@ SERVER_DIST_GO		:= $(SERVER_DIST_DIR)/src/swagger
 SERVER_DIST_UI		:= $(SERVER_DIST_DIR)/ui
 SERVER_DIST_UI_HOME	:= $(SERVER_DIST_DIR)/ui/index.html
 
+include codegen.config
+
 YANGAPI_DIR     := $(TOPDIR)/build/yaml
-YANGAPI_SPECS   := $(shell find $(YANGAPI_DIR) -name '*.yaml' | sort)
-YANGAPI_NAMES   := $(basename $(notdir $(YANGAPI_SPECS)))
+YANGAPI_SPECS   := $(shell find $(YANGAPI_DIR) -name '*.yaml')
+YANGAPI_NAMES   := $(filter-out $(YANGAPI_EXCLUDES), $(basename $(notdir $(YANGAPI_SPECS))))
 YANGAPI_SERVERS := $(addsuffix /.yangapi_done, $(addprefix $(SERVER_CODEGEN_DIR)/, $(YANGAPI_NAMES)))
 
-OPENAPI_DIR   := openapi
-OPENAPI_SPECS := $(shell find $(OPENAPI_DIR) -name '*.yaml' | sort)
-OPENAPI_NAMES := $(basename $(notdir $(OPENAPI_SPECS)))
+OPENAPI_DIR     := openapi
+OPENAPI_SPECS   := $(shell find $(OPENAPI_DIR) -name '*.yaml')
+OPENAPI_NAMES   := $(filter-out $(OPENAPI_EXCLUDES), $(basename $(notdir $(OPENAPI_SPECS))))
 OPENAPI_SERVERS := $(addsuffix /.openapi_done, $(addprefix $(SERVER_CODEGEN_DIR)/, $(OPENAPI_NAMES)))
 
+PY_YANGAPI_NAMES       := $(filter $(YANGAPI_NAMES), $(PY_YANGAPI_CLIENTS))
+PY_OPENAPI_NAMES       := $(filter $(OPENAPI_NAMES), $(PY_OPENAPI_CLIENTS))
 PY_CLIENT_CODEGEN_DIR  := $(BUILD_DIR)/swagger_client_py
-PY_CLIENT_TARGETS := $(addsuffix .yangapi_client, $(addprefix $(PY_CLIENT_CODEGEN_DIR)/, $(YANGAPI_NAMES))) \
-                     $(addsuffix .openapi_client, $(addprefix $(PY_CLIENT_CODEGEN_DIR)/, $(OPENAPI_NAMES)))
+PY_CLIENT_TARGETS := $(addsuffix .yangapi_client, $(addprefix $(PY_CLIENT_CODEGEN_DIR)/, $(PY_YANGAPI_NAMES))) \
+                     $(addsuffix .openapi_client, $(addprefix $(PY_CLIENT_CODEGEN_DIR)/, $(PY_OPENAPI_NAMES)))
 
 UIGEN_DIR  = $(TOPDIR)/tools/ui_gen
 UIGEN_SRCS = $(shell find $(UIGEN_DIR) -type f)
@@ -58,11 +62,11 @@ all: go-server py-client
 
 go-server: $(YANGAPI_SERVERS) $(OPENAPI_SERVERS) $(SERVER_DIST_INIT) $(SERVER_DIST_UI_HOME)
 
+py-client: $(PY_CLIENT_CODEGEN_DIR)/. $(PY_CLIENT_TARGETS)
+
 $(SERVER_DIST_UI_HOME): $(YANGAPI_SERVERS) $(OPENAPI_SERVERS) $(UIGEN_SRCS)
 	@echo "+++ Generating  landing page for Swagger UI +++"
 	$(UIGEN_DIR)/src/uigen.py
-
-py-client: $(PY_CLIENT_TARGETS)
 
 
 .SECONDEXPANSION:

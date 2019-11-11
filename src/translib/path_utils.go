@@ -119,12 +119,17 @@ func NewPathInfo(path string) *PathInfo {
 
 func readUntil(r *strings.Reader, delim byte) string {
 	var buff strings.Builder
+	var escaped bool
+
 	for {
 		c, err := r.ReadByte()
-		if err == nil && c != delim {
-			buff.WriteByte(c)
-		} else {
+		if err != nil || (c == delim && !escaped) {
 			break
+		} else if c == '\\' && !escaped {
+			escaped = true
+		} else {
+			escaped = false
+			buff.WriteByte(c)
 		}
 	}
 
