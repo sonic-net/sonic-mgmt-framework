@@ -5,6 +5,7 @@ import (
     "strings"
     "strconv"
     "translib/ocbinds"
+    "translib/db"
 )
 
 func init () {
@@ -12,6 +13,7 @@ func init () {
     XlateFuncBind("DbToYang_fdb_tbl_key_xfmr", DbToYang_fdb_tbl_key_xfmr)
     XlateFuncBind("YangToDb_entry_type_field_xfmr", YangToDb_entry_type_field_xfmr)
     XlateFuncBind("DbToYang_entry_type_field_xfmr", DbToYang_entry_type_field_xfmr)
+    XlateFuncBind("rpc_clear_fdb", rpc_clear_fdb)
 }
 
 const (
@@ -25,6 +27,33 @@ const (
 var FDB_ENTRY_TYPE_MAP = map[string]string{
 	strconv.FormatInt(int64(ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Fdb_MacTable_Entries_Entry_State_EntryType_STATIC), 10): SONIC_ENTRY_TYPE_STATIC,
 	strconv.FormatInt(int64(ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Fdb_MacTable_Entries_Entry_State_EntryType_DYNAMIC), 10): SONIC_ENTRY_TYPE_DYNAMIC,
+}
+
+var rpc_clear_fdb RpcCallpoint = func(body []byte, dbs [db.MaxDB]*db.DB) ([]byte, error) {
+	var err error
+	var result []byte
+/*	var operand struct {
+		Input struct {
+			Left int32 `json:"left"`
+			Right int32 `json:"right"`
+		} `json:"sonic-tests:input"`
+	}
+
+	err = json.Unmarshal(body, &operand)
+	if err != nil {
+		glog.Errorf("Failed to parse rpc input; err=%v", err)
+		return nil,tlerr.InvalidArgs("Invalid rpc input")
+	}
+
+	var sum struct {
+		Output struct {
+			Result int32 `json:"result"`
+		} `json:"sonic-tests:output"`
+	}
+
+	sum.Output.Result = operand.Input.Left + operand.Input.Right
+	result, err := json.Marshal(&sum)*/
+	return result, err
 }
 
 

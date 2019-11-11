@@ -54,7 +54,6 @@ var rpc_sum_cb RpcCallpoint = func(body []byte, dbs [db.MaxDB]*db.DB) ([]byte, e
 	}
 
 	sum.Output.Result = operand.Input.Left + operand.Input.Right
-	result, err := json.Marshal(&sum)	
-	
+	result, err := json.Marshal(&sum)
 	return result, err
 }

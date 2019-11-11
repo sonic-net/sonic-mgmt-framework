@@ -15,9 +15,27 @@ module sonic-fdb {
         description
                 "SONIC FDB";
 
+        revision 2019-11-07 {
+                description
+                        "Adding RPC for clear FDB.";
+        }
+
         revision 2019-10-10 {
                 description
                         "Initial revision.";
+        }
+
+	rpc clear_fdb {
+                input {
+                        leaf mac-param {
+                                type string;
+                        }
+                }
+                output {
+                        leaf status {
+                                type string;
+                        }
+                }
         }
 
         container sonic-fdb {

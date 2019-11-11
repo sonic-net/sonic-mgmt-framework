@@ -25,6 +25,7 @@ import openconfig_network_instance_client
 from rpipe_utils import pipestr
 from openconfig_network_instance_client.rest import ApiException 
 from scripts.render_cli import show_cli_output
+import cli_client as cc
 
 import urllib3
 urllib3.disable_warnings()
@@ -47,6 +48,9 @@ def generate_body(func, args):
     body = None
     if func.__name__ == 'get_openconfig_network_instance_network_instances_network_instance_fdb_mac_table_entries':
         keypath = ['default']
+    elif func.__name__ == 'rpc_sonic_fdb_clear_fdb':
+        keypath = []
+        body = {"sonic-fdb:input":{"mac-param":"all"}}
     else:
        body = {}
 
@@ -77,7 +81,19 @@ def fill_mac_info(mac_entry):
     return mac_entry_table
 
 
+def sonic_fdb_clear():
+    print 'Inside FDB_CLEAR -'
+    print 'sys-'+str(sys.argv[1])
+    api = cc.ApiClient()
+    if sys.argv[1] == 'rpc_sonic_fdb_clear_fdb':
+        path = cc.Path('/restconf/operations/sonic-fdb:clear_fdb') 
+    return
+
 def run(func, args):
+
+    if func.__name__ == 'rpc_sonic_fdb_clear_fdb':
+        sonic_fdb_clear(func,args)
+	return
 
     c = openconfig_network_instance_client.Configuration()
     c.verify_ssl = False
@@ -201,6 +217,9 @@ def run(func, args):
 if __name__ == '__main__':
 
     pipestr().write(sys.argv)
-    func = eval(sys.argv[1], globals(), openconfig_network_instance_client.OpenconfigNetworkInstanceApi.__dict__)
-
-    run(func, sys.argv[2:])
+    if sys.argv[1] == 'rpc_sonic_fdb_clear_fdb':
+        sonic_fdb_clear()    
+    else:
+        func = eval(sys.argv[1], globals(), openconfig_network_instance_client.OpenconfigNetworkInstanceApi.__dict__)
+        func = sys.argv[1]
+        run(func, sys.argv[2:])

@@ -320,5 +320,79 @@ limitations under the License.
     </ACTION>
     </COMMAND>
 
+<!--====================clear mac address-table dynamic <all | vlan | address>======================-->
+
+    <COMMAND
+        name="clear mac"
+        help="clear mac"
+        >
+    <ACTION>
+        builtin="clish_nop"
+    </ACTION>
+    </COMMAND>
+
+    <COMMAND
+        help="clear Mac address table"
+        name="clear mac address-table"
+        >
+    <ACTION>
+        builtin="clish_nop"
+    </ACTION>
+    </COMMAND>
+
+    <COMMAND
+        help="clear mac address-table for dynamic commands"
+        name="clear mac address-table dynamic">
+        <PARAM
+            name="d-subcommands"
+            help="Dynamic subcommands"
+            mode="switch"
+            ptype="SUBCOMMAND"
+            >
+            <PARAM
+                name="all"
+                help="clearing dynamic mac address"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                >
+            </PARAM>
+            <PARAM
+                name="address"
+                help="clear Mac address of dynamic interface"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                >
+                <PARAM
+                    name="mac-addr"
+                    help="48 bit mac-address"
+                    ptype="MAC_ADDR"
+                    >
+                </PARAM>
+            </PARAM>
+            <PARAM
+                name="Vlan"
+                help="VLAN ID"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                >
+                <PARAM
+                    name="vlan-id"
+                    help="VLAN ID"
+                    ptype="VLAN_ID"
+                    >
+                </PARAM>
+            </PARAM>
+        </PARAM>
+    <ACTION>
+        if test "${d-subcommands}" = "all"; then&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-mac.py rpc_sonic_fdb_clear_fdb&#xA;
+        else&#xA;
+            builtin="clish_nop"&#xA;
+        fi
+    </ACTION>
+    </COMMAND>
+
+
+
 </VIEW>
 </CLISH_MODULE>
