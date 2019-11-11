@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-Copyright 2019 Dell, Inc.  
+Copyright 2019 Dell, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
---> 
+-->
 
 <!DOCTYPE CLISH_MODULE [
 <!ENTITY MAX_MTU         "9216">
@@ -254,6 +254,12 @@ limitations under the License.
         name="STRING_8"
         pattern="(^([a-zA-Z]){1,8})$"
         help="String"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="STRING_16"
+        pattern="(^([a-zA-Z]){1,16})$"
+        help="String length upto 16 characters"
         />
     <!--=======================================================-->
     <PTYPE
@@ -514,28 +520,42 @@ limitations under the License.
     <PTYPE
         name="PTP_DELAY_MECHANISM"
         method="select"
-		pattern="e2e(E2E) p2p(P2P)"
+	pattern="e2e(E2E) p2p(P2P)"
         help=""
         />
     <!--=======================================================-->
     <PTYPE
         name="PTP_TRANSPORT"
         method="select"
-		pattern="l2(L2) ipv4(UDPv4) ipv6(UDPv6)"
+	pattern="l2(L2) ipv4(UDPv4) ipv6(UDPv6)"
         help=""
         />
     <!--=======================================================-->
     <PTYPE
         name="PTP_DOMAIN_PROFILE"
         method="select"
-		pattern="default(ieee1588) g8275.1(G.8275.x) g8275.2(G.8275.x)"
+	pattern="default(ieee1588) g8275.1(G.8275.x) g8275.2(G.8275.x)"
         help=""
         />
     <!--=======================================================-->
     <PTYPE
         name="PTP_PORT_MODE"
         method="select"
-		pattern="transparent(transparent) boundary(boundary) disable(disable)"
+	pattern="transparent(transparent) boundary(boundary) disable(disable)"
+        help=""
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="SFLOW_POLL_INTERVAL"
+        method="unsignedInteger"
+        pattern="0..300"
+        help="0 to disable"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="SFLOW_SAMPLING_RATE"
+        method="unsignedInteger"
+        pattern="256..8388608"
         help=""
         />
     <!--=======================================================-->
