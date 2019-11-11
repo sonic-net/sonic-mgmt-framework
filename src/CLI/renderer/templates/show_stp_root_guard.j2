@@ -1,0 +1,57 @@
+{% set vars = {'vlan_name': ""} %}
+{% set vars = {'intf_name': ""} %}
+{% if json_output -%}
+{% if json_output is iterable %}
+{% if "openconfig-spanning-tree:enabled-protocol" is in json_output %}
+{% set stp_protocol = json_output['openconfig-spanning-tree:enabled-protocol'][0]%}
+{%endif%}
+{% set vlan_list = {} %}
+{% if stp_protocol == "openconfig-spanning-tree-ext:PVST" %}
+{% if "openconfig-spanning-tree-ext:pvst" is in json_output and json_output['openconfig-spanning-tree-ext:pvst'] is not none%}
+{% set vlan_list = json_output['openconfig-spanning-tree-ext:pvst']['vlan'] %}
+{% endif %}
+{% if "openconfig-spanning-tree-ext:vlan" is in json_output and json_output['openconfig-spanning-tree-ext:vlan'] is not none %}
+{% set vlan_list = json_output['openconfig-spanning-tree-ext:vlan'] %}
+{% endif %}
+{% endif %}
+{% if stp_protocol == "openconfig-spanning-tree-types:RAPID_PVST" %}
+{% if "openconfig-spanning-tree:rapid-pvst" is in json_output and json_output['openconfig-spanning-tree:rapid-pvst'] is not none %}
+{% set vlan_list = json_output['openconfig-spanning-tree:rapid-pvst']['vlan'] %}
+{%endif%}
+{% if "openconfig-spanning-tree:vlan" is in json_output and json_ouput['openconfig-spanning-tree:vlan'] is not none %}
+{% set vlan_list = json_output['openconfig-spanning-tree:vlan'] %}
+{%endif%}
+{%endif%}
+{% if "openconfig-spanning-tree:config" in json_output %}
+{% set timeout = json_output['openconfig-spanning-tree:config']['openconfig-spanning-tree-ext:rootguard-timeout'] %} 
+{% endif %}
+Root guard timeout: {{'%-3s'|format(timeout)}} secs
+{{" "}}
+----------------------------------------------------------------------
+{{'%-17s'|format("PortNum")}}{{'%-6s'|format("VLAN")}}{{'%-45s'|format("Inconsistency State")}}
+----------------------------------------------------------------------
+{% for vlan in vlan_list %}
+{% if vars.update({'vlan_name':vlan['vlan-id']}) %}{% endif %}
+{% set interface_list  = {} %}
+{% if "interfaces" in vlan and "interface" in vlan['interfaces'] %}
+    {% set interface_list = vlan['interfaces']['interface'] %}
+{%endif%}
+    {% for intf in interface_list %}
+        {% if vars.update({'intf_name':intf['name']}) %}{% endif %}
+        {% if "state" in intf %}
+          {% if stp_protocol == "openconfig-spanning-tree-ext:PVST" %}
+            {% set root_gtime = intf['state']['root-guard-timer'] %}
+          {%endif %}
+          {% if stp_protocol == "openconfig-spanning-tree:RAPID_PVST" %}
+            {% set root_gtime = intf['state']['openconfig-spanning-tree-ext:root-guard-timer'] %}
+          {%endif %}
+          {% set root_gtime_string = "(" + root_gtime |string() + " seconds left on timer)"%}
+          {% if root_gtime > 0 %}
+{{'%-17s'|format(vars.intf_name)}}{{'%-6s'|format(vars.vlan_name)}}{{'%-18s'|format("Root Inconsistent")}}{{'%-26s'|format(root_gtime_string)}}
+            {% endif %}
+        {% endif %}
+    {% endfor %}
+{% endfor %}
+{{" "}}
+{% endif %}
+{% endif %}

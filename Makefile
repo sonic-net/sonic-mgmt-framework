@@ -50,7 +50,8 @@ GO_DEPS_LIST = github.com/gorilla/mux \
                github.com/antchfx/jsonquery \
                github.com/antchfx/xmlquery \
                github.com/facette/natsort \
-	             github.com/philopon/go-toposort
+	           github.com/philopon/go-toposort \
+			   gopkg.in/godbus/dbus.v5
 
 
 REST_BIN = $(BUILD_DIR)/rest_server/main
@@ -100,23 +101,17 @@ yamlGen:
 
 go-patch: go-deps
 	cd $(BUILD_GOPATH)/src/github.com/openconfig/ygot/; git reset --hard HEAD; git checkout 724a6b18a9224343ef04fe49199dfb6020ce132a 2>/dev/null ; true; \
-cp $(TOPDIR)/ygot-modified-files/debug.go $(BUILD_GOPATH)/src/github.com/openconfig/ygot/ytypes/../util/debug.go; \
-cp $(TOPDIR)/ygot-modified-files/node.go $(BUILD_GOPATH)/src/github.com/openconfig/ygot/ytypes/node.go; \
-cp $(TOPDIR)/ygot-modified-files/container.go $(BUILD_GOPATH)/src/github.com/openconfig/ygot/ytypes/container.go; \
-cp $(TOPDIR)/ygot-modified-files/list.go $(BUILD_GOPATH)/src/github.com/openconfig/ygot/ytypes/list.go; \
-cp $(TOPDIR)/ygot-modified-files/leaf.go $(BUILD_GOPATH)/src/github.com/openconfig/ygot/ytypes/leaf.go; \
-cp $(TOPDIR)/ygot-modified-files/util_schema.go $(BUILD_GOPATH)/src/github.com/openconfig/ygot/ytypes/util_schema.go; \
-cp $(TOPDIR)/ygot-modified-files/schema.go $(BUILD_GOPATH)/src/github.com/openconfig/ygot/ytypes/../util/schema.go; \
-cp $(TOPDIR)/ygot-modified-files/unmarshal.go $(BUILD_GOPATH)/src/github.com/openconfig/ygot/ytypes/unmarshal.go; \
-cp $(TOPDIR)/ygot-modified-files/validate.go $(BUILD_GOPATH)/src/github.com/openconfig/ygot/ytypes/validate.go; \
-cp $(TOPDIR)/ygot-modified-files/reflect.go $(BUILD_GOPATH)/src/github.com/openconfig/ygot/ytypes/../util/reflect.go; \
-cp $(TOPDIR)/ygot-modified-files/string_type.go $(BUILD_GOPATH)/src/github.com/openconfig/ygot/ytypes/string_type.go; \
-cp $(TOPDIR)/goyang-modified-files/README.md $(BUILD_GOPATH)/src/github.com/openconfig/goyang/README.md; \
-cp $(TOPDIR)/goyang-modified-files/yang.go $(BUILD_GOPATH)/src/github.com/openconfig/goyang/yang.go; \
+cd ../; cp $(TOPDIR)/ygot-modified-files/ygot.patch .; \
+patch -p1 < ygot.patch; rm -f ygot.patch; \
+$(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/openconfig/ygot/ygot; \
+	cd $(BUILD_GOPATH)/src/github.com/openconfig/goyang/; git reset --hard HEAD; git checkout 064f9690516f4f72db189f4690b84622c13b7296 >/dev/null ; true; \
 cp $(TOPDIR)/goyang-modified-files/annotate.go $(BUILD_GOPATH)/src/github.com/openconfig/goyang/annotate.go; \
-cp $(TOPDIR)/goyang-modified-files/entry.go $(BUILD_GOPATH)/src/github.com/openconfig/goyang/pkg/yang/entry.go; \
-$(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/openconfig/goyang; \
-$(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/openconfig/ygot/ygot
+cp $(TOPDIR)/goyang-modified-files/goyang.patch .; \
+patch -p1 < goyang.patch; rm -f goyang.patch; \
+$(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/openconfig/goyang
+	#Patch for jsonquery
+	cd $(BUILD_GOPATH)/src/github.com/antchfx/jsonquery; git reset --hard HEAD; \
+	git checkout 3b69d31134d889b501e166a035a4d5ecb8c6c367; git apply $(TOPDIR)/patches/jsonquery.patch
 
 install:
 	$(INSTALL) -D $(REST_BIN) $(DESTDIR)/usr/sbin/rest_server
@@ -137,6 +132,17 @@ install:
 	cp -rf $(TOPDIR)/build/swagger_client_py/ $(DESTDIR)/usr/sbin/lib/
 	cp -rf $(TOPDIR)/src/cvl/conf/cvl_cfg.json $(DESTDIR)/usr/sbin/cvl_cfg.json
 
+	# Scripts for host service
+	$(INSTALL) -d $(DESTDIR)/usr/lib/sonic_host_service/host_modules
+	$(INSTALL) -D $(TOPDIR)/scripts/sonic_host_server.py $(DESTDIR)/usr/lib/sonic_host_service
+	$(INSTALL) -D $(TOPDIR)/scripts/host_modules/*.py $(DESTDIR)/usr/lib/sonic_host_service/host_modules
+	$(INSTALL) -d $(DESTDIR)/etc/dbus-1/system.d
+	$(INSTALL) -D $(TOPDIR)/scripts/org.sonic.hostservice.conf $(DESTDIR)/etc/dbus-1/system.d
+	$(INSTALL) -d $(DESTDIR)/lib/systemd/system
+	$(INSTALL) -D $(TOPDIR)/scripts/sonic-hostservice.service $(DESTDIR)/lib/systemd/system
+
+
+
 ifeq ($(SONIC_COVERAGE_ON),y)
 	echo "" > $(DESTDIR)/usr/sbin/.test
 endif
@@ -151,6 +157,7 @@ clean: rest-clean
 	$(MAKE) -C src/cvl cleanall
 	rm -rf build/*
 	rm -rf debian/.debhelper
+	rm -rf $(BUILD_GOPATH)/src/github.com/openconfig/goyang/annotate.go
 
 cleanall:
 	$(MAKE) -C src/cvl cleanall

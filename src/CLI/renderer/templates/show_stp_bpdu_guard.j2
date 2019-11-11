@@ -1,0 +1,30 @@
+{% set vars = {'intf_name':""} %}
+{% set vars = {'intf_shut_conf':""} %}
+{% set vars = {'intf_shut':""} %}
+{{'%-17s'|format("PortNum")}}{{'%-12s'|format("Shutdown")}}{{'%-19s'|format("Port shut")}}
+{{'%-17s'|format("")}}{{'%-12s'|format("Configured")}}{{'%-19s'|format("due to BPDU guard")}}
+{% if json_output -%}
+{% set stp_intfs = {} %}
+{% if "openconfig-spanning-tree:interfaces" is in json_output and json_output['openconfig-spanning-tree:interfaces'] is not none %}
+{% set stp_intfs =  json_output['openconfig-spanning-tree:interfaces']['interface'] %}
+{%endif%}
+{% if "openconfig-spanning-tree:interface" is in json_output and json_output['openconfig-spanning-tree:interface'] is not none %}
+{% set stp_intfs =  json_output['openconfig-spanning-tree:interface'] %}
+{%endif%}
+{% for intf in stp_intfs %}
+        {% if vars.update({'intf_name':""}) %}{% endif %}
+        {% if vars.update({'intf_shut_conf':"N"}) %}{% endif %}
+        {% if vars.update({'intf_shut':"NA"}) %}{% endif %}
+
+        {% if vars.update({'intf_name':intf['name']}) %}{% endif %}
+        {% if (intf['config']['openconfig-spanning-tree-ext:bpdu-guard-port-shutdown'] == true) %}
+                {% if vars.update({'intf_shut_conf': "Y"}) %}{% endif %}
+                {% if (intf['state']['openconfig-spanning-tree-ext:bpdu-guard-shutdown'] == true) %}
+                        {% if vars.update({'intf_shut': "Y"}) %}{% endif %}
+                {% else %}
+                        {% if vars.update({'intf_shut': "N"}) %}{% endif %}
+                {% endif %}
+        {% endif %}
+{{'%-17s'|format(vars.intf_name)}}{{'%-12s'|format(vars.intf_shut_conf)}}{{'%-19s'|format(vars.intf_shut)}}
+{% endfor %}
+{% endif %}

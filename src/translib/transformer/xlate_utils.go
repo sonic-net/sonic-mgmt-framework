@@ -22,6 +22,7 @@ import (
     "fmt"
     "strings"
     "reflect"
+	"regexp"
     "translib/db"
     "github.com/openconfig/goyang/pkg/yang"
     "github.com/openconfig/gnmi/proto/gnmi"
@@ -99,7 +100,7 @@ func yangTypeGet(entry *yang.Entry) string {
     return ""
 }
 
-func dbKeyToYangDataConvert(uri string, xpath string, dbKey string, dbKeySep string) (map[string]interface{}, string, error) {
+func dbKeyToYangDataConvert(uri string, xpath string, dbKey string, dbKeySep string, txCache interface{}) (map[string]interface{}, string, error) {
 	var err error
 	if len(uri) == 0 && len(xpath) == 0 && len(dbKey) == 0 {
 		err = fmt.Errorf("Insufficient input")
@@ -133,17 +134,17 @@ func dbKeyToYangDataConvert(uri string, xpath string, dbKey string, dbKeySep str
 
 	if len(xYangSpecMap[xpath].xfmrKey) > 0 {
 		var dbs [db.MaxDB]*db.DB
-		inParams := formXfmrInputRequest(nil, dbs, db.MaxDB, nil, uri, GET, dbKey, nil, nil)
+		inParams := formXfmrInputRequest(nil, dbs, db.MaxDB, nil, uri, GET, dbKey, nil, nil, txCache)
 		ret, err := XlateFuncCall(dbToYangXfmrFunc(xYangSpecMap[xpath].xfmrKey), inParams)
 		if err != nil {
 			return nil, "", err
 		}
 		rmap := ret[0].Interface().(map[string]interface{})
-                if uriWithKeyCreate {
-                        for k, v := range rmap {
-                                uriWithKey += fmt.Sprintf("[%v=%v]", k, v)
-                        }
-                }
+		if uriWithKeyCreate {
+			for k, v := range rmap {
+				uriWithKey += fmt.Sprintf("[%v=%v]", k, v)
+			}
+		}
 		return rmap, uriWithKey, nil
 	}
 
@@ -157,7 +158,25 @@ func dbKeyToYangDataConvert(uri string, xpath string, dbKey string, dbKeySep str
 		log.Infof("No key transformer found for multi element yang key mapping to a single redis key string.")
 	        return rmap, uriWithKey, nil
 	}
-	rmap[keyNameList[0]] = keyDataList[0]
+	keyXpath := xpath + "/" + keyNameList[0]
+	xyangSpecInfo, ok := xYangSpecMap[keyXpath]
+	if !ok  || xyangSpecInfo == nil {
+		errStr := fmt.Sprintf("Failed to find key xpath %v in xYangSpecMap or is nil, needed to fetch the yangEntry data-type", keyXpath)
+		err = fmt.Errorf("%v", errStr)
+		return rmap, uriWithKey, err
+	}
+	yngTerminalNdDtType := xyangSpecInfo.yangEntry.Type.Kind
+	resVal, _, err := DbToYangType(yngTerminalNdDtType, keyXpath, keyDataList[0])
+	if err != nil {
+		errStr := fmt.Sprintf("Failure in converting Db value type to yang type for field", keyXpath)
+		err = fmt.Errorf("%v", errStr)
+		return rmap, uriWithKey, err
+	} else {
+		 rmap[keyNameList[0]] = resVal
+	}
+	if uriWithKeyCreate {
+		uriWithKey += fmt.Sprintf("[%v=%v]", keyNameList[0], resVal)
+	}
 
 	return rmap, uriWithKey, nil
 }
@@ -353,7 +372,7 @@ func mapGet(xpath string, inMap map[string]interface{}) map[string]interface{} {
     return retMap
 }
 
-func formXfmrInputRequest(d *db.DB, dbs [db.MaxDB]*db.DB, cdb db.DBNum, ygRoot *ygot.GoStruct, uri string, oper int, key string, dbDataMap *map[db.DBNum]map[string]map[string]db.Value, param interface{}) XfmrParams {
+func formXfmrInputRequest(d *db.DB, dbs [db.MaxDB]*db.DB, cdb db.DBNum, ygRoot *ygot.GoStruct, uri string, oper int, key string, dbDataMap *map[db.DBNum]map[string]map[string]db.Value, param interface{}, txCache interface{}) XfmrParams {
 	var inParams XfmrParams
 	inParams.d = d
 	inParams.dbs = dbs
@@ -364,6 +383,7 @@ func formXfmrInputRequest(d *db.DB, dbs [db.MaxDB]*db.DB, cdb db.DBNum, ygRoot *
 	inParams.key = key
 	inParams.dbDataMap = dbDataMap
 	inParams.param = param // generic param
+	inParams.txCache = txCache
 
 	return inParams
 }
@@ -404,7 +424,7 @@ func getDBOptions(dbNo db.DBNum) db.Options {
         case db.ApplDB, db.CountersDB:
                 opt = getDBOptionsWithSeparator(dbNo, "", ":", ":")
                 break
-        case db.FlexCounterDB, db.AsicDB, db.LogLevelDB, db.ConfigDB, db.StateDB:
+        case db.FlexCounterDB, db.AsicDB, db.LogLevelDB, db.ConfigDB, db.StateDB, db.ErrorDB:
                 opt = getDBOptionsWithSeparator(dbNo, "", "|", "|")
                 break
         }
@@ -460,5 +480,145 @@ func XfmrRemoveXPATHPredicates(xpath string) (string, error) {
         }
         path := "/" + strings.Join(pathList, "/")
         return path,nil
+}
+
+ /* Extract key vars, create db key and xpath */
+ func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, txCache interface{}) (string, string, string) {
+	 keyStr    := ""
+	 tableName := ""
+	 pfxPath := ""
+	 rgp       := regexp.MustCompile(`\[([^\[\]]*)\]`)
+	 curPathWithKey := ""
+	 cdb := db.ConfigDB
+	 var dbs [db.MaxDB]*db.DB
+
+	 pfxPath, _ = XfmrRemoveXPATHPredicates(path)
+	 xpathInfo, ok := xYangSpecMap[pfxPath]
+	 if !ok {
+		 log.Errorf("No entry found in xYangSpecMap for xpath %v.", pfxPath)
+		 return pfxPath, keyStr, tableName
+	 }
+	 cdb = xpathInfo.dbIndex
+	 dbOpts := getDBOptions(cdb)
+	 keySeparator := dbOpts.KeySeparator
+	 if len(xpathInfo.delim) > 0 {
+		 keySeparator = xpathInfo.delim
+	 }
+
+	 for _, k := range strings.Split(path, "/") {
+		 curPathWithKey += k
+		 yangXpath, _ := XfmrRemoveXPATHPredicates(curPathWithKey)
+		 _, ok := xYangSpecMap[yangXpath]
+		 if ok {
+			 if strings.Contains(k, "[") {
+				 if len(keyStr) > 0 {
+					 keyStr += keySeparator
+				 }
+				 if len(xYangSpecMap[yangXpath].xfmrKey) > 0 {
+					 xfmrFuncName := yangToDbXfmrFunc(xYangSpecMap[yangXpath].xfmrKey)
+					 inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, curPathWithKey, oper, "", nil, nil, txCache)
+					 ret, err := XlateFuncCall(xfmrFuncName, inParams)
+					 if err != nil {
+						 return "", "", ""
+					 }
+					 if ret != nil {
+						 keyStr = ret[0].Interface().(string)
+					 }
+				 } else if xYangSpecMap[yangXpath].keyName != nil {
+					 keyStr += *xYangSpecMap[yangXpath].keyName
+				 } else {
+					 /* multi-leaf yang key together forms a single key-string in redis.
+					 There should be key-transformer, if not then the yang key leaves
+					 will be concatenated with respective default DB type key-delimiter
+					 */
+					 for idx, kname := range rgp.FindAllString(k, -1) {
+						 if idx > 0 { keyStr += keySeparator }
+						 keyl := strings.TrimRight(strings.TrimLeft(kname, "["), "]")
+						 if strings.Contains(keyl, ":") {
+							 keyl = strings.Split(keyl, ":")[1]
+						 }
+						 keyStr += strings.Split(keyl, "=")[1]
+					 }
+				 }
+			 } else if len(xYangSpecMap[yangXpath].xfmrKey) > 0 {
+				 xfmrFuncName := yangToDbXfmrFunc(xYangSpecMap[yangXpath].xfmrKey)
+				 inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, curPathWithKey, oper, "", nil, nil, txCache)
+				 ret, err := XlateFuncCall(xfmrFuncName, inParams)
+				 if err != nil {
+					 return "", "", ""
+				 }
+				 if ret != nil {
+					 keyStr = ret[0].Interface().(string)
+				 }
+			 } else if xYangSpecMap[yangXpath].keyName != nil {
+				 keyStr += *xYangSpecMap[yangXpath].keyName
+			 }
+		 }
+		 curPathWithKey += "/"
+	 }
+	 curPathWithKey = strings.TrimSuffix(curPathWithKey, "/")
+	 tblPtr     := xpathInfo.tableName
+	 if tblPtr != nil {
+		 tableName = *tblPtr
+	 } else if xpathInfo.xfmrTbl != nil {
+		 inParams := formXfmrInputRequest(d, dbs, cdb, ygRoot, curPathWithKey, oper, "", nil, nil, txCache)
+		 tableName, _ = tblNameFromTblXfmrGet(*xpathInfo.xfmrTbl, inParams)
+	 }
+	 return pfxPath, keyStr, tableName
+ }
+
+ func sonicXpathKeyExtract(path string) (string, string, string) {
+	 xpath, keyStr, tableName := "", "", ""
+	 var err error
+	 xpath, err = XfmrRemoveXPATHPredicates(path)
+	 if err != nil {
+		 return xpath, keyStr, tableName
+	 }
+	 rgp := regexp.MustCompile(`\[([^\[\]]*)\]`)
+	 pathsubStr := strings.Split(path , "/")
+	 if len(pathsubStr) > SONIC_TABLE_INDEX  {
+		 if strings.Contains(pathsubStr[2], "[") {
+			 tableName = strings.Split(pathsubStr[SONIC_TABLE_INDEX], "[")[0]
+		 } else {
+			 tableName = pathsubStr[SONIC_TABLE_INDEX]
+		 }
+		 dbInfo, ok := xDbSpecMap[tableName]
+		 cdb := db.ConfigDB
+		 if !ok {
+			 log.Infof("No entry in xDbSpecMap for xpath %v in order to fetch DB index.", tableName)
+			 return xpath, keyStr, tableName
+		 }
+		 cdb = dbInfo.dbIndex
+		 dbOpts := getDBOptions(cdb)
+		 if dbInfo.keyName != nil {
+			 keyStr = *dbInfo.keyName
+		 } else {
+			 for i, kname := range rgp.FindAllString(path, -1) {
+				 if i > 0 {
+					 keyStr += dbOpts.KeySeparator
+				 }
+				 val := strings.Split(kname, "=")[1]
+				 keyStr += strings.TrimRight(val, "]")
+			 }
+		 }
+	 }
+	 return xpath, keyStr, tableName
+ }
+
+func getYangMdlToSonicMdlList(moduleNm string) []string {
+	var sncMdlList []string
+        if xDbSpecTblSeqnMap == nil || len(xDbSpecTblSeqnMap) == 0 {
+                log.Info("xDbSpecTblSeqnMap is empty.")
+                return sncMdlList
+        }
+        if strings.HasPrefix(moduleNm, SONIC_MDL_PFX) {
+                sncMdlList = append(sncMdlList, moduleNm)
+        } else {
+                //can be optimized if there is a way to know sonic modules, a given OC-Yang spans over
+                for sncMdl := range(xDbSpecTblSeqnMap) {
+                        sncMdlList = append(sncMdlList, sncMdl)
+                }
+        }
+	return sncMdlList
 }
 

@@ -41,7 +41,7 @@ func (app *IntfApp) getIntfTypeFromIntf(ifName *string) error {
 		app.intfType = ETHERNET
 	} else if strings.HasPrefix(*ifName, "Vlan") {
 		app.intfType = VLAN
-	} else if strings.HasPrefix(*ifName, "portchannel") {
+	} else if strings.HasPrefix(*ifName, "PortChannel") {
 		app.intfType = LAG
 	} else {
 		return errors.New("Fetching Interface type from Interface name failed!")
@@ -50,8 +50,8 @@ func (app *IntfApp) getIntfTypeFromIntf(ifName *string) error {
 }
 
 /* Validates whether the specific IP exists in the DB for an Interface*/
-func (app *IntfApp) validateIp(dbCl *db.DB, ifName string, ip string) error {
-	app.allIpKeys, _ = app.doGetAllIpKeys(dbCl, app.intfD.intfIPTs)
+func (app *IntfApp) validateIp(dbCl *db.DB, ifName string, ip string, ts *db.TableSpec) error {
+	app.allIpKeys, _ = app.doGetAllIpKeys(dbCl, ts)
 
 	for _, key := range app.allIpKeys {
 		if len(key.Comp) < 2 {
@@ -64,16 +64,16 @@ func (app *IntfApp) validateIp(dbCl *db.DB, ifName string, ip string) error {
 		ipStr := ipAddr.String()
 		if ipStr == ip {
 			log.Infof("IP address %s exists, updating the DS for deletion!", ipStr)
-			ipInfo, err := dbCl.GetEntry(app.intfD.intfIPTs, key)
+			ipInfo, err := dbCl.GetEntry(ts, key)
 			if err != nil {
 				log.Error("Error found on fetching Interface IP info from App DB for Interface Name : ", ifName)
 				return err
 			}
-			if len(app.intfD.ifIPTableMap[key.Get(0)]) == 0 {
-				app.intfD.ifIPTableMap[key.Get(0)] = make(map[string]dbEntry)
-				app.intfD.ifIPTableMap[key.Get(0)][key.Get(1)] = dbEntry{entry: ipInfo}
+			if len(app.ifIPTableMap[key.Get(0)]) == 0 {
+				app.ifIPTableMap[key.Get(0)] = make(map[string]dbEntry)
+				app.ifIPTableMap[key.Get(0)][key.Get(1)] = dbEntry{entry: ipInfo}
 			} else {
-				app.intfD.ifIPTableMap[key.Get(0)][key.Get(1)] = dbEntry{entry: ipInfo}
+				app.ifIPTableMap[key.Get(0)][key.Get(1)] = dbEntry{entry: ipInfo}
 			}
 			return nil
 		}
@@ -133,10 +133,10 @@ func (app *IntfApp) translateIpv4(d *db.DB, intf string, ip string, prefix int) 
 				entry.op = opDelete
 
 				log.Info("Entry ", key.Get(1), " on ", intf, " needs to be deleted")
-				if app.intfD.ifIPTableMap[intf] == nil {
-					app.intfD.ifIPTableMap[intf] = make(map[string]dbEntry)
+				if app.ifIPTableMap[intf] == nil {
+					app.ifIPTableMap[intf] = make(map[string]dbEntry)
 				}
-				app.intfD.ifIPTableMap[intf][key.Get(1)] = entry
+				app.ifIPTableMap[intf][key.Get(1)] = entry
 			}
 		}
 	}
@@ -150,10 +150,10 @@ func (app *IntfApp) translateIpv4(d *db.DB, intf string, ip string, prefix int) 
 		m["NULL"] = "NULL"
 		value := db.Value{Field: m}
 		entry.entry = value
-		if app.intfD.ifIPTableMap[intf] == nil {
-			app.intfD.ifIPTableMap[intf] = make(map[string]dbEntry)
+		if app.ifIPTableMap[intf] == nil {
+			app.ifIPTableMap[intf] = make(map[string]dbEntry)
 		}
-		app.intfD.ifIPTableMap[intf][ipPref] = entry
+		app.ifIPTableMap[intf][ipPref] = entry
 	}
 	return err
 }
@@ -166,6 +166,20 @@ func (app *IntfApp) validateVlanExists(d *db.DB, vlanName *string) error {
 	entry, err := d.GetEntry(app.vlanD.vlanTs, db.Key{Comp: []string{*vlanName}})
 	if err != nil || !entry.IsPopulated() {
 		errStr := "Invalid Vlan:" + *vlanName
+		return errors.New(errStr)
+	}
+	return nil
+}
+
+/* Validate whether LAG exists in DB */
+func (app *IntfApp) validateLagExists(d *db.DB, lagName *string) error {
+	if len(*lagName) == 0 {
+		return errors.New("Length of Lag name is zero")
+	}
+	entry, err := d.GetEntry(app.lagD.lagTs, db.Key{Comp: []string{*lagName}})
+	log.Info("Lag Entry found:", entry)
+	if err != nil || !entry.IsPopulated() {
+		errStr := "Invalid Lag:" + *lagName
 		return errors.New(errStr)
 	}
 	return nil
@@ -329,6 +343,11 @@ func (app *IntfApp) removeUntaggedVlanAndUpdateVlanMembTbl(d *db.DB, ifName *str
 			if err != nil {
 				return nil, err
 			}
+			// Disable STP configuration for ports which are removed from VLan membership
+			var memberPorts []string
+			memberPorts = append(memberPorts, *ifName)
+			removeStpOnInterfaceSwitchportDeletion(d, memberPorts)
+
 			return &vlanName, nil
 		}
 	}
@@ -355,6 +374,10 @@ func (app *IntfApp) removeTaggedVlanAndUpdateVlanMembTbl(d *db.DB, trunkVlan *st
 		if err != nil {
 			return err
 		}
+		// Disable STP configuration for ports which are removed from VLan membership
+		var memberPorts []string
+		memberPorts = append(memberPorts, *ifName)
+		removeStpOnInterfaceSwitchportDeletion(d, memberPorts)
 	} else {
 		vlanId := vlanName[len("Vlan"):len(vlanName)]
 		errStr := "Tagged VLAN: " + vlanId + " configuration doesn't exist for Interface: " + *ifName

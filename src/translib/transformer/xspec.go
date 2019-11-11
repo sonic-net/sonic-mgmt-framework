@@ -23,6 +23,7 @@ import (
     "os"
     "strings"
     log "github.com/golang/glog"
+    "cvl"
     "translib/db"
 
     "github.com/openconfig/goyang/pkg/yang"
@@ -42,24 +43,34 @@ type yangXpathInfo  struct {
     xfmrFunc       string
     xfmrPost       string
     validateFunc   string
+    rpcFunc        string
     xfmrKey        string
     keyName        *string
     dbIndex        db.DBNum
     keyLevel       int
     isKey          bool
+    defVal         string
 }
 
 type dbInfo  struct {
     dbIndex      db.DBNum
     keyName      *string
     fieldType    string
+    rpcFunc      string
     dbEntry      *yang.Entry
     yangXpath    []string
+    module       string
+}
+
+type sonicTblSeqnInfo struct {
+       OrdTbl []string
+       DepTbl map[string][]string
 }
 
 var xYangSpecMap  map[string]*yangXpathInfo
 var xDbSpecMap    map[string]*dbInfo
 var xDbSpecOrdTblMap map[string][]string //map of module-name to ordered list of db tables { "sonic-acl" : ["ACL_TABLE", "ACL_RULE"] }
+var xDbSpecTblSeqnMap  map[string]*sonicTblSeqnInfo
 
 /* update transformer spec with db-node */
 func updateDbTableData (xpath string, xpathData *yangXpathInfo, tableName string) {
@@ -91,13 +102,13 @@ func yangToDbMapFill (keyLevel int, xYangSpecMap map[string]*yangXpathInfo, entr
 	}
 
 	xpathData.yangDataType = entry.Node.Statement().Keyword
-	if entry.Node.Statement().Keyword == "list"  && xpathData.tableName != nil {
+	if (xpathData.tableName != nil && *xpathData.tableName != "") {
 		childToUpdateParent(xpath, *xpathData.tableName)
 	}
 
 	parentXpathData, ok := xYangSpecMap[xpathPrefix]
 	/* init current xpath table data with its parent data, change only if needed. */
-	if ok {
+	if ok && xpathData.tableName == nil {
 		if xpathData.tableName == nil && parentXpathData.tableName != nil && xpathData.xfmrTbl == nil {
 			xpathData.tableName = parentXpathData.tableName
 		} else if xpathData.xfmrTbl == nil && parentXpathData.xfmrTbl != nil {
@@ -120,15 +131,20 @@ func yangToDbMapFill (keyLevel int, xYangSpecMap map[string]*yangXpathInfo, entr
 
 	if xpathData.yangDataType == "leaf" && len(xpathData.fieldName) == 0 {
 		if xpathData.tableName != nil && xDbSpecMap[*xpathData.tableName] != nil {
-			if xDbSpecMap[*xpathData.tableName].dbEntry.Dir[entry.Name] != nil {
+			if _, ok := xDbSpecMap[*xpathData.tableName + "/" + entry.Name]; ok {
 				xpathData.fieldName = entry.Name
-			} else if xDbSpecMap[*xpathData.tableName].dbEntry.Dir[strings.ToUpper(entry.Name)] != nil {
-				xpathData.fieldName = strings.ToUpper(entry.Name)
+			} else {
+				if _, ok := xDbSpecMap[*xpathData.tableName + "/" + strings.ToUpper(entry.Name)]; ok {
+					xpathData.fieldName = strings.ToUpper(entry.Name)
+				}
 			}
 		} else if xpathData.xfmrTbl != nil {
 			/* table transformer present */
 			xpathData.fieldName = entry.Name
 		}
+	}
+	if xpathData.yangDataType == YANG_LEAF && len(entry.Default) > 0 {
+		xpathData.defVal = entry.Default
 	}
 
 	if xpathData.yangDataType == "leaf" && len(xpathData.fieldName) > 0 && xpathData.tableName != nil {
@@ -205,23 +221,24 @@ func yangToDbMapBuild(entries map[string]*yang.Entry) {
 }
 
 /* Fill the map with db details */
-func dbMapFill(tableName string, curPath string, moduleNm string, trkTpCnt bool, xDbSpecMap map[string]*dbInfo, entry *yang.Entry) {
+func dbMapFill(tableName string, curPath string, moduleNm string, xDbSpecMap map[string]*dbInfo, entry *yang.Entry) {
 	entryType := entry.Node.Statement().Keyword
 
 	if entry.Name != moduleNm {
-		if entryType == "container" {
+		if entryType == "container" || entryType == "rpc" {
 			tableName = entry.Name
 		}
 
 		if !isYangResType(entryType) {
 			dbXpath := tableName
-			if entryType != "container" {
+			if entryType != "container" && entryType != "rpc" {
 				dbXpath = tableName + "/" + entry.Name
 			}
 			xDbSpecMap[dbXpath] = new(dbInfo)
 			xDbSpecMap[dbXpath].dbIndex   = db.MaxDB
 			xDbSpecMap[dbXpath].dbEntry   = entry
 			xDbSpecMap[dbXpath].fieldType = entryType
+			xDbSpecMap[dbXpath].module = moduleNm
 			if entryType == "container" {
 				xDbSpecMap[dbXpath].dbIndex = db.ConfigDB
 				if entry.Exts != nil && len(entry.Exts) > 0 {
@@ -234,6 +251,8 @@ func dbMapFill(tableName string, curPath string, moduleNm string, trkTpCnt bool,
 								xDbSpecMap[dbXpath].keyName = new(string)
 							}
 							*xDbSpecMap[dbXpath].keyName = ext.NName()
+						case "rpc-callback" :
+							xDbSpecMap[dbXpath].rpcFunc = ext.NName()
 						default :
 							log.Infof("Unsupported ext type(%v) for xpath(%v).", tagType, dbXpath)
 						}
@@ -246,6 +265,44 @@ func dbMapFill(tableName string, curPath string, moduleNm string, trkTpCnt bool,
 		xDbSpecMap[moduleXpath] = new(dbInfo)
 		xDbSpecMap[moduleXpath].dbEntry   = entry
 		xDbSpecMap[moduleXpath].fieldType = entryType
+		xDbSpecMap[moduleXpath].module = moduleNm
+                for {
+			sncTblInfo := new(sonicTblSeqnInfo)
+			if sncTblInfo == nil {
+				log.Warningf("Memory allocation failure for storing Tbl order and dependency info for sonic module %v", moduleNm)
+				break
+			}
+			cvlSess, cvlRetSess := cvl.ValidationSessOpen()
+			if cvlRetSess != cvl.CVL_SUCCESS {
+				log.Warningf("Failure in creating CVL validation session object required to use CVl API to get Tbl info for module %v - %v", moduleNm, cvlRetSess)
+				break
+			}
+			var cvlRetOrdTbl cvl.CVLRetCode
+			sncTblInfo.OrdTbl, cvlRetOrdTbl = cvlSess.GetOrderedTables(moduleNm)
+			if cvlRetOrdTbl != cvl.CVL_SUCCESS {
+				log.Warningf("Failure in cvlSess.GetOrderedTables(%v) - %v", cvlRetOrdTbl)
+
+			}
+			sncTblInfo.DepTbl = make(map[string][]string)
+			if sncTblInfo.DepTbl == nil {
+				log.Warningf("sncTblInfo.DepTbl is nill , no space to store dependency table list for sonic module %v", moduleNm)
+				cvl.ValidationSessClose(cvlSess)
+				break
+			}
+			for _, tbl := range(sncTblInfo.OrdTbl) {
+				var cvlRetDepTbl cvl.CVLRetCode
+				sncTblInfo.DepTbl[tbl], cvlRetDepTbl = cvlSess.GetDepTables(moduleNm, tbl)
+				if cvlRetDepTbl != cvl.CVL_SUCCESS {
+					log.Warningf("Failure in cvlSess.GetDepTables(%v, %v) - %v", moduleNm, tbl, cvlRetDepTbl)
+				}
+
+
+			}
+			xDbSpecTblSeqnMap[moduleNm] = sncTblInfo
+			cvl.ValidationSessClose(cvlSess)
+			break
+		}
+
 	}
 
 	var childList []string
@@ -253,15 +310,10 @@ func dbMapFill(tableName string, curPath string, moduleNm string, trkTpCnt bool,
 		childList = append(childList, k)
 	}
 
-	if entryType == "container" &&  trkTpCnt {
-		xDbSpecOrdTblMap[moduleNm] = childList
-		log.Info("xDbSpecOrdTblMap after appending ", xDbSpecOrdTblMap)
-		trkTpCnt = false
-	}
 
 	for _, child := range childList {
 		childPath := tableName + "/" + entry.Dir[child].Name
-		dbMapFill(tableName, childPath, moduleNm, trkTpCnt, xDbSpecMap, entry.Dir[child])
+		dbMapFill(tableName, childPath, moduleNm, xDbSpecMap, entry.Dir[child])
 	}
 }
 
@@ -272,15 +324,14 @@ func dbMapBuild(entries []*yang.Entry) {
 	}
 	xDbSpecMap = make(map[string]*dbInfo)
 	xDbSpecOrdTblMap = make(map[string][]string)
+	xDbSpecTblSeqnMap =  make(map[string]*sonicTblSeqnInfo)
 
 	for _, e := range entries {
 		if e == nil || len(e.Dir) == 0 {
 			continue
 		}
 		moduleNm := e.Name
-		log.Infof("Module name(%v)", moduleNm)
-		trkTpCnt := true
-		dbMapFill("", "", moduleNm, trkTpCnt, xDbSpecMap, e)
+		dbMapFill("", "", moduleNm, xDbSpecMap, e)
 	}
 }
 
@@ -296,9 +347,14 @@ func childToUpdateParent( xpath string, tableName string) {
 		xpathData = new(yangXpathInfo)
 		xYangSpecMap[parent] = xpathData
 	}
-	xYangSpecMap[parent].childTable = append(xYangSpecMap[parent].childTable, tableName)
-	if xYangSpecMap[parent].yangEntry != nil &&
-	   xYangSpecMap[parent].yangEntry.Node.Statement().Keyword == "list" {
+
+       parentXpathData := xYangSpecMap[parent]
+       if !contains(parentXpathData.childTable, tableName) {
+               parentXpathData.childTable = append(parentXpathData.childTable, tableName)
+       }
+
+       if parentXpathData.yangEntry != nil && parentXpathData.yangEntry.Node.Statement().Keyword == "list" &&
+       (parentXpathData.tableName != nil || parentXpathData.xfmrTbl != nil) {
 		return
 	}
 	childToUpdateParent(parent, tableName)
@@ -349,6 +405,8 @@ func annotEntryFill(xYangSpecMap map[string]*yangXpathInfo, xpath string, entry 
 				xpathData.xfmrPost  = ext.NName()
 			case "get-validate" :
 				xpathData.validateFunc  = ext.NName()
+			case "rpc-callback" :
+				xpathData.rpcFunc  = ext.NName()
 			case "use-self-key" :
 				xpathData.keyXpath  = nil
 			case "db-name" :
@@ -366,6 +424,8 @@ func annotEntryFill(xYangSpecMap map[string]*yangXpathInfo, xpath string, entry 
 					xpathData.dbIndex  = db.FlexCounterDB
 				} else if ext.NName() == "STATE_DB" {
 					xpathData.dbIndex  = db.StateDB
+				} else if ext.NName() == "ERROR_DB" {
+					xpathData.dbIndex  = db.ErrorDB
 				} else {
 					xpathData.dbIndex  = db.ConfigDB
 				}
@@ -416,12 +476,38 @@ func annotDbSpecMapFill(xDbSpecMap map[string]*dbInfo, dbXpath string, entry *ya
 	var dbXpathData *dbInfo
 	var ok bool
 
-	//Currently sonic-yang annotation is supported for "list" type only.
+	//Currently sonic-yang annotation is supported for "list" and "rpc" type only
 	listName := strings.Split(dbXpath, "/")
 	if len(listName) < 3 {
-		log.Errorf("Invalid list xpath length(%v) \r\n", dbXpath)
-		return err
+		// check rpc?
+		rpcName := strings.Split(listName[1], ":")
+		if len(rpcName) < 2 {
+			log.Errorf("DB spec-map data not found(%v) \r\n", rpcName)
+			return err
+		}
+		dbXpathData, ok = xDbSpecMap[rpcName[1]]
+		if ok && dbXpathData.fieldType == "rpc" {
+			log.Infof("Annotate dbSpecMap for (%v)(rpcName:%v)\r\n", dbXpath, listName[1])
+			if entry != nil && len(entry.Exts) > 0 {
+				for _, ext := range entry.Exts {
+					dataTagArr := strings.Split(ext.Keyword, ":")
+					tagType := dataTagArr[len(dataTagArr)-1]
+					switch tagType {
+					case "rpc-callback" :
+						dbXpathData.rpcFunc = ext.NName()
+					default :
+					}
+				}
+			}
+			dbMapPrint("/tmp/dbSpecMapFull.txt")
+			return err
+		} else {
+			log.Errorf("DB spec-map data not found(%v) \r\n", dbXpath)
+			return err
+		}
 	}
+
+	// list
 	dbXpathData, ok = xDbSpecMap[listName[2]]
 	if !ok {
 		log.Errorf("DB spec-map data not found(%v) \r\n", dbXpath)
@@ -456,6 +542,8 @@ func annotDbSpecMapFill(xDbSpecMap map[string]*dbInfo, dbXpath string, entry *ya
 					dbXpathData.dbIndex  = db.FlexCounterDB
 				} else if ext.NName() == "STATE_DB" {
 					dbXpathData.dbIndex  = db.StateDB
+				} else if ext.NName() == "ERROR_DB" {
+					dbXpathData.dbIndex  = db.ErrorDB
 				} else {
 					dbXpathData.dbIndex  = db.ConfigDB
 				}
@@ -515,11 +603,13 @@ func mapPrint(inMap map[string]*yangXpathInfo, fileName string) {
         }
         fmt.Fprintf(fp, "\r\n    childTbl : %v", d.childTable)
         fmt.Fprintf(fp, "\r\n    FieldName: %v", d.fieldName)
+        fmt.Fprintf(fp, "\r\n    defVal   : %v", d.defVal)
         fmt.Fprintf(fp, "\r\n    keyLevel : %v", d.keyLevel)
         fmt.Fprintf(fp, "\r\n    xfmrKeyFn: %v", d.xfmrKey)
         fmt.Fprintf(fp, "\r\n    xfmrFunc : %v", d.xfmrFunc)
         fmt.Fprintf(fp, "\r\n    dbIndex  : %v", d.dbIndex)
         fmt.Fprintf(fp, "\r\n    validateFunc  : %v", d.validateFunc)
+        fmt.Fprintf(fp, "\r\n    rpcFunc  : %v", d.rpcFunc)
         fmt.Fprintf(fp, "\r\n    yangEntry: ")
         if d.yangEntry != nil {
             fmt.Fprintf(fp, "%v", *d.yangEntry)
@@ -550,11 +640,15 @@ func dbMapPrint( fname string) {
         fmt.Fprintf(fp, " field:%v \r\n", k)
         fmt.Fprintf(fp, "     type     :%v \r\n", v.fieldType)
         fmt.Fprintf(fp, "     db-type  :%v \r\n", v.dbIndex)
+        fmt.Fprintf(fp, "     rpcFunc  :%v \r\n", v.rpcFunc)
+        fmt.Fprintf(fp, "     module   :%v \r\n", v.module)
         fmt.Fprintf(fp, "     KeyName: ")
         if v.keyName != nil {
             fmt.Fprintf(fp, "%v", *v.keyName)
         }
-        fmt.Fprintf(fp, "\r\n     oc-yang  :%v \r\n", v.yangXpath)
+		for _, yxpath := range v.yangXpath {
+			fmt.Fprintf(fp, "\r\n     oc-yang  :%v \r\n", yxpath)
+		}
         fmt.Fprintf(fp, "     cvl-yang :%v \r\n", v.dbEntry)
         fmt.Fprintf (fp, "-----------------------------------------------------------------\r\n")
 

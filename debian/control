@@ -10,3 +10,9 @@ Priority: extra
 Architecture: amd64
 Depends: ${shlibs:Depends}, ${misc:Depends}  
 Description: SONiC Management Framework 
+
+Package: sonic-host-service
+Priority: extra
+Architecture: amd64
+Depends: python-dbus, python-gobject, python-systemd, ${shlibs:Depends}, ${misc:Depends}
+Description: SONiC Host Service

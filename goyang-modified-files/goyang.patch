@@ -1,0 +1,129 @@
+diff --git a/README.md b/README.md
+index 4d22c1e..805adb5 100644
+--- a/README.md
++++ b/README.md
+@@ -14,6 +14,7 @@ The forms include:
+ 
+ *  tree - a simple tree representation
+ *  types - list understood types extracted from the schema
++*  annotate - a template file to annotate the yang modules
+ 
+ The yang package, and the goyang program, are not complete and are a work in
+ progress.
+diff --git a/pkg/yang/entry.go b/pkg/yang/entry.go
+index ef658d6..f626dc9 100644
+--- a/pkg/yang/entry.go
++++ b/pkg/yang/entry.go
+@@ -80,6 +80,7 @@ type Entry struct {
+ 
+ 	// Fields associated with directory nodes
+ 	Dir map[string]*Entry `json:",omitempty"`
++	DirOKeys    []string  // Ordered Keys list in Dir
+ 	Key string            `json:",omitempty"` // Optional key name for lists (i.e., maps)
+ 
+ 	// Fields associated with leaf nodes
+@@ -115,6 +116,10 @@ type Entry struct {
+ 	// the augmenting entity per RFC6020 Section 7.15.2. The namespace
+ 	// of the Entry should be accessed using the Namespace function.
+ 	namespace *Value
++
++	ChildSchemaCache map[reflect.StructTag]*Entry `json:"-"`
++
++	IsSchemaValidated bool `json:"-"`
+ }
+ 
+ // An RPCEntry contains information related to an RPC Node.
+@@ -264,6 +269,7 @@ func newDirectory(n Node) *Entry {
+ 	return &Entry{
+ 		Kind:  DirectoryEntry,
+ 		Dir:   make(map[string]*Entry),
++		DirOKeys: make([]string, 0),
+ 		Node:  n,
+ 		Name:  n.NName(),
+ 		Extra: map[string][]interface{}{},
+@@ -366,6 +372,7 @@ func (e *Entry) add(key string, value *Entry) *Entry {
+ 		return e
+ 	}
+ 	e.Dir[key] = value
++	e.DirOKeys = append(e.DirOKeys, key)
+ 	return e
+ }
+ 
+@@ -1090,6 +1097,7 @@ func (e *Entry) FixChoice() {
+ 				}
+ 				ce.Parent = ne
+ 				e.Dir[k] = ne
++				e.DirOKeys = append(e.DirOKeys, k)
+ 			}
+ 		}
+ 	}
+@@ -1260,6 +1268,14 @@ func (e *Entry) shallowDup() *Entry {
+ 	// copied we will have to explicitly uncopy them.
+ 	ne := *e
+ 
++       //Copy the ordered Dir keys to new entry
++        if len(e.DirOKeys) > 0 {
++            ne.DirOKeys = make([]string, 0)
++	    for _, key := range e.DirOKeys {
++                ne.DirOKeys = append(ne.DirOKeys, key)
++            }
++	}
++
+ 	// Now only copy direct children, clear their Dir, and fix up
+ 	// Parent pointers.
+ 	if e.Dir != nil {
+@@ -1283,6 +1299,14 @@ func (e *Entry) dup() *Entry {
+ 	// to do that.
+ 	ne := *e
+ 
++       //Copy the ordered Dir keys to new entry
++        if len(e.DirOKeys) > 0 {
++            ne.DirOKeys = make([]string, 0)
++            for _, key := range e.DirOKeys {
++                ne.DirOKeys = append(ne.DirOKeys, key)
++            }
++        }
++
+ 	// Now recurse down to all of our children, fixing up Parent
+ 	// pointers as we go.
+ 	if e.Dir != nil {
+@@ -1317,6 +1341,7 @@ func (e *Entry) merge(prefix *Value, namespace *Value, oe *Entry) {
+ 		} else {
+ 			v.Parent = e
+ 			e.Dir[k] = v
++			e.DirOKeys = append(e.DirOKeys, k)
+ 		}
+ 	}
+ }
+@@ -1378,8 +1403,8 @@ func (s sortedErrors) Less(i, j int) bool {
+ 		}
+ 		return nless(fi[x], fj[x])
+ 	}
+-	for x := 1; x < 4; x++ {
+-		switch compare(1) {
++	for x := 0; x < len(fi) && x < len(fj); x++ {
++		switch compare(x) {
+ 		case -1:
+ 			return true
+ 		case 1:
+diff --git a/yang.go b/yang.go
+index 2480a4e..515d1b3 100644
+--- a/yang.go
++++ b/yang.go
+@@ -58,6 +58,7 @@ import (
+ type formatter struct {
+ 	name  string
+ 	f     func(io.Writer, []*yang.Entry)
++	utilf func([]string, map[string]*yang.Module)
+ 	help  string
+ 	flags *getopt.Set
+ }
+@@ -208,5 +209,8 @@ Formats:
+ 		entries[x] = yang.ToEntry(mods[n])
+ 	}
+ 
++	if format == "annotate" {
++	    formatters[format].utilf(files, mods)
++        }
+ 	formatters[format].f(os.Stdout, entries)
+ }
