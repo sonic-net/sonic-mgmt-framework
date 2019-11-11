@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"crypto/rand"
 	"github.com/golang/glog"
+	"strings"
 )
 var (
 	JwtRefreshInt time.Duration
@@ -25,7 +26,9 @@ type Claims struct {
 }
 
 type jwtToken struct {
-	Token string `json:"token"`
+	Token string `json:"access_token"`
+	TokenType string `json:"token_type"`
+	ExpIn int64 `json:"expires_in"`
 }
 
 func generateJWT(username string, expire_dt time.Time) string {
@@ -51,7 +54,7 @@ func GenerateJwtSecretKey() {
 
 func tokenResp(w http.ResponseWriter, r *http.Request, username string) {
 	exp_tm := time.Now().Add(JwtValidInt)
-	token := jwtToken{Token: generateJWT(username, exp_tm)}
+	token := jwtToken{Token: generateJWT(username, exp_tm), TokenType: "Bearer", ExpIn: int64(JwtValidInt/time.Second)}
 	resp,err := json.Marshal(token)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -116,18 +119,20 @@ func Refresh(w http.ResponseWriter, r *http.Request) {
 }
 
 func JwtAuthenAndAuthor(r *http.Request, rc *RequestContext) (jwtToken, error) {
-	auth_hdr := r.Header.Get("Authorization")
 	var token jwtToken
+	auth_hdr := r.Header.Get("Authorization")
 	if len(auth_hdr) == 0 {
 		glog.Errorf("[%s] JWT Token not present", rc.ID)
 		return token, httpError(http.StatusUnauthorized, "JWT Token not present")
 	}
-	
-	err := json.Unmarshal([]byte(auth_hdr), &token)
-	if err != nil {
+	auth_parts := strings.Split(auth_hdr, " ")
+	if len(auth_parts) != 2 || auth_parts[0] != "Bearer" {
 		glog.Errorf("[%s] Bad Request", rc.ID)
 		return token, httpError(http.StatusBadRequest, "Bad Request")
 	}
+
+	token.Token = auth_parts[1]
+
 	claims := &Claims{}
 	tkn, err := jwt.ParseWithClaims(token.Token, claims, func(token *jwt.Token) (interface{}, error) {
 		return hmacSampleSecret, nil
