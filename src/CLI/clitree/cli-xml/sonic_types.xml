@@ -257,6 +257,12 @@ limitations under the License.
         />
     <!--=======================================================-->
     <PTYPE
+        name="STRING_16"
+        pattern="(^([a-zA-Z]){1,16})$"
+        help="String length upto 16 characters"
+        />
+    <!--=======================================================-->
+    <PTYPE
         name="STRING_20"
         pattern="(^([a-zA-Z0-9_-]){1,20})$"
         help="String"
@@ -536,6 +542,20 @@ limitations under the License.
         name="PTP_PORT_MODE"
         method="select"
 		pattern="transparent(transparent) boundary(boundary) disable(disable)"
+        help=""
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="SFLOW_POLL_INTERVAL"
+        method="unsignedInteger"
+        pattern="0..300"
+        help="0 to disable"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="SFLOW_SAMPLING_RATE"
+        method="unsignedInteger"
+        pattern="256..8388608"
         help=""
         />
     <!--=======================================================-->
