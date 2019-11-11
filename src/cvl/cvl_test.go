@@ -28,7 +28,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
-	"syscall"
+	//"syscall"
 	"testing"
 	"runtime"
 	. "cvl/internal/util"
@@ -2867,7 +2867,7 @@ func TestBadSchema(t *testing.T) {
 }
 */
 
-
+/*
 func TestServicability_Debug_Trace(t *testing.T) {
 
 	cvl.Debug(false)
@@ -2927,7 +2927,8 @@ func TestServicability_Debug_Trace(t *testing.T) {
 		p.Signal(syscall.SIGUSR2)
 	}
 	exec.Command("/bin/sh",  "-c", "/bin/mv conf/cvl_cfg.json.orig conf/cvl_cfg.json").Output()
-}
+	p.Signal(syscall.SIGUSR2)
+}*/
 
 // EditConfig(Create) with chained leafref from redis
 func TestValidateEditConfig_Delete_Create_Same_Entry_Positive(t *testing.T) {
