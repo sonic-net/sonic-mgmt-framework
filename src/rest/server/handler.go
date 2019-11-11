@@ -26,21 +26,11 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-	"time"
 	"translib"
-	"encoding/json"
 	"github.com/golang/glog"
 	"github.com/gorilla/mux"
-	jwt "github.com/dgrijalva/jwt-go"
 )
-var (
-	JwtRefreshInt time.Duration
-	JwtValidInt   time.Duration
-)
-type Credentials struct {
-	Password string `json:"password"`
-	Username string `json:"username"`
-}
+
 // Process function is the common landing place for all REST requests.
 // Swagger code-gen should be configured to invoke this function
 // from all generated stub functions.
@@ -311,63 +301,3 @@ func hostMetadataHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(data.Bytes())
 }
 
-func Authenticate(w http.ResponseWriter, r *http.Request) {
-	var creds Credentials
-	err := json.NewDecoder(r.Body).Decode(&creds)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	auth_success, err := UserPwAuth(creds.Username, creds.Password)
-	if  auth_success {
-		exp_tm := time.Now().Add(JwtValidInt)
-		token := generateJWT(creds.Username, exp_tm)
-		http.SetCookie(w, &http.Cookie{
-			Name:    "token",
-			Value:   token,
-			Expires: exp_tm,
-		})
-		
-	} else {
-		status, data, ctype := prepareErrorResponse(httpError(http.StatusUnauthorized, ""), r)
-		w.Header().Set("Content-Type", ctype)
-		w.WriteHeader(status)
-		w.Write(data)
-		return
-	}
-}
-
-func Refresh(w http.ResponseWriter, r *http.Request) {
-
-
-	ctx,_ := GetContext(r)
-	err := JwtAuthenAndAuthor(r, ctx)
-	if err != nil {
-		status, data, ctype := prepareErrorResponse(httpError(http.StatusUnauthorized, ""), r)
-		w.Header().Set("Content-Type", ctype)
-		w.WriteHeader(status)
-		w.Write(data)
-		return	
-	}
-	c, err := r.Cookie("token")
-	claims := &Claims{}
-	jwt.ParseWithClaims(c.Value, claims, func(token *jwt.Token) (interface{}, error) {
-		return hmacSampleSecret, nil
-	})
-	if time.Unix(claims.ExpiresAt, 0).Sub(time.Now()) > JwtRefreshInt {
-		status, data, ctype := prepareErrorResponse(httpError(http.StatusBadRequest, ""), r)
-		w.Header().Set("Content-Type", ctype)
-		w.WriteHeader(status)
-		w.Write(data)
-		return
-	}
-	exp_tm := time.Now().Add(JwtValidInt)
-	token := generateJWT(claims.Username, exp_tm)
-	http.SetCookie(w, &http.Cookie{
-		Name:    "token",
-		Value:   token,
-		Expires: exp_tm,
-	})
-
-}

@@ -22,12 +22,9 @@ package server
 import (
 	"net/http"
 	"os/user"
-	"time"
 	"github.com/golang/glog"
 	//"github.com/msteinert/pam"
 	"golang.org/x/crypto/ssh"
-	jwt "github.com/dgrijalva/jwt-go"
-	"crypto/rand"
 )
 
 /*
@@ -70,35 +67,7 @@ func PAMAuthUser(u string, p string) error {
 }
 */
 
-var (
-	hmacSampleSecret = make([]byte, 16)
-)
 
-type Claims struct {
-	Username string `json:"username"`
-	jwt.StandardClaims
-}
-
-func generateJWT(username string, expire_dt time.Time) string {
-	// Create a new token object, specifying signing method and the claims
-	// you would like it to contain.
-	claims := &Claims{
-		Username: username,
-		StandardClaims: jwt.StandardClaims{
-			// In JWT, the expiry time is expressed as unix milliseconds
-			ExpiresAt: expire_dt.Unix(),
-		},
-	}
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-	// Sign and get the complete encoded token as a string using the secret
-	tokenString, _ := token.SignedString(hmacSampleSecret)
-
-	return tokenString
-}
-func GenerateJwtSecretKey() {
-	rand.Read(hmacSampleSecret)
-}
 func IsAdminGroup(username string) bool {
 
 	usr, err := user.Lookup(username)
@@ -149,64 +118,6 @@ func UserPwAuth(username string, passwd string) (bool, error) {
 
 	return true, nil
 }
-func UserAuthenAndAuthor(r *http.Request, rc *RequestContext) error {
-
-	username, passwd, authOK := r.BasicAuth()
-	if authOK == false {
-		glog.Errorf("[%s] User info not present", rc.ID)
-		return httpError(http.StatusUnauthorized, "")
-	}
-
-	glog.Infof("[%s] Received user=%s", rc.ID, username)
-
-	auth_success, err := UserPwAuth(username, passwd)
-	if auth_success == false {
-		glog.Infof("[%s] Failed to authenticate; %v", rc.ID, err)
-		return httpError(http.StatusUnauthorized, "")	
-	}
-
-
-	glog.Infof("[%s] Authentication passed. user=%s ", rc.ID, username)
-
-	//Allow SET request only if user belong to admin group
-	if isWriteOperation(r) && IsAdminGroup(username) == false {
-		glog.Errorf("[%s] Not an admin; cannot allow %s", rc.ID, r.Method)
-		return httpError(http.StatusForbidden, "Not an admin user")
-	}
-
-	glog.Infof("[%s] Authorization passed", rc.ID)
-	return nil
-}
-
-func JwtAuthenAndAuthor(r *http.Request, rc *RequestContext) error {
-	c, err := r.Cookie("token")
-	if err != nil {
-		if err == http.ErrNoCookie {
-			glog.Errorf("[%s] JWT Token not present", rc.ID)
-			return httpError(http.StatusUnauthorized, "JWT Token not present")
-		}
-		glog.Errorf("[%s] Bad Request", rc.ID)
-		return httpError(http.StatusBadRequest, "Bad Request")
-	}
-	claims := &Claims{}
-	tkn, err := jwt.ParseWithClaims(c.Value, claims, func(token *jwt.Token) (interface{}, error) {
-		return hmacSampleSecret, nil
-	})
-	if err != nil {
-		if err == jwt.ErrSignatureInvalid {
-			glog.Errorf("[%s] Failed to authenticate, Invalid JWT Signature", rc.ID)
-			return httpError(http.StatusUnauthorized, "Invalid JWT Signature")
-			
-		}
-		glog.Errorf("[%s] Bad Request", rc.ID)
-		return httpError(http.StatusBadRequest, "Bad Request")
-	}
-	if !tkn.Valid {
-		glog.Errorf("[%s] Failed to authenticate, Invalid JWT Token", rc.ID)
-		return httpError(http.StatusUnauthorized, "Invalid JWT Token")
-	}
-	return nil
-}
 
 // isWriteOperation checks if the HTTP request is a write operation
 func isWriteOperation(r *http.Request) bool {
@@ -214,30 +125,3 @@ func isWriteOperation(r *http.Request) bool {
 	return m == "POST" || m == "PUT" || m == "PATCH" || m == "DELETE"
 }
 
-// authMiddleware function creates a middleware for request
-// authentication and authorization. This middleware will return
-// 401 response if authentication fails and 403 if authorization
-// fails.
-func authMiddleware(inner http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		rc, r := GetContext(r)
-		var err error
-		if UserAuth.User {
-			err = UserAuthenAndAuthor(r, rc)
-			
-		}
-		if UserAuth.Jwt {
-			err = JwtAuthenAndAuthor(r, rc)
-		}
-
-
-		if err != nil {
-			status, data, ctype := prepareErrorResponse(err, r)
-			w.Header().Set("Content-Type", ctype)
-			w.WriteHeader(status)
-			w.Write(data)
-		} else {
-			inner.ServeHTTP(w, r)
-		}
-	})
-}

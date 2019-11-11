@@ -142,3 +142,31 @@ func withMiddleware(h http.Handler, name string) http.Handler {
 
 	return loggingMiddleware(h, name)
 }
+
+// authMiddleware function creates a middleware for request
+// authentication and authorization. This middleware will return
+// 401 response if authentication fails and 403 if authorization
+// fails.
+func authMiddleware(inner http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		rc, r := GetContext(r)
+		var err error
+		if UserAuth.User {
+			err = BasicAuthenAndAuthor(r, rc)
+			
+		}
+		if UserAuth.Jwt {
+			_,err = JwtAuthenAndAuthor(r, rc)
+		}
+
+
+		if err != nil {
+			status, data, ctype := prepareErrorResponse(err, r)
+			w.Header().Set("Content-Type", ctype)
+			w.WriteHeader(status)
+			w.Write(data)
+		} else {
+			inner.ServeHTTP(w, r)
+		}
+	})
+}
