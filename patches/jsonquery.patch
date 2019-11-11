@@ -1,0 +1,32 @@
+diff --git a/node.go b/node.go
+index 76032bb..9960c17 100644
+--- a/node.go
++++ b/node.go
+@@ -110,6 +110,17 @@ func parseValue(x interface{}, top *Node, level int) {
+ 			addNode(n)
+ 			parseValue(vv, n, level+1)
+ 		}
++	case map[string]string:
++		var keys []string
++		for key := range v {
++			keys = append(keys, key)
++		}
++		sort.Strings(keys)
++		for _, key := range keys {
++			n := &Node{Data: key, Type: ElementNode, level: level}
++			addNode(n)
++			parseValue(v[key], n, level+1)
++		}
+ 	case map[string]interface{}:
+ 		// The Go’s map iteration order is random.
+ 		// (https://blog.golang.org/go-maps-in-action#Iteration-order)
+@@ -155,3 +166,9 @@ func Parse(r io.Reader) (*Node, error) {
+ 	}
+ 	return parse(b)
+ }
++
++func ParseJsonMap(jsonMap *map[string]interface{}) (*Node, error) {
++	doc := &Node{Type: DocumentNode}
++	parseValue(*jsonMap, doc, 1)
++	return doc, nil
++}
