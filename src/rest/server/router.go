@@ -74,7 +74,7 @@ func AddRoute(name, method, pattern string, handler http.HandlerFunc) {
 // route information from swagger-codegen generated code and makes a
 // github.com/gorilla/mux router object.
 func NewRouter() *mux.Router {
-	router := mux.NewRouter().StrictSlash(true)
+	router := mux.NewRouter().StrictSlash(true).UseEncodedPath()
 
 	glog.Infof("Server has %d paths", len(allRoutes))
 

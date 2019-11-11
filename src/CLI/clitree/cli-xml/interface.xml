@@ -57,6 +57,21 @@ limitations under the License.
                     >
                  </PARAM>
              </PARAM>
+	     <!-- show interface PortChannel-->
+	     <PARAM
+                 name="PortChannel"
+                 help="PortChannel Interface"
+                 ptype="SUBCOMMAND"
+                 mode="subcommand"
+                 >
+                 <PARAM
+                    name="po-id"
+                    help="Port Channel ID"
+                    ptype="LAG_ID"
+                    optional="true"
+                    >
+                 </PARAM>
+             </PARAM>
              <!-- show interface Management -->
              <PARAM
                  name="Management"
@@ -85,11 +100,17 @@ limitations under the License.
             python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces show_interface_status.j2 ${__full_line}&#xA;
         elif test "${if-subcommands}" = "counters"; then&#xA;
             python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces show_interface_counters.j2 ${__full_line}&#xA;
+	elif test "${if-subcommands}" = "PortChannel"; then&#xA;
+            if test "${po-id}" = ""; then&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-interface-port-channel.py get_all_portchannels show_interface_portchannel.j2 ${__full_line}&#xA;
+            else&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-interface-port-channel.py get_specific_portchannel PortChannel${po-id} show_interface_portchannel.j2 ${__full_line}&#xA;
+            fi&#xA;
         elif test "${if-subcommands}" = "Management"; then&#xA;
             if test "${mgmt-if-id}" = ""; then&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces show_interface.j2 ${__full_line}&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces_interface eth0 show_mgmt_interface_id.j2 ${__full_line}&#xA;
             else&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces_interface eth${mgmt-if-id} show_interface_id.j2 ${__full_line}&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces_interface eth${mgmt-if-id} show_mgmt_interface_id.j2 ${__full_line}&#xA;
             fi&#xA;
         else&#xA;
             if test "${phy-if-id}" = ""; then&#xA;
@@ -538,7 +559,18 @@ limitations under the License.
             name="no mtu"
             help="Remove MTU of Vlan interface">
         <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config_mtu ${vlan_id} 9100 </ACTION>
-       </COMMAND>
+    </COMMAND>
+    <COMMAND
+        name="no neigh_suppress"
+        help="Disable Arp and ND Suppression">
+        <ACTION> python $SONIC_CLI_ROOT/sonic-cli-vxlan.py delete_sonic_vxlan_sonic_vxlan_suppress_vlan_neigh_suppress_vlan_neigh_list ${vlan_id} </ACTION>
+    </COMMAND>
+    <COMMAND
+        name="neigh_suppress"
+        help="Enable Arp and ND Suppression">
+       <ACTION> python $SONIC_CLI_ROOT/sonic-cli-vxlan.py patch_list_sonic_vxlan_sonic_vxlan_suppress_vlan_neigh_suppress_vlan_neigh_list ${vlan_id}
+        </ACTION>
+    </COMMAND>
        <COMMAND
             name="shutdown"
             help="Disable the Vlan interface">
@@ -706,8 +738,8 @@ limitations under the License.
         </COMMAND>
         <COMMAND
             name="no mtu"
-            help="Remove MTU">
-            <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config_mtu ${iface} 9100 </ACTION>
+            help="Set Default MTU (1500)">
+            <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config_mtu ${iface} 1500 </ACTION>
         </COMMAND>
         <COMMAND
             name="autoneg"
@@ -729,13 +761,13 @@ limitations under the License.
             <PARAM
                 name="speed"
                 help="Speed config of the interface"
-                ptype="INTF_SPEED" />
+                ptype="MGMT_INTF_SPEED" />
             <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_ethernet_interfaces_interface_ethernet_config_port_speed ${iface} ${speed} </ACTION>
         </COMMAND>
         <COMMAND
             name="no speed"
             help="Set default speed config">
-            <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_ethernet_interfaces_interface_ethernet_config_port_speed ${iface} 1000 </ACTION>
+            <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_ethernet_interfaces_interface_ethernet_config_port_speed ${iface} "1GIGE" </ACTION>
         </COMMAND>
     </VIEW>
 </CLISH_MODULE>

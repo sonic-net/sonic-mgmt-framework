@@ -2,7 +2,7 @@ module dell-intf-augments {
 
     yang-version "1";
 
-    namespace "http://openconfig.net/yang/interfaces/aggregate";
+    namespace "http://openconfig.net/yang/interfaces/aggregate-augment";
 
     prefix "if-agmnt";
 

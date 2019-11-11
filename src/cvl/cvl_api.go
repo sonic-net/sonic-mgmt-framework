@@ -283,7 +283,7 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (CVLErrorInfo, CVL
 	var cvlErrObj CVLErrorInfo
 
 	if (SkipValidation() == true) {
-
+		CVL_LOG(INFO_TRACE, "Skipping CVL validation.")
 		return cvlErrObj, CVL_SUCCESS
 	}
 

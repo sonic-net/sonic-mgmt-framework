@@ -85,7 +85,8 @@ cvl-test:
 
 rest-server: translib
 	$(MAKE) -C src/rest
-
+rest:
+	$(MAKE) -C src/rest
 rest-clean:
 	$(MAKE) -C src/rest clean
 
@@ -109,6 +110,9 @@ cp $(TOPDIR)/goyang-modified-files/annotate.go $(BUILD_GOPATH)/src/github.com/op
 cp $(TOPDIR)/goyang-modified-files/goyang.patch .; \
 patch -p1 < goyang.patch; rm -f goyang.patch; \
 $(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/openconfig/goyang
+	#Patch for jsonquery
+	cd $(BUILD_GOPATH)/src/github.com/antchfx/jsonquery; git reset --hard HEAD; \
+	git checkout 3b69d31134d889b501e166a035a4d5ecb8c6c367; git apply $(TOPDIR)/patches/jsonquery.patch
 
 install:
 	$(INSTALL) -D $(REST_BIN) $(DESTDIR)/usr/sbin/rest_server

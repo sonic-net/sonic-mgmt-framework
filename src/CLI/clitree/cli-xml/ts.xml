@@ -1,0 +1,145 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE CLISH_MODULE [
+<!ENTITY START_PORT_ID "1">
+<!ENTITY MAX_PORT_ID "32">
+<!ENTITY START_SUB_PORT_ID "1">
+<!ENTITY MAX_SUB_PORT_ID "4">
+<!ENTITY MAX_MTU "9216">
+]>
+<CLISH_MODULE xmlns="http://www.dellemc.com/sonic/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xi="http://www.w3.org/2001/XInclude" xsi:schemaLocation="http://www.dellemc.com/sonic/XMLSchema http://www.dellemc.com/sonic/XMLSchema/clish.xsd">
+
+  <VIEW name="configure-tam-view">
+         <COMMAND name="int-ifa-ts" help="TAM INT IFA TS configuration" view="configure-tam-int-ifa-ts-view" viewid="int-ifa-ts">
+         </COMMAND>
+  </VIEW>
+
+  <VIEW name="configure-tam-int-ifa-ts-view"
+        prompt="${SYSTEM_NAME}(config-int-ifa-ts)# "
+        depth="3">
+
+        <NAMESPACE ref="configure-view"
+                help="false"
+                completion="false"/>
+
+         <COMMAND name="no"
+              help="Negate a command or set its defaults">
+         </COMMAND>
+
+          <COMMAND name="no flow"
+                help="Remove Flow"
+                 >
+          <PARAM
+                 name="flow-options"
+                 help=""
+                 ptype="SUBCOMMAND"
+                 mode="switch"
+                 >
+
+                 <PARAM
+                       name="flow-name"
+                       help="Name of the flow"
+                       ptype="STRING"
+                           >
+                </PARAM>
+
+                <PARAM
+                   name="all"
+                   help="Delete all flows"
+                   ptype="SUBCOMMAND"
+                   mode="subcommand"
+                   >
+                </PARAM>
+         </PARAM>
+         <ACTION>
+              if test "${flow-options}" = "flow-name"; then&#xA;
+               python $SONIC_CLI_ROOT/ts.py -clear -flow ${flow-name}
+              elif test "${drop-options}" = "aging-interval"; then&#xA;
+               python $SONIC_CLI_ROOT/ts.py -clear -flow all
+              fi&#xA;
+           </ACTION>
+
+         </COMMAND>
+
+          <COMMAND name="feature"
+                help="Enable or Disable a feature"
+                 >
+          <PARAM
+                 name="feature-options"
+                 help=""
+                 ptype="SUBCOMMAND"
+                 mode="switch"
+                 >
+
+                <PARAM
+                   name="enable"
+                   help="Enable the feature"
+                   ptype="SUBCOMMAND"
+                   mode="subcommand"
+                   >
+                </PARAM>
+
+                <PARAM
+                   name="disable"
+                   help="Disable the feature"
+                   ptype="SUBCOMMAND"
+                   mode="subcommand"
+                   >
+                </PARAM>
+         </PARAM>
+         <ACTION>
+              if test "${feature-options}" = "enable"; then&#xA;
+               python $SONIC_CLI_ROOT/ts.py -config -enable 
+              elif test "${feature-options}" = "disable"; then&#xA;
+               python $SONIC_CLI_ROOT/ts.py -config -disable 
+              fi&#xA;
+           </ACTION>
+
+         </COMMAND>
+
+         <COMMAND
+         name="flow"
+         help="Configure Flow parameters"
+         >
+
+         <PARAM
+                   name="flow-name"
+                   help="Name of the flow"
+                   ptype="STRING"
+                   >
+               </PARAM>
+
+               <PARAM
+                   name="acl-table"
+                   help="Configure acl table name"
+                   ptype="SUBCOMMAND"
+                   mode="subcommand"
+                   >
+               </PARAM>
+
+              <PARAM
+                   name="acl-table-name"
+                   help="ACL Table Name"
+                   ptype="STRING"
+                   >
+              </PARAM>
+               <PARAM
+                   name="acl-rule"
+                   help="Configure acl rule name"
+                   ptype="SUBCOMMAND"
+                   mode="subcommand"
+                   >
+              </PARAM>
+              <PARAM
+                   name="acl-rule-name"
+                   help="ACL Rule Name"
+                   ptype="STRING"
+                   >
+              </PARAM>
+
+          <ACTION>
+               python $SONIC_CLI_ROOT/ts.py -config -flow ${flow-name} -acl_table ${acl-table-name} -acl_rule ${acl-rule-name} 
+          </ACTION>
+         </COMMAND>
+  </VIEW>
+
+</CLISH_MODULE>

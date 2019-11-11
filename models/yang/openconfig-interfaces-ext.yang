@@ -35,9 +35,6 @@ module openconfig-interfaces-ext {
     deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv4/oc-ip:proxy-arp {
         deviate not-supported;
     }
-    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv4/oc-ip:neighbors {
-        deviate not-supported;
-    }
     deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv4/oc-ip:unnumbered {
         deviate not-supported;
     }
@@ -52,9 +49,6 @@ module openconfig-interfaces-ext {
         deviate not-supported;
     }
     deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv6/oc-ip:router-advertisement {
-        deviate not-supported;
-    }
-    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv6/oc-ip:neighbors {
         deviate not-supported;
     }
     deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv6/oc-ip:unnumbered {
@@ -74,9 +68,6 @@ module openconfig-interfaces-ext {
     }
 
     deviation /oc-intf:interfaces/oc-intf:interface/oc-eth:ethernet/oc-poe:poe {
-        deviate not-supported;
-    }
-    deviation /oc-intf:interfaces/oc-intf:interface/oc-lag:aggregation {
         deviate not-supported;
     }
     deviation /oc-intf:interfaces/oc-intf:interface/oc-vlan:routed-vlan {

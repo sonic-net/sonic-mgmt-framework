@@ -257,9 +257,9 @@ limitations under the License.
         </PARAM>
     <ACTION>
         if test "${mode-subcmds}" = "";then&#xA;
-        python $SONIC_CLI_ROOT/sonic-cli-stp.py patch_openconfig_spanning_tree_stp_global_config_enabled_protocol "pvst"&#xA;
+        python $SONIC_CLI_ROOT/sonic-cli-stp.py post_openconfig_spanning_tree_stp_global_config_enabled_protocol "pvst"&#xA;
         else&#xA;
-        python $SONIC_CLI_ROOT/sonic-cli-stp.py patch_openconfig_spanning_tree_stp_global_config_enabled_protocol ${__params}&#xA;
+        python $SONIC_CLI_ROOT/sonic-cli-stp.py post_openconfig_spanning_tree_stp_global_config_enabled_protocol ${__params}&#xA;
         fi&#xA;
     </ACTION>
     </COMMAND>
