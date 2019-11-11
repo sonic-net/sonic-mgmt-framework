@@ -411,13 +411,13 @@ func addTableNamesForMustExp() {
 			var op CVLOperation = OP_NONE
 			//Check if 'must' expression should be executed for a particular operation
 			if (strings.Contains(mustExp,
-			"/scommon:operation/scommon:operation != 'CREATE'") == true) {
+			"/scommon:operation/scommon:operation != CREATE") == true) {
 				op = op | OP_CREATE
 			} else if (strings.Contains(mustExp,
-			"/scommon:operation/scommon:operation != 'UPDATE'") == true) {
+			"/scommon:operation/scommon:operation != UPDATE") == true) {
 				op = op | OP_UPDATE
 			} else if (strings.Contains(mustExp,
-			"/scommon:operation/scommon:operation != 'DELETE'") == true) {
+			"/scommon:operation/scommon:operation != DELETE") == true) {
 				op = op | OP_DELETE
 			}
 

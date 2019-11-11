@@ -528,6 +528,7 @@ func TestValidateEditConfig_Delete_Must_Check_Positive(t *testing.T) {
 		"ACL_RULE" : map[string]interface{} {
 			"TestACL1|Rule1": map[string] interface{} {
 				"PACKET_ACTION": "FORWARD",
+				"IP_TYPE": "IPV4",
 				"SRC_IP": "10.1.1.1/32",
 				"L4_SRC_PORT": "1909",
 				"IP_PROTOCOL": "103",
@@ -536,6 +537,7 @@ func TestValidateEditConfig_Delete_Must_Check_Positive(t *testing.T) {
 			},
 			"TestACL2|Rule2": map[string] interface{} {
 				"PACKET_ACTION": "FORWARD",
+				"IP_TYPE": "IPV4",
 				"SRC_IP": "10.1.1.1/32",
 				"L4_SRC_PORT": "1909",
 				"IP_PROTOCOL": "103",
@@ -571,6 +573,7 @@ func TestValidateEditConfig_Delete_Must_Check_Positive(t *testing.T) {
 	unloadConfigDB(rclient, depDataMap)
 }
 
+/*
 func TestValidateEditConfig_Delete_Must_Check_Negative(t *testing.T) {
 	depDataMap := map[string]interface{} {
 		"PORT" : map[string]interface{} {
@@ -629,6 +632,7 @@ func TestValidateEditConfig_Delete_Must_Check_Negative(t *testing.T) {
 
 	unloadConfigDB(rclient, depDataMap)
 }
+*/
 
 //Validate invalid json data
 func TestValidateConfig_Negative(t *testing.T) {
@@ -724,6 +728,7 @@ func TestValidateEditConfig_Create_Syntax_Valid_FieldValue(t *testing.T) {
 			"ACL_RULE|TestACL1|Rule1",
 			map[string]string{
 				"PACKET_ACTION":     "FORWARD",
+				"IP_TYPE": 	     "IPV4",
 				"SRC_IP":            "10.1.1.1/32",
 				"L4_SRC_PORT":       "1909",
 				"IP_PROTOCOL":       "103",
@@ -818,6 +823,7 @@ func TestValidateEditConfig_Create_Syntax_Invalid_PacketAction_Negative(t *testi
 			"ACL_RULE|TestACL1|Rule1",
 			map[string]string{
 				"PACKET_ACTION":     "FORWARD777",
+				"IP_TYPE": 	     "IPV4",
 				"SRC_IP":            "10.1.1.1/32",
 				"L4_SRC_PORT":    "1909",
 				"IP_PROTOCOL":       "103",
@@ -862,6 +868,7 @@ func TestValidateEditConfig_Create_Syntax_Invalid_SrcPrefix_Negative(t *testing.
 			"ACL_RULE|TestACL1|Rule1",
 			map[string]string{
 				"PACKET_ACTION":     "FORWARD",
+				"IP_TYPE": 	     "IPV4",
 				"SRC_IP":            "10.1.1.1/3288888",
 				"L4_SRC_PORT":       "1909",
 				"IP_PROTOCOL":       "103",
@@ -906,6 +913,7 @@ func TestValidateEditConfig_Create_Syntax_InvalidIPAddress_Negative(t *testing.T
 			"ACL_RULE|TestACL1|Rule1",
 			map[string]string{
 				"PACKET_ACTION":     "FORWARD",
+				"IP_TYPE": 	     "IPV4",
 				"SRC_IP":            "10.1a.1.1/32",
 				"L4_SRC_PORT":       "1909",
 				"IP_PROTOCOL":       "103",
@@ -950,6 +958,7 @@ func TestValidateEditConfig_Create_Syntax_OutofBound_Negative(t *testing.T) {
 			"ACL_RULE|TestACL1|Rule1",
 			map[string]string{
 				"PACKET_ACTION":     "FORWARD",
+				"IP_TYPE": 	     "IPV4",
 				"SRC_IP":            "10.1.1.1/32",
 				"L4_SRC_PORT":       "19099090909090",
 				"IP_PROTOCOL":       "103",
@@ -995,6 +1004,7 @@ func TestValidateEditConfig_Create_Syntax_InvalidProtocol_Negative(t *testing.T)
 			"ACL_RULE|TestACL1|Rule1",
 			map[string]string{
 				"PACKET_ACTION":     "FORWARD",
+				"IP_TYPE": 	     "IPV4",
 				"SRC_IP":            "10.1.1.1/32",
 				"L4_SRC_PORT":       "1909",
 				"IP_PROTOCOL":       "10388888",
@@ -1041,6 +1051,7 @@ func TestValidateEditConfig_Create_Syntax_InvalidRange_Negative(t *testing.T) {
 			"ACL_RULE|TestACL1|Rule1",
 			map[string]string{
 				"PACKET_ACTION":     "FORWARD",
+				"IP_TYPE": 	     "IPV4",
 				"SRC_IP":            "10.1.1.1/32",
 				"L4_SRC_PORT":       "1909",
 				"IP_PROTOCOL":       "103",
@@ -1076,6 +1087,7 @@ func TestValidateEditConfig_Create_Syntax_InvalidCharNEw_Negative(t *testing.T) 
 			"ACL_RULE|TestACL1jjjj|Rule1",
 			map[string]string{
 				"PACKET_ACTION":     "FORWARD",
+				"IP_TYPE": 	     "IPV4",
 				"SRC_IP":            "10.1.1.1/32",
 				"L4_SRC_PORT":       "1909",
 				"IP_PROTOCOL":       "103",
@@ -1119,6 +1131,7 @@ func TestValidateEditConfig_Create_Syntax_SpecialChar_Positive(t *testing.T) {
 			"ACL_RULE|TestACL1|Rule@##",
 			map[string]string{
 				"PACKET_ACTION":     "FORWARD",
+				"IP_TYPE": 	     "IPV4",
 				"SRC_IP":            "10.1.1.1/32",
 				"L4_SRC_PORT":       "1909",
 				"IP_PROTOCOL":       "103",
@@ -1193,6 +1206,7 @@ func TestValidateEditConfig_Create_Semantic_AdditionalInvalidNode_Negative(t *te
 			"ACL_RULE|TestACL1|Rule1",
 			map[string]string{
 				"PACKET_ACTION":     "FORWARD",
+				"IP_TYPE": 	     "IPV4",
 				"SRC_IP":            "10.1.1.1/32",
 				"L4_SRC_PORT":       "1909",
 				"IP_PROTOCOL":       "103",
@@ -1252,6 +1266,7 @@ func TestValidateEditConfig_Create_Syntax_Invalid_Negative(t *testing.T) {
 			"ACL_RULERule1",
 			map[string]string{
 				"PACKET_ACTION":     "FORWARD",
+				"IP_TYPE": 	     "IPV4",
 				"SRC_IP":            "10.1.1.1/32",
 				"L4_SRC_PORT":       "1909",
 				"IP_PROTOCOL":       "103",
@@ -1284,6 +1299,7 @@ func TestValidateEditConfig_Create_Syntax_IncompleteKey_Negative(t *testing.T) {
 			"ACL_RULE|Rule1",
 			map[string]string{
 				"PACKET_ACTION":     "FORWARD",
+				"IP_TYPE": 	     "IPV4",
 				"SRC_IP":            "10.1.1.1/32",
 				"L4_SRC_PORT":       "1909",
 				"IP_PROTOCOL":       "103",
@@ -1526,6 +1542,7 @@ func TestValidateEditConfig_Delete_InvalidKey_Negative(t *testing.T) {
 			"ACL_RULE|TestACL1:Rule1",
 			map[string]string{
 				"PACKET_ACTION":     "FORWARD",
+				"IP_TYPE":	     "IPV4",
 				"SRC_IP":            "10.1.1.1/32",
 				"L4_SRC_PORT":       "1909",
 				"IP_PROTOCOL":       "103",
@@ -1558,6 +1575,7 @@ func TestValidateEditConfig_Update_Semantic_Invalid_Key_Negative(t *testing.T) {
 			"ACL_RULE|TestACL1Rule1",
 			map[string]string{
 				"PACKET_ACTION":     "FORWARD",
+				"IP_TYPE":	     "IPV4",
 				"SRC_IP":            "10.1.1.1/32",
 				"L4_SRC_PORT":       "1909",
 				"IP_PROTOCOL":       "103uuuu",
@@ -1851,6 +1869,7 @@ func TestValidateEditConfig_Update_Syntax_DependentData_Invalid_Op_Seq(t *testin
 			"ACL_RULE|TestACL1|Rule1",
 			map[string]string{
 				"PACKET_ACTION":     "FORWARD",
+				"IP_TYPE":	     "IPV4",
 				"SRC_IP":            "10.1.1.1/32",
 				"L4_SRC_PORT":       "1909",
 				"IP_PROTOCOL":       "103",
@@ -1940,6 +1959,7 @@ func TestValidateEditConfig_Create_Syntax_DependentData_Redis_Positive(t *testin
 			"ACL_RULE|TestACL22|Rule1",
 			map[string]string{
 				"PACKET_ACTION":     "FORWARD",
+				"IP_TYPE":	     "IPV4",
 				"SRC_IP":            "10.1.1.1/32",
 				"L4_SRC_PORT":       "1909",
 				"IP_PROTOCOL":       "103",
@@ -2011,6 +2031,7 @@ func TestValidateEditConfig_Create_Dependent_CacheData(t *testing.T) {
 			"ACL_RULE|TestACL14|Rule1",
 			map[string]string{
 				"PACKET_ACTION":     "FORWARD",
+				"IP_TYPE":	     "IPV4",
 				"SRC_IP":            "10.1.1.1/32",
 				"L4_SRC_PORT":       "1909",
 				"IP_PROTOCOL":       "103",
@@ -2057,6 +2078,7 @@ func TestValidateEditConfig_Create_DepData_In_MultiSess(t *testing.T) {
 			"ACL_RULE|TestACL16|Rule1",
 			map[string]string{
 				"PACKET_ACTION":     "FORWARD",
+				"IP_TYPE":	     "IPV4",
 				"SRC_IP":            "10.1.1.1/32",
 				"L4_SRC_PORT":       "1909",
 				"IP_PROTOCOL":       "103",
@@ -2099,6 +2121,7 @@ func TestValidateEditConfig_Create_DepData_From_Redis_Negative11(t *testing.T) {
 			"ACL_RULE|TestACL188|Rule1",
 			map[string]string{
 				"PACKET_ACTION":     "FORWARD",
+				"IP_TYPE":	     "IPV4",
 				"SRC_IP":            "10.1.1.1/32",
 				"L4_SRC_PORT":       "1909",
 				"IP_PROTOCOL":       "103",
@@ -2144,6 +2167,7 @@ func TestValidateEditConfig_Create_DepData_From_Redis(t *testing.T) {
 			"ACL_RULE|TestACL1|Rule1",
 			map[string]string{
 				"PACKET_ACTION":     "FORWARD",
+				"IP_TYPE":	     "IPV4",
 				"SRC_IP":            "10.1.1.1/32",
 				"L4_SRC_PORT":       "1909",
 				"IP_PROTOCOL":       "103",
@@ -2299,6 +2323,7 @@ func TestValidateEditConfig_Create_Syntax_InValid_FieldValue(t *testing.T) {
 			"ACL_RULE|TestACL1|Rule1",
 			map[string]string{
 				"PACKET_ACTION":     "FORWARD",
+				"IP_TYPE":	     "IPV4",
 				"SRC_IP":            "10.1.1.1/32",
 				"L4_SRC_PORT":       "1909",
 				"IP_PROTOCOL":       "103",
@@ -2348,6 +2373,7 @@ func TestValidateEditConfig_Create_DepData_From_Redis_Negative(t *testing.T) {
 			"ACL_RULE|TestACL2|Rule1",
 			map[string]string {
 				"PACKET_ACTION": "FORWARD",
+				"IP_TYPE":	     "IPV4",
 				"SRC_IP": "10.1.1.1/32",
 				"L4_SRC_PORT": "1909",
 				"IP_PROTOCOL": "103",
@@ -2432,6 +2458,7 @@ func TestValidateEditConfig_Create_Chained_Leafref_DepData_Positive(t *testing.T
 			"ACL_RULE|TestACL1|Rule1",
 			map[string]string {
 				"PACKET_ACTION": "FORWARD",
+				"IP_TYPE": "IPV4",
 				"SRC_IP": "10.1.1.1/32",
 				"L4_SRC_PORT": "1909",
 				"IP_PROTOCOL": "103",
@@ -2465,6 +2492,7 @@ func TestValidateEditConfig_Delete_Dep_Leafref_Negative(t *testing.T) {
 		"ACL_RULE": map[string]interface{} {
 			"TestACL1|Rule1": map[string] interface{} {
 				"PACKET_ACTION": "FORWARD",
+				"IP_TYPE":	 "IPV4",
 				"SRC_IP": "10.1.1.1/32",
 				"L4_SRC_PORT": "1909",
 				"IP_PROTOCOL": "103",
@@ -2536,6 +2564,7 @@ func TestValidateEditConfig_Create_Chained_Leafref_DepData_Negative(t *testing.T
 			"ACL_RULE|TestACL1|Rule1",
 			map[string]string {
 				"PACKET_ACTION": "FORWARD",
+				"IP_TYPE":	 "IPV4",
 				"SRC_IP": "10.1.1.1/32",
 				"L4_SRC_PORT": "1909",
 				"IP_PROTOCOL": "103",
@@ -2884,6 +2913,7 @@ func TestServicability_Debug_Trace(t *testing.T) {
 			"ACL_RULE|TestACL1|Rule1",
 			map[string]string{
 				"PACKET_ACTION":     "FORWARD",
+				"IP_TYPE":	     "IPV4",
 				"SRC_IP":            "10.1.1.1/32",
 				"L4_SRC_PORT":       "1909",
 				"IP_PROTOCOL":       "103",

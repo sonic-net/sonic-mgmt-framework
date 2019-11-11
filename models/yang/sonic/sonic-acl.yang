@@ -7,10 +7,6 @@ module sonic-acl {
 		prefix inet;
 	}
 
-	import sonic-common {
-		prefix cmn;
-	}
-
 	import sonic-port {
 		prefix prt;
 	}
@@ -43,7 +39,9 @@ module sonic-acl {
 				leaf aclname {
 					type string {
 						pattern '[a-zA-Z0-9]{1}([-a-zA-Z0-9_]{0,71})';
-						length 1..72;
+						length 1..72 {
+							error-app-tag aclname-invalid-length;
+						}
 					}
 				}
 
@@ -65,7 +63,7 @@ module sonic-acl {
 				leaf type {
 					type enumeration {
 						enum MIRROR;
-						enum L2;
+						enum MIRRORV6;
 						enum L3;
 						enum L3V6;
 					}
@@ -88,29 +86,38 @@ module sonic-acl {
 					type leafref {
 						path "../../../ACL_TABLE/ACL_TABLE_LIST/aclname";
 					}
-					must "(/cmn:operation/cmn:operation != 'DELETE') or " +
-						"count(current()/../../../ACL_TABLE/ACL_TABLE_LIST[aclname=current()]/ports) = 0" {
-							error-message "Ports are already bound to this rule.";
-						}
 				} 
 
 				leaf rulename {
-					type string;
+					type string {
+						pattern "[^ |:]+" {
+							error-app-tag rulename-invalid;
+						}
+						length 1..63 {
+							error-app-tag policy-desc-invalid-length;
+						}
+					}
 				}
 
 				leaf PRIORITY {
 					type uint16 {
 						range "1..65535"{
+							error-app-tag priority-invalid-range;
 							error-message "Invalid ACL rule priority.";
-					}
+						}
 					}
 				}
 
 				leaf RULE_DESCRIPTION {
-					type string;
+					type string {
+						length 1..255 {
+							error-app-tag ruledesc-invalid-length;
+						}
+					}
 				}
 
 				leaf PACKET_ACTION {
+					mandatory true;
 					type enumeration {
 						enum FORWARD;
 						enum DROP;
@@ -125,6 +132,7 @@ module sonic-acl {
 				}
 
 				leaf IP_TYPE {
+					mandatory true;
 					type enumeration {
 						enum ANY;
 						enum IP;
@@ -153,7 +161,7 @@ module sonic-acl {
 
 				choice ip_src_dst {
 					case ipv4_src_dst {
-						//when "boolean(IP_TYPE[.='ANY' or .='IP' or .='IPV4' or .='IPV4ANY'])";
+						when "boolean(IP_TYPE[.='ANY' or .='IP' or .='IPV4' or .='IPV4ANY'])";
 						leaf SRC_IP {
 							mandatory true;
 							type inet:ipv4-prefix;
@@ -164,7 +172,7 @@ module sonic-acl {
 						}
 					}
 					case ipv6_src_dst {
-						//when "boolean(IP_TYPE[.='ANY' or .='IP' or .='IPV6' or .='IPV6ANY'])";
+						when "boolean(IP_TYPE[.='ANY' or .='IP' or .='IPV6' or .='IPV6ANY'])";
 						leaf SRC_IPV6 {
 							mandatory true;
 							type inet:ipv6-prefix;    
@@ -185,7 +193,9 @@ module sonic-acl {
 					case l4_src_port_range {
 						leaf L4_SRC_PORT_RANGE {
 							type string {
-								pattern "[0-9]{1,5}(-)[0-9]{1,5}";
+								pattern "[0-9]{1,5}(-)[0-9]{1,5}" {
+									error-app-tag src-port-range-invalid;
+								}
 							}
 						}
 					}
@@ -200,7 +210,9 @@ module sonic-acl {
 					case l4_dst_port_range {
 						leaf L4_DST_PORT_RANGE {
 							type string {
-								pattern "[0-9]{1,5}(-)[0-9]{1,5}";
+								pattern "[0-9]{1,5}(-)[0-9]{1,5}" {
+									error-app-tag dst-port-range-invalid;
+								}
 							}
 						}
 					}
@@ -208,12 +220,18 @@ module sonic-acl {
 
 				leaf TCP_FLAGS { 
 					type string {
-						pattern "0[xX][0-9a-fA-F]{2}[/]0[xX][0-9a-fA-F]{2}";
+						pattern "0[xX][0-9a-fA-F]{2}[/]0[xX][0-9a-fA-F]{2}" {
+							error-app-tag tcp-flag-invalid;
+						}
 					}
 				}
 
 				leaf DSCP { 
-					type uint8;
+					type uint8 {
+						range "0..63" {
+							error-app-tag dscp-invalid;
+						}
+					}
 				}
 			}
 		}

@@ -10,7 +10,7 @@ module sonic-common {
 		"SONiC";
 
 	description
-		"SONIC VLAN";
+		"SONIC common definitions";
 
 	revision 2019-05-15 {
 		description
@@ -32,10 +32,25 @@ module sonic-common {
 		}
 	}
 
+	typedef string-key {
+		type string {
+			pattern "[^ |]+";
+		}
+	}
 
 	container operation {
+		description "This definition is used internally by CVL and 
+			is not exposed in NBI. Leaf 'operation' allows
+			evaluation of must expression for CREATE/UPDATE/DELETE
+			operation.";
+
 		leaf operation {
-			type string;
+			type enumeration {
+				enum NOP;
+				enum CREATE;
+				enum UPDATE;
+				enum DELETE;
+			}
 		}
 	}
 }

@@ -200,13 +200,6 @@ const (
 	YP_INTERNAL_UNKNOWN
 )
 
-const (
-	YP_NOP = 1 + iota
-	YP_OP_CREATE
-	YP_OP_UPDATE
-	YP_OP_DELETE
-)
-
 var yparserInitialized bool = false
 
 func TRACE_LOG(level log.Level, tracelevel CVLTraceLevel, fmtStr string, args ...interface{}) {
