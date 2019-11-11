@@ -1,3 +1,21 @@
+////////////////////////////////////////////////////////////////////////////////
+//                                                                            //
+//  Copyright 2019 Dell, Inc.                                                 //
+//                                                                            //
+//  Licensed under the Apache License, Version 2.0 (the "License");           //
+//  you may not use this file except in compliance with the License.          //
+//  You may obtain a copy of the License at                                   //
+//                                                                            //
+//  http://www.apache.org/licenses/LICENSE-2.0                                //
+//                                                                            //
+//  Unless required by applicable law or agreed to in writing, software       //
+//  distributed under the License is distributed on an "AS IS" BASIS,         //
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  //
+//  See the License for the specific language governing permissions and       //
+//  limitations under the License.                                            //
+//                                                                            //
+////////////////////////////////////////////////////////////////////////////////
+
 package transformer
 
 import (
@@ -6,27 +24,24 @@ import (
     "github.com/openconfig/ygot/ygot"
     "os"
     "reflect"
-    "regexp"
     "strings"
     "translib/db"
     "translib/ocbinds"
     "github.com/openconfig/ygot/ytypes"
+	"github.com/openconfig/goyang/pkg/yang"
 
     log "github.com/golang/glog"
 )
 
-const SONIC_TABLE_INDEX = 2
-const SONIC_FIELD_INDEX = 3
-
 /* Invoke the post tansformer */
 func postXfmrHandlerFunc(inParams XfmrParams) (map[string]map[string]db.Value, error) {
-    xpath, _ := RemoveXPATHPredicates(inParams.uri)
-    ret, err := XlateFuncCall(xSpecMap[xpath].xfmrPost, inParams)
+    xpath, _ := XfmrRemoveXPATHPredicates(inParams.uri)
+    ret, err := XlateFuncCall(xYangSpecMap[xpath].xfmrPost, inParams)
     if err != nil {
         return nil, err
     }
     retData := ret[0].Interface().(map[string]map[string]db.Value)
-    log.Info("Post Transformer function :", xSpecMap[xpath].xfmrPost, " Xpath: ", xpath, " retData: ", retData)
+    log.Info("Post Transformer function :", xYangSpecMap[xpath].xfmrPost, " Xpath: ", xpath, " retData: ", retData)
     return retData, err
 }
 
@@ -42,22 +57,40 @@ func dataToDBMapAdd(tableName string, dbKey string, result map[string]map[string
         result[tableName][dbKey] = db.Value{Field: make(map[string]string)}
     }
 
+	if field == "NONE" {
+		result[tableName][dbKey].Field["NULL"] = "NULL"
+		return
+	}
+
     result[tableName][dbKey].Field[field] = value
     return
 }
 
+func tblNameFromTblXfmrGet(xfmrTblFunc string, inParams XfmrParams) (string, error){
+	tblList := xfmrTblHandlerFunc(xfmrTblFunc, inParams)
+	if len(tblList) != 1 {
+		logStr := fmt.Sprintf("Invalid return value(%v) from table transformer for (%v)", tblList, inParams.uri)
+		log.Error(logStr)
+		err := errors.New(logStr)
+		return "", err
+	}
+	return tblList[0], nil
+}
+
 /* Fill the redis-db map with data */
 func mapFillData(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, dbKey string, result map[string]map[string]db.Value, xpathPrefix string, name string, value interface{}) error {
+	var dbs [db.MaxDB]*db.DB
+	var err error
     xpath := xpathPrefix + "/" + name
-    xpathInfo := xSpecMap[xpath]
+    xpathInfo, ok := xYangSpecMap[xpath]
     log.Infof("name: \"%v\", xpathPrefix(\"%v\").", name, xpathPrefix)
 
-    if xpathInfo == nil {
+    if !ok || xpathInfo == nil {
         log.Errorf("Yang path(\"%v\") not found.", xpath)
         return errors.New("Invalid URI")
     }
 
-    if xpathInfo.tableName == nil {
+    if xpathInfo.tableName == nil && xpathInfo.xfmrTbl == nil{
         log.Errorf("Table for yang-path(\"%v\") not found.", xpath)
         return errors.New("Invalid table name")
     }
@@ -70,6 +103,19 @@ func mapFillData(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, dbKey st
     if xpathInfo.isKey {
         return nil
     }
+
+    tableName := ""
+    if xpathInfo.xfmrTbl != nil {
+	    inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, uri, oper, "", nil, "")
+	    // expecting only one table name from tbl-xfmr
+	    tableName, err = tblNameFromTblXfmrGet(*xYangSpecMap[xpath].xfmrTbl, inParams)
+	    if err != nil {
+		    return err
+	    }
+    } else {
+	    tableName = *xpathInfo.tableName
+    }
+
     if len(xpathInfo.xfmrFunc) > 0 {
         uri = uri + "/" + name
 
@@ -93,16 +139,17 @@ func mapFillData(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, dbKey st
         if nErr != nil {
             return nErr
         }
-	    var dbs [db.MaxDB]*db.DB
 	    inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, uri, oper, "", nil, node[0].Data)
-        ret, err := XlateFuncCall(yangToDbXfmrFunc(xSpecMap[xpath].xfmrFunc), inParams)
+        ret, err := XlateFuncCall(yangToDbXfmrFunc(xYangSpecMap[xpath].xfmrFunc), inParams)
         if err != nil {
             return err
         }
-        retData := ret[0].Interface().(map[string]string)
-        log.Info("Transformer function :", xpathInfo.xfmrFunc, " Xpath: ", xpath, " retData: ", retData)
-        for f, v := range retData {
-            dataToDBMapAdd(*xpathInfo.tableName, dbKey, result, f, v)
+	if ret != nil {
+            retData := ret[0].Interface().(map[string]string)
+            log.Info("Transformer function :", xpathInfo.xfmrFunc, " Xpath: ", xpath, " retData: ", retData)
+            for f, v := range retData {
+                dataToDBMapAdd(tableName, dbKey, result, f, v)
+            }
         }
         return nil
     }
@@ -134,96 +181,125 @@ func mapFillData(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, dbKey st
 	log.Infof("leaf-list value after conversion to DB format %v  :  %v", fieldName, valueStr)
 
     } else { // xpath is a leaf
-	valueStr  = fmt.Sprintf("%v", value)
-	if strings.Contains(valueStr, ":") {
-	    valueStr = strings.Split(valueStr, ":")[1]
-	}
+		valueStr  = fmt.Sprintf("%v", value)
+		if strings.Contains(valueStr, ":") {
+			valueStr = strings.Split(valueStr, ":")[1]
+		}
     }
 
-    dataToDBMapAdd(*xpathInfo.tableName, dbKey, result, fieldName, valueStr)
-    log.Infof("TblName: \"%v\", key: \"%v\", field: \"%v\", valueStr: \"%v\".",
-    *xpathInfo.tableName, dbKey, fieldName, valueStr)
+    dataToDBMapAdd(tableName, dbKey, result, fieldName, valueStr)
+    log.Infof("TblName: \"%v\", key: \"%v\", field: \"%v\", valueStr: \"%v\".", tableName, dbKey,
+	          fieldName, valueStr)
     return nil
 }
 
-func cvlYangReqToDbMapCreate(jsonData interface{}, result map[string]map[string]db.Value) error {
+func sonicYangReqToDbMapCreate(jsonData interface{}, result map[string]map[string]db.Value) error {
     if reflect.ValueOf(jsonData).Kind() == reflect.Map {
         data := reflect.ValueOf(jsonData)
         for _, key := range data.MapKeys() {
             _, ok := xDbSpecMap[key.String()]
             if ok {
-                directDbMapData(key.String(), data.MapIndex(key).Interface(), result)
+                directDbMapData("", key.String(), data.MapIndex(key).Interface(), result)
             } else {
-                cvlYangReqToDbMapCreate(data.MapIndex(key).Interface(), result)
+                sonicYangReqToDbMapCreate(data.MapIndex(key).Interface(), result)
             }
         }
     }
     return nil
 }
 
-func directDbMapData(tableName string, jsonData interface{}, result map[string]map[string]db.Value) bool {
-    _, ok := xDbSpecMap[tableName]
+func dbMapDataFill(uri string, tableName string, keyName string, d map[string]interface{}, result map[string]map[string]db.Value) {
+	result[tableName][keyName] = db.Value{Field: make(map[string]string)}
+	for field, value := range d {
+		fieldXpath := tableName + "/" + field
+		if _, fieldOk := xDbSpecMap[fieldXpath]; (fieldOk  && (xDbSpecMap[fieldXpath].dbEntry != nil)) {
+			log.Info("Found non-nil yang entry in xDbSpecMap for field xpath = ", fieldXpath)
+			if xDbSpecMap[fieldXpath].dbEntry.IsLeafList() {
+				log.Info("Yang type is Leaflist for field  = ", field)
+				field += "@"
+				fieldDt := reflect.ValueOf(value)
+				fieldValue := ""
+				for fidx := 0; fidx < fieldDt.Len(); fidx++ {
+					if fidx > 0 {
+						fieldValue += ","
+					}
+					fVal := fmt.Sprintf("%v", fieldDt.Index(fidx).Interface())
+					fieldValue = fieldValue + fVal
+				}
+				result[tableName][keyName].Field[field] = fieldValue
+				continue
+			}
+		} else {
+			// should ideally never happen , just adding for safety
+			log.Info("Did not find entry in xDbSpecMap for field xpath = ", fieldXpath)
+		}
+		result[tableName][keyName].Field[field] = fmt.Sprintf("%v", value)
+	}
+	return
+}
 
-    if ok && xDbSpecMap[tableName].dbEntry != nil {
-        dbSpecData := xDbSpecMap[tableName].dbEntry
-        tblKeyName := strings.Split(dbSpecData.Key, " ")
-        data := reflect.ValueOf(jsonData)
-        result[tableName] = make(map[string]db.Value)
+func dbMapListDataFill(uri string, tableName string, dbEntry *yang.Entry, jsonData interface{}, result map[string]map[string]db.Value) {
+	data := reflect.ValueOf(jsonData)
+	tblKeyName := strings.Split(dbEntry.Key, " ")
+	for idx := 0; idx < data.Len(); idx++ {
+		keyName := ""
+		d := data.Index(idx).Interface().(map[string]interface{})
+		for i, k := range tblKeyName {
+			if i > 0 {
+				keyName += "|"
+			}
+			keyName += fmt.Sprintf("%v", d[k])
+			delete(d, k)
+		}
+		dbMapDataFill(uri, tableName, keyName, d, result)
+	}
+	return
+}
 
-        for idx := 0; idx < data.Len(); idx++ {
-            keyName := ""
-            d := data.Index(idx).Interface().(map[string]interface{})
-            for i, k := range tblKeyName {
-                if i > 0 {
-                    keyName += "|"
-                }
-                keyName += fmt.Sprintf("%v", d[k])
-                delete(d, k)
-            }
+func directDbMapData(uri string, tableName string, jsonData interface{}, result map[string]map[string]db.Value) bool {
+	_, ok := xDbSpecMap[tableName]
+	if ok && xDbSpecMap[tableName].dbEntry != nil {
+		data := reflect.ValueOf(jsonData).Interface().(map[string]interface{})
+		key  := ""
+		dbSpecData := xDbSpecMap[tableName]
+		result[tableName] = make(map[string]db.Value)
 
-            result[tableName][keyName] = db.Value{Field: make(map[string]string)}
-            for field, value := range d {
-                fieldXpath := tableName + "/" + field
-                if _, fieldOk := xDbSpecMap[fieldXpath]; (fieldOk  && (xDbSpecMap[fieldXpath].dbEntry != nil)) {
-                    log.Info("Found non-nil yang entry in xDbSpecMap for field xpath = ", fieldXpath)
-                    if xDbSpecMap[fieldXpath].dbEntry.IsLeafList() {
-                        log.Info("Yang type is Leaflist for field  = ", field)
-                        field += "@"
-                        fieldDt := reflect.ValueOf(value)
-                        fieldValue := ""
-                        for fidx := 0; fidx < fieldDt.Len(); fidx++ {
-                            if fidx > 0 {
-                                fieldValue += ","
-                            }
-                            fVal := fmt.Sprintf("%v", fieldDt.Index(fidx).Interface())
-                            fieldValue = fieldValue + fVal
-                        }
-                        result[tableName][keyName].Field[field] = fieldValue
-                        continue
-                    }
-                } else {
-                    // should ideally never happen , just adding for safety
-                    log.Info("Did not find entry in xDbSpecMap for field xpath = ", fieldXpath)
-                }
-                result[tableName][keyName].Field[field] = fmt.Sprintf("%v", value)
-            }
-        }
-        return true
-    }
-    return false
+		if dbSpecData.keyName != nil {
+			key = *dbSpecData.keyName
+			log.Infof("Fill data for container uri(%v), key(%v)", uri, key)
+			dbMapDataFill(uri, tableName, key, data, result)
+			return true
+		}
+
+		for k, v := range data {
+			xpath := tableName + "/" + k
+			curDbSpecData, ok := xDbSpecMap[xpath]
+			if ok && curDbSpecData.dbEntry != nil {
+				eType := yangTypeGet(curDbSpecData.dbEntry)
+				switch eType {
+				case "list":
+					log.Infof("Fill data for list uri(%v)", uri)
+					dbMapListDataFill(uri, tableName, curDbSpecData.dbEntry, v, result)
+				default:
+					log.Infof("Invalid node type for uri(%v)", uri)
+				}
+			}
+		}
+	}
+	return true
 }
 
 /* Get the db table, key and field name for the incoming delete request */
 func dbMapDelete(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, jsonData interface{}, result map[string]map[string]db.Value) error {
 	var err error
-	if isCvlYang(path) {
+	if isSonicYang(path) {
 		xpathPrefix, keyName, tableName := sonicXpathKeyExtract(path)
 		log.Infof("Delete req: path(\"%v\"), key(\"%v\"), xpathPrefix(\"%v\"), tableName(\"%v\").", path, keyName, xpathPrefix, tableName)
-		err = cvlYangReqToDbMapDelete(xpathPrefix, tableName, keyName, result)
+		err = sonicYangReqToDbMapDelete(xpathPrefix, tableName, keyName, result)
 	} else {
 		xpathPrefix, keyName, tableName := xpathKeyExtract(d, ygRoot, oper, path)
 		log.Infof("Delete req: path(\"%v\"), key(\"%v\"), xpathPrefix(\"%v\"), tableName(\"%v\").", path, keyName, xpathPrefix, tableName)
-		spec, ok := xSpecMap[xpathPrefix]
+		spec, ok := xYangSpecMap[xpathPrefix]
 		if ok {
 			if  spec.tableName != nil {
 				result[*spec.tableName] = make(map[string]db.Value)
@@ -244,7 +320,7 @@ func dbMapDelete(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, jsonDat
 	return err
 }
 
-func cvlYangReqToDbMapDelete(xpathPrefix string, tableName string, keyName string, result map[string]map[string]db.Value) error {
+func sonicYangReqToDbMapDelete(xpathPrefix string, tableName string, keyName string, result map[string]map[string]db.Value) error {
     if (tableName != "") {
         // Specific table entry case
         result[tableName] = make(map[string]db.Value)
@@ -252,13 +328,24 @@ func cvlYangReqToDbMapDelete(xpathPrefix string, tableName string, keyName strin
             // Specific key case
             var dbVal db.Value
             tokens:= strings.Split(xpathPrefix, "/")
-            // Format /module:container/tableName[key]/fieldName
-            if tokens[len(tokens)-2] == tableName {
-                // Specific leaf case
-                fieldName := tokens[len(tokens)-1]
-                dbVal.Field = make(map[string]string)
-                dbVal.Field[fieldName] = ""
-            }
+            if tokens[SONIC_TABLE_INDEX] == tableName {
+               fieldName := tokens[len(tokens)-1]
+               dbSpecField := tableName + "/" + fieldName
+               _, ok := xDbSpecMap[dbSpecField]
+	       if ok {
+		       yangType := xDbSpecMap[dbSpecField].fieldType
+		       // terminal node case
+		       if yangType == YANG_LEAF_LIST {
+			       fieldName = fieldName + "@"
+			       dbVal.Field = make(map[string]string)
+			       dbVal.Field[fieldName] = ""
+		       }
+		       if yangType == YANG_LEAF {
+			       dbVal.Field = make(map[string]string)
+			       dbVal.Field[fieldName] = ""
+		       }
+	       }
+	    }
             result[tableName][keyName] = dbVal
         } else {
             // Get all keys
@@ -266,10 +353,9 @@ func cvlYangReqToDbMapDelete(xpathPrefix string, tableName string, keyName strin
     } else {
         // Get all table entries
         // If table name not available in xpath get top container name
-        tokens:= strings.Split(xpathPrefix, ":")
-        container := "/" + tokens[len(tokens)-1]
-        if xDbSpecMap[container] != nil {
-            dbInfo := xDbSpecMap[container]
+	_, ok := xDbSpecMap[xpathPrefix]
+        if ok && xDbSpecMap[xpathPrefix] != nil {
+            dbInfo := xDbSpecMap[xpathPrefix]
             if dbInfo.fieldType == "container" {
                 for dir, _ := range dbInfo.dbEntry.Dir {
                     result[dir] = make(map[string]db.Value)
@@ -280,8 +366,7 @@ func cvlYangReqToDbMapDelete(xpathPrefix string, tableName string, keyName strin
     return nil
 }
 
-/* Get the data from incoming update/replace request, create map and fill with dbValue(ie. field:value
-to write into redis-db */
+/* Get the data from incoming update/replace request, create map and fill with dbValue(ie. field:value to write into redis-db */
 func dbMapUpdate(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, jsonData interface{}, result map[string]map[string]db.Value) error {
     log.Infof("Update/replace req: path(\"%v\").", path)
     dbMapCreate(d, ygRoot, oper, path, jsonData, result)
@@ -290,13 +375,12 @@ func dbMapUpdate(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, jsonDat
     return nil
 }
 
-/* Get the data from incoming create request, create map and fill with dbValue(ie. field:value
-to write into redis-db */
+/* Get the data from incoming create request, create map and fill with dbValue(ie. field:value to write into redis-db */
 func dbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, jsonData interface{}, result map[string]map[string]db.Value) error {
 	var err error
 	root := xpathRootNameGet(path)
-	if isCvlYang(path) {
-		err = cvlYangReqToDbMapCreate(jsonData, result)
+	if isSonicYang(path) {
+		err = sonicYangReqToDbMapCreate(jsonData, result)
 	} else {
 		err = yangReqToDbMapCreate(d, ygRoot, oper, root, "", "", jsonData, result)
 	}
@@ -304,9 +388,9 @@ func dbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, jsonDat
 		if oper == CREATE {
 			moduleNm := "/" + strings.Split(path, "/")[1]
 			log.Infof("Module name for path %s is %s", path, moduleNm)
-			if _, ok := xSpecMap[moduleNm]; ok {
-				if xSpecMap[moduleNm].yangDataType == "container" {
-					log.Info("Invoke post transformer: ", xSpecMap[moduleNm].xfmrPost)
+			if _, ok := xYangSpecMap[moduleNm]; ok {
+				if xYangSpecMap[moduleNm].yangDataType == "container" && len(xYangSpecMap[moduleNm].xfmrPost) > 0 {
+					log.Info("Invoke post transformer: ", xYangSpecMap[moduleNm].xfmrPost)
 					dbDataMap := make(map[db.DBNum]map[string]map[string]db.Value)
 					dbDataMap[db.ConfigDB] = result
 					var dbs [db.MaxDB]*db.DB
@@ -314,7 +398,7 @@ func dbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, jsonDat
 					result, err = postXfmrHandlerFunc(inParams)
 				}
 			} else {
-				log.Errorf("No Entry exists for module %s in XSpecMap. Unable to process post xfmr (\"%v\") path(\"%v\") error (\"%v\").", oper, path, err)
+				log.Errorf("No Entry exists for module %s in xYangSpecMap. Unable to process post xfmr (\"%v\") path(\"%v\") error (\"%v\").", oper, path, err)
 			}
 		}
 		printDbData(result, "/tmp/yangToDbDataCreate.txt")
@@ -322,6 +406,27 @@ func dbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, jsonDat
 		log.Errorf("DBMapCreate req failed for oper (\"%v\") path(\"%v\") error (\"%v\").", oper, path, err)
 	}
 	return err
+}
+
+func yangNodeForUriGet(uri string, ygRoot *ygot.GoStruct) (interface{}, error) {
+	path, _ := ygot.StringToPath(uri, ygot.StructuredPath, ygot.StringSlicePath)
+	for _, p := range path.Elem {
+		pathSlice := strings.Split(p.Name, ":")
+		p.Name = pathSlice[len(pathSlice)-1]
+		if len(p.Key) > 0 {
+			for ekey, ent := range p.Key {
+				eslice := strings.Split(ent, ":")
+				p.Key[ekey] = eslice[len(eslice)-1]
+			}
+		}
+	}
+	ocbSch, _ := ocbinds.Schema()
+	schRoot := ocbSch.RootSchema()
+	node, nErr := ytypes.GetNode(schRoot, (*ygRoot).(*ocbinds.Device), path)
+	if nErr != nil {
+		return nil, nErr
+	}
+	return node[0].Data, nil
 }
 
 func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, xpathPrefix string, keyName string, jsonData interface{}, result map[string]map[string]db.Value) error {
@@ -338,16 +443,25 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
         for _, data := range dataMap {
             curKey := ""
             curUri, _ := uriWithKeyCreate(uri, xpathPrefix, data)
-            if len(xSpecMap[xpathPrefix].xfmrKey) > 0 {
+	    _, ok := xYangSpecMap[xpathPrefix]
+            if ok && len(xYangSpecMap[xpathPrefix].xfmrKey) > 0 {
                 /* key transformer present */
-		        inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, curUri, oper, "", nil, nil)
-                ret, err := XlateFuncCall(yangToDbXfmrFunc(xSpecMap[xpathPrefix].xfmrKey), inParams)
+			curYgotNode, nodeErr := yangNodeForUriGet(curUri, ygRoot)
+			if nodeErr != nil {
+				curYgotNode = nil
+			}
+		        inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, curUri, oper, "", nil, curYgotNode)
+                ret, err := XlateFuncCall(yangToDbXfmrFunc(xYangSpecMap[xpathPrefix].xfmrKey), inParams)
                 if err != nil {
-                    return err
+					return err
                 }
-                curKey = ret[0].Interface().(string)
+		if ret != nil {
+                    curKey = ret[0].Interface().(string)
+	        }
+            } else if xYangSpecMap[xpathPrefix].keyName != nil {
+				curKey = *xYangSpecMap[xpathPrefix].keyName
             } else {
-                curKey = keyCreate(keyName, xpathPrefix, data)
+                curKey = keyCreate(keyName, xpathPrefix, data, d.Opts.KeySeparator)
             }
             yangReqToDbMapCreate(d, ygRoot, oper, curUri, xpathPrefix, curKey, data, result)
         }
@@ -360,6 +474,7 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
                 log.Infof("slice/map data: key(\"%v\"), xpathPrefix(\"%v\").", keyName, xpathPrefix)
                 xpath    := uri
                 curUri   := uri
+				curKey   := keyName
                 pathAttr := key.String()
                 if len(xpathPrefix) > 0 {
                     if strings.Contains(pathAttr, ":") {
@@ -368,18 +483,44 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
                     xpath  = xpathPrefix + "/" + pathAttr
                     curUri = uri + "/" + pathAttr
                 }
+		_, ok := xYangSpecMap[xpath]
+		log.Infof("slice/map data: curKey(\"%v\"), xpath(\"%v\"), curUri(\"%v\").",
+				          curKey, xpath, curUri)
+			    if ok && xYangSpecMap[xpath] != nil && len(xYangSpecMap[xpath].xfmrKey) > 0 {
+					/* key transformer present */
+					curYgotNode, nodeErr := yangNodeForUriGet(curUri, ygRoot)
+					if nodeErr != nil {
+						curYgotNode = nil
+					}
+					inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, curUri, oper, "", nil, curYgotNode)
+					ret, err := XlateFuncCall(yangToDbXfmrFunc(xYangSpecMap[xpath].xfmrKey), inParams)
+					if err != nil {
+						return err
+					}
+					if ret != nil {
+					    curKey = ret[0].Interface().(string)
+					}
+				} else if xYangSpecMap[xpath].keyName != nil {
+					curKey = *xYangSpecMap[xpath].keyName
+				}
 
-                if (typeOfValue == reflect.Map || typeOfValue == reflect.Slice) && xSpecMap[xpath].yangDataType != "leaf-list" {
-                    if xSpecMap[xpath] != nil && len(xSpecMap[xpath].xfmrFunc) > 0 {
+                if (typeOfValue == reflect.Map || typeOfValue == reflect.Slice) && xYangSpecMap[xpath].yangDataType != "leaf-list" {
+                    if ok && xYangSpecMap[xpath] != nil && len(xYangSpecMap[xpath].xfmrFunc) > 0 {
                         /* subtree transformer present */
-			inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, curUri, oper, "", nil, nil)
-                        ret, err := XlateFuncCall(yangToDbXfmrFunc(xSpecMap[xpath].xfmrFunc), inParams)
+						curYgotNode, nodeErr := yangNodeForUriGet(curUri, ygRoot)
+						if nodeErr != nil {
+							curYgotNode = nil
+						}
+                        inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, curUri, oper, "", nil, curYgotNode)
+                        ret, err := XlateFuncCall(yangToDbXfmrFunc(xYangSpecMap[xpath].xfmrFunc), inParams)
                         if err != nil {
                             return nil
                         }
-                        mapCopy(result, ret[0].Interface().(map[string]map[string]db.Value))
+			if  ret != nil {
+	                    mapCopy(result, ret[0].Interface().(map[string]map[string]db.Value))
+			}
                     } else {
-                        yangReqToDbMapCreate(d, ygRoot, oper, curUri, xpath, keyName, jData.MapIndex(key).Interface(), result)
+                        yangReqToDbMapCreate(d, ygRoot, oper, curUri, xpath, curKey, jData.MapIndex(key).Interface(), result)
                     }
                 } else {
                     pathAttr := key.String()
@@ -388,7 +529,7 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
                     }
                     value := jData.MapIndex(key).Interface()
                     log.Infof("data field: key(\"%v\"), value(\"%v\").", key, value)
-                    err := mapFillData(d, ygRoot, oper, uri, keyName, result, xpathPrefix,
+                    err := mapFillData(d, ygRoot, oper, uri, curKey, result, xpathPrefix,
                     pathAttr, value)
                     if err != nil {
                         log.Errorf("Failed constructing data for db write: key(\"%v\"), value(\"%v\"), path(\"%v\").",
@@ -399,71 +540,6 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
         }
     }
     return nil
-}
-
-func sonicXpathKeyExtract(path string) (string, string, string) {
-    xpath, keyStr, tableName := "", "", ""
-    var err error
-    xpath, err = RemoveXPATHPredicates(path)
-    if err != nil {
-        return xpath, keyStr, tableName
-    }
-    rgp := regexp.MustCompile(`\[([^\[\]]*)\]`)
-    pathsubStr := strings.Split(path , "/")
-    if len(pathsubStr) > SONIC_TABLE_INDEX  {
-        tableName = strings.Split(pathsubStr[SONIC_TABLE_INDEX], "[")[0]
-        for i, kname := range rgp.FindAllString(path, -1) {
-            if i > 0 { keyStr += "|" }
-            val := strings.Split(kname, "=")[1]
-            keyStr += strings.TrimRight(val, "]")
-        }
-    }
-    return xpath, keyStr, tableName
-}
-
-/* Extract key vars, create db key and xpath */
-func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string) (string, string, string) {
-    keyStr    := ""
-    tableName := ""
-    rgp       := regexp.MustCompile(`\[([^\[\]]*)\]`)
-    curPathWithKey := ""
-    var dbs [db.MaxDB]*db.DB
-
-    for _, k := range strings.Split(path, "/") {
-        curPathWithKey += k
-        if strings.Contains(k, "[") {
-            if len(keyStr) > 0 {
-                keyStr += "|"
-            }
-            yangXpath, _ := RemoveXPATHPredicates(curPathWithKey)
-	        _, ok := xSpecMap[yangXpath]
-	    if ok {
-            if len(xSpecMap[yangXpath].xfmrKey) > 0 {
-                xfmrFuncName := yangToDbXfmrFunc(xSpecMap[yangXpath].xfmrKey)
-		inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, curPathWithKey, oper, "", nil, nil)
-                ret, err := XlateFuncCall(xfmrFuncName, inParams)
-                if err != nil {
-                    return "", "", ""
-                }
-                keyStr = ret[0].Interface().(string)
-            } else {
-                var keyl []string
-                for _, kname := range rgp.FindAllString(k, -1) {
-                    keyl = append(keyl, strings.TrimRight(strings.TrimLeft(kname, "["), "]"))
-                }
-                keyStr += keyFromXpathCreate(keyl)
-            }
-	    }
-        }
-        curPathWithKey += "/"
-    }
-    pfxPath, _ := RemoveXPATHPredicates(path)
-    tblPtr     := xSpecMap[pfxPath].tableName
-    if tblPtr != nil {
-        tableName = *tblPtr
-    }
-
-    return pfxPath, keyStr, tableName
 }
 
 /* Debug function to print the map data into file */

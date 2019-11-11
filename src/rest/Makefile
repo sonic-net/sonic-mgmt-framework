@@ -36,7 +36,6 @@ REST_TEST_SRCS = $(shell find . -name '*_test.go')
 # Source files affecting REST server
 REST_SRCS := $(ALL_GO_SRCS) \
 			 $(shell find $(TOPDIR)/models/yang -name '*.yang' | sort) \
-			 $(shell find $(TOPDIR)/src/cvl/schema '*.yang' | sort) \
 			 $(shell find $(TOPDIR)/models/openapi -name '*.yaml' | sort)
 
 REST_GOPATH := $(GOPATH):$(abspath $(REST_BUILD_DIR)/dist)
@@ -56,6 +55,7 @@ $(REST_BUILD_DIR)/:
 # Invokes yang and model make to generate swagger artifcats.
 $(REST_BIN): $(REST_SRCS) | $(REST_BUILD_DIR)/
 	$(MAKE) -C $(TOPDIR)/models/yang
+	$(MAKE) -C $(TOPDIR)/models/yang/sonic
 	$(MAKE) -C $(TOPDIR)/models
 ifeq ($(SONIC_COVERAGE_ON),y)
 	GOPATH=$(REST_GOPATH) $(GO) test -coverpkg=".././..." -c -o $@ main/main.go main/main_test.go

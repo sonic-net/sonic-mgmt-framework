@@ -2,12 +2,8 @@ module sonic-tc-priority-group-map {
 	namespace "http://github.com/Azure/sonic-tc-priority-group-map";
 	prefix tpg;
 
-	import ietf-yang-types {
-		prefix yang;
-	}
-
-	import sonic-common {
-		prefix scommon;
+	import sonic-extension {
+		prefix sonic-ext;
 	}
 
 	organization
@@ -25,31 +21,34 @@ module sonic-tc-priority-group-map {
 	}
 
 	container sonic-tc-priority-group-map {
-		list TC_TO_PRIORITY_GROUP_MAP {
-			key "name";
-			scommon:map-list "true"; //special conversion for map tables
-			scommon:map-leaf "tc_num pg_num"; //every key:value pair is mapped to list keys, e.g. "1":"7" ==> tc_num=1, dscp=7
 
-			leaf name {
-				type string;
-			}
+		container TC_TO_PRIORITY_GROUP_MAP {
 
-			list TC_TO_PRIORITY_GROUP_MAP { //this is list inside list for storing mapping between two fields
-				key "tc_num pg_num";
+			list TC_TO_PRIORITY_GROUP_MAP_LIST {
+				key "name";
+				sonic-ext:map-list "true"; //special conversion for map tables
+				sonic-ext:map-leaf "tc_num pg_num"; //every key:value pair is mapped to list keys, e.g. "1":"7" ==> tc_num=1, dscp=7
 
-				leaf tc_num {
-					type string {
-						pattern "[0-9]?";
-					}
+				leaf name {
+					type string;
 				}
 
-				leaf pg_num {
-					type string {
-						pattern "[0-7]?";
+				list TC_TO_PRIORITY_GROUP_MAP { //this is list inside list for storing mapping between two fields
+					key "tc_num pg_num";
+
+					leaf tc_num {
+						type string {
+							pattern "[0-9]?";
+						}
+					}
+
+					leaf pg_num {
+						type string {
+							pattern "[0-7]?";
+						}
 					}
 				}
 			}
-
 		}
 	}
 }

@@ -70,6 +70,7 @@ var luaScripts map[string]*redis.Script
 type modelTableInfo struct {
 	dbNum uint8
 	modelName string
+	redisTableName string //To which Redis table it belongs to, used for 1 Redis to N Yang List
 	module *yparser.YParserModule
 	keys []string
 	redisKeyDelim string
@@ -111,8 +112,9 @@ type modelNamespace struct {
 }
 
 type modelDataInfo struct {
-	modelNs map[string]modelNamespace//model namespace 
-	tableInfo map[string]modelTableInfo //redis table to model name and keys
+	modelNs map[string]modelNamespace //model namespace 
+	tableInfo map[string]*modelTableInfo //redis table to model name and keys
+	redisTableToYangList map[string][]string //Redis table to all YANG lists when it is not 1:1 mapping
 	allKeyDelims map[string]bool
 }
 
@@ -245,16 +247,26 @@ func storeModelInfo(modelFile string, module *yparser.YParserModule) { //such mo
 
 	modelInfo.modelNs[modelName] = modelNs
 
-	//Store metadata present in each list
-	nodes = xmlquery.Find(root, "//module/container/list")
+	//Store metadata present in each list.
+	//Each list represent one Redis table in general.
+	//However when one Redis table is mapped to multiple
+	//YANG lists need to store the information in redisTableToYangList map
+	nodes = xmlquery.Find(root, "//module/container/container/list")
 	if (nodes == nil) {
 		return
 	}
 
+	//number list under one table container i.e. ACL_TABLE container
+	//has only one ACL_TABLE_LIST list
 	for  _, node := range nodes {
-		//for each list
+		//for each list, remove "_LIST" suffix
 		tableName :=  node.Attr[0].Value
+		if (strings.HasSuffix(tableName, "_LIST")) {
+			tableName = tableName[0:len(tableName) - len("_LIST")]
+		}
 		tableInfo := modelTableInfo{modelName: modelName}
+		//Store Redis table name
+		tableInfo.redisTableName = node.Parent.Attr[0].Value
 		//Store the reference for list node to be used later
 		listNode := node
 		node = node.FirstChild
@@ -263,6 +275,7 @@ func storeModelInfo(modelFile string, module *yparser.YParserModule) { //such mo
 		tableInfo.dbNum = CONFIG_DB
 		//default delim '|'
 		tableInfo.redisKeyDelim = "|"
+		modelInfo.allKeyDelims[tableInfo.redisKeyDelim] = true
 
 		fieldCount := 0
 
@@ -309,10 +322,20 @@ func storeModelInfo(modelFile string, module *yparser.YParserModule) { //such mo
 		}
 		*/
 
+		//If container has more than one list, it means one Redis table is mapped to
+		//multiple lists, store the info in redisTableToYangList
+		allLists := xmlquery.Find(listNode.Parent, "/list")
+		if len(allLists) > 1 {
+			yangList := modelInfo.redisTableToYangList[tableInfo.redisTableName]
+			yangList = append(yangList, tableName)
+			//Update the map
+			modelInfo.redisTableToYangList[tableInfo.redisTableName] = yangList
+		}
+
 		leafRefNodes := xmlquery.Find(listNode, "//type[@name='leafref']")
 		if (leafRefNodes == nil) {
 			//Store the tableInfo in global data
-			modelInfo.tableInfo[tableName] = tableInfo
+			modelInfo.tableInfo[tableName] = &tableInfo
 
 			continue
 		}
@@ -340,11 +363,11 @@ func storeModelInfo(modelFile string, module *yparser.YParserModule) { //such mo
 			}
 		}
 
-		//Find all 'must' expression and store the agains its parent node
+		//Find all 'must' expression and store the against its parent node
 		mustExps := xmlquery.Find(listNode, "//must")
 		if (mustExps == nil) {
 			//Update the tableInfo in global data
-			modelInfo.tableInfo[tableName] = tableInfo
+			modelInfo.tableInfo[tableName] = &tableInfo
 			continue
 		}
 
@@ -368,7 +391,8 @@ func storeModelInfo(modelFile string, module *yparser.YParserModule) { //such mo
 		}
 
 		//Update the tableInfo in global data
-		modelInfo.tableInfo[tableName] = tableInfo
+		modelInfo.tableInfo[tableName] = &tableInfo
+
 	}
 }
 
@@ -453,6 +477,48 @@ func splitRedisKey(key string) (string, string) {
 	return tblName, key[prefixLen:]
 }
 
+//Get the YANG list name from Redis key
+//This just returns same YANG list name as Redis table name
+//when 1:1 mapping is there. For one Redis table to 
+//multiple YANG list, it returns appropriate YANG list name
+//INTERFACE:Ethernet12 returns ==> INTERFACE
+//INTERFACE:Ethernet12:1.1.1.0/32 ==> INTERFACE_IPADDR
+func getRedisKeyToYangList(tableName, key string) string {
+	mapArr, exists := modelInfo.redisTableToYangList[tableName]
+
+	if exists == false {
+		//1:1 mapping case
+		return tableName
+	}
+
+	//As of now determine the mapping based on number of keys
+	var foundIdx int = -1
+	numOfKeys := 1 //Assume only one key initially
+	for keyDelim, _ := range modelInfo.allKeyDelims {
+		foundIdx = strings.Index(key, keyDelim)
+		if (foundIdx >= 0) {
+			//Matched with key delim
+			keyComps := strings.Split(key, keyDelim)
+			numOfKeys = len(keyComps)
+			break
+		}
+	}
+
+	//Check which list has number of keys as 'numOfKeys' 
+	for i := 0; i < len(mapArr); i++ {
+		tblInfo, exists := modelInfo.tableInfo[mapArr[i]]
+		if exists == true {
+			if (len(tblInfo.keys) == numOfKeys) {
+				//Found the YANG list matching the number of keys
+				return mapArr[i]
+			}
+		}
+	}
+
+	//No matches
+	return tableName
+}
+
 //Convert Redis key to Yang keys, if multiple key components are there,
 //they are separated based on Yang schema
 func getRedisToYangKeys(tableName string, redisKey string)[]keyValuePairStruct{
@@ -529,9 +595,9 @@ func (c *CVL) checkPathForTableEntry(tableName string, currentValue string, cfgD
 		//Table name should appear like "../VLAN_MEMBER/tagging_mode' or '
 		// "/prt:PORT/prt:ifname"
 		//re := regexp.MustCompile(fmt.Sprintf(".*[/]([a-zA-Z]*:)?%s[\\[/]", tblNameSrch))
-		tblSrchIdx := strings.Index(xpath, fmt.Sprintf("/%s", tblNameSrch)) //no preifx
+		tblSrchIdx := strings.Index(xpath, fmt.Sprintf("/%s_LIST", tblNameSrch)) //no preifx
 		if (tblSrchIdx < 0) {
-			tblSrchIdx = strings.Index(xpath, fmt.Sprintf(":%s", tblNameSrch)) //with prefix
+			tblSrchIdx = strings.Index(xpath, fmt.Sprintf(":%s_LIST", tblNameSrch)) //with prefix
 		}
 		if (tblSrchIdx < 0) {
 			continue
@@ -1005,14 +1071,16 @@ func (c *CVL) addLeafRef(config bool, tableName string, name string, value strin
 
 				//only key is there, value wil be fetched and stored here, 
 				//if value can't fetched this entry will be deleted that time
-				if (c.tmpDbCache[refTableName] == nil) {
-					c.tmpDbCache[refTableName] = map[string]interface{}{redisKey: nil}
+				//Strip "_LIST" suffix
+				refRedisTableName := refTableName[0:len(refTableName) - len("_LIST")]
+				if (c.tmpDbCache[refRedisTableName] == nil) {
+					c.tmpDbCache[refRedisTableName] = map[string]interface{}{redisKey: nil}
 				} else {
-					tblMap := c.tmpDbCache[refTableName]
+					tblMap := c.tmpDbCache[refRedisTableName]
 					_, exist := tblMap.(map[string]interface{})[redisKey]
 					if (exist == false) {
 						tblMap.(map[string]interface{})[redisKey] = nil
-						c.tmpDbCache[refTableName] = tblMap
+						c.tmpDbCache[refRedisTableName] = tblMap
 					}
 				}
 			}
@@ -1323,13 +1391,26 @@ parent *yparser.YParserNode) CVLRetCode {
 
 func (c *CVL) generateTableData(config bool, jsonNode *jsonquery.Node)(*yparser.YParserNode, CVLErrorInfo) {
 	var cvlErrObj CVLErrorInfo
+
 	tableName := fmt.Sprintf("%s",jsonNode.Data)
 	c.batchLeaf = ""
 
+	//Every Redis table is mapped as list within a container,
+	//E.g. ACL_RULE is mapped as 
+	// container ACL_RULE { list ACL_RULE_LIST {} }
 	var topNode *yparser.YParserNode
+
+	// Add top most conatiner e.g. 'container sonic-acl {...}'
+	if _, exists := modelInfo.tableInfo[tableName]; exists == false {
+		return nil, cvlErrObj 
+	}
 	topNode = c.yp.AddChildNode(modelInfo.tableInfo[tableName].module,
 	nil, modelInfo.tableInfo[tableName].modelName)
 
+	//Add the container node for each list 
+	//e.g. 'container ACL_TABLE { list ACL_TABLE_LIST ...}
+	listConatinerNode := c.yp.AddChildNode(modelInfo.tableInfo[tableName].module,
+	topNode, tableName)
 
 	//Traverse each key instance
 	for jsonNode = jsonNode.FirstChild; jsonNode != nil; jsonNode = jsonNode.NextSibling {
@@ -1337,6 +1418,9 @@ func (c *CVL) generateTableData(config bool, jsonNode *jsonquery.Node)(*yparser.
 		//For each field check if is key 
 		//If it is key, create list as child of top container
 		// Get all key name/value pairs
+		if yangListName := getRedisKeyToYangList(tableName, jsonNode.Data); yangListName!= "" {
+			tableName = yangListName
+		}
 		keyValuePair := getRedisToYangKeys(tableName, jsonNode.Data)
 		keyCompCount := len(keyValuePair)
 		totalKeyComb := 1
@@ -1351,9 +1435,12 @@ func (c *CVL) generateTableData(config bool, jsonNode *jsonquery.Node)(*yparser.
 		}
 
 		for  ; totalKeyComb > 0 ; totalKeyComb-- {
+			//Get the YANG list name from Redis table name
+			//Ideally they are same except when one Redis table is split
+			//into multiple YANG lists
 
 			//Add table i.e. create list element
-			listNode := c.addChildNode(tableName, topNode, tableName) //Add the list to the top node
+			listNode := c.addChildNode(tableName, listConatinerNode, tableName + "_LIST") //Add the list to the top node
 
 			//For each key combination
 			//Add keys as leaf to the list
