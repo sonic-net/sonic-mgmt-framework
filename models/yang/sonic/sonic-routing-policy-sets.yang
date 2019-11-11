@@ -85,5 +85,91 @@ module sonic-routing-policy-sets {
                 }
             }
         }
+        container COMMUNITY_SET {
+
+            list COMMUNITY_SET_LIST {
+                key "community_set_name";
+
+                leaf community_set_name {
+                    mandatory true;
+                    type string {
+                        pattern '[a-zA-Z0-9]{1}([-a-zA-Z0-9_]{0,71})';
+                        length 1..72;
+                    }
+                }
+
+                leaf type {
+                    type enumeration {
+                        enum STANDARD;
+                        enum EXPANDED;
+                    }
+                }
+
+                leaf match_action {
+                    type enumeration {
+                        enum PERMIT_ANY;
+                        enum PERMIT_ALL;
+                        enum DENY;
+                    }
+                }
+
+                leaf-list community_member {
+                    type string;
+                }
+            }
+        }
+
+        container EXTENDED_COMMUNITY_SET {
+
+            list EXTENDED_COMMUNITY_SET_LIST {
+                key "ext_community_set_name";
+
+                leaf ext_community_set_name {
+                    mandatory true;
+                    type string {
+                        pattern '[a-zA-Z0-9]{1}([-a-zA-Z0-9_]{0,71})';
+                        length 1..72;
+                    }
+                }
+
+                leaf type {
+                    type enumeration {
+                        enum STANDARD;
+                        enum EXPANDED;
+                    }
+                }
+
+                leaf match_action {
+                    type enumeration {
+                        enum PERMIT_ANY;
+                        enum PERMIT_ALL;
+                        enum DENY;
+                    }
+                }
+
+                leaf-list community_member {
+                    type string;
+                }
+            }
+        }
+
+        container AS_PATH_SET {
+
+            list AS_PATH_SET_LIST {
+                key "as_path_set_name";
+
+                leaf as_path_set_name {
+                    mandatory true;
+                    type string {
+                        pattern '[a-zA-Z0-9]{1}([-a-zA-Z0-9_]{0,71})';
+                        length 1..72;
+                    }
+                }
+
+                leaf-list as_path_member {
+                    type string;
+                }
+            }
+        }
     }
 }
