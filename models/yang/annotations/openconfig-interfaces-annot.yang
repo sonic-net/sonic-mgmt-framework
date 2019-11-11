@@ -105,16 +105,6 @@ module openconfig-interfaces-annot {
             sonic-ext:subtree-transformer "intf_eth_port_config_xfmr";
         }
     }
-//    deviation /oc-intf:interfaces/oc-intf:interface/oc-eth:ethernet/oc-eth:config/oc-eth:auto-negotiate {
-//        deviate add {
-//            sonic-ext:field-transformer "intf_eth_auto_neg_xfmr";
-//        }
-//    }
-//    deviation /oc-intf:interfaces/oc-intf:interface/oc-eth:ethernet/oc-eth:config/oc-eth:port-speed {
-//        deviate add {
-//            sonic-ext:field-transformer "intf_eth_port_speed_xfmr";
-//        }
-//    }
     deviation /oc-intf:interfaces/oc-intf:interface/oc-eth:ethernet/oc-eth:state {
         deviate add {
             sonic-ext:db-name "APPL_DB";

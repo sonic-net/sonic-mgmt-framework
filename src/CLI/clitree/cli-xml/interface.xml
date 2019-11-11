@@ -231,7 +231,7 @@ limitations under the License.
                 ptype="LAG_ID"
                 >
         </PARAM>
-        <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface PortChannel${lag-id}</ACTION>
+        <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config PortChannel${lag-id}</ACTION>
     </COMMAND>
 
      <!-- no interface commands -->
