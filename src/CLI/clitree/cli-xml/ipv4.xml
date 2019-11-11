@@ -39,6 +39,12 @@ limitations under the License.
         >
     <ACTION builtin="clish_nop"/>
     </COMMAND>
+    <COMMAND
+        help="show IP ARP commands"
+        name="show ip arp"
+        >
+    <ACTION builtin="clish_nop"/>
+    </COMMAND>
 
    <COMMAND
         help="ARP entries for this interface"
