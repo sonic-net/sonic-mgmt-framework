@@ -1,0 +1,11 @@
+{% if 'output-filename' in json_output %}
+{% set filename = json_output['output-filename'] %}
+{% if filename|length %}
+{{'Output stored in:  '}}{{filename}}
+{% else %}
+{{'Invalid input: Incorrect DateTime format'}}
+{% endif %}
+{% else %}
+{{'Invalid input: Incorrect DateTime format'}}
+{% endif %}
+
