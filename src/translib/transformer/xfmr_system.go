@@ -91,7 +91,13 @@ func getSystemInfoFromFile () (JSONSystem, error) {
     defer log.Infof("syscall.Flock unlock  called")
 
     byteValue, _ := ioutil.ReadAll(jsonFile)
-    json.Unmarshal(byteValue, &jsonsystem)
+    err = json.Unmarshal(byteValue, &jsonsystem)
+	if err != nil {
+        errStr := "json.Unmarshal failed"
+        terr := tlerr.InternalError{Format: errStr}
+        return jsonsystem, terr
+	
+	}
     return jsonsystem, nil
 }
 
