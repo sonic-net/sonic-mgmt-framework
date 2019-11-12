@@ -496,6 +496,7 @@ func (d *DB) DeleteKeys(ts *TableSpec, key Key) error {
 
 func (d *DB) doCVL(ts * TableSpec, cvlOps []cvl.CVLOperation, key Key, vals []Value) error {
 	var e error = nil
+	return e
 
 	var cvlRetCode cvl.CVLRetCode
 	var cei cvl.CVLErrorInfo
