@@ -1,0 +1,31 @@
+module openconfig-routing-policy-ext {
+
+    yang-version "1";
+
+    // namespace
+    namespace "http://openconfig.net/yang/routing-policy/extension";
+
+    prefix "oc-rpol-ext";
+
+    // import some basic types
+    import openconfig-routing-policy { prefix oc-rpol; }
+    import openconfig-bgp-policy { prefix oc-bgp-pol; }
+
+    description
+        "This module describes a YANG model for routing policy
+        configuration extensions.";
+
+    revision "2019-11-11" {
+        description
+            "Add OpenConfig unsupported attributes.";
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-bgp-pol:bgp-conditions/oc-bgp-pol:community-count {
+        deviate not-supported;
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-bgp-pol:bgp-conditions/oc-bgp-pol:as-path-length {
+        deviate not-supported;
+    }
+}
+
