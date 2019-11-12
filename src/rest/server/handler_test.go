@@ -255,9 +255,14 @@ func TestPathConv(t *testing.T) {
 		"/test/id[name=X]"))
 
 	t.Run("escaped", testPathConv(
-		"/test/interface={name}",
-		"/test/interface=Ethernet%200%2f1",
-		"/test/interface[name=Ethernet 0/1]"))
+		"/test/interface={name}/ip={addr}",
+		"/test/interface=Ethernet%200%2f1/ip=10.0.0.1%2f24",
+		"/test/interface[name=Ethernet 0/1]/ip[addr=10.0.0.1/24]"))
+
+	t.Run("escaped2", testPathConv(
+		"/test/interface={name},{ip}",
+		"/test/interface=Eth0%2f1%5b2%5c%5d,1::1",
+		"/test/interface[name=Eth0/1[2\\\\\\]][ip=1::1]"))
 
 	t.Run("escaped+param", testPathConv2(
 		map[string]string{"name1": "name"},
