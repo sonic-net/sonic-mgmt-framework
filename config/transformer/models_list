@@ -7,3 +7,4 @@ openconfig-network-instance-annot.yang
 sonic-vxlan.yang
 sonic-udld.yang
 sonic-udld-annot.yang
+sonic-mclag.yang
