@@ -281,7 +281,10 @@ var YangToDb_network_instance_enabled_field_xfmr FieldXfmrYangToDb = func(inPara
         /* get the name at the top network-instance table level, this is the key */
         keyName := pathInfo.Var("name")
         if keyName != "mgmt" {
-                log.Info("YangToDb_network_instance_enabled_field_xfmr, not mgmt vrf, nothing to do")
+                log.Info("YangToDb_network_instance_enabled_field_xfmr, not mgmt vrf ", keyName)
+
+                /* ToDo, put this until sonic yang default value is implemented */
+                res_map["fallback"] = "false"
                 return res_map, err 
         }
 
