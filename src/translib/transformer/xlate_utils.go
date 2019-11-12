@@ -100,7 +100,7 @@ func yangTypeGet(entry *yang.Entry) string {
     return ""
 }
 
-func dbKeyToYangDataConvert(uri string, xpath string, dbKey string, dbKeySep string, txCache interface{}) (map[string]interface{}, string, error) {
+func dbKeyToYangDataConvert(uri string, requestUri string, xpath string, dbKey string, dbKeySep string, txCache interface{}) (map[string]interface{}, string, error) {
 	var err error
 	if len(uri) == 0 && len(xpath) == 0 && len(dbKey) == 0 {
 		err = fmt.Errorf("Insufficient input")
@@ -134,7 +134,7 @@ func dbKeyToYangDataConvert(uri string, xpath string, dbKey string, dbKeySep str
 
 	if len(xYangSpecMap[xpath].xfmrKey) > 0 {
 		var dbs [db.MaxDB]*db.DB
-		inParams := formXfmrInputRequest(nil, dbs, db.MaxDB, nil, uri, GET, dbKey, nil, nil, nil, txCache)
+		inParams := formXfmrInputRequest(nil, dbs, db.MaxDB, nil, uri, requestUri, GET, dbKey, nil, nil, nil, txCache)
 		ret, err := XlateFuncCall(dbToYangXfmrFunc(xYangSpecMap[xpath].xfmrKey), inParams)
 		if err != nil {
 			return nil, "", err
@@ -388,7 +388,7 @@ func mapGet(xpath string, inMap map[string]interface{}) map[string]interface{} {
     return retMap
 }
 
-func formXfmrInputRequest(d *db.DB, dbs [db.MaxDB]*db.DB, cdb db.DBNum, ygRoot *ygot.GoStruct, uri string, oper int, key string, dbDataMap *RedisDbMap, subOpDataMap map[int]*RedisDbMap, param interface{}, txCache interface{}) XfmrParams {
+func formXfmrInputRequest(d *db.DB, dbs [db.MaxDB]*db.DB, cdb db.DBNum, ygRoot *ygot.GoStruct, uri string, requestUri string, oper int, key string, dbDataMap *RedisDbMap, subOpDataMap map[int]*RedisDbMap, param interface{}, txCache interface{}) XfmrParams {
 	var inParams XfmrParams
 	inParams.d = d
 	inParams.dbs = dbs
@@ -494,7 +494,7 @@ func XfmrRemoveXPATHPredicates(xpath string) (string, error) {
 }
 
 /* Extract key vars, create db key and xpath */
- func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, subOpDataMap map[int]*RedisDbMap, txCache interface{}) (string, string, string) {
+func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, requestUri string, subOpDataMap map[int]*RedisDbMap, txCache interface{}) (string, string, string) {
 	 keyStr    := ""
 	 tableName := ""
 	 pfxPath := ""
@@ -527,7 +527,7 @@ func XfmrRemoveXPATHPredicates(xpath string) (string, error) {
 				 }
 				 if len(xYangSpecMap[yangXpath].xfmrKey) > 0 {
 					 xfmrFuncName := yangToDbXfmrFunc(xYangSpecMap[yangXpath].xfmrKey)
-					 inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, curPathWithKey, oper, "", nil, subOpDataMap, nil, txCache)
+					 inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, curPathWithKey, requestUri, oper, "", nil, subOpDataMap, nil, txCache)
 					 ret, err := XlateFuncCall(xfmrFuncName, inParams)
 					 if err != nil {
 						 return "", "", ""
@@ -553,7 +553,7 @@ func XfmrRemoveXPATHPredicates(xpath string) (string, error) {
 				 }
 			 } else if len(xYangSpecMap[yangXpath].xfmrKey) > 0 {
 				 xfmrFuncName := yangToDbXfmrFunc(xYangSpecMap[yangXpath].xfmrKey)
-				 inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, curPathWithKey, oper, "", nil, subOpDataMap, nil, txCache)
+				 inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, curPathWithKey, requestUri, oper, "", nil, subOpDataMap, nil, txCache)
 				 ret, err := XlateFuncCall(xfmrFuncName, inParams)
 				 if err != nil {
 					 return "", "", ""
@@ -572,7 +572,7 @@ func XfmrRemoveXPATHPredicates(xpath string) (string, error) {
 	 if tblPtr != nil {
 		 tableName = *tblPtr
 	 } else if xpathInfo.xfmrTbl != nil {
-		 inParams := formXfmrInputRequest(d, dbs, cdb, ygRoot, curPathWithKey, oper, "", nil, subOpDataMap, nil, txCache)
+		 inParams := formXfmrInputRequest(d, dbs, cdb, ygRoot, curPathWithKey, requestUri, oper, "", nil, subOpDataMap, nil, txCache)
 		 tableName, _ = tblNameFromTblXfmrGet(*xpathInfo.xfmrTbl, inParams)
 	 }
 	 return pfxPath, keyStr, tableName
