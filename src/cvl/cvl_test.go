@@ -3403,6 +3403,7 @@ func TestValidateEditConfig_Create_Syntax_Interface_OptionalKey_Positive(t *test
 			cvl.OP_CREATE,
 			"INTERFACE|Ethernet24",
 			map[string]string{
+				"vrf-name": "Vrf1",
 			},
 		},
 	}
