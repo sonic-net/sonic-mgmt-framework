@@ -20,8 +20,7 @@ def register_modules():
     mod_path = os.path.join(os.path.dirname(__file__), 'host_modules')
     sys.path.append(mod_path)
     for mod_file in glob.glob(os.path.join(mod_path, '*.py')):
-        if os.path.isfile(mod_file) and not mod_file.endswith('__init__.py') \
-            and not mod_file.endswith('host_service.py'):
+        if os.path.isfile(mod_file) and not mod_file.endswith('__init__.py'):
             mod_name = os.path.basename(mod_file)[:-3]
             module = importlib.import_module(mod_name)
 
