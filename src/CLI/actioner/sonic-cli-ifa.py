@@ -1,46 +1,36 @@
 import sys
-import time
 import json
-import ast
-import sonic_ifa_client
-from sonic_ifa_client.rest import ApiException
+import collections
+import re
+import cli_client as cc
+from rpipe_utils import pipestr
 from scripts.render_cli import show_cli_output
-
 import urllib3
 urllib3.disable_warnings()
 
-
-plugins = dict()
-
-def register(func):
-    """Register sdk client method as a plug-in"""
-    plugins[func.__name__] = func
-    return func
-
-
-def call_method(name, args):
-    method = plugins[name]
-    return method(args)
-
-def generate_body(func, args):
+def invoke_api(func, args):
     body = None
-    keypath = []
+    api = cc.ApiClient()
 
     # Set/Get the rules of all IFA table entries.
-    if func.__name__ == 'get_sonic_ifa_sonic_ifa_tam_int_ifa_feature_table':
-       keypath = []
-    elif func.__name__ == 'get_sonic_ifa_sonic_ifa_tam_int_ifa_flow_table':
-       keypath = []
-    elif func.__name__ == 'get_sonic_ifa_sonic_ifa_tam_int_ifa_flow_table_tam_int_ifa_flow_table_list':
-       keypath = [args[0]]
-    elif func.__name__ == 'patch_sonic_ifa_sonic_ifa_tam_int_ifa_feature_table_tam_int_ifa_feature_table_list_enable':
-       keypath = [ args[0] ]
+    if func == 'get_sonic_ifa_sonic_ifa_tam_int_ifa_feature_table':
+       path = cc.Path('/restconf/data/sonic-ifa:sonic-ifa/TAM_INT_IFA_FEATURE_TABLE')
+       return api.get(path)
+    elif func == 'get_sonic_ifa_sonic_ifa_tam_int_ifa_flow_table':
+       path = cc.Path('/restconf/data/sonic-ifa:sonic-ifa/TAM_INT_IFA_FLOW_TABLE')
+       return api.get(path)
+    elif func == 'get_sonic_ifa_sonic_ifa_tam_int_ifa_flow_table_tam_int_ifa_flow_table_list':
+       path = cc.Path('/restconf/data/sonic-ifa:sonic-ifa/TAM_INT_IFA_FLOW_TABLE/TAM_INT_IFA_FLOW_TABLE_LIST={name}', name=args[0])
+       return api.get(path)
+    elif func == 'patch_sonic_ifa_sonic_ifa_tam_int_ifa_feature_table_tam_int_ifa_feature_table_list_enable':
+       path = cc.Path('/restconf/data/sonic-ifa:sonic-ifa/TAM_INT_IFA_FEATURE_TABLE/TAM_INT_IFA_FEATURE_TABLE_LIST={name}/enable', name=args[0])
        if args[1] == 'True':
            body = { "sonic-ifa:enable": True }
        else:
            body = { "sonic-ifa:enable": False }
-    elif func.__name__ == 'patch_sonic_ifa_sonic_ifa_tam_int_ifa_flow_table_tam_int_ifa_flow_table_list':
-       keypath = [ args[0] ]
+       return api.patch(path, body)
+    elif func == 'patch_sonic_ifa_sonic_ifa_tam_int_ifa_flow_table_tam_int_ifa_flow_table_list':
+       path = cc.Path('/restconf/data/sonic-ifa:sonic-ifa/TAM_INT_IFA_FLOW_TABLE/TAM_INT_IFA_FLOW_TABLE_LIST={name}', name=args[0])
        bodydict = {"name": args[0], "acl-rule-name": args[1], "acl-table-name": args[2]}
        for i in range(len(args)):
            if args[i] == "sv":
@@ -52,33 +42,21 @@ def generate_body(func, args):
            else:
                pass
        body = { "sonic-ifa:TAM_INT_IFA_FLOW_TABLE_LIST": [ bodydict ] }
-    elif func.__name__ == 'delete_sonic_ifa_sonic_ifa_tam_int_ifa_flow_table_tam_int_ifa_flow_table_list':
-       keypath = [ args[0] ]
+       return api.patch(path, body)
+    elif func == 'delete_sonic_ifa_sonic_ifa_tam_int_ifa_flow_table_tam_int_ifa_flow_table_list':
+       path = cc.Path('/restconf/data/sonic-ifa:sonic-ifa/TAM_INT_IFA_FLOW_TABLE/TAM_INT_IFA_FLOW_TABLE_LIST={name}', name=args[0])
+       return api.delete(path)
     else:
        body = {}
 
-    return keypath,body
+    return api.cli_not_implemented(func)
 
 def run(func, args):
-
-    c = sonic_ifa_client.Configuration()
-    c.verify_ssl = False
-    aa = sonic_ifa_client.SonicIfaApi(api_client=sonic_ifa_client.ApiClient(configuration=c))
-
-    # create a body block
-    keypath, body = generate_body(func, args)
-
-    try:
-        if body is not None:
-           api_response = getattr(aa,func.__name__)(*keypath, body=body)
-        else :
-           api_response = getattr(aa,func.__name__)(*keypath)
-
-        if api_response is None:
-            print ("Success")
-        else:
+    response = invoke_api(func, args)
+    if response.ok():
+        if response.content is not None:
             # Get Command Output
-            api_response = aa.api_client.sanitize_for_serialization(api_response)
+            api_response = response.content
             if 'sonic-ifa:sonic-ifa' in api_response:
                 value = api_response['sonic-ifa:sonic-ifa']
                 if 'TAM_INT_IFA_FEATURE_TABLE' in value:
@@ -90,40 +68,20 @@ def run(func, args):
 
             if api_response is None:
                 print("Failed")
-            elif func.__name__ == 'get_sonic_ifa_sonic_ifa_tam_int_ifa_feature_table':
+            elif func == 'get_sonic_ifa_sonic_ifa_tam_int_ifa_feature_table':
                 show_cli_output(args[0], api_response)
-            elif func.__name__ == 'get_sonic_ifa_sonic_ifa_tam_int_ifa_flow_table':
+            elif func == 'get_sonic_ifa_sonic_ifa_tam_int_ifa_flow_table':
                 show_cli_output(args[0], api_response)
-            elif func.__name__ == 'get_sonic_ifa_sonic_ifa_tam_int_ifa_flow_table_tam_int_ifa_flow_table_list':
+            elif func == 'get_sonic_ifa_sonic_ifa_tam_int_ifa_flow_table_tam_int_ifa_flow_table_list':
                 show_cli_output(args[1], api_response)
             else:
                 return
-    except ApiException as e:
-        print("Exception when calling get_sonic_ifa ->%s : %s\n" %(func.__name__, e))
-        if e.body != "":
-            body = json.loads(e.body)
-            if "ietf-restconf:errors" in body:
-                 err = body["ietf-restconf:errors"]
-                 if "error" in err:
-                     errList = err["error"]
-
-                     errDict = {}
-                     for dict in errList:
-                         for k, v in dict.iteritems():
-                              errDict[k] = v
-
-                     if "error-message" in errDict:
-                         print "%Error: " + errDict["error-message"]
-                         return
-                     print "%Error: Transaction Failure"
-                     return
-            print "%Error: Transaction Failure"
         else:
-            print "Failed"
+            print response.error_message()
 
 if __name__ == '__main__':
-
-    func = eval(sys.argv[1], globals(), sonic_ifa_client.SonicIfaApi.__dict__)
+    pipestr().write(sys.argv)
+    func = sys.argv[1]
 
     run(func, sys.argv[2:])
 
