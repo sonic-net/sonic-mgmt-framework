@@ -82,7 +82,7 @@ func tblNameFromTblXfmrGet(xfmrTblFunc string, inParams XfmrParams) (string, err
 }
 
 /* Fill the redis-db map with data */
-func mapFillData(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, dbKey string, result map[string]map[string]db.Value, subOpDataMap map[int]*RedisDbMap, xpathPrefix string, name string, value interface{}, tblXpathMap map[string][]string, txCache interface{}) error {
+func mapFillData(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requestUri string, dbKey string, result map[string]map[string]db.Value, subOpDataMap map[int]*RedisDbMap, xpathPrefix string, name string, value interface{}, tblXpathMap map[string][]string, txCache interface{}) error {
 	var dbs [db.MaxDB]*db.DB
 	var err error
     xpath := xpathPrefix + "/" + name
@@ -106,7 +106,7 @@ func mapFillData(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, dbKey st
 
     tableName := ""
     if xpathInfo.xfmrTbl != nil {
-	    inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, uri, oper, "", nil, subOpDataMap, "", txCache)
+	    inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, uri, requestUri, oper, "", nil, subOpDataMap, "", txCache)
 	    // expecting only one table name from tbl-xfmr
 	    tableName, err = tblNameFromTblXfmrGet(*xYangSpecMap[xpath].xfmrTbl, inParams)
 	    if err != nil {
@@ -117,11 +117,11 @@ func mapFillData(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, dbKey st
 	    tableName = *xpathInfo.tableName
     }
 
-	mapFillDataUtil(d, ygRoot, oper, uri, xpath, tableName, dbKey, result, subOpDataMap, name, value, txCache);
+	mapFillDataUtil(d, ygRoot, oper, uri, requestUri, xpath, tableName, dbKey, result, subOpDataMap, name, value, txCache);
 	return nil
 }
 
-func mapFillDataUtil(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, xpath string, tableName string, dbKey string, result map[string]map[string]db.Value, subOpDataMap map[int]*RedisDbMap, name string, value interface{}, txCache interface{}) error {
+func mapFillDataUtil(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requestUri string, xpath string, tableName string, dbKey string, result map[string]map[string]db.Value, subOpDataMap map[int]*RedisDbMap, name string, value interface{}, txCache interface{}) error {
 	var dbs [db.MaxDB]*db.DB
 	xpathInfo := xYangSpecMap[xpath]
 
@@ -147,7 +147,7 @@ func mapFillDataUtil(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, xpat
 		if nErr != nil {
 			return nErr
 		}
-		inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, uri, oper, "", nil, subOpDataMap, node[0].Data, txCache)
+		inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, uri, requestUri, oper, "", nil, subOpDataMap, node[0].Data, txCache)
 		ret, err := XlateFuncCall(yangToDbXfmrFunc(xYangSpecMap[xpath].xfmrField), inParams)
 		if err != nil {
 			return err
@@ -298,7 +298,7 @@ func directDbMapData(uri string, tableName string, jsonData interface{}, result 
 }
 
 /* Get the db table, key and field name for the incoming delete request */
-func dbMapDelete(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, jsonData interface{}, resultMap map[int]map[db.DBNum]map[string]map[string]db.Value, txCache interface{}) error {
+func dbMapDelete(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requestUri string, jsonData interface{}, resultMap map[int]map[db.DBNum]map[string]map[string]db.Value, txCache interface{}) error {
 	var err error
 	var result = make(map[string]map[string]db.Value)
 	resultMap[oper] = make(map[db.DBNum]map[string]map[string]db.Value)
@@ -310,14 +310,14 @@ func dbMapDelete(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, jsonData
 		resultMap[oper][db.ConfigDB] = result
 		err = sonicYangReqToDbMapDelete(xpathPrefix, tableName, keyName, result)
 	} else {
-		xpathPrefix, keyName, tableName := xpathKeyExtract(d, ygRoot, oper, uri, subOpDataMap, txCache)
+		xpathPrefix, keyName, tableName := xpathKeyExtract(d, ygRoot, oper, uri, requestUri, subOpDataMap, txCache)
 		log.Infof("Delete req: uri(\"%v\"), key(\"%v\"), xpathPrefix(\"%v\"), tableName(\"%v\").", uri, keyName, xpathPrefix, tableName)
 		spec, ok := xYangSpecMap[xpathPrefix]
 		if ok {
 			if len(spec.xfmrFunc) > 0 {
 				var dbs [db.MaxDB]*db.DB
 				cdb := spec.dbIndex
-				inParams := formXfmrInputRequest(d, dbs, cdb, ygRoot, uri, oper, "", nil, subOpDataMap, nil, txCache)
+				inParams := formXfmrInputRequest(d, dbs, cdb, ygRoot, uri, requestUri, oper, "", nil, subOpDataMap, nil, txCache)
 				ret, err := XlateFuncCall(yangToDbXfmrFunc(spec.xfmrFunc), inParams)
 				if err == nil {
 					mapCopy(result, ret[0].Interface().(map[string]map[string]db.Value))
@@ -331,7 +331,7 @@ func dbMapDelete(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, jsonData
 					if spec.yangEntry != nil && spec.yangEntry.Node.Statement().Keyword == "leaf" {
 						xpath, _ := XfmrRemoveXPATHPredicates(uri)
 						if len(xYangSpecMap[xpath].defVal) > 0 {
-							mapFillDataUtil(d, ygRoot, oper, uri, xpath, tableName, keyName, result, subOpDataMap, spec.fieldName, xYangSpecMap[xpath].defVal, txCache)
+							mapFillDataUtil(d, ygRoot, oper, uri, requestUri, xpath, tableName, keyName, result, subOpDataMap, spec.fieldName, xYangSpecMap[xpath].defVal, txCache)
 							if len(subOpDataMap) > 0 && subOpDataMap[UPDATE] != nil {
 								subOperMap := subOpDataMap[UPDATE]
 								mapCopy((*subOperMap)[db.ConfigDB], result)
@@ -415,15 +415,15 @@ func sonicYangReqToDbMapDelete(xpathPrefix string, tableName string, keyName str
 }
 
 /* Get the data from incoming update/replace request, create map and fill with dbValue(ie. field:value to write into redis-db */
-func dbMapUpdate(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, jsonData interface{}, result map[int]map[db.DBNum]map[string]map[string]db.Value, txCache interface{}) error {
+func dbMapUpdate(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, requestUri string, jsonData interface{}, result map[int]map[db.DBNum]map[string]map[string]db.Value, txCache interface{}) error {
     log.Infof("Update/replace req: path(\"%v\").", path)
-    dbMapCreate(d, ygRoot, oper, path, jsonData, result, txCache)
+    dbMapCreate(d, ygRoot, oper, path, requestUri, jsonData, result, txCache)
     log.Infof("Update/replace req: path(\"%v\") result(\"%v\").", path, result)
     printDbData(result, "/tmp/yangToDbDataUpRe.txt")
     return nil
 }
 
-func dbMapDefaultFieldValFill(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, result map[string]map[string]db.Value, subOpDataMap map[int]*RedisDbMap, yangXpathList []string, tblName string, dbKey string, txCache interface{}) error {
+func dbMapDefaultFieldValFill(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requestUri string, result map[string]map[string]db.Value, subOpDataMap map[int]*RedisDbMap, yangXpathList []string, tblName string, dbKey string, txCache interface{}) error {
 	tblData := result[tblName]
 	var dbs [db.MaxDB]*db.DB
 	for _, yangXpath := range yangXpathList {
@@ -436,7 +436,7 @@ func dbMapDefaultFieldValFill(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri str
 					if childNode.yangDataType == YANG_LIST || childNode.yangDataType == YANG_CONTAINER {
 						var tblList []string
 						tblList = append(tblList, childXpath)
-						dbMapDefaultFieldValFill(d, ygRoot, oper, uri, result, subOpDataMap, tblList, tblName, dbKey, txCache)
+						dbMapDefaultFieldValFill(d, ygRoot, oper, uri, requestUri, result, subOpDataMap, tblList, tblName, dbKey, txCache)
 					}
 					if (childNode.tableName != nil && *childNode.tableName == tblName) || (childNode.xfmrTbl != nil) {
 						_, ok := tblData[dbKey].Field[childName]
@@ -447,7 +447,7 @@ func dbMapDefaultFieldValFill(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri str
 								childYangType := childNode.yangEntry.Type.Kind
 								_, defValPtr, err := DbToYangType(childYangType, childXpath, childNode.defVal)
 								if err == nil && defValPtr != nil {
-									inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, childXpath, oper, "", nil, subOpDataMap, defValPtr, txCache)
+									inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, childXpath, requestUri, oper, "", nil, subOpDataMap, defValPtr, txCache)
 									ret, err := XlateFuncCall(yangToDbXfmrFunc(xYangSpecMap[childXpath].xfmrField), inParams)
 									if err == nil {
 										retData := ret[0].Interface().(map[string]string)
@@ -460,7 +460,7 @@ func dbMapDefaultFieldValFill(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri str
 									childXpath, tblName, dbKey, childNode.fieldName, childNode.defVal)
 								}
 							} else {
-								mapFillDataUtil(d, ygRoot, oper, uri, childXpath, tblName, dbKey, result, subOpDataMap, childName, childNode.defVal, txCache)
+								mapFillDataUtil(d, ygRoot, oper, uri, requestUri, childXpath, tblName, dbKey, result, subOpDataMap, childName, childNode.defVal, txCache)
 							}
 						}
 					}
@@ -471,21 +471,21 @@ func dbMapDefaultFieldValFill(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri str
 	return nil
 }
 
-func dbMapDefaultValFill(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, result map[string]map[string]db.Value, subOpDataMap map[int]*RedisDbMap, tblXpathMap map[string][]string, txCache interface{}) error {
+func dbMapDefaultValFill(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requestUri string, result map[string]map[string]db.Value, subOpDataMap map[int]*RedisDbMap, tblXpathMap map[string][]string, txCache interface{}) error {
 	for tbl, tblData := range result {
 		for dbKey, _ := range tblData {
 			yxpathList := xDbSpecMap[tbl].yangXpath
 			if _, ok := tblXpathMap[tbl]; ok {
 				yxpathList = tblXpathMap[tbl]
 			}
-			dbMapDefaultFieldValFill(d, ygRoot, oper, uri, result, subOpDataMap, yxpathList, tbl, dbKey, txCache)
+			dbMapDefaultFieldValFill(d, ygRoot, oper, uri, requestUri, result, subOpDataMap, yxpathList, tbl, dbKey, txCache)
 		}
 	}
 	return nil
 }
 
 /* Get the data from incoming create request, create map and fill with dbValue(ie. field:value to write into redis-db */
-func dbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, jsonData interface{}, resultMap map[int]map[db.DBNum]map[string]map[string]db.Value, txCache interface{}) error {
+func dbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, requestUri string, jsonData interface{}, resultMap map[int]map[db.DBNum]map[string]map[string]db.Value, txCache interface{}) error {
 	var err error
 	tblXpathMap := make(map[string][]string)
 	var result = make(map[string]map[string]db.Value)
@@ -497,7 +497,7 @@ func dbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, jsonDat
 	if isSonicYang(path) {
 		err = sonicYangReqToDbMapCreate(jsonData, result)
 	} else {
-		err = yangReqToDbMapCreate(d, ygRoot, oper, root, "", "", jsonData, result, subOpDataMap, tblXpathMap, txCache)
+		err = yangReqToDbMapCreate(d, ygRoot, oper, root, path, "", "", jsonData, result, subOpDataMap, tblXpathMap, txCache)
 	}
 	if err == nil {
 		if !isSonicYang(path) {
@@ -505,7 +505,7 @@ func dbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, jsonDat
 			yangNode, ok := xYangSpecMap[xpath]
 			if ok && yangNode.yangDataType != YANG_LEAF && (oper == CREATE || oper == REPLACE) {
 				log.Infof("Fill default value for %v, oper(%v)\r\n", path, oper)
-				dbMapDefaultValFill(d, ygRoot, oper, path, result, subOpDataMap, tblXpathMap, txCache)
+				dbMapDefaultValFill(d, ygRoot, oper, path, requestUri, result, subOpDataMap, tblXpathMap, txCache)
 			}
 			moduleNm := "/" + strings.Split(path, "/")[1]
 			log.Infof("Module name for path %s is %s", path, moduleNm)
@@ -514,7 +514,7 @@ func dbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, jsonDat
 					log.Info("Invoke post transformer: ", xYangSpecMap[moduleNm].xfmrPost)
 					var dbDataMap = resultMap[oper]
 					var dbs [db.MaxDB]*db.DB
-					inParams := formXfmrInputRequest(d, dbs, db.ConfigDB, ygRoot, path, oper, "", &dbDataMap, subOpDataMap, nil, txCache)
+					inParams := formXfmrInputRequest(d, dbs, db.ConfigDB, ygRoot, path, requestUri, oper, "", &dbDataMap, subOpDataMap, nil, txCache)
 					resultMap[oper][db.ConfigDB], err = postXfmrHandlerFunc(inParams)
 				}
 			} else {
@@ -552,7 +552,7 @@ func yangNodeForUriGet(uri string, ygRoot *ygot.GoStruct) (interface{}, error) {
 	return node[0].Data, nil
 }
 
-func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, xpathPrefix string, keyName string, jsonData interface{}, result map[string]map[string]db.Value, subOpDataMap map[int]*RedisDbMap, tblXpathMap map[string][]string, txCache interface{}) error {
+func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requestUri string, xpathPrefix string, keyName string, jsonData interface{}, result map[string]map[string]db.Value, subOpDataMap map[int]*RedisDbMap, tblXpathMap map[string][]string, txCache interface{}) error {
     log.Infof("key(\"%v\"), xpathPrefix(\"%v\").", keyName, xpathPrefix)
     var dbs [db.MaxDB]*db.DB
 
@@ -573,7 +573,7 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
 			if nodeErr != nil {
 				curYgotNode = nil
 			}
-		        inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, curUri, oper, "", nil, subOpDataMap, curYgotNode, txCache)
+		        inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, curUri, requestUri, oper, "", nil, subOpDataMap, curYgotNode, txCache)
                 ret, err := XlateFuncCall(yangToDbXfmrFunc(xYangSpecMap[xpathPrefix].xfmrKey), inParams)
                 if err != nil {
 					return err
@@ -586,7 +586,7 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
             } else {
                 curKey = keyCreate(keyName, xpathPrefix, data, d.Opts.KeySeparator)
             }
-            yangReqToDbMapCreate(d, ygRoot, oper, curUri, xpathPrefix, curKey, data, result, subOpDataMap, tblXpathMap, txCache)
+            yangReqToDbMapCreate(d, ygRoot, oper, curUri, requestUri, xpathPrefix, curKey, data, result, subOpDataMap, tblXpathMap, txCache)
         }
     } else {
         if reflect.ValueOf(jsonData).Kind() == reflect.Map {
@@ -615,7 +615,7 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
 					if nodeErr != nil {
 						curYgotNode = nil
 					}
-					inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, curUri, oper, "", nil, subOpDataMap, curYgotNode, txCache)
+					inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, curUri, requestUri, oper, "", nil, subOpDataMap, curYgotNode, txCache)
 					ret, err := XlateFuncCall(yangToDbXfmrFunc(xYangSpecMap[xpath].xfmrKey), inParams)
 					if err != nil {
 						return err
@@ -634,7 +634,7 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
 						if nodeErr != nil {
 							curYgotNode = nil
 						}
-                        inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, curUri, oper, "", nil, subOpDataMap, curYgotNode, txCache)
+                        inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, curUri, requestUri, oper, "", nil, subOpDataMap, curYgotNode, txCache)
                         ret, err := XlateFuncCall(yangToDbXfmrFunc(xYangSpecMap[xpath].xfmrFunc), inParams)
                         if err != nil {
                             return nil
@@ -643,7 +643,7 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
 	                    mapCopy(result, ret[0].Interface().(map[string]map[string]db.Value))
 			}
                     } else {
-                        yangReqToDbMapCreate(d, ygRoot, oper, curUri, xpath, curKey, jData.MapIndex(key).Interface(), result, subOpDataMap, tblXpathMap, txCache)
+                        yangReqToDbMapCreate(d, ygRoot, oper, curUri, requestUri, xpath, curKey, jData.MapIndex(key).Interface(), result, subOpDataMap, tblXpathMap, txCache)
                     }
                 } else {
                     pathAttr := key.String()
@@ -652,7 +652,7 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
                     }
                     value := jData.MapIndex(key).Interface()
                     log.Infof("data field: key(\"%v\"), value(\"%v\").", key, value)
-                    err := mapFillData(d, ygRoot, oper, uri, curKey, result, subOpDataMap, xpathPrefix,
+                    err := mapFillData(d, ygRoot, oper, uri, requestUri, curKey, result, subOpDataMap, xpathPrefix,
                     pathAttr, value, tblXpathMap, txCache)
                     if err != nil {
                         log.Errorf("Failed constructing data for db write: key(\"%v\"), value(\"%v\"), path(\"%v\").",
