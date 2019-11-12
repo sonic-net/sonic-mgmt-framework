@@ -11,10 +11,6 @@ module sonic-acl {
 		prefix prt;
 	}
 
-	import sonic-mirror-session {
-		prefix sms;
-	}
-
 	organization
 		"SONiC";
 
@@ -126,8 +122,10 @@ module sonic-acl {
 				}
 
 				leaf MIRROR_ACTION {
-					type leafref {
-						path "/sms:sonic-mirror-session/sms:MIRROR_SESSION/sms:MIRROR_SESSION_LIST/sms:name";
+					type string {
+						pattern "[^ |:]+" {
+							error-app-tag mirror-action-invalid;
+						}
 					}
 				}
 

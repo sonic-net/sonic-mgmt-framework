@@ -32,12 +32,6 @@ module sonic-common {
 		}
 	}
 
-	typedef string-key {
-		type string {
-			pattern "[^ |]+";
-		}
-	}
-
 	container operation {
 		description "This definition is used internally by CVL and 
 			is not exposed in NBI. Leaf 'operation' allows
