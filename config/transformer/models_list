@@ -9,3 +9,5 @@ sonic-vxlan.yang
 openconfig-routing-policy.yang
 openconfig-bgp-policy.yang
 openconfig-routing-policy-annot.yang
+openconfig-system.yang
+openconfig-system-annot.yang
