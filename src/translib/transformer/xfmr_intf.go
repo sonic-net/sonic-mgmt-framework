@@ -200,7 +200,7 @@ var YangToDb_intf_tbl_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (stri
 
     log.Info("Intf name ", ifName)
     log.Info("Exiting YangToDb_intf_tbl_key_xfmr")
-    if inParams.oper == UPDATE || inParams.oper == CREATE {
+    if inParams.oper != DELETE {
         log.Info("Update/Create operation")
         return ifName, err
     }

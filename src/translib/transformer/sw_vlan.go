@@ -31,6 +31,11 @@ type ifVlan struct {
     trunkVlans []string
 }
 
+type swVlanMemberPort_t struct {
+  swEthMember *ocbinds.OpenconfigInterfaces_Interfaces_Interface_Ethernet_SwitchedVlan
+  swPortChannelMember *ocbinds.OpenconfigInterfaces_Interfaces_Interface_Aggregation_SwitchedVlan
+}
+
 func init () {
     XlateFuncBind("YangToDb_sw_vlans_xfmr", YangToDb_sw_vlans_xfmr)
     XlateFuncBind("DbToYang_sw_vlans_xfmr", DbToYang_sw_vlans_xfmr)
@@ -168,7 +173,7 @@ func removeFromMembersListForVlan(d *db.DB, vlan *string, ifName *string, vlanMa
             }
         }
         if memberFound {
-			updatedVlanEntry := db.Value{Field:make(map[string]string)}
+      updatedVlanEntry := db.Value{Field:make(map[string]string)}
             updatedVlanEntry.Field["members@"] = *ifName
             vlanMap[*vlan] = updatedVlanEntry
         } else {
@@ -391,7 +396,7 @@ func processIntfVlanMemberAdd(d *db.DB, vlanMembersMap map[string]map[string]db.
                         case TRUNK:
                             errStr = "Tagged VLAN: " + vlanId + " configuration exists for Interface: " + ifName
                         }
-						log.Error(errStr)
+                  log.Error(errStr)
                         return tlerr.InvalidArgsError{Format: errStr}
                     }
                 }
@@ -467,38 +472,69 @@ func processIntfVlanMemberRemoval(d *db.DB, ifVlanInfoList []*ifVlan, vlanMap ma
 }
 
 /* Function performs VLAN Member removal from Interface */
-func intfVlanMemberRemoval(swVlanConfig *ocbinds.OpenconfigInterfaces_Interfaces_Interface_Ethernet_SwitchedVlan_Config,
+func intfVlanMemberRemoval(swVlanConfig *swVlanMemberPort_t,
                            inParams *XfmrParams, ifName *string,
                            vlanMap map[string]db.Value,
-                           vlanMemberMap map[string]db.Value) error {
+                           vlanMemberMap map[string]db.Value, intfType E_InterfaceType) error {
     var err error
     var ifVlanInfo ifVlan
     var ifVlanInfoList []*ifVlan
 
-    if swVlanConfig.AccessVlan != nil {
-        ifVlanInfo.mode = ACCESS
-    }
-    if swVlanConfig.TrunkVlans != nil {
-        trunkVlansUnionList := swVlanConfig.TrunkVlans
-        ifVlanInfo.mode = TRUNK
-        for _, trunkVlanUnion := range trunkVlansUnionList {
-            trunkVlanUnionType := reflect.TypeOf(trunkVlanUnion).Elem()
+    switch intfType {
+    case IntfTypeEthernet:
+        if swVlanConfig.swEthMember.Config.AccessVlan != nil {
+            ifVlanInfo.mode = ACCESS
+        }
+        if swVlanConfig.swEthMember.Config.TrunkVlans != nil {
+            trunkVlansUnionList := swVlanConfig.swEthMember.Config.TrunkVlans
+            ifVlanInfo.mode = TRUNK
+            for _, trunkVlanUnion := range trunkVlansUnionList {
+                trunkVlanUnionType := reflect.TypeOf(trunkVlanUnion).Elem()
 
-            switch trunkVlanUnionType {
+                switch trunkVlanUnionType {
 
-            case reflect.TypeOf(ocbinds.OpenconfigInterfaces_Interfaces_Interface_Ethernet_SwitchedVlan_Config_TrunkVlans_Union_String{}):
-                val := (trunkVlanUnion).(*ocbinds.OpenconfigInterfaces_Interfaces_Interface_Ethernet_SwitchedVlan_Config_TrunkVlans_Union_String)
-                vlanName := "Vlan" + val.String
-                err = validateVlanExists(inParams.d, &vlanName)
-                if err != nil {
-                    errStr := "Invalid VLAN: " + val.String
-                    err = tlerr.InvalidArgsError{Format: errStr}
-                    return err
+                case reflect.TypeOf(ocbinds.OpenconfigInterfaces_Interfaces_Interface_Ethernet_SwitchedVlan_Config_TrunkVlans_Union_String{}):
+                    val := (trunkVlanUnion).(*ocbinds.OpenconfigInterfaces_Interfaces_Interface_Ethernet_SwitchedVlan_Config_TrunkVlans_Union_String)
+                    vlanName := "Vlan" + val.String
+                    err = validateVlanExists(inParams.d, &vlanName)
+                    if err != nil {
+                        errStr := "Invalid VLAN: " + val.String
+                        err = tlerr.InvalidArgsError{Format: errStr}
+                        return err
+                    }
+                    ifVlanInfo.trunkVlans = append(ifVlanInfo.trunkVlans, vlanName)
+                case reflect.TypeOf(ocbinds.OpenconfigInterfaces_Interfaces_Interface_Ethernet_SwitchedVlan_Config_TrunkVlans_Union_Uint16{}):
+                    val := (trunkVlanUnion).(*ocbinds.OpenconfigInterfaces_Interfaces_Interface_Ethernet_SwitchedVlan_Config_TrunkVlans_Union_Uint16)
+                    ifVlanInfo.trunkVlans = append(ifVlanInfo.trunkVlans, "Vlan"+strconv.Itoa(int(val.Uint16)))
                 }
-                ifVlanInfo.trunkVlans = append(ifVlanInfo.trunkVlans, vlanName)
-            case reflect.TypeOf(ocbinds.OpenconfigInterfaces_Interfaces_Interface_Ethernet_SwitchedVlan_Config_TrunkVlans_Union_Uint16{}):
-                val := (trunkVlanUnion).(*ocbinds.OpenconfigInterfaces_Interfaces_Interface_Ethernet_SwitchedVlan_Config_TrunkVlans_Union_Uint16)
-                ifVlanInfo.trunkVlans = append(ifVlanInfo.trunkVlans, "Vlan"+strconv.Itoa(int(val.Uint16)))
+            }
+        }
+    case IntfTypePortChannel:
+        if swVlanConfig.swPortChannelMember.Config.AccessVlan != nil {
+            ifVlanInfo.mode = ACCESS
+        }
+        if swVlanConfig.swPortChannelMember.Config.TrunkVlans != nil {
+            trunkVlansUnionList := swVlanConfig.swPortChannelMember.Config.TrunkVlans
+            ifVlanInfo.mode = TRUNK
+            for _, trunkVlanUnion := range trunkVlansUnionList {
+                trunkVlanUnionType := reflect.TypeOf(trunkVlanUnion).Elem()
+
+                switch trunkVlanUnionType {
+
+                case reflect.TypeOf(ocbinds.OpenconfigInterfaces_Interfaces_Interface_Aggregation_SwitchedVlan_Config_TrunkVlans_Union_String{}):
+                    val := (trunkVlanUnion).(*ocbinds.OpenconfigInterfaces_Interfaces_Interface_Aggregation_SwitchedVlan_Config_TrunkVlans_Union_String)
+                    vlanName := "Vlan" + val.String
+                    err = validateVlanExists(inParams.d, &vlanName)
+                    if err != nil {
+                        errStr := "Invalid VLAN: " + val.String
+                        err = tlerr.InvalidArgsError{Format: errStr}
+                        return err
+                    }
+                    ifVlanInfo.trunkVlans = append(ifVlanInfo.trunkVlans, vlanName)
+                case reflect.TypeOf(ocbinds.OpenconfigInterfaces_Interfaces_Interface_Aggregation_SwitchedVlan_Config_TrunkVlans_Union_Uint16{}):
+                    val := (trunkVlanUnion).(*ocbinds.OpenconfigInterfaces_Interfaces_Interface_Aggregation_SwitchedVlan_Config_TrunkVlans_Union_Uint16)
+                    ifVlanInfo.trunkVlans = append(ifVlanInfo.trunkVlans, "Vlan"+strconv.Itoa(int(val.Uint16)))
+                }
             }
         }
     }
@@ -515,45 +551,94 @@ func intfVlanMemberRemoval(swVlanConfig *ocbinds.OpenconfigInterfaces_Interfaces
 }
 
 /* Function performs VLAN Member addition to Interface */
-func intfVlanMemberAdd(swVlanConfig *ocbinds.OpenconfigInterfaces_Interfaces_Interface_Ethernet_SwitchedVlan_Config,
+func intfVlanMemberAdd(swVlanConfig *swVlanMemberPort_t,
                        inParams *XfmrParams, ifName *string,
                        vlanMap map[string]db.Value,
-                       vlanMemberMap map[string]db.Value) error {
+                       vlanMemberMap map[string]db.Value, intfType E_InterfaceType) error {
 
     var err error
     var accessVlanId uint16 = 0
     var trunkVlanSlice []string
+    var ifMode ocbinds.E_OpenconfigVlan_VlanModeType
+
     accessVlanFound := false
     trunkVlanFound := false
 
     intTbl := IntfTypeTblMap[IntfTypeVlan]
     vlanMembersListMap := make(map[string]map[string]db.Value)
 
-    /* Retrieve the Access VLAN Id */
-    if swVlanConfig.AccessVlan != nil {
-        accessVlanId = *swVlanConfig.AccessVlan
-        log.Infof("Vlan id : %d observed for Untagged Member port addition configuration!", accessVlanId)
-        accessVlanFound = true
-    }
-
-    /* Retrieve the list of trunk-vlans */
-    if swVlanConfig.TrunkVlans != nil {
-        vlanUnionList := swVlanConfig.TrunkVlans
-        if len(vlanUnionList) != 0 {
-            trunkVlanFound = true
+    switch intfType {
+    case IntfTypeEthernet:
+        /* Retrieve the Access VLAN Id */
+		if swVlanConfig.swEthMember == nil || swVlanConfig.swEthMember.Config == nil {
+			errStr := "Not supported switched-vlan request for Interface: " + *ifName
+			log.Error(errStr)
+			return errors.New(errStr)
+		}
+        if swVlanConfig.swEthMember.Config.AccessVlan != nil {
+            accessVlanId = *swVlanConfig.swEthMember.Config.AccessVlan
+            log.Infof("Vlan id : %d observed for Untagged Member port addition configuration!", accessVlanId)
+            accessVlanFound = true
         }
-        for _, vlanUnion := range vlanUnionList {
-            vlanUnionType := reflect.TypeOf(vlanUnion).Elem()
 
-            switch vlanUnionType {
-
-            case reflect.TypeOf(ocbinds.OpenconfigInterfaces_Interfaces_Interface_Ethernet_SwitchedVlan_Config_TrunkVlans_Union_String{}):
-                val := (vlanUnion).(*ocbinds.OpenconfigInterfaces_Interfaces_Interface_Ethernet_SwitchedVlan_Config_TrunkVlans_Union_String)
-                trunkVlanSlice = append(trunkVlanSlice, val.String)
-            case reflect.TypeOf(ocbinds.OpenconfigInterfaces_Interfaces_Interface_Ethernet_SwitchedVlan_Config_TrunkVlans_Union_Uint16{}):
-                val := (vlanUnion).(*ocbinds.OpenconfigInterfaces_Interfaces_Interface_Ethernet_SwitchedVlan_Config_TrunkVlans_Union_Uint16)
-                trunkVlanSlice = append(trunkVlanSlice, "Vlan"+strconv.Itoa(int(val.Uint16)))
+        /* Retrieve the list of trunk-vlans */
+        if swVlanConfig.swEthMember.Config.TrunkVlans != nil {
+            vlanUnionList := swVlanConfig.swEthMember.Config.TrunkVlans
+            if len(vlanUnionList) != 0 {
+                trunkVlanFound = true
             }
+            for _, vlanUnion := range vlanUnionList {
+                vlanUnionType := reflect.TypeOf(vlanUnion).Elem()
+
+                switch vlanUnionType {
+
+                case reflect.TypeOf(ocbinds.OpenconfigInterfaces_Interfaces_Interface_Ethernet_SwitchedVlan_Config_TrunkVlans_Union_String{}):
+                    val := (vlanUnion).(*ocbinds.OpenconfigInterfaces_Interfaces_Interface_Ethernet_SwitchedVlan_Config_TrunkVlans_Union_String)
+                    trunkVlanSlice = append(trunkVlanSlice, val.String)
+                case reflect.TypeOf(ocbinds.OpenconfigInterfaces_Interfaces_Interface_Ethernet_SwitchedVlan_Config_TrunkVlans_Union_Uint16{}):
+                    val := (vlanUnion).(*ocbinds.OpenconfigInterfaces_Interfaces_Interface_Ethernet_SwitchedVlan_Config_TrunkVlans_Union_Uint16)
+                    trunkVlanSlice = append(trunkVlanSlice, "Vlan"+strconv.Itoa(int(val.Uint16)))
+                }
+            }
+        }
+        if swVlanConfig.swEthMember.Config.InterfaceMode != ocbinds.OpenconfigVlan_VlanModeType_UNSET {
+            ifMode = swVlanConfig.swEthMember.Config.InterfaceMode
+        }
+    case IntfTypePortChannel:
+        /* Retrieve the Access VLAN Id */
+		if swVlanConfig.swPortChannelMember == nil || swVlanConfig.swPortChannelMember.Config == nil {
+			errStr := "Not supported switched-vlan request for Interface: " + *ifName
+			log.Error(errStr)
+			return errors.New(errStr)
+		}
+        if swVlanConfig.swPortChannelMember.Config.AccessVlan != nil {
+            accessVlanId = *swVlanConfig.swPortChannelMember.Config.AccessVlan
+            log.Infof("Vlan id : %d observed for Untagged Member port addition configuration!", accessVlanId)
+            accessVlanFound = true
+        }
+
+        /* Retrieve the list of trunk-vlans */
+        if swVlanConfig.swPortChannelMember.Config.TrunkVlans != nil {
+            vlanUnionList := swVlanConfig.swPortChannelMember.Config.TrunkVlans
+            if len(vlanUnionList) != 0 {
+                trunkVlanFound = true
+            }
+            for _, vlanUnion := range vlanUnionList {
+                vlanUnionType := reflect.TypeOf(vlanUnion).Elem()
+
+                switch vlanUnionType {
+
+                case reflect.TypeOf(ocbinds.OpenconfigInterfaces_Interfaces_Interface_Aggregation_SwitchedVlan_Config_TrunkVlans_Union_String{}):
+                    val := (vlanUnion).(*ocbinds.OpenconfigInterfaces_Interfaces_Interface_Aggregation_SwitchedVlan_Config_TrunkVlans_Union_String)
+                    trunkVlanSlice = append(trunkVlanSlice, val.String)
+                case reflect.TypeOf(ocbinds.OpenconfigInterfaces_Interfaces_Interface_Aggregation_SwitchedVlan_Config_TrunkVlans_Union_Uint16{}):
+                    val := (vlanUnion).(*ocbinds.OpenconfigInterfaces_Interfaces_Interface_Aggregation_SwitchedVlan_Config_TrunkVlans_Union_Uint16)
+                    trunkVlanSlice = append(trunkVlanSlice, "Vlan"+strconv.Itoa(int(val.Uint16)))
+                }
+            }
+        }
+        if swVlanConfig.swPortChannelMember.Config.InterfaceMode != ocbinds.OpenconfigVlan_VlanModeType_UNSET {
+            ifMode = swVlanConfig.swPortChannelMember.Config.InterfaceMode
         }
     }
 
@@ -620,13 +705,15 @@ func intfVlanMemberAdd(swVlanConfig *ocbinds.OpenconfigInterfaces_Interfaces_Int
             log.Info("Processing Interface VLAN addition failed!")
             return err
         }
-    return err
+        return err
     }
 
+    if ifMode == ocbinds.OpenconfigVlan_VlanModeType_UNSET {
+	    return nil
+	}
     /* Handling the request just for setting Interface Mode */
     log.Info("Request is for Configuring just the Mode for Interface: ", *ifName)
     var mode intfModeReq
-    ifMode := swVlanConfig.InterfaceMode
 
     switch ifMode {
     case ocbinds.OpenconfigVlan_VlanModeType_ACCESS:
@@ -674,13 +761,13 @@ func deleteVlanIntfAndMembers(inParams *XfmrParams, vlanName *string) error {
                 return err
             }
             vlanMemberKey := *vlanName + "|" + memberPort
-			vlanMemberMap[vlanMemberKey] = db.Value{Field:map[string]string{}} 
+      vlanMemberMap[vlanMemberKey] = db.Value{Field:map[string]string{}} 
             if err != nil {
                 return err
             }
         }
     }
-	vlanMap[*vlanName] = db.Value{Field:map[string]string{}}
+  vlanMap[*vlanName] = db.Value{Field:map[string]string{}}
     resMap[VLAN_TN] = vlanMap
     resMap[VLAN_MEMBER_TN] = vlanMemberMap
 
@@ -698,24 +785,41 @@ var YangToDb_sw_vlans_xfmr SubTreeXfmrYangToDb = func(inParams XfmrParams) (map[
 
     log.Info("YangToDb_sw_vlans_xfmr: ", inParams.uri)
 
+    var swVlanConfig swVlanMemberPort_t 
     pathInfo := NewPathInfo(inParams.uri)
     ifName := pathInfo.Var("name")
 
     deviceObj := (*inParams.ygRoot).(*ocbinds.Device)
     intfObj := deviceObj.Interfaces
 
-    log.Info("Switched vlans requrest for ", ifName)
+    log.Info("Switched vlans request for ", ifName)
     intf := intfObj.Interface[ifName]
 
-    if intf.Ethernet == nil || intf.Ethernet.SwitchedVlan == nil || intf.Ethernet.SwitchedVlan.Config == nil {
-        return nil, errors.New("Wrong config request!")
+    if intf.Ethernet == nil && intf.Aggregation == nil {
+        return nil, errors.New("Wrong Config Request")
+    }    
+    if intf.Ethernet != nil {
+        if intf.Ethernet.SwitchedVlan == nil || intf.Ethernet.SwitchedVlan.Config == nil {
+            return nil, errors.New("Wrong config request for Ethernet!")
+        }
+        swVlanConfig.swEthMember = intf.Ethernet.SwitchedVlan
     }
-    swVlanConfig := intf.Ethernet.SwitchedVlan.Config
+    if intf.Aggregation != nil {
+        if intf.Aggregation.SwitchedVlan == nil || intf.Aggregation.SwitchedVlan.Config == nil {
+            return nil, errors.New("Wrong Config Request for Port Channel")
+        }
+        swVlanConfig.swPortChannelMember = intf.Aggregation.SwitchedVlan
+    }
 
+    intfType, _, err := getIntfTypeByName(ifName)
+    if err != nil {
+        errStr := "Extraction of Interface type from Interface: " + ifName + " failed!"
+        return nil, errors.New(errStr)
+    }
     switch inParams.oper {
     case CREATE:
     case UPDATE:
-        err = intfVlanMemberAdd(swVlanConfig, &inParams, &ifName, vlanMap, vlanMemberMap)
+        err = intfVlanMemberAdd(&swVlanConfig, &inParams, &ifName, vlanMap, vlanMemberMap, intfType)
         if err != nil {
             log.Errorf("Interface VLAN member port addition failed for Interface: %s!", ifName)
             return nil, err
@@ -723,7 +827,7 @@ var YangToDb_sw_vlans_xfmr SubTreeXfmrYangToDb = func(inParams XfmrParams) (map[
         res_map[VLAN_TN] = vlanMap
         res_map[VLAN_MEMBER_TN] = vlanMemberMap
     case DELETE:
-        err = intfVlanMemberRemoval(swVlanConfig, &inParams, &ifName, vlanMap, vlanMemberMap)
+        err = intfVlanMemberRemoval(&swVlanConfig, &inParams, &ifName, vlanMap, vlanMemberMap, intfType)
         if err != nil {
             log.Errorf("Interface VLAN member port removal failed for Interface: %s!", ifName)
             return nil, err
@@ -738,10 +842,10 @@ var YangToDb_sw_vlans_xfmr SubTreeXfmrYangToDb = func(inParams XfmrParams) (map[
 }
 
 func fillDBSwitchedVlanInfoForIntf(d *db.DB, ifName *string, vlanMemberMap map[string]map[string]db.Value) error {
-  log.Info("fillDBSwitchedVlanInfoForIntf() called!")
+    log.Info("fillDBSwitchedVlanInfoForIntf() called!")
     var err error
 
-  vlanMemberTable, err := d.GetTable(&db.TableSpec{Name: VLAN_MEMBER_TN})
+    vlanMemberTable, err := d.GetTable(&db.TableSpec{Name: VLAN_MEMBER_TN})
     if err != nil {
         return err
     }
@@ -759,7 +863,7 @@ func fillDBSwitchedVlanInfoForIntf(d *db.DB, ifName *string, vlanMemberMap map[s
         ifName := vlanMember.Get(1)
         log.Infof("Received Vlan: %s for Interface: %s", vlanId, ifName)
 
-    memberPortEntry, err := d.GetEntry(&db.TableSpec{Name: VLAN_MEMBER_TN}, vlanMember)
+        memberPortEntry, err := d.GetEntry(&db.TableSpec{Name: VLAN_MEMBER_TN}, vlanMember)
         if err != nil {
             return err
         }
@@ -816,10 +920,11 @@ func getIntfVlanAttr(ifName *string, ifMode intfModeType, vlanMemberMap map[stri
 
 func getSpecificSwitchedVlanStateAttr(targetUriPath *string, ifKey *string, 
                                       vlanMemberMap map[string]map[string]db.Value,
-                                      oc_val *ocbinds.OpenconfigInterfaces_Interfaces_Interface_Ethernet_SwitchedVlan_State) (bool, error) {
+                                      swVlan *swVlanMemberPort_t, intfType E_InterfaceType) (bool, error) {
     log.Info("Specific Switched-vlan attribute!")
     switch *targetUriPath {
     case "/openconfig-interfaces:interfaces/interface/openconfig-if-ethernet:ethernet/openconfig-vlan:switched-vlan/state/access-vlan":
+    case "/openconfig-interfaces:interfaces/interface/openconfig-if-aggregate:aggregation/openconfig-vlan:switched-vlan/state/access-vlan":
         _, accessVlanName, e := getIntfVlanAttr(ifKey, ACCESS, vlanMemberMap)
         if e != nil {
             return true, e
@@ -837,25 +942,50 @@ func getSpecificSwitchedVlanStateAttr(targetUriPath *string, ifKey *string,
         }
         vlanIdCast := uint16(vlanId)
 
-        oc_val.AccessVlan = &vlanIdCast
+        switch intfType {
+        case IntfTypeEthernet:
+            swVlan.swEthMember.State.AccessVlan = &vlanIdCast
+        case IntfTypePortChannel:
+            swVlan.swPortChannelMember.State.AccessVlan = &vlanIdCast
+        }
         return true, nil
     case "/openconfig-interfaces:interfaces/interface/openconfig-if-ethernet:ethernet/openconfig-vlan:switched-vlan/state/trunk-vlans":
+    case "/openconfig-interfaces:interfaces/interface/openconfig-if-aggregate:aggregation/openconfig-vlan:switched-vlan/state/trunk-vlans":
         trunkVlans, _, e := getIntfVlanAttr(ifKey, TRUNK, vlanMemberMap)
         if e != nil {
             return true, e
         }
-        for _, vlanName := range trunkVlans {
-            log.Info("Trunk VLAN - ", vlanName)
-            vlanIdStr := vlanName[len("Vlan"):len(vlanName)]
-            vlanId, err := strconv.Atoi(vlanIdStr)
-            if err != nil {
-                errStr := "Conversion of string to int failed for " + vlanIdStr
-                return true, errors.New(errStr)
-            }
-            vlanIdCast := uint16(vlanId)
 
-            trunkVlan, _ := oc_val.To_OpenconfigInterfaces_Interfaces_Interface_Ethernet_SwitchedVlan_State_TrunkVlans_Union(vlanIdCast)
-            oc_val.TrunkVlans = append(oc_val.TrunkVlans, trunkVlan)
+        switch intfType {
+        case IntfTypeEthernet:
+
+            for _, vlanName := range trunkVlans {
+                log.Info("Trunk VLAN - ", vlanName)
+                vlanIdStr := vlanName[len("Vlan"):len(vlanName)]
+                vlanId, err := strconv.Atoi(vlanIdStr)
+                if err != nil {
+                    errStr := "Conversion of string to int failed for " + vlanIdStr
+                    return true, errors.New(errStr)
+                }
+                vlanIdCast := uint16(vlanId)
+
+                trunkVlan, _ := swVlan.swEthMember.State.To_OpenconfigInterfaces_Interfaces_Interface_Ethernet_SwitchedVlan_State_TrunkVlans_Union(vlanIdCast)
+                swVlan.swEthMember.State.TrunkVlans = append(swVlan.swEthMember.State.TrunkVlans, trunkVlan)
+            }
+        case IntfTypePortChannel:
+            for _, vlanName := range trunkVlans {
+                log.Info("Trunk VLAN - ", vlanName)
+                vlanIdStr := vlanName[len("Vlan"):len(vlanName)]
+                vlanId, err := strconv.Atoi(vlanIdStr)
+                if err != nil {
+                    errStr := "Conversion of string to int failed for " + vlanIdStr
+                    return true, errors.New(errStr)
+                }
+                vlanIdCast := uint16(vlanId)
+
+                trunkVlan, _ := swVlan.swPortChannelMember.State.To_OpenconfigInterfaces_Interfaces_Interface_Aggregation_SwitchedVlan_State_TrunkVlans_Union(vlanIdCast)
+                swVlan.swPortChannelMember.State.TrunkVlans = append(swVlan.swPortChannelMember.State.TrunkVlans, trunkVlan)
+            }
         }
         return true, nil
     case "/openconfig-interfaces:interfaces/interface/openconfig-if-ethernet:ethernet/openconfig-vlan:switched-vlan/state/interface-mode":
@@ -865,22 +995,11 @@ func getSpecificSwitchedVlanStateAttr(targetUriPath *string, ifKey *string,
 }
 
 func getSwitchedVlanState(ifKey *string, vlanMemberMap map[string]map[string]db.Value,
-                          oc_val *ocbinds.OpenconfigInterfaces_Interfaces_Interface_Ethernet_SwitchedVlan_State) (error) {
+                          swVlan *swVlanMemberPort_t, intfType E_InterfaceType) (error) {
     /* Get Access VLAN info for Interface */
     _, accessVlanName, e := getIntfVlanAttr(ifKey, ACCESS, vlanMemberMap)
     if e != nil {
         return e
-    }
-    if accessVlanName != nil {
-        vlanName := *accessVlanName
-        vlanIdStr := vlanName[len("Vlan"):len(vlanName)]
-        vlanId, err := strconv.Atoi(vlanIdStr)
-        if err != nil {
-            errStr := "Conversion of string to int failed for " + vlanIdStr
-            return errors.New(errStr)
-        }
-        vlanIdCast := uint16(vlanId)
-        oc_val.AccessVlan = &vlanIdCast
     }
 
     /* Get Trunk VLAN info for Interface */
@@ -888,25 +1007,62 @@ func getSwitchedVlanState(ifKey *string, vlanMemberMap map[string]map[string]db.
     if e != nil {
         return e
     }
-    for _, vlanName := range trunkVlans {
-        vlanIdStr := vlanName[len("Vlan"):len(vlanName)]
-        vlanId, err := strconv.Atoi(vlanIdStr)
-        if err != nil {
-            errStr := "Conversion of string to int failed for " + vlanIdStr
-            return errors.New(errStr)
-        }
-        vlanIdCast := uint16(vlanId)
-        trunkVlan, _ := oc_val.To_OpenconfigInterfaces_Interfaces_Interface_Ethernet_SwitchedVlan_State_TrunkVlans_Union(vlanIdCast)
-        oc_val.TrunkVlans = append(oc_val.TrunkVlans, trunkVlan)
-    }
-  return nil 
-}
 
+    switch intfType {
+    case IntfTypeEthernet:
+        if accessVlanName != nil {
+            vlanName := *accessVlanName
+            vlanIdStr := vlanName[len("Vlan"):len(vlanName)]
+            vlanId, err := strconv.Atoi(vlanIdStr)
+            if err != nil {
+                errStr := "Conversion of string to int failed for " + vlanIdStr
+                return errors.New(errStr)
+            }
+            vlanIdCast := uint16(vlanId)
+            swVlan.swEthMember.State.AccessVlan = &vlanIdCast
+        }
+        for _, vlanName := range trunkVlans {
+            vlanIdStr := vlanName[len("Vlan"):len(vlanName)]
+            vlanId, err := strconv.Atoi(vlanIdStr)
+            if err != nil {
+                errStr := "Conversion of string to int failed for " + vlanIdStr
+                return errors.New(errStr)
+            }
+            vlanIdCast := uint16(vlanId)
+            trunkVlan, _ := swVlan.swEthMember.State.To_OpenconfigInterfaces_Interfaces_Interface_Ethernet_SwitchedVlan_State_TrunkVlans_Union(vlanIdCast)
+            swVlan.swEthMember.State.TrunkVlans = append(swVlan.swEthMember.State.TrunkVlans, trunkVlan)
+        }
+    case IntfTypePortChannel:
+        if accessVlanName != nil {
+            vlanName := *accessVlanName
+            vlanIdStr := vlanName[len("Vlan"):len(vlanName)]
+            vlanId, err := strconv.Atoi(vlanIdStr)
+            if err != nil {
+                errStr := "Conversion of string to int failed for " + vlanIdStr
+                return errors.New(errStr)
+            }
+            vlanIdCast := uint16(vlanId)
+            swVlan.swPortChannelMember.State.AccessVlan = &vlanIdCast
+        }
+        for _, vlanName := range trunkVlans {
+            vlanIdStr := vlanName[len("Vlan"):len(vlanName)]
+            vlanId, err := strconv.Atoi(vlanIdStr)
+            if err != nil {
+                errStr := "Conversion of string to int failed for " + vlanIdStr
+                return errors.New(errStr)
+            }
+            vlanIdCast := uint16(vlanId)
+            trunkVlan, _ := swVlan.swPortChannelMember.State.To_OpenconfigInterfaces_Interfaces_Interface_Aggregation_SwitchedVlan_State_TrunkVlans_Union(vlanIdCast)
+            swVlan.swPortChannelMember.State.TrunkVlans = append(swVlan.swPortChannelMember.State.TrunkVlans, trunkVlan)
+        }
+    }
+    return nil 
+}
 
 /* Subtree transformer supports GET operation */
 var DbToYang_sw_vlans_xfmr SubTreeXfmrDbToYang = func (inParams XfmrParams) (error) {
     var err error
-
+    var swVlan swVlanMemberPort_t
     intfsObj := getIntfsRoot(inParams.ygRoot)
     if intfsObj == nil {
         errStr := "Nil root object received for Ethernet-Switched VLAN Get!"
@@ -929,42 +1085,78 @@ var DbToYang_sw_vlans_xfmr SubTreeXfmrDbToYang = func (inParams XfmrParams) (err
     log.Info("targetUriPath is ", targetUriPath)
 
     /* Transformer must have given a tree with everything filled up to switched-vlan container */
-    if strings.HasPrefix(targetUriPath, "/openconfig-interfaces:interfaces/interface/openconfig-if-ethernet:ethernet/openconfig-vlan:switched-vlan") {
+    if strings.HasPrefix(targetUriPath, "/openconfig-interfaces:interfaces/interface/openconfig-if-ethernet:ethernet/openconfig-vlan:switched-vlan") ||
+       strings.HasPrefix(targetUriPath, "/openconfig-interfaces:interfaces/interface/openconfig-if-aggregate:aggregation/openconfig-vlan:switched-vlan") {
         intfObj := intfsObj.Interface[ifName]
-        if intfObj == nil || intfObj.Ethernet == nil || intfObj.Ethernet.SwitchedVlan == nil {
-            errStr := "Required tree for Switched-Vlan request not built correctly!"
-            return errors.New(errStr)
+        if intfObj.Ethernet == nil && intfObj.Aggregation == nil {
+            return errors.New("Wrong GET request for switched-vlan!")
         }
-        if strings.HasPrefix(targetUriPath, "/openconfig-interfaces:interfaces/interface/openconfig-if-ethernet:ethernet/openconfig-vlan:switched-vlan/state") {
-            if intfObj.Ethernet.SwitchedVlan.State == nil {
-                errStr := "Switched-vlan state tree not built correctly!"
+        if intfObj.Ethernet != nil {
+            if intfObj.Ethernet.SwitchedVlan == nil {
+                errStr := "Required tree for Ethernet-Switched-Vlan request not built correctly!"
                 return errors.New(errStr)
             }
-            vlanMemberMap := make(map[string]map[string]db.Value)
-            err = fillDBSwitchedVlanInfoForIntf(inParams.d, &ifName, vlanMemberMap)
-            if err != nil {
-                log.Errorf("Filiing Switched Vlan Info for Interface: %s failed!", ifName)
-                return err
-            }
-            log.Info("Succesfully completed DB population!")
-            ocEthernetVlanStateVal := intfObj.Ethernet.SwitchedVlan.State
-            if ocEthernetVlanStateVal == nil {
-                errStr := "Tree creation for Switched Vlan state failed!"
-                log.Errorf(errStr)
+            swVlan.swEthMember = intfObj.Ethernet.SwitchedVlan
+        }
+        if intfObj.Aggregation != nil {
+            if intfObj.Aggregation.SwitchedVlan == nil {
+                errStr := "Required tree for Aggregation-Switched-Vlan request not built correctly!"
                 return errors.New(errStr)
             }
-            attrPresent, err := getSpecificSwitchedVlanStateAttr(&targetUriPath, &ifName, vlanMemberMap, ocEthernetVlanStateVal)
-            if(err != nil) {
-                return err
-            }
-            if(!attrPresent) {
-                log.Infof("Get is for Switched Vlan State Container!")
-                err = getSwitchedVlanState(&ifName, vlanMemberMap, ocEthernetVlanStateVal)
+            swVlan.swPortChannelMember = intfObj.Aggregation.SwitchedVlan
+        }
+        if strings.HasPrefix(targetUriPath, "/openconfig-interfaces:interfaces/interface/openconfig-if-ethernet:ethernet/openconfig-vlan:switched-vlan/state") ||
+           strings.HasPrefix(targetUriPath, "/openconfig-interfaces:interfaces/interface/openconfig-if-aggregate:aggregation/openconfig-vlan:switched-vlan/state") {
+            switch intfType {
+            case IntfTypeEthernet:
+                if intfObj.Ethernet.SwitchedVlan.State == nil {
+                    errStr := "Switched-vlan state tree not built correctly!"
+                    return errors.New(errStr)
+                }
+                vlanMemberMap := make(map[string]map[string]db.Value)
+                err = fillDBSwitchedVlanInfoForIntf(inParams.d, &ifName, vlanMemberMap)
                 if err != nil {
+                    log.Errorf("Filiing Switched Vlan Info for Interface: %s failed!", ifName)
                     return err
                 }
-            }
+                log.Info("Succesfully completed DB population for Ethernet!")
+                attrPresent, err := getSpecificSwitchedVlanStateAttr(&targetUriPath, &ifName, vlanMemberMap, &swVlan, intfType)
+                if(err != nil) {
+                    return err
+                }
+                if(!attrPresent) {
+                    log.Infof("Get is for Switched Vlan State Container!")
+                    err = getSwitchedVlanState(&ifName, vlanMemberMap, &swVlan, intfType)
+                    if err != nil {
+                        return err
+                    }
+                }
 
+            case IntfTypePortChannel:
+
+                if intfObj.Aggregation.SwitchedVlan.State == nil {
+                    errStr := "Switched-vlan state tree not built correctly!"
+                    return errors.New(errStr)
+                }
+                vlanMemberMap := make(map[string]map[string]db.Value)
+                err = fillDBSwitchedVlanInfoForIntf(inParams.d, &ifName, vlanMemberMap)
+                if err != nil {
+                    log.Errorf("Filiing Switched Vlan Info for Interface: %s failed!", ifName)
+                    return err
+                }
+                log.Info("Succesfully completed DB population for Port-Channel!")
+                attrPresent, err := getSpecificSwitchedVlanStateAttr(&targetUriPath, &ifName, vlanMemberMap, &swVlan, intfType)
+                if(err != nil) {
+                    return err
+                }
+                if(!attrPresent) {
+                    log.Infof("Get is for Switched Vlan State Container!")
+                    err = getSwitchedVlanState(&ifName, vlanMemberMap, &swVlan, intfType)
+                    if err != nil {
+                        return err
+                    }
+                }
+            } 
         } else {
             errStr := "Not Supported URI: " + targetUriPath
             log.Errorf(errStr)
@@ -972,6 +1164,6 @@ var DbToYang_sw_vlans_xfmr SubTreeXfmrDbToYang = func (inParams XfmrParams) (err
         }
     } else {
         err = errors.New("Invalid URI : " + targetUriPath)
-    }
+  }
     return err
 }
