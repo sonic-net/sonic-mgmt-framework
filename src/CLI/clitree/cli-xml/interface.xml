@@ -231,7 +231,7 @@ limitations under the License.
                 ptype="LAG_ID"
                 >
         </PARAM>
-        <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface PortChannel${lag-id}</ACTION>
+        <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config PortChannel${lag-id}</ACTION>
     </COMMAND>
 
      <!-- no interface commands -->
@@ -594,6 +594,134 @@ limitations under the License.
         completion="false"
         />
 
+        <COMMAND
+            name="switchport"
+            help="Configure switchport parameters"
+            >
+            <PARAM
+                name="switchport-subcommands"
+                help="Switchport subcommands"
+                ptype="SUBCOMMAND"
+                mode="switch"
+                >
+                <PARAM
+                    name="access"
+                    help="Set access mode characteristics of the interface"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    >
+                    <PARAM
+                        name="Vlan"
+                        help="Set VLAN when interface is in access mode"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        >
+                        <PARAM
+                            name="vlan-id"
+                            help="VLAN ID of the VLAN when this port is in access mode"
+                            ptype="VLAN_ID"
+                            >
+                        </PARAM>
+                    </PARAM>
+                </PARAM>
+
+                <PARAM
+                    name="trunk"
+                    help="Configure trunking parameters on an interface"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    >
+                    <PARAM
+                        name="allowed"
+                        help="Configure trunking parameters on an interface"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        >
+                        <PARAM
+                            name="Vlan"
+                            help="Configure trunking parameters on an interface"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            >
+                            <PARAM
+                                name="vlan-id"
+                                help="VLAN ID of the VLAN when this port is in trunk mode"
+                                ptype="VLAN_ID"
+                                >
+                            </PARAM>
+                        </PARAM>
+                    </PARAM>
+                </PARAM>
+          </PARAM>
+       <ACTION>
+         if test "${switchport-subcommands}" = "access"; then&#xA;
+             python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_vlan_interfaces_interface_aggregation_switched_vlan_config ${iface} ACCESS ${vlan-id}&#xA;
+         else&#xA;
+             python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_vlan_interfaces_interface_aggregation_switched_vlan_config ${iface} TRUNK ${vlan-id}&#xA;
+        fi
+       </ACTION>
+       </COMMAND>
+       <COMMAND
+           name="no switchport"
+           help="Remove switchport parameters"
+           >
+           <PARAM
+               name="switchport-subcommands"
+               help="Switchport subcommands"
+               ptype="SUBCOMMAND"
+               mode="switch"
+               >
+               <PARAM
+                   name="access"
+                   help="Remove access mode characteristics of the interface"
+                   ptype="SUBCOMMAND"
+                   mode="subcommand"
+                   >
+                   <PARAM
+                       name="Vlan"
+                       help="Remove VLAN when interface is in access mode"
+                       ptype="SUBCOMMAND"
+                       mode="subcommand"
+                       >
+                   </PARAM>
+               </PARAM>
+
+               <PARAM
+                    name="trunk"
+                    help="Remove trunking parameters on an interface"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    >
+                    <PARAM
+                        name="allowed"
+                        help="Remove trunking parameters on an interface"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        >
+                        <PARAM
+                            name="Vlan"
+                            help="Remove trunking parameters on an interface"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            >
+                            <PARAM
+                                name="vlan-id"
+                                help="VLAN ID of the VLAN when this port is in trunk mode"
+                                ptype="VLAN_ID"
+                                >
+                            </PARAM>
+                        </PARAM>
+                    </PARAM>
+               </PARAM>
+           </PARAM>
+      <ACTION>
+          if test "${switchport-subcommands}" = "access"; then&#xA;
+              python $SONIC_CLI_ROOT/sonic-cli-if.py delete_openconfig_vlan_interfaces_interface_aggregation_switched_vlan_config_access_vlan ${iface} ACCESS&#xA;
+          else&#xA;
+              python $SONIC_CLI_ROOT/sonic-cli-if.py del_llist_openconfig_vlan_interfaces_interface_aggregation_switched_vlan_config_trunk_vlans ${iface} TRUNK ${vlan-id}&#xA;
+          fi
+      </ACTION>
+      </COMMAND>
     <COMMAND
         name="no"
         help="Negate a command or set its defaults"

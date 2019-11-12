@@ -141,7 +141,6 @@ func mapFillDataUtil(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, xpat
 				}
 			}
 		}
-		ocbSch, _ = ocbinds.Schema()
 		schRoot := ocbSch.RootSchema()
 		node, nErr := ytypes.GetNode(schRoot, (*ygRoot).(*ocbinds.Device), path)
 		log.Info("GetNode data: ", node[0].Data, " nErr :", nErr)
@@ -545,7 +544,6 @@ func yangNodeForUriGet(uri string, ygRoot *ygot.GoStruct) (interface{}, error) {
 			}
 		}
 	}
-	ocbSch, _ = ocbinds.Schema()
 	schRoot := ocbSch.RootSchema()
 	node, nErr := ytypes.GetNode(schRoot, (*ygRoot).(*ocbinds.Device), path)
 	if nErr != nil {

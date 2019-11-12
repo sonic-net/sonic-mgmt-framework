@@ -105,16 +105,6 @@ module openconfig-interfaces-annot {
             sonic-ext:subtree-transformer "intf_eth_port_config_xfmr";
         }
     }
-//    deviation /oc-intf:interfaces/oc-intf:interface/oc-eth:ethernet/oc-eth:config/oc-eth:auto-negotiate {
-//        deviate add {
-//            sonic-ext:field-transformer "intf_eth_auto_neg_xfmr";
-//        }
-//    }
-//    deviation /oc-intf:interfaces/oc-intf:interface/oc-eth:ethernet/oc-eth:config/oc-eth:port-speed {
-//        deviate add {
-//            sonic-ext:field-transformer "intf_eth_port_speed_xfmr";
-//        }
-//    }
     deviation /oc-intf:interfaces/oc-intf:interface/oc-eth:ethernet/oc-eth:state {
         deviate add {
             sonic-ext:db-name "APPL_DB";
@@ -132,12 +122,17 @@ module openconfig-interfaces-annot {
         }
     }
 
-     deviation /oc-intf:interfaces/oc-intf:interface/oc-eth:ethernet/oc-vlan:switched-vlan {
+     deviation /oc-intf:interfaces/oc-intf:interface/oc-lag:aggregation/oc-vlan:switched-vlan {
         deviate add {
             sonic-ext:subtree-transformer "sw_vlans_xfmr";
         }
     }
 
+     deviation /oc-intf:interfaces/oc-intf:interface/oc-eth:ethernet/oc-vlan:switched-vlan {
+        deviate add {
+            sonic-ext:subtree-transformer "sw_vlans_xfmr";
+        }
+    }
     deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface {
         deviate add {
             sonic-ext:key-transformer "intf_subintfs_xfmr";

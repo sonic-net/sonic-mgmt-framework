@@ -1,3 +1,21 @@
+//////////////////////////////////////////////////////////////////////////
+//
+// Copyright 2019 Dell, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+//////////////////////////////////////////////////////////////////////////
+
 package transformer
 
 import (
@@ -200,8 +218,8 @@ var YangToDb_intf_tbl_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (stri
 
     log.Info("Intf name ", ifName)
     log.Info("Exiting YangToDb_intf_tbl_key_xfmr")
-    if inParams.oper == UPDATE || inParams.oper == CREATE {
-        log.Info("Update/Create operation")
+    if inParams.oper != DELETE {
+        log.Info("Not a DELETE operation, returning interface name: ", ifName)
         return ifName, err
     }
     intfType, _, ierr := getIntfTypeByName(ifName)
@@ -496,23 +514,6 @@ var DbToYang_intf_oper_status_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams)
     return result, err
 }
 
-/*
-var YangToDb_intf_eth_auto_neg_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
-    res_map := make(map[string]string)
-
-    autoNeg, _ := inParams.param.(*bool)
-    var enStr string
-    if *autoNeg == true {
-        enStr = "true"
-    } else {
-        enStr = "false"
-    }
-    res_map[PORT_AUTONEG] = enStr
-
-    return res_map, nil
-}
-*/
-
 var DbToYang_intf_eth_auto_neg_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (map[string]interface{}, error) {
     var err error
     result := make(map[string]interface{})
@@ -540,23 +541,6 @@ var DbToYang_intf_eth_auto_neg_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams
     }
     return result, err
 }
-
-/*
-var YangToDb_intf_eth_port_speed_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
-    res_map := make(map[string]string)
-    var err error
-
-    portSpeed, _ := inParams.param.(ocbinds.E_OpenconfigIfEthernet_ETHERNET_SPEED)
-    val, ok := intfOCToSpeedMap[portSpeed]
-    if ok {
-        res_map[PORT_SPEED] = val
-    } else {
-        err = errors.New("Invalid/Unsupported speed.")
-    }
-
-    return res_map, err
-}
-*/
 
 var DbToYang_intf_eth_port_speed_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (map[string]interface{}, error) {
     var err error
