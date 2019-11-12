@@ -126,6 +126,10 @@ module sonic-spanning-tree {
                     default 30;
                 }
 
+                leaf bpdu_filter {
+                    type boolean;
+                }
+
                 uses vlanModeAttr;
             }
         }
@@ -133,9 +137,6 @@ module sonic-spanning-tree {
         container STP_VLAN {
             list STP_VLAN_LIST {
                 key "name";
-                must "./name = concat('Vlan', string(./vlanid))" {
-                    error-app-tag vlan-invalid;
-                }
 
                 leaf name {
                     type leafref {
@@ -144,7 +145,6 @@ module sonic-spanning-tree {
                 }
 
                 leaf vlanid {
-                    mandatory true;
                     type uint16 {
                         range "1..4095" {
                             error-message "Vlan ID out of range";
@@ -209,7 +209,11 @@ module sonic-spanning-tree {
                 }
 
                 leaf bpdu_filter {
-                    type boolean;
+                    type enumeration {
+                        enum enable;
+                        enum disable;
+                        enum global;
+                    }
                 }
 
                 leaf bpdu_guard_do_disable {
@@ -232,9 +236,13 @@ module sonic-spanning-tree {
                     type boolean;
                 }
 
-                leaf pt2pt_mac {
+                leaf link_type {
                     //when ("../../../STP/STP_LIST/mode='rpvst'");
-                    type boolean;
+                    type enumeration {
+                        enum auto;
+                        enum shared;
+                        enum point-to-point;
+                    }
                 }
             }
         }

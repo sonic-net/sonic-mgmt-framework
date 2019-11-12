@@ -11,9 +11,7 @@
           <PARAM name="Ethernet" help="Interface type" ptype="SUBCOMMAND" mode="subcommand">
             <PARAM name="ptp_port_number" help="Enter PTP number" ptype="UINT"/>
           </PARAM>
-          <PARAM name="ptp_port_mode" help="Enter ptp port mode" ptype="PTP_PORT_MODE"/>
         </PARAM>
-        <PARAM name="foreign-masters-record" help="foreign masters record" ptype="SUBCOMMAND" mode="subcommand"> </PARAM>
       </PARAM>
       <ACTION>if test "${ptp-subcommands}" = "time-property"; then&#xA;
  python $SONIC_CLI_ROOT/sonic-cli-ptp.py get_ietf_ptp_ptp_instance_list_time_properties_ds 0 ptp_tp_show.j2 &#xA;
@@ -21,8 +19,6 @@
  python $SONIC_CLI_ROOT/sonic-cli-ptp.py get_ietf_ptp_ptp_instance_list_default_ds 0 ptp_clock_show.j2 &#xA;
  elif test "${ptp-subcommands}" = "parent"; then&#xA;
  python $SONIC_CLI_ROOT/sonic-cli-ptp.py get_ietf_ptp_ptp_instance_list_parent_ds 0 ptp_parent_show.j2 &#xA;
- elif test "${ptp-subcommands}" = "foreign-masters-record"; then&#xA;
- echo "nothing"&#xA;
  elif test "${ptp-subcommands}" = "port"; then&#xA;
  python $SONIC_CLI_ROOT/sonic-cli-ptp.py get_ietf_ptp_ptp_instance_list_port_ds_list 0 ${ptp_port_number} ptp_port_show.j2 &#xA;
  elif test "${ptp-subcommands}" = ""; then&#xA;
