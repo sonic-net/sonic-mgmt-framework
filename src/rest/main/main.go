@@ -97,6 +97,9 @@ func main() {
 		server.UserAuth.Jwt = true
 		server.GenerateJwtSecretKey()
 	}
+	if clientAuth == "cert" {
+		server.UserAuth.Cert = true
+	}
 
 	router := server.NewRouter()
 

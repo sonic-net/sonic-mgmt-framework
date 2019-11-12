@@ -67,7 +67,13 @@ func PAMAuthUser(u string, p string) error {
 }
 */
 
-
+func DoesUserExist(username string) bool {
+	_, err := user.Lookup(username)
+	if err != nil {
+		return false
+	}
+	return true
+}
 func IsAdminGroup(username string) bool {
 
 	usr, err := user.Lookup(username)
