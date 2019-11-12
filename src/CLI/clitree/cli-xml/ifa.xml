@@ -45,12 +45,7 @@ limitations under the License.
     </COMMAND>
   </VIEW>
 
-  <VIEW name="configure-view">
-    <!-- tam-int-ifa -->
-    <COMMAND name="tam-int-ifa" help="TAM IFA Configuration" mode="subcommand" ptype="SUBCOMMAND" view="config-tam-int-ifa"/>
-  </VIEW>
-
-  <VIEW name="config-tam-int-ifa" prompt="${SYSTEM_NAME}(config-tam-int-ifa)# " depth="2">
+  <VIEW name="config-int-ifa" prompt="${SYSTEM_NAME}(config-tam-int-ifa)# " depth="2">
     <COMMAND name="no" help="Negate a command or set its defaults" />
 
     <!-- tam-int-ifa enable/disable -->
