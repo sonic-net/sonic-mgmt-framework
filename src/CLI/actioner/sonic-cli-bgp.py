@@ -52,6 +52,12 @@ GLOBAF_OCSTRG_LEN=len(GLOBAF_OCSTRG)
 DELETE_GLOBAF_OCPREFIX=DELETE_OCPREFIX+GLOBAF_OCSTRG
 DELETE_GLOBAF_OCPREFIX_LEN=len(DELETE_GLOBAF_OCPREFIX)
 
+NEIGAF_OCSTRG='openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi'
+NEIGAF_OCSTRG_LEN=len(NEIGAF_OCSTRG)
+DELETE_NEIGAF_OCPREFIX=DELETE_OCPREFIX+NEIGAF_OCSTRG
+DELETE_NEIGAF_OCPREFIX_LEN=len(DELETE_NEIGAF_OCPREFIX)
+
+
 def invoke_api(func, args=[]):
     api = cc.ApiClient()
     keypath = []
@@ -174,12 +180,12 @@ def invoke_api(func, args=[]):
     elif func == 'patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_timers_config_keepalive_interval':
         keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/neighbors/neighbor={neighbor_address}/timers/config/keepalive-interval',
 		name=args[0], identifier=IDENTIFIER, name1=NAME1, neighbor_address=args[1])
-        body = { "openconfig-network-instance:keepalive-interval": int(args[2]) }
+        body = { "openconfig-network-instance:keepalive-interval": args[2] }
         return api.patch(keypath, body)
     elif func == 'patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_timers_config_hold_time':
         keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/neighbors/neighbor={neighbor_address}/timers/config/hold-time',
 		name=args[0], identifier=IDENTIFIER, name1=NAME1, neighbor_address=args[1])
-        body = { "openconfig-network-instance:hold-time": int(args[2]) }
+        body = { "openconfig-network-instance:hold-time": args[2] }
         return api.patch(keypath, body)
     elif func == 'patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_transport_config_local_address':
         keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/neighbors/neighbor={neighbor_address}/transport/config/local-address',
@@ -192,6 +198,12 @@ def invoke_api(func, args=[]):
         body = { "openconfig-network-instance:enabled": True }
         return api.patch(keypath, body)
 
+    # OC-prefixes can be substring of parent prefixes, so check the longer child prefixes before the parents.
+    elif func[0:DELETE_NEIGAF_OCPREFIX_LEN] == DELETE_NEIGAF_OCPREFIX:
+        uri = restconf_map[func[DELETE_OCPREFIX_LEN:]]
+        keypath = cc.Path(uri.replace('{neighbor-address}', '{neighbor_address}').replace('{afi-safi-name}', '{afi_safi_name}'),
+               name=args[0], identifier=IDENTIFIER, name1=NAME1, neighbor_address=args[1], afi_safi_name=args[2])
+        return api.delete(keypath)
     elif func[0:DELETE_NEIGHB_OCPREFIX_LEN] == DELETE_NEIGHB_OCPREFIX:
         uri = restconf_map[func[DELETE_OCPREFIX_LEN:]]
         keypath = cc.Path(uri.replace('{neighbor-address}', '{neighbor_address}'),
@@ -208,7 +220,6 @@ def invoke_api(func, args=[]):
                name=args[0], identifier=IDENTIFIER, name1=NAME1, afi_safi_name=args[1])
         return api.delete(keypath)
     elif func[0:DELETE_GLOBAL_OCPREFIX_LEN] == DELETE_GLOBAL_OCPREFIX:
-        # GLOBAL is substring of GLOBAF, so must be after GLOBAF
         keypath = cc.Path(restconf_map[func[DELETE_OCPREFIX_LEN:]],
                name=args[0], identifier=IDENTIFIER, name1=NAME1)
         return api.delete(keypath)
