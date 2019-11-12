@@ -357,9 +357,15 @@ module openconfig-routing-policy-annot {
       }
     }
 
+    deviation /oc-rpol:routing-policy/oc-rpol:defined-sets/oc-rpol:prefix-sets/oc-rpol:prefix-set/oc-rpol:name {
+        deviate add {
+            sonic-ext:field-transformer "prefix_set_name_fld_xfmr";
+        }
+    }
+
     deviation /oc-rpol:routing-policy/oc-rpol:defined-sets/oc-rpol:prefix-sets/oc-rpol:prefix-set/oc-rpol:config/oc-rpol:name {
       deviate add {
-        sonic-ext:field-transformer "prefix_set_name_fld_xfmr";
+        sonic-ext:field-transformer "prefix_cfg_set_name_fld_xfmr";
       }
     }
 
@@ -371,7 +377,7 @@ module openconfig-routing-policy-annot {
 
     deviation /oc-rpol:routing-policy/oc-rpol:defined-sets/oc-rpol:prefix-sets/oc-rpol:prefix-set/oc-rpol:state/oc-rpol:name {
       deviate add {
-        sonic-ext:field-transformer "prefix_set_name_fld_xfmr";
+        sonic-ext:field-transformer "prefix_cfg_set_name_fld_xfmr";
       }
     }
 
@@ -383,16 +389,22 @@ module openconfig-routing-policy-annot {
 
     /* prefix table */
 
-    deviation /oc-rpol:routing-policy/oc-rpol:defined-sets/oc-rpol:prefix-sets/oc-rpol:prefix-set/oc-rpol:prefixes/oc-rpol:prefix {
+    deviation /oc-rpol:routing-policy/oc-rpol:defined-sets/oc-rpol:prefix-sets/oc-rpol:prefix-set/oc-rpol:prefixes/oc-rpol:prefix    {
       deviate add {
         sonic-ext:table-name "PREFIX";
         sonic-ext:key-transformer "prefix_key_xfmr";
       }
     }
 
-    deviation /oc-rpol:routing-policy/oc-rpol:defined-sets/oc-rpol:prefix-sets/oc-rpol:prefix-set/oc-rpol:prefixes/oc-rpol:prefix/oc-rpol:config/oc-rpol:ip-prefix {
+    deviation   /oc-rpol:routing-policy/oc-rpol:defined-sets/oc-rpol:prefix-sets/oc-rpol:prefix-set/oc-rpol:prefixes/oc-rpol:prefix/oc-rpol:ip-prefix {
       deviate add {
         sonic-ext:field-transformer "prefix_ip_prefix_fld_xfmr";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:defined-sets/oc-rpol:prefix-sets/oc-rpol:prefix-set/oc-rpol:prefixes/oc-rpol:prefix/oc-rpol:config/oc-rpol:ip-prefix {
+      deviate add {
+        sonic-ext:field-transformer "prefix_cfg_ip_prefix_fld_xfmr";
       }
     }
 
@@ -404,7 +416,7 @@ module openconfig-routing-policy-annot {
 
     deviation /oc-rpol:routing-policy/oc-rpol:defined-sets/oc-rpol:prefix-sets/oc-rpol:prefix-set/oc-rpol:prefixes/oc-rpol:prefix/oc-rpol:state/oc-rpol:ip-prefix {
       deviate add {
-        sonic-ext:field-transformer "prefix_ip_prefix_fld_xfmr";
+        sonic-ext:field-transformer "prefix_cfg_ip_prefix_fld_xfmr";
       }
     }
 
