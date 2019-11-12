@@ -2,44 +2,34 @@ import sys
 import time
 import json
 import ast
-import sonic_tam_client
-from sonic_tam_client.rest import ApiException
+import cli_client as cc
+import collections
+from rpipe_utils import pipestr
 from scripts.render_cli import show_cli_output
 
-import urllib3
-urllib3.disable_warnings()
-
-
-plugins = dict()
-
-def register(func):
-    """Register sdk client method as a plug-in"""
-    plugins[func.__name__] = func
-    return func
-
-
-def call_method(name, args):
-    method = plugins[name]
-    return method(args)
-
-def generate_body(func, args):
+def invoke_api(func, args):
+    api = cc.ApiClient()
     body = None
-    keypath = []
 
     # Set/Get the rules of all IFA table entries.
-    if func.__name__ == 'get_sonic_tam_sonic_tam_tam_device_table':
-       keypath = []
-    elif func.__name__ == 'get_sonic_tam_sonic_tam_tam_collector_table':
-       keypath = []
-    elif func.__name__ == 'get_sonic_tam_sonic_tam_tam_collector_table_tam_collector_table_list':
-       keypath = [args[0]]
-    elif func.__name__ == 'patch_sonic_tam_sonic_tam_tam_device_table_tam_device_table_list_deviceid':
-       keypath = [ args[0] ]
+    if func == 'get_sonic_tam_sonic_tam_tam_device_table':
+       path = cc.Path('/restconf/data/sonic-tam:sonic-tam/TAM_DEVICE_TABLE')
+       return api.get(path)
+    elif func == 'get_sonic_tam_sonic_tam_tam_collector_table':
+       path = cc.Path('/restconf/data/sonic-tam:sonic-tam/TAM_COLLECTOR_TABLE')
+       return api.get(path)
+    elif func == 'get_sonic_tam_sonic_tam_tam_collector_table_tam_collector_table_list':
+       path = cc.Path('/restconf/data/sonic-tam:sonic-tam/TAM_COLLECTOR_TABLE/TAM_COLLECTOR_TABLE_LIST={name}', name=args[0])
+       return api.get(path)
+    elif func == 'patch_sonic_tam_sonic_tam_tam_device_table_tam_device_table_list_deviceid':
+       path = cc.Path('/restconf/data/sonic-tam:sonic-tam/TAM_DEVICE_TABLE/TAM_DEVICE_TABLE_LIST={device}/deviceid', device=args[0])
        body = { "sonic-tam:deviceid": int(args[1]) }
-    elif func.__name__ == 'delete_sonic_tam_sonic_tam_tam_device_table_tam_device_table_list_deviceid':
-       keypath = [args[0]]
-    elif func.__name__ == 'patch_list_sonic_tam_sonic_tam_tam_collector_table_tam_collector_table_list':
-       keypath = [ ]
+       return api.patch(path, body)
+    elif func == 'delete_sonic_tam_sonic_tam_tam_device_table_tam_device_table_list_deviceid':
+       path = cc.Path('/restconf/data/sonic-tam:sonic-tam/TAM_DEVICE_TABLE/TAM_DEVICE_TABLE_LIST={device}/deviceid', device=args[0])
+       return api.patch(path, body)
+    elif func == 'patch_list_sonic_tam_sonic_tam_tam_collector_table_tam_collector_table_list':
+       path = cc.Path('/restconf/data/sonic-tam:sonic-tam/TAM_COLLECTOR_TABLE/TAM_COLLECTOR_TABLE_LIST')
        body = {
            "sonic-tam:TAM_COLLECTOR_TABLE_LIST": [
               {
@@ -47,33 +37,22 @@ def generate_body(func, args):
               }
            ]
        }
-    elif func.__name__ == 'delete_sonic_tam_sonic_tam_tam_collector_table_tam_collector_table_list':
-       keypath = [ args[0] ]
+       return api.patch(path, body)
+    elif func == 'delete_sonic_tam_sonic_tam_tam_collector_table_tam_collector_table_list':
+       path = cc.Path('/restconf/data/sonic-tam:sonic-tam/TAM_COLLECTOR_TABLE/TAM_COLLECTOR_TABLE_LIST={name}', name=args[0])
+       return api.patch(path, body)
     else:
        body = {}
 
-    return keypath,body
+    return api.cli_not_implemented(func)
 
 def run(func, args):
 
-    c = sonic_tam_client.Configuration()
-    c.verify_ssl = False
-    aa = sonic_tam_client.SonicTamApi(api_client=sonic_tam_client.ApiClient(configuration=c))
-
-    # create a body block
-    keypath, body = generate_body(func, args)
-
-    try:
-        if body is not None:
-           api_response = getattr(aa,func.__name__)(*keypath, body=body)
-        else :
-           api_response = getattr(aa,func.__name__)(*keypath)
-
-        if api_response is None:
-            print ("Success")
-        else:
+    response = invoke_api(func, args)
+    if response.ok():
+        if response.content is not None:
             # Get Command Output
-            api_response = aa.api_client.sanitize_for_serialization(api_response)
+            api_response = response.content
             if 'sonic-tam:sonic-tam' in api_response:
                 value = api_response['sonic-tam:sonic-tam']
                 if 'TAM_DEVICE_TABLE' in value:
@@ -85,40 +64,21 @@ def run(func, args):
 
             if api_response is None:
                 print("Failed")
-            elif func.__name__ == 'get_sonic_tam_sonic_tam_tam_device_table':
+            elif func == 'get_sonic_tam_sonic_tam_tam_device_table':
                 show_cli_output(args[0], api_response)
-            elif func.__name__ == 'get_sonic_tam_sonic_tam_tam_collector_table':
+            elif func == 'get_sonic_tam_sonic_tam_tam_collector_table':
                 show_cli_output(args[0], api_response)
-            elif func.__name__ == 'get_sonic_tam_sonic_tam_tam_collector_table_tam_collector_table_list':
+            elif func == 'get_sonic_tam_sonic_tam_tam_collector_table_tam_collector_table_list':
                 show_cli_output(args[1], api_response)
             else:
                 return
-    except ApiException as e:
-        print("Exception when calling get_sonic_tam ->%s : %s\n" %(func.__name__, e))
-        if e.body != "":
-            body = json.loads(e.body)
-            if "ietf-restconf:errors" in body:
-                 err = body["ietf-restconf:errors"]
-                 if "error" in err:
-                     errList = err["error"]
-
-                     errDict = {}
-                     for dict in errList:
-                         for k, v in dict.iteritems():
-                              errDict[k] = v
-
-                     if "error-message" in errDict:
-                         print "%Error: " + errDict["error-message"]
-                         return
-                     print "%Error: Transaction Failure"
-                     return
-            print "%Error: Transaction Failure"
         else:
-            print "Failed"
+            print response.error_message()
 
 if __name__ == '__main__':
 
-    func = eval(sys.argv[1], globals(), sonic_tam_client.SonicTamApi.__dict__)
+    pipestr().write(sys.argv)
+    func = sys.argv[1]
 
     run(func, sys.argv[2:])
 
