@@ -264,16 +264,16 @@ func fill_nbr_state_cmn_info (niName string, nbrAddr string, frrNbrDataValue int
         if value, ok := cfgDbEntry["auth_password"] ; ok {
             nbrState.AuthPassword = &value
         }
-    
+
         if value, ok := cfgDbEntry["peer_type"] ; ok {
             switch value {
-                case "internal":
+                case "INTERNAL":
                     nbrState.PeerType = ocbinds.OpenconfigBgp_PeerType_INTERNAL
-                case "external":
+                case "EXTERNAL":
                     nbrState.PeerType = ocbinds.OpenconfigBgp_PeerType_EXTERNAL
             }
         }
-    
+
         _dynamically_cfred = false
         nbrState.DynamicallyConfigured = &_dynamically_cfred
     } else {
