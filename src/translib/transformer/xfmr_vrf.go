@@ -6,7 +6,6 @@ import (
         "github.com/openconfig/ygot/ygot"
         "strings"
         "translib/ocbinds"
-        "translib/db"
 )
 
 type NwInstMapKey struct {
@@ -40,9 +39,9 @@ var NwInstTblNameMapWithNameAndType = map[NwInstMapKey]string {
 
 /* Top level network instance table name based on key name */
 var NwInstTblNameMapWithName = map[string]string {
-        "mgmt": "MGMT_VRF_CONFIG",
-        "Vrf": "VRF",
-        "default": "",
+	"mgmt": "MGMT_VRF_CONFIG",
+	"Vrf": "VRF",
+	"default": "",
 }
 
 /*
@@ -164,42 +163,6 @@ func isMgmtVrf(inParams XfmrParams) (bool, error) {
         }
 }
 
-/* Intf type and tbl name may get from xfmr_intf.go????*/
-
-type E_InterfaceType  int64
-const (
-    IntfTypeUnset           E_InterfaceType = 0
-    IntfTypeEthernet        E_InterfaceType = 1
-    IntfTypeVlan            E_InterfaceType = 2
-    IntfTypePortChnl        E_InterfaceType = 3
-    IntfTypeLoopback        E_InterfaceType = 4
-)
-
-/* Get interface type based on interface name */
-func getIntfTypeByName (name string) (E_InterfaceType, error) {
-        var err error
-        if strings.HasPrefix(name, "Ethernet") == true {
-                return IntfTypeEthernet, err
-        } else if strings.HasPrefix(name, "vlan") == true {
-                return IntfTypeVlan, err
-        } else if strings.HasPrefix(name, "PortChannel") == true {
-                return IntfTypePortChnl, err
-        } else if strings.HasPrefix(name, "Loopback") == true {
-                return IntfTypeLoopback, err
-        }
-
-        err = errors.New("Interface name prefix not matched with supported types")
-        return IntfTypeUnset, err
-}
-
-/* Get interface table name based on the interface name */
-var intfTblName = map[E_InterfaceType]string {
-        IntfTypeEthernet: "INTERFACE",
-        IntfTypeVlan:     "VLAN_INTERFACE",
-        IntfTypePortChnl: "PORTCHANNEL_INTERFACE",
-        IntfTypeLoopback: "LOOPBACK_INTERFACE",
-}
-
 func init() {
         XlateFuncBind("network_instance_table_name_xfmr", network_instance_table_name_xfmr)
         XlateFuncBind("YangToDb_network_instance_table_key_xfmr", YangToDb_network_instance_table_key_xfmr)
@@ -220,8 +183,6 @@ func init() {
         XlateFuncBind("DbToYang_network_instance_route_distinguisher_field_xfmr", DbToYang_network_instance_route_distinguisher_field_xfmr)
         XlateFuncBind("YangToDb_network_instance_enabled_addr_fam_field_xfmr", YangToDb_network_instance_enabled_addr_fam_field_xfmr)
         XlateFuncBind("DbToYang_network_instance_enabled_addr_fam_field_xfmr", DbToYang_network_instance_enabled_addr_fam_field_xfmr)
-        XlateFuncBind("YangToDb_network_instance_interface_binding_subtree_xfmr", YangToDb_network_instance_interface_binding_subtree_xfmr)
-        XlateFuncBind("DbToYang_network_instance_interface_binding_subtree_xfmr", DbToYang_network_instance_interface_binding_subtree_xfmr)
 }
 
 func getNwInstRoot(s *ygot.GoStruct) *ocbinds.OpenconfigNetworkInstance_NetworkInstances  {
@@ -255,22 +216,9 @@ var network_instance_table_name_xfmr TableXfmrFunc = func (inParams XfmrParams) 
         /* get the name at the top network-instance table level, this is the key */
         keyName := pathInfo.Var("name")
 
-        /* 
-         * For GET or DELETE, if key is empty, get entries for both mgmt vrf and data vrf
-         */
-        if((inParams.oper == CREATE) ||
-           (inParams.oper == UPDATE) ||
-           (inParams.oper == REPLACE)) {
-                if keyName == "" {
-                        log.Info("network_instance_table_name_xfmr, for CREATE key name not present")
-                        return tblList, errors.New("Empty network instance name")
-                }
-        } else {
-                if keyName == "" {
-                        tblList = append(tblList, "MGMT_VRF_CONFIG")
-                        tblList = append(tblList, "VRF")
-                        return tblList, err
-                }
+        if keyName == "" {
+                log.Info("network_instance_table_name_xfmr, for CREATE key name not present")
+                return tblList, errors.New("Empty network instance name")
         }
 
         /* get internal network instance name in order to fetch the DB table name */
@@ -390,21 +338,20 @@ var DbToYang_network_instance_table_key_xfmr KeyXfmrDbToYang = func(inParams Xfm
         var err error
 
         log.Info("DbToYang_network_instance_table_key_xfmr: ", inParams.key)
-/*
+
+        if (inParams.dbDataMap == nil) {
+                log.Info("DbToYang_network_instance_table_key_xfmr dbDataMap is nil")
+                return res_map, err
+        }
+
         if (isMgmtVrfDbTbl(inParams) == true) {
                 res_map["name"] = "mgmt"
         } else if (isVrfDbTbl(inParams) == true){
                 res_map["name"] = inParams.key
         }
-*/
-        if (inParams.key == "vrf_global") {
-                res_map["name"] = "mgmt"
-        } else {
-                res_map["name"] = inParams.key
-        }
 
         log.Info("DbToYang_network_instance_table_key_xfmr: ", res_map)
- 
+
         /* ToDo in else if cases */
         return  res_map, err
 }
@@ -562,53 +509,4 @@ var DbToYang_network_instance_route_distinguisher_field_xfmr KeyXfmrDbToYang = f
         return res_map, err
 }
 
-/* YangToDb subtree transformer for network instance interface binding */
-var YangToDb_network_instance_interface_binding_subtree_xfmr SubTreeXfmrYangToDb = func(inParams XfmrParams) (map[string]map[string]db.Value, error) {
-        var err error
-        res_map := make(map[string]map[string]db.Value)
-        intfTblMap := make(map[string]db.Value)
-
-        log.Info("YangToDb_network_instance_interface_binding_subtree_xfmr: ", inParams.ygRoot, inParams.uri)
-
-        pathInfo := NewPathInfo(inParams.uri)
-
-        targetUriPath, err := getYangPathFromUri(pathInfo.Path)
-
-        log.Info("YangToDb_network_instance_interface_binding_subtree_xfmr: ", targetUriPath)
-
-        /* get the name at the top network-instance table level, this is the key */
-        keyName := pathInfo.Var("name")
-        if (strings.HasPrefix(keyName, "Vrf") == false) {
-                log.Info("YangToDb_network_instance_interface_binding_subtree_xfmr, not Vrf nothing to do with interface", keyName)
-                return res_map, err
-        }
-
-        /* get the intf name in the id, this is the intf name */
-        intf_name := pathInfo.Var("id")
-        intf_type, err := getIntfTypeByName(intf_name)
-        if err != nil {
-                log.Info("YangToDb_network_instance_interface_binding_subtree_xfmr: unknown intf type for ", intf_name)
-                return res_map, err
-        }
-
-        intf_tbl_name := intfTblName[intf_type]
-
-        intfTblMap[intf_name] = db.Value{Field: make(map[string]string)}
-
-        intfTblMap[intf_name].Field["vrf_name"] = keyName
-
-        res_map[intf_tbl_name] = intfTblMap
-
-        return res_map, err
-}
-
-
-/* DbtoYang subtree transformer for network instance interface binding */
-var DbToYang_network_instance_interface_binding_subtree_xfmr SubTreeXfmrDbToYang = func(inParams XfmrParams) error {
-        var err error
-
-        log.Info("DbToYang_network_instance_interface_binding_subtree_xfmr:")
-
-        return err
-}
 
