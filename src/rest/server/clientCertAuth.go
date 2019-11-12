@@ -19,7 +19,7 @@ func ClientCertAuthenAndAuthor(r *http.Request, rc *RequestContext) error {
 	}
 
 	if DoesUserExist(username) == false {
-		glog.Errorf("[%s] Invalid username info not present", rc.ID)
+		glog.Errorf("[%s] Invalid username", rc.ID)
 		return httpError(http.StatusUnauthorized, "")
 	}
 
