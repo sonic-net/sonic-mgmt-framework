@@ -39,18 +39,6 @@ module sonic-vrf {
                     description
                         "Enalbe/disable fallback feature defined by RFC4364.";
                 }
-
-                leaf-list route-map-import {
-                    type string;
-                    description
-                        "Route-map used for import policies of this VRF.";
-                }
-
-                leaf-list route-map-export {
-                    type string;
-                    description
-                        "Route-map used for export policies of this VRF.";
-                }
             }
         }
     }
