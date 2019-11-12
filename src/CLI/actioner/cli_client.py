@@ -158,7 +158,10 @@ class Response(object):
 
 def default_error_message_formatter(err_entry):
     if 'error-message' in err_entry:
-        return err_entry['error-message']
+        err_msg = err_entry['error-message']
+        if not err_msg.startswith("%Error"):
+            return '%Error: ' + err_msg
+        return err_msg
     err_tag = err_entry.get('error-tag')
     if err_tag == 'invalid-value':
         return '%Error: validation failed'

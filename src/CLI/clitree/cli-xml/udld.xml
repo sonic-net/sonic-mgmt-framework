@@ -26,7 +26,7 @@
         <COMMAND name = "show udld global"
             help = "Show UDLD global level information">
             <ACTION>
-                python $SONIC_CLI_ROOT/sonic-cli-udld.py udldGlobalShowHandler&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-udld.py get_sonic_udld_sonic_udld_udld_udld_list show_udld_global.j2&#xA;
             </ACTION>
         </COMMAND>
 
@@ -34,7 +34,7 @@
         <COMMAND name = "show udld neighbors"
             help = "Show UDLD neighbors information">
             <ACTION>
-                python $SONIC_CLI_ROOT/sonic-cli-udld.py udldNeighborShowHandler&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-udld.py get_list_sonic_udld_sonic_udld_udld_port_neigh_table_udld_port_neigh_table_list show_udld_neighbor.j2&#xA;
             </ACTION>
         </COMMAND>
 
@@ -47,17 +47,13 @@
                 ptype = "STRING">
             </PARAM>
             <ACTION>
-                if test "${interface-name}" = ""; then&#xA;
-                    python $SONIC_CLI_ROOT/sonic-cli-udld.py udldInterfaceShowHandler&#xA;
-                else&#xA;
-                    python $SONIC_CLI_ROOT/sonic-cli-udld.py udldInterfaceShowHandler ${interface-name}&#xA;
-                fi&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-udld.py get_sonic_udld_sonic_udld_udld_port_neigh_table_udld_port_neigh_table_list show_udld_interface.j2 ${interface-name}&#xA;
             </ACTION>
         </COMMAND>
 
         <COMMAND name = "show udld statistics" help = "Show UDLD statistics">
             <ACTION>
-                python $SONIC_CLI_ROOT/sonic-cli-udld.py udldInterfaceCountersShowHandler&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-udld.py get_list_sonic_udld_sonic_udld_udld_port_table_udld_port_table_list show_udld_stats.j2&#xA;
             </ACTION>
         </COMMAND>
         <!-- show udld counters interface <ifname> -->
@@ -69,7 +65,7 @@
                 ptype = "STRING">
             </PARAM>
             <ACTION>
-                python $SONIC_CLI_ROOT/sonic-cli-udld.py udldInterfaceCountersShowHandler ${interface-name}&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-udld.py get_sonic_udld_sonic_udld_udld_port_table_udld_port_table_list show_udld_stats.j2 ${interface-name}&#xA;
             </ACTION>
         </COMMAND>
 

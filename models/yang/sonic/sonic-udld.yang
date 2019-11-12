@@ -3,8 +3,8 @@ module sonic-udld {
     prefix sudld;
     yang-version 1.1;
 
-    import sonic-common {
-        prefix scommon;
+    import sonic-extension {
+        prefix sonic-ext;
     }
 
     import sonic-port {
@@ -88,6 +88,7 @@ module sonic-udld {
             config false;
 
             list UDLD_GLOBAL_TABLE_LIST {
+                sonic-ext:db-name "APPL_DB";
                 key "id";
 
                 leaf id {
@@ -114,6 +115,7 @@ module sonic-udld {
             config false;
 
             list UDLD_PORT_TABLE_LIST {
+                sonic-ext:db-name "APPL_DB";
                 key "ifname";
 
                 leaf ifname {
@@ -144,6 +146,7 @@ module sonic-udld {
             config false;
 
             list UDLD_PORT_NEIGH_TABLE_LIST {
+                sonic-ext:db-name "APPL_DB";
                 key "ifname index";
 
                 leaf ifname {

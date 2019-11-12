@@ -1,0 +1,21 @@
+{% if json_output -%}
+{% if json_output.__len__() > 0 %}
+{{' '}}
+{# Mock CLI code to be removed later #}
+{{'UDLD Interface statistics for'}} {{'Ethernet0'}}
+{{'%-18s'|format("Frames Transmitted")}} : {{'10'}}
+{{'%-18s'|format("Frames Received")}} : {{'9'}}
+{{'%-18s'|format("Frames with Error")}} : {{'0'}}
+
+{# Actual code to be enabled once App DB tables are ready #}
+{#
+{% for i in range(json_output.__len__()) %}
+{% set intf_stats_info = json_output[i] %}
+{{'UDLD Interface statistics for'}} {{intf_stats_info['ifname']}}
+{{'%-18s'|format("Frames Transmitted")}} : {{intf_stats_info['pdu_sent']}}
+{{'%-18s'|format("Frames Received")}} : {{intf_stats_info['pdu_received']}}
+{{'%-18s'|format("Frames with Error")}} : {{intf_stats_info['pdu_recv_error']}}
+{% endfor %}
+#}
+{%endif%}
+{%endif%}
