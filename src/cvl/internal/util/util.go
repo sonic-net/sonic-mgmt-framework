@@ -89,11 +89,11 @@ const (
         WARNING
         ERROR
         FATAL
-        INFO_API
-	INFO_TRACE
 	INFO_DEBUG
+        INFO_API
 	INFO_DATA
 	INFO_DETAIL
+	INFO_TRACE
 	INFO_ALL
 )
 
@@ -165,19 +165,19 @@ changing libyang's global log setting */
 
 //export customLogCallback
 func customLogCallback(level C.LY_LOG_LEVEL, msg *C.char, path *C.char)  {
-	TRACE_LEVEL_LOG(INFO_DEBUG, TRACE_YPARSER, "[libyang] %s (path: %s)",
+	TRACE_LEVEL_LOG(TRACE_YPARSER, "[libyang] %s (path: %s)",
 	C.GoString(msg), C.GoString(path))
 }
 
-func TRACE_LEVEL_LOG(level log.Level, tracelevel CVLTraceLevel, fmtStr string, args ...interface{}) {
+func TRACE_LEVEL_LOG(tracelevel CVLTraceLevel, fmtStr string, args ...interface{}) {
 
 	/*
 	if (IsTraceSet() == false) {
 		return
 	}
-	*/
 
 	level = (level - INFO_API) + 1;
+	*/
 
 	traceEnabled := false
 	if ((cvlTraceFlags & (uint32)(tracelevel)) != 0) {
@@ -194,11 +194,13 @@ func TRACE_LEVEL_LOG(level log.Level, tracelevel CVLTraceLevel, fmtStr string, a
 		f := runtime.FuncForPC(pc[0])
 		file, line := f.FileLine(pc[0])
 
-		fmt.Printf("%s:%d %s(): ", file, line, f.Name())
+		fmt.Printf("%s:%d [CVL] : %s(): ", file, line, f.Name())
 		fmt.Printf(fmtStr+"\n", args...)
 	} else {
+		fmtStr = "[CVL] : " + fmtStr
 		if (traceEnabled == true) {
-			log.V(level).Infof(fmtStr, args...)
+			//Trace logs has verbose level INFO_TRACE
+			log.V(INFO_TRACE).Infof(fmtStr, args...)
 		}
 	}
 }
@@ -276,6 +278,8 @@ func CVL_LEVEL_LOG(level CVLLogLevel, format string, args ...interface{}) {
 		logToCvlFile(format, args...)
 		return
 	}
+
+	format = "[CVL] : " + format 
 
 	switch level {
 		case INFO:
