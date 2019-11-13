@@ -50,8 +50,9 @@ GO_DEPS_LIST = github.com/gorilla/mux \
                github.com/antchfx/jsonquery \
                github.com/antchfx/xmlquery \
                github.com/facette/natsort \
-	           github.com/philopon/go-toposort \
-			   gopkg.in/godbus/dbus.v5
+	       github.com/philopon/go-toposort \
+               gopkg.in/godbus/dbus.v5 \
+               github.com/dgrijalva/jwt-go
 
 
 REST_BIN = $(BUILD_DIR)/rest_server/main
