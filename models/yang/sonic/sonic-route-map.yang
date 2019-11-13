@@ -103,7 +103,7 @@ module sonic-route-map {
                 }
 
                 leaf set_asn{
-                    type string;
+                    type uint32;
                 }
 
                 leaf set_community_inline {
