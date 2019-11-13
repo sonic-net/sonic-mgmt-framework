@@ -283,7 +283,7 @@ func deleteLagIntfAndMembers(inParams *XfmrParams, lagName *string) error {
                     //Keep subOpDataMap[DELETE] as empty 
                     subOpMap[db.ConfigDB] = resMap
                     inParams.subOpDataMap[DELETE] = &subOpMap
-                    log.Error("Need to first remove the IP configuration")
+                    log.Info("Need to first remove the IP configuration")
                     return nil
                 }
             }
