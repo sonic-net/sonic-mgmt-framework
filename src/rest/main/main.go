@@ -63,6 +63,8 @@ func init() {
 	flag.CommandLine.Parse([]string{})
 }
 
+var profRunning bool = true
+
 // Start REST server
 func main() {
 
@@ -79,8 +81,17 @@ func main() {
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGUSR1)
 	go func() {
+	  for {
 		<-sigs
-		prof.Stop()
+		if (profRunning) {
+			prof.Stop()
+			profRunning = false
+		} else {
+			prof = profile.Start()
+			defer prof.Stop()
+			profRunning = true
+		}
+	  }
 	}()
 
 	swagger.Load()
