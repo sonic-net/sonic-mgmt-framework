@@ -1128,7 +1128,7 @@ func TestValidateEditConfig_Create_Syntax_SpecialChar_Positive(t *testing.T) {
 		cvl.CVLEditConfigData{
 			cvl.VALIDATE_ALL,
 			cvl.OP_CREATE,
-			"ACL_RULE|TestACL1|Rule@##",
+			"ACL_RULE|TestACL1|Rule_1-2",
 			map[string]string{
 				"PACKET_ACTION":     "FORWARD",
 				"IP_TYPE": 	     "IPV4",
