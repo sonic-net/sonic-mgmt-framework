@@ -47,10 +47,10 @@ limitations under the License.
 
   <VIEW name="configure-view">
     <!-- tam -->
-    <COMMAND name="tam" help="TAM Device Configuration" mode="subcommand" ptype="SUBCOMMAND" view="config-tam"/>
+    <COMMAND name="tam" help="TAM Device Configuration" mode="subcommand" ptype="SUBCOMMAND" view="configure-tam-view"/>
   </VIEW>
 
-  <VIEW name="config-tam" prompt="${SYSTEM_NAME}(config-tam)# " depth="2">
+  <VIEW name="configure-tam-view" prompt="${SYSTEM_NAME}(config-tam)# " depth="2">
     <COMMAND name="no" help="Negate a command or set its defaults" />
 
     <!-- tam deviceid -->
