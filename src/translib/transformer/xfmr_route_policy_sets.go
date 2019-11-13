@@ -442,7 +442,6 @@ var YangToDb_community_member_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrPar
     res_map := make(map[string]string)
     var err error
     var community_list string
-    var numCommunity int
     var new_type string
     var prev_type string
 
@@ -472,7 +471,6 @@ var YangToDb_community_member_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrPar
 
         log.Info("YangToDb_community_member_fld_xfmr: prev_type ", prev_type)
     }
-    numCommunity = 0
     members := inParams.param.([]ocbinds.OpenconfigRoutingPolicy_RoutingPolicy_DefinedSets_BgpDefinedSets_CommunitySets_CommunitySet_Config_CommunityMember_Union)
 
     for _, member := range members {
