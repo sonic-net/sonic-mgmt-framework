@@ -1,3 +1,11 @@
+#!/usr/bin/python
+###########################################################################
+#
+# Copyright 2019 Dell, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
 #
 #     http://www.apache.org/licenses/LICENSE-2.0
 #
@@ -9,28 +17,16 @@
 #
 ###########################################################################
 
-#Commands to support
-#--------------------
-#  To get link layer address of single IP
-#  get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_neighbors_neighbor
-#  get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_neighbors_neighbor
-#
-#  To get all entries
-#  get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_neighbors
-#  get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_neighbors
-
 import sys
 import time
 import json
 import ast
-import openconfig_interfaces_client
+import cli_client as cc
 from rpipe_utils import pipestr
-from openconfig_interfaces_client.rest import ApiException
 from scripts.render_cli import show_cli_output
 
 import urllib3
 urllib3.disable_warnings()
-
 
 plugins = dict()
 
@@ -43,48 +39,57 @@ def call_method(name, args):
     method = plugins[name]
     return method(args)
 
-def generate_body(func, args):
-    body = None
-    keypath = []
-    if func.__name__ == 'get_openconfig_interfaces_interfaces':
-        keypath = []
-    elif func.__name__ == 'get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_neighbors':
-            keypath = [args[1], 0]
-    elif func.__name__ == 'get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_neighbors':
-            keypath = [args[1], 0]
-    elif func.__name__ == 'get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_neighbors_neighbor':
-            keypath = [args[1], 0, args[3]]
-    elif func.__name__ == 'get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_neighbors_neighbor':
-            keypath = [args[1], 0, args[3]]
-    else:
-       body = {}
-    return keypath, body
+def get_keypath(func,args):
+    keypath = None
+    instance = None
 
-def getId(item):
-    prfx = "Ethernet"
-    state_dict = item['state']
-    ifName = state_dict['name']
+    if func == 'get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_neighbors':
+        keypath = cc.Path('/restconf/data/openconfig-interfaces:interfaces/interface={name}/subinterfaces/subinterface={index}/openconfig-if-ip:ipv4/neighbors', name=args[1], index="0")
+    elif func == 'get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_neighbors':
+        keypath = cc.Path('/restconf/data/openconfig-interfaces:interfaces/interface={name}/subinterfaces/subinterface={index}/openconfig-if-ip:ipv6/neighbors', name=args[1], index="0")
+    elif func == 'get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_neighbors_neighbor':
+        keypath = cc.Path('/restconf/data/openconfig-interfaces:interfaces/interface={name}/subinterfaces/subinterface={index}/openconfig-if-ip:ipv4/neighbors/neighbor={ip}', name=args[1], index="0", ip=args[3])
+    elif func == 'get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_neighbors_neighbor':
+        keypath = cc.Path('/restconf/data/openconfig-interfaces:interfaces/interface={name}/subinterfaces/subinterface={index}/openconfig-if-ip:ipv6/neighbors/neighbor={ip}',name=args[1], index="0", ip=args[3])
+    return keypath
 
-    if ifName.startswith(prfx):
-        ifId = int(ifName[len(prfx):])
-        return ifId
-    return ifName
+def fdb_call(macAddr, vlanName):
+    aa = cc.ApiClient()
+
+    vlanId = vlanName[len("Vlan"):]
+    macAddr = macAddr.strip()
+
+    keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/fdb/mac-table/entries/entry={macaddress},{vlan}', name='default', macaddress=macAddr, vlan=vlanId)
+
+    try:
+        response = aa.get(keypath)
+        response = response.content
+
+        if 'openconfig-network-instance:entry' in response.keys():
+                instance = response['openconfig-network-instance:entry'][0]['interface']['interface-ref']['state']['interface']
+
+        if instance is not None:
+                return instance
+        return "-"
+
+    except:
+        return "-"
 
 def run(func, args):
-    c = openconfig_interfaces_client.Configuration()
-    c.verify_ssl = False
-    aa = openconfig_interfaces_client.OpenconfigInterfacesApi(api_client=openconfig_interfaces_client.ApiClient(configuration=c))
+    aa = cc.ApiClient()
 
     # create a body block
-    keypath, body = generate_body(func, args)
+    keypath = get_keypath(func, args)
     neigh_list = []
 
     try:
-        api_response = getattr(aa,func.__name__)(*keypath)
-        response = api_response.to_dict()
+        response = aa.get(keypath)
+        response  = response.content
 
-        if 'openconfig_if_ipneighbor' in response.keys():
-                neigh = response['openconfig_if_ipneighbor']
+        if 'openconfig-if-ip:neighbor' in response.keys():
+                ext_intf_name = "-"
+                neigh = response['openconfig-if-ip:neighbor']
+                print "neigh: ", neigh
 
                 if neigh[0]['state'] is None:
                     return
@@ -93,72 +98,56 @@ def run(func, args):
                 if ipAddr is None:
                     return
 
-                macAddr = neigh[0]['state']['link_layer_address']
+                macAddr = neigh[0]['state']['link-layer-address']
                 if macAddr is None:
                     return
 
+                if args[1].startswith('Vlan'):
+                        ext_intf_name = fdb_call(macAddr, args[1])
+
                 neigh_table_entry = {'ipAddr':ipAddr,
                                     'macAddr':macAddr,
-                                    'intfName':args[1]
+                                    'intfName':args[1],
+                                    'extIntfName':ext_intf_name
                                   }
                 neigh_list.append(neigh_table_entry)
-        elif 'openconfig_if_ipneighbors' in response.keys():
-                if response['openconfig_if_ipneighbors'] is None:
+        elif 'openconfig-if-ip:neighbors' in response.keys():
+                if response['openconfig-if-ip:neighbors'] is None:
                     return
 
-                neighs = response['openconfig_if_ipneighbors']['neighbor']
+                neighs = response['openconfig-if-ip:neighbors']['neighbor']
                 if neighs is None:
                     return
 
                 for neigh in neighs:
+                        ext_intf_name = "-"
                         ipAddr = neigh['state']['ip']
                         if ipAddr is None:
                             return
 
-                        macAddr = neigh['state']['link_layer_address']
+                        macAddr = neigh['state']['link-layer-address']
                         if macAddr is None:
                             return
 
+                        if args[1].startswith('Vlan'):
+                            ext_intf_name = fdb_call(macAddr, args[1])
+
                         neigh_table_entry = {'ipAddr':ipAddr,
                                     'macAddr':macAddr,
-                                    'intfName':args[1]
+                                    'intfName':args[1],
+                                    'extIntfName':ext_intf_name
                                   }
 
-                        if (args[2] == "mac") and (args[3] != macAddr):
-                                print "%Error: Entry not found"
-                        else:
+                        if not ((args[2] == "mac") and (args[3] != macAddr)):
                                 neigh_list.append(neigh_table_entry)
 
         show_cli_output(args[0],neigh_list)
         return
 
-    except ApiException as e:
-        #print("Exception when calling OpenconfigInterfacesApi->%s : %s\n" %(func.__name__, e))
-        if e.body != "":
-            body = json.loads(e.body)
-            if "ietf-restconf:errors" in body:
-                 err = body["ietf-restconf:errors"]
-                 if "error" in err:
-                     errList = err["error"]
-
-                     errDict = {}
-                     for dict in errList:
-                         for k, v in dict.iteritems():
-                              errDict[k] = v
-
-                     if "error-message" in errDict:
-                         print "%Error: " + errDict["error-message"]
-                         return
-                     print "%Error: Transaction Failure"
-                     return
-            print "%Error: Transaction Failure"
-        else:
-            print "Failed"
+    except:
+        # system/network error
+        print "Error: Transaction Failure"
 
 if __name__ == '__main__':
     pipestr().write(sys.argv)
-    func = eval(sys.argv[1], globals(), openconfig_interfaces_client.OpenconfigInterfacesApi.__dict__)
-
-    run(func, sys.argv[2:])
-
-
+    run(sys.argv[1], sys.argv[2:])

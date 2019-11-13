@@ -632,7 +632,7 @@ func intf_ip_addr_del (d *db.DB , ifName string, tblName string, subIntf *ocbind
 
     if subIntf.Ipv6 != nil && subIntf.Ipv6.Addresses != nil {
         if len(subIntf.Ipv6.Addresses.Address) < 1 {
-            ipMap, _ := getIntfIpByName(d, tblName, ifName, true, false, "")
+            ipMap, _ := getIntfIpByName(d, tblName, ifName, false, true, "")
             if ipMap != nil && len(ipMap) > 0 {
                 for k, v := range ipMap {
                     intfIpMap[k] = v
@@ -640,7 +640,7 @@ func intf_ip_addr_del (d *db.DB , ifName string, tblName string, subIntf *ocbind
             }
         } else {
             for ip, _ := range subIntf.Ipv6.Addresses.Address {
-                ipMap, _ := getIntfIpByName(d, tblName, ifName, true, false, ip)
+                ipMap, _ := getIntfIpByName(d, tblName, ifName, false, true, ip)
 
                 if ipMap != nil && len(ipMap) > 0 {
                     for k, v := range ipMap {
