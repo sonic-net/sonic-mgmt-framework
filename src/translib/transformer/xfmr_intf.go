@@ -218,28 +218,30 @@ var YangToDb_intf_tbl_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (stri
 
     log.Info("Intf name ", ifName)
     log.Info("Exiting YangToDb_intf_tbl_key_xfmr")
-    if inParams.oper != DELETE {
-        log.Info("Not a DELETE operation, returning interface name: ", ifName)
-        return ifName, err
-    }
     intfType, _, ierr := getIntfTypeByName(ifName)
     if ierr != nil {
-      log.Errorf("Extracting Interface type for Interface: %s failed!", ifName)
-    return "", ierr
+        log.Errorf("Extracting Interface type for Interface: %s failed!", ifName)
+        return "", ierr
     }
-    /* VLAN Interface Delete Handling */
-    if intfType == IntfTypeVlan {
-        /* Update the map for VLAN and VLAN MEMBER table */
-        err := deleteVlanIntfAndMembers(&inParams, &ifName)
-        if err != nil {
-            log.Errorf("Deleting VLAN: %s failed!", ifName)
-            return "", err
-        }
-    }
-    if intfType == IntfTypePortChannel {
-        err := deleteLagIntfAndMembers(&inParams, &ifName)
-        if err != nil {
-            log.Errorf("Deleting LAG: %s failed!", ifName)
+    requestUriPath, err := getYangPathFromUri(inParams.requestUri)
+    log.Info("inParams.requestUri: ", requestUriPath)
+    if inParams.oper == DELETE && requestUriPath == "/openconfig-interfaces:interfaces/interface" {
+        /* VLAN Interface Delete Handling */
+        if intfType == IntfTypeVlan {
+            /* Update the map for VLAN and VLAN MEMBER table */
+            err := deleteVlanIntfAndMembers(&inParams, &ifName)
+            if err != nil {
+                log.Errorf("Deleting VLAN: %s failed!", ifName)
+                return "", err
+            }
+        } else if intfType == IntfTypePortChannel {
+            err := deleteLagIntfAndMembers(&inParams, &ifName)
+            if err != nil {
+                log.Errorf("Deleting LAG: %s failed!", ifName)
+                return "", err
+            }
+        } else {
+            log.Errorf("Invalid interface for delete", ifName)
             return "", err
         }
     }
