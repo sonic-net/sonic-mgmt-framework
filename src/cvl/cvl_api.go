@@ -62,7 +62,7 @@ var cvlErrorMap = map[CVLRetCode]string {
 	CVL_SEMANTIC_DEPENDENT_DATA_MISSING 		: "Dependent Data is missing",
 	CVL_SEMANTIC_MANDATORY_DATA_MISSING  		: "Mandatory Data is missing",
 	CVL_SEMANTIC_KEY_ALREADY_EXIST 			: "Key already existing.",
-	CVL_SEMANTIC_KEY_NOT_EXIST  			: "Key is missing.",
+	CVL_SEMANTIC_KEY_NOT_EXIST  			: "Key does not exist.",
 	CVL_SEMANTIC_KEY_DUPLICATE 			: "Duplicate key received",
 	CVL_SEMANTIC_KEY_INVALID  			: "Invalid Key Received",
 	CVL_INTERNAL_UNKNOWN			 	: "Internal Unknown Error",
@@ -445,7 +445,7 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (CVLErrorInfo, CVL
 				n, err1 := redisClient.Exists(cfgDataItem.Key).Result()
 				if (err1 != nil || n == 0) { //key must exists
 					CVL_LOG(ERROR, "\nValidateEditConfig(): Key = %s does not exist", cfgDataItem.Key)
-					cvlErrObj.ErrCode = CVL_SEMANTIC_KEY_ALREADY_EXIST
+					cvlErrObj.ErrCode = CVL_SEMANTIC_KEY_NOT_EXIST
 					cvlErrObj.CVLErrDetails = cvlErrorMap[cvlErrObj.ErrCode]
 					return cvlErrObj, CVL_SEMANTIC_KEY_NOT_EXIST
 				}
