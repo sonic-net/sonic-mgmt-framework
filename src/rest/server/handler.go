@@ -26,9 +26,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-
 	"translib"
-
 	"github.com/golang/glog"
 	"github.com/gorilla/mux"
 )
@@ -302,3 +300,4 @@ func hostMetadataHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/xrd+xml")
 	w.Write(data.Bytes())
 }
+
