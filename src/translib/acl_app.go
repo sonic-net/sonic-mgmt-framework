@@ -91,6 +91,7 @@ type AclApp struct {
 
 func init() {
 
+	return
 	err := register("/openconfig-acl:acl",
 		&appInfo{appType: reflect.TypeOf(AclApp{}),
 			ygotRootType:  reflect.TypeOf(ocbinds.OpenconfigAcl_Acl{}),

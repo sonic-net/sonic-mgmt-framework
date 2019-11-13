@@ -20,6 +20,7 @@
 package main
 
 import (
+	"github.com/pkg/profile"
         "flag"
         "io/ioutil"
         "translib"
@@ -30,6 +31,7 @@ import (
 )
 
 func main() {
+	defer profile.Start().Stop()
     var err error
     operationPtr := flag.String("o", "get", "Operation: create,update,replace,delete,get,action,getmodels,subscribe,supportsubscribe")
     uriPtr := flag.String("u", "", "URI string")

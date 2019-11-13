@@ -634,3 +634,44 @@ func getYangMdlToSonicMdlList(moduleNm string) []string {
 	return sncMdlList
 }
 
+func yangFloatIntToGoType(t yang.TypeKind, v float64) (interface{}, error) {
+        switch t {
+        case yang.Yint8:
+                return int8(v), nil
+        case yang.Yint16:
+                return int16(v), nil
+        case yang.Yint32:
+                return int32(v), nil
+        case yang.Yuint8:
+                return uint8(v), nil
+        case yang.Yuint16:
+                return uint16(v), nil
+        case yang.Yuint32:
+                return uint32(v), nil
+        }
+        return nil, fmt.Errorf("unexpected YANG type %v", t)
+}
+
+func unmarshalJsonToDbData(schema *yang.Entry, fieldName string, value interface{}) (string, error) {
+        var data string
+        ykind := schema.Type.Kind
+
+        switch ykind {
+        case yang.Ystring, yang.Ydecimal64, yang.Yint64, yang.Yuint64:
+        case yang.Yenum, yang.Ybool, yang.Ybinary, yang.Yidentityref, yang.Yunion:
+                data = value.(string)
+
+        case yang.Yint8, yang.Yint16, yang.Yint32:
+        case yang.Yuint8, yang.Yuint16, yang.Yuint32:
+                pv, err := yangFloatIntToGoType(ykind, value.(float64))
+                if err != nil {
+                        return "", fmt.Errorf("error parsing %v for schema %s: %v", value, schema.Name, err)
+                }
+                data = fmt.Sprintf("%v", pv)
+        default:
+                // TODO - bitset, empty
+                data = value.(string)
+        }
+
+        return data, nil
+}
