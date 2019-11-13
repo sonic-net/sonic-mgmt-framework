@@ -851,7 +851,7 @@ limitations under the License.
         <COMMAND
             name="no autoneg"
             help="Set default autoneg config">
-            <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_ethernet_interfaces_interface_ethernet_config_auto_negotiate ${iface} false </ACTION>
+            <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_ethernet_interfaces_interface_ethernet_config_auto_negotiate ${iface} true </ACTION>
         </COMMAND>
         <COMMAND
             name="speed"

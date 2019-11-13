@@ -27,7 +27,7 @@ module sonic-mgmt-interface {
     description
         "SONiC MANAGEMENT INTERFACE";
 
-    revision 2019-07-02 {
+    revision 2019-11-13 {
         description
             "Initial revision.";
     }
@@ -62,7 +62,6 @@ module sonic-mgmt-interface {
                 }
 
                 leaf ip_prefix {
-                    mandatory true;
                     type inet:ip-prefix;
 
                 }
