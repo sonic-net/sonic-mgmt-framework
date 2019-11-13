@@ -32,6 +32,7 @@ type XfmrParams struct {
 	curDb db.DBNum
 	ygRoot *ygot.GoStruct
 	uri string
+	requestUri string
 	oper int
 	key string
 	dbDataMap *map[db.DBNum]map[string]map[string]db.Value

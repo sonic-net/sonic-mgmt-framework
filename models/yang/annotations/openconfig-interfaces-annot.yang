@@ -122,12 +122,17 @@ module openconfig-interfaces-annot {
         }
     }
 
-     deviation /oc-intf:interfaces/oc-intf:interface/oc-eth:ethernet/oc-vlan:switched-vlan {
+     deviation /oc-intf:interfaces/oc-intf:interface/oc-lag:aggregation/oc-vlan:switched-vlan {
         deviate add {
             sonic-ext:subtree-transformer "sw_vlans_xfmr";
         }
     }
 
+     deviation /oc-intf:interfaces/oc-intf:interface/oc-eth:ethernet/oc-vlan:switched-vlan {
+        deviate add {
+            sonic-ext:subtree-transformer "sw_vlans_xfmr";
+        }
+    }
     deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface {
         deviate add {
             sonic-ext:key-transformer "intf_subintfs_xfmr";

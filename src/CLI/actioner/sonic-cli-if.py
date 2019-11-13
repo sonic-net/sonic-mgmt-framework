@@ -100,7 +100,7 @@ def generate_body(func, args):
        sp = args[1].split('/')
        keypath = [ args[0], 0, sp[0] ]
        body = { "openconfig-if-ip:config":  {"ip" : sp[0], "prefix-length" : int(sp[1])} }
-    elif func.__name__ == 'patch_openconfig_vlan_interfaces_interface_ethernet_switched_vlan_config':
+    elif func.__name__ == 'patch_openconfig_vlan_interfaces_interface_ethernet_switched_vlan_config' or func.__name__ == 'patch_openconfig_vlan_interfaces_interface_aggregation_switched_vlan_config':
        keypath = [args[0]]
        if args[1] == "ACCESS":
            body = {"openconfig-vlan:config": {"interface-mode": "ACCESS","access-vlan": int(args[2])}}
