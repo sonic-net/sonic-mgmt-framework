@@ -671,17 +671,18 @@ type _xfmr_bgp_nbr_af_state_key struct {
     niName string
     nbrAddr string
     afiSafiNameStr string
+    afiSafiNameDbStr string
     afiSafiNameEnum ocbinds.E_OpenconfigBgpTypes_AFI_SAFI_TYPE
 }
 
-func get_afi_safi_name_enum_for_str (afiSafiNameStr string) (ocbinds.E_OpenconfigBgpTypes_AFI_SAFI_TYPE, bool) {
+func get_afi_safi_name_enum_dbstr_for_ocstr (afiSafiNameStr string) (ocbinds.E_OpenconfigBgpTypes_AFI_SAFI_TYPE, string, bool) {
     switch afiSafiNameStr {
         case "IPV4_UNICAST":
-            return ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_IPV4_UNICAST, true
+            return ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_IPV4_UNICAST, "ipv4_unicast", true
         case "IPV6_UNICAST":
-            return ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_IPV6_UNICAST, true
+            return ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_IPV6_UNICAST, "ipv6_unicast", true
         default:
-            return ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_UNSET, false
+            return ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_UNSET, "", false
     }
 }
 
@@ -703,14 +704,14 @@ func validate_nbr_af_state_get (inParams XfmrParams, dbg_log string) (*ocbinds.O
     targetUriPath, err := getYangPathFromUri(pathInfo.Path)
     nbr_af_key.nbrAddr = pathInfo.Var("neighbor-address")
     nbr_af_key.afiSafiNameStr = pathInfo.Var("afi-safi-name")
-    nbr_af_key.afiSafiNameEnum, ok = get_afi_safi_name_enum_for_str (nbr_af_key.afiSafiNameStr)
+    nbr_af_key.afiSafiNameEnum, nbr_af_key.afiSafiNameDbStr, ok = get_afi_safi_name_enum_dbstr_for_ocstr (nbr_af_key.afiSafiNameStr)
     if !ok {
         log.Errorf("%s failed !! Error: AFI-SAFI ==> %s not supported", dbg_log, nbr_af_key.afiSafiNameStr)
         return nil, nbr_af_key, oper_err
     }
 
-    log.Infof("%s : path:%s; template:%s targetUriPath:%s niName:%s nbrAddr:%s afiSafiNameStr:%s afiSafiNameEnum:%d",
-              dbg_log, pathInfo.Path, pathInfo.Template, targetUriPath, nbr_af_key.niName, nbr_af_key.nbrAddr, nbr_af_key.afiSafiNameStr, nbr_af_key.afiSafiNameEnum)
+    log.Infof("%s : path:%s; template:%s targetUriPath:%s niName:%s nbrAddr:%s afiSafiNameStr:%s afiSafiNameEnum:%d afiSafiNameDbStr:%s",
+              dbg_log, pathInfo.Path, pathInfo.Template, targetUriPath, nbr_af_key.niName, nbr_af_key.nbrAddr, nbr_af_key.afiSafiNameStr, nbr_af_key.afiSafiNameEnum, nbr_af_key.afiSafiNameDbStr)
 
     nbrs_obj := bgp_obj.Neighbors
     if nbrs_obj == nil {
@@ -745,11 +746,11 @@ func validate_nbr_af_state_get (inParams XfmrParams, dbg_log string) (*ocbinds.O
     return afiSafiState_obj, nbr_af_key, err
 }
 
-func get_spec_nbr_af_cfg_tbl_entry (cfgDb *db.DB, key _xfmr_bgp_nbr_af_state_key) (map[string]string, error) {
+func get_spec_nbr_af_cfg_tbl_entry (cfgDb *db.DB, key *_xfmr_bgp_nbr_af_state_key) (map[string]string, error) {
     var err error
 
     nbrAfCfgTblTs := &db.TableSpec{Name: "BGP_NEIGHBOR_AF"}
-    nbrAfEntryKey := db.Key{Comp: []string{key.niName, key.nbrAddr, key.afiSafiNameStr}}
+    nbrAfEntryKey := db.Key{Comp: []string{key.niName, key.nbrAddr, key.afiSafiNameDbStr}}
 
     var entryValue db.Value
     if entryValue, err = cfgDb.GetEntry(nbrAfCfgTblTs, nbrAfEntryKey) ; err != nil {
@@ -794,7 +795,7 @@ var DbToYang_bgp_nbrs_nbr_af_state_xfmr SubTreeXfmrDbToYang = func(inParams Xfmr
 
     nbrs_af_state_obj.AfiSafiName = nbr_af_key.afiSafiNameEnum
 
-    if cfgDbEntry, cfgdb_get_err := get_spec_nbr_af_cfg_tbl_entry (inParams.dbs[db.ConfigDB], nbr_af_key) ; cfgdb_get_err == nil {
+    if cfgDbEntry, cfgdb_get_err := get_spec_nbr_af_cfg_tbl_entry (inParams.dbs[db.ConfigDB], &nbr_af_key) ; cfgdb_get_err == nil {
         if value, ok := cfgDbEntry["enabled"] ; ok {
             _enabled, _ := strconv.ParseBool(value)
             nbrs_af_state_obj.Enabled = &_enabled
