@@ -211,7 +211,7 @@ func init() {
 	//Build reverse leafref info i.e. which table/field uses one table through leafref
 	buildRefTableInfo()
 
-	//dbCacheSet(false, "PORT", 0)
+	dbCacheSet(false, "PORT", 0)
 }
 
 func Debug(on bool) {
