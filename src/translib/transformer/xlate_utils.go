@@ -546,10 +546,8 @@ func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, req
 					 for idx, kname := range rgp.FindAllString(k, -1) {
 						 if idx > 0 { keyStr += keySeparator }
 						 keyl := strings.TrimRight(strings.TrimLeft(kname, "["), "]")
-						 if strings.Contains(keyl, ":") {
-							 keyl = strings.Split(keyl, ":")[1]
-						 }
-						 keyStr += strings.Split(keyl, "=")[1]
+						 keys := strings.Split(keyl, "=")
+						 keyStr += keys[1]
 					 }
 				 }
 			 } else if len(xYangSpecMap[yangXpath].xfmrKey) > 0 {
