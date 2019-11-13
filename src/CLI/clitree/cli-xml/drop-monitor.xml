@@ -84,11 +84,6 @@
      <NAMESPACE ref="hidden-view" help="false" completion="false"/>
      <NAMESPACE ref="enable-view" help="false" completion="false"/>
      <NAMESPACE ref="enable-view" help="true" prefix="do" completion="true"/>
-     <COMMAND name="exit" help="Exit from current mode" lock="false">
-              <ACTION builtin="clish_nested_up"/>
-     </COMMAND>
-
-     <COMMAND name="end" help="Exit to the exec mode" view="enable_view"/>
 
      <NAMESPACE ref="configure-view" help="false" completion="false"/>
          <COMMAND name="no" help="Negate a command or set defaults"> </COMMAND>
