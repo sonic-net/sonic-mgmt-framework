@@ -23,7 +23,7 @@ SRC_FILES=$(shell find . -name '*.go' | grep -v '_test.go' | grep -v '/tests/')
 TEST_FILES=$(wildcard *_test.go)
 TOP_DIR := $(abspath ../..)
 GOFLAGS:=
-BUILD_DIR:=build
+BUILD_DIR:=$(TOP_DIR)/build/cvl
 GO_DOWNLOAD_PATH:=$(BUILD_GOPATH)
 CVL_PKG=$(TOP_DIR)/pkg/linux_amd64/cvl.a
 
