@@ -17,16 +17,19 @@
 #                                                                              #
 ################################################################################
 
-sonic_yang=../../../models/yang/sonic
-sonic_yang_common=../../../models/yang/sonic/common
-pyang_plugin_dir=../../../tools/pyang/pyang_plugins
+TOPDIR=../../..
+YANGDIR=$(TOPDIR)/models/yang
+sonic_yang=$(YANGDIR)/sonic
+std_yang_common=$(YANGDIR)/common/
+sonic_yang_common=$(sonic_yang)/common
+pyang_plugin_dir=$(TOPDIR)/tools/pyang/pyang_plugins
 
 src_files=$(wildcard $(sonic_yang)/*.yang)
 src_files += $(wildcard $(sonic_yang_common)/*.yang)
 out=$(patsubst %.yang, %.yin, $(shell ls -1 $(sonic_yang)/*.yang | cut -d'/' -f7)) 
 out_common=$(patsubst %.yang, %.yin, $(shell ls -1 $(sonic_yang_common)/*.yang | cut -d'/' -f8)) 
 out_tree=$(patsubst %.yang, %.tree, $(src_files)) 
-search_path=$(sonic_yang):$(sonic_yang_common):$(sonic_yang_common)/ietf
+search_path=$(std_yang_common):$(sonic_yang):$(sonic_yang_common)
 
 all: schema
 

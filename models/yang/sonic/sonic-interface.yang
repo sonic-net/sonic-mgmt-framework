@@ -38,7 +38,11 @@ module sonic-interface {
 				}
 
 				leaf vrf-name {
-					type string;
+					type string {
+						pattern 'Vrf([-a-zA-Z0-9_]{1,60})' {
+							error-app-tag vrf-name-invalid;
+						}
+					}
 				}
 
 			}
@@ -53,9 +57,7 @@ module sonic-interface {
 				}
 
 				leaf ip_prefix {
-					mandatory true;
 					type inet:ip-prefix;
-
 				}
 			}
 		}

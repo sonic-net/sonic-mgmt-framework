@@ -3,6 +3,7 @@
         "TestACL13|Rule1": {
         "PRIORITY": "55",
         "PACKET_ACTION": "DROP",
+	"IP_TYPE"      : "IPV4",
         "L4_SRC_PORT": "0"
         }
    }

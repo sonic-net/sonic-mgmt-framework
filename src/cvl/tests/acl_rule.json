@@ -9,11 +9,13 @@
         "TestACL11|Rule1": {
         "PRIORITY": "55",
         "PACKET_ACTION": "DROP",
+	"IP_TYPE"      : "ANY",
         "L4_SRC_PORT": "0"
         },
         "TestACL11|Rule2": {
         "PRIORITY": "55",
         "PACKET_ACTION": "DROP",
+	"IP_TYPE"      : "ANY",
         "L4_SRC_PORT": "1"
         }
    }
