@@ -21,14 +21,8 @@ import sys
 import time
 import json
 import ast
-import openconfig_interfaces_client
-import openconfig_lacp_client
-import sonic_portchannel_client
-from sonic_portchannel_client.api.sonic_portchannel_api import SonicPortchannelApi
-from sonic_portchannel_client.rest import ApiException
-from openconfig_interfaces_client.rest import ApiException
+import cli_client as cc
 from rpipe_utils import pipestr
-from openconfig_lacp_client.rest import ApiException
 from scripts.render_cli import show_cli_output
 
 import urllib3
@@ -46,126 +40,95 @@ def register(func):
 def call_method(name, args):
     method = plugins[name]
     return method(args)
+
+    
+def invoke_api(func, args=[]):
+    api = cc.ApiClient()
+
+    if func == 'get_sonic_portchannel_sonic_portchannel_lag_table':
+        path = cc.Path('/restconf/data/sonic-portchannel:sonic-portchannel/LAG_TABLE')
+        return api.get(path)
+
+    if func == 'get_sonic_portchannel_sonic_portchannel_lag_table_lag_table_list':
+        path = cc.Path('/restconf/data/sonic-portchannel:sonic-portchannel/LAG_TABLE/LAG_TABLE_LIST={lagname}', lagname=args[0])
+        return api.get(path)
+
+    if func == 'get_openconfig_lacp_lacp_interfaces':
+        path = cc.Path('/restconf/data/openconfig-lacp:lacp/interfaces')
+        return api.get(path)
+        
+    if func == 'get_openconfig_lacp_lacp_interfaces_interface':
+        path = cc.Path('/restconf/data/openconfig-lacp:lacp/interfaces/interface={name}', name=args[0])
+        return api.get(path)        
+            
+    if func == 'get_openconfig_interfaces_interfaces_interface_state_counters':
+        path = cc.Path('/restconf/data/openconfig-interfaces:interfaces/interface={name}/state/counters', name=args[0])
+        return api.get(path)
+
+    #print "invoke_api done"
+    return api.cli_not_implemented(func)
     
 
-def generate_key(func, args):
-    keypath = []
-    if func.__name__ == "get_sonic_portchannel_sonic_portchannel_lag_table" or func.__name__ == "get_openconfig_lacp_lacp_interfaces' or func.__name__ == 'get_openconfig_interfaces_interfaces":
-        keypath = []
-    elif func.__name__ == "get_sonic_portchannel_sonic_portchannel_lag_table_lag_table_list" or func.__name__ == "get_openconfig_lacp_lacp_interfaces_interface" or func.__name__ == "get_openconfig_interfaces_interfaces_interface_state_counters":
-        keypath = [args[0]]
-
-    return keypath
-
-def print_exception(e):
-    if e.body != "":
-            body = json.loads(e.body)
-            if "ietf-restconf:errors" in body:
-                 err = body["ietf-restconf:errors"]
-                 if "error" in err:
-                     errList = err["error"]
-
-                     errDict = {}
-                     for dict in errList:
-                         for k, v in dict.iteritems():
-                              errDict[k] = v
-
-                     if "error-message" in errDict:
-                         print "%Error: " + errDict["error-message"]
-                         return
-                     print "%Error: Transaction Failure"
-                     return
-            print "%Error: Transaction Failure"
-    else:
-        print "Failed"
-    
-    
 def get_lag_data():
 
     api_response = {}
+    output = {}
 
-    try:        
-        
-        c = sonic_portchannel_client.Configuration()
-        c.verify_ssl = False
-        aa = sonic_portchannel_client.SonicPortchannelApi(api_client=sonic_portchannel_client.ApiClient(configuration=c))
-        
+    try:  
         if sys.argv[1] == "get_all_portchannels":
             portchannel_func = 'get_sonic_portchannel_sonic_portchannel_lag_table'
         else :
             portchannel_func = 'get_sonic_portchannel_sonic_portchannel_lag_table_lag_table_list'
-
-        func = eval(portchannel_func, globals(), sonic_portchannel_client.SonicPortchannelApi.__dict__)
+            
         args = sys.argv[2:]
-
-        keypath = generate_key(func, args)
         
-        if len(keypath) != 0:
-           api_response = getattr(aa,func.__name__)(*keypath)
-        else :
-           api_response = getattr(aa,func.__name__)()
-
-
-        if api_response is None:
-            print ("Failure in getting portchannel data")
-        else:
-            # Get Command Output
-            api_response = aa.api_client.sanitize_for_serialization(api_response)
-            #print "-----------------------", api_response
-            output = {}
-            if 'sonic-portchannel:LAG_TABLE' not in api_response.keys():
-                output['sonic-portchannel:LAG_TABLE'] = {}
-                output['sonic-portchannel:LAG_TABLE']['LAG_TABLE_LIST'] = api_response['sonic-portchannel:LAG_TABLE_LIST']
-            else:
-                output = api_response
+        response = invoke_api(portchannel_func, args)
+        if response.ok():
+            if response.content is not None:
+                # Get Command Output
+                api_response = response.content
+                #print "--------------------------------------------------", api_response
+                #api_response = aa.api_client.sanitize_for_serialization(api_response)
+                #print "-----------------------", api_response
+                if 'sonic-portchannel:LAG_TABLE' not in api_response.keys():
+                    output['sonic-portchannel:LAG_TABLE'] = {}
+                    output['sonic-portchannel:LAG_TABLE']['LAG_TABLE_LIST'] = api_response['sonic-portchannel:LAG_TABLE_LIST']
+                else:
+                    output = api_response        
         
-    except ApiException as e:
-        #print("Exception when calling SonicPortchannelApi->%s : %s\n" %(func.__name__, e))
-        print_exception(e)       
+    except Exception as e:
+        print("Exception when calling get_lag_data : %s\n" %(e))
     
     return output
 
 def get_lacp_data():
 
     api_response1 = {}
+    resp = {}
     
     try:
-        c1 = openconfig_lacp_client.Configuration()
-        c1.verify_ssl = False
-        aa1 = openconfig_lacp_client.OpenconfigLacpApi(api_client=openconfig_lacp_client.ApiClient(configuration=c1))
-        
-        # create a body block
         if sys.argv[1] == "get_all_portchannels":
             lacp_func = 'get_openconfig_lacp_lacp_interfaces'
         else :
             lacp_func = 'get_openconfig_lacp_lacp_interfaces_interface'
 
-        func1 = eval(lacp_func, globals(), openconfig_lacp_client.OpenconfigLacpApi.__dict__)
         args = sys.argv[2:]
-
-        keypath1 = generate_key(func1, args)
         
-        if len(keypath1) != 0:
-            api_response1 = getattr(aa1,func1.__name__)(*keypath1)
-        else :
-            api_response1 = getattr(aa1,func1.__name__)()
-
-        if api_response1 is None:
-            print ("Failure in getting LACP data")
-        else:
-            # Get Command Output
-            api_response1 = aa1.api_client.sanitize_for_serialization(api_response1)
-            resp = {}
-            if 'openconfig-lacp:interfaces' not in api_response1.keys():
-                resp['openconfig-lacp:interfaces'] = {}
-                resp['openconfig-lacp:interfaces']['interface'] = api_response1['openconfig-lacp:interface']
-            else:
-                 resp = api_response1
-            #print "------------------------------------------------", resp
+        response = invoke_api(lacp_func, args)
+        if response.ok():
+            if response.content is not None:
+                # Get Command Output
+                api_response1 = response.content
+                #api_response1 = aa1.api_client.sanitize_for_serialization(api_response1)
+                if 'openconfig-lacp:interfaces' not in api_response1.keys():
+                    resp['openconfig-lacp:interfaces'] = {}
+                    resp['openconfig-lacp:interfaces']['interface'] = api_response1['openconfig-lacp:interface']
+                else:
+                     resp = api_response1
+                #print "------------------------------------------------", resp        
                 
-    except ApiException as e:
-        #print("Exception when calling OpenconfigLacpApi->%s : %s\n" %(func.__name__, e))
-        print_exception(e)       
+    except Exception as e:
+        print("Exception when calling get_lacp_data : %s\n" %(e))
     
     return resp
 
@@ -173,15 +136,7 @@ def get_lacp_data():
 def get_counters(api_response):
 
     try:
-        c3 = openconfig_interfaces_client.Configuration()
-        c3.verify_ssl = False
-        aa3 = openconfig_interfaces_client.OpenconfigInterfacesApi(api_client=openconfig_interfaces_client.ApiClient(configuration=c3))
-
-
-        # create a body block
-        func3 = eval('get_openconfig_interfaces_interfaces_interface_state_counters', globals(), openconfig_interfaces_client.OpenconfigInterfacesApi.__dict__)
-        args = sys.argv[2:]
-
+        #print api_response        
         response = {}
         if 'sonic-portchannel:LAG_TABLE' not in api_response.keys():
             response['sonic-portchannel:LAG_TABLE'] = {}
@@ -189,18 +144,17 @@ def get_counters(api_response):
         else:
             response = api_response
         
-        for po_intf in response['sonic-portchannel:LAG_TABLE']['LAG_TABLE_LIST']:
-            resp = getattr(aa3,func3.__name__)(po_intf['lagname'])
-            if resp is None:
-                print ("Failure in getting PortChannel counters data")
-            else:
-                resp = aa3.api_client.sanitize_for_serialization(resp)
+        for po_intf in response['sonic-portchannel:LAG_TABLE']['LAG_TABLE_LIST']:        
+            resp = invoke_api('get_openconfig_interfaces_interfaces_interface_state_counters', po_intf['lagname'])
+        if resp.ok():
+            if resp.content is not None:
+                # Get Command Output
+                resp = resp.content
+                #resp = aa3.api_client.sanitize_for_serialization(resp)
                 po_intf["counters"] = resp
 
-
-    except ApiException as e:
-        #print("Exception when calling OpenconfigInterfacesApi->%s : %s\n" %(func.__name__, e))
-        print_exception(e)       
+    except Exception as e:
+        print("Exception when calling get_counters : %s\n" %(e))
     
 
 def run():
@@ -219,6 +173,7 @@ def run():
     else:
         template_file = sys.argv[3]
 
+    #print response
     show_cli_output(template_file, response)
 
 

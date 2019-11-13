@@ -38,17 +38,18 @@ func getLacpRoot (s *ygot.GoStruct) *ocbinds.OpenconfigLacp_Lacp {
 }
 
 func populateLacpData(ifKey string, state *ocbinds.OpenconfigLacp_Lacp_Interfaces_Interface_State,
-                                    members *ocbinds.OpenconfigLacp_Lacp_Interfaces_Interface_Members) bool {
+                                    members *ocbinds.OpenconfigLacp_Lacp_Interfaces_Interface_Members) error {
+	var err error
     cmd := exec.Command("docker", "exec", "teamd", "teamdctl", ifKey, "state", "dump")
-    out_stream, err := cmd.StdoutPipe()
-    if err != nil {
+	out_stream, e := cmd.StdoutPipe()
+    if e != nil {
         log.Fatalf("Can't get stdout pipe: %s\n", err)
-        return false
-    }
+        return e
+	}
     err = cmd.Start()
     if err != nil {
         log.Fatalf("cmd.Start() failed with %s\n", err)
-        return false
+        return err
     }
 
     var TeamdJson map[string]interface{}
@@ -56,13 +57,13 @@ func populateLacpData(ifKey string, state *ocbinds.OpenconfigLacp_Lacp_Interface
     err = json.NewDecoder(out_stream).Decode(&TeamdJson)
     if err != nil {
         log.Fatalf("Not able to decode teamd json output: %s\n", err)
-        return false
+        return err
     }
 
     err = cmd.Wait()
     if err != nil {
        log.Fatalf("Command execution completion failed with %s\n", err)
-        return false
+        return err
     }
 
     runner_map := TeamdJson["runner"].(map[string]interface{})
@@ -96,11 +97,22 @@ func populateLacpData(ifKey string, state *ocbinds.OpenconfigLacp_Lacp_Interface
 
     if ports_map,ok := TeamdJson["ports"].(map[string]interface{}); ok {
         for ifKey := range ports_map {
-            lacpMemberObj, _ = members.NewMember(ifKey)
-            ygot.BuildEmptyTree(lacpMemberObj)
-
+			log.Infof("----------------------------Build Empty Tree for %s \n", ifKey)
+			if lacpMemberObj, ok = members.Member[ifKey]; !ok {
+				lacpMemberObj, err = members.NewMember(ifKey)
+				if err != nil {
+					log.Error("Creation of portchannel member subtree failed")
+					return err
+				}
+				ygot.BuildEmptyTree(lacpMemberObj)
+			}
+            
            member_map := ports_map[ifKey].(map[string]interface{})
            port_runner := member_map["runner"].(map[string]interface{})
+
+   			selected := port_runner["selected"].(bool)
+			lacpMemberObj.State.Selected = &selected
+
            actor := port_runner["actor_lacpdu_info"].(map[string]interface{})
 
            port_num := actor["port"].(float64)
@@ -131,7 +143,7 @@ func populateLacpData(ifKey string, state *ocbinds.OpenconfigLacp_Lacp_Interface
 
     log.Infof("----------------------------Successfully populated portchannel data for %s\n", ifKey)
 
-    return true
+    return err
 }
 
 var DbToYang_lacp_get_xfmr  SubTreeXfmrDbToYang = func(inParams XfmrParams) error {
@@ -159,7 +171,7 @@ var DbToYang_lacp_get_xfmr  SubTreeXfmrDbToYang = func(inParams XfmrParams) erro
              ygot.BuildEmptyTree(lacpintfObj)
 
              log.Infof("---------------------------About to populate LACP data for %s\n", ifKey)
-             populateLacpData(ifKey, lacpintfObj.State, lacpintfObj.Members)
+             return populateLacpData(ifKey, lacpintfObj.State, lacpintfObj.Members)
         }
      } else if isSubtreeRequest(targetUriPath, "/openconfig-lacp:lacp/interfaces") {
         log.Infof("-------------------------------Inside all portchannel request")
@@ -175,7 +187,9 @@ var DbToYang_lacp_get_xfmr  SubTreeXfmrDbToYang = func(inParams XfmrParams) erro
             return err
         }
         keys, _ := tbl.GetKeys()
+		log.Infof("-------------------ALL KEYS: ", keys)
         for _, key := range keys {
+		   log.Infof("--------------KEYS: ", key)
            ifKey := key.Get(0)
            log.Infof("PortChannel: %s\n", ifKey)
 
