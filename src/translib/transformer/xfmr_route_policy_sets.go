@@ -32,43 +32,45 @@ var MATCH_SET_ACTION_MAP = map[string]string{
 }
 
 func init () {
+    XlateFuncBind("YangToDb_prefix_empty_set_name_fld_xfmr", YangToDb_prefix_empty_set_name_fld_xfmr)
     XlateFuncBind("YangToDb_prefix_set_name_fld_xfmr", YangToDb_prefix_set_name_fld_xfmr)
-    XlateFuncBind("YangToDb_prefix_cfg_set_name_fld_xfmr", YangToDb_prefix_cfg_set_name_fld_xfmr)
-    XlateFuncBind("DbToYang_prefix_cfg_set_name_fld_xfmr", DbToYang_prefix_cfg_set_name_fld_xfmr)
+    XlateFuncBind("DbToYang_prefix_set_name_fld_xfmr", DbToYang_prefix_set_name_fld_xfmr)
     XlateFuncBind("YangToDb_prefix_set_mode_fld_xfmr", YangToDb_prefix_set_mode_fld_xfmr)
     XlateFuncBind("DbToYang_prefix_set_mode_fld_xfmr", DbToYang_prefix_set_mode_fld_xfmr)
     XlateFuncBind("YangToDb_prefix_key_xfmr", YangToDb_prefix_key_xfmr)
     XlateFuncBind("DbToYang_prefix_key_xfmr", DbToYang_prefix_key_xfmr)
+    XlateFuncBind("YangToDb_prefix_empty_ip_prefix_fld_xfmr", YangToDb_prefix_empty_ip_prefix_fld_xfmr)
     XlateFuncBind("YangToDb_prefix_ip_prefix_fld_xfmr", YangToDb_prefix_ip_prefix_fld_xfmr)
-    XlateFuncBind("YangToDb_prefix_cfg_ip_prefix_fld_xfmr", YangToDb_prefix_cfg_ip_prefix_fld_xfmr)
-    XlateFuncBind("DbToYang_prefix_cfg_ip_prefix_fld_xfmr", DbToYang_prefix_cfg_ip_prefix_fld_xfmr)
+    XlateFuncBind("DbToYang_prefix_ip_prefix_fld_xfmr", DbToYang_prefix_ip_prefix_fld_xfmr)
+    XlateFuncBind("YangToDb_prefix_empty_masklength_range_fld_xfmr", YangToDb_prefix_empty_masklength_range_fld_xfmr)
+    XlateFuncBind("YangToDb_prefix_masklength_range_fld_xfmr", YangToDb_prefix_masklength_range_fld_xfmr)
     XlateFuncBind("DbToYang_prefix_masklength_range_fld_xfmr", DbToYang_prefix_masklength_range_fld_xfmr)
 
     XlateFuncBind("YangToDb_community_set_name_fld_xfmr", YangToDb_community_set_name_fld_xfmr)
-    XlateFuncBind("YangToDb_community_cfg_set_name_fld_xfmr", YangToDb_community_cfg_set_name_fld_xfmr)
-    XlateFuncBind("DbToYang_community_cfg_set_name_fld_xfmr", DbToYang_community_cfg_set_name_fld_xfmr)
+    XlateFuncBind("DbToYang_community_set_name_fld_xfmr", DbToYang_community_set_name_fld_xfmr)
     XlateFuncBind("YangToDb_community_match_set_options_fld_xfmr", YangToDb_community_match_set_options_fld_xfmr)
     XlateFuncBind("DbToYang_community_match_set_options_fld_xfmr", DbToYang_community_match_set_options_fld_xfmr)
     XlateFuncBind("YangToDb_community_member_fld_xfmr", YangToDb_community_member_fld_xfmr)
     XlateFuncBind("DbToYang_community_member_fld_xfmr", DbToYang_community_member_fld_xfmr)
 }
 
-var YangToDb_prefix_set_name_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
+var YangToDb_prefix_empty_set_name_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
     res_map := make(map[string]string)
 
     log.Info("YangToDb_prefix_set_name_fld_xfmr: ", inParams.key)
+  //  res_map["NULL"] = "NULL"
+    return res_map, nil
+}
+
+var YangToDb_prefix_set_name_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
+    res_map := make(map[string]string)
+
+    log.Info("YangToDb_prefix_cfg_set_name_fld_xfmr: ", inParams.key)
     res_map["NULL"] = "NULL"
     return res_map, nil
 }
 
-var YangToDb_prefix_cfg_set_name_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
-    res_map := make(map[string]string)
-
-    log.Info("YangToDb_prefix_cfg_set_name_fld_xfmr: ", inParams.key)
-    return res_map, nil
-}
-
-var DbToYang_prefix_cfg_set_name_fld_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (map[string]interface{}, error) {
+var DbToYang_prefix_set_name_fld_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (map[string]interface{}, error) {
     res_map := make(map[string]interface{})
     var err error
     log.Info("DbToYang_prefix_set_name_fld_xfmr: ", inParams.key)
@@ -236,22 +238,22 @@ var DbToYang_prefix_key_xfmr KeyXfmrDbToYang = func(inParams XfmrParams) (map[st
     return rmap, nil
 }
 
+var YangToDb_prefix_empty_ip_prefix_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
+    res_map := make(map[string]string)
+
+    log.Info("YangToDb_prefix_empty_ip_prefix_fld_xfmr: ", inParams.key)
+    return res_map, nil
+}
+
 var YangToDb_prefix_ip_prefix_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
     res_map := make(map[string]string)
 
     log.Info("YangToDb_prefix_ip_prefix_fld_xfmr: ", inParams.key)
-    return res_map, nil
-}
-
-var YangToDb_prefix_cfg_ip_prefix_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
-    res_map := make(map[string]string)
-
-    log.Info("YangToDb_prefix_cfg_ip_prefix_fld_xfmr: ", inParams.key)
     res_map["NULL"] = "NULL"
     return res_map, nil
 }
 
-var DbToYang_prefix_cfg_ip_prefix_fld_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (map[string]interface{}, error) {
+var DbToYang_prefix_ip_prefix_fld_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (map[string]interface{}, error) {
     res_map := make(map[string]interface{})
     var err error
     log.Info("DbToYang_prefix_ip_prefix_fld_xfmr: ", inParams.key)
@@ -263,6 +265,21 @@ var DbToYang_prefix_cfg_ip_prefix_fld_xfmr FieldXfmrDbtoYang = func(inParams Xfm
     res_map["ip-prefix"] = ip_prefix
     log.Info("prefix-set/prefix/config/ip-prefix ", res_map)
     return res_map, err
+}
+
+var YangToDb_prefix_empty_masklength_range_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
+    res_map := make(map[string]string)
+
+    log.Info("YangToDb_prefix_empty_masklength_range_fld_xfmr: ", inParams.key)
+    return res_map, nil
+}
+
+var YangToDb_prefix_masklength_range_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
+    res_map := make(map[string]string)
+
+    log.Info("YangToDb_prefix_masklength_range_fld_xfmr: ", inParams.key)
+    res_map["NULL"] = "NULL"
+    return res_map, nil
 }
 
 var DbToYang_prefix_masklength_range_fld_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (map[string]interface{}, error) {
@@ -284,24 +301,17 @@ var YangToDb_community_set_name_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrP
     res_map := make(map[string]string)
 
     log.Info("YangToDb_community_set_name_fld_xfmr: ", inParams.key)
-    return res_map, nil
-}
-
-var YangToDb_community_cfg_set_name_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
-    res_map := make(map[string]string)
-
-    log.Info("YangToDb_community_cfg_set_name_fld_xfmr: ", inParams.key)
     res_map["NULL"] = "NULL"
     return res_map, nil
 }
 
-var DbToYang_community_cfg_set_name_fld_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (map[string]interface{}, error) {
+var DbToYang_community_set_name_fld_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (map[string]interface{}, error) {
     res_map := make(map[string]interface{})
     var err error
-    log.Info("DbToYang_community_cfg_set_name_fld_xfmr: ", inParams.key)
+    log.Info("DbToYang_community_set_name_fld_xfmr: ", inParams.key)
     /*name attribute corresponds to key in redis table*/
     key := inParams.key
-    log.Info("DbToYang_community_cfg_set_name_fld_xfmr: ", key)
+    log.Info("DbToYang_community_set_name_fld_xfmr: ", key)
     setTblKey := strings.Split(key, "|")
     setName := setTblKey[0]
 
@@ -574,3 +584,4 @@ var DbToYang_community_member_fld_xfmr FieldXfmrDbtoYang = func(inParams XfmrPar
     log.Info("DbToYang_community_member_fld_xfmr: Comminuty Memebers ", result["community-member"])
     return result, err
 }
+
