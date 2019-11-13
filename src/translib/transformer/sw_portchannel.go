@@ -263,7 +263,7 @@ func deleteLagIntfAndMembers(inParams *XfmrParams, lagName *string) error {
     /* Validate given PortChannel exits */
     err = validateLagExists(inParams.d, &intTbl.cfgDb.portTN, lagName)
     if err != nil {
-        log.Info("PortChannel does not exist: " + *lagName)
+        log.Error("PortChannel does not exist: " + *lagName)
         //Keep subOpDataMap[DELETE] as empty 
         subOpMap[db.ConfigDB] = resMap
         inParams.subOpDataMap[DELETE] = &subOpMap
