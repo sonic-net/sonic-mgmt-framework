@@ -259,20 +259,20 @@ limitations under the License.
     <!--=======================================================-->
     <PTYPE
         name="STRING_8"
-        pattern="(^([a-zA-Z]){1,8})$"
-        help="String"
+        pattern="(^([a-zA-Z0-9_-]){1,8})$"
+        help="String(Max: 8 characters)"
         />
     <!--=======================================================-->
     <PTYPE
         name="STRING_16"
-        pattern="(^([a-zA-Z]){1,16})$"
-        help="String length upto 16 characters"
+        pattern="(^([a-zA-Z0-9_-]){1,16})$"
+        help="String(Max: 16 characters)"
         />
     <!--=======================================================-->
     <PTYPE
         name="STRING_20"
         pattern="(^([a-zA-Z0-9_-]){1,20})$"
-        help="String"
+        help="String(Max: 20 characters)"
         />
     <!--=======================================================-->
     <PTYPE
@@ -284,7 +284,7 @@ limitations under the License.
     <PTYPE
         name="STRING_55"
         pattern="(^([a-zA-Z0-9 _-]){0,55})$"
-        help="String"
+        help="String(Max: 55 characters)"
         />
     <!--=======================================================-->
     <PTYPE

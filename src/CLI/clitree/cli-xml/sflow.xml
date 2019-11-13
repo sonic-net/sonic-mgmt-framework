@@ -45,7 +45,7 @@ limitations under the License.
       <ACTION> python $SONIC_CLI_ROOT/sonic-cli-sflow.py patch_sonic_sflow_sonic_sflow_sflow_sflow_list_agent_id ${interface} </ACTION>
     </COMMAND>
     <COMMAND name="sflow polling-interval" help="Collector polling interval" ptype="SUBCOMMAND" mode="subcommand">
-      <PARAM name="interval" help="Interval" ptype="SFLOW_POLL_INTERVAL"/>
+      <PARAM name="interval" help="Interval (default: 20)" ptype="SFLOW_POLL_INTERVAL"/>
       <ACTION> python $SONIC_CLI_ROOT/sonic-cli-sflow.py patch_sonic_sflow_sonic_sflow_sflow_sflow_list_polling_interval ${interval} </ACTION>
     </COMMAND>
     <COMMAND name="no sflow" help="Disable sFlow">
