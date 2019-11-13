@@ -28,10 +28,11 @@ def register_modules():
             if not register_cb:
                 raise Exception('Missing register function for ' + mod_name)
 
-            register_dbus(mod_name, register_cb())
+            register_dbus(register_cb)
 
-def register_dbus(mod_name, handler_class):
+def register_dbus(register_cb):
     """Register DBus handlers for individual modules"""
+    handler_class, mod_name = register_cb()
     handlers[mod_name] = handler_class(mod_name)
 
 # Create a main loop reactor
