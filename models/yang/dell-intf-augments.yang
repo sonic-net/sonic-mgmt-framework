@@ -8,6 +8,7 @@ module dell-intf-augments {
 
     import openconfig-interfaces { prefix oc-if; }
     import openconfig-if-aggregate { prefix oc-lag; }
+    import openconfig-lacp {prefix oc-lacp; }
 
     // meta
     organization "OpenConfig working group";
@@ -36,6 +37,12 @@ module dell-intf-augments {
         leaf fallback {
             type boolean;
             description "Fallback status on this interface";
+        }
+    }
+    augment "/oc-lacp:lacp/oc-lacp:interfaces/oc-lacp:interface/oc-lacp:members/oc-lacp:member/oc-lacp:state" {
+        leaf selected {
+            type boolean;
+            description "Selected status on this interface";
         }
     }
 

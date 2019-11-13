@@ -248,43 +248,83 @@ var DbToYang_intf_lag_state_xfmr SubTreeXfmrDbToYang = func (inParams XfmrParams
     return err
 }
 
+func validateIPexist(intTbl IntfTblData, inParams *XfmrParams, lagName *string, checkExists *bool) error {
+    lagIPKeys, _ := inParams.d.GetKeys(&db.TableSpec{Name:intTbl.cfgDb.intfTN})
+    log.Info("lagIPKeys: ", lagIPKeys)
+    subOpMap := make(map[db.DBNum]map[string]map[string]db.Value)
+    resMap := make(map[string]map[string]db.Value)
+    if len(lagIPKeys) > 0 {
+        *checkExists = false
+        /* Check if IP entries exist */
+        for i := range lagIPKeys {
+            if *lagName == lagIPKeys[i].Get(0) {
+                *checkExists = true
+                log.Info("Found entry in PORTCHANNEL_INTERFACE TABLE")
+                if len(lagIPKeys[i].Comp) > 1 {
+                    //Keep subOpDataMap[DELETE] as empty 
+                    subOpMap[db.ConfigDB] = resMap
+                    inParams.subOpDataMap[DELETE] = &subOpMap
+                    errStr := "Need to first remove the IP configuration"
+                    log.Error(errStr)
+                    return errors.New(errStr)
+                }
+            }
+        }
+    }
+    return nil
+}
+
 /* Handle PortChannel Delete */
 func deleteLagIntfAndMembers(inParams *XfmrParams, lagName *string) error {
+    log.Info("Inside deleteLagIntfAndMembers")
     var err error
 
     subOpMap := make(map[db.DBNum]map[string]map[string]db.Value)
     resMap := make(map[string]map[string]db.Value)
     lagMap := make(map[string]db.Value)
     lagMemberMap := make(map[string]db.Value)
+    lagMap[*lagName] = db.Value{Field:map[string]string{}}
+
     intTbl := IntfTypeTblMap[IntfTypePortChannel]
     /* Validate given PortChannel exits */
     err = validateLagExists(inParams.d, &intTbl.cfgDb.portTN, lagName)
     if err != nil {
-        errStr := "Invalid PortChannel: " + *lagName
-        err = tlerr.InvalidArgsError{Format: errStr}
-        return  err
+        log.Error("PortChannel does not exist: " + *lagName)
+        //Keep subOpDataMap[DELETE] as empty 
+        subOpMap[db.ConfigDB] = resMap
+        inParams.subOpDataMap[DELETE] = &subOpMap
+        return nil
     }
-    /* Get entries from PORTCHANNEL_MEMBER TABLE */
+    /* Handle PORTCHANNEL_INTERFACE TABLE */
+    checkExists := false
+    err =validateIPexist(intTbl, inParams, lagName, &checkExists)
+    if err != nil {
+        return nil
+    } else if checkExists == true { //Entry with name exists in PORTCHANNEL_INTERFACE
+        resMap["PORTCHANNEL_INTERFACE"] = lagMap
+    }
+
+    /* Handle PORTCHANNEL_MEMBER TABLE */
     var flag bool = false
     lagKeys, err := inParams.d.GetKeys(&db.TableSpec{Name:intTbl.cfgDb.memberTN})
     if err == nil {
         for key, _ := range lagKeys {
             if *lagName == lagKeys[key].Get(0) {
                 flag = true
-                log.Info("Removing member port", lagKeys[key].Get(1))
+                log.Info("Member port", lagKeys[key].Get(1))
                 memberKey := *lagName + "|" + lagKeys[key].Get(1)
                 lagMemberMap[memberKey] = db.Value{Field:map[string]string{}}
             }
         }
     }
-    lagMap[*lagName] = db.Value{Field:map[string]string{}}
+    /* Handle PORTCHANNEL TABLE */
     resMap["PORTCHANNEL"] = lagMap
     if flag == true {
         resMap["PORTCHANNEL_MEMBER"] = lagMemberMap
     }
-    log.Info("resMap", resMap)
+    log.Info("resMap: ", resMap)
     subOpMap[db.ConfigDB] = resMap
     inParams.subOpDataMap[DELETE] = &subOpMap
-    return err
+    return nil
 }
 

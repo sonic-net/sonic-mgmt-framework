@@ -1127,8 +1127,9 @@ var DbToYang_sw_vlans_xfmr SubTreeXfmrDbToYang = func (inParams XfmrParams) (err
            strings.HasPrefix(targetUriPath, "/openconfig-interfaces:interfaces/interface/openconfig-if-aggregate:aggregation/openconfig-vlan:switched-vlan/state") {
             switch intfType {
             case IntfTypeEthernet:
-                if intfObj.Ethernet.SwitchedVlan.State == nil {
-                    errStr := "Switched-vlan state tree not built correctly!"
+                if intfObj.Ethernet == nil || intfObj.Ethernet.SwitchedVlan == nil || intfObj.Ethernet.SwitchedVlan.State == nil {
+                    errStr := "Switched-vlan state tree not built correctly for Interface: " + ifName
+                    log.Error(errStr)
                     return errors.New(errStr)
                 }
                 vlanMemberMap := make(map[string]map[string]db.Value)
@@ -1151,9 +1152,9 @@ var DbToYang_sw_vlans_xfmr SubTreeXfmrDbToYang = func (inParams XfmrParams) (err
                 }
 
             case IntfTypePortChannel:
-
-                if intfObj.Aggregation.SwitchedVlan.State == nil {
-                    errStr := "Switched-vlan state tree not built correctly!"
+                if intfObj.Aggregation == nil || intfObj.Aggregation.SwitchedVlan == nil || intfObj.Aggregation.SwitchedVlan.State == nil {
+                    errStr := "Switched-vlan state tree not built correctly for Interface: " + ifName
+                    log.Error(errStr)
                     return errors.New(errStr)
                 }
                 vlanMemberMap := make(map[string]map[string]db.Value)

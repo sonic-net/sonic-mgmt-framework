@@ -11,3 +11,5 @@ openconfig-network-instance-annot.yang
 openconfig-lacp.yang
 openconfig-lacp-annot.yang
 sonic-vxlan.yang
+openconfig-system.yang
+openconfig-system-annot.yang
