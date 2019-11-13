@@ -47,9 +47,12 @@ export CLISH_PATH=$SONIC_CLI_ROOT/command-tree
 export PYTHONVER=2.7.14
 export PYTHONPATH=$PYTHONPATH:$BUILDDIR/swagger_client_py:$SONIC_CLI_ROOT:$SONIC_CLI_ROOT/scripts
 
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$SONIC_CLI_ROOT/.libs
+# KLISH_BIN can be set to use klish exe and libs from other directory
+[ ! -d "$KLISH_BIN" ] && KLISH_BIN=$SONIC_CLI_ROOT
 
-export PATH=$PATH:$SONIC_CLI_ROOT
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$KLISH_BIN/.libs
 
-(cd $SONIC_CLI_ROOT && ./clish ${ARGS[@]})
+export PATH=$PATH:$KLISH_BIN
+
+(cd $SONIC_CLI_ROOT && clish ${ARGS[@]})
 
