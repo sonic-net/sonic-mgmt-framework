@@ -656,9 +656,9 @@ limitations under the License.
           </PARAM>
        <ACTION>
          if test "${switchport-subcommands}" = "access"; then&#xA;
-             python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_vlan_interfaces_interface_aggregation_switched_vlan_config ${iface} ACCESS ${vlan-id}&#xA;
+             python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_vlan_interfaces_interface_aggregation_switched_vlan_config ${po_name} ACCESS ${vlan-id}&#xA;
          else&#xA;
-             python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_vlan_interfaces_interface_aggregation_switched_vlan_config ${iface} TRUNK ${vlan-id}&#xA;
+             python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_vlan_interfaces_interface_aggregation_switched_vlan_config ${po_name} TRUNK ${vlan-id}&#xA;
         fi
        </ACTION>
        </COMMAND>
@@ -717,9 +717,9 @@ limitations under the License.
            </PARAM>
       <ACTION>
           if test "${switchport-subcommands}" = "access"; then&#xA;
-              python $SONIC_CLI_ROOT/sonic-cli-if.py delete_openconfig_vlan_interfaces_interface_aggregation_switched_vlan_config_access_vlan ${iface} ACCESS&#xA;
+              python $SONIC_CLI_ROOT/sonic-cli-if.py delete_openconfig_vlan_interfaces_interface_aggregation_switched_vlan_config_access_vlan ${po_name} ACCESS&#xA;
           else&#xA;
-              python $SONIC_CLI_ROOT/sonic-cli-if.py del_llist_openconfig_vlan_interfaces_interface_aggregation_switched_vlan_config_trunk_vlans ${iface} TRUNK ${vlan-id}&#xA;
+              python $SONIC_CLI_ROOT/sonic-cli-if.py del_llist_openconfig_vlan_interfaces_interface_aggregation_switched_vlan_config_trunk_vlans ${po_name} TRUNK ${vlan-id}&#xA;
           fi
       </ACTION>
       </COMMAND>
