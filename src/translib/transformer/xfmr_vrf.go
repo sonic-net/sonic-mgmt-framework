@@ -367,6 +367,8 @@ var YangToDb_network_instance_name_field_xfmr FieldXfmrYangToDb = func(inParams 
         log.Info("YangToDb_network_instance_name_field_xfmr")
 
         /* the key name is not repeated as attr name in the DB */
+        res_map["NULL"] = "NULL"
+
         return res_map, err
 }
 
