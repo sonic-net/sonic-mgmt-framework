@@ -68,6 +68,17 @@ if __name__ == '__main__':
                 api_response['ietf-ptp:default-ds'] = api_inner_response
 
         show_cli_output(sys.argv[3], api_response)
+
+        raw_data = db.get_all(db.STATE_DB, "PTP_CURRENTDS|GLOBAL")
+        if not raw_data:
+            sys.exit()
+        for key, val in raw_data.items():
+            if key == "mean-path-delay":
+                print("%-21s %s") % ("Mean Path Delay", val)
+                if key == "steps-removed":
+                    print("%-21s %s") % ("Steps Removed", val)
+                if key == "offset-from-master":
+                    print("%-21s %s") % ("Ofst From Master", val)
     elif sys.argv[1] == 'get_ietf_ptp_ptp_instance_list_time_properties_ds':
         raw_data = db.get_all(db.STATE_DB, "PTP_TIMEPROPDS|GLOBAL")
         if not raw_data:
