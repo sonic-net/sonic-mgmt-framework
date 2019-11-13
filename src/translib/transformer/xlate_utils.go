@@ -395,6 +395,7 @@ func formXfmrInputRequest(d *db.DB, dbs [db.MaxDB]*db.DB, cdb db.DBNum, ygRoot *
 	inParams.curDb = cdb
 	inParams.ygRoot = ygRoot
 	inParams.uri = uri
+	inParams.requestUri = requestUri
 	inParams.oper = oper
 	inParams.key = key
 	inParams.dbDataMap = dbDataMap
