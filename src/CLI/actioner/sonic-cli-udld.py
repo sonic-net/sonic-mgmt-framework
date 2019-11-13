@@ -58,17 +58,30 @@ def invoke(func, args):
         keypath = cc.Path('/restconf/data/sonic-udld:sonic-udld/UDLD_PORT_TABLE/UDLD_PORT_TABLE_LIST={ifname}', ifname=args[1])
         return aa.get(keypath)
 
-    # Configure UDLD global
-    if func == 'patch_sonic_udld_sonic_udld_udld_udld_list' :
-        keypath = cc.Path('/restconf/data/sonic-udld:sonic-udld/UDLD/UDLD_LIST={id}', id='GLOBAL')
+    # Enable UDLD global
+    if func == 'post_list_sonic_udld_sonic_udld_udld_udld_list' :
+        keypath = cc.Path('/restconf/data/sonic-udld:sonic-udld/UDLD')
         body=collections.defaultdict(dict)
         body["UDLD_LIST"] = [{
             "id": "GLOBAL",
             "msg_time": 1,
             "multiplier":3,
-            "admin_enable":str2bool(args[0])
+            "admin_enable":True,
+            "aggressive":False
             }]
-        return aa.patch(keypath, body)
+        return aa.post(keypath, body)
+
+    # Disable UDLD global
+    if func == 'delete_sonic_udld_sonic_udld_udld' :
+        # Delete all port level udld configs
+        keypath = cc.Path('/restconf/data/sonic-udld:sonic-udld/UDLD_PORT')
+        resp = aa.delete(keypath)
+        if not resp.ok():
+            return resp
+
+        # Delete global level udld configs
+        keypath = cc.Path('/restconf/data/sonic-udld:sonic-udld/UDLD')
+        return aa.delete(keypath)
 
     # Configure UDLD aggressive
     if func == 'patch_sonic_udld_sonic_udld_udld_udld_list_aggressive' :
@@ -94,13 +107,23 @@ def invoke(func, args):
             body = { "sonic-udld:multiplier": int(args[0]) }
         return aa.patch(keypath, body)
 
-    # Configure UDLD enable/disable at Interface
-    if func == 'patch_sonic_udld_sonic_udld_udld_port_udld_port_list_admin_enable' :
-        keypath = cc.Path('/restconf/data/sonic-udld:sonic-udld/UDLD_PORT/UDLD_PORT_LIST={ifname}/admin_enable', ifname=args[1])
-        body = { "sonic-udld:admin_enable": str2bool(args[0]) }
-        return aa.patch(keypath, body)
+    # Enable UDLD at Interface
+    if func == 'post_list_sonic_udld_sonic_udld_udld_port_udld_port_list' :
+        keypath = cc.Path('/restconf/data/sonic-udld:sonic-udld/UDLD_PORT')
+        body=collections.defaultdict(dict)
+        body["UDLD_PORT_LIST"] = [{
+            "ifname": args[0],
+            "admin_enable":True,
+            "aggressive":False
+            }]
+        return aa.post(keypath, body)
 
-    # Configure UDLD normal at Interface
+    # Disable UDLD at Interface
+    if func == 'delete_sonic_udld_sonic_udld_udld_port_udld_port_list' :
+        keypath = cc.Path('/restconf/data/sonic-udld:sonic-udld/UDLD_PORT/UDLD_PORT_LIST={ifname}', ifname=args[0])
+        return aa.delete(keypath)
+
+    # Configure UDLD aggressive at Interface
     if func == 'patch_sonic_udld_sonic_udld_udld_port_udld_port_list_aggressive' :
         keypath = cc.Path('/restconf/data/sonic-udld:sonic-udld/UDLD_PORT/UDLD_PORT_LIST={ifname}/aggressive', ifname=args[1])
         body = { "sonic-udld:aggressive": str2bool(args[0]) }

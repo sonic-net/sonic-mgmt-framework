@@ -131,13 +131,13 @@
         <COMMAND name = "udld enable"
             help = "Enable UDLD at global level">
             <ACTION>
-                python $SONIC_CLI_ROOT/sonic-cli-udld.py patch_sonic_udld_sonic_udld_udld_udld_list true&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-udld.py post_list_sonic_udld_sonic_udld_udld_udld_list&#xA;
             </ACTION>
         </COMMAND>
         <COMMAND name = "no udld enable"
             help = "Disable UDLD at global level">
             <ACTION>
-                python $SONIC_CLI_ROOT/sonic-cli-udld.py patch_sonic_udld_sonic_udld_udld_udld_list false&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-udld.py delete_sonic_udld_sonic_udld_udld&#xA;
             </ACTION>
         </COMMAND>
         <COMMAND name = "udld aggressive"
@@ -197,13 +197,13 @@
         <COMMAND name = "udld enable"
             help = "Enable UDLD at interface level">
             <ACTION>
-                python $SONIC_CLI_ROOT/sonic-cli-udld.py patch_sonic_udld_sonic_udld_udld_port_udld_port_list_admin_enable true ${iface}&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-udld.py post_list_sonic_udld_sonic_udld_udld_port_udld_port_list ${iface}&#xA;
             </ACTION>
         </COMMAND>
         <COMMAND name = "no udld enable"
             help = "Disable UDLD at interface level">
             <ACTION>
-                python $SONIC_CLI_ROOT/sonic-cli-udld.py patch_sonic_udld_sonic_udld_udld_port_udld_port_list_admin_enable false ${iface}&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-udld.py delete_sonic_udld_sonic_udld_udld_port_udld_port_list ${iface}&#xA;
             </ACTION>
         </COMMAND>
         <COMMAND name = "udld aggressive"
