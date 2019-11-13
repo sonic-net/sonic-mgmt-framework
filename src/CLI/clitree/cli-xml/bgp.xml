@@ -83,7 +83,7 @@ limitations under the License.
   <COMMAND name="graceful-restart enable" help="Enable BGP graceful restart">
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_graceful_restart_config_enabled ${vrf-name} True</ACTION>
   </COMMAND>
-  <COMMAND name="graceful-restart preserve-fw-state" help="Enable BGP graceful restart preserve FW state">
+  <COMMAND name="graceful-restart preserve-fw-state" help="Enable BGP graceful restart preserve FW state" ref="hidden">
     <ACTION builtin="clish_nop"/>
   </COMMAND>
   <COMMAND name="graceful-restart restart-time" help="BGP graceful restart restart-time">
@@ -113,8 +113,8 @@ limitations under the License.
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_local_as ${vrf-name} ${ip} ${instance}</ACTION>
   </COMMAND>
 
-  <COMMAND name="template" help="Specify a neighbor router" view="configure-router-bgp-template-view" viewid="template-name=${template-str}">
-    <PARAM name="template-str" help="neighbor router" ptype="STRING" view="configure-router-bgp-template-view" viewid="template-name=${template-str}"/>
+  <COMMAND name="peer-group" help="Specify a peer-group" view="configure-router-bgp-template-view" viewid="template-name=${template-str}">
+    <PARAM name="template-str" help="Peer-group" ptype="STRING" view="configure-router-bgp-template-view" viewid="template-name=${template-str}"/>
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_config_local_as ${vrf-name} ${template-str} ${instance}</ACTION>
   </COMMAND>
   <COMMAND name="address-family" help="Enter Address Family command mode"/>
@@ -145,7 +145,7 @@ limitations under the License.
   <COMMAND name="no graceful-restart enable" help="Disable BGP graceful restart">
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_graceful_restart_config_enabled ${vrf-name}</ACTION>
   </COMMAND>
-  <COMMAND name="no graceful-restart preserve-fw-state" help="Disable BGP graceful restart preserve FW state">
+  <COMMAND name="no graceful-restart preserve-fw-state" help="Disable BGP graceful restart preserve FW state" ref="hidden">
     <ACTION builtin="clish_nop"/>
   </COMMAND>
   <COMMAND name="no graceful-restart restart-time" help="Unconfigure BGP graceful restart restart-time">
@@ -172,8 +172,8 @@ limitations under the License.
     <PARAM name="ip" help="neighbor router" ptype="IPV4V6_ADDR"/>
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_local_as ${vrf-name} ${ip}</ACTION>
   </COMMAND>
-  <COMMAND name="no template" help="Specify a neighbor router">
-    <PARAM name="template" help="neighbor router" ptype="STRING"/>
+  <COMMAND name="no peer-group" help="Specify a peer-group">
+    <PARAM name="template" help="Peer-group" ptype="STRING"/>
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_config_local_as ${vrf-name} ${template}</ACTION>
   </COMMAND>
   <COMMAND name="no address-family" help="Enter Address Family command mode"/>
@@ -191,8 +191,8 @@ limitations under the License.
 <VIEW name="configure-router-bgp-nbr-view" prompt="${SYSTEM_NAME}(config-router-neighbor)# " depth="3">
   <NAMESPACE ref="configure-view" help="false" completion="false" />
   <NAMESPACE ref="configure-router-bgp-view" help="false" completion="false" />
-  <COMMAND name="description" help="Assign a string describing the neighbor or the peer template">
-    <PARAM name="String" help="Enter the string (max 80 characters) to describe neighbor/Peer Template" ptype="STRING"/>  
+  <COMMAND name="description" help="Assign a string describing the neighbor or the peer-group">
+    <PARAM name="String" help="Enter the string (max 80 characters) to describe neighbor/peer-group" ptype="STRING"/>  
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_description ${vrf-name} ${nbr-addr} ${String}</ACTION>
   </COMMAND>
   <COMMAND name="ebgp-multihop" help="Allow EBGP neighbors not on directly connected networks">
@@ -201,8 +201,8 @@ limitations under the License.
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_ebgp_multihop_config_multihop_ttl ${vrf-name} ${nbr-addr} ${hop-count}&#xA;
              python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_ebgp_multihop_config_enabled ${vrf-name} ${nbr-addr} True</ACTION>
   </COMMAND>
-  <COMMAND name="inherit" help="Inherit a template">
-    <PARAM name="template" help="Inherit configuration of peer-group" mode="subcommand" ptype="SUBCOMMAND">
+  <COMMAND name="inherit" help="Inherit a peer-group">
+    <PARAM name="peer-group" help="Inherit configuration of peer-group" mode="subcommand" ptype="SUBCOMMAND">
     <PARAM name="template-name" help="Name of peer-group from which to inherit" ptype="STRING"/>
     </PARAM>
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_peer_group ${vrf-name} ${nbr-addr} ${template-name}</ACTION>
@@ -253,8 +253,8 @@ limitations under the License.
     <PARAM name="evpn" help="Enter Address Family command mode" mode="subcommand" ptype="SUBCOMMAND"/>
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_config_enabled ${vrf-name} ${nbr-addr} L2VPN_EVPN</ACTION>
   </COMMAND>  
-  <COMMAND name="no description" help="Remove the string describing the neighbor or the peer template">
-    <PARAM name="String" help="Enter the string (max 80 characters) to describe neighbor/Peer Template" ptype="STRING" optional="true"/>  
+  <COMMAND name="no description" help="Remove the string describing the neighbor or the peer-group">
+    <PARAM name="String" help="Enter the string (max 80 characters) to describe neighbor/peer-group" ptype="STRING" optional="true"/>  
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_description ${vrf-name} ${nbr-addr} ${String}</ACTION>
   </COMMAND>
   <COMMAND name="no ebgp-multihop" help="Allow EBGP neighbors not on directly connected networks">
@@ -262,8 +262,8 @@ limitations under the License.
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_ebgp_multihop_config_multihop_ttl ${vrf-name} ${nbr-addr} ${hop-count}&#xA;
              python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_ebgp_multihop_config_enabled ${vrf-name} ${nbr-addr} False</ACTION>
   </COMMAND>
-  <COMMAND name="no inherit" help="Inherit a template">
-    <PARAM name="template" help="Inherit configuration of peer-group" mode="subcommand" ptype="SUBCOMMAND">
+  <COMMAND name="no inherit" help="Inherit a peer-group">
+    <PARAM name="peer-group" help="Inherit configuration of peer-group" mode="subcommand" ptype="SUBCOMMAND">
     <PARAM name="template-name" help="Name of peer-group from which to inherit" ptype="STRING" optional="true"/>
     </PARAM>
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_peer_group ${vrf-name} ${nbr-addr} ${template-name}</ACTION>
@@ -288,7 +288,7 @@ limitations under the License.
   </COMMAND>
 </VIEW>
 
-<VIEW name="configure-router-bgp-template-view" prompt="${SYSTEM_NAME}(config-router-template)# " depth="3">
+<VIEW name="configure-router-bgp-template-view" prompt="${SYSTEM_NAME}(config-router-peer-group)# " depth="3">
   <NAMESPACE ref="configure-view" help="false" completion="false" />
   <NAMESPACE ref="configure-router-bgp-view" help="false" completion="false" />
   <COMMAND name="remote-as" help="Specify a BGP neighbor AS">
