@@ -100,6 +100,21 @@ module sonic-vxlan {
 			}
 		}
 	 }
-	}
+     container SUPPRESS_VLAN_NEIGH {
+
+         list SUPPRESS_VLAN_NEIGH_LIST {
+             key "name";
+
+             leaf name {
+                 type string;
+             }
+             leaf suppress {
+                 type string;
+             }
+
+         }
+     }
+
+    }
 
 }
