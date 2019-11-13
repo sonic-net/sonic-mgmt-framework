@@ -50,7 +50,6 @@ module sonic-routing-policy-sets {
                 key "set_name ip_prefix masklength_range";
 
                 leaf set_name {
-                    mandatory true;
                     type leafref {
                         path "../../../PREFIX_SET/PREFIX_SET_LIST/name";
                     }
@@ -59,7 +58,6 @@ module sonic-routing-policy-sets {
                 leaf ip_prefix {
                     /* TODO - Validate ip-prefix based on PREFIX_SET/mode */
                     type inet:ip-prefix;
-                    mandatory true;
                     description
                         "The prefix member in CIDR notation -- while the
                         prefix may be either IPv4 or IPv6, most
@@ -70,7 +68,6 @@ module sonic-routing-policy-sets {
 
                 leaf masklength_range {
                     type string;
-                    mandatory true;
                     description
                         "Defines a range for the masklength, or 'exact' if
                         the prefix has an exact length.
@@ -88,17 +85,16 @@ module sonic-routing-policy-sets {
         container COMMUNITY_SET {
 
             list COMMUNITY_SET_LIST {
-                key "community_set_name";
+                key "name";
 
-                leaf community_set_name {
-                    mandatory true;
+                leaf name {
                     type string {
                         pattern '[a-zA-Z0-9]{1}([-a-zA-Z0-9_]{0,71})';
                         length 1..72;
                     }
                 }
 
-                leaf type {
+                leaf set_type {
                     type enumeration {
                         enum STANDARD;
                         enum EXPANDED;
@@ -107,9 +103,8 @@ module sonic-routing-policy-sets {
 
                 leaf match_action {
                     type enumeration {
-                        enum PERMIT_ANY;
-                        enum PERMIT_ALL;
-                        enum DENY;
+                        enum ANY;
+                        enum ALL;
                     }
                 }
 
@@ -122,17 +117,16 @@ module sonic-routing-policy-sets {
         container EXTENDED_COMMUNITY_SET {
 
             list EXTENDED_COMMUNITY_SET_LIST {
-                key "ext_community_set_name";
+                key "name";
 
-                leaf ext_community_set_name {
-                    mandatory true;
+                leaf name {
                     type string {
                         pattern '[a-zA-Z0-9]{1}([-a-zA-Z0-9_]{0,71})';
                         length 1..72;
                     }
                 }
 
-                leaf type {
+                leaf set_type {
                     type enumeration {
                         enum STANDARD;
                         enum EXPANDED;
@@ -141,9 +135,8 @@ module sonic-routing-policy-sets {
 
                 leaf match_action {
                     type enumeration {
-                        enum PERMIT_ANY;
-                        enum PERMIT_ALL;
-                        enum DENY;
+                        enum ANY;
+                        enum ALL;
                     }
                 }
 
@@ -156,10 +149,9 @@ module sonic-routing-policy-sets {
         container AS_PATH_SET {
 
             list AS_PATH_SET_LIST {
-                key "as_path_set_name";
+                key "name";
 
-                leaf as_path_set_name {
-                    mandatory true;
+                leaf name {
                     type string {
                         pattern '[a-zA-Z0-9]{1}([-a-zA-Z0-9_]{0,71})';
                         length 1..72;

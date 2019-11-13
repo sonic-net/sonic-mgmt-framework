@@ -15,9 +15,8 @@ import (
 const (
     SONIC_PREFIX_SET_MODE_IPV4 = "IPv4"
     SONIC_PREFIX_SET_MODE_IPV6 = "IPv6"
-    SONIC_MATCH_SET_ACTION_ANY = "PERMIT_ANY"
-    SONIC_MATCH_SET_ACTION_ALL = "PERMIT_ALL"
-    SONIC_MATCH_SET_ACTION_INVERT = "DENY"
+    SONIC_MATCH_SET_ACTION_ANY = "ANY"
+    SONIC_MATCH_SET_ACTION_ALL = "ALL"
 )
 
 /* E_OpenconfigRoutingPolicy_RoutingPolicy_DefinedSets_PrefixSets_PrefixSet_Config_Mode */
@@ -30,7 +29,6 @@ var PREFIX_SET_MODE_MAP = map[string]string{
 var MATCH_SET_ACTION_MAP = map[string]string{
     strconv.FormatInt(int64(ocbinds.OpenconfigRoutingPolicy_MatchSetOptionsType_ALL), 10): SONIC_MATCH_SET_ACTION_ALL,
     strconv.FormatInt(int64(ocbinds.OpenconfigRoutingPolicy_MatchSetOptionsType_ANY), 10): SONIC_MATCH_SET_ACTION_ANY,
-    strconv.FormatInt(int64(ocbinds.OpenconfigRoutingPolicy_MatchSetOptionsType_INVERT), 10): SONIC_MATCH_SET_ACTION_INVERT,
 }
 
 func init () {
@@ -47,7 +45,8 @@ func init () {
     XlateFuncBind("DbToYang_prefix_masklength_range_fld_xfmr", DbToYang_prefix_masklength_range_fld_xfmr)
 
     XlateFuncBind("YangToDb_community_set_name_fld_xfmr", YangToDb_community_set_name_fld_xfmr)
-    XlateFuncBind("DbToYang_community_set_name_fld_xfmr", DbToYang_community_set_name_fld_xfmr)
+    XlateFuncBind("YangToDb_community_cfg_set_name_fld_xfmr", YangToDb_community_cfg_set_name_fld_xfmr)
+    XlateFuncBind("DbToYang_community_cfg_set_name_fld_xfmr", DbToYang_community_cfg_set_name_fld_xfmr)
     XlateFuncBind("YangToDb_community_match_set_options_fld_xfmr", YangToDb_community_match_set_options_fld_xfmr)
     XlateFuncBind("DbToYang_community_match_set_options_fld_xfmr", DbToYang_community_match_set_options_fld_xfmr)
     XlateFuncBind("YangToDb_community_member_fld_xfmr", YangToDb_community_member_fld_xfmr)
@@ -102,11 +101,16 @@ var DbToYang_prefix_set_mode_fld_xfmr FieldXfmrDbtoYang = func(inParams XfmrPara
     var err error
     result := make(map[string]interface{})
     data := (*inParams.dbDataMap)[inParams.curDb]
-    log.Info("DbToYang_prefix_set_mode_fld_xfmr", data, inParams.ygRoot)
-    oc_mode := findInMap(PREFIX_SET_MODE_MAP, data["PREFIX_SET"][inParams.key].Field["mode"])
-    n, err := strconv.ParseInt(oc_mode, 10, 64)
-    log.Info("DbToYang_prefix_set_mode_fld_xfmr", oc_mode)
-    result["mode"] = ocbinds.E_OpenconfigRoutingPolicy_RoutingPolicy_DefinedSets_PrefixSets_PrefixSet_Config_Mode(n).ΛMap()["E_OpenconfigRoutingPolicy_RoutingPolicy_DefinedSets_PrefixSets_PrefixSet_Config_Mode"][n].Name
+    log.Info("DbToYang_prefix_set_mode_fld_xfmr: Input", data, inParams.ygRoot)
+    mode, ok := data["PREFIX_SET"][inParams.key].Field["mode"]
+    if ok {
+        log.Info("DbToYang_prefix_set_mode_fld_xfmr **** ", mode)
+        oc_mode := findInMap(PREFIX_SET_MODE_MAP, mode)
+        n, err := strconv.ParseInt(oc_mode, 10, 64)
+        result["mode"] = ocbinds.E_OpenconfigRoutingPolicy_RoutingPolicy_DefinedSets_PrefixSets_PrefixSet_Config_Mode(n).ΛMap()["E_OpenconfigRoutingPolicy_RoutingPolicy_DefinedSets_PrefixSets_PrefixSet_Config_Mode"][n].Name
+        log.Info("DbToYang_prefix_set_mode_fld_xfmr ", result)
+        return result, err
+    }
     return result, err
 }
 
@@ -236,7 +240,6 @@ var YangToDb_prefix_ip_prefix_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrPar
     res_map := make(map[string]string)
 
     log.Info("YangToDb_prefix_ip_prefix_fld_xfmr: ", inParams.key)
-    res_map["NULL"] = "NULL"
     return res_map, nil
 }
 
@@ -244,9 +247,9 @@ var YangToDb_prefix_cfg_ip_prefix_fld_xfmr FieldXfmrYangToDb = func(inParams Xfm
     res_map := make(map[string]string)
 
     log.Info("YangToDb_prefix_cfg_ip_prefix_fld_xfmr: ", inParams.key)
+    res_map["NULL"] = "NULL"
     return res_map, nil
 }
-
 
 var DbToYang_prefix_cfg_ip_prefix_fld_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (map[string]interface{}, error) {
     res_map := make(map[string]interface{})
@@ -281,17 +284,24 @@ var YangToDb_community_set_name_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrP
     res_map := make(map[string]string)
 
     log.Info("YangToDb_community_set_name_fld_xfmr: ", inParams.key)
-   // res_map["NULL"] = "NULL"
     return res_map, nil
 }
 
-var DbToYang_community_set_name_fld_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (map[string]interface{}, error) {
+var YangToDb_community_cfg_set_name_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
+    res_map := make(map[string]string)
+
+    log.Info("YangToDb_community_cfg_set_name_fld_xfmr: ", inParams.key)
+    res_map["NULL"] = "NULL"
+    return res_map, nil
+}
+
+var DbToYang_community_cfg_set_name_fld_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (map[string]interface{}, error) {
     res_map := make(map[string]interface{})
     var err error
-    log.Info("DbToYang_community_set_name_fld_xfmr: ", inParams.key)
+    log.Info("DbToYang_community_cfg_set_name_fld_xfmr: ", inParams.key)
     /*name attribute corresponds to key in redis table*/
     key := inParams.key
-    log.Info("DbToYang_community_set_name_fld_xfmr: ", key)
+    log.Info("DbToYang_community_cfg_set_name_fld_xfmr: ", key)
     setTblKey := strings.Split(key, "|")
     setName := setTblKey[0]
 
@@ -368,15 +378,17 @@ var YangToDb_community_match_set_options_fld_xfmr FieldXfmrYangToDb = func(inPar
 var DbToYang_community_match_set_options_fld_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (map[string]interface{}, error) {
     var err error
     result := make(map[string]interface{})
+
+    log.Info("DbToYang_community_match_set_options_fld_xfmr", inParams.ygRoot)
     data := (*inParams.dbDataMap)[inParams.curDb]
-    log.Info("DbToYang_community_match_set_options_fld_xfmr", data, inParams.ygRoot)
-
-    match_opt := findInMap(MATCH_SET_ACTION_MAP, data["COMMUNITY_SET"][inParams.key].Field["match_action"])
-    log.Info("DbToYang_community_match_set_options_fld_xfmr", match_opt)
-    n, err := strconv.ParseInt(match_opt, 10, 64)
-    result["match-set-options"] = ocbinds.E_OpenconfigRoutingPolicy_MatchSetOptionsType(n).ΛMap()["E_OpenconfigRoutingPolicy_MatchSetOptionsType"][n].Name
-
-    log.Info("DbToYang_community_match_set_options_fld_xfmr ", result["match-set-options"])
+    opt, ok := data["COMMUNITY_SET"][inParams.key].Field["match_action"]
+    if ok {
+        match_opt := findInMap(MATCH_SET_ACTION_MAP, opt)
+        n, err := strconv.ParseInt(match_opt, 10, 64)
+        result["match-set-options"] = ocbinds.E_OpenconfigRoutingPolicy_MatchSetOptionsType(n).ΛMap()["E_OpenconfigRoutingPolicy_MatchSetOptionsType"][n].Name
+        log.Info("DbToYang_community_match_set_options_fld_xfmr ", result["match-set-options"])
+        return result, err
+    }
     return result, err
 }
 
@@ -391,7 +403,7 @@ func community_set_type_get_by_set_name (d *db.DB , setName string, tblName stri
         log.Error("No Entry found e = ", err)
         return "", err
     }
-    prev_type, ok := dbEntry.Field["type"]
+    prev_type, ok := dbEntry.Field["set_type"]
     if ok {
         log.Info("Previous type ", prev_type)
     } else {
@@ -413,7 +425,7 @@ func community_set_is_community_members_exits (d *db.DB , setName string, tblNam
         return false, err
     }
 
-    community_list, ok := dbEntry.Field["community_member"]
+    community_list, ok := dbEntry.Field["community_member@"]
     if ok {
         if len(community_list) > 0 {
             log.Info("community_set_is_community_members_exits: Comminuty members eixts")
@@ -426,18 +438,17 @@ func community_set_is_community_members_exits (d *db.DB , setName string, tblNam
     return false, nil
 }
 
-
 var YangToDb_community_member_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
     res_map := make(map[string]string)
     var err error
-    var community []string
     var community_list string
     var numCommunity int
     var new_type string
     var prev_type string
+
     log.Info("YangToDb_community_member_fld_xfmr: ", inParams.ygRoot, " Xpath: ", inParams.uri, "inParams : ", inParams)
     if inParams.param == nil {
-        res_map["community_member"] = ""
+        res_map["community_member@"] = ""
         return res_map, errors.New("Invalid Inputs")
     }
 
@@ -475,13 +486,13 @@ var YangToDb_community_member_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrPar
             v := (member).(*ocbinds.OpenconfigRoutingPolicy_RoutingPolicy_DefinedSets_BgpDefinedSets_CommunitySets_CommunitySet_Config_CommunityMember_Union_E_OpenconfigBgpTypes_BGP_WELL_KNOWN_STD_COMMUNITY)
             switch v.E_OpenconfigBgpTypes_BGP_WELL_KNOWN_STD_COMMUNITY {
             case ocbinds.OpenconfigBgpTypes_BGP_WELL_KNOWN_STD_COMMUNITY_NOPEER:
-                community = append(community, "local-AS")
+                community_list += "local-AS" + ","
                 break
             case ocbinds.OpenconfigBgpTypes_BGP_WELL_KNOWN_STD_COMMUNITY_NO_ADVERTISE:
-                community = append(community, "no-advertise")
+                community_list += "no-advertise" + ","
                 break
             case ocbinds.OpenconfigBgpTypes_BGP_WELL_KNOWN_STD_COMMUNITY_NO_EXPORT:
-                community = append(community, "no-export")
+                community_list += "no-export" + ","
                 break
             case ocbinds.OpenconfigBgpTypes_BGP_WELL_KNOWN_STD_COMMUNITY_NO_EXPORT_SUBCONFED:
                 err = errors.New("Un supported BGP well known type NO_EXPORT_SUBCONFED");
@@ -492,7 +503,7 @@ var YangToDb_community_member_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrPar
         case reflect.TypeOf(ocbinds.OpenconfigRoutingPolicy_RoutingPolicy_DefinedSets_BgpDefinedSets_CommunitySets_CommunitySet_Config_CommunityMember_Union_Uint32{}):
             v := (member).(*ocbinds.OpenconfigRoutingPolicy_RoutingPolicy_DefinedSets_BgpDefinedSets_CommunitySets_CommunitySet_Config_CommunityMember_Union_Uint32)
             fmt.Fprintf(&b, "%d", v.Uint32)
-            community = append(community, b.String())
+            community_list += b.String() + ","
             new_type = "STANDARD"
             break
         case reflect.TypeOf(ocbinds.OpenconfigRoutingPolicy_RoutingPolicy_DefinedSets_BgpDefinedSets_CommunitySets_CommunitySet_Config_CommunityMember_Union_String{}):
@@ -504,11 +515,9 @@ var YangToDb_community_member_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrPar
             } else {
                 new_type = "STANDARD"
             }
-            community = append(community, strings.TrimPrefix(v.String, "REGEX:"))
+            community_list += strings.TrimPrefix(v.String, "REGEX:") + ","
             break
         }
-
-        numCommunity++
 
         log.Info("YangToDb_community_member_fld_xfmr: new_type: ", new_type, " prev_type ", prev_type)
         if ((len(prev_type) > 0) && (prev_type != new_type)){
@@ -520,17 +529,10 @@ var YangToDb_community_member_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrPar
         }
     }
 
-    var i int
-    for i = 0; (numCommunity > 1) && (i < numCommunity - 1); i++ {
-        community_list += community[i] + ","
-    }
-    if numCommunity > 0 {
-        community_list += community[i]
-    }
-    res_map["community_member"] = community_list
-    res_map["type"] = new_type
+    res_map["community_member@"] = strings.TrimSuffix(community_list, ",")
+    res_map["set_type"] = new_type
 
-    log.Info("YangToDb_community_member_fld_xfmr: ", res_map["community_member"], " type ", res_map["type"])
+    log.Info("YangToDb_community_member_fld_xfmr: ", res_map["community_member@"], " type ", res_map["set_type"])
     return res_map, err
 }
 
@@ -542,13 +544,12 @@ var DbToYang_community_member_fld_xfmr FieldXfmrDbtoYang = func(inParams XfmrPar
 
     log.Info("DbToYang_community_member_fld_xfmr", data, inParams.ygRoot, inParams.key)
 
-    set_type := data["COMMUNITY_SET"][inParams.key].Field["type"]
+    set_type := data["COMMUNITY_SET"][inParams.key].Field["set_type"]
 
     log.Info("DbToYang_community_member_fld_xfmr: type ", set_type)
-    //  var Communities [] ocbinds.OpenconfigRoutingPolicy_RoutingPolicy_DefinedSets_BgpDefinedSets_CommunitySets_CommunitySet_Config_CommunityMember_Union
     var Communities []interface{}
 
-    community_list, ok := data["COMMUNITY_SET"][inParams.key].Field["community_member"]
+    community_list, ok := data["COMMUNITY_SET"][inParams.key].Field["community_member@"]
     if ok {
         log.Info("DbToYang_community_member_fld_xfmr: DB Memebers ", community_list)
         for _, community := range strings.Split(community_list, ",") {
@@ -559,14 +560,12 @@ var DbToYang_community_member_fld_xfmr FieldXfmrDbtoYang = func(inParams XfmrPar
             }
 
             if (community == "local-AS") {
- //              cfg_val, _ := ocbinds.OpenconfigRoutingPolicy_RoutingPolicy_DefinedSets_BgpDefinedSets_CommunitySets_CommunitySet_Config.To_OpenconfigRoutingPolicy_RoutingPolicy_DefinedSets_BgpDefinedSets_CommunitySets_CommunitySet_Config_CommunityMember_Union(ocbinds.OpenconfigBgpTypes_BGP_WELL_KNOWN_STD_COMMUNITY_NOPEER)
                 result_community += "NOPEER"
             } else if (community == "no-advertise") {
                 result_community += "NO_ADVERTISE"
             } else if (community == "no-export") {
                 result_community += "NO_EXPORT"
             } else {
-           //     cfg_val, _ := ocbinds.To_OpenconfigRoutingPolicy_RoutingPolicy_DefinedSets_BgpDefinedSets_CommunitySets_CommunitySet_Config_CommunityMember_Union(community)
                 result_community += community
             }
             log.Info("DbToYang_community_member_fld_xfmr: result_community ", result_community)

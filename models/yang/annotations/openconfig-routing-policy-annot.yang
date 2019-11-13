@@ -350,7 +350,7 @@ module openconfig-routing-policy-annot {
       }
     }
 
-   /* Annotation for prefix-sets */
+   /* PREFIX SETS */
     deviation /oc-rpol:routing-policy/oc-rpol:defined-sets/oc-rpol:prefix-sets/oc-rpol:prefix-set {
       deviate add {
         sonic-ext:table-name "PREFIX_SET";
@@ -358,14 +358,14 @@ module openconfig-routing-policy-annot {
     }
 
     deviation /oc-rpol:routing-policy/oc-rpol:defined-sets/oc-rpol:prefix-sets/oc-rpol:prefix-set/oc-rpol:name {
-        deviate add {
+      deviate add {
             sonic-ext:field-transformer "prefix_set_name_fld_xfmr";
-        }
+      }
     }
 
     deviation /oc-rpol:routing-policy/oc-rpol:defined-sets/oc-rpol:prefix-sets/oc-rpol:prefix-set/oc-rpol:config/oc-rpol:name {
       deviate add {
-        sonic-ext:field-transformer "prefix_cfg_set_name_fld_xfmr";
+            sonic-ext:field-transformer "prefix_cfg_set_name_fld_xfmr";
       }
     }
 
@@ -387,18 +387,12 @@ module openconfig-routing-policy-annot {
         }
     }
 
-    /* prefix table */
+    /* PREFIX table */
 
     deviation /oc-rpol:routing-policy/oc-rpol:defined-sets/oc-rpol:prefix-sets/oc-rpol:prefix-set/oc-rpol:prefixes/oc-rpol:prefix    {
       deviate add {
         sonic-ext:table-name "PREFIX";
         sonic-ext:key-transformer "prefix_key_xfmr";
-      }
-    }
-
-    deviation   /oc-rpol:routing-policy/oc-rpol:defined-sets/oc-rpol:prefix-sets/oc-rpol:prefix-set/oc-rpol:prefixes/oc-rpol:prefix/oc-rpol:ip-prefix {
-      deviate add {
-        sonic-ext:field-transformer "prefix_ip_prefix_fld_xfmr";
       }
     }
 
@@ -426,7 +420,7 @@ module openconfig-routing-policy-annot {
       }
     }
 
-/* COMMUNITY SETS */
+   /* COMMUNITY SETS */
 
    deviation /oc-rpol:routing-policy/oc-rpol:defined-sets/oc-bgp-pol:bgp-defined-sets/oc-bgp-pol:community-sets/oc-bgp-pol:community-set {
         deviate add {
@@ -434,15 +428,9 @@ module openconfig-routing-policy-annot {
       }
     }
 
-    deviation /oc-rpol:routing-policy/oc-rpol:defined-sets/oc-bgp-pol:bgp-defined-sets/oc-bgp-pol:community-sets/oc-bgp-pol:community-set/oc-bgp-pol:community-set-name {
-        deviate add {
-            sonic-ext:field-name "community_set_name";
-        }
-    }
-
     deviation /oc-rpol:routing-policy/oc-rpol:defined-sets/oc-bgp-pol:bgp-defined-sets/oc-bgp-pol:community-sets/oc-bgp-pol:community-set/oc-bgp-pol:config/oc-bgp-pol:community-set-name {
       deviate add {
-        sonic-ext:field-transformer "community_set_name_fld_xfmr";
+        sonic-ext:field-transformer "community_cfg_set_name_fld_xfmr";
       }
     }
 
@@ -472,7 +460,7 @@ module openconfig-routing-policy-annot {
 
     deviation /oc-rpol:routing-policy/oc-rpol:defined-sets/oc-bgp-pol:bgp-defined-sets/oc-bgp-pol:community-sets/oc-bgp-pol:community-set/oc-bgp-pol:state/oc-bgp-pol:community-set-name {
       deviate add {
-        sonic-ext:field-transformer "community_set_name_fld_xfmr";
+        sonic-ext:field-transformer "community_cfg_set_name_fld_xfmr";
       }
     }
 
@@ -480,12 +468,6 @@ module openconfig-routing-policy-annot {
     deviation /oc-rpol:routing-policy/oc-rpol:defined-sets/oc-bgp-pol:bgp-defined-sets/oc-bgp-pol:ext-community-sets/oc-bgp-pol:ext-community-set {
         deviate add {
             sonic-ext:table-name "EXTENDED_COMMUNITY_SET";
-        }
-    }
-
-    deviation /oc-rpol:routing-policy/oc-rpol:defined-sets/oc-bgp-pol:bgp-defined-sets/oc-bgp-pol:ext-community-sets/oc-bgp-pol:ext-community-set/oc-bgp-pol:ext-community-set-name {
-        deviate add {
-            sonic-ext:field-name "ext_community_set_name";
         }
     }
 
