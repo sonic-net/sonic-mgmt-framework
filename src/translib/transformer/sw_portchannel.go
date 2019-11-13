@@ -280,8 +280,11 @@ func deleteLagIntfAndMembers(inParams *XfmrParams, lagName *string) error {
                 checkExists = true
                 log.Info("Found entry in PORTCHANNEL_INTERFACE TABLE")
                 if len(lagIPKeys[i].Comp) > 1 {
-                    errStr := "Need to first remove the IP configuration"
-                    return errors.New(errStr)
+                    //Keep subOpDataMap[DELETE] as empty 
+                    subOpMap[db.ConfigDB] = resMap
+                    inParams.subOpDataMap[DELETE] = &subOpMap
+                    log.Info("Need to first remove the IP configuration")
+                    return nil
                 }
             }
         }
