@@ -3,9 +3,11 @@ package transformer
 import (
     "errors"
     "strings"
+    log "github.com/golang/glog"
     "strconv"
     "translib/ocbinds"
     "translib/db"
+    "encoding/json"
 )
 
 func init () {
@@ -31,7 +33,22 @@ var FDB_ENTRY_TYPE_MAP = map[string]string{
 
 var rpc_clear_fdb RpcCallpoint = func(body []byte, dbs [db.MaxDB]*db.DB) ([]byte, error) {
 	var err error
-	var result []byte
+	var  valLst [2]string
+	var data  []byte
+
+	//var result []byte
+        log.Error(" **************** Inside RPC ********************** ")
+	valLst[0]= "ALL"
+	valLst[1] = "ALL"
+
+	data, err = json.Marshal(valLst)
+
+	if err != nil {
+		log.Error("Failed to  marshal input data; err=%v", err)
+	}
+	log.Infof("**************** Inside RPC ********************** fld %s, val %s  data %s", valLst[0], valLst[1], data)
+
+	err = dbs[db.ApplDB].Publish("FLUSHFDBREQUEST",data)
 /*	var operand struct {
 		Input struct {
 			Left int32 `json:"left"`
@@ -53,7 +70,7 @@ var rpc_clear_fdb RpcCallpoint = func(body []byte, dbs [db.MaxDB]*db.DB) ([]byte
 
 	sum.Output.Result = operand.Input.Left + operand.Input.Right
 	result, err := json.Marshal(&sum)*/
-	return result, err
+	return data, err
 }
 
 
