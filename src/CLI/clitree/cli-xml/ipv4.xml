@@ -181,7 +181,24 @@ limitations under the License.
             name="addr"
             help="IP address with mask"
             ptype="IP_ADDR_MASK" />
-        <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config ${iface} ${addr} </ACTION>
+        <PARAM name="gwaddr"
+            help="Default Gateway address"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            optional="true" >
+            <PARAM 
+                name="gw_addr"
+                help="Gateway IP address"
+                ptype="IP_ADDR"
+                />
+        </PARAM>
+        <ACTION>
+            if test "${gw_addr}" = ""; then&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config ${iface} ${addr}&#xA;
+            else&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config ${iface} ${addr} ${gw_addr}&#xA;
+            fi&#xA;
+        </ACTION>
     </COMMAND>
 
     <COMMAND
