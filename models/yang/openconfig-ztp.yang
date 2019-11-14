@@ -1,0 +1,86 @@
+module openconfig-ztp {
+    namespace "http://openconfig.net/yang/ztp";
+    prefix "oc-ztp";
+    yang-version "1";
+    import ietf-yang-types {
+        prefix yang;
+    }
+
+    organization "Dell EMC";
+    contact
+        "DELL EMC";
+    description
+        "This module contains a collection of YANG definitions for
+           Zero Touch Provisioning";
+
+    revision 2019-10-11 {
+        description
+            "Initial revision.";
+    }
+  container ztp {
+        
+	container state{
+	    config false;
+	    leaf admin_mode {
+		type boolean;
+	     }
+	    leaf error {
+		type string;
+	     }
+
+	    leaf service {
+		type string;
+	     }
+	    leaf status {
+		type string;
+	     }
+	    leaf source {
+		type string;
+	     }
+	    leaf runtime {
+		type string;
+	     }
+	    leaf timestamp {
+		type yang:date-and-time;
+	     }
+	    leaf jsonversion {
+		type string;
+	    }
+	    leaf activity_string {
+		type string;
+	     }
+	    list CONFIG_SECTION_LIST {
+		key "sectionname";
+		leaf sectionname {
+		    type string; 
+		}
+	        leaf error {
+		type string;
+	        }   
+		leaf status {
+            	    type string; 
+		}
+		leaf runtime {
+		    type string; 
+		}
+		leaf timestamp {
+		    type yang:date-and-time; 
+		}
+		leaf exitcode {
+		    type uint64; 
+		}
+		leaf ignoreresult {
+		    type boolean; 
+		}
+	    }
+	}
+	container config {
+	    leaf admin_mode {
+		type boolean;
+	    }
+	}
+   }
+  
+}
+
+
