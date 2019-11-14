@@ -1,3 +1,22 @@
+#!/usr/bin/python
+###########################################################################
+#
+# Copyright 2019 Dell, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+###########################################################################
+
 import sys
 import json
 import collections
@@ -45,6 +64,9 @@ def invoke_api(func, args):
        return api.patch(path, body)
     elif func == 'delete_sonic_ifa_sonic_ifa_tam_int_ifa_flow_table_tam_int_ifa_flow_table_list':
        path = cc.Path('/restconf/data/sonic-ifa:sonic-ifa/TAM_INT_IFA_FLOW_TABLE/TAM_INT_IFA_FLOW_TABLE_LIST={name}', name=args[0])
+       return api.delete(path)
+    elif func == 'delete_list_sonic_ifa_sonic_ifa_tam_int_ifa_flow_table_tam_int_ifa_flow_table_list':
+       path = cc.Path('/restconf/data/sonic-ifa:sonic-ifa/TAM_INT_IFA_FLOW_TABLE/TAM_INT_IFA_FLOW_TABLE_LIST',)
        return api.delete(path)
     else:
        body = {}

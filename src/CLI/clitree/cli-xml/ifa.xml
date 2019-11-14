@@ -80,9 +80,14 @@ limitations under the License.
     <!-- no tam-int-ifa flow -->
     <COMMAND name="no flow" help="Clear TAM IFA flow information" ptype="SUBCOMMAND" mode="subcommand">
       <PARAM name="name" help="Flow Name" ptype="STRING"> </PARAM>
-      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-ifa.py delete_sonic_ifa_sonic_ifa_tam_int_ifa_flow_table_tam_int_ifa_flow_table_list ${name}</ACTION>
+      <ACTION>
+        if test "${name}" = "all" ; then&#xA;
+          python $SONIC_CLI_ROOT/sonic-cli-ifa.py delete_list_sonic_ifa_sonic_ifa_tam_int_ifa_flow_table_tam_int_ifa_flow_table_list&#xA;
+        else&#xA;
+          python $SONIC_CLI_ROOT/sonic-cli-ifa.py delete_sonic_ifa_sonic_ifa_tam_int_ifa_flow_table_tam_int_ifa_flow_table_list ${name}&#xA;
+        fi&#xA;
+      </ACTION>
     </COMMAND>
-
   </VIEW>
 
 </CLISH_MODULE>
