@@ -76,7 +76,7 @@ module sonic-port {
 
 				leaf admin_status {
 					type scommon:admin-status;
-                    default "down";
+					default "down";
 				}
 			}
 		}
