@@ -67,7 +67,7 @@ module sonic-mgmt-interface {
                 }
 
                 leaf gwaddr {
-                    type inet:ip-prefix;
+                    type inet:ip-address;
                 }
 
             }

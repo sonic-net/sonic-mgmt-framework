@@ -83,6 +83,7 @@ const (
     PORT_AUTONEG       = "autoneg"
     VLAN_TN            = "VLAN"
     VLAN_MEMBER_TN     = "VLAN_MEMBER"
+    VLAN_INTERFACE_TN  = "VLAN_INTERFACE"
 )
 
 const (
@@ -732,6 +733,10 @@ var YangToDb_intf_ip_addr_xfmr SubTreeXfmrYangToDb = func(inParams XfmrParams) (
         for ip, _ := range subIntfObj.Ipv4.Addresses.Address {
             addr := subIntfObj.Ipv4.Addresses.Address[ip]
             if addr.Config != nil {
+                if addr.Config.Ip == nil {
+                    addr.Config.Ip = new(string)
+                    *addr.Config.Ip = ip
+                }
                 log.Info("Ip:=", *addr.Config.Ip)
                 log.Info("prefix:=", *addr.Config.PrefixLength)
                 if !validIPv4(*addr.Config.Ip) {
@@ -741,12 +746,27 @@ var YangToDb_intf_ip_addr_xfmr SubTreeXfmrYangToDb = func(inParams XfmrParams) (
                 }
                 intf_key := intf_intf_tbl_key_gen(ifName, *addr.Config.Ip, int(*addr.Config.PrefixLength), "|")
                 m := make(map[string]string)
-                m["NULL"] = "NULL"
+                if addr.Config.GwAddr != nil {
+                    if intfType != IntfTypeMgmt {
+                        errStr := "GwAddr config is not supported " + ifName
+                        log.Info("GwAddr config is not supported for intfType: ", intfType, " " , ifName)
+                        return subIntfmap, errors.New(errStr)
+                    }
+                    if !validIPv4(*addr.Config.GwAddr) {
+                        errStr := "Invalid IPv4 Gateway address " + *addr.Config.GwAddr
+                        err = tlerr.InvalidArgsError{Format: errStr}
+                        return subIntfmap, err
+                    }
+                    m["gwaddr"] = *addr.Config.GwAddr
+                } else {
+                    m["NULL"] = "NULL"
+                }
                 value := db.Value{Field: m}
                 if _, ok := subIntfmap[tblName]; !ok {
                     subIntfmap[tblName] = make(map[string]db.Value)
                 }
                 subIntfmap[tblName][intf_key] = value
+                log.Info("tblName :", tblName, "intf_key: ", intf_key, "data : ", value)
 
             }
         }
@@ -755,6 +775,10 @@ var YangToDb_intf_ip_addr_xfmr SubTreeXfmrYangToDb = func(inParams XfmrParams) (
         for ip, _ := range subIntfObj.Ipv6.Addresses.Address {
             addr := subIntfObj.Ipv6.Addresses.Address[ip]
             if addr.Config != nil {
+                if addr.Config.Ip == nil {
+                    addr.Config.Ip = new(string)
+                    *addr.Config.Ip = ip
+                }
                 log.Info("Ipv6 IP:=", *addr.Config.Ip)
                 log.Info("Ipv6 prefix:=", *addr.Config.PrefixLength)
                 if !validIPv6(*addr.Config.Ip) {
@@ -764,12 +788,27 @@ var YangToDb_intf_ip_addr_xfmr SubTreeXfmrYangToDb = func(inParams XfmrParams) (
                 }
                 intf_key := intf_intf_tbl_key_gen(ifName, *addr.Config.Ip, int(*addr.Config.PrefixLength), "|")
                 m := make(map[string]string)
-                m["NULL"] = "NULL"
+                if addr.Config.GwAddr != nil {
+                    if intfType != IntfTypeMgmt {
+                        errStr := "GwAddr config is not supported " + ifName
+                        log.Info("GwAddr config is not supported for intfType: ", intfType, " " , ifName)
+                        return subIntfmap, errors.New(errStr)
+                    }
+                    if !validIPv6(*addr.Config.GwAddr) {
+                        errStr := "Invalid IPv6 Gateway address " + *addr.Config.GwAddr
+                        err = tlerr.InvalidArgsError{Format: errStr}
+                        return subIntfmap, err
+                    }
+                    m["gwaddr"] = *addr.Config.GwAddr
+                } else {
+                    m["NULL"] = "NULL"
+                }
                 value := db.Value{Field: m}
                 if _, ok := subIntfmap[tblName]; !ok {
                     subIntfmap[tblName] = make(map[string]db.Value)
                 }
                 subIntfmap[tblName][intf_key] = value
+                log.Info("tblName :", tblName, "intf_key: ", intf_key, "data : ", value)
             }
         }
     }
@@ -793,7 +832,7 @@ func convertIpMapToOC (intfIpMap map[string]db.Value, ifInfo *ocbinds.Openconfig
     subIntf = ifInfo.Subinterfaces.Subinterface[0]
     ygot.BuildEmptyTree(subIntf)
 
-    for ipKey, _:= range intfIpMap {
+    for ipKey, ipdata := range intfIpMap {
         log.Info("IP address = ", ipKey)
         ipB, ipNetB, _ := net.ParseCIDR(ipKey)
         v4Flag := false
@@ -832,9 +871,19 @@ func convertIpMapToOC (intfIpMap map[string]db.Value, ifInfo *ocbinds.Openconfig
             if isState {
                 v4Address.State.Ip = ipStr
                 v4Address.State.PrefixLength = prfxLen
+                if ipdata.Has("gwaddr") {
+                    gwaddr := new(string)
+                    *gwaddr = ipdata.Get("gwaddr")
+                    v4Address.State.GwAddr = gwaddr
+                }
             } else {
                 v4Address.Config.Ip = ipStr
                 v4Address.Config.PrefixLength = prfxLen
+                if ipdata.Has("gwaddr") {
+                    gwaddr := new(string)
+                    *gwaddr = ipdata.Get("gwaddr")
+                    v4Address.Config.GwAddr = gwaddr
+                }
             }
         }
         if v6Flag {
@@ -848,13 +897,48 @@ func convertIpMapToOC (intfIpMap map[string]db.Value, ifInfo *ocbinds.Openconfig
             if isState {
                 v6Address.State.Ip = ipStr
                 v6Address.State.PrefixLength = prfxLen
+                if ipdata.Has("gwaddr") {
+                    gwaddr := new(string)
+                    *gwaddr = ipdata.Get("gwaddr")
+                    v6Address.State.GwAddr = gwaddr
+                }
             } else {
                 v6Address.Config.Ip = ipStr
                 v6Address.Config.PrefixLength = prfxLen
+                if ipdata.Has("gwaddr") {
+                    gwaddr := new(string)
+                    *gwaddr = ipdata.Get("gwaddr")
+                    v6Address.Config.GwAddr = gwaddr
+                }
             }
         }
     }
     return err
+}
+
+func validateIPexist(intTbl IntfTblData, inParams *XfmrParams, intfName *string, checkExists *bool) error {
+    intfIPKeys, _ := inParams.d.GetKeys(&db.TableSpec{Name:intTbl.cfgDb.intfTN})
+    log.Info("intfIPKeys: ", intfIPKeys)
+    subOpMap := make(map[db.DBNum]map[string]map[string]db.Value)
+    resMap := make(map[string]map[string]db.Value)
+    if len(intfIPKeys) > 0 {
+        *checkExists = false
+        /* Check if IP entries exist for given Interface*/
+        for i := range intfIPKeys {
+            if *intfName == intfIPKeys[i].Get(0) {
+                *checkExists = true
+                if len(intfIPKeys[i].Comp) > 1 {
+                    //Keep subOpDataMap[DELETE] as empty 
+                    subOpMap[db.ConfigDB] = resMap
+                    inParams.subOpDataMap[DELETE] = &subOpMap
+                    errStr := "Need to first remove the IP configuration"
+                    log.Error(errStr)
+                    return errors.New(errStr)
+                }
+            }
+        }
+    }
+    return nil
 }
 
 func getIntfIpByName(dbCl *db.DB, tblName string, ifName string, ipv4 bool, ipv6 bool, ip string) (map[string]db.Value, error) {

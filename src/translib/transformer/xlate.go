@@ -93,7 +93,7 @@ func TraverseDb(dbs [db.MaxDB]*db.DB, spec KeySpec, result *map[db.DBNum]map[str
 
 	dbOpts = getDBOptions(spec.dbNum)
 	separator := dbOpts.KeySeparator
-	log.Infof("key separator for table %v in Db %v is %v", spec.Ts.Name, spec.dbNum, separator)
+	//log.Infof("key separator for table %v in Db %v is %v", spec.Ts.Name, spec.dbNum, separator)
 
 	if spec.Key.Len() > 0 {
 		// get an entry with a specific key

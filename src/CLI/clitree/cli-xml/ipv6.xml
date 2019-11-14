@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!--
-Copyright 2019 Dell, Inc.
+Copyright 2019 Dell, Inc.  
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
--->
+--> 
 
 <!DOCTYPE CLISH_MODULE [
 ]>
@@ -23,10 +23,6 @@ limitations under the License.
     xmlns:xi="http://www.w3.org/2001/XInclude"
     xsi:schemaLocation="http://www.dellemc.com/sonic/XMLSchema
                         http://www.dellemc.com/sonic/XMLSchema/clish.xsd">
-<PTYPE name="INTF_NAME"
-           method="select"
-           pattern="Ethernet Vlan PortChannel mgmt(eth)"
-           help="Interface type"/>
 
 <!--=======================================================-->
 <!--                Config Interface PHY-MODE              -->
@@ -78,7 +74,16 @@ limitations under the License.
             name="addr"
             help="IPv6 address with mask"
             ptype="IPV6_ADDR_MASK" />
-        <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config ${iface} ${addr} </ACTION>
+        <PARAM name="gwaddr" help="Default Gateway address" ptype="SUBCOMMAND" mode="subcommand" optional="true" >
+            <PARAM name="gw_addr" help="Gateway IP address" ptype="IPV6_ADDR" />
+        </PARAM>
+        <ACTION>
+            if test "${gw_addr}" = ""; then&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config ${iface} ${addr}&#xA;
+            else&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config ${iface} ${addr} ${gw_addr}&#xA;
+            fi&#xA;
+        </ACTION>
     </COMMAND>
 
     <COMMAND
@@ -165,37 +170,80 @@ limitations under the License.
     <ACTION builtin="clish_nop"/>
     </COMMAND>
 
-    <COMMAND name="show ipv6 neighbors" help="show IPv6 neighbors commands">
-        <PARAM name="interface" help="Specify interface type" ptype="SUBCOMMAND" mode="subcommand" optional="false">
-            <PARAM name="ifType" help="" ptype="INTF_NAME">
-                <PARAM name="phy-if-id" help="Numeric ID for the given interface type" ptype="UINT">
-                    <PARAM name="choice" help="Available options" ptype="STRING" optional="true" mode="switch">
-                        <PARAM name="summary" help="Summary of neighbors entries" ptype="SUBCOMMAND" mode="subcommand" optional="true"></PARAM>
-                        <PARAM name="ip" help="IPv6 address" ptype="SUBCOMMAND" mode="subcommand" optional="true">
-                           <PARAM name="ip-addr" help="Neighbor entry for this IPv6 address" ptype="IPV6_ADDR"></PARAM>
-                        </PARAM>
-                        <PARAM name="mac-address" help="HW address" ptype="SUBCOMMAND" mode="subcommand" optional="true">
-                           <PARAM name="mac-addr" help="48 bit MAC address" ptype="MAC_ADDR"></PARAM>
+    <COMMAND
+        help="show IPv6 neighbors commands"
+        name="show ipv6 neighbors"
+        >
+        <ACTION builtin="clish_nop"/>
+    </COMMAND>
+
+    <COMMAND
+        help="ARP entries for this interface"
+        name="show ipv6 neighbors interface">
+        <PARAM
+            name="Ethernet"
+            help="Ethernet IEEE 802.3"
+            ptype="SUBCOMMAND"
+            mode="subcommand">
+            <PARAM
+                name="phy-if-id"
+                help="Physical interface(Multiples of 4)"
+                ptype="UINT">
+
+                <PARAM name="choice"
+                    help="Available options"
+                    ptype="STRING"
+                    optional="true"
+                    mode="switch">
+                    <PARAM
+                        help="Summary of ARP entries"
+                        name="summary"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        optional="true">
+                    </PARAM>
+                    <PARAM
+                       help="IP address"
+                       name="ipv6"
+                       ptype="SUBCOMMAND"
+                       mode="subcommand"
+                       optional="true">
+                       <PARAM
+                            help="ARP entry for this IPv6 address"
+                            name="ip-addr"
+                            ptype="IPV6_ADDR">
                        </PARAM>
-                   </PARAM>
-               </PARAM>
+                    </PARAM>
+                    <PARAM
+                       help="HW address"
+                       name="mac-address"
+                       ptype="SUBCOMMAND"
+                       mode="subcommand"
+                       optional="true">
+                       <PARAM
+                          help="48 bit MAC address"
+                          name="mac-addr"
+                          ptype="MAC_ADDR">
+                      </PARAM>
+                    </PARAM>
+                </PARAM>
             </PARAM>
-       </PARAM>
+        </PARAM>
         <ACTION>
             if test "${summary}" = "" -a "${ip-addr}" = "" -a "${mac-addr}" = ""; then&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-arp-neigh.py get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_neighbors arp_show.j2 ${ifType}${phy-if-id} None&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-arp-neigh.py get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_neighbors arp_show.j2 Ethernet${phy-if-id} None&#xA;
             elif test "${summary}" = "summary" -a "${ip-addr}" = "" -a "${mac-addr}" = ""; then&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-arp-neigh.py get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_neighbors arp_summary_show.j2 ${ifType}${phy-if-id} summary&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-arp-neigh.py get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_neighbors arp_summary_show.j2 Ethernet${phy-if-id} summary&#xA;
             elif test "${summary}" = "" -a "${ip-addr}" != "" -a "${mac-addr}" = ""; then&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-arp-neigh.py get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_neighbors_neighbor arp_show.j2 ${ifType}${phy-if-id} ip ${ip-addr}&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-arp-neigh.py get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_neighbors_neighbor arp_show.j2 Ethernet${phy-if-id} ip ${ip-addr}&#xA;
             elif test "${summary}" = "summary" -a "${ip-addr}" != "" -a "${mac-addr}" = ""; then&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-arp-neigh.py get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_neighbors_neighbor arp_summary_show.j2 ${ifType}${phy-if-id} ip ${ip-addr} summary&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-arp-neigh.py get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_neighbors_neighbor arp_summary_show.j2 Ethernet${phy-if-id} ip ${ip-addr} summary&#xA;
             elif test "${summary}" = "" -a "${ip-addr}" = "" -a "${mac-addr}" != ""; then&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-arp-neigh.py get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_neighbors arp_show.j2 ${ifType}${phy-if-id} mac ${mac-addr}&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-arp-neigh.py get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_neighbors arp_show.j2 Ethernet${phy-if-id} mac ${mac-addr}&#xA;
             elif test "${summary}" = "summary" -a "${ip-addr}" = "" -a "${mac-addr}" != ""; then&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-arp-neigh.py get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_neighbors arp_summary_show.j2 ${ifType}${phy-if-id} mac ${mac-addr} summary&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-arp-neigh.py get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_neighbors arp_summary_show.j2 Ethernet${phy-if-id} mac ${mac-addr} summary&#xA;
             fi&#xA;
-         </ACTION>
+        </ACTION>
     </COMMAND>
 </VIEW>
 </CLISH_MODULE>
