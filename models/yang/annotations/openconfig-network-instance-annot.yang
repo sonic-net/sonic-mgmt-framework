@@ -67,7 +67,7 @@ module openconfig-network-instance-annot {
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:config/oc-netinst:enabled-address-families {
       deviate add {
-        sonic-ext:field-transformer "network_instance_enabled_addr_fam_field_xfmr";
+        sonic-ext:field-transformer "network_instance_enabled_addr_family_field_xfmr";
       }
     }
 

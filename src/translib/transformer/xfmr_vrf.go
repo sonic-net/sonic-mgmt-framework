@@ -181,8 +181,8 @@ func init() {
         XlateFuncBind("DbToYang_network_instance_router_id_field_xfmr", DbToYang_network_instance_router_id_field_xfmr)
         XlateFuncBind("YangToDb_network_instance_route_distinguisher_field_xfmr", YangToDb_network_instance_route_distinguisher_field_xfmr)
         XlateFuncBind("DbToYang_network_instance_route_distinguisher_field_xfmr", DbToYang_network_instance_route_distinguisher_field_xfmr)
-        XlateFuncBind("YangToDb_network_instance_enabled_addr_fam_field_xfmr", YangToDb_network_instance_enabled_addr_fam_field_xfmr)
-        XlateFuncBind("DbToYang_network_instance_enabled_addr_fam_field_xfmr", DbToYang_network_instance_enabled_addr_fam_field_xfmr)
+        XlateFuncBind("YangToDb_network_instance_enabled_addr_family_field_xfmr", YangToDb_network_instance_enabled_addr_family_field_xfmr)
+        XlateFuncBind("DbToYang_network_instance_enabled_addr_family_field_xfmr", DbToYang_network_instance_enabled_addr_family_field_xfmr)
 }
 
 func getNwInstRoot(s *ygot.GoStruct) *ocbinds.OpenconfigNetworkInstance_NetworkInstances  {
@@ -204,21 +204,21 @@ var network_instance_table_name_xfmr TableXfmrFunc = func (inParams XfmrParams) 
 
         pathInfo := NewPathInfo(inParams.uri)
 
-        if len(pathInfo.Vars) < 1 {
-                /* network instance table has 1 key "name" */
-                return tblList, errors.New("Invalid xpath, key attributes not found") 
-        }
-
-        targetUriPath, err := getYangPathFromUri(pathInfo.Path)
-
-        log.Info("network_instance_table_name_xfmr, targetUri: ", targetUriPath)
-
         /* get the name at the top network-instance table level, this is the key */
         keyName := pathInfo.Var("name")
 
         if keyName == "" {
-                log.Info("network_instance_table_name_xfmr, for CREATE key name not present")
-                return tblList, errors.New("Empty network instance name")
+                /* for GET with no keyName, return table name for mgmt VRF and data VRF */
+                if (inParams.oper == GET) {
+                        //tblList  = {"MGMT_VRF_CONFIG", "VRF"}
+                        tblList = append(tblList , "MGMT_VRF_CONFIG")
+                        tblList = append(tblList, "VRF")
+                        log.Info("network_instance_table_name_xfmr: tblList ", tblList)
+                        return tblList, err
+                } else {
+                        log.Info("network_instance_table_name_xfmr, for key name not present")
+                        return tblList, errors.New("Empty network instance name")
+                }
         }
 
         /* get internal network instance name in order to fetch the DB table name */
@@ -342,20 +342,6 @@ var DbToYang_network_instance_table_key_xfmr KeyXfmrDbToYang = func(inParams Xfm
 
         log.Info("DbToYang_network_instance_table_key_xfmr: ", inParams.key)
 
-        if (inParams.dbDataMap == nil) {
-                log.Info("DbToYang_network_instance_table_key_xfmr dbDataMap is nil")
-                return res_map, err
-        }
-
-        if (isMgmtVrfDbTbl(inParams) == true) {
-                res_map["name"] = "mgmt"
-        } else if (isVrfDbTbl(inParams) == true){
-                res_map["name"] = inParams.key
-        }
-
-        log.Info("DbToYang_network_instance_table_key_xfmr: ", res_map)
-
-        /* ToDo in else if cases */
         return  res_map, err
 }
 
@@ -415,7 +401,7 @@ var DbToYang_network_instance_type_field_xfmr KeyXfmrDbToYang = func(inParams Xf
 }
 
 /* YangToDb Field transformer for enabled_address_family in the top level network instance config */
-var YangToDb_network_instance_enabled_addr_fam_field_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
+var YangToDb_network_instance_enabled_addr_family_field_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
         res_map := make(map[string]string)
         var err error
 
@@ -425,7 +411,7 @@ var YangToDb_network_instance_enabled_addr_fam_field_xfmr FieldXfmrYangToDb = fu
 }
 
 /* DbToYang Field transformer for enabled_address_family in the top level network instance config */
-var DbToYang_network_instance_enabled_addr_fam_field_xfmr KeyXfmrDbToYang = func(inParams XfmrParams) (map[string]interface{}, error) {
+var DbToYang_network_instance_enabled_addr_family_field_xfmr KeyXfmrDbToYang = func(inParams XfmrParams) (map[string]interface{}, error) {
         res_map := make(map[string]interface{})
         var err error
 

@@ -25,9 +25,9 @@ module sonic-mgmt-vrf {
             description "Management vrf configuration.";            
 
             list MGMT_VRF_CONFIG_LIST {
-                key "mgmt-vrf-name";
+                key "vrf_global_name";
 
-                leaf mgmt-vrf-name {
+                leaf vrf_global_name {
                     type string;
                     description
                         "Internal management vrf name for SONiC";

@@ -25,9 +25,9 @@ module sonic-vrf {
             description "Vrf configuration.";            
 
             list VRF_LIST {
-                key "vrf-name";
+                key "vrf_name";
 
-                leaf vrf-name {
+                leaf vrf_name {
                     type string;
                     description
                         "Vrf name for SONiC, must start with Vrf.";
@@ -37,7 +37,7 @@ module sonic-vrf {
                     type  boolean;
                     default false;
                     description
-                        "Enalbe/disable fallback feature defined by RFC4364.";
+                        "Enalbe/disable fallback feature which is useful for specified VRF user to access internet through global/main route.";
                 }
             }
         }
