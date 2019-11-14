@@ -38,8 +38,9 @@ def invoke_api(func, args=[]):
         return api.patch(path)
         
     elif func == 'patch_openconfig_interfaces_interfaces_interface_config':
+        body = { "openconfig-interfaces:config": { "name": args[0] }}
         path = cc.Path('/restconf/data/openconfig-interfaces:interfaces/interface={name}/config', name=args[0])
-        return api.patch(path)
+        return api.patch(path, body)
     
     # Delete interface
     elif func == 'delete_openconfig_interfaces_interfaces_interface':
