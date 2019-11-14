@@ -116,55 +116,6 @@ var DbToYang_prefix_set_mode_fld_xfmr FieldXfmrDbtoYang = func(inParams XfmrPara
     return result, err
 }
 
-func prefix_all_keys_get(d *db.DB, dbSpec *db.TableSpec) ([]db.Key, error) {
-
-    var keys []db.Key
-
-    prefixTable, err := d.GetTable(dbSpec)
-    if err != nil {
-        return keys, err
-    }
-
-    keys, err = prefixTable.GetKeys()
-    log.Info("prefix_all_keys_get: Found %d PREFIX table keys", len(keys))
-    return keys, err
-}
-
-func prefix_del_by_set_name (d *db.DB , setName string, tblName string) (string, error) {
-    var err error
-    var prefixTblKey string
-    first := false
-    prefixTblKey = "NULL"
-    keys,_ := prefix_all_keys_get(d, &db.TableSpec{Name:tblName})
-    for _, key := range keys {
-        log.Info("prefix_del_by_set_name: Found PREFIX table key set ", key.Get(0), "prefix ", key.Get(1), "mask ", key.Get(2))
-        if len(key.Comp) < 3 {
-            continue
-        }
-        if key.Get(0) != setName {
-            continue
-        }
-
-        if first == false {
-           prefixTblKey = key.Get(0) + "|" + key.Get(1) + "|" + key.Get(2)
-           first = true
-           continue
-        }
-
-        log.Info("prefix_del_by_set_name: PREFIX key", key)
-        err = d.DeleteEntry(&db.TableSpec{Name:tblName}, key)
-        if err != nil {
-            log.Error("Prefix Delete Entry fails e = %v key %v", err, key)
-            return setName, err
-        }
-    }
-    if first == true {
-        return prefixTblKey,nil
-    } else {
-        err =  errors.New("Unknown prefix set name")
-        return prefixTblKey, err
-    }
-}
 var YangToDb_prefix_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (string, error) {
     var err error
     var setName string
@@ -183,7 +134,6 @@ var YangToDb_prefix_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (string
             return setName, err
         }
         // TODO - This Case will not come for CLI, Riht now return dummy key to avoid DB flush
-        //   return prefix_del_by_set_name (inParams.d, setName, "PREFIX")
         return "NULL", nil
     } else {
         if len(pathInfo.Vars) < 3 {
