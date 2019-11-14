@@ -29,11 +29,15 @@ module sonic-fdb {
                 input {
                         leaf mac-param {
                                 type string;
+                                description
+                                        "parameter for deleting either all dynamic mac address or a record related to interface name / vlan id";
                         }
                 }
                 output {
                         leaf status {
                                 type string;
+                                description
+                                        " success / failure of deletion of dynamic mac address";
                         }
                 }
         }

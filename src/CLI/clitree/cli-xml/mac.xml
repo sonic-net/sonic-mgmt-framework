@@ -32,8 +32,8 @@ limitations under the License.
 
 <!--====================show mac address-table command======================-->
     <COMMAND
-        help="Mac address table"
         name="show mac address-table"
+        help="Mac address table"
         >
     <ACTION> 
         python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_network_instance_network_instances_network_instance_fdb_mac_table_entries show_mac.j2 show
@@ -42,8 +42,8 @@ limitations under the License.
 
 <!--====================show mac address-table count command ======================-->
     <COMMAND
-        help="Count keyword"
         name="show mac address-table count"
+        help="Count keyword"
         >
     <ACTION> 
         python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_network_instance_network_instances_network_instance_fdb_mac_table_entries show_mac_count.j2 count 
@@ -52,8 +52,8 @@ limitations under the License.
 
 <!--====================show mac address-table address <mac-address> command ======================-->
     <COMMAND
-        help="Show mac address table address for mac-address"
         name="show mac address-table address"
+        help="Show mac address table address for mac-address"
         >
         <PARAM
             name="mac-addr"
@@ -68,8 +68,8 @@ limitations under the License.
 
 <!--====================show mac address-table vlan <vlan-id> command ======================-->
     <COMMAND
-        help="Show mac address-table for VLAN"
         name="show mac address-table Vlan"
+        help="Show mac address-table for VLAN"
         >
         <PARAM
             name="vlan-id"
@@ -84,8 +84,8 @@ limitations under the License.
 
 <!--====================show mac address-table interface <p-id> command ======================-->
     <COMMAND
-        help="Show mac address-table for interfaces"
-        name="show mac address-table interface">
+        name="show mac address-table interface"
+        help="Show mac address-table for interfaces">
         <PARAM
             name="if-subcommands"
             help="Interface subcommands"
@@ -132,8 +132,8 @@ limitations under the License.
 
 <!--====================show mac address-table static commands ======================-->
     <COMMAND
-        help="Mac address-table for static commands"
-        name="show mac address-table static">
+        name="show mac address-table static"
+        help="Mac address-table for static commands">
         <PARAM
             name="s-subcommands"
             help="Static subcommands"
@@ -227,8 +227,8 @@ limitations under the License.
 
 <!--====================show mac address-table dynamic commands ======================-->
     <COMMAND
-        help="mac address-table for dynamic commands"
-        name="show mac address-table dynamic">
+        name="show mac address-table dynamic"
+        help="mac address-table for dynamic commands">
         <PARAM
             name="d-subcommands"
             help="Dynamic subcommands"
@@ -324,7 +324,7 @@ limitations under the License.
 
     <COMMAND
         name="clear mac"
-        help="clear mac"
+        help="Clear MAC"
         >
     <ACTION>
         builtin="clish_nop"
@@ -332,8 +332,8 @@ limitations under the License.
     </COMMAND>
 
     <COMMAND
-        help="clear Mac address table"
         name="clear mac address-table"
+        help="Clear MAC address table"
         >
     <ACTION>
         builtin="clish_nop"
@@ -341,8 +341,8 @@ limitations under the License.
     </COMMAND>
 
     <COMMAND
-        help="clear mac address-table for dynamic commands"
-        name="clear mac address-table dynamic">
+        name="clear mac address-table dynamic"
+        help="Clear MAC address-table for dynamic commands">
         <PARAM
             name="d-subcommands"
             help="Dynamic subcommands"
@@ -358,7 +358,7 @@ limitations under the License.
             </PARAM>
             <PARAM
                 name="address"
-                help="clear Mac address of dynamic interface"
+                help="Clear MAC address of dynamic interface"
                 ptype="SUBCOMMAND"
                 mode="subcommand"
                 >
@@ -391,8 +391,6 @@ limitations under the License.
         fi
     </ACTION>
     </COMMAND>
-
-
 
 </VIEW>
 </CLISH_MODULE>
