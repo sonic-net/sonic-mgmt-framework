@@ -30,7 +30,7 @@ module openconfig-network-instance-annot {
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:fdb/oc-netinst:mac-table/oc-netinst:entries {
       deviate add {
-            sonic-ext:db-name "APPL_DB";
+            sonic-ext:db-name "STATE_DB";
       }
     }
 

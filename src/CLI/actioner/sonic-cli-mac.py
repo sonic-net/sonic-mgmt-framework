@@ -28,19 +28,6 @@ from scripts.render_cli import show_cli_output
 import urllib3
 urllib3.disable_warnings()
 
-
-plugins = dict()
-
-def register(func):
-    """Register sdk client method as a plug-in"""
-    plugins[func.__name__] = func
-    return func
-
-
-def call_method(name, args):
-    method = plugins[name]
-    return method(args)
-
 def mac_fill_count(mac_entries):
     static = dynamic = 0
     for mac_entry in mac_entries:
@@ -84,15 +71,14 @@ def run(func, args):
 
         if api_response.ok():
             response = api_response.content
-            if response is None:
-                print "Success"
-                return
-            else:
+            if response is not None:
                 if 'openconfig-network-instance:entries' in response:
                     mac_entries = response['openconfig-network-instance:entries']['entry']
                 else:
-                    print('No MAC entries present')
+                    print 'Error: '+str(response)
                     return
+            else:
+                return
         
         mac_table_list = [] 
         if func == 'get_openconfig_network_instance_network_instances_network_instance_fdb_mac_table_entries':

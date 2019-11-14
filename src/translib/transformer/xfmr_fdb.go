@@ -3,11 +3,11 @@ package transformer
 import (
     "errors"
     "strings"
-    log "github.com/golang/glog"
     "strconv"
     "translib/ocbinds"
     "translib/db"
     "encoding/json"
+    log "github.com/golang/glog"
 )
 
 func init () {
@@ -36,8 +36,6 @@ var rpc_clear_fdb RpcCallpoint = func(body []byte, dbs [db.MaxDB]*db.DB) ([]byte
 	var  valLst [2]string
 	var data  []byte
 
-	//var result []byte
-        log.Error(" **************** Inside RPC ********************** ")
 	valLst[0]= "ALL"
 	valLst[1] = "ALL"
 
@@ -45,34 +43,12 @@ var rpc_clear_fdb RpcCallpoint = func(body []byte, dbs [db.MaxDB]*db.DB) ([]byte
 
 	if err != nil {
 		log.Error("Failed to  marshal input data; err=%v", err)
+		return nil, err
 	}
-	log.Infof("**************** Inside RPC ********************** fld %s, val %s  data %s", valLst[0], valLst[1], data)
 
 	err = dbs[db.ApplDB].Publish("FLUSHFDBREQUEST",data)
-/*	var operand struct {
-		Input struct {
-			Left int32 `json:"left"`
-			Right int32 `json:"right"`
-		} `json:"sonic-tests:input"`
-	}
-
-	err = json.Unmarshal(body, &operand)
-	if err != nil {
-		glog.Errorf("Failed to parse rpc input; err=%v", err)
-		return nil,tlerr.InvalidArgs("Invalid rpc input")
-	}
-
-	var sum struct {
-		Output struct {
-			Result int32 `json:"result"`
-		} `json:"sonic-tests:output"`
-	}
-
-	sum.Output.Result = operand.Input.Left + operand.Input.Right
-	result, err := json.Marshal(&sum)*/
-	return data, err
+	return nil, err
 }
-
 
 var YangToDb_fdb_tbl_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (string, error) {
     var entry_key string
@@ -108,7 +84,6 @@ var DbToYang_fdb_tbl_key_xfmr KeyXfmrDbToYang = func(inParams XfmrParams) (map[s
 
     rmap["vlan"] = vlanId
     rmap["mac-address"] = macAddress
-
     return rmap, err
 }
 
