@@ -39,6 +39,8 @@ module sonic-port {
 
 				leaf index {
 					type uint16;
+					mandatory true;
+
 				}
 
 				leaf speed {
@@ -64,14 +66,17 @@ module sonic-port {
 							error-app-tag mtu-invalid;
 						}
 					}
+					default 9100;
 				}
 
 				leaf lanes {
 					type string;
+					mandatory true;
 				}
 
 				leaf admin_status {
 					type scommon:admin-status;
+                    default "down";
 				}
 			}
 		}
