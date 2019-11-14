@@ -8,6 +8,8 @@ module dell-intf-augments {
 
     import openconfig-interfaces { prefix oc-if; }
     import openconfig-if-aggregate { prefix oc-lag; }
+    import openconfig-if-ip {prefix oc-ip; }
+    import openconfig-inet-types { prefix oc-inet; }
     import openconfig-lacp {prefix oc-lacp; }
 
     // meta
@@ -46,4 +48,28 @@ module dell-intf-augments {
         }
     }
 
+    augment "/oc-if:interfaces/oc-if:interface/oc-if:subinterfaces/oc-if:subinterface/oc-ip:ipv4/oc-ip:addresses/oc-ip:address/oc-ip:config" {
+        leaf gw-addr {
+            type oc-inet:ipv4-address;
+            description "IPv4 Gateway address";
+        }
+    }
+    augment "/oc-if:interfaces/oc-if:interface/oc-if:subinterfaces/oc-if:subinterface/oc-ip:ipv4/oc-ip:addresses/oc-ip:address/oc-ip:state" {
+        leaf gw-addr {
+            type oc-inet:ipv4-address;
+            description "IPv4 Gateway address";
+        }
+    }
+    augment "/oc-if:interfaces/oc-if:interface/oc-if:subinterfaces/oc-if:subinterface/oc-ip:ipv6/oc-ip:addresses/oc-ip:address/oc-ip:config" {
+        leaf gw-addr {
+            type oc-inet:ipv6-address;
+            description "IPv6 Gateway address";
+        }
+    }
+    augment "/oc-if:interfaces/oc-if:interface/oc-if:subinterfaces/oc-if:subinterface/oc-ip:ipv6/oc-ip:addresses/oc-ip:address/oc-ip:state" {
+        leaf gw-addr {
+            type oc-inet:ipv6-address;
+            description "IPv6 Gateway address";
+        }
+    }
 }
