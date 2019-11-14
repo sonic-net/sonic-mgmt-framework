@@ -759,11 +759,23 @@ func deleteVlanIntfAndMembers(inParams *XfmrParams, vlanName *string) error {
     vlanMap := make(map[string]db.Value)
     vlanMemberMap := make(map[string]db.Value)
 
+    vlanMap[*vlanName] = db.Value{Field:map[string]string{}}
+
     vlanEntry, err := inParams.d.GetEntry(&db.TableSpec{Name:VLAN_TN}, db.Key{Comp: []string{*vlanName}})
     if err != nil {
         log.Errorf("Retrieving data from VLAN table for VLAN: %s failed!", *vlanName)
         return err
     }
+    intTbl := IntfTypeTblMap[IntfTypeVlan]
+    /* Handle VLAN_INTERFACE TABLE */
+    checkExists := false
+    err =validateIPexist(intTbl, inParams, vlanName, &checkExists)
+    if err != nil {
+        return nil
+    } else if checkExists == true {
+        resMap[VLAN_INTERFACE_TN] = vlanMap
+    }
+
     memberPortsVal, ok := vlanEntry.Field["members@"]
     if ok {
         memberPorts := generateMemberPortsSliceFromString(&memberPortsVal)
@@ -785,7 +797,6 @@ func deleteVlanIntfAndMembers(inParams *XfmrParams, vlanName *string) error {
             }
         }
     }
-  vlanMap[*vlanName] = db.Value{Field:map[string]string{}}
     resMap[VLAN_TN] = vlanMap
     resMap[VLAN_MEMBER_TN] = vlanMemberMap
 

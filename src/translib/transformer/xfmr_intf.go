@@ -83,6 +83,7 @@ const (
     PORT_AUTONEG       = "autoneg"
     VLAN_TN            = "VLAN"
     VLAN_MEMBER_TN     = "VLAN_MEMBER"
+    VLAN_INTERFACE_TN  = "VLAN_INTERFACE"
 )
 
 const (
@@ -855,6 +856,31 @@ func convertIpMapToOC (intfIpMap map[string]db.Value, ifInfo *ocbinds.Openconfig
         }
     }
     return err
+}
+
+func validateIPexist(intTbl IntfTblData, inParams *XfmrParams, intfName *string, checkExists *bool) error {
+    intfIPKeys, _ := inParams.d.GetKeys(&db.TableSpec{Name:intTbl.cfgDb.intfTN})
+    log.Info("intfIPKeys: ", intfIPKeys)
+    subOpMap := make(map[db.DBNum]map[string]map[string]db.Value)
+    resMap := make(map[string]map[string]db.Value)
+    if len(intfIPKeys) > 0 {
+        *checkExists = false
+        /* Check if IP entries exist for given Interface*/
+        for i := range intfIPKeys {
+            if *intfName == intfIPKeys[i].Get(0) {
+                *checkExists = true
+                if len(intfIPKeys[i].Comp) > 1 {
+                    //Keep subOpDataMap[DELETE] as empty 
+                    subOpMap[db.ConfigDB] = resMap
+                    inParams.subOpDataMap[DELETE] = &subOpMap
+                    errStr := "Need to first remove the IP configuration"
+                    log.Error(errStr)
+                    return errors.New(errStr)
+                }
+            }
+        }
+    }
+    return nil
 }
 
 func getIntfIpByName(dbCl *db.DB, tblName string, ifName string, ipv4 bool, ipv6 bool, ip string) (map[string]db.Value, error) {
