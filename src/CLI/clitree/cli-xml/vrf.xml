@@ -25,12 +25,12 @@ limitations under the License.
     <VIEW name="enable-view">
       <COMMAND name="show ip vrf" help="Show vrf information">
         <ACTION> 
-          python $SONIC_CLI_ROOT/openconfig_network_instance_api.py get_list_openconfig_network_instance_network_instances_network_instance show_mgmt_vrf.j2
+          python $SONIC_CLI_ROOT/sonic-cli-vrf.py get_openconfig_network_instance_network_instances_network_instance show_vrf.j2
         </ACTION>
       </COMMAND>
       <COMMAND name="show ip vrf management" help="Show management vrf information">
         <ACTION> 
-          python $SONIC_CLI_ROOT/openconfig_network_instance_api.py get_openconfig_network_instance_network_instances_network_instance "mgmt" show_mgmt_vrf.j2
+          python $SONIC_CLI_ROOT/sonic-cli-vrf.py get_openconfig_network_instance_network_instances_network_instance "mgmt" show_vrf.j2
         </ACTION>
       </COMMAND>
     </VIEW>
@@ -40,7 +40,7 @@ limitations under the License.
     <COMMAND name="ip vrf" help="vrf instance configuration"/>
       <COMMAND name="ip vrf management" help="management vrf configuration" mode="subcommand" ptype="SUBCOMMAND">
         <ACTION> 
-          python $SONIC_CLI_ROOT/openconfig_network_instance_api.py patch_openconfig_network_instance_network_instances_network_instance "mgmt" "L3VRF" true&#xA; 
+          python $SONIC_CLI_ROOT/sonic-cli-vrf.py patch_openconfig_network_instance_network_instances_network_instance "mgmt" "L3VRF" "True"&#xA; 
         </ACTION> 
       </COMMAND>
     
@@ -48,7 +48,7 @@ limitations under the License.
     <COMMAND name="no ip vrf" help="Delete vrf instance"/>
       <COMMAND name="no ip vrf management" help="Delete management vrf" mode="subcommand" ptype="SUBCOMMAND">
         <ACTION> 
-          python $SONIC_CLI_ROOT/openconfig_network_instance_api.py delete_openconfig_network_instance_network_instances_network_instance "mgmt" "L3VRF" true&#xA;  
+          python $SONIC_CLI_ROOT/sonic-cli-vrf.py delete_openconfig_network_instance_network_instances_network_instance "mgmt" "L3VRF" "False"&#xA;  
         </ACTION>
       </COMMAND>
 
