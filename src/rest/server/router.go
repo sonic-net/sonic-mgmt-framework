@@ -23,19 +23,63 @@ import (
 	"net/http"
 	"strings"
 	"time"
-
+	"bytes"
 	"github.com/golang/glog"
 	"github.com/gorilla/mux"
+	"fmt"
 )
 
 // Root directory for UI files
 var swaggerUIDir = "./ui"
-var UserAuth struct {
-	User bool
-	Cert bool
-	Jwt bool
-}
+type UserAuth map[string]bool
 
+var ClientAuth = UserAuth{"user": false, "cert": false, "jwt": false}
+
+func (i UserAuth) String() string {
+    b := new(bytes.Buffer)
+    for key, value := range i {
+        if value {
+                fmt.Fprintf(b, "%s ", key)
+        }
+    }
+    return b.String()
+}
+func (i UserAuth) Any() bool {
+    for _, value := range i {
+    	if value {
+        	return true
+    	}
+    }
+	return false
+}
+func (i UserAuth) Enabled(mode string) bool {
+	if value, exist := i[mode]; exist && value {
+		return true
+	}
+	return false
+}
+func (i UserAuth) Set(mode string) error {
+	modes := strings.Split(mode, ",")
+	for _,m := range modes {
+		m = strings.Trim(m, " ")
+		if _, exist := i[m]; !exist {
+			return fmt.Errorf("Expecting one or more of 'cert', 'user' or 'jwt'")
+		}
+	    i[m] = true
+	}
+    return nil
+}
+func (i UserAuth) Unset(mode string) error {
+	modes := strings.Split(mode, ",")
+	for _,m := range modes {
+		m = strings.Trim(m, " ")
+		if _, exist := i[m]; !exist {
+			return fmt.Errorf("Expecting one or more of 'cert', 'user' or 'jwt'")
+		}
+	    i[m] = false
+	}
+    return nil
+}
 // SetUIDirectory functions sets directiry where Swagger UI
 // resources are maintained.
 func SetUIDirectory(directory string) {
@@ -101,7 +145,7 @@ func NewRouter() *mux.Router {
 	//router.Methods("GET").Path("/model").
 	//	Handler(http.RedirectHandler("/ui/model.html", 301))
 
-	if UserAuth.Jwt {
+	if ClientAuth.Enabled("jwt") {
 		router.Methods("POST").Path("/authenticate").Handler(http.HandlerFunc(Authenticate))
 		router.Methods("POST").Path("/refresh").Handler(http.HandlerFunc(Refresh))
 		
@@ -136,7 +180,7 @@ func loggingMiddleware(inner http.Handler, name string) http.Handler {
 // withMiddleware function prepares the default middleware chain for
 // REST APIs.
 func withMiddleware(h http.Handler, name string) http.Handler {
-	if UserAuth.User || UserAuth.Jwt || UserAuth.Cert{
+	if ClientAuth.Any() {
 		h = authMiddleware(h)
 	}
 
@@ -151,18 +195,27 @@ func authMiddleware(inner http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		rc, r := GetContext(r)
 		var err error
-		if UserAuth.User {
+		success := false
+		if ClientAuth.Enabled("user") {
 			err = BasicAuthenAndAuthor(r, rc)
-			
+			if err == nil {
+				success = true
+			}
 		}
-		if UserAuth.Jwt {
+		if !success && ClientAuth.Enabled("jwt") {
 			_,err = JwtAuthenAndAuthor(r, rc)
+			if err == nil {
+				success = true
+			}
 		}
-		if UserAuth.Cert {
+		if !success && ClientAuth.Enabled("cert") {
 			err = ClientCertAuthenAndAuthor(r, rc)
+			if err == nil {
+				success = true
+			}
 		}
 
-		if err != nil {
+		if !success {
 			status, data, ctype := prepareErrorResponse(err, r)
 			w.Header().Set("Content-Type", ctype)
 			w.WriteHeader(status)
