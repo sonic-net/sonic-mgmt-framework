@@ -2,7 +2,7 @@ module openconfig-network-instance-annot {
 
     yang-version "1";
 
-    namespace "http://openconfig.net/yang/annotation";
+    namespace "http://openconfig.net/yang/annotation/openconfig-network-instance-annot";
     prefix "oc-netinst-annot";
 
     import openconfig-network-instance { prefix oc-netinst; }
