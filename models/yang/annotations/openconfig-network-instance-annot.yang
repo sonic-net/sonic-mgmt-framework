@@ -602,6 +602,24 @@ module openconfig-network-instance-annot {
       }
     }
 
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:afi-safi-name {
+      deviate add {
+        sonic-ext:field-transformer "bgp_gbl_afi_safi_field_xfmr";
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:config/oc-netinst:afi-safi-name {
+      deviate add {
+        sonic-ext:field-transformer "bgp_gbl_afi_safi_field_xfmr";
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:state/oc-netinst:afi-safi-name {
+      deviate add {
+        sonic-ext:field-transformer "bgp_gbl_afi_safi_field_xfmr";
+      }
+    }
+
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:use-multiple-paths/oc-netinst:ebgp/oc-netinst:config/oc-netinst:maximum-paths {
       deviate add {
         sonic-ext:field-name "max_ebgp_paths";
@@ -677,6 +695,26 @@ module openconfig-network-instance-annot {
         sonic-ext:key-transformer "bgp_dyn_neigh_listen_key_xfmr";
       }
     }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:dynamic-neighbor-prefixes/oc-netinst:dynamic-neighbor-prefix/oc-netinst:prefix {
+      deviate add {
+        sonic-ext:field-transformer "bgp_dyn_neigh_listen_field_xfmr";
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:dynamic-neighbor-prefixes/oc-netinst:dynamic-neighbor-prefix/oc-netinst:config/oc-netinst:prefix {
+      deviate add {
+        sonic-ext:field-transformer "bgp_dyn_neigh_listen_field_xfmr";
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:dynamic-neighbor-prefixes/oc-netinst:dynamic-neighbor-prefix/oc-netinst:state/oc-netinst:prefix {
+      deviate add {
+        sonic-ext:field-transformer "bgp_dyn_neigh_listen_field_xfmr";
+      }
+    }
+
+
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:dynamic-neighbor-prefixes/oc-netinst:dynamic-neighbor-prefix/oc-netinst:config/oc-netinst:peer-group {
       deviate add {
         sonic-ext:field-name "peer_group";
