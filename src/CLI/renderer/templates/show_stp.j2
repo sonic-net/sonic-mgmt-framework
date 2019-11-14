@@ -103,12 +103,12 @@ STP Port Parameters:
                 {%else %}
                    {% if vars.update({'intf_bpdu_filter': "N"}) %}{% endif %}
                 {%endif %}
-                {% if stp_intf['config']['portfast'] == true %}
+                {% if stp_intf['config']['openconfig-spanning-tree-ext:portfast'] == true %}
                    {% if vars.update({'intf_fast': "Y"}) %}{% endif %}
                 {%else %}
                    {% if vars.update({'intf_fast': "N"}) %}{% endif %}
                 {%endif %}
-                {% if stp_intf['config']['uplink-fast'] == true %}
+                {% if stp_intf['config']['openconfig-spanning-tree-ext:uplink-fast'] == true %}
                    {% if vars.update({'intf_ufast': "Y"}) %}{% endif %}
                 {%else %}
                    {% if vars.update({'intf_ufast': "N"}) %}{% endif %}
