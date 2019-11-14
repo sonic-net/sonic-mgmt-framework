@@ -56,7 +56,7 @@ def invoke_api(func, args=[]):
         path = cc.Path('/restconf/data/openconfig-interfaces:interfaces/interface={name}/config/enabled', name=args[0])
         if args[1] == "True":
            body = { "openconfig-interfaces:enabled": True }
-       else:
+        else:
            body = { "openconfig-interfaces:enabled": False }
         return api.patch(path, body)
         
