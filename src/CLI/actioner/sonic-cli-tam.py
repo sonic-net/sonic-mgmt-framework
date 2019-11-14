@@ -22,11 +22,11 @@ def invoke_api(func, args):
        path = cc.Path('/restconf/data/sonic-tam:sonic-tam/TAM_COLLECTOR_TABLE/TAM_COLLECTOR_TABLE_LIST={name}', name=args[0])
        return api.get(path)
     elif func == 'patch_sonic_tam_sonic_tam_tam_device_table_tam_device_table_list_deviceid':
-       path = cc.Path('/restconf/data/sonic-tam:sonic-tam/TAM_DEVICE_TABLE/TAM_DEVICE_TABLE_LIST={device}/deviceid', device=args[0])
+       path = cc.Path('/restconf/data/sonic-tam:sonic-tam/TAM_DEVICE_TABLE/TAM_DEVICE_TABLE_LIST={name}/deviceid', name=args[0])
        body = { "sonic-tam:deviceid": int(args[1]) }
        return api.patch(path, body)
     elif func == 'delete_sonic_tam_sonic_tam_tam_device_table_tam_device_table_list_deviceid':
-       path = cc.Path('/restconf/data/sonic-tam:sonic-tam/TAM_DEVICE_TABLE/TAM_DEVICE_TABLE_LIST={device}/deviceid', device=args[0])
+       path = cc.Path('/restconf/data/sonic-tam:sonic-tam/TAM_DEVICE_TABLE/TAM_DEVICE_TABLE_LIST={name}/deviceid', name=args[0])
        return api.patch(path, body)
     elif func == 'patch_list_sonic_tam_sonic_tam_tam_collector_table_tam_collector_table_list':
        path = cc.Path('/restconf/data/sonic-tam:sonic-tam/TAM_COLLECTOR_TABLE/TAM_COLLECTOR_TABLE_LIST')

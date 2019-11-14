@@ -25,12 +25,11 @@ module sonic-tam {
         container TAM_DEVICE_TABLE {
 
             list TAM_DEVICE_TABLE_LIST {
-                key "device";
-                max-elements "1";
-
-                leaf device {
-                    type string;
-                    default "device";
+                key "name";
+                leaf name {
+                    type enumeration {
+                        enum device;
+                    }
                 }
 
                 leaf deviceid {
@@ -46,7 +45,10 @@ module sonic-tam {
                 key "name";
 
                 leaf name {
-                    type string;
+                    type string {
+                        pattern '[a-zA-Z0-9]{1}([-a-zA-Z0-9_]{0,32})';
+                        length 1..32;
+                    }
                 }
 
                 leaf ipaddress-type {

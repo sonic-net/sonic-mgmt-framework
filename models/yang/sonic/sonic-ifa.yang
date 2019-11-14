@@ -2,10 +2,6 @@ module sonic-ifa {
     namespace "http://github.com/Azure/sonic-ifa";
     prefix ifa;
 
-    import sonic-tam {
-        prefix stam;
-    }
-
     organization
         "SONiC";
 
@@ -15,7 +11,7 @@ module sonic-ifa {
     description
         "SONIC TAM IFA";
 
-    revision 2019-05-15 {
+    revision 2019-11-12 {
         description
             "Initial revision.";
     }
@@ -25,12 +21,12 @@ module sonic-ifa {
         container TAM_INT_IFA_FEATURE_TABLE {
 
             list TAM_INT_IFA_FEATURE_TABLE_LIST {
-                key "feature";
-                max-elements "1";
+                key "name";
 
-                leaf feature {
-                    type string;
-                    default "feature";
+                leaf name {
+                    type enumeration {
+                        enum feature;
+                    }
                 }
 
                 leaf enable {
@@ -45,29 +41,35 @@ module sonic-ifa {
                 key "name";
 
                 leaf name {
-                    type string;
+                    type string {
+                        pattern '[a-zA-Z0-9]{1}([-a-zA-Z0-9_]{0,32})';
+                        length 1..32;
+                    }
                 }
 
                 leaf acl-table-name {
+                    mandatory true;
                     type string;
                 }
 
                 leaf acl-rule-name {
+                    mandatory true;
                     type string;
                 }
 
                 leaf sampling-rate {
-                    mandatory false;
                     type uint16 {
                         range "1..10000"{
-                            error-message "Invalid IFA flow sampling rate.";
+                            error-app-tag "Invalid IFA flow sampling rate.";
                         }
                     }
                 }
 
                 leaf collector-name {
-                    mandatory false;
-                    type string;
+                    type string {
+                        pattern '[a-zA-Z0-9]{1}([-a-zA-Z0-9_]{0,32})';
+                        length 1..32;
+                    }
                 }
             }
         }
