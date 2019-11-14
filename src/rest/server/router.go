@@ -136,7 +136,7 @@ func loggingMiddleware(inner http.Handler, name string) http.Handler {
 // withMiddleware function prepares the default middleware chain for
 // REST APIs.
 func withMiddleware(h http.Handler, name string) http.Handler {
-	if UserAuth.User || UserAuth.Jwt {
+	if UserAuth.User || UserAuth.Jwt || UserAuth.Cert{
 		h = authMiddleware(h)
 	}
 
@@ -158,7 +158,9 @@ func authMiddleware(inner http.Handler) http.Handler {
 		if UserAuth.Jwt {
 			_,err = JwtAuthenAndAuthor(r, rc)
 		}
-
+		if UserAuth.Cert {
+			err = ClientCertAuthenAndAuthor(r, rc)
+		}
 
 		if err != nil {
 			status, data, ctype := prepareErrorResponse(err, r)
