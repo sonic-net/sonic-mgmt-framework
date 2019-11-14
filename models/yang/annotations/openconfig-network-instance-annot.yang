@@ -6,8 +6,9 @@ module openconfig-network-instance-annot {
     prefix "oc-netinst-annot";
 
     import openconfig-network-instance { prefix oc-netinst; }
+    import sonic-extensions { prefix sonic-ext; }
     import openconfig-bgp-ext { prefix oc-bgp-ext; }
-    import sonic-extensions {prefix sonic-ext; }
+
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global {
         deviate add {
