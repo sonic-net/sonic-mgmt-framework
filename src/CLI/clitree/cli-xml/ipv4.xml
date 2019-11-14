@@ -24,7 +24,19 @@ limitations under the License.
     xsi:schemaLocation="http://www.dellemc.com/sonic/XMLSchema
                         http://www.dellemc.com/sonic/XMLSchema/clish.xsd">
 
+
+
+<!--=======================================================-->
+<!--              show ip arp interface                    -->
+<!--=======================================================-->
+<PTYPE
+    name="INTF_NAME"
+    method="select"
+    pattern="Ethernet Vlan PortChannel Management(eth)"
+    help="Interface type"/>
+
 <VIEW name="enable-view">
+<!--
     <COMMAND
             name="clear ip"
             help="Clear ip command">
@@ -33,90 +45,88 @@ limitations under the License.
             name="debug ip"
             help="Debug ip command">
     </COMMAND>
+-->
     <COMMAND
         help="show IP commands"
         name="show ip"
         >
-    <ACTION builtin="clish_nop"/>
+        <ACTION builtin="clish_nop"/>
     </COMMAND>
+
     <COMMAND
-        help="show IP ARP commands"
         name="show ip arp"
-        >
-    <ACTION builtin="clish_nop"/>
-    </COMMAND>
-
-   <COMMAND
-        help="ARP entries for this interface"
-        name="show ip arp interface">
+        help="show IP ARP commands">
         <PARAM
-            name="Ethernet"
-            help="Ethernet IEEE 802.3"
+            name="interface"
+            help="Specify interface type"
             ptype="SUBCOMMAND"
-            mode="subcommand">
+            mode="subcommand"
+            optional="false">
             <PARAM
-                name="phy-if-id"
-                help="Physical interface(Multiples of 4)"
-                ptype="UINT">
-
-                <PARAM name="choice"
-                    help="Available options"
-                    ptype="STRING"
-                    optional="true"
-                    mode="switch">
+                name="ifType"
+                help=""
+                ptype="INTF_NAME">
+                <PARAM
+                    name="phy-if-id"
+                    help="Numeric ID for the given interface type"
+                    ptype="UINT">
                     <PARAM
-                        help="Summary of ARP entries"
-                        name="summary"
-                        ptype="SUBCOMMAND"
-                        mode="subcommand"
-                        optional="true">
-                    </PARAM>
-                    <PARAM
-                       help="IP address"
-                       name="ip"
-                       ptype="SUBCOMMAND"
-                       mode="subcommand"
-                       optional="true">
-                       <PARAM
-                            help="ARP entry for this IP address"
-                            name="ip-addr"
-                            ptype="IP_ADDR">
-                       </PARAM>
-                    </PARAM>
-                    <PARAM
-                       help="HW address"
-                       name="mac-address"
-                       ptype="SUBCOMMAND"
-                       mode="subcommand"
-                       optional="true">
-                       <PARAM
-                          help="48 bit MAC address"
-                          name="mac-addr"
-                          ptype="MAC_ADDR">
-                      </PARAM>
+                        name="choice"
+                        help="Available options"
+                        ptype="STRING"
+                        optional="true"
+                        mode="switch">
+                        <PARAM
+                            name="summary"
+                            help="Summary of ARP entries"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            optional="true">
+                        </PARAM>
+                        <PARAM
+                            name="ip"
+                            help="IP address"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            optional="true">
+                            <PARAM
+                                name="ip-addr"
+                                help="ARP entry for this IP address"
+                                ptype="IP_ADDR">
+                            </PARAM>
+                        </PARAM>
+                        <PARAM
+                            name="mac-address"
+                            help="HW address"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            optional="true">
+                            <PARAM
+                                name="mac-addr"
+                                help="48 bit MAC address"
+                                ptype="MAC_ADDR">
+                            </PARAM>
+                        </PARAM>
                     </PARAM>
                 </PARAM>
             </PARAM>
         </PARAM>
         <ACTION>
             if test "${summary}" = "" -a "${ip-addr}" = "" -a "${mac-addr}" = ""; then&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-arp-neigh.py get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_neighbors arp_show.j2 Ethernet${phy-if-id} None&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-arp-neigh.py get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_neighbors arp_show.j2 ${ifType}${phy-if-id} None&#xA;
             elif test "${summary}" = "summary" -a "${ip-addr}" = "" -a "${mac-addr}" = ""; then&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-arp-neigh.py get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_neighbors arp_summary_show.j2 Ethernet${phy-if-id} summary&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-arp-neigh.py get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_neighbors arp_summary_show.j2 ${ifType}${phy-if-id} summary&#xA;
             elif test "${summary}" = "" -a "${ip-addr}" != "" -a "${mac-addr}" = ""; then&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-arp-neigh.py get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_neighbors_neighbor arp_show.j2 Ethernet${phy-if-id} ip ${ip-addr}&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-arp-neigh.py get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_neighbors_neighbor arp_show.j2 ${ifType}${phy-if-id} ip ${ip-addr}&#xA;
             elif test "${summary}" = "summary" -a "${ip-addr}" != "" -a "${mac-addr}" = ""; then&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-arp-neigh.py get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_neighbors_neighbor arp_summary_show.j2 Ethernet${phy-if-id} ip ${ip-addr} summary&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-arp-neigh.py get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_neighbors_neighbor arp_summary_show.j2 ${ifType}${phy-if-id} ip ${ip-addr} summary&#xA;
             elif test "${summary}" = "" -a "${ip-addr}" = "" -a "${mac-addr}" != ""; then&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-arp-neigh.py get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_neighbors arp_show.j2 Ethernet${phy-if-id} mac ${mac-addr}&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-arp-neigh.py get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_neighbors arp_show.j2 ${ifType}${phy-if-id} mac ${mac-addr}&#xA;
             elif test "${summary}" = "summary" -a "${ip-addr}" = "" -a "${mac-addr}" != ""; then&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-arp-neigh.py get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_neighbors arp_summary_show.j2 Ethernet${phy-if-id} mac ${mac-addr} summary&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-arp-neigh.py get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_neighbors arp_summary_show.j2 ${ifType}${phy-if-id} mac ${mac-addr} summary&#xA;
             fi&#xA;
         </ACTION>
     </COMMAND>
-
-
-
 </VIEW>
 
 <!--=======================================================-->
