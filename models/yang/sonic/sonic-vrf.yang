@@ -1,0 +1,45 @@
+module sonic-vrf {
+    namespace "http://github.com/Azure/sonic-vrf";
+    prefix vrf;
+
+    import sonic-common {
+        prefix scommon;
+    }
+
+    organization
+        "SONiC";
+
+    contact
+        "SONiC";
+
+    description
+        "SONIC VRF";
+
+    revision 2019-10-30 {
+        description
+            "Initial revision.";
+    }
+
+    container sonic-vrf {
+        container VRF {
+            description "Vrf configuration.";            
+
+            list VRF_LIST {
+                key "vrf_name";
+
+                leaf vrf_name {
+                    type string;
+                    description
+                        "Vrf name for SONiC, must start with Vrf.";
+                }   
+
+                leaf fallback {
+                    type  boolean;
+                    default false;
+                    description
+                        "Enalbe/disable fallback feature which is useful for specified VRF user to access internet through global/main route.";
+                }
+            }
+        }
+    }
+}

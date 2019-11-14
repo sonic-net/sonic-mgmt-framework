@@ -31,7 +31,7 @@ import (
 	"rest/server"
 	"swagger"
 	"syscall"
-
+	"time"
 	"github.com/golang/glog"
 	"github.com/pkg/profile"
 )
@@ -44,6 +44,8 @@ var (
 	keyFile    string // Server private key file path
 	caFile     string // Client CA certificate file path
 	clientAuth string // Client auth mode
+	jwtValInt  uint64    // JWT Valid Interval
+	jwtRefInt  uint64    // JWT Refresh seconds before expiry
 )
 
 func init() {
@@ -53,11 +55,15 @@ func init() {
 	flag.StringVar(&certFile, "cert", "", "Server certificate file path")
 	flag.StringVar(&keyFile, "key", "", "Server private key file path")
 	flag.StringVar(&caFile, "cacert", "", "CA certificate for client certificate validation")
-	flag.StringVar(&clientAuth, "client_auth", "none", "Client auth mode - none|cert|user")
+	flag.StringVar(&clientAuth, "client_auth", "none", "Client auth mode - none|cert|user|jwt")
+	flag.Uint64Var(&jwtRefInt, "jwt_refresh_int", 30, "Seconds before JWT expiry the token can be refreshed.")
+	flag.Uint64Var(&jwtValInt, "jwt_valid_int", 3600, "Seconds that JWT token is valid for.")
 	flag.Parse()
 	// Suppress warning messages related to logging before flag parse
 	flag.CommandLine.Parse([]string{})
 }
+
+var profRunning bool = true
 
 // Start REST server
 func main() {
@@ -75,16 +81,35 @@ func main() {
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGUSR1)
 	go func() {
+	  for {
 		<-sigs
-		prof.Stop()
+		if (profRunning) {
+			prof.Stop()
+			profRunning = false
+		} else {
+			prof = profile.Start()
+			defer prof.Stop()
+			profRunning = true
+		}
+	  }
 	}()
 
 	swagger.Load()
 
 	server.SetUIDirectory(uiDir)
 
+	server.JwtRefreshInt = time.Duration(jwtRefInt*uint64(time.Second))
+	server.JwtValidInt = time.Duration(jwtValInt*uint64(time.Second))
+
 	if clientAuth == "user" {
-		server.SetUserAuthEnable(true)
+		server.UserAuth.User = true
+	}
+	if clientAuth == "jwt" {
+		server.UserAuth.Jwt = true
+		server.GenerateJwtSecretKey()
+	}
+	if clientAuth == "cert" {
+		server.UserAuth.Cert = true
 	}
 
 	router := server.NewRouter()
@@ -179,9 +204,11 @@ func getTLSClientAuthType() tls.ClientAuthType {
 			glog.Fatal("--cacert option is mandatory when --client_auth is 'cert'")
 		}
 		return tls.RequireAndVerifyClientCert
+	case "jwt":
+		return tls.RequestClientCert
 	default:
 		glog.Fatalf("Invalid '--client_auth' value '%s'. "+
-			"Expecting one of 'none', 'cert' or 'user'", clientAuth)
+			"Expecting one of 'none', 'cert', 'user' or 'jwt'", clientAuth)
 		return tls.RequireAndVerifyClientCert // dummy
 	}
 }

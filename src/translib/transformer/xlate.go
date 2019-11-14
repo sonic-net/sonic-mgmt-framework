@@ -134,7 +134,7 @@ func TraverseDb(dbs [db.MaxDB]*db.DB, spec KeySpec, result *map[db.DBNum]map[str
 	return err
 }
 
-func XlateUriToKeySpec(uri string, ygRoot *ygot.GoStruct, t *interface{}, txCache interface{}) (*[]KeySpec, error) {
+func XlateUriToKeySpec(uri string, requestUri string, ygRoot *ygot.GoStruct, t *interface{}, txCache interface{}) (*[]KeySpec, error) {
 
 	var err error
 	var retdbFormat = make([]KeySpec, 0)
@@ -146,7 +146,7 @@ func XlateUriToKeySpec(uri string, ygRoot *ygot.GoStruct, t *interface{}, txCach
 		retdbFormat = fillSonicKeySpec(xpath, tableName, keyStr)
 	} else {
 		/* Extract the xpath and key from input xpath */
-		xpath, keyStr, _ := xpathKeyExtract(nil, ygRoot, 0, uri, txCache)
+		xpath, keyStr, _ := xpathKeyExtract(nil, ygRoot, 0, uri, requestUri, nil, txCache)
 		retdbFormat = FillKeySpecs(xpath, keyStr, &retdbFormat)
 	}
 
@@ -245,9 +245,10 @@ func fillSonicKeySpec(xpath string , tableName string, keyStr string) ( []KeySpe
 	return retdbFormat
 }
 
-func XlateToDb(path string, opcode int, d *db.DB, yg *ygot.GoStruct, yt *interface{}, txCache interface{}) (map[string]map[string]db.Value, error) {
+func XlateToDb(path string, opcode int, d *db.DB, yg *ygot.GoStruct, yt *interface{}, txCache interface{}) (map[int]map[db.DBNum]map[string]map[string]db.Value, error) {
 
 	var err error
+	requestUri := path
 
 	device := (*yg).(*ocbinds.Device)
 	jsonStr, err := ygot.EmitJSON(device, &ygot.EmitJSONConfig{
@@ -267,32 +268,32 @@ func XlateToDb(path string, opcode int, d *db.DB, yg *ygot.GoStruct, yt *interfa
 	}
 
 	// Map contains table.key.fields
-	var result = make(map[string]map[string]db.Value)
+	var result = make(map[int]map[db.DBNum]map[string]map[string]db.Value)
 	switch opcode {
 	case CREATE:
 		log.Info("CREATE case")
-		err = dbMapCreate(d, yg, opcode, path, jsonData, result, txCache)
+		err = dbMapCreate(d, yg, opcode, path, requestUri, jsonData, result, txCache)
 		if err != nil {
 			log.Errorf("Error: Data translation from yang to db failed for create request.")
 		}
 
 	case UPDATE:
 		log.Info("UPDATE case")
-		err = dbMapUpdate(d, yg, opcode, path, jsonData, result, txCache)
+		err = dbMapUpdate(d, yg, opcode, path, requestUri, jsonData, result, txCache)
 		if err != nil {
 			log.Errorf("Error: Data translation from yang to db failed for update request.")
 		}
 
 	case REPLACE:
 		log.Info("REPLACE case")
-		err = dbMapUpdate(d, yg, opcode, path, jsonData, result, txCache)
+		err = dbMapUpdate(d, yg, opcode, path, requestUri, jsonData, result, txCache)
 		if err != nil {
 			log.Errorf("Error: Data translation from yang to db failed for replace request.")
 		}
 
 	case DELETE:
 		log.Info("DELETE case")
-		err = dbMapDelete(d, yg, opcode, path, jsonData, result, txCache)
+		err = dbMapDelete(d, yg, opcode, path, requestUri, jsonData, result, txCache)
 		if err != nil {
 			log.Errorf("Error: Data translation from yang to db failed for delete request.")
 		}
@@ -305,8 +306,9 @@ func GetAndXlateFromDB(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db.DB, 
 	var payload []byte
 	log.Info("received xpath =", uri)
 
-	keySpec, err := XlateUriToKeySpec(uri, ygRoot, nil, txCache)
-	var dbresult = make(map[db.DBNum]map[string]map[string]db.Value)
+	requestUri := uri
+	keySpec, err := XlateUriToKeySpec(uri, requestUri, ygRoot, nil, txCache)
+	var dbresult = make(RedisDbMap)
         for i := db.ApplDB; i < db.MaxDB; i++ {
                 dbresult[i] = make(map[string]map[string]db.Value)
 	}
@@ -328,11 +330,11 @@ func GetAndXlateFromDB(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db.DB, 
 	return payload, err
 }
 
-func XlateFromDb(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db.DB, data map[db.DBNum]map[string]map[string]db.Value, txCache interface{}) ([]byte, error) {
+func XlateFromDb(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db.DB, data RedisDbMap, txCache interface{}) ([]byte, error) {
 
 	var err error
 	var result []byte
-	var dbData = make(map[db.DBNum]map[string]map[string]db.Value)
+	var dbData = make(RedisDbMap)
 	var cdb db.DBNum = db.ConfigDB
 
 	dbData = data
@@ -442,10 +444,21 @@ func GetTablesToWatch(xfmrTblList []string, uriModuleNm string) []string {
         depTblMap := make(map[string]bool) //create to avoid duplicates in depTblList, serves as a Set
         processedTbl := false
 	var sncMdlList []string
+	var lXfmrTblList []string
 
 	sncMdlList = getYangMdlToSonicMdlList(uriModuleNm)
 
-        for _, xfmrTbl := range(xfmrTblList) {
+	// remove duplicates from incoming list of tables
+	xfmrTblMap := make(map[string]bool) //create to avoid duplicates in xfmrTblList
+	for _, xfmrTblNm :=range(xfmrTblList) {
+		xfmrTblMap[xfmrTblNm] = true
+	}
+	for xfmrTblNm, _ := range(xfmrTblMap) {
+		lXfmrTblList = append(lXfmrTblList, xfmrTblNm)
+	}
+
+        for _, xfmrTbl := range(lXfmrTblList) {
+		processedTbl = false
                 //can be optimized if there is a way to know all sonic modules, a given OC-Yang spans over
                 for _, sonicMdlNm := range(sncMdlList) {
                         sonicMdlTblInfo := xDbSpecTblSeqnMap[sonicMdlNm]
