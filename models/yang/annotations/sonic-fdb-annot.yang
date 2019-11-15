@@ -9,9 +9,9 @@ module sonic-fdb-annot {
     import sonic-fdb { prefix sfdb; }
 
     deviation /sfdb:clear_fdb {
-      deviate add {
-		sonic-ext:rpc-callback "rpc_clear_fdb";
-      }
+        deviate add {
+	    sonic-ext:rpc-callback "rpc_clear_fdb";
+        }
     }
 }
 

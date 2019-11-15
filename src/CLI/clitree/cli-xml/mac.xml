@@ -23,7 +23,7 @@ limitations under the License.
 <VIEW name="enable-view">
     <COMMAND
         name="show mac"
-        help="Show mac"
+        help="Show MAC"
         >
     <ACTION> 
         builtin="clish_nop"
@@ -33,7 +33,7 @@ limitations under the License.
 <!--====================show mac address-table command======================-->
     <COMMAND
         name="show mac address-table"
-        help="Mac address table"
+        help="MAC address table"
         >
     <ACTION> 
         python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_network_instance_network_instances_network_instance_fdb_mac_table_entries show_mac.j2 show
@@ -53,7 +53,7 @@ limitations under the License.
 <!--====================show mac address-table address <mac-address> command ======================-->
     <COMMAND
         name="show mac address-table address"
-        help="Show mac address table address for mac-address"
+        help="Show MAC address table address for mac-address"
         >
         <PARAM
             name="mac-addr"
@@ -69,7 +69,7 @@ limitations under the License.
 <!--====================show mac address-table vlan <vlan-id> command ======================-->
     <COMMAND
         name="show mac address-table Vlan"
-        help="Show mac address-table for VLAN"
+        help="Show MAC address-table for VLAN"
         >
         <PARAM
             name="vlan-id"
@@ -85,7 +85,7 @@ limitations under the License.
 <!--====================show mac address-table interface <p-id> command ======================-->
     <COMMAND
         name="show mac address-table interface"
-        help="Show mac address-table for interfaces">
+        help="Show MAC address-table for interfaces">
         <PARAM
             name="if-subcommands"
             help="Interface subcommands"
@@ -133,7 +133,7 @@ limitations under the License.
 <!--====================show mac address-table static commands ======================-->
     <COMMAND
         name="show mac address-table static"
-        help="Mac address-table for static commands">
+        help="MAC address-table for static commands">
         <PARAM
             name="s-subcommands"
             help="Static subcommands"
@@ -143,7 +143,7 @@ limitations under the License.
             >
             <PARAM
                 name="address"
-                help="Mac-address of static interface"
+                help="MAC-address of static interface"
                 ptype="SUBCOMMAND"
                 mode="subcommand"
                 >
@@ -228,7 +228,7 @@ limitations under the License.
 <!--====================show mac address-table dynamic commands ======================-->
     <COMMAND
         name="show mac address-table dynamic"
-        help="mac address-table for dynamic commands">
+        help="MAC address-table for dynamic commands">
         <PARAM
             name="d-subcommands"
             help="Dynamic subcommands"
@@ -238,13 +238,13 @@ limitations under the License.
             >
             <PARAM
                 name="address"
-                help="Mac address of dynamic interface"
+                help="MAC address of dynamic interface"
                 ptype="SUBCOMMAND"
                 mode="subcommand"
                 >
                 <PARAM
                     name="mac-addr"
-                    help="48 bit mac-address"
+                    help="48 bit MAC-address"
                     ptype="MAC_ADDR"
                     >
                 </PARAM>
@@ -364,7 +364,7 @@ limitations under the License.
                 >
                 <PARAM
                     name="mac-addr"
-                    help="48 bit mac-address"
+                    help="48 bit MAC-address"
                     ptype="MAC_ADDR"
                     >
                 </PARAM>
