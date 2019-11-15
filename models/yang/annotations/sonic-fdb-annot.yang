@@ -1,0 +1,17 @@
+module sonic-fdb-annot {
+
+    yang-version "1.1";
+
+    namespace "http://openconfig.net/yang/annotation/sfdb-annot";
+    prefix "sfdb-annot";
+
+    import sonic-extensions { prefix sonic-ext; }
+    import sonic-fdb { prefix sfdb; }
+
+    deviation /sfdb:clear_fdb {
+        deviate add {
+	    sonic-ext:rpc-callback "rpc_clear_fdb";
+        }
+    }
+}
+
