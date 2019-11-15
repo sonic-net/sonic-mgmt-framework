@@ -63,7 +63,7 @@ module sonic-tam {
                 }
 
                 leaf port {
-                    type uint16;
+                    type inet:port-number;
                 }
             }
         }
