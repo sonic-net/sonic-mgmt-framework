@@ -1025,7 +1025,7 @@ func (app *StpApp) convertInternalToOCRpvstVlanConfig(vlanName string, rpvst *oc
 				opHoldTime := uint8(num)
 				rpvstVlanConf.State.HoldTime = &opHoldTime
 
-				/*num, _ = strconv.ParseUint((&operDbVal).Get("root_max_age"), 10, 8)
+				num, _ = strconv.ParseUint((&operDbVal).Get("root_max_age"), 10, 8)
 				opRootMaxAge := uint8(num)
 				rpvstVlanConf.State.RootMaxAge = &opRootMaxAge
 
@@ -1035,7 +1035,7 @@ func (app *StpApp) convertInternalToOCRpvstVlanConfig(vlanName string, rpvst *oc
 
 				num, _ = strconv.ParseUint((&operDbVal).Get("root_forward_delay"), 10, 8)
 				opRootForwardDelay := uint8(num)
-				rpvstVlanConf.State.RootForwardingDelay = &opRootForwardDelay  */
+				rpvstVlanConf.State.RootForwardDelay = &opRootForwardDelay
 
 				num, _ = strconv.ParseUint((&operDbVal).Get("stp_instance"), 10, 16)
 				opStpInstance := uint16(num)
@@ -1056,8 +1056,11 @@ func (app *StpApp) convertInternalToOCRpvstVlanConfig(vlanName string, rpvst *oc
 				bridgeId := (&operDbVal).Get("bridge_id")
 				rpvstVlanConf.State.BridgeAddress = &bridgeId
 
-				desigRootAddr := (&operDbVal).Get("desig_bridge_id")
+				desigRootAddr := (&operDbVal).Get("root_bridge_id")
 				rpvstVlanConf.State.DesignatedRootAddress = &desigRootAddr
+
+				desigBridgeId := (&operDbVal).Get("desig_bridge_id")
+				rpvstVlanConf.State.DesignatedBridgeId = &desigBridgeId
 
 				rootPortStr := (&operDbVal).Get("root_port")
 				rpvstVlanConf.State.RootPortName = &rootPortStr
@@ -1269,7 +1272,7 @@ func (app *StpApp) convertInternalToOCPvstVlan(vlanName string, pvst *ocbinds.Op
 				opHoldTime := uint8(num)
 				pvstVlan.State.HoldTime = &opHoldTime
 
-				/*num, _ = strconv.ParseUint((&operDbVal).Get("root_max_age"), 10, 8)
+				num, _ = strconv.ParseUint((&operDbVal).Get("root_max_age"), 10, 8)
 				opRootMaxAge := uint8(num)
 				pvstVlan.State.RootMaxAge = &opRootMaxAge
 
@@ -1279,7 +1282,7 @@ func (app *StpApp) convertInternalToOCPvstVlan(vlanName string, pvst *ocbinds.Op
 
 				num, _ = strconv.ParseUint((&operDbVal).Get("root_forward_delay"), 10, 8)
 				opRootForwardDelay := uint8(num)
-				pvstVlan.State.RootForwardingDelay = &opRootForwardDelay  */
+				pvstVlan.State.RootForwardDelay = &opRootForwardDelay
 
 				num, _ = strconv.ParseUint((&operDbVal).Get("stp_instance"), 10, 16)
 				opStpInstance := uint16(num)
@@ -1300,8 +1303,11 @@ func (app *StpApp) convertInternalToOCPvstVlan(vlanName string, pvst *ocbinds.Op
 				bridgeId := (&operDbVal).Get("bridge_id")
 				pvstVlan.State.BridgeAddress = &bridgeId
 
-				desigRootAddr := (&operDbVal).Get("desig_bridge_id")
+				desigRootAddr := (&operDbVal).Get("root_bridge_id")
 				pvstVlan.State.DesignatedRootAddress = &desigRootAddr
+
+				desigBridgeId := (&operDbVal).Get("desig_bridge_id")
+				pvstVlan.State.DesignatedBridgeId = &desigBridgeId
 
 				rootPortStr := (&operDbVal).Get("root_port")
 				pvstVlan.State.RootPortName = &rootPortStr
@@ -1446,9 +1452,9 @@ func (app *StpApp) convertOCStpInterfacesToInternal() {
 					(&dbVal).Set("link_type", "point-to-point")
 				} else if stpIntfConf.Config.LinkType == ocbinds.OpenconfigSpanningTree_StpLinkType_SHARED {
 					(&dbVal).Set("link_type", "shared")
-				} else {
+				} /*else {
 					(&dbVal).Set("link_type", "auto")
-				}
+				} */
 			}
 		}
 	}
@@ -1942,6 +1948,9 @@ func (app *StpApp) enableStpForInterfaces(d *db.DB) error {
 	(&defaultDBValues).Set("bpdu_guard_do_disable", "false")
 	(&defaultDBValues).Set("portfast", "true")
 	(&defaultDBValues).Set("uplink_fast", "false")
+	if "rpvst" == (&app.globalInfo).Get(STP_MODE) {
+		(&defaultDBValues).Set("link_type", "auto")
+	}
 
 	intfList, err := app.getAllInterfacesFromVlanMemberTable(d)
 	if err != nil {
@@ -2071,7 +2080,7 @@ func enableStpOnInterfaceVlanMembership(d *db.DB, intfList []string) {
 	if len(intfList) == 0 {
 		return
 	}
-	_, serr := d.GetEntry(&db.TableSpec{Name: STP_GLOBAL_TABLE}, asKey("GLOBAL"))
+	stpGlobalDBEntry, serr := d.GetEntry(&db.TableSpec{Name: STP_GLOBAL_TABLE}, asKey("GLOBAL"))
 	if serr != nil {
 		return
 	}
@@ -2084,6 +2093,9 @@ func enableStpOnInterfaceVlanMembership(d *db.DB, intfList []string) {
 	(&defaultDBValues).Set("bpdu_guard_do_disable", "false")
 	(&defaultDBValues).Set("portfast", "true")
 	(&defaultDBValues).Set("uplink_fast", "false")
+	if "rpvst" == (&stpGlobalDBEntry).Get(STP_MODE) {
+		(&defaultDBValues).Set("link_type", "auto")
+	}
 
 	var stpEnabledIntfList []string
 	intfKeys, err := d.GetKeys(&db.TableSpec{Name: STP_INTF_TABLE})
