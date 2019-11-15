@@ -1,9 +1,15 @@
-{{'-----------------------------------------------------------'}}
-{{'Attribute'.ljust(21)}} {{'Value/State'}}
-{{'-----------------------------------------------------------'}}
 {% for key,value in json_output.items() %}
+{% if 'clock-type' in value.keys() %}
+{{ 'Mode'.ljust(21)}} {{ value['clock-type']}}
+{% endif %}
+{% if 'domain-profile' in value.keys() %}
+{{ 'Domain Profile'.ljust(21)}} {{ value['domain-profile']}}
+{% endif %}
 {% if 'domain-number' in value.keys() %}
 {{ 'Domain Number'.ljust(21)}} {{ value['domain-number']}}
+{% endif %}
+{% if 'clock-identity' in value.keys() %}
+{{ 'Clock Identity'.ljust(21)}} {{ value['clock-identity']}}
 {% endif %}
 {% if 'priority1' in value.keys() %}
 {{ 'Priority1'.ljust(21)}} {{ value['priority1']}}
@@ -12,10 +18,18 @@
 {{ 'Priority2'.ljust(21)}} {{ value['priority2']}}
 {% endif %}
 {% if 'two-step-flag' in value.keys() %}
-{{ 'Two Step'.ljust(21)}} {{ value['two-step-flag']}}
+{{ 'Two Step'.ljust(21)}} {% if value['two-step-flag'] %}
+{%   print 'Enabled\n' %}
+{% else %}
+{%   print 'Disabled\n' %}
+{% endif %}
 {% endif %}
 {% if 'slave-only' in value.keys() %}
-{{ 'Slave Only'.ljust(21)}} {{ value['slave-only']}}
+{{ 'Slave Only'.ljust(21)}} {% if value['slave-only'] %}
+{%   print 'True\n' %}
+{% else %}
+{%   print 'False\n' %}
+{% endif %}
 {% endif %}
 {% if 'number-ports' in value.keys() %}
 {{ 'Number Ports'.ljust(21)}} {{ value['number-ports']}}
