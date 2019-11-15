@@ -1,7 +1,7 @@
 
 module sonic-common {
 	namespace "http://github.com/Azure/sonic-common";
-	prefix scommon;
+	prefix cmn;
 
 	organization
 		"SONiC";
