@@ -3,7 +3,7 @@ module sonic-port {
 	prefix prt;
 
 	import sonic-common {
-		prefix scommon;
+		prefix cmn;
 	}
 
 	organization
@@ -75,7 +75,7 @@ module sonic-port {
 				}
 
 				leaf admin_status {
-					type scommon:admin-status;
+					type cmn:admin-status;
 					default "down";
 				}
 			}

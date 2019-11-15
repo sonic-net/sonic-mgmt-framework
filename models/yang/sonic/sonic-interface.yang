@@ -37,6 +37,7 @@ module sonic-interface {
 					}
 				}
 
+				/* Add a leafref, once VRF YANG is supported 
 				leaf vrf-name {
 					type string {
 						pattern 'Vrf([-a-zA-Z0-9_]{1,60})' {
@@ -44,6 +45,7 @@ module sonic-interface {
 						}
 					}
 				}
+				*/
 
 			}
 

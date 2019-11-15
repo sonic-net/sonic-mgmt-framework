@@ -1,6 +1,6 @@
 module sonic-acl {
 	namespace "http://github.com/Azure/sonic-acl";
-	prefix sacl;
+	prefix acl;
 	yang-version 1.1;
 
 	import ietf-inet-types {
@@ -117,14 +117,6 @@ module sonic-acl {
 					}
 				}
 
-				leaf MIRROR_ACTION {
-					type string {
-						pattern '[a-zA-Z0-9]{1}([-a-zA-Z0-9_]{1,63})' {
-							error-app-tag mirror-action-invalid;
-						}
-					}
-				}
-
 				leaf IP_TYPE {
 					mandatory true;
 					type enumeration {
@@ -181,7 +173,7 @@ module sonic-acl {
 				choice src_port {
 					case l4_src_port {
 						leaf L4_SRC_PORT {
-							type uint16;
+							type inet:port-number;
 						}
 					}
 					case l4_src_port_range {
@@ -198,7 +190,7 @@ module sonic-acl {
 				choice dst_port {
 					case l4_dst_port {
 						leaf L4_DST_PORT {
-							type uint16;
+							type inet:port-number;
 						}
 					}
 					case l4_dst_port_range {
@@ -221,11 +213,7 @@ module sonic-acl {
 				}
 
 				leaf DSCP { 
-					type uint8 {
-						range "0..63" {
-							error-app-tag dscp-invalid;
-						}
-					}
+					type inet:dscp;
 				}
 			}
 		}

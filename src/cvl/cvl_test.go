@@ -1812,12 +1812,14 @@ func TestValidateEditConfig_Update_Syntax_DependentData_Redis_Positive(t *testin
 	loadConfigDB(rclient, mpi_acl_table_rule)
 
 	depDataMap := map[string]interface{}{
+	/* Use MIRROR session once supported  ---
 		"MIRROR_SESSION": map[string]interface{}{
 			"everflow2": map[string]interface{}{
 				"src_ip": "10.1.0.32",
 				"dst_ip": "2.2.2.2",
 			},
 		},
+		*/
 	}
 
 	loadConfigDB(rclient, depDataMap)
@@ -1829,7 +1831,10 @@ func TestValidateEditConfig_Update_Syntax_DependentData_Redis_Positive(t *testin
 			cvl.OP_UPDATE,
 			"ACL_RULE|TestACL13|Rule1",
 			map[string]string{
+				/* Use Mirror session when supported
 				"MIRROR_ACTION": "everflow2",
+				*/
+				"PACKET_ACTION" : "FORWARD",
 			},
 		},
 	}
@@ -3403,7 +3408,7 @@ func TestValidateEditConfig_Create_Syntax_Interface_OptionalKey_Positive(t *test
 			cvl.OP_CREATE,
 			"INTERFACE|Ethernet24",
 			map[string]string{
-				"vrf-name": "Vrf1",
+				/*"vrf-name": "Vrf1", -- Enable once VRF YANG implemented */
 			},
 		},
 	}
