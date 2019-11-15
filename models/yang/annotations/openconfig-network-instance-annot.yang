@@ -623,10 +623,16 @@ module openconfig-network-instance-annot {
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:table-connections/oc-netinst:table-connection {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:table-connections {
       deviate add {
         sonic-ext:db-name "CONFIG_DB";
         sonic-ext:table-name "ROUTE_REDISTRIBUTE";
+      }
+    }
+
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:table-connections/oc-netinst:table-connection {
+      deviate add {
         sonic-ext:key-transformer "route_table_conn_key_xfmr";
       }
     }

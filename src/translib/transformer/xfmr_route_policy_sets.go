@@ -52,13 +52,28 @@ func init () {
     XlateFuncBind("DbToYang_community_match_set_options_fld_xfmr", DbToYang_community_match_set_options_fld_xfmr)
     XlateFuncBind("YangToDb_community_member_fld_xfmr", YangToDb_community_member_fld_xfmr)
     XlateFuncBind("DbToYang_community_member_fld_xfmr", DbToYang_community_member_fld_xfmr)
+
+    XlateFuncBind("YangToDb_ext_community_set_name_fld_xfmr", YangToDb_ext_community_set_name_fld_xfmr)
+    XlateFuncBind("DbToYang_ext_community_set_name_fld_xfmr", DbToYang_ext_community_set_name_fld_xfmr)
+    XlateFuncBind("YangToDb_ext_community_match_set_options_fld_xfmr", YangToDb_ext_community_match_set_options_fld_xfmr)
+    XlateFuncBind("DbToYang_ext_community_match_set_options_fld_xfmr", DbToYang_ext_community_match_set_options_fld_xfmr)
+    XlateFuncBind("YangToDb_ext_community_member_fld_xfmr", YangToDb_ext_community_member_fld_xfmr)
+    XlateFuncBind("DbToYang_ext_community_member_fld_xfmr", DbToYang_ext_community_member_fld_xfmr)
+
+    XlateFuncBind("YangToDb_as_path_set_name_fld_xfmr", YangToDb_as_path_set_name_fld_xfmr)
+    XlateFuncBind("DbToYang_as_path_set_name_fld_xfmr", DbToYang_as_path_set_name_fld_xfmr)
+
+    XlateFuncBind("YangToDb_neighbor_set_name_fld_xfmr", YangToDb_neighbor_set_name_fld_xfmr)
+    XlateFuncBind("DbToYang_neighbor_set_name_fld_xfmr", DbToYang_neighbor_set_name_fld_xfmr)
+
+    XlateFuncBind("YangToDb_tag_set_name_fld_xfmr", YangToDb_tag_set_name_fld_xfmr)
+    XlateFuncBind("DbToYang_tag_set_name_fld_xfmr", DbToYang_tag_set_name_fld_xfmr)
 }
 
 var YangToDb_prefix_empty_set_name_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
     res_map := make(map[string]string)
 
-    log.Info("YangToDb_prefix_set_name_fld_xfmr: ", inParams.key)
-  //  res_map["NULL"] = "NULL"
+    log.Info("YangToDb_prefix_empty_set_name_fld_xfmr: ", inParams.key)
     return res_map, nil
 }
 
@@ -134,6 +149,7 @@ var YangToDb_prefix_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (string
             return setName, err
         }
         // TODO - This Case will not come for CLI, Riht now return dummy key to avoid DB flush
+        //   return prefix_del_by_set_name (inParams.d, setName, "PREFIX")
         return "NULL", nil
     } else {
         if len(pathInfo.Vars) < 3 {
@@ -372,7 +388,7 @@ func community_set_type_get_by_set_name (d *db.DB , setName string, tblName stri
     return prev_type, nil;
 }
 
-func community_set_is_community_members_exits (d *db.DB , setName string, tblName string) (bool, error) {
+func community_set_is_community_members_exits (d *db.DB , setName string, tblName string, fieldName string) (bool, error) {
     var err error
     var community_list string
 
@@ -385,7 +401,7 @@ func community_set_is_community_members_exits (d *db.DB , setName string, tblNam
         return false, err
     }
 
-    community_list, ok := dbEntry.Field["community_member@"]
+    community_list, ok := dbEntry.Field[fieldName]
     if ok {
         if len(community_list) > 0 {
             log.Info("community_set_is_community_members_exits: Comminuty members eixts")
@@ -425,7 +441,7 @@ var YangToDb_community_member_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrPar
         log.Error("Set Name is Missing")
         return res_map, err
     }
-    is_member_exits, _ := community_set_is_community_members_exits (inParams.d, setName, "COMMUNITY_SET");
+    is_member_exits, _ := community_set_is_community_members_exits (inParams.d, setName, "COMMUNITY_SET", "community_member@");
     if is_member_exits == true {
         prev_type, _ = community_set_type_get_by_set_name (inParams.d, setName, "COMMUNITY_SET");
 
@@ -535,3 +551,259 @@ var DbToYang_community_member_fld_xfmr FieldXfmrDbtoYang = func(inParams XfmrPar
     return result, err
 }
 
+/* EXTENDED COMMUNITY SET API's */
+var YangToDb_ext_community_set_name_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
+    res_map := make(map[string]string)
+
+    log.Info("YangToDb_ext_community_set_name_fld_xfmr: ", inParams.key)
+    res_map["NULL"] = "NULL"
+    return res_map, nil
+}
+
+var DbToYang_ext_community_set_name_fld_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (map[string]interface{}, error) {
+    res_map := make(map[string]interface{})
+    var err error
+    log.Info("DbToYang_ext_community_set_name_fld_xfmr: ", inParams.key)
+    /*name attribute corresponds to key in redis table*/
+    key := inParams.key
+    log.Info("DbToYang_ext_community_set_name_fld_xfmr: ", key)
+    setTblKey := strings.Split(key, "|")
+    setName := setTblKey[0]
+
+    res_map["ext-community-set-name"] = setName
+    log.Info("config/name  ", res_map)
+    return res_map, err
+}
+
+var YangToDb_ext_community_match_set_options_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
+    res_map := make(map[string]string)
+    var err error
+    if inParams.param == nil {
+        res_map["match_action"] = ""
+        return res_map, err
+    }
+
+    log.Info("YangToDb_ext_community_match_set_options_fld_xfmr: ", inParams.ygRoot, " Xpath: ", inParams.uri)
+
+    pathInfo := NewPathInfo(inParams.uri)
+    if len(pathInfo.Vars) <  1 {
+        err = errors.New("Invalid Key length");
+        log.Error("Invalid Key length", len(pathInfo.Vars))
+        return res_map, err
+    }
+
+    setName := pathInfo.Var("ext-community-set-name")
+    log.Info("YangToDb_ext_community_match_set_options_fld_xfmr: setName ", setName)
+    if len(setName) == 0 {
+        err = errors.New("set name is missing");
+        log.Error("Set Name is Missing")
+        return res_map, err
+    }
+
+    prev_match_action, _ := community_set_match_options_get_by_set_name (inParams.d, setName, "EXTENDED_COMMUNITY_SET");
+
+    match_opt, _ := inParams.param.(ocbinds.E_OpenconfigRoutingPolicy_MatchSetOptionsType)
+    new_match_action := findInMap(MATCH_SET_ACTION_MAP, strconv.FormatInt(int64(match_opt), 10))
+    log.Info("YangToDb_ext_community_match_set_options_fld_xfmr: New match Opt: ", new_match_action)
+    if len(prev_match_action) > 0 {
+        if prev_match_action != new_match_action {
+            log.Error("YangToDb_ext_community_match_set_options_fld_xfmr: Match option difference, Error previous", prev_match_action, " new ", new_match_action)
+            err = errors.New("Match option difference");
+            return nil, err
+        } else {
+            prev_match_action = new_match_action
+        }
+    }
+
+    res_map["match_action"] = new_match_action
+
+    return res_map, err
+}
+
+var DbToYang_ext_community_match_set_options_fld_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (map[string]interface{}, error) {
+    var err error
+    result := make(map[string]interface{})
+
+    log.Info("DbToYang_ext_community_match_set_options_fld_xfmr", inParams.ygRoot)
+    data := (*inParams.dbDataMap)[inParams.curDb]
+    opt, ok := data["EXTENDED_COMMUNITY_SET"][inParams.key].Field["match_action"]
+    if ok {
+        match_opt := findInMap(MATCH_SET_ACTION_MAP, opt)
+        n, err := strconv.ParseInt(match_opt, 10, 64)
+        result["match-set-options"] = ocbinds.E_OpenconfigRoutingPolicy_MatchSetOptionsType(n).ΛMap()["E_OpenconfigRoutingPolicy_MatchSetOptionsType"][n].Name
+        log.Info("DbToYang_ext_community_match_set_options_fld_xfmr ", result["match-set-options"])
+        return result, err
+    }
+    return result, err
+}
+
+var YangToDb_ext_community_member_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
+    res_map := make(map[string]string)
+    var err error
+    var community_list string
+    var new_type string
+    var prev_type string
+
+    log.Info("YangToDb_ext_community_member_fld_xfmr: ", inParams.ygRoot, " Xpath: ", inParams.uri, "inParams : ", inParams)
+    if inParams.param == nil {
+        res_map["community_member@"] = ""
+        return res_map, errors.New("Invalid Inputs")
+    }
+
+    pathInfo := NewPathInfo(inParams.uri)
+    if len(pathInfo.Vars) <  1 {
+        err = errors.New("Invalid Key length");
+        log.Error("Invalid Key length", len(pathInfo.Vars))
+        return res_map, err
+    }
+
+    setName := pathInfo.Var("ext-community-set-name")
+    log.Info("YangToDb_ext_community_member_fld_xfmr: setName ", setName)
+    if len(setName) == 0 {
+        err = errors.New("set name is missing");
+        log.Error("Set Name is Missing")
+        return res_map, err
+    }
+    is_member_exits, _ := community_set_is_community_members_exits (inParams.d, setName, "EXTENDED_COMMUNITY_SET", "community_member@");
+    if is_member_exits == true {
+        prev_type, _ = community_set_type_get_by_set_name (inParams.d, setName, "EXTENDED_COMMUNITY_SET");
+
+        log.Info("YangToDb_ext_community_member_fld_xfmr: prev_type ", prev_type)
+    }
+
+    members := inParams.param.([]string)
+
+    log.Info("YangToDb_ext_community_member_fld_xfmr: members", members)
+    for _, member := range members {
+
+        has_regex := strings.HasPrefix(member, "REGEX:")
+        if has_regex == true {
+            new_type = "EXPANDED"
+        } else {
+            new_type = "STANDARD"
+        }
+        member = strings.TrimPrefix(member, "REGEX:")
+
+        has_rt := strings.HasPrefix(member, "route-target")
+        has_ro := strings.HasPrefix(member, "route-origin")
+        if ((has_rt == false) && (has_ro == false)){
+            err = errors.New("Community member is not of type route-target or route-origin");
+            log.Error("Community member is not of type route-target or route-origin")
+            return res_map, err
+        }
+        community_list += member + ","
+        log.Info("YangToDb_ext_community_member_fld_xfmr: new_type: ", new_type, " prev_type ", prev_type)
+        if ((len(prev_type) > 0) && (prev_type != new_type)){
+            log.Error("YangToDb_ext_community_member_fld_xfmr: Type Difference Error, previous", prev_type, " newType: ", new_type)
+            err = errors.New("Type difference, Quit Operation");
+            return res_map, err
+        } else {
+            prev_type = new_type
+        }
+    }
+    res_map["community_member@"] = strings.TrimSuffix(community_list, ",")
+    res_map["set_type"] = new_type
+    log.Info("YangToDb_ext_community_member_fld_xfmr: ", res_map["community_member@"], " type ", res_map["set_type"])
+    return res_map, err
+}
+
+var DbToYang_ext_community_member_fld_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (map[string]interface{}, error) {
+    var err error
+    result := make(map[string]interface{})
+    var result_community string
+    data := (*inParams.dbDataMap)[inParams.curDb]
+
+    log.Info("DbToYang_ext_community_member_fld_xfmr", data, inParams.ygRoot, inParams.key)
+
+    set_type := data["EXTENDED_COMMUNITY_SET"][inParams.key].Field["set_type"]
+
+    log.Info("DbToYang_ext_community_member_fld_xfmr: type ", set_type)
+    var Communities []interface{}
+
+    community_list, ok := data["EXTENDED_COMMUNITY_SET"][inParams.key].Field["community_member@"]
+    if ok {
+        log.Info("DbToYang_ext_community_member_fld_xfmr: DB Memebers ", community_list)
+        for _, community := range strings.Split(community_list, ",") {
+            if set_type == "EXPANDED" {
+                result_community = "REGEX:"
+            } else  {
+                result_community = ""
+            }
+            result_community += community
+            log.Info("DbToYang_ext_community_member_fld_xfmr: result_community ", result_community)
+            Communities = append(Communities, result_community)
+        }
+    }
+    result["ext-community-member"] = Communities
+    log.Info("DbToYang_ext_community_member_fld_xfmr: Comminuty Memebers ", result["community-member"])
+    return result, err
+}
+
+/* AS PATH SET API's */
+var YangToDb_as_path_set_name_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
+    res_map := make(map[string]string)
+
+    log.Info("YangToDb_as_path_set_name_fld_xfmr: ", inParams.key)
+    res_map["NULL"] = "NULL"
+    return res_map, nil
+}
+
+var DbToYang_as_path_set_name_fld_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (map[string]interface{}, error) {
+    res_map := make(map[string]interface{})
+    var err error
+    /*name attribute corresponds to key in redis table*/
+    key := inParams.key
+    log.Info("DbToYang_as_path_set_name_fld_xfmr: ", key)
+    setTblKey := strings.Split(key, "|")
+    setName := setTblKey[0]
+
+    res_map["as-path-set-name"] = setName
+    log.Info("config/name  ", res_map)
+    return res_map, err
+}
+
+/* NEIGHBOR SET API's */
+var YangToDb_neighbor_set_name_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
+    res_map := make(map[string]string)
+
+    log.Info("YangToDb_neighbor_set_name_fld_xfmr: ", inParams.key)
+    res_map["NULL"] = "NULL"
+    return res_map, nil
+}
+
+var DbToYang_neighbor_set_name_fld_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (map[string]interface{}, error) {
+    res_map := make(map[string]interface{})
+    var err error
+    /*name attribute corresponds to key in redis table*/
+    key := inParams.key
+    log.Info("DbToYang_neighbor_set_name_fld_xfmr: ", key)
+    setTblKey := strings.Split(key, "|")
+    setName := setTblKey[0]
+
+    res_map["name"] = setName
+    log.Info("config/name  ", res_map)
+    return res_map, err
+}
+
+/* TAG SET API's */
+var YangToDb_tag_set_name_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
+    res_map := make(map[string]string)
+
+    log.Info("YangToDb_tag_set_name_fld_xfmr: ", inParams.key)
+    res_map["NULL"] = "NULL"
+    return res_map, nil
+}
+
+var DbToYang_tag_set_name_fld_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (map[string]interface{}, error) {
+    res_map := make(map[string]interface{})
+    var err error
+    /*name attribute corresponds to key in redis table*/
+    key := inParams.key
+    log.Info("DbToYang_tag_set_name_fld_xfmr: ", key)
+    setTblKey := strings.Split(key, "|")
+    setName := setTblKey[0]
+
+    res_map["name"] = setName
+    log.Info("config/name  ", res_map)
+    return res_map, err
+}
