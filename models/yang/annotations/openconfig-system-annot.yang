@@ -17,6 +17,8 @@ module openconfig-system-annot {
     import openconfig-yang-types { prefix oc-yang; }
     import openconfig-aaa { prefix oc-aaa; }
     import openconfig-system { prefix oc-sys; }
+    import openconfig-system-augments { prefix oc-sys-aug; }
+    import sonic-extensions { prefix sonic-ext; }
 
     deviation /oc-sys:system {
       deviate add {
@@ -255,21 +257,44 @@ module openconfig-system-annot {
 
     deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:servers/oc-sys:server/oc-sys:config {
       deviate add {
+          sonic-ext:table-name "TACPLUS_SERVER";
+          sonic-ext:key-transformer "server_set_key_xfmr";
       }
     }
 
     deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:servers/oc-sys:server/oc-sys:config/oc-sys:timeout {
       deviate add {
+          sonic-ext:field-name "timeout";
       }
     }
 
     deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:servers/oc-sys:server/oc-sys:config/oc-sys:name {
       deviate add {
+          sonic-ext:field-name "name";
       }
     }
 
     deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:servers/oc-sys:server/oc-sys:config/oc-sys:address {
       deviate add {
+          sonic-ext:field-name "ipaddress";
+      }
+    }
+
+    deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:servers/oc-sys:server/oc-sys:config/oc-sys-aug:auth-type {
+      deviate add {
+          sonic-ext:field-name "auth_type";
+      }
+    }
+
+    deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:servers/oc-sys:server/oc-sys:config/oc-sys-aug:passkey {
+      deviate add {
+          sonic-ext:field-name "passkey";
+      }
+    }
+
+    deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:servers/oc-sys:server/oc-sys:config/oc-sys-aug:priority {
+      deviate add {
+          sonic-ext:field-name "priority";
       }
     }
 
@@ -475,6 +500,32 @@ module openconfig-system-annot {
 
     deviation /oc-sys:system/oc-sys:aaa/oc-sys:config {
       deviate add {
+          sonic-ext:table-name "TACPLUS";
+          sonic-ext:key-transformer "global_set_key_xfmr";
+      }
+    }
+
+    deviation /oc-sys:system/oc-sys:aaa/oc-sys:config/oc-sys-aug:timeout {
+      deviate add {
+          sonic-ext:field-name "timeout";
+      }
+    }
+
+    deviation /oc-sys:system/oc-sys:aaa/oc-sys:config/oc-sys-aug:auth-type {
+      deviate add {
+          sonic-ext:field-name "auth_type";
+      }
+    }
+
+    deviation /oc-sys:system/oc-sys:aaa/oc-sys:config/oc-sys-aug:secret-key {
+      deviate add {
+          sonic-ext:field-name "passkey";
+      }
+    }
+
+    deviation /oc-sys:system/oc-sys:aaa/oc-sys:config/oc-sys-aug:source-address {
+      deviate add {
+          sonic-ext:field-name "src_ip";
       }
     }
 
@@ -605,11 +656,14 @@ module openconfig-system-annot {
 
     deviation /oc-sys:system/oc-sys:aaa/oc-sys:authentication/oc-sys:config {
       deviate add {
+          sonic-ext:table-name "AAA";
+          sonic-ext:key-transformer "auth_set_key_xfmr";
       }
     }
 
     deviation /oc-sys:system/oc-sys:aaa/oc-sys:authentication/oc-sys:config/oc-sys:authentication-method {
       deviate add {
+          sonic-ext:field-name "login";
       }
     }
 

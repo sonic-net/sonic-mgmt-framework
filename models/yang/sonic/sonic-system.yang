@@ -1,0 +1,100 @@
+module sonic-system {
+    namespace "http://github.com/Azure/sonic-system";
+    prefix ssys;
+
+    import ietf-inet-types {
+        prefix inet;
+    }
+
+    revision 2019-11-13 {
+        description "Initial revision.";
+    }
+
+    container sonic-system {
+        container AAA {
+            list AAA_LIST {
+                key "type";
+
+                leaf type {
+                    type enumeration {
+                        enum authentication;
+                    }
+                }
+
+                leaf-list login {
+                    type string;
+                }
+                leaf failthrough {
+                    type boolean;
+                }
+                leaf fallback {
+                    type boolean;
+                }
+            }
+        }
+
+
+        container TACPLUS_SERVER {
+            list TACPLUS_SERVER_LIST {
+                key "ipaddress";
+                leaf name {
+                    type string;
+                }
+
+                leaf ipaddress {
+                    type inet:ip-address;
+                }
+
+                leaf priority {
+                    type uint8;
+                }
+                leaf tcp_port {
+                    type uint16;
+                }
+                leaf timeout {
+                    type uint16;
+                }
+                leaf passkey {
+                    type string;
+                }
+                leaf auth_type {
+                    type enumeration {
+                        enum pap;
+                        enum chap;
+                        enum mschap;
+                    }
+                }
+            }
+        }
+
+
+        container TACPLUS {
+            list TACPLUS_LIST {
+                key "type";
+                leaf type {
+                    type enumeration {
+                        enum global;
+                    }
+                }
+                leaf auth_type {
+                    type enumeration {
+                        enum pap;
+                        enum chap;
+                        enum mschap;
+                    }
+                }
+                leaf timeout {
+                    type uint16;
+                }
+                leaf passkey {
+                    type string;
+                }
+                leaf src_ip {
+                    type inet:ip-address;
+                }
+            }
+        }
+    }
+}
+
+
