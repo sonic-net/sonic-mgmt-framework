@@ -53,7 +53,7 @@ limitations under the License.
 <!--====================show mac address-table address <mac-address> command ======================-->
     <COMMAND
         name="show mac address-table address"
-        help="Show MAC address table address for mac-address"
+        help="Show MAC address table address for MAC address"
         >
         <PARAM
             name="mac-addr"
@@ -149,7 +149,7 @@ limitations under the License.
                 >
                 <PARAM
                     name="mac-addr"
-                    help="48 bit mac-address"
+                    help="48 bit MAC address"
                     ptype="MAC_ADDR"
                     >
                 </PARAM>
@@ -244,7 +244,7 @@ limitations under the License.
                 >
                 <PARAM
                     name="mac-addr"
-                    help="48 bit MAC-address"
+                    help="48 bit MAC address"
                     ptype="MAC_ADDR"
                     >
                 </PARAM>
@@ -364,7 +364,7 @@ limitations under the License.
                 >
                 <PARAM
                     name="mac-addr"
-                    help="48 bit MAC-address"
+                    help="48 bit MAC address"
                     ptype="MAC_ADDR"
                     >
                 </PARAM>
