@@ -43,7 +43,12 @@ module sonic-mgmt-port {
                 }
 
                 leaf speed {
-                    type uint64;
+                    type uint64 {
+                        range "10|100|1000" {
+                            error-message "Invalid Management interface speed";
+                            error-app-tag mgmt-speed-invalid;
+                        }
+                    }
                 }
 
                 leaf autoneg {
