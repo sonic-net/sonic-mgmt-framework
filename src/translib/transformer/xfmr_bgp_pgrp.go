@@ -9,12 +9,10 @@ import (
 
 
 func init () {
-    XlateFuncBind("YangToDb_ni_tbl_key_xfmr", YangToDb_ni_tbl_key_xfmr)
-    XlateFuncBind("YangToDb_ni_proto_tbl_key_xfmr", YangToDb_ni_proto_tbl_key_xfmr)
     XlateFuncBind("YangToDb_bgp_pgrp_tbl_key_xfmr", YangToDb_bgp_pgrp_tbl_key_xfmr)
     XlateFuncBind("DbToYang_bgp_pgrp_tbl_key_xfmr", DbToYang_bgp_pgrp_tbl_key_xfmr)
-    XlateFuncBind("YangToDb_bgp_pgrp_peer_type_xfmr", YangToDb_bgp_pgrp_peer_type_xfmr)
-    XlateFuncBind("DbToYang_bgp_pgrp_peer_type_xfmr", DbToYang_bgp_pgrp_peer_type_xfmr)
+    XlateFuncBind("YangToDb_bgp_pgrp_peer_type_fld_xfmr", YangToDb_bgp_pgrp_peer_type_xfmr)
+    XlateFuncBind("DbToYang_bgp_pgrp_peer_type_fld_xfmr", DbToYang_bgp_pgrp_peer_type_xfmr)
     XlateFuncBind("YangToDb_bgp_pgrp_name_fld_xfmr", YangToDb_bgp_pgrp_name_fld_xfmr)
     XlateFuncBind("DbToYang_bgp_pgrp_name_fld_xfmr", DbToYang_bgp_pgrp_name_fld_xfmr)
 }
@@ -39,7 +37,7 @@ var DbToYang_bgp_pgrp_name_fld_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams
     peer_group_name:= peer_group_Key[1]
     result["peer-group-name"] = peer_group_name
 
-    return result, err 
+    return result, err
 }
 
 var YangToDb_bgp_pgrp_peer_type_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
@@ -49,19 +47,16 @@ var YangToDb_bgp_pgrp_peer_type_xfmr FieldXfmrYangToDb = func(inParams XfmrParam
     if inParams.param == nil {
         err = errors.New("No Params");
         return res_map, err
-        res_map["peer_type"] = ""
-        return res_map, err
     }
     peer_type, _ := inParams.param.(ocbinds.E_OpenconfigBgp_PeerType)
     log.Info("YangToDb_bgp_pgrp_peer_type_xfmr: ", inParams.ygRoot, " Xpath: ", inParams.uri, " peer-type: ", peer_type)
 
     if (peer_type == ocbinds.OpenconfigBgp_PeerType_INTERNAL) {
-        res_map["peer_type"] = "INTERNAL"
+        res_map["peer_type"] = "internal"
     }  else if (peer_type == ocbinds.OpenconfigBgp_PeerType_EXTERNAL) {
-        res_map["peer_type"] = "EXTERNAL"
+        res_map["peer_type"] = "external"
     } else {
         err = errors.New("Peer Type Missing");
-        res_map["peer_type"] = ""
         return res_map, err
     }
 
@@ -86,78 +81,17 @@ var DbToYang_bgp_pgrp_peer_type_xfmr FieldXfmrDbtoYang = func(inParams XfmrParam
     peer_type, ok := pGrpKey.Field["peer_type"]
 
     if ok {
-        result["peer-type"] = peer_type
+        if (peer_type == "internal") {
+            result["peer-type"] = "INTERNAL" 
+        } else if (peer_type == "external") {
+            result["peer-type"] = "EXTERNAL"
+        }
     } else {
         log.Info("peer_type field not found in DB")
     }
     return result, err
 }
 
-var YangToDb_ni_tbl_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (string, error) {
-    log.Info("YangToDb_ni_tbl_key_xfmr: ***")
-    var err error
-    var vrfName string
-
-    pathInfo := NewPathInfo(inParams.uri)
-
-    /* Key should contain, <vrf name> */
-
-    vrfName    =  pathInfo.Var("name")
-
-    if len(pathInfo.Vars) <  1 {
-        err = errors.New("Invalid Key length");
-        return vrfName, err
-    }
-
-    if len(vrfName) == 0 {
-        err = errors.New("vrf name is missing");
-            return vrfName, err
-    }
-
-    return vrfName, nil
-}
-var YangToDb_ni_proto_tbl_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (string, error) {
-    var err error
-    var vrfName string
-
-    log.Info("YangToDb_ni_proto_tbl_key_xfmr: ***")
-
-    pathInfo := NewPathInfo(inParams.uri)
-
-    /* Key should contain, <vrf name, protocol name> */
-
-    vrfName    =  pathInfo.Var("name")
-    bgpId      := pathInfo.Var("identifier")
-    protoName  := pathInfo.Var("name#2")
-
-    if len(pathInfo.Vars) <  3 {
-        err = errors.New("Invalid Key length");
-        return vrfName, err
-    }
-
-    if len(vrfName) == 0 {
-        err = errors.New("vrf name is missing");
-        log.Info("vrf name is missing")
-        return vrfName, err
-    }
-    if strings.Contains(bgpId,"BGP") == false {
-        err = errors.New("BGP ID is missing");
-        log.Info("BGP ID is missing")
-        return bgpId, err
-    }
-    if len(protoName) == 0 {
-        err = errors.New("Protocol Name is missing");
-        log.Info("Protocol Name is missing")
-        return protoName, err
-    }
-
-    var protoKey string
-
-    protoKey = bgpId + "|" + protoName 
-
-    log.Info("ProtoKey: ", protoKey)
-    return protoKey, nil
-}
 
 var YangToDb_bgp_pgrp_tbl_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (string, error) {
     var err error
