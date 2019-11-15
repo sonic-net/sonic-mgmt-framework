@@ -11,7 +11,7 @@ class ZTP(host_service.HostModule):
     @staticmethod
     def _run_command(commands):
         """Run a ZTP command"""
-        cmd = ['/usr/bin/ztp']
+        cmd = ['echo', '/usr/bin/ztp']
         if isinstance(commands, list):
             cmd.extend(commands)
         else:
@@ -40,4 +40,4 @@ class ZTP(host_service.HostModule):
 
 def register():
     """Return the class name"""
-    return ZTP
+    return ZTP, MOD_NAME

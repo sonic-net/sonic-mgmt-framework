@@ -100,7 +100,7 @@ func yangTypeGet(entry *yang.Entry) string {
     return ""
 }
 
-func dbKeyToYangDataConvert(uri string, xpath string, dbKey string, dbKeySep string, txCache interface{}) (map[string]interface{}, string, error) {
+func dbKeyToYangDataConvert(uri string, requestUri string, xpath string, dbKey string, dbKeySep string, txCache interface{}) (map[string]interface{}, string, error) {
 	var err error
 	if len(uri) == 0 && len(xpath) == 0 && len(dbKey) == 0 {
 		err = fmt.Errorf("Insufficient input")
@@ -134,7 +134,7 @@ func dbKeyToYangDataConvert(uri string, xpath string, dbKey string, dbKeySep str
 
 	if len(xYangSpecMap[xpath].xfmrKey) > 0 {
 		var dbs [db.MaxDB]*db.DB
-		inParams := formXfmrInputRequest(nil, dbs, db.MaxDB, nil, uri, GET, dbKey, nil, nil, txCache)
+		inParams := formXfmrInputRequest(nil, dbs, db.MaxDB, nil, uri, requestUri, GET, dbKey, nil, nil, nil, txCache)
 		ret, err := XlateFuncCall(dbToYangXfmrFunc(xYangSpecMap[xpath].xfmrKey), inParams)
 		if err != nil {
 			return nil, "", err
@@ -231,7 +231,7 @@ func isSonicYang(path string) bool {
     return false
 }
 
-func sonicKeyDataAdd(dbIndex db.DBNum, keyNameList []string, keyStr string, resultMap map[string]interface{}) {
+func sonicKeyDataAdd(dbIndex db.DBNum, keyNameList []string, xpathPrefix string, keyStr string, resultMap map[string]interface{}) {
 	var dbOpts db.Options
 	dbOpts = getDBOptions(dbIndex)
 	keySeparator := dbOpts.KeySeparator
@@ -242,7 +242,23 @@ func sonicKeyDataAdd(dbIndex db.DBNum, keyNameList []string, keyStr string, resu
     }
 
     for i, keyName := range keyNameList {
-        resultMap[keyName] = keyValList[i]
+	    keyXpath := xpathPrefix + "/" + keyName
+	    dbInfo, ok := xDbSpecMap[keyXpath]
+	    var resVal interface{}
+	    resVal = keyValList[i]
+	    if !ok || dbInfo == nil {
+		    log.Warningf("xDbSpecMap entry not found or is nil for xpath %v, hence data-type conversion cannot happen", keyXpath)
+	    } else {
+		    yngTerminalNdDtType := dbInfo.dbEntry.Type.Kind
+		    var err error
+		    resVal, _, err = DbToYangType(yngTerminalNdDtType, keyXpath, keyValList[i])
+		    if err != nil {
+			    log.Warningf("Data-type conversion unsuccessfull for xpath %v", keyXpath)
+			    resVal = keyValList[i]
+		    }
+	    }
+
+        resultMap[keyName] = resVal
     }
 }
 
@@ -372,16 +388,18 @@ func mapGet(xpath string, inMap map[string]interface{}) map[string]interface{} {
     return retMap
 }
 
-func formXfmrInputRequest(d *db.DB, dbs [db.MaxDB]*db.DB, cdb db.DBNum, ygRoot *ygot.GoStruct, uri string, oper int, key string, dbDataMap *map[db.DBNum]map[string]map[string]db.Value, param interface{}, txCache interface{}) XfmrParams {
+func formXfmrInputRequest(d *db.DB, dbs [db.MaxDB]*db.DB, cdb db.DBNum, ygRoot *ygot.GoStruct, uri string, requestUri string, oper int, key string, dbDataMap *RedisDbMap, subOpDataMap map[int]*RedisDbMap, param interface{}, txCache interface{}) XfmrParams {
 	var inParams XfmrParams
 	inParams.d = d
 	inParams.dbs = dbs
 	inParams.curDb = cdb
 	inParams.ygRoot = ygRoot
 	inParams.uri = uri
+	inParams.requestUri = requestUri
 	inParams.oper = oper
 	inParams.key = key
 	inParams.dbDataMap = dbDataMap
+	inParams.subOpDataMap = subOpDataMap
 	inParams.param = param // generic param
 	inParams.txCache = txCache
 
@@ -455,35 +473,29 @@ func stripAugmentedModuleNames(xpath string) string {
 }
 
 func XfmrRemoveXPATHPredicates(xpath string) (string, error) {
-        pathList := strings.Split(xpath, "/")
-        pathList = pathList[1:]
-        for i, pvar := range pathList {
-                if strings.Contains(pvar, "[") && strings.Contains(pvar, "]") {
-                        si, ei := strings.Index(pvar, "["), strings.Index(pvar, "]")
-                        // substring contains [] entries
-                        if (si < ei) {
-                                pvar = strings.Split(pvar, "[")[0]
-                                pathList[i] = pvar
-
-                        } else {
-                                // This substring contained a ] before a [.
-                                return "", fmt.Errorf("Incorrect ordering of [] within substring %s of %s, [ pos: %d, ] pos: %d", pvar, xpath, si, ei)
-                        }
-                } else if strings.Contains(pvar, "[") || strings.Contains(pvar, "]") {
-                        // This substring contained a mismatched pair of []s.
-                        return "", fmt.Errorf("Mismatched brackets within substring %s of %s", pvar, xpath)
-                }
-                if (i > 0) && strings.Contains(pvar, ":") {
-                        pvar = strings.Split(pvar,":")[1]
-                        pathList[i] = pvar
-                }
-        }
-        path := "/" + strings.Join(pathList, "/")
-        return path,nil
+	// Strip keys from xpath
+	for {
+		si, ei := strings.IndexAny(xpath, "["), strings.Index(xpath, "]")
+		if si != -1 && ei != -1 {
+			if si < ei {
+				newpath := xpath[:si] + xpath[ei+1:]
+				xpath = newpath
+			} else {
+				return "", fmt.Errorf("Incorrect ordering of [] in %s , [ pos: %d, ] pos: %d", xpath, si, ei)
+			}
+		} else if si != -1 || ei != -1 {
+			return "", fmt.Errorf("Mismatched brackets within string %s, si:%d ei:%d", xpath, si, ei)
+		} else {
+			// No more keys available
+			break
+		}
+	}
+	path := stripAugmentedModuleNames(xpath)
+	return path, nil
 }
 
- /* Extract key vars, create db key and xpath */
- func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, txCache interface{}) (string, string, string) {
+/* Extract key vars, create db key and xpath */
+func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, requestUri string, subOpDataMap map[int]*RedisDbMap, txCache interface{}) (string, string, string) {
 	 keyStr    := ""
 	 tableName := ""
 	 pfxPath := ""
@@ -516,7 +528,7 @@ func XfmrRemoveXPATHPredicates(xpath string) (string, error) {
 				 }
 				 if len(xYangSpecMap[yangXpath].xfmrKey) > 0 {
 					 xfmrFuncName := yangToDbXfmrFunc(xYangSpecMap[yangXpath].xfmrKey)
-					 inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, curPathWithKey, oper, "", nil, nil, txCache)
+					 inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, curPathWithKey, requestUri, oper, "", nil, subOpDataMap, nil, txCache)
 					 ret, err := XlateFuncCall(xfmrFuncName, inParams)
 					 if err != nil {
 						 return "", "", ""
@@ -542,7 +554,7 @@ func XfmrRemoveXPATHPredicates(xpath string) (string, error) {
 				 }
 			 } else if len(xYangSpecMap[yangXpath].xfmrKey) > 0 {
 				 xfmrFuncName := yangToDbXfmrFunc(xYangSpecMap[yangXpath].xfmrKey)
-				 inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, curPathWithKey, oper, "", nil, nil, txCache)
+				 inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, curPathWithKey, requestUri, oper, "", nil, subOpDataMap, nil, txCache)
 				 ret, err := XlateFuncCall(xfmrFuncName, inParams)
 				 if err != nil {
 					 return "", "", ""
@@ -561,7 +573,7 @@ func XfmrRemoveXPATHPredicates(xpath string) (string, error) {
 	 if tblPtr != nil {
 		 tableName = *tblPtr
 	 } else if xpathInfo.xfmrTbl != nil {
-		 inParams := formXfmrInputRequest(d, dbs, cdb, ygRoot, curPathWithKey, oper, "", nil, nil, txCache)
+		 inParams := formXfmrInputRequest(d, dbs, cdb, ygRoot, curPathWithKey, requestUri, oper, "", nil, subOpDataMap, nil, txCache)
 		 tableName, _ = tblNameFromTblXfmrGet(*xpathInfo.xfmrTbl, inParams)
 	 }
 	 return pfxPath, keyStr, tableName
@@ -622,3 +634,44 @@ func getYangMdlToSonicMdlList(moduleNm string) []string {
 	return sncMdlList
 }
 
+func yangFloatIntToGoType(t yang.TypeKind, v float64) (interface{}, error) {
+        switch t {
+        case yang.Yint8:
+                return int8(v), nil
+        case yang.Yint16:
+                return int16(v), nil
+        case yang.Yint32:
+                return int32(v), nil
+        case yang.Yuint8:
+                return uint8(v), nil
+        case yang.Yuint16:
+                return uint16(v), nil
+        case yang.Yuint32:
+                return uint32(v), nil
+        }
+        return nil, fmt.Errorf("unexpected YANG type %v", t)
+}
+
+func unmarshalJsonToDbData(schema *yang.Entry, fieldName string, value interface{}) (string, error) {
+        var data string
+        ykind := schema.Type.Kind
+
+        switch ykind {
+        case yang.Ystring, yang.Ydecimal64, yang.Yint64, yang.Yuint64:
+        case yang.Yenum, yang.Ybool, yang.Ybinary, yang.Yidentityref, yang.Yunion:
+                data = value.(string)
+
+        case yang.Yint8, yang.Yint16, yang.Yint32:
+        case yang.Yuint8, yang.Yuint16, yang.Yuint32:
+                pv, err := yangFloatIntToGoType(ykind, value.(float64))
+                if err != nil {
+                        return "", fmt.Errorf("error parsing %v for schema %s: %v", value, schema.Name, err)
+                }
+                data = fmt.Sprintf("%v", pv)
+        default:
+                // TODO - bitset, empty
+                data = value.(string)
+        }
+
+        return data, nil
+}
