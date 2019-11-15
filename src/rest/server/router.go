@@ -30,7 +30,11 @@ import (
 
 // Root directory for UI files
 var swaggerUIDir = "./ui"
-var isUserAuthEnabled = false
+var UserAuth struct {
+	User bool
+	Cert bool
+	Jwt bool
+}
 
 // SetUIDirectory functions sets directiry where Swagger UI
 // resources are maintained.
@@ -38,13 +42,6 @@ func SetUIDirectory(directory string) {
 	swaggerUIDir = directory
 }
 
-// SetUserAuthEnable function enables/disables the PAM based user
-// authentication for REST requests. By default user uthentication
-// is disabled. When enabled, the server expects clients to pass
-// user credentials as per HTTP Basic Autnetication method.
-func SetUserAuthEnable(val bool) {
-	isUserAuthEnabled = val
-}
 
 // Route registration information
 type Route struct {
@@ -104,6 +101,13 @@ func NewRouter() *mux.Router {
 	//router.Methods("GET").Path("/model").
 	//	Handler(http.RedirectHandler("/ui/model.html", 301))
 
+	if UserAuth.Jwt {
+		router.Methods("POST").Path("/authenticate").Handler(http.HandlerFunc(Authenticate))
+		router.Methods("POST").Path("/refresh").Handler(http.HandlerFunc(Refresh))
+		
+	}
+
+
 	// Metadata discovery handler
 	metadataHandler := http.HandlerFunc(hostMetadataHandler)
 	router.Methods("GET").Path("/.well-known/host-meta").
@@ -132,9 +136,39 @@ func loggingMiddleware(inner http.Handler, name string) http.Handler {
 // withMiddleware function prepares the default middleware chain for
 // REST APIs.
 func withMiddleware(h http.Handler, name string) http.Handler {
-	if isUserAuthEnabled {
+	if UserAuth.User || UserAuth.Jwt || UserAuth.Cert{
 		h = authMiddleware(h)
 	}
 
 	return loggingMiddleware(h, name)
+}
+
+// authMiddleware function creates a middleware for request
+// authentication and authorization. This middleware will return
+// 401 response if authentication fails and 403 if authorization
+// fails.
+func authMiddleware(inner http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		rc, r := GetContext(r)
+		var err error
+		if UserAuth.User {
+			err = BasicAuthenAndAuthor(r, rc)
+			
+		}
+		if UserAuth.Jwt {
+			_,err = JwtAuthenAndAuthor(r, rc)
+		}
+		if UserAuth.Cert {
+			err = ClientCertAuthenAndAuthor(r, rc)
+		}
+
+		if err != nil {
+			status, data, ctype := prepareErrorResponse(err, r)
+			w.Header().Set("Content-Type", ctype)
+			w.WriteHeader(status)
+			w.Write(data)
+		} else {
+			inner.ServeHTTP(w, r)
+		}
+	})
 }

@@ -22,7 +22,6 @@ package server
 import (
 	"net/http"
 	"os/user"
-
 	"github.com/golang/glog"
 	//"github.com/msteinert/pam"
 	"golang.org/x/crypto/ssh"
@@ -68,6 +67,13 @@ func PAMAuthUser(u string, p string) error {
 }
 */
 
+func DoesUserExist(username string) bool {
+	_, err := user.Lookup(username)
+	if err != nil {
+		return false
+	}
+	return true
+}
 func IsAdminGroup(username string) bool {
 
 	usr, err := user.Lookup(username)
@@ -90,17 +96,7 @@ func IsAdminGroup(username string) bool {
 	}
 	return false
 }
-
-func PAMAuthenAndAuthor(r *http.Request, rc *RequestContext) error {
-
-	username, passwd, authOK := r.BasicAuth()
-	if authOK == false {
-		glog.Errorf("[%s] User info not present", rc.ID)
-		return httpError(http.StatusUnauthorized, "")
-	}
-
-	glog.Infof("[%s] Received user=%s", rc.ID, username)
-
+func UserPwAuth(username string, passwd string) (bool, error) {
 	/*
 	 * mgmt-framework container does not have access to /etc/passwd, /etc/group,
 	 * /etc/shadow and /etc/tacplus_conf files of host. One option is to share
@@ -123,20 +119,10 @@ func PAMAuthenAndAuthor(r *http.Request, rc *RequestContext) error {
 	}
 	_, err := ssh.Dial("tcp", "127.0.0.1:22", config)
 	if err != nil {
-		glog.Infof("[%s] Failed to authenticate; %v", rc.ID, err)
-		return httpError(http.StatusUnauthorized, "")
+		return false, err
 	}
 
-	glog.Infof("[%s] Authentication passed. user=%s ", rc.ID, username)
-
-	//Allow SET request only if user belong to admin group
-	if isWriteOperation(r) && IsAdminGroup(username) == false {
-		glog.Errorf("[%s] Not an admin; cannot allow %s", rc.ID, r.Method)
-		return httpError(http.StatusForbidden, "Not an admin user")
-	}
-
-	glog.Infof("[%s] Authorization passed", rc.ID)
-	return nil
+	return true, nil
 }
 
 // isWriteOperation checks if the HTTP request is a write operation
@@ -145,21 +131,3 @@ func isWriteOperation(r *http.Request) bool {
 	return m == "POST" || m == "PUT" || m == "PATCH" || m == "DELETE"
 }
 
-// authMiddleware function creates a middleware for request
-// authentication and authorization. This middleware will return
-// 401 response if authentication fails and 403 if authorization
-// fails.
-func authMiddleware(inner http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		rc, r := GetContext(r)
-		err := PAMAuthenAndAuthor(r, rc)
-		if err != nil {
-			status, data, ctype := prepareErrorResponse(err, r)
-			w.Header().Set("Content-Type", ctype)
-			w.WriteHeader(status)
-			w.Write(data)
-		} else {
-			inner.ServeHTTP(w, r)
-		}
-	})
-}

@@ -50,8 +50,9 @@ GO_DEPS_LIST = github.com/gorilla/mux \
                github.com/antchfx/jsonquery \
                github.com/antchfx/xmlquery \
                github.com/facette/natsort \
-	           github.com/philopon/go-toposort \
-			   gopkg.in/godbus/dbus.v5
+	       github.com/philopon/go-toposort \
+               gopkg.in/godbus/dbus.v5 \
+               github.com/dgrijalva/jwt-go
 
 
 REST_BIN = $(BUILD_DIR)/rest_server/main
@@ -105,7 +106,6 @@ cd ../; cp $(TOPDIR)/ygot-modified-files/ygot.patch .; \
 patch -p1 < ygot.patch; rm -f ygot.patch; \
 $(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/openconfig/ygot/ygot; \
 	cd $(BUILD_GOPATH)/src/github.com/openconfig/goyang/; git reset --hard HEAD; git checkout 064f9690516f4f72db189f4690b84622c13b7296 >/dev/null ; true; \
-cp $(TOPDIR)/goyang-modified-files/annotate.go $(BUILD_GOPATH)/src/github.com/openconfig/goyang/annotate.go; \
 cp $(TOPDIR)/goyang-modified-files/goyang.patch .; \
 patch -p1 < goyang.patch; rm -f goyang.patch; \
 $(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/openconfig/goyang

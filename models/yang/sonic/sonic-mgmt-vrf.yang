@@ -1,0 +1,45 @@
+module sonic-mgmt-vrf {
+    namespace "http://github.com/Azure/sonic-mgmt-vrf";
+    prefix mgmt-vrf;
+
+    import sonic-common {
+        prefix scommon;
+    }
+
+    organization
+        "SONiC";
+
+    contact
+        "SONiC";
+
+    description
+        "SONIC MGMT VRF";
+
+    revision 2019-10-08 {
+        description
+            "Initial revision.";
+    }
+
+    container sonic-mgmt-vrf {
+        container MGMT_VRF_CONFIG {
+            description "Management vrf configuration.";            
+
+            list MGMT_VRF_CONFIG_LIST {
+                key "vrf_global_name";
+
+                leaf vrf_global_name {
+                    type string;
+                    description
+                        "Internal management vrf name for SONiC";
+                }   
+
+                leaf mgmtVrfEnabled {
+                    type  boolean;
+                    default false;
+                    description
+                        "State indicating if management vrf is configured.";
+                }
+            }
+        }
+    }
+}
