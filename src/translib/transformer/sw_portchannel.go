@@ -222,7 +222,7 @@ var DbToYang_intf_lag_state_xfmr SubTreeXfmrDbToYang = func (inParams XfmrParams
         if err != nil {
             return err
         }
-    case "/openconfig-interfaces:interfaces/interface/openconfig-if-aggregate:aggregation/state/dell-intf-augments:fallback":
+    case "/openconfig-interfaces:interfaces/interface/openconfig-if-aggregate:aggregation/state/openconfig-interfaces-ext:fallback":
         log.Info("Get is for fallback")
         attr := "fallback"
         err = getLagStateAttr(&attr, &ifName, lagInfoMap, ocAggregationStateVal)

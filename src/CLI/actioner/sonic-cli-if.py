@@ -92,7 +92,7 @@ def invoke_api(func, args=[]):
         sp = args[1].split('/')
         path = cc.Path('/restconf/data/openconfig-interfaces:interfaces/interface={name}/subinterfaces/subinterface={index}/openconfig-if-ip:ipv4/addresses/address={ip}/config', name=args[0], index="0", ip=sp[0])
         if len(args) > 2:
-            body = { "openconfig-if-ip:config":  {"ip" : sp[0], "prefix-length" : int(sp[1]), "dell-intf-augments:gw-addr": args[2]} }
+            body = { "openconfig-if-ip:config":  {"ip" : sp[0], "prefix-length" : int(sp[1]), "openconfig-interfaces-ext:gw-addr": args[2]} }
         else:
             body = { "openconfig-if-ip:config":  {"ip" : sp[0], "prefix-length" : int(sp[1])} }
         return api.patch(path, body)    
@@ -102,7 +102,7 @@ def invoke_api(func, args=[]):
     
         path = cc.Path('/restconf/data/openconfig-interfaces:interfaces/interface={name}/subinterfaces/subinterface={index}/openconfig-if-ip:ipv6/addresses/address={ip}/config', name=args[0], index="0", ip=sp[0])
         if len(args) > 2:
-            body = { "openconfig-if-ip:config":  {"ip" : sp[0], "prefix-length" : int(sp[1]), "dell-intf-augments:gw-addr": args[2]} }
+            body = { "openconfig-if-ip:config":  {"ip" : sp[0], "prefix-length" : int(sp[1]), "openconfig-interfaces-ext:gw-addr": args[2]} }
         else:
             body = { "openconfig-if-ip:config":  {"ip" : sp[0], "prefix-length" : int(sp[1])} }
         return api.patch(path, body)
@@ -173,11 +173,11 @@ def invoke_api(func, args=[]):
     
     # Config fallback mode for port-channel    
     elif func == 'patch_dell_intf_augments_interfaces_interface_aggregation_config_fallback':
-        path = cc.Path('/restconf/data/openconfig-interfaces:interfaces/interface={name}/openconfig-if-aggregate:aggregation/config/dell-intf-augments:fallback', name=args[0])
+        path = cc.Path('/restconf/data/openconfig-interfaces:interfaces/interface={name}/openconfig-if-aggregate:aggregation/config/openconfig-interfaces-ext:fallback', name=args[0])
         if args[1] == "True":
-            body = { "dell-intf-augments:fallback": True }
+            body = { "openconfig-interfaces-ext:fallback": True }
         else :
-            body = { "dell-intf-augments:fallback": False }
+            body = { "openconfig-interfaces-ext:fallback": False }
         return api.patch(path, body)
         
         

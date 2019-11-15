@@ -7,13 +7,12 @@ module openconfig-interfaces-annot {
 
     import sonic-extensions { prefix sonic-ext; }
     import openconfig-interfaces { prefix oc-intf; }
-    import openconfig-yang-types { prefix oc-yang; }
+    import openconfig-interfaces-ext { prefix oc-intf-ext; }
     import openconfig-extensions { prefix oc-ext; }
     import openconfig-if-ethernet {prefix oc-eth; }
     import openconfig-vlan {prefix oc-vlan; }
     import openconfig-if-ip {prefix oc-ip; }
     import openconfig-if-aggregate { prefix oc-lag; }
-    import dell-intf-augments { prefix if-agmnt; }
 
 
     deviation /oc-intf:interfaces/oc-intf:interface {
@@ -29,12 +28,6 @@ module openconfig-interfaces-annot {
         }
     }
 
-    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:config {
-        deviate add {
-            sonic-ext:db-name "CONFIG_DB";
-        }
-    }
-
     deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:config/oc-intf:name {
         deviate add {
             sonic-ext:field-transformer "intf_name_xfmr";
@@ -47,19 +40,13 @@ module openconfig-interfaces-annot {
         }
     }
     
-    deviation /oc-intf:interfaces/oc-intf:interface/oc-lag:aggregation/oc-lag:config {
-      deviate add {
-            sonic-ext:db-name "CONFIG_DB";
-      }
-    }
-
     deviation /oc-intf:interfaces/oc-intf:interface/oc-lag:aggregation/oc-lag:config/oc-lag:min-links {
         deviate add { 
             sonic-ext:field-transformer "lag_min_links_xfmr";
         }
     }
 
-    deviation /oc-intf:interfaces/oc-intf:interface/oc-lag:aggregation/oc-lag:config/if-agmnt:fallback {
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-lag:aggregation/oc-lag:config/oc-intf-ext:fallback {
         deviate add { 
             sonic-ext:field-transformer "lag_fallback_xfmr";
         }
@@ -101,7 +88,6 @@ module openconfig-interfaces-annot {
 
     deviation /oc-intf:interfaces/oc-intf:interface/oc-eth:ethernet/oc-eth:config {
         deviate add {
-            sonic-ext:db-name "CONFIG_DB";
             sonic-ext:subtree-transformer "intf_eth_port_config_xfmr";
         }
     }
