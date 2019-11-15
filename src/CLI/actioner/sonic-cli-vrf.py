@@ -66,7 +66,7 @@ def run(func, args):
             # Get Command Output
             api_response = response.content
             if api_response is None:
-                print("Failed")
+                print("%Error: Transaction Failure")
     else:
         print response.error_message()
 
