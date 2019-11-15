@@ -10,7 +10,7 @@ module sonic-mgmt-interface {
         prefix inet;
     }
     import sonic-mgmt-vrf {
-        prefix mgmt-vrf;
+        prefix mvrf;
     }
 
     import sonic-mgmt-port {
@@ -47,7 +47,7 @@ module sonic-mgmt-interface {
 
                 leaf vrf-name {
                     type leafref {
-                        path "/mgmt-vrf:sonic-mgmt-vrf/mgmt-vrf:MGMT_VRF_CONFIG/mgmt-vrf:MGMT_VRF_CONFIG_LIST/mgmt-vrf:vrf_global_name";
+                        path "/mvrf:sonic-mgmt-vrf/mvrf:MGMT_VRF_CONFIG/mvrf:MGMT_VRF_CONFIG_LIST/mvrf:vrf_global_name";
                     }
                 }
             }
