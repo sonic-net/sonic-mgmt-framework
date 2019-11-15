@@ -666,7 +666,7 @@ func unmarshalJsonToDbData(schema *yang.Entry, fieldName string, value interface
         switch ykind {
         case yang.Ystring, yang.Ydecimal64, yang.Yint64, yang.Yuint64:
         case yang.Yenum, yang.Ybool, yang.Ybinary, yang.Yidentityref, yang.Yunion:
-                data = value.(string)
+                data = fmt.Sprintf("%v", value)
 
         case yang.Yint8, yang.Yint16, yang.Yint32:
         case yang.Yuint8, yang.Yuint16, yang.Yuint32:
@@ -677,7 +677,7 @@ func unmarshalJsonToDbData(schema *yang.Entry, fieldName string, value interface
                 data = fmt.Sprintf("%v", pv)
         default:
                 // TODO - bitset, empty
-                data = value.(string)
+                data = fmt.Sprintf("%v", value)
         }
 
         return data, nil

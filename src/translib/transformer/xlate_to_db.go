@@ -136,8 +136,14 @@ func mapFillDataUtil(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requ
 			p.Name = pathSlice[len(pathSlice)-1]
 			if len(p.Key) > 0 {
 				for ekey, ent := range p.Key {
+					// SNC-2126: check the occurrence of ":"
 					eslice := strings.Split(ent, ":")
-					p.Key[ekey] = eslice[len(eslice)-1]
+					if len(eslice) == 2 {
+						// TODO - exclude the prexix by checking enum type
+						p.Key[ekey] = eslice[len(eslice)-1]
+					} else {
+						p.Key[ekey] = ent
+					}
 				}
 			}
 		}
@@ -562,8 +568,14 @@ func yangNodeForUriGet(uri string, ygRoot *ygot.GoStruct) (interface{}, error) {
 		p.Name = pathSlice[len(pathSlice)-1]
 		if len(p.Key) > 0 {
 			for ekey, ent := range p.Key {
+				// SNC-2126: check the occurrence of ":"
 				eslice := strings.Split(ent, ":")
-				p.Key[ekey] = eslice[len(eslice)-1]
+				if len(eslice) == 2 {
+					// TODO - exclude the prexix by checking enum type
+					p.Key[ekey] = eslice[len(eslice)-1]
+				} else {
+					p.Key[ekey] = ent
+				}
 			}
 		}
 	}
