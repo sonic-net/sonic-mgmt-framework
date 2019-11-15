@@ -92,6 +92,30 @@ module openconfig-spanning-tree-ext {
             description
                 "Name of root port";
         }
+
+        leaf root-max-age {
+            type uint8;
+            description
+                "Maximum age at root bridge";
+        }
+
+        leaf root-hello-time {
+            type uint8;
+            description
+                "Hello time at root bridge";
+        }
+
+        leaf root-forward-delay {
+            type uint8;
+            description
+                "Forwarding delay at root bridge";
+        }
+
+        leaf designated-bridge-id {
+            type oc-yang:mac-address;
+            description
+                "Designated bridge id";
+        }
     }
 
     grouping vlan-interface-extra-state-field {
