@@ -105,29 +105,6 @@ module sonic-bgp-global {
                     type boolean;
                 }
 
-            }
-        }
-
-        container BGP_GLOBALS_AF {
-            list BGP_GLOBALS_AF_LIST {
-                key "vrf af_name";
-
-                leaf vrf {
-                    type string;
-                }
-
-                leaf af_name {
-                    type string;
-                }
-
-                leaf max_ebgp_paths {
-                    type uint32;
-                }
-
-                leaf max_ibgp_paths {
-                    type uint32;
-                }
-
                 leaf route_flap_dampen {
                     type boolean;
                 }
@@ -155,6 +132,30 @@ module sonic-bgp-global {
                         range "1..255";
                     }
                 }
+
+            }
+        }
+
+        container BGP_GLOBALS_AF {
+            list BGP_GLOBALS_AF_LIST {
+                key "vrf af_name";
+
+                leaf vrf {
+                    type string;
+                }
+
+                leaf af_name {
+                    type string;
+                }
+
+                leaf max_ebgp_paths {
+                    type uint32;
+                }
+
+                leaf max_ibgp_paths {
+                    type uint32;
+                }
+
 
                 leaf aggregate_prefix {
 					type inet:ip-prefix;
