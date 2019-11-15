@@ -54,7 +54,7 @@ func init() {
 	flag.StringVar(&certFile, "cert", "", "Server certificate file path")
 	flag.StringVar(&keyFile, "key", "", "Server private key file path")
 	flag.StringVar(&caFile, "cacert", "", "CA certificate for client certificate validation")
-	flag.Var(server.ClientAuth, "client_auth", "Client auth mode(s) - cert,user,jwt")
+	flag.Var(server.ClientAuth, "client_auth", "Client auth mode(s) - cert,password,jwt")
 	flag.Uint64Var(&jwtRefInt, "jwt_refresh_int", 30, "Seconds before JWT expiry the token can be refreshed.")
 	flag.Uint64Var(&jwtValInt, "jwt_valid_int", 3600, "Seconds that JWT token is valid for.")
 	flag.Parse()
@@ -192,7 +192,7 @@ func getTLSClientAuthType() tls.ClientAuthType {
 		}
 		return tls.RequireAndVerifyClientCert
 	}
-	if server.ClientAuth.Enabled("user") || server.ClientAuth.Enabled("jwt") {
+	if server.ClientAuth.Enabled("password") || server.ClientAuth.Enabled("jwt") {
 		return tls.RequestClientCert
 	}
 
