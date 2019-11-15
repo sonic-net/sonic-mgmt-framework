@@ -165,7 +165,8 @@ struct lys_leaf_ref_path* lys_get_leafrefs(struct lys_node_leaf *node) {
 		leafrefs.count = 1;
 
 	} else if (node->type.base == LY_TYPE_UNION) {
-		for (int typeCnt = 0; typeCnt < node->type.info.uni.count; typeCnt++) {
+		int typeCnt = 0;
+		for (; typeCnt < node->type.info.uni.count; typeCnt++) {
 			if (node->type.info.uni.types[typeCnt].base != LY_TYPE_LEAFREF) {
 				continue;
 			}

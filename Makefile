@@ -103,7 +103,10 @@ yamlGen:
 	$(MAKE) -C models/yang
 	$(MAKE) -C models/yang/sonic
 
-go-patch: go-deps
+pre-go-patch:
+	rm -rf $(BUILD_GOPATH)/src/github.com/openconfig/goyang/annotate.go
+
+go-patch: go-deps pre-go-patch
 	cd $(BUILD_GOPATH)/src/github.com/openconfig/ygot/; git reset --hard HEAD; git checkout 724a6b18a9224343ef04fe49199dfb6020ce132a 2>/dev/null ; true; \
 cd ../; cp $(TOPDIR)/ygot-modified-files/ygot.patch .; \
 patch -p1 < ygot.patch; rm -f ygot.patch; \
@@ -161,7 +164,6 @@ clean: rest-clean
 	$(MAKE) -C src/cvl cleanall
 	rm -rf build/*
 	rm -rf debian/.debhelper
-	rm -rf $(BUILD_GOPATH)/src/github.com/openconfig/goyang/annotate.go
 
 cleanall:
 	$(MAKE) -C src/cvl cleanall
