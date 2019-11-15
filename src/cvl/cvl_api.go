@@ -515,13 +515,25 @@ func (c *CVL) ValidateFields(key string, field string, value string) CVLRetCode 
 }
 
 //Sort list of given tables as per their dependency
-func (c *CVL) SortDepTables(tableList []string) ([]string, CVLRetCode) {
+func (c *CVL) SortDepTables(inTableList []string) ([]string, CVLRetCode) {
 
-	//Add all the table names in graph nodes
-	graph := toposort.NewGraph(len(tableList))
-	for ti := 0; ti < len(tableList); ti++ {
-		graph.AddNodes(tableList[ti])
-	}
+    tableList := []string{}
+
+    //Skip all unknown tables
+    for ti := 0; ti < len(inTableList); ti++ {
+        _, exists := modelInfo.tableInfo[inTableList[ti]]
+        if exists == false {
+            continue
+        }
+
+        tableList = append(tableList, inTableList[ti])
+    }
+
+    //Add all the table names in graph nodes
+    graph := toposort.NewGraph(len(tableList))
+    for ti := 0; ti < len(tableList); ti++ {
+        graph.AddNodes(tableList[ti])
+    }
 
 	//Add all the depedency edges for graph nodes
 	for ti :=0; ti < len(tableList); ti++ {

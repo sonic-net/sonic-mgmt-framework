@@ -5,8 +5,6 @@ openconfig-acl-annot.yang
 openconfig-network-instance.yang
 openconfig-network-instance-annot.yang
 sonic-vxlan.yang
-sonic-udld.yang
-sonic-udld-annot.yang
 ietf-ptp.yang
 ietf-ptp-annot.yang
 sonic-mclag.yang
