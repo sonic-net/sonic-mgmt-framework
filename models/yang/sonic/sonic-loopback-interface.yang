@@ -44,7 +44,6 @@ module sonic-loopback-interface {
                 }
 
                 leaf ip_prefix {
-                    mandatory true;
                     type inet:ip-prefix;
 
                 }

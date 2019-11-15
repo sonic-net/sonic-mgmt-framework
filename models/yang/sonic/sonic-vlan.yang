@@ -104,9 +104,6 @@ module sonic-vlan {
                 }
 
                 leaf ifname {
-                    //type leafref {
-                        //path "/prt:sonic-port/prt:PORT/prt:PORT_LIST/prt:ifname";
-                    //}
                     type union {
                         type leafref {
                             path "/prt:sonic-port/prt:PORT/prt:PORT_LIST/prt:ifname";

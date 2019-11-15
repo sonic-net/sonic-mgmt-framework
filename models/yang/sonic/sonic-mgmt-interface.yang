@@ -63,7 +63,6 @@ module sonic-mgmt-interface {
 
                 leaf ip_prefix {
                     type inet:ip-prefix;
-
                 }
 
                 leaf gwaddr {
