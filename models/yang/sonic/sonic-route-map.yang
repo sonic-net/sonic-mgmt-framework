@@ -41,11 +41,19 @@ module sonic-route-map {
                     type string;
                 }
 
-                leaf match_next_hop{
+                leaf match_neighbor_set{
                     type string;
                 }
 
-                leaf match_address_family{
+                leaf match_tag_set{
+                    type string;
+                }
+
+                leaf-list match_next_hop{
+                    type string;
+                }
+
+                leaf-list match_address_family{
                     type string;
                 }
 
@@ -58,7 +66,7 @@ module sonic-route-map {
                 }
 
                 leaf match_local_pref{
-                    type string;
+                    type uint32;
                 }
 
                 leaf match_route_type{
@@ -87,7 +95,7 @@ module sonic-route-map {
                 }
 
                 leaf set_local_pref{
-                    type string;
+                    type uint32;
                 }
 
                 leaf set_next_hop{

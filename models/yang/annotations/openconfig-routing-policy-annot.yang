@@ -10,15 +10,52 @@ module openconfig-routing-policy-annot {
     import openconfig-bgp-policy { prefix oc-bgp-pol; }
     import sonic-extensions {prefix sonic-ext; }
 
-    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions {
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition {
         deviate add {
             sonic-ext:table-name "ROUTE_MAP";
         }
     }
 
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:name {
+      deviate add {
+            sonic-ext:field-transformer "route_map_field_xfmr";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:config/oc-rpol:name {
+      deviate add {
+            sonic-ext:field-transformer "route_map_field_xfmr";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:state/oc-rpol:name {
+      deviate add {
+            sonic-ext:field-transformer "route_map_field_xfmr";
+      }
+    }
+
     deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement {
       deviate add {
+            /* sonic-ext:table-name "ROUTE_MAP"; */
             sonic-ext:key-transformer "route_map_key_xfmr";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:name {
+      deviate add {
+            sonic-ext:field-transformer "route_map_stmt_field_xfmr";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:config/oc-rpol:name {
+      deviate add {
+            sonic-ext:field-transformer "route_map_stmt_field_xfmr";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:state/oc-rpol:name {
+      deviate add {
+            sonic-ext:field-transformer "route_map_stmt_field_xfmr";
       }
     }
 
@@ -154,7 +191,7 @@ module openconfig-routing-policy-annot {
 
     deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-bgp-pol:bgp-conditions/oc-bgp-pol:config/oc-bgp-pol:afi-safi-in {
       deviate add {
-            sonic-ext:field-name "match_address_family";
+            sonic-ext:field-transformer "route_map_match_address_family_xfmr";
       }
     }
 
@@ -202,7 +239,7 @@ module openconfig-routing-policy-annot {
 
     deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-bgp-pol:bgp-conditions/oc-bgp-pol:state/oc-bgp-pol:afi-safi-in {
       deviate add {
-            sonic-ext:field-name "match_address_family";
+            sonic-ext:field-transformer "route_map_match_address_family_xfmr";
       }
     }
 
