@@ -520,8 +520,17 @@ func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, req
 	 for _, k := range strings.Split(path, "/") {
 		 curPathWithKey += k
 		 yangXpath, _ := XfmrRemoveXPATHPredicates(curPathWithKey)
-		 _, ok := xYangSpecMap[yangXpath]
+		 xpathInfo, ok := xYangSpecMap[yangXpath]
 		 if ok {
+			 yangType := yangTypeGet(xpathInfo.yangEntry)
+			 /* when deleting a specific element from leaf-list query uri is of the form
+			    /prefix-path/leafList-field-name[leafList-field-name=value].
+			    Here the syntax is like a list-key instance enclosed in square 
+			    brackets .So avoid list key instance like processing for such a case
+			 */
+			 if yangType == YANG_LEAF_LIST {
+				 break
+			 }
 			 if strings.Contains(k, "[") {
 				 if len(keyStr) > 0 {
 					 keyStr += keySeparator
