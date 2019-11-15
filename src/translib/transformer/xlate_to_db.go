@@ -494,8 +494,6 @@ func dbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, request
 	var err error
 	tblXpathMap := make(map[string][]string)
 	var result = make(map[string]map[string]db.Value)
-	resultMap[oper] = make(RedisDbMap)
-	resultMap[oper][db.ConfigDB] = result
 	subOpDataMap := make(map[int]*RedisDbMap)
 
 	root := xpathRootNameGet(path)
@@ -520,13 +518,17 @@ func dbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, request
 					var dbDataMap = resultMap[oper]
 					var dbs [db.MaxDB]*db.DB
 					inParams := formXfmrInputRequest(d, dbs, db.ConfigDB, ygRoot, path, requestUri, oper, "", &dbDataMap, subOpDataMap, nil, txCache)
-					resultMap[oper][db.ConfigDB], err = postXfmrHandlerFunc(inParams)
+					result, err = postXfmrHandlerFunc(inParams)
 				}
 			} else {
 				log.Errorf("No Entry exists for module %s in xYangSpecMap. Unable to process post xfmr (\"%v\") path(\"%v\") error (\"%v\").", oper, path, err)
 			}
-			for op, redisMap := range subOpDataMap {
-				resultMap[op] = *(redisMap)
+			if len(result) > 0 || len(subOpDataMap) > 0 {
+				  resultMap[oper] = make(RedisDbMap)
+				  resultMap[oper][db.ConfigDB] = result
+				  for op, redisMap := range subOpDataMap {
+					  resultMap[op] = *(redisMap)
+				  }
 			}
 
 		}
