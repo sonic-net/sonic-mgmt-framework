@@ -22,6 +22,18 @@ limitations under the License.
     xsi:schemaLocation="http://www.dellemc.com/sonic/XMLSchema
     http://www.dellemc.com/sonic/XMLSchema/clish.xsd"
     >
+    <PTYPE
+    name="TYPE"
+    method="select"
+    pattern="snat dnat"
+    help="NAT type"/>
+
+    <PTYPE
+    name="PORT_TYPE"
+    method="select"
+    pattern="tcp udp"
+    help="NAT Port type"/>
+
    <VIEW
        name="configure-view"
        >
@@ -152,6 +164,7 @@ limitations under the License.
              name="global-port-range"
              help="Global Port Range"
              ptype="STRING"
+             optional="true"
              >
          </PARAM>
          <ACTION builtin="clish_nop"></ACTION>
@@ -204,6 +217,27 @@ limitations under the License.
              ptype="STRING"
              >
          </PARAM>
+         <PARAM
+             name="natType"
+             help=""
+             ptype="TYPE"
+             optional="true"
+             >
+         </PARAM>
+         <PARAM
+             name="twice-nat-id"
+             help="Twice NAT ID"
+             ptype="SUBCOMMAND"
+             mode="subcommand"
+             optional="true"
+             >
+             <PARAM
+                 name="twice-nat-id-value"
+                 help="Twice NAT ID value"
+                 ptype="UINT"
+                 >
+             </PARAM>
+         </PARAM>
 
          <ACTION builtin="clish_nop"></ACTION>
      </COMMAND>
@@ -230,6 +264,195 @@ limitations under the License.
      <ACTION builtin="clish_nop"></ACTION>
      </COMMAND>
 
+     <COMMAND
+         name="static"
+         help="Add static NAT entry"
+         mode="subcommand"
+         ptype="SUBCOMMAND"
+         >
+         <PARAM
+             name="static-subcommands"
+             help="Static NAT subcommands"
+             mode="switch"
+             ptype="SUBCOMMAND"
+             >
+         <PARAM
+             name="basic"
+             help="Static NAT"
+             ptype="SUBCOMMAND"
+             mode="subcommand"
+             >
+
+             <PARAM
+                 name="global-ip"
+                 help="Global IP"
+                 ptype="IP_ADDR"
+                 >
+             </PARAM>
+
+             <PARAM
+                 name="local-ip"
+                 help="Local IP"
+                 ptype="IP_ADDR"
+                 >
+             </PARAM>
+
+             <PARAM
+                 name="natType"
+                 help=""
+                 ptype="TYPE"
+                 optional="true"
+                 >
+             </PARAM>
+
+             <PARAM
+                 name="twice-nat-id"
+                 help="Twice NAT ID"
+                 ptype="SUBCOMMAND"
+                 mode="subcommand"
+                 optional="true"
+                 >
+                 <PARAM
+                     name="twice-nat-id-value"
+                     help="Twice NAT ID value"
+                     ptype="UINT"
+                     >
+                 </PARAM>
+             </PARAM>
+         </PARAM>
+
+
+         <PARAM
+             name="natPortType"
+             help=""
+             ptype="PORT_TYPE"
+             >
+            <PARAM
+                 name="global-ip"
+                 help="Global IP"
+                 ptype="IP_ADDR"
+                 >
+             </PARAM>
+
+             <PARAM
+                 name="global-port"
+                 help="Global Port"
+                 ptype="UINT"
+                 >
+             </PARAM>
+
+             <PARAM
+                 name="local-ip"
+                 help="Local IP"
+                 ptype="IP_ADDR"
+                 >
+             </PARAM>
+
+             <PARAM
+                 name="local-port"
+                 help="Local Port"
+                 ptype="UINT"
+                 >
+             </PARAM>
+
+             <PARAM
+                 name="natType"
+                 help=""
+                 ptype="TYPE"
+                 optional="true"
+                 >
+             </PARAM>
+
+             <PARAM
+                 name="twice-nat-id"
+                 help="Twice NAT ID"
+                 ptype="SUBCOMMAND"
+                 mode="subcommand"
+                 optional="true"
+                 >
+                 <PARAM
+                     name="twice-nat-id-value"
+                     help="Twice NAT ID value"
+                     ptype="UINT"
+                     >
+                 </PARAM>
+             </PARAM>
+         </PARAM>
+     </PARAM>
+
+         <ACTION builtin="clish_nop"></ACTION>
+     </COMMAND>
+
+     <COMMAND
+         name="no static"
+         help="Remove static NAT entry"
+         mode="subcommand"
+         ptype="SUBCOMMAND"
+         >
+         <PARAM
+             name="no static-subcommands"
+             help="Remove Static NAT subcommands"
+             mode="switch"
+             ptype="SUBCOMMAND"
+             >
+             <PARAM
+                 name="basic"
+                 help="Static NAT"
+                 ptype="SUBCOMMAND"
+                 mode="subcommand"
+                 >
+
+                 <PARAM
+                     name="global-ip"
+                     help="Global IP"
+                     ptype="IP_ADDR"
+                 >
+                 </PARAM>
+
+                 <PARAM
+                     name="local-ip"
+                     help="Local IP"
+                     ptype="IP_ADDR"
+                     >
+                 </PARAM>
+             </PARAM>
+             
+             <PARAM
+                 name="natPortType"
+                 help=""
+                 ptype="PORT_TYPE"
+                 >
+                <PARAM
+                     name="global-ip"
+                     help="Global IP"
+                     ptype="IP_ADDR"
+                     >
+                 </PARAM>
+
+                 <PARAM
+                     name="global-port"
+                     help="Global Port"
+                     ptype="UINT"
+                     >
+                 </PARAM>
+
+                 <PARAM
+                     name="local-ip"
+                     help="Local IP"
+                     ptype="IP_ADDR"
+                     >
+                 </PARAM>
+
+                 <PARAM
+                     name="local-port"
+                     help="Local Port"
+                     ptype="UINT"
+                     >
+                 </PARAM>
+             </PARAM>
+         </PARAM>
+         <ACTION builtin="clish_nop"></ACTION>
+     </COMMAND>
 
 
    </VIEW>
