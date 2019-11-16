@@ -18,26 +18,12 @@
 ###########################################################################
 
 import sys
-import time
-import json
-import ast
 import cli_client as cc
 from rpipe_utils import pipestr
 from scripts.render_cli import show_cli_output
 
 import urllib3
 urllib3.disable_warnings()
-
-plugins = dict()
-
-def register(func):
-    """Register sdk client method as a plug-in"""
-    plugins[func.__name__] = func
-    return func
-
-def call_method(name, args):
-    method = plugins[name]
-    return method(args)
 
 def get_keypath(func,args):
     keypath = None
