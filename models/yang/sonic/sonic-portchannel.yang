@@ -42,6 +42,7 @@ module sonic-portchannel {
 
                 leaf admin_status {
                     type scommon:admin-status;
+                    default up;
                 }
 
                 leaf mtu {

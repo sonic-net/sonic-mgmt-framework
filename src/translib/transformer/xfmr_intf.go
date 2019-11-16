@@ -337,7 +337,7 @@ var YangToDb_intf_name_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[s
         vlanId := ifName[len("Vlan"):len(ifName)]
         res_map["vlanid"] = vlanId
     } else if strings.HasPrefix(ifName, PORTCHANNEL) == true {
-        res_map["admin_status"] = "up"
+        res_map["NULL"] = "NULL"
     } else if strings.HasPrefix(ifName, LOOPBACK) == true {
         res_map["NULL"] = "NULL"
     }
