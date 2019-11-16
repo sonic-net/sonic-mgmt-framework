@@ -41,8 +41,10 @@ type yangXpathInfo  struct {
     delim          string
     fieldName      string
     xfmrFunc       string
+    xfmrField      string
     xfmrPost       string
     validateFunc   string
+    rpcFunc        string
     xfmrKey        string
     keyName        *string
     dbIndex        db.DBNum
@@ -55,6 +57,7 @@ type dbInfo  struct {
     dbIndex      db.DBNum
     keyName      *string
     fieldType    string
+    rpcFunc      string
     dbEntry      *yang.Entry
     yangXpath    []string
     module       string
@@ -106,7 +109,7 @@ func yangToDbMapFill (keyLevel int, xYangSpecMap map[string]*yangXpathInfo, entr
 
 	parentXpathData, ok := xYangSpecMap[xpathPrefix]
 	/* init current xpath table data with its parent data, change only if needed. */
-	if ok {
+	if ok && xpathData.tableName == nil {
 		if xpathData.tableName == nil && parentXpathData.tableName != nil && xpathData.xfmrTbl == nil {
 			xpathData.tableName = parentXpathData.tableName
 		} else if xpathData.xfmrTbl == nil && parentXpathData.xfmrTbl != nil {
@@ -128,6 +131,9 @@ func yangToDbMapFill (keyLevel int, xYangSpecMap map[string]*yangXpathInfo, entr
 	}
 
 	if xpathData.yangDataType == "leaf" && len(xpathData.fieldName) == 0 {
+		if len(xpathData.xfmrField) != 0 {
+			xpathData.xfmrFunc = ""
+		}
 		if xpathData.tableName != nil && xDbSpecMap[*xpathData.tableName] != nil {
 			if _, ok := xDbSpecMap[*xpathData.tableName + "/" + entry.Name]; ok {
 				xpathData.fieldName = entry.Name
@@ -161,8 +167,10 @@ func yangToDbMapFill (keyLevel int, xYangSpecMap map[string]*yangXpathInfo, entr
 		keyXpath        := make([]string, len(strings.Split(entry.Key, " ")))
 		for id, keyName := range(strings.Split(entry.Key, " ")) {
 			keyXpath[id] = xpath + "/" + keyName
-			keyXpathData := new(yangXpathInfo)
-			xYangSpecMap[xpath + "/" + keyName] = keyXpathData
+			if _, ok := xYangSpecMap[xpath + "/" + keyName]; !ok {
+				keyXpathData := new(yangXpathInfo)
+				xYangSpecMap[xpath + "/" + keyName] = keyXpathData
+			}
 			xYangSpecMap[xpath + "/" + keyName].isKey = true
 		}
 
@@ -223,13 +231,13 @@ func dbMapFill(tableName string, curPath string, moduleNm string, xDbSpecMap map
 	entryType := entry.Node.Statement().Keyword
 
 	if entry.Name != moduleNm {
-		if entryType == "container" {
+		if entryType == "container" || entryType == "rpc" {
 			tableName = entry.Name
 		}
 
 		if !isYangResType(entryType) {
 			dbXpath := tableName
-			if entryType != "container" {
+			if entryType != "container" && entryType != "rpc" {
 				dbXpath = tableName + "/" + entry.Name
 			}
 			xDbSpecMap[dbXpath] = new(dbInfo)
@@ -249,6 +257,8 @@ func dbMapFill(tableName string, curPath string, moduleNm string, xDbSpecMap map
 								xDbSpecMap[dbXpath].keyName = new(string)
 							}
 							*xDbSpecMap[dbXpath].keyName = ext.NName()
+						case "rpc-callback" :
+							xDbSpecMap[dbXpath].rpcFunc = ext.NName()
 						default :
 							log.Infof("Unsupported ext type(%v) for xpath(%v).", tagType, dbXpath)
 						}
@@ -396,11 +406,13 @@ func annotEntryFill(xYangSpecMap map[string]*yangXpathInfo, xpath string, entry 
 			case "key-delimiter" :
 				xpathData.delim     = ext.NName()
 			case "field-transformer" :
-				xpathData.xfmrFunc  = ext.NName()
+				xpathData.xfmrField  = ext.NName()
 			case "post-transformer" :
 				xpathData.xfmrPost  = ext.NName()
 			case "get-validate" :
 				xpathData.validateFunc  = ext.NName()
+			case "rpc-callback" :
+				xpathData.rpcFunc  = ext.NName()
 			case "use-self-key" :
 				xpathData.keyXpath  = nil
 			case "db-name" :
@@ -418,6 +430,8 @@ func annotEntryFill(xYangSpecMap map[string]*yangXpathInfo, xpath string, entry 
 					xpathData.dbIndex  = db.FlexCounterDB
 				} else if ext.NName() == "STATE_DB" {
 					xpathData.dbIndex  = db.StateDB
+				} else if ext.NName() == "ERROR_DB" {
+					xpathData.dbIndex  = db.ErrorDB
 				} else {
 					xpathData.dbIndex  = db.ConfigDB
 				}
@@ -468,12 +482,38 @@ func annotDbSpecMapFill(xDbSpecMap map[string]*dbInfo, dbXpath string, entry *ya
 	var dbXpathData *dbInfo
 	var ok bool
 
-	//Currently sonic-yang annotation is supported for "list" type only.
+	//Currently sonic-yang annotation is supported for "list" and "rpc" type only
 	listName := strings.Split(dbXpath, "/")
 	if len(listName) < 3 {
-		log.Errorf("Invalid list xpath length(%v) \r\n", dbXpath)
-		return err
+		// check rpc?
+		rpcName := strings.Split(listName[1], ":")
+		if len(rpcName) < 2 {
+			log.Errorf("DB spec-map data not found(%v) \r\n", rpcName)
+			return err
+		}
+		dbXpathData, ok = xDbSpecMap[rpcName[1]]
+		if ok && dbXpathData.fieldType == "rpc" {
+			log.Infof("Annotate dbSpecMap for (%v)(rpcName:%v)\r\n", dbXpath, listName[1])
+			if entry != nil && len(entry.Exts) > 0 {
+				for _, ext := range entry.Exts {
+					dataTagArr := strings.Split(ext.Keyword, ":")
+					tagType := dataTagArr[len(dataTagArr)-1]
+					switch tagType {
+					case "rpc-callback" :
+						dbXpathData.rpcFunc = ext.NName()
+					default :
+					}
+				}
+			}
+			dbMapPrint("/tmp/dbSpecMapFull.txt")
+			return err
+		} else {
+			log.Errorf("DB spec-map data not found(%v) \r\n", dbXpath)
+			return err
+		}
 	}
+
+	// list
 	dbXpathData, ok = xDbSpecMap[listName[2]]
 	if !ok {
 		log.Errorf("DB spec-map data not found(%v) \r\n", dbXpath)
@@ -508,6 +548,8 @@ func annotDbSpecMapFill(xDbSpecMap map[string]*dbInfo, dbXpath string, entry *ya
 					dbXpathData.dbIndex  = db.FlexCounterDB
 				} else if ext.NName() == "STATE_DB" {
 					dbXpathData.dbIndex  = db.StateDB
+				} else if ext.NName() == "ERROR_DB" {
+					dbXpathData.dbIndex  = db.ErrorDB
 				} else {
 					dbXpathData.dbIndex  = db.ConfigDB
 				}
@@ -571,8 +613,10 @@ func mapPrint(inMap map[string]*yangXpathInfo, fileName string) {
         fmt.Fprintf(fp, "\r\n    keyLevel : %v", d.keyLevel)
         fmt.Fprintf(fp, "\r\n    xfmrKeyFn: %v", d.xfmrKey)
         fmt.Fprintf(fp, "\r\n    xfmrFunc : %v", d.xfmrFunc)
+        fmt.Fprintf(fp, "\r\n    xfmrField :%v", d.xfmrField)
         fmt.Fprintf(fp, "\r\n    dbIndex  : %v", d.dbIndex)
         fmt.Fprintf(fp, "\r\n    validateFunc  : %v", d.validateFunc)
+        fmt.Fprintf(fp, "\r\n    rpcFunc  : %v", d.rpcFunc)
         fmt.Fprintf(fp, "\r\n    yangEntry: ")
         if d.yangEntry != nil {
             fmt.Fprintf(fp, "%v", *d.yangEntry)
@@ -603,6 +647,7 @@ func dbMapPrint( fname string) {
         fmt.Fprintf(fp, " field:%v \r\n", k)
         fmt.Fprintf(fp, "     type     :%v \r\n", v.fieldType)
         fmt.Fprintf(fp, "     db-type  :%v \r\n", v.dbIndex)
+        fmt.Fprintf(fp, "     rpcFunc  :%v \r\n", v.rpcFunc)
         fmt.Fprintf(fp, "     module   :%v \r\n", v.module)
         fmt.Fprintf(fp, "     KeyName: ")
         if v.keyName != nil {

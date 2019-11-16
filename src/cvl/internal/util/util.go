@@ -128,9 +128,11 @@ func IsTraceSet() bool {
 
 func TRACE_LEVEL_LOG(level log.Level, tracelevel CVLTraceLevel, fmtStr string, args ...interface{}) {
 
+	/*
 	if (IsTraceSet() == false) {
 		return
 	}
+	*/
 
 	level = (level - INFO_API) + 1;
 
@@ -197,11 +199,11 @@ func ConfigFileSyncHandler() {
 			CVL_LEVEL_LOG(INFO ,"Received SIGUSR2. Changed configuration values are %v", cvlCfgMap)
 
 
+			flag.Set("v", cvlCfgMap["VERBOSITY"])
 			if (strings.Compare(cvlCfgMap["LOGTOSTDERR"], "true") == 0) {
 				SetTrace(true)
 				flag.Set("logtostderr", "true")
 				flag.Set("stderrthreshold", cvlCfgMap["STDERRTHRESHOLD"])
-				flag.Set("v", cvlCfgMap["VERBOSITY"])
 			}
 		}
 	}()
@@ -227,7 +229,7 @@ func ReadConfFile()  map[string]string{
 	CVL_LEVEL_LOG(INFO ,"Current Values of CVL Configuration File %v", cvlCfgMap)
 	var index uint32
 
-	for  index = TRACE_MIN ; index < TRACE_MAX ; index++  {
+	for  index = TRACE_MIN ; index <= TRACE_MAX ; index++  {
 		if (strings.Compare(cvlCfgMap[traceLevelMap[1 << index]], "true") == 0) {
 			cvlTraceFlags = cvlTraceFlags |  (1 << index) 
 		}

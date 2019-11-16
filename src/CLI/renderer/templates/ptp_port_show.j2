@@ -2,22 +2,36 @@
 {{'Attribute'.ljust(30)}} {{'Value/State'}}
 {{'-----------------------------------------------------------'}}
 {% for key,value in json_output.items() %}
-{% for key2,value2 in value.items() %}
-{% if 'port-number' in value2.keys() %}
-{{ 'Port Number'.ljust(30)}} {{ value2['port-number']}}
+{% for item in value %}
+{% for key2,value2 in item.items() %}
+{% if 'port-number' == key2 %}
+{{ 'Port Number'.ljust(30)}} {{ value2}}
 {% endif %}
-{% if 'port-state' in value2.keys() %}
-{{ 'Port State'.ljust(30)}} {{ value2['port-state']}}
+{% if 'port-state' == key2 %}
+{{ 'Port State'.ljust(30)}} {{ value2 }}
 {% endif %}
-{% if 'log-min-pdelay-req-interval' in value2.keys() %}
-{{ 'Log Min Pdelay Req Intvl'.ljust(30)}} {{ value2['log-min-pdelay-req-interval']}}
+{% if 'log-min-delay-req-interval' == key2.keys %}
+{{ 'Log Min delay Req Intvl'.ljust(30)}} {{ value2 }}
 {% endif %}
-{% if 'log-min-delay-req-interval' in value2.keys() %}
-{{ 'Log Min delay Req Intvl'.ljust(30)}} {{ value2['log-min-delay-req-interval']}}
+{% if 'peer-mean-path-delay' == key2 %}
+{{ 'Peer Mean Path delay'.ljust(30)}} {{ value2 }}
 {% endif %}
-{% if 'peer-mean-path-delay' in value2.keys() %}
-{{ 'Peer Mean Path delay'.ljust(30)}} {{ value2['peer-mean-path-delay']}}
+{% if 'log-announce-interval' == key2 %}
+{{ 'Log Announce Interval'.ljust(30)}} {{ value2 }}
 {% endif %}
+{% if 'log-sync-interval' == key2 %}
+{{ 'Log Sync Interval'.ljust(30)}} {{ value2 }}
+{% endif %}
+{% if 'delay-mechanism' == key2 %}
+{{ 'Delay Mechanism'.ljust(30)}} {{ value2 }}
+{% endif %}
+{% if 'log-min-pdelay-req-interval' == key2 %}
+{{ 'Log Min PDelay Req Interval'.ljust(30)}} {{ value2 }}
+{% endif %}
+{% if 'version-number' == key2 %}
+{{ 'Version Number'.ljust(30)}} {{ value2 }}
+{% endif %}
+{% endfor %}
 {% endfor %}
 {% endfor %}
 

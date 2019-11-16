@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CLISH_MODULE
+    xmlns="http://www.dellemc.com/sonic/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xi="http://www.w3.org/2001/XInclude"
+    xsi:schemaLocation="http://www.dellemc.com/sonic/XMLSchema
+                        http://www.dellemc.com/sonic/XMLSchema/clish.xsd">
+<!--=========================================================================-->
+
+    <VIEW name="enable-view">
+        <COMMAND name = "show udld" help = "Show UDLD information" />
+
+        <!-- show udld global -->
+        <COMMAND name = "show udld global"
+            help = "Show UDLD global level information">
+            <ACTION>
+                python $SONIC_CLI_ROOT/sonic-cli-udld.py udldGlobalShowHandler&#xA;
+            </ACTION>
+        </COMMAND>
+
+        <!-- show udld neighbors -->
+        <COMMAND name = "show udld neighbors"
+            help = "Show UDLD neighbors information">
+            <ACTION>
+                python $SONIC_CLI_ROOT/sonic-cli-udld.py udldNeighborShowHandler&#xA;
+            </ACTION>
+        </COMMAND>
+
+        <!-- show udld interface <ifname> -->
+        <COMMAND name = "show udld interface"
+            help = "Show UDLD interface level information">
+            <PARAM 
+                name = "interface-name"
+                help = "Interface name"
+                ptype = "STRING">
+            </PARAM>
+            <ACTION>
+                if test "${interface-name}" = ""; then&#xA;
+                    python $SONIC_CLI_ROOT/sonic-cli-udld.py udldInterfaceShowHandler&#xA;
+                else&#xA;
+                    python $SONIC_CLI_ROOT/sonic-cli-udld.py udldInterfaceShowHandler ${interface-name}&#xA;
+                fi&#xA;
+            </ACTION>
+        </COMMAND>
+
+        <COMMAND name = "show udld statistics" help = "Show UDLD statistics">
+            <ACTION>
+                python $SONIC_CLI_ROOT/sonic-cli-udld.py udldInterfaceCountersShowHandler&#xA;
+            </ACTION>
+        </COMMAND>
+        <!-- show udld counters interface <ifname> -->
+        <COMMAND name = "show udld statistics interface"
+            help = "Show UDLD interface level statistics">
+            <PARAM 
+                name = "interface-name"
+                help = "Interface name"
+                ptype = "STRING">
+            </PARAM>
+            <ACTION>
+                python $SONIC_CLI_ROOT/sonic-cli-udld.py udldInterfaceCountersShowHandler ${interface-name}&#xA;
+            </ACTION>
+        </COMMAND>
+
+        <COMMAND name = "debug udld" help = "UDLD debug commands" />
+        <COMMAND name = "no debug udld" help = "UDLD debug commands" />
+        <COMMAND name = "debug udld dump" help = "Dump UDLD info commands" />
+        <COMMAND name = "no debug udld dump" help = "Dump UDLD info commands" />
+        <COMMAND name = "debug udld dump global" help = "Dump UDLD global debug information">
+            <ACTION>
+                python $SONIC_CLI_ROOT/sonic-cli-udld.py udldGlobalDebugHandler 1&#xA;
+            </ACTION>
+        </COMMAND>
+        <COMMAND name = "no debug udld dump global" help = "Dump UDLD global debug information">
+            <ACTION>
+                python $SONIC_CLI_ROOT/sonic-cli-udld.py udldGlobalDebugHandler 0&#xA;
+            </ACTION>
+        </COMMAND>
+        <COMMAND name = "debug udld dump interface" help = "Dump UDLD interface debug information">
+            <PARAM 
+                name = "interface-name"
+                help = "Interface name"
+                ptype = "STRING">
+            </PARAM>
+            <ACTION>
+                python $SONIC_CLI_ROOT/sonic-cli-udld.py udldInterfaceDebugHandler 1 ${interface-name}&#xA;
+            </ACTION>
+        </COMMAND>
+        <COMMAND name = "no debug udld dump interface" help = "Dump UDLD interface debug information">
+            <PARAM 
+                name = "interface-name"
+                help = "Interface name"
+                ptype = "STRING">
+            </PARAM>
+            <ACTION>
+                python $SONIC_CLI_ROOT/sonic-cli-udld.py udldInterfaceDebugHandler 0 ${interface-name}&#xA;
+            </ACTION>
+        </COMMAND>
+
+        <COMMAND name = "clear udld" help = "UDLD Clear commands" />
+        <COMMAND name = "clear udld statistics" help = "Clear UDLD statistics">
+            <ACTION>
+                python $SONIC_CLI_ROOT/sonic-cli-udld.py udldInterfaceCountersClearHandler&#xA;
+            </ACTION>
+        </COMMAND>
+        <!-- clear udld counters interface <ifname> -->
+        <COMMAND name = "clear udld statistics interface"
+            help = "Clear UDLD interface level statistics">
+            <PARAM 
+                name = "interface-name"
+                help = "Interface name"
+                ptype = "STRING">
+            </PARAM>
+            <ACTION>
+                python $SONIC_CLI_ROOT/sonic-cli-udld.py udldInterfaceCountersClearHandler ${interface-name}&#xA;
+            </ACTION>
+        </COMMAND>
+    </VIEW>
+
+
+    <VIEW name="configure-view">
+        <COMMAND name="udld" help="UDLD configuration subcommands"/>
+        <COMMAND name="no udld" help="UDLD configuration subcommands"/>
+        <COMMAND name = "udld enable"
+            help = "Enable UDLD at global level">
+            <ACTION>
+                python $SONIC_CLI_ROOT/sonic-cli-udld.py udldGlobalEnableHandler 1&#xA;
+            </ACTION>
+        </COMMAND>
+        <COMMAND name = "no udld enable"
+            help = "Disable UDLD at global level">
+            <ACTION>
+                python $SONIC_CLI_ROOT/sonic-cli-udld.py udldGlobalEnableHandler 0&#xA;
+            </ACTION>
+        </COMMAND>
+        <COMMAND name = "udld normal"
+            help = "Enable normal UDLD mode at global level">
+            <ACTION>
+                python $SONIC_CLI_ROOT/sonic-cli-udld.py udldGlobalNormalEnableHandler 1&#xA;
+            </ACTION>
+        </COMMAND>
+        <COMMAND name = "no udld normal"
+            help = "Disable normal UDLD mode at global level">
+            <ACTION>
+                python $SONIC_CLI_ROOT/sonic-cli-udld.py udldGlobalNormalEnableHandler 0&#xA;
+            </ACTION>
+        </COMMAND>
+        <COMMAND name = "udld message-time"
+            help = "Configure UDLD message time value in seconds (1 - 30 sec)">
+            <PARAM
+                name="msg-time"
+                help="Message time value (Range 1 - 30 seconds)"
+                ptype="UINT"
+                >
+            </PARAM>
+            <ACTION>
+                python $SONIC_CLI_ROOT/sonic-cli-udld.py udldMsgTimeHandler ${msg-time}&#xA;
+            </ACTION>
+        </COMMAND>
+        <COMMAND name = "no udld message-time" help = "Reset UDLD Message time">
+            <ACTION>
+                python $SONIC_CLI_ROOT/sonic-cli-udld.py udldMsgTimeHandler 1&#xA;
+            </ACTION>
+        </COMMAND>
+
+        <COMMAND name = "udld multiplier"
+            help = "Configure UDLD multiplier value (3 - 10)">
+            <PARAM
+                name="multiplier"
+                help="Multiplier value (Range 3 - 10)"
+                ptype="UINT"
+                >
+            </PARAM>
+            <ACTION>
+                python $SONIC_CLI_ROOT/sonic-cli-udld.py udldMultiplierHandler ${multiplier}&#xA;
+            </ACTION>
+        </COMMAND>
+        <COMMAND name = "no udld multiplier" help = "Reset UDLD Multiplier">
+            <ACTION>
+                python $SONIC_CLI_ROOT/sonic-cli-udld.py udldMultiplierHandler 3&#xA;
+            </ACTION>
+        </COMMAND>
+    </VIEW>
+
+
+    <!--MODE : interface -->
+    <VIEW name="configure-if-view">
+        <COMMAND name="udld" help="UDLD interface configuration subcommands"/>
+        <COMMAND name="no udld" help="UDLD interface configuration subcommands"/>
+        <COMMAND name = "udld enable"
+            help = "Enable aggresive mode UDLD at interface level">
+            <ACTION>
+                python $SONIC_CLI_ROOT/sonic-cli-udld.py udldInterfaceEnableHandler ${iface} 1&#xA;
+            </ACTION>
+        </COMMAND>
+        <COMMAND name = "no udld enable"
+            help = "Disable aggresive mode UDLD at interface level">
+            <ACTION>
+                python $SONIC_CLI_ROOT/sonic-cli-udld.py udldInterfaceEnableHandler ${iface} 0&#xA;
+            </ACTION>
+        </COMMAND>
+        <COMMAND name = "udld normal"
+            help = "Enable normal mode UDLD at interface level">
+            <ACTION>
+                python $SONIC_CLI_ROOT/sonic-cli-udld.py udldInterfaceNormalEnableHandler ${iface} 1&#xA;
+            </ACTION>
+        </COMMAND>
+        <COMMAND name = "no udld normal"
+            help = "Disable normal mode UDLD at interface level">
+            <ACTION>
+                python $SONIC_CLI_ROOT/sonic-cli-udld.py udldInterfaceNormalEnableHandler ${iface} 0&#xA;
+            </ACTION>
+        </COMMAND>
+    </VIEW>
+</CLISH_MODULE>

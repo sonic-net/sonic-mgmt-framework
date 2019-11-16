@@ -63,6 +63,17 @@ limitations under the License.
             name="show"
             help="Show running system information"
         />
+        <!-- Clear commands -->
+        <COMMAND
+            name="clear"
+            help="Clear commands" />
+        <!-- Debug commands -->
+        <COMMAND
+            name="debug"
+            help="Debug commands" />
+        <COMMAND
+            name="no debug"
+            help="No Debug commands" />
         <!-- Special commands -->
         <COMMAND
             name="system"
