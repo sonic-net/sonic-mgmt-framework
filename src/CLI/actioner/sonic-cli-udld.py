@@ -73,14 +73,8 @@ def invoke(func, args):
 
     # Disable UDLD global
     if func == 'delete_sonic_udld_sonic_udld_udld' :
-        # Delete all port level udld configs
-        keypath = cc.Path('/restconf/data/sonic-udld:sonic-udld/UDLD_PORT')
-        resp = aa.delete(keypath)
-        if not resp.ok():
-            return resp
-
-        # Delete global level udld configs
-        keypath = cc.Path('/restconf/data/sonic-udld:sonic-udld/UDLD')
+        # Delete all udld config tables including port and global level.
+        keypath = cc.Path('/restconf/data/sonic-udld:sonic-udld')
         return aa.delete(keypath)
 
     # Configure UDLD aggressive
