@@ -1,0 +1,95 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE CLISH_MODULE [
+<!ENTITY START_PORT_ID "1">
+<!ENTITY MAX_PORT_ID "32">
+<!ENTITY START_SUB_PORT_ID "1">
+<!ENTITY MAX_SUB_PORT_ID "4">
+<!ENTITY MAX_MTU "9216">
+]>
+<CLISH_MODULE
+    xmlns="http://www.dellemc.com/sonic/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xi="http://www.w3.org/2001/XInclude"
+    xsi:schemaLocation="http://www.dellemc.com/sonic/XMLSchema
+    http://www.dellemc.com/sonic/XMLSchema/clish.xsd"
+    >
+    <VIEW name="enable-view">
+        <COMMAND
+            name="write"
+            help="Save config"
+            >
+            <PARAM
+                name="memory"
+                help="Save config"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                >
+            </PARAM>
+        <ACTION>
+            python $SONIC_CLI_ROOT/sonic-cli-cfg-mgmt.py rpc_sonic_config_mgmt_copy running-configuration startup-configuration
+        </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="copy"
+            help="Perform file copy operations"
+            ptype="SUBCOMMAND">
+                <PARAM name="src-copy-options"
+                       help="Copy source options"
+                       ptype="SUBCOMMAND"
+                       mode="switch">
+                       <PARAM name="copy_config_url"
+                              help="Copy from file(file://filepath)"
+                              ptype="FILE_TYPE">
+                              <PARAM name="running-configuration"
+                                     help="Copy to running-configuration"
+                                     mode="subcommand"
+                                     ptype="SUBCOMMAND">
+                                     <PARAM name="overwrite"
+                                            help="Overwrite running-configuration and restart core services."
+                                            optional="true"
+                                            mode="subcommand"
+                                            ptype="SUBCOMMAND">
+                                     </PARAM>
+                              </PARAM>
+                       </PARAM>
+                       <PARAM name="running-configuration"
+                              help="Copy running configuration"
+                              mode="subcommand"
+                              ptype="SUBCOMMAND">
+                              <PARAM name="filepath"
+                                     help="Copy to file(file://filepath)"
+                                     ptype="FILE_TYPE">
+                              </PARAM>
+                       </PARAM>
+                       <PARAM name="startup-configuration"
+                              help="Copy startup-configuration"
+                              mode="subcommand"
+                              ptype="SUBCOMMAND">
+                              <PARAM name="running-configuration"
+                                     help="Copy to running-configuration"
+                                     mode="subcommand"
+                                     ptype="SUBCOMMAND">
+                                     <PARAM name="overwrite"
+                                            help="Overwrite running-configuration and restart core services."
+                                            optional = "true"
+                                            mode="subcommand"
+                                            ptype="SUBCOMMAND">
+                                     </PARAM>
+                              </PARAM>
+                       </PARAM>
+                </PARAM>
+                <ACTION>
+                  if test "${src-copy-options}" = "copy_config_url"; then&#xA;
+                      python $SONIC_CLI_ROOT/sonic-cli-cfg-mgmt.py rpc_sonic_config_mgmt_copy ${copy_config_url} ${running-configuration} ${overwrite}&#xA;
+                  else&#xA;
+		              if test "${filepath}" = ""; then&#xA;
+                          python $SONIC_CLI_ROOT/sonic-cli-cfg-mgmt.py rpc_sonic_config_mgmt_copy ${src-copy-options} ${running-configuration} ${overwrite}&#xA;
+                      else&#xA;
+                          python $SONIC_CLI_ROOT/sonic-cli-cfg-mgmt.py rpc_sonic_config_mgmt_copy ${src-copy-options} ${filepath}&#xA;
+                      fi&#xA;
+                  fi&#xA;
+                </ACTION>
+          </COMMAND>                           
+    </VIEW>
+</CLISH_MODULE>
+
