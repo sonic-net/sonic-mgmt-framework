@@ -1,0 +1,42 @@
+module sonic-show-techsupport {
+	namespace "http://github.com/Azure/sonic-show-techsupport";
+	prefix sshwtchspt;
+    yang-version 1.1;
+
+	import ietf-yang-types {
+		prefix yang;
+	}
+
+	organization
+		"SONiC";
+
+	contact
+		"SONiC";
+
+	description
+		"SONiC TECH SUPPORT INFORMATION";
+
+	revision 2019-10-15 {
+		description
+			"Initial revision.";
+	}
+
+	rpc sonic-show-techsupport-info {
+        input {
+            leaf date {
+                type yang:date-and-time;
+                description
+                    "Date and time specification (in Linux 'date' format) of desired
+                    start point for collected log information";
+            }
+        }
+        output {
+            leaf output-filename {
+                type string;
+                description
+                    "Name of the host compressed tar file containing the collected
+                    technical support information";
+            }
+        }
+	}
+}
