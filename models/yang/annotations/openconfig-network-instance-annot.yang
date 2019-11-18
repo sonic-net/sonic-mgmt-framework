@@ -1840,7 +1840,7 @@ module openconfig-network-instance-annot {
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:attribute-unchanged/oc-bgp-ext:config/oc-bgp-ext:med {
       deviate add {
-        sonic-ext:field-name "unchanged_as_med";
+        sonic-ext:field-name "unchanged_med";
       }
     }
 
@@ -1858,7 +1858,7 @@ module openconfig-network-instance-annot {
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:attribute-unchanged/oc-bgp-ext:state/oc-bgp-ext:med {
       deviate add {
-        sonic-ext:field-name "unchanged_as_med";
+        sonic-ext:field-name "unchanged_med";
       }
     }
 
