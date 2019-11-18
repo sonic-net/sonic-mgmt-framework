@@ -617,8 +617,8 @@ func checkAndProcessLeafList(existingEntry db.Value, tblRw db.Value, opcode int,
 					delete(tblRw.Field, field)
 				}
 			} else if opcode == UPDATE {
-				exstLst = valueLst
-			}
+                                exstLst = valueLst
+                        }
 			if opcode == UPDATE {
 				tblRw.SetList(field, exstLst)
 			}

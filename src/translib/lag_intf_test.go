@@ -74,11 +74,11 @@ func Test_LagIntfOperations(t *testing.T) {
 	t.Run("Verify_PortChannel_MinLinks_Set", processGetRequest(minLinksGetUrl, minLinksResp, false))
 
 	// Set fallback
-	fallbackUrl := aggregationUrl + "/config/dell-intf-augments:fallback"
+	fallbackUrl := aggregationUrl + "/config/openconfig-interfaces-ext:fallback"
 	t.Run("Configure PortChannel Fallback", processSetRequest(fallbackUrl, fallbackJson, "PATCH", false))
 
 	// Get fallback mode
-	fallbackGetUrl := aggregationUrl + "/state/dell-intf-augments:fallback"
+	fallbackGetUrl := aggregationUrl + "/state/openconfig-interfaces-ext:fallback"
 	t.Run("Verify_portchannel_Fallback_Set", processGetRequest(fallbackGetUrl, fallbackResp, false))
 
 	// Set IP address
@@ -151,7 +151,7 @@ var adminJson string = "{\"openconfig-interfaces:admin-status\":\"DOWN\"}"
 var minLinksJson string = "{\"openconfig-if-aggregate:min-links\":1}"
 var minLinksResp string = "{\"min-links\":1}"
 
-var fallbackJson string = "{\"dell-intf-augments:fallback\":true}"
+var fallbackJson string = "{\"openconfig-interfaces-ext:fallback\":true}"
 var fallbackResp string = "{\"fallback\":true}"
 
 var ipJson string = "{\"openconfig-if-ip:config\":{\"ip\":\"11.1.1.1\",\"prefix-length\":24}}"
