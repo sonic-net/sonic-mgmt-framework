@@ -98,8 +98,8 @@ def run(func, args):
                 show_cli_output(args[1], api_response)
             else:
                 return
-        else:
-            print response.error_message()
+    else:
+        print response.error_message()
 
 if __name__ == '__main__':
     pipestr().write(sys.argv)

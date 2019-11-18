@@ -46,7 +46,7 @@ def invoke_api(func, args):
        return api.patch(path, body)
     elif func == 'delete_sonic_tam_sonic_tam_tam_device_table_tam_device_table_list_deviceid':
        path = cc.Path('/restconf/data/sonic-tam:sonic-tam/TAM_DEVICE_TABLE/TAM_DEVICE_TABLE_LIST={name}/deviceid', name=args[0])
-       return api.patch(path, body)
+       return api.delete(path, body)
     elif func == 'patch_list_sonic_tam_sonic_tam_tam_collector_table_tam_collector_table_list':
        path = cc.Path('/restconf/data/sonic-tam:sonic-tam/TAM_COLLECTOR_TABLE/TAM_COLLECTOR_TABLE_LIST')
        body = {
@@ -59,7 +59,7 @@ def invoke_api(func, args):
        return api.patch(path, body)
     elif func == 'delete_sonic_tam_sonic_tam_tam_collector_table_tam_collector_table_list':
        path = cc.Path('/restconf/data/sonic-tam:sonic-tam/TAM_COLLECTOR_TABLE/TAM_COLLECTOR_TABLE_LIST={name}', name=args[0])
-       return api.patch(path, body)
+       return api.delete(path, body)
     else:
        body = {}
 
@@ -82,7 +82,7 @@ def run(func, args):
                     api_response = None
 
             if api_response is None:
-                print("Failed")
+                print("api_response is None")
             elif func == 'get_sonic_tam_sonic_tam_tam_device_table':
                 show_cli_output(args[0], api_response)
             elif func == 'get_sonic_tam_sonic_tam_tam_collector_table':
@@ -91,8 +91,8 @@ def run(func, args):
                 show_cli_output(args[1], api_response)
             else:
                 return
-        else:
-            print response.error_message()
+    else:
+        print "invoke_api failed"
 
 if __name__ == '__main__':
 
