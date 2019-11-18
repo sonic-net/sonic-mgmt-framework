@@ -31,10 +31,6 @@ module openconfig-system-augments {
             type boolean;
             description "Indicating whether authentication failthrough should be enabled/disabled";
         }
-        leaf fallback {
-            type boolean;
-            description "Indicating whether authentication fallback should be enabled/disabled";
-        }
     }
 
     augment "/oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:servers/oc-sys:server/oc-sys:config" {
@@ -49,14 +45,6 @@ module openconfig-system-augments {
         leaf  timeout {
             type uint16;
             description "The server timeout";
-        }
-        leaf  tcp_port {
-            type inet:port-number;
-            description "The server port";
-        }
-        leaf  passkey {
-            type string;
-            description "server authentication passkey";
         }
     }
 

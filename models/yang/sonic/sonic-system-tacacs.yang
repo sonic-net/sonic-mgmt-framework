@@ -1,5 +1,5 @@
-module sonic-system {
-    namespace "http://github.com/Azure/sonic-system";
+module sonic-system-tacacs {
+    namespace "http://github.com/Azure/sonic-system-tacacs";
     prefix ssys;
 
     import ietf-inet-types {
@@ -10,7 +10,7 @@ module sonic-system {
         description "Initial revision.";
     }
 
-    container sonic-system {
+    container sonic-system-tacacs {
         container AAA {
             list AAA_LIST {
                 key "type";
@@ -25,9 +25,6 @@ module sonic-system {
                     type string;
                 }
                 leaf failthrough {
-                    type boolean;
-                }
-                leaf fallback {
                     type boolean;
                 }
             }

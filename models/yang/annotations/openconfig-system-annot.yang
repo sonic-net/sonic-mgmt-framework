@@ -286,12 +286,6 @@ module openconfig-system-annot {
       }
     }
 
-    deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:servers/oc-sys:server/oc-sys:config/oc-sys-aug:passkey {
-      deviate add {
-          sonic-ext:field-name "passkey";
-      }
-    }
-
     deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:servers/oc-sys:server/oc-sys:config/oc-sys-aug:priority {
       deviate add {
           sonic-ext:field-name "priority";
@@ -365,21 +359,24 @@ module openconfig-system-annot {
 
     deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:servers/oc-sys:server/oc-sys:tacacs/oc-sys:config {
       deviate add {
+          sonic-ext:table-name "TACPLUS_SERVER";
+          sonic-ext:key-transformer "server_set_key_xfmr";
       }
     }
 
     deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:servers/oc-sys:server/oc-sys:tacacs/oc-sys:config/oc-sys:secret-key {
       deviate add {
+          sonic-ext:field-name "passkey";
       }
     }
 
     deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:servers/oc-sys:server/oc-sys:tacacs/oc-sys:config/oc-sys:source-address {
-      deviate add {
-      }
+        deviate not-supported;
     }
 
     deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:servers/oc-sys:server/oc-sys:tacacs/oc-sys:config/oc-sys:port {
       deviate add {
+          sonic-ext:field-name "tcp_port";
       }
     }
 
