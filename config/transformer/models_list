@@ -2,6 +2,8 @@
 
 openconfig-acl.yang
 openconfig-acl-annot.yang
+openconfig-ztp.yang
+openconfig-ztp-annot.yang
 openconfig-network-instance.yang
 openconfig-bgp-ext.yang
 openconfig-network-instance-annot.yang

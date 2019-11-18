@@ -5,6 +5,9 @@ import (
     "strings"
     "strconv"
     "translib/ocbinds"
+    "translib/db"
+    "encoding/json"
+    log "github.com/golang/glog"
 )
 
 func init () {
@@ -12,6 +15,7 @@ func init () {
     XlateFuncBind("DbToYang_fdb_tbl_key_xfmr", DbToYang_fdb_tbl_key_xfmr)
     XlateFuncBind("YangToDb_entry_type_field_xfmr", YangToDb_entry_type_field_xfmr)
     XlateFuncBind("DbToYang_entry_type_field_xfmr", DbToYang_entry_type_field_xfmr)
+    XlateFuncBind("rpc_clear_fdb", rpc_clear_fdb)
 }
 
 const (
@@ -27,6 +31,24 @@ var FDB_ENTRY_TYPE_MAP = map[string]string{
 	strconv.FormatInt(int64(ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Fdb_MacTable_Entries_Entry_State_EntryType_DYNAMIC), 10): SONIC_ENTRY_TYPE_DYNAMIC,
 }
 
+var rpc_clear_fdb RpcCallpoint = func(body []byte, dbs [db.MaxDB]*db.DB) ([]byte, error) {
+	var err error
+	var  valLst [2]string
+	var data  []byte
+
+	valLst[0]= "ALL"
+	valLst[1] = "ALL"
+
+	data, err = json.Marshal(valLst)
+
+	if err != nil {
+		log.Error("Failed to  marshal input data; err=%v", err)
+		return nil, err
+	}
+
+	err = dbs[db.ApplDB].Publish("FLUSHFDBREQUEST",data)
+	return nil, err
+}
 
 var YangToDb_fdb_tbl_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (string, error) {
     var entry_key string
@@ -62,7 +84,6 @@ var DbToYang_fdb_tbl_key_xfmr KeyXfmrDbToYang = func(inParams XfmrParams) (map[s
 
     rmap["vlan"] = vlanId
     rmap["mac-address"] = macAddress
-
     return rmap, err
 }
 

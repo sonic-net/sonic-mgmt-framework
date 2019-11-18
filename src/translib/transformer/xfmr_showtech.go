@@ -19,41 +19,48 @@
 package transformer
 
 import (
-//	"bytes"
-//	"errors"
-//	"fmt"
-	"encoding/json"
-	"translib/tlerr"
-	"translib/db"
-	"github.com/golang/glog"
+    "encoding/json"
+    "translib/tlerr"
+    "translib/db"
+    "github.com/golang/glog"
 )
 
 func init() {
-	XlateFuncBind("rpc_sum_cb", rpc_sum_cb)
+    XlateFuncBind("rpc_showtech_cb", rpc_showtech_cb)
 }
 
-var rpc_sum_cb RpcCallpoint = func(body []byte, dbs [db.MaxDB]*db.DB) ([]byte, error) {
-	var err error
-	var operand struct {
-		Input struct {
-			Left int32 `json:"left"`
-			Right int32 `json:"right"`
-		} `json:"sonic-tests:input"`
-	}
+var rpc_showtech_cb RpcCallpoint = func(body []byte, dbs [db.MaxDB]*db.DB) ([]byte, error) {
+    var err error
+    var output string
+    var operand struct {
+        Input struct {
+        Date string `json:"date"`
+        } `json:"sonic-show-techsupport:input"`
+    }
 
-	err = json.Unmarshal(body, &operand)
-	if err != nil {
-		glog.Errorf("Failed to parse rpc input; err=%v", err)
-		return nil,tlerr.InvalidArgs("Invalid rpc input")
-	}
+    err = json.Unmarshal(body, &operand)
+        if err != nil {
+        glog.Errorf("Failed to parse rpc input; err=%v", err)
+        return nil,tlerr.InvalidArgs("Invalid rpc input")
+    }
 
-	var sum struct {
-		Output struct {
-			Result int32 `json:"result"`
-		} `json:"sonic-tests:output"`
-	}
+    var showtech struct {
+        Output struct {
+        Result string `json:"output-filename"`
+        } `json:"sonic-show-techsupport:output"`
+    }
 
-	sum.Output.Result = operand.Input.Left + operand.Input.Right
-	result, err := json.Marshal(&sum)
-	return result, err
+    host_output := hostQuery("showtech.info", operand.Input.Date)
+    if host_output.Err != nil {
+        glog.Errorf("Showtech host Query failed: err=%v", host_output.Err)
+        glog.Flush()
+        return nil, host_output.Err
+    }
+
+    output, _ = host_output.Body[1].(string)
+    showtech.Output.Result = output
+
+    result, err := json.Marshal(&showtech)
+
+    return result, nil
 }
