@@ -136,8 +136,14 @@ func mapFillDataUtil(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requ
 			p.Name = pathSlice[len(pathSlice)-1]
 			if len(p.Key) > 0 {
 				for ekey, ent := range p.Key {
+					// SNC-2126: check the occurrence of ":"
 					eslice := strings.Split(ent, ":")
-					p.Key[ekey] = eslice[len(eslice)-1]
+					if len(eslice) == 2 {
+						// TODO - exclude the prexix by checking enum type
+						p.Key[ekey] = eslice[len(eslice)-1]
+					} else {
+						p.Key[ekey] = ent
+					}
 				}
 			}
 		}
@@ -318,6 +324,7 @@ func dbMapDelete(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requestU
 		xpathPrefix, keyName, tableName := xpathKeyExtract(d, ygRoot, oper, uri, requestUri, subOpDataMap, txCache)
 		log.Infof("Delete req: uri(\"%v\"), key(\"%v\"), xpathPrefix(\"%v\"), tableName(\"%v\").", uri, keyName, xpathPrefix, tableName)
 		spec, ok := xYangSpecMap[xpathPrefix]
+		specYangType := yangTypeGet(spec.yangEntry)
 		if ok {
 			if len(spec.xfmrFunc) > 0 {
 				var dbs [db.MaxDB]*db.DB
@@ -333,10 +340,18 @@ func dbMapDelete(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requestU
 				result[tableName] = make(map[string]db.Value)
 				if len(keyName) > 0 {
 					result[tableName][keyName] = db.Value{Field: make(map[string]string)}
-					if spec.yangEntry != nil && spec.yangEntry.Node.Statement().Keyword == "leaf" {
-						xpath, _ := XfmrRemoveXPATHPredicates(uri)
+					xpath := xpathPrefix
+					uriItemList := strings.Split(strings.TrimSuffix(uri, "/"), "/")
+					uriItemListLen := len(uriItemList)
+					var terminalNode, luri string
+					if uriItemListLen > 0 {
+						terminalNode = uriItemList[uriItemListLen-1]
+						luri = strings.Join(uriItemList[:uriItemListLen-1], "/") //strip off the leaf/leaf-list for mapFillDataUtil takes uri without it
+
+					}
+					if specYangType == YANG_LEAF {
 						if len(xYangSpecMap[xpath].defVal) > 0 {
-							mapFillDataUtil(d, ygRoot, oper, uri, requestUri, xpath, tableName, keyName, result, subOpDataMap, spec.fieldName, xYangSpecMap[xpath].defVal, txCache)
+							mapFillDataUtil(d, ygRoot, oper, luri, requestUri, xpath, tableName, keyName, result, subOpDataMap, spec.fieldName, xYangSpecMap[xpath].defVal, txCache)
 							if len(subOpDataMap) > 0 && subOpDataMap[UPDATE] != nil {
 								subOperMap := subOpDataMap[UPDATE]
 								mapCopy((*subOperMap)[db.ConfigDB], result)
@@ -349,6 +364,15 @@ func dbMapDelete(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requestU
 						} else {
 							result[tableName][keyName].Field[spec.fieldName] = ""
 						}
+					} else if specYangType == YANG_LEAF_LIST {
+						var fieldVal []interface{}
+						if strings.Contains(terminalNode, "[") {
+							terminalNodeData := strings.TrimSuffix(strings.SplitN(terminalNode, "[", 2)[1], "]")
+							terminalNodeDataLst := strings.SplitN(terminalNodeData, "=", 2)
+							terminalNodeVal := terminalNodeDataLst[1]
+							fieldVal = append(fieldVal, terminalNodeVal)
+						}
+						mapFillDataUtil(d, ygRoot, oper, luri, requestUri, xpath, tableName, keyName, result, subOpDataMap, spec.yangEntry.Name, fieldVal, txCache)
 					}
 				}
 			} else if len(spec.childTable) > 0 {
@@ -546,8 +570,14 @@ func yangNodeForUriGet(uri string, ygRoot *ygot.GoStruct) (interface{}, error) {
 		p.Name = pathSlice[len(pathSlice)-1]
 		if len(p.Key) > 0 {
 			for ekey, ent := range p.Key {
+				// SNC-2126: check the occurrence of ":"
 				eslice := strings.Split(ent, ":")
-				p.Key[ekey] = eslice[len(eslice)-1]
+				if len(eslice) == 2 {
+					// TODO - exclude the prexix by checking enum type
+					p.Key[ekey] = eslice[len(eslice)-1]
+				} else {
+					p.Key[ekey] = ent
+				}
 			}
 		}
 	}
