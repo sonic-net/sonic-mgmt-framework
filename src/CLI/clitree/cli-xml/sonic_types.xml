@@ -140,18 +140,11 @@ limitations under the License.
         />
     <!--=======================================================-->
     <PTYPE
-<<<<<<< HEAD
         name="RANGE_1_128"
         method="integer"
         pattern="1..128"
         help=""
         />
-=======
-	name="RANGE_1_128"
-	method="integer"
-	pattern="1..128"
-	help=""
-    />
     <PTYPE
     name="RANGE_1_4095"
     method="integer"
@@ -159,7 +152,6 @@ limitations under the License.
     help=""
     />
 
->>>>>>> origin/broadcom_sonic_share
     <!--=======================================================-->
     <PTYPE
         name="IPADDR_NN"
@@ -581,22 +573,18 @@ limitations under the License.
         help=""
         />
     <!--=======================================================-->
-<<<<<<< HEAD
     <PTYPE
         name="FILE_TYPE"
         pattern="file:\/\/[^|]+"
         help="file:"
         />
     <!--========================================================-->    
-=======
-    <!--=======================================================-->
     <PTYPE
         name="MCLAG_KA_INTERVAL_RANGE"
         method="integer"
         pattern="1..60"
         help="Keepalive Interval"
         />
-    <!--=======================================================-->
     <!--=======================================================-->
     <PTYPE
         name="MCLAG_SESSION_TIMEOUT_RANGE"
@@ -606,5 +594,4 @@ limitations under the License.
         />
     <!--=======================================================-->
 
->>>>>>> origin/broadcom_sonic_share
 </CLISH_MODULE>
