@@ -1,13 +1,42 @@
-{{'-----------------------------------------------------------'}}
-{% for key,value in json_output.items() %}
-{% if key == 'Available' %}
-{{key.ljust(20)}}:
-{% for img in value %}
-{{img}}
-{% endfor %}
-{% else %}
-{{key.ljust(20)}}:{{value}}
+{% set available = [] %}
+{% for key, val in json_output.items() %}
+{% if key == 'sonic-image-management:sonic-image-management' %}
+{% for k1, v1 in val.items() %}
+{% if 'IMAGE_GLOBAL' in k1 %}
+{% for k2, v2 in v1.items() %}
+{% if 'IMAGE_GLOBAL_LIST' in k2 %}
+{% for item in v2 %}
+{% for k3, v3 in item.items() %}
+{% if 'current' in k3 %}
+{{"Current: "+ v3 }}
+{% endif %}
+{% if 'next' in k3 %}
+{{"Next: "+ v3 }}
 {% endif %}
 {% endfor %}
-{{'-----------------------------------------------------------'}}
+{% endfor %}
+{% endif %}
+{% endfor %}
+{% endif %}
+{% if 'IMAGE_TABLE' in k1 %}
+{% for k2, v2 in v1.items() %}
+{% if 'IMAGE_TABLE_LIST' in k2 %}
+{% for item in v2 %}
+{% if 'image' in item.keys() %}
+{% if available.append(item['image']) %}{%endif %}
+{% endif %}
+{% endfor %}
+{% endif %}
+{% endfor %}
+{% endif %}
+{% endfor %}
+{% endif %}
+{% endfor %}
 
+
+{{ "Available: " }}
+{% if available %}
+{% for item in available -%}
+{{item}}
+{% endfor %}
+{% endif %}

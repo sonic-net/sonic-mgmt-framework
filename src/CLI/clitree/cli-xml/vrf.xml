@@ -37,21 +37,69 @@ limitations under the License.
 
     <VIEW name="configure-view">
     <!-- vrf configuration commands -->
-    <COMMAND name="ip vrf" help="VRF instance configuration"/>
-      <COMMAND name="ip vrf management" help="management VRF configuration" mode="subcommand" ptype="SUBCOMMAND">
-        <ACTION> 
-          python $SONIC_CLI_ROOT/sonic-cli-vrf.py patch_openconfig_network_instance_network_instances_network_instance "mgmt" "L3VRF" "True"&#xA; 
-        </ACTION> 
-      </COMMAND>
+    <COMMAND name="ip vrf management" help="management VRF configuration" mode="subcommand" ptype="SUBCOMMAND">
+      <ACTION> 
+        python $SONIC_CLI_ROOT/sonic-cli-vrf.py patch_openconfig_network_instance_network_instances_network_instance "mgmt" "L3VRF" "True"&#xA; 
+      </ACTION> 
+    </COMMAND>
     
+    <COMMAND
+      name="ip vrf"
+      help="VRF instance configuration"
+      mode="subcommand"
+      ptype="SUBCOMMAND"
+      >
+      <PARAM
+        name="vrf-name"
+        help="Name of VRF (Max size 32, prefixed by Vrf_)"
+        ptype="STRING_32"
+        >
+      </PARAM>
+      <ACTION>
+        python $SONIC_CLI_ROOT/sonic-cli-vrf.py patch_openconfig_network_instance_network_instances_network_instance ${vrf-name} "L3VRF" "True"&#xA;
+      </ACTION>
+    </COMMAND>
+
     <!-- no vrf commands -->
-    <COMMAND name="no ip vrf" help="Delete VRF instance"/>
-      <COMMAND name="no ip vrf management" help="Delete management VRF" mode="subcommand" ptype="SUBCOMMAND">
-        <ACTION> 
-          python $SONIC_CLI_ROOT/sonic-cli-vrf.py delete_openconfig_network_instance_network_instances_network_instance "mgmt" "L3VRF" "False"&#xA;  
-        </ACTION>
-      </COMMAND>
+    <COMMAND name="no ip vrf management" help="Delete management VRF" mode="subcommand" ptype="SUBCOMMAND">
+      <ACTION> 
+        python $SONIC_CLI_ROOT/sonic-cli-vrf.py delete_openconfig_network_instance_network_instances_network_instance "mgmt" "L3VRF" "False"&#xA;  
+      </ACTION>
+    </COMMAND>
+
+    <COMMAND
+      name="no ip vrf"
+      help="Delete VRF instance"
+      mode="subcommand"
+      ptype="SUBCOMMAND"
+      >
+      <PARAM
+        name="vrf-name"
+        help="Name of VRF (Max size 32, prefixed by Vrf_)"
+        ptype="STRING_32"
+        >
+      </PARAM>
+      <ACTION>
+        python $SONIC_CLI_ROOT/sonic-cli-vrf.py delete_openconfig_network_instance_network_instances_network_instance ${vrf-name} "L3VRF" "False"&#xA;
+      </ACTION>
+    </COMMAND>
 
     </VIEW>
+
+<!--=======================================================-->
+<!--                Config Interface PHY-MODE              -->
+<!--=======================================================-->
+
+<VIEW name="configure-if-view">
+    <MACRO name="BIND-INTF-TO-VRF" arg=""></MACRO>
+</VIEW>
+
+<VIEW name="configure-lag-view">
+    <MACRO name="BIND-INTF-TO-VRF" arg=""></MACRO>
+</VIEW>
+
+<VIEW name="configure-vlan-view">
+    <MACRO name="BIND-INTF-TO-VRF" arg=""></MACRO>
+</VIEW>
 
 </CLISH_MODULE>
