@@ -20,24 +20,32 @@ Below steps need to be done to enable CVL logging.
 
 2. Change the logging flags from "false" to "true" as below:
 
+```
 	{
 		"TRACE_CACHE": "true",
 		"TRACE_LIBYANG": "true",
-		"TRACE_YPARSER": "true",
+		"TRACE_YPARSER": "true", 
 		"TRACE_CREATE": "true",
 		"TRACE_UPDATE": "true",
 		"TRACE_DELETE": "true",
 		"TRACE_SEMANTIC": "true",
 		"TRACE_SYNTAX": "true",
+		"TRACE_ONERROR": "true",
 		"__comment1__": "Set LOGTOSTDER to 'true' to log on standard error",
-		"LOGTOSTDERR": "true",
-		"__comment2__": "Display log upto INFO level",
-		"STDERRTHRESHOLD": "INFO",
-		"__comment3__": "Display log upto INFO level 8",
-		"VERBOSITY": "8",
+		"LOGTOSTDERR": "false",
+		"__comment2__": "Log messages to standard error at or above this severity level",
+		"STDERRTHRESHOLD": "ERROR",
+		"__comment3__": "Log to /tmp/cvl.log file",
+		"LOG_TO_FILE": "true",
+		"__comment4__": "Limit log file size in bytes, 0 means no limit, default 10MB",
+		"LOG_FILE_SIZE": "10485760",
+		"__comment5__": "Set verbosity level(1 to 8) for verbose logs",
+		"VERBOSITY": "0",
 		"SKIP_VALIDATION": "false",
 		"SKIP_SEMANTIC_VALIDATION": "false"
 	}
+```
+
 3. Below environment variables need to be set at the end in /usr/bin/rest-server.sh in mgmt-framework docker. 
 
    export CVL_DEBUG=1

@@ -7,6 +7,18 @@
                         http://www.dellemc.com/sonic/XMLSchema/clish.xsd">
 <!--=========================================================================-->
 
+    <PTYPE
+        name = "UDLD_MSG_TIME_TYPE"
+        method = "integer"
+        pattern = "1..30"
+        help = ""
+    />
+    <PTYPE
+        name = "UDLD_MULTIPLIER_TYPE"
+        method = "integer"
+        pattern = "3..10"
+        help = ""
+    />
     <VIEW name="enable-view">
         <COMMAND name = "show udld" help = "Show UDLD information" />
 
@@ -14,7 +26,7 @@
         <COMMAND name = "show udld global"
             help = "Show UDLD global level information">
             <ACTION>
-                python $SONIC_CLI_ROOT/sonic-cli-udld.py udldGlobalShowHandler&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-udld.py get_sonic_udld_sonic_udld_udld_udld_list show_udld_global.j2&#xA;
             </ACTION>
         </COMMAND>
 
@@ -22,7 +34,7 @@
         <COMMAND name = "show udld neighbors"
             help = "Show UDLD neighbors information">
             <ACTION>
-                python $SONIC_CLI_ROOT/sonic-cli-udld.py udldNeighborShowHandler&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-udld.py get_list_sonic_udld_sonic_udld_udld_port_neigh_table_udld_port_neigh_table_list show_udld_neighbor.j2&#xA;
             </ACTION>
         </COMMAND>
 
@@ -35,17 +47,13 @@
                 ptype = "STRING">
             </PARAM>
             <ACTION>
-                if test "${interface-name}" = ""; then&#xA;
-                    python $SONIC_CLI_ROOT/sonic-cli-udld.py udldInterfaceShowHandler&#xA;
-                else&#xA;
-                    python $SONIC_CLI_ROOT/sonic-cli-udld.py udldInterfaceShowHandler ${interface-name}&#xA;
-                fi&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-udld.py get_sonic_udld_sonic_udld_udld_port_neigh_table_udld_port_neigh_table_list show_udld_interface.j2 ${interface-name}&#xA;
             </ACTION>
         </COMMAND>
 
         <COMMAND name = "show udld statistics" help = "Show UDLD statistics">
             <ACTION>
-                python $SONIC_CLI_ROOT/sonic-cli-udld.py udldInterfaceCountersShowHandler&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-udld.py get_list_sonic_udld_sonic_udld_udld_port_table_udld_port_table_list show_udld_stats.j2&#xA;
             </ACTION>
         </COMMAND>
         <!-- show udld counters interface <ifname> -->
@@ -57,7 +65,7 @@
                 ptype = "STRING">
             </PARAM>
             <ACTION>
-                python $SONIC_CLI_ROOT/sonic-cli-udld.py udldInterfaceCountersShowHandler ${interface-name}&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-udld.py get_sonic_udld_sonic_udld_udld_port_table_udld_port_table_list show_udld_stats.j2 ${interface-name}&#xA;
             </ACTION>
         </COMMAND>
 
@@ -123,25 +131,25 @@
         <COMMAND name = "udld enable"
             help = "Enable UDLD at global level">
             <ACTION>
-                python $SONIC_CLI_ROOT/sonic-cli-udld.py udldGlobalEnableHandler 1&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-udld.py post_list_sonic_udld_sonic_udld_udld_udld_list&#xA;
             </ACTION>
         </COMMAND>
         <COMMAND name = "no udld enable"
             help = "Disable UDLD at global level">
             <ACTION>
-                python $SONIC_CLI_ROOT/sonic-cli-udld.py udldGlobalEnableHandler 0&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-udld.py delete_sonic_udld_sonic_udld_udld&#xA;
             </ACTION>
         </COMMAND>
-        <COMMAND name = "udld normal"
-            help = "Enable normal UDLD mode at global level">
+        <COMMAND name = "udld aggressive"
+            help = "Enable aggressive UDLD mode at global level">
             <ACTION>
-                python $SONIC_CLI_ROOT/sonic-cli-udld.py udldGlobalNormalEnableHandler 1&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-udld.py patch_sonic_udld_sonic_udld_udld_udld_list_aggressive true&#xA;
             </ACTION>
         </COMMAND>
-        <COMMAND name = "no udld normal"
-            help = "Disable normal UDLD mode at global level">
+        <COMMAND name = "no udld aggressive"
+            help = "Disable aggressive UDLD mode at global level">
             <ACTION>
-                python $SONIC_CLI_ROOT/sonic-cli-udld.py udldGlobalNormalEnableHandler 0&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-udld.py patch_sonic_udld_sonic_udld_udld_udld_list_aggressive false&#xA;
             </ACTION>
         </COMMAND>
         <COMMAND name = "udld message-time"
@@ -149,16 +157,16 @@
             <PARAM
                 name="msg-time"
                 help="Message time value (Range 1 - 30 seconds)"
-                ptype="UINT"
+                ptype="UDLD_MSG_TIME_TYPE"
                 >
             </PARAM>
             <ACTION>
-                python $SONIC_CLI_ROOT/sonic-cli-udld.py udldMsgTimeHandler ${msg-time}&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-udld.py patch_sonic_udld_sonic_udld_udld_udld_list_msg_time ${msg-time}&#xA;
             </ACTION>
         </COMMAND>
         <COMMAND name = "no udld message-time" help = "Reset UDLD Message time">
             <ACTION>
-                python $SONIC_CLI_ROOT/sonic-cli-udld.py udldMsgTimeHandler 1&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-udld.py patch_sonic_udld_sonic_udld_udld_udld_list_msg_time 0&#xA;
             </ACTION>
         </COMMAND>
 
@@ -167,16 +175,16 @@
             <PARAM
                 name="multiplier"
                 help="Multiplier value (Range 3 - 10)"
-                ptype="UINT"
+                ptype="UDLD_MULTIPLIER_TYPE"
                 >
             </PARAM>
             <ACTION>
-                python $SONIC_CLI_ROOT/sonic-cli-udld.py udldMultiplierHandler ${multiplier}&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-udld.py patch_sonic_udld_sonic_udld_udld_udld_list_multiplier ${multiplier}&#xA;
             </ACTION>
         </COMMAND>
         <COMMAND name = "no udld multiplier" help = "Reset UDLD Multiplier">
             <ACTION>
-                python $SONIC_CLI_ROOT/sonic-cli-udld.py udldMultiplierHandler 3&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-udld.py patch_sonic_udld_sonic_udld_udld_udld_list_multiplier 0&#xA;
             </ACTION>
         </COMMAND>
     </VIEW>
@@ -187,27 +195,27 @@
         <COMMAND name="udld" help="UDLD interface configuration subcommands"/>
         <COMMAND name="no udld" help="UDLD interface configuration subcommands"/>
         <COMMAND name = "udld enable"
-            help = "Enable aggresive mode UDLD at interface level">
+            help = "Enable UDLD at interface level">
             <ACTION>
-                python $SONIC_CLI_ROOT/sonic-cli-udld.py udldInterfaceEnableHandler ${iface} 1&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-udld.py post_list_sonic_udld_sonic_udld_udld_port_udld_port_list ${iface}&#xA;
             </ACTION>
         </COMMAND>
         <COMMAND name = "no udld enable"
-            help = "Disable aggresive mode UDLD at interface level">
+            help = "Disable UDLD at interface level">
             <ACTION>
-                python $SONIC_CLI_ROOT/sonic-cli-udld.py udldInterfaceEnableHandler ${iface} 0&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-udld.py delete_sonic_udld_sonic_udld_udld_port_udld_port_list ${iface}&#xA;
             </ACTION>
         </COMMAND>
-        <COMMAND name = "udld normal"
-            help = "Enable normal mode UDLD at interface level">
+        <COMMAND name = "udld aggressive"
+            help = "Enable aggressive mode UDLD at interface level">
             <ACTION>
-                python $SONIC_CLI_ROOT/sonic-cli-udld.py udldInterfaceNormalEnableHandler ${iface} 1&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-udld.py patch_sonic_udld_sonic_udld_udld_port_udld_port_list_aggressive true ${iface}&#xA;
             </ACTION>
         </COMMAND>
-        <COMMAND name = "no udld normal"
-            help = "Disable normal mode UDLD at interface level">
+        <COMMAND name = "no udld aggressive"
+            help = "Disable aggressive mode UDLD at interface level">
             <ACTION>
-                python $SONIC_CLI_ROOT/sonic-cli-udld.py udldInterfaceNormalEnableHandler ${iface} 0&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-udld.py patch_sonic_udld_sonic_udld_udld_port_udld_port_list_aggressive false ${iface}&#xA;
             </ACTION>
         </COMMAND>
     </VIEW>
