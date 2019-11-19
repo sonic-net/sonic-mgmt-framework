@@ -10,9 +10,9 @@ Flags:  D - Down
 {{'----------------------------------------------------------------------------------------------------------------------------'}}
 {% for dict in json_output %}
 {% if dict["name"] == 'lacp' %}
-{% if vars.update({'protocol':'DYNAMIC'}) %}{% endif %}
+{% if vars.update({'protocol':'LACP'}) %}{% endif %}
 {% else %}
-{% if vars.update({'protocol':'STATIC'}) %}{% endif %}
+{% if vars.update({'protocol':'NONE'}) %}{% endif %}
 {% endif %}
 {% if dict["oper_status"] == 'down' %}
 {% if vars.update({'oper_state':'D'}) %}{% endif %}

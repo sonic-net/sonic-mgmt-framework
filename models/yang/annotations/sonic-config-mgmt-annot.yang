@@ -1,0 +1,17 @@
+module sonic-config-mgmt-annot {
+
+    yang-version "1.1";
+
+    namespace "http://openconfig.net/yang/annotation/cmgmt-annot";
+    prefix "cmgmt-annot"; 
+
+    import sonic-extensions { prefix sonic-ext; }
+    import sonic-config-mgmt { prefix cmgmt; }
+
+    deviation /cmgmt:copy {
+        deviate add {
+            sonic-ext:rpc-callback "rpc_config_copy";
+        }
+    }
+}
+

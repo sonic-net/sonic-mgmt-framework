@@ -48,7 +48,6 @@ module sonic-vlan-interface {
                 }
 
                 leaf ip_prefix {
-                    mandatory true;
                     type inet:ip-prefix;
 
                 }

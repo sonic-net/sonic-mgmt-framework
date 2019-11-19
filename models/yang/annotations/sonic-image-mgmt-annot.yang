@@ -1,0 +1,36 @@
+module sonic-image-mgmt-annot {
+
+    yang-version "1.1";
+
+    namespace "http://openconfig.net/yang/annotation/image-mgmt-annot";
+    prefix "imgmt-annot"; 
+
+    import sonic-extensions { prefix sonic-ext; }
+    import sonic-image-management { prefix imgmt; }
+
+    deviation /imgmt:image-install {
+        deviate add {
+            sonic-ext:rpc-callback "rpc_image_install";
+        }
+    }
+    deviation /imgmt:image-remove {
+        deviate add {
+            sonic-ext:rpc-callback "rpc_image_remove";
+        }
+    }
+    deviation /imgmt:image-default{
+        deviate add {
+            sonic-ext:rpc-callback "rpc_image_default";
+        }
+    } 
+    deviation /imgmt:sonic-image-management/imgmt:IMAGE_GLOBAL/imgmt:IMAGE_GLOBAL_LIST {
+      deviate add {
+        sonic-ext:db-name "STATE_DB";
+      }
+    }
+    deviation /imgmt:sonic-image-management/imgmt:IMAGE_TABLE/imgmt:IMAGE_TABLE_LIST {
+      deviate add {
+        sonic-ext:db-name "STATE_DB";
+      }
+    }    
+}

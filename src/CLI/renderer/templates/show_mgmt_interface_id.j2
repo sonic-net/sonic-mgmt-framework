@@ -11,6 +11,7 @@
 {% set vars = {'mode4': "not-set"} %}
 {% set vars = {'mode6': "not-set"} %}
 {% set vars = {'speed': ""} %}
+{% set vars = {'autoneg': ""} %}
 {% set vars = {'in_pkts':""} %}
 {% set vars = {'in_octets':""} %}
 {% set vars = {'in_multi':""} %}
@@ -32,6 +33,7 @@
     {% for key in interface %}
       {% if "ethernet" in key %}
         {% if vars.update({'speed':interface[key]["state"]["port-speed"]|replace("openconfig-if-ethernet:SPEED_", "")}) %}{% endif %}
+        {% if vars.update({'autoneg':interface[key]["state"]["auto-negotiate"]}) %}{% endif %}
       {% endif %}
       {% if "state" in key %}
         {% if vars.update({'name':interface[key]["name"]}) %}{% endif %}
@@ -91,7 +93,7 @@
     {% endfor %}
 {% if vars.name %}
 {{ vars.name }} is {{ vars.admin_state|lower() }}, line protocol is {{vars.oper_state|lower() }}
-Hardware is Eth
+Hardware is MGMT
 
 {% if vars.description %}
 Description: {{ vars.description }}
@@ -105,7 +107,7 @@ Mode of {{ vars.ipv4 }} address assignment: {{ vars.mode4 }}
 {% endif %}
 Mode of {{ vars.ipv6 }} address assignment: {{ vars.mode6 }}
 IP MTU {{ vars.mtu }} bytes
-LineSpeed {{ vars.speed }}, Auto-negotiation off
+LineSpeed {{ vars.speed }}, Auto-negotiation {{ vars.autoneg }}
 Input statistics:
         {{vars.in_pkts}} packets, {{vars.in_octets}} octets
         {{vars.in_multi}} Multicasts, {{vars.in_broad}} Broadcasts, {{vars.in_uni}} Unicasts
