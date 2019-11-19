@@ -93,12 +93,62 @@ func DbValToInt(dbFldVal string, base int, size int, isUint bool) (interface{}, 
 	return res, err
 }
 
+func getLeafrefRefdYangType(yngTerminalNdDtType yang.TypeKind, fldXpath string) (yang.TypeKind) {
+	if yngTerminalNdDtType == yang.Yleafref {
+		path := xDbSpecMap[fldXpath].dbEntry.Type.Path
+		if strings.Contains(path, "..") {
+			// Refernced path within same yang file
+			var entry *yang.Entry = xDbSpecMap[fldXpath].dbEntry
+			pathList := strings.Split(path, "/")
+			for _, x := range pathList {
+				if x == ".." {
+					entry = entry.Parent
+				} else {
+					entry = entry.Dir[x]
+				}
+			}
+			if entry != nil {
+				yngTerminalNdDtType = entry.Type.Kind
+			}
+		} else {
+			// Referenced path in a different yang file
+			xpath, err := XfmrRemoveXPATHPredicates(path)
+			if  err != nil {
+				log.Warningf("error in XfmrRemoveXPATHPredicates %v", xpath)
+				return yngTerminalNdDtType
+			}
+			// Form xpath based on sonic or non sonic yang path
+			if strings.Contains(xpath, "sonic") {
+				pathList := strings.Split(xpath, "/")
+				xpath = pathList[SONIC_TABLE_INDEX]+ "/" + pathList[len(pathList)-1]
+				if _, ok := xDbSpecMap[xpath]; ok {
+					yngTerminalNdDtType = xDbSpecMap[xpath].dbEntry.Type.Kind
+				}
+
+			} else {
+				xpath = replacePrefixWithModuleName(xpath)
+				if _, ok := xYangSpecMap[xpath]; ok {
+					yngTerminalNdDtType = xYangSpecMap[xpath].dbEntry.Type.Kind
+				}
+			}
+
+		}
+		log.Infof("yangLeaf datatype %v", yngTerminalNdDtType)
+	}
+	return yngTerminalNdDtType
+}
+
 func DbToYangType(yngTerminalNdDtType yang.TypeKind, fldXpath string, dbFldVal string) (interface{}, interface{}, error) {
 	log.Infof("Received FieldXpath %v, yngTerminalNdDtType %v and Db field value %v to be converted to yang data-type.", fldXpath, yngTerminalNdDtType, dbFldVal)
 	var res interface{}
 	var resPtr interface{}
 	var err error
 	const INTBASE = 10
+
+	if yngTerminalNdDtType == yang.Yleafref {
+		yngTerminalNdDtType = getLeafrefRefdYangType(yngTerminalNdDtType, fldXpath)
+	}
+
 	switch yngTerminalNdDtType {
         case yang.Ynone:
                 log.Warning("Yang node data-type is non base yang type")
@@ -134,7 +184,7 @@ func DbToYangType(yngTerminalNdDtType yang.TypeKind, fldXpath string, dbFldVal s
 		}
 		var resBool bool = res.(bool)
 		resPtr = &resBool
-        case yang.Ybinary, yang.Ydecimal64, yang.Yenum, yang.Yidentityref, yang.Yint64, yang.Yuint64, yang.Ystring, yang.Yunion,yang.Yleafref:
+        case yang.Ybinary, yang.Ydecimal64, yang.Yenum, yang.Yidentityref, yang.Yint64, yang.Yuint64, yang.Ystring, yang.Yunion, yang.Yleafref:
                 // TODO - handle the union type
                 // Make sure to encode as string, expected by util_types.go: ytypes.yangToJSONType
                 log.Info("Yenum/Ystring/Yunion(having all members as strings) type for yangXpath ", fldXpath)
