@@ -339,6 +339,13 @@ limitations under the License.
         />
     <!--=======================================================-->
     <PTYPE
+        name="MGMT_INTF_SPEED"
+        method="select"
+        pattern="10(10MBPS) 100(100MBPS) 1000(1GIGE) auto(1GIGE)"
+        help="Port speed"
+        />
+    <!--=======================================================-->
+    <PTYPE
         name="INTF_DUPLEX"
         method="select"
         pattern="full(full) half(half) auto(auto)"
@@ -579,14 +586,12 @@ limitations under the License.
         help=""
         />
     <!--=======================================================-->
-    <!--=======================================================-->
     <PTYPE
         name="MCLAG_KA_INTERVAL_RANGE"
         method="integer"
         pattern="1..60"
         help="Keepalive Interval"
         />
-    <!--=======================================================-->
     <!--=======================================================-->
     <PTYPE
         name="MCLAG_SESSION_TIMEOUT_RANGE"
@@ -595,5 +600,10 @@ limitations under the License.
         help=""
         />
     <!--=======================================================-->
-
+    <PTYPE
+        name="FILE_TYPE"
+        pattern="file:\/\/[^|]+"
+        help="file:"
+        />
+    <!--========================================================-->    
 </CLISH_MODULE>
