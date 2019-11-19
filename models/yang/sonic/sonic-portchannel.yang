@@ -32,11 +32,17 @@ module sonic-portchannel {
                 key "name";
 
                 leaf name {
-                    type string;
+                    type string {
+                        pattern "PortChannel(0|[1-9]{0,3})" {
+                            error-message "Invalid PortChannel name pattern";
+                            error-app-tag portchannel-name-invalid;
+                        }
+                    }
                 }
 
                 leaf admin_status {
                     type scommon:admin-status;
+                    default up;
                 }
 
                 leaf mtu {

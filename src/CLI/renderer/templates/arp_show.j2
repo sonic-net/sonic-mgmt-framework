@@ -1,0 +1,6 @@
+{{'-------------------------------------------------------------------------------------------------'}}
+{{'Address'.ljust(40)}}{{'Hardware address'.ljust(20)}}{{'Interface '.ljust(20)}}{{'Egress Interface'}}
+{{'-------------------------------------------------------------------------------------------------'}}
+{% for neigh_list in json_output %}
+{{(neigh_list['ipAddr'] | string).ljust(40)}}{{(neigh_list['macAddr'] | string).ljust(20)}}{{(neigh_list['intfName'] | string).ljust(20)}}{{(neigh_list['extIntfName'] | string).ljust(20)}}
+{% endfor %}

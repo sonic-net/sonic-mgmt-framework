@@ -1,35 +1,38 @@
 {{'========================================'}}
 {{'ZTP'}}
 {{'========================================'}}
-{% if 'ZTP Admin Mode' in json_output %}
-{{'ZTP Admin Mode'.ljust(20)}}:{{json_output['ZTP Admin Mode']}}
+{% if 'admin_mode' in json_output %}
+{{'ZTP Admin Mode'.ljust(20)}}:{{json_output['admin_mode']}}
 {% endif %}
-{% if 'ZTP Service' in json_output %}
-{{'ZTP Service'.ljust(20)}}:{{json_output['ZTP Service']}}
+{% if 'service' in json_output %}
+{{'ZTP Service'.ljust(20)}}:{{json_output['service']}}
 {% endif %}
-{% if 'ZTP Status' in json_output %}
-{{'ZTP Status'.ljust(20)}}:{{json_output['ZTP Status']}}
+{% if 'status' in json_output %}
+{{'ZTP Status'.ljust(20)}}:{{json_output['status']}}
 {% endif %}
-{% if 'ZTP Source' in json_output %}
-{{'ZTP Source'.ljust(20)}}:{{json_output['ZTP Source']}}
+{% if 'source' in json_output %}
+{{'ZTP Source'.ljust(20)}}:{{json_output['source']}}
 {% endif %}
-{% if 'Runtime' in json_output %}
-{{'Runtime'.ljust(20)}}:{{json_output['Runtime']}}
+{% if 'runtime' in json_output %}
+{{'Runtime'.ljust(20)}}:{{json_output['runtime']}}
 {% endif %}
-{% if 'Timestamp' in json_output %}
-{{'Timestamp'.ljust(20)}}:{{json_output['Timestamp']}}
+{% if 'timestamp' in json_output %}
+{{'Timestamp'.ljust(20)}}:{{json_output['timestamp']}}
 {% endif %}
-{% if 'ZTP JSON Version' in json_output %}
-{{'ZTP JSON Version'.ljust(20)}}:{{json_output['ZTP JSON Version']}}
+{% if 'jsonversion' in json_output %}
+{{'JSON Version'.ljust(20)}}:{{json_output['jsonversion']}}
 {% endif %}
-{% if 'activity-string' in json_output %}
-{{json_output['activity']}}
+{% if 'error' in json_output %}
+{{'Error'.ljust(20)}}:{{json_output['error']}}
 {% endif %}
-{% if 'config-list' in json_output %}
-{% set c_dict = json_output['config-list'] %}
-{% for key,val in c_dict.items() %}
+{% if 'activity_string' in json_output %}
+{{json_output['activity_string']}}
+{% endif %}
+{% if 'CONFIG_SECTION_LIST' in json_output %}
+{% set c_dict = json_output['CONFIG_SECTION_LIST'] %}
+{% for val in c_dict %}
 {{'---------------------------------------------'}}
-{{key.ljust(20)}}
+{{val['sectionname'].ljust(20)}}
 {{'---------------------------------------------'}}
 {% for k,v in val.items() %}
 {{k.ljust(20)}}:{{v}}
