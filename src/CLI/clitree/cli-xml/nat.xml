@@ -453,7 +453,101 @@ limitations under the License.
          </PARAM>
          <ACTION builtin="clish_nop"></ACTION>
      </COMMAND>
+   </VIEW>
 
+
+     <VIEW name="enable-view">
+    <!--show nat -->
+    <COMMAND
+         name="show nat"
+         help="Show NAT info"
+         >
+         <PARAM
+             name="nat-subcommands"
+             help="NAT subcommands"
+             mode="switch"
+             ptype="SUBCOMMAND"
+             >
+             <!-- show nat translations -->
+             <PARAM
+                 name="translations"
+                 help="NAT Translations"
+                 ptype="SUBCOMMAND"
+                 mode="subcommand"
+                 >
+                 <PARAM
+                     name="count"
+                     help="NAT Translations Count"
+                     ptype="SUBCOMMAND"
+                     mode="subcommand"
+                     optional="true"
+                     >
+                 </PARAM>
+             </PARAM>
+
+             <!-- show nat statistics -->
+             <PARAM
+                 name="statistics"
+                 help="NAT Statistics"
+                 ptype="SUBCOMMAND"
+                 mode="subcommand"
+                 >
+             </PARAM>
+
+              <!-- show nat config -->
+             <PARAM
+                 name="config"
+                 help="NAT Configurations"
+                 ptype="SUBCOMMAND"
+                 mode="subcommand"
+                 >
+                 <PARAM
+                     name="config-subcommands"
+                     help="NAT Config subcommands"
+                     mode="switch"
+                     ptype="SUBCOMMAND"
+                     optional="true"
+                     >
+                     <PARAM
+                         name="static"
+                         help="NAT Static config"
+                         ptype="SUBCOMMAND"
+                         mode="subcommand"
+                         >
+                     </PARAM>
+                     <PARAM
+                         name="pool"
+                         help="NAT pool config"
+                         ptype="SUBCOMMAND"
+                         mode="subcommand"
+                         >
+                     </PARAM>
+                     <PARAM
+                         name="bindings"
+                         help="NAT Static bindings"
+                         ptype="SUBCOMMAND"
+                         mode="subcommand"
+                         >
+                     </PARAM>
+                     <PARAM
+                         name="globalvalues"
+                         help="NAT Static globals"
+                         ptype="SUBCOMMAND"
+                         mode="subcommand"
+                         >
+                     </PARAM>
+                     <PARAM
+                         name="zones"
+                         help="NAT zones"
+                         ptype="SUBCOMMAND"
+                         mode="subcommand"
+                         >
+                     </PARAM>
+                 </PARAM>
+             </PARAM>
+         </PARAM>
+         <ACTION builtin="clish_nop"></ACTION>
+     </COMMAND>
 
    </VIEW>
 </CLISH_MODULE>
