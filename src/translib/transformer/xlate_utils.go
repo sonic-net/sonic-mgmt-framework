@@ -494,6 +494,20 @@ func XfmrRemoveXPATHPredicates(xpath string) (string, error) {
 	return path, nil
 }
 
+func replacePrefixWithModuleName(xpath string) (string) {
+	//Input xpath is after removing the xpath Predicates
+	var moduleNm string
+	if _, ok := xYangSpecMap[xpath]; ok {
+		moduleNm = xYangSpecMap[xpath].dbEntry.Prefix.Parent.NName()
+		pathList := strings.Split(xpath, ":")
+		if len(moduleNm) > 0 && len(pathList) == 2 {
+			xpath = "/" + moduleNm + ":" + pathList[1]
+		}
+	}
+	return xpath
+}
+
+
 /* Extract key vars, create db key and xpath */
 func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, requestUri string, subOpDataMap map[int]*RedisDbMap, txCache interface{}) (string, string, string) {
 	 keyStr    := ""
@@ -520,8 +534,17 @@ func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, req
 	 for _, k := range strings.Split(path, "/") {
 		 curPathWithKey += k
 		 yangXpath, _ := XfmrRemoveXPATHPredicates(curPathWithKey)
-		 _, ok := xYangSpecMap[yangXpath]
+		 xpathInfo, ok := xYangSpecMap[yangXpath]
 		 if ok {
+			 yangType := yangTypeGet(xpathInfo.yangEntry)
+			 /* when deleting a specific element from leaf-list query uri is of the form
+			    /prefix-path/leafList-field-name[leafList-field-name=value].
+			    Here the syntax is like a list-key instance enclosed in square 
+			    brackets .So avoid list key instance like processing for such a case
+			 */
+			 if yangType == YANG_LEAF_LIST {
+				 break
+			 }
 			 if strings.Contains(k, "[") {
 				 if len(keyStr) > 0 {
 					 keyStr += keySeparator
@@ -578,11 +601,19 @@ func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, req
  }
 
  func sonicXpathKeyExtract(path string) (string, string, string) {
-	 xpath, keyStr, tableName := "", "", ""
+	 xpath, keyStr, tableName, fldNm := "", "", "", ""
 	 var err error
+	 lpath := path
 	 xpath, err = XfmrRemoveXPATHPredicates(path)
 	 if err != nil {
 		 return xpath, keyStr, tableName
+	 }
+	 if xpath != "" {
+		 fldPth := strings.Split(xpath, "/")
+		 if len(fldPth) > SONIC_FIELD_INDEX {
+			 fldNm = fldPth[SONIC_FIELD_INDEX]
+			 log.Info("Field Name : ", fldNm)
+		 }
 	 }
 	 rgp := regexp.MustCompile(`\[([^\[\]]*)\]`)
 	 pathsubStr := strings.Split(path , "/")
@@ -603,7 +634,16 @@ func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, req
 		 if dbInfo.keyName != nil {
 			 keyStr = *dbInfo.keyName
 		 } else {
-			 for i, kname := range rgp.FindAllString(path, -1) {
+			 /* chomp off the field portion to avoid processing specific item delete in leaf-list
+			    eg. /sonic-acl:sonic-acl/ACL_TABLE/ACL_TABLE_LIST[aclname=MyACL2_ACL_IPV4]/ports[ports=Ethernet12]
+			 */
+			 if fldNm != "" {
+				 chompFld := strings.Split(path, "/")
+				 lpath = strings.Join(chompFld[:SONIC_FIELD_INDEX], "/")
+				 log.Info("path after removing the field portion ", lpath)
+
+			 }
+			 for i, kname := range rgp.FindAllString(lpath, -1) {
 				 if i > 0 {
 					 keyStr += dbOpts.KeySeparator
 				 }
@@ -657,7 +697,7 @@ func unmarshalJsonToDbData(schema *yang.Entry, fieldName string, value interface
         switch ykind {
         case yang.Ystring, yang.Ydecimal64, yang.Yint64, yang.Yuint64:
         case yang.Yenum, yang.Ybool, yang.Ybinary, yang.Yidentityref, yang.Yunion:
-                data = value.(string)
+                data = fmt.Sprintf("%v", value)
 
         case yang.Yint8, yang.Yint16, yang.Yint32:
         case yang.Yuint8, yang.Yuint16, yang.Yuint32:
@@ -668,7 +708,7 @@ func unmarshalJsonToDbData(schema *yang.Entry, fieldName string, value interface
                 data = fmt.Sprintf("%v", pv)
         default:
                 // TODO - bitset, empty
-                data = value.(string)
+                data = fmt.Sprintf("%v", value)
         }
 
         return data, nil
