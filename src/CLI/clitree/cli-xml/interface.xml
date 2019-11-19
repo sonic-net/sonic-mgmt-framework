@@ -122,7 +122,27 @@ limitations under the License.
        fi&#xA;
    </ACTION>
    </COMMAND>
-
+   <COMMAND
+       name="show NeighbourSuppressStatus"
+       help="Show arp and nd suppression status"
+       ptype="SUBCOMMAND"
+       mode="subcommand"
+       >
+       <PARAM
+           name="id"
+           help="Vlan identifier"
+           ptype="VLAN_ID"
+           optional="true"
+           >
+       </PARAM>
+   <ACTION>
+       if test "${id}" = ""; then&#xA;
+          python $SONIC_CLI_ROOT/sonic-cli-vlan.py get_sonic_vxlan_sonic_vxlan_suppress_vlan_neigh "" show_neigh_suppress.j2 ${__full_line}&#xA;
+       else&#xA;
+          python $SONIC_CLI_ROOT/sonic-cli-vlan.py get_sonic_vxlan_sonic_vxlan_suppress_vlan_neigh Vlan${id} show_neigh_suppress.j2 ${__full_line}&#xA;
+       fi&#xA;
+   </ACTION>
+   </COMMAND>
    <COMMAND
        name="show PortChannel"
        help="LAG status and configuration"
