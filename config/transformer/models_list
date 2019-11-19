@@ -9,6 +9,5 @@ openconfig-network-instance-annot.yang
 sonic-vxlan.yang
 ietf-ptp.yang
 ietf-ptp-annot.yang
-sonic-mclag.yang
 openconfig-system.yang
 openconfig-system-annot.yang

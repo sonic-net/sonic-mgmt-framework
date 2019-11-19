@@ -1,0 +1,61 @@
+{% if json_output %}
+
+{% set vars = {'domain_id': ""} %}
+
+{% set number_of_mclag_ifaces = 0 %}
+
+{% if "domain_info" is in json_output %}
+{% set domain_info = json_output["domain_info"] %}
+{% set number_of_mclag_ifaces = json_output["domain_info"]["number_of_mclag_ifaces"] %}
+{% endif %}
+
+{% if "mclag_iface_info" in json_output %}
+{% set mclag_iface_info = json_output["mclag_iface_info"] %}
+{% endif %}
+
+{{ ' ' }}
+
+{% if domain_info -%}
+
+{% if vars.update({'domain_id':domain_info["domain_id"]}) %}{% endif %}
+{% if vars.update({'role':domain_info["role"]}) %}{% endif %}
+{% if vars.update({'session_status':domain_info["oper_status"]}) %}{% endif %}
+{% if vars.update({'peer_link_status':domain_info["peer_link_status"]}) %}{% endif %}
+{% if vars.update({'source_ip':domain_info["source_ip"]}) %}{% endif %}
+{% if vars.update({'peer_ip':domain_info["peer_ip"]}) %}{% endif %}
+{% if vars.update({'peer_link':domain_info["peer_link"]}) %}{% endif %}
+{% if vars.update({'keepalive_interval':domain_info["keepalive_interval"]}) %} {% endif %}
+{% if vars.update({'session_timeout':domain_info["session_timeout"]}) %}{% endif %}
+{% if vars.update({'system_mac':domain_info["system_mac"]}) %}{% endif %}
+
+
+{{'Domain ID'.ljust(20)}} : {{ vars.domain_id }}
+{{'Role'.ljust(20)}} : {{ vars.role}}
+{{'Session Status'.ljust(20)}} : {{ vars.session_status}}
+{{'Peer Link Status'.ljust(20)}} : {{ vars.peer_link_status}}
+{{'Source Address'.ljust(20)}} : {{ vars.source_ip}}
+{{'Peer Address'.ljust(20)}} : {{ vars.peer_ip}}
+{{'Peer Link'.ljust(20)}} : {{ vars.peer_link}}
+{{'Keepalive Interval'.ljust(20)}} : {{ vars.keepalive_interval}} {{'secs'}}
+{{'Session Timeout'.ljust(20)}} : {{ vars.session_timeout}} {{'secs'}}
+{{'System Mac'.ljust(20)}} : {{ vars.system_mac}}
+
+{{ ' \n ' }}
+Number of MLAG Interfaces:{{ number_of_mclag_ifaces }}
+
+{% if mclag_iface_info -%}
+{{'-----------------------------------------------------------'}}
+{{'MLAG Interface'.ljust(20)}} {{'Local/Remote Status'.ljust(20)}}
+{{'-----------------------------------------------------------'}}
+{% for key in mclag_iface_info %}
+{% if vars.update({'if_name':mclag_iface_info[key]["if_name"]}) %}{% endif %}
+{% if vars.update({'local_if_status':mclag_iface_info[key]["local_if_status"]}) %}{% endif %}
+{% if vars.update({'remote_if_status':mclag_iface_info[key]["remote_if_status"]}) %}{% endif %}
+
+{{(vars.if_name).ljust(25)}}{{vars.local_if_status}}{{'/'}}{{vars.remote_if_status}}
+{% endfor %}
+{% endif %}
+
+{% endif %}
+
+{% endif %}

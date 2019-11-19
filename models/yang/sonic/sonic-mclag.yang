@@ -3,13 +3,21 @@ module sonic-mclag {
 	prefix smclag;
 	yang-version 1.1;
 
-	import ietf-yang-types {
-		prefix yang;
-	}
+    import ietf-yang-types {
+        prefix yang;
+    }
 
 	import ietf-inet-types {
 		prefix inet;
 	}
+
+    import sonic-common {
+        prefix scommon;
+    }
+
+    import sonic-extension {
+        prefix sonic-ext;
+    }
 
     import sonic-portchannel {
         prefix spc;
@@ -38,12 +46,7 @@ module sonic-mclag {
                 max-elements 1;
 
                 leaf domain_id {
-                    type uint16 {
-                        range "1..4095" {
-                            error-message "MCLAG Domain ID out of range";
-                            error-app-tag domain_id-invalid;
-                        }
-                    }
+                    type string;
                 }
 
                 leaf source_ip {
@@ -63,7 +66,6 @@ module sonic-mclag {
                         }
                     }
                     default 1;
-                    
                 }
                 leaf session_timeout {
                     type uint16 {
@@ -104,7 +106,76 @@ module sonic-mclag {
                 leaf if_type {
                     type string;
                 }
+
+                
             }
         }
+
+        //stateDB MCLAG Table
+        container MCLAG_TABLE { 
+            sonic-ext:db-name "STATE_DB"; 
+            sonic-ext:key-delim ":"; 
+
+            config false;
+            description "state db mclag domain table";
+
+            list MCLAG_TABLE_LIST { 
+                key "domain_id";
+
+                leaf domain_id {
+                    type leafref {
+                        path "../../../MCLAG_DOMAIN/MCLAG_DOMAIN_LIST/domain_id";
+                    }
+                }
+
+                leaf oper_status {
+                    type scommon:oper-status;
+                }
+
+                leaf role {
+                    type enumeration {
+						enum active;
+						enum standby;
+					}
+                }
+
+                leaf system_mac {
+                    type yang:mac-address;
+                    description
+                     "System MAC Address used for ICCPD";
+                }
+            }
+        }
+
+        //state MCLAG Remote interface Table
+        container MCLAG_REMOTE_INTF_TABLE { 
+
+            sonic-ext:db-name "STATE_DB"; 
+            sonic-ext:key-delim ":"; 
+
+            config false;
+            description "state db remote interface table";
+
+            list MCLAG_REMOTE_INTF_TABLE_LIST { 
+                key "domain_id if_name";
+
+                leaf domain_id {
+                    type leafref {
+                        path "../../../MCLAG_DOMAIN/MCLAG_DOMAIN_LIST/domain_id";
+                    }
+                }
+
+                leaf if_name {
+                    type leafref {
+                        path "/spc:sonic-portchannel/spc:PORTCHANNEL/spc:PORTCHANNEL_LIST/spc:name";
+                    }
+                }
+
+                leaf oper_status {
+                    type scommon:oper-status;
+                }
+            }
+        }
+
     }
 }
