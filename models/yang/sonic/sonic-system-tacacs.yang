@@ -11,32 +11,10 @@ module sonic-system-tacacs {
     }
 
     container sonic-system-tacacs {
-        container AAA {
-            list AAA_LIST {
-                key "type";
-
-                leaf type {
-                    type enumeration {
-                        enum authentication;
-                    }
-                }
-
-                leaf-list login {
-                    type string;
-                }
-                leaf failthrough {
-                    type boolean;
-                }
-            }
-        }
-
 
         container TACPLUS_SERVER {
             list TACPLUS_SERVER_LIST {
                 key "ipaddress";
-                leaf name {
-                    type string;
-                }
 
                 leaf ipaddress {
                     type inet:ip-address;
@@ -45,20 +23,29 @@ module sonic-system-tacacs {
                 leaf priority {
                     type uint8;
                 }
+
                 leaf tcp_port {
-                    type uint16;
+                    type inet:port-number;
                 }
+
                 leaf timeout {
-                    type uint16;
+                    type uint8;
                 }
-                leaf passkey {
-                    type string;
-                }
+
                 leaf auth_type {
                     type enumeration {
                         enum pap;
                         enum chap;
                         enum mschap;
+                    }
+                }
+
+                leaf passkey {
+                    type string {
+                        length "1..32";
+                        pattern "[0-9A-Za-z]*" {
+                            error-message "TACACS shared secret valid chars: [0-9A-Za-z]";
+                        }
                     }
                 }
             }
@@ -67,12 +54,15 @@ module sonic-system-tacacs {
 
         container TACPLUS {
             list TACPLUS_LIST {
+
                 key "type";
+
                 leaf type {
                     type enumeration {
                         enum global;
                     }
                 }
+
                 leaf auth_type {
                     type enumeration {
                         enum pap;
@@ -80,15 +70,24 @@ module sonic-system-tacacs {
                         enum mschap;
                     }
                 }
+
                 leaf timeout {
-                    type uint16;
+                    type uint8;
                 }
+
                 leaf passkey {
-                    type string;
+                    type string {
+                        length "1..32";
+                        pattern "[0-9A-Za-z]*" {
+                            error-message "TACACS shared secret valid chars: [0-9A-Za-z]";
+                        }
+                    }
                 }
+
                 leaf src_ip {
                     type inet:ip-address;
                 }
+
             }
         }
     }

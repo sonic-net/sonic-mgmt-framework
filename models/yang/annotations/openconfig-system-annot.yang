@@ -270,7 +270,6 @@ module openconfig-system-annot {
 
     deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:servers/oc-sys:server/oc-sys:config/oc-sys:name {
       deviate add {
-          sonic-ext:field-name "name";
       }
     }
 
