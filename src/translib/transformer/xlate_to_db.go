@@ -435,7 +435,9 @@ func sonicYangReqToDbMapDelete(xpathPrefix string, tableName string, keyName str
             dbInfo := xDbSpecMap[xpathPrefix]
             if dbInfo.fieldType == "container" {
                 for dir, _ := range dbInfo.dbEntry.Dir {
-                    result[dir] = make(map[string]db.Value)
+                    if dbInfo.dbEntry.Dir[dir].Config != yang.TSFalse {
+                       result[dir] = make(map[string]db.Value)
+                    }
                 }
             }
         }
