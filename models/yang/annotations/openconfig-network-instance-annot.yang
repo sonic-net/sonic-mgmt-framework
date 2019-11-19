@@ -2,7 +2,7 @@ module openconfig-network-instance-annot {
 
     yang-version "1";
 
-    namespace "http://openconfig.net/yang/annotation";
+    namespace "http://openconfig.net/yang/annotation/openconfig-network-instance-annot";
     prefix "oc-netinst-annot";
 
     import openconfig-network-instance { prefix oc-netinst; }
@@ -27,6 +27,115 @@ module openconfig-network-instance-annot {
     import openconfig-segment-routing { prefix oc-sr; }
     import openconfig-aft { prefix oc-aft; }
     import sonic-extensions { prefix sonic-ext; }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance {
+      deviate add {
+        sonic-ext:table-transformer "network_instance_table_name_xfmr";
+        sonic-ext:key-transformer "network_instance_table_key_xfmr";
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:name {
+      deviate add {
+          sonic-ext:field-transformer "network_instance_name_field_xfmr";
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:config/oc-netinst:name {
+      deviate add {
+        sonic-ext:field-transformer "network_instance_name_field_xfmr";
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:config/oc-netinst:type {
+      deviate add {
+        sonic-ext:field-transformer "network_instance_type_field_xfmr";
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:config/oc-netinst:enabled {
+      deviate add {
+        sonic-ext:field-transformer "network_instance_enabled_field_xfmr";
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:config/oc-netinst:mtu {
+      deviate add {
+        sonic-ext:field-transformer "network_instance_mtu_field_xfmr";
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:config/oc-netinst:enabled-address-families {
+      deviate add {
+        sonic-ext:field-transformer "network_instance_enabled_addr_family_field_xfmr";
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:config/oc-netinst:description {
+      deviate add {
+        sonic-ext:field-transformer "network_instance_description_field_xfmr";
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:config/oc-netinst:router-id {
+      deviate add {
+        sonic-ext:field-transformer "network_instance_router_id_field_xfmr";
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:config/oc-netinst:route-distinguisher {
+      deviate add {
+        sonic-ext:field-transformer "network_instance_route_distinguisher_field_xfmr";
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:state/oc-netinst:name {
+      deviate add {
+        sonic-ext:field-transformer "network_instance_name_field_xfmr";
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:state/oc-netinst:type {
+      deviate add {
+        sonic-ext:field-transformer "network_instance_type_field_xfmr";
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:state/oc-netinst:enabled-address-families {
+      deviate add {
+        sonic-ext:field-transformer "network_instance_enabled_addr_fam_field_xfmr";
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:state/oc-netinst:mtu {
+      deviate add {
+        sonic-ext:field-transformer "network_instance_mtu_field_xfmr";
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:state/oc-netinst:enabled {
+      deviate add {
+        sonic-ext:field-transformer "network_instance_enabled_field_xfmr";
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:state/oc-netinst:description {
+      deviate add {
+        sonic-ext:field-transformer "network_instance_description_field_xfmr";
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:state/oc-netinst:router-id {
+      deviate add {
+        sonic-ext:field-transformer "network_instance_router_id_field_xfmr";
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:state/oc-netinst:route-distinguisher {
+      deviate add {
+        sonic-ext:field-transformer "network_instance_route_distinguisher_field_xfmr";
+      }
+    }
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:fdb/oc-netinst:mac-table/oc-netinst:entries {
       deviate add {
