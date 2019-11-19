@@ -1,0 +1,73 @@
+module openconfig-nat {
+
+  yang-version "1";
+
+  // namespace
+  namespace "http://openconfig.net/yang/nat";
+
+  prefix "oc-nat";
+
+  // import some basic types
+  import openconfig-inet-types { prefix oc-inet; }
+  import openconfig-yang-types { prefix oc-yang; }
+  import openconfig-types { prefix oc-types; }
+  import openconfig-extensions { prefix oc-ext; }
+
+  // meta
+  organization "OpenConfig working group";
+    
+  contact
+    "OpenConfig working group
+    netopenconfig@googlegroups.com";
+
+  description
+    " ";
+
+  revision "2019-11-15" {
+    description
+      "Initial draft version";
+    reference "0.0.1";
+  }
+
+  // OpenConfig specific extensions for module metadata.
+  oc-ext:regexp-posix;
+  oc-ext:catalog-organization "openconfig";
+  oc-ext:origin "openconfig";
+
+  // extension statements
+
+  // feature statements
+
+  // identity statements
+
+  
+  grouping nat-top {
+    description
+      "Top level nat data containers";
+
+    container nat {
+      description
+        "Enclosing container for nat-related configuration and
+        operational state data";
+
+      container config {
+        description "Global configuration data for the nat";
+
+        uses nat-global-config;
+
+      }
+
+      container state {
+        config false;
+        description "Global operational state data for the nat";
+
+        uses nat-global-config;
+        uses nat-global-state;
+      }
+    }
+  }
+
+  // data definition statements
+
+  uses nat-top;
+}

@@ -24,10 +24,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"strings"
-
 	"translib"
-
 	"github.com/golang/glog"
 	"github.com/gorilla/mux"
 )
@@ -178,12 +177,27 @@ func getPathForTranslib(r *http.Request) string {
 	rc, _ := GetContext(r)
 
 	for k, v := range vars {
+		v, err = url.PathUnescape(v)
+		if err != nil {
+			glog.Warningf("Failed to unescape path var \"%s\". err=%v", v, err)
+			v = vars[k]
+		}
+
 		restStyle := fmt.Sprintf("{%v}", k)
-		gnmiStyle := fmt.Sprintf("[%v=%v]", rc.PMap.Get(k), v)
+		gnmiStyle := fmt.Sprintf("[%v=%v]", rc.PMap.Get(k), escapeKeyValue(v))
 		path = strings.Replace(path, restStyle, gnmiStyle, 1)
 	}
 
 	return path
+}
+
+// escapeKeyValue function escapes a path key's value as per gNMI path
+// conventions -- prefixes '\' to ']' and '\'
+func escapeKeyValue(val string) string {
+	val = strings.Replace(val, "\\", "\\\\", -1)
+	val = strings.Replace(val, "]", "\\]", -1)
+
+	return val
 }
 
 // trimRestconfPrefix removes "/restconf/data" prefix from the path.
@@ -286,3 +300,4 @@ func hostMetadataHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/xrd+xml")
 	w.Write(data.Bytes())
 }
+
