@@ -1,0 +1,36 @@
+module sonic-udld-annot {
+
+    yang-version "1.1";
+
+    namespace "http://openconfig.net/yang/annotation/udld-annot";
+    prefix "udld-annot";
+
+    import sonic-extensions { prefix sonic-ext; }
+    import sonic-udld { prefix udld; }
+
+
+    deviation /udld:sonic-udld/udld:UDLD/udld:UDLD_LIST {
+        deviate add {
+            sonic-ext:table-name "UDLD";
+            sonic-ext:key-transformer "udld_global_key_xfmr";
+        }
+    }
+
+    deviation /udld:sonic-udld/udld:UDLD_GLOBAL_TABLE/udld:UDLD_GLOBAL_TABLE_LIST {
+        deviate add {
+            sonic-ext:db-name "APPL_DB";
+        }
+    }
+
+    deviation /udld:sonic-udld/udld:UDLD_PORT_TABLE/udld:UDLD_PORT_TABLE_LIST {
+        deviate add {
+            sonic-ext:db-name "APPL_DB";
+        }
+    }
+
+    deviation /udld:sonic-udld/udld:UDLD_PORT_NEIGH_TABLE/udld:UDLD_PORT_NEIGH_TABLE_LIST {
+        deviate add {
+            sonic-ext:db-name "APPL_DB";
+        }
+    }
+}

@@ -46,3 +46,4 @@ schema-tree: $(out_ext)
 clean:
 	@echo "Removing files ..."
 	rm -rf *.yin *.tree
+	rm -rf platform

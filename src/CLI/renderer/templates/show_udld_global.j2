@@ -1,0 +1,19 @@
+{% if json_output -%}
+{% if json_output.__len__() > 0 and json_output[0].__len__() > 1 %}
+{{' '}}
+{{'UDLD Global Information'}}
+{% set udld_info = json_output[0] %}
+{% if udld_info['admin_enable'] == True %}
+{{'%-20s'|format("  Admin State")}} : UDLD Enabled
+{%else %}
+{{'%-20s'|format("  Admin State")}} : UDLD Disabled
+{%endif%}
+{% if udld_info['aggressive'] == True %}
+{{'%-20s'|format("  Mode")}} : Aggressive
+{%else %}
+{{'%-20s'|format("  Mode")}} : Normal
+{%endif%}
+{{'%-20s'|format("  UDLD Message Time")}} : {{udld_info['msg_time']}} seconds
+{{'%-20s'|format("  UDLD Multiplier")}} : {{udld_info['multiplier']}}
+{%endif%}
+{%endif%}

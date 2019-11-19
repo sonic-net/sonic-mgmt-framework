@@ -28,7 +28,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
-	"syscall"
+	//"syscall"
 	"testing"
 	"runtime"
 	. "cvl/internal/util"
@@ -45,6 +45,19 @@ type testEditCfgData struct {
 var rclient *redis.Client
 var port_map map[string]interface{}
 var filehandle  *os.File
+
+var loadDeviceDataMap bool
+var deviceDataMap = map[string]interface{} {
+	"DEVICE_METADATA" : map[string]interface{} {
+		"localhost": map[string] interface{} {
+			"hwsku": "Quanta-IX8-54x",
+			"hostname": "sonic",
+			"platform": "x86_64-quanta_ix8_54x-r0",
+			"mac": "4c:76:25:f4:70:82",
+			"deployment_id": "1",
+		},
+	},
+}
 
 /* Dependent port channel configuration. */
 var depDataMap = map[string]interface{} {
@@ -221,6 +234,13 @@ func prepareDb() {
 		fmt.Printf("read file %v err: %v", fileName, err)
 	}
 
+	//Load device data map on which application of deviation files depends
+	dm, err:= rclient.Keys("DEVICE_METADATA|localhost").Result()
+	if (err != nil) || (len(dm) == 0) {
+		loadConfigDB(rclient, deviceDataMap)
+		loadDeviceDataMap = true
+	}
+
 	port_map = loadConfig("", PortsMapByte)
 
 	portKeys, err:= rclient.Keys("PORT|*").Result()
@@ -293,6 +313,10 @@ func TestMain(m *testing.M) {
 
 	unloadConfigDB(rclient, port_map)
 	unloadConfigDB(rclient, depDataMap)
+	if (loadDeviceDataMap == true) {
+		unloadConfigDB(rclient, deviceDataMap)
+	}
+
 	cvl.Finish()
 	rclient.Close()
 	rclient.FlushDB()
@@ -740,6 +764,7 @@ func TestValidateEditConfig_Create_Syntax_Valid_FieldValue(t *testing.T) {
 				"IP_PROTOCOL":       "103",
 				"DST_IP":            "20.2.2.2/32",
 				"L4_DST_PORT_RANGE": "9000-12000",
+				"IP_TYPE":	"IPV4",
 			},
 		},
 	}
@@ -2867,7 +2892,7 @@ func TestBadSchema(t *testing.T) {
 }
 */
 
-
+/*
 func TestServicability_Debug_Trace(t *testing.T) {
 
 	cvl.Debug(false)
@@ -2927,7 +2952,8 @@ func TestServicability_Debug_Trace(t *testing.T) {
 		p.Signal(syscall.SIGUSR2)
 	}
 	exec.Command("/bin/sh",  "-c", "/bin/mv conf/cvl_cfg.json.orig conf/cvl_cfg.json").Output()
-}
+	p.Signal(syscall.SIGUSR2)
+}*/
 
 // EditConfig(Create) with chained leafref from redis
 func TestValidateEditConfig_Delete_Create_Same_Entry_Positive(t *testing.T) {
@@ -3197,7 +3223,6 @@ func TestValidateEditConfig_Create_Syntax_DependentData_PositivePortChannelIfNam
 }
 
 func TestValidateEditConfig_Create_Syntax_DependentData_NegativePortChannelEthernet(t *testing.T) {
-
 	cfgData := []cvl.CVLEditConfigData{
 		cvl.CVLEditConfigData{
 			cvl.VALIDATE_ALL,
@@ -3526,6 +3551,47 @@ func TestGetDepTables(t *testing.T) {
 	cvl.ValidationSessClose(cvSess)
 }
 
+
+func TestGetDepDataForDelete(t *testing.T) {
+	depDataMap := map[string]interface{} {
+		"VLAN_MEMBER" : map[string]interface{} {
+			"Vlan21|Ethernet7": map[string] interface{} {
+				"tagging_mode":   "tagged",
+			},
+			"Vlan22|Ethernet7": map[string] interface{} {
+				"tagging_mode":   "tagged",
+			},
+		},
+		"PORTCHANNEL_MEMBER" : map[string]interface{} {
+			"Ch47|Ethernet7": map[string] interface{} {
+				"NULL": "NULL",
+			},
+		},
+		"ACL_TABLE" : map[string]interface{} {
+			"TestACL1": map[string] interface{} {
+				"stage": "INGRESS",
+				"type": "L3",
+				"ports@": "Ethernet7,Ethernet9",
+			},
+		},
+	}
+
+	loadConfigDB(rclient, depDataMap)
+
+        cvSess, _ := cvl.ValidationSessOpen()
+
+	depKeys, depKeysMod := cvSess.GetDepDataForDelete("PORT|Ethernet7")
+
+
+        cvl.ValidationSessClose(cvSess)
+
+        if (len(depKeys) == 0) || (len(depKeysMod) == 0) {
+                t.Errorf("GetDepDataForDelete() failed")
+        }
+
+	unloadConfigDB(rclient, depDataMap)
+}
+
 func TestMaxElements_All_Entries_In_Request(t *testing.T) {
         cvSess, _ := cvl.ValidationSessOpen()
 
@@ -3533,13 +3599,9 @@ func TestMaxElements_All_Entries_In_Request(t *testing.T) {
                 cvl.CVLEditConfigData{
                         cvl.VALIDATE_ALL,
                         cvl.OP_CREATE,
-                        "DEVICE_METADATA|localhost",
+                        "STP|GLOBAL",
 			map[string]string{
-				"hwsku": "Force10-S6100",
-				"hostname": "sonic-s6100-01",
-				"platform": "x86_64-dell_s6100_c2538-r0",
-				"mac": "4c:76:25:f4:70:82",
-				"deployment_id": "1",
+				"mode": "pvst",
 			},
                 },
         }
@@ -3557,13 +3619,9 @@ func TestMaxElements_All_Entries_In_Request(t *testing.T) {
                 cvl.CVLEditConfigData{
                         cvl.VALIDATE_ALL,
                         cvl.OP_CREATE,
-                        "DEVICE_METADATA|localhost1",
+                        "STP|GLOBAL1",
 			map[string]string{
-				"hwsku": "Force10-S6101",
-				"hostname": "sonic-s6100-02",
-				"platform": "x86_64-dell_s6100_c2538-r0",
-				"mac": "4c:76:25:f4:70:83",
-				"deployment_id": "2",
+				"mode": "mstp",
 			},
                 },
         }
@@ -3582,13 +3640,9 @@ func TestMaxElements_All_Entries_In_Request(t *testing.T) {
 
 func TestMaxElements_Entries_In_Redis(t *testing.T) {
 	depDataMap := map[string]interface{} {
-		"DEVICE_METADATA" : map[string]interface{} {
-			"localhost": map[string] interface{} {
-				"hwsku": "Force10-S6100",
-				"hostname": "sonic-s6100-01",
-				"platform": "x86_64-dell_s6100_c2538-r0",
-				"mac": "4c:76:25:f4:70:82",
-				"deployment_id": "1",
+		"STP": map[string]interface{}{
+			"GLOBAL": map[string]interface{}{
+				"mode": "pvst",
 			},
 		},
 	}
@@ -3601,13 +3655,9 @@ func TestMaxElements_Entries_In_Redis(t *testing.T) {
                 cvl.CVLEditConfigData{
                         cvl.VALIDATE_ALL,
                         cvl.OP_CREATE,
-                        "DEVICE_METADATA|localhost1",
+                        "STP|GLOBAL1",
 			map[string]string{
-				"hwsku": "Force10-S6101",
-				"hostname": "sonic-s6100-02",
-				"platform": "x86_64-dell_s6100_c2538-r0",
-				"mac": "4c:76:25:f4:70:83",
-				"deployment_id": "2",
+				"mode": "mstp",
 			},
                 },
         }
@@ -3633,9 +3683,9 @@ func TestValidateEditConfig_Two_Create_Requests_Positive(t *testing.T) {
 		cvl.CVLEditConfigData {
 			cvl.VALIDATE_ALL,
 			cvl.OP_CREATE,
-			"VLAN|Vlan1",
+			"VLAN|Vlan21",
 			map[string]string {
-				"vlanid": "1",
+				"vlanid": "21",
 			},
 		},
 	}
@@ -3652,22 +3702,22 @@ func TestValidateEditConfig_Two_Create_Requests_Positive(t *testing.T) {
 		cvl.CVLEditConfigData {
 			cvl.VALIDATE_NONE,
 			cvl.OP_CREATE,
-			"VLAN|Vlan1",
+			"VLAN|Vlan21",
 			map[string]string {
-				"vlanid": "1",
+				"vlanid": "21",
 			},
 		},
 		cvl.CVLEditConfigData {
 			cvl.VALIDATE_ALL,
 			cvl.OP_CREATE,
-			"STP_VLAN|Vlan1",
+			"STP_VLAN|Vlan21",
 			map[string]string {
 				"enabled": "true",
 				"forward_delay": "15",
 				"hello_time": "2",
 				"max_age" : "20",
 				"priority": "327",
-				"vlanid": "1",
+				"vlanid": "21",
 			},
 		},
 	}
@@ -3685,18 +3735,18 @@ func TestValidateEditConfig_Two_Create_Requests_Positive(t *testing.T) {
 func TestValidateEditConfig_Two_Delete_Requests_Positive(t *testing.T) {
 	depDataMap := map[string]interface{}{
 		"VLAN": map[string]interface{}{
-			"Vlan1": map[string]interface{}{
-				"vlanid": "1",
+			"Vlan51": map[string]interface{}{
+				"vlanid": "51",
 			},
 		},
 		"STP_VLAN": map[string]interface{}{
-			"Vlan1": map[string]interface{}{
+			"Vlan51": map[string]interface{}{
 				"enabled": "true",
 				"forward_delay": "15",
 				"hello_time": "2",
 				"max_age" : "20",
 				"priority": "327",
-				"vlanid": "1",
+				"vlanid": "51",
 			},
 		},
 	}
@@ -3709,7 +3759,7 @@ func TestValidateEditConfig_Two_Delete_Requests_Positive(t *testing.T) {
 		cvl.CVLEditConfigData {
 			cvl.VALIDATE_ALL,
 			cvl.OP_DELETE,
-			"STP_VLAN|Vlan1",
+			"STP_VLAN|Vlan51",
 			map[string]string {
 			},
 		},
@@ -3727,14 +3777,14 @@ func TestValidateEditConfig_Two_Delete_Requests_Positive(t *testing.T) {
 		cvl.CVLEditConfigData {
 			cvl.VALIDATE_NONE,
 			cvl.OP_DELETE,
-			"STP_VLAN|Vlan1",
+			"STP_VLAN|Vlan51",
 			map[string]string {
 			},
 		},
 		cvl.CVLEditConfigData {
 			cvl.VALIDATE_ALL,
 			cvl.OP_DELETE,
-			"VLAN|Vlan1",
+			"VLAN|Vlan51",
 			map[string]string {
 			},
 		},
@@ -3748,5 +3798,61 @@ func TestValidateEditConfig_Two_Delete_Requests_Positive(t *testing.T) {
         cvl.ValidationSessClose(cvSess)
 
 	unloadConfigDB(rclient, depDataMap)
+}
+
+func TestVailidateStaticPlatformLimits_YANG_Deviation_Ngeative(t *testing.T) {
+
+	//Get platform
+	platformName := ""
+	metaData, err:= rclient.HGetAll("DEVICE_METADATA|localhost").Result()
+
+	if (err == nil) {
+		platformName, _ = metaData["platform"]
+	}
+
+	depDataMapAcl := map[string]interface{}{
+		"ACL_TABLE": map[string]interface{}{
+			"TestACL901": map[string]interface{}{
+				"type": "L3",
+			},
+			"TestACL902": map[string]interface{}{
+				"type": "L3",
+			},
+		},
+	}
+
+	loadConfigDB(rclient, depDataMapAcl)
+
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	cfgDataAcl := []cvl.CVLEditConfigData {
+		cvl.CVLEditConfigData {
+			cvl.VALIDATE_ALL,
+			cvl.OP_CREATE,
+			"ACL_TABLE|TestACL903",
+			map[string]string {
+				"type": "L3",
+			},
+		},
+		cvl.CVLEditConfigData {
+			cvl.VALIDATE_ALL,
+			cvl.OP_CREATE,
+			"ACL_TABLE|TestACL904",
+			map[string]string {
+				"type": "L3",
+			},
+		},
+	}
+
+	cvlErrInfo, _ := cvSess.ValidateEditConfig(cfgDataAcl)
+
+	if (strings.Contains(platformName, "quanta_ix8")) &&
+	(cvlErrInfo.ErrCode == cvl.CVL_SUCCESS) {
+		t.Errorf("Should not be able to create more than 3 ACL TABLEs")
+        }
+
+        cvl.ValidationSessClose(cvSess)
+
+	unloadConfigDB(rclient, depDataMapAcl)
 }
 
