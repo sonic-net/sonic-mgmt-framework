@@ -95,22 +95,32 @@ func DbValToInt(dbFldVal string, base int, size int, isUint bool) (interface{}, 
 
 func getLeafrefRefdYangType(yngTerminalNdDtType yang.TypeKind, fldXpath string) (yang.TypeKind) {
 	if yngTerminalNdDtType == yang.Yleafref {
-		path := xDbSpecMap[fldXpath].dbEntry.Type.Path
+		var entry *yang.Entry
+		var path string
+		if _, ok := xDbSpecMap[fldXpath]; ok {
+			path = xDbSpecMap[fldXpath].dbEntry.Type.Path
+			entry = xDbSpecMap[fldXpath].dbEntry
+		} else if _, ok := xYangSpecMap[fldXpath]; ok {
+			path = xYangSpecMap[fldXpath].yangEntry.Type.Path
+			entry = xYangSpecMap[fldXpath].yangEntry
+		}
+		log.Infof("Received path %v for FieldXpath %v", path, fldXpath)
 		if strings.Contains(path, "..") {
-			// Refernced path within same yang file
-			var entry *yang.Entry = xDbSpecMap[fldXpath].dbEntry
-			pathList := strings.Split(path, "/")
-			for _, x := range pathList {
-				if x == ".." {
-					entry = entry.Parent
-				} else {
-					entry = entry.Dir[x]
+			if entry != nil && len(path) > 0 {
+				// Referenced path within same yang file
+				pathList := strings.Split(path, "/")
+				for _, x := range pathList {
+					if x == ".." {
+						entry = entry.Parent
+					} else {
+						entry = entry.Dir[x]
+					}
+				}
+				if entry != nil {
+					yngTerminalNdDtType = entry.Type.Kind
 				}
 			}
-			if entry != nil {
-				yngTerminalNdDtType = entry.Type.Kind
-			}
-		} else {
+		} else if len(path) > 0 {
 			// Referenced path in a different yang file
 			xpath, err := XfmrRemoveXPATHPredicates(path)
 			if  err != nil {
@@ -120,7 +130,7 @@ func getLeafrefRefdYangType(yngTerminalNdDtType yang.TypeKind, fldXpath string) 
 			// Form xpath based on sonic or non sonic yang path
 			if strings.Contains(xpath, "sonic") {
 				pathList := strings.Split(xpath, "/")
-				xpath = pathList[SONIC_TABLE_INDEX]+ "/" + pathList[len(pathList)-1]
+				xpath = pathList[SONIC_TABLE_INDEX]+ "/" + pathList[SONIC_FIELD_INDEX]
 				if _, ok := xDbSpecMap[xpath]; ok {
 					yngTerminalNdDtType = xDbSpecMap[xpath].dbEntry.Type.Kind
 				}
