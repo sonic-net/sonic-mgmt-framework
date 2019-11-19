@@ -27,12 +27,23 @@ limitations under the License.
 <!--=========================================================================-->
 
   <VIEW name="enable-view">
-    <COMMAND name="show tam" help="Show TAM info"/>
-    <COMMAND name="show tam device" help="Show TAM device info" mode="subcommand" ptype="SUBCOMMAND">
+    <COMMAND name="show tam" 
+             help="Show TAM info"/>
+    <COMMAND name="show tam device" 
+             help="Show TAM device info" 
+             mode="subcommand" 
+             ptype="SUBCOMMAND">
       <ACTION>python $SONIC_CLI_ROOT/sonic-cli-tam.py get_sonic_tam_sonic_tam_tam_device_table show_tam_device.j2</ACTION>
     </COMMAND>
-    <COMMAND name="show tam collector" help="Show TAM collector info" mode="subcommand" ptype="SUBCOMMAND">
-      <PARAM name="name" help="Name of the collector" ptype="STRING_32" optional="true"> </PARAM>
+    <COMMAND name="show tam collector" 
+             help="Show TAM collector info" 
+             mode="subcommand" 
+             ptype="SUBCOMMAND">
+      <PARAM name="name" 
+             help="Name of the collector" 
+             ptype="STRING_32" 
+             optional="true"> 
+      </PARAM>
       <ACTION>
         if test "${name}" = "all" ; then&#xA;
           python $SONIC_CLI_ROOT/sonic-cli-tam.py get_sonic_tam_sonic_tam_tam_collector_table show_tam_collector.j2&#xA;
@@ -47,44 +58,94 @@ limitations under the License.
 
   <VIEW name="configure-view">
     <!-- tam -->
-    <COMMAND name="tam" help="TAM Device Configuration" mode="subcommand" ptype="SUBCOMMAND" view="configure-tam-view"/>
+    <COMMAND name="tam" 
+             help="TAM Device Configuration" 
+             mode="subcommand" 
+             ptype="SUBCOMMAND" 
+             view="configure-tam-view"/>
   </VIEW>
 
-  <VIEW name="configure-tam-view" prompt="${SYSTEM_NAME}(config-tam)# " depth="2">
-    <COMMAND name="no" help="Negate a command or set its defaults" />
+  <VIEW name="configure-tam-view" 
+        prompt="${SYSTEM_NAME}(config-tam)# " 
+        depth="2">
+    <COMMAND name="no" 
+             help="Negate a command or set its defaults" />
 
     <!-- tam deviceid -->
-    <COMMAND name="device-id" help="Configure device-id" ptype="SUBCOMMAND" mode="subcommand">
-      <PARAM name="device-id" help="Device ID" ptype="UINT16"> </PARAM>
+    <COMMAND name="device-id" 
+             help="Configure device-id" 
+             ptype="SUBCOMMAND" 
+             mode="subcommand">
+      <PARAM name="device-id" 
+             help="Device ID" 
+             ptype="UINT16"> 
+      </PARAM>
       <ACTION>python $SONIC_CLI_ROOT/sonic-cli-tam.py patch_sonic_tam_sonic_tam_tam_device_table_tam_device_table_list_deviceid device ${device-id}</ACTION>
     </COMMAND>
 
     <!-- tam collector -->
-    <COMMAND name="collector" help="Configure TAM collector" ptype="SUBCOMMAND" mode="subcommand">
-      <PARAM name="name" help="Collector name" ptype="STRING"> </PARAM>
-      <PARAM name="ip-type" help="Collector ip address type" ptype="SUBCOMMAND" mode="subcommand">
-        <PARAM name="ip-type-val" help="IP Address Type" ptype="IP_TYPE"> </PARAM>
+    <COMMAND name="collector" 
+             help="Configure TAM collector" 
+             ptype="SUBCOMMAND" 
+             mode="subcommand">
+      <PARAM name="name" 
+             help="Collector name" 
+             ptype="STRING"> 
       </PARAM>
-      <PARAM name="ip-addr" help="Collector ip address" ptype="SUBCOMMAND" mode="subcommand">
-        <PARAM name="ip-addr-val" help="Collector IP Address" ptype="IPV4V6_ADDR"> </PARAM>
+      <PARAM name="ip-type" 
+             help="Collector ip address type" 
+             ptype="SUBCOMMAND" 
+             mode="subcommand">
+        <PARAM name="ip-type-val" 
+               help="IP Address Type" 
+               ptype="IP_TYPE"> 
+        </PARAM>
       </PARAM>
-      <PARAM name="port" help="Collector port" ptype="SUBCOMMAND" mode="subcommand">
-        <PARAM name="port-val" help="Collector Port" ptype="UINT"> </PARAM>
+      <PARAM name="ip-addr" 
+             help="Collector ip address" 
+             ptype="SUBCOMMAND" 
+             mode="subcommand">
+        <PARAM name="ip-addr-val" 
+               help="Collector IP Address" 
+               ptype="IPV4V6_ADDR"> 
+        </PARAM>
+      </PARAM>
+      <PARAM name="port" 
+             help="Collector port" 
+             ptype="SUBCOMMAND" 
+             mode="subcommand">
+        <PARAM name="port-val" 
+               help="Collector Port" 
+               ptype="UINT"> 
+        </PARAM>
       </PARAM>
       <ACTION>python $SONIC_CLI_ROOT/sonic-cli-tam.py patch_list_sonic_tam_sonic_tam_tam_collector_table_tam_collector_table_list ${name} ${ip-type-val} ${ip-addr-val} ${port-val}</ACTION>
     </COMMAND>
 
     <!-- config sub view for int-ifa configuration -->
-    <COMMAND name="int-ifa" help="INT IFA Configuration" mode="subcommand" ptype="SUBCOMMAND" view="config-int-ifa"/>
+    <COMMAND name="int-ifa"
+             help="INT IFA Configuration" 
+             mode="subcommand" 
+             ptype="SUBCOMMAND" 
+             view="config-int-ifa"/>
 
     <!-- no tam device -->
-    <COMMAND name="no device-id" help="Clear TAM device ID" ptype="SUBCOMMAND" mode="subcommand">
+    <COMMAND name="no device-id" 
+             help="Clear TAM device ID" 
+             ptype="SUBCOMMAND" 
+             mode="subcommand">
       <ACTION> python $SONIC_CLI_ROOT/sonic-cli-tam.py patch_sonic_tam_sonic_tam_tam_device_table_tam_device_table_list_deviceid device 0</ACTION>
     </COMMAND>
 
     <!-- no tam collector -->
-    <COMMAND name="no collector" help="Clear TAM Collector information" ptype="SUBCOMMAND" mode="subcommand">
-      <PARAM name="name" help="Collector name" ptype="STRING"> </PARAM>
+    <COMMAND name="no collector" 
+             help="Clear TAM Collector information" 
+             ptype="SUBCOMMAND" 
+             mode="subcommand">
+      <PARAM name="name" 
+             help="Collector name" 
+             ptype="STRING"> 
+      </PARAM>
       <ACTION> python $SONIC_CLI_ROOT/sonic-cli-tam.py delete_sonic_tam_sonic_tam_tam_collector_table_tam_collector_table_list ${name}</ACTION>
     </COMMAND>
 
