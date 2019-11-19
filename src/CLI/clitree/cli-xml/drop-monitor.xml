@@ -57,11 +57,11 @@
      </PARAM>
     <ACTION>
       if test "${tam-drop-monitor-subcommands}" = "flow"; then
-         python $SONIC_CLI_ROOT/drop-monitor.py -show -flow ${flow-name} -templ -showflow.j2   
+         python $SONIC_CLI_ROOT/drop-monitor.py -show -flow ${flow-name} -templ -showflow.j2;   
       elif test "${tam-drop-monitor-subcommands}" = "statistics"; then
-         python $SONIC_CLI_ROOT/drop-monitor.py -show -statistics -flow ${flow-name} -templ -showstatisticsflow.j2
+         python $SONIC_CLI_ROOT/drop-monitor.py -show -statistics -flow ${flow-name} -templ -showstatisticsflow.j2;
       elif test "${tam-drop-monitor-subcommands}" = "aging-interval"; then
-         python $SONIC_CLI_ROOT/drop-monitor.py -show --aginginterval 1
+         python $SONIC_CLI_ROOT/drop-monitor.py -show --aginginterval 1;
       fi
     </ACTION>
    </COMMAND>
@@ -97,9 +97,9 @@
          </PARAM>
         <ACTION>
               if test "${drop-options}" = "flow-name"; then
-                 python $SONIC_CLI_ROOT/drop-monitor.py -clear -dropmonitor -flow ${flow-name}
+                 python $SONIC_CLI_ROOT/drop-monitor.py -clear -dropmonitor -flow ${flow-name};
               elif test "${drop-options}" = "all"; then
-                 python $SONIC_CLI_ROOT/drop-monitor.py -clear -dropmonitor -flow all
+                 python $SONIC_CLI_ROOT/drop-monitor.py -clear -dropmonitor -flow all;
               fi
         </ACTION>
         </COMMAND>
