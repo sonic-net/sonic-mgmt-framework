@@ -1,0 +1,191 @@
+module ietf-ptp-annot {
+
+    yang-version "1.1";
+
+    namespace "http://openconfig.net/yang/annotation/ptp-annot";
+    prefix "ptp-annot";
+
+    import sonic-extensions { prefix sonic-ext; }
+    import ietf-interfaces { prefix if; }
+    import ietf-ptp { prefix ptp; }
+
+	deviation /ptp:ptp {
+		deviate add {
+		}
+	}
+
+	deviation /ptp:ptp/ptp:instance-list {
+		deviate add {
+			sonic-ext:table-name "PTP_INSTANCE";
+			sonic-ext:key-transformer "ptp_global_key_xfmr";
+		}
+	}
+
+	deviation /ptp:ptp/ptp:instance-list/ptp:current-ds {
+		deviate add {
+			sonic-ext:table-name "PTP_CURRENTDS";
+			sonic-ext:key-transformer "ptp_global_key_xfmr";
+			sonic-ext:db-name "STATE_DB";
+		}
+	}
+
+	deviation /ptp:ptp/ptp:instance-list/ptp:parent-ds {
+		deviate add {
+			sonic-ext:table-name "PTP_PARENTDS";
+			sonic-ext:key-transformer "ptp_global_key_xfmr";
+			sonic-ext:db-name "STATE_DB";
+		}
+	}
+
+	deviation /ptp:ptp/ptp:instance-list/ptp:parent-ds/ptp:grandmaster-identity {
+		deviate add {
+			sonic-ext:field-transformer "ptp_clock_identity_xfmr";
+		}
+	}
+
+	deviation /ptp:ptp/ptp:instance-list/ptp:parent-ds/ptp:parent-port-identity/ptp:clock-identity {
+		deviate add {
+			sonic-ext:field-transformer "ptp_clock_identity_xfmr";
+		}
+	}
+
+	deviation /ptp:ptp/ptp:instance-list/ptp:parent-ds/ptp:grandmaster-clock-quality/ptp:offset-scaled-log-variance {
+		deviate add {
+		}
+	}
+
+	deviation /ptp:ptp/ptp:instance-list/ptp:parent-ds/ptp:parent-stats {
+		deviate add {
+			sonic-ext:field-transformer "ptp_boolean_xfmr";
+		}
+	}
+
+	deviation /ptp:ptp/ptp:instance-list/ptp:time-properties-ds {
+		deviate add {
+			sonic-ext:table-name "PTP_TIMEPROPDS";
+			sonic-ext:key-transformer "ptp_global_key_xfmr";
+			sonic-ext:db-name "STATE_DB";
+		}
+	}
+
+	deviation /ptp:ptp/ptp:instance-list/ptp:time-properties-ds/ptp:time-traceable {
+		deviate add {
+			sonic-ext:field-transformer "ptp_boolean_xfmr";
+		}
+	}
+
+	deviation /ptp:ptp/ptp:instance-list/ptp:time-properties-ds/ptp:frequency-traceable {
+		deviate add {
+			sonic-ext:field-transformer "ptp_boolean_xfmr";
+		}
+	}
+
+	deviation /ptp:ptp/ptp:instance-list/ptp:time-properties-ds/ptp:ptp-timescale {
+		deviate add {
+			sonic-ext:field-transformer "ptp_boolean_xfmr";
+		}
+	}
+
+	deviation /ptp:ptp/ptp:instance-list/ptp:time-properties-ds/ptp:current-utc-offset-valid {
+		deviate add {
+			sonic-ext:field-transformer "ptp_boolean_xfmr";
+		}
+	}
+
+	deviation /ptp:ptp/ptp:instance-list/ptp:time-properties-ds/ptp:leap59 {
+		deviate add {
+			sonic-ext:field-transformer "ptp_boolean_xfmr";
+		}
+	}
+
+	deviation /ptp:ptp/ptp:instance-list/ptp:time-properties-ds/ptp:leap61 {
+		deviate add {
+			sonic-ext:field-transformer "ptp_boolean_xfmr";
+		}
+	}
+
+	deviation /ptp:ptp/ptp:instance-list/ptp:port-ds-list {
+		deviate add {
+			sonic-ext:table-name "PTP_PORT";
+			sonic-ext:key-transformer "ptp_port_entry_key_xfmr";
+			sonic-ext:db-name "STATE_DB";
+		}
+	}
+
+	deviation /ptp:ptp/ptp:instance-list/ptp:port-ds-list/ptp:port-state {
+		deviate add {
+			sonic-ext:field-transformer "ptp_port_state_xfmr";
+		}
+	}
+
+	deviation /ptp:ptp/ptp:instance-list/ptp:port-ds-list/ptp:delay-mechanism {
+		deviate add {
+			sonic-ext:field-transformer "ptp_delay_mech_xfmr";
+		}
+	}
+
+	deviation /ptp:ptp/ptp:instance-list/ptp:instance-number {
+		deviate add {
+			sonic-ext:field-transformer "ptp_inst_number_xfmr";
+		}
+	}
+
+	deviation /ptp:ptp/ptp:instance-list/ptp:default-ds {
+		deviate add {
+			sonic-ext:table-name "PTP_CLOCK";
+			sonic-ext:key-transformer "ptp_entry_key_xfmr";
+			sonic-ext:db-name "STATE_DB";
+		}
+	}
+
+	deviation /ptp:ptp/ptp:instance-list/ptp:default-ds/ptp:slave-only {
+		deviate add {
+			sonic-ext:field-transformer "ptp_boolean_xfmr";
+		}
+	}
+
+	deviation /ptp:ptp/ptp:instance-list/ptp:default-ds/ptp:two-step-flag {
+		deviate add {
+			sonic-ext:field-transformer "ptp_boolean_xfmr";
+		}
+	}
+
+	deviation /ptp:ptp/ptp:instance-list/ptp:default-ds/ptp:clock-identity {
+		deviate add {
+			sonic-ext:field-transformer "ptp_clock_identity_xfmr";
+		}
+	}
+
+	deviation /ptp:ptp/ptp:transparent-clock-port-ds-list {
+		deviate add {
+			sonic-ext:table-name "PTP_TC_PORT";
+			sonic-ext:key-transformer "ptp_tcport_entry_key_xfmr";
+		}
+	}
+
+	deviation /ptp:ptp/ptp:transparent-clock-port-ds-list/ptp:faulty-flag {
+		deviate add {
+			sonic-ext:field-transformer "ptp_boolean_xfmr";
+		}
+	}
+
+	deviation /ptp:ptp/ptp:transparent-clock-default-ds {
+		deviate add {
+			sonic-ext:table-name "PTP_TC_CLOCK";
+			sonic-ext:key-transformer "ptp_global_key_xfmr";
+		}
+	}
+
+	deviation /ptp:ptp/ptp:transparent-clock-default-ds/ptp:clock-identity {
+		deviate add {
+			sonic-ext:field-transformer "ptp_clock_identity_xfmr";
+		}
+	}
+
+	deviation /ptp:ptp/ptp:transparent-clock-default-ds/ptp:delay-mechanism {
+		deviate add {
+			sonic-ext:field-transformer "ptp_delay_mech_xfmr";
+		}
+	}
+
+}

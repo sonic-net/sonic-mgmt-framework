@@ -737,7 +737,7 @@ limitations under the License.
 
         <PARAM
             name="uplinkfast"
-            help="Enables port fast on the interface"
+            help="Enables uplink fast on the interface"
             ptype="SUBCOMMAND"
             mode="subcommand"
             >
@@ -753,7 +753,7 @@ limitations under the License.
         elif test "${stp-if-subcmds}" = "portfast";then&#xA;
         python $SONIC_CLI_ROOT/sonic-cli-stp.py patch_openconfig_spanning_tree_ext_stp_interfaces_interface_config_portfast ${iface} True&#xA;
         elif test "${stp-if-subcmds}" = "uplinkfast";then&#xA;
-        python $SONIC_CLI_ROOT/sonic-cli-stp.py patch_openconfig_spanning_tree_ext_stp_interfaces_interface_config_portfast ${iface} True&#xA;
+        python $SONIC_CLI_ROOT/sonic-cli-stp.py patch_openconfig_spanning_tree_ext_stp_interfaces_interface_config_uplink_fast ${iface} True&#xA;
         elif test "${stp-if-subcmds}" = "enable";then&#xA;
         python $SONIC_CLI_ROOT/sonic-cli-stp.py patch_openconfig_spanning_tree_ext_stp_interfaces_interface_config_spanning_tree_enable ${iface} True&#xA;
         elif test "${stp-if-subcmds}" = "cost";then&#xA;
@@ -971,7 +971,7 @@ limitations under the License.
             </PARAM>
             <PARAM
                 name="uplinkfast"
-                help="Disables port fast on the interface"
+                help="Disables uplink fast on the interface"
                 ptype="SUBCOMMAND"
                 mode="subcommand"
                 >

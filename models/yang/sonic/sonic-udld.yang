@@ -1,0 +1,184 @@
+module sonic-udld {
+    namespace "http://github.com/Azure/sonic-udld";
+    prefix sudld;
+    yang-version 1.1;
+
+    import sonic-extension {
+        prefix sonic-ext;
+    }
+
+    import sonic-port {
+        prefix prt;
+    }
+
+    organization
+        "SONiC";
+
+    contact
+        "SONiC";
+
+    description
+        "SONiC UDLD yang model";
+
+    revision 2019-11-08 {
+        description
+            "Initial revision.";
+    }
+
+    grouping udld_mode_config {
+        leaf admin_enable {
+            type boolean;
+        }
+
+        leaf aggressive {
+            type boolean;
+        }
+    }
+
+    container sonic-udld {
+
+        container UDLD {
+            list UDLD_LIST {
+                key "id";
+
+                leaf id {
+                    type enumeration {
+                        enum GLOBAL;
+                    }
+                }
+
+                uses udld_mode_config;
+
+                leaf msg_time {
+                    type uint8 {
+                        range "1..30" {
+                            error-message "Invalid UDLD message time value.";
+                        }
+                    }
+                    units seconds;
+                    default 1;
+                }
+
+                leaf multiplier {
+                    type uint8 {
+                        range "3..10" {
+                            error-message "Invalid UDLD multiplier value.";
+                        }
+                    }
+                    default 3;
+                }
+            }
+        }
+
+        container UDLD_PORT {
+            list UDLD_PORT_LIST {
+                key "ifname";
+
+                leaf ifname {
+                    type leafref {
+                        path "/prt:sonic-port/prt:PORT/prt:PORT_LIST/prt:ifname";
+                    }
+                }
+
+                uses udld_mode_config;
+            }
+        }
+
+        container UDLD_GLOBAL_TABLE {
+            config false;
+
+            list UDLD_GLOBAL_TABLE_LIST {
+                sonic-ext:db-name "APPL_DB";
+                key "id";
+
+                leaf id {
+                    type enumeration {
+                        enum GLOBAL;
+                    }
+                }
+
+                leaf device_id {
+                    type string;
+                }
+
+                leaf device_name {
+                    type string;
+                }
+
+                leaf timeout_interval {
+                    type uint16;
+                }
+            }
+        }
+
+        container UDLD_PORT_TABLE {
+            config false;
+
+            list UDLD_PORT_TABLE_LIST {
+                sonic-ext:db-name "APPL_DB";
+                key "ifname";
+
+                leaf ifname {
+                    type leafref {
+                        path "/prt:sonic-port/prt:PORT/prt:PORT_LIST/prt:ifname";
+                    }
+                }
+
+                leaf status {
+                    type string;
+                }
+
+                leaf pdu_sent {
+                    type uint64;
+                }
+
+                leaf pdu_received {
+                    type uint64;
+                }
+
+                leaf pdu_recv_error {
+                    type uint64;
+                }
+            }
+        }
+
+        container UDLD_PORT_NEIGH_TABLE {
+            config false;
+
+            list UDLD_PORT_NEIGH_TABLE_LIST {
+                sonic-ext:db-name "APPL_DB";
+                key "ifname index";
+
+                leaf ifname {
+                    type leafref {
+                        path "/prt:sonic-port/prt:PORT/prt:PORT_LIST/prt:ifname";
+                    }
+                }
+
+                leaf index {
+                    type string;
+                }
+
+                leaf device_id {
+                    type string;
+                }
+
+                leaf device_name {
+                    type string;
+                }
+
+                leaf port_id {
+                    type string;
+                }
+
+                leaf msg_time {
+                    type uint16;
+                }
+
+                leaf timeout_interval {
+                    type uint16;
+                }
+            }
+        }
+    }
+}

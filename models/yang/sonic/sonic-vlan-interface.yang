@@ -1,0 +1,57 @@
+module sonic-vlan-interface {
+    namespace "http://github.com/Azure/sonic-vlan-interface";
+    prefix sVlanIf;
+
+    import ietf-inet-types {
+        prefix inet;
+    }
+
+    import sonic-vlan {
+        prefix svlan;
+    }
+
+    organization
+        "SONiC";
+
+    contact
+        "SONiC";
+
+    description
+        "SONIC VLAN INTERFACE";
+
+    revision 2019-07-02 {
+        description
+            "Initial revision.";
+    }
+
+    container sonic-vlan-interface {
+
+        container VLAN_INTERFACE {
+
+            list VLAN_INTERFACE_LIST {
+                key "vlanName";
+
+                leaf vlanName{
+                    type leafref {
+                        path "/svlan:sonic-vlan/svlan:VLAN/svlan:VLAN_LIST/svlan:name";
+                    }
+                }
+
+            }
+            list VLAN_INTERFACE_IPADDR_LIST {
+                key "vlanName ip_prefix";
+
+                leaf vlanName{
+                    type leafref {
+                        path "/svlan:sonic-vlan/svlan:VLAN/svlan:VLAN_LIST/svlan:name";
+                    }
+                }
+
+                leaf ip_prefix {
+                    type inet:ip-prefix;
+
+                }
+            }
+        }
+    }
+}

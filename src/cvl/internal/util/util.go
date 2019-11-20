@@ -19,9 +19,32 @@
 
 package util
 
+/*
+#cgo LDFLAGS: -lyang
+#include <libyang/libyang.h>
+
+extern void customLogCallback(LY_LOG_LEVEL, char* msg, char* path);
+
+static void customLogCb(LY_LOG_LEVEL level, const char* msg, const char* path) {
+	customLogCallback(level, (char*)msg, (char*)path);
+}
+
+static void ly_set_log_callback(int enable) {
+	if (enable == 1) {
+		ly_verb(LY_LLDBG);
+		ly_set_log_clb(customLogCb, 0);
+	} else {
+		ly_verb(LY_LLERR);
+		ly_set_log_clb(NULL, 0);
+	}
+}
+
+*/
+import "C"
 import (
 	"os"
 	"fmt"
+	"io"
 	"runtime"
 	 "encoding/json"
         "io/ioutil"
@@ -29,11 +52,15 @@ import (
         "syscall"
 	"strings"
 	"flag"
+	"strconv"
 	log "github.com/golang/glog"
+	fileLog "log"
+	"sync"
 )
 
 var CVL_SCHEMA string = "schema/"
 var CVL_CFG_FILE string = "/usr/sbin/cvl_cfg.json"
+const CVL_LOG_FILE = "/tmp/cvl.log"
 
 //package init function 
 func init() {
@@ -44,22 +71,29 @@ func init() {
 	if (os.Getenv("CVL_CFG_FILE") != "") {
 		CVL_CFG_FILE = os.Getenv("CVL_CFG_FILE")
 	}
+
+	//Initialize mutex
+	logFileMutex = &sync.Mutex{}
 }
 
 var cvlCfgMap map[string]string
+var isLogToFile bool
+var logFileSize int
+var pLogFile *os.File
+var logFileMutex *sync.Mutex
 
 /* Logging Level for CVL global logging. */
-type CVLLogLevel uint8 
+type CVLLogLevel uint8
 const (
         INFO  = 0 + iota
         WARNING
         ERROR
         FATAL
-        INFO_API
-	INFO_TRACE
 	INFO_DEBUG
+        INFO_API
 	INFO_DATA
 	INFO_DETAIL
+	INFO_TRACE
 	INFO_ALL
 )
 
@@ -126,20 +160,33 @@ func IsTraceSet() bool {
 	}
 }
 
-func TRACE_LEVEL_LOG(level log.Level, tracelevel CVLTraceLevel, fmtStr string, args ...interface{}) {
+/* The following function enbles the libyang logging by
+changing libyang's global log setting */
+
+//export customLogCallback
+func customLogCallback(level C.LY_LOG_LEVEL, msg *C.char, path *C.char)  {
+	TRACE_LEVEL_LOG(TRACE_YPARSER, "[libyang] %s (path: %s)",
+	C.GoString(msg), C.GoString(path))
+}
+
+func TRACE_LEVEL_LOG(tracelevel CVLTraceLevel, fmtStr string, args ...interface{}) {
 
 	/*
 	if (IsTraceSet() == false) {
 		return
 	}
-	*/
 
 	level = (level - INFO_API) + 1;
+	*/
 
 	traceEnabled := false
-		if ((cvlTraceFlags & (uint32)(tracelevel)) != 0) {
-			traceEnabled = true
-		}
+	if ((cvlTraceFlags & (uint32)(tracelevel)) != 0) {
+		traceEnabled = true
+	}
+	if (traceEnabled == true) && (isLogToFile == true) {
+		logToCvlFile(fmtStr, args...)
+		return
+	}
 
 	if IsTraceSet() == true && traceEnabled == true {
 		pc := make([]uintptr, 10)
@@ -147,16 +194,92 @@ func TRACE_LEVEL_LOG(level log.Level, tracelevel CVLTraceLevel, fmtStr string, a
 		f := runtime.FuncForPC(pc[0])
 		file, line := f.FileLine(pc[0])
 
-		fmt.Printf("%s:%d %s(): ", file, line, f.Name())
+		fmt.Printf("%s:%d [CVL] : %s(): ", file, line, f.Name())
 		fmt.Printf(fmtStr+"\n", args...)
 	} else {
+		fmtStr = "[CVL] : " + fmtStr
 		if (traceEnabled == true) {
-			log.V(level).Infof(fmtStr, args...)
+			//Trace logs has verbose level INFO_TRACE
+			log.V(INFO_TRACE).Infof(fmtStr, args...)
 		}
 	}
 }
 
+//Logs to /tmp/cvl.log file
+func logToCvlFile(format string, args ...interface{}) {
+	if (pLogFile == nil) {
+		return
+	}
+
+	logFileMutex.Lock()
+	if (logFileSize == 0) {
+		fileLog.Printf(format, args...)
+		logFileMutex.Unlock()
+		return
+	}
+
+	fStat, err := pLogFile.Stat()
+
+	var curSize int64 = 0
+	if (err == nil) && (fStat != nil) {
+		curSize = fStat.Size()
+	}
+
+	// Roll over the file contents if size execeeds max defined limit
+	if (curSize >= int64(logFileSize)) {
+		//Write 70% contents from bottom and write to top
+		//Truncate 30% of bottom
+
+		//close the file first
+		pLogFile.Close()
+
+		pFile, err := os.OpenFile(CVL_LOG_FILE,
+		os.O_RDONLY, 0666)
+		pFileOut, errOut := os.OpenFile(CVL_LOG_FILE + ".tmp",
+		os.O_WRONLY | os.O_CREATE, 0666)
+
+
+		if (err != nil) && (errOut != nil) {
+			fileLog.Printf("Failed to roll over the file, current size %v", curSize)
+		} else {
+			pFile.Seek(int64(logFileSize * 30/100), io.SeekStart)
+			_, err := io.Copy(pFileOut, pFile)
+			if err == nil {
+				os.Rename(CVL_LOG_FILE + ".tmp", CVL_LOG_FILE)
+			}
+		}
+
+		if (pFile != nil) {
+			pFile.Close()
+		}
+		if (pFileOut != nil) {
+			pFileOut.Close()
+		}
+
+		// Reopen the file 
+		pLogFile, err := os.OpenFile(CVL_LOG_FILE,
+		os.O_RDWR | os.O_CREATE | os.O_APPEND, 0666)
+		if err != nil {
+			fmt.Printf("Error in opening log file %s, %v", CVL_LOG_FILE, err)
+		} else {
+			fileLog.SetOutput(pLogFile)
+		}
+	}
+
+
+	fileLog.Printf(format, args...)
+
+	logFileMutex.Unlock()
+}
+
 func CVL_LEVEL_LOG(level CVLLogLevel, format string, args ...interface{}) {
+
+	if (isLogToFile == true) {
+		logToCvlFile(format, args...)
+		return
+	}
+
+	format = "[CVL] : " + format 
 
 	switch level {
 		case INFO:
@@ -179,10 +302,49 @@ func CVL_LEVEL_LOG(level CVLLogLevel, format string, args ...interface{}) {
 			log.V(5).Infof(format, args...)
 		case INFO_ALL:
 			log.V(6).Infof(format, args...)
-	}	
+	}
 
 }
 
+// Function to check CVL log file related settings
+func applyCvlLogFileConfig() {
+
+	if (pLogFile != nil) {
+		pLogFile.Close()
+		pLogFile = nil
+	}
+
+	//Disable libyang trace log
+	C.ly_set_log_callback(0)
+	isLogToFile = false
+	logFileSize = 0
+
+	enabled, exists := cvlCfgMap["LOG_TO_FILE"]
+	if exists == false {
+		return
+	}
+
+	if fileSize, sizeExists := cvlCfgMap["LOG_FILE_SIZE"];
+	sizeExists == true {
+		logFileSize, _ = strconv.Atoi(fileSize)
+	}
+
+	if (enabled == "true") {
+		pFile, err := os.OpenFile(CVL_LOG_FILE,
+		os.O_RDWR | os.O_CREATE | os.O_APPEND, 0666)
+
+		if err != nil {
+			fmt.Printf("Error in opening log file %s, %v", CVL_LOG_FILE, err)
+		} else {
+			pLogFile = pFile
+			fileLog.SetOutput(pLogFile)
+			isLogToFile = true
+		}
+
+		//Enable libyang trace log
+		C.ly_set_log_callback(1)
+	}
+}
 
 func ConfigFileSyncHandler() {
 	sigs := make(chan os.Signal, 1)
@@ -205,6 +367,7 @@ func ConfigFileSyncHandler() {
 				flag.Set("logtostderr", "true")
 				flag.Set("stderrthreshold", cvlCfgMap["STDERRTHRESHOLD"])
 			}
+
 		}
 	}()
 
@@ -234,6 +397,8 @@ func ReadConfFile()  map[string]string{
 			cvlTraceFlags = cvlTraceFlags |  (1 << index) 
 		}
 	}
+
+	applyCvlLogFileConfig()
 
 	return cvlCfgMap
 }

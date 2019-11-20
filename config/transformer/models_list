@@ -2,9 +2,21 @@
 
 openconfig-acl.yang
 openconfig-acl-annot.yang
+openconfig-interfaces.yang
+openconfig-if-ip.yang
+openconfig-if-ethernet.yang
+openconfig-interfaces-annot.yang
 openconfig-ztp.yang
 openconfig-ztp-annot.yang
 openconfig-network-instance.yang
 openconfig-network-instance-annot.yang
+openconfig-lacp.yang
+openconfig-lacp-annot.yang
+sonic-vxlan.yang
+sonic-udld.yang
+sonic-udld-annot.yang
+ietf-ptp.yang
+ietf-ptp-annot.yang
+sonic-mclag.yang
 openconfig-system.yang
 openconfig-system-annot.yang

@@ -93,7 +93,7 @@ func TraverseDb(dbs [db.MaxDB]*db.DB, spec KeySpec, result *map[db.DBNum]map[str
 
 	dbOpts = getDBOptions(spec.dbNum)
 	separator := dbOpts.KeySeparator
-	log.Infof("key separator for table %v in Db %v is %v", spec.Ts.Name, spec.dbNum, separator)
+	//log.Infof("key separator for table %v in Db %v is %v", spec.Ts.Name, spec.dbNum, separator)
 
 	if spec.Key.Len() > 0 {
 		// get an entry with a specific key
@@ -350,11 +350,21 @@ func XlateFromDb(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db.DB, data R
 			tokens:= strings.Split(xpath, "/")
 			// Format /module:container/tableName/listname[key]/fieldName
 			if tokens[SONIC_TABLE_INDEX] == tableName {
-		                fieldName := tokens[len(tokens)-1]
-				dbSpecField := tableName + "/" + fieldName
-				_, ok := xDbSpecMap[dbSpecField]
-				if ok && xDbSpecMap[dbSpecField].fieldType == "leaf" {
-					dbData[cdb] = extractFieldFromDb(tableName, keyStr, fieldName, data[cdb])
+				fieldName := ""
+				if len(tokens) > SONIC_FIELD_INDEX {
+					fieldName = tokens[SONIC_FIELD_INDEX]
+					dbSpecField := tableName + "/" + fieldName
+					_, ok := xDbSpecMap[dbSpecField]
+					if ok  && fieldName != "" {
+						yangNodeType := yangTypeGet(xDbSpecMap[dbSpecField].dbEntry)
+						if yangNodeType == YANG_LEAF_LIST {
+							fieldName = fieldName + "@"
+						}
+						if ((yangNodeType == YANG_LEAF_LIST) || (yangNodeType == YANG_LEAF)) {
+							dbData[cdb] = extractFieldFromDb(tableName, keyStr, fieldName, data[cdb])
+
+						}
+					}
 				}
 			}
 		}

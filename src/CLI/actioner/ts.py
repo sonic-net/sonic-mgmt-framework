@@ -15,9 +15,14 @@ import sys
 import swsssdk
 from swsssdk import ConfigDBConnector
 from os import path
+from scripts.render_cli import show_cli_output
 
 TAM_INT_IFA_FLOW_TS_TABLE_PREFIX = "TAM_INT_IFA_TS_FLOW"
 TAM_INT_IFA_TS_FEATURE_TABLE_PREFIX = "TAM_INT_IFA_TS_FEATURE_TABLE"
+TAM_DEVICE_TABLE_PREFIX       = "TAM_DEVICE_TABLE"
+TAM_COLLECTOR_TABLE_PREFIX    = "TAM_COLLECTOR_TABLE"
+ACL_RULE_TABLE_PREFIX         = "ACL_RULE"
+ACL_TABLE_PREFIX              = "ACL_TABLE"
 
 class Ts(object):
 
@@ -25,7 +30,11 @@ class Ts(object):
         # connect CONFIG DB
         self.config_db = ConfigDBConnector()
         self.config_db.connect()
-		
+
+        # connect COUNTER DB
+        self.counters_db = ConfigDBConnector()
+        self.counters_db.db_connect('COUNTERS_DB')
+
         # connect APPL DB
         self.app_db = ConfigDBConnector()
         self.app_db.db_connect('APPL_DB')
@@ -75,15 +84,141 @@ class Ts(object):
             # Get all the flow keys 
             table_data = self.config_db.get_keys(TAM_INT_IFA_FLOW_TS_TABLE_PREFIX)
             if not table_data:
-                return True 
+                return True
             # Clear each flow key
             for key in table_data:
                 self.clear_each_flow(key)
-        else:    
-            # Clear the specified flow entry		
+        else:
+            # Clear the specified flow entry
             self.clear_each_flow(key)
 
         return
+
+    def show_flow(self, args):
+        self.get_print_all_ifa_flows(args.flowname)
+        return
+
+    def show_status(self):
+        # Get data for all keys
+        flowtable_keys = self.config_db.get_keys(TAM_INT_IFA_FLOW_TS_TABLE_PREFIX)
+
+        api_response = {}
+        key = TAM_INT_IFA_TS_FEATURE_TABLE_PREFIX + '|' + 'feature'
+        raw_data_feature = self.config_db.get_all(self.config_db.CONFIG_DB, key)
+        api_response['ietf-ts:feature-data'] = raw_data_feature
+        api_inner_response = {}
+        api_inner_response["num-of-flows"] = len(flowtable_keys)
+        api_response['ietf-ts:num-of-flows'] = api_inner_response 
+        key = TAM_DEVICE_TABLE_PREFIX + '|' + 'device'
+        raw_data_device = self.config_db.get_all(self.config_db.CONFIG_DB, key)
+        api_response['ietf-ts:device-data'] = raw_data_device
+        show_cli_output("show_status.j2", api_response)
+
+        return
+
+    def get_ifa_flow_stat(self, flowname):
+        api_response_stat = {}
+        api_response, entryfound = self.get_ifa_flow_info(flowname)
+        api_response_stat['flow-name'] = flowname
+        if entryfound is not None:
+            for k in api_response:
+               if k == "ietf-ts:each-flow-data":
+                  acl_rule_name = api_response['ietf-ts:each-flow-data']['acl-rule-name']
+                  acl_table_name = api_response['ietf-ts:each-flow-data']['acl-table-name']
+                  api_response_stat['rule-name'] = acl_rule_name
+                  api_response_stat['table-name'] = acl_table_name
+
+        acl_rule_keys = self.config_db.get_keys(ACL_RULE_TABLE_PREFIX)
+        for acl_rule_key in acl_rule_keys:
+            if acl_rule_key[1] == acl_rule_name:
+               acl_counter_key = 'COUNTERS:' + acl_rule_key[0] + ':' + acl_rule_key[1]
+               raw_ifa_stats = self.counters_db.get_all(self.counters_db.COUNTERS_DB, acl_counter_key)
+               api_response_stat['ietf-ts:ifa-stats'] = raw_ifa_stats
+
+        return api_response_stat, entryfound
+
+    def get_print_all_ifa_stats(self, name):
+        stat_dict = {}
+        stat_list = []
+        if name != 'all':
+            api_response, entryfound = self.get_ifa_flow_stat(name)
+            if entryfound is not None:
+                stat_list.append(api_response)
+        else:
+            table_data = self.config_db.get_keys(TAM_INT_IFA_FLOW_TS_TABLE_PREFIX)
+            # Get data for all keys
+            for k in table_data:
+                api_each_stat_response, entryfound = self.get_ifa_flow_stat(k)
+                if entryfound is not None:
+                    stat_list.append(api_each_stat_response)
+
+        stat_dict['stat-list'] = stat_list
+        show_cli_output("show_statistics_flow.j2", stat_dict)
+        return
+
+    def show_statistics(self, args):
+        self.get_print_all_ifa_stats(args.flowname)
+        return
+
+
+    def get_ifa_flow_info(self, k):
+        flow_data = {}
+        flow_data['acl-table-name'] = ''
+        flow_data['sampling-rate'] = ''
+        flow_data['collector'] = ''
+
+        api_response = {}
+        key = TAM_INT_IFA_FLOW_TS_TABLE_PREFIX + '|' + k
+        raw_flow_data = self.config_db.get_all(self.config_db.CONFIG_DB, key)
+        api_response['ietf-ts:flow-key'] = k 
+        api_response['ietf-ts:each-flow-data'] = raw_flow_data
+        return api_response , raw_flow_data
+
+    def get_print_all_ifa_flows(self, name):
+        flow_dict = {}
+        flow_list = []
+        if name != 'all':
+            api_response, entryfound = self.get_ifa_flow_info(name)
+            if entryfound is not None:
+                flow_list.append(api_response)
+        else:
+            table_data = self.config_db.get_keys(TAM_INT_IFA_FLOW_TS_TABLE_PREFIX)
+            # Get data for all keys
+            for k in table_data:
+                api_each_flow_response, entryfound = self.get_ifa_flow_info(k)
+                if entryfound is not None:
+                    flow_list.append(api_each_flow_response)
+
+        flow_dict['flow-list'] = flow_list
+        show_cli_output("show_flow.j2", flow_dict)
+        return
+
+    def get_ifa_supported_info(self):
+        key = 'TAM_INT_IFA_TS_FEATURE_TABLE|feature'
+        data = self.config_db.get_all(self.config_db.CONFIG_DB, key)
+
+        if data is None:
+           return
+
+        if data['enable'] == "true" :
+            print "TAM INT IFA TS Supported - True"
+            return True
+        elif data['enable'] == "false" :
+            print "TAM INT IFA TS Supported - False "
+            return False
+
+        return
+
+    def get_ifa_enabled_info(self):
+        print "In get_ifa_enabled_info"
+        key = 'SWITCH_TABLE:switch'
+        data = self.app_db.get(self.app_db.APPL_DB, key, 'ifa_enabled')
+
+        if data and data == 'True':
+            return True
+
+        return True
+
 
 def main():
 
@@ -106,6 +241,14 @@ Examples:
     parser.add_argument('-flow', '--flowname', type=str, help='ifa flow name')
     parser.add_argument('-acl_table_name', '--acl_table_name', type=str, help='ifa acl table name')
     parser.add_argument('-acl_rule_name', '--acl_rule_name', type=str, help='ifa acl rule name')
+    parser.add_argument('-status', '--status', action='store_true', help='ifa status')
+    parser.add_argument('-supported', '--supported', action='store_true', help='Check if tam-int-ifa supported')
+    parser.add_argument('-statistics', '--statistics', action='store_true', help='ifa statistics')
+    parser.add_argument('-templ', '--template', action='store_true', help='ifa template to be used')
+    parser.add_argument('-showsupported.j2', '--showsupported', action='store_true', help='ifa template to be used')
+    parser.add_argument('-showstatus.j2', '--showstatus', action='store_true', help='ifa status to be used')
+    parser.add_argument('-showflow.j2', '--showflow', action='store_true', help='ifa flow to be used')
+    parser.add_argument('-showstatisticsflow.j2', '--showstatistics', action='store_true', help='ifa statistics to be used')
 
 
     args = parser.parse_args()
@@ -118,12 +261,21 @@ Examples:
             ts.config_enable(args)
         elif args.disable:
             ts.config_disable(args)
-        elif args.flowname: 
+        elif args.flowname:
             ts.config_flow(args)
 
     elif args.clear:
-        if args.flowname: 
+        if args.flowname:
           ts.clear_flow(args)
+    elif args.show:
+        if args.status:
+            ts.show_status()
+        elif args.statistics:
+            ts.show_statistics(args)
+        elif args.flowname:
+            ts.show_flow(args)
+        elif args.supported:
+            ts.get_ifa_supported_info()
 
     sys.exit(0)
 

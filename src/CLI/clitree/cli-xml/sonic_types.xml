@@ -145,6 +145,13 @@ limitations under the License.
         pattern="1..128"
         help=""
         />
+    <PTYPE
+    name="RANGE_1_4095"
+    method="integer"
+    pattern="1..4095"
+    help=""
+    />
+
     <!--=======================================================-->
     <PTYPE
         name="IPADDR_NN"
@@ -329,6 +336,13 @@ limitations under the License.
         name="INTF_SPEED"
         method="select"
         pattern="10(10MBPS) 100(100MBPS) 1000(1GIGE) 10000(10GIGE) 25000(25GIGE) 40000(40GIGE) 100000(100GIGE) auto(AUTO)"
+        help="Port speed"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="MGMT_INTF_SPEED"
+        method="select"
+        pattern="10(10MBPS) 100(100MBPS) 1000(1GIGE) auto(1GIGE)"
         help="Port speed"
         />
     <!--=======================================================-->
@@ -559,4 +573,25 @@ limitations under the License.
         help=""
         />
     <!--=======================================================-->
+    <PTYPE
+        name="FILE_TYPE"
+        pattern="file:\/\/[^|]+"
+        help="file:"
+        />
+    <!--========================================================-->    
+    <PTYPE
+        name="MCLAG_KA_INTERVAL_RANGE"
+        method="integer"
+        pattern="1..60"
+        help="Keepalive Interval"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="MCLAG_SESSION_TIMEOUT_RANGE"
+        method="integer"
+        pattern="1..3600"
+        help=""
+        />
+    <!--=======================================================-->
+
 </CLISH_MODULE>

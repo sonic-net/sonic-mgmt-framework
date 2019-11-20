@@ -1,0 +1,61 @@
+module sonic-config-mgmt {
+  namespace "http://github.com/Azure/sonic-config-mgmt";
+  prefix scm;
+
+
+  organization
+    "SONiC";
+  contact
+    "SONiC";
+  description
+    "SONIC Configuration Management";
+
+  revision 2019-09-15 {
+    description
+      "Initial revision.";
+  }
+
+
+  typedef filename-uri-type {
+    description
+      "Support for following URI format:
+         file://etc/sonic/filename
+         Exception: running-configuration (running configDB)
+                    startup-configuration (default startup config file i.e. file://etc/sonic/config_db.json)";
+       type string {
+            pattern "((file):.*)";
+            pattern "running-configuration";
+            pattern "startup-configuration";
+       }
+  }
+
+  rpc copy {
+      input {
+          leaf source {
+              type filename-uri-type;
+              description "Provide the filename in URI format for the source file.";
+          }
+
+          leaf overwrite {
+              type boolean;
+              description "Overwrite the destination.";  
+          }
+
+          leaf destination {
+              type filename-uri-type;
+              description "Provide the filename in URI format for the destination file.";
+          }
+      }
+
+      output {
+        leaf status {
+            type int32;
+            description "The status of the operation execution request.";
+        }
+        leaf status-detail {
+            type string;
+            description "The detailed status of the operation execution request.";
+      }
+    }
+  }
+}

@@ -30,41 +30,104 @@ def invoke(func, args):
     body = None
     aa = cc.ApiClient()
 
-    if func == 'udldGlobalShowHandler':
-        return udldShowHandler("global_show", args)
+    # show udld global
+    if func == 'get_sonic_udld_sonic_udld_udld_udld_list':
+        keypath = cc.Path('/restconf/data/sonic-udld:sonic-udld/UDLD/UDLD_LIST={id}', id='GLOBAL')
+        resp = aa.get(keypath)
+        if not resp.ok() and resp.error_message() is not None:
+            if resp.error_message().find('Entry not found') >= 0:
+                return aa._make_error_response('UDLD not configured')
+        return resp
 
-    if func == 'udldNeighborShowHandler':
-        return udldShowHandler("neighbor_show", args)
+    # show udld neighbors
+    if func == 'get_list_sonic_udld_sonic_udld_udld_port_neigh_table_udld_port_neigh_table_list_zz':
+        keypath = cc.Path('/restconf/data/sonic-udld:sonic-udld/UDLD_PORT_NEIGH_TABLE/UDLD_PORT_NEIGH_TABLE_LIST')
+        return aa.get(keypath)
 
-    if func == 'udldInterfaceShowHandler':
-        return udldShowHandler("interface_show", args)
+    # show udld interface <ifname>
+    if func == 'get_sonic_udld_sonic_udld_udld_port_neigh_table_udld_port_neigh_table_list':
+        return generateShowUdldInterfaceResponse(aa, args)
 
-    if func == 'udldInterfaceCountersShowHandler':
-        return udldShowHandler("counters_show", args)
+    # show udld statistics
+    if func == 'get_list_sonic_udld_sonic_udld_udld_port_table_udld_port_table_list_zz':
+        keypath = cc.Path('/restconf/data/sonic-udld:sonic-udld/UDLD_PORT_TABLE/UDLD_PORT_TABLE_LIST')
+        return aa.get(keypath)
 
-    # Configure UDLD global
-    if func == 'udldGlobalEnableHandler' :
-        return udldConfigHandler("global_enable", args)
+    # show udld statistics interface <ifname>
+    if func == 'get_sonic_udld_sonic_udld_udld_port_table_udld_port_table_list_zz':
+        keypath = cc.Path('/restconf/data/sonic-udld:sonic-udld/UDLD_PORT_TABLE/UDLD_PORT_TABLE_LIST={ifname}', ifname=args[1])
+        return aa.get(keypath)
 
-    # Configure UDLD normal
-    if func == 'udldGlobalNormalEnableHandler' :
-        return udldConfigHandler("global_normal", args)
+    # Enable UDLD global
+    if func == 'post_list_sonic_udld_sonic_udld_udld_udld_list' :
+        keypath = cc.Path('/restconf/data/sonic-udld:sonic-udld/UDLD')
+        body=collections.defaultdict(dict)
+        body["UDLD_LIST"] = [{
+            "id": "GLOBAL",
+            "msg_time": 1,
+            "multiplier":3,
+            "admin_enable":True,
+            "aggressive":False
+            }]
+        return aa.post(keypath, body)
+
+    # Disable UDLD global
+    if func == 'delete_sonic_udld_sonic_udld_udld' :
+        # Delete all port level udld configs
+        keypath = cc.Path('/restconf/data/sonic-udld:sonic-udld/UDLD_PORT')
+        resp = aa.delete(keypath)
+        if not resp.ok():
+            return resp
+
+        # Delete global level udld configs
+        keypath = cc.Path('/restconf/data/sonic-udld:sonic-udld/UDLD')
+        return aa.delete(keypath)
+
+    # Configure UDLD aggressive
+    if func == 'patch_sonic_udld_sonic_udld_udld_udld_list_aggressive' :
+        keypath = cc.Path('/restconf/data/sonic-udld:sonic-udld/UDLD/UDLD_LIST={id}/aggressive', id='GLOBAL')
+        body = { "sonic-udld:aggressive": str2bool(args[0]) }
+        return aa.patch(keypath, body)
 
     # Configure UDLD message-time
-    if func == 'udldMsgTimeHandler' :
-        return udldConfigHandler("global_msg_time", args)
+    if func == 'patch_sonic_udld_sonic_udld_udld_udld_list_msg_time' :
+        keypath = cc.Path('/restconf/data/sonic-udld:sonic-udld/UDLD/UDLD_LIST={id}/msg_time', id='GLOBAL')
+        if args[0] == '0':
+            body = { "sonic-udld:msg_time": 1 }
+        else:
+            body = { "sonic-udld:msg_time": int(args[0]) }
+        return aa.patch(keypath, body)
 
     # Configure UDLD multiplier
-    if func == 'udldMultiplierHandler' :
-        return udldConfigHandler("global_multiplier", args)
+    if func == 'patch_sonic_udld_sonic_udld_udld_udld_list_multiplier' :
+        keypath = cc.Path('/restconf/data/sonic-udld:sonic-udld/UDLD/UDLD_LIST={id}/multiplier', id='GLOBAL')
+        if args[0] == '0':
+            body = { "sonic-udld:multiplier": 3 }
+        else:
+            body = { "sonic-udld:multiplier": int(args[0]) }
+        return aa.patch(keypath, body)
 
-    # Configure UDLD enable/disable at Interface
-    if func == 'udldInterfaceEnableHandler' :
-        return udldConfigHandler("interface_enable", args)
+    # Enable UDLD at Interface
+    if func == 'post_list_sonic_udld_sonic_udld_udld_port_udld_port_list' :
+        keypath = cc.Path('/restconf/data/sonic-udld:sonic-udld/UDLD_PORT')
+        body=collections.defaultdict(dict)
+        body["UDLD_PORT_LIST"] = [{
+            "ifname": args[0],
+            "admin_enable":True,
+            "aggressive":False
+            }]
+        return aa.post(keypath, body)
 
-    # Configure UDLD normal at Interface
-    if func == 'udldInterfaceNormalEnableHandler' :
-        return udldConfigHandler("interface_normal", args)
+    # Disable UDLD at Interface
+    if func == 'delete_sonic_udld_sonic_udld_udld_port_udld_port_list' :
+        keypath = cc.Path('/restconf/data/sonic-udld:sonic-udld/UDLD_PORT/UDLD_PORT_LIST={ifname}', ifname=args[0])
+        return aa.delete(keypath)
+
+    # Configure UDLD aggressive at Interface
+    if func == 'patch_sonic_udld_sonic_udld_udld_port_udld_port_list_aggressive' :
+        keypath = cc.Path('/restconf/data/sonic-udld:sonic-udld/UDLD_PORT/UDLD_PORT_LIST={ifname}/aggressive', ifname=args[1])
+        body = { "sonic-udld:aggressive": str2bool(args[0]) }
+        return aa.patch(keypath, body)
 
     # enable/disable debug udld at global level
     if func == 'udldGlobalDebugHandler' :
@@ -78,86 +141,70 @@ def invoke(func, args):
     if func == 'udldInterfaceCountersClearHandler' :
         return udldInterfaceCountersClearHandler(args)
 
+def generateShowUdldInterfaceResponse(clientApi, args):
+    resp_status = 0
+    # Retrieve global UDLD message time
+    keypath = cc.Path('/restconf/data/sonic-udld:sonic-udld/UDLD/UDLD_LIST={id}/msg_time', id='GLOBAL')
+    resp = clientApi.get(keypath)
+    gbl_msg_time = 0
+    if resp.ok() and 'sonic-udld:msg_time' in resp.content.keys():
+        gbl_msg_time = resp.content['sonic-udld:msg_time']
 
-def udldConfigHandler(option, args):
-    if option == "global_enable":
-        if args[0] == '1':
-            print("Enabled UDLD globally")
-        else:    
-            print("Disabled UDLD globally")
-    elif option == "global_normal":
-        if args[0] == '1':
-            print("Enabled UDLD globally in Normal mode")
-        else:    
-            print("Disabled UDLD globally in Normal mode")
-    elif option == "global_msg_time":
-        print("Set UDLD Message Time to: " + args[0])
-    elif option == "global_multiplier":
-        print("Set UDLD Multiplier to: " + args[0])
-    elif option == "interface_enable":
-        if args[1] == '1':
-            print("Enabled UDLD on interface: " + args[0])
-        else:    
-            print("Disabled UDLD on interface: " + args[0])
-    elif option == "interface_normal":
-        if args[1] == '1':
-            print("Enabled UDLD in Normal mode on interface: " + args[0])
-        else:    
-            print("Disabled UDLD in Normal mode on interface: " + args[0])
+    # Retrieve port level UDLD configs
+    keypath = cc.Path('/restconf/data/sonic-udld:sonic-udld/UDLD_PORT/UDLD_PORT_LIST={ifname}', ifname=args[1])
+    resp = clientApi.get(keypath)
+    port_conf_dict = {}
+    if resp.ok() and 'sonic-udld:UDLD_PORT_LIST' in resp.content.keys():
+        port_conf_dict = resp.content['sonic-udld:UDLD_PORT_LIST'][0]
+        resp_status = resp.response.status_code
+    else:
+        if resp.error_message().find('Entry not found') >= 0:
+            return clientApi._make_error_response('UDLD not configured on ' + args[1])
+        else:
+            return resp
 
-    return ""
+    # Retrieve UDLD Global operatioal info
+    keypath = cc.Path('/restconf/data/sonic-udld:sonic-udld/UDLD_GLOBAL_TABLE/UDLD_GLOBAL_TABLE_LIST={id}', id='GLOBAL')
+    resp = clientApi.get(keypath)
+    gbl_oper_dict = {}
+    if resp.ok() and 'sonic-udld:UDLD_GLOBAL_TABLE_LIST' in resp.content.keys():
+        gbl_oper_dict = resp.content['sonic-udld:UDLD_GLOBAL_TABLE_LIST'][0]
 
+    # Retrieve UDLD port local status
+    keypath = cc.Path('/restconf/data/sonic-udld:sonic-udld/UDLD_PORT_TABLE/UDLD_PORT_TABLE_LIST={ifname}/status', ifname=args[1])
+    resp = clientApi.get(keypath)
+    port_status = 0
+    if resp.ok() and 'sonic-udld:status' in resp.content.keys():
+        port_status = resp.content['sonic-udld:status']
 
-def udldShowHandler(option, args):
-    if option == "global_show":
-        print("UDLD GLobal Information")
-        print("Admin State:         UDLD Enabled")
-        print("Mode:                Aggresive")
-        print("UDLD Message time:   1 secs")
-        print("UDLD Multiplier:     3")
-    elif option == "neighbor_show":
-        print("Port           Device Name     Device ID         Port ID         Neighbor State")
-        print("---------------------------------------------------------------------------------")
-        print("Ethernet0      Sonic           3c2c.992d.8201    Ethernet8       Bidirectional")
-        print("Ethernet4      Sonic           3c2c.992d.8205    Ethernet12      Bidirectional")
-    elif option == "interface_show":
-        print("UDLD information for " + args[0])
-        print("  UDLD Admin State:                  Enabled")
-        print("  Mode:                              Aggressive")
-        print("  Status:                            Bidirectional")
-        print("  Local device id:                   3c2c.992d.8201")
-        print("  Local port id :                    " + args[0])
-        print("  Local device name:                 Sonic")
-        print("  Message Time:                      1 secs")
-        print("  Timeout Interval:                  3")
-        print("     Neighbor Entry 1")
-        print("     ----------------------------------------------------------------------------------------")
-        print("     Neighbor device id:         3c2c.992d.8235")
-        print("     Neighbor port id:           Ethernet8") 
-        print("     Neighbor device name:       Sonic") 
-        print("     Neighbor message time:      1")
-        print("     Neighbor timeout interval:  3")
-    elif option == "counters_show":
-        if len(args) > 0:
-            print("UDLD Interface statistics for " + args[0])
-            print("Frames transmitted:         10")
-            print("Frames received:            9")
-            print("Frames with error:          0")
-        else:    
-            print("UDLD Interface statistics for Ethernet0")
-            print("Frames transmitted:         120")
-            print("Frames received:            39")
-            print("Frames with error:          0")
-            print("UDLD Interface statistics for Ethernet4")
-            print("Frames transmitted:         20")
-            print("Frames received:            23")
-            print("Frames with error:          0")
-            print("UDLD Interface statistics for Ethernet8")
-            print("Frames transmitted:         68")
-            print("Frames received:            53")
-            print("Frames with error:          3")
+    # Retrieve neighbors info for a given interface
+    keypath = cc.Path('/restconf/data/sonic-udld:sonic-udld/UDLD_PORT_NEIGH_TABLE/UDLD_PORT_NEIGH_TABLE_LIST={ifname},{index}', ifname=args[1], index='*')
+    resp = clientApi.get(keypath)
+    neigh_dict = {}
+    if resp.ok() and 'sonic-udld:UDLD_PORT_NEIGH_TABLE_LIST' in resp.content.keys():
+        neigh_dict = resp.content['sonic-udld:UDLD_PORT_NEIGH_TABLE_LIST'][0]
+    else:
+        if resp.error_message().find('Entry not found') < 0:
+            return resp
 
-    return ""
+    final_dict = {}
+    final_dict['interface'] = args[1]
+    final_dict['msg_time'] = gbl_msg_time
+    final_dict['status'] = port_status
+    final_dict['port_config'] = port_conf_dict
+    final_dict['global_oper'] = gbl_oper_dict
+    final_dict['neighbor'] = neigh_dict
+
+    body=collections.defaultdict(dict)
+    body['intf_show'] = final_dict
+
+    import requests
+    presp = requests.Response()
+    presp.status_code = resp_status
+    response = cc.Response(presp)
+    response.content = body
+
+    return response
 
 
 def udldGlobalDebugHandler(args):
@@ -181,8 +228,47 @@ def udldInterfaceCountersClearHandler(args):
         print("Clearing counters for interface: " + args[0])
 
 
+def str2bool(s):
+    return s.lower() in ("yes", "true", "t", "1")
+
+
 def run(func, args):
         api_response = invoke(func, args)
+        # Temporary for Mock CLI. Needs to be removed
+        if api_response is None:
+            value = [{'id': 'GLOBAL'}]
+            show_cli_output(args[0], value)
+            return
+        if api_response.ok():
+            response = api_response.content
+            if response is None:
+                print "Success"
+            elif 'sonic-udld:UDLD_LIST' in response.keys():
+                value = response['sonic-udld:UDLD_LIST']
+                if value is None:
+                    return
+                else:
+                    show_cli_output(args[0], value)
+            elif 'sonic-udld:UDLD_PORT_TABLE_LIST' in response.keys():
+                value = response['sonic-udld:UDLD_PORT_TABLE_LIST']
+                if value is None:
+                    return
+                else:
+                    show_cli_output(args[0], value)
+            elif 'intf_show' in response.keys():
+                value = response['intf_show']
+                if value is None:
+                    return
+                else:
+                    show_cli_output(args[0], value)
+            elif 'sonic-udld:UDLD_PORT_NEIGH_TABLE_LIST' in response.keys():
+                value = response['sonic-udld:UDLD_PORT_NEIGH_TABLE_LIST']
+                if value is None:
+                    return
+                else:
+                    show_cli_output(args[0], value)
+        else:
+            print api_response.error_message()
 
 
 if __name__ == '__main__':
