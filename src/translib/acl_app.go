@@ -542,16 +542,14 @@ func (app *AclApp) convertDBAclRulesToInternal(dbCl *db.DB, aclName string, seqI
 	}
 	if ruleKey.Len() > 1 {
 		ruleName := ruleKey.Get(1)
-		if ruleName != "DEFAULT_RULE" {
-			ruleData, err := dbCl.GetEntry(app.ruleTs, ruleKey)
-			if err != nil {
-				return err
-			}
-			if app.ruleTableMap[aclName] == nil {
-				app.ruleTableMap[aclName] = make(map[string]db.Value)
-			}
-			app.ruleTableMap[aclName][ruleName] = ruleData
-		}
+        ruleData, err := dbCl.GetEntry(app.ruleTs, ruleKey)
+        if err != nil {
+            return err
+        }
+        if app.ruleTableMap[aclName] == nil {
+            app.ruleTableMap[aclName] = make(map[string]db.Value)
+        }
+        app.ruleTableMap[aclName][ruleName] = ruleData
 	} else {
 		ruleKeys, err := dbCl.GetKeys(app.ruleTs)
 		if err != nil {
@@ -831,17 +829,15 @@ func (app *AclApp) convertInternalToOCAclBinding(d *db.DB, aclName string, intfI
 		for i, _ := range ruleKeys {
 			rulekey := ruleKeys[i]
 			// Rulekey has two keys, first aclkey and second rulename
-			if rulekey.Get(0) == aclName && rulekey.Get(1) != "DEFAULT_RULE" {
+			if rulekey.Get(0) == aclName {
 				seqId, _ := strconv.Atoi(strings.Replace(rulekey.Get(1), "RULE_", "", 1))
 				convertInternalToOCAclRuleBinding(d, 0, int64(seqId), direction, intfAclSet, nil)
 			}
 		}
 	} else {
 		for ruleName := range app.ruleTableMap[aclName] {
-			if ruleName != "DEFAULT_RULE" {
-				seqId, _ := strconv.Atoi(strings.Replace(ruleName, "RULE_", "", 1))
-				convertInternalToOCAclRuleBinding(d, 0, int64(seqId), direction, intfAclSet, nil)
-			}
+            seqId, _ := strconv.Atoi(strings.Replace(ruleName, "RULE_", "", 1))
+            convertInternalToOCAclRuleBinding(d, 0, int64(seqId), direction, intfAclSet, nil)
 		}
 	}
 
@@ -1166,11 +1162,6 @@ func (app *AclApp) convertOCAclRulesToInternal(d *db.DB) {
 						convertOCAclRuleToInternalAclRule(app.ruleTableMap[aclKey][ruleName], seqId, aclKey, aclSet.Type, entrySet)
 					}
 				}
-
-				yangPathStr, _ := getYangPathFromUri(app.pathInfo.Path)
-				if yangPathStr != "/openconfig-acl:acl/acl-sets/acl-set/acl-entries" && yangPathStr != "/openconfig-acl:acl/acl-sets/acl-set/acl-entries/acl-entry" {
-					app.createDefaultDenyAclRule(d, aclKey, app.ruleTableMap[aclKey])
-				}
 			}
 		}
 	}
@@ -1222,19 +1213,6 @@ func (app *AclApp) convertOCAclBindingsToInternal() {
 			(&val).SetList("ports", aclInterfacesMap[k])
 		}
 	}
-}
-
-func (app *AclApp) createDefaultDenyAclRule(d *db.DB, aclName string, rulesInfo map[string]db.Value) {
-	existingRuleEntry, err := d.GetEntry(app.ruleTs, db.Key{Comp: []string{aclName, "DEFAULT_RULE"}})
-	// If Default Rule already exists, Do not add new Default Rule
-	if existingRuleEntry.IsPopulated() && err == nil {
-		return
-	}
-	m := make(map[string]string)
-	rulesInfo["DEFAULT_RULE"] = db.Value{Field: m}
-	rulesInfo["DEFAULT_RULE"].Field["PRIORITY"] = strconv.FormatInt(int64(MIN_PRIORITY), 10)
-	rulesInfo["DEFAULT_RULE"].Field["PACKET_ACTION"] = "DROP"
-	rulesInfo["DEFAULT_RULE"].Field["IP_TYPE"] = "ANY"
 }
 
 func convertOCAclRuleToInternalAclRule(ruleData db.Value, seqId uint32, aclName string, aclType ocbinds.E_OpenconfigAcl_ACL_TYPE, rule *ocbinds.OpenconfigAcl_Acl_AclSets_AclSet_AclEntries_AclEntry) {
@@ -1549,7 +1527,7 @@ func (app *AclApp) setAclRuleDataInConfigDb(d *db.DB, ruleData map[string]map[st
 					return err
 				}
 			} else {
-				if existingRuleEntry.IsPopulated() && ruleName != "DEFAULT_RULE" {
+				if existingRuleEntry.IsPopulated() {
 					err := d.ModEntry(app.ruleTs, db.Key{Comp: []string{aclName, ruleName}}, ruleData[aclName][ruleName])
 					if err != nil {
 						return err

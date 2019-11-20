@@ -1,0 +1,222 @@
+module openconfig-interfaces-annot {
+
+    yang-version "1";
+
+    namespace "http://openconfig.net/yang/annotation/openconfig-interfaces-annot";
+    prefix "oc-interfaces-annot";
+
+    import sonic-extensions { prefix sonic-ext; }
+    import openconfig-interfaces { prefix oc-intf; }
+    import openconfig-interfaces-ext { prefix oc-intf-ext; }
+    import openconfig-extensions { prefix oc-ext; }
+    import openconfig-if-ethernet {prefix oc-eth; }
+    import openconfig-vlan {prefix oc-vlan; }
+    import openconfig-if-ip {prefix oc-ip; }
+    import openconfig-if-aggregate { prefix oc-lag; }
+
+
+    deviation /oc-intf:interfaces/oc-intf:interface {
+        deviate add {
+            sonic-ext:key-transformer "intf_tbl_key_xfmr";
+            sonic-ext:table-transformer "intf_table_xfmr";
+        }
+    }
+
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:name {
+        deviate add {
+            sonic-ext:field-transformer "intf_name_empty_xfmr";
+        }
+    }
+
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:config/oc-intf:name {
+        deviate add {
+            sonic-ext:field-transformer "intf_name_xfmr";
+        }
+    }
+
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:config/oc-intf:enabled {
+        deviate add {
+            sonic-ext:field-transformer "intf_enabled_xfmr";
+        }
+    }
+    
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-lag:aggregation/oc-lag:config/oc-lag:min-links {
+        deviate add { 
+            sonic-ext:field-transformer "lag_min_links_xfmr";
+        }
+    }
+
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-lag:aggregation/oc-lag:config/oc-intf-ext:fallback {
+        deviate add { 
+            sonic-ext:field-transformer "lag_fallback_xfmr";
+        }
+    }
+
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-lag:aggregation/oc-lag:state {
+      deviate add {
+            sonic-ext:subtree-transformer "intf_lag_state_xfmr";
+      }
+    }
+
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:state {
+        deviate add {
+            sonic-ext:db-name "APPL_DB";
+        }
+    }
+
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:state/oc-intf:name {
+        deviate add {
+            sonic-ext:field-transformer "intf_name_xfmr";
+        }
+    }
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:state/oc-intf:enabled {
+        deviate add {
+            sonic-ext:field-transformer "intf_enabled_xfmr";
+        }
+    }
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:state/oc-intf:admin-status {
+        deviate add {
+            sonic-ext:field-transformer "intf_admin_status_xfmr";
+        }
+    }
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:state/oc-intf:oper-status {
+        deviate add {
+            sonic-ext:field-transformer "intf_oper_status_xfmr";
+        }
+    }
+
+
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-eth:ethernet/oc-eth:config {
+        deviate add {
+            sonic-ext:subtree-transformer "intf_eth_port_config_xfmr";
+        }
+    }
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-eth:ethernet/oc-eth:state {
+        deviate add {
+            sonic-ext:db-name "APPL_DB";
+        }
+    }
+
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-eth:ethernet/oc-eth:state/oc-eth:auto-negotiate {
+        deviate add {
+            sonic-ext:field-transformer "intf_eth_auto_neg_xfmr";
+        }
+    }
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-eth:ethernet/oc-eth:state/oc-eth:port-speed {
+        deviate add {
+            sonic-ext:field-transformer "intf_eth_port_speed_xfmr";
+        }
+    }
+
+     deviation /oc-intf:interfaces/oc-intf:interface/oc-lag:aggregation/oc-vlan:switched-vlan {
+        deviate add {
+            sonic-ext:subtree-transformer "sw_vlans_xfmr";
+        }
+    }
+
+     deviation /oc-intf:interfaces/oc-intf:interface/oc-eth:ethernet/oc-vlan:switched-vlan {
+        deviate add {
+            sonic-ext:subtree-transformer "sw_vlans_xfmr";
+        }
+    }
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface {
+        deviate add {
+            sonic-ext:key-transformer "intf_subintfs_xfmr";
+        }
+    }
+
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv4/oc-ip:addresses {
+        deviate add {
+            sonic-ext:subtree-transformer "intf_ip_addr_xfmr";
+        }
+    }
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv6/oc-ip:addresses {
+        deviate add {
+            sonic-ext:subtree-transformer "intf_ip_addr_xfmr";
+        }
+    }
+
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:state/oc-intf:counters {
+        deviate add {
+            sonic-ext:subtree-transformer "intf_get_counters_xfmr";
+            sonic-ext:db-name "COUNTERS_DB";
+        }
+    }
+
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv4/oc-ip:neighbors {
+        deviate add {
+            sonic-ext:db-name "APPL_DB";
+            sonic-ext:table-name "NEIGH_TABLE";
+            sonic-ext:subtree-transformer "neigh_tbl_get_all_ipv4_xfmr";
+        }
+    }
+
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv4/oc-ip:neighbors/oc-ip:neighbor {
+        deviate add {
+            sonic-ext:key-transformer "neigh_tbl_key_xfmr";
+        }
+    }
+
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv4/oc-ip:neighbors/oc-ip:neighbor/oc-ip:state {
+        deviate add {
+        }
+    }
+
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv4/oc-ip:neighbors/oc-ip:neighbor/oc-ip:state/oc-ip:ip {
+        deviate add {
+        }
+    }
+
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv4/oc-ip:neighbors/oc-ip:neighbor/oc-ip:state/oc-ip:link-layer-address {
+        deviate add {
+            sonic-ext:field-name "neigh";
+        }
+    }
+
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv4/oc-ip:neighbors/oc-ip:neighbor/oc-ip:state/oc-ip:origin {
+        deviate add {
+            sonic-ext:field-name "NONE";
+        }
+    }
+
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv4/oc-ip:neighbors/oc-ip:neighbor/oc-ip:ip {
+        deviate add {
+        }
+    }
+
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv6/oc-ip:neighbors {
+        deviate add {
+            sonic-ext:db-name "APPL_DB";
+            sonic-ext:table-name "NEIGH_TABLE";
+            sonic-ext:subtree-transformer "neigh_tbl_get_all_ipv6_xfmr";
+        }
+    }
+
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv6/oc-ip:neighbors/oc-ip:neighbor {
+        deviate add {
+            sonic-ext:key-transformer "neigh_tbl_key_xfmr";
+        }
+    }
+
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv6/oc-ip:neighbors/oc-ip:neighbor/oc-ip:state {
+        deviate add {
+        }
+    }
+
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv6/oc-ip:neighbors/oc-ip:neighbor/oc-ip:state/oc-ip:ip {
+        deviate add {
+        }
+    }
+
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv6/oc-ip:neighbors/oc-ip:neighbor/oc-ip:state/oc-ip:link-layer-address {
+        deviate add {
+            sonic-ext:field-name "neigh";
+        }
+    }
+
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv6/oc-ip:neighbors/oc-ip:neighbor/oc-ip:state/oc-ip:origin {
+        deviate add {
+            sonic-ext:field-name "NONE";
+        }
+    }
+}

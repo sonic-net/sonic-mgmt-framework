@@ -13,6 +13,39 @@
          </COMMAND>
   </VIEW>
 
+  <VIEW name="enable-view">
+    <!--show tam-int-ifa-ts status -->
+    <COMMAND name="show tam-int-ifa-ts" help="Show TAM INT IFA config info/status ">
+       <PARAM name="tam-int-ifa-ts-subcommands" help="TAM INT IFA TS subcommands" mode="switch" ptype="SUBCOMMAND" optional="true">
+        <PARAM name="supported" help="Check if TAM-INT_IFA-TS is supported" ptype="SUBCOMMAND" mode="subcommand"> </PARAM>
+        <PARAM name="status" help="TAM_INT_IFA_TS Info/Status"  ptype="SUBCOMMAND" mode="subcommand"> </PARAM>
+        <PARAM name="flow" help="TAM_INT_IFA_TS Flow"  ptype="SUBCOMMAND" mode="subcommand"> 
+		<PARAM name="flow-options" help="TAM_INT_IFA_TS Flow Options" mode="switch" ptype="SUBCOMMAND"> 
+		   <PARAM name="flow-name" help="TAM_INT_IFA_TS Info/Status for each flow"  ptype="STRING"> </PARAM>
+		   <PARAM name="all" help="TAM_INT_IFA_TS Info/Status for all flows"  ptype="SUBCOMMAND" mode="subcommand"> </PARAM>
+		</PARAM>
+        </PARAM>
+        <PARAM name="statistics" help="TAM_INT_IFA_TS Statistics" ptype="SUBCOMMAND" mode="subcommand"> 
+		<PARAM name="statistics-options" help="TAM_INT_IFA_TS Statistics Options" mode="switch" ptype="SUBCOMMAND"> 
+		   <PARAM name="flow-name" help="TAM_INT_IFA_TS Statistics for each flow"  ptype="STRING"> </PARAM>
+		   <PARAM name="all" help="TAM_INT_IFA_TS Statistics for all flows"  ptype="SUBCOMMAND" mode="subcommand"> </PARAM>
+		</PARAM>
+        </PARAM>
+       </PARAM>
+      <ACTION> 
+         if test "${tam-int-ifa-ts-subcommands}" = "supported"; then
+            python $SONIC_CLI_ROOT/ts.py -show -supported -templ -showsupported.j2; 
+         elif test "${tam-int-ifa-ts-subcommands}" = "status"; then
+            python $SONIC_CLI_ROOT/ts.py -show -status -templ -showstatus.j2; 
+         elif test "${tam-int-ifa-ts-subcommands}" = "flow"; then
+            python $SONIC_CLI_ROOT/ts.py -show -flow ${flow-name} -templ -showflow.j2;
+         elif test "${tam-int-ifa-ts-subcommands}" = "statistics"; then
+            python $SONIC_CLI_ROOT/ts.py -show -statistics -flow ${flow-name} -templ -showstatisticsflow.j2;
+         fi
+     </ACTION>
+    </COMMAND>
+  </VIEW>
+
   <VIEW name="configure-tam-int-ifa-ts-view"
         prompt="${SYSTEM_NAME}(config-int-ifa-ts)# "
         depth="3">
@@ -50,14 +83,10 @@
                    >
                 </PARAM>
          </PARAM>
-         <ACTION>
-              if test "${flow-options}" = "flow-name"; then&#xA;
-               python $SONIC_CLI_ROOT/ts.py -clear -flow ${flow-name}
-              elif test "${drop-options}" = "aging-interval"; then&#xA;
-               python $SONIC_CLI_ROOT/ts.py -clear -flow all
-              fi&#xA;
-           </ACTION>
-
+      <ACTION> if test "${flow-options}" = "flow-name"; then
+       python $SONIC_CLI_ROOT/ts.py -clear -flow ${flow-name}; elif test "${flow-options}" = "all"; then
+       python $SONIC_CLI_ROOT/ts.py -clear -flow all; fi
+       </ACTION>
          </COMMAND>
 
           <COMMAND name="feature"
@@ -86,14 +115,12 @@
                    >
                 </PARAM>
          </PARAM>
-         <ACTION>
-              if test "${feature-options}" = "enable"; then&#xA;
-               python $SONIC_CLI_ROOT/ts.py -config -enable 
-              elif test "${feature-options}" = "disable"; then&#xA;
-               python $SONIC_CLI_ROOT/ts.py -config -disable 
-              fi&#xA;
-           </ACTION>
-
+         <ACTION> if test "${feature-options}" = "enable"; then
+		  python $SONIC_CLI_ROOT/ts.py -config -enable;
+	          elif test "${feature-options}" = "disable"; then
+		  python $SONIC_CLI_ROOT/ts.py -config -disable;
+	          fi 
+         </ACTION>
          </COMMAND>
 
          <COMMAND

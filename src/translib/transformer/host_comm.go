@@ -1,6 +1,8 @@
 package transformer
 
 import (
+	"strings"
+
 	// Go 1.11 doesn't let us download using the canonical import path
 	// "github.com/godbus/dbus/v5"
 	// This works around that problem by using gopkg.in instead
@@ -37,11 +39,13 @@ func hostQueryAsync(endpoint string, args ...interface{}) (chan hostResult, erro
 		return result_ch, err
 	}
 
-	const bus_name = "org.SONiC.HostService"
-	const bus_path = "/org/SONiC/HostService"
+	service := strings.SplitN(endpoint, ".", 2)
+	const bus_name_base = "org.SONiC.HostService."
+	bus_name := bus_name_base + service[0]
+	bus_path := dbus.ObjectPath("/org/SONiC/HostService/" + service[0])
 
 	obj := conn.Object(bus_name, bus_path)
-	dest := bus_name + "." + endpoint
+	dest := bus_name_base + endpoint
 	dbus_ch := make(chan *dbus.Call, 1)
 
 	go func() {
@@ -120,3 +124,23 @@ func ztpAction(action string) (string, error) {
 }
 
 */
+
+// showtechAction calls the Showtech endpoint on the host and returns
+// the status
+func showtechAction(date string) (string, error) {
+	var output string
+	// result.Body is of type []interface{}, since any data may be returned by
+	// the host server. The application is responsible for performing
+	// type assertions to get the correct data.
+	result := hostQuery("Showtech.showtech_info", date)
+
+	if result.Err != nil {
+		return output, result.Err
+	}
+
+    // Showtech.showtech_info returns an exit code and the stdout of the command
+    // We only care about the stdout (which is at offset 1 in the "Body".)
+    output, _ = result.Body[1].(string)
+
+	return output, nil
+}

@@ -266,12 +266,13 @@ func (app *CommonApp) translateCRUDCommon(d *db.DB, opcode int) ([]db.WatchKeys,
 		log.Error(err)
 		return keys, err
 	}
+	app.cmnAppTableMap = result
 	if len(result) == 0 {
 		log.Error("XlatetoDB() returned empty map")
-		err = errors.New("transformer.XlatetoDB() returned empty map")
+		//Note: Get around for no redis ABNF Schema for set(temporary)
+		//`err = errors.New("transformer.XlatetoDB() returned empty map")
 		return keys, err
 	}
-	app.cmnAppTableMap = result
 
 	moduleNm, err := transformer.GetModuleNmFromPath(app.pathInfo.Path)
         if (err != nil) || (len(moduleNm) == 0) {
@@ -309,6 +310,10 @@ func (app *CommonApp) translateCRUDCommon(d *db.DB, opcode int) ([]db.WatchKeys,
 func (app *CommonApp) processCommon(d *db.DB, opcode int) error {
 
 	var err error
+	if len(app.cmnAppTableMap) == 0 {
+		return err
+	}
+
 	log.Info("Processing DB operation for ", app.cmnAppTableMap)
 	switch opcode {
 		case CREATE:
@@ -614,8 +619,8 @@ func checkAndProcessLeafList(existingEntry db.Value, tblRw db.Value, opcode int,
 					}
 				}
 			} else if opcode == UPDATE {
-				exstLst = valueLst
-			}
+                                exstLst = valueLst
+                        }
 			if opcode == UPDATE {
 				tblRw.SetList(field, exstLst)
 			}

@@ -23,7 +23,7 @@ limitations under the License.
 <VIEW name="enable-view">
     <COMMAND
         name="show mac"
-        help="Show mac"
+        help="Show MAC"
         >
     <ACTION> 
         builtin="clish_nop"
@@ -32,8 +32,8 @@ limitations under the License.
 
 <!--====================show mac address-table command======================-->
     <COMMAND
-        help="Mac address table"
         name="show mac address-table"
+        help="MAC address table"
         >
     <ACTION> 
         python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_network_instance_network_instances_network_instance_fdb_mac_table_entries show_mac.j2 show
@@ -42,8 +42,8 @@ limitations under the License.
 
 <!--====================show mac address-table count command ======================-->
     <COMMAND
-        help="Count keyword"
         name="show mac address-table count"
+        help="Count keyword"
         >
     <ACTION> 
         python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_network_instance_network_instances_network_instance_fdb_mac_table_entries show_mac_count.j2 count 
@@ -52,8 +52,8 @@ limitations under the License.
 
 <!--====================show mac address-table address <mac-address> command ======================-->
     <COMMAND
-        help="Show mac address table address for mac-address"
         name="show mac address-table address"
+        help="Show MAC address table address for MAC address"
         >
         <PARAM
             name="mac-addr"
@@ -68,8 +68,8 @@ limitations under the License.
 
 <!--====================show mac address-table vlan <vlan-id> command ======================-->
     <COMMAND
-        help="Show mac address-table for VLAN"
         name="show mac address-table Vlan"
+        help="Show MAC address-table for VLAN"
         >
         <PARAM
             name="vlan-id"
@@ -84,8 +84,8 @@ limitations under the License.
 
 <!--====================show mac address-table interface <p-id> command ======================-->
     <COMMAND
-        help="Show mac address-table for interfaces"
-        name="show mac address-table interface">
+        name="show mac address-table interface"
+        help="Show MAC address-table for interfaces">
         <PARAM
             name="if-subcommands"
             help="Interface subcommands"
@@ -132,8 +132,8 @@ limitations under the License.
 
 <!--====================show mac address-table static commands ======================-->
     <COMMAND
-        help="Mac address-table for static commands"
-        name="show mac address-table static">
+        name="show mac address-table static"
+        help="MAC address-table for static commands">
         <PARAM
             name="s-subcommands"
             help="Static subcommands"
@@ -143,13 +143,13 @@ limitations under the License.
             >
             <PARAM
                 name="address"
-                help="Mac-address of static interface"
+                help="MAC address of static interface"
                 ptype="SUBCOMMAND"
                 mode="subcommand"
                 >
                 <PARAM
                     name="mac-addr"
-                    help="48 bit mac-address"
+                    help="48 bit MAC address"
                     ptype="MAC_ADDR"
                     >
                 </PARAM>
@@ -227,8 +227,8 @@ limitations under the License.
 
 <!--====================show mac address-table dynamic commands ======================-->
     <COMMAND
-        help="mac address-table for dynamic commands"
-        name="show mac address-table dynamic">
+        name="show mac address-table dynamic"
+        help="MAC address-table for dynamic commands">
         <PARAM
             name="d-subcommands"
             help="Dynamic subcommands"
@@ -238,13 +238,13 @@ limitations under the License.
             >
             <PARAM
                 name="address"
-                help="Mac address of dynamic interface"
+                help="MAC address of dynamic interface"
                 ptype="SUBCOMMAND"
                 mode="subcommand"
                 >
                 <PARAM
                     name="mac-addr"
-                    help="48 bit mac-address"
+                    help="48 bit MAC address"
                     ptype="MAC_ADDR"
                     >
                 </PARAM>
@@ -316,6 +316,78 @@ limitations under the License.
             fi&#xA;
         else&#xA;
             python $SONIC_CLI_ROOT/sonic-cli-mac.py get_openconfig_network_instance_network_instances_network_instance_fdb_mac_table_entries show_mac.j2 dynamic ${__full_line}&#xA;
+        fi
+    </ACTION>
+    </COMMAND>
+
+<!--====================clear mac address-table dynamic <all | vlan | address>======================-->
+
+    <COMMAND
+        name="clear mac"
+        help="Clear MAC"
+        >
+    <ACTION>
+        builtin="clish_nop"
+    </ACTION>
+    </COMMAND>
+
+    <COMMAND
+        name="clear mac address-table"
+        help="Clear MAC address table"
+        >
+    <ACTION>
+        builtin="clish_nop"
+    </ACTION>
+    </COMMAND>
+
+    <COMMAND
+        name="clear mac address-table dynamic"
+        help="Clear MAC address-table for dynamic commands">
+        <PARAM
+            name="d-subcommands"
+            help="Dynamic subcommands"
+            mode="switch"
+            ptype="SUBCOMMAND"
+            >
+            <PARAM
+                name="all"
+                help="clearing dynamic mac address"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                >
+            </PARAM>
+            <PARAM
+                name="address"
+                help="Clear MAC address of dynamic interface"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                >
+                <PARAM
+                    name="mac-addr"
+                    help="48 bit MAC address"
+                    ptype="MAC_ADDR"
+                    >
+                </PARAM>
+            </PARAM>
+            <PARAM
+                name="Vlan"
+                help="VLAN ID"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                >
+                <PARAM
+                    name="vlan-id"
+                    help="VLAN ID"
+                    ptype="VLAN_ID"
+                    >
+                </PARAM>
+            </PARAM>
+        </PARAM>
+    <ACTION>
+        if test "${d-subcommands}" = "all"; then&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-mac.py rpc_sonic_fdb_clear_fdb&#xA;
+        else&#xA;
+            builtin="clish_nop"&#xA;
         fi
     </ACTION>
     </COMMAND>

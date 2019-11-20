@@ -1,0 +1,138 @@
+module sonic-image-management {
+  namespace "http://github.com/Azure/sonic-image-mgmt";
+  prefix simg;
+  yang-version 1.1;
+
+  organization "SONiC";
+  contact
+    "SONiC";
+  description
+    "This module contains a collection of YANG definitions for
+       Configuration and Monitoring of System software.";
+
+  revision 2019-09-23 {
+    description
+      "Initial revision.";
+  }
+
+
+
+container sonic-image-management {
+
+  container IMAGE_GLOBAL {
+      list IMAGE_GLOBAL_LIST {
+         key "img_key";
+         leaf img_key {
+             type enumeration {
+                 enum "config";
+             }
+         }
+         leaf current {
+             type string;
+         }
+         leaf next-boot {
+             type string; 
+         }
+      }
+    }
+    container IMAGE_TABLE {
+      list IMAGE_TABLE_LIST {
+         key "image";
+         leaf image {
+             type string;
+         }
+      }
+    }
+  }
+
+
+typedef filename-uri-type {
+  description
+    "Support for following URI format:
+    http://hostip/filepath
+    https://hostip/filepath
+    file://filename";
+  type string {
+    pattern "((https?|file):.*)";
+  }
+}
+
+/*
+ * RPCs
+ */
+
+  rpc image-install {
+    description
+      "This RPC is used to kickoff a background task to download, install and load the new software.";
+    input {
+     leaf imagename {
+        type filename-uri-type;
+        description
+          "Provides the type of link to installer's destination(url or path(obsolute-path)).";
+      }
+    }
+    output {
+      leaf status {
+        type int32;
+        description
+          "The status of the operation execution request.";
+      }
+      leaf status-detail {
+        type string;
+        description
+          "The detailed status of the operation execution request.";
+      }
+    }
+  }
+  rpc image-remove {
+    description
+      "This RPC is used to remove an unused image from the disk.";
+    input {
+      leaf imagename {
+        type string;
+        description
+          "Provides the name of the image to be set as default.";
+      }
+    }
+    output {
+      leaf status {
+        type int32;
+        description
+          "The status of the operation execution request.";
+      }
+      leaf status-detail {
+        type string;
+        description
+          "The detailed status of the operation execution request.";
+      }
+    }
+  }
+
+  rpc image-default {
+    description
+      "This RPC is used to set default image which loaded in all subsequent reboots";
+    input {
+      leaf imagename {
+        type string;
+        description
+          "Provides the name of the image to be set as default.";
+      }
+    }
+    output {
+      leaf status {
+        type int32;
+        description
+          "The status of the operation execution request.";
+      }
+      leaf status-detail {
+        type string;
+        description
+          "The detailed status of the operation execution request.";
+      }
+    }
+  }
+}
+
+
+
+
