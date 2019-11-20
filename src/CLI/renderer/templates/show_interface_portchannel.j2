@@ -1,0 +1,30 @@
+{% for intf in json_output['lacp']['openconfig-lacp:interfaces']['interface'] %}
+{% for po_intf in json_output['portchannel']['sonic-portchannel:LAG_TABLE']['LAG_TABLE_LIST'] %}
+{% if intf['name'] == po_intf['lagname'] %}
+{{po_intf['lagname']}} is {{po_intf['admin_status']}}, line protocol is {{po_intf['oper_status']}}, mode lacp
+MTU {{po_intf['mtu']}}
+LACP mode {{intf['state']['lacp-mode']}} interval {{intf['state']['interval']}} priority {{intf['state']['system-priority']}} address {{intf['state']['system-id-mac']}}
+{% if intf['members'] %}
+{% for mem in intf['members']['member'] %}
+Members in this channel: {{mem['interface'] }}
+selected {{mem['state']['openconfig-interfaces-ext:selected']}}
+LACP Actor port {{mem['state']['port-num']}}  address {{mem['state']['system-id']}} key {{mem['state']['oper-key']}}
+LACP Partner port {{mem['state']['partner-port-num']}}  address {{mem['state']['partner-id']}} key {{mem['state']['partner-key']}}
+{% endfor %}
+{% endif %}
+{% if po_intf['counters'] %}
+{%set counters = po_intf['counters']['openconfig-interfaces:counters'] %}
+{% set space = "          " %}
+Input statistics:
+{{space}}{{counters['in-pkts']}} packets, {{counters['in-octets']}} octets
+{{counters['in-multicast-pkts']}} Multicasts, {{counters['in-broadcast-pkts']}} Broadcasts, {{counters['in-unicast-pkts']}} Unicasts
+{{counters['in-errors']}} error, {{counters['in-discards']}} discarded
+Output statistics:
+{{space}}{{counters['out-pkts']}} packets, {{counters['out-octets']}} octets
+{{counters['out-multicast-pkts']}} Multicasts, {{counters['out-broadcast-pkts']}} Broadcasts, {{counters['out-unicast-pkts']}} Unicasts
+{{counters['out-errors']}} error, {{counters['out-discards']}} discarded
+{% endif %}
+{% endif %}
+{% endfor %}
+{% endfor %}
+

@@ -107,10 +107,39 @@ var DbToYang_route_table_conn_key_xfmr KeyXfmrDbToYang = func(inParams XfmrParam
     source := key[1]
     destination := key[2]
     family := key[3]
+ 
+    var src_proto string
+    var dst_proto string
+    var af string
 
-    rmap["src-protocol"] = source
-    rmap["dst-protocol"] = destination
-    rmap["address-family"] = family 
+    if source == "connected" {
+        src_proto = "DIRECTLY_CONNECTED"
+    } else if source == "static" {
+        src_proto = "STATIC"
+    } else if source == "ospf" {
+        src_proto = "OSPF"
+    } else if source == "ospf3" {
+        src_proto = "OSPF3"
+    } else {
+		return rmap, errors.New("Unsupported src protocol " + source)
+    }
+
+    if destination == "bgp" {
+        dst_proto = "BGP"
+    } else {
+		return rmap, errors.New("Unsupported dst protocol " + destination)
+    }
+
+    if family == "ipv4" {
+        af = "IPV4"
+    } else if family == "ipv6" {
+        af = "IPV6"
+    } else {
+		return rmap, errors.New("Unsupported family " + family)
+    }
+    rmap["src-protocol"] = src_proto
+    rmap["dst-protocol"] = dst_proto
+    rmap["address-family"] = af 
 
     return rmap, nil
 }

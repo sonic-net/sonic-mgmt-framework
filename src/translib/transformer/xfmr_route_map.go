@@ -11,11 +11,12 @@ import (
 	"reflect"
 	"github.com/openconfig/ygot/ygot"
 	"translib/db"
-	"translib/tlerr"
+//	"translib/tlerr"
 )
 
 func init () {
     XlateFuncBind("YangToDb_route_map_key_xfmr", YangToDb_route_map_key_xfmr)
+    XlateFuncBind("DbToYang_route_map_key_xfmr", DbToYang_route_map_key_xfmr)
     XlateFuncBind("YangToDb_route_map_action_policy_result_xfmr", YangToDb_route_map_action_policy_result_xfmr)
     XlateFuncBind("DbToYang_route_map_action_policy_result_xfmr", DbToYang_route_map_action_policy_result_xfmr)
     XlateFuncBind("YangToDb_route_map_match_protocol_xfmr", YangToDb_route_map_match_protocol_xfmr)
@@ -26,6 +27,106 @@ func init () {
     XlateFuncBind("DbToYang_route_map_bgp_action_set_community", DbToYang_route_map_bgp_action_set_community)
     XlateFuncBind("YangToDb_route_map_bgp_action_set_ext_community", YangToDb_route_map_bgp_action_set_ext_community)
     XlateFuncBind("DbToYang_route_map_bgp_action_set_ext_community", DbToYang_route_map_bgp_action_set_ext_community)
+    XlateFuncBind("DbToYang_route_map_field_xfmr", DbToYang_route_map_field_xfmr)
+    XlateFuncBind("YangToDb_route_map_stmt_field_xfmr", YangToDb_route_map_stmt_field_xfmr)
+    XlateFuncBind("DbToYang_route_map_stmt_field_xfmr", DbToYang_route_map_stmt_field_xfmr)
+    XlateFuncBind("YangToDb_route_map_match_address_family_xfmr", YangToDb_route_map_match_address_family_xfmr)
+    XlateFuncBind("DbToYang_route_map_match_address_family_xfmr", DbToYang_route_map_match_address_family_xfmr)
+}
+
+
+var YangToDb_route_map_match_address_family_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
+    res_map := make(map[string]string)
+
+    var err error
+    if inParams.param == nil {
+        err = errors.New("No Params");
+        return res_map, err
+    }
+    af, _ := inParams.param.(ocbinds.E_OpenconfigBgpTypes_AFI_SAFI_TYPE)
+    log.Info("YangToDb_route_map_match_address_family_xfmr: ", inParams.ygRoot, " Xpath: ", inParams.uri, " addr_type: ", af)
+
+    if (af == ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_IPV4_UNICAST) {
+        res_map["match_address_family@"] = "ipv4_unicast"
+    } else if (af == ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_IPV6_UNICAST) {
+        res_map["match_address_family@"] = "ipv6_unicast"
+    } else if (af == ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_L2VPN_EVPN) {
+        res_map["match_address_family@"] = "l2vpn_evpn"
+    } else {
+        err = errors.New("Invalid address family");
+        return res_map, err
+    }
+
+    return res_map, nil
+
+}
+
+var DbToYang_route_map_match_address_family_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (map[string]interface{}, error) {
+
+    var err error
+    result := make(map[string]interface{})
+
+    data := (*inParams.dbDataMap)[inParams.curDb]
+    log.Info("DbToYang_route_map_match_address_family_xfmr: ", data, "inParams : ", inParams)
+
+    pTbl := data["ROUTE_MAP"]
+    if _, ok := pTbl[inParams.key]; !ok {
+        log.Info("DbToYang_route_map_match_address_family_xfmr route map: ", inParams.key)
+        return result, errors.New("route map not found : " + inParams.key)
+    }
+    pGrpKey := pTbl[inParams.key]
+    af, ok := pGrpKey.Field["match_address_family"]
+
+    if ok {
+        if (af == "ipv4_unicast") {
+            result["afi-safi-in"] = "IPV4_UNICAST"
+        } else if (af == "ipv6_unicast") {
+            result["afi-safi-in"] = "IPV6_UNICAST"
+        } else if (af == "l2vpn_evpn") {
+            result["afi-safi-in"] = "L2VPN_EVPN"
+        }
+    } else {
+        log.Info("match addr family not found in DB")
+    }
+    return result, err
+}
+
+var DbToYang_route_map_field_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (map[string]interface{}, error) {
+    rmap := make(map[string]interface{})
+    var err error
+    
+    entry_key := inParams.key
+    log.Info("DbToYang_route_map_field_xfmr: ", entry_key)
+
+    dynKey := strings.Split(entry_key, "|")
+
+    rmap["name"] = dynKey[0]
+
+    return rmap, err
+}
+
+var YangToDb_route_map_stmt_field_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
+    rmap := make(map[string]string)
+    var err error
+
+    log.Info("YangToDb_bgp_dyn_neigh_listen_field_xfmr")
+    rmap["NULL"] = "NULL"
+    
+    return rmap, err
+}
+
+var DbToYang_route_map_stmt_field_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (map[string]interface{}, error) {
+    rmap := make(map[string]interface{})
+    var err error
+    
+    entry_key := inParams.key
+    log.Info("DbToYang_route_map_stmt_field_xfmr: ", entry_key)
+
+    dynKey := strings.Split(entry_key, "|")
+
+    rmap["name"] = dynKey[1]
+
+    return rmap, err
 }
 
 var YangToDb_route_map_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (string, error) {
@@ -37,15 +138,31 @@ var YangToDb_route_map_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (str
     stmtName := pathInfo.Var("name#2")
 
     /* @@TODO For now, due to infra. ordering issue, always assuming statement name is uint16 value. */
+    /*
     _, err = strconv.ParseUint(stmtName, 10, 16)
     if err != nil {
         log.Info("URI route-map invalid statement name type, use values in range (1-65535)", stmtName)
 	    return entry_key, tlerr.InvalidArgs("Statement '%s' not supported, use values in range (1-65535)", stmtName)
     }
+    */
     entry_key = rtMapName + "|" + stmtName
     log.Info("URI route-map ", entry_key)
 
     return entry_key, err
+}
+
+var DbToYang_route_map_key_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (map[string]interface{}, error) {
+    rmap := make(map[string]interface{})
+    var err error
+    
+    entry_key := inParams.key
+    log.Info("DbToYang_route_map_key_xfmr: ", entry_key)
+
+    dynKey := strings.Split(entry_key, "|")
+
+    rmap["name"] = dynKey[1]
+
+    return rmap, err
 }
 
 var YangToDb_route_map_action_policy_result_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {

@@ -3,6 +3,7 @@ package transformer
 import (
     "errors"
     "strings"
+    "translib/ocbinds"
     log "github.com/golang/glog"
 )
 
@@ -14,6 +15,13 @@ func init () {
     XlateFuncBind("DbToYang_bgp_pgrp_afi_safi_name_fld_xfmr", DbToYang_bgp_pgrp_afi_safi_name_fld_xfmr)
     XlateFuncBind("YangToDb_bgp_af_pgrp_proto_tbl_key_xfmr", YangToDb_bgp_af_pgrp_proto_tbl_key_xfmr)
     XlateFuncBind("DbToYang_bgp_af_pgrp_proto_tbl_key_xfmr", DbToYang_bgp_af_pgrp_proto_tbl_key_xfmr)
+
+    XlateFuncBind("YangToDb_bgp_pgrp_community_type_fld_xfmr", YangToDb_bgp_pgrp_community_type_fld_xfmr)
+    XlateFuncBind("DbToYang_bgp_pgrp_community_type_fld_xfmr", DbToYang_bgp_pgrp_community_type_fld_xfmr)
+    XlateFuncBind("YangToDb_bgp_pgrp_plist_direction_fld_xfmr", YangToDb_bgp_pgrp_plist_direction_fld_xfmr)
+    XlateFuncBind("DbToYang_bgp_pgrp_plist_direction_fld_xfmr", DbToYang_bgp_pgrp_plist_direction_fld_xfmr)
+    XlateFuncBind("YangToDb_bgp_pgrp_flist_direction_fld_xfmr", YangToDb_bgp_pgrp_flist_direction_fld_xfmr)
+    XlateFuncBind("DbToYang_bgp_pgrp_flist_direction_fld_xfmr", DbToYang_bgp_pgrp_flist_direction_fld_xfmr)
 }
 
 var YangToDb_bgp_pgrp_afi_safi_name_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
@@ -222,4 +230,164 @@ var DbToYang_bgp_af_pgrp_proto_tbl_key_xfmr KeyXfmrDbToYang = func(inParams Xfmr
     rmap["afi-safi-name"]   = afName
 
     return rmap, nil
+}
+
+var YangToDb_bgp_pgrp_community_type_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
+    res_map := make(map[string]string)
+
+    var err error
+    if inParams.param == nil {
+        err = errors.New("No Params");
+        return res_map, err
+    }
+    community_type, _ := inParams.param.(ocbinds.E_OpenconfigBgpExt_CommunityType)
+    log.Info("YangToDb_bgp_pgrp_community_type_fld_xfmr: ", inParams.ygRoot, " Xpath: ", inParams.uri, " community_type: ", community_type)
+
+    if (community_type == ocbinds.OpenconfigBgpExt_CommunityType_STANDARD) {
+        res_map["send_community"] = "standard"
+    }  else if (community_type == ocbinds.OpenconfigBgpExt_CommunityType_EXTENDED) {
+        res_map["send_community"] = "extended"
+    }  else if (community_type == ocbinds.OpenconfigBgpExt_CommunityType_BOTH) {
+        res_map["send_community"] = "both"
+    } else {
+        err = errors.New("send_community  Missing");
+        return res_map, err
+    }
+
+    return res_map, nil
+
+}
+
+var DbToYang_bgp_pgrp_community_type_fld_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (map[string]interface{}, error) {
+
+    var err error
+    result := make(map[string]interface{})
+
+    data := (*inParams.dbDataMap)[inParams.curDb]
+    log.Info("DbToYang_bgp_pgrp_community_type_fld_xfmr : ", data, "inParams : ", inParams)
+
+    pTbl := data["BGP_PEER_GROUP_AF"]
+    if _, ok := pTbl[inParams.key]; !ok {
+        log.Info("DbToYang_bgp_pgrp_community_type_fld_xfmr BGP Peer group not found : ", inParams.key)
+        return result, errors.New("BGP peer group not found : " + inParams.key)
+    }
+    pGrpKey := pTbl[inParams.key]
+    community_type, ok := pGrpKey.Field["send_community"]
+
+    if ok {
+        if (community_type == "standard") {
+            result["send-community"] = "STANDARD"
+        } else if (community_type == "extended") {
+            result["send-community"] = "EXTENDED"
+        } else if (community_type == "both") {
+            result["send-community"] = "BOTH"
+        }
+    } else {
+        log.Info("send_community not found in DB")
+    }
+    return result, err
+}
+
+var YangToDb_bgp_pgrp_plist_direction_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
+    res_map := make(map[string]string)
+
+    var err error
+    if inParams.param == nil {
+        err = errors.New("No Params");
+        return res_map, err
+    }
+    direction, _ := inParams.param.(ocbinds.E_OpenconfigBgpExt_BgpDirection)
+    log.Info("YangToDb_bgp_pgrp_plist_direction_fld_xfmr: ", inParams.ygRoot, " Xpath: ", inParams.uri, " direction: ", direction)
+
+    if (direction == ocbinds.OpenconfigBgpExt_BgpDirection_INBOUND) {
+        res_map["prefix_list_direction"] = "inbound"
+    }  else if (direction == ocbinds.OpenconfigBgpExt_BgpDirection_OUTBOUND) {
+        res_map["prefix_list_direction"] = "outbound"
+    } else {
+        err = errors.New("direction Missing");
+        return res_map, err
+    }
+
+    return res_map, nil
+
+}
+
+var DbToYang_bgp_pgrp_plist_direction_fld_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (map[string]interface{}, error) {
+
+    var err error
+    result := make(map[string]interface{})
+
+    data := (*inParams.dbDataMap)[inParams.curDb]
+    log.Info("DbToYang_bgp_pgrp_plist_direction_fld_xfmr : ", data, "inParams : ", inParams)
+
+    pTbl := data["BGP_PEER_GROUP_AF"]
+    if _, ok := pTbl[inParams.key]; !ok {
+        log.Info("DbToYang_bgp_pgrp_peer_type_xfmr BGP peer group not found : ", inParams.key)
+        return result, errors.New("BGP peer group not found : " + inParams.key)
+    }
+    pGrpKey := pTbl[inParams.key]
+    direction, ok := pGrpKey.Field["prefix_list_direction"]
+
+    if ok {
+        if (direction == "inbound") {
+            result["direction"] = "INBOUND"
+        } else if (direction == "outbound") {
+            result["direction"] = "OUTBOUND"
+        }
+    } else {
+        log.Info("prefix_list_direction field not found in DB")
+    }
+    return result, err
+}
+
+var YangToDb_bgp_pgrp_flist_direction_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
+    res_map := make(map[string]string)
+
+    var err error
+    if inParams.param == nil {
+        err = errors.New("No Params");
+        return res_map, err
+    }
+    direction, _ := inParams.param.(ocbinds.E_OpenconfigBgpExt_BgpDirection)
+    log.Info("YangToDb_bgp_pgrp_flist_direction_fld_xfmr: ", inParams.ygRoot, " Xpath: ", inParams.uri, " direction: ", direction)
+
+    if (direction == ocbinds.OpenconfigBgpExt_BgpDirection_INBOUND) {
+        res_map["filter_list_direction"] = "inbound"
+    }  else if (direction == ocbinds.OpenconfigBgpExt_BgpDirection_OUTBOUND) {
+        res_map["filter_list_direction"] = "outbound"
+    } else {
+        err = errors.New("direction Missing");
+        return res_map, err
+    }
+
+    return res_map, nil
+
+}
+
+var DbToYang_bgp_pgrp_flist_direction_fld_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (map[string]interface{}, error) {
+
+    var err error
+    result := make(map[string]interface{})
+
+    data := (*inParams.dbDataMap)[inParams.curDb]
+    log.Info("DbToYang_bgp_pgrp_flist_direction_fld_xfmr : ", data, "inParams : ", inParams)
+
+    pTbl := data["BGP_PEER_GROUP_AF"]
+    if _, ok := pTbl[inParams.key]; !ok {
+        log.Info("DbToYang_bgp_pgrp_flist_direction_fld_xfmr BGP peer group not found : ", inParams.key)
+        return result, errors.New("BGP peer group not found : " + inParams.key)
+    }
+    pGrpKey := pTbl[inParams.key]
+    direction, ok := pGrpKey.Field["filter_list_direction"]
+
+    if ok {
+        if (direction == "inbound") {
+            result["direction"] = "INBOUND"
+        }else if (direction == "outbound") {
+            result["direction"] = "OUTBOUND"
+        }
+    } else {
+        log.Info("filter_list_direction field not found in DB")
+    }
+    return result, err
 }

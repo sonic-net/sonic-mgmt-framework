@@ -69,7 +69,7 @@ func TestRoutes(t *testing.T) {
 	// Try the test URLs with authentication enabled.. This should
 	// fail the requests with 401 error. Unknown path should still
 	// return 404.
-	SetUserAuthEnable(true)
+	ClientAuth.Set("password")
 	testRouter = NewRouter()
 	t.Run("Get1_auth", testGet("/test/1", 401))
 	t.Run("Get2_auth", testGet("/test/2", 401))
@@ -79,7 +79,7 @@ func TestRoutes(t *testing.T) {
 	t.Run("Meta_auth", testGet("/.well-known/host-meta", 200))
 
 	// Cleanup for next tests
-	SetUserAuthEnable(false)
+	ClientAuth.Unset("password")
 	testRouter = nil
 }
 

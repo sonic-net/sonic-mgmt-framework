@@ -116,24 +116,26 @@ module openconfig-bgp-ext {
       }
   }
 
-  grouping bgp-ext-global-afi-safi{
-      container route-flap-damping {
+  grouping bgp-ext-global-route-flap-damping {
+    container route-flap-damping {
           description
               "Parameters relating to BGP route flap damping";
           container config {
               description
                   "Configuration options for BGP route flap damping";
-              uses bgp-ext-global-afi-safi-route-flap-damping-config;
+              uses bgp-ext-global-route-flap-damping-config;
           }
           container state {
               config false;
               description
                   "State information for BGP route flap damping";
-              uses bgp-ext-global-afi-safi-route-flap-damping-config;
+              uses bgp-ext-global-route-flap-damping-config;
           }
       }
+  }
 
-      container aggregate-address {
+  grouping bgp-ext-global-afi-safi {
+        container aggregate-address {
           description
               "Parameters relating to BGP route aggregation.";
           container config {
@@ -293,7 +295,7 @@ module openconfig-bgp-ext {
       }
   }
 
-  grouping bgp-ext-global-afi-safi-route-flap-damping-config {
+  grouping bgp-ext-global-route-flap-damping-config {
       leaf enabled {
           type boolean;
           description
@@ -917,6 +919,13 @@ module openconfig-bgp-ext {
 	  deviate not-supported;
   }
 
+  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:state/oc-netinst:total-prefixes {
+	  deviate not-supported;
+  }
+
+  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:state/oc-netinst:total-paths {
+	  deviate not-supported;
+  }
 
   deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:transport/oc-netinst:config/oc-netinst:tcp-mss {
 	  deviate not-supported;
@@ -1270,6 +1279,7 @@ deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:p
   augment /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global {
       uses oc-bgp:bgp-common-structure-neighbor-group-logging-options;
       uses bgp-ext-global-route-reflector;
+      uses bgp-ext-global-route-flap-damping;
   }
 
   augment /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:config {

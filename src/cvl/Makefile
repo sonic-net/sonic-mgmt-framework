@@ -23,7 +23,7 @@ SRC_FILES=$(shell find . -name '*.go' | grep -v '_test.go' | grep -v '/tests/')
 TEST_FILES=$(wildcard *_test.go)
 TOP_DIR := $(abspath ../..)
 GOFLAGS:=
-BUILD_DIR:=build
+BUILD_DIR:=$(TOP_DIR)/build/cvl
 GO_DOWNLOAD_PATH:=$(BUILD_GOPATH)
 CVL_PKG=$(TOP_DIR)/pkg/linux_amd64/cvl.a
 
@@ -65,14 +65,18 @@ gotest:
 	make -C schema
 	make -C testdata/schema
 	cp schema/*.yin testdata/schema
+	rm -rf testdata/schema/platform
+	cp -rf schema/platform testdata/schema/
 	CVL_CFG_FILE=$(abspath .)/conf/cvl_cfg.json CVL_SCHEMA_PATH=$(abspath .)/testdata/schema GOPATH=$(GOPATH) tests/run_test.sh
 
 clean:
 	make -C tests clean
+	make -C schema clean
+	make -C testdata/schema clean
 	rm -rf $(CVL_PKG)
 	rm -rf $(CVL_TEST_DIR)
 
-cleanall:
+cleanall:clean
 	rm -rf $(BUILD_DIR)
 	rm -rf $(CVL_PKG)
 	rm -rf $(CVL_TEST_DIR)

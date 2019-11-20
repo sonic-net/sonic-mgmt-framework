@@ -29,7 +29,7 @@ import (
         "io/ioutil"
 )
 
-const YangPath = "/usr/models/yang/" // OpenConfig-*.yang and sonic yang models path
+var YangPath = "/usr/models/yang/" // OpenConfig-*.yang and sonic yang models path
 
 var entries = map[string]*yang.Entry{}
 
@@ -85,6 +85,7 @@ func getDefaultModelsList () ([]string) {
 }
 
 func init() {
+	initYangModelsPath()
 	yangFiles := []string{}
         ocList := getOcModelsList()
         yangFiles = getDefaultModelsList()
@@ -94,6 +95,17 @@ func init() {
     if err != nil {
 	    fmt.Fprintln(os.Stderr, err)
     }
+}
+
+func initYangModelsPath() {
+	if path, ok := os.LookupEnv("YANG_MODELS_PATH"); ok {
+		if !strings.HasSuffix(path, "/") {
+			path += "/"
+		}
+		YangPath = path
+	}
+
+	fmt.Println("Yang modles path:", YangPath)
 }
 
 func loadYangModules(files ...string) error {

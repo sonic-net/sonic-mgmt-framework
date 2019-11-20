@@ -199,7 +199,8 @@ func startSubscribe(sInfo *subscribeInfo, dbNotificationMap map[db.DBNum][]*noti
 	stopMap[sInfo.stop] = sInfo
 
     for dbno, nInfoArr := range dbNotificationMap {
-        opt := getDBOptions(dbno)
+		isWriteDisabled := true
+        opt := getDBOptions(dbno, isWriteDisabled)
         err = startDBSubscribe(opt, nInfoArr, sInfo)
 
 		if err != nil {

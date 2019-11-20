@@ -57,6 +57,21 @@ limitations under the License.
                     >
                  </PARAM>
              </PARAM>
+	     <!-- show interface PortChannel-->
+	     <PARAM
+                 name="PortChannel"
+                 help="PortChannel Interface"
+                 ptype="SUBCOMMAND"
+                 mode="subcommand"
+                 >
+                 <PARAM
+                    name="po-id"
+                    help="Port Channel ID"
+                    ptype="LAG_ID"
+                    optional="true"
+                    >
+                 </PARAM>
+             </PARAM>
              <!-- show interface Management -->
              <PARAM
                  name="Management"
@@ -85,11 +100,17 @@ limitations under the License.
             python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces show_interface_status.j2 ${__full_line}&#xA;
         elif test "${if-subcommands}" = "counters"; then&#xA;
             python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces show_interface_counters.j2 ${__full_line}&#xA;
+	elif test "${if-subcommands}" = "PortChannel"; then&#xA;
+            if test "${po-id}" = ""; then&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-interface-port-channel.py get_all_portchannels show_interface_portchannel.j2 ${__full_line}&#xA;
+            else&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-interface-port-channel.py get_specific_portchannel PortChannel${po-id} show_interface_portchannel.j2 ${__full_line}&#xA;
+            fi&#xA;
         elif test "${if-subcommands}" = "Management"; then&#xA;
             if test "${mgmt-if-id}" = ""; then&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces show_interface.j2 ${__full_line}&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces_interface eth0 show_mgmt_interface_id.j2 ${__full_line}&#xA;
             else&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces_interface eth${mgmt-if-id} show_interface_id.j2 ${__full_line}&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces_interface eth${mgmt-if-id} show_mgmt_interface_id.j2 ${__full_line}&#xA;
             fi&#xA;
         else&#xA;
             if test "${phy-if-id}" = ""; then&#xA;
@@ -193,7 +214,7 @@ limitations under the License.
              ptype="VLAN_ID"
              >
          </PARAM>
-     <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface Vlan${vlan-id}</ACTION>
+     <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config Vlan${vlan-id}</ACTION>
      </COMMAND>
 
     <COMMAND
@@ -210,7 +231,7 @@ limitations under the License.
                 ptype="LAG_ID"
                 >
         </PARAM>
-        <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface PortChannel${lag-id}</ACTION>
+        <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config PortChannel${lag-id}</ACTION>
     </COMMAND>
 
      <!-- no interface commands -->
@@ -423,7 +444,7 @@ limitations under the License.
 
        <COMMAND name="sflow" help="Interface sFlow settings"/>
            <COMMAND name="sflow sampling-rate" help="Set sampling-rate" ptype="SUBCOMMAND" mode="subcommand">
-               <PARAM name="rate" help="Sampling rate" ptype="UINT"/>
+               <PARAM name="rate" help="Sampling rate" ptype="SFLOW_SAMPLING_RATE"/>
                   <ACTION>
                        python $SONIC_CLI_ROOT/sonic-cli-sflow.py patch_sonic_sflow_sonic_sflow_sflow_session_sflow_session_list_sample_rate ${iface} ${rate}
                   </ACTION>
@@ -538,28 +559,29 @@ limitations under the License.
             name="no mtu"
             help="Remove MTU of Vlan interface">
         <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config_mtu ${vlan_id} 9100 </ACTION>
-    </COMMAND>
-    <COMMAND
-        name="no neigh_suppress"
-        help="Disable Arp and ND Suppression">
-        <ACTION> python $SONIC_CLI_ROOT/sonic-cli-vxlan.py delete_sonic_vxlan_sonic_vxlan_suppress_vlan_neigh_suppress_vlan_neigh_list ${vlan_id} </ACTION>
-    </COMMAND>
-    <COMMAND
+      </COMMAND>
+      <COMMAND
         name="neigh_suppress"
-        help="Enable Arp and ND Suppression">
-       <ACTION> python $SONIC_CLI_ROOT/sonic-cli-vxlan.py patch_list_sonic_vxlan_sonic_vxlan_suppress_vlan_neigh_suppress_vlan_neigh_list ${vlan_id}
-        </ACTION>
-    </COMMAND>
-       <COMMAND
-            name="shutdown"
-            help="Disable the Vlan interface">
+        help="Enable ARP and ND Suppression">
+        <ACTION> python $SONIC_CLI_ROOT/sonic-cli-vxlan.py patch_list_sonic_vxlan_sonic_vxlan_suppress_vlan_neigh_suppress_vlan_neigh_list ${vlan_id} </ACTION>
+      </COMMAND>
+      <COMMAND
+        name="no neigh_suppress"
+        help="Disable ARP and ND Suppression">
+        <ACTION> python $SONIC_CLI_ROOT/sonic-cli-vxlan.py delete_sonic_vxlan_sonic_vxlan_suppress_vlan_neigh_suppress_vlan_neigh_list ${vlan_id} </ACTION>
+      </COMMAND>
+      <!--
+      <COMMAND
+        name="shutdown"
+        help="Disable the Vlan interface">
         <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config_enabled ${vlan_id} False </ACTION>
-        </COMMAND>
-        <COMMAND
-            name="no shutdown"
-            help="Enable the Vlan interface">
+      </COMMAND>
+      <COMMAND
+        name="no shutdown"
+        help="Enable the Vlan interface">
         <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config_enabled ${vlan_id} True </ACTION>
-        </COMMAND>
+      </COMMAND>
+     -->
 </VIEW>
 <VIEW
     name="configure-lag-view"
@@ -573,6 +595,134 @@ limitations under the License.
         completion="false"
         />
 
+        <COMMAND
+            name="switchport"
+            help="Configure switchport parameters"
+            >
+            <PARAM
+                name="switchport-subcommands"
+                help="Switchport subcommands"
+                ptype="SUBCOMMAND"
+                mode="switch"
+                >
+                <PARAM
+                    name="access"
+                    help="Set access mode characteristics of the interface"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    >
+                    <PARAM
+                        name="Vlan"
+                        help="Set VLAN when interface is in access mode"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        >
+                        <PARAM
+                            name="vlan-id"
+                            help="VLAN ID of the VLAN when this port is in access mode"
+                            ptype="VLAN_ID"
+                            >
+                        </PARAM>
+                    </PARAM>
+                </PARAM>
+
+                <PARAM
+                    name="trunk"
+                    help="Configure trunking parameters on an interface"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    >
+                    <PARAM
+                        name="allowed"
+                        help="Configure trunking parameters on an interface"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        >
+                        <PARAM
+                            name="Vlan"
+                            help="Configure trunking parameters on an interface"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            >
+                            <PARAM
+                                name="vlan-id"
+                                help="VLAN ID of the VLAN when this port is in trunk mode"
+                                ptype="VLAN_ID"
+                                >
+                            </PARAM>
+                        </PARAM>
+                    </PARAM>
+                </PARAM>
+          </PARAM>
+       <ACTION>
+         if test "${switchport-subcommands}" = "access"; then&#xA;
+             python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_vlan_interfaces_interface_aggregation_switched_vlan_config ${po_name} ACCESS ${vlan-id}&#xA;
+         else&#xA;
+             python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_vlan_interfaces_interface_aggregation_switched_vlan_config ${po_name} TRUNK ${vlan-id}&#xA;
+        fi
+       </ACTION>
+       </COMMAND>
+       <COMMAND
+           name="no switchport"
+           help="Remove switchport parameters"
+           >
+           <PARAM
+               name="switchport-subcommands"
+               help="Switchport subcommands"
+               ptype="SUBCOMMAND"
+               mode="switch"
+               >
+               <PARAM
+                   name="access"
+                   help="Remove access mode characteristics of the interface"
+                   ptype="SUBCOMMAND"
+                   mode="subcommand"
+                   >
+                   <PARAM
+                       name="Vlan"
+                       help="Remove VLAN when interface is in access mode"
+                       ptype="SUBCOMMAND"
+                       mode="subcommand"
+                       >
+                   </PARAM>
+               </PARAM>
+
+               <PARAM
+                    name="trunk"
+                    help="Remove trunking parameters on an interface"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    >
+                    <PARAM
+                        name="allowed"
+                        help="Remove trunking parameters on an interface"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        >
+                        <PARAM
+                            name="Vlan"
+                            help="Remove trunking parameters on an interface"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            >
+                            <PARAM
+                                name="vlan-id"
+                                help="VLAN ID of the VLAN when this port is in trunk mode"
+                                ptype="VLAN_ID"
+                                >
+                            </PARAM>
+                        </PARAM>
+                    </PARAM>
+               </PARAM>
+           </PARAM>
+      <ACTION>
+          if test "${switchport-subcommands}" = "access"; then&#xA;
+              python $SONIC_CLI_ROOT/sonic-cli-if.py delete_openconfig_vlan_interfaces_interface_aggregation_switched_vlan_config_access_vlan ${po_name} ACCESS&#xA;
+          else&#xA;
+              python $SONIC_CLI_ROOT/sonic-cli-if.py del_llist_openconfig_vlan_interfaces_interface_aggregation_switched_vlan_config_trunk_vlans ${po_name} TRUNK ${vlan-id}&#xA;
+          fi
+      </ACTION>
+      </COMMAND>
     <COMMAND
         name="no"
         help="Negate a command or set its defaults"
@@ -615,37 +765,6 @@ limitations under the License.
         help="Enable the interface">
         <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config_enabled ${po_name} True </ACTION>
     </COMMAND>
-    <COMMAND
-        name="ip"
-        help="Interface Internet Protocol config commands"
-    />
-    <COMMAND
-        name="no ip"
-        help="Interface Internet Protocol config commands"
-        >
-    </COMMAND>
-    <COMMAND
-        name="ip address"
-        help="IP address" >
-        <PARAM
-            name="addr"
-            help="IP address with mask"
-            ptype="IP_ADDR_MASK" />
-	<ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config ${po_name} ${addr} </ACTION>
-    </COMMAND>
-
-    <COMMAND
-        name="no ip address"
-        help="Interface Internet Protocol config commands"
-        >
-        <PARAM
-            name="addr"
-            help="IP address"
-            ptype="IP_ADDR" />
-        <ACTION>
-	    python $SONIC_CLI_ROOT/sonic-cli-if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config_prefix_length ${po_name} ${addr}
-</ACTION>
-    </COMMAND>
     <!-- lacp fallback -->
     <COMMAND
         help="Configure LACP fallback"
@@ -664,6 +783,19 @@ limitations under the License.
         name="no fallback"
         help="Disable fallback">
         <ACTION> python $SONIC_CLI_ROOT/sonic-cli-if.py patch_dell_intf_augments_interfaces_interface_aggregation_config_fallback ${po_name} False </ACTION>
+    </COMMAND>
+
+    <COMMAND
+           name="mclag"
+           help="Configure MCLAG interface" >
+           <PARAM name="domain_id" help="mclag domain id" ptype="RANGE_1_4095" />
+           <ACTION> python $SONIC_CLI_ROOT/sonic-cli-mclag.py patch_sonic_mclag_sonic_mclag_mclag_interface_mclag_interface_list ${domain_id} ${po_name} </ACTION>
+    </COMMAND>
+    <COMMAND
+           name="no mclag"
+           help="Unconfigure MCLAG interface">
+           <PARAM name="domain_id" help="mclag domain id" ptype="RANGE_1_4095" />
+           <ACTION> python $SONIC_CLI_ROOT/sonic-cli-mclag.py delete_sonic_mclag_sonic_mclag_mclag_interface_mclag_interface_list ${domain_id} ${po_name} </ACTION>
     </COMMAND>
     </VIEW> <!-- End of Configure View for PortChannel-->
 
@@ -717,8 +849,8 @@ limitations under the License.
         </COMMAND>
         <COMMAND
             name="no mtu"
-            help="Remove MTU">
-            <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config_mtu ${iface} 9100 </ACTION>
+            help="Set Default MTU (1500)">
+            <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config_mtu ${iface} 1500 </ACTION>
         </COMMAND>
         <COMMAND
             name="autoneg"
@@ -732,7 +864,7 @@ limitations under the License.
         <COMMAND
             name="no autoneg"
             help="Set default autoneg config">
-            <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_ethernet_interfaces_interface_ethernet_config_auto_negotiate ${iface} false </ACTION>
+            <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_ethernet_interfaces_interface_ethernet_config_auto_negotiate ${iface} true </ACTION>
         </COMMAND>
         <COMMAND
             name="speed"
@@ -740,14 +872,15 @@ limitations under the License.
             <PARAM
                 name="speed"
                 help="Speed config of the interface"
-                ptype="INTF_SPEED" />
+                ptype="MGMT_INTF_SPEED" />
             <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_ethernet_interfaces_interface_ethernet_config_port_speed ${iface} ${speed} </ACTION>
         </COMMAND>
         <COMMAND
             name="no speed"
             help="Set default speed config">
-            <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_ethernet_interfaces_interface_ethernet_config_port_speed ${iface} 1000 </ACTION>
+            <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_ethernet_interfaces_interface_ethernet_config_port_speed ${iface} "1GIGE" </ACTION>
         </COMMAND>
+
     </VIEW>
 </CLISH_MODULE>
 

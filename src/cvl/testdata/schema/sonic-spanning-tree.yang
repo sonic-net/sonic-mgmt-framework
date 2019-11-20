@@ -3,10 +3,6 @@ module sonic-spanning-tree {
     prefix sstp;
     yang-version 1.1;
 
-    import sonic-common {
-        prefix scommon;
-    }
-
     import sonic-port {
         prefix prt;
     }
@@ -70,8 +66,7 @@ module sonic-spanning-tree {
                     error-message "Invalid Bridge Priority value.";
                 }
             }
-            units seconds;
-            default 20;
+            default 32768;
         }
     }
 
@@ -99,6 +94,7 @@ module sonic-spanning-tree {
 
         container STP {
             list STP_LIST {
+		max-elements 1;
                 key "keyleaf";
 
                 leaf keyleaf {

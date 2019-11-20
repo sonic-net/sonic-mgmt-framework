@@ -1,0 +1,23 @@
+{{'---------------------------------------------------------'}}
+{{'TAM/IFA Status'.ljust(20)}}
+{{'---------------------------------------------------------'}}
+{% if json_output -%}
+{% set tam_device = json_output['device'] %}
+{% set tam_feature = json_output['feature'] %}
+{% set tam_collector = json_output['collector'] %}
+{% set tam_flow = json_output['flow'] %}
+
+{% if tam_device -%}
+{{'Device Identifier    : '}}{{tam_device[0]['deviceid']}}
+{% endif %}
+{% if tam_collector -%}
+{{'Number of collectors : '}}{{tam_collector|length}}
+{% endif %}
+{% if tam_flow -%}
+{{'Number of flows      : '}}{{tam_flow|length}}
+{% endif %}
+{% if tam_feature -%}
+{{'Feature Enabled      : '}}{{tam_feature[0]['enable']}}
+{% endif %}
+{% endif %}
+

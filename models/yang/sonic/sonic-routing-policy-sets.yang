@@ -1,0 +1,232 @@
+module sonic-routing-policy-sets {
+    namespace "http://github.com/Azure/sonic-routing-policy-lists";
+    prefix srpolsets;
+    yang-version 1.1;
+
+    import ietf-inet-types {
+        prefix inet;
+    }
+    
+    import ietf-yang-types {
+        prefix yang;
+    }
+    
+    organization
+        "SONiC";
+
+    contact
+        "SONiC";
+
+    description
+        "SONiC ROUTING POLICY SETS";
+
+    revision 2019-10-23 {
+        description
+            "Initial revision.";
+    }
+
+    container sonic-routing-policy-sets {
+
+        container PREFIX_SET {
+
+            list PREFIX_SET_LIST {
+                key "name";
+
+                leaf name {
+                    type string {
+                        pattern '[a-zA-Z0-9]{1}([-a-zA-Z0-9_]{0,71})';
+                        length 1..72;
+                    }
+                }
+
+                leaf mode {
+                    type enumeration {
+                        enum IPv4;
+                        enum IPv6;
+                    }
+                }
+            }
+        }
+
+        container PREFIX {
+
+            list PREFIX_LIST { 
+                key "set_name ip_prefix masklength_range";
+
+                leaf set_name {
+                    type leafref {
+                        path "../../../PREFIX_SET/PREFIX_SET_LIST/name";
+                    }
+                }   
+
+                leaf ip_prefix {
+                    /* TODO - Validate ip-prefix based on PREFIX_SET/mode */
+                    type inet:ip-prefix;
+                    description
+                        "The prefix member in CIDR notation -- while the
+                        prefix may be either IPv4 or IPv6, most
+                        implementations require all members of the prefix set
+                        to be the same address family.  Mixing address types in
+                        the same prefix set is likely to cause an error.";
+                }
+
+                leaf masklength_range {
+                    type string;
+                    description
+                        "Defines a range for the masklength, or 'exact' if
+                        the prefix has an exact length.
+
+                        Example: 10.3.192.0/21 through 10.3.192.0/24 would be
+                        expressed as prefix: 10.3.192.0/21,
+                                   masklength_range: 21..24.
+
+                        Example: 10.3.192.0/21 would be expressed as
+                                  prefix: 10.3.192.0/21,
+                                  masklength_range: exact";
+                }
+            }
+        }
+        container COMMUNITY_SET {
+
+            list COMMUNITY_SET_LIST {
+                key "name";
+
+                leaf name {
+                    type string {
+                        pattern '[a-zA-Z0-9]{1}([-a-zA-Z0-9_]{0,71})';
+                        length 1..72;
+                    }
+                }
+
+                leaf set_type {
+                    type enumeration {
+                        enum STANDARD;
+                        enum EXPANDED;
+                    }
+                }
+
+                leaf match_action {
+                    type enumeration {
+                        enum ANY;
+                        enum ALL;
+                    }
+                }
+
+                leaf-list community_member {
+                    type string;
+                    description
+                            "members of the community set.";
+                }
+            }
+        }
+
+        container EXTENDED_COMMUNITY_SET {
+
+            list EXTENDED_COMMUNITY_SET_LIST {
+                key "name";
+
+                leaf name {
+                    type string {
+                        pattern '[a-zA-Z0-9]{1}([-a-zA-Z0-9_]{0,71})';
+                        length 1..72;
+                    }
+                }
+
+                leaf set_type {
+                    type enumeration {
+                        enum STANDARD;
+                        enum EXPANDED;
+                    }
+                }
+
+                leaf match_action {
+                    type enumeration {
+                        enum ANY;
+                        enum ALL;
+                    }
+                }
+
+                leaf-list community_member {
+                    type string;
+                    description
+                        "members of the community set.";
+                }
+            }
+        }
+
+        container AS_PATH_SET {
+
+            list AS_PATH_SET_LIST {
+                key "name";
+
+                leaf name {
+                    type string {
+                        pattern '[a-zA-Z0-9]{1}([-a-zA-Z0-9_]{0,71})';
+                        length 1..72;
+                    }
+                }
+
+                leaf-list as_path_set_member {
+                    type string;
+                    description
+                       "AS path expression -- list of ASes in the set";
+                }
+            }
+        }
+
+        container NEIGHBOR_SET {
+
+            list NEIGHBOR_SET_LIST {
+                key "name";
+
+                leaf name {
+                    type string {
+                        pattern '[a-zA-Z0-9]{1}([-a-zA-Z0-9_]{0,71})';
+                        length 1..72;
+                    }
+                }
+
+                leaf-list address {
+                    type inet:ip-address;
+                    description
+                        "List of IP addresses in the neighbor set";
+                }
+            }
+        }
+
+        typedef tag-type {
+            type union {
+                type uint32;
+                type yang:hex-string;
+            }
+            description "type for expressing route tags on a local system,
+                        including IS-IS and OSPF; may be expressed as either decimal or
+                            hexidecimal integer";
+            reference
+                "RFC 2178 OSPF Version 2
+                RFC 5130 A Policy Control Mechanism in IS-IS Using
+                Administrative Tags";
+        }
+
+        container TAG_SET {
+
+            list TAG_SET_LIST {
+                key "name";
+
+                leaf name {
+                    type string {
+                        pattern '[a-zA-Z0-9]{1}([-a-zA-Z0-9_]{0,71})';
+                        length 1..72;
+                    }
+                }
+
+                leaf-list tag_value {
+                    type tag-type;
+                    description
+                        "Value of the tag set member";
+                }
+            }
+        }
+
+    }
+}

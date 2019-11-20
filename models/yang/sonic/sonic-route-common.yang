@@ -39,6 +39,7 @@ module sonic-route-common {
 
                 leaf-list route_map {
                     type string;
+                    max-elements 1;
                 }
             }
         }

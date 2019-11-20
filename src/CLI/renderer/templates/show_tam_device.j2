@@ -1,0 +1,8 @@
+{{'---------------------------------------------------------'}}
+{{'TAM Device Information'.ljust(20)}}
+{{'---------------------------------------------------------'}}
+{% if json_output and 'sonic-tam:TAM_DEVICE_TABLE' in json_output -%}
+{% set tam_info = json_output['sonic-tam:TAM_DEVICE_TABLE']['TAM_DEVICE_TABLE_LIST'] %}
+{{'device-id: '}}{{tam_info[0]['deviceid']}}
+{% endif %}
+

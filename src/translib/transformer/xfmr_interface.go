@@ -32,6 +32,7 @@ type XfmrParams struct {
 	curDb db.DBNum
 	ygRoot *ygot.GoStruct
 	uri string
+	requestUri string //original uri using which a curl/NBI request is made
 	oper int
 	key string
 	dbDataMap *map[db.DBNum]map[string]map[string]db.Value
