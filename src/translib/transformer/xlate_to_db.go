@@ -691,7 +691,8 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
 				}
 
                 if ok && (typeOfValue == reflect.Map || typeOfValue == reflect.Slice) && xYangSpecMap[xpath].yangDataType != "leaf-list" {
-                    if xYangSpecMap[xpath] != nil && len(xYangSpecMap[xpath].xfmrFunc) > 0 {
+                    if xYangSpecMap[xpath] != nil && len(xYangSpecMap[xpath].xfmrFunc) > 0 &&
+					   (xYangSpecMap[xpathPrefix] != xYangSpecMap[xpath]) {
                         /* subtree transformer present */
 						curYgotNode, nodeErr := yangNodeForUriGet(curUri, ygRoot)
 						if nodeErr != nil {
@@ -705,14 +706,15 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
 			if  ret != nil {
 	                    mapCopy(result, ret[0].Interface().(map[string]map[string]db.Value))
 			}
-                    } else {
-                        yangReqToDbMapCreate(d, ygRoot, oper, curUri, requestUri, xpath, curKey, jData.MapIndex(key).Interface(), result, subOpDataMap, tblXpathMap, txCache)
                     }
+                        yangReqToDbMapCreate(d, ygRoot, oper, curUri, requestUri, xpath, curKey, jData.MapIndex(key).Interface(), result, subOpDataMap, tblXpathMap, txCache)
                 } else {
                     pathAttr := key.String()
                     if strings.Contains(pathAttr, ":") {
                         pathAttr = strings.Split(pathAttr, ":")[1]
                     }
+					xpath := xpathPrefix + "/" + pathAttr
+					if len(xYangSpecMap[xpath].xfmrFunc) == 0 {
                     value := jData.MapIndex(key).Interface()
                     log.Infof("data field: key(\"%v\"), value(\"%v\").", key, value)
                     err := mapFillData(d, ygRoot, oper, uri, requestUri, curKey, result, subOpDataMap, xpathPrefix,
@@ -721,6 +723,7 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
                         log.Errorf("Failed constructing data for db write: key(\"%v\"), value(\"%v\"), path(\"%v\").",
                         pathAttr, value, xpathPrefix)
                     }
+				}
                 }
             }
         }
