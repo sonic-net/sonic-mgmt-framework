@@ -1,0 +1,77 @@
+module sonic-ifa {
+    namespace "http://github.com/Azure/sonic-ifa";
+    prefix ifa;
+
+    organization
+        "SONiC";
+
+    contact
+        "SONiC";
+
+    description
+        "SONIC TAM IFA";
+
+    revision 2019-11-12 {
+        description
+            "Initial revision.";
+    }
+
+    container sonic-ifa {
+
+        container TAM_INT_IFA_FEATURE_TABLE {
+
+            list TAM_INT_IFA_FEATURE_TABLE_LIST {
+                key "name";
+
+                leaf name {
+                    type enumeration {
+                        enum feature;
+                    }
+                }
+
+                leaf enable {
+                    type boolean;
+                }
+            }
+        }
+
+        container TAM_INT_IFA_FLOW_TABLE {
+
+            list TAM_INT_IFA_FLOW_TABLE_LIST {
+                key "name";
+
+                leaf name {
+                    type string {
+                        pattern '[a-zA-Z0-9]{1}([-a-zA-Z0-9_]{0,32})';
+                        length 1..32;
+                    }
+                }
+
+                leaf acl-table-name {
+                    mandatory true;
+                    type string;
+                }
+
+                leaf acl-rule-name {
+                    mandatory true;
+                    type string;
+                }
+
+                leaf sampling-rate {
+                    type uint16 {
+                        range "1..10000"{
+                            error-app-tag "Invalid IFA flow sampling rate.";
+                        }
+                    }
+                }
+
+                leaf collector-name {
+                    type string {
+                        pattern '[a-zA-Z0-9]{1}([-a-zA-Z0-9_]{0,32})';
+                        length 1..32;
+                    }
+                }
+            }
+        }
+    }
+}

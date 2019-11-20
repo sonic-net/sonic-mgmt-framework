@@ -574,6 +574,13 @@ limitations under the License.
         />
     <!--=======================================================-->
     <PTYPE
+        name="IP_TYPE"
+        method="select"
+        pattern="ipv4(ipv4) ipv6(ipv6)"
+        help=""
+        />
+    <!--=======================================================-->
+    <PTYPE
         name="FILE_TYPE"
         pattern="file:\/\/[^|]+"
         help="file:"

@@ -1,0 +1,71 @@
+module sonic-tam {
+    namespace "http://github.com/Azure/sonic-tam";
+    prefix tam;
+
+    import ietf-inet-types {
+        prefix inet;
+    }
+
+    organization
+        "SONiC";
+
+    contact
+        "SONiC";
+
+    description
+        "SONIC TAM";
+
+    revision 2019-11-08 {
+        description
+            "Initial revision.";
+    }
+
+    container sonic-tam {
+
+        container TAM_DEVICE_TABLE {
+
+            list TAM_DEVICE_TABLE_LIST {
+                key "name";
+                leaf name {
+                    type enumeration {
+                        enum device;
+                    }
+                }
+
+                leaf deviceid {
+                    type uint16;
+                    default 0;
+                }
+            }
+        }
+
+        container TAM_COLLECTOR_TABLE {
+
+            list TAM_COLLECTOR_TABLE_LIST {
+                key "name";
+
+                leaf name {
+                    type string {
+                        pattern '[a-zA-Z0-9]{1}([-a-zA-Z0-9_]{0,32})';
+                        length 1..32;
+                    }
+                }
+
+                leaf ipaddress-type {
+                    type enumeration {
+                        enum ipv4;
+                        enum ipv6;
+                    }
+                }
+
+                leaf ipaddress {
+                    type inet:ip-address;
+                }
+
+                leaf port {
+                    type inet:port-number;
+                }
+            }
+        }
+    }
+}
