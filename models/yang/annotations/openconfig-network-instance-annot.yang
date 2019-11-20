@@ -27,6 +27,7 @@ module openconfig-network-instance-annot {
     import openconfig-segment-routing { prefix oc-sr; }
     import openconfig-aft { prefix oc-aft; }
     import sonic-extensions { prefix sonic-ext; }
+    import openconfig-network-instance-deviation { prefix oc-netinst-deviation; }
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance {
       deviate add {
@@ -161,5 +162,61 @@ module openconfig-network-instance-annot {
             sonic-ext:field-name "port";
       }
     }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst-deviation:igmp-snooping/oc-netinst-deviation:interfaces/oc-netinst-deviation:interface/oc-netinst-deviation:config
+    {
+      deviate add {
+            sonic-ext:table-name "CFG_L2MC_TABLE";
+            sonic-ext:key-transformer "igmp_snooping_key_xfmr";    
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst-deviation:igmp-snooping/oc-netinst-deviation:interfaces/oc-netinst-deviation:interface/oc-netinst-deviation:state
+    {
+      deviate add {
+            sonic-ext:table-name "CFG_L2MC_TABLE";
+            sonic-ext:key-transformer "igmp_snooping_key_xfmr";    
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst-deviation:igmp-snooping/oc-netinst-deviation:interfaces/oc-netinst-deviation:interface/oc-netinst-deviation:config/oc-netinst-deviation:mrouter-interface
+    {
+      deviate add {
+            sonic-ext:table-name "CFG_L2MC_MROUTER_TABLE";
+            sonic-ext:key-transformer "igmp_snooping_mrouter_config_key_xfmr";    
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst-deviation:igmp-snooping/oc-netinst-deviation:interfaces/oc-netinst-deviation:interface/oc-netinst-deviation:state/oc-netinst-deviation:mrouter-interface
+    {
+      deviate add {
+      			sonic-ext:db-name "APPL_DB";
+            sonic-ext:table-name "APP_L2MC_MROUTER_TABLE";
+            sonic-ext:key-transformer "igmp_snooping_mrouter_state_key_xfmr";    
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst-deviation:igmp-snooping/oc-netinst-deviation:interfaces/oc-netinst-deviation:interface/oc-netinst-deviation:config/oc-netinst-deviation:static-multicast-group 
+    {
+      deviate add {
+            sonic-ext:table-name "CFG_L2MC_STATIC_MEMBER_TABLE";
+            sonic-ext:key-transformer "igmp_snooping_static_member_config_key_xfmr";    
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst-deviation:igmp-snooping/oc-netinst-deviation:interfaces/oc-netinst-deviation:interface/oc-netinst-deviation:state/oc-netinst-deviation:static-multicast-group 
+    {
+      deviate add {
+      			sonic-ext:db-name "APPL_DB";
+            sonic-ext:table-name "APP_L2MC_MEMBER_TABLE";
+            sonic-ext:key-transformer "igmp_snooping_static_member_state_key_xfmr";
+      }
+    }
+    
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst-deviation:igmp-snooping {
+			deviate add {
+				sonic-ext:subtree-transformer "igmp_snooping_subtree_xfmr";
+			}    
+    }    
 }
 
