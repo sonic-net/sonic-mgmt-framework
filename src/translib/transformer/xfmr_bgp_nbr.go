@@ -80,7 +80,7 @@ var YangToDb_bgp_nbr_tbl_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (s
 
     pNbrKey = vrfName + "|" + pNbrAddr
 
-    log.Info("YangToDb_bgp_nbr_tbl_key_xfmr: pGrpKey:", pNbrKey)
+    log.Info("YangToDb_bgp_nbr_tbl_key_xfmr: pNbrKey:", pNbrKey)
     return pNbrKey, nil
 }
 

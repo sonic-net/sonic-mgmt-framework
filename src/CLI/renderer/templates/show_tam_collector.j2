@@ -1,0 +1,28 @@
+{% set vars = {'name': ""} %}
+{% set vars = {'ipaddresstype': ""} %}
+{% set vars = {'address': ""} %}
+{% set vars = {'port': ""} %}
+{% if json_output -%}
+
+{% for key_json in json_output %}
+    {% if key_json == "sonic-tam:TAM_COLLECTOR_TABLE" %}
+        {% set collector_list = json_output[key_json]["TAM_COLLECTOR_TABLE_LIST"] %}
+    {% else %}
+        {% set collector_list = json_output[key_json] %}
+    {% endif %}
+------------------------------------------------------------------------------------------------
+{{'%-15s'|format("NAME")}}{{'%-15s'|format("IP TYPE")}}{{'%-15s'|format("IP ADDRESS")}}{{'%-15s'|format("PORT")}}
+------------------------------------------------------------------------------------------------
+
+{% for collector in collector_list %}
+    {% if vars.update({'name':collector["name"]}) %}{% endif %}
+    {% if vars.update({'ipaddresstype':collector["ipaddress-type"]}) %}{% endif %}
+    {% if vars.update({'port':collector["port"]}) %}{% endif %}
+    {% if vars.update({'address':collector["ipaddress"]}) %}{% endif %}
+{{'%-15s'|format(vars.name)}}{{'%-15s'|format(vars.ipaddresstype)}}{{'%-15s'|format(vars.address)}}{{'%-15s'|format(vars.port)}}
+{% endfor %}
+
+{% endfor %}
+
+{% endif %}
+

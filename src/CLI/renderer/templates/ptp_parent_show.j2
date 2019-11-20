@@ -1,6 +1,3 @@
-{{'-----------------------------------------------------------'}}
-{{'Attribute'.ljust(30)}} {{'Value/State'}}
-{{'-----------------------------------------------------------'}}
 {% for key,value in json_output.items() %}
 {% if 'parent-port-identity' in value.keys() %}
 {% for key2,value2 in value['parent-port-identity'].items() %}

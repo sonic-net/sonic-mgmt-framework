@@ -3,91 +3,93 @@ import sys
 import time
 import json
 import ast
-import openconfig_platform_client
 from rpipe_utils import pipestr
-from openconfig_platform_client.rest import ApiException
+import cli_client as cc
 from scripts.render_cli import show_cli_output
 
+def prompt(msg):
+    prompt_msg = msg + " [y/N]:";
 
-import urllib3
-urllib3.disable_warnings()
+    x = raw_input(prompt_msg)
+    while x != "y" and  x != "N":
+        print ("Invalid input, expected [y/N]")
+        x = raw_input(prompt_msg)
+    if x == "N":
+        exit(1)
 
-plugins = dict()
-temp_resp = {'Current': 'SONiC-OS-HEAD.XXXX','Next': 'SONiC-OS-HEAD.XXXX','Available':['SONiC-OS-HEAD.YYYY', 'SONiC-OS-HEAD.XXXX']}
+def prompt_confirm(func, args):
+    msg = ""
+    if func == 'rpc_sonic_image_management_image_remove':
+        if  len(args) > 0:
+                msg = ("Remove image " +  args[0] + "?")
+        else:
+                msg = ("Remove images which are not current and next, continue?")
+        prompt(msg)
 
-def register(func):
-    """Register sdk client method as a plug-in"""
-    plugins[func.__name__] = func
-    return func
+def validate_imagename(args, command):
+    if len(args) < 1:
+        if command != "remove":
+            print('ERROR: Image name not provided.')
+            exit(1)
+        else:
+            return None
+    return {"sonic-image-management:input":{"imagename":args[0]}}
+   
 
 
-def call_method(name, args):
-    method = plugins[name]
-    return method(args)
-
-def generate_body(func, args):
+def invoke_api(func, args):
     body = None
-    # Get the rules of all ACL table entries.
 
-    if func.__name__ == 'get_openconfig_platform_components':
-        keypath = []
+    api = cc.ApiClient()    
 
-    else:
-       body = {}
+    if func.startswith("rpc") == True:
 
-    return keypath,body
+        if func == 'rpc_sonic_image_management_image_install':
+            body= validate_imagename(args, 'install')
+            path = cc.Path('/restconf/operations/sonic-image-management:image-install')
+            return api.post(path, body)
 
+        if func == 'rpc_sonic_image_management_image_remove':
+            body =validate_imagename(args, 'remove')
+            path = cc.Path('/restconf/operations/sonic-image-management:image-remove')
+            return api.post(path,body)
+
+        if func == 'rpc_sonic_image_management_image_default':
+            body =validate_imagename(args, 'default')
+            path = cc.Path('/restconf/operations/sonic-image-management:image-default')
+            return api.post(path,body)
+
+    if func ==  'get_sonic_image_management_sonic_image_management':
+        path = cc.Path('/restconf/data/sonic-image-management:sonic-image-management')
+        return api.get(path)
 
 def run(func, args):
-    c = openconfig_platform_client.Configuration()
-    c.verify_ssl = False
-    aa = openconfig_platform_client.OpenconfigPlatformApi(api_client=openconfig_platform_client.ApiClient(configuration=c))
+  prompt_confirm(func, args)  
+  try:
+       api_response = invoke_api(func, args)
+       if api_response.ok():
+            response = api_response.content
+            if response is None:
+                print "Success"
+            else:
+                if 'sonic-image-management:output' in response:
+                    status =response["sonic-image-management:output"]
+                    if status["status"] != 0:
+                        print status["status-detail"]
+                else:
+                    jOut = eval(json.dumps(response))
+                    show_cli_output(args[0], jOut)
+       else:
+            #error response
+            print api_response.error_message()
 
-    # create a body block
-    keypath, body = generate_body(func, args)
-
-    try:
-        if body is not None:
-           api_response = getattr(aa,func.__name__)(*keypath, body=body)
-
-        else :
-           api_response = getattr(aa,func.__name__)(*keypath)
-     
-        if api_response is None:
-            print ("Success")
-        else:
-            #api_response = aa.api_client.sanitize_for_serialization(api_response)
-	    if 'image-list' in sys.argv:
-	        show_cli_output(sys.argv[2],temp_resp)
-   	    else:
-		print('Success')		  
-
-    except ApiException as e:
-        if e.body != "":
-            body = json.loads(e.body)
-            if "ietf-restconf:errors" in body:
-                 err = body["ietf-restconf:errors"]
-                 if "error" in err:
-                     errList = err["error"]
-
-                     errDict = {}
-                     for dict in errList:
-                         for k, v in dict.iteritems():
-                              errDict[k] = v
-
-                     if "error-message" in errDict:
-                         print "%Error: " + errDict["error-message"]
-                         return
-                     print "%Error: Transaction Failure"
-                     return
+  except:
+            # system/network error
             print "%Error: Transaction Failure"
-        else:
-            print "Failed"
 
 if __name__ == '__main__':
 
     pipestr().write(sys.argv)
-    #pdb.set_trace()
-    func = eval(sys.argv[1], globals(), openconfig_platform_client.OpenconfigPlatformApi.__dict__)
-    run(func, sys.argv[2:])
+    func = sys.argv[1]
 
+    run(func, sys.argv[2:])

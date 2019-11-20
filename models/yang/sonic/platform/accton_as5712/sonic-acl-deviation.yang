@@ -1,0 +1,35 @@
+module sonic-acl-deviation {
+	namespace "http://github.com/Azure/sonic-acl-deviation";
+	prefix acld;
+	yang-version 1.1;
+
+	import sonic-acl {
+		prefix sacl;
+	}
+
+	organization
+		"SONiC";
+
+	contact
+		"SONiC";
+
+	description
+		"SONiC ACL Deviations";
+
+	revision 2019-11-11 {
+		description
+			"Initial revision.";
+	}
+
+	deviation /sacl:sonic-acl/sacl:ACL_TABLE/sacl:ACL_TABLE_LIST {
+		deviate add {
+			max-elements 8;
+		}
+	}
+
+	deviation /sacl:sonic-acl/sacl:ACL_RULE/sacl:ACL_RULE_LIST {
+		deviate add {
+			max-elements 256;
+		}
+	}
+}

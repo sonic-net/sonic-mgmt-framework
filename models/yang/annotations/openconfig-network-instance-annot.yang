@@ -737,6 +737,18 @@ module openconfig-network-instance-annot {
       }
     }
 
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:use-multiple-paths/oc-netinst:ebgp/oc-netinst:state/oc-netinst:maximum-paths {
+      deviate add {
+        sonic-ext:field-name "max_ebgp_paths";
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:use-multiple-paths/oc-netinst:ibgp/oc-netinst:state/oc-netinst:maximum-paths {
+      deviate add {
+        sonic-ext:field-name "max_ibgp_paths";
+      }
+    }
+
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:table-connections {
       deviate add {
         sonic-ext:db-name "CONFIG_DB";

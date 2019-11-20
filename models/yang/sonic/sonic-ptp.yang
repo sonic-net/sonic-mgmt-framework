@@ -1,0 +1,254 @@
+module sonic-ptp {
+	namespace "http://github.com/Azure/sonic-ptp";
+	prefix sptp;
+	yang-version 1.1;
+
+	organization
+		"SONiC";
+
+	contact
+		"SONiC";
+
+	description
+		"SONIC PTP";
+
+	revision 2019-10-08 {
+		description
+			"Initial revision.";
+	}
+
+	container sonic-ptp {
+		container PTP_INSTANCE {
+			list PTP_INSTANCE_LIST {
+				key instance-number;
+				leaf instance-number {
+					type string;
+				}
+			}
+		}
+		container PTP_CURRENTDS {
+			list PTP_CURRENTDS_LIST  {
+				key instance-number;
+				leaf instance-number {
+					type leafref {
+						path "../../../PTP_INSTANCE/PTP_INSTANCE_LIST/instance-number";
+					}
+				}
+				leaf steps-removed {
+					type uint16;
+				}
+				leaf offset-from-master {
+					type int64;
+				}
+				leaf mean-path-delay {
+					type int64;
+				}
+			}
+		}
+		container PTP_TC_CLOCK {
+			list PTP_TC_CLOCK_LIST {
+				key instance-number;
+				leaf instance-number {
+					type string {
+						pattern "GLOBAL" {
+							error-message "Invalid Instance";
+							error-app-tag instance-number-invalid;
+						}
+					}
+				}
+				leaf clock-identity {
+					type string;
+				}
+				leaf number-ports {
+					type uint16;
+				}
+				leaf delay-mechanism {
+					type string;
+				}
+				leaf primary-domain {
+					type uint8;
+				}
+			}
+		}
+		container PTP_PARENTDS {
+			list PTP_PARENTDS_LIST {
+				key instance-number;
+				leaf instance-number {
+					type leafref {
+						path "../../../PTP_INSTANCE/PTP_INSTANCE_LIST/instance-number";
+					}
+				}
+				leaf observed-parent-clock-phase-change-rate {
+					type int32;
+				}
+				leaf grandmaster-identity {
+					type string;
+				}
+				leaf grandmaster-priority1 {
+					type uint8;
+				}
+				leaf grandmaster-priority2 {
+					type uint8;
+				}
+				leaf port-number {
+					type uint16;
+				}
+				leaf observed-parent-offset-scaled-log-variance {
+					type uint16;
+				}
+				leaf clock-identity {
+					type string;
+				}
+				leaf offset-scaled-log-variance {
+					type uint16;
+				}
+				leaf clock-class {
+					type uint8;
+				}
+				leaf clock-accuracy {
+					type uint8;
+				}
+				leaf parent-stats {
+					type uint8;
+				}
+			}
+		}
+		container PTP_TIMEPROPDS {
+			list PTP_TIMEPROPDS_LIST {
+				key instance-number;
+				leaf instance-number {
+					type leafref {
+						path "../../../PTP_INSTANCE/PTP_INSTANCE_LIST/instance-number";
+					}
+				}
+				leaf time-traceable {
+					type uint8;
+				}
+				leaf frequency-traceable {
+					type uint8;
+				}
+				leaf ptp-timescale {
+					type uint8;
+				}
+				leaf time-source {
+					type uint8;
+				}
+				leaf current-utc-offset-valid {
+					type uint8;
+				}
+				leaf current-utc-offset {
+					type int16;
+				}
+				leaf leap59 {
+					type uint8;
+				}
+				leaf leap61 {
+					type uint8;
+				}
+			}
+		}
+		container PTP_PORT {
+			list PTP_PORT_LIST {
+				key "instance-number port-number";
+				leaf instance-number {
+					type leafref {
+						path "../../../PTP_INSTANCE/PTP_INSTANCE_LIST/instance-number";
+					}
+				}
+				leaf port-number {
+					type string;
+				}
+				leaf peer-mean-path-delay {
+					type int64;
+				}
+				leaf announce-receipt-timeout {
+					type int8;
+				}
+				leaf log-sync-interval {
+					type int8;
+				}
+				leaf log-min-pdelay-req-interval {
+					type int8;
+				}
+				leaf version-number {
+					type int8;
+				}
+				leaf port-state {
+					type uint8;
+				}
+				leaf underlying-interface {
+					type string;
+				}
+				leaf log-min-delay-req-interval {
+					type int8;
+				}
+				leaf log-announce-interval {
+					type int8;
+				}
+				leaf delay-mechanism {
+					type string;
+				}
+			}
+		}
+		container PTP_TC_PORT {
+			list PTP_TC_PORT_LIST {
+				key "port-number";
+				leaf port-number {
+					type string;
+				}
+				leaf log-min-pdelay-req-interval {
+					type int8;
+				}
+				leaf faulty-flag {
+					type uint8;
+				}
+				leaf peer-mean-path-delay {
+					type int64;
+				}
+			}
+		}
+		container PTP_CLOCK {
+			list PTP_CLOCK_LIST {
+				key instance-number;
+				leaf instance-number {
+					type leafref {
+						path "../../../PTP_INSTANCE/PTP_INSTANCE_LIST/instance-number";
+					}
+				}
+
+				// default-ds attributes
+				leaf priority1 {
+					type uint8;
+				}
+				leaf priority2 {
+					type uint8;
+				}
+				leaf domain-number {
+					type uint8;
+				}
+				leaf slave-only {
+					type uint8;
+				}
+				leaf clock-class {
+					type uint8;
+				}
+				leaf clock-accuracy {
+					type uint8;
+				}
+				leaf offset-scaled-log-variance {
+					type uint16;
+				}
+				leaf two-step-flag {
+					type uint8;
+				}
+				leaf clock-identity {
+					type string;
+				}
+				leaf number-ports {
+					type uint16;
+				}
+
+			}
+		}
+	}
+}

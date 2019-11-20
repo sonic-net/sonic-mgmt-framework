@@ -40,6 +40,10 @@ def invoke_api(func, args=[]):
         path = cc.Path('/restconf/data/sonic-portchannel:sonic-portchannel/LAG_MEMBER_TABLE')
         return api.get(path)
 
+    if func == 'get_sonic_port_sonic_port_port_table_port_table_list_oper_status':
+        path = cc.Path('/restconf/data/sonic-port:sonic-port/PORT_TABLE/PORT_TABLE_LIST={ifname}/oper_status', ifname=args[0])
+        return api.get(path)
+
     return api.cli_not_implemented(func)
 
 def run(func, args):
@@ -60,12 +64,12 @@ def run(func, args):
                 if func == 'get_sonic_portchannel_sonic_portchannel_lag_table':
                     memlst=[]
                     # Get members for all PortChannels
-                    memebrs_resp = invoke_api('get_sonic_portchannel_sonic_portchannel_lag_member_table')
-                    if not memebrs_resp.ok():
-                        print memebrs_resp.error_message()
+                    members_resp = invoke_api('get_sonic_portchannel_sonic_portchannel_lag_member_table')
+                    if not members_resp.ok():
+                        print members_resp.error_message()
                         return
 
-                    api_response_members = memebrs_resp.content
+                    api_response_members = members_resp.content
 
                     if 'sonic-portchannel:LAG_MEMBER_TABLE' in api_response_members:
                         memlst = api_response_members['sonic-portchannel:LAG_MEMBER_TABLE']['LAG_MEMBER_TABLE_LIST']
@@ -74,8 +78,13 @@ def run(func, args):
                         pc_dict['type']="Eth"
                         for mem_dict in memlst:
                             if mem_dict['name'] == pc_dict['lagname']:
-                                keypath = [mem_dict['ifname']]
-                                pc_dict['members'].append(mem_dict['ifname'])
+                                ifname = mem_dict['ifname']
+                                oper_status = invoke_api('get_sonic_port_sonic_port_port_table_port_table_list_oper_status', [ifname])
+                                if not oper_status.ok():
+                                    print oper_status.error_message()
+                                    return
+                                oper_status = oper_status.content['sonic-port:oper_status'][0].upper()
+                                pc_dict['members'].append(ifname+"("+oper_status+")")
                     show_cli_output(args[0], laglst)
                 else:
                      return

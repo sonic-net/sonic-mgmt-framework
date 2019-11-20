@@ -23,9 +23,10 @@ package yparser
 
 import (
 	"os"
+	"fmt"
 	"strings"
-	log "github.com/golang/glog"
 	. "cvl/internal/util"
+	"unsafe"
 )
 
 /*
@@ -138,9 +139,47 @@ struct lyd_node *lyd_find_node(struct lyd_node *root, const char *xpath)
 	return node;
 }
 
-int lyd_change_leaf_data(struct lyd_node *leaf, const char *val_str)
-{
+struct lys_node* lys_get_snode(struct ly_set *set, int idx) {
+	if (set == NULL || set->number == 0) {
+		return NULL;
+	}
+
+	return set->set.s[idx];
+}
+
+int lyd_change_leaf_data(struct lyd_node *leaf, const char *val_str) {
   return lyd_change_leaf((struct lyd_node_leaf_list *)leaf, val_str);
+}
+
+struct lys_leaf_ref_path {
+	const char *path[10]; //max 10 path
+	int count; //actual path count
+};
+
+struct lys_leaf_ref_path* lys_get_leafrefs(struct lys_node_leaf *node) {
+	static struct lys_leaf_ref_path leafrefs;
+	memset(&leafrefs, 0, sizeof(leafrefs));
+
+	if (node->type.base == LY_TYPE_LEAFREF) {
+		leafrefs.path[0] = node->type.info.lref.path;
+		leafrefs.count = 1;
+
+	} else if (node->type.base == LY_TYPE_UNION) {
+		for (int typeCnt = 0; typeCnt < node->type.info.uni.count; typeCnt++) {
+			if (node->type.info.uni.types[typeCnt].base != LY_TYPE_LEAFREF) {
+				continue;
+			}
+
+			leafrefs.path[leafrefs.count] = node->type.info.uni.types[typeCnt].info.lref.path;
+			leafrefs.count += 1;
+		}
+	}
+
+	if (leafrefs.count > 0) {
+		return &leafrefs;
+	} else {
+		return NULL;
+	}
 }
 
 */
@@ -148,6 +187,7 @@ import "C"
 
 type YParserCtx C.struct_ly_ctx
 type YParserNode C.struct_lyd_node
+type YParserSNode C.struct_lys_node
 type YParserModule C.struct_lys_module
 
 var ypCtx *YParserCtx
@@ -155,6 +195,29 @@ var ypOpModule *YParserModule
 var ypOpRoot *YParserNode  //Operation root
 var ypOpNode *YParserNode  //Operation node 
 
+type XpathExpression struct {
+	Expr string
+	ErrCode string
+	ErrStr string
+}
+
+//Important schema information to be loaded at bootup time
+type YParserListInfo struct {
+	ListName string
+	Module *YParserModule
+	DbName string
+	ModelName string
+	RedisTableName string //To which Redis table it belongs to, used for 1 Redis to N Yang List
+	Keys []string
+	RedisKeyDelim string
+	RedisKeyPattern string
+	RedisTableSize int
+	MapLeaf []string //for 'mapping  list'
+	LeafRef map[string][]string //for storing all leafrefs for a leaf in a table, 
+				//multiple leafref possible for union 
+	XpathExpr map[string]*XpathExpression
+	CustValidation map[string]string
+}
 
 type YParser struct {
 	ctx *YParserCtx      //Parser context
@@ -208,8 +271,8 @@ const (
 
 var yparserInitialized bool = false
 
-func TRACE_LOG(level log.Level, tracelevel CVLTraceLevel, fmtStr string, args ...interface{}) {
-	TRACE_LEVEL_LOG(level, tracelevel , fmtStr, args...)
+func TRACE_LOG(tracelevel CVLTraceLevel, fmtStr string, args ...interface{}) {
+	TRACE_LEVEL_LOG(tracelevel , fmtStr, args...)
 }
 
 func CVL_LOG(level CVLLogLevel, fmtStr string, args ...interface{}) {
@@ -249,7 +312,7 @@ func Finish() {
 //Parse YIN schema file
 func ParseSchemaFile(modelFile string) (*YParserModule, YParserError) {
 	/* schema */
-	TRACE_LOG(INFO_DEBUG, TRACE_YPARSER, "Parsing schema file %s ...\n", modelFile)
+	TRACE_LOG(TRACE_YPARSER, "Parsing schema file %s ...", modelFile)
 
 	module :=  C.lys_parse_path((*C.struct_ly_ctx)(ypCtx), C.CString(modelFile), C.LYS_IN_YIN)
 	if module == nil {
@@ -270,7 +333,7 @@ func(yp *YParser) AddChildNode(module *YParserModule, parent *YParserNode, name 
 
 	ret := (*YParserNode)(C.lyd_new((*C.struct_lyd_node)(parent), (*C.struct_lys_module)(module), C.CString(name)))
 	if (ret == nil) {
-		TRACE_LOG(INFO_DEBUG, TRACE_YPARSER, "Failed parsing node %s\n", name)
+		TRACE_LOG(TRACE_YPARSER, "Failed parsing node %s", name)
 	}
 
 	return ret
@@ -280,7 +343,7 @@ func(yp *YParser) AddChildNode(module *YParserModule, parent *YParserNode, name 
 func(yp *YParser) AddMultiLeafNodes(module *YParserModule, parent *YParserNode, multiLeaf string) YParserError {
 	if (0 != C.lyd_multi_new_leaf((*C.struct_lyd_node)(parent), (*C.struct_lys_module)(module), C.CString(multiLeaf))) {
 		if (Tracing == true) {
-			TRACE_LOG(INFO_API, TRACE_ONERROR, "Failed to create Multi Leaf Data = %v", multiLeaf)
+			TRACE_LOG(TRACE_ONERROR, "Failed to create Multi Leaf Data = %v", multiLeaf)
 		}
 		return getErrorDetails()
 	}
@@ -310,7 +373,7 @@ func (yp *YParser) MergeSubtree(root, node *YParserNode) (*YParserNode, YParserE
 
 	if (Tracing == true) {
 		rootdumpStr := yp.NodeDump((*YParserNode)(rootTmp))
-		TRACE_LOG(INFO_API, TRACE_YPARSER, "Root subtree = %v\n", rootdumpStr)
+		TRACE_LOG(TRACE_YPARSER, "Root subtree = %v\n", rootdumpStr)
 	}
 
 	if (0 != C.lyd_merge_to_ctx(&rootTmp, (*C.struct_lyd_node)(node), C.LYD_OPT_DESTRUCT,
@@ -320,7 +383,7 @@ func (yp *YParser) MergeSubtree(root, node *YParserNode) (*YParserNode, YParserE
 
 	if (Tracing == true) {
 		dumpStr := yp.NodeDump((*YParserNode)(rootTmp))
-		TRACE_LOG(INFO_API, TRACE_YPARSER, "Merged subtree = %v\n", dumpStr)
+		TRACE_LOG(TRACE_YPARSER, "Merged subtree = %v\n", dumpStr)
 	}
 
 	return (*YParserNode)(rootTmp), YParserError {ErrCode : YP_SUCCESS,}
@@ -353,7 +416,7 @@ func (yp *YParser) CacheSubtree(dupSrc bool, node *YParserNode) YParserError {
 
 	if (Tracing == true) {
 		dumpStr := yp.NodeDump((*YParserNode)(rootTmp))
-		TRACE_LOG(INFO_API, TRACE_YPARSER, "Cached subtree = %v\n", dumpStr)
+		TRACE_LOG(TRACE_YPARSER, "Cached subtree = %v\n", dumpStr)
 	}
 
 	return YParserError {ErrCode : YP_SUCCESS,}
@@ -400,7 +463,7 @@ func (yp *YParser) ValidateData(data, depData *YParserNode) YParserError {
 	if (0 != C.lyd_data_validate(&dataRootTmp, C.LYD_OPT_CONFIG, (*C.struct_ly_ctx)(ypCtx))) {
 		if (Tracing == true) {
 			strData := yp.NodeDump((*YParserNode)(dataRootTmp))
-			TRACE_LOG(INFO_API, TRACE_ONERROR, "Failed to validate data = %v", strData)
+			TRACE_LOG(TRACE_ONERROR, "Failed to validate data = %v", strData)
 		}
 
 		CVL_LOG(ERROR, "Validation failed\n")
@@ -419,7 +482,7 @@ func (yp *YParser) ValidateSyntax(data *YParserNode) YParserError {
 	(*C.struct_ly_ctx)(ypCtx))) {
 		if (Tracing == true) {
 			strData := yp.NodeDump((*YParserNode)(dataTmp))
-			TRACE_LOG(INFO_API, TRACE_ONERROR, "Failed to validate Syntax, data = %v", strData)
+			TRACE_LOG(TRACE_ONERROR, "Failed to validate Syntax, data = %v", strData)
 		}
 		return  getErrorDetails()
 	}
@@ -453,7 +516,7 @@ func (yp *YParser) ValidateSemantics(data, depData, appDepData *YParserNode) YPa
 		//merge input data and dependent data for semantic validation
 		if (0 != C.lyd_merge_to_ctx(&dataTmp, (*C.struct_lyd_node)(depData),
 		C.LYD_OPT_DESTRUCT, (*C.struct_ly_ctx)(ypCtx))) {
-			TRACE_LOG(INFO_API, (TRACE_SEMANTIC | TRACE_LIBYANG), "Unable to merge dependent data\n")
+			TRACE_LOG((TRACE_SEMANTIC | TRACE_LIBYANG), "Unable to merge dependent data\n")
 			return getErrorDetails()
 		}
 	}
@@ -462,7 +525,7 @@ func (yp *YParser) ValidateSemantics(data, depData, appDepData *YParserNode) YPa
 	if ((data != nil || depData != nil) && yp.root != nil) {
 		if (0 != C.lyd_merge_to_ctx(&dataTmp, (*C.struct_lyd_node)(yp.root),
 		0, (*C.struct_ly_ctx)(ypCtx))) {
-			TRACE_LOG(INFO_API, (TRACE_SEMANTIC | TRACE_LIBYANG), "Unable to merge cached dependent data\n")
+			TRACE_LOG((TRACE_SEMANTIC | TRACE_LIBYANG), "Unable to merge cached dependent data\n")
 			return getErrorDetails()
 		}
 	}
@@ -471,7 +534,7 @@ func (yp *YParser) ValidateSemantics(data, depData, appDepData *YParserNode) YPa
 	if (appDepData != nil) {
 		if (0 != C.lyd_merge_to_ctx(&dataTmp, (*C.struct_lyd_node)(appDepData),
 		C.LYD_OPT_DESTRUCT, (*C.struct_ly_ctx)(ypCtx))) {
-			TRACE_LOG(INFO_API, (TRACE_SEMANTIC | TRACE_LIBYANG), "Unable to merge other dependent data\n")
+			TRACE_LOG((TRACE_SEMANTIC | TRACE_LIBYANG), "Unable to merge other dependent data\n")
 			return getErrorDetails()
 		}
 	}
@@ -481,21 +544,21 @@ func (yp *YParser) ValidateSemantics(data, depData, appDepData *YParserNode) YPa
 		//if (0 != C.lyd_insert_sibling(&dataTmp, (*C.struct_lyd_node)(ypOpRoot))) {
 		if (0 != C.lyd_merge_to_ctx(&dataTmp, (*C.struct_lyd_node)(ypOpRoot),
 		0, (*C.struct_ly_ctx)(ypCtx))) {
-			TRACE_LOG(INFO_API, (TRACE_SEMANTIC | TRACE_LIBYANG), "Unable to insert operation node")
+			TRACE_LOG((TRACE_SEMANTIC | TRACE_LIBYANG), "Unable to insert operation node")
 			return getErrorDetails()
 		}
 	}
 
 	if (Tracing == true) {
 		strData := yp.NodeDump((*YParserNode)(dataTmp))
-		TRACE_LOG(INFO_API, TRACE_YPARSER, "Semantics data = %v", strData)
+		TRACE_LOG(TRACE_YPARSER, "Semantics data = %v", strData)
 	}
 
 	//Check semantic validation
 	if (0 != C.lyd_data_validate(&dataTmp, C.LYD_OPT_CONFIG, (*C.struct_ly_ctx)(ypCtx))) {
 		if (Tracing == true) {
 			strData1 := yp.NodeDump((*YParserNode)(dataTmp))
-			TRACE_LOG(INFO_API, TRACE_ONERROR, "Failed to validate Semantics, data = %v", strData1)
+			TRACE_LOG(TRACE_ONERROR, "Failed to validate Semantics, data = %v", strData1)
 		}
 		return getErrorDetails()
 	}
@@ -695,7 +758,7 @@ func getErrorDetails() YParserError {
 		ErrAppTag: errAppTag,
 	}
 
-	TRACE_LOG(INFO_API, TRACE_YPARSER, "YParser error details: %v...", errObj)
+	TRACE_LOG(TRACE_YPARSER, "YParser error details: %v...", errObj)
 
 	return  errObj
 }
@@ -703,3 +766,150 @@ func getErrorDetails() YParserError {
 func FindNode(root *YParserNode, xpath string) *YParserNode {
 	return  (*YParserNode)(C.lyd_find_node((*C.struct_lyd_node)(root), C.CString(xpath)))
 }
+
+func GetModelNs(module *YParserModule) (ns, prefix string) {
+	return C.GoString(((*C.struct_lys_module)(module)).ns),
+	 C.GoString(((*C.struct_lys_module)(module)).prefix)
+}
+
+//Get model info for YANG list and its subtree
+func GetModelListInfo(module *YParserModule) []*YParserListInfo {
+	var list []*YParserListInfo
+
+	mod := (*C.struct_lys_module)(module)
+	set := C.lys_find_path(mod, nil,
+	C.CString(fmt.Sprintf("/%s/*", C.GoString(mod.name))))
+
+	if (set == nil) {
+		return nil
+	}
+
+	for idx := 0; idx < int(set.number); idx++ { //for each container
+
+		snode := C.lys_get_snode(set, C.int(idx))
+		snodec := (*C.struct_lys_node_container)(unsafe.Pointer(snode))
+		slist := (*C.struct_lys_node_list)(unsafe.Pointer(snodec.child))
+
+		//for each list
+		for ; slist != nil; slist = (*C.struct_lys_node_list)(unsafe.Pointer(slist.next)) {
+			var l YParserListInfo
+			listName :=  C.GoString(slist.name)
+			l.RedisTableName = C.GoString(snodec.name)
+
+			tableName := listName
+			if (strings.HasSuffix(tableName, "_LIST")) {
+				tableName = tableName[0:len(tableName) - len("_LIST")]
+			}
+			l.ListName = tableName
+			l.ModelName = C.GoString(mod.name)
+			//Default database is CONFIG_DB since CVL works with config db mainly
+			l.Module = module
+			l.DbName = "CONFIG_DB"
+			//default delim '|'
+			l.RedisKeyDelim = "|"
+			//Default table size is -1 i.e. size limit
+			l.RedisTableSize = -1
+			if (slist.max  > 0) {
+				l.RedisTableSize = int(slist.max)
+			}
+
+			l.LeafRef = make(map[string][]string)
+			l.XpathExpr = make(map[string]*XpathExpression)
+			l.CustValidation = make(map[string]string)
+
+			//Add keys
+			keys := (*[10]*C.struct_lys_node_leaf)(unsafe.Pointer(slist.keys))
+			for idx := 0; idx < int(slist.keys_size); idx++ {
+				keyName := C.GoString(keys[idx].name)
+				l.Keys = append(l.Keys, keyName)
+			}
+
+			//Check for must expression
+			if (slist.must_size > 0) {
+				l.XpathExpr[listName] = &XpathExpression{C.GoString(slist.must.expr),
+				C.GoString(slist.must.eapptag), C.GoString(slist.must.emsg)}
+			}
+
+			//Check for custom extension
+			if (slist.ext_size > 0) {
+				exts := (*[10]*C.struct_lys_ext_instance)(unsafe.Pointer(slist.ext))
+				for  idx := 0; idx < int(slist.ext_size); idx++ {
+
+					extName := C.GoString(exts[idx].def.name)
+					argVal := C.GoString(exts[idx].arg_value)
+
+					switch extName {
+					case "custom-validation":
+						if (argVal != "") {
+							l.CustValidation[listName] = argVal
+						}
+					case "db-name":
+						l.DbName = argVal
+					case "key-delim":
+						l.RedisKeyDelim = argVal
+					case "key-pattern":
+						l.RedisKeyPattern = argVal
+					case "map-leaf":
+						l.MapLeaf = strings.Split(argVal, " ")
+					}
+				}
+
+			}
+
+			//Add default key pattern
+			if l.RedisKeyPattern == "" {
+				keyPattern := []string{tableName}
+				for idx := 0; idx < len(l.Keys); idx++ {
+					keyPattern = append(keyPattern, fmt.Sprintf("{%s}", l.Keys[idx]))
+				}
+				l.RedisKeyPattern = strings.Join(keyPattern, l.RedisKeyDelim)
+			}
+
+
+
+			for sChild := slist.child; sChild != nil; sChild = sChild.next {
+				sleaf := (*C.struct_lys_node_leaf)(unsafe.Pointer(sChild))
+				if sleaf == nil {
+					continue
+				}
+
+				leafName := C.GoString(sleaf.name)
+
+				//Check for leafref expression
+				leafRefs := C.lys_get_leafrefs(sleaf)
+				if (leafRefs != nil) {
+					leafRefPaths := (*[10]*C.char)(unsafe.Pointer(&leafRefs.path))
+					for idx := 0; idx < int(leafRefs.count); idx++ {
+						l.LeafRef[leafName] = append(l.LeafRef[leafName],
+						C.GoString(leafRefPaths[idx]))
+					}
+				}
+
+				//Check for must expression
+				if (sleaf.must_size > 0) {
+					l.XpathExpr[leafName] = &XpathExpression{C.GoString(sleaf.must.expr),
+					C.GoString(sleaf.must.eapptag), C.GoString(sleaf.must.emsg)}
+				}
+
+				//Check for custom extension
+				if (sleaf.ext_size > 0) {
+					exts := (*[10]*C.struct_lys_ext_instance)(unsafe.Pointer(sleaf.ext))
+					for  idx := 0; idx < int(sleaf.ext_size); idx++ {
+						if (C.GoString(exts[idx].def.name) == "custom-validation") {
+							argVal := C.GoString(exts[idx].arg_value)
+							if (argVal != "") {
+								l.CustValidation[leafName] = argVal
+							}
+						}
+					}
+				}
+			}
+
+			list = append(list, &l)
+		}//each list inside a container
+	}//each container
+
+	C.free(unsafe.Pointer(set))
+	return list
+}
+

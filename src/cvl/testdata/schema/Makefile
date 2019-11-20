@@ -44,3 +44,6 @@ $(out_dir)/%.tree:%.yang
 	pyang -p $(sonic_yang):$(sonic_yang)/common:$(sonic_yang)/common/ietf \
 			-f tree $$devOpt $< -o $@
 
+clean:
+	@echo "Removing files ..."
+	rm -rf platform

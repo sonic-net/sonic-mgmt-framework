@@ -1,0 +1,34 @@
+{% set vars = {'flowName': ""} %}
+{% set vars = {'aclTable': ""} %}
+{% set vars = {'aclRule': ""} %}
+{% set vars = {'collector': ""} %}
+{% set vars = {'samplingRate': ""} %}
+{{'------------------------------------------------------------------------------------------------------------------------'}}
+{{'FLOW'.ljust(20)}} {{'ACL RULE'.ljust(20)}} {{'ACL TABLE'.ljust(20)}} {{'COLLECTOR'.ljust(20)}} {{'SAMPLING RATE'}}
+{{'------------------------------------------------------------------------------------------------------------------------'}}
+{% for key,value in json_output.items() %}
+{% for item in value %} 
+{% for key2,value2 in item.items() %}
+{% if 'ietf-ts:flow-key' == key2 %}
+{% if vars.update({'flowName':value2}) %}{% endif %}
+{% endif %}
+{% if 'ietf-ts:each-flow-data' == key2 %}
+{% for key,value in value2.items() %}
+{% if 'acl-rule' == key %}
+{% if vars.update({'aclRuleName':value}) %}{% endif %}
+{% endif %}
+{% if 'acl-table' == key %}
+{% if vars.update({'aclTableName':value}) %}{% endif %}
+{% endif %}
+{% if 'collector' == key %}
+{% if vars.update({'collectorName':value}) %}{% endif %}
+{% endif %}
+{% if 'sample' == key %}
+{% if vars.update({'samplingRate':value}) %}{% endif %}
+{% endif %}
+{% endfor %}
+{% endif %}
+{% endfor %}
+{{'%-25s'|format(vars.flowName)}}{{'%-20s'|format(vars.aclRuleName)}}{{'%-20s'|format(vars.aclTableName)}} {{'%-20s'|format(vars.collectorName)}} {{'%-20s'|format(vars.samplingRate)}}
+{% endfor %}
+{% endfor %}

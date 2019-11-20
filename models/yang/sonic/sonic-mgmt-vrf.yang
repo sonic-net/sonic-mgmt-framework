@@ -2,10 +2,6 @@ module sonic-mgmt-vrf {
     namespace "http://github.com/Azure/sonic-mgmt-vrf";
     prefix mgmt-vrf;
 
-    import sonic-common {
-        prefix scommon;
-    }
-
     organization
         "SONiC";
 
