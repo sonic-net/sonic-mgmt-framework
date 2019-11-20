@@ -775,6 +775,7 @@ func deleteVlanIntfAndMembers(inParams *XfmrParams, vlanName *string) error {
         errStr := "Need to first remove IP address entry"
         log.Error(errStr)
         return errors.New(errStr)
+
     }
 
     memberPortsVal, ok := vlanEntry.Field["members@"]
@@ -797,7 +798,7 @@ func deleteVlanIntfAndMembers(inParams *XfmrParams, vlanName *string) error {
                 return err
             }
         }
-        resMap[VLAN_MEMBER_TN] = vlanMemberMap
+    	resMap[VLAN_MEMBER_TN] = vlanMemberMap
     }
     resMap[VLAN_TN] = vlanMap
 
