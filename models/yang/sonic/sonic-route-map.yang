@@ -1,0 +1,136 @@
+module sonic-route-map {
+    namespace "http://github.com/Azure/sonic-route-map";
+    prefix srmap;
+
+    organization
+        "SONiC";
+
+    contact
+        "SONiC";
+
+    description
+        "SONIC Route map YANG";
+
+    revision 2019-09-15 {
+        description
+            "Initial revision.";
+    }
+
+    container sonic-route-map {
+        container ROUTE_MAP {
+            list ROUTE_MAP_LIST {
+                key "route_map_name stmt_name";
+
+                leaf route_map_name {
+                    type string;
+                }
+
+                leaf stmt_name {
+                    type string;
+                }
+
+                leaf route_operation {
+                    type string;
+                }
+
+                leaf match_interface{
+                    type string;
+                }
+
+                leaf match_prefix_set{
+                    type string;
+                }
+
+                leaf match_neighbor_set{
+                    type string;
+                }
+
+                leaf match_tag_set{
+                    type string;
+                }
+
+                leaf-list match_next_hop{
+                    type string;
+                }
+
+                leaf-list match_address_family{
+                    type string;
+                }
+
+                leaf match_med{
+                    type uint32;
+                }
+
+                leaf match_origin{
+                    type string;
+                }
+
+                leaf match_local_pref{
+                    type uint32;
+                }
+
+                leaf match_route_type{
+                    type string;
+                }
+
+                leaf match_community{
+                    type string;
+                }
+
+                leaf match_ext_community{
+                    type string;
+                }
+
+                leaf match_as_path{
+                    type string;
+                }
+                leaf call_route_map {
+                    type string;
+                }
+
+
+
+                leaf set_origin{
+                    type string;
+                }
+
+                leaf set_local_pref{
+                    type uint32;
+                }
+
+                leaf set_next_hop{
+                    type string;
+                }
+
+                leaf set_med{
+                    type string;
+                }
+
+                leaf set_repeat_asn{
+                    type uint8;
+                }
+
+                leaf set_asn{
+                    type uint32;
+                }
+
+                leaf set_community_inline {
+                    type string;
+                }
+
+                leaf set_community_ref {
+                    type string;
+                }
+
+                leaf set_ext_community_inline {
+                    type string;
+                }
+
+                leaf set_ext_community_ref {
+                    type string;
+                }
+
+            }
+        }
+    }
+}

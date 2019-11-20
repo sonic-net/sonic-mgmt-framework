@@ -3,10 +3,6 @@ module sonic-spanning-tree {
     prefix sstp;
     yang-version 1.1;
 
-    import sonic-common {
-        prefix scommon;
-    }
-
     import sonic-port {
         prefix prt;
     }

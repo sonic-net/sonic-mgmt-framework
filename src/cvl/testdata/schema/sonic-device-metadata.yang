@@ -10,8 +10,8 @@ module sonic-device-metadata {
 		prefix scommon;
 	}
 
-	import sonic-bgp-neighbor {
-		prefix sbn;
+	import sonic-bgp-global {
+		prefix sbg;
 	}
 
 	organization
@@ -58,7 +58,10 @@ module sonic-device-metadata {
 
 				leaf bgp_asn {
 					type leafref {
-						path "/sbn:sonic-bgp-neighbor/sbn:BGP_NEIGHBOR/sbn:BGP_NEIGHBOR_LIST/sbn:asn";
+						path "/sbg:sonic-bgp-global/sbg:BGP_GLOBALS/sbg:BGP_GLOBALS_LIST/sbg:local_asn";
+					}
+					must "/sbg:sonic-bgp-global/sbg:BGP_GLOBALS/sbg:BGP_GLOBALS_LIST[sbg:vrf='default']/sbg:local_asn" {
+						error-message "BGP global configuraion missing";
 					}
 				}
 

@@ -2,10 +2,6 @@ module sonic-common {
     namespace "http://github.com/Azure/sonic-common";
     prefix scommon;
 
-    import ietf-yang-types {
-        prefix yang;
-    }
-
     organization
         "SONiC";
 

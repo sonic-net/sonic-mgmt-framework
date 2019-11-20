@@ -158,7 +158,24 @@ func processLfLstDbToYang(fieldXpath string, dbFldVal string) []interface{} {
 	valLst := strings.Split(dbFldVal, ",")
 	var resLst []interface{}
 	const INTBASE = 10
-	yngTerminalNdDtType := xDbSpecMap[fieldXpath].dbEntry.Type.Kind
+
+	log.Info("xpath:", fieldXpath, ", dbFldVal:", dbFldVal)
+	xpathData, ok := xYangSpecMap[fieldXpath]
+	if !ok {
+		log.Info("xpath ", fieldXpath, " doesnt have entry in xYangSpecMap")
+		return resLst
+	}
+
+	dbPath := *xpathData.tableName + "/" + xpathData.fieldName
+	dbNode := xDbSpecMap[dbPath]
+	log.Info("xDbSpecMap[",dbPath,"]:",dbNode)
+
+	if dbNode == nil {
+		log.Info("xDbSpecMap[", dbPath, "] is NULL")
+		return resLst
+	}
+
+	yngTerminalNdDtType := xDbSpecMap[dbPath].dbEntry.Type.Kind
 	switch  yngTerminalNdDtType {
 	case yang.Yenum, yang.Ystring, yang.Yunion, yang.Yleafref:
 		// TODO handle leaf-ref base type
