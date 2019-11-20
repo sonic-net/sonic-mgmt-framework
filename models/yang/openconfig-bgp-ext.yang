@@ -334,8 +334,6 @@ module openconfig-bgp-ext {
       }
   }
 
-
-
   grouping bgp-ext-global-afi-safi {
         container aggregate-address {
           description
@@ -1606,7 +1604,7 @@ deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:p
 }
  
  
-augment /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi {
+  augment /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi {
       uses bgp-ext-global-afi-safi;
   }
 
