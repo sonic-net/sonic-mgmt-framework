@@ -37,11 +37,11 @@ import (
 const (
 	STP_GLOBAL_TABLE         = "STP"
 	STP_VLAN_TABLE           = "STP_VLAN"
-	STP_VLAN_INTF_TABLE      = "STP_VLAN_INTF"
-	STP_INTF_TABLE           = "STP_INTF"
+	STP_VLAN_PORT_TABLE      = "STP_VLAN_PORT"
+	STP_PORT_TABLE           = "STP_PORT"
 	STP_VLAN_OPER_TABLE      = "_STP_VLAN_TABLE"
-	STP_VLAN_INTF_OPER_TABLE = "_STP_VLAN_INTF_TABLE"
-	STP_INTF_OPER_TABLE      = "_STP_INTF_TABLE"
+	STP_VLAN_PORT_OPER_TABLE = "_STP_VLAN_PORT_TABLE"
+	STP_PORT_OPER_TABLE      = "_STP_PORT_TABLE"
 	STP_MODE                 = "mode"
 	OC_STP_APP_MODULE_NAME   = "/openconfig-spanning-tree:stp"
 	OC_STP_YANG_PATH_PREFIX  = "/device/stp"
@@ -86,7 +86,10 @@ func init() {
 		&appInfo{appType: reflect.TypeOf(StpApp{}),
 			ygotRootType:  reflect.TypeOf(ocbinds.OpenconfigSpanningTree_Stp{}),
 			isNative:      false,
-			tablesToWatch: []*db.TableSpec{&db.TableSpec{Name: STP_GLOBAL_TABLE}, &db.TableSpec{Name: STP_VLAN_TABLE}, &db.TableSpec{Name: STP_VLAN_INTF_TABLE}, &db.TableSpec{Name: STP_INTF_TABLE}}})
+			tablesToWatch: []*db.TableSpec{&db.TableSpec{Name:
+            STP_GLOBAL_TABLE}, &db.TableSpec{Name: STP_VLAN_TABLE},
+            &db.TableSpec{Name: STP_VLAN_PORT_TABLE}, &db.TableSpec{Name:
+            STP_PORT_TABLE}}})
 
 	if err != nil {
 		log.Fatal("Register STP app module with App Interface failed with error=", err)
@@ -106,12 +109,12 @@ func (app *StpApp) initialize(data appData) {
 
 	app.globalTable = &db.TableSpec{Name: STP_GLOBAL_TABLE}
 	app.vlanTable = &db.TableSpec{Name: STP_VLAN_TABLE}
-	app.vlanIntfTable = &db.TableSpec{Name: STP_VLAN_INTF_TABLE}
-	app.interfaceTable = &db.TableSpec{Name: STP_INTF_TABLE}
+	app.vlanIntfTable = &db.TableSpec{Name: STP_VLAN_PORT_TABLE}
+	app.interfaceTable = &db.TableSpec{Name: STP_PORT_TABLE}
 
 	app.vlanOperTable = &db.TableSpec{Name: STP_VLAN_OPER_TABLE}
-	app.vlanIntfOperTable = &db.TableSpec{Name: STP_VLAN_INTF_OPER_TABLE}
-	app.intfOperTable = &db.TableSpec{Name: STP_INTF_OPER_TABLE}
+	app.vlanIntfOperTable = &db.TableSpec{Name: STP_VLAN_PORT_OPER_TABLE}
+	app.intfOperTable = &db.TableSpec{Name: STP_PORT_OPER_TABLE}
 
 	app.globalInfo = db.Value{Field: map[string]string{}}
 	app.vlanTableMap = make(map[string]db.Value)
@@ -2063,7 +2066,7 @@ func removeStpConfigOnVlanDeletion(d *db.DB, vlanList []string) {
 	}
 	log.Infof("removeStpConfigOnVlanDeletion --> Disable Stp on Vlans: %v", vlanList)
 	for i, _ := range vlanList {
-		err := d.DeleteEntry(&db.TableSpec{Name: STP_VLAN_INTF_TABLE}, asKey(vlanList[i], "*"))
+		err := d.DeleteEntry(&db.TableSpec{Name: STP_VLAN_PORT_TABLE}, asKey(vlanList[i], "*"))
 		if err != nil {
 			log.Error(err)
 		}
@@ -2098,7 +2101,7 @@ func enableStpOnInterfaceVlanMembership(d *db.DB, intfList []string) {
 	}
 
 	var stpEnabledIntfList []string
-	intfKeys, err := d.GetKeys(&db.TableSpec{Name: STP_INTF_TABLE})
+	intfKeys, err := d.GetKeys(&db.TableSpec{Name: STP_PORT_TABLE})
 	if err != nil {
 		log.Error(err)
 	} else {
@@ -2109,7 +2112,7 @@ func enableStpOnInterfaceVlanMembership(d *db.DB, intfList []string) {
 
 		for i, _ := range intfList {
 			if !contains(stpEnabledIntfList, intfList[i]) {
-				d.CreateEntry(&db.TableSpec{Name: STP_INTF_TABLE}, asKey(intfList[i]), defaultDBValues)
+				d.CreateEntry(&db.TableSpec{Name: STP_PORT_TABLE}, asKey(intfList[i]), defaultDBValues)
 			}
 		}
 	}
@@ -2123,11 +2126,11 @@ func removeStpOnInterfaceSwitchportDeletion(d *db.DB, intfList []string) {
 	}
 	log.Infof("removeStpOnInterfaceSwitchportDeletion --> Disable Stp on Interfaces: %v", intfList)
 	for i, _ := range intfList {
-		err := d.DeleteEntry(&db.TableSpec{Name: STP_VLAN_INTF_TABLE}, asKey("*", intfList[i]))
+		err := d.DeleteEntry(&db.TableSpec{Name: STP_VLAN_PORT_TABLE}, asKey("*", intfList[i]))
 		if err != nil {
 			log.Error(err)
 		}
-		err = d.DeleteEntry(&db.TableSpec{Name: STP_INTF_TABLE}, asKey(intfList[i]))
+		err = d.DeleteEntry(&db.TableSpec{Name: STP_PORT_TABLE}, asKey(intfList[i]))
 		if err != nil {
 			log.Error(err)
 		}
