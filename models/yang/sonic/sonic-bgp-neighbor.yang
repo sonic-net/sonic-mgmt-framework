@@ -1,0 +1,61 @@
+module sonic-bgp-neighbor {
+	namespace "http://github.com/Azure/sonic-bgp-neighbor";
+	prefix sbnbr;
+	yang-version 1.1;
+
+	import ietf-inet-types {
+		prefix inet;
+	}
+
+	import sonic-bgp-common {
+		prefix sbc;
+	}
+
+	organization
+		"SONiC";
+
+	contact
+		"SONiC";
+
+	description
+		"SONIC BGP Neighbor";
+
+	revision 2019-09-23 {
+		description
+			"Initial revision.";
+	}
+
+    container sonic-bgp-neighbor {
+        container BGP_NEIGHBOR {
+            list BGP_NEIGHBOR_LIST {
+                key "vrf_name neighbor_ip";
+
+                leaf neighbor_ip {
+                    type inet:ip-address;
+                    description "Neighbor description";
+                }
+
+                uses sbc:sonic-bgp-cmn;
+
+                leaf enabled {
+                    type boolean;
+                    description "To enable BGP peer";
+                }
+            }
+        }
+
+        container BGP_NEIGHBOR_AF {
+            list BGP_NEIGHBOR_AF_LIST {
+                key "vrf_name neighbor_ip afi_safi";
+
+                leaf neighbor_ip {
+                    type inet:ip-address;
+                    description "Neighbor description";
+                }
+
+                uses sbc:sonic-bgp-cmn-af;
+
+            }
+        }
+    }
+}

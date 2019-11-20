@@ -123,8 +123,8 @@ func main() {
 		TLSConfig: &tlsConfig,
 	}
 
-	glog.Infof("Server started on %v", address)
-	glog.Infof("UI directory is %v", uiDir)
+	glog.Infof("**** Server started on %v", address)
+	glog.Infof("**** UI directory is %v", uiDir)
 
 	// Start HTTPS server
 	glog.Fatal(restServer.ListenAndServeTLS("", ""))
