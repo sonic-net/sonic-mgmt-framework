@@ -44,7 +44,12 @@ module sonic-port {
 				}
 
 				leaf speed {
-					type uint64;
+					type uint64 {
+						range "1000|10000|25000|40000|50000|100000|400000" {
+							error-message "Invalid Ethernet interface speed";
+							error-app-tag port-speed-invalid;
+						}
+					}
 				}
 
 				leaf valid_speeds {
@@ -52,11 +57,15 @@ module sonic-port {
 				}
 
 				leaf alias {
-					type string;
+					type string {
+					    pattern '[ -~]{0,64}';
+					}
 				}
 
 				leaf description {
-					type string;
+					type string {
+					    pattern '[ -~]{0,64}';
+					}
 				}
 
 				leaf mtu{
