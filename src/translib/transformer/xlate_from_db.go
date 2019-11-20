@@ -488,7 +488,11 @@ func yangListDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, r
 		} else {
 			// Handling for case: Parent list is not associated with a tableName but has children containers/lists having tableNames.
 			if tblKey != "" {
-				mapSlice, _ := yangListInstanceDataFill(dbs, ygRoot, uri, requestUri, xpath, dbDataMap, resultMap, tbl, tblKey, cdb, validate, txCache)
+				var mapSlice []typeMapOfInterface
+				err := yangListInstanceDataFill(dbs, ygRoot, uri, requestUri, xpath, dbDataMap, resultMap, tbl, tblKey, cdb, validate, txCache, mapSlice[0])
+				if err != nil {
+					log.Infof("Error(%v) returned for %v", err, uri)
+				}
 				if len(mapSlice) > 0 {
 					listInstanceGet := false
 					// Check if it is a list instance level Get
@@ -511,33 +515,12 @@ func yangListDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, r
 
 		if ok {
 			var mapSlice []typeMapOfInterface
+			var err error
+			i := 0
 			for dbKey, _ := range tblData {
-				curMap := make(map[string]interface{})
-				curKeyMap, curUri, _ := dbKeyToYangDataConvert(uri, requestUri, xpath, dbKey, dbs[cdb].Opts.KeySeparator, txCache)
-				if len(xYangSpecMap[xpath].xfmrFunc) > 0 {
-					inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, curUri, requestUri, GET, "", dbDataMap, nil, nil, txCache)
-					err := xfmrHandlerFunc(inParams)
-					if err != nil {
-						log.Infof("Error returned by %v: %v", xYangSpecMap[xpath].xfmrFunc, err)
-					}
-					yangDataFill(dbs, ygRoot, curUri, requestUri, xpath, dbDataMap, curMap, tbl, dbKey, cdb, validate, txCache)
-					if len(curMap) > 0 {
-						mapSlice = append(mapSlice, curMap)
-					}
-				} else {
-					_, keyFromCurUri, _ := xpathKeyExtract(dbs[cdb], ygRoot, GET, curUri, requestUri, nil, txCache)
-					if dbKey == keyFromCurUri || keyFromCurUri == "" {
-						if dbKey == keyFromCurUri {
-							for k, kv := range curKeyMap {
-								curMap[k] = kv
-							}
-						}
-						curXpath, _ := XfmrRemoveXPATHPredicates(curUri)
-						yangDataFill(dbs, ygRoot, curUri, requestUri, curXpath, dbDataMap, curMap, tbl, dbKey, cdb, validate, txCache)
-						if len(curMap) > 0 {
-							mapSlice = append(mapSlice, curMap)
-						}
-					}
+				err = yangListInstanceDataFill(dbs, ygRoot, uri, requestUri, xpath, dbDataMap, resultMap, tbl, dbKey, cdb, validate, txCache, mapSlice[i])
+				if err != nil {
+					log.Infof("Error(%v) returned for %v", err, uri)
 				}
 			}
 			if len(mapSlice) > 0 {
@@ -560,34 +543,40 @@ func yangListDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, r
 	return nil
 }
 
-func yangListInstanceDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, requestUri string, xpath string, dbDataMap *map[db.DBNum]map[string]map[string]db.Value, resultMap map[string]interface{}, tbl string, dbKey string, cdb db.DBNum, validate bool, txCache interface{}) ([]typeMapOfInterface, error) {
+func yangListInstanceDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, requestUri string, xpath string, dbDataMap *map[db.DBNum]map[string]map[string]db.Value, resultMap map[string]interface{}, tbl string, dbKey string, cdb db.DBNum, validate bool, txCache interface{}, retMap typeMapOfInterface) error {
 
-        var err error
-        var mapSlice []typeMapOfInterface
-        curMap := make(map[string]interface{})
-        curKeyMap, curUri, _ := dbKeyToYangDataConvert(uri, requestUri, xpath, dbKey, dbs[cdb].Opts.KeySeparator, txCache)
-        if len(xYangSpecMap[xpath].xfmrFunc) > 0 {
-		inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, curUri, requestUri, GET, "", dbDataMap, nil, nil, txCache)
-		err := xfmrHandlerFunc(inParams)
-		if err != nil {
-			log.Infof("Error returned by %v: %v", xYangSpecMap[xpath].xfmrFunc, err)
+	var err error
+	curMap := make(map[string]interface{})
+	curKeyMap, curUri, _ := dbKeyToYangDataConvert(uri, requestUri, xpath, dbKey, dbs[cdb].Opts.KeySeparator, txCache)
+	if len(xYangSpecMap[xpath].xfmrFunc) > 0 {
+		if (xYangSpecMap[xpath].xfmrFunc != xYangSpecMap[parentXpathGet(xpath)].xfmrFunc) {
+			log.Infof("Parent subtree already handled cur uri: %v", xpath)
+			inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, curUri, requestUri, GET, "", dbDataMap, nil, nil, txCache)
+			err := xfmrHandlerFunc(inParams)
+			if err != nil {
+				log.Infof("Error returned by %v: %v", xYangSpecMap[xpath].xfmrFunc, err)
+			}
 		}
-        } else {
-                _, keyFromCurUri, _ := xpathKeyExtract(dbs[cdb], ygRoot, GET, curUri, requestUri, nil, txCache)
-                if dbKey == keyFromCurUri || keyFromCurUri == "" {
-                        if dbKey == keyFromCurUri {
-                                for k, kv := range curKeyMap {
-                                        curMap[k] = kv
-                                }
-                        }
-                        curXpath, _ := XfmrRemoveXPATHPredicates(curUri)
-                        yangDataFill(dbs, ygRoot, curUri, requestUri, curXpath, dbDataMap, curMap, tbl, dbKey, cdb, validate, txCache)
-						if len(curMap) > 0 {
-							mapSlice = append(mapSlice, curMap)
-						}
-                }
-        }
-        return mapSlice, err
+		yangDataFill(dbs, ygRoot, curUri, requestUri, xpath, dbDataMap, curMap, tbl, dbKey, cdb, validate, txCache)
+		if len(curMap) > 0 {
+			retMap = curMap
+		}
+	} else {
+		_, keyFromCurUri, _ := xpathKeyExtract(dbs[cdb], ygRoot, GET, curUri, requestUri, nil, txCache)
+		if dbKey == keyFromCurUri || keyFromCurUri == "" {
+			if dbKey == keyFromCurUri {
+				for k, kv := range curKeyMap {
+					curMap[k] = kv
+				}
+			}
+			curXpath, _ := XfmrRemoveXPATHPredicates(curUri)
+			yangDataFill(dbs, ygRoot, curUri, requestUri, curXpath, dbDataMap, curMap, tbl, dbKey, cdb, validate, txCache)
+			if len(curMap) > 0 {
+				retMap = curMap
+			}
+		}
+	}
+	return err
 }
 
 func terminalNodeProcess(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, requestUri string, xpath string, dbDataMap *map[db.DBNum]map[string]map[string]db.Value, tbl string, tblKey string, txCache interface{}) (map[string]interface{}, error) {
