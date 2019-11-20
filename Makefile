@@ -17,7 +17,7 @@
 #                                                                              #
 ################################################################################
 
-.PHONY: all clean cleanall codegen rest-server rest-clean yamlGen cli
+.PHONY: all clean cleanall codegen rest-server rest-clean yamlGen cli clitree
 
 TOPDIR := $(abspath .)
 BUILD_DIR := $(TOPDIR)/build
@@ -66,6 +66,7 @@ all: build-deps $(go-deps) $(go-redis-patch) $(go-patch) translib rest-server cl
 
 build-deps:
 	mkdir -p $(BUILD_DIR)/gopkgs
+	mkdir -p $(BUILD_DIR)/cvl/schema
 
 $(BUILD_DIR)/gopkgs/.done: $(MAKEFILE_LIST)
 	$(GO) get -v $(GO_DEPS_LIST)
@@ -76,15 +77,20 @@ $(go-redis-patch): $(go-deps)
 $(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/go-redis/redis
 	touch  $@
 
-cli: rest-server
+cli: 
 	$(MAKE) -C src/CLI
+
+clitree:
+	 TGT_DIR=$(BUILD_DIR)/cli $(MAKE) -C src/CLI/clitree
 
 cvl: $(go-deps) $(go-patch) $(go-redis-patch)
 	$(MAKE) -C src/cvl
 	$(MAKE) -C src/cvl/schema
 	$(MAKE) -C src/cvl/testdata/schema
+
 schema:
 	$(MAKE) -C src/cvl/schema
+
 cvl-test:
 	$(MAKE) -C src/cvl gotest
 
@@ -116,7 +122,10 @@ $(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/openconfig/goya
 	#Patch for jsonquery
 	cd $(BUILD_GOPATH)/src/github.com/antchfx/jsonquery; git reset --hard HEAD; \
 	git checkout 3b69d31134d889b501e166a035a4d5ecb8c6c367; git apply $(TOPDIR)/patches/jsonquery.patch
+#Apply CVL related patches
+	$(apply_cvl_dep_patches)
 	touch  $@
+
 
 install:
 	$(INSTALL) -D $(REST_BIN) $(DESTDIR)/usr/sbin/rest_server
@@ -126,7 +135,6 @@ install:
 	$(INSTALL) -d $(DESTDIR)/usr/models/yang/
 	$(INSTALL) -D $(TOPDIR)/models/yang/sonic/*.yang $(DESTDIR)/usr/models/yang/
 	$(INSTALL) -D $(TOPDIR)/models/yang/sonic/common/*.yang $(DESTDIR)/usr/models/yang/
-	$(INSTALL) -D $(TOPDIR)/build/cvl/*.yin $(DESTDIR)/usr/sbin/schema/
 	$(INSTALL) -D $(TOPDIR)/models/yang/*.yang $(DESTDIR)/usr/models/yang/
 	$(INSTALL) -D $(TOPDIR)/config/transformer/models_list $(DESTDIR)/usr/models/yang/
 	$(INSTALL) -D $(TOPDIR)/models/yang/common/*.yang $(DESTDIR)/usr/models/yang/
@@ -135,6 +143,9 @@ install:
 	cp -rf $(TOPDIR)/build/cli $(DESTDIR)/usr/sbin/
 	rsync -a --exclude="test" --exclude="docs" build/swagger_client_py $(DESTDIR)/usr/sbin/lib/
 	cp -rf $(TOPDIR)/src/cvl/conf/cvl_cfg.json $(DESTDIR)/usr/sbin/cvl_cfg.json
+
+# Copy all CVL schema files
+	cp -aT build/cvl/schema $(DESTDIR)/usr/sbin/schema
 
 	# Scripts for host service
 	$(INSTALL) -d $(DESTDIR)/usr/lib/sonic_host_service/host_modules
@@ -162,3 +173,14 @@ clean: rest-clean
 cleanall:
 	$(MAKE) -C src/cvl cleanall
 	rm -rf build/*
+
+#Function to apply CVL related patches
+define apply_cvl_dep_patches
+
+	cd $(BUILD_GOPATH)/src/github.com/antchfx/jsonquery; git reset --hard HEAD; \
+	git checkout 3b69d31134d889b501e166a035a4d5ecb8c6c367; git apply $(TOPDIR)/patches/jsonquery.patch
+	cd $(BUILD_GOPATH)/src/github.com/antchfx/xmlquery; git reset --hard HEAD; \
+	git checkout fe009d4cc63c3011f05e1dfa75a27899acccdf11; git apply $(TOPDIR)/patches/xmlquery.patch
+
+endef
+

@@ -17,12 +17,6 @@ module sonic-extension {
 			"Initial revision.";
 	}
 
-	extension custom-handler {
-		description
-			"Node should be handled by custom handler";
-		argument "name";
-	}
-
 	extension db-name {
 		description
 			"DB name, e.g. APPL_DB, CONFIG_DB";
@@ -53,9 +47,10 @@ module sonic-extension {
 		argument "value";
 	}
 
-	extension pf-check {
+	extension custom-validation {
 		description
-			"Platform specific validation";
+			"Extension for custom validation. 
+			 Platform specific validation can be implemented using custom validation.";
 		argument "handler"; 
 	}
 }

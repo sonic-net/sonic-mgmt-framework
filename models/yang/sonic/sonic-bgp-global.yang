@@ -2,16 +2,8 @@ module sonic-bgp-global {
     namespace "http://github.com/Azure/sonic-bgp-global";
     prefix sbgpg;
 
-    import ietf-yang-types {
-        prefix yang;
-    }
-
     import ietf-inet-types {
         prefix inet;
-    }
-
-    import sonic-common {
-        prefix scommon;
     }
 
     organization

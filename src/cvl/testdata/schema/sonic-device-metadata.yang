@@ -57,10 +57,12 @@ module sonic-device-metadata {
 				}
 
 				leaf bgp_asn {
-					//type leafref {
-					//	path "/sbg:sonic-bgp-globals/sbg:BGP_GLOBALS/sbg:BGP_GLOBALS_LIST[vrf='default']/sbg:local_asn";
-					//}
-                    type uint32;
+					type leafref {
+						path "/sbg:sonic-bgp-global/sbg:BGP_GLOBALS/sbg:BGP_GLOBALS_LIST/sbg:local_asn";
+					}
+					must "/sbg:sonic-bgp-global/sbg:BGP_GLOBALS/sbg:BGP_GLOBALS_LIST[sbg:vrf='default']/sbg:local_asn" {
+						error-message "BGP global configuraion missing";
+					}
 				}
 
 				leaf default_pfcwd_status {

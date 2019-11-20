@@ -2,10 +2,6 @@ module sonic-vrf {
     namespace "http://github.com/Azure/sonic-vrf";
     prefix vrf;
 
-    import sonic-common {
-        prefix scommon;
-    }
-
     organization
         "SONiC";
 

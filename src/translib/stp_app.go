@@ -1432,8 +1432,8 @@ func (app *StpApp) convertOCStpInterfacesToInternal() {
 
 				if stpIntfConf.Config.Guard == ocbinds.OpenconfigSpanningTree_StpGuardType_ROOT {
 					(&dbVal).Set("root_guard", "true")
-				} else {
-					//(&dbVal).Set("root_guard", "false")
+				} else if stpIntfConf.Config.Guard == ocbinds.OpenconfigSpanningTree_StpGuardType_NONE {
+					(&dbVal).Set("root_guard", "false")
 				}
 				////   For RPVST+   /////
 				if stpIntfConf.Config.EdgePort == ocbinds.OpenconfigSpanningTreeTypes_STP_EDGE_PORT_EDGE_ENABLE {

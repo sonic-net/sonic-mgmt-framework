@@ -1,0 +1,110 @@
+module sonic-mclag {
+	namespace "http://github.com/Azure/sonic-mclag";
+	prefix smclag;
+	yang-version 1.1;
+
+	import ietf-yang-types {
+		prefix yang;
+	}
+
+	import ietf-inet-types {
+		prefix inet;
+	}
+
+    import sonic-portchannel {
+        prefix spc;
+    }
+
+	organization
+		"SONiC";
+
+	contact
+		"SONiC";
+
+	description
+		"SONIC MCLAG";
+
+	revision 2019-10-01 {
+		description
+			"Initial revision.";
+	}
+
+	container sonic-mclag {
+
+        container MCLAG_DOMAIN {
+
+            list MCLAG_DOMAIN_LIST { 
+                key "domain_id";
+                max-elements 1;
+
+                leaf domain_id {
+                    type uint16 {
+                        range "1..4095" {
+                            error-message "MCLAG Domain ID out of range";
+                            error-app-tag domain_id-invalid;
+                        }
+                    }
+                }
+
+                leaf source_ip {
+                    type inet:ipv4-address;
+                }
+                leaf peer_ip {
+                    type inet:ipv4-address;
+                }
+                leaf peer_link {
+                    type string;
+                }
+                leaf keepalive_interval {
+                    type uint16 {
+                        range "1..60" {
+                            error-message "MCLAG Domain keepalive interval out of range";
+                            error-app-tag keepalive_interval-invalid;
+                        }
+                    }
+                    default 1;
+                    
+                }
+                leaf session_timeout {
+                    type uint16 {
+                        range "1..3600" {
+                            error-message "MCLAG Domain session timeout out of range";
+                            error-app-tag session_timeout-invalid;
+                        }
+                    }
+                    default 15;
+                }
+                must "(keeaplive_interval * 3) <= session_timeout" {
+                        error-message "(keepalive interval * 3) <= session_timeout value";
+                        error-app-tag keepalive_interval-invalid;
+                }
+                must "session_timeout >= (3 *keepalive_interval)" {
+                        error-message "(keepalive interval * 3) <= session_timeout value";
+                        error-app-tag session_timeout-invalid;
+                }
+            }
+        }
+
+        container MCLAG_INTERFACE { 
+
+            list MCLAG_INTERFACE_LIST { 
+                key "domain_id if_name";
+
+                leaf domain_id {
+                    type leafref {
+                        path "../../../MCLAG_DOMAIN/MCLAG_DOMAIN_LIST/domain_id";
+                    }
+                }
+
+                leaf if_name {
+                    type leafref {
+                        path "/spc:sonic-portchannel/spc:PORTCHANNEL/spc:PORTCHANNEL_LIST/spc:name";
+                    }
+                }
+                leaf if_type {
+                    type string;
+                }
+            }
+        }
+    }
+}

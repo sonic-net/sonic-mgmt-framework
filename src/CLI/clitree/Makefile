@@ -18,7 +18,9 @@
 
 .PHONY: install
 
-TGT_DIR := $(SONIC_CLI_ROOT)/target
+# TGT_DIR is the directory wher all prepreocssed cli model, actioner and
+# renderer scripts and temlates will be dumped. Can be overidden from caller.
+TGT_DIR ?= $(SONIC_CLI_ROOT)/target
 
 all:
 	mkdir -p ${TGT_DIR}/command-tree ${TGT_DIR}/cli-macro ${TGT_DIR}/render-templates ${TGT_DIR}/scripts

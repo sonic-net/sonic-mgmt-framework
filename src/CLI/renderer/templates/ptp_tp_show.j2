@@ -1,6 +1,3 @@
-{{'-----------------------------------------------------------'}}
-{{'Attribute'.ljust(20)}} {{'Value/State'}}
-{{'-----------------------------------------------------------'}}
 {% for key,value in json_output.items() %}
 {% if 'current-utc-offset-valid' in value.keys() %}
 {{ 'Curr UTC Offset Vld'.ljust(20)}} {{ value['current-utc-offset-valid']}}

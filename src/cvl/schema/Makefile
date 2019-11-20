@@ -19,26 +19,33 @@
 
 sonic_yang=../../../models/yang/sonic
 sonic_yang_common=../../../models/yang/sonic/common
+sonic_yang_platform=../../../models/yang/sonic/platform
 pyang_plugin_dir=../../../tools/pyang/pyang_plugins
 
-out_dir=$(TOPDIR)/build/cvl
+out_dir=$(TOPDIR)/build/cvl/schema
 src_files=$(wildcard $(sonic_yang)/*.yang)
 src_files += $(wildcard $(sonic_yang_common)/*.yang)
 out=$(patsubst %.yang, $(out_dir)/%.yin, $(shell ls -1 $(sonic_yang)/*.yang | cut -d'/' -f7)) 
 out_common=$(patsubst %.yang, $(out_dir)/%.yin, $(shell ls -1 $(sonic_yang_common)/*.yang | cut -d'/' -f8)) 
+out_platform=$(patsubst %.yang, $(out_dir)/%.yin, $(shell find $(sonic_yang_platform) -name '*.yang' | cut -d'/' -f7-9))
+out_platform_dep=$(shell find $(sonic_yang_platform) -name '*.yang')
 out_tree=$(patsubst %.yang, $(out_dir)/%.tree, $(src_files)) 
+
 search_path=$(sonic_yang):$(sonic_yang_common):$(sonic_yang_common)/ietf
+
 
 all: schema
 
-schema: $(out) $(out_common)
-
+schema: $(out) $(out_common) $(out_platform)
+	@$(call install_cvl_schema)
 
 schema-tree: $(out_tree)
+$(info out_plat $(out_platform))
+$(info out_plat_dep $(out_platform_dep))
 
 #Build YANG models
 $(out_dir)/%.yin:$(sonic_yang)/%.yang
-	@echo "Generating `basename $@` ..."
+	@echo "Generating 1 `basename $@` ...for $<"
 	@devFile="`echo $@ | cut -d . -f1`-deviation.yang"; \
 	if [ -f $$devFile ] ; then devOpt="--deviation-module $$devFile"; fi; \
 	pyang -p $(search_path)	--plugindir $(pyang_plugin_dir) \
@@ -47,11 +54,19 @@ $(out_dir)/%.yin:$(sonic_yang)/%.yang
 
 #Build common YANG models
 $(out_dir)/%.yin:$(sonic_yang_common)/%.yang
-	@echo "Generating `basename $@` ..."
+	@echo "Generating 2 `basename $@` ..."
 	@devFile="`echo $@ | cut -d . -f1`-deviation.yang"; \
 	if [ -f $$devFile ] ; then devOpt="--deviation-module $$devFile"; fi; \
 	pyang -p $(search_path)	--plugindir $(pyang_plugin_dir) \
 		-f yin-cvl $$devOpt $< -o $@
+
+#Build platform specific YANG models
+$(out_platform):$(out_platform_dep)
+	echo mkdir -p `dirname $@`
+	@mkdir -p `dirname $@`
+	@echo "Generating 3 $@ ..."
+	@pyang -p $(search_path)	--plugindir $(pyang_plugin_dir) \
+		-f yin-cvl $< -o $@
 
 $(out_dir)/%.tree:%.yang
 	@echo "Generating `basename $@` ..."
@@ -62,3 +77,5 @@ $(out_dir)/%.tree:%.yang
 clean:
 	@echo "Removing files ..."
 	rm -rf $(out_dir)/*
+	rm -rf platform/
+
