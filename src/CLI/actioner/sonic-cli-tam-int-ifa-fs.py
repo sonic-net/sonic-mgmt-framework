@@ -24,8 +24,6 @@ def invoke_api(func, args):
        path = cc.Path('/restconf/data/sonic-tam-int-ifa-ts:sonic-tam-int-ifa-ts/TAM_INT_IFA_TS_FLOW_TABLE/TAM_INT_IFA_TS_FLOW_TABLE_LIST={name}', name=args[0])
        return api.get(path)
     elif func == 'patch_sonic_tam_int_ifa_ts_sonic_tam_int_ifa_ts_tam_int_ifa_ts_feature_table_tam_int_ifa_ts_feature_table_list_enable':
-       print "IN pathc"
-       print args
        path = cc.Path('/restconf/data/sonic-tam-int-ifa-ts:sonic-tam-int-ifa-ts/TAM_INT_IFA_TS_FEATURE_TABLE/TAM_INT_IFA_TS_FEATURE_TABLE_LIST={name}/enable', name=args[0])
        if args[1] == 'True':
            body = { "sonic-tam-int-ifa-ts:enable": True }
@@ -47,6 +45,30 @@ def invoke_api(func, args):
        body = {}
 
     return api.cli_not_implemented(func)
+
+def get_tam_ifa_ts_status(args):
+    api_response = {}
+    api = cc.ApiClient()
+
+    path = cc.Path('/restconf/data/sonic-tam:sonic-tam/TAM_DEVICE_TABLE')
+    response = api.get(path)
+    if response.ok():
+        if response.content:
+            api_response['device'] = response.content['sonic-tam:TAM_DEVICE_TABLE']['TAM_DEVICE_TABLE_LIST']
+
+    path = cc.Path('/restconf/data/sonic-tam-int-ifa-ts:sonic-tam-int-ifa-ts/TAM_INT_IFA_TS_FEATURE_TABLE')
+    response = api.get(path)
+    if response.ok():
+        if response.content:
+            api_response['feature'] = response.content['sonic-tam-int-ifa-ts:TAM_INT_IFA_TS_FEATURE_TABLE']['TAM_INT_IFA_TS_FEATURE_TABLE_LIST']
+
+    path = cc.Path('/restconf/data/sonic-tam-int-ifa-ts:sonic-tam-int-ifa-ts/TAM_INT_IFA_TS_FLOW_TABLE')
+    response = api.get(path)
+    if response.ok():
+        if response.content:
+            api_response['flow'] = response.content['sonic-tam-int-ifa-ts:TAM_INT_IFA_TS_FLOW_TABLE']['TAM_INT_IFA_TS_FLOW_TABLE_LIST']
+
+    show_cli_output("show_tam_ifa_ts_status.j2", api_response)
 
 def run(func, args):
     response = invoke_api(func, args)
@@ -77,6 +99,8 @@ def run(func, args):
 if __name__ == '__main__':
     pipestr().write(sys.argv)
     func = sys.argv[1]
+    if func == 'get_tam_ifa_ts_status':
+        get_tam_ifa_ts_status(sys.argv[2:])
 
     run(func, sys.argv[2:])
 
