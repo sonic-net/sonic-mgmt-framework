@@ -21,24 +21,24 @@
     <COMMAND name="show tam int-ifa-ts flow" help="Show TAM IFA TS flow info" mode="subcommand" ptype="SUBCOMMAND">
       <PARAM name="name" help="Name of the flow" ptype="STRING_32" optional="true"> </PARAM>
       <ACTION>
-        if test "${name}" = "all" ; then&#xA;
+        if test "${name}" = "all" ; then
 	  python $SONIC_CLI_ROOT/sonic-cli-tam-int-ifa-fs.py get_sonic_tam_int_ifa_ts_sonic_tam_int_ifa_ts_tam_int_ifa_ts_flow_table show_tam_int_ifa_ts_flow.j2; 
-        elif test -z "${name}"; then&#xA;
+        elif test -z "${name}"; then
 	  python $SONIC_CLI_ROOT/sonic-cli-tam-int-ifa-fs.py get_sonic_tam_int_ifa_ts_sonic_tam_int_ifa_ts_tam_int_ifa_ts_flow_table show_tam_int_ifa_ts_flow.j2; 
-        else&#xA;
-	  python $SONIC_CLI_ROOT/sonic-cli-tam-int-ifa-fs.py get_list_sonic_tam_int_ifa_ts_sonic_tam_int_ifa_ts_tam_int_ifa_ts_flow_table_tam_int_ifa_ts_flow_table_list ${name} show_tam_int_ifa_ts_flow.j2;
-        fi&#xA;
+        else
+	  python $SONIC_CLI_ROOT/sonic-cli-tam-int-ifa-fs.py get_list_sonic_tam_int_ifa_ts_sonic_tam_int_ifa_ts_tam_int_ifa_ts_flow_table_tam_int_ifa_ts_flow_table_list ${name} show_tam_int_ifa_ts_flow.j2; 
+        fi
       </ACTION>
     </COMMAND>
     <COMMAND name="show tam int-ifa-ts status" help="Show TAM IFA TS Status" mode="subcommand" ptype="SUBCOMMAND">
-      <ACTION>python $SONIC_CLI_ROOT/ts.py -show -status -templ -showstatus.j2;</ACTION>
+      <ACTION>python $SONIC_CLI_ROOT/sonic-cli-tam-int-ifa-fs.py get_tam_ifa_ts_status;</ACTION>
     </COMMAND>
     <COMMAND name="show tam int-ifa-ts statistics" help="Show TAM IFA TS Statistics" mode="subcommand" ptype="SUBCOMMAND">
       <PARAM name="name" help="Name of the flow" ptype="STRING_32" optional="true"> </PARAM>
       <ACTION>
-	   python $SONIC_CLI_ROOT/ts.py -show -statistics -flow ${flow-name} -templ -showstatisticsflow.j2;
+	   python $SONIC_CLI_ROOT/ts.py -show -statistics -flow ${flow-name} -templ -showstatisticsflow.j2;   
       </ACTION>
-    </COMMAND>
+    </COMMAND>	    
   </VIEW>
 
   <VIEW name="configure-tam-int-ifa-ts-view"
@@ -78,9 +78,9 @@
                    >
                 </PARAM>
          </PARAM>
-	 <ACTION>
+	 <ACTION> 
 		 if test "${flow-options}" = "flow-name"; then
-		 python $SONIC_CLI_ROOT/sonic-cli-tam-int-ifa-fs.py delete_list_sonic_tam_int_ifa_ts_sonic_tam_int_ifa_ts_tam_int_ifa_ts_flow_table_tam_int_ifa_ts_flow_table_list ${flow-name};
+		 python $SONIC_CLI_ROOT/sonic-cli-tam-int-ifa-fs.py delete_list_sonic_tam_int_ifa_ts_sonic_tam_int_ifa_ts_tam_int_ifa_ts_flow_table_tam_int_ifa_ts_flow_table_list ${flow-name}; 
 		 elif test "${flow-options}" = "all"; then
        python $SONIC_CLI_ROOT/sonic-cli-tam-int-ifa-fs.py delete_list_sonic_tam_int_ifa_ts_sonic_tam_int_ifa_ts_tam_int_ifa_ts_flow_table_tam_int_ifa_ts_flow_table_list;
                  fi
@@ -117,7 +117,7 @@
 		  python $SONIC_CLI_ROOT/sonic-cli-tam-int-ifa-fs.py patch_sonic_tam_int_ifa_ts_sonic_tam_int_ifa_ts_tam_int_ifa_ts_feature_table_tam_int_ifa_ts_feature_table_list_enable feature True;
 	          elif test "${feature-options}" = "disable"; then
 		  python $SONIC_CLI_ROOT/sonic-cli-tam-int-ifa-fs.py patch_sonic_tam_int_ifa_ts_sonic_tam_int_ifa_ts_tam_int_ifa_ts_feature_table_tam_int_ifa_ts_feature_table_list_enable feature False;
-	          fi
+	          fi 
          </ACTION>
          </COMMAND>
 
@@ -161,7 +161,7 @@
                    >
               </PARAM>
 
-	  <ACTION> python $SONIC_CLI_ROOT/sonic-cli-tam-int-ifa-fs.py patch_sonic_tam_int_ifa_ts_sonic_tam_int_ifa_ts_tam_int_ifa_ts_flow_table_tam_int_ifa_ts_flow_table_list  ${flow-name} ${acl-table-name} ${acl-rule-name} </ACTION>
+	  <ACTION> python $SONIC_CLI_ROOT/sonic-cli-tam-int-ifa-fs.py patch_sonic_tam_int_ifa_ts_sonic_tam_int_ifa_ts_tam_int_ifa_ts_flow_table_tam_int_ifa_ts_flow_table_list  ${flow-name} ${acl-table-name} ${acl-rule-name} </ACTION>    
          </COMMAND>
   </VIEW>
 
