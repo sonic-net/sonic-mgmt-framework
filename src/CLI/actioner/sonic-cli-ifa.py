@@ -101,9 +101,42 @@ def run(func, args):
     else:
         print response.error_message()
 
+def get_tam_ifa_status(args):
+    api_response = {}
+    api = cc.ApiClient()
+
+    path = cc.Path('/restconf/data/sonic-tam:sonic-tam/TAM_DEVICE_TABLE')
+    response = api.get(path)
+    if response.ok():
+        if response.content:
+            api_response['device'] = response.content['sonic-tam:TAM_DEVICE_TABLE']['TAM_DEVICE_TABLE_LIST']
+
+    path = cc.Path('/restconf/data/sonic-tam:sonic-tam/TAM_COLLECTOR_TABLE')
+    response = api.get(path)
+    if response.ok():
+        if response.content:
+            api_response['collector'] = response.content['sonic-tam:TAM_COLLECTOR_TABLE']['TAM_COLLECTOR_TABLE_LIST']
+
+    path = cc.Path('/restconf/data/sonic-ifa:sonic-ifa/TAM_INT_IFA_FEATURE_TABLE')
+    response = api.get(path)
+    if response.ok():
+        if response.content:
+            print(response.content)
+            api_response['feature'] = response.content['sonic-ifa:TAM_INT_IFA_FEATURE_TABLE']['TAM_INT_IFA_FEATURE_TABLE_LIST']
+
+    path = cc.Path('/restconf/data/sonic-ifa:sonic-ifa/TAM_INT_IFA_FLOW_TABLE')
+    response = api.get(path)
+    if response.ok():
+        if response.content:
+            api_response['flow'] = response.content['sonic-ifa:TAM_INT_IFA_FLOW_TABLE']['TAM_INT_IFA_FLOW_TABLE_LIST']
+
+    show_cli_output("show_tam_ifa_status.j2", api_response)
+
 if __name__ == '__main__':
     pipestr().write(sys.argv)
     func = sys.argv[1]
+    if func == 'get_tam_ifa_status':
+        get_tam_ifa_status(sys.argv[2:])
 
     run(func, sys.argv[2:])
 
