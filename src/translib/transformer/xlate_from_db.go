@@ -482,20 +482,25 @@ func yangListDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, r
 		tblList = append(tblList, tbl)
 
 	} else if tbl == "" && xYangSpecMap[xpath].xfmrTbl == nil {
-		// Handling for case: Parent list is not associated with a tableName but has children containers/lists having tableNames.
-		if tblKey != "" {
-			mapSlice, _ := yangListInstanceDataFill(dbs, ygRoot, uri, requestUri, xpath, dbDataMap, resultMap, tbl, tblKey, cdb, validate, txCache)
-			if len(mapSlice) > 0 {
-				listInstanceGet := false
-				// Check if it is a list instance level Get
-				if ((strings.HasSuffix(uri, "]")) || (strings.HasSuffix(uri, "]/"))) {
-					listInstanceGet = true
-					for k, v := range mapSlice[0] {
-						resultMap[k] = v
+		if (len(xYangSpecMap[xpath].xfmrFunc) > 0   &&
+		(xYangSpecMap[xpath].xfmrFunc == xYangSpecMap[parentXpathGet(xpath)].xfmrFunc)) {
+			log.Infof("Parent subtree already handled cur uri: %v", xpath)
+		} else {
+			// Handling for case: Parent list is not associated with a tableName but has children containers/lists having tableNames.
+			if tblKey != "" {
+				mapSlice, _ := yangListInstanceDataFill(dbs, ygRoot, uri, requestUri, xpath, dbDataMap, resultMap, tbl, tblKey, cdb, validate, txCache)
+				if len(mapSlice) > 0 {
+					listInstanceGet := false
+					// Check if it is a list instance level Get
+					if ((strings.HasSuffix(uri, "]")) || (strings.HasSuffix(uri, "]/"))) {
+						listInstanceGet = true
+						for k, v := range mapSlice[0] {
+							resultMap[k] = v
+						}
 					}
-				}
-				if !listInstanceGet {
-					resultMap[xYangSpecMap[xpath].yangEntry.Name] = mapSlice
+					if !listInstanceGet {
+						resultMap[xYangSpecMap[xpath].yangEntry.Name] = mapSlice
+					}
 				}
 			}
 		}
