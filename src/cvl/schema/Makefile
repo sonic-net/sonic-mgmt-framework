@@ -40,12 +40,10 @@ schema: $(out) $(out_common) $(out_platform)
 	@$(call install_cvl_schema)
 
 schema-tree: $(out_tree)
-$(info out_plat $(out_platform))
-$(info out_plat_dep $(out_platform_dep))
 
 #Build YANG models
 $(out_dir)/%.yin:$(sonic_yang)/%.yang
-	@echo "Generating 1 `basename $@` ...for $<"
+	@echo "Generating `basename $@` ..."
 	@devFile="`echo $@ | cut -d . -f1`-deviation.yang"; \
 	if [ -f $$devFile ] ; then devOpt="--deviation-module $$devFile"; fi; \
 	pyang -p $(search_path)	--plugindir $(pyang_plugin_dir) \
@@ -54,7 +52,7 @@ $(out_dir)/%.yin:$(sonic_yang)/%.yang
 
 #Build common YANG models
 $(out_dir)/%.yin:$(sonic_yang_common)/%.yang
-	@echo "Generating 2 `basename $@` ..."
+	@echo "Generating `basename $@` ..."
 	@devFile="`echo $@ | cut -d . -f1`-deviation.yang"; \
 	if [ -f $$devFile ] ; then devOpt="--deviation-module $$devFile"; fi; \
 	pyang -p $(search_path)	--plugindir $(pyang_plugin_dir) \
@@ -62,9 +60,8 @@ $(out_dir)/%.yin:$(sonic_yang_common)/%.yang
 
 #Build platform specific YANG models
 $(out_platform):$(out_platform_dep)
-	echo mkdir -p `dirname $@`
 	@mkdir -p `dirname $@`
-	@echo "Generating 3 $@ ..."
+	@echo "Generating $@ ..."
 	@pyang -p $(search_path)	--plugindir $(pyang_plugin_dir) \
 		-f yin-cvl $< -o $@
 

@@ -50,7 +50,7 @@ GO_DEPS_LIST = github.com/gorilla/mux \
                github.com/antchfx/jsonquery \
                github.com/antchfx/xmlquery \
                github.com/facette/natsort \
-	             github.com/philopon/go-toposort \
+               github.com/philopon/go-toposort \
                gopkg.in/godbus/dbus.v5 \
                github.com/dgrijalva/jwt-go
 
@@ -183,4 +183,3 @@ define apply_cvl_dep_patches
 	git checkout fe009d4cc63c3011f05e1dfa75a27899acccdf11; git apply $(TOPDIR)/patches/xmlquery.patch
 
 endef
-
