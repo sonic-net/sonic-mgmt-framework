@@ -50,9 +50,7 @@ if __name__ == '__main__':
     if sys.argv[1] == 'get_ietf_ptp_ptp_instance_list_default_ds':
         raw_data = db.get_all(db.STATE_DB, "PTP_CLOCK|GLOBAL")
         if not raw_data:
-            raw_data = config_db.get_entry(PTP_CLOCK, PTP_GLOBAL)
-            api_response = {}
-            api_response['ietf-ptp:default-ds'] = raw_data
+            sys.exit()
         else:
             api_response = {}
             api_inner_response = {}
@@ -64,7 +62,8 @@ if __name__ == '__main__':
                 else:
                     api_inner_response[key] = val
 
-                api_inner_response["clock-quality"] = api_clock_quality_response
+                if bool(api_clock_quality_response):
+                    api_inner_response["clock-quality"] = api_clock_quality_response
                 api_response['ietf-ptp:default-ds'] = api_inner_response
 
         show_cli_output(sys.argv[3], api_response)
@@ -75,10 +74,10 @@ if __name__ == '__main__':
         for key, val in raw_data.items():
             if key == "mean-path-delay":
                 print("%-21s %s") % ("Mean Path Delay", val)
-                if key == "steps-removed":
-                    print("%-21s %s") % ("Steps Removed", val)
-                if key == "offset-from-master":
-                    print("%-21s %s") % ("Ofst From Master", val)
+            if key == "steps-removed":
+                print("%-21s %s") % ("Steps Removed", val)
+            if key == "offset-from-master":
+                print("%-21s %s") % ("Ofst From Master", val)
     elif sys.argv[1] == 'get_ietf_ptp_ptp_instance_list_time_properties_ds':
         raw_data = db.get_all(db.STATE_DB, "PTP_TIMEPROPDS|GLOBAL")
         if not raw_data:
