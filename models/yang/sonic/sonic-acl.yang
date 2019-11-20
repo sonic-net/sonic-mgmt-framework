@@ -11,6 +11,10 @@ module sonic-acl {
 		prefix cmn;
 	}
 
+	import sonic-extension {
+		prefix sonic-ext;
+	}
+
 	import sonic-port {
 		prefix prt;
 	}
@@ -39,6 +43,7 @@ module sonic-acl {
 
 			list ACL_TABLE_LIST {
 				key "aclname";
+				sonic-ext:custom-validation ValidateMaxAclTable;
 
 				leaf aclname {
 					type string {
@@ -115,6 +120,8 @@ module sonic-acl {
 						enum FORWARD;
 						enum DROP;
 						enum REDIRECT;
+						enum INT_INSERT;
+						enum INT_DELETE;
 					}
 				}
 
@@ -125,6 +132,7 @@ module sonic-acl {
 				}
 
 				leaf IP_TYPE {
+					sonic-ext:custom-validation ValidateAclRuleIPAddress;
 					type enumeration {
 						enum ANY;
 						enum IP;

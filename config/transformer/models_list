@@ -1,5 +1,4 @@
 #List yang models transformer need to load
-
 openconfig-acl.yang
 openconfig-acl-annot.yang
 openconfig-interfaces.yang
@@ -9,8 +8,16 @@ openconfig-interfaces-annot.yang
 openconfig-ztp.yang
 openconfig-ztp-annot.yang
 openconfig-network-instance.yang
+openconfig-bgp-ext.yang
 openconfig-network-instance-annot.yang
+openconfig-routing-policy.yang
+openconfig-bgp-policy.yang
+openconfig-bgp-policy-ext.yang
+openconfig-routing-policy-annot.yang
+openconfig-routing-policy-ext.yang
 openconfig-lacp.yang
 openconfig-lacp-annot.yang
+ietf-ptp.yang
+ietf-ptp-annot.yang
 openconfig-system.yang
 openconfig-system-annot.yang

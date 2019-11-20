@@ -54,6 +54,18 @@ module sonic-mirror-session {
 				leaf queue {
 					type uint8;
 				}
+
+				leaf dst_port {
+					type string;
+				}
+
+				leaf src_port {
+					type string;
+				}
+
+				leaf direction {
+					type string;
+				}
 			}
 		}
 	}

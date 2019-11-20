@@ -17,14 +17,14 @@
 #                                                                              #
 ################################################################################
 
-.PHONY: all clean cleanall codegen rest-server rest-clean yamlGen cli
+.PHONY: all clean cleanall codegen rest-server rest-clean yamlGen cli clitree
 
 TOPDIR := $(abspath .)
 BUILD_DIR := $(TOPDIR)/build
 export TOPDIR
 
 ifeq ($(BUILD_GOPATH),)
-export BUILD_GOPATH=$(TOPDIR)/gopkgs
+export BUILD_GOPATH=$(TOPDIR)/build/gopkgs
 endif
 
 export GOPATH=$(BUILD_GOPATH):$(TOPDIR)
@@ -50,7 +50,7 @@ GO_DEPS_LIST = github.com/gorilla/mux \
                github.com/antchfx/jsonquery \
                github.com/antchfx/xmlquery \
                github.com/facette/natsort \
-	       github.com/philopon/go-toposort \
+               github.com/philopon/go-toposort \
                gopkg.in/godbus/dbus.v5 \
                github.com/dgrijalva/jwt-go
 
@@ -58,25 +58,32 @@ GO_DEPS_LIST = github.com/gorilla/mux \
 REST_BIN = $(BUILD_DIR)/rest_server/main
 CERTGEN_BIN = $(BUILD_DIR)/rest_server/generate_cert
 
+go-deps = $(BUILD_DIR)/gopkgs/.done
+go-patch = $(BUILD_DIR)/gopkgs/.patch_done
+go-redis-patch = $(BUILD_DIR)/gopkgs/.redis_patch_done
 
-all: build-deps go-deps go-redis-patch go-patch translib rest-server cli
+all: build-deps $(go-deps) $(go-redis-patch) $(go-patch) translib rest-server cli
 
 build-deps:
-	mkdir -p $(BUILD_DIR)
+	mkdir -p $(BUILD_DIR)/gopkgs
+	mkdir -p $(BUILD_DIR)/cvl/schema
 
-go-deps: $(GO_DEPS_LIST)
+$(BUILD_DIR)/gopkgs/.done: $(MAKEFILE_LIST)
+	$(GO) get -v $(GO_DEPS_LIST)
+	touch  $@
 
-go-redis-patch: go-deps
+$(go-redis-patch): $(go-deps)
 	cd $(BUILD_GOPATH)/src/github.com/go-redis/redis; git checkout d19aba07b47683ef19378c4a4d43959672b7cec8 2>/dev/null ; true; \
 $(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/go-redis/redis
+	touch  $@
 
-$(GO_DEPS_LIST):
-	$(GO) get -v $@
-
-cli: rest-server
+cli: 
 	$(MAKE) -C src/CLI
 
-cvl: go-deps go-patch go-redis-patch
+clitree:
+	 TGT_DIR=$(BUILD_DIR)/cli $(MAKE) -C src/CLI/clitree
+
+cvl: $(go-deps) $(go-patch) $(go-redis-patch)
 	$(MAKE) -C src/cvl
 	$(MAKE) -C src/cvl/schema
 	$(MAKE) -C src/cvl/testdata/schema
@@ -100,7 +107,7 @@ yamlGen:
 	$(MAKE) -C models/yang
 	$(MAKE) -C models/yang/sonic
 
-go-patch: go-deps
+$(go-patch): $(go-deps)
 	cd $(BUILD_GOPATH)/src/github.com/openconfig/ygot/; git reset --hard HEAD; git checkout 724a6b18a9224343ef04fe49199dfb6020ce132a 2>/dev/null ; true; \
 cd ../; cp $(TOPDIR)/ygot-modified-files/ygot.patch .; \
 patch -p1 < ygot.patch; rm -f ygot.patch; \
@@ -109,9 +116,10 @@ $(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/openconfig/ygot
 cp $(TOPDIR)/goyang-modified-files/goyang.patch .; \
 patch -p1 < goyang.patch; rm -f goyang.patch; \
 $(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/openconfig/goyang
-	#Patch for jsonquery
-	cd $(BUILD_GOPATH)/src/github.com/antchfx/jsonquery; git reset --hard HEAD; \
-	git checkout 3b69d31134d889b501e166a035a4d5ecb8c6c367; git apply $(TOPDIR)/patches/jsonquery.patch
+#Apply CVL related patches
+	$(apply_cvl_dep_patches)
+	touch  $@
+
 
 install:
 	$(INSTALL) -D $(REST_BIN) $(DESTDIR)/usr/sbin/rest_server
@@ -121,16 +129,17 @@ install:
 	$(INSTALL) -d $(DESTDIR)/usr/models/yang/
 	$(INSTALL) -D $(TOPDIR)/models/yang/sonic/*.yang $(DESTDIR)/usr/models/yang/
 	$(INSTALL) -D $(TOPDIR)/models/yang/sonic/common/*.yang $(DESTDIR)/usr/models/yang/
-	$(INSTALL) -D $(TOPDIR)/src/cvl/schema/*.yin $(DESTDIR)/usr/sbin/schema/
-	$(INSTALL) -D $(TOPDIR)/src/cvl/testdata/schema/*.yin $(DESTDIR)/usr/sbin/schema/
 	$(INSTALL) -D $(TOPDIR)/models/yang/*.yang $(DESTDIR)/usr/models/yang/
 	$(INSTALL) -D $(TOPDIR)/config/transformer/models_list $(DESTDIR)/usr/models/yang/
 	$(INSTALL) -D $(TOPDIR)/models/yang/common/*.yang $(DESTDIR)/usr/models/yang/
 	$(INSTALL) -D $(TOPDIR)/models/yang/annotations/*.yang $(DESTDIR)/usr/models/yang/
 	cp -rf $(TOPDIR)/build/rest_server/dist/ui/ $(DESTDIR)/rest_ui/
 	cp -rf $(TOPDIR)/build/cli $(DESTDIR)/usr/sbin/
-	cp -rf $(TOPDIR)/build/swagger_client_py/ $(DESTDIR)/usr/sbin/lib/
+	rsync -a --exclude="test" --exclude="docs" build/swagger_client_py $(DESTDIR)/usr/sbin/lib/
 	cp -rf $(TOPDIR)/src/cvl/conf/cvl_cfg.json $(DESTDIR)/usr/sbin/cvl_cfg.json
+
+# Copy all CVL schema files
+	cp -aT build/cvl/schema $(DESTDIR)/usr/sbin/schema
 
 	# Scripts for host service
 	$(INSTALL) -d $(DESTDIR)/usr/lib/sonic_host_service/host_modules
@@ -141,8 +150,6 @@ install:
 	$(INSTALL) -d $(DESTDIR)/lib/systemd/system
 	$(INSTALL) -D $(TOPDIR)/scripts/sonic-hostservice.service $(DESTDIR)/lib/systemd/system
 
-
-
 ifeq ($(SONIC_COVERAGE_ON),y)
 	echo "" > $(DESTDIR)/usr/sbin/.test
 endif
@@ -151,14 +158,22 @@ $(addprefix $(DEST)/, $(MAIN_TARGET)): $(DEST)/% :
 	mv $* $(DEST)/
 
 clean: rest-clean
-	$(MAKE) -C src/cvl clean
 	$(MAKE) -C src/translib clean
-	$(MAKE) -C src/cvl/schema clean
-	$(MAKE) -C src/cvl cleanall
-	rm -rf build/*
+	$(MAKE) -C src/cvl clean
 	rm -rf debian/.debhelper
 	rm -rf $(BUILD_GOPATH)/src/github.com/openconfig/goyang/annotate.go
+	cd build && find .  -maxdepth 1 -name "gopkgs" -prune -o -not -name '.' -exec rm -rf {} +
 
 cleanall:
 	$(MAKE) -C src/cvl cleanall
 	rm -rf build/*
+
+#Function to apply CVL related patches
+define apply_cvl_dep_patches
+
+	cd $(BUILD_GOPATH)/src/github.com/antchfx/jsonquery; git reset --hard HEAD; \
+	git checkout 3b69d31134d889b501e166a035a4d5ecb8c6c367; git apply $(TOPDIR)/patches/jsonquery.patch
+	cd $(BUILD_GOPATH)/src/github.com/antchfx/xmlquery; git reset --hard HEAD; \
+	git checkout fe009d4cc63c3011f05e1dfa75a27899acccdf11; git apply $(TOPDIR)/patches/xmlquery.patch
+
+endef

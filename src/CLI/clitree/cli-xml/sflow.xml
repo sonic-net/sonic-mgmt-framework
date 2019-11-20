@@ -35,7 +35,7 @@ limitations under the License.
       <PARAM name="name" help="Collector name" ptype="STRING_16"/>
       <PARAM name="ip" help="Collector IP address" ptype="IPV4_OR_IPV6_ADDR"/>
       <PARAM name="port" help="Collector port number" ptype="RANGE_0_65535" optional="true"/>
-      <ACTION> if "${port}" == ""; then python $SONIC_CLI_ROOT/sonic-cli-sflow.py put_sonic_sflow_sonic_sflow_sflow_collector_sflow_collector_list ${name} ${ip}; else python $SONIC_CLI_ROOT/sonic-cli-sflow.py put_sonic_sflow_sonic_sflow_sflow_collector_sflow_collector_list ${name} ${ip} ${port}; fi </ACTION>
+      <ACTION> if test "${port}" = ""; then python $SONIC_CLI_ROOT/sonic-cli-sflow.py put_sonic_sflow_sonic_sflow_sflow_collector_sflow_collector_list ${name} ${ip}; else python $SONIC_CLI_ROOT/sonic-cli-sflow.py put_sonic_sflow_sonic_sflow_sflow_collector_sflow_collector_list ${name} ${ip} ${port}; fi </ACTION>
     </COMMAND>
     <COMMAND name="sflow enable" help="Enable sFlow" ptype="SUBCOMMAND" mode="subcommand">
       <ACTION> python $SONIC_CLI_ROOT/sonic-cli-sflow.py patch_sonic_sflow_sonic_sflow_sflow_sflow_list_admin_state up </ACTION>

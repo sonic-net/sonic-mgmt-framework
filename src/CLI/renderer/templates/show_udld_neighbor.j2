@@ -1,0 +1,18 @@
+{% if json_output -%}
+{% if json_output.__len__() > 0 %}
+{{' '}}
+{{'%-14s'|format("Port")}} {{'%-20s'|format("Device Name")}} {{'%-17s'|format("Device ID")}} {{'%-15s'|format("Port ID")}} {{'Neighbor State'}}
+{{'--------------------------------------------------------------------------------------'}}
+{# Mock CLI code to be removed later #}
+{{'%-14s'|format("Ethernet12")}} {{'%-20s'|format("Sonic")}} {{'%-17s'|format("3c2c.992d.8218")}} {{'%-15s'|format("Ethernet8")}} {{'Bidirectional'}}
+{{'%-14s'|format("Ethernet3")}} {{'%-20s'|format("Sonic")}} {{'%-17s'|format("3c2c.992d.8203")}} {{'%-15s'|format("Ethernet16")}} {{'Bidirectional'}}
+
+{# Actual code to be enabled once App DB tables are ready #}
+{#
+{% for i in range(json_output.__len__()) %}
+{% set neigh_info = json_output[i] %}
+{{'%-14s'|format(neigh_info['ifname'])}} {{'%-20s'|format(neigh_info['device_name'])}} {{'%-17s'|format(neigh_info['device_id'])}} {{'%-15s'|format(neigh_info['port_id'])}} {{neigh_info['status']}}
+{% endfor %}
+#}
+{%endif%}
+{%endif%}

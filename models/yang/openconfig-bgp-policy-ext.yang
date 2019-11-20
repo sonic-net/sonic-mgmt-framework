@@ -1,0 +1,58 @@
+module openconfig-bgp-policy-ext {
+
+  yang-version "1";
+
+  // namespace
+  namespace "http://openconfig.net/yang/bgp-policy/extension";
+
+  prefix "oc-bgp-pol-ext";
+
+  import openconfig-routing-policy {prefix oc-rpol; }
+  import openconfig-bgp-types { prefix oc-bgp-types; }
+  import openconfig-bgp-policy { prefix oc-bgp-pol; }
+
+  description
+    "This module describes a deviation for BGP routing policy 
+     configuration extensions.";
+
+  revision "2019-11-13" {
+    description
+      "BGP Routing Policy extensions.";
+  }
+
+  typedef bgp-community-defined-regexp-type {
+      // Format REGEX:string 
+      type string;
+     // {
+          // regex 
+        //  pattern '^(REGEX:[0-9a-zA-Z]{1,10})$';
+     // }
+
+      description
+          "Type definition for communities specified as regular
+          expression patterns";
+    }
+
+  deviation /oc-rpol:routing-policy/oc-rpol:defined-sets/oc-bgp-pol:bgp-defined-sets/oc-bgp-pol:community-sets/oc-bgp-pol:community-set/oc-bgp-pol:config/oc-bgp-pol:community-member {
+      deviate replace {
+          type union {
+              type oc-bgp-types:bgp-std-community-type;
+              type bgp-community-defined-regexp-type;
+              type oc-bgp-types:bgp-well-known-community-type;
+          }
+      }
+  }
+
+  deviation /oc-rpol:routing-policy/oc-rpol:defined-sets/oc-bgp-pol:bgp-defined-sets/oc-bgp-pol:ext-community-sets/oc-bgp-pol:ext-community-set/oc-bgp-pol:config/oc-bgp-pol:ext-community-member {
+      deviate replace {
+          type union {
+              type oc-bgp-types:bgp-ext-community-type;
+              type bgp-community-defined-regexp-type;
+          }
+      }
+  }
+
+  // rpc statements
+
+  // notification statements
+}

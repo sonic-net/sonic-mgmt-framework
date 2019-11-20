@@ -13,6 +13,7 @@ import os
 import re
 import sys
 import swsssdk
+from scripts.render_cli import show_cli_output
 from swsssdk import ConfigDBConnector
 from os import path
 
@@ -33,37 +34,30 @@ class Tam(object):
         self.app_db.db_connect('APPL_DB')
 
     def get_tam_collector_info(self, k):
-        collector_data = {}
-        collector_data['ipaddress-type'] = ''
-        collector_data['ipaddress'] = ''
-        collector_data['port'] = ''
-
+        api_response = {}
         key = TAM_COLLECTOR_TABLE_PREFIX + '|' + k
-        data = self.config_db.get_all(self.config_db.CONFIG_DB, key)
-        if data is not None:
-            if 'ipaddress-type' in data:
-                collector_data['ipaddress-type'] = data['ipaddress-type']
-            if 'ipaddress' in data:
-                collector_data['ipaddress'] = data['ipaddress']
-            if 'port' in data:
-                collector_data['port'] = data['port']
-        return collector_data, data
+        raw_coll_data = self.config_db.get_all(self.config_db.CONFIG_DB, key)
+        api_response['coll-key'] = k 
+        api_response['each-coll-data'] = raw_coll_data
+        return api_response , raw_coll_data
 
     def get_print_all_tam_collectors(self, name):
-        table = []
+        coll_dict = {}
+        coll_list = []
         if name != 'all':
-            data, entryfound = self.get_tam_collector_info(name)
+            api_response, entryfound = self.get_tam_collector_info(name)
             if entryfound is not None:
-                table.append((name, data['ipaddress-type'], data['ipaddress'] ,data['port']))
+                coll_list.append(api_response)
         else:
             table_data = self.config_db.get_keys(TAM_COLLECTOR_TABLE_PREFIX)
             # Get data for all keys
             for k in table_data:
-                data, entryfound = self.get_tam_collector_info(k)
+                api_each_flow_response, entryfound = self.get_tam_collector_info(k)
                 if entryfound is not None:
-                    table.append((k, data['ipaddress-type'], data['ipaddress'] ,data['port']))
+                    coll_list.append(api_each_flow_response)
 
-        print tabulate(table, collectorheader, tablefmt='simple', stralign='right')
+        coll_dict['flow-list'] = coll_list
+        show_cli_output("show_collector.j2", coll_dict)
         return
 
     def config_device_id(self, args):
@@ -149,6 +143,8 @@ Examples:
     parser.add_argument('-iptype', '--iptype', type=str, choices=['ipv4', 'ipv6'], help='tam collector IP type')
     parser.add_argument('-ipaddr', '--ipaddr', type=str, help='tam collector ip')
     parser.add_argument('-port', '--port', type=str, help='tam collector port')
+    parser.add_argument('-templ', '--template', action='store_true', help='ifa template to be used')
+    parser.add_argument('-showcollector.j2', '--showcollector', action='store_true', help='ifa template for collector to be used')
 
     args = parser.parse_args()
 
@@ -165,7 +161,7 @@ Examples:
         elif args.collectorname:
             tam.clear_collector(args)
     elif args.show:
-        if args.device_id:
+        if args.device:
             tam.show_device_id()
         elif args.collectorname:
             tam.show_collector(args)
