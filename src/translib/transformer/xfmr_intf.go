@@ -655,11 +655,18 @@ func intf_ip_addr_del (d *db.DB , ifName string, tblName string, subIntf *ocbind
         if _, ok := subIntfmap[tblName]; !ok {
             subIntfmap[tblName] = make (map[string]db.Value)
         }
-
+        var data db.Value
         for k, _ := range intfIpMap {
             ifKey := ifName + "|" + k
-            var data db.Value
             subIntfmap[tblName][ifKey] = data
+        }
+        count := 0
+        _ = interfaceIPcount(tblName, d, &ifName, &count)
+        if (count - len(intfIpMap)) == 1 {
+            _, dbErr := d.GetEntry(&db.TableSpec{Name:tblName}, db.Key{Comp: []string{ifName}})
+            if dbErr == nil {
+                subIntfmap[tblName][ifName] = data
+            }
         }
     }
     log.Info("Delete IP address list ", subIntfmap,  " ", err)
@@ -916,25 +923,12 @@ func convertIpMapToOC (intfIpMap map[string]db.Value, ifInfo *ocbinds.Openconfig
     return err
 }
 
-func validateIPexist(intTbl IntfTblData, inParams *XfmrParams, intfName *string, checkExists *bool) error {
-    intfIPKeys, _ := inParams.d.GetKeys(&db.TableSpec{Name:intTbl.cfgDb.intfTN})
-    log.Info("intfIPKeys: ", intfIPKeys)
-    subOpMap := make(map[db.DBNum]map[string]map[string]db.Value)
-    resMap := make(map[string]map[string]db.Value)
+func interfaceIPcount(tblName string, d *db.DB, intfName *string, ipCnt *int) error {
+    intfIPKeys, _ := d.GetKeys(&db.TableSpec{Name:tblName})
     if len(intfIPKeys) > 0 {
-        *checkExists = false
-        /* Check if IP entries exist for given Interface*/
         for i := range intfIPKeys {
             if *intfName == intfIPKeys[i].Get(0) {
-                *checkExists = true
-                if len(intfIPKeys[i].Comp) > 1 {
-                    //Keep subOpDataMap[DELETE] as empty 
-                    subOpMap[db.ConfigDB] = resMap
-                    inParams.subOpDataMap[DELETE] = &subOpMap
-                    errStr := "Need to first remove the IP configuration"
-                    log.Error(errStr)
-                    return errors.New(errStr)
-                }
+                *ipCnt = *ipCnt+1
             }
         }
     }
