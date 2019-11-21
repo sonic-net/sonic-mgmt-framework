@@ -1540,7 +1540,7 @@ var DbToYang_intf_get_counters_xfmr SubTreeXfmrDbToYang = func(inParams XfmrPara
         log.Info("DbToYang_intf_get_counters_xfmr - Invalid interface type IntfTypeUnset");
         return errors.New("Invalid interface type IntfTypeUnset");
     }
-    //intTbl := IntfTypeTblMap[intfType]
+    intTbl := IntfTypeTblMap[intfType]
 
     var state_counters * ocbinds.OpenconfigInterfaces_Interfaces_Interface_State_Counters
 
@@ -1563,7 +1563,7 @@ var DbToYang_intf_get_counters_xfmr SubTreeXfmrDbToYang = func(inParams XfmrPara
         state_counters = intfObj.State.Counters
     }
 
-    //err = intTbl.CountersHdl.PopulateCounters(inParams, state_counters)
+    err = intTbl.CountersHdl.PopulateCounters(inParams, state_counters)
     log.Info("DbToYang_intf_get_counters_xfmr - ", state_counters)
 
     return err
