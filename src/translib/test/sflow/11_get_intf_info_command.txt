@@ -1,0 +1,1 @@
+./gnmi_get -xpath /sonic-sflow:sonic-sflow/SFLOW_SESSION/SFLOW_SESSION_LIST[ifname=Ethernet0]/ -target_addr 127.0.0.1:8080 -alsologtostderr -insecure true -pretty
