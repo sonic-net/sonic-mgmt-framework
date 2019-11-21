@@ -316,6 +316,7 @@ module openconfig-nat {
                     description
                         "NAT state data.";
 
+                    uses nat-mapping-table-config;
                     uses nat-mapping-table-state;
                 }
             }
@@ -505,7 +506,7 @@ module openconfig-nat {
             description
                 "Twice NAPT mapping table.";
 
-            list napt-twice-state-entry {
+            list napt-twice-entry {
                 description
                     "Twice NAPT mapping state entry list.";
                 key "protocol src-ip src-port dst-ip dst-port";

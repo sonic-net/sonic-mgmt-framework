@@ -34,10 +34,10 @@ module sonic-nat {
 
     typedef nat-type {
         type enumeration {
-            enum SNAT {
+            enum snat {
                 description "Source NAT.";
             }
-            enum DNAT {
+            enum dnat {
                 description "Destination NAT.";
             }
         }
@@ -75,7 +75,7 @@ module sonic-nat {
 
         leaf nat_type {
             type nat-type;
-            default DNAT;
+            default dnat;
         }
         uses sonic-twice-nat-id;
     }
@@ -117,8 +117,8 @@ module sonic-nat {
 
     typedef mode {
         type enumeration {
-            enum ENABLE;
-            enum DISABLE;
+            enum enabled;
+            enum disabled;
         }
     }
 
@@ -134,7 +134,7 @@ module sonic-nat {
             }
             leaf admin_mode {
                 type mode;
-                default ENABLE;
+                default enabled;
             }
 
             leaf nat_timeout {
@@ -237,7 +237,7 @@ module sonic-nat {
 
             leaf nat_type {
                 type nat-type;
-                default SNAT;
+                default snat;
             }
             uses sonic-twice-nat-id;
         }
