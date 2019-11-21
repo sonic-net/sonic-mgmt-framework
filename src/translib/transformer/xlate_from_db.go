@@ -485,8 +485,7 @@ func yangListDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, r
 		// Handling for case: Parent list is not associated with a tableName but has children containers/lists having tableNames.
 		if tblKey != "" {
 			var mapSlice []typeMapOfInterface
-			var instMap typeMapOfInterface
-			err := yangListInstanceDataFill(dbs, ygRoot, uri, requestUri, xpath, dbDataMap, resultMap, tbl, tblKey, cdb, validate, txCache, instMap, isFirstCall)
+			instMap, err := yangListInstanceDataFill(dbs, ygRoot, uri, requestUri, xpath, dbDataMap, resultMap, tbl, tblKey, cdb, validate, txCache, isFirstCall)
 			if err != nil {
 				log.Infof("Error(%v) returned for %v", err, uri)
 			}
@@ -514,10 +513,8 @@ func yangListDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, r
 
 		if ok {
 			var mapSlice []typeMapOfInterface
-			var err error
 			for dbKey, _ := range tblData {
-				var instMap typeMapOfInterface
-				err = yangListInstanceDataFill(dbs, ygRoot, uri, requestUri, xpath, dbDataMap, resultMap, tbl, dbKey, cdb, validate, txCache, instMap, isFirstCall)
+				instMap, err := yangListInstanceDataFill(dbs, ygRoot, uri, requestUri, xpath, dbDataMap, resultMap, tbl, dbKey, cdb, validate, txCache, isFirstCall)
 				if err != nil {
 					log.Infof("Error(%v) returned for %v", err, uri)
 				}
@@ -545,7 +542,7 @@ func yangListDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, r
 	return nil
 }
 
-func yangListInstanceDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, requestUri string, xpath string, dbDataMap *map[db.DBNum]map[string]map[string]db.Value, resultMap map[string]interface{}, tbl string, dbKey string, cdb db.DBNum, validate bool, txCache interface{}, retMap typeMapOfInterface, isFirstCall bool) error {
+func yangListInstanceDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, requestUri string, xpath string, dbDataMap *map[db.DBNum]map[string]map[string]db.Value, resultMap map[string]interface{}, tbl string, dbKey string, cdb db.DBNum, validate bool, txCache interface{}, isFirstCall bool) (typeMapOfInterface,error) {
 
 	var err error
 	curMap := make(map[string]interface{})
@@ -562,9 +559,6 @@ func yangListInstanceDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri s
 			}
 		}
 		yangDataFill(dbs, ygRoot, curUri, requestUri, xpath, dbDataMap, curMap, tbl, dbKey, cdb, validate, txCache)
-		if len(curMap) > 0 {
-			retMap = curMap
-		}
 	} else {
 		_, keyFromCurUri, _ := xpathKeyExtract(dbs[cdb], ygRoot, GET, curUri, requestUri, nil, txCache)
 		if dbKey == keyFromCurUri || keyFromCurUri == "" {
@@ -575,12 +569,9 @@ func yangListInstanceDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri s
 			}
 			curXpath, _ := XfmrRemoveXPATHPredicates(curUri)
 			yangDataFill(dbs, ygRoot, curUri, requestUri, curXpath, dbDataMap, curMap, tbl, dbKey, cdb, validate, txCache)
-			if len(curMap) > 0 {
-				retMap = curMap
-			}
 		}
 	}
-	return err
+	return curMap, err
 }
 
 func terminalNodeProcess(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, requestUri string, xpath string, dbDataMap *map[db.DBNum]map[string]map[string]db.Value, tbl string, tblKey string, txCache interface{}) (map[string]interface{}, error) {
