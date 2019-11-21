@@ -14,6 +14,10 @@ module sonic-nat {
         prefix scommon;
     }
 
+    import sonic-acl {
+        prefix sacl;
+    }
+
     organization
         "SONiC";
 
@@ -26,10 +30,6 @@ module sonic-nat {
     revision 2019-10-30 {
         description
             "Initial revision.";
-    }
-
-    import sonic-acl {
-        prefix sacl;
     }
 
     typedef nat-type {
@@ -231,7 +231,7 @@ module sonic-nat {
 
             leaf access_list {
                 type leafref {
-                    path "/sacl:ACL_TABLE/sacl:ACL_TABLE_LIST/sacl:aclname";
+                    path "/sacl:sonic-acl/sacl:ACL_TABLE/sacl:ACL_TABLE_LIST/sacl:aclname";
                 } 
             }
 
