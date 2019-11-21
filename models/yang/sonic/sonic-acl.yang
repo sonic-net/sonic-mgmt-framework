@@ -120,6 +120,8 @@ module sonic-acl {
 						enum FORWARD;
 						enum DROP;
 						enum REDIRECT;
+						enum INT_INSERT;
+						enum INT_DELETE;
 					}
 				}
 

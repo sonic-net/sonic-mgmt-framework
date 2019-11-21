@@ -5,9 +5,6 @@ module sonic-sflow-annot {
     namespace "http://openconfig.net/yang/annotation/sflow-annot";
     prefix "sflow-annot";
 
-    import ietf-yang-types { prefix yang; }
-    import ietf-inet-types { prefix inet; }
-    import sonic-common { prefix scommon; }
     import sonic-sflow { prefix sflow; }
     import sonic-extensions { prefix sonic-ext; }
 

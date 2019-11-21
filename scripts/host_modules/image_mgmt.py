@@ -30,7 +30,7 @@ class IMAGE_MGMT(host_service.HostModule):
 
     @host_service.method(host_service.bus_name(MOD_NAME), in_signature='as', out_signature='is')
     def action(self, options):
-        return IMAAGE_MGMT._run_command(options)
+        return IMAGE_MGMT._run_command(options)
         
 def register():
     """Return class name"""

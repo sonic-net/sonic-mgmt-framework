@@ -75,7 +75,6 @@ def run(func, args):
         if 'openconfig-if-ip:neighbor' in response.keys():
                 ext_intf_name = "-"
                 neigh = response['openconfig-if-ip:neighbor']
-                print "neigh: ", neigh
 
                 if neigh[0]['state'] is None:
                     return
