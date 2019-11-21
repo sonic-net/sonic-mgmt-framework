@@ -87,8 +87,8 @@ limitations under the License.
                     >
                 </PARAM>
              </PARAM>
-	         <!-- show interface Vlan-->
-	         <PARAM
+             <!-- show interface Vlan-->
+             <PARAM
                  name="Vlan"
                  help="Vlan Interface"
                  ptype="SUBCOMMAND"
@@ -101,8 +101,8 @@ limitations under the License.
                     >
                  </PARAM>
              </PARAM>
-	         <!-- show interface Loopback-->
-	         <PARAM
+           <!-- show interface Loopback-->
+           <PARAM
                  name="Loopback"
                  help="Loopback Interface"
                  ptype="SUBCOMMAND"
@@ -128,7 +128,7 @@ limitations under the License.
             python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces show_interface_status.j2 ${__full_line}&#xA;
         elif test "${if-subcommands}" = "counters"; then&#xA;
             python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces show_interface_counters.j2 ${__full_line}&#xA;
-	    elif test "${if-subcommands}" = "PortChannel"; then&#xA;
+        elif test "${if-subcommands}" = "PortChannel"; then&#xA;
             if test "${po-id}" = ""; then&#xA;
                 python $SONIC_CLI_ROOT/sonic-cli-interface-port-channel.py get_all_portchannels show_interface_portchannel.j2 ${__full_line}&#xA;
             else&#xA;
@@ -140,15 +140,17 @@ limitations under the License.
             else&#xA;
                 python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces_interface eth${mgmt-if-id} show_mgmt_interface_id.j2 ${__full_line}&#xA;
             fi&#xA;
-	    elif test "${if-subcommands}" = "Vlan"; then&#xA;
+        elif test "${if-subcommands}" = "Vlan"; then&#xA;
             if test "${vlan-id}" = ""; then&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-if.py get_all_vlans show_interface_vlan.j2 ${__full_line}&#xA;
+                #Note: TODO, Discussion needed
+                #python $SONIC_CLI_ROOT/sonic-cli-if.py get_all_vlans show_interface_vlan.j2 ${__full_line}&#xA;
             else&#xA;
                 python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces_interface Vlan${vlan-id} show_interface_vlan.j2 ${__full_line}&#xA;
             fi&#xA;
-	    elif test "${if-subcommands}" = "Loopback"; then&#xA;
+        elif test "${if-subcommands}" = "Loopback"; then&#xA;
             if test "${lo-id}" = ""; then&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-if.py get_all_loopbacks show_interface_loopback.j2 ${__full_line}&#xA;
+                # Note: TODO, Discussion needed
+                #python $SONIC_CLI_ROOT/sonic-cli-if.py get_all_loopbacks show_interface_loopback.j2 ${__full_line}&#xA;
             else&#xA;
                 python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces_interface Loopback${lo-id} show_interface_loopback.j2 ${__full_line}&#xA;
             fi&#xA;
