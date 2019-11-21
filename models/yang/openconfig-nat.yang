@@ -77,132 +77,92 @@ module openconfig-nat {
 
 
 
-    grouping napt-mapping-table-config-top {
+    grouping napt-mapping-table-config {
         description
             "NAPT mapping config table.";
 
-        list napt-mapping-entry {
-            key "external-address protocol external-port";
+        leaf external-address {
             description
-                "NAPT mapping entry list.";
+                "External interface of the NAPT.";
+            type oc-inet:ip-address;
+        }
 
-            leaf external-address {
-                description
-                    "External interface of the NAPT.";
-                type oc-inet:ip-address;
+        leaf external-port {
+            description
+                "External port of the packet sent/receive on an external
+                interface of the NAPT.";
+            type oc-inet:port-number;
+        }
+
+        leaf protocol {
+            type uint8;
+            description
+                "The protocol associated with this mapping values.";
+        }
+
+        leaf internal-address {
+            description
+                "Internal interface of the NAPT.";
+            type oc-inet:ip-address;
+            mandatory true;
+        }
+
+        leaf internal-port {
+            description
+                "Internal port of the packet sent/receive on an internal
+                interface of the NAPT.";
+            type oc-inet:port-number;
+            mandatory true;
+        }
+
+        leaf type {
+            description
+                "Type of the NAT to be done, Source NAPT (SNAT) or
+                Destination NAPT(DNAT).";
+            type identityref {
+                base NAT_TYPE;
             }
+            default DNAT;
+        }
 
-            leaf external-port {
-                description
-                    "External port of the packet sent/receive on an external
-                     interface of the NAPT.";
-                type uint16;
-            }
-
-            leaf protocol {
-                type uint8;
-                description
-                    "The protocol associated with this mapping values.";
-            }
-
-            leaf internal-address {
-                description
-                    "Internal interface of the NAPT.";
-                type oc-inet:ip-address;
-                mandatory true;
-            }
-
-            leaf internal-port {
-                description
-                    "Internal port of the packet sent/receive on an internal
-                     interface of the NAPT.";
-                type uint16;
-                mandatory true;
-            }
-
-            leaf type {
-                description
-                    "Type of the NAT to be done, Source NAPT (SNAT) or
-                     Destination NAPT(DNAT).";
-                type identityref {
-                    base NAT_TYPE;
-                }
-                default DNAT;
-            }
-
-            leaf twice_nat_id {
-                description
-                    "Group ID used for twice NAPT.";
-                type uint16 {
-                    range "1..9999";
-                }
+        leaf twice-nat-id {
+            description
+                "Group ID used for twice NAPT.";
+            type uint16 {
+                range "1..9999";
             }
         }
     }
 
-    grouping napt-mapping-table-state-top {
+    grouping napt-mapping-table-state {
         description
             "NAPT mapping state table.";
 
-        list napt-mapping-entry {
+        leaf translated-ip {
             description
-                "NAPT mapping state entry list.";
+                "Translated interface associated with this NAPT entry.";
+            type oc-inet:ip-address;
+        }
 
-            key "protocol ip port";
+        leaf translated-port {
+            description
+                "Translated port associated with this NAPT entry.";
+            type oc-inet:port-number;
+        }
 
-            leaf ip {
-                description
-                    "The Interface associated with this NAPT entry.";
-                type oc-inet:ip-address;
+        leaf entry-type {
+            description
+                "NAPT Entry type (STATIC/DYNAMIC).";
+            type identityref {
+                base NAT_ENTRY_TYPE;
             }
+        }
 
-            leaf protocol {
-                description
-                    "The protocol associated with this NAPT entry.";
-                type uint8;
-            }
+        container counters {
+            description
+                "Counters associated with this NAPT entry.";
 
-            leaf port {
-                description
-                    "The port of the packet sent/receive on an
-                     interface of the NAPT.";
-                type uint16;
-            }
-
-            leaf translated-ip {
-                description
-                    "Translated interface associated with this NAPT entry.";
-                type oc-inet:ip-address;
-            }
-
-            leaf translated-port {
-                description
-                    "Translated port associated with this NAPT entry.";
-                type uint16;
-            }
-
-            leaf type {
-                description
-                    "Type of the NAT.";
-                type identityref {
-                    base NAT_TYPE;
-                }
-            }
-
-            leaf entry-type {
-                description
-                    "NAPT Entry type (STATIC/DYNAMIC).";
-                type identityref {
-                    base NAT_ENTRY_TYPE;
-                }
-            }
-
-            container counters {
-                description
-                    "Counters associated with this NAPT entry.";
-
-                uses nat-counters-common-top;
-            }
+            uses nat-counters-common-top;
         }
     }
 
@@ -214,108 +174,112 @@ module openconfig-nat {
             description
                 "NAPT mapping table.";
 
-            container config {
+            list napt-mapping-entry {
+                key "external-address protocol external-port";
                 description
-                    "NAPT config data.";
+                    "NAPT mapping entry list.";
 
-                uses napt-mapping-table-config-top;
-            }
+                leaf external-address {
+                    description
+                        "External interface of the NAPT.";
+                    type leafref {
+                        path "../config/external-address";
+                    }
+                }
 
-            container state {
-                config false;
-                description
-                    "NAPT state data.";
+                leaf external-port {
+                    description
+                        "External port of the packet sent/receive on an external
+                        interface of the NAPT.";
+                    type leafref {
+                        path "../config/external-port";
+                    }
+                }
 
-                uses napt-mapping-table-state-top;
+                leaf protocol {
+                    type leafref {
+                        path "../config/protocol";
+                    }
+                    description
+                        "The protocol associated with this mapping values.";
+                }
+
+                container config {
+                    description
+                        "NAPT config data.";
+
+                    uses napt-mapping-table-config;
+                }
+
+                container state {
+                    config false;
+                    description
+                        "NAPT state data.";
+
+                    uses napt-mapping-table-config;
+                    uses napt-mapping-table-state;
+                }
             }
         }
     }
 
-    grouping nat-mapping-table-config-top {
+    grouping nat-mapping-table-config {
         description
             "NAT mapping config table.";
 
-        list nat-mapping-entry {
+        leaf external-address {
             description
-                "NAT mapping entry list.";
+                "External interface of the NAT.";
+            type oc-inet:ip-address;
+        }
 
-            key "external-address";
+        leaf internal-address {
+            description
+                "Internal interface of the NAT.";
+            type oc-inet:ip-address;
+        }
 
-            leaf external-address {
-                description
-                    "External interface of the NAT.";
-                type oc-inet:ip-address;
+        leaf type {
+            description
+                "Type of the NAT to be done, Source NAPT (SNAT) or
+                Destination NAPT(DNAT).";
+            type identityref {
+                base NAT_TYPE;
             }
+            default DNAT;
+        }
 
-            leaf internal-address {
-                description
-                    "Internal interface of the NAT.";
-                type oc-inet:ip-address;
-            }
-
-            leaf type {
-                description
-                    "Type of the NAT to be done, Source NAPT (SNAT) or
-                     Destination NAPT(DNAT).";
-                type identityref {
-                    base NAT_TYPE;
-                }
-                default DNAT;
-            }
-
-            leaf twice_nat_id {
-                description
-                    "Group ID used for twice NAT.";
-                type uint16 {
-                    range "1..9999";
-                }
+        leaf twice-nat-id {
+            description
+                "Group ID used for twice NAT.";
+            type uint16 {
+                range "1..9999";
             }
         }
     }
 
-    grouping nat-mapping-table-state-top {
+    grouping nat-mapping-table-state {
         description
             "NAT mapping state table.";
 
-        list nat-mapping-entry {
+        leaf translated-ip {
             description
-                "NAT mapping state entry list.";
+                "Translated interface associated with this NAT entry.";
+            type oc-inet:ip-address;
+        }
 
-            key "ip";
-
-            leaf ip {
-                description
-                    "The Interface associated with this NAT entry.";
-                type oc-inet:ip-address;
+        leaf entry-type {
+            description
+                "NAPT Entry type (STATIC/DYNAMIC).";
+            type identityref {
+                base NAT_ENTRY_TYPE;
             }
+        }
 
-            leaf translated-ip {
-                description
-                    "Translated interface associated with this NAT entry.";
-                type oc-inet:ip-address;
-            }
-
-            leaf type {
-                description
-                    "Type of the NAT.";
-                type identityref {
-                    base NAT_TYPE;
-                }
-            }
-
-            leaf entry-type {
-                description
-                    "NAPT Entry type (STATIC/DYNAMIC).";
-                type identityref {
-                    base NAT_ENTRY_TYPE;
-                }
-            }
-
-            container counters {
-                description
-                    "Counters associated with this NAT entry.";
-                uses nat-counters-common-top;
-            }
+        container counters {
+            description
+                "Counters associated with this NAT entry.";
+            uses nat-counters-common-top;
         }
     }
 
@@ -326,150 +290,162 @@ module openconfig-nat {
         container nat-mapping-table {
             description
                 "NAT mapping table.";
-
-            container config {
+            list nat-mapping-entry {
                 description
-                    "NAT config data.";
+                    "NAT mapping entry list.";
 
-                uses nat-mapping-table-config-top;
-            }
+                key "external-address";
 
-            container state {
-                config false;
-                description
-                    "NAT state data.";
+                leaf external-address {
+                    description
+                        "External interface of the NAT.";
+                    type leafref {
+                        path "../config/external-address";
+                    }
+                }
 
-                uses nat-mapping-table-state-top;
+                container config {
+                    description
+                        "NAT config data.";
+
+                    uses nat-mapping-table-config;
+                }
+
+                container state {
+                    config false;
+                    description
+                        "NAT state data.";
+
+                    uses nat-mapping-table-state;
+                }
             }
         }
     }
 
+    grouping nat-twice-mapping-table-config {
+        description
+            "Top grouping for twice NAT mapping config table.";
 
-    grouping nat-twice-mapping-table-state-top {
+        leaf src-ip {
+            description
+                "The source interface associated with this NAT entry.";
+            type oc-inet:ip-address;
+        }
+
+        leaf dst-ip {
+            description
+                "The destination interface associated with this NAT entry.";
+            type oc-inet:ip-address;
+        }
+    }
+
+    grouping nat-twice-mapping-table-state {
         description
             "Top grouping for twice NAT mapping state table.";
 
-        list nat-twice-state-entry  {
-            key "src-ip dst-ip";
+        leaf translated-src-ip {
             description
-                "Twice NAT mapping state entry list.";
+                "Translated source interface associated with this NAT entry.";
+            type oc-inet:ip-address;
+        }
 
-            leaf src-ip {
-                description
-                    "The source interface associated with this NAT entry.";
-                type oc-inet:ip-address;
-            }
+        leaf translated-dst-ip {
+            description
+                "Translated destination interface associated with this NAT entry.";
+            type oc-inet:ip-address;
+        }
 
-            leaf dst-ip {
-                description
-                    "The destination interface associated with this NAT entry.";
-                type oc-inet:ip-address;
+        leaf entry-type {
+            description
+                "NAT Entry type (STATIC/DYNAMIC).";
+            type identityref {
+                base NAT_ENTRY_TYPE;
             }
+        }
 
-            leaf translated-src-ip {
-                description
-                    "Translated source interface associated with this NAT entry.";
-                type oc-inet:ip-address;
-            }
-
-            leaf translated-dst-ip {
-                description
-                    "Translated destination interface associated with this NAT entry.";
-                type oc-inet:ip-address;
-            }
-
-            leaf entry-type {
-                description
-                    "NAT Entry type (STATIC/DYNAMIC).";
-                type identityref {
-                    base NAT_ENTRY_TYPE;
-                }
-            }
-
-            container counters {
-                description
-                    "Counters associated with this NAT entry.";
-                uses nat-counters-common-top;
-            }
+        container counters {
+            description
+                "Counters associated with this NAT entry.";
+            uses nat-counters-common-top;
         }
     }
 
-    grouping napt-twice-mapping-table-state-top {
+    grouping napt-twice-mapping-table-config {
         description
             "Top grouping for twice NAPT mapping state table.";
 
-        list napt-twice-state-entry {
-            key "protocol src-ip src-port dst-ip dst-port";
+        leaf protocol {
             description
-                "Twice NAPT mapping state entry list.";
+                "The protocol associated with this NAPT entry.";
+            type uint8;
+        }
 
-            leaf protocol {
-                description
-                    "The protocol associated with this NAPT entry.";
-                type uint8;
-            }
+        leaf src-ip {
+            description
+                "The source interface associated with this NAPT entry.";
+            type oc-inet:ip-address;
+        }
 
-            leaf src-ip {
-                description
-                    "The source interface associated with this NAPT entry.";
-                type oc-inet:ip-address;
-            }
+        leaf src-port {
+            description
+                "The Source port associated with this NAPT entry.";
+            type oc-inet:port-number;
+        }
 
-            leaf src-port {
-                description
-                    "The Source port associated with this NAPT entry.";
-                type uint16;
-            }
+        leaf dst-ip {
+            description
+                "The destination interface associated with this NAPT entry.";
+            type oc-inet:ip-address;
+        }
 
-            leaf dst-ip {
-                description
-                    "The destination interface associated with this NAPT entry.";
-                type oc-inet:ip-address;
-            }
+        leaf dst-port {
+            description
+                "The destination port associated with this NAPT entry.";
+            type oc-inet:port-number;
+        }
+    }
 
-            leaf dst-port {
-                description
-                    "The destination port associated with this NAPT entry.";
-                type uint16;
-            }
+    grouping napt-twice-mapping-table-state {
+        description
+            "Top grouping for twice NAPT mapping state table.";
 
-            leaf translated-src-ip {
-                description
-                    "Translated source interface associated with this NAPT entry.";
-                type oc-inet:ip-address;
-            }
 
-            leaf translated-src-port {
-                description
-                    "Translated source port associated with this NAPT entry.";
-                type uint16;
-            }
+        leaf translated-src-ip {
+            description
+                "Translated source interface associated with this NAPT entry.";
+            type oc-inet:ip-address;
+        }
 
-            leaf translated-dst-ip {
-                description
-                    "Translated destination interface associated with this NAPT entry.";
-                type oc-inet:ip-address;
-            }
+        leaf translated-src-port {
+            description
+                "Translated source port associated with this NAPT entry.";
+            type oc-inet:port-number;
+        }
 
-            leaf translated-dst-port {
-                description
-                    "Translated destination port associated with this NAPT entry.";
-                type uint16;
-            }
+        leaf translated-dst-ip {
+            description
+                "Translated destination interface associated with this NAPT entry.";
+            type oc-inet:ip-address;
+        }
 
-            leaf entry-type {
-                description
-                    "NAT Entry type (STATIC/DYNAMIC).";
-                type identityref {
-                    base NAT_ENTRY_TYPE;
-                }
-            }
+        leaf translated-dst-port {
+            description
+                "Translated destination port associated with this NAPT entry.";
+            type oc-inet:port-number;
+        }
 
-            container counters {
-                description
-                    "Counters associated with this NAPT entry.";
-                uses nat-counters-common-top;
+        leaf entry-type {
+            description
+                "NAT Entry type (STATIC/DYNAMIC).";
+            type identityref {
+                base NAT_ENTRY_TYPE;
             }
+        }
+
+        container counters {
+            description
+                "Counters associated with this NAPT entry.";
+            uses nat-counters-common-top;
         }
     }
 
@@ -481,17 +457,42 @@ module openconfig-nat {
             description
                 "Twice NAT mapping table.";
 
-            container config {
-                description
-                    "Twice NAT config data.";
-            }
+            list nat-twice-entry  {
+                key "src-ip dst-ip";
 
-            container state {
-                config false;
                 description
-                    "Twice NAT state data.";
+                    "Twice NAT mapping state entry list.";
 
-                uses nat-twice-mapping-table-state-top;
+                leaf src-ip {
+                    description
+                        "The source interface associated with this NAT entry.";
+                    type leafref {
+                        path "../config/src-ip";
+                    }
+                }
+
+                leaf dst-ip {
+                    description
+                        "The destination interface associated with this NAT entry.";
+                    type leafref {
+                        path "../config/dst-ip";
+                    }
+                }
+
+                container config {
+                    description
+                        "Twice NAT config data.";
+                    uses nat-twice-mapping-table-config;
+                }
+
+                container state {
+                    config false;
+                    description
+                        "Twice NAT state data.";
+
+                    uses nat-twice-mapping-table-config;
+                    uses nat-twice-mapping-table-state;
+                }
             }
         }
     }
@@ -503,16 +504,65 @@ module openconfig-nat {
         container napt-twice-mapping-table {
             description
                 "Twice NAPT mapping table.";
-            container config {
-                description
-                    "Twice NAPT config data.";
-            }
 
-            container state {
-                config false;
+            list napt-twice-state-entry {
                 description
-                    "Twice NAPT state data.";
-                uses napt-twice-mapping-table-state-top;
+                    "Twice NAPT mapping state entry list.";
+                key "protocol src-ip src-port dst-ip dst-port";
+
+                leaf protocol {
+                    description
+                        "The protocol associated with this NAPT entry.";
+                    type leafref {
+                        path "../config/protocol";
+                    }
+                }
+
+                leaf src-ip {
+                    description
+                        "The source interface associated with this NAPT entry.";
+                    type leafref {
+                        path "../config/src-ip";
+                    }
+                }
+
+                leaf src-port {
+                    description
+                        "The Source port associated with this NAPT entry.";
+                    type leafref {
+                        path "../config/src-port";
+                    }
+                }
+
+                leaf dst-ip {
+                    description
+                        "The destination interface associated with this NAPT entry.";
+                    type leafref {
+                        path "../config/dst-ip";
+                    }
+                }
+
+                leaf dst-port {
+                    description
+                        "The destination port associated with this NAPT entry.";
+                    type leafref {
+                        path "../config/dst-port";
+                    }
+                }
+
+                container config {
+                    description
+                        "Twice NAPT config data.";
+                    uses napt-twice-mapping-table-config;
+                }
+
+                container state {
+                    config false;
+                    description
+                        "Twice NAPT state data.";
+                    uses napt-twice-mapping-table-config;
+                    uses napt-twice-mapping-table-state;
+                }
             }
         }
     }
@@ -572,7 +622,7 @@ module openconfig-nat {
     }
 
 
-    grouping nat-pool-entry-top {
+    grouping nat-pool-config {
         description
             "Top grouping for NAT pool data.";
 
@@ -625,27 +675,29 @@ module openconfig-nat {
                 leaf pool-name {
                     description
                         "NAT pool name.";
-                    type string;
+                    type leafref {
+                        path "../config/pool-name";
+                    }
                 }
 
                 container config {
                     description
                         "NAT pool config data.";
 
-                    uses nat-pool-entry-top;
+                    uses nat-pool-config;
                 }
                 container state {
                     description
                         "NAT pool state data.";
 
-                    uses nat-pool-entry-top;
+                    uses nat-pool-config;
                 }
             }
         }
 
     }
 
-    grouping nat-acl-pool-binding-entry-top {
+    grouping nat-acl-pool-binding-config {
         description
             "Top grouping for NAT ACL pool binding entry data.";
 
@@ -671,7 +723,7 @@ module openconfig-nat {
         leaf nat-type {
             description
                 "Type of the NAT to be done, Source NAPT (SNAT) or
-                 Destination NAPT(DNAT).";
+                Destination NAPT(DNAT).";
             type identityref {
                 base NAT_TYPE;
             }
@@ -703,20 +755,22 @@ module openconfig-nat {
                 leaf name {
                     description
                         "NAT ACL pool binding name.";
-                    type string;
+                    type leafref {
+                        path "../config/name";
+                    }
                 }
 
                 container config {
                     description
                         "NAT ACL to pool binding config data.";
 
-                    uses nat-acl-pool-binding-entry-top;
+                    uses nat-acl-pool-binding-config;
                 }
                 container state {
                     description
                         "NAT ACL to pool binding state data.";
 
-                    uses nat-acl-pool-binding-entry-top;
+                    uses nat-acl-pool-binding-config;
                 }
             }
         }
@@ -728,8 +782,45 @@ module openconfig-nat {
         container nat-zone {
             description
                 "NAT zone counters data.";
+            list nat-zone-entry {
+                key "id";
+                description
+                    "NAT zone entry.";
 
-           uses nat-zone-counters-top;
+                leaf id {
+                    description
+                        "NAT zone id.";
+                    type uint8;
+                }
+                container config {
+                    uses nat-zone-config;
+                }
+
+                container state {
+                    config false;
+                    uses nat-zone-config;
+                    uses nat-zone-state;
+                }
+
+            }
+        }
+    }
+
+    grouping nat-zone-config {
+        leaf id {
+            description
+                "NAT zone id.";
+            type uint8;
+        }
+    }
+
+    grouping nat-zone-state {
+        container counters {
+            description
+                "NAT zone counters table.";
+            config false;
+
+            uses nat-zone-counters-top;
         }
     }
 
@@ -737,60 +828,41 @@ module openconfig-nat {
         description
             "Top grouping for NAT zone counters data.";
 
-        container nat-zone-counters {
+
+        leaf dnat-discards {
             description
-                "NAT zone counters table.";
+                "DNAT discards counter.";
+            type oc-yang:counter64;
+        }
 
-            config false;
+        leaf snat-discards {
+            description
+                "SNAT discards counter.";
+            type oc-yang:counter64;
+        }
 
-            list zone-counters-entry {
-                description
-                    "NAT zone counters entry.";
+        leaf dnat-translation-needed {
+            description
+                "DNAT translation needed counter.";
+            type oc-yang:counter64;
+        }
 
-                key "id";
+        leaf snat-translation-needed {
+            description
+                "SNAT translation needed counter.";
+            type oc-yang:counter64;
+        }
 
-                leaf id {
-                    description
-                        "NAT zone id.";
-                    type uint8;
-                }
+        leaf dnat-translations {
+            description
+                "DNAT translations counter.";
+            type oc-yang:counter64;
+        }
 
-                leaf dnat-discards {
-                    description
-                        "DNAT discards counter.";
-                    type oc-yang:counter64;
-                }
-
-                leaf snat-discards {
-                    description
-                        "SNAT discards counter.";
-                    type oc-yang:counter64;
-                }
-
-                leaf dnat-translation-needed {
-                    description
-                        "DNAT translation needed counter.";
-                    type oc-yang:counter64;
-                }
-
-                leaf snat-translation-needed {
-                    description
-                        "SNAT translation needed counter.";
-                    type oc-yang:counter64;
-                }
-
-                leaf dnat-translations {
-                    description
-                        "DNAT translations counter.";
-                    type oc-yang:counter64;
-                }
-
-                leaf snat-translations {
-                    description
-                        "SNAT translations counter.";
-                    type oc-yang:counter64;
-                }
-            }
+        leaf snat-translations {
+            description
+                "SNAT translations counter.";
+            type oc-yang:counter64;
         }
     }
 
@@ -851,7 +923,7 @@ module openconfig-nat {
             description
                 "NAT instances";
 
-            list instance-entry {
+            list instance {
                 key "id";
                 description
                     "A NAT instance.  This identifier can be automatically

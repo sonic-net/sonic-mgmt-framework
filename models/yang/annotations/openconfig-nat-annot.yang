@@ -1,0 +1,57 @@
+module openconfig-nat-annot {
+
+    yang-version "1";
+
+    namespace "http://openconfig.net/yang/annotation/openconfig-nat-annot";
+    prefix "oc-nat-annot";
+
+    import sonic-extensions { prefix sonic-ext; }
+    import openconfig-nat { prefix oc-nat; }
+    import openconfig-extensions { prefix oc-ext; }
+
+
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:config {
+        deviate add {
+            sonic-ext:table-name "NAT_GLOBAL";
+            sonic-ext:key-transformer "nat_instance_key_xfmr";
+        }
+    }
+
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:state {
+        deviate add {
+            sonic-ext:table-name "NAT_GLOBAL";
+            sonic-ext:key-transformer "nat_instance_key_xfmr";
+        }
+    }
+
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:napt-mapping-table/oc-nat:napt-mapping-entry/oc-nat:config {
+        deviate add {
+            sonic-ext:table-name "STATIC_NAPT";
+            sonic-ext:key-transformer "napt_mapping_key_xfmr";
+        }
+    }
+
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:napt-mapping-table/oc-nat:napt-mapping-entry/oc-nat:config/oc-nat:internal-address {
+        deviate add {
+            sonic-ext:field-name "local_ip";
+        }
+    }
+
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:napt-mapping-table/oc-nat:napt-mapping-entry/oc-nat:config/oc-nat:internal-port {
+        deviate add {
+            sonic-ext:field-name "local_port";
+        }
+    }
+
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:napt-mapping-table/oc-nat:napt-mapping-entry/oc-nat:config/oc-nat:type {
+        deviate add {
+            sonic-ext:field-name "nat_type";
+        }
+    }
+
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:napt-mapping-table/oc-nat:napt-mapping-entry/oc-nat:config/oc-nat:twice-nat-id {
+        deviate add {
+            sonic-ext:field-name "twice_nat_id";
+        }
+    }
+}
