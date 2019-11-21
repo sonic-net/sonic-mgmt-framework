@@ -1,155 +1,234 @@
 #!/usr/bin/python
+###########################################################################
+#
+# Copyright 2019 Broadcom.  The term "Broadcom" refers to Broadcom Inc. and/or
+# its subsidiaries.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+###########################################################################
+
 import sys
-import time
 import json
-import ast
-import sonic_vxlan_client
+import collections
+import re
+import cli_client as cc
 from rpipe_utils import pipestr
-from sonic_vxlan_client.rest import ApiException
 from scripts.render_cli import show_cli_output
 
-import urllib3
-urllib3.disable_warnings()
+vxlan_global_info = []
 
-
-plugins = dict()
-
-def register(func):
-    """Register sdk client method as a plug-in"""
-    plugins[func.__name__] = func
-    return func
-
-
-def call_method(name, args):
-    method = plugins[name]
-    return method(args)
-
-def generate_body(func, args):
+def invoke(func, args):
     body = None
-    # Get the rules of all ACL table entries.
-    if func.__name__ == 'patch_list_sonic_vxlan_sonic_vxlan_vxlan_tunnel_vxlan_tunnel_list':
-       keypath = []
-       body = {
-         "sonic-vxlan:VXLAN_TUNNEL_LIST": [
-           {
-             "name": args[0][5:],
-             "src_ip": args[1] 
-           }
-         ]
-       }
-    elif func.__name__ == 'delete_sonic_vxlan_sonic_vxlan_vxlan_tunnel':
-       #keypath = [ args[0][5:] ]
-       keypath = []
-    elif func.__name__ == 'patch_list_sonic_vxlan_sonic_vxlan_suppress_vlan_neigh_suppress_vlan_neigh_list':
-       keypath = []
-       body = {
-         "sonic-vxlan:SUPPRESS_VLAN_NEIGH_LIST": [
-           {
-             "name": args[0],
-             "suppress": 'on'
-           }
-         ]
-       }
-    elif func.__name__ == 'delete_sonic_vxlan_sonic_vxlan_suppress_vlan_neigh_suppress_vlan_neigh_list':
-       keypath = [ args[0] ]
-    elif func.__name__ == 'patch_list_sonic_vxlan_sonic_vxlan_evpn_nvo_evpn_nvo_list':
-       keypath = []
-       body = {
-         "sonic-vxlan:EVPN_NVO_LIST": [
-           {
-             "name": args[0][4:],
-             "source_vtep": args[1] 
-           }
-         ]
-       }
-    elif func.__name__ == 'delete_sonic_vxlan_sonic_vxlan_evpn_nvo':
-       #keypath = [ args[0][4:] ]
-       keypath = []
-    elif func.__name__ == 'patch_list_sonic_vxlan_sonic_vxlan_vxlan_tunnel_map_vxlan_tunnel_map_list':
-       keypath = []
-       body = {
-         "sonic-vxlan:VXLAN_TUNNEL_MAP_LIST": [
-           {
-             "name": args[0][5:],
-             "mapname": 'map_'+ args[1] + '_' + args[2],
-             "vlan": 'Vlan' + args[2],
-             "vni": int(args[1]) 
-           }
-         ]
-       }
-    elif func.__name__ == 'delete_sonic_vxlan_sonic_vxlan_vxlan_tunnel_map_vxlan_tunnel_map_list':
-       keypath = [ args[0][5:] , 'map_'+ args[1] + '_' + args[2]]
+    aa = cc.ApiClient()
+
+
+    #[un]configure VTEP 
+    if (func == 'patch_sonic_vxlan_sonic_vxlan_vxlan_tunnel_vxlan_tunnel_list' or
+        func == 'delete_sonic_vxlan_sonic_vxlan_vxlan_tunnel_vxlan_tunnel_list'):
+        keypath = cc.Path('/restconf/data/sonic-vxlan:sonic-vxlan/VXLAN_TUNNEL/VXLAN_TUNNEL_LIST={name}', name=args[0][5:])
+
+        if (func.startswith("patch") is True):
+            body = {
+              "sonic-vxlan:VXLAN_TUNNEL_LIST": [
+                {
+                  "name": args[0][5:],
+                  "src_ip": args[1] 
+                }
+              ]
+            }
+            return aa.patch(keypath, body)
+        else:
+            return aa.delete(keypath)
+
+    #[un]configure EVPN NVO
+    if (func == 'patch_sonic_vxlan_sonic_vxlan_evpn_nvo_evpn_nvo_list' or
+        func == 'delete_sonic_vxlan_sonic_vxlan_evpn_nvo_evpn_nvo_list'):
+        keypath = cc.Path('/restconf/data/sonic-vxlan:sonic-vxlan/EVPN_NVO/EVPN_NVO_LIST={name}', name=args[0][4:])
+
+        if (func.startswith("patch") is True):
+            body = {
+              "sonic-vxlan:EVPN_NVO_LIST": [
+                {
+                  "name": args[0][4:],
+                  "source_vtep": args[1] 
+                }
+              ]
+            }
+            return aa.patch(keypath, body)
+        else:
+            return aa.delete(keypath)
+
+    #[un]configure Tunnel Map
+    if (func == 'patch_sonic_vxlan_sonic_vxlan_vxlan_tunnel_map_vxlan_tunnel_map_list' or
+        func == 'delete_sonic_vxlan_sonic_vxlan_vxlan_tunnel_map_vxlan_tunnel_map_list'):
+        fail = 0
+        for count in range(int(args[3])):
+          vidstr = str(int(args[2]) + count)
+          vnid = int(args[1]) + count
+          vnistr = str(vnid)
+          mapname = 'map_'+ vnistr + '_' + vidstr
+          keypath = cc.Path('/restconf/data/sonic-vxlan:sonic-vxlan/VXLAN_TUNNEL_MAP/VXLAN_TUNNEL_MAP_LIST={name},{mapname1}', name=args[0][5:], mapname1=mapname)
+
+          if (func.startswith("patch") is True):
+              body = {
+                "sonic-vxlan:VXLAN_TUNNEL_MAP_LIST": [
+                  {
+                    "name": args[0][5:],
+                    "mapname": mapname,
+                    "vlan": 'Vlan' + vidstr,
+                    "vni": vnid 
+                  }
+                ]
+              }
+              api_response =  aa.patch(keypath, body)
+          else:
+              api_response = aa.delete(keypath)
+
+          if api_response.ok():
+              response = api_response.content
+              if response is None:
+                  result = "Success"
+              elif 'sonic-vxlan:sonic-vxlan' in response.keys():
+                  value = response['sonic-vxlan:sonic-vxlan']
+                  if value is None:
+                      result = "Success"
+                  else:
+                      result = "Failed"
+              
+          else:
+              #error response
+              result =  api_response.error_message()
+
+          if result != 'Success':
+           print("Map creation for VID:{} = {}".format(vidstr,result)) 
+           fail = 1
+
+        if fail == 0:
+          print("Map creation for {} vids succeeded.".format(count+1))
+          
+    if func == "get_list_sonic_vxlan_sonic_vxlan_vxlan_tunnel_vxlan_tunnel_list":
+        keypath = cc.Path('/restconf/data/sonic-vxlan:sonic-vxlan/VXLAN_TUNNEL/VXLAN_TUNNEL_LIST')
+        return aa.get(keypath)
+
+    if func == "get_list_sonic_vxlan_sonic_vxlan_evpn_nvo_evpn_nvo_list":
+        keypath = cc.Path('/restconf/data/sonic-vxlan:sonic-vxlan/EVPN_NVO/EVPN_NVO_LIST')
+        return aa.get(keypath)
+
+    if func == "get_list_sonic_vxlan_sonic_vxlan_vxlan_tunnel_map_vxlan_tunnel_map_list":
+        keypath = cc.Path('/restconf/data/sonic-vxlan:sonic-vxlan/VXLAN_TUNNEL_MAP/VXLAN_TUNNEL_MAP_LIST')
+        return aa.get(keypath)
+
     else:
-       body = {}
+        print("%Error: not implemented")
+        exit(1)
 
-    return keypath,body
+    return api_response
 
-def getId(item):
-    prfx = "Ethernet"
-    state_dict = item['state']
-    ifName = state_dict['name']
+#show vxlan interface 
+def vxlan_show_vxlan_interface(args):
 
-    if ifName.startswith(prfx):
-        ifId = int(ifName[len(prfx):])
-        return ifId
-    return ifName
+    print "#### VXLAN INFO ####"
+    api_response = invoke("get_list_sonic_vxlan_sonic_vxlan_vxlan_tunnel_vxlan_tunnel_list", args)
+    if api_response.ok():
+        response = api_response.content
+	if response is None:
+	    print "no vxlan configuration"
+	elif response is not None:
+           tunnel_list = response['sonic-vxlan:VXLAN_TUNNEL_LIST']
+           print "VTEP Name : " + tunnel_list[0]['name']
+           print "VTEP Source IP : " + tunnel_list[0]['src_ip']
+	       #show_cli_output(args[0], vxlan_info)
+	#print api_response.error_message()
+
+    api_response = invoke("get_list_sonic_vxlan_sonic_vxlan_evpn_nvo_evpn_nvo_list", args)
+    if api_response.ok():
+        response = api_response.content
+
+	if response is None:
+	    print "no evpn configuration"
+	elif response is not None:
+           nvo_list = response['sonic-vxlan:EVPN_NVO_LIST']
+           print"EVPN NVO Name : " + nvo_list[0]['name']
+           print"EVPN VTEP : " + nvo_list[0]['source_vtep']
+	       #show_cli_output(args[0], vxlan_info)
+
+    return
+
+#show vxlan map 
+def vxlan_show_vxlan_vlanvnimap(args):
+
+    print "#### VLAN-VNI Mapping ####"
+    print("{0:^8}  {1:^8}".format('VLAN','VNI'))
+    api_response = invoke("get_list_sonic_vxlan_sonic_vxlan_vxlan_tunnel_map_vxlan_tunnel_map_list", args)
+    if api_response.ok():
+        response = api_response.content
+	if response is None:
+	    print "no vxlan configuration"
+	elif response is not None:
+           tunnel_list = response['sonic-vxlan:VXLAN_TUNNEL_MAP_LIST']
+           for iter in tunnel_list:
+             print("{0:^8}  {1:^8}".format(iter['vlan'],iter['vni']))
+	       #show_cli_output(args[0], vxlan_info)
+	#print api_response.error_message()
+
+    return
 
 def run(func, args):
 
-    c = sonic_vxlan_client.Configuration()
-    c.verify_ssl = False
-    aa = sonic_vxlan_client.SonicVxlanApi(api_client=sonic_vxlan_client.ApiClient(configuration=c))
-
-    # create a body block
-    keypath, body = generate_body(func, args)
-
+    #show commands
     try:
-        if body is not None:
-           api_response = getattr(aa,func.__name__)(*keypath, body=body)
-        else :
-           api_response = getattr(aa,func.__name__)(*keypath)
+        #show vxlan brief command
+        if func == 'show vxlan interface':
+            vxlan_show_vxlan_interface(args)
+            return
+        if func == 'show vxlan vlanvnimap':
+            vxlan_show_vxlan_vlanvnimap(args)
+            return
 
-        if api_response is None:
-            print ("Success")
-        else:
-            # Get Command Output
-            api_response = aa.api_client.sanitize_for_serialization(api_response)
-#           if 'openconfig-interfaces:interfaces' in api_response:
-#               value = api_response['openconfig-interfaces:interfaces']
-#               if 'interface' in value:
-#                   tup = value['interface']
-#                   value['interface'] = sorted(tup, key=getId)
+    except Exception as e:
+            print sys.exc_value
+            return
 
-            if api_response is None:
-                print("Failed")
-            else:
-                return
 
-    except ApiException as e:
-        if e.body != "":
-            body = json.loads(e.body)
-            if "ietf-restconf:errors" in body:
-                 err = body["ietf-restconf:errors"]
-                 if "error" in err:
-                     errList = err["error"]
+    #config commands
+    try:
+        api_response = invoke(func, args)
 
-                     errDict = {}
-                     for dict in errList:
-                         for k, v in dict.iteritems():
-                              errDict[k] = v
+        if (func != 'patch_sonic_vxlan_sonic_vxlan_vxlan_tunnel_map_vxlan_tunnel_map_list' and
+            func != 'delete_sonic_vxlan_sonic_vxlan_vxlan_tunnel_map_vxlan_tunnel_map_list'):
+          if api_response.ok():
+              response = api_response.content
+              if response is None:
+                  print "Success"
+              elif 'sonic-vxlan:sonic-vxlan' in response.keys():
+                  value = response['sonic-vxlan:sonic-vxlan']
+                  if value is None:
+                      print("Success")
+                  else:
+                      print ("Failed")
+              
+          else:
+              #error response
+              print api_response.error_message()
 
-                     if "error-message" in errDict:
-                         print "%Error: " + errDict["error-message"]
-                         return
-                     print "%Error: Transaction Failure"
-                     return
+    except:
+            # system/network error
             print "%Error: Transaction Failure"
-        else:
-            print "Failed"
+
 
 if __name__ == '__main__':
-
     pipestr().write(sys.argv)
-    func = eval(sys.argv[1], globals(), sonic_vxlan_client.SonicVxlanApi.__dict__)
+    #pdb.set_trace()
+    run(sys.argv[1], sys.argv[2:])
 
-    run(func, sys.argv[2:])
