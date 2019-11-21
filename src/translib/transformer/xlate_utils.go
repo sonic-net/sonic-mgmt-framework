@@ -235,7 +235,8 @@ func sonicKeyDataAdd(dbIndex db.DBNum, keyNameList []string, xpathPrefix string,
 	var dbOpts db.Options
 	dbOpts = getDBOptions(dbIndex)
 	keySeparator := dbOpts.KeySeparator
-    keyValList := strings.Split(keyStr, keySeparator)
+    keyValList := strings.SplitN(keyStr, keySeparator, len(keyNameList))
+    log.Infof("yang keys list - %v, xpathprefix - %v, DB-key string - %v, DB-key list after db key separator split - %v, dbIndex - %v", keyNameList, xpathPrefix, keyStr, keyValList, dbIndex) 
 
     if len(keyNameList) != len(keyValList) {
         return
@@ -494,6 +495,20 @@ func XfmrRemoveXPATHPredicates(xpath string) (string, error) {
 	return path, nil
 }
 
+func replacePrefixWithModuleName(xpath string) (string) {
+	//Input xpath is after removing the xpath Predicates
+	var moduleNm string
+	if _, ok := xYangSpecMap[xpath]; ok {
+		moduleNm = xYangSpecMap[xpath].dbEntry.Prefix.Parent.NName()
+		pathList := strings.Split(xpath, ":")
+		if len(moduleNm) > 0 && len(pathList) == 2 {
+			xpath = "/" + moduleNm + ":" + pathList[1]
+		}
+	}
+	return xpath
+}
+
+
 /* Extract key vars, create db key and xpath */
 func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, requestUri string, subOpDataMap map[int]*RedisDbMap, txCache interface{}) (string, string, string) {
 	 keyStr    := ""
@@ -587,11 +602,19 @@ func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, req
  }
 
  func sonicXpathKeyExtract(path string) (string, string, string) {
-	 xpath, keyStr, tableName := "", "", ""
+	 xpath, keyStr, tableName, fldNm := "", "", "", ""
 	 var err error
+	 lpath := path
 	 xpath, err = XfmrRemoveXPATHPredicates(path)
 	 if err != nil {
 		 return xpath, keyStr, tableName
+	 }
+	 if xpath != "" {
+		 fldPth := strings.Split(xpath, "/")
+		 if len(fldPth) > SONIC_FIELD_INDEX {
+			 fldNm = fldPth[SONIC_FIELD_INDEX]
+			 log.Info("Field Name : ", fldNm)
+		 }
 	 }
 	 rgp := regexp.MustCompile(`\[([^\[\]]*)\]`)
 	 pathsubStr := strings.Split(path , "/")
@@ -612,7 +635,16 @@ func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, req
 		 if dbInfo.keyName != nil {
 			 keyStr = *dbInfo.keyName
 		 } else {
-			 for i, kname := range rgp.FindAllString(path, -1) {
+			 /* chomp off the field portion to avoid processing specific item delete in leaf-list
+			    eg. /sonic-acl:sonic-acl/ACL_TABLE/ACL_TABLE_LIST[aclname=MyACL2_ACL_IPV4]/ports[ports=Ethernet12]
+			 */
+			 if fldNm != "" {
+				 chompFld := strings.Split(path, "/")
+				 lpath = strings.Join(chompFld[:SONIC_FIELD_INDEX], "/")
+				 log.Info("path after removing the field portion ", lpath)
+
+			 }
+			 for i, kname := range rgp.FindAllString(lpath, -1) {
 				 if i > 0 {
 					 keyStr += dbOpts.KeySeparator
 				 }

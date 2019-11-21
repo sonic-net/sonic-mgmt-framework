@@ -319,7 +319,7 @@ func dbMapDelete(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requestU
 		xpathPrefix, keyName, tableName := sonicXpathKeyExtract(uri)
 		log.Infof("Delete req: uri(\"%v\"), key(\"%v\"), xpathPrefix(\"%v\"), tableName(\"%v\").", uri, keyName, xpathPrefix, tableName)
 		resultMap[oper][db.ConfigDB] = result
-		err = sonicYangReqToDbMapDelete(xpathPrefix, tableName, keyName, result)
+		err = sonicYangReqToDbMapDelete(requestUri, xpathPrefix, tableName, keyName, result)
 	} else {
 		xpathPrefix, keyName, tableName := xpathKeyExtract(d, ygRoot, oper, uri, requestUri, subOpDataMap, txCache)
 		log.Infof("Delete req: uri(\"%v\"), key(\"%v\"), xpathPrefix(\"%v\"), tableName(\"%v\").", uri, keyName, xpathPrefix, tableName)
@@ -397,7 +397,8 @@ func dbMapDelete(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requestU
 	return err
 }
 
-func sonicYangReqToDbMapDelete(xpathPrefix string, tableName string, keyName string, result map[string]map[string]db.Value) error {
+func sonicYangReqToDbMapDelete(requestUri string, xpathPrefix string, tableName string, keyName string, result map[string]map[string]db.Value) error {
+	var err error
     if (tableName != "") {
         // Specific table entry case
         result[tableName] = make(map[string]db.Value)
@@ -406,24 +407,48 @@ func sonicYangReqToDbMapDelete(xpathPrefix string, tableName string, keyName str
             var dbVal db.Value
             tokens:= strings.Split(xpathPrefix, "/")
             if tokens[SONIC_TABLE_INDEX] == tableName {
-               fieldName := tokens[len(tokens)-1]
-               dbSpecField := tableName + "/" + fieldName
-               _, ok := xDbSpecMap[dbSpecField]
-	       if ok {
-		       yangType := xDbSpecMap[dbSpecField].fieldType
-		       // terminal node case
-		       if yangType == YANG_LEAF_LIST {
-			       fieldName = fieldName + "@"
-			       dbVal.Field = make(map[string]string)
-			       dbVal.Field[fieldName] = ""
-		       }
-		       if yangType == YANG_LEAF {
-			       dbVal.Field = make(map[string]string)
-			       dbVal.Field[fieldName] = ""
-		       }
-	       }
-	    }
-            result[tableName][keyName] = dbVal
+		    fieldName := ""
+		    if len(tokens) > SONIC_FIELD_INDEX {
+			    fieldName = tokens[SONIC_FIELD_INDEX]
+		    }
+
+		     if fieldName != "" {
+			     dbSpecField := tableName + "/" + fieldName
+			     _, ok := xDbSpecMap[dbSpecField]
+			     if ok {
+				     yangType := xDbSpecMap[dbSpecField].fieldType
+				     // terminal node case
+				     if yangType == YANG_LEAF_LIST {
+					     dbVal.Field = make(map[string]string)
+					     //check if it is a specific item in leaf-list delete
+					     uriItemList := strings.Split(strings.TrimSuffix(requestUri, "/"), "/")
+					     uriItemListLen := len(uriItemList)
+					     var terminalNode string
+					     if uriItemListLen > 0 {
+						     terminalNode = uriItemList[uriItemListLen-1]
+						     dbFldVal := ""
+						     if strings.Contains(terminalNode, "[") {
+							     terminalNodeData := strings.TrimSuffix(strings.SplitN(terminalNode, "[", 2)[1], "]")
+							     terminalNodeDataLst := strings.SplitN(terminalNodeData, "=", 2)
+							     terminalNodeVal := terminalNodeDataLst[1]
+							     dbFldVal, err = unmarshalJsonToDbData(xDbSpecMap[dbSpecField].dbEntry, fieldName, terminalNodeVal)
+							     if err != nil {
+								     log.Errorf("Failed to unmashal Json to DbData: path(\"%v\") error (\"%v\").", dbSpecField, err)
+								     return err
+							     }
+						     }
+						     fieldName = fieldName + "@"
+						     dbVal.Field[fieldName] = dbFldVal
+					     }
+				     }
+				     if yangType == YANG_LEAF {
+					     dbVal.Field = make(map[string]string)
+					     dbVal.Field[fieldName] = ""
+				     }
+			     }
+		     }
+	     }
+	     result[tableName][keyName] = dbVal
         } else {
             // Get all keys
         }
@@ -435,7 +460,9 @@ func sonicYangReqToDbMapDelete(xpathPrefix string, tableName string, keyName str
             dbInfo := xDbSpecMap[xpathPrefix]
             if dbInfo.fieldType == "container" {
                 for dir, _ := range dbInfo.dbEntry.Dir {
-                    result[dir] = make(map[string]db.Value)
+                    if dbInfo.dbEntry.Dir[dir].Config != yang.TSFalse {
+                       result[dir] = make(map[string]db.Value)
+                    }
                 }
             }
         }
