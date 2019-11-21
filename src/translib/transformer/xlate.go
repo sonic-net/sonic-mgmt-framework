@@ -97,17 +97,18 @@ func TraverseDb(dbs [db.MaxDB]*db.DB, spec KeySpec, result *map[db.DBNum]map[str
 
 	if spec.Key.Len() > 0 {
 		// get an entry with a specific key
-		data, err := dbs[spec.dbNum].GetEntry(&spec.Ts, spec.Key)
-		if err != nil {
-			return err
-		}
+		if spec.Ts.Name != "NIL" { // Do not traverse for NIL table
+			data, err := dbs[spec.dbNum].GetEntry(&spec.Ts, spec.Key)
+			if err != nil {
+				return err
+			}
 
-		if (*result)[spec.dbNum][spec.Ts.Name] == nil {
-			(*result)[spec.dbNum][spec.Ts.Name] = map[string]db.Value{strings.Join(spec.Key.Comp, separator): data}
-		} else {
-			(*result)[spec.dbNum][spec.Ts.Name][strings.Join(spec.Key.Comp, separator)] = data
+			if (*result)[spec.dbNum][spec.Ts.Name] == nil {
+				(*result)[spec.dbNum][spec.Ts.Name] = map[string]db.Value{strings.Join(spec.Key.Comp, separator): data}
+			} else {
+				(*result)[spec.dbNum][spec.Ts.Name][strings.Join(spec.Key.Comp, separator)] = data
+			}
 		}
-
 		if len(spec.Child) > 0 {
 			for _, ch := range spec.Child {
 				err = TraverseDb(dbs, ch, result, &spec.Key)
@@ -115,21 +116,27 @@ func TraverseDb(dbs [db.MaxDB]*db.DB, spec KeySpec, result *map[db.DBNum]map[str
 		}
 	} else {
 		// TODO - GetEntry support with regex patten, 'abc*' for optimization
-		keys, err := dbs[spec.dbNum].GetKeys(&spec.Ts)
-		if err != nil {
-			return err
-		}
-		log.Infof("keys for table %v in Db %v are %v", spec.Ts.Name, spec.dbNum, keys)
-		for i, _ := range keys {
-			if parentKey != nil && (spec.ignoreParentKey == false) {
-				// TODO - multi-depth with a custom delimiter
-				if strings.Index(strings.Join(keys[i].Comp, separator), strings.Join((*parentKey).Comp, separator)) == -1 {
-					continue
-				}
+		if spec.Ts.Name != "NIL" { //Do not traverse for NIL table
+			keys, err := dbs[spec.dbNum].GetKeys(&spec.Ts)
+			if err != nil {
+				return err
 			}
-			spec.Key = keys[i]
-			err = TraverseDb(dbs, spec, result, parentKey)
-		}
+			log.Infof("keys for table %v in Db %v are %v", spec.Ts.Name, spec.dbNum, keys)
+			for i, _ := range keys {
+				if parentKey != nil && (spec.ignoreParentKey == false) {
+					// TODO - multi-depth with a custom delimiter
+					if strings.Index(strings.Join(keys[i].Comp, separator), strings.Join((*parentKey).Comp, separator)) == -1 {
+						continue
+					}
+				}
+				spec.Key = keys[i]
+				err = TraverseDb(dbs, spec, result, parentKey)
+			}
+		} else if len(spec.Child) > 0 {
+                        for _, ch := range spec.Child {
+                                err = TraverseDb(dbs, ch, result, &spec.Key)
+                        }
+                }
 	}
 	return err
 }

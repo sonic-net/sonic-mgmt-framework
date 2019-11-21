@@ -99,6 +99,11 @@ func mapFillData(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requestU
         return errors.New("Invalid table name")
     }
 
+    if *xpathInfo.tableName == "NIL" {
+        log.Errorf("Table for yang-path(\"%v\") NIL.", xpath)
+        return errors.New("Ignore table name")
+    }
+
     if len(dbKey) == 0 {
         log.Errorf("Table key for yang path(\"%v\") not found.", xpath)
         return errors.New("Invalid table key")
