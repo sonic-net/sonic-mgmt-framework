@@ -410,7 +410,6 @@ module openconfig-nat-annot {
     }
     deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-twice-mapping-table/oc-nat:nat-twice-entry/oc-nat:state/oc-nat:entry-type {
         deviate add {
-            sonic-ext:field-name "entry_type";
             sonic-ext:field-transformer "entry_type_field_xfmr";
         }
     }
