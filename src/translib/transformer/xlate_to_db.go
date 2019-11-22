@@ -99,8 +99,8 @@ func mapFillData(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requestU
         return errors.New("Invalid table name")
     }
 
-    if *xpathInfo.tableName == "NIL" {
-        log.Errorf("Table for yang-path(\"%v\") NIL.", xpath)
+    if *xpathInfo.tableName == "NONE" {
+        log.Errorf("Table for yang-path(\"%v\") NONE.", xpath)
         return errors.New("Ignore table name")
     }
 

@@ -592,7 +592,7 @@ func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, req
 	 }
 	 curPathWithKey = strings.TrimSuffix(curPathWithKey, "/")
 	 tblPtr     := xpathInfo.tableName
-	 if tblPtr != nil && *tblPtr != "NIL" {
+	 if tblPtr != nil && *tblPtr != "NONE" {
 		 tableName = *tblPtr
 	 } else if xpathInfo.xfmrTbl != nil {
 		 inParams := formXfmrInputRequest(d, dbs, cdb, ygRoot, curPathWithKey, requestUri, oper, "", nil, subOpDataMap, nil, txCache)
