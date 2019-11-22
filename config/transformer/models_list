@@ -20,3 +20,5 @@ ietf-ptp-annot.yang
 sonic-mclag.yang
 openconfig-system.yang
 openconfig-system-annot.yang
+openconfig-nat.yang
+openconfig-nat-annot.yang

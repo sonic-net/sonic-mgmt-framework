@@ -105,141 +105,141 @@ module sonic-nat {
 
             }
         }
-    }
 
-    container STATIC_NAT {
-        list STATIC_NAT_LIST {
-            key "global_ip";
+        container STATIC_NAT {
+            list STATIC_NAT_LIST {
+                key "global_ip";
 
-            uses sonic-nat-common;
-        }
-    }
-
-    typedef mode {
-        type enumeration {
-            enum enabled;
-            enum disabled;
-        }
-    }
-
-    container NAT_GLOBAL {
-        list NAT_GLOBAL_LIST {
-            key "name";
-            max-elements 1;
-
-            leaf name {
-                type enumeration {
-                    enum Values;
-                }
-            }
-            leaf admin_mode {
-                type mode;
-                default enabled;
-            }
-
-            leaf nat_timeout {
-                type uint32 {
-                    range "300..432000" {
-                        error-message "Invalid NAT Timeout, valid range 300 sec to 432000 sec.";
-                        error-app-tag nat-timeout-invalid;
-                    }
-                }
-            }
-            leaf nat_tcp_timeout {
-                type uint32 {
-                    range "300..432000" {
-                        error-message "Invalid NAT TCP Timeout, valid range 300 sec to 432000 sec.";
-                        error-app-tag nat-tcp-timeout-invalid;
-                    }
-                }
-            }
-            leaf nat_udp_timeout {
-                type uint16 {
-                    range "120..600" {
-                        error-message "Invalid NAT UDP Timeout, valid range 120 sec to 600 sec.";
-                        error-app-tag nat-udp-timeout-invalid;
-                    }
-                }
+                uses sonic-nat-common;
             }
         }
-    }
 
-    container NAT_POOL {
-        list NAT_POOL_LIST {
-            key "pool_name";
-            max-elements 16;
-
-            leaf pool_name {
-                type string {
-                    pattern '[a-zA-Z0-9]{1}([-a-zA-Z0-9_]{0,31})';
-                    length 1..32 {
-                        error-app-tag pool-name-invalid-length;
-                    }
-                }
+        typedef mode {
+            type enumeration {
+                enum enabled;
+                enum disabled;
             }
+        }
 
-            choice nat_ip {
-                case ip_address {
-                    leaf IP_ADDRESS {
-                        type inet:ipv4-address;
+        container NAT_GLOBAL {
+            list NAT_GLOBAL_LIST {
+                key "name";
+                max-elements 1;
+
+                leaf name {
+                    type enumeration {
+                        enum Values;
                     }
                 }
-                case ip_address_range {
-                    leaf IP_ADDRESS_RANGE {
-                        type string {
-                            pattern '(([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|'  +
-                                        '25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4]' + 
-                                        '[0-9]|25[0-5])$ (-) ^(([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|'  +
-                                                '25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4]'  +
-                                                '[0-9]|25[0-5])';
+                leaf admin_mode {
+                    type mode;
+                    default enabled;
+                }
+
+                leaf nat_timeout {
+                    type uint32 {
+                        range "300..432000" {
+                            error-message "Invalid NAT Timeout, valid range 300 sec to 432000 sec.";
+                            error-app-tag nat-timeout-invalid;
+                        }
+                    }
+                }
+                leaf nat_tcp_timeout {
+                    type uint32 {
+                        range "300..432000" {
+                            error-message "Invalid NAT TCP Timeout, valid range 300 sec to 432000 sec.";
+                            error-app-tag nat-tcp-timeout-invalid;
+                        }
+                    }
+                }
+                leaf nat_udp_timeout {
+                    type uint16 {
+                        range "120..600" {
+                            error-message "Invalid NAT UDP Timeout, valid range 120 sec to 600 sec.";
+                            error-app-tag nat-udp-timeout-invalid;
                         }
                     }
                 }
             }
-
-            leaf nat_port {
-                type string {
-                    pattern "[0-9]{1,5}(-)[0-9]{1,5}";
-                }
-            }
         }
-    }
 
-    container NAT_BINDINGS {
+        container NAT_POOL {
+            list NAT_POOL_LIST {
+                key "pool_name";
+                max-elements 16;
 
-        list NAT_BINDINGS_LIST {
+                leaf pool_name {
+                    type string {
+                        pattern '[a-zA-Z0-9]{1}([-a-zA-Z0-9_]{0,31})';
+                        length 1..32 {
+                            error-app-tag pool-name-invalid-length;
+                        }
+                    }
+                }
 
-            key "binding_name";
-            max-elements 16;
+                choice nat_ip {
+                    case ip_address {
+                        leaf IP_ADDRESS {
+                            type inet:ipv4-address;
+                        }
+                    }
+                    case ip_address_range {
+                        leaf IP_ADDRESS_RANGE {
+                            type string {
+                                pattern '(([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|'  +
+                                            '25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4]' + 
+                                            '[0-9]|25[0-5])$ (-) ^(([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|'  +
+                                                    '25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4]'  +
+                                                    '[0-9]|25[0-5])';
+                            }
+                        }
+                    }
+                }
 
-            leaf binding_name {
-                type string {
-
-                    pattern '[a-zA-Z0-9]{1}([-a-zA-Z0-9_]{0,31})';
-                    length 1..32 {
-                        error-app-tag binding-name-invalid-length;
+                leaf nat_port {
+                    type string {
+                        pattern "[0-9]{1,5}(-)[0-9]{1,5}";
                     }
                 }
             }
+        }
 
-            leaf nat_pool {
-                mandatory true;
-                type leafref {
-                    path "../../../NAT_POOL/NAT_POOL_LIST/pool_name";
+        container NAT_BINDINGS {
+
+            list NAT_BINDINGS_LIST {
+
+                key "binding_name";
+                max-elements 16;
+
+                leaf binding_name {
+                    type string {
+
+                        pattern '[a-zA-Z0-9]{1}([-a-zA-Z0-9_]{0,31})';
+                        length 1..32 {
+                            error-app-tag binding-name-invalid-length;
+                        }
+                    }
                 }
-            }
 
-            leaf access_list {
-                type leafref {
-                    path "/sacl:sonic-acl/sacl:ACL_TABLE/sacl:ACL_TABLE_LIST/sacl:aclname";
-                } 
-            }
+                leaf nat_pool {
+                    mandatory true;
+                    type leafref {
+                        path "../../../NAT_POOL/NAT_POOL_LIST/pool_name";
+                    }
+                }
 
-            leaf nat_type {
-                type nat-type;
-                default snat;
+                leaf access_list {
+                    type leafref {
+                        path "/sacl:sonic-acl/sacl:ACL_TABLE/sacl:ACL_TABLE_LIST/sacl:aclname";
+                    } 
+                }
+
+                leaf nat_type {
+                    type nat-type;
+                    default snat;
+                }
+                uses sonic-twice-nat-id;
             }
-            uses sonic-twice-nat-id;
         }
     }
 }
