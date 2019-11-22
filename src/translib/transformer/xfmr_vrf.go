@@ -6,7 +6,6 @@ import (
         "github.com/openconfig/ygot/ygot"
         "strings"
         "translib/ocbinds"
-        "fmt"
 )
 
 type NwInstMapKey struct {
