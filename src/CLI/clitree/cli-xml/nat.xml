@@ -64,14 +64,14 @@ limitations under the License.
             name="enable"
             help="Enable NAT feature"
 	    >
-        <ACTION builtin="clish_nop"></ACTION>
+        <ACTION>python $SONIC_CLI_ROOT/sonic-cli-nat.py patch_openconfig_nat_nat_instances_instance_config_enable True</ACTION>
         </COMMAND>
 
 	<COMMAND
             name="no enable"
             help="Disable NAT feature"
             >
-	    <ACTION builtin="clish_nop"></ACTION>
+        <ACTION>python $SONIC_CLI_ROOT/sonic-cli-nat.py patch_openconfig_nat_nat_instances_instance_config_enable False</ACTION>
 
        </COMMAND>
 
@@ -87,7 +87,7 @@ limitations under the License.
              ptype="UINT"
              >
          </PARAM>
-         <ACTION builtin="clish_nop"></ACTION>
+         <ACTION>python $SONIC_CLI_ROOT/sonic-cli-nat.py patch_openconfig_nat_nat_instances_instance_config_timeout ${timeout-value}</ACTION>
        </COMMAND>
 
 
@@ -95,7 +95,7 @@ limitations under the License.
          name="no timeout"
          help="Set default NAT entry aging timeout in seconds"
 	 >
-         <ACTION builtin="clish_nop"></ACTION>
+         <ACTION>python $SONIC_CLI_ROOT/sonic-cli-nat.py patch_openconfig_nat_nat_instances_instance_config_timeout 600</ACTION>
      </COMMAND>
 
      <COMMAND
@@ -110,14 +110,14 @@ limitations under the License.
              ptype="UINT"
              >
          </PARAM>
-         <ACTION builtin="clish_nop"></ACTION>
+         <ACTION>python $SONIC_CLI_ROOT/sonic-cli-nat.py patch_openconfig_nat_nat_instances_instance_config_tcp_timeout ${tcp-timeout-value}</ACTION>
      </COMMAND>
 
      <COMMAND
          name="no tcp-timeout"
          help="Set Default TCP NAT entry aging timeout in seconds"
          >
-         <ACTION builtin="clish_nop"></ACTION>
+         <ACTION>python $SONIC_CLI_ROOT/sonic-cli-nat.py patch_openconfig_nat_nat_instances_instance_config_tcp_timeout 86400</ACTION>
      </COMMAND>
 
       <COMMAND
@@ -132,14 +132,14 @@ limitations under the License.
              ptype="UINT"
              >
          </PARAM>
-         <ACTION builtin="clish_nop"></ACTION>
+         <ACTION>python $SONIC_CLI_ROOT/sonic-cli-nat.py patch_openconfig_nat_nat_instances_instance_config_udp_timeout ${udp-timeout-value}</ACTION>
      </COMMAND>
 
       <COMMAND
          name="no udp-timeout"
          help="Set Default UDP NAT entry aging timeout in seconds"
          >
-         <ACTION builtin="clish_nop"></ACTION>
+         <ACTION>python $SONIC_CLI_ROOT/sonic-cli-nat.py patch_openconfig_nat_nat_instances_instance_config_udp_timeout 300</ACTION>
      </COMMAND>
 
       <COMMAND
