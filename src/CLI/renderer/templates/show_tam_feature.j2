@@ -1,0 +1,8 @@
+{{'---------------------------------------------------------'}}
+{{'TAM IFA Feature Information'.ljust(20)}}
+{{'---------------------------------------------------------'}}
+{% if json_output and 'sonic-ifa:TAM_INT_IFA_FEATURE_TABLE' in json_output -%}
+{% set tam_info = json_output['sonic-ifa:TAM_INT_IFA_FEATURE_TABLE']['TAM_INT_IFA_FEATURE_TABLE_LIST'] %}
+{{'IFA Feature Supported: '}}{{tam_info[0]['enable']}}
+{% endif %}
+

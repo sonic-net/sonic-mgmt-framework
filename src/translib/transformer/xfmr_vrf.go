@@ -206,6 +206,9 @@ var network_instance_table_name_xfmr TableXfmrFunc = func (inParams XfmrParams) 
 
         /* get the name at the top network-instance table level, this is the key */
         keyName := pathInfo.Var("name")
+        if keyName == "default" {
+           return tblList, err
+        }
 
         if keyName == "" {
                 /* for GET with no keyName, return table name for mgmt VRF and data VRF */

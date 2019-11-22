@@ -550,6 +550,8 @@ func dbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, request
 	root := xpathRootNameGet(path)
 	if isSonicYang(path) {
 		err = sonicYangReqToDbMapCreate(jsonData, result)
+		resultMap[oper] = make(RedisDbMap)
+		resultMap[oper][db.ConfigDB] = result
 	} else {
 		err = yangReqToDbMapCreate(d, ygRoot, oper, root, path, "", "", jsonData, result, subOpDataMap, tblXpathMap, txCache)
 	}

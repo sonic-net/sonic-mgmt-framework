@@ -1,0 +1,44 @@
+module sonic-bgp-peergroup {
+  namespace "http://github.com/Azure/sonic-bgp-peergroup";
+  prefix pg;
+
+  import sonic-bgp-common {
+    prefix sbc;
+  }
+  organization
+    "SONiC";
+
+  contact
+    "SONiC";
+
+  description
+    "SONIC BGP Peer Group YANG";
+
+  revision 2019-10-16 {
+    description
+      "Initial revision.";
+  }
+
+  container sonic-bgp-peergroup {
+    container BGP_PEER_GROUP {
+      list BGP_PEER_GROUP_LIST {
+        key "vrf_name peer_group_name";
+
+        uses sbc:sonic-bgp-cmn;
+      }
+    }
+
+    container BGP_PEER_GROUP_AF {
+      list BGP_PEER_GROUP_AF_LIST {
+        key "vrf_name peer_group_name afi_safi";
+
+        leaf peer_group_name {
+            type string;
+            description "Peer group name";
+        }
+        
+        uses sbc:sonic-bgp-cmn-af;
+      }
+    }
+  }
+}

@@ -19,10 +19,11 @@
 
 TOPDIR     ?= ../..
 ABS_TOPDIR ?= $(abspath $(TOPDIR))
-BUILD_DIR  ?= $(TOPDIR)/build
+BUILD_DIR  ?= $(ABS_TOPDIR)/build
+BUILD_GOPATH ?= $(BUILD_DIR)/gopkgs
 
 GO     ?= go
-GOPATH ?= $(ABS_TOPDIR)/gopkgs:$(ABS_TOPDIR):$(shell $(GO) env GOPATH)
+GOPATH ?= $(BUILD_GOPATH):$(ABS_TOPDIR):$(shell $(GO) env GOPATH)
 GOROOT ?= $(shell $(GO) env GOROOT)
 
 
@@ -36,7 +37,7 @@ REST_TEST_SRCS = $(shell find . -name '*_test.go')
 # Source files affecting REST server
 REST_SRCS := $(ALL_GO_SRCS) \
 			 $(shell find $(TOPDIR)/models/yang -name '*.yang' | sort) \
-			 $(shell find $(TOPDIR)/src/cvl/schema '*.yang' | sort) \
+			 $(shell find $(TOPDIR)/src/cvl/schema -name '*.yang' | sort) \
 			 $(shell find $(TOPDIR)/models/openapi -name '*.yaml' | sort)
 
 REST_GOPATH := $(GOPATH):$(abspath $(REST_BUILD_DIR)/dist)
@@ -61,7 +62,7 @@ $(REST_BIN): $(REST_SRCS) | $(REST_BUILD_DIR)/
 ifeq ($(SONIC_COVERAGE_ON),y)
 	GOPATH=$(REST_GOPATH) $(GO) test -coverpkg=".././..." -c -o $@ main/main.go main/main_test.go
 else
-	GOPATH=$(REST_GOPATH) $(GO) build -gcflags="all=-N -l" -v -o $@ main/main.go
+	GOPATH=$(REST_GOPATH) $(GO) build -gcflags="all=-N -l" -v -o $@ $(abspath .)/main/main.go
 endif
 
 # Gotest binary for REST Server

@@ -91,5 +91,4 @@ module sonic-extensions {
     argument "callback";
     description "RPC callback to be invoked for action";
   }
-
 }
