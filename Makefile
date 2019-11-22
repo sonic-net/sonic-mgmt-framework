@@ -91,7 +91,7 @@ cvl: $(go-deps) $(go-patch) $(go-redis-patch)
 cvl-test:
 	$(MAKE) -C src/cvl gotest
 
-rest-server: translib
+rest-server: build-deps translib
 	$(MAKE) -C src/rest
 
 rest-clean:
@@ -112,10 +112,13 @@ $(go-patch): $(go-deps)
 cd ../; cp $(TOPDIR)/ygot-modified-files/ygot.patch .; \
 patch -p1 < ygot.patch; rm -f ygot.patch; \
 $(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/openconfig/ygot/ygot; \
+	
+	rm -f $(BUILD_GOPATH)/src/github.com/openconfig/goyang/annotate.go
 	cd $(BUILD_GOPATH)/src/github.com/openconfig/goyang/; git reset --hard HEAD; git checkout 064f9690516f4f72db189f4690b84622c13b7296 >/dev/null ; true; \
 cp $(TOPDIR)/goyang-modified-files/goyang.patch .; \
 patch -p1 < goyang.patch; rm -f goyang.patch; \
 $(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/openconfig/goyang
+	
 #Apply CVL related patches
 	$(apply_cvl_dep_patches)
 	touch  $@
@@ -161,7 +164,6 @@ clean: rest-clean
 	$(MAKE) -C src/translib clean
 	$(MAKE) -C src/cvl clean
 	rm -rf debian/.debhelper
-	rm -rf $(BUILD_GOPATH)/src/github.com/openconfig/goyang/annotate.go
 	(cd build && find .  -maxdepth 1 -name "gopkgs" -prune -o -not -name '.' -exec rm -rf {} +) || true
 
 cleanall:
