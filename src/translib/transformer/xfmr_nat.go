@@ -1,4 +1,4 @@
-////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 //                                                                            //
 //  Copyright 2019 Dell, Inc.                                                 //
 //                                                                            //
@@ -24,6 +24,8 @@ import (
 	"strconv"
 	"strings"
 	"translib/db"
+    "translib/ocbinds"
+    "translib/tlerr"
 )
 
 func init() {
@@ -49,6 +51,10 @@ func init() {
         XlateFuncBind("DbToYang_nat_twice_mapping_key_xfmr", DbToYang_nat_twice_mapping_key_xfmr)
         XlateFuncBind("YangToDb_napt_twice_mapping_key_xfmr", YangToDb_napt_twice_mapping_key_xfmr)
         XlateFuncBind("DbToYang_napt_twice_mapping_key_xfmr", DbToYang_napt_twice_mapping_key_xfmr)
+        XlateFuncBind("YangToDb_nat_type_field_xfmr", YangToDb_nat_type_field_xfmr)
+        XlateFuncBind("DbToYang_nat_type_field_xfmr", DbToYang_nat_type_field_xfmr)
+        XlateFuncBind("YangToDb_nat_entry_type_field_xfmr", YangToDb_nat_entry_type_field_xfmr)
+        XlateFuncBind("DbToYang_nat_entry_type_field_xfmr", DbToYang_nat_entry_type_field_xfmr)
 }
 
 const (
@@ -59,6 +65,14 @@ const (
     ENABLE           = "enable"
     INSTANCE_ID      = "id"
     GLOBAL_KEY       = "Values"
+    NAT_TABLE        = "NAT_TABLE"
+    STATIC_NAT       = "STATIC_NAT"
+    NAT_TYPE         = "nat_type"
+    NAT_ENTRY_TYPE   = "entry_type"
+    STATIC           = "static"
+    DYNAMIC          = "dynamic"
+    SNAT             = "snat"
+    DNAT             = "dnat"
 )
 
 var YangToDb_nat_instance_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (string, error) {
@@ -433,5 +447,71 @@ var DbToYang_napt_twice_mapping_key_xfmr KeyXfmrDbToYang = func(inParams XfmrPar
     return rmap, err
 }
 
+var NAT_TYPE_MAP = map[string]string{
+    strconv.FormatInt(int64(ocbinds.OpenconfigNat_NAT_TYPE_SNAT), 10): "snat",
+    strconv.FormatInt(int64(ocbinds.OpenconfigNat_NAT_TYPE_DNAT), 10): "dnat",
+}
 
+var NAT_ENTRY_TYPE_MAP = map[string]string{
+    strconv.FormatInt(int64(ocbinds.OpenconfigNat_NAT_ENTRY_TYPE_STATIC), 10): "static",
+    strconv.FormatInt(int64(ocbinds.OpenconfigNat_NAT_ENTRY_TYPE_DYNAMIC), 10): "dynamic",
+}
+
+
+var YangToDb_nat_type_field_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
+    result := make(map[string]string)
+    var err error
+
+    if inParams.param == nil {
+        result[NAT_TYPE] = ""
+        return result, err
+    }
+
+    t, _ := inParams.param.(ocbinds.E_OpenconfigNat_NAT_TYPE)
+    log.Info("YangToDb_nat_type_field_xfmr: ", inParams.ygRoot, " Xpath: ", inParams.uri, " type: ", t)
+    result[NAT_TYPE] = findInMap(NAT_TYPE_MAP, strconv.FormatInt(int64(t), 10))
+    return result, err
+
+}
+
+var DbToYang_nat_type_field_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (map[string]interface{}, error) {
+    var err error
+    result := make(map[string]interface{})
+
+    data := (*inParams.dbDataMap)[inParams.curDb]
+    log.Info("DbToYang_nat_type_field_xfmr", data, inParams.ygRoot)
+
+    t := findInMap(NAT_TYPE_MAP, data[STATIC_NAT][inParams.key].Field[NAT_TYPE])
+    n, err := strconv.ParseInt(t, 10, 64)
+    result[NAT_TYPE] = ocbinds.E_OpenconfigNat_NAT_TYPE(n).ΛMap()["E_OpenconfigNat_NAT_TYPE"][n].Name
+    return result, err
+}
+
+var YangToDb_nat_entry_type_field_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
+    result := make(map[string]string)
+    var err error
+
+    if inParams.param == nil {
+        result[NAT_ENTRY_TYPE] = ""
+        return result, err
+    }
+
+    t, _ := inParams.param.(ocbinds.E_OpenconfigNat_NAT_ENTRY_TYPE)
+    log.Info("YangToDb_nat_entry_type_field_xfmr: ", inParams.ygRoot, " Xpath: ", inParams.uri, " type: ", t)
+    result[NAT_ENTRY_TYPE] = findInMap(NAT_ENTRY_TYPE_MAP, strconv.FormatInt(int64(t), 10))
+    return result, err
+}
+
+var DbToYang_nat_entry_type_field_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (map[string]interface{}, error) {
+    var err error
+    result := make(map[string]interface{})
+
+    data := (*inParams.dbDataMap)[inParams.curDb]
+    log.Info("DbToYang_nat_entry_type_field_xfmr", data, inParams.ygRoot)
+
+    t := findInMap(NAT_ENTRY_TYPE_MAP, data[NAT_TABLE][inParams.key].Field[NAT_ENTRY_TYPE])
+    n, err := strconv.ParseInt(t, 10, 64)
+    result[NAT_ENTRY_TYPE] = ocbinds.E_OpenconfigNat_NAT_ENTRY_TYPE(n).ΛMap()["E_OpenconfigNat_NAT_ENTRY_TYPE"][n].Name
+    return result, err
+}
 
