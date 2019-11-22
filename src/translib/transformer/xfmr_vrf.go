@@ -171,36 +171,6 @@ func isMgmtVrf(inParams XfmrParams) (bool, error) {
         }
 }
 
-/* NewPathInfoFirstKey parses given path string into a PathInfo structure containing the 1st key */
-func NewPathInfoFirstKey(path string) *PathInfo {
-        var info PathInfo
-        info.Path = path
-        info.Vars = make(map[string]string)
-
-        var template strings.Builder
-        r := strings.NewReader(path)
-
-        for r.Len() > 0 {
-                c, _ := r.ReadByte()
-                if c != '[' {
-                        template.WriteByte(c)
-                        continue
-                }
-
-                name := readUntil(r, '=')
-                value := readUntil(r, ']')
-                if len(name) != 0 {
-                        fmt.Fprintf(&template, "{%s}", name)
-                        info.Vars[name] = value
-                        break;
-                }
-        }
-
-        info.Template = template.String()
-
-        return &info
-}
-
 func init() {
         XlateFuncBind("network_instance_table_name_xfmr", network_instance_table_name_xfmr)
         XlateFuncBind("YangToDb_network_instance_table_key_xfmr", YangToDb_network_instance_table_key_xfmr)
@@ -240,7 +210,7 @@ var network_instance_table_name_xfmr TableXfmrFunc = func (inParams XfmrParams) 
                 return tblList, errors.New("Network instance not set")
         }
 
-        pathInfo := NewPathInfoFirstKey(inParams.uri)
+        pathInfo := NewPathInfo(inParams.uri)
 
         /* get the name at the top network-instance table level, this is the key */
         keyName := pathInfo.Var("name")
