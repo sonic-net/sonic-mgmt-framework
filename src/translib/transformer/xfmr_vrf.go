@@ -291,11 +291,6 @@ var network_instance_table_name_xfmr TableXfmrFunc = func (inParams XfmrParams) 
 
                 tblList = append(tblList, tblName)
         } else {
-                if (keyName == "default") {
-                        log.Info("network_instance_table_name_xfmr: UPDATE case for default network instance")
-                        return tblList, err
-                }
-
                 tblList = append(tblList, NwInstTblNameMapWithName[intNwInstName])
         }
 
