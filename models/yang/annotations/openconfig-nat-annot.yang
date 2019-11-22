@@ -11,7 +11,7 @@ module openconfig-nat-annot {
 
     deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance {
         deviate add {
-            sonic-ext:key-transformer "nat_instance_key_xfmr"
+            sonic-ext:key-transformer "nat_instance_key_xfmr";
         }
     }
 
@@ -92,7 +92,7 @@ module openconfig-nat-annot {
 
     deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:napt-mapping-table/oc-nat:napt-mapping-entry/oc-nat:config/oc-nat:type {
         deviate add {
-            sonic-ext:field-name "nat_type";
+            sonic-ext:field-transformer "nat_type_field_xfmr";
         }
     }
 
@@ -123,13 +123,13 @@ module openconfig-nat-annot {
 
     deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:napt-mapping-table/oc-nat:napt-mapping-entry/oc-nat:state/oc-nat:type {
         deviate add {
-            sonic-ext:field-name "nat_type";
+            sonic-ext:field-transformer "nat_type_field_xfmr";
         }
     }
 
     deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:napt-mapping-table/oc-nat:napt-mapping-entry/oc-nat:state/oc-nat:entry-type {
         deviate add {
-            sonic-ext:field-name "entry_type";
+            sonic-ext:field-transformer "entry_type_field_xfmr";
         }
     }
 
@@ -176,7 +176,7 @@ module openconfig-nat-annot {
 
     deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-mapping-table/oc-nat:nat-mapping-entry/oc-nat:config/oc-nat:type {
         deviate add {
-            sonic-ext:field-name "nat_type";
+            sonic-ext:field-transformer "nat_type_field_xfmr";
         }
     }
 
@@ -201,13 +201,13 @@ module openconfig-nat-annot {
 
     deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-mapping-table/oc-nat:nat-mapping-entry/oc-nat:state/oc-nat:type {
         deviate add {
-            sonic-ext:field-name "nat_type";
+            sonic-ext:field-transformer "nat_type_field_xfmr";
         }
     }
 
     deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-mapping-table/oc-nat:nat-mapping-entry/oc-nat:state/oc-nat:entry-type {
         deviate add {
-            sonic-ext:field-name "entry_type";
+            sonic-ext:field-transformer "entry_type_field_xfmr";
         }
     }
 
@@ -294,7 +294,7 @@ module openconfig-nat-annot {
     }
     deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-acl-pool-binding/oc-nat:nat-acl-pool-binding-entry/oc-nat:config/oc-nat:nat-type {
         deviate add {
-            sonic-ext:field-name "nat_type";
+            sonic-ext:field-transformer "nat_type_field_xfmr";
         }
     }
     deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-acl-pool-binding/oc-nat:nat-acl-pool-binding-entry/oc-nat:config/oc-nat:twice-nat-id {
@@ -322,7 +322,7 @@ module openconfig-nat-annot {
     }
     deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-acl-pool-binding/oc-nat:nat-acl-pool-binding-entry/oc-nat:state/oc-nat:nat-type {
         deviate add {
-            sonic-ext:field-name "nat_type";
+            sonic-ext:field-transformer "nat_type_field_xfmr";
         }
     }
     deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-acl-pool-binding/oc-nat:nat-acl-pool-binding-entry/oc-nat:state/oc-nat:twice-nat-id {
@@ -405,6 +405,7 @@ module openconfig-nat-annot {
     deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-twice-mapping-table/oc-nat:nat-twice-entry/oc-nat:state/oc-nat:entry-type {
         deviate add {
             sonic-ext:field-name "entry_type";
+            sonic-ext:field-transformer "entry_type_field_xfmr";
         }
     }
 
@@ -472,7 +473,7 @@ module openconfig-nat-annot {
 
     deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:napt-twice-mapping-table/oc-nat:napt-twice-entry/oc-nat:state/oc-nat:entry-type {
         deviate add {
-            sonic-ext:field-name "entry_type";
+            sonic-ext:field-transformer "entry_type_field_xfmr";
         }
     }
 
