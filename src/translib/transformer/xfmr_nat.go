@@ -192,7 +192,7 @@ var YangToDb_napt_mapping_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (
 
     if _, ok := protocol_map[uint8(protocol)]; !ok {
         log.Info("YangToDb_napt_mapping_key_xfmr - Invalid protocol : ", protocol);
-        return napt_key, errors.New("Invalid protocol")
+        return napt_key, nil
     }
 
     key_sep = getKeySeparator(inParams.curDb)
@@ -237,7 +237,7 @@ var YangToDb_napt_mapping_state_key_xfmr KeyXfmrYangToDb = func(inParams XfmrPar
 
     if _, ok := protocol_map[uint8(protocol)]; !ok {
         log.Info("YangToDb_napt_mapping_key_xfmr - Invalid protocol : ", protocol);
-        return napt_key, errors.New("Invalid protocol")
+        return napt_key, nil
     }
 
     key_sep = getKeySeparator(inParams.curDb)
@@ -412,7 +412,7 @@ var YangToDb_napt_twice_mapping_key_xfmr KeyXfmrYangToDb = func(inParams XfmrPar
 
     if _, ok := protocol_map[uint8(protocol)]; !ok {
         log.Info("YangToDb_napt_twice_mapping_key_xfmr - Invalid protocol : ", protocol);
-        return napt_key, errors.New("Invalid protocol")
+        return napt_key, nil
     }
 
     key_sep = getKeySeparator(inParams.curDb)

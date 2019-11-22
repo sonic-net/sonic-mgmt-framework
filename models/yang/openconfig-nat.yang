@@ -597,32 +597,6 @@ module openconfig-nat {
         }
     }
 
-
-    grouping port-number {
-        description
-            "An individual port number or a range of ports.
-            When only start-port-number is present,
-                 it represents a single port number.";
-
-        leaf start-port-number {
-            type oc-inet:port-number;
-            description
-                "Beginning of the port range.";
-        }
-
-        leaf end-port-number {
-            type oc-inet:port-number;
-            must '. >= ../start-port-number' {
-                error-message
-                    "The end-port-number must be greater than or
-                    equal to start-port-number.";
-            }
-            description
-                "End of the port range.";
-        }
-    }
-
-
     grouping nat-pool-config {
         description
             "Top grouping for NAT pool data.";
@@ -652,10 +626,12 @@ module openconfig-nat {
             }
         }
 
-        container nat-port {
+        leaf nat-port {
             description
                 "NAT port range.";
-            uses port-number;
+            type string {
+                pattern "[0-9]{1,5}(-)[0-9]{1,5}";
+            }
         }
     }
 

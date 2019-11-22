@@ -71,6 +71,12 @@ module openconfig-nat-annot {
         }
     }
 
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:napt-mapping-table {
+        deviate add {
+            sonic-ext:table-name "STATIC_NAPT";
+        }
+    }
+
     deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:napt-mapping-table/oc-nat:napt-mapping-entry/oc-nat:config {
         deviate add {
             sonic-ext:table-name "STATIC_NAPT";
@@ -163,6 +169,11 @@ module openconfig-nat-annot {
     }
 
 
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-mapping-table {
+        deviate add {
+            sonic-ext:table-name "STATIC_NAT";
+        }
+    }
     deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-mapping-table/oc-nat:nat-mapping-entry/oc-nat:config {
         deviate add {
             sonic-ext:table-name "STATIC_NAT";
@@ -243,6 +254,11 @@ module openconfig-nat-annot {
     }
 
 
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-pool {
+        deviate add {
+            sonic-ext:table-name "NAT_POOL";
+        }
+    }
     deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-pool/oc-nat:nat-pool-entry/oc-nat:config {
         deviate add {
             sonic-ext:table-name "NAT_POOL";
@@ -280,6 +296,11 @@ module openconfig-nat-annot {
 
 
 
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-acl-pool-binding {
+        deviate add {
+            sonic-ext:table-name "NAT_BINDINGS";
+        }
+    }
     deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-acl-pool-binding/oc-nat:nat-acl-pool-binding-entry/oc-nat:config {
         deviate add {
             sonic-ext:table-name "NAT_BINDINGS";
@@ -337,6 +358,12 @@ module openconfig-nat-annot {
 
 
 
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-zone {
+        deviate add {
+            sonic-ext:db-name "COUNTERS_DB";
+            sonic-ext:table-name "COUNTERS_NAT_ZONE";
+        }
+    }
     deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-zone/oc-nat:nat-zone-entry/oc-nat:config {
         deviate add {
             sonic-ext:key-transformer "nat_zone_key_xfmr";
@@ -386,6 +413,12 @@ module openconfig-nat-annot {
         }
     }
 
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-twice-mapping-table {
+        deviate add {
+            sonic-ext:db-name "APPL_DB";
+            sonic-ext:table-name "NAT_TWICE_TABLE";
+        }
+    }
     deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-twice-mapping-table/oc-nat:nat-twice-entry/oc-nat:config {
         deviate add {
             sonic-ext:key-transformer "nat_twice_mapping_key_xfmr";
@@ -444,6 +477,13 @@ module openconfig-nat-annot {
 
 
 
+
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:napt-twice-mapping-table {
+        deviate add {
+            sonic-ext:db-name "APPL_DB";
+            sonic-ext:table-name "NAPT_TWICE_TABLE";
+        }
+    }
 
     deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:napt-twice-mapping-table/oc-nat:napt-twice-entry/oc-nat:config {
         deviate add {
