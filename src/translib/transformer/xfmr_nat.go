@@ -25,7 +25,6 @@ import (
 	"strings"
 	"translib/db"
     "translib/ocbinds"
-    "translib/tlerr"
 )
 
 func init() {
