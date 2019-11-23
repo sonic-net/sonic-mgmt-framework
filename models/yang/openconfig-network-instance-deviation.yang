@@ -79,7 +79,7 @@ module openconfig-network-instance-deviation {
 		  "IGMP Snooping Query Max Response Time.";
 	}  
 
-	grouping igmp-snooping-interface-config-attr {
+	grouping igmp-snooping-interface-attr {
     leaf name {
       type oc-if:base-interface-ref;
       description
@@ -144,7 +144,7 @@ module openconfig-network-instance-deviation {
 	
 	grouping igmp-snooping-interface-config {
 	
-		uses igmp-snooping-interface-config-attr;
+		uses igmp-snooping-interface-attr;
 		
 		list static-multicast-group {
 			key "group";
@@ -156,13 +156,12 @@ module openconfig-network-instance-deviation {
         description
           "Multicast address.";
       }
-      
-      leaf outgoing-interface {				
-      	type oc-if:base-interface-ref;
-      	mandatory true;
-	    	description
-      		"Outgoing interfaces";
-    	}
+
+			leaf-list outgoing-interface {
+				type oc-if:base-interface-ref;		
+				description
+					"Outgoing interfaces.";	
+			}	
 		}	
 	}
 									
@@ -193,7 +192,7 @@ module openconfig-network-instance-deviation {
       	  description
       	    "Operational state data for IGMP Snooping on each interface";
 
-      	  uses igmp-snooping-interface-config-attr;
+      	  uses igmp-snooping-interface-attr;
       	  
 					list static-multicast-group {
 						key "group source-addr";

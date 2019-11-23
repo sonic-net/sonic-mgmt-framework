@@ -181,7 +181,7 @@
 							         <PARAM
 				               			name="group-addr" 
 				               			help="Multicast Address to be Joined" 
-				               			ptype="STRING"							             			
+				               			ptype="IP_ADDR"							             			
 				               >
 										         <PARAM
 							                    name="interface"
@@ -294,7 +294,7 @@
 							         <PARAM
 				               			name="group-addr" 
 				               			help="Multicast Address to be Joined" 
-				               			ptype="STRING"							             			
+				               			ptype="IP_ADDR"							             			
 				               >
 										         <PARAM
 							                    name="interface"
