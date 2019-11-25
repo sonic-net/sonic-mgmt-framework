@@ -680,6 +680,18 @@ func intf_ip_addr_del (d *db.DB , ifName string, tblName string, subIntf *ocbind
     return subIntfmap, err
 }
 
+/* Validate IP exists in the INTERFACE table of corresponding Interface type */
+func validateIPExists(tblName string, d *db.DB, ifName *string) error {
+    ipCnt := 0
+    _    = interfaceIPcount(tblName, d, ifName, &ipCnt)
+    if ipCnt > 0 {
+        errStr := "L3 Configuration exists for Interface: " + *ifName
+        log.Error(errStr)
+        return errors.New(errStr)
+    }
+    return nil
+}
+
 /* Note: This function can be extended for IP validations for all Interface types */
 func validateIpForIntfType(ifType E_InterfaceType, ip *string, prfxLen *uint8, isIpv4 bool) error {
     var err error
@@ -722,6 +734,20 @@ var YangToDb_intf_ip_addr_xfmr SubTreeXfmrYangToDb = func(inParams XfmrParams) (
         return subIntfmap, errors.New(errStr)
     }
 
+    intfType, _, ierr := getIntfTypeByName(ifName)
+    if intfType == IntfTypeUnset || ierr != nil {
+        errStr := "Invalid interface type IntfTypeUnset"
+        log.Info("YangToDb_intf_subintf_ip_xfmr : " + errStr)
+        return subIntfmap, errors.New(errStr)
+    }
+    /* Validate whether the Interface is configured as member-port associated with any vlan */
+    if intfType == IntfTypeEthernet || intfType == IntfTypePortChannel {
+        err = validateIntfAssociatedWithVlan(inParams.d, &ifName)
+        if err != nil {
+            return subIntfmap, err
+        }
+    }
+
     if _, ok := intfsObj.Interface[ifName]; !ok {
         errStr := "Interface entry not found in Ygot tree, ifname: " + ifName
         log.Info("YangToDb_intf_subintf_ip_xfmr : " + errStr)
@@ -740,12 +766,6 @@ var YangToDb_intf_ip_addr_xfmr SubTreeXfmrYangToDb = func(inParams XfmrParams) (
         return subIntfmap, err
     }
 
-    intfType, _, ierr := getIntfTypeByName(ifName)
-    if intfType == IntfTypeUnset || ierr != nil {
-        errStr := "Invalid interface type IntfTypeUnset"
-        log.Info("YangToDb_intf_subintf_ip_xfmr : " + errStr)
-        return subIntfmap, errors.New(errStr)
-    }
     intTbl := IntfTypeTblMap[intfType]
     tblName, _ := getIntfTableNameByDBId(intTbl, inParams.curDb)
 
