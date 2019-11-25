@@ -2187,8 +2187,8 @@ module openconfig-network-instance-annot {
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst-deviation:igmp-snooping/oc-netinst-deviation:interfaces/oc-netinst-deviation:interface/oc-netinst-deviation:config/oc-netinst-deviation:static-multicast-group 
     {
       deviate add {
-            sonic-ext:table-name "CFG_L2MC_STATIC_MEMBER_TABLE";
-            sonic-ext:key-transformer "igmp_snooping_static_member_config_key_xfmr";    
+            sonic-ext:table-name "CFG_L2MC_STATIC_GROUP_TABLE";
+            sonic-ext:key-transformer "igmp_snooping_static_group_config_key_xfmr";    
       }
     }
 
