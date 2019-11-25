@@ -1,0 +1,1 @@
+./gnmi_set -replace /sonic-sflow:sonic-sflow/SFLOW_COLLECTOR/SFLOW_COLLECTOR_LIST[collector_name=col1]/collector_ip:@./07_set_col_ip.json -target_addr 127.0.0.1:8080 -alsologtostderr -insecure true -pretty
