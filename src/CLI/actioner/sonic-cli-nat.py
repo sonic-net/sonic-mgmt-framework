@@ -32,6 +32,7 @@ urllib3.disable_warnings()
 def invoke_api(func, args=[]):
     api = cc.ApiClient()
 
+    # Enable/Disable NAT Feature
     if func == 'patch_openconfig_nat_nat_instances_instance_config_enable':
         path = cc.Path('/restconf/data/openconfig-nat:nat/instances/instance={id}/config/enable', id=args[0])
         if args[1] == "True":
@@ -40,20 +41,100 @@ def invoke_api(func, args=[]):
            body = { "openconfig-nat:enable": False }
         return api.patch(path,body)
 
+    # Config NAT Timeout
     elif func == 'patch_openconfig_nat_nat_instances_instance_config_timeout':
         path = cc.Path('/restconf/data/openconfig-nat:nat/instances/instance={id}/config/timeout', id=args[0])
         body = { "openconfig-nat:timeout":  int(args[1]) }
         return api.patch(path, body)
 
+    # Config NAT TCP Timeout
     elif func == 'patch_openconfig_nat_nat_instances_instance_config_tcp_timeout':
         path = cc.Path('/restconf/data/openconfig-nat:nat/instances/instance={id}/config/tcp-timeout', id=args[0])
         body = { "openconfig-nat:tcp-timeout":  int(args[1]) }
         return api.patch(path, body)
 
+    # Config NAT UDP Timeout
     elif func == 'patch_openconfig_nat_nat_instances_instance_config_udp_timeout':
         path = cc.Path('/restconf/data/openconfig-nat:nat/instances/instance={id}/config/udp-timeout', id=args[0])
         body = { "openconfig-nat:udp-timeout":  int(args[1]) }
         return api.patch(path, body)
+
+    # Config NAT Static basic translation entry
+    elif func == 'patch_list_openconfig_nat_nat_instances_instance_nat_mapping_table_nat_mapping_entry':
+        path = cc.Path('/restconf/data/openconfig-nat:nat/instances/instance={id}/nat-mapping-table/nat-mapping-entry={external-address}', id=args[0], external-address=args[1])
+        body = { "openconfig-nat:internal-address": args[2] }
+        l = len(args)
+        if l >= 4:
+            body.update( {"openconfig-nat:type": args[3]} )
+        if l == 5:
+            body.update( {"openconfig-nat:twice-nat-id": args[4]} )
+        return api.patch(path, body)
+
+    # Remove NAT Static basic translation entry
+    elif func == 'delete_list_openconfig_nat_nat_instances_instance_nat_mapping_table_nat_mapping_entry':
+        path = cc.Path('/restconf/data/openconfig-nat:nat/instances/instance={id}/nat-mapping-table/nat-mapping-entry={external-address}', id=args[0], external-address=args[1])
+        body = { "openconfig-nat:internal-address": args[2] }
+        return api.delete(path, body)
+
+    # Config NAPT Static translation entry
+    elif func == 'patch_list_openconfig_nat_nat_instances_instance_napt_mapping_table_napt_mapping_entry':
+        path = cc.Path('/restconf/data/openconfig-nat:nat/instances/instance={id}/napt-mapping-table/napt-mapping-entry={external-address},{protocol},{external-port}', id=args[0],external-address=args[1],protocol=args[2],external-port=args[3])
+        body = { "openconfig-nat:internal-address": args[4], "openconfig-nat:internal-port": args[5] }
+        l = len(args)
+        if l >= 7:
+            body.update( {"openconfig-nat:type": args[6]} )
+        if l == 8:
+            body.update( {"openconfig-nat:twice-nat-id": args[7]} )
+        return api.patch(path, body)
+
+    # Remove NAPT Static translation entry
+    elif func == 'delete_list_openconfig_nat_nat_instances_instance_napt_mapping_table_napt_mapping_entry':
+        path = cc.Path('/restconf/data/openconfig-nat:nat/instances/instance={id}/napt-mapping-table/napt-mapping-entry={external-address},{protocol},{external-port}', id=args[0],external-address=args[1],protocol=args[2],external-port=args[3])
+        body = { "openconfig-nat:internal-address": args[4], "openconfig-nat:internal-port": args[5] }
+        return api.delete(path, body)
+
+    # Config NAT Pool
+    elif func == 'patch_list_openconfig_nat_nat_instances_instance_nat_mapping_table_nat_mapping_entry':
+        path = cc.Path('/restconf/data/openconfig-nat:nat/instances/instance={id}/nat-pool/nat-pool-entry={pool-name}', id=args[0],pool-name=args[1])
+        body = { "openconfig-nat:nat-ip": args[2]}
+        l = len(args)
+        if l == 4:
+            port = args[3].split('-')
+            body.update( {"openconfig-nat:start-port-number": port[0], "openconfig-nat:end-port-number": port[1] } )
+        return api.patch(path, body)
+
+    # Remove NAT Pool
+    elif func == 'delete_list_openconfig_nat_nat_instances_instance_nat_mapping_table_nat_mapping_entry':
+        path = cc.Path('/restconf/data/openconfig-nat:nat/instances/instance={id}/nat-pool/nat-pool-entry={pool-name}', id=args[0],pool-name=args[1])
+        return api.delete(path)
+
+    # Remove all NAT Pools
+    elif func == 'delete_list_openconfig_nat_nat_instances_instance_nat_mapping_table':
+        path = cc.Path('/restconf/data/openconfig-nat:nat/instances/instance={id}/nat-pool', id=args[0])
+        return api.delete(path)
+
+    # Config NAT Binding
+    elif func == 'patch_openconfig_nat_nat_instances_instance_nat_acl_pool_binding_nat_acl_pool_binding_entry':
+        path = cc.Path('/restconf/data/openconfig-nat:nat/instances/instance={id}/nat-acl-pool-binding/nat-acl-pool-binding-entry={name}', id=args[0],name=args[1])
+        body = { "openconfig-nat:access-list": args[2], "openconfig-nat:nat-pool": args[3] }
+        l = len(args)
+        if l >= 5:
+            body.update( {"openconfig-nat:nat-type": args[4]} )
+        if l == 6:
+            body.update( {"openconfig-nat:twice-nat-id": args[5]} )
+        return api.patch(path, body)
+
+    # Remove NAT Binding
+    elif func == 'delete_openconfig_nat_nat_instances_instance_nat_acl_pool_binding_nat_acl_pool_binding_entry':
+        path = cc.Path('/restconf/data/openconfig-nat:nat/instances/instance={id}/nat-acl-pool-binding/nat-acl-pool-binding-entry={name}', id=args[0],name=args[1])
+        return api.delete(path)
+
+    # Remove all NAT Bindings
+    elif func == 'delete_openconfig_nat_nat_instances_instance_nat_acl_pool_binding':
+        path = cc.Path('/restconf/data/openconfig-nat:nat/instances/instance={id}/nat-acl-pool-binding', id=args[0])
+        return api.delete(path)
+
+
 
     return api.cli_not_implemented(func)
 
