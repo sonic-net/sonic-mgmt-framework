@@ -1201,6 +1201,175 @@ func fake_rib_exec_vtysh_cmd (vtysh_cmd string) (map[string]interface{}, error) 
 //        }
 //    }`
 
+//    outJsonBlob := `{
+//        "vrfId": 0,
+//        "vrfName": "default",
+//        "tableVersion": 54,
+//        "routerId": "200.9.0.4",
+//        "defaultLocPrf": 100,
+//        "localAS": 400,
+//        "routes": {
+//            "4.4.4.4\/32": {
+//                "prefix":"4.4.4.4\/32",
+//                "advertisedTo":{
+//                    "10.10.10.1":{
+//                    }
+//                },
+//                "paths":{
+//                    "1" : {
+//                        "aspath":{
+//                            "string":"Local",
+//                            "segments":[
+//                            ],
+//                            "length":0
+//                        },
+//                        "origin":"incomplete",
+//                        "med":0,
+//                        "metric":0,
+//                        "weight":32768,
+//                        "valid":true,
+//                        "sourced":true,
+//                        "atomicAggregate":false
+//                        "localPref":200
+//                        "originatorId":""
+//                        "bestpath":{
+//                            "overall":true
+//                        },
+//                        "lastUpdate":{
+//                            "epoch":1494011680,
+//                            "string":"Fri May  5 19:14:40 2017\n"
+//                        },
+//                        "nexthops":[
+//                        {
+//                            "ip":"0.0.0.0",
+//                            "afi":"ipv4",
+//                            "metric":0,
+//                            "accessible":true,
+//                            "used":true
+//                        }
+//                        ],
+//                        "peer":{
+//                            "peerId":"0.0.0.0",
+//                            "routerId":"200.9.0.4"
+//                        }
+//                    },
+//                    "2" : {
+//                        "aspath":{
+//                            "string":"200 {100,300,500}",
+//                            "segments":[
+//                            {
+//                                "type":"as-sequence",
+//                                "list":[
+//                                    200
+//                                ]
+//                            },
+//                            {
+//                                "type":"as-set",
+//                                "list":[
+//                                    100,
+//                                300,
+//                                500
+//                                ]
+//                            }
+//                            ],
+//                            "length":2
+//                        },
+//                        "origin":"IGP",
+//                        "valid":true,
+//                        "atomicAggregate":true
+//                        "bestpath":{
+//                            "overall":true
+//                        },
+//                        "community":{
+//                            "string":"500:700",
+//                            "list":[
+//                                "500:700"
+//                            ]
+//                        },
+//                        "lastUpdate":{
+//                            "epoch":1494011770,
+//                            "string":"Fri May  5 19:16:10 2017\n"
+//                        },
+//                        "nexthops":[
+//                        {
+//                            "ip":"10.10.10.1",
+//                            "afi":"ipv4",
+//                            "metric":0,
+//                            "accessible":true,
+//                            "used":true
+//                        }
+//                        ],
+//                        "peer":{
+//                            "peerId":"10.10.10.1",
+//                            "routerId":"25.98.0.1",
+//                            "type":"external"
+//                        }
+//                    }
+//                }
+//            },
+//            "69.10.30.0\/24": {
+//                "prefix":"69.10.30.0\/24",
+//                "advertisedTo":{
+//                    "10.10.10.1":{
+//                    }
+//                },
+//                "paths":{
+//                    "1" : {
+//                        "aspath":{
+//                            "string":"200 {100,300,500}",
+//                            "segments":[
+//                            {
+//                                "type":"as-sequence",
+//                                "list":[
+//                                    200
+//                                ]
+//                            },
+//                            {
+//                                "type":"as-set",
+//                                "list":[
+//                                    100,
+//                                300,
+//                                500
+//                                ]
+//                            }
+//                            ],
+//                            "length":2
+//                        },
+//                        "origin":"IGP",
+//                        "valid":true,
+//                        "bestpath":{
+//                            "overall":true
+//                        },
+//                        "community":{
+//                            "string":"500:700",
+//                            "list":[
+//                                "500:700"
+//                            ]
+//                        },
+//                        "lastUpdate":{
+//                            "epoch":1494011770,
+//                            "string":"Fri May  5 19:16:10 2017\n"
+//                        },
+//                        "nexthops":[
+//                        {
+//                            "ip":"10.10.10.1",
+//                            "afi":"ipv4",
+//                            "metric":0,
+//                            "accessible":true,
+//                            "used":true
+//                        }
+//                        ],
+//                        "peer":{
+//                            "peerId":"10.10.10.2",
+//                            "routerId":"25.98.0.1",
+//                            "type":"external"
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//    }`
+
     outJsonBlob := `{
         "vrfId": 0,
         "vrfName": "default",
@@ -1223,12 +1392,38 @@ func fake_rib_exec_vtysh_cmd (vtysh_cmd string) (map[string]interface{}, error) 
                             ],
                             "length":0
                         },
+                        "as4path":{
+                            "string":"200 {100,300,500}",
+                            "segments":[
+                            {
+                                "type":"as-sequence",
+                                "list":[
+                                    200
+                                ]
+                            },
+                            {
+                                "type":"as-set",
+                                "list":[
+                                    100,
+                                300,
+                                500
+                                ]
+                            }
+                            ],
+                            "length":2
+                        },
                         "origin":"incomplete",
                         "med":0,
                         "metric":0,
                         "weight":32768,
                         "valid":true,
                         "sourced":true,
+                        "atomicAggregate":false,
+                        "localPref":200,
+                        "originatorId":"0.0.0.0",
+                        "aggregatorAs":600,
+                        "aggregatorAs4":75535,
+                        "aggregatorId":"10.20.30.40",
                         "bestpath":{
                             "overall":true
                         },
@@ -1248,117 +1443,12 @@ func fake_rib_exec_vtysh_cmd (vtysh_cmd string) (map[string]interface{}, error) 
                         "peer":{
                             "peerId":"0.0.0.0",
                             "routerId":"200.9.0.4"
-                        }
-                    },
-                    "2" : {
-                        "aspath":{
-                            "string":"200 {100,300,500}",
-                            "segments":[
-                            {
-                                "type":"as-sequence",
-                                "list":[
-                                    200
-                                ]
-                            },
-                            {
-                                "type":"as-set",
-                                "list":[
-                                    100,
-                                300,
-                                500
-                                ]
-                            }
-                            ],
-                            "length":2
                         },
-                        "origin":"IGP",
-                        "valid":true,
-                        "bestpath":{
-                            "overall":true
-                        },
-                        "community":{
-                            "string":"500:700",
+                        "cluster":{
                             "list":[
-                                "500:700"
+                            "1.1.1.1",
+                            "2.2.2.2"
                             ]
-                        },
-                        "lastUpdate":{
-                            "epoch":1494011770,
-                            "string":"Fri May  5 19:16:10 2017\n"
-                        },
-                        "nexthops":[
-                        {
-                            "ip":"10.10.10.1",
-                            "afi":"ipv4",
-                            "metric":0,
-                            "accessible":true,
-                            "used":true
-                        }
-                        ],
-                        "peer":{
-                            "peerId":"10.10.10.1",
-                            "routerId":"25.98.0.1",
-                            "type":"external"
-                        }
-                    }
-                }
-            },
-            "69.10.30.0\/24": {
-                "prefix":"69.10.30.0\/24",
-                "advertisedTo":{
-                    "10.10.10.1":{
-                    }
-                },
-                "paths":{
-                    "1" : {
-                        "aspath":{
-                            "string":"200 {100,300,500}",
-                            "segments":[
-                            {
-                                "type":"as-sequence",
-                                "list":[
-                                    200
-                                ]
-                            },
-                            {
-                                "type":"as-set",
-                                "list":[
-                                    100,
-                                300,
-                                500
-                                ]
-                            }
-                            ],
-                            "length":2
-                        },
-                        "origin":"IGP",
-                        "valid":true,
-                        "bestpath":{
-                            "overall":true
-                        },
-                        "community":{
-                            "string":"500:700",
-                            "list":[
-                                "500:700"
-                            ]
-                        },
-                        "lastUpdate":{
-                            "epoch":1494011770,
-                            "string":"Fri May  5 19:16:10 2017\n"
-                        },
-                        "nexthops":[
-                        {
-                            "ip":"10.10.10.1",
-                            "afi":"ipv4",
-                            "metric":0,
-                            "accessible":true,
-                            "used":true
-                        }
-                        ],
-                        "peer":{
-                            "peerId":"10.10.10.2",
-                            "routerId":"25.98.0.1",
-                            "type":"external"
                         }
                     }
                 }

@@ -9,14 +9,12 @@ module openconfig-network-instance-annot {
     import sonic-extensions { prefix sonic-ext; }
     import openconfig-bgp-ext { prefix oc-bgp-ext; }
 
-    /*
     deviation /oc-netinst:network-instances/oc-netinst:network-instance {
       deviate add {
         sonic-ext:table-transformer "network_instance_table_name_xfmr";
         sonic-ext:key-transformer "network_instance_table_key_xfmr";
       }
     }
-    */
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:name {
       deviate add {
@@ -848,6 +846,7 @@ module openconfig-network-instance-annot {
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:rib {
         deviate add {
+            sonic-ext:table-name "NONE";
             sonic-ext:subtree-transformer "bgp_routes_get_xfmr";
         }
     }
