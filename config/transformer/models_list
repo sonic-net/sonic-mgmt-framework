@@ -9,6 +9,7 @@ openconfig-ztp.yang
 openconfig-ztp-annot.yang
 openconfig-network-instance.yang
 openconfig-bgp-ext.yang
+openconfig-bgp-evpn-ext.yang
 openconfig-network-instance-annot.yang
 ietf-ptp.yang
 ietf-ptp-annot.yang

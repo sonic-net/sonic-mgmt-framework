@@ -60,10 +60,10 @@ limitations under the License.
   </COMMAND>
 
   <COMMAND name="advertise-all-vni" help="Advertise all local VNIs">
-    <ACTION builtin="clish_nop"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp-evpn.py patch_bgp_evpn_advertise_all_vni ${vrf-name} L2VPN_EVPN True</ACTION>
   </COMMAND>
   <COMMAND name="advertise-default-gw" help="Advertise all default gw mac-ip routes in EVPN">
-    <ACTION builtin="clish_nop"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp-evpn.py patch_bgp_evpn_advertise_default_gw ${vrf-name} L2VPN_EVPN True</ACTION>
   </COMMAND>
 
   <COMMAND name="advertise" help="Advertise prefix routes"/>
@@ -79,10 +79,10 @@ limitations under the License.
 
   <COMMAND name="default-originate" help="originate a default route"/>
   <COMMAND name="default-originate ipv4" help="Address family IPv4">
-    <ACTION builtin="clish_nop"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp-evpn.py patch_bgp_evpn_default_originate ${vrf-name} L2VPN_EVPN ipv4</ACTION>
   </COMMAND>
   <COMMAND name="default-originate ipv6" help="Address family IPv6">
-    <ACTION builtin="clish_nop"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp-evpn.py patch_bgp_evpn_default_originate ${vrf-name} L2VPN_EVPN ipv6</ACTION>
   </COMMAND>
 
   <COMMAND name="autort" help="Auto-derivation of RT">
@@ -102,15 +102,17 @@ limitations under the License.
   </COMMAND>
 
   <COMMAND name="rd" help="Route distinguisher" >
-    <PARAM name="rdvalue" help="Route Distinguisher value" ptype="RD"/>
-    <ACTION builtin="clish_nop"/>
+    <!--PARAM name="rdvalue" help="Route Distinguisher value" ptype="RD"/-->
+    <PARAM name="rdvalue" help="Route Distinguisher value" ptype="STRING"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp-evpn.py patch_bgp_evpn_rd ${vrf-name} L2VPN_EVPN ${rdvalue}</ACTION>
   </COMMAND>
 
   <COMMAND name="route-target" help="Route target">
     <PARAM name="rttype" help="advertise options" ptype="ADVERTISE_OPTIONS">
-      <PARAM name="rt" help="Route target value" ptype="RT"/>
+      <!--PARAM name="rt" help="Route target value" ptype="RT"/-->
+      <PARAM name="rt" help="Route target value" ptype="STRING"/>
     </PARAM>
-    <ACTION builtin="clish_nop"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp-evpn.py patch_bgp_evpn_rt ${vrf-name} L2VPN_EVPN ${rt} ${rttype}</ACTION>
   </COMMAND>
 
   <COMMAND name="dup-addr-detection" help="Duplicate address detection" >
@@ -135,18 +137,18 @@ limitations under the License.
     <ACTION builtin="clish_nop"/>
   </COMMAND>
 
-  <COMMAND name="vni" help="Enter VNI config mode" view="configure-router-bgp-l2vpn-vni-view" viewid="vrf-name=${vrf-name};family=l2vpn;vni=${vninum}">
-    <PARAM name="vninum" help="VxLAN Network Identifier" ptype="VNI_RANGE" view="configure-router-bgp-l2vpn-vni-view" viewid="vrf-name=${vrf-name};family=l2vpn;vni=${vninum}"/>
-    <ACTION builtin="clish_nop"/>
+  <COMMAND name="vni" help="Enter VNI config mode" view="configure-router-bgp-l2vpn-vni-view" viewid="vrf-name=${vrf-name};family=l2vpn;vninum=${vninum}">
+    <PARAM name="vninum" help="VxLAN Network Identifier" ptype="VNI_RANGE" view="configure-router-bgp-l2vpn-vni-view" viewid="vrf-name=${vrf-name};family=l2vpn;vninum=${vninum}"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp-evpn.py patch_bgp_evpn_vni ${vrf-name} L2VPN_EVPN ${vninum}</ACTION>
   </COMMAND>
 
 
   <COMMAND name="no" help="no commands"/>
   <COMMAND name="no advertise-all-vni" help="Advertise all local VNIs">
-    <ACTION builtin="clish_nop"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp-evpn.py delete_bgp_evpn_advertise_all_vni ${vrf-name} L2VPN_EVPN True</ACTION>
   </COMMAND>
   <COMMAND name="no advertise-default-gw" help="Advertise all default gw mac-ip routes in EVPN">
-    <ACTION builtin="clish_nop"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp-evpn.py delete_bgp_evpn_advertise_default_gw ${vrf-name} L2VPN_EVPN True</ACTION>
   </COMMAND>
 
   <COMMAND name="no advertise" help="Advertise prefix routes"/>
@@ -162,10 +164,10 @@ limitations under the License.
 
   <COMMAND name="no default-originate" help="originate a default route"/>
   <COMMAND name="no default-originate ipv4" help="Address family IPv4">
-    <ACTION builtin="clish_nop"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp-evpn.py delete_bgp_evpn_default_originate ${vrf-name} L2VPN_EVPN ipv4</ACTION>
   </COMMAND>
   <COMMAND name="no default-originate ipv6" help="Address family IPv6">
-    <ACTION builtin="clish_nop"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp-evpn.py delete_bgp_evpn_default_originate ${vrf-name} L2VPN_EVPN ipv6</ACTION>
   </COMMAND>
 
   <COMMAND name="no autort" help="Auto-derivation of RT">
@@ -185,15 +187,17 @@ limitations under the License.
   </COMMAND>
 
   <COMMAND name="no rd" help="Route distinguisher" >
-    <PARAM name="rdvalue" help="Route Distinguisher value" ptype="RD"/>
-    <ACTION builtin="clish_nop"/>
+    <!--PARAM name="rdvalue" help="Route Distinguisher value" ptype="RD"/-->
+    <PARAM name="rdvalue" help="Route Distinguisher value" ptype="STRING"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp-evpn.py delete_bgp_evpn_rd ${vrf-name} L2VPN_EVPN ${rdvalue}</ACTION>
   </COMMAND>
 
   <COMMAND name="no route-target" help="Route target">
     <PARAM name="rttype" help="advertise options" ptype="ADVERTISE_OPTIONS">
-      <PARAM name="rt" help="Route target value" ptype="RT"/>
+      <!--PARAM name="rt" help="Route target value" ptype="RT"/-->
+      <PARAM name="rt" help="Route target value" ptype="STRING"/>
     </PARAM>
-    <ACTION builtin="clish_nop"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp-evpn.py delete_bgp_evpn_rt ${vrf-name} L2VPN_EVPN ${rt} ${rttype}</ACTION>
   </COMMAND>
 
   <COMMAND name="no dup-addr-detection" help="Duplicate address detection" >
@@ -220,7 +224,7 @@ limitations under the License.
 
   <COMMAND name="no vni" help="Enter VNI config mode" >
     <PARAM name="vninum" help="VxLAN Network Identifier" ptype="VNI_RANGE"/>
-    <ACTION builtin="clish_nop"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp-evpn.py delete_bgp_evpn_vni ${vrf-name} L2VPN_EVPN ${vninum}</ACTION>
   </COMMAND>
 
 </VIEW>

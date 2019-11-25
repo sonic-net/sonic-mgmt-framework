@@ -30,36 +30,40 @@ limitations under the License.
       <NAMESPACE ref="configure-router-bgp-l2vpn-view" help="false" completion="false" />
 
       <COMMAND name="advertise-default-gw" help="Advertise all default gw mac-ip routes in EVPN">
-        <ACTION builtin="clish_nop"/>
+        <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp-evpn.py patch_bgp_evpn_vni_advertise_default_gw ${vrf-name} L2VPN_EVPN ${vninum}</ACTION>
       </COMMAND>
 
       <COMMAND name="rd" help="Route distinguisher" >
-        <PARAM name="rdvalue" help="Route Distinguisher value" ptype="RD"/>
-        <ACTION builtin="clish_nop"/>
+        <!--PARAM name="rdvalue" help="Route Distinguisher value" ptype="RD"/-->
+        <PARAM name="rdvalue" help="Route Distinguisher value" ptype="STRING"/>
+        <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp-evpn.py patch_bgp_evpn_vni_rd ${vrf-name} L2VPN_EVPN ${vninum} ${rdvalue}</ACTION>
       </COMMAND>
 
       <COMMAND name="route-target" help="Route target">
         <PARAM name="rttype" help="advertise options" ptype="ADVERTISE_OPTIONS">
-          <PARAM name="rt" help="Route target value" ptype="RT"/>
+          <!--PARAM name="rt" help="Route target value" ptype="RT"/-->
+          <PARAM name="rt" help="Route target value" ptype="STRING"/>
         </PARAM>
-        <ACTION builtin="clish_nop"/>
+        <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp-evpn.py patch_bgp_evpn_vni_rt ${vrf-name} L2VPN_EVPN ${vninum} ${rt} ${rttype}</ACTION>
       </COMMAND>
 
       <COMMAND name="no" help="no commands"/>
       <COMMAND name="no advertise-default-gw" help="Advertise all default gw mac-ip routes in EVPN">
-        <ACTION builtin="clish_nop"/>
+        <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp-evpn.py delete_bgp_evpn_vni_advertise_default_gw ${vrf-name} L2VPN_EVPN ${vninum}</ACTION>
       </COMMAND>
       
       <COMMAND name="no rd" help="Route distinguisher" >
-        <PARAM name="rdvalue" help="Route Distinguisher value" ptype="RD"/>
-        <ACTION builtin="clish_nop"/>
+        <!--PARAM name="rdvalue" help="Route Distinguisher value" ptype="RD"/-->
+        <PARAM name="rdvalue" help="Route Distinguisher value" ptype="STRING"/>
+        <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp-evpn.py delete_bgp_evpn_vni_rd ${vrf-name} L2VPN_EVPN ${vninum} ${rdvalue}</ACTION>
       </COMMAND>
 
       <COMMAND name="no route-target" help="Route target">
         <PARAM name="rttype" help="advertise options" ptype="ADVERTISE_OPTIONS">
-          <PARAM name="rt" help="Route target value" ptype="RT"/>
+          <!--PARAM name="rt" help="Route target value" ptype="RT"/-->
+          <PARAM name="rt" help="Route target value" ptype="STRING"/>
         </PARAM>
-        <ACTION builtin="clish_nop"/>
+        <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp-evpn.py delete_bgp_evpn_vni_rt ${vrf-name} L2VPN_EVPN ${vninum} ${rt} ${rttype}</ACTION>
       </COMMAND>
 
     </VIEW>
