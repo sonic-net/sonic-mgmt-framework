@@ -1012,13 +1012,10 @@ func deleteLoopbackIntf(inParams *XfmrParams, loName *string) error {
         log.Errorf("Retrieving data from LOOPBACK_INTERFACE table for Loopback: %s failed!", *loName)
         return err
     }
-    ipCnt := 0
-    _ = interfaceIPcount(intTbl.cfgDb.intfTN, inParams.d, loName, &ipCnt)
-    if ipCnt > 0 {
-        errStr := "IP address exists for Interface: " + *loName + "- Returning!"
-        log.Error(errStr)
-        return errors.New(errStr)
-    }
+    err = validateIPExists(intTbl.cfgDb.intfTN, inParams.d, loName)
+	if err != nil {
+		return err
+	}
     resMap[intTbl.cfgDb.intfTN] = loMap
 
     subOpMap[db.ConfigDB] = resMap
