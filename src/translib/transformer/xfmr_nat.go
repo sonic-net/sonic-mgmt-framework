@@ -42,6 +42,8 @@ func init() {
         XlateFuncBind("DbToYang_nat_mapping_key_xfmr", DbToYang_nat_mapping_key_xfmr)
         XlateFuncBind("YangToDb_nat_pool_key_xfmr", YangToDb_nat_pool_key_xfmr)
         XlateFuncBind("DbToYang_nat_pool_key_xfmr", DbToYang_nat_pool_key_xfmr)
+        XlateFuncBind("YangToDb_nat_ip_field_xfmr", YangToDb_nat_ip_field_xfmr)
+        XlateFuncBind("DbToYang_nat_ip_field_xfmr", DbToYang_nat_ip_field_xfmr)
         XlateFuncBind("YangToDb_nat_binding_key_xfmr", YangToDb_nat_binding_key_xfmr)
         XlateFuncBind("DbToYang_nat_binding_key_xfmr", DbToYang_nat_binding_key_xfmr)
         XlateFuncBind("YangToDb_nat_zone_key_xfmr", YangToDb_nat_zone_key_xfmr)
@@ -65,13 +67,18 @@ const (
     INSTANCE_ID      = "id"
     GLOBAL_KEY       = "Values"
     NAT_TABLE        = "NAT_TABLE"
+    NAPT_TABLE       = "NAPT_TABLE"
     STATIC_NAT       = "STATIC_NAT"
+    STATIC_NAPT      = "STATIC_NAPT"
     NAT_TYPE         = "nat_type"
     NAT_ENTRY_TYPE   = "entry_type"
     STATIC           = "static"
     DYNAMIC          = "dynamic"
     SNAT             = "snat"
     DNAT             = "dnat"
+    NAT_BINDINGS     = "NAT_BINDINGS"
+    NAPT_TWICE_TABLE = "NAPT_TWICE_TABLE"
+    NAT_TWICE_TABLE  = "NAT_TWICE_TABLE"
 )
 
 var YangToDb_nat_instance_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (string, error) {
@@ -187,9 +194,14 @@ var YangToDb_napt_mapping_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (
     pathInfo := NewPathInfo(inParams.uri)
     extAddress := pathInfo.Var("external-address")
     extPort := pathInfo.Var("external-port")
-    protocol,_ := strconv.Atoi(pathInfo.Var("protocol"))
+    proto := pathInfo.Var("protocol")
 
+    if extAddress == "" || extPort == "" || proto == "" {
+        log.Info("YangToDb_napt_mapping_key_xfmr - No Key params.")
+        return napt_key, nil
+    }
 
+    protocol,_ := strconv.Atoi(proto)
     if _, ok := protocol_map[uint8(protocol)]; !ok {
         log.Info("YangToDb_napt_mapping_key_xfmr - Invalid protocol : ", protocol);
         return napt_key, nil
@@ -233,8 +245,13 @@ var YangToDb_napt_mapping_state_key_xfmr KeyXfmrYangToDb = func(inParams XfmrPar
     pathInfo := NewPathInfo(inParams.uri)
     extAddress := pathInfo.Var("external-address")
     extPort := pathInfo.Var("external-port")
-    protocol,_ := strconv.Atoi(pathInfo.Var("protocol"))
+    proto := pathInfo.Var("protocol")
 
+    if extAddress == "" || extPort == "" || proto == "" {
+        log.Info("YangToDb_napt_mapping_state_key_xfmr - No Key params.")
+        return napt_key, nil
+    }
+    protocol,_ := strconv.Atoi(proto)
     if _, ok := protocol_map[uint8(protocol)]; !ok {
         log.Info("YangToDb_napt_mapping_key_xfmr - Invalid protocol : ", protocol);
         return napt_key, nil
@@ -314,6 +331,39 @@ var DbToYang_nat_pool_key_xfmr KeyXfmrDbToYang = func(inParams XfmrParams) (map[
     return rmap, err
 }
 
+var YangToDb_nat_ip_field_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
+    res_map := make(map[string]string)
+
+    ipPtr, _ := inParams.param.(*string)
+    res_map["nat_ip"] = *ipPtr;
+    return res_map, nil
+}
+
+var DbToYang_nat_ip_field_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (map[string]interface{}, error) {
+    var err error
+    result := make(map[string]interface{})
+
+    data := (*inParams.dbDataMap)[inParams.curDb]
+    tblName := "NAT_POOL"
+    if _, ok := data[tblName]; ok {
+        if _, entOk := data[tblName][inParams.key]; entOk {
+            entry := data[tblName][inParams.key]
+            fldOk := entry.Has("nat_ip")
+            if fldOk == true {
+                ipStr := entry.Get("nat_ip")
+                ipRange := strings.Contains(ipStr, "-")
+                if ipRange == true {
+                    result["IP-ADDRESS-RANGE"] = ipStr
+                } else {
+                    result["IP-ADDRESS"] = ipStr
+                }
+            }
+        }
+    }
+    return result, err
+}
+
+
 var YangToDb_nat_binding_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (string, error) {
     var key string
     var err error
@@ -371,6 +421,10 @@ var YangToDb_nat_twice_mapping_key_xfmr KeyXfmrYangToDb = func(inParams XfmrPara
     srcIp := pathInfo.Var("src-ip")
     dstIp := pathInfo.Var("dst-ip")
 
+    if srcIp == "" || dstIp == "" {
+        log.Info("YangToDb_nat_twice_mapping_key_xfmr : Invalid key params.")
+        return nat_key, err
+    }
     key_sep = getKeySeparator(inParams.curDb)
     nat_key = srcIp + key_sep + dstIp
     log.Info("YangToDb_nat_twice_mapping_key_xfmr : Key : ", nat_key)
@@ -404,12 +458,18 @@ var YangToDb_napt_twice_mapping_key_xfmr KeyXfmrYangToDb = func(inParams XfmrPar
     var key_sep string
 
     pathInfo := NewPathInfo(inParams.uri)
-    protocol, _ := strconv.Atoi(pathInfo.Var("protocol"))
+    proto    := pathInfo.Var("protocol")
     srcIp    := pathInfo.Var("src-ip")
     srcPort  := pathInfo.Var("src-port")
     dstIp    := pathInfo.Var("dst-ip")
     dstPort  := pathInfo.Var("dst-port")
 
+    if proto == "" || srcIp == "" || srcPort == "" || dstIp == "" || dstPort == "" {
+        log.Info("YangToDb_napt_twice_mapping_key_xfmr : Invalid key params.")
+        return napt_key, nil
+    }
+
+    protocol, _ := strconv.Atoi(proto)
     if _, ok := protocol_map[uint8(protocol)]; !ok {
         log.Info("YangToDb_napt_twice_mapping_key_xfmr - Invalid protocol : ", protocol);
         return napt_key, nil
@@ -462,7 +522,6 @@ var YangToDb_nat_type_field_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (
     var err error
 
     if inParams.param == nil {
-        result[NAT_TYPE] = ""
         return result, err
     }
 
@@ -480,9 +539,32 @@ var DbToYang_nat_type_field_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (
     data := (*inParams.dbDataMap)[inParams.curDb]
     log.Info("DbToYang_nat_type_field_xfmr", data, inParams.ygRoot)
 
-    t := findInMap(NAT_TYPE_MAP, data[STATIC_NAT][inParams.key].Field[NAT_TYPE])
-    n, err := strconv.ParseInt(t, 10, 64)
-    result[NAT_TYPE] = ocbinds.E_OpenconfigNat_NAT_TYPE(n).ΛMap()["E_OpenconfigNat_NAT_TYPE"][n].Name
+    targetUriPath, err := getYangPathFromUri(inParams.uri)
+    var tblName string
+
+    if strings.HasPrefix(targetUriPath, "/openconfig-nat:nat/instances/instance/napt-mapping-table/napt-mapping-entry") {
+        tblName = STATIC_NAPT
+    } else if strings.HasPrefix(targetUriPath, "/openconfig-nat:nat/instances/instance/nat-acl-pool-binding/nat-acl-pool-binding-entry") {
+        tblName = NAT_BINDINGS
+    }else {
+        tblName = STATIC_NAT
+    }
+
+    if _, ok := data[tblName]; ok {
+        if _, entOk := data[tblName][inParams.key]; entOk {
+            entry := data[tblName][inParams.key]
+            fldOk := entry.Has(NAT_TYPE)
+            if fldOk == true {
+                t := findInMap(NAT_TYPE_MAP, data[tblName][inParams.key].Field[NAT_TYPE])
+                var n int64
+                n, err = strconv.ParseInt(t, 10, 64)
+                if err == nil {
+                    result["type"] = ocbinds.E_OpenconfigNat_NAT_TYPE(n).ΛMap()["E_OpenconfigNat_NAT_TYPE"][n].Name
+                }
+            }
+        }
+    }
+
     return result, err
 }
 
@@ -491,7 +573,6 @@ var YangToDb_nat_entry_type_field_xfmr FieldXfmrYangToDb = func(inParams XfmrPar
     var err error
 
     if inParams.param == nil {
-        result[NAT_ENTRY_TYPE] = ""
         return result, err
     }
 
@@ -507,10 +588,33 @@ var DbToYang_nat_entry_type_field_xfmr FieldXfmrDbtoYang = func(inParams XfmrPar
 
     data := (*inParams.dbDataMap)[inParams.curDb]
     log.Info("DbToYang_nat_entry_type_field_xfmr", data, inParams.ygRoot)
+    targetUriPath, err := getYangPathFromUri(inParams.uri)
+    var tblName string
 
-    t := findInMap(NAT_ENTRY_TYPE_MAP, data[NAT_TABLE][inParams.key].Field[NAT_ENTRY_TYPE])
-    n, err := strconv.ParseInt(t, 10, 64)
-    result[NAT_ENTRY_TYPE] = ocbinds.E_OpenconfigNat_NAT_ENTRY_TYPE(n).ΛMap()["E_OpenconfigNat_NAT_ENTRY_TYPE"][n].Name
+    if strings.HasPrefix(targetUriPath, "/openconfig-nat:nat/instances/instance/napt-mapping-table/napt-mapping-entry") {
+        tblName = NAPT_TABLE
+    } else if  strings.HasPrefix(targetUriPath, "/openconfig-nat:nat/instances/instance/napt-twice-mapping-table/napt-twice-entry") {
+        tblName = NAPT_TWICE_TABLE
+    } else if  strings.HasPrefix(targetUriPath, "/openconfig-nat:nat/instances/instance/nat-twice-mapping-table/nat-twice-entry") {
+        tblName = NAT_TWICE_TABLE
+    } else {
+        tblName = NAT_TABLE
+    }
+    if _, ok := data[tblName]; ok {
+        if _, entOk := data[tblName][inParams.key]; entOk {
+            entry := data[tblName][inParams.key]
+            fldOk := entry.Has(NAT_ENTRY_TYPE)
+            if fldOk == true {
+                t := findInMap(NAT_ENTRY_TYPE_MAP, data[tblName][inParams.key].Field[NAT_ENTRY_TYPE])
+                var n int64
+                n, err = strconv.ParseInt(t, 10, 64)
+                if err == nil {
+                    result["entry-type"] = ocbinds.E_OpenconfigNat_NAT_ENTRY_TYPE(n).ΛMap()["E_OpenconfigNat_NAT_ENTRY_TYPE"][n].Name
+                }
+            }
+        }
+    }
+
     return result, err
 }
 
