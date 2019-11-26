@@ -88,7 +88,7 @@ func dataToDBMapAdd(tableName string, dbKey string, result map[string]map[string
         result[tableName][dbKey] = db.Value{Field: make(map[string]string)}
     }
 
-	if field == "NONE" {
+	if field == XFMR_NONE_STRING {
 		if len(result[tableName][dbKey].Field) == 0 {
 			result[tableName][dbKey].Field["NULL"] = "NULL"
 		}
@@ -128,7 +128,7 @@ func mapFillData(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requestU
         return errors.New("Invalid table name")
     }
 
-    if xpathInfo.tableName != nil && *xpathInfo.tableName == "NONE" {
+    if xpathInfo.tableName != nil && *xpathInfo.tableName == XFMR_NONE_STRING {
         log.Errorf("Table for yang-path(\"%v\") NONE.", xpath)
         return errors.New("Ignore table name")
     }

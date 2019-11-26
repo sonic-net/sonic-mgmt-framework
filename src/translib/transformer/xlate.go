@@ -97,7 +97,7 @@ func TraverseDb(dbs [db.MaxDB]*db.DB, spec KeySpec, result *map[db.DBNum]map[str
 
 	if spec.Key.Len() > 0 {
 		// get an entry with a specific key
-		if spec.Ts.Name != "NONE" { // Do not traverse for NONE table
+		if spec.Ts.Name != XFMR_NONE_STRING { // Do not traverse for NONE table
 			data, err := dbs[spec.dbNum].GetEntry(&spec.Ts, spec.Key)
 			if err != nil {
 				return err
@@ -116,7 +116,7 @@ func TraverseDb(dbs [db.MaxDB]*db.DB, spec KeySpec, result *map[db.DBNum]map[str
 		}
 	} else {
 		// TODO - GetEntry support with regex patten, 'abc*' for optimization
-		if spec.Ts.Name != "NONE" { //Do not traverse for NONE table
+		if spec.Ts.Name != XFMR_NONE_STRING { //Do not traverse for NONE table
 			keys, err := dbs[spec.dbNum].GetKeys(&spec.Ts)
 			if err != nil {
 				return err
