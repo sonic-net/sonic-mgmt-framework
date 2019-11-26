@@ -279,12 +279,12 @@ module openconfig-nat-annot {
             sonic-ext:key-transformer "nat_pool_key_xfmr";
         }
     }
-    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-pool/oc-nat:nat-pool-entry/oc-nat:config/oc-nat:IP-ADDRESS {
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-pool/oc-nat:nat-pool-entry/oc-nat:config/oc-nat:nat-ip/oc-nat:ip-address/oc-nat:IP-ADDRESS {
         deviate add {
             sonic-ext:field-transformer "nat_ip_field_xfmr";
         }
     }
-    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-pool/oc-nat:nat-pool-entry/oc-nat:config/oc-nat:IP-ADDRESS-RANGE {
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-pool/oc-nat:nat-pool-entry/oc-nat:config/oc-nat:nat-ip/oc-nat:ip-address-range/oc-nat:IP-ADDRESS-RANGE {
         deviate add {
             sonic-ext:field-transformer "nat_ip_field_xfmr";
         }
@@ -300,12 +300,12 @@ module openconfig-nat-annot {
             sonic-ext:key-transformer "nat_pool_key_xfmr";
         }
     }
-    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-pool/oc-nat:nat-pool-entry/oc-nat:state/oc-nat:IP-ADDRESS {
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-pool/oc-nat:nat-pool-entry/oc-nat:state/oc-nat:nat-ip/oc-nat:ip-address/oc-nat:IP-ADDRESS {
         deviate add {
             sonic-ext:field-transformer "nat_ip_field_xfmr";
         }
     }
-    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-pool/oc-nat:nat-pool-entry/oc-nat:state/oc-nat:IP-ADDRESS-RANGE {
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-pool/oc-nat:nat-pool-entry/oc-nat:state/oc-nat:nat-ip/oc-nat:ip-address-range/oc-nat:IP-ADDRESS-RANGE {
         deviate add {
             sonic-ext:field-transformer "nat_ip_field_xfmr";
         }
