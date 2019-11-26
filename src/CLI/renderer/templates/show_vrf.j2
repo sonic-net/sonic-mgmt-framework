@@ -1,13 +1,12 @@
 {{'----------------------------------------------------------------'}}
 {{'VRF-NAME'.ljust(20)}}{{'INTERFACES'}}
-{% if json_output and 'openconfig-network-instance' in json_output -%}
-{% set inst_info = json_output['openconfig-network-instance'] %}
-{% set state = inst_info['state'] %}
-{% if state['name'] == 'mgmt' %}
-{% if state['type'] == 'L3VRF' %}
-{% if state['enabled'] == true %}
-{{ state['name'] }}
-{% endif %}
-{% endif %}
-{% endif %}
+{% if json_output %}
+{% for key in json_output %}
+    {% if 'openconfig-network-instance:config' in key %}
+        {% set vrf_info = json_output['openconfig-network-instance:config'] %}
+        {% if vrf_info['name'] == 'mgmt' %}
+            {{-'mgmt'.ljust(20)}}{{'eth0'}}
+        {% endif %}
+    {% endif %}
+{% endfor %}
 {% endif %}
