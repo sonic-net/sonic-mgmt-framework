@@ -3,7 +3,7 @@
 {{'%40s'|format('Interface		Admin State		Sampling Rate')}}
 {% if json_output -%}
 {% for sess in json_output %}
-{{'%12s'|format(sess['ifname'])}}		{{sess['admin_state']}}			{{sess['sample_rate']}}
+{{'%23s'|format(sess['ifname'].ljust(20))}} {{sess['admin_state'].ljust(20)}}    {{sess['sample_rate']}}
 {% endfor %}
 {% endif %}
 
