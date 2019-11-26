@@ -83,8 +83,8 @@ limitations under the License.
   <COMMAND name="graceful-restart enable" help="Enable BGP graceful restart">
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_graceful_restart_config_enabled ${vrf-name} True</ACTION>
   </COMMAND>
-  <COMMAND name="graceful-restart preserve-fw-state" help="__tbd__ Enable BGP graceful restart preserve FW state">
-    <ACTION builtin="clish_nop"/>
+  <COMMAND name="graceful-restart preserve-fw-state" help="Enable BGP graceful restart preserve FW state">
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_graceful_restart_config_preserve_fw_state ${vrf-name} True</ACTION>
   </COMMAND>
   <COMMAND name="graceful-restart restart-time" help="BGP graceful restart restart-time">
     <PARAM name="restart-time" help="Seconds" ptype="RANGE_1_3600"/>
@@ -99,21 +99,21 @@ limitations under the License.
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_route_selection_options_config_always_compare_med ${vrf-name} True</ACTION>
   </COMMAND>
 
-  <COMMAND name="coalesce-time" help="__tbd__ Subgroup coalesce timer">
-    <PARAM name="cltime" help="Subgroup coalesce timer value (in ms)" ptype="RANGE_1_4294967295"/>
-    <ACTION builtin="clish_nop"/>
+  <COMMAND name="coalesce-time" help="Subgroup coalesce timer">
+    <PARAM name="coaltime" help="Subgroup coalesce timer value (in ms)" ptype="RANGE_1_4294967295"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_config_coalesce_time ${vrf-name} ${coaltime}</ACTION>
   </COMMAND>
-  <COMMAND name="read-quanta" help="__tbd__ How many packets to read from peer socket per I/O cycle">
+  <COMMAND name="read-quanta" help="How many packets to read from peer socket per I/O cycle">
     <PARAM name="rdval" help="Number of packets" ptype="RANGE_1_10"/>
-    <ACTION builtin="clish_nop"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_config_read_quanta ${vrf-name} ${rdval}</ACTION>
   </COMMAND>
-  <COMMAND name="write-quanta" help="__tbd__ How many packets to write to peer socket per run">
+  <COMMAND name="write-quanta" help="How many packets to write to peer socket per run">
     <PARAM name="wrval" help="Number of packets" ptype="RANGE_1_10"/>
-    <ACTION builtin="clish_nop"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_config_write_quanta ${vrf-name} ${wrval}</ACTION>
   </COMMAND>
-  <COMMAND name="client-to-client" help="__tbd__ Configure client to client route reflection"/>
+  <COMMAND name="client-to-client" help="Configure client to client route reflection"/>
   <COMMAND name="client-to-client reflection" help="Route reflection">
-    <ACTION builtin="clish_nop"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_config_clnt_to_clnt_reflection ${vrf-name} True</ACTION>
   </COMMAND>
   <COMMAND name="cluster-id" help="Configure Route-Reflector Cluster-id">
     <PARAM name="intval-ip" help= "Route-Reflector Cluster-id as IP address format or 32-bit quantity" ptype="INT32_OR_IP_ADDR"/>
@@ -132,8 +132,8 @@ limitations under the License.
     </PARAM>
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_route_flap_damping_config ${vrf-name} True ${halflife} ${reusethr} ${suppressthr} ${maxsuppress}</ACTION>
   </COMMAND>
-  <COMMAND name="deterministic-med" help="__tbd__ Pick the best-MED path among paths advertised from the neighboring AS">
-    <ACTION builtin="clish_nop"/>
+  <COMMAND name="deterministic-med" help="Pick the best-MED path among paths advertised from the neighboring AS">
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_config_deterministic_med ${vrf-name} True</ACTION>
   </COMMAND>
   <COMMAND name="disable-ebgp-connected-route-check" help="Disable checking if nexthop is connected on ebgp sessions">
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_config_disable_ebgp_connected_route_check ${vrf-name} True</ACTION>
@@ -141,30 +141,30 @@ limitations under the License.
   <COMMAND name="graceful-shutdown" help="Graceful shutdown parameters">
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_config_graceful_shutdown ${vrf-name} True</ACTION>
   </COMMAND>
-  <COMMAND name="max-med" help="__tbd__ Advertise routes with max-med"/>
-  <COMMAND name="max-med on-startup" help="Advertise routes with max-med">
+  <COMMAND name="max-med" help="Advertise routes with max-med"/>
+  <COMMAND name="max-med on-startup" help="Effective on a startup">
     <PARAM name="stime" help="Time (seconds) period for max-med" ptype="RANGE_5_86400" optional="true">
        <PARAM name="maxmedval" help="Max MED value to be used" ptype="RANGE_0_4294967295" optional="true"/>
     </PARAM>
-    <ACTION builtin="clish_nop"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_max_med_config ${vrf-name} ${stime} ${maxmedval}</ACTION>
   </COMMAND>
-  <COMMAND name="default" help="__tbd__ Configure BGP defaults"/>
+  <COMMAND name="default" help="Configure BGP defaults"/>
   <COMMAND name="default ipv4-unicast" help="Activate ipv4-unicast for a peer by default">
-    <ACTION builtin="clish_nop"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_global_defaults_config_ipv4_unicast ${vrf-name} True</ACTION>
   </COMMAND>
   <COMMAND name="default local-preference" help="Local preference (higher=more preferred)">
-       <PARAM name="maxmedval" help="Seconds" ptype="RANGE_0_4294967295"/>
-    <ACTION builtin="clish_nop"/>
+       <PARAM name="lprftime" help="Seconds" ptype="RANGE_0_4294967295"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_global_defaults_config_local_preference ${vrf-name} ${lprftime}</ACTION>
   </COMMAND>
   <COMMAND name="default show-hostname" help="Show hostname in certain command outputs">
-    <ACTION builtin="clish_nop"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_global_defaults_config_show_hostname ${vrf-name} True</ACTION>
   </COMMAND>
   <COMMAND name="default shutdown" help="Apply administrative shutdown to newly configured peers">
-    <ACTION builtin="clish_nop"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_global_defaults_config_shutdown ${vrf-name} True</ACTION>
   </COMMAND>
   <COMMAND name="default subgroup-pkt-queue-max" help="subgroup-pkt-queue-max">
        <PARAM name="maxval" help="Configure subgroup packet queue max" ptype="RANGE_20_100"/>
-    <ACTION builtin="clish_nop"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_global_defaults_config_subgroup_pkt_queue_max ${vrf-name} ${maxval}</ACTION>
   </COMMAND>
   <COMMAND name="fast-external-failover" help="Immediately reset session if a link to a directly connected external peer goes down">
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_config_fast_external_failover ${vrf-name} True</ACTION>
@@ -173,20 +173,20 @@ limitations under the License.
   <COMMAND name="network import-check" help="">
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_config_network_import_check ${vrf-name} True</ACTION>
   </COMMAND>
-  <COMMAND name="route-map" help="__tbd__ Time in secs to wait before processing route-map changes"/>
+  <COMMAND name="route-map" help="Time in secs to wait before processing route-map changes"/>
   <COMMAND name="route-map delay-timer" help="Time in secs to wait before processing route-map changes">
-    <PARAM name="maxval" help="0 disables the timer,  no route updates happen when route-maps change" ptype="RANGE_0_600"/>
-    <ACTION builtin="clish_nop"/>
+    <PARAM name="delaytm" help="0 disables the timer,  no route updates happen when route-maps change" ptype="RANGE_0_600"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_config_route_map_process_delay ${vrf-name} ${delaytm}</ACTION>
   </COMMAND>
   <COMMAND name="route-reflector" help="Allow modifications made by out route-map"/>
   <COMMAND name="route-reflector allow-outbound-policy" help="Allow modifications made by out route-map">
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_bgp_ext_route_reflector_config_allow_outbound_policy ${vrf-name} True</ACTION>
   </COMMAND>
-  <COMMAND name="update-delay" help="__tbd__ Force initial delay for best-path and updates">
+  <COMMAND name="update-delay" help="Force initial delay for best-path and updates">
     <PARAM name="time" help="Seconds" ptype="RANGE_0_3600" optional="true">
        <PARAM name="maxmedval" help="Seconds" ptype="RANGE_1_3600" optional="true"/>
     </PARAM>
-    <ACTION builtin="clish_nop"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_update_delay_config ${vrf-name} ${time} ${maxmedval}</ACTION>
   </COMMAND>
 
   <COMMAND name="bestpath" help="Change the default bestpath selection"/>
@@ -236,7 +236,7 @@ limitations under the License.
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_graceful_restart_config_enabled ${vrf-name}</ACTION>
   </COMMAND>
   <COMMAND name="no graceful-restart preserve-fw-state" help="Disable BGP graceful restart preserve FW state" ref="hidden">
-    <ACTION builtin="clish_nop"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_graceful_restart_config_preserve_fw_state ${vrf-name} True</ACTION>
   </COMMAND>
   <COMMAND name="no graceful-restart restart-time" help="Unconfigure BGP graceful restart restart-time">
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_graceful_restart_config_restart_time ${vrf-name}</ACTION>
@@ -249,17 +249,17 @@ limitations under the License.
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_route_selection_options_config_always_compare_med ${vrf-name}</ACTION>
   </COMMAND>
   <COMMAND name="no coalesce-time" help="Subgroup coalesce timer">
-    <ACTION builtin="clish_nop"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_config_coalesce_time ${vrf-name}</ACTION>
   </COMMAND>
   <COMMAND name="no read-quanta" help="How many packets to read from peer socket per I/O cycle">
-    <ACTION builtin="clish_nop"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_config_read_quanta ${vrf-name}</ACTION>
   </COMMAND>
   <COMMAND name="no write-quanta" help="How many packets to write to peer socket per run">
-    <ACTION builtin="clish_nop"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_config_write_quanta ${vrf-name} ${wrval}</ACTION>
   </COMMAND>
   <COMMAND name="no client-to-client" help="Configure client to client route reflection"/>
   <COMMAND name="no client-to-client reflection" help="Route reflection">
-    <ACTION builtin="clish_nop"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_config_clnt_to_clnt_reflection ${vrf-name}</ACTION>
   </COMMAND>
   <COMMAND name="no cluster-id" help="Configure Route-Reflector Cluster-id">
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_bgp_ext_route_reflector_config_route_reflector_cluster_id ${vrf-name}</ACTION>
@@ -271,7 +271,7 @@ limitations under the License.
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_route_flap_damping_config</ACTION>
   </COMMAND>
   <COMMAND name="no deterministic-med" help="Pick the best-MED path among paths advertised from the neighboring AS">
-    <ACTION builtin="clish_nop"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_config_deterministic_med${vrf-name}</ACTION>
   </COMMAND>
   <COMMAND name="no disable-ebgp-connected-route-check" help="Disable checking if nexthop is connected on ebgp sessions">
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_config_disable_ebgp_connected_route_check ${vrf-name}</ACTION>
@@ -284,23 +284,23 @@ limitations under the License.
     <PARAM name="stime" help="Time (seconds) period for max-med" ptype="RANGE_5_86400" optional="true">
        <PARAM name="maxmedval" help="Max MED value to be used" ptype="RANGE_0_4294967295" optional="true"/>
     </PARAM>
-    <ACTION builtin="clish_nop"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_max_med_config ${vrf-name}</ACTION>
   </COMMAND>
   <COMMAND name="no default" help="Configure BGP defaults"/>
   <COMMAND name="no default ipv4-unicast" help="Activate ipv4-unicast for a peer by default">
-    <ACTION builtin="clish_nop"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_global_defaults_config_ipv4_unicast ${vrf-name}</ACTION>
   </COMMAND>
   <COMMAND name="no default local-preference" help="Local preference (higher=more preferred)">
-    <ACTION builtin="clish_nop"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_global_defaults_config_local_preference ${vrf-name}</ACTION>
   </COMMAND>
   <COMMAND name="no default show-hostname" help="Show hostname in certain command outputs">
-    <ACTION builtin="clish_nop"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_global_defaults_config_show_hostname ${vrf-name}</ACTION>
   </COMMAND>
   <COMMAND name="no default shutdown" help="Apply administrative shutdown to newly configured peers">
-    <ACTION builtin="clish_nop"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_global_defaults_config_shutdown ${vrf-name}</ACTION>
   </COMMAND>
   <COMMAND name="no default subgroup-pkt-queue-max" help="subgroup-pkt-queue-max">
-    <ACTION builtin="clish_nop"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_global_defaults_config_subgroup_pkt_queue_max ${vrf-name}</ACTION>
   </COMMAND>
   <COMMAND name="no fast-external-failover" help="Immediately reset session if a link to a directly connected external peer goes down">
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_config_fast_external_failover ${vrf-name}</ACTION>
@@ -318,7 +318,7 @@ limitations under the License.
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_bgp_ext_route_reflector_config_allow_outbound_policy ${vrf-name}</ACTION>
   </COMMAND>
   <COMMAND name="no update-delay" help="Force initial delay for best-path and updates">
-    <ACTION builtin="clish_nop"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_config_route_map_process_delay ${vrf-name}</ACTION>
   </COMMAND>
 
   <COMMAND name="no bestpath" help="Change the default bestpath selection"/>
@@ -389,8 +389,8 @@ limitations under the License.
     <PARAM name="tval" help="Seconds" ptype="RANGE_0_600"/>  
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_timers_config_minimum_advertisement_interval ${vrf-name} ${nbr-addr} ${tval}</ACTION>
   </COMMAND>
-  <COMMAND name="bfd" help="__tbd__ Enables BFD support">
-    <ACTION builtin="clish_nop"/>
+  <COMMAND name="bfd" help="Enables BFD support">
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_bfd ${vrf-name} ${nbr-addr} True</ACTION>
   </COMMAND>
   <COMMAND name="capability" help="Advertise capability to the peer">
     <PARAM name="captype" help="Capability" mode="switch" ptype="SUBCOMMAND">
@@ -402,21 +402,21 @@ limitations under the License.
   <COMMAND name="disable-connected-check" help="One-hop away EBGP peer using loopback address">
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_disable_ebgp_connected_route_check ${vrf-name} ${nbr-addr} True</ACTION>
   </COMMAND>
-  <COMMAND name="dont-capability-negotiate" help="__tbd__ Do not perform capability negotiation">
-    <ACTION builtin="clish_nop"/>
+  <COMMAND name="dont-capability-negotiate" help="Do not perform capability negotiation">
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_dont_negotiate_capability ${vrf-name} ${nbr-addr} True</ACTION>
   </COMMAND>
   <COMMAND name="enforce-first-as" help="Enforce the first AS for EBGP routes">
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_enforce_first_as ${vrf-name} ${nbr-addr} True</ACTION>
   </COMMAND>
-  <COMMAND name="enforce-multihop" help="__tbd__ Enforce EBGP neighbors perform multihop">
-    <ACTION builtin="clish_nop"/>
+  <COMMAND name="enforce-multihop" help="Enforce EBGP neighbors perform multihop">
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_enforce_multihop ${vrf-name} ${nbr-addr} True</ACTION>
   </COMMAND>
   <COMMAND name="local-as" help="Specify a local-as number">
     <PARAM name="asnum" help="Autonomous system number" ptype="AS_NUM_DOT"/>
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_local_as ${vrf-name} ${nbr-addr} ${asnum}</ACTION>
   </COMMAND>
-  <COMMAND name="override-capability" help="__tbd__ Override capability negotiation result">
-    <ACTION builtin="clish_nop"/>
+  <COMMAND name="override-capability" help="Override capability negotiation result">
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_override_capability ${vrf-name} ${nbr-addr} True</ACTION>
   </COMMAND>
   <COMMAND name="passive" help="Don't send open messages to this neighbor">
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_transport_config_passive_mode ${vrf-name} ${nbr-addr} True</ACTION>
@@ -425,15 +425,15 @@ limitations under the License.
     <PARAM name="String" help="Password" ptype="STRING"/>
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_auth_password ${vrf-name} ${nbr-addr} ${String}</ACTION>
   </COMMAND>
-  <COMMAND name="port" help="__tbd__ Neighbor's BGP port">
-    <PARAM name="pnum" help="Port number" ptype="RANGE_0_65535"/>
-    <ACTION builtin="clish_nop"/>
+  <COMMAND name="port" help="Neighbor's BGP port">
+    <PARAM name="tcpport" help="TCP port number" ptype="RANGE_0_65535"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_peer_port ${vrf-name} ${nbr-addr} ${tcpport}</ACTION>
   </COMMAND>
   <COMMAND name="solo" help="Solo peer - part of its own update group">
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_solo_peer ${vrf-name} ${nbr-addr} True</ACTION>
   </COMMAND>
-  <COMMAND name="strict-capability-match" help="__tbd__ Strict capability negotiation match">
-    <ACTION builtin="clish_nop"/>
+  <COMMAND name="strict-capability-match" help="Strict capability negotiation match">
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_strict_capability_match ${vrf-name} ${nbr-addr} True</ACTION>
   </COMMAND>
   <COMMAND name="ttl-security" help="TTL security"/>
   <COMMAND name="ttl-security hops" help="BGP ttl-security parameters">
@@ -503,7 +503,7 @@ limitations under the License.
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_timers_config_minimum_advertisement_interval ${vrf-name} ${nbr-addr}</ACTION>
   </COMMAND>
   <COMMAND name="no bfd" help="Enables BFD support">
-    <ACTION builtin="clish_nop"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_bfd ${vrf-name}</ACTION>
   </COMMAND>
   <COMMAND name="no capability" help="Advertise capability to the peer">
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_capability_extended_nexthop ${vrf-name} ${nbr-addr} False ${String}</ACTION>
@@ -512,19 +512,19 @@ limitations under the License.
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_disable_ebgp_connected_route_check ${vrf-name} ${nbr-addr}</ACTION>
   </COMMAND>
   <COMMAND name="no dont-capability-negotiate" help="Do not perform capability negotiation">
-    <ACTION builtin="clish_nop"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_dont_negotiate_capability ${vrf-name}</ACTION>
   </COMMAND>
   <COMMAND name="no enforce-first-as" help="Enforce the first AS for EBGP routes">
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_enforce_first_as ${vrf-name} ${nbr-addr}</ACTION>
   </COMMAND>
   <COMMAND name="no enforce-multihop" help="Enforce EBGP neighbors perform multihop">
-    <ACTION builtin="clish_nop"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_enforce_multihop ${vrf-name}</ACTION>
   </COMMAND>
   <COMMAND name="no local-as" help="Specify a local-as number">
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_local_as ${vrf-name} ${nbr-addr}</ACTION>
   </COMMAND>
   <COMMAND name="no override-capability" help="Override capability negotiation result">
-    <ACTION builtin="clish_nop"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_override_capability ${vrf-name}</ACTION>
   </COMMAND>
   <COMMAND name="no passive" help="Don't send open messages to this neighbor">
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_transport_config_passive_mode ${vrf-name} ${nbr-addr}</ACTION>
@@ -533,13 +533,13 @@ limitations under the License.
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_auth_password ${vrf-name} ${nbr-addr}</ACTION>
   </COMMAND>
   <COMMAND name="no port" help="Neighbor's BGP port">
-    <ACTION builtin="clish_nop"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_peer_port ${vrf-name}</ACTION>
   </COMMAND>
   <COMMAND name="no solo" help="Solo peer - part of its own update group">
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_solo_peer ${vrf-name} ${nbr-addr}</ACTION>
   </COMMAND>
   <COMMAND name="no strict-capability-match" help="Strict capability negotiation match">
-    <ACTION builtin="clish_nop"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_strict_capability_match ${vrf-name}</ACTION>
   </COMMAND>
   <COMMAND name="no ttl-security" help="BGP ttl-security parameters"/>
   <COMMAND name="no ttl-security hops" help="BGP ttl-security parameters">
