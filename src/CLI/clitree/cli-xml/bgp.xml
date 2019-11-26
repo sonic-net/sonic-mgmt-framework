@@ -1,0 +1,309 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Copyright 2019 Dell, Inc.  
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+--> 
+
+<CLISH_MODULE
+    xmlns="http://www.dellemc.com/sonic/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xi="http://www.w3.org/2001/XInclude"
+    xsi:schemaLocation="http://www.dellemc.com/sonic/XMLSchema
+                        http://www.dellemc.com/sonic/XMLSchema/clish.xsd"
+    >
+    <!--=======================================================-->
+
+<VIEW name="enable-view">
+  <COMMAND name="show ip bgp" help="BGP information"/>
+  <COMMAND name="show ip bgp neighbors" help="BGP information">
+    <ACTION builtin="clish_nop"/>
+  </COMMAND>
+  <COMMAND name="show ip bgp summary" help="BGP information">
+    <ACTION builtin="clish_nop"/>
+  </COMMAND>
+  <COMMAND name="show ip bgp peer-group" help="BGP information">
+    <ACTION builtin="clish_nop"/>
+  </COMMAND>
+  <COMMAND name="show ip bgp ipv4" help="IPv4 route information">
+    <PARAM name="unicast" help="Unicast route information" mode="subcommand" ptype="SUBCOMMAND"/>
+    <ACTION builtin="clish_nop"/>
+  </COMMAND>
+  <COMMAND name="show ip bgp ipv6" help="IPv6 route information">
+    <PARAM name="unicast" help="Unicast route information" mode="subcommand" ptype="SUBCOMMAND"/>
+    <ACTION builtin="clish_nop"/>
+  </COMMAND>
+  <COMMAND name="show ip bgp l2vpn" help="L2VPN route information">
+    <PARAM name="evpn" help="EVPN route information" mode="subcommand" ptype="SUBCOMMAND"/>
+    <ACTION builtin="clish_nop"/>
+  </COMMAND>
+</VIEW>
+
+<VIEW name="configure-view">
+  <COMMAND name="router" help="Router mode" view="configure-router-bgp-view" viewid="instance=${as-num-dot};vrf-name=${vrf-name}">
+    <PARAM name="bgp" help="Border Gateway protocol (BGP)" mode="subcommand" ptype="SUBCOMMAND">
+      <PARAM name="as-num-dot" help="Autonomous system number" ptype="AS_NUM_DOT" view="configure-router-bgp-view" viewid="instance=${as-num-dot};vrf-name=${vrf-name}">
+        <PARAM name="vrf" help="VRF Instance" ptype="SUBCOMMAND" mode="subcommand" optional="true">
+          <PARAM name="vrf-name" help="VRF Name" ptype="STRING" view="configure-router-bgp-view" default="default"/>
+        </PARAM>
+      </PARAM>
+    </PARAM>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_config_as ${vrf-name} ${as-num-dot}</ACTION>
+  </COMMAND>
+  <COMMAND name="no router" help="Border Gateway protocol (BGP)">
+    <PARAM name="bgp" help="Border Gateway protocol (BGP)" mode="subcommand" ptype="SUBCOMMAND">
+      <PARAM name="vrf" help="VRF Instance" ptype="SUBCOMMAND" mode="subcommand" optional="true">
+        <PARAM name="vrf-name" help="VRF Name" ptype="STRING" view="configure-router-bgp-view" default="default"/>
+      </PARAM>
+    </PARAM>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_config ${vrf-name}</ACTION>
+  </COMMAND>
+</VIEW>
+
+<VIEW name="configure-router-bgp-view" prompt="${SYSTEM_NAME}(config-router-bgp)# "
+      depth="2">
+  <NAMESPACE ref="configure-view" help="false" completion="false" />
+  
+  <COMMAND name="router-id" help="Override configured router identifier">
+    <PARAM name="ip-addr" help="Router identifier" ptype="IP_ADDR"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_config_router_id ${vrf-name} ${ip-addr}</ACTION>
+  </COMMAND>
+  
+  <COMMAND name="graceful-restart" help="BGP graceful restart feature"/>
+  <COMMAND name="graceful-restart enable" help="Enable BGP graceful restart">
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_graceful_restart_config_enabled ${vrf-name} True</ACTION>
+  </COMMAND>
+  <COMMAND name="graceful-restart preserve-fw-state" help="Enable BGP graceful restart preserve FW state" ref="hidden">
+    <ACTION builtin="clish_nop"/>
+  </COMMAND>
+  <COMMAND name="graceful-restart restart-time" help="BGP graceful restart restart-time">
+    <PARAM name="restart-time" help="Seconds" ptype="RANGE_1_3600"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_graceful_restart_config_restart_time ${vrf-name} ${restart-time}</ACTION>
+  </COMMAND>
+  <COMMAND name="graceful-restart stalepath-time" help="BGP graceful restart stalepath-time">
+    <PARAM name="stalepath-time" help="Seconds" ptype="RANGE_1_3600"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_graceful_restart_config_stale_routes_time ${vrf-name} ${stalepath-time}</ACTION>
+  </COMMAND>
+  
+  <COMMAND name="always-compare-med" help="Allow comparing MED from different neighbors">
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_route_selection_options_config_always_compare_med ${vrf-name} True</ACTION>
+  </COMMAND>
+  
+  <COMMAND name="bestpath" help="Change the default bestpath selection"/>
+  <COMMAND name="bestpath as-path" help="AS-path for best path computation"/>
+  <COMMAND name="bestpath as-path multipath-relax" help="Include prefixes received from different AS path during multipath calculation">
+  <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_use_multiple_paths_ebgp_config_allow_multiple_as ${vrf-name} True</ACTION>
+  </COMMAND>
+  <COMMAND name="bestpath as-path ignore" help="Ignore AS path for best path computation">
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_route_selection_options_config_ignore_as_path_length ${vrf-name} True</ACTION>
+  </COMMAND>
+
+  <COMMAND name="neighbor" help="Specify a neighbor router" view="configure-router-bgp-nbr-view" viewid="nbr-addr=${ip};vrf-name=${vrf-name}">
+    <PARAM name="ip" help="neighbor router" ptype="IPV4V6_ADDR" view="configure-router-bgp-nbr-view" viewid="nbr-addr=${ip};vrf-name=${vrf-name}"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config ${vrf-name} ${ip} ${instance}</ACTION>
+  </COMMAND>
+
+  <COMMAND name="peer-group" help="Specify a peer-group" view="configure-router-bgp-template-view" viewid="template-name=${template-str}">
+    <PARAM name="template-str" help="Peer-group" ptype="STRING" view="configure-router-bgp-template-view" viewid="template-name=${template-str}"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_config ${vrf-name} ${template-str} ${instance}</ACTION>
+  </COMMAND>
+  <COMMAND name="address-family" help="Enter Address Family command mode"/>
+  <COMMAND name="address-family ipv4" help="Enter Address Family command mode" view="configure-router-bgp-ipv4-view" viewid="vrf-name=${vrf-name};family=ipv4">
+    <PARAM name="unicast" help="Address Family" mode="subcommand" ptype="SUBCOMMAND" view="configure-router-bgp-ipv4-view" viewid="vrf-family=ipv4"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_config ${vrf-name} IPV4_UNICAST</ACTION>
+  </COMMAND>
+  <COMMAND name="address-family ipv6" help="Enter Address Family command mode" view="configure-router-bgp-ipv6-view" viewid="vrf-name=${vrf-name};family=ipv6">
+    <PARAM name="unicast" help="Address Family" mode="subcommand" ptype="SUBCOMMAND" view="configure-router-bgp-ipv6-view" viewid="family=ipv6"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_config ${vrf-name} IPV6_UNICAST</ACTION>
+  </COMMAND>
+
+  <COMMAND name="listen" help="Set the prefix range for dynamic peers">
+    <PARAM name="addr" help="Neighbor prefix" ptype="IP_ADDR_MASK">
+      <PARAM name="peer-group" help="Member of the peer-group" mode="subcommand" ptype="SUBCOMMAND">
+        <PARAM name="pgname" help="Peer-group name" ptype="STRING"/>
+      </PARAM>
+    </PARAM>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance1717438887 ${vrf-name} ${addr} ${pgname} </ACTION>
+  </COMMAND>
+
+    <COMMAND name="no" help="no commands"/>
+  <COMMAND name="no router-id" help="Override configured router identifier">
+    <PARAM name="ip-addr" help="Router identifier" ptype="IP_ADDR" optional="true"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_config_router_id ${vrf-name} ${ip-addr}</ACTION>
+  </COMMAND>
+  <COMMAND name="no graceful-restart" help="BGP graceful restart feature"/>
+  <COMMAND name="no graceful-restart enable" help="Disable BGP graceful restart">
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_graceful_restart_config_enabled ${vrf-name}</ACTION>
+  </COMMAND>
+  <COMMAND name="no graceful-restart preserve-fw-state" help="Disable BGP graceful restart preserve FW state" ref="hidden">
+    <ACTION builtin="clish_nop"/>
+  </COMMAND>
+  <COMMAND name="no graceful-restart restart-time" help="Unconfigure BGP graceful restart restart-time">
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_graceful_restart_config_restart_time ${vrf-name}</ACTION>
+  </COMMAND>
+  <COMMAND name="no graceful-restart stalepath-time" help="Unconfigure BGP graceful restart stalepath-time">
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_graceful_restart_config_stale_routes_time ${vrf-name}</ACTION>
+  </COMMAND>
+  
+  <COMMAND name="no always-compare-med" help="Allow comparing MED from different neighbors">
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_route_selection_options_config_always_compare_med ${vrf-name}</ACTION>
+  </COMMAND>
+
+  <COMMAND name="no bestpath" help="Change the default bestpath selection"/>
+  <COMMAND name="no bestpath as-path" help="AS-path for best path computation"/>
+  <COMMAND name="no bestpath as-path multipath-relax" help="Include prefixes received from different AS path during multipath calculation">
+  <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_use_multiple_paths_ebgp_config_allow_multiple_as ${vrf-name}</ACTION>
+  </COMMAND>
+  <COMMAND name="no bestpath as-path ignore" help="Ignore AS path for best path computation">
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_route_selection_options_config_ignore_as_path_length ${vrf-name}</ACTION>
+  </COMMAND>
+
+  <COMMAND name="no neighbor" help="Specify a neighbor router">
+    <PARAM name="ip" help="neighbor router" ptype="IPV4V6_ADDR"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor ${vrf-name} ${ip}</ACTION>
+  </COMMAND>
+  <COMMAND name="no peer-group" help="Specify a peer-group">
+    <PARAM name="template" help="Peer-group" ptype="STRING"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group ${vrf-name} ${template}</ACTION>
+  </COMMAND>
+  <COMMAND name="no address-family" help="Enter Address Family command mode"/>
+  <COMMAND name="no address-family ipv4" help="Enter Address Family command mode">
+    <PARAM name="unicast" help="Address Family" mode="subcommand" ptype="SUBCOMMAND"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi ${vrf-name} IPV4_UNICAST</ACTION>
+  </COMMAND>
+  <COMMAND name="no address-family ipv6" help="Enter Address Family command mode">
+    <PARAM name="unicast" help="Address Family" mode="subcommand" ptype="SUBCOMMAND"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi ${vrf-name} IPV6_UNICAST</ACTION>
+  </COMMAND>
+</VIEW>
+
+
+<VIEW name="configure-router-bgp-nbr-view" prompt="${SYSTEM_NAME}(config-router-bgp-neighbor)# " depth="3">
+  <NAMESPACE ref="configure-view" help="false" completion="false" />
+  <NAMESPACE ref="configure-router-bgp-view" help="false" completion="false" />
+  <COMMAND name="description" help="Assign a string describing the neighbor">
+    <PARAM name="String" help="Enter the string (max 80 characters) to describe neighbor/peer-group" ptype="STRING"/>  
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_description ${vrf-name} ${nbr-addr} ${String}</ACTION>
+  </COMMAND>
+  <COMMAND name="ebgp-multihop" help="Allow EBGP neighbors not on directly connected networks">
+    <PARAM name="hop-count" help="Maximum hop count (default=1)" ptype="RANGE_1_255"/>
+    <ACTION builtin="clish_nop"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_ebgp_multihop_config_multihop_ttl ${vrf-name} ${nbr-addr} ${hop-count}&#xA;
+             python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_ebgp_multihop_config_enabled ${vrf-name} ${nbr-addr} True</ACTION>
+  </COMMAND>
+  <COMMAND name="inherit" help="Inherit a peer-group">
+    <PARAM name="peer-group" help="Inherit configuration of peer-group" mode="subcommand" ptype="SUBCOMMAND">
+    <PARAM name="template-name" help="Name of peer-group from which to inherit" ptype="STRING"/>
+    </PARAM>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_peer_group ${vrf-name} ${nbr-addr} ${template-name}</ACTION>
+  </COMMAND>
+  <COMMAND name="remote-as" help="Specify a BGP neighbor AS">
+      <PARAM name="as-num-dot" help="Autonomous system number" ptype="AS_NUM_DOT"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_peer_as ${vrf-name} ${nbr-addr} ${as-num-dot}</ACTION>
+  </COMMAND>
+  <COMMAND name="timers" help="Adjust routing timers">
+    <PARAM name="keepalive-intvl" help="Keepalive interval (default=60)" ptype="RANGE_1_3600">
+      <PARAM name="hold-time" help="Holdtime (default=180)" ptype="RANGE_1_3600"/>
+    </PARAM>  
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_timers_config_keepalive_interval ${vrf-name} ${nbr-addr} ${keepalive-intvl}&#xA;
+             python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_timers_config_hold_time ${vrf-name} ${nbr-addr} ${hold-time}</ACTION>
+  </COMMAND>    
+  <COMMAND name="update-source" help="Source of routing updates">
+    <PARAM name="ip" help="IP source" ptype="IPV4V6_ADDR" view="configure-router-bgp-nbr-view" viewid="nbr-addr=${ip};vrf-name=${vrf-name}"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_transport_config_local_address ${vrf-name} ${nbr-addr} ${ip}</ACTION>
+  </COMMAND>
+  <COMMAND name="shutdown" help="Shutdown a neighbor">
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_enabled ${vrf-name} ${nbr-addr} False</ACTION>
+  </COMMAND>
+  <COMMAND name="address-family" help="Enter Address Family command mode" />
+  <COMMAND name="address-family ipv4" help="Enter Address Family command mode" view="configure-router-bgp-nbr-ipv4-view" viewid="vrf-name=${vrf-name};nbr-addr=${nbr-addr};nbr-family=nbr-ipv4">
+    <PARAM name="unicast" help="Address Family" mode="subcommand" ptype="SUBCOMMAND" view="configure-router-bgp-nbr-ipv4-view" viewid="vrf-name=${vrf-name};nbr-addr=${nbr-addr};nbr-family=nbr-ipv4"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_config ${vrf-name} ${nbr-addr} IPV4_UNICAST</ACTION>
+  </COMMAND>
+  <COMMAND name="address-family ipv6" help="Enter Address Family command mode" view="configure-router-bgp-nbr-ipv6-view" viewid="vrf-name=${vrf-name};nbr-addr=${nbr-addr};nbr-family=nbr-ipv6">
+    <PARAM name="unicast" help="Address Family" mode="subcommand" ptype="SUBCOMMAND" view="configure-router-bgp-nbr-ipv6-view" viewid="vrf-name=${vrf-name};nbr-addr=${nbr-addr};nbr-family=nbr-ipv6"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_config ${vrf-name} ${nbr-addr} IPV6_UNICAST</ACTION>
+  </COMMAND>
+  <COMMAND name="address-family l2vpn" help="Enter Address Family command mode" view="configure-router-bgp-nbr-l2vpn-view" viewid="vrf-name=${vrf-name};nbr-addr=${nbr-addr};nbr-family=nbr-l2vpn">
+    <PARAM name="evpn" help="Address Family" mode="subcommand" ptype="SUBCOMMAND" view="configure-router-bgp-nbr-l2vpn-view" viewid="vrf-name=${vrf-name};nbr-addr=${nbr-addr};nbr-family=nbr-l2vpn"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_config ${vrf-name} ${nbr-addr} L2VPN_EVPN</ACTION>
+  </COMMAND>
+
+  <COMMAND name="no" help="no commands"/>
+  <COMMAND name="no address-family" help="Enter Address Family command mode"/>
+  <COMMAND name="no address-family ipv4" help="Enter Address Family command mode">
+    <PARAM name="unicast" help="Enter Address Family command mode" mode="subcommand" ptype="SUBCOMMAND"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi ${vrf-name} ${nbr-addr} IPV4_UNICAST</ACTION>
+  </COMMAND>  
+  <COMMAND name="no address-family ipv6" help="Enter Address Family command mode">
+    <PARAM name="unicast" help="Enter Address Family command mode" mode="subcommand" ptype="SUBCOMMAND"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi ${vrf-name} ${nbr-addr} IPV6_UNICAST</ACTION>
+  </COMMAND>  
+  <COMMAND name="no address-family l2vpn" help="Enter Address Family command mode">
+    <PARAM name="evpn" help="Enter Address Family command mode" mode="subcommand" ptype="SUBCOMMAND"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi ${vrf-name} ${nbr-addr} L2VPN_EVPN</ACTION>
+  </COMMAND>  
+  <COMMAND name="no description" help="Remove the string describing the neighbor or the peer-group">
+    <PARAM name="String" help="Enter the string (max 80 characters) to describe neighbor/peer-group" ptype="STRING" optional="true"/>  
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_description ${vrf-name} ${nbr-addr} ${String}</ACTION>
+  </COMMAND>
+  <COMMAND name="no ebgp-multihop" help="Allow EBGP neighbors not on directly connected networks">
+    <PARAM name="hop-count" help="Maximum hop count (default=1)" ptype="RANGE_1_255" optional="true"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_ebgp_multihop_config_multihop_ttl ${vrf-name} ${nbr-addr} ${hop-count}&#xA;
+             python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_ebgp_multihop_config_enabled ${vrf-name} ${nbr-addr} False</ACTION>
+  </COMMAND>
+  <COMMAND name="no inherit" help="Inherit a peer-group">
+    <PARAM name="peer-group" help="Inherit configuration of peer-group" mode="subcommand" ptype="SUBCOMMAND">
+    <PARAM name="template-name" help="Name of peer-group from which to inherit" ptype="STRING" optional="true"/>
+    </PARAM>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_peer_group ${vrf-name} ${nbr-addr} ${template-name}</ACTION>
+  </COMMAND>
+  <COMMAND name="no remote-as" help="Specify a BGP neighbor AS">
+      <PARAM name="as-num-dot" help="Autonomous system number" ptype="AS_NUM_DOT" optional="true"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_peer_as ${vrf-name} ${nbr-addr} ${as-num-dot}</ACTION>
+  </COMMAND>
+  <COMMAND name="no timers" help="Adjust routing timers">
+    <PARAM name="keepalive-intvl" help="Keepalive interval (default=60)" ptype="RANGE_1_3600" optional="true">
+      <PARAM name="hold-time" help="Holdtime (default=180)" ptype="RANGE_1_3600" optional="true"/>
+    </PARAM>  
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_timers_config_keepalive_interval ${vrf-name} ${nbr-addr} ${keepalive-intvl}&#xA;
+             python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_timers_config_hold_time ${vrf-name} ${nbr-addr} ${hold-time}</ACTION>
+  </COMMAND>    
+  <COMMAND name="no update-source" help="Source of routing updates">
+    <PARAM name="ip" help="IP source" ptype="IPV4V6_ADDR" view="configure-router-bgp-nbr-view" viewid="nbr-addr=${ip};vrf-name=${vrf-name}" optional="true"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_transport_config_local_address ${vrf-name} ${nbr-addr} ${ip}</ACTION>
+  </COMMAND>
+  <COMMAND name="no shutdown" help="Shutdown a neighbor">
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_enabled ${vrf-name} ${nbr-addr} True</ACTION>
+  </COMMAND>
+</VIEW>
+
+<VIEW name="configure-router-bgp-template-view" prompt="${SYSTEM_NAME}(config-router-bgp-pg)# " depth="3">
+  <NAMESPACE ref="configure-view" help="false" completion="false" />
+  <NAMESPACE ref="configure-router-bgp-view" help="false" completion="false" />
+  <COMMAND name="remote-as" help="Specify a BGP neighbor AS">
+      <PARAM name="as-num-dot" help="Autonomous system number" ptype="AS_NUM_DOT"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_bgp_global_config_router_id ${vrf-name} ${as-num-dot}${template-name} ${remote-as}</ACTION>
+  </COMMAND>
+</VIEW>
+
+<VIEW name="configure-router-bgp-vrf-view" prompt="${SYSTEM_NAME}(config-router-bgp-${instance}-vrf)# " depth="3">
+  <NAMESPACE ref="configure-view" help="false" completion="false" />
+  <NAMESPACE ref="configure-router-bgp-view" help="false" completion="false" />
+  <COMMAND name="router-id" help="Override configured router identifier">
+    <PARAM name="ip-addr" help="Router identifier" ptype="IP_ADDR"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_bgp_global_config_router_id ${vrf-name} ${instance} ${ip-addr} True </ACTION>
+  </COMMAND>
+</VIEW>
+</CLISH_MODULE>
+

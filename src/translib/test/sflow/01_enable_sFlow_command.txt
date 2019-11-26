@@ -1,0 +1,1 @@
+./gnmi_set -replace /sonic-sflow:sonic-sflow/SFLOW/SFLOW_LIST[sflow_key=global]/admin_state:@./01_enable_sFlow.json  -target_addr 127.0.0.1:8080 -alsologtostderr -insecure true -pretty

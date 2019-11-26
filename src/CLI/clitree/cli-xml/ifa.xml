@@ -1,0 +1,180 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE CLISH_MODULE [
+]>
+<!--
+Copyright 2019 Dell, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+<CLISH_MODULE
+    xmlns="http://www.dellemc.com/sonic/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xi="http://www.w3.org/2001/XInclude"
+    xsi:schemaLocation="http://www.dellemc.com/sonic/XMLSchema
+                        http://www.dellemc.com/sonic/XMLSchema/clish.xsd"
+    >
+<!--=========================================================================-->
+
+  <VIEW name="enable-view">
+    <COMMAND name="show tam int-ifa" 
+             help="Show TAM IFA info"/>
+    <COMMAND name="show tam int-ifa supported" 
+             help="Show TAM IFA feature info" 
+             mode="subcommand" 
+             ptype="SUBCOMMAND">
+      <ACTION>python $SONIC_CLI_ROOT/sonic-cli-ifa.py get_sonic_ifa_sonic_ifa_tam_int_ifa_feature_table show_tam_feature.j2</ACTION>
+    </COMMAND>
+    <COMMAND name="show tam int-ifa flow" 
+             help="Show TAM IFA flow info" 
+             mode="subcommand" 
+             ptype="SUBCOMMAND">
+      <PARAM name="name" 
+             help="Name of the flow" 
+             ptype="STRING_32" 
+             optional="true"> 
+      </PARAM>
+      <ACTION>
+        if test "${name}" = "all" ; then&#xA;
+          python $SONIC_CLI_ROOT/sonic-cli-ifa.py get_sonic_ifa_sonic_ifa_tam_int_ifa_flow_table show_tam_flow.j2&#xA;
+        elif test -z "${name}"; then&#xA;
+          python $SONIC_CLI_ROOT/sonic-cli-ifa.py get_sonic_ifa_sonic_ifa_tam_int_ifa_flow_table show_tam_flow.j2&#xA;
+        else&#xA;
+          python $SONIC_CLI_ROOT/sonic-cli-ifa.py get_sonic_ifa_sonic_ifa_tam_int_ifa_flow_table_tam_int_ifa_flow_table_list ${name} show_tam_flow.j2&#xA;
+        fi&#xA;
+      </ACTION>
+    </COMMAND>
+
+    <COMMAND name="show tam int-ifa statisitcs"
+             help="Show TAM IFA flow statistics"
+             mode="subcommand"
+             ptype="SUBCOMMAND">
+      <PARAM name="name"
+             help="Name of the flow"
+             ptype="STRING_32"
+             optional="true">
+      </PARAM>
+      <ACTION>
+        if test "${name}" = "all" ; then&#xA;
+          python $SONIC_CLI_ROOT/sonic-cli-ifa.py get_sonic_ifa_sonic_ifa_tam_int_ifa_flow_table show_tam_flow.j2&#xA;
+        elif test -z "${name}"; then&#xA;
+          python $SONIC_CLI_ROOT/sonic-cli-ifa.py get_sonic_ifa_sonic_ifa_tam_int_ifa_flow_table show_tam_flow.j2&#xA;
+        else&#xA;
+          python $SONIC_CLI_ROOT/sonic-cli-ifa.py get_sonic_ifa_sonic_ifa_tam_int_ifa_flow_table_tam_int_ifa_flow_table_list ${name} show_tam_flow.j2&#xA;
+        fi&#xA;
+      </ACTION>
+    </COMMAND>
+
+    <COMMAND name="show tam int-ifa status"
+             help="Show TAM IFA flow status"
+             mode="subcommand"
+             ptype="SUBCOMMAND">
+      <ACTION>python $SONIC_CLI_ROOT/sonic-cli-ifa.py get_tam_ifa_status</ACTION>
+    </COMMAND>
+
+  </VIEW>
+
+  <VIEW name="config-int-ifa" 
+        prompt="${SYSTEM_NAME}(config-tam-int-ifa)# " 
+        depth="2">
+    <COMMAND name="no" 
+             help="Negate a command or set its defaults" />
+
+    <!-- tam-int-ifa enable/disable -->
+    <COMMAND name="feature" 
+             help="Enable/disable TAM IFA" 
+             ptype="SUBCOMMAND" 
+             mode="subcommand">
+      <PARAM name="enable" 
+             help="Device ID" 
+             ptype="ENA_DISA"> 
+      </PARAM>
+      <ACTION> if test "${enable}" = "enable" ; then&#xA;
+        python $SONIC_CLI_ROOT/sonic-cli-ifa.py patch_sonic_ifa_sonic_ifa_tam_int_ifa_feature_table_tam_int_ifa_feature_table_list_enable feature True&#xA;
+          else&#xA;
+        python $SONIC_CLI_ROOT/sonic-cli-ifa.py patch_sonic_ifa_sonic_ifa_tam_int_ifa_feature_table_tam_int_ifa_feature_table_list_enable feature False&#xA;
+          fi&#xA;
+      </ACTION>
+    </COMMAND>
+
+    <!-- tam-int-ifa flow-->
+    <COMMAND name="flow" 
+             help="Configure TAM IFA flow" 
+             ptype="SUBCOMMAND" 
+             mode="subcommand">
+      <PARAM name="flow-name" 
+             help="Flow name" 
+             ptype="STRING"> 
+      </PARAM>
+      <PARAM name="acl-table" 
+             help="ACL table name" 
+             ptype="SUBCOMMAND" 
+             mode="subcommand">
+        <PARAM name="acl-table-val" 
+               help="ACL table name" 
+               ptype="STRING"> 
+        </PARAM>
+      </PARAM>
+      <PARAM name="acl-rule" 
+             help="ACL rule name" 
+             ptype="SUBCOMMAND" 
+             mode="subcommand">
+        <PARAM name="acl-rule-val" 
+               help="ACL rule name" 
+               ptype="STRING"> 
+        </PARAM>
+      </PARAM>
+      <PARAM name="sampling-rate" 
+             help="Sampling rate" 
+             ptype="SUBCOMMAND" 
+             mode="subcommand" 
+             optional="true">
+        <PARAM name="sampling-rate-val" 
+               help="Sampling rate" 
+               ptype="UINT"> 
+        </PARAM>
+      </PARAM>
+      <PARAM name="collector-name" 
+             help="Sampling rate" 
+             ptype="SUBCOMMAND" 
+             mode="subcommand" 
+             optional="true">
+        <PARAM name="collector-val" 
+               help="Collector name" 
+               ptype="STRING"> 
+        </PARAM>
+      </PARAM>
+      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-ifa.py patch_sonic_ifa_sonic_ifa_tam_int_ifa_flow_table_tam_int_ifa_flow_table_list ${flow-name} ${acl-rule-val} ${acl-table-val} sv ${sampling-rate-val} cv ${collector-val} </ACTION>
+    </COMMAND>
+
+    <!-- no tam-int-ifa flow -->
+    <COMMAND name="no flow" 
+             help="Clear TAM IFA flow information" 
+             ptype="SUBCOMMAND" 
+             mode="subcommand">
+      <PARAM name="name" 
+             help="Flow Name" 
+             ptype="STRING"> 
+      </PARAM>
+      <ACTION>
+        if test "${name}" = "all" ; then&#xA;
+          python $SONIC_CLI_ROOT/sonic-cli-ifa.py delete_list_sonic_ifa_sonic_ifa_tam_int_ifa_flow_table_tam_int_ifa_flow_table_list&#xA;
+        else&#xA;
+          python $SONIC_CLI_ROOT/sonic-cli-ifa.py delete_sonic_ifa_sonic_ifa_tam_int_ifa_flow_table_tam_int_ifa_flow_table_list ${name}&#xA;
+        fi&#xA;
+      </ACTION>
+    </COMMAND>
+  </VIEW>
+
+</CLISH_MODULE>
+

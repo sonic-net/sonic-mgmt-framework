@@ -760,20 +760,21 @@ func deleteVlanIntfAndMembers(inParams *XfmrParams, vlanName *string) error {
     vlanMemberMap := make(map[string]db.Value)
 
     vlanMap[*vlanName] = db.Value{Field:map[string]string{}}
+    subOpMap[db.ConfigDB] = resMap
+    inParams.subOpDataMap[DELETE] = &subOpMap
 
     vlanEntry, err := inParams.d.GetEntry(&db.TableSpec{Name:VLAN_TN}, db.Key{Comp: []string{*vlanName}})
     if err != nil {
         log.Errorf("Retrieving data from VLAN table for VLAN: %s failed!", *vlanName)
         return err
     }
-    intTbl := IntfTypeTblMap[IntfTypeVlan]
     /* Handle VLAN_INTERFACE TABLE */
-    checkExists := false
-    err =validateIPexist(intTbl, inParams, vlanName, &checkExists)
-    if err != nil {
-        return nil
-    } else if checkExists == true {
-        resMap[VLAN_INTERFACE_TN] = vlanMap
+    ipCnt := 0
+    _ = interfaceIPcount(VLAN_INTERFACE_TN, inParams.d, vlanName, &ipCnt)
+    if ipCnt > 0 {
+        errStr := "Need to first remove IP address entry"
+        log.Error(errStr)
+        return errors.New(errStr)
     }
 
     memberPortsVal, ok := vlanEntry.Field["members@"]
@@ -791,14 +792,14 @@ func deleteVlanIntfAndMembers(inParams *XfmrParams, vlanName *string) error {
                 return err
             }
             vlanMemberKey := *vlanName + "|" + memberPort
-      vlanMemberMap[vlanMemberKey] = db.Value{Field:map[string]string{}} 
+            vlanMemberMap[vlanMemberKey] = db.Value{Field:map[string]string{}} 
             if err != nil {
                 return err
             }
         }
+        resMap[VLAN_MEMBER_TN] = vlanMemberMap
     }
     resMap[VLAN_TN] = vlanMap
-    resMap[VLAN_MEMBER_TN] = vlanMemberMap
 
     subOpMap[db.ConfigDB] = resMap
     inParams.subOpDataMap[DELETE] = &subOpMap

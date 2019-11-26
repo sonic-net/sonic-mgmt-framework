@@ -1,4 +1,7 @@
+{% if json_output['lacp']['openconfig-lacp:interfaces'] and json_output['lacp']['openconfig-lacp:interfaces']['interface']%}
 {% for intf in json_output['lacp']['openconfig-lacp:interfaces']['interface'] %}
+{% if json_output['portchannel']['sonic-portchannel:LAG_TABLE'] and json_output['portchannel']['sonic-portchannel:LAG_TABLE']['LAG_TABLE_LIST'] %}
+
 {% for po_intf in json_output['portchannel']['sonic-portchannel:LAG_TABLE']['LAG_TABLE_LIST'] %}
 {% if intf['name'] == po_intf['lagname'] %}
 {{po_intf['lagname']}} is {{po_intf['admin_status']}}, line protocol is {{po_intf['oper_status']}}, mode lacp
@@ -26,5 +29,8 @@ Output statistics:
 {% endif %}
 {% endif %}
 {% endfor %}
+{% endif %}
+
 {% endfor %}
+{% endif %}
 

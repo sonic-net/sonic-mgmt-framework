@@ -1,0 +1,48 @@
+module sonic-route-common {
+    namespace "http://github.com/Azure/sonic-route-common";
+    prefix srtcmn;
+
+    organization
+        "SONiC";
+
+    contact
+        "SONiC";
+
+    description
+        "SONIC ROUTE common YANG";
+
+    revision 2019-11-08 {
+        description
+            "Initial revision.";
+    }
+
+    container sonic-route-common {
+        container ROUTE_REDISTRIBUTE {
+            list ROUTE_REDISTRIBUTE_LIST {
+                key "vrf src_protocol dst_protocol addr_family";
+
+                leaf vrf {
+                    type string;
+                }
+
+                leaf src_protocol {
+                    type string;
+                }
+
+                leaf dst_protocol {
+                    type string;
+                }
+
+                leaf addr_family {
+                    type string;
+                }
+
+                leaf-list route_map {
+                    type string;
+                    max-elements 1;
+                }
+            }
+        }
+    }
+}
+

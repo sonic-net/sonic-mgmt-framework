@@ -21,12 +21,12 @@ const (
         MGMT_VRF_NAME          = "mgmt-vrf-name"
 )
 
+const (
+        DEFAULT_NETWORK_INSTANCE_CONFIG_TYPE        = "L3VRF"
+)
+
 var nwInstTypeMap = map[ocbinds.E_OpenconfigNetworkInstanceTypes_NETWORK_INSTANCE_TYPE] string {
-        ocbinds.OpenconfigNetworkInstanceTypes_NETWORK_INSTANCE_TYPE_UNSET: "",
         ocbinds.OpenconfigNetworkInstanceTypes_NETWORK_INSTANCE_TYPE_DEFAULT_INSTANCE: "DEFAULT_INSTANCE",
-        ocbinds.OpenconfigNetworkInstanceTypes_NETWORK_INSTANCE_TYPE_L2L3: "L2L3",
-        ocbinds.OpenconfigNetworkInstanceTypes_NETWORK_INSTANCE_TYPE_L2P2P: "L2P2P",
-        ocbinds.OpenconfigNetworkInstanceTypes_NETWORK_INSTANCE_TYPE_L2VSI: "L2VSI",
         ocbinds.OpenconfigNetworkInstanceTypes_NETWORK_INSTANCE_TYPE_L3VRF: "L3VRF",
 }
 
@@ -35,6 +35,7 @@ var NwInstTblNameMapWithNameAndType = map[NwInstMapKey]string {
         {NwInstName: "mgmt", NwInstType: "L3VRF"}: "MGMT_VRF_CONFIG",
         {NwInstName: "Vrf",  NwInstType: "L3VRF"}: "VRF",
         {NwInstName: "default", NwInstType: "L3VRF"}: "",
+        {NwInstName: "default", NwInstType: "DEFAULT_INSTANCE"}: "",
 }
 
 /* Top level network instance table name based on key name */
@@ -127,12 +128,18 @@ func mgmtVrfEnabledInDb (inParams XfmrParams) (string) {
 func getNwInstType (nwInstObj *ocbinds.OpenconfigNetworkInstance_NetworkInstances, keyName string) (string, error) {
         var err error
 
-        nwInstType := nwInstTypeMap[nwInstObj.NetworkInstance[keyName].Config.Type]
-        if nwInstType == "" {
-                return nwInstType, errors.New("network instance type not set")
+        /* If config not set or config.type not set, return L3VRF */
+        if ((nwInstObj.NetworkInstance[keyName].Config == nil) ||
+            (nwInstObj.NetworkInstance[keyName].Config.Type == ocbinds.OpenconfigNetworkInstanceTypes_NETWORK_INSTANCE_TYPE_UNSET)) {
+                return DEFAULT_NETWORK_INSTANCE_CONFIG_TYPE, err
+        } else {
+                instType, ok :=nwInstTypeMap[nwInstObj.NetworkInstance[keyName].Config.Type]
+                if ok {
+                        return instType, err
+                } else {
+                        return instType, errors.New("Unknow network instance type")
+                }
         }
-
-        return nwInstType, err
 }
 
 /* Check if this is mgmt vrf configuration. Note this is used for create, update only */
@@ -229,27 +236,34 @@ var network_instance_table_name_xfmr TableXfmrFunc = func (inParams XfmrParams) 
         }
 
         /*
-         * for GET or DELETE, use the key "name" only to get the DB table name
-         * for CREATE, UPDATE or REPLACE, use the key "name" and type to get the DB table name
-         */
-        if ((inParams.oper == CREATE) ||
-            (inParams.oper == UPDATE) ||
-            (inParams.oper == REPLACE))  {
-                /* get the type for the network instance config */
+         * For CREATE or PATCH at top level (Network_instances), check the config type if user provides one 
+         * For other cases of UPATE, CREATE, or GET/DELETE, get the table name from the key only
+         */ 
+        if (((inParams.oper == CREATE) ||
+             (inParams.oper == REPLACE) ||
+             (inParams.oper == UPDATE)) &&
+             (inParams.requestUri == "/openconfig-network-instance:network-instances")) {
                 oc_nwInstType, ierr := getNwInstType(nwInstObj, keyName)
                 if (ierr != nil ) {
-                        log.Info("network_instance_table_name_xfmr, network instance type not correct")
+                        log.Info("network_instance_table_name_xfmr, network instance type not correct ", oc_nwInstType)
                         return tblList, errors.New("network instance type incorrect")
                 }
 
                 log.Info("network_instance_table_name_xfmr, name ", keyName)
                 log.Info("network_instance_table_name_xfmr, type ", oc_nwInstType)
 
-                tblList = append(tblList, NwInstTblNameMapWithNameAndType[NwInstMapKey{intNwInstName, oc_nwInstType}])
+                tblName, ok  := NwInstTblNameMapWithNameAndType[NwInstMapKey{intNwInstName, oc_nwInstType}]
+                if !ok {
+                        log.Info("network_instance_table_name_xfmr, type not matching name")
+                        return tblList, errors.New("network instance type not matching name")
+                }
+
+                tblList = append(tblList, tblName)
         } else {
                 tblList = append(tblList, NwInstTblNameMapWithName[intNwInstName])
         }
 
+        log.Info("network_instance_table_name_xfmr, OP ", inParams.oper)
         log.Info("network_instance_table_name_xfmr,  DB table name ", tblList)
 
         return tblList, err

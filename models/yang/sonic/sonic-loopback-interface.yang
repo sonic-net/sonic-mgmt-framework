@@ -6,10 +6,6 @@ module sonic-loopback-interface {
         prefix inet;
     }
 
-    import sonic-port {
-        prefix prt;
-    }
-
     organization
         "SONiC";
 

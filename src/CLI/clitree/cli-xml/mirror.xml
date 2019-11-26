@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Copyright 2019 Dell, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+<CLISH_MODULE
+    xmlns="http://www.dellemc.com/sonic/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xi="http://www.w3.org/2001/XInclude"
+    xsi:schemaLocation="http://www.dellemc.com/sonic/XMLSchema
+    http://www.dellemc.com/sonic/XMLSchema/clish.xsd"
+    >
+    <VIEW name="enable-view">
+    <!--show mirror-session -->
+    <COMMAND name="show mirror-session" help="Show Mirror session information">
+        <PARAM
+            name="session-name"
+            help="Mirror session name"
+            ptype="STRING"
+            optional="true"
+            >
+        </PARAM>
+        <ACTION>
+            if test "${session-name}" = ""; then&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-mirror.py -show&#xA;
+            else&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-mirror.py -show --session ${session-name}&#xA;
+            fi&#xA;
+       </ACTION>
+   </COMMAND>
+
+   </VIEW>
+  <VIEW name="configure-view">
+    <COMMAND
+        name="mirror-session"
+        help="Mirror session configuration"
+         mode="subcommand"
+         ptype="SUBCOMMAND"
+        view="configure-mirror-view"
+        viewid="session_name=${session-name}"
+        >
+        <PARAM
+            name="session-name"
+            help="Mirror session name"
+            ptype="STRING"
+            >
+        </PARAM>
+     <ACTION builtin="clish_nop"></ACTION>
+     </COMMAND>
+     <!-- no mirror-session commands -->
+     <COMMAND
+         name="no mirror-session"
+         help="Delete Mirror session configuration"
+         >
+        <PARAM
+            name="session-name"
+            help="Mirror session name"
+            ptype="STRING"
+            >
+        </PARAM>
+     <ACTION>
+        python $SONIC_CLI_ROOT/sonic-cli-mirror.py -clear --session ${session-name}
+     </ACTION>
+     </COMMAND>
+  </VIEW>
+  <VIEW name="configure-mirror-view"
+        prompt="${SYSTEM_NAME}(config-mirror-${session_name})# "
+        depth="2">
+        <NAMESPACE ref="configure-view"
+                help="false"
+                completion="false"/>
+
+        <!-- destination Ethernet <idx> source Ethernet <idx> direction [rx|tx|both] -->
+         <COMMAND
+         name="destination"
+         help="mirror destination configuration"
+         >
+                 <PARAM
+                    name="phy-if-id"
+                    help="Physical interface or ERSPAN"
+                    ptype="STRING"
+                optional="true"
+                    >
+                 </PARAM>
+            <PARAM
+                name="source"
+                help="mirror source configuration"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                optional="true"
+            >
+                 <PARAM
+                    name="src-phy-if-id"
+                    help="Physical interface"
+                    ptype="STRING"
+                    optional="false"
+                    >
+                 </PARAM>
+                 </PARAM>
+             <PARAM
+                name="direction"
+                help="mirror destination configuration"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                optional="true"
+             >
+                 <PARAM
+                    name="sess-direction"
+                    help="Mirror session direction rx/tx/both"
+                    ptype="STRING"
+                    optional="false"
+                    >
+                 </PARAM>
+             </PARAM>
+             <PARAM
+                name="dst-ip"
+                help="ERSPAN Destination ip address"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                optional="true"
+             >
+                 <PARAM
+                    name="dst_ip"
+                    help="ERSPAN destination ip address"
+                    ptype="IP_ADDR"
+                    optional="false"
+                    >
+                 </PARAM>
+             </PARAM>
+             <PARAM
+                name="src-ip"
+                help="ERSPAN source ip address"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                optional="true"
+             >
+                 <PARAM
+                    name="src_ip"
+                    help="ERSPAN source ip address"
+                    ptype="IP_ADDR"
+                    optional="false"
+                    >
+                 </PARAM>
+             </PARAM>
+             <PARAM
+                name="dscp"
+                help="ERSPAN destination dscp"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                optional="true"
+             >
+                 <PARAM
+                    name="ip_dscp"
+                    help="ERSPAN dscp"
+                    ptype="UINT"
+                    optional="false"
+                    >
+                 </PARAM>
+             </PARAM>
+             <PARAM
+                name="gre"
+                help="ERSPAN destination gre-type"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                optional="true"
+             >
+                 <PARAM
+                    name="ip_gre"
+                    help="ERSPAN gre-type"
+                    ptype="UINT"
+                    optional="false"
+                    >
+                 </PARAM>
+             </PARAM>
+             <PARAM
+                name="ttl"
+                help="ERSPAN destination ttl"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                optional="true"
+             >
+                 <PARAM
+                    name="ip_ttl"
+                    help="ERSPAN ttl"
+                    ptype="UINT"
+                    optional="false"
+                    >
+                 </PARAM>
+             </PARAM>
+                <ACTION>
+                 if test "${dst_ip}" != ""; then&#xA;
+                    if test "${src-phy-if-id}" = ""; then&#xA;
+                        if test "${ip_gre}" = ""; then&#xA;
+                            python $SONIC_CLI_ROOT/sonic-cli-mirror.py -config --session ${session_name} --dst_ip ${dst_ip} --src_ip ${src_ip} --dscp ${ip_dscp} --ttl ${ip_ttl}&#xA;
+                        else&#xA;
+                            python $SONIC_CLI_ROOT/sonic-cli-mirror.py -config --session ${session_name} --dst_ip ${dst_ip} --src_ip ${src_ip} --dscp ${ip_dscp} --gre ${ip_gre} --ttl ${ip_ttl}&#xA;
+                        fi&#xA;
+                    else&#xA;
+                        if test "${ip_gre}" = ""; then&#xA;
+                            python $SONIC_CLI_ROOT/sonic-cli-mirror.py -config --session ${session_name} --dst_ip ${dst_ip} --src_ip ${src_ip} --dscp ${ip_dscp} --ttl ${ip_ttl} --source ${src-phy-if-id} --direction ${sess-direction}&#xA;
+                        else&#xA;
+                            python $SONIC_CLI_ROOT/sonic-cli-mirror.py -config --session ${session_name} --dst_ip ${dst_ip} --src_ip ${src_ip} --dscp ${ip_dscp} --gre ${ip_gre} --ttl ${ip_ttl} --source ${src-phy-if-id} --direction ${sess-direction}&#xA;
+                        fi&#xA;
+                    fi&#xA;
+                elif test "${phy-if-id}" != ""; then&#xA;
+                 if test "${src-phy-if-id}" = ""; then&#xA;
+                    python $SONIC_CLI_ROOT/sonic-cli-mirror.py -config --session ${session_name} --destination ${phy-if-id}&#xA;
+                 else&#xA;
+                    python $SONIC_CLI_ROOT/sonic-cli-mirror.py -config --session ${session_name} --destination ${phy-if-id} --source ${src-phy-if-id} --direction ${sess-direction}&#xA;
+                 fi&#xA;
+                fi&#xA;
+                </ACTION>
+
+        </COMMAND>
+  </VIEW>
+</CLISH_MODULE>

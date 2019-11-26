@@ -2,10 +2,6 @@ module sonic-common {
     namespace "http://github.com/Azure/sonic-common";
     prefix scommon;
 
-    import ietf-yang-types {
-        prefix yang;
-    }
-
     organization
         "SONiC";
 
@@ -13,7 +9,7 @@ module sonic-common {
         "SONiC";
 
     description
-        "SONIC VLAN";
+        "SONIC Common";
 
     revision 2019-05-15 {
         description
@@ -40,48 +36,6 @@ module sonic-common {
             enum up;
             enum down;
         }
-    }
-
-    extension custom-handler {
-        description
-            "Node should be handled by custom handler";
-        argument "name";
-    }
-
-    extension db-name {
-        description
-            "DB name, e.g. APPL_DB, CONFIG_DB";
-        argument "value";
-    }
-
-    extension key-delim {
-        description
-            "Key delimeter, e.g. - |, :";
-        argument "value";
-    }
-
-    extension key-pattern {
-        description
-            "Key pattern, e.g. - ACL_RULE|{aclname}|{rulename}";
-        argument "value";
-    }
-
-    extension map-list {
-        description
-            "If it is a map list";
-        argument "value"; //
-    }
-
-    extension map-leaf {
-        description
-            "Map leaf names";
-        argument "value"; //
-    }
-
-    extension pf-check {
-        description
-            "Platform specific validation";
-        argument "handler"; //
     }
 
     container operation {
