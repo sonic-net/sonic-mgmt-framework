@@ -18,13 +18,13 @@
       <ACTION builtin="clish_nop"/>
     </COMMAND>
     <COMMAND name="no ztp enable" help="Ztp disable commands">
-      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-ztp.py post_openconfig_ztp_ztp_config_admin_mode ${__full_line} </ACTION>
+      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-ztp.py patch_openconfig_ztp_ztp_config ${__full_line} </ACTION>
     </COMMAND>
     <COMMAND name="ztp" help="Ztp control commands">
       <ACTION builtin="clish_nop"/>
     </COMMAND>
     <COMMAND name="ztp enable" help="Ztp enable command" >
-      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-ztp.py post_openconfig_ztp_ztp_config_admin_mode ${__full_line} </ACTION>
+      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-ztp.py patch_openconfig_ztp_ztp_config ${__full_line} </ACTION>
     </COMMAND>
   </VIEW>
 </CLISH_MODULE>
