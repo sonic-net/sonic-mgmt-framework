@@ -108,7 +108,8 @@ def invoke(func, args):
               
           else:
               #error response
-              result =  api_response.error_message()
+              result =  "Failed"
+              print api_response.error_message()
 
           if result != 'Success':
            print("Map creation for VID:{} = {}".format(vidstr,result)) 
@@ -116,6 +117,8 @@ def invoke(func, args):
 
         if fail == 0:
           print("Map creation for {} vids succeeded.".format(count+1))
+
+        return api_response
           
     if func == "get_list_sonic_vxlan_sonic_vxlan_vxlan_tunnel_vxlan_tunnel_list":
         keypath = cc.Path('/restconf/data/sonic-vxlan:sonic-vxlan/VXLAN_TUNNEL/VXLAN_TUNNEL_LIST')
@@ -129,6 +132,10 @@ def invoke(func, args):
         keypath = cc.Path('/restconf/data/sonic-vxlan:sonic-vxlan/VXLAN_TUNNEL_MAP/VXLAN_TUNNEL_MAP_LIST')
         return aa.get(keypath)
 
+    if func == "get_list_sonic_vxlan_sonic_vxlan_vxlan_tunnel_table_vxlan_tunnel_table_list":
+        keypath = cc.Path('/restconf/data/sonic-vxlan:sonic-vxlan/VXLAN_TUNNEL_TABLE/VXLAN_TUNNEL_TABLE_LIST')
+        return aa.get(keypath)
+
     else:
         print("%Error: not implemented")
         exit(1)
@@ -138,7 +145,7 @@ def invoke(func, args):
 #show vxlan interface 
 def vxlan_show_vxlan_interface(args):
 
-    print "#### VXLAN INFO ####"
+    print "VXLAN INFO:"
     api_response = invoke("get_list_sonic_vxlan_sonic_vxlan_vxlan_tunnel_vxlan_tunnel_list", args)
     if api_response.ok():
         response = api_response.content
@@ -168,7 +175,7 @@ def vxlan_show_vxlan_interface(args):
 #show vxlan map 
 def vxlan_show_vxlan_vlanvnimap(args):
 
-    print "#### VLAN-VNI Mapping ####"
+    print "VLAN-VNI Mapping"
     print("{0:^8}  {1:^8}".format('VLAN','VNI'))
     api_response = invoke("get_list_sonic_vxlan_sonic_vxlan_vxlan_tunnel_map_vxlan_tunnel_map_list", args)
     if api_response.ok():
@@ -184,6 +191,25 @@ def vxlan_show_vxlan_vlanvnimap(args):
 
     return
 
+#show vxlan tunnel 
+def vxlan_show_vxlan_tunnel(args):
+
+    print("{:*^70s}".format("List of Tunnels"))
+    print("{0:^20} {1:^15} {2:^15} {3:^8} {4:^12}".format('Name','SIP','DIP','source','operstatus'))
+    api_response = invoke("get_list_sonic_vxlan_sonic_vxlan_vxlan_tunnel_table_vxlan_tunnel_table_list", args)
+    if api_response.ok():
+        response = api_response.content
+	if response is None:
+	    print "no vxlan configuration"
+	elif response is not None:
+           tunnel_list = response['sonic-vxlan:VXLAN_TUNNEL_TABLE_LIST']
+           for iter in tunnel_list:
+             print("{0:^20} {1:^15} {2:^15} {3:^8} {4:^12}".format(iter['name'],iter['src_ip'],iter['dst_ip'],iter['tnl_src'],iter['operstatus']))
+	       #show_cli_output(args[0], vxlan_info)
+	#print api_response.error_message()
+
+    return
+
 def run(func, args):
 
     #show commands
@@ -194,6 +220,9 @@ def run(func, args):
             return
         if func == 'show vxlan vlanvnimap':
             vxlan_show_vxlan_vlanvnimap(args)
+            return
+        if func == 'show vxlan tunnel':
+            vxlan_show_vxlan_tunnel(args)
             return
 
     except Exception as e:

@@ -6,6 +6,10 @@ module sonic-vxlan {
 	import ietf-inet-types {
 		prefix inet;
 	}
+    import sonic-extension {
+        prefix sonic-ext;
+    }
+
 
 	organization
 		"SONiC";
@@ -110,6 +114,33 @@ module sonic-vxlan {
 
          }
      }
+     container VXLAN_TUNNEL_TABLE { 
+            sonic-ext:db-name "STATE_DB"; 
+            sonic-ext:key-delim ":"; 
+
+            config false;
+            description "state db vxlan tunnel table";
+
+            list VXLAN_TUNNEL_TABLE_LIST { 
+                key "name";
+
+                leaf name {
+                    type string; 
+                }
+                leaf src_ip {
+                    type string;
+                }
+                leaf dst_ip {
+                    type string;
+                }
+                leaf tnl_src {
+                    type string;
+                }
+                leaf operstatus {
+                    type string;
+                }
+            }
+        }
 
     }
 

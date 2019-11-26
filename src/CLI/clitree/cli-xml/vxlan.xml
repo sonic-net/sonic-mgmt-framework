@@ -19,6 +19,11 @@
       <COMMAND name="show vxlan vlanvnimap" help="Show Vlan VNI mapping information">
         <ACTION> python $SONIC_CLI_ROOT/sonic-cli-vxlan.py "show vxlan vlanvnimap" show_vxlan_vlanvnimap.j2  </ACTION>
       </COMMAND>
+
+      <!--show vxlan vlanvnimap -->
+      <COMMAND name="show vxlan tunnel" help="Show Vxlan Tunnels">
+        <ACTION> python $SONIC_CLI_ROOT/sonic-cli-vxlan.py "show vxlan tunnel" show_vxlan_vlanvnimap.j2  </ACTION>
+      </COMMAND>
     </VIEW>
     <VIEW name="configure-view">
         <COMMAND
@@ -79,11 +84,14 @@
         <PARAM name="mapoptions" help="" ptype="SUBCOMMAND" mode="switch"> 
          <PARAM name="vlan" help="Configure VLAN" ptype="SUBCOMMAND" mode="subcommand"> 
          <PARAM name="vid" help="VLAN ID" ptype="VLAN_ID"> </PARAM>
+           <PARAM name="count" help="Number of mappings" ptype="SUBCOMMAND" mode="subcommand"> 
+            <PARAM name="numvid" help="Number" ptype="VLAN_ID"> </PARAM>
+           </PARAM>
          </PARAM>
         </PARAM>
        </PARAM>
       </PARAM>
-      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-vxlan.py delete_sonic_vxlan_sonic_vxlan_vxlan_tunnel_map_vxlan_tunnel_map_list ${iface}  ${vnid} ${vid} </ACTION>
+      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-vxlan.py delete_sonic_vxlan_sonic_vxlan_vxlan_tunnel_map_vxlan_tunnel_map_list ${iface} ${vnid} ${vid} ${numvid} </ACTION>
     </COMMAND>
         <COMMAND
             name="source-ip"
