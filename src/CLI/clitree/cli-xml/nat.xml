@@ -167,13 +167,14 @@ limitations under the License.
              optional="true"
              >
          </PARAM>
-         <ACTION>
+
+         <ACTION> 
              if test "${global-port-range}" = ""; then&#xA;
-                 python $SONIC_CLI_ROOT/sonic-cli-nat.py patch_list_openconfig_nat_nat_instances_instance_nat_mapping_table_nat_mapping_entry pool-name global-ip-range
+                 python $SONIC_CLI_ROOT/sonic-cli-nat.py patch_openconfig_nat_nat_instances_instance_nat_pool_nat_pool_entry_config ${pool-name} ${global-ip-range} 
              else&#xA;
-                 python $SONIC_CLI_ROOT/sonic-cli-nat.py patch_list_openconfig_nat_nat_instances_instance_nat_mapping_table_nat_mapping_entry pool-name global-ip-range global-port-range
+                 python $SONIC_CLI_ROOT/sonic-cli-nat.py patch_openconfig_nat_nat_instances_instance_nat_pool_nat_pool_entry_config ${pool-name} ${global-ip-range} ${global-port-range} 
              fi&#xA;
-         </ACTION>
+     </ACTION>
      </COMMAND>
 
 
@@ -189,14 +190,16 @@ limitations under the License.
              ptype="STRING"
              >
          </PARAM>
-         <ACTION>python $SONIC_CLI_ROOT/sonic-cli-nat.py delete_list_openconfig_nat_nat_instances_instance_nat_mapping_table_nat_mapping_entry pool-name</ACTION>
+         <ACTION>
+             python $SONIC_CLI_ROOT/sonic-cli-nat.py delete_openconfig_nat_nat_instances_instance_nat_pool_nat_pool_entry_config ${pool-name}
+         </ACTION>
      </COMMAND>
 
      <COMMAND
          name="no pools"
          help="Remove all NAT Pools"
 	 >
-     <ACTION>python $SONIC_CLI_ROOT/sonic-cli-nat.py delete_list_openconfig_nat_nat_instances_instance_nat_mapping_table</ACTION>
+     <ACTION>python $SONIC_CLI_ROOT/sonic-cli-nat.py delete_openconfig_nat_nat_instances_instance_nat_pool</ACTION>
      </COMMAND>
 
      <COMMAND
@@ -245,15 +248,15 @@ limitations under the License.
              </PARAM>
          </PARAM>
 
-         <ACTION>
-         if test "${natType}" = ""; then&#xA;
-            python $SONIC_CLI_ROOT/sonic-cli-nat.py patch_openconfig_nat_nat_instances_instance_nat_acl_pool_binding_nat_acl_pool_binding_entry binding-name pool-name acl-name
-         elif test "${twice-nat-id-value}" = ""; then&#xA;
-            python $SONIC_CLI_ROOT/sonic-cli-nat.py patch_openconfig_nat_nat_instances_instance_nat_acl_pool_binding_nat_acl_pool_binding_entry binding-name pool-name acl-name natType
-         else&#xA;
-            python $SONIC_CLI_ROOT/sonic-cli-nat.py patch_openconfig_nat_nat_instances_instance_nat_acl_pool_binding_nat_acl_pool_binding_entry binding-name pool-name acl-name natType twice-nat-id-value
-         fi&#xA;
-         </ACTION>
+         <ACTION> 
+             if test "${natType}" = ""; then&#xA;
+                 python $SONIC_CLI_ROOT/sonic-cli-nat.py patch_openconfig_nat_nat_instances_instance_nat_acl_pool_binding_nat_acl_pool_binding_entry_config ${binding-name} ${pool-name} ${acl-name} 
+             elif test "${twice-nat-id-value}" = ""; then&#xA;
+                 python $SONIC_CLI_ROOT/sonic-cli-nat.py patch_openconfig_nat_nat_instances_instance_nat_acl_pool_binding_nat_acl_pool_binding_entry_config ${binding-name} ${pool-name} ${acl-name} ${natType} 
+             else&#xA;
+                 python $SONIC_CLI_ROOT/sonic-cli-nat.py patch_openconfig_nat_nat_instances_instance_nat_acl_pool_binding_nat_acl_pool_binding_entry_config ${binding-name} ${pool-name} ${acl-name} ${natType} ${twice-nat-id-value} 
+             fi&#xA;
+     </ACTION>
      </COMMAND>
 
       <COMMAND
@@ -268,14 +271,18 @@ limitations under the License.
              ptype="STRING"
              >
          </PARAM>
-         <ACTION>python $SONIC_CLI_ROOT/sonic-cli-nat.py delete_openconfig_nat_nat_instances_instance_nat_acl_pool_binding_nat_acl_pool_binding_entry bind-name</ACTION>
+         <ACTION>
+             python $SONIC_CLI_ROOT/sonic-cli-nat.py delete_openconfig_nat_nat_instances_instance_nat_acl_pool_binding_nat_acl_pool_binding_entry_config ${bind-name}
+         </ACTION>
      </COMMAND>
 
      <COMMAND
          name="no bindings"
          help="Remove all NAT Bindings"
      >
-     <ACTION>python $SONIC_CLI_ROOT/sonic-cli-nat.py delete_openconfig_nat_nat_instances_instance_nat_acl_pool_binding</ACTION>
+     <ACTION>
+         python $SONIC_CLI_ROOT/sonic-cli-nat.py delete_openconfig_nat_nat_instances_instance_nat_acl_pool_binding
+     </ACTION>
      </COMMAND>
 
      <COMMAND
@@ -393,27 +400,26 @@ limitations under the License.
              </PARAM>
          </PARAM>
      </PARAM>
-     <ACTION>
-         if test "${static-subcommands}" = "basic"; then&#xA;
-            if test "${natType}" = ""; then&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-if.py patch_list_openconfig_nat_nat_instances_instance_nat_mapping_table_nat_mapping_entry global-ip local-ip&#xA;
-            elif test "${twice-nat-id-value}" = ""; then&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-if.py patch_list_openconfig_nat_nat_instances_instance_nat_mapping_table_nat_mapping_entry global-ip local-ip natType&#xA;
-            else&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-if.py patch_list_openconfig_nat_nat_instances_instance_nat_mapping_table_nat_mapping_entry global-ip local-ip natType twice-nat-id-value&#xA;
-            fi&#xA;
-
-         else&#xA;
-             if test "${natType}" = ""; then&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-if.py patch_list_openconfig_nat_nat_instances_instance_napt_mapping_table_napt_mapping_entry global-ip natPortType global-port local-ip local-port&#xA;
-            elif test "${twice-nat-id-value}" = ""; then&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-if.py patch_list_openconfig_nat_nat_instances_instance_napt_mapping_table_napt_mapping_entry global-ip natPortType global-port local-ip local-port natType&#xA;
-            else&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-if.py patch_list_openconfig_nat_nat_instances_instance_napt_mapping_table_napt_mapping_entry global-ip natPortType global-port local-ip local-port natType twice-nat-id-value&#xA;
-            fi&#xA;
-         fi
-   </ACTION>
-     </COMMAND>
+    <ACTION> 
+       if test "${static-subcommands}" = "basic"; then&#xA;
+           if test "${natType}" = ""; then&#xA;
+               python $SONIC_CLI_ROOT/sonic-cli-nat.py patch_openconfig_nat_nat_instances_instance_nat_mapping_table_nat_mapping_entry_config ${global-ip} ${local-ip}
+           elif test "${twice-nat-id-value}" = ""; then&#xA;
+               python $SONIC_CLI_ROOT/sonic-cli-nat.py patch_openconfig_nat_nat_instances_instance_nat_mapping_table_nat_mapping_entry_config ${global-ip} ${local-ip} ${natType}
+           else&#xA;
+               python $SONIC_CLI_ROOT/sonic-cli-nat.py patch_openconfig_nat_nat_instances_instance_nat_mapping_table_nat_mapping_entry_config ${global-ip} ${local-ip} ${natType} ${twice-nat-id-value}
+           fi&#xA;
+      else&#xA;
+          if test "${natType}" = ""; then&#xA;
+              python $SONIC_CLI_ROOT/sonic-cli-nat.py patch_openconfig_nat_nat_instances_instance_napt_mapping_table_napt_mapping_entry_config ${global-ip} ${natPortType} ${global-port} ${local-ip} ${local-port}
+          elif test "${twice-nat-id-value}" = ""; then&#xA;
+              python $SONIC_CLI_ROOT/sonic-cli-nat.py patch_openconfig_nat_nat_instances_instance_napt_mapping_table_napt_mapping_entry_config ${global-ip} ${natPortType} ${global-port} ${local-ip} ${local-port} ${natType}
+          else&#xA;
+              python $SONIC_CLI_ROOT/sonic-cli-nat.py patch_openconfig_nat_nat_instances_instance_napt_mapping_table_napt_mapping_entry_config ${global-ip} ${natPortType} ${global-port} ${local-ip} ${local-port} ${natType} ${twice-nat-id-value}
+          fi&#xA;
+      fi&#xA;
+    </ACTION>
+    </COMMAND>
 
      <COMMAND
          name="no static"
@@ -422,7 +428,7 @@ limitations under the License.
          ptype="SUBCOMMAND"
          >
          <PARAM
-             name="no static-subcommands"
+             name="no-static-subcommands"
              help="Remove Static NAT subcommands"
              mode="switch"
              ptype="SUBCOMMAND"
@@ -490,19 +496,18 @@ limitations under the License.
                  </PARAM>
              </PARAM>
          </PARAM>
-         <ACTION builtin="clish_nop"></ACTION>
-          <ACTION>
-          if test "${static-subcommands}" = "all"; then&#xA;
-             python $SONIC_CLI_ROOT/sonic-cli-if.py delete_list_openconfig_nat_nat_instances_instance_nat_mapping_table_nat_mapping_entry global-ip local-ip&#xA;
-             python $SONIC_CLI_ROOT/sonic-cli-if.py delete_list_openconfig_nat_nat_instances_instance_napt_mapping_table_napt_mapping_entry global-ip natPortType global-port local-ip local-port&#xA;
 
-          elif test "${static-subcommands}" = "basic"; then&#xA;
-            python $SONIC_CLI_ROOT/sonic-cli-if.py delete_list_openconfig_nat_nat_instances_instance_nat_mapping_table_nat_mapping_entry global-ip local-ip&#xA;
-
-         else&#xA;
-            python $SONIC_CLI_ROOT/sonic-cli-if.py delete_list_openconfig_nat_nat_instances_instance_napt_mapping_table_napt_mapping_entry global-ip natPortType global-port local-ip local-port&#xA;
-         fi
+   <ACTION> 
+       if test "${no-static-subcommands}" = "all"; then&#xA;
+           python $SONIC_CLI_ROOT/sonic-cli-nat.py delete_openconfig_nat_nat_instances_instance_nat_mapping_table_nat_mapping_entry_config ${global-ip} ${local-ip}
+           python $SONIC_CLI_ROOT/sonic-cli-nat.py delete_openconfig_nat_nat_instances_instance_napt_mapping_table_napt_mapping_entry_config ${global-ip} ${natPortType} ${global-port} ${local-ip} ${local-port}
+       elif test "${no-static-subcommands}" = "basic"; then&#xA;
+           python $SONIC_CLI_ROOT/sonic-cli-nat.py delete_openconfig_nat_nat_instances_instance_nat_mapping_table_nat_mapping_entry_config_internal_address ${global-ip} ${local-ip}
+       else&#xA;
+           python $SONIC_CLI_ROOT/sonic-cli-nat.py delete_openconfig_nat_nat_instances_instance_napt_mapping_table_napt_mapping_entry_config ${global-ip} ${natPortType} ${global-port} ${local-ip} ${local-port}
+       fi&#xA;
    </ACTION>
+
      </COMMAND>
    </VIEW>
 
