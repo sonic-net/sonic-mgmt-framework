@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CLISH_MODULE xmlns="http://www.dellemc.com/sonic/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xi="http://www.w3.org/2001/XInclude" xsi:schemaLocation="http://www.dellemc.com/sonic/XMLSchema http://www.dellemc.com/sonic/XMLSchema/clish.xsd">
+  <PTYPE
+    name="DMN_PROFILE"
+    method="select"
+    pattern="default(ieee1588) g8275.1(G.8275.1) g8275.2(G.8275.2)"
+    help="domain profile type"/>
+
   <VIEW name="enable-view">
     <!--show ptp -->
     <COMMAND name="show ptp" help="Show PTP config info/status">
@@ -8,8 +14,15 @@
         <PARAM name="clock" help="clock" ptype="SUBCOMMAND" mode="subcommand"> </PARAM>
         <PARAM name="parent" help="parent" ptype="SUBCOMMAND" mode="subcommand"> </PARAM>
         <PARAM name="port" help="PTP port config" ptype="SUBCOMMAND" mode="subcommand">
-          <PARAM name="Ethernet" help="Interface type" ptype="SUBCOMMAND" mode="subcommand">
-            <PARAM name="ptp_port_number" help="Enter PTP port number" ptype="UINT"/>
+          <PARAM name="sh-if-type" help="Interface Type" mode="switch" ptype="SUBCOMMAND">
+            <PARAM name="Ethernet" help="Ethernet Interface type" ptype="SUBCOMMAND" mode="subcommand">
+              <PARAM name="ptp_port_number" help="Enter PTP port number" ptype="UINT"/>
+            </PARAM>
+            <!-- Comment out portchannel support
+            <PARAM name="PortChannel" help="PortChannel Interface type" ptype="SUBCOMMAND" mode="subcommand">
+              <PARAM name="ptp_port_number" help="Enter PTP port number" ptype="UINT"/>
+            </PARAM>
+            -->
           </PARAM>
         </PARAM>
       </PARAM>
@@ -20,7 +33,7 @@
  elif test "${ptp-subcommands}" = "parent"; then&#xA;
  python $SONIC_CLI_ROOT/sonic-cli-ptp.py get_ietf_ptp_ptp_instance_list_parent_ds 0 ptp_parent_show.j2 &#xA;
  elif test "${ptp-subcommands}" = "port"; then&#xA;
- python $SONIC_CLI_ROOT/sonic-cli-ptp.py get_ietf_ptp_ptp_instance_list_port_ds_list 0 ${ptp_port_number} ptp_port_show.j2 &#xA;
+ python $SONIC_CLI_ROOT/sonic-cli-ptp.py get_ietf_ptp_ptp_instance_list_port_ds_list 0 ${sh-if-type}${ptp_port_number} ptp_port_show.j2 &#xA;
  elif test "${ptp-subcommands}" = ""; then&#xA;
  python $SONIC_CLI_ROOT/sonic-cli-ptp.py get_ietf_ptp_ptp_instance_list 0 ptp_show.j2&#xA; 
  else&#xA;
@@ -45,7 +58,7 @@
           <PARAM name="ptp_domain" help="Enter PTP domain value" ptype="RANGE_1_255"/>
         </PARAM>
         <PARAM name="domain-profile" help="PTP domain profile" ptype="SUBCOMMAND" mode="subcommand">
-          <PARAM name="ptp_domain_profile" help="Enter PTP domain profile type" ptype="PTP_DOMAIN_PROFILE"/>
+          <PARAM name="ptp_domain_profile" help="Enter PTP domain profile type" ptype="DMN_PROFILE"/>
         </PARAM>
         <PARAM name="two-step" help="PTP two step enable" ptype="SUBCOMMAND" mode="subcommand">
           <PARAM name="ptp_two_step" help="Enable/Disable " ptype="ENA_DISA"/>
@@ -73,8 +86,15 @@
             <PARAM name="add" help="Add Interface" ptype="SUBCOMMAND" mode="subcommand"/>
             <PARAM name="del" help="Add Interface" ptype="SUBCOMMAND" mode="subcommand"/>
           </PARAM>
-          <PARAM name="Ethernet" help="Interface type" ptype="SUBCOMMAND" mode="subcommand">
-            <PARAM name="ptp_port_number" help="Enter PTP port number" ptype="UINT"/>
+          <PARAM name="cfg-if-type" help="Interface Type" mode="switch" ptype="SUBCOMMAND">
+            <PARAM name="Ethernet" help="Ethernet Interface type" ptype="SUBCOMMAND" mode="subcommand">
+              <PARAM name="ptp_port_number" help="Enter PTP port number" ptype="UINT"/>
+            </PARAM>
+            <!-- Comment out portchannel support
+            <PARAM name="PortChannel" help="PortChannel Interface type" ptype="SUBCOMMAND" mode="subcommand">
+              <PARAM name="ptp_port_number" help="Enter PTP port number" ptype="UINT"/>
+            </PARAM>
+            -->
           </PARAM>
         </PARAM>
       </PARAM>
@@ -104,9 +124,9 @@
  python $SONIC_CLI_ROOT/sonic-cli-ptp.py "log-min-delay-req-interval" ${ptp_delay_request_interval}&#xA;
  elif test "${cfg-ptp-subcommands}" = "port"; then&#xA;
  if test "${add}" = "add"; then&#xA;
- python $SONIC_CLI_ROOT/sonic-cli-ptp.py "add_port" ${Ethernet}${ptp_port_number}&#xA;
+ python $SONIC_CLI_ROOT/sonic-cli-ptp.py "add_port" ${cfg-if-type}${ptp_port_number}&#xA;
  elif test "${del}" = "del"; then&#xA;
- python $SONIC_CLI_ROOT/sonic-cli-ptp.py "del_port" ${Ethernet}${ptp_port_number}&#xA;
+ python $SONIC_CLI_ROOT/sonic-cli-ptp.py "del_port" ${cfg-if-type}${ptp_port_number}&#xA;
  fi&#xA;
  fi&#xA;
       </ACTION>

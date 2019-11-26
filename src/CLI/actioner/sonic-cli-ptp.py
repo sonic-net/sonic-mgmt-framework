@@ -127,7 +127,7 @@ if __name__ == '__main__':
 
         sys.exit()
     elif sys.argv[1] == 'get_ietf_ptp_ptp_instance_list_port_ds_list':
-        raw_data = db.get_all(db.STATE_DB, "PTP_PORT|GLOBAL|Ethernet" + sys.argv[3])
+        raw_data = db.get_all(db.STATE_DB, "PTP_PORT|GLOBAL|" + sys.argv[3])
         if not raw_data:
             sys.exit()
         api_response = {}
@@ -190,6 +190,9 @@ if __name__ == '__main__':
             data['two-step-flag'] = '0'
         config_db.mod_entry(PTP_CLOCK, PTP_GLOBAL, data)
     elif sys.argv[1] == 'patch_ietf_ptp_ptp_transparent_clock_default_ds_delay_mechanism':
+        if sys.argv[2] == 'P2P':
+            print "%Error: peer-to-peer is not supported"
+            sys.exit()
         data = {}
         data['tc-delay-mechanism'] = sys.argv[2]
         config_db.mod_entry(PTP_CLOCK, PTP_GLOBAL, data)
@@ -199,6 +202,23 @@ if __name__ == '__main__':
         config_db.set_entry(PTP_PORT, sys.argv[2], data)
     elif sys.argv[1] == 'del_port':
         config_db.set_entry(PTP_PORT, sys.argv[2], None)
+    elif sys.argv[1] == 'clock-type':
+        if sys.argv[2] == 'P2P_TC':
+            print "%Error: peer-to-peer-transparent-clock is not supported"
+            sys.exit()
+        data = {}
+        data[sys.argv[1]] = sys.argv[2]
+        config_db.mod_entry(PTP_CLOCK, PTP_GLOBAL, data)
+    elif sys.argv[1] == 'domain-profile':
+        data = {}
+        if sys.argv[2] == 'G.8275.1':
+            print "%Error: g8275.1 is not supported"
+            sys.exit()
+        elif sys.argv[2] == 'G.8275.2':
+            data[sys.argv[1]] = 'G.8275.x'
+        else:
+            data[sys.argv[1]] = sys.argv[2]
+        config_db.mod_entry(PTP_CLOCK, PTP_GLOBAL, data)
     else:
         data = {}
         data[sys.argv[1]] = sys.argv[2]
