@@ -63,6 +63,10 @@ module sonic-route-map {
                     type string;
                 }
 
+                leaf match_next_hop_set {
+                    type string;
+                }
+
                 leaf-list match_neighbor {
                     type inet:ip-address;
                     description
