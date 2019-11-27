@@ -143,7 +143,7 @@ func mapFillData(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requestU
 	    inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, uri, requestUri, oper, "", nil, subOpDataMap, "", txCache)
 	    // expecting only one table name from tbl-xfmr
 	    tableName, _ = tblNameFromTblXfmrGet(*xYangSpecMap[xpath].xfmrTbl, inParams)
-	    if len(tableName) != 1 {
+	    if tableName == "" {
 		    return err
 	    }
 		tblXpathMap[tableName] = append(tblXpathMap[tableName], xpathPrefix)
