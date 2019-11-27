@@ -597,7 +597,10 @@ func checkAndProcessLeafList(existingEntry db.Value, tblRw db.Value, opcode int,
 	for field, value := range tblRw.Field {
 		if strings.HasSuffix(field, "@") {
 			exstLst := existingEntry.GetList(field)
-			valueLst := strings.Split(value, ",")
+			var valueLst []string
+			if value != "" { //zero len string as leaf-list value is treated as delete all items in leaf-list
+				valueLst = strings.Split(value, ",")
+			}
 			if len(exstLst) != 0 {
 				for _, item := range valueLst {
 					if !contains(exstLst, item) {
@@ -613,8 +616,10 @@ func checkAndProcessLeafList(existingEntry db.Value, tblRw db.Value, opcode int,
 				}
 				log.Infof("For field %v value after merge %v", field, exstLst)
 				if opcode == DELETE {
-					mergeTblRw.SetList(field, exstLst)
-					delete(tblRw.Field, field)
+					if len(valueLst) > 0 {
+						mergeTblRw.SetList(field, exstLst)
+						delete(tblRw.Field, field)
+					}
 				}
 			} else if opcode == UPDATE {
                                 exstLst = valueLst
@@ -627,6 +632,7 @@ func checkAndProcessLeafList(existingEntry db.Value, tblRw db.Value, opcode int,
 	/* delete specific item from leaf-list */
 	if opcode == DELETE {
 		if len(mergeTblRw.Field) == 0 {
+			log.Infof("mergeTblRow is empty - Returning Table Row %v", tblRw)
 			return tblRw
 		}
 		err := d.ModEntry(dbTblSpec, db.Key{Comp: []string{tblKey}}, mergeTblRw)

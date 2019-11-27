@@ -1,0 +1,561 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Copyright 2019 Dell, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+<CLISH_MODULE
+    xmlns="http://www.dellemc.com/sonic/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xi="http://www.w3.org/2001/XInclude"
+    xsi:schemaLocation="http://www.dellemc.com/sonic/XMLSchema
+    http://www.dellemc.com/sonic/XMLSchema/clish.xsd"
+    >
+    <PTYPE
+    name="TYPE"
+    method="select"
+    pattern="snat dnat"
+    help="NAT type"/>
+
+    <PTYPE
+    name="PORT_TYPE"
+    method="select"
+    pattern="tcp udp"
+    help="NAT Port type"/>
+
+   <VIEW
+       name="configure-view"
+       >
+    <!-- nat commands -->
+    <COMMAND
+        name="nat"
+	view="configure-nat-view"
+        help="NAT configuration"
+        />
+
+   </VIEW>
+
+   <VIEW
+        name="configure-nat-view"
+        prompt="${SYSTEM_NAME}(conf-nat) "
+        depth="2"
+        >
+        <NAMESPACE
+            ref="configure-view"
+            help="false"
+            completion="false"
+            />
+        <COMMAND
+            name="no"
+            help="Negate a command or set its defaults"
+	    />
+        <COMMAND
+            name="enable"
+            help="Enable NAT feature"
+	    >
+        <ACTION builtin="clish_nop"></ACTION>
+        </COMMAND>
+
+	<COMMAND
+            name="no enable"
+            help="Disable NAT feature"
+            >
+	    <ACTION builtin="clish_nop"></ACTION>
+
+       </COMMAND>
+
+       <COMMAND
+         name="timeout"
+         help="Configure NAT entry aging timeout in seconds"
+         mode="subcommand"
+         ptype="SUBCOMMAND"
+         >
+         <PARAM
+             name="timeout-value"
+             help="NAT Timeout"
+             ptype="UINT"
+             >
+         </PARAM>
+         <ACTION builtin="clish_nop"></ACTION>
+       </COMMAND>
+
+
+       <COMMAND
+         name="no timeout"
+         help="Set default NAT entry aging timeout in seconds"
+	 >
+         <ACTION builtin="clish_nop"></ACTION>
+     </COMMAND>
+
+     <COMMAND
+         name="tcp-timeout"
+         help="Configure TCP NAT entry aging timeout in seconds"
+         mode="subcommand"
+         ptype="SUBCOMMAND"
+         >
+         <PARAM
+             name="tcp-timeout-value"
+             help="TCP NAT Timeout"
+             ptype="UINT"
+             >
+         </PARAM>
+         <ACTION builtin="clish_nop"></ACTION>
+     </COMMAND>
+
+     <COMMAND
+         name="no tcp-timeout"
+         help="Set Default TCP NAT entry aging timeout in seconds"
+         >
+         <ACTION builtin="clish_nop"></ACTION>
+     </COMMAND>
+
+      <COMMAND
+         name="udp-timeout"
+         help="Configure UDP NAT entry aging timeout in seconds"
+         mode="subcommand"
+         ptype="SUBCOMMAND"
+         >
+         <PARAM
+             name="udp-timeout-value"
+             help="UDP NAT Timeout"
+             ptype="UINT"
+             >
+         </PARAM>
+         <ACTION builtin="clish_nop"></ACTION>
+     </COMMAND>
+
+      <COMMAND
+         name="no udp-timeout"
+         help="Set Default UDP NAT entry aging timeout in seconds"
+         >
+         <ACTION builtin="clish_nop"></ACTION>
+     </COMMAND>
+
+      <COMMAND
+         name="pool"
+         help="Create NAT Pool"
+         mode="subcommand"
+         ptype="SUBCOMMAND"
+         >
+         <PARAM
+             name="pool-name"
+             help="NAT Pool name"
+             ptype="STRING"
+             >
+         </PARAM>
+         <PARAM
+             name="global-ip-range"
+             help="Global IP range"
+             ptype="STRING"
+             >
+         </PARAM>
+         <PARAM
+             name="global-port-range"
+             help="Global Port Range"
+             ptype="STRING"
+             optional="true"
+             >
+         </PARAM>
+         <ACTION builtin="clish_nop"></ACTION>
+     </COMMAND>
+
+
+     <COMMAND
+         name="no pool"
+         help="Remove NAT Pool"
+         mode="subcommand"
+         ptype="SUBCOMMAND"
+         >
+         <PARAM
+             name="pool-name"
+             help="NAT Pool name"
+             ptype="STRING"
+             >
+         </PARAM>
+         <ACTION builtin="clish_nop"></ACTION>
+     </COMMAND>
+
+     <COMMAND
+         name="no pools"
+         help="Remove all NAT Pools"
+	 >
+	 <ACTION builtin="clish_nop"></ACTION>
+     </COMMAND>
+
+     <COMMAND
+         name="binding"
+         help="Create binding between an ACL and a NAT pool"
+         mode="subcommand"
+         ptype="SUBCOMMAND"
+         >
+	 <PARAM
+             name="binding-name"
+             help="NAT Binding name"
+             ptype="STRING"
+             >
+         </PARAM>
+         <PARAM
+             name="pool-name"
+             help="NAT Pool name"
+             ptype="STRING"
+             >
+         </PARAM>
+         <PARAM
+             name="acl-name"
+             help="ACL Name"
+             ptype="STRING"
+             >
+         </PARAM>
+         <PARAM
+             name="natType"
+             help=""
+             ptype="TYPE"
+             optional="true"
+             >
+         </PARAM>
+         <PARAM
+             name="twice-nat-id"
+             help="Twice NAT ID"
+             ptype="SUBCOMMAND"
+             mode="subcommand"
+             optional="true"
+             >
+             <PARAM
+                 name="twice-nat-id-value"
+                 help="Twice NAT ID value"
+                 ptype="UINT"
+                 >
+             </PARAM>
+         </PARAM>
+
+         <ACTION builtin="clish_nop"></ACTION>
+     </COMMAND>
+
+      <COMMAND
+         name="no binding"
+         help="Remove NAT Binding"
+         mode="subcommand"
+         ptype="SUBCOMMAND"
+         >
+         <PARAM
+             name="bind-name"
+             help="NAT Binding name"
+             ptype="STRING"
+             >
+         </PARAM>
+         <ACTION builtin="clish_nop"></ACTION>
+     </COMMAND>
+
+     <COMMAND
+         name="no bindings"
+         help="Remove all NAT Bindings"
+     >
+     <ACTION builtin="clish_nop"></ACTION>
+     </COMMAND>
+
+     <COMMAND
+         name="static"
+         help="Add static NAT entry"
+         mode="subcommand"
+         ptype="SUBCOMMAND"
+         >
+         <PARAM
+             name="static-subcommands"
+             help="Static NAT subcommands"
+             mode="switch"
+             ptype="SUBCOMMAND"
+             >
+         <PARAM
+             name="basic"
+             help="Static NAT"
+             ptype="SUBCOMMAND"
+             mode="subcommand"
+             >
+
+             <PARAM
+                 name="global-ip"
+                 help="Global IP"
+                 ptype="IP_ADDR"
+                 >
+             </PARAM>
+
+             <PARAM
+                 name="local-ip"
+                 help="Local IP"
+                 ptype="IP_ADDR"
+                 >
+             </PARAM>
+
+             <PARAM
+                 name="natType"
+                 help=""
+                 ptype="TYPE"
+                 optional="true"
+                 >
+             </PARAM>
+
+             <PARAM
+                 name="twice-nat-id"
+                 help="Twice NAT ID"
+                 ptype="SUBCOMMAND"
+                 mode="subcommand"
+                 optional="true"
+                 >
+                 <PARAM
+                     name="twice-nat-id-value"
+                     help="Twice NAT ID value"
+                     ptype="UINT"
+                     >
+                 </PARAM>
+             </PARAM>
+         </PARAM>
+
+
+         <PARAM
+             name="natPortType"
+             help=""
+             ptype="PORT_TYPE"
+             >
+            <PARAM
+                 name="global-ip"
+                 help="Global IP"
+                 ptype="IP_ADDR"
+                 >
+             </PARAM>
+
+             <PARAM
+                 name="global-port"
+                 help="Global Port"
+                 ptype="UINT"
+                 >
+             </PARAM>
+
+             <PARAM
+                 name="local-ip"
+                 help="Local IP"
+                 ptype="IP_ADDR"
+                 >
+             </PARAM>
+
+             <PARAM
+                 name="local-port"
+                 help="Local Port"
+                 ptype="UINT"
+                 >
+             </PARAM>
+
+             <PARAM
+                 name="natType"
+                 help=""
+                 ptype="TYPE"
+                 optional="true"
+                 >
+             </PARAM>
+
+             <PARAM
+                 name="twice-nat-id"
+                 help="Twice NAT ID"
+                 ptype="SUBCOMMAND"
+                 mode="subcommand"
+                 optional="true"
+                 >
+                 <PARAM
+                     name="twice-nat-id-value"
+                     help="Twice NAT ID value"
+                     ptype="UINT"
+                     >
+                 </PARAM>
+             </PARAM>
+         </PARAM>
+     </PARAM>
+
+         <ACTION builtin="clish_nop"></ACTION>
+     </COMMAND>
+
+     <COMMAND
+         name="no static"
+         help="Remove static NAT entry"
+         mode="subcommand"
+         ptype="SUBCOMMAND"
+         >
+         <PARAM
+             name="no static-subcommands"
+             help="Remove Static NAT subcommands"
+             mode="switch"
+             ptype="SUBCOMMAND"
+             >
+             <PARAM
+                 name="all"
+                 help="Remove all static configurations"
+                 ptype="SUBCOMMAND"
+                 mode="subcommand"
+                 >
+             </PARAM>
+             <PARAM
+                 name="basic"
+                 help="Static NAT"
+                 ptype="SUBCOMMAND"
+                 mode="subcommand"
+                 >
+
+                 <PARAM
+                     name="global-ip"
+                     help="Global IP"
+                     ptype="IP_ADDR"
+                 >
+                 </PARAM>
+
+                 <PARAM
+                     name="local-ip"
+                     help="Local IP"
+                     ptype="IP_ADDR"
+                     >
+                 </PARAM>
+             </PARAM>
+             
+             <PARAM
+                 name="natPortType"
+                 help=""
+                 ptype="PORT_TYPE"
+                 >
+                <PARAM
+                     name="global-ip"
+                     help="Global IP"
+                     ptype="IP_ADDR"
+                     >
+                 </PARAM>
+
+                 <PARAM
+                     name="global-port"
+                     help="Global Port"
+                     ptype="UINT"
+                     >
+                 </PARAM>
+
+                 <PARAM
+                     name="local-ip"
+                     help="Local IP"
+                     ptype="IP_ADDR"
+                     >
+                 </PARAM>
+
+                 <PARAM
+                     name="local-port"
+                     help="Local Port"
+                     ptype="UINT"
+                     >
+                 </PARAM>
+             </PARAM>
+         </PARAM>
+         <ACTION builtin="clish_nop"></ACTION>
+     </COMMAND>
+   </VIEW>
+
+
+     <VIEW name="enable-view">
+    <!--show nat -->
+    <COMMAND
+         name="show nat"
+         help="Show NAT info"
+         >
+         <PARAM
+             name="nat-subcommands"
+             help="NAT subcommands"
+             mode="switch"
+             ptype="SUBCOMMAND"
+             >
+             <!-- show nat translations -->
+             <PARAM
+                 name="translations"
+                 help="NAT Translations"
+                 ptype="SUBCOMMAND"
+                 mode="subcommand"
+                 >
+                 <PARAM
+                     name="count"
+                     help="NAT Translations Count"
+                     ptype="SUBCOMMAND"
+                     mode="subcommand"
+                     optional="true"
+                     >
+                 </PARAM>
+             </PARAM>
+
+             <!-- show nat statistics -->
+             <PARAM
+                 name="statistics"
+                 help="NAT Statistics"
+                 ptype="SUBCOMMAND"
+                 mode="subcommand"
+                 >
+             </PARAM>
+
+              <!-- show nat config -->
+             <PARAM
+                 name="config"
+                 help="NAT Configurations"
+                 ptype="SUBCOMMAND"
+                 mode="subcommand"
+                 >
+                 <PARAM
+                     name="config-subcommands"
+                     help="NAT Config subcommands"
+                     mode="switch"
+                     ptype="SUBCOMMAND"
+                     optional="true"
+                     >
+                     <PARAM
+                         name="static"
+                         help="NAT Static config"
+                         ptype="SUBCOMMAND"
+                         mode="subcommand"
+                         >
+                     </PARAM>
+                     <PARAM
+                         name="pool"
+                         help="NAT pool config"
+                         ptype="SUBCOMMAND"
+                         mode="subcommand"
+                         >
+                     </PARAM>
+                     <PARAM
+                         name="bindings"
+                         help="NAT Static bindings"
+                         ptype="SUBCOMMAND"
+                         mode="subcommand"
+                         >
+                     </PARAM>
+                     <PARAM
+                         name="globalvalues"
+                         help="NAT Static globals"
+                         ptype="SUBCOMMAND"
+                         mode="subcommand"
+                         >
+                     </PARAM>
+                     <PARAM
+                         name="zones"
+                         help="NAT zones"
+                         ptype="SUBCOMMAND"
+                         mode="subcommand"
+                         >
+                     </PARAM>
+                 </PARAM>
+             </PARAM>
+         </PARAM>
+         <ACTION builtin="clish_nop"></ACTION>
+     </COMMAND>
+
+   </VIEW>
+</CLISH_MODULE>
+

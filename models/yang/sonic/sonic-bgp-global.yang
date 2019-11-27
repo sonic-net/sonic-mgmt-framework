@@ -2,6 +2,10 @@ module sonic-bgp-global {
     namespace "http://github.com/Azure/sonic-bgp-global";
     prefix sbgpg;
 
+    import sonic-vrf {
+        prefix svrf;
+    }
+
     import ietf-inet-types {
         prefix inet;
     }
@@ -31,7 +35,9 @@ module sonic-bgp-global {
                 key "vrf";
 
                 leaf vrf {
-                    type string;
+                    type leafref {
+                        path "/svrf:sonic-vrf/svrf:VRF/svrf:VRF_LIST/svrf:vrf_name";
+                    }
                 }
 
                 leaf router_id {
@@ -279,7 +285,9 @@ module sonic-bgp-global {
                 key "vrf af_name";
 
                 leaf vrf {
-                    type string;
+                    type leafref {
+                        path "/svrf:sonic-vrf/svrf:VRF/svrf:VRF_LIST/svrf:vrf_name";
+                    }
                 }
 
                 leaf af_name {
@@ -352,7 +360,9 @@ module sonic-bgp-global {
                 key "vrf ip_prefix";
 
                 leaf vrf {
-                    type string;
+                    type leafref {
+                        path "/svrf:sonic-vrf/svrf:VRF/svrf:VRF_LIST/svrf:vrf_name";
+                    }
                 }
 
                 leaf ip_prefix {

@@ -47,6 +47,7 @@ const (
 	XPATH_SEP_FWD_SLASH = "/"
 	XFMR_EMPTY_STRING   = ""
 	SONIC_TABLE_INDEX = 2
+	SONIC_FIELD_INDEX = 4
 	SONIC_MDL_PFX = "sonic"
 
 )

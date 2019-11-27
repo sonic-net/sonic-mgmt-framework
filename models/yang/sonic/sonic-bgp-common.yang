@@ -68,16 +68,6 @@ module sonic-bgp-common {
 
   grouping sonic-bgp-cmn {
 
-    leaf vrf_name {
-      type string;
-        description "Network-instance/VRF name";
-    }
-
-    leaf peer_group_name {
-      type string;
-        description "Peer group name";
-    }
-
     leaf local_asn {
       type uint32;
         description "Local AS number";
@@ -186,11 +176,6 @@ module sonic-bgp-common {
 
 
   grouping sonic-bgp-cmn-af {
-
-    leaf vrf_name {
-        type string;
-        description "Network-instance/VRF name";
-    }
 
     leaf afi_safi {
         type string;
