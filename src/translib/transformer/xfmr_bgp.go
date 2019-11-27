@@ -99,6 +99,8 @@ func exec_vtysh_cmd (vtysh_cmd string) (map[string]interface{}, error) {
 }
 
 func init () {
+    XlateFuncBind("YangToDb_network_instance_protocol_key_xfmr", YangToDb_network_instance_protocol_key_xfmr)
+    XlateFuncBind("DbToYang_network_instance_protocol_key_xfmr", DbToYang_network_instance_protocol_key_xfmr)
     XlateFuncBind("YangToDb_bgp_gbl_tbl_key_xfmr", YangToDb_bgp_gbl_tbl_key_xfmr)
     XlateFuncBind("DbToYang_bgp_gbl_tbl_key_xfmr", DbToYang_bgp_gbl_tbl_key_xfmr)
     XlateFuncBind("YangToDb_bgp_gbl_afi_safi_field_xfmr", YangToDb_bgp_gbl_afi_safi_field_xfmr)
@@ -166,6 +168,25 @@ var DbToYang_bgp_dyn_neigh_listen_field_xfmr FieldXfmrDbtoYang = func(inParams X
 
     rmap["prefix"] = dynKey[1]
 
+    return rmap, err
+}
+
+var YangToDb_network_instance_protocol_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (string, error) {
+
+    return "", nil 
+}
+
+var DbToYang_network_instance_protocol_key_xfmr KeyXfmrDbToYang = func(inParams XfmrParams) (map[string]interface{}, error) {
+    rmap := make(map[string]interface{})
+    var err error
+
+    pathInfo := NewPathInfo(inParams.uri)
+
+    bgpId := pathInfo.Var("identifier")
+    protoName := pathInfo.Var("name#2")
+
+    rmap["name"] = protoName; 
+    rmap["identifier"] = bgpId; 
     return rmap, err
 }
 

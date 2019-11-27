@@ -44,7 +44,14 @@ limitations under the License.
     <PTYPE
         name="LAG_ID"
         method="integer"
-        pattern="0..9999"
+        pattern="1..256"
+        help=""
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="LO_ID"
+        method="integer"
+        pattern="0..16383"
         help=""
         />
     <!--=======================================================-->
