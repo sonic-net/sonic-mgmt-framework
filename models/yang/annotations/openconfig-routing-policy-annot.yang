@@ -8,6 +8,7 @@ module openconfig-routing-policy-annot {
     import openconfig-routing-policy { prefix oc-rpol; }
     import openconfig-routing-policy-ext { prefix oc-rpol-ext; }
     import openconfig-bgp-policy { prefix oc-bgp-pol; }
+    import openconfig-bgp-policy-ext { prefix oc-bgp-pol-ext; }
     import sonic-extensions {prefix sonic-ext; }
 
     deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition {
@@ -92,6 +93,18 @@ module openconfig-routing-policy-annot {
     deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-rpol:match-prefix-set/oc-rpol:config/oc-rpol:prefix-set {
       deviate add {
             sonic-ext:field-name "match_prefix_set";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-bgp-pol:bgp-conditions/oc-bgp-pol:config/oc-bgp-pol-ext:next-hop-set {
+      deviate add {
+            sonic-ext:field-name "match_next_hop_set";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-bgp-pol:bgp-conditions/oc-bgp-pol:state/oc-bgp-pol-ext:next-hop-set {
+      deviate add {
+            sonic-ext:field-name "match_next_hop_set";
       }
     }
 
