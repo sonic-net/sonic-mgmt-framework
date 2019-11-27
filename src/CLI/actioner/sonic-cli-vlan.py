@@ -155,6 +155,12 @@ def run(func, args):
 
             if 'sonic-vxlan:sonic-vxlan' in api_response:
                 value = api_response['sonic-vxlan:sonic-vxlan']
+                if 'SUPPRESS_VLAN_NEIGH' not in value:
+                    print("Neighbour suppress is not configured in any of the vlan")
+                    return
+                if 'VXLAN_TUNNEL_MAP' not in value:
+                    print("No Vlans are mapped in Vxlan Tunnel Map")
+                    return
                 suppressCont = value['SUPPRESS_VLAN_NEIGH']
                 vxlanCont = value['VXLAN_TUNNEL_MAP']
                 suppTuple = suppressCont['SUPPRESS_VLAN_NEIGH_LIST']
