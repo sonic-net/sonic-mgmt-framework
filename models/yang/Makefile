@@ -38,11 +38,12 @@ PYANG_BIN        := pyang
 
 all: yamlGen annot allyangs.tree allyangs_tree.html
 
-yamlGen: $(YANGAPI_DIR)/.done
+yamlGen: $(YANGAPI_DIR)/.done $(YANGAPI_DIR)/api_ignore
 
 annot:
 	$(PYANG_BIN) --strict \
-		-p $(YANGDIR_COMMON):$(YANGDIR_SONIC):$(YANGDIR) $(YANG_ANNOTATIONS_FILES)
+		-p $(YANGDIR_COMMON):$(YANGDIR_SONIC):$(YANGDIR_ANNOTATIONS):$(YANGDIR) \
+		$(YANG_ANNOTATIONS_FILES)
 
 allyangs.tree:  $(YANG_MOD_FILES) $(YANG_COMMON_FILES)
 	$(PYANG_BIN) \
@@ -74,6 +75,13 @@ $(YANGAPI_DIR)/.done:  $(YANG_MOD_FILES) $(YANG_COMMON_FILES)
 		$(YANG_MOD_FILES)
 	@echo "+++++ Generation of  YAML files for Yang modules completed +++++"
 	touch $@
+
+#======================================================================
+# Generate api_ignore file
+#======================================================================
+$(YANGAPI_DIR)/api_ignore: $(YANG_ANNOTATIONS_FILES)
+	echo "# Yangs ignored" > $@
+	(cd $(YANGDIR_ANNOTATIONS) && ls -f *.yang) >> $@
 
 #======================================================================
 # Cleanups
