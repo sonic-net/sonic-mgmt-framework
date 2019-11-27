@@ -36,7 +36,7 @@
     <COMMAND name="show tam int-ifa-ts statistics" help="Show TAM IFA TS Statistics" mode="subcommand" ptype="SUBCOMMAND">
       <PARAM name="name" help="Name of the flow" ptype="STRING_32" optional="true"> </PARAM>
       <ACTION>
-	   python $SONIC_CLI_ROOT/ts.py -show -statistics -flow ${flow-name} -templ -showstatisticsflow.j2;   
+	   python $SONIC_CLI_ROOT/ts.py -show -statistics -flow ${name} -templ -showstatisticsflow.j2;
       </ACTION>
     </COMMAND>	    
   </VIEW>

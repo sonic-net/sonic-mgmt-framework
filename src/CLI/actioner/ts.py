@@ -119,6 +119,9 @@ class Ts(object):
     def get_ifa_flow_stat(self, flowname):
         api_response_stat = {}
         api_response, entryfound = self.get_ifa_flow_info(flowname)
+        if entryfound is None:
+          return api_response_stat, entryfound
+
         api_response_stat['flow-name'] = flowname
         if entryfound is not None:
             for k in api_response:
