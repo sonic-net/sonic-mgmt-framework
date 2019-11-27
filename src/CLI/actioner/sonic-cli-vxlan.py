@@ -22,6 +22,7 @@ import sys
 import json
 import collections
 import re
+import pdb
 import cli_client as cc
 from rpipe_utils import pipestr
 from scripts.render_cli import show_cli_output
@@ -36,13 +37,13 @@ def invoke(func, args):
     #[un]configure VTEP 
     if (func == 'patch_sonic_vxlan_sonic_vxlan_vxlan_tunnel_vxlan_tunnel_list' or
         func == 'delete_sonic_vxlan_sonic_vxlan_vxlan_tunnel_vxlan_tunnel_list'):
-        keypath = cc.Path('/restconf/data/sonic-vxlan:sonic-vxlan/VXLAN_TUNNEL/VXLAN_TUNNEL_LIST={name}', name=args[0][5:])
+        keypath = cc.Path('/restconf/data/sonic-vxlan:sonic-vxlan/VXLAN_TUNNEL/VXLAN_TUNNEL_LIST={name}', name=args[0][6:])
 
         if (func.startswith("patch") is True):
             body = {
               "sonic-vxlan:VXLAN_TUNNEL_LIST": [
                 {
-                  "name": args[0][5:],
+                  "name": args[0][6:],
                   "src_ip": args[1] 
                 }
               ]
@@ -78,13 +79,13 @@ def invoke(func, args):
           vnid = int(args[1]) + count
           vnistr = str(vnid)
           mapname = 'map_'+ vnistr + '_' + vidstr
-          keypath = cc.Path('/restconf/data/sonic-vxlan:sonic-vxlan/VXLAN_TUNNEL_MAP/VXLAN_TUNNEL_MAP_LIST={name},{mapname1}', name=args[0][5:], mapname1=mapname)
+          keypath = cc.Path('/restconf/data/sonic-vxlan:sonic-vxlan/VXLAN_TUNNEL_MAP/VXLAN_TUNNEL_MAP_LIST={name},{mapname1}', name=args[0][6:], mapname1=mapname)
 
           if (func.startswith("patch") is True):
               body = {
                 "sonic-vxlan:VXLAN_TUNNEL_MAP_LIST": [
                   {
-                    "name": args[0][5:],
+                    "name": args[0][6:],
                     "mapname": mapname,
                     "vlan": 'Vlan' + vidstr,
                     "vni": vnid 
@@ -109,14 +110,18 @@ def invoke(func, args):
           else:
               #error response
               result =  "Failed"
-              print api_response.error_message()
-
-          if result != 'Success':
-           print("Map creation for VID:{} = {}".format(vidstr,result)) 
-           fail = 1
+              fail = 1
+              #print(api_response.error_message())
+              if (func.startswith("patch") is True):
+                print("Error:Map creation for VID:{} failed. Verify if the VLAN is created".format(vidstr)) 
+              else:
+                print ("Error:Map deletion for VID:{} failed with error = {}".format(vidstr,api_response.error_message()[7:]))
 
         if fail == 0:
-          print("Map creation for {} vids succeeded.".format(count+1))
+          if (func.startswith("patch") is True):
+            print("Map creation for {} vids succeeded.".format(count+1))
+          else:
+            print("Map deletion for {} vids succeeded.".format(count+1))
 
         return api_response
           
@@ -136,8 +141,13 @@ def invoke(func, args):
         keypath = cc.Path('/restconf/data/sonic-vxlan:sonic-vxlan/VXLAN_TUNNEL_TABLE/VXLAN_TUNNEL_TABLE_LIST')
         return aa.get(keypath)
 
+    if func == "get_list_sonic_vxlan_sonic_vxlan_evpn_remote_vni_table_evpn_remote_vni_table_list":
+        keypath = cc.Path('/restconf/data/sonic-vxlan:sonic-vxlan/EVPN_REMOTE_VNI_TABLE/EVPN_REMOTE_VNI_TABLE_LIST')
+        return aa.get(keypath)
+
+
     else:
-        print("%Error: not implemented")
+        print("Error: not implemented")
         exit(1)
 
     return api_response
@@ -145,29 +155,29 @@ def invoke(func, args):
 #show vxlan interface 
 def vxlan_show_vxlan_interface(args):
 
-    print "VXLAN INFO:"
+    print("VXLAN INFO:")
     api_response = invoke("get_list_sonic_vxlan_sonic_vxlan_vxlan_tunnel_vxlan_tunnel_list", args)
     if api_response.ok():
         response = api_response.content
 	if response is None:
-	    print "no vxlan configuration"
+	    print("no vxlan configuration")
 	elif response is not None:
            tunnel_list = response['sonic-vxlan:VXLAN_TUNNEL_LIST']
-           print "VTEP Name : " + tunnel_list[0]['name']
-           print "VTEP Source IP : " + tunnel_list[0]['src_ip']
+           print("VTEP Name : " + tunnel_list[0]['name'])
+           print("VTEP Source IP : " + tunnel_list[0]['src_ip'])
 	       #show_cli_output(args[0], vxlan_info)
-	#print api_response.error_message()
+	#print(api_response.error_message())
 
     api_response = invoke("get_list_sonic_vxlan_sonic_vxlan_evpn_nvo_evpn_nvo_list", args)
     if api_response.ok():
         response = api_response.content
 
 	if response is None:
-	    print "no evpn configuration"
+	    print("no evpn configuration")
 	elif response is not None:
            nvo_list = response['sonic-vxlan:EVPN_NVO_LIST']
-           print"EVPN NVO Name : " + nvo_list[0]['name']
-           print"EVPN VTEP : " + nvo_list[0]['source_vtep']
+           print("EVPN NVO Name : " + nvo_list[0]['name'])
+           print("EVPN VTEP : " + nvo_list[0]['source_vtep'])
 	       #show_cli_output(args[0], vxlan_info)
 
     return
@@ -175,19 +185,19 @@ def vxlan_show_vxlan_interface(args):
 #show vxlan map 
 def vxlan_show_vxlan_vlanvnimap(args):
 
-    print "VLAN-VNI Mapping"
+    print("VLAN-VNI Mapping")
     print("{0:^8}  {1:^8}".format('VLAN','VNI'))
     api_response = invoke("get_list_sonic_vxlan_sonic_vxlan_vxlan_tunnel_map_vxlan_tunnel_map_list", args)
     if api_response.ok():
         response = api_response.content
 	if response is None:
-	    print "no vxlan configuration"
+	    print("no vxlan configuration")
 	elif response is not None:
            tunnel_list = response['sonic-vxlan:VXLAN_TUNNEL_MAP_LIST']
            for iter in tunnel_list:
              print("{0:^8}  {1:^8}".format(iter['vlan'],iter['vni']))
 	       #show_cli_output(args[0], vxlan_info)
-	#print api_response.error_message()
+	#print(api_response.error_message())
 
     return
 
@@ -200,14 +210,30 @@ def vxlan_show_vxlan_tunnel(args):
     if api_response.ok():
         response = api_response.content
 	if response is None:
-	    print "no vxlan configuration"
+	    print("no vxlan configuration")
 	elif response is not None:
            tunnel_list = response['sonic-vxlan:VXLAN_TUNNEL_TABLE_LIST']
            for iter in tunnel_list:
              print("{0:^20} {1:^15} {2:^15} {3:^8} {4:^12}".format(iter['name'],iter['src_ip'],iter['dst_ip'],iter['tnl_src'],iter['operstatus']))
 	       #show_cli_output(args[0], vxlan_info)
-	#print api_response.error_message()
+	#print(api_response.error_message())
 
+    return
+
+#show vxlan evpn remote vni
+def vxlan_show_vxlan_evpn_remote_vni(args):
+    arg_length = len(args);
+    print("{0:^20} {1:^15} {2:^10}".format('Vlan', 'Tunnel', 'VNI'))
+    api_response = invoke("get_list_sonic_vxlan_sonic_vxlan_evpn_remote_vni_table_evpn_remote_vni_table_list", args)
+    if api_response.ok():
+        response = api_response.content
+	if response is None:
+	    print("no vxlan evpn remote vni entires")
+	elif response is not None:
+           tunnel_vni_list = response['sonic-vxlan:EVPN_REMOTE_VNI_TABLE_LIST']
+           for iter in tunnel_vni_list:
+               if (arg_length == 1) or (arg_length == 2 and args[1] == iter['ip_addr']):
+                   print("{0:^20} {1:^15} {2:^10}".format(iter['vlan'], iter['ip_addr'], iter['vni']))
     return
 
 def run(func, args):
@@ -224,9 +250,12 @@ def run(func, args):
         if func == 'show vxlan tunnel':
             vxlan_show_vxlan_tunnel(args)
             return
+        if func == 'show vxlan evpn remote vni':
+            vxlan_show_vxlan_evpn_remote_vni(args)
+            return
 
     except Exception as e:
-            print sys.exc_value
+            print(sys.exc_value)
             return
 
 
@@ -239,7 +268,7 @@ def run(func, args):
           if api_response.ok():
               response = api_response.content
               if response is None:
-                  print "Success"
+                  print("Success")
               elif 'sonic-vxlan:sonic-vxlan' in response.keys():
                   value = response['sonic-vxlan:sonic-vxlan']
                   if value is None:
@@ -249,11 +278,17 @@ def run(func, args):
               
           else:
               #error response
-              print api_response.error_message()
+              #print(api_response.error_message())
+              if func == 'patch_sonic_vxlan_sonic_vxlan_vxlan_tunnel_vxlan_tunnel_list':
+                 print("Error : Only a single VTEP is supported.")
+              if func == 'delete_sonic_vxlan_sonic_vxlan_vxlan_tunnel_vxlan_tunnel_list':
+                 print("Error : Remove all VLAN-VNI mappings and also the EVPN NVO object .")
+              if func == 'patch_sonic_vxlan_sonic_vxlan_evpn_nvo_evpn_nvo_list':
+                 print("Error : Verify if the source vtep is configured and that this is the only EVPN object")
 
     except:
             # system/network error
-            print "%Error: Transaction Failure"
+            print("Error: Transaction Failure")
 
 
 if __name__ == '__main__':
