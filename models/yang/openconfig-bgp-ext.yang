@@ -90,6 +90,36 @@ module openconfig-bgp-ext {
 
   }
 
+  grouping bgp-ext-global-graceful-restart-config {
+      leaf preserve-fw-state {
+          type boolean;
+          description
+              "Set F-bit indication that FIB is preserved while doing Graceful Restart.";
+      }
+  }
+
+  grouping bgp-ext-global-use-multiple-paths-config {
+      leaf as-set {
+          type boolean;
+          description
+              "Generate an AS_SET.";
+      }
+  }
+
+  grouping bgp-ext-global-route-selection-options-config {
+      leaf med-confed {
+          type boolean;
+          description
+              "Compare MED among confederation paths when set to true.";
+      }
+
+      leaf med-missing-as-worst {
+          type boolean;
+          description
+              "Treat missing MED as the least preferred one when set to true.";
+      }
+  }
+
   grouping bgp-ext-global-config{
       leaf disable-ebgp-connected-route-check {
           type boolean;
@@ -114,6 +144,56 @@ module openconfig-bgp-ext {
           description
               "This helps to reduce the amount of lost traffic when taking BGP sessions down for maintenance.";
       }
+
+      leaf clnt-to-clnt-reflection {
+          type boolean;
+          description
+              "Enable client to client route reflection.";
+      }
+
+      leaf max-dynamic-neighbors {
+          type uint16 {
+              range 1..5000;
+          }
+          description
+              "Maximum number of BGP dynamic neighbors that can be created.";
+      }
+
+      leaf read-quanta {
+          type uint8 {
+              range 1..10;
+          }
+          description
+              "This indicates how many packets to read from peer socket per I/O cycle";
+      }
+
+      leaf write-quanta {
+          type uint8 {
+              range 1..10;
+          }
+          description
+              "This indicates how many packets to write to peer socket per run";
+      }
+
+      leaf coalesce-time {
+          type uint32;
+          description
+              "Subgroup coalesce timer value in milli-sec";
+      }
+
+      leaf route-map-process-delay {
+          type uint16 {
+              range 0..600;
+          }
+          description
+              "0 disables the timer, no route updates happen when route-maps change";
+      }
+
+      leaf deterministic-med {
+          type boolean;
+          description
+              "Pick the best-MED path among paths advertised from the neighboring AS.";
+      }
   }
 
   grouping bgp-ext-global-route-flap-damping {
@@ -130,6 +210,126 @@ module openconfig-bgp-ext {
               description
                   "State information for BGP route flap damping";
               uses bgp-ext-global-route-flap-damping-config;
+          }
+      }
+  }
+
+  grouping bgp-ext-global-defaults-config {
+      leaf ipv4-unicast {
+          type boolean;
+          description
+              "Activate ipv4-unicast for a peer by default";
+      }
+
+      leaf local-preference {
+          type uint32;
+          description
+              "Configure default local preference value.";
+      }
+
+      leaf show-hostname {
+          type boolean;
+          description
+              "Show hostname in BGP dumps.";
+      }
+
+      leaf shutdown {
+          type boolean;
+          description
+              "Apply administrative shutdown to newly configured peers.";
+      }
+
+      leaf subgroup-pkt-queue-max {
+          type uint8 {
+              range 20..100;
+          }
+          description
+              "Configure subgroup packet queue max.";
+      }
+  }
+  
+  grouping bgp-ext-global-defaults {
+    container global-defaults {
+          description
+              "Parameters relating to BGP defaults";
+          container config {
+              description
+                  "Configuration options for BGP global defaults";
+              uses bgp-ext-global-defaults-config;
+          }
+          container state {
+              config false;
+              description
+                  "State information for BGP global defaults";
+              uses bgp-ext-global-defaults-config;
+          }
+      }
+  }
+
+  grouping bgp-ext-global-update-delay-config {
+      leaf max-delay {
+          type uint16 {
+              range 0..3600;
+          }
+          description
+              "Maximum delay for best path calculation.";
+      }
+      leaf establish-wait {
+          type uint16 {
+              range 0..3600;
+          }
+          description
+              "Maximum delay for updates.";
+      }
+  }
+
+  grouping bgp-ext-global-update-delay {
+      container update-delay {
+          description
+              "Parameters relating to force initial delay for best-path and updates.";
+          container config {
+              description
+                  "Configuration options for BGP update delay";
+              uses bgp-ext-global-update-delay-config;
+          }
+          container state {
+              config false;
+              description
+                  "State information for BGP update delay";
+              uses bgp-ext-global-update-delay-config;
+          }
+      }
+  }
+
+  grouping bgp-ext-global-max-med-config {
+      leaf time {
+          type uint32{
+              range 5..86400;
+          }
+          description
+              "Time (seconds) period for max-med";
+      }
+      leaf max-med-val {
+          type uint32;
+          description
+              "Max MED value to be used";
+      }
+  }
+
+  grouping bgp-ext-global-max-med {
+      container max-med {
+          description
+              "Parameters relating to advertise routes with max-med.";
+          container config {
+              description
+                  "Configuration options for BGP max med.";
+              uses bgp-ext-global-max-med-config;
+          }
+          container state {
+              config false;
+              description
+                  "State information for BGP max med.";
+              uses bgp-ext-global-max-med-config;
           }
       }
   }
@@ -225,6 +425,48 @@ module openconfig-bgp-ext {
           type boolean;
           description
               "Enable BFD for the neighbor group.";
+      }
+
+      leaf capability-dynamic {
+          type boolean;
+          description
+              "Advertise dynamic capability to this neighbor.";
+      }
+
+      leaf dont-negotiate-capability {
+          type boolean;
+          description
+              "Do not perform capability negotiation";
+      }
+
+      leaf enforce-multihop {
+          type boolean;
+          description
+              "Enforce EBGP neighbors perform multihop";
+      }
+
+      leaf override-capability {
+          type boolean;
+          description
+              "Override capability negotiation result.";
+      }
+
+      leaf peer-port {
+          type uint16;
+          description
+              "Neighbor's BGP port.";
+      }
+
+      leaf shutdown-message {
+          type boolean;
+          description
+              "Add a shutdown message.";
+      }
+
+      leaf strict-capability-match {
+          type boolean;
+          description
+              "Strict capability negotiation match";
       }
   }
 
@@ -475,6 +717,12 @@ module openconfig-bgp-ext {
           description
               "Configure the neighbor as a route reflector client.";
       }
+
+      leaf route-server-client {
+          type boolean;
+          description
+              "Configure a neighbor as Route Server client.";
+      }
   }
 
   grouping bgp-ext-neighbor-group-add-paths {
@@ -496,6 +744,32 @@ module openconfig-bgp-ext {
               the neighbor or group";
           reference
               "RFC 7911 - Advertisement of Multiple Paths in BGP";
+      }
+  }
+
+  grouping bgp-ext-capability-orf-config {
+      leaf send {
+          type boolean;
+          description
+              "Capability to receive the outbound route filtering from this neighbor";
+      }
+      leaf receive {
+          type boolean;
+          description
+              "Capability to send the outbound route filtering to this neighbor";
+      }
+      leaf both {
+          type boolean;
+          description
+              "Capability to send and receive the outbound route filtering to/from this neighbor";
+      }
+  }
+
+  grouping bgp-ext-global-afi-safi-ibgp-config {
+      leaf equal-cluster-length {
+          type boolean;
+          description
+              "Match the cluster length.";
       }
   }
 
@@ -583,6 +857,18 @@ module openconfig-bgp-ext {
           container state {
               config false;
               uses bgp-ext-remove-private-as-config; 
+          }
+      }
+
+      container capability-orf {
+          description
+              "Advertise prefix-list outbound route filtering capability to this neighbor.";
+          container config {
+              uses bgp-ext-capability-orf-config; 
+          }
+          container state {
+              config false;
+              uses bgp-ext-capability-orf-config; 
           }
       }
   }
@@ -1280,6 +1566,9 @@ deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:p
       uses oc-bgp:bgp-common-structure-neighbor-group-logging-options;
       uses bgp-ext-global-route-reflector;
       uses bgp-ext-global-route-flap-damping;
+      uses bgp-ext-global-defaults;
+      uses bgp-ext-global-update-delay;
+      uses bgp-ext-global-max-med;
   }
 
   augment /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:config {
@@ -1289,6 +1578,31 @@ deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:p
   augment /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:state {
       uses bgp-ext-global-config;
   }
+
+  augment /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:graceful-restart/oc-netinst:config {
+      uses bgp-ext-global-graceful-restart-config;
+}
+ 
+  augment /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:graceful-restart/oc-netinst:state {
+      uses bgp-ext-global-graceful-restart-config;
+}
+ 
+  augment /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:route-selection-options/oc-netinst:config {
+      uses bgp-ext-global-route-selection-options-config;
+}
+ 
+  augment /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:route-selection-options/oc-netinst:state {
+      uses bgp-ext-global-route-selection-options-config;
+}
+ 
+ augment /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:use-multiple-paths/oc-netinst:ebgp/oc-netinst:config {
+      uses bgp-ext-global-use-multiple-paths-config;
+}
+  
+ augment /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:use-multiple-paths/oc-netinst:ebgp/oc-netinst:state {
+      uses bgp-ext-global-use-multiple-paths-config;
+}
+ 
  
   augment /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi {
       uses bgp-ext-global-afi-safi;
@@ -1300,6 +1614,14 @@ deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:p
 
   augment /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:state  {
       uses bgp-ext-global-afi-safi-config;
+  }
+
+  augment /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:use-multiple-paths/oc-netinst:ibgp/oc-netinst:config  {
+	  uses bgp-ext-global-afi-safi-ibgp-config;
+  }
+
+  augment /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:use-multiple-paths/oc-netinst:ibgp/oc-netinst:state  {
+	  uses bgp-ext-global-afi-safi-ibgp-config;
   }
 
   augment /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:config {
