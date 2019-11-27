@@ -47,6 +47,7 @@ GO_DEPS_LIST = github.com/gorilla/mux \
                github.com/pkg/profile \
                gopkg.in/go-playground/validator.v9 \
                golang.org/x/crypto/ssh \
+               github.com/antchfx/xpath \
                github.com/antchfx/jsonquery \
                github.com/antchfx/xmlquery \
                github.com/facette/natsort \
@@ -66,7 +67,6 @@ all: build-deps $(go-deps) $(go-redis-patch) $(go-patch) translib rest-server cl
 
 build-deps:
 	mkdir -p $(BUILD_DIR)/gopkgs
-	mkdir -p $(BUILD_DIR)/cvl/schema
 
 $(BUILD_DIR)/gopkgs/.done: $(MAKEFILE_LIST)
 	$(GO) get -v $(GO_DEPS_LIST)
@@ -85,8 +85,6 @@ clitree:
 
 cvl: $(go-deps) $(go-patch) $(go-redis-patch)
 	$(MAKE) -C src/cvl
-	$(MAKE) -C src/cvl/schema
-	$(MAKE) -C src/cvl/testdata/schema
 
 cvl-test:
 	$(MAKE) -C src/cvl gotest
@@ -174,8 +172,12 @@ cleanall:
 #Function to apply CVL related patches
 define apply_cvl_dep_patches
 
+	cd $(BUILD_GOPATH)/src/github.com/antchfx/xpath; git reset --hard HEAD; \
+	git checkout d9ad276609987dd73ce5cd7d6265fe82189b10b6; git apply $(TOPDIR)/patches/xpath.patch
+
 	cd $(BUILD_GOPATH)/src/github.com/antchfx/jsonquery; git reset --hard HEAD; \
 	git checkout 3b69d31134d889b501e166a035a4d5ecb8c6c367; git apply $(TOPDIR)/patches/jsonquery.patch
+
 	cd $(BUILD_GOPATH)/src/github.com/antchfx/xmlquery; git reset --hard HEAD; \
 	git checkout fe009d4cc63c3011f05e1dfa75a27899acccdf11; git apply $(TOPDIR)/patches/xmlquery.patch
 

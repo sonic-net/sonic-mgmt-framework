@@ -1,6 +1,7 @@
 module sonic-bgp-global {
     namespace "http://github.com/Azure/sonic-bgp-global";
     prefix sbgpg;
+    yang-version 1.1;
 
     import sonic-vrf {
         prefix svrf;

@@ -10,14 +10,22 @@ module sonic-vlan-interface {
         prefix svlan;
     }
 
+    import sonic-common {
+	    prefix cmn;
+    }
+
+    import sonic-interface {
+	    prefix sint;
+    }
+
     organization
-        "SONiC";
+	    "SONiC";
 
     contact
         "SONiC";
 
     description
-        "SONIC VLAN INTERFACE";
+	    "SONiC VLAN INTERFACE";
 
     revision 2019-07-02 {
         description
@@ -26,33 +34,44 @@ module sonic-vlan-interface {
 
     container sonic-vlan-interface {
 
-        container VLAN_INTERFACE {
+	    container VLAN_INTERFACE {
 
-            list VLAN_INTERFACE_LIST {
-                key "vlanName";
+		    list VLAN_INTERFACE_LIST {
+			    key "vlanName";
 
-                leaf vlanName{
-                    type leafref {
-                        path "/svlan:sonic-vlan/svlan:VLAN/svlan:VLAN_LIST/svlan:name";
-                    }
-                }
+			    leaf vlanName {
+				    type leafref {
+					    path "/svlan:sonic-vlan/svlan:VLAN/svlan:VLAN_LIST/svlan:name";
+				    }
+				    must "count(/svlan:sonic-vlan/svlan:VLAN/svlan:VLAN_LIST/svlan:members) > 0" {
+					    error-message "No VLAN member is configured";
+					    error-app-tag no-vlan-member-configured;
+				    }
+			    }
 
-            }
-            list VLAN_INTERFACE_IPADDR_LIST {
-                key "vlanName ip_prefix";
+		    }
+		    list VLAN_INTERFACE_IPADDR_LIST {
+			    key "vlanName ip_prefix";
 
-                leaf vlanName{
-                    type leafref {
-                        path "/svlan:sonic-vlan/svlan:VLAN/svlan:VLAN_LIST/svlan:name";
-                    }
-                }
+			    leaf vlanName{
+				    type leafref {
+					    path "/svlan:sonic-vlan/svlan:VLAN/svlan:VLAN_LIST/svlan:name";
+				    }
+				    must "(/cmn:operation/cmn:operation != 'CREATE') or " +
+					    "(count(/sint:sonic-interface/sint:INTERFACE/sint:INTERFACE_IPADDR_LIST" + 
+					    "[sint:ip_prefix=current()/../ip_prefix] " + 
+					    "[sint:portname=(/svlan:sonic-vlan/svlan:VLAN_MEMBER/svlan:VLAN_MEMBER_LIST" +
+					    "[svlan:name=current()]/svlan:ifname)]) = 0)" {
+						    error-message "Vlan and port being member of same vlan can't have same IP prefix.";
+					    }
+			    }
 
-                leaf ip_prefix {
-                    mandatory true;
-                    type inet:ip-prefix;
+			    leaf ip_prefix {
+				    mandatory true;
+				    type inet:ip-prefix;
 
-                }
-            }
-        }
+			    }
+		    }
+	    }
     }
 }
