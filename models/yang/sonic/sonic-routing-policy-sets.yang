@@ -84,6 +84,12 @@ module sonic-routing-policy-sets {
                                   prefix: 10.3.192.0/21,
                                   masklength_range: exact";
                 }
+                
+                leaf action {
+                    type string;
+                    description
+                        "Permit/Deny action for the prefix list.";
+                }
             }
         }
         container COMMUNITY_SET {
