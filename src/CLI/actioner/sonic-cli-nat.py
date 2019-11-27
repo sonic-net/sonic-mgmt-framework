@@ -84,6 +84,7 @@ def invoke_api(func, args=[]):
         path = cc.Path('/restconf/data/openconfig-nat:nat/instances/instance={id}/napt-mapping-table/napt-mapping-entry={externaladdress},{protocol},{externalport}/config', id=args[0],externaladdress=args[1],protocol=nat_protocol_map[args[2]],externalport=args[3])
         body = { "openconfig-nat:config" : {"internal-address": args[4], "internal-port": int(args[5])} }
         l = len(args)
+        A
         if l >= 7:
             body["openconfig-nat:config"].update( {"type": nat_type_map[args[6]] } )
         if l == 8:
@@ -91,14 +92,19 @@ def invoke_api(func, args=[]):
         return api.patch(path, body)
 
     # Remove NAPT Static translation entry
-    elif func == 'delete_openconfig_nat_nat_instances_instance_napt_mapping_table_napt_mapping_entry_config':
-        path = cc.Path('/restconf/data/openconfig-nat:nat/instances/instance={id}/napt-mapping-table/napt-mapping-entry={externaladdress},{protocol},{externalport}/config/internal-address', id=args[0],externaladdress=args[1],protocol=nat_protocol_map[args[2]],externalport=args[3])
+    elif func == 'delete_openconfig_nat_nat_instances_instance_napt_mapping_table_napt_mapping_entry':
+        path = cc.Path('/restconf/data/openconfig-nat:nat/instances/instance={id}/napt-mapping-table/napt-mapping-entry={externaladdress},{protocol},{externalport}', id=args[0],externaladdress=args[1],protocol=nat_protocol_map[args[2]],externalport=args[3])
         return api.delete(path)
 
     # Config NAT Pool
     elif func == 'patch_openconfig_nat_nat_instances_instance_nat_pool_nat_pool_entry_config':
         path = cc.Path('/restconf/data/openconfig-nat:nat/instances/instance={id}/nat-pool/nat-pool-entry={poolname}/config', id=args[0],poolname=args[1])
-        body = { "openconfig-nat:config": {"nat-ip": args[2]} }
+        ip = args[2].split("-")
+        if len(ip) == 1:
+            body = { "openconfig-nat:config": {"ip-address": args[2]} }
+        else:
+            body =  { "openconfig-nat:config": {"ip-address-range": args[2]} }
+
         l = len(args)
         if l == 4:
             port = args[3].split('-')
@@ -148,11 +154,9 @@ def run(func, args):
            if response.content is not None:
                # Get Command Output
                api_response = response.content
-            
-               if api_response is None:
-                  print("Failed")
-               else:
-                  show_cli_output(args[0], api_response)
+               show_cli_output(args[0], api_response)
+           else:
+               print "None response received from backend application"
        else:
            print response.error_message()
 
