@@ -40,6 +40,25 @@ module openconfig-bgp-ext {
         "Type to describe the direction";
   }
 
+  typedef bgp-orf-type {
+    type enumeration {
+      enum SEND {
+          description
+              "Capability to receive the outbound route filtering from this neighbor";
+      }
+      enum RECEIVE {
+          description
+              "Capability to send the outbound route filtering to this neighbor";
+      }
+      enum BOTH {
+          description
+              "Capability to send and receive the outbound route filtering to/from this neighbor";
+      }
+    }
+    description
+        "Type to describe the BGP ORF(Outbound route filtering) capability";
+  }
+
   grouping bgp-ext-global-afi-safi-route-reflector-config {
       leaf route-reflector-cluster-id {
           type oc-bgp-types:rr-cluster-id-type;
@@ -117,6 +136,12 @@ module openconfig-bgp-ext {
           type boolean;
           description
               "Treat missing MED as the least preferred one when set to true.";
+      }
+
+      leaf compare-confed-as-path {
+          type boolean;
+          description
+              "Compare path lengths including confederation sets & sequences in selecting a route";
       }
   }
 
@@ -460,7 +485,9 @@ module openconfig-bgp-ext {
       }
 
       leaf shutdown-message {
-          type boolean;
+          type string {
+             length "1..127";
+          }
           description
               "Add a shutdown message.";
       }
@@ -750,20 +777,10 @@ module openconfig-bgp-ext {
   }
 
   grouping bgp-ext-capability-orf-config {
-      leaf send {
-          type boolean;
+      leaf orf-type {
+          type bgp-orf-type;
           description
-              "Capability to receive the outbound route filtering from this neighbor";
-      }
-      leaf receive {
-          type boolean;
-          description
-              "Capability to send the outbound route filtering to this neighbor";
-      }
-      leaf both {
-          type boolean;
-          description
-              "Capability to send and receive the outbound route filtering to/from this neighbor";
+              "Describes the outbound route filtering (ORF) capability type";
       }
   }
 

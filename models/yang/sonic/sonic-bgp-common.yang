@@ -65,6 +65,24 @@ module sonic-bgp-common {
         "Type to describe the direction";
   }
 
+  typedef sonic_bgp_orf {
+    type enumeration {
+      enum send {
+          description
+              "Capability to receive the outbound route filtering from this neighbor";
+      }
+      enum receive {
+          description
+              "Capability to send the outbound route filtering to this neighbor";
+      }
+      enum both {
+          description
+              "Capability to send and receive the outbound route filtering to/from this neighbor";
+      }
+    }
+    description
+        "Type to describe the BGP ORF(Outbound route filtering) capability";
+  }
 
   grouping sonic-bgp-cmn {
 
@@ -172,6 +190,44 @@ module sonic-bgp-common {
       type boolean;
         description "BFD status";
     }
+
+    leaf capability_dynamic {
+      type boolean;
+        description "Advertise dynamic capability";
+    }
+
+    leaf dont_negotiate_capability {
+      type boolean;
+        description "Do not perform capability negotiation";
+    }
+
+    leaf enforce_multihop {
+      type boolean;
+        description "Enforce EBGP neighbors perform multihop";
+    }
+
+    leaf override_capability {
+      type boolean;
+        description "Override capability negotiation result";
+    }
+
+    leaf peer_port {
+      type uint16;
+        description "Peer port number";
+    }
+
+    leaf shutdown_message {
+      type string {
+	length "1..127";
+      }
+        description "Message on peer/Neighbor shutdown";
+    }
+
+    leaf strict_capability_match {
+      type boolean;
+        description "Strict capability negotiation match";
+    }
+
   }
 
 
@@ -340,6 +396,16 @@ module sonic-bgp-common {
     leaf allow_as_origin {
       type boolean;
         description "Allow own AS in AS path, if route originated in own AS";
+    }
+
+    leaf cap_orf {
+      type sonic_bgp_orf;
+        description "ORF(Outbound Route Filtering) capability";
+    }
+
+    leaf route_server_client {
+      type boolean;
+        description "Route server client";
     }
   }
 }
