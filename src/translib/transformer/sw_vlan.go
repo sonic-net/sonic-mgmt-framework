@@ -32,14 +32,14 @@ import (
 type intfModeType int
 
 const (
-  MODE_UNSET intfModeType = iota
-  ACCESS
-  TRUNK
+    MODE_UNSET intfModeType = iota
+    ACCESS
+    TRUNK
 )
 
 type intfModeReq struct {
-  ifName string
-  mode   intfModeType
+    ifName string
+    mode   intfModeType
 }
 
 type ifVlan struct {
@@ -50,8 +50,8 @@ type ifVlan struct {
 }
 
 type swVlanMemberPort_t struct {
-  swEthMember *ocbinds.OpenconfigInterfaces_Interfaces_Interface_Ethernet_SwitchedVlan
-  swPortChannelMember *ocbinds.OpenconfigInterfaces_Interfaces_Interface_Aggregation_SwitchedVlan
+    swEthMember *ocbinds.OpenconfigInterfaces_Interfaces_Interface_Ethernet_SwitchedVlan
+    swPortChannelMember *ocbinds.OpenconfigInterfaces_Interfaces_Interface_Aggregation_SwitchedVlan
 }
 
 func init () {
@@ -71,6 +71,39 @@ func validateVlanExists(d *db.DB, vlanName *string) error {
         return errors.New(errStr)
     }
     return nil
+}
+
+/* Validates whether physical interface or port-channel interface configured as member of any VLAN */
+func validateIntfAssociatedWithVlan(d *db.DB, ifName *string) error {
+    var err error
+
+    if len(*ifName) == 0 {
+        return errors.New("Interface name is empty!")
+    }
+    var vlanKeys []db.Key
+    vlanTable, err := d.GetTable(&db.TableSpec{Name:VLAN_TN})
+    if err != nil {
+        return err
+    }
+
+    vlanKeys, err = vlanTable.GetKeys()
+    log.Infof("Found %d Vlan Table keys", len(vlanKeys))
+
+    for _, vlan := range vlanKeys {
+        vlanEntry, err := d.GetEntry(&db.TableSpec{Name: VLAN_TN}, vlan)
+        if(err != nil) {
+            return err
+        }
+        members, ok := vlanEntry.Field["members@"]
+        if ok {
+            if strings.Contains(members, *ifName) {
+                errStr := "Interface: " + *ifName + " is part of VLAN: " + vlan.Get(0)
+                log.Error(errStr)
+                return errors.New(errStr)
+            }
+        }
+    }
+    return err
 }
 
 /* Generate Member Ports string from Slice to update VLAN table in CONFIG DB */
@@ -151,13 +184,13 @@ func validateUntaggedVlanCfgredForIf(d *db.DB, vlanMemberTs *string, ifName *str
         memberPortEntry, err := d.GetEntry(&db.TableSpec{Name:*vlanMemberTs}, vlanMember)
         if err != nil || !memberPortEntry.IsPopulated() {
             errStr := "Get from VLAN_MEMBER table for Vlan: + " + vlanMember.Get(0) + " Interface:" + *ifName + " failed!"
-      log.Error(errStr)
+            log.Error(errStr)
             return false, errors.New(errStr)
         }
         tagMode, ok := memberPortEntry.Field["tagging_mode"]
         if !ok {
             errStr := "tagging_mode entry is not present for VLAN: " + vlanMember.Get(0) + " Interface: " + *ifName
-      log.Error(errStr)
+            log.Error(errStr)
             return false, errors.New(errStr)
         }
         if tagMode == "untagged" {
@@ -588,11 +621,11 @@ func intfVlanMemberAdd(swVlanConfig *swVlanMemberPort_t,
     switch intfType {
     case IntfTypeEthernet:
         /* Retrieve the Access VLAN Id */
-		if swVlanConfig.swEthMember == nil || swVlanConfig.swEthMember.Config == nil {
-			errStr := "Not supported switched-vlan request for Interface: " + *ifName
-			log.Error(errStr)
-			return errors.New(errStr)
-		}
+        if swVlanConfig.swEthMember == nil || swVlanConfig.swEthMember.Config == nil {
+            errStr := "Not supported switched-vlan request for Interface: " + *ifName
+            log.Error(errStr)
+            return errors.New(errStr)
+        }
         if swVlanConfig.swEthMember.Config.AccessVlan != nil {
             accessVlanId = *swVlanConfig.swEthMember.Config.AccessVlan
             log.Infof("Vlan id : %d observed for Untagged Member port addition configuration!", accessVlanId)
@@ -624,11 +657,11 @@ func intfVlanMemberAdd(swVlanConfig *swVlanMemberPort_t,
         }
     case IntfTypePortChannel:
         /* Retrieve the Access VLAN Id */
-		if swVlanConfig.swPortChannelMember == nil || swVlanConfig.swPortChannelMember.Config == nil {
-			errStr := "Not supported switched-vlan request for Interface: " + *ifName
-			log.Error(errStr)
-			return errors.New(errStr)
-		}
+        if swVlanConfig.swPortChannelMember == nil || swVlanConfig.swPortChannelMember.Config == nil {
+            errStr := "Not supported switched-vlan request for Interface: " + *ifName
+            log.Error(errStr)
+            return errors.New(errStr)
+        }
         if swVlanConfig.swPortChannelMember.Config.AccessVlan != nil {
             accessVlanId = *swVlanConfig.swPortChannelMember.Config.AccessVlan
             log.Infof("Vlan id : %d observed for Untagged Member port addition configuration!", accessVlanId)
@@ -727,8 +760,8 @@ func intfVlanMemberAdd(swVlanConfig *swVlanMemberPort_t,
     }
 
     if ifMode == ocbinds.OpenconfigVlan_VlanModeType_UNSET {
-	    return nil
-	}
+        return nil
+    }
     /* Handling the request just for setting Interface Mode */
     log.Info("Request is for Configuring just the Mode for Interface: ", *ifName)
     var mode intfModeReq
@@ -775,6 +808,7 @@ func deleteVlanIntfAndMembers(inParams *XfmrParams, vlanName *string) error {
         errStr := "Need to first remove IP address entry"
         log.Error(errStr)
         return errors.New(errStr)
+
     }
 
     memberPortsVal, ok := vlanEntry.Field["members@"]
@@ -797,7 +831,7 @@ func deleteVlanIntfAndMembers(inParams *XfmrParams, vlanName *string) error {
                 return err
             }
         }
-        resMap[VLAN_MEMBER_TN] = vlanMemberMap
+      resMap[VLAN_MEMBER_TN] = vlanMemberMap
     }
     resMap[VLAN_TN] = vlanMap
 
@@ -845,6 +879,12 @@ var YangToDb_sw_vlans_xfmr SubTreeXfmrYangToDb = func(inParams XfmrParams) (map[
     if err != nil {
         errStr := "Extraction of Interface type from Interface: " + ifName + " failed!"
         return nil, errors.New(errStr)
+    }
+    intTbl := IntfTypeTblMap[intfType]
+    /* Restrict configuring member-port if Interface(Physical/port-channel) is in L3 mode */
+    err = validateIPExists(intTbl.cfgDb.intfTN, inParams.d, &ifName)
+    if err != nil {
+        return nil, err
     }
     switch inParams.oper {
     case CREATE:

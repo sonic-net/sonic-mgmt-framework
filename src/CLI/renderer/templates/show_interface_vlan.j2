@@ -1,0 +1,67 @@
+{% set vars = {'ipv4': ""} %}
+{% set vars = {'ipv6': ""} %}
+{% set vars = {'name': ""} %}
+{% set vars = {'admin_state': ""} %}
+{% set vars = {'mtu': ""} %}
+{% set vars = {'ipv4_src_pfx': ""} %}
+{% set vars = {'ipv6_src_pfx': ""} %}
+{% if json_output -%}
+{% for interfaces in json_output %}
+{% set interface_list = json_output[interfaces] %}
+{% for interface in interface_list %}
+    {% for key in interface %}
+      {% if "state" in key %}
+        {% if vars.update({'name':interface[key]["name"]}) %}{% endif %}
+        {% if vars.update({'admin_state':interface[key]["admin-status"]}) %}{% endif %}
+        {% if vars.update({'mtu':interface[key]["mtu"]}) %}{% endif %}
+      {% endif %}
+      {% if "subinterfaces" in key  %}
+        {% for subinterface in interface[key] %}
+          {% set subif_list = interface[key][subinterface] %}
+          {% for subif in subif_list %}
+            {% if vars.update({'ipv4':"IPV4"}) %}{% endif %}
+            {% if vars.update({'ipv6':"IPV6"}) %}{% endif %}
+            {% if subif["openconfig-if-ip:ipv4"] %}
+              {% set ip_list = subif["openconfig-if-ip:ipv4"]["addresses"]["address"] %}
+              {% set ip_all = [] %}
+              {% for ip in ip_list %}
+                {% set ipfx = ip["state"]["ip"] + "/" + ip["state"]["prefix-length"]|string() %}
+                {{ ip_all.append(ipfx)|default("", True)}}
+                {% if vars.update({'mode4':"MANUAL"}) %}{% endif %}
+              {% endfor %}
+              {% if vars.update({'ipv4_src_pfx':ip_all|join(',')}) %}{% endif %}
+            {% else %}
+              {% if vars.update({'mode4':"not-set"}) %}{% endif %}
+            {% endif %}
+            {% if subif["openconfig-if-ip:ipv6"] %}
+              {% set ip_list = subif["openconfig-if-ip:ipv6"]["addresses"]["address"] %}
+              {% set ipv6_all = [] %}
+              {% for ip in ip_list %}
+                {% set ipfx = ip["state"]["ip"] + "/" + ip["state"]["prefix-length"]|string() %}
+                {{ ipv6_all.append(ipfx)|default("", True)}}
+                {% if vars.update({'mode6':"MANUAL"}) %}{% endif %}
+              {% endfor %}
+              {% if vars.update({'ipv6_src_pfx':ipv6_all|join(',')}) %}{% endif %}
+            {% else %}
+              {% if vars.update({'mode6':"not-set"}) %}{% endif %}
+            {% endif %}
+          {% endfor %}
+        {% endfor %}
+      {% endif %}
+    {% endfor %}
+{% if vars.name %}
+{{ vars.name }} is {{ vars.admin_state|lower() }}
+
+{% if vars.ipv4_src_pfx %}
+{{ vars.ipv4 }} address is {{ vars.ipv4_src_pfx }}
+{% endif %}
+Mode of {{ vars.ipv4 }} address assignment: {{ vars.mode4 }}
+{% if vars.ipv6_src_pfx %}
+{{ vars.ipv6 }} address is {{ vars.ipv6_src_pfx }}
+{% endif %}
+Mode of {{ vars.ipv6 }} address assignment: {{ vars.mode6 }}
+IP MTU {{ vars.mtu }} bytes
+{%- endif %}
+{% endfor %}
+{% endfor %}
+{% endif %}
