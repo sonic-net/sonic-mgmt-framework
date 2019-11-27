@@ -54,9 +54,120 @@ type swVlanMemberPort_t struct {
     swPortChannelMember *ocbinds.OpenconfigInterfaces_Interfaces_Interface_Aggregation_SwitchedVlan
 }
 
+const (
+    STP_GLOBAL_TABLE         = "STP"
+    STP_VLAN_TABLE           = "STP_VLAN"
+    STP_VLAN_INTF_TABLE      = "STP_VLAN_INTF"
+    STP_INTF_TABLE           = "STP_INTF"
+    PVST_MAX_INSTANCES       = 255
+)
+
 func init () {
     XlateFuncBind("YangToDb_sw_vlans_xfmr", YangToDb_sw_vlans_xfmr)
     XlateFuncBind("DbToYang_sw_vlans_xfmr", DbToYang_sw_vlans_xfmr)
+}
+
+/*** STP related Actions - Note: This needs to be taken off once STP moves to transformer  ***/
+func enableStpOnVlanCreation(inParams *XfmrParams, vlanName *string) {
+    log.Info("enableStpOnVlanCreation() called")
+    if len(*vlanName) == 0 {
+        return
+    }
+    d := inParams.d
+
+    log.Infof("enableStpOnVlanCreation --> Enable Stp on Vlans: %s", *vlanName)
+    subOpMap := make(map[db.DBNum]map[string]map[string]db.Value)
+    resMap := make(map[string]map[string]db.Value)
+    stpMap := make(map[string]db.Value)
+
+    vlanKeys, _ := d.GetKeys(&db.TableSpec{Name: STP_VLAN_TABLE})
+    existingEntriesCount := len(vlanKeys)
+    if existingEntriesCount < PVST_MAX_INSTANCES {
+        stpGlobalDBEntry, err := d.GetEntry(&db.TableSpec{Name: STP_GLOBAL_TABLE}, db.Key{Comp:[]string {"GLOBAL"}})
+        if err != nil {
+            return
+        }
+        fDelay := (&stpGlobalDBEntry).Get("forward_delay")
+        helloTime := (&stpGlobalDBEntry).Get("hello_time")
+        maxAge := (&stpGlobalDBEntry).Get("max_age")
+        priority := (&stpGlobalDBEntry).Get("priority")
+
+        defaultDBValues := db.Value{Field: map[string]string{}}
+        (&defaultDBValues).Set("enabled", "true")
+        (&defaultDBValues).Set("forward_delay", fDelay)
+        (&defaultDBValues).Set("hello_time", helloTime)
+        (&defaultDBValues).Set("max_age", maxAge)
+        (&defaultDBValues).Set("priority", priority)
+
+        vlanId := strings.Replace(*vlanName, "Vlan", "", 1)
+        (&defaultDBValues).Set("vlanid", vlanId)
+        stpMap[*vlanName] = defaultDBValues
+    }
+    if len(stpMap) != 0 {
+        resMap[STP_VLAN_TABLE] = stpMap
+        subOpMap[db.ConfigDB] = resMap
+        inParams.subOpDataMap[inParams.oper] = &subOpMap
+    }
+}
+
+func enableStpOnInterfaceVlanMembership(d *db.DB, intfList []string, stpMap map[string]db.Value) {
+    log.Info("enableStpOnInterfaceVlanMembership() called")
+    if len(intfList) == 0 {
+        return
+    }
+    _, serr := d.GetEntry(&db.TableSpec{Name: STP_GLOBAL_TABLE}, db.Key{Comp:[]string {"GLOBAL"}})
+    if serr != nil {
+        return
+    }
+    log.Infof("enableStpOnInterfaceVlanMembership --> Enable Stp on Interfaces: %v", intfList)
+    defaultDBValues := db.Value{Field: map[string]string{}}
+    (&defaultDBValues).Set("enabled", "true")
+    (&defaultDBValues).Set("root_guard", "false")
+    (&defaultDBValues).Set("bpdu_guard", "false")
+    (&defaultDBValues).Set("bpdu_filter", "global")
+    (&defaultDBValues).Set("bpdu_guard_do_disable", "false")
+    (&defaultDBValues).Set("portfast", "true")
+    (&defaultDBValues).Set("uplink_fast", "false")
+
+    var stpEnabledIntfList []string
+    intfKeys, err := d.GetKeys(&db.TableSpec{Name: STP_INTF_TABLE})
+    if err != nil {
+        log.Error(err)
+    } else {
+        for i, _ := range intfKeys {
+            dbKey := intfKeys[i]
+            stpEnabledIntfList = append(stpEnabledIntfList, (&dbKey).Get(0))
+        }
+
+        for i, _ := range intfList {
+            if !contains(stpEnabledIntfList, intfList[i]) {
+                stpMap[intfList[i]] = defaultDBValues
+            }
+        }
+    }
+}
+
+func removeStpConfigOnVlanDeletion(d *db.DB, vlanName *string, resMap map[string]map[string]db.Value) {
+    log.Info("removeStpConfigOnVlanDeletion() called")
+    if len(*vlanName) == 0 {
+        return
+    }
+    log.Infof("removeStpConfigOnVlanDeletion --> Disable Stp on Vlans: %s", *vlanName)
+    stpMap := make(map[string]db.Value)
+    stpMap[*vlanName] = db.Value{Field:map[string]string{}}
+    resMap[STP_VLAN_INTF_TABLE] = stpMap
+    resMap[STP_VLAN_TABLE] = stpMap
+}
+
+func removeStpOnInterfaceSwitchportDeletion(d *db.DB, intfList []string, stpMap map[string]db.Value) {
+    log.Info("removeStpOnInterfaceSwitchportDeletion() called")
+    if len(intfList) == 0 {
+        return
+    }
+    log.Infof("removeStpOnInterfaceSwitchportDeletion --> Disable Stp on Interfaces: %v", intfList)
+    for i, _ := range intfList {
+        stpMap[intfList[i]] = db.Value{Field:map[string]string{}}
+    }
 }
 
 /* Validate whether VLAN exists in DB */
@@ -249,7 +360,8 @@ func removeFromMembersListForAllVlans(d *db.DB, ifName *string, vlanMemberMap ma
 }
 
 /* Remove tagged port associated with VLAN and update VLAN_MEMBER table */
-func removeTaggedVlanAndUpdateVlanMembTbl(d *db.DB, trunkVlan *string, ifName *string, vlanMemberMap map[string]db.Value) error {
+func removeTaggedVlanAndUpdateVlanMembTbl(d *db.DB, trunkVlan *string, ifName *string,
+                                          vlanMemberMap map[string]db.Value, stpMap map[string]db.Value) error {
     var err error
     memberPortEntry, err := d.GetEntry(&db.TableSpec{Name:VLAN_MEMBER_TN}, db.Key{Comp: []string{*trunkVlan, *ifName}})
     if err != nil || !memberPortEntry.IsPopulated() {
@@ -265,6 +377,10 @@ func removeTaggedVlanAndUpdateVlanMembTbl(d *db.DB, trunkVlan *string, ifName *s
     if tagMode == "tagged" {
         vlanMemberKey := *trunkVlan + "|" + *ifName
         vlanMemberMap[vlanMemberKey] = memberPortEntry
+    // Disable STP configuration for ports which are removed from VLan membership
+    var memberPorts []string
+    memberPorts = append(memberPorts, *ifName)
+    removeStpOnInterfaceSwitchportDeletion(d, memberPorts, stpMap)
     } else {
         vlanId := vlanName[len("Vlan"):len(vlanName)]
         errStr := "Tagged VLAN: " + vlanId + " configuration doesn't exist for Interface: " + *ifName
@@ -274,7 +390,9 @@ func removeTaggedVlanAndUpdateVlanMembTbl(d *db.DB, trunkVlan *string, ifName *s
 }
 
 /* Remove untagged port associated with VLAN and update VLAN_MEMBER table */
-func removeUntaggedVlanAndUpdateVlanMembTbl(d *db.DB, ifName *string, vlanMemberMap map[string]db.Value) (*string, error) {
+func removeUntaggedVlanAndUpdateVlanMembTbl(d *db.DB, ifName *string, 
+                                            vlanMemberMap map[string]db.Value, 
+                      stpMap map[string]db.Value) (*string, error) {
     if len(*ifName) == 0 {
         return nil, errors.New("Interface name is empty for fetching list of VLANs!")
     }
@@ -310,6 +428,11 @@ func removeUntaggedVlanAndUpdateVlanMembTbl(d *db.DB, ifName *string, vlanMember
         vlanMemberKey := vlanName + "|" + *ifName
         if tagMode == "untagged" {
             vlanMemberMap[vlanMemberKey] = memberPortEntry 
+      // Disable STP configuration for ports which are removed from VLan membership
+      var memberPorts []string
+      memberPorts = append(memberPorts, *ifName)
+      removeStpOnInterfaceSwitchportDeletion(d, memberPorts, stpMap)
+
             return &vlanName, nil
         }
     }
@@ -396,7 +519,8 @@ func intfModeReqConfig(d *db.DB, mode intfModeReq,
 }
 
 /* Adding member to VLAN requires updation of VLAN Table and VLAN Member Table */
-func processIntfVlanMemberAdd(d *db.DB, vlanMembersMap map[string]map[string]db.Value, vlanMap map[string]db.Value, vlanMemberMap map[string]db.Value) error {
+func processIntfVlanMemberAdd(d *db.DB, vlanMembersMap map[string]map[string]db.Value, vlanMap map[string]db.Value,
+                              vlanMemberMap map[string]db.Value, stpMap map[string]db.Value) error {
     var err error
     var isMembersListUpdate bool
 
@@ -405,6 +529,7 @@ func processIntfVlanMemberAdd(d *db.DB, vlanMembersMap map[string]map[string]db.
         log.Info("Processing VLAN: ", vlanName)
         var memberPortsListStrB strings.Builder
         var memberPortsList []string
+    var stpInterfacesList []string
         isMembersListUpdate = false
 
         vlanEntry, _ := d.GetEntry(&db.TableSpec{Name:VLAN_TN}, db.Key{Comp: []string{vlanName}})
@@ -447,13 +572,14 @@ func processIntfVlanMemberAdd(d *db.DB, vlanMembersMap map[string]map[string]db.
                         case TRUNK:
                             errStr = "Tagged VLAN: " + vlanId + " configuration exists for Interface: " + ifName
                         }
-                  log.Error(errStr)
+                        log.Error(errStr)
                         return tlerr.InvalidArgsError{Format: errStr}
                     }
                 }
             }
 
             isMembersListUpdate = true
+            stpInterfacesList = append(stpInterfacesList, ifName)
             vlanMemberKey := vlanName + "|" + ifName
             vlanMemberMap[vlanMemberKey] = db.Value{Field:make(map[string]string)}
             vlanMemberMap[vlanMemberKey].Field["tagging_mode"] = ifEntry.Field["tagging_mode"] 
@@ -471,12 +597,15 @@ func processIntfVlanMemberAdd(d *db.DB, vlanMembersMap map[string]map[string]db.
         }
         vlanMap[vlanName] = db.Value{Field:make(map[string]string)}
         vlanMap[vlanName].Field["members@"] = memberPortsListStrB.String()
+        enableStpOnInterfaceVlanMembership(d, stpInterfacesList, stpMap)
+
         log.Infof("Updated VLAN Map with VLAN: %s and Member-ports: %s", vlanName, memberPortsListStrB.String())
     }
     return err
 }
 
-func processIntfVlanMemberRemoval(d *db.DB, ifVlanInfoList []*ifVlan, vlanMap map[string]db.Value, vlanMemberMap map[string]db.Value) error {
+func processIntfVlanMemberRemoval(d *db.DB, ifVlanInfoList []*ifVlan, vlanMap map[string]db.Value, 
+                                  vlanMemberMap map[string]db.Value, stpMap map[string]db.Value) error {
     var err error
 
     if len(ifVlanInfoList) == 0 {
@@ -497,7 +626,7 @@ func processIntfVlanMemberRemoval(d *db.DB, ifVlanInfoList []*ifVlan, vlanMap ma
         case ACCESS:
             /* Handling Access Vlan delete */
             log.Info("Access VLAN Delete!")
-            untagdVlan, err := removeUntaggedVlanAndUpdateVlanMembTbl(d, ifName, vlanMemberMap)
+            untagdVlan, err := removeUntaggedVlanAndUpdateVlanMembTbl(d, ifName, vlanMemberMap, stpMap)
             if err != nil {
                 return err
             }
@@ -510,7 +639,7 @@ func processIntfVlanMemberRemoval(d *db.DB, ifVlanInfoList []*ifVlan, vlanMap ma
             log.Info("Trunk VLAN Delete!")
             if trunkVlans != nil {
                 for _, trunkVlan := range trunkVlans {
-                    err = removeTaggedVlanAndUpdateVlanMembTbl(d, &trunkVlan, ifName, vlanMemberMap)
+                    err = removeTaggedVlanAndUpdateVlanMembTbl(d, &trunkVlan, ifName, vlanMemberMap, stpMap)
                     if err != nil {
                         return err
                     }
@@ -526,7 +655,7 @@ func processIntfVlanMemberRemoval(d *db.DB, ifVlanInfoList []*ifVlan, vlanMap ma
 func intfVlanMemberRemoval(swVlanConfig *swVlanMemberPort_t,
                            inParams *XfmrParams, ifName *string,
                            vlanMap map[string]db.Value,
-                           vlanMemberMap map[string]db.Value, intfType E_InterfaceType) error {
+                           vlanMemberMap map[string]db.Value, stpMap map[string]db.Value, intfType E_InterfaceType) error {
     var err error
     var ifVlanInfo ifVlan
     var ifVlanInfoList []*ifVlan
@@ -593,7 +722,7 @@ func intfVlanMemberRemoval(swVlanConfig *swVlanMemberPort_t,
         ifVlanInfo.ifName = ifName
         ifVlanInfoList = append(ifVlanInfoList, &ifVlanInfo)
     }
-    err = processIntfVlanMemberRemoval(inParams.d, ifVlanInfoList, vlanMap, vlanMemberMap)
+    err = processIntfVlanMemberRemoval(inParams.d, ifVlanInfoList, vlanMap, vlanMemberMap, stpMap)
     if(err != nil) {
         log.Errorf("Interface VLAN member removal for Interface: %s failed!", *ifName)
         return err
@@ -605,7 +734,7 @@ func intfVlanMemberRemoval(swVlanConfig *swVlanMemberPort_t,
 func intfVlanMemberAdd(swVlanConfig *swVlanMemberPort_t,
                        inParams *XfmrParams, ifName *string,
                        vlanMap map[string]db.Value,
-                       vlanMemberMap map[string]db.Value, intfType E_InterfaceType) error {
+                       vlanMemberMap map[string]db.Value, stpMap map[string]db.Value, intfType E_InterfaceType) error {
 
     var err error
     var accessVlanId uint16 = 0
@@ -751,7 +880,7 @@ func intfVlanMemberAdd(swVlanConfig *swVlanMemberPort_t,
         }
     }
     if accessVlanFound || trunkVlanFound {
-        err = processIntfVlanMemberAdd(inParams.d, vlanMembersListMap, vlanMap, vlanMemberMap)
+        err = processIntfVlanMemberAdd(inParams.d, vlanMembersListMap, vlanMap, vlanMemberMap, stpMap)
         if err != nil {
             log.Info("Processing Interface VLAN addition failed!")
             return err
@@ -832,6 +961,7 @@ func deleteVlanIntfAndMembers(inParams *XfmrParams, vlanName *string) error {
             }
         }
       resMap[VLAN_MEMBER_TN] = vlanMemberMap
+    removeStpConfigOnVlanDeletion(inParams.d, vlanName, resMap)
     }
     resMap[VLAN_TN] = vlanMap
 
@@ -846,7 +976,7 @@ var YangToDb_sw_vlans_xfmr SubTreeXfmrYangToDb = func(inParams XfmrParams) (map[
     res_map := make(map[string]map[string]db.Value)
     vlanMap := make(map[string]db.Value)
     vlanMemberMap := make(map[string]db.Value)
-
+  stpMap := make(map[string]db.Value)
     log.Info("YangToDb_sw_vlans_xfmr: ", inParams.uri)
 
     var swVlanConfig swVlanMemberPort_t 
@@ -889,22 +1019,24 @@ var YangToDb_sw_vlans_xfmr SubTreeXfmrYangToDb = func(inParams XfmrParams) (map[
     switch inParams.oper {
     case CREATE:
     case UPDATE:
-        err = intfVlanMemberAdd(&swVlanConfig, &inParams, &ifName, vlanMap, vlanMemberMap, intfType)
+        err = intfVlanMemberAdd(&swVlanConfig, &inParams, &ifName, vlanMap, vlanMemberMap, stpMap, intfType)
         if err != nil {
             log.Errorf("Interface VLAN member port addition failed for Interface: %s!", ifName)
             return nil, err
         }
         res_map[VLAN_TN] = vlanMap
         res_map[VLAN_MEMBER_TN] = vlanMemberMap
+        res_map[STP_INTF_TABLE] = stpMap
     case DELETE:
-        err = intfVlanMemberRemoval(&swVlanConfig, &inParams, &ifName, vlanMap, vlanMemberMap, intfType)
+        err = intfVlanMemberRemoval(&swVlanConfig, &inParams, &ifName, vlanMap, vlanMemberMap, stpMap, intfType)
         if err != nil {
             log.Errorf("Interface VLAN member port removal failed for Interface: %s!", ifName)
             return nil, err
         }
-
         res_map[VLAN_MEMBER_TN] = vlanMemberMap
         res_map[VLAN_TN] = vlanMap
+        res_map[STP_VLAN_INTF_TABLE] = stpMap
+        res_map[STP_INTF_TABLE] = stpMap
     }
 
     log.Info("YangToDb_sw_vlans_xfmr: vlan res map:", res_map)
