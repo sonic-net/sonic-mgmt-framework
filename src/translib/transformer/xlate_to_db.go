@@ -419,12 +419,20 @@ func dbMapDelete(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requestU
 					result[child] = make(map[string]db.Value)
 				}
 			}
+
 			if len(result) > 0 {
 				resultMap[oper][db.ConfigDB] = result
 			}
+
 			if len(subOpDataMap) > 0 {
-				for o, d := range subOpDataMap {
-					resultMap[o] = *d
+				for op, data := range subOpDataMap {
+					if len(data) > 0 {
+						for dbType, dbData := range data {
+							if len(dbData) > 0 {
+								mapCopy(resultMap[op][dbType], subOpDataMap[op][dbType])
+							}
+						}
+					}
 				}
 
 			}
