@@ -25,7 +25,6 @@ import cli_client as cc
 from rpipe_utils import pipestr
 from scripts.render_cli import show_cli_output
 
-
 def invoke(func, args):
     body = None
     aa = cc.ApiClient()
@@ -193,7 +192,20 @@ def invoke(func, args):
                 vlanid=args[0], ifname=args[4])
         elif args[2] == 'static-group' :
             keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance=default/protocols/protocol=IGMP_SNOOPING,IGMP-SNOOPING/openconfig-network-instance-deviation:igmp-snooping/interfaces/interface={vlanid}/config/static-multicast-group={grpAddr}/outgoing-interface={ifname}',
-                vlanid=args[0], grpAddr=args[3], ifname=args[5])            
+                vlanid=args[0], grpAddr=args[3], ifname=args[5])
+            api_response = aa.delete (keypath)
+            if api_response.ok():
+                keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance=default/protocols/protocol=IGMP_SNOOPING,IGMP-SNOOPING/openconfig-network-instance-deviation:igmp-snooping/interfaces/interface={vlanid}/config/static-multicast-group={grpAddr}/outgoing-interface',
+                                  vlanid=args[0], grpAddr=args[3])
+                get_response = aa.get(keypath)
+                if get_response.ok() and len(get_response.content) == 0:
+                    keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance=default/protocols/protocol=IGMP_SNOOPING,IGMP-SNOOPING/openconfig-network-instance-deviation:igmp-snooping/interfaces/interface={vlanid}/config/static-multicast-group={grpAddr}',
+                        vlanid=args[0], grpAddr=args[3])
+                    return aa.delete (keypath)
+                else:
+                    return api_response
+            else:
+                return api_response
         else:    
             print("%Error: Invalid command")
             exit(1)
@@ -206,7 +218,6 @@ def invoke(func, args):
 def run(func, args):
     try:
         api_response = invoke(func, args)
-
         if api_response.ok():
             response = api_response.content
             if response is None:
