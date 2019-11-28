@@ -44,8 +44,10 @@ if [ -z $YANG_MODELS_PATH ]; then
     export YANG_MODELS_PATH=$BUILD_DIR/all_yangs
     mkdir -p $YANG_MODELS_PATH
     pushd $YANG_MODELS_PATH > /dev/null
+    rm -f *
     find $TOPDIR/models/yang -name "*.yang" -not -path "*/testdata/*" -exec ln -sf {} \;
     ln -sf $TOPDIR/config/transformer/models_list
+    ln -sf $BUILD_DIR/yaml/api_ignore
     popd > /dev/null
 fi
 

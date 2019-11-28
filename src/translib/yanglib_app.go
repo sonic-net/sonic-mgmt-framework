@@ -20,9 +20,14 @@
 package translib
 
 import (
+	"bufio"
+	"crypto/md5"
+	"fmt"
 	"net"
+	"os"
 	"path/filepath"
 	"reflect"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -164,6 +169,8 @@ func (app *yanglibApp) copyOneModuleInfo(fromMods *ocbinds.IETFYangLibrary_Modul
 	key := ocbinds.IETFYangLibrary_ModulesState_Module_Key{
 		Name: app.pathInfo.Var("name"), Revision: app.pathInfo.Var("revision")}
 
+	glog.Infof("Copying module %s@%s", key.Name, key.Revision)
+
 	to := app.ygotRoot.ModulesState.Module[key]
 	from := fromMods.Module[key]
 	if from == nil {
@@ -214,7 +221,6 @@ func (app *yanglibApp) copyOneModuleInfo(fromMods *ocbinds.IETFYangLibrary_Modul
 
 	default:
 		// Copy full module
-		glog.Infof("Copying module %s@%s", key.Name, key.Revision)
 		app.ygotRoot.ModulesState.Module[key] = from
 	}
 
@@ -230,6 +236,10 @@ func (app *yanglibApp) copyOneModuleInfo(fromMods *ocbinds.IETFYangLibrary_Modul
 type yanglibBuilder struct {
 	// yangDir is the directory with all yang files
 	yangDir string
+
+	// implModules contains top level yang module names implemented
+	// by this system. Values are discovered from translib.getModels() API
+	implModules map[string]bool
 
 	// baseURL is the base URL for downloading yang files. Yang schema URL
 	// can be obtained by appending yang file name to this base URL.
@@ -290,6 +300,12 @@ func (yb *yanglibBuilder) prepare() error {
 	glog.Infof("yanglibBuilder.prepare: yangDir = %s", yb.yangDir)
 	glog.Infof("yanglibBuilder.prepare: baseURL = %s", yb.baseURL)
 
+	// Load supported model information
+	yb.implModules = make(map[string]bool)
+	for _, m := range getModels() {
+		yb.implModules[m.Name] = true
+	}
+
 	yb.ygotModules = &ocbinds.IETFYangLibrary_ModulesState{}
 	return nil
 }
@@ -298,18 +314,37 @@ func (yb *yanglibBuilder) prepare() error {
 // Skips transformer annotation yangs.
 func (yb *yanglibBuilder) loadYangs() error {
 	glog.Infof("Loading yangs from %s directory", yb.yangDir)
+	var parsed, ignored uint32
+	yangIgnores := make(map[string]bool)
 	mods := yang.NewModules()
 	start := time.Now()
 
+	// Load yang ignore list
+	ignores, err := readConfigLines(filepath.Join(yb.yangDir, "api_ignore"))
+	if err == nil {
+		glog.Infof("api_ignore = %v", ignores)
+		for _, f := range ignores {
+			yangIgnores[filepath.Base(f)] = true
+		}
+	} else {
+		glog.Warningf("Failed to parse api_ignore file; err=%v", err)
+		// Continue to load all yangs if api_ignore canot be resolved
+	}
+
 	files, _ := filepath.Glob(filepath.Join(yb.yangDir, "*.yang"))
 	for _, f := range files {
+		if yangIgnores[filepath.Base(f)] {
+			ignored++
+			continue
+		}
 		if err := mods.Read(f); err != nil {
 			glog.Errorf("Failed to parse %s; err=%v", f, err)
 			return errors.New("System error")
 		}
+		parsed++
 	}
 
-	glog.Infof("%d yang files loaded in %s", len(files), time.Since(start))
+	glog.Infof("%d yang files loaded in %s; %d ignored", parsed, time.Since(start), ignored)
 	yb.yangModules = mods
 	return nil
 }
@@ -318,6 +353,7 @@ func (yb *yanglibBuilder) loadYangs() error {
 // ygot IETFYangLibrary_ModulesState object.
 func (yb *yanglibBuilder) translate() error {
 	var modsWithDeviation []*yang.Module
+	var allNames []string
 
 	// First iteration -- create ygot module entry for each yang.Module
 	for _, mod := range yb.yangModules.Modules {
@@ -342,6 +378,27 @@ func (yb *yanglibBuilder) translate() error {
 	for _, mod := range modsWithDeviation {
 		yb.translateDeviations(mod)
 	}
+
+	// 3rd iteration -- fill conformance type
+	for _, m := range yb.ygotModules.Module {
+		if yb.implModules[*m.Name] {
+			m.ConformanceType = ocbinds.IETFYangLibrary_ModulesState_Module_ConformanceType_implement
+		} else {
+			m.ConformanceType = ocbinds.IETFYangLibrary_ModulesState_Module_ConformanceType_import
+		}
+
+		// Collect full names of modules and submodules for module-set-id generation
+		allNames = append(allNames, fullName(*m.Name, *m.Revision))
+		for _, sm := range m.Submodule {
+			allNames = append(allNames, fullName(*sm.Name, *sm.Revision))
+		}
+	}
+
+	// Finally, generte module-set-id as a uuid prepared from all module and
+	// submodule names. Sort them to make uuid deterministic.
+	sort.Strings(allNames)
+	msetID := wordsToUuid(allNames...)
+	yb.ygotModules.ModuleSetId = &msetID
 
 	return nil
 }
@@ -371,9 +428,6 @@ func (yb *yanglibBuilder) fillModuleInfo(to *ocbinds.IETFYangLibrary_ModulesStat
 			sm.Schema = yb.getSchemaURL(submod)
 		}
 	}
-
-	//TODO is it okay to set "implement" always???
-	to.ConformanceType = ocbinds.IETFYangLibrary_ModulesState_Module_ConformanceType_implement
 }
 
 // fillModuleDeviation creates a deviation module info in the ygot structure
@@ -384,6 +438,11 @@ func (yb *yanglibBuilder) fillModuleDeviation(main *yang.Module, deviation *yang
 
 	if m, ok := yb.ygotModules.Module[key]; ok {
 		m.NewDeviation(deviation.Name, deviation.Current())
+
+		// Mark the deviation module as "implemented" if main module is also "implemented"
+		if yb.implModules[main.Name] {
+			yb.implModules[deviation.Name] = true
+		}
 	} else {
 		glog.Errorf("Ygot module entry %s not found", key)
 	}
@@ -457,6 +516,12 @@ func (yb *yanglibBuilder) getSchemaURL(m *yang.Module) *string {
 	return &uri
 }
 
+// fullName returns the version qualified name
+// in "name@version" format.
+func fullName(name, version string) string {
+	return name + "@" + version
+}
+
 /*
  * Other utilities..
  */
@@ -489,4 +554,44 @@ func findAManagementIP() string {
 // transformer.YangPath for now.
 func GetYangPath() string {
 	return transformer.YangPath
+}
+
+// readConfigLines returns a slice containing lines from a config
+// file. Empty lines and lines starting with '#' are ignored.
+func readConfigLines(filepath string) ([]string, error) {
+	f, err := os.Open(filepath)
+	if err != nil {
+		return nil, err
+	}
+
+	defer f.Close()
+	scanner := bufio.NewScanner(f)
+	var lines []string
+
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if len(line) != 0 && !strings.HasPrefix(line, "#") {
+			lines = append(lines, line)
+		}
+	}
+
+	return lines, nil
+}
+
+// wordsToUuid genertes uuid from given words. Uses RFC4412
+// name based uuid generation method.
+func wordsToUuid(words ...string) string {
+	if len(words) == 0 {
+		return "00000000-0000-0000-0000-000000000000"
+	}
+
+	h := md5.New()
+	for _, w := range words {
+		h.Write([]byte(w))
+	}
+
+	u := h.Sum(nil)
+	u[8] = 0x80 | (u[8] & 0x3F) // octet8 10XX XXXX = RFC4412 variant
+	u[6] = 0x30 | (u[6] & 0x0F) // octet6 0011 XXXX = MD5 based uuid
+	return fmt.Sprintf("%x-%x-%x-%x-%x", u[0:4], u[4:6], u[6:8], u[8:10], u[10:16])
 }
