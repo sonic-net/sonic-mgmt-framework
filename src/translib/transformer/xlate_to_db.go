@@ -28,8 +28,7 @@ import (
     "translib/db"
     "translib/ocbinds"
     "github.com/openconfig/ygot/ytypes"
-	"github.com/openconfig/goyang/pkg/yang"
-
+    "github.com/openconfig/goyang/pkg/yang"
     log "github.com/golang/glog"
 )
 
@@ -608,13 +607,15 @@ func dbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requestU
 	var result = make(map[string]map[string]db.Value)
 	subOpDataMap := make(map[int]*RedisDbMap)
 
-	root := xpathRootNameGet(uri)
 	if isSonicYang(uri) {
 		err = sonicYangReqToDbMapCreate(jsonData, result)
 		resultMap[oper] = make(RedisDbMap)
 		resultMap[oper][db.ConfigDB] = result
 	} else {
-		err = yangReqToDbMapCreate(d, ygRoot, oper, root, uri, "", "", jsonData, result, subOpDataMap, tblXpathMap, txCache)
+		log.Info("Value of jsonData: ", jsonData)
+		xpath, keyName, _ := xpathKeyExtract(d, ygRoot, oper, uri, uri, subOpDataMap, txCache)
+		xpathPrefix := parentXpathGet(xpath)
+		err = yangReqToDbMapCreate(d, ygRoot, oper, uri, uri, xpathPrefix, keyName, jsonData, result, subOpDataMap, tblXpathMap, txCache)
 		if err != nil {
 			return err
 		}
@@ -749,7 +750,6 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
 						pathAttr = strings.Split(pathAttr, ":")[1]
 					}
 					xpath  = xpathPrefix + "/" + pathAttr
-					curUri = uri + "/" + pathAttr
 				}
 				_, ok := xYangSpecMap[xpath]
 				log.Infof("slice/map data: curKey(\"%v\"), xpath(\"%v\"), curUri(\"%v\").",
@@ -813,6 +813,7 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
 			}
 		}
 	}
+
 	return retErr
 }
 
