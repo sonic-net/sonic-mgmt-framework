@@ -145,6 +145,24 @@ def invoke(func, args):
         keypath = cc.Path('/restconf/data/sonic-vxlan:sonic-vxlan/EVPN_REMOTE_VNI_TABLE/EVPN_REMOTE_VNI_TABLE_LIST')
         return aa.get(keypath)
 
+    #[un]configure Neighbour Suppression
+    if (func == 'patch_sonic_vxlan_sonic_vxlan_suppress_vlan_neigh_suppress_vlan_neigh_list' or
+        func == 'delete_sonic_vxlan_sonic_vxlan_suppress_vlan_neigh_suppress_vlan_neigh_list'):
+        print args[0]
+        keypath = cc.Path('/restconf/data/sonic-vxlan:sonic-vxlan/SUPPRESS_VLAN_NEIGH/SUPPRESS_VLAN_NEIGH_LIST={name}', name=args[0])
+
+        if (func.startswith("patch") is True):
+            body = {
+                "sonic-vxlan:SUPPRESS_VLAN_NEIGH_LIST": [
+                {
+                    "name": args[0],
+                    "suppress": 'on'
+                }
+             ]
+            }
+            return aa.patch(keypath, body)
+        else:
+            return aa.delete(keypath)
 
     else:
         print("Error: not implemented")
