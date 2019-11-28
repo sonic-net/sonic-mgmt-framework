@@ -44,6 +44,23 @@
             fi&#xA;
       </ACTION>
       </COMMAND>
+      <COMMAND name="show vxlan evpn remote mac" help="Show Vxlan EVPN Remote mac">
+          <PARAM
+              name="remote_ip_addr"
+              help="remote evpn peer ip"
+              ptype="IP_ADDR"
+              optional="true"
+              >
+          </PARAM>
+        <ACTION> 
+            if test "${remote_ip_addr}" = ""; then&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-vxlan.py "show vxlan evpn remote mac" show_vxlan_evpn_remote_mac.j2&#xA; 
+            else&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-vxlan.py "show vxlan evpn remote mac" show_vxlan_evpn_remote_mac.j2 ${remote_ip_addr}&#xA;
+            fi&#xA;
+      </ACTION>
+      </COMMAND>
+
     </VIEW>
 
     <VIEW name="configure-view">

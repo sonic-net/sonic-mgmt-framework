@@ -3,9 +3,14 @@ module sonic-vxlan {
     prefix svxlan;
     yang-version 1.1;
 
+    import ietf-yang-types {
+        prefix yang;
+    }
+
     import ietf-inet-types {
         prefix inet;
     }
+
     import sonic-extension {
         prefix sonic-ext;
     }
@@ -148,12 +153,43 @@ module sonic-vxlan {
             description "app db vxlan remote vni table";
 
             list EVPN_REMOTE_VNI_TABLE_LIST {
-                key "vlan ip_addr";
+                key "vlan remote_vtep";
 
                 leaf vlan {
+                    type leafref {
+                        path "/svlan:sonic-vlan/svlan:VLAN/svlan:VLAN_LIST/svlan:name";
+                    }
+                }
+                leaf remote_vtep {
+                    type inet:ipv4-address;
+                }
+                leaf vni {
                     type string;
                 }
-                leaf ip_addr {
+            }
+        }
+        container VXLAN_FDB_TABLE{
+            sonic-ext:db-name "APPL_DB";
+            sonic-ext:key-delim ":";
+
+            config false;
+            description "app db vxlan fdb table";
+
+            list VXLAN_FDB_TABLE_LIST {
+                key "vlan mac_addr";
+
+                leaf vlan {
+                    type leafref {
+                        path "/svlan:sonic-vlan/svlan:VLAN/svlan:VLAN_LIST/svlan:name";
+                    }
+                }
+                leaf mac_addr {
+                    type yang:mac-address;
+                }
+                leaf remote_vtep {
+                    type inet:ipv4-address;
+                }
+                leaf type {
                     type string;
                 }
                 leaf vni {

@@ -145,6 +145,10 @@ def invoke(func, args):
         keypath = cc.Path('/restconf/data/sonic-vxlan:sonic-vxlan/EVPN_REMOTE_VNI_TABLE/EVPN_REMOTE_VNI_TABLE_LIST')
         return aa.get(keypath)
 
+    if func == "get_list_sonic_vxlan_sonic_vxlan_fdb_table_vxlan_fdb_table_list":
+        keypath = cc.Path('/restconf/data/sonic-vxlan:sonic-vxlan/VXLAN_FDB_TABLE/VXLAN_FDB_TABLE_LIST')
+        return aa.get(keypath)
+
     #[un]configure Neighbour Suppression
     if (func == 'patch_sonic_vxlan_sonic_vxlan_suppress_vlan_neigh_suppress_vlan_neigh_list' or
         func == 'delete_sonic_vxlan_sonic_vxlan_suppress_vlan_neigh_suppress_vlan_neigh_list'):
@@ -163,7 +167,6 @@ def invoke(func, args):
             return aa.patch(keypath, body)
         else:
             return aa.delete(keypath)
-
     else:
         print("Error: not implemented")
         exit(1)
@@ -250,8 +253,24 @@ def vxlan_show_vxlan_evpn_remote_vni(args):
 	elif response is not None:
            tunnel_vni_list = response['sonic-vxlan:EVPN_REMOTE_VNI_TABLE_LIST']
            for iter in tunnel_vni_list:
-               if (arg_length == 1) or (arg_length == 2 and args[1] == iter['ip_addr']):
-                   print("{0:^20} {1:^15} {2:^10}".format(iter['vlan'], iter['ip_addr'], iter['vni']))
+               if (arg_length == 1) or (arg_length == 2 and args[1] == iter['remote_vtep']):
+                   print("{0:^20} {1:^15} {2:^10}".format(iter['vlan'], iter['remote_vtep'], iter['vni']))
+    return
+
+#show vxlan evpn remote mac
+def vxlan_show_vxlan_evpn_remote_mac(args):
+    arg_length = len(args);
+    print("{0:^20} {1:^17} {2:^20} {3:^15} {4:^10}".format('Vlan', 'Mac', 'Type', 'Tunnel', 'VNI'))
+    api_response = invoke("get_list_sonic_vxlan_sonic_vxlan_fdb_table_vxlan_fdb_table_list", args)
+    if api_response.ok():
+        response = api_response.content
+	if response is None:
+	    print("no vxlan fdb entries")
+	elif response is not None:
+           tunnel_fdb_list = response['sonic-vxlan:VXLAN_FDB_TABLE_LIST']
+           for iter in tunnel_fdb_list:
+               if (arg_length == 1) or (arg_length == 2 and args[1] == iter['remote_vtep']):
+                   print("{0:^20} {1:^10} {2:^20} {3:^15} {4:^10}".format(iter['vlan'], iter['mac_addr'], iter['type'], iter['remote_vtep'], iter['vni']))
     return
 
 def run(func, args):
@@ -270,6 +289,9 @@ def run(func, args):
             return
         if func == 'show vxlan evpn remote vni':
             vxlan_show_vxlan_evpn_remote_vni(args)
+            return
+        if func == 'show vxlan evpn remote mac':
+            vxlan_show_vxlan_evpn_remote_mac(args)
             return
 
     except Exception as e:
