@@ -32,7 +32,7 @@ limitations under the License.
       <PARAM name="connected" help="Connected Routes" mode="subcommand" ptype="SUBCOMMAND"/>
       <PARAM name="static" help="Static Routes" mode="subcommand" ptype="SUBCOMMAND"/>
     </PARAM>
-    <PARAM name="route-map" help="Route-map reference" mode="subcommand" ptype="SUBCOMMAND" optional="true">
+    <PARAM name="route-map" help="Route-map reference" mode="subcommand" ptype="SUBCOMMAND">
       <PARAM name="route-map-name" help="Route map name" ptype="STRING"/>
     </PARAM>
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_table_connections_table_connection_config_import_policy ${vrf-name} IPV4_UNICAST ${protocol} ${route-map-name}</ACTION>
@@ -227,7 +227,7 @@ limitations under the License.
   </COMMAND>
   <COMMAND name="weight" help="Set default weight for routes from this neighbor">
     <PARAM name="val" help="Default weight" ptype="RANGE_1_255"/>
-     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_afi_safis_afi_safi_config_weight ${vrf-name} ${nbr-addr} IPV4_UNICAST ${val}</ACTION>
+     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_config_weight ${vrf-name} ${nbr-addr} IPV4_UNICAST ${val}</ACTION>
   </COMMAND>
   <COMMAND name="maximum-prefix" help="Maximum number of prefixes to accept from this peer">
     <PARAM name="max-prefix-val" help="Maximum no. of prefix limit" ptype="RANGE_1_4294967295">
@@ -239,7 +239,7 @@ limitations under the License.
         </PARAM>
       </PARAM>
     </PARAM>
-    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py PATCH_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_ipv4_unicast_config_prefix_limit_config ${vrf-name} ${nbr-addr} IPV4_UNICAST ${max-prefix-val} ${threshold-val} ${warning-only} ${maxpfopt} ${interval}</ACTION>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py PATCH_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_ipv4_unicast_config_prefix_limit_config ${vrf-name} ${nbr-addr} IPV4_UNICAST ${max-prefix-val} ${threshold-val} ${maxpfopt} ${interval}</ACTION>
   </COMMAND>
 
   <COMMAND name="no" help="no commands"/>
@@ -352,7 +352,7 @@ limitations under the License.
   </COMMAND>
   <COMMAND name="no weight" help="Set default weight for routes from this neighbor">
     <PARAM name="val" help="Default weight" mode="subcommand" ptype="RANGE_1_255"/>
-     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_afi_safis_afi_safi_config_weight ${vrf-name} ${nbr-addr} IPV4_UNICAST</ACTION>
+     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_config_weight ${vrf-name} ${nbr-addr} IPV4_UNICAST</ACTION>
   </COMMAND>
   <COMMAND name="no maximum-prefix" help="Maximum number of prefixes to accept from this peer">
     <PARAM name="max-prefix-val" help="Maximum no. of prefix limit" mode="subcommand" ptype="RANGE_1_4294967295">
