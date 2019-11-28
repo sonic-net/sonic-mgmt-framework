@@ -2,6 +2,10 @@ module sonic-bgp-global {
     namespace "http://github.com/Azure/sonic-bgp-global";
     prefix sbgpg;
 
+    import sonic-vrf {
+        prefix svrf;
+    }
+
     import ietf-inet-types {
         prefix inet;
     }
@@ -15,6 +19,11 @@ module sonic-bgp-global {
     description
         "SONIC BGP Global YANG";
 
+    revision 2019-11-20 {
+        description
+            "Added BGP fields for extensive features.";
+    }
+
     revision 2019-09-15 {
         description
             "Initial revision.";
@@ -26,7 +35,9 @@ module sonic-bgp-global {
                 key "vrf";
 
                 leaf vrf {
-                    type string;
+                    type leafref {
+                        path "/svrf:sonic-vrf/svrf:VRF/svrf:VRF_LIST/svrf:vrf_name";
+                    }
                 }
 
                 leaf router_id {
@@ -47,6 +58,12 @@ module sonic-bgp-global {
 
                 leaf graceful_restart_enable {
                     type boolean;
+                }
+
+                leaf gr_preserve_fw_state {
+                    type boolean;
+                    description
+                        "Set F-bit indication that FIB is preserved while doing Graceful Restart.";
                 }
 
                 leaf gr_restart_time {
@@ -125,6 +142,141 @@ module sonic-bgp-global {
                     }
                 }
 
+                leaf rr_clnt_to_clnt_reflection {
+                    type boolean;
+                    description
+                        "Enable client to client route reflection.";
+                }
+
+                leaf max_dynamic_neighbors {
+                    type uint16 {
+                        range 1..5000;
+                    }
+                    description
+                        "Maximum number of BGP dynamic neighbors that can be created.";
+                }
+
+                leaf read_quanta {
+                    type uint8 {
+                        range 1..10;
+                    }
+                    description
+                        "This indicates how many packets to read from peer socket per I/O cycle";
+                }
+
+                leaf write_quanta {
+                    type uint8 {
+                        range 1..10;
+                    }
+                    description
+                        "This indicates how many packets to write to peer socket per run";
+                }
+
+                leaf coalesce_time {
+                    type uint32;
+                    description
+                        "Subgroup coalesce timer value in milli-sec";
+                }
+
+                leaf route_map_process_delay {
+                    type uint16 {
+                        range 0..600;
+                    }
+                    description
+                        "0 disables the timer, no route updates happen when route-maps change";
+                }
+
+                leaf deterministic_med {
+                    type boolean;
+                    description
+                        "Pick the best-MED path among paths advertised from the neighboring AS.";
+                }
+
+                leaf med_confed {
+                    type boolean;
+                    description
+                        "Compare MED among confederation paths when set to true.";
+                }
+
+                leaf med_missing_as_worst {
+                    type boolean;
+                    description
+                        "Treat missing MED as the least preferred one when set to true.";
+                }
+
+                leaf compare_confed_as_path {
+                    type boolean;
+                    description
+                        "Compare path lengths including confederation sets & sequences in selecting a route";
+                }
+
+                leaf as_path_mp_as_set {
+                    type boolean;
+                    description
+                        "Generate an AS_SET.";
+                }
+
+                leaf default_ipv4_unicast {
+                    type boolean;
+                    description
+                        "Activate ipv4-unicast for a peer by default";
+                }
+
+                leaf default_local_preference {
+                    type uint32;
+                    description
+                        "Configure default local preference value.";
+                }
+
+                leaf default_show_hostname {
+                    type boolean;
+                    description
+                        "Show hostname in BGP dumps.";
+                }
+
+                leaf default_shutdown {
+                    type boolean;
+                    description
+                        "Apply administrative shutdown to newly configured peers.";
+                }
+
+                leaf default_subgroup_pkt_queue_max {
+                    type uint8 {
+                        range 20..100;
+                    }
+                    description
+                        "Configure subgroup packet queue max.";
+                }
+
+                leaf max_med_time {
+                    type uint32{
+                        range 5..86400;
+                    }
+                    description
+                        "Time (seconds) period for max-med";
+                }
+                
+                leaf max_med_val {
+                    type uint32;
+                    description
+                        "Max MED value to be used";
+                }
+
+                leaf max_delay {
+                    type uint16 {
+                        range 0..3600;
+                    }
+                    description
+                        "Maximum delay for best path calculation.";
+                }
+
+                leaf establish_wait {
+                    type uint16 {
+                        range 0..3600;
+                    }
+                    description
+                        "Maximum delay for updates.";
+                }
             }
         }
 
@@ -133,7 +285,9 @@ module sonic-bgp-global {
                 key "vrf af_name";
 
                 leaf vrf {
-                    type string;
+                    type leafref {
+                        path "/svrf:sonic-vrf/svrf:VRF/svrf:VRF_LIST/svrf:vrf_name";
+                    }
                 }
 
                 leaf af_name {
@@ -141,11 +295,15 @@ module sonic-bgp-global {
                 }
 
                 leaf max_ebgp_paths {
-                    type uint32;
+                    type uint16 {
+                        range "1..256";
+                    }
                 }
 
                 leaf max_ibgp_paths {
-                    type uint32;
+                    type uint16 {
+                        range "1..256";
+                    }
                 }
 
 
@@ -188,6 +346,12 @@ module sonic-bgp-global {
                         range "1..255";
                     }
                 }
+
+                leaf ibgp_equal_cluster_length {
+                    type boolean;
+                    description
+                        "Match the cluster length.";
+                }
             }
         }
 
@@ -196,7 +360,9 @@ module sonic-bgp-global {
                 key "vrf ip_prefix";
 
                 leaf vrf {
-                    type string;
+                    type leafref {
+                        path "/svrf:sonic-vrf/svrf:VRF/svrf:VRF_LIST/svrf:vrf_name";
+                    }
                 }
 
                 leaf ip_prefix {

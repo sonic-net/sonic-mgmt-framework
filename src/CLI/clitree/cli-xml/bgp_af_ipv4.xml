@@ -29,18 +29,13 @@ limitations under the License.
   <NAMESPACE ref="configure-router-bgp-view" help="false" completion="false" />
   <COMMAND name="redistribute" help="Redistribute information from another routing protocol">
     <PARAM name="protocol" help="protocol" mode="switch" ptype="SUBCOMMAND">
-      <PARAM name="connected" help="Connected Routes" mode="subcommand" ptype="SUBCOMMAND">
-        <PARAM name="route-map" help="Route-map reference" mode="subcommand" ptype="SUBCOMMAND">
-          <PARAM name="route-map-name" help="Route map name" ptype="STRING"/>
-        </PARAM>  
-      </PARAM>  
-      <PARAM name="static" help="Static Routes" mode="subcommand" ptype="SUBCOMMAND">
-        <PARAM name="route-map" help="Route-map reference" mode="subcommand" ptype="SUBCOMMAND">
-          <PARAM name="route-map-name" help="Route map name" ptype="STRING"/>
-        </PARAM>      
-      </PARAM>      
-    </PARAM>      
-    <ACTION builtin="clish_nop"/>
+      <PARAM name="connected" help="Connected Routes" mode="subcommand" ptype="SUBCOMMAND"/>
+      <PARAM name="static" help="Static Routes" mode="subcommand" ptype="SUBCOMMAND"/>
+    </PARAM>
+    <PARAM name="route-map" help="Route-map reference" mode="subcommand" ptype="SUBCOMMAND">
+      <PARAM name="route-map-name" help="Route map name" ptype="STRING"/>
+    </PARAM>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_table_connections_table_connection_config_import_policy ${vrf-name} IPV4_UNICAST ${protocol} ${route-map-name}</ACTION>
   </COMMAND>
     <COMMAND name="maximum-paths" help="Forward packets over multiple paths">
       <PARAM name="paths" help="Number of paths" ptype="RANGE_1_256"/>
@@ -51,12 +46,71 @@ limitations under the License.
        <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance1543452951 ${vrf-name} IPV4_UNICAST ${ipaths}</ACTION>
     </COMMAND>
   <COMMAND name="network" help="Enable routing on an IP network">
+    <PARAM name="prefix" help="Network number" ptype="IP_ADDR_MASK">
+      <PARAM name="backdoor" help="Backdoor" ptype="SUBCOMMAND" mode="subcommand" default="x" optional="true"/>
+      <PARAM name="route-map" help="Route-map reference" mode="subcommand" ptype="SUBCOMMAND" optional="true">
+        <PARAM name="route-map-name" help="Route map name" ptype="STRING"/>
+      </PARAM>
+    </PARAM>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_network_config ${vrf-name} IPV4_UNICAST ${prefix} ${backdoor} ${route-map-name}</ACTION>
+  </COMMAND>
+  <COMMAND name="table-map" help="BGP table to RIB route download filter">
+    <PARAM name="rtmap" help="Router map name" ptype="STRING"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_config_table_map_name ${vrf-name} IPV4_UNICAST ${rtmap}</ACTION>
+  </COMMAND>
+  <COMMAND name="aggregate-address" help="Configure BGP aggregate entries">
+    <PARAM name="prefix" help="Aggregate prefix" ptype="IP_ADDR_MASK">
+      <PARAM name="as-set" help="Generate AS set path information" ptype="SUBCOMMAND" mode="subcommand" optional="true"/>
+      <PARAM name="summary-only" help="Filter more specific routes from updates" ptype="SUBCOMMAND" mode="subcommand" optional="true"/>
+    </PARAM>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_aggregate_address_config ${vrf-name} IPV4_UNICAST ${prefix} ${as-set} ${summary-only}</ACTION>
+  </COMMAND>
+  <COMMAND name="distance" help="Define an administrative distance"/>
+  <COMMAND name="distance bgp" help="Define an administrative distance">
+    <PARAM name="external" help="Distance for routes external to the AS" ptype="RANGE_1_255">
+      <PARAM name="internal" help="Distance for routes internal to the AS" ptype="RANGE_1_255"/>
+    </PARAM>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_default_route_distance_config ${vrf-name} IPV4_UNICAST ${external} ${internal}</ACTION>
+  </COMMAND>
+
+  <COMMAND name="no" help="no commands"/>
+  <COMMAND name="no redistribute" help="Redistribute information from another routing protocol">
+    <PARAM name="protocol" help="protocol" mode="switch" ptype="SUBCOMMAND">
+      <PARAM name="connected" help="Connected Routes" mode="subcommand" ptype="SUBCOMMAND"/>
+      <PARAM name="static" help="Static Routes" mode="subcommand" ptype="SUBCOMMAND"/>
+    </PARAM>
+    <PARAM name="route-map" help="Route-map reference" mode="subcommand" ptype="SUBCOMMAND" optional="true">
+      <PARAM name="route-map-name" help="Route map name" ptype="STRING"/>
+    </PARAM>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_table_connections_table_connection_config_import_policy ${vrf-name} IPV4_UNICAST ${protocol} ${route-map-name}</ACTION>
+  </COMMAND>
+    <COMMAND name="no maximum-paths" help="Forward packets over multiple paths">
+      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance1348121867 ${vrf-name} IPV4_UNICAST ${paths}</ACTION>
+    </COMMAND>
+    <COMMAND name="no maximum-paths ibgp" help="iBGP-multipath">
+       <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance1543452951 ${vrf-name} IPV4_UNICAST ${ipaths}</ACTION>
+    </COMMAND>
+  <COMMAND name="no network" help="Enable routing on an IP network">
     <PARAM name="prefix" help="Network number" ptype="IP_ADDR">
-        <PARAM name="route-map" help="Route-map reference" mode="subcommand" ptype="SUBCOMMAND" optional="true">
-          <PARAM name="route-map-name" help="Route map name" ptype="STRING"/>
-        </PARAM>      
-    </PARAM>      
-    <ACTION builtin="clish_nop"/>
+      <PARAM name="route-map" help="Route-map reference" mode="subcommand" ptype="SUBCOMMAND" optional="true"/>
+    </PARAM>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_network_config ${vrf-name} IPV4_UNICAST</ACTION>
+  </COMMAND>
+  <COMMAND name="no table-map" help="BGP table to RIB route download filter">
+    <PARAM name="rtmap" help="Number of paths" ptype="STRING" optional="true"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_config_table_map_name ${vrf-name} IPV4_UNICAST</ACTION>
+  </COMMAND>
+  <COMMAND name="no aggregate-address" help="Configure BGP aggregate entries">
+    <PARAM name="prefix" help="Aggregate prefix" ptype="IPV4_IPV6_NETWORK">
+      <PARAM name="as-set" help="Generate AS set path information" ptype="SUBCOMMAND" optional="true">
+        <PARAM name="summary-only" help="Filter more specific routes from updates" ptype="SUBCOMMAND" optional="true"/>
+      </PARAM>
+    </PARAM>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_aggregate_address_config ${vrf-name} IPV4_UNICAST</ACTION>
+  </COMMAND>
+  <COMMAND name="no distance" help="Define an administrative distance"/>
+  <COMMAND name="no distance bgp" help="Define an administrative distance">
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_default_route_distance_config ${vrf-name} IPV4_UNICAST</ACTION>
   </COMMAND>
 </VIEW>
 
@@ -69,17 +123,17 @@ limitations under the License.
   </COMMAND>
   <COMMAND name="allowas-in" help="Allow local AS number in as-path">
     <PARAM name="value" help="as-number" ptype="RANGE_1_10"/>
-    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py PATCH_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_allow_own_as_config_as_count ${vrf-name} ${nbr-addr} IPV4_UNICAST ${value}&#xA;
-             python $SONIC_CLI_ROOT/sonic-cli-bgp.py PATCH_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_allow_own_as_config_enabled ${vrf-name} ${nbr-addr} IPV4_UNICAST True&#xA;
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_allow_own_as_config_as_count ${vrf-name} ${nbr-addr} IPV4_UNICAST ${value}&#xA;
+             python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_allow_own_as_config_enabled ${vrf-name} ${nbr-addr} IPV4_UNICAST True&#xA;
     </ACTION>
   </COMMAND>
-  <COMMAND name="route-map" help="Name of the route map (max 140 chars)" ref="hidden">
+  <COMMAND name="route-map" help="Name of the route map (max 140 chars)">
     <PARAM name="route-name-str" help="route map name" ptype="STRING">
       <PARAM name="direction" help="direction" mode="switch" ptype="SUBCOMMAND">
         <PARAM name="in" help="Filter incoming routing updates" mode="subcommand" ptype="SUBCOMMAND"/>
         <PARAM name="out" help="Filter outgoing routing updates" mode="subcommand" ptype="SUBCOMMAND"/>
       </PARAM>
-    </PARAM>  
+    </PARAM>
     <ACTION>
           if test "${direction}" = "in" ; then&#xA;
                python $SONIC_CLI_ROOT/sonic-cli-bgp.py PATCH_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_apply_policy_config_import_policy ${vrf-name} ${nbr-addr} IPV4_UNICAST ${route-name-str}&#xA;
@@ -88,23 +142,123 @@ limitations under the License.
           fi&#xA;
     </ACTION>
   </COMMAND>
+
+  <COMMAND name="addpath-tx-all-paths" help="Use addpath to advertise all paths to a neighbor">
+     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_add_paths_config_tx_all_paths ${vrf-name} ${nbr-addr} IPV4_UNICAST True</ACTION>
+  </COMMAND>
+  <COMMAND name="addpath-tx-bestpath-per-AS" help="Use addpath to advertise the bestpath per each neighboring AS">
+     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_add_paths_config_tx_bestpath_per_as ${vrf-name} ${nbr-addr} IPV4_UNICAST True</ACTION>
+  </COMMAND>
+  <COMMAND name="as-override" help="Override ASNs in outbound updates if aspath equals remote-as">
+     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_config_as_override ${vrf-name} ${nbr-addr} IPV4_UNICAST True</ACTION>
+  </COMMAND>
+  <COMMAND name="attribute-unchanged" help="BGP attribute is propagated unchanged to this neighbor">
+    <PARAM name="as-path" help="As-path attribute" mode="subcommand" ptype="SUBCOMMAND" optional="true"/>
+    <PARAM name="med" help="Med attribute" mode="subcommand" ptype="SUBCOMMAND" optional="true"/>
+    <PARAM name="next-hop" help="Nexthop attribute" mode="subcommand" ptype="SUBCOMMAND" optional="true"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_attribute_unchanged_config ${vrf-name} ${nbr-addr} IPV4_UNICAST ${as-path} ${med} ${next-hop}</ACTION>
+  </COMMAND>
+  <COMMAND name="capability" help="_Advertise capability to the peer"/>
+  <COMMAND name="capability orf" help="Advertise ORF capability to the peer"/>
+  <COMMAND name="capability orf prefix-list" help="Advertise prefixlist ORF capability to this neighbor">
+    <PARAM name="capopt" help="Capabilities" mode="switch" ptype="SUBCOMMAND">
+      <PARAM name="send" help="Capability to RECEIVE the ORF from this neighbor" mode="subcommand" ptype="SUBCOMMAND"/>
+      <PARAM name="receive" help="Capability to SEND the ORF to this neighbor" mode="subcommand" ptype="SUBCOMMAND"/>
+      <PARAM name="both" help="Capability to SEND and RECEIVE the ORF to/from this neighbor" mode="subcommand" ptype="SUBCOMMAND"/>
+    </PARAM>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_capability_orf_config ${vrf-name} ${nbr-addr} IPV4_UNICAST ${capopt}</ACTION>
+  </COMMAND>
+  <COMMAND name="default-originate" help="Originate default route to this neighbor">
+    <PARAM name="route-map" help="Route-map to specify criteria to originate default" mode="subcommand" ptype="SUBCOMMAND">
+       <PARAM name="rtemap" help="Route-map name" ptype="STRING"/>
+    </PARAM>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py PATCH_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_ipv4_unicast_config_default_policy_name ${vrf-name} ${nbr-addr} IPV4_UNICAST ${rtemap}</ACTION>
+  </COMMAND>
+  <COMMAND name="filter-list" help="Establish BGP filters">
+    <PARAM name="fname" help="AS path access-list name" ptype="STRING">
+      <PARAM name="filtopt" help="Filter options" mode="switch" ptype="SUBCOMMAND">
+        <PARAM name="in" help="Filter incoming routes" mode="subcommand" ptype="SUBCOMMAND"/>
+        <PARAM name="out" help="Filter outgoing routes" mode="subcommand" ptype="SUBCOMMAND"/>
+      </PARAM>
+    </PARAM>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_filter_list_config ${vrf-name} ${nbr-addr} IPV4_UNICAST ${fname} ${filtopt}</ACTION>
+  </COMMAND>
+  <COMMAND name="next-hop-self" help="Disable the next hop calculation for this neighbor">
+    <PARAM name="force" help="Set the next hop to self for reflected routes" mode="subcommand" ptype="SUBCOMMAND" optional="true"/>
+     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_next_hop_self_config ${vrf-name} ${nbr-addr} IPV4_UNICAST True ${force}</ACTION>
+  </COMMAND>
+  <COMMAND name="prefix-list" help="Filter updates to/from this neighbor">
+    <PARAM name="pname" help="Name of a prefix list" ptype="STRING">
+      <PARAM name="prfopt" help="Filter options" mode="switch" ptype="SUBCOMMAND">
+        <PARAM name="in" help="Filter incoming routes" mode="subcommand" ptype="SUBCOMMAND"/>
+        <PARAM name="out" help="Filter outgoing routes" mode="subcommand" ptype="SUBCOMMAND"/>
+      </PARAM>
+    </PARAM>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_prefix_list_config ${vrf-name} ${nbr-addr} IPV4_UNICAST ${pname} ${prfopt}</ACTION>
+  </COMMAND>
+  <COMMAND name="remove-private-AS" help="Remove private ASNs in outbound updates">
+    <PARAM name="all" help="Apply to all AS numbers" mode="subcommand" ptype="SUBCOMMAND" order="true" optional="true"/>
+    <PARAM name="replace-AS" help="Replace private ASNs with our ASN in outbound updates" mode="subcommand" ptype="SUBCOMMAND" order="true" optional="true"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_remove_private_as_config ${vrf-name} ${nbr-addr} IPV4_UNICAST True ${all} ${replace-AS}</ACTION>
+  </COMMAND>
+  <COMMAND name="route-reflector-client" help="Configure a neighbor as Route Reflector client">
+   <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_config_route_reflector_client ${vrf-name} ${nbr-addr} IPV4_UNICAST True</ACTION>
+  </COMMAND>
+  <COMMAND name="route-server-client" help="Configure a neighbor as Route Server client">
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_config_route_server_client ${vrf-name} ${nbr-addr} IPV4_UNICAST True</ACTION>
+  </COMMAND>
+  <COMMAND name="send-community" help="Send Community attribute to this neighbor">
+    <PARAM name="comtype" help="Send options" mode="switch" ptype="SUBCOMMAND">
+      <PARAM name="standard" help="Send Standard Community attributes" mode="subcommand" ptype="SUBCOMMAND"/>
+      <PARAM name="extended" help="Send Extended Community attributes" mode="subcommand" ptype="SUBCOMMAND"/>
+      <PARAM name="both" help="Send Standard and Extended Community attributes" mode="subcommand" ptype="SUBCOMMAND"/>
+    </PARAM>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_config_send_community ${vrf-name} ${nbr-addr} IPV4_UNICAST ${comtype}</ACTION>
+  </COMMAND>
+  <COMMAND name="soft-reconfiguration" help="Per neighbor soft reconfiguration">
+    <PARAM name="inbound" help="Allow inbound soft reconfiguration for this neighbor" mode="subcommand" ptype="SUBCOMMAND">
+    </PARAM>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_config_soft_reconfiguration_in ${vrf-name} ${nbr-addr} IPV4_UNICAST True</ACTION>
+  </COMMAND>
+  <COMMAND name="unsuppress-map" help="Route-map to selectively unsuppress suppressed routes">
+    <PARAM name="map" help="Name of route map" ptype="STRING">
+    </PARAM>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_config_unsuppress_map_name ${vrf-name} ${nbr-addr} IPV4_UNICAST ${map}</ACTION>
+  </COMMAND>
+  <COMMAND name="weight" help="Set default weight for routes from this neighbor">
+    <PARAM name="val" help="Default weight" ptype="RANGE_1_255"/>
+     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_config_weight ${vrf-name} ${nbr-addr} IPV4_UNICAST ${val}</ACTION>
+  </COMMAND>
+  <COMMAND name="maximum-prefix" help="Maximum number of prefixes to accept from this peer">
+    <PARAM name="max-prefix-val" help="Maximum no. of prefix limit" ptype="RANGE_1_4294967295">
+      <PARAM name="threshold-val" help="Threshold value (%) at which to generate a warning msg" ptype="PERCENT_1" default="0" order="true" optional="true"/>
+      <PARAM name="maxpfopt" help="Maximum limit options" mode="switch" ptype="SUBCOMMAND" order="true" optional="true">
+        <PARAM name="warning-only" help="Only give warning message when limit is exceeded" mode="subcommand" ptype="SUBCOMMAND"/>
+        <PARAM name="restart" help="Restart bgp connection after limit is exceeded" mode="subcommand" ptype="SUBCOMMAND">
+           <PARAM name="interval" help="Restart interval in minutes" ptype="RANGE_1_65535"/>
+        </PARAM>
+      </PARAM>
+    </PARAM>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py PATCH_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_ipv4_unicast_config_prefix_limit_config ${vrf-name} ${nbr-addr} IPV4_UNICAST ${max-prefix-val} ${threshold-val} ${maxpfopt} ${interval}</ACTION>
+  </COMMAND>
+
   <COMMAND name="no" help="no commands"/>
   <COMMAND name="no activate" help="Disable the Address Family for this Neighbor">
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_config_enabled ${vrf-name} ${nbr-addr} IPV4_UNICAST False</ACTION>
   </COMMAND>
   <COMMAND name="no allowas-in" help="Allow local AS number in as-path">
     <PARAM name="value" help="as-number" ptype="RANGE_1_10" optional="true"/>
-    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py DELETE_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_allow_own_as_config_as_count ${vrf-name} ${nbr-addr} IPV4_UNICAST ${value}&#xA;
-             python $SONIC_CLI_ROOT/sonic-cli-bgp.py DELETE_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_allow_own_as_config_enabled ${vrf-name} ${nbr-addr} IPV4_UNICAST False&#xA;
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_allow_own_as_config_as_count ${vrf-name} ${nbr-addr} IPV4_UNICAST ${value}&#xA;
+             python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_allow_own_as_config_enabled ${vrf-name} ${nbr-addr} IPV4_UNICAST False&#xA;
     </ACTION>
   </COMMAND>
-  <COMMAND name="no route-map" help="Name of the route map (max 140 chars)" ref="hidden">
+  <COMMAND name="no route-map" help="Name of the route map (max 140 chars)">
     <PARAM name="route-name-str" help="route map name" ptype="STRING">
       <PARAM name="direction" help="direction" mode="switch" ptype="SUBCOMMAND" optional="true">
         <PARAM name="in" help="Filter incoming routing updates" mode="subcommand" ptype="SUBCOMMAND" optional="true"/>
         <PARAM name="out" help="Filter outgoing routing updates" mode="subcommand" ptype="SUBCOMMAND" optional="true"/>
       </PARAM>
-    </PARAM>  
+    </PARAM>
     <ACTION>
           if test "${direction}" = "in" ; then&#xA;
                python $SONIC_CLI_ROOT/sonic-cli-bgp.py DELETE_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_apply_policy_config_import_policy ${vrf-name} ${nbr-addr} IPV4_UNICAST ${route-name-str}&#xA;
@@ -115,6 +269,102 @@ limitations under the License.
                python $SONIC_CLI_ROOT/sonic-cli-bgp.py DELETE_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_apply_policy_config_export_policy ${vrf-name} ${nbr-addr} IPV4_UNICAST ${route-name-str}&#xA;
           fi&#xA;
     </ACTION>
+  </COMMAND>
+  <COMMAND name="no addpath-tx-all-paths" help="Use addpath to advertise all paths to a neighbor">
+     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_add_paths_config_tx_all_paths ${vrf-name} ${nbr-addr} IPV4_UNICAST</ACTION>
+  </COMMAND>
+  <COMMAND name="no addpath-tx-bestpath-per-AS" help="Use addpath to advertise the bestpath per each neighboring AS">
+     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_add_paths_config_tx_bestpath_per_as ${vrf-name} ${nbr-addr} IPV4_UNICAST</ACTION>
+  </COMMAND>
+  <COMMAND name="no as-override" help="Override ASNs in outbound updates if aspath equals remote-as">
+     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_config_as_override ${vrf-name} ${nbr-addr} IPV4_UNICAST</ACTION>
+  </COMMAND>
+  <COMMAND name="no attribute-unchanged" help="BGP attribute is propagated unchanged to this neighbor">
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_attribute_unchanged_config ${vrf-name} ${nbr-addr} IPV4_UNICAST</ACTION>
+  </COMMAND>
+  <COMMAND name="no capability" help="Advertise capability to the peer"/>
+  <COMMAND name="no capability orf" help="Advertise capability to this neighbor"/>
+  <COMMAND name="no capability orf prefix-list" help="Advertise capability to this neighbor">
+    <PARAM name="capopt" help="Capabilities" mode="switch" ptype="SUBCOMMAND" optional="true">
+      <PARAM name="send" help="Capability to RECEIVE the ORF from this neighbor" mode="subcommand" ptype="SUBCOMMAND"/>
+      <PARAM name="receive" help="Capability to SEND the ORF to this neighbor" mode="subcommand" ptype="SUBCOMMAND"/>
+      <PARAM name="both" help="Capability to SEND and RECEIVE the ORF to/from this neighbor" mode="subcommand" ptype="SUBCOMMAND"/>
+    </PARAM>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_capability_orf_config ${vrf-name} ${nbr-addr} IPV4_UNICAST ${capopt}</ACTION>
+  </COMMAND>
+  <COMMAND name="no default-originate" help="Originate default route to this neighbor">
+    <PARAM name="route-map" help="Route-map to specify criteria to originate default" mode="subcommand" ptype="SUBCOMMAND">
+       <PARAM name="rtemap" help="Route-map name" ptype="STRING"/>
+    </PARAM>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py DELETE_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_ipv4_unicast_config_default_policy_name ${vrf-name} ${nbr-addr} IPV4_UNICAST ${rtemap}</ACTION>
+  </COMMAND>
+  <COMMAND name="no filter-list" help="Establish BGP filters">
+    <PARAM name="fname" help="AS path access-list name" ptype="STRING">
+      <PARAM name="filtopt" help="Filter options" mode="switch" ptype="SUBCOMMAND">
+        <PARAM name="in" help="Filter incoming routes" mode="subcommand" ptype="SUBCOMMAND"/>
+        <PARAM name="out" help="Filter outgoing routes" mode="subcommand" ptype="SUBCOMMAND"/>
+      </PARAM>
+    </PARAM>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_filter_list_config ${vrf-name} ${nbr-addr} IPV4_UNICAST</ACTION>
+  </COMMAND>
+  <COMMAND name="no next-hop-self" help="Disable the next hop calculation for this neighbor">
+    <PARAM name="force" help="Set the next hop to self for reflected routes" mode="subcommand" ptype="SUBCOMMAND" optional="true"/>
+     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_next_hop_self_config ${vrf-name} ${nbr-addr} IPV4_UNICAST</ACTION>
+  </COMMAND>
+  <COMMAND name="no prefix-list" help="Filter updates to/from this neighbor">
+    <PARAM name="pname" help="Name of a prefix list" ptype="STRING">
+      <PARAM name="prfopt" help="Filter options" mode="switch" ptype="SUBCOMMAND">
+        <PARAM name="in" help="Filter incoming routes" mode="subcommand" ptype="SUBCOMMAND"/>
+        <PARAM name="out" help="Filter outgoing routes" mode="subcommand" ptype="SUBCOMMAND"/>
+      </PARAM>
+    </PARAM>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_prefix_list_config ${vrf-name} ${nbr-addr} IPV4_UNICAST</ACTION>
+  </COMMAND>
+  <COMMAND name="no remove-private-AS" help="Remove private ASNs in outbound updates">
+    <PARAM name="all" help="Apply to all AS numbers" mode="subcommand" ptype="SUBCOMMAND" optional="true">
+      <PARAM name="replace-AS" help="Replace private ASNs with our ASN in outbound updates" mode="subcommand" ptype="SUBCOMMAND" optional="true"/>
+    </PARAM>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_remove_private_as_config ${vrf-name} ${nbr-addr} IPV4_UNICAST</ACTION>
+  </COMMAND>
+  <COMMAND name="no route-reflector-client" help="Configure a neighbor as Route Reflector client">
+   <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_config_route_reflector_client ${vrf-name} ${nbr-addr} IPV4_UNICAST</ACTION>
+  </COMMAND>
+  <COMMAND name="no route-server-client" help="Configure a neighbor as Route Server client">
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_config_route_server_client ${vrf-name} ${nbr-addr} IPV4_UNICAST</ACTION>
+  </COMMAND>
+  <COMMAND name="no send-community" help="Send Community attribute to this neighbor">
+    <PARAM name="cmopt" help="Send options" mode="switch" ptype="SUBCOMMAND">
+      <PARAM name="standard" help="Send Standard Community attributes" mode="subcommand" ptype="SUBCOMMAND"/>
+      <PARAM name="extended" help="Send Extended Community attributes" mode="subcommand" ptype="SUBCOMMAND"/>
+      <PARAM name="both" help="Send Standard and Extended Community attributes" mode="subcommand" ptype="SUBCOMMAND"/>
+    </PARAM>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_config_send_community ${vrf-name} ${nbr-addr} IPV4_UNICAST</ACTION>
+  </COMMAND>
+  <COMMAND name="no soft-reconfiguration" help="Per neighbor soft reconfiguration">
+    <PARAM name="inbound" help="Allow inbound soft reconfiguration for this neighbor" mode="subcommand" ptype="SUBCOMMAND">
+    </PARAM>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_config_soft_reconfiguration_in ${vrf-name} ${nbr-addr} IPV4_UNICAST</ACTION>
+  </COMMAND>
+  <COMMAND name="no unsuppress-map" help="Route-map to selectively unsuppress suppressed routes">
+    <PARAM name="map" help="Name of route map" ptype="STRING">
+    </PARAM>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_config_unsuppress_map_name ${vrf-name} ${nbr-addr} IPV4_UNICAST</ACTION>
+  </COMMAND>
+  <COMMAND name="no weight" help="Set default weight for routes from this neighbor">
+    <PARAM name="val" help="Default weight" mode="subcommand" ptype="RANGE_1_255"/>
+     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_config_weight ${vrf-name} ${nbr-addr} IPV4_UNICAST</ACTION>
+  </COMMAND>
+  <COMMAND name="no maximum-prefix" help="Maximum number of prefixes to accept from this peer">
+    <PARAM name="max-prefix-val" help="Maximum no. of prefix limit" mode="subcommand" ptype="RANGE_1_4294967295">
+      <PARAM name="mxopt" help="Maximum limit options" mode="switch" ptype="SUBCOMMAND">
+        <PARAM name="threshold-val" help="Threshold value (%) at which to generate a warning msg" mode="subcommand" ptype="PERCENT_1"/>
+        <PARAM name="warning-only" help="Only give warning message when limit is exceeded" mode="subcommand" ptype="SUBCOMMAND"/>
+        <PARAM name="restart" help="Restart bgp connection after limit is exceeded" mode="subcommand" ptype="SUBCOMMAND">
+           <PARAM name="val" help="tbd" ptype="RANGE_1_255"/>
+        </PARAM>
+      </PARAM>
+    </PARAM>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py DELETE_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_ipv4_unicast_config_prefix_limit_config ${vrf-name} ${nbr-addr} IPV4_UNICAST ${max-prefix-val} ${threshold-val} ${warning-only} ${restart} ${val}</ACTION>
   </COMMAND>
 </VIEW>
 

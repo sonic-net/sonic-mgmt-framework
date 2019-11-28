@@ -44,8 +44,12 @@ def prompt_confirm(func, args):
     msg = ""
     if (args[0] == "startup-configuration") or ("file://" in args[0]):
         if  len(args) ==3:
-                msg = ("Clear current config and reload config from " +  args[1] + "? \n"
+            if args[2] == "overwrite":
+                msg = ("Clear current config and reload config from " +  args[0] + "? \n"
                 "This will result in loss of management connection for a short time.")
+            else:
+                print("Error:Invalid arguments.")
+                exit(1)
         else:
                 msg = ("Load config from " + args[0] + "?")
         prompt(msg)
