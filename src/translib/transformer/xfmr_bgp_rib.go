@@ -26,6 +26,42 @@ func print_rib_keys (rib_key *_xfmr_bgp_rib_key) string {
                        rib_key.niName, rib_key.afiSafiName, rib_key.prefix, rib_key.origin, rib_key.pathId, rib_key.nbrAddr)
 }
 
+func fill_ipv4_specific_pfx_path_loc_rib_data (ipv4LocRibRoutes_obj *ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Rib_AfiSafis_AfiSafi_Ipv4Unicast_LocRib_Routes,
+                                               prefix string, pathId uint32, pathData map[string]interface{}) bool {
+    peer, ok := pathData["peer"].(map[string]interface{})
+    if !ok {return false}
+
+    peerId, ok := peer["peerId"].(string)
+    if !ok {return false}
+
+    _route_origin := &ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Rib_AfiSafis_AfiSafi_Ipv4Unicast_LocRib_Routes_Route_State_Origin_Union_String{peerId}
+    ipv4LocRibRoute_obj, err := ipv4LocRibRoutes_obj.NewRoute (prefix, _route_origin, pathId)
+    if err != nil {return false}
+
+    var _state ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Rib_AfiSafis_AfiSafi_Ipv4Unicast_LocRib_Routes_Route_State
+    ipv4LocRibRoute_obj.State = &_state
+    ipv4LocRibRouteState := ipv4LocRibRoute_obj.State
+
+    ipv4LocRibRouteState.Prefix = &prefix
+    ipv4LocRibRouteState.Origin = _route_origin
+    ipv4LocRibRouteState.PathId = &pathId
+
+    if value, ok := pathData["valid"].(bool) ; ok {
+        ipv4LocRibRouteState.ValidRoute = &value
+    }
+
+    lastUpdate, ok := pathData["lastUpdate"].(map[string]interface{})
+    if ok {
+        if value, ok := lastUpdate["epoch"] ; ok {
+            _lastUpdateEpoch := uint64(value.(float64))
+            ipv4LocRibRouteState.LastModified = &_lastUpdateEpoch
+        }
+    }
+
+    return true
+}
+
+
 func hdl_get_bgp_ipv4_local_rib (ribAfiSafi_obj *ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Rib_AfiSafis_AfiSafi,
                                  rib_key *_xfmr_bgp_rib_key, bgpRibOutputJson map[string]interface{}, dbg_log *string) (error) {
     var err error
@@ -56,47 +92,13 @@ func hdl_get_bgp_ipv4_local_rib (ribAfiSafi_obj *ocbinds.OpenconfigNetworkInstan
     if !ok {return err}
 
     for prefix, _ := range routes {
-        prefixData, ok := routes[prefix].(map[string]interface{})
-        if !ok {continue}
-
-        paths, ok := prefixData["paths"].(map[string]interface {})
-        if !ok {continue }
-
-        for pathId, _ := range paths {
-            pathData, ok := paths[pathId].(map[string]interface{})
-            if !ok {continue}
-
-            peer, ok := pathData["peer"].(map[string]interface{})
-            if !ok {continue}
-
-            peerId, ok := peer["peerId"].(string)
-            if !ok {continue}
-
-            _route_prefix := prefix
-            _route_origin := &ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Rib_AfiSafis_AfiSafi_Ipv4Unicast_LocRib_Routes_Route_State_Origin_Union_String{peerId}
-            _route_pathId_u64, _ := strconv.ParseUint(pathId, 10, 32)
-            _route_pathId := uint32(_route_pathId_u64)
-            ipv4LocRibRoute_obj, err := ipv4LocRibRoutes_obj.NewRoute (_route_prefix, _route_origin, _route_pathId)
-            if err != nil {continue}
-
-            var _state ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Rib_AfiSafis_AfiSafi_Ipv4Unicast_LocRib_Routes_Route_State
-            ipv4LocRibRoute_obj.State = &_state
-            ipv4LocRibRouteState := ipv4LocRibRoute_obj.State
-
-            ipv4LocRibRouteState.Prefix = &_route_prefix
-            ipv4LocRibRouteState.Origin = _route_origin
-            ipv4LocRibRouteState.PathId = &_route_pathId
-
-            if value, ok := pathData["valid"].(bool) ; ok {
-                ipv4LocRibRouteState.ValidRoute = &value
-            }
-
-            lastUpdate, ok := pathData["lastUpdate"].(map[string]interface{})
-            if ok {
-                if value, ok := lastUpdate["epoch"] ; ok {
-                    _lastUpdateEpoch := uint64(value.(float64))
-                    ipv4LocRibRouteState.LastModified = &_lastUpdateEpoch
-                }
+        prefixData, ok := routes[prefix].(map[string]interface{}) ; if !ok {continue}
+        paths, ok := prefixData["paths"].([]interface {}) ; if !ok {continue}
+        for _, _pathData := range paths {
+            pathData := _pathData.(map[string]interface {})
+            if value, ok := pathData["pathId"] ; ok {
+                pathId := uint32(value.(float64))
+                if ok := fill_ipv4_specific_pfx_path_loc_rib_data (ipv4LocRibRoutes_obj, prefix, pathId, pathData) ; !ok {continue}
             }
         }
     }
