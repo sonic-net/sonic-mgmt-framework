@@ -46,7 +46,11 @@ module sonic-mclag {
                 max-elements 1;
 
                 leaf domain_id {
-                    type string;
+                     type uint16 {
+                        range "1..4095" {
+                            error-message "MCLAG Domain ID out of range";
+                        }
+                    }
                 }
 
                 leaf source_ip {
@@ -114,7 +118,7 @@ module sonic-mclag {
         //stateDB MCLAG Table
         container MCLAG_TABLE { 
             sonic-ext:db-name "STATE_DB"; 
-            sonic-ext:key-delim ":"; 
+            sonic-ext:key-delim "|"; 
 
             config false;
             description "state db mclag domain table";
@@ -123,9 +127,7 @@ module sonic-mclag {
                 key "domain_id";
 
                 leaf domain_id {
-                    type leafref {
-                        path "../../../MCLAG_DOMAIN/MCLAG_DOMAIN_LIST/domain_id";
-                    }
+                     type uint16;
                 }
 
                 leaf oper_status {
@@ -151,7 +153,7 @@ module sonic-mclag {
         container MCLAG_REMOTE_INTF_TABLE { 
 
             sonic-ext:db-name "STATE_DB"; 
-            sonic-ext:key-delim ":"; 
+            sonic-ext:key-delim "|"; 
 
             config false;
             description "state db remote interface table";
@@ -160,15 +162,11 @@ module sonic-mclag {
                 key "domain_id if_name";
 
                 leaf domain_id {
-                    type leafref {
-                        path "../../../MCLAG_DOMAIN/MCLAG_DOMAIN_LIST/domain_id";
-                    }
+                     type uint16;
                 }
 
                 leaf if_name {
-                    type leafref {
-                        path "/spc:sonic-portchannel/spc:PORTCHANNEL/spc:PORTCHANNEL_LIST/spc:name";
-                    }
+                    type string;
                 }
 
                 leaf oper_status {
@@ -176,6 +174,5 @@ module sonic-mclag {
                 }
             }
         }
-
     }
 }

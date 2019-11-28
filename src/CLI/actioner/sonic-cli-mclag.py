@@ -1,7 +1,8 @@
 #!/usr/bin/python
 ###########################################################################
 #
-# Copyright 2019 Dell, Inc.
+# Copyright 2019 Broadcom.  The term "Broadcom" refers to Broadcom Inc. and/or
+# its subsidiaries.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,11 +22,10 @@ import sys
 import json
 import collections
 import re
-import pdb
+#import pdb
 import cli_client as cc
 from rpipe_utils import pipestr
 from scripts.render_cli import show_cli_output
-
 
 def invoke(func, args):
     body = None
@@ -121,7 +121,7 @@ def invoke(func, args):
         body = {
             "sonic-mclag:MCLAG_INTERFACE_LIST": [
             {
-                "domain_id":args[0],
+                "domain_id":int(args[0]),
                 "if_name":args[1],
                 "if_type":"PortChannel"
             }
@@ -226,11 +226,12 @@ def mclag_get_remote_if_oper_status(if_name, remote_if_list):
 
 
 
-def mclag_convert_list_to_dist(list_to_converted):
+def mclag_convert_list_to_dict(list_to_converted, field = None, value = None):
     converted_dict = {}
     for  list_item in list_to_converted:
-        for k, v in list_item.iteritems():
-            converted_dict[k] = v
+        if ((field is None) or list_item[field] == value):
+            for k, v in list_item.iteritems():
+	        converted_dict[k] = v
     return converted_dict;
 
 def mclag_get_peer_link_status(peer_link_name):
@@ -303,9 +304,8 @@ def mclag_show_mclag_brief(args):
 	    #{"MCLAG_DOMAIN_LIST":[{"domain_id":"5","peer_ip":"192.168.1.2","peer_link":"PortChannel30","source_ip":"192.168.1.1"}]}
 	    domain_cfg_info = {}
 	    #set default values - somehow it is not picking up from rest API, need to check
-	    domain_cfg_info = mclag_convert_list_to_dist(response['sonic-mclag:sonic-mclag']['MCLAG_DOMAIN']['MCLAG_DOMAIN_LIST'])
+	    domain_cfg_info = mclag_convert_list_to_dict(response['sonic-mclag:sonic-mclag']['MCLAG_DOMAIN']['MCLAG_DOMAIN_LIST'])
 	    #set default values if the values are filled - somehow get rest api not returning default values
-	    print domain_cfg_info.get("keepalive_interval")
 	    if domain_cfg_info.get("keepalive_interval") is None:
 		domain_cfg_info['keepalive_interval'] = 1;
 	    if domain_cfg_info.get("session_timeout") is None:
@@ -316,7 +316,7 @@ def mclag_show_mclag_brief(args):
             domain_state_info={}
 	    #domain_state_info  = {"oper_status":"down", "role":"", "system_mac":""}
 	    if "MCLAG_TABLE" in response["sonic-mclag:sonic-mclag"]:
-		domain_state_info = mclag_convert_list_to_dict(response['sonic-mclag:MCLAG_TABLE']['MCLAG_TABLE_LIST'])
+		domain_state_info = mclag_convert_list_to_dict(response['sonic-mclag:sonic-mclag']['MCLAG_TABLE']['MCLAG_TABLE_LIST'], "domain_id", domain_cfg_info['domain_id'])
 	    mclag_info['domain_info'] = domain_cfg_info.copy()
 	    mclag_info['domain_info'].update(domain_state_info)
 
@@ -363,11 +363,8 @@ def run(func, args):
     #config commands
     try:
         api_response = invoke(func, args)
-        print api_response
-
         
         if api_response.ok():
-            print "ok...."
             response = api_response.content
             if response is None:
                 print "Success"

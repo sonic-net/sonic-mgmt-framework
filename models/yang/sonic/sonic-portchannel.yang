@@ -33,7 +33,7 @@ module sonic-portchannel {
 
                 leaf name {
                     type string {
-                        pattern "PortChannel(0|[1-9]{0,3})" {
+                        pattern "PortChannel(0|[1-9][0-9]{0,3})" {
                             error-message "Invalid PortChannel name pattern";
                             error-app-tag portchannel-name-invalid;
                         }
