@@ -94,7 +94,9 @@ def run(func, args):
             else:
                 return
         else:
-            print response.error_message()
+            msg = response.error_message() 
+            if msg is not None:
+              print response.error_message()
 
 if __name__ == '__main__':
     pipestr().write(sys.argv)
