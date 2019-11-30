@@ -20,50 +20,50 @@
 
 set -e
 
-ARGS=()
-HOST=localhost
-PORT=443
+TOPDIR=$PWD
+
+TEST_ARGS=()
+REST_ARGS=()
+PIPE=tee
 
 while [[ $# -gt 0 ]]; do
 case "$1" in
-    -host) HOST=$2; shift 2 ;;
-    -port) PORT=$2; shift 2 ;;
-    *) ARGS+=("$1"); shift ;;
+    -h|-help|--help)
+        echo "usage: $0 [-run NAME] [-auth] [-json] [-tparse] [ARGS...]"
+        echo ""
+        echo " -run NAME  Run specific test cases."
+        echo "            Value starting with 'Auth' implicitly enables -auth"
+        echo " -auth      Enable local password authentication test cases"
+        echo "            Extra arguments may be needed as described in pamAuth_test.go"
+        echo " -json      Prints output in json format"
+        echo " -tparse    Render output through tparse; implicitly enables -json"
+        echo " ARGS...    Arguments to test program (log level, auth test arguments etc)"
+        exit 0 ;;
+    -auth)
+        REST_ARGS+=("-authtest" "local")
+        shift ;;
+    -run)
+        TEST_ARGS+=("-run" "$2")
+        [[ $2 == Auth* ]] && REST_ARGS+=("-authtest" "local")
+        shift 2 ;;
+    -json)
+        TEST_ARGS+=("-json")
+        shift ;;
+    -tparse)
+        TEST_ARGS+=("-json")
+        PIPE=tparse
+        shift ;;
+    *)
+        REST_ARGS+=("$1")
+        shift;;
 esac
 done
 
-TOPDIR=$PWD
-BUILDDIR=$TOPDIR/build
+export GOPATH=$TOPDIR:$TOPDIR/build/gopkgs:$TOPDIR/build/rest_server/dist
 
-CLISOURCE=$TOPDIR/src/CLI
-CLIBUILD=$BUILDDIR/cli
+export CVL_SCHEMA_PATH=$TOPDIR/build/cvl/schema
 
-[ -z $SYSTEM_NAME ] && export SYSTEM_NAME=sonic-cli
+export YANG_MODELS_PATH=$TOPDIR/build/all_yangs
 
-export REST_API_ROOT=https://$HOST:$PORT
-
-export SONIC_CLI_ROOT=$CLISOURCE/actioner
-
-export RENDERER_TEMPLATE_PATH=$CLISOURCE/renderer/templates
-
-#export CLISH_PATH=$CLISOURCE/clitree/cli-xml
-export CLISH_PATH=$CLIBUILD/command-tree
-
-export PYTHONVER=2.7.14
-
-PYTHONPATH+=:$CLISOURCE/actioner
-PYTHONPATH+=:$CLISOURCE/renderer
-PYTHONPATH+=:$CLISOURCE/renderer/scripts
-PYTHONPATH+=:$BUILDDIR/swagger_client_py
-PYTHONPATH+=:$(realpath $TOPDIR/..)/sonic-py-swsssdk/src
-export PYTHONPATH
-
-# KLISH_BIN can be set to use klish exe and libs from other directory
-[ ! -d "$KLISH_BIN" ] && KLISH_BIN=$CLIBUILD
-
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$KLISH_BIN/.libs
-
-export PATH=$PATH:$KLISH_BIN
-
-(cd $BUILDDIR && clish ${ARGS[@]})
+go test rest/server -v -cover "${TEST_ARGS[@]}" -args -logtostderr "${REST_ARGS[@]}" | $PIPE
 

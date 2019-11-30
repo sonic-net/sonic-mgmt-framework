@@ -100,42 +100,42 @@ var authTestHandler = authMiddleware(http.HandlerFunc(
 		w.WriteHeader(200)
 	}))
 
-func TestLocalUser_Get(t *testing.T) {
+func TestAuthLocalUser_Get(t *testing.T) {
 	ensureAuthTestEnabled(t, "local")
 	testAuthGet(t, *lusrName, *lusrPass, 200)
 }
 
-func TestLocalUser_Set(t *testing.T) {
+func TestAuthLocalUser_Set(t *testing.T) {
 	ensureAuthTestEnabled(t, "local")
 	testAuthSet(t, *lusrName, *lusrPass, 403)
 }
 
-func TestLocalAdmin_Get(t *testing.T) {
+func TestAuthLocalAdmin_Get(t *testing.T) {
 	ensureAuthTestEnabled(t, "local")
 	testAuthGet(t, *ladmName, *ladmPass, 200)
 }
 
-func TestLocalAdmin_Set(t *testing.T) {
+func TestAuthLocalAdmin_Set(t *testing.T) {
 	ensureAuthTestEnabled(t, "local")
 	testAuthSet(t, *ladmName, *ladmPass, 200)
 }
 
-func TestTacacsUser_Get(t *testing.T) {
+func TestAuthTacacsUser_Get(t *testing.T) {
 	ensureAuthTestEnabled(t, "tacacs")
 	testAuthGet(t, *tusrName, *tusrPass, 200)
 }
 
-func TestTacacslUser_Set(t *testing.T) {
+func TestAuthTacacsUser_Set(t *testing.T) {
 	ensureAuthTestEnabled(t, "tacacs")
 	testAuthSet(t, *tusrName, *tusrPass, 403)
 }
 
-func TestTacacsAdmin_Get(t *testing.T) {
+func TestAuthTacacsAdmin_Get(t *testing.T) {
 	ensureAuthTestEnabled(t, "tacacs")
 	testAuthGet(t, *tadmName, *tadmPass, 200)
 }
 
-func TestTacacsAdmin_Set(t *testing.T) {
+func TestAuthTacacsAdmin_Set(t *testing.T) {
 	ensureAuthTestEnabled(t, "tacacs")
 	testAuthSet(t, *tadmName, *tadmPass, 200)
 }
@@ -179,6 +179,12 @@ func testAuthSet(t *testing.T, username, password string, expStatus int) {
 
 func testAuth(method, username, password string, expStatus int) func(*testing.T) {
 	return func(t *testing.T) {
+		// Temporariliy enable password auth if not enabled already
+		if !ClientAuth.Enabled("password") {
+			ClientAuth.Set("password")
+			defer ClientAuth.Unset("password")
+		}
+
 		r := httptest.NewRequest(method, "/auth", nil)
 		w := httptest.NewRecorder()
 
