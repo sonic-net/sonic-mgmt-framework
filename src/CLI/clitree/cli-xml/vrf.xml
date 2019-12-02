@@ -23,11 +23,25 @@ limitations under the License.
     http://www.dellemc.com/sonic/XMLSchema/clish.xsd"
     >
     <VIEW name="enable-view">
-      <COMMAND name="show ip vrf" help="Show VRF information">
+      <COMMAND name="show ip vrf"
+        help="Show VRF information"
+        >
+        <PARAM 
+            name = "vrf-name"
+            help = "Name of VRF"
+            ptype = "STRING_32"
+            optional = "true"
+            >
+        </PARAM>
         <ACTION> 
-          python $SONIC_CLI_ROOT/sonic-cli-vrf.py get_openconfig_network_instance_network_instances_network_instance show_vrf.j2
+            if test "${vrf-name}" = ""; then&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-vrf.py get_openconfig_network_instance_network_instances_network_instances show_vrf.j2
+            else&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-vrf.py get_openconfig_network_instance_network_instances_network_instance ${vrf-name} show_vrf.j2
+            fi&#xA;
         </ACTION>
       </COMMAND>
+
       <COMMAND name="show ip vrf management" help="Show management VRF information">
         <ACTION> 
           python $SONIC_CLI_ROOT/sonic-cli-vrf.py get_openconfig_network_instance_network_instances_network_instance "mgmt" show_vrf.j2
@@ -37,7 +51,7 @@ limitations under the License.
 
     <VIEW name="configure-view">
     <!-- vrf configuration commands -->
-    <COMMAND name="ip vrf management" help="management VRF configuration" mode="subcommand" ptype="SUBCOMMAND">
+    <COMMAND name="ip vrf management" help="Management VRF configuration" mode="subcommand" ptype="SUBCOMMAND">
       <ACTION> 
         python $SONIC_CLI_ROOT/sonic-cli-vrf.py patch_openconfig_network_instance_network_instances_network_instance "mgmt" "L3VRF" "True"&#xA; 
       </ACTION> 
@@ -51,7 +65,7 @@ limitations under the License.
       >
       <PARAM
         name="vrf-name"
-        help="Name of VRF (Max size 32, prefixed by Vrf_)"
+        help="Name of VRF (Max size 32, prefixed by Vrf)"
         ptype="STRING_32"
         >
       </PARAM>
@@ -75,7 +89,7 @@ limitations under the License.
       >
       <PARAM
         name="vrf-name"
-        help="Name of VRF (Max size 32, prefixed by Vrf_)"
+        help="Name of VRF (Max size 32, prefixed by Vrf)"
         ptype="STRING_32"
         >
       </PARAM>

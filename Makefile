@@ -162,7 +162,7 @@ clean: rest-clean
 	$(MAKE) -C src/cvl clean
 	rm -rf debian/.debhelper
 	rm -rf $(BUILD_GOPATH)/src/github.com/openconfig/goyang/annotate.go
-	cd build && find .  -maxdepth 1 -name "gopkgs" -prune -o -not -name '.' -exec rm -rf {} +
+	(cd build && find .  -maxdepth 1 -name "gopkgs" -prune -o -not -name '.' -exec rm -rf {} +) || true
 
 cleanall:
 	$(MAKE) -C src/cvl cleanall
