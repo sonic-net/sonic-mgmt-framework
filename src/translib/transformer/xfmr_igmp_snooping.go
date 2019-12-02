@@ -598,6 +598,7 @@ func (reqP *reqProcessor) handleCRUReq() (*map[string]map[string]db.Value, error
 				if len (grpObj.OutgoingInterface) > 0 {
 					igmpsGrpKey := igmpsKey + "|" + grpKey
 					dbV := db.Value{Field: make(map[string]string)}
+					dbV.Field["NULL"] = "NULL" // since deleting the field "out-intf" from the db removes the key also, to avoid that insert the dummy field/value as NULL/NULL
 					dbV.SetList("out-intf", grpObj.OutgoingInterface)
 					igmpsMcastGroupTblMap[igmpsGrpKey] = dbV
 					for _, outIntf := range grpObj.OutgoingInterface {
