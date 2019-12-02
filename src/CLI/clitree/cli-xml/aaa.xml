@@ -49,10 +49,10 @@ limitations under the License.
              help="Negate a command or set its defaults" />
 
     <!-- config sub view for aaa authentication -->
-    <COMMAND name="aaa authentication"
+    <COMMAND name="authentication"
              help="AAA authentication configuration"/>
 
-    <COMMAND name="aaa authentication failthrough"
+    <COMMAND name="authentication failthrough"
              help="AAA authentication failthrough status"
              mode="subcommand"
              ptype="SUBCOMMAND">
@@ -61,14 +61,14 @@ limitations under the License.
              ptype="ENA_DISA">
       </PARAM>
       <ACTION> if test "${enable}" = "enable" ; then&#xA;
-        python $SONIC_CLI_ROOT/sonic-cli-aaa.py patch_sonic_ifa_sonic_ifa_tam_int_ifa_feature_table_tam_int_ifa_feature_table_list_enable True&#xA;
+        python $SONIC_CLI_ROOT/sonic-cli-aaa.py patch_openconfig_system_augments_system_aaa_authentication_config_failthrough True&#xA;
           else&#xA;
-        python $SONIC_CLI_ROOT/sonic-cli-aaa.py patch_sonic_ifa_sonic_ifa_tam_int_ifa_feature_table_tam_int_ifa_feature_table_list_enable False&#xA;
+        python $SONIC_CLI_ROOT/sonic-cli-aaa.py patch_openconfig_system_augments_system_aaa_authentication_config_failthrough False&#xA;
           fi&#xA;
       </ACTION>
     </COMMAND>
 
-    <COMMAND name="aaa authentication login"
+    <COMMAND name="authentication login"
              help="AAA authentication login preference"
              mode="subcommand"
              ptype="SUBCOMMAND">
@@ -76,7 +76,7 @@ limitations under the License.
              help="login methods"
              ptype="STRING">
       </PARAM>
-      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-aaa.py patch_sonic_ifa_sonic_ifa_tam_int_ifa_feature_table_tam_int_ifa_feature_table_list_enable ${login}&#xA;
+      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-aaa.py patch_openconfig_system_system_aaa_authentication_config_authentication_method ${login}&#xA;
       </ACTION>
     </COMMAND>
   </VIEW>
