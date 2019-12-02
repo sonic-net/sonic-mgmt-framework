@@ -16,6 +16,8 @@ PTP_GLOBAL = 'GLOBAL'
 
 def port_state_to_str(state_num):
     outval = ""
+    if state_num == "0":
+        outval = "none"
     if state_num == "1":
         outval = "initializing"
     if state_num == "2":
