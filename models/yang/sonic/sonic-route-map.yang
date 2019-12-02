@@ -39,6 +39,16 @@ module sonic-route-map {
     }
 
     container sonic-route-map {
+        container ROUTE_MAP_SET {
+            list ROUTE_MAP_SET_LIST {
+                key "name";
+
+                leaf name {
+                    type string;
+                }
+            }
+        }
+
         container ROUTE_MAP {
             list ROUTE_MAP_LIST {
                 key "route_map_name stmt_name";
@@ -48,7 +58,9 @@ module sonic-route-map {
                 }
 
                 leaf stmt_name {
-                    type string;
+                    type uint16 {
+                        range 1..65535;
+                    }
                 }
 
                 leaf route_operation {
@@ -60,6 +72,10 @@ module sonic-route-map {
                 }
 
                 leaf match_prefix_set{
+                    type string;
+                }
+
+                leaf match_protocol {
                     type string;
                 }
 
