@@ -1373,6 +1373,464 @@ func fake_rib_exec_vtysh_cmd (vtysh_cmd string) (map[string]interface{}, error) 
     return outputJson, err
 }
 
+func fake_rib_nbrs_in_post_exec_vtysh_cmd (vtysh_cmd string) (map[string]interface{}, error) {
+    var err error
+    var outputJson map[string]interface{}
+
+    outJsonBlob := `{
+	"vrfId": 0,
+	"vrfName": "default",
+	"tableVersion": 54,
+	"routerId": "200.9.0.4",
+	"defaultLocPrf": 100,
+	"localAS": 400,
+	"routes": {
+	    "4.4.4.4\/32": {
+		"prefix":"4.4.4.4\/32",
+		"advertisedTo":{
+		    "10.10.10.1":{
+		    }
+		},
+		"paths": [
+		 {
+                        "pathId":0,
+			"aspath":{                                           
+			    "string":"100 {300,400,1600,1700}",                
+			    "segments":[                                       
+			    {                                                
+				"type":"as-sequence",                          
+				"list":[                                       
+			 	  100                                          
+				]                                              
+			    },                                               
+			    {                                                
+				"type":"as-set",                               
+				"list":[                                       
+                                    300,                                         
+				    400,                                         
+			   	    1600,                                        
+			     	    1700                                         
+				]                                              
+			    }                                                
+			    ],                                                 
+			    "length":2                                         
+			},
+
+			"as4path":{                                           
+			    "string":"100000 {300000,170000}",                
+			    "segments":[                                       
+			    {                                                
+				"type":"as-sequence",                          
+				"list":[                                       
+		  		100000                                         
+				]                                              
+			    },                                               
+			    {                                                
+				"type":"as-set",                               
+				"list":[                                       
+				300000,                                                                                 
+				170000                                         
+				]                                              
+			    }                                                
+			    ],                                                 
+			    "length":2                                         
+			},  
+			"origin":"incomplete",  
+			"localPref":200,
+			"originatorId":"1.1.1.1",
+			"med":0,
+			"metric":0,
+			"weight":32768,
+			"aggregatorAs":600,
+			"aggregatorAs4":75535,                                            
+			"aggregatorId":"10.20.30.40",                                
+			"atomicAggregate":true,
+			"valid":true,
+			"sourced":true,
+			"bestpath":{
+			    "overall":false
+			},
+			"lastUpdate":{
+			    "epoch":1494011680,
+			    "string":"Fri May  5 19:14:40 2017\n"
+			},
+
+			"nexthops":[
+			{
+			    "ip":"2.2.2.2",
+			    "afi":"ipv4",
+			    "metric":0,
+			    "accessible":true,
+			    "used":true
+			}
+			],
+
+			"peer":{                        
+			    "peerId":"10.10.10.1",                             
+			    "routerId":"210.135.0.1",                          
+			    "type":"external"
+			}, 
+
+			"cluster":{
+                          "list":[                                       
+			    "1.1.1.1",                                                                                 
+		            "2.2.2.2"                                         
+			   ]
+                        },
+
+			"community":{                                                 
+			    "string":"local-AS 800:900 1000:2000",                               
+			    "list":[
+ 		               "local-AS",                                                    
+			       "800:900",                                                
+			       "1000:2000"                                               
+			    ]                                                           
+			},
+
+			"extendedCommunity":{                                         
+			    "string":"RT:2000:168496141 RO:2000:168496141", 
+			    "list":[                                                    
+			        "RT:2000:168496141",                                                
+			        "RO:2000:168496141"                                               
+			    ]                                     
+			}                                                                                 
+		    },
+		    { 
+                        "pathId":1,
+			"aspath":{                                           
+			    "string":"100 {300,400,1600,1700}",                
+			    "segments":[                                       
+			    {                                                
+				"type":"as-sequence",                          
+				"list":[                                       
+			 	  100                                          
+				]                                              
+			    },                                               
+			    {                                                
+				"type":"as-set",                               
+				"list":[                                       
+                                    300,                                         
+				    400,                                         
+			   	    1600,                                        
+			     	    1700                                         
+				]                                              
+			    }                                                
+			    ],                                                 
+			    "length":2                                         
+			},
+
+			"as4path":{                                           
+			    "string":"100000 {300000,170000}",                
+			    "segments":[                                       
+			    {                                                
+				"type":"as-sequence",                          
+				"list":[                                       
+		  		100000                                         
+				]                                              
+			    },                                               
+			    {                                                
+				"type":"as-set",                               
+				"list":[                                       
+				300000,                                                                                 
+				170000                                         
+				]                                              
+			    }                                                
+			    ],                                                 
+			    "length":2                                         
+			},  
+			"origin":"incomplete",  
+			"localPref":200,
+			"originatorId":"3.3.3.3",
+			"med":1,
+			"metric":1,
+			"weight":32768,
+			"aggregatorAs":600,
+			"aggregatorAs4":75535,                                            
+			"aggregatorId":"10.20.30.40",                                
+			"atomicAggregate":true,
+			"valid":false,
+			"sourced":false,
+			"bestpath":{
+			    "overall":false
+			},
+			"lastUpdate":{
+			    "epoch":1494011680,
+			    "string":"Fri May  5 19:14:40 2017\n"
+			},
+
+			"nexthops":[
+			{
+			    "ip":"3.3.3.3",
+			    "afi":"ipv4",
+			    "metric":0,
+			    "accessible":true,
+			    "used":true
+			}
+			],
+
+			"peer":{                        
+			    "peerId":"10.10.10.1",                             
+			    "routerId":"210.135.0.1",                          
+			    "type":"external"
+			}, 
+
+			"cluster":{
+                          "list":[                                       
+			    "3.3.3.3",                                                                                 
+		            "4.4.4.4"                                         
+			   ]
+                        },
+
+			"community":{                                                 
+			    "string":"no-peer 800:900 1000:2000",                               
+			    "list":[
+ 		               "no-peer",                                                    
+			       "800:900",                                                
+			       "1000:2000"                                               
+			    ]                                                           
+			},
+
+			"extendedCommunity":{                                         
+			    "string":"RT:3000:168496141 RO:4000:168496141", 
+			    "list":[                                                    
+			        "RT:3000:168496141",                                                
+			        "RO:4000:168496141"                                               
+			    ]                                     
+			}                                                                                 
+		    }
+                   ] 
+		},
+            "5.5.5.5\/32": {
+		"prefix":"5.5.5.5\/32",
+		"advertisedTo":{
+		    "10.10.10.1":{
+		    }
+		},
+		"paths":[
+		    {
+                        "pathId":0,
+			"aspath":{                                           
+			    "string":"100 {300,400,1600,1700}",                
+			    "segments":[                                       
+			    {                                                
+				"type":"as-sequence",                          
+				"list":[                                       
+			 	  100                                          
+				]                                              
+			    },                                               
+			    {                                                
+				"type":"as-set",                               
+				"list":[                                       
+                                    300,                                         
+				    400,                                         
+			   	    1600,                                        
+			     	    1700                                         
+				]                                              
+			    }                                                
+			    ],                                                 
+			    "length":2                                         
+			},
+
+			"as4path":{                                           
+			    "string":"100000 {300000,170000}",                
+			    "segments":[                                       
+			    {                                                
+				"type":"as-sequence",                          
+				"list":[                                       
+		  		100000                                         
+				]                                              
+			    },                                               
+			    {                                                
+				"type":"as-set",                               
+				"list":[                                       
+				300000,                                                                                 
+				170000                                         
+				]                                              
+			    }                                                
+			    ],                                                 
+			    "length":2                                         
+			},  
+			"origin":"incomplete",  
+			"localPref":200,
+			"originatorId":"1.1.1.1",
+			"med":0,
+			"metric":0,
+			"weight":32768,
+			"aggregatorAs":600,
+			"aggregatorAs4":75535,                                            
+			"aggregatorId":"10.20.30.40",                                
+			"atomicAggregate":true,
+			"valid":true,
+			"sourced":true,
+			"bestpath":{
+			    "overall":false
+			},
+			"lastUpdate":{
+			    "epoch":1494011680,
+			    "string":"Fri May  5 19:14:40 2017\n"
+			},
+
+			"nexthops":[
+			{
+			    "ip":"2.2.2.2",
+			    "afi":"ipv4",
+			    "metric":0,
+			    "accessible":true,
+			    "used":true
+			}
+			],
+
+			"peer":{                        
+			    "peerId":"10.10.10.1",                             
+			    "routerId":"210.135.0.1",                          
+			    "type":"external"
+			}, 
+
+			"cluster":{
+                          "list":[                                       
+			    "1.1.1.1",                                                                                 
+		            "2.2.2.2"                                         
+			   ]
+                        },
+
+			"community":{                                                 
+			    "string":"local-AS 800:900 1000:2000",                               
+			    "list":[
+ 		               "local-AS",                                                    
+			       "800:900",                                                
+			       "1000:2000"                                               
+			    ]                                                           
+			},
+
+			"extendedCommunity":{                                         
+			    "string":"RT:2000:168496141 RO:2000:168496141", 
+			    "list":[                                                    
+			        "RT:2000:168496141",                                                
+			        "RO:2000:168496141"                                               
+			    ]                                     
+			}                                                                                 
+		    }
+		]
+	    }
+        }    
+    }`
+
+    if err = json.Unmarshal([]byte(outJsonBlob), &outputJson) ; err != nil {
+        return nil, err
+    }
+
+    return outputJson, err
+}
+
+func fake_rib_nbrs_in_pre_exec_vtysh_cmd (vtysh_cmd string) (map[string]interface{}, error) {
+    var err error
+    var outputJson map[string]interface{}
+
+    outJsonBlob := `{
+	"vrfId": 0,
+	"vrfName": "default",
+	"bgpTableVersion":20,                                             
+	"bgpLocalRouterId":"30.30.30.1",                                  
+	"defaultLocPrf":100,             						                              
+	"localAS":200,
+	"routes": {
+	    "6.6.6.6\/32": {
+		"prefix":"6.6.6.6\/32",
+		"paths":{
+		    "1" : {     
+			"weight":0,
+			"bgpOriginCode":"i", 
+			"origin":"IGP",                                                     
+			"aggregatorAs":600,                                           
+			"aggregatorId":"10.20.30.40",                                
+			"atomicAggregate":true,
+			"med":0,
+			"metric":0,                                                   
+			"aspath":{                                           
+			    "string":"100 {300,400,1600,1700}",                
+			    "segments":[                                       
+			    {                                                
+				"type":"as-sequence",                          
+				"list":[                                       
+				100                                          
+				]                                              
+			    },                                               
+			    {                                                
+				"type":"as-set",                               
+				"list":[                                       
+				300,                                         
+				400,                                         
+				1600,                                        
+				1700                                         
+				]                                              
+			    }                                                
+			    ],                                                 
+			    "length":2                                         
+			},           
+ 			"as4path":{                                           
+			    "string":"1000000 {3000000,4000000}",                
+			    "segments":[                                       
+			    {                                                
+				"type":"as-sequence",                          
+				"list":[                                       
+				  1000000                                          
+				]                                              
+			    },                                               
+			    {                                                
+				"type":"as-set",                               
+				"list":[                                       
+				   3000000,                                         
+			           4000000                                         
+				]                                              
+			    }                                                
+			    ],                                                 
+			    "length":2                                         
+			},
+
+			"community":{                                                 
+			    "string":"local-AS, 800:900 1000:2000",                               
+			    "list":[
+		 	    "local-AS",                                                    
+			    "800:900",                                                
+			    "1000:2000"                                               
+			    ]                                                           
+			},
+
+			"extendedCommunity":{                                         
+			    "string":"RT:2000:168496141 RO:2000:168496141", 
+			    "list":[                                                    
+			    "RT:2000:168496141",                                                
+			    "RO:2000:168496141"                                               
+			    ]                                     
+			},                                                            
+
+			"lastUpdate":{
+			    "epoch":1494011770,
+			    "string":"Fri May  5 19:16:10 2017\n"
+			},
+
+			"nextHop":"10.10.10.1",
+
+			"valid":true,
+
+			"bestpath":{
+			    "overall":true
+			}
+		    }
+		}
+	    }     	                                                             
+	},                                                                 
+	"totalPrefixCounter":20,                                          
+	"filteredPrefixCounter":0                                         
+    }`
+
+    if err = json.Unmarshal([]byte(outJsonBlob), &outputJson) ; err != nil {
+        return nil, err
+    }
+
+    return outputJson, err
+}
+
 func init () {
     XlateFuncBind("YangToDb_bgp_gbl_tbl_key_xfmr", YangToDb_bgp_gbl_tbl_key_xfmr)
     XlateFuncBind("DbToYang_bgp_gbl_tbl_key_xfmr", DbToYang_bgp_gbl_tbl_key_xfmr)
@@ -1625,46 +2083,4 @@ var DbToYang_bgp_gbl_afi_safi_key_xfmr KeyXfmrDbToYang = func(inParams XfmrParam
 
 	log.Info("DbToYang_bgp_gbl_afi_safi_key_xfmr: rmap:", rmap)
     return rmap, nil
-}
-
-var DbToYang_bgp_routes_get_xfmr SubTreeXfmrDbToYang = func(inParams XfmrParams) error {
-    var err error
-    /*
-
-    pathInfo := NewPathInfo(inParams.uri)
-    targetUriPath, err := getYangPathFromUri(pathInfo.Path)
-    switch targetUriPath {
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis":
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi":
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv4-unicast":
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv4-unicast/loc-rib":
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv4-unicast/loc-rib/routes":
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv4-unicast/loc-rib/routes/route":
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv4-unicast/neighbors":
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv4-unicast/neighbors/neighbor":
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv4-unicast/neighbors/neighbor/adj-rib-in-pre":
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv4-unicast/neighbors/neighbor/adj-rib-in-pre/routes":
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv4-unicast/neighbors/neighbor/adj-rib-in-pre/routes/route":
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv4-unicast/neighbors/neighbor/adj-rib-in-post":
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv4-unicast/neighbors/neighbor/adj-rib-in-post/routes":
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv4-unicast/neighbors/neighbor/adj-rib-in-post/routes/route":
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv4-unicast/neighbors/neighbor/adj-rib-out-pre":
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv4-unicast/neighbors/neighbor/adj-rib-out-pre/routes":
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv4-unicast/neighbors/neighbor/adj-rib-out-pre/routes/route":
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv4-unicast/neighbors/neighbor/adj-rib-out-post":
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv4-unicast/neighbors/neighbor/adj-rib-out-post/routes":
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv4-unicast/neighbors/neighbor/adj-rib-out-post/routes/route":
-    }
-
-    /* Address Family
-     * 1) IPv4
-     *       - Local RIB - get all & specific prefix get
-     *       - Neighbors - get all for adj-rib-in-pre, adj-rib-in-post, adj-rib-out-pre & adj-rib-out-post
-     *                     and specific route get in above containers.
-     * 2) IPv6
-     *       - Local RIB - get all & specific prefix get
-     *       - Neighbors - get all for adj-rib-in-pre, adj-rib-in-post, adj-rib-out-pre & adj-rib-out-post
-     *                     and specific route get in above containers.
-     **/
-    return err;
 }
