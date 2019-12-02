@@ -57,7 +57,7 @@ limitations under the License.
              help="Source ip address"
              ptype="IPV4V6_ADDR">
       </PARAM>
-      <ACTION>python $SONIC_CLI_ROOT/sonic-cli-tacacs.py patch_sonic_tam_sonic_tam_tam_device_table_tam_device_table_list_deviceid ${src-ip}</ACTION>
+      <ACTION>python $SONIC_CLI_ROOT/sonic-cli-tacacs.py patch_openconfig_system_augments_system_aaa_server_groups_server_group_config_source_address ${src-ip}</ACTION>
     </COMMAND>
 
     <!-- tacacs timeout -->
@@ -69,7 +69,7 @@ limitations under the License.
              help="timeout"
              ptype="UINT16">
       </PARAM>
-      <ACTION>python $SONIC_CLI_ROOT/sonic-cli-tacacs.py patch_sonic_tam_sonic_tam_tam_device_table_tam_device_table_list_deviceid ${timeout}</ACTION>
+      <ACTION>python $SONIC_CLI_ROOT/sonic-cli-tacacs.py patch_openconfig_system_augments_system_aaa_server_groups_server_group_config_timeout ${timeout}</ACTION>
     </COMMAND>
 
     <!-- tacacs authtype -->
@@ -81,10 +81,10 @@ limitations under the License.
              help="Authentication type"
              ptype="AAA_AUTH_TYPE">
       </PARAM>
-      <ACTION>python $SONIC_CLI_ROOT/sonic-cli-tacacs.py patch_sonic_tam_sonic_tam_tam_device_table_tam_device_table_list_deviceid ${auth-type}</ACTION>
+      <ACTION>python $SONIC_CLI_ROOT/sonic-cli-tacacs.py patch_openconfig_system_augments_system_aaa_server_groups_server_group_config_auth_type ${auth-type}</ACTION>
     </COMMAND>
 
-    <!-- tacacs authtype -->
+    <!-- tacacs secret-key -->
     <COMMAND name="passkey"
              help="Configure tacacs secret key"
              ptype="SUBCOMMAND"
@@ -93,7 +93,7 @@ limitations under the License.
              help="Authentication type"
              ptype="STRING">
       </PARAM>
-      <ACTION>python $SONIC_CLI_ROOT/sonic-cli-tacacs.py patch_sonic_tam_sonic_tam_tam_device_table_tam_device_table_list_deviceid ${secret-key}</ACTION>
+      <ACTION>python $SONIC_CLI_ROOT/sonic-cli-tacacs.py patch_openconfig_system_augments_system_aaa_server_groups_server_group_config_secret_key ${secret-key}</ACTION>
     </COMMAND>
 
     <!-- tacacs server -->
@@ -161,7 +161,7 @@ limitations under the License.
         </PARAM>
       </PARAM>
 
-      <ACTION>python $SONIC_CLI_ROOT/sonic-cli-tacacs.py patch_list_sonic_tam_sonic_tam_tam_collector_table_tam_collector_table_list ${ip-addr-val} ${port-val} ${timeout-val} ${key-val} ${type-val} ${priority-val}</ACTION>
+      <ACTION>python $SONIC_CLI_ROOT/sonic-cli-tacacs.py patch_tacacs_server ${ip-addr-val} ${port-val} ${key-val} ${timeout-val} ${type-val} ${priority-val}</ACTION>
     </COMMAND>
 
     <!-- no tacacs server -->
@@ -173,7 +173,7 @@ limitations under the License.
              help="tacacs ip address"
              ptype="IPV4V6_ADDR">
       </PARAM>
-      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-tacacs.py delete_sonic_tam_sonic_tam_tam_collector_table_tam_collector_table_list ${address}</ACTION>
+      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-tacacs.py delete_openconfig_system_system_aaa_server_groups_server_group_servers_server_tacacs_config ${address}</ACTION>
     </COMMAND>
 
   </VIEW>
