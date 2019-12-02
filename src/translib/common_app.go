@@ -189,7 +189,11 @@ func (app *CommonApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
 		    log.Error("transformer.transformer.GetAndXlateFromDB failure. error:", err)
 		    resPayload = payload
 		    break
-	    }
+	    } else if len(payload) == 2 { // "{}"
+		    log.Error("transformer.transformer.GetAndXlateFromDB return empty payload")
+		    resPayload = payload
+		    break
+            }
 
 	    targetObj, tgtObjCastOk := (*app.ygotTarget).(ygot.GoStruct)
 	    if tgtObjCastOk == false {

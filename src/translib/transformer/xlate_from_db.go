@@ -468,6 +468,16 @@ func fillDbDataMapForTbl(uri string, xpath string, tblName string, tblKey string
 
 // Assumption: All tables are from the same DB
 func dbDataFromTblXfmrGet(tbl string, inParams XfmrParams, dbDataMap *map[db.DBNum]map[string]map[string]db.Value) error {
+    // skip the query if the table is already visited
+    if _,ok := (*dbDataMap)[inParams.curDb][tbl]; ok {
+       if len(inParams.key) > 0 {
+          if  _,ok = (*dbDataMap)[inParams.curDb][tbl][inParams.key]; ok {
+             return nil
+          }
+       } else {
+          return nil
+       }
+    }
     xpath, _ := XfmrRemoveXPATHPredicates(inParams.uri)
     curDbDataMap, err := fillDbDataMapForTbl(inParams.uri, xpath, tbl, inParams.key, inParams.curDb, inParams.dbs)
     if err == nil {
