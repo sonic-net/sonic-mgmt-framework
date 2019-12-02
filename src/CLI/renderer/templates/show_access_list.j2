@@ -1,5 +1,6 @@
 {% macro traverse_acl_entry(acl_entry_list) -%}
     {% for seq in acl_entry_list %}
+        {#"debug " {{seq}} " debug done"#}
         {% set response_list = [] %}
         {# Get sequence id #}
         {% set seqid = seq["sequence-id"] %}
@@ -45,6 +46,9 @@
         {%- if seq["ipv4"]["state"]["dscp"] %}
             {% set _list = response_list.append( "dscp "+seq["ipv4"]["state"]["dscp"]|string ) %}
         {%- endif %}
+        {%- if seq["state"]["matched-packets"] %}
+            {% set _list = response_list.append("(" +seq["state"]["matched-packets"]|string + " matches)") %}
+        {%- endif %} 
         {{- "    " }} {{ response_list|join(' ') }}
     {% endfor %}
 {%- endmacro %}
