@@ -1,39 +1,59 @@
 module sonic-bgp-neighbor {
-	namespace "http://github.com/Azure/sonic-bgp-neighbor";
-	prefix sbnbr;
-	yang-version 1.1;
+    namespace "http://github.com/Azure/sonic-bgp-neighbor";
+    prefix sbnbr;
+    yang-version 1.1;
 
-	import ietf-inet-types {
-		prefix inet;
-	}
+    import ietf-inet-types {
+        prefix inet;
+    }
 
-	import sonic-bgp-common {
-		prefix sbc;
-	}
+    import sonic-bgp-common {
+        prefix sbc;
+    }
+        
+    import sonic-bgp-global {
+        prefix sbgpg;
+    }
 
-	organization
-		"SONiC";
+    import sonic-bgp-peergroup {
+        prefix pg;
+    }
 
-	contact
-		"SONiC";
+    organization
+        "SONiC";
 
-	description
-		"SONIC BGP Neighbor";
+    contact
+        "SONiC";
 
-	revision 2019-09-23 {
-		description
-			"Initial revision.";
-	}
+    description
+        "SONIC BGP Neighbor";
+
+    revision 2019-09-23 {
+        description
+            "Initial revision.";
+    }
 
     container sonic-bgp-neighbor {
         container BGP_NEIGHBOR {
             list BGP_NEIGHBOR_LIST {
                 key "vrf_name neighbor_ip";
+                
+                leaf vrf_name {
+                    type leafref {
+                        path "/sbgpg:sonic-bgp-global/sbgpg:BGP_GLOBALS/sbgpg:BGP_GLOBALS_LIST/sbgpg:vrf";
+                    }
+                   description "Network-instance/VRF name";
+                }
 
                 leaf neighbor_ip {
                     type inet:ip-address;
                     description "Neighbor description";
                 }
+
+                leaf peer_group_name {
+                    type string;
+		    description "Peer group name";
+		}
 
                 uses sbc:sonic-bgp-cmn;
 
@@ -48,8 +68,21 @@ module sonic-bgp-neighbor {
             list BGP_NEIGHBOR_AF_LIST {
                 key "vrf_name neighbor_ip afi_safi";
 
+                leaf vrf_name {
+                    type leafref {
+                        path "/sbgpg:sonic-bgp-global/sbgpg:BGP_GLOBALS/sbgpg:BGP_GLOBALS_LIST/sbgpg:vrf";
+                    }
+                   description "Network-instance/VRF name";
+                }
+
                 leaf neighbor_ip {
-                    type inet:ip-address;
+                    type leafref {
+                        path "../../../BGP_NEIGHBOR/BGP_NEIGHBOR_LIST/neighbor_ip";
+                    }
+
+                    must "/sbnbr:sonic-bgp-neighbor/sbnbr:BGP_NEIGHBOR/sbnbr:BGP_NEIGHBOR_LIST[vrf_name=current()/../vrf_name][neighbor_ip=current()]" {
+                            error-message "BGP Neighbor Table is not configured with vrf_name and neighbor_ip";
+                    }
                     description "Neighbor description";
                 }
 
