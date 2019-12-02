@@ -142,6 +142,17 @@ def invoke_api(func, args=[]):
         path = cc.Path('/restconf/data/openconfig-nat:nat/instances/instance={id}/nat-acl-pool-binding', id=args[0])
         return api.delete(path)
 
+    # Config NAT Zone
+    elif func == 'patch_openconfig_interfaces_ext_interfaces_interface_nat_zone_config_nat_zone':
+        path = cc.Path('/restconf/data/openconfig-interfaces:interfaces/interface={name}/openconfig-interfaces-ext:nat-zone/config/nat-zone', name=args[1])
+        body = { "openconfig-interfaces-ext:nat-zone": int(args[2]) }
+        return api.patch(path, body)
+
+    # Remove NAT Zone
+    elif func == 'delete_openconfig_interfaces_ext_interfaces_interface_nat_zone_config_nat_zone':
+        path = cc.Path('/restconf/data/openconfig-interfaces:interfaces/interface={name}/openconfig-interfaces-ext:nat-zone/config/nat-zone', name=args[1])
+        return api.delete(path)
+
     else:
         return api.cli_not_implemented(func)
 
@@ -155,8 +166,6 @@ def run(func, args):
                # Get Command Output
                api_response = response.content
                show_cli_output(args[0], api_response)
-           else:
-               print "None response received from backend application"
        else:
            print response.error_message()
 
