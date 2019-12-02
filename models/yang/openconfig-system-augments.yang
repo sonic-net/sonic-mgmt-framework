@@ -42,13 +42,9 @@ module openconfig-system-augments {
             type uint16;
             description "The server priority";
         }
-        leaf  timeout {
-            type uint16;
-            description "The server timeout";
-        }
     }
 
-    augment "/oc-sys:system/oc-sys:aaa/oc-sys:config" {
+    augment "/oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:config" {
         leaf  source-address {
             type inet:ip-address;
             description "The global source ip";

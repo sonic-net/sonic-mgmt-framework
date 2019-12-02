@@ -539,4 +539,12 @@ limitations under the License.
         help=""
         />
     <!--=======================================================-->
+    <PTYPE
+        name="AAA_AUTH_TYPE"
+        method="select"
+                pattern="pap(pap) chap(chap) mschap(mschap)"
+        help=""
+        />
+    <!--=======================================================-->
+
 </CLISH_MODULE>

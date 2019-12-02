@@ -29,7 +29,7 @@ module sonic-system-tacacs {
                 }
 
                 leaf timeout {
-                    type uint8;
+                    type uint16;
                 }
 
                 leaf auth_type {
@@ -72,7 +72,7 @@ module sonic-system-tacacs {
                 }
 
                 leaf timeout {
-                    type uint8;
+                    type uint16;
                 }
 
                 leaf passkey {
