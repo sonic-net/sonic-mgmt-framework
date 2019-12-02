@@ -1,0 +1,84 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE CLISH_MODULE [
+]>
+<!--
+Copyright 2019 Dell, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+<CLISH_MODULE
+    xmlns="http://www.dellemc.com/sonic/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xi="http://www.w3.org/2001/XInclude"
+    xsi:schemaLocation="http://www.dellemc.com/sonic/XMLSchema
+                        http://www.dellemc.com/sonic/XMLSchema/clish.xsd"
+    >
+<!--=========================================================================-->
+
+  <VIEW name="enable-view">
+    <COMMAND name="show aaa"
+             help="Show aaa info">
+      <ACTION>python $SONIC_CLI_ROOT/sonic-cli-aaa.py get_sonic_tam_sonic_tam_tam_device_table show_aaa.j2</ACTION>
+    </COMMAND>
+  </VIEW>
+
+  <VIEW name="configure-view">
+    <!-- tacacs -->
+    <COMMAND name="aaa"
+             help="aaa Configuration"
+             mode="subcommand"
+             ptype="SUBCOMMAND"
+             view="configure-aaa-view"/>
+  </VIEW>
+
+  <VIEW name="configure-aaa-view"
+        prompt="${SYSTEM_NAME}(config-aaa)# "
+        depth="2">
+    <COMMAND name="no" 
+             help="Negate a command or set its defaults" />
+
+    <!-- config sub view for aaa authentication -->
+    <COMMAND name="aaa authentication"
+             help="AAA authentication configuration"/>
+
+    <COMMAND name="aaa authentication failthrough"
+             help="AAA authentication failthrough status"
+             mode="subcommand"
+             ptype="SUBCOMMAND">
+      <PARAM name="enable"
+             help="failthrough status"
+             ptype="ENA_DISA">
+      </PARAM>
+      <ACTION> if test "${enable}" = "enable" ; then&#xA;
+        python $SONIC_CLI_ROOT/sonic-cli-aaa.py patch_sonic_ifa_sonic_ifa_tam_int_ifa_feature_table_tam_int_ifa_feature_table_list_enable True&#xA;
+          else&#xA;
+        python $SONIC_CLI_ROOT/sonic-cli-aaa.py patch_sonic_ifa_sonic_ifa_tam_int_ifa_feature_table_tam_int_ifa_feature_table_list_enable False&#xA;
+          fi&#xA;
+      </ACTION>
+    </COMMAND>
+
+    <COMMAND name="aaa authentication login"
+             help="AAA authentication login preference"
+             mode="subcommand"
+             ptype="SUBCOMMAND">
+      <PARAM name="login"
+             help="login methods"
+             ptype="STRING">
+      </PARAM>
+      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-aaa.py patch_sonic_ifa_sonic_ifa_tam_int_ifa_feature_table_tam_int_ifa_feature_table_list_enable ${login}&#xA;
+      </ACTION>
+    </COMMAND>
+  </VIEW>
+
+</CLISH_MODULE>

@@ -1,0 +1,181 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE CLISH_MODULE [
+]>
+<!--
+Copyright 2019 Dell, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+<CLISH_MODULE
+    xmlns="http://www.dellemc.com/sonic/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xi="http://www.w3.org/2001/XInclude"
+    xsi:schemaLocation="http://www.dellemc.com/sonic/XMLSchema
+                        http://www.dellemc.com/sonic/XMLSchema/clish.xsd"
+    >
+<!--=========================================================================-->
+
+  <VIEW name="enable-view">
+    <COMMAND name="show tacacs"
+             help="Show tacacs info">
+      <ACTION>python $SONIC_CLI_ROOT/sonic-cli-tacacs.py get_sonic_tam_sonic_tam_tam_device_table show_tacacs.j2</ACTION>
+    </COMMAND>
+  </VIEW>
+
+  <VIEW name="configure-view">
+    <!-- tacacs -->
+    <COMMAND name="tacacs"
+             help="TACACS Configuration"
+             mode="subcommand"
+             ptype="SUBCOMMAND"
+             view="configure-tacacs-view"/>
+  </VIEW>
+
+  <VIEW name="configure-tacacs-view"
+        prompt="${SYSTEM_NAME}(config-tacacs)# "
+        depth="2">
+    <COMMAND name="no" 
+             help="Negate a command or set its defaults" />
+
+    <!-- tacacs src-ip -->
+    <COMMAND name="src-ip"
+             help="Configure tacacs source ip"
+             ptype="SUBCOMMAND"
+             mode="subcommand">
+      <PARAM name="src-ip"
+             help="Source ip address"
+             ptype="IPV4V6_ADDR">
+      </PARAM>
+      <ACTION>python $SONIC_CLI_ROOT/sonic-cli-tacacs.py patch_sonic_tam_sonic_tam_tam_device_table_tam_device_table_list_deviceid ${src-ip}</ACTION>
+    </COMMAND>
+
+    <!-- tacacs timeout -->
+    <COMMAND name="timeout"
+             help="Configure tacacs timeout"
+             ptype="SUBCOMMAND"
+             mode="subcommand">
+      <PARAM name="timeout"
+             help="timeout"
+             ptype="UINT16">
+      </PARAM>
+      <ACTION>python $SONIC_CLI_ROOT/sonic-cli-tacacs.py patch_sonic_tam_sonic_tam_tam_device_table_tam_device_table_list_deviceid ${timeout}</ACTION>
+    </COMMAND>
+
+    <!-- tacacs authtype -->
+    <COMMAND name="authtype"
+             help="Configure tacacs authentication type"
+             ptype="SUBCOMMAND"
+             mode="subcommand">
+      <PARAM name="auth-type"
+             help="Authentication type"
+             ptype="AAA_AUTH_TYPE">
+      </PARAM>
+      <ACTION>python $SONIC_CLI_ROOT/sonic-cli-tacacs.py patch_sonic_tam_sonic_tam_tam_device_table_tam_device_table_list_deviceid ${auth-type}</ACTION>
+    </COMMAND>
+
+    <!-- tacacs authtype -->
+    <COMMAND name="passkey"
+             help="Configure tacacs secret key"
+             ptype="SUBCOMMAND"
+             mode="subcommand">
+      <PARAM name="secret-key"
+             help="Authentication type"
+             ptype="STRING">
+      </PARAM>
+      <ACTION>python $SONIC_CLI_ROOT/sonic-cli-tacacs.py patch_sonic_tam_sonic_tam_tam_device_table_tam_device_table_list_deviceid ${secret-key}</ACTION>
+    </COMMAND>
+
+    <!-- tacacs server -->
+    <COMMAND name="server"
+             help="Configure tacacs server"
+             ptype="SUBCOMMAND"
+             mode="subcommand">
+      <PARAM name="address"
+             help="server ip address"
+             ptype="SUBCOMMAND"
+             mode="subcommand">
+        <PARAM name="ip-addr-val"
+               help="server IP Address"
+               ptype="IPV4V6_ADDR">
+        </PARAM>
+      </PARAM>
+
+      <PARAM name="port"
+             help="server port"
+             ptype="SUBCOMMAND"
+             mode="subcommand">
+        <PARAM name="port-val"
+               help="server Port"
+               ptype="UINT">
+        </PARAM>
+      </PARAM>
+
+      <PARAM name="timeout"
+             help="server timeout"
+             ptype="SUBCOMMAND"
+             mode="subcommand">
+        <PARAM name="timeout-val"
+               help="server timeout"
+               ptype="UINT16">
+        </PARAM>
+      </PARAM>
+
+      <PARAM name="key"
+             help="server key"
+             ptype="SUBCOMMAND"
+             mode="subcommand">
+        <PARAM name="key-val"
+               help="server key"
+               ptype="STRING">
+        </PARAM>
+      </PARAM>
+
+      <PARAM name="type"
+             help="server authentication type"
+             ptype="SUBCOMMAND"
+             mode="subcommand">
+        <PARAM name="type-val"
+               help="server authentication type"
+               ptype="AAA_AUTH_TYPE">
+        </PARAM>
+      </PARAM>
+
+      <PARAM name="priority"
+             help="server priority"
+             ptype="SUBCOMMAND"
+             mode="subcommand">
+        <PARAM name="priority-val"
+               help="server priority"
+               ptype="UINT16">
+        </PARAM>
+      </PARAM>
+
+      <ACTION>python $SONIC_CLI_ROOT/sonic-cli-tacacs.py patch_list_sonic_tam_sonic_tam_tam_collector_table_tam_collector_table_list ${ip-addr-val} ${port-val} ${timeout-val} ${key-val} ${type-val} ${priority-val}</ACTION>
+    </COMMAND>
+
+    <!-- no tacacs server -->
+    <COMMAND name="no server"
+             help="Clear tacacs server information"
+             ptype="SUBCOMMAND"
+             mode="subcommand">
+      <PARAM name="address"
+             help="tacacs ip address"
+             ptype="IPV4V6_ADDR">
+      </PARAM>
+      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-tacacs.py delete_sonic_tam_sonic_tam_tam_collector_table_tam_collector_table_list ${address}</ACTION>
+    </COMMAND>
+
+  </VIEW>
+
+</CLISH_MODULE>
