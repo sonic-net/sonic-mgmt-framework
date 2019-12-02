@@ -10,6 +10,10 @@ module sonic-interface {
 		prefix prt;
 	}
 
+        import sonic-vrf {
+                prefix vrf;
+        }
+
 	organization
 		"SONiC";
 
@@ -24,6 +28,11 @@ module sonic-interface {
 			"Initial revision.";
 	}
 
+        revision 2019-12-01 {
+                description
+                        "Add leafref for vrf_name.";
+        }
+
 	container sonic-interface {
 
 		container INTERFACE {
@@ -37,8 +46,10 @@ module sonic-interface {
 					}
 				}
 
-				leaf vrf-name {
-					type string;
+				leaf vrf_name {
+                                        type leafref {
+                                                path "/vrf:sonic-vrf/vrf:VRF/vrf:VRF_LIST/vrf:vrf_name";
+                                        }
 				}
 
 			}
