@@ -633,8 +633,19 @@ limitations under the License.
         help="Enable the Vlan interface">
         <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config_enabled ${vlan_id} True </ACTION>
       </COMMAND>
-     -->
-</VIEW>
+      -->
+
+    <COMMAND
+           name="mclag-seperate-ip"
+           help="Configure seperate IP on Vlan interface for L3 protocol support over MCLAG" >
+           <ACTION> python $SONIC_CLI_ROOT/sonic-cli-mclag.py patch_sonic_mclag_seperate_ip_list ${vlan_id} </ACTION>
+    </COMMAND>
+    <COMMAND
+           name="no mclag-seperate-ip"
+           help="Unconfigure seperate IP on Vlan interface for L3 protocol support over MCLAG" >
+           <ACTION> python $SONIC_CLI_ROOT/sonic-cli-mclag.py delete_sonic_mclag_seperate_ip_list ${vlan_id} </ACTION>
+    </COMMAND>
+</VIEW> <!-- End of Configure View for Vlan-->
 <VIEW
     name="configure-lag-view"
     prompt="${SYSTEM_NAME}(conf-if-${po_id})# "

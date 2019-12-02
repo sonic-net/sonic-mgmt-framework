@@ -138,6 +138,30 @@ def invoke(func, args):
     # Configure  MCLAG Domain Table - END
     #######################################
 
+    #######################################
+    # Configure  MCLAG Unique IP Table - START
+    #######################################
+    if (func == 'patch_sonic_mclag_seperate_ip_list'):
+        keypath = cc.Path('/restconf/data/sonic-mclag:sonic-mclag/MCLAG_UNIQUE_IP/MCLAG_UNIQUE_IP_LIST={if_name}',
+                if_name=args[0])
+        body = {
+            "sonic-mclag:MCLAG_UNIQUE_IP_LIST": [
+            {
+                "if_name":args[0],
+                "unique_ip":"enable"
+            }
+          ]
+        }
+        return aa.patch(keypath, body)
+
+    if (func == 'delete_sonic_mclag_seperate_ip_list'):
+        keypath = cc.Path('/restconf/data/sonic-mclag:sonic-mclag/MCLAG_UNIQUE_IP/MCLAG_UNIQUE_IP_LIST={if_name}',
+                if_name=args[0])
+        return aa.delete(keypath)
+
+    #######################################
+    # Configure  MCLAG Unique IP Table - END
+    #######################################
 
     #######################################
     # Get  APIs   - START
