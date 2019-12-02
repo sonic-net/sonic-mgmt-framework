@@ -2,6 +2,10 @@ module sonic-route-common {
     namespace "http://github.com/Azure/sonic-route-common";
     prefix srtcmn;
 
+    import sonic-bgp-global {
+        prefix sbgpg;
+    }
+
     organization
         "SONiC";
 
@@ -22,7 +26,9 @@ module sonic-route-common {
                 key "vrf src_protocol dst_protocol addr_family";
 
                 leaf vrf {
-                    type string;
+                    type leafref {
+                        path "/sbgpg:sonic-bgp-global/sbgpg:BGP_GLOBALS/sbgpg:BGP_GLOBALS_LIST/sbgpg:vrf";
+                    }
                 }
 
                 leaf src_protocol {
