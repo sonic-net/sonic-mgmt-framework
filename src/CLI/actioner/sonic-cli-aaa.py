@@ -33,12 +33,12 @@ def invoke_api(func, args):
 
     # Set/Get aaa configuration
     if func == 'patch_openconfig_system_augments_system_aaa_authentication_config_failthrough':
-       path = cc.Path('/restconf/data/openconfig-system:system/aaa/authentication/config/failthrough')
-       body = { "openconfig-system-augments:failthrough": args[0] }
+       path = cc.Path('/restconf/data/openconfig-system:system/aaa/authentication/config/openconfig-system-augments:failthrough')
+       body = { "openconfig-system-augments:failthrough": bool(args[0]) }
        return api.patch(path, body)
     elif func == 'patch_openconfig_system_system_aaa_authentication_config_authentication_method':
        path = cc.Path('/restconf/data/openconfig-system:system/aaa/authentication/config/authentication-method')
-       body = { "openconfig-system-augments:authentication-method": (args[0]) }
+       body = { "openconfig-system-augments:authentication-method": args[0] }
        return api.patch(path, body)
     else:
        body = {}
