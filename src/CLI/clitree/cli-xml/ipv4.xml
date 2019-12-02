@@ -24,7 +24,19 @@ limitations under the License.
     xsi:schemaLocation="http://www.dellemc.com/sonic/XMLSchema
                         http://www.dellemc.com/sonic/XMLSchema/clish.xsd">
 
+
+
+<!--=======================================================-->
+<!--              show ip arp interface                    -->
+<!--=======================================================-->
+<PTYPE
+    name="INTF_NAME"
+    method="select"
+    pattern="Ethernet Vlan PortChannel Management(eth)"
+    help="Interface type"/>
+
 <VIEW name="enable-view">
+<!--
     <COMMAND
             name="clear ip"
             help="Clear ip command">
@@ -33,11 +45,87 @@ limitations under the License.
             name="debug ip"
             help="Debug ip command">
     </COMMAND>
+-->
     <COMMAND
         help="show IP commands"
         name="show ip"
         >
-    <ACTION builtin="clish_nop"/>
+        <ACTION builtin="clish_nop"/>
+    </COMMAND>
+
+    <COMMAND
+        name="show ip arp"
+        help="show IP ARP commands">
+        <PARAM
+            name="interface"
+            help="Specify interface type"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            optional="false">
+            <PARAM
+                name="ifType"
+                help=""
+                ptype="INTF_NAME">
+                <PARAM
+                    name="phy-if-id"
+                    help="Numeric ID for the given interface type"
+                    ptype="UINT">
+                    <PARAM
+                        name="choice"
+                        help="Available options"
+                        ptype="STRING"
+                        optional="true"
+                        mode="switch">
+                        <PARAM
+                            name="summary"
+                            help="Summary of ARP entries"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            optional="true">
+                        </PARAM>
+                        <PARAM
+                            name="ip"
+                            help="IP address"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            optional="true">
+                            <PARAM
+                                name="ip-addr"
+                                help="ARP entry for this IP address"
+                                ptype="IP_ADDR">
+                            </PARAM>
+                        </PARAM>
+                        <PARAM
+                            name="mac-address"
+                            help="HW address"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            optional="true">
+                            <PARAM
+                                name="mac-addr"
+                                help="48 bit MAC address"
+                                ptype="MAC_ADDR">
+                            </PARAM>
+                        </PARAM>
+                    </PARAM>
+                </PARAM>
+            </PARAM>
+        </PARAM>
+        <ACTION>
+            if test "${summary}" = "" -a "${ip-addr}" = "" -a "${mac-addr}" = ""; then&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-arp-neigh.py get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_neighbors arp_show.j2 ${ifType}${phy-if-id} None&#xA;
+            elif test "${summary}" = "summary" -a "${ip-addr}" = "" -a "${mac-addr}" = ""; then&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-arp-neigh.py get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_neighbors arp_summary_show.j2 ${ifType}${phy-if-id} summary&#xA;
+            elif test "${summary}" = "" -a "${ip-addr}" != "" -a "${mac-addr}" = ""; then&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-arp-neigh.py get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_neighbors_neighbor arp_show.j2 ${ifType}${phy-if-id} ip ${ip-addr}&#xA;
+            elif test "${summary}" = "summary" -a "${ip-addr}" != "" -a "${mac-addr}" = ""; then&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-arp-neigh.py get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_neighbors_neighbor arp_summary_show.j2 ${ifType}${phy-if-id} ip ${ip-addr} summary&#xA;
+            elif test "${summary}" = "" -a "${ip-addr}" = "" -a "${mac-addr}" != ""; then&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-arp-neigh.py get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_neighbors arp_show.j2 ${ifType}${phy-if-id} mac ${mac-addr}&#xA;
+            elif test "${summary}" = "summary" -a "${ip-addr}" = "" -a "${mac-addr}" != ""; then&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-arp-neigh.py get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_neighbors arp_summary_show.j2 ${ifType}${phy-if-id} mac ${mac-addr} summary&#xA;
+            fi&#xA;
+        </ACTION>
     </COMMAND>
 </VIEW>
 
@@ -81,6 +169,9 @@ limitations under the License.
     </COMMAND>
 </VIEW>
 
+<!--=======================================================-->
+<!--                Config Interface MGMT-MODE              -->
+<!--=======================================================-->
 <VIEW name="configure-if-mgmt-view">
 
     <COMMAND
@@ -100,7 +191,24 @@ limitations under the License.
             name="addr"
             help="IP address with mask"
             ptype="IP_ADDR_MASK" />
-        <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config ${iface} ${addr} </ACTION>
+        <PARAM name="gwaddr"
+            help="Default Gateway address"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            optional="true" >
+            <PARAM 
+                name="gw_addr"
+                help="Gateway IP address"
+                ptype="IP_ADDR"
+                />
+        </PARAM>
+        <ACTION>
+            if test "${gw_addr}" = ""; then&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config ${iface} ${addr}&#xA;
+            else&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config ${iface} ${addr} ${gw_addr}&#xA;
+            fi&#xA;
+        </ACTION>
     </COMMAND>
 
     <COMMAND
@@ -117,4 +225,79 @@ limitations under the License.
     </COMMAND>
 </VIEW>
 
+<!--=======================================================-->
+<!--                Config Interface VLAN-MODE             -->
+<!--=======================================================-->
+<VIEW
+     name="configure-vlan-view"
+     >
+     <COMMAND
+          name="ip"
+          help="Interface Internet Protocol config commands"
+      />
+      <COMMAND
+          name="no ip"
+          help="Interface Internet Protocol config commands"
+      >
+      </COMMAND>
+      <COMMAND
+          name="ip address"
+          help="IP address" >
+          <PARAM
+              name="addr"
+              help="IP address with mask"
+              ptype="IP_ADDR_MASK" />
+          <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config ${vlan_id} ${addr} </ACTION>
+      </COMMAND>
+      <COMMAND
+         name="no ip address"
+         help="Interface Internet Protocol config commands"
+         >
+         <PARAM
+             name="addr"
+             help="IP address"
+             ptype="IP_ADDR" />
+         <ACTION>
+            python $SONIC_CLI_ROOT/sonic-cli-if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config_prefix_length ${vlan_id} ${addr}
+         </ACTION>
+      </COMMAND>
+</VIEW>
+
+<!--=======================================================-->
+<!--                Config Interface PO-CH-MODE            -->
+<!--=======================================================-->
+<VIEW
+     name="configure-lag-view"
+     >
+     <COMMAND
+          name="ip"
+          help="Interface Internet Protocol config commands"
+      />
+      <COMMAND
+          name="no ip"
+          help="Interface Internet Protocol config commands"
+      >
+      </COMMAND>
+      <COMMAND
+          name="ip address"
+          help="IP address" >
+          <PARAM
+              name="addr"
+              help="IP address with mask"
+              ptype="IP_ADDR_MASK" />
+          <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config ${po_name} ${addr} </ACTION>
+      </COMMAND>
+      <COMMAND
+         name="no ip address"
+         help="Interface Internet Protocol config commands"
+         >
+         <PARAM
+             name="addr"
+             help="IP address"
+             ptype="IP_ADDR" />
+         <ACTION>
+            python $SONIC_CLI_ROOT/sonic-cli-if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config_prefix_length ${po_name} ${addr}
+         </ACTION>
+      </COMMAND>
+</VIEW>
 </CLISH_MODULE>

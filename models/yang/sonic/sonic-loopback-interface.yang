@@ -1,0 +1,49 @@
+module sonic-loopback-interface {
+    namespace "http://github.com/Azure/sonic-loopback-interface";
+    prefix sonic-lo-if;
+
+    import ietf-inet-types {
+        prefix inet;
+    }
+
+    organization
+        "SONiC";
+
+    contact
+        "SONiC";
+
+    description
+        "SONIC LOOPBACK INTERFACE";
+
+    revision 2019-07-02 {
+        description
+            "Initial revision.";
+    }
+
+    container sonic-loopback-interface {
+
+        container LOOPBACK_INTERFACE {
+
+            list LOOPBACK_INTERFACE_LIST {
+                key "loIfName";
+
+                leaf loIfName{
+                    type string;
+                }
+            }
+
+            list LOOPBACK_INTERFACE_IPADDR_LIST {
+                key "loIfName ip_prefix";
+
+                leaf loIfName{
+                    type string;
+                }
+
+                leaf ip_prefix {
+                    type inet:ip-prefix;
+
+                }
+            }
+        }
+    }
+}

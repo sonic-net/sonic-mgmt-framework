@@ -1,0 +1,9 @@
+.debhelper/
+*.debhelper
+*.debhelper.log
+*.substvars
+sonic-mgmt-framework/
+sonic-host-service/
+tmp/
+files
+

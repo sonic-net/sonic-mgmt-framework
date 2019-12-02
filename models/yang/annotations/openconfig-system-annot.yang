@@ -2055,6 +2055,24 @@ module openconfig-system-annot {
       deviate add {
       }
     }
-
+    deviation /oc-sys:system/oc-sys:state {
+        deviate add {
+            sonic-ext:subtree-transformer "sys_state_xfmr";
+        }
+    }
+    deviation /oc-sys:system/oc-sys:memory {
+        deviate add {
+            sonic-ext:subtree-transformer "sys_memory_xfmr";
+        }
+    }
+    deviation /oc-sys:system/oc-sys:cpus {
+        deviate add {
+            sonic-ext:subtree-transformer "sys_cpus_xfmr";
+        }
+    }
+    deviation /oc-sys:system/oc-sys:processes {
+        deviate add {
+            sonic-ext:subtree-transformer "sys_procs_xfmr";
+        }
+    }
 }
-

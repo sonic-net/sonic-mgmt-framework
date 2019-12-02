@@ -52,6 +52,7 @@ const (
 	STP_DEFAULT_HELLO_INTERVAL     = "2"
 	STP_DEFAULT_MAX_AGE            = "20"
 	STP_DEFAULT_BRIDGE_PRIORITY    = "32768"
+	STP_DEFAULT_BPDU_FILTER        = "false"
 )
 
 type StpApp struct {
@@ -254,9 +255,18 @@ func (app *StpApp) translateCRUCommon(d *db.DB, opcode int) ([]db.WatchKeys, err
 	var keys []db.WatchKeys
 	log.Info("translateCRUCommon:STP:path =", app.pathInfo.Template)
 
-	app.convertOCStpGlobalConfToInternal(opcode)
-	app.convertOCPvstToInternal(opcode)
-	app.convertOCRpvstConfToInternal(opcode)
+	err = app.convertOCStpGlobalConfToInternal(opcode)
+	if err != nil {
+		return keys, err
+	}
+	err = app.convertOCPvstToInternal(opcode)
+	if err != nil {
+		return keys, err
+	}
+	err = app.convertOCRpvstConfToInternal(opcode)
+	if err != nil {
+		return keys, err
+	}
 	app.convertOCStpInterfacesToInternal()
 
 	return keys, err
@@ -700,13 +710,18 @@ func (app *StpApp) setStpGlobalConfigInDB(d *db.DB) error {
 	return err
 }
 
-func (app *StpApp) convertOCStpGlobalConfToInternal(opcode int) {
+func (app *StpApp) convertOCStpGlobalConfToInternal(opcode int) error {
+	var err error
 	stp := app.getAppRootObject()
 	setDefaultFlag := (opcode == CREATE || opcode == REPLACE)
 	if stp != nil {
 		if stp.Global != nil && stp.Global.Config != nil {
 			if stp.Global.Config.BridgePriority != nil {
-				(&app.globalInfo).Set("priority", strconv.Itoa(int(*stp.Global.Config.BridgePriority)))
+				priorityVal := int(*stp.Global.Config.BridgePriority)
+				if (priorityVal % 4096) != 0 {
+					return tlerr.InvalidArgs("Priority value should be multiple of 4096")
+				}
+				(&app.globalInfo).Set("priority", strconv.Itoa(priorityVal))
 			} else if setDefaultFlag {
 				(&app.globalInfo).Set("priority", STP_DEFAULT_BRIDGE_PRIORITY)
 			}
@@ -730,6 +745,15 @@ func (app *StpApp) convertOCStpGlobalConfToInternal(opcode int) {
 			} else if setDefaultFlag {
 				(&app.globalInfo).Set("rootguard_timeout", STP_DEFAULT_ROOT_GUARD_TIMEOUT)
 			}
+			if stp.Global.Config.BpduFilter != nil {
+				if *stp.Global.Config.BpduFilter == true {
+					(&app.globalInfo).Set("bpdu_filter", "true")
+				} else {
+					(&app.globalInfo).Set("bpdu_filter", "false")
+				}
+			} else if setDefaultFlag {
+				(&app.globalInfo).Set("bpdu_filter", STP_DEFAULT_BPDU_FILTER)
+			}
 
 			if len(stp.Global.Config.EnabledProtocol) > 0 {
 				mode := app.convertOCStpModeToInternal(stp.Global.Config.EnabledProtocol[0])
@@ -741,6 +765,7 @@ func (app *StpApp) convertOCStpGlobalConfToInternal(opcode int) {
 			log.Infof("convertOCStpGlobalConfToInternal -- Internal Stp global config: %v", app.globalInfo)
 		}
 	}
+	return err
 }
 
 func (app *StpApp) convertDBStpGlobalConfigToInternal(d *db.DB) error {
@@ -758,6 +783,7 @@ func (app *StpApp) convertInternalToOCStpGlobalConfig(stpGlobal *ocbinds.Opencon
 		var priority uint32
 		var forDelay, helloTime, maxAge uint8
 		var rootGTimeout uint16
+		var bpduFilter bool
 		ygot.BuildEmptyTree(stpGlobal)
 
 		if stpGlobal.Config != nil {
@@ -783,6 +809,9 @@ func (app *StpApp) convertInternalToOCStpGlobalConfig(stpGlobal *ocbinds.Opencon
 			num, _ = strconv.ParseUint((&app.globalInfo).Get("rootguard_timeout"), 10, 16)
 			rootGTimeout = uint16(num)
 			stpGlobal.Config.RootguardTimeout = &rootGTimeout
+
+			bpduFilter, _ = strconv.ParseBool((&app.globalInfo).Get("bpdu_filter"))
+			stpGlobal.Config.BpduFilter = &bpduFilter
 		}
 		if stpGlobal.State != nil {
 			stpGlobal.State.EnabledProtocol = app.convertInternalStpModeToOC((&app.globalInfo).Get(STP_MODE))
@@ -791,12 +820,14 @@ func (app *StpApp) convertInternalToOCStpGlobalConfig(stpGlobal *ocbinds.Opencon
 			stpGlobal.State.HelloTime = &helloTime
 			stpGlobal.State.MaxAge = &maxAge
 			stpGlobal.State.RootguardTimeout = &rootGTimeout
+			stpGlobal.State.BpduFilter = &bpduFilter
 		}
 	}
 }
 
 /////////////////    RPVST //////////////////////
-func (app *StpApp) convertOCRpvstConfToInternal(opcode int) {
+func (app *StpApp) convertOCRpvstConfToInternal(opcode int) error {
+	var err error
 	stp := app.getAppRootObject()
 	setDefaultFlag := (opcode == CREATE || opcode == REPLACE)
 	if stp != nil && stp.RapidPvst != nil && len(stp.RapidPvst.Vlan) > 0 {
@@ -808,7 +839,11 @@ func (app *StpApp) convertOCRpvstConfToInternal(opcode int) {
 				dbVal := app.vlanTableMap[vlanName]
 				(&dbVal).Set("vlanid", strconv.Itoa(int(vlanId)))
 				if rpvstVlanConf.Config.BridgePriority != nil {
-					(&dbVal).Set("priority", strconv.Itoa(int(*rpvstVlanConf.Config.BridgePriority)))
+					priorityVal := int(*rpvstVlanConf.Config.BridgePriority)
+					if (priorityVal % 4096) != 0 {
+						return tlerr.InvalidArgs("Priority value should be multiple of 4096")
+					}
+					(&dbVal).Set("priority", strconv.Itoa(priorityVal))
 				} else if setDefaultFlag {
 					(&dbVal).Set("priority", "32768")
 				}
@@ -859,6 +894,7 @@ func (app *StpApp) convertOCRpvstConfToInternal(opcode int) {
 			}
 		}
 	}
+	return err
 }
 
 func (app *StpApp) setRpvstVlanDataInDB(d *db.DB, createFlag bool) error {
@@ -1047,16 +1083,18 @@ func (app *StpApp) convertDBRpvstVlanInterfaceToInternal(d *db.DB, vlanName stri
 	var err error
 	if vlanInterfaceKey.Len() > 1 {
 		rpvstVlanIntfConf, err := d.GetEntry(app.vlanIntfTable, asKey(vlanName, intfId))
-		if err != nil {
-			return err
-		}
 		if app.vlanIntfTableMap[vlanName] == nil {
 			app.vlanIntfTableMap[vlanName] = make(map[string]db.Value)
 		}
-		app.vlanIntfTableMap[vlanName][intfId] = rpvstVlanIntfConf
+		if err == nil {
+			app.vlanIntfTableMap[vlanName][intfId] = rpvstVlanIntfConf
+		}
 		// Collect operational info from application DB
 		if doGetOperData {
 			err = app.convertApplDBRpvstVlanInterfaceToInternal(vlanName, intfId)
+		}
+		if err != nil {
+			return err
 		}
 	} else {
 		keys, err := d.GetKeys(app.vlanIntfTable)
@@ -1090,20 +1128,26 @@ func (app *StpApp) convertInternalToOCRpvstVlanInterface(vlanName string, intfId
 			}
 		}
 
-		num, _ = strconv.ParseUint((&dbVal).Get("path_cost"), 10, 32)
-		cost := uint32(num)
-		rpvstVlanIntfConf.Config.Cost = &cost
+		var err error
+		num, err = strconv.ParseUint((&dbVal).Get("path_cost"), 10, 32)
+		if err == nil {
+			cost := uint32(num)
+			rpvstVlanIntfConf.Config.Cost = &cost
+		}
 
-		num, _ = strconv.ParseUint((&dbVal).Get("priority"), 10, 8)
-		portPriority := uint8(num)
-		rpvstVlanIntfConf.Config.PortPriority = &portPriority
+		num, err = strconv.ParseUint((&dbVal).Get("priority"), 10, 8)
+		if err == nil {
+			portPriority := uint8(num)
+			rpvstVlanIntfConf.Config.PortPriority = &portPriority
+		}
 
 		rpvstVlanIntfConf.Config.Name = &intfId
 	}
 }
 
 ///////////   PVST   //////////////////////
-func (app *StpApp) convertOCPvstToInternal(opcode int) {
+func (app *StpApp) convertOCPvstToInternal(opcode int) error {
+	var err error
 	stp := app.getAppRootObject()
 	setDefaultFlag := (opcode == CREATE || opcode == REPLACE)
 	if stp != nil && stp.Pvst != nil && len(stp.Pvst.Vlan) > 0 {
@@ -1115,7 +1159,11 @@ func (app *StpApp) convertOCPvstToInternal(opcode int) {
 				dbVal := app.vlanTableMap[vlanName]
 				(&dbVal).Set("vlanid", strconv.Itoa(int(vlanId)))
 				if pvstVlan.Config.BridgePriority != nil {
-					(&dbVal).Set("priority", strconv.Itoa(int(*pvstVlan.Config.BridgePriority)))
+					priorityVal := int(*pvstVlan.Config.BridgePriority)
+					if (priorityVal % 4096) != 0 {
+						return tlerr.InvalidArgs("Priority value should be multiple of 4096")
+					}
+					(&dbVal).Set("priority", strconv.Itoa(priorityVal))
 				} else if setDefaultFlag {
 					(&dbVal).Set("priority", "32768")
 				}
@@ -1166,6 +1214,7 @@ func (app *StpApp) convertOCPvstToInternal(opcode int) {
 			}
 		}
 	}
+	return err
 }
 
 func (app *StpApp) convertInternalToOCPvstVlan(vlanName string, pvst *ocbinds.OpenconfigSpanningTree_Stp_Pvst, pvstVlan *ocbinds.OpenconfigSpanningTree_Stp_Pvst_Vlan) {
@@ -1292,13 +1341,18 @@ func (app *StpApp) convertInternalToOCPvstVlanInterface(vlanName string, intfId 
 			}
 		}
 
-		num, _ = strconv.ParseUint((&dbVal).Get("path_cost"), 10, 32)
-		cost := uint32(num)
-		pvstVlanIntf.Config.Cost = &cost
+		var err error
+		num, err = strconv.ParseUint((&dbVal).Get("path_cost"), 10, 32)
+		if err == nil {
+			cost := uint32(num)
+			pvstVlanIntf.Config.Cost = &cost
+		}
 
-		num, _ = strconv.ParseUint((&dbVal).Get("priority"), 10, 8)
-		portPriority := uint8(num)
-		pvstVlanIntf.Config.PortPriority = &portPriority
+		num, err = strconv.ParseUint((&dbVal).Get("priority"), 10, 8)
+		if err == nil {
+			portPriority := uint8(num)
+			pvstVlanIntf.Config.PortPriority = &portPriority
+		}
 
 		pvstVlanIntf.Config.Name = &intfId
 	}
@@ -1325,10 +1379,12 @@ func (app *StpApp) convertOCStpInterfacesToInternal() {
 
 				if stpIntfConf.Config.BpduFilter != nil {
 					if *stpIntfConf.Config.BpduFilter == true {
-						(&dbVal).Set("bpdu_filter", "true")
+						(&dbVal).Set("bpdu_filter", "enable")
 					} else {
-						(&dbVal).Set("bpdu_filter", "false")
+						(&dbVal).Set("bpdu_filter", "disable")
 					}
+				} else {
+					(&dbVal).Set("bpdu_filter", "global")
 				}
 
 				if stpIntfConf.Config.BpduGuardPortShutdown != nil {
@@ -1376,8 +1432,8 @@ func (app *StpApp) convertOCStpInterfacesToInternal() {
 
 				if stpIntfConf.Config.Guard == ocbinds.OpenconfigSpanningTree_StpGuardType_ROOT {
 					(&dbVal).Set("root_guard", "true")
-				} else {
-					//(&dbVal).Set("root_guard", "false")
+				} else if stpIntfConf.Config.Guard == ocbinds.OpenconfigSpanningTree_StpGuardType_NONE {
+					(&dbVal).Set("root_guard", "false")
 				}
 				////   For RPVST+   /////
 				if stpIntfConf.Config.EdgePort == ocbinds.OpenconfigSpanningTreeTypes_STP_EDGE_PORT_EDGE_ENABLE {
@@ -1387,9 +1443,11 @@ func (app *StpApp) convertOCStpInterfacesToInternal() {
 				}
 
 				if stpIntfConf.Config.LinkType == ocbinds.OpenconfigSpanningTree_StpLinkType_P2P {
-					(&dbVal).Set("pt2pt_mac", "true")
+					(&dbVal).Set("link_type", "point-to-point")
 				} else if stpIntfConf.Config.LinkType == ocbinds.OpenconfigSpanningTree_StpLinkType_SHARED {
-					(&dbVal).Set("pt2pt_mac", "false")
+					(&dbVal).Set("link_type", "shared")
+				} else {
+					(&dbVal).Set("link_type", "auto")
 				}
 			}
 		}
@@ -1475,9 +1533,17 @@ func (app *StpApp) convertInternalToOCStpInterfaces(intfName string, interfaces 
 				intf.Config.BpduGuard = &bpduGuardEnabled
 				intf.State.BpduGuard = &bpduGuardEnabled
 
-				bpduFilterEnabled, _ := strconv.ParseBool((&stpIntfData).Get("bpdu_filter"))
-				intf.Config.BpduFilter = &bpduFilterEnabled
-				intf.State.BpduFilter = &bpduFilterEnabled
+				var bpduFilterEnabled bool
+				bpduFilterVal := (&stpIntfData).Get("bpdu_filter")
+				if bpduFilterVal == "enable" {
+					bpduFilterEnabled = true
+					intf.Config.BpduFilter = &bpduFilterEnabled
+					intf.State.BpduFilter = &bpduFilterEnabled
+				} else if bpduFilterVal == "disable" {
+					bpduFilterEnabled = false
+					intf.Config.BpduFilter = &bpduFilterEnabled
+					intf.State.BpduFilter = &bpduFilterEnabled
+				}
 
 				bpduGuardPortShut, _ := strconv.ParseBool((&stpIntfData).Get("bpdu_guard_do_disable"))
 				intf.Config.BpduGuardPortShutdown = &bpduGuardPortShut
@@ -1509,14 +1575,14 @@ func (app *StpApp) convertInternalToOCStpInterfaces(intfName string, interfaces 
 					}
 				}
 
-				if linkTypeEnabled, err := strconv.ParseBool((&stpIntfData).Get("pt2pt_mac")); err == nil {
-					if linkTypeEnabled {
-						intf.Config.LinkType = ocbinds.OpenconfigSpanningTree_StpLinkType_P2P
-						intf.State.LinkType = ocbinds.OpenconfigSpanningTree_StpLinkType_P2P
-					} else {
-						intf.Config.LinkType = ocbinds.OpenconfigSpanningTree_StpLinkType_SHARED
-						intf.State.LinkType = ocbinds.OpenconfigSpanningTree_StpLinkType_SHARED
-					}
+				linkTypeVal := (&stpIntfData).Get("link_type")
+				switch linkTypeVal {
+				case "shared":
+					intf.Config.LinkType = ocbinds.OpenconfigSpanningTree_StpLinkType_SHARED
+					intf.State.LinkType = ocbinds.OpenconfigSpanningTree_StpLinkType_SHARED
+				case "point-to-point":
+					intf.Config.LinkType = ocbinds.OpenconfigSpanningTree_StpLinkType_P2P
+					intf.State.LinkType = ocbinds.OpenconfigSpanningTree_StpLinkType_P2P
 				}
 
 				var num uint64
@@ -1553,6 +1619,28 @@ func (app *StpApp) convertInternalToOCStpInterfaces(intfName string, interfaces 
 				boolVal = false
 			}
 			intf.State.Portfast = &boolVal
+
+			opBpduFilter := (&operDbVal).Get("bpdu_filter")
+			if opBpduFilter == "yes" {
+				boolVal = true
+			} else if opBpduFilter == "no" {
+				boolVal = false
+			}
+			intf.State.BpduFilter = &boolVal
+
+			opEdgePortType := (&operDbVal).Get("edge_port")
+			if opEdgePortType == "yes" {
+				intf.State.EdgePort = ocbinds.OpenconfigSpanningTreeTypes_STP_EDGE_PORT_EDGE_ENABLE
+			} else if opEdgePortType == "no" {
+				intf.State.EdgePort = ocbinds.OpenconfigSpanningTreeTypes_STP_EDGE_PORT_EDGE_DISABLE
+			}
+
+			opLinkType := (&operDbVal).Get("link_type")
+			if opLinkType == "shared" {
+				intf.State.LinkType = ocbinds.OpenconfigSpanningTree_StpLinkType_SHARED
+			} else if opLinkType == "point-to-point" {
+				intf.State.LinkType = ocbinds.OpenconfigSpanningTree_StpLinkType_P2P
+			}
 		}
 	} else {
 		for intfName := range app.intfTableMap {
@@ -1580,10 +1668,10 @@ func (app *StpApp) convertOperInternalToOCVlanInterface(vlanName string, intfId 
 					pvstVlanIntf, _ = pvstVlan.Interfaces.NewInterface(intfId)
 				}
 				ygot.BuildEmptyTree(pvstVlanIntf)
-				ygot.BuildEmptyTree(pvstVlanIntf.State)
 			} else {
 				pvstVlanIntf, _ = vlanIntf.(*ocbinds.OpenconfigSpanningTree_Stp_Pvst_Vlan_Interfaces_Interface)
 			}
+			ygot.BuildEmptyTree(pvstVlanIntf.State)
 		case "OpenconfigSpanningTree_Stp_RapidPvst_Vlan":
 			rpvstVlan, _ = vlan.(*ocbinds.OpenconfigSpanningTree_Stp_RapidPvst_Vlan)
 			if vlanIntf == nil {
@@ -1592,10 +1680,10 @@ func (app *StpApp) convertOperInternalToOCVlanInterface(vlanName string, intfId 
 					rpvstVlanIntf, _ = rpvstVlan.Interfaces.NewInterface(intfId)
 				}
 				ygot.BuildEmptyTree(rpvstVlanIntf)
-				ygot.BuildEmptyTree(rpvstVlanIntf.State)
 			} else {
 				rpvstVlanIntf, _ = vlanIntf.(*ocbinds.OpenconfigSpanningTree_Stp_RapidPvst_Vlan_Interfaces_Interface)
 			}
+			ygot.BuildEmptyTree(rpvstVlanIntf.State)
 		}
 
 		operDbVal := app.vlanIntfOperTableMap[vlanName][intfId]
@@ -1640,6 +1728,13 @@ func (app *StpApp) convertOperInternalToOCVlanInterface(vlanName string, intfId 
 
 			num, _ = strconv.ParseUint((&operDbVal).Get("tcn_received"), 10, 64)
 			opTcnReceived := num
+
+			// For RPVST+ only
+			num, _ = strconv.ParseUint((&operDbVal).Get("config_bpdu_sent"), 10, 64)
+			opConfigBpduSent := num
+
+			num, _ = strconv.ParseUint((&operDbVal).Get("config_bpdu_received"), 10, 64)
+			opConfigBpduReceived := num
 
 			if pvstVlanIntf != nil && pvstVlanIntf.State != nil {
 				pvstVlanIntf.State.Name = &intfId
@@ -1698,6 +1793,8 @@ func (app *StpApp) convertOperInternalToOCVlanInterface(vlanName string, intfId 
 					rpvstVlanIntf.State.Counters.BpduReceived = &opBpduReceived
 					rpvstVlanIntf.State.Counters.TcnSent = &opTcnSent
 					rpvstVlanIntf.State.Counters.TcnReceived = &opTcnReceived
+					rpvstVlanIntf.State.Counters.ConfigBpduSent = &opConfigBpduSent
+					rpvstVlanIntf.State.Counters.ConfigBpduReceived = &opConfigBpduReceived
 				}
 			}
 		}
@@ -1841,7 +1938,7 @@ func (app *StpApp) enableStpForInterfaces(d *db.DB) error {
 	(&defaultDBValues).Set("enabled", "true")
 	(&defaultDBValues).Set("root_guard", "false")
 	(&defaultDBValues).Set("bpdu_guard", "false")
-	(&defaultDBValues).Set("bpdu_filter", "false")
+	(&defaultDBValues).Set("bpdu_filter", "global")
 	(&defaultDBValues).Set("bpdu_guard_do_disable", "false")
 	(&defaultDBValues).Set("portfast", "true")
 	(&defaultDBValues).Set("uplink_fast", "false")
@@ -1918,6 +2015,7 @@ func enableStpOnVlanCreation(d *db.DB, vlanList []string) {
 	if len(vlanList) == 0 {
 		return
 	}
+	log.Infof("enableStpOnVlanCreation --> Enable Stp on Vlans: %v", vlanList)
 	vlanKeys, _ := d.GetKeys(&db.TableSpec{Name: STP_VLAN_TABLE})
 	existingEntriesCount := len(vlanKeys)
 	if existingEntriesCount < PVST_MAX_INSTANCES {
@@ -1950,10 +2048,79 @@ func enableStpOnVlanCreation(d *db.DB, vlanList []string) {
 	}
 }
 
-// This function accepts map where key is Interface name (i.e. Eth or Portchannel)
-// and value will be slice of VlanIds
-//func enableStpOnInterfaceVlanMembership(d *db.DB, intfVlansMap map[string][]string) {
-//}
+func removeStpConfigOnVlanDeletion(d *db.DB, vlanList []string) {
+	if len(vlanList) == 0 {
+		return
+	}
+	log.Infof("removeStpConfigOnVlanDeletion --> Disable Stp on Vlans: %v", vlanList)
+	for i, _ := range vlanList {
+		err := d.DeleteEntry(&db.TableSpec{Name: STP_VLAN_INTF_TABLE}, asKey(vlanList[i], "*"))
+		if err != nil {
+			log.Error(err)
+		}
+		err = d.DeleteEntry(&db.TableSpec{Name: STP_VLAN_TABLE}, asKey(vlanList[i]))
+		if err != nil {
+			log.Error(err)
+		}
+	}
+}
+
+// This function accepts list of Interface names (i.e. Eth or Portchannel)
+// on which switchport is enabled
+func enableStpOnInterfaceVlanMembership(d *db.DB, intfList []string) {
+	if len(intfList) == 0 {
+		return
+	}
+	_, serr := d.GetEntry(&db.TableSpec{Name: STP_GLOBAL_TABLE}, asKey("GLOBAL"))
+	if serr != nil {
+		return
+	}
+	log.Infof("enableStpOnInterfaceVlanMembership --> Enable Stp on Interfaces: %v", intfList)
+	defaultDBValues := db.Value{Field: map[string]string{}}
+	(&defaultDBValues).Set("enabled", "true")
+	(&defaultDBValues).Set("root_guard", "false")
+	(&defaultDBValues).Set("bpdu_guard", "false")
+	(&defaultDBValues).Set("bpdu_filter", "global")
+	(&defaultDBValues).Set("bpdu_guard_do_disable", "false")
+	(&defaultDBValues).Set("portfast", "true")
+	(&defaultDBValues).Set("uplink_fast", "false")
+
+	var stpEnabledIntfList []string
+	intfKeys, err := d.GetKeys(&db.TableSpec{Name: STP_INTF_TABLE})
+	if err != nil {
+		log.Error(err)
+	} else {
+		for i, _ := range intfKeys {
+			dbKey := intfKeys[i]
+			stpEnabledIntfList = append(stpEnabledIntfList, (&dbKey).Get(0))
+		}
+
+		for i, _ := range intfList {
+			if !contains(stpEnabledIntfList, intfList[i]) {
+				d.CreateEntry(&db.TableSpec{Name: STP_INTF_TABLE}, asKey(intfList[i]), defaultDBValues)
+			}
+		}
+	}
+}
+
+// This function accepts list of Interface names (i.e. Eth or Portchannel)
+// on which switchport is disabled
+func removeStpOnInterfaceSwitchportDeletion(d *db.DB, intfList []string) {
+	if len(intfList) == 0 {
+		return
+	}
+	log.Infof("removeStpOnInterfaceSwitchportDeletion --> Disable Stp on Interfaces: %v", intfList)
+	for i, _ := range intfList {
+		err := d.DeleteEntry(&db.TableSpec{Name: STP_VLAN_INTF_TABLE}, asKey("*", intfList[i]))
+		if err != nil {
+			log.Error(err)
+		}
+		err = d.DeleteEntry(&db.TableSpec{Name: STP_INTF_TABLE}, asKey(intfList[i]))
+		if err != nil {
+			log.Error(err)
+		}
+	}
+}
 
 func (app *StpApp) updateGlobalFieldsToStpVlanTable(d *db.DB, fldValuePair map[string]string, stpGlobalDbEntry db.Value) error {
 	vlanKeys, err := d.GetKeys(app.vlanTable)
@@ -2029,7 +2196,7 @@ func (app *StpApp) handleStpGlobalFieldsUpdation(d *db.DB, opcode int) error {
 		valStr := app.globalInfo.Field[fld]
 		(&tmpDbEntry).Set(fld, valStr)
 
-		if fld != "rootguard_timeout" {
+		if fld != "rootguard_timeout" && fld != "bpdu_filter" {
 			fldValuePair[fld] = valStr
 		}
 	}
@@ -2076,6 +2243,9 @@ func (app *StpApp) handleStpGlobalFieldsDeletion(d *db.DB) error {
 		case "bridge-priority":
 			fldName = "priority"
 			valStr = STP_DEFAULT_BRIDGE_PRIORITY
+		case "bpdu-filter":
+			fldName = "bpdu_filter"
+			valStr = STP_DEFAULT_BPDU_FILTER
 		}
 
 		// Make a copy of StpGlobalDBEntry to modify fields value.
@@ -2091,7 +2261,7 @@ func (app *StpApp) handleStpGlobalFieldsDeletion(d *db.DB) error {
 			return err
 		}
 
-		if fldName != "rootguard_timeout" {
+		if fldName != "rootguard_timeout" && fldName != "bpdu_filter" {
 			fldValuePair[fldName] = valStr
 		}
 
@@ -2192,7 +2362,7 @@ func (app *StpApp) handleInterfacesFieldsDeletion(d *db.DB, intfId string) error
 		case "bpdu-guard":
 			(&dbEntry).Remove("bpdu_guard")
 		case "bpdu-filter":
-			(&dbEntry).Remove("bpdu_filter")
+			(&dbEntry).Set("bpdu_filter", "global")
 		case "portfast":
 			(&dbEntry).Remove("portfast")
 		case "uplink-fast":
@@ -2208,7 +2378,7 @@ func (app *StpApp) handleInterfacesFieldsDeletion(d *db.DB, intfId string) error
 		case "edge-port":
 			(&dbEntry).Remove("edge_port")
 		case "link-type":
-			(&dbEntry).Remove("pt2pt_mac")
+			(&dbEntry).Set("link_type", "auto")
 		}
 	}
 

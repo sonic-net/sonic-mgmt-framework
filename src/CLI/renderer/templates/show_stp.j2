@@ -90,27 +90,29 @@ STP Port Parameters:
         {% set vars = {'intf_fast': ""} %}
         {% set vars = {'intf_ufast':""} %}
         {% if vars.update({'intf_name':intf['name']}) %}{% endif %}
-        {% if vars.update({'intf_pri':intf['config']['port-priority']}) %}{% endif %}
-        {% if vars.update({'intf_path_cost':intf['config']['cost']}) %}{% endif %}
+        {% if intf['state'] %}
+            {% if vars.update({'intf_pri':intf['state']['port-priority']}) %}{% endif %}
+            {% if vars.update({'intf_path_cost':intf['state']['cost']}) %}{% endif %}
+            {% if vars.update({'intf_state':intf['state']['port-state']| replace('openconfig-spanning-tree-types:',"")}) %}{% endif %}
+            {% if vars.update({'intf_desig_cost':intf['state']['designated-cost']}) %}{% endif %}
+            {% if vars.update({'intf_desig_root':intf['state']['designated-root-address']}) %}{% endif %}
+            {% if vars.update({'intf_desig_bridge':intf['state']['designated-bridge-address']}) %}{% endif %}
+        {%endif %}
                 {% if stp_intf['config']['bpdu-filter'] == true %}
                    {% if vars.update({'intf_bpdu_filter': "Y"}) %}{% endif %}
                 {%else %}
                    {% if vars.update({'intf_bpdu_filter': "N"}) %}{% endif %}
                 {%endif %}
-                {% if stp_intf['config']['portfast'] == true %}
+                {% if stp_intf['config']['openconfig-spanning-tree-ext:portfast'] == true %}
                    {% if vars.update({'intf_fast': "Y"}) %}{% endif %}
                 {%else %}
                    {% if vars.update({'intf_fast': "N"}) %}{% endif %}
                 {%endif %}
-                {% if stp_intf['config']['uplink-fast'] == true %}
+                {% if stp_intf['config']['openconfig-spanning-tree-ext:uplink-fast'] == true %}
                    {% if vars.update({'intf_ufast': "Y"}) %}{% endif %}
                 {%else %}
                    {% if vars.update({'intf_ufast': "N"}) %}{% endif %}
                 {%endif %}
-        {% if vars.update({'intf_state':intf['state']['port-state']| replace('openconfig-spanning-tree-types:',"")}) %}{% endif %}
-        {% if vars.update({'intf_desig_cost':intf['state']['designated-cost']}) %}{% endif %}
-        {% if vars.update({'intf_desig_root':intf['state']['designated-root-address']}) %}{% endif %}
-        {% if vars.update({'intf_desig_bridge':intf['state']['designated-bridge-address']}) %}{% endif %}
 {{'%-16s'|format(vars.intf_name)}}{{'%-5s'|format(vars.intf_pri)}}{{'%-10s'|format(vars.intf_path_cost)}}{{'%-5s'|format(vars.intf_fast)}}{{'%-7s'|format(vars.intf_ufast)}}{{'%-7s'|format(vars.intf_bpdu_filter)}}{{'%-11s'|format(vars.intf_state)}}{{'%-11s'|format(vars.intf_desig_cost)}}{{'%-17s'|format(vars.intf_desig_root)}}{{'%-17s'|format(vars.intf_desig_bridge)}}
         {%endif %}
         {%endfor %}
@@ -171,8 +173,14 @@ RSTP (IEEE 802.1w) Port Parameters:
         {% set vars = {'intf_p2pmac': ""} %}
         {% set vars = {'intf_edge': ""} %}
         {% if vars.update({'intf_name':intf['name']}) %}{% endif %}
-        {% if vars.update({'intf_pri':intf['config']['port-priority']}) %}{% endif %}
-        {% if vars.update({'intf_path_cost':intf['config']['cost']}) %}{% endif %}
+        {% if intf['state'] %}
+            {% if vars.update({'intf_pri':intf['state']['port-priority']}) %}{% endif %}
+            {% if vars.update({'intf_path_cost':intf['state']['cost']}) %}{% endif %}
+            {% if vars.update({'intf_role':intf['state']['role']}) %}{% endif %}
+            {% if vars.update({'intf_state':intf['state']['port-state']| replace('openconfig-spanning-tree-types:',"")}) %}{% endif %}
+            {% if vars.update({'intf_desig_cost':intf['state']['designated-cost']}) %}{% endif %}
+            {% if vars.update({'intf_desig_bridge':intf['state']['designated-bridge-address']}) %}{% endif %}
+        {%endif%}
                {% if stp_intf['config']['bpdu-filter'] == true %}
                   {% if vars.update({'intf_bpdu_filter': "Y"}) %}{% endif %}
                {%else %}
@@ -188,10 +196,6 @@ RSTP (IEEE 802.1w) Port Parameters:
                {%else %}
                      {% if vars.update({'intf_edge': "N"}) %}{% endif %}
                {%endif %}
-        {% if vars.update({'intf_role':intf['state']['role']}) %}{% endif %}
-        {% if vars.update({'intf_state':intf['state']['port-state']| replace('openconfig-spanning-tree-types:',"")}) %}{% endif %}
-        {% if vars.update({'intf_desig_cost':intf['state']['designated-cost']}) %}{% endif %}
-        {% if vars.update({'intf_desig_bridge':intf['state']['designated-bridge-address']}) %}{% endif %}
 {{'%-16s'|format(vars.intf_name)}}{{'%-5s'|format(vars.intf_pri)}}{{'%-10s'|format(vars.intf_path_cost)}}{{'%-5s'|format(vars.intf_p2pmac)}}{{'%-7s'|format(vars.intf_edge)}}{{'%-7s'|format(vars.intf_bpdu_filter)}}{{'%-10s'|format(vars.intf_role)}}{{'%-11s'|format(vars.intf_state)}}{{'%-11s'|format(vars.intf_desig_cost)}}{{'%-17s'|format(vars.intf_desig_bridge)}}
         {%endif %}
         {%endfor %}

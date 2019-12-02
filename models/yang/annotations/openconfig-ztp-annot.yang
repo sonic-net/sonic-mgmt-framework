@@ -1,0 +1,21 @@
+module openconfig-ztp-annot {
+   
+    yang-version "1";
+    namespace "http://openconfig.net/yang/ztp-annot";
+    prefix "oc-ztp-annot";
+
+    import sonic-extensions { prefix sonic-ext; }
+    import openconfig-ztp { prefix oc-ztp; }
+    import openconfig-extensions { prefix oc-ext; }
+
+    deviation /oc-ztp:ztp/oc-ztp:state {
+        deviate add {
+            sonic-ext:subtree-transformer "ztp_status_xfmr";
+            }
+    }
+    deviation /oc-ztp:ztp/oc-ztp:config {
+        deviate add {
+            sonic-ext:subtree-transformer "ztp_config_xfmr";
+            }
+    }
+}

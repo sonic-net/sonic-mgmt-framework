@@ -34,11 +34,10 @@ This package can also talk to non-DB clients.
 package translib
 
 import (
-	//"errors"
+	"errors"
 	"sync"
 	"translib/db"
 	"translib/tlerr"
-
 	"github.com/Workiva/go-datastructures/queue"
 	log "github.com/golang/glog"
 )
@@ -60,14 +59,17 @@ const (
 type SetRequest struct {
 	Path    string
 	Payload []byte
+	User    string
 }
 
 type SetResponse struct {
 	ErrSrc ErrSource
+	Err    error
 }
 
 type GetRequest struct {
-	Path string
+	Path    string
+	User    string
 }
 
 type GetResponse struct {
@@ -78,11 +80,34 @@ type GetResponse struct {
 type ActionRequest struct {
 	Path    string
 	Payload []byte
+	User    string
 }
 
 type ActionResponse struct {
 	Payload []byte
 	ErrSrc  ErrSource
+}
+
+type BulkRequest struct {
+	DeleteRequest  []SetRequest
+	ReplaceRequest []SetRequest
+	UpdateRequest  []SetRequest
+	CreateRequest  []SetRequest
+	User           string
+}
+
+type BulkResponse struct {
+	DeleteResponse  []SetResponse
+	ReplaceResponse []SetResponse
+	UpdateResponse  []SetResponse
+	CreateResponse  []SetResponse
+}
+
+type SubscribeRequest struct {
+	Paths			[]string
+	Q				*queue.PriorityQueue
+	Stop			chan struct{}
+	User			string
 }
 
 type SubscribeResponse struct {
@@ -99,6 +124,11 @@ const (
 	Sample NotificationType = iota
 	OnChange
 )
+
+type IsSubscribeRequest struct {
+	Paths				[]string
+	User				string
+}
 
 type IsSubscribeResponse struct {
 	Path                string
@@ -129,6 +159,11 @@ func Create(req SetRequest) (SetResponse, error) {
 	var keys []db.WatchKeys
 	var resp SetResponse
 
+	if (!isUserAuthorizedForSet(req.User)) {
+		resp.ErrSrc = ProtoErr
+		return resp, errors.New("User is not authorized to perform this operation")
+	}
+
 	path := req.Path
 	payload := req.Payload
 
@@ -152,7 +187,8 @@ func Create(req SetRequest) (SetResponse, error) {
 	writeMutex.Lock()
 	defer writeMutex.Unlock()
 
-	d, err := db.NewDB(getDBOptions(db.ConfigDB))
+	isWriteDisabled := false
+	d, err := db.NewDB(getDBOptions(db.ConfigDB, isWriteDisabled))
 
 	if err != nil {
 		resp.ErrSrc = ProtoErr
@@ -197,6 +233,11 @@ func Update(req SetRequest) (SetResponse, error) {
 	var keys []db.WatchKeys
 	var resp SetResponse
 
+    if (!isUserAuthorizedForSet(req.User)) {
+        resp.ErrSrc = ProtoErr
+        return resp, errors.New("User is not authorized to perform this operation")
+    }
+
 	path := req.Path
 	payload := req.Payload
 
@@ -220,7 +261,8 @@ func Update(req SetRequest) (SetResponse, error) {
 	writeMutex.Lock()
 	defer writeMutex.Unlock()
 
-	d, err := db.NewDB(getDBOptions(db.ConfigDB))
+	isWriteDisabled := false
+	d, err := db.NewDB(getDBOptions(db.ConfigDB, isWriteDisabled))
 
 	if err != nil {
 		resp.ErrSrc = ProtoErr
@@ -266,6 +308,11 @@ func Replace(req SetRequest) (SetResponse, error) {
 	var keys []db.WatchKeys
 	var resp SetResponse
 
+    if (!isUserAuthorizedForSet(req.User)) {
+        resp.ErrSrc = ProtoErr
+        return resp, errors.New("User is not authorized to perform this operation")
+    }
+
 	path := req.Path
 	payload := req.Payload
 
@@ -289,7 +336,8 @@ func Replace(req SetRequest) (SetResponse, error) {
 	writeMutex.Lock()
 	defer writeMutex.Unlock()
 
-	d, err := db.NewDB(getDBOptions(db.ConfigDB))
+	isWriteDisabled := false
+	d, err := db.NewDB(getDBOptions(db.ConfigDB, isWriteDisabled))
 
 	if err != nil {
 		resp.ErrSrc = ProtoErr
@@ -335,6 +383,11 @@ func Delete(req SetRequest) (SetResponse, error) {
 	var keys []db.WatchKeys
 	var resp SetResponse
 
+    if (!isUserAuthorizedForSet(req.User)) {
+        resp.ErrSrc = ProtoErr
+        return resp, errors.New("User is not authorized to perform this operation")
+    }
+
 	path := req.Path
 
 	log.Info("Delete request received with path =", path)
@@ -356,7 +409,8 @@ func Delete(req SetRequest) (SetResponse, error) {
 	writeMutex.Lock()
 	defer writeMutex.Unlock()
 
-	d, err := db.NewDB(getDBOptions(db.ConfigDB))
+	isWriteDisabled := false
+	d, err := db.NewDB(getDBOptions(db.ConfigDB, isWriteDisabled))
 
 	if err != nil {
 		resp.ErrSrc = ProtoErr
@@ -401,6 +455,11 @@ func Get(req GetRequest) (GetResponse, error) {
 	var payload []byte
 	var resp GetResponse
 
+    if (!isUserAuthorizedForGet(req.User)) {
+		resp = GetResponse{Payload: payload, ErrSrc: ProtoErr}
+        return resp, errors.New("User is not authorized to perform this operation")
+    }
+
 	path := req.Path
 
 	log.Info("Received Get request for path = ", path)
@@ -419,7 +478,8 @@ func Get(req GetRequest) (GetResponse, error) {
 		return resp, err
 	}
 
-	dbs, err := getAllDbs()
+	isGetCase := true
+	dbs, err := getAllDbs(isGetCase)
 
 	if err != nil {
 		resp = GetResponse{Payload: payload, ErrSrc: ProtoErr}
@@ -444,6 +504,11 @@ func Action(req ActionRequest) (ActionResponse, error) {
 	var payload []byte
 	var resp ActionResponse
 
+    if (!isUserAuthorizedForAction(req.User)) {
+        resp = ActionResponse{Payload: payload, ErrSrc: ProtoErr}
+        return resp, errors.New("User is not authorized to perform this operation")
+    }
+
 	path := req.Path
 
 	log.Info("Received Action request for path = ", path)
@@ -466,7 +531,8 @@ func Action(req ActionRequest) (ActionResponse, error) {
 		return resp, err
 	}
 
-	dbs, err := getAllDbs()
+	isGetCase := false
+	dbs, err := getAllDbs(isGetCase)
 
 	if err != nil {
 		resp = ActionResponse{Payload: payload, ErrSrc: ProtoErr}
@@ -487,11 +553,259 @@ func Action(req ActionRequest) (ActionResponse, error) {
 	return resp, err
 }
 
+func Bulk(req BulkRequest) (BulkResponse, error) {
+	var err error
+	var keys []db.WatchKeys
+	var errSrc ErrSource
+
+	delResp := make([]SetResponse, len(req.DeleteRequest))
+	replaceResp := make([]SetResponse, len(req.ReplaceRequest))
+	updateResp := make([]SetResponse, len(req.UpdateRequest))
+	createResp := make([]SetResponse, len(req.CreateRequest))
+
+	resp := BulkResponse{DeleteResponse: delResp,
+		ReplaceResponse: replaceResp,
+		UpdateResponse: updateResp,
+		CreateResponse: createResp}
+
+    if (!isUserAuthorizedForSet(req.User)) {
+        return resp, errors.New("User is not authorized to perform this operation")
+    }
+
+	writeMutex.Lock()
+	defer writeMutex.Unlock()
+
+	isWriteDisabled := false
+	d, err := db.NewDB(getDBOptions(db.ConfigDB, isWriteDisabled))
+
+	if err != nil {
+		return resp, err
+	}
+
+	defer d.DeleteDB()
+
+	//Start the transaction without any keys or tables to watch will be added later using AppendWatchTx
+	err = d.StartTx(nil, nil)
+
+	if err != nil {
+        return resp, err
+    }
+
+	for i, _ := range req.DeleteRequest {
+		path := req.DeleteRequest[i].Path
+
+		log.Info("Delete request received with path =", path)
+
+		app, appInfo, err := getAppModule(path)
+
+		if err != nil {
+			errSrc = ProtoErr
+			goto BulkDeleteError
+		}
+
+		err = appInitialize(app, appInfo, path, nil, DELETE)
+
+		if err != nil {
+			errSrc = AppErr
+			goto BulkDeleteError
+		}
+
+		keys, err = (*app).translateDelete(d)
+
+		if err != nil {
+			errSrc = AppErr
+			goto BulkDeleteError
+		}
+
+		err = d.AppendWatchTx(keys, appInfo.tablesToWatch)
+
+		if err != nil {
+			errSrc = AppErr
+			goto BulkDeleteError
+		}
+
+		resp.DeleteResponse[i], err = (*app).processDelete(d)
+
+		if err != nil {
+			errSrc = AppErr
+		}
+
+	BulkDeleteError:
+
+		if err != nil {
+			d.AbortTx()
+			resp.DeleteResponse[i].ErrSrc = errSrc
+			resp.DeleteResponse[i].Err = err
+			return resp, err
+		}
+	}
+
+    for i, _ := range req.ReplaceRequest {
+        path := req.ReplaceRequest[i].Path
+		payload := req.ReplaceRequest[i].Payload
+
+        log.Info("Replace request received with path =", path)
+
+        app, appInfo, err := getAppModule(path)
+
+        if err != nil {
+            errSrc = ProtoErr
+            goto BulkReplaceError
+        }
+
+		log.Info("Bulk replace request received with path =", path)
+		log.Info("Bulk replace request received with payload =", string(payload))
+
+		err = appInitialize(app, appInfo, path, &payload, REPLACE)
+
+        if err != nil {
+            errSrc = AppErr
+            goto BulkReplaceError
+        }
+
+        keys, err = (*app).translateReplace(d)
+
+        if err != nil {
+            errSrc = AppErr
+            goto BulkReplaceError
+        }
+
+        err = d.AppendWatchTx(keys, appInfo.tablesToWatch)
+
+        if err != nil {
+            errSrc = AppErr
+            goto BulkReplaceError
+        }
+
+        resp.ReplaceResponse[i], err = (*app).processReplace(d)
+
+        if err != nil {
+            errSrc = AppErr
+        }
+
+    BulkReplaceError:
+
+        if err != nil {
+            d.AbortTx()
+            resp.ReplaceResponse[i].ErrSrc = errSrc
+            resp.ReplaceResponse[i].Err = err
+            return resp, err
+        }
+    }
+
+	for i, _ := range req.UpdateRequest {
+		path := req.UpdateRequest[i].Path
+		payload := req.UpdateRequest[i].Payload
+
+		log.Info("Update request received with path =", path)
+
+		app, appInfo, err := getAppModule(path)
+
+		if err != nil {
+			errSrc = ProtoErr
+			goto BulkUpdateError
+		}
+
+		err = appInitialize(app, appInfo, path, &payload, UPDATE)
+
+		if err != nil {
+			errSrc = AppErr
+			goto BulkUpdateError
+		}
+
+		keys, err = (*app).translateUpdate(d)
+
+		if err != nil {
+			errSrc = AppErr
+			goto BulkUpdateError
+		}
+
+		err = d.AppendWatchTx(keys, appInfo.tablesToWatch)
+
+		if err != nil {
+			errSrc = AppErr
+			goto BulkUpdateError
+		}
+
+		resp.UpdateResponse[i], err = (*app).processUpdate(d)
+
+		if err != nil {
+			errSrc = AppErr
+		}
+
+	BulkUpdateError:
+
+		if err != nil {
+			d.AbortTx()
+			resp.UpdateResponse[i].ErrSrc = errSrc
+			resp.UpdateResponse[i].Err = err
+			return resp, err
+		}
+	}
+
+	for i, _ := range req.CreateRequest {
+		path := req.CreateRequest[i].Path
+		payload := req.CreateRequest[i].Payload
+
+		log.Info("Create request received with path =", path)
+
+		app, appInfo, err := getAppModule(path)
+
+		if err != nil {
+			errSrc = ProtoErr
+			goto BulkCreateError
+		}
+
+		err = appInitialize(app, appInfo, path, &payload, CREATE)
+
+		if err != nil {
+			errSrc = AppErr
+			goto BulkCreateError
+		}
+
+		keys, err = (*app).translateCreate(d)
+
+		if err != nil {
+			errSrc = AppErr
+			goto BulkCreateError
+		}
+
+		err = d.AppendWatchTx(keys, appInfo.tablesToWatch)
+
+		if err != nil {
+			errSrc = AppErr
+			goto BulkCreateError
+		}
+
+		resp.CreateResponse[i], err = (*app).processCreate(d)
+
+		if err != nil {
+			errSrc = AppErr
+		}
+
+	BulkCreateError:
+
+		if err != nil {
+			d.AbortTx()
+			resp.CreateResponse[i].ErrSrc = errSrc
+			resp.CreateResponse[i].Err = err
+			return resp, err
+		}
+	}
+
+	err = d.CommitTx()
+
+	return resp, err
+}
+
 //Subscribes to the paths requested and sends notifications when the data changes in DB
-func Subscribe(paths []string, q *queue.PriorityQueue, stop chan struct{}) ([]*IsSubscribeResponse, error) {
+func Subscribe(req SubscribeRequest) ([]*IsSubscribeResponse, error) {
 	var err error
 	var sErr error
-	//err = errors.New("Not implemented")
+
+	paths := req.Paths
+	q     := req.Q
+	stop  := req.Stop
 
 	dbNotificationMap := make(map[db.DBNum][]*notificationInfo)
 
@@ -505,7 +819,12 @@ func Subscribe(paths []string, q *queue.PriorityQueue, stop chan struct{}) ([]*I
 			Err:                 nil}
 	}
 
-	dbs, err := getAllDbs()
+    if (!isUserAuthorizedForGet(req.User)) {
+        return resp, errors.New("User is not authorized to perform this operation")
+    }
+
+	isGetCase := true
+	dbs, err := getAllDbs(isGetCase)
 
 	if err != nil {
 		return resp, err
@@ -592,8 +911,9 @@ func Subscribe(paths []string, q *queue.PriorityQueue, stop chan struct{}) ([]*I
 }
 
 //Check if subscribe is supported on the given paths
-func IsSubscribeSupported(paths []string) ([]*IsSubscribeResponse, error) {
+func IsSubscribeSupported(req IsSubscribeRequest) ([]*IsSubscribeResponse, error) {
 
+	paths := req.Paths
 	resp := make([]*IsSubscribeResponse, len(paths))
 
 	for i, _ := range resp {
@@ -604,7 +924,12 @@ func IsSubscribeSupported(paths []string) ([]*IsSubscribeResponse, error) {
 			Err:                 nil}
 	}
 
-	dbs, err := getAllDbs()
+    if (!isUserAuthorizedForGet(req.User)) {
+        return resp, errors.New("User is not authorized to perform this operation")
+    }
+
+	isGetCase := true
+	dbs, err := getAllDbs(isGetCase)
 
 	if err != nil {
 		return resp, err
@@ -650,12 +975,19 @@ func GetModels() ([]ModelData, error) {
 }
 
 //Creates connection will all the redis DBs. To be used for get request
-func getAllDbs() ([db.MaxDB]*db.DB, error) {
+func getAllDbs(isGetCase bool) ([db.MaxDB]*db.DB, error) {
 	var dbs [db.MaxDB]*db.DB
 	var err error
+	var isWriteDisabled bool
+
+	if isGetCase {
+		isWriteDisabled = true
+	} else {
+		isWriteDisabled = false
+	}
 
 	//Create Application DB connection
-	dbs[db.ApplDB], err = db.NewDB(getDBOptions(db.ApplDB))
+	dbs[db.ApplDB], err = db.NewDB(getDBOptions(db.ApplDB, isWriteDisabled))
 
 	if err != nil {
 		closeAllDbs(dbs[:])
@@ -663,7 +995,7 @@ func getAllDbs() ([db.MaxDB]*db.DB, error) {
 	}
 
 	//Create ASIC DB connection
-	dbs[db.AsicDB], err = db.NewDB(getDBOptions(db.AsicDB))
+	dbs[db.AsicDB], err = db.NewDB(getDBOptions(db.AsicDB, isWriteDisabled))
 
 	if err != nil {
 		closeAllDbs(dbs[:])
@@ -671,7 +1003,7 @@ func getAllDbs() ([db.MaxDB]*db.DB, error) {
 	}
 
 	//Create Counter DB connection
-	dbs[db.CountersDB], err = db.NewDB(getDBOptions(db.CountersDB))
+	dbs[db.CountersDB], err = db.NewDB(getDBOptions(db.CountersDB, isWriteDisabled))
 
 	if err != nil {
 		closeAllDbs(dbs[:])
@@ -679,23 +1011,31 @@ func getAllDbs() ([db.MaxDB]*db.DB, error) {
 	}
 
 	//Create Log Level DB connection
-	dbs[db.LogLevelDB], err = db.NewDB(getDBOptions(db.LogLevelDB))
+	dbs[db.LogLevelDB], err = db.NewDB(getDBOptions(db.LogLevelDB, isWriteDisabled))
 
 	if err != nil {
 		closeAllDbs(dbs[:])
 		return dbs, err
 	}
+
+    isWriteDisabled = true 
 
 	//Create Config DB connection
-	dbs[db.ConfigDB], err = db.NewDB(getDBOptions(db.ConfigDB))
+	dbs[db.ConfigDB], err = db.NewDB(getDBOptions(db.ConfigDB, isWriteDisabled))
 
 	if err != nil {
 		closeAllDbs(dbs[:])
 		return dbs, err
 	}
 
+    if isGetCase {
+        isWriteDisabled = true 
+    } else {
+        isWriteDisabled = false
+    }
+
 	//Create Flex Counter DB connection
-	dbs[db.FlexCounterDB], err = db.NewDB(getDBOptions(db.FlexCounterDB))
+	dbs[db.FlexCounterDB], err = db.NewDB(getDBOptions(db.FlexCounterDB, isWriteDisabled))
 
 	if err != nil {
 		closeAllDbs(dbs[:])
@@ -703,7 +1043,15 @@ func getAllDbs() ([db.MaxDB]*db.DB, error) {
 	}
 
 	//Create State DB connection
-	dbs[db.StateDB], err = db.NewDB(getDBOptions(db.StateDB))
+	dbs[db.StateDB], err = db.NewDB(getDBOptions(db.StateDB, isWriteDisabled))
+
+	if err != nil {
+		closeAllDbs(dbs[:])
+		return dbs, err
+	}
+
+    //Create Error DB connection
+    dbs[db.ErrorDB], err = db.NewDB(getDBOptions(db.ErrorDB, isWriteDisabled))
 
 	if err != nil {
 		closeAllDbs(dbs[:])
@@ -734,27 +1082,28 @@ func (val SubscribeResponse) Compare(other queue.Item) int {
 	return -1
 }
 
-func getDBOptions(dbNo db.DBNum) db.Options {
+func getDBOptions(dbNo db.DBNum, isWriteDisabled bool) db.Options {
 	var opt db.Options
 
 	switch dbNo {
 	case db.ApplDB, db.CountersDB:
-		opt = getDBOptionsWithSeparator(dbNo, "", ":", ":")
+		opt = getDBOptionsWithSeparator(dbNo, "", ":", ":", isWriteDisabled)
 		break
-	case db.FlexCounterDB, db.AsicDB, db.LogLevelDB, db.ConfigDB, db.StateDB:
-		opt = getDBOptionsWithSeparator(dbNo, "", "|", "|")
+	case db.FlexCounterDB, db.AsicDB, db.LogLevelDB, db.ConfigDB, db.StateDB, db.ErrorDB:
+		opt = getDBOptionsWithSeparator(dbNo, "", "|", "|", isWriteDisabled)
 		break
 	}
 
 	return opt
 }
 
-func getDBOptionsWithSeparator(dbNo db.DBNum, initIndicator string, tableSeparator string, keySeparator string) db.Options {
+func getDBOptionsWithSeparator(dbNo db.DBNum, initIndicator string, tableSeparator string, keySeparator string, isWriteDisabled bool) db.Options {
 	return (db.Options{
 		DBNo:               dbNo,
 		InitIndicator:      initIndicator,
 		TableNameSeparator: tableSeparator,
 		KeySeparator:       keySeparator,
+		IsWriteDisabled:    isWriteDisabled,
 	})
 }
 

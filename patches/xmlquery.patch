@@ -1,0 +1,33 @@
+diff --git a/node.go b/node.go
+index e86c0c3..028867c 100644
+--- a/node.go
++++ b/node.go
+@@ -48,7 +48,7 @@ type Node struct {
+ 
+ // InnerText returns the text between the start and end tags of the object.
+ func (n *Node) InnerText() string {
+-	var output func(*bytes.Buffer, *Node)
++	/*var output func(*bytes.Buffer, *Node)
+ 	output = func(buf *bytes.Buffer, n *Node) {
+ 		switch n.Type {
+ 		case TextNode:
+@@ -64,7 +64,18 @@ func (n *Node) InnerText() string {
+ 
+ 	var buf bytes.Buffer
+ 	output(&buf, n)
+-	return buf.String()
++	return buf.String()*/
++
++	if (n.Type == TextNode) {
++		return n.Data
++	} else if (n.Type == ElementNode) &&
++	(n.FirstChild != nil) &&
++	(n.FirstChild.Type == TextNode) {
++		return n.FirstChild.Data
++	}
++
++
++	return ""
+ }
+ 
+ func (n *Node) sanitizedData(preserveSpaces bool) string {

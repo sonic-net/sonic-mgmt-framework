@@ -9,11 +9,9 @@
         <PARAM name="parent" help="parent" ptype="SUBCOMMAND" mode="subcommand"> </PARAM>
         <PARAM name="port" help="PTP port config" ptype="SUBCOMMAND" mode="subcommand">
           <PARAM name="Ethernet" help="Interface type" ptype="SUBCOMMAND" mode="subcommand">
-            <PARAM name="ptp_port_number" help="Enter PTP number" ptype="UINT"/>
+            <PARAM name="ptp_port_number" help="Enter PTP port number" ptype="UINT"/>
           </PARAM>
-          <PARAM name="ptp_port_mode" help="Enter ptp port mode" ptype="PTP_PORT_MODE"/>
         </PARAM>
-        <PARAM name="foreign-masters-record" help="foreign masters record" ptype="SUBCOMMAND" mode="subcommand"> </PARAM>
       </PARAM>
       <ACTION>if test "${ptp-subcommands}" = "time-property"; then&#xA;
  python $SONIC_CLI_ROOT/sonic-cli-ptp.py get_ietf_ptp_ptp_instance_list_time_properties_ds 0 ptp_tp_show.j2 &#xA;
@@ -21,8 +19,6 @@
  python $SONIC_CLI_ROOT/sonic-cli-ptp.py get_ietf_ptp_ptp_instance_list_default_ds 0 ptp_clock_show.j2 &#xA;
  elif test "${ptp-subcommands}" = "parent"; then&#xA;
  python $SONIC_CLI_ROOT/sonic-cli-ptp.py get_ietf_ptp_ptp_instance_list_parent_ds 0 ptp_parent_show.j2 &#xA;
- elif test "${ptp-subcommands}" = "foreign-masters-record"; then&#xA;
- echo "nothing"&#xA;
  elif test "${ptp-subcommands}" = "port"; then&#xA;
  python $SONIC_CLI_ROOT/sonic-cli-ptp.py get_ietf_ptp_ptp_instance_list_port_ds_list 0 ${ptp_port_number} ptp_port_show.j2 &#xA;
  elif test "${ptp-subcommands}" = ""; then&#xA;
@@ -44,9 +40,6 @@
         </PARAM>
         <PARAM name="network-transport" help="PTP network transport" ptype="SUBCOMMAND" mode="subcommand">
           <PARAM name="ptp_network_transport_type" help="Enter PTP network transport type" ptype="PTP_TRANSPORT"/>
-        </PARAM>
-        <PARAM name="source-ip" help="PTP source ip address" ptype="SUBCOMMAND" mode="subcommand">
-          <PARAM name="ptp_source_ip" help="Enter PTP source IP address" ptype="IPV4_OR_IPV6_ADDR"/>
         </PARAM>
         <PARAM name="domain" help="PTP domain" ptype="SUBCOMMAND" mode="subcommand">
           <PARAM name="ptp_domain" help="Enter PTP domain value" ptype="RANGE_1_255"/>
@@ -81,7 +74,7 @@
             <PARAM name="del" help="Add Interface" ptype="SUBCOMMAND" mode="subcommand"/>
           </PARAM>
           <PARAM name="Ethernet" help="Interface type" ptype="SUBCOMMAND" mode="subcommand">
-            <PARAM name="ptp_port_number" help="Enter PTP number" ptype="UINT"/>
+            <PARAM name="ptp_port_number" help="Enter PTP port number" ptype="UINT"/>
           </PARAM>
         </PARAM>
       </PARAM>
@@ -91,8 +84,6 @@
  python $SONIC_CLI_ROOT/sonic-cli-ptp.py patch_ietf_ptp_ptp_transparent_clock_default_ds_delay_mechanism ${ptp_delay_mechanism_type}&#xA;
  elif test "${cfg-ptp-subcommands}" = "network-transport"; then&#xA;
  python $SONIC_CLI_ROOT/sonic-cli-ptp.py "network-transport" ${ptp_network_transport_type}&#xA;
- elif test "${cfg-ptp-subcommands}" = "source-ip"; then&#xA;
- python $SONIC_CLI_ROOT/sonic-cli-ptp.py "source-ip" ${ptp_source_ip}&#xA;
  elif test "${cfg-ptp-subcommands}" = "domain"; then&#xA;
  python $SONIC_CLI_ROOT/sonic-cli-ptp.py patch_ietf_ptp_ptp_instance_list_default_ds_domain_number 0 ${ptp_domain}&#xA;
  elif test "${cfg-ptp-subcommands}" = "domain-profile"; then&#xA;

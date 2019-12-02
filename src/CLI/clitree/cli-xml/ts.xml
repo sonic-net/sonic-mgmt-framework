@@ -1,0 +1,172 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE CLISH_MODULE [
+<!ENTITY START_PORT_ID "1">
+<!ENTITY MAX_PORT_ID "32">
+<!ENTITY START_SUB_PORT_ID "1">
+<!ENTITY MAX_SUB_PORT_ID "4">
+<!ENTITY MAX_MTU "9216">
+]>
+<CLISH_MODULE xmlns="http://www.dellemc.com/sonic/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xi="http://www.w3.org/2001/XInclude" xsi:schemaLocation="http://www.dellemc.com/sonic/XMLSchema http://www.dellemc.com/sonic/XMLSchema/clish.xsd">
+
+  <VIEW name="configure-tam-view">
+         <COMMAND name="int-ifa-ts" help="TAM INT IFA TS configuration" view="configure-tam-int-ifa-ts-view" viewid="int-ifa-ts">
+         </COMMAND>
+  </VIEW>
+
+  <VIEW name="enable-view">
+    <!--show tam-int-ifa-ts status -->
+    <COMMAND name="show tam-int-ifa-ts" help="Show TAM INT IFA config info/status ">
+       <PARAM name="tam-int-ifa-ts-subcommands" help="TAM INT IFA TS subcommands" mode="switch" ptype="SUBCOMMAND" optional="true">
+        <PARAM name="supported" help="Check if TAM-INT_IFA-TS is supported" ptype="SUBCOMMAND" mode="subcommand"> </PARAM>
+        <PARAM name="status" help="TAM_INT_IFA_TS Info/Status"  ptype="SUBCOMMAND" mode="subcommand"> </PARAM>
+        <PARAM name="flow" help="TAM_INT_IFA_TS Flow"  ptype="SUBCOMMAND" mode="subcommand"> 
+		<PARAM name="flow-options" help="TAM_INT_IFA_TS Flow Options" mode="switch" ptype="SUBCOMMAND"> 
+		   <PARAM name="flow-name" help="TAM_INT_IFA_TS Info/Status for each flow"  ptype="STRING"> </PARAM>
+		   <PARAM name="all" help="TAM_INT_IFA_TS Info/Status for all flows"  ptype="SUBCOMMAND" mode="subcommand"> </PARAM>
+		</PARAM>
+        </PARAM>
+        <PARAM name="statistics" help="TAM_INT_IFA_TS Statistics" ptype="SUBCOMMAND" mode="subcommand"> 
+		<PARAM name="statistics-options" help="TAM_INT_IFA_TS Statistics Options" mode="switch" ptype="SUBCOMMAND"> 
+		   <PARAM name="flow-name" help="TAM_INT_IFA_TS Statistics for each flow"  ptype="STRING"> </PARAM>
+		   <PARAM name="all" help="TAM_INT_IFA_TS Statistics for all flows"  ptype="SUBCOMMAND" mode="subcommand"> </PARAM>
+		</PARAM>
+        </PARAM>
+       </PARAM>
+      <ACTION> 
+         if test "${tam-int-ifa-ts-subcommands}" = "supported"; then
+            python $SONIC_CLI_ROOT/ts.py -show -supported -templ -showsupported.j2; 
+         elif test "${tam-int-ifa-ts-subcommands}" = "status"; then
+            python $SONIC_CLI_ROOT/ts.py -show -status -templ -showstatus.j2; 
+         elif test "${tam-int-ifa-ts-subcommands}" = "flow"; then
+            python $SONIC_CLI_ROOT/ts.py -show -flow ${flow-name} -templ -showflow.j2;
+         elif test "${tam-int-ifa-ts-subcommands}" = "statistics"; then
+            python $SONIC_CLI_ROOT/ts.py -show -statistics -flow ${flow-name} -templ -showstatisticsflow.j2;
+         fi
+     </ACTION>
+    </COMMAND>
+  </VIEW>
+
+  <VIEW name="configure-tam-int-ifa-ts-view"
+        prompt="${SYSTEM_NAME}(config-int-ifa-ts)# "
+        depth="3">
+
+        <NAMESPACE ref="configure-view"
+                help="false"
+                completion="false"/>
+
+         <COMMAND name="no"
+              help="Negate a command or set its defaults">
+         </COMMAND>
+
+          <COMMAND name="no flow"
+                help="Remove Flow"
+                 >
+          <PARAM
+                 name="flow-options"
+                 help=""
+                 ptype="SUBCOMMAND"
+                 mode="switch"
+                 >
+
+                 <PARAM
+                       name="flow-name"
+                       help="Name of the flow"
+                       ptype="STRING"
+                           >
+                </PARAM>
+
+                <PARAM
+                   name="all"
+                   help="Delete all flows"
+                   ptype="SUBCOMMAND"
+                   mode="subcommand"
+                   >
+                </PARAM>
+         </PARAM>
+      <ACTION> if test "${flow-options}" = "flow-name"; then
+       python $SONIC_CLI_ROOT/ts.py -clear -flow ${flow-name}; elif test "${flow-options}" = "all"; then
+       python $SONIC_CLI_ROOT/ts.py -clear -flow all; fi
+       </ACTION>
+         </COMMAND>
+
+          <COMMAND name="feature"
+                help="Enable or Disable a feature"
+                 >
+          <PARAM
+                 name="feature-options"
+                 help=""
+                 ptype="SUBCOMMAND"
+                 mode="switch"
+                 >
+
+                <PARAM
+                   name="enable"
+                   help="Enable the feature"
+                   ptype="SUBCOMMAND"
+                   mode="subcommand"
+                   >
+                </PARAM>
+
+                <PARAM
+                   name="disable"
+                   help="Disable the feature"
+                   ptype="SUBCOMMAND"
+                   mode="subcommand"
+                   >
+                </PARAM>
+         </PARAM>
+         <ACTION> if test "${feature-options}" = "enable"; then
+		  python $SONIC_CLI_ROOT/ts.py -config -enable;
+	          elif test "${feature-options}" = "disable"; then
+		  python $SONIC_CLI_ROOT/ts.py -config -disable;
+	          fi 
+         </ACTION>
+         </COMMAND>
+
+         <COMMAND
+         name="flow"
+         help="Configure Flow parameters"
+         >
+
+         <PARAM
+                   name="flow-name"
+                   help="Name of the flow"
+                   ptype="STRING"
+                   >
+               </PARAM>
+
+               <PARAM
+                   name="acl-table"
+                   help="Configure acl table name"
+                   ptype="SUBCOMMAND"
+                   mode="subcommand"
+                   >
+               </PARAM>
+
+              <PARAM
+                   name="acl-table-name"
+                   help="ACL Table Name"
+                   ptype="STRING"
+                   >
+              </PARAM>
+               <PARAM
+                   name="acl-rule"
+                   help="Configure acl rule name"
+                   ptype="SUBCOMMAND"
+                   mode="subcommand"
+                   >
+              </PARAM>
+              <PARAM
+                   name="acl-rule-name"
+                   help="ACL Rule Name"
+                   ptype="STRING"
+                   >
+              </PARAM>
+
+          <ACTION>
+               python $SONIC_CLI_ROOT/ts.py -config -flow ${flow-name} -acl_table ${acl-table-name} -acl_rule ${acl-rule-name} 
+          </ACTION>
+         </COMMAND>
+  </VIEW>
+
+</CLISH_MODULE>

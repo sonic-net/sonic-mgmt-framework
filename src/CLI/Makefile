@@ -20,11 +20,13 @@ SHELL = /bin/bash
 .ONESHELL:
 .SHELLFLAGS += -e
 
+TOPDIR  ?= $(abspath ../..)
+CLIDEPS ?= packages
 SUBDIRS := clitree renderer klish 
 export SONIC_CLI_ROOT=$(TOPDIR)/build
 TGT_DIR := $(SONIC_CLI_ROOT)/target
 
-all: packages $(SUBDIRS)
+all: $(CLIDEPS) $(SUBDIRS)
 $(SUBDIRS):
 	$(MAKE) -C $@
 
@@ -35,7 +37,7 @@ all:
     	$(MAKE) -C $$dir -f Makefile $@; \
 	done
 
-	rm -rf $(TOPDIR)/build/cli/*
+	rm -rf $(TOPDIR)/build/cli
 	mv -f $(TGT_DIR) $(TOPDIR)/build/cli
 
 clean:

@@ -10,70 +10,71 @@
       >
   <VIEW name="enable-view">
     <COMMAND
-         name="show image-list"
-         help="Show list of images"
+         name="show image"
+         help="Show image information"
          >
-         <ACTION>
-              python $SONIC_CLI_ROOT/sonic-cli-img.py get_openconfig_platform_components show_image.j2 ${__full_line}
-         </ACTION>
+        <PARAM name="list"
+               help="List images"
+               mode="subcommand"
+               ptype="SUBCOMMAND">
+         </PARAM>
+       <ACTION> python $SONIC_CLI_ROOT/sonic-cli-img.py get_sonic_image_management_sonic_image_management show_image.j2</ACTION>
     </COMMAND>
-
     <COMMAND
          name="image"
          help="Image related commands"
          >
-         <ACTION builtin="clish_nop"/>
     </COMMAND> 
     <COMMAND
 	 name="image set-default"
-	 help="Set default image">
+	 help="Set default boot image">
          <PARAM
 	      name="img-name"
 	      help="Image name"
 	      ptype="STRING"
 	      >
 	 </PARAM>
-         <ACTION>
-	      python $SONIC_CLI_ROOT/sonic-cli-img.py get_openconfig_platform_components ${img-name} ${__full_line}
-	 </ACTION>
+      <ACTION>
+         python $SONIC_CLI_ROOT/sonic-cli-img.py rpc_sonic_image_management_image_default ${img-name} 
+   	 </ACTION>
     </COMMAND>
     <COMMAND
 	 name="image install"
 	 help="Install image">
          <PARAM
 	      name="img-path"
-	      help="Path or url to image"
+	      help="Path(file://filepath) or URL(http:// or https://) to image"
 	      ptype="STRING"
 	      >
 	 </PARAM>
-         <ACTION>
-	      python $SONIC_CLI_ROOT/sonic-cli-img.py get_openconfig_platform_components ${img-path} ${__full_line}
-	 </ACTION>
+       <ACTION> 
+	       python $SONIC_CLI_ROOT/sonic-cli-img.py rpc_sonic_image_management_image_install ${img-path}
+	   </ACTION>
     </COMMAND>
     <COMMAND
-	 name="image set-nextboot"
-	 help="Set image for nextboot">
-         <PARAM
-	      name="img-name"
-	      help="Image name"
-	      ptype="STRING"
-	      >
+	name="image remove"
+	help="Remove an image "
+   	ptype="SUBCOMMAND">
+	<PARAM name="remove_option"
+          help="Remove an image or all unused images."
+          ptype="SUBCOMMAND"
+          mode="switch">
+         <PARAM name="all"
+                help="Remove all images which are not current or next"
+                mode="subcommand"
+                ptype="SUBCOMMAND">
+         </PARAM>          
+         <PARAM name="image"
+                help="Enter image to remove"
+                ptype="STRING">
+         </PARAM>
 	 </PARAM>
-         <ACTION>
-	      python $SONIC_CLI_ROOT/sonic-cli-img.py get_openconfig_platform_components ${img-name} ${__full_line}
-	 </ACTION>
-    </COMMAND>
-    <COMMAND
-	 name="image remove"
-	 help="Remove an image ">
-         <PARAM
-	      name="img-name"
-	      help="Image name"
-	      ptype="STRING"
-	      >
-	 </PARAM>
-         <ACTION>
-	      python $SONIC_CLI_ROOT/sonic-cli-img.py get_openconfig_platform_components ${img-name} ${__full_line}
+   <ACTION>
+    if test "${remove_option}" = "all"; then&#xA;
+        python $SONIC_CLI_ROOT/sonic-cli-img.py rpc_sonic_image_management_image_remove&#xA;    
+     else&#xA;
+        python $SONIC_CLI_ROOT/sonic-cli-img.py rpc_sonic_image_management_image_remove  ${image}&#xA;
+      fi&#xA;   
 	 </ACTION>
     </COMMAND>
   </VIEW>

@@ -3,10 +3,6 @@ module sonic-vxlan {
 	prefix svxlan;
 	yang-version 1.1;
 
-	import ietf-yang-types {
-		prefix yang;
-	}
-
 	import ietf-inet-types {
 		prefix inet;
 	}
@@ -100,6 +96,21 @@ module sonic-vxlan {
 			}
 		}
 	 }
-	}
+     container SUPPRESS_VLAN_NEIGH {
+
+         list SUPPRESS_VLAN_NEIGH_LIST {
+             key "name";
+
+             leaf name {
+                 type string;
+             }
+             leaf suppress {
+                 type string;
+             }
+
+         }
+     }
+
+    }
 
 }

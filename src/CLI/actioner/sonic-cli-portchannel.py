@@ -23,60 +23,36 @@ import json
 import ast
 import collections
 from rpipe_utils import pipestr
-import sonic_portchannel_client
-from sonic_portchannel_client.api.sonic_portchannel_api import SonicPortchannelApi  
-from sonic_portchannel_client.rest import ApiException
-import sonic_port_client
+import cli_client as cc
 from scripts.render_cli import show_cli_output
-
-import urllib3
-urllib3.disable_warnings()
 
 pcDict = {}
 memberDict = {}
 
-plugins = dict()
+def invoke_api(func, args=[]):
+    api = cc.ApiClient()
 
-def register(func):
-    plugins[func.__name__] = func
-    return func
+    if func == 'get_sonic_portchannel_sonic_portchannel_lag_table':
+        path = cc.Path('/restconf/data/sonic-portchannel:sonic-portchannel/LAG_TABLE')
+        return api.get(path)
 
+    if func == 'get_sonic_portchannel_sonic_portchannel_lag_member_table':
+        path = cc.Path('/restconf/data/sonic-portchannel:sonic-portchannel/LAG_MEMBER_TABLE')
+        return api.get(path)
 
-def call_method(name, args):
-    method = plugins[name]
-    return method(args)
+    if func == 'get_sonic_port_sonic_port_port_table_port_table_list_oper_status':
+        path = cc.Path('/restconf/data/sonic-port:sonic-port/PORT_TABLE/PORT_TABLE_LIST={ifname}/oper_status', ifname=args[0])
+        return api.get(path)
 
-def generate_body(func, args):
-    body = None
-    if func.__name__ == 'get_sonic_portchannel_sonic_portchannel_lag_table':
-        keypath = []
-    else:
-       body = {}
-
-    return keypath,body
+    return api.cli_not_implemented(func)
 
 def run(func, args):
+    response = invoke_api(func, args)
 
-    c = sonic_portchannel_client.Configuration()
-    c2 = sonic_port_client.Configuration()
-    c.verify_ssl = False
-    c2.verify_ssl = False
-    aa = sonic_portchannel_client.SonicPortchannelApi(api_client=sonic_portchannel_client.ApiClient(configuration=c))
-    aa2 = sonic_port_client.SonicPortApi(api_client=sonic_port_client.ApiClient(configuration=c2))
-
-    keypath, body = generate_body(func, args)
-
-    try:
-        if body is not None:
-           api_response = getattr(aa,func.__name__)(*keypath, body=body)
-        else :
-           api_response = getattr(aa,func.__name__)(*keypath)
-
-        if api_response is None:
-            print ("Success")
-        else:
+    if response.ok():
+        if response.content is not None:
             # Get Command Output
-            api_response = aa.api_client.sanitize_for_serialization(api_response)
+            api_response = response.content
             laglst =[]
             if 'sonic-portchannel:LAG_TABLE' in api_response:
                 value = api_response['sonic-portchannel:LAG_TABLE']
@@ -85,11 +61,16 @@ def run(func, args):
             if api_response is None:
                 print("Failed")
             else:
-                if func.__name__ == 'get_sonic_portchannel_sonic_portchannel_lag_table':
+                if func == 'get_sonic_portchannel_sonic_portchannel_lag_table':
                     memlst=[]
                     # Get members for all PortChannels
-                    api_response_members = getattr(aa,'get_sonic_portchannel_sonic_portchannel_lag_member_table')(*keypath)
-                    api_response_members = aa.api_client.sanitize_for_serialization(api_response_members)
+                    members_resp = invoke_api('get_sonic_portchannel_sonic_portchannel_lag_member_table')
+                    if not members_resp.ok():
+                        print members_resp.error_message()
+                        return
+
+                    api_response_members = members_resp.content
+
                     if 'sonic-portchannel:LAG_MEMBER_TABLE' in api_response_members:
                         memlst = api_response_members['sonic-portchannel:LAG_MEMBER_TABLE']['LAG_MEMBER_TABLE_LIST']
                     for pc_dict in laglst:
@@ -97,36 +78,22 @@ def run(func, args):
                         pc_dict['type']="Eth"
                         for mem_dict in memlst:
                             if mem_dict['name'] == pc_dict['lagname']:
-                                keypath = [mem_dict['ifname']]
-                                pc_dict['members'].append(mem_dict['ifname'])
+                                ifname = mem_dict['ifname']
+                                oper_status = invoke_api('get_sonic_port_sonic_port_port_table_port_table_list_oper_status', [ifname])
+                                if not oper_status.ok():
+                                    print oper_status.error_message()
+                                    return
+                                oper_status = oper_status.content['sonic-port:oper_status'][0].upper()
+                                pc_dict['members'].append(ifname+"("+oper_status+")")
                     show_cli_output(args[0], laglst)
                 else:
                      return
-    except ApiException as e:
-        if e.body != "":
-            body = json.loads(e.body)
-            if "ietf-restconf:errors" in body:
-                 err = body["ietf-restconf:errors"]
-                 if "error" in err:
-                     errList = err["error"]
-
-                     errDict = {}
-                     for dict in errList:
-                         for k, v in dict.iteritems():
-                              errDict[k] = v
-
-                     if "error-message" in errDict:
-                         print "%Error: " + errDict["error-message"]
-                         return
-                     print "%Error: Transaction Failure"
-                     return
-            print "%Error: Transaction Failure"
-        else:
-            print "Failed"
+    else:
+        print response.error_message()
 
 if __name__ == '__main__':
 
     pipestr().write(sys.argv)
-    func = eval(sys.argv[1], globals(), sonic_portchannel_client.SonicPortchannelApi.__dict__)
+    func = sys.argv[1]
 
     run(func, sys.argv[2:])

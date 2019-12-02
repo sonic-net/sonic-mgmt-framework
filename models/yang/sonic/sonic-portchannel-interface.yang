@@ -48,7 +48,6 @@ module sonic-portchannel-interface {
                 }
 
                 leaf ip_prefix {
-                    mandatory true;
                     type inet:ip-prefix;
 
                 }

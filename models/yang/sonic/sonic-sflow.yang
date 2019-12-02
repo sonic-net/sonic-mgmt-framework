@@ -2,10 +2,6 @@ module sonic-sflow {
         namespace "http://github.com/Azure/sonic-sflow";
         prefix sflow;
 
-	import ietf-yang-types {
-		prefix yang;
-	}
-
 	import ietf-inet-types {
 		prefix inet;
 	}
@@ -79,8 +75,8 @@ module sonic-sflow {
 
                     leaf polling_interval {
                         type uint32 {
-                            range "0..300" {
-                                error-message "sFlow sample rate must be [0-300]";
+                            range "0|5..300" {
+                                error-message "sFlow sample rate must be [0, 5-300]";
                             }
                         }
                     }
