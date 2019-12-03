@@ -492,7 +492,6 @@ limitations under the License.
      </COMMAND>
    </VIEW>
 
-
      <VIEW name="enable-view">
     <!--show nat -->
     <COMMAND
@@ -584,6 +583,13 @@ limitations under the License.
              </PARAM>
          </PARAM>
          <ACTION builtin="clish_nop"></ACTION>
+         <ACTION>
+          if test "${nat-subcommands}" = "config"; then&#xA;
+                  if test "${config-subcommands}" = "globalvalues"; then&#xA;
+                      python $SONIC_CLI_ROOT/sonic-cli-nat.py get_openconfig_nat_nat_instances_instance_config show_nat_global_config.j2&#xA;
+                  fi&#xA;
+          fi&#xA;
+      </ACTION>
      </COMMAND>
 
    </VIEW>

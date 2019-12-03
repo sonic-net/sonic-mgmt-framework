@@ -84,7 +84,6 @@ def invoke_api(func, args=[]):
         path = cc.Path('/restconf/data/openconfig-nat:nat/instances/instance={id}/napt-mapping-table/napt-mapping-entry={externaladdress},{protocol},{externalport}/config', id=args[0],externaladdress=args[1],protocol=nat_protocol_map[args[2]],externalport=args[3])
         body = { "openconfig-nat:config" : {"internal-address": args[4], "internal-port": int(args[5])} }
         l = len(args)
-        A
         if l >= 7:
             body["openconfig-nat:config"].update( {"type": nat_type_map[args[6]] } )
         if l == 8:
@@ -153,6 +152,13 @@ def invoke_api(func, args=[]):
         path = cc.Path('/restconf/data/openconfig-interfaces:interfaces/interface={name}/openconfig-interfaces-ext:nat-zone/config/nat-zone', name=args[1])
         return api.delete(path)
 
+
+    ### GET
+    ## Get NAT Global Config
+    elif func == 'get_openconfig_nat_nat_instances_instance_config':
+        path = cc.Path('/restconf/data/openconfig-nat:nat/instances/instance={id}/config', id=args[0])
+        return api.get(path)
+
     else:
         return api.cli_not_implemented(func)
 
@@ -165,7 +171,7 @@ def run(func, args):
            if response.content is not None:
                # Get Command Output
                api_response = response.content
-               show_cli_output(args[0], api_response)
+               show_cli_output(args[1], api_response)
        else:
            print response.error_message()
 
