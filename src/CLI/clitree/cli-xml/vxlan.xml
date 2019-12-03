@@ -116,7 +116,7 @@
             help="Unset the source Ipv4 address">
            <ACTION> python $SONIC_CLI_ROOT/sonic-cli-vxlan.py delete_sonic_vxlan_sonic_vxlan_vxlan_tunnel_vxlan_tunnel_list ${iface} </ACTION>
         </COMMAND>
-    <COMMAND name="no map" help="Delete VLAN VNI Mapping">
+    <COMMAND name="no map" help="Delete VNI Mapping">
       <PARAM name="vni" help="Configure VNI mapping" ptype="SUBCOMMAND" mode="subcommand"> 
        <PARAM name="vnid" help="VNID" ptype="RANGE_1_65535"> 
         <PARAM name="mapoptions" help="" ptype="SUBCOMMAND" mode="switch"> 
@@ -126,16 +126,21 @@
             <PARAM name="numvid" help="Number" ptype="VLAN_ID" optional="true"> </PARAM>
            </PARAM>
          </PARAM>
+         <PARAM name="vrf" help="Configure VRF Name" ptype="SUBCOMMAND" mode="subcommand">
+         <PARAM name="vrf-name" help="VRF Name" ptype="STRING_63"> </PARAM>
+         </PARAM>
         </PARAM>
        </PARAM>
       </PARAM>
-      <ACTION> 
-        if test "${count}" = ""; then&#xA;
-          python $SONIC_CLI_ROOT/sonic-cli-vxlan.py delete_sonic_vxlan_sonic_vxlan_vxlan_tunnel_map_vxlan_tunnel_map_list ${iface} ${vnid} ${vid} "1"&#xA; 
+      <ACTION>
+        if test "${vrf}" != ""; then&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-vxlan.py delete_sonic_vxlan_map_vrf_vni_list ${iface} ${vnid} ${vrf-name}&#xA;
+        elif test "${count}" = ""; then&#xA;
+          python $SONIC_CLI_ROOT/sonic-cli-vxlan.py delete_sonic_vxlan_sonic_vxlan_vxlan_tunnel_map_vxlan_tunnel_map_list ${iface} ${vnid} ${vid} "1"&#xA;
         else&#xA;
-          python $SONIC_CLI_ROOT/sonic-cli-vxlan.py delete_sonic_vxlan_sonic_vxlan_vxlan_tunnel_map_vxlan_tunnel_map_list ${iface} ${vnid} ${vid} ${numvid}&#xA; 
+          python $SONIC_CLI_ROOT/sonic-cli-vxlan.py delete_sonic_vxlan_sonic_vxlan_vxlan_tunnel_map_vxlan_tunnel_map_list ${iface} ${vnid} ${vid} ${numvid}&#xA;
         fi&#xA;
-      </ACTION> 
+      </ACTION>
     </COMMAND>
         <COMMAND
             name="source-ip"
@@ -160,14 +165,19 @@
            </PARAM>
           </PARAM>
          </PARAM>
+         <PARAM name="vrf" help="Configure VRF name" ptype="SUBCOMMAND" mode="subcommand">
+          <PARAM name="vrf-name" help="VRF Name" ptype="STRING_63"> </PARAM>
+          </PARAM>
         </PARAM>
        </PARAM>
       </PARAM>
       <ACTION> 
-        if test "${count}" = ""; then&#xA;
-          python $SONIC_CLI_ROOT/sonic-cli-vxlan.py patch_sonic_vxlan_sonic_vxlan_vxlan_tunnel_map_vxlan_tunnel_map_list ${iface} ${vnid} ${vid} "1"&#xA; 
+        if test "${vrf}" != ""; then&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-vxlan.py patch_sonic_vxlan_map_vrf_vni_list ${iface} ${vnid} ${vrf-name}&#xA;
+        elif test "${count}" = ""; then&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-vxlan.py patch_sonic_vxlan_sonic_vxlan_vxlan_tunnel_map_vxlan_tunnel_map_list ${iface} ${vnid} ${vid} "1"&#xA;
         else&#xA;
-          python $SONIC_CLI_ROOT/sonic-cli-vxlan.py patch_sonic_vxlan_sonic_vxlan_vxlan_tunnel_map_vxlan_tunnel_map_list ${iface} ${vnid} ${vid} ${numvid}&#xA; 
+            python $SONIC_CLI_ROOT/sonic-cli-vxlan.py patch_sonic_vxlan_sonic_vxlan_vxlan_tunnel_map_vxlan_tunnel_map_list ${iface} ${vnid} ${vid} ${numvid}&#xA;
         fi&#xA;
       </ACTION>
     </COMMAND>
