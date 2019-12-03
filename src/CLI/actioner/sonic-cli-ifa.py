@@ -136,10 +136,6 @@ def get_tam_ifa_flow_stats(args):
     api_response = {}
     api = cc.ApiClient()
 
-    # connect to COUNTERS_DB
-    counters_db = ConfigDBConnector()
-    counters_db.db_connect('COUNTERS_DB')
-
     if len(args) == 0:
        path = cc.Path('/restconf/data/sonic-ifa:sonic-ifa/TAM_INT_IFA_FLOW_TABLE')
     else:
@@ -153,11 +149,22 @@ def get_tam_ifa_flow_stats(args):
                 api_response = response.content['sonic-ifa:TAM_INT_IFA_FLOW_TABLE']['TAM_INT_IFA_FLOW_TABLE_LIST']
             else:
                 api_response = response.content['sonic-ifa:TAM_INT_IFA_FLOW_TABLE_LIST']
+
+            print(api_response)
             for i in range(len(api_response)):
-                acl_counter_key = 'COUNTERS:' + api_response[i]['acl-table-name'] + ':' + api_response[i]['acl-rule-name']
-                flow_stats = counters_db.get_all(counters_db.COUNTERS_DB, acl_counter_key)
-                api_response[i]['Packets'] = flow_stats['Packets']
-                api_response[i]['Bytes'] = flow_stats['Bytes']
+                rule = api_response[i]['acl-rule-name']
+                print(rule)
+                # tokenize the rulename with '_' and fetch last number
+                tmpseq = (rule.split("_", 1))[-1]
+                print(tmpseq)
+                path = cc.Path('/restconf/data/openconfig-acl:acl/acl-sets/acl-set={name},{type}/acl-entries/acl-entry={seqid}', name=api_response[i]['acl-table-name'], type="ACL_IPV4", seqid=tmpseq)
+                flow_stats = api.get(path)
+                if flow_stats.ok():
+                    if flow_stats.content:
+                        print(flow_stats.content['openconfig-acl:acl-entry'])
+                        aclstate = flow_stats.content['openconfig-acl:acl-entry']["state"]
+                        api_response[i]['Packets'] = aclstate["matched-packets"]
+                        api_response[i]['Bytes'] = aclstate["matched-bytes"]
 
     show_cli_output("show_tam_ifa_flow_stats.j2", api_response)
 
