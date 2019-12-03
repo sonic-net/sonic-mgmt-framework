@@ -1,0 +1,6 @@
+{% if json_output and 'sonic-tam-drop-monitor:TAM_DROP_MONITOR_AGING_INTERVAL_TABLE' in json_output -%}
+{% set drop_aging_interval_info = json_output['sonic-tam-drop-monitor:TAM_DROP_MONITOR_AGING_INTERVAL_TABLE']['TAM_DROP_MONITOR_AGING_INTERVAL_TABLE_LIST'] %}
+{{'Aging Interval : '}}{{drop_aging_interval_info[0]['aging-interval']}}
+{% endif %}
+
+

@@ -54,8 +54,8 @@ module sonic-tam-drop-monitor {
 			key "name";
 
 			leaf name {
-				type string {
-					pattern 'aging';
+				type enumeration {
+					enum aging;
 				}
 			}
 
@@ -130,7 +130,7 @@ module sonic-tam-drop-monitor {
 			}
 		}
 
-		leaf flowgroup_id {
+		leaf flowgroup-id {
 			type uint32 {
 				range "1..655356"{
 					error-app-tag "Invalid Flow Group Identifier.";
