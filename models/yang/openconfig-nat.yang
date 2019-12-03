@@ -760,14 +760,16 @@ module openconfig-nat {
             description
                 "NAT zone counters data.";
             list nat-zone-entry {
-                key "id";
+                key "zone-id";
                 description
                     "NAT zone entry.";
 
-                leaf id {
+                leaf zone-id {
                     description
                         "NAT zone id.";
-                    type uint8;
+                    type leafref {
+                        path "../config/zone-id";
+                    }
                 }
                 container config {
                     uses nat-zone-config;
@@ -784,7 +786,7 @@ module openconfig-nat {
     }
 
     grouping nat-zone-config {
-        leaf id {
+        leaf zone-id {
             description
                 "NAT zone id.";
             type uint8;

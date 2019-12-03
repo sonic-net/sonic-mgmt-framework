@@ -404,7 +404,7 @@ var DbToYang_nat_zone_key_xfmr KeyXfmrDbToYang = func(inParams XfmrParams) (map[
     var err error
 
     key := inParams.key
-    rmap["zoneid"],_ = strconv.Atoi(key)
+    rmap["zone-id"],_ = strconv.Atoi(key)
     log.Info("YangToDb_nat_zone_key_xfmr : - ", rmap)
     return rmap, err
 }
