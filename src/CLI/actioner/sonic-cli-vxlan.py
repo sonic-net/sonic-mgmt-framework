@@ -176,7 +176,7 @@ def invoke(func, args):
 #show vxlan interface 
 def vxlan_show_vxlan_interface(args):
 
-    print("VXLAN INFO:")
+    print ""
     api_response = invoke("get_list_sonic_vxlan_sonic_vxlan_vxlan_tunnel_vxlan_tunnel_list", args)
     if api_response.ok():
         response = api_response.content
@@ -184,8 +184,8 @@ def vxlan_show_vxlan_interface(args):
 	    print("no vxlan configuration")
 	elif response is not None:
            tunnel_list = response['sonic-vxlan:VXLAN_TUNNEL_LIST']
-           print("VTEP Name : " + tunnel_list[0]['name'])
-           print("VTEP Source IP : " + tunnel_list[0]['src_ip'])
+           print("{0:<16} {1:} {2:<8}".format("VTEP Name", ":", tunnel_list[0]['name']))
+           print("{0:<16} {1:} {2:<8}".format("VTEP Source IP",":",tunnel_list[0]['src_ip']))
 	       #show_cli_output(args[0], vxlan_info)
 	#print(api_response.error_message())
 
@@ -197,17 +197,18 @@ def vxlan_show_vxlan_interface(args):
 	    print("no evpn configuration")
 	elif response is not None:
            nvo_list = response['sonic-vxlan:EVPN_NVO_LIST']
-           print("EVPN NVO Name : " + nvo_list[0]['name'])
-           print("EVPN VTEP : " + nvo_list[0]['source_vtep'])
-	       #show_cli_output(args[0], vxlan_info)
+           print("{0:<16} {1:} {2:<8}".format("EVPN NVO Name",":",nvo_list[0]['name']))
+           print("{0:<16} {1:} {2:<8}".format("EVPN VTEP",":",nvo_list[0]['source_vtep']))
 
     return
 
 #show vxlan map 
 def vxlan_show_vxlan_vlanvnimap(args):
 
-    print("VLAN-VNI Mapping")
+    #print("VLAN-VNI Mapping")
+    print("")
     print("{0:^8}  {1:^8}".format('VLAN','VNI'))
+    print("{0:^8}  {1:^8}".format('======','====='))
     api_response = invoke("get_list_sonic_vxlan_sonic_vxlan_vxlan_tunnel_map_vxlan_tunnel_map_list", args)
     if api_response.ok():
         response = api_response.content
@@ -225,8 +226,10 @@ def vxlan_show_vxlan_vlanvnimap(args):
 #show vxlan tunnel 
 def vxlan_show_vxlan_tunnel(args):
 
-    print("{:*^70s}".format("List of Tunnels"))
+    #print("{:*^70s}".format("List of Tunnels"))
+    print("")
     print("{0:^20} {1:^15} {2:^15} {3:^8} {4:^12}".format('Name','SIP','DIP','source','operstatus'))
+    print("{0:^20} {1:^15} {2:^15} {3:^8} {4:^12}".format('======','=====','=====','========','============'))
     api_response = invoke("get_list_sonic_vxlan_sonic_vxlan_vxlan_tunnel_table_vxlan_tunnel_table_list", args)
     if api_response.ok():
         response = api_response.content
@@ -244,7 +247,9 @@ def vxlan_show_vxlan_tunnel(args):
 #show vxlan evpn remote vni
 def vxlan_show_vxlan_evpn_remote_vni(args):
     arg_length = len(args);
+    print("")
     print("{0:^20} {1:^15} {2:^10}".format('Vlan', 'Tunnel', 'VNI'))
+    print("{0:^20} {1:^15} {2:^10}".format('======', '========', '====='))
     api_response = invoke("get_list_sonic_vxlan_sonic_vxlan_evpn_remote_vni_table_evpn_remote_vni_table_list", args)
     if api_response.ok():
         response = api_response.content
@@ -260,7 +265,9 @@ def vxlan_show_vxlan_evpn_remote_vni(args):
 #show vxlan evpn remote mac
 def vxlan_show_vxlan_evpn_remote_mac(args):
     arg_length = len(args);
+    print("")
     print("{0:^20} {1:^17} {2:^20} {3:^15} {4:^10}".format('Vlan', 'Mac', 'Type', 'Tunnel', 'VNI'))
+    print("{0:^20} {1:^17} {2:^20} {3:^15} {4:^10}".format('======', '=====', '======', '========', '====='))
     api_response = invoke("get_list_sonic_vxlan_sonic_vxlan_fdb_table_vxlan_fdb_table_list", args)
     if api_response.ok():
         response = api_response.content
