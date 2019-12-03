@@ -149,6 +149,26 @@ def invoke(func, args):
         keypath = cc.Path('/restconf/data/sonic-vxlan:sonic-vxlan/VXLAN_FDB_TABLE/VXLAN_FDB_TABLE_LIST')
         return aa.get(keypath)
 
+    #[un]configure VRF VNI MAP
+    if (func == 'patch_sonic_vxlan_map_vrf_vni_list' or
+        func == 'delete_sonic_vxlan_map_vrf_vni_list'):
+        #keypath = cc.Path('/restconf/data/sonic-vrf:sonic-vrf/VRF/VRF_LIST={vrf_name}', vrf_name=args[2])
+        keypath = cc.Path('/restconf/data/sonic-vrf:sonic-vrf/VRF/VRF_LIST={vrf_name}/vni', vrf_name=args[2])
+
+        if (func.startswith("patch") is True):
+        #body = {
+        #   "sonic-vrf:VRF_LIST": [
+        #       {
+        #            "vrf_name": args[2],
+        #            "vni": int(args[1])
+        #       }
+        #   ]
+        # }
+            body = { "sonic-vrf:vni": int(args[1])}
+        else:
+            body = { "sonic-vrf:vni": 0}
+        return aa.patch(keypath, body)
+
     #[un]configure Neighbour Suppression
     if (func == 'patch_sonic_vxlan_sonic_vxlan_suppress_vlan_neigh_suppress_vlan_neigh_list' or
         func == 'delete_sonic_vxlan_sonic_vxlan_suppress_vlan_neigh_suppress_vlan_neigh_list'):
