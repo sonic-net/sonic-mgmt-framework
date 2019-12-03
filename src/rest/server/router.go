@@ -23,6 +23,7 @@ import (
 	"bytes"
 	"fmt"
 	"net/http"
+	"sort"
 	"strings"
 	"time"
 	"translib"
@@ -119,11 +120,13 @@ func AddRoute(name, method, pattern string, handler http.HandlerFunc) {
 // github.com/gorilla/mux router object.
 func NewRouter() *mux.Router {
 	router := mux.NewRouter().StrictSlash(true).UseEncodedPath()
+	allPaths := make(map[string]bool)
 
 	glog.Infof("Server has %d paths", len(allRoutes))
 
 	// Collect swagger generated route information
 	for _, route := range allRoutes {
+		allPaths[route.Pattern] = true
 		handler := withMiddleware(route.Handler, route.Name)
 
 		glog.V(2).Infof(
@@ -135,6 +138,12 @@ func NewRouter() *mux.Router {
 			Path(route.Pattern).
 			Name(route.Name).
 			Handler(handler)
+	}
+
+	// Register common OPTIONS handler for every path template
+	oh := withMiddleware(http.HandlerFunc(commonOptionsHandler), "optionsHandler")
+	for p := range allPaths {
+		router.Methods("OPTIONS").Path(p).Handler(oh)
 	}
 
 	// Documentation and test UI
@@ -150,22 +159,43 @@ func NewRouter() *mux.Router {
 		router.Methods("POST").Path("/refresh").Handler(http.HandlerFunc(Refresh))
 	}
 
-	// Metadata discovery handler
-	metadataHandler := http.HandlerFunc(hostMetadataHandler)
-	router.Methods("GET").Path("/.well-known/host-meta").
-		Handler(loggingMiddleware(metadataHandler, "hostMetadataHandler"))
-
-	// yanglib version handler
-	yverHandler := http.HandlerFunc(yanglibVersionHandler)
-	router.Methods("GET").Path("/restconf/yang-library-version").
-		Handler(loggingMiddleware(yverHandler, "yanglibVersionHandler"))
-
 	// To download yang models
 	ydirHandler := http.FileServer(http.Dir(translib.GetYangPath()))
 	router.Methods("GET").PathPrefix("/models/yang/").
 		Handler(http.StripPrefix("/models/yang/", ydirHandler))
 
 	return router
+}
+
+// commonOptionsHandler is the common HTTP OPTIONS method handler
+// for all path based routes. Resolves allowed methods for current
+// path template by traversing allRoutes cache.
+func commonOptionsHandler(w http.ResponseWriter, r *http.Request) {
+	var methods []string
+	var hasPatch bool
+	t, _ := mux.CurrentRoute(r).GetPathTemplate()
+
+	// Collect allowed method names
+	for _, r := range allRoutes {
+		if r.Pattern == t {
+			methods = append(methods, r.Method)
+			if r.Method == "PATCH" {
+				hasPatch = true
+			}
+		}
+	}
+
+	// "Allow" header
+	if len(methods) != 0 {
+		methods = append(methods, "OPTIONS") // OPTIONS will not be part of allRoutes
+		sort.Strings(methods)
+		w.Header().Set("Allow", strings.Join(methods, ", "))
+	}
+
+	// "Accept-Patch" header for RESTCONF data paths
+	if hasPatch && strings.HasPrefix(t, restconfDataPathPrefix) {
+		w.Header().Set("Accept-Patch", mimeYangDataJSON)
+	}
 }
 
 // loggingMiddleware returns a handler which times and logs the request.

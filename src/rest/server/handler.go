@@ -26,6 +26,7 @@ import (
 	"net/url"
 	"strings"
 	"translib"
+
 	"github.com/golang/glog"
 	"github.com/gorilla/mux"
 )
@@ -201,10 +202,10 @@ func escapeKeyValue(val string) string {
 
 // trimRestconfPrefix removes "/restconf/data" prefix from the path.
 func trimRestconfPrefix(path string) string {
-	pattern := "/restconf/data/"
+	pattern := restconfDataPathPrefix
 	k := strings.Index(path, pattern)
 	if k < 0 {
-		pattern = "/restconf/operations/"
+		pattern = restconfOperPathPrefix
 		k = strings.Index(path, pattern)
 	}
 	if k >= 0 {
@@ -217,7 +218,7 @@ func trimRestconfPrefix(path string) string {
 // isOperationsRequest checks if a request is a RESTCONF operations
 // request (rpc or action)
 func isOperationsRequest(r *http.Request) bool {
-	k := strings.Index(r.URL.Path, "/restconf/operations/")
+	k := strings.Index(r.URL.Path, restconfOperPathPrefix)
 	return k >= 0
 	//FIXME URI pattern will not help identifying yang action APIs.
 	//Use swagger generated API name instead???
@@ -286,4 +287,3 @@ func invokeTranslib(r *http.Request, path string, payload []byte) (int, []byte, 
 
 	return status, content, err
 }
-

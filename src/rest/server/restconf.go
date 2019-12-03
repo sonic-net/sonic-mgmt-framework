@@ -21,12 +21,32 @@ package server
 
 import (
 	"bytes"
+	"encoding/json"
 	"net/http"
 	"strings"
 )
 
 const mimeYangDataJSON = "application/yang-data+json"
 const mimeYangDataXML = "application/yang-data+xml"
+const restconfPathPrefix = "/restconf/"
+const restconfDataPathPrefix = "/restconf/data/"
+const restconfOperPathPrefix = "/restconf/operations/"
+
+func init() {
+
+	// Metadata discovery handler
+	AddRoute("hostMetadataHandler", "GET", "/.well-known/host-meta", hostMetadataHandler)
+
+	// yanglib version handler
+	AddRoute("yanglibVersionHandler", "GET", "/restconf/yang-library-version", yanglibVersionHandler)
+
+	// RESTCONF capability handler
+	AddRoute("capabilityHandler", "GET",
+		"/restconf/data/ietf-restconf-monitoring:restconf-state/capabilities", capabilityHandler)
+	AddRoute("capabilityHandler", "GET",
+		"/restconf/data/ietf-restconf-monitoring:restconf-state/capabilities/capability", capabilityHandler)
+
+}
 
 // hostMetadataHandler function handles "GET /.well-known/host-meta"
 // request as per RFC6415. RESTCONF specification requires this for
@@ -60,4 +80,36 @@ func yanglibVersionHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", contentType)
 	w.Write(data.Bytes())
+}
+
+// capabilityHandler serves RESTCONF capability requests -
+// "GET /restconf/data/ietf-restconf-monitoring:restconf-state/capabilities"
+func capabilityHandler(w http.ResponseWriter, r *http.Request) {
+	var c struct {
+		Capabilities struct {
+			Capability []string `json:"capability"`
+		} `json:"capabilities"`
+	}
+
+	c.Capabilities.Capability = append(c.Capabilities.Capability,
+		"urn:ietf:params:restconf:capability:defaults:1.0?basic-mode=report-all")
+
+	var data []byte
+	if strings.HasSuffix(r.URL.Path, "/capabilities") {
+		data, _ = json.Marshal(&c)
+	} else {
+		data, _ = json.Marshal(&c.Capabilities)
+	}
+
+	// A hack to add module prefix
+	// TODO find better method.. My be ygot?
+	if bytes.HasPrefix(data, []byte("{\"")) {
+		var buff bytes.Buffer
+		buff.WriteString("{\"ietf-restconf-monitoring:")
+		buff.Write(data[2:])
+		data = buff.Bytes()
+	}
+
+	w.Header().Set("Content-Type", mimeYangDataJSON)
+	w.Write(data)
 }
