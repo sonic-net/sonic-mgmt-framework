@@ -697,7 +697,7 @@ module openconfig-nat {
             type string;
         }
 
-        leaf nat-type {
+        leaf type {
             description
                 "Type of the NAT to be done, Source NAPT (SNAT) or
                 Destination NAPT(DNAT).";

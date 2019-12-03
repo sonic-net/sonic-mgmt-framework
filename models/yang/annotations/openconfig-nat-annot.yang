@@ -343,7 +343,7 @@ module openconfig-nat-annot {
             sonic-ext:field-name "nat_pool";
         }
     }
-    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-acl-pool-binding/oc-nat:nat-acl-pool-binding-entry/oc-nat:config/oc-nat:nat-type {
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-acl-pool-binding/oc-nat:nat-acl-pool-binding-entry/oc-nat:config/oc-nat:type {
         deviate add {
             sonic-ext:field-transformer "nat_type_field_xfmr";
         }
@@ -371,7 +371,7 @@ module openconfig-nat-annot {
             sonic-ext:field-name "nat_pool";
         }
     }
-    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-acl-pool-binding/oc-nat:nat-acl-pool-binding-entry/oc-nat:state/oc-nat:nat-type {
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-acl-pool-binding/oc-nat:nat-acl-pool-binding-entry/oc-nat:state/oc-nat:type {
         deviate add {
             sonic-ext:field-transformer "nat_type_field_xfmr";
         }
