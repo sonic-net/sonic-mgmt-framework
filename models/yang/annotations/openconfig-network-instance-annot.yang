@@ -123,7 +123,13 @@ module openconfig-network-instance-annot {
             sonic-ext:db-name "STATE_DB";
       }
     }
-
+/*
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp {
+        deviate add {
+            sonic-ext:subtree-transformer "bgp_global_subtree_xfmr";
+        }
+    }
+*/
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol {
         deviate add {
             sonic-ext:key-transformer "network_instance_protocol_key_xfmr";

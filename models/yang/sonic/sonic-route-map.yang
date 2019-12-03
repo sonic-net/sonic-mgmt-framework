@@ -1,13 +1,30 @@
 module sonic-route-map {
     namespace "http://github.com/Azure/sonic-route-map";
     prefix srmap;
+    yang-version 1.1;
+
+    import ietf-yang-types {
+        prefix yang;
+    }
 
     import ietf-inet-types {
         prefix inet;
     }
-    
-    import ietf-yang-types {
-        prefix yang;
+
+    import sonic-port {
+        prefix prt;
+    }
+
+    import sonic-portchannel {
+        prefix spc;
+    }
+
+    import sonic-routing-policy-sets {
+        prefix srpolsets;
+    }
+
+    import sonic-vlan-interface {
+        prefix svlanint;
     }
  
     organization
@@ -36,6 +53,20 @@ module sonic-route-map {
             "RFC 2178 OSPF Version 2
             RFC 5130 A Policy Control Mechanism in IS-IS Using
             Administrative Tags";
+    }
+
+    typedef route-map-intf {
+        type union {
+            type leafref {
+                path "/prt:sonic-port/prt:PORT/prt:PORT_LIST/prt:ifname";
+            }
+            type leafref {
+                path "/spc:sonic-portchannel/spc:PORTCHANNEL/spc:PORTCHANNEL_LIST/spc:name";
+            }
+            type leafref {
+                path "/svlanint:sonic-vlan-interface/svlanint:VLAN_INTERFACE/svlanint:VLAN_INTERFACE_LIST/svlanint:vlanName";
+            }
+        }
     }
 
     container sonic-route-map {
@@ -68,11 +99,13 @@ module sonic-route-map {
                 }
 
                 leaf match_interface{
-                    type string;
+                    type route-map-intf;
                 }
 
                 leaf match_prefix_set{
-                    type string;
+                    type leafref {
+                        path "/srpolsets:sonic-routing-policy-sets/srpolsets:PREFIX_SET/srpolsets:PREFIX_SET_LIST/srpolsets:name";
+                    }
                 }
 
                 leaf match_protocol {
@@ -80,7 +113,9 @@ module sonic-route-map {
                 }
 
                 leaf match_next_hop_set {
-                    type string;
+                    type leafref {
+                        path "/srpolsets:sonic-routing-policy-sets/srpolsets:PREFIX_SET/srpolsets:PREFIX_SET_LIST/srpolsets:name";
+                    }
                 }
 
                 leaf-list match_neighbor {
@@ -110,18 +145,26 @@ module sonic-route-map {
                 }
 
                 leaf match_community{
-                    type string;
+                    type leafref {
+                        path "/srpolsets:sonic-routing-policy-sets/srpolsets:COMMUNITY_SET/srpolsets:COMMUNITY_SET_LIST/srpolsets:name";
+                    }
                 }
 
                 leaf match_ext_community{
-                    type string;
+                    type leafref {
+                        path "/srpolsets:sonic-routing-policy-sets/srpolsets:EXTENDED_COMMUNITY_SET/srpolsets:EXTENDED_COMMUNITY_SET_LIST/srpolsets:name";
+                    }
                 }
 
                 leaf match_as_path{
-                    type string;
+                    type leafref {
+                        path "/srpolsets:sonic-routing-policy-sets/srpolsets:AS_PATH_SET/srpolsets:AS_PATH_SET_LIST/srpolsets:name";
+                    }
                 }
                 leaf call_route_map {
-                    type string;
+                    type leafref {
+                        path "../../../ROUTE_MAP_SET/ROUTE_MAP_SET_LIST/name";
+                    }
                 }
 
                 leaf set_origin{
@@ -153,7 +196,9 @@ module sonic-route-map {
                 }
 
                 leaf set_community_ref {
-                    type string;
+                    type leafref {
+                        path "/srpolsets:sonic-routing-policy-sets/srpolsets:COMMUNITY_SET/srpolsets:COMMUNITY_SET_LIST/srpolsets:name";
+                    }
                 }
 
                 leaf set_ext_community_inline {
@@ -161,7 +206,9 @@ module sonic-route-map {
                 }
 
                 leaf set_ext_community_ref {
-                    type string;
+                    type leafref {
+                        path "/srpolsets:sonic-routing-policy-sets/srpolsets:EXTENDED_COMMUNITY_SET/srpolsets:EXTENDED_COMMUNITY_SET_LIST/srpolsets:name";
+                    }
                 }
 
             }
