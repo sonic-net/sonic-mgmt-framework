@@ -121,7 +121,6 @@ def get_tam_ifa_status(args):
     response = api.get(path)
     if response.ok():
         if response.content:
-            print(response.content)
             api_response['feature'] = response.content['sonic-ifa:TAM_INT_IFA_FEATURE_TABLE']['TAM_INT_IFA_FEATURE_TABLE_LIST']
 
     path = cc.Path('/restconf/data/sonic-ifa:sonic-ifa/TAM_INT_IFA_FLOW_TABLE')
@@ -150,18 +149,14 @@ def get_tam_ifa_flow_stats(args):
             else:
                 api_response = response.content['sonic-ifa:TAM_INT_IFA_FLOW_TABLE_LIST']
 
-            print(api_response)
             for i in range(len(api_response)):
                 rule = api_response[i]['acl-rule-name']
-                print(rule)
                 # tokenize the rulename with '_' and fetch last number
                 tmpseq = (rule.split("_", 1))[-1]
-                print(tmpseq)
                 path = cc.Path('/restconf/data/openconfig-acl:acl/acl-sets/acl-set={name},{type}/acl-entries/acl-entry={seqid}', name=api_response[i]['acl-table-name'], type="ACL_IPV4", seqid=tmpseq)
                 flow_stats = api.get(path)
                 if flow_stats.ok():
                     if flow_stats.content:
-                        print(flow_stats.content['openconfig-acl:acl-entry'])
                         aclstate = flow_stats.content['openconfig-acl:acl-entry']["state"]
                         api_response[i]['Packets'] = aclstate["matched-packets"]
                         api_response[i]['Bytes'] = aclstate["matched-bytes"]
