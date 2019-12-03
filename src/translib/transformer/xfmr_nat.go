@@ -542,12 +542,19 @@ var DbToYang_nat_type_field_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (
     targetUriPath, err := getYangPathFromUri(inParams.uri)
     var tblName string
 
-    if strings.HasPrefix(targetUriPath, "/openconfig-nat:nat/instances/instance/napt-mapping-table/napt-mapping-entry") {
+    if strings.HasPrefix(targetUriPath, "/openconfig-nat:nat/instances/instance/napt-mapping-table/napt-mapping-entry/config") {
         tblName = STATIC_NAPT
+    } else if strings.HasPrefix(targetUriPath, "/openconfig-nat:nat/instances/instance/napt-mapping-table/napt-mapping-entry/state") {
+        tblName = NAPT_TABLE
+    } else if strings.HasPrefix(targetUriPath, "/openconfig-nat:nat/instances/instance/nat-mapping-table/nat-mapping-entry/config") {
+        tblName = STATIC_NAT
+    } else if strings.HasPrefix(targetUriPath, "/openconfig-nat:nat/instances/instance/nat-mapping-table/nat-mapping-entry/state") {
+        tblName = NAT_TABLE
     } else if strings.HasPrefix(targetUriPath, "/openconfig-nat:nat/instances/instance/nat-acl-pool-binding/nat-acl-pool-binding-entry") {
         tblName = NAT_BINDINGS
     }else {
-        tblName = STATIC_NAT
+        log.Info("DbToYang_nat_type_field_xfmr: Invalid URI: %s\n", targetUriPath)
+        return result, errors.New("Invalid URI " + targetUriPath)
     }
 
     if _, ok := data[tblName]; ok {
