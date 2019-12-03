@@ -28,8 +28,7 @@ import (
     "translib/db"
     "translib/ocbinds"
     "github.com/openconfig/ygot/ytypes"
-	"github.com/openconfig/goyang/pkg/yang"
-
+    "github.com/openconfig/goyang/pkg/yang"
     log "github.com/golang/glog"
 )
 
@@ -160,10 +159,9 @@ func mapFillDataUtil(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requ
 	xpathInfo := xYangSpecMap[xpath]
 
 	if len(xpathInfo.xfmrField) > 0 {
-		uri = uri + "/" + name
 
 		/* field transformer present */
-		log.Infof("Transformer function(\"%v\") invoked for yang path(\"%v\").", xpathInfo.xfmrField, xpath)
+		log.Infof("Transformer function(\"%v\") invoked for yang path(\"%v\"). uri: %v", xpathInfo.xfmrField, xpath, uri)
 		path, _ := ygot.StringToPath(uri, ygot.StructuredPath, ygot.StringSlicePath)
 		for _, p := range path.Elem {
 			pathSlice := strings.Split(p.Name, ":")
@@ -419,12 +417,20 @@ func dbMapDelete(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requestU
 					result[child] = make(map[string]db.Value)
 				}
 			}
+
 			if len(result) > 0 {
 				resultMap[oper][db.ConfigDB] = result
 			}
+
 			if len(subOpDataMap) > 0 {
-				for o, d := range subOpDataMap {
-					resultMap[o] = *d
+				for op, data := range subOpDataMap {
+					if len(*data) > 0 {
+						for dbType, dbData := range (*data) {
+							if len(dbData) > 0 {
+								mapCopy(resultMap[op][dbType], (*subOpDataMap[op])[dbType])
+							}
+						}
+					}
 				}
 
 			}
@@ -600,13 +606,15 @@ func dbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requestU
 	var result = make(map[string]map[string]db.Value)
 	subOpDataMap := make(map[int]*RedisDbMap)
 
-	root := xpathRootNameGet(uri)
 	if isSonicYang(uri) {
 		err = sonicYangReqToDbMapCreate(jsonData, result)
 		resultMap[oper] = make(RedisDbMap)
 		resultMap[oper][db.ConfigDB] = result
 	} else {
-		err = yangReqToDbMapCreate(d, ygRoot, oper, root, uri, "", "", jsonData, result, subOpDataMap, tblXpathMap, txCache)
+		log.Info("Value of jsonData: ", jsonData)
+		xpath, keyName, _ := xpathKeyExtract(d, ygRoot, oper, uri, uri, subOpDataMap, txCache)
+		xpathPrefix := parentXpathGet(xpath)
+		err = yangReqToDbMapCreate(d, ygRoot, oper, uri, uri, xpathPrefix, keyName, jsonData, result, subOpDataMap, tblXpathMap, txCache)
 		if err != nil {
 			return err
 		}
@@ -741,7 +749,6 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
 						pathAttr = strings.Split(pathAttr, ":")[1]
 					}
 					xpath  = xpathPrefix + "/" + pathAttr
-					curUri = uri + "/" + pathAttr
 				}
 				_, ok := xYangSpecMap[xpath]
 				log.Infof("slice/map data: curKey(\"%v\"), xpath(\"%v\"), curUri(\"%v\").",
@@ -790,6 +797,7 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
 						pathAttr = strings.Split(pathAttr, ":")[1]
 					}
 					xpath := xpathPrefix + "/" + pathAttr
+					log.Infof("LEAF Case: xpath: %v, xpathPrefix: %v, pathAttr: %v", xpath, xpathPrefix, pathAttr)
 					if len(xYangSpecMap[xpath].xfmrFunc) == 0 {
 						value := jData.MapIndex(key).Interface()
 						log.Infof("data field: key(\"%v\"), value(\"%v\").", key, value)
@@ -800,11 +808,26 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
 							pathAttr, value, xpathPrefix)
 							return retErr
 						}
+					} else {
+						log.Infof("write: key(\"%v\"), xpath(\"%v\"), uri(%v).",key, xpath, uri)
+						curYgotNode, nodeErr := yangNodeForUriGet(uri, ygRoot)
+						if nodeErr != nil {
+							curYgotNode = nil
+						}
+						inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, uri, requestUri, oper, curKey, nil, subOpDataMap, curYgotNode, txCache)
+						ret, err := XlateFuncCall(yangToDbXfmrFunc(xYangSpecMap[xpath].xfmrFunc), inParams)
+						if err != nil {
+							return nil
+						}
+						if  ret != nil {
+							mapCopy(result, ret[0].Interface().(map[string]map[string]db.Value))
+						}
 					}
 				}
 			}
 		}
 	}
+
 	return retErr
 }
 

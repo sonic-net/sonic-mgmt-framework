@@ -40,35 +40,42 @@ def invoke_api(func, args=[]):
                                                                                   "type": args[1],
                                                                                   "enabled": True if args[2] == "True" else False } } ] }
         return api.patch(keypath, body)
+
     elif func == 'delete_openconfig_network_instance_network_instances_network_instance':
         keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}', name=args[0])
-        body = { "openconfig-network-instance:network-instance": [ { "name": args[0],
-                                                                     "config" : { "name": args[0],
-                                                                                  "type": args[1],
-                                                                                  "enabled": True if args[2] == "True" else False } } ] }
-        return api.patch(keypath, body)
-    elif func == 'get_openconfig_network_instance_network_instances_network_instance':
-        if args[0] == 'mgmt':
-	    keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/config', name=args[0])
-        else:
-	    keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance/config')
+        return api.delete(keypath)
+
+    elif func == 'get_openconfig_network_instance_network_instances_network_instances':
+	keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance')
         return api.get(keypath)
+
+    elif func == 'get_openconfig_network_instance_network_instances_network_instance':
+	keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/config', name=args[0])
+        return api.get(keypath)
+
     else:
         body = {}
 
     return api.cli_not_implemented(func)
 
 def run(func, args):
-    response = invoke_api(func, args)
+    try:
+        api_response = invoke_api(func, args)
 
-    if response.ok():
-        if response.content is not None:
-            # Get Command Output
-            api_response = response.content
-            if api_response is None:
-                print("%Error: Transaction Failure")
-    else:
-        print response.error_message()
+        if api_response.ok():
+            response = api_response.content
+            if response is None:
+                return
+            else:
+                show_cli_output(args[1], response)
+
+        else:
+            # error response
+            print api_response.error_message()
+
+    except:
+            # system/network error
+            print "%Error: Transaction Failure"
 
 if __name__ == '__main__':
 
