@@ -136,6 +136,7 @@ module openconfig-network-instance-annot {
         }
     }
 
+
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global {
         deviate add {
             sonic-ext:db-name "CONFIG_DB";
@@ -228,7 +229,7 @@ module openconfig-network-instance-annot {
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:route-selection-options/oc-netinst:state/oc-bgp-ext:compare-confed-as-path {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:route-selection-options/oc-netinst:config/oc-bgp-ext:compare-confed-as-path {
       deviate add {
           sonic-ext:field-name "compare_confed_as_path";
       }
