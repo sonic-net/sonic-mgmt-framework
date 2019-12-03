@@ -19,43 +19,42 @@
 package transformer
 
 import (
-	"errors"
-	log "github.com/golang/glog"
-	"strconv"
-	"strings"
-	"translib/db"
+    "errors"
+    log "github.com/golang/glog"
+    "strconv"
+    "strings"
     "translib/ocbinds"
 )
 
 func init() {
-	XlateFuncBind("YangToDb_nat_instance_key_xfmr", YangToDb_nat_instance_key_xfmr)
-	XlateFuncBind("DbToYang_nat_instance_key_xfmr", DbToYang_nat_instance_key_xfmr)
-	XlateFuncBind("YangToDb_nat_global_key_xfmr", YangToDb_nat_global_key_xfmr)
-	XlateFuncBind("DbToYang_nat_global_key_xfmr", DbToYang_nat_global_key_xfmr)
-	XlateFuncBind("YangToDb_nat_enable_xfmr", YangToDb_nat_enable_xfmr)
-	XlateFuncBind("DbToYang_nat_enable_xfmr", DbToYang_nat_enable_xfmr)
-        XlateFuncBind("YangToDb_napt_mapping_key_xfmr", YangToDb_napt_mapping_key_xfmr)
-        XlateFuncBind("DbToYang_napt_mapping_key_xfmr", DbToYang_napt_mapping_key_xfmr)
-        XlateFuncBind("YangToDb_napt_mapping_state_key_xfmr", YangToDb_napt_mapping_state_key_xfmr)
-        XlateFuncBind("DbToYang_napt_mapping_state_key_xfmr", DbToYang_napt_mapping_state_key_xfmr)
-        XlateFuncBind("YangToDb_nat_mapping_key_xfmr", YangToDb_nat_mapping_key_xfmr)
-        XlateFuncBind("DbToYang_nat_mapping_key_xfmr", DbToYang_nat_mapping_key_xfmr)
-        XlateFuncBind("YangToDb_nat_pool_key_xfmr", YangToDb_nat_pool_key_xfmr)
-        XlateFuncBind("DbToYang_nat_pool_key_xfmr", DbToYang_nat_pool_key_xfmr)
-        XlateFuncBind("YangToDb_nat_ip_field_xfmr", YangToDb_nat_ip_field_xfmr)
-        XlateFuncBind("DbToYang_nat_ip_field_xfmr", DbToYang_nat_ip_field_xfmr)
-        XlateFuncBind("YangToDb_nat_binding_key_xfmr", YangToDb_nat_binding_key_xfmr)
-        XlateFuncBind("DbToYang_nat_binding_key_xfmr", DbToYang_nat_binding_key_xfmr)
-        XlateFuncBind("YangToDb_nat_zone_key_xfmr", YangToDb_nat_zone_key_xfmr)
-        XlateFuncBind("DbToYang_nat_zone_key_xfmr", DbToYang_nat_zone_key_xfmr)
-        XlateFuncBind("YangToDb_nat_twice_mapping_key_xfmr", YangToDb_nat_twice_mapping_key_xfmr)
-        XlateFuncBind("DbToYang_nat_twice_mapping_key_xfmr", DbToYang_nat_twice_mapping_key_xfmr)
-        XlateFuncBind("YangToDb_napt_twice_mapping_key_xfmr", YangToDb_napt_twice_mapping_key_xfmr)
-        XlateFuncBind("DbToYang_napt_twice_mapping_key_xfmr", DbToYang_napt_twice_mapping_key_xfmr)
-        XlateFuncBind("YangToDb_nat_type_field_xfmr", YangToDb_nat_type_field_xfmr)
-        XlateFuncBind("DbToYang_nat_type_field_xfmr", DbToYang_nat_type_field_xfmr)
-        XlateFuncBind("YangToDb_nat_entry_type_field_xfmr", YangToDb_nat_entry_type_field_xfmr)
-        XlateFuncBind("DbToYang_nat_entry_type_field_xfmr", DbToYang_nat_entry_type_field_xfmr)
+    XlateFuncBind("YangToDb_nat_instance_key_xfmr", YangToDb_nat_instance_key_xfmr)
+    XlateFuncBind("DbToYang_nat_instance_key_xfmr", DbToYang_nat_instance_key_xfmr)
+    XlateFuncBind("YangToDb_nat_global_key_xfmr", YangToDb_nat_global_key_xfmr)
+    XlateFuncBind("DbToYang_nat_global_key_xfmr", DbToYang_nat_global_key_xfmr)
+    XlateFuncBind("YangToDb_nat_enable_xfmr", YangToDb_nat_enable_xfmr)
+    XlateFuncBind("DbToYang_nat_enable_xfmr", DbToYang_nat_enable_xfmr)
+    XlateFuncBind("YangToDb_napt_mapping_key_xfmr", YangToDb_napt_mapping_key_xfmr)
+    XlateFuncBind("DbToYang_napt_mapping_key_xfmr", DbToYang_napt_mapping_key_xfmr)
+    XlateFuncBind("YangToDb_napt_mapping_state_key_xfmr", YangToDb_napt_mapping_state_key_xfmr)
+    XlateFuncBind("DbToYang_napt_mapping_state_key_xfmr", DbToYang_napt_mapping_state_key_xfmr)
+    XlateFuncBind("YangToDb_nat_mapping_key_xfmr", YangToDb_nat_mapping_key_xfmr)
+    XlateFuncBind("DbToYang_nat_mapping_key_xfmr", DbToYang_nat_mapping_key_xfmr)
+    XlateFuncBind("YangToDb_nat_pool_key_xfmr", YangToDb_nat_pool_key_xfmr)
+    XlateFuncBind("DbToYang_nat_pool_key_xfmr", DbToYang_nat_pool_key_xfmr)
+    XlateFuncBind("YangToDb_nat_ip_field_xfmr", YangToDb_nat_ip_field_xfmr)
+    XlateFuncBind("DbToYang_nat_ip_field_xfmr", DbToYang_nat_ip_field_xfmr)
+    XlateFuncBind("YangToDb_nat_binding_key_xfmr", YangToDb_nat_binding_key_xfmr)
+    XlateFuncBind("DbToYang_nat_binding_key_xfmr", DbToYang_nat_binding_key_xfmr)
+    XlateFuncBind("YangToDb_nat_zone_key_xfmr", YangToDb_nat_zone_key_xfmr)
+    XlateFuncBind("DbToYang_nat_zone_key_xfmr", DbToYang_nat_zone_key_xfmr)
+    XlateFuncBind("YangToDb_nat_twice_mapping_key_xfmr", YangToDb_nat_twice_mapping_key_xfmr)
+    XlateFuncBind("DbToYang_nat_twice_mapping_key_xfmr", DbToYang_nat_twice_mapping_key_xfmr)
+    XlateFuncBind("YangToDb_napt_twice_mapping_key_xfmr", YangToDb_napt_twice_mapping_key_xfmr)
+    XlateFuncBind("DbToYang_napt_twice_mapping_key_xfmr", DbToYang_napt_twice_mapping_key_xfmr)
+    XlateFuncBind("YangToDb_nat_type_field_xfmr", YangToDb_nat_type_field_xfmr)
+    XlateFuncBind("DbToYang_nat_type_field_xfmr", DbToYang_nat_type_field_xfmr)
+    XlateFuncBind("YangToDb_nat_entry_type_field_xfmr", YangToDb_nat_entry_type_field_xfmr)
+    XlateFuncBind("DbToYang_nat_entry_type_field_xfmr", DbToYang_nat_entry_type_field_xfmr)
 }
 
 const (
@@ -168,23 +167,6 @@ func findProtocolByValue(m map[uint8]string, value string) uint8 {
     return 0
 }
 
-func getKeySeparator (dbId db.DBNum) (string) {
-    var sep string
-
-    if dbId == db.ConfigDB {
-        sep = "|"
-    } else if dbId == db.ApplDB {
-        sep = ":"
-    } else if dbId == db.StateDB {
-        sep = "|"
-    } else if dbId == db.CountersDB {
-        sep = ":"
-    } else {
-        sep = "|"
-    }
-    return sep
-}
-
 var YangToDb_napt_mapping_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (string, error) {
     var napt_key string
     var err error
@@ -206,8 +188,7 @@ var YangToDb_napt_mapping_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (
         log.Info("YangToDb_napt_mapping_key_xfmr - Invalid protocol : ", protocol);
         return napt_key, nil
     }
-
-    key_sep = getKeySeparator(inParams.curDb)
+    key_sep = "|"
     napt_key = extAddress + key_sep + protocol_map[uint8(protocol)] + key_sep + extPort
     log.Info("YangToDb_napt_mapping_key_xfmr : Key : ", napt_key)
     return napt_key, err
@@ -219,8 +200,7 @@ var DbToYang_napt_mapping_key_xfmr KeyXfmrDbToYang = func(inParams XfmrParams) (
     var key_sep string
 
     napt_key := inParams.key
-    key_sep = getKeySeparator(inParams.curDb)
-
+    key_sep = "|"
     key := strings.Split(napt_key, key_sep)
     if len(key) < 3 {
         err = errors.New("Invalid key for NAPT ampping entry.")
@@ -256,8 +236,7 @@ var YangToDb_napt_mapping_state_key_xfmr KeyXfmrYangToDb = func(inParams XfmrPar
         log.Info("YangToDb_napt_mapping_key_xfmr - Invalid protocol : ", protocol);
         return napt_key, nil
     }
-
-    key_sep = getKeySeparator(inParams.curDb)
+    key_sep = ":"
     napt_key = protocol_map[uint8(protocol)] + key_sep + extAddress + key_sep + extPort
     log.Info("YangToDb_napt_counters_key_xfmr: Key : ", napt_key)
     return napt_key, err
@@ -269,7 +248,7 @@ var DbToYang_napt_mapping_state_key_xfmr KeyXfmrDbToYang = func(inParams XfmrPar
     var key_sep string
 
     napt_key := inParams.key
-    key_sep = getKeySeparator(inParams.curDb)
+    key_sep = ":"
 
     key := strings.Split(napt_key, key_sep)
     if len(key) < 3 {
@@ -425,7 +404,8 @@ var YangToDb_nat_twice_mapping_key_xfmr KeyXfmrYangToDb = func(inParams XfmrPara
         log.Info("YangToDb_nat_twice_mapping_key_xfmr : Invalid key params.")
         return nat_key, err
     }
-    key_sep = getKeySeparator(inParams.curDb)
+    key_sep = ":"
+
     nat_key = srcIp + key_sep + dstIp
     log.Info("YangToDb_nat_twice_mapping_key_xfmr : Key : ", nat_key)
     return nat_key, err
@@ -436,7 +416,8 @@ var DbToYang_nat_twice_mapping_key_xfmr KeyXfmrDbToYang = func(inParams XfmrPara
     var err error
 
     nat_key := inParams.key
-    key_sep := getKeySeparator(inParams.curDb)
+    var key_sep string
+    key_sep = ":"
 
     key := strings.Split(nat_key, key_sep)
     if len(key) < 2 {
@@ -475,7 +456,8 @@ var YangToDb_napt_twice_mapping_key_xfmr KeyXfmrYangToDb = func(inParams XfmrPar
         return napt_key, nil
     }
 
-    key_sep = getKeySeparator(inParams.curDb)
+    key_sep = ":"
+
     napt_key = protocol_map[uint8(protocol)] + key_sep + srcIp + key_sep + srcPort + key_sep + dstIp + key_sep + dstPort
     log.Info("YangToDb_napt_twice_mapping_key_xfmr : Key : ", napt_key)
     return napt_key, err
@@ -485,8 +467,9 @@ var DbToYang_napt_twice_mapping_key_xfmr KeyXfmrDbToYang = func(inParams XfmrPar
     rmap := make(map[string]interface{})
     var err error
 
+    var key_sep string
     nat_key := inParams.key
-    key_sep := getKeySeparator(inParams.curDb)
+    key_sep = ":"
 
     key := strings.Split(nat_key, key_sep)
     if len(key) < 5 {
