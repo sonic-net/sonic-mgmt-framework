@@ -16,7 +16,7 @@
     <VIEW name="enable-view">
     <COMMAND name="show tam int-ifa-ts" help="Show TAM IFA info"/>	    
     <COMMAND name="show tam int-ifa-ts supported" help="Show TAM IFA TS feature info" mode="subcommand" ptype="SUBCOMMAND">
-      <ACTION>python $SONIC_CLI_ROOT/sonic-cli-tam-int-ifa-fs.py get_sonic_tam_int_ifa_ts_sonic_tam_int_ifa_ts_tam_int_ifa_ts_feature_table show_int_ifa_ts_feature.j2</ACTION>
+      <ACTION>python $SONIC_CLI_ROOT/sonic-cli-tam-int-ifa-fs.py get_tam_int_ifa_ts_supported</ACTION>
     </COMMAND>
     <COMMAND name="show tam int-ifa-ts flow" help="Show TAM IFA TS flow info" mode="subcommand" ptype="SUBCOMMAND">
       <PARAM name="name" help="Name of the flow" ptype="STRING_32" optional="true"> </PARAM>
@@ -34,7 +34,7 @@
       <ACTION>python $SONIC_CLI_ROOT/sonic-cli-tam-int-ifa-fs.py get_tam_ifa_ts_status;</ACTION>
     </COMMAND>
     <COMMAND name="show tam int-ifa-ts statistics" help="Show TAM IFA TS Statistics" mode="subcommand" ptype="SUBCOMMAND">
-      <PARAM name="name" help="Name of the flow" ptype="STRING_32" optional="true"> </PARAM>
+      <PARAM name="name" help="Name of the flow" ptype="STRING_32"> </PARAM>
       <ACTION>
 	   python $SONIC_CLI_ROOT/ts.py -show -statistics -flow ${name} -templ -showstatisticsflow.j2;
       </ACTION>
@@ -56,35 +56,21 @@
           <COMMAND name="no flow"
                 help="Remove Flow"
                  >
-          <PARAM
-                 name="flow-options"
-                 help=""
-                 ptype="SUBCOMMAND"
-                 mode="switch"
-                 >
+	   <PARAM
+	       name="flow-name"
+	       help="Name of the flow"
+	       ptype="STRING"
+		   >
+           </PARAM>
 
-                 <PARAM
-                       name="flow-name"
-                       help="Name of the flow"
-                       ptype="STRING"
-                           >
-                </PARAM>
+	   <ACTION>
+		   if test "${flow-name}" = "all"; then
+		   python $SONIC_CLI_ROOT/sonic-cli-tam-int-ifa-fs.py delete_list_sonic_tam_int_ifa_ts_sonic_tam_int_ifa_ts_tam_int_ifa_ts_flow_table_tam_int_ifa_ts_flow_table_list;
+		   else
+		   python $SONIC_CLI_ROOT/sonic-cli-tam-int-ifa-fs.py delete_sonic_tam_int_ifa_ts_sonic_tam_int_ifa_ts_tam_int_ifa_ts_flow_table_tam_int_ifa_ts_flow_table_list ${flow-name};
+		   fi
+	   </ACTION>
 
-                <PARAM
-                   name="all"
-                   help="Delete all flows"
-                   ptype="SUBCOMMAND"
-                   mode="subcommand"
-                   >
-                </PARAM>
-         </PARAM>
-	 <ACTION> 
-		 if test "${flow-options}" = "flow-name"; then
-		 python $SONIC_CLI_ROOT/sonic-cli-tam-int-ifa-fs.py delete_list_sonic_tam_int_ifa_ts_sonic_tam_int_ifa_ts_tam_int_ifa_ts_flow_table_tam_int_ifa_ts_flow_table_list ${flow-name}; 
-		 elif test "${flow-options}" = "all"; then
-       python $SONIC_CLI_ROOT/sonic-cli-tam-int-ifa-fs.py delete_list_sonic_tam_int_ifa_ts_sonic_tam_int_ifa_ts_tam_int_ifa_ts_flow_table_tam_int_ifa_ts_flow_table_list;
-                 fi
-       </ACTION>
          </COMMAND>
 
           <COMMAND name="feature"

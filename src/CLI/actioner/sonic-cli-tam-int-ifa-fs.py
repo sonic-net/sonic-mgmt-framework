@@ -5,6 +5,7 @@ import re
 import cli_client as cc
 from rpipe_utils import pipestr
 from scripts.render_cli import show_cli_output
+from swsssdk import ConfigDBConnector
 import urllib3
 urllib3.disable_warnings()
 
@@ -37,8 +38,12 @@ def invoke_api(func, args):
        body = { "sonic-tam-int-ifa-ts:TAM_INT_IFA_TS_FLOW_TABLE_LIST": [ bodydict ] }
        return api.patch(path, body)
 
-    elif func == 'delete_list_sonic_tam_int_ifa_ts_sonic_tam_int_ifa_ts_tam_int_ifa_ts_flow_table_tam_int_ifa_ts_flow_table_list':
+    elif func == 'delete_sonic_tam_int_ifa_ts_sonic_tam_int_ifa_ts_tam_int_ifa_ts_flow_table_tam_int_ifa_ts_flow_table_list':
        path = cc.Path('/restconf/data/sonic-tam-int-ifa-ts:sonic-tam-int-ifa-ts/TAM_INT_IFA_TS_FLOW_TABLE/TAM_INT_IFA_TS_FLOW_TABLE_LIST={name}', name=args[0])
+       return api.delete(path)
+
+    elif func == 'delete_list_sonic_tam_int_ifa_ts_sonic_tam_int_ifa_ts_tam_int_ifa_ts_flow_table_tam_int_ifa_ts_flow_table_list':
+       path = cc.Path('/restconf/data/sonic-tam-int-ifa-ts:sonic-tam-int-ifa-ts/TAM_INT_IFA_TS_FLOW_TABLE/TAM_INT_IFA_TS_FLOW_TABLE_LIST')
        return api.delete(path)
 
     else:
@@ -57,10 +62,11 @@ def get_tam_ifa_ts_status(args):
             api_response['device'] = response.content['sonic-tam:TAM_DEVICE_TABLE']['TAM_DEVICE_TABLE_LIST']
 
     path = cc.Path('/restconf/data/sonic-tam-int-ifa-ts:sonic-tam-int-ifa-ts/TAM_INT_IFA_TS_FEATURE_TABLE')
-    response = api.get(path)
-    if response.ok():
-        if response.content:
+    response = api.get(path)                                                                               
+    if response.ok():                                                                                      
+        if response.content:                                                                               
             api_response['feature'] = response.content['sonic-tam-int-ifa-ts:TAM_INT_IFA_TS_FEATURE_TABLE']['TAM_INT_IFA_TS_FEATURE_TABLE_LIST']
+
 
     path = cc.Path('/restconf/data/sonic-tam-int-ifa-ts:sonic-tam-int-ifa-ts/TAM_INT_IFA_TS_FLOW_TABLE')
     response = api.get(path)
@@ -69,6 +75,25 @@ def get_tam_ifa_ts_status(args):
             api_response['flow'] = response.content['sonic-tam-int-ifa-ts:TAM_INT_IFA_TS_FLOW_TABLE']['TAM_INT_IFA_TS_FLOW_TABLE_LIST']
 
     show_cli_output("show_tam_ifa_ts_status.j2", api_response)
+
+
+def get_tam_int_ifa_ts_supported(args):
+    api_response = {}
+
+    # connect to APPL_DB
+    app_db = ConfigDBConnector()
+    app_db.db_connect('APPL_DB')
+
+    key = 'SWITCH_TABLE:switch'
+    data = app_db.get(app_db.APPL_DB, key, 'ts_supported')
+
+    if data and data == 'True':
+        api_response['feature'] = data
+    else:
+        api_response['feature'] = 'False'
+
+    show_cli_output("show_tam_ifa_ts_feature_supported.j2", api_response)
+
 
 def run(func, args):
     response = invoke_api(func, args)
@@ -103,6 +128,8 @@ if __name__ == '__main__':
     func = sys.argv[1]
     if func == 'get_tam_ifa_ts_status':
         get_tam_ifa_ts_status(sys.argv[2:])
+    if func == 'get_tam_int_ifa_ts_supported':
+        get_tam_int_ifa_ts_supported(sys.argv[2:])
 
     run(func, sys.argv[2:])
 
