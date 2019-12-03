@@ -50,6 +50,10 @@ def invoke_api(func, args=[]):
         path = cc.Path('/restconf/data/sonic-vxlan:sonic-vxlan')
         return api.get(path)
 
+    if func == 'get_sonic_vxlan_remote_vni':
+        path = cc.Path('/restconf/data/sonic-vxlan:sonic-vxlan/EVPN_REMOTE_VNI_TABLE/EVPN_REMOTE_VNI_TABLE_LIST')
+        return api.get(path)
+
     return api.cli_not_implemented(func)
 
 def getVlanId(key):
@@ -57,6 +61,18 @@ def getVlanId(key):
         return int(key)
     except ValueError:
         return key
+
+def updateVxlanMembers(vlanName, remoteip):
+    if vlanDict.get(vlanName) == None:
+        ifModeDict = {}
+
+        ifModeDict['Vxlan_' + remoteip] = 'untagged'
+        ifData = ifInfo(ifModeDict)
+        vlanDict[vlanName] = ifData
+    else:
+        ifData = vlanDict.get(vlanName)
+        existingifDict = ifData.ifModeDict
+        existingifDict['Vxlan_' + remoteip] = 'untagged'
 
 def updateVlanToIntfMap(vlanTuple, vlanId):
     for dict in vlanTuple:
@@ -152,6 +168,25 @@ def run(func, args):
                     if 'VLAN_TABLE_LIST' in vlanCont:
                          vlanTup = vlanCont['VLAN_TABLE_LIST']
                          updateVlanInfoMap(vlanTup, args[0])
+
+                func1 = 'get_sonic_vxlan_remote_vni'
+                response2 = invoke_api(func1, args)
+                if response2.ok():
+                   response2content = response2.content
+                   if response2content is not None:
+                       # Get Command Output
+                       #api_response2 = response2.content
+                       if 'sonic-vxlan:EVPN_REMOTE_VNI_TABLE_LIST' in response2content:
+                           tunnel_vni_list = response2content['sonic-vxlan:EVPN_REMOTE_VNI_TABLE_LIST']
+                           vlanid = 'all'
+                           if args[0]:
+                              vlanid = args[0]
+                              
+                           for iter in tunnel_vni_list:
+                               if vlanid == 'all' or vlanid == iter['vlan']:
+                                 updateVxlanMembers(iter['vlan'][4:],iter['remote_vtep'])
+                               #Add the remote_ip in the corresponding vlan member list
+                               #iter['vlan'] iter['remote_vtep']
 
             if 'sonic-vxlan:sonic-vxlan' in api_response:
                 value = api_response['sonic-vxlan:sonic-vxlan']
