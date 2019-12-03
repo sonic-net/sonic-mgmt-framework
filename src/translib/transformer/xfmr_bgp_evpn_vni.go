@@ -1,9 +1,28 @@
+////////////////////////////////////////////////////////////////////////////////
+//                                                                            //
+//  Copyright 2019 Broadcom. The term Broadcom refers to Broadcom Inc. and/or //
+//  its subsidiaries.                                                         //
+//                                                                            //
+//  Licensed under the Apache License, Version 2.0 (the "License");           //
+//  you may not use this file except in compliance with the License.          //
+//  You may obtain a copy of the License at                                   //
+//                                                                            //
+//     http://www.apache.org/licenses/LICENSE-2.0                             //
+//                                                                            //
+//  Unless required by applicable law or agreed to in writing, software       //
+//  distributed under the License is distributed on an "AS IS" BASIS,         //
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  //
+//  See the License for the specific language governing permissions and       //
+//  limitations under the License.                                            //
+//                                                                            //
+////////////////////////////////////////////////////////////////////////////////
+
 package transformer
 
 import (
     "errors"
     "strings"
-    //"translib/ocbinds"
+    "translib/ocbinds"
     log "github.com/golang/glog"
 )
 
@@ -21,6 +40,8 @@ func init () {
     XlateFuncBind("DbToYang_bgp_rt_type_fld_xfmr", DbToYang_bgp_rt_type_fld_xfmr)
     XlateFuncBind("YangToDb_bgp_evpn_vni_rt_key_xfmr", YangToDb_bgp_evpn_vni_rt_key_xfmr)
     XlateFuncBind("DbToYang_bgp_evpn_vni_rt_key_xfmr", DbToYang_bgp_evpn_vni_rt_key_xfmr)
+    XlateFuncBind("YangToDb_bgp_advertise_fld_xfmr", YangToDb_bgp_advertise_fld_xfmr)
+    XlateFuncBind("DbToYang_bgp_advertise_fld_xfmr", DbToYang_bgp_advertise_fld_xfmr)
 }
 
 
@@ -356,4 +377,40 @@ var DbToYang_bgp_evpn_vni_rt_key_xfmr KeyXfmrDbToYang = func(inParams XfmrParams
     rmap["route-target"]   = routeTarget
 
     return rmap, nil
+}
+
+
+var YangToDb_bgp_advertise_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
+    res_map := make(map[string]string)
+
+    var err error
+    afi_safi_list, _ := inParams.param.([]ocbinds.E_OpenconfigBgpTypes_AFI_SAFI_TYPE)
+    log.Info("YangToDb_bgp_advertise_fld_xfmr: afi_safi_list:", afi_safi_list)
+
+    for _, afi_safi := range afi_safi_list {
+
+        if (afi_safi == ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_IPV4_UNICAST) {
+            res_map["advertise-ipv4-unicast"] = "true"
+        }  else if (afi_safi == ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_IPV6_UNICAST) {
+            res_map["advertise-ipv6-unicast"] = "true"
+        } else {
+            err = errors.New("Unsupported afi_safi");
+            return res_map, err
+        }
+    }
+    return res_map, nil
+}
+
+var DbToYang_bgp_advertise_fld_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (map[string]interface{}, error) {
+
+    var err error
+    result := make(map[string]interface{})
+
+    entry_key := inParams.key
+    afiSafiKey := strings.Split(entry_key, "|")
+    afiSafi:= afiSafiKey[2]
+
+    result["advertise-list"] = afiSafi
+
+    return result, err
 }

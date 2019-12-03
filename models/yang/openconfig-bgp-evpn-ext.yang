@@ -83,55 +83,6 @@ module openconfig-bgp-evpn-ext {
     }//end list
   }
 
-  grouping bgp-common-mp-afi-safi-config {
-    description
-    "Configuration parameters used for BGP AFI-SAFIs";
-
-    leaf afi-safi-name {
-      type identityref {
-        base oc-bgp-types:AFI_SAFI_TYPE;
-      }
-      description "AFI,SAFI";
-    }
-
-    leaf enabled {
-      type boolean;
-      default false;
-      description
-      "This leaf indicates whether the AFI-SAFI is
-      enabled for the neighbour or group";
-    }
-  }
-
-
-  grouping advertise-afi-safi-list {
-    description
-    "List of address-families associated with the BGP instance";
-
-    list afi-safi {
-      key "afi-safi-name";
-
-      description
-      "AFI,SAFI configuration available for the
-      neighbour or group";
-
-      leaf afi-safi-name {
-        type leafref {
-          path "../config/afi-safi-name";
-        }
-        description
-        "Reference to the AFI-SAFI name used as a key
-        for the AFI-SAFI list";
-      }
-
-      container config {
-        description
-        "Configuration parameters for the AFI-SAFI";
-        uses bgp-common-mp-afi-safi-config;
-      }
-    }
-  }
-
   // augment statements
 
   augment "/oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol"
@@ -142,18 +93,19 @@ module openconfig-bgp-evpn-ext {
       description "Advertise all VNIs";
     }
 
+    leaf-list advertise-list {
+      type identityref {
+        base oc-bgp-types:AFI_SAFI_TYPE;
+      }
+      description "AFI,SAFI";
+    }
+
     uses bgp-common-mp-l2vpn-evpn-vni-config;
 
     container vnis {
       description
       "VNI configuration";
       uses bgp-common-mp-l2vpn-evpn-list;
-    }
-
-    container advertise {
-      description
-      "Address family specific configuration";
-      uses advertise-afi-safi-list;
     }
 
     container default-originate {
