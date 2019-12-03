@@ -149,9 +149,9 @@ var IntfTypeTblMap = map[E_InterfaceType]IntfTblData {
 }
 
 var dbIdToTblMap = map[db.DBNum][]string {
-    db.ConfigDB: {"PORT", "INTERFACE", "MGMT_PORT", "MGMT_INTERFACE","VLAN", "VLAN_MEMBER", "VLAN_INTERFACE", "PORTCHANNEL", "PORTCHANNEL_INTERFACE", "PORTCHANNEL_MEMBER", "LOOPBACK_INTERFACE"},
-    db.ApplDB  : {"PORT_TABLE", "INTF_TABLE", "MGMT_PORT_TABLE", "MGMT_INTF_TABLE", "VLAN_TABLE", "VLAN_MEMBER_TABLE", "LAG_TABLE"},
-    db.StateDB : {"PORT_TABLE", "INTERFACE_TABLE", "MGMT_PORT_TABLE", "MGMT_INTERFACE_TABLE", "LAG_TABLE"},
+    db.ConfigDB: {"PORT", "MGMT_PORT", "VLAN", "PORTCHANNEL", "LOOPBACK_INTERFACE"},
+    db.ApplDB  : {"PORT_TABLE", "MGMT_PORT_TABLE", "VLAN_TABLE", "LAG_TABLE"},
+    db.StateDB : {"PORT_TABLE", "MGMT_PORT_TABLE", "LAG_TABLE"},
 }
 
 var intfOCToSpeedMap = map[ocbinds.E_OpenconfigIfEthernet_ETHERNET_SPEED] string {
@@ -261,10 +261,8 @@ var DbToYang_intf_tbl_key_xfmr  KeyXfmrDbToYang = func(inParams XfmrParams) (map
     log.Info("Entering DbToYang_intf_tbl_key_xfmr")
     res_map := make(map[string]interface{})
 
-    pathInfo := NewPathInfo(inParams.uri)
-    ifName:= pathInfo.Var("name")
-    log.Info("Interface Name = ", ifName)
-    res_map["name"] = ifName
+    log.Info("Interface Name = ", inParams.key)
+    res_map["name"] = inParams.key 
     return res_map, nil
 }
 
@@ -1558,7 +1556,10 @@ var DbToYang_intf_get_counters_xfmr SubTreeXfmrDbToYang = func(inParams XfmrPara
         return errors.New("Invalid interface type IntfTypeUnset");
     }
     intTbl := IntfTypeTblMap[intfType]
-
+    if intTbl.CountersHdl.PopulateCounters == nil {
+         log.Infof("Counters for Interface: %s not supported!", intfName)
+		 return nil
+ 	}
     var state_counters * ocbinds.OpenconfigInterfaces_Interfaces_Interface_State_Counters
 
     if intfsObj != nil && intfsObj.Interface != nil && len(intfsObj.Interface) > 0 {
