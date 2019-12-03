@@ -78,6 +78,45 @@ module openconfig-bgp-evpn-ext {
         
       }
 
+      container state {
+        leaf vni-number {
+          type uint32;
+        }
+
+        leaf type {
+          type string;
+        }
+
+        leaf is-live {
+          type boolean;
+        }
+
+        leaf route-distinguisher {
+          type string;
+        }
+
+        leaf originator {
+          type string;
+        }
+
+        leaf mcast-group {
+          type string;
+        }
+
+        leaf advertise-gw-mac {
+          type boolean;
+        }
+
+        leaf-list import-rts {
+          type string;
+        }
+
+        leaf-list export-rts {
+          type string;
+        }
+
+      }
+
       uses bgp-common-mp-l2vpn-evpn-vni-config;
 
     }//end list
