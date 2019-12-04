@@ -18,7 +18,7 @@ module openconfig-network-instance-annot {
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:name {
       deviate add {
-          sonic-ext:field-transformer "network_instance_name_field_xfmr";
+          sonic-ext:field-transformer "network_instance_name_key_xfmr";
       }
     }
 
@@ -123,12 +123,19 @@ module openconfig-network-instance-annot {
             sonic-ext:db-name "STATE_DB";
       }
     }
-
+/*
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp {
+        deviate add {
+            sonic-ext:subtree-transformer "bgp_global_subtree_xfmr";
+        }
+    }
+*/
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol {
         deviate add {
             sonic-ext:key-transformer "network_instance_protocol_key_xfmr";
         }
     }
+
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global {
         deviate add {
@@ -222,7 +229,7 @@ module openconfig-network-instance-annot {
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:route-selection-options/oc-netinst:state/oc-bgp-ext:compare-confed-as-path {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:route-selection-options/oc-netinst:config/oc-bgp-ext:compare-confed-as-path {
       deviate add {
           sonic-ext:field-name "compare_confed_as_path";
       }

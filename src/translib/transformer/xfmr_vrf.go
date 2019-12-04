@@ -34,15 +34,15 @@ var nwInstTypeMap = map[ocbinds.E_OpenconfigNetworkInstanceTypes_NETWORK_INSTANC
 var NwInstTblNameMapWithNameAndType = map[NwInstMapKey]string {
         {NwInstName: "mgmt", NwInstType: "L3VRF"}: "MGMT_VRF_CONFIG",
         {NwInstName: "Vrf",  NwInstType: "L3VRF"}: "VRF",
-        {NwInstName: "default", NwInstType: "L3VRF"}: "",
-        {NwInstName: "default", NwInstType: "DEFAULT_INSTANCE"}: "",
+        {NwInstName: "default", NwInstType: "L3VRF"}: "VRF",
+        {NwInstName: "default", NwInstType: "DEFAULT_INSTANCE"}: "VRF",
 }
 
 /* Top level network instance table name based on key name */
 var NwInstTblNameMapWithName = map[string]string {
 	"mgmt": "MGMT_VRF_CONFIG",
 	"Vrf": "VRF",
-	"default": "",
+	"default": "VRF",
 }
 
 /*
@@ -70,16 +70,20 @@ func getInternalNwInstName (name string) (string, error) {
 func getVrfTblKeyByName (name string) (string) {
         var vrf_key string
 
+        if (strings.Compare(name, "default") == 0) { 
+            log.Info("getVrfTblKeyByName:  network instance name contains default -VRF Name")
+            return  vrf_key
+        }
         if name == "" {
-                /* Shouldn't even come here */
-                log.Info("getVrfTblKeyByName:  network instance name is empty")
-                return  vrf_key
+            /* Shouldn't even come here */
+            log.Info("getVrfTblKeyByName:  network instance name is empty")
+            return  vrf_key
         }
 
         if (strings.Compare(name, "mgmt") == 0) { 
-                vrf_key = "vrf_global"
+            vrf_key = "vrf_global"
         } else {
-                vrf_key = name
+            vrf_key = name
         }
 
         log.Info("getVrfTblKeyByName: vrf key is ", vrf_key)
@@ -176,6 +180,8 @@ func init() {
         XlateFuncBind("DbToYang_network_instance_table_key_xfmr", DbToYang_network_instance_table_key_xfmr)
         XlateFuncBind("YangToDb_network_instance_enabled_field_xfmr", YangToDb_network_instance_enabled_field_xfmr)
         XlateFuncBind("DbToYang_network_instance_enabled_field_xfmr", DbToYang_network_instance_enabled_field_xfmr)
+        XlateFuncBind("YangToDb_network_instance_name_key_xfmr", YangToDb_network_instance_name_key_xfmr)
+        XlateFuncBind("DbToYang_network_instance_name_key_xfmr", DbToYang_network_instance_name_field_xfmr)
         XlateFuncBind("YangToDb_network_instance_name_field_xfmr", YangToDb_network_instance_name_field_xfmr)
         XlateFuncBind("DbToYang_network_instance_name_field_xfmr", DbToYang_network_instance_name_field_xfmr)
         XlateFuncBind("YangToDb_network_instance_type_field_xfmr", YangToDb_network_instance_type_field_xfmr)
@@ -357,6 +363,16 @@ var DbToYang_network_instance_table_key_xfmr KeyXfmrDbToYang = func(inParams Xfm
         log.Info("DbToYang_network_instance_table_key_xfmr: ", inParams.key)
 
         return  res_map, err
+}
+
+/* YangToDb Field transformer for name(key) in the top level network instance */
+var YangToDb_network_instance_name_key_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
+        res_map := make(map[string]string)
+        var err error
+
+        log.Info("YangToDb_network_instance_name_key_xfmr")
+
+        return res_map, err
 }
 
 /* YangToDb Field transformer for name in the top level network instance config */

@@ -27,7 +27,6 @@ import (
 	"reflect"
 	"strings"
 	"translib/db"
-	"translib/ocbinds"
 	"translib/tlerr"
 )
 
@@ -97,7 +96,7 @@ func TraverseDb(dbs [db.MaxDB]*db.DB, spec KeySpec, result *map[db.DBNum]map[str
 
 	if spec.Key.Len() > 0 {
 		// get an entry with a specific key
-		if spec.Ts.Name != "NONE" { // Do not traverse for NONE table
+		if spec.Ts.Name != XFMR_NONE_STRING { // Do not traverse for NONE table
 			data, err := dbs[spec.dbNum].GetEntry(&spec.Ts, spec.Key)
 			if err != nil {
 				return err
@@ -116,7 +115,7 @@ func TraverseDb(dbs [db.MaxDB]*db.DB, spec KeySpec, result *map[db.DBNum]map[str
 		}
 	} else {
 		// TODO - GetEntry support with regex patten, 'abc*' for optimization
-		if spec.Ts.Name != "NONE" { //Do not traverse for NONE table
+		if spec.Ts.Name != XFMR_NONE_STRING { //Do not traverse for NONE table
 			keys, err := dbs[spec.dbNum].GetKeys(&spec.Ts)
 			if err != nil {
 				return err
@@ -252,26 +251,18 @@ func fillSonicKeySpec(xpath string , tableName string, keyStr string) ( []KeySpe
 	return retdbFormat
 }
 
-func XlateToDb(path string, opcode int, d *db.DB, yg *ygot.GoStruct, yt *interface{}, txCache interface{}) (map[int]map[db.DBNum]map[string]map[string]db.Value, error) {
+func XlateToDb(path string, opcode int, d *db.DB, yg *ygot.GoStruct, yt *interface{}, jsonPayload []byte, txCache interface{}) (map[int]map[db.DBNum]map[string]map[string]db.Value, error) {
 
 	var err error
 	requestUri := path
 
-	device := (*yg).(*ocbinds.Device)
-	jsonStr, err := ygot.EmitJSON(device, &ygot.EmitJSONConfig{
-		Format:         ygot.RFC7951,
-		Indent:         "  ",
-		SkipValidation: true,
-		RFC7951Config: &ygot.RFC7951JSONConfig{
-			AppendModuleName: true,
-		},
-	})
-
 	jsonData := make(map[string]interface{})
-	err = json.Unmarshal([]byte(jsonStr), &jsonData)
-	if err != nil {
-		log.Errorf("Error: failed to unmarshal json.")
-		return nil, err
+	if opcode != DELETE {
+		err = json.Unmarshal(jsonPayload, &jsonData)
+		if err != nil {
+			log.Errorf("Error: failed to unmarshal json.")
+			return nil, err
+		}
 	}
 
 	// Map contains table.key.fields

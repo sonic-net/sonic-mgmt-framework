@@ -71,8 +71,8 @@ module sonic-bgp-neighbor {
 
                 leaf peer_group_name {
                     type string;
-		    description "Peer group name";
-		}
+                    description "Peer group name";
+                }
 
                 uses sbc:sonic-bgp-cmn;
 

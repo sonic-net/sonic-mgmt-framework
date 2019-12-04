@@ -57,8 +57,8 @@ limitations under the License.
                     >
                  </PARAM>
              </PARAM>
-	     <!-- show interface PortChannel-->
-	     <PARAM
+	         <!-- show interface PortChannel-->
+	         <PARAM
                  name="PortChannel"
                  help="PortChannel Interface"
                  ptype="SUBCOMMAND"
@@ -87,6 +87,34 @@ limitations under the License.
                     >
                 </PARAM>
              </PARAM>
+             <!-- show interface Vlan-->
+             <PARAM
+                 name="Vlan"
+                 help="Vlan Interface"
+                 ptype="SUBCOMMAND"
+                 mode="subcommand"
+                 >
+                 <PARAM
+                    name="vlan-id"
+                    help="Vlan ID"
+                    ptype="VLAN_ID"
+                    >
+                 </PARAM>
+             </PARAM>
+           <!-- show interface Loopback-->
+           <PARAM
+                 name="Loopback"
+                 help="Loopback Interface"
+                 ptype="SUBCOMMAND"
+                 mode="subcommand"
+                 >
+                 <PARAM
+                    name="lo-id"
+                    help="Loopback ID"
+                    ptype="LO_ID"
+                    >
+                 </PARAM>
+             </PARAM>
              <PARAM
                  name="status"
                  help="Physical interfaces status"
@@ -100,7 +128,7 @@ limitations under the License.
             python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces show_interface_status.j2 ${__full_line}&#xA;
         elif test "${if-subcommands}" = "counters"; then&#xA;
             python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces show_interface_counters.j2 ${__full_line}&#xA;
-	elif test "${if-subcommands}" = "PortChannel"; then&#xA;
+        elif test "${if-subcommands}" = "PortChannel"; then&#xA;
             if test "${po-id}" = ""; then&#xA;
                 python $SONIC_CLI_ROOT/sonic-cli-interface-port-channel.py get_all_portchannels show_interface_portchannel.j2 ${__full_line}&#xA;
             else&#xA;
@@ -111,6 +139,20 @@ limitations under the License.
                 python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces_interface eth0 show_mgmt_interface_id.j2 ${__full_line}&#xA;
             else&#xA;
                 python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces_interface eth${mgmt-if-id} show_mgmt_interface_id.j2 ${__full_line}&#xA;
+            fi&#xA;
+        elif test "${if-subcommands}" = "Vlan"; then&#xA;
+            if test "${vlan-id}" = ""; then&#xA;
+                #Note: TODO, Discussion needed
+                python $SONIC_CLI_ROOT/sonic-cli-if.py get_all_vlans show_interface_vlan.j2 ${__full_line}&#xA;
+            else&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces_interface Vlan${vlan-id} show_interface_vlan.j2 ${__full_line}&#xA;
+            fi&#xA;
+        elif test "${if-subcommands}" = "Loopback"; then&#xA;
+            if test "${lo-id}" = ""; then&#xA;
+                # Note: TODO, Discussion needed
+                #python $SONIC_CLI_ROOT/sonic-cli-if.py get_all_loopbacks show_interface_loopback.j2 ${__full_line}&#xA;
+            else&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces_interface Loopback${lo-id} show_interface_loopback.j2 ${__full_line}&#xA;
             fi&#xA;
         else&#xA;
             if test "${phy-if-id}" = ""; then&#xA;
@@ -234,6 +276,22 @@ limitations under the License.
         <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config PortChannel${lag-id}</ACTION>
     </COMMAND>
 
+    <COMMAND
+        name="interface Loopback"
+        help="Loopback Interface Configuration"
+        mode="subcommand"
+        ptype="SUBCOMMAND"
+        view="configure-lo-view"
+        viewid="lo_id=lo${lo-id};lo_name=Loopback${lo-id};"
+        >
+        <PARAM
+                name="lo-id"
+                help="Loopback identifier"
+                ptype="LO_ID"
+                >
+        </PARAM>
+        <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config Loopback${lo-id}</ACTION>
+    </COMMAND>
      <!-- no interface commands -->
      <COMMAND
          name="no interface"
@@ -245,6 +303,18 @@ limitations under the License.
              mode="switch"
              ptype="SUBCOMMAND"
              >
+             <PARAM
+                name="Loopback"
+                help="Delete Loopback"
+                mode="subcommand"
+                ptype="SUBCOMMAND"
+                >
+                <PARAM
+                    name="lo-id"
+                    help="Loopback identifier(0-16383)"
+                    ptype="LO_ID"
+                />
+             </PARAM>
              <PARAM
                 name="Vlan"
                 help="Delete vlan"
@@ -276,6 +346,9 @@ limitations under the License.
         fi&#xA;
         if test "${if-subcommands}" = "Vlan"; then&#xA;
             python $SONIC_CLI_ROOT/sonic-cli-if.py delete_openconfig_interfaces_interfaces_interface Vlan${vlan-id}&#xA;
+        fi&#xA;
+        if test "${if-subcommands}" = "Loopback"; then&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-if.py delete_openconfig_interfaces_interfaces_interface Loopback${lo-id}&#xA;
         fi
      </ACTION>
      </COMMAND>
@@ -546,6 +619,24 @@ limitations under the License.
       </ACTION>
       </COMMAND>
 </VIEW>
+
+<VIEW
+     name="configure-lo-view"
+     prompt="${SYSTEM_NAME}(conf-if-${lo_id})# "
+     depth="2"
+     >
+        <!-- Inheritance -->
+     <NAMESPACE
+         ref="configure-view"
+         help="false"
+         completion="false"
+      />
+      <COMMAND
+        name="no"
+        help="Negate a command or set its defaults"
+      />
+</VIEW>
+
 <VIEW
      name="configure-vlan-view"
      prompt="${SYSTEM_NAME}(conf-if-${vlan_id})# "
