@@ -601,7 +601,7 @@ limitations under the License.
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_solo_peer ${vrf-name} ${nbr-addr}</ACTION>
   </COMMAND>
   <COMMAND name="no strict-capability-match" help="Strict capability negotiation match">
-    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_strict_capability_match ${vrf-name}</ACTION>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_strict_capability_match ${vrf-name} ${nbr-addr}</ACTION>
   </COMMAND>
   <COMMAND name="no ttl-security" help="BGP ttl-security parameters"/>
   <COMMAND name="no ttl-security hops" help="BGP ttl-security parameters">

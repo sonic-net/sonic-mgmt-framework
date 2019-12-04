@@ -443,12 +443,12 @@ def invoke_api(func, args=[]):
     elif func == 'patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_peer_port':
         keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/neighbors/neighbor={neighbor_address}/config/openconfig-bgp-ext:peer-port',
                 name=args[0], identifier=IDENTIFIER, name1=NAME1, neighbor_address=args[1])
-        body = { "openconfig-bgp-ext:peer-port" : int(args[1]) }
+        body = { "openconfig-bgp-ext:peer-port" : int(args[2]) }
         return api.patch(keypath, body)
     elif func == 'patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_strict_capability_match':
         keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/neighbors/neighbor={neighbor_address}/config/openconfig-bgp-ext:strict-capability-match',
                 name=args[0], identifier=IDENTIFIER, name1=NAME1, neighbor_address=args[1])
-        body = { "openconfig-bgp-ext:strict-capability-match" : True if args[1] == 'True' else False }
+        body = { "openconfig-bgp-ext:strict-capability-match" : True if args[2] == 'True' else False }
         return api.patch(keypath, body)
 
     elif func == 'patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_config':
