@@ -75,6 +75,9 @@ var xDbSpecTblSeqnMap  map[string]*sonicTblSeqnInfo
 
 /* update transformer spec with db-node */
 func updateDbTableData (xpath string, xpathData *yangXpathInfo, tableName string) {
+	if len(tableName) == 0 {
+		return
+	}
 	_, ok := xDbSpecMap[tableName]
 	if ok {
 		xDbSpecMap[tableName].yangXpath = append(xDbSpecMap[tableName].yangXpath, xpath)

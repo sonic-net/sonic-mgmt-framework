@@ -258,7 +258,7 @@ func (app *CommonApp) translateCRUDCommon(d *db.DB, opcode int) ([]db.WatchKeys,
 	log.Info("translateCRUDCommon:path =", app.pathInfo.Path)
 
 	// translate yang to db
-	result, err := transformer.XlateToDb(app.pathInfo.Path, opcode, d, (*app).ygotRoot, (*app).ygotTarget, txCache)
+	result, err := transformer.XlateToDb(app.pathInfo.Path, opcode, d, (*app).ygotRoot, (*app).ygotTarget, (*app).body, txCache)
 	fmt.Println(result)
 	log.Info("transformer.XlateToDb() returned", result)
 
@@ -618,7 +618,11 @@ func checkAndProcessLeafList(existingEntry db.Value, tblRw db.Value, opcode int,
 				if opcode == DELETE {
 					if len(valueLst) > 0 {
 						mergeTblRw.SetList(field, exstLst)
-						delete(tblRw.Field, field)
+						if len(exstLst) == 0 {
+							tblRw.Field[field] = ""
+						} else {
+							delete(tblRw.Field, field)
+						}
 					}
 				}
 			} else if opcode == UPDATE {

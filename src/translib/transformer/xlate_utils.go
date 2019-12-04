@@ -592,7 +592,7 @@ func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, req
 	 }
 	 curPathWithKey = strings.TrimSuffix(curPathWithKey, "/")
 	 tblPtr     := xpathInfo.tableName
-	 if tblPtr != nil {
+	 if tblPtr != nil && *tblPtr != XFMR_NONE_STRING {
 		 tableName = *tblPtr
 	 } else if xpathInfo.xfmrTbl != nil {
 		 inParams := formXfmrInputRequest(d, dbs, cdb, ygRoot, curPathWithKey, requestUri, oper, "", nil, subOpDataMap, nil, txCache)
@@ -696,12 +696,12 @@ func unmarshalJsonToDbData(schema *yang.Entry, fieldName string, value interface
         ykind := schema.Type.Kind
 
         switch ykind {
-        case yang.Ystring, yang.Ydecimal64, yang.Yint64, yang.Yuint64:
-        case yang.Yenum, yang.Ybool, yang.Ybinary, yang.Yidentityref, yang.Yunion:
+        case yang.Ystring, yang.Ydecimal64, yang.Yint64, yang.Yuint64,
+             yang.Yenum, yang.Ybool, yang.Ybinary, yang.Yidentityref, yang.Yunion:
                 data = fmt.Sprintf("%v", value)
 
-        case yang.Yint8, yang.Yint16, yang.Yint32:
-        case yang.Yuint8, yang.Yuint16, yang.Yuint32:
+        case yang.Yint8, yang.Yint16, yang.Yint32,
+             yang.Yuint8, yang.Yuint16, yang.Yuint32:
                 pv, err := yangFloatIntToGoType(ykind, value.(float64))
                 if err != nil {
                         return "", fmt.Errorf("error parsing %v for schema %s: %v", value, schema.Name, err)
