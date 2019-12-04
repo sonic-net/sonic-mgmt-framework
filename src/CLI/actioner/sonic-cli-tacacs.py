@@ -74,6 +74,40 @@ def invoke_api(func, args):
 
     return api.cli_not_implemented(func)
 
+def get_sonic_tacacs_server(args):
+    api_response = {}
+    api = cc.ApiClient()
+
+    path = cc.Path('/restconf/data/openconfig-system:system/aaa/server-groups/server-group=TACACS/servers/server={address}/tacacs/config', address=args[0])
+    response = api.get(path)
+    if response.ok():
+        if response.content:
+            api_response['port'] = response.content['openconfig-system:config']['port']
+            api_response['key'] = response.content['openconfig-system:config']['secret-key']
+
+    path = cc.Path('/restconf/data/openconfig-system:system/aaa/server-groups/server-group=TACACS/servers/server={address}/config', address=args[0])
+    response = api.get(path)
+    if response.ok():
+        if response.content:
+            api_response['authtype'] = response.content['openconfig-system:config']['openconfig-system-augments:auth-type']
+            api_response['priority'] = response.content['openconfig-system:config']['openconfig-system-augments:priority']
+            api_response['timeout'] = response.content['openconfig-system:config']['timeout']
+
+    api_response['address'] = args[0]
+    show_cli_output("show_tacacs_server.j2", api_response)
+
+def get_sonic_tacacs_global():
+    api_response = {}
+    api = cc.ApiClient()
+
+    path = cc.Path('/restconf/data/openconfig-system:system/aaa/server-groups/server-group=TACACS/config')
+    response = api.get(path)
+    if response.ok():
+        if response.content:
+            api_response = response.content
+
+    show_cli_output("show_tacacs_global.j2", api_response)
+
 def run(func, args):
     response = invoke_api(func, args)
     if response.ok():
@@ -83,12 +117,6 @@ def run(func, args):
 
             if api_response is None:
                 print("Failed")
-            elif func == 'get_sonic_ifa_sonic_ifa_tam_int_ifa_feature_table':
-                show_cli_output(args[0], api_response)
-            elif func == 'get_sonic_ifa_sonic_ifa_tam_int_ifa_flow_table':
-                show_cli_output(args[0], api_response)
-            elif func == 'get_sonic_ifa_sonic_ifa_tam_int_ifa_flow_table_tam_int_ifa_flow_table_list':
-                show_cli_output(args[1], api_response)
             else:
                 return
     else:
@@ -97,5 +125,10 @@ def run(func, args):
 if __name__ == '__main__':
     pipestr().write(sys.argv)
     func = sys.argv[1]
-    run(func, sys.argv[2:])
+    if func == 'get_sonic_tacacs_global':
+        get_sonic_tacacs_global()
+    elif func == 'get_sonic_tacacs_server':
+        get_sonic_tacacs_server(sys.argv[2:])
+    else:
+        run(func, sys.argv[2:])
 

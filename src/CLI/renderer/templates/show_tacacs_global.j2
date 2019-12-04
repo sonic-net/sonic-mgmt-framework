@@ -1,0 +1,23 @@
+{{'---------------------------------------------------------'}}
+{{'TACACS Global Configuration'.ljust(20)}}
+{{'---------------------------------------------------------'}}
+{% if json_output -%}
+{% set srcip = json_output['openconfig-system:config']['openconfig-system-augments:source-address'] %}
+{% set timeout = json_output['openconfig-system:config']['openconfig-system-augments:timeout'] %}
+{% set authtype = json_output['openconfig-system:config']['openconfig-system-augments:auth-type'] %}
+{% set key = json_output['openconfig-system:config']['openconfig-system-augments:secret-key'] %}
+
+{% if srcip -%}
+{{'src-ip     : '}}{{srcip}}
+{% endif %}
+{% if timeout -%}
+{{'timeout    : '}}{{timeout}}
+{% endif %}
+{% if authtype -%}
+{{'auth-type  : '}}{{authtype}}
+{% endif %}
+{% if key -%}
+{{'secret-key : '}}{{key}}
+{% endif %}
+{% endif %}
+

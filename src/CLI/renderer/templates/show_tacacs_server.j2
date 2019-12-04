@@ -1,0 +1,23 @@
+{% set vars = {'address': ""} %}
+{% set vars = {'authtype': ""} %}
+{% set vars = {'key': ""} %}
+{% set vars = {'port': ""} %}
+{% set vars = {'priority': ""} %}
+{% set vars = {'timeout': ""} %}
+
+{% if json_output -%}
+
+------------------------------------------------------------------------------------------------
+{{'%-10s'|format("SERVER")}}{{'%-15s'|format("AUTH-TYPE")}}{{'%-10s'|format("KEY")}}{{'%-10s'|format("PORT")}}{{'%-10s'|format("PRIORITY")}}{{'%-10s'|format("TIMEOUT")}}
+------------------------------------------------------------------------------------------------
+
+    {% if vars.update({'address':json_output["address"]}) %}{% endif %}
+    {% if vars.update({'authtype':json_output["authtype"]}) %}{% endif %}
+    {% if vars.update({'key':json_output["key"]}) %}{% endif %}
+    {% if vars.update({'port':json_output["port"]}) %}{% endif %}
+    {% if vars.update({'priority':json_output["priority"]}) %}{% endif %}
+    {% if vars.update({'timeout':json_output["timeout"]}) %}{% endif %}
+{{'%-10s'|format(vars.address)}}{{'%-15s'|format(vars.authtype)}}{{'%-10s'|format(vars.key)}}{{'%-10s'|format(vars.port)}}{{'%-10s'|format(vars.priority)}}{{'%-10s'|format(vars.timeout)}}
+
+{% endif %}
+

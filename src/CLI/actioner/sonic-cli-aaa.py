@@ -32,14 +32,44 @@ def invoke_api(func, args):
     api = cc.ApiClient()
 
     # Set/Get aaa configuration
-    if func == 'patch_openconfig_system_augments_system_aaa_authentication_config_failthrough':
+    body = { "openconfig-system-augments:failthrough": False, "openconfig-system-augments:authentication-method": 'None' }
+    failthrough='None'
+    authmethod=[]
+
+    # authentication-method is a leaf-list. So patch is not supported. A put opeartion
+    # would clear existing other parameters as well. So reading existing contents and
+    # trying to change only the user input parameter with a put
+
+    path = cc.Path('/restconf/data/openconfig-system:system/aaa/authentication/config')
+    get_response = api.get(path)
+    if get_response.ok():
+        if get_response.content:
+            api_response = get_response.content
+            body["openconfig-system-augments:failthrough"] = api_response['openconfig-system:config']['openconfig-system-augments:failthrough']
+            body["openconfig-system-augments:authentication-method"] = api_response['openconfig-system:config']['authentication-method']
+
+    if func == 'put_openconfig_system_augments_system_aaa_authentication_config_failthrough':
        path = cc.Path('/restconf/data/openconfig-system:system/aaa/authentication/config/openconfig-system-augments:failthrough')
-       body = { "openconfig-system-augments:failthrough": bool(args[0]) }
-       return api.patch(path, body)
-    elif func == 'patch_openconfig_system_system_aaa_authentication_config_authentication_method':
+       body["openconfig-system-augments:failthrough"] = (args[0] == "True")
+       return api.put(path, body)
+    elif func == 'put_openconfig_system_system_aaa_authentication_config_authentication_method':
        path = cc.Path('/restconf/data/openconfig-system:system/aaa/authentication/config/authentication-method')
-       body = { "openconfig-system-augments:authentication-method": args[0] }
-       return api.patch(path, body)
+       # tricky logic: xml sends frist selection and values of both local and tacacs+ params
+       # when user selects "local tacacs+", actioner receives "local local tacacs+"
+       # when user selects "tacacs+ local", actioner receives "tacacs+ local tacacs+"
+
+       authmethod.append(args[0])
+       if len(args) == 3:
+           if args[0] == args[1]:
+               authmethod.append(args[2])
+           else:
+               authmethod.append(args[1])
+       else:
+           pass
+       body["openconfig-system-augments:authentication-method"] = authmethod
+       return api.put(path, body)
+    elif func == 'get_openconfig_system_system_aaa_authentication_config':
+       return get_response
     else:
        body = {}
 
@@ -54,6 +84,8 @@ def run(func, args):
 
             if api_response is None:
                 print("Failed")
+            elif func == 'get_openconfig_system_system_aaa_authentication_config':
+                show_cli_output(args[0], api_response)
             else:
                 return
     else:

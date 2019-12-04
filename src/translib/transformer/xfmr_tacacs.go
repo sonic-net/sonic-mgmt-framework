@@ -1,6 +1,7 @@
 package transformer
 
 import (
+        "strings"
         log "github.com/golang/glog"
         "github.com/openconfig/ygot/ygot"
         "translib/ocbinds"
@@ -45,12 +46,13 @@ var tacacs_global_table_xfmr TableXfmrFunc = func (inParams XfmrParams) ([]strin
     targetUriPath, err := getYangPathFromUri(pathInfo.Path)
 
     aaaType := pathInfo.Var("name");
+    aaaTypeLower := strings.ToLower(aaaType)
     log.Info("TableXfmrFunc - targetUriPath : ", targetUriPath)
     log.Info("TableXfmrFunc - type : ", aaaType)
 
-    if (aaaType == "TACACS") {
+    if (strings.Contains(aaaTypeLower, "tacacs")) {
         tblList = append(tblList, "TACPLUS")
-    } else if (aaaType == "RADIUS") {
+    } else if (strings.Contains(aaaTypeLower, "radius")) {
         tblList = append(tblList, "RADIUS")
     }
 
@@ -70,12 +72,13 @@ var server_table_xfmr TableXfmrFunc = func (inParams XfmrParams) ([]string, erro
     targetUriPath, err := getYangPathFromUri(pathInfo.Path)
 
     aaaType := pathInfo.Var("name");
+    aaaTypeLower := strings.ToLower(aaaType)
     log.Info("TableXfmrFunc - targetUriPath : ", targetUriPath)
     log.Info("TableXfmrFunc - type : ", aaaType)
 
-    if (aaaType == "TACACS") {
+    if (strings.Contains(aaaTypeLower, "tacacs")) {
         tblList = append(tblList, "TACPLUS_SERVER")
-    } else if (aaaType == "RADIUS") {
+    } else if (strings.Contains(aaaTypeLower, "radius")) {
         tblList = append(tblList, "RADIUS")
     }
 //   else {

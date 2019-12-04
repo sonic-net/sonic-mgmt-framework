@@ -27,9 +27,23 @@ limitations under the License.
 <!--=========================================================================-->
 
   <VIEW name="enable-view">
-    <COMMAND name="show tacacs"
-             help="Show tacacs info">
-      <ACTION>python $SONIC_CLI_ROOT/sonic-cli-tacacs.py get_sonic_tam_sonic_tam_tam_device_table show_tacacs.j2</ACTION>
+    <COMMAND name="show tacacs" 
+             help="Show tacacs info"/>
+    <COMMAND name="show tacacs global" 
+             help="Show tacacs global configuration" 
+             mode="subcommand" 
+             ptype="SUBCOMMAND">
+      <ACTION>python $SONIC_CLI_ROOT/sonic-cli-tacacs.py get_sonic_tacacs_global show_tacacs_global.j2</ACTION>
+    </COMMAND>
+    <COMMAND name="show tacacs server" 
+             help="Show tacacs server configuration" 
+             mode="subcommand" 
+             ptype="SUBCOMMAND">
+      <PARAM name="address" 
+             help="IP address of the tacacs server" 
+             ptype="IP_ADDR"> 
+      </PARAM>
+      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-tacacs.py get_sonic_tacacs_server ${address} show_tacacs_server.j2 </ACTION>
     </COMMAND>
   </VIEW>
 
@@ -50,19 +64,19 @@ limitations under the License.
 
     <!-- tacacs src-ip -->
     <COMMAND name="src-ip"
-             help="Configure tacacs source ip"
+             help="Configure tacacs global source ip"
              ptype="SUBCOMMAND"
              mode="subcommand">
       <PARAM name="src-ip"
              help="Source ip address"
-             ptype="IPV4V6_ADDR">
+             ptype="IP_ADDR">
       </PARAM>
       <ACTION>python $SONIC_CLI_ROOT/sonic-cli-tacacs.py patch_openconfig_system_augments_system_aaa_server_groups_server_group_config_source_address ${src-ip}</ACTION>
     </COMMAND>
 
     <!-- tacacs timeout -->
     <COMMAND name="timeout"
-             help="Configure tacacs timeout"
+             help="Configure tacacs global timeout"
              ptype="SUBCOMMAND"
              mode="subcommand">
       <PARAM name="timeout"
@@ -74,7 +88,7 @@ limitations under the License.
 
     <!-- tacacs authtype -->
     <COMMAND name="authtype"
-             help="Configure tacacs authentication type"
+             help="Configure tacacs global authentication type"
              ptype="SUBCOMMAND"
              mode="subcommand">
       <PARAM name="auth-type"
@@ -86,7 +100,7 @@ limitations under the License.
 
     <!-- tacacs secret-key -->
     <COMMAND name="passkey"
-             help="Configure tacacs secret key"
+             help="Configure tacacs global secret key"
              ptype="SUBCOMMAND"
              mode="subcommand">
       <PARAM name="secret-key"
@@ -107,7 +121,7 @@ limitations under the License.
              mode="subcommand">
         <PARAM name="ip-addr-val"
                help="server IP Address"
-               ptype="IPV4V6_ADDR">
+               ptype="IP_ADDR">
         </PARAM>
       </PARAM>
 
@@ -171,7 +185,7 @@ limitations under the License.
              mode="subcommand">
       <PARAM name="address"
              help="tacacs ip address"
-             ptype="IPV4V6_ADDR">
+             ptype="IP_ADDR">
       </PARAM>
       <ACTION> python $SONIC_CLI_ROOT/sonic-cli-tacacs.py delete_openconfig_system_system_aaa_server_groups_server_group_servers_server_tacacs_config ${address}</ACTION>
     </COMMAND>

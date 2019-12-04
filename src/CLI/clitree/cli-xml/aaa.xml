@@ -29,12 +29,12 @@ limitations under the License.
   <VIEW name="enable-view">
     <COMMAND name="show aaa"
              help="Show aaa info">
-      <ACTION>python $SONIC_CLI_ROOT/sonic-cli-aaa.py get_sonic_tam_sonic_tam_tam_device_table show_aaa.j2</ACTION>
+      <ACTION>python $SONIC_CLI_ROOT/sonic-cli-aaa.py get_openconfig_system_system_aaa_authentication_config show_aaa.j2</ACTION>
     </COMMAND>
   </VIEW>
 
   <VIEW name="configure-view">
-    <!-- tacacs -->
+    <!-- aaa -->
     <COMMAND name="aaa"
              help="aaa Configuration"
              mode="subcommand"
@@ -72,12 +72,34 @@ limitations under the License.
              help="AAA authentication login preference"
              mode="subcommand"
              ptype="SUBCOMMAND">
-      <PARAM name="login"
-             help="login methods"
-             ptype="STRING">
+      <PARAM name="login" 
+             help="login methods" 
+             mode="switch" 
+             ptype="SUBCOMMAND">
+          <PARAM name="local" 
+                 help="local authentication" 
+                 optional="true" 
+                 mode="subcommand" 
+                 ptype="SUBCOMMAND">
+              <PARAM name="tacacs+" 
+                     help="tacacs+ authentication" 
+                     optional="true" 
+                     ptype="AAA_AUTH_TACPLUS"> 
+              </PARAM>
+          </PARAM>
+          <PARAM name="tacacs+" 
+                 help="tacacs+ authentication" 
+                 optional="true" 
+                 mode="subcommand" 
+                 ptype="SUBCOMMAND">
+              <PARAM name="local" 
+                     help="local authentication" 
+                     optional="true" 
+                     ptype="AAA_AUTH_LOCAL"> 
+              </PARAM>
+          </PARAM>
       </PARAM>
-      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-aaa.py patch_openconfig_system_system_aaa_authentication_config_authentication_method ${login}&#xA;
-      </ACTION>
+      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-aaa.py put_openconfig_system_system_aaa_authentication_config_authentication_method ${login} ${local} ${tacacs+} </ACTION>
     </COMMAND>
   </VIEW>
 
