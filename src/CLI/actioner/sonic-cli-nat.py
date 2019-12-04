@@ -79,6 +79,11 @@ def invoke_api(func, args=[]):
         path = cc.Path('/restconf/data/openconfig-nat:nat/instances/instance={id}/nat-mapping-table/nat-mapping-entry={externaladdress}/config/internal-address', id=args[0], externaladdress=args[1])
         return api.delete(path)
 
+    # Remove all NAT Static basic translation entries
+    elif func == 'delete_openconfig_nat_nat_instances_instance_nat_mapping_table':
+        path = cc.Path('/restconf/data/openconfig-nat:nat/instances/instance={id}/nat-mapping-table', id=args[0])
+        return api.delete(path)
+
     # Config NAPT Static translation entry
     elif func == 'patch_openconfig_nat_nat_instances_instance_napt_mapping_table_napt_mapping_entry_config':
         path = cc.Path('/restconf/data/openconfig-nat:nat/instances/instance={id}/napt-mapping-table/napt-mapping-entry={externaladdress},{protocol},{externalport}/config', id=args[0],externaladdress=args[1],protocol=nat_protocol_map[args[2]],externalport=args[3])
@@ -107,6 +112,11 @@ def invoke_api(func, args=[]):
         if args[3] != "":
             body["openconfig-nat:config"].update( {"nat-port": args[3] } )
         return api.patch(path, body)
+
+    # Remove all NAPT Static basic translation entries
+    elif func == 'delete_openconfig_nat_nat_instances_instance_napt_mapping_table':
+        path = cc.Path('/restconf/data/openconfig-nat:nat/instances/instance={id}/napt-mapping-table', id=args[0])
+        return api.delete(path)
 
     # Remove NAT Pool
     elif func == 'delete_openconfig_nat_nat_instances_instance_nat_pool_nat_pool_entry_config':

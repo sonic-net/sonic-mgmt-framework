@@ -476,8 +476,8 @@ limitations under the License.
 
    <ACTION> 
        if test "${no-static-subcommands}" = "all"; then&#xA;
-           python $SONIC_CLI_ROOT/sonic-cli-nat.py delete_openconfig_nat_nat_instances_instance_nat_mapping_table_nat_mapping_entry_config ${global-ip}&#xA;
-           python $SONIC_CLI_ROOT/sonic-cli-nat.py delete_openconfig_nat_nat_instances_instance_napt_mapping_table_napt_mapping_entry_config ${global-ip} ${natPortType} ${global-port} &#xA;
+           python $SONIC_CLI_ROOT/sonic-cli-nat.py delete_openconfig_nat_nat_instances_instance_nat_mapping_table ${global-ip}&#xA;
+           python $SONIC_CLI_ROOT/sonic-cli-nat.py delete_openconfig_nat_nat_instances_instance_napt_mapping_table ${global-ip} ${natPortType} ${global-port} &#xA;
        elif test "${no-static-subcommands}" = "basic"; then&#xA;
            python $SONIC_CLI_ROOT/sonic-cli-nat.py delete_openconfig_nat_nat_instances_instance_nat_mapping_table_nat_mapping_entry_config_internal_address ${global-ip}&#xA;
        else&#xA;
