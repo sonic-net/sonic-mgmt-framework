@@ -324,7 +324,7 @@ var DbToYang_bgp_pgrp_plist_direction_fld_xfmr FieldXfmrDbtoYang = func(inParams
 
     pTbl := data["BGP_PEER_GROUP_AF"]
     if _, ok := pTbl[inParams.key]; !ok {
-        log.Info("DbToYang_bgp_pgrp_peer_type_xfmr BGP peer group not found : ", inParams.key)
+        log.Info("DbToYang_bgp_pgrp_plist_direction_fld_xfmr BGP peer group not found : ", inParams.key)
         return result, errors.New("BGP peer group not found : " + inParams.key)
     }
     pGrpKey := pTbl[inParams.key]
