@@ -1,0 +1,6 @@
+{"sonic-sflow:SFLOW_COLLECTOR_LIST": [
+    {"collector_name": "col1",
+     "collector_ip": "1.1.1.1",
+     "collector_port": 4444
+    }
+]}

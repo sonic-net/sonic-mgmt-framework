@@ -22,6 +22,8 @@ func init () {
     XlateFuncBind("DbToYang_bgp_pgrp_plist_direction_fld_xfmr", DbToYang_bgp_pgrp_plist_direction_fld_xfmr)
     XlateFuncBind("YangToDb_bgp_pgrp_flist_direction_fld_xfmr", YangToDb_bgp_pgrp_flist_direction_fld_xfmr)
     XlateFuncBind("DbToYang_bgp_pgrp_flist_direction_fld_xfmr", DbToYang_bgp_pgrp_flist_direction_fld_xfmr)
+    XlateFuncBind("YangToDb_bgp_pgrp_orf_type_fld_xfmr", YangToDb_bgp_pgrp_orf_type_fld_xfmr)
+    XlateFuncBind("DbToYang_bgp_pgrp_orf_type_fld_xfmr", DbToYang_bgp_pgrp_orf_type_fld_xfmr)
 }
 
 var YangToDb_bgp_pgrp_afi_safi_name_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
@@ -388,6 +390,61 @@ var DbToYang_bgp_pgrp_flist_direction_fld_xfmr FieldXfmrDbtoYang = func(inParams
         }
     } else {
         log.Info("filter_list_direction field not found in DB")
+    }
+    return result, err
+}
+
+var YangToDb_bgp_pgrp_orf_type_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
+    res_map := make(map[string]string)
+
+    var err error
+    if inParams.param == nil {
+        err = errors.New("No Params");
+        return res_map, err
+    }
+    orf_type, _ := inParams.param.(ocbinds.E_OpenconfigBgpExt_BgpOrfType)
+    log.Info("YangToDb_bgp_pgrp_orf_type_fld_xfmr: ", inParams.ygRoot, " Xpath: ", inParams.uri, " orf_type: ", orf_type)
+
+    if (orf_type == ocbinds.OpenconfigBgpExt_BgpOrfType_SEND) {
+        res_map["cap_orf"] = "send"
+    }  else if (orf_type == ocbinds.OpenconfigBgpExt_BgpOrfType_RECEIVE) {
+        res_map["cap_orf"] = "receive"
+    }  else if (orf_type == ocbinds.OpenconfigBgpExt_BgpOrfType_BOTH) {
+        res_map["cap_orf"] = "both"
+    } else {
+        err = errors.New("ORF type Missing");
+        return res_map, err
+    }
+
+    return res_map, nil
+}
+
+var DbToYang_bgp_pgrp_orf_type_fld_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (map[string]interface{}, error) {
+
+    var err error
+    result := make(map[string]interface{})
+
+    data := (*inParams.dbDataMap)[inParams.curDb]
+    log.Info("DbToYang_bgp_pgrp_orf_type_fld_xfmr : ", data, "inParams : ", inParams)
+
+    pTbl := data["BGP_PEER_GROUP_AF"]
+    if _, ok := pTbl[inParams.key]; !ok {
+        log.Info("DbToYang_bgp_pgrp_orf_type_fld_xfmr BGP PEER GROUP AF not found : ", inParams.key)
+        return result, errors.New("BGP PEER GROUP AF not found : " + inParams.key)
+    }
+    pGrpKey := pTbl[inParams.key]
+    orf_type, ok := pGrpKey.Field["cap_orf"]
+
+    if ok {
+        if (orf_type == "send") {
+            result["orf-type"] = "SEND"
+        } else if (orf_type == "receive") {
+            result["orf-type"] = "RECEIVE"
+        } else if (orf_type == "both") {
+            result["orf-type"] = "BOTH"
+        }
+    } else {
+        log.Info("cap_orf_direction field not found in DB")
     }
     return result, err
 }

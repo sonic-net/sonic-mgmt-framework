@@ -65,18 +65,26 @@ module sonic-bgp-common {
         "Type to describe the direction";
   }
 
+  typedef sonic_bgp_orf {
+    type enumeration {
+      enum send {
+          description
+              "Capability to receive the outbound route filtering from this neighbor";
+      }
+      enum receive {
+          description
+              "Capability to send the outbound route filtering to this neighbor";
+      }
+      enum both {
+          description
+              "Capability to send and receive the outbound route filtering to/from this neighbor";
+      }
+    }
+    description
+        "Type to describe the BGP ORF(Outbound route filtering) capability";
+  }
 
   grouping sonic-bgp-cmn {
-
-    leaf vrf_name {
-      type string;
-        description "Network-instance/VRF name";
-    }
-
-    leaf peer_group_name {
-      type string;
-        description "Peer group name";
-    }
 
     leaf local_asn {
       type uint32;
@@ -129,14 +137,14 @@ module sonic-bgp-common {
 
     leaf conn_retry {
       type uint16 {
-        range "1..3600";
+        range "1..65535";
       }
         description "Connection retry time";
     }
 
     leaf min_adv_interval {
       type uint16 {
-        range "1..3600";
+        range "1..600";
       }
         description "minium advertisement interval";
     }
@@ -172,7 +180,9 @@ module sonic-bgp-common {
     }
 
     leaf ttl_security_hops {
-      type uint8;
+      type uint8 {
+          range 1..254;
+      }
         description "TTL";
     }
 
@@ -180,15 +190,48 @@ module sonic-bgp-common {
       type boolean;
         description "BFD status";
     }
+
+    leaf capability_dynamic {
+      type boolean;
+        description "Advertise dynamic capability";
+    }
+
+    leaf dont_negotiate_capability {
+      type boolean;
+        description "Do not perform capability negotiation";
+    }
+
+    leaf enforce_multihop {
+      type boolean;
+        description "Enforce EBGP neighbors perform multihop";
+    }
+
+    leaf override_capability {
+      type boolean;
+        description "Override capability negotiation result";
+    }
+
+    leaf peer_port {
+      type uint16;
+        description "Peer port number";
+    }
+
+    leaf shutdown_message {
+      type string {
+	length "1..127";
+      }
+        description "Message on peer/Neighbor shutdown";
+    }
+
+    leaf strict_capability_match {
+      type boolean;
+        description "Strict capability negotiation match";
+    }
+
   }
 
 
   grouping sonic-bgp-cmn-af {
-
-    leaf vrf_name {
-        type string;
-        description "Network-instance/VRF name";
-    }
 
     leaf afi_safi {
         type string;
@@ -224,14 +267,14 @@ module sonic-bgp-common {
       type uint8 {
         range "0..100";
       }
-        description " maximum prefix limit threshold for warning";
+        description "Maximum prefix limit threshold for warning";
     }
 
     leaf max_prefix_restart_interval {
       type uint16 {
-        range "1..3600";
+        range "1..65535";
       }
-        description " Interval after which connection will get re-established";
+        description "Interval after which connection will get re-established";
     }
 
     leaf-list route_map_in {
@@ -257,7 +300,9 @@ module sonic-bgp-common {
     }
 
     leaf weight {
-      type uint32;
+      type uint16 {
+          range 0..65535;
+      }
     }
 
     leaf as_override {
@@ -353,10 +398,14 @@ module sonic-bgp-common {
         description "Allow own AS in AS path, if route originated in own AS";
     }
 
-    leaf bfd {
-      type boolean;
-        description "BFD status";
+    leaf cap_orf {
+      type sonic_bgp_orf;
+        description "ORF(Outbound Route Filtering) capability";
     }
 
+    leaf route_server_client {
+      type boolean;
+        description "Route server client";
+    }
   }
 }
