@@ -2,6 +2,7 @@
 
 import sys
 import swsssdk
+import socket
 from rpipe_utils import pipestr
 from scripts.render_cli import show_cli_output
 from swsssdk import ConfigDBConnector
@@ -13,6 +14,19 @@ PTP_CLOCK = 'PTP_CLOCK'
 PTP_PORT = 'PTP_PORT|GLOBAL'
 PTP_GLOBAL = 'GLOBAL'
 
+
+def node_addr_type(address):
+    try:
+        socket.inet_pton(socket.AF_INET, address)
+    except:
+        try:
+            socket.inet_pton(socket.AF_INET6, address)
+        except:
+            return "mac"
+
+        return "ipv6"
+
+    return "ipv4"
 
 def port_state_to_str(state_num):
     outval = ""
@@ -220,6 +234,53 @@ if __name__ == '__main__':
             data[sys.argv[1]] = 'G.8275.x'
         else:
             data[sys.argv[1]] = sys.argv[2]
+        config_db.mod_entry(PTP_CLOCK, PTP_GLOBAL, data)
+    elif sys.argv[1] == 'add_master_table':
+        tbl = db.get_all(db.STATE_DB, "PTP_PORT|GLOBAL|" + sys.argv[2])
+        nd_list = []
+        if not tbl:
+            print "%Error: " + sys.argv[2] + " has not been added"
+            sys.exit()
+
+        uc_tbl = tbl.get('unicast-table', 'None')
+        if uc_tbl != 'None':
+            nd_list = uc_tbl.split(',')
+        if sys.argv[3] in nd_list:
+            # entry already exists
+            sys.exit()
+        if len(nd_list) == 1 and nd_list[0] == '':
+            nd_list = []
+        if len(nd_list) > 0 and node_addr_type(nd_list[0]) != node_addr_type(sys.argv[3]):
+            print "%Error: Mixed address types not allowed"
+            sys.exit()
+        if len(nd_list) >= 8:
+            print "%Error: maximum 8 nodes"
+            sys.exit()
+        nd_list.append(sys.argv[3])
+        value = ','.join(nd_list)
+        data = {}
+        data['unicast-table'] = value
+        config_db.mod_entry("PTP_PORT|GLOBAL", sys.argv[2], data)
+    elif sys.argv[1] == 'del_master_table':
+        tbl = db.get_all(db.STATE_DB, "PTP_PORT|GLOBAL|" + sys.argv[2])
+        nd_list = []
+        if tbl:
+            uc_tbl = tbl.get('unicast-table', 'None')
+            if uc_tbl != 'None':
+                nd_list = uc_tbl.split(',')
+        if sys.argv[3] not in nd_list:
+            # entry doesn't exists
+            sys.exit()
+
+        nd_list.remove(sys.argv[3])
+        value = ','.join(nd_list)
+        data = {}
+        data['unicast-table'] = value
+        config_db.mod_entry("PTP_PORT|GLOBAL", sys.argv[2], data)
+    elif sys.argv[1] == 'network-transport':
+        data = {}
+        data[sys.argv[1]] = sys.argv[2]
+        data["unicast-multicast"] = sys.argv[3]
         config_db.mod_entry(PTP_CLOCK, PTP_GLOBAL, data)
     else:
         data = {}

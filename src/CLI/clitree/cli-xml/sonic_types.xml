@@ -554,10 +554,17 @@ limitations under the License.
         help=""
         />
     <!--=======================================================-->
+	<PTYPE
+		name="PTP_MST_SLV"
+		method="select"
+		pattern="unicast-master(unicast-master) unicast-slave(unicast-slave) multicast(multicast)"
+		help="master or slave"/>
+
+    <!--=======================================================-->
     <PTYPE
         name="PTP_DOMAIN_PROFILE"
         method="select"
-        pattern="default(ieee1588) g8275.1(G.8275.x) g8275.2(G.8275.x)"
+        pattern="default(ieee1588) g8275.1(G.8275.1) g8275.2(G.8275.2)"
         help=""
         />
     <!--=======================================================-->
@@ -566,6 +573,13 @@ limitations under the License.
         method="select"
         pattern="transparent(transparent) boundary(boundary) disable(disable)"
         help=""
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="PTP_MASTER_TABLE"
+        method="select"
+        pattern="master-table(master-table)"
+        help="master-table"
         />
     <!--=======================================================-->
     <PTYPE
@@ -615,6 +629,11 @@ limitations under the License.
         pattern="1..256"
         help=""
         />
+    <PTYPE
+        name="INT8_RANGE"
+        method="integer"
+        pattern="-128..128"
+        help="" />
     <!--=======================================================-->
   <PTYPE 
         name="AS_NUM_DOT"

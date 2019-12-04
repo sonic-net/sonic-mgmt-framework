@@ -6,7 +6,7 @@
 {{ 'Domain Profile'.ljust(21)}} {{ value['domain-profile']}}
 {% endif %}
 {% if 'network-transport' in value.keys() %}
-{{ 'Network Transport'.ljust(21)}} {{ value['network-transport']}}
+{{ 'Network Transport'.ljust(21)}} {{ value['network-transport']}} {{ value['unicast-multicast']}}
 {% endif %}
 {% if 'domain-number' in value.keys() %}
 {{ 'Domain Number'.ljust(21)}} {{ value['domain-number']}}
