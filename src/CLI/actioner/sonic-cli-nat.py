@@ -153,10 +153,14 @@ def invoke_api(func, args=[]):
         return api.delete(path)
 
 
-    ### GET
-    ## Get NAT Global Config
+    # Get NAT Global Config
     elif func == 'get_openconfig_nat_nat_instances_instance_config':
         path = cc.Path('/restconf/data/openconfig-nat:nat/instances/instance={id}/config', id=args[0])
+        return api.get(path)
+
+    # Get NAT Bindings
+    elif func == 'get_openconfig_nat_nat_instances_instance_nat_acl_pool_binding':
+        path = cc.Path('/restconf/data/openconfig-nat:nat/instances/instance={id}/nat-acl-pool-binding', id=args[0])
         return api.get(path)
 
     else:
