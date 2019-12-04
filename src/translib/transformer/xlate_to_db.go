@@ -159,10 +159,9 @@ func mapFillDataUtil(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requ
 	xpathInfo := xYangSpecMap[xpath]
 
 	if len(xpathInfo.xfmrField) > 0 {
-		uri = uri + "/" + name
 
 		/* field transformer present */
-		log.Infof("Transformer function(\"%v\") invoked for yang path(\"%v\").", xpathInfo.xfmrField, xpath)
+		log.Infof("Transformer function(\"%v\") invoked for yang path(\"%v\"). uri: %v", xpathInfo.xfmrField, xpath, uri)
 		path, _ := ygot.StringToPath(uri, ygot.StructuredPath, ygot.StringSlicePath)
 		for _, p := range path.Elem {
 			pathSlice := strings.Split(p.Name, ":")
@@ -798,6 +797,7 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
 						pathAttr = strings.Split(pathAttr, ":")[1]
 					}
 					xpath := xpathPrefix + "/" + pathAttr
+					log.Infof("LEAF Case: xpath: %v, xpathPrefix: %v, pathAttr: %v", xpath, xpathPrefix, pathAttr)
 					if len(xYangSpecMap[xpath].xfmrFunc) == 0 {
 						value := jData.MapIndex(key).Interface()
 						log.Infof("data field: key(\"%v\"), value(\"%v\").", key, value)
@@ -807,6 +807,20 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
 							log.Errorf("Failed constructing data for db write: key(\"%v\"), value(\"%v\"), path(\"%v\").",
 							pathAttr, value, xpathPrefix)
 							return retErr
+						}
+					} else {
+						log.Infof("write: key(\"%v\"), xpath(\"%v\"), uri(%v).",key, xpath, uri)
+						curYgotNode, nodeErr := yangNodeForUriGet(uri, ygRoot)
+						if nodeErr != nil {
+							curYgotNode = nil
+						}
+						inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, uri, requestUri, oper, curKey, nil, subOpDataMap, curYgotNode, txCache)
+						ret, err := XlateFuncCall(yangToDbXfmrFunc(xYangSpecMap[xpath].xfmrFunc), inParams)
+						if err != nil {
+							return nil
+						}
+						if  ret != nil {
+							mapCopy(result, ret[0].Interface().(map[string]map[string]db.Value))
 						}
 					}
 				}
