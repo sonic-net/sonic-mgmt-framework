@@ -17,14 +17,26 @@ module openconfig-system-annot {
     import openconfig-yang-types { prefix oc-yang; }
     import openconfig-aaa { prefix oc-aaa; }
     import openconfig-system { prefix oc-sys; }
-    import openconfig-system-augments { prefix oc-sys-aug; }
     import sonic-extensions { prefix sonic-ext; }
+    import openconfig-system-augments { prefix oc-sys-aug; }
+
+    deviation /oc-sys:system/oc-sys:state {
+        deviate add {
+            sonic-ext:subtree-transformer "sys_state_xfmr";
+        }
+    }
 
     deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:config {
       deviate add {
           sonic-ext:key-transformer "tacacs_global_set_key_xfmr";
           sonic-ext:table-transformer "tacacs_global_table_xfmr";
       }
+    }
+
+    deviation /oc-sys:system/oc-sys:memory {
+        deviate add {
+            sonic-ext:subtree-transformer "sys_memory_xfmr";
+        }
     }
 
     deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:config/oc-sys-aug:timeout {
@@ -75,6 +87,12 @@ module openconfig-system-annot {
       }
     }
 
+    deviation /oc-sys:system/oc-sys:cpus {
+        deviate add {
+            sonic-ext:subtree-transformer "sys_cpus_xfmr";
+        }
+    }
+
     deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:servers/oc-sys:server/oc-sys:config/oc-sys-aug:auth-type {
       deviate add {
           sonic-ext:field-name "auth_type";
@@ -98,6 +116,12 @@ module openconfig-system-annot {
       deviate add {
           sonic-ext:field-name "passkey";
       }
+    }
+
+    deviation /oc-sys:system/oc-sys:processes {
+        deviate add {
+            sonic-ext:subtree-transformer "sys_procs_xfmr";
+        }
     }
 
     deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:servers/oc-sys:server/oc-sys:tacacs/oc-sys:config/oc-sys:source-address {
