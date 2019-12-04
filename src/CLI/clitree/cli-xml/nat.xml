@@ -589,6 +589,8 @@ limitations under the License.
                       python $SONIC_CLI_ROOT/sonic-cli-nat.py get_openconfig_nat_nat_instances_instance_config show_nat_global_config.j2&#xA;
                   elif test "${config-subcommands}" = "bindings"; then&#xA;
                       python $SONIC_CLI_ROOT/sonic-cli-nat.py get_openconfig_nat_nat_instances_instance_nat_acl_pool_binding show_nat_bindings.j2&#xA;
+                  elif test "${config-subcommands}" = "pool"; then&#xA;
+                      python $SONIC_CLI_ROOT/sonic-cli-nat.py get_openconfig_nat_nat_instances_instance_nat_pool show_nat_pool.j2&#xA;
                   fi&#xA;
           fi&#xA;
       </ACTION>

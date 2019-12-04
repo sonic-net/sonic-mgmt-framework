@@ -163,6 +163,11 @@ def invoke_api(func, args=[]):
         path = cc.Path('/restconf/data/openconfig-nat:nat/instances/instance={id}/nat-acl-pool-binding', id=args[0])
         return api.get(path)
 
+    # Get NAT Pools
+    elif func == 'get_openconfig_nat_nat_instances_instance_nat_pool':
+        path = cc.Path('/restconf/data/openconfig-nat:nat/instances/instance={id}/nat-pool', id=args[0])
+        return api.get(path)
+
     else:
         return api.cli_not_implemented(func)
 
