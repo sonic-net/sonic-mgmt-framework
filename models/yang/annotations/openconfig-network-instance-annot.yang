@@ -18,7 +18,7 @@ module openconfig-network-instance-annot {
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:name {
       deviate add {
-          sonic-ext:field-transformer "network_instance_name_field_xfmr";
+          sonic-ext:field-transformer "network_instance_name_key_xfmr";
       }
     }
 
