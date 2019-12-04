@@ -169,11 +169,7 @@ limitations under the License.
          </PARAM>
 
          <ACTION> 
-             if test "${global-port-range}" = ""; then&#xA;
-                 python $SONIC_CLI_ROOT/sonic-cli-nat.py patch_openconfig_nat_nat_instances_instance_nat_pool_nat_pool_entry_config ${pool-name} ${global-ip-range}&#xA; 
-             else&#xA;
                  python $SONIC_CLI_ROOT/sonic-cli-nat.py patch_openconfig_nat_nat_instances_instance_nat_pool_nat_pool_entry_config ${pool-name} ${global-ip-range} ${global-port-range}&#xA;
-             fi&#xA;
      </ACTION>
      </COMMAND>
 

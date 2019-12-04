@@ -104,10 +104,8 @@ def invoke_api(func, args=[]):
         else:
             body =  { "openconfig-nat:config": {"ip-address-range": args[2]} }
 
-        l = len(args)
-        if l == 4:
-            port = args[3].split('-')
-            body["openconfig-nat:config"].update( {"start-port-number": port[0], "end-port-number": port[1] } )
+        if args[3] != "":
+            body["openconfig-nat:config"].update( {"nat-port": args[3] } )
         return api.patch(path, body)
 
     # Remove NAT Pool
@@ -186,7 +184,7 @@ def run(func, args):
 
         
     except Exception as e:
-        print("Exception when calling OpenconfigNatApi->%s : %s\n" %(func, e))
+        print("Failure: %s\n" %(e))
 
 if __name__ == '__main__':
 
