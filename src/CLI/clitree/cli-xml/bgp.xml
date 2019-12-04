@@ -50,7 +50,7 @@ limitations under the License.
 
               <PARAM name="summary" help="Summary of BGP neighbor status" ptype="SUBCOMMAND" mode="subcommand"/>
             </PARAM>
-		  </PARAM>
+          </PARAM>
 
           <PARAM name="ipv6" help="Address family" ptype="SUBCOMMAND" mode="subcommand">
             <PARAM name="ipv6 Subcommands" help="IPv6 subcommands" ptype="SUBCOMMAND" mode="switch">
@@ -68,7 +68,7 @@ limitations under the License.
                     <PARAM name="received-routes" help="Display the received routes from neighbor" ptype="SUBCOMMAND" mode="subcommand"/>
                     <PARAM name="advertised-routes" help="Display the routes advertised to a BGP neighbor" ptype="SUBCOMMAND" mode="subcommand"/>
                   </PARAM>
-			  </PARAM>
+                </PARAM>
 
               <PARAM name="summary" help="Summary of BGP neighbor status" ptype="SUBCOMMAND" mode="subcommand"/>
             </PARAM>
