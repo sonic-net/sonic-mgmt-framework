@@ -31,6 +31,9 @@
   <VIEW name="enable-view">
     <!-- show tam-drop-monitor -->
     <COMMAND name="show tam drop-monitor" help="Show TAM drop monitor status/stats."/>
+      <COMMAND name="show tam drop-monitor supported" help="Show DROP MONITOR feature info" mode="subcommand" ptype="SUBCOMMAND">
+        <ACTION>python $SONIC_CLI_ROOT/sonic-cli-drop-monitor.py get_tam_drop_monitor_supported</ACTION>
+      </COMMAND>
       <COMMAND name="show tam drop-monitor flow" help="Show drop monitor flow info" mode="subcommand" ptype="SUBCOMMAND">
               <PARAM name="flow-name" help="Name of the flow" ptype="STRING_32" optional="true"> </PARAM>
 	      <ACTION>
@@ -87,6 +90,39 @@
     </COMMAND>
     <COMMAND name="no aging-interval" help="Remove aging-interval configuration">
       <ACTION> python $SONIC_CLI_ROOT/sonic-cli-drop-monitor.py delete_sonic_tam_drop_monitor_sonic_tam_drop_monitor_tam_drop_monitor_aging_interval_table </ACTION>
+    </COMMAND>
+    <COMMAND name="feature"
+		help="Enable or Disable a feature"
+		 >
+	  <PARAM
+		 name="feature-options"
+		 help=""
+		 ptype="SUBCOMMAND"
+		 mode="switch"
+		 >
+
+		<PARAM
+		   name="enable"
+		   help="Enable the feature"
+		   ptype="SUBCOMMAND"
+		   mode="subcommand"
+		   >
+		</PARAM>
+
+		<PARAM
+		   name="disable"
+		   help="Disable the feature"
+		   ptype="SUBCOMMAND"
+		   mode="subcommand"
+		   >
+		</PARAM>
+	 </PARAM>
+	 <ACTION> if test "${feature-options}" = "enable"; then
+		  python $SONIC_CLI_ROOT/sonic-cli-drop-monitor.py patch_sonic_tam_drop_monitor_sonic_tam_drop_monitor_tam_drop_monitor_feature_table_tam_drop_monitor_feature_table_list_enable feature True;
+		  elif test "${feature-options}" = "disable"; then
+		  python $SONIC_CLI_ROOT/sonic-cli-drop-monitor.py patch_sonic_tam_drop_monitor_sonic_tam_drop_monitor_tam_drop_monitor_feature_table_tam_drop_monitor_feature_table_list_enable feature False;
+		  fi 
+	 </ACTION>
     </COMMAND>
     <COMMAND name="flow" help="Configure flow parameters">
       <PARAM name="flow-name" help="Name of flow" ptype="STRING"> </PARAM>

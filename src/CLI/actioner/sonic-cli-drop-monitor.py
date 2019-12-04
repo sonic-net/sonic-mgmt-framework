@@ -5,6 +5,7 @@ import re
 import cli_client as cc
 from rpipe_utils import pipestr
 from scripts.render_cli import show_cli_output
+from swsssdk import ConfigDBConnector
 import urllib3
 urllib3.disable_warnings()
 
@@ -91,6 +92,24 @@ def invoke_api(func, args):
 
     return api.cli_not_implemented(func)
 
+def get_tam_drop_monitor_supported(args):
+    api_response = {}
+
+    # connect to APPL_DB
+    app_db = ConfigDBConnector()
+    app_db.db_connect('APPL_DB')
+
+    key = 'SWITCH_TABLE:switch'
+    data = app_db.get(app_db.APPL_DB, key, 'drop_monitor_supported')
+
+    if data and data == 'True':
+        api_response['feature'] = data
+    else:
+        api_response['feature'] = 'False'
+
+    show_cli_output("show_tam_drop_monitor_feature_supported.j2", api_response)
+
+
 def run(func, args):
     response = invoke_api(func, args)
     if response.ok():
@@ -122,6 +141,9 @@ def run(func, args):
 if __name__ == '__main__':
     pipestr().write(sys.argv)
     func = sys.argv[1]
+
+    if func == 'get_tam_drop_monitor_supported':
+        get_tam_drop_monitor_supported(sys.argv[2:])
 
     run(func, sys.argv[2:])
 
