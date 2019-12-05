@@ -25,7 +25,63 @@ limitations under the License.
     <!--=======================================================-->
 
 <VIEW name="enable-view">
-  <COMMAND name="show ip bgp" help="BGP information"/>
+  <COMMAND name="show ip bgp" help="BGP information">
+    <PARAM name="vrf" help="BGP VRF" mode="subcommand" ptype="SUBCOMMAND" optional="true">
+      <PARAM name="vrf-Name" help="VRF Name" ptype="STRING">
+        <PARAM name="ip subcommands" help="IP subcommands" ptype="SUBCOMMAND" mode="switch">
+          <PARAM name="ipv4" help="Address family" ptype="SUBCOMMAND" mode="subcommand">
+            <PARAM name="ipv4 Subcommands" help="IPv4 subcommands" ptype="SUBCOMMAND" mode="switch">
+
+              <PARAM name="prefix" help="IPv4 prefix" ptype="IP_ADDR_MASK">
+                <PARAM name="neighbor-ip" help="Neighbor to display information about" ptype="IP_ADDR">
+                  <PARAM name="path-id" help="Path Identifier" ptype="UINT"/>
+                </PARAM>
+              </PARAM>
+
+              <PARAM name="neighbors" help="Detailed information on TCP and BGP neighbor connections" ptype="SUBCOMMAND" mode="subcommand">
+                <PARAM name="neighbor-ip" help="Neighbor to display information about" ptype="IP_ADDR" optional="true">
+                  <PARAM name="neighbor-subcommands" help="Neighbor subcommands" ptype="SUBCOMMAND" mode="switch">
+
+                    <PARAM name="received-routes" help="Display the received routes from neighbor" ptype="SUBCOMMAND" mode="subcommand"/>
+                    <PARAM name="advertised-routes" help="Display the routes advertised to a BGP neighbor" ptype="SUBCOMMAND" mode="subcommand"/>
+                  </PARAM>
+                </PARAM>
+              </PARAM>
+
+              <PARAM name="summary" help="Summary of BGP neighbor status" ptype="SUBCOMMAND" mode="subcommand"/>
+            </PARAM>
+          </PARAM>
+
+          <PARAM name="ipv6" help="Address family" ptype="SUBCOMMAND" mode="subcommand">
+            <PARAM name="ipv6 Subcommands" help="IPv6 subcommands" ptype="SUBCOMMAND" mode="switch">
+
+              <PARAM name="prefix" help="IPv6 prefix" ptype="IPV6_ADDR_MASK">
+                <PARAM name="neighbour-ip" help="Neighbor to display information about" ptype="IPV6_ADDR">
+                  <PARAM name="path-id" help="Path identifier" ptype="UINT"/>
+                </PARAM>
+              </PARAM>
+
+              <PARAM name="neighbors" help="Detailed information on TCP and BGP neighbor connections" ptype="SUBCOMMAND" mode="subcommand">
+                <PARAM name="neighbor-ip" help="Neighbor to display information about" ptype="IPV6_ADDR" optional="true"/>
+                  <PARAM name="neighbor-subcommands" help="Neighbor subcommands" ptype="SUBCOMMAND" mode="switch">
+
+                    <PARAM name="received-routes" help="Display the received routes from neighbor" ptype="SUBCOMMAND" mode="subcommand"/>
+                    <PARAM name="advertised-routes" help="Display the routes advertised to a BGP neighbor" ptype="SUBCOMMAND" mode="subcommand"/>
+                  </PARAM>
+                </PARAM>
+
+              <PARAM name="summary" help="Summary of BGP neighbor status" ptype="SUBCOMMAND" mode="subcommand"/>
+            </PARAM>
+          </PARAM>
+          <PARAM name="peer-group" help="Detailed information on BGP peer groups" ptype="SUBCOMMAND" mode="subcommand">
+            <PARAM name="peer-group name" help="Peer-group name" ptype="STRING"/>
+          </PARAM>
+        </PARAM>
+      </PARAM>
+    </PARAM>
+    <ACTION builtin="clish_nop"/>
+  </COMMAND>
+
   <COMMAND name="show ip bgp neighbors" help="BGP information">
     <ACTION builtin="clish_nop"/>
   </COMMAND>
