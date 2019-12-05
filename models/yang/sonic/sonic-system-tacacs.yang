@@ -34,13 +34,12 @@ module sonic-system-tacacs {
                 }
 
                 leaf auth_type {
-                    default pap;
                     type enumeration {
                         enum pap;
                         enum chap;
                         enum mschap;
                     }
-                    default "pap";
+                    default pap;
                 }
 
                 leaf passkey {
@@ -72,7 +71,7 @@ module sonic-system-tacacs {
                         enum chap;
                         enum mschap;
                     }
-                    default "pap";
+                    default pap;
                 }
 
                 leaf timeout {
