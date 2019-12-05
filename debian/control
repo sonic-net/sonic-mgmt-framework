@@ -10,3 +10,10 @@ Priority: extra
 Architecture: amd64
 Depends: ${shlibs:Depends}, ${misc:Depends}  
 Description: SONiC Management Framework 
+
+Package: sonic-mgmt-framework-dbg
+Priority: extra
+Architecture: amd64
+Section: debug
+Depends: sonic-mgmt-framework (=${binary:Version})
+Description: debugging symbols for SONiC Management Framework

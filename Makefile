@@ -57,16 +57,32 @@ REST_BIN = $(BUILD_DIR)/rest_server/main
 CERTGEN_BIN = $(BUILD_DIR)/rest_server/generate_cert
 
 
-all: build-deps go-deps go-redis-patch go-patch translib rest-server cli
+all: build-deps go-deps go-pkg-version go-patch translib rest-server cli
 
 build-deps:
 	mkdir -p $(BUILD_DIR)
 
 go-deps: $(GO_DEPS_LIST)
 
-go-redis-patch: go-deps
+go-pkg-version: go-deps
 	cd $(BUILD_GOPATH)/src/github.com/go-redis/redis; git checkout d19aba07b47683ef19378c4a4d43959672b7cec8 2>/dev/null ; true; \
-$(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/go-redis/redis
+$(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/go-redis/redis; \
+cd $(BUILD_GOPATH)/src/github.com/gorilla/mux; git checkout 49c01487a141b49f8ffe06277f3dca3ee80a55fa 2>/dev/null ; true; \
+$(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/gorilla/mux; \
+cd $(BUILD_GOPATH)/src/github.com/Workiva/go-datastructures; git checkout f07cbe3f82ca2fd6e5ab94afce65fe43319f675f 2>/dev/null ; true; \
+$(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/Workiva/go-datastructures; \
+cd $(BUILD_GOPATH)/src/github.com/golang/glog; git checkout 23def4e6c14b4da8ac2ed8007337bc5eb5007998 2>/dev/null ; true; \
+$(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/golang/glog; \
+cd $(BUILD_GOPATH)/src/github.com/pkg/profile; git checkout acd64d450fd45fb2afa41f833f3788c8a7797219 2>/dev/null ; true; \
+$(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/pkg/profile; \
+cd $(BUILD_GOPATH)/src/github.com/antchfx/jsonquery; git checkout 3535127d6ca5885dbf650204eb08eabf8374a274 2>/dev/null ; true; \
+$(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/antchfx/jsonquery; \
+cd $(BUILD_GOPATH)/src/github.com/antchfx/xmlquery; git checkout 16f1e6cdc5fe44a7f8e2a8c9faf659a1b3a8fd9b 2>/dev/null ; true; \
+$(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/antchfx/xmlquery; \
+cd $(BUILD_GOPATH)/src/github.com/facette/natsort; git checkout 2cd4dd1e2dcba4d85d6d3ead4adf4cfd2b70caf2 2>/dev/null ; true; \
+$(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/facette/natsort; \
+cd $(BUILD_GOPATH)/src/github.com/philopon/go-toposort; git checkout 9be86dbd762f98b5b9a4eca110a3f40ef31d0375 2>/dev/null ; true; \
+$(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/philopon/go-toposort
 
 $(GO_DEPS_LIST):
 	$(GO) get -v $@
@@ -74,7 +90,7 @@ $(GO_DEPS_LIST):
 cli: rest-server
 	$(MAKE) -C src/CLI
 
-cvl: go-deps go-patch go-redis-patch
+cvl: go-deps go-patch go-pkg-version
 	$(MAKE) -C src/cvl
 	$(MAKE) -C src/cvl/schema
 	$(MAKE) -C src/cvl/testdata/schema
