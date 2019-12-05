@@ -133,10 +133,26 @@ def run(func, args):
                 show_cli_output(args[1], api_response)
             else:
                 return
-        else:
-            msg = response.error_message()
-            if msg is not None:
-              print response.error_message()
+
+    else:
+            api_response = response.content
+            if "ietf-restconf:errors" in api_response:
+                 err = api_response["ietf-restconf:errors"]
+                 if "error" in err:
+                     errList = err["error"]
+
+                     errDict = {}
+                     for dict in errList:
+                         for k, v in dict.iteritems():
+                              errDict[k] = v
+
+                     if "error-message" in errDict:
+                         print "%Error: " + errDict["error-message"]
+                         return
+                     print "%Error: Transaction Failure"
+                     return
+            print response.error_message()
+            print "%Error: Transaction Failure"
 
 if __name__ == '__main__':
     pipestr().write(sys.argv)

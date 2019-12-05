@@ -109,7 +109,7 @@ def run(func, args):
                     api_response = None
 
             if api_response is None:
-                print("Failed")
+                print "Failed"
             elif func == 'get_sonic_tam_int_ifa_ts_sonic_tam_int_ifa_ts_tam_int_ifa_ts_feature_table':
                 show_cli_output(args[0], api_response)
             elif func == 'get_sonic_tam_int_ifa_ts_sonic_tam_int_ifa_ts_tam_int_ifa_ts_flow_table':
@@ -118,10 +118,25 @@ def run(func, args):
                 show_cli_output(args[1], api_response)
             else:
                 return
-        else:
-            msg = response.error_message() 
-            if msg is not None:
-              print response.error_message()
+    else:
+            api_response = response.content
+            if "ietf-restconf:errors" in api_response:
+                 err = api_response["ietf-restconf:errors"]
+                 if "error" in err:
+                     errList = err["error"]
+
+                     errDict = {}
+                     for dict in errList:
+                         for k, v in dict.iteritems():
+                              errDict[k] = v
+
+                     if "error-message" in errDict:
+                         print "%Error: " + errDict["error-message"]
+                         return
+                     print "%Error: Transaction Failure"
+                     return
+            print response.error_message()
+            print "%Error: Transaction Failure"
 
 if __name__ == '__main__':
     pipestr().write(sys.argv)
