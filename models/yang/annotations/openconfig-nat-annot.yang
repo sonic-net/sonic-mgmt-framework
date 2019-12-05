@@ -116,7 +116,7 @@ module openconfig-nat-annot {
         deviate add {
             sonic-ext:db-name "APPL_DB";
             sonic-ext:table-name "NAPT_TABLE";
-            sonic-ext:key-transformer "napt_mapping_state_key_xfmr ";
+            sonic-ext:key-transformer "napt_mapping_state_key_xfmr";
         }
     }
 
@@ -148,7 +148,7 @@ module openconfig-nat-annot {
         deviate add {
             sonic-ext:db-name "COUNTERS_DB";
             sonic-ext:table-name "COUNTERS_NAPT";
-            sonic-ext:key-transformer "napt_mapping_state_key_xfmr ";
+            sonic-ext:key-transformer "napt_mapping_state_key_xfmr";
         }
     }
     deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:napt-mapping-table/oc-nat:napt-mapping-entry/oc-nat:state/oc-nat:counters/oc-nat:dnat-translations-pkts {
