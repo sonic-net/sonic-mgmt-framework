@@ -27,6 +27,7 @@ import (
 	"reflect"
 	"strings"
 	"translib/db"
+	"translib/ocbinds"
 	"translib/tlerr"
 )
 
@@ -255,13 +256,31 @@ func XlateToDb(path string, opcode int, d *db.DB, yg *ygot.GoStruct, yt *interfa
 
 	var err error
 	requestUri := path
-
 	jsonData := make(map[string]interface{})
-	if opcode != DELETE {
-		err = json.Unmarshal(jsonPayload, &jsonData)
+
+	if isSonicYang(requestUri) {
+		device := (*yg).(*ocbinds.Device)
+		jsonStr, err := ygot.EmitJSON(device, &ygot.EmitJSONConfig{
+			Format:         ygot.RFC7951,
+			Indent:         "  ",
+			SkipValidation: true,
+			RFC7951Config: &ygot.RFC7951JSONConfig{
+				AppendModuleName: true,
+			},
+		})
+
+		err = json.Unmarshal([]byte(jsonStr), &jsonData)
 		if err != nil {
 			log.Errorf("Error: failed to unmarshal json.")
 			return nil, err
+		}
+	} else {
+		if opcode != DELETE {
+			err = json.Unmarshal(jsonPayload, &jsonData)
+			if err != nil {
+				log.Errorf("Error: failed to unmarshal json.")
+				return nil, err
+			}
 		}
 	}
 

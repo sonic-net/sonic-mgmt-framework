@@ -80,10 +80,6 @@ func getDefaultModelsList () ([]string) {
         if strings.HasPrefix(file.Name(), "sonic-") && !strings.HasSuffix(file.Name(), "-dev.yang") &&  filepath.Ext(file.Name()) == ".yang" {
             files = append(files, file.Name())
         }
-        // load OC extensions to handle DeviationNotSupported
-        if strings.HasPrefix(file.Name(), "openconfig-") && strings.HasSuffix(file.Name(), "-ext.yang") {
-            files = append(files, file.Name())
-        }
     }
     return files
 }
