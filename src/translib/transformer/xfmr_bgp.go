@@ -5,6 +5,7 @@ import (
     "strings"
     "encoding/json"
     "translib/ocbinds"
+    "translib/db"
     "os/exec"
     log "github.com/golang/glog"
 )
@@ -1203,6 +1204,7 @@ func init () {
 	XlateFuncBind("DbToYang_bgp_gbl_afi_safi_key_xfmr", DbToYang_bgp_gbl_afi_safi_key_xfmr) 
 	XlateFuncBind("YangToDb_bgp_dyn_neigh_listen_field_xfmr", YangToDb_bgp_dyn_neigh_listen_field_xfmr)
 	XlateFuncBind("DbToYang_bgp_dyn_neigh_listen_field_xfmr", DbToYang_bgp_dyn_neigh_listen_field_xfmr) 
+    XlateFuncBind("YangToDb_bgp_global_subtree_xfmr", YangToDb_bgp_global_subtree_xfmr)
 }
 
 var YangToDb_bgp_gbl_afi_safi_field_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
@@ -1463,4 +1465,13 @@ var DbToYang_bgp_gbl_afi_safi_key_xfmr KeyXfmrDbToYang = func(inParams XfmrParam
 
 	log.Info("DbToYang_bgp_gbl_afi_safi_key_xfmr: rmap:", rmap)
     return rmap, nil
+}
+
+var YangToDb_bgp_global_subtree_xfmr SubTreeXfmrYangToDb = func(inParams XfmrParams) (map[string]map[string]db.Value, error) {
+    var err error
+	log.Info("YangToDb_bgp_global_subtree_xfmr:", inParams.oper)
+    if inParams.oper == DELETE {
+        return nil, errors.New("Invalid request")
+    }
+    return nil, err
 }

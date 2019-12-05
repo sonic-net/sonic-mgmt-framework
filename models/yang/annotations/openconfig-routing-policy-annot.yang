@@ -13,7 +13,7 @@ module openconfig-routing-policy-annot {
 
     deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition {
         deviate add {
-            sonic-ext:table-name "ROUTE_MAP";
+            sonic-ext:table-name "ROUTE_MAP_SET";
         }
     }
 
@@ -37,7 +37,7 @@ module openconfig-routing-policy-annot {
 
     deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement {
       deviate add {
-            /* sonic-ext:table-name "ROUTE_MAP"; */
+            sonic-ext:table-name "ROUTE_MAP";
             sonic-ext:key-transformer "route_map_key_xfmr";
       }
     }

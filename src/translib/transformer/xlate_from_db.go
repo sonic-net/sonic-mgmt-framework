@@ -617,7 +617,7 @@ func terminalNodeProcess(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string
 	        }
 	} else {
 		dbFldName := xYangSpecMap[xpath].fieldName
-		if dbFldName == "NONE" {
+		if dbFldName == XFMR_NONE_STRING {
 			return resFldValMap, err
 		}
 		/* if there is no transformer extension/annotation then it means leaf-list in yang is also leaflist in db */

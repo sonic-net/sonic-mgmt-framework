@@ -11,7 +11,6 @@ import (
 	"reflect"
 	"github.com/openconfig/ygot/ygot"
 	"translib/db"
-//	"translib/tlerr"
 )
 
 func init () {
@@ -28,6 +27,7 @@ func init () {
     XlateFuncBind("YangToDb_route_map_bgp_action_set_ext_community", YangToDb_route_map_bgp_action_set_ext_community)
     XlateFuncBind("DbToYang_route_map_bgp_action_set_ext_community", DbToYang_route_map_bgp_action_set_ext_community)
     XlateFuncBind("DbToYang_route_map_field_xfmr", DbToYang_route_map_field_xfmr)
+    XlateFuncBind("YangToDb_route_map_field_xfmr", YangToDb_route_map_field_xfmr)
     XlateFuncBind("YangToDb_route_map_stmt_field_xfmr", YangToDb_route_map_stmt_field_xfmr)
     XlateFuncBind("DbToYang_route_map_stmt_field_xfmr", DbToYang_route_map_stmt_field_xfmr)
 }
@@ -46,11 +46,21 @@ var DbToYang_route_map_field_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) 
     return rmap, err
 }
 
+var YangToDb_route_map_field_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
+    rmap := make(map[string]string)
+    var err error
+
+    log.Info("YangToDb_route_map_field_xfmr")
+    rmap["NULL"] = "NULL"
+    
+    return rmap, err
+}
+
 var YangToDb_route_map_stmt_field_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
     rmap := make(map[string]string)
     var err error
 
-    log.Info("YangToDb_bgp_dyn_neigh_listen_field_xfmr")
+    log.Info("YangToDb_route_map_stmt_field_xfmr")
     rmap["NULL"] = "NULL"
     
     return rmap, err
@@ -139,9 +149,9 @@ var DbToYang_route_map_action_policy_result_xfmr FieldXfmrDbtoYang = func(inPara
     route_operation, ok := niInst.Field["route_operation"]
     if ok {
         if route_operation == "permit" {
-            result["policy-result"] = ocbinds.OpenconfigRoutingPolicy_PolicyResultType_ACCEPT_ROUTE 
+            result["policy-result"] = "ACCEPT_ROUTE"
         } else {
-            result["policy-result"] = ocbinds.OpenconfigRoutingPolicy_PolicyResultType_REJECT_ROUTE
+            result["policy-result"] = "REJECT_ROUTE"
         }
     } else {
         log.Info("DbToYang_route_map_action_policy_result_xfmr field not found in DB")
@@ -193,17 +203,17 @@ var DbToYang_route_map_match_protocol_xfmr FieldXfmrDbtoYang = func(inParams Xfm
     if ok {
         switch protocol {
             case "bgp":
-                result["install-protocol-eq"] = ocbinds.OpenconfigPolicyTypes_INSTALL_PROTOCOL_TYPE_BGP
+                result["install-protocol-eq"] = "BGP"
             case "connected":
-                result["install-protocol-eq"] = ocbinds.OpenconfigPolicyTypes_INSTALL_PROTOCOL_TYPE_DIRECTLY_CONNECTED
+                result["install-protocol-eq"] = "DIRECTLY_CONNECTED"
             case "isis":
-                result["install-protocol-eq"] = ocbinds.OpenconfigPolicyTypes_INSTALL_PROTOCOL_TYPE_ISIS
+                result["install-protocol-eq"] = "ISIS"
             case "ospf":
-                result["install-protocol-eq"] = ocbinds.OpenconfigPolicyTypes_INSTALL_PROTOCOL_TYPE_OSPF
+                result["install-protocol-eq"] = "OSPF"
             case "ospf3":
-                result["install-protocol-eq"] = ocbinds.OpenconfigPolicyTypes_INSTALL_PROTOCOL_TYPE_OSPF3
+                result["install-protocol-eq"] = "OSPF3"
             case "static":
-                result["install-protocol-eq"] = ocbinds.OpenconfigPolicyTypes_INSTALL_PROTOCOL_TYPE_STATIC
+                result["install-protocol-eq"] = "STATIC"
             default:
         }
     } else {
@@ -232,7 +242,7 @@ var DbToYang_route_map_match_set_options_xfmr FieldXfmrDbtoYang = func(inParams 
     var err error
     result := make(map[string]interface{})
     
-    result["match-set-options"] = ocbinds.OpenconfigRoutingPolicy_MatchSetOptionsType_ANY
+    result["match-set-options"] = "ANY"
     return result, err
 }
 
