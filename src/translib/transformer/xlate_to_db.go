@@ -58,7 +58,11 @@ func leafXfmrHandler(inParams XfmrParams, xpath string) (map[string]string, erro
 		    fldValMap := ret[0].Interface().(map[string]string)
 		    return fldValMap, nil
 	    }
+    } else {
+	    retFldValMap := map[string]string{"NULL":"NULL"}
+	    return retFldValMap, nil
     }
+
     return nil, nil
 }
 
@@ -796,29 +800,35 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
 					}
 					xpath := xpathPrefix + "/" + pathAttr
 					log.Infof("LEAF Case: xpath: %v, xpathPrefix: %v, pathAttr: %v", xpath, xpathPrefix, pathAttr)
-					if len(xYangSpecMap[xpath].xfmrFunc) == 0 {
-						value := jData.MapIndex(key).Interface()
-						log.Infof("data field: key(\"%v\"), value(\"%v\").", key, value)
-						retErr = mapFillData(d, ygRoot, oper, uri, requestUri, curKey, result, subOpDataMap, xpathPrefix,
-						pathAttr, value, tblXpathMap, txCache)
-						if retErr != nil {
-							log.Errorf("Failed constructing data for db write: key(\"%v\"), value(\"%v\"), path(\"%v\").",
-							pathAttr, value, xpathPrefix)
-							return retErr
-						}
-					} else {
-						log.Infof("write: key(\"%v\"), xpath(\"%v\"), uri(%v).",key, xpath, uri)
-						curYgotNode, nodeErr := yangNodeForUriGet(uri, ygRoot)
-						if nodeErr != nil {
-							curYgotNode = nil
-						}
-						inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, uri, requestUri, oper, curKey, nil, subOpDataMap, curYgotNode, txCache)
-						ret, err := XlateFuncCall(yangToDbXfmrFunc(xYangSpecMap[xpath].xfmrFunc), inParams)
-						if err != nil {
-							return nil
-						}
-						if  ret != nil {
-							mapCopy(result, ret[0].Interface().(map[string]map[string]db.Value))
+					/* skip processing for list key-leaf outside of config container(OC yang) directly under the list.
+					   Inside full-spec isKey is set to true for list key-leaf dierctly under the list(outside of config container) 
+					   For ietf yang(eg.ietf-ptp) list key-leaf might have a field transformer.
+					 */
+					if ((!xYangSpecMap[xpath].isKey) && (len(xYangSpecMap[xpath].xfmrField) > 0)) {
+						if len(xYangSpecMap[xpath].xfmrFunc) == 0 {
+							value := jData.MapIndex(key).Interface()
+							log.Infof("data field: key(\"%v\"), value(\"%v\").", key, value)
+							retErr = mapFillData(d, ygRoot, oper, uri, requestUri, curKey, result, subOpDataMap, xpathPrefix,
+							pathAttr, value, tblXpathMap, txCache)
+							if retErr != nil {
+								log.Errorf("Failed constructing data for db write: key(\"%v\"), value(\"%v\"), path(\"%v\").",
+								pathAttr, value, xpathPrefix)
+								return retErr
+							}
+						} else {
+							log.Infof("write: key(\"%v\"), xpath(\"%v\"), uri(%v).",key, xpath, uri)
+							curYgotNode, nodeErr := yangNodeForUriGet(uri, ygRoot)
+							if nodeErr != nil {
+								curYgotNode = nil
+							}
+							inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, uri, requestUri, oper, curKey, nil, subOpDataMap, curYgotNode, txCache)
+							ret, err := XlateFuncCall(yangToDbXfmrFunc(xYangSpecMap[xpath].xfmrFunc), inParams)
+							if err != nil {
+								return nil
+							}
+							if  ret != nil {
+								mapCopy(result, ret[0].Interface().(map[string]map[string]db.Value))
+							}
 						}
 					}
 				}
