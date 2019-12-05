@@ -60,6 +60,13 @@ func Process(w http.ResponseWriter, r *http.Request) {
 		goto write_resp
 	}
 
+	// Special handling for HEAD -- ignore the data but set content-length.
+	// HTTP spec says HEAD can return content-length and content-type as if it was a GET.
+	if r.Method == "HEAD" {
+		w.Header().Set("Content-Length", fmt.Sprintf("%d", len(data)))
+		data = nil
+	}
+
 	rtype, err = resolveResponseContentType(data, r, rc)
 	if err != nil {
 		glog.Errorf("[%s] Failed to resolve response content-type, err=%v", rc.ID, err)
@@ -238,7 +245,7 @@ func invokeTranslib(r *http.Request, path string, payload []byte) (int, []byte, 
 	var err error
 
 	switch r.Method {
-	case "GET":
+	case "GET", "HEAD":
 		req := translib.GetRequest{Path: path}
 		resp, err1 := translib.Get(req)
 		if err1 == nil {

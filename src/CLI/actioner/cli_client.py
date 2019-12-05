@@ -79,6 +79,9 @@ class ApiClient(object):
     def get(self, path):
         return self.request("GET", path, None)
 
+    def head(self, path):
+        return self.request("HEAD", path, None)
+
     def put(self, path, data={}):
         return self.request("PUT", path, data)
 
