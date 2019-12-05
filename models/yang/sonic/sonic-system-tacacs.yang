@@ -29,15 +29,18 @@ module sonic-system-tacacs {
                 }
 
                 leaf timeout {
+                    default 5;
                     type uint16;
                 }
 
                 leaf auth_type {
+                    default pap;
                     type enumeration {
                         enum pap;
                         enum chap;
                         enum mschap;
                     }
+                    default "pap";
                 }
 
                 leaf passkey {
@@ -69,10 +72,12 @@ module sonic-system-tacacs {
                         enum chap;
                         enum mschap;
                     }
+                    default "pap";
                 }
 
                 leaf timeout {
                     type uint16;
+                    default 5;
                 }
 
                 leaf passkey {

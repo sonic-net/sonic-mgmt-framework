@@ -69,6 +69,18 @@ def invoke_api(func, args):
     elif func == 'delete_openconfig_system_system_aaa_server_groups_server_group_servers_server_tacacs_config':
        path = cc.Path('/restconf/data/openconfig-system:system/aaa/server-groups/server-group=TACACS/servers/server={address}/tacacs/config', address=args[0])
        return api.delete(path)
+    elif func == 'delete_openconfig_system_augments_system_aaa_server_groups_server_group_config_source_address':
+       path = cc.Path('/restconf/data/openconfig-system:system/aaa/server-groups/server-group=TACACS/config/openconfig-system-augments:source-address')
+       return api.delete(path)
+    elif func == 'delete_openconfig_system_augments_system_aaa_server_groups_server_group_config_timeout':
+       path = cc.Path('/restconf/data/openconfig-system:system/aaa/server-groups/server-group=TACACS/config/openconfig-system-augments:timeout')
+       return api.delete(path)
+    elif func == 'delete_openconfig_system_augments_system_aaa_server_groups_server_group_config_auth_type':
+       path = cc.Path('/restconf/data/openconfig-system:system/aaa/server-groups/server-group=TACACS/config/openconfig-system-augments:auth-type')
+       return api.delete(path)
+    elif func == 'delete_openconfig_system_augments_system_aaa_server_groups_server_group_config_secret-key':
+       path = cc.Path('/restconf/data/openconfig-system:system/aaa/server-groups/server-group=TACACS/config/openconfig-system-augments:secret-key')
+       return api.delete(path)
     else:
        body = {}
 

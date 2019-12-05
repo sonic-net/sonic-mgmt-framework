@@ -25,6 +25,33 @@ limitations under the License.
                         http://www.dellemc.com/sonic/XMLSchema/clish.xsd"
     >
 <!--=========================================================================-->
+  <PTYPE
+     name="TACACS_AUTH_PORT"
+     method="integer"
+     pattern="1..65535"
+     help="port"
+  />
+<!--=========================================================================-->
+  <PTYPE
+     name="TACACS_TIMEOUT"
+     method="integer"
+     pattern="0..60"
+     help="seconds"
+  />
+<!--=======================================================-->
+  <PTYPE
+     name="TACACS_KEY"
+     pattern="(^(([0-9A-Za-z]){1,32})$)"
+     help="(Valid Chars: [0-9A-Za-z], Max Len: 32) shared secret"
+  />
+<!--=======================================================-->
+<PTYPE
+     name="TACACS_PRIORITY"
+     method="integer"
+     pattern="1..64"
+     help="(1..64)"
+/>
+<!--=======================================================-->
 
   <VIEW name="enable-view">
     <COMMAND name="show tacacs" 
@@ -49,80 +76,65 @@ limitations under the License.
 
   <VIEW name="configure-view">
     <!-- tacacs -->
-    <COMMAND name="tacacs"
-             help="TACACS Configuration"
-             mode="subcommand"
-             ptype="SUBCOMMAND"
-             view="configure-tacacs-view"/>
-  </VIEW>
-
-  <VIEW name="configure-tacacs-view"
-        prompt="${SYSTEM_NAME}(config-tacacs)# "
-        depth="2">
-    <COMMAND name="no" 
-             help="Negate a command or set its defaults" />
+    <COMMAND name="tacacs-server"
+             help="TACACS server Configuration"/>
 
     <!-- tacacs src-ip -->
-    <COMMAND name="src-ip"
-             help="Configure tacacs global source ip"
+    <COMMAND name="tacacs-server source-ip"
+             help="Configure global source ip for TACACS"
              ptype="SUBCOMMAND"
              mode="subcommand">
       <PARAM name="src-ip"
-             help="Source ip address"
-             ptype="IP_ADDR">
+             help=""
+             ptype="IPV4V6_ADDR">
       </PARAM>
       <ACTION>python $SONIC_CLI_ROOT/sonic-cli-tacacs.py patch_openconfig_system_augments_system_aaa_server_groups_server_group_config_source_address ${src-ip}</ACTION>
     </COMMAND>
 
     <!-- tacacs timeout -->
-    <COMMAND name="timeout"
-             help="Configure tacacs global timeout"
+    <COMMAND name="tacacs-server timeout"
+             help="Configure global timeout for TACACS"
              ptype="SUBCOMMAND"
              mode="subcommand">
       <PARAM name="timeout"
-             help="timeout"
-             ptype="UINT16">
+             help="timeout (default: 5)"
+             ptype="TACACS_TIMEOUT">
       </PARAM>
       <ACTION>python $SONIC_CLI_ROOT/sonic-cli-tacacs.py patch_openconfig_system_augments_system_aaa_server_groups_server_group_config_timeout ${timeout}</ACTION>
     </COMMAND>
 
     <!-- tacacs authtype -->
-    <COMMAND name="authtype"
-             help="Configure tacacs global authentication type"
+    <COMMAND name="tacacs-server auth-type"
+             help="Configure global authentication type for TACACS"
              ptype="SUBCOMMAND"
              mode="subcommand">
       <PARAM name="auth-type"
-             help="Authentication type"
+             help="Authentication type (default: pap)"
              ptype="AAA_AUTH_TYPE">
       </PARAM>
       <ACTION>python $SONIC_CLI_ROOT/sonic-cli-tacacs.py patch_openconfig_system_augments_system_aaa_server_groups_server_group_config_auth_type ${auth-type}</ACTION>
     </COMMAND>
 
     <!-- tacacs secret-key -->
-    <COMMAND name="passkey"
-             help="Configure tacacs global secret key"
+    <COMMAND name="tacacs-server key"
+             help="Configure global shared secret for TACACS"
              ptype="SUBCOMMAND"
              mode="subcommand">
       <PARAM name="secret-key"
-             help="Authentication type"
-             ptype="STRING">
+             help=""
+             ptype="TACACS_KEY">
       </PARAM>
       <ACTION>python $SONIC_CLI_ROOT/sonic-cli-tacacs.py patch_openconfig_system_augments_system_aaa_server_groups_server_group_config_secret_key ${secret-key}</ACTION>
     </COMMAND>
 
     <!-- tacacs server -->
-    <COMMAND name="server"
-             help="Configure tacacs server"
+    <COMMAND name="tacacs-server host"
+             help="Configure a server for TACACS"
              ptype="SUBCOMMAND"
              mode="subcommand">
-      <PARAM name="address"
-             help="server ip address"
-             ptype="SUBCOMMAND"
-             mode="subcommand">
-        <PARAM name="ip-addr-val"
-               help="server IP Address"
-               ptype="IP_ADDR">
-        </PARAM>
+      <PARAM name="host"
+             help="IPV4|IPV6 address"
+             ptype="IPV4V6_ADDR">
       </PARAM>
 
       <PARAM name="port"
@@ -131,7 +143,7 @@ limitations under the License.
              mode="subcommand">
         <PARAM name="port-val"
                help="server Port"
-               ptype="UINT">
+               ptype="TACACS_AUTH_PORT">
         </PARAM>
       </PARAM>
 
@@ -141,7 +153,7 @@ limitations under the License.
              mode="subcommand">
         <PARAM name="timeout-val"
                help="server timeout"
-               ptype="UINT16">
+               ptype="TACACS_TIMEOUT">
         </PARAM>
       </PARAM>
 
@@ -151,7 +163,7 @@ limitations under the License.
              mode="subcommand">
         <PARAM name="key-val"
                help="server key"
-               ptype="STRING">
+               ptype="TACACS_KEY">
         </PARAM>
       </PARAM>
 
@@ -171,23 +183,43 @@ limitations under the License.
              mode="subcommand">
         <PARAM name="priority-val"
                help="server priority"
-               ptype="UINT16">
+               ptype="TACACS_PRIORITY">
         </PARAM>
       </PARAM>
 
-      <ACTION>python $SONIC_CLI_ROOT/sonic-cli-tacacs.py patch_tacacs_server ${ip-addr-val} ${port-val} ${key-val} ${timeout-val} ${type-val} ${priority-val}</ACTION>
+      <ACTION>python $SONIC_CLI_ROOT/sonic-cli-tacacs.py patch_tacacs_server ${host} ${port-val} ${key-val} ${timeout-val} ${type-val} ${priority-val}</ACTION>
     </COMMAND>
 
     <!-- no tacacs server -->
-    <COMMAND name="no server"
-             help="Clear tacacs server information"
+    <COMMAND name="no tacacs-server"
+             help="Unconfigure TACACS server"
              ptype="SUBCOMMAND"
              mode="subcommand">
-      <PARAM name="address"
-             help="tacacs ip address"
-             ptype="IP_ADDR">
+      <PARAM name="host"
+             help="server ip address"
+             ptype="IPV4V6_ADDR">
       </PARAM>
-      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-tacacs.py delete_openconfig_system_system_aaa_server_groups_server_group_servers_server_tacacs_config ${address}</ACTION>
+      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-tacacs.py delete_openconfig_system_system_aaa_server_groups_server_group_servers_server_tacacs_config ${host}</ACTION>
+    </COMMAND>
+
+    <COMMAND name="no tacacs-server source-ip"
+             help="Unconfigure global source ip for TACACS">
+      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-tacacs.py delete_openconfig_system_augments_system_aaa_server_groups_server_group_config_source_address</ACTION>
+    </COMMAND>
+
+    <COMMAND name="no tacacs-server timeout"
+             help="Unconfigure global timeout for TACACS">
+      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-tacacs.py delete_openconfig_system_augments_system_aaa_server_groups_server_group_config_timeout</ACTION>
+    </COMMAND>
+
+    <COMMAND name="no tacacs-server auth-type"
+             help="Unconfigure global auth-type for TACACS">
+      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-tacacs.py delete_openconfig_system_augments_system_aaa_server_groups_server_group_config_auth_type</ACTION>
+    </COMMAND>
+
+    <COMMAND name="no tacacs-server key"
+             help="Unconfigure global shared secret for TACACS">
+      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-tacacs.py delete_openconfig_system_augments_system_aaa_server_groups_server_group_config_secret_key</ACTION>
     </COMMAND>
 
   </VIEW>

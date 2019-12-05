@@ -25,6 +25,20 @@ limitations under the License.
                         http://www.dellemc.com/sonic/XMLSchema/clish.xsd"
     >
 <!--=========================================================================-->
+  <PTYPE
+     name="AAA_AUTH_TACPLUS"
+     method="select"
+     pattern="tacacs+(tacacs+)"
+     help=""
+     />
+  <!--=========================================================================-->
+  <PTYPE
+     name="AAA_AUTH_LOCAL"
+     method="select"
+     pattern="local(local)"
+     help=""
+     />
+  <!--=========================================================================-->
 
   <VIEW name="enable-view">
     <COMMAND name="show aaa"
@@ -36,23 +50,13 @@ limitations under the License.
   <VIEW name="configure-view">
     <!-- aaa -->
     <COMMAND name="aaa"
-             help="aaa Configuration"
-             mode="subcommand"
-             ptype="SUBCOMMAND"
-             view="configure-aaa-view"/>
-  </VIEW>
-
-  <VIEW name="configure-aaa-view"
-        prompt="${SYSTEM_NAME}(config-aaa)# "
-        depth="2">
-    <COMMAND name="no" 
-             help="Negate a command or set its defaults" />
+             help="AAA configuration"/>
 
     <!-- config sub view for aaa authentication -->
-    <COMMAND name="authentication"
+    <COMMAND name="aaa authentication"
              help="AAA authentication configuration"/>
 
-    <COMMAND name="authentication failthrough"
+    <COMMAND name="aaa authentication failthrough"
              help="AAA authentication failthrough status"
              mode="subcommand"
              ptype="SUBCOMMAND">
@@ -61,15 +65,15 @@ limitations under the License.
              ptype="ENA_DISA">
       </PARAM>
       <ACTION> if test "${enable}" = "enable" ; then&#xA;
-        python $SONIC_CLI_ROOT/sonic-cli-aaa.py patch_openconfig_system_augments_system_aaa_authentication_config_failthrough true&#xA;
+        python $SONIC_CLI_ROOT/sonic-cli-aaa.py put_openconfig_system_augments_system_aaa_authentication_config_failthrough True&#xA;
           else&#xA;
-        python $SONIC_CLI_ROOT/sonic-cli-aaa.py patch_openconfig_system_augments_system_aaa_authentication_config_failthrough false&#xA;
+        python $SONIC_CLI_ROOT/sonic-cli-aaa.py put_openconfig_system_augments_system_aaa_authentication_config_failthrough False&#xA;
           fi&#xA;
       </ACTION>
     </COMMAND>
 
-    <COMMAND name="authentication login"
-             help="AAA authentication login preference"
+    <COMMAND name="aaa authentication login-method"
+             help="AAA authentication login method preference"
              mode="subcommand"
              ptype="SUBCOMMAND">
       <PARAM name="login" 
