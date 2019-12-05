@@ -79,12 +79,16 @@ def invoke_api(func, args=[]):
         path = cc.Path('/restconf/data/openconfig-nat:nat/instances/instance={id}/nat-mapping-table/nat-mapping-entry={externaladdress}/config/internal-address', id=args[0], externaladdress=args[1])
         return api.delete(path)
 
+    # Remove all NAT Static basic translation entries
+    elif func == 'delete_openconfig_nat_nat_instances_instance_nat_mapping_table':
+        path = cc.Path('/restconf/data/openconfig-nat:nat/instances/instance={id}/nat-mapping-table', id=args[0])
+        return api.delete(path)
+
     # Config NAPT Static translation entry
     elif func == 'patch_openconfig_nat_nat_instances_instance_napt_mapping_table_napt_mapping_entry_config':
         path = cc.Path('/restconf/data/openconfig-nat:nat/instances/instance={id}/napt-mapping-table/napt-mapping-entry={externaladdress},{protocol},{externalport}/config', id=args[0],externaladdress=args[1],protocol=nat_protocol_map[args[2]],externalport=args[3])
         body = { "openconfig-nat:config" : {"internal-address": args[4], "internal-port": int(args[5])} }
         l = len(args)
-        A
         if l >= 7:
             body["openconfig-nat:config"].update( {"type": nat_type_map[args[6]] } )
         if l == 8:
@@ -105,11 +109,14 @@ def invoke_api(func, args=[]):
         else:
             body =  { "openconfig-nat:config": {"ip-address-range": args[2]} }
 
-        l = len(args)
-        if l == 4:
-            port = args[3].split('-')
-            body["openconfig-nat:config"].update( {"start-port-number": port[0], "end-port-number": port[1] } )
+        if args[3] != "":
+            body["openconfig-nat:config"].update( {"nat-port": args[3] } )
         return api.patch(path, body)
+
+    # Remove all NAPT Static basic translation entries
+    elif func == 'delete_openconfig_nat_nat_instances_instance_napt_mapping_table':
+        path = cc.Path('/restconf/data/openconfig-nat:nat/instances/instance={id}/napt-mapping-table', id=args[0])
+        return api.delete(path)
 
     # Remove NAT Pool
     elif func == 'delete_openconfig_nat_nat_instances_instance_nat_pool_nat_pool_entry_config':
@@ -153,6 +160,22 @@ def invoke_api(func, args=[]):
         path = cc.Path('/restconf/data/openconfig-interfaces:interfaces/interface={name}/openconfig-interfaces-ext:nat-zone/config/nat-zone', name=args[1])
         return api.delete(path)
 
+
+    # Get NAT Global Config
+    elif func == 'get_openconfig_nat_nat_instances_instance_config':
+        path = cc.Path('/restconf/data/openconfig-nat:nat/instances/instance={id}/config', id=args[0])
+        return api.get(path)
+
+    # Get NAT Bindings
+    elif func == 'get_openconfig_nat_nat_instances_instance_nat_acl_pool_binding':
+        path = cc.Path('/restconf/data/openconfig-nat:nat/instances/instance={id}/nat-acl-pool-binding', id=args[0])
+        return api.get(path)
+
+    # Get NAT Pools
+    elif func == 'get_openconfig_nat_nat_instances_instance_nat_pool':
+        path = cc.Path('/restconf/data/openconfig-nat:nat/instances/instance={id}/nat-pool', id=args[0])
+        return api.get(path)
+
     else:
         return api.cli_not_implemented(func)
 
@@ -165,13 +188,13 @@ def run(func, args):
            if response.content is not None:
                # Get Command Output
                api_response = response.content
-               show_cli_output(args[0], api_response)
+               show_cli_output(args[1], api_response)
        else:
            print response.error_message()
 
         
     except Exception as e:
-        print("Exception when calling OpenconfigNatApi->%s : %s\n" %(func, e))
+        print("Failure: %s\n" %(e))
 
 if __name__ == '__main__':
 
