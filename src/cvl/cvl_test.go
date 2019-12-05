@@ -280,7 +280,7 @@ func TestMain(m *testing.M) {
 	code := m.Run()
 	//os.Exit(m.Run())
 
-	//unloadConfigDB(rclient, port_map)
+	unloadConfigDB(rclient, port_map)
 	unloadConfigDB(rclient, depDataMap)
 	cvl.Finish()
 	rclient.Close()
