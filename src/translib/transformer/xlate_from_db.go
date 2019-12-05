@@ -656,6 +656,7 @@ func terminalNodeProcess(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string
 	}
 	return resFldValMap, err
 }
+
 func mergeMaps(mapIntfs ...map[string]interface{}) map[string]interface{} {
     resultMap := make(map[string]interface{})
     for _, mapIntf := range mapIntfs {
@@ -665,6 +666,7 @@ func mergeMaps(mapIntfs ...map[string]interface{}) map[string]interface{} {
     }
     return resultMap
 }
+
 func yangDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, requestUri string, xpath string, dbDataMap *map[db.DBNum]map[string]map[string]db.Value, resultMap map[string]interface{}, tbl string, tblKey string, cdb db.DBNum, validate bool, txCache interface{}) error {
 	var err error
 	isValid := validate
@@ -701,6 +703,12 @@ func yangDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, reque
 					}
 				} else if chldYangType == YANG_CONTAINER {
 					_, tblKey, chtbl := xpathKeyExtract(dbs[cdb], ygRoot, GET, chldUri, requestUri, nil, txCache)
+					if _, ok := (*dbDataMap)[cdb][chtbl]; !ok {
+						curDbDataMap, err := fillDbDataMapForTbl(chldUri, chldXpath, chtbl, "", cdb, dbs)
+						if err == nil {
+							mapCopy((*dbDataMap)[cdb], curDbDataMap[cdb])
+						}
+					}
 					cname := xYangSpecMap[chldXpath].yangEntry.Name
 					if xYangSpecMap[chldXpath].xfmrTbl != nil {
 						xfmrTblFunc := *xYangSpecMap[chldXpath].xfmrTbl
