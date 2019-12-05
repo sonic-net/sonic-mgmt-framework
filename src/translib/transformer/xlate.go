@@ -73,7 +73,8 @@ func XlateFuncBind(name string, fn interface{}) (err error) {
 func XlateFuncCall(name string, params ...interface{}) (result []reflect.Value, err error) {
 	if _, ok := XlateFuncs[name]; !ok {
 		err = errors.New(name + " Xfmr function does not exist.")
-		return nil, err
+		log.Warning(err)
+		return nil, nil
 	}
 	if len(params) != XlateFuncs[name].Type().NumIn() {
 		err = ErrParamsNotAdapted
@@ -258,30 +259,20 @@ func XlateToDb(path string, opcode int, d *db.DB, yg *ygot.GoStruct, yt *interfa
 	requestUri := path
 	jsonData := make(map[string]interface{})
 
-	if isSonicYang(requestUri) {
-		device := (*yg).(*ocbinds.Device)
-		jsonStr, err := ygot.EmitJSON(device, &ygot.EmitJSONConfig{
-			Format:         ygot.RFC7951,
-			Indent:         "  ",
-			SkipValidation: true,
-			RFC7951Config: &ygot.RFC7951JSONConfig{
-				AppendModuleName: true,
-			},
-		})
+	device := (*yg).(*ocbinds.Device)
+	jsonStr, err := ygot.EmitJSON(device, &ygot.EmitJSONConfig{
+		Format:         ygot.RFC7951,
+		Indent:         "  ",
+		SkipValidation: true,
+		RFC7951Config: &ygot.RFC7951JSONConfig{
+			AppendModuleName: true,
+		},
+	})
 
-		err = json.Unmarshal([]byte(jsonStr), &jsonData)
-		if err != nil {
-			log.Errorf("Error: failed to unmarshal json.")
-			return nil, err
-		}
-	} else {
-		if opcode != DELETE {
-			err = json.Unmarshal(jsonPayload, &jsonData)
-			if err != nil {
-				log.Errorf("Error: failed to unmarshal json.")
-				return nil, err
-			}
-		}
+	err = json.Unmarshal([]byte(jsonStr), &jsonData)
+	if err != nil {
+		log.Errorf("Error: failed to unmarshal json.")
+		return nil, err
 	}
 
 	// Map contains table.key.fields
