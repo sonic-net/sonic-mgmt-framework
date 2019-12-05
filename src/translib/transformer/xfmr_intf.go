@@ -1170,9 +1170,9 @@ var DbToYang_intf_ip_addr_xfmr SubTreeXfmrDbToYang = func (inParams XfmrParams) 
                 ygot.BuildEmptyTree(intfObj.Subinterfaces)
             }
         } else {
-             ygot.BuildEmptyTree(intfsObj)
-             intfObj, _ = intfsObj.NewInterface(intfName)
-             ygot.BuildEmptyTree(intfObj.Subinterfaces)
+            ygot.BuildEmptyTree(intfsObj)
+            intfObj, _ = intfsObj.NewInterface(intfName)
+            ygot.BuildEmptyTree(intfObj)
         }
 
 
