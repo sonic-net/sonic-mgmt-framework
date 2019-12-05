@@ -15,9 +15,9 @@ func getSystemRoot(s *ygot.GoStruct) *ocbinds.OpenconfigSystem_System {
 func init() {
     XlateFuncBind("YangToDb_auth_set_key_xfmr", YangToDb_auth_set_key_xfmr)
     XlateFuncBind("YangToDb_server_set_key_xfmr", YangToDb_server_set_key_xfmr)
-    XlateFuncBind("YangToDb_tacacs_global_set_key_xfmr", YangToDb_tacacs_global_set_key_xfmr)
+    XlateFuncBind("YangToDb_global_set_key_xfmr", YangToDb_global_set_key_xfmr)
     XlateFuncBind("server_table_xfmr", server_table_xfmr)
-    XlateFuncBind("tacacs_global_table_xfmr", tacacs_global_table_xfmr)
+    XlateFuncBind("global_table_xfmr", global_table_xfmr)
 }
 
 var YangToDb_auth_set_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (string, error) {
@@ -31,16 +31,16 @@ var YangToDb_server_set_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (st
     return serverkey, nil
 }
 
-var YangToDb_tacacs_global_set_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (string, error) {
+var YangToDb_global_set_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (string, error) {
     return "global", nil
 }
 
-var tacacs_global_table_xfmr TableXfmrFunc = func (inParams XfmrParams) ([]string, error) {
+var global_table_xfmr TableXfmrFunc = func (inParams XfmrParams) ([]string, error) {
 
     var tblList []string
     var err error
 
-    log.Infof("tacacs_global_table_xfmr - Uri: ", inParams.uri);
+    log.Infof("global_table_xfmr - Uri: ", inParams.uri);
     pathInfo := NewPathInfo(inParams.uri)
 
     targetUriPath, err := getYangPathFromUri(pathInfo.Path)

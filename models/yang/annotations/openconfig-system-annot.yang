@@ -28,8 +28,8 @@ module openconfig-system-annot {
 
     deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:config {
       deviate add {
-          sonic-ext:key-transformer "tacacs_global_set_key_xfmr";
-          sonic-ext:table-transformer "tacacs_global_table_xfmr";
+          sonic-ext:key-transformer "global_set_key_xfmr";
+          sonic-ext:table-transformer "global_table_xfmr";
       }
     }
 
