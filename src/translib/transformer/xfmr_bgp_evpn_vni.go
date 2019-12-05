@@ -23,6 +23,8 @@ import (
     "errors"
     "strings"
     "translib/ocbinds"
+    "translib/db"
+    "strconv"
     log "github.com/golang/glog"
 )
 
@@ -42,6 +44,8 @@ func init () {
     XlateFuncBind("DbToYang_bgp_evpn_vni_rt_key_xfmr", DbToYang_bgp_evpn_vni_rt_key_xfmr)
     XlateFuncBind("YangToDb_bgp_advertise_fld_xfmr", YangToDb_bgp_advertise_fld_xfmr)
     XlateFuncBind("DbToYang_bgp_advertise_fld_xfmr", DbToYang_bgp_advertise_fld_xfmr)
+
+    XlateFuncBind("DbToYang_bgp_evpn_vni_state_xfmr", DbToYang_bgp_evpn_vni_state_xfmr)
 }
 
 
@@ -413,4 +417,175 @@ var DbToYang_bgp_advertise_fld_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams
     result["advertise-list"] = afiSafi
 
     return result, err
+}
+
+var DbToYang_bgp_evpn_vni_state_xfmr SubTreeXfmrDbToYang = func(inParams XfmrParams) error {
+    var err error
+    cmn_log := "GET: xfmr for BGP EVPN VNI state"
+
+    vni_obj, vni_key, get_err := validate_vni_get (inParams, cmn_log);
+    if get_err != nil {
+        return get_err
+    }
+
+    err = get_specific_vni_state (vni_obj, inParams.dbs[db.ConfigDB], &vni_key)
+    return err;
+}
+
+type _xfmr_bgp_vni_state_key struct {
+    niName string
+    vniNumber string
+    afiSafiNameStr string
+    afiSafiNameDbStr string
+    afiSafiNameEnum ocbinds.E_OpenconfigBgpTypes_AFI_SAFI_TYPE
+}
+
+func fill_vni_state_info (vni_key *_xfmr_bgp_vni_state_key, vniDataValue interface{}, cfgDb *db.DB,
+                          vni_obj *ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Global_AfiSafis_AfiSafi_L2VpnEvpn_Vnis_Vni) error {
+    var err error
+
+    vniDataJson := vniDataValue.(map[string]interface{})
+    
+    vniState := vni_obj.State
+
+    vninum := vniDataJson["vni"].(uint32)
+    importlist := vniDataJson["importRts"].([]string)
+    exportlist := vniDataJson["exportRts"].([]string)
+
+    if value, ok := vniDataJson["kernelFlag"] ; ok {
+        switch value {
+            case "Yes":
+                b := true
+                vniState.IsLive = &b
+            case "No":
+                b := false
+                vniState.IsLive = &b
+        }
+    }
+
+    if value, ok := vniDataJson["advertiseGatewayMacip"] ; ok {
+        switch value {
+            case "Yes":
+                b := true
+                vniState.AdvertiseGwMac = &b
+            case "No":
+                b := false
+                vniState.AdvertiseGwMac = &b
+        }
+    }
+
+    if value, ok := vniDataJson["type"].(string) ; ok {
+        vniState.Type = &value
+    }
+
+    if value, ok := vniDataJson["rd"].(string) ; ok {
+        vniState.RouteDistinguisher = &value
+    }
+
+    if value, ok := vniDataJson["mcastGroup"].(string) ; ok {
+        vniState.McastGroup = &value
+    }
+
+    if value, ok := vniDataJson["originatorIp"].(string) ; ok {
+        vniState.Originator = &value
+    }
+
+    for _,importrt := range importlist {
+        vniState.ImportRts = append(vniState.ImportRts, importrt)
+    }
+
+    for _,exportrt := range exportlist {
+        vniState.ExportRts = append(vniState.ExportRts, exportrt)
+    }
+
+    vniState.VniNumber = &vninum
+
+    return err
+}
+
+func get_specific_vni_state (vni_obj *ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Global_AfiSafis_AfiSafi_L2VpnEvpn_Vnis_Vni,
+                             cfgDb *db.DB, vni_key *_xfmr_bgp_vni_state_key) error {
+    var err error
+ 
+    vtysh_cmd := "show ip bgp l2vpn evpn " + vni_key.vniNumber + " json"
+    vniMapJson, cmd_err := exec_vtysh_cmd (vtysh_cmd)
+    if cmd_err != nil {
+        log.Errorf("Failed to fetch bgp l2vpn evpn state info for niName:%s vniNumber:%s. Err: %s\n", vni_key.niName, vni_key.vniNumber, err)
+        return cmd_err
+    }
+
+    /*
+    //This is test data from sample json output for test off-device
+    vniMapJson := make(map[string]interface{})
+    importlist := []string{"10:10", "20:20", "30:30"} 
+    exportlist := []string{"100:100", "200:200"} 
+    vniMapJson["output"] = map[string]interface{}{
+        "vni":uint32(100), 
+        "type":"L2", 
+        "importRts":importlist, 
+        "exportRts":exportlist, 
+        "kernelFlag":"Yes",
+        "rd":"2.2.2.2:56",
+        "originatorIp":"1.1.1.1",
+        "mcastGroup":"0.0.0.0",
+        "advertiseGatewayMacip":"No",
+    }
+    */
+
+    if vniDataJson, ok := vniMapJson["output"].(map[string]interface{}) ; ok {
+        err = fill_vni_state_info (vni_key, vniDataJson, cfgDb, vni_obj)
+    }    
+
+    return err
+}
+
+func validate_vni_get (inParams XfmrParams, dbg_log string) (*ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Global_AfiSafis_AfiSafi_L2VpnEvpn_Vnis_Vni, _xfmr_bgp_vni_state_key, error) {
+    var err error
+    var ok bool
+    oper_err := errors.New("Opertational error")
+    var vni_key _xfmr_bgp_vni_state_key
+    var bgp_obj *ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp
+
+    bgp_obj, vni_key.niName, err = getBgpRoot (inParams)
+    if err != nil {
+        log.Errorf ("%s failed !! Error:%s", dbg_log , err);
+        return nil, vni_key, err
+    }
+
+    pathInfo := NewPathInfo(inParams.uri)
+    targetUriPath, err := getYangPathFromUri(pathInfo.Path)
+    vni_key.vniNumber = pathInfo.Var("vni-number")
+    vni_key.afiSafiNameStr = pathInfo.Var("afi-safi-name")
+    vni_key.afiSafiNameEnum, vni_key.afiSafiNameDbStr, ok = get_afi_safi_name_enum_dbstr_for_ocstr (vni_key.afiSafiNameStr)
+    log.Infof("%s : path:%s; template:%s targetUriPath:%s niName:%s vniNumber:%s",
+              dbg_log, pathInfo.Path, pathInfo.Template, targetUriPath, vni_key.niName, vni_key.vniNumber)
+
+    afiSafis_obj := bgp_obj.Global.AfiSafis
+    if afiSafis_obj == nil {
+        log.Errorf("%s failed !! Error: BGP AfiSafis container missing", dbg_log)
+        return nil, vni_key, oper_err
+    }
+
+    afiSafi_obj, ok := afiSafis_obj.AfiSafi[vni_key.afiSafiNameEnum]
+    if !ok {
+        log.Errorf("%s failed !! Error: BGP AfiSafi object missing", dbg_log)
+        return nil, vni_key, oper_err
+    }
+
+    nbrs_obj := afiSafi_obj.L2VpnEvpn.Vnis
+    if nbrs_obj == nil {
+        log.Errorf("%s failed !! Error: VNIs container missing", dbg_log)
+        return nil, vni_key, oper_err
+    }
+
+    vninum64, err := strconv.ParseUint(vni_key.vniNumber, 10, 32)
+    vninum := uint32(vninum64)
+
+    vni_obj, ok := nbrs_obj.Vni[vninum]
+    if !ok {
+        log.Errorf("%s failed !! Error: Vni object %u missing", dbg_log, vninum)
+        return nil, vni_key, oper_err
+    }
+
+    return vni_obj, vni_key, err
 }
