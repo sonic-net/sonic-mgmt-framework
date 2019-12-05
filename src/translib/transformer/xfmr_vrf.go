@@ -681,19 +681,20 @@ var DbToYang_network_instance_interface_binding_subtree_xfmr SubTreeXfmrDbToYang
 
                                         intfName := intfKeys[i].Comp
 
-                                        /* add the interface if it is not already in the interface list */
-                                        intfData, ok := nwInstTree.NetworkInstance[vrfName_str].Interfaces.Interface[intfName[0]]
-                                        if  !ok {
-                                                var intfData *ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Interfaces_Interface
+                                        var intfData *ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Interfaces_Interface
 
+                                        /* if Interfaces.Interface is nil, then allocate for the new interface name */
+                                        if (nwInstTree.NetworkInstance[vrfName_str].Interfaces.Interface == nil) {
+                                                intfData, _ = nwInstData.Interfaces.NewInterface(intfName[0])
+                                                ygot.BuildEmptyTree(intfData)
+                                        }
+
+                                        /* if interface name not in Interfaces.Interface list, then allocate it */
+                                        intfData, ok = nwInstTree.NetworkInstance[vrfName_str].Interfaces.Interface[intfName[0]]
+                                        if  !ok {
                                                 intfData, _ = nwInstData.Interfaces.NewInterface(intfName[0])
 
                                                 ygot.BuildEmptyTree(intfData)
-                                        } else {
-                                                /* if it's already on the list, then update config and state info */
-                                                if  (intfData.Config == nil) {
-                                                        ygot.BuildEmptyTree(intfData)
-                                                }
                                         }
 
                                         intfData.Config.Id = intfData.Id
