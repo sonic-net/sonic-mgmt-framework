@@ -176,25 +176,79 @@ def invoke_api(func, args=[]):
         path = cc.Path('/restconf/data/openconfig-nat:nat/instances/instance={id}/nat-pool', id=args[0])
         return api.get(path)
 
+    ## Get NAT Translations
+    elif func == 'get_openconfig_nat_nat_instances_instance_nat_mapping_table':
+        path = cc.Path('/restconf/data/openconfig-nat:nat/instances/instance={id}/nat-mapping-table', id=args[0])
+        return api.get(path)
+
+    elif func == 'get_openconfig_nat_nat_instances_instance_napt_mapping_table':
+        path = cc.Path('/restconf/data/openconfig-nat:nat/instances/instance={id}/napt-mapping-table', id=args[0])
+        return api.get(path)
+
+    elif func == 'get_openconfig_nat_nat_instances_instance_nat_twice_mapping_table':
+        path = cc.Path('/restconf/data/openconfig-nat:nat/instances/instance={id}/nat-twice-mapping-table', id=args[0])
+        return api.get(path)
+
+    elif func == 'get_openconfig_nat_nat_instances_instance_napt_twice_mapping_table':
+        path = cc.Path('/restconf/data/openconfig-nat:nat/instances/instance={id}/napt-twice-mapping-table', id=args[0])
+        return api.get(path)
+
     else:
         return api.cli_not_implemented(func)
+
+
+def get_response_dict(response):
+    api_response = {}
+
+    if response.ok():
+        if response.content is not None:
+            # Get Command Output
+            api_response = response.content
+    else:
+        print response.error_message()
+
+    return api_response
+
+
+def get_nat_translations(func, args):
+    response = {}
+
+    resp = invoke_api('get_openconfig_nat_nat_instances_instance_nat_mapping_table', args)
+    resp = get_response_dict(resp)
+    response.update(resp)
+
+    resp = invoke_api('get_openconfig_nat_nat_instances_instance_napt_mapping_table', args)
+    resp = get_response_dict(resp)
+    response.update(resp)
+
+    resp = invoke_api('get_openconfig_nat_nat_instances_instance_nat_twice_mapping_table', args)
+    resp = get_response_dict(resp)
+    response.update(resp)
+
+    resp = invoke_api('get_openconfig_nat_nat_instances_instance_napt_twice_mapping_table', args)
+    resp = get_response_dict(resp)
+    response.update(resp)
+
+
+    return response
+
 
 def run(func, args):   
 
     try:
        args.insert(0,"0")  # NAT instance 0
-       response = invoke_api(func, args)    
-       if response.ok():
-           if response.content is not None:
-               # Get Command Output
-               api_response = response.content
-               show_cli_output(args[1], api_response)
-       else:
-           print response.error_message()
 
-        
+       if func == 'get_nat_translations':
+           api_response = get_nat_translations(func,args)
+       else:
+           response = invoke_api(func, args)
+           api_response = get_response_dict(response)
+
+       show_cli_output(args[1], api_response)
+ 
     except Exception as e:
         print("Failure: %s\n" %(e))
+
 
 if __name__ == '__main__':
 
