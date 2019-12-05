@@ -1,0 +1,16 @@
+{% if 'openconfig-nat:config' in json_output %}
+{% if 'enable' in json_output['openconfig-nat:config'] and json_output['openconfig-nat:config']['enable'] == True %}
+Admin Mode     : enabled
+{% else %}
+Admin Mode     : disabled
+{% endif %}
+{% if 'timeout' in json_output['openconfig-nat:config'] %}
+Global Timeout : {{ json_output['openconfig-nat:config']['timeout'] }} secs
+{% endif %}
+{% if 'tcp-timeout' in json_output['openconfig-nat:config'] %}
+TCP Timeout    : {{ json_output['openconfig-nat:config']['tcp-timeout'] }} secs
+{% endif %}
+{% if 'udp-timeout' in json_output['openconfig-nat:config'] %}
+UDP Timeout    : {{ json_output['openconfig-nat:config']['udp-timeout'] }} secs
+{% endif %}
+{% endif %}

@@ -64,14 +64,14 @@ limitations under the License.
             name="enable"
             help="Enable NAT feature"
 	    >
-        <ACTION builtin="clish_nop"></ACTION>
+        <ACTION>python $SONIC_CLI_ROOT/sonic-cli-nat.py patch_openconfig_nat_nat_instances_instance_config_enable True</ACTION>
         </COMMAND>
 
 	<COMMAND
             name="no enable"
             help="Disable NAT feature"
             >
-	    <ACTION builtin="clish_nop"></ACTION>
+        <ACTION>python $SONIC_CLI_ROOT/sonic-cli-nat.py patch_openconfig_nat_nat_instances_instance_config_enable False</ACTION>
 
        </COMMAND>
 
@@ -87,7 +87,7 @@ limitations under the License.
              ptype="UINT"
              >
          </PARAM>
-         <ACTION builtin="clish_nop"></ACTION>
+         <ACTION>python $SONIC_CLI_ROOT/sonic-cli-nat.py patch_openconfig_nat_nat_instances_instance_config_timeout ${timeout-value}</ACTION>
        </COMMAND>
 
 
@@ -95,7 +95,7 @@ limitations under the License.
          name="no timeout"
          help="Set default NAT entry aging timeout in seconds"
 	 >
-         <ACTION builtin="clish_nop"></ACTION>
+         <ACTION>python $SONIC_CLI_ROOT/sonic-cli-nat.py patch_openconfig_nat_nat_instances_instance_config_timeout 600</ACTION>
      </COMMAND>
 
      <COMMAND
@@ -110,14 +110,14 @@ limitations under the License.
              ptype="UINT"
              >
          </PARAM>
-         <ACTION builtin="clish_nop"></ACTION>
+         <ACTION>python $SONIC_CLI_ROOT/sonic-cli-nat.py patch_openconfig_nat_nat_instances_instance_config_tcp_timeout ${tcp-timeout-value}</ACTION>
      </COMMAND>
 
      <COMMAND
          name="no tcp-timeout"
          help="Set Default TCP NAT entry aging timeout in seconds"
          >
-         <ACTION builtin="clish_nop"></ACTION>
+         <ACTION>python $SONIC_CLI_ROOT/sonic-cli-nat.py patch_openconfig_nat_nat_instances_instance_config_tcp_timeout 86400</ACTION>
      </COMMAND>
 
       <COMMAND
@@ -132,14 +132,14 @@ limitations under the License.
              ptype="UINT"
              >
          </PARAM>
-         <ACTION builtin="clish_nop"></ACTION>
+         <ACTION>python $SONIC_CLI_ROOT/sonic-cli-nat.py patch_openconfig_nat_nat_instances_instance_config_udp_timeout ${udp-timeout-value}</ACTION>
      </COMMAND>
 
       <COMMAND
          name="no udp-timeout"
          help="Set Default UDP NAT entry aging timeout in seconds"
          >
-         <ACTION builtin="clish_nop"></ACTION>
+         <ACTION>python $SONIC_CLI_ROOT/sonic-cli-nat.py patch_openconfig_nat_nat_instances_instance_config_udp_timeout 300</ACTION>
      </COMMAND>
 
       <COMMAND
@@ -167,7 +167,10 @@ limitations under the License.
              optional="true"
              >
          </PARAM>
-         <ACTION builtin="clish_nop"></ACTION>
+
+         <ACTION> 
+                 python $SONIC_CLI_ROOT/sonic-cli-nat.py patch_openconfig_nat_nat_instances_instance_nat_pool_nat_pool_entry_config ${pool-name} ${global-ip-range} ${global-port-range}&#xA;
+     </ACTION>
      </COMMAND>
 
 
@@ -183,14 +186,16 @@ limitations under the License.
              ptype="STRING"
              >
          </PARAM>
-         <ACTION builtin="clish_nop"></ACTION>
+         <ACTION>
+             python $SONIC_CLI_ROOT/sonic-cli-nat.py delete_openconfig_nat_nat_instances_instance_nat_pool_nat_pool_entry_config ${pool-name}
+         </ACTION>
      </COMMAND>
 
      <COMMAND
          name="no pools"
          help="Remove all NAT Pools"
 	 >
-	 <ACTION builtin="clish_nop"></ACTION>
+     <ACTION>python $SONIC_CLI_ROOT/sonic-cli-nat.py delete_openconfig_nat_nat_instances_instance_nat_pool</ACTION>
      </COMMAND>
 
      <COMMAND
@@ -239,7 +244,15 @@ limitations under the License.
              </PARAM>
          </PARAM>
 
-         <ACTION builtin="clish_nop"></ACTION>
+         <ACTION> 
+             if test "${natType}" = ""; then&#xA;
+                 python $SONIC_CLI_ROOT/sonic-cli-nat.py patch_openconfig_nat_nat_instances_instance_nat_acl_pool_binding_nat_acl_pool_binding_entry_config ${binding-name} ${pool-name} ${acl-name}&#xA; 
+             elif test "${twice-nat-id-value}" = ""; then&#xA;
+                 python $SONIC_CLI_ROOT/sonic-cli-nat.py patch_openconfig_nat_nat_instances_instance_nat_acl_pool_binding_nat_acl_pool_binding_entry_config ${binding-name} ${pool-name} ${acl-name} ${natType}&#xA;
+             else&#xA;
+                 python $SONIC_CLI_ROOT/sonic-cli-nat.py patch_openconfig_nat_nat_instances_instance_nat_acl_pool_binding_nat_acl_pool_binding_entry_config ${binding-name} ${pool-name} ${acl-name} ${natType} ${twice-nat-id-value}&#xA;
+             fi&#xA;
+     </ACTION>
      </COMMAND>
 
       <COMMAND
@@ -254,14 +267,18 @@ limitations under the License.
              ptype="STRING"
              >
          </PARAM>
-         <ACTION builtin="clish_nop"></ACTION>
+         <ACTION>
+             python $SONIC_CLI_ROOT/sonic-cli-nat.py delete_openconfig_nat_nat_instances_instance_nat_acl_pool_binding_nat_acl_pool_binding_entry_config ${bind-name}
+         </ACTION>
      </COMMAND>
 
      <COMMAND
          name="no bindings"
          help="Remove all NAT Bindings"
      >
-     <ACTION builtin="clish_nop"></ACTION>
+     <ACTION>
+         python $SONIC_CLI_ROOT/sonic-cli-nat.py delete_openconfig_nat_nat_instances_instance_nat_acl_pool_binding
+     </ACTION>
      </COMMAND>
 
      <COMMAND
@@ -379,9 +396,26 @@ limitations under the License.
              </PARAM>
          </PARAM>
      </PARAM>
-
-         <ACTION builtin="clish_nop"></ACTION>
-     </COMMAND>
+    <ACTION> 
+       if test "${static-subcommands}" = "basic"; then&#xA;
+           if test "${natType}" = ""; then&#xA;
+               python $SONIC_CLI_ROOT/sonic-cli-nat.py patch_openconfig_nat_nat_instances_instance_nat_mapping_table_nat_mapping_entry_config ${global-ip} ${local-ip}&#xA;
+           elif test "${twice-nat-id-value}" = ""; then&#xA;
+               python $SONIC_CLI_ROOT/sonic-cli-nat.py patch_openconfig_nat_nat_instances_instance_nat_mapping_table_nat_mapping_entry_config ${global-ip} ${local-ip} ${natType}&#xA;
+           else&#xA;
+               python $SONIC_CLI_ROOT/sonic-cli-nat.py patch_openconfig_nat_nat_instances_instance_nat_mapping_table_nat_mapping_entry_config ${global-ip} ${local-ip} ${natType} ${twice-nat-id-value}&#xA;
+           fi&#xA;
+      else&#xA;
+          if test "${natType}" = ""; then&#xA;
+              python $SONIC_CLI_ROOT/sonic-cli-nat.py patch_openconfig_nat_nat_instances_instance_napt_mapping_table_napt_mapping_entry_config ${global-ip} ${natPortType} ${global-port} ${local-ip} ${local-port}&#xA;
+          elif test "${twice-nat-id-value}" = ""; then&#xA;
+              python $SONIC_CLI_ROOT/sonic-cli-nat.py patch_openconfig_nat_nat_instances_instance_napt_mapping_table_napt_mapping_entry_config ${global-ip} ${natPortType} ${global-port} ${local-ip} ${local-port} ${natType}&#xA;
+          else&#xA;
+              python $SONIC_CLI_ROOT/sonic-cli-nat.py patch_openconfig_nat_nat_instances_instance_napt_mapping_table_napt_mapping_entry_config ${global-ip} ${natPortType} ${global-port} ${local-ip} ${local-port} ${natType} ${twice-nat-id-value}&#xA;
+          fi&#xA;
+      fi&#xA;
+    </ACTION>
+    </COMMAND>
 
      <COMMAND
          name="no static"
@@ -390,7 +424,7 @@ limitations under the License.
          ptype="SUBCOMMAND"
          >
          <PARAM
-             name="no static-subcommands"
+             name="no-static-subcommands"
              help="Remove Static NAT subcommands"
              mode="switch"
              ptype="SUBCOMMAND"
@@ -416,12 +450,6 @@ limitations under the License.
                  >
                  </PARAM>
 
-                 <PARAM
-                     name="local-ip"
-                     help="Local IP"
-                     ptype="IP_ADDR"
-                     >
-                 </PARAM>
              </PARAM>
              
              <PARAM
@@ -443,25 +471,22 @@ limitations under the License.
                      >
                  </PARAM>
 
-                 <PARAM
-                     name="local-ip"
-                     help="Local IP"
-                     ptype="IP_ADDR"
-                     >
-                 </PARAM>
-
-                 <PARAM
-                     name="local-port"
-                     help="Local Port"
-                     ptype="UINT"
-                     >
-                 </PARAM>
              </PARAM>
          </PARAM>
-         <ACTION builtin="clish_nop"></ACTION>
+
+   <ACTION> 
+       if test "${no-static-subcommands}" = "all"; then&#xA;
+           python $SONIC_CLI_ROOT/sonic-cli-nat.py delete_openconfig_nat_nat_instances_instance_nat_mapping_table ${global-ip}&#xA;
+           python $SONIC_CLI_ROOT/sonic-cli-nat.py delete_openconfig_nat_nat_instances_instance_napt_mapping_table ${global-ip} ${natPortType} ${global-port} &#xA;
+       elif test "${no-static-subcommands}" = "basic"; then&#xA;
+           python $SONIC_CLI_ROOT/sonic-cli-nat.py delete_openconfig_nat_nat_instances_instance_nat_mapping_table_nat_mapping_entry_config_internal_address ${global-ip}&#xA;
+       else&#xA;
+           python $SONIC_CLI_ROOT/sonic-cli-nat.py delete_openconfig_nat_nat_instances_instance_napt_mapping_table_napt_mapping_entry_config ${global-ip} ${natPortType} ${global-port}&#xA;
+       fi&#xA;
+   </ACTION>
+
      </COMMAND>
    </VIEW>
-
 
      <VIEW name="enable-view">
     <!--show nat -->
@@ -554,6 +579,17 @@ limitations under the License.
              </PARAM>
          </PARAM>
          <ACTION builtin="clish_nop"></ACTION>
+         <ACTION>
+          if test "${nat-subcommands}" = "config"; then&#xA;
+                  if test "${config-subcommands}" = "globalvalues"; then&#xA;
+                      python $SONIC_CLI_ROOT/sonic-cli-nat.py get_openconfig_nat_nat_instances_instance_config show_nat_global_config.j2&#xA;
+                  elif test "${config-subcommands}" = "bindings"; then&#xA;
+                      python $SONIC_CLI_ROOT/sonic-cli-nat.py get_openconfig_nat_nat_instances_instance_nat_acl_pool_binding show_nat_bindings.j2&#xA;
+                  elif test "${config-subcommands}" = "pool"; then&#xA;
+                      python $SONIC_CLI_ROOT/sonic-cli-nat.py get_openconfig_nat_nat_instances_instance_nat_pool show_nat_pool.j2&#xA;
+                  fi&#xA;
+          fi&#xA;
+      </ACTION>
      </COMMAND>
 
    </VIEW>

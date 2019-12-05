@@ -1,0 +1,33 @@
+{% set vars = {'access_list': "----"} %}
+{% set vars = {'type': "----"} %}
+{% set vars = {'twice_nat_id': "----"} %}
+{{'%-20s'|format("Binding Name")}}{{'%-30s'|format("Pool Name")}}{{'%-20s'|format("Access-List")}}{{'%-15s'|format("Nat Type")}}{{'%-15s'|format("Twice-Nat Id")}}
+{{'----------------------------------------------------------------------------------------------------------------------------'}}
+{% if 'openconfig-nat:nat-acl-pool-binding' in json_output and 'nat-acl-pool-binding-entry' in json_output['openconfig-nat:nat-acl-pool-binding'] %}
+{% for dict in json_output['openconfig-nat:nat-acl-pool-binding']['nat-acl-pool-binding-entry'] %}
+{% if 'access-list' in dict['config'] %}
+{% if vars.update({'access_list': dict['config']['access-list']}) %}{% endif %}
+{% else %}
+{% if vars.update({'access_list':"----"}) %}{% endif %}
+{% endif %}
+
+{% if 'type' in dict['config'] %}
+{% if dict['config']['type'] == 'openconfig-nat:SNAT' %}
+{% if vars.update({'type': 'snat'}) %}{% endif %}
+{% else %}
+{% if vars.update({'type': 'dnat'}) %}{% endif %}
+{% endif %}
+{% else %}
+{% if vars.update({'type':"----"}) %}{% endif %}
+{% endif %}
+
+{% if 'twice-nat-id' in dict['config'] %}
+{% if vars.update({'twice_nat_id': dict['config']['twice-nat-id']}) %}{% endif %}
+{% else %}
+{% if vars.update({'twice_nat_id':"----"}) %}{% endif %}
+{% endif %}
+
+{{'%-20s'|format(dict['name'])}}{{'%-30s'|format(dict['config']['nat-pool'])}}{{'%-20s'|format(vars.access_list)}}{{'%-15s'|format(vars.type)}}{{'%-15s'|format(vars.twice_nat_id)}}
+
+{% endfor %}
+{% endif %}
