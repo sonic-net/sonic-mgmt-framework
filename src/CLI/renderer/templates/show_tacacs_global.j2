@@ -8,7 +8,7 @@
 {% set key = json_output['openconfig-system:config']['openconfig-system-augments:secret-key'] %}
 
 {% if srcip -%}
-{{'src-ip     : '}}{{srcip}}
+{{'source-ip  : '}}{{srcip}}
 {% endif %}
 {% if timeout -%}
 {{'timeout    : '}}{{timeout}}
@@ -17,7 +17,7 @@
 {{'auth-type  : '}}{{authtype}}
 {% endif %}
 {% if key -%}
-{{'secret-key : '}}{{key}}
+{{'key        : '}}{{key}}
 {% endif %}
 {% endif %}
 

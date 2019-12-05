@@ -4,7 +4,7 @@
 {% if json_output and 'openconfig-system:config' in json_output -%}
 {% set authfail = json_output['openconfig-system:config']['openconfig-system-augments:failthrough'] %}
 {% set authmethod = json_output['openconfig-system:config']['authentication-method'] %}
-{{'failthrough : '}}{{authfail}}
-{{'login       : '}}{{authmethod|join(', ') }}
+{{'failthrough  : '}}{{authfail}}
+{{'login-method : '}}{{authmethod|join(', ') }}
 {% endif %}
 
