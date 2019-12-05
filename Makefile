@@ -122,7 +122,8 @@ $(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/openconfig/ygot
         cd $(BUILD_GOPATH)/src/github.com/openconfig/goyang/; git reset --hard HEAD; git checkout 064f9690516f4f72db189f4690b84622c13b7296 >/dev/null ; true; \
 	cp $(TOPDIR)/goyang-modified-files/goyang.patch .; \
 	patch -p1 < goyang.patch; rm -f goyang.patch; \
-	$(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/openconfig/goyang
+	$(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/openconfig/goyang; \
+	cd $(BUILD_GOPATH)/src/github.com/antchfx/jsonquery; git apply $(TOPDIR)/patches/jsonquery.patch
 
 install:
 	$(INSTALL) -D $(REST_BIN) $(DESTDIR)/usr/sbin/rest_server
