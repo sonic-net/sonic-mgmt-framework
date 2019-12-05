@@ -804,7 +804,7 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
 					   Inside full-spec isKey is set to true for list key-leaf dierctly under the list(outside of config container) 
 					   For ietf yang(eg.ietf-ptp) list key-leaf might have a field transformer.
 					 */
-					if ((!xYangSpecMap[xpath].isKey) && (len(xYangSpecMap[xpath].xfmrField) > 0)) {
+					if ((!xYangSpecMap[xpath].isKey) || (len(xYangSpecMap[xpath].xfmrField) > 0)) {
 						if len(xYangSpecMap[xpath].xfmrFunc) == 0 {
 							value := jData.MapIndex(key).Interface()
 							log.Infof("data field: key(\"%v\"), value(\"%v\").", key, value)
