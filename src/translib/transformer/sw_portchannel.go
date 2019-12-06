@@ -25,6 +25,7 @@ import (
     "translib/ocbinds"
     "translib/tlerr"
     "strings"
+	"github.com/openconfig/ygot/ygot"
     log "github.com/golang/glog"
 )
 
@@ -174,13 +175,17 @@ var DbToYang_intf_lag_state_xfmr SubTreeXfmrDbToYang = func (inParams XfmrParams
     var err error
 
     intfsObj := getIntfsRoot(inParams.ygRoot)
-    if intfsObj == nil {
+    if intfsObj == nil || intfsObj.Interface == nil {
         errStr := "Failed to Get root object!"
         log.Errorf(errStr)
         return errors.New(errStr)
     }
     pathInfo := NewPathInfo(inParams.uri)
     ifName := pathInfo.Var("name")
+    if _, ok := intfsObj.Interface[ifName]; !ok  {
+		obj, _ := intfsObj.NewInterface(ifName)
+		ygot.BuildEmptyTree(obj)
+	}
     intfObj := intfsObj.Interface[ifName]
     if intfObj.Aggregation == nil {
         return errors.New("Not a valid request")
