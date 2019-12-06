@@ -1,0 +1,28 @@
+{% set vars = {'port_range': "----"} %}
+{% set vars = {'ip_range': "----"} %}
+
+{{'%-20s'|format("Pool Name")}}{{'%-30s'|format("Global IP Range")}}{{'%-20s'|format("Global L4 Port Range")}}
+{{'----------------------------------------------------------------------------------------------------------------------------'}}
+{% if 'openconfig-nat:nat-pool' in json_output and 'nat-pool-entry' in json_output['openconfig-nat:nat-pool'] %}
+{% for dict in json_output['openconfig-nat:nat-pool']['nat-pool-entry'] %}
+
+{% if 'state' in dict  and 'ip-address' in dict['state']%}
+{% if vars.update({'ip_range': dict['state']['ip-address']}) %}{% endif %}
+{% elif 'state' in dict  and 'ip-address-range' in dict['state']%}
+{% if vars.update({'ip_range': dict['state']['ip-address-range']}) %}{% endif %}
+{% else %}
+{% if vars.update({'ip_range':"----"}) %}{% endif %}
+{% endif %}
+
+
+{% if 'state' in dict  and 'nat-port' in dict['state']%}
+{% if vars.update({'port_range': dict['state']['nat-port']}) %}{% endif %}
+{% else %}
+{% if vars.update({'port_range':"----"}) %}{% endif %}
+{% endif %}
+
+
+{{'%-20s'|format(dict['pool-name'])}}{{'%-30s'|format(vars.ip_range)}}{{'%-20s'|format(vars.port_range)}}
+
+{% endfor %}
+{% endif %}
