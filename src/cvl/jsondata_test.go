@@ -27,6 +27,7 @@ var json_edit_config_create_acl_table_dependent_data = []string{`{
 var json_edit_config_create_acl_rule_config_data = []string{
 						`{
         						"PACKET_ACTION": "FORWARD",
+							"IP_TYPE":	"IPV4",
                						 "SRC_IP": "10.1.1.1/32",
                 					"L4_SRC_PORT": "1909",
                						 "IP_PROTOCOL": "103",

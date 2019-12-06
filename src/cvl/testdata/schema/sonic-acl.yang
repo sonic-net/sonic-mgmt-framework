@@ -142,6 +142,8 @@ module sonic-acl {
 						enum IPV6ANY;
 						enum NON_IPV6;
 					}
+
+					default IPV4;
 				}
 
 				leaf IP_PROTOCOL {
