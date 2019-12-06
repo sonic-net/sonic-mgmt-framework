@@ -6,6 +6,7 @@ import (
     "translib/ocbinds"
     "translib/db"
     "strconv"
+    "github.com/openconfig/ygot/ygot"
     log "github.com/golang/glog"
 )
 
@@ -141,9 +142,9 @@ var DbToYang_bgp_nbr_peer_type_fld_xfmr FieldXfmrDbtoYang = func(inParams XfmrPa
 
     if ok {
         if (peer_type == "internal") {
-            result["peer-type"] = strconv.FormatInt(int64(ocbinds.OpenconfigBgp_PeerType_INTERNAL), 10)
+            result["peer-type"] = "INTERNAL"
         } else if (peer_type == "external") {
-            result["peer-type"] = strconv.FormatInt(int64(ocbinds.OpenconfigBgp_PeerType_EXTERNAL), 10)
+            result["peer-type"] = "EXTERNAL"
         }
     } else {
         log.Info("peer_type field not found in DB")
@@ -504,12 +505,12 @@ func fill_nbr_state_cmn_info (nbr_key *_xfmr_bgp_nbr_state_key, frrNbrDataValue 
             nbrState.PeerGroup = &value
         }
 
-        if value, ok := cfgDbEntry["enabled"] ; ok {
+        if value, ok := cfgDbEntry["admin_status"] ; ok {
             _enabled, _ := strconv.ParseBool(value)
             nbrState.Enabled = &_enabled
         }
 
-        if value, ok := cfgDbEntry["description"] ; ok {
+        if value, ok := cfgDbEntry["name"] ; ok {
             nbrState.Description = &value
         }
 
@@ -519,9 +520,9 @@ func fill_nbr_state_cmn_info (nbr_key *_xfmr_bgp_nbr_state_key, frrNbrDataValue 
 
         if value, ok := cfgDbEntry["peer_type"] ; ok {
             switch value {
-                case "INTERNAL":
+                case "internal":
                     nbrState.PeerType = ocbinds.OpenconfigBgp_PeerType_INTERNAL
-                case "EXTERNAL":
+                case "external":
                     nbrState.PeerType = ocbinds.OpenconfigBgp_PeerType_EXTERNAL
             }
         }
@@ -578,11 +579,11 @@ func fill_nbr_state_timers_info (nbr_key *_xfmr_bgp_nbr_state_key, frrNbrDataVal
             _connectRetry, _ := strconv.ParseFloat(value, 64)
             nbrTimersState.ConnectRetry = &_connectRetry
         }
-        if value, ok := cfgDbEntry["hold_time"] ; ok {
+        if value, ok := cfgDbEntry["holdtime"] ; ok {
             _holdTime, _ := strconv.ParseFloat(value, 64)
             nbrTimersState.HoldTime = &_holdTime
         }
-        if value, ok := cfgDbEntry["keepalive_interval"] ; ok {
+        if value, ok := cfgDbEntry["keepalive"] ; ok {
             _keepaliveInterval, _ := strconv.ParseFloat(value, 64)
             nbrTimersState.KeepaliveInterval = &_keepaliveInterval
         }
@@ -675,7 +676,7 @@ func validate_nbr_state_get (inParams XfmrParams, dbg_log string) (*ocbinds.Open
     }
 
     pathInfo := NewPathInfo(inParams.uri)
-    targetUriPath, err := getYangPathFromUri(pathInfo.Path)
+    targetUriPath, _ := getYangPathFromUri(pathInfo.Path)
     nbr_key.nbrAddr = pathInfo.Var("neighbor-address")
     log.Infof("%s : path:%s; template:%s targetUriPath:%s niName:%s nbrAddr:%s",
               dbg_log, pathInfo.Path, pathInfo.Template, targetUriPath, nbr_key.niName, nbr_key.nbrAddr)
@@ -688,10 +689,10 @@ func validate_nbr_state_get (inParams XfmrParams, dbg_log string) (*ocbinds.Open
 
     nbr_obj, ok := nbrs_obj.Neighbor[nbr_key.nbrAddr]
     if !ok {
-        log.Errorf("%s failed !! Error: Neighbor object missing", dbg_log)
-        return nil, nbr_key, oper_err
+        log.Infof("%s Neighbor object missing, add new", dbg_log)
+        nbr_obj,_ = nbrs_obj.NewNeighbor(nbr_key.nbrAddr)
     }
-
+    ygot.BuildEmptyTree(nbr_obj)
     return nbr_obj, nbr_key, err
 }
 
@@ -720,6 +721,7 @@ var DbToYang_bgp_nbrs_nbr_state_xfmr SubTreeXfmrDbToYang = func(inParams XfmrPar
 
     nbr_obj, nbr_key, get_err := validate_nbr_state_get (inParams, cmn_log);
     if get_err != nil {
+        log.Info("Neighbor state get subtree error: ", get_err)
         return get_err
     }
 
@@ -781,9 +783,10 @@ func validate_nbr_af_state_get (inParams XfmrParams, dbg_log string) (*ocbinds.O
 
     nbr_obj, ok := nbrs_obj.Neighbor[nbr_af_key.nbrAddr]
     if !ok {
-        log.Errorf("%s failed !! Error: Neighbor object missing", dbg_log)
-        return nil, nbr_af_key, oper_err
+        log.Errorf("%s Neighbor object missing, add new", dbg_log)
+        nbr_obj,_ = nbrs_obj.NewNeighbor(nbr_af_key.nbrAddr)
     }
+    ygot.BuildEmptyTree(nbr_obj)
 
     afiSafis_obj := nbr_obj.AfiSafis
     if afiSafis_obj == nil {
@@ -856,7 +859,7 @@ var DbToYang_bgp_nbrs_nbr_af_state_xfmr SubTreeXfmrDbToYang = func(inParams Xfmr
     nbrs_af_state_obj.AfiSafiName = nbr_af_key.afiSafiNameEnum
 
     if cfgDbEntry, cfgdb_get_err := get_spec_nbr_af_cfg_tbl_entry (inParams.dbs[db.ConfigDB], &nbr_af_key) ; cfgdb_get_err == nil {
-        if value, ok := cfgDbEntry["enabled"] ; ok {
+        if value, ok := cfgDbEntry["admin_status"] ; ok {
             _enabled, _ := strconv.ParseBool(value)
             nbrs_af_state_obj.Enabled = &_enabled
         }
@@ -884,18 +887,18 @@ var DbToYang_bgp_nbrs_nbr_af_state_xfmr SubTreeXfmrDbToYang = func(inParams Xfmr
 
         if value, ok := cfgDbEntry["send_community"] ; ok {
             switch value {
-                case "STANDARD":
+                case "standard":
                     nbrs_af_state_obj.SendCommunity = ocbinds.OpenconfigBgpExt_CommunityType_STANDARD
-                case "EXTENDED":
+                case "extended":
                     nbrs_af_state_obj.SendCommunity = ocbinds.OpenconfigBgpExt_CommunityType_EXTENDED
-                case "BOTH":
+                case "both":
                     nbrs_af_state_obj.SendCommunity = ocbinds.OpenconfigBgpExt_CommunityType_BOTH
-                case "NONE":
+                case "none":
                     nbrs_af_state_obj.SendCommunity = ocbinds.OpenconfigBgpExt_CommunityType_NONE
             }
         }
 
-        if value, ok := cfgDbEntry["route_reflector_client"] ; ok {
+        if value, ok := cfgDbEntry["rrclient"] ; ok {
             _routeReflectorClient, _ := strconv.ParseBool(value)
             nbrs_af_state_obj.RouteReflectorClient = &_routeReflectorClient
         }
