@@ -323,6 +323,14 @@ func fill_ipv4_spec_pfx_nbr_in_pre_rib_data (ipv4InPreRoute_obj *ocbinds.
         nbrRouteState.ValidRoute = &value
     }
 
+    symbol, ok := pathData["appliedStatusSymbols"].(map[string]interface{})
+    if ok {
+        if value, ok := symbol["*"] ; ok {
+            _value := value.(bool)
+            nbrRouteState.ValidRoute = &_value
+        }
+    }
+
     lastUpdate, ok := pathData["lastUpdate"].(map[string]interface{})
     if ok {
         if value, ok := lastUpdate["epoch"] ; ok {
@@ -473,6 +481,14 @@ func fill_ipv6_spec_pfx_nbr_in_pre_rib_data (ipv6InPreRoute_obj *ocbinds.
     /* State Attributes */
     if value, ok := pathData["valid"].(bool) ; ok {
         nbrRouteState.ValidRoute = &value
+    }
+
+    symbol, ok := pathData["appliedStatusSymbols"].(map[string]interface{})
+    if ok {
+        if value, ok := symbol["*"] ; ok {
+            _value := value.(bool)
+            nbrRouteState.ValidRoute = &_value
+        }
     }
 
     lastUpdate, ok := pathData["lastUpdate"].(map[string]interface{})
@@ -1254,7 +1270,6 @@ func hdl_get_bgp_nbrs_adj_rib_in_pre (bgpRib_obj *ocbinds.OpenconfigNetworkInsta
         ipv4NbrsRibNbr_obj.State.NeighborAddress = &rib_key.nbrAddr
         routesData, ok := bgpRibOutputJson["routes"].(map[string]interface{})
         if !ok {return err}
-
         err = fill_bgp_ipv4_nbr_adj_rib_in_pre (ipv4NbrsRibNbr_obj, rib_key, routesData, dbg_log)
     }
 
