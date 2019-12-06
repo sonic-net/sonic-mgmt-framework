@@ -107,7 +107,7 @@ func fake_rib_json_output_blob (rib_type string) ([]byte) {
         case "ipv4-loc-rib":
             outJsonBlob = `{
                 "vrfId": 0,
-                "vrfName": "Vrf_blue",
+                "vrfName": "default",
                 "tableVersion": 2,
                 "routerId": "10.20.30.40",
                 "defaultLocPrf": 100,
@@ -320,7 +320,7 @@ func fake_rib_json_output_blob (rib_type string) ([]byte) {
         case "ipv4-adj-rib-out-post":
             outJsonBlob = `{
                 "vrfId":0,
-                "vrfName":"Vrf_blue",
+                "vrfName":"default",
                 "bgpTableVersion":2,.                                              
                 "bgpLocalRouterId":"10.20.30.40",
                 "defaultLocPrf":100,
@@ -480,7 +480,7 @@ func fake_rib_json_output_blob (rib_type string) ([]byte) {
                 "10.10.10.1":[                                   
                     {                                                
                         "vrfId":0,                                     
-                            "vrfName":"Vrf_blue",                           
+                            "vrfName":"default",                           
                             "bgpTableVersion":4,                           
                             "bgpLocalRouterId":"10.20.30.40",              
                             "defaultLocPrf":100,                           
@@ -705,7 +705,7 @@ func fake_rib_json_output_blob (rib_type string) ([]byte) {
                     }                                                                                      
                     ,{                                                                                     
                         "vrfId":0,                                                                           
-                            "vrfName":"Vrf_blue",                                                                 
+                            "vrfName":"default",                                                                 
                             "bgpTableVersion":0,                                                                 
                             "bgpLocalRouterId":"10.20.30.40",                                                    
                             "defaultLocPrf":100,                                                                 
@@ -857,7 +857,7 @@ func fake_rib_json_output_blob (rib_type string) ([]byte) {
                     }                                                                                      
                     ,{                                                                                     
                         "vrfId": 0,                                                                           
-                            "vrfName": "Vrf_blue",                                                                 
+                            "vrfName": "default",                                                                 
                             "tableVersion": 4,                                                                    
                             "routerId": "10.20.30.40",                                                            
                             "defaultLocPrf": 100,                                                                 
@@ -953,7 +953,7 @@ func fake_rib_json_output_blob (rib_type string) ([]byte) {
                                         }                                                                                
                                     }                                                                                  
                                     ]                                                                                    
-                                }                                                                                      
+                                }                                                                                  
                                 ,                                                                                      
                                     "70.80.91.0/24": {                                                                     
                                         "prefix":"70.80.91.0\/24",                                                           
@@ -1052,7 +1052,7 @@ func fake_rib_json_output_blob (rib_type string) ([]byte) {
                 "11.1.1.1":[                                                                           
                     {                                                                                      
                         "vrfId": 0,                                                                           
-                        "vrfName": "Vrf_blue",                                                                 
+                        "vrfName": "default",                                                                 
                         "tableVersion": 4,                                                                    
                         "routerId": "10.20.30.40",                                                            
                         "defaultLocPrf": 100,                                                                 
@@ -1178,7 +1178,7 @@ func fake_rib_json_output_blob (rib_type string) ([]byte) {
            case "ipv4-adj-rib-in-post":
                outJsonBlob = `{
                    "vrfId": 0,
-                   "vrfName": "Vrf_blue",
+                   "vrfName": "default",
                    "tableVersion": 54,
                    "routerId": "200.9.0.4",
                    "defaultLocPrf": 100,
@@ -1270,7 +1270,7 @@ func fake_rib_json_output_blob (rib_type string) ([]byte) {
                                    "type":"external"
                                }, 
 
-                               "cluster":{
+                               "clusterList":{
                                    "list":[
                                    "1.1.1.1",
                                    "2.2.2.2"
@@ -1287,11 +1287,7 @@ func fake_rib_json_output_blob (rib_type string) ([]byte) {
                                },
 
                                "extendedCommunity":{                                         
-                                   "string":"RT:2000:168496141 RO:2000:168496141", 
-                                   "list":[                                                    
-                                   "RT:2000:168496141",                                                
-                                   "RO:2000:168496141"                                               
-                                   ]                                     
+                                   "string":"RT:2000:168496141 RO:2000:168496141" 
                                }                                                                                 
                            },
                            { 
@@ -1373,7 +1369,7 @@ func fake_rib_json_output_blob (rib_type string) ([]byte) {
                                    "type":"external"
                                }, 
 
-                               "cluster":{
+                               "clusterList":{
                                    "list":[                                       
                                    "5.5.5.5",                                                                                 
                                    "6.6.6.6"                                         
@@ -1390,11 +1386,7 @@ func fake_rib_json_output_blob (rib_type string) ([]byte) {
                                },
 
                                "extendedCommunity":{                                         
-                                   "string":"RT:3000:168496141 RO:4000:168496141", 
-                                   "list":[                                                    
-                                   "RT:13000:168496141",                                                
-                                   "RO:14000:168496141"                                               
-                                   ]                                     
+                                   "string":"RT:3000:168496141 RO:4000:168496141" 
                                }                                                                                 
                            }
                            ] 
@@ -1485,7 +1477,7 @@ func fake_rib_json_output_blob (rib_type string) ([]byte) {
                                    "type":"external"
                                }, 
 
-                               "cluster":{
+                               "clusterList":{
                                    "list":[                                       
                                    "1.1.1.1",                                                                                 
                                    "2.2.2.2"                                         
@@ -1502,11 +1494,7 @@ func fake_rib_json_output_blob (rib_type string) ([]byte) {
                                },
 
                                "extendedCommunity":{                                         
-                                   "string":"RT:2000:168496141 RO:2000:168496141", 
-                                   "list":[                                                    
-                                   "RT:2000:168496141",                                                
-                                   "RO:2000:168496141"                                               
-                                   ]                                     
+                                   "string":"RT:2000:168496141 RO:2000:168496141" 
                                }                                                                                 
                            }
                            ]
