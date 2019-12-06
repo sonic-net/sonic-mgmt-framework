@@ -149,11 +149,18 @@ limitations under the License.
         />
     <!--=======================================================-->
     <PTYPE
-        name="RANGE_1_128"
+	name="RANGE_1_128"
+	method="integer"
+	pattern="1..128"
+	help=""
+    />
+    <!--=======================================================-->
+    <PTYPE
+        name="RANGE_2_255"
         method="integer"
-        pattern="1..128"
+        pattern="2..128"
         help=""
-        />
+    />
     <!--=======================================================-->
     <PTYPE
         name="RANGE_1_4095"
@@ -161,6 +168,13 @@ limitations under the License.
         pattern="1..4095"
         help=""
         />
+    <!--=======================================================-->
+    <PTYPE
+        name="RANGE_10_60000"
+        method="integer"
+        pattern="10..60000"
+        help=""
+    />
     <!--=======================================================-->
     <PTYPE
         name="IPADDR_NN"
