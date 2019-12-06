@@ -1064,7 +1064,19 @@ func fill_bgp_ipv4_nbr_adj_rib_out_post (ipv4Nbr_obj *ocbinds.OpenconfigNetworkI
         prefixData, ok := routes[prefix].(map[string]interface{}) ; if !ok {continue}
         value, ok := prefixData["pathId"] ; if !ok {continue}
         pathId := uint32(value.(float64))
-        ipv4OutPostRoute_obj, err := ipv4OutPostRoutes_obj.NewRoute (prefix, pathId) ; if err != nil {continue}
+
+        if (rib_key.prefix != "" && (prefix != rib_key.prefix)) {continue}
+        if (rib_key.pathIdKey != "" && (pathId != rib_key.pathId)) {continue}
+
+        key := ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Rib_AfiSafis_AfiSafi_Ipv4Unicast_Neighbors_Neighbor_AdjRibOutPost_Routes_Route_Key{
+            Prefix: prefix,
+            PathId: pathId,
+        }
+
+        var ipv4OutPostRoute_obj *ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Rib_AfiSafis_AfiSafi_Ipv4Unicast_Neighbors_Neighbor_AdjRibOutPost_Routes_Route
+        if ipv4OutPostRoute_obj, ok = ipv4OutPostRoutes_obj.Route[key] ; !ok {
+            ipv4OutPostRoute_obj, err = ipv4OutPostRoutes_obj.NewRoute (prefix, pathId) ; if err != nil {continue}
+        }
         ygot.BuildEmptyTree(ipv4OutPostRoute_obj)
         if ok := fill_ipv4_spec_pfx_nbr_out_post_rib_data (ipv4OutPostRoute_obj, prefix, pathId, prefixData) ; !ok {continue}
     }
@@ -1072,9 +1084,136 @@ func fill_bgp_ipv4_nbr_adj_rib_out_post (ipv4Nbr_obj *ocbinds.OpenconfigNetworkI
     return err
 }
 
+func fill_ipv6_spec_pfx_nbr_out_post_rib_data (ipv6OutPostRoute_obj *ocbinds.
+                                               OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Rib_AfiSafis_AfiSafi_Ipv6Unicast_Neighbors_Neighbor_AdjRibOutPost_Routes_Route,
+                                               prefix string, pathId uint32, prefixData map[string]interface{}) bool {
+    ipv6NbrOutPostRouteState := ipv6OutPostRoute_obj.State
+    ipv6NbrOutPostRouteState.Prefix = &prefix
+    ipv6NbrOutPostRouteState.PathId = &pathId
+
+    lastUpdate, ok := prefixData["lastUpdate"].(map[string]interface{})
+    if ok {
+        if value, ok := lastUpdate["epoch"] ; ok {
+            _lastUpdateEpoch := uint64(value.(float64))
+            ipv6NbrOutPostRouteState.LastModified = &_lastUpdateEpoch
+        }
+    }
+
+    ipv6OutPostRouteAttrSets := ipv6OutPostRoute_obj.AttrSets
+
+    if value, ok := prefixData["atomicAggregate"].(bool) ; ok {
+        ipv6OutPostRouteAttrSets.AtomicAggregate = &value
+    }
+
+    if value, ok := prefixData["localPref"] ; ok {
+        _localPref := uint32(value.(float64))
+        ipv6OutPostRouteAttrSets.LocalPref = &_localPref
+    }
+
+    if value, ok := prefixData["med"] ; ok {
+        _med := uint32(value.(float64))
+        ipv6OutPostRouteAttrSets.Med = &_med
+    }
+
+    if value, ok := prefixData["originatorId"].(string) ; ok {
+        ipv6OutPostRouteAttrSets.OriginatorId = &value
+    }
+
+    ipv6OutPostRouteAggState := ipv6OutPostRouteAttrSets.Aggregator.State
+
+    if value, ok := prefixData["aggregatorAs"] ; ok {
+        _as := uint32(value.(float64))
+        ipv6OutPostRouteAggState.As = &_as
+    }
+
+    if value, ok := prefixData["aggregatorId"].(string) ; ok {
+        ipv6OutPostRouteAggState.Address = &value
+    }
+
+    if value, ok := prefixData["aspath"].(map[string]interface{}) ; ok {
+        if asPathSegments, ok := value["segments"].([]interface {}) ; ok {
+            for _, asPathSegmentsData := range asPathSegments {
+                var _segment ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Rib_AfiSafis_AfiSafi_Ipv6Unicast_Neighbors_Neighbor_AdjRibOutPost_Routes_Route_AttrSets_AsPath_AsSegment
+                ygot.BuildEmptyTree (&_segment)
+                if ok = parse_aspath_segment_data (asPathSegmentsData.(map[string]interface {}), &_segment.State.Type, &_segment.State.Member) ; ok {
+                   ipv6OutPostRouteAttrSets.AsPath.AsSegment = append (ipv6OutPostRouteAttrSets.AsPath.AsSegment, &_segment)
+                }
+            }
+        }
+    }
+
+    if value, ok := prefixData["nexthops"].(map[string]interface{}) ; ok {
+        if ip, ok := value["ip"].(string) ; ok {
+            ipv6OutPostRouteAttrSets.NextHop = &ip
+        }
+    }
+
+    if value, ok := prefixData["clusterList"].(map[string]interface{}) ; ok {
+        if _list, ok := value["list"].([]interface{}) ; ok {
+            for _, _listData := range _list {
+                ipv6OutPostRouteAttrSets.ClusterList = append (ipv6OutPostRouteAttrSets.ClusterList, _listData.(string))
+            }
+        }
+    }
+
+    if value, ok := prefixData["community"].(map[string]interface{}) ; ok {
+        if _list, ok := value["list"].([]interface{}) ; ok {
+            for _, _listData := range _list {
+                if _community_union, err := ipv6OutPostRouteAttrSets.To_OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Rib_AfiSafis_AfiSafi_Ipv6Unicast_Neighbors_Neighbor_AdjRibOutPost_Routes_Route_AttrSets_Community_Union (_listData.(string)) ; err == nil {
+                    ipv6OutPostRouteAttrSets.Community = append (ipv6OutPostRouteAttrSets.Community, _community_union)
+                }
+            }
+        }
+    }
+
+    if value, ok := prefixData["extendedCommunity"].(map[string]interface{}) ; ok {
+        if _value, ok := value["string"] ; ok {
+            _community_slice := strings.Split (_value.(string), " ")
+            for _, _data := range _community_slice {
+                if _ext_community_union, err := ipv6OutPostRouteAttrSets.To_OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Rib_AfiSafis_AfiSafi_Ipv6Unicast_Neighbors_Neighbor_AdjRibOutPost_Routes_Route_AttrSets_ExtCommunity_Union (_data) ; err == nil {
+                    ipv6OutPostRouteAttrSets.ExtCommunity = append (ipv6OutPostRouteAttrSets.ExtCommunity, _ext_community_union)
+                }
+            }
+        }
+    }
+
+    return true
+}
+
 func fill_bgp_ipv6_nbr_adj_rib_out_post (ipv6Nbr_obj *ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Rib_AfiSafis_AfiSafi_Ipv6Unicast_Neighbors_Neighbor,
                                          rib_key *_xfmr_bgp_rib_key, routes map[string]interface{}, dbg_log *string) (error) {
     var err error
+
+    ipv6NbrAdjRibOutPost_obj := ipv6Nbr_obj.AdjRibOutPost
+
+    var ipv6OutPostRoutes_obj *ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Rib_AfiSafis_AfiSafi_Ipv6Unicast_Neighbors_Neighbor_AdjRibOutPost_Routes
+    if ipv6OutPostRoutes_obj = ipv6NbrAdjRibOutPost_obj.Routes ; ipv6OutPostRoutes_obj == nil {
+        var _ipv6OutPostRoutes ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Rib_AfiSafis_AfiSafi_Ipv6Unicast_Neighbors_Neighbor_AdjRibOutPost_Routes
+        ipv6NbrAdjRibOutPost_obj.Routes = &_ipv6OutPostRoutes
+        ipv6OutPostRoutes_obj = ipv6NbrAdjRibOutPost_obj.Routes
+    }
+
+    for prefix, _ := range routes {
+        prefixData, ok := routes[prefix].(map[string]interface{}) ; if !ok {continue}
+        value, ok := prefixData["pathId"] ; if !ok {continue}
+        pathId := uint32(value.(float64))
+
+        if (rib_key.prefix != "" && (prefix != rib_key.prefix)) {continue}
+        if (rib_key.pathIdKey != "" && (pathId != rib_key.pathId)) {continue}
+
+        key := ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Rib_AfiSafis_AfiSafi_Ipv6Unicast_Neighbors_Neighbor_AdjRibOutPost_Routes_Route_Key{
+            Prefix: prefix,
+            PathId: pathId,
+        }
+
+        var ipv6OutPostRoute_obj *ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Rib_AfiSafis_AfiSafi_Ipv6Unicast_Neighbors_Neighbor_AdjRibOutPost_Routes_Route
+        if ipv6OutPostRoute_obj, ok = ipv6OutPostRoutes_obj.Route[key] ; !ok {
+            ipv6OutPostRoute_obj, err = ipv6OutPostRoutes_obj.NewRoute (prefix, pathId) ; if err != nil {continue}
+        }
+        ygot.BuildEmptyTree(ipv6OutPostRoute_obj)
+        if ok := fill_ipv6_spec_pfx_nbr_out_post_rib_data (ipv6OutPostRoute_obj, prefix, pathId, prefixData) ; !ok {continue}
+    }
+
     return err
 }
 
@@ -1083,13 +1222,11 @@ func hdl_get_bgp_nbrs_adj_rib_in_pre (bgpRib_obj *ocbinds.OpenconfigNetworkInsta
     var err error
     oper_err := errors.New("Opertational error")
     var ok bool
-    var cmd string
     log.Infof("%s ==> NBRS-RIB invoke with keys {%s} afiSafiType:%d", *dbg_log, print_rib_keys(rib_key), afiSafiType)
 
-    if afiSafiType == ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_IPV4_UNICAST {
-       cmd = "ipv4-adj-rib-in-pre"
-    } else {
-       cmd = "ipv6-adj-rib-in-pre"
+    cmd := "ipv4-adj-rib-in-pre"
+    if afiSafiType == ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_IPV6_UNICAST {
+        cmd = "ipv6-adj-rib-in-pre"
     }
 
     bgpRibOutputJson, cmd_err := fake_rib_exec_vtysh_cmd ("", cmd)
@@ -1147,10 +1284,9 @@ func hdl_get_bgp_nbrs_adj_rib_in_post (bgpRib_obj *ocbinds.OpenconfigNetworkInst
     var cmd string
     log.Infof("%s ==> NBRS-RIB invoke with keys {%s} afiSafiType:%d", *dbg_log, print_rib_keys(rib_key), afiSafiType)
 
-    if afiSafiType == ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_IPV4_UNICAST {
-       cmd = "ipv4-adj-rib-in-post"
-    } else {
-       cmd = "ipv6-adj-rib-in-post"
+    cmd := "ipv4-adj-rib-in-post"
+    if afiSafiType == ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_IPV6_UNICAST {
+        cmd = "ipv6-adj-rib-in-post"
     }
 
     bgpRibOutputJson, cmd_err := fake_rib_exec_vtysh_cmd ("", cmd)
@@ -1217,16 +1353,58 @@ func hdl_get_bgp_nbrs_adj_rib_out_post (bgpRib_obj *ocbinds.OpenconfigNetworkIns
     var err error
     oper_err := errors.New("Opertational error")
 
-    log.Infof("%s ==> GET-Specific-Nbr: Nbrs-Adj-RIB invoke with keys {%s} afiSafiType:%d", *dbg_log, print_rib_keys(rib_key), afiSafiType)
+    log.Infof("%s ==> NBRS-RIB invoke with keys {%s} afiSafiType:%d", *dbg_log, print_rib_keys(rib_key), afiSafiType)
 
-    bgpRibOutputJson, cmd_err := fake_rib_exec_vtysh_cmd ("", "ipv4-adj-rib-out-post")
+    if rib_key.nbrAddr == "" {
+        log.Errorf ("%s failed !! Nbr-Addr not present !!", *dbg_log);
+        return oper_err
+    }
+
+    out_post_cmd := "ipv4-adj-rib-out-post"
+    if afiSafiType == ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_IPV6_UNICAST {
+        out_post_cmd = "ipv6-adj-rib-out-post"
+    }
+
+    bgpRibOutputJson, cmd_err := fake_rib_exec_vtysh_cmd ("", out_post_cmd)
     if (cmd_err != nil) {
         log.Errorf ("%s failed !! Error:%s", *dbg_log, cmd_err);
         return oper_err
     }
-    log.Infof ("ipv4-adj-rib-out-post :%V",bgpRibOutputJson)
+
+    if vrfName, ok := bgpRibOutputJson["vrfName"] ; (!ok || vrfName != rib_key.niName) {
+        log.Errorf ("%s failed !! GET-req niName:%s not same as JSON-VRFname:%s", *dbg_log, rib_key.niName, vrfName)
+        return oper_err
+    }
+
+    if afiSafiType == ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_IPV4_UNICAST {
+        ipv4NbrsRibNbr_obj, ok := bgpRib_obj.AfiSafis.AfiSafi[afiSafiType].Ipv4Unicast.Neighbors.Neighbor[rib_key.nbrAddr]; if !ok {
+            log.Errorf ("%s failed !! Error:%s", *dbg_log, cmd_err);
+            return err
+        }
+        ygot.BuildEmptyTree(ipv4NbrsRibNbr_obj)
+
+        ipv4NbrsRibNbr_obj.State.NeighborAddress = &rib_key.nbrAddr
+        routesData, ok := bgpRibOutputJson["routes"].(map[string]interface{})
+        if !ok {return err}
+
+        err = fill_bgp_ipv4_nbr_adj_rib_out_post (ipv4NbrsRibNbr_obj, rib_key, routesData, dbg_log)
+    }
+
+    if afiSafiType == ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_IPV6_UNICAST {
+        ipv6NbrsRibNbr_obj, ok := bgpRib_obj.AfiSafis.AfiSafi[afiSafiType].Ipv6Unicast.Neighbors.Neighbor[rib_key.nbrAddr]; if !ok {
+            log.Errorf ("%s failed !! Error:%s", *dbg_log, cmd_err);
+            return err
+        }
+        ygot.BuildEmptyTree(ipv6NbrsRibNbr_obj)
+
+        routesData, ok := bgpRibOutputJson["routes"].(map[string]interface{})
+        if !ok {return err}
+
+        err = fill_bgp_ipv6_nbr_adj_rib_out_post (ipv6NbrsRibNbr_obj, rib_key, routesData, dbg_log)
+    }
 
     return err
+
 }
 
 func hdl_get_all_bgp_nbrs_adj_rib (bgpRib_obj *ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Rib,
@@ -1234,16 +1412,14 @@ func hdl_get_all_bgp_nbrs_adj_rib (bgpRib_obj *ocbinds.OpenconfigNetworkInstance
     var err error
     oper_err := errors.New("Opertational error")
     var ok bool
-    var cmd string
     log.Infof("%s ==> GET-ALL: Nbrs-Adj-RIB invoke with keys {%s} afiSafiType:%d", *dbg_log, print_rib_keys(rib_key), afiSafiType)
 
-    if afiSafiType == ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_IPV4_UNICAST {
-       cmd = "ipv4-all-nbrs-adj-rib"
-    } else {
-       cmd = "ipv6-all-nbrs-adj-rib"
+    get_all_nbrs_cmd := "ipv4-all-nbrs-adj-rib"
+    if afiSafiType == ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_IPV6_UNICAST {
+        get_all_nbrs_cmd = "ipv6-all-nbrs-adj-rib"
     }
 
-    bgpRibOutputJson, cmd_err := fake_rib_exec_vtysh_cmd ("", cmd)
+    bgpRibOutputJson, cmd_err := fake_rib_exec_vtysh_cmd ("", get_all_nbrs_cmd)
     if (cmd_err != nil) {
         log.Errorf ("%s failed !! Error:%s", *dbg_log, cmd_err);
         return oper_err
