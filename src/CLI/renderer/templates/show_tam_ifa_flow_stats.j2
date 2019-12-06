@@ -1,0 +1,25 @@
+{% set vars = {'name': ""} %}
+{% set vars = {'aclrule': ""} %}
+{% set vars = {'acltable': ""} %}
+{% set vars = {'packets': ""} %}
+{% set vars = {'bytes': ""} %}
+
+{% if json_output -%}
+
+------------------------------------------------------------------------------------------------
+{{'%-15s'|format("FLOW")}}{{'%-15s'|format("ACL TABLE")}}{{'%-15s'|format("ACL RULE")}}{{'%-15s'|format("PACKET COUNT")}}{{'%-15s'|format("BYTE COUNT")}}
+------------------------------------------------------------------------------------------------
+
+{% for flow in json_output %}
+
+    {% if vars.update({'name':flow["name"]}) %}{% endif %}
+    {% if vars.update({'aclrule':flow["acl-rule-name"]}) %}{% endif %}
+    {% if vars.update({'acltable':flow["acl-table-name"]}) %}{% endif %}
+    {% if vars.update({'packets':flow["Packets"]}) %}{% endif %}
+    {% if vars.update({'bytes':flow["Bytes"]}) %}{% endif %}
+
+{{'%-15s'|format(vars.name)}}{{'%-15s'|format(vars.acltable)}}{{'%-15s'|format(vars.aclrule)}}{{'%-15s'|format(vars.packets)}}{{'%-15s'|format(vars.bytes)}}
+
+{% endfor %}
+
+{% endif %}

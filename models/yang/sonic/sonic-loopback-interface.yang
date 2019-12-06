@@ -40,6 +40,12 @@ module sonic-loopback-interface {
                     type string;
                 }
 
+                leaf nat_zone {
+                    type uint8 {
+                        range "0..3";
+                    }
+                }
+
                 leaf vrf_name {
                     type leafref {
                         path "/vrf:sonic-vrf/vrf:VRF/vrf:VRF_LIST/vrf:vrf_name";

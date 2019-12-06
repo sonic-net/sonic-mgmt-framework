@@ -34,7 +34,7 @@ module sonic-vrf {
 
                 leaf vrf_name {
                     type string {
-                        pattern "Vrf[a-zA-Z0-9_-]*" {
+                        pattern "Vrf[a-zA-Z0-9_-]+" {
                             error-message "Invalid VRF name";
                             error-app-tag vrf-name-invalid;
                         }

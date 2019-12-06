@@ -45,12 +45,18 @@ module sonic-vlan-interface {
                         path "/svlan:sonic-vlan/svlan:VLAN/svlan:VLAN_LIST/svlan:name";
                     }
                 }
-                
-                leaf vrf_name {
-                        type leafref {
-                                path "/vrf:sonic-vrf/vrf:VRF/vrf:VRF_LIST/vrf:vrf_name";
-                        }
+
+                leaf nat_zone {
+                    type uint8 {
+                        range "0..3";
+                    }
                 }
+
+                leaf vrf_name {
+                    type leafref {
+                        path "/vrf:sonic-vrf/vrf:VRF/vrf:VRF_LIST/vrf:vrf_name";
+                    }
+                } 
             }
             list VLAN_INTERFACE_IPADDR_LIST {
                 key "vlanName ip_prefix";

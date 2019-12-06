@@ -171,14 +171,6 @@ func isMgmtVrf(inParams XfmrParams) (bool, error) {
         }
 }
 
-/* Get interface table name based on the interface name */
-var intfTblName = map[E_InterfaceType]string {
-        IntfTypeEthernet: "INTERFACE",
-        IntfTypeVlan:     "VLAN_INTERFACE",
-        IntfTypePortChannel: "PORTCHANNEL_INTERFACE",
-        IntfTypeLoopback: "LOOPBACK_INTERFACE",
-}
-
 func init() {
         XlateFuncBind("network_instance_table_name_xfmr", network_instance_table_name_xfmr)
         XlateFuncBind("YangToDb_network_instance_table_key_xfmr", YangToDb_network_instance_table_key_xfmr)
@@ -538,41 +530,36 @@ var YangToDb_network_instance_interface_binding_subtree_xfmr SubTreeXfmrYangToDb
 
         /* get the name at the top network-instance table level, this is the key */
         keyName := pathInfo.Var("name")
-        if (strings.HasPrefix(keyName, "Vrf") == false) {
-                log.Info("YangToDb_network_instance_interface_binding_subtree_xfmr, not Vrf nothing to do with interface", keyName)
-                return res_map, errors.New("Unexpected network instance name")
+        intfId := pathInfo.Var("id")
+
+        if intfId == "" {
+                log.Info("YangToDb_network_instance_interface_binding_subtree_xfmr: empty interface id for VRF ", keyName)
+                return res_map, err
         }
 
-        /* Check if interfaces is configured, if not, return */
+        /* Check if interfaces exists, if not, return */
         vrfObj := getNwInstRoot(inParams.ygRoot)
 
         if vrfObj.NetworkInstance[keyName].Interfaces == nil {
                 return res_map, err
         }
 
-        for intfId, _:= range vrfObj.NetworkInstance[keyName].Interfaces.Interface {
-                intf_type, _, err := getIntfTypeByName(intfId)
-                if err != nil {
-                        log.Info("YangToDb_network_instance_interface_binding_subtree_xfmr: unknown intf type for ", intfId)
-                }
-
-                var intf_tbl_name string
-                intf_tbl_name = intfTblName[intf_type]
-
-                log.Info("YangToDb_network_instance_interface_binding_subtree_xfmr: intf tbl name: ", intf_tbl_name)
-
-                _, ok := res_map[intf_tbl_name]
-                if !ok {
-                        res_map[intf_tbl_name] = make(map[string]db.Value)
-                }
-
-                res_map[intf_tbl_name][intfId] = db.Value{Field: map[string]string{}}
-                dbVal := res_map[intf_tbl_name][intfId]
-                (&dbVal).Set("vrf_name", keyName)
-
-                log.Infof("YangToDb_network_instance_interface_binding_subtree_xfmr: set vrf_name %v for %v in %v", 
-                          keyName, intfId, intf_tbl_name)
+        intf_type, _, err := getIntfTypeByName(intfId)
+        if err != nil {
+                log.Info("YangToDb_network_instance_interface_binding_subtree_xfmr: unknown intf type for ", intfId)
         }
+
+        intTbl := IntfTypeTblMap[intf_type]
+        intf_tbl_name, _ :=  getIntfTableNameByDBId(intTbl, inParams.curDb)
+
+        res_map[intf_tbl_name] = make(map[string]db.Value)
+
+        res_map[intf_tbl_name][intfId] = db.Value{Field: map[string]string{}}
+        dbVal := res_map[intf_tbl_name][intfId]
+        (&dbVal).Set("vrf_name", keyName)
+
+        log.Infof("YangToDb_network_instance_interface_binding_subtree_xfmr: set vrf_name %v for %v in %v", 
+                  keyName, intfId, intf_tbl_name)
 
         log.Infof("YangToDb_network_instance_interface_binding_subtree_xfmr: %v", res_map)
 
@@ -611,8 +598,8 @@ var DbToYang_network_instance_interface_binding_subtree_xfmr SubTreeXfmrDbToYang
                         return err
                 }
 
-                var intf_tbl_name string
-                intf_tbl_name = intfTblName[intf_type]
+                intTbl := IntfTypeTblMap[intf_type]
+                intf_tbl_name, _ :=  getIntfTableNameByDBId(intTbl, inParams.curDb)
 
                 log.Info("DbToYang_network_instance_interface_binding_subtree_xfmr: intf tbl name: ", intf_tbl_name)
 

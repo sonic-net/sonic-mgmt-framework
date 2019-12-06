@@ -1,0 +1,581 @@
+module openconfig-nat-annot {
+
+    yang-version "1";
+
+    namespace "http://openconfig.net/yang/annotation/openconfig-nat-annot";
+    prefix "oc-nat-annot";
+
+    import sonic-extensions { prefix sonic-ext; }
+    import openconfig-nat { prefix oc-nat; }
+    import openconfig-extensions { prefix oc-ext; }
+
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance {
+        deviate add {
+            sonic-ext:key-transformer "nat_instance_key_xfmr";
+        }
+    }
+
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:config {
+        deviate add {
+            sonic-ext:table-name "NAT_GLOBAL";
+            sonic-ext:key-transformer "nat_global_key_xfmr";
+        }
+    }
+
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:config/oc-nat:enable {
+        deviate add {
+            sonic-ext:field-transformer "nat_enable_xfmr";
+        }
+    }
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:config/oc-nat:timeout {
+        deviate add {
+            sonic-ext:field-name "nat_timeout";
+        }
+    }
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:config/oc-nat:tcp-timeout {
+        deviate add {
+            sonic-ext:field-name "nat_tcp_timeout";
+        }
+    }
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:config/oc-nat:udp-timeout {
+        deviate add {
+            sonic-ext:field-name "nat_udp_timeout";
+        }
+    }
+
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:state {
+        deviate add {
+            sonic-ext:table-name "NAT_GLOBAL";
+            sonic-ext:key-transformer "nat_global_key_xfmr";
+        }
+    }
+
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:state/oc-nat:enable {
+        deviate add {
+            sonic-ext:field-transformer "nat_enable_xfmr";
+        }
+    }
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:state/oc-nat:timeout {
+        deviate add {
+            sonic-ext:field-name "nat_timeout";
+        }
+    }
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:state/oc-nat:tcp-timeout {
+        deviate add {
+            sonic-ext:field-name "nat_tcp_timeout";
+        }
+    }
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:state/oc-nat:udp-timeout {
+        deviate add {
+            sonic-ext:field-name "nat_udp_timeout";
+        }
+    }
+
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:napt-mapping-table {
+        deviate add {
+            sonic-ext:table-name "STATIC_NAPT";
+        }
+    }
+
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:napt-mapping-table/oc-nat:napt-mapping-entry {
+        deviate add {
+            sonic-ext:key-transformer "napt_mapping_key_xfmr";
+        }
+    }
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:napt-mapping-table/oc-nat:napt-mapping-entry/oc-nat:config {
+        deviate add {
+            sonic-ext:key-transformer "napt_mapping_key_xfmr";
+        }
+    }
+
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:napt-mapping-table/oc-nat:napt-mapping-entry/oc-nat:config/oc-nat:internal-address {
+        deviate add {
+            sonic-ext:field-name "local_ip";
+        }
+    }
+
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:napt-mapping-table/oc-nat:napt-mapping-entry/oc-nat:config/oc-nat:internal-port {
+        deviate add {
+            sonic-ext:field-name "local_port";
+        }
+    }
+
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:napt-mapping-table/oc-nat:napt-mapping-entry/oc-nat:config/oc-nat:type {
+        deviate add {
+            sonic-ext:field-transformer "nat_type_field_xfmr";
+        }
+    }
+
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:napt-mapping-table/oc-nat:napt-mapping-entry/oc-nat:config/oc-nat:twice-nat-id {
+        deviate add {
+            sonic-ext:field-name "twice_nat_id";
+        }
+    }
+
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:napt-mapping-table/oc-nat:napt-mapping-entry/oc-nat:state {
+        deviate add {
+            sonic-ext:db-name "APPL_DB";
+            sonic-ext:table-name "NAPT_TABLE";
+            sonic-ext:key-transformer "napt_mapping_state_key_xfmr";
+        }
+    }
+
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:napt-mapping-table/oc-nat:napt-mapping-entry/oc-nat:state/oc-nat:translated-ip {
+        deviate add {
+            sonic-ext:field-name "translated_ip";
+        }
+    }
+
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:napt-mapping-table/oc-nat:napt-mapping-entry/oc-nat:state/oc-nat:translated-port {
+        deviate add {
+            sonic-ext:field-name "translated_l4_port";
+        }
+    }
+
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:napt-mapping-table/oc-nat:napt-mapping-entry/oc-nat:state/oc-nat:type {
+        deviate add {
+            sonic-ext:field-transformer "nat_type_field_xfmr";
+        }
+    }
+
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:napt-mapping-table/oc-nat:napt-mapping-entry/oc-nat:state/oc-nat:entry-type {
+        deviate add {
+            sonic-ext:field-transformer "nat_entry_type_field_xfmr";
+        }
+    }
+
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:napt-mapping-table/oc-nat:napt-mapping-entry/oc-nat:state/oc-nat:counters {
+        deviate add {
+            sonic-ext:db-name "COUNTERS_DB";
+            sonic-ext:table-name "COUNTERS_NAPT";
+            sonic-ext:key-transformer "napt_mapping_state_key_xfmr";
+        }
+    }
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:napt-mapping-table/oc-nat:napt-mapping-entry/oc-nat:state/oc-nat:counters/oc-nat:dnat-translations-pkts {
+        deviate add {
+            sonic-ext:field-name "DNAT_TRANSLATIONS_PKTS";
+        }
+    }
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:napt-mapping-table/oc-nat:napt-mapping-entry/oc-nat:state/oc-nat:counters/oc-nat:dnat-translations-bytes {
+        deviate add {
+            sonic-ext:field-name "DNAT_TRANSLATIONS_BYTES";
+        }
+    }
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:napt-mapping-table/oc-nat:napt-mapping-entry/oc-nat:state/oc-nat:counters/oc-nat:snat-translations-pkts {
+        deviate add {
+            sonic-ext:field-name "SNAT_TRANSLATIONS_PKTS";
+        }
+    }
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:napt-mapping-table/oc-nat:napt-mapping-entry/oc-nat:state/oc-nat:counters/oc-nat:snat-translations-bytes {
+        deviate add {
+            sonic-ext:field-name "SNAT_TRANSLATIONS_BYTES";
+        }
+    }
+
+
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-mapping-table {
+        deviate add {
+            sonic-ext:table-name "STATIC_NAT";
+        }
+    }
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-mapping-table/oc-nat:nat-mapping-entry {
+        deviate add {
+            sonic-ext:key-transformer "nat_mapping_key_xfmr";
+        }
+    }
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-mapping-table/oc-nat:nat-mapping-entry/oc-nat:config {
+        deviate add {
+            sonic-ext:table-name "STATIC_NAT";
+            sonic-ext:key-transformer "nat_mapping_key_xfmr";
+        }
+    }
+
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-mapping-table/oc-nat:nat-mapping-entry/oc-nat:config/oc-nat:internal-address {
+        deviate add {
+            sonic-ext:field-name "local_ip";
+        }
+    }
+
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-mapping-table/oc-nat:nat-mapping-entry/oc-nat:config/oc-nat:type {
+        deviate add {
+            sonic-ext:field-transformer "nat_type_field_xfmr";
+        }
+    }
+
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-mapping-table/oc-nat:nat-mapping-entry/oc-nat:config/oc-nat:twice-nat-id {
+        deviate add {
+            sonic-ext:field-name "twice_nat_id";
+        }
+    }
+
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-mapping-table/oc-nat:nat-mapping-entry/oc-nat:state {
+        deviate add {
+            sonic-ext:db-name "APPL_DB";
+            sonic-ext:table-name "NAT_TABLE";
+            sonic-ext:key-transformer "nat_mapping_key_xfmr";
+        }
+    }
+
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-mapping-table/oc-nat:nat-mapping-entry/oc-nat:state/oc-nat:translated-ip {
+        deviate add {
+            sonic-ext:field-name "translated_ip";
+        }
+    }
+
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-mapping-table/oc-nat:nat-mapping-entry/oc-nat:state/oc-nat:type {
+        deviate add {
+            sonic-ext:field-transformer "nat_type_field_xfmr";
+        }
+    }
+
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-mapping-table/oc-nat:nat-mapping-entry/oc-nat:state/oc-nat:entry-type {
+        deviate add {
+            sonic-ext:field-transformer "nat_entry_type_field_xfmr";
+        }
+    }
+
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-mapping-table/oc-nat:nat-mapping-entry/oc-nat:state/oc-nat:counters {
+        deviate add {
+            sonic-ext:db-name "COUNTERS_DB";
+            sonic-ext:table-name "COUNTERS_NAT";
+            sonic-ext:key-transformer "nat_mapping_key_xfmr";
+        }
+    }
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-mapping-table/oc-nat:nat-mapping-entry/oc-nat:state/oc-nat:counters/oc-nat:dnat-translations-pkts {
+        deviate add {
+            sonic-ext:field-name "DNAT_TRANSLATIONS_PKTS";
+        }
+    }
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-mapping-table/oc-nat:nat-mapping-entry/oc-nat:state/oc-nat:counters/oc-nat:dnat-translations-bytes {
+        deviate add {
+            sonic-ext:field-name "DNAT_TRANSLATIONS_BYTES";
+        }
+    }
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-mapping-table/oc-nat:nat-mapping-entry/oc-nat:state/oc-nat:counters/oc-nat:snat-translations-pkts {
+        deviate add {
+            sonic-ext:field-name "SNAT_TRANSLATIONS_PKTS";
+        }
+    }
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-mapping-table/oc-nat:nat-mapping-entry/oc-nat:state/oc-nat:counters/oc-nat:snat-translations-bytes {
+        deviate add {
+            sonic-ext:field-name "SNAT_TRANSLATIONS_BYTES";
+        }
+    }
+
+
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-pool {
+        deviate add {
+            sonic-ext:table-name "NAT_POOL";
+        }
+    }
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-pool/oc-nat:nat-pool-entry {
+        deviate add {
+            sonic-ext:key-transformer "nat_pool_key_xfmr";
+        }
+    }
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-pool/oc-nat:nat-pool-entry/oc-nat:config {
+        deviate add {
+            sonic-ext:table-name "NAT_POOL";
+            sonic-ext:key-transformer "nat_pool_key_xfmr";
+        }
+    }
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-pool/oc-nat:nat-pool-entry/oc-nat:config/oc-nat:nat-ip/oc-nat:ip-address/oc-nat:IP-ADDRESS {
+        deviate add {
+            sonic-ext:field-transformer "nat_ip_field_xfmr";
+        }
+    }
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-pool/oc-nat:nat-pool-entry/oc-nat:config/oc-nat:nat-ip/oc-nat:ip-address-range/oc-nat:IP-ADDRESS-RANGE {
+        deviate add {
+            sonic-ext:field-transformer "nat_ip_field_xfmr";
+        }
+    }
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-pool/oc-nat:nat-pool-entry/oc-nat:config/oc-nat:nat-port {
+        deviate add {
+            sonic-ext:field-name "nat_port";
+        }
+    }
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-pool/oc-nat:nat-pool-entry/oc-nat:state {
+        deviate add {
+            sonic-ext:table-name "NAT_POOL";
+            sonic-ext:key-transformer "nat_pool_key_xfmr";
+        }
+    }
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-pool/oc-nat:nat-pool-entry/oc-nat:state/oc-nat:nat-ip/oc-nat:ip-address/oc-nat:IP-ADDRESS {
+        deviate add {
+            sonic-ext:field-transformer "nat_ip_field_xfmr";
+        }
+    }
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-pool/oc-nat:nat-pool-entry/oc-nat:state/oc-nat:nat-ip/oc-nat:ip-address-range/oc-nat:IP-ADDRESS-RANGE {
+        deviate add {
+            sonic-ext:field-transformer "nat_ip_field_xfmr";
+        }
+    }
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-pool/oc-nat:nat-pool-entry/oc-nat:state/oc-nat:nat-port {
+        deviate add {
+            sonic-ext:field-name "nat_port";
+        }
+    }
+
+
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-acl-pool-binding {
+        deviate add {
+            sonic-ext:table-name "NAT_BINDINGS";
+        }
+    }
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-acl-pool-binding/oc-nat:nat-acl-pool-binding-entry {
+        deviate add {
+            sonic-ext:key-transformer "nat_binding_key_xfmr";
+        }
+    }
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-acl-pool-binding/oc-nat:nat-acl-pool-binding-entry/oc-nat:config {
+        deviate add {
+            sonic-ext:table-name "NAT_BINDINGS";
+            sonic-ext:key-transformer "nat_binding_key_xfmr";
+        }
+    }
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-acl-pool-binding/oc-nat:nat-acl-pool-binding-entry/oc-nat:config/oc-nat:access-list {
+        deviate add {
+            sonic-ext:field-name "access_list";
+        }
+    }
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-acl-pool-binding/oc-nat:nat-acl-pool-binding-entry/oc-nat:config/oc-nat:nat-pool {
+        deviate add {
+            sonic-ext:field-name "nat_pool";
+        }
+    }
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-acl-pool-binding/oc-nat:nat-acl-pool-binding-entry/oc-nat:config/oc-nat:type {
+        deviate add {
+            sonic-ext:field-transformer "nat_type_field_xfmr";
+        }
+    }
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-acl-pool-binding/oc-nat:nat-acl-pool-binding-entry/oc-nat:config/oc-nat:twice-nat-id {
+        deviate add {
+            sonic-ext:field-name "twice_nat_id";
+        }
+    }
+
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-acl-pool-binding/oc-nat:nat-acl-pool-binding-entry/oc-nat:state {
+        deviate add {
+            sonic-ext:table-name "NAT_BINDINGS";
+            sonic-ext:key-transformer "nat_binding_key_xfmr";
+        }
+    }
+
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-acl-pool-binding/oc-nat:nat-acl-pool-binding-entry/oc-nat:state/oc-nat:access-list {
+        deviate add {
+            sonic-ext:field-name "access_list";
+        }
+    }
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-acl-pool-binding/oc-nat:nat-acl-pool-binding-entry/oc-nat:state/oc-nat:nat-pool {
+        deviate add {
+            sonic-ext:field-name "nat_pool";
+        }
+    }
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-acl-pool-binding/oc-nat:nat-acl-pool-binding-entry/oc-nat:state/oc-nat:type {
+        deviate add {
+            sonic-ext:field-transformer "nat_type_field_xfmr";
+        }
+    }
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-acl-pool-binding/oc-nat:nat-acl-pool-binding-entry/oc-nat:state/oc-nat:twice-nat-id {
+        deviate add {
+            sonic-ext:field-name "twice_nat_id";
+        }
+    }
+
+
+
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-zone {
+        deviate add {
+            sonic-ext:db-name "COUNTERS_DB";
+            sonic-ext:table-name "COUNTERS_NAT_ZONE";
+        }
+    }
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-zone/oc-nat:nat-zone-entry {
+        deviate add {
+            sonic-ext:key-transformer "nat_zone_key_xfmr";
+        }
+    }
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-zone/oc-nat:nat-zone-entry/oc-nat:state {
+        deviate add {
+            sonic-ext:key-transformer "nat_zone_key_xfmr";
+        }
+    }
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-zone/oc-nat:nat-zone-entry/oc-nat:state/oc-nat:counters {
+        deviate add {
+            sonic-ext:db-name "COUNTERS_DB";
+            sonic-ext:table-name "COUNTERS_NAT_ZONE";
+            sonic-ext:key-transformer "nat_zone_key_xfmr";
+        }
+    }
+
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-zone/oc-nat:nat-zone-entry/oc-nat:state/oc-nat:counters/oc-nat:dnat-discards {
+        deviate add {
+            sonic-ext:field-name "SAI_NAT_DNAT_DISCARDS";
+        }
+    }
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-zone/oc-nat:nat-zone-entry/oc-nat:state/oc-nat:counters/oc-nat:snat-discards {
+        deviate add {
+            sonic-ext:field-name "SAI_NAT_SNAT_DISCARDS";
+        }
+    }
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-zone/oc-nat:nat-zone-entry/oc-nat:state/oc-nat:counters/oc-nat:dnat-translation-needed {
+        deviate add {
+            sonic-ext:field-name "SAI_NAT_DNAT_TRANSLATION_NEEDED";
+        }
+    }
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-zone/oc-nat:nat-zone-entry/oc-nat:state/oc-nat:counters/oc-nat:snat-translation-needed {
+        deviate add {
+            sonic-ext:field-name "SAI_NAT_SNAT_TRANSLATION_NEEDED";
+        }
+    }
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-zone/oc-nat:nat-zone-entry/oc-nat:state/oc-nat:counters/oc-nat:dnat-translations {
+        deviate add {
+            sonic-ext:field-name "SAI_NAT_DNAT_TRANSLATIONS";
+        }
+    }
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-zone/oc-nat:nat-zone-entry/oc-nat:state/oc-nat:counters/oc-nat:snat-translations {
+        deviate add {
+            sonic-ext:field-name "SAI_NAT_SNAT_TRANSLATIONS";
+        }
+    }
+
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-twice-mapping-table {
+        deviate add {
+            sonic-ext:db-name "APPL_DB";
+            sonic-ext:table-name "NAT_TWICE_TABLE";
+        }
+    }
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-twice-mapping-table/oc-nat:nat-twice-entry {
+        deviate add {
+            sonic-ext:key-transformer "nat_twice_mapping_key_xfmr";
+        }
+    }
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-twice-mapping-table/oc-nat:nat-twice-entry/oc-nat:state {
+        deviate add {
+            sonic-ext:db-name "APPL_DB";
+            sonic-ext:table-name "NAT_TWICE_TABLE";
+            sonic-ext:key-transformer "nat_twice_mapping_key_xfmr";
+        }
+    }
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-twice-mapping-table/oc-nat:nat-twice-entry/oc-nat:state/oc-nat:translated-src-ip {
+        deviate add {
+            sonic-ext:field-name "translated_src_ip";
+        }
+    }
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-twice-mapping-table/oc-nat:nat-twice-entry/oc-nat:state/oc-nat:translated-dst-ip {
+        deviate add {
+            sonic-ext:field-name "translated_dst_ip";
+        }
+    }
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-twice-mapping-table/oc-nat:nat-twice-entry/oc-nat:state/oc-nat:entry-type {
+        deviate add {
+            sonic-ext:field-transformer "nat_entry_type_field_xfmr";
+        }
+    }
+
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-twice-mapping-table/oc-nat:nat-twice-entry/oc-nat:state/oc-nat:counters {
+        deviate add {
+            sonic-ext:db-name "COUNTERS_DB";
+            sonic-ext:table-name "COUNTERS_NAT_TWICE";
+            sonic-ext:key-transformer "nat_twice_mapping_key_xfmr";
+        }
+    }
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-twice-mapping-table/oc-nat:nat-twice-entry/oc-nat:state/oc-nat:counters/oc-nat:dnat-translations-pkts {
+        deviate add {
+            sonic-ext:field-name "DNAT_TRANSLATIONS_PKTS";
+        }
+    }
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-twice-mapping-table/oc-nat:nat-twice-entry/oc-nat:state/oc-nat:counters/oc-nat:dnat-translations-bytes {
+        deviate add {
+            sonic-ext:field-name "DNAT_TRANSLATIONS_BYTES";
+        }
+    }
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-twice-mapping-table/oc-nat:nat-twice-entry/oc-nat:state/oc-nat:counters/oc-nat:snat-translations-pkts {
+        deviate add {
+            sonic-ext:field-name "SNAT_TRANSLATIONS_PKTS";
+        }
+    }
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:nat-twice-mapping-table/oc-nat:nat-twice-entry/oc-nat:state/oc-nat:counters/oc-nat:snat-translations-bytes {
+        deviate add {
+            sonic-ext:field-name "SNAT_TRANSLATIONS_BYTES";
+        }
+    }
+
+
+
+
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:napt-twice-mapping-table {
+        deviate add {
+            sonic-ext:db-name "APPL_DB";
+            sonic-ext:table-name "NAPT_TWICE_TABLE";
+        }
+    }
+
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:napt-twice-mapping-table/oc-nat:napt-twice-entry {
+        deviate add {
+            sonic-ext:key-transformer "napt_twice_mapping_key_xfmr";
+        }
+    }
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:napt-twice-mapping-table/oc-nat:napt-twice-entry/oc-nat:state {
+        deviate add {
+            sonic-ext:db-name "APPL_DB";
+            sonic-ext:table-name "NAPT_TWICE_TABLE";
+            sonic-ext:key-transformer "napt_twice_mapping_key_xfmr";
+        }
+    }
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:napt-twice-mapping-table/oc-nat:napt-twice-entry/oc-nat:state/oc-nat:translated-src-ip {
+        deviate add {
+            sonic-ext:field-name "translated_src_ip";
+        }
+    }
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:napt-twice-mapping-table/oc-nat:napt-twice-entry/oc-nat:state/oc-nat:translated-src-port {
+        deviate add {
+            sonic-ext:field-name "translated_src_l4_port";
+        }
+    }
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:napt-twice-mapping-table/oc-nat:napt-twice-entry/oc-nat:state/oc-nat:translated-dst-ip {
+        deviate add {
+            sonic-ext:field-name "translated_dst_ip";
+        }
+    }
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:napt-twice-mapping-table/oc-nat:napt-twice-entry/oc-nat:state/oc-nat:translated-dst-port {
+        deviate add {
+            sonic-ext:field-name "translated_dst_l4_port";
+        }
+    }
+
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:napt-twice-mapping-table/oc-nat:napt-twice-entry/oc-nat:state/oc-nat:entry-type {
+        deviate add {
+            sonic-ext:field-transformer "nat_entry_type_field_xfmr";
+        }
+    }
+
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:napt-twice-mapping-table/oc-nat:napt-twice-entry/oc-nat:state/oc-nat:counters {
+        deviate add {
+            sonic-ext:db-name "COUNTERS_DB";
+            sonic-ext:table-name "COUNTERS_NAPT_TWICE";
+            sonic-ext:key-transformer "napt_twice_mapping_key_xfmr";
+        }
+    }
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:napt-twice-mapping-table/oc-nat:napt-twice-entry/oc-nat:state/oc-nat:counters/oc-nat:dnat-translations-pkts {
+        deviate add {
+            sonic-ext:field-name "DNAT_TRANSLATIONS_PKTS";
+        }
+    }
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:napt-twice-mapping-table/oc-nat:napt-twice-entry/oc-nat:state/oc-nat:counters/oc-nat:dnat-translations-bytes {
+        deviate add {
+            sonic-ext:field-name "DNAT_TRANSLATIONS_BYTES";
+        }
+    }
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:napt-twice-mapping-table/oc-nat:napt-twice-entry/oc-nat:state/oc-nat:counters/oc-nat:snat-translations-pkts {
+        deviate add {
+            sonic-ext:field-name "SNAT_TRANSLATIONS_PKTS";
+        }
+    }
+
+    deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance/oc-nat:napt-twice-mapping-table/oc-nat:napt-twice-entry/oc-nat:state/oc-nat:counters/oc-nat:snat-translations-bytes {
+        deviate add {
+            sonic-ext:field-name "SNAT_TRANSLATIONS_BYTES";
+        }
+    }
+}
