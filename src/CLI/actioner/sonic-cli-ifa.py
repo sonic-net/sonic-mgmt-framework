@@ -121,7 +121,6 @@ def get_tam_ifa_status(args):
     response = api.get(path)
     if response.ok():
         if response.content:
-            print(response.content)
             api_response['feature'] = response.content['sonic-ifa:TAM_INT_IFA_FEATURE_TABLE']['TAM_INT_IFA_FEATURE_TABLE_LIST']
 
     path = cc.Path('/restconf/data/sonic-ifa:sonic-ifa/TAM_INT_IFA_FLOW_TABLE')
@@ -132,11 +131,53 @@ def get_tam_ifa_status(args):
 
     show_cli_output("show_tam_ifa_status.j2", api_response)
 
+def get_tam_ifa_flow_stats(args):
+    api_response = {}
+    api = cc.ApiClient()
+
+    if len(args) == 0:
+       path = cc.Path('/restconf/data/sonic-ifa:sonic-ifa/TAM_INT_IFA_FLOW_TABLE')
+    else:
+       path = cc.Path('/restconf/data/sonic-ifa:sonic-ifa/TAM_INT_IFA_FLOW_TABLE/TAM_INT_IFA_FLOW_TABLE_LIST={name}', name=args[0])
+
+    response = api.get(path)
+
+    if response.ok():
+        if response.content:
+            if len(args) == 0:
+                api_response = response.content['sonic-ifa:TAM_INT_IFA_FLOW_TABLE']['TAM_INT_IFA_FLOW_TABLE_LIST']
+            else:
+                api_response = response.content['sonic-ifa:TAM_INT_IFA_FLOW_TABLE_LIST']
+
+            for i in range(len(api_response)):
+                api_response[i]['Packets'] = 0
+                api_response[i]['Bytes'] = 0
+
+                path = cc.Path('/restconf/data/openconfig-acl:acl/acl-sets')
+                acl_info = api.get(path)
+                if acl_info.ok():
+                    if acl_info.content:
+                        acl_list = acl_info.content["openconfig-acl:acl-sets"]["acl-set"]
+                        for acl in acl_list:
+                            if acl['name'] == api_response[i]['acl-table-name']:
+                                rule = api_response[i]['acl-rule-name']
+                                # tokenize the rulename with '_' and fetch last number
+                                tmpseq = (rule.split("_", 1))[-1]
+                                acl_entry_list = acl["acl-entries"]["acl-entry"]
+                                for entry in acl_entry_list:
+                                    if int(tmpseq) == int(entry["sequence-id"]):
+                                        api_response[i]['Packets'] = entry["state"]["matched-packets"]
+                                        api_response[i]['Bytes'] = entry["state"]["matched-octets"]
+
+    show_cli_output("show_tam_ifa_flow_stats.j2", api_response)
+
 if __name__ == '__main__':
     pipestr().write(sys.argv)
     func = sys.argv[1]
     if func == 'get_tam_ifa_status':
         get_tam_ifa_status(sys.argv[2:])
-
-    run(func, sys.argv[2:])
+    elif func == 'get_tam_ifa_flow_stats':
+        get_tam_ifa_flow_stats(sys.argv[2:])
+    else:
+        run(func, sys.argv[2:])
 
