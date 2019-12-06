@@ -83,7 +83,7 @@ const (
 var YangToDb_nat_instance_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (string, error) {
     var nat_inst_key string
     var err error
-
+    nat_inst_key = "0"
     return nat_inst_key, err
 }
 
