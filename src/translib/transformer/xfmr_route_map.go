@@ -22,6 +22,8 @@ func init () {
     XlateFuncBind("DbToYang_route_map_match_protocol_xfmr", DbToYang_route_map_match_protocol_xfmr)
     XlateFuncBind("YangToDb_route_map_match_set_options_xfmr", YangToDb_route_map_match_set_options_xfmr)
     XlateFuncBind("DbToYang_route_map_match_set_options_xfmr", DbToYang_route_map_match_set_options_xfmr)
+    XlateFuncBind("YangToDb_route_map_match_set_options_restrict_type_xfmr", YangToDb_route_map_match_set_options_restrict_type_xfmr)
+    XlateFuncBind("DbToYang_route_map_match_set_options_restrict_type_xfmr", DbToYang_route_map_match_set_options_restrict_type_xfmr)
     XlateFuncBind("YangToDb_route_map_bgp_action_set_community", YangToDb_route_map_bgp_action_set_community)
     XlateFuncBind("DbToYang_route_map_bgp_action_set_community", DbToYang_route_map_bgp_action_set_community)
     XlateFuncBind("YangToDb_route_map_bgp_action_set_ext_community", YangToDb_route_map_bgp_action_set_ext_community)
@@ -245,6 +247,31 @@ var DbToYang_route_map_match_set_options_xfmr FieldXfmrDbtoYang = func(inParams 
     result["match-set-options"] = "ANY"
     return result, err
 }
+
+var YangToDb_route_map_match_set_options_restrict_type_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
+
+    res_map := make(map[string]string)
+    var err error
+    if inParams.param == nil {
+        return res_map, err
+    }
+    action, _ := inParams.param.(ocbinds.E_OpenconfigRoutingPolicy_MatchSetOptionsRestrictedType)
+    log.Info("YangToDb_acl_forwarding_action_xfmr: ", inParams.ygRoot, " Xpath: ", inParams.uri, " match-set-option: ", action)
+    if action != ocbinds.OpenconfigRoutingPolicy_MatchSetOptionsRestrictedType_ANY {
+        err = errors.New("Invalid match set option")
+        return res_map, err
+    }
+    return res_map, err
+}
+
+var DbToYang_route_map_match_set_options_restrict_type_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (map[string]interface{}, error) {
+    var err error
+    result := make(map[string]interface{})
+    
+    result["match-set-options"] = "ANY"
+    return result, err
+}
+
 
 func getRoutingPolicyRoot (s *ygot.GoStruct) *ocbinds.OpenconfigRoutingPolicy_RoutingPolicy {
     deviceObj := (*s).(*ocbinds.Device)

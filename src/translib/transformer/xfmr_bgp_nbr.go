@@ -187,7 +187,16 @@ var DbToYang_bgp_nbr_afi_safi_name_fld_xfmr FieldXfmrDbtoYang = func(inParams Xf
 
     entry_key := inParams.key
     nbrAfKey := strings.Split(entry_key, "|")
-    nbrAfName:= nbrAfKey[2]
+	nbrAfName := ""
+
+	switch nbrAfKey[2] {
+	case "ipv4_unicast":
+		nbrAfName = "IPV4_UNICAST"
+	case "ipv6_unicast":
+		nbrAfName = "IPV6_UNICAST"
+	case "l2vpn_evpn":
+		nbrAfName = "L2VPN_EVPN"
+	}
 
     result["afi-safi-name"] = nbrAfName
 
@@ -244,11 +253,11 @@ var YangToDb_bgp_af_nbr_tbl_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams)
     }
 
     if strings.Contains(afName, "IPV4_UNICAST") {
-        afName = "IPV4_UNICAST"
+        afName = "ipv4_unicast"
     } else if strings.Contains(afName, "IPV6_UNICAST") {
-        afName = "IPV6_UNICAST"
+        afName = "ipv6_unicast"
     } else if strings.Contains(afName, "L2VPN_EVPN") {
-        afName = "L2VPN_EVPN"
+        afName = "l2vpn_evpn"
     } else  {
 	err = errors.New("Unsupported AFI SAFI")
 	log.Info("Unsupported AFI SAFI ", afName);
@@ -273,7 +282,16 @@ var DbToYang_bgp_af_nbr_tbl_key_xfmr KeyXfmrDbToYang = func(inParams XfmrParams)
     log.Info("DbToYang_bgp_af_nbr_tbl_key: ", entry_key)
 
     nbrAfKey := strings.Split(entry_key, "|")
-    afName  := nbrAfKey[2]
+	afName := ""
+
+	switch nbrAfKey[2] {
+	case "ipv4_unicast":
+		afName = "IPV4_UNICAST"
+	case "ipv6_unicast":
+		afName = "IPV6_UNICAST"
+	case "l2vpn_evpn":
+		afName = "L2VPN_EVPN"
+	}
 
     rmap["afi-safi-name"]   = afName
 
@@ -327,7 +345,7 @@ var YangToDb_bgp_af_nbr_proto_tbl_key_xfmr KeyXfmrYangToDb = func(inParams XfmrP
     }
 
     if strings.Contains(afName, "IPV4_UNICAST") {
-        afName = "IPV4_UNICAST"
+        afName = "ipv4_unicast"
         if strings.Contains(inParams.uri, "ipv6-unicast") ||
            strings.Contains(inParams.uri, "l2vpn-evpn") {
 		err = errors.New("IPV4_UNICAST supported only on ipv4-config container")
@@ -335,7 +353,7 @@ var YangToDb_bgp_af_nbr_proto_tbl_key_xfmr KeyXfmrYangToDb = func(inParams XfmrP
 		return afName, err
         }
     } else if strings.Contains(afName, "IPV6_UNICAST") {
-        afName = "IPV6_UNICAST"
+        afName = "ipv6_unicast"
         if strings.Contains(inParams.uri, "ipv4-unicast") ||
            strings.Contains(inParams.uri, "l2vpn-evpn") {
 		err = errors.New("IPV6_UNICAST supported only on ipv6-config container")
@@ -343,7 +361,7 @@ var YangToDb_bgp_af_nbr_proto_tbl_key_xfmr KeyXfmrYangToDb = func(inParams XfmrP
 		return afName, err
         }
     } else if strings.Contains(afName, "L2VPN_EVPN") {
-        afName = "L2VPN_EVPN"
+        afName = "l2vpn_evpn"
         if strings.Contains(inParams.uri, "ipv6-unicast") ||
            strings.Contains(inParams.uri, "ipv4-unicast") {
 		err = errors.New("L2VPN_EVPN supported only on l2vpn-evpn container")
@@ -374,7 +392,16 @@ var DbToYang_bgp_af_nbr_proto_tbl_key_xfmr KeyXfmrDbToYang = func(inParams XfmrP
     log.Info("DbToYang_bgp_af_nbr_proto_tbl_key_xfmr: ", entry_key)
 
     nbrAfKey := strings.Split(entry_key, "|")
-    afName  := nbrAfKey[2]
+    afName := ""
+
+	switch nbrAfKey[2] {
+	case "ipv4_unicast":
+		afName = "IPV4_UNICAST"
+	case "ipv6_unicast":
+		afName = "IPV6_UNICAST"
+	case "l2vpn_evpn":
+		afName = "L2VPN_EVPN"
+	}
 
     rmap["afi-safi-name"]   = afName
 
