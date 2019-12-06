@@ -54,15 +54,15 @@ limitations under the License.
 <!--=======================================================-->
 
   <VIEW name="enable-view">
-    <COMMAND name="show tacacs" 
+    <COMMAND name="show tacacs-server" 
              help="Show tacacs info"/>
-    <COMMAND name="show tacacs global" 
+    <COMMAND name="show tacacs-server global" 
              help="Show tacacs global configuration" 
              mode="subcommand" 
              ptype="SUBCOMMAND">
       <ACTION>python $SONIC_CLI_ROOT/sonic-cli-tacacs.py get_sonic_tacacs_global show_tacacs_global.j2</ACTION>
     </COMMAND>
-    <COMMAND name="show tacacs server" 
+    <COMMAND name="show tacacs-server host" 
              help="Show tacacs server configuration" 
              mode="subcommand" 
              ptype="SUBCOMMAND">
@@ -191,15 +191,17 @@ limitations under the License.
     </COMMAND>
 
     <!-- no tacacs server -->
-    <COMMAND name="no tacacs-server"
+    <COMMAND name="no tacacs-server" 
+             help="Unconfigure TACACS server Configuration"/>
+    <COMMAND name="no tacacs-server host"
              help="Unconfigure TACACS server"
              ptype="SUBCOMMAND"
              mode="subcommand">
-      <PARAM name="host"
+      <PARAM name="address"
              help="server ip address"
              ptype="IPV4V6_ADDR">
       </PARAM>
-      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-tacacs.py delete_openconfig_system_system_aaa_server_groups_server_group_servers_server_tacacs_config ${host}</ACTION>
+      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-tacacs.py delete_openconfig_system_system_aaa_server_groups_server_group_servers_server_tacacs_config ${address}</ACTION>
     </COMMAND>
 
     <COMMAND name="no tacacs-server source-ip"
