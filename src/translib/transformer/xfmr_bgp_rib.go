@@ -489,7 +489,6 @@ func hdl_get_bgp_nbrs_adj_rib_out_post (bgpRib_obj *ocbinds.OpenconfigNetworkIns
                                         rib_key *_xfmr_bgp_rib_key, afiSafiType ocbinds.E_OpenconfigBgpTypes_AFI_SAFI_TYPE, dbg_log *string) (error) {
     var err error
     oper_err := errors.New("Opertational error")
-    var ok bool
 
     log.Infof("%s ==> GET-Specific-Nbr: Nbrs-Adj-RIB invoke with keys {%s} afiSafiType:%d", *dbg_log, print_rib_keys(rib_key), afiSafiType)
 
@@ -498,6 +497,7 @@ func hdl_get_bgp_nbrs_adj_rib_out_post (bgpRib_obj *ocbinds.OpenconfigNetworkIns
         log.Errorf ("%s failed !! Error:%s", *dbg_log, cmd_err);
         return oper_err
     }
+    log.Infof ("ipv4-adj-rib-out-post :%V",bgpRibOutputJson)
 
     return err
 }
