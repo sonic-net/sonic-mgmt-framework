@@ -953,7 +953,7 @@ func fake_rib_json_output_blob (rib_type string) ([]byte) {
                                         }                                                                                
                                     }                                                                                  
                                     ]                                                                                    
-                                }                                                                                      
+                                }                                                                                  
                                 ,                                                                                      
                                     "70.80.91.0/24": {                                                                     
                                         "prefix":"70.80.91.0\/24",                                                           
@@ -1552,6 +1552,332 @@ func fake_rib_json_output_blob (rib_type string) ([]byte) {
                     }
                 ]
             }`
+           case "ipv4-adj-rib-in-post":
+               outJsonBlob = `{
+                   "vrfId": 0,
+                   "vrfName": "default",
+                   "tableVersion": 54,
+                   "routerId": "200.9.0.4",
+                   "defaultLocPrf": 100,
+                   "localAS": 400,
+                   "routes": {
+                       "4.4.4.4\/32": {
+                           "prefix":"4.4.4.4\/32",
+                           "advertisedTo":{
+                               "10.10.10.1":{
+                               }
+                           },
+                           "paths": [
+                           {
+                               "pathId":0,
+                               "aspath":{                                           
+                                   "string":"100 {300,400,1600,1700}",                
+                                   "segments":[                                       
+                                   {                                                
+                                       "type":"as-sequence",                          
+                                       "list":[                                       
+                                       100                                          
+                                       ]                                              
+                                   },                                               
+                                   {                                                
+                                       "type":"as-set",                               
+                                       "list":[                                       
+                                       300,                                         
+                                       400,                                         
+                                       1600,                                        
+                                       1700                                         
+                                       ]                                              
+                                   }                                                
+                                   ],                                                 
+                                   "length":2                                         
+                               },
+
+                               "as4path":{                                           
+                                   "string":"100000 {300000,170000}",                
+                                   "segments":[                                       
+                                   {                                                
+                                       "type":"as-sequence",                          
+                                       "list":[                                       
+                                       100000                                         
+                                       ]                                              
+                                   },                                               
+                                   {                                                
+                                       "type":"as-set",                               
+                                       "list":[                                       
+                                       300000,                                                                                 
+                                       170000                                         
+                                       ]                                              
+                                   }                                                
+                                   ],                                                 
+                                   "length":2                                         
+                               },  
+                               "origin":"incomplete",  
+                               "localPref":200,
+                               "originatorId":"1.1.1.1",
+                               "med":0,
+                               "metric":0,
+                               "weight":32768,
+                               "aggregatorAs":600,
+                               "aggregatorAs4":75535,                                            
+                               "aggregatorId":"10.20.30.40",                                
+                               "atomicAggregate":true,
+                               "valid":true,
+                               "sourced":true,
+                               "bestpath":{
+                                   "overall":false
+                               },
+                               "lastUpdate":{
+                                   "epoch":1494011680,
+                                   "string":"Fri May  5 19:14:40 2017\n"
+                               },
+
+                               "nexthops":[
+                               {
+                                   "ip":"2.2.2.2",
+                                   "afi":"ipv4",
+                                   "metric":0,
+                                   "accessible":true,
+                                   "used":true
+                               }
+                               ],
+
+                               "peer":{                        
+                                   "peerId":"10.10.10.1",                             
+                                   "routerId":"210.135.0.1",                          
+                                   "type":"external"
+                               }, 
+
+                               "clusterList":{
+                                   "list":[
+                                   "1.1.1.1",
+                                   "2.2.2.2"
+                                   ]
+                               },
+
+                               "community":{                                                 
+                                   "string":"local-AS 800:900 1000:2000",                               
+                                   "list":[
+                                   "local-AS",                                                    
+                                   "800:900",                                                
+                                   "1000:2000"                                               
+                                   ]                                                           
+                               },
+
+                               "extendedCommunity":{                                         
+                                   "string":"RT:2000:168496141 RO:2000:168496141" 
+                               }                                                                                 
+                           },
+                           { 
+                               "pathId":1,
+                               "aspath":{                                           
+                                   "string":"900 {110,1400,2600,2700}",                
+                                   "segments":[                                       
+                                   {                                                
+                                       "type":"as-sequence",                          
+                                       "list":[                                       
+                                       900                                          
+                                       ]                                              
+                                   },                                               
+                                   {                                                
+                                       "type":"as-set",                               
+                                       "list":[                                       
+                                       110,                                         
+                                       1400,                                         
+                                       2600,                                        
+                                       2700                                         
+                                       ]                                              
+                                   }                                                
+                                   ],                                                 
+                                   "length":2                                         
+                               },
+
+                               "as4path":{                                           
+                                   "string":"100000 {300000,170000}",                
+                                   "segments":[                                       
+                                   {                                                
+                                       "type":"as-sequence",                          
+                                       "list":[                                       
+                                       100000                                         
+                                       ]                                              
+                                   },                                               
+                                   {                                                
+                                       "type":"as-set",                               
+                                       "list":[                                       
+                                       300000,                                                                                 
+                                       170000                                         
+                                       ]                                              
+                                   }                                                
+                                   ],                                                 
+                                   "length":2                                         
+                               },  
+                               "origin":"incomplete",  
+                               "localPref":200,
+                               "originatorId":"33.33.33.33",
+                               "med":1,
+                               "metric":1,
+                               "weight":32768,
+                               "aggregatorAs":600,
+                               "aggregatorAs4":75535,                                            
+                               "aggregatorId":"60.60.60.60",                                
+                               "atomicAggregate":true,
+                               "valid":false,
+                               "sourced":false,
+                               "bestpath":{
+                                   "overall":false
+                               },
+                               "lastUpdate":{
+                                   "epoch":1494011680,
+                                   "string":"Fri May  5 19:14:40 2017\n"
+                               },
+
+                               "nexthops":[
+                               {
+                                   "ip":"3.3.3.3",
+                                   "afi":"ipv4",
+                                   "metric":0,
+                                   "accessible":true,
+                                   "used":true
+                               }
+                               ],
+
+                               "peer":{                        
+                                   "peerId":"10.10.10.1",                             
+                                   "routerId":"210.135.0.1",                          
+                                   "type":"external"
+                               }, 
+
+                               "clusterList":{
+                                   "list":[                                       
+                                   "5.5.5.5",                                                                                 
+                                   "6.6.6.6"                                         
+                                   ]
+                               },
+
+                               "community":{                                                 
+                                   "string":"no-peer 800:900 1000:2000",                               
+                                   "list":[
+                                   "no-export",                                                    
+                                   "1800:1900",                                                
+                                   "1100:1200"                                               
+                                   ]                                                           
+                               },
+
+                               "extendedCommunity":{                                         
+                                   "string":"RT:3000:168496141 RO:4000:168496141" 
+                               }                                                                                 
+                           }
+                           ] 
+                       },
+                       "5.5.5.5\/32": {
+                           "prefix":"5.5.5.5\/32",
+                           "advertisedTo":{
+                               "10.10.10.1":{
+                               }
+                           },
+                           "paths":[
+                           {
+                               "pathId":0,
+                               "aspath":{                                           
+                                   "string":"100 {300,400,1600,1700}",                
+                                   "segments":[                                       
+                                   {                                                
+                                       "type":"as-sequence",                          
+                                       "list":[                                       
+                                       100                                          
+                                       ]                                              
+                                   },                                               
+                                   {                                                
+                                       "type":"as-set",                               
+                                       "list":[                                       
+                                       300,                                         
+                                       400,                                         
+                                       1600,                                        
+                                       1700                                         
+                                       ]                                              
+                                   }                                                
+                                   ],                                                 
+                                   "length":2                                         
+                               },
+
+                               "as4path":{                                           
+                                   "string":"100000 {300000,170000}",                
+                                   "segments":[                                       
+                                   {                                                
+                                       "type":"as-sequence",                          
+                                       "list":[                                       
+                                       100000                                         
+                                       ]                                              
+                                   },                                               
+                                   {                                                
+                                       "type":"as-set",                               
+                                       "list":[                                       
+                                       300000,                                                                                 
+                                       170000                                         
+                                       ]                                              
+                                   }                                                
+                                   ],                                                 
+                                   "length":2                                         
+                               },  
+                               "origin":"incomplete",  
+                               "localPref":200,
+                               "originatorId":"1.1.1.1",
+                               "med":0,
+                               "metric":0,
+                               "weight":32768,
+                               "aggregatorAs":600,
+                               "aggregatorAs4":75535,                                            
+                               "aggregatorId":"10.20.30.40",                                
+                               "atomicAggregate":true,
+                               "valid":true,
+                               "sourced":true,
+                               "bestpath":{
+                                   "overall":false
+                               },
+                               "lastUpdate":{
+                                   "epoch":1494011680,
+                                   "string":"Fri May  5 19:14:40 2017\n"
+                               },
+
+                               "nexthops":[
+                               {
+                                   "ip":"2.2.2.2",
+                                   "afi":"ipv4",
+                                   "metric":0,
+                                   "accessible":true,
+                                   "used":true
+                               }
+                               ],
+
+                               "peer":{                        
+                                   "peerId":"10.10.10.1",                             
+                                   "routerId":"210.135.0.1",                          
+                                   "type":"external"
+                               }, 
+
+                               "clusterList":{
+                                   "list":[                                       
+                                   "1.1.1.1",                                                                                 
+                                   "2.2.2.2"                                         
+                                   ]
+                               },
+
+                               "community":{                                                 
+                                   "string":"local-AS 800:900 1000:2000",                               
+                                   "list":[
+                                   "local-AS",                                                    
+                                   "800:900",                                                
+                                   "1000:2000"                                               
+                                   ]                                                           
+                               },
+
+                               "extendedCommunity":{                                         
+                                   "string":"RT:2000:168496141 RO:2000:168496141" 
+                               }                                                                                 
+                           }
+                           ]
+                       }
+                   }
+               }`
     }
 
     return []byte(outJsonBlob)
