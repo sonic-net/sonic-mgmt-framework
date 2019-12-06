@@ -1281,7 +1281,6 @@ func hdl_get_bgp_nbrs_adj_rib_in_post (bgpRib_obj *ocbinds.OpenconfigNetworkInst
     var err error
     oper_err := errors.New("Opertational error")
     var ok bool
-    var cmd string
     log.Infof("%s ==> NBRS-RIB invoke with keys {%s} afiSafiType:%d", *dbg_log, print_rib_keys(rib_key), afiSafiType)
 
     cmd := "ipv4-adj-rib-in-post"
