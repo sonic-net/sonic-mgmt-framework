@@ -76,7 +76,7 @@ module sonic-bgp-neighbor {
 
                 uses sbc:sonic-bgp-cmn;
 
-                leaf enabled {
+                leaf admin_status {
                     type boolean;
                     description "To enable BGP peer";
                 }
@@ -106,7 +106,6 @@ module sonic-bgp-neighbor {
                 }
 
                 uses sbc:sonic-bgp-cmn-af;
-
             }
         }
     }

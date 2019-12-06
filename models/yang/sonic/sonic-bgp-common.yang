@@ -100,11 +100,12 @@ module sonic-bgp-common {
         description "Local AS number";
     }
 
-    leaf description {
+    leaf name {
       type string;
+        description "Peer description";
     }
 
-    leaf peer_asn {
+    leaf asn {
       type uint32;
         description "Peer AS number";
     }
@@ -130,14 +131,14 @@ module sonic-bgp-common {
         description "Authuntiation password";
     }
 
-    leaf keepalive_interval {
+    leaf keepalive {
       type uint16 {
         range "1..3600";
       }
         description "Keepalive interval";
     }
 
-    leaf hold_time {
+    leaf holdtime {
       type uint16 {
         range "1..3600";
       }
@@ -158,9 +159,9 @@ module sonic-bgp-common {
         description "minium advertisement interval";
     }
 
-    leaf local_address {
+    leaf local_addr {
       type inet:ip-address;
-        description "Local address to use for connection";
+        description "Local source address to use for connection";
     }
 
     leaf passive_mode {
@@ -247,7 +248,7 @@ module sonic-bgp-common {
         description "Address family";
     }
 
-    leaf enabled {
+    leaf admin_status {
       type boolean;
         description "Enabled status";
     }
@@ -321,8 +322,9 @@ module sonic-bgp-common {
       description "Route map";
     }
 
-    leaf route_reflector_client {
+    leaf rrclient {
       type boolean;
+        description "Route reflector client";
     }
 
     leaf weight {
@@ -378,7 +380,7 @@ module sonic-bgp-common {
         description "Filter list direction";
     }
 
-    leaf nexthop_self_enabled {
+    leaf nhself {
       type boolean;
         description "Nexthop is self, no nexthop calculation";
     }
