@@ -507,11 +507,13 @@ func TestValidateEditConfig_Delete_Must_Check_Positive(t *testing.T) {
 				"alias":"hundredGigE1",
 				"lanes": "81,82,83,84",
 				"mtu": "9100",
+				"index": "3",
 			},
 			"Ethernet5" : map[string]interface{} {
 				"alias":"hundredGigE1",
 				"lanes": "85,86,87,89",
 				"mtu": "9100",
+				"index": "5",
 			},
 		},
 		"ACL_TABLE" : map[string]interface{} {
@@ -2417,11 +2419,13 @@ func TestValidateEditConfig_Create_Chained_Leafref_DepData_Positive(t *testing.T
 				"alias":"hundredGigE1",
 				"lanes": "81,82,83,84",
 				"mtu": "9100",
+				"index": "1",
 			},
 			"Ethernet2" : map[string]interface{} {
 				"alias":"hundredGigE1",
 				"lanes": "85,86,87,89",
 				"mtu": "9100",
+				"index": "2",
 			},
 		},
 		"ACL_TABLE" : map[string]interface{} {
@@ -2543,11 +2547,13 @@ func TestValidateEditConfig_Create_Chained_Leafref_DepData_Negative(t *testing.T
 				"alias":"hundredGigE1",
 				"lanes": "81,82,83,84",
 				"mtu": "9100",
+				"index": "3",
 			},
 			"Ethernet5" : map[string]interface{} {
 				"alias":"hundredGigE1",
 				"lanes": "85,86,87,89",
 				"mtu": "9100",
+				"index": "5",
 			},
 		},
 		"ACL_TABLE" : map[string]interface{} {
@@ -2649,11 +2655,13 @@ func TestValidateEditConfig_DepData_Through_Cache(t *testing.T) {
 				"alias":"hundredGigE1",
 				"lanes": "81,82,83,84",
 				"mtu": "9100",
+				"index": "3",
 			},
 			"Ethernet5" : map[string]interface{} {
 				"alias":"hundredGigE1",
 				"lanes": "85,86,87,89",
 				"mtu": "9100",
+				"index": "5",
 			},
 		},
 	}
@@ -2962,6 +2970,7 @@ func TestValidateEditConfig_Delete_Create_Same_Entry_Positive(t *testing.T) {
 				"alias":"hundredGigE1",
 				"lanes": "81,82,83,84",
 				"mtu": "9100",
+				"index": "1",
 			},
 		},
 	}
@@ -3038,11 +3047,13 @@ func TestValidateIncrementalConfig_Positive(t *testing.T) {
 				"alias":"hundredGigE1",
 				"lanes": "81,82,83,84",
 				"mtu": "9100",
+				"index": "1",
 			},
 			"Ethernet2" : map[string]interface{} {
 				"alias":"hundredGigE1",
 				"lanes": "85,86,87,89",
 				"mtu": "9100",
+				"index": "2",
 			},
 		},
 	}

@@ -75,8 +75,6 @@ cd $(BUILD_GOPATH)/src/github.com/golang/glog; git checkout 23def4e6c14b4da8ac2e
 $(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/golang/glog; \
 cd $(BUILD_GOPATH)/src/github.com/pkg/profile; git checkout acd64d450fd45fb2afa41f833f3788c8a7797219 2>/dev/null ; true; \
 $(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/pkg/profile; \
-cd $(BUILD_GOPATH)/src/github.com/antchfx/jsonquery; git checkout 3535127d6ca5885dbf650204eb08eabf8374a274 2>/dev/null ; true; \
-$(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/antchfx/jsonquery; \
 cd $(BUILD_GOPATH)/src/github.com/antchfx/xmlquery; git checkout 16f1e6cdc5fe44a7f8e2a8c9faf659a1b3a8fd9b 2>/dev/null ; true; \
 $(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/antchfx/xmlquery; \
 cd $(BUILD_GOPATH)/src/github.com/facette/natsort; git checkout 2cd4dd1e2dcba4d85d6d3ead4adf4cfd2b70caf2 2>/dev/null ; true; \
@@ -122,7 +120,11 @@ $(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/openconfig/ygot
         cd $(BUILD_GOPATH)/src/github.com/openconfig/goyang/; git reset --hard HEAD; git clean -f -d; git checkout 064f9690516f4f72db189f4690b84622c13b7296 >/dev/null ; true; \
 	cp $(TOPDIR)/goyang-modified-files/goyang.patch .; \
 	patch -p1 < goyang.patch; rm -f goyang.patch; \
-	$(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/openconfig/goyang
+	$(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/openconfig/goyang; \
+	cd $(BUILD_GOPATH)/src/github.com/antchfx/jsonquery; git reset --hard HEAD; \
+	git checkout 3535127d6ca5885dbf650204eb08eabf8374a274 2>/dev/null ; \
+	git apply $(TOPDIR)/patches/jsonquery.patch; \
+	$(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/antchfx/jsonquery
 
 install:
 	$(INSTALL) -D $(REST_BIN) $(DESTDIR)/usr/sbin/rest_server

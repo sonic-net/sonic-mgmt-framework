@@ -41,13 +41,6 @@ deps:  $(BUILD_DIR)/.deps $(CVL_PKG) $(CVL_TEST_BIN)
 
 	
 $(BUILD_DIR)/.deps:
-# Patch code
-	@grep ParseJsonMap  $(GO_DOWNLOAD_PATH)/src/github.com/antchfx/jsonquery/node.go || \
-	printf "\nfunc ParseJsonMap(jsonMap *map[string]interface{}) (*Node, error) {\n \
-		doc := &Node{Type: DocumentNode}\n \
-		parseValue(*jsonMap, doc, 1)\n \
-		return doc, nil\n \
-	}\n" >> $(GO_DOWNLOAD_PATH)/src/github.com/antchfx/jsonquery/node.go
 	touch $@
 
 $(CVL_PKG):
