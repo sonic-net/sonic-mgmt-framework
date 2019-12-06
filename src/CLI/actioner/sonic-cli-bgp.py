@@ -780,6 +780,22 @@ def invoke_api(func, args=[]):
             return api.patch(keypath, body)
         else:
             return api.delete(keypath)
+    elif attr == 'openconfig_network_instance_network_instances_network_instance_table_connections_table_connection_config':
+        keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/table-connections/table-connection={src_protocol},{dst_protocol},{address_family}/config',
+                name=args[0], src_protocol= "STATIC" if 'static' == args[2] else "DIRECTLY_CONNECTED", dst_protocol=IDENTIFIER, address_family=args[1].split('_',1)[0])
+        if op == 'patch':
+            body = { "openconfig-network-instance:config" : { "address-family" : args[1].split('_',1)[0] } }
+            return api.patch(keypath, body)
+        else:
+            return api.delete(keypath)
+    elif attr == 'openconfig_network_instance_network_instances_network_instance_table_connections_table_connection':
+        keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/table-connections/table-connection={src_protocol},{dst_protocol},{address_family}',
+                name=args[0], src_protocol= "STATIC" if 'static' == args[2] else "DIRECTLY_CONNECTED", dst_protocol=IDENTIFIER, address_family=args[1].split('_',1)[0])
+        if op == 'patch':
+            body = { "openconfig-network-instance:table-connection": [ { "config": { "address-family": args[1].split('_',1)[0] } } ] }
+            return api.patch(keypath, body)
+        else:
+            return api.delete(keypath)
 
     elif op == OCEXTPREFIX_DELETE or op == OCEXTPREFIX_PATCH:
         # PATCH_ and DELETE_ prefixes (all caps) means no swaggar-api string
