@@ -34,11 +34,11 @@ limitations under the License.
             >
         </PARAM>
         <ACTION> 
-            if test "${vrf-name}" = ""; then&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-vrf.py get_openconfig_network_instance_network_instances_network_instances show_vrf.j2
-            else&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-vrf.py get_openconfig_network_instance_network_instances_network_instance ${vrf-name} show_vrf.j2
-            fi&#xA;
+            if test "${vrf-name}" = ""; then
+                python $SONIC_CLI_ROOT/sonic-cli-vrf.py get_openconfig_network_instance_network_instances_network_instances show_vrf.j2;
+            else
+                python $SONIC_CLI_ROOT/sonic-cli-vrf.py get_openconfig_network_instance_network_instances_network_instance ${vrf-name} show_vrf.j2;
+            fi
         </ACTION>
       </COMMAND>
 

@@ -460,7 +460,29 @@ func getDBOptionsWithSeparator(dbNo db.DBNum, initIndicator string, tableSeparat
                       })
 }
 
+func getXpathFromYangEntry(entry *yang.Entry) string {
+        xpath := ""
+        if entry != nil {
+                xpath = entry.Name
+                entry = entry.Parent
+                for {
+                        if entry.Parent != nil {
+                                xpath = entry.Name + "/" + xpath
+                                entry = entry.Parent
+                        } else {
+                                // This is the module entry case
+                                xpath = "/" + entry.Name + ":" + xpath
+                                break
+                        }
+                }
+        }
+        return xpath
+}
+
 func stripAugmentedModuleNames(xpath string) string {
+	if !strings.HasPrefix(xpath, "/") {
+		xpath = "/" + xpath
+	}
         pathList := strings.Split(xpath, "/")
         pathList = pathList[1:]
         for i, pvar := range pathList {

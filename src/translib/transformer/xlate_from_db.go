@@ -109,6 +109,8 @@ func getLeafrefRefdYangType(yngTerminalNdDtType yang.TypeKind, fldXpath string) 
 			path = xYangSpecMap[fldXpath].yangEntry.Type.Path
 			entry = xYangSpecMap[fldXpath].yangEntry
 		}
+		path = stripAugmentedModuleNames(path)
+		path = path[1:]
 		log.Infof("Received path %v for FieldXpath %v", path, fldXpath)
 		if strings.Contains(path, "..") {
 			if entry != nil && len(path) > 0 {
@@ -118,11 +120,19 @@ func getLeafrefRefdYangType(yngTerminalNdDtType yang.TypeKind, fldXpath string) 
 					if x == ".." {
 						entry = entry.Parent
 					} else {
-						entry = entry.Dir[x]
+						if _,ok := entry.Dir[x]; ok {
+							entry = entry.Dir[x]
+						}
 					}
 				}
 				if entry != nil {
 					yngTerminalNdDtType = entry.Type.Kind
+					log.Infof("yangLeaf datatype %v", yngTerminalNdDtType)
+					if yngTerminalNdDtType == yang.Yleafref {
+						leafPath := getXpathFromYangEntry(entry)
+						log.Infof("getLeafrefRefdYangType: xpath for leafref type:%v",leafPath)
+						return getLeafrefRefdYangType(yngTerminalNdDtType, leafPath)
+					}
 				}
 			}
 		} else if len(path) > 0 {
