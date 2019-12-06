@@ -580,11 +580,11 @@ func (reqP *reqProcessor) handleCRUReq() (*map[string]map[string]db.Value, error
 			}
 
 			if len(igmpsMrouterTblMap) > 0 {
-				if len(dbV.Field) == 0 {
-					dbV.Field["enabled"] = "true"
-					igmpsTblMap[igmpsKey] = dbV
-					res_map[CFG_L2MC_TABLE] = igmpsTblMap
-				}
+//				if len(dbV.Field) == 0 {
+//					dbV.Field["enabled"] = "true"
+//					igmpsTblMap[igmpsKey] = dbV
+//					res_map[CFG_L2MC_TABLE] = igmpsTblMap
+//				}
 				fmt.Println(" handleCRUReq ============> setting CFG_L2MC_MROUTER_TABLE igmpsMrouterTblMap => ", igmpsMrouterTblMap)
 				res_map[CFG_L2MC_MROUTER_TABLE] = igmpsMrouterTblMap
 			}
@@ -618,11 +618,11 @@ func (reqP *reqProcessor) handleCRUReq() (*map[string]map[string]db.Value, error
 			}
 
 			if len(igmpsMcastGroupTblMap) > 0 {
-				if len(dbV.Field) == 0 {
-					dbV.Field["enabled"] = "true"
-					igmpsTblMap[igmpsKey] = dbV
-					res_map[CFG_L2MC_TABLE] = igmpsTblMap
-				}
+//				if len(dbV.Field) == 0 {
+//					dbV.Field["enabled"] = "true"
+//					igmpsTblMap[igmpsKey] = dbV
+//					res_map[CFG_L2MC_TABLE] = igmpsTblMap
+//				}
 				fmt.Println(" handleCRUReq ============> setting CFG_L2MC_STATIC_MEMBER_TABLE igmpsMcastGroupTblMap => ", igmpsMcastGroupTblMap)
 				res_map[CFG_L2MC_STATIC_GROUP_TABLE] = igmpsMcastGroupTblMap
 			}
