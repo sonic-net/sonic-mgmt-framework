@@ -483,7 +483,8 @@ func fake_rib_json_output_blob (rib_type string) ([]byte) {
                             "nextHop":"11.1.1.1",                                  
                             "localPref":35,                                        
                             "locPrf":35,                                           
-                            "weight":0,                                            
+                            "weight":0,
+                            "med":1,
                             "aspath":{                                             
                                 "string":"{3000,5000}",                              
                                 "segments":[                                         
@@ -559,104 +560,104 @@ func fake_rib_json_output_blob (rib_type string) ([]byte) {
             }`
 
         case "ipv6-adj-rib-in-pre" :
-			outJsonBlob = `{
-				"vrfId":0,                                                   
-					"vrfName":"default",                                         
-					"bgpTableVersion":0,                                         
-					"bgpLocalRouterId":"11.1.1.4",                               
-					"defaultLocPrf":100,                                         
-					"localAS":400,                                               
-					"routes":{                                                   
-						"3001::\/64":{                                             
-							"addrPrefix":"3001::",                                   
-							"prefixLen":64,                                          
-							"prefix":"3001::\/64",                                   
-							"pathId":0,                                              
-							"nextHopGlobal":"2001::1",                               
-							"weight":0,                                              
-							"aspath":{                                               
-								"string":"100 {10000,20000} 30000 40000",              
-								"segments":[                                           
-								{                                                    
-									"type":"as-sequence",                              
-									"list":[                                           
-										100                                              
-									]                                                  
-								},                                                   
-								{                                                    
-									"type":"as-set",                                   
-									"list":[                                           
-										10000,                                           
-									20000                                            
-									]                                                  
-								},                                                   
-								{                                                    
-									"type":"as-sequence",                              
-									"list":[                                           
-										30000,                                           
-									40000                                            
-									]                                                  
-								}                                                    
-								],                                                     
-								"length":4                                             
-							},                                                       
-							"origin":"IGP",                                          
-							"lastUpdate":{                                           
-								"epoch":1495309393,                                    
-								"string":"Sat May 20 19:43:13 2017\n"                  
-							},                                                       
-							"appliedStatusSymbols":{                                 
-								"*":true,                                              
-								">":true                                               
-							}                                                        
-						},                                                         
-						"3001:0:0:1::\/64":{                                       
-							"addrPrefix":"3001:0:0:1::",                             
-							"prefixLen":64,                                          
-							"prefix":"3001:0:0:1::\/64",                             
-							"pathId":0,                                              
-							"nextHopGlobal":"2001::1",                               
-							"weight":0,                                              
-							"aspath":{                                               
-								"string":"100 {10000,20000} 30000 40000",              
-								"segments":[                                           
-								{
-									"type":"as-sequence",
-									"list":[
-										100
-									]
-								},
-								{
-									"type":"as-set",
-									"list":[
-										10000,
-									20000
-									]
-								},
-								{
-									"type":"as-sequence",
-									"list":[
-										30000,
-									40000
-									]
-								}
-								],
-								"length":4
-							},
-							"origin":"IGP",
-							"lastUpdate":{
-								"epoch":1495309393,
-								"string":"Sat May 20 19:43:13 2017\n"
-							},
-							"appliedStatusSymbols":{
-								"*":true,
-								">":true
-							}
-						}
-					},
-					"totalPrefixCounter":2,
-					"filteredPrefixCounter":0
-			}`
+            outJsonBlob = `{
+                "vrfId":0,                                                   
+                "vrfName":"default",                                         
+                "bgpTableVersion":0,                                         
+                "bgpLocalRouterId":"11.1.1.4",                               
+                "defaultLocPrf":100,                                         
+                "localAS":400,                                               
+                "routes":{                                                   
+                    "3001::\/64":{                                             
+                        "addrPrefix":"3001::",                                   
+                        "prefixLen":64,                                          
+                        "prefix":"3001::\/64",                                   
+                        "pathId":0,                                              
+                        "nextHopGlobal":"2001::1",                               
+                        "weight":0,                                              
+                        "aspath":{                                               
+                            "string":"100 {10000,20000} 30000 40000",              
+                            "segments":[                                           
+                            {                                                    
+                                "type":"as-sequence",                              
+                                "list":[                                           
+                                100                                              
+                                ]                                                  
+                            },                                                   
+                            {                                                    
+                                "type":"as-set",                                   
+                                "list":[                                           
+                                10000,                                           
+                                20000                                            
+                                ]                                                  
+                            },                                                   
+                            {                                                    
+                                "type":"as-sequence",                              
+                                "list":[                                           
+                                30000,                                           
+                                40000                                            
+                                ]                                                  
+                            }                                                    
+                            ],                                                     
+                            "length":4                                             
+                        },                                                       
+                        "origin":"IGP",                                          
+                        "lastUpdate":{                                           
+                            "epoch":1495309393,                                    
+                            "string":"Sat May 20 19:43:13 2017\n"                  
+                        },                                                       
+                        "appliedStatusSymbols":{                                 
+                            "*":true,                                              
+                            ">":true                                               
+                        }                                                        
+                    },                                                         
+                    "3001:0:0:1::\/64":{                                       
+                        "addrPrefix":"3001:0:0:1::",                             
+                        "prefixLen":64,                                          
+                        "prefix":"3001:0:0:1::\/64",                             
+                        "pathId":0,                                              
+                        "nextHopGlobal":"2001::1",                               
+                        "weight":0,                                              
+                        "aspath":{                                               
+                            "string":"100 {10000,20000} 30000 40000",              
+                            "segments":[                                           
+                            {
+                                "type":"as-sequence",
+                                "list":[
+                                100
+                                ]
+                            },
+                            {
+                                "type":"as-set",
+                                "list":[
+                                10000,
+                                20000
+                                ]
+                            },
+                            {
+                                "type":"as-sequence",
+                                "list":[
+                                30000,
+                                40000
+                                ]
+                            }
+                            ],
+                            "length":4
+                        },
+                        "origin":"IGP",
+                        "lastUpdate":{
+                            "epoch":1495309393,
+                            "string":"Sat May 20 19:43:13 2017\n"
+                        },
+                        "appliedStatusSymbols":{
+                            "*":true,
+                            ">":true
+                        }
+                    }
+                },
+                "totalPrefixCounter":2,
+                "filteredPrefixCounter":0
+            }`
 
         case "ipv4-adj-rib-in-post":
             outJsonBlob = `{
@@ -723,6 +724,7 @@ func fake_rib_json_output_blob (rib_type string) ([]byte) {
                                 "med":37,                                                                        
                                 "metric":37,                                                                     
                                 "valid":true,                                                                    
+                                "localPref":100,
                                 "atomicAggregate":true,                                                          
                                 "bestpath":{                                                                     
                                     "overall":true                                                                 
@@ -897,7 +899,11 @@ func fake_rib_json_output_blob (rib_type string) ([]byte) {
                                     "length":4                                    
                                 },                                              
                                 "origin":"IGP",                                 
-                                "valid":true,                                   
+                                "valid":true,    
+                                "med":37,                                                                        
+                                "metric":37,                                                                     
+                                "atomicAggregate":true,
+                                "localPref":100,
                                 "bestpath":{                                    
                                     "overall":true                                
                                 },                                              

@@ -396,10 +396,9 @@ func fill_ipv4_spec_pfx_nbr_in_pre_rib_data (ipv4InPreRoute_obj *ocbinds.
         }
     }
 
-    if value, ok := pathData["nexthops"].(map[string]interface{}) ; ok {
-        if ip, ok := value["ip"].(string) ; ok {
-            routeAttrSets.NextHop = &ip
-        }
+    if value, ok := pathData["nextHop"] ; ok {
+        _value := value.(string)
+        routeAttrSets.NextHop = &_value
     }
 
     if value, ok := pathData["clusterList"].(map[string]interface{}) ; ok {
@@ -556,10 +555,9 @@ func fill_ipv6_spec_pfx_nbr_in_pre_rib_data (ipv6InPreRoute_obj *ocbinds.
         }
     }
 
-    if value, ok := pathData["nexthops"].(map[string]interface{}) ; ok {
-        if ip, ok := value["ip"].(string) ; ok {
-            routeAttrSets.NextHop = &ip
-        }
+    if value, ok := pathData["nextHopGlobal"] ; ok {
+        _value := value.(string)
+        routeAttrSets.NextHop = &_value
     }
 
     if value, ok := pathData["clusterList"].(map[string]interface{}) ; ok {
@@ -713,9 +711,15 @@ func fill_ipv4_spec_pfx_nbr_in_post_rib_data (ipv4InPostRoute_obj *ocbinds.
         }
     }
 
-    if value, ok := pathData["nexthops"].(map[string]interface{}) ; ok {
-        if ip, ok := value["ip"].(string) ; ok {
-            routeAttrSets.NextHop = &ip
+    nexthops, ok := pathData["nexthops"].([]interface{})
+    if ok {
+        for _, nexthop := range nexthops {
+            data, ok := nexthop.(map[string]interface{})
+            if ok {
+                if value, ok := data["ip"].(string) ; ok {
+                    routeAttrSets.NextHop = &value
+                }
+            }
         }
     }
 
@@ -882,9 +886,19 @@ func fill_ipv6_spec_pfx_nbr_in_post_rib_data (ipv6InPostRoute_obj *ocbinds.
         }
     }
 
-    if value, ok := pathData["nexthops"].(map[string]interface{}) ; ok {
-        if ip, ok := value["ip"].(string) ; ok {
-            routeAttrSets.NextHop = &ip
+    nexthops, ok := pathData["nexthops"].([]interface{})
+    if ok {
+        for _, nexthop := range nexthops {
+            data, ok := nexthop.(map[string]interface{})
+            if ok {
+                if scope, ok := data["scope"].(string) ; ok {
+                    if scope == "global" {
+                        if value, ok := data["ip"].(string) ; ok {
+                            routeAttrSets.NextHop = &value
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -1025,10 +1039,9 @@ func fill_ipv4_spec_pfx_nbr_out_post_rib_data (ipv4OutPostRoute_obj *ocbinds.
         }
     }
 
-    if value, ok := prefixData["nexthops"].(map[string]interface{}) ; ok {
-        if ip, ok := value["ip"].(string) ; ok {
-            ipv4OutPostRouteAttrSets.NextHop = &ip
-        }
+    if value, ok := prefixData["nextHop"] ; ok {
+        _value := value.(string)
+        ipv4OutPostRouteAttrSets.NextHop = &_value
     }
 
     if value, ok := prefixData["clusterList"].(map[string]interface{}) ; ok {
@@ -1158,10 +1171,9 @@ func fill_ipv6_spec_pfx_nbr_out_post_rib_data (ipv6OutPostRoute_obj *ocbinds.
         }
     }
 
-    if value, ok := prefixData["nexthops"].(map[string]interface{}) ; ok {
-        if ip, ok := value["ip"].(string) ; ok {
-            ipv6OutPostRouteAttrSets.NextHop = &ip
-        }
+    if value, ok := prefixData["nextHopGlobal"] ; ok {
+        _value := value.(string)
+        ipv6OutPostRouteAttrSets.NextHop = &_value
     }
 
     if value, ok := prefixData["clusterList"].(map[string]interface{}) ; ok {
