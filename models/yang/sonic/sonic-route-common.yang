@@ -49,9 +49,11 @@ module sonic-route-common {
                 }
 
                 leaf-list route_map {
+                    type string;
+                    /*
                     type leafref {
                         path "/srmap:sonic-route-map/srmap:ROUTE_MAP_SET/srmap:ROUTE_MAP_SET_LIST/srmap:name";
-                    }
+                    } */
                     max-elements 1;
                 }
             }
