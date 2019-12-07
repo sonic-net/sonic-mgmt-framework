@@ -72,14 +72,6 @@ def run(func, args):
         if response.content is not None:
             # Get Command Output
             api_response = response.content
-            if 'sonic-tam:sonic-tam' in api_response:
-                value = api_response['sonic-tam:sonic-tam']
-                if 'TAM_DEVICE_TABLE' in value:
-                    tup = value['TAM_DEVICE_TABLE']
-                elif 'TAM_COLLECTOR_TABLE' in value:
-                    tup = value['TAM_COLLECTOR_TABLE']
-                else:
-                    api_response = None
 
             if api_response is None:
                 print("api_response is None")
