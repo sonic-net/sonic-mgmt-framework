@@ -352,7 +352,7 @@ func dbMapDelete(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requestU
 	var err error
 	var result = make(map[string]map[string]db.Value)
 	resultMap[oper] = make(map[db.DBNum]map[string]map[string]db.Value)
-    subOpDataMap := make(map[int]*RedisDbMap)
+	subOpDataMap := make(map[int]*RedisDbMap)
 	xfmrErrMsg := ""
 
 	if isSonicYang(uri) {
