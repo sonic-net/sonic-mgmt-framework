@@ -384,14 +384,14 @@ module openconfig-network-instance-annot {
 /* peer-groups->timers->state->hold-time */
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:timers/oc-netinst:state/oc-netinst:hold-time {
       deviate add {
-            sonic-ext:field-name "hold_time";
+            sonic-ext:field-name "holdtime";
       }
     }
 
 /* peer-groups->timers->state->keepalive-interval */
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:timers/oc-netinst:state/oc-netinst:keepalive-interval {
       deviate add {
-            sonic-ext:field-name "keepalive_interval";
+            sonic-ext:field-name "keepalive";
       }
     }
 
@@ -427,14 +427,14 @@ module openconfig-network-instance-annot {
 /* peer-group->timers->config->hold-time */
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:timers/oc-netinst:config/oc-netinst:hold-time {
       deviate add {
-            sonic-ext:field-name "hold_time";
+            sonic-ext:field-name "holdtime";
       }
     }
 
 /* peer-group->timers->config->keepalive-interval */
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:timers/oc-netinst:config/oc-netinst:keepalive-interval {
       deviate add {
-            sonic-ext:field-name "keepalive_interval";
+            sonic-ext:field-name "keepalive";
       }
     }
 
@@ -442,7 +442,7 @@ module openconfig-network-instance-annot {
 /* peer-group->config->description */
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:config/oc-netinst:description {
       deviate add {
-            sonic-ext:field-name "description";
+            sonic-ext:field-name "name";
       }
     }
 
@@ -455,7 +455,7 @@ module openconfig-network-instance-annot {
 /* peer-group->config->peer-as */
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:config/oc-netinst:peer-as {
       deviate add {
-            sonic-ext:field-name "peer_asn";
+            sonic-ext:field-name "asn";
       }
     }
 
@@ -490,7 +490,7 @@ module openconfig-network-instance-annot {
 /* peer-group->state->description */
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:state/oc-netinst:description {
       deviate add {
-            sonic-ext:field-name "description";
+            sonic-ext:field-name "name";
       }
     }
 
@@ -504,7 +504,7 @@ module openconfig-network-instance-annot {
 /* peer-group->state->peer-as */
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:state/oc-netinst:peer-as {
       deviate add {
-            sonic-ext:field-name "peer_asn";
+            sonic-ext:field-name "asn";
       }
     }
 
@@ -527,7 +527,7 @@ module openconfig-network-instance-annot {
 /* peer-group->transport->state->local-address */
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:transport/oc-netinst:state/oc-netinst:local-address {
       deviate add {
-            sonic-ext:field-name "local_address";
+            sonic-ext:field-name "local_addr";
       }
     }
 
@@ -542,7 +542,7 @@ module openconfig-network-instance-annot {
 /* peer-group->transport->config->local-address */
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:transport/oc-netinst:config/oc-netinst:local-address {
       deviate add {
-            sonic-ext:field-name "local_address";
+            sonic-ext:field-name "local_addr";
       }
     }
 /* peer-group->afi-safis->afi-safi */
@@ -568,6 +568,18 @@ module openconfig-network-instance-annot {
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:ipv6-unicast {
       deviate add {
         sonic-ext:key-transformer "bgp_af_pgrp_proto_tbl_key_xfmr";
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:config/oc-netinst:enabled {
+      deviate add {
+            sonic-ext:field-name "admin_status";
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:state/oc-netinst:enabled {
+      deviate add {
+            sonic-ext:field-name "admin_status";
       }
     }
 
@@ -1425,6 +1437,13 @@ module openconfig-network-instance-annot {
             sonic-ext:field-transformer "bgp_nbr_address_fld_xfmr";
       }
     }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:config/oc-netinst:enabled {
+      deviate add {
+            sonic-ext:field-name "admin_status";
+      }
+    }
+
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:config/oc-netinst:peer-group {
       deviate add {
             sonic-ext:field-name "peer_group_name";
@@ -1475,14 +1494,14 @@ module openconfig-network-instance-annot {
 /* neighbor->timers->config->hold-time */
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:timers/oc-netinst:config/oc-netinst:hold-time {
       deviate add {
-            sonic-ext:field-name "hold_time";
+            sonic-ext:field-name "holdtime";
       }
     }
 
 /* neighbor->timers->config->keepalive-interval */
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:timers/oc-netinst:config/oc-netinst:keepalive-interval {
       deviate add {
-            sonic-ext:field-name "keepalive_interval";
+            sonic-ext:field-name "keepalive";
       }
     }
 
@@ -1490,7 +1509,7 @@ module openconfig-network-instance-annot {
 /* neighbor->config->description */
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:config/oc-netinst:description {
       deviate add {
-            sonic-ext:field-name "description";
+            sonic-ext:field-name "name";
       }
     }
 
@@ -1503,7 +1522,7 @@ module openconfig-network-instance-annot {
 /* neighbor->config->peer-as */
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:config/oc-netinst:peer-as {
       deviate add {
-            sonic-ext:field-name "peer_asn";
+            sonic-ext:field-name "asn";
       }
     }
 
@@ -1532,7 +1551,7 @@ module openconfig-network-instance-annot {
 /* neighbor->transport->config->local-address */
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:transport/oc-netinst:config/oc-netinst:local-address {
       deviate add {
-            sonic-ext:field-name "local_address";
+            sonic-ext:field-name "local_addr";
       }
     }
 
@@ -1541,6 +1560,12 @@ module openconfig-network-instance-annot {
       deviate add {
         sonic-ext:table-name "BGP_NEIGHBOR_AF";
         sonic-ext:key-transformer "bgp_af_nbr_tbl_key_xfmr";
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:config/oc-netinst:enabled {
+      deviate add {
+        sonic-ext:field-name "admin_status";
       }
     }
 
@@ -2029,7 +2054,7 @@ module openconfig-network-instance-annot {
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:config/oc-bgp-ext:route-reflector-client {
       deviate add {
-        sonic-ext:field-name "route_reflector_client";
+        sonic-ext:field-name "rrclient";
       }
     }
 
@@ -2119,7 +2144,7 @@ module openconfig-network-instance-annot {
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:config/oc-bgp-ext:route-reflector-client {
       deviate add {
-        sonic-ext:field-name "route_reflector_client";
+        sonic-ext:field-name "rrclient";
       }
     }
 
@@ -2161,7 +2186,7 @@ module openconfig-network-instance-annot {
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:state/oc-bgp-ext:route-reflector-client {
       deviate add {
-        sonic-ext:field-name "route_reflector_client";
+        sonic-ext:field-name "rrclient";
       }
     }
 
@@ -2269,7 +2294,7 @@ module openconfig-network-instance-annot {
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:next-hop-self/oc-bgp-ext:config/oc-bgp-ext:enabled {
       deviate add {
-        sonic-ext:field-name "nexthop_self_enabled";
+        sonic-ext:field-name "nhself";
       }
     }
 
@@ -2281,7 +2306,7 @@ module openconfig-network-instance-annot {
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:next-hop-self/oc-bgp-ext:state/oc-bgp-ext:enabled {
       deviate add {
-        sonic-ext:field-name "nexthop_self_enabled";
+        sonic-ext:field-name "nhself";
       }
     }
 
@@ -2461,7 +2486,7 @@ module openconfig-network-instance-annot {
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:next-hop-self/oc-bgp-ext:config/oc-bgp-ext:enabled {
       deviate add {
-        sonic-ext:field-name "nexthop_self_enabled";
+        sonic-ext:field-name "nhself";
       }
     }
 
@@ -2473,7 +2498,7 @@ module openconfig-network-instance-annot {
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:next-hop-self/oc-bgp-ext:state/oc-bgp-ext:enabled {
       deviate add {
-        sonic-ext:field-name "nexthop_self_enabled";
+        sonic-ext:field-name "nhself";
       }
     }
 

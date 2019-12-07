@@ -304,6 +304,12 @@ var intf_table_xfmr TableXfmrFunc = func (inParams XfmrParams) ([]string, error)
         strings.HasPrefix(targetUriPath, "/openconfig-interfaces:interfaces/interface/ethernet/state") ||
         strings.HasPrefix(targetUriPath, "/openconfig-interfaces:interfaces/interface/openconfig-if-ethernet:ethernet/state") {
         tblList = append(tblList, intTbl.appDb.portTN)
+    } else if strings.HasPrefix(targetUriPath,"/openconfig-interfaces:interfaces/interface/openconfig-interfaces-ext:nat-zone/config")||
+        strings.HasPrefix(targetUriPath,"/openconfig-interfaces:interfaces/interface/nat-zone/config") {
+        tblList = append(tblList, intTbl.cfgDb.intfTN)
+    } else if strings.HasPrefix(targetUriPath,"/openconfig-interfaces:interfaces/interface/openconfig-interfaces-ext:nat-zone/state")||
+        strings.HasPrefix(targetUriPath,"/openconfig-interfaces:interfaces/interface/nat-zone/state") {
+        tblList = append(tblList, intTbl.appDb.intfTN)
     } else if strings.HasPrefix(targetUriPath, "/openconfig-interfaces:interfaces/interface/subinterfaces/subinterface/ipv4/addresses/address/config") ||
         strings.HasPrefix(targetUriPath, "/openconfig-interfaces:interfaces/interface/subinterfaces/subinterface/openconfig-if-ip:ipv4/addresses/address/config") ||
         strings.HasPrefix(targetUriPath, "/openconfig-interfaces:interfaces/interface/subinterfaces/subinterface/openconfig-if-ip:ipv6/addresses/address/config") ||
@@ -322,6 +328,9 @@ var intf_table_xfmr TableXfmrFunc = func (inParams XfmrParams) ([]string, error)
     } else if strings.HasPrefix(targetUriPath, "/openconfig-interfaces:interfaces/interface/ethernet") ||
         strings.HasPrefix(targetUriPath, "/openconfig-interfaces:interfaces/interface/openconfig-if-ethernet:ethernet") {
         tblList = append(tblList, intTbl.cfgDb.portTN)
+    } else if strings.HasPrefix(targetUriPath,"/openconfig-interfaces:interfaces/interface/openconfig-interfaces-ext:nat-zone") ||
+        strings.HasPrefix(targetUriPath,"/openconfig-interfaces:interfaces/interface/nat-zone") {
+        tblList = append(tblList, intTbl.cfgDb.intfTN)
     } else if strings.HasPrefix(targetUriPath, "/openconfig-interfaces:interfaces/interface") {
         tblList = append(tblList, intTbl.cfgDb.portTN)
     } else {       err = errors.New("Invalid URI")
@@ -1140,9 +1149,9 @@ var DbToYang_intf_ip_addr_xfmr SubTreeXfmrDbToYang = func (inParams XfmrParams) 
                 ygot.BuildEmptyTree(intfObj.Subinterfaces)
             }
         } else {
-             ygot.BuildEmptyTree(intfsObj)
-             intfObj, _ = intfsObj.NewInterface(intfName)
-             ygot.BuildEmptyTree(intfObj.Subinterfaces)
+            ygot.BuildEmptyTree(intfsObj)
+            intfObj, _ = intfsObj.NewInterface(intfName)
+            ygot.BuildEmptyTree(intfObj)
         }
 
 

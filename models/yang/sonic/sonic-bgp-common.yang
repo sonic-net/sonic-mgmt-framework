@@ -100,11 +100,12 @@ module sonic-bgp-common {
         description "Local AS number";
     }
 
-    leaf description {
+    leaf name {
       type string;
+        description "Peer description";
     }
 
-    leaf peer_asn {
+    leaf asn {
       type uint32;
         description "Peer AS number";
     }
@@ -130,14 +131,14 @@ module sonic-bgp-common {
         description "Authuntiation password";
     }
 
-    leaf keepalive_interval {
+    leaf keepalive {
       type uint16 {
         range "1..3600";
       }
         description "Keepalive interval";
     }
 
-    leaf hold_time {
+    leaf holdtime {
       type uint16 {
         range "1..3600";
       }
@@ -158,9 +159,9 @@ module sonic-bgp-common {
         description "minium advertisement interval";
     }
 
-    leaf local_address {
+    leaf local_addr {
       type inet:ip-address;
-        description "Local address to use for connection";
+        description "Local source address to use for connection";
     }
 
     leaf passive_mode {
@@ -247,7 +248,7 @@ module sonic-bgp-common {
         description "Address family";
     }
 
-    leaf enabled {
+    leaf admin_status {
       type boolean;
         description "Enabled status";
     }
@@ -258,9 +259,12 @@ module sonic-bgp-common {
     }
 
     leaf default_rmap {
+        type string;
+        /*
         type leafref {
             path "/srmap:sonic-route-map/srmap:ROUTE_MAP_SET/srmap:ROUTE_MAP_SET_LIST/srmap:name";
         }
+        */
         description "Default route map to originate";
     }
 
@@ -289,15 +293,19 @@ module sonic-bgp-common {
     }
 
     leaf-list route_map_in {
+        type string;
+        /*
       type leafref {
         path "/srmap:sonic-route-map/srmap:ROUTE_MAP_SET/srmap:ROUTE_MAP_SET_LIST/srmap:name";
-      }
+      } */
     }
 
     leaf-list route_map_out {
+        type string;
+        /*
       type leafref {
         path "/srmap:sonic-route-map/srmap:ROUTE_MAP_SET/srmap:ROUTE_MAP_SET_LIST/srmap:name";
-      }
+      }*/
     }
 
     leaf soft_reconfiguration_in {
@@ -306,14 +314,17 @@ module sonic-bgp-common {
     }
 
     leaf unsuppress_map_name {
+        type string;
+        /*
       type leafref {
         path "/srmap:sonic-route-map/srmap:ROUTE_MAP_SET/srmap:ROUTE_MAP_SET_LIST/srmap:name";
-      }
+      } */
       description "Route map";
     }
 
-    leaf route_reflector_client {
+    leaf rrclient {
       type boolean;
+        description "Route reflector client";
     }
 
     leaf weight {
@@ -356,9 +367,11 @@ module sonic-bgp-common {
     }
 
     leaf filter_list_name {
+        type string;
+        /*
         type leafref {
             path "/srpolsets:sonic-routing-policy-sets/srpolsets:AS_PATH_SET/srpolsets:AS_PATH_SET_LIST/srpolsets:name";
-        }
+        }*/
         description "Filter list name";
     }
 
@@ -367,7 +380,7 @@ module sonic-bgp-common {
         description "Filter list direction";
     }
 
-    leaf nexthop_self_enabled {
+    leaf nhself {
       type boolean;
         description "Nexthop is self, no nexthop calculation";
     }
@@ -378,9 +391,11 @@ module sonic-bgp-common {
     }
 
     leaf prefix_list_name {
+        type string;
+        /*
         type leafref {
             path "/srpolsets:sonic-routing-policy-sets/srpolsets:PREFIX_SET/srpolsets:PREFIX_SET_LIST/srpolsets:name";
-        }
+        }*/
         description "Prefix list name";
     }
 

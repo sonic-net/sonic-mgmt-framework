@@ -142,15 +142,15 @@ limitations under the License.
             fi&#xA;
         elif test "${if-subcommands}" = "Vlan"; then&#xA;
             if test "${vlan-id}" = ""; then&#xA;
-                #Note: TODO, Discussion needed
+                #Note: TODO, Discussion needed&#xA;
                 python $SONIC_CLI_ROOT/sonic-cli-if.py get_all_vlans show_interface_vlan.j2 ${__full_line}&#xA;
             else&#xA;
                 python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces_interface Vlan${vlan-id} show_interface_vlan.j2 ${__full_line}&#xA;
             fi&#xA;
         elif test "${if-subcommands}" = "Loopback"; then&#xA;
             if test "${lo-id}" = ""; then&#xA;
-                # Note: TODO, Discussion needed
-                #python $SONIC_CLI_ROOT/sonic-cli-if.py get_all_loopbacks show_interface_loopback.j2 ${__full_line}&#xA;
+                # Note: TODO, Discussion needed&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-if.py get_all_loopbacks show_interface_loopback.j2 ${__full_line}&#xA;
             else&#xA;
                 python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces_interface Loopback${lo-id} show_interface_loopback.j2 ${__full_line}&#xA;
             fi&#xA;
@@ -376,12 +376,16 @@ limitations under the License.
                 name="zone"
                 help="NAT zone of the interface"
                 ptype="UINT" />
-        <ACTION builtin="clish_nop"></ACTION>
+        <ACTION>
+            python $SONIC_CLI_ROOT/sonic-cli-nat.py patch_openconfig_interfaces_ext_interfaces_interface_nat_zone_config_nat_zone ${iface} ${zone}
+        </ACTION>
         </COMMAND>
         <COMMAND
             name="no nat-zone"
             help="Remove Nat Zone on an interface" >
-        <ACTION builtin="clish_nop"></ACTION>
+        <ACTION>
+            python $SONIC_CLI_ROOT/sonic-cli-nat.py delete_openconfig_interfaces_ext_interfaces_interface_nat_zone_config_nat_zone ${iface}
+        </ACTION>
         </COMMAND>
 
         <COMMAND
@@ -660,12 +664,16 @@ limitations under the License.
                 name="zone"
                 help="NAT zone of the vlan"
                 ptype="UINT" />
-        <ACTION builtin="clish_nop"></ACTION>
+        <ACTION>
+            python $SONIC_CLI_ROOT/sonic-cli-nat.py patch_openconfig_interfaces_ext_interfaces_interface_nat_zone_config_nat_zone Vlan${vlan_id} ${zone}
+        </ACTION>
         </COMMAND>
         <COMMAND
             name="no nat-zone"
             help="Remove Nat Zone on a vlan" >
-        <ACTION builtin="clish_nop"></ACTION>
+        <ACTION>
+            python $SONIC_CLI_ROOT/sonic-cli-nat.py delete_openconfig_interfaces_ext_interfaces_interface_nat_zone_config_nat_zone Vlan${vlan_id}
+        </ACTION>
         </COMMAND>
 
       <COMMAND
@@ -725,12 +733,16 @@ limitations under the License.
                 name="zone"
                 help="NAT zone of the port channel"
                 ptype="UINT" />
-        <ACTION builtin="clish_nop"></ACTION>
+        <ACTION>
+            python $SONIC_CLI_ROOT/sonic-cli-nat.py patch_openconfig_interfaces_ext_interfaces_interface_nat_zone_config_nat_zone ${po_name} ${zone}
+        </ACTION>
         </COMMAND>
         <COMMAND
             name="no nat-zone"
             help="Remove Nat Zone on a port channel" >
-        <ACTION builtin="clish_nop"></ACTION>
+        <ACTION>
+            python $SONIC_CLI_ROOT/sonic-cli-nat.py delete_openconfig_interfaces_ext_interfaces_interface_nat_zone_config_nat_zone ${po_name}
+        </ACTION>
         </COMMAND>
 
 

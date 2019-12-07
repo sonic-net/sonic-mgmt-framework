@@ -86,7 +86,7 @@ module openconfig-routing-policy-annot {
 
     deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-rpol:match-prefix-set/oc-rpol:config/oc-rpol:match-set-options {
       deviate add {
-            sonic-ext:field-transformer "route_map_match_set_options_xfmr";
+            sonic-ext:field-transformer "route_map_match_set_options_restrict_type_xfmr";
       }
     }
 
@@ -110,7 +110,7 @@ module openconfig-routing-policy-annot {
 
     deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-rpol:match-prefix-set/oc-rpol:state/oc-rpol:match-set-options {
       deviate add {
-            sonic-ext:field-transformer "route_map_match_set_options_xfmr";
+            sonic-ext:field-transformer "route_map_match_set_options_restrict_type_xfmr";
       }
     }
 
