@@ -142,14 +142,14 @@ limitations under the License.
             fi&#xA;
         elif test "${if-subcommands}" = "Vlan"; then&#xA;
             if test "${vlan-id}" = ""; then&#xA;
-                #Note: TODO, Discussion needed
+                #Note: TODO, Discussion needed&#xA;
                 python $SONIC_CLI_ROOT/sonic-cli-if.py get_all_vlans show_interface_vlan.j2 ${__full_line}&#xA;
             else&#xA;
                 python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces_interface Vlan${vlan-id} show_interface_vlan.j2 ${__full_line}&#xA;
             fi&#xA;
         elif test "${if-subcommands}" = "Loopback"; then&#xA;
             if test "${lo-id}" = ""; then&#xA;
-                # Note: TODO, Discussion needed
+                # Note: TODO, Discussion needed&#xA;
                 python $SONIC_CLI_ROOT/sonic-cli-if.py get_all_loopbacks show_interface_loopback.j2 ${__full_line}&#xA;
             else&#xA;
                 python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces_interface Loopback${lo-id} show_interface_loopback.j2 ${__full_line}&#xA;
