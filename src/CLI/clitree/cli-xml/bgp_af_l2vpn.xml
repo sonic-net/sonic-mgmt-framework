@@ -24,7 +24,7 @@ limitations under the License.
     >
     <!--=======================================================-->
 
-<VIEW name="configure-router-bgp-l2vpn-view" prompt="${SYSTEM_NAME}(configure-router-bgp-af)# " depth="3">
+<VIEW name="configure-router-bgp-l2vpn-view" prompt="${SYSTEM_NAME}(config-router-bgp-af)# " depth="3">
   <NAMESPACE ref="configure-view" help="false" completion="false" />
   <NAMESPACE ref="configure-router-bgp-view" help="false" completion="false" />
   <COMMAND name="redistribute" help="Redistribute information from another routing protocol">
@@ -187,7 +187,7 @@ limitations under the License.
     </PARAM>
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_capability_orf_config_orf_type ${vrf-name} ${nbr-addr} L2VPN_EVPN ${capopt}</ACTION>
   </COMMAND>
-  <COMMAND name="default-originate" help="Originate default route to this neighbor">
+  <COMMAND name="default-originate" help="Originate default route to this neighbor" ref="hidden">
     <PARAM name="route-map" help="Route-map to specify criteria to originate default" mode="subcommand" ptype="SUBCOMMAND">
        <PARAM name="rtemap" help="Route-map name" ptype="STRING"/>
     </PARAM>
@@ -314,7 +314,7 @@ limitations under the License.
     </PARAM>
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_capability_orf_config_orf_type ${vrf-name} ${nbr-addr} L2VPN_EVPN ${capopt}</ACTION>
   </COMMAND>
-  <COMMAND name="no default-originate" help="Originate default route to this neighbor">
+  <COMMAND name="no default-originate" help="Originate default route to this neighbor" ref="hidden">
     <PARAM name="route-map" help="Route-map to specify criteria to originate default" mode="subcommand" ptype="SUBCOMMAND">
        <PARAM name="rtemap" help="Route-map name" ptype="STRING"/>
     </PARAM>
@@ -447,7 +447,7 @@ limitations under the License.
     </PARAM>
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_afi_safis_afi_safi_capability_orf_config_orf_type ${vrf-name} ${template-name} L2VPN_EVPN ${capopt}</ACTION>
   </COMMAND>
-  <COMMAND name="default-originate" help="Originate default route to this neighbor">
+  <COMMAND name="default-originate" help="Originate default route to this neighbor" ref="hidden">
     <PARAM name="route-map" help="Route-map to specify criteria to originate default" mode="subcommand" ptype="SUBCOMMAND">
        <PARAM name="rtemap" help="Route-map name" ptype="STRING"/>
     </PARAM>
@@ -574,7 +574,7 @@ limitations under the License.
     </PARAM>
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_afi_safis_afi_safi_capability_orf_config_orf_type ${vrf-name} ${template-name} L2VPN_EVPN ${capopt}</ACTION>
   </COMMAND>
-  <COMMAND name="no default-originate" help="Originate default route to this neighbor">
+  <COMMAND name="no default-originate" help="Originate default route to this neighbor" ref="hidden">
     <PARAM name="route-map" help="Route-map to specify criteria to originate default" mode="subcommand" ptype="SUBCOMMAND">
        <PARAM name="rtemap" help="Route-map name" ptype="STRING"/>
     </PARAM>

@@ -108,7 +108,7 @@ limitations under the License.
 <VIEW name="configure-view">
   <COMMAND name="router" help="Router mode" view="configure-router-bgp-view" viewid="instance=${as-num-dot};vrf-name=${vrf-name}">
     <PARAM name="bgp" help="Border Gateway protocol (BGP)" mode="subcommand" ptype="SUBCOMMAND">
-      <PARAM name="as-num-dot" help="Autonomous system number" ptype="AS_NUM_DOT" view="configure-router-bgp-view" viewid="instance=${as-num-dot};vrf-name=${vrf-name}">
+      <PARAM name="as-num-dot" help="Autonomous system number" ptype="RANGE_1_4294967295" view="configure-router-bgp-view" viewid="instance=${as-num-dot};vrf-name=${vrf-name}">
         <PARAM name="vrf" help="VRF Instance" ptype="SUBCOMMAND" mode="subcommand" optional="true">
           <PARAM name="vrf-name" help="Name of VRF (Max size 32, prefixed by Vrf)" ptype="STRING_32" view="configure-router-bgp-view" default="default"/>
         </PARAM>
@@ -309,7 +309,6 @@ limitations under the License.
 
     <COMMAND name="no" help="no commands"/>
   <COMMAND name="no router-id" help="Override configured router identifier">
-    <PARAM name="ip-addr" help="Router identifier" ptype="IP_ADDR" optional="true"/>
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_config_router_id ${vrf-name} ${ip-addr}</ACTION>
   </COMMAND>
   <COMMAND name="no graceful-restart" help="BGP graceful restart feature"/>
@@ -471,7 +470,7 @@ limitations under the License.
     <PARAM name="remtype" help="Remote type" mode="switch" ptype="SUBCOMMAND">
       <PARAM name="internal" help="Internal BGP peer" mode="subcommand" ptype="SUBCOMMAND"/>
       <PARAM name="external" help="External BGP peer" mode="subcommand" ptype="SUBCOMMAND"/>
-      <PARAM name="as-num-dot" help="Autonomous system number" ptype="AS_NUM_DOT"/>
+      <PARAM name="as-num-dot" help="Autonomous system number" ptype="RANGE_1_4294967295"/>
     </PARAM>
     <ACTION>
              if test "${remtype}" = "internal" -o "${remtype}" = "external" ; then&#xA;
@@ -524,7 +523,7 @@ limitations under the License.
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_enforce_multihop ${vrf-name} ${nbr-addr} True</ACTION>
   </COMMAND>
   <COMMAND name="local-as" help="Specify a local-as number">
-    <PARAM name="asnum" help="Autonomous system number" ptype="AS_NUM_DOT"/>
+    <PARAM name="asnum" help="Autonomous system number" ptype="RANGE_1_4294967295"/>
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_local_as ${vrf-name} ${nbr-addr} ${asnum}</ACTION>
   </COMMAND>
   <COMMAND name="override-capability" help="Override capability negotiation result">
@@ -597,7 +596,7 @@ limitations under the License.
     <PARAM name="remtype" help="Remote type" mode="switch" ptype="SUBCOMMAND" optional="true">
       <PARAM name="internal" help="Internal BGP peer" mode="subcommand" ptype="SUBCOMMAND"/>
       <PARAM name="external" help="External BGP peer" mode="subcommand" ptype="SUBCOMMAND"/>
-      <PARAM name="as-num-dot" help="Autonomous system number" ptype="AS_NUM_DOT"/>
+      <PARAM name="as-num-dot" help="Autonomous system number" ptype="RANGE_1_4294967295"/>
     </PARAM>
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_peer_as ${vrf-name} ${nbr-addr} ${as-num-dot}&#xA;
              python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_peer_type ${vrf-name} ${nbr-addr} ${internal} ${external}&#xA;
@@ -684,7 +683,7 @@ limitations under the License.
     <PARAM name="remtype" help="Remote type" mode="switch" ptype="SUBCOMMAND">
       <PARAM name="internal" help="Internal BGP peer" mode="subcommand" ptype="SUBCOMMAND"/>
       <PARAM name="external" help="External BGP peer" mode="subcommand" ptype="SUBCOMMAND"/>
-      <PARAM name="as-num-dot" help="Autonomous system number" ptype="AS_NUM_DOT"/>
+      <PARAM name="as-num-dot" help="Autonomous system number" ptype="RANGE_1_4294967295"/>
     </PARAM>
     <ACTION>
              if test "${remtype}" = "internal" -o "${remtype}" = "external" ; then&#xA;
@@ -737,7 +736,7 @@ limitations under the License.
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_config_enforce_multihop ${vrf-name} ${template-name} True</ACTION>
   </COMMAND>
   <COMMAND name="local-as" help="Specify a local-as number">
-    <PARAM name="asnum" help="Autonomous system number" ptype="AS_NUM_DOT"/>
+    <PARAM name="asnum" help="Autonomous system number" ptype="RANGE_1_4294967295"/>
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_config_local_as ${vrf-name} ${template-name} ${asnum}</ACTION>
   </COMMAND>
   <COMMAND name="override-capability" help="Override capability negotiation result">
@@ -809,7 +808,7 @@ limitations under the License.
     <PARAM name="remtype" help="Remote type" mode="switch" ptype="SUBCOMMAND" optional="true">
       <PARAM name="internal" help="Internal BGP peer" mode="subcommand" ptype="SUBCOMMAND"/>
       <PARAM name="external" help="External BGP peer" mode="subcommand" ptype="SUBCOMMAND"/>
-      <PARAM name="as-num-dot" help="Autonomous system number" ptype="AS_NUM_DOT"/>
+      <PARAM name="as-num-dot" help="Autonomous system number" ptype="RANGE_1_4294967295"/>
     </PARAM>
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_config_peer_as ${vrf-name} ${template-name} ${as-num-dot}&#xA;
              python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_config_peer_type ${vrf-name} ${template-name} ${internal} ${external}&#xA;
