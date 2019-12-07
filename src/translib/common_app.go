@@ -189,7 +189,7 @@ func (app *CommonApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
 		    log.Error("transformer.transformer.GetAndXlateFromDB failure. error:", err)
 		    resPayload = payload
 		    break
-	    }
+            }
 
 	    targetObj, tgtObjCastOk := (*app.ygotTarget).(ygot.GoStruct)
 	    if tgtObjCastOk == false {
@@ -410,8 +410,20 @@ func (app *CommonApp) cmnAppCRUCommonDbOpn(d *db.DB, opcode int, dbMap map[strin
 		if tblVal, ok := dbMap[tblNm]; ok {
 			cmnAppTs = &db.TableSpec{Name: tblNm}
 			log.Info("Found table entry in yang to DB map")
+			if ((tblVal == nil) || (len(tblVal) == 0)) {
+				log.Info("No table instances/rows found.")
+				continue
+			}
 			for tblKey, tblRw := range tblVal {
-				log.Info("Processing Table key and row ", tblKey, tblRw)
+				log.Info("Processing Table key ", tblKey)
+				// REDIS doesn't allow to create a table instance without any fields
+				if tblRw.Field == nil {
+					tblRw.Field = map[string]string{"NULL": "NULL"}
+				}
+				if len(tblRw.Field) == 0 {
+					tblRw.Field["NULL"] = "NULL"
+				}
+				log.Info("Processing Table row ", tblRw)
 				existingEntry, _ := d.GetEntry(cmnAppTs, db.Key{Comp: []string{tblKey}})
 				switch opcode {
 				case CREATE:
