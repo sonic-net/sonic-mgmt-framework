@@ -24,7 +24,7 @@ limitations under the License.
     >
     <!--=======================================================-->
 
-<VIEW name="configure-router-bgp-ipv6-view" prompt="${SYSTEM_NAME}(configure-router-bgp-af)# " depth="3">
+<VIEW name="configure-router-bgp-ipv6-view" prompt="${SYSTEM_NAME}(config-router-bgp-af)# " depth="3">
   <NAMESPACE ref="configure-view" help="false" completion="false" />
   <NAMESPACE ref="configure-router-bgp-view" help="false" completion="false" />
   <COMMAND name="redistribute" help="Redistribute information from another routing protocol">
