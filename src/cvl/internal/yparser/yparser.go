@@ -156,9 +156,12 @@ struct lys_leaf_ref_path {
 	int count; //actual path count
 };
 
+const char *nonLeafRef = "non-leafref";
 struct lys_leaf_ref_path* lys_get_leafrefs(struct lys_node_leaf *node) {
 	static struct lys_leaf_ref_path leafrefs;
 	memset(&leafrefs, 0, sizeof(leafrefs));
+
+	int nonLeafRefCnt = 0;
 
 	if (node->type.base == LY_TYPE_LEAFREF) {
 		leafrefs.path[0] = node->type.info.lref.path;
@@ -168,6 +171,12 @@ struct lys_leaf_ref_path* lys_get_leafrefs(struct lys_node_leaf *node) {
 		int typeCnt = 0;
 		for (; typeCnt < node->type.info.uni.count; typeCnt++) {
 			if (node->type.info.uni.types[typeCnt].base != LY_TYPE_LEAFREF) {
+				if (nonLeafRefCnt == 0) {
+					leafrefs.path[leafrefs.count] = nonLeafRef; //data type, not leafref
+					leafrefs.count += 1;
+					nonLeafRefCnt++;
+				}
+
 				continue;
 			}
 
@@ -176,7 +185,7 @@ struct lys_leaf_ref_path* lys_get_leafrefs(struct lys_node_leaf *node) {
 		}
 	}
 
-	if (leafrefs.count > 0) {
+	if ((leafrefs.count - nonLeafRefCnt) > 0) {
 		return &leafrefs;
 	} else {
 		return NULL;

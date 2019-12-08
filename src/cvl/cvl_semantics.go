@@ -201,7 +201,7 @@ func (c *CVL) generateYangListData(jsonNode *jsonquery.Node,
 		return nil, cvlErrObj
 	}
 
-	// Add top most conatiner e.g. 'container sonic-acl {...}'
+	// Add top most container e.g. 'container sonic-acl {...}'
 	topNode = c.addYangNode(tableName, nil, modelInfo.tableInfo[tableName].modelName, "")
 	//topNode.Prefix = modelInfo.modelNs[modelInfo.tableInfo[tableName].modelName].prefix
 	topNode.Prefix = modelInfo.tableInfo[tableName].modelName
@@ -509,6 +509,14 @@ destLoop:
 	return CVL_SUCCESS
 }
 
+func (c *CVL) findYangList(tableName string, redisKey string) *xmlquery.Node {
+	origCurrent := c.yv.current
+	tmpCurrent := c.moveToYangList(tableName, redisKey)
+	c.yv.current = origCurrent
+
+	return tmpCurrent
+}
+
 //Locate YANG list instance in root for given table name and key
 func (c *CVL) moveToYangList(tableName string, redisKey string) *xmlquery.Node {
 
@@ -764,6 +772,12 @@ func (c *CVL) addYangDataForMustExp(op CVLOperation, tableName string, oneEntry 
 				continue
 			}
 
+			if (topYangNode.FirstChild != nil) &&
+			(topYangNode.FirstChild.FirstChild != nil) {
+				//Add attribute mentioning that data is from db
+				addAttrNode(topYangNode.FirstChild.FirstChild, "db", "")
+			}
+
 			//Create full document by adding document node
 			doc := &xmlquery.Node{Type: xmlquery.DocumentNode}
 			doc.FirstChild = topYangNode
@@ -832,6 +846,11 @@ func compileLeafRefPath() {
 		//for  nodeName, leafRefArr := range tInfo.leafRef {
 		for  _, leafRefArr := range tInfo.leafRef {
 			for _, leafRefArrItem := range leafRefArr {
+				if (leafRefArrItem.path == "non-leafref") {
+					//Leaf type has at-least one non-learef data type
+					continue
+				}
+
 				//first store the referred table and target node
 				leafRefArrItem.yangListNames, leafRefArrItem.targetNodeName =
 					getLeafRefTargetInfo(leafRefArrItem.path)
@@ -873,6 +892,11 @@ func (c *CVL) validateMustExp(tableName, key string, op CVLOperation) (r CVLErro
 	//Set xpath callback for retriving dependent data count
 	xpath.SetDepDataCntClbk(c, func(ctxt interface{},
 	redisKeyFilter, keyNames, pred, field string) float64 {
+
+		if (pred != "") {
+			pred = "return (" + pred + ")"
+		}
+
 		redisEntries, err := luaScripts["count_entries"].Run(redisClient,
 		[]string{}, redisKeyFilter, keyNames, pred, field).Result()
 
@@ -1103,9 +1127,15 @@ func (c *CVL) validateLeafRef(tableName, key string, op CVLOperation) (r CVLRetC
 			//data needed for leafref validation should be available from this.
 
 			leafRefSuccess := false
+			nonLeafRefPresent := false //If leaf has non-leafref data type due to union
 			//Excute all leafref checks, multiple leafref for unions
 			leafRefLoop:
 			for _, leafRefPath := range leafRefs {
+				if (leafRefPath.path == "non-leafref") {
+					//Leaf has at-least one non-leaferf data type in union
+					nonLeafRefPresent = true
+					continue
+				}
 
 				//Add dependent data for all referred tables
 				for _, refListName := range leafRefPath.yangListNames {
@@ -1124,7 +1154,7 @@ func (c *CVL) validateLeafRef(tableName, key string, op CVLOperation) (r CVLRetC
 						//Context node used for leafref
 						//Keys -> ACL_TABLE|TestACL1
 						filter = refRedisTableName +
-						modelInfo.tableInfo[refListName].redisKeyDelim + ctxtVal 
+						modelInfo.tableInfo[refListName].redisKeyDelim + ctxtVal
 						tableKeys, err = redisClient.Keys(filter).Result()
 					} else {
 						//Keys -> ACL_TABLE|*
@@ -1137,7 +1167,7 @@ func (c *CVL) validateLeafRef(tableName, key string, op CVLOperation) (r CVLRetC
 					if (err != nil) || (len(tableKeys) == 0) {
 						//There must be at least one entry in the ref table
 						TRACE_LOG(TRACE_SEMANTIC, "Leafref dependent data " +
-						"table %s, key %s not found Redis", refRedisTableName,
+						"table %s, key %s not found in Redis", refRedisTableName,
 						ctxtVal)
 
 						if (leafRefPath.exprTree == nil) {
@@ -1145,6 +1175,11 @@ func (c *CVL) validateLeafRef(tableName, key string, op CVLOperation) (r CVLRetC
 							if _, exists := c.requestCache[refRedisTableName][ctxtVal];
 							exists == true {
 								//no predicate and single key is referred
+								leafRefSuccess = true
+								break leafRefLoop
+							} else if node := c.findYangList(refListName, ctxtVal);
+							node != nil {
+								//Found in the request tree
 								leafRefSuccess = true
 								break leafRefLoop
 							}
@@ -1171,8 +1206,14 @@ func (c *CVL) validateLeafRef(tableName, key string, op CVLOperation) (r CVLRetC
 				}
 			} //for loop for all leafref check for a leaf - union case
 
-			if (leafRefSuccess == false) {
+			if (leafRefSuccess == false) && (nonLeafRefPresent == false) {
+				//Return failure if none of the leafref exists and
+				//the leaf has no non-leafref data type as well
 				return CVL_SEMANTIC_DEPENDENT_DATA_MISSING
+			} else if (leafRefSuccess == false) {
+				TRACE_LOG(TRACE_SEMANTIC, "validateLeafRef(): " +
+				"Leafref dependent data not found but leaf has " +
+				"other data type in union, returning success.")
 			}
 		} //for each leaf-list node
 	}
@@ -1273,10 +1314,11 @@ func (c *CVL) checkDeleteConstraint(cfgData []CVLEditConfigData,
 }
 
 //Validate external dependency using leafref, must and when expression
-func (c *CVL) validateEditCfgExtDep(yangListName, key string, op CVLOperation) (r CVLErrorInfo) {
+func (c *CVL) validateEditCfgExtDep(yangListName, key string,
+	cfgData *CVLEditConfigData) (r CVLErrorInfo) {
 
 	//Check all leafref
-	if errCode := c.validateLeafRef(yangListName, key, op) ;
+	if errCode := c.validateLeafRef(yangListName, key, cfgData.VOp) ;
 	errCode != CVL_SUCCESS {
 		return CVLErrorInfo {
 			ErrCode: errCode,
@@ -1285,13 +1327,21 @@ func (c *CVL) validateEditCfgExtDep(yangListName, key string, op CVLOperation) (
 	}
 
 	//Validate when expression
-	if errObj := c.validateWhenExp(yangListName, key, op) ;
+	if errObj := c.validateWhenExp(yangListName, key, cfgData.VOp) ;
 	errObj.ErrCode != CVL_SUCCESS {
 		return errObj
 	}
 
 	//Validate must expression
-	if errObj := c.validateMustExp(yangListName, key, op) ;
+	if (cfgData.VOp == OP_DELETE) {
+		if (len(cfgData.Data) > 0) {
+			//Multiple field delete case, must expression execution 
+			//supported for entire entry delete only
+			return CVLErrorInfo{ErrCode:CVL_SUCCESS}
+		}
+	}
+
+	if errObj := c.validateMustExp(yangListName, key, cfgData.VOp) ;
 	errObj.ErrCode != CVL_SUCCESS {
 		return errObj
 	}
@@ -1306,7 +1356,8 @@ func (c *CVL) validateCfgExtDep(root *xmlquery.Node) (r CVLErrorInfo) {
 			return CVLErrorInfo{ErrCode:CVL_SUCCESS}
 		}
 		yangListName := root.Data[:len(root.Data) - 5]
-		return c.validateEditCfgExtDep(yangListName, root.Attr[0].Value, OP_NONE)
+		return c.validateEditCfgExtDep(yangListName, root.Attr[0].Value,
+		&CVLEditConfigData{VType: VALIDATE_NONE, VOp: OP_NONE})
 	}
 
 	ret := CVLErrorInfo{}

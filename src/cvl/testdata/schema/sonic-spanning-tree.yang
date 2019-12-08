@@ -183,6 +183,7 @@ module sonic-spanning-tree {
 
                 leaf ifname {
                     type union {
+			type string; //Any other type    
                         type leafref {
                             path "/prt:sonic-port/prt:PORT/prt:PORT_LIST/prt:ifname";
                         }
