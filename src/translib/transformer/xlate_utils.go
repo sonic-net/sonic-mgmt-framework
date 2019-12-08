@@ -460,7 +460,29 @@ func getDBOptionsWithSeparator(dbNo db.DBNum, initIndicator string, tableSeparat
                       })
 }
 
+func getXpathFromYangEntry(entry *yang.Entry) string {
+        xpath := ""
+        if entry != nil {
+                xpath = entry.Name
+                entry = entry.Parent
+                for {
+                        if entry.Parent != nil {
+                                xpath = entry.Name + "/" + xpath
+                                entry = entry.Parent
+                        } else {
+                                // This is the module entry case
+                                xpath = "/" + entry.Name + ":" + xpath
+                                break
+                        }
+                }
+        }
+        return xpath
+}
+
 func stripAugmentedModuleNames(xpath string) string {
+	if !strings.HasPrefix(xpath, "/") {
+		xpath = "/" + xpath
+	}
         pathList := strings.Split(xpath, "/")
         pathList = pathList[1:]
         for i, pvar := range pathList {
@@ -552,7 +574,7 @@ func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, req
 				 }
 				 if len(xYangSpecMap[yangXpath].xfmrKey) > 0 {
 					 xfmrFuncName := yangToDbXfmrFunc(xYangSpecMap[yangXpath].xfmrKey)
-					 inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, curPathWithKey, requestUri, oper, "", nil, subOpDataMap, nil, txCache)
+					 inParams := formXfmrInputRequest(d, dbs, cdb, ygRoot, curPathWithKey, requestUri, oper, "", nil, subOpDataMap, nil, txCache)
 					 ret, err := XlateFuncCall(xfmrFuncName, inParams)
 					 if err != nil {
 						 return "", "", ""
@@ -576,7 +598,7 @@ func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, req
 				 }
 			 } else if len(xYangSpecMap[yangXpath].xfmrKey) > 0 {
 				 xfmrFuncName := yangToDbXfmrFunc(xYangSpecMap[yangXpath].xfmrKey)
-				 inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, curPathWithKey, requestUri, oper, "", nil, subOpDataMap, nil, txCache)
+				 inParams := formXfmrInputRequest(d, dbs, cdb, ygRoot, curPathWithKey, requestUri, oper, "", nil, subOpDataMap, nil, txCache)
 				 ret, err := XlateFuncCall(xfmrFuncName, inParams)
 				 if err != nil {
 					 return "", "", ""
