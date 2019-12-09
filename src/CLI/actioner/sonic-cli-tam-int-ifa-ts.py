@@ -141,10 +141,11 @@ def run(func, args):
 if __name__ == '__main__':
     pipestr().write(sys.argv)
     func = sys.argv[1]
+
     if func == 'get_tam_ifa_ts_status':
         get_tam_ifa_ts_status(sys.argv[2:])
-    if func == 'get_tam_int_ifa_ts_supported':
+    elif func == 'get_tam_int_ifa_ts_supported':
         get_tam_int_ifa_ts_supported(sys.argv[2:])
-
-    run(func, sys.argv[2:])
+    else: 
+        run(func, sys.argv[2:])
 
