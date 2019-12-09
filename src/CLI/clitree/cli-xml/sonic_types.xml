@@ -571,8 +571,8 @@ limitations under the License.
 	<PTYPE
 		name="PTP_MST_SLV"
 		method="select"
-		pattern="unicast-master(unicast-master) unicast-slave(unicast-slave) multicast(multicast)"
-		help="master or slave"/>
+		pattern="unicast(unicast) multicast(multicast)"
+		help="unicast/multicast"/>
 
     <!--=======================================================-->
     <PTYPE

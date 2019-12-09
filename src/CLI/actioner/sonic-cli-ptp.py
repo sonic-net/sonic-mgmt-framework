@@ -28,30 +28,79 @@ def node_addr_type(address):
 
     return "ipv4"
 
-def port_state_to_str(state_num):
-    outval = ""
-    if state_num == "0":
-        outval = "none"
-    if state_num == "1":
-        outval = "initializing"
-    if state_num == "2":
-        outval = "faulty"
-    if state_num == "3":
-        outval = "disabled"
-    if state_num == "4":
-        outval = "listening"
-    if state_num == "5":
-        outval = "pre_master"
-    if state_num == "6":
-        outval = "master"
-    if state_num == "7":
-        outval = "passive"
-    if state_num == "8":
-        outval = "uncalibrated"
-    if state_num == "9":
-        outval = "slave"
 
-    return outval
+def port_state_to_str(state_num):
+    port_state_tbl = {"0": "none", "1": "initializing", "2": "faulty", "3": "disabled", "4": "listening",
+                      "5": "pre_master", "6": "master", "7": "passive", "8": "uncalibrated", "9": "slave"}
+    return port_state_tbl[state_num]
+
+
+def get_attrib(c, attrib):
+    attrib_val = c.get(attrib, 'None')
+    return attrib_val
+
+
+def check_network_transport_allowed(c, network_transport, unicast_multicast):
+    domain_profile = get_attrib(c, 'domain-profile')
+    domain_number = int(get_attrib(c, 'domain-number'))
+    clock_type = get_attrib(c, 'clock-type')
+    if domain_profile == 'G.8275.x':
+        if network_transport == "L2":
+            print "%Error: L2 not supported with G.8275.2"
+            return 0
+        if unicast_multicast == "multicast":
+            print "%Error: multicast not supported with G.8275.2"
+            return 0
+        if domain_number < 44 or domain_number > 63:
+            print "%Error: domain must be in range 44-63 with G.8275.2"
+            return 0
+        if clock_type == 'P2P_TC' or clock_type == 'E2E_TC':
+            print "%Error: transparent-clock not supported with G.8275.2"
+            return 0
+    return 1
+
+
+def check_domain_number_allowed(c, domain_number):
+    domain_profile = get_attrib(c, 'domain-profile')
+    if domain_profile == 'G.8275.x':
+        if domain_number < 44 or domain_number > 63:
+            print "%Error: domain must be in range 44-63 with G.8275.2"
+            return 0
+    return 1
+
+
+def check_clock_type_allowed(c, clock_type):
+    domain_profile = get_attrib(c, 'domain-profile')
+    if domain_profile == 'G.8275.x':
+        if clock_type == 'P2P_TC' or clock_type == 'E2E_TC':
+            print "%Error: transparent-clock not supported with G.8275.2"
+            return 0
+    return 1
+
+
+def check_master_table_allowed(c):
+    unicast_multicast = get_attrib(c, 'unicast-multicast')
+    if unicast_multicast == 'multicast':
+        print "%Error: master-table is not needed in with multicast transport"
+        return 0
+    return 1
+
+
+def check_domain_profile_allowed(c, domain_profile):
+    network_transport = get_attrib(c, 'network-transport')
+    unicast_multicast = get_attrib(c, 'unicast-multicast')
+    domain_number = int(get_attrib(c, 'domain-number'))
+    if domain_profile == 'G.8275.2':
+        if network_transport == "L2":
+            print "%Error: G.8275.2 not supported with L2 transport"
+            return 0
+        if unicast_multicast == "multicast":
+            print "%Error: G.8275.2 not supported with multicast transport"
+            return 0
+        if domain_number < 44 or domain_number > 63:
+            print "%Error: domain must be in range 44-63 with G.8275.2"
+            return 0
+    return 1
 
 
 if __name__ == '__main__':
@@ -63,8 +112,11 @@ if __name__ == '__main__':
     if config_db is None:
         sys.exit()
     config_db.connect()
+
+    clock_global = db.get_all(db.STATE_DB, "PTP_CLOCK|GLOBAL")
+
     if sys.argv[1] == 'get_ietf_ptp_ptp_instance_list_default_ds':
-        raw_data = db.get_all(db.STATE_DB, "PTP_CLOCK|GLOBAL")
+        raw_data = clock_global
         if not raw_data:
             sys.exit()
         else:
@@ -188,6 +240,8 @@ if __name__ == '__main__':
         show_cli_output(sys.argv[3], api_response)
     elif sys.argv[1] == 'patch_ietf_ptp_ptp_instance_list_default_ds_domain_number':
         data = {}
+        if not check_domain_number_allowed(clock_global, sys.argv[3]):
+            sys.exit()
         data['domain-number'] = sys.argv[3]
         config_db.mod_entry(PTP_CLOCK, PTP_GLOBAL, data)
     elif sys.argv[1] == 'patch_ietf_ptp_ptp_instance_list_default_ds_priority1':
@@ -222,6 +276,8 @@ if __name__ == '__main__':
         if sys.argv[2] == 'P2P_TC':
             print "%Error: peer-to-peer-transparent-clock is not supported"
             sys.exit()
+        if not check_clock_type_allowed(clock_global, sys.argv[2]):
+            sys.exit()
         data = {}
         data[sys.argv[1]] = sys.argv[2]
         config_db.mod_entry(PTP_CLOCK, PTP_GLOBAL, data)
@@ -234,6 +290,8 @@ if __name__ == '__main__':
             data[sys.argv[1]] = 'G.8275.x'
         else:
             data[sys.argv[1]] = sys.argv[2]
+        if not check_domain_profile_allowed(clock_global, sys.argv[2]):
+            sys.exit()
         config_db.mod_entry(PTP_CLOCK, PTP_GLOBAL, data)
     elif sys.argv[1] == 'add_master_table':
         tbl = db.get_all(db.STATE_DB, "PTP_PORT|GLOBAL|" + sys.argv[2])
@@ -255,6 +313,8 @@ if __name__ == '__main__':
             sys.exit()
         if len(nd_list) >= 8:
             print "%Error: maximum 8 nodes"
+            sys.exit()
+        if not check_master_table_allowed(clock_global):
             sys.exit()
         nd_list.append(sys.argv[3])
         value = ','.join(nd_list)
@@ -279,6 +339,8 @@ if __name__ == '__main__':
         config_db.mod_entry("PTP_PORT|GLOBAL", sys.argv[2], data)
     elif sys.argv[1] == 'network-transport':
         data = {}
+        if not check_network_transport_allowed(clock_global, sys.argv[2], sys.argv[3]):
+            sys.exit()
         data[sys.argv[1]] = sys.argv[2]
         data["unicast-multicast"] = sys.argv[3]
         config_db.mod_entry(PTP_CLOCK, PTP_GLOBAL, data)
