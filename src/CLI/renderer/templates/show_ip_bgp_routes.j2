@@ -29,6 +29,8 @@ AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Li
 {% set routeList = json_output["openconfig-network-instance:adj-rib-out-post"]["routes"]["route"] %}
 {% elif "openconfig-network-instance:adj-rib-in-post" in key %}
 {% set routeList = json_output["openconfig-network-instance:adj-rib-in-post"]["routes"]["route"] %}
+{% elif "openconfig-network-instance:loc-rib" in key %}
+{% set routeList = json_output["openconfig-network-instance:adj-rib-in-post"]["routes"]["route"] %}
 {% else %}
 {% endif %}
 {% if routeList %}
