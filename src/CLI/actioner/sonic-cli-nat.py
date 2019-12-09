@@ -232,6 +232,10 @@ def get_nat_translations(func, args):
 
     return response
 
+def get_nat_statistics(func, args):
+    api_response = get_nat_translations(func, args)
+    print api_response
+    return {}
 
 def run(func, args):   
 
@@ -240,6 +244,8 @@ def run(func, args):
 
        if func == 'get_nat_translations':
            api_response = get_nat_translations(func,args)
+       elif func == 'get_nat_statistics':
+           api_response = get_nat_statistics(func,args)
        else:
            response = invoke_api(func, args)
            api_response = get_response_dict(response)

@@ -590,6 +590,8 @@ limitations under the License.
               fi&#xA;
           elif test "${nat-subcommands}" = "translations"; then&#xA;
               python $SONIC_CLI_ROOT/sonic-cli-nat.py get_nat_translations show_nat_translations.j2&#xA;
+          elif test "${nat-subcommands}" = "statistics"; then&#xA;
+              python $SONIC_CLI_ROOT/sonic-cli-nat.py get_nat_statistics show_nat_statistics.j2&#xA;
           fi&#xA;
       </ACTION>
      </COMMAND>
