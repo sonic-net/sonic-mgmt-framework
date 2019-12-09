@@ -71,7 +71,7 @@ if [ -z $HAS_CRTFILE ] && [ -z $HAS_KEYFILE ]; then
         echo "Reusing existing cert.pem and key.pem ..."
     else 
         echo "Generating temporary server certificate ..."
-        ./generate_cert --host localhost
+        ./generate_cert --host=localhost --ecdsa-curve=P256
     fi
 
     EXTRA_ARGS+=" -cert cert.pem -key key.pem"

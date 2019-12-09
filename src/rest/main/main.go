@@ -111,7 +111,6 @@ func main() {
 		Certificates:             prepareServerCertificate(),
 		ClientCAs:                prepareCACertificates(),
 		MinVersion:               tls.VersionTLS12,
-		CurvePreferences:         getPreferredCurveIDs(),
 		PreferServerCipherSuites: true,
 		CipherSuites:             getPreferredCipherSuites(),
 	}
@@ -198,14 +197,6 @@ func getTLSClientAuthType() tls.ClientAuthType {
 
 	return tls.RequireAndVerifyClientCert // dummy
 	
-}
-
-func getPreferredCurveIDs() []tls.CurveID {
-	return []tls.CurveID{
-		tls.CurveP521,
-		tls.CurveP384,
-		tls.CurveP256,
-	}
 }
 
 func getPreferredCipherSuites() []uint16 {
