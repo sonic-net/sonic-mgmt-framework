@@ -235,7 +235,8 @@ func sonicKeyDataAdd(dbIndex db.DBNum, keyNameList []string, xpathPrefix string,
 	var dbOpts db.Options
 	dbOpts = getDBOptions(dbIndex)
 	keySeparator := dbOpts.KeySeparator
-    keyValList := strings.Split(keyStr, keySeparator)
+    keyValList := strings.SplitN(keyStr, keySeparator, len(keyNameList))
+    log.Infof("yang keys list - %v, xpathprefix - %v, DB-key string - %v, DB-key list after db key separator split - %v, dbIndex - %v", keyNameList, xpathPrefix, keyStr, keyValList, dbIndex) 
 
     if len(keyNameList) != len(keyValList) {
         return
@@ -459,7 +460,29 @@ func getDBOptionsWithSeparator(dbNo db.DBNum, initIndicator string, tableSeparat
                       })
 }
 
+func getXpathFromYangEntry(entry *yang.Entry) string {
+        xpath := ""
+        if entry != nil {
+                xpath = entry.Name
+                entry = entry.Parent
+                for {
+                        if entry.Parent != nil {
+                                xpath = entry.Name + "/" + xpath
+                                entry = entry.Parent
+                        } else {
+                                // This is the module entry case
+                                xpath = "/" + entry.Name + ":" + xpath
+                                break
+                        }
+                }
+        }
+        return xpath
+}
+
 func stripAugmentedModuleNames(xpath string) string {
+	if !strings.HasPrefix(xpath, "/") {
+		xpath = "/" + xpath
+	}
         pathList := strings.Split(xpath, "/")
         pathList = pathList[1:]
         for i, pvar := range pathList {
@@ -494,6 +517,20 @@ func XfmrRemoveXPATHPredicates(xpath string) (string, error) {
 	return path, nil
 }
 
+func replacePrefixWithModuleName(xpath string) (string) {
+	//Input xpath is after removing the xpath Predicates
+	var moduleNm string
+	if _, ok := xYangSpecMap[xpath]; ok {
+		moduleNm = xYangSpecMap[xpath].dbEntry.Prefix.Parent.NName()
+		pathList := strings.Split(xpath, ":")
+		if len(moduleNm) > 0 && len(pathList) == 2 {
+			xpath = "/" + moduleNm + ":" + pathList[1]
+		}
+	}
+	return xpath
+}
+
+
 /* Extract key vars, create db key and xpath */
 func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, requestUri string, subOpDataMap map[int]*RedisDbMap, txCache interface{}) (string, string, string) {
 	 keyStr    := ""
@@ -520,15 +557,24 @@ func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, req
 	 for _, k := range strings.Split(path, "/") {
 		 curPathWithKey += k
 		 yangXpath, _ := XfmrRemoveXPATHPredicates(curPathWithKey)
-		 _, ok := xYangSpecMap[yangXpath]
+		 xpathInfo, ok := xYangSpecMap[yangXpath]
 		 if ok {
+			 yangType := yangTypeGet(xpathInfo.yangEntry)
+			 /* when deleting a specific element from leaf-list query uri is of the form
+			    /prefix-path/leafList-field-name[leafList-field-name=value].
+			    Here the syntax is like a list-key instance enclosed in square 
+			    brackets .So avoid list key instance like processing for such a case
+			 */
+			 if yangType == YANG_LEAF_LIST {
+				 break
+			 }
 			 if strings.Contains(k, "[") {
 				 if len(keyStr) > 0 {
 					 keyStr += keySeparator
 				 }
 				 if len(xYangSpecMap[yangXpath].xfmrKey) > 0 {
 					 xfmrFuncName := yangToDbXfmrFunc(xYangSpecMap[yangXpath].xfmrKey)
-					 inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, curPathWithKey, requestUri, oper, "", nil, subOpDataMap, nil, txCache)
+					 inParams := formXfmrInputRequest(d, dbs, cdb, ygRoot, curPathWithKey, requestUri, oper, "", nil, subOpDataMap, nil, txCache)
 					 ret, err := XlateFuncCall(xfmrFuncName, inParams)
 					 if err != nil {
 						 return "", "", ""
@@ -552,7 +598,7 @@ func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, req
 				 }
 			 } else if len(xYangSpecMap[yangXpath].xfmrKey) > 0 {
 				 xfmrFuncName := yangToDbXfmrFunc(xYangSpecMap[yangXpath].xfmrKey)
-				 inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, curPathWithKey, requestUri, oper, "", nil, subOpDataMap, nil, txCache)
+				 inParams := formXfmrInputRequest(d, dbs, cdb, ygRoot, curPathWithKey, requestUri, oper, "", nil, subOpDataMap, nil, txCache)
 				 ret, err := XlateFuncCall(xfmrFuncName, inParams)
 				 if err != nil {
 					 return "", "", ""
@@ -568,7 +614,7 @@ func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, req
 	 }
 	 curPathWithKey = strings.TrimSuffix(curPathWithKey, "/")
 	 tblPtr     := xpathInfo.tableName
-	 if tblPtr != nil {
+	 if tblPtr != nil && *tblPtr != XFMR_NONE_STRING {
 		 tableName = *tblPtr
 	 } else if xpathInfo.xfmrTbl != nil {
 		 inParams := formXfmrInputRequest(d, dbs, cdb, ygRoot, curPathWithKey, requestUri, oper, "", nil, subOpDataMap, nil, txCache)
@@ -578,11 +624,19 @@ func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, req
  }
 
  func sonicXpathKeyExtract(path string) (string, string, string) {
-	 xpath, keyStr, tableName := "", "", ""
+	 xpath, keyStr, tableName, fldNm := "", "", "", ""
 	 var err error
+	 lpath := path
 	 xpath, err = XfmrRemoveXPATHPredicates(path)
 	 if err != nil {
 		 return xpath, keyStr, tableName
+	 }
+	 if xpath != "" {
+		 fldPth := strings.Split(xpath, "/")
+		 if len(fldPth) > SONIC_FIELD_INDEX {
+			 fldNm = fldPth[SONIC_FIELD_INDEX]
+			 log.Info("Field Name : ", fldNm)
+		 }
 	 }
 	 rgp := regexp.MustCompile(`\[([^\[\]]*)\]`)
 	 pathsubStr := strings.Split(path , "/")
@@ -603,7 +657,16 @@ func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, req
 		 if dbInfo.keyName != nil {
 			 keyStr = *dbInfo.keyName
 		 } else {
-			 for i, kname := range rgp.FindAllString(path, -1) {
+			 /* chomp off the field portion to avoid processing specific item delete in leaf-list
+			    eg. /sonic-acl:sonic-acl/ACL_TABLE/ACL_TABLE_LIST[aclname=MyACL2_ACL_IPV4]/ports[ports=Ethernet12]
+			 */
+			 if fldNm != "" {
+				 chompFld := strings.Split(path, "/")
+				 lpath = strings.Join(chompFld[:SONIC_FIELD_INDEX], "/")
+				 log.Info("path after removing the field portion ", lpath)
+
+			 }
+			 for i, kname := range rgp.FindAllString(lpath, -1) {
 				 if i > 0 {
 					 keyStr += dbOpts.KeySeparator
 				 }
@@ -655,12 +718,12 @@ func unmarshalJsonToDbData(schema *yang.Entry, fieldName string, value interface
         ykind := schema.Type.Kind
 
         switch ykind {
-        case yang.Ystring, yang.Ydecimal64, yang.Yint64, yang.Yuint64:
-        case yang.Yenum, yang.Ybool, yang.Ybinary, yang.Yidentityref, yang.Yunion:
-                data = value.(string)
+        case yang.Ystring, yang.Ydecimal64, yang.Yint64, yang.Yuint64,
+             yang.Yenum, yang.Ybool, yang.Ybinary, yang.Yidentityref, yang.Yunion:
+                data = fmt.Sprintf("%v", value)
 
-        case yang.Yint8, yang.Yint16, yang.Yint32:
-        case yang.Yuint8, yang.Yuint16, yang.Yuint32:
+        case yang.Yint8, yang.Yint16, yang.Yint32,
+             yang.Yuint8, yang.Yuint16, yang.Yuint32:
                 pv, err := yangFloatIntToGoType(ykind, value.(float64))
                 if err != nil {
                         return "", fmt.Errorf("error parsing %v for schema %s: %v", value, schema.Name, err)
@@ -668,7 +731,7 @@ func unmarshalJsonToDbData(schema *yang.Entry, fieldName string, value interface
                 data = fmt.Sprintf("%v", pv)
         default:
                 // TODO - bitset, empty
-                data = value.(string)
+                data = fmt.Sprintf("%v", value)
         }
 
         return data, nil

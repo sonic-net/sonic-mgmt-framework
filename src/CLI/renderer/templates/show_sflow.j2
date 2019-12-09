@@ -4,11 +4,11 @@
 {% if json_output and 'sflow' in json_output -%}
 {% set sflow_info = json_output['sflow'] %}
 {% set sflow_col_info = json_output['col_info'] %}
-{{'	admin state: '}}{{sflow_info['admin_state']}}
-{{'	polling-interval: '}}{{sflow_info['polling_interval']}}
-{{'	agent-id: '}} {{sflow_info['agent_id']}}
-{{'	configured collectors: '}} {{sflow_col_info['col_cnt']}}
+{{'	admin state:            '}}{{sflow_info['admin_state']}}
+{{'	polling-interval:       '}}{{sflow_info['polling_interval']}}
+{{'	agent-id:               '}}{{sflow_info['agent_id']}}
+{{'	configured collectors:  '}}{{sflow_col_info['col_cnt']}}
 {% for collector in sflow_col_info['col_lst'] %}
-	{{collector['collector_name']}}		{{collector['collector_ip']}}   {{collector['collector_port']}}
+	    {{collector['collector_name']}}		{{collector['collector_ip']}}   {{collector['collector_port']}}
 {% endfor %}
 {% endif %}

@@ -1,6 +1,15 @@
 module sonic-route-common {
     namespace "http://github.com/Azure/sonic-route-common";
     prefix srtcmn;
+    yang-version 1.1;
+
+    import sonic-vrf {
+        prefix svrf;
+    }
+
+    import sonic-route-map {
+        prefix srmap;
+    }
 
     organization
         "SONiC";
@@ -22,7 +31,14 @@ module sonic-route-common {
                 key "vrf src_protocol dst_protocol addr_family";
 
                 leaf vrf {
-                    type string;
+                    type union {
+                        type string {
+                            pattern "default";
+                        }
+                        type leafref {
+                            path "/svrf:sonic-vrf/svrf:VRF/svrf:VRF_LIST/svrf:vrf_name";
+                        }
+                    }
                 }
 
                 leaf src_protocol {
@@ -38,7 +54,9 @@ module sonic-route-common {
                 }
 
                 leaf-list route_map {
-                    type string;
+                    type leafref {
+                        path "/srmap:sonic-route-map/srmap:ROUTE_MAP_SET/srmap:ROUTE_MAP_SET_LIST/srmap:name";
+                    }
                     max-elements 1;
                 }
             }

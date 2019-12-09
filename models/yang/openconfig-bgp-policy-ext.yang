@@ -20,6 +20,15 @@ module openconfig-bgp-policy-ext {
       "BGP Routing Policy extensions.";
   }
 
+  grouping routing-policy-ext-action-next-hop-set {
+      leaf next-hop-set {
+          type leafref {
+              path "/oc-rpol:routing-policy/oc-rpol:defined-sets/oc-rpol:prefix-sets/oc-rpol:prefix-set/oc-rpol:config/oc-rpol:name";
+          }
+          description "References a defined prefix set";
+      }
+  }
+
   typedef bgp-community-defined-regexp-type {
       // Format REGEX:string 
       type string;
@@ -50,6 +59,14 @@ module openconfig-bgp-policy-ext {
               type bgp-community-defined-regexp-type;
           }
       }
+  }
+
+  augment /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-bgp-pol:bgp-conditions/oc-bgp-pol:config {
+      uses routing-policy-ext-action-next-hop-set;
+  }
+
+  augment /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-bgp-pol:bgp-conditions/oc-bgp-pol:state {
+      uses routing-policy-ext-action-next-hop-set;
   }
 
   // rpc statements

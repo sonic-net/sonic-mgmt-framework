@@ -442,7 +442,7 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (CVLErrorInfo, CVL
 				n, err1 := redisClient.Exists(cfgData[i].Key).Result()
 				if (err1 != nil || n == 0) { //key must exists
 					CVL_LOG(ERROR, "\nValidateEditConfig(): Key = %s does not exist", cfgData[i].Key)
-					cvlErrObj.ErrCode = CVL_SEMANTIC_KEY_ALREADY_EXIST
+					cvlErrObj.ErrCode = CVL_SEMANTIC_KEY_NOT_EXIST
 					cvlErrObj.CVLErrDetails = cvlErrorMap[cvlErrObj.ErrCode]
 					return cvlErrObj, CVL_SEMANTIC_KEY_NOT_EXIST
 				}
@@ -453,7 +453,7 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (CVLErrorInfo, CVL
 				n, err1 := redisClient.Exists(cfgData[i].Key).Result()
 				if (err1 != nil || n == 0) { //key must exists
 					CVL_LOG(ERROR, "\nValidateEditConfig(): Key = %s does not exist", cfgData[i].Key)
-					cvlErrObj.ErrCode = CVL_SEMANTIC_KEY_ALREADY_EXIST
+					cvlErrObj.ErrCode = CVL_SEMANTIC_KEY_NOT_EXIST
 					cvlErrObj.CVLErrDetails = cvlErrorMap[cvlErrObj.ErrCode]
 					return cvlErrObj, CVL_SEMANTIC_KEY_NOT_EXIST
 				}
@@ -514,8 +514,62 @@ func (c *CVL) ValidateFields(key string, field string, value string) CVLRetCode 
 	return CVL_NOT_IMPLEMENTED
 }
 
+func (c *CVL) addDepEdges(graph *toposort.Graph, tableList []string) {
+	//Add all the depedency edges for graph nodes
+	for ti :=0; ti < len(tableList); ti++ {
+
+		redisTblTo := getYangListToRedisTbl(tableList[ti])
+
+		for tj :=0; tj < len(tableList); tj++ {
+
+			if (tableList[ti] == tableList[tj]) {
+				//same table, continue
+				continue
+			}
+
+			redisTblFrom := getYangListToRedisTbl(tableList[tj])
+
+			//map for checking duplicate edge
+			dupEdgeCheck := map[string]string{}
+
+			for _, leafRefs := range modelInfo.tableInfo[tableList[tj]].leafRef {
+				for _, leafRef := range leafRefs {
+					if (strings.Contains(leafRef, tableList[ti] + "_LIST")) == false {
+						continue
+					}
+
+					toName, exists := dupEdgeCheck[redisTblFrom]
+					if (exists == true) && (toName == redisTblTo) {
+						//Don't add duplicate edge
+						continue
+					}
+
+					//Add and store the edge in map
+					graph.AddEdge(redisTblFrom, redisTblTo)
+					dupEdgeCheck[redisTblFrom] = redisTblTo
+
+					CVL_LOG(INFO_DEBUG,
+					"addDepEdges(): Adding edge %s -> %s", redisTblFrom, redisTblTo)
+				}
+			}
+		}
+	}
+}
+
 //Sort list of given tables as per their dependency
-func (c *CVL) SortDepTables(tableList []string) ([]string, CVLRetCode) {
+func (c *CVL) SortDepTables(inTableList []string) ([]string, CVLRetCode) {
+
+	tableList := []string{}
+
+	//Skip all unknown tables
+	for ti := 0; ti < len(inTableList); ti++ {
+		_, exists := modelInfo.tableInfo[inTableList[ti]]
+		if exists == false {
+			continue
+		}
+
+		tableList = append(tableList, inTableList[ti])
+	}
 
 	//Add all the table names in graph nodes
 	graph := toposort.NewGraph(len(tableList))
@@ -523,23 +577,8 @@ func (c *CVL) SortDepTables(tableList []string) ([]string, CVLRetCode) {
 		graph.AddNodes(tableList[ti])
 	}
 
-	//Add all the depedency edges for graph nodes
-	for ti :=0; ti < len(tableList); ti++ {
-		for tj :=0; tj < len(tableList); tj++ {
-			if (tableList[ti] == tableList[tj]) {
-				continue
-			}
-
-			for _, leafRefs := range modelInfo.tableInfo[tableList[tj]].leafRef {
-				for _, leafRef := range leafRefs {
-					if (strings.Contains(leafRef, tableList[ti])) {
-						graph.AddEdge(yangToRedisTblName(tableList[tj]),
-						 yangToRedisTblName(tableList[ti]))
-					}
-				}
-			}
-		}
-	}
+	//Add all dependency egdes
+	c.addDepEdges(graph, tableList)
 
 	//Now perform topological sort
 	result, ret := graph.Toposort()
@@ -577,7 +616,7 @@ func (c *CVL) addDepTables(tableMap map[string]bool, tableName string) {
 
 			//We have the leafref table name
 			if (matches != nil && len(matches) == 5) { //whole + 4 sub matches
-				c.addDepTables(tableMap, yangToRedisTblName(matches[2])) //call recursively
+				c.addDepTables(tableMap, getYangListToRedisTbl(matches[2])) //call recursively
 			}
 		}
 	}
@@ -588,6 +627,11 @@ func (c *CVL) GetDepTables(yangModule string, tableName string) ([]string, CVLRe
 	tableList := []string{}
 	tblMap := make(map[string]bool)
 
+	if _, exists := modelInfo.tableInfo[tableName]; exists == false {
+		CVL_LOG(INFO_DEBUG, "GetDepTables(): Unknown table %s\n", tableName)
+		return []string{}, CVL_ERROR
+	}
+
 	c.addDepTables(tblMap, tableName)
 
 	for tblName, _ := range tblMap {
@@ -597,26 +641,12 @@ func (c *CVL) GetDepTables(yangModule string, tableName string) ([]string, CVLRe
 	//Add all the table names in graph nodes
 	graph := toposort.NewGraph(len(tableList))
 	for ti := 0; ti < len(tableList); ti++ {
+		CVL_LOG(INFO_DEBUG, "GetDepTables(): Adding node %s\n", tableList[ti])
 		graph.AddNodes(tableList[ti])
 	}
 
-	//Add all the depedency edges for graph nodes
-	for ti :=0; ti < len(tableList); ti++ {
-		for tj :=0; tj < len(tableList); tj++ {
-			if (tableList[ti] == tableList[tj]) {
-				continue
-			}
-
-			for _, leafRefs := range modelInfo.tableInfo[tableList[tj]].leafRef {
-				for _, leafRef := range leafRefs {
-					if (strings.Contains(leafRef, tableList[ti]+"/")) {
-						graph.AddEdge(yangToRedisTblName(tableList[tj]),
-						yangToRedisTblName(tableList[ti]))
-					}
-				}
-			}
-		}
-	}
+	//Add all dependency egdes
+	c.addDepEdges(graph, tableList)
 
 	//Now perform topological sort
 	result, ret := graph.Toposort()
@@ -632,6 +662,16 @@ func (c *CVL) GetDepTables(yangModule string, tableName string) ([]string, CVLRe
 func (c *CVL) GetDepDataForDelete(redisKey string) ([]string, []string) {
 
 	tableName, key := splitRedisKey(redisKey)
+
+	if (tableName == "") || (key == "") {
+		CVL_LOG(INFO_DEBUG, "GetDepDataForDelete(): Unknown or invalid table %s\n",
+		tableName)
+	}
+
+	if _, exists := modelInfo.tableInfo[tableName]; exists == false {
+		CVL_LOG(INFO_DEBUG, "GetDepDataForDelete(): Unknown table %s\n", tableName)
+		return []string{}, []string{} 
+	}
 
 	mCmd := map[string]*redis.StringSliceCmd{}
 	mFilterScripts := map[string]string{}
