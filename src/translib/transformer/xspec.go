@@ -88,6 +88,14 @@ func updateDbTableData (xpath string, xpathData *yangXpathInfo, tableName string
 /* Recursive api to fill the map with yang details */
 func yangToDbMapFill (keyLevel int, xYangSpecMap map[string]*yangXpathInfo, entry *yang.Entry, xpathPrefix string) {
 	xpath := ""
+	curKeyLevel := 0
+
+	if entry != nil && entry.Node != nil && isYangResType(entry.Node.Statement().Keyword) == true {
+		xpath = xpathPrefix
+		if _, ok := xYangSpecMap[xpath]; ok {
+			curKeyLevel = xYangSpecMap[xpath].keyLevel
+		}
+	} else {
 	/* create the yang xpath */
 	if xYangSpecMap[xpathPrefix] != nil  && xYangSpecMap[xpathPrefix].yangDataType == "module" {
 		/* module name is separated from the rest of xpath with ":" */
@@ -189,6 +197,8 @@ func yangToDbMapFill (keyLevel int, xYangSpecMap map[string]*yangXpathInfo, entr
 	} else if parentXpathData != nil && parentXpathData.keyXpath != nil {
 		xpathData.keyXpath = parentXpathData.keyXpath
 	}
+	xpathData.yangEntry = entry
+	}
 
 	/* get current obj's children */
 	var childList []string
@@ -196,7 +206,6 @@ func yangToDbMapFill (keyLevel int, xYangSpecMap map[string]*yangXpathInfo, entr
 		childList = append(childList, k)
 	}
 
-	xpathData.yangEntry = entry
 	/* now recurse, filling the map with current node's children info */
 	for _, child := range childList {
 		yangToDbMapFill(curKeyLevel, xYangSpecMap, entry.Dir[child], xpath)

@@ -87,7 +87,7 @@ func parentXpathGet(xpath string) string {
 }
 
 func isYangResType(ytype string) bool {
-    if ytype == "choose" || ytype == "case" {
+    if ytype == "choice" || ytype == "case" {
         return true
     }
     return false
