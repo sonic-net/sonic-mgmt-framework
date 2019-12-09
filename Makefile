@@ -108,11 +108,11 @@ yamlGen:
 	$(MAKE) -C models/yang/sonic
 
 $(go-patch): $(go-deps)
-	cd $(BUILD_GOPATH)/src/github.com/openconfig/ygot/; git reset --hard HEAD; git checkout 724a6b18a9224343ef04fe49199dfb6020ce132a 2>/dev/null ; true; \
+	cd $(BUILD_GOPATH)/src/github.com/openconfig/ygot/; git reset --hard HEAD;git clean -f -d;git checkout 724a6b18a9224343ef04fe49199dfb6020ce132a 2>/dev/null ; true; \
 cd ../; cp $(TOPDIR)/ygot-modified-files/ygot.patch .; \
 patch -p1 < ygot.patch; rm -f ygot.patch; \
 $(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/openconfig/ygot/ygot; \
-	cd $(BUILD_GOPATH)/src/github.com/openconfig/goyang/; git reset --hard HEAD; git checkout 064f9690516f4f72db189f4690b84622c13b7296 >/dev/null ; true; \
+	cd $(BUILD_GOPATH)/src/github.com/openconfig/goyang/; git reset --hard HEAD;git clean -f -d;git checkout 064f9690516f4f72db189f4690b84622c13b7296 >/dev/null ; true; \
 cp $(TOPDIR)/goyang-modified-files/goyang.patch .; \
 patch -p1 < goyang.patch; rm -f goyang.patch; \
 $(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/openconfig/goyang
