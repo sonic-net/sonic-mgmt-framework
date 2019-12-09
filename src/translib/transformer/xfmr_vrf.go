@@ -688,7 +688,7 @@ var DbToYang_network_instance_interface_binding_subtree_xfmr SubTreeXfmrDbToYang
                                         intfData.State.Id = intfData.Id
 
                                         log.Infof("DbToYang_network_instance_interface_binding_subtree_xfmr: vrf_name %v intf %v ygRoot %v ", 
-                                                  vrfName_str, pathIntfId, nwInstTree)
+                                                  vrfName_str, intfName[0], nwInstTree)
                                 }
                         }
                 }
