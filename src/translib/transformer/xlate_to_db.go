@@ -235,7 +235,7 @@ func mapFillDataUtil(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requ
 
 	} else { // xpath is a leaf
 		valueStr  = fmt.Sprintf("%v", value)
-		if strings.Contains(valueStr, ":") {
+		if strings.Contains(valueStr, ":") && !checkIpV6AddrNotation(valueStr) {
 			valueStr = strings.Split(valueStr, ":")[1]
 		}
 	}
