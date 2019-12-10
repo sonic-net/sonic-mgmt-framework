@@ -29,7 +29,7 @@ limitations under the License.
         <PARAM 
             name = "vrf-name"
             help = "Name of VRF"
-            ptype = "STRING_32"
+            ptype = "STRING_15"
             optional = "true"
             >
         </PARAM>
@@ -53,7 +53,7 @@ limitations under the License.
     <!-- vrf configuration commands -->
     <COMMAND name="ip vrf management" help="Management VRF configuration" mode="subcommand" ptype="SUBCOMMAND">
       <ACTION> 
-        python $SONIC_CLI_ROOT/sonic-cli-vrf.py patch_openconfig_network_instance_network_instances_network_instance "mgmt" "L3VRF" "True"&#xA; 
+        python $SONIC_CLI_ROOT/sonic-cli-vrf.py patch_openconfig_network_instance_network_instances_network_instance "mgmt" "L3VRF" "True" 
       </ACTION> 
     </COMMAND>
     
@@ -65,19 +65,19 @@ limitations under the License.
       >
       <PARAM
         name="vrf-name"
-        help="Name of VRF (Max size 32, prefixed by Vrf)"
-        ptype="STRING_32"
+        help="Name of VRF (Max size 15, prefixed by Vrf)"
+        ptype="STRING_15"
         >
       </PARAM>
       <ACTION>
-        python $SONIC_CLI_ROOT/sonic-cli-vrf.py patch_openconfig_network_instance_network_instances_network_instance ${vrf-name} "L3VRF" "True"&#xA;
+        python $SONIC_CLI_ROOT/sonic-cli-vrf.py patch_openconfig_network_instance_network_instances_network_instance ${vrf-name} "L3VRF" "True"
       </ACTION>
     </COMMAND>
 
     <!-- no vrf commands -->
     <COMMAND name="no ip vrf management" help="Delete management VRF" mode="subcommand" ptype="SUBCOMMAND">
       <ACTION> 
-        python $SONIC_CLI_ROOT/sonic-cli-vrf.py delete_openconfig_network_instance_network_instances_network_instance "mgmt" "L3VRF" "False"&#xA;  
+        python $SONIC_CLI_ROOT/sonic-cli-vrf.py delete_openconfig_network_instance_network_instances_network_instance "mgmt" "L3VRF" "False"  
       </ACTION>
     </COMMAND>
 
@@ -89,12 +89,12 @@ limitations under the License.
       >
       <PARAM
         name="vrf-name"
-        help="Name of VRF (Max size 32, prefixed by Vrf)"
-        ptype="STRING_32"
+        help="Name of VRF (Max size 15, prefixed by Vrf)"
+        ptype="STRING_15"
         >
       </PARAM>
       <ACTION>
-        python $SONIC_CLI_ROOT/sonic-cli-vrf.py delete_openconfig_network_instance_network_instances_network_instance ${vrf-name} "L3VRF" "False"&#xA;
+        python $SONIC_CLI_ROOT/sonic-cli-vrf.py delete_openconfig_network_instance_network_instances_network_instance ${vrf-name} "L3VRF" "False"
       </ACTION>
     </COMMAND>
 
@@ -105,15 +105,19 @@ limitations under the License.
 <!--=======================================================-->
 
 <VIEW name="configure-if-view">
-    <MACRO name="BIND-INTF-TO-VRF" arg=""></MACRO>
+    <MACRO name="BIND-INTF-TO-VRF" arg="${iface}"></MACRO>
 </VIEW>
 
 <VIEW name="configure-lag-view">
-    <MACRO name="BIND-INTF-TO-VRF" arg=""></MACRO>
+    <MACRO name="BIND-INTF-TO-VRF" arg="${po_name}"></MACRO>
 </VIEW>
 
 <VIEW name="configure-vlan-view">
-    <MACRO name="BIND-INTF-TO-VRF" arg=""></MACRO>
+    <MACRO name="BIND-INTF-TO-VRF" arg="${vlan_id}"></MACRO>
+</VIEW>
+
+<VIEW name="configure-lo-view">
+    <MACRO name="BIND-INTF-TO-VRF" arg="${lo_name}"></MACRO>
 </VIEW>
 
 </CLISH_MODULE>

@@ -1,12 +1,22 @@
-{{'----------------------------------------------------------------'}}
 {{'VRF-NAME'.ljust(20)}}{{'INTERFACES'}}
+{{'----------------------------------------------------------------'}}
 {% if json_output %}
-{% for key in json_output %}
-    {% if 'openconfig-network-instance:config' in key %}
-        {% set vrf_info = json_output['openconfig-network-instance:config'] %}
-        {% if vrf_info['name'] == 'mgmt' %}
-            {{-'mgmt'.ljust(20)}}{{'eth0'}}
-        {% endif %}
-    {% endif %}
-{% endfor %}
+    {% for vrf_data in json_output %}
+        {% for vrf_name,vrf_info in vrf_data.items() %}
+            {% if vrf_name == 'mgmt' %}
+                {{-'mgmt'.ljust(20)}}{{'eth0'}}
+            {% else %}
+                {% set ns = namespace(v_name=vrf_name) %}
+                {% set intfs = vrf_info['openconfig-network-instance:interface'] %}
+                {% for intf in intfs %}
+                    {{-ns.v_name.ljust(20)}}{{intf['id']}}
+                    {% set ns.v_name = ' ' %}
+                {% endfor %}
+                {% if ns.v_name != ' ' %}
+                    {{-ns.v_name.ljust(20)}}
+                {% endif %}
+            {% endif %}
+        {% endfor %}
+    {% endfor %}
 {% endif %}
+

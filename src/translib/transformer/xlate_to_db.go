@@ -354,9 +354,15 @@ func dbMapDelete(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requestU
 	subOpDataMap := make(map[int]*RedisDbMap)
 	xfmrErrMsg := ""
 
+<<<<<<< HEAD
 	for i := 0; i < MAXOPER; i++ {
 		resultMap[i] = make(map[db.DBNum]map[string]map[string]db.Value)
 	}
+=======
+    for i := 0; i < MAXOPER; i++ {
+        resultMap[i] = make(map[db.DBNum]map[string]map[string]db.Value)
+    }
+>>>>>>> dell_sonic
 	if isSonicYang(uri) {
 		xpathPrefix, keyName, tableName := sonicXpathKeyExtract(uri)
 		log.Infof("Delete req: uri(\"%v\"), key(\"%v\"), xpathPrefix(\"%v\"), tableName(\"%v\").", uri, keyName, xpathPrefix, tableName)
@@ -407,11 +413,19 @@ func dbMapDelete(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requestU
 							} else {
 								var redisMap = new(RedisDbMap)
 								var dbresult = make(RedisDbMap)
+<<<<<<< HEAD
 								for i := db.ApplDB; i < db.MaxDB; i++ {
 									dbresult[i] = make(map[string]map[string]db.Value)
 								}
 								redisMap = &dbresult
 								(*redisMap)[db.ConfigDB] = result
+=======
+                                for i := db.ApplDB; i < db.MaxDB; i++ {
+                                    dbresult[i] = make(map[string]map[string]db.Value)
+                                }
+                                redisMap = &dbresult
+                                (*redisMap)[db.ConfigDB] = result
+>>>>>>> dell_sonic
 								subOpDataMap[UPDATE]     = redisMap
 							}
 							result = make(map[string]map[string]db.Value)
@@ -452,10 +466,17 @@ func dbMapDelete(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requestU
 					if len(*data) > 0 {
 						for dbType, dbData := range (*data) {
 							if len(dbData) > 0 {
+<<<<<<< HEAD
 								if _, ok := resultMap[op][dbType]; !ok {
 									resultMap[op][dbType] = make(map[string]map[string]db.Value)
 								}
 								mapCopy(resultMap[op][dbType], (*subOpDataMap[op])[dbType])
+=======
+                                if _, ok := resultMap[op][dbType]; !ok {
+                                    resultMap[op][dbType] = make(map[string]map[string]db.Value)
+                                }
+                                mapCopy(resultMap[op][dbType], (*subOpDataMap[op])[dbType])
+>>>>>>> dell_sonic
 							}
 						}
 					}
@@ -467,6 +488,7 @@ func dbMapDelete(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requestU
 	}
 	printDbData(resultMap, "/tmp/yangToDbDataDel.txt")
 
+    printDbData(resultMap, "/tmp/yangToDbDataDel.txt")
 	log.Infof("Delete req: uri(\"%v\") resultMap(\"%v\").", uri, resultMap)
 	return err
 }

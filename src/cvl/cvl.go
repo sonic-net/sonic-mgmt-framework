@@ -432,10 +432,16 @@ func storeModelInfo(modelFile string, module *yparser.YParserModule) { //such mo
 }
 
 // Get YANG list to Redis table name
-func yangToRedisTblName(yangListName string) string {
+func getYangListToRedisTbl(yangListName string) string {
 	if (strings.HasSuffix(yangListName, "_LIST")) {
-		return yangListName[0:len(yangListName) - len("_LIST")]
+		yangListName = yangListName[0:len(yangListName) - len("_LIST")]
 	}
+	tInfo, exists := modelInfo.tableInfo[yangListName]
+
+	if (exists == true) && (tInfo.redisTableName != "") {
+		return tInfo.redisTableName
+	}
+
 	return yangListName
 }
 
@@ -457,7 +463,7 @@ func buildRefTableInfo() {
 
 				//We have the leafref table name
 				if (matches != nil && len(matches) == 5) { //whole + 4 sub matches
-					refTable := yangToRedisTblName(matches[2])
+					refTable := getYangListToRedisTbl(matches[2])
 					refTblInfo :=  modelInfo.tableInfo[refTable]
 
 					refFromTables := &refTblInfo.refFromTables
