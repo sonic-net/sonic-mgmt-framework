@@ -631,7 +631,9 @@ func yangListInstanceDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri s
 				log.Infof("Error returned by %v: %v", xYangSpecMap[xpath].xfmrFunc, err)
 			}
 		}
-		yangDataFill(dbs, ygRoot, curUri, requestUri, xpath, dbDataMap, curMap, tbl, dbKey, cdb, validate, txCache)
+		if xYangSpecMap[xpath].hasChildSubTree == true {
+			yangDataFill(dbs, ygRoot, curUri, requestUri, xpath, dbDataMap, curMap, tbl, dbKey, cdb, validate, txCache)
+		}
 	} else {
 		_, keyFromCurUri, _ := xpathKeyExtract(dbs[cdb], ygRoot, GET, curUri, requestUri, nil, txCache)
 		if dbKey == keyFromCurUri || keyFromCurUri == "" {
@@ -785,6 +787,9 @@ func yangDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, reque
 								log.Infof("Error returned by %v: %v", xYangSpecMap[xpath].xfmrFunc, err)
 							}
 						}
+						if xYangSpecMap[chldXpath].hasChildSubTree == false {
+							continue
+						}
 					}
 					cmap2 := make(map[string]interface{})
 					err  = yangDataFill(dbs, ygRoot, chldUri, requestUri, chldXpath, dbDataMap, cmap2, chtbl,
@@ -808,6 +813,9 @@ func yangDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, reque
 							   if err != nil {
 								   log.Infof("Error returned by %v: %v", xYangSpecMap[chldXpath].xfmrFunc, err)
 							   }
+						}
+						if xYangSpecMap[chldXpath].hasChildSubTree == false {
+							continue
 						}
 					}
 					ynode, ok := xYangSpecMap[chldXpath]
@@ -924,6 +932,9 @@ func dbDataToYangJsonCreate(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db
 						if err != nil {
 							log.Infof("Error returned by %v: %v", xYangSpecMap[reqXpath].xfmrFunc, err)
 						}
+						if xYangSpecMap[reqXpath].hasChildSubTree == false {
+							break
+						}
 					}
 					err = yangDataFill(dbs, ygRoot, uri, requestUri, reqXpath, dbDataMap, resultMap, tableName, keyName, cdb, IsValidate, txCache)
 					if err != nil {
@@ -939,6 +950,9 @@ func dbDataToYangJsonCreate(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db
 							log.Infof("Error returned by %v: %v", xYangSpecMap[reqXpath].xfmrFunc, err)
 						}
 						isFirstCall = false
+						if xYangSpecMap[reqXpath].hasChildSubTree == false {
+							break
+						}
 					}
 					err = yangListDataFill(dbs, ygRoot, uri, requestUri, reqXpath, dbDataMap, resultMap, tableName, keyName, cdb, IsValidate, txCache, isFirstCall)
 					if err != nil {

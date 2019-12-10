@@ -51,6 +51,7 @@ type yangXpathInfo  struct {
     keyLevel       int
     isKey          bool
     defVal         string
+	hasChildSubTree bool
 }
 
 type dbInfo  struct {
@@ -85,6 +86,19 @@ func updateDbTableData (xpath string, xpathData *yangXpathInfo, tableName string
 	}
 }
 
+func childSubTreePresenceFlagSet(xpath string) {
+		parXpath := parentXpathGet(xpath)
+	for {
+		if parXpath == "" {
+			break
+		}
+		if parXpathData, ok := xYangSpecMap[parXpath]; ok {
+			parXpathData.hasChildSubTree = true
+		}
+		parXpath = parentXpathGet(parXpath)
+	}
+	return
+}
 /* Recursive api to fill the map with yang details */
 func yangToDbMapFill (keyLevel int, xYangSpecMap map[string]*yangXpathInfo, entry *yang.Entry, xpathPrefix string) {
 	xpath := ""
@@ -111,6 +125,9 @@ func yangToDbMapFill (keyLevel int, xYangSpecMap map[string]*yangXpathInfo, entr
 		xpathData.dbIndex = db.ConfigDB // default value
 	} else {
 		xpathData = xYangSpecMap[xpath]
+		if len(xpathData.xfmrFunc) > 0 {
+			childSubTreePresenceFlagSet(xpath)
+		}
 	}
 
 	xpathData.yangDataType = entry.Node.Statement().Keyword
@@ -607,6 +624,7 @@ func mapPrint(inMap map[string]*yangXpathInfo, fileName string) {
         fmt.Fprintf (fp, "-----------------------------------------------------------------\r\n")
         fmt.Fprintf(fp, "%v:\r\n", k)
         fmt.Fprintf(fp, "    yangDataType: %v\r\n", d.yangDataType)
+        fmt.Fprintf(fp, "    hasChildSubTree: %v\r\n", d.hasChildSubTree)
         fmt.Fprintf(fp, "    tableName: ")
         if d.tableName != nil {
             fmt.Fprintf(fp, "%v", *d.tableName)
