@@ -168,6 +168,11 @@ module openconfig-vxlan {
   grouping vxlan-vni-static-ipv4-peer-config {
     description
       "The remote NVE address table in a same VNI.";
+    leaf peer-ip {
+      type oc-inet:ipv4-address;
+      description
+        "The address of the NVE.";
+    }
     leaf out-vni-id {
       type uint32 {
         range "1..16777215";
@@ -188,7 +193,9 @@ module openconfig-vxlan {
         description
           "The remote NVE address in a same VNI.";
         leaf peer-ip {
-          type oc-inet:ipv4-address;
+          type leafref {
+            path "../config/peer-ip";
+          }
           description
             "The address of the NVE.";
         }
@@ -207,6 +214,16 @@ module openconfig-vxlan {
     }
   }
 
+  grouping vxlan-vni-flood-proxy-config {
+    description
+      "The flood proxys for this VNI";
+    leaf peer-ip {
+      type oc-inet:ipv4-address;
+      description
+        "peer ip address"; 
+    }
+  }
+
   grouping vxlan-vni-flood-proxy {
     description
       "The flood proxys for this VNI";
@@ -218,14 +235,37 @@ module openconfig-vxlan {
         description
           "List of the flood proxys";
         leaf peer-ip {
-          type oc-inet:ipv4-address;
+          type leafref {
+            path "../config/peer-ip";
+          }
           description
             "peer ip address"; 
+        }
+        container config {
+          description
+            "The flood proxys for this VNI";
+          uses vxlan-vni-flood-proxy-config;
+        }
+        container state {
+          config false;
+          description
+            "The flood proxys for this VNI";
+          uses vxlan-vni-flood-proxy-config;
         }
       }
     }
   }
   
+  grouping vxlan-vni-mcast-group-config {
+    description
+      "The mcast address table.";
+    leaf mcast-ip {
+      type oc-inet:ipv4-address;
+      description
+        "The mcast address of NVO3.";
+    }
+  }
+
   grouping vxlan-vni-mcast-groups {
     description
       "The mcast address table.";
@@ -237,9 +277,22 @@ module openconfig-vxlan {
         description
           "The mcast address.";
         leaf mcast-ip {
-          type oc-inet:ipv4-address;
+          type leafref {
+            path "../config/mcast-ip";
+          }
           description
             "The mcast address of NVO3.";
+        }
+        container config {
+          description
+            "The mcast address of NVO3.";
+          uses vxlan-vni-mcast-group-config;
+        }
+        container state {
+          config false;
+          description
+            "The mcast address of NVO3.";
+          uses vxlan-vni-mcast-group-config;
         }
       }
     }
@@ -248,6 +301,19 @@ module openconfig-vxlan {
   grouping vxlan-vni-instance-config {
     description
       "The configuration and information table of the VNI.";
+    leaf vni-id {
+      type uint32 {
+        range "1..16777215";
+      }
+      description
+        "The id of VNI.";
+    }
+    leaf source-nve {
+      type oc-if:base-interface-ref;          
+      mandatory true;
+      description
+        "The name of the nve interface .";
+    }
     leaf vni-mode {
       type vni-mode;
       description
@@ -272,16 +338,17 @@ module openconfig-vxlan {
         description
           "The confiuration and information of the VNI.";
         leaf vni-id {
-          type uint32 {
-            range "1..16777215";
+          type leafref {
+            path "../config/vni-id";
           }
           must "/oc-if:interfaces/oc-if:interface[oc-if:name=./source-nve]/oc-if:config/oc-if:type = 'oc-if-types-ext:IF_NVE'";
           description
             "The id of VNI.";
         }
         leaf source-nve {
-          type oc-if:base-interface-ref;          
-          mandatory true;
+          type leafref {
+            path "../config/source-nve";
+          }
           description
             "The name of the nve interface .";
         }
