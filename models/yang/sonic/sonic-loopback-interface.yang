@@ -6,6 +6,10 @@ module sonic-loopback-interface {
         prefix inet;
     }
 
+   import sonic-vrf {
+        prefix vrf;
+    }
+
     organization
         "SONiC";
 
@@ -18,6 +22,11 @@ module sonic-loopback-interface {
     revision 2019-07-02 {
         description
             "Initial revision.";
+    }
+
+    revision 2019-12-01 {
+        description
+            "Add vrf_name for VRF interface binding.";
     }
 
     container sonic-loopback-interface {
@@ -37,6 +46,11 @@ module sonic-loopback-interface {
                     }
                 }
 
+                leaf vrf_name {
+                    type leafref {
+                        path "/vrf:sonic-vrf/vrf:VRF/vrf:VRF_LIST/vrf:vrf_name";
+                    }
+                }
             }
 
             list LOOPBACK_INTERFACE_IPADDR_LIST {

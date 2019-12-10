@@ -23,6 +23,7 @@ import (
     "translib/tlerr"
     "translib/db"
     "github.com/golang/glog"
+    "regexp"
 )
 
 func init() {
@@ -31,17 +32,25 @@ func init() {
 
 var rpc_showtech_cb RpcCallpoint = func(body []byte, dbs [db.MaxDB]*db.DB) ([]byte, error) {
     var err error
+    var matched bool
     var output string
     var operand struct {
         Input struct {
-        Date string `json:"date"`
+            Date string `json:"date"`
         } `json:"sonic-show-techsupport:input"`
     }
 
     err = json.Unmarshal(body, &operand)
-        if err != nil {
-        glog.Errorf("Failed to parse rpc input; err=%v", err)
+    if err != nil {
+        glog.Errorf("%Error: Failed to parse rpc input; err=%v", err)
         return nil,tlerr.InvalidArgs("Invalid rpc input")
+    }
+
+    if operand.Input.Date == "" {
+        matched = true
+    } else {
+        matched, err = regexp.MatchString((`\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?` +
+                                           `(Z|[\+\-]\d{2}:\d{2})`), operand.Input.Date)
     }
 
     var showtech struct {
@@ -50,9 +59,15 @@ var rpc_showtech_cb RpcCallpoint = func(body []byte, dbs [db.MaxDB]*db.DB) ([]by
         } `json:"sonic-show-techsupport:output"`
     }
 
+    if matched != true {
+        showtech.Output.Result = "Invalid input: Incorrect DateTime format"
+        result, _ := json.Marshal(&showtech)
+        return result, nil
+    }
+
     host_output := hostQuery("showtech.info", operand.Input.Date)
     if host_output.Err != nil {
-        glog.Errorf("Showtech host Query failed: err=%v", host_output.Err)
+        glog.Errorf("%Error: Showtech host Query failed: err=%v", host_output.Err)
         glog.Flush()
         return nil, host_output.Err
     }
@@ -60,7 +75,7 @@ var rpc_showtech_cb RpcCallpoint = func(body []byte, dbs [db.MaxDB]*db.DB) ([]by
     output, _ = host_output.Body[1].(string)
     showtech.Output.Result = output
 
-    result, err := json.Marshal(&showtech)
+    result, _ := json.Marshal(&showtech)
 
     return result, nil
 }

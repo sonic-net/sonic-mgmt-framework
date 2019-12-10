@@ -26,8 +26,8 @@ module sonic-show-techsupport {
             leaf date {
                 type yang:date-and-time;
                 description
-                    "Date and time specification (in Linux 'date' format) of desired
-                    start point for collected log information";
+                    "Date and time specification of the desired start
+                    point for collected log and core information";
             }
         }
         output {
