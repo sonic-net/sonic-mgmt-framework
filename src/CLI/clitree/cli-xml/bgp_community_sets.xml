@@ -1,0 +1,181 @@
+<?xml version="1.0"?>
+<!--copyright 2019 Dell, Inc.  
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+    http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+<!DOCTYPE CLISH_MODULE [
+]>
+
+<CLISH_MODULE xmlns="http://www.dellemc.com/sonic/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xi="http://www.w3.org/2001/XInclude"
+    xsi:schemaLocation="http://www.dellemc.com/sonic/XMLSchema
+                        http://www.dellemc.com/sonic/XMLSchema/clish.xsd">
+
+   <VIEW
+       name="configure-view"
+       >
+    <COMMAND
+        name="bgp"
+        help="bgp command list">
+    <ACTION>
+        builtin=clish_nop"
+    </ACTION>
+    </COMMAND>
+
+
+    <COMMAND
+        name="bgp community-list"
+        help="Add bgp community-list entry">
+        <PARAM
+            name="bgp-subcommands"
+            help="BGP subcommands"
+            mode="switch"
+            ptype="SUBCOMMAND"
+            >
+            <PARAM
+                name="standard"
+                help="Add a standard community list entry"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                >
+                <PARAM
+                    name="community-list-name"
+                    help="Communty list name"
+                    ptype="STRING"
+                    >
+                    <PARAM
+                        name="aa"
+                        help="Community number aa:nn format 0..65535:0..65535"
+                        ptype="AA_NN"
+                        optional="true"
+                        >
+                    </PARAM>
+                    <PARAM
+                        name="local-AS"
+                        help="Do not send outside local AS (well-known community)"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        optional="true"
+                        >
+                    </PARAM>
+                    <PARAM
+                        name="no-advertise"
+                        help="Do not advertise to any peer (well-known community)"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        optional="true"
+                        >
+                    </PARAM>
+                    <PARAM
+                        name="no-export"
+                        help="Do not export to next AS (well-known community)"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        optional="true"
+                        >
+                    </PARAM>
+                    <PARAM
+                        name="no-peer"
+                        help="Do not export to next AS (well-known community)"
+                        ptype="SUBCOMMAND"
+                        mode="subcommand"
+                        optional="true"
+                        >
+                    </PARAM>
+                    <PARAM
+                        name="any-all subcommands"
+                        help="Any/all command"
+                        ptype="SUBCOMMAND"
+                        mode="switch"
+                        optional="false"
+                        >
+                        <PARAM
+                            name="any"
+                            help="Any command"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            >
+                        </PARAM>
+                        <PARAM
+                            name="all"
+                            help="All command"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            >
+                        </PARAM>
+                    </PARAM>
+                </PARAM>
+            </PARAM>
+
+            <PARAM
+                name="expanded"
+                help="Add a expanded community list entry"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                >
+                <PARAM
+                    name="community-expanded-list-name"
+                    help="Communty list name"
+                    ptype="STRING"
+                    >
+                    <PARAM
+                        name="line"
+                        help="LINE An ordered list as a regular-expression"
+                        ptype="STRING"
+                        >
+                    </PARAM>
+                </PARAM>
+            </PARAM>
+        </PARAM>
+    <ACTION>
+        if test "${bgp-subcommands}" = "standard"; then&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-bgp-community.py bgp_community_standard ${community-list-name} ${aa} ${__full_line}&#xA;
+
+        elif test "${bgp-subcommands}" = "expanded"; then&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-bgp-community.py bgp_community_expanded ${community-expanded-list-name} ${line}&#xA;
+
+        else&#xA;
+            builtin="clish_nop"&#xA;
+        fi
+    </ACTION>
+    </COMMAND>
+
+    <COMMAND
+        name="bgp as-path-list"
+        help="BGP autonomous system path"
+        >
+        <PARAM
+            name="as-path-list-name"
+            help="Name of as-path-list"
+            ptype="STRING"
+            >
+            <PARAM
+                name="regex"
+                help="Regular expression to match the BGP AS paths"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                >
+                <PARAM
+                    name="regx-id"
+                    help="Regular expression"
+                    ptype="STRING"
+                    >
+                </PARAM>
+            </PARAM>
+        </PARAM>
+    <ACTION>
+        python $SONIC_CLI_ROOT/sonic-cli-bgp-community.py bgp_as_path_list ${as-path-list-name} ${regx-id}&#xA;
+    </ACTION>
+    </COMMAND>
+
+</VIEW>
+</CLISH_MODULE>

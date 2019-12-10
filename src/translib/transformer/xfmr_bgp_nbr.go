@@ -184,21 +184,22 @@ var YangToDb_bgp_nbr_afi_safi_name_fld_xfmr FieldXfmrYangToDb = func(inParams Xf
 var DbToYang_bgp_nbr_afi_safi_name_fld_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (map[string]interface{}, error) {
 
     var err error
+    var nbrAfName string
     result := make(map[string]interface{})
 
     entry_key := inParams.key
     nbrAfKey := strings.Split(entry_key, "|")
-	nbrAfName := ""
 
-	switch nbrAfKey[2] {
-	case "ipv4_unicast":
-		nbrAfName = "IPV4_UNICAST"
-	case "ipv6_unicast":
-		nbrAfName = "IPV6_UNICAST"
-	case "l2vpn_evpn":
-		nbrAfName = "L2VPN_EVPN"
-	}
-
+    switch nbrAfKey[2] {
+        case "ipv4_unicast":
+            nbrAfName = "IPV4_UNICAST"
+        case "ipv6_unicast":
+            nbrAfName = "IPV6_UNICAST"
+        case "l2vpn_evpn":
+            nbrAfName = "L2VPN_EVPN"
+       default:
+            return result, nil
+    }
     result["afi-safi-name"] = nbrAfName
 
     return result, err
@@ -278,21 +279,23 @@ var YangToDb_bgp_af_nbr_tbl_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams)
 }
 
 var DbToYang_bgp_af_nbr_tbl_key_xfmr KeyXfmrDbToYang = func(inParams XfmrParams) (map[string]interface{}, error) {
+    var afName string
     rmap := make(map[string]interface{})
     entry_key := inParams.key
     log.Info("DbToYang_bgp_af_nbr_tbl_key: ", entry_key)
 
     nbrAfKey := strings.Split(entry_key, "|")
-	afName := ""
 
-	switch nbrAfKey[2] {
-	case "ipv4_unicast":
-		afName = "IPV4_UNICAST"
-	case "ipv6_unicast":
-		afName = "IPV6_UNICAST"
-	case "l2vpn_evpn":
-		afName = "L2VPN_EVPN"
-	}
+    switch nbrAfKey[2] {
+        case "ipv4_unicast":
+            afName = "IPV4_UNICAST"
+        case "ipv6_unicast":
+            afName = "IPV6_UNICAST"
+        case "l2vpn_evpn":
+            afName = "L2VPN_EVPN"
+       default:
+            return rmap, nil
+    }
 
     rmap["afi-safi-name"]   = afName
 
@@ -388,21 +391,23 @@ var YangToDb_bgp_af_nbr_proto_tbl_key_xfmr KeyXfmrYangToDb = func(inParams XfmrP
 }
 
 var DbToYang_bgp_af_nbr_proto_tbl_key_xfmr KeyXfmrDbToYang = func(inParams XfmrParams) (map[string]interface{}, error) {
+   var afName string
     rmap := make(map[string]interface{})
     entry_key := inParams.key
     log.Info("DbToYang_bgp_af_nbr_proto_tbl_key_xfmr: ", entry_key)
 
     nbrAfKey := strings.Split(entry_key, "|")
-    afName := ""
 
-	switch nbrAfKey[2] {
-	case "ipv4_unicast":
-		afName = "IPV4_UNICAST"
-	case "ipv6_unicast":
-		afName = "IPV6_UNICAST"
-	case "l2vpn_evpn":
-		afName = "L2VPN_EVPN"
-	}
+    switch nbrAfKey[2] {
+        case "ipv4_unicast":
+            afName = "IPV4_UNICAST"
+        case "ipv6_unicast":
+            afName = "IPV6_UNICAST"
+        case "l2vpn_evpn":
+            afName = "L2VPN_EVPN"
+       default:
+            return rmap, nil
+    }
 
     rmap["afi-safi-name"]   = afName
 
@@ -820,18 +825,22 @@ func validate_nbr_af_state_get (inParams XfmrParams, dbg_log string) (*ocbinds.O
         log.Errorf("%s failed !! Error: Neighbors AfiSafis container missing", dbg_log)
         return nil, nbr_af_key, oper_err
     }
+    ygot.BuildEmptyTree(afiSafis_obj)
 
     afiSafi_obj, ok := afiSafis_obj.AfiSafi[nbr_af_key.afiSafiNameEnum]
     if !ok {
-        log.Errorf("%s failed !! Error: Neighbor AfiSafi object missing", dbg_log)
-        return nil, nbr_af_key, oper_err
+        log.Errorf("%s Neighbor AfiSafi object missing, allocate new", dbg_log)
+        afiSafi_obj, _ = afiSafis_obj.NewAfiSafi(nbr_af_key.afiSafiNameEnum)
     }
+
+    ygot.BuildEmptyTree(afiSafi_obj)
 
     afiSafiState_obj := afiSafi_obj.State
     if afiSafiState_obj == nil {
         log.Errorf("%s failed !! Error: Neighbor AfiSafi State object missing", dbg_log)
         return nil, nbr_af_key, oper_err
     }
+    ygot.BuildEmptyTree(afiSafiState_obj)
 
     return afiSafiState_obj, nbr_af_key, err
 }
@@ -1053,7 +1062,7 @@ var DbToYang_bgp_nbr_plist_direction_fld_xfmr FieldXfmrDbtoYang = func(inParams 
 
     pTbl := data["BGP_NEIGHBOR_AF"]
     if _, ok := pTbl[inParams.key]; !ok {
-        log.Info("DbToYang_bgp_nbr_peer_type_xfmr BGP neighbor not found : ", inParams.key)
+        log.Info("DbToYang_bgp_nbr_plist_direction_fld_xfmr BGP neighbor not found : ", inParams.key)
         return result, errors.New("BGP neighbor not found : " + inParams.key)
     }
     pGrpKey := pTbl[inParams.key]
