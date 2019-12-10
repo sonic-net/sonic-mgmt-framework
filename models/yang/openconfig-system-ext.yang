@@ -1,0 +1,75 @@
+module openconfig-system-ext {
+
+    yang-version "1";
+
+    namespace "http://openconfig.net/yang/system/extention";
+
+    prefix "oc-sys-ext";
+
+    import openconfig-system { prefix oc-sys; }
+    import openconfig-inet-types { prefix inet; }
+
+    // meta
+    organization "OpenConfig working group";
+
+    contact
+        "OpenConfig working group
+        netopenconfig@googlegroups.com";
+
+    description
+        "Model for managing TACACS+ configurations .";
+
+    revision 2019-11-05 {
+        description
+            "Initial augment file.";
+    }
+
+    // augment statements
+
+    augment "/oc-sys:system/oc-sys:aaa/oc-sys:authentication/oc-sys:config" {
+        leaf failthrough {
+            type boolean;
+            description "Indicating whether authentication failthrough should be enabled/disabled";
+        }
+    }
+
+    augment "/oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:servers/oc-sys:server/oc-sys:config" {
+        leaf  auth-type {
+            type string;
+            description "The server authentication type pap/chap/mschap/mschapv2";
+        }
+        leaf  priority {
+            type uint16;
+            description "The server priority";
+        }
+        leaf vrf {
+            type string;
+            description "The server's VRF";
+        }
+    }
+
+    augment "/oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:config" {
+        leaf  source-address {
+            type inet:ip-address;
+            description "The global source ip";
+        }
+        leaf  auth-type {
+            type string;
+            description "The global authentication type pap/chap/mschap/mschapv2";
+        }
+        leaf  secret-key {
+            type string;
+            description "The global authentication passkey";
+        }
+        leaf  timeout {
+            type uint16;
+            description "The global authentication timeout";
+        }
+        leaf retransmit-attempts {
+          type uint8;
+          description
+              "Number of times the system may resend a request to the
+              RADIUS server when it is unresponsive";
+        }
+    }
+}

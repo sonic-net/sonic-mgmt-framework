@@ -1,0 +1,27 @@
+{{'---------------------------------------------------------'}}
+{{'RADIUS Global Configuration'.ljust(20)}}
+{{'---------------------------------------------------------'}}
+{% if json_output -%}
+{% set srcip = json_output['openconfig-system:config']['openconfig-system-ext:source-address'] %}
+{% set timeout = json_output['openconfig-system:config']['openconfig-system-ext:timeout'] %}
+{% set authtype = json_output['openconfig-system:config']['openconfig-system-ext:auth-type'] %}
+{% set key = json_output['openconfig-system:config']['openconfig-system-ext:secret-key'] %}
+{% set retransmit = json_output['openconfig-system:config']['openconfig-system-ext:retransmit-attemts'] %}
+
+{% if srcip -%}
+{{'source-ip  : '}}{{srcip}}
+{% endif %}
+{% if timeout -%}
+{{'timeout    : '}}{{timeout}}
+{% endif %}
+{% if authtype -%}
+{{'auth-type  : '}}{{authtype}}
+{% endif %}
+{% if key -%}
+{{'key        : '}}{{key}}
+{% endif %}
+{% if retransmit -%}
+{{'retransmit : '}}{{retransmit}}
+{% endif %}
+{% endif %}
+

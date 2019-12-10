@@ -1,0 +1,415 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+Copyright 2019 Broadcom. The term Broadcom refers to Broadcom Inc. and/or
+its subsidiaries.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+--> 
+
+<CLISH_MODULE
+    xmlns="http://www.dellemc.com/sonic/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xi="http://www.w3.org/2001/XInclude"
+    xsi:schemaLocation="http://www.dellemc.com/sonic/XMLSchema
+                        http://www.dellemc.com/sonic/XMLSchema/clish.xsd"
+    >
+<!--=========================================================================-->
+
+<PTYPE
+     name="RADIUS_AUTH_PORT"
+     method="integer"
+     pattern="1..65535"
+     help="port"
+     />
+<!--=======================================================-->
+<PTYPE
+     name="RADIUS_TIMEOUT"
+     method="integer"
+     pattern="0..60"
+     help="seconds"
+     />
+<!--=======================================================-->
+<PTYPE
+     name="RADIUS_RETRANSMIT"
+     method="integer"
+     pattern="0..10"
+     help="attempts"
+/>
+<!--=======================================================-->
+<PTYPE
+     name="RADIUS_KEY"
+     pattern="(^(([0-9A-Za-z]){1,32})$)"
+     help="(Valid Chars: [0-9A-Za-z], Max Len: 32) shared secret"
+/>
+<!--=======================================================-->
+<PTYPE
+     name="RADIUS_AUTH_TYPE"
+     method="select"
+     pattern="pap(pap) chap(chap) mschapv2(mschapv2)"
+     help="authentication type"
+/>
+<!--=======================================================-->
+<PTYPE
+     name="RADIUS_PRIORITY"
+     method="integer"
+     pattern="1..64"
+     help="(1..64)"
+/>
+<!--=======================================================-->
+<PTYPE
+     name="RADIUS_VRF"
+     pattern="Vrf_(([0-9A-Za-z]){1,28})"
+     help="Name of VRF (Max size 32, prefixed by Vrf_)"
+/>
+<!--=======================================================-->
+
+<VIEW name="enable-view">
+    <COMMAND
+        name="show radius"
+        help="Show RADIUS information"
+        >
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-radius.py get_sonic_radius
+    </ACTION>
+    </COMMAND>
+</VIEW>
+
+<!-- Config mode -->
+<VIEW name="configure-view">
+    <COMMAND
+        name="radius-server"
+        help="Configure RADIUS servers"
+        >
+    </COMMAND>
+
+    <COMMAND
+        name="radius-server source-ip"
+        help="Configure global source ip for RADIUS"
+        >
+        <PARAM
+            name="source_ip"
+            help=""
+            ptype="IPV4V6_ADDR"
+            >
+        </PARAM>
+        <ACTION> python $SONIC_CLI_ROOT/sonic-cli-radius.py patch_openconfig_radius_global_config_source_address ${source_ip}&#xA;
+        </ACTION>
+    </COMMAND>
+
+    <COMMAND
+        name="radius-server timeout"
+        help="Configure global timeout for RADIUS"
+        >
+        <PARAM
+            name="timeout"
+            help="(default: 5)"
+            ptype="RADIUS_TIMEOUT"
+            >
+        </PARAM>
+        <ACTION> python $SONIC_CLI_ROOT/sonic-cli-radius.py patch_openconfig_radius_global_config_timeout ${timeout}&#xA;
+        </ACTION>
+    </COMMAND>
+
+    <COMMAND
+        name="radius-server retransmit"
+        help="Configure global retransmit attempts for RADIUS"
+        >
+        <PARAM
+            name="retransmit"
+            help="(default: 3)"
+            ptype="RADIUS_RETRANSMIT"
+            >
+        </PARAM>
+        <ACTION> python $SONIC_CLI_ROOT/sonic-cli-radius.py patch_openconfig_radius_global_config_retransmit ${retransmit}&#xA;
+        </ACTION>
+    </COMMAND>
+
+    <COMMAND
+        name="radius-server key"
+        help="Configure global shared secret for RADIUS"
+        >
+        <PARAM
+            name="key"
+            help=""
+            ptype="RADIUS_KEY"
+            >
+        </PARAM>
+        <ACTION> python $SONIC_CLI_ROOT/sonic-cli-radius.py patch_openconfig_radius_global_config_key ${key}&#xA;
+        </ACTION>
+    </COMMAND>
+
+    <COMMAND
+        name="radius-server auth-type"
+        help="Configure global authentication type for RADIUS"
+        >
+        <PARAM
+            name="auth_type"
+            help="(default: pap)"
+            ptype="RADIUS_AUTH_TYPE"
+            >
+        </PARAM>
+        <ACTION> python $SONIC_CLI_ROOT/sonic-cli-radius.py patch_openconfig_radius_global_config_auth_type ${auth_type}&#xA;
+        </ACTION>
+    </COMMAND>
+
+    <COMMAND
+        name="radius-server host"
+        help="Configure a server for RADIUS"
+        >
+        <PARAM
+            name="host"
+            help="IPV4|IPV6 address"
+            ptype="IPV4V6_ADDR"
+            >
+        </PARAM>
+
+        <PARAM
+            name="auth-port"
+            help="RADIUS server's authentication port"
+            mode="subcommand"
+            ptype="SUBCOMMAND"
+            optional="true"
+            >
+            <PARAM
+                name="vauth_port"
+                help="(default: 1812)"
+                ptype="RADIUS_AUTH_PORT"
+            >
+            </PARAM>
+        </PARAM>
+
+        <PARAM
+            name="timeout"
+            help="RADIUS server's timeout"
+            mode="subcommand"
+            ptype="SUBCOMMAND"
+            optional="true"
+            >
+            <PARAM
+                name="vtimeout"
+                help="(default: global setting)"
+                ptype="RADIUS_TIMEOUT"
+            >
+            </PARAM>
+        </PARAM>
+
+        <PARAM
+            name="retransmit"
+            help="RADIUS server's retransmit attempts"
+            mode="subcommand"
+            ptype="SUBCOMMAND"
+            optional="true"
+            >
+            <PARAM
+                name="vretransmit"
+                help="(default: global setting)"
+                ptype="RADIUS_RETRANSMIT"
+            >
+            </PARAM>
+        </PARAM>
+
+        <PARAM
+            name="key"
+            help="RADIUS server's shared secret"
+            mode="subcommand"
+            ptype="SUBCOMMAND"
+            optional="true"
+            >
+            <PARAM
+                name="vkey"
+                help="(default: global setting)"
+                ptype="RADIUS_KEY"
+            >
+            </PARAM>
+        </PARAM>
+
+        <PARAM
+            name="auth-type"
+            help="RADIUS server's authentication type"
+            mode="subcommand"
+            ptype="SUBCOMMAND"
+            optional="true"
+            >
+            <PARAM
+                name="vauth_type"
+                help="(default: global setting)"
+                ptype="RADIUS_AUTH_TYPE"
+            >
+            </PARAM>
+        </PARAM>
+
+        <PARAM
+            name="priority"
+            help="RADIUS server's priority"
+            mode="subcommand"
+            ptype="SUBCOMMAND"
+            optional="true"
+            >
+            <PARAM
+                name="vpriority"
+                help="greater value means higher priority"
+                ptype="RADIUS_PRIORITY"
+            >
+            </PARAM>
+        </PARAM>
+
+        <PARAM
+            name="vrf"
+            help="RADIUS server's vrf"
+            mode="subcommand"
+            ptype="SUBCOMMAND"
+            optional="true"
+            >
+            <PARAM
+                name="vvrf"
+                help=""
+                ptype="RADIUS_VRF"
+            >
+            </PARAM>
+        </PARAM>
+
+        <ACTION> python $SONIC_CLI_ROOT/sonic-cli-radius.py patch_openconfig_radius_global_config_host ${host} auth_port=${vauth_port} timeout=${vtimeout} retransmit=${vretransmit} key=${vkey} auth_type=${vauth_type} priority=${vpriority} vrf=${vvrf}&#xA;
+        </ACTION>
+    </COMMAND>
+
+    <COMMAND
+        name="no radius-server source-ip"
+        help="Unconfigure global source ip for RADIUS"
+        >
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-radius.py delete_openconfig_radius_global_config_source_address&#xA;
+    </ACTION>
+    </COMMAND>
+
+    <COMMAND
+        name="no radius-server timeout"
+        help="Unconfigure global timeout for RADIUS"
+        >
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-radius.py delete_openconfig_radius_global_config_timeout&#xA;
+    </ACTION>
+    </COMMAND>
+
+    <COMMAND
+        name="no radius-server retransmit"
+        help="Unconfigure global retransmit attempts for RADIUS"
+        >
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-radius.py delete_openconfig_radius_global_config_retransmit&#xA;
+    </ACTION>
+    </COMMAND>
+
+    <COMMAND
+        name="no radius-server auth-type"
+        help="Unconfigure global authentication type for RADIUS"
+        >
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-radius.py delete_openconfig_radius_global_config_auth_type&#xA;
+    </ACTION>
+    </COMMAND>
+
+    <COMMAND
+        name="no radius-server key"
+        help="Unconfigure global shared secret for RADIUS"
+        >
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-radius.py delete_openconfig_radius_global_config_key&#xA;
+    </ACTION>
+    </COMMAND>
+
+    <COMMAND
+        name="no radius-server"
+        help="Unconfigure RADIUS"
+        >
+    </COMMAND>
+
+    <COMMAND
+        name="no radius-server host"
+        help="Unconfigure a server for RADIUS"
+        >
+
+        <PARAM
+            name="host"
+            help="IPV4|IPV6 address"
+            ptype="IPV4V6_ADDR"
+            >
+        </PARAM>
+
+        <PARAM
+            name="attribute"
+            help=""
+            ptype="STRING"
+            mode="switch"
+            optional="true"
+            >
+
+        <PARAM
+            name="auth-port"
+            help="Unconfigure RADIUS server's authentication port"
+            mode="subcommand"
+            ptype="SUBCOMMAND"
+            >
+        </PARAM>
+
+        <PARAM
+            name="timeout"
+            help="Unconfigure RADIUS server's timeout"
+            mode="subcommand"
+            ptype="SUBCOMMAND"
+            >
+        </PARAM>
+
+        <PARAM
+            name="retransmit"
+            help="Unconfigure RADIUS server's retransmit attempts"
+            mode="subcommand"
+            ptype="SUBCOMMAND"
+            >
+        </PARAM>
+
+        <PARAM
+            name="key"
+            help="Unconfigure RADIUS server's shared secret"
+            mode="subcommand"
+            ptype="SUBCOMMAND"
+            >
+        </PARAM>
+
+        <PARAM
+            name="auth-type"
+            help="Unconfigure RADIUS server's authentication type"
+            mode="subcommand"
+            ptype="SUBCOMMAND"
+            >
+        </PARAM>
+
+        <PARAM
+            name="priority"
+            help="Unconfigure RADIUS server's priority"
+            mode="subcommand"
+            ptype="SUBCOMMAND"
+            >
+        </PARAM>
+
+        <PARAM
+            name="vrf"
+            help="Unconfigure RADIUS server's vrf"
+            mode="subcommand"
+            ptype="SUBCOMMAND"
+            >
+        </PARAM>
+
+        </PARAM>
+
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-radius.py delete_openconfig_radius_global_config_host ${host} ${attribute}&#xA;
+    </ACTION>
+    </COMMAND>
+
+</VIEW>
+
+</CLISH_MODULE>
