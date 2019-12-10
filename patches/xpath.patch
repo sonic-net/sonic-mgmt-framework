@@ -133,7 +133,7 @@ index 74f266b..95ad033 100644
  }
  
 diff --git a/func.go b/func.go
-index a2f0dce..8f42f43 100644
+index a2f0dce..4abde27 100644
 --- a/func.go
 +++ b/func.go
 @@ -21,6 +21,11 @@ func predicate(q query) func(NodeNavigator) bool {
@@ -148,7 +148,7 @@ index a2f0dce..8f42f43 100644
  // positionFunc is a XPath Node Set functions position().
  func positionFunc(q query, t iterator) interface{} {
  	var (
-@@ -58,6 +63,26 @@ func lastFunc(q query, t iterator) interface{} {
+@@ -58,16 +63,59 @@ func lastFunc(q query, t iterator) interface{} {
  // countFunc is a XPath Node Set functions count(node-set).
  func countFunc(q query, t iterator) interface{} {
  	var count = 0
@@ -175,7 +175,25 @@ index a2f0dce..8f42f43 100644
  	test := predicate(q)
  	switch typ := q.Evaluate(t).(type) {
  	case query:
-@@ -67,7 +92,14 @@ func countFunc(q query, t iterator) interface{} {
+ 		for node := typ.Select(t); node != nil; node = typ.Select(t) {
++
++			tmpNode := node.Copy()
++			if (strings.HasSuffix(node.LocalName(), "_LIST") == false) {
++				//Go to leaf's parent i.e. list
++				tmpNode.MoveToParent()
++			}
++			//Go to 2nd attribute
++			if tmpNode.MoveToNextAttribute() && tmpNode.MoveToNextAttribute() {
++				if (tmpNode.LocalName() == "db") {
++					//Don't count list entry brought from db
++					//which is already counted during path evaluation
++					continue
++				}
++
++			}
++
+ 			if test(node) {
+ 				count++
  			}
  		}
  	}
@@ -183,7 +201,7 @@ index a2f0dce..8f42f43 100644
 +	if (fQuery != nil) && (fQuery.CountFuncVal > 0) {
 +		// -1 since first data always gets added before 
 +		//starting xpath evaluation, then count is fetched from Redis
-+		return (float64(count) + (fQuery.CountFuncVal - 1))
++		return (float64(count) + (fQuery.CountFuncVal))
 +
 +	} else {
 +		return float64(count)
@@ -290,7 +308,7 @@ index 308d3cb..e40b4b7 100644
  }
  
 diff --git a/query.go b/query.go
-index afeb890..14970ff 100644
+index afeb890..32af3ea 100644
 --- a/query.go
 +++ b/query.go
 @@ -1,10 +1,12 @@
@@ -442,8 +460,8 @@ index afeb890..14970ff 100644
 +			} else {
 +				//typ.SFilter.Predicate = fmt.Sprintf("(%s %s '%s')",
 +				//sfl.Predicate, op, sfr.Predicate)
-+				typ.SFilter.Predicate = "(" + sfl.Predicate + op +
-+				sfr.Predicate + ")"
++				typ.SFilter.Predicate = "(" + sfl.Predicate + op + "'" +
++				sfr.Predicate + "')"
 +			}
 +		}
 +

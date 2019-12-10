@@ -370,17 +370,12 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (cvlErr CVLErrorIn
 
 		case OP_DELETE:
 			if (len(cfgData[i].Data) > 0) {
-				//Delete a single field
-				if (len(cfgData[i].Data) != 1)  {
-					CVL_LOG(ERROR, "Only single field is allowed for field deletion")
-				} else {
-					for field, _ := range cfgData[i].Data {
-						if (c.checkDeleteConstraint(cfgData, tbl, key, field) != CVL_SUCCESS) {
-							cvlErrObj.ErrCode = CVL_SEMANTIC_ERROR
-							cvlErrObj.CVLErrDetails = cvlErrorMap[cvlErrObj.ErrCode]
-							return cvlErrObj, CVL_SEMANTIC_ERROR
-						}
-						break //only one field there
+				//Check constraints for deleting field(s)
+				for field, _ := range cfgData[i].Data {
+					if (c.checkDeleteConstraint(cfgData, tbl, key, field) != CVL_SUCCESS) {
+						cvlErrObj.ErrCode = CVL_SEMANTIC_ERROR
+						cvlErrObj.CVLErrDetails = cvlErrorMap[cvlErrObj.ErrCode]
+						return cvlErrObj, CVL_SEMANTIC_ERROR
 					}
 				}
 			} else {
@@ -511,7 +506,7 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (cvlErr CVLErrorIn
 			return cvlErrObj,cvlErrObj.ErrCode
 		}
 
-		if cvlErrObj = c.validateEditCfgExtDep(yangListName, key, cfgData[i].VOp);
+		if cvlErrObj = c.validateEditCfgExtDep(yangListName, key, &cfgData[i]);
 		cvlErrObj.ErrCode != CVL_SUCCESS {
 			return cvlErrObj,cvlErrObj.ErrCode
 		}

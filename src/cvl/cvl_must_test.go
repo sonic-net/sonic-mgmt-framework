@@ -433,3 +433,115 @@ func TestValidateEditConfig_MustExp_Without_Predicate_Positive(t *testing.T) {
 
 	unloadConfigDB(rclient, depDataMap)
 }
+
+func TestValidateEditConfig_MustExp_Non_Key_As_Predicate_Negative(t *testing.T) {
+	depDataMap := map[string]interface{} {
+		"VLAN" : map[string]interface{} {
+			"Vlan201": map[string] interface{} {
+				"vlanid":   "201",
+			},
+			"Vlan202": map[string] interface{} {
+				"vlanid":   "202",
+			},
+		},
+		"VXLAN_TUNNEL" : map[string]interface{} {
+			"tun1": map[string] interface{} {
+				"src_ip":   "10.10.1.2",
+			},
+		},
+		"VXLAN_TUNNEL_MAP" : map[string]interface{} {
+			"tun1|vmap1": map[string] interface{} {
+				"vlan": "Vlan201",
+				"vni": "300",
+			},
+		},
+	}
+
+	//Try to create 
+        cfgData := []cvl.CVLEditConfigData{
+                cvl.CVLEditConfigData{
+                        cvl.VALIDATE_ALL,
+                        cvl.OP_CREATE,
+                        "VXLAN_TUNNEL_MAP|tun1|vmap2",
+			map[string]string{
+				"vlan": "Vlan202",
+				"vni": "300", //same VNI is not valid
+			},
+                },
+        }
+
+	loadConfigDB(rclient, depDataMap)
+
+        cvSess, _ := cvl.ValidationSessOpen()
+
+	cvlErrInfo, _ := cvSess.ValidateEditConfig(cfgData)
+
+        cvl.ValidationSessClose(cvSess)
+
+        if cvlErrInfo.ErrCode == cvl.CVL_SUCCESS {
+                t.Errorf("Non key as predicate - config validation should fail, %v", cvlErrInfo)
+        }
+
+	unloadConfigDB(rclient, depDataMap)
+}
+
+func TestValidateEditConfig_MustExp_Non_Key_As_Predicate_In_External_Table_Positive(t *testing.T) {
+	depDataMap := map[string]interface{} {
+		"VLAN" : map[string]interface{} {
+			"Vlan201": map[string] interface{} {
+				"vlanid":   "201",
+			},
+			"Vlan202": map[string] interface{} {
+				"vlanid":   "202",
+			},
+			"Vlan203": map[string] interface{} {
+				"vlanid":   "203",
+			},
+		},
+		"VXLAN_TUNNEL" : map[string]interface{} {
+			"tun1": map[string] interface{} {
+				"src_ip":   "10.10.1.2",
+			},
+		},
+		"VXLAN_TUNNEL_MAP" : map[string]interface{} {
+			"tun1|vmap1": map[string] interface{} {
+				"vlan": "Vlan201",
+				"vni": "301",
+			},
+			"tun1|vmap2": map[string] interface{} {
+				"vlan": "Vlan202",
+				"vni": "302",
+			},
+			"tun1|vmap3": map[string] interface{} {
+				"vlan": "Vlan203",
+				"vni": "303",
+			},
+		},
+	}
+
+	//Try to create 
+        cfgData := []cvl.CVLEditConfigData{
+                cvl.CVLEditConfigData{
+                        cvl.VALIDATE_ALL,
+                        cvl.OP_CREATE,
+                        "VRF|vrf101",
+			map[string]string{
+				"vni": "302",
+			},
+                },
+        }
+
+	loadConfigDB(rclient, depDataMap)
+
+        cvSess, _ := cvl.ValidationSessOpen()
+
+	cvlErrInfo, _ := cvSess.ValidateEditConfig(cfgData)
+
+        cvl.ValidationSessClose(cvSess)
+
+        if cvlErrInfo.ErrCode != cvl.CVL_SUCCESS {
+                t.Errorf("Non key as predicate in external table - config validation should succeed, %v", cvlErrInfo)
+        }
+
+	unloadConfigDB(rclient, depDataMap)
+}
