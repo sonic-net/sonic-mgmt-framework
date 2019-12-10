@@ -136,19 +136,15 @@ limitations under the License.
         fi
 
         if test "$gelen" = "" -a "$lelen" = ""; then&#xA;
-            echo "No keywords and so passing only ip"&#xA;
             python $SONIC_CLI_ROOT/sonic-cli-ip-prefix.py ipv4_prefix ${prefix-name} $prefixtype $var&#xA;
 
         elif test "$gelen" != "" -a "$lelen" != "" -a "$len" -lt "$gelen" -a "$gelen" -le "$lelen"; then&#xA;
-            echo "PASS PASS - Call actioner with all params"&#xA;
             python $SONIC_CLI_ROOT/sonic-cli-ip-prefix.py ipv4_prefix_le_ge ${prefix-name} $prefixtype $var $gelen $lelen&#xA;
 
         elif test "$gelen" = "" -a "$len" -le "$lelen"; then&#xA;
-            echo "PASS -- Call actioner with only LE"&#xA;
             python $SONIC_CLI_ROOT/sonic-cli-ip-prefix.py ipv4_prefix_le ${prefix-name} $prefixtype $var $len $lelen&#xA;
 
         elif test "$lelen" = "" -a "$len" -lt "$gelen"; then&#xA;
-            echo "PASS -- Call actioner with only GE"&#xA;
             python $SONIC_CLI_ROOT/sonic-cli-ip-prefix.py ipv4_prefix_ge ${prefix-name} $prefixtype $var $gelen&#xA;
 
         else&#xA;
@@ -277,19 +273,15 @@ limitations under the License.
         fi
 
         if test "$gelen" = "" -a "$lelen" = ""; then&#xA;
-            echo "No keywords and so passing only ip"&#xA;
             python $SONIC_CLI_ROOT/sonic-cli-ip-prefix.py ipv6_prefix ${prefix-name} $prefixtype $var&#xA;
 
         elif test "$gelen" != "" -a "$lelen" != "" -a "$len" -lt "$gelen" -a "$gelen" -le "$lelen"; then&#xA;
-            echo "PASS PASS - Call actioner with all params"&#xA;
             python $SONIC_CLI_ROOT/sonic-cli-ip-prefix.py ipv6_prefix_le_ge ${prefix-name} $prefixtype $var $gelen $lelen&#xA;
 
         elif test "$gelen" = "" -a "$len" -le "$lelen"; then&#xA;
-            echo "PASS -- Call actioner with only LE"&#xA;
             python $SONIC_CLI_ROOT/sonic-cli-ip-prefix.py ipv6_prefix_le ${prefix-name} $prefixtype $var $len $lelen&#xA;
 
         elif test "$lelen" = "" -a "$len" -lt "$gelen"; then&#xA;
-            echo "PASS -- Call actioner with only GE"&#xA;
             python $SONIC_CLI_ROOT/sonic-cli-ip-prefix.py ipv6_prefix_ge ${prefix-name} $prefixtype $var $gelen&#xA;
 
         else&#xA;
