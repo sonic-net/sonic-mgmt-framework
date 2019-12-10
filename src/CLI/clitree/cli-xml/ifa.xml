@@ -66,11 +66,11 @@ limitations under the License.
       </PARAM>
       <ACTION>
         if test "${name}" = "all" ; then&#xA;
-          python $SONIC_CLI_ROOT/sonic-cli-ifa.py get_sonic_ifa_sonic_ifa_tam_int_ifa_flow_table show_tam_flow.j2&#xA;
+          python $SONIC_CLI_ROOT/sonic-cli-ifa.py get_tam_ifa_flow_stats&#xA;
         elif test -z "${name}"; then&#xA;
-          python $SONIC_CLI_ROOT/sonic-cli-ifa.py get_sonic_ifa_sonic_ifa_tam_int_ifa_flow_table show_tam_flow.j2&#xA;
+          python $SONIC_CLI_ROOT/sonic-cli-ifa.py get_tam_ifa_flow_stats&#xA;
         else&#xA;
-          python $SONIC_CLI_ROOT/sonic-cli-ifa.py get_sonic_ifa_sonic_ifa_tam_int_ifa_flow_table_tam_int_ifa_flow_table_list ${name} show_tam_flow.j2&#xA;
+          python $SONIC_CLI_ROOT/sonic-cli-ifa.py get_tam_ifa_flow_stats ${name}&#xA;
         fi&#xA;
       </ACTION>
     </COMMAND>

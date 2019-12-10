@@ -37,6 +37,7 @@ const (
 	REPLACE
 	UPDATE
 	DELETE
+    MAXOPER
 )
 
 type KeySpec struct {
@@ -72,8 +73,8 @@ func XlateFuncBind(name string, fn interface{}) (err error) {
 
 func XlateFuncCall(name string, params ...interface{}) (result []reflect.Value, err error) {
 	if _, ok := XlateFuncs[name]; !ok {
-		err = errors.New(name + " Xfmr function does not exist.")
-		return nil, err
+		log.Warning(name + " Xfmr function does not exist.")
+		return nil, nil
 	}
 	if len(params) != XlateFuncs[name].Type().NumIn() {
 		err = ErrParamsNotAdapted
@@ -97,17 +98,18 @@ func TraverseDb(dbs [db.MaxDB]*db.DB, spec KeySpec, result *map[db.DBNum]map[str
 
 	if spec.Key.Len() > 0 {
 		// get an entry with a specific key
-		data, err := dbs[spec.dbNum].GetEntry(&spec.Ts, spec.Key)
-		if err != nil {
-			return err
-		}
+		if spec.Ts.Name != XFMR_NONE_STRING { // Do not traverse for NONE table
+			data, err := dbs[spec.dbNum].GetEntry(&spec.Ts, spec.Key)
+			if err != nil {
+				return err
+			}
 
-		if (*result)[spec.dbNum][spec.Ts.Name] == nil {
-			(*result)[spec.dbNum][spec.Ts.Name] = map[string]db.Value{strings.Join(spec.Key.Comp, separator): data}
-		} else {
-			(*result)[spec.dbNum][spec.Ts.Name][strings.Join(spec.Key.Comp, separator)] = data
+			if (*result)[spec.dbNum][spec.Ts.Name] == nil {
+				(*result)[spec.dbNum][spec.Ts.Name] = map[string]db.Value{strings.Join(spec.Key.Comp, separator): data}
+			} else {
+				(*result)[spec.dbNum][spec.Ts.Name][strings.Join(spec.Key.Comp, separator)] = data
+			}
 		}
-
 		if len(spec.Child) > 0 {
 			for _, ch := range spec.Child {
 				err = TraverseDb(dbs, ch, result, &spec.Key)
@@ -115,21 +117,27 @@ func TraverseDb(dbs [db.MaxDB]*db.DB, spec KeySpec, result *map[db.DBNum]map[str
 		}
 	} else {
 		// TODO - GetEntry support with regex patten, 'abc*' for optimization
-		keys, err := dbs[spec.dbNum].GetKeys(&spec.Ts)
-		if err != nil {
-			return err
-		}
-		log.Infof("keys for table %v in Db %v are %v", spec.Ts.Name, spec.dbNum, keys)
-		for i, _ := range keys {
-			if parentKey != nil && (spec.ignoreParentKey == false) {
-				// TODO - multi-depth with a custom delimiter
-				if strings.Index(strings.Join(keys[i].Comp, separator), strings.Join((*parentKey).Comp, separator)) == -1 {
-					continue
-				}
+		if spec.Ts.Name != XFMR_NONE_STRING { //Do not traverse for NONE table
+			keys, err := dbs[spec.dbNum].GetKeys(&spec.Ts)
+			if err != nil {
+				return err
 			}
-			spec.Key = keys[i]
-			err = TraverseDb(dbs, spec, result, parentKey)
-		}
+			log.Infof("keys for table %v in Db %v are %v", spec.Ts.Name, spec.dbNum, keys)
+			for i, _ := range keys {
+				if parentKey != nil && (spec.ignoreParentKey == false) {
+					// TODO - multi-depth with a custom delimiter
+					if strings.Index(strings.Join(keys[i].Comp, separator), strings.Join((*parentKey).Comp, separator)) == -1 {
+						continue
+					}
+				}
+				spec.Key = keys[i]
+				err = TraverseDb(dbs, spec, result, parentKey)
+			}
+		} else if len(spec.Child) > 0 {
+                        for _, ch := range spec.Child {
+                                err = TraverseDb(dbs, ch, result, &spec.Key)
+                        }
+                }
 	}
 	return err
 }
@@ -146,7 +154,7 @@ func XlateUriToKeySpec(uri string, requestUri string, ygRoot *ygot.GoStruct, t *
 		retdbFormat = fillSonicKeySpec(xpath, tableName, keyStr)
 	} else {
 		/* Extract the xpath and key from input xpath */
-		xpath, keyStr, _ := xpathKeyExtract(nil, ygRoot, 0, uri, requestUri, nil, txCache)
+		xpath, keyStr, _ := xpathKeyExtract(nil, ygRoot, GET, uri, requestUri, nil, txCache)
 		retdbFormat = FillKeySpecs(xpath, keyStr, &retdbFormat)
 	}
 
@@ -245,10 +253,11 @@ func fillSonicKeySpec(xpath string , tableName string, keyStr string) ( []KeySpe
 	return retdbFormat
 }
 
-func XlateToDb(path string, opcode int, d *db.DB, yg *ygot.GoStruct, yt *interface{}, txCache interface{}) (map[int]map[db.DBNum]map[string]map[string]db.Value, error) {
+func XlateToDb(path string, opcode int, d *db.DB, yg *ygot.GoStruct, yt *interface{}, jsonPayload []byte, txCache interface{}) (map[int]map[db.DBNum]map[string]map[string]db.Value, error) {
 
 	var err error
 	requestUri := path
+	jsonData := make(map[string]interface{})
 
 	device := (*yg).(*ocbinds.Device)
 	jsonStr, err := ygot.EmitJSON(device, &ygot.EmitJSONConfig{
@@ -260,7 +269,6 @@ func XlateToDb(path string, opcode int, d *db.DB, yg *ygot.GoStruct, yt *interfa
 		},
 	})
 
-	jsonData := make(map[string]interface{})
 	err = json.Unmarshal([]byte(jsonStr), &jsonData)
 	if err != nil {
 		log.Errorf("Error: failed to unmarshal json.")
@@ -350,11 +358,21 @@ func XlateFromDb(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db.DB, data R
 			tokens:= strings.Split(xpath, "/")
 			// Format /module:container/tableName/listname[key]/fieldName
 			if tokens[SONIC_TABLE_INDEX] == tableName {
-		                fieldName := tokens[len(tokens)-1]
-				dbSpecField := tableName + "/" + fieldName
-				_, ok := xDbSpecMap[dbSpecField]
-				if ok && xDbSpecMap[dbSpecField].fieldType == "leaf" {
-					dbData[cdb] = extractFieldFromDb(tableName, keyStr, fieldName, data[cdb])
+				fieldName := ""
+				if len(tokens) > SONIC_FIELD_INDEX {
+					fieldName = tokens[SONIC_FIELD_INDEX]
+					dbSpecField := tableName + "/" + fieldName
+					_, ok := xDbSpecMap[dbSpecField]
+					if ok  && fieldName != "" {
+						yangNodeType := yangTypeGet(xDbSpecMap[dbSpecField].dbEntry)
+						if yangNodeType == YANG_LEAF_LIST {
+							fieldName = fieldName + "@"
+						}
+						if ((yangNodeType == YANG_LEAF_LIST) || (yangNodeType == YANG_LEAF)) {
+							dbData[cdb] = extractFieldFromDb(tableName, keyStr, fieldName, data[cdb])
+
+						}
+					}
 				}
 			}
 		}

@@ -75,6 +75,9 @@ var xDbSpecTblSeqnMap  map[string]*sonicTblSeqnInfo
 
 /* update transformer spec with db-node */
 func updateDbTableData (xpath string, xpathData *yangXpathInfo, tableName string) {
+	if len(tableName) == 0 {
+		return
+	}
 	_, ok := xDbSpecMap[tableName]
 	if ok {
 		xDbSpecMap[tableName].yangXpath = append(xDbSpecMap[tableName].yangXpath, xpath)
@@ -286,7 +289,7 @@ func dbMapFill(tableName string, curPath string, moduleNm string, xDbSpecMap map
 			var cvlRetOrdTbl cvl.CVLRetCode
 			sncTblInfo.OrdTbl, cvlRetOrdTbl = cvlSess.GetOrderedTables(moduleNm)
 			if cvlRetOrdTbl != cvl.CVL_SUCCESS {
-				log.Warningf("Failure in cvlSess.GetOrderedTables(%v) - %v", cvlRetOrdTbl)
+				log.Warningf("Failure in cvlSess.GetOrderedTables(%v) - %v", moduleNm, cvlRetOrdTbl)
 
 			}
 			sncTblInfo.DepTbl = make(map[string][]string)
