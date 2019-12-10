@@ -60,12 +60,13 @@ func init() {
 	mdlCpblt := transformer.AddModelCpbltInfo()
 	if mdlCpblt == nil {
 		log.Warning("Failure in fetching model capabilities data.")
-	}
-	for yngMdlNm, mdlDt := range(mdlCpblt) {
-		log.Info("Adding Model Data for ", yngMdlNm, "  Org : ", mdlDt.Org, "  Ver : ", mdlDt.Ver)
-		err := addModel(&ModelData{Name: yngMdlNm, Org: mdlDt.Org, Ver: mdlDt.Ver})
-		if err != nil {
-			log.Warningf("Adding model data for module %v to appinterface failed with error=%v", yngMdlNm, err)
+	} else {
+		for yngMdlNm, mdlDt := range(mdlCpblt) {
+			log.Info("Adding Model Data for ", yngMdlNm, "  Org : ", mdlDt.Org, "  Ver : ", mdlDt.Ver)
+			err := addModel(&ModelData{Name: yngMdlNm, Org: mdlDt.Org, Ver: mdlDt.Ver})
+			if err != nil {
+				log.Warningf("Adding model data for module %v to appinterface failed with error=%v", yngMdlNm, err)
+			}
 		}
 	}
 }

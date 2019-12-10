@@ -156,11 +156,9 @@ func loadYangModules(files ...string) error {
 		if strings.Contains(n, "annot") && strings.Contains(n, "sonic") {
 			sonic_annot_entries = append(sonic_annot_entries, yang.ToEntry(mods[n]))
 		} else if strings.Contains(n, "annot") {
-			if strings.HasSuffix(n, "-annot") {
-				yangMdlNmDt := strings.Split(n, "-annot")
-				if len(yangMdlNmDt) > 0 {
-					addMdlCpbltEntry(yangMdlNmDt[0])
-				}
+			yangMdlNmDt := strings.Split(n, "-annot")
+			if len(yangMdlNmDt) > 0 {
+				addMdlCpbltEntry(yangMdlNmDt[0])
 			}
 			oc_annot_entries = append(oc_annot_entries, yang.ToEntry(mods[n]))
 		} else if strings.Contains(n, "sonic") {
