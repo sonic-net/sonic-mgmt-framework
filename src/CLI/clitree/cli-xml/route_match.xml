@@ -66,6 +66,12 @@ limitations under the License.
      </ACTION>
     </COMMAND>
 
+    <COMMAND name="no match metric" help="delete matched metric">
+
+      <ACTION> python $SONIC_CLI_ROOT/sonic-route-map.py delete_openconfig_bgp_policy_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_bgp_conditions_config_med_eq ${name} ${seq_num}
+     </ACTION>
+    </COMMAND>
+
     <COMMAND name="no match ip" help="Negate a  commands"/>
     <COMMAND name="no match ip address" help="Negate a  commands"/>
     <COMMAND name="no match ipv6" help="Negate a  commands"/>
@@ -93,7 +99,7 @@ limitations under the License.
         >
         <PARAM name="as-path-name"
                      help="Name of as-path-name (Max size 63)"
-                     ptype="STRING_63"
+                     ptype="STRING"
         />
         <ACTION>
            python $SONIC_CLI_ROOT/sonic-route-map.py patch_openconfig_bgp_policy_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_bgp_conditions_match_as_path_set_config_as_path_set ${name} ${seq_num} ${as-path-name} &#xA;
@@ -124,7 +130,7 @@ limitations under the License.
         >
         <PARAM name="prefix-list-name"
                      help="Name of prefis-list (Max size 63)"
-                     ptype="STRING_63"
+                     ptype="STRING"
         />
         <ACTION>
            python $SONIC_CLI_ROOT/sonic-route-map.py patch_openconfig_routing_policy_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_match_prefix_set_config_prefix_set ${name} ${seq_num} ${prefix-list-name} &#xA;
@@ -137,7 +143,7 @@ limitations under the License.
         >
         <PARAM name="prefix-list-name"
                      help="Name of route map (Max size 63)"
-                     ptype="STRING_63"
+                     ptype="STRING"
         />
        <ACTION>
            python $SONIC_CLI_ROOT/sonic-route-map.py patch_openconfig_routing_policy_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_match_prefix_set_config_prefix_set ${name} ${seq_num} ${prefix-list-name} &#xA;
@@ -152,7 +158,7 @@ limitations under the License.
         >
         <PARAM name="intf-name"
                      help="Name of interface (Max size 63)"
-                     ptype="STRING_63"
+                     ptype="STRING"
         />
        <ACTION>
            python $SONIC_CLI_ROOT/sonic-route-map.py patch_openconfig_routing_policy_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_match_interface_config_interface ${name} ${seq_num} ${intf-name} &#xA;
@@ -165,7 +171,7 @@ limitations under the License.
         >
         <PARAM name="community-name"
                      help="Name of community (Max size 63)"
-                     ptype="STRING_63"
+                     ptype="STRING"
         />
         <ACTION>
            python $SONIC_CLI_ROOT/sonic-route-map.py patch_openconfig_bgp_policy_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_bgp_conditions_config_community_set ${name} ${seq_num} ${community-name} &#xA;
@@ -178,7 +184,7 @@ limitations under the License.
         >
         <PARAM name="community-name"
                      help="Name of external community (Max size 63)"
-                     ptype="STRING_63"
+                     ptype="STRING"
         />
         <ACTION>
            python $SONIC_CLI_ROOT/sonic-route-map.py  patch_openconfig_bgp_policy_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_bgp_conditions_config_ext_community_set ${name} ${seq_num} ${community-name} &#xA;
@@ -191,14 +197,29 @@ limitations under the License.
         >
         <PARAM name="match-tag"
                      help="tag number"
-                     ptype="UINT"
+                     ptype="STRING"
         />
        <ACTION>
-           <!-- TODO : CK SUCHETA PATCH_FUNCT -->
            python $SONIC_CLI_ROOT/sonic-route-map.py patch_openconfig_routing_policy_ext_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_match_tag_set_config_tag_value  ${name} ${seq_num} ${match-tag}
 
        </ACTION>
     </COMMAND>
+
+    <COMMAND
+        name="match metric"
+        help="Set routing policy match criteria to metric"
+        >
+        <PARAM name="match-met"
+                     help="metric number"
+                     ptype="UINT"
+        />
+       <ACTION>
+           python $SONIC_CLI_ROOT/sonic-route-map.py patch_openconfig_bgp_policy_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_bgp_conditions_config_med_eq  ${name} ${seq_num} ${match-met}
+
+       </ACTION>
+    </COMMAND>
+
+   
 
     <COMMAND
          name="match origin"
