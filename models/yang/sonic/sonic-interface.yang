@@ -23,6 +23,10 @@ module sonic-interface {
 	description
 		"SONIC INTERFACE";
 
+        revision 2019-11-20 {
+            description
+                "Adding RPC for clear counters.";
+        }
 	revision 2019-07-02 {
 		description
 			"Initial revision.";
@@ -31,6 +35,36 @@ module sonic-interface {
         revision 2019-12-01 {
                 description
                         "Add leafref for vrf_name.";
+        }
+
+/*
+ * RPCs
+*/
+        rpc clear_counters {
+            description "RPC for clearing interface counters. Input can be :
+                       1. Single interface name
+                       2. All interfaces
+                       3. All interfaces of a particular type";
+
+            input {
+                leaf interface-param {
+                    type string;
+                        description
+                            "parameter for clearing counters - all or interface type(Ethernet/PortChannel) or interface name";
+                    }
+            }
+            output {
+                leaf status {
+                    type int32;
+                    description
+                        "The status of the operation execution request.";
+                }
+                leaf status-detail {
+                    type string;
+                    description
+                        "The detailed status of the operation execution request.";
+                }
+            }
         }
 
 	container sonic-interface {
