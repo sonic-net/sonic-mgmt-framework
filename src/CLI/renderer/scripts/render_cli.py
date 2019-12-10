@@ -14,8 +14,21 @@ from rpipe_utils import pipestr
 global line_count
 global ctrl_rfd
 
+# AFB: 12/09/2019: If sonic_cli_output() gets called twice in actioner
+# script, then # render_init() is called twice ==> os.fdopen() is called
+# twice ==> "OSError: [Errno 9] Bad file descriptor" executing the os.fdopen()
+global render_init_called
+render_init_called = False
+
 def render_init(fd):
     global ctrlc_rfd
+
+    # See Note above.
+    global render_init_called
+    if render_init_called == True:
+        return None
+
+    render_init_called = True
 
     ctrlc_rd_fd_num = int(fd)
     try:
