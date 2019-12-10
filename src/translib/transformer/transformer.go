@@ -156,6 +156,10 @@ func loadYangModules(files ...string) error {
 		if strings.Contains(n, "annot") && strings.Contains(n, "sonic") {
 			sonic_annot_entries = append(sonic_annot_entries, yang.ToEntry(mods[n]))
 		} else if strings.Contains(n, "annot") {
+			yangMdlNmDt := strings.Split(n, "-annot")
+			if len(yangMdlNmDt) > 0 {
+				addMdlCpbltEntry(yangMdlNmDt[0])
+			}
 			oc_annot_entries = append(oc_annot_entries, yang.ToEntry(mods[n]))
 		} else if strings.Contains(n, "sonic") {
 			sonic_entries = append(sonic_entries, yang.ToEntry(mods[n]))
@@ -164,6 +168,39 @@ func loadYangModules(files ...string) error {
 		}
 	}
 
+	// populate model capabilities data
+	if xMdlCpbltMap != nil {
+		for yngMdlNm, _ := range(xMdlCpbltMap) {
+			org := ""
+			ver := ""
+			ocVerSet := false
+			yngEntry := oc_entries[yngMdlNm]
+			if (yngEntry != nil) {
+				// OC yang has version in standard extension oc-ext:openconfig-version
+				if strings.HasPrefix(yngMdlNm, "openconfig-") {
+					for _, ext := range yngEntry.Exts {
+						dataTagArr := strings.Split(ext.Keyword, ":")
+						tagType := dataTagArr[len(dataTagArr)-1]
+						if tagType == "openconfig-version" {
+							ver = ext.NName()
+							fmt.Printf("Found version %v for yang module %v", ver, yngMdlNm)
+							if len(strings.TrimSpace(ver)) > 0 {
+								ocVerSet = true
+							}
+							break
+						}
+
+					}
+				}
+			}
+			if ((strings.HasPrefix(yngMdlNm, "ietf-")) || (!ocVerSet)) {
+				// as per RFC7895 revision date to be used as version
+				ver = mods[yngMdlNm].Current() //gives the most recent revision date for yang module
+			}
+			org = mods[yngMdlNm].Organization.Name
+			addMdlCpbltData(yngMdlNm, ver, org)
+		}
+	}
 	dbMapBuild(sonic_entries)
 	annotDbSpecMap(sonic_annot_entries)
 	annotToDbMapBuild(oc_annot_entries)

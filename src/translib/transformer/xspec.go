@@ -69,10 +69,53 @@ type sonicTblSeqnInfo struct {
        DepTbl map[string][]string
 }
 
+type mdlInfo struct {
+       Org string
+       Ver string
+}
+
 var xYangSpecMap  map[string]*yangXpathInfo
 var xDbSpecMap    map[string]*dbInfo
 var xDbSpecOrdTblMap map[string][]string //map of module-name to ordered list of db tables { "sonic-acl" : ["ACL_TABLE", "ACL_RULE"] }
 var xDbSpecTblSeqnMap  map[string]*sonicTblSeqnInfo
+var xMdlCpbltMap  map[string]*mdlInfo
+
+/* Add module name to map storing model info for model capabilities */
+func addMdlCpbltEntry(yangMdlNm string) {
+       log.Info("Received yang model name to be added to model info map for gnmi ", yangMdlNm)
+       if xMdlCpbltMap == nil {
+               xMdlCpbltMap = make(map[string]*mdlInfo)
+       }
+       mdlInfoEntry := new(mdlInfo)
+       if mdlInfoEntry == nil {
+               log.Warningf("Memory allocation failure for storing model info for gnmi - module %v", yangMdlNm)
+               return
+       }
+       mdlInfoEntry.Org = ""
+       mdlInfoEntry.Ver = ""
+       xMdlCpbltMap[yangMdlNm] = mdlInfoEntry
+       return
+}
+
+/* Add version and organization info for model capabilities into map */
+func addMdlCpbltData(yangMdlNm string, version string, organization string) {
+	log.Infof("Adding version %v and organization %v for yang module %v", version, organization, yangMdlNm)
+	if xMdlCpbltMap == nil {
+               xMdlCpbltMap = make(map[string]*mdlInfo)
+        }
+	mdlInfoEntry, ok := xMdlCpbltMap[yangMdlNm]
+	if ((!ok) || (mdlInfoEntry == nil)) {
+		mdlInfoEntry = new(mdlInfo)
+		if mdlInfoEntry == nil {
+			log.Warningf("Memory allocation failure for storing model info for gnmi - module %v", yangMdlNm)
+			return
+		}
+       }
+       mdlInfoEntry.Ver = version
+       mdlInfoEntry.Org = organization
+       xMdlCpbltMap[yangMdlNm] = mdlInfoEntry
+       return
+}
 
 /* update transformer spec with db-node */
 func updateDbTableData (xpath string, xpathData *yangXpathInfo, tableName string) {
