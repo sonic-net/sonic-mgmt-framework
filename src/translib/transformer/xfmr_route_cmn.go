@@ -29,12 +29,20 @@ var DbToYang_route_table_addr_family_xfmr FieldXfmrDbtoYang = func(inParams Xfmr
     entry_key := inParams.key
     key := strings.Split(entry_key, "|")
     family := key[3]
+    af := ""
 
-    result["address-family"] = family 
+    if family == "ipv4" {
+        af = "IPV4"
+    } else if family == "ipv6" {
+        af = "IPV6"
+    } else {
+		return result, errors.New("Unsupported family " + family)
+    }
+
+    result["address-family"] = af
 
     return result, err
 }
-
 
 var YangToDb_route_table_conn_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (string, error) {
     var err error

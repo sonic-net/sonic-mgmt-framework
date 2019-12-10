@@ -1,9 +1,18 @@
 module sonic-bgp-common {
   namespace "http://github.com/Azure/sonic-bgp-common";
   prefix sbc;
+  yang-version 1.1;
 
   import ietf-inet-types {
     prefix inet;
+  }
+
+  import sonic-routing-policy-sets {
+    prefix srpolsets;
+  }
+
+  import sonic-route-map {
+    prefix srmap;
   }
 
   organization
@@ -65,6 +74,24 @@ module sonic-bgp-common {
         "Type to describe the direction";
   }
 
+  typedef sonic_bgp_orf {
+    type enumeration {
+      enum send {
+          description
+              "Capability to receive the outbound route filtering from this neighbor";
+      }
+      enum receive {
+          description
+              "Capability to send the outbound route filtering to this neighbor";
+      }
+      enum both {
+          description
+              "Capability to send and receive the outbound route filtering to/from this neighbor";
+      }
+    }
+    description
+        "Type to describe the BGP ORF(Outbound route filtering) capability";
+  }
 
   grouping sonic-bgp-cmn {
 
@@ -73,11 +100,12 @@ module sonic-bgp-common {
         description "Local AS number";
     }
 
-    leaf description {
+    leaf name {
       type string;
+        description "Peer description";
     }
 
-    leaf peer_asn {
+    leaf asn {
       type uint32;
         description "Peer AS number";
     }
@@ -103,14 +131,14 @@ module sonic-bgp-common {
         description "Authuntiation password";
     }
 
-    leaf keepalive_interval {
+    leaf keepalive {
       type uint16 {
         range "1..3600";
       }
         description "Keepalive interval";
     }
 
-    leaf hold_time {
+    leaf holdtime {
       type uint16 {
         range "1..3600";
       }
@@ -131,9 +159,9 @@ module sonic-bgp-common {
         description "minium advertisement interval";
     }
 
-    leaf local_address {
+    leaf local_addr {
       type inet:ip-address;
-        description "Local address to use for connection";
+        description "Local source address to use for connection";
     }
 
     leaf passive_mode {
@@ -172,6 +200,44 @@ module sonic-bgp-common {
       type boolean;
         description "BFD status";
     }
+
+    leaf capability_dynamic {
+      type boolean;
+        description "Advertise dynamic capability";
+    }
+
+    leaf dont_negotiate_capability {
+      type boolean;
+        description "Do not perform capability negotiation";
+    }
+
+    leaf enforce_multihop {
+      type boolean;
+        description "Enforce EBGP neighbors perform multihop";
+    }
+
+    leaf override_capability {
+      type boolean;
+        description "Override capability negotiation result";
+    }
+
+    leaf peer_port {
+      type uint16;
+        description "Peer port number";
+    }
+
+    leaf shutdown_message {
+      type string {
+	length "1..127";
+      }
+        description "Message on peer/Neighbor shutdown";
+    }
+
+    leaf strict_capability_match {
+      type boolean;
+        description "Strict capability negotiation match";
+    }
+
   }
 
 
@@ -182,7 +248,7 @@ module sonic-bgp-common {
         description "Address family";
     }
 
-    leaf enabled {
+    leaf admin_status {
       type boolean;
         description "Enabled status";
     }
@@ -193,7 +259,12 @@ module sonic-bgp-common {
     }
 
     leaf default_rmap {
-      type string;
+        type string;
+        /*
+        type leafref {
+            path "/srmap:sonic-route-map/srmap:ROUTE_MAP_SET/srmap:ROUTE_MAP_SET_LIST/srmap:name";
+        }
+        */
         description "Default route map to originate";
     }
 
@@ -222,11 +293,19 @@ module sonic-bgp-common {
     }
 
     leaf-list route_map_in {
-      type string;
+        type string;
+        /*
+      type leafref {
+        path "/srmap:sonic-route-map/srmap:ROUTE_MAP_SET/srmap:ROUTE_MAP_SET_LIST/srmap:name";
+      } */
     }
 
     leaf-list route_map_out {
-      type string;
+        type string;
+        /*
+      type leafref {
+        path "/srmap:sonic-route-map/srmap:ROUTE_MAP_SET/srmap:ROUTE_MAP_SET_LIST/srmap:name";
+      }*/
     }
 
     leaf soft_reconfiguration_in {
@@ -235,12 +314,17 @@ module sonic-bgp-common {
     }
 
     leaf unsuppress_map_name {
-      type string;
-        description "Route map";
+        type string;
+        /*
+      type leafref {
+        path "/srmap:sonic-route-map/srmap:ROUTE_MAP_SET/srmap:ROUTE_MAP_SET_LIST/srmap:name";
+      } */
+      description "Route map";
     }
 
-    leaf route_reflector_client {
+    leaf rrclient {
       type boolean;
+        description "Route reflector client";
     }
 
     leaf weight {
@@ -283,7 +367,11 @@ module sonic-bgp-common {
     }
 
     leaf filter_list_name {
-      type string;
+        type string;
+        /*
+        type leafref {
+            path "/srpolsets:sonic-routing-policy-sets/srpolsets:AS_PATH_SET/srpolsets:AS_PATH_SET_LIST/srpolsets:name";
+        }*/
         description "Filter list name";
     }
 
@@ -292,7 +380,7 @@ module sonic-bgp-common {
         description "Filter list direction";
     }
 
-    leaf nexthop_self_enabled {
+    leaf nhself {
       type boolean;
         description "Nexthop is self, no nexthop calculation";
     }
@@ -303,7 +391,11 @@ module sonic-bgp-common {
     }
 
     leaf prefix_list_name {
-      type string;
+        type string;
+        /*
+        type leafref {
+            path "/srpolsets:sonic-routing-policy-sets/srpolsets:PREFIX_SET/srpolsets:PREFIX_SET_LIST/srpolsets:name";
+        }*/
         description "Prefix list name";
     }
 
@@ -340,6 +432,16 @@ module sonic-bgp-common {
     leaf allow_as_origin {
       type boolean;
         description "Allow own AS in AS path, if route originated in own AS";
+    }
+
+    leaf cap_orf {
+      type sonic_bgp_orf;
+        description "ORF(Outbound Route Filtering) capability";
+    }
+
+    leaf route_server_client {
+      type boolean;
+        description "Route server client";
     }
   }
 }

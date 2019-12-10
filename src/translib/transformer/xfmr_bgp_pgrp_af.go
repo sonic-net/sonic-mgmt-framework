@@ -22,6 +22,8 @@ func init () {
     XlateFuncBind("DbToYang_bgp_pgrp_plist_direction_fld_xfmr", DbToYang_bgp_pgrp_plist_direction_fld_xfmr)
     XlateFuncBind("YangToDb_bgp_pgrp_flist_direction_fld_xfmr", YangToDb_bgp_pgrp_flist_direction_fld_xfmr)
     XlateFuncBind("DbToYang_bgp_pgrp_flist_direction_fld_xfmr", DbToYang_bgp_pgrp_flist_direction_fld_xfmr)
+    XlateFuncBind("YangToDb_bgp_pgrp_orf_type_fld_xfmr", YangToDb_bgp_pgrp_orf_type_fld_xfmr)
+    XlateFuncBind("DbToYang_bgp_pgrp_orf_type_fld_xfmr", DbToYang_bgp_pgrp_orf_type_fld_xfmr)
 }
 
 var YangToDb_bgp_pgrp_afi_safi_name_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
@@ -38,7 +40,16 @@ var DbToYang_bgp_pgrp_afi_safi_name_fld_xfmr FieldXfmrDbtoYang = func(inParams X
 
     entry_key := inParams.key
     pgrpAfKey := strings.Split(entry_key, "|")
-    pgrpAfName:= pgrpAfKey[2]
+	pgrpAfName := ""
+
+	switch pgrpAfKey[2] {
+	case "ipv4_unicast":
+		pgrpAfName = "IPV4_UNICAST"
+	case "ipv6_unicast":
+		pgrpAfName = "IPV6_UNICAST"
+	case "l2vpn_evpn":
+		pgrpAfName = "L2VPN_EVPN"
+	}
 
     result["afi-safi-name"] = pgrpAfName
 
@@ -95,11 +106,11 @@ var YangToDb_bgp_af_pgrp_tbl_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams
     }
 
     if strings.Contains(afName, "IPV4_UNICAST") {
-        afName = "IPV4_UNICAST"
+        afName = "ipv4_unicast"
     } else if strings.Contains(afName, "IPV6_UNICAST") { 
-        afName = "IPV6_UNICAST"
+        afName = "ipv6_unicast"
     } else if strings.Contains(afName, "L2VPN_EVPN") {
-        afName = "L2VPN_EVPN"
+        afName = "l2vpn_evpn"
     } else  {
 	err = errors.New("Unsupported AFI SAFI")
 	log.Info("Unsupported AFI SAFI ", afName);
@@ -124,7 +135,16 @@ var DbToYang_bgp_af_pgrp_tbl_key_xfmr KeyXfmrDbToYang = func(inParams XfmrParams
     log.Info("DbToYang_bgp_af_pgrp_tbl_key: ", entry_key)
 
     afPgrpKey := strings.Split(entry_key, "|")
-    afName  := afPgrpKey[2]
+	afName := ""
+
+	switch afPgrpKey[2] {
+	case "ipv4_unicast":
+		afName = "IPV4_UNICAST"
+	case "ipv6_unicast":
+		afName = "IPV6_UNICAST"
+	case "l2vpn_evpn":
+		afName = "L2VPN_EVPN"
+	}
 
     rmap["afi-safi-name"]   = afName
 
@@ -178,7 +198,7 @@ var YangToDb_bgp_af_pgrp_proto_tbl_key_xfmr KeyXfmrYangToDb = func(inParams Xfmr
     }
 
     if strings.Contains(afName, "IPV4_UNICAST") {
-        afName = "IPV4_UNICAST"
+        afName = "ipv4_unicast"
         if strings.Contains(inParams.uri, "ipv6-unicast") ||
            strings.Contains(inParams.uri, "l2vpn-evpn") {
 		err = errors.New("IPV4_UNICAST supported only on ipv4-config container")
@@ -186,7 +206,7 @@ var YangToDb_bgp_af_pgrp_proto_tbl_key_xfmr KeyXfmrYangToDb = func(inParams Xfmr
 		return afName, err
         }
     } else if strings.Contains(afName, "IPV6_UNICAST") { 
-        afName = "IPV6_UNICAST"
+        afName = "ipv6_unicast"
         if strings.Contains(inParams.uri, "ipv4-unicast") ||
            strings.Contains(inParams.uri, "l2vpn-evpn") {
 		err = errors.New("IPV6_UNICAST supported only on ipv6-config container")
@@ -194,7 +214,7 @@ var YangToDb_bgp_af_pgrp_proto_tbl_key_xfmr KeyXfmrYangToDb = func(inParams Xfmr
 		return afName, err
         }
     } else if strings.Contains(afName, "L2VPN_EVPN") {
-        afName = "L2VPN_EVPN"
+        afName = "l2vpn_evpn"
         if strings.Contains(inParams.uri, "ipv6-unicast") ||
            strings.Contains(inParams.uri, "ipv4-unicast") {
 		err = errors.New("L2VPN_EVPN supported only on l2vpn-evpn container")
@@ -225,7 +245,16 @@ var DbToYang_bgp_af_pgrp_proto_tbl_key_xfmr KeyXfmrDbToYang = func(inParams Xfmr
     log.Info("DbToYang_bgp_af_pgrp_proto_tbl_key_xfmr: ", entry_key)
 
     afPgrpKey := strings.Split(entry_key, "|")
-    afName  := afPgrpKey[2]
+	afName := ""
+
+	switch afPgrpKey[2] {
+	case "ipv4_unicast":
+		afName = "IPV4_UNICAST"
+	case "ipv6_unicast":
+		afName = "IPV6_UNICAST"
+	case "l2vpn_evpn":
+		afName = "L2VPN_EVPN"
+	}
 
     rmap["afi-safi-name"]   = afName
 
@@ -322,7 +351,7 @@ var DbToYang_bgp_pgrp_plist_direction_fld_xfmr FieldXfmrDbtoYang = func(inParams
 
     pTbl := data["BGP_PEER_GROUP_AF"]
     if _, ok := pTbl[inParams.key]; !ok {
-        log.Info("DbToYang_bgp_pgrp_peer_type_xfmr BGP peer group not found : ", inParams.key)
+        log.Info("DbToYang_bgp_pgrp_plist_direction_fld_xfmr BGP peer group not found : ", inParams.key)
         return result, errors.New("BGP peer group not found : " + inParams.key)
     }
     pGrpKey := pTbl[inParams.key]
@@ -388,6 +417,61 @@ var DbToYang_bgp_pgrp_flist_direction_fld_xfmr FieldXfmrDbtoYang = func(inParams
         }
     } else {
         log.Info("filter_list_direction field not found in DB")
+    }
+    return result, err
+}
+
+var YangToDb_bgp_pgrp_orf_type_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
+    res_map := make(map[string]string)
+
+    var err error
+    if inParams.param == nil {
+        err = errors.New("No Params");
+        return res_map, err
+    }
+    orf_type, _ := inParams.param.(ocbinds.E_OpenconfigBgpExt_BgpOrfType)
+    log.Info("YangToDb_bgp_pgrp_orf_type_fld_xfmr: ", inParams.ygRoot, " Xpath: ", inParams.uri, " orf_type: ", orf_type)
+
+    if (orf_type == ocbinds.OpenconfigBgpExt_BgpOrfType_SEND) {
+        res_map["cap_orf"] = "send"
+    }  else if (orf_type == ocbinds.OpenconfigBgpExt_BgpOrfType_RECEIVE) {
+        res_map["cap_orf"] = "receive"
+    }  else if (orf_type == ocbinds.OpenconfigBgpExt_BgpOrfType_BOTH) {
+        res_map["cap_orf"] = "both"
+    } else {
+        err = errors.New("ORF type Missing");
+        return res_map, err
+    }
+
+    return res_map, nil
+}
+
+var DbToYang_bgp_pgrp_orf_type_fld_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (map[string]interface{}, error) {
+
+    var err error
+    result := make(map[string]interface{})
+
+    data := (*inParams.dbDataMap)[inParams.curDb]
+    log.Info("DbToYang_bgp_pgrp_orf_type_fld_xfmr : ", data, "inParams : ", inParams)
+
+    pTbl := data["BGP_PEER_GROUP_AF"]
+    if _, ok := pTbl[inParams.key]; !ok {
+        log.Info("DbToYang_bgp_pgrp_orf_type_fld_xfmr BGP PEER GROUP AF not found : ", inParams.key)
+        return result, errors.New("BGP PEER GROUP AF not found : " + inParams.key)
+    }
+    pGrpKey := pTbl[inParams.key]
+    orf_type, ok := pGrpKey.Field["cap_orf"]
+
+    if ok {
+        if (orf_type == "send") {
+            result["orf-type"] = "SEND"
+        } else if (orf_type == "receive") {
+            result["orf-type"] = "RECEIVE"
+        } else if (orf_type == "both") {
+            result["orf-type"] = "BOTH"
+        }
+    } else {
+        log.Info("cap_orf_direction field not found in DB")
     }
     return result, err
 }
