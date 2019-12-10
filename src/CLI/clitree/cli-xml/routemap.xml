@@ -31,32 +31,71 @@ limitations under the License.
 </VIEW>
 
 <VIEW name="configure-view">
-  <COMMAND name="route-map" help="Configure routing policy match criteria and associated actions" view="configure-route-map-view" viewid="map-name=${map-name};seqno=${seqno}">
-    <PARAM name="map-name" help="Route-map name" ptype="STRING">
-      <PARAM name="type" mode="switch" ptype="SUBCOMMAND" help="type">
-        <PARAM name="deny" help="" mode="subcommand" ptype="SUBCOMMAND"/>
-        <PARAM name="permit" help="" mode="subcommand" ptype="SUBCOMMAND"/>
-      </PARAM>
-      <PARAM name="seqno" help="Sequence number" ptype="RANGE_1_65535"/>
-    </PARAM>
-    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-routemap.py patch_openconfig_routing_policy_routing_policy_policy_definitions_policy_definition_statements_statement_actions_config_policy_result ${map-name} ${seqno} ${type}</ACTION>
-  </COMMAND>
+    <!-- route-map <name> {permit|Deny} <seq_nu> -->
+    <COMMAND
+         name="route-map"
+         help="Specify routing policy"
+         view="configure-route-map-view"
+         viewid="name=${route-map-name};seq_num=${seq-nu}"
+         >
+	 <PARAM name="route-map-name"
+            help="Name of route map (Max size 63)"
+            ptype="STRING_63"
+                        />
+         <PARAM name="action-switch"
+            help="Configure the action to apply on route-map"
+            ptype="SUBCOMMAND"
+            mode="switch"
+            >
 
-  <COMMAND name="no route-map" help="Configure routing policy match criteria and associated actions">
-    <PARAM name="map-name" help="Route-map name" ptype="STRING">
-      <PARAM name="seqno" help="Sequence number" ptype="RANGE_1_65535"/>
-    </PARAM>
-    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-routemap.py delete_openconfig_routing_policy_routing_policy_policy_definitions_policy_definition_statements_statement ${map-name} ${seqno}</ACTION>
-  </COMMAND>
+            <PARAM name="permit"
+                help="Apply permit action"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                                />
+
+            <PARAM name="deny"
+                help="Apply deny action"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                                />
+        </PARAM>
+	<PARAM name="seq-nu"
+            help="sequence number"
+            ptype="UINT" 
+                        />
+
+    <ACTION>
+        if test "${action-switch}" = "permit"; then&#xA;
+            python $SONIC_CLI_ROOT/sonic-route-map.py patch_openconfig_routing_policy_routing_policy_policy_definitions_policy_definition_statements_statement_actions_config_policy_result  ${route-map-name} ${seq-nu} ACCEPT_ROUTE&#xA;
+        else&#xA;
+            python $SONIC_CLI_ROOT/sonic-route-map.py patch_openconfig_routing_policy_routing_policy_policy_definitions_policy_definition_statements_statement_actions_config_policy_result  ${route-map-name} ${seq-nu} REJECT_ROUTE&#xA;
+        fi&#xA;
+    </ACTION>
+    </COMMAND>
+
+    <!-- no route-map <name> <seq_nu> -->
+    <COMMAND
+         name="no route-map"
+         help="remove routing policy map"
+         >
+         <PARAM name="route-map-name"
+            help="Name of route map (Max size 63)"
+            ptype="STRING_63"
+                        /> <PARAM name="seq-nu" help="sequence number (Max size 63)"
+            ptype="STRING_63"
+                        />
+    <ACTION>
+            python $SONIC_CLI_ROOT/sonic-route-map.py delete_openconfig_routing_policy_routing_policy_policy_definitions_policy_definition_statements_statement_actions ${route-map-name} ${seq-nu}  &#xA;
+    </ACTION>
+    </COMMAND>
 </VIEW>
 
 <VIEW name="configure-route-map-view" prompt="${SYSTEM_NAME}(config-route-map)# "
       depth="2">
   <NAMESPACE ref="configure-view" help="false" completion="false" />
 
-  <COMMAND name="match" help="Match values from routing table">
-    <ACTION builtin="clish_nop"/>
-  </COMMAND>
+ 
 
   <COMMAND name="set" help="Set values in destination routing protocol"/>
   <COMMAND name="set as-path" help="Transform BGP AS-path attribute">
@@ -100,11 +139,6 @@ limitations under the License.
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-routemap.py patch_openconfig_bgp_policy_routing_policy_policy_definitions_policy_definition_statements_statement_actions_bgp_actions_config_set_route_origin ${map-name} ${seqno} ${origopt}</ACTION>
   </COMMAND>
   <COMMAND name="set tag" help="Tag value for routing protocol">
-    <ACTION builtin="clish_nop"/>
-  </COMMAND>
-
-  <COMMAND name="no" help="Negate a command or set its defaults"/>
-  <COMMAND name="no match" help="Match values from routing table">
     <ACTION builtin="clish_nop"/>
   </COMMAND>
 
