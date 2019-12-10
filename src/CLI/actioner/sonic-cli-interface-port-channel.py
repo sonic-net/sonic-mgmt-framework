@@ -18,9 +18,6 @@
 ###########################################################################
 
 import sys
-import time
-import json
-import ast
 import cli_client as cc
 from rpipe_utils import pipestr
 from scripts.render_cli import show_cli_output
@@ -29,19 +26,6 @@ import urllib3
 urllib3.disable_warnings()
 
 
-plugins = dict()
-
-def register(func):
-    """Register sdk client method as a plug-in"""
-    plugins[func.__name__] = func
-    return func
-
-
-def call_method(name, args):
-    method = plugins[name]
-    return method(args)
-
-    
 def invoke_api(func, args=[]):
     api = cc.ApiClient()
 
@@ -65,7 +49,6 @@ def invoke_api(func, args=[]):
         path = cc.Path('/restconf/data/openconfig-interfaces:interfaces/interface={name}/state/counters', name=args[0])
         return api.get(path)
 
-    #print "invoke_api done"
     return api.cli_not_implemented(func)
     
 
@@ -87,19 +70,18 @@ def get_lag_data():
             if response.content is not None:
                 # Get Command Output
                 api_response = response.content
-                #print "--------------------------------------------------", api_response
-                #api_response = aa.api_client.sanitize_for_serialization(api_response)
-                #print "-----------------------", api_response
                 if 'sonic-portchannel:LAG_TABLE' not in api_response.keys():
                     output['sonic-portchannel:LAG_TABLE'] = {}
-                    output['sonic-portchannel:LAG_TABLE']['LAG_TABLE_LIST'] = api_response['sonic-portchannel:LAG_TABLE_LIST']
+                    if 'sonic-portchannel:LAG_TABLE_LIST' in api_response.keys():
+                        output['sonic-portchannel:LAG_TABLE']['LAG_TABLE_LIST'] = api_response['sonic-portchannel:LAG_TABLE_LIST']
                 else:
                     output = api_response        
-        
+ 
     except Exception as e:
         print("Exception when calling get_lag_data : %s\n" %(e))
-    
+
     return output
+
 
 def get_lacp_data():
 
@@ -122,10 +104,10 @@ def get_lacp_data():
                 #api_response1 = aa1.api_client.sanitize_for_serialization(api_response1)
                 if 'openconfig-lacp:interfaces' not in api_response1.keys():
                     resp['openconfig-lacp:interfaces'] = {}
-                    resp['openconfig-lacp:interfaces']['interface'] = api_response1['openconfig-lacp:interface']
+                    if 'openconfig-lacp:interface' in api_response1.keys():
+                        resp['openconfig-lacp:interfaces']['interface'] = api_response1['openconfig-lacp:interface']
                 else:
                      resp = api_response1
-                #print "------------------------------------------------", resp        
                 
     except Exception as e:
         print("Exception when calling get_lacp_data : %s\n" %(e))
@@ -136,22 +118,22 @@ def get_lacp_data():
 def get_counters(api_response):
 
     try:
-        #print api_response        
         response = {}
         if 'sonic-portchannel:LAG_TABLE' not in api_response.keys():
             response['sonic-portchannel:LAG_TABLE'] = {}
-            response['sonic-portchannel:LAG_TABLE']['LAG_TABLE_LIST'] = api_response['sonic-portchannel:LAG_TABLE_LIST']
+            if 'sonic-portchannel:LAG_TABLE_LIST' in api_response.keys():
+                response['sonic-portchannel:LAG_TABLE']['LAG_TABLE_LIST'] = api_response['sonic-portchannel:LAG_TABLE_LIST']
         else:
             response = api_response
         
-        for po_intf in response['sonic-portchannel:LAG_TABLE']['LAG_TABLE_LIST']:        
+        if 'LAG_TABLE_LIST' in response['sonic-portchannel:LAG_TABLE']:
+          for po_intf in response['sonic-portchannel:LAG_TABLE']['LAG_TABLE_LIST']:        
             resp = invoke_api('get_openconfig_interfaces_interfaces_interface_state_counters', po_intf['lagname'])
-        if resp.ok():
-            if resp.content is not None:
-                # Get Command Output
-                resp = resp.content
-                #resp = aa3.api_client.sanitize_for_serialization(resp)
-                po_intf["counters"] = resp
+            if resp.ok():
+                if resp.content is not None:
+                    # Get Command Output
+                    resp = resp.content
+                    po_intf["counters"] = resp
 
     except Exception as e:
         print("Exception when calling get_counters : %s\n" %(e))
@@ -166,14 +148,12 @@ def run():
 
     # Combine Outputs
     response = {"portchannel": api_response, "lacp": api_response1}
-    #print response
     
     if sys.argv[1] == "get_all_portchannels":
         template_file = sys.argv[2]
     else:
         template_file = sys.argv[3]
 
-    #print response
     show_cli_output(template_file, response)
 
 

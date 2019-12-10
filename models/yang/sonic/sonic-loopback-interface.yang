@@ -30,6 +30,13 @@ module sonic-loopback-interface {
                 leaf loIfName{
                     type string;
                 }
+
+                leaf nat_zone {
+                    type uint8 {
+                        range "0..3";
+                    }
+                }
+
             }
 
             list LOOPBACK_INTERFACE_IPADDR_LIST {
