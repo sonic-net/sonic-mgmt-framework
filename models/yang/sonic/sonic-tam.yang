@@ -54,7 +54,7 @@ module sonic-tam {
                 leaf ipaddress-type {
                     must "(contains(../ipaddress, ':') and current()='ipv6') or
                           (contains(../ipaddress, '.') and current()='ipv4')" {
-                        error-app-tag "Error: Wrong ipaddress for the specified ipaddress-type";
+                        error-message "%Error: Wrong ipaddress for the specified ipaddress-type";
                     }
 
                     type enumeration {
