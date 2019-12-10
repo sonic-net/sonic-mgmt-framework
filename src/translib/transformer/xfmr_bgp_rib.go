@@ -249,9 +249,19 @@ func hdl_get_bgp_local_rib (bgpRib_obj *ocbinds.OpenconfigNetworkInstance_Networ
 
     log.Infof("%s ==> Local-RIB invoke with keys {%s} afiSafiType:%d", *dbg_log, print_rib_keys(rib_key), afiSafiType)
 
-    bgpRibOutputJson, cmd_err := fake_rib_exec_vtysh_cmd ("", "ipv4-loc-rib")
+    cmd := "show ip bgp vrf" + " " + rib_key.niName + " " + "verbose json"
+    if afiSafiType == ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_IPV6_UNICAST {
+        cmd = "show bgp vrf" + " " + rib_key.niName + " " + "verbose json"
+    }
+
+    bgpRibOutputJson, cmd_err := exec_vtysh_cmd (cmd)
     if (cmd_err != nil) {
         log.Errorf ("%s failed !! Error:%s", *dbg_log, cmd_err);
+        return oper_err
+    }
+
+    if outError, ok := bgpRibOutputJson["warning"] ; ok {
+        log.Errorf ("%s failed !!, %s", outError)
         return oper_err
     }
 
@@ -1252,14 +1262,19 @@ func hdl_get_bgp_nbrs_adj_rib_in_pre (bgpRib_obj *ocbinds.OpenconfigNetworkInsta
     var ok bool
     log.Infof("%s ==> NBRS-RIB invoke with keys {%s} afiSafiType:%d", *dbg_log, print_rib_keys(rib_key), afiSafiType)
 
-    cmd := "ipv4-adj-rib-in-pre"
+    cmd := "show ip bgp vrf" + " " + rib_key.niName + " " + "neighbors" + " " + rib_key.nbrAddr + " " + "received-routes verbose json"
     if afiSafiType == ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_IPV6_UNICAST {
-        cmd = "ipv6-adj-rib-in-pre"
+        cmd = "show bgp vrf" + " " + rib_key.niName + " " + "neighbors" + " " + rib_key.nbrAddr + " " + "received-routes verbose json"
     }
 
-    bgpRibOutputJson, cmd_err := fake_rib_exec_vtysh_cmd ("", cmd)
+    bgpRibOutputJson, cmd_err := exec_vtysh_cmd (cmd)
     if (cmd_err != nil) {
         log.Errorf ("%s failed !! Error:%s", *dbg_log, cmd_err);
+        return oper_err
+    }
+
+    if outError, ok := bgpRibOutputJson["warning"] ; ok {
+        log.Errorf ("%s failed !!, %s", outError)
         return oper_err
     }
 
@@ -1293,7 +1308,7 @@ func hdl_get_bgp_nbrs_adj_rib_in_pre (bgpRib_obj *ocbinds.OpenconfigNetworkInsta
             return err
         }
         ygot.BuildEmptyTree(ipv6NbrsRibNbr_obj)
-
+        ipv6NbrsRibNbr_obj.State.NeighborAddress = &rib_key.nbrAddr
         routesData, ok := bgpRibOutputJson["routes"].(map[string]interface{})
         if !ok {return err}
 
@@ -1310,14 +1325,19 @@ func hdl_get_bgp_nbrs_adj_rib_in_post (bgpRib_obj *ocbinds.OpenconfigNetworkInst
     var ok bool
     log.Infof("%s ==> NBRS-RIB invoke with keys {%s} afiSafiType:%d", *dbg_log, print_rib_keys(rib_key), afiSafiType)
 
-    cmd := "ipv4-adj-rib-in-post"
+    cmd := "show ip bgp vrf" + " " + rib_key.niName + " " + "neighbors" + " " + rib_key.nbrAddr + " " + "routes verbose json"
     if afiSafiType == ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_IPV6_UNICAST {
-        cmd = "ipv6-adj-rib-in-post"
+        cmd = "show bgp vrf" + " " + rib_key.niName + " " + "neighbors" + " " + rib_key.nbrAddr + " " + "routes verbose json"
     }
 
-    bgpRibOutputJson, cmd_err := fake_rib_exec_vtysh_cmd ("", cmd)
+    bgpRibOutputJson, cmd_err := exec_vtysh_cmd (cmd)
     if (cmd_err != nil) {
         log.Errorf ("%s failed !! Error:%s", *dbg_log, cmd_err);
+        return oper_err
+    }
+
+    if outError, ok := bgpRibOutputJson["warning"] ; ok {
+        log.Errorf ("%s failed !!, %s", outError)
         return oper_err
     }
 
@@ -1386,14 +1406,19 @@ func hdl_get_bgp_nbrs_adj_rib_out_post (bgpRib_obj *ocbinds.OpenconfigNetworkIns
         return oper_err
     }
 
-    out_post_cmd := "ipv4-adj-rib-out-post"
+    cmd := "show ip bgp vrf" + " " + rib_key.niName + " " + "neighbors" + " " + rib_key.nbrAddr + " " + "advertised-routes verbose json"
     if afiSafiType == ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_IPV6_UNICAST {
-        out_post_cmd = "ipv6-adj-rib-out-post"
+        cmd = "show bgp vrf" + " " + rib_key.niName + " " + "neighbors" + " " + rib_key.nbrAddr + " " + "advertised-routes verbose json"
     }
 
-    bgpRibOutputJson, cmd_err := fake_rib_exec_vtysh_cmd ("", out_post_cmd)
+    bgpRibOutputJson, cmd_err := exec_vtysh_cmd (cmd)
     if (cmd_err != nil) {
         log.Errorf ("%s failed !! Error:%s", *dbg_log, cmd_err);
+        return oper_err
+    }
+
+    if outError, ok := bgpRibOutputJson["warning"] ; ok {
+        log.Errorf ("%s failed !!, %s", outError)
         return oper_err
     }
 
@@ -1438,16 +1463,22 @@ func hdl_get_all_bgp_nbrs_adj_rib (bgpRib_obj *ocbinds.OpenconfigNetworkInstance
     var err error
     oper_err := errors.New("Opertational error")
     var ok bool
+
     log.Infof("%s ==> GET-ALL: Nbrs-Adj-RIB invoke with keys {%s} afiSafiType:%d", *dbg_log, print_rib_keys(rib_key), afiSafiType)
 
-    get_all_nbrs_cmd := "ipv4-all-nbrs-adj-rib"
+    cmd := "show ip bgp vrf" + " " + rib_key.niName + " " + "neighbors" + " " + "routes verbose json"
     if afiSafiType == ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_IPV6_UNICAST {
-        get_all_nbrs_cmd = "ipv6-all-nbrs-adj-rib"
+        cmd = "show bgp vrf" + " " + rib_key.niName + " " + "neighbors" + " " + "routes verbose json"
     }
 
-    bgpRibOutputJson, cmd_err := fake_rib_exec_vtysh_cmd ("", get_all_nbrs_cmd)
+    bgpRibOutputJson, cmd_err := exec_vtysh_cmd (cmd)
     if (cmd_err != nil) {
         log.Errorf ("%s failed !! Error:%s", *dbg_log, cmd_err);
+        return oper_err
+    }
+
+    if outError, ok := bgpRibOutputJson["warning"] ; ok {
+        log.Errorf ("%s failed !!, %s", outError)
         return oper_err
     }
 
