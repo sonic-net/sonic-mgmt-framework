@@ -7,6 +7,11 @@
 {% endif %}
 {% if 'network-transport' in value.keys() %}
 {{ 'Network Transport'.ljust(21)}} {{ value['network-transport']}} {{ value['unicast-multicast']}}
+{% if 'udp6-scope' in value.keys() %}
+{% if value['network-transport'] == 'UDPv6' and value['unicast-multicast'] == 'multicast' %}
+{{ 'IPv6 Scope'.ljust(21)}} {{ value['udp6-scope']}}
+{% endif %}
+{% endif %}
 {% endif %}
 {% if 'domain-number' in value.keys() %}
 {{ 'Domain Number'.ljust(21)}} {{ value['domain-number']}}
