@@ -160,6 +160,6 @@ if __name__ == '__main__':
 
     if func == 'get_tam_drop_monitor_supported':
         get_tam_drop_monitor_supported(sys.argv[2:])
-
-    run(func, sys.argv[2:])
+    else:
+        run(func, sys.argv[2:])
 
