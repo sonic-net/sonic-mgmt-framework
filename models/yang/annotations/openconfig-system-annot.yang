@@ -18,7 +18,7 @@ module openconfig-system-annot {
     import openconfig-aaa { prefix oc-aaa; }
     import openconfig-system { prefix oc-sys; }
     import sonic-extensions { prefix sonic-ext; }
-    import openconfig-system-augments { prefix oc-sys-aug; }
+    import openconfig-system-ext { prefix oc-sys-aug; }
 
     deviation /oc-sys:system/oc-sys:state {
         deviate add {

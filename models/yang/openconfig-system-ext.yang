@@ -1,4 +1,4 @@
-module openconfig-system-augments {
+module openconfig-system-ext {
 
     yang-version "1";
 

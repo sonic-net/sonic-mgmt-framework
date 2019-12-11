@@ -65,9 +65,9 @@ limitations under the License.
              ptype="ENA_DISA">
       </PARAM>
       <ACTION> if test "${enable}" = "enable" ; then&#xA;
-        python $SONIC_CLI_ROOT/sonic-cli-aaa.py put_openconfig_system_augments_system_aaa_authentication_config_failthrough True&#xA;
+        python $SONIC_CLI_ROOT/sonic-cli-aaa.py put_openconfig_system_ext_system_aaa_authentication_config_failthrough True&#xA;
           else&#xA;
-        python $SONIC_CLI_ROOT/sonic-cli-aaa.py put_openconfig_system_augments_system_aaa_authentication_config_failthrough False&#xA;
+        python $SONIC_CLI_ROOT/sonic-cli-aaa.py put_openconfig_system_ext_system_aaa_authentication_config_failthrough False&#xA;
           fi&#xA;
       </ACTION>
     </COMMAND>

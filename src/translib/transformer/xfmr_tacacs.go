@@ -79,7 +79,7 @@ var server_table_xfmr TableXfmrFunc = func (inParams XfmrParams) ([]string, erro
     if (strings.Contains(aaaTypeLower, "tacacs")) {
         tblList = append(tblList, "TACPLUS_SERVER")
     } else if (strings.Contains(aaaTypeLower, "radius")) {
-        tblList = append(tblList, "RADIUS")
+        tblList = append(tblList, "RADIUS_SERVER")
     }
 //   else {
 //        err = errors.New("Invalid URI")

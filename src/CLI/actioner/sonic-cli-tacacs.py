@@ -32,21 +32,21 @@ def invoke_api(func, args):
     api = cc.ApiClient()
 
     # Set/Get tacacs configuration
-    if func == 'patch_openconfig_system_augments_system_aaa_server_groups_server_group_config_source_address':
-       path = cc.Path('/restconf/data/openconfig-system:system/aaa/server-groups/server-group=TACACS/config/openconfig-system-augments:source-address')
-       body = { "openconfig-system-augments:source-address": args[0] }
+    if func == 'patch_openconfig_system_ext_system_aaa_server_groups_server_group_config_source_address':
+       path = cc.Path('/restconf/data/openconfig-system:system/aaa/server-groups/server-group=TACACS/config/openconfig-system-ext:source-address')
+       body = { "openconfig-system-ext:source-address": args[0] }
        return api.patch(path, body)
-    elif func == 'patch_openconfig_system_augments_system_aaa_server_groups_server_group_config_timeout':
-       path = cc.Path('/restconf/data/openconfig-system:system/aaa/server-groups/server-group=TACACS/config/openconfig-system-augments:timeout')
-       body = { "openconfig-system-augments:timeout": int(args[0]) }
+    elif func == 'patch_openconfig_system_ext_system_aaa_server_groups_server_group_config_timeout':
+       path = cc.Path('/restconf/data/openconfig-system:system/aaa/server-groups/server-group=TACACS/config/openconfig-system-ext:timeout')
+       body = { "openconfig-system-ext:timeout": int(args[0]) }
        return api.patch(path, body)
-    elif func == 'patch_openconfig_system_augments_system_aaa_server_groups_server_group_config_auth_type':
-       path = cc.Path('/restconf/data/openconfig-system:system/aaa/server-groups/server-group=TACACS/config/openconfig-system-augments:auth-type')
-       body = { "openconfig-system-augments:auth-type": args[0] }
+    elif func == 'patch_openconfig_system_ext_system_aaa_server_groups_server_group_config_auth_type':
+       path = cc.Path('/restconf/data/openconfig-system:system/aaa/server-groups/server-group=TACACS/config/openconfig-system-ext:auth-type')
+       body = { "openconfig-system-ext:auth-type": args[0] }
        return api.patch(path, body)
-    elif func == 'patch_openconfig_system_augments_system_aaa_server_groups_server_group_config_secret_key':
-       path = cc.Path('/restconf/data/openconfig-system:system/aaa/server-groups/server-group=TACACS/config/openconfig-system-augments:secret-key')
-       body = { "openconfig-system-augments:secret-key": args[0] }
+    elif func == 'patch_openconfig_system_ext_system_aaa_server_groups_server_group_config_secret_key':
+       path = cc.Path('/restconf/data/openconfig-system:system/aaa/server-groups/server-group=TACACS/config/openconfig-system-ext:secret-key')
+       body = { "openconfig-system-ext:secret-key": args[0] }
        return api.patch(path, body)
     elif func == 'patch_tacacs_server':
        path = cc.Path('/restconf/data/openconfig-system:system/aaa/server-groups/server-group=TACACS/servers/server={address}/tacacs/config', address=args[0])
@@ -61,25 +61,25 @@ def invoke_api(func, args):
        body = {
            "openconfig-system:config": {
              "timeout": int(args[3]),
-             "openconfig-system-augments:auth-type": args[4],
-             "openconfig-system-augments:priority": int(args[5])
+             "openconfig-system-ext:auth-type": args[4],
+             "openconfig-system-ext:priority": int(args[5])
           }
        }
        return api.patch(path, body)
     elif func == 'delete_openconfig_system_system_aaa_server_groups_server_group_servers_server_tacacs_config':
        path = cc.Path('/restconf/data/openconfig-system:system/aaa/server-groups/server-group=TACACS/servers/server={address}/tacacs/config', address=args[0])
        return api.delete(path)
-    elif func == 'delete_openconfig_system_augments_system_aaa_server_groups_server_group_config_source_address':
-       path = cc.Path('/restconf/data/openconfig-system:system/aaa/server-groups/server-group=TACACS/config/openconfig-system-augments:source-address')
+    elif func == 'delete_openconfig_system_ext_system_aaa_server_groups_server_group_config_source_address':
+       path = cc.Path('/restconf/data/openconfig-system:system/aaa/server-groups/server-group=TACACS/config/openconfig-system-ext:source-address')
        return api.delete(path)
-    elif func == 'delete_openconfig_system_augments_system_aaa_server_groups_server_group_config_timeout':
-       path = cc.Path('/restconf/data/openconfig-system:system/aaa/server-groups/server-group=TACACS/config/openconfig-system-augments:timeout')
+    elif func == 'delete_openconfig_system_ext_system_aaa_server_groups_server_group_config_timeout':
+       path = cc.Path('/restconf/data/openconfig-system:system/aaa/server-groups/server-group=TACACS/config/openconfig-system-ext:timeout')
        return api.delete(path)
-    elif func == 'delete_openconfig_system_augments_system_aaa_server_groups_server_group_config_auth_type':
-       path = cc.Path('/restconf/data/openconfig-system:system/aaa/server-groups/server-group=TACACS/config/openconfig-system-augments:auth-type')
+    elif func == 'delete_openconfig_system_ext_system_aaa_server_groups_server_group_config_auth_type':
+       path = cc.Path('/restconf/data/openconfig-system:system/aaa/server-groups/server-group=TACACS/config/openconfig-system-ext:auth-type')
        return api.delete(path)
-    elif func == 'delete_openconfig_system_augments_system_aaa_server_groups_server_group_config_secret-key':
-       path = cc.Path('/restconf/data/openconfig-system:system/aaa/server-groups/server-group=TACACS/config/openconfig-system-augments:secret-key')
+    elif func == 'delete_openconfig_system_ext_system_aaa_server_groups_server_group_config_secret_key':
+       path = cc.Path('/restconf/data/openconfig-system:system/aaa/server-groups/server-group=TACACS/config/openconfig-system-ext:secret-key')
        return api.delete(path)
     else:
        body = {}
@@ -101,11 +101,11 @@ def get_sonic_tacacs_server(args):
     response = api.get(path)
     if response.ok():
         if response.content:
-            api_response['authtype'] = response.content['openconfig-system:config']['openconfig-system-augments:auth-type']
-            api_response['priority'] = response.content['openconfig-system:config']['openconfig-system-augments:priority']
+            api_response['authtype'] = response.content['openconfig-system:config']['openconfig-system-ext:auth-type']
+            api_response['priority'] = response.content['openconfig-system:config']['openconfig-system-ext:priority']
             api_response['timeout'] = response.content['openconfig-system:config']['timeout']
+            api_response['address'] = args[0] 
 
-    api_response['address'] = args[0]
     show_cli_output("show_tacacs_server.j2", api_response)
 
 def get_sonic_tacacs_global():
