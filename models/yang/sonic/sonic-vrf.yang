@@ -1,6 +1,10 @@
 module sonic-vrf {
     namespace "http://github.com/Azure/sonic-vrf";
     prefix vrf;
+    
+    import sonic-common {
+        prefix scommon;
+    }
 
     organization
         "SONiC";
@@ -16,6 +20,11 @@ module sonic-vrf {
             "Initial revision.";
     }
 
+    revision 2019-11-22 {
+        description
+            "Add VRF name check";
+    }
+
     container sonic-vrf {
         container VRF {
             description "Vrf configuration.";            
@@ -24,9 +33,12 @@ module sonic-vrf {
                 key "vrf_name";
 
                 leaf vrf_name {
-                    type string;
-                    description
-                        "Vrf name for SONiC, must start with Vrf.";
+                    type string {
+                        pattern "Vrf[a-zA-Z0-9_-]+" {
+                            error-message "Invalid VRF name";
+                            error-app-tag vrf-name-invalid;
+                        }
+                    }
                 }   
 
                 leaf fallback {
