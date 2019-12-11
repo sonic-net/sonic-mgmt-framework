@@ -51,6 +51,7 @@ type yangXpathInfo  struct {
     keyLevel       int
     isKey          bool
     defVal         string
+	hasChildSubTree bool
 }
 
 type dbInfo  struct {
@@ -68,10 +69,53 @@ type sonicTblSeqnInfo struct {
        DepTbl map[string][]string
 }
 
+type mdlInfo struct {
+       Org string
+       Ver string
+}
+
 var xYangSpecMap  map[string]*yangXpathInfo
 var xDbSpecMap    map[string]*dbInfo
 var xDbSpecOrdTblMap map[string][]string //map of module-name to ordered list of db tables { "sonic-acl" : ["ACL_TABLE", "ACL_RULE"] }
 var xDbSpecTblSeqnMap  map[string]*sonicTblSeqnInfo
+var xMdlCpbltMap  map[string]*mdlInfo
+
+/* Add module name to map storing model info for model capabilities */
+func addMdlCpbltEntry(yangMdlNm string) {
+       log.Info("Received yang model name to be added to model info map for gnmi ", yangMdlNm)
+       if xMdlCpbltMap == nil {
+               xMdlCpbltMap = make(map[string]*mdlInfo)
+       }
+       mdlInfoEntry := new(mdlInfo)
+       if mdlInfoEntry == nil {
+               log.Warningf("Memory allocation failure for storing model info for gnmi - module %v", yangMdlNm)
+               return
+       }
+       mdlInfoEntry.Org = ""
+       mdlInfoEntry.Ver = ""
+       xMdlCpbltMap[yangMdlNm] = mdlInfoEntry
+       return
+}
+
+/* Add version and organization info for model capabilities into map */
+func addMdlCpbltData(yangMdlNm string, version string, organization string) {
+	log.Infof("Adding version %v and organization %v for yang module %v", version, organization, yangMdlNm)
+	if xMdlCpbltMap == nil {
+               xMdlCpbltMap = make(map[string]*mdlInfo)
+        }
+	mdlInfoEntry, ok := xMdlCpbltMap[yangMdlNm]
+	if ((!ok) || (mdlInfoEntry == nil)) {
+		mdlInfoEntry = new(mdlInfo)
+		if mdlInfoEntry == nil {
+			log.Warningf("Memory allocation failure for storing model info for gnmi - module %v", yangMdlNm)
+			return
+		}
+       }
+       mdlInfoEntry.Ver = version
+       mdlInfoEntry.Org = organization
+       xMdlCpbltMap[yangMdlNm] = mdlInfoEntry
+       return
+}
 
 /* update transformer spec with db-node */
 func updateDbTableData (xpath string, xpathData *yangXpathInfo, tableName string) {
@@ -85,16 +129,32 @@ func updateDbTableData (xpath string, xpathData *yangXpathInfo, tableName string
 	}
 }
 
+func childSubTreePresenceFlagSet(xpath string) {
+		parXpath := parentXpathGet(xpath)
+	for {
+		if parXpath == "" {
+			break
+		}
+		if parXpathData, ok := xYangSpecMap[parXpath]; ok {
+			parXpathData.hasChildSubTree = true
+		}
+		parXpath = parentXpathGet(parXpath)
+	}
+	return
+}
+
 /* Recursive api to fill the map with yang details */
-func yangToDbMapFill (keyLevel int, xYangSpecMap map[string]*yangXpathInfo, entry *yang.Entry, xpathPrefix string) {
+func yangToDbMapFill (keyLevel int, xYangSpecMap map[string]*yangXpathInfo, entry *yang.Entry, xpathPrefix string, xpathFull string) {
 	xpath := ""
-	curKeyLevel := 0
+	curKeyLevel  := 0
+	curXpathFull := ""
 
 	if entry != nil && entry.Node != nil && isYangResType(entry.Node.Statement().Keyword) == true {
-		xpath = xpathPrefix
-		if _, ok := xYangSpecMap[xpath]; ok {
-			curKeyLevel = xYangSpecMap[xpath].keyLevel
+		curXpathFull = xpathFull + "/" + entry.Name
+		if _, ok := xYangSpecMap[xpathPrefix]; ok {
+			curKeyLevel = xYangSpecMap[xpathPrefix].keyLevel
 		}
+		xpath = xpathPrefix
 	} else {
 	/* create the yang xpath */
 	if xYangSpecMap[xpathPrefix] != nil  && xYangSpecMap[xpathPrefix].yangDataType == "module" {
@@ -104,6 +164,16 @@ func yangToDbMapFill (keyLevel int, xYangSpecMap map[string]*yangXpathInfo, entr
 		xpath = xpathPrefix + "/" + entry.Name
 	}
 
+	curXpathFull = xpath
+	if xpathPrefix != xpathFull {
+		curXpathFull = xpathFull + "/" + entry.Name
+		if annotNode, ok := xYangSpecMap[curXpathFull]; ok {
+			xpathData := new(yangXpathInfo)
+			xYangSpecMap[xpath] = xpathData
+			copyYangXpathSpecData(xYangSpecMap[xpath], annotNode)
+		}
+	}
+
 	xpathData, ok := xYangSpecMap[xpath]
 	if !ok {
 		xpathData = new(yangXpathInfo)
@@ -111,6 +181,9 @@ func yangToDbMapFill (keyLevel int, xYangSpecMap map[string]*yangXpathInfo, entr
 		xpathData.dbIndex = db.ConfigDB // default value
 	} else {
 		xpathData = xYangSpecMap[xpath]
+		if len(xpathData.xfmrFunc) > 0 {
+			childSubTreePresenceFlagSet(xpath)
+		}
 	}
 
 	xpathData.yangDataType = entry.Node.Statement().Keyword
@@ -208,7 +281,7 @@ func yangToDbMapFill (keyLevel int, xYangSpecMap map[string]*yangXpathInfo, entr
 
 	/* now recurse, filling the map with current node's children info */
 	for _, child := range childList {
-		yangToDbMapFill(curKeyLevel, xYangSpecMap, entry.Dir[child], xpath)
+		yangToDbMapFill(curKeyLevel, xYangSpecMap, entry.Dir[child], xpath, curXpathFull)
 	}
 }
 
@@ -229,7 +302,7 @@ func yangToDbMapBuild(entries map[string]*yang.Entry) {
 
 	/* Start to fill xpath based map with yang data */
     keyLevel := 0
-    yangToDbMapFill(keyLevel, xYangSpecMap, e, "")
+    yangToDbMapFill(keyLevel, xYangSpecMap, e, "", "")
 
 	// Fill the ordered map of child tables list for oc yangs
 	updateSchemaOrderedMap(module, e)
@@ -607,6 +680,7 @@ func mapPrint(inMap map[string]*yangXpathInfo, fileName string) {
         fmt.Fprintf (fp, "-----------------------------------------------------------------\r\n")
         fmt.Fprintf(fp, "%v:\r\n", k)
         fmt.Fprintf(fp, "    yangDataType: %v\r\n", d.yangDataType)
+        fmt.Fprintf(fp, "    hasChildSubTree: %v\r\n", d.hasChildSubTree)
         fmt.Fprintf(fp, "    tableName: ")
         if d.tableName != nil {
             fmt.Fprintf(fp, "%v", *d.tableName)

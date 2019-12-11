@@ -22,7 +22,7 @@ import (
     "fmt"
     "strings"
     "reflect"
-	"regexp"
+    "regexp"
     "translib/db"
     "github.com/openconfig/goyang/pkg/yang"
     "github.com/openconfig/gnmi/proto/gnmi"
@@ -735,4 +735,22 @@ func unmarshalJsonToDbData(schema *yang.Entry, fieldName string, value interface
         }
 
         return data, nil
+}
+
+func checkIpV6AddrNotation(val string) bool {
+        re_std := regexp.MustCompile(`^(?:[A-F0-9]{1,4}:){7}[A-F0-9]{1,4}$`)
+        re_comp := regexp.MustCompile(`(?:[A-F0-9]{0,4}:){0,7}[A-F0-9]{0,4}`)
+        if re_std.MatchString(val) {
+                return true;
+        } else if re_comp.MatchString(val) {
+                return true;
+        }
+        return false;
+}
+
+func copyYangXpathSpecData(dstNode *yangXpathInfo, srcNode *yangXpathInfo) {
+	if dstNode != nil && srcNode != nil {
+		*dstNode = *srcNode
+	}
+	return
 }
