@@ -951,6 +951,7 @@ module openconfig-network-instance-annot {
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:rib {
         deviate add {
+            sonic-ext:table-name "NONE";
             sonic-ext:subtree-transformer "bgp_routes_get_xfmr";
         }
     }
