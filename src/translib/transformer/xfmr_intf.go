@@ -31,6 +31,9 @@ import (
     "translib/tlerr"
     "bufio"
     "os"
+    "fmt"
+    "encoding/json"
+    "time"
 )
 
 func init () {
@@ -58,6 +61,7 @@ func init () {
     XlateFuncBind("DbToYang_neigh_tbl_key_xfmr", DbToYang_neigh_tbl_key_xfmr)
     XlateFuncBind("YangToDb_neigh_tbl_key_xfmr", YangToDb_neigh_tbl_key_xfmr)
     /*--show ip ARP/neighbors changes end--*/
+    XlateFuncBind("rpc_clear_counters", rpc_clear_counters)
 }
 
 /*--show ip ARP/neighbors changes start--*/
@@ -209,6 +213,114 @@ func getIntfsRoot (s *ygot.GoStruct) *ocbinds.OpenconfigInterfaces_Interfaces {
     return deviceObj.Interfaces
 }
 
+/* RPC for clear counters */
+var rpc_clear_counters RpcCallpoint = func(body []byte, dbs [db.MaxDB]*db.DB) ([]byte, error) {
+    var err error
+    var result struct {
+        Output struct {
+            Status int32 `json:"status"`
+            Status_detail string`json:"status-detail"`
+        } `json:"sonic-interface:output"`
+    }
+    result.Output.Status = 1
+    /* Get input data */
+    var mapData map[string]interface{}
+    err = json.Unmarshal(body, &mapData)
+    if err != nil {
+        log.Info("Failed to unmarshall given input data")
+        result.Output.Status_detail = fmt.Sprintf("Error: Failed to unmarshall given input data")
+        return json.Marshal(&result)
+    }
+    input, _ := mapData["sonic-interface:input"]
+    mapData = input.(map[string]interface{})
+    input = mapData["interface-param"]
+    input_str := fmt.Sprintf("%v", input)
+    input_str = strings.ToUpper(string(input_str))
+
+    portOidmapTs := &db.TableSpec{Name: "COUNTERS_PORT_NAME_MAP"}
+    ifCountInfo, err := dbs[db.CountersDB].GetMapAll(portOidmapTs)
+    if err != nil {
+        result.Output.Status_detail = fmt.Sprintf("Error: Port-OID (Counters) get for all the interfaces failed!")
+        return json.Marshal(&result)
+    }
+
+    if input_str == "ALL" {
+        log.Info("rpc_clear_counters : Clear Counters for all interfaces")
+        for  intf, oid := range ifCountInfo.Field {
+            verr, cerr := resetCounters(dbs[db.CountersDB], oid)
+            if verr != nil || cerr != nil {
+                log.Info("Failed to reset counters for ", intf)
+            } else {
+                log.Info("Counters reset for " + intf)
+            }
+        }
+    } else if input_str == "ETHERNET" || input_str == "PORTCHANNEL" {
+        log.Info("rpc_clear_counters : Reset counters for given interface type")
+        for  intf, oid := range ifCountInfo.Field {
+            if strings.HasPrefix(strings.ToUpper(intf), input_str) {
+                verr, cerr := resetCounters(dbs[db.CountersDB], oid)
+                if verr != nil || cerr != nil {
+                    log.Error("Failed to reset counters for: ", intf)
+                } else {
+                    log.Info("Counters reset for " + intf)
+                }
+            }
+        }
+    } else {
+        log.Info("rpc_clear_counters: Clear counters for given interface name")
+        id := getIdFromIntfName(&input_str)
+        if strings.HasPrefix(input_str, "ETHERNET") {
+            input_str = "Ethernet" + id
+        } else if strings.HasPrefix(input_str, "PORTCHANNEL") {
+            input_str = "PortChannel" + id
+        } else {
+            log.Info("Invalid Interface")
+            result.Output.Status_detail = fmt.Sprintf("Error: Clear Counters not supported for %s", input_str)
+            return json.Marshal(&result)
+        }
+        oid, ok := ifCountInfo.Field[input_str]
+        if !ok {
+            result.Output.Status_detail = fmt.Sprintf("Error: OID info not found in COUNTERS_PORT_NAME_MAP for %s", input_str)
+            return json.Marshal(&result)
+        }
+        verr, cerr := resetCounters(dbs[db.CountersDB], oid)
+        if verr != nil {
+            result.Output.Status_detail = fmt.Sprintf("Error: Failed to get counter values from COUNTERS table for %s", input_str)
+            return json.Marshal(&result)
+        }
+        if cerr != nil {
+            log.Info("Failed to reset counters values")
+            result.Output.Status_detail = fmt.Sprintf("Error: Failed to reset counters values for %s.", input_str)
+            return json.Marshal(&result)
+        }
+        log.Info("Counters reset for " + input_str)
+    }
+    result.Output.Status = 0
+    result.Output.Status_detail = "Success: Cleared Counters"
+    return json.Marshal(&result)
+}
+
+/* Reset counter values in COUNTERS_BACKUP table for given OID */
+func resetCounters(d *db.DB, oid string) (error,error) {
+    var verr,cerr error
+    CountrTblTs := db.TableSpec {Name: "COUNTERS"}
+    CountrTblTsCp := db.TableSpec { Name: "COUNTERS_BACKUP" }
+    value, verr := d.GetEntry(&CountrTblTs, db.Key{Comp: []string{oid}})
+    if verr == nil {
+        secs := time.Now().Unix()
+        timeStamp := strconv.FormatInt(secs, 10)
+        value.Field["LAST_CLEAR_TIMESTAMP"] = timeStamp
+        cerr = d.CreateEntry(&CountrTblTsCp, db.Key{Comp: []string{oid}}, value)
+    }
+    return verr, cerr
+}
+
+/* Extract ID from Intf String */
+func getIdFromIntfName(intfName *string) (string) {
+    var re = regexp.MustCompile("[0-9]+")
+    id := re.FindStringSubmatch(*intfName)
+    return id[0]
+}
 
 var YangToDb_intf_tbl_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (string, error) {
     log.Info("Entering YangToDb_intf_tbl_key_xfmr")
@@ -1258,42 +1370,42 @@ func getIntfCountersTblKey (d *db.DB, ifKey string) (string, error) {
     return oid, err
 }
 
-func getSpecificCounterAttr(targetUriPath string, entry *db.Value, counter_val *ocbinds.OpenconfigInterfaces_Interfaces_Interface_State_Counters) (bool, error) {
+func getSpecificCounterAttr(targetUriPath string, entry *db.Value, entry_backup *db.Value, counter_val *ocbinds.OpenconfigInterfaces_Interfaces_Interface_State_Counters) (bool, error) {
 
     var e error
 
     switch targetUriPath {
     case "/openconfig-interfaces:interfaces/interface/state/counters/in-octets":
-        e = getCounters(entry, "SAI_PORT_STAT_IF_IN_OCTETS", &counter_val.InOctets)
+        e = getCounters(entry, entry_backup, "SAI_PORT_STAT_IF_IN_OCTETS", &counter_val.InOctets)
         return true, e
 
     case "/openconfig-interfaces:interfaces/interface/state/counters/in-unicast-pkts":
-        e = getCounters(entry, "SAI_PORT_STAT_IF_IN_UCAST_PKTS", &counter_val.InUnicastPkts)
+        e = getCounters(entry, entry_backup, "SAI_PORT_STAT_IF_IN_UCAST_PKTS", &counter_val.InUnicastPkts)
         return true, e
 
     case "/openconfig-interfaces:interfaces/interface/state/counters/in-broadcast-pkts":
-        e = getCounters(entry, "SAI_PORT_STAT_IF_IN_BROADCAST_PKTS", &counter_val.InBroadcastPkts)
+        e = getCounters(entry, entry_backup, "SAI_PORT_STAT_IF_IN_BROADCAST_PKTS", &counter_val.InBroadcastPkts)
         return true, e
 
     case "/openconfig-interfaces:interfaces/interface/state/counters/in-multicast-pkts":
-        e = getCounters(entry, "SAI_PORT_STAT_IF_IN_MULTICAST_PKTS", &counter_val.InMulticastPkts)
+        e = getCounters(entry, entry_backup, "SAI_PORT_STAT_IF_IN_MULTICAST_PKTS", &counter_val.InMulticastPkts)
         return true, e
 
     case "/openconfig-interfaces:interfaces/interface/state/counters/in-errors":
-        e = getCounters(entry, "SAI_PORT_STAT_IF_IN_ERRORS", &counter_val.InErrors)
+        e = getCounters(entry, entry_backup, "SAI_PORT_STAT_IF_IN_ERRORS", &counter_val.InErrors)
         return true, e
 
     case "/openconfig-interfaces:interfaces/interface/state/counters/in-discards":
-        e = getCounters(entry, "SAI_PORT_STAT_IF_IN_DISCARDS", &counter_val.InDiscards)
+        e = getCounters(entry, entry_backup, "SAI_PORT_STAT_IF_IN_DISCARDS", &counter_val.InDiscards)
         return true, e
 
     case "/openconfig-interfaces:interfaces/interface/state/counters/in-pkts":
         var inNonUCastPkt, inUCastPkt *uint64
         var in_pkts uint64
 
-        e = getCounters(entry, "SAI_PORT_STAT_IF_IN_NON_UCAST_PKTS", &inNonUCastPkt)
+        e = getCounters(entry, entry_backup, "SAI_PORT_STAT_IF_IN_NON_UCAST_PKTS", &inNonUCastPkt)
         if e == nil {
-            e = getCounters(entry, "SAI_PORT_STAT_IF_IN_UCAST_PKTS", &inUCastPkt)
+            e = getCounters(entry, entry_backup, "SAI_PORT_STAT_IF_IN_UCAST_PKTS", &inUCastPkt)
             if e != nil {
                 return true, e
             }
@@ -1305,36 +1417,42 @@ func getSpecificCounterAttr(targetUriPath string, entry *db.Value, counter_val *
         }
 
     case "/openconfig-interfaces:interfaces/interface/state/counters/out-octets":
-        e = getCounters(entry, "SAI_PORT_STAT_IF_OUT_OCTETS", &counter_val.OutOctets)
+        e = getCounters(entry, entry_backup, "SAI_PORT_STAT_IF_OUT_OCTETS", &counter_val.OutOctets)
         return true, e
 
     case "/openconfig-interfaces:interfaces/interface/state/counters/out-unicast-pkts":
-        e = getCounters(entry, "SAI_PORT_STAT_IF_OUT_UCAST_PKTS", &counter_val.OutUnicastPkts)
+        e = getCounters(entry, entry_backup, "SAI_PORT_STAT_IF_OUT_UCAST_PKTS", &counter_val.OutUnicastPkts)
         return true, e
 
     case "/openconfig-interfaces:interfaces/interface/state/counters/out-broadcast-pkts":
-        e = getCounters(entry, "SAI_PORT_STAT_IF_OUT_BROADCAST_PKTS", &counter_val.OutBroadcastPkts)
+        e = getCounters(entry, entry_backup, "SAI_PORT_STAT_IF_OUT_BROADCAST_PKTS", &counter_val.OutBroadcastPkts)
         return true, e
 
     case "/openconfig-interfaces:interfaces/interface/state/counters/out-multicast-pkts":
-        e = getCounters(entry, "SAI_PORT_STAT_IF_OUT_MULTICAST_PKTS", &counter_val.OutMulticastPkts)
+        e = getCounters(entry, entry_backup, "SAI_PORT_STAT_IF_OUT_MULTICAST_PKTS", &counter_val.OutMulticastPkts)
         return true, e
 
     case "/openconfig-interfaces:interfaces/interface/state/counters/out-errors":
-        e = getCounters(entry, "SAI_PORT_STAT_IF_OUT_ERRORS", &counter_val.OutErrors)
+        e = getCounters(entry, entry_backup, "SAI_PORT_STAT_IF_OUT_ERRORS", &counter_val.OutErrors)
         return true, e
 
     case "/openconfig-interfaces:interfaces/interface/state/counters/out-discards":
-        e = getCounters(entry, "SAI_PORT_STAT_IF_OUT_DISCARDS", &counter_val.OutDiscards)
+        e = getCounters(entry, entry_backup, "SAI_PORT_STAT_IF_OUT_DISCARDS", &counter_val.OutDiscards)
+        return true, e
+
+    case "/openconfig-interfaces:interfaces/interface/state/counters/last-clear":
+        timestampStr := (entry_backup.Field["LAST_CLEAR_TIMESTAMP"])
+        timestamp, _ := strconv.ParseUint(timestampStr, 10, 64)
+        counter_val.LastClear = &timestamp
         return true, e
 
     case "/openconfig-interfaces:interfaces/interface/state/counters/out-pkts":
         var outNonUCastPkt, outUCastPkt *uint64
         var out_pkts uint64
 
-        e = getCounters(entry, "SAI_PORT_STAT_IF_OUT_NON_UCAST_PKTS", &outNonUCastPkt)
+        e = getCounters(entry, entry_backup, "SAI_PORT_STAT_IF_OUT_NON_UCAST_PKTS", &outNonUCastPkt)
         if e == nil {
-            e = getCounters(entry, "SAI_PORT_STAT_IF_OUT_UCAST_PKTS", &outUCastPkt)
+            e = getCounters(entry, entry_backup, "SAI_PORT_STAT_IF_OUT_UCAST_PKTS", &outUCastPkt)
             if e != nil {
                 return true, e
             }
@@ -1352,24 +1470,25 @@ func getSpecificCounterAttr(targetUriPath string, entry *db.Value, counter_val *
     return false, nil
 }
 
-func getCounters(entry *db.Value, attr string, counter_val **uint64 ) error {
+func getCounters(entry *db.Value, entry_backup *db.Value, attr string, counter_val **uint64 ) error {
 
     var ok bool = false
-    var val string
     var err error
-
-    val, ok = entry.Field[attr]
+    val1, ok := entry.Field[attr]
     if !ok {
         return errors.New("Attr " + attr + "doesn't exist in IF table Map!")
     }
+    val2, ok := entry_backup.Field[attr]
+    if !ok {
+        return errors.New("Attr " + attr + "doesn't exist in IF backup table Map!")
+    }
 
-    if len(val) > 0 {
-        v, e := strconv.ParseUint(val, 10, 64)
-        if err == nil {
-            *counter_val = &v
-            return nil
-        }
-        err = e
+    if len(val1) > 0 {
+        v, _ := strconv.ParseUint(val1, 10, 64)
+        v_backup, _ := strconv.ParseUint(val2, 10, 64)
+        val := v-v_backup
+        *counter_val = &val
+        return nil
     }
     return err
 }
@@ -1377,9 +1496,8 @@ func getCounters(entry *db.Value, attr string, counter_val **uint64 ) error {
 var portCntList [] string = []string {"in-octets", "in-unicast-pkts", "in-broadcast-pkts", "in-multicast-pkts",
 "in-errors", "in-discards", "in-pkts", "out-octets", "out-unicast-pkts",
 "out-broadcast-pkts", "out-multicast-pkts", "out-errors", "out-discards",
-"out-pkts"}
+"out-pkts","last-clear"}
 var populatePortCounters PopulateIntfCounters = func (inParams XfmrParams, counter *ocbinds.OpenconfigInterfaces_Interfaces_Interface_State_Counters) (error) {
-
     pathInfo := NewPathInfo(inParams.uri)
     intfName := pathInfo.Var("name")
     targetUriPath, err := getYangPathFromUri(pathInfo.Path)
@@ -1397,18 +1515,31 @@ var populatePortCounters PopulateIntfCounters = func (inParams XfmrParams, count
         return dbErr
     }
     CounterData := entry
+    cntTs_cp := &db.TableSpec { Name: "COUNTERS_BACKUP" }
+    entry_backup, dbErr := inParams.dbs[inParams.curDb].GetEntry(cntTs_cp, db.Key{Comp: []string{oid}})
+    if dbErr != nil {
+        m := make(map[string]string)
+        log.Info("PopulateIntfCounters : not able find the oid entry in DB COUNTERS_BACKUP table")
+        /* Frame backup data with 0 as counter values */
+        for  attr,_ := range entry.Field {
+            m[attr] = "0"
+        }
+        m["LAST_CLEAR_TIMESTAMP"] = "0"
+        entry_backup = db.Value{Field: m}
+    }
+    CounterBackUpData := entry_backup
 
     switch (targetUriPath) {
     case "/openconfig-interfaces:interfaces/interface/state/counters":
         for _, attr := range portCntList {
             uri := targetUriPath + "/" + attr
-            if ok, err := getSpecificCounterAttr(uri, &CounterData, counter); !ok || err != nil {
+            if ok, err := getSpecificCounterAttr(uri, &CounterData, &CounterBackUpData, counter); !ok || err != nil {
                 log.Info("Get Counter URI failed :", uri)
                 err = errors.New("Get Counter URI failed")
             }
         }
     default:
-        _, err = getSpecificCounterAttr(targetUriPath, &CounterData, counter)
+        _, err = getSpecificCounterAttr(targetUriPath, &CounterData, &CounterBackUpData, counter)
     }
 
     return err
