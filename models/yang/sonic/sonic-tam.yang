@@ -55,7 +55,7 @@ module sonic-tam {
                     must "(contains(../ipaddress, ':') and current()='ipv6') or
                           (contains(../ipaddress, '.') and current()='ipv4')" {
                         error-message "%Error: Wrong ipaddress for the specified ipaddress-type";
-                        error-app-tag "%Error: Wrong ipaddress for the specified ipaddress-type";
+                        error-app-tag invalid-ipaddress;
                     }
 
                     type enumeration {
