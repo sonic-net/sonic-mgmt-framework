@@ -10,6 +10,7 @@ import (
     log "github.com/golang/glog"
     "reflect"
     "fmt"
+    "net"
 )
 
 const (
@@ -73,11 +74,11 @@ var YangToDb_prefix_action_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrParams
     if inParams.param == nil {
         return res_map, err
     }
-    action, _ := inParams.param.(ocbinds.E_OpenconfigRoutingPolicy_PolicyResultType)
+    action, _ := inParams.param.(ocbinds.E_OpenconfigRoutingPolicyExt_RoutingPolicyExtActionType)
     log.Info("YangToDb_prefix_action_fld_xfmr: ", inParams.ygRoot, " Xpath: ", inParams.uri, " route-operation: ", action)
-    if action == ocbinds.OpenconfigRoutingPolicy_PolicyResultType_ACCEPT_ROUTE {
+    if action == ocbinds.OpenconfigRoutingPolicyExt_RoutingPolicyExtActionType_PERMIT {
         res_map["action"] = "permit"
-    } else if action == ocbinds.OpenconfigRoutingPolicy_PolicyResultType_REJECT_ROUTE {
+    } else if action == ocbinds.OpenconfigRoutingPolicyExt_RoutingPolicyExtActionType_DENY {
         res_map["action"] = "deny"
     }
     return res_map, err
@@ -219,7 +220,16 @@ var YangToDb_prefix_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (string
             return masklenrange, err
         }
 
-        prefixTblKey = setName + "|" + ipPrefix + "|" + masklenrange
+        log.Info("YangToDb_prefix_key_xfmr: in prefix: ", ipPrefix)
+        _, ipNet, err := net.ParseCIDR(ipPrefix)
+        if err != nil {
+            err = errors.New("Invalid prefix")
+            log.Error("YangToDb_prefix_key_xfmr: Invalid Prefix ", ipPrefix)
+            return ipPrefix, err
+        }
+        log.Info("YangToDb_prefix_key_xfmr: Converted to CIDR prefix: ", ipNet.String())
+
+        prefixTblKey = setName + "|" + ipNet.String() + "|" + masklenrange
     }
     log.Info("YangToDb_prefix_key_xfmr: prefixTblKey: ", prefixTblKey)
 
