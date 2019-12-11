@@ -142,16 +142,19 @@ func childSubTreePresenceFlagSet(xpath string) {
 	}
 	return
 }
+
 /* Recursive api to fill the map with yang details */
-func yangToDbMapFill (keyLevel int, xYangSpecMap map[string]*yangXpathInfo, entry *yang.Entry, xpathPrefix string) {
+func yangToDbMapFill (keyLevel int, xYangSpecMap map[string]*yangXpathInfo, entry *yang.Entry, xpathPrefix string, xpathFull string) {
 	xpath := ""
-	curKeyLevel := 0
+	curKeyLevel  := 0
+	curXpathFull := ""
 
 	if entry != nil && entry.Node != nil && isYangResType(entry.Node.Statement().Keyword) == true {
-		xpath = xpathPrefix
-		if _, ok := xYangSpecMap[xpath]; ok {
-			curKeyLevel = xYangSpecMap[xpath].keyLevel
+		curXpathFull = xpathFull + "/" + entry.Name
+		if _, ok := xYangSpecMap[xpathPrefix]; ok {
+			curKeyLevel = xYangSpecMap[xpathPrefix].keyLevel
 		}
+		xpath = xpathPrefix
 	} else {
 	/* create the yang xpath */
 	if xYangSpecMap[xpathPrefix] != nil  && xYangSpecMap[xpathPrefix].yangDataType == "module" {
@@ -159,6 +162,16 @@ func yangToDbMapFill (keyLevel int, xYangSpecMap map[string]*yangXpathInfo, entr
 		xpath = xpathPrefix + ":" + entry.Name
 	} else {
 		xpath = xpathPrefix + "/" + entry.Name
+	}
+
+	curXpathFull = xpath
+	if xpathPrefix != xpathFull {
+		curXpathFull = xpathFull + "/" + entry.Name
+		if annotNode, ok := xYangSpecMap[curXpathFull]; ok {
+			xpathData := new(yangXpathInfo)
+			xYangSpecMap[xpath] = xpathData
+			copyYangXpathSpecData(xYangSpecMap[xpath], annotNode)
+		}
 	}
 
 	xpathData, ok := xYangSpecMap[xpath]
@@ -268,7 +281,7 @@ func yangToDbMapFill (keyLevel int, xYangSpecMap map[string]*yangXpathInfo, entr
 
 	/* now recurse, filling the map with current node's children info */
 	for _, child := range childList {
-		yangToDbMapFill(curKeyLevel, xYangSpecMap, entry.Dir[child], xpath)
+		yangToDbMapFill(curKeyLevel, xYangSpecMap, entry.Dir[child], xpath, curXpathFull)
 	}
 }
 
@@ -289,7 +302,7 @@ func yangToDbMapBuild(entries map[string]*yang.Entry) {
 
 	/* Start to fill xpath based map with yang data */
     keyLevel := 0
-    yangToDbMapFill(keyLevel, xYangSpecMap, e, "")
+    yangToDbMapFill(keyLevel, xYangSpecMap, e, "", "")
 
 	// Fill the ordered map of child tables list for oc yangs
 	updateSchemaOrderedMap(module, e)

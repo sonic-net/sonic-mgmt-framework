@@ -747,3 +747,10 @@ func checkIpV6AddrNotation(val string) bool {
         }
         return false;
 }
+
+func copyYangXpathSpecData(dstNode *yangXpathInfo, srcNode *yangXpathInfo) {
+	if dstNode != nil && srcNode != nil {
+		*dstNode = *srcNode
+	}
+	return
+}
