@@ -790,6 +790,18 @@ def invoke_api(func, args=[]):
                 name=args[0], identifier=IDENTIFIER, name1=NAME1, peer_group_name=args[1], afi_safi_name=args[2])
         body = { "openconfig-bgp-ext:origin": True if 'origin' in args[3:] else False }
         return api.patch(keypath, body)
+    elif func == 'get_adj_rib_in_pre':
+        d = {}
+        keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/rib/afi-safis/afi-safi={afi_safi_name}/ipv4-unicast/neighbors/neighbor={nbr_address}/adj-rib-in-pre', name=args[0], identifier=IDENTIFIER, name1=NAME1, afi_safi_name=args[1], nbr_address = args[2])
+        response = api.get(keypath)
+        if(response.ok()):
+            d.update(response.content)
+            keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/config', name=args[0], identifier=IDENTIFIER,name1=NAME1)
+            response1 = api.get(keypath)
+            if(response1.ok()):
+                d.update(response1.content)
+                return d 
+        return d 
 
     elif attr == 'openconfig_network_instance_network_instances_network_instance_table_connections_table_connection_config_import_policy':
         keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/table-connections/table-connection={src_protocol},{dst_protocol},{address_family}/config/import-policy',
@@ -1160,18 +1172,22 @@ def invoke_api(func, args=[]):
     return api.cli_not_implemented(func)
 
 def run(func, args):
-    response = invoke_api(func, args)
-
-    if response.ok():
-        if response.content is not None:
-            # Get Command Output
-            api_response = response.content
-            if api_response is None:
-                print("Failed")
-                sys.exit(1)
+    if func == 'get_adj_rib_in_pre':
+        response = invoke_api(func, args)
+        show_cli_output(args[3], response)
     else:
-        print response.error_message()
-        sys.exit(1)
+        response = invoke_api(func, args)
+        if response.ok():
+            if response.content is not None:
+                # Get Command Output
+                api_response = response.content
+                print(api_response)
+                if api_response is None:
+                    print("Failed")
+                    sys.exit(1)
+        else:
+            print response.error_message()
+            sys.exit(1)
 
 if __name__ == '__main__':
 
