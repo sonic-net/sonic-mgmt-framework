@@ -26,82 +26,42 @@ limitations under the License.
 
 <VIEW name="enable-view">
   <COMMAND name="show ip bgp" help="BGP information">
-    <PARAM name="vrf" help="BGP VRF" mode="subcommand" ptype="SUBCOMMAND" optional="true">
-      <PARAM name="vrf-Name" help="VRF Name" ptype="STRING">
-        <PARAM name="ip subcommands" help="IP subcommands" ptype="SUBCOMMAND" mode="switch">
-          <PARAM name="ipv4" help="Address family" ptype="SUBCOMMAND" mode="subcommand">
-            <PARAM name="ipv4 Subcommands" help="IPv4 subcommands" ptype="SUBCOMMAND" mode="switch">
+    <PARAM name="bgp subcommands" help="BGP Subcommands" ptype="SUBCOMMAND" mode="switch" optional="true">
+       <PARAM name="neighbors" help="Detailed information on TCP and BGP neighbor connections" ptype="SUBCOMMAND" mode="subcommand">
+         <PARAM name="neighbor-ip" help="Neighbor to display information about" ptype="IP_ADDR" optional="true">
+           <PARAM name="neighbor-subcommands" help="Neighbor subcommands" ptype="SUBCOMMAND" mode="switch">
 
-              <PARAM name="prefix" help="IPv4 prefix" ptype="IP_ADDR_MASK">
-                <PARAM name="neighbor-ip" help="Neighbor to display information about" ptype="IP_ADDR">
-                  <PARAM name="path-id" help="Path Identifier" ptype="UINT"/>
-                </PARAM>
-              </PARAM>
-
-              <PARAM name="neighbors" help="Detailed information on TCP and BGP neighbor connections" ptype="SUBCOMMAND" mode="subcommand">
-                <PARAM name="neighbor-ip" help="Neighbor to display information about" ptype="IP_ADDR" optional="true">
-                  <PARAM name="neighbor-subcommands" help="Neighbor subcommands" ptype="SUBCOMMAND" mode="switch">
-
-                    <PARAM name="received-routes" help="Display the received routes from neighbor" ptype="SUBCOMMAND" mode="subcommand"/>
-                    <PARAM name="advertised-routes" help="Display the routes advertised to a BGP neighbor" ptype="SUBCOMMAND" mode="subcommand"/>
-                  </PARAM>
-                </PARAM>
-              </PARAM>
-
-              <PARAM name="summary" help="Summary of BGP neighbor status" ptype="SUBCOMMAND" mode="subcommand"/>
-            </PARAM>
-          </PARAM>
-
-          <PARAM name="ipv6" help="Address family" ptype="SUBCOMMAND" mode="subcommand">
-            <PARAM name="ipv6 Subcommands" help="IPv6 subcommands" ptype="SUBCOMMAND" mode="switch">
-
-              <PARAM name="prefix" help="IPv6 prefix" ptype="IPV6_ADDR_MASK">
-                <PARAM name="neighbour-ip" help="Neighbor to display information about" ptype="IPV6_ADDR">
-                  <PARAM name="path-id" help="Path identifier" ptype="UINT"/>
-                </PARAM>
-              </PARAM>
-
-              <PARAM name="neighbors" help="Detailed information on TCP and BGP neighbor connections" ptype="SUBCOMMAND" mode="subcommand">
-                <PARAM name="neighbor-ip" help="Neighbor to display information about" ptype="IPV6_ADDR" optional="true"/>
-                  <PARAM name="neighbor-subcommands" help="Neighbor subcommands" ptype="SUBCOMMAND" mode="switch">
-
-                    <PARAM name="received-routes" help="Display the received routes from neighbor" ptype="SUBCOMMAND" mode="subcommand"/>
-                    <PARAM name="advertised-routes" help="Display the routes advertised to a BGP neighbor" ptype="SUBCOMMAND" mode="subcommand"/>
-                  </PARAM>
-                </PARAM>
-
-              <PARAM name="summary" help="Summary of BGP neighbor status" ptype="SUBCOMMAND" mode="subcommand"/>
-            </PARAM>
-          </PARAM>
-          <PARAM name="peer-group" help="Detailed information on BGP peer groups" ptype="SUBCOMMAND" mode="subcommand">
-            <PARAM name="peer-group name" help="Peer-group name" ptype="STRING"/>
-          </PARAM>
-        </PARAM>
-      </PARAM>
+             <PARAM name="received-routes" help="Display the received routes from neighbor" ptype="SUBCOMMAND" mode="subcommand"/>
+             <PARAM name="advertised-routes" help="Display the routes advertised to a BGP neighbor" ptype="SUBCOMMAND" mode="subcommand"/>
+           </PARAM>
+         </PARAM>
+       </PARAM>
+       <MACRO name="IP_BGP_SUB_CMDS" arg=""></MACRO>
+       <PARAM name="vrf" help="BGP VRF" mode="subcommand" ptype="SUBCOMMAND" optional="true">
+         <PARAM name="vrf-Name" help="VRF Name" ptype="STRING">
+           <PARAM name="ip subcommands" help="IP subcommands" ptype="SUBCOMMAND" mode="switch" optional="true">
+           <MACRO name="IP_BGP_SUB_CMDS" arg=""></MACRO>
+           </PARAM>
+         </PARAM>
+       </PARAM>
     </PARAM>
-    <ACTION builtin="clish_nop"/>
+  <ACTION>
+      if test "${ip subcommands}" = "ipv4"; then&#xA;
+          if test "${ipv4 Subcommands}" = "neighbors"; then&#xA;
+              if test "${neighbor-subcommands}" = "received-routes"; then&#xA;
+                  python $SONIC_CLI_ROOT/sonic-cli-bgp.py get_adj_rib_in_pre ${vrf-Name} IPV4_UNICAST ${neighbor-ip} show_ip_bgp_routes.j2 ${__full_line}&#xA;
+              fi&#xA;
+          fi&#xA;
+      fi&#xA;
+  </ACTION>
   </COMMAND>
 
-  <COMMAND name="show ip bgp neighbors" help="BGP information">
-    <ACTION builtin="clish_nop"/>
-  </COMMAND>
-  <COMMAND name="show ip bgp summary" help="BGP information">
-    <ACTION builtin="clish_nop"/>
-  </COMMAND>
-  <COMMAND name="show ip bgp peer-group" help="BGP information">
-    <ACTION builtin="clish_nop"/>
-  </COMMAND>
-  <COMMAND name="show ip bgp ipv4" help="IPv4 route information">
-    <PARAM name="unicast" help="Unicast route information" mode="subcommand" ptype="SUBCOMMAND"/>
-    <ACTION builtin="clish_nop"/>
-  </COMMAND>
-  <COMMAND name="show ip bgp ipv6" help="IPv6 route information">
-    <PARAM name="unicast" help="Unicast route information" mode="subcommand" ptype="SUBCOMMAND"/>
-    <ACTION builtin="clish_nop"/>
-  </COMMAND>
   <COMMAND name="show ip bgp l2vpn" help="L2VPN route information">
     <PARAM name="evpn" help="EVPN route information" mode="subcommand" ptype="SUBCOMMAND"/>
     <ACTION builtin="clish_nop"/>
+  </COMMAND>
+  <COMMAND name="show ip bgp summary" help="BGP Summary information">
+  <ACTION builtin="clish_nop"/>
   </COMMAND>
 </VIEW>
 
@@ -345,7 +305,7 @@ limitations under the License.
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_bgp_ext_route_reflector_config_route_reflector_cluster_id ${vrf-name}</ACTION>
   </COMMAND>
   <COMMAND name="no log-neighbor-changes" help="Log neighbor up/down and reset reason(default)">
-    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_logging_options_config_log_neighbor_state_changes ${vrf-name}</ACTION>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_logging_options_config_log_neighbor_state_changes ${vrf-name} False</ACTION>
   </COMMAND>
   <COMMAND name="no dampening" help="Enable route-flap dampening">
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_route_flap_damping_config_enabled ${vrf-name}&#xA;
@@ -693,10 +653,6 @@ limitations under the License.
     <PARAM name="hop-count" help="Maximum hop count (default=1)" ptype="RANGE_1_255"/>
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_ebgp_multihop_config ${vrf-name} ${template-name} True ${hop-count}</ACTION>
   </COMMAND>
-  <COMMAND name="peer-group" help="Inherit configuration of peer-group">
-    <PARAM name="template-name" help="Name of peer-group from which to inherit" ptype="STRING"/>
-    <ACTION builtin="clish_nop"/>
-  </COMMAND>
   <COMMAND name="remote-as" help="Specify a BGP neighbor AS">
     <PARAM name="remtype" help="Remote type" mode="switch" ptype="SUBCOMMAND">
       <PARAM name="internal" help="Internal BGP peer" mode="subcommand" ptype="SUBCOMMAND"/>
@@ -819,10 +775,6 @@ limitations under the License.
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_ebgp_multihop_config_enabled ${vrf-name} ${template-name}&#xA;
              python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_ebgp_multihop_config_multihop_ttl ${vrf-name} ${template-name}&#xA;
     </ACTION>
-  </COMMAND>
-  <COMMAND name="no peer-group" help="Inherit configuration of peer-group" mode="subcommand" ptype="SUBCOMMAND">
-    <PARAM name="template-name" help="Name of peer-group from which to inherit" ptype="STRING" optional="true"/>
-    <ACTION builtin="clish_nop"/>
   </COMMAND>
   <COMMAND name="no remote-as" help="Specify a BGP neighbor AS">
     <PARAM name="remtype" help="Remote type" mode="switch" ptype="SUBCOMMAND" optional="true">
