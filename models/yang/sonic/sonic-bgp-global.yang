@@ -11,18 +11,14 @@ module sonic-bgp-global {
         prefix inet;
     }
 
-<<<<<<< HEAD
     import sonic-route-map {
         prefix srmap;
     }
 
-||||||| merged common ancestors
-=======
     import sonic-bgp-common {
         prefix sbc;
     }
 
->>>>>>> broadcom_sonic_share
     organization
         "SONiC";
 
