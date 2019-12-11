@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!--
-Copyright 2019 Dell, Inc.  
+Copyright 2019 Dell, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
---> 
+-->
 
 <!DOCTYPE CLISH_MODULE [
 ]>
@@ -24,107 +24,96 @@ limitations under the License.
     xsi:schemaLocation="http://www.dellemc.com/sonic/XMLSchema
                         http://www.dellemc.com/sonic/XMLSchema/clish.xsd">
 
-
-
 <!--=======================================================-->
-<!--              show ip arp interface                    -->
+<!--              show ip arp changes                      -->
 <!--=======================================================-->
 <PTYPE
-    name="INTF_NAME"
+    name="INTF_TYPE"
     method="select"
     pattern="Ethernet Vlan PortChannel Management(eth)"
     help="Interface type"/>
 
+
 <VIEW name="enable-view">
-<!--
-    <COMMAND
-            name="clear ip"
-            help="Clear ip command">
-    </COMMAND>
-    <COMMAND
-            name="debug ip"
-            help="Debug ip command">
-    </COMMAND>
--->
     <COMMAND
         help="show IP commands"
         name="show ip"
         >
-        <ACTION builtin="clish_nop"/>
+    <ACTION builtin="clish_nop"/>
     </COMMAND>
 
+<!-- show ip arp <ip-addr> commands -->
     <COMMAND
-        name="show ip arp"
-        help="show IP ARP commands">
+        help="show ARP commands"
+        name="show ip arp">
         <PARAM
-            name="interface"
-            help="Specify interface type"
+            name="arp-subcommands"
+            help="ARP subcommands"
+            mode="switch"
             ptype="SUBCOMMAND"
-            mode="subcommand"
-            optional="false">
-            <PARAM
-                name="ifType"
-                help=""
-                ptype="INTF_NAME">
+            optional="true">
                 <PARAM
-                    name="phy-if-id"
-                    help="Numeric ID for the given interface type"
-                    ptype="UINT">
-                    <PARAM
-                        name="choice"
-                        help="Available options"
-                        ptype="STRING"
-                        optional="true"
-                        mode="switch">
-                        <PARAM
-                            name="summary"
-                            help="Summary of ARP entries"
-                            ptype="SUBCOMMAND"
-                            mode="subcommand"
-                            optional="true">
-                        </PARAM>
-                        <PARAM
-                            name="ip"
-                            help="IP address"
-                            ptype="SUBCOMMAND"
-                            mode="subcommand"
-                            optional="true">
-                            <PARAM
-                                name="ip-addr"
-                                help="ARP entry for this IP address"
-                                ptype="IP_ADDR">
-                            </PARAM>
-                        </PARAM>
-                        <PARAM
-                            name="mac-address"
-                            help="HW address"
-                            ptype="SUBCOMMAND"
-                            mode="subcommand"
-                            optional="true">
-                            <PARAM
-                                name="mac-addr"
-                                help="48 bit MAC address"
-                                ptype="MAC_ADDR">
-                            </PARAM>
-                        </PARAM>
-                    </PARAM>
+                    help="ARP entry for this IP address"
+                    name="ip-addr"
+                    ptype="IP_ADDR"
+                    optional="true">
+                </PARAM>
+        </PARAM>
+       <ACTION>
+               python $SONIC_CLI_ROOT/sonic-cli-arp-neigh.py get_sonic_neigh_sonic_neigh_neigh_table arp_show.j2 IPv4 ${ip-addr}&#xA;
+       </ACTION>
+    </COMMAND>
+
+<!-- show ip arp interface <intf> [summary] -->
+    <COMMAND
+        help="ARP entries for this interface"
+        name="show ip arp interface">
+        <PARAM
+            name="ifType"
+            help=""
+            ptype="INTF_TYPE">
+            <PARAM
+                name="phy-if-id"
+                help="Numeric ID for the given interface type"
+                ptype="UINT">
+                <PARAM
+                    help="Summary of ARP entries"
+                    name="summary"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    optional="true">
                 </PARAM>
             </PARAM>
         </PARAM>
         <ACTION>
-            if test "${summary}" = "" -a "${ip-addr}" = "" -a "${mac-addr}" = ""; then&#xA;
+            if test "${summary}" = ""; then&#xA;
                 python $SONIC_CLI_ROOT/sonic-cli-arp-neigh.py get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_neighbors arp_show.j2 ${ifType}${phy-if-id} None&#xA;
-            elif test "${summary}" = "summary" -a "${ip-addr}" = "" -a "${mac-addr}" = ""; then&#xA;
+            else&#xA;
                 python $SONIC_CLI_ROOT/sonic-cli-arp-neigh.py get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_neighbors arp_summary_show.j2 ${ifType}${phy-if-id} summary&#xA;
-            elif test "${summary}" = "" -a "${ip-addr}" != "" -a "${mac-addr}" = ""; then&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-arp-neigh.py get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_neighbors_neighbor arp_show.j2 ${ifType}${phy-if-id} ip ${ip-addr}&#xA;
-            elif test "${summary}" = "summary" -a "${ip-addr}" != "" -a "${mac-addr}" = ""; then&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-arp-neigh.py get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_neighbors_neighbor arp_summary_show.j2 ${ifType}${phy-if-id} ip ${ip-addr} summary&#xA;
-            elif test "${summary}" = "" -a "${ip-addr}" = "" -a "${mac-addr}" != ""; then&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-arp-neigh.py get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_neighbors arp_show.j2 ${ifType}${phy-if-id} mac ${mac-addr}&#xA;
-            elif test "${summary}" = "summary" -a "${ip-addr}" = "" -a "${mac-addr}" != ""; then&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-arp-neigh.py get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_neighbors arp_summary_show.j2 ${ifType}${phy-if-id} mac ${mac-addr} summary&#xA;
             fi&#xA;
+        </ACTION>
+    </COMMAND>
+
+<!--- show ip arp [mac-address <mac-addr>] -->
+    <COMMAND
+        help="HW address"
+        name="show ip arp mac-address">
+        <PARAM
+            help="48 bit MAC address"
+            name="mac-addr"
+            ptype="MAC_ADDR">
+        </PARAM>
+        <ACTION>
+            python $SONIC_CLI_ROOT/sonic-cli-arp-neigh.py get_sonic_neigh_sonic_neigh_neigh_table arp_show.j2 IPv4 mac ${mac-addr}&#xA;
+        </ACTION>
+   </COMMAND>
+
+<!-- show ip arp summary -->
+    <COMMAND
+        help="Summary of ARP entries"
+        name="show ip arp summary">
+        <ACTION>
+            python $SONIC_CLI_ROOT/sonic-cli-arp-neigh.py get_sonic_neigh_sonic_neigh_neigh_table arp_summary_show.j2 summary None&#xA;
         </ACTION>
     </COMMAND>
 </VIEW>

@@ -35,8 +35,16 @@ limitations under the License.
 
             <PARAM
                 name="date"
-                help="String specifying date/time in the same format as the 
-                      Linux &quot;date&quot; command"
+                help="date/time in the format:&#xA;&#xA;
+                    &quot;YYYY-MM-DDTHH:MM:SS[.ddd...]Z&quot; or&#xA;
+                    &quot;YYYY-MM-DDTHH:MM:SS[.ddd...]+hh:mm&quot; or&#xA;
+                    &quot;YYYY-MM-DDTHH:MM:SS[.ddd...]-hh:mm&quot; Where:&#xA;&#xA;
+                    YYYY = year, MM = month, DD = day,&#xA;
+                    T (required before time),&#xA;
+                    HH = hours, MM = minutes, SS = seconds,&#xA;
+                    (optional) .ddd... = decimal fraction of a second (e.g. &quot;.323&quot;)&#xA;
+                    Z indicates zero offset from local time&#xA;
+                    +/- hh:mm indicates hour:minute offset from local time"
                 ptype="STRING">
             </PARAM>
         </PARAM>
