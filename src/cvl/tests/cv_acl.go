@@ -26,6 +26,7 @@ import (
 	"cvl"
 	"github.com/go-redis/redis"
 	"strconv"
+	"github.com/pkg/profile"
 )
 
 func getConfigDbClient() *redis.Client {
@@ -73,6 +74,9 @@ func main() {
 	start := time.Now()
 	count := 0
 
+	prof := profile.Start()
+	defer prof.Stop()
+
 	cvl.Initialize()
 
 	if ((len(os.Args) > 1) && (os.Args[1] == "debug")) {
@@ -107,14 +111,14 @@ func main() {
 			_, ret := cvSess.ValidateEditConfig(cfgDataAclRule)
 
 			if (ret != cvl.CVL_SUCCESS) {
-				fmt.Printf("Validation failure\n")
+				fmt.Printf("ACL_TABLE Create: Validation failure\n")
 				return
 			}
 
 			cfgDataAclRule[0].VType = cvl.VALIDATE_NONE
 
 			//Create 7 ACL rules
-			for i:=0; i<7; i++ {
+			for i:=0; i<5; i++ {
 				cfgDataAclRule = append(cfgDataAclRule, cvl.CVLEditConfigData {
 					cvl.VALIDATE_ALL,
 					cvl.OP_CREATE,
@@ -129,10 +133,11 @@ func main() {
 						"L4_DST_PORT":       fmt.Sprintf("%d", 701 + i),
 					},
 				})
+						//"DST_IPV6": "2001:db8:3c4d::/48",
 
 				_, ret1 := cvSess.ValidateEditConfig(cfgDataAclRule)
 				if (ret1 != cvl.CVL_SUCCESS) {
-					fmt.Printf("Validation failure\n")
+					fmt.Printf("ACL_RULE Create: Validation failure\n")
 					return
 				}
 
@@ -160,7 +165,7 @@ func main() {
 			cfgDataAclRule := []cvl.CVLEditConfigData{}
 
 			//Create 7 ACL rules
-			for i:=0; i<7; i++ {
+			for i:=0; i<5; i++ {
 				cfgDataAclRule = append(cfgDataAclRule, cvl.CVLEditConfigData {
 					cvl.VALIDATE_ALL,
 					cvl.OP_DELETE,
@@ -171,7 +176,7 @@ func main() {
 
 				_, ret := cvSess.ValidateEditConfig(cfgDataAclRule)
 				if (ret != cvl.CVL_SUCCESS) {
-					fmt.Printf("Validation failure\n")
+					fmt.Printf("ACL_RULE Delete: Validation failure\n")
 					return
 				}
 
@@ -188,7 +193,7 @@ func main() {
 
 			_, ret := cvSess.ValidateEditConfig(cfgDataAclRule)
 			if (ret != cvl.CVL_SUCCESS) {
-				fmt.Printf("Validation failure\n")
+				fmt.Printf("ACL_TABLE Delete: Validation failure\n")
 				return
 			}
 

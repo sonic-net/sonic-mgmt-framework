@@ -63,7 +63,80 @@ func loadLuaScript(luaScripts map[string]*redis.Script) {
 
 	//Find current number of entries in a table
 	luaScripts["count_entries"] = redis.NewScript(`
-	  return #redis.call('KEYS', ARGV[1].."*")
+	--ARGV[1] => Key patterns
+	--ARGV[2] => Key names separated by '|'
+	--ARGV[3] => predicate patterns
+	--ARGV[4] => Field
+
+	if (#ARGV == 1) then
+		--count of all table entries
+		return #redis.call('KEYS', ARGV[1])
+	end
+
+	-- count with filter
+	local keys = redis.call('KEYS', ARGV[1])
+	if #keys == 0 then return 0 end
+
+	local cnt = 0
+
+	local sepStart = string.find(keys[1], "|")
+	if sepStart == nil then return ; end
+
+	-- Function to load lua predicate code
+	local function loadPredicateScript(str)
+		if (str == nil or str == "") then return nil; end
+
+		local f, err = loadstring("return function (k,h) " .. str .. " end")
+		if f then return f(); else return nil;end
+	end
+
+	local keySetNames = {}
+	ARGV[2]:gsub("([^|]+)",function(c) table.insert(keySetNames, c) end)
+
+	local predicate = loadPredicateScript(ARGV[3])
+
+	local field = ""
+	if (ARGV[4] ~= nil) then field = ARGV[4]; end
+
+	for _, key in ipairs(keys) do
+		local hash = redis.call('HGETALL', key)
+		local row = {}; local keySet = {}; local keyVal = {}
+		local keyOnly = string.sub(key, sepStart+1)
+
+		for index = 1, #hash, 2 do
+			row[hash[index]] = hash[index + 1]
+		end
+
+		local incFlag = false
+		if (predicate == nil) then
+			incFlag = true
+		else
+			--Split key values
+			keyOnly:gsub("([^|]+)", function(c)  table.insert(keyVal, c) end)
+
+			for idx = 1, #keySetNames, 1 do
+				keySet[keySetNames[idx]] = keyVal[idx]
+			end
+
+			if (predicate(keySet, row) == true) then
+				incFlag = true
+			end
+		end
+
+		if (incFlag == true) then
+			if (field ~= "") then
+				if (row[field] ~= nil) then
+					cnt = cnt + 1 
+				elseif (row[field.."@"] ~= nil) then
+					row[field.."@"]:gsub("([^,]+)", function(c) cnt = cnt + 1 end)
+				end
+			else
+				cnt = cnt + 1
+			end
+		end
+	end
+
+	return cnt
 	`)
 
 	// Find entry which has given fieldName and value
@@ -115,5 +188,66 @@ func loadLuaScript(luaScripts map[string]*redis.Script) {
 	end
 
 	return string.sub(filterKeys, 1, #filterKeys - 1)
+	`)
+
+	//Get filtered entries as per given key filters and predicate
+	luaScripts["filter_entries"] = redis.NewScript(`
+	--ARGV[1] => Key patterns
+	--ARGV[2] => Key names separated by '|'
+	--ARGV[3] => predicate patterns
+	--ARGV[4] => Fields to return
+	--ARGV[5] => Count of entries to return
+
+	local tableData = {} ; local tbl = {}
+
+	local keys = redis.call('KEYS', ARGV[1])
+	if #keys == 0 then return end
+
+	local count = -1
+	if (ARGV[5] ~= nil and ARGV[5] ~= "") then count=tonumber(ARGV[5]) end
+
+	local sepStart = string.find(keys[1], "|")
+	if sepStart == nil then return ; end
+
+	-- Function to load lua predicate code
+	local function loadPredicateScript(str)
+		if (str == nil or str == "") then return nil; end
+
+		local f, err = loadstring("return function (k,h) " .. str .. " end")
+		if f then return f(); else return nil;end
+	end
+
+	local keySetNames = {}
+	ARGV[2]:gsub("([^|]+)",function(c) table.insert(keySetNames, c) end)
+
+	local predicate = loadPredicateScript(ARGV[3])
+
+	for _, key in ipairs(keys) do
+		local hash = redis.call('HGETALL', key)
+		local row = {}; local keySet = {}; local keyVal = {}
+		local keyOnly = string.sub(key, sepStart+1)
+
+		for index = 1, #hash, 2 do
+			row[hash[index]] = hash[index + 1]
+		end
+
+		--Split key values
+		keyOnly:gsub("([^|]+)", function(c)  table.insert(keyVal, c) end)
+
+		for idx = 1, #keySetNames, 1 do
+			keySet[keySetNames[idx]] = keyVal[idx]
+		end
+
+		if (predicate == nil) or (predicate(keySet, row) == true) then
+			tbl[keyOnly] = row
+		end
+
+		if (count ~= -1 and #tbl == count) then break end
+
+	end
+
+	tableData[string.sub(keys[1], 0, sepStart-1)] = tbl
+
+	return cjson.encode(tableData)
 	`)
 }

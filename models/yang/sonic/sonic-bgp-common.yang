@@ -444,4 +444,67 @@ module sonic-bgp-common {
         description "Route server client";
     }
   }
+
+  grouping sonic-bgp-evpn-vni-common {
+
+    leaf advertise-default-gw {
+      type boolean;
+    }
+        
+    leaf route-distinguisher {
+      type string;
+    }
+
+  }
+
+  grouping sonic-bgp-af-evpn-global {
+
+    uses sonic-bgp-evpn-vni-common;
+        
+    leaf advertise-all-vni {
+      type boolean;
+    }     
+
+    leaf advertise-ipv4-unicast {
+      type boolean;
+    }
+
+    leaf advertise-ipv6-unicast {
+      type boolean;
+    }
+
+    leaf default-originate-ipv4 {
+      type boolean;
+    }
+
+    leaf default-originate-ipv6 {
+      type boolean;
+    } 
+        
+    leaf autort {
+      type string;
+    }
+
+    leaf flooding {
+      type string;
+    }
+
+    leaf dad-enabled {
+      type boolean;
+    } 
+
+    leaf dad-max-moves {
+      type uint32;
+    }
+
+    leaf dad-time {
+      type uint32;
+    }
+
+    leaf dad-freeze {
+      type string;
+    } 
+
+  }
+
 }

@@ -73,15 +73,27 @@ type tblFieldPair struct {
 	field string
 }
 
-type xpathExpression struct {
-	expr string
-	exprTree *xpath.Expr
-	errCode string
-	errStr string
+type mustInfo struct {
+	expr string //must expression
+	exprTree *xpath.Expr //compiled expression tree
+	errCode string //err-app-tag
+	errStr string //error message
 }
 
-//var tmpDbCache map[string]interface{} //map of table storing map of key-value pair
-					//m["PORT_TABLE] = {"key" : {"f1": "v1"}}
+type leafRefInfo struct {
+	path string //leafref path
+	exprTree *xpath.Expr //compiled expression tree
+	yangListNames []string //all yang list in path
+	targetNodeName string //target node name
+}
+
+type whenInfo struct {
+	expr string //when expression
+	exprTree *xpath.Expr //compiled expression tree
+	nodeNames []string //list of nodes under when condition
+	yangListNames []string //all yang list in expression
+}
+
 //Important schema information to be loaded at bootup time
 type modelTableInfo struct {
 	dbNum uint8
@@ -93,12 +105,14 @@ type modelTableInfo struct {
 	redisKeyPattern string
 	redisTableSize int
 	mapLeaf []string //for 'mapping  list'
-	leafRef map[string][]string //for storing all leafrefs for a leaf in a table, 
+	leafRef map[string][]*leafRefInfo //for storing all leafrefs for a leaf in a table, 
 				//multiple leafref possible for union 
-	xpathExpr map[string]*xpathExpression
+	mustExpr map[string][]*mustInfo
+	whenExpr map[string][]*whenInfo
 	tablesForMustExp map[string]CVLOperation
 	refFromTables []tblFieldPair //list of table or table/field referring to this table
 	custValidation map[string]string // Map for custom validation node and function name
+	dfltLeafVal map[string]string //map of leaf names and default value
 }
 
 
@@ -128,6 +142,7 @@ type CVL struct {
 	tmpDbCache map[string]interface{} //map of table storing map of key-value pair
 	requestCache map[string]map[string][]*requestCacheType//Cache of validated data,
 				//per table, per key. Can be used as dependent data in next request
+	maxTableElem map[string]int //max element count per table
 	batchLeaf string
 	chkLeafRefWithOthCache bool
 	yv *YValidator //Custom YANG validator for validating external dependencies
@@ -195,6 +210,15 @@ func init() {
 		SetTrace(true)
 	}
 
+	xpath.SetKeyGetClbk(func(listName string) []string {
+		if modelInfo.tableInfo[listName] != nil {
+			return modelInfo.tableInfo[listName].keys
+		}
+
+		return nil
+	})
+
+
 	ConfigFileSyncHandler()
 
 	cvlCfgMap := ReadConfFile()
@@ -236,7 +260,15 @@ func init() {
 	}
 
 	//Store PORT table details in global cache and update the cache if PORT entry changes
-	dbCacheSet(false, "PORT", 0)
+	//dbCacheSet(false, "PORT", 0)
+
+	xpath.SetLogCallback(func(fmt string, args ...interface{}) {
+		if (IsTraceLevelSet(TRACE_SEMANTIC) == false) {
+			return
+		}
+
+		TRACE_LOG(TRACE_SEMANTIC, "XPATH: " + fmt, args...)
+	})
 }
 
 func Debug(on bool) {
@@ -371,11 +403,41 @@ func loadSchemaFiles() CVLRetCode {
 		storeModelInfo(modelFile, parsedModule)
 	}
 
-
-	//Build reverse leafref info i.e. which table/field uses one table through leafref
-	buildRefTableInfo()
-
 	return CVL_SUCCESS
+}
+
+//Get list of YANG list names used in xpath expression
+func getYangListNamesInExpr(expr string) []string {
+	tbl := []string{}
+
+	//Check with all table names
+	for tblName, _ := range modelInfo.tableInfo {
+		if (strings.Contains(expr, tblName + "_LIST") == true) {
+			tbl = append(tbl, tblName)
+		}
+	}
+
+	return tbl
+}
+
+//Get all YANG lists referred and the target node for leafref
+//Ex: leafref { path "../../../ACL_TABLE/ACL_TABLE_LIST[aclname=current()]/aclname";}
+//will return [ACL_TABLE] and aclname
+func getLeafRefTargetInfo(path string) ([]string, string) {
+	target := ""
+
+	//Get list of all YANG list used in the path
+	tbl := getYangListNamesInExpr(path)
+
+	//Get the target node name from end of the path
+	idx := strings.LastIndex(path, ":") //check with prefix first
+	if idx > 0 {
+		target = path[idx+1:]
+	} else if idx = strings.LastIndex(path, "/"); idx > 0{ //no prefix there
+		target = path[idx+1:]
+	}
+
+	return tbl, target
 }
 
 func storeModelInfo(modelFile string, module *yparser.YParserModule) { //such model info can be maintained in C code and fetched from there 
@@ -386,7 +448,7 @@ func storeModelInfo(modelFile string, module *yparser.YParserModule) { //such mo
 
 	//Store namespace and prefix
 	ns, prefix := yparser.GetModelNs(module)
-	modelInfo.modelNs[modelName] = &modelNamespace{ns, prefix}
+	modelInfo.modelNs[modelName] = &modelNamespace{ns:ns, prefix:prefix}
 
 	list := yparser.GetModelListInfo(module)
 
@@ -410,14 +472,46 @@ func storeModelInfo(modelFile string, module *yparser.YParserModule) { //such mo
 		tInfo.redisTableSize = lInfo.RedisTableSize
 		tInfo.keys = lInfo.Keys
 		tInfo.mapLeaf = lInfo.MapLeaf
-		tInfo.leafRef = lInfo.LeafRef
 		tInfo.custValidation = lInfo.CustValidation
-		tInfo.xpathExpr = make(map[string]*xpathExpression, len(lInfo.XpathExpr))
-		for nodeName, xpr := range lInfo.XpathExpr {
-			tInfo.xpathExpr[nodeName] = &xpathExpression{
-				expr: xpr.Expr,
-				errCode: xpr.ErrCode,
-				errStr: xpr.ErrStr,
+
+		//store default values used in must and when exp
+		tInfo.dfltLeafVal = make(map[string]string, len(lInfo.DfltLeafVal))
+		for nodeName, val := range lInfo.DfltLeafVal {
+			tInfo.dfltLeafVal[nodeName] = val
+		}
+
+		//tInfo.leafRef = lInfo.LeafRef
+		tInfo.leafRef =  make(map[string][]*leafRefInfo, len(lInfo.LeafRef))
+		for nodeName, lpathArr := range lInfo.LeafRef { //for each leaf or leaf-list
+			leafRefInfoArr := []*leafRefInfo{}
+			for _, lpath := range lpathArr {
+				//just store the leafref path
+				leafRefData := leafRefInfo{path: lpath}
+				leafRefInfoArr = append(leafRefInfoArr, &leafRefData)
+			}
+			tInfo.leafRef[nodeName] = leafRefInfoArr
+		}
+
+		tInfo.mustExpr = make(map[string][]*mustInfo, len(lInfo.XpathExpr))
+		for nodeName, xprArr := range lInfo.XpathExpr {
+			for _, xpr := range xprArr {
+				tInfo.mustExpr[nodeName] = append(tInfo.mustExpr[nodeName],
+				&mustInfo{
+					expr: xpr.Expr,
+					errCode: xpr.ErrCode,
+					errStr: xpr.ErrStr,
+				})
+			}
+		}
+
+		tInfo.whenExpr = make(map[string][]*whenInfo, len(lInfo.WhenExpr))
+		for nodeName, whenExprArr := range lInfo.WhenExpr {
+			for _, whenExpr := range whenExprArr {
+				tInfo.whenExpr[nodeName] = append(tInfo.whenExpr[nodeName],
+					&whenInfo {
+					expr: whenExpr.Expr,
+					nodeNames: whenExpr.NodeNames,
+				})
 			}
 		}
 
@@ -459,6 +553,7 @@ func buildRefTableInfo() {
 		//For each leafref update the table used through leafref
 		for fieldName, leafRefs  := range tblInfo.leafRef {
 			for _, leafRef := range leafRefs {
+				/*
 				matches := reLeafRef.FindStringSubmatch(leafRef)
 
 				//We have the leafref table name
@@ -468,8 +563,17 @@ func buildRefTableInfo() {
 
 					refFromTables := &refTblInfo.refFromTables
 					*refFromTables = append(*refFromTables, tblFieldPair{tblName, fieldName})
-					modelInfo.tableInfo[refTable] = refTblInfo 
+					modelInfo.tableInfo[refTable] = refTblInfo
+				} */
+
+				for _, yangListName := range leafRef.yangListNames {
+					refTblInfo :=  modelInfo.tableInfo[yangListName]
+
+					refFromTables := &refTblInfo.refFromTables
+					 *refFromTables = append(*refFromTables, tblFieldPair{tblName, fieldName})
+					 modelInfo.tableInfo[yangListName] = refTblInfo
 				}
+
 			}
 		}
 
@@ -516,43 +620,45 @@ func buildRefTableInfo() {
 func addTableNamesForMustExp() {
 
 	for tblName, tblInfo := range  modelInfo.tableInfo {
-		if (tblInfo.xpathExpr == nil) {
+		if (len(tblInfo.mustExpr) == 0) {
 			continue
 		}
 
 		tblInfo.tablesForMustExp = make(map[string]CVLOperation)
 
-		for _, mustExp := range tblInfo.xpathExpr {
-			var op CVLOperation = OP_NONE
-			//Check if 'must' expression should be executed for a particular operation
-			if (strings.Contains(mustExp.expr,
-			":operation != 'CREATE'") == true) {
-				op = op | OP_CREATE
-			} else if (strings.Contains(mustExp.expr,
-			":operation != 'UPDATE'") == true) {
-				op = op | OP_UPDATE
-			} else if (strings.Contains(mustExp.expr,
-			":operation != 'DELETE'") == true) {
-				op = op | OP_DELETE
-			}
-
-			//store the current table if aggregate function like count() is used
-			/*if (strings.Contains(mustExp, "count") == true) {
-				tblInfo.tablesForMustExp[tblName] = op
-			}*/
-
-			//check which table name is present in the must expression
-			for tblNameSrch, _ := range modelInfo.tableInfo {
-				if (tblNameSrch == tblName) {
-					continue
+		for _, mustExpArr := range tblInfo.mustExpr {
+			for _, mustExp := range mustExpArr {
+				var op CVLOperation = OP_NONE
+				//Check if 'must' expression should be executed for a particular operation
+				if (strings.Contains(mustExp.expr,
+				":operation != 'CREATE'") == true) {
+					op = op | OP_CREATE
+				} else if (strings.Contains(mustExp.expr,
+				":operation != 'UPDATE'") == true) {
+					op = op | OP_UPDATE
+				} else if (strings.Contains(mustExp.expr,
+				":operation != 'DELETE'") == true) {
+					op = op | OP_DELETE
 				}
-				//Table name should appear like "../VLAN_MEMBER_LIST/tagging_mode' or '
-				// "/prt:PORT/prt:ifname"
-				re := regexp.MustCompile(fmt.Sprintf(".*[/]([-_a-zA-Z]*:)?%s_LIST[\\[/]", tblNameSrch))
-				matches := re.FindStringSubmatch(mustExp.expr)
-				if (len(matches) > 0) {
-					//stores the table name 
-					tblInfo.tablesForMustExp[tblNameSrch] = op
+
+				//store the current table if aggregate function like count() is used
+				/*if (strings.Contains(mustExp, "count") == true) {
+					tblInfo.tablesForMustExp[tblName] = op
+				}*/
+
+				//check which table name is present in the must expression
+				for tblNameSrch, _ := range modelInfo.tableInfo {
+					if (tblNameSrch == tblName) {
+						continue
+					}
+					//Table name should appear like "../VLAN_MEMBER_LIST/tagging_mode' or '
+					// "/prt:PORT/prt:ifname"
+					re := regexp.MustCompile(fmt.Sprintf(".*[/]([-_a-zA-Z]*:)?%s_LIST[\\[/]", tblNameSrch))
+					matches := re.FindStringSubmatch(mustExp.expr)
+					if (len(matches) > 0) {
+						//stores the table name 
+						tblInfo.tablesForMustExp[tblNameSrch] = op
+					}
 				}
 			}
 		}
@@ -605,7 +711,7 @@ func splitRedisKey(key string) (string, string) {
 //multiple YANG list, it returns appropriate YANG list name
 //INTERFACE:Ethernet12 returns ==> INTERFACE
 //INTERFACE:Ethernet12:1.1.1.0/32 ==> INTERFACE_IPADDR
-func getRedisKeyToYangList(tableName, key string) (yangList string) {
+func getRedisTblToYangList(tableName, key string) (yangList string) {
 	defer func() {
 		pYangList := &yangList
 		TRACE_LOG(TRACE_SYNTAX, "Got YANG list '%s' " +
@@ -671,10 +777,10 @@ func getRedisToYangKeys(tableName string, redisKey string)[]keyValuePairStruct{
 	for  idx, keyName := range keyNames {
 
 		//check if key-pattern contains specific key pattern
-		if (keyPatterns[idx+1] == fmt.Sprintf("{%s}", keyName)) { //no specific key pattern - just "{key}"
+		if (keyPatterns[idx+1] == ("{" + keyName + "}")) { //fmt.Sprintf("{%s}", keyName)) { //no specific key pattern - just "{key}"
 			//Store key/value mapping     
 			mkeys = append(mkeys, keyValuePairStruct{keyName,  []string{keyVals[idx]}})
-		} else if (keyPatterns[idx+1] == fmt.Sprintf("({%s},)*", keyName)) {   // key pattern is "({key},)*" i.e. repeating keys seperated by ','   
+		} else if (keyPatterns[idx+1] == ("({" + keyName + "},)*")) { //fmt.Sprintf("({%s},)*", keyName)) {   // key pattern is "({key},)*" i.e. repeating keys seperated by ','   
 			repeatedKeys := strings.Split(keyVals[idx], ",")
 			mkeys = append(mkeys, keyValuePairStruct{keyName, repeatedKeys})
 		}
@@ -846,11 +952,12 @@ func (c *CVL) checkPathForTableEntry(tableName string, currentValue string, cfgD
 //Node-set function such count() can be quite expensive and 
 //should be avoided through this function
 func (c *CVL) addTableEntryForMustExp(cfgData *CVLEditConfigData, tableName string) CVLRetCode {
-	if (modelInfo.tableInfo[tableName].xpathExpr == nil) {
+	if (modelInfo.tableInfo[tableName].mustExpr == nil) {
 		return CVL_SUCCESS
 	}
 
-	for fieldName, mustExp := range modelInfo.tableInfo[tableName].xpathExpr {
+	for fieldName, mustExpArr := range modelInfo.tableInfo[tableName].mustExpr {
+		mustExp := mustExpArr[0]
 
 		currentValue := "" // Current value for current() function
 
@@ -976,7 +1083,7 @@ func (c *CVL) addTableEntryForMustExp(cfgData *CVLEditConfigData, tableName stri
 
 //Add all other table data for validating all 'must' exp for tableName
 func (c *CVL) addTableDataForMustExp(op CVLOperation, tableName string) CVLRetCode {
-	if (modelInfo.tableInfo[tableName].xpathExpr == nil) {
+	if (len(modelInfo.tableInfo[tableName].mustExpr) == 0) {
 		return CVL_SUCCESS
 	}
 
@@ -1046,6 +1153,7 @@ func (c *CVL) addTableDataForMustExp(op CVLOperation, tableName string) CVLRetCo
 
 //Add leafref entry for caching
 //It has to be recursive in nature, as there can be chained leafref
+/*
 func (c *CVL) addLeafRef(config bool, tableName string, name string, value string) {
 
 	if (config == false) {
@@ -1097,6 +1205,7 @@ func (c *CVL) addLeafRef(config bool, tableName string, name string, value strin
 		}
 	}
 }
+*/
 
 //Checks field map values and removes "NULL" entry, create array for leaf-list
 func (c *CVL) checkFieldMap(fieldMap *map[string]string) map[string]interface{} {
@@ -1211,6 +1320,11 @@ func (c *CVL) validate (data *yparser.YParserNode) CVLRetCode {
 		return CVL_FAILURE
 	}
 
+	cvlErrObj := c.validateCfgExtDep(c.yv.root)
+	if CVL_SUCCESS != cvlErrObj.ErrCode {
+		return cvlErrObj.ErrCode
+	}
+
 	return CVL_SUCCESS
 }
 
@@ -1273,6 +1387,9 @@ func (c *CVL) validateSemantics(data *yparser.YParserNode, appDepData *yparser.Y
 	//Get dependent data from 
 	depData := c.fetchDataToTmpCache() //fetch data to temp cache for temporary validation
 
+	//TODO
+	return cvlErrObj, CVL_SUCCESS
+
 	if (Tracing == true) {
 		TRACE_LOG(TRACE_SEMANTIC, "Validating semantics data=%s\n depData =%s\n, appDepData=%s\n....", c.yp.NodeDump(data), c.yp.NodeDump(depData), c.yp.NodeDump(appDepData))
 	}
@@ -1306,6 +1423,7 @@ func (c *CVL) addCfgDataItem(configData *map[string]interface{},
 			cfgDataItem CVLEditConfigData) (string, string){
 	var cfgData map[string]interface{}
 	cfgData = *configData
+	var tmpFieldMap map[string]interface{}
 
 	tblName, key := splitRedisKey(cfgDataItem.Key)
 	if (tblName == "" || key == "") {
@@ -1313,18 +1431,33 @@ func (c *CVL) addCfgDataItem(configData *map[string]interface{},
 		return "", ""
 	}
 
-	if (cfgDataItem.VOp == OP_DELETE) {
-		//Don't add data it is delete operation
-		return tblName, key
-	}
-
 	if _, existing := cfgData[tblName]; existing {
 		fieldsMap := cfgData[tblName].(map[string]interface{})
 		fieldsMap[key] = c.checkFieldMap(&cfgDataItem.Data)
+		tmpFieldMap = fieldsMap[key].(map[string]interface{})
 	} else {
 		fieldsMap := make(map[string]interface{})
 		fieldsMap[key] = c.checkFieldMap(&cfgDataItem.Data)
 		cfgData[tblName] = fieldsMap
+		tmpFieldMap = fieldsMap[key].(map[string]interface{})
+	}
+
+	if (cfgDataItem.VOp == OP_DELETE) {
+		//Don't add data it is delete operation
+		//If Delete has map field, it means single field delete case.
+		//If the field has empty string, remove from map
+		for field, val := range tmpFieldMap {
+			switch v := val.(type) {
+			case string:
+				if (v == "") {
+					delete(tmpFieldMap, field)
+				}
+			case []string:
+				if (len(v) == 0) {
+					delete(tmpFieldMap, field)
+				}
+			}
+		}
 	}
 
 	return tblName, key
@@ -1332,7 +1465,7 @@ func (c *CVL) addCfgDataItem(configData *map[string]interface{},
 
 //Perform user defined custom validation
 func (c *CVL) doCustomValidation(custvCfg []custv.CVLEditConfigData,
-	curCustvCfg *custv.CVLEditConfigData,
+	curCustvCfg *custv.CVLEditConfigData, yangListName,
 	tbl, key string) CVLErrorInfo {
 
 	cvlErrObj := CVLErrorInfo{ErrCode : CVL_SUCCESS}
@@ -1344,11 +1477,11 @@ func (c *CVL) doCustomValidation(custvCfg []custv.CVLEditConfigData,
 			node = c.requestCache[tbl][key][0].yangData
 		} else {
 			//Find the node from YANG tree
-			node = c.moveToYangList(tbl, key)
+			node = c.moveToYangList(yangListName, key)
 		}
 
 		if (node == nil) {
-			CVL_LOG(WARNING, "Could not find data for custom validation, " + 
+			CVL_LOG(WARNING, "Could not find data for custom validation, " +
 			"node name=%s, func name =%s", nodeName, custFunc)
 			continue
 		}

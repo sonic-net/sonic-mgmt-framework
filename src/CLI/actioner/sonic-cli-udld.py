@@ -34,9 +34,8 @@ def invoke(func, args):
     if func == 'get_sonic_udld_sonic_udld_udld_udld_list':
         keypath = cc.Path('/restconf/data/sonic-udld:sonic-udld/UDLD/UDLD_LIST={id}', id='GLOBAL')
         resp = aa.get(keypath)
-        if not resp.ok() and resp.error_message() is not None:
-            if resp.error_message().find('Entry not found') >= 0:
-                return aa._make_error_response('UDLD not configured')
+        if not resp.ok() and resp.status_code == 404:
+            resp.set_error_message('UDLD not configured')
         return resp
 
     # show udld neighbors
@@ -73,14 +72,8 @@ def invoke(func, args):
 
     # Disable UDLD global
     if func == 'delete_sonic_udld_sonic_udld_udld' :
-        # Delete all port level udld configs
-        keypath = cc.Path('/restconf/data/sonic-udld:sonic-udld/UDLD_PORT')
-        resp = aa.delete(keypath)
-        if not resp.ok():
-            return resp
-
-        # Delete global level udld configs
-        keypath = cc.Path('/restconf/data/sonic-udld:sonic-udld/UDLD')
+        # Delete all udld config tables including port and global level.
+        keypath = cc.Path('/restconf/data/sonic-udld:sonic-udld')
         return aa.delete(keypath)
 
     # Configure UDLD aggressive
@@ -158,10 +151,9 @@ def generateShowUdldInterfaceResponse(clientApi, args):
         port_conf_dict = resp.content['sonic-udld:UDLD_PORT_LIST'][0]
         resp_status = resp.response.status_code
     else:
-        if resp.error_message().find('Entry not found') >= 0:
-            return clientApi._make_error_response('UDLD not configured on ' + args[1])
-        else:
-            return resp
+        if resp.status_code == 404:
+            resp.set_error_message('UDLD not configured on ' + args[1])
+        return resp
 
     # Retrieve UDLD Global operatioal info
     keypath = cc.Path('/restconf/data/sonic-udld:sonic-udld/UDLD_GLOBAL_TABLE/UDLD_GLOBAL_TABLE_LIST={id}', id='GLOBAL')
@@ -184,7 +176,7 @@ def generateShowUdldInterfaceResponse(clientApi, args):
     if resp.ok() and 'sonic-udld:UDLD_PORT_NEIGH_TABLE_LIST' in resp.content.keys():
         neigh_dict = resp.content['sonic-udld:UDLD_PORT_NEIGH_TABLE_LIST'][0]
     else:
-        if resp.error_message().find('Entry not found') < 0:
+        if resp.status_code != 404:
             return resp
 
     final_dict = {}
@@ -268,7 +260,7 @@ def run(func, args):
                 else:
                     show_cli_output(args[0], value)
         else:
-            print api_response.error_message()
+            print(api_response.error_message())
 
 
 if __name__ == '__main__':

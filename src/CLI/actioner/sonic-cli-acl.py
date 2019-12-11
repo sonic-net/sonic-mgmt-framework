@@ -48,8 +48,7 @@ def invoke(func, args):
 
     # Configure ACL table
     if func == 'patch_openconfig_acl_acl_acl_sets_acl_set' :
-        keypath = cc.Path('/restconf/data/openconfig-acl:acl/acl-sets/acl-set={name},{type}',
-                name=args[0], type=args[1] )
+        keypath = cc.Path('/restconf/data/openconfig-acl:acl/acl-sets/acl-set')
         body=collections.defaultdict(dict)
         body["acl-set"]=[{
                         "name": args[0],
@@ -215,19 +214,7 @@ def run(func, args):
         if api_response.ok():
             response = api_response.content
             if response is None:
-                print "Success"
-            elif 'openconfig-acl:acl-entry' in response.keys():
-                value = response['openconfig-acl:acl-entry']
-                if value is None:
-                    print("Success")
-                else:
-                    print ("Failed")
-            elif 'openconfig-acl:acl-set' in response.keys():
-                value = response['openconfig-acl:acl-set']
-                if value is None:
-                    print("Success")
-                else:
-                    print("Failed")
+                pass
             elif 'openconfig-acl:acl-entries' in response.keys():
                 value = response['openconfig-acl:acl-entries']
                 if value is None:
@@ -246,11 +233,11 @@ def run(func, args):
 
         else:
             #error response
-            print api_response.error_message()
+            print(api_response.error_message())
 
     except:
             # system/network error
-            print "%Error: Transaction Failure"
+            raise
 
 
 if __name__ == '__main__':

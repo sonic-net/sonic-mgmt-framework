@@ -68,13 +68,13 @@ STP Bridge Parameters:
 {{'%-18s'|format("RootBridge")}}{{'%-10s'|format("RootPath")}}{{'%-18s'|format("DesignatedBridge")}}{{'%-12s'|format("Root")}}{{'%-5s'|format("Max")}}{{'%-5s'|format("Hel")}}{{'%-5s'|format("Fwd")}}
 {{'%-18s'|format("Identifier")}}{{'%-10s'|format("Cost")}}{{'%-18s'|format("Identifier")}}{{'%-12s'|format("Port")}}{{'%-5s'|format("Age")}}{{'%-4s'|format("lo")}} {{'%-5s'|format("Dly")}}
 {{'%-18s'|format("hex")}}{{'%-10s'|format("")}}{{'%-18s'|format("hex")}}{{'%-12s'|format("")}}{{'%-5s'|format("sec")}}{{'%-4s'|format("sec")}} {{'%-5s'|format("sec")}}
-        {% if vars.update({'root_br':vlan['state']['bridge-address']}) %}{% endif %}
+        {% if vars.update({'root_br':vlan['state']['designated-root-address']}) %}{% endif %}
         {% if vars.update({'root_path':vlan['state']['root-cost']}) %}{% endif %}
-        {% if vars.update({'desig_br':vlan['state']['designated-root-address']}) %}{% endif %}
+        {% if vars.update({'desig_br':vlan['state']['designated-bridge-id']}) %}{% endif %}
         {% if vars.update({'root_port_name':vlan['state']['root-port-name']}) %}{% endif %}
-        {% if vars.update({'max_age':vlan['state']['max-age']}) %}{% endif %}
-        {% if vars.update({'hello':vlan['state']['hello-time']}) %}{% endif %}
-        {% if vars.update({'fDly':vlan['state']['forwarding-delay']}) %}{% endif %}
+        {% if vars.update({'max_age':vlan['state']['root-max-age']}) %}{% endif %}
+        {% if vars.update({'hello':vlan['state']['root-hello-time']}) %}{% endif %}
+        {% if vars.update({'fDly':vlan['state']['root-forward-delay']}) %}{% endif %}
 {{'%-18s'|format(vars.root_br)}}{{'%-10s'|format(vars.root_path)}}{{'%-18s'|format(vars.desig_br)}}{{'%-12s'|format(vars.root_port_name)}}{{'%-5s'|format(vars.max_age)}}{{'%-5s'|format(vars.hello)}}{{'%-5s'|format(vars.fDly)}}
 {{' ' }}
 STP Port Parameters:
@@ -150,13 +150,13 @@ RSTP (IEEE 802.1w) Bridge Parameters:
 {{'%-18s'|format("RootBridge")}}{{'%-10s'|format("RootPath")}}{{'%-18s'|format("DesignatedBridge")}}{{'%-12s'|format("Root")}}{{'%-5s'|format("Max")}}{{'%-5s'|format("Hel")}}{{'%-5s'|format("Fwd")}}
 {{'%-18s'|format("Identifier")}}{{'%-10s'|format("Cost")}}{{'%-18s'|format("Identifier")}}{{'%-12s'|format("Port")}}{{'%-5s'|format("Age")}}{{'%-4s'|format("lo")}} {{'%-5s'|format("Dly")}}
 {{'%-18s'|format("hex")}}{{'%-10s'|format("")}}{{'%-18s'|format("hex")}}{{'%-12s'|format("")}}{{'%-5s'|format("sec")}}{{'%-4s'|format("sec")}} {{'%-5s'|format("sec")}}
-        {% if vars.update({'root_br':vlan['state']['bridge-address']}) %}{% endif %}
+        {% if vars.update({'root_br':vlan['state']['designated-root-address']}) %}{% endif %}
         {% if vars.update({'root_path':vlan['state']['root-cost']}) %}{% endif %}
-        {% if vars.update({'desig_br':vlan['state']['designated-root-address']}) %}{% endif %}
+        {% if vars.update({'desig_br':vlan['state']['openconfig-spanning-tree-ext:designated-bridge-id']}) %}{% endif %}
         {% if vars.update({'root_port_name_name':vlan['state']['openconfig-spanning-tree-ext:root-port-name']}) %}{% endif %}
-        {% if vars.update({'max_age':vlan['state']['max-age']}) %}{% endif %}
-        {% if vars.update({'hello':vlan['state']['hello-time']}) %}{% endif %}
-        {% if vars.update({'fDly':vlan['state']['forwarding-delay']}) %}{% endif %}
+        {% if vars.update({'max_age':vlan['state']['openconfig-spanning-tree-ext:root-max-age']}) %}{% endif %}
+        {% if vars.update({'hello':vlan['state']['openconfig-spanning-tree-ext:root-hello-time']}) %}{% endif %}
+        {% if vars.update({'fDly':vlan['state']['openconfig-spanning-tree-ext:root-forward-delay']}) %}{% endif %}
 {{'%-18s'|format(vars.root_br)}}{{'%-10s'|format(vars.root_path)}}{{'%-18s'|format(vars.desig_br)}}{{'%-12s'|format(vars.root_port_name)}}{{'%-5s'|format(vars.max_age)}}{{'%-5s'|format(vars.hello)}}{{'%-5s'|format(vars.fDly)}}
 {{' ' }}
 RSTP (IEEE 802.1w) Port Parameters:

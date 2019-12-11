@@ -1,0 +1,163 @@
+module sonic-tam-drop-monitor {
+    namespace "http://github.com/Azure/sonic-tam-drop-monitor";
+    prefix drop-monitor;
+
+    import ietf-yang-types {
+	    prefix yang;
+    }
+
+    import sonic-common {
+	    prefix scommon;
+    }
+
+    import sonic-extension {
+            prefix sonic-ext;
+    }
+
+    organization
+        "SONiC";
+
+    contact
+        "SONiC";
+
+    description
+        "SONIC TAM DROP MONITOR YANG";
+
+    revision 2019-11-28 {
+        description
+            "Initial revision.";
+    }
+
+    container sonic-tam-drop-monitor {
+
+	container TAM_DROP_MONITOR_FEATURE_TABLE {
+
+            list TAM_DROP_MONITOR_FEATURE_TABLE_LIST {
+                key "name";
+
+                leaf name {
+                    type enumeration {
+                        enum feature;
+                    }
+                }
+
+                leaf enable {
+                    type boolean;
+                }
+            }
+        }
+    
+
+        container TAM_DROP_MONITOR_AGING_INTERVAL_TABLE {
+
+		list TAM_DROP_MONITOR_AGING_INTERVAL_TABLE_LIST {
+			key "name";
+
+			leaf name {
+				type enumeration {
+					enum aging;
+				}
+			}
+
+			leaf aging-interval {
+				type uint16 {
+					range "1..10" {
+						error-message "Drop monitor aging interval is out of range";
+						error-app-tag drop-monitor-aging-invalid;
+					}
+				}
+
+				default 3;
+			}
+		}
+	}
+
+	container SAMPLE_RATE_TABLE {
+
+		list SAMPLE_RATE_TABLE_LIST {
+			key "name";
+
+			leaf name {
+				type string {
+					pattern '[a-zA-Z0-9]{1}([-a-zA-Z0-9_]{0,71})';
+					length 1..72;
+				}
+			}
+
+			leaf sampling-rate {
+				type uint16 {
+					range "1..10000"{
+						error-app-tag "Invalid Drop Monitor Sampling Rate.";
+					}
+				}
+			}
+		}
+	}
+
+        container TAM_DROP_MONITOR_FLOW_TABLE {
+
+            list TAM_DROP_MONITOR_FLOW_TABLE_LIST {
+                key "name";
+
+                leaf name {
+			type string {
+				pattern '[a-zA-Z0-9]{1}([-a-zA-Z0-9_]{0,71})';
+				length 1..72;
+			}
+                }
+
+                leaf acl-table-name {
+			mandatory true;
+			type string;
+                }
+
+                leaf acl-rule-name {
+			mandatory true;
+			type string;
+                }
+
+		leaf sample {
+			type string {
+				pattern '[a-zA-Z0-9]{1}([-a-zA-Z0-9_]{0,32})';
+				length 1..32;
+			}
+		}
+
+		leaf collector-name {
+			type string {
+				pattern '[a-zA-Z0-9]{1}([-a-zA-Z0-9_]{0,32})';
+				length 1..32;
+			}
+		}
+
+		leaf flowgroup-id {
+			type uint32 {
+				range "1..655356"{
+					error-app-tag "Invalid Flow Group Identifier.";
+				}
+			}
+		}
+
+		container state {
+			sonic-ext:db-name "COUNTERS_DB";
+                        sonic-ext:key-delim ":";
+
+			config false;
+			description "State data for TAM INT IFA FS FLOW";
+
+
+			leaf MATCHED_PACKETS {
+				type yang:counter64;
+                                default 0;
+			}
+
+			leaf MATCHED_OCTETS {
+				type yang:counter64;
+                                default 0;
+			}
+		}
+
+            }
+        }
+    }
+}
