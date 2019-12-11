@@ -460,50 +460,14 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (cvlErr CVLErrorIn
 					}
 				}
 
-<<<<<<< HEAD
-				c.yp.SetOperation("CREATE")
-
-			case OP_UPDATE:
-				n, err1 := redisClient.Exists(cfgData[i].Key).Result()
-				if (err1 != nil || n == 0) { //key must exists
-					CVL_LOG(ERROR, "\nValidateEditConfig(): Key = %s does not exist", cfgData[i].Key)
-					cvlErrObj.ErrCode = CVL_SEMANTIC_KEY_NOT_EXIST
-||||||| merged common ancestors
-				c.yp.SetOperation("CREATE")
-
-			case OP_UPDATE:
-				n, err1 := redisClient.Exists(cfgData[i].Key).Result()
-				if (err1 != nil || n == 0) { //key must exists
-					CVL_LOG(ERROR, "\nValidateEditConfig(): Key = %s does not exist", cfgData[i].Key)
-					cvlErrObj.ErrCode = CVL_SEMANTIC_KEY_ALREADY_EXIST
-=======
 				if deletedInSameSession == false {
 					CVL_LOG(ERROR, "\nValidateEditConfig(): Key = %s already exists", cfgData[i].Key)
 					cvlErrObj.ErrCode = CVL_SEMANTIC_KEY_ALREADY_EXIST
->>>>>>> broadcom_sonic_share
 					cvlErrObj.CVLErrDetails = cvlErrorMap[cvlErrObj.ErrCode]
 					return cvlErrObj, CVL_SEMANTIC_KEY_ALREADY_EXIST 
 
-<<<<<<< HEAD
-			case OP_DELETE:
-				n, err1 := redisClient.Exists(cfgData[i].Key).Result()
-				if (err1 != nil || n == 0) { //key must exists
-					CVL_LOG(ERROR, "\nValidateEditConfig(): Key = %s does not exist", cfgData[i].Key)
-					cvlErrObj.ErrCode = CVL_SEMANTIC_KEY_NOT_EXIST
-					cvlErrObj.CVLErrDetails = cvlErrorMap[cvlErrObj.ErrCode]
-					return cvlErrObj, CVL_SEMANTIC_KEY_NOT_EXIST
-||||||| merged common ancestors
-			case OP_DELETE:
-				n, err1 := redisClient.Exists(cfgData[i].Key).Result()
-				if (err1 != nil || n == 0) { //key must exists
-					CVL_LOG(ERROR, "\nValidateEditConfig(): Key = %s does not exist", cfgData[i].Key)
-					cvlErrObj.ErrCode = CVL_SEMANTIC_KEY_ALREADY_EXIST
-					cvlErrObj.CVLErrDetails = cvlErrorMap[cvlErrObj.ErrCode]
-					return cvlErrObj, CVL_SEMANTIC_KEY_NOT_EXIST
-=======
 				} else {
 					TRACE_LOG(TRACE_CREATE, "\nKey %s is deleted in same session, skipping key existence check for OP_CREATE operation", cfgData[i].Key)
->>>>>>> broadcom_sonic_share
 				}
 			}
 
@@ -613,17 +577,8 @@ func (c *CVL) addDepEdges(graph *toposort.Graph, tableList []string) {
 
 			for _, leafRefs := range modelInfo.tableInfo[tableList[tj]].leafRef {
 				for _, leafRef := range leafRefs {
-<<<<<<< HEAD
-					if (strings.Contains(leafRef, tableList[ti] + "_LIST")) == false {
-						continue
-||||||| merged common ancestors
-					if (strings.Contains(leafRef, tableList[ti])) {
-						graph.AddEdge(yangToRedisTblName(tableList[tj]),
-						 yangToRedisTblName(tableList[ti]))
-=======
 					if (strings.Contains(leafRef.path, tableList[ti] + "_LIST")) == false {
 						continue
->>>>>>> broadcom_sonic_share
 					}
 
 					toName, exists := dupEdgeCheck[redisTblFrom]
@@ -700,22 +655,8 @@ func (c *CVL) addDepTables(tableMap map[string]bool, tableName string) {
 	//Now find all tables referred in leafref from this table
 	for _, leafRefs := range modelInfo.tableInfo[tableName].leafRef {
 		for _, leafRef := range leafRefs {
-<<<<<<< HEAD
-			matches := reLeafRef.FindStringSubmatch(leafRef)
-
-			//We have the leafref table name
-			if (matches != nil && len(matches) == 5) { //whole + 4 sub matches
-				c.addDepTables(tableMap, getYangListToRedisTbl(matches[2])) //call recursively
-||||||| merged common ancestors
-			matches := reLeafRef.FindStringSubmatch(leafRef)
-
-			//We have the leafref table name
-			if (matches != nil && len(matches) == 5) { //whole + 4 sub matches
-				c.addDepTables(tableMap, yangToRedisTblName(matches[2])) //call recursively
-=======
 			for _, refTbl := range leafRef.yangListNames {
 				c.addDepTables(tableMap, getYangListToRedisTbl(refTbl)) //call recursively
->>>>>>> broadcom_sonic_share
 			}
 		}
 	}
