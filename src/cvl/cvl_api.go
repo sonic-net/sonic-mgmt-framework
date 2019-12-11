@@ -463,9 +463,6 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (cvlErr CVLErrorIn
 				if deletedInSameSession == false {
 					CVL_LOG(ERROR, "\nValidateEditConfig(): Key = %s already exists", cfgData[i].Key)
 					cvlErrObj.ErrCode = CVL_SEMANTIC_KEY_ALREADY_EXIST
-					cvlErrObj.CVLErrDetails = cvlErrorMap[cvlErrObj.ErrCode]
-					return cvlErrObj, CVL_SEMANTIC_KEY_ALREADY_EXIST 
-
 				} else {
 					TRACE_LOG(TRACE_CREATE, "\nKey %s is deleted in same session, skipping key existence check for OP_CREATE operation", cfgData[i].Key)
 				}
