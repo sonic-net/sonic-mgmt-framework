@@ -120,11 +120,14 @@ var DbToYang_intf_nat_zone_xfmr SubTreeXfmrDbToYang = func (inParams XfmrParams)
 
     config, state := false, false
 
-    if strings.HasPrefix(targetUriPath, "/openconfig-interfaces:interfaces/interface/openconfig-interfaces-ext:nat-zone/config") {
+    if strings.HasPrefix(targetUriPath, "/openconfig-interfaces:interfaces/interface/openconfig-interfaces-ext:nat-zone/config") || 
+        strings.HasPrefix(targetUriPath, "/openconfig-interfaces:interfaces/interface/nat-zone/config"){
         config = true
-    } else if strings.HasPrefix(targetUriPath, "/openconfig-interfaces:interfaces/interface/openconfig-interfaces-ext:nat-zone/state") {
+    } else if strings.HasPrefix(targetUriPath, "/openconfig-interfaces:interfaces/interface/openconfig-interfaces-ext:nat-zone/state") ||
+        strings.HasPrefix(targetUriPath, "/openconfig-interfaces:interfaces/interface/nat-zone/state") {
         state = true
-    } else if strings.HasPrefix(targetUriPath, "/openconfig-interfaces:interfaces/interface/openconfig-interfaces-ext:nat-zone") {
+    } else if strings.HasPrefix(targetUriPath, "/openconfig-interfaces:interfaces/interface/openconfig-interfaces-ext:nat-zone") ||
+        strings.HasPrefix(targetUriPath, "/openconfig-interfaces:interfaces/interface/nat-zone") {
         config = true
         state = true
     } else {

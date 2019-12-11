@@ -285,7 +285,7 @@ var YangToDb_nat_mapping_subtree_xfmr SubTreeXfmrYangToDb = func(inParams XfmrPa
 
 
     for key, data := range natTblObj.NatMappingEntry {
-        if data.Config == nil {
+        if data.Config == nil && inParams.oper != DELETE {
             errStr := "NAT [Config DATA]  invalid."
             log.Info("YangToDb_nat_mapping_subtree_xfmr : " + errStr)
             return natMap, errors.New(errStr)
@@ -298,6 +298,7 @@ var YangToDb_nat_mapping_subtree_xfmr SubTreeXfmrYangToDb = func(inParams XfmrPa
 
         dbData := make(map[string]string)
         entry := db.Value{Field: dbData}
+        if data.Config != nil {
 
         if data.Config.InternalAddress != nil {
             entry.Set("local_ip",  *data.Config.InternalAddress)
@@ -308,6 +309,7 @@ var YangToDb_nat_mapping_subtree_xfmr SubTreeXfmrYangToDb = func(inParams XfmrPa
         }
         if data.Config.TwiceNatId != nil {
             entry.SetInt("twice_nat_id", int(*data.Config.TwiceNatId))
+        }
         }
         log.Info("YangToDb_nat_mapping_subtree_xfmr : dbkey - ", dbkey, " data - ", entry)
 
@@ -690,7 +692,7 @@ var YangToDb_napt_mapping_subtree_xfmr SubTreeXfmrYangToDb = func(inParams XfmrP
 
 
     for key, data := range naptTblObj.NaptMappingEntry {
-        if data.Config == nil {
+        if data.Config == nil && inParams.oper != DELETE {
             errStr := "NAPT [Config DATA]  invalid."
             log.Info("YangToDb_napt_mapping_subtree_xfmr : " + errStr)
             return naptMap, errors.New(errStr)
@@ -710,6 +712,7 @@ var YangToDb_napt_mapping_subtree_xfmr SubTreeXfmrYangToDb = func(inParams XfmrP
         dbData := make(map[string]string)
         entry := db.Value{Field: dbData}
 
+        if data.Config != nil {
         if data.Config.InternalAddress != nil {
             entry.Set("local_ip",  *data.Config.InternalAddress)
         }
@@ -722,6 +725,7 @@ var YangToDb_napt_mapping_subtree_xfmr SubTreeXfmrYangToDb = func(inParams XfmrP
         }
         if data.Config.TwiceNatId != nil {
             entry.SetInt("twice_nat_id", int(*data.Config.TwiceNatId))
+        }
         }
         log.Info("YangToDb_napt_mapping_subtree_xfmr : dbkey - ", dbkey, " data - ", entry)
 
