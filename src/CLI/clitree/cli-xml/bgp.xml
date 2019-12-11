@@ -39,7 +39,7 @@ limitations under the License.
        <MACRO name="IP_BGP_SUB_CMDS" arg=""></MACRO>
        <PARAM name="vrf" help="BGP VRF" mode="subcommand" ptype="SUBCOMMAND" optional="true">
          <PARAM name="vrf-Name" help="VRF Name" ptype="STRING">
-           <PARAM name="ip subcommands" help="IP subcommands" ptype="SUBCOMMAND" mode="switch">
+           <PARAM name="ip subcommands" help="IP subcommands" ptype="SUBCOMMAND" mode="switch" optional="true">
            <MACRO name="IP_BGP_SUB_CMDS" arg=""></MACRO>
            </PARAM>
          </PARAM>
@@ -60,7 +60,7 @@ limitations under the License.
     <PARAM name="evpn" help="EVPN route information" mode="subcommand" ptype="SUBCOMMAND"/>
     <ACTION builtin="clish_nop"/>
   </COMMAND>
-  <COMMAND name="show ip bgp Summary" help="BGP Summary information">
+  <COMMAND name="show ip bgp summary" help="BGP Summary information">
   <ACTION builtin="clish_nop"/>
   </COMMAND>
 </VIEW>
