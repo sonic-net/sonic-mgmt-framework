@@ -474,7 +474,9 @@ func TestValidateEditConfig_MustExp_Non_Key_As_Predicate_Negative(t *testing.T) 
 
         cvSess, _ := cvl.ValidationSessOpen()
 
-	cvlErrInfo, _ := cvSess.ValidateEditConfig(cfgData)
+	cvlErrInfo, _ := cvSess.ValidateEditConfig(cfgData)//should fail
+	cvlErrInfo, _ = cvSess.ValidateEditConfig(cfgData) //should fail again
+	cvlErrInfo, _ = cvSess.ValidateEditConfig(cfgData) //should fail again
 
         cvl.ValidationSessClose(cvSess)
 
@@ -545,3 +547,4 @@ func TestValidateEditConfig_MustExp_Non_Key_As_Predicate_In_External_Table_Posit
 
 	unloadConfigDB(rclient, depDataMap)
 }
+
