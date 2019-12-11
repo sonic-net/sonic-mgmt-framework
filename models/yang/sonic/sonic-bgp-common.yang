@@ -61,11 +61,11 @@ module sonic-bgp-common {
 
   typedef sonic_bgp_direction {
     type enumeration {
-      enum inbound {
+      enum in {
         description
           "Refers to information received from the BGP peer";
       }
-      enum outbound {
+      enum out {
         description
           "Refers to information advertised to the BGP peer";
       }
