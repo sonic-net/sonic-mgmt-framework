@@ -75,8 +75,8 @@ def invoke_api(func, args=[]):
         return api.patch(path, body)
 
     # Remove NAT Static basic translation entry
-    elif func == 'delete_openconfig_nat_nat_instances_instance_nat_mapping_table_nat_mapping_entry_config_internal_address':
-        path = cc.Path('/restconf/data/openconfig-nat:nat/instances/instance={id}/nat-mapping-table/nat-mapping-entry={externaladdress}/config/internal-address', id=args[0], externaladdress=args[1])
+    elif func == 'delete_openconfig_nat_nat_instances_instance_nat_mapping_table_nat_mapping_entry':
+        path = cc.Path('/restconf/data/openconfig-nat:nat/instances/instance={id}/nat-mapping-table/nat-mapping-entry={externaladdress}', id=args[0], externaladdress=args[1])
         return api.delete(path)
 
     # Remove all NAT Static basic translation entries
