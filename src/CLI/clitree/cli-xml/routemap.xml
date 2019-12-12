@@ -67,9 +67,9 @@ limitations under the License.
 
     <ACTION>
         if test "${action-switch}" = "permit"; then&#xA;
-            python $SONIC_CLI_ROOT/sonic-route-map.py patch_openconfig_routing_policy_routing_policy_policy_definitions_policy_definition_statements_statement_actions_config_policy_result  ${route-map-name} ${seq-nu} ACCEPT_ROUTE&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-routemap.py patch_openconfig_routing_policy_routing_policy_policy_definitions_policy_definition_statements_statement_actions_config_policy_result  ${route-map-name} ${seq-nu} ACCEPT_ROUTE&#xA;
         else&#xA;
-            python $SONIC_CLI_ROOT/sonic-route-map.py patch_openconfig_routing_policy_routing_policy_policy_definitions_policy_definition_statements_statement_actions_config_policy_result  ${route-map-name} ${seq-nu} REJECT_ROUTE&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-routemap.py patch_openconfig_routing_policy_routing_policy_policy_definitions_policy_definition_statements_statement_actions_config_policy_result  ${route-map-name} ${seq-nu} REJECT_ROUTE&#xA;
         fi&#xA;
     </ACTION>
     </COMMAND>
@@ -86,7 +86,7 @@ limitations under the License.
             ptype="STRING_63"
                         />
     <ACTION>
-            python $SONIC_CLI_ROOT/sonic-route-map.py delete_openconfig_routing_policy_routing_policy_policy_definitions_policy_definition_statements_statement_actions ${route-map-name} ${seq-nu}  &#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-routemap.py delete_openconfig_routing_policy_routing_policy_policy_definitions_policy_definition_statements_statement_actions ${route-map-name} ${seq-nu}  &#xA;
     </ACTION>
     </COMMAND>
 </VIEW>
