@@ -567,7 +567,10 @@ var YangToDb_community_member_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrPar
     }
 
     res_map["community_member@"] = strings.TrimSuffix(community_list, ",")
-    res_map["set_type"] = new_type
+
+    if (inParams.oper != DELETE) {
+       res_map["set_type"] = prev_type
+    }
 
     log.Info("YangToDb_community_member_fld_xfmr: ", res_map["community_member@"], " type ", res_map["set_type"])
     return res_map, err
@@ -767,7 +770,11 @@ var YangToDb_ext_community_member_fld_xfmr FieldXfmrYangToDb = func(inParams Xfm
         }
     }
     res_map["community_member@"] = strings.TrimSuffix(community_list, ",")
-    res_map["set_type"] = new_type
+
+    if (inParams.oper != DELETE) {
+       res_map["set_type"] = prev_type
+    }
+
     log.Info("YangToDb_ext_community_member_fld_xfmr: ", res_map["community_member@"], " type ", res_map["set_type"])
     return res_map, err
 }
