@@ -2,8 +2,8 @@
 <CLISH_MODULE xmlns="http://www.dellemc.com/sonic/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xi="http://www.w3.org/2001/XInclude" xsi:schemaLocation="http://www.dellemc.com/sonic/XMLSchema http://www.dellemc.com/sonic/XMLSchema/clish.xsd">
 	<PTYPE
 		name="PTP_V6SCOPE_TYPE"
-		pattern="0[xX][0-9a-fA-F]{2}"
-		help="Hexadecimal range (0x00-0xff)"
+		pattern="0[xX][0-9a-fA-F]"
+		help="Hexadecimal range (0x0-0xf)"
 		/>
 	<VIEW name="enable-view">
 		<!--show ptp -->
