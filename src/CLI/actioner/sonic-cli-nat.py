@@ -105,11 +105,11 @@ def invoke_api(func, args=[]):
         path = cc.Path('/restconf/data/openconfig-nat:nat/instances/instance={id}/nat-pool/nat-pool-entry={poolname}/config', id=args[0],poolname=args[1])
         ip = args[2].split("-")
         if len(ip) == 1:
-            body = { "openconfig-nat:config": {"ip-address": args[2]} }
+            body = { "openconfig-nat:config": {"IP-ADDRESS": args[2]} }
         else:
-            body =  { "openconfig-nat:config": {"ip-address-range": args[2]} }
+            body =  { "openconfig-nat:config": {"IP-ADDRESS-RANGE": args[2]} }
 
-        if args[3] != "":
+        if len(args) > 3:
             body["openconfig-nat:config"].update( {"nat-port": args[3] } )
         return api.patch(path, body)
 
