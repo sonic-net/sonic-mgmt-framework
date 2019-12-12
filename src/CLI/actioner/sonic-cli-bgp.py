@@ -294,7 +294,9 @@ def invoke_api(func, args=[]):
     elif func == 'patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_update_delay_config':
         keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/openconfig-bgp-ext:update-delay/config',
                 name=args[0], identifier=IDENTIFIER, name1=NAME1)
-        body = { "openconfig-bgp-ext:config" : { "max-delay" : int(args[1]), "establish-wait" : int(args[1]) } }
+        body = { "openconfig-bgp-ext:config" : { "max-delay": int(args[1]) } }
+        if len(args) > 2:
+            body["openconfig-bgp-ext:config"]["establish-wait"] = int(args[2])
         return api.patch(keypath, body)
     elif func == 'patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config':
         keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/neighbors/neighbor={neighbor_address}/config',
