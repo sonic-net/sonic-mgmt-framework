@@ -10,7 +10,6 @@ import (
     log "github.com/golang/glog"
     "reflect"
     "fmt"
-    "net"
 )
 
 const (
@@ -100,9 +99,9 @@ var DbToYang_prefix_action_fld_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams
     route_operation, ok := niInst.Field["action"]
     if ok {
         if route_operation == "permit" {
-            result["action"] = ocbinds.OpenconfigRoutingPolicy_PolicyResultType_ACCEPT_ROUTE 
+            result["action"] = "PERMIT"
         } else {
-            result["action"] = ocbinds.OpenconfigRoutingPolicy_PolicyResultType_REJECT_ROUTE
+            result["action"] = "DENY"
         }
     } else {
         log.Info("DbToYang_prefix_action_fld_xfmr field not found in DB")
@@ -221,15 +220,29 @@ var YangToDb_prefix_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (string
         }
 
         log.Info("YangToDb_prefix_key_xfmr: in prefix: ", ipPrefix)
-        _, ipNet, err := net.ParseCIDR(ipPrefix)
-        if err != nil {
-            err = errors.New("Invalid prefix")
-            log.Error("YangToDb_prefix_key_xfmr: Invalid Prefix ", ipPrefix)
-            return ipPrefix, err
-        }
-        log.Info("YangToDb_prefix_key_xfmr: Converted to CIDR prefix: ", ipNet.String())
 
-        prefixTblKey = setName + "|" + ipNet.String() + "|" + masklenrange
+        if masklenrange != "exact" {
+            prefix_mask := strings.Split(ipPrefix, "/")
+            length, _ := strconv.Atoi(prefix_mask[1])
+
+            m_range := strings.Split(masklenrange, "..")
+            ge, _ := strconv.Atoi(m_range[0])
+            le, _ := strconv.Atoi(m_range[1])
+
+            log.Infof("YangToDb_prefix_key_xfmr: mask length %d ge %d le %d", length, ge, le)
+
+            if (length < ge) != true {
+                err = errors.New("Invalid maskrange, len < ge-value")
+                log.Error("YangToDb_prefix_key_xfmr: Invalid maskrange, make len < ge-value <= ge-value")
+                return ipPrefix, err
+            }
+            if (ge <= le) != true {
+                err = errors.New("Invalid maskrange, ge-value <= ge-value")
+                log.Error("YangToDb_prefix_key_xfmr: Invalid maskrange, make sure len < ge-value <= ge-value")
+                return ipPrefix, err
+            }
+        }
+        prefixTblKey = setName + "|" + ipPrefix + "|" + masklenrange
     }
     log.Info("YangToDb_prefix_key_xfmr: prefixTblKey: ", prefixTblKey)
 
