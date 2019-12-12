@@ -10,6 +10,7 @@ import (
     log "github.com/golang/glog"
     "reflect"
     "fmt"
+    "net"
 )
 
 const (
@@ -73,11 +74,11 @@ var YangToDb_prefix_action_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrParams
     if inParams.param == nil {
         return res_map, err
     }
-    action, _ := inParams.param.(ocbinds.E_OpenconfigRoutingPolicy_PolicyResultType)
+    action, _ := inParams.param.(ocbinds.E_OpenconfigRoutingPolicyExt_RoutingPolicyExtActionType)
     log.Info("YangToDb_prefix_action_fld_xfmr: ", inParams.ygRoot, " Xpath: ", inParams.uri, " route-operation: ", action)
-    if action == ocbinds.OpenconfigRoutingPolicy_PolicyResultType_ACCEPT_ROUTE {
+    if action == ocbinds.OpenconfigRoutingPolicyExt_RoutingPolicyExtActionType_PERMIT {
         res_map["action"] = "permit"
-    } else if action == ocbinds.OpenconfigRoutingPolicy_PolicyResultType_REJECT_ROUTE {
+    } else if action == ocbinds.OpenconfigRoutingPolicyExt_RoutingPolicyExtActionType_DENY {
         res_map["action"] = "deny"
     }
     return res_map, err
@@ -219,7 +220,16 @@ var YangToDb_prefix_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (string
             return masklenrange, err
         }
 
-        prefixTblKey = setName + "|" + ipPrefix + "|" + masklenrange
+        log.Info("YangToDb_prefix_key_xfmr: in prefix: ", ipPrefix)
+        _, ipNet, err := net.ParseCIDR(ipPrefix)
+        if err != nil {
+            err = errors.New("Invalid prefix")
+            log.Error("YangToDb_prefix_key_xfmr: Invalid Prefix ", ipPrefix)
+            return ipPrefix, err
+        }
+        log.Info("YangToDb_prefix_key_xfmr: Converted to CIDR prefix: ", ipNet.String())
+
+        prefixTblKey = setName + "|" + ipNet.String() + "|" + masklenrange
     }
     log.Info("YangToDb_prefix_key_xfmr: prefixTblKey: ", prefixTblKey)
 
@@ -500,7 +510,7 @@ var YangToDb_community_member_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrPar
             v := (member).(*ocbinds.OpenconfigRoutingPolicy_RoutingPolicy_DefinedSets_BgpDefinedSets_CommunitySets_CommunitySet_Config_CommunityMember_Union_E_OpenconfigBgpTypes_BGP_WELL_KNOWN_STD_COMMUNITY)
             switch v.E_OpenconfigBgpTypes_BGP_WELL_KNOWN_STD_COMMUNITY {
             case ocbinds.OpenconfigBgpTypes_BGP_WELL_KNOWN_STD_COMMUNITY_NOPEER:
-                community_list += "local-AS" + ","
+                community_list += "no-peer" + ","
                 break
             case ocbinds.OpenconfigBgpTypes_BGP_WELL_KNOWN_STD_COMMUNITY_NO_ADVERTISE:
                 community_list += "no-advertise" + ","
@@ -509,8 +519,8 @@ var YangToDb_community_member_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrPar
                 community_list += "no-export" + ","
                 break
             case ocbinds.OpenconfigBgpTypes_BGP_WELL_KNOWN_STD_COMMUNITY_NO_EXPORT_SUBCONFED:
-                err = errors.New("Un supported BGP well known type NO_EXPORT_SUBCONFED");
-                return res_map, err
+                community_list += "local-AS" + ","
+                break
             }
             new_type = "STANDARD"
             break
@@ -574,11 +584,13 @@ var DbToYang_community_member_fld_xfmr FieldXfmrDbtoYang = func(inParams XfmrPar
             }
 
             if (community == "local-AS") {
-                result_community += "NOPEER"
+                result_community += "NO_EXPORT_SUBCONFED"
             } else if (community == "no-advertise") {
                 result_community += "NO_ADVERTISE"
             } else if (community == "no-export") {
                 result_community += "NO_EXPORT"
+            } else if (community == "no-peer") {
+                result_community += "NOPEER"
             } else {
                 result_community += community
             }

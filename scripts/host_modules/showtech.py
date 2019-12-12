@@ -11,6 +11,15 @@ class Showtech(host_service.HostModule):
     """
     @host_service.method(host_service.bus_name(MOD_NAME), in_signature='s', out_signature='is')
     def info(self, date):
+
+        ERROR_TAR_FAILED = 5
+        ERROR_PROCFS_SAVE_FAILED = 6
+        ERROR_INVALID_ARGUMENT = 10
+
+        err_dict = {ERROR_INVALID_ARGUMENT: 'Invalid input: Incorrect DateTime format',
+                    ERROR_TAR_FAILED: 'Failure saving information into compressed output file',
+                    ERROR_PROCFS_SAVE_FAILED: 'Saving of process information failed'}
+
         print("Host side: Running show techsupport")
         cmd = ['/usr/bin/generate_dump']
         if date:
@@ -20,11 +29,19 @@ class Showtech(host_service.HostModule):
         try:
             rc = 0
             output = subprocess.check_output(cmd)
+
         except subprocess.CalledProcessError as err:
             rc = err.returncode
-            output = ""
-            print("Host side: Failed", rc)
+            errmsg = err_dict.get(rc)
+
+            if errmsg is None:
+                output = 'Error: Failure code {:-5}'.format(rc)
+            else:
+                output = errmsg
+
+            print("%Error: Host side: Failed: " + str(rc))
             return rc, output
+
         output_string = output.decode("utf-8")
         output_file_match = re.search('\/var\/.*dump.*\.gz', output_string)
         if output_file_match is not None:

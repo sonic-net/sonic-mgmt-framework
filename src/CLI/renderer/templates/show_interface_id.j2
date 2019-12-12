@@ -25,6 +25,7 @@
 {% set vars = {'out_uni':""} %}
 {% set vars = {'out_errors':""} %}
 {% set vars = {'out_discards':""} %}
+{% set vars = {'last_clear':""} %}
 {% if json_output -%}
 {% for interfaces in json_output %}
 {% set interface_list = json_output[interfaces] %}
@@ -54,6 +55,7 @@
         {% if vars.update({'out_uni':interface[key]["counters"]["out-unicast-pkts"]}) %}{% endif %}
         {% if vars.update({'out_errors':interface[key]["counters"]["in-errors"]}) %}{% endif %}
         {% if vars.update({'out_discards':interface[key]["counters"]["out-discards"]}) %}{% endif %}
+        {% if vars.update({'last_clear':interface[key]["counters"]["last-clear"]}) %}{% endif %}
       {% endif %}
       {% if "subinterfaces" in key  %}
         {% for subinterface in interface[key] %}
@@ -106,6 +108,8 @@ Mode of {{ vars.ipv4 }} address assignment: {{ vars.mode4 }}
 Mode of {{ vars.ipv6 }} address assignment: {{ vars.mode6 }}
 IP MTU {{ vars.mtu }} bytes
 LineSpeed {{ vars.speed }}, Auto-negotiation off
+{% set datetime = datetimeformat(vars.last_clear) %}
+Last clearing of "show interface" counters: {{ datetime }} 
 Input statistics:
         {{vars.in_pkts}} packets, {{vars.in_octets}} octets
         {{vars.in_multi}} Multicasts, {{vars.in_broad}} Broadcasts, {{vars.in_uni}} Unicasts
