@@ -695,12 +695,6 @@ module openconfig-nat {
         description
             "Top grouping for NAT ACL pool binding entry data.";
 
-        leaf name {
-            description
-                "NAT ACL pool binding name.";
-            type string;
-        }
-
         leaf access-list {
             description
                 "Access list name.";
@@ -747,11 +741,9 @@ module openconfig-nat {
                 key "name";
 
                 leaf name {
+                    type string;
                     description
                         "NAT ACL pool binding name.";
-                    type leafref {
-                        path "../config/name";
-                    }
                 }
 
                 container config {

@@ -119,8 +119,8 @@ def invoke_api(func, args=[]):
         return api.delete(path)
 
     # Remove NAT Pool
-    elif func == 'delete_openconfig_nat_nat_instances_instance_nat_pool_nat_pool_entry_config':
-        path = cc.Path('/restconf/data/openconfig-nat:nat/instances/instance={id}/nat-pool/nat-pool-entry={poolname}/config',id=args[0],poolname=args[1])
+    elif func == 'delete_openconfig_nat_nat_instances_instance_nat_pool_nat_pool_entry':
+        path = cc.Path('/restconf/data/openconfig-nat:nat/instances/instance={id}/nat-pool/nat-pool-entry={poolname}',id=args[0],poolname=args[1])
         return api.delete(path)
 
     # Remove all NAT Pools
@@ -131,12 +131,12 @@ def invoke_api(func, args=[]):
     # Config NAT Binding
     elif func == 'patch_openconfig_nat_nat_instances_instance_nat_acl_pool_binding_nat_acl_pool_binding_entry_config':
         path = cc.Path('/restconf/data/openconfig-nat:nat/instances/instance={id}/nat-acl-pool-binding/nat-acl-pool-binding-entry={name}/config', id=args[0],name=args[1])
-        body = { "openconfig-nat:config": {"access-list": args[2], "nat-pool": args[3]} }
+        body = { "openconfig-nat:config": {"nat-pool": args[2]}, "access-list": args[3] }
         l = len(args)
         if l >= 5:
-            body["openconfig-nat:config"].update( {"nat-type": nat_type_map[args[4]] } )
+            body["openconfig-nat:config"].update( {"type": nat_type_map[args[4]] } )
         if l == 6:
-            body["openconfig-nat:config"].update( {"twice-nat-id": args[5]} )
+            body["openconfig-nat:config"].update( {"twice-nat-id": int(args[5])} )
         return api.patch(path, body)
 
     # Remove NAT Binding
