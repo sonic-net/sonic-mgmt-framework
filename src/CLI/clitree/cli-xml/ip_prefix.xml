@@ -290,6 +290,46 @@ limitations under the License.
     </ACTION>
     </COMMAND>
 
+    <COMMAND
+        name="no ip prefix-list"
+        help="Deleting ip prefix list"
+        >
+        <PARAM
+            name="prefix-name"
+            help="Name of a prefix list"
+            ptype="STRING"
+            >
+        </PARAM>
+    <ACTION>
+        python $SONIC_CLI_ROOT/sonic-cli-ip-prefix.py ipv4_prefix_delete ${prefix-name}&#xA;
+    </ACTION>
+    </COMMAND>
+
+    <COMMAND
+        name="no ipv6"
+        help="Deleting ipv6 prefix list"
+        >
+        <PARAM
+            name="prefix-list"
+            help="Prefix list"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            >
+            <PARAM
+                name="prefix-name"
+                help="Name of a ipv6 prefix list"
+                ptype="STRING"
+                >
+            </PARAM>
+        </PARAM>
+    <ACTION>
+        python $SONIC_CLI_ROOT/sonic-cli-ip-prefix.py ipv6_prefix_delete ${prefix-name}&#xA;
+    </ACTION>
+    </COMMAND>
+
+
+
+
 </VIEW>
 </CLISH_MODULE>
 
