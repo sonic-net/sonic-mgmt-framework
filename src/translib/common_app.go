@@ -306,14 +306,16 @@ func (app *CommonApp) translateCRUDCommon(d *db.DB, opcode int) ([]db.WatchKeys,
         log.Info("Result Tables List", resultTblList)
 
 	// Get list of tables to watch
-	depTbls := transformer.GetTablesToWatch(resultTblList, moduleNm)
-	if len(depTbls) == 0 {
-		log.Errorf("Failure to get Tables to watch for module %v", moduleNm)
-		err = errors.New("GetTablesToWatch returned empty slice")
-                return keys, err
-	}
-	for _, tbl := range depTbls {
-		tblsToWatch = append(tblsToWatch, &db.TableSpec{Name: tbl})
+	if len(resultTblList) > 0 {
+		depTbls := transformer.GetTablesToWatch(resultTblList, moduleNm)
+		if len(depTbls) == 0 {
+			log.Errorf("Failure to get Tables to watch for module %v", moduleNm)
+			err = errors.New("GetTablesToWatch returned empty slice")
+			return keys, err
+		}
+		for _, tbl := range depTbls {
+			tblsToWatch = append(tblsToWatch, &db.TableSpec{Name: tbl})
+		}
 	}
         log.Info("Tables to watch", tblsToWatch)
         cmnAppInfo.tablesToWatch = tblsToWatch
