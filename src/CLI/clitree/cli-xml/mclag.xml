@@ -7,39 +7,22 @@
 <!ENTITY MAX_MTU "9216">
 ]>
 <CLISH_MODULE xmlns="http://www.dellemc.com/sonic/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xi="http://www.w3.org/2001/XInclude" xsi:schemaLocation="http://www.dellemc.com/sonic/XMLSchema http://www.dellemc.com/sonic/XMLSchema/clish.xsd">
-
-
   <!--MODE : config terminal -->
-    <VIEW name="configure-view">
-        <COMMAND name="mclag" help="domain" 
-        >
-        </COMMAND>
-        <COMMAND
-            name="mclag domain"
-            help="Enter MCLAG Domain configuration mode"
-            view="configure-mclag-view"
-            viewid="id=${mclag-domain-id}"
-            >
-            <PARAM
-                name="mclag-domain-id"
-                help="Enter domain id"
-                ptype="RANGE_1_4095"
-              >
-            </PARAM>
-            <ACTION builtin="clish_nop"></ACTION>
-        </COMMAND>
-        <COMMAND name="no mclag" help="domain">
-        </COMMAND>
-        <COMMAND name="no mclag domain" help="Remove MCLAG Domain">
-            <PARAM name="mclag-domain-id" help="Domain Id" ptype="RANGE_1_4095"> </PARAM>
-            <ACTION> python $SONIC_CLI_ROOT/sonic-cli-mclag.py delete_sonic_mclag_sonic_mclag_mclag_domain_mclag_domain_list ${mclag-domain-id} </ACTION>
-        </COMMAND>
-   </VIEW>
-
+  <VIEW name="configure-view">
+    <COMMAND name="mclag" help="domain"> </COMMAND>
+    <COMMAND name="mclag domain" help="Enter MCLAG Domain configuration mode" view="configure-mclag-view" viewid="id=${mclag-domain-id}">
+      <PARAM name="mclag-domain-id" help="Enter domain id" ptype="RANGE_1_4095"> </PARAM>
+      <ACTION builtin="clish_nop"/>
+    </COMMAND>
+    <COMMAND name="no mclag" help="domain"> </COMMAND>
+    <COMMAND name="no mclag domain" help="Remove MCLAG Domain">
+      <PARAM name="mclag-domain-id" help="Domain Id" ptype="RANGE_1_4095"> </PARAM>
+      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-mclag.py delete_sonic_mclag_sonic_mclag_mclag_domain_mclag_domain_list ${mclag-domain-id} </ACTION>
+    </COMMAND>
+  </VIEW>
   <!--MODE : mclag domain view -->
   <VIEW name="configure-mclag-view" prompt="${SYSTEM_NAME}(mclag-domain-${id})# " depth="2">
-
-   <!-- Inheritance -->
+    <!-- Inheritance -->
     <NAMESPACE ref="configure-view" help="false" completion="false"/>
     <!-- show configuration -->
     <COMMAND name="show configuration" help="Current configuration">
@@ -54,14 +37,14 @@
       <ACTION> python $SONIC_CLI_ROOT/sonic-cli-mclag.py patch_sonic_mclag_sonic_mclag_mclag_domain_mclag_domain_list_source_ip ${id} ${SIP} </ACTION>
     </COMMAND>
     <COMMAND name="no source-ip" help="unset source IPV4 address">
-      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-mclag.py delete_sonic_mclag_sonic_mclag_mclag_domain_mclag_domain_list_source_ip ${id}  </ACTION>
+      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-mclag.py delete_sonic_mclag_sonic_mclag_mclag_domain_mclag_domain_list_source_ip ${id} </ACTION>
     </COMMAND>
     <COMMAND name="peer-ip" help="Set mclag Peer IPv4 address">
       <PARAM name="PIP" help="MCLAG Peer IPv4 address" ptype="IP_ADDR"> </PARAM>
       <ACTION> python $SONIC_CLI_ROOT/sonic-cli-mclag.py patch_sonic_mclag_sonic_mclag_mclag_domain_mclag_domain_list_peer_ip ${id} ${PIP} </ACTION>
     </COMMAND>
     <COMMAND name="no peer-ip" help="unset Peer IPV4 Address">
-      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-mclag.py delete_sonic_mclag_sonic_mclag_mclag_domain_mclag_domain_list_peer_ip ${id}  </ACTION>
+      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-mclag.py delete_sonic_mclag_sonic_mclag_mclag_domain_mclag_domain_list_peer_ip ${id} </ACTION>
     </COMMAND>
     <COMMAND name="peer-link" help="Set mclag Peer Interface">
       <PARAM name="if-subcommands" help="Interface subcommands" mode="switch" ptype="SUBCOMMAND">
@@ -72,17 +55,15 @@
           <PARAM name="PLK" help="Port-channel id" ptype="LAG_ID"> </PARAM>
         </PARAM>
       </PARAM>
-      <ACTION> 
-          if test "${if-subcommands}" = "PortChannel"; then
-             python $SONIC_CLI_ROOT/sonic-cli-mclag.py patch_sonic_mclag_sonic_mclag_mclag_domain_mclag_domain_list_peer_link ${id} PortChannel${PLK}
-          else
-             python $SONIC_CLI_ROOT/sonic-cli-mclag.py patch_sonic_mclag_sonic_mclag_mclag_domain_mclag_domain_list_peer_link ${id} Ethernet${PLK}
-          fi
+      <ACTION> if test "${if-subcommands}" = "PortChannel"; then &#xA;
+          python $SONIC_CLI_ROOT/sonic-cli-mclag.py patch_sonic_mclag_sonic_mclag_mclag_domain_mclag_domain_list_peer_link ${id} PortChannel${PLK} &#xA;
+          else &#xA;
+          python $SONIC_CLI_ROOT/sonic-cli-mclag.py patch_sonic_mclag_sonic_mclag_mclag_domain_mclag_domain_list_peer_link ${id} Ethernet${PLK} &#xA;
+          fi &#xA;
       </ACTION>
-
     </COMMAND>
     <COMMAND name="no peer-link" help="unset mclag Interface">
-      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-mclag.py delete_sonic_mclag_sonic_mclag_mclag_domain_mclag_domain_list_peer_link ${id}  </ACTION>
+      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-mclag.py delete_sonic_mclag_sonic_mclag_mclag_domain_mclag_domain_list_peer_link ${id} </ACTION>
     </COMMAND>
     <COMMAND name="keepalive-interval" help="Set mclag Session Keepalive interaval in secs">
       <PARAM name="KA" help="MCLAG Session Keepalive Interval" ptype="MCLAG_KA_INTERVAL_RANGE"> </PARAM>
@@ -90,14 +71,32 @@
     </COMMAND>
     <COMMAND name="no keepalive-interval" help="unset mclag keepalive interval">
       <ACTION builtin="clish_nop"/>
-      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-mclag.py delete_sonic_mclag_sonic_mclag_mclag_domain_mclag_domain_list_keepalive_interval ${id}  </ACTION>
+      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-mclag.py delete_sonic_mclag_sonic_mclag_mclag_domain_mclag_domain_list_keepalive_interval ${id} </ACTION>
     </COMMAND>
     <COMMAND name="session-timeout" help="Set mclag Session Timeout in secs">
       <PARAM name="ST" help="MCLAG Session Timeout value in secs" ptype="MCLAG_SESSION_TIMEOUT_RANGE"> </PARAM>
       <ACTION> python $SONIC_CLI_ROOT/sonic-cli-mclag.py patch_sonic_mclag_sonic_mclag_mclag_domain_mclag_domain_list_session_timeout ${id} ${ST} </ACTION>
     </COMMAND>
     <COMMAND name="no session-timeout" help="unset mclag Session Timeout">
-      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-mclag.py delete_sonic_mclag_sonic_mclag_mclag_domain_mclag_domain_list_session_timeout ${id}  </ACTION>
+      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-mclag.py delete_sonic_mclag_sonic_mclag_mclag_domain_mclag_domain_list_session_timeout ${id} </ACTION>
     </COMMAND>
   </VIEW>
+
+  <!--MODE : show commands view -->
+  <VIEW name="enable-view">
+    <!--show mclag brief -->
+    <COMMAND name="show mclag" help="Show mclag domain"> </COMMAND>
+    <COMMAND name="show mclag brief" help="Show mclag domain/interface information"> 
+      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-mclag.py "show mclag brief" show_mclag_brief.j2  </ACTION>
+    </COMMAND>
+
+    <!--show mclag interface -->
+    <COMMAND name="show mclag interface" help="Show mclag interface information">
+      <PARAM name="ifid" help="Enter mclag interface Portchannel Id without prefix" ptype="LAG_ID"> 
+        <PARAM name="domain_id" help="Enter domain id" ptype="RANGE_1_4095"> </PARAM>
+      </PARAM>
+      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-mclag.py "show mclag interface" show_mclag_iface.j2 PortChannel${ifid} ${domain_id} </ACTION>
+    </COMMAND>
+  </VIEW>
+
 </CLISH_MODULE>

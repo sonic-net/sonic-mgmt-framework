@@ -1,0 +1,53 @@
+module sonic-kdump {
+
+    yang-version "1";
+    namespace "http://github.com/Azure/sonic-kdump";
+    prefix "sonic-kdump";
+
+    description
+        "kdump support module for SONiC Management REST Server";
+
+
+    rpc kdump-config {
+        input {
+            leaf enabled {
+                type boolean;
+            }
+            leaf num_dumps {
+                type int32 {
+                    range "1..9" {
+                        error-message "Maximum number of stored kernel core files out of range";
+                    }
+                }
+            }
+            leaf memory {
+                type string {
+                    pattern '^(((([0-9]+[MG])?(-([0-9]+[MG])?):)?[0-9]+[MG],?)+)$' {
+                        error-message "Invalid kdump memory pattern";
+                    }
+                }
+            }
+        }
+        output {
+            leaf result {
+                type string;
+            }
+        }
+   }
+
+    rpc kdump-state {
+        input {
+            leaf param {
+                type string {
+                    pattern "status(status) memory(memory) num_dumps(num_dump)";
+                }
+            }
+        }
+        output {
+            leaf result {
+                type string;
+            }
+        }
+    }
+
+}

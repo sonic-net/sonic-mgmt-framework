@@ -3,7 +3,7 @@ module openconfig-interfaces-ext {
     yang-version "1";
 
     // namespace
-    namespace "http://openconfig.net/yang/interfaces/extension";
+    namespace "http://openconfig.net/yang/interfaces/extention";
 
     prefix "oc-intf-ext";
 

@@ -1,0 +1,321 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE CLISH_MODULE [
+]>
+
+<CLISH_MODULE xmlns="http://www.dellemc.com/sonic/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xi="http://www.w3.org/2001/XInclude"
+    xsi:schemaLocation="http://www.dellemc.com/sonic/XMLSchema
+                        http://www.dellemc.com/sonic/XMLSchema/clish.xsd">
+
+<!-- show commands -->
+<!-- show ip igmp snooping [[ vlan ] vlan-id ] -->
+<!-- show ip igmp snooping groups [[vlan] vlan-id] -->
+
+<VIEW name="enable-view">
+    <COMMAND
+        name="show ip igmp"
+        help="Show Internet Group Management Protocol (IGMP)">
+        <PARAM
+            name="snooping"
+            help="IGMP Snooping information for VLAN"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+        >        
+            <PARAM
+            name="vlan"
+            help="IGMP Snooping information for VLAN"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+						optional="true"
+        		>
+			        <PARAM
+			            name="vlan-id"
+			            help=""
+			            ptype="VLAN_ID"
+							/>
+					 </PARAM>
+					 
+	        <PARAM
+	            name="groups"
+	            help="IGMP Snooping groups information for VLAN"
+	            ptype="SUBCOMMAND"
+	            mode="subcommand"
+	            optional="true"
+	         >
+	            <PARAM
+	            name="vlan"
+	            help="IGMP Snooping information for VLAN"
+	            ptype="SUBCOMMAND"
+	            mode="subcommand"
+							optional="true"
+	        		>
+				        <PARAM
+				            name="vlan-id"
+				            help=""
+				            ptype="VLAN_ID"
+								/>
+						 </PARAM>
+					</PARAM>					 
+			</PARAM>
+    <ACTION>
+    		python $SONIC_CLI_ROOT/sonic-cli-igmp-snooping.py get_igmp_snooping_interfaces_interface_state show_igmp_snooping.j2 ${__params}&#xA;
+    </ACTION>
+    </COMMAND>
+</VIEW>
+
+<!--config commands: MODE : interface vlan -->
+<VIEW name="configure-vlan-view">
+
+    <COMMAND name = "ip igmp"
+		    help="Internet Group Management Protocol (IGMP)">
+				<PARAM
+						    name="snooping"
+						    help="IGMP Snooping"
+						    ptype="SUBCOMMAND"
+						    mode="subcommand"
+							>
+							<PARAM
+							    name="snooping-options"
+							    help=""
+							    ptype="SUBCOMMAND"
+							    mode="switch"
+							    optional = "true"
+							    >
+							    
+				                <PARAM
+				                    name="querier"
+				                    help="Querier"
+				                    ptype="SUBCOMMAND"
+				                    mode="subcommand"
+				                   >
+												</PARAM>							    
+				
+				                <PARAM
+				                    name="fast-leave"
+				                    help="Fast Leave Processing"
+				                    ptype="SUBCOMMAND"
+				                    mode="subcommand"
+				                   >
+			  								</PARAM>
+				
+				                <PARAM
+				                    name="query-interval"
+				                    help="Query Interval"
+				                    ptype="SUBCOMMAND"
+				                    mode="subcommand"
+				                   >
+				                   <PARAM
+					                    name="query-interval-val"	                    
+															ptype="IGMP_QUERY_INTERVAL"
+															help=""
+					                   	/>
+												</PARAM>
+				
+				                <PARAM
+				                    name="last-member-query-interval"
+				                    help="Last Member Query Interval"
+				                    ptype="SUBCOMMAND"
+				                    mode="subcommand"
+				                    >
+													  <PARAM
+							                 name="last-mem-query-interval-val"	                    
+															 ptype="IGMP_LAST_MEM_QUERY_INTERVAL"
+														 	 help=""
+				                    />
+												</PARAM>
+				
+				                <PARAM
+				                    name="query-max-response-time"
+				                    help="IGMP Max Query Response Time"
+				                    ptype="SUBCOMMAND"
+				                    mode="subcommand"
+				                   >
+				                   <PARAM
+					                    name="query-max-response-val"	                    
+															ptype="IGMP_MAX_QUERY_RESPONSE"
+															help=""
+					                   	/>
+												</PARAM>
+
+											<PARAM
+				                    name="version"
+				                    help="IGMP Snooping Version"
+				                    ptype="SUBCOMMAND"
+				                    mode="subcommand"
+				                   >
+				                   <PARAM
+					                    name="igmps-version-val"	                    
+															ptype="IGMP_SNOOPING_VERSION"
+															help=""
+					                 />
+											</PARAM>
+				
+			                <PARAM
+			                    name="mrouter"
+			                    help="Multicast Router"
+			                    ptype="SUBCOMMAND"
+			                    mode="subcommand"
+			                   >
+								         <PARAM
+					                    name="interface"
+					                    help="Interface to use"
+					                    ptype="SUBCOMMAND"
+					                    mode="subcommand"
+					               >
+					               <PARAM 
+					               			name="mrouter-if-name" 
+					               			help="Interface name" 
+					               			ptype="STRING"
+												/>							             			
+										   </PARAM>										   				
+										</PARAM>
+										
+		                <PARAM
+		                    name="static-group"
+		                    help="Static Group to be Joined"
+		                    ptype="SUBCOMMAND"
+		                    mode="subcommand"
+		                   >
+							         <PARAM
+				               			name="group-addr" 
+				               			help="Multicast Address to be Joined" 
+				               			ptype="IP_ADDR"							             			
+				               >
+										         <PARAM
+							                    name="interface"
+							                    help="Interface to use"
+							                    ptype="SUBCOMMAND"
+							                    mode="subcommand"
+							               >
+									               <PARAM 
+									               			name="grp-if-name" 
+									               			help="Interface name" 
+									               			ptype="STRING"
+																 />							             			
+												   </PARAM>										   				
+				              </PARAM>
+									</PARAM>										
+							</PARAM>					
+				</PARAM>		    
+    <ACTION>
+    		python $SONIC_CLI_ROOT/sonic-cli-igmp-snooping.py patch_igmp_snooping_interfaces_interface_config ${vlan_id} ${__params}&#xA;
+        builtin="clish_nop"
+    </ACTION>
+    </COMMAND>
+    
+    <COMMAND name = "no ip igmp"
+		    help="Internet Group Management Protocol (IGMP)">
+				<PARAM
+						    name="snooping"
+						    help="IGMP Snooping"
+						    ptype="SUBCOMMAND"
+						    mode="subcommand"
+							>
+							<PARAM
+							    name="snooping-options"
+							    help=""
+							    ptype="SUBCOMMAND"
+							    mode="switch"
+							    optional = "true"
+							    >
+							    
+				                <PARAM
+				                    name="querier"
+				                    help="Querier"
+				                    ptype="SUBCOMMAND"
+				                    mode="subcommand"
+				                   >
+												</PARAM>							    
+				
+				                <PARAM
+				                    name="fast-leave"
+				                    help="Fast Leave Processing"
+				                    ptype="SUBCOMMAND"
+				                    mode="subcommand"
+				                   >
+			  								</PARAM>
+				
+				                <PARAM
+				                    name="query-interval"
+				                    help="Query Interval"
+				                    ptype="SUBCOMMAND"
+				                    mode="subcommand"
+				                   />
+				
+				                <PARAM
+				                    name="last-member-query-interval"
+				                    help="Last Member Query Interval"
+				                    ptype="SUBCOMMAND"
+				                    mode="subcommand"
+				                    />
+				
+				                <PARAM
+				                    name="query-max-response-time"
+				                    help="IGMP Max Query Response Time"
+				                    ptype="SUBCOMMAND"
+				                    mode="subcommand"
+				                   />
+
+											<PARAM
+				                    name="version"
+				                    help="IGMP Snooping Version"
+				                    ptype="SUBCOMMAND"
+				                    mode="subcommand"
+				                   />
+				
+			                <PARAM
+			                    name="mrouter"
+			                    help="Multicast Router"
+			                    ptype="SUBCOMMAND"
+			                    mode="subcommand"
+			                   >
+								         <PARAM
+					                    name="interface"
+					                    help="Interface to use"
+					                    ptype="SUBCOMMAND"
+					                    mode="subcommand"
+					               >
+							               <PARAM 
+							               			name="mrouter-if-name" 
+							               			help="Interface name" 
+							               			ptype="STRING"
+														 />							             			
+										     </PARAM>
+										  </PARAM>
+										  
+		                <PARAM
+		                    name="static-group"
+		                    help="Static Group to be Joined"
+		                    ptype="SUBCOMMAND"
+		                    mode="subcommand"
+		                   >
+							         <PARAM
+				               			name="group-addr" 
+				               			help="Multicast Address to be Joined" 
+				               			ptype="IP_ADDR"							             			
+				               >
+										         <PARAM
+							                    name="interface"
+							                    help="Interface to use"
+							                    ptype="SUBCOMMAND"
+							                    mode="subcommand"
+							               >
+									               <PARAM 
+									               			name="grp-if-name" 
+									               			help="Interface name" 
+									               			ptype="STRING"
+																 />							             			
+												   </PARAM>										   				
+				              </PARAM>
+									</PARAM>
+						</PARAM>					
+				</PARAM>		    
+        <ACTION>
+    		python $SONIC_CLI_ROOT/sonic-cli-igmp-snooping.py delete_igmp_snooping_interfaces_interface_config ${vlan_id} ${__params}&#xA;       
+        builtin="clish_nop"
+        </ACTION>
+    </COMMAND>        
+</VIEW>
+</CLISH_MODULE>

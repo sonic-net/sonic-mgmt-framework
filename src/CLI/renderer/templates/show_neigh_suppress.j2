@@ -1,0 +1,10 @@
+{% set vars = {'entry': ""} %}
+{% if json_output -%}
+{{'-------------------------------'}}
+{{'%-11s'|format("VlanId")}}{{'%-22s'|format("SuppressionStatus")}}
+{{'-------------------------------'}}
+{% for vlanKey in json_output %}
+{% if vars.update({'entry':vlanKey}) %}{% endif %}
+{{'%-11s'|format(vars.entry['name'])}}{{'%-12s'|format(vars.entry['suppress'])}}
+{% endfor %}
+{% endif %}

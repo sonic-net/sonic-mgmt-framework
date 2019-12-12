@@ -99,10 +99,10 @@ limitations under the License.
     <PARAM name="unicast" help="Unicast route information" mode="subcommand" ptype="SUBCOMMAND"/>
     <ACTION builtin="clish_nop"/>
   </COMMAND>
-  <COMMAND name="show ip bgp l2vpn" help="L2VPN route information">
-    <PARAM name="evpn" help="EVPN route information" mode="subcommand" ptype="SUBCOMMAND"/>
+  <!--COMMAND name="show ip bgp l2vpn" help="L2VPN route information"/>
+  <COMMAND name="show ip bgp l2vpn evpn" help="L2VPN EVPN route information">
     <ACTION builtin="clish_nop"/>
-  </COMMAND>
+  </COMMAND-->
 </VIEW>
 
 <VIEW name="configure-view">
@@ -297,6 +297,10 @@ limitations under the License.
     <PARAM name="unicast" help="Address Family" mode="subcommand" ptype="SUBCOMMAND" view="configure-router-bgp-ipv6-view" viewid="family=ipv6"/>
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_config ${vrf-name} IPV6_UNICAST</ACTION>
   </COMMAND>
+  <COMMAND name="address-family l2vpn" help="Enter Address Family command mode" view="configure-router-bgp-l2vpn-view" viewid="vrf-name=${vrf-name};family=l2vpn">
+    <PARAM name="evpn" help="Address Family" mode="subcommand" ptype="SUBCOMMAND" view="configure-router-bgp-l2vpn-view" viewid="family=l2vpn"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_config ${vrf-name} L2VPN_EVPN</ACTION>
+  </COMMAND>
 
   <COMMAND name="listen" help="Set the prefix range for dynamic peers">
     <PARAM name="addr" help="Neighbor prefix" ptype="IP_ADDR_MASK">
@@ -459,6 +463,10 @@ limitations under the License.
   <COMMAND name="no address-family ipv6" help="Enter Address Family command mode">
     <PARAM name="unicast" help="Address Family" mode="subcommand" ptype="SUBCOMMAND"/>
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi ${vrf-name} IPV6_UNICAST</ACTION>
+  </COMMAND>
+  <COMMAND name="no address-family l2vpn" help="Enter Address Family command mode">
+    <PARAM name="evpn" help="Address Family" mode="subcommand" ptype="SUBCOMMAND"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi ${vrf-name} L2VPN_EVPN</ACTION>
   </COMMAND>
 </VIEW>
 

@@ -7,7 +7,9 @@ module openconfig-network-instance-annot {
 
     import openconfig-network-instance { prefix oc-netinst; }
     import sonic-extensions { prefix sonic-ext; }
+    import openconfig-network-instance-deviation { prefix oc-netinst-deviation; }
     import openconfig-bgp-ext { prefix oc-bgp-ext; }
+    import openconfig-bgp-evpn-ext { prefix oc-bgp-evpn-ext; }
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance {
       deviate add {
@@ -2631,6 +2633,161 @@ module openconfig-network-instance-annot {
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:ipv6-unicast/oc-netinst:state/oc-bgp-ext:default-policy-name {
       deviate add {
         sonic-ext:field-name "default_rmap";
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst-deviation:igmp-snooping/oc-netinst-deviation:interfaces/oc-netinst-deviation:interface/oc-netinst-deviation:config
+    {
+      deviate add {
+            sonic-ext:table-name "CFG_L2MC_TABLE";
+            sonic-ext:key-transformer "igmp_snooping_key_xfmr";    
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst-deviation:igmp-snooping/oc-netinst-deviation:interfaces/oc-netinst-deviation:interface/oc-netinst-deviation:state
+    {
+      deviate add {
+            sonic-ext:table-name "CFG_L2MC_TABLE";
+            sonic-ext:key-transformer "igmp_snooping_key_xfmr";    
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst-deviation:igmp-snooping/oc-netinst-deviation:interfaces/oc-netinst-deviation:interface/oc-netinst-deviation:config/oc-netinst-deviation:mrouter-interface
+    {
+      deviate add {
+            sonic-ext:table-name "CFG_L2MC_MROUTER_TABLE";
+            sonic-ext:key-transformer "igmp_snooping_mrouter_config_key_xfmr";    
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst-deviation:igmp-snooping/oc-netinst-deviation:interfaces/oc-netinst-deviation:interface/oc-netinst-deviation:state/oc-netinst-deviation:mrouter-interface
+    {
+      deviate add {
+      			sonic-ext:db-name "APPL_DB";
+            sonic-ext:table-name "APP_L2MC_MROUTER_TABLE";
+            sonic-ext:key-transformer "igmp_snooping_mrouter_state_key_xfmr";    
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst-deviation:igmp-snooping/oc-netinst-deviation:interfaces/oc-netinst-deviation:interface/oc-netinst-deviation:config/oc-netinst-deviation:static-multicast-group 
+    {
+      deviate add {
+            sonic-ext:table-name "CFG_L2MC_STATIC_GROUP_TABLE";
+            sonic-ext:key-transformer "igmp_snooping_static_group_config_key_xfmr";    
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst-deviation:igmp-snooping/oc-netinst-deviation:interfaces/oc-netinst-deviation:interface/oc-netinst-deviation:state/oc-netinst-deviation:static-multicast-group 
+    {
+      deviate add {
+      			sonic-ext:db-name "APPL_DB";
+            sonic-ext:table-name "APP_L2MC_MEMBER_TABLE";
+            sonic-ext:key-transformer "igmp_snooping_static_member_state_key_xfmr";
+      }
+    }
+    
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst-deviation:igmp-snooping {
+			deviate add {
+				sonic-ext:subtree-transformer "igmp_snooping_subtree_xfmr";
+			}    
+    }  
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:l2vpn-evpn/oc-bgp-evpn-ext:vnis/oc-bgp-evpn-ext:vni {
+      deviate add {
+        sonic-ext:table-name "BGP_GLOBALS_EVPN_VNI";
+        sonic-ext:key-transformer "bgp_evpn_vni_key_xfmr";
+      }
+    } 
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:l2vpn-evpn/oc-bgp-evpn-ext:vnis/oc-bgp-evpn-ext:vni/oc-bgp-evpn-ext:config/oc-bgp-evpn-ext:vni-number {
+      deviate add {
+            sonic-ext:field-transformer "bgp_vni_number_fld_xfmr";
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:l2vpn-evpn/oc-bgp-evpn-ext:vpn-target {
+      deviate add {
+        sonic-ext:table-name "BGP_GLOBALS_EVPN_RT";
+        sonic-ext:key-transformer "bgp_evpn_rt_key_xfmr";
+      }
+    } 
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:l2vpn-evpn/oc-bgp-evpn-ext:vpn-target/oc-bgp-evpn-ext:route-target {
+      deviate add {
+            sonic-ext:field-transformer "bgp_rt_fld_xfmr";
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:l2vpn-evpn/oc-bgp-evpn-ext:vpn-target/oc-bgp-evpn-ext:route-target-type {
+      deviate add {
+        sonic-ext:field-transformer "bgp_rt_type_fld_xfmr";
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:l2vpn-evpn/oc-bgp-evpn-ext:vnis/oc-bgp-evpn-ext:vni/oc-bgp-evpn-ext:vpn-target {
+      deviate add {
+        sonic-ext:table-name "BGP_GLOBALS_EVPN_VNI_RT";
+        sonic-ext:key-transformer "bgp_evpn_vni_rt_key_xfmr";
+      }
+    } 
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:l2vpn-evpn/oc-bgp-evpn-ext:vnis/oc-bgp-evpn-ext:vni/oc-bgp-evpn-ext:vpn-target/oc-bgp-evpn-ext:route-target {
+      deviate add {
+            sonic-ext:field-transformer "bgp_rt_fld_xfmr";
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:l2vpn-evpn/oc-bgp-evpn-ext:vnis/oc-bgp-evpn-ext:vni/oc-bgp-evpn-ext:vpn-target/oc-bgp-evpn-ext:route-target-type {
+      deviate add {
+        sonic-ext:field-transformer "bgp_rt_type_fld_xfmr";
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:l2vpn-evpn/oc-bgp-evpn-ext:default-originate/oc-bgp-evpn-ext:ipv4 {
+      deviate add {
+        sonic-ext:field-name "default-originate-ipv4";
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:l2vpn-evpn/oc-bgp-evpn-ext:default-originate/oc-bgp-evpn-ext:ipv6 {
+      deviate add {
+        sonic-ext:field-name "default-originate-ipv6";
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:l2vpn-evpn/oc-bgp-evpn-ext:advertise-list {
+      deviate add {
+            sonic-ext:field-transformer "bgp_advertise_fld_xfmr";
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:l2vpn-evpn/oc-bgp-evpn-ext:dup-addr-detection/oc-bgp-evpn-ext:enabled {
+      deviate add {
+        sonic-ext:field-name "dad-enabled";
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:l2vpn-evpn/oc-bgp-evpn-ext:dup-addr-detection/oc-bgp-evpn-ext:max-moves {
+      deviate add {
+        sonic-ext:field-name "dad-max-moves";
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:l2vpn-evpn/oc-bgp-evpn-ext:dup-addr-detection/oc-bgp-evpn-ext:time {
+      deviate add {
+        sonic-ext:field-name "dad-time";
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:l2vpn-evpn/oc-bgp-evpn-ext:dup-addr-detection/oc-bgp-evpn-ext:freeze {
+      deviate add {
+        sonic-ext:field-name "dad-freeze";
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:l2vpn-evpn/oc-bgp-evpn-ext:vnis/oc-bgp-evpn-ext:vni/oc-bgp-evpn-ext:state {
+      deviate add {
+            sonic-ext:subtree-transformer "bgp_evpn_vni_state_xfmr";
       }
     }
 }

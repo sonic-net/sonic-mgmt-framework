@@ -113,8 +113,8 @@ func clearStpDataFromConfigDb() error {
 	var err error
 	stpGlobalTbl := db.TableSpec{Name: "STP"}
 	stpVlanTbl := db.TableSpec{Name: "STP_VLAN"}
-	stpVlanIntfTbl := db.TableSpec{Name: "STP_VLAN_INTF"}
-	stpIntfTbl := db.TableSpec{Name: "STP_INTF"}
+	stpVlanIntfTbl := db.TableSpec{Name: "STP_VLAN_PORT"}
+	stpIntfTbl := db.TableSpec{Name: "STP_PORT"}
 
 	d := getConfigDb()
 	if d == nil {

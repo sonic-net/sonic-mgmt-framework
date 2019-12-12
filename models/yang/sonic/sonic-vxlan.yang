@@ -1,116 +1,201 @@
 module sonic-vxlan {
-	namespace "http://github.com/Azure/sonic-vxlan";
-	prefix svxlan;
-	yang-version 1.1;
+    namespace "http://github.com/Azure/sonic-vxlan";
+    prefix svxlan;
+    yang-version 1.1;
 
-	import ietf-inet-types {
-		prefix inet;
-	}
-
-	organization
-		"SONiC";
-
-	contact
-		"SONiC";
-
-	description
-		"SONIC VXLAN";
-
-	revision 2019-10-01 {
-		description
-			"Initial revision.";
-	}
-
-	container sonic-vxlan {
-
-     container VXLAN_TUNNEL {
-
-		list VXLAN_TUNNEL_LIST { 
-			key "name";
-            max-elements 1;
-
-			leaf name {
-				type string;
-			}
-
-			leaf src_ip {
-				mandatory true;
-				type inet:ipv4-address;
-			}
-		}
-     }
-
-     container VXLAN_TUNNEL_MAP {
-
-		list VXLAN_TUNNEL_MAP_LIST { 
-			key "name mapname";
-
-			leaf name {
-				type leafref {
-					path "../../../VXLAN_TUNNEL/VXLAN_TUNNEL_LIST/name";
-				}
-			}
-
-			leaf mapname {
-				type string;
-			}
-
-			leaf vlan {
-				mandatory true;
-				type string {
-					pattern "Vlan(409[0-5]|40[0-8][0-9]|[1-3][0-9]{3}|[1-9][0-9]{2}|[1-9][0-9]|[1-9])" {
-						error-message "Invalid Vlan name pattern";
-						error-app-tag vlan-name-invalid;
-					}
-				}
-			}
-
-			leaf vni {
-				mandatory true;
-				type uint32 {
-					range "1..16777215" {
-						error-message "VNI ID out of range";
-						error-app-tag vnid-invalid;
-					}
-				}
-			}
-		}
-      }
-
-     container EVPN_NVO {
-
-		list EVPN_NVO_LIST { 
-
-			key "name";
-            max-elements 1;
-
-			leaf name {
-				type string;
-			}
-
-			leaf source_vtep {
-				mandatory true;
-				type leafref {
-					path "../../../VXLAN_TUNNEL/VXLAN_TUNNEL_LIST/name";
-				}
-			}
-		}
-	 }
-     container SUPPRESS_VLAN_NEIGH {
-
-         list SUPPRESS_VLAN_NEIGH_LIST {
-             key "name";
-
-             leaf name {
-                 type string;
-             }
-             leaf suppress {
-                 type string;
-             }
-
-         }
-     }
-
+    import ietf-yang-types {
+        prefix yang;
     }
 
+    import ietf-inet-types {
+        prefix inet;
+    }
+
+    import sonic-extension {
+        prefix sonic-ext;
+    }
+    import sonic-vlan {
+        prefix svlan;
+    }
+
+
+    organization
+        "SONiC";
+
+    contact
+        "SONiC";
+
+    description
+        "SONIC VXLAN";
+
+    revision 2019-10-01 {
+        description
+            "Initial revision.";
+    }
+
+    container sonic-vxlan {
+
+        container VXLAN_TUNNEL {
+
+            list VXLAN_TUNNEL_LIST { 
+                key "name";
+                max-elements 1;
+
+                leaf name {
+                    type string;
+                }
+
+                leaf src_ip {
+                    mandatory true;
+                    type inet:ipv4-address;
+                }
+            }
+        }
+
+        container VXLAN_TUNNEL_MAP {
+
+            list VXLAN_TUNNEL_MAP_LIST { 
+                key "name mapname";
+
+                leaf name {
+                    type leafref {
+                        path "../../../VXLAN_TUNNEL/VXLAN_TUNNEL_LIST/name";
+                    }
+                }
+
+                leaf mapname {
+                    type string;
+                }
+                leaf vlan {
+                    mandatory true;
+                    type leafref {
+                        path "/svlan:sonic-vlan/svlan:VLAN/svlan:VLAN_LIST/svlan:name";
+                    }
+                }
+
+                leaf vni {
+                    mandatory true;
+                    type uint32 {
+                        range "1..16777215" {
+                            error-message "VNI ID out of range";
+                            error-app-tag vnid-invalid;
+                        }
+                    }
+                }
+            }
+        }
+
+        container EVPN_NVO {
+
+            list EVPN_NVO_LIST { 
+
+                key "name";
+                max-elements 1;
+
+                leaf name {
+                    type string;
+                }
+
+                leaf source_vtep {
+                    mandatory true;
+                    type leafref {
+                        path "../../../VXLAN_TUNNEL/VXLAN_TUNNEL_LIST/name";
+                    }
+                }
+            }
+        }
+        container SUPPRESS_VLAN_NEIGH {
+
+            list SUPPRESS_VLAN_NEIGH_LIST {
+                key "name";
+
+                leaf name {
+                    type string;
+                }
+                leaf suppress {
+                    type string;
+                }
+
+            }
+        }
+        container VXLAN_TUNNEL_TABLE { 
+            sonic-ext:db-name "STATE_DB"; 
+            sonic-ext:key-delim ":"; 
+
+            config false;
+            description "state db vxlan tunnel table";
+
+            list VXLAN_TUNNEL_TABLE_LIST { 
+                key "name";
+
+                leaf name {
+                    type string; 
+                }
+                leaf src_ip {
+                    type string;
+                }
+                leaf dst_ip {
+                    type string;
+                }
+                leaf tnl_src {
+                    type string;
+                }
+                leaf operstatus {
+                    type string;
+                }
+            }
+        }
+        container EVPN_REMOTE_VNI_TABLE {
+            sonic-ext:db-name "APPL_DB";
+            sonic-ext:key-delim ":";
+
+            config false;
+            description "app db vxlan remote vni table";
+
+            list EVPN_REMOTE_VNI_TABLE_LIST {
+                key "vlan remote_vtep";
+
+                leaf vlan {
+                    type leafref {
+                        path "/svlan:sonic-vlan/svlan:VLAN/svlan:VLAN_LIST/svlan:name";
+                    }
+                }
+                leaf remote_vtep {
+                    type inet:ipv4-address;
+                }
+                leaf vni {
+                    type string;
+                }
+            }
+        }
+        container VXLAN_FDB_TABLE{
+            sonic-ext:db-name "APPL_DB";
+            sonic-ext:key-delim ":";
+
+            config false;
+            description "app db vxlan fdb table";
+
+            list VXLAN_FDB_TABLE_LIST {
+                key "vlan mac_addr";
+
+                leaf vlan {
+                    type leafref {
+                        path "/svlan:sonic-vlan/svlan:VLAN/svlan:VLAN_LIST/svlan:name";
+                    }
+                }
+                leaf mac_addr {
+                    type yang:mac-address;
+                }
+                leaf remote_vtep {
+                    type inet:ipv4-address;
+                }
+                leaf type {
+                    type string;
+                }
+                leaf vni {
+                    type string;
+                }
+            }
+        }
+    }
 }

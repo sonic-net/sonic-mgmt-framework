@@ -1,0 +1,53 @@
+{% set igmps_intfs = {} %}
+{% if json_output['interface'] is defined and json_output['interface'] is not none %}
+{% set igmps_intfs =  json_output['interface'] %}
+{%endif%}
+{% if json_output['openconfig-network-instance-deviation:interface'] is defined and json_output['openconfig-network-instance-deviation:interface'] is not none %}
+{% set igmps_intfs =  json_output['openconfig-network-instance-deviation:interface'] %}
+{%endif%}
+{% for igmps_intf in igmps_intfs %}
+{% if igmps_intf['config'] is not none %}
+{% set igmps_config = igmps_intf['config'] %}
+{% if igmps_config['enabled'] is defined and igmps_config['enabled'] == true %}
+{% set vlan_name = igmps_config['name'] %}
+{% set vlan_id = vlan_name.split('Vlan')[1] %}
+Vlan ID: {{vlan_id}}
+{% if igmps_config['mrouter-interface'] is defined %}
+Multicast Router ports: {{igmps_config['mrouter-interface']|join(", ")}}
+{%endif%}
+{% if igmps_config['querier'] == true %}
+Querier: Enabled
+{% else %}
+Querier: Disabled
+{%endif%}
+{% if igmps_config['version'] is defined %}
+IGMP Operation mode: IGMPv{{igmps_config['version']}}
+{% else %}
+IGMP Operation mode: IGMPv2
+{%endif%}
+{% if igmps_config['fast-leave'] == true %}
+Is Fast-Leave Enabled: Enabled
+{% else %}
+Is Fast-Leave Enabled: Disabled
+{%endif%}
+{% if igmps_config['query-interval'] is defined %}
+Query interval: {{igmps_config['query-interval']}}
+{% else %}
+Query interval: 125
+{%endif%}
+{% if igmps_config['last-member-query-interval'] is defined %}
+Last Member Query Interval: {{igmps_config['last-member-query-interval']}}
+{% else %}
+Last Member Query Interval: 1000
+{%endif%}
+{% if igmps_config['query-max-response-time'] is defined %}
+Max Response time: {{igmps_config['query-max-response-time']}}
+{% else %}
+Max Response time: 10
+{%endif%}
+{% if json_output['interface'] is defined and json_output['interface'] is not none %}
+{{ ' ' }}
+{%endif%}
+{%endif%}
+{%endif%}
+{% endfor %}
