@@ -131,7 +131,7 @@ def invoke_api(func, args=[]):
     # Config NAT Binding
     elif func == 'patch_openconfig_nat_nat_instances_instance_nat_acl_pool_binding_nat_acl_pool_binding_entry_config':
         path = cc.Path('/restconf/data/openconfig-nat:nat/instances/instance={id}/nat-acl-pool-binding/nat-acl-pool-binding-entry={name}/config', id=args[0],name=args[1])
-        body = { "openconfig-nat:config": {"nat-pool": args[2]}, "access-list": args[3] }
+        body = { "openconfig-nat:config": {"nat-pool": args[2], "access-list": args[3]} }
         l = len(args)
         if l >= 5:
             body["openconfig-nat:config"].update( {"type": nat_type_map[args[4]] } )
