@@ -210,7 +210,7 @@ def get_response_dict(response):
     return api_response
 
 
-def get_nat_translations(func, args):
+def get_nat_tables(args):
     response = {}
 
     resp = invoke_api('get_openconfig_nat_nat_instances_instance_nat_mapping_table', args)
@@ -232,6 +232,56 @@ def get_nat_translations(func, args):
 
     return response
 
+
+def get_nat_translations(func, args):
+    return get_nat_tables(args)
+
+def get_count(count, table_name, l):
+
+    table_count_map = {
+                        'openconfig-nat:nat-mapping-table': ['static_nat', 'dynamic_nat'],
+                        'openconfig-nat:napt-mapping-table': ['static_napt', 'dynamic_napt'],
+                        'openconfig-nat:nat-twice-mapping-table': ['static_twice_nat', 'dynamic_twice_nat'],
+                        'openconfig-nat:napt-twice-mapping-table': ['static_twice_napt', 'dynamic_twice_napt'],
+                      }
+
+    if 'state' in l and 'entry-type' in l['state']:
+        if l['state']['entry-type'] == 'openconfig-nat:STATIC':
+            count[table_count_map[table_name][0]]+=1;
+        else:
+            count[table_count_map[table_name][1]]+=1;
+
+    if 'state' in l and 'type' in l['state']:
+        if l['state']['type'] == 'openconfig-nat:SNAT':
+            count['snat_snapt']+=1;
+        else:
+            count['dnat_dnapt']+=1
+    return
+    
+
+def get_nat_translations_count(func, args):
+    response = get_nat_tables(args)
+    count = { 'static_nat': 0, 
+              'static_napt': 0,
+              'dynamic_nat': 0,
+              'dynamic_napt': 0,
+              'static_twice_nat': 0,
+              'static_twice_napt': 0,
+              'dynamic_twice_nat': 0,
+              'dynamic_twice_napt': 0,
+              'snat_snapt': 0,
+              'dnat_dnapt': 0
+	     }
+
+    for key in response:
+        for entry in response[key]:
+            for l in response[key][entry]:
+                get_count(count, key, l)
+
+    return count
+
+
+
 def get_nat_statistics(func, args):
     api_response = get_nat_translations(func, args)
     print api_response
@@ -246,6 +296,8 @@ def run(func, args):
            api_response = get_nat_translations(func,args)
        elif func == 'get_nat_statistics':
            api_response = get_nat_statistics(func,args)
+       elif func == 'get_nat_translations_count':
+           api_response = get_nat_translations_count(func,args)
        else:
            response = invoke_api(func, args)
            api_response = get_response_dict(response)
