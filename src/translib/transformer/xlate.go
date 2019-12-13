@@ -253,7 +253,7 @@ func fillSonicKeySpec(xpath string , tableName string, keyStr string) ( []KeySpe
 	return retdbFormat
 }
 
-func XlateToDb(path string, opcode int, d *db.DB, yg *ygot.GoStruct, yt *interface{}, jsonPayload []byte, txCache interface{}) (map[int]map[db.DBNum]map[string]map[string]db.Value, error) {
+func XlateToDb(path string, opcode int, d *db.DB, yg *ygot.GoStruct, yt *interface{}, jsonPayload []byte, txCache interface{}, skipOrdTbl *bool) (map[int]map[db.DBNum]map[string]map[string]db.Value, error) {
 
 	var err error
 	requestUri := path
@@ -301,7 +301,7 @@ func XlateToDb(path string, opcode int, d *db.DB, yg *ygot.GoStruct, yt *interfa
 
 	case DELETE:
 		log.Info("DELETE case")
-		err = dbMapDelete(d, yg, opcode, path, requestUri, jsonData, result, txCache)
+		err = dbMapDelete(d, yg, opcode, path, requestUri, jsonData, result, txCache, skipOrdTbl)
 		if err != nil {
 			log.Errorf("Error: Data translation from yang to db failed for delete request.")
 		}
@@ -325,7 +325,7 @@ func GetAndXlateFromDB(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db.DB, 
 		err := TraverseDb(dbs, spec, &dbresult, nil)
 		if err != nil {
 			log.Error("TraverseDb() failure")
-			return payload, err
+//			return payload, err
 		}
 	}
 

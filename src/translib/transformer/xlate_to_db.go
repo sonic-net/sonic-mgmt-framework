@@ -348,16 +348,18 @@ func directDbMapData(uri string, tableName string, jsonData interface{}, result 
 }
 
 /* Get the db table, key and field name for the incoming delete request */
-func dbMapDelete(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requestUri string, jsonData interface{}, resultMap map[int]map[db.DBNum]map[string]map[string]db.Value, txCache interface{}) error {
+func dbMapDelete(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requestUri string, jsonData interface{}, resultMap map[int]map[db.DBNum]map[string]map[string]db.Value, txCache interface{}, skipOrdTbl *bool) error {
 	var err error
 	var result = make(map[string]map[string]db.Value)
 	subOpDataMap := make(map[int]*RedisDbMap)
 	xfmrErrMsg := ""
+	*skipOrdTbl = false
 
 	for i := 0; i < MAXOPER; i++ {
 		resultMap[i] = make(map[db.DBNum]map[string]map[string]db.Value)
 	}
 	if isSonicYang(uri) {
+		*skipOrdTbl = true
 		xpathPrefix, keyName, tableName := sonicXpathKeyExtract(uri)
 		log.Infof("Delete req: uri(\"%v\"), key(\"%v\"), xpathPrefix(\"%v\"), tableName(\"%v\").", uri, keyName, xpathPrefix, tableName)
 		resultMap[oper][db.ConfigDB] = result
@@ -366,8 +368,10 @@ func dbMapDelete(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requestU
 		xpathPrefix, keyName, tableName := xpathKeyExtract(d, ygRoot, oper, uri, requestUri, subOpDataMap, txCache)
 		log.Infof("Delete req: uri(\"%v\"), key(\"%v\"), xpathPrefix(\"%v\"), tableName(\"%v\").", uri, keyName, xpathPrefix, tableName)
 		spec, ok := xYangSpecMap[xpathPrefix]
-		specYangType := yangTypeGet(spec.yangEntry)
 		if ok {
+			specYangType := yangTypeGet(spec.yangEntry)
+                        moduleNm := "/" + strings.Split(uri, "/")[1]
+                        log.Infof("Module name for uri %s is %s", uri, moduleNm)
 			if len(spec.xfmrFunc) > 0 {
 				var dbs [db.MaxDB]*db.DB
 				cdb := spec.dbIndex
@@ -378,7 +382,7 @@ func dbMapDelete(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requestU
 				} else {
 					return err
 				}
-			} else if  len(tableName) > 0 {
+			} else if len(tableName) > 0 {
 				result[tableName] = make(map[string]db.Value)
 				if len(keyName) > 0 {
 					result[tableName][keyName] = db.Value{Field: make(map[string]string)}
@@ -440,6 +444,18 @@ func dbMapDelete(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requestU
 			} else if len(spec.childTable) > 0 {
 				for _, child := range spec.childTable {
 					result[child] = make(map[string]db.Value)
+				}
+			}
+
+			if len(xYangSpecMap[moduleNm].xfmrPost) > 0 {
+				log.Info("Invoke post transformer: ", xYangSpecMap[moduleNm].xfmrPost)
+				var dbs [db.MaxDB]*db.DB
+				var dbresult = make(RedisDbMap)
+				dbresult[db.ConfigDB] = result
+				inParams := formXfmrInputRequest(d, dbs, db.ConfigDB, ygRoot, uri, requestUri, oper, "", &dbresult, subOpDataMap, nil, txCache)
+				result, err = postXfmrHandlerFunc(inParams)
+				if inParams.skipOrdTblChk != nil {
+					*skipOrdTbl = *(inParams.skipOrdTblChk)
 				}
 			}
 
