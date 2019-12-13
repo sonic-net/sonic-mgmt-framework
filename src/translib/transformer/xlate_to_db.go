@@ -366,8 +366,8 @@ func dbMapDelete(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requestU
 		xpathPrefix, keyName, tableName := xpathKeyExtract(d, ygRoot, oper, uri, requestUri, subOpDataMap, txCache)
 		log.Infof("Delete req: uri(\"%v\"), key(\"%v\"), xpathPrefix(\"%v\"), tableName(\"%v\").", uri, keyName, xpathPrefix, tableName)
 		spec, ok := xYangSpecMap[xpathPrefix]
-		specYangType := yangTypeGet(spec.yangEntry)
 		if ok {
+			specYangType := yangTypeGet(spec.yangEntry)
 			if len(spec.xfmrFunc) > 0 {
 				var dbs [db.MaxDB]*db.DB
 				cdb := spec.dbIndex
