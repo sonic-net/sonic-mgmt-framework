@@ -20,4 +20,5 @@ openconfig-lacp-annot.yang
 ietf-ptp.yang
 ietf-ptp-annot.yang
 openconfig-system.yang
+openconfig-system-ext.yang
 openconfig-system-annot.yang
