@@ -113,10 +113,13 @@ def emit_stmt(ctx, module, stmt, fd, indent, indentstep):
             stmt.raw_keyword == "contact" or 
             stmt.raw_keyword == "rpc" or
             stmt.raw_keyword == "notification" or
-            stmt.raw_keyword == "description") or
-            (len(stmt.substmts) > 0 and stmt.substmts[0].raw_keyword  == "config" and
-                stmt.substmts[0].arg == "false")):
+            stmt.raw_keyword == "description")):
         return
+
+    #Check for "config false" statement and skip the node containing the same
+    for s in stmt.substmts:
+        if (s.raw_keyword  == "config" and s.arg == "false"):
+            return
 
     if util.is_prefixed(stmt.raw_keyword):
         # this is an extension.  need to find its definition

@@ -17,14 +17,19 @@
 #                                                                              #
 ################################################################################
 
+TOPDIR?=$(abspath ../../../../)
+
 sonic_yang=../../../../models/yang/sonic
 pyang_plugin_dir=../../../../tools/pyang/pyang_plugins
 src_files=$(wildcard *.yang)
-out_dir=$(TOPDIR)/build/cvl
+out_dir=$(TOPDIR)/build/tests/cvl/testdata/schema/
 out=$(patsubst %.yang, $(out_dir)/%.yin, $(src_files)) 
 out_ext=$(patsubst %.yang, $(out_dir)/%.tree, $(src_files)) 
 
-all:schema
+all:precheck schema
+
+precheck:
+	mkdir -p $(out_dir) 
 
 schema: $(out)
 
@@ -32,14 +37,14 @@ schema-tree: $(out_ext)
 
 $(out_dir)/%.yin:%.yang
 	@echo "Generating `basename $@` ..."
-	@devFile="`echo $< | cut -d . -f1`-dev.yang"; \
+	@devFile="`echo $< | cut -d . -f1`-deviation.yang"; \
 	if [ -f $$devFile ] ; then devOpt="--deviation-module $$devFile"; fi; \
 	pyang -p $(sonic_yang):$(sonic_yang)/common:$(sonic_yang)/common/ietf \
 		--plugindir $(pyang_plugin_dir) -f yin-cvl $$devOpt $< -o $@
 
 $(out_dir)/%.tree:%.yang
 	@echo "Generating `basename $@` ..."
-	@devFile="`echo $< | cut -d . -f1`-dev.yang"; \
+	@devFile="`echo $< | cut -d . -f1`-deviation.yang"; \
 	if [ -f $$devFile ] ; then devOpt="--deviation-module $$devFile"; fi; \
 	pyang -p $(sonic_yang):$(sonic_yang)/common:$(sonic_yang)/common/ietf \
 			-f tree $$devOpt $< -o $@

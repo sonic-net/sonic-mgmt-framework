@@ -1,0 +1,335 @@
+module openconfig-mclag {
+
+  yang-version "1";
+
+  // namespace
+  namespace "http://openconfig.net/yang/mclag";
+
+  prefix "oc-mclag";
+
+  import openconfig-yang-types { prefix oc-yang; }
+  import openconfig-inet-types { prefix oc-inet; }
+  import openconfig-interfaces { prefix oc-if; }
+  import openconfig-extensions { prefix oc-ext; }
+
+  // meta
+  organization "OpenConfig working group";
+
+  contact
+    "OpenConfig working group
+    www.openconfig.net";
+
+  description
+    "This module defines configuration and operational state data for Multi Chassis LAGs.
+    MCLAG information are organized as MCLAG Domains.Each MCLAG Domain would contain
+    config and state inforamtion of domain, it would contain mclag interfaces for that given domain";
+
+  oc-ext:openconfig-version "1.0.2";
+
+  revision "2019-12-02" {
+    description
+      "Initial revision";
+    reference "TBD";
+  }
+
+  // OpenConfig specific extensions for module metadata.
+  oc-ext:regexp-posix;
+  oc-ext:catalog-organization "openconfig";
+  oc-ext:origin "openconfig";
+
+  // grouping statements
+
+  grouping mclag-domain-config {
+    description
+      "MCLAG Domain config";
+
+    leaf domain-id {
+      type uint32 {
+          range 1..4095;
+      }
+      description
+        "Domain id for MCLAG Domain";
+    }
+
+    leaf source-address {
+      type oc-inet:ip-address;
+
+      description
+        "source ip address of MCLAG Domain";
+    }
+
+    leaf peer-address {
+      type oc-inet:ip-address;
+      description
+        "peer ip address of MCLAG Domain";
+    }
+
+    leaf peer-link {
+      type string;
+      description
+        "peer link of MCLAG Domain";
+    }
+
+    leaf keepalive-interval {
+      type uint32 {
+          range 1..60;
+      }
+
+      description
+        "Keepalive interval for ICCP MCLAG session";
+    }
+
+    leaf session-timeout {
+      type uint32 {
+          range 1..3600;
+      }
+
+      description
+        "Session Timeout for ICCP MCLAG session";
+    }
+
+  }
+
+  grouping mclag-domain-state {
+    description
+      "MCLAG Domain state";
+
+    leaf oper-status {
+      type enumeration {
+        enum OPER_UP {
+          description
+            "MCLAG Session is operationally up";
+        }
+        enum OPER_DOWN {
+          description
+            "MCLAG Session is operationally down";
+        }
+     }
+     description
+       "MCLAG Domain Session oper status";
+   }
+
+   leaf role {
+      type enumeration {
+        enum ROLE_ACTIVE {
+          description
+            "MCLAG Node Role is Active";
+        }
+        enum ROLE_STANDBY {
+          description
+            "MCLAG Node Role is Standby";
+        }
+     }
+     description
+       "MCLAG Node's Role";
+   }
+
+   leaf system-mac {
+     type oc-yang:mac-address;
+     description
+       "System MAC Address used for MCLAG Interface";
+   }
+
+ }
+
+ grouping mclag-domain-top {
+    description
+      "MCLAG Domain variables top level container";
+
+    container mclag-domains {
+      description
+        "MCLAG Domain entries variables enclosing container";
+
+      list mclag-domain {
+        key "domain-id";
+        description
+          "List of MCLAG Domain entries";
+
+        leaf domain-id {
+          type leafref {
+            path "../config/domain-id";
+          }
+          description
+            "Reference to the domain-id list  key";
+        }
+
+        container config {
+          description
+            "MCLAG Domain config";
+          uses mclag-domain-config;
+
+        }
+
+        container state {
+          config false;
+          description
+            "MCLAG Domain state information";
+          uses mclag-domain-config;
+          uses mclag-domain-state;
+        }
+      }
+    }
+  }
+
+  grouping mclag-interface-config {
+    description
+      "Configuration data for mclag interfaces";
+
+    leaf name {
+      type oc-if:base-interface-ref;
+      description
+        "Reference to the MCLAG LAG Interface";
+    }
+
+    leaf mclag-domain-id {
+          type leafref {
+            path "../../../../mclag-domains/mclag-domain/config/domain-id";
+          }
+          description
+            "Reference to MCLAG domain list key";
+    }
+  }
+
+  grouping mclag-interface-state {
+    description
+      "Operational state data for local interface references";
+
+    container  local {
+      description
+         "Operational state for local interfaces";
+      leaf traffic_disable {
+        type boolean;
+        description
+          "MCLAG local interface traffic disable value to indicate whether Tx/Rx traffic
+          is disabled or enabled on this MCLAG interface";
+      }
+      
+      leaf port_isolate {
+        type boolean;
+        description
+          "MCLAG local interface port isolation state to indicate whether BUM
+          traffic incoming on ISL is blocked on MCLAG Interface";
+      }
+    }
+  }
+
+  grouping mclag-remote-interface-state {
+    description
+      "Operational state data for remote interface references";
+
+    container remote {
+      description
+        "Operational state data for remote interface references";
+      leaf oper-status {
+        type enumeration {
+          enum OPER_UP {
+            description
+              "Remote Interface operational status up";
+          }
+          enum OPER_DOWN {
+            description
+              "Remote Interface operational status down";
+          }
+       }
+       description
+         "MCLAG Remote Interface Operational status";
+      }
+    }
+  }
+
+
+  grouping mclag-interfaces-top {
+    description
+      "Top-level grouping for MCLAG interface-specific data";
+
+    container interfaces {
+      description
+        "Enclosing container for the list of interfaces on which
+        MCLAG domains are enabled";
+
+      list interface {
+        key "name";
+        description
+          "List of interfaces on which MCLAG is configured";
+
+        leaf name {
+          type leafref {
+            path "../config/name";
+          }
+          description
+            "Reference to the interface id list key";
+        }
+
+        container config {
+          description
+            "Configuration for MCLAG per-interface data";
+
+          uses mclag-interface-config;
+        }
+
+        container state {
+
+          config false;
+
+          description
+            "Operational state for MCLAG interface data";
+
+          uses mclag-interface-config;
+          uses mclag-interface-state;
+          uses mclag-remote-interface-state;
+        }
+
+      }
+    }
+  }
+
+
+  grouping mclag-config {
+    description
+      "Global configuration data for MCLAG";
+  }
+
+  grouping mclag-state {
+    description
+      "Global operational state data for MCLAG";
+  }
+  
+  grouping mclag-top {
+    description
+      "Top level grouping for MCLAG data and structure";
+
+    container mclag {
+      description
+        "Top level enclosing container for MCLAG model config
+        and operational state data";
+
+      container config {
+        description
+          "Global config data for MCLAG";
+        uses mclag-config;
+      }
+
+      container state {
+
+        config false;
+
+        description
+          "Global operational state data for MCLAG";
+
+        uses mclag-config;
+        uses mclag-state;
+      }
+
+      //mclag domain config and state
+      uses mclag-domain-top;
+      uses mclag-interfaces-top;
+    }
+  }
+
+  // data definition statements
+  uses mclag-top;
+
+  // augment statements
+
+
+}

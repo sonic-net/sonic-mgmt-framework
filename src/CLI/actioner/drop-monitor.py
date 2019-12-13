@@ -118,7 +118,7 @@ class DropMon(object):
             if acl_rule_key[1] == acl_rule:
                acl_counter_key = 'COUNTERS:' + acl_rule_key[0] + ':' + acl_rule_key[1]
                raw_dropmon_stats = self.counters_db.get_all(self.counters_db.COUNTERS_DB, acl_counter_key)
-               api_response_stat['ietf-ts:dropmon-stats'] = raw_ifa_stats
+               api_response_stat['ietf-ts:dropmon-stats'] = raw_dropmon_stats
 
         return api_response_stat, entryfound
 
@@ -149,7 +149,7 @@ class DropMon(object):
         key = "aging"
         entry = self.config_db.get_entry(TAM_DROP_MONITOR_AGING_INTERVAL_TABLE, key)
         if entry:
-            print "Aging interval : {}".format(entry['aging-interval'])
+            print "Aging interval : {} ms".format(entry['aging-interval'])
         return
 
     def show_sample(self, args):
@@ -168,7 +168,10 @@ class DropMon(object):
         if raw_flow_data:
             sample = raw_flow_data['sample']
             rate = self.config_db.get_entry(SAMPLE_RATE_TABLE, sample)
-            raw_flow_data['sample'] = rate['sampling-rate']
+            if rate:
+                raw_flow_data['sample'] = rate['sampling-rate']
+            else:
+                raw_flow_data['sample'] = 0
         api_response['ietf-ts:flow-key'] = k
         api_response['ietf-ts:each-flow-data'] = raw_flow_data
         return api_response , raw_flow_data

@@ -7,12 +7,68 @@
     http://www.dellemc.com/sonic/XMLSchema/clish.xsd"
     >
 
+    <!--MODE : show commands view -->
+    <VIEW name="enable-view">
+      <!--show vxlan interface -->
+      <COMMAND name="show vxlan" help="show vxlan commands"> </COMMAND>
+      <COMMAND name="show vxlan interface" help="show vxlan global params">
+        <ACTION> python $SONIC_CLI_ROOT/sonic-cli-vxlan.py "show vxlan interface" show_vxlan_interface.j2  </ACTION>
+      </COMMAND>
+
+      <!--show vxlan vlanvnimap -->
+      <COMMAND name="show vxlan vlanvnimap" help="Show Vlan VNI mapping information">
+        <ACTION> python $SONIC_CLI_ROOT/sonic-cli-vxlan.py "show vxlan vlanvnimap" show_vxlan_vlanvnimap.j2  </ACTION>
+      </COMMAND>
+
+      <!--show vxlan vlanvnimap -->
+      <COMMAND name="show vxlan tunnel" help="Show Vxlan Tunnels">
+        <ACTION> python $SONIC_CLI_ROOT/sonic-cli-vxlan.py "show vxlan tunnel" show_vxlan_vlanvnimap.j2  </ACTION>
+      </COMMAND>
+
+      <!--show vxlan evpn remote vni-->
+      <COMMAND name="show vxlan evpn" help="show vxlan evpn commands"> </COMMAND>
+      <COMMAND name="show vxlan evpn remote" help="show vxlan evpn remote commands"> </COMMAND>
+      <COMMAND name="show vxlan evpn remote vni" help="Show Vxlan EVPN Remote VNI">
+          <PARAM
+              name="remote_ip_addr"
+              help="remote evpn peer ip"
+              ptype="IP_ADDR"
+              optional="true"
+              >
+          </PARAM>
+        <ACTION> 
+            if test "${remote_ip_addr}" = ""; then&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-vxlan.py "show vxlan evpn remote vni" show_vxlan_evpn_remote_vni.j2&#xA; 
+            else&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-vxlan.py "show vxlan evpn remote vni" show_vxlan_evpn_remote_vni.j2 ${remote_ip_addr}&#xA;
+            fi&#xA;
+      </ACTION>
+      </COMMAND>
+      <COMMAND name="show vxlan evpn remote mac" help="Show Vxlan EVPN Remote mac">
+          <PARAM
+              name="remote_ip_addr"
+              help="remote evpn peer ip"
+              ptype="IP_ADDR"
+              optional="true"
+              >
+          </PARAM>
+        <ACTION> 
+            if test "${remote_ip_addr}" = ""; then&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-vxlan.py "show vxlan evpn remote mac" show_vxlan_evpn_remote_mac.j2&#xA; 
+            else&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-vxlan.py "show vxlan evpn remote mac" show_vxlan_evpn_remote_mac.j2 ${remote_ip_addr}&#xA;
+            fi&#xA;
+      </ACTION>
+      </COMMAND>
+
+    </VIEW>
+
     <VIEW name="configure-view">
         <COMMAND
             name="interface Vxlan"
             help="VXLAN Configuration mode"
             view="configure-vxlan-view"
-            viewid="iface=Vxlan${vxlan-if-name}"
+            viewid="iface=Vxlan-${vxlan-if-name}"
             >
             <PARAM
                 name="vxlan-if-name"
@@ -31,12 +87,12 @@
       <!-- Inheritance -->
       <NAMESPACE ref="configure-view" help="false" completion="false"/>
       <COMMAND name="no" help="Negate a command or set its defaults"> </COMMAND>
-      <COMMAND name="no nvo" help="Unset the NVO object">
-        <ACTION> python $SONIC_CLI_ROOT/sonic-cli-vxlan.py delete_sonic_vxlan_sonic_vxlan_evpn_nvo ${iface} </ACTION>
+      <COMMAND name="no source-vtep" help="Unset the NVO object">
+        <ACTION> python $SONIC_CLI_ROOT/sonic-cli-vxlan.py delete_sonic_vxlan_sonic_vxlan_evpn_nvo_evpn_nvo_list ${iface} </ACTION>
       </COMMAND>
-      <COMMAND name="nvo" help="Set the NVO Object">
+      <COMMAND name="source-vtep" help="Set the Vxlan interface to source the IP address ">
         <PARAM name="vxlan_name" help="VTEP Name" ptype="STRING_63"> </PARAM>
-        <ACTION> python $SONIC_CLI_ROOT/sonic-cli-vxlan.py patch_list_sonic_vxlan_sonic_vxlan_evpn_nvo_evpn_nvo_list ${iface} ${vxlan_name} </ACTION>
+        <ACTION> python $SONIC_CLI_ROOT/sonic-cli-vxlan.py patch_sonic_vxlan_sonic_vxlan_evpn_nvo_evpn_nvo_list ${iface} ${vxlan_name} </ACTION>
       </COMMAND>
     </VIEW>
     <VIEW
@@ -58,19 +114,33 @@
         <COMMAND
             name="no source-ip"
             help="Unset the source Ipv4 address">
-           <ACTION> python $SONIC_CLI_ROOT/sonic-cli-vxlan.py delete_sonic_vxlan_sonic_vxlan_vxlan_tunnel ${iface} </ACTION>
+           <ACTION> python $SONIC_CLI_ROOT/sonic-cli-vxlan.py delete_sonic_vxlan_sonic_vxlan_vxlan_tunnel_vxlan_tunnel_list ${iface} </ACTION>
         </COMMAND>
-    <COMMAND name="no map" help="Delete VLAN VNI Mapping">
+    <COMMAND name="no map" help="Delete VNI Mapping">
       <PARAM name="vni" help="Configure VNI mapping" ptype="SUBCOMMAND" mode="subcommand"> 
        <PARAM name="vnid" help="VNID" ptype="RANGE_1_65535"> 
         <PARAM name="mapoptions" help="" ptype="SUBCOMMAND" mode="switch"> 
          <PARAM name="vlan" help="Configure VLAN" ptype="SUBCOMMAND" mode="subcommand"> 
          <PARAM name="vid" help="VLAN ID" ptype="VLAN_ID"> </PARAM>
+           <PARAM name="count" help="Number of mappings" ptype="SUBCOMMAND" mode="subcommand" optional="true"> 
+            <PARAM name="numvid" help="Number" ptype="VLAN_ID" optional="true"> </PARAM>
+           </PARAM>
+         </PARAM>
+         <PARAM name="vrf" help="Configure VRF Name" ptype="SUBCOMMAND" mode="subcommand">
+         <PARAM name="vrf-name" help="VRF Name" ptype="STRING_63"> </PARAM>
          </PARAM>
         </PARAM>
        </PARAM>
       </PARAM>
-      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-vxlan.py delete_sonic_vxlan_sonic_vxlan_vxlan_tunnel_map_vxlan_tunnel_map_list ${iface}  ${vnid} ${vid} </ACTION>
+      <ACTION>
+        if test "${vrf}" != ""; then&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-vxlan.py delete_sonic_vxlan_map_vrf_vni_list ${iface} ${vnid} ${vrf-name}&#xA;
+        elif test "${count}" = ""; then&#xA;
+          python $SONIC_CLI_ROOT/sonic-cli-vxlan.py delete_sonic_vxlan_sonic_vxlan_vxlan_tunnel_map_vxlan_tunnel_map_list ${iface} ${vnid} ${vid} "1"&#xA;
+        else&#xA;
+          python $SONIC_CLI_ROOT/sonic-cli-vxlan.py delete_sonic_vxlan_sonic_vxlan_vxlan_tunnel_map_vxlan_tunnel_map_list ${iface} ${vnid} ${vid} ${numvid}&#xA;
+        fi&#xA;
+      </ACTION>
     </COMMAND>
         <COMMAND
             name="source-ip"
@@ -81,7 +151,7 @@
                 ptype="IP_ADDR"
                 >
             </PARAM>
-            <ACTION> python $SONIC_CLI_ROOT/sonic-cli-vxlan.py patch_list_sonic_vxlan_sonic_vxlan_vxlan_tunnel_vxlan_tunnel_list ${iface} ${SIP}
+            <ACTION> python $SONIC_CLI_ROOT/sonic-cli-vxlan.py patch_sonic_vxlan_sonic_vxlan_vxlan_tunnel_vxlan_tunnel_list ${iface} ${SIP}
             </ACTION>
         </COMMAND>
     <COMMAND name="map" help="Configure Mapping">
@@ -89,14 +159,30 @@
        <PARAM name="vnid" help="VNID" ptype="RANGE_1_65535"> 
         <PARAM name="mapoptions" help="" ptype="SUBCOMMAND" mode="switch"> 
          <PARAM name="vlan" help="Configure VLAN" ptype="SUBCOMMAND" mode="subcommand"> 
-         <PARAM name="vid" help="VLAN ID" ptype="VLAN_ID"> </PARAM>
+          <PARAM name="vid" help="VLAN ID" ptype="VLAN_ID"> 
+           <PARAM name="count" help="Number of mappings" ptype="SUBCOMMAND" mode="subcommand" optional="true"> 
+            <PARAM name="numvid" help="Number" ptype="VLAN_ID" optional="true"> </PARAM>
+           </PARAM>
+          </PARAM>
          </PARAM>
+         <PARAM name="vrf" help="Configure VRF name" ptype="SUBCOMMAND" mode="subcommand">
+          <PARAM name="vrf-name" help="VRF Name" ptype="STRING_63"> </PARAM>
+          </PARAM>
         </PARAM>
        </PARAM>
       </PARAM>
-      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-vxlan.py patch_list_sonic_vxlan_sonic_vxlan_vxlan_tunnel_map_vxlan_tunnel_map_list ${iface} ${vnid} ${vid} </ACTION>
+      <ACTION> 
+        if test "${vrf}" != ""; then&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-vxlan.py patch_sonic_vxlan_map_vrf_vni_list ${iface} ${vnid} ${vrf-name}&#xA;
+        elif test "${count}" = ""; then&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-vxlan.py patch_sonic_vxlan_sonic_vxlan_vxlan_tunnel_map_vxlan_tunnel_map_list ${iface} ${vnid} ${vid} "1"&#xA;
+        else&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-vxlan.py patch_sonic_vxlan_sonic_vxlan_vxlan_tunnel_map_vxlan_tunnel_map_list ${iface} ${vnid} ${vid} ${numvid}&#xA;
+        fi&#xA;
+      </ACTION>
     </COMMAND>
     </VIEW>
+
 
 </CLISH_MODULE>
 

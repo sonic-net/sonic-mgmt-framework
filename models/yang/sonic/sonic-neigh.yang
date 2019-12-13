@@ -1,0 +1,61 @@
+module sonic-neigh {
+    namespace "http://github.com/Azure/sonic-neigh";
+    prefix sneigh;
+
+    import ietf-inet-types {
+        prefix inet;
+    }
+
+    import ietf-yang-types {
+        prefix yang;
+    }
+
+    organization
+        "SONiC";
+
+    contact
+        "SONiC";
+
+    description
+        "SONiC yang for NEIGH_TABLE";
+
+    revision 2019-10-10 {
+        description
+            "Initial revision.";
+    }
+
+    container sonic-neigh {
+
+        container NEIGH_TABLE {
+            config false;
+
+            list NEIGH_TABLE_LIST {
+
+                key "ifname ip";
+
+                leaf ifname {
+                    type string;
+                    description "interface name";
+                }
+
+                leaf ip {
+                    type inet:ip-prefix;
+                    description "ip address";
+                }
+
+                leaf neigh {
+                    type yang:mac-address;
+                    description "mac address of the neighbor";
+                }
+
+                leaf family {
+                    type enumeration {
+                        enum IPv4;
+                        enum IPv6;
+                    }
+                    description "address family (IPv4/IPv6)";
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Copyright 2019 Dell, Inc.  
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+--> 
+
+<CLISH_MODULE
+    xmlns="http://www.dellemc.com/sonic/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xi="http://www.w3.org/2001/XInclude"
+    xsi:schemaLocation="http://www.dellemc.com/sonic/XMLSchema
+                        http://www.dellemc.com/sonic/XMLSchema/clish.xsd"
+    >
+    <!--=======================================================-->
+
+    <VIEW name="configure-router-bgp-l2vpn-vni-view" prompt="${SYSTEM_NAME}(config-router-bgp-af-vni)# " depth="4">
+      <NAMESPACE ref="configure-view" help="false" completion="false" />
+      <NAMESPACE ref="configure-router-bgp-view" help="false" completion="false" />
+      <NAMESPACE ref="configure-router-bgp-l2vpn-view" help="false" completion="false" />
+
+      <COMMAND name="advertise-default-gw" help="Advertise all default gw mac-ip routes in EVPN">
+        <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp-evpn.py patch_bgp_evpn_vni_advertise_default_gw ${vrf-name} L2VPN_EVPN ${vninum}</ACTION>
+      </COMMAND>
+
+      <COMMAND name="rd" help="Route distinguisher" >
+        <!--PARAM name="rdvalue" help="Route Distinguisher value" ptype="RD"/-->
+        <PARAM name="rdvalue" help="Route Distinguisher value" ptype="STRING"/>
+        <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp-evpn.py patch_bgp_evpn_vni_rd ${vrf-name} L2VPN_EVPN ${vninum} ${rdvalue}</ACTION>
+      </COMMAND>
+
+      <COMMAND name="route-target" help="Route target">
+        <PARAM name="rttype" help="advertise options" ptype="ADVERTISE_OPTIONS">
+          <!--PARAM name="rt" help="Route target value" ptype="RT"/-->
+          <PARAM name="rt" help="Route target value" ptype="STRING"/>
+        </PARAM>
+        <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp-evpn.py patch_bgp_evpn_vni_rt ${vrf-name} L2VPN_EVPN ${vninum} ${rt} ${rttype}</ACTION>
+      </COMMAND>
+
+      <COMMAND name="no" help="no commands"/>
+      <COMMAND name="no advertise-default-gw" help="Advertise all default gw mac-ip routes in EVPN">
+        <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp-evpn.py delete_bgp_evpn_vni_advertise_default_gw ${vrf-name} L2VPN_EVPN ${vninum}</ACTION>
+      </COMMAND>
+      
+      <COMMAND name="no rd" help="Route distinguisher" >
+        <!--PARAM name="rdvalue" help="Route Distinguisher value" ptype="RD"/-->
+        <PARAM name="rdvalue" help="Route Distinguisher value" ptype="STRING"/>
+        <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp-evpn.py delete_bgp_evpn_vni_rd ${vrf-name} L2VPN_EVPN ${vninum} ${rdvalue}</ACTION>
+      </COMMAND>
+
+      <COMMAND name="no route-target" help="Route target">
+        <PARAM name="rttype" help="advertise options" ptype="ADVERTISE_OPTIONS">
+          <!--PARAM name="rt" help="Route target value" ptype="RT"/-->
+          <PARAM name="rt" help="Route target value" ptype="STRING"/>
+        </PARAM>
+        <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp-evpn.py delete_bgp_evpn_vni_rt ${vrf-name} L2VPN_EVPN ${vninum} ${rt} ${rttype}</ACTION>
+      </COMMAND>
+
+    </VIEW>
+
+    <VIEW name="enable-view">
+      <COMMAND name="show ip bgp l2vpn evpn vni" help="L2VPN EVPN VNI information">
+        <PARAM name="vninum" help="VxLAN Network Identifier" ptype="VNI_RANGE">
+        </PARAM>
+        <ACTION> python $SONIC_CLI_ROOT/sonic-cli-show-bgp-evpn.py get_bgp_evpn_vni default L2VPN_EVPN ${vninum} show_evpn_vni.j2</ACTION>
+      </COMMAND>
+    </VIEW>
+
+</CLISH_MODULE>
+

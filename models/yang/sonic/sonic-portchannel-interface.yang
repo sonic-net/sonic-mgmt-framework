@@ -10,6 +10,10 @@ module sonic-portchannel-interface {
         prefix spc;
     }
 
+    import sonic-vrf {
+        prefix vrf;
+    }
+
     organization
         "SONiC";
 
@@ -24,6 +28,11 @@ module sonic-portchannel-interface {
             "Initial revision.";
     }
 
+    revision 2019-12-01 {
+        description
+            "Add vrf_name for VRF interface binding.";
+    }
+
     container sonic-portchannel-interface {
 
         container PORTCHANNEL_INTERFACE {
@@ -35,6 +44,17 @@ module sonic-portchannel-interface {
                     type leafref {
                         path "/spc:sonic-portchannel/spc:PORTCHANNEL/spc:PORTCHANNEL_LIST/spc:name";
                     }
+                }
+                leaf nat_zone {
+                    type uint8 {
+                        range "0..3";
+                    }
+                }
+
+                leaf vrf_name {
+                        type leafref {
+                                path "/vrf:sonic-vrf/vrf:VRF/vrf:VRF_LIST/vrf:vrf_name";
+                        }
                 }
 
             }

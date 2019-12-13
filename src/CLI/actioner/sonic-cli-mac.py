@@ -71,11 +71,10 @@ def run(func, args):
 
         if api_response.ok():
             response = api_response.content
-            if response is not None:
+            if len(response) is not 0:
                 if 'openconfig-network-instance:entries' in response:
                     mac_entries = response['openconfig-network-instance:entries']['entry']
                 else:
-                    print 'Error: '+str(response)
                     return
             else:
                 return
