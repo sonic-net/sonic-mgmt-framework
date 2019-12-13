@@ -123,17 +123,16 @@ limitations under the License.
                 </PARAM>
             </PARAM>
         </PARAM>
-    <ACTION>
-        var="${ipv4-prefix}"
-        len="$(echo "$var" | cut -d'/' -f2)"
-        gelen="${ge-min-prefix-length}"
-        lelen="${le-max-prefix-length}"
+    <ACTION> var="${ipv4-prefix}"&#xA;
+        len="$(echo "$var" | cut -d'/' -f2)"&#xA;
+        gelen="${ge-min-prefix-length}"&#xA;
+        lelen="${le-max-prefix-length}"&#xA;
 
         if test "${ip-prefix-subcommands}" = "permit"; then&#xA;
             prefixtype="permit"&#xA;
         else&#xA;
             prefixtype="deny"&#xA;
-        fi
+        fi&#xA;
 
         if test "$gelen" = "" -a "$lelen" = ""; then&#xA;
             python $SONIC_CLI_ROOT/sonic-cli-ip-prefix.py ipv4_prefix ${prefix-name} $prefixtype $var&#xA;
@@ -260,17 +259,16 @@ limitations under the License.
                 </PARAM>
             </PARAM>
         </PARAM>
-    <ACTION>
-        var="${ipv6-prefix}"
-        len="$(echo "$var" | cut -d'/' -f2)"
-        gelen="${ge-min-prefix-length}"
-        lelen="${le-max-prefix-length}"
+    <ACTION> var="${ipv6-prefix}"&#xA;
+        len="$(echo "$var" | cut -d'/' -f2)"&#xA;
+        gelen="${ge-min-prefix-length}"&#xA;
+        lelen="${le-max-prefix-length}"&#xA;
 
         if test "${ipv6-prefix-subcommands}" = "permit"; then&#xA;
             prefixtype="permit"&#xA;
         else&#xA;
             prefixtype="deny"&#xA;
-        fi
+        fi&#xA;
 
         if test "$gelen" = "" -a "$lelen" = ""; then&#xA;
             python $SONIC_CLI_ROOT/sonic-cli-ip-prefix.py ipv6_prefix ${prefix-name} $prefixtype $var&#xA;
