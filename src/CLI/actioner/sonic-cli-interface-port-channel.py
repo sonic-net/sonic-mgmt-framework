@@ -128,7 +128,7 @@ def get_counters(api_response):
         
         if 'LAG_TABLE_LIST' in response['sonic-portchannel:LAG_TABLE']:
           for po_intf in response['sonic-portchannel:LAG_TABLE']['LAG_TABLE_LIST']:        
-            resp = invoke_api('get_openconfig_interfaces_interfaces_interface_state_counters', po_intf['lagname'])
+            resp = invoke_api('get_openconfig_interfaces_interfaces_interface_state_counters', [po_intf['lagname']])
             if resp.ok():
                 if resp.content is not None:
                     # Get Command Output
@@ -137,7 +137,7 @@ def get_counters(api_response):
 
     except Exception as e:
         print("Exception when calling get_counters : %s\n" %(e))
-    
+
 
 def run():
     

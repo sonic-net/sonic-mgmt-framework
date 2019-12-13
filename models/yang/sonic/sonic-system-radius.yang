@@ -1,0 +1,184 @@
+module sonic-system-radius {
+    namespace "http://github.com/Azure/sonic-system-radius";
+    prefix ssys;
+
+    import ietf-inet-types {
+        prefix inet;
+    }
+
+    organization
+        "SONiC";
+
+    contact
+        "SONiC";
+
+    description
+        "SONiC RADIUS";
+
+    revision 2019-11-14 {
+        description
+            "Initial revision.";
+    }
+
+    container sonic-system-radius {
+
+        container RADIUS {
+
+            list RADIUS_LIST {
+
+                key "global_key";
+
+                leaf global_key {
+                    type enumeration {
+                        enum global;
+                    }
+                    description
+                            "RADIUS global key";
+                }
+
+/*
+                leaf type {
+                    type enumeration {
+                        enum RADIUS;
+                    }
+                    description
+                            "RADIUS global type";
+                }
+ */
+
+                leaf passkey {
+                    type string {
+                        length "1..32";
+                        pattern "[0-9A-Za-z]*" {
+                            error-message "RADIUS shared secret valid chars: [0-9A-Za-z]";
+                        }
+                    }
+                    description
+                            "RADIUS global shared secret (Valid chars: [0-9A-Za-z])";
+                }
+
+                leaf auth_type {
+                    default "pap";
+                    type enumeration {
+                        enum pap;
+                        enum chap;
+                        enum mschapv2;
+                    }
+                    description
+                            "RADIUS global method used for authenticating the comm. mesg.";
+                }
+
+                leaf src_ip {
+                    type inet:ip-address;
+                    description
+                            "source IP address (IPv4 or IPv6) for the outgoing RADIUS pkts.";
+                }
+
+                leaf timeout {
+                    default 5;
+                    type uint16 {
+                        range "1..60" {
+                            error-message "RADIUS timeout must be 1..60";
+                        }
+                    }
+                }
+
+                leaf retransmit {
+                    default 3;
+                    type uint8 {
+                        range "1..10" {
+                            error-message "RADIUS retransmit must be 1..10";
+                        }
+                    }
+                }
+            }
+        }
+
+        container RADIUS_SERVER {
+
+            list RADIUS_SERVER_LIST {
+                key "ipaddress";
+/*
+                key "address";
+*/
+                max-elements 8;
+
+                leaf ipaddress {
+                    type inet:ip-address;
+                    description
+                            "RADIUS server's IP address (IPv4 or IPv6)";
+                }
+
+/*
+                leaf address {
+                    type inet:ip-address;
+                    description
+                            "RADIUS server's IP address (IPv4 or IPv6)";
+                }
+*/
+
+                leaf auth_port {
+                    default 1812;
+                    type inet:port-number;
+                }
+
+                leaf passkey {
+                    type string {
+                        length "1..32";
+                        pattern "[0-9A-Za-z]*" {
+                            error-message "RADIUS shared secret valid chars: [0-9A-Za-z]";
+                        }
+                    }
+                    description
+                            "RADIUS server's shared secret (Valid chars: [0-9A-Za-z])";
+                }
+
+                leaf auth_type {
+                    default "pap";
+                    type enumeration {
+                        enum pap;
+                        enum chap;
+                        enum mschapv2;
+                    }
+                    description
+                            "RADIUS server's method used for authenticating the comm. mesg.";
+                }
+
+                leaf priority {
+                    type uint8 {
+                        range "1..64" {
+                            error-message "RADIUS priority must be 0..99";
+                        }
+                    }
+                    description
+                            "RADIUS server's priority";
+                }
+
+                leaf timeout {
+                    default 5;
+                    type uint16 {
+                        range "1..60" {
+                            error-message "RADIUS timeout must be 1..60";
+                        }
+                    }
+                }
+
+                leaf retransmit {
+                    default 5;
+                    type uint8 {
+                        range "1..10" {
+                            error-message "RADIUS retransmit must be 1..10";
+                        }
+                    }
+                }
+
+                leaf vrf {
+                    type string;
+                    description
+                            "RADIUS server's VRF";
+                }
+            }
+        }
+    }
+}
+

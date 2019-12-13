@@ -5,14 +5,15 @@ module openconfig-routing-policy-annot {
     namespace "http://openconfig.net/yang/annotation/oc-rpol-annot";
     prefix "oc-rpol-annot";
 
-    import openconfig-policy-types { prefix oc-pol-types; }
     import openconfig-routing-policy { prefix oc-rpol; }
+    import openconfig-routing-policy-ext { prefix oc-rpol-ext; }
     import openconfig-bgp-policy { prefix oc-bgp-pol; }
+    import openconfig-bgp-policy-ext { prefix oc-bgp-pol-ext; }
     import sonic-extensions {prefix sonic-ext; }
 
     deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition {
         deviate add {
-            sonic-ext:table-name "ROUTE_MAP";
+            sonic-ext:table-name "ROUTE_MAP_SET";
         }
     }
 
@@ -36,7 +37,7 @@ module openconfig-routing-policy-annot {
 
     deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement {
       deviate add {
-            /* sonic-ext:table-name "ROUTE_MAP"; */
+            sonic-ext:table-name "ROUTE_MAP";
             sonic-ext:key-transformer "route_map_key_xfmr";
       }
     }
@@ -85,7 +86,7 @@ module openconfig-routing-policy-annot {
 
     deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-rpol:match-prefix-set/oc-rpol:config/oc-rpol:match-set-options {
       deviate add {
-            sonic-ext:field-transformer "route_map_match_set_options_xfmr";
+            sonic-ext:field-transformer "route_map_match_set_options_restrict_type_xfmr";
       }
     }
 
@@ -95,9 +96,21 @@ module openconfig-routing-policy-annot {
       }
     }
 
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-bgp-pol:bgp-conditions/oc-bgp-pol:config/oc-bgp-pol-ext:next-hop-set {
+      deviate add {
+            sonic-ext:field-name "match_next_hop_set";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-bgp-pol:bgp-conditions/oc-bgp-pol:state/oc-bgp-pol-ext:next-hop-set {
+      deviate add {
+            sonic-ext:field-name "match_next_hop_set";
+      }
+    }
+
     deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-rpol:match-prefix-set/oc-rpol:state/oc-rpol:match-set-options {
       deviate add {
-            sonic-ext:field-transformer "route_map_match_set_options_xfmr";
+            sonic-ext:field-transformer "route_map_match_set_options_restrict_type_xfmr";
       }
     }
 
@@ -121,52 +134,27 @@ module openconfig-routing-policy-annot {
       }
     }
 
-    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-rpol:match-neighbor-set/oc-rpol:config/oc-rpol:match-set-options {
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-rpol:match-neighbor-set/oc-rpol:config/oc-rpol-ext:address {
       deviate add {
-            sonic-ext:field-transformer "route_map_match_set_options_xfmr";
+            sonic-ext:field-name "match_neighbor";
       }
     }
 
-    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-rpol:match-neighbor-set/oc-rpol:config/oc-rpol:neighbor-set {
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-rpol:match-neighbor-set/oc-rpol:state/oc-rpol-ext:address {
       deviate add {
-            sonic-ext:field-name "match_neighbor_set";
+            sonic-ext:field-name "match_neighbor";
       }
     }
 
-    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-rpol:match-neighbor-set/oc-rpol:state/oc-rpol:match-set-options {
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-rpol:match-tag-set/oc-rpol:config/oc-rpol-ext:tag-value {
       deviate add {
-            sonic-ext:field-transformer "route_map_match_set_options_xfmr";
+            sonic-ext:field-name "match_tag";
       }
     }
 
-    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-rpol:match-neighbor-set/oc-rpol:state/oc-rpol:neighbor-set {
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-rpol:match-tag-set/oc-rpol:state/oc-rpol-ext:tag-value {
       deviate add {
-            sonic-ext:field-name "match_neighbor_set";
-      }
-    }
-
-    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-rpol:match-tag-set/oc-rpol:config/oc-rpol:match-set-options {
-      deviate add {
-            sonic-ext:field-transformer "route_map_match_set_options_xfmr";
-      }
-    }
-
-    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-rpol:match-tag-set/oc-rpol:config/oc-rpol:tag-set {
-      deviate add {
-            sonic-ext:field-name "match_tag_set";
-      }
-    }
-
-
-    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-rpol:match-tag-set/oc-rpol:state/oc-rpol:match-set-options {
-      deviate add {
-            sonic-ext:field-transformer "route_map_match_set_options_xfmr";
-      }
-    }
-
-    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-rpol:match-tag-set/oc-rpol:state/oc-rpol:tag-set {
-      deviate add {
-            sonic-ext:field-name "match_tag_set";
+            sonic-ext:field-name "match_tag";
       }
     }
 
@@ -179,19 +167,6 @@ module openconfig-routing-policy-annot {
     deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-rpol:state/oc-rpol:call-policy {
       deviate add {
             sonic-ext:field-name "call_route_map";
-      }
-    }
-
-
-    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-bgp-pol:bgp-conditions/oc-bgp-pol:config/oc-bgp-pol:next-hop-in {
-      deviate add {
-            sonic-ext:field-name "match_next_hop";
-      }
-    }
-
-    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-bgp-pol:bgp-conditions/oc-bgp-pol:config/oc-bgp-pol:afi-safi-in {
-      deviate add {
-            sonic-ext:field-transformer "route_map_match_address_family_xfmr";
       }
     }
 
@@ -213,12 +188,6 @@ module openconfig-routing-policy-annot {
       }
     }
 
-    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-bgp-pol:bgp-conditions/oc-bgp-pol:config/oc-bgp-pol:route-type {
-      deviate add {
-            sonic-ext:field-name "match_route_type";
-      }
-    }
-
     deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-bgp-pol:bgp-conditions/oc-bgp-pol:config/oc-bgp-pol:community-set {
       deviate add {
             sonic-ext:field-name "match_community";
@@ -228,18 +197,6 @@ module openconfig-routing-policy-annot {
     deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-bgp-pol:bgp-conditions/oc-bgp-pol:config/oc-bgp-pol:ext-community-set {
       deviate add {
             sonic-ext:field-name "match_ext_community";
-      }
-    }
-
-    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-bgp-pol:bgp-conditions/oc-bgp-pol:state/oc-bgp-pol:next-hop-in {
-      deviate add {
-            sonic-ext:field-name "match_next_hop";
-      }
-    }
-
-    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-bgp-pol:bgp-conditions/oc-bgp-pol:state/oc-bgp-pol:afi-safi-in {
-      deviate add {
-            sonic-ext:field-transformer "route_map_match_address_family_xfmr";
       }
     }
 
@@ -258,12 +215,6 @@ module openconfig-routing-policy-annot {
     deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-bgp-pol:bgp-conditions/oc-bgp-pol:state/oc-bgp-pol:local-pref-eq {
       deviate add {
             sonic-ext:field-name "match_local_pref";
-      }
-    }
-
-    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-bgp-pol:bgp-conditions/oc-bgp-pol:state/oc-bgp-pol:route-type {
-      deviate add {
-            sonic-ext:field-name "match_route_type";
       }
     }
 
@@ -457,6 +408,18 @@ module openconfig-routing-policy-annot {
       }
     }
 
+    deviation /oc-rpol:routing-policy/oc-rpol:defined-sets/oc-rpol:prefix-sets/oc-rpol:prefix-set/oc-rpol:prefixes/oc-rpol:prefix/oc-rpol:config/oc-rpol-ext:action {
+      deviate add {
+        sonic-ext:field-transformer "prefix_action_fld_xfmr";
+      }
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:defined-sets/oc-rpol:prefix-sets/oc-rpol:prefix-set/oc-rpol:prefixes/oc-rpol:prefix/oc-rpol:state/oc-rpol-ext:action {
+      deviate add {
+        sonic-ext:field-transformer "prefix_action_fld_xfmr";
+      }
+    }
+
     deviation /oc-rpol:routing-policy/oc-rpol:defined-sets/oc-rpol:prefix-sets/oc-rpol:prefix-set/oc-rpol:prefixes/oc-rpol:prefix/oc-rpol:state/oc-rpol:ip-prefix {
       deviate add {
         sonic-ext:field-transformer "prefix_cfg_ip_prefix_fld_xfmr";
@@ -604,80 +567,5 @@ module openconfig-routing-policy-annot {
         deviate add {
             sonic-ext:field-name "as_path_set_member";
         }
-    }
-    
-    /* NEIGHBOR SET */
-    deviation /oc-rpol:routing-policy/oc-rpol:defined-sets/oc-rpol:neighbor-sets/oc-rpol:neighbor-set {
-      deviate add {
-        sonic-ext:table-name "NEIGHBOR_SET";
-      }
-    }
-
-    deviation /oc-rpol:routing-policy/oc-rpol:defined-sets/oc-rpol:neighbor-sets/oc-rpol:neighbor-set/oc-rpol:name {
-      deviate add {
-            sonic-ext:field-transformer "neighbor_set_name_fld_xfmr";
-      }
-    }
-
-    deviation /oc-rpol:routing-policy/oc-rpol:defined-sets/oc-rpol:neighbor-sets/oc-rpol:neighbor-set/oc-rpol:config/oc-rpol:name {
-      deviate add {
-            sonic-ext:field-transformer "neighbor_set_name_fld_xfmr";
-      }
-    }
-
-    deviation /oc-rpol:routing-policy/oc-rpol:defined-sets/oc-rpol:neighbor-sets/oc-rpol:neighbor-set/oc-rpol:config/oc-rpol:address {
-      deviate add {
-            sonic-ext:field-name "address";
-      }
-    }
-
-
-    deviation /oc-rpol:routing-policy/oc-rpol:defined-sets/oc-rpol:neighbor-sets/oc-rpol:neighbor-set/oc-rpol:state/oc-rpol:name {
-      deviate add {
-            sonic-ext:field-transformer "neighbor_set_name_fld_xfmr";
-      }
-    }
-
-    deviation /oc-rpol:routing-policy/oc-rpol:defined-sets/oc-rpol:neighbor-sets/oc-rpol:neighbor-set/oc-rpol:state/oc-rpol:address {
-      deviate add {
-            sonic-ext:field-name "address";
-      }
-    }
-
-    /* TAG SET */
-    deviation /oc-rpol:routing-policy/oc-rpol:defined-sets/oc-rpol:tag-sets/oc-rpol:tag-set {
-      deviate add {
-        sonic-ext:table-name "TAG_SET";
-      }
-    }
-
-    deviation /oc-rpol:routing-policy/oc-rpol:defined-sets/oc-rpol:tag-sets/oc-rpol:tag-set/oc-rpol:name {
-      deviate add {
-            sonic-ext:field-transformer "tag_set_name_fld_xfmr";
-      }
-    }
-
-    deviation /oc-rpol:routing-policy/oc-rpol:defined-sets/oc-rpol:tag-sets/oc-rpol:tag-set/oc-rpol:config/oc-rpol:name {
-      deviate add {
-            sonic-ext:field-transformer "tag_set_name_fld_xfmr";
-      }
-    }
-
-    deviation /oc-rpol:routing-policy/oc-rpol:defined-sets/oc-rpol:tag-sets/oc-rpol:tag-set/oc-rpol:config/oc-rpol:tag-value {
-      deviate add {
-            sonic-ext:field-name "tag_value";
-      }
-    }
-
-    deviation /oc-rpol:routing-policy/oc-rpol:defined-sets/oc-rpol:tag-sets/oc-rpol:tag-set/oc-rpol:state/oc-rpol:name {
-      deviate add {
-            sonic-ext:field-transformer "tag_set_name_fld_xfmr";
-      }
-    }
-
-    deviation /oc-rpol:routing-policy/oc-rpol:defined-sets/oc-rpol:tag-sets/oc-rpol:tag-set/oc-rpol:state/oc-rpol:tag-value {
-      deviate add {
-            sonic-ext:field-name "tag_value";
-      }
     }
 }

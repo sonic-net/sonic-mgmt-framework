@@ -1,6 +1,7 @@
 module sonic-bgp-peergroup {
     namespace "http://github.com/Azure/sonic-bgp-peergroup";
     prefix pg;
+    yang-version 1.1;
 
     import sonic-bgp-common {
       prefix sbc;
@@ -30,9 +31,11 @@ module sonic-bgp-peergroup {
                 key "vrf_name peer_group_name";
 
                 leaf vrf_name {
+                    type string;
+                    /*
                     type leafref {
                         path "/sbgpg:sonic-bgp-global/sbgpg:BGP_GLOBALS/sbgpg:BGP_GLOBALS_LIST/sbgpg:vrf";
-                    }
+                    }*/
                     description "Network-instance/VRF name";
                 }
 
@@ -49,9 +52,11 @@ module sonic-bgp-peergroup {
                 key "vrf_name peer_group_name afi_safi";
 
 	        leaf vrf_name {
-	            type leafref {
+                type string;
+                /*
+                type leafref {
 		        path "/sbgpg:sonic-bgp-global/sbgpg:BGP_GLOBALS/sbgpg:BGP_GLOBALS_LIST/sbgpg:vrf";
-		    }
+		    } */
 		    description "Network-instance/VRF name";
 		}
 

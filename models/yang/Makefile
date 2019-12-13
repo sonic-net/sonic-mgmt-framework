@@ -21,10 +21,10 @@ TOPDIR := ../..
 BUILD_DIR := $(TOPDIR)/build
 
 YANGAPI_DIR                 := $(TOPDIR)/build/yaml
-YANGDIR                     := $(TOPDIR)/models/yang
-YANGDIR_COMMON              := $(TOPDIR)/models/yang/common
-YANGDIR_OPENAPI             := $(TOPDIR)/models/openapi
-YANGDIR_ANNOTATIONS         := $(TOPDIR)/models/yang/annotations
+YANGDIR                     := .
+YANGDIR_COMMON              := $(YANGDIR)/common
+YANGDIR_ANNOTATIONS         := $(YANGDIR)/annotations
+YANGDIR_SONIC               := $(YANGDIR)/sonic
 YANG_MOD_FILES              := $(shell find $(YANGDIR) -maxdepth 1 -name '*.yang' | sort)
 YANG_ANNOTATIONS_FILES      := $(shell find $(YANGDIR_ANNOTATIONS) -name '*.yang' | sort)
 YANG_COMMON_FILES           := $(shell find $(YANGDIR_COMMON) -name '*.yang' | sort)
@@ -38,16 +38,17 @@ PYANG_BIN        := pyang
 
 all: yamlGen annot allyangs.tree allyangs_tree.html
 
-yamlGen: $(YANGAPI_DIR)/.done
+yamlGen: $(YANGAPI_DIR)/.done $(YANGAPI_DIR)/api_ignore
 
 annot:
 	$(PYANG_BIN) --strict \
-		-p $(YANGDIR_COMMON):$(YANGDIR) $(YANG_ANNOTATIONS_FILES)
+		-p $(YANGDIR_COMMON):$(YANGDIR_SONIC):$(YANGDIR_ANNOTATIONS):$(YANGDIR) \
+		$(YANG_ANNOTATIONS_FILES)
 
 allyangs.tree:  $(YANG_MOD_FILES) $(YANG_COMMON_FILES)
 	$(PYANG_BIN) \
 		-f tree \
-		-o $(YANGDIR)/$@ \
+		-o $@ \
 		-p $(YANGDIR_COMMON):$(YANGDIR) \
 		$(YANG_MOD_FILES)
 	@echo "+++++ Generation of  YANG tree for Yang modules completed +++++"
@@ -55,7 +56,7 @@ allyangs.tree:  $(YANG_MOD_FILES) $(YANG_COMMON_FILES)
 allyangs_tree.html:  $(YANG_MOD_FILES) $(YANG_COMMON_FILES)
 	$(PYANG_BIN) \
 		-f jstree \
-		-o $(YANGDIR)/$@ \
+		-o $@ \
 		-p $(YANGDIR_COMMON):$(YANGDIR) \
 		$(YANG_MOD_FILES)
 	@echo "+++++ Generation of  HTML tree for Yang modules completed +++++"
@@ -74,6 +75,13 @@ $(YANGAPI_DIR)/.done:  $(YANG_MOD_FILES) $(YANG_COMMON_FILES)
 		$(YANG_MOD_FILES)
 	@echo "+++++ Generation of  YAML files for Yang modules completed +++++"
 	touch $@
+
+#======================================================================
+# Generate api_ignore file
+#======================================================================
+$(YANGAPI_DIR)/api_ignore: $(YANG_ANNOTATIONS_FILES)
+	echo "# Yangs ignored" > $@
+	(cd $(YANGDIR_ANNOTATIONS) && ls -f *.yang) >> $@
 
 #======================================================================
 # Cleanups

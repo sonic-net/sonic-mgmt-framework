@@ -142,15 +142,15 @@ limitations under the License.
             fi&#xA;
         elif test "${if-subcommands}" = "Vlan"; then&#xA;
             if test "${vlan-id}" = ""; then&#xA;
-                #Note: TODO, Discussion needed
+                #Note: TODO, Discussion needed&#xA;
                 python $SONIC_CLI_ROOT/sonic-cli-if.py get_all_vlans show_interface_vlan.j2 ${__full_line}&#xA;
             else&#xA;
                 python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces_interface Vlan${vlan-id} show_interface_vlan.j2 ${__full_line}&#xA;
             fi&#xA;
         elif test "${if-subcommands}" = "Loopback"; then&#xA;
             if test "${lo-id}" = ""; then&#xA;
-                # Note: TODO, Discussion needed
-                #python $SONIC_CLI_ROOT/sonic-cli-if.py get_all_loopbacks show_interface_loopback.j2 ${__full_line}&#xA;
+                # Note: TODO, Discussion needed&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-if.py get_all_loopbacks show_interface_loopback.j2 ${__full_line}&#xA;
             else&#xA;
                 python $SONIC_CLI_ROOT/sonic-cli-if.py get_openconfig_interfaces_interfaces_interface Loopback${lo-id} show_interface_loopback.j2 ${__full_line}&#xA;
             fi&#xA;
@@ -185,7 +185,27 @@ limitations under the License.
        fi&#xA;
    </ACTION>
    </COMMAND>
-
+   <COMMAND
+       name="show NeighbourSuppressStatus"
+       help="Show arp and nd suppression status"
+       ptype="SUBCOMMAND"
+       mode="subcommand"
+       >
+       <PARAM
+           name="id"
+           help="Vlan identifier"
+           ptype="VLAN_ID"
+           optional="true"
+           >
+       </PARAM>
+   <ACTION>
+       if test "${id}" = ""; then&#xA;
+          python $SONIC_CLI_ROOT/sonic-cli-vlan.py get_sonic_vxlan_sonic_vxlan_suppress_vlan_neigh "" show_neigh_suppress.j2 ${__full_line}&#xA;
+       else&#xA;
+          python $SONIC_CLI_ROOT/sonic-cli-vlan.py get_sonic_vxlan_sonic_vxlan_suppress_vlan_neigh Vlan${id} show_neigh_suppress.j2 ${__full_line}&#xA;
+       fi&#xA;
+   </ACTION>
+   </COMMAND>
    <COMMAND
        name="show PortChannel"
        help="LAG status and configuration"
@@ -376,12 +396,16 @@ limitations under the License.
                 name="zone"
                 help="NAT zone of the interface"
                 ptype="UINT" />
-        <ACTION builtin="clish_nop"></ACTION>
+        <ACTION>
+            python $SONIC_CLI_ROOT/sonic-cli-nat.py patch_openconfig_interfaces_ext_interfaces_interface_nat_zone_config_nat_zone ${iface} ${zone}
+        </ACTION>
         </COMMAND>
         <COMMAND
             name="no nat-zone"
             help="Remove Nat Zone on an interface" >
-        <ACTION builtin="clish_nop"></ACTION>
+        <ACTION>
+            python $SONIC_CLI_ROOT/sonic-cli-nat.py delete_openconfig_interfaces_ext_interfaces_interface_nat_zone_config_nat_zone ${iface}
+        </ACTION>
         </COMMAND>
 
         <COMMAND
@@ -660,12 +684,16 @@ limitations under the License.
                 name="zone"
                 help="NAT zone of the vlan"
                 ptype="UINT" />
-        <ACTION builtin="clish_nop"></ACTION>
+        <ACTION>
+            python $SONIC_CLI_ROOT/sonic-cli-nat.py patch_openconfig_interfaces_ext_interfaces_interface_nat_zone_config_nat_zone Vlan${vlan_id} ${zone}
+        </ACTION>
         </COMMAND>
         <COMMAND
             name="no nat-zone"
             help="Remove Nat Zone on a vlan" >
-        <ACTION builtin="clish_nop"></ACTION>
+        <ACTION>
+            python $SONIC_CLI_ROOT/sonic-cli-nat.py delete_openconfig_interfaces_ext_interfaces_interface_nat_zone_config_nat_zone Vlan${vlan_id}
+        </ACTION>
         </COMMAND>
 
       <COMMAND
@@ -686,7 +714,7 @@ limitations under the License.
       <COMMAND
         name="neigh_suppress"
         help="Enable ARP and ND Suppression">
-        <ACTION> python $SONIC_CLI_ROOT/sonic-cli-vxlan.py patch_list_sonic_vxlan_sonic_vxlan_suppress_vlan_neigh_suppress_vlan_neigh_list ${vlan_id} </ACTION>
+        <ACTION> python $SONIC_CLI_ROOT/sonic-cli-vxlan.py patch_sonic_vxlan_sonic_vxlan_suppress_vlan_neigh_suppress_vlan_neigh_list ${vlan_id} </ACTION>
       </COMMAND>
       <COMMAND
         name="no neigh_suppress"
@@ -704,8 +732,19 @@ limitations under the License.
         help="Enable the Vlan interface">
         <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config_enabled ${vlan_id} True </ACTION>
       </COMMAND>
-     -->
-</VIEW>
+      -->
+
+    <COMMAND
+           name="mclag-seperate-ip"
+           help="Configure seperate IP on Vlan interface for L3 protocol support over MCLAG" >
+           <ACTION> python $SONIC_CLI_ROOT/sonic-cli-mclag.py patch_sonic_mclag_seperate_ip_list ${vlan_id} </ACTION>
+    </COMMAND>
+    <COMMAND
+           name="no mclag-seperate-ip"
+           help="Unconfigure seperate IP on Vlan interface for L3 protocol support over MCLAG" >
+           <ACTION> python $SONIC_CLI_ROOT/sonic-cli-mclag.py delete_sonic_mclag_seperate_ip_list ${vlan_id} </ACTION>
+    </COMMAND>
+</VIEW> <!-- End of Configure View for Vlan-->
 <VIEW
     name="configure-lag-view"
     prompt="${SYSTEM_NAME}(conf-if-${po_id})# "
@@ -725,12 +764,16 @@ limitations under the License.
                 name="zone"
                 help="NAT zone of the port channel"
                 ptype="UINT" />
-        <ACTION builtin="clish_nop"></ACTION>
+        <ACTION>
+            python $SONIC_CLI_ROOT/sonic-cli-nat.py patch_openconfig_interfaces_ext_interfaces_interface_nat_zone_config_nat_zone ${po_name} ${zone}
+        </ACTION>
         </COMMAND>
         <COMMAND
             name="no nat-zone"
             help="Remove Nat Zone on a port channel" >
-        <ACTION builtin="clish_nop"></ACTION>
+        <ACTION>
+            python $SONIC_CLI_ROOT/sonic-cli-nat.py delete_openconfig_interfaces_ext_interfaces_interface_nat_zone_config_nat_zone ${po_name}
+        </ACTION>
         </COMMAND>
 
 

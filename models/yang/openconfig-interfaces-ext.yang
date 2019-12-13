@@ -3,7 +3,7 @@ module openconfig-interfaces-ext {
     yang-version "1";
 
     // namespace
-    namespace "http://openconfig.net/yang/interfaces/extension";
+    namespace "http://openconfig.net/yang/interfaces/extention";
 
     prefix "oc-intf-ext";
 
@@ -61,6 +61,33 @@ module openconfig-interfaces-ext {
             type oc-inet:ipv6-address;
             description "IPv6 Gateway address";
         }
+    }
+
+    grouping interface-nat-zone-config {
+        leaf nat-zone {
+            description
+                "NAT zone id.";
+            type uint8 {
+                range "0..3";
+            }
+        }
+    }
+    grouping interface-nat-zone-top {
+        container nat-zone {
+            container config {
+                uses interface-nat-zone-config;
+            }
+            container state {
+                config false;
+                uses interface-nat-zone-config;
+            }
+        }
+    }
+
+    augment "/oc-intf:interfaces/oc-intf:interface" {
+        description
+            "NAT zone config and state data.";
+        uses interface-nat-zone-top;
     }
 
     deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:hold-time {

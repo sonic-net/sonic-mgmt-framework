@@ -45,12 +45,19 @@ limitations under the License.
      help="(Valid Chars: [0-9A-Za-z], Max Len: 32) shared secret"
   />
 <!--=======================================================-->
-<PTYPE
+  <PTYPE
      name="TACACS_PRIORITY"
      method="integer"
      pattern="1..64"
      help="(1..64)"
-/>
+  />
+<!--=======================================================-->
+  <PTYPE
+     name="AAA_AUTH_TYPE"
+     method="select"
+     pattern="pap(pap) chap(chap) mschap(mschap)"
+     help=""
+  />
 <!--=======================================================-->
 
   <VIEW name="enable-view">

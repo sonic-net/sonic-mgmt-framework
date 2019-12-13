@@ -1,0 +1,16 @@
+module sonic-interfaces-annot {
+
+    yang-version "1.1";
+
+    namespace "http://openconfig.net/yang/annotation/sintf-annot";
+    prefix "sintf-annot";
+
+    import sonic-extensions { prefix sonic-ext; }
+    import sonic-interface { prefix sintf; }
+
+    deviation /sintf:clear_counters {
+        deviate add {
+	    sonic-ext:rpc-callback "rpc_clear_counters";
+        }
+    }
+}

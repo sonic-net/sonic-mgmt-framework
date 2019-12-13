@@ -27,6 +27,7 @@ import (
 	"reflect"
 	"strings"
 	"translib/db"
+	"translib/ocbinds"
 	"translib/tlerr"
 )
 
@@ -36,6 +37,7 @@ const (
 	REPLACE
 	UPDATE
 	DELETE
+	MAXOPER
 )
 
 type KeySpec struct {
@@ -71,8 +73,8 @@ func XlateFuncBind(name string, fn interface{}) (err error) {
 
 func XlateFuncCall(name string, params ...interface{}) (result []reflect.Value, err error) {
 	if _, ok := XlateFuncs[name]; !ok {
-		err = errors.New(name + " Xfmr function does not exist.")
-		return nil, err
+		log.Warning(name + " Xfmr function does not exist.")
+		return nil, nil
 	}
 	if len(params) != XlateFuncs[name].Type().NumIn() {
 		err = ErrParamsNotAdapted
@@ -152,7 +154,7 @@ func XlateUriToKeySpec(uri string, requestUri string, ygRoot *ygot.GoStruct, t *
 		retdbFormat = fillSonicKeySpec(xpath, tableName, keyStr)
 	} else {
 		/* Extract the xpath and key from input xpath */
-		xpath, keyStr, _ := xpathKeyExtract(nil, ygRoot, 0, uri, requestUri, nil, txCache)
+		xpath, keyStr, _ := xpathKeyExtract(nil, ygRoot, GET, uri, requestUri, nil, txCache)
 		retdbFormat = FillKeySpecs(xpath, keyStr, &retdbFormat)
 	}
 
@@ -255,14 +257,22 @@ func XlateToDb(path string, opcode int, d *db.DB, yg *ygot.GoStruct, yt *interfa
 
 	var err error
 	requestUri := path
-
 	jsonData := make(map[string]interface{})
-	if opcode != DELETE {
-		err = json.Unmarshal(jsonPayload, &jsonData)
-		if err != nil {
-			log.Errorf("Error: failed to unmarshal json.")
-			return nil, err
-		}
+
+	device := (*yg).(*ocbinds.Device)
+	jsonStr, err := ygot.EmitJSON(device, &ygot.EmitJSONConfig{
+		Format:         ygot.RFC7951,
+		Indent:         "  ",
+		SkipValidation: true,
+		RFC7951Config: &ygot.RFC7951JSONConfig{
+			AppendModuleName: true,
+		},
+	})
+
+	err = json.Unmarshal([]byte(jsonStr), &jsonData)
+	if err != nil {
+		log.Errorf("Error: failed to unmarshal json.")
+		return nil, err
 	}
 
 	// Map contains table.key.fields
@@ -512,5 +522,9 @@ func CallRpcMethod(path string, body []byte, dbs [db.MaxDB]*db.DB) ([]byte, erro
 	}
 
 	return ret, err
+}
+
+func AddModelCpbltInfo() map[string]*mdlInfo {
+	return xMdlCpbltMap
 }
 

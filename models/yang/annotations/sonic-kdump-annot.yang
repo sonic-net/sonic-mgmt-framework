@@ -1,0 +1,23 @@
+module sonic-kdump-annot {
+
+    yang-version "1.1";
+
+    namespace "http://github.com/Azure/sonic-kdump-annot";
+    prefix "kdump-annot";
+
+    import sonic-extensions { prefix sonic-ext; }
+    import sonic-kdump { prefix kdump; }
+
+    deviation /kdump:kdump-config {
+        deviate add {
+            sonic-ext:rpc-callback "rpc_kdump_config_cb";
+        }
+    }
+
+    deviation /kdump:kdump-state {
+        deviate add {
+            sonic-ext:rpc-callback "rpc_kdump_state_cb";
+        }
+    }
+
+}

@@ -1,0 +1,26 @@
+{% set vars = {'address': ""} %}
+{% set vars = {'authtype': ""} %}
+{% set vars = {'key': ""} %}
+{% set vars = {'port': ""} %}
+{% set vars = {'priority': ""} %}
+{% set vars = {'timeout': ""} %}
+{% set vars = {'retransmit': ""} %}
+{% set vars = {'vrf': ""} %}
+{% if json_output -%}
+{% if json_output["header"] == 'True' -%}
+--------------------------------------------------------------------------------
+{{'%-16s'|format("SERVER")}}{{'%-10s'|format("AUTH-TYPE")}}{{'%-10s'|format("KEY")}}{{'%-10s'|format("AUTH-PORT")}}{{'%-9s'|format("PRIORITY")}}{{'%-8s'|format("TIMEOUT")}}{{'%-6s'|format("RTSMT")}}{{'%-5s'|format("VRF")}}
+--------------------------------------------------------------------------------
+{% else %}
+    {% if vars.update({'address':json_output["address"]}) %}{% endif %}
+    {% if vars.update({'authtype':json_output["authtype"]}) %}{% endif %}
+    {% if vars.update({'key':json_output["key"]}) %}{% endif %}
+    {% if vars.update({'port':json_output["port"]}) %}{% endif %}
+    {% if vars.update({'priority':json_output["priority"]}) %}{% endif %}
+    {% if vars.update({'timeout':json_output["timeout"]}) %}{% endif %}
+    {% if vars.update({'retransmit':json_output["retransmit"]}) %}{% endif %}
+    {% if vars.update({'vrf':json_output["vrf"]}) %}{% endif %}
+{{'%-16s'|format(vars.address)}}{{'%-10s'|format(vars.authtype)}}{{'%-10s'|format(vars.key)}}{{'%-10s'|format(vars.port)}}{{'%-9s'|format(vars.priority)}}{{'%-8s'|format(vars.timeout)}}{{'%-6s'|format(vars.retransmit)}}{{'%-5s'|format(vars.vrf)}}
+{% endif %}
+{% endif %}
+

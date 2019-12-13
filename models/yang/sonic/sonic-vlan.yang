@@ -60,9 +60,9 @@ module sonic-vlan {
                 }
 
                 leaf-list members {
-                    must "count(../members[text()=/spc:sonic-portchannel/spc:PORTCHANNEL_MEMBER/" +
+                    must "count(current()/../members[text()=/spc:sonic-portchannel/spc:PORTCHANNEL_MEMBER/" +
                         "spc:PORTCHANNEL_MEMBER_LIST[spc:ifname=current()]/spc:name]) = 0 and " +
-                        "count(../members[text()=/spc:sonic-portchannel/spc:PORTCHANNEL_MEMBER/" +
+                        "count(current()/../members[text()=/spc:sonic-portchannel/spc:PORTCHANNEL_MEMBER/" +
                         "spc:PORTCHANNEL_MEMBER_LIST[spc:name=current()]/spc:ifname]) = 0 " {
                             error-message "A vlan interface member cannot be part of portchannel which is already a vlan member";
                         }

@@ -2,9 +2,9 @@ module openconfig-system-ext {
 
     yang-version "1";
 
-    namespace "http://openconfig.net/yang/system-augments";
+    namespace "http://openconfig.net/yang/system/extention";
 
-    prefix "sys-agmnt";
+    prefix "oc-sys-ext";
 
     import openconfig-system { prefix oc-sys; }
     import openconfig-inet-types { prefix inet; }
@@ -36,11 +36,15 @@ module openconfig-system-ext {
     augment "/oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:servers/oc-sys:server/oc-sys:config" {
         leaf  auth-type {
             type string;
-            description "The server authentication type pap/chap/mschap";
+            description "The server authentication type pap/chap/mschap/mschapv2";
         }
         leaf  priority {
             type uint16;
             description "The server priority";
+        }
+        leaf vrf {
+            type string;
+            description "The server's VRF";
         }
     }
 
@@ -51,7 +55,7 @@ module openconfig-system-ext {
         }
         leaf  auth-type {
             type string;
-            description "The global authentication type pap/chap/mschap";
+            description "The global authentication type pap/chap/mschap/mschapv2";
         }
         leaf  secret-key {
             type string;
@@ -60,6 +64,12 @@ module openconfig-system-ext {
         leaf  timeout {
             type uint16;
             description "The global authentication timeout";
+        }
+        leaf retransmit-attempts {
+          type uint8;
+          description
+              "Number of times the system may resend a request to the
+              RADIUS server when it is unresponsive";
         }
     }
 }
