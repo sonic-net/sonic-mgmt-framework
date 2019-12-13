@@ -73,7 +73,7 @@ cust_to_oc_URI  = {
     'get_custom_stp_counters': 'get_openconfig_spanning_tree_stp_rapid_pvst',
     'get_custom_stp_counters_vlan': 'get_openconfig_spanning_tree_stp_rapid_pvst_vlan',
     'get_custom_stp_inconsistentports': 'get_openconfig_spanning_tree_stp_rapid_pvst',
-    'get_custom_stp_inconsistentports_vlan': 'get_openconfig_spanning_tree_stp_rapi_pvst_vlan',
+    'get_custom_stp_inconsistentports_vlan': 'get_openconfig_spanning_tree_stp_rapid_pvst_vlan',
     'patch_custom_stp_vlan_config_enable':
     'patch_openconfig_spanning_tree_ext_stp_rapid_pvst_vlan_config_spanning_tree_enable',
     'patch_custom_stp_vlan_config_forwarding_delay':
