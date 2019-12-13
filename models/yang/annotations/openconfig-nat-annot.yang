@@ -9,6 +9,12 @@ module openconfig-nat-annot {
     import openconfig-nat { prefix oc-nat; }
     import openconfig-extensions { prefix oc-ext; }
 
+    deviation /oc-nat:nat {
+      deviate add {
+        sonic-ext:post-transformer "nat_post_xfmr";
+      }
+    }
+
     deviation /oc-nat:nat/oc-nat:instances/oc-nat:instance {
         deviate add {
             sonic-ext:key-transformer "nat_instance_key_xfmr";

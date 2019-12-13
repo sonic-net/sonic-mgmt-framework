@@ -55,6 +55,7 @@ func init() {
     XlateFuncBind("DbToYang_nat_type_field_xfmr", DbToYang_nat_type_field_xfmr)
     XlateFuncBind("YangToDb_nat_entry_type_field_xfmr", YangToDb_nat_entry_type_field_xfmr)
     XlateFuncBind("DbToYang_nat_entry_type_field_xfmr", DbToYang_nat_entry_type_field_xfmr)
+    XlateFuncBind("nat_post_xfmr", nat_post_xfmr)
 }
 
 const (
@@ -79,6 +80,15 @@ const (
     NAPT_TWICE_TABLE = "NAPT_TWICE_TABLE"
     NAT_TWICE_TABLE  = "NAT_TWICE_TABLE"
 )
+
+var nat_post_xfmr PostXfmrFunc = func(inParams XfmrParams) (map[string]map[string]db.Value, error) {
+    var res = make (map[string]map[string]db.Value)
+    var skip bool = true
+    if inParams.oper == DELETE {
+        inParams.skipOrdTblChk  = &skip
+    }
+    return res,nil
+}
 
 var YangToDb_nat_instance_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (string, error) {
     var nat_inst_key string
