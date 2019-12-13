@@ -86,7 +86,7 @@ limitations under the License.
 
   <VIEW name="config-int-ifa" 
         prompt="${SYSTEM_NAME}(config-tam-int-ifa)# " 
-        depth="2">
+        depth="3">
     <COMMAND name="no" 
              help="Negate a command or set its defaults" />
 
