@@ -28,8 +28,8 @@ module openconfig-system-annot {
 
     deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:config {
       deviate add {
-          sonic-ext:key-transformer "global_set_key_xfmr";
-          sonic-ext:table-transformer "global_table_xfmr";
+          sonic-ext:key-transformer "global_sg_key_xfmr";
+          sonic-ext:table-transformer "global_sg_tbl_xfmr";
       }
     }
 
@@ -39,25 +39,25 @@ module openconfig-system-annot {
         }
     }
 
-    deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:config/oc-sys-aug:timeout {
+    deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:config/oc-sys-ext:timeout {
       deviate add {
           sonic-ext:field-name "timeout";
       }
     }
 
-    deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:config/oc-sys-aug:auth-type {
+    deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:config/oc-sys-ext:auth-type {
       deviate add {
           sonic-ext:field-name "auth_type";
       }
     }
 
-    deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:config/oc-sys-aug:secret-key {
+    deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:config/oc-sys-ext:secret-key {
       deviate add {
           sonic-ext:field-name "passkey";
       }
     }
 
-    deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:config/oc-sys-aug:source-address {
+    deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:config/oc-sys-ext:source-address {
       deviate add {
           sonic-ext:field-name "src_ip";
       }
@@ -66,7 +66,7 @@ module openconfig-system-annot {
     deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:servers/oc-sys:server/oc-sys:config {
       deviate add {
           sonic-ext:table-transformer "server_table_xfmr";
-          sonic-ext:key-transformer "server_set_key_xfmr";
+          sonic-ext:key-transformer "server_key_xfmr";
       }
     }
 
@@ -93,13 +93,13 @@ module openconfig-system-annot {
         }
     }
 
-    deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:servers/oc-sys:server/oc-sys:config/oc-sys-aug:auth-type {
+    deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:servers/oc-sys:server/oc-sys:config/oc-sys-ext:auth-type {
       deviate add {
           sonic-ext:field-name "auth_type";
       }
     }
 
-    deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:servers/oc-sys:server/oc-sys:config/oc-sys-aug:priority {
+    deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:servers/oc-sys:server/oc-sys:config/oc-sys-ext:priority {
       deviate add {
           sonic-ext:field-name "priority";
       }
@@ -108,7 +108,7 @@ module openconfig-system-annot {
     deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:servers/oc-sys:server/oc-sys:tacacs/oc-sys:config {
       deviate add {
           sonic-ext:table-transformer "server_table_xfmr";
-          sonic-ext:key-transformer "server_set_key_xfmr";
+          sonic-ext:key-transformer "server_key_xfmr";
       }
     }
 

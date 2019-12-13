@@ -128,11 +128,11 @@ def run(func, args):
             api_response = response.content
 
             if api_response is None:
-                print("Failed")
+                print("%Error: Transaction Failure")
             else:
                 return
     else:
-        print response.error_message()
+        print(response.error_message())
 
 if __name__ == '__main__':
     pipestr().write(sys.argv)
