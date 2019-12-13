@@ -116,10 +116,6 @@ var YangToDb_global_sg_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (str
             ", uri: ", inParams.uri)
     }
 
-    // pathInfo := NewPathInfo(inParams.uri)
-    // globalkey := pathInfo.Var("global")
-
-    // return globalkey, nil
     return "global", nil
 }
 
@@ -146,7 +142,7 @@ var global_sg_tbl_xfmr TableXfmrFunc = func(inParams XfmrParams) ([]string, erro
     if strings.Contains(servergroupname, "RADIUS") {
         tables = append(tables, "RADIUS")
     } else if strings.Contains(servergroupname, "TACACS") {
-        tables[0] = "TACPLUS"
+        tables = append(tables, "TACPLUS")
     } else if inParams.oper == GET {
         tables = append(tables, "RADIUS")
         tables = append(tables, "TACPLUS")
