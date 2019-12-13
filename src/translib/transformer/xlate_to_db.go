@@ -235,7 +235,7 @@ func mapFillDataUtil(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requ
 
 	} else { // xpath is a leaf
 		valueStr  = fmt.Sprintf("%v", value)
-		if strings.Contains(valueStr, ":") {
+		if strings.Contains(valueStr, ":") && !checkIpV6AddrNotation(valueStr) {
 			valueStr = strings.Split(valueStr, ":")[1]
 		}
 	}
@@ -354,9 +354,9 @@ func dbMapDelete(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requestU
 	subOpDataMap := make(map[int]*RedisDbMap)
 	xfmrErrMsg := ""
 
-    for i := 0; i < MAXOPER; i++ {
-        resultMap[i] = make(map[db.DBNum]map[string]map[string]db.Value)
-    }
+	for i := 0; i < MAXOPER; i++ {
+		resultMap[i] = make(map[db.DBNum]map[string]map[string]db.Value)
+	}
 	if isSonicYang(uri) {
 		xpathPrefix, keyName, tableName := sonicXpathKeyExtract(uri)
 		log.Infof("Delete req: uri(\"%v\"), key(\"%v\"), xpathPrefix(\"%v\"), tableName(\"%v\").", uri, keyName, xpathPrefix, tableName)
@@ -407,11 +407,11 @@ func dbMapDelete(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requestU
 							} else {
 								var redisMap = new(RedisDbMap)
 								var dbresult = make(RedisDbMap)
-                                for i := db.ApplDB; i < db.MaxDB; i++ {
-                                    dbresult[i] = make(map[string]map[string]db.Value)
-                                }
-                                redisMap = &dbresult
-                                (*redisMap)[db.ConfigDB] = result
+								for i := db.ApplDB; i < db.MaxDB; i++ {
+									dbresult[i] = make(map[string]map[string]db.Value)
+								}
+								redisMap = &dbresult
+								(*redisMap)[db.ConfigDB] = result
 								subOpDataMap[UPDATE]     = redisMap
 							}
 							result = make(map[string]map[string]db.Value)
@@ -452,10 +452,10 @@ func dbMapDelete(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requestU
 					if len(*data) > 0 {
 						for dbType, dbData := range (*data) {
 							if len(dbData) > 0 {
-                                if _, ok := resultMap[op][dbType]; !ok {
-                                    resultMap[op][dbType] = make(map[string]map[string]db.Value)
-                                }
-                                mapCopy(resultMap[op][dbType], (*subOpDataMap[op])[dbType])
+								if _, ok := resultMap[op][dbType]; !ok {
+									resultMap[op][dbType] = make(map[string]map[string]db.Value)
+								}
+								mapCopy(resultMap[op][dbType], (*subOpDataMap[op])[dbType])
 							}
 						}
 					}
@@ -465,6 +465,7 @@ func dbMapDelete(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requestU
 			/* for container/list delete req , it should go through, even if there are any leaf default-yang-values */
 		}
 	}
+	printDbData(resultMap, "/tmp/yangToDbDataDel.txt")
 
     printDbData(resultMap, "/tmp/yangToDbDataDel.txt")
 	log.Infof("Delete req: uri(\"%v\") resultMap(\"%v\").", uri, resultMap)
@@ -684,13 +685,23 @@ func dbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requestU
 			} else {
 				log.Errorf("No Entry exists for module %s in xYangSpecMap. Unable to process post xfmr (\"%v\") uri(\"%v\") error (\"%v\").", oper, uri, err)
 			}
-			if len(result) > 0 || len(subOpDataMap) > 0 {
-				  resultMap[oper] = make(RedisDbMap)
-				  resultMap[oper][db.ConfigDB] = result
-				  for op, redisMap := range subOpDataMap {
-					  resultMap[op] = *(redisMap)
-				  }
-			}
+                        if len(result) > 0 || len(subOpDataMap) > 0 {
+                                  resultMap[oper] = make(RedisDbMap)
+                                  resultMap[oper][db.ConfigDB] = result
+                                  for op, redisMapPtr := range subOpDataMap {
+                                         if redisMapPtr != nil {
+                                                 if _,ok := resultMap[op]; !ok {
+                                                       resultMap[op] = make(RedisDbMap)
+                                               }
+                                               for dbNum, dbMap := range *redisMapPtr {
+                                                       if _,ok := resultMap[op][dbNum]; !ok {
+                                                               resultMap[op][dbNum] = make(map[string]map[string]db.Value)
+                                                       }
+                                                       mapCopy(resultMap[op][dbNum],dbMap)
+                                               }
+                                         }
+                                  }
+                        }
 
 		}
 		printDbData(resultMap, "/tmp/yangToDbDataCreate.txt")

@@ -37,7 +37,7 @@ const (
 	REPLACE
 	UPDATE
 	DELETE
-    MAXOPER
+	MAXOPER
 )
 
 type KeySpec struct {
@@ -522,5 +522,9 @@ func CallRpcMethod(path string, body []byte, dbs [db.MaxDB]*db.DB) ([]byte, erro
 	}
 
 	return ret, err
+}
+
+func AddModelCpbltInfo() map[string]*mdlInfo {
+	return xMdlCpbltMap
 }
 

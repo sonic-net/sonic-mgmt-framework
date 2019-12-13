@@ -22,8 +22,11 @@
 {% set vlan_list = json_output['openconfig-spanning-tree-ext:vlan'] %}
 {% endif %}
 {% for vlan in vlan_list %}
+    {% set stp_vlan_status = false %}
     {% if vars.update({'vlan_name':vlan['vlan-id']}) %}{% endif %}
     {% if vars.update({'stp_instance':vlan['state']['stp-instance']}) %}{% endif %}
+    {% set stp_vlan_status = vlan['config']['spanning-tree-enable'] %}
+{% if stp_vlan_status == true  %}
 {{" " }}
 VLAN {{'%s'| format(vars.vlan_name)}} - {{mode}} instance {{'%s'| format(vars.stp_instance)}}
 ----------------------------------------------------------------------
@@ -44,6 +47,7 @@ VLAN {{'%s'| format(vars.vlan_name)}} - {{mode}} instance {{'%s'| format(vars.st
         {% endif %}
 {{'%-16s'|format(vars.intf_name)}}{{'%-10s'|format(vars.bpdu_tx)}}{{'%-10s'|format(vars.bpdu_rx)}}{{'%-10s'|format(vars.tcn_tx)}}{{'%-10s'|format(vars.tcn_rx)}}
     {% endfor %}
+{% endif %}
 {% endfor %}
 {% endif %}
 {% if stp_protocol == "openconfig-spanning-tree-types:RAPID_PVST" %}
@@ -55,8 +59,11 @@ VLAN {{'%s'| format(vars.vlan_name)}} - {{mode}} instance {{'%s'| format(vars.st
 {% set vlan_list = json_output['openconfig-spanning-tree:vlan'] %}
 {%endif%}
 {% for vlan in vlan_list %}
+    {% set stp_vlan_status = false %}
     {% if vars.update({'vlan_name':vlan['vlan-id']}) %}{% endif %}
     {% if vars.update({'stp_instance':vlan['state']['openconfig-spanning-tree-ext:stp-instance']}) %}{% endif %}
+    {% set stp_vlan_status = vlan['config']['openconfig-spanning-tree-ext:spanning-tree-enable'] %}
+{% if stp_vlan_status == true  %}
 {{" " }}
 VLAN {{'%s'| format(vars.vlan_name)}} - {{mode}} instance {{'%s'| format(vars.stp_instance)}}
 --------------------------------------------------------------------------------
@@ -72,11 +79,12 @@ VLAN {{'%s'| format(vars.vlan_name)}} - {{mode}} instance {{'%s'| format(vars.st
         {% if "counters" in intf['state'] %}
             {% if vars.update({'bpdu_tx':intf['state']['counters']['bpdu-sent']}) %}{% endif %}
             {% if vars.update({'bpdu_rx':intf['state']['counters']['bpdu-received']}) %}{% endif %}
-            {% if vars.update({'tcn_rx': intf['state']['counters']['openconfig-spanning-tree-ext:tcn-received']}) %}{% endif %}
-            {% if vars.update({'tcn_tx': intf['state']['counters']['openconfig-spanning-tree-ext:tcn-sent']}) %}{% endif %}
+            {% if vars.update({'config_bpdu_tx': intf['state']['counters']['openconfig-spanning-tree-ext:config-bpdu-sent']}) %}{% endif %}
+            {% if vars.update({'config_bpdu_rx': intf['state']['counters']['openconfig-spanning-tree-ext:config-bpdu-received']}) %}{% endif %}
         {% endif %}
-{{'%-16s'|format(vars.intf_name)}}{{'%-10s'|format(vars.bpdu_tx)}}{{'%-10s'|format(vars.bpdu_rx)}}{{'%-10s'|format(vars.config_bpdu_rx)}}{{'%-10s'|format(vars.config_bpdu_tx)}}
+{{'%-16s'|format(vars.intf_name)}}{{'%-10s'|format(vars.bpdu_tx)}}{{'%-10s'|format(vars.bpdu_rx)}}{{'%-12s'|format(vars.config_bpdu_tx)}}{{'%-12s'|format(vars.config_bpdu_rx)}}
     {% endfor %}
+{%endif%}
 {% endfor %}
 {%endif%}
 {% endif %}
