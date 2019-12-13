@@ -167,31 +167,11 @@ func mapFillDataUtil(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requ
 
 		/* field transformer present */
 		log.Infof("Transformer function(\"%v\") invoked for yang path(\"%v\"). uri: %v", xpathInfo.xfmrField, xpath, uri)
-		path, _ := ygot.StringToPath(uri, ygot.StructuredPath, ygot.StringSlicePath)
-		for _, p := range path.Elem {
-			pathSlice := strings.Split(p.Name, ":")
-			p.Name = pathSlice[len(pathSlice)-1]
-			if len(p.Key) > 0 {
-				for ekey, ent := range p.Key {
-					// SNC-2126: check the occurrence of ":"
-					eslice := strings.Split(ent, ":")
-					if len(eslice) == 2 {
-						// TODO - exclude the prexix by checking enum type
-						p.Key[ekey] = eslice[len(eslice)-1]
-					} else {
-						p.Key[ekey] = ent
-					}
-				}
-			}
-		}
-		schRoot := ocbSch.RootSchema()
-		node, nErr := ytypes.GetNode(schRoot, (*ygRoot).(*ocbinds.Device), path)
-		log.Info("GetNode data: ", node[0].Data, " nErr :", nErr)
-		if nErr != nil {
-			log.Error(nErr)
+		curYgotNodeData, nodeErr := yangNodeForUriGet(uri, ygRoot)
+		if nodeErr != nil {
 			return nil
 		}
-		inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, uri, requestUri, oper, "", nil, subOpDataMap, node[0].Data, txCache)
+		inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, uri, requestUri, oper, "", nil, subOpDataMap, curYgotNodeData, txCache)
 		retData, err := leafXfmrHandler(inParams, xpath)
 		if err != nil {
 			if xfmrErrMsg != nil && len(*xfmrErrMsg) == 0 {
@@ -229,14 +209,19 @@ func mapFillDataUtil(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requ
 				valueStr += ","
 			}
 			fVal := fmt.Sprintf("%v", valData.Index(fidx).Interface())
+			if ((strings.Contains(fVal, ":")) && (strings.HasPrefix(fVal, OC_MDL_PFX) || strings.HasPrefix(fVal, IETF_MDL_PFX) || strings.HasPrefix(fVal, IANA_MDL_PFX))) {
+				// identity-ref/enum has module prefix
+				fVal = strings.SplitN(fVal, ":", 2)[1]
+			}
 			valueStr = valueStr + fVal
 		}
 		log.Infof("leaf-list value after conversion to DB format %v  :  %v", fieldName, valueStr)
 
 	} else { // xpath is a leaf
 		valueStr  = fmt.Sprintf("%v", value)
-		if strings.Contains(valueStr, ":") && !checkIpV6AddrNotation(valueStr) {
-			valueStr = strings.Split(valueStr, ":")[1]
+		if ((strings.Contains(valueStr, ":")) && (strings.HasPrefix(valueStr, OC_MDL_PFX) || strings.HasPrefix(valueStr, IETF_MDL_PFX) || strings.HasPrefix(valueStr, IANA_MDL_PFX))) {
+			// identity-ref/enum might has module prefix
+			valueStr = strings.SplitN(valueStr, ":", 2)[1]
 		}
 	}
 
@@ -718,8 +703,9 @@ func yangNodeForUriGet(uri string, ygRoot *ygot.GoStruct) (interface{}, error) {
 		if len(p.Key) > 0 {
 			for ekey, ent := range p.Key {
 				// SNC-2126: check the occurrence of ":"
-				eslice := strings.Split(ent, ":")
-				if len(eslice) == 2 {
+				if ((strings.Contains(ent, ":")) && (strings.HasPrefix(ent, OC_MDL_PFX) || strings.HasPrefix(ent, IETF_MDL_PFX) || strings.HasPrefix(ent, IANA_MDL_PFX))) {
+					// identity-ref/enum has module prefix
+					eslice := strings.SplitN(ent, ":", 2)
 					// TODO - exclude the prexix by checking enum type
 					p.Key[ekey] = eslice[len(eslice)-1]
 				} else {
@@ -731,8 +717,14 @@ func yangNodeForUriGet(uri string, ygRoot *ygot.GoStruct) (interface{}, error) {
 	schRoot := ocbSch.RootSchema()
 	node, nErr := ytypes.GetNode(schRoot, (*ygRoot).(*ocbinds.Device), path)
 	if nErr != nil {
+		log.Warningf("For uri %v - GetNode failure - %v", uri, nErr)
 		return nil, nErr
 	}
+	if ((node == nil) || (len(node) == 0) || (node[0].Data == nil)) {
+		log.Warningf("GetNode returned nil for uri %v", uri)
+		return nil, errors.New("GetNode returned nil for the given uri.")
+	}
+	log.Info("GetNode data: ", node[0].Data)
 	return node[0].Data, nil
 }
 
