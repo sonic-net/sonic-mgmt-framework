@@ -232,7 +232,6 @@ limitations under the License.
   </COMMAND>
 
 
-  <COMMAND name="no" help="no commands"/>
   <COMMAND name="no advertise-all-vni" help="Advertise all local VNIs">
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp-evpn.py delete_bgp_evpn_advertise_all_vni ${vrf-name} L2VPN_EVPN True</ACTION>
   </COMMAND>
