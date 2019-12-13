@@ -771,7 +771,7 @@ var YangToDb_ext_community_member_fld_xfmr FieldXfmrYangToDb = func(inParams Xfm
     }
     res_map["community_member@"] = strings.TrimSuffix(community_list, ",")
 
-    if (inParams.oper != DELETE) {
+    if ((inParams.oper != DELETE) && (prev_type != "")) {
        res_map["set_type"] = prev_type
     }
 
