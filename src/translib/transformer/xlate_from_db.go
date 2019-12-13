@@ -503,7 +503,6 @@ func dbDataFromTblXfmrGet(tbl string, inParams XfmrParams, dbDataMap *map[db.DBN
 
 func yangListDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, requestUri string, xpath string, dbDataMap *map[db.DBNum]map[string]map[string]db.Value, resultMap map[string]interface{}, tbl string, tblKey string, cdb db.DBNum, validate bool, txCache interface{}, isFirstCall bool) error {
 	var tblList []string
-	var wg sync.WaitGroup
 
 	if tbl == "" && xYangSpecMap[xpath].xfmrTbl != nil {
 		xfmrTblFunc := *xYangSpecMap[xpath].xfmrTbl
@@ -527,6 +526,7 @@ func yangListDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, r
 	} else if tbl == "" && xYangSpecMap[xpath].xfmrTbl == nil {
 		// Handling for case: Parent list is not associated with a tableName but has children containers/lists having tableNames.
 		if tblKey != "" {
+			var wg sync.WaitGroup
 			var mapSlice []typeMapOfInterface
 			wg.Add(1)
 			chl := make(chan typeChMapErr)
@@ -561,10 +561,17 @@ func yangListDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, r
 		}
 	}
 
+	var tblWg sync.WaitGroup
 	for _, tbl = range(tblList) {
+		tblWg.Add(1)
+
+		go func(tbl string) {
+
+		defer tblWg.Done()
 		tblData, ok := (*dbDataMap)[cdb][tbl]
 
 		if ok {
+			var wg sync.WaitGroup
 			var mapSlice []typeMapOfInterface
 			chl := make(chan typeChMapErr, len(tblData))
 			for dbKey, _ := range tblData {
@@ -608,7 +615,9 @@ func yangListDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, r
 			}
 		}
 
+	}(tbl)
 	}// end of tblList for
+	tblWg.Wait()
 	return nil
 }
 
