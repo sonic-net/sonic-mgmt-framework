@@ -10,6 +10,14 @@ module sonic-system-tacacs {
         description "Initial revision.";
     }
 
+    typedef auth_type_enumeration {
+        type enumeration {
+            enum pap;
+            enum chap;
+            enum mschap;
+        }
+    }
+
     container sonic-system-tacacs {
 
         container TACPLUS_SERVER {
@@ -34,11 +42,7 @@ module sonic-system-tacacs {
                 }
 
                 leaf auth_type {
-                    type enumeration {
-                        enum pap;
-                        enum chap;
-                        enum mschap;
-                    }
+                    type auth_type_enumeration;
                     default pap;
                 }
 
@@ -66,11 +70,7 @@ module sonic-system-tacacs {
                 }
 
                 leaf auth_type {
-                    type enumeration {
-                        enum pap;
-                        enum chap;
-                        enum mschap;
-                    }
+                    type auth_type_enumeration;
                     default pap;
                 }
 
