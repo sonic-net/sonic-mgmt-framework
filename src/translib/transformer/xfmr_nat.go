@@ -300,16 +300,16 @@ var YangToDb_nat_mapping_subtree_xfmr SubTreeXfmrYangToDb = func(inParams XfmrPa
         entry := db.Value{Field: dbData}
         if data.Config != nil {
 
-        if data.Config.InternalAddress != nil {
-            entry.Set("local_ip",  *data.Config.InternalAddress)
-        }
-        if data.Config.Type != 0 {
-            natType :=  findInMap(NAT_TYPE_MAP, strconv.FormatInt(int64(data.Config.Type), 10))
-            entry.Set(NAT_TYPE, natType)
-        }
-        if data.Config.TwiceNatId != nil {
-            entry.SetInt("twice_nat_id", int(*data.Config.TwiceNatId))
-        }
+            if data.Config.InternalAddress != nil {
+                entry.Set("local_ip",  *data.Config.InternalAddress)
+            }
+            if data.Config.Type != 0 {
+                natType :=  findInMap(NAT_TYPE_MAP, strconv.FormatInt(int64(data.Config.Type), 10))
+                entry.Set(NAT_TYPE, natType)
+            }
+            if data.Config.TwiceNatId != nil {
+                entry.SetInt("twice_nat_id", int(*data.Config.TwiceNatId))
+            }
         }
         log.Info("YangToDb_nat_mapping_subtree_xfmr : dbkey - ", dbkey, " data - ", entry)
 
@@ -487,22 +487,6 @@ func nat_mapping_Counters_attr_get (attrUri string, natCntObj *ocbinds.Openconfi
         } else {
             err = errors.New("URI data (NAT_TRANSLATIONS_PKTS) not found in db , " + attrUri)
         }
-        /*
-    case "/openconfig-nat:nat/instances/instance/nat-mapping-table/nat-mapping-entry/state/counters/snat-translations-bytes":
-        if entry.Has("SNAT_TRANSLATIONS_BYTES") {
-            natCntObj.SnatTranslationsBytes= new(uint64)
-            *natCntObj.SnatTranslationsBytes, _ = strconv.ParseUint(entry.Get("SNAT_TRANSLATIONS_BYTES"), 10, 64)
-        } else {
-            err = errors.New("URI data (SNAT_TRANSLATIONS_BYTES) not found in db , " + attrUri)
-        }
-    case "/openconfig-nat:nat/instances/instance/nat-mapping-table/nat-mapping-entry/state/counters/snat-translations-pkts":
-        if entry.Has("SNAT_TRANSLATIONS_PKTS") {
-            natCntObj.SnatTranslationsPkts= new(uint64)
-            *natCntObj.SnatTranslationsPkts, _ = strconv.ParseUint(entry.Get("SNAT_TRANSLATIONS_PKTS"), 10, 64)
-        } else {
-            err = errors.New("URI data (SNAT_TRANSLATIONS_PKTS) not found in db , " + attrUri)
-        }
-        */
     default:
         errStr := "Invalid Uri " + attrUri
         log.Info("nat_mapping_Counters_attr_get : " + errStr)
@@ -703,7 +687,6 @@ var YangToDb_napt_mapping_subtree_xfmr SubTreeXfmrYangToDb = func(inParams XfmrP
             return naptMap, errors.New(errStr)
         }
 
-        //dbkey := db.Key{Comp: []string{key.ExternalAddress, protocol_map[key.Protocol)], strconv.FormatInt(int64(key.ExternalPort), 10)}
         dbkey := key.ExternalAddress + "|" + protocol_map[key.Protocol] + "|" + strconv.FormatInt(int64(key.ExternalPort), 10)
         if _, ok := naptMap[tblName]; !ok {
             naptMap[tblName] = make (map[string]db.Value)
@@ -713,19 +696,19 @@ var YangToDb_napt_mapping_subtree_xfmr SubTreeXfmrYangToDb = func(inParams XfmrP
         entry := db.Value{Field: dbData}
 
         if data.Config != nil {
-        if data.Config.InternalAddress != nil {
-            entry.Set("local_ip",  *data.Config.InternalAddress)
-        }
-        if data.Config.InternalPort != nil {
-            entry.SetInt("local_port", int(*data.Config.InternalPort))
-        }
-        if data.Config.Type != 0 {
-            natType :=  findInMap(NAT_TYPE_MAP, strconv.FormatInt(int64(data.Config.Type), 10))
-            entry.Set(NAT_TYPE, natType)
-        }
-        if data.Config.TwiceNatId != nil {
-            entry.SetInt("twice_nat_id", int(*data.Config.TwiceNatId))
-        }
+            if data.Config.InternalAddress != nil {
+                entry.Set("local_ip",  *data.Config.InternalAddress)
+            }
+            if data.Config.InternalPort != nil {
+                entry.SetInt("local_port", int(*data.Config.InternalPort))
+            }
+            if data.Config.Type != 0 {
+                natType :=  findInMap(NAT_TYPE_MAP, strconv.FormatInt(int64(data.Config.Type), 10))
+                entry.Set(NAT_TYPE, natType)
+            }
+            if data.Config.TwiceNatId != nil {
+                entry.SetInt("twice_nat_id", int(*data.Config.TwiceNatId))
+            }
         }
         log.Info("YangToDb_napt_mapping_subtree_xfmr : dbkey - ", dbkey, " data - ", entry)
 
@@ -928,21 +911,6 @@ func napt_mapping_Counters_attr_get (attrUri string, naptCntObj *ocbinds.Opencon
         } else {
             err = errors.New("URI data (NAT_TRANSLATIONS_PKTS) not found in db , " + attrUri)
         }
-        /*
-    case "/openconfig-nat:nat/instances/instance/napt-mapping-table/napt-mapping-entry/state/counters/snat-translations-bytes":
-        if entry.Has("SNAT_TRANSLATIONS_BYTES") {
-            naptCntObj.SnatTranslationsBytes= new(uint64)
-            *naptCntObj.SnatTranslationsBytes, _ = strconv.ParseUint(entry.Get("SNAT_TRANSLATIONS_BYTES"), 10, 64)
-        } else {
-            err = errors.New("URI data (SNAT_TRANSLATIONS_BYTES) not found in db , " + attrUri)
-        }
-    case "/openconfig-nat:nat/instances/instance/napt-mapping-table/napt-mapping-entry/state/counters/snat-translations-pkts":
-        if entry.Has("SNAT_TRANSLATIONS_PKTS") {
-            naptCntObj.SnatTranslationsPkts= new(uint64)
-            *naptCntObj.SnatTranslationsPkts, _ = strconv.ParseUint(entry.Get("SNAT_TRANSLATIONS_PKTS"), 10, 64)
-        } else {
-            err = errors.New("URI data (SNAT_TRANSLATIONS_PKTS) not found in db , " + attrUri)
-        }*/
     default:
         errStr := "Invalid Uri " + attrUri
         log.Info("napt_mapping_Counters_attr_get : " + errStr)
