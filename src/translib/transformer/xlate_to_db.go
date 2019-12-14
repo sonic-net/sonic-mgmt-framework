@@ -235,7 +235,7 @@ func mapFillDataUtil(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requ
 
 	} else { // xpath is a leaf
 		valueStr  = fmt.Sprintf("%v", value)
-		if strings.Contains(valueStr, ":") {
+		if strings.Contains(valueStr, ":") && !checkIpV6AddrNotation(valueStr) {
 			valueStr = strings.Split(valueStr, ":")[1]
 		}
 	}
@@ -684,13 +684,23 @@ func dbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requestU
 			} else {
 				log.Errorf("No Entry exists for module %s in xYangSpecMap. Unable to process post xfmr (\"%v\") uri(\"%v\") error (\"%v\").", oper, uri, err)
 			}
-			if len(result) > 0 || len(subOpDataMap) > 0 {
-				  resultMap[oper] = make(RedisDbMap)
-				  resultMap[oper][db.ConfigDB] = result
-				  for op, redisMap := range subOpDataMap {
-					  resultMap[op] = *(redisMap)
-				  }
-			}
+                        if len(result) > 0 || len(subOpDataMap) > 0 {
+                                  resultMap[oper] = make(RedisDbMap)
+                                  resultMap[oper][db.ConfigDB] = result
+                                  for op, redisMapPtr := range subOpDataMap {
+                                         if redisMapPtr != nil {
+                                                 if _,ok := resultMap[op]; !ok {
+                                                       resultMap[op] = make(RedisDbMap)
+                                               }
+                                               for dbNum, dbMap := range *redisMapPtr {
+                                                       if _,ok := resultMap[op][dbNum]; !ok {
+                                                               resultMap[op][dbNum] = make(map[string]map[string]db.Value)
+                                                       }
+                                                       mapCopy(resultMap[op][dbNum],dbMap)
+                                               }
+                                         }
+                                  }
+                        }
 
 		}
 		printDbData(resultMap, "/tmp/yangToDbDataCreate.txt")

@@ -1,8 +1,16 @@
 diff --git a/node.go b/node.go
-index 76032bb..9960c17 100644
+index 76032bb..f6103d9 100644
 --- a/node.go
 +++ b/node.go
-@@ -110,6 +110,17 @@ func parseValue(x interface{}, top *Node, level int) {
+@@ -8,6 +8,7 @@ import (
+ 	"net/http"
+ 	"sort"
+ 	"strconv"
++	"strings"
+ )
+ 
+ // A NodeType is the type of a Node.
+@@ -110,6 +111,29 @@ func parseValue(x interface{}, top *Node, level int) {
  			addNode(n)
  			parseValue(vv, n, level+1)
  		}
@@ -13,14 +21,50 @@ index 76032bb..9960c17 100644
 +		}
 +		sort.Strings(keys)
 +		for _, key := range keys {
-+			n := &Node{Data: key, Type: ElementNode, level: level}
++			tmpKey := key
++			var tmpVal interface{}
++			tmpVal = v[key]
++			if (strings.HasSuffix(key, "@")) {
++				tmpKey = key[:len(key) - 1]
++				tmpValArr := []interface{}{}
++				for _, val := range strings.Split(v[key], ",") {
++					tmpValArr = append(tmpValArr, val)
++				}
++				tmpVal = tmpValArr
++			}
++
++			n := &Node{Data: tmpKey, Type: ElementNode, level: level}
 +			addNode(n)
-+			parseValue(v[key], n, level+1)
++			parseValue(tmpVal, n, level+1)
 +		}
  	case map[string]interface{}:
  		// The Go’s map iteration order is random.
  		// (https://blog.golang.org/go-maps-in-action#Iteration-order)
-@@ -155,3 +166,9 @@ func Parse(r io.Reader) (*Node, error) {
+@@ -119,9 +143,21 @@ func parseValue(x interface{}, top *Node, level int) {
+ 		}
+ 		sort.Strings(keys)
+ 		for _, key := range keys {
+-			n := &Node{Data: key, Type: ElementNode, level: level}
++			tmpKey := key
++			var tmpVal interface{}
++			tmpVal = v[key]
++			if (strings.HasSuffix(key, "@")) {
++				tmpKey = key[:len(key) - 1]
++				tmpValArr := []interface{}{}
++				for _, val := range strings.Split(v[key].(string), ",") {
++					tmpValArr = append(tmpValArr, val)
++				}
++				tmpVal = tmpValArr
++			}
++
++			n := &Node{Data: tmpKey, Type: ElementNode, level: level}
+ 			addNode(n)
+-			parseValue(v[key], n, level+1)
++			parseValue(tmpVal, n, level+1)
+ 		}
+ 	case string:
+ 		n := &Node{Data: v, Type: TextNode, level: level}
+@@ -155,3 +191,9 @@ func Parse(r io.Reader) (*Node, error) {
  	}
  	return parse(b)
  }
@@ -30,3 +74,22 @@ index 76032bb..9960c17 100644
 +	parseValue(*jsonMap, doc, 1)
 +	return doc, nil
 +}
+diff --git a/query.go b/query.go
+index d105962..e8db1d6 100644
+--- a/query.go
++++ b/query.go
+@@ -120,6 +120,14 @@ func (a *NodeNavigator) MoveToRoot() {
+ 	a.cur = a.root
+ }
+ 
++func (a *NodeNavigator) MoveToContext() {
++	return
++}
++
++func (a *NodeNavigator) CurrentPrefix() string {
++	return ""
++}
++
+ func (a *NodeNavigator) MoveToParent() bool {
+ 	if n := a.cur.Parent; n != nil {
+ 		a.cur = n

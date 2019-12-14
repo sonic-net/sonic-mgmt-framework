@@ -9,13 +9,26 @@ from rpipe_utils import pipestr
 import datetime
 
 # Capture our current directory
-THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+#THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 
 global line_count
 global ctrl_rfd
 
+# AFB: 12/09/2019: If sonic_cli_output() gets called twice in actioner
+# script, then # render_init() is called twice ==> os.fdopen() is called
+# twice ==> "OSError: [Errno 9] Bad file descriptor" executing the os.fdopen()
+global render_init_called
+render_init_called = False
+
 def render_init(fd):
     global ctrlc_rfd
+
+    # See Note above.
+    global render_init_called
+    if render_init_called == True:
+        return None
+
+    render_init_called = True
 
     ctrlc_rd_fd_num = int(fd)
     try:
@@ -119,7 +132,8 @@ def show_cli_output(template_file, response):
     # Create the jinja2 environment.
     # Notice the use of trim_blocks, which greatly helps control whitespace.
 
-    template_path = os.path.abspath(os.path.join(THIS_DIR, "../render-templates"))
+    template_path = os.getenv("RENDERER_TEMPLATE_PATH")
+    #template_path = os.path.abspath(os.path.join(THIS_DIR, "../render-templates"))
 
     j2_env = Environment(loader=FileSystemLoader(template_path),extensions=['jinja2.ext.do'])
     j2_env.trim_blocks = True

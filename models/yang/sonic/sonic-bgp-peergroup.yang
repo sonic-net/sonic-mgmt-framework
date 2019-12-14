@@ -61,13 +61,15 @@ module sonic-bgp-peergroup {
 		}
 
 		leaf peer_group_name {
-		    type leafref {
+            type string;
+            /*
+            type leafref {
                         path "../../../BGP_PEER_GROUP/BGP_PEER_GROUP_LIST/peer_group_name";
 		    }
 
 		    must "/pg:sonic-bgp-peergroup/pg:BGP_PEER_GROUP/pg:BGP_PEER_GROUP_LIST[vrf_name=current()/../vrf_name][peer_group_name=current()]" {
 		        error-message "BGP Peer Group Table is not configured with vrf_name and peer_group_name";
-		    }
+		    } */
 		    description "Peer group name";
 	        }
 		

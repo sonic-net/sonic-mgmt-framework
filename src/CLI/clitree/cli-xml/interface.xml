@@ -185,7 +185,27 @@ limitations under the License.
        fi&#xA;
    </ACTION>
    </COMMAND>
-
+   <COMMAND
+       name="show NeighbourSuppressStatus"
+       help="Show arp and nd suppression status"
+       ptype="SUBCOMMAND"
+       mode="subcommand"
+       >
+       <PARAM
+           name="id"
+           help="Vlan identifier"
+           ptype="VLAN_ID"
+           optional="true"
+           >
+       </PARAM>
+   <ACTION>
+       if test "${id}" = ""; then&#xA;
+          python $SONIC_CLI_ROOT/sonic-cli-vlan.py get_sonic_vxlan_sonic_vxlan_suppress_vlan_neigh "" show_neigh_suppress.j2 ${__full_line}&#xA;
+       else&#xA;
+          python $SONIC_CLI_ROOT/sonic-cli-vlan.py get_sonic_vxlan_sonic_vxlan_suppress_vlan_neigh Vlan${id} show_neigh_suppress.j2 ${__full_line}&#xA;
+       fi&#xA;
+   </ACTION>
+   </COMMAND>
    <COMMAND
        name="show PortChannel"
        help="LAG status and configuration"
@@ -694,7 +714,7 @@ limitations under the License.
       <COMMAND
         name="neigh_suppress"
         help="Enable ARP and ND Suppression">
-        <ACTION> python $SONIC_CLI_ROOT/sonic-cli-vxlan.py patch_list_sonic_vxlan_sonic_vxlan_suppress_vlan_neigh_suppress_vlan_neigh_list ${vlan_id} </ACTION>
+        <ACTION> python $SONIC_CLI_ROOT/sonic-cli-vxlan.py patch_sonic_vxlan_sonic_vxlan_suppress_vlan_neigh_suppress_vlan_neigh_list ${vlan_id} </ACTION>
       </COMMAND>
       <COMMAND
         name="no neigh_suppress"
@@ -712,8 +732,19 @@ limitations under the License.
         help="Enable the Vlan interface">
         <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_interfaces_interfaces_interface_config_enabled ${vlan_id} True </ACTION>
       </COMMAND>
-     -->
-</VIEW>
+      -->
+
+    <COMMAND
+           name="mclag-seperate-ip"
+           help="Configure seperate IP on Vlan interface for L3 protocol support over MCLAG" >
+           <ACTION> python $SONIC_CLI_ROOT/sonic-cli-mclag.py patch_sonic_mclag_seperate_ip_list ${vlan_id} </ACTION>
+    </COMMAND>
+    <COMMAND
+           name="no mclag-seperate-ip"
+           help="Unconfigure seperate IP on Vlan interface for L3 protocol support over MCLAG" >
+           <ACTION> python $SONIC_CLI_ROOT/sonic-cli-mclag.py delete_sonic_mclag_seperate_ip_list ${vlan_id} </ACTION>
+    </COMMAND>
+</VIEW> <!-- End of Configure View for Vlan-->
 <VIEW
     name="configure-lag-view"
     prompt="${SYSTEM_NAME}(conf-if-${po_id})# "

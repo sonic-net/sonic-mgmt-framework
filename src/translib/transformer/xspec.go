@@ -68,10 +68,53 @@ type sonicTblSeqnInfo struct {
        DepTbl map[string][]string
 }
 
+type mdlInfo struct {
+       Org string
+       Ver string
+}
+
 var xYangSpecMap  map[string]*yangXpathInfo
 var xDbSpecMap    map[string]*dbInfo
 var xDbSpecOrdTblMap map[string][]string //map of module-name to ordered list of db tables { "sonic-acl" : ["ACL_TABLE", "ACL_RULE"] }
 var xDbSpecTblSeqnMap  map[string]*sonicTblSeqnInfo
+var xMdlCpbltMap  map[string]*mdlInfo
+
+/* Add module name to map storing model info for model capabilities */
+func addMdlCpbltEntry(yangMdlNm string) {
+       log.Info("Received yang model name to be added to model info map for gnmi ", yangMdlNm)
+       if xMdlCpbltMap == nil {
+               xMdlCpbltMap = make(map[string]*mdlInfo)
+       }
+       mdlInfoEntry := new(mdlInfo)
+       if mdlInfoEntry == nil {
+               log.Warningf("Memory allocation failure for storing model info for gnmi - module %v", yangMdlNm)
+               return
+       }
+       mdlInfoEntry.Org = ""
+       mdlInfoEntry.Ver = ""
+       xMdlCpbltMap[yangMdlNm] = mdlInfoEntry
+       return
+}
+
+/* Add version and organization info for model capabilities into map */
+func addMdlCpbltData(yangMdlNm string, version string, organization string) {
+	log.Infof("Adding version %v and organization %v for yang module %v", version, organization, yangMdlNm)
+	if xMdlCpbltMap == nil {
+               xMdlCpbltMap = make(map[string]*mdlInfo)
+        }
+	mdlInfoEntry, ok := xMdlCpbltMap[yangMdlNm]
+	if ((!ok) || (mdlInfoEntry == nil)) {
+		mdlInfoEntry = new(mdlInfo)
+		if mdlInfoEntry == nil {
+			log.Warningf("Memory allocation failure for storing model info for gnmi - module %v", yangMdlNm)
+			return
+		}
+       }
+       mdlInfoEntry.Ver = version
+       mdlInfoEntry.Org = organization
+       xMdlCpbltMap[yangMdlNm] = mdlInfoEntry
+       return
+}
 
 /* update transformer spec with db-node */
 func updateDbTableData (xpath string, xpathData *yangXpathInfo, tableName string) {
@@ -88,6 +131,14 @@ func updateDbTableData (xpath string, xpathData *yangXpathInfo, tableName string
 /* Recursive api to fill the map with yang details */
 func yangToDbMapFill (keyLevel int, xYangSpecMap map[string]*yangXpathInfo, entry *yang.Entry, xpathPrefix string) {
 	xpath := ""
+	curKeyLevel := 0
+
+	if entry != nil && entry.Node != nil && isYangResType(entry.Node.Statement().Keyword) == true {
+		xpath = xpathPrefix
+		if _, ok := xYangSpecMap[xpath]; ok {
+			curKeyLevel = xYangSpecMap[xpath].keyLevel
+		}
+	} else {
 	/* create the yang xpath */
 	if xYangSpecMap[xpathPrefix] != nil  && xYangSpecMap[xpathPrefix].yangDataType == "module" {
 		/* module name is separated from the rest of xpath with ":" */
@@ -189,6 +240,8 @@ func yangToDbMapFill (keyLevel int, xYangSpecMap map[string]*yangXpathInfo, entr
 	} else if parentXpathData != nil && parentXpathData.keyXpath != nil {
 		xpathData.keyXpath = parentXpathData.keyXpath
 	}
+	xpathData.yangEntry = entry
+	}
 
 	/* get current obj's children */
 	var childList []string
@@ -196,7 +249,6 @@ func yangToDbMapFill (keyLevel int, xYangSpecMap map[string]*yangXpathInfo, entr
 		childList = append(childList, k)
 	}
 
-	xpathData.yangEntry = entry
 	/* now recurse, filling the map with current node's children info */
 	for _, child := range childList {
 		yangToDbMapFill(curKeyLevel, xYangSpecMap, entry.Dir[child], xpath)
