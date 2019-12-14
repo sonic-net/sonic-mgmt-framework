@@ -123,17 +123,16 @@ limitations under the License.
                 </PARAM>
             </PARAM>
         </PARAM>
-    <ACTION>
-        var="${ipv4-prefix}"
-        len="$(echo "$var" | cut -d'/' -f2)"
-        gelen="${ge-min-prefix-length}"
-        lelen="${le-max-prefix-length}"
+    <ACTION> var="${ipv4-prefix}"&#xA;
+        len="$(echo "$var" | cut -d'/' -f2)"&#xA;
+        gelen="${ge-min-prefix-length}"&#xA;
+        lelen="${le-max-prefix-length}"&#xA;
 
         if test "${ip-prefix-subcommands}" = "permit"; then&#xA;
             prefixtype="permit"&#xA;
         else&#xA;
             prefixtype="deny"&#xA;
-        fi
+        fi&#xA;
 
         if test "$gelen" = "" -a "$lelen" = ""; then&#xA;
             python $SONIC_CLI_ROOT/sonic-cli-ip-prefix.py ipv4_prefix ${prefix-name} $prefixtype $var&#xA;
@@ -260,17 +259,16 @@ limitations under the License.
                 </PARAM>
             </PARAM>
         </PARAM>
-    <ACTION>
-        var="${ipv6-prefix}"
-        len="$(echo "$var" | cut -d'/' -f2)"
-        gelen="${ge-min-prefix-length}"
-        lelen="${le-max-prefix-length}"
+    <ACTION> var="${ipv6-prefix}"&#xA;
+        len="$(echo "$var" | cut -d'/' -f2)"&#xA;
+        gelen="${ge-min-prefix-length}"&#xA;
+        lelen="${le-max-prefix-length}"&#xA;
 
         if test "${ipv6-prefix-subcommands}" = "permit"; then&#xA;
             prefixtype="permit"&#xA;
         else&#xA;
             prefixtype="deny"&#xA;
-        fi
+        fi&#xA;
 
         if test "$gelen" = "" -a "$lelen" = ""; then&#xA;
             python $SONIC_CLI_ROOT/sonic-cli-ip-prefix.py ipv6_prefix ${prefix-name} $prefixtype $var&#xA;
@@ -289,6 +287,46 @@ limitations under the License.
         fi
     </ACTION>
     </COMMAND>
+
+    <COMMAND
+        name="no ip prefix-list"
+        help="Deleting ip prefix list"
+        >
+        <PARAM
+            name="prefix-name"
+            help="Name of a prefix list"
+            ptype="STRING"
+            >
+        </PARAM>
+    <ACTION>
+        python $SONIC_CLI_ROOT/sonic-cli-ip-prefix.py ipv4_prefix_delete ${prefix-name}&#xA;
+    </ACTION>
+    </COMMAND>
+
+    <COMMAND
+        name="no ipv6"
+        help="Deleting ipv6 prefix list"
+        >
+        <PARAM
+            name="prefix-list"
+            help="Prefix list"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+            >
+            <PARAM
+                name="prefix-name"
+                help="Name of a ipv6 prefix list"
+                ptype="STRING"
+                >
+            </PARAM>
+        </PARAM>
+    <ACTION>
+        python $SONIC_CLI_ROOT/sonic-cli-ip-prefix.py ipv6_prefix_delete ${prefix-name}&#xA;
+    </ACTION>
+    </COMMAND>
+
+
+
 
 </VIEW>
 </CLISH_MODULE>
