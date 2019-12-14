@@ -316,7 +316,8 @@ def invoke_api(func, args=[]):
     elif func == 'patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_network_config':
         keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi_safi_name}/openconfig-bgp-ext:network/config',
                 name=args[0], identifier=IDENTIFIER, name1=NAME1, afi_safi_name=args[1])
-        body = { "oc-bgp-ext:config" : { "prefix": args[2], "backdoor": True if args[3] == 'backdoor' else False } }
+        body = { "oc-bgp-ext:config" : { "prefix": args[2] } }
+        if args[3] == 'backdoor': body["oc-bgp-ext:config"]["backdoor"] = True
         if len(args) > 4:
             body["oc-bgp-ext:config"]["policy-name"] = args[4]
         return api.patch(keypath, body)
@@ -333,7 +334,9 @@ def invoke_api(func, args=[]):
     elif func == 'patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_aggregate_address_config':
         keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi_safi_name}/openconfig-bgp-ext:aggregate-address/config',
                 name=args[0], identifier=IDENTIFIER, name1=NAME1, afi_safi_name=args[1])
-        body = { "oc-bgp-ext:config" : { "prefix": args[2], "as-set": True if 'as-set' in args[3:] else False, "summary-only": True if 'summary-only' in args[3:] else False } }
+        body = { "oc-bgp-ext:config" : { "prefix": args[2] } }
+        if 'as-set' in args[3:]: body["oc-bgp-ext:config"]['as-set'] = True
+        if 'summary-only' in args[3:]: body["oc-bgp-ext:config"]['summary-only'] = True
         return api.patch(keypath, body)
     elif func == 'patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_default_route_distance_config':
         keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi_safi_name}/openconfig-bgp-ext:default-route-distance/config',
@@ -374,6 +377,11 @@ def invoke_api(func, args=[]):
         keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/neighbors/neighbor={neighbor_address}/config/enabled',
                 name=args[0], identifier=IDENTIFIER, name1=NAME1, neighbor_address=args[1])
         body = { "openconfig-network-instance:enabled": True if args[2] == 'True' else False }
+        return api.patch(keypath, body)
+    elif func == 'patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_shutdown_message':
+        keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/neighbors/neighbor={neighbor_address}/config/openconfig-bgp-ext:shutdown-message',
+                name=args[0], identifier=IDENTIFIER, name1=NAME1, neighbor_address=args[1])
+        body = { "openconfig-bgp-ext:shutdown-message": args[2] }
         return api.patch(keypath, body)
     elif func == 'patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_description':
         keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/neighbors/neighbor={neighbor_address}/config/description',
@@ -540,7 +548,8 @@ def invoke_api(func, args=[]):
     elif func == 'patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_next_hop_self_config':
         keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/neighbors/neighbor={neighbor_address}/afi-safis/afi-safi={afi_safi_name}/openconfig-bgp-ext:next-hop-self/config',
                 name=args[0], identifier=IDENTIFIER, name1=NAME1, neighbor_address=args[1], afi_safi_name=args[2])
-        body = { "openconfig-bgp-ext:config" : { "enabled" : True if args[3] == 'True' else False, "force" : True if 'force' in args[3:] else False } }
+        body = { "openconfig-bgp-ext:config" : { "enabled" : True if args[3] == 'True' else False } }
+        if 'force' in args[3:]: body["openconfig-bgp-ext:config"]["force"] = True
         return api.patch(keypath, body)
     elif func == 'patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_prefix_list_config':
         keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/neighbors/neighbor={neighbor_address}/afi-safis/afi-safi={afi_safi_name}/openconfig-bgp-ext:prefix-list/config',
@@ -550,7 +559,11 @@ def invoke_api(func, args=[]):
     elif func == 'patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_remove_private_as_config':
         keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/neighbors/neighbor={neighbor_address}/afi-safis/afi-safi={afi_safi_name}/openconfig-bgp-ext:remove-private-as/config',
                 name=args[0], identifier=IDENTIFIER, name1=NAME1, neighbor_address=args[1], afi_safi_name=args[2])
-        body = { "openconfig-bgp-ext:config" : { "enabled" : True if args[3] == 'True' else False, "all" : True if 'all' in args[3:] else False,  "replace-as" : True if 'replace-AS' in args[3:] else False} }
+        body = { "openconfig-bgp-ext:config" : { "enabled" : True if args[3] == 'True' else False } }
+        if 'all' in args[3:]:
+            body["openconfig-bgp-ext:config"]["all"] = True
+        if 'replace-AS' in args[3:]:
+            body["openconfig-bgp-ext:config"]["replace-as"] = True
         return api.patch(keypath, body)
     elif func == 'patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_config_route_reflector_client':
         keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/neighbors/neighbor={neighbor_address}/afi-safis/afi-safi={afi_safi_name}/config/openconfig-bgp-ext:route-reflector-client',
@@ -746,7 +759,8 @@ def invoke_api(func, args=[]):
     elif func == 'patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_afi_safis_afi_safi_next_hop_self_config':
         keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/peer-groups/peer-group={peer_group_name}/afi-safis/afi-safi={afi_safi_name}/openconfig-bgp-ext:next-hop-self/config',
                 name=args[0], identifier=IDENTIFIER, name1=NAME1, peer_group_name=args[1], afi_safi_name=args[2])
-        body = { "openconfig-bgp-ext:config" : { "enabled" : True if args[3] == 'True' else False, "force" : True if 'force' in args[3:] else False } }
+        body = { "openconfig-bgp-ext:config" : { "enabled" : True if args[3] == 'True' else False } }
+        if 'force' in args[3:]: body["openconfig-bgp-ext:config"]["force"] = True
         return api.patch(keypath, body)
     elif func == 'patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_afi_safis_afi_safi_prefix_list_config':
         keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/peer-groups/peer-group={peer_group_name}/afi-safis/afi-safi={afi_safi_name}/openconfig-bgp-ext:prefix-list/config',
@@ -756,7 +770,11 @@ def invoke_api(func, args=[]):
     elif func == 'patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_afi_safis_afi_safi_remove_private_as_config':
         keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/peer-groups/peer-group={peer_group_name}/afi-safis/afi-safi={afi_safi_name}/openconfig-bgp-ext:remove-private-as/config',
                 name=args[0], identifier=IDENTIFIER, name1=NAME1, peer_group_name=args[1], afi_safi_name=args[2])
-        body = { "openconfig-bgp-ext:config" : { "enabled" : True if args[3] == 'True' else False, "all" : True if 'all' in args[3:] else False,  "replace-as" : True if 'replace-AS' in args[3:] else False} }
+        body = { "openconfig-bgp-ext:config" : { "enabled" : True if args[3] == 'True' else False } }
+        if 'all' in args[3:]:
+            body["openconfig-bgp-ext:config"]["all"] = True
+        if 'replace-AS' in args[3:]:
+            body["openconfig-bgp-ext:config"]["replace-as"] = True
         return api.patch(keypath, body)
     elif func == 'patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_afi_safis_afi_safi_config_route_reflector_client':
         keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/peer-groups/peer-group={peer_group_name}/afi-safis/afi-safi={afi_safi_name}/config/openconfig-bgp-ext:route-reflector-client',
@@ -865,9 +883,10 @@ def invoke_api(func, args=[]):
             keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/neighbors/neighbor={neighbor_address}/afi-safis/afi-safi={afi_safi_name}/ipv4-unicast/prefix-limit/config',
                 name=args[0], identifier=IDENTIFIER, name1=NAME1, neighbor_address=args[1], afi_safi_name=args[2])
             if op == OCEXTPREFIX_PATCH:
-                body = { "openconfig-network-instance:config" : { "max-prefixes" : int(args[3]), "warning-threshold-pct" : int(args[4]), "prevent-teardown" : True if 'warning-only' in args[4:] else False } }
-                if 'restart' in args[4:]:
-                   body["openconfig-network-instance:config"]["restart-timer"] = args[-1]
+                body = { "openconfig-network-instance:config" : { "max-prefixes" : int(args[3]) } }
+                if args[4] != '0': body["openconfig-network-instance:config"]["warning-threshold-pct"] = int(args[4])
+                if 'warning-only' in args[4:]: body["openconfig-network-instance:config"]["prevent-teardown"] = True
+                if 'restart' in args[4:]: body["openconfig-network-instance:config"]["restart-timer"] = args[-1]
         elif attr == 'openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_ipv4_unicast_config_prefix_limit_config_max_prefixes':
             # openconfig_network_instance3828573403
             keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/neighbors/neighbor={neighbor_address}/afi-safis/afi-safi={afi_safi_name}/ipv4-unicast/prefix-limit/config/max-prefixes',
@@ -903,9 +922,10 @@ def invoke_api(func, args=[]):
             keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/neighbors/neighbor={neighbor_address}/afi-safis/afi-safi={afi_safi_name}/ipv6-unicast/prefix-limit/config',
                 name=args[0], identifier=IDENTIFIER, name1=NAME1, neighbor_address=args[1], afi_safi_name=args[2])
             if op == OCEXTPREFIX_PATCH:
-                body = { "openconfig-network-instance:config" : { "max-prefixes" : int(args[3]), "warning-threshold-pct" : int(args[4]), "prevent-teardown" : True if 'warning-only' in args[4:] else False } }
-                if 'restart' in args[4:]:
-                   body["openconfig-network-instance:config"]["restart-timer"] = args[-1]
+                body = { "openconfig-network-instance:config" : { "max-prefixes" : int(args[3]) } }
+                if args[4] != '0': body["openconfig-network-instance:config"]["warning-threshold-pct"] = int(args[4])
+                if 'warning-only' in args[4:]: body["openconfig-network-instance:config"]["prevent-teardown"] = True
+                if 'restart' in args[4:]: body["openconfig-network-instance:config"]["restart-timer"] = args[-1]
         elif attr == 'openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_ipv6_unicast_config_prefix_limit_config_max_prefixes':
             # openconfig_network_instance3828573403
             keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/neighbors/neighbor={neighbor_address}/afi-safis/afi-safi={afi_safi_name}/ipv6-unicast/prefix-limit/config/max-prefixes',
@@ -935,9 +955,10 @@ def invoke_api(func, args=[]):
             keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/neighbors/neighbor={neighbor_address}/afi-safis/afi-safi={afi_safi_name}/l2vpn-evpn/prefix-limit/config',
                 name=args[0], identifier=IDENTIFIER, name1=NAME1, neighbor_address=args[1], afi_safi_name=args[2])
             if op == OCEXTPREFIX_PATCH:
-                body = { "openconfig-network-instance:config" : { "max-prefixes" : int(args[3]), "warning-threshold-pct" : int(args[4]), "prevent-teardown" : True if 'warning-only' in args[4:] else False } }
-                if 'restart' in args[4:]:
-                   body["openconfig-network-instance:config"]["restart-timer"] = args[-1]
+                body = { "openconfig-network-instance:config" : { "max-prefixes" : int(args[3]) } }
+                if args[4] != '0': body["openconfig-network-instance:config"]["warning-threshold-pct"] = int(args[4])
+                if 'warning-only' in args[4:]: body["openconfig-network-instance:config"]["prevent-teardown"] = True
+                if 'restart' in args[4:]: body["openconfig-network-instance:config"]["restart-timer"] = args[-1]
         elif attr == 'openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_l2vpn_evpn_config_prefix_limit_config_max_prefixes':
             # openconfig_network_instance3828573403
             keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/neighbors/neighbor={neighbor_address}/afi-safis/afi-safi={afi_safi_name}/l2vpn-evpn/prefix-limit/config/max-prefixes',
@@ -992,9 +1013,10 @@ def invoke_api(func, args=[]):
             keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/peer-groups/peer-group={peer_group_name}/afi-safis/afi-safi={afi_safi_name}/ipv4-unicast/prefix-limit/config',
                 name=args[0], identifier=IDENTIFIER, name1=NAME1, peer_group_name=args[1], afi_safi_name=args[2])
             if op == OCEXTPREFIX_PATCH:
-                body = { "openconfig-network-instance:config" : { "max-prefixes" : int(args[3]), "warning-threshold-pct" : int(args[4]), "prevent-teardown" : True if 'warning-only' in args[4:] else False } }
-                if 'restart' in args[4:]:
-                   body["openconfig-network-instance:config"]["restart-timer"] = args[-1]
+                body = { "openconfig-network-instance:config" : { "max-prefixes" : int(args[3]) } }
+                if args[4] != '0': body["openconfig-network-instance:config"]["warning-threshold-pct"] = int(args[4])
+                if 'warning-only' in args[4:]: body["openconfig-network-instance:config"]["prevent-teardown"] = True
+                if 'restart' in args[4:]: body["openconfig-network-instance:config"]["restart-timer"] = args[-1]
         elif attr == 'openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_afi_safis_afi_safi_ipv4_unicast_config_prefix_limit_config_max_prefixes':
             # openconfig_network_instance3828573403
             keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/peer-groups/peer-group={peer_group_name}/afi-safis/afi-safi={afi_safi_name}/ipv4-unicast/prefix-limit/config/max-prefixes',
@@ -1042,9 +1064,10 @@ def invoke_api(func, args=[]):
             keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/peer-groups/peer-group={peer_group_name}/afi-safis/afi-safi={afi_safi_name}/ipv6-unicast/prefix-limit/config',
                 name=args[0], identifier=IDENTIFIER, name1=NAME1, peer_group_name=args[1], afi_safi_name=args[2])
             if op == OCEXTPREFIX_PATCH:
-                body = { "openconfig-network-instance:config" : { "max-prefixes" : int(args[3]), "warning-threshold-pct" : int(args[4]), "prevent-teardown" : True if 'warning-only' in args[4:] else False } }
-                if 'restart' in args[4:]:
-                   body["openconfig-network-instance:config"]["restart-timer"] = args[-1]
+                body = { "openconfig-network-instance:config" : { "max-prefixes" : int(args[3]) } }
+                if args[4] != '0': body["openconfig-network-instance:config"]["warning-threshold-pct"] = int(args[4])
+                if 'warning-only' in args[4:]: body["openconfig-network-instance:config"]["prevent-teardown"] = True
+                if 'restart' in args[4:]: body["openconfig-network-instance:config"]["restart-timer"] = args[-1]
         elif attr == 'openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_afi_safis_afi_safi_ipv6_unicast_config_prefix_limit_config_max_prefixes':
             # openconfig_network_instance3828573403
             keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/peer-groups/peer-group={peer_group_name}/afi-safis/afi-safi={afi_safi_name}/ipv6-unicast/prefix-limit/config/max-prefixes',
@@ -1074,9 +1097,10 @@ def invoke_api(func, args=[]):
             keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/peer-groups/peer-group={peer_group_name}/afi-safis/afi-safi={afi_safi_name}/l2vpn-evpn/prefix-limit/config',
                 name=args[0], identifier=IDENTIFIER, name1=NAME1, peer_group_name=args[1], afi_safi_name=args[2])
             if op == OCEXTPREFIX_PATCH:
-                body = { "openconfig-network-instance:config" : { "max-prefixes" : int(args[3]), "warning-threshold-pct" : int(args[4]), "prevent-teardown" : True if 'warning-only' in args[4:] else False } }
-                if 'restart' in args[4:]:
-                   body["openconfig-network-instance:config"]["restart-timer"] = args[-1]
+                body = { "openconfig-network-instance:config" : { "max-prefixes" : int(args[3]) } }
+                if args[4] != '0': body["openconfig-network-instance:config"]["warning-threshold-pct"] = int(args[4])
+                if 'warning-only' in args[4:]: body["openconfig-network-instance:config"]["prevent-teardown"] = True
+                if 'restart' in args[4:]: body["openconfig-network-instance:config"]["restart-timer"] = args[-1]
         elif attr == 'openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_afi_safis_afi_safi_l2vpn_evpn_config_prefix_limit_config_max_prefixes':
             # openconfig_network_instance3828573403
             keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/peer-groups/peer-group={peer_group_name}/afi-safis/afi-safi={afi_safi_name}/l2vpn-evpn/prefix-limit/config/max-prefixes',
