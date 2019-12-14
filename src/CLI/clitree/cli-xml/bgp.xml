@@ -464,7 +464,7 @@ limitations under the License.
     <PARAM name="ip" help="IP source" ptype="IPV4V6_ADDR" view="configure-router-bgp-nbr-view" viewid="nbr-addr=${ip};vrf-name=${vrf-name}"/>
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_transport_config_local_address ${vrf-name} ${nbr-addr} ${ip}</ACTION>
   </COMMAND>
-  <COMMAND name="shutdown" help="Shutdown a neighbor">
+  <COMMAND name="shutdown" help="Shutdown a neighbor or add shutdown message">
     <PARAM name="String" help="Shutdown message" ptype="STRING" optional="true"/>  
     <ACTION> if test -n "${String}" ; then&#xA;
                  python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_shutdown_message ${vrf-name} ${nbr-addr} ${String}&#xA;
@@ -592,8 +592,14 @@ limitations under the License.
     <PARAM name="ip" help="IP source" ptype="IPV4V6_ADDR" view="configure-router-bgp-nbr-view" viewid="nbr-addr=${ip};vrf-name=${vrf-name}" optional="true"/>
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_transport_config_local_address ${vrf-name} ${nbr-addr} ${ip}</ACTION>
   </COMMAND>
-  <COMMAND name="no shutdown" help="Shutdown a neighbor">
-    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_enabled ${vrf-name} ${nbr-addr} True</ACTION>
+  <COMMAND name="no shutdown" help="Shutdown a neighbor or delete shutdown message">
+    <PARAM name="String" help="Shutdown message" ptype="STRING" optional="true"/>  
+    <ACTION> if test -n "${String}" ; then&#xA;
+                 python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_shutdown_message ${vrf-name} ${nbr-addr} ${String}&#xA;
+             else&#xA;
+                 python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_enabled ${vrf-name} ${nbr-addr} True&#xA;
+             fi&#xA;
+    </ACTION>
   </COMMAND>
   <COMMAND name="no advertisement-interval" help="Minimum interval between sending BGP routing updates">
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_timers_config_minimum_advertisement_interval ${vrf-name} ${nbr-addr}</ACTION>
