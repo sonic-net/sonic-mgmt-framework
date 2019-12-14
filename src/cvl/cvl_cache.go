@@ -262,14 +262,22 @@ func (c *CVL) fetchDataToTmpCache() *yparser.YParserNode {
 			doc.LastChild = topYangNode
 			topYangNode.Parent = doc
 
-			//TRACE_LOG(TRACE_CACHE, "Before cache merge = %s", c.yv.root.OutputXML(false))
+			if (IsTraceLevelSet(TRACE_CACHE)) {
+				TRACE_LOG(TRACE_CACHE, "Before cache merge = %s, source = %s",
+				c.yv.root.OutputXML(false),
+				doc.OutputXML(false))
+			}
+
 			if c.mergeYangData(c.yv.root, doc) != CVL_SUCCESS {
 				CVL_LOG(ERROR, "Unable to merge translated YANG data while " +
-				"translating from cahce data to YANG format")
+				"translating from cache data to YANG format")
 				cvlYErrObj.ErrCode = CVL_SYNTAX_ERROR
 				return nil
 			}
-			//TRACE_LOG(TRACE_CACHE, "After cache merge = %s", c.yv.root.OutputXML(false))
+			if (IsTraceLevelSet(TRACE_CACHE)) {
+				TRACE_LOG(TRACE_CACHE, "After cache merge = %s",
+				c.yv.root.OutputXML(false))
+			}
 		}
 	} // until all dependent data is fetched
 

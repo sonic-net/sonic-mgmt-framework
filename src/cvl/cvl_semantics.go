@@ -373,6 +373,10 @@ func (c *CVL) detachNode(node *xmlquery.Node) CVLRetCode {
 		if (node.NextSibling != nil) {
 			//if remaining sibling
 			node.NextSibling.PrevSibling = node.PrevSibling
+		} else {
+			//this is last child getting detached,
+			//so set lastChild as node's prevSibling
+			parent.LastChild = node.PrevSibling
 		}
 	}
 
@@ -427,7 +431,7 @@ func (c *CVL) mergeYangData(dest, src *xmlquery.Node) CVLRetCode {
 
 	srcNode := src
 
-	destLeafListDeleted := false
+	destLeafListDeleted := make(map[string]bool)
 	for srcNode != nil {
 		//Find all source nodes and attach to the matching destination node
 		ret := CVL_FAILURE
@@ -453,10 +457,12 @@ destLoop:
 			(destNode.Attr[0].Name.Local == "leaf-list") &&
 			(srcNode.Attr[0].Name.Local == "leaf-list") { // attribute has type
 
-				if (destLeafListDeleted == false) {
+				delFlag, exists := destLeafListDeleted[srcNode.Data]
+
+				if (exists == false) || (delFlag == false) {
 					//Replace all leaf-list nodes from destination first
 					c.deleteDestLeafList(destNode)
-					destLeafListDeleted = true
+					destLeafListDeleted[srcNode.Data] = true
 					//Note that 'dest' still points to list keys 
 					//even though all leaf-list might have been deleted
 					//as we never delete key while merging
@@ -487,7 +493,7 @@ destLoop:
 					(srcNode.Attr[0].Name.Local == "leaf-list") {
 						//set the flag so that we don't delete leaf-list
 						//from destNode further
-						destLeafListDeleted = true
+						destLeafListDeleted[srcNode.Data] = true
 					}
 					c.appendSubtree(dest.Parent, srcNode)
 				}
@@ -542,7 +548,7 @@ func (c *CVL) moveToYangList(tableName string, redisKey string) *xmlquery.Node {
 	}
 
 	if (nodeTbl == nil) {
-		TRACE_LOG(TRACE_SEMANTIC, "Unable to find YANG data for table %s, key %s",
+		TRACE_LOG(TRACE_SEMANTIC, "YANG data for table %s, key %s is not present in YANG tree",
 		tableName, redisKey)
 		return nil
 	}
