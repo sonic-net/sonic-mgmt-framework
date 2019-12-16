@@ -1,89 +1,110 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CLISH_MODULE xmlns="http://www.dellemc.com/sonic/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xi="http://www.w3.org/2001/XInclude" xsi:schemaLocation="http://www.dellemc.com/sonic/XMLSchema http://www.dellemc.com/sonic/XMLSchema/clish.xsd">
-  <VIEW name="enable-view">
-    <!--show ptp -->
-    <COMMAND name="show ptp" help="Show PTP config info/status">
-      <PARAM name="ptp-subcommands" help="PTP subcommands" mode="switch" ptype="SUBCOMMAND" optional="true">
-        <PARAM name="time-property" help="time property" ptype="SUBCOMMAND" mode="subcommand"> </PARAM>
-        <PARAM name="clock" help="clock" ptype="SUBCOMMAND" mode="subcommand"> </PARAM>
-        <PARAM name="parent" help="parent" ptype="SUBCOMMAND" mode="subcommand"> </PARAM>
-        <PARAM name="port" help="PTP port config" ptype="SUBCOMMAND" mode="subcommand">
-          <PARAM name="Ethernet" help="Interface type" ptype="SUBCOMMAND" mode="subcommand">
-            <PARAM name="ptp_port_number" help="Enter PTP port number" ptype="UINT"/>
-          </PARAM>
-        </PARAM>
-      </PARAM>
-      <ACTION>if test "${ptp-subcommands}" = "time-property"; then&#xA;
+	<PTYPE
+		name="PTP_V6SCOPE_TYPE"
+		pattern="0[xX][0-9a-fA-F]{2}"
+		help="Hexadecimal range (0x00-0xff)"
+		/>
+	<VIEW name="enable-view">
+		<!--show ptp -->
+		<COMMAND name="show ptp" help="Show PTP config info/status">
+			<PARAM name="ptp-subcommands" help="PTP subcommands" mode="switch" ptype="SUBCOMMAND" optional="true">
+				<PARAM name="time-property" help="time property" ptype="SUBCOMMAND" mode="subcommand"> </PARAM>
+				<PARAM name="clock" help="clock" ptype="SUBCOMMAND" mode="subcommand"> </PARAM>
+				<PARAM name="parent" help="parent" ptype="SUBCOMMAND" mode="subcommand"> </PARAM>
+				<PARAM name="port" help="PTP port config" ptype="SUBCOMMAND" mode="subcommand">
+					<MACRO name="PTP-CFG-IF-TYPE" arg=""/>
+				</PARAM>
+			</PARAM>
+			<ACTION>if test "${ptp-subcommands}" = "time-property"; then&#xA;
  python $SONIC_CLI_ROOT/sonic-cli-ptp.py get_ietf_ptp_ptp_instance_list_time_properties_ds 0 ptp_tp_show.j2 &#xA;
  elif test "${ptp-subcommands}" = "clock"; then&#xA;
  python $SONIC_CLI_ROOT/sonic-cli-ptp.py get_ietf_ptp_ptp_instance_list_default_ds 0 ptp_clock_show.j2 &#xA;
  elif test "${ptp-subcommands}" = "parent"; then&#xA;
  python $SONIC_CLI_ROOT/sonic-cli-ptp.py get_ietf_ptp_ptp_instance_list_parent_ds 0 ptp_parent_show.j2 &#xA;
  elif test "${ptp-subcommands}" = "port"; then&#xA;
- python $SONIC_CLI_ROOT/sonic-cli-ptp.py get_ietf_ptp_ptp_instance_list_port_ds_list 0 ${ptp_port_number} ptp_port_show.j2 &#xA;
+ python $SONIC_CLI_ROOT/sonic-cli-ptp.py get_ietf_ptp_ptp_instance_list_port_ds_list 0 ${cfg-if-type}${ptp_port_number} ptp_port_show.j2 &#xA;
  elif test "${ptp-subcommands}" = ""; then&#xA;
  python $SONIC_CLI_ROOT/sonic-cli-ptp.py get_ietf_ptp_ptp_instance_list 0 ptp_show.j2&#xA; 
  else&#xA;
  python $SONIC_CLI_ROOT/sonic-cli-ptp.py get_ietf_ptp_ptp_instance_list 0 ptp_port_show.j2 &#xA;
  fi&#xA;
-      </ACTION>
-    </COMMAND>
-  </VIEW>
-  <VIEW name="configure-view">
-    <COMMAND name="ptp" help="PTP commands">
-      <PARAM name="cfg-ptp-subcommands" help="PTP subcommands" mode="switch" ptype="SUBCOMMAND">
-        <PARAM name="mode" help="PTP mode" ptype="SUBCOMMAND" mode="subcommand">
-          <PARAM name="mode_type" help="Enter ptp mode" ptype="PTP_MODE"/>
-        </PARAM>
-        <PARAM name="delay-mechanism" help="PTP delay mechanism" ptype="SUBCOMMAND" mode="subcommand">
-          <PARAM name="ptp_delay_mechanism_type" help="Enter PTP delay mechanism type" ptype="PTP_DELAY_MECHANISM"/>
-        </PARAM>
-        <PARAM name="network-transport" help="PTP network transport" ptype="SUBCOMMAND" mode="subcommand">
-          <PARAM name="ptp_network_transport_type" help="Enter PTP network transport type" ptype="PTP_TRANSPORT"/>
-        </PARAM>
-        <PARAM name="domain" help="PTP domain" ptype="SUBCOMMAND" mode="subcommand">
-          <PARAM name="ptp_domain" help="Enter PTP domain value" ptype="RANGE_1_255"/>
-        </PARAM>
-        <PARAM name="domain-profile" help="PTP domain profile" ptype="SUBCOMMAND" mode="subcommand">
-          <PARAM name="ptp_domain_profile" help="Enter PTP domain profile type" ptype="PTP_DOMAIN_PROFILE"/>
-        </PARAM>
-        <PARAM name="two-step" help="PTP two step enable" ptype="SUBCOMMAND" mode="subcommand">
-          <PARAM name="ptp_two_step" help="Enable/Disable " ptype="ENA_DISA"/>
-        </PARAM>
-        <PARAM name="priority1" help="PTP priority1" ptype="SUBCOMMAND" mode="subcommand">
-          <PARAM name="ptp_priority1" help="Enter PTP priority1 value" ptype="RANGE_1_255"/>
-        </PARAM>
-        <PARAM name="priority2" help="PTP priority2" ptype="SUBCOMMAND" mode="subcommand">
-          <PARAM name="ptp_priority2" help="Enter PTP priority2 value" ptype="RANGE_1_255"/>
-        </PARAM>
-        <PARAM name="log-announce-interval" help="PTP announce interval" ptype="SUBCOMMAND" mode="subcommand">
-          <PARAM name="ptp_announce_interval" help="Enter PTP announce interval value" ptype="RANGE_1_255"/>
-        </PARAM>
-        <PARAM name="announce-timeout" help="PTP announce timeout" ptype="SUBCOMMAND" mode="subcommand">
-          <PARAM name="ptp_announce_timeout" help="Enter PTP announce timeout value" ptype="RANGE_1_255"/>
-        </PARAM>
-        <PARAM name="log-sync-interval" help="PTP sync interval" ptype="SUBCOMMAND" mode="subcommand">
-          <PARAM name="ptp_sync_interval" help="Enter PTP sync interval value" ptype="RANGE_1_255"/>
-        </PARAM>
-        <PARAM name="log-min-delay-req-interval" help="PTP delay request interval" ptype="SUBCOMMAND" mode="subcommand">
-          <PARAM name="ptp_delay_request_interval" help="Enter PTP delay request interval value" ptype="RANGE_1_255"/>
-        </PARAM>
-        <PARAM name="port" help="PTP port config" ptype="SUBCOMMAND" mode="subcommand">
-          <PARAM name="cfg-ptp-port-subcommands" help="PTP subcommands" mode="switch" ptype="SUBCOMMAND">
-            <PARAM name="add" help="Add Interface" ptype="SUBCOMMAND" mode="subcommand"/>
-            <PARAM name="del" help="Add Interface" ptype="SUBCOMMAND" mode="subcommand"/>
-          </PARAM>
-          <PARAM name="Ethernet" help="Interface type" ptype="SUBCOMMAND" mode="subcommand">
-            <PARAM name="ptp_port_number" help="Enter PTP port number" ptype="UINT"/>
-          </PARAM>
-        </PARAM>
-      </PARAM>
-      <ACTION> if test "${cfg-ptp-subcommands}" = "mode"; then&#xA;
+				</ACTION>
+		</COMMAND>
+	</VIEW>
+	<VIEW name="configure-view">
+		<COMMAND name="ptp" help="PTP commands">
+			<PARAM name="cfg-ptp-subcommands" help="PTP subcommands" mode="switch" ptype="SUBCOMMAND">
+				<PARAM name="mode" help="PTP mode" ptype="SUBCOMMAND" mode="subcommand">
+					<PARAM name="mode_type" help="Enter ptp mode" ptype="PTP_MODE"/>
+				</PARAM>
+				<PARAM name="delay-mechanism" help="PTP delay mechanism" ptype="SUBCOMMAND" mode="subcommand">
+					<PARAM name="ptp_delay_mechanism_type" help="Enter PTP delay mechanism type" ptype="PTP_DELAY_MECHANISM"/>
+				</PARAM>
+				<PARAM name="network-transport" help="PTP network transport" ptype="SUBCOMMAND" mode="subcommand">
+					<PARAM name="ptp_network_transport_type" help="Enter PTP network transport type" ptype="PTP_TRANSPORT"/>
+					<PARAM name="ptp_master_slave" help="unicast mode/multicast" ptype="PTP_MST_SLV"/>
+				</PARAM>
+				<PARAM name="ipv6_scope" help="PTP IPv6 multicast scope" ptype="SUBCOMMAND" mode="subcommand">
+					<PARAM name="ptp_ipv6_scope" help="Scope used for IPv6 multicast message. Used as second byte of the primary address" ptype="PTP_V6SCOPE_TYPE"/>
+				</PARAM>
+				<PARAM name="domain" help="PTP domain" ptype="SUBCOMMAND" mode="subcommand">
+					<PARAM name="ptp_domain" help="Enter PTP domain value" ptype="RANGE_1_255"/>
+				</PARAM>
+				<PARAM name="domain-profile" help="PTP domain profile" ptype="SUBCOMMAND" mode="subcommand">
+					<PARAM name="ptp_domain_profile" help="Enter PTP domain profile type" ptype="PTP_DOMAIN_PROFILE"/>
+				</PARAM>
+				<PARAM name="two-step" help="PTP two step enable" ptype="SUBCOMMAND" mode="subcommand">
+					<PARAM name="ptp_two_step" help="Enable/Disable " ptype="ENA_DISA"/>
+				</PARAM>
+				<PARAM name="priority1" help="PTP priority1" ptype="SUBCOMMAND" mode="subcommand">
+					<PARAM name="ptp_priority1" help="Enter PTP priority1 value" ptype="RANGE_1_255"/>
+				</PARAM>
+				<PARAM name="priority2" help="PTP priority2" ptype="SUBCOMMAND" mode="subcommand">
+					<PARAM name="ptp_priority2" help="Enter PTP priority2 value" ptype="RANGE_1_255"/>
+				</PARAM>
+				<PARAM name="log-announce-interval" help="PTP announce interval" ptype="SUBCOMMAND" mode="subcommand">
+					<PARAM name="ptp_announce_interval" help="Enter PTP announce interval value" ptype="INT8_RANGE"/>
+				</PARAM>
+				<PARAM name="announce-timeout" help="PTP announce timeout" ptype="SUBCOMMAND" mode="subcommand">
+					<PARAM name="ptp_announce_timeout" help="Enter PTP announce timeout value" ptype="RANGE_1_255"/>
+				</PARAM>
+				<PARAM name="log-sync-interval" help="PTP sync interval" ptype="SUBCOMMAND" mode="subcommand">
+					<PARAM name="ptp_sync_interval" help="Enter PTP sync interval value" ptype="INT8_RANGE"/>
+				</PARAM>
+				<PARAM name="log-min-delay-req-interval" help="PTP delay request interval" ptype="SUBCOMMAND" mode="subcommand">
+					<PARAM name="ptp_delay_request_interval" help="Enter PTP delay request interval value" ptype="INT8_RANGE"/>
+				</PARAM>
+				<PARAM name="port" help="PTP port config" ptype="SUBCOMMAND" mode="subcommand">
+					<PARAM name="cfg-ptp-port-subcommands" help="PTP subcommands" mode="switch" ptype="SUBCOMMAND">
+						<PARAM name="add" help="Add Interface" ptype="SUBCOMMAND" mode="subcommand">
+							<MACRO name="PTP-CFG-IF-TYPE" arg=""/>
+						</PARAM>
+						<PARAM name="del" help="Add Interface" ptype="SUBCOMMAND" mode="subcommand">
+							<MACRO name="PTP-CFG-IF-TYPE" arg=""/>
+						</PARAM>
+						<PARAM name="master-table" help="Master nodes list when this node is configured as slave" ptype="SUBCOMMAND" mode="subcommand">
+							<MACRO name="PTP-CFG-IF-TYPE" arg=""/>
+							<PARAM name="cfg-ptp-mt-subcommands" help="PTP master-table subcommands" mode="switch" ptype="SUBCOMMAND">
+								<PARAM name="add" help="Add master nodes" ptype="SUBCOMMAND" mode="subcommand">
+									<MACRO name="PTP-DEST-NODE" arg=""/>
+								</PARAM>
+								<PARAM name="del" help="Delete master nodes" ptype="SUBCOMMAND" mode="subcommand">
+									<MACRO name="PTP-DEST-NODE" arg=""/>
+								</PARAM>
+							</PARAM>
+						</PARAM>
+					</PARAM>
+				</PARAM>
+			</PARAM>
+			<ACTION>if test "${cfg-ptp-subcommands}" = "mode"; then&#xA;
  python $SONIC_CLI_ROOT/sonic-cli-ptp.py "clock-type" ${mode_type}&#xA;
  elif test "${cfg-ptp-subcommands}" = "delay-mechanism"; then&#xA;
  python $SONIC_CLI_ROOT/sonic-cli-ptp.py patch_ietf_ptp_ptp_transparent_clock_default_ds_delay_mechanism ${ptp_delay_mechanism_type}&#xA;
  elif test "${cfg-ptp-subcommands}" = "network-transport"; then&#xA;
- python $SONIC_CLI_ROOT/sonic-cli-ptp.py "network-transport" ${ptp_network_transport_type}&#xA;
+ python $SONIC_CLI_ROOT/sonic-cli-ptp.py "network-transport" ${ptp_network_transport_type} ${ptp_master_slave}&#xA;
+ elif test "${cfg-ptp-subcommands}" = "ipv6_scope"; then&#xA;
+ python $SONIC_CLI_ROOT/sonic-cli-ptp.py "udp6-scope" ${ptp_ipv6_scope}&#xA;
  elif test "${cfg-ptp-subcommands}" = "domain"; then&#xA;
  python $SONIC_CLI_ROOT/sonic-cli-ptp.py patch_ietf_ptp_ptp_instance_list_default_ds_domain_number 0 ${ptp_domain}&#xA;
  elif test "${cfg-ptp-subcommands}" = "domain-profile"; then&#xA;
@@ -103,13 +124,19 @@
  elif test "${cfg-ptp-subcommands}" = "log-min-delay-req-interval"; then&#xA;
  python $SONIC_CLI_ROOT/sonic-cli-ptp.py "log-min-delay-req-interval" ${ptp_delay_request_interval}&#xA;
  elif test "${cfg-ptp-subcommands}" = "port"; then&#xA;
- if test "${add}" = "add"; then&#xA;
- python $SONIC_CLI_ROOT/sonic-cli-ptp.py "add_port" ${Ethernet}${ptp_port_number}&#xA;
- elif test "${del}" = "del"; then&#xA;
- python $SONIC_CLI_ROOT/sonic-cli-ptp.py "del_port" ${Ethernet}${ptp_port_number}&#xA;
+ if test "${cfg-ptp-port-subcommands}" = "add"; then&#xA;
+ python $SONIC_CLI_ROOT/sonic-cli-ptp.py "add_port" ${cfg-if-type}${ptp_port_number}&#xA;
+ elif test "${cfg-ptp-port-subcommands}" = "del"; then&#xA;
+ python $SONIC_CLI_ROOT/sonic-cli-ptp.py "del_port" ${cfg-if-type}${ptp_port_number}&#xA;
+ elif test "${cfg-ptp-port-subcommands}" = "master-table"; then&#xA;
+ if test "${cfg-ptp-mt-subcommands}" = "add"; then&#xA;
+ python $SONIC_CLI_ROOT/sonic-cli-ptp.py "add_master_table" ${cfg-if-type}${ptp_port_number} ${l3_ip}${mac}&#xA;
+ elif test "${cfg-ptp-mt-subcommands}" = "del"; then&#xA;
+ python $SONIC_CLI_ROOT/sonic-cli-ptp.py "del_master_table" ${cfg-if-type}${ptp_port_number} ${l3_ip}${mac}&#xA;
  fi&#xA;
  fi&#xA;
-      </ACTION>
-    </COMMAND>
-  </VIEW>
+ fi&#xA;
+			</ACTION>
+		</COMMAND>
+	</VIEW>
 </CLISH_MODULE>

@@ -1,0 +1,39 @@
+module sonic-mclag-annot {
+
+    yang-version "1.1";
+
+    namespace "http://github.com/Azure/sonic-mclag-annot";
+    prefix "smclag-annot"; 
+
+    import sonic-extensions { prefix sonic-ext; }
+    import sonic-mclag { prefix smclag; }
+
+    // meta
+    organization
+        "SONiC";
+
+    contact
+        "SONiC";
+
+    description
+        "SONIC MCLAG";
+
+    revision 2019-11-22 {
+        description
+            "Initial revision.";
+    }
+
+    deviation /smclag:sonic-mclag/smclag:MCLAG_TABLE/smclag:MCLAG_TABLE_LIST {
+        deviate add {
+            sonic-ext:db-name "STATE_DB";
+        }
+    }
+
+    deviation /smclag:sonic-mclag/smclag:MCLAG_REMOTE_INTF_TABLE/smclag:MCLAG_REMOTE_INTF_TABLE_LIST {
+        deviate add {
+            sonic-ext:db-name "STATE_DB";
+        }
+    }
+
+}
+

@@ -1,0 +1,8 @@
+{% if json_output -%}
+{% set tam_feature = json_output['feature'] %}
+
+{% if tam_feature -%}
+{{'Feature Enabled      : '}}{{tam_feature}}
+{% endif %}
+{% endif %}
+

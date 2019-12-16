@@ -37,11 +37,11 @@ import (
 const (
 	STP_GLOBAL_TABLE         = "STP"
 	STP_VLAN_TABLE           = "STP_VLAN"
-	STP_VLAN_INTF_TABLE      = "STP_VLAN_INTF"
-	STP_INTF_TABLE           = "STP_INTF"
+	STP_VLAN_PORT_TABLE      = "STP_VLAN_PORT"
+	STP_PORT_TABLE           = "STP_PORT"
 	STP_VLAN_OPER_TABLE      = "_STP_VLAN_TABLE"
-	STP_VLAN_INTF_OPER_TABLE = "_STP_VLAN_INTF_TABLE"
-	STP_INTF_OPER_TABLE      = "_STP_INTF_TABLE"
+	STP_VLAN_PORT_OPER_TABLE = "_STP_VLAN_PORT_TABLE"
+	STP_PORT_OPER_TABLE      = "_STP_PORT_TABLE"
 	STP_MODE                 = "mode"
 	OC_STP_APP_MODULE_NAME   = "/openconfig-spanning-tree:stp"
 	OC_STP_YANG_PATH_PREFIX  = "/device/stp"
@@ -86,7 +86,10 @@ func init() {
 		&appInfo{appType: reflect.TypeOf(StpApp{}),
 			ygotRootType:  reflect.TypeOf(ocbinds.OpenconfigSpanningTree_Stp{}),
 			isNative:      false,
-			tablesToWatch: []*db.TableSpec{&db.TableSpec{Name: STP_GLOBAL_TABLE}, &db.TableSpec{Name: STP_VLAN_TABLE}, &db.TableSpec{Name: STP_VLAN_INTF_TABLE}, &db.TableSpec{Name: STP_INTF_TABLE}}})
+			tablesToWatch: []*db.TableSpec{&db.TableSpec{Name:
+            STP_GLOBAL_TABLE}, &db.TableSpec{Name: STP_VLAN_TABLE},
+            &db.TableSpec{Name: STP_VLAN_PORT_TABLE}, &db.TableSpec{Name:
+            STP_PORT_TABLE}}})
 
 	if err != nil {
 		log.Fatal("Register STP app module with App Interface failed with error=", err)
@@ -106,12 +109,12 @@ func (app *StpApp) initialize(data appData) {
 
 	app.globalTable = &db.TableSpec{Name: STP_GLOBAL_TABLE}
 	app.vlanTable = &db.TableSpec{Name: STP_VLAN_TABLE}
-	app.vlanIntfTable = &db.TableSpec{Name: STP_VLAN_INTF_TABLE}
-	app.interfaceTable = &db.TableSpec{Name: STP_INTF_TABLE}
+	app.vlanIntfTable = &db.TableSpec{Name: STP_VLAN_PORT_TABLE}
+	app.interfaceTable = &db.TableSpec{Name: STP_PORT_TABLE}
 
 	app.vlanOperTable = &db.TableSpec{Name: STP_VLAN_OPER_TABLE}
-	app.vlanIntfOperTable = &db.TableSpec{Name: STP_VLAN_INTF_OPER_TABLE}
-	app.intfOperTable = &db.TableSpec{Name: STP_INTF_OPER_TABLE}
+	app.vlanIntfOperTable = &db.TableSpec{Name: STP_VLAN_PORT_OPER_TABLE}
+	app.intfOperTable = &db.TableSpec{Name: STP_PORT_OPER_TABLE}
 
 	app.globalInfo = db.Value{Field: map[string]string{}}
 	app.vlanTableMap = make(map[string]db.Value)
@@ -1025,7 +1028,7 @@ func (app *StpApp) convertInternalToOCRpvstVlanConfig(vlanName string, rpvst *oc
 				opHoldTime := uint8(num)
 				rpvstVlanConf.State.HoldTime = &opHoldTime
 
-				/*num, _ = strconv.ParseUint((&operDbVal).Get("root_max_age"), 10, 8)
+				num, _ = strconv.ParseUint((&operDbVal).Get("root_max_age"), 10, 8)
 				opRootMaxAge := uint8(num)
 				rpvstVlanConf.State.RootMaxAge = &opRootMaxAge
 
@@ -1035,7 +1038,7 @@ func (app *StpApp) convertInternalToOCRpvstVlanConfig(vlanName string, rpvst *oc
 
 				num, _ = strconv.ParseUint((&operDbVal).Get("root_forward_delay"), 10, 8)
 				opRootForwardDelay := uint8(num)
-				rpvstVlanConf.State.RootForwardingDelay = &opRootForwardDelay  */
+				rpvstVlanConf.State.RootForwardDelay = &opRootForwardDelay
 
 				num, _ = strconv.ParseUint((&operDbVal).Get("stp_instance"), 10, 16)
 				opStpInstance := uint16(num)
@@ -1056,8 +1059,11 @@ func (app *StpApp) convertInternalToOCRpvstVlanConfig(vlanName string, rpvst *oc
 				bridgeId := (&operDbVal).Get("bridge_id")
 				rpvstVlanConf.State.BridgeAddress = &bridgeId
 
-				desigRootAddr := (&operDbVal).Get("desig_bridge_id")
+				desigRootAddr := (&operDbVal).Get("root_bridge_id")
 				rpvstVlanConf.State.DesignatedRootAddress = &desigRootAddr
+
+				desigBridgeId := (&operDbVal).Get("desig_bridge_id")
+				rpvstVlanConf.State.DesignatedBridgeId = &desigBridgeId
 
 				rootPortStr := (&operDbVal).Get("root_port")
 				rpvstVlanConf.State.RootPortName = &rootPortStr
@@ -1269,7 +1275,7 @@ func (app *StpApp) convertInternalToOCPvstVlan(vlanName string, pvst *ocbinds.Op
 				opHoldTime := uint8(num)
 				pvstVlan.State.HoldTime = &opHoldTime
 
-				/*num, _ = strconv.ParseUint((&operDbVal).Get("root_max_age"), 10, 8)
+				num, _ = strconv.ParseUint((&operDbVal).Get("root_max_age"), 10, 8)
 				opRootMaxAge := uint8(num)
 				pvstVlan.State.RootMaxAge = &opRootMaxAge
 
@@ -1279,7 +1285,7 @@ func (app *StpApp) convertInternalToOCPvstVlan(vlanName string, pvst *ocbinds.Op
 
 				num, _ = strconv.ParseUint((&operDbVal).Get("root_forward_delay"), 10, 8)
 				opRootForwardDelay := uint8(num)
-				pvstVlan.State.RootForwardingDelay = &opRootForwardDelay  */
+				pvstVlan.State.RootForwardDelay = &opRootForwardDelay
 
 				num, _ = strconv.ParseUint((&operDbVal).Get("stp_instance"), 10, 16)
 				opStpInstance := uint16(num)
@@ -1300,8 +1306,11 @@ func (app *StpApp) convertInternalToOCPvstVlan(vlanName string, pvst *ocbinds.Op
 				bridgeId := (&operDbVal).Get("bridge_id")
 				pvstVlan.State.BridgeAddress = &bridgeId
 
-				desigRootAddr := (&operDbVal).Get("desig_bridge_id")
+				desigRootAddr := (&operDbVal).Get("root_bridge_id")
 				pvstVlan.State.DesignatedRootAddress = &desigRootAddr
+
+				desigBridgeId := (&operDbVal).Get("desig_bridge_id")
+				pvstVlan.State.DesignatedBridgeId = &desigBridgeId
 
 				rootPortStr := (&operDbVal).Get("root_port")
 				pvstVlan.State.RootPortName = &rootPortStr
@@ -1446,9 +1455,9 @@ func (app *StpApp) convertOCStpInterfacesToInternal() {
 					(&dbVal).Set("link_type", "point-to-point")
 				} else if stpIntfConf.Config.LinkType == ocbinds.OpenconfigSpanningTree_StpLinkType_SHARED {
 					(&dbVal).Set("link_type", "shared")
-				} else {
+				} /*else {
 					(&dbVal).Set("link_type", "auto")
-				}
+				} */
 			}
 		}
 	}
@@ -1942,6 +1951,9 @@ func (app *StpApp) enableStpForInterfaces(d *db.DB) error {
 	(&defaultDBValues).Set("bpdu_guard_do_disable", "false")
 	(&defaultDBValues).Set("portfast", "true")
 	(&defaultDBValues).Set("uplink_fast", "false")
+	if "rpvst" == (&app.globalInfo).Get(STP_MODE) {
+		(&defaultDBValues).Set("link_type", "auto")
+	}
 
 	intfList, err := app.getAllInterfacesFromVlanMemberTable(d)
 	if err != nil {
@@ -2054,7 +2066,7 @@ func removeStpConfigOnVlanDeletion(d *db.DB, vlanList []string) {
 	}
 	log.Infof("removeStpConfigOnVlanDeletion --> Disable Stp on Vlans: %v", vlanList)
 	for i, _ := range vlanList {
-		err := d.DeleteEntry(&db.TableSpec{Name: STP_VLAN_INTF_TABLE}, asKey(vlanList[i], "*"))
+		err := d.DeleteEntry(&db.TableSpec{Name: STP_VLAN_PORT_TABLE}, asKey(vlanList[i], "*"))
 		if err != nil {
 			log.Error(err)
 		}
@@ -2071,7 +2083,7 @@ func enableStpOnInterfaceVlanMembership(d *db.DB, intfList []string) {
 	if len(intfList) == 0 {
 		return
 	}
-	_, serr := d.GetEntry(&db.TableSpec{Name: STP_GLOBAL_TABLE}, asKey("GLOBAL"))
+	stpGlobalDBEntry, serr := d.GetEntry(&db.TableSpec{Name: STP_GLOBAL_TABLE}, asKey("GLOBAL"))
 	if serr != nil {
 		return
 	}
@@ -2084,9 +2096,12 @@ func enableStpOnInterfaceVlanMembership(d *db.DB, intfList []string) {
 	(&defaultDBValues).Set("bpdu_guard_do_disable", "false")
 	(&defaultDBValues).Set("portfast", "true")
 	(&defaultDBValues).Set("uplink_fast", "false")
+	if "rpvst" == (&stpGlobalDBEntry).Get(STP_MODE) {
+		(&defaultDBValues).Set("link_type", "auto")
+	}
 
 	var stpEnabledIntfList []string
-	intfKeys, err := d.GetKeys(&db.TableSpec{Name: STP_INTF_TABLE})
+	intfKeys, err := d.GetKeys(&db.TableSpec{Name: STP_PORT_TABLE})
 	if err != nil {
 		log.Error(err)
 	} else {
@@ -2097,7 +2112,7 @@ func enableStpOnInterfaceVlanMembership(d *db.DB, intfList []string) {
 
 		for i, _ := range intfList {
 			if !contains(stpEnabledIntfList, intfList[i]) {
-				d.CreateEntry(&db.TableSpec{Name: STP_INTF_TABLE}, asKey(intfList[i]), defaultDBValues)
+				d.CreateEntry(&db.TableSpec{Name: STP_PORT_TABLE}, asKey(intfList[i]), defaultDBValues)
 			}
 		}
 	}
@@ -2111,11 +2126,11 @@ func removeStpOnInterfaceSwitchportDeletion(d *db.DB, intfList []string) {
 	}
 	log.Infof("removeStpOnInterfaceSwitchportDeletion --> Disable Stp on Interfaces: %v", intfList)
 	for i, _ := range intfList {
-		err := d.DeleteEntry(&db.TableSpec{Name: STP_VLAN_INTF_TABLE}, asKey("*", intfList[i]))
+		err := d.DeleteEntry(&db.TableSpec{Name: STP_VLAN_PORT_TABLE}, asKey("*", intfList[i]))
 		if err != nil {
 			log.Error(err)
 		}
-		err = d.DeleteEntry(&db.TableSpec{Name: STP_INTF_TABLE}, asKey(intfList[i]))
+		err = d.DeleteEntry(&db.TableSpec{Name: STP_PORT_TABLE}, asKey(intfList[i]))
 		if err != nil {
 			log.Error(err)
 		}

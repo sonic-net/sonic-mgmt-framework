@@ -1,0 +1,27 @@
+{% set vars = {'name': ""} %}
+{% set vars = {'sample_rate': ""} %}
+
+{% if json_output -%}
+
+{% for key_json in json_output %}
+
+    {% if key_json == "sonic-tam-drop-monitor:SAMPLE_RATE_TABLE" %}
+        {% set sample_list = json_output[key_json]["SAMPLE_RATE_TABLE_LIST"] %}
+    {% else %}
+        {% set sample_list = json_output[key_json] %}
+    {% endif %}
+------------------------------------------------------------------------------------------------
+{{'%-15s'|format("SAMPLE NAME")}}{{'%-15s'|format("SAMPLE RATE")}}
+------------------------------------------------------------------------------------------------
+{% for sample in sample_list %}
+
+    {% if vars.update({'name':sample["name"]}) %}{% endif %}
+    {% if vars.update({'sample_rate':sample["sampling-rate"]}) %}{% endif %}
+{{'%-15s'|format(vars.name)}}{{'%-15s'|format(vars.sample_rate)}}
+
+{% endfor %}
+
+{% endfor %}
+
+{% endif %}
+

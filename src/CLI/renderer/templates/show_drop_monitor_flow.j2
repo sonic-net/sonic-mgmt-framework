@@ -1,34 +1,35 @@
-{% set vars = {'flowName': ""} %}
-{% set vars = {'aclTable': ""} %}
-{% set vars = {'aclRule': ""} %}
+{% set vars = {'name': ""} %}
+{% set vars = {'aclrule': ""} %}
+{% set vars = {'acltable': ""} %}
 {% set vars = {'collector': ""} %}
-{% set vars = {'samplingRate': ""} %}
-{{'------------------------------------------------------------------------------------------------------------------------'}}
-{{'FLOW'.ljust(20)}} {{'ACL RULE'.ljust(20)}} {{'ACL TABLE'.ljust(20)}} {{'COLLECTOR'.ljust(20)}} {{'SAMPLING RATE'}}
-{{'------------------------------------------------------------------------------------------------------------------------'}}
-{% for key,value in json_output.items() %}
-{% for item in value %} 
-{% for key2,value2 in item.items() %}
-{% if 'ietf-ts:flow-key' == key2 %}
-{% if vars.update({'flowName':value2}) %}{% endif %}
-{% endif %}
-{% if 'ietf-ts:each-flow-data' == key2 %}
-{% for key,value in value2.items() %}
-{% if 'acl-rule' == key %}
-{% if vars.update({'aclRuleName':value}) %}{% endif %}
-{% endif %}
-{% if 'acl-table' == key %}
-{% if vars.update({'aclTableName':value}) %}{% endif %}
-{% endif %}
-{% if 'collector' == key %}
-{% if vars.update({'collectorName':value}) %}{% endif %}
-{% endif %}
-{% if 'sample' == key %}
-{% if vars.update({'samplingRate':value}) %}{% endif %}
-{% endif %}
+{% set vars = {'sampling_rate': ""} %}
+{% set vars = {'flowgroup_id': ""} %}
+
+{% if json_output -%}
+
+{% for key_json in json_output %}
+
+    {% if key_json == "sonic-tam-drop-monitor:TAM_DROP_MONITOR_FLOW_TABLE" %}
+        {% set flow_list = json_output[key_json]["TAM_DROP_MONITOR_FLOW_TABLE_LIST"] %}
+    {% else %}
+        {% set flow_list = json_output[key_json] %}
+    {% endif %}
+------------------------------------------------------------------------------------------------
+{{'%-15s'|format("FLOW")}}{{'%-15s'|format("ACL TABLE")}}{{'%-15s'|format("ACL RULE")}} {{'%-15s'|format("COLLECTOR")}} {{'%-15s'|format("SAMPLING RATE")}} {{'%-15s'|format("FLOWGROUP ID")}}
+------------------------------------------------------------------------------------------------
+{% for flow in flow_list %}
+
+    {% if vars.update({'name':flow["name"]}) %}{% endif %}
+    {% if vars.update({'aclrule':flow["acl-rule-name"]}) %}{% endif %}
+    {% if vars.update({'acltable':flow["acl-table-name"]}) %}{% endif %}
+    {% if vars.update({'collector':flow["collector-name"]}) %}{% endif %}
+    {% if vars.update({'sampling_rate':flow["sample"]}) %}{% endif %}
+    {% if vars.update({'flowgroup_id':flow["flowgroup-id"]}) %}{% endif %}
+{{'%-15s'|format(vars.name)}}{{'%-15s'|format(vars.acltable)}}{{'%-15s'|format(vars.aclrule)}} {{'%-15s'|format(vars.collector)}} {{'%-15s'|format(vars.sampling_rate)}} {{'%-15s'|format(vars.flowgroup_id)}}
+
 {% endfor %}
+
+{% endfor %}
+
 {% endif %}
-{% endfor %}
-{{'%-25s'|format(vars.flowName)}}{{'%-20s'|format(vars.aclRuleName)}}{{'%-20s'|format(vars.aclTableName)}} {{'%-20s'|format(vars.collectorName)}} {{'%-20s'|format(vars.samplingRate)}}
-{% endfor %}
-{% endfor %}
+

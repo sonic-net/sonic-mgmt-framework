@@ -27,6 +27,7 @@ import (
 	"time"
 	"runtime"
 	"github.com/antchfx/jsonquery"
+	"github.com/antchfx/xmlquery"
 )
 
 func (c *CVL) addTableEntryToCache(tableName string, redisKey string) {
@@ -159,6 +160,11 @@ func (c *CVL) fetchTableDataToTmpCache(tableName string, dbKeys map[string]inter
 
 		for key, val := range mCmd {
 			res, err := val.Result()
+
+			if (mapTable == nil) {
+				break
+			}
+
 			if (err != nil || len(res) == 0) {
 				//no data found, don't keep blank entry
 				delete(mapTable.(map[string]interface{}), key)
@@ -241,6 +247,29 @@ func (c *CVL) fetchDataToTmpCache() *yparser.YParserNode {
 					return nil
 				}
 			}
+
+			//Generate YANG data for Yang Validator
+			topYangNode, cvlYErrObj := c.generateYangListData(jsonNode, true)
+			if  topYangNode == nil {
+				cvlYErrObj.ErrCode = CVL_SYNTAX_ERROR
+				CVL_LOG(ERROR, "Unable to translate cache data to YANG format")
+				return nil
+			}
+
+			//Create a full document and merge with main YANG data
+			doc := &xmlquery.Node{Type: xmlquery.DocumentNode}
+			doc.FirstChild = topYangNode
+			doc.LastChild = topYangNode
+			topYangNode.Parent = doc
+
+			//TRACE_LOG(TRACE_CACHE, "Before cache merge = %s", c.yv.root.OutputXML(false))
+			if c.mergeYangData(c.yv.root, doc) != CVL_SUCCESS {
+				CVL_LOG(ERROR, "Unable to merge translated YANG data while " +
+				"translating from cahce data to YANG format")
+				cvlYErrObj.ErrCode = CVL_SYNTAX_ERROR
+				return nil
+			}
+			//TRACE_LOG(TRACE_CACHE, "After cache merge = %s", c.yv.root.OutputXML(false))
 		}
 	} // until all dependent data is fetched
 

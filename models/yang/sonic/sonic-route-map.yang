@@ -179,10 +179,6 @@ module sonic-route-map {
                     type string;
                 }
 
-                leaf set_med{
-                    type string;
-                }
-
                 leaf set_repeat_asn{
                     type uint8;
                 }

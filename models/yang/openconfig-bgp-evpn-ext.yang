@@ -1,0 +1,200 @@
+module openconfig-bgp-evpn-ext {
+
+  yang-version "1";
+
+  namespace "http://openconfig.net/yang/bgp-evpn/extension";
+
+  prefix "oc-bgp-evpn-ext";
+
+  import openconfig-network-instance { prefix oc-netinst; }
+  import openconfig-network-instance-types { prefix "oc-ni-types"; }
+  import ietf-routing-types { prefix "ietfrt"; }
+  import openconfig-bgp-types { prefix oc-bgp-types; }
+  //import openconfig-bgp { prefix ocbgpmp; }
+
+  organization "Broadcom";
+
+  contact
+  "Broadcom";
+
+  description
+  "Model for managing BGP EVPN config.";
+
+  revision 2019-10-03 {
+    description
+    "Initial augment file.";
+  }
+
+  grouping bgp-common-mp-l2vpn-evpn-vni-config {
+    description
+    "Configuration parameters relating to evpn";
+
+    leaf advertise-default-gw {
+      type boolean;
+      default "false";
+      description
+      "If set to true, advertise default gateway";
+    }
+
+    leaf route-distinguisher {
+      //type oc-ni-types:route-distinguisher;
+      type string;
+      description
+      "The route distinguisher that should be used for the local
+      VRF or VSI instance when it is signalled via BGP.";
+    }
+
+    uses ietfrt:vpn-route-targets;
+
+  }
+
+  grouping bgp-common-mp-l2vpn-evpn-list {
+    description
+    "List of VNIs in EVPN";
+
+    list vni {
+      key "vni-number";
+
+      description
+      "VNI configuration available for the
+      EVPN";
+
+      leaf vni-number {
+        type leafref {
+          path "../config/vni-number";
+        }
+        description
+        "VNI number";
+      }
+
+      container config {
+        leaf vni-number {
+          type uint32 {
+            range "1..16777215";
+          }
+          description
+          "VNI number";
+        }
+        
+      }
+
+      container state {
+        leaf vni-number {
+          type uint32;
+        }
+
+        leaf type {
+          type string;
+        }
+
+        leaf is-live {
+          type boolean;
+        }
+
+        leaf route-distinguisher {
+          type string;
+        }
+
+        leaf originator {
+          type string;
+        }
+
+        leaf mcast-group {
+          type string;
+        }
+
+        leaf advertise-gw-mac {
+          type boolean;
+        }
+
+        leaf-list import-rts {
+          type string;
+        }
+
+        leaf-list export-rts {
+          type string;
+        }
+
+      }
+
+      uses bgp-common-mp-l2vpn-evpn-vni-config;
+
+    }//end list
+  }
+
+  // augment statements
+
+  augment "/oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol"
+  +"/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:l2vpn-evpn" {
+
+    leaf advertise-all-vni {
+      type boolean;
+      description "Advertise all VNIs";
+    }
+
+    leaf-list advertise-list {
+      type identityref {
+        base oc-bgp-types:AFI_SAFI_TYPE;
+      }
+      description "AFI,SAFI";
+    }
+
+    uses bgp-common-mp-l2vpn-evpn-vni-config;
+
+    container vnis {
+      description
+      "VNI configuration";
+      uses bgp-common-mp-l2vpn-evpn-list;
+    }
+
+    container default-originate {
+      description "Specify whether to originate default routes";
+      leaf ipv4 {
+        type boolean;
+      }
+      leaf ipv6 {
+        type boolean;
+      }
+    }
+
+    leaf autort {
+      description "Enable automatic derivation of route-target";
+      type enumeration {
+        enum rfc8365-compatible;
+      }
+    }
+
+    leaf flooding {
+      description "Specify handling of BUM packets";
+      type enumeration {
+        enum disable;
+        enum head-end-replication;
+      }
+    }
+
+    container dup-addr-detection {
+      description "Specify duplicate address detection parameters";
+      leaf enabled {
+        description "Specify whether duplicate address detection is enabled";
+        type boolean;
+      }
+      leaf max-moves {
+        description "Specify maximum allowed moves before address declared as duplicate";
+        type uint32;
+      }
+      leaf time {
+        description "Dulplicate address detection time";
+        type uint32;
+      }
+      leaf freeze {
+        description "Duplicate address detection freeze, time (30-3600) or permanent";
+        type union {
+          type uint32;
+          type string;
+        }
+      }
+    }
+
+  }//end augment
+
+}//end module

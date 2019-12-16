@@ -7,146 +7,140 @@
 <!ENTITY MAX_MTU "9216">
 ]>
 <CLISH_MODULE xmlns="http://www.dellemc.com/sonic/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xi="http://www.w3.org/2001/XInclude" xsi:schemaLocation="http://www.dellemc.com/sonic/XMLSchema http://www.dellemc.com/sonic/XMLSchema/clish.xsd">
-
   <VIEW name="configure-view">
-         <COMMAND name="no sample" help="Remove Sample" >
-            <PARAM name="sample-name" help="Name of the sample" ptype="STRING"> </PARAM> 
-              <ACTION> 
-               python $SONIC_CLI_ROOT/drop-monitor.py -clear -sample ${sample-name} 
-              </ACTION>
-        </COMMAND>
-
-        <COMMAND name="sample" help="Sample Name" >
-            <PARAM name="sample-name" help="Sample Name" ptype="STRING"> </PARAM>
-              <PARAM name="rate" help="Configure sample rate" ptype="SUBCOMMAND" mode="subcommand" > </PARAM>
-              <PARAM name="rate-name" help="Configure Sampling rate" ptype="UINT16" > </PARAM>
-              <ACTION>
-               python $SONIC_CLI_ROOT/drop-monitor.py -config -sample ${sample-name} -rate ${rate-name}
-              </ACTION>
-        </COMMAND>
+    <COMMAND name="no sample" help="Remove Sample">
+      <PARAM name="sample-name" help="Name of the sample" ptype="STRING"> </PARAM>
+      <ACTION>
+	if test "${sample-name}" = "all" ; then
+	  python $SONIC_CLI_ROOT/sonic-cli-drop-monitor.py delete_list_sonic_tam_drop_monitor_sonic_tam_drop_monitor_sample_rate_table_sample_rate_table_list;
+	else
+	  python $SONIC_CLI_ROOT/sonic-cli-drop-monitor.py delete_sonic_tam_drop_monitor_sonic_tam_drop_monitor_sample_rate_table_sample_rate_table_list ${sample-name};
+	fi
+      </ACTION>
+    </COMMAND>
+    <COMMAND name="sample" help="Sample Name">
+      <PARAM name="sample-name" help="Sample Name" ptype="STRING"> </PARAM>
+      <PARAM name="rate" help="Configure sample rate" ptype="SUBCOMMAND" mode="subcommand"> </PARAM>
+      <PARAM name="rate-name" help="Configure Sampling rate" ptype="UINT16"> </PARAM>
+      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-drop-monitor.py patch_sonic_tam_drop_monitor_sonic_tam_drop_monitor_sample_rate_table_sample_rate_table_list ${sample-name} ${rate-name}</ACTION>
+    </COMMAND>
   </VIEW>
-
   <VIEW name="configure-tam-view">
-         <COMMAND name="drop-monitor" help="TAM DROP MONITOR configuration" view="configure-tam-drop-monitor-view" viewid="drop-monitor"> </COMMAND>
+    <COMMAND name="drop-monitor" help="TAM DROP MONITOR configuration" view="configure-tam-drop-monitor-view" viewid="drop-monitor"> </COMMAND>
   </VIEW>
-
   <VIEW name="enable-view">
-   <!-- show tam-drop-monitor -->
-    <COMMAND name="show tam-drop-monitor" help="Show TAM drop monitor status/stats.">
-     <PARAM name="tam-drop-monitor-subcommands" help="TAM drop monitor subcommands" mode="switch" ptype="SUBCOMMAND" optional="true">
-      <PARAM name="flow" help="TAM drop monitor flows" ptype="SUBCOMMAND" mode="subcommand">
-       <PARAM name="flow-options" help="TAM drop monitor flow options" mode="switch" ptype="SUBCOMMAND">
-        <PARAM name="flow-name" help="Info of drop monitor flow" ptype="STRING"> 
-        </PARAM>
-        <PARAM name="all" help="Info of all drop monitor flows" ptype="SUBCOMMAND" mode="subcommand">
-        </PARAM>
-       </PARAM>
-      </PARAM>
+    <!-- show tam-drop-monitor -->
+    <COMMAND name="show tam drop-monitor" help="Show TAM drop monitor status/stats."/>
+      <COMMAND name="show tam drop-monitor supported" help="Show DROP MONITOR feature info" mode="subcommand" ptype="SUBCOMMAND">
+        <ACTION>python $SONIC_CLI_ROOT/sonic-cli-drop-monitor.py get_tam_drop_monitor_supported</ACTION>
+      </COMMAND>
+      <COMMAND name="show tam drop-monitor flow" help="Show drop monitor flow info" mode="subcommand" ptype="SUBCOMMAND">
+              <PARAM name="flow-name" help="Name of the flow" ptype="STRING_32" optional="true"> </PARAM>
+	      <ACTION>
+		if test "${flow-name}" = "all" ; then
+                  python $SONIC_CLI_ROOT/sonic-cli-drop-monitor.py get_sonic_tam_drop_monitor_sonic_tam_drop_monitor_tam_drop_monitor_flow_table show_drop_monitor_flow.j2;
+		elif test -z "${flow-name}"; then
+                  python $SONIC_CLI_ROOT/sonic-cli-drop-monitor.py get_sonic_tam_drop_monitor_sonic_tam_drop_monitor_tam_drop_monitor_flow_table show_drop_monitor_flow.j2;
+		else
+		  python $SONIC_CLI_ROOT/sonic-cli-drop-monitor.py get_list_sonic_tam_drop_monitor_sonic_tam_drop_monitor_tam_drop_monitor_flow_table_tam_drop_monitor_flow_table_list ${flow-name} show_drop_monitor_flow.j2;
+		fi
+	      </ACTION>
+      </COMMAND>
+      <COMMAND name="show tam drop-monitor statistics" help="Show drop monitor statistics" mode="subcommand" ptype="SUBCOMMAND">
+	      <PARAM name="flow-name" help="Name of the flow" ptype="STRING_32" optional="true"> </PARAM>
+	      <ACTION>
+                   python $SONIC_CLI_ROOT/sonic-cli-drop-monitor.py -show -statistics -flow ${flow-name} -templ -showstatisticsflow.j2;
+	      </ACTION>
+     </COMMAND>
 
-      <PARAM name="statistics" help="TAM drop monitor stats" ptype="SUBCOMMAND" mode="subcommand">
-       <PARAM name="stat-options" help="TAM drop monitor stat options" mode="switch" ptype="SUBCOMMAND">
-        <PARAM name="flow-name" help="stats of drop monitor flow" ptype="STRING"> 
-        </PARAM>
-        <PARAM name="all" help="stats of all drop monitor flows" ptype="SUBCOMMAND" mode="subcommand">
-        </PARAM>
-       </PARAM>
-      </PARAM>
+     <COMMAND name="show tam drop-monitor aging-interval" help="Show drop monitor aging interval" mode="subcommand" ptype="SUBCOMMAND">
+      <ACTION>python $SONIC_CLI_ROOT/sonic-cli-drop-monitor.py get_sonic_tam_drop_monitor_sonic_tam_drop_monitor_tam_drop_monitor_aging_interval_table show_drop_monitor_aging_interval.j2 </ACTION>
+    </COMMAND>
 
-      <PARAM name="aging-interval" help="show drop monitor aging interval" ptype="SUBCOMMAND" mode="subcommand">
-      </PARAM>
-     </PARAM>
-    <ACTION>
-      if test "${tam-drop-monitor-subcommands}" = "flow"; then
-         python $SONIC_CLI_ROOT/drop-monitor.py -show -flow ${flow-name} -templ -showflow.j2   
-      elif test "${tam-drop-monitor-subcommands}" = "statistics"; then
-         python $SONIC_CLI_ROOT/drop-monitor.py -show -statistics -flow ${flow-name} -templ -showstatisticsflow.j2
-      elif test "${tam-drop-monitor-subcommands}" = "aging-interval"; then
-         python $SONIC_CLI_ROOT/drop-monitor.py -show --aginginterval 1
-      fi
-    </ACTION>
-   </COMMAND>
-
-   <!-- show sample -->
-   <COMMAND name="show sample" help="Show sampling configuration">
-     <PARAM name="sample-options" help="sampling options" mode="switch" ptype="SUBCOMMAND">
-      <PARAM name="sample-name" help="show sampling config of sample-name" ptype="STRING">
-      </PARAM>
-      <PARAM name="all" help="Show all sampling config" ptype="SUBCOMMAND" mode="subcommand"> 
-      </PARAM>
-     </PARAM>
-    <ACTION>
-       python $SONIC_CLI_ROOT/drop-monitor.py -show -sample ${sample-name} -templ -showsample.j2
-    </ACTION>
-   </COMMAND>
+    <!-- show sample -->
+    <COMMAND name="show sample" help="Show sampling configuration">
+      <PARAM name="sample-name" help="show sampling config of sample-name" ptype="STRING"> </PARAM>
+      <ACTION>
+	if test "${sample-name}" = "all" ; then
+	  python $SONIC_CLI_ROOT/sonic-cli-drop-monitor.py get_sonic_tam_drop_monitor_sonic_tam_drop_monitor_sample_rate_table show_drop_monitor_sample.j2;
+	else
+	  python $SONIC_CLI_ROOT/sonic-cli-drop-monitor.py get_sonic_tam_drop_monitor_sonic_tam_drop_monitor_sample_rate_table_sample_rate_table_list ${sample-name} show_drop_monitor_sample.j2;
+	fi
+      </ACTION>
+      <xi:include href="include/pipe.xml"/>
+    </COMMAND>
   </VIEW>
-
   <VIEW name="configure-tam-drop-monitor-view" prompt="${SYSTEM_NAME}(config-drop-monitor)# " depth="3">
-     <NAMESPACE ref="hidden-view" help="false" completion="false"/>
-     <NAMESPACE ref="enable-view" help="false" completion="false"/>
-     <NAMESPACE ref="enable-view" help="true" prefix="do" completion="true"/>
+    <NAMESPACE ref="hidden-view" help="false" completion="false"/>
+    <NAMESPACE ref="enable-view" help="false" completion="false"/>
+    <NAMESPACE ref="enable-view" help="true" prefix="do" completion="true"/>
+    <NAMESPACE ref="hidden-view" help="false" completion="false"/>
+    <NAMESPACE ref="enable-view" help="false" completion="false"/>
+    <NAMESPACE ref="enable-view" help="true" prefix="do" completion="true"/>
+    <NAMESPACE ref="configure-view" help="false" completion="false"/>
+    <COMMAND name="no" help="Negate a command or set defaults"> </COMMAND>
+    <COMMAND name="no flow" help="Remove Flow">
+      <PARAM name="flow-name" help="Name of the flow" ptype="STRING"> </PARAM>
+      <ACTION> if test "${flow-name}" = "all"; then 
+	      python $SONIC_CLI_ROOT/sonic-cli-drop-monitor.py delete_list_sonic_tam_drop_monitor_sonic_tam_drop_monitor_tam_drop_monitor_flow_table_tam_drop_monitor_flow_table_list ;
+	      else
+	      python $SONIC_CLI_ROOT/sonic-cli-drop-monitor.py delete_sonic_tam_drop_monitor_sonic_tam_drop_monitor_tam_drop_monitor_flow_table_tam_drop_monitor_flow_table_list ${flow-name};
+	      fi 
+      </ACTION>
+    </COMMAND>
+    <COMMAND name="no aging-interval" help="Remove aging-interval configuration">
+      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-drop-monitor.py delete_sonic_tam_drop_monitor_sonic_tam_drop_monitor_tam_drop_monitor_aging_interval_table </ACTION>
+    </COMMAND>
+    <COMMAND name="feature"
+		help="Enable or Disable a feature"
+		 >
+	  <PARAM
+		 name="feature-options"
+		 help=""
+		 ptype="SUBCOMMAND"
+		 mode="switch"
+		 >
 
-     <NAMESPACE ref="configure-view" help="false" completion="false"/>
-         <COMMAND name="no" help="Negate a command or set defaults"> </COMMAND>
-          <COMMAND name="no flow" help="Remove Flow">
-             <PARAM name="drop-options" help="" ptype="SUBCOMMAND" mode="switch">
-                 <PARAM name="flow-name" help="Name of the flow" ptype="STRING">
-                 </PARAM>
+		<PARAM
+		   name="enable"
+		   help="Enable the feature"
+		   ptype="SUBCOMMAND"
+		   mode="subcommand"
+		   >
+		</PARAM>
 
-                 <PARAM name="all" help="Delete all flows" ptype="SUBCOMMAND" mode="subcommand" >
-                 </PARAM>
-         </PARAM>
-        <ACTION>
-              if test "${drop-options}" = "flow-name"; then
-                 python $SONIC_CLI_ROOT/drop-monitor.py -clear -dropmonitor -flow ${flow-name}
-              elif test "${drop-options}" = "all"; then
-                 python $SONIC_CLI_ROOT/drop-monitor.py -clear -dropmonitor -flow all
-              fi
-        </ACTION>
-        </COMMAND>
-    
-        <COMMAND name="no aging-interval" help="Remove aging-interval configuration">
-        <ACTION>
-                 python $SONIC_CLI_ROOT/drop-monitor.py -clear -dropmonitor --aginginterval 0
-        </ACTION>
-        </COMMAND>
-
-        <COMMAND name="flow" help="Configure flow parameters">
-          <PARAM name="flow-name" help="Name of flow" ptype="STRING"> </PARAM>
-               <PARAM name="acl-table" help="Configure acl table name" ptype="SUBCOMMAND" mode="subcommand">
-               </PARAM>
-
-              <PARAM name="acl-table-name" help="ACL Table Name" ptype="STRING">
-              </PARAM>
-
-              <PARAM name="acl-rule" help="Configure acl rule name" ptype="SUBCOMMAND" mode="subcommand">
-              </PARAM>
-
-              <PARAM name="acl-rule-name" help="ACL Rule Name" ptype="STRING">
-              </PARAM>
-
-               <PARAM name="collector" help="Configure Collector name" ptype="SUBCOMMAND" mode="subcommand">
-              </PARAM>
-
-              <PARAM name="collector-name" help="Collector Name" ptype="STRING">
-              </PARAM>
-
-              <PARAM name="sample" help="Configure Sampling Name" ptype="SUBCOMMAND" mode="subcommand">
-              </PARAM>
-
-              <PARAM name="sampling-name" help="Sampling Name" ptype="STRING">
-              </PARAM>
-
-           <ACTION>
-                 python $SONIC_CLI_ROOT/drop-monitor.py -config -dropmonitor -flow ${flow-name} --acl_table ${acl-table-name} --acl_rule ${acl-rule-name} --dropcollector ${collector-name} --dropsample ${sampling-name}
-           </ACTION>
-        </COMMAND>
-
-        <COMMAND name="aging-interval" help="Configure aging interval">
-            <PARAM name="aging-interval-time" help="Specify aging Interval in ms" ptype="UINT16">
-              </PARAM>
-           <ACTION>
-               python $SONIC_CLI_ROOT/drop-monitor.py -config -dropmonitor --aginginterval ${aging-interval-time}
-           </ACTION>
-        </COMMAND>
+		<PARAM
+		   name="disable"
+		   help="Disable the feature"
+		   ptype="SUBCOMMAND"
+		   mode="subcommand"
+		   >
+		</PARAM>
+	 </PARAM>
+	 <ACTION> if test "${feature-options}" = "enable"; then
+		  python $SONIC_CLI_ROOT/sonic-cli-drop-monitor.py patch_sonic_tam_drop_monitor_sonic_tam_drop_monitor_tam_drop_monitor_feature_table_tam_drop_monitor_feature_table_list_enable feature True;
+		  elif test "${feature-options}" = "disable"; then
+		  python $SONIC_CLI_ROOT/sonic-cli-drop-monitor.py patch_sonic_tam_drop_monitor_sonic_tam_drop_monitor_tam_drop_monitor_feature_table_tam_drop_monitor_feature_table_list_enable feature False;
+		  fi 
+	 </ACTION>
+    </COMMAND>
+    <COMMAND name="flow" help="Configure flow parameters">
+      <PARAM name="flow-name" help="Name of flow" ptype="STRING"> </PARAM>
+      <PARAM name="acl-table" help="Configure acl table name" ptype="SUBCOMMAND" mode="subcommand"> </PARAM>
+      <PARAM name="acl-table-name" help="ACL Table Name" ptype="STRING"> </PARAM>
+      <PARAM name="acl-rule" help="Configure acl rule name" ptype="SUBCOMMAND" mode="subcommand"> </PARAM>
+      <PARAM name="acl-rule-name" help="ACL Rule Name" ptype="STRING"> </PARAM>
+      <PARAM name="collector" help="Configure Collector name" ptype="SUBCOMMAND" mode="subcommand"> </PARAM>
+      <PARAM name="collector-name" help="Collector Name" ptype="STRING"> </PARAM>
+      <PARAM name="sample" help="Configure Sampling Name" ptype="SUBCOMMAND" mode="subcommand"> </PARAM>
+      <PARAM name="sampling-name" help="Sampling Name" ptype="STRING"> </PARAM>
+      <PARAM name="flowgroup-id" help="Configure Flow Group ID" ptype="SUBCOMMAND" mode="subcommand"> </PARAM>
+      <PARAM name="flowgroup_id" help="Flow group id number" ptype="UINT16"> </PARAM>
+      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-drop-monitor.py patch_sonic_tam_drop_monitor_sonic_tam_drop_monitor_tam_drop_monitor_flow_table_tam_drop_monitor_flow_table_list ${flow-name} ${acl-table-name} ${acl-rule-name} ${collector-name} ${sampling-name} ${flowgroup_id}</ACTION>
+    </COMMAND>
+    <COMMAND name="aging-interval" help="Configure aging interval (1-10)">
+      <PARAM name="aging-interval-time" help="Specify aging Interval in ms" ptype="UINT16"> </PARAM>
+      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-drop-monitor.py patch_sonic_tam_drop_monitor_sonic_tam_drop_monitor_tam_drop_monitor_aging_interval_table_tam_drop_monitor_aging_interval_table_list_aging_interval aging ${aging-interval-time} </ACTION>
+    </COMMAND>
   </VIEW>
 </CLISH_MODULE>

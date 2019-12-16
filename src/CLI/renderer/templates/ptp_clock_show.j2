@@ -5,6 +5,14 @@
 {% if 'domain-profile' in value.keys() %}
 {{ 'Domain Profile'.ljust(21)}} {{ value['domain-profile']}}
 {% endif %}
+{% if 'network-transport' in value.keys() %}
+{{ 'Network Transport'.ljust(21)}} {{ value['network-transport']}} {{ value['unicast-multicast']}}
+{% if 'udp6-scope' in value.keys() %}
+{% if value['network-transport'] == 'UDPv6' and value['unicast-multicast'] == 'multicast' %}
+{{ 'IPv6 Scope'.ljust(21)}} {{ value['udp6-scope']}}
+{% endif %}
+{% endif %}
+{% endif %}
 {% if 'domain-number' in value.keys() %}
 {{ 'Domain Number'.ljust(21)}} {{ value['domain-number']}}
 {% endif %}
@@ -18,17 +26,17 @@
 {{ 'Priority2'.ljust(21)}} {{ value['priority2']}}
 {% endif %}
 {% if 'two-step-flag' in value.keys() %}
-{{ 'Two Step'.ljust(21)}} {% if value['two-step-flag'] %}
-{%   print 'Enabled\n' %}
-{% else %}
+{{ 'Two Step'.ljust(21)}} {% if value['two-step-flag'] == '0' %}
 {%   print 'Disabled\n' %}
+{% else %}
+{%   print 'Enabled\n' %}
 {% endif %}
 {% endif %}
 {% if 'slave-only' in value.keys() %}
-{{ 'Slave Only'.ljust(21)}} {% if value['slave-only'] %}
-{%   print 'True\n' %}
-{% else %}
+{{ 'Slave Only'.ljust(21)}} {% if value['slave-only'] == '0' %}
 {%   print 'False\n' %}
+{% else %}
+{%   print 'True\n' %}
 {% endif %}
 {% endif %}
 {% if 'number-ports' in value.keys() %}

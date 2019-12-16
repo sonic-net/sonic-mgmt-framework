@@ -3,16 +3,32 @@ module sonic-mclag {
 	prefix smclag;
 	yang-version 1.1;
 
-	import ietf-yang-types {
-		prefix yang;
-	}
+    import ietf-yang-types {
+        prefix yang;
+    }
 
 	import ietf-inet-types {
 		prefix inet;
 	}
 
+    import sonic-common {
+        prefix scommon;
+    }
+
+    import sonic-extension {
+        prefix sonic-ext;
+    }
+
     import sonic-portchannel {
         prefix spc;
+    }
+
+    import sonic-vlan {
+        prefix svlan;
+    }
+
+    import sonic-vlan-interface {
+        prefix svlan-intf;
     }
 
 	organization
@@ -38,10 +54,9 @@ module sonic-mclag {
                 max-elements 1;
 
                 leaf domain_id {
-                    type uint16 {
+                     type uint16 {
                         range "1..4095" {
                             error-message "MCLAG Domain ID out of range";
-                            error-app-tag domain_id-invalid;
                         }
                     }
                 }
@@ -63,7 +78,6 @@ module sonic-mclag {
                         }
                     }
                     default 1;
-                    
                 }
                 leaf session_timeout {
                     type uint16 {
@@ -74,7 +88,7 @@ module sonic-mclag {
                     }
                     default 15;
                 }
-                must "(keeaplive_interval * 3) <= session_timeout" {
+                must "(keepalive_interval * 3) <= session_timeout" {
                         error-message "(keepalive interval * 3) <= session_timeout value";
                         error-app-tag keepalive_interval-invalid;
                 }
@@ -103,6 +117,93 @@ module sonic-mclag {
                 }
                 leaf if_type {
                     type string;
+                }
+            }
+        }
+
+        container MCLAG_UNIQUE_IP {
+
+            list MCLAG_UNIQUE_IP_LIST {
+                key "if_name";
+
+                must "count(../../MCLAG_DOMAIN/MCLAG_DOMAIN_LIST/domain_id) != 0" {
+                //must "count(../../MCLAG_DOMAIN/MCLAG_DOMAIN_LIST) != 0" {
+                    error-message "mclag not configured";
+                    error-app-tag mclag-invalid;
+                }
+
+                //must "count(/svlan-intf:sonic-vlan-interface/svlan-intf:VLAN_INTERFACE/svlan-intf:VLAN_INTERFACE_IPADDR_LIST[svlan-intf:vlanName=./if_name]) = 0" {
+                //    error-message "remove configured ip/v6 address and reconfigure after seperate ip configuration";
+                //    error-app-tag vlan-intf-ip-invalid;
+                //}
+
+                leaf if_name {
+                    type leafref {
+                        path "/svlan:sonic-vlan/svlan:VLAN/svlan:VLAN_LIST/svlan:name";
+                    }
+                }
+                leaf unique_ip {
+                    type string;
+                }
+            }
+        }
+
+        //stateDB MCLAG Table
+        container MCLAG_TABLE { 
+            sonic-ext:db-name "STATE_DB"; 
+            sonic-ext:key-delim "|"; 
+
+            config false;
+            description "state db mclag domain table";
+
+            list MCLAG_TABLE_LIST { 
+                key "domain_id";
+
+                leaf domain_id {
+                     type uint16;
+                }
+
+                leaf oper_status {
+                    type scommon:oper-status;
+                }
+
+                leaf role {
+                    type enumeration {
+						enum active;
+						enum standby;
+					}
+                }
+
+                leaf system_mac {
+                    type yang:mac-address;
+                    description
+                     "System MAC Address used for ICCPD";
+                }
+            }
+        }
+
+        //state MCLAG Remote interface Table
+        container MCLAG_REMOTE_INTF_TABLE { 
+
+            sonic-ext:db-name "STATE_DB"; 
+            sonic-ext:key-delim "|"; 
+
+            config false;
+            description "state db remote interface table";
+
+            list MCLAG_REMOTE_INTF_TABLE_LIST { 
+                key "domain_id if_name";
+
+                leaf domain_id {
+                     type uint16;
+                }
+
+                leaf if_name {
+                    type string;
+                }
+
+                leaf oper_status {
+                    type scommon:oper-status;
                 }
             }
         }

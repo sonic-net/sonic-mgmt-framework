@@ -1,0 +1,246 @@
+module sonic-spanning-tree {
+    namespace "http://github.com/Azure/sonic-spanning-tree";
+    prefix sstp;
+    yang-version 1.1;
+
+    import sonic-port {
+        prefix prt;
+    }
+
+    import sonic-portchannel {
+        prefix spc;
+    }
+
+    import sonic-vlan {
+        prefix svlan;
+    }
+
+    organization
+        "BRCM";
+
+    contact
+        "BRCM";
+
+    description
+        "SONIC Spanning-tree";
+
+    revision 2019-09-21 {
+        description
+            "Initial revision.";
+    }
+
+    grouping vlanModeAttr {
+        leaf forward_delay {
+            type uint8 {
+                range "4..30" {
+                    error-message "Invalid Forwarding Delay value.";
+                }
+            }
+            units seconds;
+            default 15;
+        }
+
+        leaf hello_time {
+            type uint8 {
+                range "1..10" {
+                    error-message "Invalid Hello Time value.";
+                }
+            }
+            units seconds;
+            default 2;
+        }
+
+        leaf max_age {
+            type uint8 {
+                range "6..40" {
+                    error-message "Invalid Maximum Age Time value.";
+                }
+            }
+            units seconds;
+            default 20;
+        }
+
+        leaf priority {
+            type uint16 {
+                range "0..61440" {
+                    error-message "Invalid Bridge Priority value.";
+                }
+            }
+            default 32768;
+        }
+    }
+
+    grouping interfaceAttr {
+        leaf path_cost {
+            type uint64 {
+                range "1..200000000" {
+                    error-message "Invalid Port Path Cost value.";
+                }
+            }
+            default 200;
+        }
+
+        leaf priority {
+            type uint8 {
+                range "0..240" {
+                    error-message "Invalid Port Priority value.";
+                }
+            }
+            default 128;
+        }
+    }
+
+    container sonic-spanning-tree {
+
+        container STP {
+            list STP_LIST {
+		max-elements 1;
+                key "keyleaf";
+
+                leaf keyleaf {
+                    type enumeration {
+                        enum GLOBAL;
+                    }
+                }
+
+                leaf mode {
+                    type enumeration {
+                        enum pvst;
+                        enum rpvst;
+                        enum mstp;
+                        enum rstp;
+                    }
+                }
+
+                leaf rootguard_timeout {
+                    type uint16 {
+                        range "5..600" {
+                            error-message "Invalid Root-guard Timeout value.";
+                        }
+                    }
+                    units seconds;
+                    default 30;
+                }
+
+                leaf bpdu_filter {
+                    type boolean;
+                }
+
+                uses vlanModeAttr;
+            }
+        }
+
+        container STP_VLAN {
+            list STP_VLAN_LIST {
+                key "name";
+
+                leaf name {
+                    type leafref {
+                        path "/svlan:sonic-vlan/svlan:VLAN/svlan:VLAN_LIST/svlan:name";
+                    }
+                }
+
+                leaf vlanid {
+                    type uint16 {
+                        range "1..4095" {
+                            error-message "Vlan ID out of range";
+                            error-app-tag vlanid-invalid;
+                        }
+                    }
+                }
+
+                leaf enabled {
+                    type boolean;
+                }
+
+                uses vlanModeAttr;
+            }
+        }
+
+        container STP_VLAN_PORT {
+            list STP_VLAN_PORT_LIST {
+                key "vlan-name ifname";
+
+                leaf vlan-name {
+                    type leafref {
+                        path "../../../STP_VLAN/STP_VLAN_LIST/name";
+                    }
+                }
+
+                leaf ifname {
+                    type leafref {
+                        path "../../../STP_PORT/STP_PORT_LIST/ifname";
+                    }
+                }
+
+                uses interfaceAttr;
+            }
+        }
+
+        container STP_PORT {
+            list STP_PORT_LIST {
+                key "ifname";
+
+                leaf ifname {
+                    type union {
+                        type leafref {
+                            path "/prt:sonic-port/prt:PORT/prt:PORT_LIST/prt:ifname";
+                        }
+                        type leafref {
+                            path "/spc:sonic-portchannel/spc:PORTCHANNEL/spc:PORTCHANNEL_LIST/spc:name";
+                        }
+                    }
+                }
+
+                leaf enabled {
+                    type boolean;
+                }
+
+                leaf root_guard {
+                    type boolean;
+                }
+
+                leaf bpdu_guard {
+                    type boolean;
+                }
+
+                leaf bpdu_filter {
+                    type enumeration {
+                        enum enable;
+                        enum disable;
+                        enum global;
+                    }
+                }
+
+                leaf bpdu_guard_do_disable {
+                    type boolean;
+                }
+
+                leaf uplink_fast {
+                    type boolean;
+                }
+
+                leaf portfast {
+                    type boolean;
+                }
+
+                uses interfaceAttr;
+
+                // For RPVST+
+                leaf edge_port {
+                    //when ("../../../STP/STP_LIST/mode='rpvst'");
+                    type boolean;
+                }
+
+                leaf link_type {
+                    //when ("../../../STP/STP_LIST/mode='rpvst'");
+                    type enumeration {
+                        enum auto;
+                        enum shared;
+                        enum point-to-point;
+                    }
+                }
+            }
+        }
+    }
+}

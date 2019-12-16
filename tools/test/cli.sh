@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-
 ################################################################################
 #                                                                              #
 #  Copyright 2019 Broadcom. The term Broadcom refers to Broadcom Inc. and/or   #
@@ -36,23 +35,35 @@ done
 TOPDIR=$PWD
 BUILDDIR=$TOPDIR/build
 
-[ -z $SYSTEM_NAME ] && export SYSTEM_NAME=$HOSTNAME
+CLISOURCE=$TOPDIR/src/CLI
+CLIBUILD=$BUILDDIR/cli
+
+[ -z $SYSTEM_NAME ] && export SYSTEM_NAME=sonic-cli
 
 export REST_API_ROOT=https://$HOST:$PORT
 
-export SONIC_CLI_ROOT=$BUILDDIR/cli
+export SONIC_CLI_ROOT=$CLISOURCE/actioner
 
-export CLISH_PATH=$SONIC_CLI_ROOT/command-tree
+export RENDERER_TEMPLATE_PATH=$CLISOURCE/renderer/templates
+
+#export CLISH_PATH=$CLISOURCE/clitree/cli-xml
+export CLISH_PATH=$CLIBUILD/command-tree
 
 export PYTHONVER=2.7.14
-export PYTHONPATH=$PYTHONPATH:$BUILDDIR/swagger_client_py:$SONIC_CLI_ROOT:$SONIC_CLI_ROOT/scripts
+
+PYTHONPATH+=:$CLISOURCE/actioner
+PYTHONPATH+=:$CLISOURCE/renderer
+PYTHONPATH+=:$CLISOURCE/renderer/scripts
+PYTHONPATH+=:$BUILDDIR/swagger_client_py
+PYTHONPATH+=:$(realpath $TOPDIR/..)/sonic-py-swsssdk/src
+export PYTHONPATH
 
 # KLISH_BIN can be set to use klish exe and libs from other directory
-[ ! -d "$KLISH_BIN" ] && KLISH_BIN=$SONIC_CLI_ROOT
+[ ! -d "$KLISH_BIN" ] && KLISH_BIN=$CLIBUILD
 
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$KLISH_BIN/.libs
 
 export PATH=$PATH:$KLISH_BIN
 
-(cd $SONIC_CLI_ROOT && clish ${ARGS[@]})
+(cd $BUILDDIR && clish ${ARGS[@]})
 

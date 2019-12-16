@@ -183,6 +183,7 @@ module sonic-spanning-tree {
 
                 leaf ifname {
                     type union {
+			type string; //Any other type    
                         type leafref {
                             path "/prt:sonic-port/prt:PORT/prt:PORT_LIST/prt:ifname";
                         }
@@ -228,12 +229,12 @@ module sonic-spanning-tree {
 
                 // For RPVST+
                 leaf edge_port {
-                    //when ("../../../STP/STP_LIST/mode='rpvst'");
+                    when "../../../STP/STP_LIST[keyleaf='GLOBAL']/mode = 'rpvst'";
                     type boolean;
                 }
 
                 leaf link_type {
-                    //when ("../../../STP/STP_LIST/mode='rpvst'");
+                    when "../../../STP/STP_LIST[keyleaf='GLOBAL']/mode = 'rpvst'";
                     type enumeration {
                         enum auto;
                         enum shared;
