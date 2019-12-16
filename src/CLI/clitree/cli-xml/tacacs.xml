@@ -75,9 +75,16 @@ limitations under the License.
              ptype="SUBCOMMAND">
       <PARAM name="address" 
              help="IP address of the tacacs server" 
-             ptype="IP_ADDR"> 
+             ptype="IP_ADDR"
+             optional="true"> 
       </PARAM>
-      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-tacacs.py get_sonic_tacacs_server ${address} show_tacacs_server.j2 </ACTION>
+      <ACTION> 
+        if test -z "${address}"; then;
+          python $SONIC_CLI_ROOT/sonic-cli-tacacs.py get_sonic_tacacs_server show_tacacs_server.j2;
+        else;
+          python $SONIC_CLI_ROOT/sonic-cli-tacacs.py get_sonic_tacacs_server ${address} show_tacacs_server.j2;
+        fi;
+      </ACTION>
     </COMMAND>
   </VIEW>
 

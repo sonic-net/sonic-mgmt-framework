@@ -87,24 +87,26 @@ def invoke_api(func, args):
     return api.cli_not_implemented(func)
 
 def get_sonic_tacacs_server(args):
-    api_response = {}
+    api_response = []
     api = cc.ApiClient()
 
-    path = cc.Path('/restconf/data/openconfig-system:system/aaa/server-groups/server-group=TACACS/servers/server={address}/tacacs/config', address=args[0])
+    path = cc.Path('/restconf/data/openconfig-system:system/aaa/server-groups/server-group=TACACS/servers/', address=args[0])
     response = api.get(path)
     if response.ok():
         if response.content:
-            api_response['port'] = response.content['openconfig-system:config']['port']
-            api_response['key'] = response.content['openconfig-system:config']['secret-key']
-
-    path = cc.Path('/restconf/data/openconfig-system:system/aaa/server-groups/server-group=TACACS/servers/server={address}/config', address=args[0])
-    response = api.get(path)
-    if response.ok():
-        if response.content:
-            api_response['authtype'] = response.content['openconfig-system:config']['openconfig-system-ext:auth-type']
-            api_response['priority'] = response.content['openconfig-system:config']['openconfig-system-ext:priority']
-            api_response['timeout'] = response.content['openconfig-system:config']['timeout']
-            api_response['address'] = args[0] 
+            server_list = response.content["openconfig-system:servers"]["server"]
+            for i in range(len(server_list)):
+                if args[0] == server_list[i]['address'] or args[0] == 'show_tacacs_server.j2':
+                    api_response_data = {}
+                    api_response_data['address'] = server_list[i]['address']
+                    api_response_data['authtype'] = server_list[i]['config']['openconfig-system-ext:auth-type']
+                    api_response_data['priority'] = server_list[i]['config']['openconfig-system-ext:priority']
+                    api_response_data['timeout'] = server_list[i]['config']['timeout']
+                    tac_cfg = {}
+                    tac_cfg = server_list[i]['tacacs']['config']
+                    api_response_data['port'] = tac_cfg['port']
+                    api_response_data['key'] = tac_cfg['secret-key']
+                    api_response.append(api_response_data)
 
     show_cli_output("show_tacacs_server.j2", api_response)
 
