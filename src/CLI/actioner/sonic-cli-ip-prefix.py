@@ -65,9 +65,33 @@ def invoke(func, args):
         return aa.patch(keypath, body)
 
     # Remove the ipv4 prefix set.
-    elif func == 'ipv4_prefix_delete':
+    elif func == 'ipv4_prefix_set_delete':
         keypath = cc.Path('/restconf/data/openconfig-routing-policy:routing-policy/defined-sets/prefix-sets/prefix-set={prefix_list_name}',
                 prefix_list_name=args[0])
+        return aa.delete(keypath)
+
+    # Remove IPv4 prefix set for exact range (exact)
+    elif func == 'ipv4_prefix_delete':
+        _prefix, _mask = args[2].split("/")
+        keypath = cc.Path('/restconf/data/openconfig-routing-policy:routing-policy/defined-sets/prefix-sets/prefix-set={prefix_list_name}/prefixes/prefix={prefix}%2F{mask},{masklength_range}', prefix_list_name=args[0], prefix=_prefix, mask=_mask, masklength_range="exact")
+        return aa.delete(keypath)
+
+    # Remove IPv4 prefix set with LE and GE values (le .. ge) 
+    elif func == 'ipv4_prefix_le_ge_delete':
+        _prefix, _mask = args[2].split("/")
+        keypath = cc.Path('/restconf/data/openconfig-routing-policy:routing-policy/defined-sets/prefix-sets/prefix-set={prefix_list_name}/prefixes/prefix={prefix}%2F{mask},{masklength_range}', prefix_list_name=args[0], prefix=_prefix, mask=_mask, masklength_range=args[3]+".."+args[4])
+        return aa.delete(keypath)
+
+    # Remove IPv4 prefix set with only LE (len .. le)   
+    elif func == 'ipv4_prefix_le_delete':
+        _prefix, _mask = args[2].split("/")
+        keypath = cc.Path('/restconf/data/openconfig-routing-policy:routing-policy/defined-sets/prefix-sets/prefix-set={prefix_list_name}/prefixes/prefix={prefix}%2F{mask},{masklength_range}', prefix_list_name=args[0], prefix_=_prefix, mask_=_mask, masklength_range=args[3]+".."+args[4])
+        return aa.delete(keypath)
+
+    # Remove IPv4 prefix set with only GE (ge .. 32)   
+    elif func == 'ipv4_prefix_ge_delete':
+        _prefix, _mask = args[2].split("/")
+        keypath = cc.Path('/restconf/data/openconfig-routing-policy:routing-policy/defined-sets/prefix-sets/prefix-set={prefix_list_name}/prefixes/prefix={prefix_}%2F{mask_},{masklength_range}', prefix_list_name=args[0], prefix_=_prefix, mask_=_mask, masklength_range=args[3]+"..32")
         return aa.delete(keypath)
 
     # IPv6 prefix set for exact range (exact)
@@ -101,11 +125,36 @@ def invoke(func, args):
                 "mode": "IPV6"},"prefixes":{"prefix":[{"ip-prefix": args[2],"masklength-range": args[3]+"..128","config": {
                 "ip-prefix": args[2],"masklength-range": args[3]+"..128","openconfig-routing-policy-ext:action": args[1].upper()}}]}}]}}
         return aa.patch(keypath, body)
-    
+
+
     # Remove the ipv6 prefix set.
-    elif func == 'ipv6_prefix_delete':
+    elif func == 'ipv6_prefix_set_delete':
         keypath = cc.Path('/restconf/data/openconfig-routing-policy:routing-policy/defined-sets/prefix-sets/prefix-set={prefix_list_name}',
                 prefix_list_name=args[0])
+        return aa.delete(keypath)
+
+    # Remove IPv6 prefix set for exact range (exact)
+    elif func == 'ipv6_prefix_delete':
+        _prefix, _mask = args[2].split("/")
+        keypath = cc.Path('/restconf/data/openconfig-routing-policy:routing-policy/defined-sets/prefix-sets/prefix-set={prefix_list_name}/prefixes/prefix={prefix}%2F{mask},{masklength_range}', prefix_list_name=args[0], prefix=_prefix, mask=_mask, masklength_range="exact")
+        return aa.delete(keypath)
+
+    # Remove IPv6 prefix set with LE and GE values (le .. ge) 
+    elif func == 'ipv6_prefix_le_ge_delete':
+        _prefix, _mask = args[2].split("/")
+        keypath = cc.Path('/restconf/data/openconfig-routing-policy:routing-policy/defined-sets/prefix-sets/prefix-set={prefix_list_name}/prefixes/prefix={prefix}%2F{mask},{masklength_range}', prefix_list_name=args[0], prefix=_prefix, mask=_mask, masklength_range=args[3]+".."+args[4])
+        return aa.delete(keypath)
+
+    # Remove IPv6 prefix set with only LE (len .. le)   
+    elif func == 'ipv6_prefix_le_delete':
+        _prefix, _mask = args[2].split("/")
+        keypath = cc.Path('/restconf/data/openconfig-routing-policy:routing-policy/defined-sets/prefix-sets/prefix-set={prefix_list_name}/prefixes/prefix={prefix}%2F{mask},{masklength_range}', prefix_list_name=args[0], prefix_=_prefix, mask_=_mask, masklength_range=args[3]+".."+args[4])
+        return aa.delete(keypath)
+
+    # Remove IPv6 prefix set with only GE (ge .. 128)   
+    elif func == 'ipv6_prefix_ge_delete':
+        _prefix, _mask = args[2].split("/")
+        keypath = cc.Path('/restconf/data/openconfig-routing-policy:routing-policy/defined-sets/prefix-sets/prefix-set={prefix_list_name}/prefixes/prefix={prefix_}%2F{mask_},{masklength_range}', prefix_list_name=args[0], prefix_=_prefix, mask_=_mask, masklength_range=args[3]+"..128")
         return aa.delete(keypath)
 
     else:

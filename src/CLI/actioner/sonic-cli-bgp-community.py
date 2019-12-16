@@ -30,47 +30,52 @@ urllib3.disable_warnings()
 
 def generate_community_standard_body(args):
     community_member = []
-    if args[1] != "bgp":
-        community_member.append(args[1])
-    if "local-AS" in args:
-        community_member.append("NOPEER")# TODO: need to add local-AS match
-    if  "no-peer" in args:
-        community_member.append("NOPEER")
-    if "no-export" in args:
-        community_member.append("NO_EXPORT")
-    if "no-advertise" in args:
-        community_member.append("NO_ADVERTISE")
-    if "all" in args:
-         match_options = "ALL"
-    else:
-        match_options = "ANY"
+    match_options = "ANY"
+    for arg in args[5:]:
+        if "local-AS" == arg:
+           community_member.append("NO_EXPORT_SUBCONFED")
+        elif  "no-peer" == arg:
+           community_member.append("NOPEER")
+        elif "no-export" == arg:
+           community_member.append("NO_EXPORT")
+        elif "no-advertise" == arg:
+           community_member.append("NO_ADVERTISE")
+        elif "all" == arg:
+           match_options = "ALL"
+        elif "any" == arg:
+           match_options = "ANY"
+        else:
+           community_member.append(arg)
 
-    body = {"openconfig-bgp-policy:community-sets":{"community-set":[{"community-set-name": args[0],
-            "config":{"community-set-name":args[0],"community-member":community_member,
+    body = {"openconfig-bgp-policy:community-sets":{"community-set":[{"community-set-name": args[4],
+            "config":{"community-set-name":args[4],"community-member":community_member,
             "match-set-options":match_options}}]}}
 
     return body
 
 def generate_extcommunity_standard_body(args):
     extcommunity_member = []
-    if 'all' in args:
-        match_options = "ALL"
-    else:
-        match_options = "ANY"
+    match_options = "ANY"
+    i = 5
+    for arg in args[5:]:
+        if "all" == arg:
+           match_options = "ALL"
+        elif "any" == arg:
+           match_options = "ANY"
+        elif "soo" == arg:
+           extcommunity_member.append("route-origin:"+args[i+1])
+        elif "rt" == arg:
+           extcommunity_member.append("route-target:"+args[i+1])
+        i = i + 1
 
-    if args[1] == "soo":
-        extcommunity_member.append("route-original:"+args[7])
-    else:
-        extcommunity_member.append("route-target:"+args[7])
-
-    body = {"openconfig-bgp-policy:ext-community-sets":{"ext-community-set":[{"ext-community-set-name": args[0],
-            "config":{"ext-community-set-name":args[0],"ext-community-member":extcommunity_member,"match-set-options": match_options}}]}}
+    body = {"openconfig-bgp-policy:ext-community-sets":{"ext-community-set":[{"ext-community-set-name": args[4],
+            "config":{"ext-community-set-name":args[4],"ext-community-member":extcommunity_member,"match-set-options": match_options}}]}}
     return body
 
 def invoke(func, args):
     body = None
     aa = cc.ApiClient()
-    
+
     #bgp-community-standard commands
     if func == 'bgp_community_standard':
         keypath = cc.Path('/restconf/data/openconfig-routing-policy:routing-policy/defined-sets/openconfig-bgp-policy:bgp-defined-sets/community-sets')
@@ -115,7 +120,7 @@ def invoke(func, args):
         return aa.delete(keypath)
 
     # Remove the bgp-extcommunity-expanded set.
-    elif func == 'bgp_extcommunity_standard_delete':
+    elif func == 'bgp_extcommunity_expanded_delete':
         keypath = cc.Path('/restconf/data/openconfig-routing-policy:routing-policy/defined-sets/openconfig-bgp-policy:bgp-defined-sets/ext-community-sets/ext-community-set={extcommunity_list_name}',extcommunity_list_name=args[0])
         return aa.delete(keypath)
 

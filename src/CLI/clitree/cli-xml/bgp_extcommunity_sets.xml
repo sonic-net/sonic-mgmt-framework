@@ -49,7 +49,6 @@ limitations under the License.
                         help="Standard extcommand"
                         ptype="SUBCOMMAND"
                         mode="switch"
-                        optional="true"
                         >
                         <PARAM
                             name="rt"
@@ -57,19 +56,23 @@ limitations under the License.
                             ptype="SUBCOMMAND"
                             mode="subcommand"
                             >
-                            <PARAM
-                                name="aa"
-                                help="Extended community number aa:nn format 0..65535:0..65535"
-                                ptype="AA_NN"
-                                optional="true"
+                            <PARAM name="rt-subcommands"
+                                help="RT extcommand"
+                                ptype="SUBCOMMAND"
+                                mode="switch"
                                 >
-                            </PARAM>
-                            <PARAM
-                                name="ipaddrnn"
-                                help="Extended community number ip-addr"
-                                ptype="IPADDR_NN"
-                                optional="true"
-                                >
+                                <PARAM
+                                    name="aa"
+                                    help="Extended community number aa:nn format 0..65535:0..65535"
+                                    ptype="AA_NN"
+                                    >
+                                </PARAM>
+                                <PARAM
+                                    name="ipaddrnn"
+                                    help="Extended community number ip-addr"
+                                    ptype="IPADDR_NN"
+                                    >
+                                </PARAM>
                             </PARAM>
                             <PARAM
                                 name="rt-any-all subcommands"
@@ -100,26 +103,30 @@ limitations under the License.
                             ptype="SUBCOMMAND"
                             mode="subcommand"
                             >
-                            <PARAM
-                                name="aa"
-                                help="Extended community number aa:nn format 0..65535:0..65535"
-                                ptype="AA_NN"
-                                optional="true"
+                            <PARAM name="soo-subcommands"
+                                help="Route origin subcommand"
+                                ptype="SUBCOMMAND"
+                                mode="switch"
                                 >
+                                <PARAM
+                                    name="aa"
+                                    help="Extended community number aa:nn format 0..65535:0..65535"
+                                    ptype="AA_NN"
+                                    >
+                                </PARAM>
+                                <PARAM
+                                    name="ipaddrnn"
+                                    help="Extended community number ip-addr"
+                                    ptype="IPADDR_NN"
+                                    >
+                                </PARAM>
                             </PARAM>
                             <PARAM
-                                name="ipaddrnn"
-                                help="Extended community ip_addr"
-                                ptype="IPADDR_NN"
-                                optional="true"
-                                >
-                            </PARAM>
-                            <PARAM
-                                name="so-any-all subcommands"
+                                name="rt-any-all subcommands"
                                 help="Any/all command"
                                 ptype="SUBCOMMAND"
                                 mode="switch"
-                                optional="false"
+                                optional="true"
                                 >
                                 <PARAM
                                     name="any"
@@ -127,8 +134,8 @@ limitations under the License.
                                     ptype="SUBCOMMAND"
                                     mode="subcommand"
                                     >
-                               </PARAM>
-                               <PARAM
+                                </PARAM>
+                                <PARAM
                                     name="all"
                                     help="All command"
                                     ptype="SUBCOMMAND"
@@ -136,20 +143,6 @@ limitations under the License.
                                     >
                                 </PARAM>
                             </PARAM>
-                        </PARAM>
-                        <PARAM
-                            name="any"
-                            help="Any command"
-                            ptype="SUBCOMMAND"
-                            mode="subcommand"
-                            >
-                        </PARAM>
-                        <PARAM
-                            name="all"
-                            help="All command"
-                            ptype="SUBCOMMAND"
-                            mode="subcommand"
-                            >
                         </PARAM>
                     </PARAM>
                 </PARAM>
@@ -176,15 +169,7 @@ limitations under the License.
         </PARAM>
     <ACTION>
         if test "${bgp-subcommands}" = "standard"; then&#xA;
-            if test "${standard-subcommands}" = "rt"; then&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-bgp-community.py bgp_extcommunity_standard ${extcommunity-list-name} ${standard-subcommands} ${__full_line}&#xA;
-
-            elif test "${standard-subcommands}" = "soo"; then&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-bgp-community.py bgp_extcommunity_standard ${extcommunity-list-name} ${standard-subcommands} ${__full_line}&#xA;
-
-            else&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-bgp-community.py bgp_extcommunity_standard ${extcommunity-list-name} ${standard-subcommands} ${__full_line}&#xA;
-            fi
+                python $SONIC_CLI_ROOT/sonic-cli-bgp-community.py bgp_extcommunity_standard ${extcommunity-list-name} ${__full_line}&#xA;
 
         elif test "${bgp-subcommands}" = "expanded"; then&#xA;
             python $SONIC_CLI_ROOT/sonic-cli-bgp-community.py bgp_extcommunity_expanded ${extcommunity-list-name} ${line}&#xA;
@@ -236,7 +221,7 @@ limitations under the License.
             python $SONIC_CLI_ROOT/sonic-cli-bgp-community.py bgp_extcommunity_standard_delete ${extcommunity-list-name}&#xA;
 
         elif test "${bgp-subcommands}" = "expanded"; then&#xA;
-            python $SONIC_CLI_ROOT/sonic-cli-bgp-community.py bgp_extcommunity_expanded ${extcommunity-list-name}&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-bgp-community.py bgp_extcommunity_expanded_delete ${extcommunity-list-name}&#xA;
 
         else&#xA;
             builtin="clish_nop"&#xA;
