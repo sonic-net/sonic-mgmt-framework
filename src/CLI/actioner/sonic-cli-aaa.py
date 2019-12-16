@@ -45,9 +45,10 @@ def invoke_api(func, args):
     if get_response.ok():
         if get_response.content:
             api_response = get_response.content
-            body["openconfig-system-ext:failthrough"] = api_response['openconfig-system:config']['openconfig-system-ext:failthrough']
-            body["openconfig-system-ext:authentication-method"] = api_response['openconfig-system:config']['authentication-method']
-
+            if 'failthrough' in api_response:
+                body["openconfig-system-ext:failthrough"] = api_response['openconfig-system:config']['failthrough']
+            if 'authentication-method' in api_response:
+                body["openconfig-system-ext:authentication-method"] = api_response['openconfig-system:config']['authentication-method']
     if func == 'put_openconfig_system_ext_system_aaa_authentication_config_failthrough':
        path = cc.Path('/restconf/data/openconfig-system:system/aaa/authentication/config/openconfig-system-ext:failthrough')
        body["openconfig-system-ext:failthrough"] = (args[0] == "True")
