@@ -28,11 +28,10 @@ from scripts.render_cli import show_cli_output
 import urllib3
 urllib3.disable_warnings()
 
+nat_type_map = {"snat" : "SNAT", "dnat": "DNAT"}
+nat_protocol_map = {"icmp": "1", "tcp": "6", "udp": "17"}
 
 def invoke_api(func, args=[]):
-
-    nat_type_map = {"snat" : "SNAT", "dnat": "DNAT"}
-    nat_protocol_map = {"icmp": "1", "tcp": "6", "udp": "17"}
 
     api = cc.ApiClient()
 
@@ -209,8 +208,7 @@ def get_response_dict(response):
 
     return api_response
 
-
-def get_nat_tables(args):
+def get_nat_napt_tables(args):
     response = {}
 
     resp = invoke_api('get_openconfig_nat_nat_instances_instance_nat_mapping_table', args)
@@ -220,6 +218,11 @@ def get_nat_tables(args):
     resp = invoke_api('get_openconfig_nat_nat_instances_instance_napt_mapping_table', args)
     resp = get_response_dict(resp)
     response.update(resp)
+
+    return response
+
+def get_twice_nat_napt_tables(args):
+    response = {}
 
     resp = invoke_api('get_openconfig_nat_nat_instances_instance_nat_twice_mapping_table', args)
     resp = get_response_dict(resp)
@@ -231,10 +234,18 @@ def get_nat_tables(args):
 
 
     return response
-
+    
 
 def get_nat_translations(func, args):
-    return get_nat_tables(args)
+    response = {}
+    resp = get_nat_napt_tables(args)
+    response.update(resp)
+
+    resp = get_twice_nat_napt_tables(args)
+    response.update(resp)
+
+    return response
+
 
 def get_count(count, table_name, l):
 
@@ -287,6 +298,68 @@ def get_nat_statistics(func, args):
     print api_response
     return {}
 
+def get_configs(table_name, l):
+    configs = {
+                'nat_type': "dnat",
+                'ip_protocol': "all",
+                'global_ip': "",
+                'global_l4_port': "----",
+                'local_ip': "",
+                'local_l4_port': "----",
+                'twice_nat_id': "----"
+              }
+    if 'config' not in  l:
+        return None
+
+    # IP Protocol
+    if 'openconfig-nat:napt-mapping-table' == table_name:
+        if 'config' in l and 'protocol' in l['config']:
+            proto = l['config']['protocol']
+        for key,val in nat_protocol_map.items():
+            if val ==  proto:
+                configs['ip_protocol'] = key
+
+    # Nat Type
+    if 'config' in l and 'type' in l['config']:
+        if l['config']['type'] == "openconfig-nat:SNAT":
+            configs['nat_type'] = "snat"
+
+    # Global IP
+    if 'config' in l and 'external-address' in l['config']:
+        configs['global_ip'] = l['config']['external-address']
+
+    # Global L4 Port
+    if 'config' in l and 'external-port' in l['config']:
+        configs['global_l4_port'] = l['config']['external-port']
+
+    # Local IP
+    if 'config' in l and 'internal-address' in l['config']:
+        configs['local_ip'] = l['config']['internal-address']
+
+    # Local L4 Port
+    if 'config' in l and 'internal-port' in l['config']:
+        configs['local_l4_port'] = l['config']['internal-port']
+
+    # Twice NAT ID
+    if 'config' in l and 'twice-nat-id' in l['config']:
+        configs['twice_nat_id'] = l['config']['twice-nat-id']
+    
+    return configs        
+
+
+def get_nat_static_configs(func,args):
+    response = get_nat_napt_tables(args)
+    resp = []
+
+    for key in response:
+        for entry in response[key]:
+            for l in response[key][entry]:
+                configs = get_configs(key, l)
+                if configs is not None:
+                    resp.append(configs)
+
+    return resp
+
 def run(func, args):   
 
     try:
@@ -298,6 +371,8 @@ def run(func, args):
            api_response = get_nat_statistics(func,args)
        elif func == 'get_nat_translations_count':
            api_response = get_nat_translations_count(func,args)
+       elif func == 'get_nat_static_configs':
+           api_response = get_nat_static_configs(func,args)
        else:
            response = invoke_api(func, args)
            api_response = get_response_dict(response)
