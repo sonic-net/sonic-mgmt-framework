@@ -146,7 +146,16 @@ limitations under the License.
         </PARAM>
       </PARAM>
     </PARAM>
-    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_route_flap_damping_config ${vrf-name} True ${halflife} ${reusethr} ${suppressthr} ${maxsuppress}</ACTION>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_route_flap_damping_config ${vrf-name} True ${halflife} ${reusethr} ${suppressthr} ${maxsuppress}&#xA;
+             if test -z "${reusethr}" ; then&#xA;
+                 python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_route_flap_damping_config_reuse_threshold ${vrf-name}&#xA;
+                 python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_route_flap_damping_config_suppress_threshold ${vrf-name}&#xA;
+                 python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_route_flap_damping_config_max_suppress ${vrf-name}&#xA;
+                 if test -z "${halflife}" ; then&#xA;
+                     python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_route_flap_damping_config_half_life ${vrf-name}&#xA;
+                 fi&#xA;
+             fi&#xA;
+    </ACTION>
   </COMMAND>
   <COMMAND name="deterministic-med" help="Pick the best-MED path among paths advertised from the neighboring AS">
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_config_deterministic_med ${vrf-name} True</ACTION>
@@ -159,10 +168,14 @@ limitations under the License.
   </COMMAND>
   <COMMAND name="max-med" help="Advertise routes with max-med"/>
   <COMMAND name="max-med on-startup" help="Effective on a startup">
-    <PARAM name="stime" help="Time (seconds) period for max-med" ptype="RANGE_5_86400" optional="true">
+    <PARAM name="stime" help="Time (seconds) period for max-med" ptype="RANGE_5_86400">
        <PARAM name="maxmedval" help="Max MED value to be used" ptype="RANGE_0_4294967295" optional="true"/>
     </PARAM>
-    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_max_med_config ${vrf-name} ${stime} ${maxmedval}</ACTION>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_max_med_config ${vrf-name} ${stime} ${maxmedval}&#xA;
+             if test -z "${maxmedval}" ; then&#xA;
+                 python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_max_med_config_max_med_val ${vrf-name}&#xA;
+             fi&#xA;
+    </ACTION>
   </COMMAND>
   <COMMAND name="default" help="Configure BGP defaults"/>
   <COMMAND name="default ipv4-unicast" help="Activate ipv4-unicast for a peer by default">
@@ -202,7 +215,11 @@ limitations under the License.
     <PARAM name="time" help="Seconds" ptype="RANGE_0_3600">
        <PARAM name="maxmedval" help="Seconds" ptype="RANGE_1_3600" optional="true"/>
     </PARAM>
-    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_update_delay_config ${vrf-name} ${time} ${maxmedval}</ACTION>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_update_delay_config ${vrf-name} ${time} ${maxmedval}&#xA;
+             if test -z "${maxmedval}" ; then&#xA;
+                 python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_update_delay_config_establish_wait ${vrf-name}&#xA;
+             fi&#xA;
+    </ACTION>
   </COMMAND>
 
   <COMMAND name="bestpath" help="Change the default bestpath selection"/>
@@ -365,7 +382,9 @@ limitations under the License.
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_bgp_ext_route_reflector_config_allow_outbound_policy ${vrf-name}</ACTION>
   </COMMAND>
   <COMMAND name="no update-delay" help="Force initial delay for best-path and updates">
-    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_config_route_map_process_delay ${vrf-name}</ACTION>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_update_delay_config_max_delay ${vrf-name}&#xA;
+             python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_update_delay_config_establish_wait ${vrf-name}&#xA;
+    </ACTION>
   </COMMAND>
 
   <COMMAND name="no bestpath" help="Change the default bestpath selection"/>
@@ -464,10 +483,12 @@ limitations under the License.
     <PARAM name="ip" help="IP source" ptype="IPV4V6_ADDR" view="configure-router-bgp-nbr-view" viewid="nbr-addr=${ip};vrf-name=${vrf-name}"/>
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_transport_config_local_address ${vrf-name} ${nbr-addr} ${ip}</ACTION>
   </COMMAND>
-  <COMMAND name="shutdown" help="Shutdown a neighbor or add shutdown message">
-    <PARAM name="String" help="Shutdown message" ptype="STRING" optional="true"/>  
-    <ACTION> if test -n "${String}" ; then&#xA;
-                 python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_shutdown_message ${vrf-name} ${nbr-addr} ${String}&#xA;
+  <COMMAND name="shutdown" help="Shutdown a neighbor">
+    <PARAM name="message" help="Add a shutdown message (draft-ietf-idr-shutdown-06)" mode="subcommand" ptype="SUBCOMMAND" optional="true">
+       <PARAM name="MSG" help="Shutdown message" ptype="STRING"/>  
+    </PARAM>
+    <ACTION> if test -n "${message}" ; then&#xA;
+                 python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_shutdown_message ${vrf-name} ${nbr-addr} ${MSG}&#xA;
              else&#xA;
                  python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_enabled ${vrf-name} ${nbr-addr} False&#xA;
              fi&#xA;
@@ -592,10 +613,12 @@ limitations under the License.
     <PARAM name="ip" help="IP source" ptype="IPV4V6_ADDR" view="configure-router-bgp-nbr-view" viewid="nbr-addr=${ip};vrf-name=${vrf-name}" optional="true"/>
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_transport_config_local_address ${vrf-name} ${nbr-addr} ${ip}</ACTION>
   </COMMAND>
-  <COMMAND name="no shutdown" help="Shutdown a neighbor or delete shutdown message">
-    <PARAM name="String" help="Shutdown message" ptype="STRING" optional="true"/>  
-    <ACTION> if test -n "${String}" ; then&#xA;
-                 python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_shutdown_message ${vrf-name} ${nbr-addr} ${String}&#xA;
+  <COMMAND name="no shutdown" help="Shutdown a neighbor">
+    <PARAM name="message" help="Add a shutdown message (draft-ietf-idr-shutdown-06)" mode="subcommand" ptype="SUBCOMMAND" optional="true">
+       <PARAM name="MSG" help="Shutdown message" ptype="STRING"/>  
+    </PARAM>
+    <ACTION> if test -n "${message}" ; then&#xA;
+                 python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_shutdown_message ${vrf-name} ${nbr-addr} ${MSG}&#xA;
              else&#xA;
                  python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_enabled ${vrf-name} ${nbr-addr} True&#xA;
              fi&#xA;
