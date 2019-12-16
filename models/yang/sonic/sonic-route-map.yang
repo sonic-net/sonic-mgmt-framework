@@ -1,7 +1,32 @@
 module sonic-route-map {
     namespace "http://github.com/Azure/sonic-route-map";
     prefix srmap;
+    yang-version 1.1;
 
+    import ietf-yang-types {
+        prefix yang;
+    }
+
+    import ietf-inet-types {
+        prefix inet;
+    }
+
+    import sonic-port {
+        prefix prt;
+    }
+
+    import sonic-portchannel {
+        prefix spc;
+    }
+
+    import sonic-routing-policy-sets {
+        prefix srpolsets;
+    }
+
+    import sonic-vlan-interface {
+        prefix svlanint;
+    }
+ 
     organization
         "SONiC";
 
@@ -16,7 +41,45 @@ module sonic-route-map {
             "Initial revision.";
     }
 
+    typedef tag-type {
+        type union {
+            type uint32;
+            type yang:hex-string;
+        }
+        description "type for expressing route tags on a local system,
+                    including IS-IS and OSPF; may be expressed as either decimal or
+                        hexidecimal integer";
+        reference
+            "RFC 2178 OSPF Version 2
+            RFC 5130 A Policy Control Mechanism in IS-IS Using
+            Administrative Tags";
+    }
+
+    typedef route-map-intf {
+        type union {
+            type leafref {
+                path "/prt:sonic-port/prt:PORT/prt:PORT_LIST/prt:ifname";
+            }
+            type leafref {
+                path "/spc:sonic-portchannel/spc:PORTCHANNEL/spc:PORTCHANNEL_LIST/spc:name";
+            }
+            type leafref {
+                path "/svlanint:sonic-vlan-interface/svlanint:VLAN_INTERFACE/svlanint:VLAN_INTERFACE_LIST/svlanint:vlanName";
+            }
+        }
+    }
+
     container sonic-route-map {
+        container ROUTE_MAP_SET {
+            list ROUTE_MAP_SET_LIST {
+                key "name";
+
+                leaf name {
+                    type string;
+                }
+            }
+        }
+
         container ROUTE_MAP {
             list ROUTE_MAP_LIST {
                 key "route_map_name stmt_name";
@@ -26,7 +89,9 @@ module sonic-route-map {
                 }
 
                 leaf stmt_name {
-                    type string;
+                    type uint16 {
+                        range 1..65535;
+                    }
                 }
 
                 leaf route_operation {
@@ -34,27 +99,37 @@ module sonic-route-map {
                 }
 
                 leaf match_interface{
-                    type string;
+                    type route-map-intf;
                 }
 
                 leaf match_prefix_set{
+                    type leafref {
+                        path "/srpolsets:sonic-routing-policy-sets/srpolsets:PREFIX_SET/srpolsets:PREFIX_SET_LIST/srpolsets:name";
+                    }
+                }
+
+                leaf match_protocol {
                     type string;
                 }
 
-                leaf match_neighbor_set{
-                    type string;
+                leaf match_next_hop_set {
+                    type leafref {
+                        path "/srpolsets:sonic-routing-policy-sets/srpolsets:PREFIX_SET/srpolsets:PREFIX_SET_LIST/srpolsets:name";
+                    }
                 }
 
-                leaf match_tag_set{
-                    type string;
+                leaf-list match_neighbor {
+                    type inet:ip-address;
+                    description
+                        "List of IP addresses in the neighbor set";
+			        max-elements 1;
                 }
 
-                leaf-list match_next_hop{
-                    type string;
-                }
-
-                leaf-list match_address_family{
-                    type string;
+                leaf-list match_tag {
+                    type tag-type;
+                    description
+                        "Value of the tag set member";
+			        max-elements 1;
                 }
 
                 leaf match_med{
@@ -69,26 +144,28 @@ module sonic-route-map {
                     type uint32;
                 }
 
-                leaf match_route_type{
-                    type string;
-                }
-
                 leaf match_community{
-                    type string;
+                    type leafref {
+                        path "/srpolsets:sonic-routing-policy-sets/srpolsets:COMMUNITY_SET/srpolsets:COMMUNITY_SET_LIST/srpolsets:name";
+                    }
                 }
 
                 leaf match_ext_community{
-                    type string;
+                    type leafref {
+                        path "/srpolsets:sonic-routing-policy-sets/srpolsets:EXTENDED_COMMUNITY_SET/srpolsets:EXTENDED_COMMUNITY_SET_LIST/srpolsets:name";
+                    }
                 }
 
                 leaf match_as_path{
-                    type string;
+                    type leafref {
+                        path "/srpolsets:sonic-routing-policy-sets/srpolsets:AS_PATH_SET/srpolsets:AS_PATH_SET_LIST/srpolsets:name";
+                    }
                 }
                 leaf call_route_map {
-                    type string;
+                    type leafref {
+                        path "../../../ROUTE_MAP_SET/ROUTE_MAP_SET_LIST/name";
+                    }
                 }
-
-
 
                 leaf set_origin{
                     type string;
@@ -119,7 +196,9 @@ module sonic-route-map {
                 }
 
                 leaf set_community_ref {
-                    type string;
+                    type leafref {
+                        path "/srpolsets:sonic-routing-policy-sets/srpolsets:COMMUNITY_SET/srpolsets:COMMUNITY_SET_LIST/srpolsets:name";
+                    }
                 }
 
                 leaf set_ext_community_inline {
@@ -127,7 +206,9 @@ module sonic-route-map {
                 }
 
                 leaf set_ext_community_ref {
-                    type string;
+                    type leafref {
+                        path "/srpolsets:sonic-routing-policy-sets/srpolsets:EXTENDED_COMMUNITY_SET/srpolsets:EXTENDED_COMMUNITY_SET_LIST/srpolsets:name";
+                    }
                 }
 
             }

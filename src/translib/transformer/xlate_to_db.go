@@ -491,6 +491,7 @@ func dbMapDelete(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requestU
 	}
 	printDbData(resultMap, "/tmp/yangToDbDataDel.txt")
 
+    printDbData(resultMap, "/tmp/yangToDbDataDel.txt")
 	log.Infof("Delete req: uri(\"%v\") resultMap(\"%v\").", uri, resultMap)
 	return err
 }

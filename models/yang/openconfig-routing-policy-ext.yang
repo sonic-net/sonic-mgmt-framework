@@ -10,6 +10,8 @@ module openconfig-routing-policy-ext {
     // import some basic types
     import openconfig-routing-policy { prefix oc-rpol; }
     import openconfig-bgp-policy { prefix oc-bgp-pol; }
+    import openconfig-inet-types { prefix oc-inet; }
+    import openconfig-policy-types { prefix oc-pol-types; }
 
     description
         "This module describes a YANG model for routing policy
@@ -20,12 +22,141 @@ module openconfig-routing-policy-ext {
             "Add OpenConfig unsupported attributes.";
     }
 
+    typedef routing-policy-ext-action-type {
+        type enumeration {
+            enum PERMIT {
+                description "Permit action.";
+            }
+            enum DENY {
+                description "Deny action.";
+            }
+        }
+    }
+
+    grouping routing-policy-ext-action {
+        leaf action {
+            type routing-policy-ext-action-type;
+            description
+                "Select the action, accept or reject.";
+        }
+    }
+
+    grouping routing-policy-ext-neighbor-set-config {
+        description
+            "Configuration data for neighbor set definitions";
+
+        leaf-list address {
+            type oc-inet:ip-address;
+            description
+                "List of IP addresses in the neighbor set";
+        }
+    }
+
+    grouping routing-policy-ext-tag-set-config {
+        description
+            "Configuration data for tag set definitions.";
+
+        leaf-list tag-value {
+            type oc-pol-types:tag-type;
+            description
+                "Value of the tag set member";
+        }
+    }
+
     deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-bgp-pol:bgp-conditions/oc-bgp-pol:community-count {
         deviate not-supported;
     }
 
     deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-bgp-pol:bgp-conditions/oc-bgp-pol:as-path-length {
         deviate not-supported;
+    }
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-bgp-pol:bgp-conditions/oc-bgp-pol:config/oc-bgp-pol:afi-safi-in {
+        deviate not-supported;
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-bgp-pol:bgp-conditions/oc-bgp-pol:state/oc-bgp-pol:afi-safi-in {
+        deviate not-supported;
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-bgp-pol:bgp-conditions/oc-bgp-pol:config/oc-bgp-pol:next-hop-in {
+        deviate not-supported;
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-bgp-pol:bgp-conditions/oc-bgp-pol:state/oc-bgp-pol:next-hop-in {
+        deviate not-supported;
+    }
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-bgp-pol:bgp-conditions/oc-bgp-pol:config/oc-bgp-pol:route-type {
+        deviate not-supported;
+    }
+ 
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-bgp-pol:bgp-conditions/oc-bgp-pol:state/oc-bgp-pol:route-type {
+        deviate not-supported;
+    }
+    
+    augment /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-rpol:match-neighbor-set/oc-rpol:config {
+        uses routing-policy-ext-neighbor-set-config;
+    }
+    
+    augment /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-rpol:match-neighbor-set/oc-rpol:state {
+        uses routing-policy-ext-neighbor-set-config;
+    }
+   
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-rpol:match-neighbor-set/oc-rpol:config/oc-rpol:neighbor-set {
+        deviate not-supported;
+    }
+    
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-rpol:match-neighbor-set/oc-rpol:config/oc-rpol:match-set-options {
+        deviate not-supported;
+    }
+     
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-rpol:match-neighbor-set/oc-rpol:state/oc-rpol:neighbor-set {
+        deviate not-supported;
+    }
+    
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-rpol:match-neighbor-set/oc-rpol:state/oc-rpol:match-set-options {
+        deviate not-supported;
+    }
+    
+    deviation /oc-rpol:routing-policy/oc-rpol:defined-sets/oc-rpol:neighbor-sets{
+        deviate not-supported;
+    }
+ 
+    augment /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-rpol:match-tag-set/oc-rpol:config {
+        uses routing-policy-ext-tag-set-config;
+    }
+    
+    augment /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-rpol:match-tag-set/oc-rpol:state{
+        uses routing-policy-ext-tag-set-config;
+    }
+ 
+
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-rpol:match-tag-set/oc-rpol:config/oc-rpol:tag-set {
+        deviate not-supported;
+    }
+    
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-rpol:match-tag-set/oc-rpol:config/oc-rpol:match-set-options {
+        deviate not-supported;
+    }
+     
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-rpol:match-tag-set/oc-rpol:state/oc-rpol:tag-set {
+        deviate not-supported;
+    }
+    
+    deviation /oc-rpol:routing-policy/oc-rpol:policy-definitions/oc-rpol:policy-definition/oc-rpol:statements/oc-rpol:statement/oc-rpol:conditions/oc-rpol:match-tag-set/oc-rpol:state/oc-rpol:match-set-options {
+        deviate not-supported;
+    }
+    
+    deviation /oc-rpol:routing-policy/oc-rpol:defined-sets/oc-rpol:tag-sets{
+        deviate not-supported;
+    }
+
+    augment /oc-rpol:routing-policy/oc-rpol:defined-sets/oc-rpol:prefix-sets/oc-rpol:prefix-set/oc-rpol:prefixes/oc-rpol:prefix/oc-rpol:config {
+        uses routing-policy-ext-action;
+    }
+
+    augment /oc-rpol:routing-policy/oc-rpol:defined-sets/oc-rpol:prefix-sets/oc-rpol:prefix-set/oc-rpol:prefixes/oc-rpol:prefix/oc-rpol:state {
+        uses routing-policy-ext-action;
     }
 }
 
