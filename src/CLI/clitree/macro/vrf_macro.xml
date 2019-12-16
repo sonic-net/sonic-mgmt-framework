@@ -28,12 +28,12 @@ limitations under the License.
         >
         <PARAM
           name="vrf-name"
-          help="Name of VRF (Max size 32, prefixed by Vrf_)"
-          ptype="STRING_32"
+          help="Name of VRF"
+          ptype="STRING_15"
           >
         </PARAM>
         <ACTION>
-          python $SONIC_CLI_ROOT/sonic-cli-vrf.py patch_openconfig_network_instance_network_instances_network_instance_interface ${vrf-name}&#xA;
+          python $SONIC_CLI_ROOT/sonic-cli-vrf.py patch_openconfig_network_instance_network_instances_network_instance_interface ${vrf-name} arg1
         </ACTION>
     </COMMAND>
 
@@ -44,8 +44,14 @@ limitations under the License.
         mode="subcommand"
         ptype="SUBCOMMAND"
         >
+        <PARAM
+          name="vrf-name"
+          help="Name of VRF"
+          ptype="STRING_15"
+          >
+        </PARAM>
         <ACTION>
-          python $SONIC_CLI_ROOT/sonic-cli-vrf.py delete_openconfig_network_instance_network_instances_network_instance_interface&#xA;
+          python $SONIC_CLI_ROOT/sonic-cli-vrf.py delete_openconfig_network_instance_network_instances_network_instance_interface ${vrf-name} arg1
         </ACTION>
     </COMMAND>
 

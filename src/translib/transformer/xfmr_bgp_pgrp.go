@@ -11,8 +11,8 @@ import (
 func init () {
     XlateFuncBind("YangToDb_bgp_pgrp_tbl_key_xfmr", YangToDb_bgp_pgrp_tbl_key_xfmr)
     XlateFuncBind("DbToYang_bgp_pgrp_tbl_key_xfmr", DbToYang_bgp_pgrp_tbl_key_xfmr)
-    XlateFuncBind("YangToDb_bgp_pgrp_peer_type_fld_xfmr", YangToDb_bgp_pgrp_peer_type_xfmr)
-    XlateFuncBind("DbToYang_bgp_pgrp_peer_type_fld_xfmr", DbToYang_bgp_pgrp_peer_type_xfmr)
+    XlateFuncBind("YangToDb_bgp_pgrp_peer_type_fld_xfmr", YangToDb_bgp_pgrp_peer_type_fld_xfmr)
+    XlateFuncBind("DbToYang_bgp_pgrp_peer_type_fld_xfmr", DbToYang_bgp_pgrp_peer_type_fld_xfmr)
     XlateFuncBind("YangToDb_bgp_pgrp_name_fld_xfmr", YangToDb_bgp_pgrp_name_fld_xfmr)
     XlateFuncBind("DbToYang_bgp_pgrp_name_fld_xfmr", DbToYang_bgp_pgrp_name_fld_xfmr)
 }
@@ -40,7 +40,7 @@ var DbToYang_bgp_pgrp_name_fld_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams
     return result, err
 }
 
-var YangToDb_bgp_pgrp_peer_type_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
+var YangToDb_bgp_pgrp_peer_type_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
     res_map := make(map[string]string)
 
     var err error
@@ -49,7 +49,7 @@ var YangToDb_bgp_pgrp_peer_type_xfmr FieldXfmrYangToDb = func(inParams XfmrParam
         return res_map, err
     }
     peer_type, _ := inParams.param.(ocbinds.E_OpenconfigBgp_PeerType)
-    log.Info("YangToDb_bgp_pgrp_peer_type_xfmr: ", inParams.ygRoot, " Xpath: ", inParams.uri, " peer-type: ", peer_type)
+    log.Info("YangToDb_bgp_pgrp_peer_type_fld_xfmr: ", inParams.ygRoot, " Xpath: ", inParams.uri, " peer-type: ", peer_type)
 
     if (peer_type == ocbinds.OpenconfigBgp_PeerType_INTERNAL) {
         res_map["peer_type"] = "internal"
@@ -64,17 +64,17 @@ var YangToDb_bgp_pgrp_peer_type_xfmr FieldXfmrYangToDb = func(inParams XfmrParam
 
 }
 
-var DbToYang_bgp_pgrp_peer_type_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (map[string]interface{}, error) {
+var DbToYang_bgp_pgrp_peer_type_fld_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (map[string]interface{}, error) {
 
     var err error
     result := make(map[string]interface{})
 
     data := (*inParams.dbDataMap)[inParams.curDb]
-    log.Info("DbToYang_bgp_pgrp_peer_type_xfmr : ", data, "inParams : ", inParams)
+    log.Info("DbToYang_bgp_pgrp_peer_type_fld_xfmr : ", data, "inParams : ", inParams)
 
     pTbl := data["BGP_PEER_GROUP"]
     if _, ok := pTbl[inParams.key]; !ok {
-        log.Info("DbToYang_bgp_pgrp_peer_type_xfmr BGP peer-groups not found : ", inParams.key)
+        log.Info("DbToYang_bgp_pgrp_peer_type_fld_xfmr BGP peer-groups not found : ", inParams.key)
         return result, errors.New("BGP peer-groups not found : " + inParams.key)
     }
     pGrpKey := pTbl[inParams.key]

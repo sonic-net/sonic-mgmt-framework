@@ -1,0 +1,16 @@
+module sonic-neigh-annot {
+
+    yang-version "1";
+
+    namespace "http://openconfig.net/yang/annotation/sneigh-annot";
+    prefix "sneigh-annot";
+
+    import sonic-neigh { prefix sneigh; }
+    import sonic-extensions { prefix sonic-ext; }
+
+    deviation /sneigh:sonic-neigh/sneigh:NEIGH_TABLE {
+        deviate add {
+            sonic-ext:db-name "APPL_DB";
+        }
+    }
+}

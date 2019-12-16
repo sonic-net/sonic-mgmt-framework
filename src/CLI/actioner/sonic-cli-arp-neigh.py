@@ -37,6 +37,8 @@ def get_keypath(func,args):
         keypath = cc.Path('/restconf/data/openconfig-interfaces:interfaces/interface={name}/subinterfaces/subinterface={index}/openconfig-if-ip:ipv4/neighbors/neighbor={ip}', name=args[1], index="0", ip=args[3])
     elif func == 'get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_neighbors_neighbor':
         keypath = cc.Path('/restconf/data/openconfig-interfaces:interfaces/interface={name}/subinterfaces/subinterface={index}/openconfig-if-ip:ipv6/neighbors/neighbor={ip}',name=args[1], index="0", ip=args[3])
+    elif func == 'get_sonic_neigh_sonic_neigh_neigh_table':
+        keypath = cc.Path('/restconf/data/sonic-neigh:sonic-neigh/NEIGH_TABLE')
     return keypath
 
 def fdb_call(macAddr, vlanName):
@@ -96,6 +98,7 @@ def run(func, args):
                                     'extIntfName':ext_intf_name
                                   }
                 neigh_list.append(neigh_table_entry)
+
         elif 'openconfig-if-ip:neighbors' in response.keys():
                 if response['openconfig-if-ip:neighbors'] is None:
                     return
@@ -105,26 +108,70 @@ def run(func, args):
                     return
 
                 for neigh in neighs:
-                        ext_intf_name = "-"
-                        ipAddr = neigh['state']['ip']
-                        if ipAddr is None:
-                            return
+                    ext_intf_name = "-"
+                    ipAddr = neigh['state']['ip']
+                    if ipAddr is None:
+                        return
 
-                        macAddr = neigh['state']['link-layer-address']
-                        if macAddr is None:
-                            return
+                    macAddr = neigh['state']['link-layer-address']
+                    if macAddr is None:
+                        return
 
-                        if args[1].startswith('Vlan'):
-                            ext_intf_name = fdb_call(macAddr, args[1])
+                    if args[1].startswith('Vlan'):
+                        ext_intf_name = fdb_call(macAddr, args[1])
 
-                        neigh_table_entry = {'ipAddr':ipAddr,
+                    neigh_table_entry = {'ipAddr':ipAddr,
                                     'macAddr':macAddr,
                                     'intfName':args[1],
                                     'extIntfName':ext_intf_name
                                   }
+                neigh_list.append(neigh_table_entry)
 
-                        if not ((args[2] == "mac") and (args[3] != macAddr)):
-                                neigh_list.append(neigh_table_entry)
+        elif 'sonic-neigh:NEIGH_TABLE' in response.keys():
+                if response['sonic-neigh:NEIGH_TABLE'] is None:
+                    return
+
+                neighs = response['sonic-neigh:NEIGH_TABLE']['NEIGH_TABLE_LIST']
+                if neighs is None:
+                    return
+
+                for neigh in neighs:
+                        ext_intf_name = "-"
+
+                        family = neigh['family']
+                        if family is None:
+                            return
+                        if family != args[1]:
+                            continue
+
+                        ifName = neigh['ifname']
+                        if ifName is None:
+                            return
+
+                        ipAddr = neigh['ip']
+                        if ipAddr is None:
+                            return
+
+                        macAddr = neigh['neigh']
+                        if macAddr is None:
+                            return
+
+                        if ifName.startswith('Vlan'):
+                            ext_intf_name = fdb_call(macAddr, ifName)
+
+                        neigh_table_entry = {'ipAddr':ipAddr,
+                                    'macAddr':macAddr,
+                                    'intfName':ifName,
+                                    'extIntfName':ext_intf_name
+                                  }
+
+                        if (len(args) == 3):
+                                if (args[2] == "mac" and args[3] == macAddr):
+                                    neigh_list.append(neigh_table_entry)
+                                elif (args[1] == "IPv4" or args[1] == "IPv6") and args[2] == ipAddr:
+                                    neigh_list.append(neigh_table_entry)
+                        else:
+                            neigh_list.append(neigh_table_entry)
 
         show_cli_output(args[0],neigh_list)
         return

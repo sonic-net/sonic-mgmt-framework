@@ -6,7 +6,7 @@ import sys
 import gc
 import select
 from rpipe_utils import pipestr
-
+import datetime
 
 # Capture our current directory
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -115,8 +115,6 @@ def write(t_str):
                 q = _write(s_str)
             if q:
                 break
-
-
 def show_cli_output(template_file, response):
     # Create the jinja2 environment.
     # Notice the use of trim_blocks, which greatly helps control whitespace.
@@ -127,6 +125,11 @@ def show_cli_output(template_file, response):
     j2_env.trim_blocks = True
     j2_env.lstrip_blocks = True
     j2_env.rstrip_blocks = True
+
+    def datetimeformat(time):
+        return datetime.datetime.fromtimestamp(int(time)).strftime('%Y-%m-%d %H:%M:%S')
+
+    j2_env.globals.update(datetimeformat=datetimeformat)
 
     if response:
         t_str = (j2_env.get_template(template_file).render(json_output=response))
