@@ -20,12 +20,111 @@
 package server
 
 import (
+	"bytes"
+	"fmt"
 	"net/http"
 	"os/user"
+	"strings"
+
 	"github.com/golang/glog"
+
 	//"github.com/msteinert/pam"
 	"golang.org/x/crypto/ssh"
 )
+
+
+type UserAuth map[string]bool
+
+var ClientAuth = UserAuth{"password": false, "cert": false, "jwt": false}
+
+func (i UserAuth) String() string {
+	b := new(bytes.Buffer)
+	for key, value := range i {
+		if value {
+			fmt.Fprintf(b, "%s ", key)
+		}
+	}
+	return b.String()
+}
+
+func (i UserAuth) Any() bool {
+	for _, value := range i {
+		if value {
+			return true
+		}
+	}
+	return false
+}
+
+func (i UserAuth) Enabled(mode string) bool {
+	if value, exist := i[mode]; exist && value {
+		return true
+	}
+	return false
+}
+
+func (i UserAuth) Set(mode string) error {
+	modes := strings.Split(mode, ",")
+	for _, m := range modes {
+		m = strings.Trim(m, " ")
+		if _, exist := i[m]; !exist {
+			return fmt.Errorf("Expecting one or more of 'cert', 'password' or 'jwt'")
+		}
+		i[m] = true
+	}
+	return nil
+}
+
+func (i UserAuth) Unset(mode string) error {
+	modes := strings.Split(mode, ",")
+	for _, m := range modes {
+		m = strings.Trim(m, " ")
+		if _, exist := i[m]; !exist {
+			return fmt.Errorf("Expecting one or more of 'cert', 'password' or 'jwt'")
+		}
+		i[m] = false
+	}
+	return nil
+}
+
+// authMiddleware function creates a middleware for request
+// authentication and authorization. This middleware will return
+// 401 response if authentication fails and 403 if authorization
+// fails.
+func authMiddleware(inner http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		rc, r := GetContext(r)
+		var err error
+		success := false
+		if ClientAuth.Enabled("password") {
+			err = BasicAuthenAndAuthor(r, rc)
+			if err == nil {
+				success = true
+			}
+		}
+		if !success && ClientAuth.Enabled("jwt") {
+			_, err = JwtAuthenAndAuthor(r, rc)
+			if err == nil {
+				success = true
+			}
+		}
+		if !success && ClientAuth.Enabled("cert") {
+			err = ClientCertAuthenAndAuthor(r, rc)
+			if err == nil {
+				success = true
+			}
+		}
+
+		if !success {
+			status, data, ctype := prepareErrorResponse(err, r)
+			w.Header().Set("Content-Type", ctype)
+			w.WriteHeader(status)
+			w.Write(data)
+		} else {
+			inner.ServeHTTP(w, r)
+		}
+	})
+}
 
 /*
 type UserCredential struct {
@@ -74,6 +173,7 @@ func DoesUserExist(username string) bool {
 	}
 	return true
 }
+
 func IsAdminGroup(username string) bool {
 
 	usr, err := user.Lookup(username)
@@ -96,6 +196,7 @@ func IsAdminGroup(username string) bool {
 	}
 	return false
 }
+
 func UserPwAuth(username string, passwd string) (bool, error) {
 	/*
 	 * mgmt-framework container does not have access to /etc/passwd, /etc/group,
