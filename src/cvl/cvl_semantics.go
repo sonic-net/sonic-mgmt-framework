@@ -435,11 +435,11 @@ func (c *CVL) mergeYangData(dest, src *xmlquery.Node) CVLRetCode {
 	for srcNode != nil {
 		//Find all source nodes and attach to the matching destination node
 		ret := CVL_FAILURE
-		TRACE_LOG((TRACE_SYNTAX | TRACE_SEMANTIC), "MergeData : src loop\n")
+		//TRACE_LOG((TRACE_SYNTAX | TRACE_SEMANTIC), "MergeData : src loop\n")
 destLoop:
 		destNode := dest
 		for ; destNode != nil; destNode = destNode.NextSibling {
-			TRACE_LOG((TRACE_SYNTAX | TRACE_SEMANTIC), "MergeData : dest loop\n")
+			//TRACE_LOG((TRACE_SYNTAX | TRACE_SEMANTIC), "MergeData : dest loop\n")
 			if (destNode.Data != srcNode.Data) {
 				//Can proceed to subtree only if current node name matches
 				continue
@@ -892,6 +892,8 @@ func (c *CVL) validateMustExp(tableName, key string, op CVLOperation) (r CVLErro
 	xpath.SetDepDataClbk(c, func(ctxt interface{}, redisKeys []string,
 	redisKeyFilter, keyNames, pred, fields, count string) string {
 		c := ctxt.(*CVL)
+
+		TRACE_LOG(TRACE_SEMANTIC, "validateMustExp(): calling addDepYangData()")
 		return c.addDepYangData(redisKeys, redisKeyFilter, keyNames, pred, fields, "")
 	})
 
@@ -912,7 +914,7 @@ func (c *CVL) validateMustExp(tableName, key string, op CVLOperation) (r CVLErro
 			count = float64(redisEntries.(int64))
 		}
 
-		TRACE_LOG(TRACE_SEMANTIC, "depDataCntClbk() with redisKeyFilter=%s, " +
+		TRACE_LOG(TRACE_SEMANTIC, "validateMustExp(): depDataCntClbk() with redisKeyFilter=%s, " +
 		"keyNames= %s, predicate=%s, fields=%s, returned = %v",
 		redisKeyFilter, keyNames, pred, field, count)
 
@@ -999,6 +1001,7 @@ func (c *CVL) validateWhenExp(tableName, key string, op CVLOperation) (r CVLErro
 	xpath.SetDepDataClbk(c, func(ctxt interface{}, redisKeys []string,
 	redisKeyFilter, keyNames, pred, fields, count string) string {
 		c := ctxt.(*CVL)
+		TRACE_LOG(TRACE_SEMANTIC, "validateWhenExp(): calling addDepYangData()")
 		return c.addDepYangData(redisKeys, redisKeyFilter, keyNames, pred, fields, "")
 	})
 
@@ -1102,6 +1105,7 @@ func (c *CVL) validateLeafRef(tableName, key string, op CVLOperation) (r CVLRetC
 	xpath.SetDepDataClbk(c, func(ctxt interface{}, redisKeys []string,
 	redisKeyFilter, keyNames, pred, fields, count string) string {
 		c := ctxt.(*CVL)
+		TRACE_LOG(TRACE_SEMANTIC, "validateLeafRef(): calling addDepYangData()")
 		return c.addDepYangData(redisKeys, redisKeyFilter, keyNames, pred, fields, "")
 	})
 
