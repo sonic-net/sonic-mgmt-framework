@@ -117,6 +117,11 @@ module sonic-portchannel {
                 leaf oper_status {
                     type scommon:oper-status;
                 }
+
+                //control to disable traffic collection and distribution for all LAG member ports
+                leaf traffic_disable {
+                    type boolean; 
+                }
             }
         }
 

@@ -22,8 +22,10 @@ package cvl
 import (
 	"fmt"
 	"encoding/xml"
+	"encoding/json"
 	"strings"
-//	"github.com/antchfx/xpath"
+	"regexp"
+	"github.com/antchfx/xpath"
 	"github.com/antchfx/xmlquery"
 	"github.com/antchfx/jsonquery"
 	. "cvl/internal/util"
@@ -87,6 +89,33 @@ parent *xmlquery.Node) CVLRetCode {
 				arrayNode.FirstChild.Data)
 
 				//mark these nodes as leaf-list
+				addAttrNode(node, "leaf-list", "")
+			}
+		}
+	}
+
+	//Add all the default nodes required for must and when exps evaluation
+	for nodeName, valStr := range modelInfo.tableInfo[tableName].dfltLeafVal {
+		//Check if default node is already present in data
+		var child *xmlquery.Node
+		for child = parent.FirstChild; child != nil; child = child.NextSibling {
+			if (child.Data == nodeName) {
+				break
+			}
+		}
+
+		if (child != nil) {
+			//node is already present, skip adding it
+			continue
+		}
+
+		valArr := strings.Split(valStr, ",")
+		for idx := 0; idx < len(valArr); idx ++ {
+			node := c.addYangNode(tableName,
+			parent, nodeName, valArr[idx])
+
+			//mark these nodes as leaf-list
+			if (len(valArr) > 1) {
 				addAttrNode(node, "leaf-list", "")
 			}
 		}
@@ -172,9 +201,10 @@ func (c *CVL) generateYangListData(jsonNode *jsonquery.Node,
 		return nil, cvlErrObj
 	}
 
-	// Add top most conatiner e.g. 'container sonic-acl {...}'
+	// Add top most container e.g. 'container sonic-acl {...}'
 	topNode = c.addYangNode(tableName, nil, modelInfo.tableInfo[tableName].modelName, "")
-	topNode.Prefix = modelInfo.modelNs[modelInfo.tableInfo[tableName].modelName].prefix
+	//topNode.Prefix = modelInfo.modelNs[modelInfo.tableInfo[tableName].modelName].prefix
+	topNode.Prefix = modelInfo.tableInfo[tableName].modelName
 	topNode.NamespaceURI = modelInfo.modelNs[modelInfo.tableInfo[tableName].modelName].ns
 
 	//Add the container node for each list 
@@ -182,14 +212,18 @@ func (c *CVL) generateYangListData(jsonNode *jsonquery.Node,
 	listConatinerNode := c.addYangNode(tableName, topNode, tableName, "")
 
 	//Traverse each key instance
+	keyPresent := false
 	for jsonNode = jsonNode.FirstChild; jsonNode != nil; jsonNode = jsonNode.NextSibling {
 		//store the redis key
 		redisKey := jsonNode.Data
 
+		//Mark at least one key is present
+		keyPresent = true
+
 		//For each field check if is key 
 		//If it is key, create list as child of top container
 		// Get all key name/value pairs
-		if yangListName := getRedisKeyToYangList(tableName, redisKey); yangListName!= "" {
+		if yangListName := getRedisTblToYangList(tableName, redisKey); yangListName!= "" {
 			tableName = yangListName
 		}
 		keyValuePair := getRedisToYangKeys(tableName, redisKey)
@@ -254,6 +288,10 @@ func (c *CVL) generateYangListData(jsonNode *jsonquery.Node,
 		}
 	}
 
+	if (keyPresent == false) {
+		return nil, cvlErrObj
+	}
+
 	return topNode, cvlErrObj
 }
 
@@ -316,6 +354,11 @@ func (c *CVL) detachNode(node *xmlquery.Node) CVLRetCode {
 	//get the parent node
 	parent := node.Parent
 
+	if (parent == nil) {
+		//Already detached node
+		return CVL_SUCCESS
+	}
+
 	//adjust siblings
 	if (parent.FirstChild == node &&  parent.LastChild == node) {
 		//this is the only node
@@ -369,14 +412,14 @@ func (c *CVL) deleteDestLeafList(dest *xmlquery.Node)  {
 //Leaf-list is always replaced and appeneded at
 //the end of list's children
 func (c *CVL) mergeYangData(dest, src *xmlquery.Node) CVLRetCode {
-	TRACE_LOG((TRACE_SYNTAX | TRACE_SEMANTIC),
-	 "Merging YANG data")
-
 	if (dest == nil) || (src == nil) {
 		return CVL_FAILURE
 	}
 
-	if (dest.Type ==xmlquery.TextNode) && (src.Type == xmlquery.TextNode) {
+	TRACE_LOG((TRACE_SYNTAX | TRACE_SEMANTIC),
+	 "Merging YANG data %s %s", dest.Data, src.Data)
+
+	if (dest.Type == xmlquery.TextNode) && (src.Type == xmlquery.TextNode) {
 		//handle leaf node by updating value
 		dest.Data = src.Data
 		return CVL_SUCCESS
@@ -388,9 +431,11 @@ func (c *CVL) mergeYangData(dest, src *xmlquery.Node) CVLRetCode {
 	for srcNode != nil {
 		//Find all source nodes and attach to the matching destination node
 		ret := CVL_FAILURE
+		TRACE_LOG((TRACE_SYNTAX | TRACE_SEMANTIC), "MergeData : src loop\n")
 destLoop:
 		destNode := dest
 		for ; destNode != nil; destNode = destNode.NextSibling {
+			TRACE_LOG((TRACE_SYNTAX | TRACE_SEMANTIC), "MergeData : dest loop\n")
 			if (destNode.Data != srcNode.Data) {
 				//Can proceed to subtree only if current node name matches
 				continue
@@ -414,6 +459,7 @@ destLoop:
 					destLeafListDeleted = true
 					//Note that 'dest' still points to list keys 
 					//even though all leaf-list might have been deleted
+					//as we never delete key while merging
 					goto destLoop
 				} else {
 					//if all dest leaflist deleted,
@@ -463,33 +509,48 @@ destLoop:
 	return CVL_SUCCESS
 }
 
+func (c *CVL) findYangList(tableName string, redisKey string) *xmlquery.Node {
+	origCurrent := c.yv.current
+	tmpCurrent := c.moveToYangList(tableName, redisKey)
+	c.yv.current = origCurrent
+
+	return tmpCurrent
+}
+
 //Locate YANG list instance in root for given table name and key
 func (c *CVL) moveToYangList(tableName string, redisKey string) *xmlquery.Node {
 
 	var nodeTbl *xmlquery.Node = nil
+
+	redisTableName := getYangListToRedisTbl(tableName)
+	modelName := modelInfo.tableInfo[tableName].modelName
+
 	//move to the model first
 	for node := c.yv.root.FirstChild; node != nil; node = node.NextSibling {
-		if (node.Data != modelInfo.tableInfo[tableName].modelName) {
+		if (node.Data != modelName) {
 			continue
 		}
 
 		//Move to container
 		for nodeTbl = node.FirstChild; nodeTbl != nil; nodeTbl = nodeTbl.NextSibling {
-			if (nodeTbl.Data == tableName) {
+			if (nodeTbl.Data == redisTableName) {
 				break
 			}
 		}
+
+		break
 	}
 
 	if (nodeTbl == nil) {
-		CVL_LOG(WARNING, "Unable to find YANG data for table %s, key %s",
+		TRACE_LOG(TRACE_SEMANTIC, "Unable to find YANG data for table %s, key %s",
 		tableName, redisKey)
 		return nil
 	}
 
 	//Move to list
+	listName := tableName + "_LIST"
 	for nodeList := nodeTbl.FirstChild; nodeList != nil; nodeList = nodeList.NextSibling {
-		if (nodeList.Data != fmt.Sprintf("%s_LIST", tableName)) {
+		if (nodeList.Data != listName) {
 			continue
 		}
 
@@ -500,37 +561,664 @@ func (c *CVL) moveToYangList(tableName string, redisKey string) *xmlquery.Node {
 			return c.yv.current
 		}
 
-		//Get key name-value pair
-		keyValuePair := getRedisToYangKeys(tableName, redisKey)
-		if (keyValuePair == nil) {
-			return c.yv.current
-		}
-
-		//Match the key value with list instance
 		for ; (nodeList != nil); nodeList = nodeList.NextSibling {
-			keyIdx := 0;
-
-			for nodeLeaf := nodeList.FirstChild;
-			(nodeLeaf != nil) && (keyIdx < len(keyValuePair));
-			nodeLeaf = nodeLeaf.NextSibling {
-
-				if (nodeLeaf.Data == keyValuePair[keyIdx].key) &&
-				(nodeLeaf.FirstChild != nil) &&
-				(nodeLeaf.FirstChild.Data == keyValuePair[keyIdx].values[0]) {
-					keyIdx = keyIdx + 1
-				}
-			}
-
-			//Check if all key values matched
-			if (keyIdx == len(keyValuePair)) {
+			if (len(nodeList.Attr) > 0) &&
+			(nodeList.Attr[0].Value == redisKey) {
+				c.yv.current = nodeList
 				return nodeList
 			}
 		}
 	}
 
-	CVL_LOG(WARNING, "Unable to find YANG data for table %s, key %s",
+	CVL_LOG(WARNING, "No list entry matched, unable to find YANG data for table %s, key %s",
 	tableName, redisKey)
 	return nil
+}
+
+//Set operation node value based on operation in request received
+func (c *CVL) setOperation(op CVLOperation) {
+
+	var node *xmlquery.Node
+
+	for node = c.yv.root.FirstChild; node != nil; node = node.NextSibling {
+		if (node.Data == "operation") {
+			break
+		}
+	}
+
+	//Add the operation container
+	if (node == nil) {
+		node = c.addYangNode("", c.yv.root, "operation", "")
+		node.Prefix = "sonic-common" //"cmn"
+		//modelInfo.modelNs["sonic-common"].prefix
+		node.NamespaceURI = modelInfo.modelNs["sonic-common"].ns
+	}
+
+	opNode := node.FirstChild
+	if opNode == nil {
+		node.Prefix = "sonic-common"//"cmn"
+		opNode = c.addYangNode("", node, "operation", "NONE")
+	}
+
+	switch op {
+	case OP_CREATE:
+		opNode.FirstChild.Data = "CREATE"
+	case OP_UPDATE:
+		opNode.FirstChild.Data = "UPDATE"
+	case OP_DELETE:
+		opNode.FirstChild.Data = "DELETE"
+	default:
+		opNode.FirstChild.Data = "NONE"
+	}
+}
+
+//Add given YANG data buffer to Yang Validator
+//redisKeys - Set of redis keys
+//redisKeyFilter - Redis key filter in glob style pattern
+//keyNames - Names of all keys separated by "|"
+//predicate - Condition on keys/fields
+//fields - Fields to retrieve, separated by "|"
+//Return "," separated list of leaf nodes if only one leaf is requested
+//One leaf is used as xpath query result in other nested xpath
+func (c *CVL) addDepYangData(redisKeys []string, redisKeyFilter,
+		keyNames, predicate, fields, count string) string {
+
+	var v interface{}
+	tmpPredicate := ""
+
+	//Get filtered Redis data based on lua script 
+	//filter derived from Xpath predicate
+	if (predicate != "") {
+		tmpPredicate = "return (" + predicate + ")"
+	}
+
+	cfgData, err := luaScripts["filter_entries"].Run(redisClient, []string{},
+	redisKeyFilter, keyNames, tmpPredicate, fields, count).Result()
+
+	singleLeaf := "" //leaf data for single leaf
+
+	if (cfgData == nil) {
+		return ""
+	}
+
+	TRACE_LOG(TRACE_SEMANTIC, "addDepYangData() with redisKeyFilter=%s, " +
+	"predicate=%s, fields=%s, returned cfgData = %s, err=%v",
+	redisKeyFilter, predicate, fields, cfgData, err)
+
+	//Parse the JSON map received from lua script
+	b := []byte(cfgData.(string))
+	if err := json.Unmarshal(b, &v); err != nil {
+		return ""
+	}
+
+	var dataMap map[string]interface{} = v.(map[string]interface{})
+
+	dataTop, _ := jsonquery.ParseJsonMap(&dataMap)
+
+	for jsonNode := dataTop.FirstChild; jsonNode != nil; jsonNode=jsonNode.NextSibling {
+		//Generate YANG data for Yang Validator from Redis JSON
+		topYangNode, _ := c.generateYangListData(jsonNode, false)
+
+		if  topYangNode == nil {
+			continue
+		}
+
+		//Build single leaf data requested
+		singleLeaf = ""
+		for redisKey := topYangNode.FirstChild.FirstChild;
+		redisKey != nil; redisKey = redisKey.NextSibling {
+
+			for field := redisKey.FirstChild; field != nil;
+			field = field.NextSibling {
+				if (field.Data == fields) {
+					//Single field requested
+					singleLeaf = singleLeaf + field.FirstChild.Data + ","
+					break
+				}
+			}
+		}
+
+		//Merge with main YANG data cache
+		doc := &xmlquery.Node{Type: xmlquery.DocumentNode}
+		doc.FirstChild = topYangNode
+		doc.LastChild = topYangNode
+		topYangNode.Parent = doc
+		if c.mergeYangData(c.yv.root, doc) != CVL_SUCCESS {
+			continue
+		}
+	}
+
+
+	//remove last comma in case mulitple values returned
+	if (singleLeaf != "") {
+		return singleLeaf[:len(singleLeaf) - 1]
+	}
+
+	return ""
+}
+
+//Add all other table data for validating all 'must' exp for tableName
+//One entry is needed for incremental loading of must tables
+func (c *CVL) addYangDataForMustExp(op CVLOperation, tableName string, oneEntry bool) CVLRetCode {
+	if (modelInfo.tableInfo[tableName].mustExpr == nil) {
+		return CVL_SUCCESS
+	}
+
+	for mustTblName, mustOp := range modelInfo.tableInfo[tableName].tablesForMustExp {
+		//First check if must expression should be executed for the given operation
+		if (mustOp != OP_NONE) && ((mustOp & op) == OP_NONE) {
+			//must to be excuted for particular operation, but current operation 
+			//is not the same one
+			continue
+		}
+
+		//If one entry is needed and it is already availale in c.yv.root cache
+		//just ignore and continue
+		if (oneEntry == true) {
+			node := c.moveToYangList(mustTblName, "")
+			if node != nil {
+				//One entry exists, continue
+				continue
+			}
+		}
+
+		redisTblName := getYangListToRedisTbl(mustTblName) //1 yang to N Redis table case
+		tableKeys, err:= redisClient.Keys(redisTblName +
+		modelInfo.tableInfo[mustTblName].redisKeyDelim + "*").Result()
+
+		if (err != nil) {
+			return CVL_FAILURE
+		}
+
+		if (len(tableKeys) == 0) {
+			//No dependent data for mustTable available
+			continue
+		}
+
+		cvg.cv.clearTmpDbCache()
+
+		//fill all keys; TBD Optimize based on predicate in Xpath
+		tablePrefixLen := len(redisTblName + modelInfo.tableInfo[mustTblName].redisKeyDelim)
+		for _, tableKey := range tableKeys {
+			tableKey = tableKey[tablePrefixLen:] //remove table prefix
+			if (cvg.cv.tmpDbCache[redisTblName] == nil) {
+				cvg.cv.tmpDbCache[redisTblName] = map[string]interface{}{tableKey: nil}
+			} else {
+				tblMap := cvg.cv.tmpDbCache[redisTblName]
+				tblMap.(map[string]interface{})[tableKey] =nil
+				cvg.cv.tmpDbCache[redisTblName] = tblMap
+			}
+			//Load only one entry 
+			if (oneEntry == true) {
+				break
+			}
+		}
+
+		//fetch using pipeline
+		cvg.cv.fetchTableDataToTmpCache(redisTblName, cvg.cv.tmpDbCache[redisTblName].(map[string]interface{}))
+		data, err := jsonquery.ParseJsonMap(&cvg.cv.tmpDbCache)
+
+		if (err != nil) {
+			return CVL_FAILURE
+		}
+
+		//Build yang tree for each table and cache it
+		for jsonNode := data.FirstChild; jsonNode != nil; jsonNode=jsonNode.NextSibling {
+			//Visit each top level list in a loop for creating table data
+			topYangNode, _ := c.generateYangListData(jsonNode, false)
+
+			if (topYangNode == nil) {
+				//No entry found, check next entry
+				continue
+			}
+
+			if (topYangNode.FirstChild != nil) &&
+			(topYangNode.FirstChild.FirstChild != nil) {
+				//Add attribute mentioning that data is from db
+				addAttrNode(topYangNode.FirstChild.FirstChild, "db", "")
+			}
+
+			//Create full document by adding document node
+			doc := &xmlquery.Node{Type: xmlquery.DocumentNode}
+			doc.FirstChild = topYangNode
+			doc.LastChild = topYangNode
+			topYangNode.Parent = doc
+			if c.mergeYangData(c.yv.root, doc) != CVL_SUCCESS {
+				return CVL_INTERNAL_UNKNOWN
+			}
+		}
+
+	}
+
+	return CVL_SUCCESS
+}
+
+//Compile all must expression and save the expression tree
+func compileMustExps() {
+	reMultiPred := regexp.MustCompile(`\][ ]*\[`)
+
+	for _, tInfo := range modelInfo.tableInfo {
+		if (tInfo.mustExpr == nil) {
+			continue
+		}
+
+		// Replace multiple predicate using 'and' expressiona
+		// xpath engine not accepting multiple predicates
+		for  _, mustExprArr := range tInfo.mustExpr {
+			for  _, mustExpr := range mustExprArr {
+				mustExpr.exprTree = xpath.MustCompile(
+				reMultiPred.ReplaceAllString(mustExpr.expr, " and "))
+			}
+		}
+	}
+}
+
+//Compile all when expression and save the expression tree
+func compileWhenExps() {
+	reMultiPred := regexp.MustCompile(`\][ ]*\[`)
+
+	for _, tInfo := range modelInfo.tableInfo {
+		if (tInfo.whenExpr == nil) {
+			continue
+		}
+
+		// Replace multiple predicate using 'and' expressiona
+		// xpath engine not accepting multiple predicates
+		for  _, whenExprArr := range tInfo.whenExpr {
+			for _, whenExpr := range whenExprArr {
+				whenExpr.exprTree = xpath.MustCompile(
+				reMultiPred.ReplaceAllString(whenExpr.expr, " and "))
+				//Store all YANG list used in the expression
+				whenExpr.yangListNames = getYangListNamesInExpr(whenExpr.expr)
+			}
+		}
+	}
+}
+
+func compileLeafRefPath() {
+	reMultiPred := regexp.MustCompile(`\][ ]*\[`)
+
+	for _, tInfo := range modelInfo.tableInfo {
+		if (len(tInfo.leafRef) == 0) { //no leafref
+			continue
+		}
+
+		//for  nodeName, leafRefArr := range tInfo.leafRef {
+		for  _, leafRefArr := range tInfo.leafRef {
+			for _, leafRefArrItem := range leafRefArr {
+				if (leafRefArrItem.path == "non-leafref") {
+					//Leaf type has at-least one non-learef data type
+					continue
+				}
+
+				//first store the referred table and target node
+				leafRefArrItem.yangListNames, leafRefArrItem.targetNodeName =
+					getLeafRefTargetInfo(leafRefArrItem.path)
+				//check if predicate is used in path
+				//for complex expression, xpath engine is 
+				//used for evaluation,
+				//else don't build expression tree,
+				//it is handled by just checking redis entry
+				if strings.Contains(leafRefArrItem.path, "[") &&
+				strings.Contains(leafRefArrItem.path, "]") {
+					//Compile the xpath in leafref
+					tmpExp := reMultiPred.ReplaceAllString(leafRefArrItem.path, " and ")
+					//tmpExp = nodeName + " = " + tmpExp
+					tmpExp = "current() = " + tmpExp
+					leafRefArrItem.exprTree = xpath.MustCompile(tmpExp)
+				}
+			}
+		}
+	}
+}
+
+//Validate must expression
+func (c *CVL) validateMustExp(tableName, key string, op CVLOperation) (r CVLErrorInfo) {
+	defer func() {
+		ret := &r
+		CVL_LOG(INFO_API, "validateMustExp(): table name = %s, " +
+		"return value = %v", tableName, *ret)
+	}()
+
+	c.setOperation(op)
+
+	//Set xpath callback for retreiving dependent data
+	xpath.SetDepDataClbk(c, func(ctxt interface{}, redisKeys []string,
+	redisKeyFilter, keyNames, pred, fields, count string) string {
+		c := ctxt.(*CVL)
+		return c.addDepYangData(redisKeys, redisKeyFilter, keyNames, pred, fields, "")
+	})
+
+	//Set xpath callback for retriving dependent data count
+	xpath.SetDepDataCntClbk(c, func(ctxt interface{},
+	redisKeyFilter, keyNames, pred, field string) float64 {
+
+		if (pred != "") {
+			pred = "return (" + pred + ")"
+		}
+
+		redisEntries, err := luaScripts["count_entries"].Run(redisClient,
+		[]string{}, redisKeyFilter, keyNames, pred, field).Result()
+
+		count := float64(0)
+
+		if (err == nil) && (redisEntries.(int64) > 0) {
+			count = float64(redisEntries.(int64))
+		}
+
+		TRACE_LOG(TRACE_SEMANTIC, "depDataCntClbk() with redisKeyFilter=%s, " +
+		"keyNames= %s, predicate=%s, fields=%s, returned = %v",
+		redisKeyFilter, keyNames, pred, field, count)
+
+		return count
+	})
+
+	node := c.moveToYangList(tableName, key)
+	if (node == nil || node.FirstChild == nil) {
+		return CVLErrorInfo{
+			TableName: tableName,
+			ErrCode: CVL_SEMANTIC_ERROR,
+			CVLErrDetails: cvlErrorMap[CVL_SEMANTIC_ERROR],
+			Msg: "Failed to find YANG data for must expression validation",
+		}
+	}
+
+	//Load all table's any one entry for 'must' expression execution.
+	//This helps building full YANG tree for tables needed.
+	//Other instances/entries would be fetched as per xpath predicate execution 
+	//during expression evaluation
+	c.addYangDataForMustExp(op, tableName, true)
+
+	//Find the node where must expression is attached
+	for nodeName, mustExpArr := range modelInfo.tableInfo[tableName].mustExpr {
+		for _, mustExp := range mustExpArr {
+			ctxNode := node
+			if (ctxNode.Data != nodeName) { //must expression at list level
+				ctxNode = ctxNode.FirstChild
+				for (ctxNode !=nil) && (ctxNode.Data != nodeName) {
+					ctxNode = ctxNode.NextSibling //must expression at leaf level
+				}
+			}
+
+			//Check leafref for each leaf-list node
+			/*for ;(ctxNode != nil) && (ctxNode.Data == nodeName);
+			ctxNode = ctxNode.NextSibling {
+				//Load first data for each referred table. 
+				//c.yv.root has all requested data merged and any depdendent
+				//data needed for leafref validation should be available from this.
+
+				leafRefSuccess := false*/
+
+				if (ctxNode != nil) &&
+				(xmlquery.Eval(c.yv.root, ctxNode, mustExp.exprTree) == false) {
+					keys := []string{}
+					if (len(ctxNode.Parent.Attr) > 0) {
+						keys =  strings.Split(ctxNode.Parent.Attr[0].Value,
+						modelInfo.tableInfo[tableName].redisKeyDelim)
+					}
+
+					return CVLErrorInfo{
+						TableName: tableName,
+						ErrCode: CVL_SEMANTIC_ERROR,
+						CVLErrDetails: cvlErrorMap[CVL_SEMANTIC_ERROR],
+						Keys: keys,
+						Value: ctxNode.FirstChild.Data,
+						Field: nodeName,
+						Msg: "Must expression validation failed",
+						ConstraintErrMsg: mustExp.errStr,
+						ErrAppTag: mustExp.errCode,
+					}
+				}
+				//}
+			} //for each must exp
+		} //all must exp under one node
+
+		return CVLErrorInfo{ErrCode:CVL_SUCCESS}
+	}
+
+//Currently supports when expression with current table only
+func (c *CVL) validateWhenExp(tableName, key string, op CVLOperation) (r CVLErrorInfo) {
+	defer func() {
+		ret := &r
+		CVL_LOG(INFO_API, "validateWhenExp(): table name = %s, " + 
+		"return value = %v", tableName, *ret)
+	}()
+
+	if (op == OP_DELETE) {
+		//No new node getting added so skip when validation
+		return CVLErrorInfo{ErrCode:CVL_SUCCESS}
+	}
+
+	//Set xpath callback for retreiving dependent data
+	xpath.SetDepDataClbk(c, func(ctxt interface{}, redisKeys []string,
+	redisKeyFilter, keyNames, pred, fields, count string) string {
+		c := ctxt.(*CVL)
+		return c.addDepYangData(redisKeys, redisKeyFilter, keyNames, pred, fields, "")
+	})
+
+	node := c.moveToYangList(tableName, key)
+	if (node == nil || node.FirstChild == nil) {
+		return CVLErrorInfo{
+			TableName: tableName,
+			ErrCode: CVL_SEMANTIC_ERROR,
+			CVLErrDetails: cvlErrorMap[CVL_SEMANTIC_ERROR],
+			Msg: "Failed to find YANG data for must expression validation",
+		}
+	}
+
+	//Find the node where when expression is attached
+	for nodeName, whenExpArr := range modelInfo.tableInfo[tableName].whenExpr {
+		for _, whenExp := range whenExpArr { //for each when expression
+			ctxNode := node
+			if (ctxNode.Data != nodeName) { //when expression not at list level
+				ctxNode = ctxNode.FirstChild
+				for (ctxNode !=nil) && (ctxNode.Data != nodeName) {
+					ctxNode = ctxNode.NextSibling //whent expression at leaf level
+				}
+			}
+
+			//Add data for dependent table in when expression
+			//Add one entry only
+			for _, refListName := range whenExp.yangListNames {
+				refRedisTableName := getYangListToRedisTbl(refListName)
+
+				filter := refRedisTableName +
+				modelInfo.tableInfo[refListName].redisKeyDelim + "*"
+
+				c.addDepYangData([]string{}, filter,
+				strings.Join(modelInfo.tableInfo[refListName].keys, "|"),
+				"true", "", "1") //fetch one entry only
+			}
+
+			//Validate the when expression
+			if (ctxNode != nil) &&
+			(xmlquery.Eval(c.yv.root, ctxNode, whenExp.exprTree) == false) {
+				keys := []string{}
+				if (len(ctxNode.Parent.Attr) > 0) {
+					keys =  strings.Split(ctxNode.Parent.Attr[0].Value,
+					modelInfo.tableInfo[tableName].redisKeyDelim)
+				}
+
+				if (len(whenExp.nodeNames) == 1) && //when in leaf
+				(nodeName == whenExp.nodeNames[0]) {
+					return CVLErrorInfo{
+						TableName: tableName,
+						ErrCode: CVL_SEMANTIC_ERROR,
+						CVLErrDetails: cvlErrorMap[CVL_SEMANTIC_ERROR],
+						Keys: keys,
+						Value: ctxNode.FirstChild.Data,
+						Field: nodeName,
+						Msg: "When expression validation failed",
+					}
+				} else {
+					//check if any nodes in whenExp.nodeNames
+					//present in request data, when at list level
+					whenNodeList := strings.Join(whenExp.nodeNames, ",") + ","
+					for cNode := node.FirstChild; cNode !=nil;
+					cNode = cNode.NextSibling {
+						if strings.Contains(whenNodeList, (cNode.Data + ",")) {
+							return CVLErrorInfo{
+								TableName: tableName,
+								ErrCode: CVL_SEMANTIC_ERROR,
+								CVLErrDetails: cvlErrorMap[CVL_SEMANTIC_ERROR],
+								Keys: keys,
+								Value: cNode.FirstChild.Data,
+								Field: cNode.Data,
+								Msg: "When expression validation failed",
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return CVLErrorInfo{ErrCode:CVL_SUCCESS}
+}
+
+//Validate leafref
+//Convert leafref to must expression
+//type leafref { path "../../../ACL_TABLE/ACL_TABLE_LIST/aclname";} converts to
+// "current() = ../../../ACL_TABLE/ACL_TABLE_LIST[aclname=current()]/aclname"
+func (c *CVL) validateLeafRef(tableName, key string, op CVLOperation) (r CVLRetCode) {
+	defer func() {
+		ret := &r
+		CVL_LOG(INFO_API, "validateLeafRef(): table name = %s, " +
+		"return value = %v", tableName, *ret)
+	}()
+
+	if (op == OP_DELETE) {
+		//No new node getting added so skip leafref validation
+		return CVL_SUCCESS
+	}
+
+	//Set xpath callback for retreiving dependent data
+	xpath.SetDepDataClbk(c, func(ctxt interface{}, redisKeys []string,
+	redisKeyFilter, keyNames, pred, fields, count string) string {
+		c := ctxt.(*CVL)
+		return c.addDepYangData(redisKeys, redisKeyFilter, keyNames, pred, fields, "")
+	})
+
+	listNode := c.moveToYangList(tableName, key)
+	if (listNode == nil || listNode.FirstChild == nil) {
+		return CVL_SEMANTIC_ERROR
+	}
+
+	tblInfo := modelInfo.tableInfo[tableName]
+
+	for nodeName, leafRefs := range tblInfo.leafRef { //for each leafref node
+
+		//Reach to the node where leafref is present
+		ctxNode := listNode.FirstChild
+		for ;(ctxNode !=nil) && (ctxNode.Data != nodeName);
+		ctxNode = ctxNode.NextSibling {
+		}
+
+		if (ctxNode == nil) {
+			//No leafref instance present, proceed to next leafref
+			continue
+		}
+
+		//Check leafref for each leaf-list node
+		for ;(ctxNode != nil) && (ctxNode.Data == nodeName);
+		ctxNode = ctxNode.NextSibling {
+			//Load first data for each referred table. 
+			//c.yv.root has all requested data merged and any depdendent
+			//data needed for leafref validation should be available from this.
+
+			leafRefSuccess := false
+			nonLeafRefPresent := false //If leaf has non-leafref data type due to union
+			//Excute all leafref checks, multiple leafref for unions
+			leafRefLoop:
+			for _, leafRefPath := range leafRefs {
+				if (leafRefPath.path == "non-leafref") {
+					//Leaf has at-least one non-leaferf data type in union
+					nonLeafRefPresent = true
+					continue
+				}
+
+				//Add dependent data for all referred tables
+				for _, refListName := range leafRefPath.yangListNames {
+					refRedisTableName := getYangListToRedisTbl(refListName)
+					ctxtVal := ""
+
+					//Get the leaf value
+					if (ctxNode.FirstChild != nil) {
+						ctxtVal = ctxNode.FirstChild.Data
+					}
+
+					filter := ""
+					var err error
+					var tableKeys []string
+					if (leafRefPath.exprTree == nil) { //no predicate, single key case
+						//Context node used for leafref
+						//Keys -> ACL_TABLE|TestACL1
+						filter = refRedisTableName +
+						modelInfo.tableInfo[refListName].redisKeyDelim + ctxtVal
+						tableKeys, err = redisClient.Keys(filter).Result()
+					} else {
+						//Keys -> ACL_TABLE|*
+						filter =  refRedisTableName +
+						modelInfo.tableInfo[refListName].redisKeyDelim + "*"
+						//tableKeys, _, err = redisClient.Scan(0, filter, 1).Result()
+						tableKeys, err = redisClient.Keys(filter).Result()
+					}
+
+					if (err != nil) || (len(tableKeys) == 0) {
+						//There must be at least one entry in the ref table
+						TRACE_LOG(TRACE_SEMANTIC, "Leafref dependent data " +
+						"table %s, key %s not found in Redis", refRedisTableName,
+						ctxtVal)
+
+						if (leafRefPath.exprTree == nil) {
+							//Check the key in request cache also
+							if _, exists := c.requestCache[refRedisTableName][ctxtVal];
+							exists == true {
+								//no predicate and single key is referred
+								leafRefSuccess = true
+								break leafRefLoop
+							} else if node := c.findYangList(refListName, ctxtVal);
+							node != nil {
+								//Found in the request tree
+								leafRefSuccess = true
+								break leafRefLoop
+							}
+						}
+						continue
+					} else {
+						if (leafRefPath.exprTree == nil) {
+							//no predicate and single key is referred
+							leafRefSuccess = true
+							break leafRefLoop
+						}
+					}
+
+					//Now add the first data 
+					c.addDepYangData([]string{}, tableKeys[0],
+					strings.Join(modelInfo.tableInfo[refListName].keys, "|"),
+					"true", "", "")
+				}
+
+				//Excute xpath expression for complex leafref path
+				if (xmlquery.Eval(c.yv.root, ctxNode, leafRefPath.exprTree) == true) {
+					leafRefSuccess = true
+					break leafRefLoop
+				}
+			} //for loop for all leafref check for a leaf - union case
+
+			if (leafRefSuccess == false) && (nonLeafRefPresent == false) {
+				//Return failure if none of the leafref exists and
+				//the leaf has no non-leafref data type as well
+				return CVL_SEMANTIC_DEPENDENT_DATA_MISSING
+			} else if (leafRefSuccess == false) {
+				TRACE_LOG(TRACE_SEMANTIC, "validateLeafRef(): " +
+				"Leafref dependent data not found but leaf has " +
+				"other data type in union, returning success.")
+			}
+		} //for each leaf-list node
+	}
+
+	return CVL_SUCCESS
 }
 
 //Find which all tables (and which field) is using given (tableName/field)
@@ -552,8 +1240,8 @@ func (c *CVL) findUsedAsLeafRef(tableName, field string) []tblFieldPair {
 			found := false
 			//Find leafref by searching table and field name
 			for _, leafRef := range leafRefs {
-				if ((strings.Contains(leafRef, tableName) == true) &&
-				(strings.Contains(leafRef, field) == true)) {
+				if ((strings.Contains(leafRef.path, tableName) == true) &&
+				(strings.Contains(leafRef.path, field) == true)) {
 					tblFieldPairArr = append(tblFieldPairArr,
 					tblFieldPair{tblName, fieldName})
 					//Found as leafref, no need to search further
@@ -623,5 +1311,63 @@ func (c *CVL) checkDeleteConstraint(cfgData []CVLEditConfigData,
 
 
 	return CVL_SUCCESS
+}
+
+//Validate external dependency using leafref, must and when expression
+func (c *CVL) validateEditCfgExtDep(yangListName, key string,
+	cfgData *CVLEditConfigData) (r CVLErrorInfo) {
+
+	//Check all leafref
+	if errCode := c.validateLeafRef(yangListName, key, cfgData.VOp) ;
+	errCode != CVL_SUCCESS {
+		return CVLErrorInfo {
+			ErrCode: errCode,
+			CVLErrDetails: cvlErrorMap[errCode],
+		}
+	}
+
+	//Validate when expression
+	if errObj := c.validateWhenExp(yangListName, key, cfgData.VOp) ;
+	errObj.ErrCode != CVL_SUCCESS {
+		return errObj
+	}
+
+	//Validate must expression
+	if (cfgData.VOp == OP_DELETE) {
+		if (len(cfgData.Data) > 0) {
+			//Multiple field delete case, must expression execution 
+			//supported for entire entry delete only
+			return CVLErrorInfo{ErrCode:CVL_SUCCESS}
+		}
+	}
+
+	if errObj := c.validateMustExp(yangListName, key, cfgData.VOp) ;
+	errObj.ErrCode != CVL_SUCCESS {
+		return errObj
+	}
+
+	return CVLErrorInfo{ErrCode:CVL_SUCCESS}
+}
+
+//Validate external dependency using leafref, must and when expression
+func (c *CVL) validateCfgExtDep(root *xmlquery.Node) (r CVLErrorInfo) {
+	if (strings.HasSuffix(root.Data, "_LIST")) {
+		if (len(root.Attr) == 0) {
+			return CVLErrorInfo{ErrCode:CVL_SUCCESS}
+		}
+		yangListName := root.Data[:len(root.Data) - 5]
+		return c.validateEditCfgExtDep(yangListName, root.Attr[0].Value,
+		&CVLEditConfigData{VType: VALIDATE_NONE, VOp: OP_NONE})
+	}
+
+	ret := CVLErrorInfo{}
+	for node := root.FirstChild; node != nil ; node = node.NextSibling {
+		ret = c.validateCfgExtDep(node)
+		if (ret.ErrCode != CVL_SUCCESS) {
+			break
+		}
+	}
+
+	return ret
 }
 

@@ -92,7 +92,7 @@ limitations under the License.
              help="Collector name" 
              ptype="STRING"> 
       </PARAM>
-      <PARAM name="ip-type" 
+      <PARAM name="type" 
              help="Collector ip address type" 
              ptype="SUBCOMMAND" 
              mode="subcommand">
@@ -101,7 +101,7 @@ limitations under the License.
                ptype="IP_TYPE"> 
         </PARAM>
       </PARAM>
-      <PARAM name="ip-addr" 
+      <PARAM name="ip" 
              help="Collector ip address" 
              ptype="SUBCOMMAND" 
              mode="subcommand">

@@ -15,6 +15,10 @@ module sonic-bgp-global {
         prefix srmap;
     }
 
+    import sonic-bgp-common {
+        prefix sbc;
+    }
+
     organization
         "SONiC";
 
@@ -366,6 +370,8 @@ module sonic-bgp-global {
                     description
                         "Match the cluster length.";
                 }
+
+                uses sbc:sonic-bgp-af-evpn-global;
             }
         }
 
@@ -387,6 +393,74 @@ module sonic-bgp-global {
                     type string;
                 }
 
+            }
+        }
+
+        container BGP_GLOBALS_EVPN_RT {
+            list BGP_GLOBALS_EVPN_RT_LIST {
+                key "vrf af_name route_target";
+
+                leaf vrf {
+                    type string;
+                }
+
+                leaf af_name {
+                    type string;
+                }
+
+                leaf route_target {
+                    type string;
+                }
+
+                leaf route-target-type {
+                    type string;
+                }
+            }
+        }
+
+        container BGP_GLOBALS_EVPN_VNI {
+            list BGP_GLOBALS_EVPN_VNI_LIST {
+                key "vrf af_name vni_number";
+
+                leaf vrf {
+                    type string;
+                }
+
+                leaf af_name {
+                    type string;
+                }
+
+                leaf vni_number {
+                    type uint32;
+                }
+
+                uses sbc:sonic-bgp-evpn-vni-common;
+            }
+        }
+
+        container BGP_GLOBALS_EVPN_VNI_RT {
+            list BGP_GLOBALS_EVPN_VNI_RT_LIST {
+                key "vrf af_name vni_number route_target";
+
+                leaf vrf {
+                    type string;
+                }
+
+                leaf af_name {
+                    type string;
+                }
+
+                leaf vni_number {
+                    type uint32;
+                }
+
+                leaf route_target {
+                    type string;
+                }
+
+                leaf route-target-type {
+                    type string;
+                }
             }
         }
     }

@@ -52,7 +52,37 @@ def invoke_api(func, args=[]):
             keypath = cc.Path(uri, name=args[0], name1=args[1])
             body = { "openconfig-bgp-policy:set-route-origin" : args[2].upper() }
             return api.patch(keypath, body)
-
+        elif attr == 'openconfig_bgp_policy_routing_policy_policy_definitions_policy_definition_statements_statement_actions_bgp_actions_set_as_path_prepend_config_asn':
+            keypath = cc.Path(uri, name=args[0], name1=args[1])
+            body = { "openconfig-bgp-policy:asn" : int(args[2]) }
+            return api.patch(keypath, body)  
+        elif attr == 'openconfig_bgp_policy_routing_policy_policy_definitions_policy_definition_statements_statement_actions_bgp_actions_set_community_config':
+            keypath = cc.Path(uri, name=args[0], name1=args[1])
+            return api.patch(keypath, body)
+        elif attr == 'openconfig_bgp_policy_routing_policy_policy_definitions_policy_definition_statements_statement_actions_bgp_actions_set_community_config_method':
+            keypath = cc.Path(uri, name=args[0], name1=args[1])
+            body = { "openconfig-bgp-policy:method" : args[2] }
+            return api.patch(keypath, body) 
+        elif attr == 'openconfig_bgp_policy_routing_policy_policy_definitions_policy_definition_statements_statement_actions_bgp_actions_set_community_config_options':
+            keypath = cc.Path(uri, name=args[0], name1=args[1])
+            body = { "openconfig-bgp-policy:options" : args[2] }
+            return api.patch(keypath, body)
+        elif attr == 'openconfig_bgp_policy3674057445':
+            keypath = cc.Path(uri, name=args[0], name1=args[1])
+            body = { "openconfig-bgp-policy:communities" : [args[2]] }
+            return api.patch(keypath, body)
+        elif attr == 'openconfig_bgp_policy_routing_policy_policy_definitions_policy_definition_statements_statement_actions_bgp_actions_set_ext_community_config_method':
+            keypath = cc.Path(uri, name=args[0], name1=args[1])
+            body = { "openconfig-bgp-policy:method" : args[2] }
+            return api.patch(keypath, body)
+        elif attr == 'openconfig_bgp_policy_routing_policy_policy_definitions_policy_definition_statements_statement_actions_bgp_actions_set_ext_community_config_options':
+            keypath = cc.Path(uri, name=args[0], name1=args[1])
+            body = { "openconfig-bgp-policy:options" : args[2] }
+            return api.patch(keypath, body)
+        elif attr == 'openconfig_bgp_policy2318914281':
+            keypath = cc.Path(uri, name=args[0], name1=args[1])
+            body = { "openconfig-bgp-policy:communities" : ["route-target:"+args[3]] if "rt" == args[2] else ["route-origin:"+args[3]] }
+            return api.patch(keypath, body)
     elif op == 'delete':
         keypath = cc.Path(uri,
                 name=args[0], name1=args[1])

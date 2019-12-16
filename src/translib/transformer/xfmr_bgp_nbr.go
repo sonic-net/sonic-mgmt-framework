@@ -775,6 +775,8 @@ func get_afi_safi_name_enum_dbstr_for_ocstr (afiSafiNameStr string) (ocbinds.E_O
             return ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_IPV4_UNICAST, "ipv4_unicast", true
         case "IPV6_UNICAST":
             return ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_IPV6_UNICAST, "ipv6_unicast", true
+        case "L2VPN_EVPN":
+            return ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_L2VPN_EVPN, "l2vpn_evpn", true
         default:
             return ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_UNSET, "", false
     }

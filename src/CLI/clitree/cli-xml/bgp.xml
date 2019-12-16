@@ -99,10 +99,10 @@ limitations under the License.
     <PARAM name="unicast" help="Unicast route information" mode="subcommand" ptype="SUBCOMMAND"/>
     <ACTION builtin="clish_nop"/>
   </COMMAND>
-  <COMMAND name="show ip bgp l2vpn" help="L2VPN route information">
-    <PARAM name="evpn" help="EVPN route information" mode="subcommand" ptype="SUBCOMMAND"/>
+  <!--COMMAND name="show ip bgp l2vpn" help="L2VPN route information"/>
+  <COMMAND name="show ip bgp l2vpn evpn" help="L2VPN EVPN route information">
     <ACTION builtin="clish_nop"/>
-  </COMMAND>
+  </COMMAND-->
 </VIEW>
 
 <VIEW name="configure-view">
@@ -297,6 +297,10 @@ limitations under the License.
     <PARAM name="unicast" help="Address Family" mode="subcommand" ptype="SUBCOMMAND" view="configure-router-bgp-ipv6-view" viewid="family=ipv6"/>
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_config ${vrf-name} IPV6_UNICAST</ACTION>
   </COMMAND>
+  <COMMAND name="address-family l2vpn" help="Enter Address Family command mode" view="configure-router-bgp-l2vpn-view" viewid="vrf-name=${vrf-name};family=l2vpn">
+    <PARAM name="evpn" help="Address Family" mode="subcommand" ptype="SUBCOMMAND" view="configure-router-bgp-l2vpn-view" viewid="family=l2vpn"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_config ${vrf-name} L2VPN_EVPN</ACTION>
+  </COMMAND>
 
   <COMMAND name="listen" help="Set the prefix range for dynamic peers">
     <PARAM name="addr" help="Neighbor prefix" ptype="IP_ADDR_MASK">
@@ -345,7 +349,7 @@ limitations under the License.
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_bgp_ext_route_reflector_config_route_reflector_cluster_id ${vrf-name}</ACTION>
   </COMMAND>
   <COMMAND name="no log-neighbor-changes" help="Log neighbor up/down and reset reason(default)">
-    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_logging_options_config_log_neighbor_state_changes ${vrf-name}</ACTION>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_logging_options_config_log_neighbor_state_changes ${vrf-name} False</ACTION>
   </COMMAND>
   <COMMAND name="no dampening" help="Enable route-flap dampening">
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_route_flap_damping_config_enabled ${vrf-name}&#xA;
@@ -459,6 +463,10 @@ limitations under the License.
   <COMMAND name="no address-family ipv6" help="Enter Address Family command mode">
     <PARAM name="unicast" help="Address Family" mode="subcommand" ptype="SUBCOMMAND"/>
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi ${vrf-name} IPV6_UNICAST</ACTION>
+  </COMMAND>
+  <COMMAND name="no address-family l2vpn" help="Enter Address Family command mode">
+    <PARAM name="evpn" help="Address Family" mode="subcommand" ptype="SUBCOMMAND"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi ${vrf-name} L2VPN_EVPN</ACTION>
   </COMMAND>
 </VIEW>
 
@@ -693,10 +701,6 @@ limitations under the License.
     <PARAM name="hop-count" help="Maximum hop count (default=1)" ptype="RANGE_1_255"/>
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_ebgp_multihop_config ${vrf-name} ${template-name} True ${hop-count}</ACTION>
   </COMMAND>
-  <COMMAND name="peer-group" help="Inherit configuration of peer-group">
-    <PARAM name="template-name" help="Name of peer-group from which to inherit" ptype="STRING"/>
-    <ACTION builtin="clish_nop"/>
-  </COMMAND>
   <COMMAND name="remote-as" help="Specify a BGP neighbor AS">
     <PARAM name="remtype" help="Remote type" mode="switch" ptype="SUBCOMMAND">
       <PARAM name="internal" help="Internal BGP peer" mode="subcommand" ptype="SUBCOMMAND"/>
@@ -819,10 +823,6 @@ limitations under the License.
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_ebgp_multihop_config_enabled ${vrf-name} ${template-name}&#xA;
              python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_ebgp_multihop_config_multihop_ttl ${vrf-name} ${template-name}&#xA;
     </ACTION>
-  </COMMAND>
-  <COMMAND name="no peer-group" help="Inherit configuration of peer-group" mode="subcommand" ptype="SUBCOMMAND">
-    <PARAM name="template-name" help="Name of peer-group from which to inherit" ptype="STRING" optional="true"/>
-    <ACTION builtin="clish_nop"/>
   </COMMAND>
   <COMMAND name="no remote-as" help="Specify a BGP neighbor AS">
     <PARAM name="remtype" help="Remote type" mode="switch" ptype="SUBCOMMAND" optional="true">

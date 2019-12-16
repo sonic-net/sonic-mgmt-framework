@@ -20,11 +20,11 @@
 package server
 
 import (
-	"encoding/xml"
 	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"sort"
 	"strings"
 	"testing"
 
@@ -54,9 +54,10 @@ func TestRoutes(t *testing.T) {
 	SetUIDirectory("/tmp/ui") // !!?
 	testRouter = NewRouter()
 	newCount := countRoutes(testRouter)
+	expCount := initCount + 4 // OPTIONS handler is automaticall added for above 2 GET handlers
 
-	if newCount != initCount+2 {
-		t.Fatalf("Expected route count %d; found %d", initCount+2, newCount)
+	if newCount != expCount {
+		t.Fatalf("Expected route count %d; found %d", expCount, newCount)
 	}
 
 	// Try the test URLs and an unknown URL. The unknonw path
@@ -74,9 +75,7 @@ func TestRoutes(t *testing.T) {
 	t.Run("Get1_auth", testGet("/test/1", 401))
 	t.Run("Get2_auth", testGet("/test/2", 401))
 	t.Run("GetUnknown_auth", testGet("/test/unknown", 404))
-
-	// Meta handler should not be affected by user auth
-	t.Run("Meta_auth", testGet("/.well-known/host-meta", 200))
+	t.Run("Meta_auth", testGet("/.well-known/host-meta", 401))
 
 	// Cleanup for next tests
 	ClientAuth.Unset("password")
@@ -106,55 +105,58 @@ func testGet(url string, expStatus int) func(*testing.T) {
 	}
 }
 
-func TestMetadataHandler(t *testing.T) {
-	r := httptest.NewRequest("GET", "/.well-known/host-meta", nil)
-	w := httptest.NewRecorder()
+func TestOptions(t *testing.T) {
+	path1 := "/optionstest/1"
+	path2 := "/optionstest/2"
+	path3 := restconfDataPathPrefix + "optionstest/3"
 
-	NewRouter().ServeHTTP(w, r)
+	h := func(w http.ResponseWriter, r *http.Request) {}
+	AddRoute("OPTGET1", "GET", path1, h)
+	AddRoute("OPTGET2", "GET", path2, h)
+	AddRoute("OPTPUT2", "PUT", path2, h)
+	AddRoute("OPTPAT2", "PATCH", path2, h)
+	AddRoute("OPTPAT3", "PATCH", path3, h)
 
-	if w.Code != 200 {
-		t.Fatalf("Request failed with status %d", w.Code)
-	}
+	testRouter = NewRouter()
+	t.Run("OPT-1", testOptions(path1, "GET, OPTIONS", ""))
+	t.Run("OPT-2", testOptions(path2, "GET, PUT, PATCH, OPTIONS", ""))
+	t.Run("OPT-3", testOptions(path3, "PATCH, OPTIONS", mimeYangDataJSON))
+	testRouter = nil
+}
 
-	ct, _ := parseMediaType(w.Header().Get("content-type"))
-	if ct == nil || ct.Type != "application/xrd+xml" {
-		t.Fatalf("Unexpected content-type '%s'", w.Header().Get("content-type"))
-	}
+func testOptions(path, expAllow, expAcceptPatch string) func(*testing.T) {
+	return func(t *testing.T) {
+		//t.Logf("Trying OPTIONS %s", path)
+		w := httptest.NewRecorder()
+		testRouter.ServeHTTP(w, httptest.NewRequest("OPTIONS", path, nil))
 
-	data := w.Body.Bytes()
-	if len(data) == 0 {
-		t.Fatalf("No response body")
-	}
+		allow := w.Header().Get("Allow")
+		acceptPatch := w.Header().Get("Accept-Patch")
 
-	var payload struct {
-		XMLName xml.Name `xml:"XRD"`
-		Links   []struct {
-			Rel  string `xml:"rel,attr"`
-			Href string `xml:"href,attr"`
-		} `xml:"Link"`
-	}
-
-	err := xml.Unmarshal(data, &payload)
-	if err != nil {
-		t.Fatalf("Response parsing failed; err=%v", err)
-	}
-
-	if payload.XMLName.Local != "XRD" ||
-		payload.XMLName.Space != "http://docs.oasis-open.org/ns/xri/xrd-1.0" {
-		t.Fatalf("Invalid response '%s'", data)
-	}
-
-	var rcRoot string
-	for _, x := range payload.Links {
-		if x.Rel == "restconf" {
-			rcRoot = x.Href
+		if w.Code != 200 {
+			t.Fatalf("Handler returned %d for path %s", w.Code, path)
+		}
+		if allow == "" {
+			t.Fatalf("Handler did not return 'Allow' header for path %s", path)
+		}
+		if normalizeCommaList(allow) != normalizeCommaList(expAllow) {
+			t.Fatalf("Expecting 'Allow' methods [%s]; found [%s] for path %s",
+				expAllow, allow, path)
+		}
+		if acceptPatch != expAcceptPatch {
+			t.Fatalf("Expecting 'Accept-Patch' [%s]; found [%s] for path %s",
+				expAcceptPatch, acceptPatch, path)
 		}
 	}
+}
 
-	t.Logf("Restconf root = '%s'", rcRoot)
-	if rcRoot != "/restconf" {
-		t.Fatalf("Invalid restconf root; expected '/restconf'")
+func normalizeCommaList(value string) string {
+	toks := strings.Split(value, ",")
+	for i, v := range toks {
+		toks[i] = strings.TrimSpace(v)
 	}
+	sort.Strings(toks)
+	return strings.Join(toks, ",")
 }
 
 // Test REST to Translib path conversions
@@ -500,6 +502,25 @@ func TestProcessGET(t *testing.T) {
 func TestProcessGET_error(t *testing.T) {
 	w := httptest.NewRecorder()
 	Process(w, prepareRequest(t, "GET", "/api-tests:sample/error/not-found", ""))
+	verifyResponse(t, w, 404)
+}
+
+func TestProcessHEAD(t *testing.T) {
+	w := httptest.NewRecorder()
+	Process(w, prepareRequest(t, "HEAD", "/api-tests:sample", ""))
+	verifyResponse(t, w, 200)
+
+	if w.Header().Get("Content-Length") == "" {
+		t.Fatalf("Expecting Content-Length response header..")
+	}
+	if w.Body.Len() != 0 {
+		t.Fatalf("Expecting empty body; found %d bytes - %s", w.Body.Len(), w.Body.String())
+	}
+}
+
+func TestProcessHEAD_error(t *testing.T) {
+	w := httptest.NewRecorder()
+	Process(w, prepareRequest(t, "HEAD", "/api-tests:sample/error/not-found", ""))
 	verifyResponse(t, w, 404)
 }
 

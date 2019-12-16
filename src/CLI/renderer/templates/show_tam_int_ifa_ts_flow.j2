@@ -1,0 +1,29 @@
+{% set vars = {'name': ""} %}
+{% set vars = {'aclrule': ""} %}
+{% set vars = {'acltable': ""} %}
+
+{% if json_output -%}
+
+{% for key_json in json_output %}
+
+    {% if key_json == "sonic-tam-int-ifa-ts:TAM_INT_IFA_TS_FLOW_TABLE" %}
+        {% set flow_list = json_output[key_json]["TAM_INT_IFA_TS_FLOW_TABLE_LIST"] %}
+    {% else %}
+        {% set flow_list = json_output[key_json] %}
+    {% endif %}
+------------------------------------------------------------------------------------------------
+{{'%-15s'|format("FLOW")}}{{'%-15s'|format("ACL TABLE")}}{{'%-15s'|format("ACL RULE")}}
+------------------------------------------------------------------------------------------------
+{% for flow in flow_list %}
+
+    {% if vars.update({'name':flow["name"]}) %}{% endif %}
+    {% if vars.update({'aclrule':flow["acl-rule-name"]}) %}{% endif %}
+    {% if vars.update({'acltable':flow["acl-table-name"]}) %}{% endif %}
+{{'%-15s'|format(vars.name)}}{{'%-15s'|format(vars.acltable)}}{{'%-15s'|format(vars.aclrule)}}
+
+{% endfor %}
+
+{% endfor %}
+
+{% endif %}
+

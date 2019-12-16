@@ -17,14 +17,16 @@
         {% if vars.update({'intf_shut':"NA"}) %}{% endif %}
 
         {% if vars.update({'intf_name':intf['name']}) %}{% endif %}
-        {% if (intf['config']['openconfig-spanning-tree-ext:bpdu-guard-port-shutdown'] == true) %}
+        {% if (intf['config']['bpdu-guard'] == true) %}
+          {% if (intf['config']['openconfig-spanning-tree-ext:bpdu-guard-port-shutdown'] == true) %}
                 {% if vars.update({'intf_shut_conf': "Y"}) %}{% endif %}
                 {% if (intf['state']['openconfig-spanning-tree-ext:bpdu-guard-shutdown'] == true) %}
                         {% if vars.update({'intf_shut': "Y"}) %}{% endif %}
                 {% else %}
                         {% if vars.update({'intf_shut': "N"}) %}{% endif %}
                 {% endif %}
-        {% endif %}
+          {% endif %}
 {{'%-17s'|format(vars.intf_name)}}{{'%-12s'|format(vars.intf_shut_conf)}}{{'%-19s'|format(vars.intf_shut)}}
+        {% endif %}
 {% endfor %}
 {% endif %}

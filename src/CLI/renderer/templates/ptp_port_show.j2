@@ -1,34 +1,39 @@
 {% for key,value in json_output.items() %}
 {% for item in value %}
-{% for key2,value2 in item.items() %}
-{% if 'port-number' == key2 %}
-{{ 'Port Number'.ljust(30)}} {{ value2}}
-{% endif %}
-{% if 'port-state' == key2 %}
-{{ 'Port State'.ljust(30)}} {{ value2 }}
-{% endif %}
-{% if 'log-min-delay-req-interval' == key2.keys %}
-{{ 'Log Min delay Req Intvl'.ljust(30)}} {{ value2 }}
-{% endif %}
-{% if 'peer-mean-path-delay' == key2 %}
-{{ 'Peer Mean Path delay'.ljust(30)}} {{ value2 }}
-{% endif %}
-{% if 'log-announce-interval' == key2 %}
-{{ 'Log Announce Interval'.ljust(30)}} {{ value2 }}
-{% endif %}
-{% if 'log-sync-interval' == key2 %}
-{{ 'Log Sync Interval'.ljust(30)}} {{ value2 }}
-{% endif %}
-{% if 'delay-mechanism' == key2 %}
-{{ 'Delay Mechanism'.ljust(30)}} {{ value2 }}
-{% endif %}
-{% if 'log-min-pdelay-req-interval' == key2 %}
-{{ 'Log Min PDelay Req Interval'.ljust(30)}} {{ value2 }}
-{% endif %}
-{% if 'version-number' == key2 %}
-{{ 'Version Number'.ljust(30)}} {{ value2 }}
-{% endif %}
-{% endfor %}
-{% endfor %}
-{% endfor %}
 
+{% if 'port-number' in item %}
+{{ 'Port Number'.ljust(30)}} {{ item['port-number'] }}
+{% endif %}
+{% if 'port-state' in item %}
+{{ 'Port State'.ljust(30)}} {{ item['port-state'] }}
+{% endif %}
+{% if 'log-min-delay-req-interval' in item %}
+{{ 'Log Min delay Req Intvl'.ljust(30)}} {{ item['log-min-delay-req-interval'] }}
+{% endif %}
+{% if 'peer-mean-path-delay' in item %}
+{{ 'Peer Mean Path Delay'.ljust(30)}} {{ item['peer-mean-path-delay'] }}
+{% endif %}
+{% if 'log-announce-interval' in item %}
+{{ 'Log Announce Interval'.ljust(30)}} {{ item['log-announce-interval'] }}
+{% endif %}
+{% if 'log-sync-interval' in item %}
+{{ 'Log Sync Interval'.ljust(30)}} {{ item['log-sync-interval'] }}
+{% endif %}
+{% if 'delay-mechanism' in item %}
+{{ 'Delay Mechanism'.ljust(30)}} {{ item['delay-mechanism'] }}
+{% endif %}
+{% if 'log-min-pdelay-req-interval' in item %}
+{{ 'Log Min PDelay Req Interval'.ljust(30)}} {{ item['log-min-pdelay-req-interval'] }}
+{% endif %}
+{% if 'version-number' in item %}
+{{ 'Version Number'.ljust(30)}} {{ item['version-number'] }}
+{% endif %}
+
+{% if 'unicast-table' in item %}
+{{ 'Unicast Master Table:'.ljust(30)}}
+{% for i in item['unicast-table'].split(',') %}
+{{ ''.ljust(30)}} {{ i }}
+{% endfor %}
+{% endif %}
+{% endfor %}
+{% endfor %}

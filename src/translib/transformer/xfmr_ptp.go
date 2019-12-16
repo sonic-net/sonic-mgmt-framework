@@ -315,17 +315,17 @@ var DbToYang_ptp_boolean_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (map
 	} else if field == "parent-stats" {
 		inval = data["PTP_PARENTDS"][inParams.key].Field[field]
 	} else if field == "current-utc-offset-valid" {
-		inval = data["TIMEPROPDS"][inParams.key].Field[field]
+		inval = data["PTP_TIMEPROPDS"][inParams.key].Field[field]
 	} else if field == "leap59" {
-		inval = data["TIMEPROPDS"][inParams.key].Field[field]
+		inval = data["PTP_TIMEPROPDS"][inParams.key].Field[field]
 	} else if field == "leap61" {
-		inval = data["TIMEPROPDS"][inParams.key].Field[field]
+		inval = data["PTP_TIMEPROPDS"][inParams.key].Field[field]
 	} else if field == "time-traceable" {
-		inval = data["TIMEPROPDS"][inParams.key].Field[field]
+		inval = data["PTP_TIMEPROPDS"][inParams.key].Field[field]
 	} else if field == "frequency-traceable" {
-		inval = data["TIMEPROPDS"][inParams.key].Field[field]
+		inval = data["PTP_TIMEPROPDS"][inParams.key].Field[field]
 	} else if field == "ptp-timescale" {
-		inval = data["TIMEPROPDS"][inParams.key].Field[field]
+		inval = data["PTP_TIMEPROPDS"][inParams.key].Field[field]
 	} else if field == "faulty-flag" {
 		inval = data["PTP_TC_PORT"][inParams.key].Field[field]
 	}

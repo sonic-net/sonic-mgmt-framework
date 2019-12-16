@@ -20,7 +20,6 @@
 package custom_validation
 
 import (
-	"fmt"
 	"reflect"
 	"github.com/antchfx/xmlquery"
 	"github.com/go-redis/redis"
@@ -120,7 +119,6 @@ func InvokeCustomValidation(cv *CustomValidation, name string, args... interface
 		TRACE_LEVEL_LOG(TRACE_SEMANTIC,
 		"InvokeCustomValidation: %s(), return value = %v", v[0])
 
-		fmt.Printf("Return value = %v\n", v[0])
 		return (v[0].Interface()).(CVLErrorInfo)
 	}
 

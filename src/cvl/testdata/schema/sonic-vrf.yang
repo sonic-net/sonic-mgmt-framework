@@ -1,0 +1,62 @@
+module sonic-vrf {
+    namespace "http://github.com/Azure/sonic-vrf";
+    prefix vrf;
+
+    import sonic-vxlan {
+        prefix svxlan;
+    }
+
+    organization
+        "SONiC";
+
+    contact
+        "SONiC";
+
+    description
+        "SONIC VRF";
+
+    revision 2019-10-30 {
+        description
+            "Initial revision.";
+    }
+
+    container sonic-vrf {
+        container VRF {
+            description "Vrf configuration.";            
+
+            list VRF_LIST {
+                key "vrf_name";
+
+                leaf vrf_name {
+                    type string;
+                    description
+                        "Vrf name for SONiC, must start with Vrf.";
+                }   
+
+                leaf fallback {
+                    type  boolean;
+                    default false;
+                    description
+                        "Enalbe/disable fallback feature which is useful for specified VRF user to access internet through global/main route.";
+                }
+
+                leaf vni {
+                    type uint32 {
+                        range "0..16777215" {
+                            error-message "VNI ID out of range";
+                            error-app-tag vnid-invalid;
+                        }
+                    }
+
+		    must  "count(/svxlan:sonic-vxlan/svxlan:VXLAN_TUNNEL_MAP/svxlan:VXLAN_TUNNEL_MAP_LIST[svxlan:vni=current()]) > 0"  {
+                            error-app-tag vnid-not-configured;
+		    }
+
+                    default 0;
+                    description
+                        "VNI mapped to VRF";
+                }
+            }
+        }
+    }
+}

@@ -18,6 +18,15 @@ module openconfig-spanning-tree-ext {
             "Per Vlan Spanning Tree Protocol";
     }
 
+    typedef stp-bridge-priority-type-ext {
+        type uint32 {
+            range 0..61440;
+        }
+        description
+            "The manageable component of the Bridge Identifier";
+        reference "IEEE 802.1D 17.13.7 Bridge Identifier Priority";
+    }
+
     grouping stp-global-ext-config {
         leaf rootguard-timeout {
             type uint16 {
@@ -91,6 +100,30 @@ module openconfig-spanning-tree-ext {
             type string;
             description
                 "Name of root port";
+        }
+
+        leaf root-max-age {
+            type uint8;
+            description
+                "Maximum age at root bridge";
+        }
+
+        leaf root-hello-time {
+            type uint8;
+            description
+                "Hello time at root bridge";
+        }
+
+        leaf root-forward-delay {
+            type uint8;
+            description
+                "Forwarding delay at root bridge";
+        }
+
+        leaf designated-bridge-id {
+            type oc-yang:mac-address;
+            description
+                "Designated bridge id";
         }
     }
 
@@ -231,6 +264,23 @@ module openconfig-spanning-tree-ext {
         uses stp-interface-common-ext-config;
     }
 
+    deviation /oc-stp:stp/oc-stp:global/oc-stp:config/oc-stp-ext:bridge-priority {
+        deviate replace {
+            type stp-bridge-priority-type-ext;
+        }
+    }
+
+    deviation /oc-stp:stp/oc-stp-ext:pvst/oc-stp-ext:vlan/oc-stp-ext:config/oc-stp-ext:bridge-priority {
+        deviate replace {
+            type stp-bridge-priority-type-ext;
+        }
+    }
+
+    deviation /oc-stp:stp/oc-stp:rapid-pvst/oc-stp:vlan/oc-stp:config/oc-stp:bridge-priority {
+        deviate replace {
+            type stp-bridge-priority-type-ext;
+        }
+    }
 
     deviation /oc-stp:stp/oc-stp:global/oc-stp:config/oc-stp:bridge-assurance {
         deviate not-supported;
