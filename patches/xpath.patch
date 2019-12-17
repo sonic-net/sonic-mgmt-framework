@@ -308,7 +308,7 @@ index 308d3cb..e40b4b7 100644
  }
  
 diff --git a/query.go b/query.go
-index afeb890..5a136d0 100644
+index afeb890..40ee425 100644
 --- a/query.go
 +++ b/query.go
 @@ -1,10 +1,12 @@
@@ -325,7 +325,7 @@ index afeb890..5a136d0 100644
  )
  
  type iterator interface {
-@@ -33,10 +35,239 @@ func (nopQuery) Evaluate(iterator) interface{} { return nil }
+@@ -33,10 +35,247 @@ func (nopQuery) Evaluate(iterator) interface{} { return nil }
  
  func (nopQuery) Clone() query { return nopQuery{} }
  
@@ -420,12 +420,20 @@ index afeb890..5a136d0 100644
 +				}
 +
 +				if *(typ1.Prefix) == *(typ.Prefix) {
-+					if (isChildAKey == true) {
-+						//match with keys
-+						typ.SFilter.Predicate = "k." + *(typ.Name)
-+					} else {
-+						//match with hash-field
-+						typ.SFilter.Predicate = "h." + *(typ.Name)
++					//Check parent caller is a parent query
++					switch typ.Input.(type) {
++					case *parentQuery:
++						//Just break, since the value should be used for
++						//filter script
++						break
++					default:
++						if (isChildAKey == true) {
++							//match with keys
++							typ.SFilter.Predicate = "k." + *(typ.Name)
++						} else {
++							//match with hash-field
++							typ.SFilter.Predicate = "h." + *(typ.Name)
++						}
 +					}
 +				}
 +			}
@@ -565,7 +573,7 @@ index afeb890..5a136d0 100644
  }
  
  func (c *contextQuery) Select(t iterator) (n NodeNavigator) {
-@@ -164,13 +395,103 @@ func (a *attributeQuery) Clone() query {
+@@ -164,13 +403,103 @@ func (a *attributeQuery) Clone() query {
  	return &attributeQuery{Input: a.Input.Clone(), Predicate: a.Predicate}
  }
  
@@ -670,7 +678,7 @@ index afeb890..5a136d0 100644
  }
  
  func (c *childQuery) Select(t iterator) NodeNavigator {
-@@ -181,6 +502,10 @@ func (c *childQuery) Select(t iterator) NodeNavigator {
+@@ -181,6 +510,10 @@ func (c *childQuery) Select(t iterator) NodeNavigator {
  			if node == nil {
  				return nil
  			}
@@ -681,7 +689,7 @@ index afeb890..5a136d0 100644
  			node = node.Copy()
  			first := true
  			c.iterator = func() NodeNavigator {
-@@ -198,6 +523,10 @@ func (c *childQuery) Select(t iterator) NodeNavigator {
+@@ -198,6 +531,10 @@ func (c *childQuery) Select(t iterator) NodeNavigator {
  
  		if node := c.iterator(); node != nil {
  			c.posit++
@@ -692,7 +700,7 @@ index afeb890..5a136d0 100644
  			return node
  		}
  		c.iterator = nil
-@@ -207,6 +536,12 @@ func (c *childQuery) Select(t iterator) NodeNavigator {
+@@ -207,6 +544,12 @@ func (c *childQuery) Select(t iterator) NodeNavigator {
  func (c *childQuery) Evaluate(t iterator) interface{} {
  	c.Input.Evaluate(t)
  	c.iterator = nil
@@ -705,7 +713,7 @@ index afeb890..5a136d0 100644
  	return c
  }
  
-@@ -215,7 +550,7 @@ func (c *childQuery) Test(n NodeNavigator) bool {
+@@ -215,7 +558,7 @@ func (c *childQuery) Test(n NodeNavigator) bool {
  }
  
  func (c *childQuery) Clone() query {
@@ -714,7 +722,7 @@ index afeb890..5a136d0 100644
  }
  
  // position returns a position of current NodeNavigator.
-@@ -473,6 +808,8 @@ func (p *precedingQuery) position() int {
+@@ -473,6 +816,8 @@ func (p *precedingQuery) position() int {
  type parentQuery struct {
  	Input     query
  	Predicate func(NodeNavigator) bool
@@ -723,7 +731,7 @@ index afeb890..5a136d0 100644
  }
  
  func (p *parentQuery) Select(t iterator) NodeNavigator {
-@@ -505,6 +842,8 @@ func (p *parentQuery) Test(n NodeNavigator) bool {
+@@ -505,6 +850,8 @@ func (p *parentQuery) Test(n NodeNavigator) bool {
  type selfQuery struct {
  	Input     query
  	Predicate func(NodeNavigator) bool
@@ -732,7 +740,7 @@ index afeb890..5a136d0 100644
  }
  
  func (s *selfQuery) Select(t iterator) NodeNavigator {
-@@ -538,10 +877,14 @@ type filterQuery struct {
+@@ -538,10 +885,14 @@ type filterQuery struct {
  	Input     query
  	Predicate query
  	posit     int
@@ -747,7 +755,7 @@ index afeb890..5a136d0 100644
  	switch val.Kind() {
  	case reflect.Bool:
  		return val.Bool()
-@@ -562,21 +905,198 @@ func (f *filterQuery) position() int {
+@@ -562,21 +913,198 @@ func (f *filterQuery) position() int {
  	return f.posit
  }
  
@@ -946,7 +954,7 @@ index afeb890..5a136d0 100644
  		f.posit = 0
  	}
  }
-@@ -595,9 +1115,19 @@ func (f *filterQuery) Clone() query {
+@@ -595,9 +1123,19 @@ func (f *filterQuery) Clone() query {
  type functionQuery struct {
  	Input query                             // Node Set
  	Func  func(query, iterator) interface{} // The xpath function.
@@ -966,7 +974,7 @@ index afeb890..5a136d0 100644
  	return nil
  }
  
-@@ -614,6 +1144,8 @@ func (f *functionQuery) Clone() query {
+@@ -614,6 +1152,8 @@ func (f *functionQuery) Clone() query {
  // constantQuery is an XPath constant operand.
  type constantQuery struct {
  	Val interface{}
@@ -975,7 +983,7 @@ index afeb890..5a136d0 100644
  }
  
  func (c *constantQuery) Select(t iterator) NodeNavigator {
-@@ -621,6 +1153,7 @@ func (c *constantQuery) Select(t iterator) NodeNavigator {
+@@ -621,6 +1161,7 @@ func (c *constantQuery) Select(t iterator) NodeNavigator {
  }
  
  func (c *constantQuery) Evaluate(t iterator) interface{} {
@@ -983,7 +991,7 @@ index afeb890..5a136d0 100644
  	return c.Val
  }
  
-@@ -633,6 +1166,8 @@ type logicalQuery struct {
+@@ -633,6 +1174,8 @@ type logicalQuery struct {
  	Left, Right query
  
  	Do func(iterator, interface{}, interface{}) interface{}
@@ -992,7 +1000,7 @@ index afeb890..5a136d0 100644
  }
  
  func (l *logicalQuery) Select(t iterator) NodeNavigator {
-@@ -649,9 +1184,16 @@ func (l *logicalQuery) Select(t iterator) NodeNavigator {
+@@ -649,9 +1192,16 @@ func (l *logicalQuery) Select(t iterator) NodeNavigator {
  }
  
  func (l *logicalQuery) Evaluate(t iterator) interface{} {
@@ -1010,7 +1018,7 @@ index afeb890..5a136d0 100644
  }
  
  func (l *logicalQuery) Clone() query {
-@@ -683,6 +1225,8 @@ type booleanQuery struct {
+@@ -683,6 +1233,8 @@ type booleanQuery struct {
  	IsOr        bool
  	Left, Right query
  	iterator    func() NodeNavigator
@@ -1019,7 +1027,7 @@ index afeb890..5a136d0 100644
  }
  
  func (b *booleanQuery) Select(t iterator) NodeNavigator {
-@@ -750,14 +1294,26 @@ func (b *booleanQuery) Select(t iterator) NodeNavigator {
+@@ -750,14 +1302,26 @@ func (b *booleanQuery) Select(t iterator) NodeNavigator {
  }
  
  func (b *booleanQuery) Evaluate(t iterator) interface{} {

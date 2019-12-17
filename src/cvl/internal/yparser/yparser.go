@@ -101,11 +101,11 @@ int lyd_multi_new_leaf(struct lyd_node *parent, const struct lys_module *module,
 
         strcpy(s, leafVal);
 
-	name = strtok_r(s, "#", &saveptr);
+	name = strtok_r(s, "|", &saveptr);
 
 	while (name != NULL)
 	{
-		val = strtok_r(NULL, "#", &saveptr);
+		val = strtok_r(NULL, "|", &saveptr);
 		if (val != NULL)
 		{
 			if (NULL == lyd_new_leaf(parent, module, name, val))
@@ -114,7 +114,7 @@ int lyd_multi_new_leaf(struct lyd_node *parent, const struct lys_module *module,
 			}
 		}
 
-		name = strtok_r(NULL, "#", &saveptr);
+		name = strtok_r(NULL, "|", &saveptr);
 	}
 }
 
@@ -792,6 +792,19 @@ func getModelChildInfo(l *YParserListInfo, node *C.struct_lys_node,
 
 	for sChild := node.child; sChild != nil; sChild = sChild.next {
 		switch sChild.nodetype {
+		case C.LYS_USES:
+			nodeUses := (*C.struct_lys_node_uses)(unsafe.Pointer(sChild))
+			if (nodeUses.when != nil) {
+				usesWhenExp := WhenExpression {
+					Expr: C.GoString(nodeUses.when.cond),
+				}
+				listName := l.ListName + "_LIST"
+				l.WhenExpr[listName] = append(l.WhenExpr[listName],
+				&usesWhenExp)
+				getModelChildInfo(l, sChild, true, &usesWhenExp)
+			} else {
+				getModelChildInfo(l, sChild, false, nil)
+			}
 		case C.LYS_CHOICE:
 			nodeChoice := (*C.struct_lys_node_choice)(unsafe.Pointer(sChild))
 			if (nodeChoice.when != nil) {
