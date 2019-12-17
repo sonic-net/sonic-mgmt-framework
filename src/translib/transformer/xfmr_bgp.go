@@ -114,6 +114,8 @@ func init () {
 	XlateFuncBind("DbToYang_bgp_gbl_afi_safi_addr_key_xfmr", DbToYang_bgp_gbl_afi_safi_addr_key_xfmr) 
 	XlateFuncBind("YangToDb_bgp_dyn_neigh_listen_field_xfmr", YangToDb_bgp_dyn_neigh_listen_field_xfmr)
 	XlateFuncBind("DbToYang_bgp_dyn_neigh_listen_field_xfmr", DbToYang_bgp_dyn_neigh_listen_field_xfmr) 
+	XlateFuncBind("YangToDb_bgp_gbl_afi_safi_addr_field_xfmr", YangToDb_bgp_gbl_afi_safi_addr_field_xfmr)
+	XlateFuncBind("DbToYang_bgp_gbl_afi_safi_addr_field_xfmr", DbToYang_bgp_gbl_afi_safi_addr_field_xfmr) 
     XlateFuncBind("YangToDb_bgp_global_subtree_xfmr", YangToDb_bgp_global_subtree_xfmr)
 }
 
@@ -162,6 +164,17 @@ var YangToDb_bgp_dyn_neigh_listen_field_xfmr FieldXfmrYangToDb = func(inParams X
     return rmap, err
 }
 
+var YangToDb_bgp_gbl_afi_safi_addr_field_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
+    rmap := make(map[string]string)
+    var err error
+
+    log.Info("YangToDb_bgp_gbl_afi_safi_addr_field_xfmr")
+    rmap["NULL"] = "NULL"
+    
+    return rmap, err
+}
+
+
 var DbToYang_bgp_dyn_neigh_listen_field_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (map[string]interface{}, error) {
     rmap := make(map[string]interface{})
     var err error
@@ -172,6 +185,20 @@ var DbToYang_bgp_dyn_neigh_listen_field_xfmr FieldXfmrDbtoYang = func(inParams X
     dynKey := strings.Split(entry_key, "|")
 
     rmap["prefix"] = dynKey[1]
+
+    return rmap, err
+}
+
+var DbToYang_bgp_gbl_afi_safi_addr_field_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (map[string]interface{}, error) {
+    rmap := make(map[string]interface{})
+    var err error
+    
+    entry_key := inParams.key
+    log.Info("DbToYang_bgp_gbl_afi_safi_addr_field_xfmr: ", entry_key)
+
+    dynKey := strings.Split(entry_key, "|")
+
+    rmap["prefix"] = dynKey[2]
 
     return rmap, err
 }

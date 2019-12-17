@@ -860,8 +860,13 @@ module openconfig-network-instance-annot {
       deviate add {
         sonic-ext:db-name "CONFIG_DB";
         sonic-ext:table-name "ROUTE_REDISTRIBUTE";
-        sonic-ext:key-transformer "route_table_conn_key_xfmr";
       }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:table-connections/oc-netinst:table-connection {
+        deviate add {
+            sonic-ext:key-transformer "route_table_conn_key_xfmr";
+        }
     }
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:table-connections/oc-netinst:table-connection/oc-netinst:config/oc-netinst:src-protocol {
@@ -1327,19 +1332,19 @@ module openconfig-network-instance-annot {
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:aggregate-address-config/oc-bgp-ext:aggregate-address/oc-bgp-ext:prefix {
       deviate add {
-            sonic-ext:field-name "ip_prefix";
+            sonic-ext:field-transformer "bgp_gbl_afi_safi_addr_field_xfmr";
       }
     }
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:aggregate-address-config/oc-bgp-ext:aggregate-address/oc-bgp-ext:config/oc-bgp-ext:prefix {
       deviate add {
-            sonic-ext:field-name "ip_prefix";
+            sonic-ext:field-transformer "bgp_gbl_afi_safi_addr_field_xfmr";
       }
     }
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:aggregate-address-config/oc-bgp-ext:aggregate-address/oc-bgp-ext:state/oc-bgp-ext:prefix {
       deviate add {
-            sonic-ext:field-name "ip_prefix";
+            sonic-ext:field-transformer "bgp_gbl_afi_safi_addr_field_xfmr";
       }
     }
 
@@ -1400,19 +1405,19 @@ module openconfig-network-instance-annot {
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:network-config/oc-bgp-ext:network/oc-bgp-ext:prefix {
       deviate add {
-            sonic-ext:field-name "ip_prefix";
+            sonic-ext:field-transformer "bgp_gbl_afi_safi_addr_field_xfmr";
       }
     }
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:network-config/oc-bgp-ext:network/oc-bgp-ext:config/oc-bgp-ext:prefix {
       deviate add {
-            sonic-ext:field-name "ip_prefix";
+            sonic-ext:field-transformer "bgp_gbl_afi_safi_addr_field_xfmr";
       }
     }
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:network-config/oc-bgp-ext:network/oc-bgp-ext:state/oc-bgp-ext:prefix {
       deviate add {
-            sonic-ext:field-name "ip_prefix";
+            sonic-ext:field-transformer "bgp_gbl_afi_safi_addr_field_xfmr";
       }
     }
 

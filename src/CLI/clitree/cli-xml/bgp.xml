@@ -56,10 +56,6 @@ limitations under the License.
   </ACTION>
   </COMMAND>
 
-  <COMMAND name="show ip bgp l2vpn" help="L2VPN route information">
-    <PARAM name="evpn" help="EVPN route information" mode="subcommand" ptype="SUBCOMMAND"/>
-    <ACTION builtin="clish_nop"/>
-  </COMMAND>
   <COMMAND name="show ip bgp summary" help="BGP Summary information">
   <ACTION builtin="clish_nop"/>
   </COMMAND>

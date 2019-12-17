@@ -1003,14 +1003,12 @@ limitations under the License.
   </COMMAND>
 </VIEW>
 
-<!--=========================== FIXME DUPLICATE CMD
 <VIEW name="enable-view">
   <COMMAND name="show ip bgp l2vpn" help="L2VPN route information"/>
   <COMMAND name="show ip bgp l2vpn evpn" help="L2VPN EVPN route information">
     <ACTION builtin="clish_nop"/>
   </COMMAND>
 </VIEW>
-============================-->
 
 </CLISH_MODULE>
 
