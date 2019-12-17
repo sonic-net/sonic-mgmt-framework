@@ -134,16 +134,16 @@ limitations under the License.
             prefixtype="deny"&#xA;
         fi&#xA;
 
-        if test "$gelen" = "" -a "$lelen" = ""; then&#xA;
+        if test "(("$gelen" = "") -a ("$lelen" = ""))"; then&#xA;
             python $SONIC_CLI_ROOT/sonic-cli-ip-prefix.py ipv4_prefix ${prefix-name} $prefixtype $var&#xA;
 
-        elif test "$gelen" != "" -a "$lelen" != "" -a "$len" -lt "$gelen" -a "$gelen" -le "$lelen"; then&#xA;
+        elif test "((("$gelen" != "") -a ("$lelen" != "")) -a ("$len" -lt "$gelen") -a ("$gelen" -le "$lelen"))"; then&#xA;
             python $SONIC_CLI_ROOT/sonic-cli-ip-prefix.py ipv4_prefix_le_ge ${prefix-name} $prefixtype $var $gelen $lelen&#xA;
 
-        elif test "$gelen" = "" -a "$len" -le "$lelen"; then&#xA;
+        elif test "(("$gelen" = "") -a ("$len" -le "$lelen"))"; then&#xA;
             python $SONIC_CLI_ROOT/sonic-cli-ip-prefix.py ipv4_prefix_le ${prefix-name} $prefixtype $var $len $lelen&#xA;
 
-        elif test "$lelen" = "" -a "$len" -lt "$gelen"; then&#xA;
+        elif test "(("$lelen" = "") -a ("$len" -lt "$gelen"))"; then&#xA;
             python $SONIC_CLI_ROOT/sonic-cli-ip-prefix.py ipv4_prefix_ge ${prefix-name} $prefixtype $var $gelen&#xA;
 
         else&#xA;
@@ -270,16 +270,16 @@ limitations under the License.
             prefixtype="deny"&#xA;
         fi&#xA;
 
-        if test "$gelen" = "" -a "$lelen" = ""; then&#xA;
+        if test "(("$gelen" = "") -a ("$lelen" = ""))"; then&#xA;
             python $SONIC_CLI_ROOT/sonic-cli-ip-prefix.py ipv6_prefix ${prefix-name} $prefixtype $var&#xA;
 
-        elif test "$gelen" != "" -a "$lelen" != "" -a "$len" -lt "$gelen" -a "$gelen" -le "$lelen"; then&#xA;
+        elif test "((("$gelen" != "") -a ("$lelen" != "")) -a ("$len" -lt "$gelen") -a ("$gelen" -le "$lelen"))"; then&#xA;
             python $SONIC_CLI_ROOT/sonic-cli-ip-prefix.py ipv6_prefix_le_ge ${prefix-name} $prefixtype $var $gelen $lelen&#xA;
 
-        elif test "$gelen" = "" -a "$len" -le "$lelen"; then&#xA;
+        elif test "(("$gelen" = "") -a ("$len" -le "$lelen"))"; then&#xA;
             python $SONIC_CLI_ROOT/sonic-cli-ip-prefix.py ipv6_prefix_le ${prefix-name} $prefixtype $var $len $lelen&#xA;
 
-        elif test "$lelen" = "" -a "$len" -lt "$gelen"; then&#xA;
+        elif test "(("$lelen" = "") -a ("$len" -lt "$gelen"))"; then&#xA;
             python $SONIC_CLI_ROOT/sonic-cli-ip-prefix.py ipv6_prefix_ge ${prefix-name} $prefixtype $var $gelen&#xA;
 
         else&#xA;
@@ -398,18 +398,18 @@ limitations under the License.
             prefixtype="deny"&#xA;
         fi&#xA;
 
-        if test "$del_cmd" = ""; then&#xA;
+        if test "("$del_cmd" = "")"; then&#xA;
             python $SONIC_CLI_ROOT/sonic-cli-ip-prefix.py ipv4_prefix_set_delete ${prefix-name} $var&#xA;
-        elif test "$gelen" = "" -a "$lelen" = ""; then&#xA;
+        elif test "(("$gelen" = "") -a ("$lelen" = ""))"; then&#xA;
             python $SONIC_CLI_ROOT/sonic-cli-ip-prefix.py ipv4_prefix_delete ${prefix-name} $prefixtype $var&#xA;
 
-        elif test "$gelen" != "" -a "$lelen" != "" -a "$len" -lt "$gelen" -a "$gelen" -le "$lelen"; then&#xA;
+        elif test "((("$gelen" != "") -a ("$lelen" != "")) -a ("$len" -lt "$gelen") -a ("$gelen" -le "$lelen"))"; then&#xA;
             python $SONIC_CLI_ROOT/sonic-cli-ip-prefix.py ipv4_prefix_le_ge_delete ${prefix-name} $prefixtype $var $gelen $lelen&#xA;
 
-        elif test "$gelen" = "" -a "$len" -le "$lelen"; then&#xA;
+        elif test "(("$gelen" = "") -a ("$len" -le "$lelen"))"; then&#xA;
             python $SONIC_CLI_ROOT/sonic-cli-ip-prefix.py ipv4_prefix_le_delete ${prefix-name} $prefixtype $var $len $lelen&#xA;
 
-        elif test "$lelen" = "" -a "$len" -lt "$gelen"; then&#xA;
+        elif test "(("$lelen" = "") -a ("$len" -lt "$gelen"))"; then&#xA;
             python $SONIC_CLI_ROOT/sonic-cli-ip-prefix.py ipv4_prefix_ge_delete ${prefix-name} $prefixtype $var $gelen&#xA;
 
         else&#xA;
@@ -538,19 +538,19 @@ limitations under the License.
             prefixtype="deny"&#xA;
         fi&#xA;
 
-        if test "$del_cmd" = ""; then&#xA;
+        if test "("$del_cmd")" = ""; then&#xA;
             python $SONIC_CLI_ROOT/sonic-cli-ip-prefix.py ipv6_prefix_set_delete ${prefix-name} $var&#xA;
 
-        elif test "$gelen" = "" -a "$lelen" = ""; then&#xA;
+        elif test "(("$gelen" = "") -a ("$lelen" = ""))"; then&#xA;
             python $SONIC_CLI_ROOT/sonic-cli-ip-prefix.py ipv6_prefix_delete ${prefix-name} $prefixtype $var&#xA;
 
-        elif test "$gelen" != "" -a "$lelen" != "" -a "$len" -lt "$gelen" -a "$gelen" -le "$lelen"; then&#xA;
+        elif test "((("$gelen" != "") -a ("$lelen" != "")) -a ("$len" -lt "$gelen") -a ("$gelen" -le "$lelen"))"; then&#xA;
             python $SONIC_CLI_ROOT/sonic-cli-ip-prefix.py ipv6_prefix_le_ge_delete ${prefix-name} $prefixtype $var $gelen $lelen&#xA;
 
-        elif test "$gelen" = "" -a "$len" -le "$lelen"; then&#xA;
+        elif test "(("$gelen" = "") -a ("$len" -le "$lelen"))"; then&#xA;
             python $SONIC_CLI_ROOT/sonic-cli-ip-prefix.py ipv6_prefix_le_delete ${prefix-name} $prefixtype $var $len $lelen&#xA;
 
-        elif test "$lelen" = "" -a "$len" -lt "$gelen"; then&#xA;
+        elif test "(("$lelen" = "") -a ("$len" -lt "$gelen"))"; then&#xA;
             python $SONIC_CLI_ROOT/sonic-cli-ip-prefix.py ipv6_prefix_ge_delete ${prefix-name} $prefixtype $var $gelen&#xA;
 
         else&#xA;
