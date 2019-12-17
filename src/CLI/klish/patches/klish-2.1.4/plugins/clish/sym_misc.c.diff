@@ -1,0 +1,15 @@
+--- plugins/clish/sym_misc.c	2019-12-16 21:38:05.953222081 -0800
++++ plugins/clish/sym_misc.c	2019-12-16 21:37:48.901081059 -0800
+@@ -221,4 +221,11 @@
+ 	return 0;
+ }
+ 
++CLISH_PLUGIN_SYM(clish_extn)
++{
++    extern int rest_cl(char *);
++    rest_cl(script);
++    return 0;
++}
++
+ /*----------------------------------------------------------- */
+

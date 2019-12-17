@@ -1,0 +1,10 @@
+--- plugins/clish/module.am	2019-12-15 16:27:40.127960733 -0800
++++ plugins/clish/module.am	2019-12-15 16:27:23.947828829 -0800
+@@ -18,5 +18,6 @@
+ 	plugins/clish/hook_config.c \
+ 	plugins/clish/hook_log.c \
+ 	plugins/clish/sym_misc.c \
++	plugins/clish/rest_cl.c \
+ 	plugins/clish/sym_script.c \
+ 	plugins/clish/private.h
+

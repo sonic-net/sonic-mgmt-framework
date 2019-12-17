@@ -75,6 +75,26 @@ limitations under the License.
             name="no debug"
             help="No Debug commands" />
         <!-- Special commands -->
+        <COMMAND name="interface" help="Interface commands"/>
+        <COMMAND name="interface Vlan" help="Vlan Interface Configuration" mode="subcommand" ptype="SUBCOMMAND">
+      		<PARAM name="vlan-id" help="Vlan identifier(1-4094)" ptype="VLAN_ID"> </PARAM>
+      			<ACTION builtin="clish_extn">oper=patch url=/restconf/data/openconfig-interfaces:interfaces/interface=Vlan${vlan-id}/config body={"openconfig-interfaces:config": {"name": "Vlan${vlan-id}"}}</ACTION>
+        </COMMAND>
+    	<COMMAND name="router" help="Router mode" >
+      		<PARAM name="bgp" help="Border Gateway protocol (BGP)" mode="subcommand" ptype="SUBCOMMAND">
+        		<PARAM name="as-num-dot" help="Autonomous system number" ptype="RANGE_1_4294967295" view="configure-router-bgp-view" viewid="instance=${as-num-dot};vrf-name=${vrf-name}">
+          			<PARAM name="vrf" help="VRF Instance" ptype="SUBCOMMAND" mode="subcommand" optional="true">
+            			<PARAM name="vrf-name" help="Name of VRF (Max size 32, prefixed by Vrf)" ptype="STRING_32" view="configure-router-bgp-view" default="default"/>
+          				</PARAM>
+        			</PARAM>
+      		</PARAM>
+      		<ACTION builtin="clish_extn">oper=patch url=/restconf/data/openconfig-network-instance:network-instances/network-instance=${vrf-name}/protocols/protocol=BGP,bgp/bgp/global/config/as body={"openconfig-network-instance:as": ${as-num-dot}} </ACTION>
+    	</COMMAND>
+
+        <COMMAND name="Vlan" help="Vlan Interface Configuration" mode="subcommand" ptype="SUBCOMMAND">
+                <PARAM name="vlan-id" help="Vlan identifier(1-4094)" ptype="VLAN_ID"> </PARAM>
+                        <ACTION builtin="clish_pyobj">sonic_cli_if patch_openconfig_interfaces_interfaces_interface_config Vlan${vlan-id}</ACTION>
+        </COMMAND>
         <COMMAND
             name="system"
             help="System command"
