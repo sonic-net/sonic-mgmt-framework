@@ -490,7 +490,7 @@ func nat_mapping_Counters_attr_get (attrUri string, natCntObj *ocbinds.Openconfi
         } else {
             err = errors.New("URI data (NAT_TRANSLATIONS_BYTES) not found in db , " + attrUri)
         }
-    case "/openconfig-nat:nat/instances/instance/nat-mapping-table/nat-mapping-entry/state/counters/dnat-translations-pkts":
+    case "/openconfig-nat:nat/instances/instance/nat-mapping-table/nat-mapping-entry/state/counters/nat-translations-pkts":
         if entry.Has("NAT_TRANSLATIONS_PKTS") {
             natCntObj.NatTranslationsPkts = new(uint64)
             *natCntObj.NatTranslationsPkts , _ = strconv.ParseUint(entry.Get("NAT_TRANSLATIONS_PKTS"), 10, 64)

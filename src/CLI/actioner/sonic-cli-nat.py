@@ -291,12 +291,60 @@ def get_nat_translations_count(func, args):
 
     return count
 
+def get_stats(key, l):
+
+    stats = { "protocol": "all",
+              "source": "",
+              "destination": "---",
+              "pkts": "0",
+              "bytes": "0"}
+
+    if key == "openconfig-nat:napt-mapping-table" or key == "openconfig-nat:napt-twice-mapping-table" : 
+        for k,v in nat_protocol_map.items():
+            if v ==  str(l["protocol"]):
+                stats["protocol"] = k
+
+    if key == "openconfig-nat:nat-mapping-table":
+        stats["source"] = l['external-address']
+    elif key == "openconfig-nat:napt-mapping-table":
+        stats["source"] = l['external-address']+":"+str(l['external-port'])
+    elif key == "openconfig-nat:nat-twice-mapping-table":
+        stats["source"] = l["src-ip"]
+        stats["destination"] = l["dst-ip"]
+    else:
+        stats["source"] = l["src-ip"]+":"+str(l["src-port"])
+        stats["destination"] = l["dst-ip"]+":"+str(l["dst-port"])
+
+    if 'state' in l and 'counters' in l['state']:
+        if key == "openconfig-nat:nat-mapping-table" or key == "openconfig-nat:napt-mapping-table":
+            if 'nat-translations-bytes' in l['state']['counters']:
+                stats["bytes"] = l['state']['counters']['nat-translations-bytes']
+            if 'nat-translations-pkts' in l['state']['counters']:
+                stats["pkts"] = l['state']['counters']['nat-translations-pkts']
+
+        elif key == "openconfig-nat:nat-twice-mapping-table" or key == "openconfig-nat:napt-twice-mapping-table":
+            if 'dnat-translations-bytes' in l['state']['counters']:
+                stats["bytes"] = l['state']['counters']['dnat-translations-bytes']
+            if 'dnat-translations-pkts' in l['state']['counters']:
+                stats["pkts"] = l['state']['counters']['dnat-translations-pkts']
+
+    return stats 
 
 
 def get_nat_statistics(func, args):
-    api_response = get_nat_translations(func, args)
-    print api_response
-    return {}
+    resp = []
+    response = get_nat_translations(func, args)
+
+    for key in response:
+        for entry in response[key]:
+            for l in response[key][entry]:
+                if 'state' in l and 'counters' in l['state']:
+                    stats = get_stats(key, l) 
+                    if stats is not None:
+                        resp.append(stats)
+                    
+ 
+    return resp
 
 def get_configs(table_name, l):
     configs = {
