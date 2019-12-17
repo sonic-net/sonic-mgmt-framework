@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ROOT>
+<MACRODEF name="LINK-STATE-TRACK-UPSTREAM-INTF">
+    <COMMAND name="link" help="Interface link" />
+    <COMMAND name="link state" help="Link state" />
+    <COMMAND name="link state track" help="Link state tracking">
+        <PARAM name="grp-name" help="Name (Max size 63)" ptype="STRING_63"/>
+        <PARAM name="group-direction" help="Upstream interface" ptype="SUBCOMMAND" mode="switch">
+            <PARAM name="upstream" help="Upstream interface" ptype="SUBCOMMAND" mode="subcommand" />
+        </PARAM>
+        <ACTION>
+            python $SONIC_CLI_ROOT/sonic-cli-link-state-tracking.py set_link_state_tracking_group_upstream ${grp-name} ${iface} ${vlan_id} ${po_name}
+        </ACTION>
+    </COMMAND>
+
+    <COMMAND name="no link" help="Interface link" />
+    <COMMAND name="no link state" help="Link state" />
+    <COMMAND name="no link state track" help="Link state tracking">
+        <PARAM name="grp-name" help="Name (Max size 63)" ptype="STRING_63"/>
+        <PARAM name="group-direction" help="Upstream interface" ptype="SUBCOMMAND" mode="switch">
+            <PARAM name="upstream" help="Upstream interface" ptype="SUBCOMMAND" mode="subcommand" />
+        </PARAM>
+        <ACTION>
+            python $SONIC_CLI_ROOT/sonic-cli-link-state-tracking.py delete_link_state_tracking_group_upstream ${grp-name} ${iface} ${vlan_id} ${po_name}
+        </ACTION>
+    </COMMAND>
+</MACRODEF>
+</ROOT>
