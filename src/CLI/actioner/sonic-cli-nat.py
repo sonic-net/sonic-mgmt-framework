@@ -192,6 +192,11 @@ def invoke_api(func, args=[]):
         path = cc.Path('/restconf/data/openconfig-nat:nat/instances/instance={id}/napt-twice-mapping-table', id=args[0])
         return api.get(path)
 
+    # Get all interfaces (needed for NAT Zone)
+    elif func == 'get_openconfig_interfaces_interfaces':
+        path = cc.Path('/restconf/data/openconfig-interfaces:interfaces')
+        return api.get(path)
+
     else:
         return api.cli_not_implemented(func)
 
@@ -245,6 +250,23 @@ def get_nat_translations(func, args):
     response.update(resp)
 
     return response
+
+ 
+def get_nat_zones(func,args):
+    response = invoke_api("get_openconfig_interfaces_interfaces")
+    api_response = get_response_dict(response)
+
+    zone = {}
+
+    if 'openconfig-interfaces:interfaces' in api_response and 'interface' in api_response['openconfig-interfaces:interfaces']:
+        for intf in api_response['openconfig-interfaces:interfaces']['interface']:
+            zone_value = 0
+            if 'openconfig-interfaces-ext:nat-zone' in intf and 'config' in intf['openconfig-interfaces-ext:nat-zone'] and 'nat-zone' in intf['openconfig-interfaces-ext:nat-zone']['config']:
+                zone_value = intf['openconfig-interfaces-ext:nat-zone']['config']['nat-zone']
+            zone.update({intf['name']: zone_value})
+
+    return zone
+
 
 
 def get_count(count, table_name, l):
@@ -415,6 +437,8 @@ def run(func, args):
 
        if func == 'get_nat_translations':
            api_response = get_nat_translations(func,args)
+       elif func == 'get_nat_zones':
+           api_response = get_nat_zones(func,args)
        elif func == 'get_nat_statistics':
            api_response = get_nat_statistics(func,args)
        elif func == 'get_nat_translations_count':
