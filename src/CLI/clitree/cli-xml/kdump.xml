@@ -1,0 +1,103 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE CLISH_MODULE [
+]>
+<CLISH_MODULE
+      xmlns="http://www.dellemc.com/sonic/XMLSchema"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xsi:schemaLocation="http://www.dellemc.com/sonic/XMLSchema 
+      http://www.dellemc.com/sonic/XMLSchema/clish.xsd"
+      >
+
+    <PTYPE
+        name="RANGE_1_9"
+        method="integer"
+        pattern="1..9"
+        help=""
+        />
+
+    <PTYPE
+        name="KDUMP_MEMORY"
+        pattern="^(((([0-9]+[MG])?(-([0-9]+[MG])?):)?[0-9]+[MG],?)+)$"
+        help=""
+        />
+
+  <!--MODE : config terminal -->
+    <VIEW name="configure-view">
+        <COMMAND name="kdump" help="kdump command">
+        </COMMAND>
+        <COMMAND
+            name="no kdump"
+            help="Disable kdump">
+             <ACTION>
+                  python $SONIC_CLI_ROOT/sonic-cli-kdump.py ${__full_line}
+             </ACTION>
+        </COMMAND>
+        <COMMAND
+             name="kdump enable"
+             help="Enable kdump">
+             <ACTION>
+                  python $SONIC_CLI_ROOT/sonic-cli-kdump.py ${__full_line}
+             </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="kdump memory"
+             help="Set the amount of memory reserved for kdump">
+             <PARAM name="kdump_memory" help="The amount of memory reserved for kdump" ptype="KDUMP_MEMORY"/>
+             <ACTION>
+                  python $SONIC_CLI_ROOT/sonic-cli-kdump.py ${__full_line}
+             </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="kdump num_dumps"
+             help="Set the maximum number of kernel core files stored locally">
+             <PARAM name="kdump_memory" help="Maximum number of kernel core files stored locally" ptype="RANGE_1_9"/>
+             <ACTION>
+                  python $SONIC_CLI_ROOT/sonic-cli-kdump.py ${__full_line}
+             </ACTION>
+        </COMMAND>
+        <COMMAND 
+            name="no kdump memory" 
+            help="Reset to default the amount of memory allocated for kdump">
+             <ACTION>
+                  python $SONIC_CLI_ROOT/sonic-cli-kdump.py ${__full_line}
+             </ACTION>
+        </COMMAND>
+        <COMMAND 
+            name="no kdump num_dumps" 
+            help="Reset to default the maximum number of kernel core files stored locally">
+             <ACTION>
+                  python $SONIC_CLI_ROOT/sonic-cli-kdump.py ${__full_line}
+             </ACTION>
+        </COMMAND>
+   </VIEW>
+
+    <!--MODE : kdump view -->
+    <VIEW name="enable-view">
+        <COMMAND
+            name="show kdump"
+            help="Show kdump status">
+        </COMMAND>
+        <COMMAND
+            name="show kdump status"
+            help="Show kdump status">
+            <ACTION>
+                python $SONIC_CLI_ROOT/sonic-cli-kdump.py ${__full_line}
+            </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="show kdump memory"
+            help="Show memory allocated for kdump">
+            <ACTION>
+                python $SONIC_CLI_ROOT/sonic-cli-kdump.py ${__full_line}
+            </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="show kdump num_dumps"
+            help="Show maximimum number of kernel core dump files which will are stored locally">
+            <ACTION>
+                python $SONIC_CLI_ROOT/sonic-cli-kdump.py ${__full_line}
+            </ACTION>
+        </COMMAND>
+    </VIEW>
+</CLISH_MODULE>

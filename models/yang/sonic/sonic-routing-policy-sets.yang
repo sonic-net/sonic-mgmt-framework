@@ -7,10 +7,6 @@ module sonic-routing-policy-sets {
         prefix inet;
     }
     
-    import ietf-yang-types {
-        prefix yang;
-    }
-    
     organization
         "SONiC";
 
@@ -83,6 +79,12 @@ module sonic-routing-policy-sets {
                         Example: 10.3.192.0/21 would be expressed as
                                   prefix: 10.3.192.0/21,
                                   masklength_range: exact";
+                }
+                
+                leaf action {
+                    type string;
+                    description
+                        "Permit/Deny action for the prefix list.";
                 }
             }
         }
@@ -173,60 +175,5 @@ module sonic-routing-policy-sets {
                 }
             }
         }
-
-        container NEIGHBOR_SET {
-
-            list NEIGHBOR_SET_LIST {
-                key "name";
-
-                leaf name {
-                    type string {
-                        pattern '[a-zA-Z0-9]{1}([-a-zA-Z0-9_]{0,71})';
-                        length 1..72;
-                    }
-                }
-
-                leaf-list address {
-                    type inet:ip-address;
-                    description
-                        "List of IP addresses in the neighbor set";
-                }
-            }
-        }
-
-        typedef tag-type {
-            type union {
-                type uint32;
-                type yang:hex-string;
-            }
-            description "type for expressing route tags on a local system,
-                        including IS-IS and OSPF; may be expressed as either decimal or
-                            hexidecimal integer";
-            reference
-                "RFC 2178 OSPF Version 2
-                RFC 5130 A Policy Control Mechanism in IS-IS Using
-                Administrative Tags";
-        }
-
-        container TAG_SET {
-
-            list TAG_SET_LIST {
-                key "name";
-
-                leaf name {
-                    type string {
-                        pattern '[a-zA-Z0-9]{1}([-a-zA-Z0-9_]{0,71})';
-                        length 1..72;
-                    }
-                }
-
-                leaf-list tag_value {
-                    type tag-type;
-                    description
-                        "Value of the tag set member";
-                }
-            }
-        }
-
     }
 }

@@ -535,136 +535,6 @@ func TestValidateConfig_CfgFile(t *testing.T) {
 	 cvl.ValidationSessClose(cvSess)
 }
 
-func TestValidateEditConfig_Delete_Must_Check_Positive(t *testing.T) {
-	depDataMap := map[string]interface{} {
-		"PORT" : map[string]interface{} {
-			"Ethernet3" : map[string]interface{} {
-				"alias":"hundredGigE1",
-				"lanes": "81,82,83,84",
-				"mtu": "9100",
-			},
-			"Ethernet5" : map[string]interface{} {
-				"alias":"hundredGigE1",
-				"lanes": "85,86,87,89",
-				"mtu": "9100",
-			},
-		},
-		"ACL_TABLE" : map[string]interface{} {
-			"TestACL1": map[string] interface{} {
-				"stage": "INGRESS",
-				"type": "L3",
-				"ports@": "Ethernet3,Ethernet5",
-			},
-			"TestACL2": map[string] interface{} {
-				"stage": "INGRESS",
-				"type": "L3",
-			},
-		},
-		"ACL_RULE" : map[string]interface{} {
-			"TestACL1|Rule1": map[string] interface{} {
-				"PACKET_ACTION": "FORWARD",
-				"SRC_IP": "10.1.1.1/32",
-				"L4_SRC_PORT": "1909",
-				"IP_PROTOCOL": "103",
-				"DST_IP": "20.2.2.2/32",
-				"L4_DST_PORT_RANGE": "9000-12000",
-			},
-			"TestACL2|Rule2": map[string] interface{} {
-				"PACKET_ACTION": "FORWARD",
-				"SRC_IP": "10.1.1.1/32",
-				"L4_SRC_PORT": "1909",
-				"IP_PROTOCOL": "103",
-				"DST_IP": "20.2.2.2/32",
-				"L4_DST_PORT_RANGE": "9000-12000",
-			},
-		},
-	}
-
-	//Prepare data in Redis
-	loadConfigDB(rclient, depDataMap)
-
-	cfgDataAclRule :=  []cvl.CVLEditConfigData {
-		cvl.CVLEditConfigData {
-			cvl.VALIDATE_ALL,
-			cvl.OP_DELETE,
-			"ACL_RULE|TestACL2|Rule2",
-			map[string]string {
-			},
-		},
-	}
-
-	cvSess, _ := cvl.ValidationSessOpen()
-
-	cvlErrObj, err := cvSess.ValidateEditConfig(cfgDataAclRule)
-
-	 cvl.ValidationSessClose(cvSess)
-
-	if err != cvl.CVL_SUCCESS { //should not succeed
-		t.Errorf("Config Validation failed. %v", cvlErrObj)
-	}
-
-	unloadConfigDB(rclient, depDataMap)
-}
-
-func TestValidateEditConfig_Delete_Must_Check_Negative(t *testing.T) {
-	depDataMap := map[string]interface{} {
-		"PORT" : map[string]interface{} {
-			"Ethernet3" : map[string]interface{} {
-				"alias":"hundredGigE1",
-				"lanes": "81,82,83,84",
-				"mtu": "9100",
-			},
-			"Ethernet5" : map[string]interface{} {
-				"alias":"hundredGigE1",
-				"lanes": "85,86,87,89",
-				"mtu": "9100",
-			},
-		},
-		"ACL_TABLE" : map[string]interface{} {
-			"TestACL1": map[string] interface{} {
-				"stage": "INGRESS",
-				"type": "L3",
-				"ports@": "Ethernet3,Ethernet5",
-			},
-		},
-		"ACL_RULE" : map[string]interface{} {
-			"TestACL1|Rule1": map[string] interface{} {
-				"PACKET_ACTION": "FORWARD",
-				"SRC_IP": "10.1.1.1/32",
-				"L4_SRC_PORT": "1909",
-				"IP_PROTOCOL": "103",
-				"DST_IP": "20.2.2.2/32",
-				"L4_DST_PORT_RANGE": "9000-12000",
-			},
-		},
-	}
-
-	//Prepare data in Redis
-	loadConfigDB(rclient, depDataMap)
-
-	cfgDataAclRule :=  []cvl.CVLEditConfigData {
-		cvl.CVLEditConfigData {
-			cvl.VALIDATE_ALL,
-			cvl.OP_DELETE,
-			"ACL_RULE|TestACL1|Rule1",
-			map[string]string {
-			},
-		},
-	}
-
-	cvSess, _ := cvl.ValidationSessOpen()
-
-	cvlErrObj, err := cvSess.ValidateEditConfig(cfgDataAclRule)
-
-	 cvl.ValidationSessClose(cvSess)
-
-	if err == cvl.CVL_SUCCESS { //should not succeed
-		t.Errorf("Config Validation failed. %v", cvlErrObj)
-	}
-
-	unloadConfigDB(rclient, depDataMap)
-}
-
 //Validate invalid json data
 func TestValidateConfig_Negative(t *testing.T) {
 	cvSess, _ := cvl.ValidationSessOpen()
@@ -703,6 +573,7 @@ func TestValidateEditConfig_Delete_Semantic_ACLTableReference_Positive(t *testin
 		"ACL_RULE": map[string]interface{} {
 			"TestACL1005|Rule1": map[string] interface{} {
 				"PACKET_ACTION": "FORWARD",
+				"IP_TYPE": "IPV4",
 				"SRC_IP": "10.1.1.1/32",
 				"L4_SRC_PORT": "1909",
 				"IP_PROTOCOL": "103",
@@ -759,12 +630,12 @@ func TestValidateEditConfig_Create_Syntax_Valid_FieldValue(t *testing.T) {
 			"ACL_RULE|TestACL1|Rule1",
 			map[string]string{
 				"PACKET_ACTION":     "FORWARD",
+				"IP_TYPE":           "IPV4",
 				"SRC_IP":            "10.1.1.1/32",
 				"L4_SRC_PORT":       "1909",
 				"IP_PROTOCOL":       "103",
 				"DST_IP":            "20.2.2.2/32",
 				"L4_DST_PORT_RANGE": "9000-12000",
-				"IP_TYPE":	"IPV4",
 			},
 		},
 	}
@@ -854,6 +725,7 @@ func TestValidateEditConfig_Create_Syntax_Invalid_PacketAction_Negative(t *testi
 			"ACL_RULE|TestACL1|Rule1",
 			map[string]string{
 				"PACKET_ACTION":     "FORWARD777",
+				"IP_TYPE": "IPV4",
 				"SRC_IP":            "10.1.1.1/32",
 				"L4_SRC_PORT":    "1909",
 				"IP_PROTOCOL":       "103",
@@ -898,6 +770,7 @@ func TestValidateEditConfig_Create_Syntax_Invalid_SrcPrefix_Negative(t *testing.
 			"ACL_RULE|TestACL1|Rule1",
 			map[string]string{
 				"PACKET_ACTION":     "FORWARD",
+				"IP_TYPE": "IPV4",
 				"SRC_IP":            "10.1.1.1/3288888",
 				"L4_SRC_PORT":       "1909",
 				"IP_PROTOCOL":       "103",
@@ -942,6 +815,7 @@ func TestValidateEditConfig_Create_Syntax_InvalidIPAddress_Negative(t *testing.T
 			"ACL_RULE|TestACL1|Rule1",
 			map[string]string{
 				"PACKET_ACTION":     "FORWARD",
+				"IP_TYPE":	     "IPV4",
 				"SRC_IP":            "10.1a.1.1/32",
 				"L4_SRC_PORT":       "1909",
 				"IP_PROTOCOL":       "103",
@@ -986,6 +860,7 @@ func TestValidateEditConfig_Create_Syntax_OutofBound_Negative(t *testing.T) {
 			"ACL_RULE|TestACL1|Rule1",
 			map[string]string{
 				"PACKET_ACTION":     "FORWARD",
+				"IP_TYPE":	     "IPV4",
 				"SRC_IP":            "10.1.1.1/32",
 				"L4_SRC_PORT":       "19099090909090",
 				"IP_PROTOCOL":       "103",
@@ -1031,6 +906,7 @@ func TestValidateEditConfig_Create_Syntax_InvalidProtocol_Negative(t *testing.T)
 			"ACL_RULE|TestACL1|Rule1",
 			map[string]string{
 				"PACKET_ACTION":     "FORWARD",
+				"IP_TYPE":	     "IPV4",
 				"SRC_IP":            "10.1.1.1/32",
 				"L4_SRC_PORT":       "1909",
 				"IP_PROTOCOL":       "10388888",
@@ -1077,6 +953,7 @@ func TestValidateEditConfig_Create_Syntax_InvalidRange_Negative(t *testing.T) {
 			"ACL_RULE|TestACL1|Rule1",
 			map[string]string{
 				"PACKET_ACTION":     "FORWARD",
+				"IP_TYPE":	     "IPV4",
 				"SRC_IP":            "10.1.1.1/32",
 				"L4_SRC_PORT":       "1909",
 				"IP_PROTOCOL":       "103",
@@ -1112,6 +989,7 @@ func TestValidateEditConfig_Create_Syntax_InvalidCharNEw_Negative(t *testing.T) 
 			"ACL_RULE|TestACL1jjjj|Rule1",
 			map[string]string{
 				"PACKET_ACTION":     "FORWARD",
+				"IP_TYPE":	     "IPV4",
 				"SRC_IP":            "10.1.1.1/32",
 				"L4_SRC_PORT":       "1909",
 				"IP_PROTOCOL":       "103",
@@ -1155,6 +1033,7 @@ func TestValidateEditConfig_Create_Syntax_SpecialChar_Positive(t *testing.T) {
 			"ACL_RULE|TestACL1|Rule@##",
 			map[string]string{
 				"PACKET_ACTION":     "FORWARD",
+				"IP_TYPE":	     "IPV4",
 				"SRC_IP":            "10.1.1.1/32",
 				"L4_SRC_PORT":       "1909",
 				"IP_PROTOCOL":       "103",
@@ -1187,6 +1066,7 @@ func TestValidateEditConfig_Create_Syntax_InvalidKeyName_Negative(t *testing.T) 
 			"AC&&***L_RULE|TestACL1|Rule1",
 			map[string]string{
 				"PACKET_ACTION":     "FORWARD",
+				"IP_TYPE":	     "IPV4",
 				"SRC_IP":            "10.1.1.1/32",
 				"L4_SRC_PORT":       "1909",
 				"IP_PROTOCOL":       "103",
@@ -1229,6 +1109,7 @@ func TestValidateEditConfig_Create_Semantic_AdditionalInvalidNode_Negative(t *te
 			"ACL_RULE|TestACL1|Rule1",
 			map[string]string{
 				"PACKET_ACTION":     "FORWARD",
+				"IP_TYPE":	     "IPV4",
 				"SRC_IP":            "10.1.1.1/32",
 				"L4_SRC_PORT":       "1909",
 				"IP_PROTOCOL":       "103",
@@ -1288,6 +1169,7 @@ func TestValidateEditConfig_Create_Syntax_Invalid_Negative(t *testing.T) {
 			"ACL_RULERule1",
 			map[string]string{
 				"PACKET_ACTION":     "FORWARD",
+				"IP_TYPE":	     "IPV4",
 				"SRC_IP":            "10.1.1.1/32",
 				"L4_SRC_PORT":       "1909",
 				"IP_PROTOCOL":       "103",
@@ -1320,6 +1202,7 @@ func TestValidateEditConfig_Create_Syntax_IncompleteKey_Negative(t *testing.T) {
 			"ACL_RULE|Rule1",
 			map[string]string{
 				"PACKET_ACTION":     "FORWARD",
+				"IP_TYPE":	     "IPV4",
 				"SRC_IP":            "10.1.1.1/32",
 				"L4_SRC_PORT":       "1909",
 				"IP_PROTOCOL":       "103",
@@ -1352,6 +1235,7 @@ func TestValidateEditConfig_Create_Syntax_InvalidKey_Negative(t *testing.T) {
 			"|Rule1",
 			map[string]string{
 				"PACKET_ACTION":     "FORWARD",
+				"IP_TYPE":	     "IPV4",
 				"SRC_IP":            "10.1.1.1/32",
 				"L4_SRC_PORT":       "1909",
 				"IP_PROTOCOL":       "103",
@@ -1498,6 +1382,7 @@ func TestValidateEditConfig_Delete_Syntax_InvalidKey_Negative(t *testing.T) {
 			"|Rule1",
 			map[string]string{
 				"PACKET_ACTION":     "FORWARD",
+				"IP_TYPE":	     "IPV4",
 				"SRC_IP":            "10.1.1.1/32",
 				"L4_SRC_PORT":       "1909",
 				"IP_PROTOCOL":       "103",
@@ -1530,6 +1415,7 @@ func TestValidateEditConfig_Update_Syntax_InvalidKey_Negative(t *testing.T) {
 			"|Rule1",
 			map[string]string{
 				"PACKET_ACTION":     "FORWARD",
+				"IP_TYPE":	     "IPV4",
 				"SRC_IP":            "10.1.1.1/32",
 				"L4_SRC_PORT":       "1909",
 				"IP_PROTOCOL":       "103",
@@ -1562,6 +1448,7 @@ func TestValidateEditConfig_Delete_InvalidKey_Negative(t *testing.T) {
 			"ACL_RULE|TestACL1:Rule1",
 			map[string]string{
 				"PACKET_ACTION":     "FORWARD",
+				"IP_TYPE":	     "IPV4",
 				"SRC_IP":            "10.1.1.1/32",
 				"L4_SRC_PORT":       "1909",
 				"IP_PROTOCOL":       "103",
@@ -1594,6 +1481,7 @@ func TestValidateEditConfig_Update_Semantic_Invalid_Key_Negative(t *testing.T) {
 			"ACL_RULE|TestACL1Rule1",
 			map[string]string{
 				"PACKET_ACTION":     "FORWARD",
+				"IP_TYPE":	     "IPV4",
 				"SRC_IP":            "10.1.1.1/32",
 				"L4_SRC_PORT":       "1909",
 				"IP_PROTOCOL":       "103uuuu",
@@ -1782,7 +1670,7 @@ func TestValidateEditConfig_Update_Semantic_Positive(t *testing.T) {
 }
 
 /* API to test edit config with valid syntax. */
-func TestValidateConfig_Update_Semantic_Vlan_Negative(t *testing.T) {
+func TestValidateConfig_Semantic_Vlan_Negative(t *testing.T) {
 
 	cvSess, _ := cvl.ValidationSessOpen()
 
@@ -1887,6 +1775,7 @@ func TestValidateEditConfig_Update_Syntax_DependentData_Invalid_Op_Seq(t *testin
 			"ACL_RULE|TestACL1|Rule1",
 			map[string]string{
 				"PACKET_ACTION":     "FORWARD",
+				"IP_TYPE":	     "IPV4",
 				"SRC_IP":            "10.1.1.1/32",
 				"L4_SRC_PORT":       "1909",
 				"IP_PROTOCOL":       "103",
@@ -1976,6 +1865,7 @@ func TestValidateEditConfig_Create_Syntax_DependentData_Redis_Positive(t *testin
 			"ACL_RULE|TestACL22|Rule1",
 			map[string]string{
 				"PACKET_ACTION":     "FORWARD",
+				"IP_TYPE":	     "IPV4",
 				"SRC_IP":            "10.1.1.1/32",
 				"L4_SRC_PORT":       "1909",
 				"IP_PROTOCOL":       "103",
@@ -2047,6 +1937,7 @@ func TestValidateEditConfig_Create_Dependent_CacheData(t *testing.T) {
 			"ACL_RULE|TestACL14|Rule1",
 			map[string]string{
 				"PACKET_ACTION":     "FORWARD",
+				"IP_TYPE":	     "IPV4",
 				"SRC_IP":            "10.1.1.1/32",
 				"L4_SRC_PORT":       "1909",
 				"IP_PROTOCOL":       "103",
@@ -2093,6 +1984,7 @@ func TestValidateEditConfig_Create_DepData_In_MultiSess(t *testing.T) {
 			"ACL_RULE|TestACL16|Rule1",
 			map[string]string{
 				"PACKET_ACTION":     "FORWARD",
+				"IP_TYPE":	     "IPV4",
 				"SRC_IP":            "10.1.1.1/32",
 				"L4_SRC_PORT":       "1909",
 				"IP_PROTOCOL":       "103",
@@ -2135,6 +2027,7 @@ func TestValidateEditConfig_Create_DepData_From_Redis_Negative11(t *testing.T) {
 			"ACL_RULE|TestACL188|Rule1",
 			map[string]string{
 				"PACKET_ACTION":     "FORWARD",
+				"IP_TYPE":	     "IPV4",
 				"SRC_IP":            "10.1.1.1/32",
 				"L4_SRC_PORT":       "1909",
 				"IP_PROTOCOL":       "103",
@@ -2181,6 +2074,7 @@ func TestValidateEditConfig_Create_DepData_From_Redis(t *testing.T) {
 			"ACL_RULE|TestACL1|Rule1",
 			map[string]string{
 				"PACKET_ACTION":     "FORWARD",
+				"IP_TYPE":	     "IPV4",
 				"SRC_IP":            "10.1.1.1/32",
 				"L4_SRC_PORT":       "1909",
 				"IP_PROTOCOL":       "103",
@@ -2288,34 +2182,6 @@ func TestValidateEditConfig_Create_Syntax_ErrAppTag_In_Pattern_Negative(t *testi
 
 }
 
-func TestValidateEditConfig_Create_ErrAppTag_In_Must_Negative(t *testing.T) {
-
-	cfgData := []cvl.CVLEditConfigData{
-		cvl.CVLEditConfigData{
-			cvl.VALIDATE_ALL,
-			cvl.OP_CREATE,
-			"VLAN|Vlan1001",
-			map[string]string{
-				"vlanid":   "102",
-				"members@": "Ethernet24,Ethernet8",
-			},
-		},
-	}
-
-	cvSess, _ := cvl.ValidationSessOpen()
-
-	cvlErrInfo, retCode := cvSess.ValidateEditConfig(cfgData)
-
-	cvl.ValidationSessClose(cvSess)
-
-	WriteToFile(fmt.Sprintf("\nCVL Error Info is  %v\n", cvlErrInfo))
-
-	if retCode == cvl.CVL_SUCCESS {
-		t.Errorf("Config Validation failed -- error details %v %v", cvlErrInfo, retCode)
-	}
-
-}
-
 /* API to test edit config with valid syntax. */
 func TestValidateEditConfig_Create_Syntax_InValid_FieldValue(t *testing.T) {
 
@@ -2335,6 +2201,7 @@ func TestValidateEditConfig_Create_Syntax_InValid_FieldValue(t *testing.T) {
 			"ACL_RULE|TestACL1|Rule1",
 			map[string]string{
 				"PACKET_ACTION":     "FORWARD",
+				"IP_TYPE":	     "IPV4",
 				"SRC_IP":            "10.1.1.1/32",
 				"L4_SRC_PORT":       "1909",
 				"IP_PROTOCOL":       "103",
@@ -2385,6 +2252,7 @@ func TestValidateEditConfig_Create_DepData_From_Redis_Negative(t *testing.T) {
 			"ACL_RULE|TestACL2|Rule1",
 			map[string]string {
 				"PACKET_ACTION": "FORWARD",
+				"IP_TYPE":	     "IPV4",
 				"SRC_IP": "10.1.1.1/32",
 				"L4_SRC_PORT": "1909",
 				"IP_PROTOCOL": "103",
@@ -2410,87 +2278,6 @@ func TestValidateEditConfig_Create_DepData_From_Redis_Negative(t *testing.T) {
 }
 */
 
-// EditConfig(Create) with chained leafref from redis
-func TestValidateEditConfig_Create_Chained_Leafref_DepData_Positive(t *testing.T) {
-	depDataMap := map[string]interface{} {
-		"VLAN" : map[string]interface{} {
-			"Vlan100": map[string]interface{} {
-				"members@": "Ethernet1",
-				"vlanid": "100",
-			},
-		},
-		"PORT" : map[string]interface{} {
-			"Ethernet1" : map[string]interface{} {
-				"alias":"hundredGigE1",
-				"lanes": "81,82,83,84",
-				"mtu": "9100",
-			},
-			"Ethernet2" : map[string]interface{} {
-				"alias":"hundredGigE1",
-				"lanes": "85,86,87,89",
-				"mtu": "9100",
-			},
-		},
-		"ACL_TABLE" : map[string]interface{} {
-			"TestACL1": map[string] interface{} {
-				"stage": "INGRESS",
-				"type": "L3",
-				"ports@":"Ethernet2",
-			},
-		},
-	}
-
-	//Prepare data in Redis
-	loadConfigDB(rclient, depDataMap)
-
-	cvSess, _ := cvl.ValidationSessOpen()
-
-	cfgDataVlan := []cvl.CVLEditConfigData {
-		cvl.CVLEditConfigData {
-			cvl.VALIDATE_ALL,
-			cvl.OP_CREATE,
-			"VLAN_MEMBER|Vlan100|Ethernet1",
-			map[string]string {
-				"tagging_mode" : "tagged",
-			},
-		},
-	}
-
-	_, err := cvSess.ValidateEditConfig(cfgDataVlan)
-
-	if err != cvl.CVL_SUCCESS { //should succeed
-		t.Errorf("Config Validation failed.")
-		return
-	}
-
-	cfgDataAclRule :=  []cvl.CVLEditConfigData {
-		cvl.CVLEditConfigData {
-			cvl.VALIDATE_ALL,
-			cvl.OP_CREATE,
-			"ACL_RULE|TestACL1|Rule1",
-			map[string]string {
-				"PACKET_ACTION": "FORWARD",
-				"SRC_IP": "10.1.1.1/32",
-				"L4_SRC_PORT": "1909",
-				"IP_PROTOCOL": "103",
-				"DST_IP": "20.2.2.2/32",
-				"L4_DST_PORT_RANGE": "9000-12000",
-			},
-		},
-	}
-
-
-	_, err = cvSess.ValidateEditConfig(cfgDataAclRule)
-
-	cvl.ValidationSessClose(cvSess)
-
-	if err != cvl.CVL_SUCCESS { //should succeed
-		t.Errorf("Config Validation failed.")
-	}
-
-	unloadConfigDB(rclient, depDataMap)
-}
-
 //EditConfig(Delete) deleting entry already used by other table as leafref
 func TestValidateEditConfig_Delete_Dep_Leafref_Negative(t *testing.T) {
 	depDataMap := map[string]interface{} {
@@ -2503,6 +2290,7 @@ func TestValidateEditConfig_Delete_Dep_Leafref_Negative(t *testing.T) {
 		"ACL_RULE": map[string]interface{} {
 			"TestACL1|Rule1": map[string] interface{} {
 				"PACKET_ACTION": "FORWARD",
+				"IP_TYPE":	     "IPV4",
 				"SRC_IP": "10.1.1.1/32",
 				"L4_SRC_PORT": "1909",
 				"IP_PROTOCOL": "103",
@@ -2540,61 +2328,6 @@ func TestValidateEditConfig_Delete_Dep_Leafref_Negative(t *testing.T) {
 	unloadConfigDB(rclient, depDataMap)
 }
 
-//EditConfig(Create) with chained leafref from redis
-func TestValidateEditConfig_Create_Chained_Leafref_DepData_Negative(t *testing.T) {
-	depDataMap := map[string]interface{} {
-		"PORT" : map[string]interface{} {
-			"Ethernet3" : map[string]interface{} {
-				"alias":"hundredGigE1",
-				"lanes": "81,82,83,84",
-				"mtu": "9100",
-			},
-			"Ethernet5" : map[string]interface{} {
-				"alias":"hundredGigE1",
-				"lanes": "85,86,87,89",
-				"mtu": "9100",
-			},
-		},
-		"ACL_TABLE" : map[string]interface{} {
-			"TestACL1": map[string] interface{} {
-				"stage": "INGRESS",
-				"type": "L3",
-				"ports@":"Ethernet2",
-			},
-		},
-	}
-
-	//Prepare data in Redis
-	loadConfigDB(rclient, depDataMap)
-
-	cfgDataAclRule :=  []cvl.CVLEditConfigData {
-		cvl.CVLEditConfigData {
-			cvl.VALIDATE_ALL,
-			cvl.OP_CREATE,
-			"ACL_RULE|TestACL1|Rule1",
-			map[string]string {
-				"PACKET_ACTION": "FORWARD",
-				"SRC_IP": "10.1.1.1/32",
-				"L4_SRC_PORT": "1909",
-				"IP_PROTOCOL": "103",
-				"DST_IP": "20.2.2.2/32",
-				"L4_DST_PORT_RANGE": "9000-12000",
-			},
-		},
-	}
-
-	cvSess, _ := cvl.ValidationSessOpen()
-
-	_, err := cvSess.ValidateEditConfig(cfgDataAclRule)
-
-	 cvl.ValidationSessClose(cvSess)
-
-	if err == cvl.CVL_SUCCESS { //should not succeed
-		t.Errorf("Config Validation failed.")
-	}
-
-	unloadConfigDB(rclient, depDataMap)
-}
 func TestValidateEditConfig_Create_Syntax_InvalidVlanRange_Negative(t *testing.T) {
 
         cfgData := []cvl.CVLEditConfigData{
@@ -2925,6 +2658,7 @@ func TestServicability_Debug_Trace(t *testing.T) {
 			"ACL_RULE|TestACL1|Rule1",
 			map[string]string{
 				"PACKET_ACTION":     "FORWARD",
+				"IP_TYPE":	     "IPV4",
 				"SRC_IP":            "10.1.1.1/32",
 				"L4_SRC_PORT":       "1909",
 				"IP_PROTOCOL":       "103",
@@ -3280,6 +3014,7 @@ func TestValidateEditConfig_Use_Updated_Data_As_Create_DependentData_Positive(t 
 		"VLAN" : map[string]interface{} {
 			"Vlan201": map[string] interface{} {
 				"vlanid":   "201",
+				"mtu": "1700",
 				"members@": "Ethernet8",
 			},
 		},
@@ -3297,6 +3032,7 @@ func TestValidateEditConfig_Use_Updated_Data_As_Create_DependentData_Positive(t 
 			cvl.OP_UPDATE,
 			"VLAN|Vlan201",
 			map[string]string{
+				"mtu": "1900",
 				"members@": "Ethernet8,Ethernet12",
 			},
 		},
@@ -3338,6 +3074,7 @@ func TestValidateEditConfig_Use_Updated_Data_As_Create_DependentData_Single_Call
 		"VLAN" : map[string]interface{} {
 			"Vlan201": map[string] interface{} {
 				"vlanid":   "201",
+				"mtu": "1700",
 				"members@": "Ethernet8",
 			},
 		},
@@ -3355,6 +3092,7 @@ func TestValidateEditConfig_Use_Updated_Data_As_Create_DependentData_Single_Call
 			cvl.OP_UPDATE,
 			"VLAN|Vlan201",
 			map[string]string{
+				"mtu": "1900",
 				"members@": "Ethernet8,Ethernet12",
 			},
 		},
@@ -3493,7 +3231,7 @@ func TestSortDepTables(t *testing.T) {
 
 	if len(expectedResult) != len(result) {
 		t.Errorf("Validation failed, returned value = %v", result)
-		return 
+		return
 	}
 
 	for i := 0; i < len(expectedResult) ; i++ {
@@ -3515,7 +3253,7 @@ func TestGetOrderedTables(t *testing.T) {
 
 	if len(expectedResult) != len(result) {
 		t.Errorf("Validation failed, returned value = %v", result)
-		return 
+		return
 	}
 
 	for i := 0; i < len(expectedResult) ; i++ {

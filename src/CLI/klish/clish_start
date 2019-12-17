@@ -7,6 +7,7 @@ then
  export SYSTEM_NAME="${HOSTNAME%%.*}"
 fi
 export PYTHONPATH=$SONIC_MGMT_ROOT:$SONIC_MGMT_ROOT/lib/swagger_client_py:$SONIC_CLI_ROOT:$SONIC_CLI_ROOT/scripts:$PYTHONPATH
+export RENDERER_TEMPLATE_PATH=$SONIC_CLI_ROOT/render-templates
 export CLISH_PATH=$SONIC_CLI_ROOT/command-tree
 export LD_LIBRARY_PATH=/usr/local/lib:$SONIC_CLI_ROOT/.libs:$LD_LIBRARY_PATH
 export PATH=$PATH:/usr/local/sbin:/usr/sbin:/sbin:$SONIC_CLI_ROOT

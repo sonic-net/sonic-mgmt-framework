@@ -22,7 +22,7 @@ import (
     "fmt"
     "strings"
     "reflect"
-	"regexp"
+    "regexp"
     "translib/db"
     "github.com/openconfig/goyang/pkg/yang"
     "github.com/openconfig/gnmi/proto/gnmi"
@@ -87,7 +87,7 @@ func parentXpathGet(xpath string) string {
 }
 
 func isYangResType(ytype string) bool {
-    if ytype == "choose" || ytype == "case" {
+    if ytype == "choice" || ytype == "case" {
         return true
     }
     return false
@@ -460,7 +460,29 @@ func getDBOptionsWithSeparator(dbNo db.DBNum, initIndicator string, tableSeparat
                       })
 }
 
+func getXpathFromYangEntry(entry *yang.Entry) string {
+        xpath := ""
+        if entry != nil {
+                xpath = entry.Name
+                entry = entry.Parent
+                for {
+                        if entry.Parent != nil {
+                                xpath = entry.Name + "/" + xpath
+                                entry = entry.Parent
+                        } else {
+                                // This is the module entry case
+                                xpath = "/" + entry.Name + ":" + xpath
+                                break
+                        }
+                }
+        }
+        return xpath
+}
+
 func stripAugmentedModuleNames(xpath string) string {
+	if !strings.HasPrefix(xpath, "/") {
+		xpath = "/" + xpath
+	}
         pathList := strings.Split(xpath, "/")
         pathList = pathList[1:]
         for i, pvar := range pathList {
@@ -552,7 +574,7 @@ func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, req
 				 }
 				 if len(xYangSpecMap[yangXpath].xfmrKey) > 0 {
 					 xfmrFuncName := yangToDbXfmrFunc(xYangSpecMap[yangXpath].xfmrKey)
-					 inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, curPathWithKey, requestUri, oper, "", nil, subOpDataMap, nil, txCache)
+					 inParams := formXfmrInputRequest(d, dbs, cdb, ygRoot, curPathWithKey, requestUri, oper, "", nil, subOpDataMap, nil, txCache)
 					 ret, err := XlateFuncCall(xfmrFuncName, inParams)
 					 if err != nil {
 						 return "", "", ""
@@ -576,7 +598,7 @@ func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, req
 				 }
 			 } else if len(xYangSpecMap[yangXpath].xfmrKey) > 0 {
 				 xfmrFuncName := yangToDbXfmrFunc(xYangSpecMap[yangXpath].xfmrKey)
-				 inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, curPathWithKey, requestUri, oper, "", nil, subOpDataMap, nil, txCache)
+				 inParams := formXfmrInputRequest(d, dbs, cdb, ygRoot, curPathWithKey, requestUri, oper, "", nil, subOpDataMap, nil, txCache)
 				 ret, err := XlateFuncCall(xfmrFuncName, inParams)
 				 if err != nil {
 					 return "", "", ""
@@ -713,4 +735,15 @@ func unmarshalJsonToDbData(schema *yang.Entry, fieldName string, value interface
         }
 
         return data, nil
+}
+
+func checkIpV6AddrNotation(val string) bool {
+        re_std := regexp.MustCompile(`^(?:[A-F0-9]{1,4}:){7}[A-F0-9]{1,4}$`)
+        re_comp := regexp.MustCompile(`(?:[A-F0-9]{0,4}:){0,7}[A-F0-9]{0,4}`)
+        if re_std.MatchString(val) {
+                return true;
+        } else if re_comp.MatchString(val) {
+                return true;
+        }
+        return false;
 }

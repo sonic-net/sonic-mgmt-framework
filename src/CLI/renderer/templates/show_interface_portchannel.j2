@@ -17,6 +17,7 @@ LACP Partner port {{mem['state']['partner-port-num']}}  address {{mem['state']['
 {% endif %}
 {% if po_intf['counters'] %}
 {%set counters = po_intf['counters']['openconfig-interfaces:counters'] %}
+Last clearing of "show interface" counters: {{ datetimeformat(counters['last-clear']) }}
 {% set space = "          " %}
 Input statistics:
 {{space}}{{counters['in-pkts']}} packets, {{counters['in-octets']}} octets

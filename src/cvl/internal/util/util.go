@@ -169,6 +169,14 @@ func customLogCallback(level C.LY_LOG_LEVEL, msg *C.char, path *C.char)  {
 	C.GoString(msg), C.GoString(path))
 }
 
+func IsTraceLevelSet(tracelevel CVLTraceLevel) bool {
+	if (cvlTraceFlags & (uint32)(tracelevel)) != 0 {
+		return true
+	}
+
+	return false
+}
+
 func TRACE_LEVEL_LOG(tracelevel CVLTraceLevel, fmtStr string, args ...interface{}) {
 
 	/*
@@ -197,8 +205,8 @@ func TRACE_LEVEL_LOG(tracelevel CVLTraceLevel, fmtStr string, args ...interface{
 		fmt.Printf("%s:%d [CVL] : %s(): ", file, line, f.Name())
 		fmt.Printf(fmtStr+"\n", args...)
 	} else {
-		fmtStr = "[CVL] : " + fmtStr
 		if (traceEnabled == true) {
+			fmtStr = "[CVL] : " + fmtStr
 			//Trace logs has verbose level INFO_TRACE
 			log.V(INFO_TRACE).Infof(fmtStr, args...)
 		}
@@ -279,7 +287,7 @@ func CVL_LEVEL_LOG(level CVLLogLevel, format string, args ...interface{}) {
 		return
 	}
 
-	format = "[CVL] : " + format 
+	format = "[CVL] : " + format
 
 	switch level {
 		case INFO:

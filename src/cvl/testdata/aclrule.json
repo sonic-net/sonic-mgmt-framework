@@ -1,5 +1,6 @@
 {
 	"PACKET_ACTION": "FORWARD",
+		"IP_TYPE":	"IPV4",
 		"SRC_IP": "10.1.1.1/32",
 		"L4_SRC_PORT": "1909",
 		"IP_PROTOCOL": "103",

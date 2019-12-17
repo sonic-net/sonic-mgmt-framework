@@ -79,6 +79,9 @@ class ApiClient(object):
     def get(self, path):
         return self.request("GET", path, None)
 
+    def head(self, path):
+        return self.request("HEAD", path, None)
+
     def put(self, path, data={}):
         return self.request("PUT", path, data)
 
@@ -115,6 +118,7 @@ class Path(object):
 class Response(object):
     def __init__(self, response):
         self.response = response
+        self.status_code = response.status_code
 
         try:
             if response.content is None or len(response.content) == 0:
@@ -125,7 +129,7 @@ class Response(object):
             self.content = self.response.text
 
     def ok(self):
-        return self.response.status_code >= 200 and self.response.status_code <= 299
+        return self.status_code >= 200 and self.status_code <= 299
 
     def errors(self):
         if self.ok():
@@ -141,6 +145,9 @@ class Response(object):
         return errors
 
     def error_message(self, formatter_func=None):
+        if hasattr(self, 'err_message_override'):
+            return self.err_message_override
+
         err = self.errors().get('error')
         if err == None:
             return None
@@ -148,20 +155,21 @@ class Response(object):
             err = err[0]
         if isinstance(err, dict):
             if formatter_func is not None:
-                return formatter_func(err)
-            return default_error_message_formatter(err)
+                return formatter_func(self.status_code, err)
+            return default_error_message_formatter(self.status_code, err)
         return str(err)
+
+    def set_error_message(self, message):
+        self.err_message_override = add_error_prefix(message)
 
     def __getitem__(self, key):
         return self.content[key]
 
 
-def default_error_message_formatter(err_entry):
+def default_error_message_formatter(status_code, err_entry):
     if 'error-message' in err_entry:
         err_msg = err_entry['error-message']
-        if not err_msg.startswith("%Error"):
-            return '%Error: ' + err_msg
-        return err_msg
+        return add_error_prefix(err_msg)
     err_tag = err_entry.get('error-tag')
     if err_tag == 'invalid-value':
         return '%Error: validation failed'
@@ -170,4 +178,9 @@ def default_error_message_formatter(err_entry):
     if err_tag == 'access-denied':
         return '%Error: not authorized'
     return '%Error: operation failed'
+
+def add_error_prefix(err_msg):
+    if not err_msg.startswith("%Error"):
+        return '%Error: ' + err_msg
+    return err_msg
 

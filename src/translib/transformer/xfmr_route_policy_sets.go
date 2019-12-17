@@ -39,6 +39,8 @@ func init () {
     XlateFuncBind("DbToYang_prefix_set_mode_fld_xfmr", DbToYang_prefix_set_mode_fld_xfmr)
     XlateFuncBind("YangToDb_prefix_key_xfmr", YangToDb_prefix_key_xfmr)
     XlateFuncBind("DbToYang_prefix_key_xfmr", DbToYang_prefix_key_xfmr)
+    XlateFuncBind("YangToDb_prefix_action_fld_xfmr", YangToDb_prefix_action_fld_xfmr)
+    XlateFuncBind("DbToYang_prefix_action_fld_xfmr", DbToYang_prefix_action_fld_xfmr)
     XlateFuncBind("YangToDb_prefix_empty_ip_prefix_fld_xfmr", YangToDb_prefix_empty_ip_prefix_fld_xfmr)
     XlateFuncBind("YangToDb_prefix_ip_prefix_fld_xfmr", YangToDb_prefix_ip_prefix_fld_xfmr)
     XlateFuncBind("DbToYang_prefix_ip_prefix_fld_xfmr", DbToYang_prefix_ip_prefix_fld_xfmr)
@@ -62,13 +64,51 @@ func init () {
 
     XlateFuncBind("YangToDb_as_path_set_name_fld_xfmr", YangToDb_as_path_set_name_fld_xfmr)
     XlateFuncBind("DbToYang_as_path_set_name_fld_xfmr", DbToYang_as_path_set_name_fld_xfmr)
-
-    XlateFuncBind("YangToDb_neighbor_set_name_fld_xfmr", YangToDb_neighbor_set_name_fld_xfmr)
-    XlateFuncBind("DbToYang_neighbor_set_name_fld_xfmr", DbToYang_neighbor_set_name_fld_xfmr)
-
-    XlateFuncBind("YangToDb_tag_set_name_fld_xfmr", YangToDb_tag_set_name_fld_xfmr)
-    XlateFuncBind("DbToYang_tag_set_name_fld_xfmr", DbToYang_tag_set_name_fld_xfmr)
 }
+
+var YangToDb_prefix_action_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
+
+    res_map := make(map[string]string)
+    var err error
+    if inParams.param == nil {
+        return res_map, err
+    }
+    action, _ := inParams.param.(ocbinds.E_OpenconfigRoutingPolicy_PolicyResultType)
+    log.Info("YangToDb_prefix_action_fld_xfmr: ", inParams.ygRoot, " Xpath: ", inParams.uri, " route-operation: ", action)
+    if action == ocbinds.OpenconfigRoutingPolicy_PolicyResultType_ACCEPT_ROUTE {
+        res_map["action"] = "permit"
+    } else if action == ocbinds.OpenconfigRoutingPolicy_PolicyResultType_REJECT_ROUTE {
+        res_map["action"] = "deny"
+    }
+    return res_map, err
+}
+
+var DbToYang_prefix_action_fld_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (map[string]interface{}, error) {
+    var err error
+    result := make(map[string]interface{})
+
+    data := (*inParams.dbDataMap)[inParams.curDb]
+    log.Info("DbToYang_prefix_action_fld_xfmr", data, "inParams : ", inParams)
+
+    pTbl := data["PREFIX"]
+    if _, ok := pTbl[inParams.key]; !ok {
+        log.Info("DbToYang_route_map_action_policy_result_xfmr table not found : ", inParams.key)
+        return result, errors.New("Policy definition table not found : " + inParams.key)
+    }
+    niInst := pTbl[inParams.key]
+    route_operation, ok := niInst.Field["action"]
+    if ok {
+        if route_operation == "permit" {
+            result["action"] = ocbinds.OpenconfigRoutingPolicy_PolicyResultType_ACCEPT_ROUTE 
+        } else {
+            result["action"] = ocbinds.OpenconfigRoutingPolicy_PolicyResultType_REJECT_ROUTE
+        }
+    } else {
+        log.Info("DbToYang_prefix_action_fld_xfmr field not found in DB")
+    }
+    return result, err
+}
+
 
 var YangToDb_prefix_empty_set_name_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
     res_map := make(map[string]string)
@@ -460,7 +500,7 @@ var YangToDb_community_member_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrPar
             v := (member).(*ocbinds.OpenconfigRoutingPolicy_RoutingPolicy_DefinedSets_BgpDefinedSets_CommunitySets_CommunitySet_Config_CommunityMember_Union_E_OpenconfigBgpTypes_BGP_WELL_KNOWN_STD_COMMUNITY)
             switch v.E_OpenconfigBgpTypes_BGP_WELL_KNOWN_STD_COMMUNITY {
             case ocbinds.OpenconfigBgpTypes_BGP_WELL_KNOWN_STD_COMMUNITY_NOPEER:
-                community_list += "local-AS" + ","
+                community_list += "no-peer" + ","
                 break
             case ocbinds.OpenconfigBgpTypes_BGP_WELL_KNOWN_STD_COMMUNITY_NO_ADVERTISE:
                 community_list += "no-advertise" + ","
@@ -469,8 +509,8 @@ var YangToDb_community_member_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrPar
                 community_list += "no-export" + ","
                 break
             case ocbinds.OpenconfigBgpTypes_BGP_WELL_KNOWN_STD_COMMUNITY_NO_EXPORT_SUBCONFED:
-                err = errors.New("Un supported BGP well known type NO_EXPORT_SUBCONFED");
-                return res_map, err
+                community_list += "local-AS" + ","
+                break
             }
             new_type = "STANDARD"
             break
@@ -534,11 +574,13 @@ var DbToYang_community_member_fld_xfmr FieldXfmrDbtoYang = func(inParams XfmrPar
             }
 
             if (community == "local-AS") {
-                result_community += "NOPEER"
+                result_community += "NO_EXPORT_SUBCONFED"
             } else if (community == "no-advertise") {
                 result_community += "NO_ADVERTISE"
             } else if (community == "no-export") {
                 result_community += "NO_EXPORT"
+            } else if (community == "no-peer") {
+                result_community += "NOPEER"
             } else {
                 result_community += community
             }
@@ -762,48 +804,4 @@ var DbToYang_as_path_set_name_fld_xfmr FieldXfmrDbtoYang = func(inParams XfmrPar
     return res_map, err
 }
 
-/* NEIGHBOR SET API's */
-var YangToDb_neighbor_set_name_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
-    res_map := make(map[string]string)
 
-    log.Info("YangToDb_neighbor_set_name_fld_xfmr: ", inParams.key)
-    res_map["NULL"] = "NULL"
-    return res_map, nil
-}
-
-var DbToYang_neighbor_set_name_fld_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (map[string]interface{}, error) {
-    res_map := make(map[string]interface{})
-    var err error
-    /*name attribute corresponds to key in redis table*/
-    key := inParams.key
-    log.Info("DbToYang_neighbor_set_name_fld_xfmr: ", key)
-    setTblKey := strings.Split(key, "|")
-    setName := setTblKey[0]
-
-    res_map["name"] = setName
-    log.Info("config/name  ", res_map)
-    return res_map, err
-}
-
-/* TAG SET API's */
-var YangToDb_tag_set_name_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
-    res_map := make(map[string]string)
-
-    log.Info("YangToDb_tag_set_name_fld_xfmr: ", inParams.key)
-    res_map["NULL"] = "NULL"
-    return res_map, nil
-}
-
-var DbToYang_tag_set_name_fld_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (map[string]interface{}, error) {
-    res_map := make(map[string]interface{})
-    var err error
-    /*name attribute corresponds to key in redis table*/
-    key := inParams.key
-    log.Info("DbToYang_tag_set_name_fld_xfmr: ", key)
-    setTblKey := strings.Split(key, "|")
-    setName := setTblKey[0]
-
-    res_map["name"] = setName
-    log.Info("config/name  ", res_map)
-    return res_map, err
-}

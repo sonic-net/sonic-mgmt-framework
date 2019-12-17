@@ -2,11 +2,12 @@ module openconfig-system-annot {
 
     yang-version "1";
 
-    namespace "http://openconfig.net/yang/openconfig-system-annot";
+    namespace "http://openconfig.net/yang/annotation/oc-sys-annot";
     prefix "oc-sys-annot";
 
     import openconfig-system { prefix oc-sys; }
     import sonic-extensions {prefix sonic-ext; }
+    import openconfig-system-ext { prefix oc-sys-ext; }
 
     deviation /oc-sys:system/oc-sys:state {
         deviate add {
@@ -28,4 +29,184 @@ module openconfig-system-annot {
             sonic-ext:subtree-transformer "sys_procs_xfmr";
         }
     }
+
+/*********************************************************/
+
+    deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group {
+      deviate add {
+          sonic-ext:key-transformer "global_sg_key_xfmr";
+          sonic-ext:table-transformer "global_sg_tbl_xfmr";
+      }
+    }
+
+    deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:name {
+      deviate add {
+          sonic-ext:field-transformer "global_sg_name_xfmr";
+      }
+    }
+
+    deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:config {
+      deviate add {
+      }
+    }
+
+    deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:config/oc-sys-ext:timeout {
+      deviate add {
+          sonic-ext:field-name "timeout";
+      }
+    }
+
+    deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:config/oc-sys-ext:auth-type {
+      deviate add {
+          sonic-ext:field-name "auth_type";
+      }
+    }
+
+    deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:config/oc-sys-ext:secret-key {
+      deviate add {
+          sonic-ext:field-name "passkey";
+      }
+    }
+
+    deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:config/oc-sys-ext:source-address {
+      deviate add {
+          sonic-ext:field-name "src_ip";
+      }
+    }
+
+    deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:config/oc-sys-ext:retransmit-attempts {
+      deviate add {
+          sonic-ext:field-name "retransmit";
+      }
+    }
+
+    deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:config/oc-sys:name {
+      deviate add {
+          sonic-ext:field-transformer "global_sg_name_xfmr";
+      }
+    }
+
+    deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:config/oc-sys:type {
+      deviate add {
+      }
+    }
+
+    deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:state {
+      deviate add {
+      }
+    }
+
+    deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:state/oc-sys:type {
+      deviate add {
+      }
+    }
+
+    deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:state/oc-sys:name {
+      deviate add {
+      }
+    }
+
+    deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:servers {
+      deviate add {
+      }
+    }
+
+    deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:servers/oc-sys:server {
+      deviate add {
+          sonic-ext:table-transformer "server_table_xfmr";
+          sonic-ext:key-transformer "server_key_xfmr";
+      }
+    }
+
+/*
+    deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:servers/oc-sys:server/oc-sys:address {
+      deviate add {
+          sonic-ext:field-name "ipaddress";
+      }
+    }
+*/
+
+    deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:servers/oc-sys:server/oc-sys:config {
+      deviate add {
+      }
+    }
+
+    deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:servers/oc-sys:server/oc-sys:config/oc-sys:timeout {
+      deviate add {
+          sonic-ext:field-name "timeout";
+      }
+    }
+
+    deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:servers/oc-sys:server/oc-sys:config/oc-sys:name {
+      deviate add {
+          sonic-ext:field-transformer "server_name_xfmr";
+      }
+    }
+
+    deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:servers/oc-sys:server/oc-sys:config/oc-sys:address {
+      deviate add {
+          sonic-ext:field-name "ipaddress";
+      }
+    }
+
+    deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:servers/oc-sys:server/oc-sys:config/oc-sys-ext:auth-type {
+      deviate add {
+          sonic-ext:field-name "auth_type";
+      }
+    }
+
+    deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:servers/oc-sys:server/oc-sys:config/oc-sys-ext:priority {
+      deviate add {
+          sonic-ext:field-name "priority";
+      }
+    }
+
+    deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:servers/oc-sys:server/oc-sys:config/oc-sys-ext:vrf {
+      deviate add {
+      }
+    }
+
+/*********************************************************/
+
+    deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:servers/oc-sys:server/oc-sys:radius {
+      deviate add {
+      }
+    }
+
+    deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:servers/oc-sys:server/oc-sys:radius/oc-sys:config {
+      deviate add {
+        sonic-ext:table-name "RADIUS_SERVER";
+        sonic-ext:key-transformer "server_key_xfmr";
+      }
+    }
+
+    deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:servers/oc-sys:server/oc-sys:radius/oc-sys:config/oc-sys:retransmit-attempts {
+      deviate add {
+          sonic-ext:field-name "retransmit";
+      }
+    }
+
+    deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:servers/oc-sys:server/oc-sys:radius/oc-sys:config/oc-sys:auth-port {
+      deviate add {
+          sonic-ext:field-name "auth_port";
+      }
+    }
+
+    deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:servers/oc-sys:server/oc-sys:radius/oc-sys:config/oc-sys:acct-port {
+        deviate not-supported;
+    }
+
+    deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:servers/oc-sys:server/oc-sys:radius/oc-sys:config/oc-sys:secret-key {
+      deviate add {
+          sonic-ext:field-name "passkey";
+      }
+    }
+
+    deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:servers/oc-sys:server/oc-sys:radius/oc-sys:config/oc-sys:source-address {
+        deviate not-supported;
+    }
+
+/*********************************************************/
+
+
 }

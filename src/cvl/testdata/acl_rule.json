@@ -1,9 +1,12 @@
 {
-"ACL_RULE": {
-        "TestACL13|Rule1": {
-        "PRIORITY": "55",
-        "PACKET_ACTION": "DROP",
-        "L4_SRC_PORT": "0"
-        }
-   }
+	"ACL_RULE": {
+		"TestACL13|Rule1": {
+			"PRIORITY": "55",
+			"PACKET_ACTION": "DROP",
+			"L4_SRC_PORT": "0",
+			"IP_TYPE": "IPV4",
+			"SRC_IP": "10.1.1.1/32",
+			"DST_IP": "20.2.2.2/32"
+		}
+	}
 }

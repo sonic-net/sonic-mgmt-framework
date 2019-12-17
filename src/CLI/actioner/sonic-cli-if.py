@@ -204,7 +204,6 @@ def run(func, args):
           if response.content is not None:
             # Get Command Output
             api_response = response.content
-            
             if 'openconfig-interfaces:interfaces' in api_response:
                 value = api_response['openconfig-interfaces:interfaces']
                 if 'interface' in value:
@@ -215,11 +214,11 @@ def run(func, args):
                 print("Failed")
             else:
                 if func == 'get_openconfig_interfaces_interfaces_interface':
-                     show_cli_output(args[1], api_response)
+                    show_cli_output(args[1], api_response)
                 elif func == 'get_openconfig_interfaces_interfaces':
-                     show_cli_output(args[0], api_response)
+                    show_cli_output(args[0], api_response)
                 else:
-                     return
+                    return
         else:
             print response.error_message()
 
