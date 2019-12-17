@@ -1287,11 +1287,22 @@ func (c *CVL) translateToYang(jsonMap *map[string]interface{}) (*yparser.YParser
 		doc.FirstChild = topYangNode
 		doc.LastChild = topYangNode
 		topYangNode.Parent = doc
+
+		if (IsTraceLevelSet(TRACE_CACHE)) {
+			TRACE_LOG(TRACE_CACHE, "Before merge, YANG data tree = %s, source = %s",
+			c.yv.root.OutputXML(false),
+			doc.OutputXML(false))
+		}
+
 		if c.mergeYangData(c.yv.root, doc) != CVL_SUCCESS {
 			CVL_LOG(ERROR, "Unable to merge translated YANG data while " +
 			"translating from request data to YANG format")
 			cvlYErrObj.ErrCode = CVL_SYNTAX_ERROR
 			return nil, cvlErrObj
+		}
+		if (IsTraceLevelSet(TRACE_CACHE)) {
+			TRACE_LOG(TRACE_CACHE, "After merge, YANG data tree = %s",
+			c.yv.root.OutputXML(false))
 		}
 	}
 
@@ -1352,6 +1363,9 @@ func (c *CVL) validateSyntax(data *yparser.YParserNode) (CVLErrorInfo, CVLRetCod
 	var cvlErrObj CVLErrorInfo
 	TRACE_LOG(TRACE_YPARSER, "Validating syntax ....")
 
+	//Get dependent data from 
+	c.fetchDataToTmpCache() //fetch data to temp cache for temporary validation
+
 	if errObj  := c.yp.ValidateSyntax(data); errObj.ErrCode != yparser.YP_SUCCESS {
 
 		retCode := CVLRetCode(errObj.ErrCode)
@@ -1384,11 +1398,12 @@ func (c *CVL) validateSemantics(data *yparser.YParserNode, appDepData *yparser.Y
 		return cvlErrObj, CVL_SUCCESS
 	}
 
+	//TODO: Clean up this function
+	return cvlErrObj, CVL_SUCCESS
+
 	//Get dependent data from 
 	depData := c.fetchDataToTmpCache() //fetch data to temp cache for temporary validation
 
-	//TODO
-	return cvlErrObj, CVL_SUCCESS
 
 	if (Tracing == true) {
 		TRACE_LOG(TRACE_SEMANTIC, "Validating semantics data=%s\n depData =%s\n, appDepData=%s\n....", c.yp.NodeDump(data), c.yp.NodeDump(depData), c.yp.NodeDump(appDepData))
@@ -1423,7 +1438,6 @@ func (c *CVL) addCfgDataItem(configData *map[string]interface{},
 			cfgDataItem CVLEditConfigData) (string, string){
 	var cfgData map[string]interface{}
 	cfgData = *configData
-	var tmpFieldMap map[string]interface{}
 
 	tblName, key := splitRedisKey(cfgDataItem.Key)
 	if (tblName == "" || key == "") {
@@ -1433,31 +1447,18 @@ func (c *CVL) addCfgDataItem(configData *map[string]interface{},
 
 	if _, existing := cfgData[tblName]; existing {
 		fieldsMap := cfgData[tblName].(map[string]interface{})
+		if (cfgDataItem.VOp == OP_DELETE) {
+			return tblName, key
+		}
 		fieldsMap[key] = c.checkFieldMap(&cfgDataItem.Data)
-		tmpFieldMap = fieldsMap[key].(map[string]interface{})
 	} else {
 		fieldsMap := make(map[string]interface{})
-		fieldsMap[key] = c.checkFieldMap(&cfgDataItem.Data)
-		cfgData[tblName] = fieldsMap
-		tmpFieldMap = fieldsMap[key].(map[string]interface{})
-	}
-
-	if (cfgDataItem.VOp == OP_DELETE) {
-		//Don't add data it is delete operation
-		//If Delete has map field, it means single field delete case.
-		//If the field has empty string, remove from map
-		for field, val := range tmpFieldMap {
-			switch v := val.(type) {
-			case string:
-				if (v == "") {
-					delete(tmpFieldMap, field)
-				}
-			case []string:
-				if (len(v) == 0) {
-					delete(tmpFieldMap, field)
-				}
-			}
+		if (cfgDataItem.VOp == OP_DELETE) {
+			fieldsMap[key] = nil
+		} else {
+			fieldsMap[key] = c.checkFieldMap(&cfgDataItem.Data)
 		}
+		cfgData[tblName] = fieldsMap
 	}
 
 	return tblName, key

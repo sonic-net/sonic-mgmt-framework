@@ -31,12 +31,10 @@ func TestValidateEditConfig_Delete_Must_Check_Positive(t *testing.T) {
 			"Ethernet3" : map[string]interface{} {
 				"alias":"hundredGigE1",
 				"lanes": "81,82,83,84",
-				"mtu": "9100",
 			},
 			"Ethernet5" : map[string]interface{} {
 				"alias":"hundredGigE1",
 				"lanes": "85,86,87,89",
-				"mtu": "9100",
 			},
 		},
 		"ACL_TABLE" : map[string]interface{} {
@@ -104,12 +102,12 @@ func TestValidateEditConfig_Delete_Must_Check_Negative(t *testing.T) {
 			"Ethernet3" : map[string]interface{} {
 				"alias":"hundredGigE1",
 				"lanes": "81,82,83,84",
-				"mtu": "9100",
+				//"mtu": "9100",
 			},
 			"Ethernet5" : map[string]interface{} {
 				"alias":"hundredGigE1",
 				"lanes": "85,86,87,89",
-				"mtu": "9100",
+				//"mtu": "9100",
 			},
 		},
 		"ACL_TABLE" : map[string]interface{} {
@@ -548,3 +546,37 @@ func TestValidateEditConfig_MustExp_Non_Key_As_Predicate_In_External_Table_Posit
 	unloadConfigDB(rclient, depDataMap)
 }
 
+func TestValidateEditConfig_MustExp_Update_Leaf_List_Positive(t *testing.T) {
+	depDataMap := map[string]interface{} {
+		"VLAN" : map[string]interface{} {
+			"Vlan202": map[string] interface{} {
+				"vlanid":   "202",
+			},
+		},
+	}
+
+	loadConfigDB(rclient, depDataMap)
+
+	cfgData := []cvl.CVLEditConfigData{
+		cvl.CVLEditConfigData{
+			cvl.VALIDATE_ALL,
+			cvl.OP_UPDATE,
+			"VLAN|Vlan202",
+			map[string]string{
+				"members@": "Ethernet4,Ethernet8",
+			},
+		},
+	}
+
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	cvlErrInfo, retCode := cvSess.ValidateEditConfig(cfgData)
+
+	cvl.ValidationSessClose(cvSess)
+
+	if retCode != cvl.CVL_SUCCESS {
+		t.Errorf("Config Validation failed -- error details %v %v", cvlErrInfo, retCode)
+	}
+
+	unloadConfigDB(rclient, depDataMap)
+}
