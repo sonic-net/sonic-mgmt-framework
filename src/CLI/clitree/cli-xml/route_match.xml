@@ -192,7 +192,7 @@ limitations under the License.
         help="redistributes routes in the routing table that match the specified tags."
         >
         <PARAM name="match-tag"
-                     help="tag number"
+                     help="tag vlaue (1-4294967295)"
                      ptype="STRING"
         />
        <ACTION>
@@ -206,7 +206,7 @@ limitations under the License.
         help="Set routing policy match criteria to metric"
         >
         <PARAM name="match-met"
-                     help="metric number"
+                     help="metric value (0-4294967295)"
                      ptype="UINT"
         />
        <ACTION>
