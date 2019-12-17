@@ -41,9 +41,9 @@ module sonic-bgp-global {
     container sonic-bgp-global {
         container BGP_GLOBALS {
             list BGP_GLOBALS_LIST {
-                key "vrf";
+                key "vrf_name";
 
-                leaf vrf {
+                leaf vrf_name {
                     type union {
                         type string {
                             pattern "default";
@@ -296,11 +296,11 @@ module sonic-bgp-global {
 
         container BGP_GLOBALS_AF {
             list BGP_GLOBALS_AF_LIST {
-                key "vrf afi_safi";
+                key "vrf_name afi_safi";
 
-                leaf vrf {
+                leaf vrf_name {
                     type leafref {
-                        path "../../../BGP_GLOBALS/BGP_GLOBALS_LIST/vrf";
+                        path "../../../BGP_GLOBALS/BGP_GLOBALS_LIST/vrf_name";
                     }
                 }
 
@@ -348,34 +348,13 @@ module sonic-bgp-global {
             }
         }
 
-        container BGP_GLOBALS_LISTEN_PREFIX {
-            list BGP_GLOBALS_LISTEN_PREFIX_LIST {
-                key "vrf ip_prefix";
-
-                leaf vrf {
-                    type leafref {
-                        path "../../../BGP_GLOBALS/BGP_GLOBALS_LIST/vrf";
-                    }
-                }
-
-                leaf ip_prefix {
-                    type inet:ip-prefix;
-                }
-
-                leaf peer_group {
-                    type string;
-                }
-
-            }
-        }
-
         container BGP_GLOBALS_AF_AGGREGATE_ADDR {
             list BGP_GLOBALS_AF_AGGREGATE_ADDR_LIST {
-                key "vrf afi_safi ip_prefix";
+                key "vrf_name afi_safi ip_prefix";
 
-                leaf vrf {
+                leaf vrf_name {
                     type leafref {
-                        path "../../../BGP_GLOBALS/BGP_GLOBALS_LIST/vrf";
+                        path "../../../BGP_GLOBALS/BGP_GLOBALS_LIST/vrf_name";
                     }
                 }
 
@@ -399,11 +378,11 @@ module sonic-bgp-global {
 
         container BGP_GLOBALS_AF_NETWORK {
             list BGP_GLOBALS_AF_NETWORK_LIST {
-                key "vrf afi_safi ip_prefix";
+                key "vrf_name afi_safi ip_prefix";
 
-                leaf vrf {
+                leaf vrf_name {
                     type leafref {
-                        path "../../../BGP_GLOBALS/BGP_GLOBALS_LIST/vrf";
+                        path "../../../BGP_GLOBALS/BGP_GLOBALS_LIST/vrf_name";
                     }
                 }
 
