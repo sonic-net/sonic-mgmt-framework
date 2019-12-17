@@ -64,9 +64,9 @@ func leafXfmrHandler(inParams XfmrParams, xfmrFieldFuncNm string) (map[string]st
     return nil, nil
 }
 
-func xfmrHandler(inParams XfmrParams, xfmrFuncNm string) (map[string]map[string]db.Value, err) {
+func xfmrHandler(inParams XfmrParams, xfmrFuncNm string) (map[string]map[string]db.Value, error) {
         log.Info("Received inParams ", inParams, "Subtree function name ", xfmrFuncNm)
-        ret, err := XlateFuncCall(yangToDbXfmrFunc(xfmrFuncNm, inParams)
+        ret, err := XlateFuncCall(yangToDbXfmrFunc(xfmrFuncNm), inParams)
         if err != nil {
                 return nil, err
         }
@@ -384,7 +384,7 @@ func dbMapDelete(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requestU
 				var dbs [db.MaxDB]*db.DB
 				cdb := spec.dbIndex
 				inParams := formXfmrInputRequest(d, dbs, cdb, ygRoot, uri, requestUri, oper, "", nil, subOpDataMap, nil, txCache)
-				stRetData, err := xfmrHandler(inParams, xYangSpecMap[xpath].xfmrFunc)
+				stRetData, err := xfmrHandler(inParams, spec.xfmrFunc)
 				if err == nil {
 					mapCopy(result, stRetData)
 				} else {
