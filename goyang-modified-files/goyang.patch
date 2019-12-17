@@ -412,7 +412,7 @@ index 0000000..286a29c
 +}
 +
 diff --git a/pkg/yang/entry.go b/pkg/yang/entry.go
-index ef658d6..195babc 100644
+index ef658d6..cd3b046 100644
 --- a/pkg/yang/entry.go
 +++ b/pkg/yang/entry.go
 @@ -80,6 +80,7 @@ type Entry struct {
@@ -423,7 +423,18 @@ index ef658d6..195babc 100644
  	Key string            `json:",omitempty"` // Optional key name for lists (i.e., maps)
  
  	// Fields associated with leaf nodes
-@@ -264,6 +265,7 @@ func newDirectory(n Node) *Entry {
+@@ -115,6 +116,10 @@ type Entry struct {
+ 	// the augmenting entity per RFC6020 Section 7.15.2. The namespace
+ 	// of the Entry should be accessed using the Namespace function.
+ 	namespace *Value
++
++	ChildSchemaCache map[reflect.StructTag]*Entry `json:"-"`
++
++	IsSchemaValidated bool `json:"-"`
+ }
+ 
+ // An RPCEntry contains information related to an RPC Node.
+@@ -264,6 +269,7 @@ func newDirectory(n Node) *Entry {
  	return &Entry{
  		Kind:  DirectoryEntry,
  		Dir:   make(map[string]*Entry),
@@ -431,7 +442,7 @@ index ef658d6..195babc 100644
  		Node:  n,
  		Name:  n.NName(),
  		Extra: map[string][]interface{}{},
-@@ -366,6 +368,7 @@ func (e *Entry) add(key string, value *Entry) *Entry {
+@@ -366,6 +372,7 @@ func (e *Entry) add(key string, value *Entry) *Entry {
  		return e
  	}
  	e.Dir[key] = value
@@ -439,7 +450,7 @@ index ef658d6..195babc 100644
  	return e
  }
  
-@@ -1007,7 +1010,7 @@ func (e *Entry) ApplyDeviate() []error {
+@@ -1007,7 +1014,7 @@ func (e *Entry) ApplyDeviate() []error {
  					}
  
  					if devSpec.Default != "" {
@@ -448,7 +459,7 @@ index ef658d6..195babc 100644
  					}
  
  					if devSpec.Mandatory != TSUnset {
-@@ -1090,6 +1093,7 @@ func (e *Entry) FixChoice() {
+@@ -1090,6 +1097,7 @@ func (e *Entry) FixChoice() {
  				}
  				ce.Parent = ne
  				e.Dir[k] = ne
@@ -456,7 +467,7 @@ index ef658d6..195babc 100644
  			}
  		}
  	}
-@@ -1260,6 +1264,14 @@ func (e *Entry) shallowDup() *Entry {
+@@ -1260,6 +1268,14 @@ func (e *Entry) shallowDup() *Entry {
  	// copied we will have to explicitly uncopy them.
  	ne := *e
  
@@ -471,7 +482,7 @@ index ef658d6..195babc 100644
  	// Now only copy direct children, clear their Dir, and fix up
  	// Parent pointers.
  	if e.Dir != nil {
-@@ -1283,6 +1295,14 @@ func (e *Entry) dup() *Entry {
+@@ -1283,6 +1299,14 @@ func (e *Entry) dup() *Entry {
  	// to do that.
  	ne := *e
  
@@ -486,7 +497,7 @@ index ef658d6..195babc 100644
  	// Now recurse down to all of our children, fixing up Parent
  	// pointers as we go.
  	if e.Dir != nil {
-@@ -1317,6 +1337,7 @@ func (e *Entry) merge(prefix *Value, namespace *Value, oe *Entry) {
+@@ -1317,6 +1341,7 @@ func (e *Entry) merge(prefix *Value, namespace *Value, oe *Entry) {
  		} else {
  			v.Parent = e
  			e.Dir[k] = v
@@ -494,6 +505,17 @@ index ef658d6..195babc 100644
  		}
  	}
  }
+@@ -1378,8 +1403,8 @@ func (s sortedErrors) Less(i, j int) bool {
+ 		}
+ 		return nless(fi[x], fj[x])
+ 	}
+-	for x := 1; x < 4; x++ {
+-		switch compare(1) {
++	for x := 0; x < len(fi) && x < len(fj); x++ {
++		switch compare(x) {
+ 		case -1:
+ 			return true
+ 		case 1:
 diff --git a/yang.go b/yang.go
 index 2480a4e..515d1b3 100644
 --- a/yang.go
