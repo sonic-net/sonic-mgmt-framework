@@ -503,7 +503,7 @@ func fill_ipv4_spec_pfx_nbr_in_pre_rib_data (ipv4InPreRoute_obj *ocbinds.
         routeAttrSets.AtomicAggregate = &value
     }
 
-    if value, ok := pathData["localpref"] ; ok {
+    if value, ok := pathData["localPref"] ; ok {
         _localPref := uint32(value.(float64))
         routeAttrSets.LocalPref = &_localPref
     }
@@ -654,7 +654,7 @@ func fill_ipv6_spec_pfx_nbr_in_pre_rib_data (ipv6InPreRoute_obj *ocbinds.
         routeAttrSets.AtomicAggregate = &value
     }
 
-    if value, ok := pathData["localpref"] ; ok {
+    if value, ok := pathData["localPref"] ; ok {
         _localPref := uint32(value.(float64))
         routeAttrSets.LocalPref = &_localPref
     }
@@ -1127,7 +1127,7 @@ func fill_ipv4_spec_pfx_nbr_out_post_rib_data (ipv4OutPostRoute_obj *ocbinds.
         ipv4OutPostRouteAttrSets.AtomicAggregate = &value
     }
 
-    if value, ok := prefixData["localpref"] ; ok {
+    if value, ok := prefixData["localPref"] ; ok {
         _localPref := uint32(value.(float64))
         ipv4OutPostRouteAttrSets.LocalPref = &_localPref
     }
@@ -1263,7 +1263,7 @@ func fill_ipv6_spec_pfx_nbr_out_post_rib_data (ipv6OutPostRoute_obj *ocbinds.
         ipv6OutPostRouteAttrSets.AtomicAggregate = &value
     }
 
-    if value, ok := prefixData["localpref"] ; ok {
+    if value, ok := prefixData["localPref"] ; ok {
         _localPref := uint32(value.(float64))
         ipv6OutPostRouteAttrSets.LocalPref = &_localPref
     }
