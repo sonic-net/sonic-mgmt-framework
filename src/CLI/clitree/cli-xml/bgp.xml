@@ -251,7 +251,7 @@ limitations under the License.
     <PARAM name="nbopt" help="neighbor router" mode="switch" ptype="SUBCOMMAND">
       <PARAM name="ip" help="Neighbor router" ptype="IPV4V6_ADDR"/>
       <PARAM name="interface" help="Interface type name" ptype="STRING">
-          <PARAM name="ifnum" help="Interfce number" ptype="RANGE_0_65535"/>
+          <PARAM name="ifnum" help="Interfce number" ptype="LOOPBACK_NUM" optional="true"/>
       </PARAM>
     </PARAM>
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config ${vrf-name} ${ip} ${interface}${ifnum} ${instance}</ACTION>
@@ -417,7 +417,7 @@ limitations under the License.
     <PARAM name="nbopt" help="neighbor router" mode="switch" ptype="SUBCOMMAND">
       <PARAM name="ip" help="Neighbor router" ptype="IPV4V6_ADDR"/>
       <PARAM name="interface" help="Interface type name" ptype="STRING">
-          <PARAM name="ifnum" help="Interfce number" ptype="RANGE_0_65535"/>
+          <PARAM name="ifnum" help="Interfce number" ptype="LOOPBACK_NUM" optional="true"/>
       </PARAM>
     </PARAM>
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor ${vrf-name} ${ip} ${interface}${ifnum}</ACTION>
