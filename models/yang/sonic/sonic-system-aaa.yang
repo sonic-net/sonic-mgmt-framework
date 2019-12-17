@@ -1,0 +1,31 @@
+module sonic-system-aaa {
+    namespace "http://github.com/Azure/sonic-system-aaa";
+    prefix ssys;
+
+    revision 2019-11-13 {
+        description "Initial revision.";
+    }
+
+    container sonic-system-aaa {
+        container AAA {
+            list AAA_LIST {
+                key "type";
+
+                leaf type {
+                    type enumeration {
+                        enum authentication;
+                    }
+                }
+
+                leaf-list login {
+                    type string;
+                }
+                leaf failthrough {
+                    type boolean;
+                }
+            }
+        }
+    }
+}
+
+

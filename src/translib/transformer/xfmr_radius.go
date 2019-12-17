@@ -20,12 +20,9 @@
 package transformer
 
 import (
-    // "translib/ocbinds"
-    // "translib/tlerr"
-    "strings"
-    "errors"
-    log "github.com/golang/glog"
-    // ygot "github.com/openconfig/ygot/ygot"
+        "strings"
+        "errors"
+        log "github.com/golang/glog"
 )
 
 func init () {
@@ -33,11 +30,15 @@ func init () {
     XlateFuncBind("YangToDb_global_sg_key_xfmr", YangToDb_global_sg_key_xfmr)
     XlateFuncBind("DbToYang_global_sg_key_xfmr", DbToYang_global_sg_key_xfmr)
     XlateFuncBind("global_sg_tbl_xfmr", global_sg_tbl_xfmr)
-
+    XlateFuncBind("YangToDb_auth_set_key_xfmr", YangToDb_auth_set_key_xfmr)
     XlateFuncBind("YangToDb_server_key_xfmr", YangToDb_server_key_xfmr)
     XlateFuncBind("DbToYang_server_key_xfmr", DbToYang_server_key_xfmr)
     XlateFuncBind("server_table_xfmr", server_table_xfmr)
     XlateFuncBind("YangToDb_server_name_xfmr", YangToDb_server_name_xfmr)
+}
+
+var YangToDb_auth_set_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (string, error) {
+    return "authentication", nil
 }
 
 var YangToDb_server_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (string, error) {
@@ -115,10 +116,6 @@ var YangToDb_global_sg_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (str
             ", uri: ", inParams.uri)
     }
 
-    // pathInfo := NewPathInfo(inParams.uri)
-    // globalkey := pathInfo.Var("global")
-
-    // return globalkey, nil
     return "global", nil
 }
 
@@ -145,7 +142,7 @@ var global_sg_tbl_xfmr TableXfmrFunc = func(inParams XfmrParams) ([]string, erro
     if strings.Contains(servergroupname, "RADIUS") {
         tables = append(tables, "RADIUS")
     } else if strings.Contains(servergroupname, "TACACS") {
-        tables[0] = "TACPLUS"
+        tables = append(tables, "TACPLUS")
     } else if inParams.oper == GET {
         tables = append(tables, "RADIUS")
         tables = append(tables, "TACPLUS")
