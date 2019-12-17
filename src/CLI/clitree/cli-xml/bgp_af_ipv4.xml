@@ -62,12 +62,12 @@ limitations under the License.
         <PARAM name="route-map-name" help="Route map name" ptype="STRING"/>
       </PARAM>
     </PARAM>
-    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_network_config ${vrf-name} IPV4_UNICAST ${prefix} ${backdoor} ${route-map-name}
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_network_config_network_config ${vrf-name} IPV4_UNICAST ${prefix} ${backdoor} ${route-map-name}&#xA;
              if test -z "${backdoor}" ; then&#xA;
-                 python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_network_config_backdoor ${vrf-name} IPV4_UNICAST&#xA;
+                 python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_network_config_network_config_backdoor ${vrf-name} IPV4_UNICAST ${prefix}&#xA;
              fi&#xA;
              if test -z "${route-map}" ; then&#xA;
-                 python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_network_config_policy_name ${vrf-name} IPV4_UNICAST&#xA;
+                 python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_network_config_network_config_policy_name ${vrf-name} IPV4_UNICAST ${prefix}&#xA;
              fi&#xA;
     </ACTION>
   </COMMAND>
@@ -80,12 +80,12 @@ limitations under the License.
       <PARAM name="as-set" help="Generate AS set path information" ptype="SUBCOMMAND" mode="subcommand" optional="true"/>
       <PARAM name="summary-only" help="Filter more specific routes from updates" ptype="SUBCOMMAND" mode="subcommand" optional="true"/>
     </PARAM>
-    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_aggregate_address_config ${vrf-name} IPV4_UNICAST ${prefix} ${as-set} ${summary-only}&#xA;
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py PATCH_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_aggregate_address_config_aggregate_address_config ${vrf-name} IPV4_UNICAST ${prefix} ${as-set} ${summary-only}&#xA;
              if test -z "${as-set}" ; then&#xA;
-                 python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_aggregate_address_config_as_set ${vrf-name} IPV4_UNICAST&#xA;
+                 python $SONIC_CLI_ROOT/sonic-cli-bgp.py DELETE_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_aggregate_address_config_aggregate_address_config_as_set ${vrf-name} IPV4_UNICAST ${prefix}&#xA;
              fi&#xA;
              if test -z "${summary-only}" ; then&#xA;
-                 python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_aggregate_address_config_summary_only ${vrf-name} IPV4_UNICAST&#xA;
+                 python $SONIC_CLI_ROOT/sonic-cli-bgp.py DELETE_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_aggregate_address_config_aggregate_address_config_summary_only ${vrf-name} IPV4_UNICAST ${prefix}&#xA;
              fi&#xA;
     </ACTION>
   </COMMAND>
@@ -122,10 +122,8 @@ limitations under the License.
        </ACTION>
     </COMMAND>
   <COMMAND name="no network" help="Enable routing on an IP network">
-    <PARAM name="prefix" help="Network number" ptype="IP_ADDR_MASK" optional="true"/>
-    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_network_config_prefix ${vrf-name} IPV4_UNICAST&#xA;
-             python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_network_config_policy_name ${vrf-name} IPV4_UNICAST&#xA;
-             python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_network_config_backdoor ${vrf-name} IPV4_UNICAST&#xA;
+    <PARAM name="prefix" help="Network number" ptype="IP_ADDR_MASK"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_network_config_network ${vrf-name} IPV4_UNICAST ${prefix}&#xA;
     </ACTION>
   </COMMAND>
   <COMMAND name="no table-map" help="BGP table to RIB route download filter">
@@ -138,9 +136,7 @@ limitations under the License.
         <PARAM name="summary-only" help="Filter more specific routes from updates" ptype="SUBCOMMAND" optional="true"/>
       </PARAM>
     </PARAM>
-    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_aggregate_address_config_prefix ${vrf-name} IPV4_UNICAST&#xA;
-             python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_aggregate_address_config_as_set ${vrf-name} IPV4_UNICAST&#xA;
-             python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_aggregate_address_config_summary_only ${vrf-name} IPV4_UNICAST&#xA;
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_aggregate_address_config_aggregate_address ${vrf-name} IPV4_UNICAST ${prefix}&#xA;
     </ACTION>
   </COMMAND>
   <COMMAND name="no distance" help="Define an administrative distance"/>
