@@ -20,6 +20,27 @@ limitations under the License.
     xsi:schemaLocation="http://www.dellemc.com/sonic/XMLSchema
                         http://www.dellemc.com/sonic/XMLSchema/clish.xsd">
 
+   <VIEW name="enable-view">
+    <COMMAND name="show ip prefix-list" help="IPv4 prefix list">
+        <PARAM name="list-name" help="prefix list name" ptype="STRING" optional="true"> </PARAM>
+      <ACTION> if test "${list-name}" != ""; then&#xA;
+        python $SONIC_CLI_ROOT/sonic-cli-ip-prefix.py ip_prefix_show_specific show_ip_prefix.j2 ${list-name}&#xA;
+        else&#xA;
+        python $SONIC_CLI_ROOT/sonic-cli-ip-prefix.py ip_prefix_show_all show_ip_prefix.j2&#xA;
+        fi&#xA;
+      </ACTION>
+    </COMMAND>
+    <COMMAND name="show ipv6 prefix-list" help="IPv6 prefix list">
+        <PARAM name="list-name" help="prefix list name" ptype="STRING" optional="true"> </PARAM>
+      <ACTION> if test "${list-name}" != ""; then&#xA;
+        python $SONIC_CLI_ROOT/sonic-cli-ip-prefix.py ipv6_prefix_show_specific show_ipv6_prefix.j2 ${list-name}&#xA;
+        else&#xA;
+        python $SONIC_CLI_ROOT/sonic-cli-ip-prefix.py ipv6_prefix_show_all show_ipv6_prefix.j2&#xA;
+        fi&#xA;
+      </ACTION>
+    </COMMAND>
+   </VIEW>
+
    <VIEW
        name="configure-view"
        >
@@ -41,7 +62,7 @@ limitations under the License.
                 >
                 <PARAM
                     name="permit"
-                    help="Specify packets to forward"
+                    help="Allow action for the prefixes"
                     mode="subcommand"
                     ptype="SUBCOMMAND"
                     >
@@ -82,7 +103,7 @@ limitations under the License.
                 </PARAM>
                 <PARAM
                     name="deny"
-                    help="Specify packets to reject"
+                    help="Deny action for the prefixes"
                     mode="subcommand"
                     ptype="SUBCOMMAND"
                     >
@@ -177,7 +198,7 @@ limitations under the License.
                 >
                 <PARAM
                     name="permit"
-                    help="Specify packets to forward"
+                    help="Allow action for the prefixes"
                     mode="subcommand"
                     ptype="SUBCOMMAND"
                     >
@@ -218,7 +239,7 @@ limitations under the License.
                 </PARAM>
                 <PARAM
                     name="deny"
-                    help="Specify packets to reject"
+                    help="Deny action for the prefixes"
                     mode="subcommand"
                     ptype="SUBCOMMAND"
                     >
@@ -305,7 +326,7 @@ limitations under the License.
                 >
                 <PARAM
                     name="permit"
-                    help="Specify packets to forward"
+                    help="Allow action for the prefixes"
                     mode="subcommand"
                     ptype="SUBCOMMAND"
                     >
@@ -346,7 +367,7 @@ limitations under the License.
                 </PARAM>
                 <PARAM
                     name="deny"
-                    help="Specify packets to reject"
+                    help="Deny action for the prefixes"
                     mode="subcommand"
                     ptype="SUBCOMMAND"
                     >
@@ -444,7 +465,7 @@ limitations under the License.
                 >
                 <PARAM
                     name="permit"
-                    help="Specify packets to forward"
+                    help="Allow action for the prefixes"
                     mode="subcommand"
                     ptype="SUBCOMMAND"
                     >
@@ -485,7 +506,7 @@ limitations under the License.
                 </PARAM>
                 <PARAM
                     name="deny"
-                    help="Specify packets to reject"
+                    help="Deny action for the prefixes"
                     mode="subcommand"
                     ptype="SUBCOMMAND"
                     >

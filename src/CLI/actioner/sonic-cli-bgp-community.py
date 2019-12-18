@@ -136,18 +136,54 @@ def invoke(func, args):
         keypath = cc.Path('/restconf/data/openconfig-routing-policy:routing-policy/defined-sets/openconfig-bgp-policy:bgp-defined-sets/as-path-sets/as-path-set={as_path_set_name}',as_path_set_name=args[0])
         return aa.delete(keypath)
 
+    elif func == 'bgp_community_show_all':
+        keypath = cc.Path('/restconf/data/openconfig-routing-policy:routing-policy/defined-sets/openconfig-bgp-policy:bgp-defined-sets/community-sets')
+        return aa.get(keypath)
+
+    elif func == 'bgp_community_show_specific':
+        keypath = cc.Path('/restconf/data/openconfig-routing-policy:routing-policy/defined-sets/openconfig-bgp-policy:bgp-defined-sets/community-sets/community-set={name}', name=args[1])
+        return aa.get(keypath)
+
+    elif func == 'bgp_ext_community_show_all':
+        keypath = cc.Path('/restconf/data/openconfig-routing-policy:routing-policy/defined-sets/openconfig-bgp-policy:bgp-defined-sets/ext-community-sets')
+        return aa.get(keypath)
+
+    elif func == 'bgp_ext_community_show_specific':
+        keypath = cc.Path('/restconf/data/openconfig-routing-policy:routing-policy/defined-sets/openconfig-bgp-policy:bgp-defined-sets/ext-community-sets/ext-community-set={name}', name=args[1])
+        return aa.get(keypath)
+
+    elif func == 'bgp_aspath_show_specific':
+        keypath = cc.Path('/restconf/data/openconfig-routing-policy:routing-policy/defined-sets/openconfig-bgp-policy:bgp-defined-sets/as-path-sets/as-path-set={name}', name=args[1])
+        return aa.get(keypath)
+
+    elif func == 'bgp_aspath_show_all':
+        keypath = cc.Path('/restconf/data/openconfig-routing-policy:routing-policy/defined-sets/openconfig-bgp-policy:bgp-defined-sets/as-path-sets')
+        return aa.get(keypath)
     else:
-        return body
+    	return aa.cli_not_implemented(func)
 
 
 def run(func, args):
-    try:
-        api_response = invoke(func,args)
-        return
-    except:
-            # system/network error
-            print "Error: Transaction Failure"
 
+  try:
+    response = invoke(func,args)
+
+    if response.ok():
+        if response.content is not None:
+            # Get Command Output
+            api_response = response.content
+            if api_response is None:
+                print("Failed")
+                return 
+	    #print api_response
+	    show_cli_output(args[0], api_response)
+    else:
+        print response.error_message()
+	return
+  except Exception as e:
+    print "%Error: " + str(e)
+
+  return
 
 
 if __name__ == '__main__':

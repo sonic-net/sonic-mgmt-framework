@@ -157,16 +157,45 @@ def invoke(func, args):
         keypath = cc.Path('/restconf/data/openconfig-routing-policy:routing-policy/defined-sets/prefix-sets/prefix-set={prefix_list_name}/prefixes/prefix={prefix_}%2F{mask_},{masklength_range}', prefix_list_name=args[0], prefix_=_prefix, mask_=_mask, masklength_range=args[3]+"..128")
         return aa.delete(keypath)
 
+    elif func == 'ip_prefix_show_all':
+        keypath = cc.Path('/restconf/data/openconfig-routing-policy:routing-policy/defined-sets/prefix-sets')
+        return aa.get(keypath)
+
+    elif func == 'ip_prefix_show_specific':
+        keypath = cc.Path('/restconf/data/openconfig-routing-policy:routing-policy/defined-sets/prefix-sets/prefix-set={name}',name=args[1])
+        return aa.get(keypath)
+
+    elif func == 'ipv6_prefix_show_all':
+        keypath = cc.Path('/restconf/data/openconfig-routing-policy:routing-policy/defined-sets/prefix-sets')
+        return aa.get(keypath)
+
+    elif func == 'ipv6_prefix_show_specific':
+        keypath = cc.Path('/restconf/data/openconfig-routing-policy:routing-policy/defined-sets/prefix-sets/prefix-set={name}',name=args[1])
+        return aa.get(keypath)
     else:
-        return body
+    	return aa.cli_not_implemented(func)
+
 
 def run(func, args):
-    try:
-        api_response = invoke(func,args)
-        return
-    except:
-            # system/network error
-            print "Error: Transaction Failure"
+  try:
+    response = invoke(func,args)
+
+    if response.ok():
+        if response.content is not None:
+            # Get Command Output
+            api_response = response.content
+            if api_response is None:
+                print("Failed")
+                return 
+	    #print api_response
+	    show_cli_output(args[0], api_response)
+    else:
+        print response.error_message()
+	return
+  except Exception as e:
+    print "%Error: " + str(e)
+
+  return
 
 
 
