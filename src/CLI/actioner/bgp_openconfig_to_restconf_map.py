@@ -75,6 +75,8 @@ restconf_map = {
         '/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi-safi-name}',
     'list_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi' :
         '/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi',
+    'openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_config_enabled' :
+        '/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi-safi-name}/config/enabled',
     'openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_config_table_map_name' :
         '/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi-safi-name}/config/openconfig-bgp-ext:table-map-name',
     'openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_use_multiple_paths' :
@@ -93,26 +95,110 @@ restconf_map = {
         '/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi-safi-name}/use-multiple-paths/ibgp/config/maximum-paths',
     'openconfig_bgp_ext3691744053' :
         '/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi-safi-name}/use-multiple-paths/ibgp/config/openconfig-bgp-ext:equal-cluster-length',
-    'openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_aggregate_address' :
-        '/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi-safi-name}/openconfig-bgp-ext:aggregate-address',
+    'openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_l2vpn_evpn' :
+        '/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi-safi-name}/l2vpn-evpn',
+    'openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_l2vpn_evpn_prefix_limit' :
+        '/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi-safi-name}/l2vpn-evpn/prefix-limit',
+    'openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_l2vpn_evpn_prefix_limit_config' :
+        '/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi-safi-name}/l2vpn-evpn/prefix-limit/config',
+    'openconfig_network_instance2494599511' :
+        '/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi-safi-name}/l2vpn-evpn/prefix-limit/config/max-prefixes',
+    'openconfig_network_instance766838271' :
+        '/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi-safi-name}/l2vpn-evpn/prefix-limit/config/prevent-teardown',
+    'openconfig_network_instance1949223480' :
+        '/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi-safi-name}/l2vpn-evpn/prefix-limit/config/warning-threshold-pct',
+    'openconfig_network_instance4089704618' :
+        '/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi-safi-name}/l2vpn-evpn/prefix-limit/config/restart-timer',
+    'openconfig_bgp_evpn_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_l2vpn_evpn_advertise_all_vni' :
+        '/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi-safi-name}/l2vpn-evpn/openconfig-bgp-evpn-ext:advertise-all-vni',
+    'openconfig_bgp_evpn_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_l2vpn_evpn_advertise_list' :
+        '/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi-safi-name}/l2vpn-evpn/openconfig-bgp-evpn-ext:advertise-list',
+    'openconfig_bgp_evpn_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_l2vpn_evpn_advertise_default_gw' :
+        '/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi-safi-name}/l2vpn-evpn/openconfig-bgp-evpn-ext:advertise-default-gw',
+    'openconfig_bgp_evpn_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_l2vpn_evpn_route_distinguisher' :
+        '/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi-safi-name}/l2vpn-evpn/openconfig-bgp-evpn-ext:route-distinguisher',
+    'openconfig_bgp_evpn_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_l2vpn_evpn_vpn_target' :
+        '/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi-safi-name}/l2vpn-evpn/openconfig-bgp-evpn-ext:vpn-target={route-target}',
+    'list_openconfig_bgp_evpn_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_l2vpn_evpn_vpn_target' :
+        '/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi-safi-name}/l2vpn-evpn/openconfig-bgp-evpn-ext:vpn-target',
+    'openconfig_bgp_evpn_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_l2vpn_evpn_vpn_target_route_target_type' :
+        '/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi-safi-name}/l2vpn-evpn/openconfig-bgp-evpn-ext:vpn-target={route-target}/route-target-type',
+    'openconfig_bgp_evpn_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_l2vpn_evpn_vnis' :
+        '/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi-safi-name}/l2vpn-evpn/openconfig-bgp-evpn-ext:vnis',
+    'openconfig_bgp_evpn_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_l2vpn_evpn_vnis_vni' :
+        '/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi-safi-name}/l2vpn-evpn/openconfig-bgp-evpn-ext:vnis/vni={vni-number}',
+    'list_openconfig_bgp_evpn_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_l2vpn_evpn_vnis_vni' :
+        '/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi-safi-name}/l2vpn-evpn/openconfig-bgp-evpn-ext:vnis/vni',
+    'openconfig_bgp_evpn_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_l2vpn_evpn_vnis_vni_state' :
+        '/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi-safi-name}/l2vpn-evpn/openconfig-bgp-evpn-ext:vnis/vni={vni-number}/state',
+    'openconfig_bgp_evpn_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_l2vpn_evpn_vnis_vni_state_vni_number' :
+        '/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi-safi-name}/l2vpn-evpn/openconfig-bgp-evpn-ext:vnis/vni={vni-number}/state/vni-number',
+    'openconfig_bgp_evpn_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_l2vpn_evpn_vnis_vni_state_type' :
+        '/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi-safi-name}/l2vpn-evpn/openconfig-bgp-evpn-ext:vnis/vni={vni-number}/state/type',
+    'openconfig_bgp_evpn_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_l2vpn_evpn_vnis_vni_state_is_live' :
+        '/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi-safi-name}/l2vpn-evpn/openconfig-bgp-evpn-ext:vnis/vni={vni-number}/state/is-live',
+    'openconfig_bgp_evpn_ext3291680974' :
+        '/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi-safi-name}/l2vpn-evpn/openconfig-bgp-evpn-ext:vnis/vni={vni-number}/state/route-distinguisher',
+    'openconfig_bgp_evpn_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_l2vpn_evpn_vnis_vni_state_originator' :
+        '/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi-safi-name}/l2vpn-evpn/openconfig-bgp-evpn-ext:vnis/vni={vni-number}/state/originator',
+    'openconfig_bgp_evpn_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_l2vpn_evpn_vnis_vni_state_mcast_group' :
+        '/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi-safi-name}/l2vpn-evpn/openconfig-bgp-evpn-ext:vnis/vni={vni-number}/state/mcast-group',
+    'openconfig_bgp_evpn_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_l2vpn_evpn_vnis_vni_state_advertise_gw_mac' :
+        '/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi-safi-name}/l2vpn-evpn/openconfig-bgp-evpn-ext:vnis/vni={vni-number}/state/advertise-gw-mac',
+    'openconfig_bgp_evpn_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_l2vpn_evpn_vnis_vni_state_import_rts' :
+        '/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi-safi-name}/l2vpn-evpn/openconfig-bgp-evpn-ext:vnis/vni={vni-number}/state/import-rts',
+    'openconfig_bgp_evpn_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_l2vpn_evpn_vnis_vni_state_export_rts' :
+        '/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi-safi-name}/l2vpn-evpn/openconfig-bgp-evpn-ext:vnis/vni={vni-number}/state/export-rts',
+    'openconfig_bgp_evpn_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_l2vpn_evpn_vnis_vni_advertise_default_gw' :
+        '/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi-safi-name}/l2vpn-evpn/openconfig-bgp-evpn-ext:vnis/vni={vni-number}/advertise-default-gw',
+    'openconfig_bgp_evpn_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_l2vpn_evpn_vnis_vni_route_distinguisher' :
+        '/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi-safi-name}/l2vpn-evpn/openconfig-bgp-evpn-ext:vnis/vni={vni-number}/route-distinguisher',
+    'openconfig_bgp_evpn_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_l2vpn_evpn_vnis_vni_vpn_target' :
+        '/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi-safi-name}/l2vpn-evpn/openconfig-bgp-evpn-ext:vnis/vni={vni-number}/vpn-target={route-target}',
+    'list_openconfig_bgp_evpn_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_l2vpn_evpn_vnis_vni_vpn_target' :
+        '/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi-safi-name}/l2vpn-evpn/openconfig-bgp-evpn-ext:vnis/vni={vni-number}/vpn-target',
+    'openconfig_bgp_evpn_ext4078896717' :
+        '/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi-safi-name}/l2vpn-evpn/openconfig-bgp-evpn-ext:vnis/vni={vni-number}/vpn-target={route-target}/route-target-type',
+    'openconfig_bgp_evpn_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_l2vpn_evpn_default_originate' :
+        '/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi-safi-name}/l2vpn-evpn/openconfig-bgp-evpn-ext:default-originate',
+    'openconfig_bgp_evpn_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_l2vpn_evpn_default_originate_ipv4' :
+        '/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi-safi-name}/l2vpn-evpn/openconfig-bgp-evpn-ext:default-originate/ipv4',
+    'openconfig_bgp_evpn_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_l2vpn_evpn_default_originate_ipv6' :
+        '/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi-safi-name}/l2vpn-evpn/openconfig-bgp-evpn-ext:default-originate/ipv6',
+    'openconfig_bgp_evpn_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_l2vpn_evpn_autort' :
+        '/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi-safi-name}/l2vpn-evpn/openconfig-bgp-evpn-ext:autort',
+    'openconfig_bgp_evpn_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_l2vpn_evpn_flooding' :
+        '/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi-safi-name}/l2vpn-evpn/openconfig-bgp-evpn-ext:flooding',
+    'openconfig_bgp_evpn_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_l2vpn_evpn_dup_addr_detection' :
+        '/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi-safi-name}/l2vpn-evpn/openconfig-bgp-evpn-ext:dup-addr-detection',
+    'openconfig_bgp_evpn_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_l2vpn_evpn_dup_addr_detection_enabled' :
+        '/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi-safi-name}/l2vpn-evpn/openconfig-bgp-evpn-ext:dup-addr-detection/enabled',
+    'openconfig_bgp_evpn_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_l2vpn_evpn_dup_addr_detection_max_moves' :
+        '/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi-safi-name}/l2vpn-evpn/openconfig-bgp-evpn-ext:dup-addr-detection/max-moves',
+    'openconfig_bgp_evpn_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_l2vpn_evpn_dup_addr_detection_time' :
+        '/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi-safi-name}/l2vpn-evpn/openconfig-bgp-evpn-ext:dup-addr-detection/time',
+    'openconfig_bgp_evpn_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_l2vpn_evpn_dup_addr_detection_freeze' :
+        '/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi-safi-name}/l2vpn-evpn/openconfig-bgp-evpn-ext:dup-addr-detection/freeze',
     'openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_aggregate_address_config' :
-        '/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi-safi-name}/openconfig-bgp-ext:aggregate-address/config',
-    'openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_aggregate_address_config_prefix' :
-        '/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi-safi-name}/openconfig-bgp-ext:aggregate-address/config/prefix',
-    'openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_aggregate_address_config_as_set' :
-        '/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi-safi-name}/openconfig-bgp-ext:aggregate-address/config/as-set',
-    'openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_aggregate_address_config_summary_only' :
-        '/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi-safi-name}/openconfig-bgp-ext:aggregate-address/config/summary-only',
-    'openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_network' :
-        '/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi-safi-name}/openconfig-bgp-ext:network',
+        '/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi-safi-name}/openconfig-bgp-ext:aggregate-address-config',
+    'openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_aggregate_address_config_aggregate_address' :
+        '/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi-safi-name}/openconfig-bgp-ext:aggregate-address-config/aggregate-address={prefix}',
+    'list_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_aggregate_address_config_aggregate_address' :
+        '/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi-safi-name}/openconfig-bgp-ext:aggregate-address-config/aggregate-address',
+    'openconfig_bgp_ext2155307832' :
+        '/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi-safi-name}/openconfig-bgp-ext:aggregate-address-config/aggregate-address={prefix}/config/as-set',
+    'openconfig_bgp_ext1133616225' :
+        '/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi-safi-name}/openconfig-bgp-ext:aggregate-address-config/aggregate-address={prefix}/config/summary-only',
     'openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_network_config' :
-        '/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi-safi-name}/openconfig-bgp-ext:network/config',
-    'openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_network_config_prefix' :
-        '/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi-safi-name}/openconfig-bgp-ext:network/config/prefix',
-    'openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_network_config_policy_name' :
-        '/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi-safi-name}/openconfig-bgp-ext:network/config/policy-name',
-    'openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_network_config_backdoor' :
-        '/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi-safi-name}/openconfig-bgp-ext:network/config/backdoor',
+        '/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi-safi-name}/openconfig-bgp-ext:network-config',
+    'openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_network_config_network' :
+        '/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi-safi-name}/openconfig-bgp-ext:network-config/network={prefix}',
+    'list_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_network_config_network' :
+        '/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi-safi-name}/openconfig-bgp-ext:network-config/network',
+    'openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_network_config_network_config_policy_name' :
+        '/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi-safi-name}/openconfig-bgp-ext:network-config/network={prefix}/config/policy-name',
+    'openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_network_config_network_config_backdoor' :
+        '/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi-safi-name}/openconfig-bgp-ext:network-config/network={prefix}/config/backdoor',
     'openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_default_route_distance' :
         '/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi-safi-name}/openconfig-bgp-ext:default-route-distance',
     'openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_default_route_distance_config' :

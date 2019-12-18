@@ -1,0 +1,100 @@
+module sonic-system-tacacs {
+    namespace "http://github.com/Azure/sonic-system-tacacs";
+    prefix ssys;
+
+    import ietf-inet-types {
+        prefix inet;
+    }
+
+    revision 2019-11-13 {
+        description "Initial revision.";
+    }
+
+    typedef auth_type_enumeration {
+        type enumeration {
+            enum pap;
+            enum chap;
+            enum mschap;
+        }
+    }
+
+    container sonic-system-tacacs {
+
+        container TACPLUS_SERVER {
+            list TACPLUS_SERVER_LIST {
+                key "ipaddress";
+
+                leaf ipaddress {
+                    type inet:ip-address;
+                }
+
+                leaf priority {
+                    type uint8;
+                }
+
+                leaf tcp_port {
+                    type inet:port-number;
+                }
+
+                leaf timeout {
+                    default 5;
+                    type uint16;
+                }
+
+                leaf auth_type {
+                    type auth_type_enumeration;
+                    default pap;
+                }
+
+                leaf passkey {
+                    type string {
+                        length "1..32";
+                        pattern "[0-9A-Za-z]*" {
+                            error-message "TACACS shared secret valid chars: [0-9A-Za-z]";
+                        }
+                    }
+                }
+            }
+        }
+
+
+        container TACPLUS {
+            list TACPLUS_LIST {
+
+                key "type";
+
+                leaf type {
+                    type enumeration {
+                        enum global;
+                    }
+                }
+
+                leaf auth_type {
+                    type auth_type_enumeration;
+                    default pap;
+                }
+
+                leaf timeout {
+                    type uint16;
+                    default 5;
+                }
+
+                leaf passkey {
+                    type string {
+                        length "1..32";
+                        pattern "[0-9A-Za-z]*" {
+                            error-message "TACACS shared secret valid chars: [0-9A-Za-z]";
+                        }
+                    }
+                }
+
+                leaf src_ip {
+                    type inet:ip-address;
+                }
+
+            }
+        }
+    }
+}
+
+

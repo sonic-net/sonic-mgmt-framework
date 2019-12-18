@@ -139,11 +139,13 @@ module openconfig-interfaces-annot {
 
     deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv4/oc-ip:addresses {
         deviate add {
+            sonic-ext:table-name "NONE";
             sonic-ext:subtree-transformer "intf_ip_addr_xfmr";
         }
     }
     deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv6/oc-ip:addresses {
         deviate add {
+            sonic-ext:table-name "NONE";
             sonic-ext:subtree-transformer "intf_ip_addr_xfmr";
         }
     }

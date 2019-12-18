@@ -20,6 +20,27 @@ limitations under the License.
     xsi:schemaLocation="http://www.dellemc.com/sonic/XMLSchema
                         http://www.dellemc.com/sonic/XMLSchema/clish.xsd">
 
+   <VIEW name="enable-view">
+    <COMMAND name="show ip prefix-list" help="IPv4 prefix list">
+        <PARAM name="list-name" help="prefix list name" ptype="STRING" optional="true"> </PARAM>
+      <ACTION> if test "${list-name}" != ""; then&#xA;
+        python $SONIC_CLI_ROOT/sonic-cli-ip-prefix.py ip_prefix_show_specific show_ip_prefix.j2 ${list-name}&#xA;
+        else&#xA;
+        python $SONIC_CLI_ROOT/sonic-cli-ip-prefix.py ip_prefix_show_all show_ip_prefix.j2&#xA;
+        fi&#xA;
+      </ACTION>
+    </COMMAND>
+    <COMMAND name="show ipv6 prefix-list" help="IPv6 prefix list">
+        <PARAM name="list-name" help="prefix list name" ptype="STRING" optional="true"> </PARAM>
+      <ACTION> if test "${list-name}" != ""; then&#xA;
+        python $SONIC_CLI_ROOT/sonic-cli-ip-prefix.py ipv6_prefix_show_specific show_ipv6_prefix.j2 ${list-name}&#xA;
+        else&#xA;
+        python $SONIC_CLI_ROOT/sonic-cli-ip-prefix.py ipv6_prefix_show_all show_ipv6_prefix.j2&#xA;
+        fi&#xA;
+      </ACTION>
+    </COMMAND>
+   </VIEW>
+
    <VIEW
        name="configure-view"
        >
@@ -41,7 +62,7 @@ limitations under the License.
                 >
                 <PARAM
                     name="permit"
-                    help="Specify packets to forward"
+                    help="Allow action for the prefixes"
                     mode="subcommand"
                     ptype="SUBCOMMAND"
                     >
@@ -60,7 +81,7 @@ limitations under the License.
                             <PARAM
                                 name="ge-min-prefix-length"
                                 help="Minimum prefix length"
-                                ptype="UINT"
+                                ptype="RANGE_1_32"
                                 >
                             </PARAM>
                         </PARAM>
@@ -74,7 +95,7 @@ limitations under the License.
                             <PARAM
                                 name="le-max-prefix-length"
                                 help="Maximum prefix length"
-                                ptype="UINT"
+                                ptype="RANGE_1_32"
                                 >
                             </PARAM>
                         </PARAM>
@@ -82,7 +103,7 @@ limitations under the License.
                 </PARAM>
                 <PARAM
                     name="deny"
-                    help="Specify packets to reject"
+                    help="Deny action for the prefixes"
                     mode="subcommand"
                     ptype="SUBCOMMAND"
                     >
@@ -101,7 +122,7 @@ limitations under the License.
                             <PARAM
                                 name="ge-min-prefix-length"
                                 help="Minimum prefix length"
-                                ptype="UINT"
+                                ptype="RANGE_1_32"
                                 >
                             </PARAM>
                         </PARAM>
@@ -115,7 +136,7 @@ limitations under the License.
                             <PARAM
                                 name="le-max-prefix-length"
                                 help="Maximum prefix length"
-                                ptype="UINT"
+                                ptype="RANGE_1_32"
                                 >
                             </PARAM>
                         </PARAM>
@@ -123,17 +144,16 @@ limitations under the License.
                 </PARAM>
             </PARAM>
         </PARAM>
-    <ACTION>
-        var="${ipv4-prefix}"
-        len="$(echo "$var" | cut -d'/' -f2)"
-        gelen="${ge-min-prefix-length}"
-        lelen="${le-max-prefix-length}"
+    <ACTION> var="${ipv4-prefix}"&#xA;
+        len="$(echo "$var" | cut -d'/' -f2)"&#xA;
+        gelen="${ge-min-prefix-length}"&#xA;
+        lelen="${le-max-prefix-length}"&#xA;
 
         if test "${ip-prefix-subcommands}" = "permit"; then&#xA;
             prefixtype="permit"&#xA;
         else&#xA;
             prefixtype="deny"&#xA;
-        fi
+        fi&#xA;
 
         if test "$gelen" = "" -a "$lelen" = ""; then&#xA;
             python $SONIC_CLI_ROOT/sonic-cli-ip-prefix.py ipv4_prefix ${prefix-name} $prefixtype $var&#xA;
@@ -149,7 +169,7 @@ limitations under the License.
 
         else&#xA;
             echo "% Invalid prefix range for $var, make sure: len 'less then' ge-value 'less then equal to' le-value"&#xA;
-        fi
+        fi&#xA;
     </ACTION>
     </COMMAND>
 
@@ -178,7 +198,7 @@ limitations under the License.
                 >
                 <PARAM
                     name="permit"
-                    help="Specify packets to forward"
+                    help="Allow action for the prefixes"
                     mode="subcommand"
                     ptype="SUBCOMMAND"
                     >
@@ -197,7 +217,7 @@ limitations under the License.
                             <PARAM
                                 name="ge-min-prefix-length"
                                 help="Minimum prefix length"
-                                ptype="UINT"
+                                ptype="RANGE_1_128"
                                 >
                             </PARAM>
                         </PARAM>
@@ -211,7 +231,7 @@ limitations under the License.
                             <PARAM
                                 name="le-max-prefix-length"
                                 help="Maximum prefix length"
-                                ptype="UINT"
+                                ptype="RANGE_1_128"
                                 >
                             </PARAM>
                         </PARAM>
@@ -219,7 +239,274 @@ limitations under the License.
                 </PARAM>
                 <PARAM
                     name="deny"
-                    help="Specify packets to reject"
+                    help="Deny action for the prefixes"
+                    mode="subcommand"
+                    ptype="SUBCOMMAND"
+                    >
+                    <PARAM
+                        name="ipv6-prefix"
+                        help="IPv6 prefix network/length, e.g., 3ffe::/16"
+                        ptype="IPV6_ADDR_MASK"
+                        >
+                        <PARAM
+                            name="ge"
+                            help="Minimum prefix length to be matched"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            optional="true"
+                            >
+                            <PARAM
+                                name="ge-min-prefix-length"
+                                help="Minimum prefix length"
+                                ptype="RANGE_1_128"
+                                >
+                            </PARAM>
+                        </PARAM>
+                        <PARAM
+                            name="le"
+                            help="Maximum prefix length to be matched"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            optional="true"
+                            >
+                            <PARAM
+                                name="le-max-prefix-length"
+                                help="Maximum prefix length"
+                                ptype="RANGE_1_128"
+                                >
+                            </PARAM>
+                        </PARAM>
+                    </PARAM>
+                </PARAM>
+            </PARAM>
+        </PARAM>
+    <ACTION> var="${ipv6-prefix}"&#xA;
+        len="$(echo "$var" | cut -d'/' -f2)"&#xA;
+        gelen="${ge-min-prefix-length}"&#xA;
+        lelen="${le-max-prefix-length}"&#xA;
+
+        if test "${ipv6-prefix-subcommands}" = "permit"; then&#xA;
+            prefixtype="permit"&#xA;
+        else&#xA;
+            prefixtype="deny"&#xA;
+        fi&#xA;
+
+        if test "$gelen" = "" -a "$lelen" = ""; then&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-ip-prefix.py ipv6_prefix ${prefix-name} $prefixtype $var&#xA;
+
+        elif test "$gelen" != "" -a "$lelen" != "" -a "$len" -lt "$gelen" -a "$gelen" -le "$lelen"; then&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-ip-prefix.py ipv6_prefix_le_ge ${prefix-name} $prefixtype $var $gelen $lelen&#xA;
+
+        elif test "$gelen" = "" -a "$len" -le "$lelen"; then&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-ip-prefix.py ipv6_prefix_le ${prefix-name} $prefixtype $var $len $lelen&#xA;
+
+        elif test "$lelen" = "" -a "$len" -lt "$gelen"; then&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-ip-prefix.py ipv6_prefix_ge ${prefix-name} $prefixtype $var $gelen&#xA;
+
+        else&#xA;
+            echo "% Invalid prefix range for $var, make sure: len 'less then' ge-value 'less then equal to' le-value"&#xA;
+        fi&#xA;
+    </ACTION>
+    </COMMAND>
+    <COMMAND
+        name="no ip prefix-list"
+        help="Delete a prefix list"
+        >
+        <PARAM
+            name="prefix-name"
+            help="Name of a prefix list"
+            ptype="STRING"
+            >
+            <PARAM
+                name="ip-prefix-subcommands"
+                help="Prefix list sub commands"
+                ptype="SUBCOMMAND"
+                mode="switch"
+                optional="true"
+                >
+                <PARAM
+                    name="permit"
+                    help="Allow action for the prefixes"
+                    mode="subcommand"
+                    ptype="SUBCOMMAND"
+                    >
+                    <PARAM
+                        name="ipv4-prefix"
+                        help="IP prefix network/length,  e.g.,  35.0.0.0/8"
+                        ptype="IP_ADDR_MASK"
+                        >
+		        <PARAM
+		            name="ge"
+                            help="Minimum prefix length to be matched"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            optional="true"
+                            >
+                            <PARAM
+                                name="ge-min-prefix-length"
+                                help="Minimum prefix length"
+                                ptype="RANGE_1_32"
+                                >
+                            </PARAM>
+                        </PARAM>
+                        <PARAM
+                            name="le"
+                            help="Maximum prefix length to be matched"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            optional="true"
+                            >
+                            <PARAM
+                                name="le-max-prefix-length"
+                                help="Maximum prefix length"
+                                ptype="RANGE_1_32"
+                                >
+                            </PARAM>
+                        </PARAM>
+                    </PARAM>
+                </PARAM>
+                <PARAM
+                    name="deny"
+                    help="Deny action for the prefixes"
+                    mode="subcommand"
+                    ptype="SUBCOMMAND"
+                    >
+                    <PARAM
+                        name="ipv4-prefix"
+                        help="IP prefix network/length,  e.g.,  35.0.0.0/8"
+                        ptype="IP_ADDR_MASK"
+                        >
+                        <PARAM
+                            name="ge"
+                            help="Minimum prefix length to be matched"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            optional="true"
+                            >
+                            <PARAM
+                                name="ge-min-prefix-length"
+                                help="Minimum prefix length"
+                                ptype="RANGE_1_32"
+                                >
+                            </PARAM>
+                        </PARAM>
+                        <PARAM
+                            name="le"
+                            help="Maximum prefix length to be matched"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            optional="true"
+                            >
+                            <PARAM
+                                name="le-max-prefix-length"
+                                help="Maximum prefix length"
+                                ptype="RANGE_1_32"
+                                >
+                            </PARAM>
+                        </PARAM>
+                    </PARAM>
+                </PARAM>
+            </PARAM>
+        </PARAM>
+    <ACTION> var="${ipv4-prefix}"&#xA;
+        len="$(echo "$var" | cut -d'/' -f2)"&#xA;
+        gelen="${ge-min-prefix-length}"&#xA;
+        lelen="${le-max-prefix-length}"&#xA;
+        del_cmd="${ip-prefix-subcommands}"&#xA;
+        if test "${ip-prefix-subcommands}" = "permit"; then&#xA;
+            prefixtype="permit"&#xA;
+        else&#xA;
+            prefixtype="deny"&#xA;
+        fi&#xA;
+
+        if test "$del_cmd" = ""; then&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-ip-prefix.py ipv4_prefix_set_delete ${prefix-name} $var&#xA;
+        elif test "$gelen" = "" -a "$lelen" = ""; then&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-ip-prefix.py ipv4_prefix_delete ${prefix-name} $prefixtype $var&#xA;
+
+        elif test "$gelen" != "" -a "$lelen" != "" -a "$len" -lt "$gelen" -a "$gelen" -le "$lelen"; then&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-ip-prefix.py ipv4_prefix_le_ge_delete ${prefix-name} $prefixtype $var $gelen $lelen&#xA;
+
+        elif test "$gelen" = "" -a "$len" -le "$lelen"; then&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-ip-prefix.py ipv4_prefix_le_delete ${prefix-name} $prefixtype $var $len $lelen&#xA;
+
+        elif test "$lelen" = "" -a "$len" -lt "$gelen"; then&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-ip-prefix.py ipv4_prefix_ge_delete ${prefix-name} $prefixtype $var $gelen&#xA;
+
+        else&#xA;
+            echo "% Invalid prefix range for $var, make sure: len 'less then' ge-value 'less then equal to' le-value"&#xA;
+        fi&#xA;
+    </ACTION>
+    </COMMAND>
+
+    <COMMAND
+        name="no ipv6"
+        help="Delete ipv6 prefix-list">
+    <ACTION>
+        builtin="clish_nop"
+    </ACTION>
+    </COMMAND>
+
+    <COMMAND
+        name="no ipv6 prefix-list"
+        help="Delete ipv6 prefix list"
+        >
+        <PARAM
+            name="prefix-name"
+            help="Name of a prefix list"
+            ptype="STRING"
+            >
+            <PARAM
+                name="ipv6-prefix-subcommands"
+                help="Prefix list sub commands"
+                ptype="SUBCOMMAND"
+                mode="switch"
+                optional="true"
+                >
+                <PARAM
+                    name="permit"
+                    help="Allow action for the prefixes"
+                    mode="subcommand"
+                    ptype="SUBCOMMAND"
+                    >
+                    <PARAM
+                        name="ipv6-prefix"
+                        help="IPv6 prefix network/length, e.g., 3ffe::/16"
+                        ptype="IPV6_ADDR_MASK"
+                        >
+		        <PARAM
+		            name="ge"
+                            help="Minimum prefix length to be matched"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            optional="true"
+                            >
+                            <PARAM
+                                name="ge-min-prefix-length"
+                                help="Minimum prefix length"
+                                ptype="RANGE_1_128"
+                                >
+                            </PARAM>
+                        </PARAM>
+                        <PARAM
+                            name="le"
+                            help="Maximum prefix length to be matched"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            optional="true"
+                            >
+                            <PARAM
+                                name="le-max-prefix-length"
+                                help="Maximum prefix length"
+                                ptype="RANGE_1_128"
+                                >
+                            </PARAM>
+                        </PARAM>
+                    </PARAM>
+                </PARAM>
+                <PARAM
+                    name="deny"
+                    help="Deny action for the prefixes"
                     mode="subcommand"
                     ptype="SUBCOMMAND"
                     >
@@ -260,36 +547,38 @@ limitations under the License.
                 </PARAM>
             </PARAM>
         </PARAM>
-    <ACTION>
-        var="${ipv6-prefix}"
-        len="$(echo "$var" | cut -d'/' -f2)"
-        gelen="${ge-min-prefix-length}"
-        lelen="${le-max-prefix-length}"
+    <ACTION> var="${ipv6-prefix}"&#xA;
+        len="$(echo "$var" | cut -d'/' -f2)"&#xA;
+        gelen="${ge-min-prefix-length}"&#xA;
+        lelen="${le-max-prefix-length}"&#xA;
+        del_cmd="${ipv6-prefix-subcommands}"&#xA;
 
         if test "${ipv6-prefix-subcommands}" = "permit"; then&#xA;
             prefixtype="permit"&#xA;
         else&#xA;
             prefixtype="deny"&#xA;
-        fi
+        fi&#xA;
 
-        if test "$gelen" = "" -a "$lelen" = ""; then&#xA;
-            python $SONIC_CLI_ROOT/sonic-cli-ip-prefix.py ipv6_prefix ${prefix-name} $prefixtype $var&#xA;
+        if test "$del_cmd" = ""; then&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-ip-prefix.py ipv6_prefix_set_delete ${prefix-name} $var&#xA;
+
+        elif test "$gelen" = "" -a "$lelen" = ""; then&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-ip-prefix.py ipv6_prefix_delete ${prefix-name} $prefixtype $var&#xA;
 
         elif test "$gelen" != "" -a "$lelen" != "" -a "$len" -lt "$gelen" -a "$gelen" -le "$lelen"; then&#xA;
-            python $SONIC_CLI_ROOT/sonic-cli-ip-prefix.py ipv6_prefix_le_ge ${prefix-name} $prefixtype $var $gelen $lelen&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-ip-prefix.py ipv6_prefix_le_ge_delete ${prefix-name} $prefixtype $var $gelen $lelen&#xA;
 
         elif test "$gelen" = "" -a "$len" -le "$lelen"; then&#xA;
-            python $SONIC_CLI_ROOT/sonic-cli-ip-prefix.py ipv6_prefix_le ${prefix-name} $prefixtype $var $len $lelen&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-ip-prefix.py ipv6_prefix_le_delete ${prefix-name} $prefixtype $var $len $lelen&#xA;
 
         elif test "$lelen" = "" -a "$len" -lt "$gelen"; then&#xA;
-            python $SONIC_CLI_ROOT/sonic-cli-ip-prefix.py ipv6_prefix_ge ${prefix-name} $prefixtype $var $gelen&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-ip-prefix.py ipv6_prefix_ge_delete ${prefix-name} $prefixtype $var $gelen&#xA;
 
         else&#xA;
             echo "% Invalid prefix range for $var, make sure: len 'less then' ge-value 'less then equal to' le-value"&#xA;
-        fi
+        fi&#xA;
     </ACTION>
     </COMMAND>
-
 </VIEW>
 </CLISH_MODULE>
 

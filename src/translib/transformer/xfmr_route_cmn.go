@@ -55,9 +55,7 @@ var YangToDb_route_table_conn_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParam
     afName     := pathInfo.Var("address-family")
 
     if len(pathInfo.Vars) < 3 {
-        err = errors.New("Invalid Key length");
-        log.Info("Invalid Key length", len(pathInfo.Vars))
-        return niName, err
+        return "", nil
     }
 
     if len(niName) == 0 {

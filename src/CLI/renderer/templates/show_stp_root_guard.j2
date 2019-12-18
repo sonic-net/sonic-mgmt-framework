@@ -18,7 +18,7 @@
 {% if "openconfig-spanning-tree:rapid-pvst" is in json_output and json_output['openconfig-spanning-tree:rapid-pvst'] is not none %}
 {% set vlan_list = json_output['openconfig-spanning-tree:rapid-pvst']['vlan'] %}
 {%endif%}
-{% if "openconfig-spanning-tree:vlan" is in json_output and json_ouput['openconfig-spanning-tree:vlan'] is not none %}
+{% if "openconfig-spanning-tree:vlan" is in json_output and json_output['openconfig-spanning-tree:vlan'] is not none %}
 {% set vlan_list = json_output['openconfig-spanning-tree:vlan'] %}
 {%endif%}
 {%endif%}
@@ -37,12 +37,13 @@ Root guard timeout: {{'%-3s'|format(timeout)}} secs
     {% set interface_list = vlan['interfaces']['interface'] %}
 {%endif%}
     {% for intf in interface_list %}
+        {% set root_gtime = 0 %}
         {% if vars.update({'intf_name':intf['name']}) %}{% endif %}
         {% if "state" in intf %}
           {% if stp_protocol == "openconfig-spanning-tree-ext:PVST" %}
             {% set root_gtime = intf['state']['root-guard-timer'] %}
           {%endif %}
-          {% if stp_protocol == "openconfig-spanning-tree:RAPID_PVST" %}
+          {% if stp_protocol == "openconfig-spanning-tree-types:RAPID_PVST" %}
             {% set root_gtime = intf['state']['openconfig-spanning-tree-ext:root-guard-timer'] %}
           {%endif %}
           {% set root_gtime_string = "(" + root_gtime |string() + " seconds left on timer)"%}

@@ -1,0 +1,10 @@
+{{'---------------------------------------------------------'}}
+{{'AAA Authentication Information'.ljust(20)}}
+{{'---------------------------------------------------------'}}
+{% if json_output and 'openconfig-system:config' in json_output -%}
+{% set authfail = json_output['openconfig-system:config']['openconfig-system-ext:failthrough'] %}
+{% set authmethod = json_output['openconfig-system:config']['authentication-method'] %}
+{{'failthrough  : '}}{{authfail}}
+{{'login-method : '}}{{authmethod|join(', ') }}
+{% endif %}
+

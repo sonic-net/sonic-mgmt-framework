@@ -1,0 +1,110 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE CLISH_MODULE [
+]>
+<!--
+Copyright 2019 Dell, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+<CLISH_MODULE
+    xmlns="http://www.dellemc.com/sonic/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xi="http://www.w3.org/2001/XInclude"
+    xsi:schemaLocation="http://www.dellemc.com/sonic/XMLSchema
+                        http://www.dellemc.com/sonic/XMLSchema/clish.xsd"
+    >
+<!--=========================================================================-->
+  <PTYPE
+     name="AAA_AUTH_TACPLUS"
+     method="select"
+     pattern="tacacs+(tacacs+)"
+     help=""
+     />
+  <!--=========================================================================-->
+  <PTYPE
+     name="AAA_AUTH_LOCAL"
+     method="select"
+     pattern="local(local)"
+     help=""
+     />
+  <!--=========================================================================-->
+
+  <VIEW name="enable-view">
+    <COMMAND name="show aaa"
+             help="Show aaa info">
+      <ACTION>python $SONIC_CLI_ROOT/sonic-cli-aaa.py get_openconfig_system_system_aaa_authentication_config show_aaa.j2</ACTION>
+    </COMMAND>
+  </VIEW>
+
+  <VIEW name="configure-view">
+    <!-- aaa -->
+    <COMMAND name="aaa"
+             help="AAA configuration"/>
+
+    <!-- config sub view for aaa authentication -->
+    <COMMAND name="aaa authentication"
+             help="AAA authentication configuration"/>
+
+    <COMMAND name="aaa authentication failthrough"
+             help="AAA authentication failthrough status"
+             mode="subcommand"
+             ptype="SUBCOMMAND">
+      <PARAM name="enable"
+             help="failthrough status"
+             ptype="ENA_DISA">
+      </PARAM>
+      <ACTION> if test "${enable}" = "enable" ; then&#xA;
+        python $SONIC_CLI_ROOT/sonic-cli-aaa.py put_openconfig_system_ext_system_aaa_authentication_config_failthrough True&#xA;
+          else&#xA;
+        python $SONIC_CLI_ROOT/sonic-cli-aaa.py put_openconfig_system_ext_system_aaa_authentication_config_failthrough False&#xA;
+          fi&#xA;
+      </ACTION>
+    </COMMAND>
+
+    <COMMAND name="aaa authentication login-method"
+             help="AAA authentication login method preference"
+             mode="subcommand"
+             ptype="SUBCOMMAND">
+      <PARAM name="login" 
+             help="login methods" 
+             mode="switch" 
+             ptype="SUBCOMMAND">
+          <PARAM name="local" 
+                 help="local authentication" 
+                 optional="true" 
+                 mode="subcommand" 
+                 ptype="SUBCOMMAND">
+              <PARAM name="tacacs+" 
+                     help="tacacs+ authentication" 
+                     optional="true" 
+                     ptype="AAA_AUTH_TACPLUS"> 
+              </PARAM>
+          </PARAM>
+          <PARAM name="tacacs+" 
+                 help="tacacs+ authentication" 
+                 optional="true" 
+                 mode="subcommand" 
+                 ptype="SUBCOMMAND">
+              <PARAM name="local" 
+                     help="local authentication" 
+                     optional="true" 
+                     ptype="AAA_AUTH_LOCAL"> 
+              </PARAM>
+          </PARAM>
+      </PARAM>
+      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-aaa.py put_openconfig_system_system_aaa_authentication_config_authentication_method ${login} ${local} ${tacacs+} </ACTION>
+    </COMMAND>
+  </VIEW>
+
+</CLISH_MODULE>
