@@ -353,7 +353,7 @@ def invoke_api(func, args=[]):
             return api.delete(keypath)
         body = { "openconfig-bgp-ext:equal-cluster-length": True if 'equal-cluster-length' in args[2:] else False }
         return api.patch(keypath, body)
-    elif func == 'patch_openconfig_network_instance1717438887' and func == 'delete_openconfig_network_instance1717438887':
+    elif func == 'patch_openconfig_network_instance1717438887' or func == 'delete_openconfig_network_instance1717438887':
         keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/dynamic-neighbor-prefixes/dynamic-neighbor-prefix={prefix}/config/peer-group', 
                 name=args[0], identifier=IDENTIFIER, name1=NAME1, prefix=args[1])
         if func[0:DELETE_OCPREFIX_LEN] == DELETE_OCPREFIX:

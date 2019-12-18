@@ -117,6 +117,67 @@ def invoke_api(func, args=[]):
         keypath  = cc.Path('/restconf/data/openconfig-routing-policy:routing-policy/policy-definitions/policy-definition={name}/statements/statement={name1}/conditions/openconfig-bgp-policy:bgp-conditions/config/med-eq',
              name=args[0], name1= args[1])
         return api.delete(keypath)
+    
+    elif func == 'patch_openconfig_bgp_policy_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_bgp_conditions_config_local_pref_eq':
+        keypath  = cc.Path('/restconf/data/openconfig-routing-policy:routing-policy/policy-definitions/policy-definition={name}/statements/statement={name1}/conditions/openconfig-bgp-policy:bgp-conditions/config/local-pref-eq',
+             name=args[0], name1= args[1])
+        body = {"openconfig-bgp-policy:local-pref-eq":int(args[2])}
+        return api.patch(keypath, body)
+    elif func == 'delete_openconfig_bgp_policy_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_bgp_conditions_config_local_pref_eq':
+        keypath  = cc.Path('/restconf/data/openconfig-routing-policy:routing-policy/policy-definitions/policy-definition={name}/statements/statement={name1}/conditions/openconfig-bgp-policy:bgp-conditions/config/local-pref-eq',
+             name=args[0], name1= args[1])
+        return api.delete(keypath)
+
+    elif func == 'patch_openconfig_routing_policy_ext_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_match_neighbor_set_config_address':
+        keypath  = cc.Path('/restconf/data/openconfig-routing-policy:routing-policy/policy-definitions/policy-definition={name}/statements/statement={name1}/conditions/match-neighbor-set/config/openconfig-routing-policy-ext:address',
+             name=args[0], name1= args[1])
+        body = {"openconfig-routing-policy-ext:address":[args[2]]}
+        return api.put(keypath, body)
+    elif func == 'delete_openconfig_routing_policy_ext_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_match_neighbor_set_config_address':
+        keypath  = cc.Path('/restconf/data/openconfig-routing-policy:routing-policy/policy-definitions/policy-definition={name}/statements/statement={name1}/conditions/match-neighbor-set/config/openconfig-routing-policy-ext:address',
+             name=args[0], name1= args[1])
+        return api.delete(keypath)
+
+    elif func == 'patch_openconfig_bgp_policy_ext_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_bgp_conditions_config_next_hop_set':
+        keypath  = cc.Path('/restconf/data/openconfig-routing-policy:routing-policy/policy-definitions/policy-definition={name}/statements/statement={name1}/conditions/openconfig-bgp-policy:bgp-conditions/config/openconfig-bgp-policy-ext:next-hop-set',
+             name=args[0], name1= args[1])
+        body = {"openconfig-bgp-policy-ext:next-hop-set":args[2]}
+        return api.patch(keypath, body)
+    elif func == 'delete_openconfig_bgp_policy_ext_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_bgp_conditions_config_next_hop_set':
+        keypath  = cc.Path('/restconf/data/openconfig-routing-policy:routing-policy/policy-definitions/policy-definition={name}/statements/statement={name1}/conditions/openconfig-bgp-policy:bgp-conditions/config/openconfig-bgp-policy-ext:next-hop-set',
+             name=args[0], name1= args[1])
+        return api.delete(keypath)
+
+    elif func == 'patch_openconfig_routing_policy_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_config_call_policy':
+        keypath  = cc.Path('/restconf/data/openconfig-routing-policy:routing-policy/policy-definitions/policy-definition={name}/statements/statement={name1}/conditions/config/call-policy',
+             name=args[0], name1= args[1])
+        body = {"openconfig-routing-policy:call-policy":args[2]}
+        return api.patch(keypath, body)
+    elif func == 'delete_openconfig_routing_policy_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_config_call_policy':
+        keypath  = cc.Path('/restconf/data/openconfig-routing-policy:routing-policy/policy-definitions/policy-definition={name}/statements/statement={name1}/conditions/config/call-policy',
+             name=args[0], name1= args[1])
+        return api.delete(keypath)
+
+
+    elif func == 'patch_openconfig_routing_policy_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_config_install_protocol_eq':
+        proto_number = {"bgp":"BGP","ospf":"OSPF","ospf3":"OSPF3","static":"STATIC","connected":"DIRECTLY_CONNECTED"}
+        if args[2] not in proto_number.keys():
+            print("%Error: Invalid protocol number in route-match config")
+            exit(1)
+        else:
+ #TDO: REMOVE DEBUG PRINT
+            protocol = proto_number.get(args[2])
+            print protocol
+
+        keypath  = cc.Path('/restconf/data/openconfig-routing-policy:routing-policy/policy-definitions/policy-definition={name}/statements/statement={name1}/conditions/config/install-protocol-eq',
+             name=args[0], name1= args[1])
+        body = {"openconfig-routing-policy:install-protocol-eq":protocol}
+        return api.patch(keypath, body)
+    elif func == 'delete_openconfig_routing_policy_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_config_install_protocol_eq':
+        keypath  = cc.Path('/restconf/data/openconfig-routing-policy:routing-policy/policy-definitions/policy-definition={name}/statements/statement={name1}/conditions/config/install-protocol-eq',
+             name=args[0], name1= args[1])
+    
+        return api.delete(keypath)
 
     else:
         body = {}
