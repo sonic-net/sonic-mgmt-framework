@@ -30,6 +30,7 @@ import (
 	"strings"
 	"github.com/antchfx/xmlquery"
 	"unsafe"
+	"runtime"
 	custv "cvl/custom_validation"
 )
 
@@ -148,8 +149,20 @@ func Initialize() CVLRetCode {
 		return retCode
 	}
 
+	//Compile leafref path
+	compileLeafRefPath()
+
+	//Compile all must exps
+	compileMustExps()
+
+	//Compile all when exps
+	compileWhenExps()
+
 	//Add all table names to be fetched to validate 'must' expression
 	addTableNamesForMustExp()
+
+	//Build reverse leafref info i.e. which table/field uses one table through leafref
+	buildRefTableInfo()
 
 	cvlInitialized = true
 
@@ -164,6 +177,7 @@ func ValidationSessOpen() (*CVL, CVLRetCode) {
 	cvl :=  &CVL{}
 	cvl.tmpDbCache = make(map[string]interface{})
 	cvl.requestCache = make(map[string]map[string][]*requestCacheType)
+	cvl.maxTableElem = make(map[string]int)
 	cvl.yp = &yparser.YParser{}
 	cvl.yv = &YValidator{}
 	cvl.yv.root = &xmlquery.Node{Type: xmlquery.DocumentNode}
@@ -268,8 +282,25 @@ func (c *CVL) ValidateConfig(jsonData string) CVLRetCode {
 }
 
 //Validate config data based on edit operation - no marshalling in between
-func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (CVLErrorInfo, CVLRetCode) {
+func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (cvlErr CVLErrorInfo, ret CVLRetCode) {
+
+	defer func() {
+		if (cvlErr.ErrCode != CVL_SUCCESS) {
+			CVL_LOG(ERROR, "ValidateEditConfig() failed , %+v", cvlErr)
+		}
+	}()
+
 	var cvlErrObj CVLErrorInfo
+
+	caller := ""
+	if (IsTraceSet()) {
+		pc := make([]uintptr, 10)
+		runtime.Callers(2, pc)
+		f := runtime.FuncForPC(pc[0])
+		caller = f.Name()
+	}
+
+	TRACE_LOG(INFO_TRACE, "ValidateEditConfig() called from %s() : %v", caller, cfgData)
 
 	if (SkipValidation() == true) {
 		CVL_LOG(INFO_TRACE, "Skipping CVL validation.")
@@ -281,8 +312,8 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (CVLErrorInfo, CVL
 	custvCfg := *(*[]custv.CVLEditConfigData)(unsafe.Pointer(&sliceHeader))
 
 	c.clearTmpDbCache()
-	c.yv.root.FirstChild = nil
-	c.yv.root.LastChild = nil
+	//c.yv.root.FirstChild = nil
+	//c.yv.root.LastChild = nil
 
 
 	//Step 1: Get requested data first
@@ -312,6 +343,7 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (CVLErrorInfo, CVL
 		//Invalid table name or invalid key separator 
 		if key == "" {
 			cvlErrObj.ErrCode = CVL_SYNTAX_ERROR
+			cvlErrObj.Msg = "Invalid table or key for " + cfgData[i].Key
 			cvlErrObj.CVLErrDetails = cvlErrorMap[cvlErrObj.ErrCode]
 			return cvlErrObj, CVL_SYNTAX_ERROR
 		}
@@ -321,40 +353,39 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (CVLErrorInfo, CVL
 			//Check max-element constraint 
 			if ret := c.checkMaxElemConstraint(tbl); ret != CVL_SUCCESS {
 				cvlErrObj.ErrCode = CVL_SYNTAX_ERROR
+				cvlErrObj.ErrAppTag = "too-many-elements"
+				cvlErrObj.Msg = "Max elements limit reached"
 				cvlErrObj.CVLErrDetails = cvlErrorMap[cvlErrObj.ErrCode]
 				return cvlErrObj, CVL_SYNTAX_ERROR
 			}
 
-			if (c.addTableEntryForMustExp(&cfgData[i], tbl) != CVL_SUCCESS) {
+			/*if (c.addTableEntryForMustExp(&cfgData[i], tbl) != CVL_SUCCESS) {
 				c.addTableDataForMustExp(cfgData[i].VOp, tbl)
-			}
+			}*/
 
 		case OP_UPDATE:
 			//Get the existing data from Redis to cache, so that final validation can be done after merging this dependent data
-			if (c.addTableEntryForMustExp(&cfgData[i], tbl) != CVL_SUCCESS) {
+			/*if (c.addTableEntryForMustExp(&cfgData[i], tbl) != CVL_SUCCESS) {
 				c.addTableDataForMustExp(cfgData[i].VOp, tbl)
-			}
+			}*/
 			c.addTableEntryToCache(tbl, key)
 
 		case OP_DELETE:
 			if (len(cfgData[i].Data) > 0) {
-				//Delete a single field
-				if (len(cfgData[i].Data) != 1)  {
-					CVL_LOG(ERROR, "Only single field is allowed for field deletion")
-				} else {
-					for field, _ := range cfgData[i].Data {
-						if (c.checkDeleteConstraint(cfgData, tbl, key, field) != CVL_SUCCESS) {
-							cvlErrObj.ErrCode = CVL_SEMANTIC_ERROR
-							cvlErrObj.CVLErrDetails = cvlErrorMap[cvlErrObj.ErrCode]
-							return cvlErrObj, CVL_SEMANTIC_ERROR
-						}
-						break //only one field there
+				//Check constraints for deleting field(s)
+				for field, _ := range cfgData[i].Data {
+					if (c.checkDeleteConstraint(cfgData, tbl, key, field) != CVL_SUCCESS) {
+						cvlErrObj.ErrCode = CVL_SEMANTIC_ERROR
+						cvlErrObj.Msg = "Delete constraint failed"
+						cvlErrObj.CVLErrDetails = cvlErrorMap[cvlErrObj.ErrCode]
+						return cvlErrObj, CVL_SEMANTIC_ERROR
 					}
 				}
 			} else {
 				//Entire entry to be deleted
 				if (c.checkDeleteConstraint(cfgData, tbl, key, "") != CVL_SUCCESS) {
 					cvlErrObj.ErrCode = CVL_SEMANTIC_ERROR
+					cvlErrObj.Msg = "Delete constraint failed"
 					cvlErrObj.CVLErrDetails = cvlErrorMap[cvlErrObj.ErrCode]
 					return cvlErrObj, CVL_SEMANTIC_ERROR
 				}
@@ -364,9 +395,9 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (CVLErrorInfo, CVL
 				//delete(c.requestCache[tbl], key)
 			}
 
-			if (c.addTableEntryForMustExp(&cfgData[i], tbl) != CVL_SUCCESS) {
+			/*if (c.addTableEntryForMustExp(&cfgData[i], tbl) != CVL_SUCCESS) {
 				c.addTableDataForMustExp(cfgData[i].VOp, tbl)
-			}
+			}*/
 
 			c.addTableEntryToCache(tbl, key)
 		}
@@ -399,78 +430,93 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (CVLErrorInfo, CVL
 	}
 
 	//Step 3 : Check keys and update dependent data
-	dependentData := make(map[string]interface{})
+	//dependentData := make(map[string]interface{})
+
+	//Step 4 : Perform validation
+	if cvlErrObj, cvlRetCode1 := c.validateSemantics(yang, nil);
+	cvlRetCode1 != CVL_SUCCESS {
+			return cvlErrObj, cvlRetCode1
+	}
 
 	for i := 0; i < cfgDataLen; i++ {
 
-		if (cfgData[i].VType == VALIDATE_ALL || cfgData[i].VType == VALIDATE_SEMANTICS) {
+		if (cfgData[i].VType != VALIDATE_ALL && cfgData[i].VType != VALIDATE_SEMANTICS) {
+			continue
+		}
 
-			tbl, key := splitRedisKey(cfgData[i].Key)
+		tbl, key := splitRedisKey(cfgData[i].Key)
 
-			//Step 3.1 : Check keys
-			switch cfgData[i].VOp {
-			case OP_CREATE:
-				//Check key should not already exist
-				n, err1 := redisClient.Exists(cfgData[i].Key).Result()
-				if (err1 == nil && n > 0) {
-					//Check if key deleted and CREATE done in same session, 
-					//allow to create the entry
-					deletedInSameSession := false
-					if  tbl != ""  && key != "" {
-						for _, cachedCfgData := range c.requestCache[tbl][key] {
-							if cachedCfgData.reqData.VOp == OP_DELETE {
-								deletedInSameSession = true
-								break
-							}
+		//Step 3.1 : Check keys
+		switch cfgData[i].VOp {
+		case OP_CREATE:
+			//Check key should not already exist
+			n, err1 := redisClient.Exists(cfgData[i].Key).Result()
+			if (err1 == nil && n > 0) {
+				//Check if key deleted and CREATE done in same session, 
+				//allow to create the entry
+				deletedInSameSession := false
+				if  tbl != ""  && key != "" {
+					for _, cachedCfgData := range c.requestCache[tbl][key] {
+						if cachedCfgData.reqData.VOp == OP_DELETE {
+							deletedInSameSession = true
+							break
 						}
 					}
-
-					if deletedInSameSession == false {
-						CVL_LOG(ERROR, "\nValidateEditConfig(): Key = %s already exists", cfgData[i].Key)
-						cvlErrObj.ErrCode = CVL_SEMANTIC_KEY_ALREADY_EXIST
-						cvlErrObj.CVLErrDetails = cvlErrorMap[cvlErrObj.ErrCode]
-						return cvlErrObj, CVL_SEMANTIC_KEY_ALREADY_EXIST 
-
-					} else {
-						TRACE_LOG(TRACE_CREATE, "\nKey %s is deleted in same session, skipping key existence check for OP_CREATE operation", cfgData[i].Key)
-					}
 				}
 
-				c.yp.SetOperation("CREATE")
-
-			case OP_UPDATE:
-				n, err1 := redisClient.Exists(cfgData[i].Key).Result()
-				if (err1 != nil || n == 0) { //key must exists
-					CVL_LOG(ERROR, "\nValidateEditConfig(): Key = %s does not exist", cfgData[i].Key)
+				if deletedInSameSession == false {
+					CVL_LOG(ERROR, "\nValidateEditConfig(): Key = %s already exists", cfgData[i].Key)
 					cvlErrObj.ErrCode = CVL_SEMANTIC_KEY_ALREADY_EXIST
 					cvlErrObj.CVLErrDetails = cvlErrorMap[cvlErrObj.ErrCode]
-					return cvlErrObj, CVL_SEMANTIC_KEY_NOT_EXIST
+					return cvlErrObj, CVL_SEMANTIC_KEY_ALREADY_EXIST 
+
+				} else {
+					TRACE_LOG(TRACE_CREATE, "\nKey %s is deleted in same session, skipping key existence check for OP_CREATE operation", cfgData[i].Key)
 				}
-
-				c.yp.SetOperation("UPDATE")
-
-			case OP_DELETE:
-				n, err1 := redisClient.Exists(cfgData[i].Key).Result()
-				if (err1 != nil || n == 0) { //key must exists
-					CVL_LOG(ERROR, "\nValidateEditConfig(): Key = %s does not exist", cfgData[i].Key)
-					cvlErrObj.ErrCode = CVL_SEMANTIC_KEY_ALREADY_EXIST
-					cvlErrObj.CVLErrDetails = cvlErrorMap[cvlErrObj.ErrCode]
-					return cvlErrObj, CVL_SEMANTIC_KEY_NOT_EXIST
-				}
-
-				c.yp.SetOperation("DELETE")
-				//store deleted keys
 			}
 
-			//Run all custom validations
-			cvlErrObj= c.doCustomValidation(custvCfg, &custvCfg[i], tbl, key)
-			if cvlErrObj.ErrCode != CVL_SUCCESS {
-				return cvlErrObj,cvlErrObj.ErrCode
+			c.yp.SetOperation("CREATE")
+
+		case OP_UPDATE:
+			n, err1 := redisClient.Exists(cfgData[i].Key).Result()
+			if (err1 != nil || n == 0) { //key must exists
+				CVL_LOG(ERROR, "\nValidateEditConfig(): Key = %s does not exist", cfgData[i].Key)
+				cvlErrObj.ErrCode = CVL_SEMANTIC_KEY_NOT_EXIST
+				cvlErrObj.CVLErrDetails = cvlErrorMap[cvlErrObj.ErrCode]
+				return cvlErrObj, CVL_SEMANTIC_KEY_NOT_EXIST
 			}
 
+			c.yp.SetOperation("UPDATE")
+
+		case OP_DELETE:
+			n, err1 := redisClient.Exists(cfgData[i].Key).Result()
+			if (err1 != nil || n == 0) { //key must exists
+				CVL_LOG(ERROR, "\nValidateEditConfig(): Key = %s does not exist", cfgData[i].Key)
+				cvlErrObj.ErrCode = CVL_SEMANTIC_KEY_NOT_EXIST
+				cvlErrObj.CVLErrDetails = cvlErrorMap[cvlErrObj.ErrCode]
+				return cvlErrObj, CVL_SEMANTIC_KEY_NOT_EXIST
+			}
+
+			c.yp.SetOperation("DELETE")
+			//store deleted keys
+		}
+
+		yangListName := getRedisTblToYangList(tbl, key)
+
+		//Run all custom validations
+		cvlErrObj= c.doCustomValidation(custvCfg, &custvCfg[i], yangListName,
+		tbl, key)
+		if cvlErrObj.ErrCode != CVL_SUCCESS {
+			return cvlErrObj,cvlErrObj.ErrCode
+		}
+
+		if cvlErrObj = c.validateEditCfgExtDep(yangListName, key, &cfgData[i]);
+		cvlErrObj.ErrCode != CVL_SUCCESS {
+			return cvlErrObj,cvlErrObj.ErrCode
 		}
 	}
 
+	/* TBD
 	var depYang *yparser.YParserNode = nil
 	if (len(dependentData) > 0) {
 		depYang, errN = c.translateToYang(&dependentData)
@@ -480,6 +526,7 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (CVLErrorInfo, CVL
 	cvlRetCode1 != CVL_SUCCESS {
 			return cvlErrObj, cvlRetCode1
 	}
+	*/
 
 	//Cache validated data
 	/*
@@ -514,8 +561,62 @@ func (c *CVL) ValidateFields(key string, field string, value string) CVLRetCode 
 	return CVL_NOT_IMPLEMENTED
 }
 
+func (c *CVL) addDepEdges(graph *toposort.Graph, tableList []string) {
+	//Add all the depedency edges for graph nodes
+	for ti :=0; ti < len(tableList); ti++ {
+
+		redisTblTo := getYangListToRedisTbl(tableList[ti])
+
+		for tj :=0; tj < len(tableList); tj++ {
+
+			if (tableList[ti] == tableList[tj]) {
+				//same table, continue
+				continue
+			}
+
+			redisTblFrom := getYangListToRedisTbl(tableList[tj])
+
+			//map for checking duplicate edge
+			dupEdgeCheck := map[string]string{}
+
+			for _, leafRefs := range modelInfo.tableInfo[tableList[tj]].leafRef {
+				for _, leafRef := range leafRefs {
+					if (strings.Contains(leafRef.path, tableList[ti] + "_LIST")) == false {
+						continue
+					}
+
+					toName, exists := dupEdgeCheck[redisTblFrom]
+					if (exists == true) && (toName == redisTblTo) {
+						//Don't add duplicate edge
+						continue
+					}
+
+					//Add and store the edge in map
+					graph.AddEdge(redisTblFrom, redisTblTo)
+					dupEdgeCheck[redisTblFrom] = redisTblTo
+
+					CVL_LOG(INFO_DEBUG,
+					"addDepEdges(): Adding edge %s -> %s", redisTblFrom, redisTblTo)
+				}
+			}
+		}
+	}
+}
+
 //Sort list of given tables as per their dependency
-func (c *CVL) SortDepTables(tableList []string) ([]string, CVLRetCode) {
+func (c *CVL) SortDepTables(inTableList []string) ([]string, CVLRetCode) {
+
+	tableList := []string{}
+
+	//Skip all unknown tables
+	for ti := 0; ti < len(inTableList); ti++ {
+		_, exists := modelInfo.tableInfo[inTableList[ti]]
+		if exists == false {
+			continue
+		}
+
+		tableList = append(tableList, inTableList[ti])
+	}
 
 	//Add all the table names in graph nodes
 	graph := toposort.NewGraph(len(tableList))
@@ -523,23 +624,8 @@ func (c *CVL) SortDepTables(tableList []string) ([]string, CVLRetCode) {
 		graph.AddNodes(tableList[ti])
 	}
 
-	//Add all the depedency edges for graph nodes
-	for ti :=0; ti < len(tableList); ti++ {
-		for tj :=0; tj < len(tableList); tj++ {
-			if (tableList[ti] == tableList[tj]) {
-				continue
-			}
-
-			for _, leafRefs := range modelInfo.tableInfo[tableList[tj]].leafRef {
-				for _, leafRef := range leafRefs {
-					if (strings.Contains(leafRef, tableList[ti])) {
-						graph.AddEdge(yangToRedisTblName(tableList[tj]),
-						 yangToRedisTblName(tableList[ti]))
-					}
-				}
-			}
-		}
-	}
+	//Add all dependency egdes
+	c.addDepEdges(graph, tableList)
 
 	//Now perform topological sort
 	result, ret := graph.Toposort()
@@ -573,11 +659,8 @@ func (c *CVL) addDepTables(tableMap map[string]bool, tableName string) {
 	//Now find all tables referred in leafref from this table
 	for _, leafRefs := range modelInfo.tableInfo[tableName].leafRef {
 		for _, leafRef := range leafRefs {
-			matches := reLeafRef.FindStringSubmatch(leafRef)
-
-			//We have the leafref table name
-			if (matches != nil && len(matches) == 5) { //whole + 4 sub matches
-				c.addDepTables(tableMap, yangToRedisTblName(matches[2])) //call recursively
+			for _, refTbl := range leafRef.yangListNames {
+				c.addDepTables(tableMap, getYangListToRedisTbl(refTbl)) //call recursively
 			}
 		}
 	}
@@ -588,6 +671,11 @@ func (c *CVL) GetDepTables(yangModule string, tableName string) ([]string, CVLRe
 	tableList := []string{}
 	tblMap := make(map[string]bool)
 
+	if _, exists := modelInfo.tableInfo[tableName]; exists == false {
+		CVL_LOG(INFO_DEBUG, "GetDepTables(): Unknown table %s\n", tableName)
+		return []string{}, CVL_ERROR
+	}
+
 	c.addDepTables(tblMap, tableName)
 
 	for tblName, _ := range tblMap {
@@ -597,26 +685,12 @@ func (c *CVL) GetDepTables(yangModule string, tableName string) ([]string, CVLRe
 	//Add all the table names in graph nodes
 	graph := toposort.NewGraph(len(tableList))
 	for ti := 0; ti < len(tableList); ti++ {
+		CVL_LOG(INFO_DEBUG, "GetDepTables(): Adding node %s\n", tableList[ti])
 		graph.AddNodes(tableList[ti])
 	}
 
-	//Add all the depedency edges for graph nodes
-	for ti :=0; ti < len(tableList); ti++ {
-		for tj :=0; tj < len(tableList); tj++ {
-			if (tableList[ti] == tableList[tj]) {
-				continue
-			}
-
-			for _, leafRefs := range modelInfo.tableInfo[tableList[tj]].leafRef {
-				for _, leafRef := range leafRefs {
-					if (strings.Contains(leafRef, tableList[ti]+"/")) {
-						graph.AddEdge(yangToRedisTblName(tableList[tj]),
-						yangToRedisTblName(tableList[ti]))
-					}
-				}
-			}
-		}
-	}
+	//Add all dependency egdes
+	c.addDepEdges(graph, tableList)
 
 	//Now perform topological sort
 	result, ret := graph.Toposort()
@@ -627,11 +701,21 @@ func (c *CVL) GetDepTables(yangModule string, tableName string) ([]string, CVLRe
 	return result, CVL_SUCCESS
 }
 
-//Get the dependent data (redis keys) for an entry to be deleted
-// and dependent data to be modified
+//Get the dependent (Redis keys) to be deleted or modified
+//for a given entry getting deleted
 func (c *CVL) GetDepDataForDelete(redisKey string) ([]string, []string) {
 
 	tableName, key := splitRedisKey(redisKey)
+
+	if (tableName == "") || (key == "") {
+		CVL_LOG(INFO_DEBUG, "GetDepDataForDelete(): Unknown or invalid table %s\n",
+		tableName)
+	}
+
+	if _, exists := modelInfo.tableInfo[tableName]; exists == false {
+		CVL_LOG(INFO_DEBUG, "GetDepDataForDelete(): Unknown table %s\n", tableName)
+		return []string{}, []string{} 
+	}
 
 	mCmd := map[string]*redis.StringSliceCmd{}
 	mFilterScripts := map[string]string{}

@@ -17,12 +17,15 @@
 #                                                                              #
 ################################################################################
 
+TOPDIR?=$(abspath ../../..)
+
 sonic_yang=../../../models/yang/sonic
 sonic_yang_common=../../../models/yang/sonic/common
 sonic_yang_platform=../../../models/yang/sonic/platform
 pyang_plugin_dir=../../../tools/pyang/pyang_plugins
 
 out_dir=$(TOPDIR)/build/cvl/schema
+
 src_files=$(wildcard $(sonic_yang)/*.yang)
 src_files += $(wildcard $(sonic_yang_common)/*.yang)
 out=$(patsubst %.yang, $(out_dir)/%.yin, $(shell ls -1 $(sonic_yang)/*.yang | cut -d'/' -f7)) 
@@ -34,10 +37,13 @@ out_tree=$(patsubst %.yang, $(out_dir)/%.tree, $(src_files))
 search_path=$(sonic_yang):$(sonic_yang_common):$(sonic_yang_common)/ietf
 
 
-all: schema
+all: precheck schema
+
+precheck:
+	mkdir -p $(out_dir) 
 
 schema: $(out) $(out_common) $(out_platform)
-	@$(call install_cvl_schema)
+#	@$(call install_cvl_schema)
 
 schema-tree: $(out_tree)
 
@@ -73,6 +79,6 @@ $(out_dir)/%.tree:%.yang
 
 clean:
 	@echo "Removing files ..."
-	rm -rf $(out_dir)/*
+	rm -rf $(out_dir)
 	rm -rf platform/
 

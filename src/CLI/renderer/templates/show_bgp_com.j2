@@ -1,0 +1,53 @@
+{% if json_output -%}
+{% if json_output is iterable %}
+{% set comm_list = {} %}
+{% if "openconfig-bgp-policy:community-sets" is in json_output %}
+{% set comm_list = json_output['openconfig-bgp-policy:community-sets']['community-set'] %}
+{% endif %}
+{% if "openconfig-bgp-policy:community-set" is in json_output %}
+{% set comm_list = json_output['openconfig-bgp-policy:community-set'] %}
+{% endif %}
+{% for list in comm_list %}
+{% set vars = {'list_name': ""} %}
+{% set vars = {'regex':false } %}
+{% set mems = "" %}
+{% set temp = [ ] %}
+{% set match = "" %}
+{% if vars.update({'list_name':list ['community-set-name']}) %} {% endif %}
+   {% set match =  list['config']['match-set-options'] %}
+   {% set mems =  list['config']['community-member'] %}
+   {% for mem in mems %}
+   {% if mem[:5]|string() == "REGEX" %}
+      {% if vars.update({'regex': true}) %} {% endif %}
+   {% endif %}
+   {% endfor %}
+   {% if (vars.regex) == true %}
+Expanded community list {{'%s'| format(vars.list_name)}}:   match: {{'%s'| format(match)}}
+   {% elif (vars.regex) == False %}
+Standard community list {{'%s'| format(vars.list_name)}}:  match: {{'%s'| format(match)}}
+   {% endif %}
+   {% for mem in mems %}
+     {% if mem == "openconfig-bgp-types:NOPEER" %}
+     {% set mem = "no-peer" %}
+     {% elif mem == "openconfig-bgp-types:NO_ADVERTISE" %}
+     {% set mem = "no-advertise" %}
+     {% elif mem == "openconfig-bgp-types:NO_EXPORT" %}
+     {% set mem = "no-export" %}
+     {% elif mem == "openconfig-bgp-types:NO_EXPORT_SUBCONFED" %}
+     {% set mem = "local-AS" %}
+     {% elif "REGEX" is in mem  %}
+     {% set mem = mem[6:] %}
+     {% endif %}
+     {% if match == "ALL" %}
+       {% do temp.append(mem) %}
+     {% endif %}
+     {% if match == "ANY" %}
+     {{'%s'| format(mem)}}
+     {% endif %}
+   {% endfor %}
+   {% if match == "ALL" %}
+     {{'%s'| format(temp|join(","))}}
+   {% endif %}
+{% endfor %}
+{% endif %}
+{% endif %}

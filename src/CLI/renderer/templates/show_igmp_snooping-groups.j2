@@ -1,0 +1,32 @@
+{% set igmps_intfs = {} %}
+{% if json_output['interface'] is defined and json_output['interface'] is not none %}
+{% set igmps_intfs =  json_output['interface'] %}
+{%endif%}
+{% if json_output['openconfig-network-instance-deviation:interface'] is defined and json_output['openconfig-network-instance-deviation:interface'] is not none %}
+{% set igmps_intfs =  json_output['openconfig-network-instance-deviation:interface'] %}
+{%endif%}
+{% for igmps_intf in igmps_intfs %}
+{% if igmps_intf['state'] is not none %}
+{% set igmps_state = igmps_intf['state'] %}
+{% set vlan_name = igmps_state['name'] %}
+{% set vlan_id = vlan_name.split('Vlan')[1] %}
+{% if igmps_state['static-multicast-group'] is defined %}
+Vlan ID: {{vlan_id}}
+{{'-----------'}}
+{%endif%}
+{% for igmps_static_group in igmps_state['static-multicast-group'] -%}
+{% if igmps_static_group['source-addr'] == '0.0.0.0' %}
+{{ 1 + loop.index0 }} (*, {{igmps_static_group['group']}})
+{% else %}
+{{ 1 + loop.index0 }} ({{igmps_static_group['source-addr']}}, {{igmps_static_group['group']}})
+{%endif%}
+  Outgoing Ports: {{igmps_static_group['outgoing-interface']|join(", ")}}
+{% endfor -%}
+{% if igmps_state['static-multicast-group'] is defined %}
+Total number of entries: {{igmps_state['static-multicast-group']|length}}
+{%endif%}
+{% if json_output['interface'] is defined and json_output['interface'] is not none and igmps_state['static-multicast-group'] is defined %}
+{{ ' ' }}
+{%endif%}
+{%endif%}
+{% endfor %}

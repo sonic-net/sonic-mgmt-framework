@@ -1,0 +1,250 @@
+module openconfig-network-instance-deviation {
+
+  yang-version "1";
+
+  // namespace
+  namespace "http://openconfig.net/yang/oc-netinst-deviation";
+
+  prefix "oc-netinst-deviation";
+
+  // import some basic types/interfaces
+  import openconfig-types { prefix "oc-types"; }
+  import ietf-inet-types { prefix "inet"; }
+  import openconfig-extensions { prefix "oc-ext"; }
+  import openconfig-policy-types { prefix "oc-pol-types"; }
+  import openconfig-network-instance { prefix "oc-netinst"; }
+  import openconfig-interfaces { prefix "oc-if"; }
+  
+  // meta
+  organization
+    "OpenConfig working group";
+
+  contact
+    "OpenConfig working group
+    www.openconfig.net";
+
+  description
+    "Deviation for the Network Instance model to add Internet Group 
+    Management Protocol (IGMP) Snooping.";
+
+  oc-ext:openconfig-version "0.1.0";
+
+  revision "2019-09-15" {
+    description
+      "Initial revision.";
+    reference "0.1.0";
+  }
+  
+  identity IGMP_SNOOPING {
+    base oc-pol-types:INSTALL_PROTOCOL_TYPE;
+    description
+      "Locally defined IGMP snooping instance";
+  }
+  
+	typedef igmp-snooping-version {
+		type uint8 {
+		    range 1..3;
+		}
+		description
+		  "IGMP Snooping Version.";
+	}
+	
+	typedef igmp-snooping-query-interval-type {
+		type uint16 {
+		  range 1..1024;
+		}
+		units "seconds";
+		default 125;
+		description
+		  "Interval at which the router sends the IGMP Snooping query message toward
+		  the upstream neighbor.";
+	}
+	
+	typedef igmp-snooping-last-member-query-interval-type {
+		type uint32 {
+			range "100..25500";
+		}
+		units milliseconds;
+		description
+		  "Interval at which the router sends the IGMP Snooping last member query message toward
+		  the upstream neighbor.";
+	}
+	
+	typedef igmp-snooping-query-max-response-time-type {
+		type uint16 {
+			range "1..25";
+		}
+		units "seconds";
+		description
+		  "IGMP Snooping Query Max Response Time.";
+	}  
+
+	grouping igmp-snooping-interface-attr {
+    leaf name {
+      type oc-if:base-interface-ref;
+      description
+        "Reference to the IGMP Snooping VLAN interface";
+    }
+
+		leaf enabled {
+		    type boolean;
+		    description
+		      "IGMP Snooping Enabled / Disabled.";
+		}
+	
+		leaf version {
+		    type igmp-snooping-version;
+		    description
+		      "IGMP Snooping Version.";
+		}
+		  
+		leaf query-interval {
+		  type igmp-snooping-query-interval-type;
+		  description
+		    "Interval at which the router sends the IGMP Snooping
+		    queries.";
+		}
+		
+		leaf query-max-response-time {
+			type igmp-snooping-query-max-response-time-type;
+			description
+		    "Max response time for the IGMP Snooping queries.";
+			default 10;
+		}
+		
+		leaf last-member-query-interval {
+			type igmp-snooping-last-member-query-interval-type;
+		  description	  	
+				"IGMP Snooping Last Member Query Interval";
+			default 1000;
+		}
+		
+		leaf querier {
+		  type boolean;
+		  description
+		    "When set to true, the functionality within which this
+		    leaf is defined is enabled, when set to false it is
+		    explicitly disabled.";      
+		}
+		
+		leaf fast-leave {
+		  type boolean;
+		  description
+		    "When set to true, the functionality within which this
+		    leaf is defined is enabled, when set to false it is
+		    explicitly disabled.";      
+		}
+		
+		leaf-list mrouter-interface {
+			type oc-if:base-interface-ref;		
+			description
+				"Multicast Router ports.";	
+		}	
+	}
+	
+	grouping igmp-snooping-interface-config {
+	
+		uses igmp-snooping-interface-attr;
+		
+		list static-multicast-group {
+			key "group";
+      description
+        "A static multicast group";
+			
+      leaf group {
+        type inet:ipv4-address;
+        description
+          "Multicast address.";
+      }
+
+			leaf-list outgoing-interface {
+				type oc-if:base-interface-ref;		
+				description
+					"Outgoing interfaces.";	
+			}	
+		}	
+	}
+									
+  grouping igmp-snooping-interface-top {    	
+		container interfaces {
+			list interface {
+			  key "name";
+			  
+			  leaf name {
+			    type leafref {
+			      path "../config/name";
+			    }
+			    description
+			      "A reference to an identifier for this interface which
+			      acts as a key for this list";
+			  }
+			
+				container config {
+				  description
+				    "Configuration parameters relating to the associated
+				    interface";
+				  uses igmp-snooping-interface-config;
+				}
+				
+      	container state {
+      	  config false;
+
+      	  description
+      	    "Operational state data for IGMP Snooping on each interface";
+
+      	  uses igmp-snooping-interface-attr;
+      	  
+					list static-multicast-group {
+						key "group source-addr";
+			      description
+			        "A Static Multicast group.";
+						
+			      leaf group {
+			        type inet:ipv4-address;
+			        description
+			          "Multicast group IPv4 address.";
+			      }
+
+			      leaf source-addr {
+			        type inet:ipv4-address;
+			        description
+			          "Multicast source IPv4 address.";
+			      }
+			      
+			      leaf-list outgoing-interface {
+			      	type oc-if:base-interface-ref;
+				    	description
+			      		"Outgoing interfaces.";
+			    	}
+					}
+      	}				
+			}        
+		}
+	}
+	
+	grouping igmp-snooping-top {
+		description
+      "Top-level grouping for IGMP Snooping.";
+      
+		container igmp-snooping {
+			description
+				"Top-level IGMP Snooping configuration and operational state.";
+				
+			uses igmp-snooping-interface-top;
+		}
+	}
+		
+	augment "/oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol" {
+    uses igmp-snooping-top {
+      when "/oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/config/identifier = 'IGMP_SNOOPING'" {
+        description
+          "Include IGMP Snooping parameters only when the
+          protocol is set to IGMP_SNOOPING";
+      }
+      description
+        "Configuration and state parameters relating to
+        IGMP Snooping";
+    }
+	}
+    
+}

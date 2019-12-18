@@ -5,6 +5,7 @@ import (
     "strings"
     "encoding/json"
     "translib/ocbinds"
+    "translib/db"
     "os/exec"
     log "github.com/golang/glog"
 )
@@ -105,13 +106,17 @@ func init () {
     XlateFuncBind("DbToYang_bgp_gbl_tbl_key_xfmr", DbToYang_bgp_gbl_tbl_key_xfmr)
     XlateFuncBind("YangToDb_bgp_gbl_afi_safi_field_xfmr", YangToDb_bgp_gbl_afi_safi_field_xfmr)
     XlateFuncBind("DbToYang_bgp_gbl_afi_safi_field_xfmr", DbToYang_bgp_gbl_afi_safi_field_xfmr)
-    XlateFuncBind("DbToYang_bgp_routes_get_xfmr", DbToYang_bgp_routes_get_xfmr)
 	XlateFuncBind("YangToDb_bgp_dyn_neigh_listen_key_xfmr", YangToDb_bgp_dyn_neigh_listen_key_xfmr)
 	XlateFuncBind("DbToYang_bgp_dyn_neigh_listen_key_xfmr", DbToYang_bgp_dyn_neigh_listen_key_xfmr) 
 	XlateFuncBind("YangToDb_bgp_gbl_afi_safi_key_xfmr", YangToDb_bgp_gbl_afi_safi_key_xfmr)
 	XlateFuncBind("DbToYang_bgp_gbl_afi_safi_key_xfmr", DbToYang_bgp_gbl_afi_safi_key_xfmr) 
+	XlateFuncBind("YangToDb_bgp_gbl_afi_safi_addr_key_xfmr", YangToDb_bgp_gbl_afi_safi_addr_key_xfmr)
+	XlateFuncBind("DbToYang_bgp_gbl_afi_safi_addr_key_xfmr", DbToYang_bgp_gbl_afi_safi_addr_key_xfmr) 
 	XlateFuncBind("YangToDb_bgp_dyn_neigh_listen_field_xfmr", YangToDb_bgp_dyn_neigh_listen_field_xfmr)
 	XlateFuncBind("DbToYang_bgp_dyn_neigh_listen_field_xfmr", DbToYang_bgp_dyn_neigh_listen_field_xfmr) 
+	XlateFuncBind("YangToDb_bgp_gbl_afi_safi_addr_field_xfmr", YangToDb_bgp_gbl_afi_safi_addr_field_xfmr)
+	XlateFuncBind("DbToYang_bgp_gbl_afi_safi_addr_field_xfmr", DbToYang_bgp_gbl_afi_safi_addr_field_xfmr) 
+    XlateFuncBind("YangToDb_bgp_global_subtree_xfmr", YangToDb_bgp_global_subtree_xfmr)
 }
 
 var YangToDb_bgp_gbl_afi_safi_field_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
@@ -140,6 +145,8 @@ var DbToYang_bgp_gbl_afi_safi_field_xfmr FieldXfmrDbtoYang = func(inParams XfmrP
 		afi = "IPV6_UNICAST"
 	case "l2vpn_evpn":
 		afi = "L2VPN_EVPN"
+    default:
+        return rmap, nil
 	}
 
     rmap["afi-safi-name"] = afi
@@ -157,6 +164,17 @@ var YangToDb_bgp_dyn_neigh_listen_field_xfmr FieldXfmrYangToDb = func(inParams X
     return rmap, err
 }
 
+var YangToDb_bgp_gbl_afi_safi_addr_field_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
+    rmap := make(map[string]string)
+    var err error
+
+    log.Info("YangToDb_bgp_gbl_afi_safi_addr_field_xfmr")
+    rmap["NULL"] = "NULL"
+    
+    return rmap, err
+}
+
+
 var DbToYang_bgp_dyn_neigh_listen_field_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (map[string]interface{}, error) {
     rmap := make(map[string]interface{})
     var err error
@@ -167,6 +185,20 @@ var DbToYang_bgp_dyn_neigh_listen_field_xfmr FieldXfmrDbtoYang = func(inParams X
     dynKey := strings.Split(entry_key, "|")
 
     rmap["prefix"] = dynKey[1]
+
+    return rmap, err
+}
+
+var DbToYang_bgp_gbl_afi_safi_addr_field_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (map[string]interface{}, error) {
+    rmap := make(map[string]interface{})
+    var err error
+    
+    entry_key := inParams.key
+    log.Info("DbToYang_bgp_gbl_afi_safi_addr_field_xfmr: ", entry_key)
+
+    dynKey := strings.Split(entry_key, "|")
+
+    rmap["prefix"] = dynKey[2]
 
     return rmap, err
 }
@@ -366,6 +398,8 @@ var DbToYang_bgp_gbl_afi_safi_key_xfmr KeyXfmrDbToYang = func(inParams XfmrParam
 		afi = "IPV6_UNICAST"
 	case "l2vpn_evpn":
 		afi = "L2VPN_EVPN"
+    default:
+        return rmap, nil
 	}
 
     rmap["afi-safi-name"] = afi
@@ -374,44 +408,102 @@ var DbToYang_bgp_gbl_afi_safi_key_xfmr KeyXfmrDbToYang = func(inParams XfmrParam
     return rmap, nil
 }
 
-var DbToYang_bgp_routes_get_xfmr SubTreeXfmrDbToYang = func(inParams XfmrParams) error {
+var YangToDb_bgp_global_subtree_xfmr SubTreeXfmrYangToDb = func(inParams XfmrParams) (map[string]map[string]db.Value, error) {
     var err error
-    /*
+	log.Info("YangToDb_bgp_global_subtree_xfmr:", inParams.oper)
+    if inParams.oper == DELETE {
+        return nil, errors.New("Invalid request")
+    }
+    return nil, err
+}
+
+var YangToDb_bgp_gbl_afi_safi_addr_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (string, error) {
 
     pathInfo := NewPathInfo(inParams.uri)
-    targetUriPath, err := getYangPathFromUri(pathInfo.Path)
-    switch targetUriPath {
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis":
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi":
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv4-unicast":
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv4-unicast/loc-rib":
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv4-unicast/loc-rib/routes":
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv4-unicast/loc-rib/routes/route":
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv4-unicast/neighbors":
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv4-unicast/neighbors/neighbor":
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv4-unicast/neighbors/neighbor/adj-rib-in-pre":
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv4-unicast/neighbors/neighbor/adj-rib-in-pre/routes":
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv4-unicast/neighbors/neighbor/adj-rib-in-pre/routes/route":
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv4-unicast/neighbors/neighbor/adj-rib-in-post":
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv4-unicast/neighbors/neighbor/adj-rib-in-post/routes":
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv4-unicast/neighbors/neighbor/adj-rib-in-post/routes/route":
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv4-unicast/neighbors/neighbor/adj-rib-out-pre":
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv4-unicast/neighbors/neighbor/adj-rib-out-pre/routes":
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv4-unicast/neighbors/neighbor/adj-rib-out-pre/routes/route":
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv4-unicast/neighbors/neighbor/adj-rib-out-post":
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv4-unicast/neighbors/neighbor/adj-rib-out-post/routes":
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv4-unicast/neighbors/neighbor/adj-rib-out-post/routes/route":
+
+    niName := pathInfo.Var("name")
+    bgpId := pathInfo.Var("identifier")
+    protoName := pathInfo.Var("name#2")
+	afName := pathInfo.Var("afi-safi-name")
+	prefix := pathInfo.Var("prefix")
+	afi := ""
+    var err error
+
+    if len(pathInfo.Vars) < 5 {
+        return afi, errors.New("Invalid Key length")
     }
 
-    /* Address Family
-     * 1) IPv4
-     *       - Local RIB - get all & specific prefix get
-     *       - Neighbors - get all for adj-rib-in-pre, adj-rib-in-post, adj-rib-out-pre & adj-rib-out-post
-     *                     and specific route get in above containers.
-     * 2) IPv6
-     *       - Local RIB - get all & specific prefix get
-     *       - Neighbors - get all for adj-rib-in-pre, adj-rib-in-post, adj-rib-out-pre & adj-rib-out-post
-     *                     and specific route get in above containers.
-     **/
-    return err;
+    if len(niName) == 0 {
+        return afi, errors.New("vrf name is missing")
+    }
+
+    if strings.Contains(bgpId,"BGP") == false {
+        return afi, errors.New("BGP ID is missing")
+    }
+    
+    if len(protoName) == 0 {
+        return afi, errors.New("Protocol Name is missing")
+    }
+
+	if strings.Contains(afName, "IPV4_UNICAST") {
+		afi = "ipv4_unicast"
+	} else if strings.Contains(afName, "IPV6_UNICAST") {
+		afi = "ipv6_unicast"
+	} else if strings.Contains(afName, "L2VPN_EVPN") {
+		afi = "l2vpn_evpn"
+	} else {
+		log.Info("Unsupported AFI type " + afName)
+        return afi, errors.New("Unsupported AFI type " + afName)
+	}
+
+    if strings.Contains(afName, "IPV4_UNICAST") {
+        afName = "IPV4_UNICAST"
+        if strings.Contains(inParams.uri, "ipv6-unicast") ||
+           strings.Contains(inParams.uri, "l2vpn-evpn") {
+		    err = errors.New("IPV4_UNICAST supported only on ipv4-config container")
+		    log.Info("IPV4_UNICAST supported only on ipv4-config container: ", afName);
+		    return afName, err
+        }
+    } else if strings.Contains(afName, "IPV6_UNICAST") {
+        afName = "IPV6_UNICAST"
+        if strings.Contains(inParams.uri, "ipv4-unicast") ||
+           strings.Contains(inParams.uri, "l2vpn-evpn") {
+		    err = errors.New("IPV6_UNICAST supported only on ipv6-config container")
+		    log.Info("IPV6_UNICAST supported only on ipv6-config container: ", afName);
+		    return afName, err
+        }
+    } else if strings.Contains(afName, "L2VPN_EVPN") {
+        afName = "L2VPN_EVPN"
+        if strings.Contains(inParams.uri, "ipv6-unicast") ||
+           strings.Contains(inParams.uri, "ipv4-unicast") {
+		    err = errors.New("L2VPN_EVPN supported only on l2vpn-evpn container")
+		    log.Info("L2VPN_EVPN supported only on l2vpn-evpn container: ", afName);
+		    return afName, err
+        }
+    } else  {
+	    err = errors.New("Unsupported AFI SAFI")
+	    log.Info("Unsupported AFI SAFI ", afName);
+	    return afName, err
+    }
+
+	key := niName + "|" + afi + "|" + prefix
+	
+	log.Info("YangToDb_bgp_gbl_afi_safi_addr_key_xfmr AFI key: ", key)
+
+    return key, nil
 }
+
+var DbToYang_bgp_gbl_afi_safi_addr_key_xfmr KeyXfmrDbToYang = func(inParams XfmrParams) (map[string]interface{}, error) {
+    rmap := make(map[string]interface{})
+    entry_key := inParams.key
+    log.Info("DbToYang_bgp_gbl_afi_safi_addr_key_xfmr: ", entry_key)
+
+    mpathKey := strings.Split(entry_key, "|")
+
+    rmap["prefix"] = mpathKey[2]
+
+	log.Info("DbToYang_bgp_gbl_afi_safi_addr_key_xfmr: rmap:", rmap)
+    return rmap, nil
+}
+
+

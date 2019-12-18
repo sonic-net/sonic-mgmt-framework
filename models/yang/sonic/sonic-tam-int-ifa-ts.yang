@@ -1,0 +1,94 @@
+module sonic-tam-int-ifa-ts {
+    namespace "http://github.com/Azure/sonic-tam-int-ifa-ts";
+    prefix stam-ts;
+
+    import sonic-acl {
+        prefix sacl;
+    }
+
+    import ietf-yang-types {
+	    prefix yang;
+    }
+
+    import sonic-extension { 
+            prefix sonic-ext; 
+    }
+
+    organization
+        "SONiC";
+
+    contact
+        "SONiC";
+
+    description
+         "This module defines configuration and operational state
+          data for IFA TailStamping Feature."; 
+
+    revision 2019-11-14 {
+        description
+            "Initial revision.";
+    }
+
+    container sonic-tam-int-ifa-ts {
+
+        container TAM_INT_IFA_TS_FEATURE_TABLE {
+
+            list TAM_INT_IFA_TS_FEATURE_TABLE_LIST {
+                key "name";
+
+		leaf name {
+			type string {
+				pattern 'feature';
+			}
+		}
+
+                leaf enable {
+                    type boolean;
+                    default false;
+                }
+            }
+        }
+
+        container TAM_INT_IFA_TS_FLOW_TABLE {
+
+            list TAM_INT_IFA_TS_FLOW_TABLE_LIST {
+                key "name";
+
+                leaf name {
+			type string {
+				pattern '[a-zA-Z0-9]{1}([-a-zA-Z0-9_]{0,71})'{
+                                   error-message "Invalid INT IFA TS Flow name";
+                                   error-app-tag int-ifa-ts-invalid-flow-name;
+                                }
+			}
+                }
+
+                leaf acl-table-name {
+                    type string;
+                }
+
+                leaf acl-rule-name {
+                    type string;
+                }
+
+               container state {
+                        sonic-ext:db-name "COUNTERS_DB"; 
+			sonic-ext:key-delim ":";    
+
+                        config false;
+                        description "State data for TAM INT IFA FS FLOW";
+
+			leaf MATCHED_PACKETS {
+				type yang:counter64;
+				default 0;
+			}
+
+			leaf MATCHED_OCTETS {
+				type yang:counter64;
+				default 0;
+			}
+                }
+            }
+        }
+    }
+}

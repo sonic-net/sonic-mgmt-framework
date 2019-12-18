@@ -283,6 +283,9 @@ def swagger_it(child, defName, pathstr, payload, metadata, verb, operId=False, x
 
     if haveXParams:
         swaggerDict["paths"][verbPathStr][verb]["x-params"] = {"varMapping":copy.deepcopy(xParamsList)}
+    
+    if not child.i_config:
+        swaggerDict["paths"][verbPathStr][verb]["x-config"] = "false"
 
     opId = None
     if "operationId" not in swaggerDict["paths"][verbPathStr][verb]:
@@ -305,6 +308,7 @@ def swagger_it(child, defName, pathstr, payload, metadata, verb, operId=False, x
         opId = swaggerDict["paths"][verbPathStr][verb]["operationId"]
 
     verbPath = swaggerDict["paths"][verbPathStr][verb]
+    uriPath = swaggerDict["paths"][verbPathStr]
 
     if not firstEncounter:
         for meta in metadata:
@@ -347,6 +351,13 @@ def swagger_it(child, defName, pathstr, payload, metadata, verb, operId=False, x
     if verb == "get":
         verbPath["responses"]["200"]["schema"] = OrderedDict()
         verbPath["responses"]["200"]["schema"]["$ref"] = "#/definitions/" + defName
+
+        # Generate HEAD requests
+        uriPath["head"] = copy.deepcopy(verbPath)
+        uriPath["head"]["operationId"] = 'head_' + verbPath["operationId"][4:] #taking after get_
+        uriPath["head"]["description"] = uriPath["head"]["description"].replace(verbPath["operationId"],uriPath["head"]["operationId"])
+        del(uriPath["head"]["responses"]["200"]["schema"])
+        del(uriPath["head"]["produces"])
 
 def handle_rpc(child, actXpath, pathstr):
     global currentTag

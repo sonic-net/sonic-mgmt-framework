@@ -24,6 +24,7 @@ import (
     "reflect"
     "regexp"
     "translib/db"
+    "translib/tlerr"
     "github.com/openconfig/goyang/pkg/yang"
     "github.com/openconfig/gnmi/proto/gnmi"
     "github.com/openconfig/ygot/ygot"
@@ -727,7 +728,8 @@ func unmarshalJsonToDbData(schema *yang.Entry, fieldName string, value interface
              yang.Yuint8, yang.Yuint16, yang.Yuint32:
                 pv, err := yangFloatIntToGoType(ykind, value.(float64))
                 if err != nil {
-                        return "", fmt.Errorf("error parsing %v for schema %s: %v", value, schema.Name, err)
+			errStr := fmt.Sprintf("error parsing %v for schema %s: %v", value, schema.Name, err)
+			return "", tlerr.InternalError{Format: errStr}
                 }
                 data = fmt.Sprintf("%v", pv)
         default:

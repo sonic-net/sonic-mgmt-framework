@@ -1,4 +1,5 @@
 module sonic-device-metadata {
+	yang-version 1.1;
 	namespace "http://github.com/Azure/sonic-device-metadata";
 	prefix sdm;
 
@@ -40,6 +41,13 @@ module sonic-device-metadata {
 					type string;
 				}
 
+				leaf vrf {
+					type enumeration {
+						enum default;
+					}
+					default default;
+				}
+
 				leaf hwsku {
 					type string;
 				}
@@ -58,10 +66,7 @@ module sonic-device-metadata {
 
 				leaf bgp_asn {
 					type leafref {
-						path "/sbg:sonic-bgp-global/sbg:BGP_GLOBALS/sbg:BGP_GLOBALS_LIST/sbg:local_asn";
-					}
-					must "/sbg:sonic-bgp-global/sbg:BGP_GLOBALS/sbg:BGP_GLOBALS_LIST[sbg:vrf='default']/sbg:local_asn" {
-						error-message "BGP global configuraion missing";
+						path "/sbg:sonic-bgp-global/sbg:BGP_GLOBALS/sbg:BGP_GLOBALS_LIST[sbg:vrf_name=current()/../vrf]/sbg:local_asn";
 					}
 				}
 

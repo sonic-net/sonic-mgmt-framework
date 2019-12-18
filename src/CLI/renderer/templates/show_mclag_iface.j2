@@ -1,0 +1,15 @@
+{% set vars = {'if_name': ""} %}
+{% set mclag_iface_info = json_output %}
+
+{% if mclag_iface_info -%}
+{% for key in mclag_iface_info %}
+{{ ' ' }}
+{% if vars.update({'if_name':mclag_iface_info[key]["if_name"]}) %}{% endif %}
+{% if vars.update({'local_if_status':mclag_iface_info[key]["local_if_status"]}) %}{% endif %}
+{% if vars.update({'remote_if_status':mclag_iface_info[key]["remote_if_status"]}) %}{% endif %}
+{% if vars.update({'traffic_disable':mclag_iface_info[key]["traffic_disable"]}) %}{% endif %}
+
+{{'Local/Remote Status'.ljust(20)}} : {{vars.local_if_status}}{{'/'}}{{vars.remote_if_status}}
+{{'TrafficDisable'.ljust(20)}} : {{ vars.traffic_disable}}
+{% endfor %}
+{% endif %}

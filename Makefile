@@ -47,6 +47,7 @@ GO_DEPS_LIST = github.com/gorilla/mux \
                github.com/pkg/profile \
                gopkg.in/go-playground/validator.v9 \
                golang.org/x/crypto/ssh \
+               github.com/antchfx/xpath \
                github.com/antchfx/jsonquery \
                github.com/antchfx/xmlquery \
                github.com/facette/natsort \
@@ -66,7 +67,6 @@ all: build-deps $(go-deps) $(go-redis-patch) $(go-patch) translib rest-server cl
 
 build-deps:
 	mkdir -p $(BUILD_DIR)/gopkgs
-	mkdir -p $(BUILD_DIR)/cvl/schema
 
 $(BUILD_DIR)/gopkgs/.done: $(MAKEFILE_LIST)
 	$(GO) get -v $(GO_DEPS_LIST)
@@ -85,13 +85,11 @@ clitree:
 
 cvl: $(go-deps) $(go-patch) $(go-redis-patch)
 	$(MAKE) -C src/cvl
-	$(MAKE) -C src/cvl/schema
-	$(MAKE) -C src/cvl/testdata/schema
 
 cvl-test:
 	$(MAKE) -C src/cvl gotest
 
-rest-server: translib
+rest-server: build-deps translib
 	$(MAKE) -C src/rest
 
 rest-clean:
@@ -116,6 +114,7 @@ $(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/openconfig/ygot
 cp $(TOPDIR)/goyang-modified-files/goyang.patch .; \
 patch -p1 < goyang.patch; rm -f goyang.patch; \
 $(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/openconfig/goyang
+	
 #Apply CVL related patches
 	$(apply_cvl_dep_patches)
 	touch  $@
@@ -133,6 +132,7 @@ install:
 	$(INSTALL) -D $(TOPDIR)/config/transformer/models_list $(DESTDIR)/usr/models/yang/
 	$(INSTALL) -D $(TOPDIR)/models/yang/common/*.yang $(DESTDIR)/usr/models/yang/
 	$(INSTALL) -D $(TOPDIR)/models/yang/annotations/*.yang $(DESTDIR)/usr/models/yang/
+	$(INSTALL) -D $(TOPDIR)/build/yaml/api_ignore $(DESTDIR)/usr/models/yang/
 	cp -rf $(TOPDIR)/build/rest_server/dist/ui/ $(DESTDIR)/rest_ui/
 	cp -rf $(TOPDIR)/build/cli $(DESTDIR)/usr/sbin/
 	rsync -a --exclude="test" --exclude="docs" build/swagger_client_py $(DESTDIR)/usr/sbin/lib/
@@ -161,7 +161,6 @@ clean: rest-clean
 	$(MAKE) -C src/translib clean
 	$(MAKE) -C src/cvl clean
 	rm -rf debian/.debhelper
-	rm -rf $(BUILD_GOPATH)/src/github.com/openconfig/goyang/annotate.go
 	(cd build && find .  -maxdepth 1 -name "gopkgs" -prune -o -not -name '.' -exec rm -rf {} +) || true
 
 cleanall:
@@ -171,8 +170,12 @@ cleanall:
 #Function to apply CVL related patches
 define apply_cvl_dep_patches
 
+	cd $(BUILD_GOPATH)/src/github.com/antchfx/xpath; git reset --hard HEAD; \
+	git checkout d9ad276609987dd73ce5cd7d6265fe82189b10b6; git apply $(TOPDIR)/patches/xpath.patch
+
 	cd $(BUILD_GOPATH)/src/github.com/antchfx/jsonquery; git reset --hard HEAD; \
 	git checkout 3b69d31134d889b501e166a035a4d5ecb8c6c367; git apply $(TOPDIR)/patches/jsonquery.patch
+
 	cd $(BUILD_GOPATH)/src/github.com/antchfx/xmlquery; git reset --hard HEAD; \
 	git checkout fe009d4cc63c3011f05e1dfa75a27899acccdf11; git apply $(TOPDIR)/patches/xmlquery.patch
 
