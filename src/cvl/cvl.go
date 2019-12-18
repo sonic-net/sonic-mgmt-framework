@@ -412,7 +412,11 @@ func getYangListNamesInExpr(expr string) []string {
 
 	//Check with all table names
 	for tblName, _ := range modelInfo.tableInfo {
-		if (strings.Contains(expr, tblName + "_LIST") == true) {
+
+		//Match 1 - Prefix is used in path
+		//Match 2 - Prefix is not used in path, it is in same YANG model
+		if (strings.Contains(expr, ":" + tblName + "_LIST") == true) ||
+		(strings.Contains(expr, "/" + tblName + "_LIST") == true) {
 			tbl = append(tbl, tblName)
 		}
 	}

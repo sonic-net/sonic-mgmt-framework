@@ -16,10 +16,11 @@ module sonic-spanning-tree {
     }
 
     organization
-        "BRCM";
+        "SONiC";
 
     contact
-        "BRCM";
+        "SONiC";
+
 
     description
         "SONIC Spanning-tree";
@@ -157,8 +158,8 @@ module sonic-spanning-tree {
             }
         }
 
-        container STP_VLAN_INTF {
-            list STP_VLAN_INTF_LIST {
+        container STP_VLAN_PORT {
+            list STP_VLAN_PORT_LIST {
                 key "vlan-name ifname";
 
                 leaf vlan-name {
@@ -169,7 +170,7 @@ module sonic-spanning-tree {
 
                 leaf ifname {
                     type leafref {
-                        path "../../../STP_INTF/STP_INTF_LIST/ifname";
+                        path "../../../STP_PORT/STP_PORT_LIST/ifname";
                     }
                 }
 
@@ -177,8 +178,8 @@ module sonic-spanning-tree {
             }
         }
 
-        container STP_INTF {
-            list STP_INTF_LIST {
+        container STP_PORT {
+            list STP_PORT_LIST {
                 key "ifname";
 
                 leaf ifname {
