@@ -1086,17 +1086,10 @@ func getDBOptions(dbNo db.DBNum, isWriteDisabled bool) db.Options {
 	var opt db.Options
 
 	switch dbNo {
-<<<<<<< HEAD
-	case db.ApplDB, db.CountersDB, db.AsicDB, db.LogLevelDB, db.FlexCounterDB:
-		opt = getDBOptionsWithSeparator(dbNo, "", ":", ":", isWriteDisabled)
-		break
-	case db.ConfigDB, db.StateDB, db.ErrorDB:
-=======
 	case db.ApplDB, db.CountersDB, db.AsicDB:
 		opt = getDBOptionsWithSeparator(dbNo, "", ":", ":", isWriteDisabled)
 		break
 	case db.FlexCounterDB, db.LogLevelDB, db.ConfigDB, db.StateDB, db.ErrorDB:
->>>>>>> f07025adf624a69bc682597694d9a4d823827b44
 		opt = getDBOptionsWithSeparator(dbNo, "", "|", "|", isWriteDisabled)
 		break
 	}
