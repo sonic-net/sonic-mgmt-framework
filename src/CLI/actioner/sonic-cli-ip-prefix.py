@@ -108,15 +108,29 @@ def invoke(func, args):
         keypath, body = generate_ipprefix_uri(args, 1)
         return aa.delete(keypath)
     else:
-        return body
+    	return aa.cli_not_implemented(func)
+
 
 def run(func, args):
-    try:
-        api_response = invoke(func,args)
-        return
-    except:
-            # system/network error
-            print "Error: Transaction Failure"
+  try:
+    response = invoke(func,args)
+
+    if response.ok():
+        if response.content is not None:
+            # Get Command Output
+            api_response = response.content
+            if api_response is None:
+                print("Failed")
+                return 
+	    #print api_response
+	    show_cli_output(args[0], api_response)
+    else:
+        print response.error_message()
+	return
+  except Exception as e:
+    print "%Error: " + str(e)
+
+  return
 
 
 

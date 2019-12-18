@@ -20,6 +20,37 @@ limitations under the License.
     xsi:schemaLocation="http://www.dellemc.com/sonic/XMLSchema
                         http://www.dellemc.com/sonic/XMLSchema/clish.xsd">
 
+   <VIEW name = "enable-view">
+    <COMMAND name="show bgp" help="show bgp community, ext community, as list information"> </COMMAND>
+    <COMMAND name="show bgp community-list" help="Community list">
+        <PARAM name="list-name" help="Community list name" ptype="STRING" optional="true"> </PARAM>
+      <ACTION> if test "${list-name}" != ""; then&#xA;
+        python $SONIC_CLI_ROOT/sonic-cli-bgp-community.py bgp_community_show_specific show_bgp_com.j2 ${list-name}&#xA;
+        else&#xA;
+        python $SONIC_CLI_ROOT/sonic-cli-bgp-community.py bgp_community_show_all show_bgp_com.j2&#xA;
+        fi&#xA;
+      </ACTION>
+    </COMMAND>
+    <COMMAND name="show bgp ext-community-list" help="Extended community list">
+        <PARAM name="list-name" help="Extended community list name" ptype="STRING" optional="true"> </PARAM>
+      <ACTION> if test "${list-name}" != ""; then&#xA;
+        python $SONIC_CLI_ROOT/sonic-cli-bgp-community.py bgp_ext_community_show_specific show_bgp_extcom.j2 ${list-name}&#xA;
+        else&#xA;
+        python $SONIC_CLI_ROOT/sonic-cli-bgp-community.py bgp_ext_community_show_all show_bgp_extcom.j2&#xA;
+        fi&#xA;
+      </ACTION>
+    </COMMAND>
+    <COMMAND name="show bgp as-path-access-list" help="AS path acces list">
+        <PARAM name="list-name" help="AS path list name" ptype="STRING" optional="true"> </PARAM>
+      <ACTION> if test "${list-name}" != ""; then&#xA;
+        python $SONIC_CLI_ROOT/sonic-cli-bgp-community.py bgp_aspath_show_specific show_bgp_aspath.j2 ${list-name}&#xA;
+        else&#xA;
+        python $SONIC_CLI_ROOT/sonic-cli-bgp-community.py bgp_aspath_show_all show_bgp_aspath.j2&#xA;
+        fi&#xA;
+      </ACTION>
+    </COMMAND>
+   </VIEW>
+
    <VIEW
        name="configure-view"
        >

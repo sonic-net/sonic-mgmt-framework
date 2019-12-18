@@ -25,9 +25,15 @@ limitations under the License.
     <!--=======================================================-->
 
 <VIEW name="enable-view">
-  <COMMAND name="show route-map" help="Display route map information">
-    <ACTION builtin="clish_nop"/>
-  </COMMAND>
+    <COMMAND name="show route-map" help="Display route map information">
+        <PARAM name="rt-map-name" help="route map name" ptype="STRING_63" optional="true"> </PARAM>
+      <ACTION> if test "${rt-map-name}" != ""; then&#xA;
+        python $SONIC_CLI_ROOT/sonic-cli-routemap.py get_openconfig_routing_policy_routing_policy_policy_definitions_policy_definition show_routemap.j2 ${rt-map-name}&#xA;
+        else&#xA;
+        python $SONIC_CLI_ROOT/sonic-cli-routemap.py get_openconfig_routing_policy_routing_policy_policy_definitions show_routemap.j2&#xA;
+        fi&#xA;
+      </ACTION>
+    </COMMAND>
 </VIEW>
 
 <VIEW name="configure-view">

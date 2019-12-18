@@ -991,6 +991,8 @@ var YangToDb_bgp_nbr_community_type_fld_xfmr FieldXfmrYangToDb = func(inParams X
         res_map["send_community"] = "extended"
     }  else if (community_type == ocbinds.OpenconfigBgpExt_CommunityType_BOTH) {
         res_map["send_community"] = "both"
+    }  else if (community_type == ocbinds.OpenconfigBgpExt_CommunityType_NONE) {
+        res_map["send_community"] = "none"
     } else {
         err = errors.New("send_community  Missing");
         return res_map, err
@@ -1023,6 +1025,8 @@ var DbToYang_bgp_nbr_community_type_fld_xfmr FieldXfmrDbtoYang = func(inParams X
             result["send-community"] = "EXTENDED"
         } else if (community_type == "both") {
             result["send-community"] = "BOTH"
+        } else if (community_type == "none") {
+            result["send-community"] = "NONE"
         }
     } else {
         log.Info("send_community not found in DB")
