@@ -15,25 +15,7 @@
 {{'%-20s'|format("  Mode")}} : Normal
 {%endif%}
 
-{# Mock CLI code to be removed later #}
-{{'%-20s'|format("  Status")}} : {{'Bidirectional'}}
-{{'%-20s'|format("  Local Device Id")}} : {{'3c2c.992d.8201'}}
-{{'%-20s'|format("  Local Port Id")}} : {{port_config['ifname']}}
-{{'%-20s'|format("  Local Device Name")}} : {{'Sonic'}}
-{{'%-20s'|format("  Message Time")}} : {{json_output['msg_time']}} seconds
-{{'%-20s'|format("  Timeout Interval")}} : {{'3'}} seconds
 
-{{'%-20s'|format("     Neighbor Entry")}} {{'1'}}
-{{'     --------------------------------------------------'}}
-{{'%-30s'|format("     Neighbor Device Id")}} : {{'3c2c.992d.8235'}}
-{{'%-30s'|format("     Neighbor Port Id")}} : {{'Ethernet0'}}
-{{'%-30s'|format("     Neighbor Device Name")}} : {{'Sonic'}}
-{{'%-30s'|format("     Neighbor Message Time")}} : {{'1'}} seconds
-{{'%-30s'|format("     Neighbor Timeout Interval")}} : {{'3'}} seconds
-
-
-{# Actual code to be enabled once App DB tables are ready #}
-{#
 {{'%-20s'|format("  Status")}} : {{json_output['status']}}
 {% set global_oper = json_output['global_oper'] %}
 {% if global_oper and global_oper.__len__() > 1 %}
@@ -46,15 +28,18 @@
 
 {% set intf_info = json_output['neighbor'] %}
 {% if intf_info and intf_info.__len__() > 0 %}
-{{'%-20s'|format("     Neighbor Entry")}} {{intf_info['index']}}
+{% for i in range(intf_info.__len__()) %}
+{% set neigh_info = intf_info[i] %}
+{{' '}}
+{{'%-20s'|format("     Neighbor Entry")}} {{neigh_info['index']}}
 {{'     --------------------------------------------------'}}
-{{'%-30s'|format("     Neighbor Device Id")}} : {{intf_info['device_id']}}
-{{'%-30s'|format("     Neighbor Port Id")}} : {{intf_info['port_id']}}
-{{'%-30s'|format("     Neighbor Device Name")}} : {{intf_info['device_name']}}
-{{'%-30s'|format("     Neighbor Message Time")}} : {{intf_info['msg_time']}} seconds
-{{'%-30s'|format("     Neighbor Timeout Interval")}} : {{intf_info['timeout_interval']}} seconds
+{{'%-30s'|format("     Neighbor Device Id")}} : {{neigh_info['device_id']}}
+{{'%-30s'|format("     Neighbor Port Id")}} : {{neigh_info['port_id']}}
+{{'%-30s'|format("     Neighbor Device Name")}} : {{neigh_info['device_name']}}
+{{'%-30s'|format("     Neighbor Message Time")}} : {{neigh_info['msg_time']}} seconds
+{{'%-30s'|format("     Neighbor Timeout Interval")}} : {{neigh_info['timeout_interval']}} seconds
+{% endfor %}
 {%endif%}
-#}
 
 {%endif%}
 {%endif%}
