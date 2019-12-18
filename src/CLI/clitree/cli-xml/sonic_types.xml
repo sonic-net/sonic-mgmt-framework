@@ -944,5 +944,12 @@ limitations under the License.
         help="VNI"
         />
     <!--=======================================================-->
+    <PTYPE
+        name="MIRROR_DIRECTION"
+        method="select"
+        pattern="rx(rx) tx(tx) both(both)"
+        help="Port mirror session direction"
+        />
+    <!--=======================================================-->
 
 </CLISH_MODULE>

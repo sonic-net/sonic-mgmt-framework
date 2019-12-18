@@ -1,0 +1,18 @@
+module sonic-mirror-session-annot {
+
+    yang-version "1.1";
+
+    namespace "http://openconfig.net/yang/annotation/mirror-session-annot";
+    prefix "sonic-mirror-session-annot";
+
+    import sonic-extensions { prefix sonic-ext; }
+    import sonic-mirror-session { prefix mirror; }
+
+
+    deviation /mirror:sonic-mirror-session/mirror:MIRROR_SESSION_TABLE {
+        deviate add {
+            sonic-ext:table-name "MIRROR_SESSION_TABLE";
+            sonic-ext:db-name "STATE_DB";
+        }
+    }
+}

@@ -1,0 +1,36 @@
+{% set vars = {'print_banner': ""} %}
+{% if json_output -%}
+{% set session_list = json_output['session_list'] %}
+{% set session_status = json_output['session_status'] %}
+{% for i in range(session_list.__len__()) %}
+{% set m_info = session_list[i] %}
+{% set m_state = session_status[i] %}
+{% if 'dst_port' not in m_info %}
+{% if ( vars.print_banner == "" ) %}
+{% if vars.update({'print_banner':"1"}) %}{% endif %}
+ERSPAN Sessions
+---------------------------------------------------------------------------------------------------------------
+{{'%-10s'|format("Name")}}{{'%-10s'|format("Status")}}{{'%-16s'|format("SRC-IP")}}{{'%-16s'|format("DST-IP")}}{{'%-6s'|format("GRE")}}{{'%-6s'|format("DSCP")}}{{'%-6s'|format("TTL")}}{{'%-8s'|format("Queue")}}{{'%-10s'|format("Policer")}}{{'%-16s'|format("SRC-Port")}}{{'%-10s'|format("Direction")}}
+---------------------------------------------------------------------------------------------------------------
+{%endif%}
+{{'%-10s'|format(m_info['name'])}}{{'%-10s'|format(m_state['status'])}}{{'%-16s'|format(m_info['src_ip'])}}{{'%-16s'|format(m_info['dst_ip'])}}{{'%-6s'|format(m_info['gre_type'])}}{{'%-6s'|format(m_info['dscp'])}}{{'%-6s'|format(m_info['ttl'])}}{{'%-8s'|format(m_info['queue'])}}{{'%-10s'|format(m_info['policer'])}}{{'%-16s'|format(m_info['src_port'])}}{{'%-10s'|format(m_info['direction'])}}
+{%endif%}
+{% endfor %}
+
+
+{% if vars.update({'print_banner':""}) %}{% endif %}
+{% for i in range(session_list.__len__()) %}
+{% set m_info = session_list[i] %}
+{% set m_state = session_status[i] %}
+{% if 'dst_port' in m_info %}
+{% if ( vars.print_banner == "" ) %}
+{% if vars.update({'print_banner':"1"}) %}{% endif %}
+SPAN Sessions
+---------------------------------------------------------------
+{{'%-10s'|format("Name")}}{{'%-10s'|format("Status")}}{{'%-16s'|format("DST-Port")}}{{'%-16s'|format("SRC-Port")}}{{'%-10s'|format("Direction")}}
+---------------------------------------------------------------
+{%endif%}
+{{'%-10s'|format(m_info['name'])}}{{'%-10s'|format(m_state['status'])}}{{'%-16s'|format(m_info['dst_port'])}}{{'%-16s'|format(m_info['src_port'])}}{{'%-10s'|format(m_info['direction'])}}
+{%endif%}
+{% endfor %}
+{%endif%}
