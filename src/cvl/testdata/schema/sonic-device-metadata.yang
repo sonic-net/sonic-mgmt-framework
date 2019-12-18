@@ -66,7 +66,7 @@ module sonic-device-metadata {
 
 				leaf bgp_asn {
 					type leafref {
-						path "/sbg:sonic-bgp-global/sbg:BGP_GLOBALS/sbg:BGP_GLOBALS_LIST[sbg:vrf=current()/../vrf]/sbg:local_asn";
+						path "/sbg:sonic-bgp-global/sbg:BGP_GLOBALS/sbg:BGP_GLOBALS_LIST[sbg:vrf_name=current()/../vrf]/sbg:local_asn";
 					}
 				}
 

@@ -991,6 +991,8 @@ var YangToDb_bgp_nbr_community_type_fld_xfmr FieldXfmrYangToDb = func(inParams X
         res_map["send_community"] = "extended"
     }  else if (community_type == ocbinds.OpenconfigBgpExt_CommunityType_BOTH) {
         res_map["send_community"] = "both"
+    }  else if (community_type == ocbinds.OpenconfigBgpExt_CommunityType_NONE) {
+        res_map["send_community"] = "none"
     } else {
         err = errors.New("send_community  Missing");
         return res_map, err
@@ -1023,6 +1025,8 @@ var DbToYang_bgp_nbr_community_type_fld_xfmr FieldXfmrDbtoYang = func(inParams X
             result["send-community"] = "EXTENDED"
         } else if (community_type == "both") {
             result["send-community"] = "BOTH"
+        } else if (community_type == "none") {
+            result["send-community"] = "NONE"
         }
     } else {
         log.Info("send_community not found in DB")
@@ -1042,9 +1046,9 @@ var YangToDb_bgp_nbr_plist_direction_fld_xfmr FieldXfmrYangToDb = func(inParams 
     log.Info("YangToDb_bgp_nbr_plist_direction_fld_xfmr: ", inParams.ygRoot, " Xpath: ", inParams.uri, " direction: ", direction)
 
     if (direction == ocbinds.OpenconfigBgpExt_BgpDirection_INBOUND) {
-        res_map["prefix_list_direction"] = "inbound"
+        res_map["prefix_list_direction"] = "in"
     }  else if (direction == ocbinds.OpenconfigBgpExt_BgpDirection_OUTBOUND) {
-        res_map["prefix_list_direction"] = "outbound"
+        res_map["prefix_list_direction"] = "out"
     } else {
         err = errors.New("direction Missing");
         return res_map, err
@@ -1071,9 +1075,9 @@ var DbToYang_bgp_nbr_plist_direction_fld_xfmr FieldXfmrDbtoYang = func(inParams 
     direction, ok := pGrpKey.Field["prefix_list_direction"]
 
     if ok {
-        if (direction == "inbound") {
+        if (direction == "in") {
             result["direction"] = "INBOUND"
-        } else if (direction == "outbound") {
+        } else if (direction == "out") {
             result["direction"] = "OUTBOUND"
         }
     } else {
@@ -1094,9 +1098,9 @@ var YangToDb_bgp_nbr_flist_direction_fld_xfmr FieldXfmrYangToDb = func(inParams 
     log.Info("YangToDb_bgp_nbr_flist_direction_fld_xfmr: ", inParams.ygRoot, " Xpath: ", inParams.uri, " direction: ", direction)
 
     if (direction == ocbinds.OpenconfigBgpExt_BgpDirection_INBOUND) {
-        res_map["filter_list_direction"] = "inbound"
+        res_map["filter_list_direction"] = "in"
     }  else if (direction == ocbinds.OpenconfigBgpExt_BgpDirection_OUTBOUND) {
-        res_map["filter_list_direction"] = "outbound"
+        res_map["filter_list_direction"] = "out"
     } else {
         err = errors.New("direction Missing");
         return res_map, err
@@ -1123,9 +1127,9 @@ var DbToYang_bgp_nbr_flist_direction_fld_xfmr FieldXfmrDbtoYang = func(inParams 
     direction, ok := pGrpKey.Field["filter_list_direction"]
 
     if ok {
-        if (direction == "inbound") {
+        if (direction == "in") {
             result["direction"] = "INBOUND"
-        } else if (direction == "outbound") {
+        } else if (direction == "out") {
             result["direction"] = "OUTBOUND"
         }
     } else {

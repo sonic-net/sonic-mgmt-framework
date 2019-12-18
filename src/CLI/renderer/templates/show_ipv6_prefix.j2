@@ -1,0 +1,36 @@
+{% if json_output -%}
+{% if json_output is iterable %}
+{% set prefix_list = {} %}
+{% if "openconfig-routing-policy:prefix-sets" is in json_output %}
+{% set prefix_list = json_output['openconfig-routing-policy:prefix-sets']['prefix-set'] %}
+{% endif %}
+{% if "openconfig-routing-policy:prefix-set" is in json_output %}
+{% set prefix_list = json_output['openconfig-routing-policy:prefix-set'] %}
+{% set prefixes = json_output['openconfig-routing-policy:prefix-set'] %}
+{% endif %}
+{% for list in prefix_list %}
+{% if list['config']['mode'] == "IPV6" %}
+{% set vars = {'list_name': ""} %}
+{% set mems = "" %}
+{% if vars.update({'list_name':list ['name']}) %} {% endif %}
+IPv6 prefix list {{'%s'| format(vars.list_name)}}:
+   {% if "prefixes" in list %}
+   {% set mems = list['prefixes']['prefix'] %}
+   {%endif %}
+   {% for mem in mems %}
+     {% if mem['masklength-range']  != "exact" %}
+      {% set mrange = mem['masklength-range'].split("..") %}
+      {% set rangestr = "ge " + mrange[0] + " le " + mrange[1] %}
+     {% else %}
+      {% set rangestr = "" %}
+     {% endif %}
+     {% if mem['config']['openconfig-routing-policy-ext:action'] == "PERMIT" %}
+     permit {{'%s'| format(mem['ip-prefix'])}} {{'%s'| format(rangestr)}}
+     {% elif mem['config']['openconfig-routing-policy-ext:action'] == "DENY" %}
+     deny {{'%s'| format(mem['ip-prefix'])}} {{'%s'| format(rangestr)}}
+     {% endif %}
+   {% endfor %}
+{% endif %}
+{% endfor %}
+{% endif %}
+{% endif %}

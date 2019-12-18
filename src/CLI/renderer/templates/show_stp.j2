@@ -46,8 +46,11 @@ Spanning-tree Mode: PVST
 {% set vlan_list = json_output['openconfig-spanning-tree-ext:vlan'] %}
 {%endif%}
 {% for vlan in vlan_list %}
+    {% set stp_vlan_status = false %}
     {% if vars.update({'vlan_name':vlan['vlan-id']}) %}{% endif %}
     {% if vars.update({'stp_instance':vlan['state']['stp-instance']}) %}{% endif %}
+    {% set stp_vlan_status = vlan['config']['spanning-tree-enable'] %}
+{% if stp_vlan_status == true  %}
 {{' '}}
 VLAN {{'%s'| format(vars.vlan_name)}} - STP instance {{'%s'| format(vars.stp_instance)}}
 {{ '------------------------------------------------------------------------------------------------------------ ' }}
@@ -81,7 +84,7 @@ STP Port Parameters:
 {{'%-16s'|format("Port")}}{{'%-5s'|format("Prio")}}{{'%-10s'|format("Path")}}{{'%-5s'|format("Port")}}{{'%-7s'|format("Uplink")}}{{'%-7s'|format("BPDU")}}{{'%-11s'|format("State")}}{{'%-11s'|format("Designated")}}{{'%-17s'|format("Designated")}}{{'%-17s'|format("Designated")}}
 {{'%-16s'|format("Num")}}{{'%-5s'|format("rity")}}{{'%-10s'|format("Cost")}}{{'%-5s'|format("Fast")}}{{'%-7s'|format("Fast")}}{{'%-7s'|format("Filter")}}{{'%-11s'|format("")}}{{'%-11s'|format("Cost")}}{{'%-17s'|format("Root")}}{{'%-17s'|format("bridge")}}
 {% set interface_list  = {} %}
-{% if "interfaces" in vlan and "interface" in vlan['interfaces'] %}    
+{% if "interfaces" in vlan and "interface" in vlan['interfaces'] %}
     {% set interface_list = vlan['interfaces']['interface'] %}
 {%endif%}
     {% for stp_intf in stp_intfs %}
@@ -117,6 +120,7 @@ STP Port Parameters:
         {%endif %}
         {%endfor %}
     {% endfor %}
+    {%endif %}
     {% endfor %}
 {% endif %}
 {% if stp_protocol == "openconfig-spanning-tree-types:RAPID_PVST" %}
@@ -128,9 +132,12 @@ STP Port Parameters:
 {%endif%}
 Spanning-tree Mode: RPVST
 {% for vlan in vlan_list %}
+   {% set stp_vlan_status = false %}
    {% set vars = {'br_txHCnt':""} %}
    {% if vars.update({'vlan_name':vlan['vlan-id']}) %}{% endif %}
    {% if vars.update({'stp_instance':vlan['state']['openconfig-spanning-tree-ext:stp-instance']}) %}{% endif %}
+   {% set stp_vlan_status = vlan['config']['openconfig-spanning-tree-ext:spanning-tree-enable'] %}
+{% if stp_vlan_status == true  %}
 {{ " " }}
 VLAN {{'%s'| format(vars.vlan_name)}} - RSTP instance {{'%s'| format(vars.stp_instance)}}
 {{ '------------------------------------------------------------------------------------------------------------ ' }}
@@ -164,7 +171,7 @@ RSTP (IEEE 802.1w) Port Parameters:
 {{'%-16s'|format("Num")}}{{'%-5s'|format("rity")}}{{'%-10s'|format("Cost")}}{{'%-4s'|format("Mac")}}{{'%-5s'|format("Port")}}{{'%-7s'|format("Filter")}}{{'%-10s'|format("")}}{{'%-11s'|format("")}}{{'%-11s'|format("ted cost")}}{{'%-17s'|format("bridge")}}
 
 {% set interface_list  = {} %}
-{% if "interfaces" in vlan and "interface" in vlan['interfaces'] %}    
+{% if "interfaces" in vlan and "interface" in vlan['interfaces'] %}
     {% set interface_list = vlan['interfaces']['interface'] %}
 {%endif%}
     {% for stp_intf in stp_intfs %}
@@ -196,10 +203,11 @@ RSTP (IEEE 802.1w) Port Parameters:
                {%else %}
                      {% if vars.update({'intf_edge': "N"}) %}{% endif %}
                {%endif %}
-{{'%-16s'|format(vars.intf_name)}}{{'%-5s'|format(vars.intf_pri)}}{{'%-10s'|format(vars.intf_path_cost)}}{{'%-5s'|format(vars.intf_p2pmac)}}{{'%-7s'|format(vars.intf_edge)}}{{'%-7s'|format(vars.intf_bpdu_filter)}}{{'%-10s'|format(vars.intf_role)}}{{'%-11s'|format(vars.intf_state)}}{{'%-11s'|format(vars.intf_desig_cost)}}{{'%-17s'|format(vars.intf_desig_bridge)}}
+{{'%-16s'|format(vars.intf_name)}}{{'%-5s'|format(vars.intf_pri)}}{{'%-10s'|format(vars.intf_path_cost)}}{{'%-4s'|format(vars.intf_p2pmac)}}{{'%-5s'|format(vars.intf_edge)}}{{'%-7s'|format(vars.intf_bpdu_filter)}}{{'%-10s'|format(vars.intf_role)}}{{'%-11s'|format(vars.intf_state)}}{{'%-11s'|format(vars.intf_desig_cost)}}{{'%-17s'|format(vars.intf_desig_bridge)}}
         {%endif %}
         {%endfor %}
     {% endfor %}
+{% endif %}
 {% endfor %}
 {% endif %}
 {% endif %}

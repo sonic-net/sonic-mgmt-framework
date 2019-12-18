@@ -373,6 +373,10 @@ func (c *CVL) detachNode(node *xmlquery.Node) CVLRetCode {
 		if (node.NextSibling != nil) {
 			//if remaining sibling
 			node.NextSibling.PrevSibling = node.PrevSibling
+		} else {
+			//this is last child getting detached,
+			//so set lastChild as node's prevSibling
+			parent.LastChild = node.PrevSibling
 		}
 	}
 
@@ -427,15 +431,15 @@ func (c *CVL) mergeYangData(dest, src *xmlquery.Node) CVLRetCode {
 
 	srcNode := src
 
-	destLeafListDeleted := false
+	destLeafListDeleted := make(map[string]bool)
 	for srcNode != nil {
 		//Find all source nodes and attach to the matching destination node
 		ret := CVL_FAILURE
-		TRACE_LOG((TRACE_SYNTAX | TRACE_SEMANTIC), "MergeData : src loop\n")
+		//TRACE_LOG((TRACE_SYNTAX | TRACE_SEMANTIC), "MergeData : src loop\n")
 destLoop:
 		destNode := dest
 		for ; destNode != nil; destNode = destNode.NextSibling {
-			TRACE_LOG((TRACE_SYNTAX | TRACE_SEMANTIC), "MergeData : dest loop\n")
+			//TRACE_LOG((TRACE_SYNTAX | TRACE_SEMANTIC), "MergeData : dest loop\n")
 			if (destNode.Data != srcNode.Data) {
 				//Can proceed to subtree only if current node name matches
 				continue
@@ -453,10 +457,12 @@ destLoop:
 			(destNode.Attr[0].Name.Local == "leaf-list") &&
 			(srcNode.Attr[0].Name.Local == "leaf-list") { // attribute has type
 
-				if (destLeafListDeleted == false) {
+				delFlag, exists := destLeafListDeleted[srcNode.Data]
+
+				if (exists == false) || (delFlag == false) {
 					//Replace all leaf-list nodes from destination first
 					c.deleteDestLeafList(destNode)
-					destLeafListDeleted = true
+					destLeafListDeleted[srcNode.Data] = true
 					//Note that 'dest' still points to list keys 
 					//even though all leaf-list might have been deleted
 					//as we never delete key while merging
@@ -487,7 +493,7 @@ destLoop:
 					(srcNode.Attr[0].Name.Local == "leaf-list") {
 						//set the flag so that we don't delete leaf-list
 						//from destNode further
-						destLeafListDeleted = true
+						destLeafListDeleted[srcNode.Data] = true
 					}
 					c.appendSubtree(dest.Parent, srcNode)
 				}
@@ -542,7 +548,7 @@ func (c *CVL) moveToYangList(tableName string, redisKey string) *xmlquery.Node {
 	}
 
 	if (nodeTbl == nil) {
-		TRACE_LOG(TRACE_SEMANTIC, "Unable to find YANG data for table %s, key %s",
+		TRACE_LOG(TRACE_SEMANTIC, "YANG data for table %s, key %s is not present in YANG tree",
 		tableName, redisKey)
 		return nil
 	}
@@ -886,6 +892,8 @@ func (c *CVL) validateMustExp(tableName, key string, op CVLOperation) (r CVLErro
 	xpath.SetDepDataClbk(c, func(ctxt interface{}, redisKeys []string,
 	redisKeyFilter, keyNames, pred, fields, count string) string {
 		c := ctxt.(*CVL)
+
+		TRACE_LOG(TRACE_SEMANTIC, "validateMustExp(): calling addDepYangData()")
 		return c.addDepYangData(redisKeys, redisKeyFilter, keyNames, pred, fields, "")
 	})
 
@@ -906,7 +914,7 @@ func (c *CVL) validateMustExp(tableName, key string, op CVLOperation) (r CVLErro
 			count = float64(redisEntries.(int64))
 		}
 
-		TRACE_LOG(TRACE_SEMANTIC, "depDataCntClbk() with redisKeyFilter=%s, " +
+		TRACE_LOG(TRACE_SEMANTIC, "validateMustExp(): depDataCntClbk() with redisKeyFilter=%s, " +
 		"keyNames= %s, predicate=%s, fields=%s, returned = %v",
 		redisKeyFilter, keyNames, pred, field, count)
 
@@ -993,6 +1001,7 @@ func (c *CVL) validateWhenExp(tableName, key string, op CVLOperation) (r CVLErro
 	xpath.SetDepDataClbk(c, func(ctxt interface{}, redisKeys []string,
 	redisKeyFilter, keyNames, pred, fields, count string) string {
 		c := ctxt.(*CVL)
+		TRACE_LOG(TRACE_SEMANTIC, "validateWhenExp(): calling addDepYangData()")
 		return c.addDepYangData(redisKeys, redisKeyFilter, keyNames, pred, fields, "")
 	})
 
@@ -1096,6 +1105,7 @@ func (c *CVL) validateLeafRef(tableName, key string, op CVLOperation) (r CVLRetC
 	xpath.SetDepDataClbk(c, func(ctxt interface{}, redisKeys []string,
 	redisKeyFilter, keyNames, pred, fields, count string) string {
 		c := ctxt.(*CVL)
+		TRACE_LOG(TRACE_SEMANTIC, "validateLeafRef(): calling addDepYangData()")
 		return c.addDepYangData(redisKeys, redisKeyFilter, keyNames, pred, fields, "")
 	})
 

@@ -28,7 +28,6 @@ import (
     log "github.com/golang/glog"
 )
 
-
 func init () {
     XlateFuncBind("YangToDb_bgp_evpn_vni_key_xfmr", YangToDb_bgp_evpn_vni_key_xfmr)
     XlateFuncBind("DbToYang_bgp_evpn_vni_key_xfmr", DbToYang_bgp_evpn_vni_key_xfmr)
@@ -410,12 +409,13 @@ var DbToYang_bgp_advertise_fld_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams
     var err error
     result := make(map[string]interface{})
 
+    /*
     entry_key := inParams.key
     afiSafiKey := strings.Split(entry_key, "|")
     afiSafi:= afiSafiKey[2]
 
     result["advertise-list"] = afiSafi
-
+*/
     return result, err
 }
 

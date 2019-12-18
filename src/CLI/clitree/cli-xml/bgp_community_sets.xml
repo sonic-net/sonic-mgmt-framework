@@ -20,6 +20,37 @@ limitations under the License.
     xsi:schemaLocation="http://www.dellemc.com/sonic/XMLSchema
                         http://www.dellemc.com/sonic/XMLSchema/clish.xsd">
 
+   <VIEW name = "enable-view">
+    <COMMAND name="show bgp" help="show bgp community, ext community, as list information"> </COMMAND>
+    <COMMAND name="show bgp community-list" help="Community list">
+        <PARAM name="list-name" help="Community list name" ptype="STRING" optional="true"> </PARAM>
+      <ACTION> if test "${list-name}" != ""; then&#xA;
+        python $SONIC_CLI_ROOT/sonic-cli-bgp-community.py bgp_community_show_specific show_bgp_com.j2 ${list-name}&#xA;
+        else&#xA;
+        python $SONIC_CLI_ROOT/sonic-cli-bgp-community.py bgp_community_show_all show_bgp_com.j2&#xA;
+        fi&#xA;
+      </ACTION>
+    </COMMAND>
+    <COMMAND name="show bgp ext-community-list" help="Extended community list">
+        <PARAM name="list-name" help="Extended community list name" ptype="STRING" optional="true"> </PARAM>
+      <ACTION> if test "${list-name}" != ""; then&#xA;
+        python $SONIC_CLI_ROOT/sonic-cli-bgp-community.py bgp_ext_community_show_specific show_bgp_extcom.j2 ${list-name}&#xA;
+        else&#xA;
+        python $SONIC_CLI_ROOT/sonic-cli-bgp-community.py bgp_ext_community_show_all show_bgp_extcom.j2&#xA;
+        fi&#xA;
+      </ACTION>
+    </COMMAND>
+    <COMMAND name="show bgp as-path-access-list" help="AS path acces list">
+        <PARAM name="list-name" help="AS path list name" ptype="STRING" optional="true"> </PARAM>
+      <ACTION> if test "${list-name}" != ""; then&#xA;
+        python $SONIC_CLI_ROOT/sonic-cli-bgp-community.py bgp_aspath_show_specific show_bgp_aspath.j2 ${list-name}&#xA;
+        else&#xA;
+        python $SONIC_CLI_ROOT/sonic-cli-bgp-community.py bgp_aspath_show_all show_bgp_aspath.j2&#xA;
+        fi&#xA;
+      </ACTION>
+    </COMMAND>
+   </VIEW>
+
    <VIEW
        name="configure-view"
        >
@@ -53,64 +84,315 @@ limitations under the License.
                     ptype="STRING"
                     >
                     <PARAM
-                        name="aa"
-                        help="Community number aa:nn format 0..65535:0..65535"
-                        ptype="AA_NN"
-                        optional="true"
-                        >
-                    </PARAM>
-                    <PARAM
-                        name="local-AS"
-                        help="Do not send outside local AS (well-known community)"
-                        ptype="SUBCOMMAND"
-                        mode="subcommand"
-                        optional="true"
-                        >
-                    </PARAM>
-                    <PARAM
-                        name="no-advertise"
-                        help="Do not advertise to any peer (well-known community)"
-                        ptype="SUBCOMMAND"
-                        mode="subcommand"
-                        optional="true"
-                        >
-                    </PARAM>
-                    <PARAM
-                        name="no-export"
-                        help="Do not export to next AS (well-known community)"
-                        ptype="SUBCOMMAND"
-                        mode="subcommand"
-                        optional="true"
-                        >
-                    </PARAM>
-                    <PARAM
-                        name="no-peer"
-                        help="Do not export to next AS (well-known community)"
-                        ptype="SUBCOMMAND"
-                        mode="subcommand"
-                        optional="true"
-                        >
-                    </PARAM>
-                    <PARAM
-                        name="any-all subcommands"
-                        help="Any/all command"
-                        ptype="SUBCOMMAND"
+                        name="community-members-subcommands"
+                        help="BGP Community members subcommands"
                         mode="switch"
-                        optional="false"
+                        ptype="SUBCOMMAND"
                         >
                         <PARAM
-                            name="any"
-                            help="Any command"
-                            ptype="SUBCOMMAND"
-                            mode="subcommand"
+                            name="aann"
+                            help="Community number aa:nn format 0..65535:0..65535"
+                            ptype="AA_NN"
                             >
+                            <PARAM
+                                name="local-AS"
+                                help="Do not send outside local AS (well-known community)"
+                                ptype="SUBCOMMAND"
+                                mode="subcommand"
+                                optional="true"
+                                >
+                            </PARAM>
+                            <PARAM
+                                name="no-advertise"
+                                help="Do not advertise to any peer (well-known community)"
+                                ptype="SUBCOMMAND"
+                                mode="subcommand"
+                                optional="true"
+                                >
+                            </PARAM>
+                            <PARAM
+                                name="no-export"
+                                help="Do not export to next AS (well-known community)"
+                                ptype="SUBCOMMAND"
+                                mode="subcommand"
+                                optional="true"
+                                >
+                            </PARAM>
+                            <PARAM
+                                name="no-peer"
+                                help="Do not export to next AS (well-known community)"
+                                ptype="SUBCOMMAND"
+                                mode="subcommand"
+                                optional="true"
+                                >
+                            </PARAM>
+                            <PARAM
+                                name="any-all subcommands"
+                                help="Any/all command"
+                                ptype="SUBCOMMAND"
+                                mode="switch"
+                                order="true"
+                                optional="true"
+                                >
+                                <PARAM
+                                    name="any"
+                                    help="Any command"
+                                    ptype="SUBCOMMAND"
+                                    mode="subcommand"
+                                    >
+                                </PARAM>
+                                <PARAM
+                                    name="all"
+                                    help="All command"
+                                    ptype="SUBCOMMAND"
+                                    mode="subcommand"
+                                    >
+                                </PARAM>
+                            </PARAM>
                         </PARAM>
                         <PARAM
-                            name="all"
-                            help="All command"
+                            name="local-AS"
+                            help="Do not send outside local AS (well-known community)"
                             ptype="SUBCOMMAND"
                             mode="subcommand"
                             >
+                            <PARAM
+                                name="aann"
+                                help="Community number aa:nn format 0..65535:0..65535"
+                                ptype="AA_NN"
+                                optional="true"
+                                >
+                            </PARAM>
+                            <PARAM
+                                name="no-advertise"
+                                help="Do not advertise to any peer (well-known community)"
+                                ptype="SUBCOMMAND"
+                                mode="subcommand"
+                                optional="true"
+                                >
+                            </PARAM>
+                            <PARAM
+                                name="no-export"
+                                help="Do not export to next AS (well-known community)"
+                                ptype="SUBCOMMAND"
+                                mode="subcommand"
+                                optional="true"
+                                >
+                            </PARAM>
+                            <PARAM
+                                name="no-peer"
+                                help="Do not export to next AS (well-known community)"
+                                ptype="SUBCOMMAND"
+                                mode="subcommand"
+                                optional="true"
+                                >
+                            </PARAM>
+                            <PARAM
+                                name="any-all subcommands"
+                                help="Any/all command"
+                                ptype="SUBCOMMAND"
+                                mode="switch"
+                                order="true"
+                                optional="true"
+                                >
+                                <PARAM
+                                    name="any"
+                                    help="Any command"
+                                    ptype="SUBCOMMAND"
+                                    mode="subcommand"
+                                    >
+                                </PARAM>
+                                <PARAM
+                                    name="all"
+                                    help="All command"
+                                    ptype="SUBCOMMAND"
+                                    mode="subcommand"
+                                    >
+                                </PARAM>
+                            </PARAM>
+                        </PARAM>
+                        <PARAM
+                            name="no-advertise"
+                            help="Do not advertise to any peer (well-known community)"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            >
+                            <PARAM
+                                name="aann"
+                                help="Community number aa:nn format 0..65535:0..65535"
+                                ptype="AA_NN"
+                                optional="true"
+                                >
+                            </PARAM>
+                            <PARAM
+                                name="local-AS"
+                                help="Do not send outside local AS (well-known community)"
+                                ptype="SUBCOMMAND"
+                                mode="subcommand"
+                                optional="true"
+                                >
+                            </PARAM>
+                            <PARAM
+                                name="no-export"
+                                help="Do not export to next AS (well-known community)"
+                                ptype="SUBCOMMAND"
+                                mode="subcommand"
+                                optional="true"
+                                >
+                            </PARAM>
+                            <PARAM
+                                name="no-peer"
+                                help="Do not export to next AS (well-known community)"
+                                ptype="SUBCOMMAND"
+                                mode="subcommand"
+                                optional="true"
+                                >
+                            </PARAM>
+                            <PARAM
+                                name="any-all subcommands"
+                                help="Any/all command"
+                                ptype="SUBCOMMAND"
+                                mode="switch"
+                                order="true"
+                                optional="true"
+                                >
+                                <PARAM
+                                    name="any"
+                                    help="Any command"
+                                    ptype="SUBCOMMAND"
+                                    mode="subcommand"
+                                    >
+                                </PARAM>
+                                <PARAM
+                                    name="all"
+                                    help="All command"
+                                    ptype="SUBCOMMAND"
+                                    mode="subcommand"
+                                    >
+                                </PARAM>
+                            </PARAM>
+                        </PARAM>
+                        <PARAM
+                            name="no-export"
+                            help="Do not export to next AS (well-known community)"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            >
+                            <PARAM
+                                name="aann"
+                                help="Community number aa:nn format 0..65535:0..65535"
+                                ptype="AA_NN"
+                                optional="true"
+                                >
+                            </PARAM>
+                            <PARAM
+                                name="local-AS"
+                                help="Do not send outside local AS (well-known community)"
+                                ptype="SUBCOMMAND"
+                                mode="subcommand"
+                                optional="true"
+                                >
+                            </PARAM>
+                            <PARAM
+                                name="no-advertise"
+                                help="Do not advertise to any peer (well-known community)"
+                                ptype="SUBCOMMAND"
+                                mode="subcommand"
+                                optional="true"
+                                >
+                            </PARAM>
+                            <PARAM
+                                name="no-peer"
+                                help="Do not export to next AS (well-known community)"
+                                ptype="SUBCOMMAND"
+                                mode="subcommand"
+                                optional="true"
+                                >
+                            </PARAM>
+                            <PARAM
+                                name="any-all subcommands"
+                                help="Any/all command"
+                                ptype="SUBCOMMAND"
+                                mode="switch"
+                                order="true"
+                                optional="true"
+                                >
+                                <PARAM
+                                    name="any"
+                                    help="Any command"
+                                    ptype="SUBCOMMAND"
+                                    mode="subcommand"
+                                    >
+                                </PARAM>
+                                <PARAM
+                                    name="all"
+                                    help="All command"
+                                    ptype="SUBCOMMAND"
+                                    mode="subcommand"
+                                    >
+                                </PARAM>
+                            </PARAM>
+                        </PARAM>
+                        <PARAM
+                            name="no-peer"
+                            help="Do not export to next AS (well-known community)"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            >
+                            <PARAM
+                                name="aann"
+                                help="Community number aa:nn format 0..65535:0..65535"
+                                ptype="AA_NN"
+                                optional="true"
+                                >
+                            </PARAM>
+                            <PARAM
+                                name="local-AS"
+                                help="Do not send outside local AS (well-known community)"
+                                ptype="SUBCOMMAND"
+                                mode="subcommand"
+                                optional="true"
+                                >
+                            </PARAM>
+                            <PARAM
+                                name="no-advertise"
+                                help="Do not advertise to any peer (well-known community)"
+                                ptype="SUBCOMMAND"
+                                mode="subcommand"
+                                optional="true"
+                                >
+                            </PARAM>
+                            <PARAM
+                                name="no-export"
+                                help="Do not export to next AS (well-known community)"
+                                ptype="SUBCOMMAND"
+                                mode="subcommand"
+                                optional="true"
+                                >
+                            </PARAM>
+                            <PARAM
+                                name="any-all subcommands"
+                                help="Any/all command"
+                                ptype="SUBCOMMAND"
+                                mode="switch"
+                                order="true"
+                                optional="true"
+                                >
+                                <PARAM
+                                    name="any"
+                                    help="Any command"
+                                    ptype="SUBCOMMAND"
+                                    mode="subcommand"
+                                    >
+                                </PARAM>
+                                <PARAM
+                                    name="all"
+                                    help="All command"
+                                    ptype="SUBCOMMAND"
+                                    mode="subcommand"
+                                    >
+                                </PARAM>
+                            </PARAM>
                         </PARAM>
                     </PARAM>
                 </PARAM>
@@ -138,7 +420,7 @@ limitations under the License.
         </PARAM>
     <ACTION>
         if test "${bgp-subcommands}" = "standard"; then&#xA;
-            python $SONIC_CLI_ROOT/sonic-cli-bgp-community.py bgp_community_standard ${community-list-name} ${aa} ${__full_line}&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-bgp-community.py bgp_community_standard ${community-list-name} ${__full_line}&#xA;
 
         elif test "${bgp-subcommands}" = "expanded"; then&#xA;
             python $SONIC_CLI_ROOT/sonic-cli-bgp-community.py bgp_community_expanded ${community-expanded-list-name} ${line}&#xA;
@@ -177,5 +459,76 @@ limitations under the License.
     </ACTION>
     </COMMAND>
 
+    <COMMAND
+        name="no bgp"
+        help="bgp command list">
+    <ACTION>
+        builtin=clish_nop"
+    </ACTION>
+    </COMMAND>
+
+    <COMMAND
+        name="no bgp community-list"
+        help="Delete bgp community-list entry">
+        <PARAM
+            name="bgp-subcommands"
+            help="BGP subcommands"
+            mode="switch"
+            ptype="SUBCOMMAND"
+            >
+            <PARAM
+                name="standard"
+                help="Delete a standard community list entry"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                >
+                <PARAM
+                    name="community-list-name"
+                    help="Communty list name"
+                    ptype="STRING"
+                    >
+                </PARAM>
+            </PARAM>
+            <PARAM
+                name="expanded"
+                help="Delete a expanded community list entry"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                >
+                <PARAM
+                    name="community-expanded-list-name"
+                    help="Communty list name"
+                    ptype="STRING"
+                    >
+                </PARAM>
+            </PARAM>
+        </PARAM>    
+    <ACTION>
+        if test "${bgp-subcommands}" = "standard"; then&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-bgp-community.py bgp_community_standard_delete ${community-list-name}&#xA;
+
+        elif test "${bgp-subcommands}" = "expanded"; then&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-bgp-community.py bgp_community_expanded_delete ${community-expanded-list-name}&#xA;
+
+        else&#xA;
+            builtin="clish_nop"&#xA;
+        fi
+    </ACTION>
+    </COMMAND>
+
+    <COMMAND
+        name="no bgp as-path-list"
+        help="Deleting bgp autonomous system path"
+        >
+        <PARAM
+            name="as-path-list-name"
+            help="Name of as-path-list"
+            ptype="STRING"
+            >
+        </PARAM>
+    <ACTION>
+        python $SONIC_CLI_ROOT/sonic-cli-bgp-community.py bgp_as_path_list_delete ${as-path-list-name)&#xA;
+    </ACTION>
+    </COMMAND>
 </VIEW>
 </CLISH_MODULE>

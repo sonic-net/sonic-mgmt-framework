@@ -21,6 +21,7 @@ openconfig-bgp-policy-ext.yang
 openconfig-routing-policy-annot.yang
 openconfig-routing-policy-ext.yang
 openconfig-system.yang
+openconfig-system-ext.yang
 openconfig-system-annot.yang
 openconfig-nat.yang
 openconfig-nat-annot.yang
