@@ -244,7 +244,7 @@ def invoke(func, args):
 
     # Remove the bgp-extcommunity-expanded set.
     elif func == 'bgp_extcommunity_expanded_delete':
-        keypath = generate_extcommunity_standard_delete_keypath(args)
+        keypath = generate_extcommunity_expanded_delete_keypath(args)
         return aa.delete(keypath)
 
     # bgp-as-path-list command
