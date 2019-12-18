@@ -360,35 +360,65 @@ module openconfig-bgp-ext {
   }
 
   grouping bgp-ext-global-afi-safi {
-        container aggregate-address {
+        container aggregate-address-config {
           description
               "Parameters relating to BGP route aggregation.";
-          container config {
+
+          list aggregate-address {
+              key "prefix";
               description
-                  "Configuration options for BGP route aggregation";
-              uses bgp-ext-global-afi-safi-aggregate-address-config;
-          }
-          container state {
-              config false;
-              description
-                  "State information for BGP route aggregation";
-              uses bgp-ext-global-afi-safi-aggregate-address-config;
+                  "BGP aggregate address configurtion.";
+              
+              leaf prefix {
+                  type leafref {
+                      path "../config/prefix";
+                  }
+                  description
+                      "Reference to the aggregate prefix.";
+              }
+
+              container config {
+                  description
+                      "Configuration options for BGP route aggregation";
+                  uses bgp-ext-global-afi-safi-aggregate-address-config;
+              }
+              container state {
+                  config false;
+                  description
+                      "State information for BGP route aggregation";
+                  uses bgp-ext-global-afi-safi-aggregate-address-config;
+              }
           }
       }
 
-      container network {
+      container network-config {
           description
-              "Parameters relating to BGP route aggregation.";
-          container config {
+              "Parameters relating to BGP network announcement.";
+          
+          list network {
+              key "prefix";
               description
-                  "Configuration options for BGP network.";
-              uses bgp-ext-global-afi-safi-network-config;
-          }
-          container state {
-              config false;
-              description
-                  "State information for BGP network.";
-              uses bgp-ext-global-afi-safi-network-config;
+                  "BGP network configurtion.";
+
+              leaf prefix {
+                  type leafref {
+                      path "../config/prefix";
+                  }
+                  description
+                      "Reference to the IP network.";
+              }
+
+              container config {
+                  description
+                      "Configuration options for BGP network.";
+                  uses bgp-ext-global-afi-safi-network-config;
+              }
+              container state {
+                  config false;
+                  description
+                      "State information for BGP network.";
+                  uses bgp-ext-global-afi-safi-network-config;
+              }
           }
       }
 
@@ -1837,5 +1867,4 @@ deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:p
   deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:rib/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:ipv6-unicast/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:adj-rib-out-post/oc-netinst:routes/oc-netinst:route/oc-bgp-ext:attr-sets/oc-bgp-ext:as4-path {
 	  deviate not-supported;
   }
-
 }

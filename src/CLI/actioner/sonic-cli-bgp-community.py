@@ -30,49 +30,59 @@ urllib3.disable_warnings()
 
 def generate_community_standard_body(args):
     community_member = []
-    if args[1] != "bgp":
-        community_member.append(args[1])
-    if "local-AS" in args or "no-peer" in args:
-        community_member.append("NOPEER")
-    if "no-export" in args:
-        community_member.append("NO_EXPORT")
-    if "no-advertise" in args:
-        community_member.append("NO_ADVERTISE")
-    if "all" in args:
-         match_options = "ALL"
-    else:
-        match_options = "ANY"
+    match_options = "ANY"
+    for arg in args[5:]:
+        if "local-AS" == arg:
+           community_member.append("NO_EXPORT_SUBCONFED")
+        elif  "no-peer" == arg:
+           community_member.append("NOPEER")
+        elif "no-export" == arg:
+           community_member.append("NO_EXPORT")
+        elif "no-advertise" == arg:
+           community_member.append("NO_ADVERTISE")
+        elif "all" == arg:
+           match_options = "ALL"
+        elif "any" == arg:
+           match_options = "ANY"
+        else:
+           community_member.append(arg)
 
-    body = {"openconfig-bgp-policy:community-sets":{"community-set":[{"community-set-name": args[0],
-            "config":{"community-set-name":args[0],"community-member":community_member,
+    body = {"openconfig-bgp-policy:community-sets":{"community-set":[{"community-set-name": args[4],
+            "config":{"community-set-name":args[4],"community-member":community_member,
             "match-set-options":match_options}}]}}
 
     return body
 
 def generate_extcommunity_standard_body(args):
     extcommunity_member = []
-    if 'all' in args:
-        match_options = "ALL"
-    else:
-        match_options = "ANY"
+    match_options = "ANY"
+    i = 5
+    for arg in args[5:]:
+        if "all" == arg:
+           match_options = "ALL"
+        elif "any" == arg:
+           match_options = "ANY"
+        elif "soo" == arg:
+           extcommunity_member.append("route-origin:"+args[i+1])
+        elif "rt" == arg:
+           extcommunity_member.append("route-target:"+args[i+1])
+        i = i + 1
 
-    if args[1] == "soo":
-        extcommunity_member.append("route-original:"+args[7])
-    else:
-        extcommunity_member.append("route-target:"+args[7])
-
-    body = {"openconfig-bgp-policy:ext-community-sets":{"ext-community-set":[{"ext-community-set-name": args[0],
-            "config":{"ext-community-set-name":args[0],"ext-community-member":extcommunity_member,"match-set-options": match_options}}]}}
+    body = {"openconfig-bgp-policy:ext-community-sets":{"ext-community-set":[{"ext-community-set-name": args[4],
+            "config":{"ext-community-set-name":args[4],"ext-community-member":extcommunity_member,"match-set-options": match_options}}]}}
     return body
 
 def invoke(func, args):
     body = None
     aa = cc.ApiClient()
+
+    #bgp-community-standard commands
     if func == 'bgp_community_standard':
         keypath = cc.Path('/restconf/data/openconfig-routing-policy:routing-policy/defined-sets/openconfig-bgp-policy:bgp-defined-sets/community-sets')
         body = generate_community_standard_body(args)
         return aa.patch(keypath,body)
 
+    #bgp-community-expanded commands
     elif func == 'bgp_community_expanded':
         community_member = ["REGEX:"+args[1]]
         keypath = cc.Path('/restconf/data/openconfig-routing-policy:routing-policy/defined-sets/openconfig-bgp-policy:bgp-defined-sets/community-sets')
@@ -80,36 +90,100 @@ def invoke(func, args):
                 "community-member":community_member,"match-set-options":"ANY"}}]}}
         return aa.patch(keypath,body)
 
+    # Remove the bgp-community-standard set.
+    elif func == 'bgp_community_standard_delete':
+        keypath = cc.Path('/restconf/data/openconfig-routing-policy:routing-policy/defined-sets/openconfig-bgp-policy:bgp-defined-sets/community-sets/community-set={community_list_name}',community_list_name=args[0])
+        return aa.delete(keypath)
 
+    # Remove the bgp-community-expanded set.
+    elif func == 'bgp_community_expanded_delete':
+        keypath = cc.Path('/restconf/data/openconfig-routing-policy:routing-policy/defined-sets/openconfig-bgp-policy:bgp-defined-sets/community-sets/community-set={community_list_name}',community_list_name=args[0])
+        return aa.delete(keypath)
+
+    #bgp-extcommunity-standard commands
     elif func == 'bgp_extcommunity_standard':
         keypath = cc.Path('/restconf/data/openconfig-routing-policy:routing-policy/defined-sets/openconfig-bgp-policy:bgp-defined-sets/ext-community-sets')
         body = generate_extcommunity_standard_body(args)
         return aa.patch(keypath,body)
 
+    #bgp-extcommunity-expanded commands
     elif func == 'bgp_extcommunity_expanded':
+        community_member = ["REGEX:"+args[1]]
         keypath = cc.Path('/restconf/data/openconfig-routing-policy:routing-policy/defined-sets/openconfig-bgp-policy:bgp-defined-sets/ext-community-sets')
         body = {"openconfig-bgp-policy:ext-community-sets":{"ext-community-set":[{"ext-community-set-name": args[0],
-                "config":{"ext-community-set-name":args[0],"ext-community-member":[args[1]],"match-set-options": "ANY"}}]}}
+                "config":{"ext-community-set-name":args[0],"ext-community-member":community_member,"match-set-options": "ANY"}}]}}
         return aa.patch(keypath,body)
 
+    # Remove the bgp-extcommunity-standard set.
+    elif func == 'bgp_extcommunity_standard_delete':
+        keypath = cc.Path('/restconf/data/openconfig-routing-policy:routing-policy/defined-sets/openconfig-bgp-policy:bgp-defined-sets/ext-community-sets/ext-community-set={extcommunity_list_name}',extcommunity_list_name=args[0])
+        return aa.delete(keypath)
+
+    # Remove the bgp-extcommunity-expanded set.
+    elif func == 'bgp_extcommunity_expanded_delete':
+        keypath = cc.Path('/restconf/data/openconfig-routing-policy:routing-policy/defined-sets/openconfig-bgp-policy:bgp-defined-sets/ext-community-sets/ext-community-set={extcommunity_list_name}',extcommunity_list_name=args[0])
+        return aa.delete(keypath)
+
+    # bgp-as-path-list command
     elif func == 'bgp_as_path_list':
         keypath = cc.Path('/restconf/data/openconfig-routing-policy:routing-policy/defined-sets/openconfig-bgp-policy:bgp-defined-sets/as-path-sets')
         body = {"openconfig-bgp-policy:as-path-sets":{"as-path-set":[{"as-path-set-name": args[0],"config":{"as-path-set-name":args[0],
                 "as-path-set-member":[args[1]]}}]}}
         return aa.patch(keypath,body)
 
+    # Remove the bgp-as-path-list set.
+    elif func == 'bgp_as_path_list_delete':
+        keypath = cc.Path('/restconf/data/openconfig-routing-policy:routing-policy/defined-sets/openconfig-bgp-policy:bgp-defined-sets/as-path-sets/as-path-set={as_path_set_name}',as_path_set_name=args[0])
+        return aa.delete(keypath)
+
+    elif func == 'bgp_community_show_all':
+        keypath = cc.Path('/restconf/data/openconfig-routing-policy:routing-policy/defined-sets/openconfig-bgp-policy:bgp-defined-sets/community-sets')
+        return aa.get(keypath)
+
+    elif func == 'bgp_community_show_specific':
+        keypath = cc.Path('/restconf/data/openconfig-routing-policy:routing-policy/defined-sets/openconfig-bgp-policy:bgp-defined-sets/community-sets/community-set={name}', name=args[1])
+        return aa.get(keypath)
+
+    elif func == 'bgp_ext_community_show_all':
+        keypath = cc.Path('/restconf/data/openconfig-routing-policy:routing-policy/defined-sets/openconfig-bgp-policy:bgp-defined-sets/ext-community-sets')
+        return aa.get(keypath)
+
+    elif func == 'bgp_ext_community_show_specific':
+        keypath = cc.Path('/restconf/data/openconfig-routing-policy:routing-policy/defined-sets/openconfig-bgp-policy:bgp-defined-sets/ext-community-sets/ext-community-set={name}', name=args[1])
+        return aa.get(keypath)
+
+    elif func == 'bgp_aspath_show_specific':
+        keypath = cc.Path('/restconf/data/openconfig-routing-policy:routing-policy/defined-sets/openconfig-bgp-policy:bgp-defined-sets/as-path-sets/as-path-set={name}', name=args[1])
+        return aa.get(keypath)
+
+    elif func == 'bgp_aspath_show_all':
+        keypath = cc.Path('/restconf/data/openconfig-routing-policy:routing-policy/defined-sets/openconfig-bgp-policy:bgp-defined-sets/as-path-sets')
+        return aa.get(keypath)
     else:
-        return body
+    	return aa.cli_not_implemented(func)
 
 
 def run(func, args):
-    try:
-        api_response = invoke(func,args)
-        return
-    except:
-            # system/network error
-            print "Error: Transaction Failure"
 
+  try:
+    response = invoke(func,args)
+
+    if response.ok():
+        if response.content is not None:
+            # Get Command Output
+            api_response = response.content
+            if api_response is None:
+                print("Failed")
+                return 
+	    #print api_response
+	    show_cli_output(args[0], api_response)
+    else:
+        print response.error_message()
+	return
+  except Exception as e:
+    print "%Error: " + str(e)
+
+  return
 
 
 if __name__ == '__main__':

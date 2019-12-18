@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+Copyright 2019 Dell, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<ROOT>
+    <MACRODEF name="IP_BGP_SUB_CMDS">
+        <PARAM name="ipv4" help="Address family" ptype="SUBCOMMAND" mode="subcommand">
+            <PARAM name="ipv4 Subcommands" help="IPv4 subcommands" ptype="SUBCOMMAND" mode="switch" optional="true">
+
+                <PARAM name="prefix" help="IPv4 prefix" ptype="IP_ADDR_MASK">
+                    <PARAM name="neighbor-ip" help="Neighbor to display information about" ptype="IP_ADDR">
+                        <PARAM name="path-id" help="Path Identifier" ptype="UINT"/>
+                    </PARAM>
+                </PARAM>
+
+                <PARAM name="neighbors" help="Detailed information on TCP and BGP neighbor connections" ptype="SUBCOMMAND" mode="subcommand">
+                    <PARAM name="neighbor-ip" help="Neighbor to display information about" ptype="IP_ADDR" optional="true">
+                        <PARAM name="neighbor-subcommands" help="Neighbor subcommands" ptype="SUBCOMMAND" mode="switch">
+
+                            <PARAM name="received-routes" help="Display the received routes from neighbor" ptype="SUBCOMMAND" mode="subcommand"/>
+                            <PARAM name="advertised-routes" help="Display the routes advertised to a BGP neighbor" ptype="SUBCOMMAND" mode="subcommand"/>
+                        </PARAM>
+                    </PARAM>
+                </PARAM>
+
+                <PARAM name="summary" help="Summary of BGP neighbor status" ptype="SUBCOMMAND" mode="subcommand"/>
+            </PARAM>
+        </PARAM>
+
+        <PARAM name="ipv6" help="Address family" ptype="SUBCOMMAND" mode="subcommand">
+            <PARAM name="ipv6 Subcommands" help="IPv6 subcommands" ptype="SUBCOMMAND" mode="switch" optional="true">
+
+                <PARAM name="prefix" help="IPv6 prefix" ptype="IPV6_ADDR_MASK">
+                    <PARAM name="neighbour-ip" help="Neighbor to display information about" ptype="IPV6_ADDR">
+                        <PARAM name="path-id" help="Path identifier" ptype="UINT"/>
+                    </PARAM>
+                </PARAM>
+
+                <PARAM name="neighbors" help="Detailed information on TCP and BGP neighbor connections" ptype="SUBCOMMAND" mode="subcommand">
+                    <PARAM name="neighbor-ip" help="Neighbor to display information about" ptype="IPV6_ADDR" optional="true">
+                        <PARAM name="neighbor-subcommands" help="Neighbor subcommands" ptype="SUBCOMMAND" mode="switch">
+
+                            <PARAM name="received-routes" help="Display the received routes from neighbor" ptype="SUBCOMMAND" mode="subcommand"/>
+                            <PARAM name="advertised-routes" help="Display the routes advertised to a BGP neighbor" ptype="SUBCOMMAND" mode="subcommand"/>
+                        </PARAM>
+                    </PARAM>
+
+                </PARAM>
+
+                <PARAM name="summary" help="Summary of BGP neighbor status" ptype="SUBCOMMAND" mode="subcommand"/>
+            </PARAM>
+        </PARAM>
+        <PARAM name="peer-group" help="Detailed information on BGP peer groups" ptype="SUBCOMMAND" mode="subcommand">
+            <PARAM name="peer-group name" help="Peer-group name" ptype="STRING"/>
+        </PARAM>
+    </MACRODEF>
+</ROOT>
+

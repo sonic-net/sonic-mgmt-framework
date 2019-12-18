@@ -329,9 +329,9 @@ var YangToDb_bgp_pgrp_plist_direction_fld_xfmr FieldXfmrYangToDb = func(inParams
     log.Info("YangToDb_bgp_pgrp_plist_direction_fld_xfmr: ", inParams.ygRoot, " Xpath: ", inParams.uri, " direction: ", direction)
 
     if (direction == ocbinds.OpenconfigBgpExt_BgpDirection_INBOUND) {
-        res_map["prefix_list_direction"] = "inbound"
+        res_map["prefix_list_direction"] = "in"
     }  else if (direction == ocbinds.OpenconfigBgpExt_BgpDirection_OUTBOUND) {
-        res_map["prefix_list_direction"] = "outbound"
+        res_map["prefix_list_direction"] = "out"
     } else {
         err = errors.New("direction Missing");
         return res_map, err
@@ -358,9 +358,9 @@ var DbToYang_bgp_pgrp_plist_direction_fld_xfmr FieldXfmrDbtoYang = func(inParams
     direction, ok := pGrpKey.Field["prefix_list_direction"]
 
     if ok {
-        if (direction == "inbound") {
+        if (direction == "in") {
             result["direction"] = "INBOUND"
-        } else if (direction == "outbound") {
+        } else if (direction == "out") {
             result["direction"] = "OUTBOUND"
         }
     } else {
@@ -381,9 +381,9 @@ var YangToDb_bgp_pgrp_flist_direction_fld_xfmr FieldXfmrYangToDb = func(inParams
     log.Info("YangToDb_bgp_pgrp_flist_direction_fld_xfmr: ", inParams.ygRoot, " Xpath: ", inParams.uri, " direction: ", direction)
 
     if (direction == ocbinds.OpenconfigBgpExt_BgpDirection_INBOUND) {
-        res_map["filter_list_direction"] = "inbound"
+        res_map["filter_list_direction"] = "in"
     }  else if (direction == ocbinds.OpenconfigBgpExt_BgpDirection_OUTBOUND) {
-        res_map["filter_list_direction"] = "outbound"
+        res_map["filter_list_direction"] = "out"
     } else {
         err = errors.New("direction Missing");
         return res_map, err
@@ -410,9 +410,9 @@ var DbToYang_bgp_pgrp_flist_direction_fld_xfmr FieldXfmrDbtoYang = func(inParams
     direction, ok := pGrpKey.Field["filter_list_direction"]
 
     if ok {
-        if (direction == "inbound") {
+        if (direction == "in") {
             result["direction"] = "INBOUND"
-        }else if (direction == "outbound") {
+        }else if (direction == "out") {
             result["direction"] = "OUTBOUND"
         }
     } else {

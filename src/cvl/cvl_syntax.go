@@ -88,7 +88,7 @@ func (c *CVL) addChildLeaf(config bool, tableName string, parent *yparser.YParse
         }
 
 	//Batch leaf creation
-	c.batchLeaf = c.batchLeaf + name + "#" + value + "#"
+	c.batchLeaf = c.batchLeaf + name + "|" + value + "|"
 	//Check if this leaf has leafref,
 	//If so add the add redis key to its table so that those 
 	// details can be fetched for dependency validation
