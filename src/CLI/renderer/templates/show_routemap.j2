@@ -1,0 +1,154 @@
+{% if json_output -%}
+{% if json_output is iterable %}
+{% set pol_list = {} %}
+{% if "openconfig-routing-policy:policy-definitions" is in json_output %}
+{% set pol_list = json_output['openconfig-routing-policy:policy-definitions']['policy-definition'] %}
+{% endif %}
+{% if "openconfig-routing-policy:policy-definition" is in json_output %}
+{% set pol_list = json_output['openconfig-routing-policy:policy-definition'] %}
+{% endif %}
+{% for list in pol_list %}
+{% set vars = {'pol_name': ""} %}
+{% set vars = {'call_rmap': ""} %}
+{% set statements = "" %}
+{% set temp = [ ] %}
+{% set match = "" %}
+{% set match_intf = "" %}
+{% if vars.update({'pol_name':list ['name']}) %} {% endif %}
+Route map {{'%s'| format(vars.pol_name)}}:
+   {% if "statements" in list %}
+   {% set statements = list['statements']['statement'] %}
+   {%endif %}
+   {% for statement in statements %}
+    {% if "actions" in statement %}
+     {% set act = statement['actions'] %}
+     {% if "config" is in act and "policy-result" in act['config']%}
+      {% if act['config']['policy-result'] == "ACCEPT_ROUTE" %}
+   permit, sequence {{statement['config']['name']}} 
+      {% elif act['config']['policy-result'] == "REJECT_ROUTE" %}
+   deny, sequence {{statement['config']['name']}} 
+      {% endif %}
+    {% endif %}
+    {% endif %}
+    {% if "conditions" in statement %}
+    {% set conditions = statement['conditions'] %}
+    {{"Match clauses: "}}
+     {% for match in conditions %}
+       {% if "config" is in match  %}
+         {% set match_config = conditions[match] %}
+         {% if "name" in match_config %} 
+          {% if vars.update({'call_rmap': match_config['name']}) %} {% endif %}
+         {% endif %}
+         {% if "install-protocol-eq" in match_config %}
+          {% if vars.update({'protocol': conditions['config']['install-protocol-eq']}) %} {% endif %}
+      {{"protocol " + vars.protocol|replace("openconfig-policy-types:","")}}
+         {% endif %}
+       {%endif %}
+       {% if "openconfig-bgp-policy:bgp-conditions" is in match %}
+        {% set match_bgp =  conditions[match] %}
+        {% if "match-as-path-set" is in match_bgp %}
+         {% set match_bgpas =  match_bgp['match-as-path-set'] %}
+          {% if "as-path-set" in match_bgpas['config'] %}
+      {{"as-path " + match_bgpas['config']['as-path-set']}}
+          {%endif %}
+         {%endif %}
+        {% if "config" is in match_bgp %}
+         {% if "community-set" in match_bgp['config'] %}
+      {{"community " + match_bgp['config']['community-set']}}
+         {%endif %}
+         {% if "ext-community-set" in match_bgp['config'] %}
+      {{"extcommunity " + match_bgp['config']['ext-community-set']}}
+         {%endif %}
+         {% if "local-pref-eq" in match_bgp['config'] %}
+      {{"local preference " + match_bgp['config']['local-pref-eq']|string()}}
+         {%endif %}
+         {% if "med-eq" in match_bgp['config'] %}
+      {{"med " + match_bgp['config']['med-eq']|string()}}
+         {%endif %}
+         {% if "openconfig-bgp-policy-ext:next-hop-set" in match_bgp['config'] %}
+      {{"nexthop " + match_bgp['config']['openconfig-bgp-policy-ext:next-hop-set']}}
+         {%endif %}
+         {% if "origin-eq" in match_bgp['config'] %}
+      {{"origin " + match_bgp['config']['origin-eq']}}
+         {%endif %}
+        {%endif %}
+       {%endif %}
+      {% if "match-prefix-set" is in match %}
+       {% set match_prefix =  conditions[match] %}
+       {% if "prefix-set" in match_prefix['config'] %}
+      {{"prefix " + match_prefix['config']['prefix-set']}}
+       {%endif %}
+      {%endif %}
+      {% if "match-interface" is in match %}
+       {% set match_intf =  conditions[match] %}
+       {% if "interface" in match_intf['config'] %}
+      {{"interface " + match_intf['config']['interface']}}
+       {%endif %}
+      {%endif %}
+      {% if "match-neighbor-set" is in match %}
+       {% set match_nbr =  conditions[match] %}
+       {% set temp = [] %}
+       {% if "config" in match_nbr and "openconfig-routing-policy-ext:address" in match_nbr['config'] %}
+        {% set nbr = match_nbr['config']['openconfig-routing-policy-ext:address'] %}
+        {% for item in nbr %}
+        {% do temp.append(item) %}
+        {% endfor %}
+      {{"neighbor " + temp|join(",")}}
+       {% endif %}
+      {% endif %}
+      {% if "match-tag-set" is in match %}
+       {% set match_tag =  conditions[match] %}
+       {% set temp_tag = [] %}
+       {% if "config" in match_tag and "openconfig-routing-policy-ext:tag-value" in match_tag['config'] %}
+        {% set tag = match_tag['config']['openconfig-routing-policy-ext:tag-value'] %}
+        {% for item in tag %}
+         {% do temp_tag.append(item) %}
+        {% endfor %}
+      {{"tag " + temp_tag|join(",")}}
+       {% endif %}
+      {% endif %}
+     {% endfor %}
+    {% endif %}
+    {{"Set clauses: "}}
+    {% if "actions" in statement %}
+     {% set actions = statement['actions'] %}
+     {% for set in actions %}
+      {% if "openconfig-bgp-policy:bgp-actions" is in actions %}
+       {% set set_bgp =  actions[set] %}
+       {% if "set-as-path-prepend" is in set_bgp %}
+        {% set set_bgpas =  set_bgp['set-as-path-prepend'] %}
+        {% if "asn" in set_bgpas['config'] %}
+      {{"as-path prepend " + set_bgpas['config']['asn']|string()}}
+        {% endif %}
+        {% if "repeat-n" in set_bgpas['config'] %}
+      {{"repeat-n " + set_bgpas['config']['repeat-n']|string()}}
+        {% endif %}
+       {% endif %}
+       {% set set_bgpconf = actions[set]['config'] %}
+       {% for item in set_bgpconf %}
+        {% if item == "set-next-hop" %}
+      {{"nexthop " + set_bgpconf[item]}}
+        {% endif %}
+        {% if item == "set-local-pref" %}
+      {{"local preference " + set_bgpconf[item]|string()}}
+        {% endif %}
+        {% if item == "set-med" %}
+      {{"med " + set_bgpconf[item]|string()}}
+        {% endif %}
+        {% if item == "set-route-origin" %}
+      {{"route origin " + set_bgpconf[item]}}
+        {% endif %}
+       {% endfor %}
+      {% endif %}
+     {% endfor %}
+   {% endif %}
+    {{"Call clauses:"}}
+    {% if vars.call_rmap != "" %}
+    {{"  Call " + vars.call_rmap }}
+    {% endif %}
+    {{"Actions:"}}
+    {{"  Exit routemap"}}
+   {% endfor %}
+{% endfor %}
+{% endif %}
+{% endif %}

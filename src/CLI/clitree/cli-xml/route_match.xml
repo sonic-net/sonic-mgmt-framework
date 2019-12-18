@@ -30,41 +30,41 @@ limitations under the License.
     <COMMAND name="no" help="Negate a  commands"/>
     <COMMAND name="no match" help="Negate a  commands"/>
     <COMMAND name="no match interface" help="delete matched interface">
-      <ACTION> python $SONIC_CLI_ROOT/sonic-route-map.py delete_openconfig_routing_policy_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_match_interface_config_interface ${name} ${seq_num}
+      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-route-match.py delete_openconfig_routing_policy_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_match_interface_config_interface ${name} ${seq_num}
      </ACTION>
     </COMMAND>
 
     <COMMAND name="no match tag" help="delete matched tag">
-      <ACTION> python $SONIC_CLI_ROOT/sonic-route-map.py delete_openconfig_routing_policy_ext_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_match_tag_set_config_tag_value ${name} ${seq_num}
+      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-route-match.py delete_openconfig_routing_policy_ext_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_match_tag_set_config_tag_value ${name} ${seq_num}
      </ACTION>
     </COMMAND>
 
     <COMMAND name="no match as-path" help="delete matched as-path-name">
-      <ACTION> python $SONIC_CLI_ROOT/sonic-route-map.py delete_openconfig_bgp_policy_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_bgp_conditions_match_as_path_set_config_as_path_set ${name} ${seq_num}
+      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-route-match.py delete_openconfig_bgp_policy_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_bgp_conditions_match_as_path_set_config_as_path_set ${name} ${seq_num}
      </ACTION>
     </COMMAND>
 
     <COMMAND name="no match community" help="delete matched community">
 
-      <ACTION> python $SONIC_CLI_ROOT/sonic-route-map.py delete_openconfig_bgp_policy_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_bgp_conditions_config_community_set ${name} ${seq_num}
+      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-route-match.py delete_openconfig_bgp_policy_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_bgp_conditions_config_community_set ${name} ${seq_num}
      </ACTION>
     </COMMAND>
 
     <COMMAND name="no match ext-community" help="delete matched external community">
 
-      <ACTION> python $SONIC_CLI_ROOT/sonic-route-map.py delete_openconfig_bgp_policy_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_bgp_conditions_config_ext_community_set ${name} ${seq_num}
+      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-route-match.py delete_openconfig_bgp_policy_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_bgp_conditions_config_ext_community_set ${name} ${seq_num}
      </ACTION>
     </COMMAND>
 
     <COMMAND name="no match origin" help="delete matched origin">
 
-      <ACTION> python $SONIC_CLI_ROOT/sonic-route-map.py delete_openconfig_bgp_policy_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_bgp_conditions_config_origin_eq ${name} ${seq_num}
+      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-route-match.py delete_openconfig_bgp_policy_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_bgp_conditions_config_origin_eq ${name} ${seq_num}
      </ACTION>
     </COMMAND>
 
     <COMMAND name="no match metric" help="delete matched metric">
 
-      <ACTION> python $SONIC_CLI_ROOT/sonic-route-map.py delete_openconfig_bgp_policy_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_bgp_conditions_config_med_eq ${name} ${seq_num}
+      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-route-match.py delete_openconfig_bgp_policy_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_bgp_conditions_config_med_eq ${name} ${seq_num}
      </ACTION>
     </COMMAND>
 
@@ -74,12 +74,12 @@ limitations under the License.
     <COMMAND name="no match ipv6 address" help="Negate a  commands"/>
 
     <COMMAND name="no match ip address prefix-list" help="delete matched ip address prefix">
-      <ACTION> python $SONIC_CLI_ROOT/sonic-route-map.py delete_openconfig_routing_policy_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_match_prefix_set_config_prefix_set ${name} ${seq_num}
+      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-route-match.py delete_openconfig_routing_policy_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_match_prefix_set_config_prefix_set ${name} ${seq_num}
       </ACTION>
     </COMMAND>
     
     <COMMAND name="no match ipv6 address prefix-list" help="delete matched ipv6 address prefix">
-      <ACTION> python $SONIC_CLI_ROOT/sonic-route-map.py delete_openconfig_routing_policy_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_match_prefix_set_config_prefix_set
+      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-route-match.py delete_openconfig_routing_policy_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_match_prefix_set_config_prefix_set
  ${name} ${seq_num}
       </ACTION>
     </COMMAND>
@@ -98,7 +98,7 @@ limitations under the License.
                      ptype="STRING"
         />
         <ACTION>
-           python $SONIC_CLI_ROOT/sonic-route-map.py patch_openconfig_bgp_policy_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_bgp_conditions_match_as_path_set_config_as_path_set ${name} ${seq_num} ${as-path-name} &#xA;
+           python $SONIC_CLI_ROOT/sonic-cli-route-match.py patch_openconfig_bgp_policy_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_bgp_conditions_match_as_path_set_config_as_path_set ${name} ${seq_num} ${as-path-name} &#xA;
         </ACTION>
     </COMMAND>
 
@@ -129,7 +129,7 @@ limitations under the License.
                      ptype="STRING"
         />
         <ACTION>
-           python $SONIC_CLI_ROOT/sonic-route-map.py patch_openconfig_routing_policy_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_match_prefix_set_config_prefix_set ${name} ${seq_num} ${prefix-list-name} &#xA;
+           python $SONIC_CLI_ROOT/sonic-cli-route-match.py patch_openconfig_routing_policy_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_match_prefix_set_config_prefix_set ${name} ${seq_num} ${prefix-list-name} &#xA;
         </ACTION>
     </COMMAND>
 
@@ -142,7 +142,7 @@ limitations under the License.
                      ptype="STRING"
         />
        <ACTION>
-           python $SONIC_CLI_ROOT/sonic-route-map.py patch_openconfig_routing_policy_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_match_prefix_set_config_prefix_set ${name} ${seq_num} ${prefix-list-name} &#xA;
+           python $SONIC_CLI_ROOT/sonic-cli-route-match.py patch_openconfig_routing_policy_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_match_prefix_set_config_prefix_set ${name} ${seq_num} ${prefix-list-name} &#xA;
        </ACTION>
     </COMMAND>
 
@@ -157,7 +157,7 @@ limitations under the License.
                      ptype="STRING"
         />
        <ACTION>
-           python $SONIC_CLI_ROOT/sonic-route-map.py patch_openconfig_routing_policy_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_match_interface_config_interface ${name} ${seq_num} ${intf-name} &#xA;
+           python $SONIC_CLI_ROOT/sonic-cli-route-match.py patch_openconfig_routing_policy_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_match_interface_config_interface ${name} ${seq_num} ${intf-name} &#xA;
        </ACTION>
     </COMMAND>
 
@@ -170,7 +170,7 @@ limitations under the License.
                      ptype="STRING"
         />
         <ACTION>
-           python $SONIC_CLI_ROOT/sonic-route-map.py patch_openconfig_bgp_policy_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_bgp_conditions_config_community_set ${name} ${seq_num} ${community-name} &#xA;
+           python $SONIC_CLI_ROOT/sonic-cli-route-match.py patch_openconfig_bgp_policy_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_bgp_conditions_config_community_set ${name} ${seq_num} ${community-name} &#xA;
         </ACTION>
     </COMMAND>
 
@@ -183,7 +183,7 @@ limitations under the License.
                      ptype="STRING"
         />
         <ACTION>
-           python $SONIC_CLI_ROOT/sonic-route-map.py  patch_openconfig_bgp_policy_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_bgp_conditions_config_ext_community_set ${name} ${seq_num} ${community-name} &#xA;
+           python $SONIC_CLI_ROOT/sonic-cli-route-match.py  patch_openconfig_bgp_policy_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_bgp_conditions_config_ext_community_set ${name} ${seq_num} ${community-name} &#xA;
         </ACTION>
     </COMMAND>
 
@@ -192,11 +192,11 @@ limitations under the License.
         help="redistributes routes in the routing table that match the specified tags."
         >
         <PARAM name="match-tag"
-                     help="tag number"
+                     help="tag vlaue (1-4294967295)"
                      ptype="STRING"
         />
        <ACTION>
-           python $SONIC_CLI_ROOT/sonic-route-map.py patch_openconfig_routing_policy_ext_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_match_tag_set_config_tag_value  ${name} ${seq_num} ${match-tag}
+           python $SONIC_CLI_ROOT/sonic-cli-route-match.py patch_openconfig_routing_policy_ext_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_match_tag_set_config_tag_value  ${name} ${seq_num} ${match-tag}
 
        </ACTION>
     </COMMAND>
@@ -206,11 +206,11 @@ limitations under the License.
         help="Set routing policy match criteria to metric"
         >
         <PARAM name="match-met"
-                     help="metric number"
+                     help="metric value (0-4294967295)"
                      ptype="UINT"
         />
        <ACTION>
-           python $SONIC_CLI_ROOT/sonic-route-map.py patch_openconfig_bgp_policy_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_bgp_conditions_config_med_eq  ${name} ${seq_num} ${match-met}
+           python $SONIC_CLI_ROOT/sonic-cli-route-match.py patch_openconfig_bgp_policy_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_bgp_conditions_config_med_eq  ${name} ${seq_num} ${match-met}
 
        </ACTION>
     </COMMAND>
@@ -246,11 +246,11 @@ limitations under the License.
 
     <ACTION>
         if test "${action-switch}" = "egp"; then&#xA;
-            python $SONIC_CLI_ROOT/sonic-route-map.py patch_openconfig_bgp_policy_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_bgp_conditions_config_origin_eq  ${name} ${seq_num} EGP&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-route-match.py patch_openconfig_bgp_policy_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_bgp_conditions_config_origin_eq  ${name} ${seq_num} EGP&#xA;
         elif test "${action-switch}" = "igp"; then&#xA;
-            python $SONIC_CLI_ROOT/sonic-route-map.py patch_openconfig_bgp_policy_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_bgp_conditions_config_origin_eq ${name} ${seq_num} IGP&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-route-match.py patch_openconfig_bgp_policy_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_bgp_conditions_config_origin_eq ${name} ${seq_num} IGP&#xA;
         else&#xA;
-            python $SONIC_CLI_ROOT/sonic-route-map.py patch_openconfig_bgp_policy_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_bgp_conditions_config_origin_eq ${name} ${seq_num} INTERNAL&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-route-match.py patch_openconfig_bgp_policy_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_bgp_conditions_config_origin_eq ${name} ${seq_num} INCOMPLETE&#xA;
         fi&#xA;
 
     </ACTION>

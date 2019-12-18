@@ -125,7 +125,7 @@ def run(func, args):
                                     'intfName':args[1],
                                     'extIntfName':ext_intf_name
                                   }
-                neigh_list.append(neigh_table_entry)
+                    neigh_list.append(neigh_table_entry)
 
         elif 'sonic-neigh:NEIGH_TABLE' in response.keys():
                 if response['sonic-neigh:NEIGH_TABLE'] is None:

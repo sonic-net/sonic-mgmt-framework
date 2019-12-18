@@ -39,6 +39,7 @@ type XfmrParams struct {
 	subOpDataMap map[int]*RedisDbMap // used to add an in-flight data with a sub-op
 	param interface{}
 	txCache interface{}
+	skipOrdTblChk *bool
 }
 
 /**

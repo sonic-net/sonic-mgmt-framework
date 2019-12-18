@@ -14,7 +14,7 @@ module sonic-bgp-common {
   import sonic-route-map {
     prefix srmap;
   }
-
+  
   organization
     "SONiC";
 
@@ -95,9 +95,9 @@ module sonic-bgp-common {
 
   grouping sonic-bgp-cmn {
 
-    leaf local_asn {
-      type uint32;
-        description "Local AS number";
+      leaf local_asn {
+          type uint32;
+          description "Local AS number";
     }
 
     leaf name {
@@ -259,12 +259,9 @@ module sonic-bgp-common {
     }
 
     leaf default_rmap {
-        type string;
-        /*
         type leafref {
             path "/srmap:sonic-route-map/srmap:ROUTE_MAP_SET/srmap:ROUTE_MAP_SET_LIST/srmap:name";
         }
-        */
         description "Default route map to originate";
     }
 
@@ -280,7 +277,7 @@ module sonic-bgp-common {
 
     leaf max_prefix_warning_threshold {
       type uint8 {
-        range "0..100";
+        range "1..100";
       }
         description "Maximum prefix limit threshold for warning";
     }
@@ -293,19 +290,15 @@ module sonic-bgp-common {
     }
 
     leaf-list route_map_in {
-        type string;
-        /*
       type leafref {
         path "/srmap:sonic-route-map/srmap:ROUTE_MAP_SET/srmap:ROUTE_MAP_SET_LIST/srmap:name";
-      } */
+      }
     }
 
     leaf-list route_map_out {
-        type string;
-        /*
       type leafref {
         path "/srmap:sonic-route-map/srmap:ROUTE_MAP_SET/srmap:ROUTE_MAP_SET_LIST/srmap:name";
-      }*/
+      }
     }
 
     leaf soft_reconfiguration_in {
@@ -314,11 +307,9 @@ module sonic-bgp-common {
     }
 
     leaf unsuppress_map_name {
-        type string;
-        /*
       type leafref {
         path "/srmap:sonic-route-map/srmap:ROUTE_MAP_SET/srmap:ROUTE_MAP_SET_LIST/srmap:name";
-      } */
+      }
       description "Route map";
     }
 
@@ -367,11 +358,9 @@ module sonic-bgp-common {
     }
 
     leaf filter_list_name {
-        type string;
-        /*
         type leafref {
             path "/srpolsets:sonic-routing-policy-sets/srpolsets:AS_PATH_SET/srpolsets:AS_PATH_SET_LIST/srpolsets:name";
-        }*/
+        }
         description "Filter list name";
     }
 
@@ -391,11 +380,9 @@ module sonic-bgp-common {
     }
 
     leaf prefix_list_name {
-        type string;
-        /*
         type leafref {
             path "/srpolsets:sonic-routing-policy-sets/srpolsets:PREFIX_SET/srpolsets:PREFIX_SET_LIST/srpolsets:name";
-        }*/
+        }
         description "Prefix list name";
     }
 

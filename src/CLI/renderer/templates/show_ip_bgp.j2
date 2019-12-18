@@ -10,8 +10,11 @@
 {% set vars = {'validRoute': ""} %}
 {% if json_output -%}
 {% for key in json_output %}
-{% if vars.update({'routerId':json_output["openconfig-network-instance:router-id"]}) %}{% endif %}
-{% if vars.update({'asNum':json_output["openconfig-network-instance:as"]}) %}{% endif %}
+{% if "openconfig-network-instance:config" in key %}
+{% set globalConfig = json_output["openconfig-network-instance:config"] %}
+{% if vars.update({'routerId':globalConfig["router-id"]}) %}{% endif %}
+{% if vars.update({'asNum':globalConfig["as"]}) %}{% endif %}
+{% endif %}
 {% endfor %}
 BGP routing table information for VRF default
 Router identifier {{ vars.routerId }}, local AS number {{ vars.asNum }} 

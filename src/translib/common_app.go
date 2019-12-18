@@ -39,6 +39,7 @@ type CommonApp struct {
 	body           []byte
 	ygotRoot       *ygot.GoStruct
 	ygotTarget     *interface{}
+	skipOrdTableChk bool
 	cmnAppTableMap map[int]map[db.DBNum]map[string]map[string]db.Value
 }
 
@@ -74,7 +75,7 @@ func init() {
 func (app *CommonApp) initialize(data appData) {
 	log.Info("initialize:path =", data.path)
 	pathInfo := NewPathInfo(data.path)
-	*app = CommonApp{pathInfo: pathInfo, body: data.payload, ygotRoot: data.ygotRoot, ygotTarget: data.ygotTarget}
+	*app = CommonApp{pathInfo: pathInfo, body: data.payload, ygotRoot: data.ygotRoot, ygotTarget: data.ygotTarget, skipOrdTableChk: false}
 
 }
 
@@ -195,7 +196,9 @@ func (app *CommonApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
     var txCache interface{}
 
     for {
-	    payload, err = transformer.GetAndXlateFromDB(app.pathInfo.Path, app.ygotRoot, dbs, txCache)
+	    // Keep a copy of the ygotRoot and let Transformer use this copy of ygotRoot
+	    xfmrYgotRoot, _ := ygot.DeepCopy((*app.ygotRoot).(ygot.GoStruct))
+	    payload, err = transformer.GetAndXlateFromDB(app.pathInfo.Path, &xfmrYgotRoot, dbs, txCache)
 	    if err != nil {
 		    log.Error("transformer.transformer.GetAndXlateFromDB failure. error:", err)
 		    resPayload = payload
@@ -235,7 +238,9 @@ func (app *CommonApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
 			    break
 		    }
 
-		    resPayload, err = generateGetResponsePayload(app.pathInfo.Path, (*app.ygotRoot).(*ocbinds.Device), app.ygotTarget)
+		    // Merge the ygotRoots filled by transformer and app.ygotRoot used to Unmarshal the payload (required as Unmarshal does replace operation on ygotRoot)
+		    resYgot, _ := ygot.MergeStructs(xfmrYgotRoot.(*ocbinds.Device),(*app.ygotRoot).(*ocbinds.Device))
+		    resPayload, err = generateGetResponsePayload(app.pathInfo.Path, resYgot.(*ocbinds.Device), app.ygotTarget)
 		    if err != nil {
 			    log.Error("generateGetResponsePayload()  failed")
 			    resPayload = payload
@@ -256,7 +261,7 @@ func (app *CommonApp) processAction(dbs [db.MaxDB]*db.DB) (ActionResponse, error
 	err := errors.New("Not implemented")
 
 	resp.Payload, err = transformer.CallRpcMethod(app.pathInfo.Path, app.body, dbs)
-	log.Info("transformer.XlateToDb() returned", resp.Payload)
+	log.Info("transformer.CallRpcMethod() returned", resp.Payload)
 
 	return resp, err
 }
@@ -269,7 +274,7 @@ func (app *CommonApp) translateCRUDCommon(d *db.DB, opcode int) ([]db.WatchKeys,
 	log.Info("translateCRUDCommon:path =", app.pathInfo.Path)
 
 	// translate yang to db
-	result, err := transformer.XlateToDb(app.pathInfo.Path, opcode, d, (*app).ygotRoot, (*app).ygotTarget, (*app).body, txCache)
+	result, err := transformer.XlateToDb(app.pathInfo.Path, opcode, d, (*app).ygotRoot, (*app).ygotTarget, (*app).body, txCache, &app.skipOrdTableChk)
 	fmt.Println(result)
 	log.Info("transformer.XlateToDb() returned", result)
 
@@ -302,14 +307,16 @@ func (app *CommonApp) translateCRUDCommon(d *db.DB, opcode int) ([]db.WatchKeys,
         log.Info("Result Tables List", resultTblList)
 
 	// Get list of tables to watch
-	depTbls := transformer.GetTablesToWatch(resultTblList, moduleNm)
-	if len(depTbls) == 0 {
-		log.Errorf("Failure to get Tables to watch for module %v", moduleNm)
-		err = errors.New("GetTablesToWatch returned empty slice")
-                return keys, err
-	}
-	for _, tbl := range depTbls {
-		tblsToWatch = append(tblsToWatch, &db.TableSpec{Name: tbl})
+	if len(resultTblList) > 0 {
+		depTbls := transformer.GetTablesToWatch(resultTblList, moduleNm)
+		if len(depTbls) == 0 {
+			log.Errorf("Failure to get Tables to watch for module %v", moduleNm)
+			err = errors.New("GetTablesToWatch returned empty slice")
+			return keys, err
+		}
+		for _, tbl := range depTbls {
+			tblsToWatch = append(tblsToWatch, &db.TableSpec{Name: tbl})
+		}
 	}
         log.Info("Tables to watch", tblsToWatch)
         cmnAppInfo.tablesToWatch = tblsToWatch
@@ -499,6 +506,7 @@ func (app *CommonApp) cmnAppDelDbOpn(d *db.DB, opcode int, dbMap map[string]map[
 	var moduleNm string
 	var xfmrTblLst []string
 	var resultTblLst []string
+	var ordTblList []string
 
 	for tblNm, _ := range(dbMap) {
 		xfmrTblLst = append(xfmrTblLst, tblNm)
@@ -523,26 +531,30 @@ func (app *CommonApp) cmnAppDelDbOpn(d *db.DB, opcode int, dbMap map[string]map[
 		if tblVal, ok := dbMap[tblNm]; ok {
 			cmnAppTs = &db.TableSpec{Name: tblNm}
 			log.Info("Found table entry in yang to DB map")
-			ordTblList := transformer.GetOrdTblList(tblNm, moduleNm)
-			if len(ordTblList) == 0 {
-				log.Error("GetOrdTblList returned empty slice")
-				err = errors.New("GetOrdTblList returned empty slice. Insufficient information to process request")
-				return err
+			if !app.skipOrdTableChk {
+				ordTblList = transformer.GetOrdTblList(tblNm, moduleNm)
+				if len(ordTblList) == 0 {
+					log.Error("GetOrdTblList returned empty slice")
+					err = errors.New("GetOrdTblList returned empty slice. Insufficient information to process request")
+					return err
+				}
+				log.Infof("GetOrdTblList for table - %v, module %v returns %v", tblNm, moduleNm, ordTblList)
 			}
-			log.Infof("GetOrdTblList for table - %v, module %v returns %v", tblNm, moduleNm, ordTblList)
 			if len(tblVal) == 0 {
 				log.Info("DELETE case - No table instances/rows found hence delete entire table = ", tblNm)
-				for _, ordtbl := range ordTblList {
-					log.Info("Since parent table is to be deleted, first deleting child table = ", ordtbl)
-					if ordtbl == tblNm {
-						// Handle the child tables only till you reach the parent table entry
-						break
-					}
-					dbTblSpec = &db.TableSpec{Name: ordtbl}
-					err = d.DeleteTable(dbTblSpec)
-					if err != nil {
-						log.Warning("DELETE case - d.DeleteTable() failure for Table = ", ordtbl)
-						return err
+				if !app.skipOrdTableChk {
+					for _, ordtbl := range ordTblList {
+						log.Info("Since parent table is to be deleted, first deleting child table = ", ordtbl)
+						if ordtbl == tblNm {
+							// Handle the child tables only till you reach the parent table entry
+							break
+						}
+						dbTblSpec = &db.TableSpec{Name: ordtbl}
+						err = d.DeleteTable(dbTblSpec)
+						if err != nil {
+							log.Warning("DELETE case - d.DeleteTable() failure for Table = ", ordtbl)
+							return err
+						}
 					}
 				}
 				err = d.DeleteTable(cmnAppTs)
@@ -560,21 +572,22 @@ func (app *CommonApp) cmnAppDelDbOpn(d *db.DB, opcode int, dbMap map[string]map[
 				if len(tblRw.Field) == 0 {
 					log.Info("DELETE case - no fields/cols to delete hence delete the entire row.")
 					log.Info("First, delete child table instances that correspond to parent table instance to be deleted = ", tblKey)
-					for _, ordtbl := range ordTblList {
-						if ordtbl == tblNm {
-							// Handle the child tables only till you reach the parent table entry
-							break;
+					if !app.skipOrdTableChk {
+						for _, ordtbl := range ordTblList {
+							if ordtbl == tblNm {
+								// Handle the child tables only till you reach the parent table entry
+								break;
+							}
+							dbTblSpec = &db.TableSpec{Name: ordtbl}
+							keyPattern := tblKey + "|*"
+							log.Info("Key pattern to be matched for deletion = ", keyPattern)
+							err = d.DeleteKeys(dbTblSpec, db.Key{Comp: []string{keyPattern}})
+							if err != nil {
+								log.Warning("DELETE case - d.DeleteTable() failure for Table = ", ordtbl)
+								return err
+							}
+							log.Info("Deleted keys matching parent table key pattern for child table = ", ordtbl)
 						}
-						dbTblSpec = &db.TableSpec{Name: ordtbl}
-						keyPattern := tblKey + "|*"
-						log.Info("Key pattern to be matched for deletion = ", keyPattern)
-						err = d.DeleteKeys(dbTblSpec, db.Key{Comp: []string{keyPattern}})
-						if err != nil {
-							log.Warning("DELETE case - d.DeleteTable() failure for Table = ", ordtbl)
-							return err
-						}
-						log.Info("Deleted keys matching parent table key pattern for child table = ", ordtbl)
-
 					}
 					err = d.DeleteEntry(cmnAppTs, db.Key{Comp: []string{tblKey}})
 					if err != nil {
