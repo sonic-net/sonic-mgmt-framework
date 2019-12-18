@@ -258,6 +258,55 @@ func prepareDb() {
 	loadConfigDB(rclient, depDataMap)
 }
 
+//Clear all db entries which are used in the test cases.
+//The list of such db should be updated here if new
+//table is referred in any test case.
+//The test case running may fail if tables are not cleared 
+//prior to starting execution of test cases.
+//"DEVICE_METADATA" should not be cleaned as it is used
+//during cvl package init() phase.
+func clearDb() {
+
+	tblList := []string {
+		"ACL_RULE",
+		"ACL_TABLE",
+		"BGP_GLOBALS",
+		"BUFFER_PG",
+		"CABLE_LENGTH",
+		"CFG_L2MC_TABLE",
+		"INTERFACE",
+		"MIRROR_SESSION",
+		"PORTCHANNEL",
+		"PORTCHANNEL_MEMBER",
+		"PORT_QOS_MAP",
+		"QUEUE",
+		"SCHEDULER",
+		"STP",
+		"STP_INTF",
+		"STP_VLAN",
+		"TAM_COLLECTOR_TABLE",
+		"TAM_INT_IFA_FLOW_TABLE",
+		"VLAN",
+		"VLAN_INTERFACE",
+		"VLAN_MEMBER",
+		"VRF",
+		"VXLAN_TUNNEL",
+		"VXLAN_TUNNEL_MAP",
+		"WRED_PROFILE",
+	}
+
+	for _, tbl := range tblList {
+		_, err := exec.Command("/bin/sh", "-c",
+		"redis-cli -n 4 del `redis-cli -n 4 keys '" +
+		tbl + "|*' | cut -d ' ' -f 2`").Output()
+
+		if err != nil {
+			fmt.Println(err.Error())
+		}
+	}
+}
+
+
 func  WriteToFile(message string) {
 	pc := make([]uintptr, 10)
 	runtime.Callers(2, pc)
@@ -304,6 +353,9 @@ func TestMain(m *testing.M) {
 	}
 
 
+	//Clear all tables which are used for testing
+	clearDb()
+
 	/* Prepare the Redis database. */
 	prepareDb()
 	SetTrace(true)
@@ -316,6 +368,9 @@ func TestMain(m *testing.M) {
 	if (loadDeviceDataMap == true) {
 		unloadConfigDB(rclient, deviceDataMap)
 	}
+
+	//Clear all tables which were used for testing
+	clearDb()
 
 	cvl.Finish()
 	rclient.Close()
