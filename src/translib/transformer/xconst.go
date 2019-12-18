@@ -50,5 +50,8 @@ const (
 	SONIC_TABLE_INDEX = 2
 	SONIC_FIELD_INDEX = 4
 	SONIC_MDL_PFX = "sonic"
+	OC_MDL_PFX = "openconfig-"
+	IETF_MDL_PFX = "ietf-"
+	IANA_MDL_PFX = "iana-"
 
 )

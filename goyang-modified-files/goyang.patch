@@ -12,7 +12,7 @@ index 4d22c1e..805adb5 100644
  progress.
 diff --git a/annotate.go b/annotate.go
 new file mode 100644
-index 0000000..243c416
+index 0000000..286a29c
 --- /dev/null
 +++ b/annotate.go
 @@ -0,0 +1,395 @@
@@ -412,7 +412,7 @@ index 0000000..243c416
 +}
 +
 diff --git a/pkg/yang/entry.go b/pkg/yang/entry.go
-index ef658d6..f626dc9 100644
+index ef658d6..cd3b046 100644
 --- a/pkg/yang/entry.go
 +++ b/pkg/yang/entry.go
 @@ -80,6 +80,7 @@ type Entry struct {
@@ -450,6 +450,15 @@ index ef658d6..f626dc9 100644
  	return e
  }
  
+@@ -1007,7 +1014,7 @@ func (e *Entry) ApplyDeviate() []error {
+ 					}
+ 
+ 					if devSpec.Default != "" {
+-						deviatedNode.Default = ""
++						deviatedNode.Default = devSpec.Default
+ 					}
+ 
+ 					if devSpec.Mandatory != TSUnset {
 @@ -1090,6 +1097,7 @@ func (e *Entry) FixChoice() {
  				}
  				ce.Parent = ne

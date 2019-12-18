@@ -1,0 +1,23 @@
+{% if json_output -%}
+{% if json_output is iterable %}
+{% set comm_list = {} %}
+{% if "openconfig-bgp-policy:as-path-sets" is in json_output %}
+{% set comm_list = json_output['openconfig-bgp-policy:as-path-sets']['as-path-set'] %}
+{% endif %}
+{% if "openconfig-bgp-policy:as-path-set" is in json_output %}
+{% set comm_list = json_output['openconfig-bgp-policy:as-path-set'] %}
+{% endif %}
+{% for list in comm_list %}
+{% set vars = {'list_name': ""} %}
+{% set mems =  "" %}
+{% set temp = [ ] %}
+{% if vars.update({'list_name':list ['as-path-set-name']}) %} {% endif %}
+AS path list {{'%s'| format(vars.list_name)}}:
+   {% set mems =  list['config']['as-path-set-member'] %}
+   {% for mem in mems %}
+     {% do temp.append(mem) %}
+   {% endfor %}
+   members: {{'%s'| format(temp|join(","))}}
+{% endfor %}
+{% endif %}
+{% endif %}

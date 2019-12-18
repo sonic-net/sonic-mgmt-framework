@@ -24,6 +24,7 @@ import (
     "reflect"
     "regexp"
     "translib/db"
+    "translib/tlerr"
     "github.com/openconfig/goyang/pkg/yang"
     "github.com/openconfig/gnmi/proto/gnmi"
     "github.com/openconfig/ygot/ygot"
@@ -403,6 +404,7 @@ func formXfmrInputRequest(d *db.DB, dbs [db.MaxDB]*db.DB, cdb db.DBNum, ygRoot *
 	inParams.subOpDataMap = subOpDataMap
 	inParams.param = param // generic param
 	inParams.txCache = txCache
+	inParams.skipOrdTblChk = new(bool)
 
 	return inParams
 }
@@ -726,7 +728,8 @@ func unmarshalJsonToDbData(schema *yang.Entry, fieldName string, value interface
              yang.Yuint8, yang.Yuint16, yang.Yuint32:
                 pv, err := yangFloatIntToGoType(ykind, value.(float64))
                 if err != nil {
-                        return "", fmt.Errorf("error parsing %v for schema %s: %v", value, schema.Name, err)
+			errStr := fmt.Sprintf("error parsing %v for schema %s: %v", value, schema.Name, err)
+			return "", tlerr.InternalError{Format: errStr}
                 }
                 data = fmt.Sprintf("%v", pv)
         default:
@@ -746,4 +749,11 @@ func checkIpV6AddrNotation(val string) bool {
                 return true;
         }
         return false;
+}
+
+func copyYangXpathSpecData(dstNode *yangXpathInfo, srcNode *yangXpathInfo) {
+	if dstNode != nil && srcNode != nil {
+		*dstNode = *srcNode
+	}
+	return
 }

@@ -20,6 +20,37 @@ limitations under the License.
     xsi:schemaLocation="http://www.dellemc.com/sonic/XMLSchema
                         http://www.dellemc.com/sonic/XMLSchema/clish.xsd">
 
+   <VIEW name = "enable-view">
+    <COMMAND name="show bgp" help="show bgp community, ext community, as list information"> </COMMAND>
+    <COMMAND name="show bgp community-list" help="Community list">
+        <PARAM name="list-name" help="Community list name" ptype="STRING" optional="true"> </PARAM>
+      <ACTION> if test "${list-name}" != ""; then&#xA;
+        python $SONIC_CLI_ROOT/sonic-cli-bgp-community.py bgp_community_show_specific show_bgp_com.j2 ${list-name}&#xA;
+        else&#xA;
+        python $SONIC_CLI_ROOT/sonic-cli-bgp-community.py bgp_community_show_all show_bgp_com.j2&#xA;
+        fi&#xA;
+      </ACTION>
+    </COMMAND>
+    <COMMAND name="show bgp ext-community-list" help="Extended community list">
+        <PARAM name="list-name" help="Extended community list name" ptype="STRING" optional="true"> </PARAM>
+      <ACTION> if test "${list-name}" != ""; then&#xA;
+        python $SONIC_CLI_ROOT/sonic-cli-bgp-community.py bgp_ext_community_show_specific show_bgp_extcom.j2 ${list-name}&#xA;
+        else&#xA;
+        python $SONIC_CLI_ROOT/sonic-cli-bgp-community.py bgp_ext_community_show_all show_bgp_extcom.j2&#xA;
+        fi&#xA;
+      </ACTION>
+    </COMMAND>
+    <COMMAND name="show bgp as-path-access-list" help="AS path acces list">
+        <PARAM name="list-name" help="AS path list name" ptype="STRING" optional="true"> </PARAM>
+      <ACTION> if test "${list-name}" != ""; then&#xA;
+        python $SONIC_CLI_ROOT/sonic-cli-bgp-community.py bgp_aspath_show_specific show_bgp_aspath.j2 ${list-name}&#xA;
+        else&#xA;
+        python $SONIC_CLI_ROOT/sonic-cli-bgp-community.py bgp_aspath_show_all show_bgp_aspath.j2&#xA;
+        fi&#xA;
+      </ACTION>
+    </COMMAND>
+   </VIEW>
+
    <VIEW
        name="configure-view"
        >
@@ -383,6 +414,29 @@ limitations under the License.
                         help="LINE An ordered list as a regular-expression"
                         ptype="STRING"
                         >
+                        <PARAM
+                            name="any-all subcommands"
+                            help="Any/all command"
+                            ptype="SUBCOMMAND"
+                            mode="switch"
+                            order="true"
+                            optional="true"
+                            >
+                            <PARAM
+                                name="any"
+                                help="Any command"
+                                ptype="SUBCOMMAND"
+                                mode="subcommand"
+                                >
+                            </PARAM>
+                            <PARAM
+                                name="all"
+                                help="All command"
+                                ptype="SUBCOMMAND"
+                                mode="subcommand"
+                                >
+                            </PARAM>
+                        </PARAM>
                     </PARAM>
                 </PARAM>
             </PARAM>
@@ -392,7 +446,7 @@ limitations under the License.
             python $SONIC_CLI_ROOT/sonic-cli-bgp-community.py bgp_community_standard ${community-list-name} ${__full_line}&#xA;
 
         elif test "${bgp-subcommands}" = "expanded"; then&#xA;
-            python $SONIC_CLI_ROOT/sonic-cli-bgp-community.py bgp_community_expanded ${community-expanded-list-name} ${line}&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-bgp-community.py bgp_community_expanded ${community-expanded-list-name} ${__full_line}&#xA;
 
         else&#xA;
             builtin="clish_nop"&#xA;
@@ -420,6 +474,29 @@ limitations under the License.
                     help="Regular expression"
                     ptype="STRING"
                     >
+                    <PARAM
+                        name="any-all subcommands"
+                        help="Any/all command"
+                        ptype="SUBCOMMAND"
+                        mode="switch"
+                        order="true"
+                        optional="true"
+                        >
+                        <PARAM
+                            name="any"
+                            help="Any command"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            >
+                        </PARAM>
+                        <PARAM
+                            name="all"
+                            help="All command"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            >
+                        </PARAM>
+                    </PARAM>
                 </PARAM>
             </PARAM>
         </PARAM>
@@ -456,11 +533,54 @@ limitations under the License.
                     help="Communty list name"
                     ptype="STRING"
                     >
+                    <PARAM
+                        name="community-members-subcommands"
+                        help="BGP Community members subcommands"
+                        mode="switch"
+                        ptype="SUBCOMMAND"
+                        optional="true"
+                        >
+                        <PARAM
+                            name="aann"
+                            help="Community number aa:nn format 0..65535:0..65535"
+                            ptype="AA_NN"
+                            >
+                        </PARAM>
+                        <PARAM
+                            name="local-AS"
+                            help="Do not send outside local AS (well-known community)"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            >
+                        </PARAM>
+                        <PARAM
+                            name="no-advertise"
+                            help="Do not advertise to any peer (well-known community)"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            >
+                        </PARAM>
+                        <PARAM
+                            name="no-export"
+                            help="Do not export to next AS (well-known community)"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            >
+                        </PARAM>
+                        <PARAM
+                            name="no-peer"
+                            help="Do not export to next AS (well-known community)"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            >
+                        </PARAM>
+                    </PARAM>
                 </PARAM>
             </PARAM>
+
             <PARAM
                 name="expanded"
-                help="Delete a expanded community list entry"
+                help="Delete expanded community list entry"
                 ptype="SUBCOMMAND"
                 mode="subcommand"
                 >
@@ -469,15 +589,23 @@ limitations under the License.
                     help="Communty list name"
                     ptype="STRING"
                     >
+                    <PARAM
+                        name="line"
+                        help="LINE An ordered list as a regular-expression"
+                        ptype="STRING"
+                        optional="true"
+                        >
+                    </PARAM>
                 </PARAM>
             </PARAM>
-        </PARAM>    
+        </PARAM>
+
     <ACTION>
         if test "${bgp-subcommands}" = "standard"; then&#xA;
-            python $SONIC_CLI_ROOT/sonic-cli-bgp-community.py bgp_community_standard_delete ${community-list-name}&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-bgp-community.py bgp_community_standard_delete ${community-list-name} ${__full_line}&#xA;
 
         elif test "${bgp-subcommands}" = "expanded"; then&#xA;
-            python $SONIC_CLI_ROOT/sonic-cli-bgp-community.py bgp_community_expanded_delete ${community-expanded-list-name}&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-bgp-community.py bgp_community_expanded_delete ${community-expanded-list-name} ${__full_line}&#xA;
 
         else&#xA;
             builtin="clish_nop"&#xA;
@@ -494,9 +622,23 @@ limitations under the License.
             help="Name of as-path-list"
             ptype="STRING"
             >
+            <PARAM
+                name="regex"
+                help="Regular expression to match the BGP AS paths"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                optional="true"
+                >
+                <PARAM
+                    name="regx-id"
+                    help="Regular expression"
+                    ptype="STRING"
+                    >
+                </PARAM>
+            </PARAM>
         </PARAM>
     <ACTION>
-        python $SONIC_CLI_ROOT/sonic-cli-bgp-community.py bgp_as_path_list_delete ${as-path-list-name)&#xA;
+        python $SONIC_CLI_ROOT/sonic-cli-bgp-community.py bgp_as_path_list_delete ${as-path-list-name} ${regx-id}&#xA;
     </ACTION>
     </COMMAND>
 </VIEW>

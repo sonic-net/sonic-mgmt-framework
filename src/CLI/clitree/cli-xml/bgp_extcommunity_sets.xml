@@ -35,7 +35,7 @@ limitations under the License.
             >
             <PARAM
                 name="standard"
-                help="Add a standard extcommunity list entry"
+                help="Add a standard extended community list entry"
                 ptype="SUBCOMMAND"
                 mode="subcommand"
                 >
@@ -149,7 +149,7 @@ limitations under the License.
             </PARAM>
             <PARAM
                 name="expanded"
-                help="Add a expanded community list entry"
+                help="Add a expanded extended community list entry"
                 ptype="SUBCOMMAND"
                 mode="subcommand"
                 >
@@ -163,16 +163,38 @@ limitations under the License.
                         help="LINE An ordered list as a regular-expression"
                         ptype="STRING"
                         >
+                        <PARAM
+                            name="rt-any-all subcommands"
+                            help="Any/all command"
+                            ptype="SUBCOMMAND"
+                            mode="switch"
+                            optional="true"
+                            >
+                            <PARAM
+                                name="any"
+                                help="Any command"
+                                ptype="SUBCOMMAND"
+                                mode="subcommand"
+                                >
+                            </PARAM>
+                            <PARAM
+                                name="all"
+                                help="All command"
+                                ptype="SUBCOMMAND"
+                                mode="subcommand"
+                                >
+                            </PARAM>
+                        </PARAM>
                     </PARAM>
                 </PARAM>
             </PARAM>
         </PARAM>
     <ACTION>
         if test "${bgp-subcommands}" = "standard"; then&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-bgp-community.py bgp_extcommunity_standard ${extcommunity-list-name} ${__full_line}&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-bgp-community.py bgp_extcommunity_standard ${extcommunity-list-name} ${__full_line}&#xA;
 
         elif test "${bgp-subcommands}" = "expanded"; then&#xA;
-            python $SONIC_CLI_ROOT/sonic-cli-bgp-community.py bgp_extcommunity_expanded ${extcommunity-list-name} ${line}&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-bgp-community.py bgp_extcommunity_expanded ${extcommunity-list-name} ${__full_line}&#xA;
 
         else&#xA;
             builtin="clish_nop"&#xA;
@@ -182,7 +204,7 @@ limitations under the License.
 
     <COMMAND
         name="no bgp extcommunity-list"
-        help="Delete a extcommunity list entry">
+        help="Delete a extended community list entry">
         <PARAM
             name="bgp-subcommands"
             help="BGP subcommands"
@@ -191,7 +213,7 @@ limitations under the License.
             >
             <PARAM
                 name="standard"
-                help="Delete a standard extcommunity list entry"
+                help="Delete standard extcommunity list entry"
                 ptype="SUBCOMMAND"
                 mode="subcommand"
                 >
@@ -200,6 +222,64 @@ limitations under the License.
                     help="Communty list name"
                     ptype="STRING"
                     >
+                    <PARAM
+                        name="standard-subcommands"
+                        help="Standard extcommand"
+                        ptype="SUBCOMMAND"
+                        mode="switch"
+                        optional="true"
+                        >
+                        <PARAM
+                            name="rt"
+                            help="Route-target"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            >
+                            <PARAM name="rt-subcommands"
+                                help="RT extcommand"
+                                ptype="SUBCOMMAND"
+                                mode="switch"
+                                >
+                                <PARAM
+                                    name="aa"
+                                    help="Extended community number aa:nn format 0..65535:0..65535"
+                                    ptype="AA_NN"
+                                    >
+                                </PARAM>
+                                <PARAM
+                                    name="ipaddrnn"
+                                    help="Extended community number ip-addr"
+                                    ptype="IPADDR_NN"
+                                    >
+                                </PARAM>
+                            </PARAM>
+                        </PARAM>
+                        <PARAM
+                            name="soo"
+                            help="Route-origin"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            >
+                            <PARAM name="soo-subcommands"
+                                help="Route origin subcommand"
+                                ptype="SUBCOMMAND"
+                                mode="switch"
+                                >
+                                <PARAM
+                                    name="aa"
+                                    help="Extended community number aa:nn format 0..65535:0..65535"
+                                    ptype="AA_NN"
+                                    >
+                                </PARAM>
+                                <PARAM
+                                    name="ipaddrnn"
+                                    help="Extended community number ip-addr"
+                                    ptype="IPADDR_NN"
+                                    >
+                                </PARAM>
+                            </PARAM>
+                        </PARAM>
+                    </PARAM>
                 </PARAM>
             </PARAM>
             <PARAM
@@ -213,15 +293,23 @@ limitations under the License.
                     help="Communty list name"
                     ptype="STRING"
                     >
+                    <PARAM
+                        name="line"
+                        help="LINE An ordered list as a regular-expression"
+                        ptype="STRING"
+                        optional="true"
+                        >
+                    </PARAM>
                 </PARAM>
             </PARAM>
         </PARAM>
-    <ACTION>
+
+      <ACTION>
         if test "${bgp-subcommands}" = "standard"; then&#xA;
-            python $SONIC_CLI_ROOT/sonic-cli-bgp-community.py bgp_extcommunity_standard_delete ${extcommunity-list-name}&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-bgp-community.py bgp_extcommunity_standard_delete ${extcommunity-list-name} ${__full_line}&#xA;
 
         elif test "${bgp-subcommands}" = "expanded"; then&#xA;
-            python $SONIC_CLI_ROOT/sonic-cli-bgp-community.py bgp_extcommunity_expanded_delete ${extcommunity-list-name}&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-bgp-community.py bgp_extcommunity_expanded_delete ${extcommunity-list-name} ${__full_line}&#xA;
 
         else&#xA;
             builtin="clish_nop"&#xA;

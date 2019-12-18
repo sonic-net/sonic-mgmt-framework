@@ -408,8 +408,16 @@ var DbToYang_route_map_bgp_action_set_community SubTreeXfmrDbToYang = func (inPa
         return errors.New("Routing policy keys are not present")
     }
     rtPolDefObj := rtPolDefsObj.PolicyDefinitions.PolicyDefinition[rtPolicyName]
+    if rtPolDefObj == nil {
+        rtPolDefObj,_ = rtPolDefsObj.PolicyDefinitions.NewPolicyDefinition(rtPolicyName)
+    }
+    ygot.BuildEmptyTree(rtPolDefObj)
 
     rtStmtObj := rtPolDefObj.Statements.Statement[rtStmtName]
+    if rtStmtObj == nil {
+        rtStmtObj,_ = rtPolDefObj.Statements.NewStatement(rtStmtName)
+    }
+    ygot.BuildEmptyTree(rtStmtObj)
 
     if rtStmtObj.Actions == nil || rtStmtObj.Actions.BgpActions == nil || rtStmtObj.Actions.BgpActions.SetCommunity == nil {
         return errors.New("Routing policy invalid action parameters")
@@ -613,7 +621,16 @@ var DbToYang_route_map_bgp_action_set_ext_community SubTreeXfmrDbToYang = func (
     }
     rtPolDefObj := rtPolDefsObj.PolicyDefinitions.PolicyDefinition[rtPolicyName]
 
+    if rtPolDefObj == nil {
+        rtPolDefObj,_ = rtPolDefsObj.PolicyDefinitions.NewPolicyDefinition(rtPolicyName)
+    }
+    ygot.BuildEmptyTree(rtPolDefObj)
+
     rtStmtObj := rtPolDefObj.Statements.Statement[rtStmtName]
+    if rtStmtObj == nil {
+        rtStmtObj,_ = rtPolDefObj.Statements.NewStatement(rtStmtName)
+    }
+    ygot.BuildEmptyTree(rtStmtObj)
 
     if rtStmtObj.Actions == nil || rtStmtObj.Actions.BgpActions == nil || rtStmtObj.Actions.BgpActions.SetExtCommunity == nil {
         return errors.New("Routing policy invalid action parameters")
