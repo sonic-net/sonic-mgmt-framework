@@ -58,7 +58,9 @@ module sonic-mirror-session {
                 }
 
                 leaf gre_type {
-                    type yang:hex-string;
+                    type string {
+                        pattern "0[xX][0-9a-fA-F]*";
+                    }
                 }
 
                 leaf dscp {
@@ -98,7 +100,7 @@ module sonic-mirror-session {
 
                 must "not (src_port) or not (dst_port) or (dst_port != src_port)" {
                     error-message "destination port cant be same as source port";
-                    error-app-tag mirror_session-invalid;
+                    error-app-tag mirror-session-invalid;
                 }
             }
         }
