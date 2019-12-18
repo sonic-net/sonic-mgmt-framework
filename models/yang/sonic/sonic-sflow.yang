@@ -88,9 +88,9 @@ module sonic-sflow {
            }
 
            container SFLOW_SESSION_TABLE {
-               list SFLOW_SESSION_LIST {
+               config false;
+               list SFLOW_SESSION_TABLE_LIST {
                    key "ifname";
-                   config false;
 
                    leaf ifname {
                        type string;

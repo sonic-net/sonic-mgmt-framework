@@ -9,7 +9,7 @@ module sonic-sflow-annot {
     import sonic-extensions { prefix sonic-ext; }
 
 
-    deviation /sflow:sonic-sflow/sflow:SFLOW_SESSION_TABLE/sflow:SFLOW_SESSION_LIST {
+    deviation /sflow:sonic-sflow/sflow:SFLOW_SESSION_TABLE/sflow:SFLOW_SESSION_TABLE_LIST {
       deviate add {
         sonic-ext:db-name "APPL_DB";
       }
