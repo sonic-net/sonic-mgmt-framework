@@ -378,9 +378,13 @@ func dbMapDelete(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requestU
 		log.Infof("Delete req: uri(\"%v\"), key(\"%v\"), xpathPrefix(\"%v\"), tableName(\"%v\").", uri, keyName, xpathPrefix, tableName)
 		spec, ok := xYangSpecMap[xpathPrefix]
 		if ok {
+<<<<<<< HEAD
 			specYangType := yangTypeGet(spec.yangEntry)
                         moduleNm := "/" + strings.Split(uri, "/")[1]
                         log.Infof("Module name for uri %s is %s", uri, moduleNm)
+=======
+		specYangType := yangTypeGet(spec.yangEntry)
+>>>>>>> origin/broadcom_sonic_share
 			if len(spec.xfmrFunc) > 0 {
 				var dbs [db.MaxDB]*db.DB
 				cdb := spec.dbIndex

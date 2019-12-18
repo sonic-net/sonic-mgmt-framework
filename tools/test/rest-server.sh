@@ -29,9 +29,8 @@ SERVER_DIR=$BUILD_DIR/rest_server
 [ -z $LD_LIBRARY_PATH ] && export LD_LIBRARY_PATH=/usr/local/lib
 
 # Setup CVL schema directory
-if [ -z $CVL_SCHEMA_PATH ]; then
-    export CVL_SCHEMA_PATH=$BUILD_DIR/cvl/schema
-fi
+[ -z $CVL_SCHEMA_PATH ] && export CVL_SCHEMA_PATH=$BUILD_DIR/cvl/schema
+[ -z $CVL_CFG_FILE ] && export CVL_CFG_FILE=$TOPDIR/src/cvl/conf/cvl_cfg.json
 
 echo "CVL schema directory is $CVL_SCHEMA_PATH"
 if [ $(find $CVL_SCHEMA_PATH -name *.yin | wc -l) == 0 ]; then

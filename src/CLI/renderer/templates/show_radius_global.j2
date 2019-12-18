@@ -6,7 +6,7 @@
 {% set timeout = json_output['openconfig-system:config']['openconfig-system-ext:timeout'] %}
 {% set authtype = json_output['openconfig-system:config']['openconfig-system-ext:auth-type'] %}
 {% set key = json_output['openconfig-system:config']['openconfig-system-ext:secret-key'] %}
-{% set retransmit = json_output['openconfig-system:config']['openconfig-system-ext:retransmit-attemts'] %}
+{% set retransmit = json_output['openconfig-system:config']['openconfig-system-ext:retransmit-attempts'] %}
 
 {% if srcip -%}
 {{'source-ip  : '}}{{srcip}}
