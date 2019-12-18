@@ -503,7 +503,6 @@ func dbDataFromTblXfmrGet(tbl string, inParams XfmrParams, dbDataMap *map[db.DBN
 
 func yangListDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, requestUri string, xpath string, dbDataMap *map[db.DBNum]map[string]map[string]db.Value, resultMap map[string]interface{}, tbl string, tblKey string, cdb db.DBNum, validate bool, txCache interface{}, isFirstCall bool) error {
 	var tblList []string
-	var wg sync.WaitGroup
 
 	if tbl == "" && xYangSpecMap[xpath].xfmrTbl != nil {
 		xfmrTblFunc := *xYangSpecMap[xpath].xfmrTbl
@@ -527,6 +526,7 @@ func yangListDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, r
 	} else if tbl == "" && xYangSpecMap[xpath].xfmrTbl == nil {
 		// Handling for case: Parent list is not associated with a tableName but has children containers/lists having tableNames.
 		if tblKey != "" {
+			var wg sync.WaitGroup
 			var mapSlice []typeMapOfInterface
 			wg.Add(1)
 			chl := make(chan typeChMapErr)
@@ -561,10 +561,17 @@ func yangListDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, r
 		}
 	}
 
+	var tblWg sync.WaitGroup
 	for _, tbl = range(tblList) {
+		tblWg.Add(1)
+
+		go func(tbl string) {
+
+		defer tblWg.Done()
 		tblData, ok := (*dbDataMap)[cdb][tbl]
 
 		if ok {
+			var wg sync.WaitGroup
 			var mapSlice []typeMapOfInterface
 			chl := make(chan typeChMapErr, len(tblData))
 			for dbKey, _ := range tblData {
@@ -608,7 +615,9 @@ func yangListDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, r
 			}
 		}
 
+	}(tbl)
 	}// end of tblList for
+	tblWg.Wait()
 	return nil
 }
 
@@ -631,7 +640,9 @@ func yangListInstanceDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri s
 				log.Infof("Error returned by %v: %v", xYangSpecMap[xpath].xfmrFunc, err)
 			}
 		}
-		yangDataFill(dbs, ygRoot, curUri, requestUri, xpath, dbDataMap, curMap, tbl, dbKey, cdb, validate, txCache)
+		if xYangSpecMap[xpath].hasChildSubTree == true {
+			yangDataFill(dbs, ygRoot, curUri, requestUri, xpath, dbDataMap, curMap, tbl, dbKey, cdb, validate, txCache)
+		}
 	} else {
 		_, keyFromCurUri, _ := xpathKeyExtract(dbs[cdb], ygRoot, GET, curUri, requestUri, nil, txCache)
 		if dbKey == keyFromCurUri || keyFromCurUri == "" {
@@ -785,6 +796,9 @@ func yangDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, reque
 								log.Infof("Error returned by %v: %v", xYangSpecMap[xpath].xfmrFunc, err)
 							}
 						}
+						if xYangSpecMap[chldXpath].hasChildSubTree == false {
+							continue
+						}
 					}
 					cmap2 := make(map[string]interface{})
 					err  = yangDataFill(dbs, ygRoot, chldUri, requestUri, chldXpath, dbDataMap, cmap2, chtbl,
@@ -808,6 +822,9 @@ func yangDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, reque
 							   if err != nil {
 								   log.Infof("Error returned by %v: %v", xYangSpecMap[chldXpath].xfmrFunc, err)
 							   }
+						}
+						if xYangSpecMap[chldXpath].hasChildSubTree == false {
+							continue
 						}
 					}
 					ynode, ok := xYangSpecMap[chldXpath]
@@ -924,6 +941,9 @@ func dbDataToYangJsonCreate(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db
 						if err != nil {
 							log.Infof("Error returned by %v: %v", xYangSpecMap[reqXpath].xfmrFunc, err)
 						}
+						if xYangSpecMap[reqXpath].hasChildSubTree == false {
+							break
+						}
 					}
 					err = yangDataFill(dbs, ygRoot, uri, requestUri, reqXpath, dbDataMap, resultMap, tableName, keyName, cdb, IsValidate, txCache)
 					if err != nil {
@@ -939,6 +959,9 @@ func dbDataToYangJsonCreate(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db
 							log.Infof("Error returned by %v: %v", xYangSpecMap[reqXpath].xfmrFunc, err)
 						}
 						isFirstCall = false
+						if xYangSpecMap[reqXpath].hasChildSubTree == false {
+							break
+						}
 					}
 					err = yangListDataFill(dbs, ygRoot, uri, requestUri, reqXpath, dbDataMap, resultMap, tableName, keyName, cdb, IsValidate, txCache, isFirstCall)
 					if err != nil {
