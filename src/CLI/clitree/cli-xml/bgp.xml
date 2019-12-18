@@ -373,7 +373,7 @@ limitations under the License.
   </COMMAND>
   <COMMAND name="no route-map" help="Time in secs to wait before processing route-map changes"/>
   <COMMAND name="no route-map delay-timer" help="Time in secs to wait before processing route-map changes">
-    <ACTION builtin="clish_nop"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_config_route_map_process_delay ${vrf-name}</ACTION>
   </COMMAND>
   <COMMAND name="no route-reflector" help="Allow modifications made by out route-map"/>
   <COMMAND name="no route-reflector allow-outbound-policy" help="Allow modifications made by out route-map">
@@ -437,6 +437,16 @@ limitations under the License.
     <PARAM name="unicast" help="Address Family" mode="subcommand" ptype="SUBCOMMAND"/>
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi ${vrf-name} IPV6_UNICAST</ACTION>
   </COMMAND>
+
+  <COMMAND name="no listen" help="Set the prefix range for dynamic peers">
+    <PARAM name="addr" help="Neighbor prefix" ptype="IP_ADDR_MASK">
+      <PARAM name="peer-group" help="Member of the peer-group" mode="subcommand" ptype="SUBCOMMAND" optional="true">
+        <PARAM name="pgname" help="Peer-group name" ptype="STRING"/>
+      </PARAM>
+    </PARAM>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance1717438887 ${vrf-name} ${addr} ${pgname} </ACTION>
+  </COMMAND>
+
 </VIEW>
 
 
@@ -722,12 +732,12 @@ limitations under the License.
   <COMMAND name="bfd" help="Enables BFD support">
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_config_bfd ${vrf-name} ${template-name} True</ACTION>
   </COMMAND>
-  <COMMAND name="capability" help="Advertise capability to the peer">
-    <PARAM name="captype" help="Capability" mode="switch" ptype="SUBCOMMAND">
-      <PARAM name="dynamic" help="Advertise dynamic capability to this neighbor" mode="subcommand" ptype="SUBCOMMAND"/>
-      <PARAM name="extended-nexthop" help="Advertise extended next-hop capability to the peer" mode="subcommand" ptype="SUBCOMMAND"/>
-    </PARAM>
-    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_config_capability_extended_nexthop ${vrf-name} ${template-name} ${captype}</ACTION>
+  <COMMAND name="capability" help="Advertise capability to the peer"/>
+  <COMMAND name="capability extended-nexthop" help="Advertise extended next-hop capability to the peer">
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_peer_groups_config_capability_extended_nexthop ${vrf-name} ${template-name} True</ACTION>
+  </COMMAND>
+  <COMMAND name="capability dynamic" help="Advertise dynamic capability to this neighbor">
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_peer_groups_config_capability_dynamic ${vrf-name} ${template-name} True</ACTION>
   </COMMAND>
   <COMMAND name="disable-connected-check" help="One-hop away EBGP peer using loopback address">
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_config_disable_ebgp_connected_route_check ${vrf-name} ${template-name} True</ACTION>
@@ -755,7 +765,7 @@ limitations under the License.
     <PARAM name="String" help="Password" ptype="STRING"/>
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_config_auth_password ${vrf-name} ${template-name} ${String}</ACTION>
   </COMMAND>
-  <COMMAND name="port" help="Neighbor's BGP port">
+  <COMMAND name="port" help="Neighbor's BGP port" ref="hidden">
     <PARAM name="tcpport" help="TCP port number" ptype="RANGE_0_65535"/>
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_config_peer_port ${vrf-name} ${template-name} ${tcpport}</ACTION>
   </COMMAND>
@@ -838,8 +848,12 @@ limitations under the License.
   <COMMAND name="no bfd" help="Enables BFD support">
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_config_bfd ${vrf-name} ${template-name} False</ACTION>
   </COMMAND>
-  <COMMAND name="no capability" help="Advertise capability to the peer">
-    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_config_capability_extended_nexthop ${vrf-name} ${template-name} False ${String}</ACTION>
+  <COMMAND name="no capability" help="Advertise capability to the peer"/>
+  <COMMAND name="no capability extended-nexthop" help="Advertise extended next-hop capability to the peer">
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_config_capability_extended_nexthop ${vrf-name} ${template-name}</ACTION>
+  </COMMAND>
+  <COMMAND name="no capability dynamic" help="Advertise dynamic capability to this neighbor">
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_config_capability_dynamic ${vrf-name} ${template-name}</ACTION>
   </COMMAND>
   <COMMAND name="no disable-connected-check" help="One-hop away EBGP peer using loopback address">
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_config_disable_ebgp_connected_route_check ${vrf-name} ${template-name}</ACTION>
