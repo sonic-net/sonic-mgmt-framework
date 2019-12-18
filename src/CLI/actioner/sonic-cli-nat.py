@@ -30,8 +30,10 @@ urllib3.disable_warnings()
 
 nat_type_map = {"snat" : "SNAT", "dnat": "DNAT"}
 nat_protocol_map = {"icmp": "1", "tcp": "6", "udp": "17"}
+config = True
 
 def invoke_api(func, args=[]):
+    global config
 
     api = cc.ApiClient()
 
@@ -162,38 +164,46 @@ def invoke_api(func, args=[]):
 
     # Get NAT Global Config
     elif func == 'get_openconfig_nat_nat_instances_instance_config':
+        config = False
         path = cc.Path('/restconf/data/openconfig-nat:nat/instances/instance={id}/config', id=args[0])
         return api.get(path)
 
     # Get NAT Bindings
     elif func == 'get_openconfig_nat_nat_instances_instance_nat_acl_pool_binding':
+        config = False
         path = cc.Path('/restconf/data/openconfig-nat:nat/instances/instance={id}/nat-acl-pool-binding', id=args[0])
         return api.get(path)
 
     # Get NAT Pools
     elif func == 'get_openconfig_nat_nat_instances_instance_nat_pool':
+        config = False
         path = cc.Path('/restconf/data/openconfig-nat:nat/instances/instance={id}/nat-pool', id=args[0])
         return api.get(path)
 
     ## Get NAT Translations
     elif func == 'get_openconfig_nat_nat_instances_instance_nat_mapping_table':
+        config = False
         path = cc.Path('/restconf/data/openconfig-nat:nat/instances/instance={id}/nat-mapping-table', id=args[0])
         return api.get(path)
 
     elif func == 'get_openconfig_nat_nat_instances_instance_napt_mapping_table':
+        config = False
         path = cc.Path('/restconf/data/openconfig-nat:nat/instances/instance={id}/napt-mapping-table', id=args[0])
         return api.get(path)
 
     elif func == 'get_openconfig_nat_nat_instances_instance_nat_twice_mapping_table':
+        config = False
         path = cc.Path('/restconf/data/openconfig-nat:nat/instances/instance={id}/nat-twice-mapping-table', id=args[0])
         return api.get(path)
 
     elif func == 'get_openconfig_nat_nat_instances_instance_napt_twice_mapping_table':
+        config = False
         path = cc.Path('/restconf/data/openconfig-nat:nat/instances/instance={id}/napt-twice-mapping-table', id=args[0])
         return api.get(path)
 
     # Get all interfaces (needed for NAT Zone)
     elif func == 'get_openconfig_interfaces_interfaces':
+        config = False
         path = cc.Path('/restconf/data/openconfig-interfaces:interfaces')
         return api.get(path)
 
@@ -430,7 +440,8 @@ def get_nat_static_configs(func,args):
 
     return resp
 
-def run(func, args):   
+def run(func, args):
+    global config
 
     try:
        args.insert(0,"0")  # NAT instance 0
@@ -449,7 +460,8 @@ def run(func, args):
            response = invoke_api(func, args)
            api_response = get_response_dict(response)
 
-       show_cli_output(args[1], api_response)
+       if config == False:
+           show_cli_output(args[1], api_response)
  
     except Exception as e:
         print("Failure: %s\n" %(e))

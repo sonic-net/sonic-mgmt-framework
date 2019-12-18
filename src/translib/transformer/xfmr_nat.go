@@ -1,4 +1,4 @@
-///////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////
 //                                                                            //
 //  Copyright 2019 Dell, Inc.                                                 //
 //                                                                            //
@@ -82,12 +82,13 @@ const (
 )
 
 var nat_post_xfmr PostXfmrFunc = func(inParams XfmrParams) (map[string]map[string]db.Value, error) {
-    var res = make (map[string]map[string]db.Value)
-    var skip bool = true
     if inParams.oper == DELETE {
-        inParams.skipOrdTblChk  = &skip
+        if inParams.skipOrdTblChk != nil {
+            *inParams.skipOrdTblChk  = true
+        }
     }
-    return res,nil
+    log.Infof("nat_post_xfmr returned : %v, skipOrdTblChk: %v", (*inParams.dbDataMap)[db.ConfigDB], *inParams.skipOrdTblChk)
+    return (*inParams.dbDataMap)[db.ConfigDB], nil
 }
 
 var YangToDb_nat_instance_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (string, error) {
