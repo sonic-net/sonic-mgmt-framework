@@ -55,7 +55,7 @@ limitations under the License.
       </ACTION>
     </COMMAND>
 
-    <COMMAND name="show tam int-ifa statisitcs"
+    <COMMAND name="show tam int-ifa statistics"
              help="Show TAM IFA flow statistics"
              mode="subcommand"
              ptype="SUBCOMMAND">
