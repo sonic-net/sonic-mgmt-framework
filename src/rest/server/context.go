@@ -53,11 +53,15 @@ type RequestContext struct {
 	// swagger and map them back to yang names while converting
 	// REST paths to TransLib paths.
 	PMap NameMap
+
+	// stats is the apiStats object from the context
+	stats *apiStats
 }
 
 type contextkey int
 
 const requestContextKey contextkey = 0
+const statsContextKey	contextkey = 1
 
 // Request Id generator
 var requestCounter uint64
@@ -75,6 +79,7 @@ func GetContext(r *http.Request) (*RequestContext, *http.Request) {
 
 	rc := new(RequestContext)
 	rc.ID = fmt.Sprintf("REST-%v", atomic.AddUint64(&requestCounter, 1))
+	rc.stats = getApiStats(r)
 
 	r = r.WithContext(context.WithValue(r.Context(), requestContextKey, rc))
 	return rc, r
