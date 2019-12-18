@@ -57,7 +57,9 @@ limitations under the License.
   </COMMAND>
 
   <COMMAND name="show ip bgp summary" help="BGP Summary information">
-  <ACTION builtin="clish_nop"/>
+    <ACTION>
+      python $SONIC_CLI_ROOT/sonic-cli-bgp.py get_ip_bgp_summary show_ip_bgp_summary.j2
+    </ACTION>
   </COMMAND>
 </VIEW>
 
