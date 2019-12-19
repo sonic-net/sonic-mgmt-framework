@@ -380,8 +380,8 @@ func (app *StpApp) processCommon(d *db.DB, opcode int) error {
 			// Handle top PVST
 			switch opcode {
 			case CREATE, REPLACE, UPDATE, DELETE:
-				log.Infof("Implementation in progress for URL: %s", app.pathInfo.Template)
-				return tlerr.NotSupported("Implementation in progress")
+				log.Infof("URL: %s Not Supported", app.pathInfo.Template)
+				return tlerr.NotSupported("Operation Not Supported")
 			case GET:
 				ygot.BuildEmptyTree(stp.Pvst)
 				err = app.convertDBRpvstVlanConfigToInternal(d, db.Key{})
@@ -443,8 +443,8 @@ func (app *StpApp) processCommon(d *db.DB, opcode int) error {
 			// Handle both rapid-pvst and rapid-pvst/vlan
 			switch opcode {
 			case CREATE, REPLACE, UPDATE, DELETE:
-				log.Infof("Implementation in progress for URL: %s", app.pathInfo.Template)
-				return tlerr.NotSupported("Implementation in progress")
+				log.Infof("URL: %s Not Supported", app.pathInfo.Template)
+				return tlerr.NotSupported("Operation Not Supported")
 			case GET:
 				ygot.BuildEmptyTree(stp.RapidPvst)
 				err = app.convertDBRpvstVlanConfigToInternal(d, db.Key{})
@@ -496,8 +496,8 @@ func (app *StpApp) processCommon(d *db.DB, opcode int) error {
 		} else {
 			switch opcode {
 			case CREATE, REPLACE, UPDATE, DELETE:
-				log.Infof("Implementation in progress for URL: %s", app.pathInfo.Template)
-				return tlerr.NotSupported("Implementation in progress")
+				log.Infof("URL: %s Not Supported", app.pathInfo.Template)
+				return tlerr.NotSupported("Operation Not Supported")
 			case GET:
 				ygot.BuildEmptyTree(stp.Interfaces)
 				err = app.convertDBStpInterfacesToInternal(d, db.Key{})

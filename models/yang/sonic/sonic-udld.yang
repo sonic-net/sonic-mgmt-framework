@@ -178,6 +178,10 @@ module sonic-udld {
                 leaf timeout_interval {
                     type uint16;
                 }
+
+                leaf status {
+                    type string;
+                }
             }
         }
     }
