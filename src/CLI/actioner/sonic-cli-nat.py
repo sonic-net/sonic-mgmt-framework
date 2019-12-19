@@ -303,7 +303,7 @@ def get_count(count, table_name, l):
     
 
 def get_nat_translations_count(func, args):
-    response = get_nat_tables(args)
+    response = get_nat_translations(func, args)
     count = { 'static_nat': 0, 
               'static_napt': 0,
               'dynamic_nat': 0,
