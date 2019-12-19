@@ -1,0 +1,65 @@
+module sonic-vrf {
+    namespace "http://github.com/Azure/sonic-vrf";
+    prefix vrf;
+    
+    import sonic-common {
+        prefix scommon;
+    }
+
+    organization
+        "SONiC";
+
+    contact
+        "SONiC";
+
+    description
+        "SONIC VRF";
+
+    revision 2019-10-30 {
+        description
+            "Initial revision.";
+    }
+
+    revision 2019-11-22 {
+        description
+            "Add VRF name check";
+    }
+
+    container sonic-vrf {
+        container VRF {
+            description "Vrf configuration.";            
+
+            list VRF_LIST {
+                key "vrf_name";
+
+                leaf vrf_name {
+                    type string {
+                        pattern "Vrf[a-zA-Z0-9_-]+" {
+                            error-message "Invalid VRF name";
+                            error-app-tag vrf-name-invalid;
+                        }
+                    }
+                }   
+
+                leaf fallback {
+                    type  boolean;
+                    default false;
+                    description
+                        "Enalbe/disable fallback feature which is useful for specified VRF user to access internet through global/main route.";
+                }
+
+                leaf vni {
+                    type uint32 {
+                        range "0..16777215" {
+                            error-message "VNI ID out of range";
+                            error-app-tag vnid-invalid;
+                        }
+                    }
+                    default 0;
+                    description
+                        "VNI mapped to VRF";
+                }
+            }
+        }
+    }
+}

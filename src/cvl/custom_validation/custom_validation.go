@@ -71,6 +71,10 @@ func (t *CustomValidation) ValidateMaxAclTable(
 func (t *CustomValidation) ValidateAclRuleIPAddress(
 	vc *CustValidationCtxt) CVLErrorInfo {
 
+	if (vc.CurCfg.VOp == OP_DELETE) || (vc.CurCfg.VOp == OP_UPDATE) {
+		return CVLErrorInfo{ErrCode: CVL_SUCCESS}
+	}
+
 	if (vc.YNodeVal == "") {
 		return CVLErrorInfo{ErrCode: CVL_SUCCESS}
 	}

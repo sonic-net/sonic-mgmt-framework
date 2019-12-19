@@ -1,0 +1,66 @@
+module sonic-route-common {
+    namespace "http://github.com/Azure/sonic-route-common";
+    prefix srtcmn;
+    yang-version 1.1;
+
+    import sonic-vrf {
+        prefix svrf;
+    }
+
+    import sonic-route-map {
+        prefix srmap;
+    }
+
+    organization
+        "SONiC";
+
+    contact
+        "SONiC";
+
+    description
+        "SONIC ROUTE common YANG";
+
+    revision 2019-11-08 {
+        description
+            "Initial revision.";
+    }
+
+    container sonic-route-common {
+        container ROUTE_REDISTRIBUTE {
+            list ROUTE_REDISTRIBUTE_LIST {
+                key "vrf src_protocol dst_protocol addr_family";
+
+                leaf vrf {
+                    type union {
+                        type string {
+                            pattern "default";
+                        }
+                        type leafref {
+                            path "/svrf:sonic-vrf/svrf:VRF/svrf:VRF_LIST/svrf:vrf_name";
+                        }
+                    }
+                }
+
+                leaf src_protocol {
+                    type string;
+                }
+
+                leaf dst_protocol {
+                    type string;
+                }
+
+                leaf addr_family {
+                    type string;
+                }
+
+                leaf-list route_map {
+                    type leafref {
+                        path "/srmap:sonic-route-map/srmap:ROUTE_MAP_SET/srmap:ROUTE_MAP_SET_LIST/srmap:name";
+                    }
+                    max-elements 1;
+                }
+            }
+        }
+    }
+}
+

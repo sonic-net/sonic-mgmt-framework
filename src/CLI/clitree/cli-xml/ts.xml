@@ -12,38 +12,33 @@
          <COMMAND name="int-ifa-ts" help="TAM INT IFA TS configuration" view="configure-tam-int-ifa-ts-view" viewid="int-ifa-ts">
          </COMMAND>
   </VIEW>
-
-  <VIEW name="enable-view">
-    <!--show tam-int-ifa-ts status -->
-    <COMMAND name="show tam-int-ifa-ts" help="Show TAM INT IFA config info/status ">
-       <PARAM name="tam-int-ifa-ts-subcommands" help="TAM INT IFA TS subcommands" mode="switch" ptype="SUBCOMMAND" optional="true">
-        <PARAM name="supported" help="Check if TAM-INT_IFA-TS is supported" ptype="SUBCOMMAND" mode="subcommand"> </PARAM>
-        <PARAM name="status" help="TAM_INT_IFA_TS Info/Status"  ptype="SUBCOMMAND" mode="subcommand"> </PARAM>
-        <PARAM name="flow" help="TAM_INT_IFA_TS Flow"  ptype="SUBCOMMAND" mode="subcommand"> 
-		<PARAM name="flow-options" help="TAM_INT_IFA_TS Flow Options" mode="switch" ptype="SUBCOMMAND"> 
-		   <PARAM name="flow-name" help="TAM_INT_IFA_TS Info/Status for each flow"  ptype="STRING"> </PARAM>
-		   <PARAM name="all" help="TAM_INT_IFA_TS Info/Status for all flows"  ptype="SUBCOMMAND" mode="subcommand"> </PARAM>
-		</PARAM>
-        </PARAM>
-        <PARAM name="statistics" help="TAM_INT_IFA_TS Statistics" ptype="SUBCOMMAND" mode="subcommand"> 
-		<PARAM name="statistics-options" help="TAM_INT_IFA_TS Statistics Options" mode="switch" ptype="SUBCOMMAND"> 
-		   <PARAM name="flow-name" help="TAM_INT_IFA_TS Statistics for each flow"  ptype="STRING"> </PARAM>
-		   <PARAM name="all" help="TAM_INT_IFA_TS Statistics for all flows"  ptype="SUBCOMMAND" mode="subcommand"> </PARAM>
-		</PARAM>
-        </PARAM>
-       </PARAM>
-      <ACTION> 
-         if test "${tam-int-ifa-ts-subcommands}" = "supported"; then
-            python $SONIC_CLI_ROOT/ts.py -show -supported -templ -showsupported.j2; 
-         elif test "${tam-int-ifa-ts-subcommands}" = "status"; then
-            python $SONIC_CLI_ROOT/ts.py -show -status -templ -showstatus.j2; 
-         elif test "${tam-int-ifa-ts-subcommands}" = "flow"; then
-            python $SONIC_CLI_ROOT/ts.py -show -flow ${flow-name} -templ -showflow.j2;
-         elif test "${tam-int-ifa-ts-subcommands}" = "statistics"; then
-            python $SONIC_CLI_ROOT/ts.py -show -statistics -flow ${flow-name} -templ -showstatisticsflow.j2;
-         fi
-     </ACTION>
+  
+    <VIEW name="enable-view">
+    <COMMAND name="show tam int-ifa-ts" help="Show TAM IFA info"/>	    
+    <COMMAND name="show tam int-ifa-ts supported" help="Show TAM IFA TS feature info" mode="subcommand" ptype="SUBCOMMAND">
+      <ACTION>python $SONIC_CLI_ROOT/sonic-cli-tam-int-ifa-ts.py get_tam_int_ifa_ts_supported</ACTION>
     </COMMAND>
+    <COMMAND name="show tam int-ifa-ts flow" help="Show TAM IFA TS flow info" mode="subcommand" ptype="SUBCOMMAND">
+      <PARAM name="name" help="Name of the flow" ptype="STRING_32" optional="true"> </PARAM>
+      <ACTION>
+        if test "${name}" = "all" ; then
+	  python $SONIC_CLI_ROOT/sonic-cli-tam-int-ifa-ts.py get_sonic_tam_int_ifa_ts_sonic_tam_int_ifa_ts_tam_int_ifa_ts_flow_table show_tam_int_ifa_ts_flow.j2; 
+        elif test -z "${name}"; then
+	  python $SONIC_CLI_ROOT/sonic-cli-tam-int-ifa-ts.py get_sonic_tam_int_ifa_ts_sonic_tam_int_ifa_ts_tam_int_ifa_ts_flow_table show_tam_int_ifa_ts_flow.j2; 
+        else
+	  python $SONIC_CLI_ROOT/sonic-cli-tam-int-ifa-ts.py get_list_sonic_tam_int_ifa_ts_sonic_tam_int_ifa_ts_tam_int_ifa_ts_flow_table_tam_int_ifa_ts_flow_table_list ${name} show_tam_int_ifa_ts_flow.j2; 
+        fi
+      </ACTION>
+    </COMMAND>
+    <COMMAND name="show tam int-ifa-ts status" help="Show TAM IFA TS Status" mode="subcommand" ptype="SUBCOMMAND">
+      <ACTION>python $SONIC_CLI_ROOT/sonic-cli-tam-int-ifa-ts.py get_tam_ifa_ts_status;</ACTION>
+    </COMMAND>
+    <COMMAND name="show tam int-ifa-ts statistics" help="Show TAM IFA TS Statistics" mode="subcommand" ptype="SUBCOMMAND">
+      <PARAM name="name" help="Name of the flow" ptype="STRING_32"> </PARAM>
+      <ACTION>
+	   python $SONIC_CLI_ROOT/ts.py -show -statistics -flow ${name} -templ -showstatisticsflow.j2;
+      </ACTION>
+    </COMMAND>	    
   </VIEW>
 
   <VIEW name="configure-tam-int-ifa-ts-view"
@@ -61,32 +56,21 @@
           <COMMAND name="no flow"
                 help="Remove Flow"
                  >
-          <PARAM
-                 name="flow-options"
-                 help=""
-                 ptype="SUBCOMMAND"
-                 mode="switch"
-                 >
+	   <PARAM
+	       name="flow-name"
+	       help="Name of the flow"
+	       ptype="STRING"
+		   >
+           </PARAM>
 
-                 <PARAM
-                       name="flow-name"
-                       help="Name of the flow"
-                       ptype="STRING"
-                           >
-                </PARAM>
+	   <ACTION>
+		   if test "${flow-name}" = "all"; then
+		   python $SONIC_CLI_ROOT/sonic-cli-tam-int-ifa-ts.py delete_list_sonic_tam_int_ifa_ts_sonic_tam_int_ifa_ts_tam_int_ifa_ts_flow_table_tam_int_ifa_ts_flow_table_list;
+		   else
+		   python $SONIC_CLI_ROOT/sonic-cli-tam-int-ifa-ts.py delete_sonic_tam_int_ifa_ts_sonic_tam_int_ifa_ts_tam_int_ifa_ts_flow_table_tam_int_ifa_ts_flow_table_list ${flow-name};
+		   fi
+	   </ACTION>
 
-                <PARAM
-                   name="all"
-                   help="Delete all flows"
-                   ptype="SUBCOMMAND"
-                   mode="subcommand"
-                   >
-                </PARAM>
-         </PARAM>
-      <ACTION> if test "${flow-options}" = "flow-name"; then
-       python $SONIC_CLI_ROOT/ts.py -clear -flow ${flow-name}; elif test "${flow-options}" = "all"; then
-       python $SONIC_CLI_ROOT/ts.py -clear -flow all; fi
-       </ACTION>
          </COMMAND>
 
           <COMMAND name="feature"
@@ -116,9 +100,9 @@
                 </PARAM>
          </PARAM>
          <ACTION> if test "${feature-options}" = "enable"; then
-		  python $SONIC_CLI_ROOT/ts.py -config -enable;
+		  python $SONIC_CLI_ROOT/sonic-cli-tam-int-ifa-ts.py patch_sonic_tam_int_ifa_ts_sonic_tam_int_ifa_ts_tam_int_ifa_ts_feature_table_tam_int_ifa_ts_feature_table_list_enable feature True;
 	          elif test "${feature-options}" = "disable"; then
-		  python $SONIC_CLI_ROOT/ts.py -config -disable;
+		  python $SONIC_CLI_ROOT/sonic-cli-tam-int-ifa-ts.py patch_sonic_tam_int_ifa_ts_sonic_tam_int_ifa_ts_tam_int_ifa_ts_feature_table_tam_int_ifa_ts_feature_table_list_enable feature False;
 	          fi 
          </ACTION>
          </COMMAND>
@@ -163,9 +147,7 @@
                    >
               </PARAM>
 
-          <ACTION>
-               python $SONIC_CLI_ROOT/ts.py -config -flow ${flow-name} -acl_table ${acl-table-name} -acl_rule ${acl-rule-name} 
-          </ACTION>
+	  <ACTION> python $SONIC_CLI_ROOT/sonic-cli-tam-int-ifa-ts.py patch_sonic_tam_int_ifa_ts_sonic_tam_int_ifa_ts_tam_int_ifa_ts_flow_table_tam_int_ifa_ts_flow_table_list  ${flow-name} ${acl-table-name} ${acl-rule-name} </ACTION>    
          </COMMAND>
   </VIEW>
 

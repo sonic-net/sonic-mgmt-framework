@@ -23,35 +23,101 @@ limitations under the License.
     http://www.dellemc.com/sonic/XMLSchema/clish.xsd"
     >
     <VIEW name="enable-view">
-      <COMMAND name="show ip vrf" help="Show vrf information">
+      <COMMAND name="show ip vrf"
+        help="Show VRF information"
+        >
+        <PARAM 
+            name = "vrf-name"
+            help = "Name of VRF"
+            ptype = "STRING_15"
+            optional = "true"
+            >
+        </PARAM>
         <ACTION> 
-          python $SONIC_CLI_ROOT/openconfig_network_instance_api.py get_list_openconfig_network_instance_network_instances_network_instance show_mgmt_vrf.j2
+            if test "${vrf-name}" = ""; then
+                python $SONIC_CLI_ROOT/sonic-cli-vrf.py get_openconfig_network_instance_network_instances_network_instances show_vrf.j2;
+            else
+                python $SONIC_CLI_ROOT/sonic-cli-vrf.py get_openconfig_network_instance_network_instances_network_instance show_vrf.j2 ${vrf-name};
+            fi
         </ACTION>
       </COMMAND>
-      <COMMAND name="show ip vrf management" help="Show management vrf information">
+
+      <COMMAND name="show ip vrf management" help="Show management VRF information">
         <ACTION> 
-          python $SONIC_CLI_ROOT/openconfig_network_instance_api.py get_openconfig_network_instance_network_instances_network_instance "mgmt" show_mgmt_vrf.j2
+          python $SONIC_CLI_ROOT/sonic-cli-vrf.py get_openconfig_network_instance_network_instances_network_instance show_vrf.j2 "mgmt"
         </ACTION>
       </COMMAND>
     </VIEW>
 
     <VIEW name="configure-view">
     <!-- vrf configuration commands -->
-    <COMMAND name="ip vrf" help="vrf instance configuration"/>
-      <COMMAND name="ip vrf management" help="management vrf configuration" mode="subcommand" ptype="SUBCOMMAND">
-        <ACTION> 
-          python $SONIC_CLI_ROOT/openconfig_network_instance_api.py patch_openconfig_network_instance_network_instances_network_instance "mgmt" "L3VRF" true&#xA; 
-        </ACTION> 
-      </COMMAND>
+    <COMMAND name="ip vrf management" help="Management VRF configuration" mode="subcommand" ptype="SUBCOMMAND">
+      <ACTION> 
+        python $SONIC_CLI_ROOT/sonic-cli-vrf.py patch_openconfig_network_instance_network_instances_network_instance "mgmt" "L3VRF" "True" 
+      </ACTION> 
+    </COMMAND>
     
+    <COMMAND
+      name="ip vrf"
+      help="VRF instance configuration"
+      mode="subcommand"
+      ptype="SUBCOMMAND"
+      >
+      <PARAM
+        name="vrf-name"
+        help="Name of VRF (Max size 15, prefixed by Vrf)"
+        ptype="STRING_15"
+        >
+      </PARAM>
+      <ACTION>
+        python $SONIC_CLI_ROOT/sonic-cli-vrf.py patch_openconfig_network_instance_network_instances_network_instance ${vrf-name} "L3VRF" "True"
+      </ACTION>
+    </COMMAND>
+
     <!-- no vrf commands -->
-    <COMMAND name="no ip vrf" help="Delete vrf instance"/>
-      <COMMAND name="no ip vrf management" help="Delete management vrf" mode="subcommand" ptype="SUBCOMMAND">
-        <ACTION> 
-          python $SONIC_CLI_ROOT/openconfig_network_instance_api.py delete_openconfig_network_instance_network_instances_network_instance "mgmt" "L3VRF" true&#xA;  
-        </ACTION>
-      </COMMAND>
+    <COMMAND name="no ip vrf management" help="Delete management VRF" mode="subcommand" ptype="SUBCOMMAND">
+      <ACTION> 
+        python $SONIC_CLI_ROOT/sonic-cli-vrf.py delete_openconfig_network_instance_network_instances_network_instance "mgmt" "L3VRF" "False"  
+      </ACTION>
+    </COMMAND>
+
+    <COMMAND
+      name="no ip vrf"
+      help="Delete VRF instance"
+      mode="subcommand"
+      ptype="SUBCOMMAND"
+      >
+      <PARAM
+        name="vrf-name"
+        help="Name of VRF (Max size 15, prefixed by Vrf)"
+        ptype="STRING_15"
+        >
+      </PARAM>
+      <ACTION>
+        python $SONIC_CLI_ROOT/sonic-cli-vrf.py delete_openconfig_network_instance_network_instances_network_instance ${vrf-name} "L3VRF" "False"
+      </ACTION>
+    </COMMAND>
 
     </VIEW>
+
+<!--=======================================================-->
+<!--                Config Interface PHY-MODE              -->
+<!--=======================================================-->
+
+<VIEW name="configure-if-view">
+    <MACRO name="BIND-INTF-TO-VRF" arg="${iface}"></MACRO>
+</VIEW>
+
+<VIEW name="configure-lag-view">
+    <MACRO name="BIND-INTF-TO-VRF" arg="${po_name}"></MACRO>
+</VIEW>
+
+<VIEW name="configure-vlan-view">
+    <MACRO name="BIND-INTF-TO-VRF" arg="${vlan_id}"></MACRO>
+</VIEW>
+
+<VIEW name="configure-lo-view">
+    <MACRO name="BIND-INTF-TO-VRF" arg="${lo_name}"></MACRO>
+</VIEW>
 
 </CLISH_MODULE>

@@ -1,0 +1,22 @@
+{% set vars = {'vni': ""} %}
+{% if json_output %}
+{% for key in json_output %}
+{% if "openconfig-bgp-evpn-ext:state" in key %}
+{% set vars = {'vni': json_output['openconfig-bgp-evpn-ext:state']} %}
+{{' VNI: '}}{{vars.vni['vni-number']}}{% if vars.vni['is-live'] == true %}{{'(known to the kernel)'}}{% endif %}{{''}}
+{{'  Type: '}}{{vars.vni['type']}}
+{{'  RD: '}}{{vars.vni['route-distinguisher']}}
+{{'  Originator IP: '}}{{vars.vni['originator']}}
+{{'  Mcast group: '}}{{vars.vni['mcast-group']}}
+{{'  Advertise-gw-macip: '}}{{vars.vni['advertise-gw-mac']}}
+{{'  Import Route Target:'}}
+{% for key1 in vars.vni['import-rts'] %}
+{{'   '}}{{key1}}
+{% endfor %}
+{{'  Export Route Target:'}}
+{% for key1 in vars.vni['export-rts'] %}
+{{'   '}}{{key1}}
+{% endfor %}
+{% endif %}
+{% endfor %}
+{% endif %}

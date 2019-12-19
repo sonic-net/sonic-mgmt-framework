@@ -1,0 +1,90 @@
+module sonic-link-state-tracking {
+    namespace "http://github.com/Azure/sonic-link-state-tracking";
+    prefix iftracking;
+    yang-version 1.1;
+
+    import sonic-common {
+        prefix scommon;
+    }
+
+    import sonic-port {
+        prefix sprt;
+    }
+
+    import sonic-portchannel {
+        prefix spc;
+    }
+
+    import sonic-vlan {
+        prefix svlan;
+    }
+
+    organization
+        "SONiC";
+
+    contact
+        "SONiC";
+
+    description
+        "SONIC Link state tracking";
+
+    revision 2019-12-01 {
+        description
+            "Initial revision.";
+    }
+
+    container sonic-link-state-tracking {
+
+        container INTF_TRACKING {
+
+            list INTF_TRACKING_LIST { 
+                key "name";
+                max-elements 1;
+
+                leaf name {
+                    type string {
+                        pattern '[a-zA-Z0-9]{1}([-a-zA-Z0-9@$+#_]{0,63})';
+                        length 1..64;
+                    }
+                }
+
+                leaf description {
+                    type string {
+                        length 1..255;
+                    }
+                }
+
+                leaf timeout {
+                     type uint16 {
+                        range "1..999" {
+                            error-message "Timeout value is out of range (1-999)";
+                        }
+                    }
+                    default 60;
+                }
+
+                leaf-list upstream {
+                    type union {
+                        type leafref {
+                            path "/sprt:sonic-port/sprt:PORT/sprt:PORT_LIST/sprt:ifname";
+                        }
+                        type leafref {
+                            path "/spc:sonic-portchannel/spc:PORTCHANNEL/spc:PORTCHANNEL_LIST/spc:name";
+                        }
+                        type leafref {
+                            path "/svlan:sonic-vlan/svlan:VLAN/svlan:VLAN_LIST/svlan:name";
+                        }
+                    }
+                }
+
+                leaf-list downstream {
+                    type string {
+                        pattern "all-mclag|| ";
+                    }
+                    max-elements 1;
+                }
+            }
+        }
+    }
+}
+

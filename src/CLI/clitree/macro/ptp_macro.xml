@@ -1,0 +1,18 @@
+<ROOT>
+
+	<MACRODEF name="PTP-CFG-IF-TYPE">
+		<PARAM name="cfg-if-type" help="Interface Type" mode="switch" ptype="SUBCOMMAND">
+			<PARAM name="Ethernet" help="Ethernet Interface type" ptype="SUBCOMMAND" mode="subcommand">
+				<PARAM name="ptp_port_number" help="Enter PTP port number" ptype="UINT"/>
+			</PARAM>
+			<!-- Comment out portchannel support <PARAM name="PortChannel" help="PortChannel Interface type" ptype="SUBCOMMAND" mode="subcommand"> <PARAM name="ptp_port_number" help="Enter PTP port number" ptype="UINT"/> </PARAM> -->
+		</PARAM>
+	</MACRODEF>
+	<MACRODEF name="PTP-DEST-NODE">
+		<PARAM name="cfg-ptp-master_node" help="PTP master-table subcommands" mode="switch" ptype="SUBCOMMAND">
+			<PARAM name="l3_ip" help="Enter IP address" ptype="IPV4V6_ADDR"/>
+			<PARAM name="mac" help="Enter MAC address" ptype="MAC_ADDR"/>
+		</PARAM>
+	</MACRODEF>
+
+</ROOT>

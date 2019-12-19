@@ -57,7 +57,18 @@ func init() {
 			log.Fatal("Register Common app module with App Interface failed with error=", err, "for path=", mdl_pth)
 		}
 	}
-
+	mdlCpblt := transformer.AddModelCpbltInfo()
+	if mdlCpblt == nil {
+		log.Warning("Failure in fetching model capabilities data.")
+	} else {
+		for yngMdlNm, mdlDt := range(mdlCpblt) {
+			log.Info("Adding Model Data for ", yngMdlNm, "  Org : ", mdlDt.Org, "  Ver : ", mdlDt.Ver)
+			err := addModel(&ModelData{Name: yngMdlNm, Org: mdlDt.Org, Ver: mdlDt.Ver})
+			if err != nil {
+				log.Warningf("Adding model data for module %v to appinterface failed with error=%v", yngMdlNm, err)
+			}
+		}
+	}
 }
 
 func (app *CommonApp) initialize(data appData) {
@@ -189,7 +200,7 @@ func (app *CommonApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
 		    log.Error("transformer.transformer.GetAndXlateFromDB failure. error:", err)
 		    resPayload = payload
 		    break
-	    }
+            }
 
 	    targetObj, tgtObjCastOk := (*app.ygotTarget).(ygot.GoStruct)
 	    if tgtObjCastOk == false {
@@ -258,7 +269,7 @@ func (app *CommonApp) translateCRUDCommon(d *db.DB, opcode int) ([]db.WatchKeys,
 	log.Info("translateCRUDCommon:path =", app.pathInfo.Path)
 
 	// translate yang to db
-	result, err := transformer.XlateToDb(app.pathInfo.Path, opcode, d, (*app).ygotRoot, (*app).ygotTarget, txCache)
+	result, err := transformer.XlateToDb(app.pathInfo.Path, opcode, d, (*app).ygotRoot, (*app).ygotTarget, (*app).body, txCache)
 	fmt.Println(result)
 	log.Info("transformer.XlateToDb() returned", result)
 
@@ -266,12 +277,13 @@ func (app *CommonApp) translateCRUDCommon(d *db.DB, opcode int) ([]db.WatchKeys,
 		log.Error(err)
 		return keys, err
 	}
+	app.cmnAppTableMap = result
 	if len(result) == 0 {
 		log.Error("XlatetoDB() returned empty map")
-		err = errors.New("transformer.XlatetoDB() returned empty map")
+		//Note: Get around for no redis ABNF Schema for set(temporary)
+		//`err = errors.New("transformer.XlatetoDB() returned empty map")
 		return keys, err
 	}
-	app.cmnAppTableMap = result
 
 	moduleNm, err := transformer.GetModuleNmFromPath(app.pathInfo.Path)
         if (err != nil) || (len(moduleNm) == 0) {
@@ -309,6 +321,10 @@ func (app *CommonApp) translateCRUDCommon(d *db.DB, opcode int) ([]db.WatchKeys,
 func (app *CommonApp) processCommon(d *db.DB, opcode int) error {
 
 	var err error
+	if len(app.cmnAppTableMap) == 0 {
+		return err
+	}
+
 	log.Info("Processing DB operation for ", app.cmnAppTableMap)
 	switch opcode {
 		case CREATE:
@@ -405,8 +421,20 @@ func (app *CommonApp) cmnAppCRUCommonDbOpn(d *db.DB, opcode int, dbMap map[strin
 		if tblVal, ok := dbMap[tblNm]; ok {
 			cmnAppTs = &db.TableSpec{Name: tblNm}
 			log.Info("Found table entry in yang to DB map")
+			if ((tblVal == nil) || (len(tblVal) == 0)) {
+				log.Info("No table instances/rows found.")
+				continue
+			}
 			for tblKey, tblRw := range tblVal {
-				log.Info("Processing Table key and row ", tblKey, tblRw)
+				log.Info("Processing Table key ", tblKey)
+				// REDIS doesn't allow to create a table instance without any fields
+				if tblRw.Field == nil {
+					tblRw.Field = map[string]string{"NULL": "NULL"}
+				}
+				if len(tblRw.Field) == 0 {
+					tblRw.Field["NULL"] = "NULL"
+				}
+				log.Info("Processing Table row ", tblRw)
 				existingEntry, _ := d.GetEntry(cmnAppTs, db.Key{Comp: []string{tblKey}})
 				switch opcode {
 				case CREATE:
@@ -592,7 +620,10 @@ func checkAndProcessLeafList(existingEntry db.Value, tblRw db.Value, opcode int,
 	for field, value := range tblRw.Field {
 		if strings.HasSuffix(field, "@") {
 			exstLst := existingEntry.GetList(field)
-			valueLst := strings.Split(value, ",")
+			var valueLst []string
+			if value != "" { //zero len string as leaf-list value is treated as delete all items in leaf-list
+				valueLst = strings.Split(value, ",")
+			}
 			if len(exstLst) != 0 {
 				for _, item := range valueLst {
 					if !contains(exstLst, item) {
@@ -608,12 +639,18 @@ func checkAndProcessLeafList(existingEntry db.Value, tblRw db.Value, opcode int,
 				}
 				log.Infof("For field %v value after merge %v", field, exstLst)
 				if opcode == DELETE {
-					mergeTblRw.SetList(field, exstLst)
-					delete(tblRw.Field, field)
+					if len(valueLst) > 0 {
+						mergeTblRw.SetList(field, exstLst)
+						if len(exstLst) == 0 {
+							tblRw.Field[field] = ""
+						} else {
+							delete(tblRw.Field, field)
+						}
+					}
 				}
 			} else if opcode == UPDATE {
-				exstLst = valueLst
-			}
+                                exstLst = valueLst
+                        }
 			if opcode == UPDATE {
 				tblRw.SetList(field, exstLst)
 			}
@@ -622,6 +659,7 @@ func checkAndProcessLeafList(existingEntry db.Value, tblRw db.Value, opcode int,
 	/* delete specific item from leaf-list */
 	if opcode == DELETE {
 		if len(mergeTblRw.Field) == 0 {
+			log.Infof("mergeTblRow is empty - Returning Table Row %v", tblRw)
 			return tblRw
 		}
 		err := d.ModEntry(dbTblSpec, db.Key{Comp: []string{tblKey}}, mergeTblRw)

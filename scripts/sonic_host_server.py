@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 """Host Service to handle docker-to-host communication"""
 
 import os
@@ -10,7 +10,8 @@ import sys
 import dbus
 import dbus.service
 import dbus.mainloop.glib
-import gobject
+
+from gi.repository import GObject
 
 BUS_NAME = 'org.SONiC.HostService'
 BUS_PATH = '/org/SONiC/HostService'
@@ -36,10 +37,10 @@ def register_dbus(register_cb):
     handlers[mod_name] = handler_class(mod_name)
 
 # Create a main loop reactor
-gobject.threads_init()
+GObject.threads_init()
 dbus.mainloop.glib.threads_init()
 dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
-loop = gobject.MainLoop()
+loop = GObject.MainLoop()
 handlers = {}
 
 class SignalManager(object):
@@ -78,4 +79,4 @@ if handlers:
 
     systemd.daemon.notify("STOPPING=1")
 else:
-    print "No handlers to register, quitting..."
+    print("No handlers to register, quitting...")

@@ -1,0 +1,17 @@
+module sonic-showtech-annotation {
+
+    yang-version "1";
+
+    namespace "http://openconfig.net/Azure/sonic-showtech-annotation";
+    prefix "showtech-annot";
+
+    import sonic-extensions { prefix sonic-ext; }
+    import sonic-show-techsupport { prefix sshwtchspt; }
+
+    deviation /sshwtchspt:sonic-show-techsupport-info {
+      deviate add {
+        sonic-ext:rpc-callback "rpc_showtech_cb";
+      }
+    }
+
+}
