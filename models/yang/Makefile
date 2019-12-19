@@ -41,9 +41,9 @@ all: yamlGen annot allyangs.tree allyangs_tree.html
 yamlGen: $(YANGAPI_DIR)/.done $(YANGAPI_DIR)/api_ignore
 
 annot:
-	$(PYANG_BIN) --strict \
+	$(PYANG_BIN) --strict -f tree \
 		-p $(YANGDIR_COMMON):$(YANGDIR_SONIC):$(YANGDIR_ANNOTATIONS):$(YANGDIR) \
-		$(YANG_ANNOTATIONS_FILES)
+		$(YANG_ANNOTATIONS_FILES) > /dev/null
 
 allyangs.tree:  $(YANG_MOD_FILES) $(YANG_COMMON_FILES)
 	$(PYANG_BIN) \

@@ -26,6 +26,9 @@ from rpipe_utils import pipestr
 from openconfig_system_client.rest import ApiException
 from scripts.render_cli import show_cli_output
 
+from crypt import crypt
+import base64
+import os
 
 import urllib3
 urllib3.disable_warnings()
@@ -33,6 +36,10 @@ urllib3.disable_warnings()
 
 plugins = dict()
 
+def hashed_pw(pw):
+    salt = base64.b64encode(os.urandom(6), './')
+    return crypt(pw, '$6$' + salt)
+    
 def util_capitalize(value):
     for key,val in value.items():
         temp = key.split('_')
@@ -66,7 +73,7 @@ def call_method(name, args):
 def generate_body(func, args):
     body = None
     # Get the rules of all ACL table entries.
-
+    keypath = None
     if func.__name__ == 'get_openconfig_system_system_state':
         keypath = []
     elif func.__name__ == 'get_openconfig_system_system_clock':
@@ -80,9 +87,21 @@ def generate_body(func, args):
     elif func.__name__ == 'get_openconfig_system_components':
         keypath = []
 
-    else:
-       body = {}
-
+    elif func.__name__ == 'patch_openconfig_system_system_aaa_authentication_users_user':
+        keypath = []
+        body =  { "openconfig-system:user": [{"username": args[0],
+					     "config": {
+ 							 "username": args[0],
+        						 "password": args[1],
+        						 "password-hashed": hashed_pw(args[1]),
+                                                         "ssh-key": "string",
+                                                         "role": args[2]
+                                                        }
+                                             }
+                                           ]
+                }
+    elif func.__name__ == 'delete_openconfig_system_system_aaa_authentication_users_user':
+	keypath = []
     return keypath,body
 
 
@@ -96,12 +115,15 @@ def run(func, args):
 
     try:
         if body is not None:
-           api_response = getattr(aa,func.__name__)(*keypath, body=body)
+           api_response = getattr(aa,func.__name__)(*keypath, username= args[0], body=body)
            
         else :
-           api_response = getattr(aa,func.__name__)(*keypath)
+	   if func.__name__ == 'delete_openconfig_system_system_aaa_authentication_users_user':
+	       api_response = getattr(aa,func.__name__)(*keypath, username = args[0])
+           else:
+               api_response = getattr(aa,func.__name__)(*keypath)
         if api_response is None:
-            print ("Success")
+            #DO NOTHING 
         else:
             response = api_response.to_dict()
             if 'openconfig_systemstate' in response.keys():

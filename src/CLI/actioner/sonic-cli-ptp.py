@@ -57,6 +57,14 @@ def check_network_transport_allowed(c, network_transport, unicast_multicast):
         if clock_type == 'P2P_TC' or clock_type == 'E2E_TC':
             print "%Error: transparent-clock not supported with G.8275.2"
             return 0
+    if unicast_multicast == 'multicast':
+        raw_data = db.keys(db.STATE_DB, "PTP_PORT|GLOBAL|*")
+        for key in raw_data:
+            state_data = db.get_all(db.STATE_DB, key)
+            uc_tbl = state_data.get('unicast-table', 'None')
+            if uc_tbl != 'None':
+                print "%Error: master table must be removed from " + key.replace("PTP_PORT|GLOBAL|", "")
+                return 0
     return 1
 
 

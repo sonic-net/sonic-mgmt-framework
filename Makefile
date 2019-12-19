@@ -17,7 +17,7 @@
 #                                                                              #
 ################################################################################
 
-.PHONY: all clean cleanall codegen rest-server rest-clean yamlGen cli clitree
+.PHONY: all clean cleanall codegen rest-server rest-clean yamlGen cli clitree ham
 
 TOPDIR := $(abspath .)
 BUILD_DIR := $(TOPDIR)/build
@@ -53,7 +53,8 @@ GO_DEPS_LIST = github.com/gorilla/mux \
                github.com/facette/natsort \
                github.com/philopon/go-toposort \
                gopkg.in/godbus/dbus.v5 \
-               github.com/dgrijalva/jwt-go
+               github.com/dgrijalva/jwt-go \
+               github.com/msteinert/pam
 
 
 REST_BIN = $(BUILD_DIR)/rest_server/main
@@ -63,7 +64,7 @@ go-deps = $(BUILD_DIR)/gopkgs/.done
 go-patch = $(BUILD_DIR)/gopkgs/.patch_done
 go-redis-patch = $(BUILD_DIR)/gopkgs/.redis_patch_done
 
-all: build-deps $(go-deps) $(go-redis-patch) $(go-patch) translib rest-server cli
+all: build-deps $(go-deps) $(go-redis-patch) $(go-patch) translib rest-server cli ham
 
 build-deps:
 	mkdir -p $(BUILD_DIR)/gopkgs
@@ -105,6 +106,9 @@ yamlGen:
 	$(MAKE) -C models/yang
 	$(MAKE) -C models/yang/sonic
 
+ham:
+	(cd src/ham; ./build.sh)
+
 $(go-patch): $(go-deps)
 	cd $(BUILD_GOPATH)/src/github.com/openconfig/ygot/; git reset --hard HEAD;git clean -f -d;git checkout 724a6b18a9224343ef04fe49199dfb6020ce132a 2>/dev/null ; true; \
 cd ../; cp $(TOPDIR)/ygot-modified-files/ygot.patch .; \
@@ -125,6 +129,7 @@ install:
 	$(INSTALL) -D $(CERTGEN_BIN) $(DESTDIR)/usr/sbin/generate_cert
 	$(INSTALL) -d $(DESTDIR)/usr/sbin/schema/
 	$(INSTALL) -d $(DESTDIR)/usr/sbin/lib/
+	$(INSTALL) -d $(DESTDIR)/usr/bin/
 	$(INSTALL) -d $(DESTDIR)/usr/models/yang/
 	$(INSTALL) -D $(TOPDIR)/models/yang/sonic/*.yang $(DESTDIR)/usr/models/yang/
 	$(INSTALL) -D $(TOPDIR)/models/yang/sonic/common/*.yang $(DESTDIR)/usr/models/yang/
@@ -149,6 +154,17 @@ install:
 	$(INSTALL) -D $(TOPDIR)/scripts/org.sonic.hostservice.conf $(DESTDIR)/etc/dbus-1/system.d
 	$(INSTALL) -d $(DESTDIR)/lib/systemd/system
 	$(INSTALL) -D $(TOPDIR)/scripts/sonic-hostservice.service $(DESTDIR)/lib/systemd/system
+
+	# Scripts for Host Account Management (HAM)
+	$(INSTALL) -D $(TOPDIR)/src/ham/hamd/etc/dbus-1/system.d/* $(DESTDIR)/etc/dbus-1/system.d/
+	$(INSTALL) -d $(DESTDIR)/etc/sonic/hamd/
+	$(INSTALL) -D $(TOPDIR)/src/ham/hamd/etc/sonic/hamd/*      $(DESTDIR)/etc/sonic/hamd/
+	$(INSTALL) -D $(TOPDIR)/src/ham/hamd/lib/systemd/system/*  $(DESTDIR)/lib/systemd/system/
+	$(INSTALL) -D $(TOPDIR)/src/ham/hamd/usr/bin/*             $(DESTDIR)/usr/bin/
+	$(INSTALL) -D $(TOPDIR)/src/ham/hamd/hamd     $(DESTDIR)/usr/sbin/.
+	$(INSTALL) -D $(TOPDIR)/src/ham/hamctl/hamctl $(DESTDIR)/usr/bin/.
+	$(INSTALL) -d $(DESTDIR)/lib/x86_64-linux-gnu/
+	$(INSTALL) -D $(TOPDIR)/src/ham/libnss_ham/libnss_ham.so.2 $(DESTDIR)/lib/x86_64-linux-gnu/.
 
 ifeq ($(SONIC_COVERAGE_ON),y)
 	echo "" > $(DESTDIR)/usr/sbin/.test

@@ -84,10 +84,10 @@ module sonic-udld {
             }
         }
 
-        container UDLD_GLOBAL_TABLE {
+        container _UDLD_GLOBAL_TABLE {
             config false;
 
-            list UDLD_GLOBAL_TABLE_LIST {
+            list _UDLD_GLOBAL_TABLE_LIST {
                 sonic-ext:db-name "APPL_DB";
                 key "id";
 
@@ -111,10 +111,10 @@ module sonic-udld {
             }
         }
 
-        container UDLD_PORT_TABLE {
+        container _UDLD_PORT_TABLE {
             config false;
 
-            list UDLD_PORT_TABLE_LIST {
+            list _UDLD_PORT_TABLE_LIST {
                 sonic-ext:db-name "APPL_DB";
                 key "ifname";
 
@@ -142,10 +142,10 @@ module sonic-udld {
             }
         }
 
-        container UDLD_PORT_NEIGH_TABLE {
+        container _UDLD_PORT_NEIGH_TABLE {
             config false;
 
-            list UDLD_PORT_NEIGH_TABLE_LIST {
+            list _UDLD_PORT_NEIGH_TABLE_LIST {
                 sonic-ext:db-name "APPL_DB";
                 key "ifname index";
 

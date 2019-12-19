@@ -1,3 +1,8 @@
-usr/sbin/*
+usr/sbin/rest_server
+usr/sbin/generate_cert
+usr/sbin/schema
+usr/sbin/lib
+usr/sbin/cvl_cfg.json
+usr/sbin/cli
 rest_ui/*
-usr/models/*
+usr/models/yang

@@ -1,24 +1,26 @@
 package server
 
 import (
-	"time"
-	"encoding/json"
-	jwt "github.com/dgrijalva/jwt-go"
-	"net/http"
 	"crypto/rand"
-	"github.com/golang/glog"
+	"encoding/json"
+	"net/http"
 	"strings"
+	"time"
+
+	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/golang/glog"
 )
+
 var (
-	JwtRefreshInt time.Duration
-	JwtValidInt   time.Duration
+	JwtRefreshInt    time.Duration
+	JwtValidInt      time.Duration
 	hmacSampleSecret = make([]byte, 16)
 )
+
 type Credentials struct {
 	Password string `json:"password"`
 	Username string `json:"username"`
 }
-
 
 type Claims struct {
 	Username string `json:"username"`
@@ -26,9 +28,9 @@ type Claims struct {
 }
 
 type jwtToken struct {
-	Token string `json:"access_token"`
+	Token     string `json:"access_token"`
 	TokenType string `json:"token_type"`
-	ExpIn int64 `json:"expires_in"`
+	ExpIn     int64  `json:"expires_in"`
 }
 
 func generateJWT(username string, expire_dt time.Time) string {
@@ -54,8 +56,8 @@ func GenerateJwtSecretKey() {
 
 func tokenResp(w http.ResponseWriter, r *http.Request, username string) {
 	exp_tm := time.Now().Add(JwtValidInt)
-	token := jwtToken{Token: generateJWT(username, exp_tm), TokenType: "Bearer", ExpIn: int64(JwtValidInt/time.Second)}
-	resp,err := json.Marshal(token)
+	token := jwtToken{Token: generateJWT(username, exp_tm), TokenType: "Bearer", ExpIn: int64(JwtValidInt / time.Second)}
+	resp, err := json.Marshal(token)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		status, data, ctype := prepareErrorResponse(httpError(http.StatusUnauthorized, err.Error()), r)
@@ -77,11 +79,10 @@ func Authenticate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	auth_success, err := UserPwAuth(creds.Username, creds.Password)
-	if  auth_success {
+	if auth_success {
 		tokenResp(w, r, creds.Username)
 		return
 
-		
 	} else {
 		status, data, ctype := prepareErrorResponse(httpError(http.StatusUnauthorized, ""), r)
 		w.Header().Set("Content-Type", ctype)
@@ -93,14 +94,14 @@ func Authenticate(w http.ResponseWriter, r *http.Request) {
 
 func Refresh(w http.ResponseWriter, r *http.Request) {
 
-	ctx,_ := GetContext(r)
+	ctx, _ := GetContext(r)
 	token, err := JwtAuthenAndAuthor(r, ctx)
 	if err != nil {
 		status, data, ctype := prepareErrorResponse(httpError(http.StatusUnauthorized, ""), r)
 		w.Header().Set("Content-Type", ctype)
 		w.WriteHeader(status)
 		w.Write(data)
-		return	
+		return
 	}
 
 	claims := &Claims{}
@@ -127,8 +128,8 @@ func JwtAuthenAndAuthor(r *http.Request, rc *RequestContext) (jwtToken, error) {
 	}
 	auth_parts := strings.Split(auth_hdr, " ")
 	if len(auth_parts) != 2 || auth_parts[0] != "Bearer" {
-		glog.Errorf("[%s] Bad Request", rc.ID)
-		return token, httpError(http.StatusBadRequest, "Bad Request")
+		glog.Errorf("[%s] Failed to authenticate, Invalid JWT Token", rc.ID)
+		return token, httpError(http.StatusUnauthorized, "Invalid JWT Token")
 	}
 
 	token.Token = auth_parts[1]
@@ -141,15 +142,18 @@ func JwtAuthenAndAuthor(r *http.Request, rc *RequestContext) (jwtToken, error) {
 		if err == jwt.ErrSignatureInvalid {
 			glog.Errorf("[%s] Failed to authenticate, Invalid JWT Signature", rc.ID)
 			return token, httpError(http.StatusUnauthorized, "Invalid JWT Signature")
-			
+
 		}
-		glog.Errorf("[%s] Bad Request", rc.ID)
-		return token, httpError(http.StatusBadRequest, "Bad Request")
+		glog.Errorf("[%s] Failed to authenticate, Invalid JWT Token", rc.ID)
+		return token, httpError(http.StatusUnauthorized, "Invalid JWT Token")
 	}
 	if !tkn.Valid {
 		glog.Errorf("[%s] Failed to authenticate, Invalid JWT Token", rc.ID)
 		return token, httpError(http.StatusUnauthorized, "Invalid JWT Token")
 	}
+	if err := PopulateAuthStruct(claims.Username, &rc.Auth); err != nil {
+		glog.Infof("[%s] Failed to retrieve authentication information; %v", rc.ID, err)
+		return token, httpError(http.StatusUnauthorized, "")
+	}
 	return token, nil
 }
-

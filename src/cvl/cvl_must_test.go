@@ -31,12 +31,10 @@ func TestValidateEditConfig_Delete_Must_Check_Positive(t *testing.T) {
 			"Ethernet3" : map[string]interface{} {
 				"alias":"hundredGigE1",
 				"lanes": "81,82,83,84",
-				"mtu": "9100",
 			},
 			"Ethernet5" : map[string]interface{} {
 				"alias":"hundredGigE1",
 				"lanes": "85,86,87,89",
-				"mtu": "9100",
 			},
 		},
 		"ACL_TABLE" : map[string]interface{} {
@@ -104,12 +102,12 @@ func TestValidateEditConfig_Delete_Must_Check_Negative(t *testing.T) {
 			"Ethernet3" : map[string]interface{} {
 				"alias":"hundredGigE1",
 				"lanes": "81,82,83,84",
-				"mtu": "9100",
+				//"mtu": "9100",
 			},
 			"Ethernet5" : map[string]interface{} {
 				"alias":"hundredGigE1",
 				"lanes": "85,86,87,89",
-				"mtu": "9100",
+				//"mtu": "9100",
 			},
 		},
 		"ACL_TABLE" : map[string]interface{} {

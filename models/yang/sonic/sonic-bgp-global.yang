@@ -11,12 +11,12 @@ module sonic-bgp-global {
         prefix inet;
     }
 
-    import sonic-route-map {
-        prefix srmap;
-    }
-
     import sonic-bgp-common {
         prefix sbc;
+    }
+
+    import sonic-route-map {
+        prefix srmap;
     }
 
     organization
