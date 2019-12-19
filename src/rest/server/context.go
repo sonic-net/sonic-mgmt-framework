@@ -28,6 +28,21 @@ import (
 	"sync/atomic"
 )
 
+// AuthInfo holds data about the authenticated user
+type AuthInfo struct {
+	// Username
+	User string
+
+	// Group name (primary group)
+	Group string
+
+	// Additional groups
+	Groups []string
+
+	// Roles
+	Roles []string
+}
+
 // RequestContext holds metadata about REST request.
 type RequestContext struct {
 
@@ -53,6 +68,9 @@ type RequestContext struct {
 	// swagger and map them back to yang names while converting
 	// REST paths to TransLib paths.
 	PMap NameMap
+
+	// Auth contains the authorized user information
+	Auth AuthInfo
 }
 
 type contextkey int

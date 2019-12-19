@@ -73,11 +73,11 @@ var YangToDb_prefix_action_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrParams
     if inParams.param == nil {
         return res_map, err
     }
-    action, _ := inParams.param.(ocbinds.E_OpenconfigRoutingPolicy_PolicyResultType)
+    action, _ := inParams.param.(ocbinds.E_OpenconfigRoutingPolicyExt_RoutingPolicyExtActionType)
     log.Info("YangToDb_prefix_action_fld_xfmr: ", inParams.ygRoot, " Xpath: ", inParams.uri, " route-operation: ", action)
-    if action == ocbinds.OpenconfigRoutingPolicy_PolicyResultType_ACCEPT_ROUTE {
+    if action == ocbinds.OpenconfigRoutingPolicyExt_RoutingPolicyExtActionType_PERMIT {
         res_map["action"] = "permit"
-    } else if action == ocbinds.OpenconfigRoutingPolicy_PolicyResultType_REJECT_ROUTE {
+    } else if action == ocbinds.OpenconfigRoutingPolicyExt_RoutingPolicyExtActionType_DENY {
         res_map["action"] = "deny"
     }
     return res_map, err
@@ -99,9 +99,9 @@ var DbToYang_prefix_action_fld_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams
     route_operation, ok := niInst.Field["action"]
     if ok {
         if route_operation == "permit" {
-            result["action"] = ocbinds.OpenconfigRoutingPolicy_PolicyResultType_ACCEPT_ROUTE 
+            result["action"] = "PERMIT"
         } else {
-            result["action"] = ocbinds.OpenconfigRoutingPolicy_PolicyResultType_REJECT_ROUTE
+            result["action"] = "DENY"
         }
     } else {
         log.Info("DbToYang_prefix_action_fld_xfmr field not found in DB")
@@ -140,6 +140,55 @@ var DbToYang_prefix_set_name_fld_xfmr FieldXfmrDbtoYang = func(inParams XfmrPara
     return res_map, err
 }
 
+func prefix_all_keys_get(d *db.DB, dbSpec *db.TableSpec) ([]db.Key, error) {
+
+    var keys []db.Key
+
+    prefixTable, err := d.GetTable(dbSpec)
+    if err != nil {
+        return keys, err
+    }
+
+    keys, err = prefixTable.GetKeys()
+    log.Info("prefix_all_keys_get: Found %d PREFIX table keys", len(keys))
+    return keys, err
+}
+
+func prefixes_exits_by_set_name (d *db.DB , setName string, tblName string) (bool) {
+    keys,_ := prefix_all_keys_get(d, &db.TableSpec{Name:tblName})
+    for _, key := range keys {
+        if len(key.Comp) < 3 {
+            continue
+        }
+        if key.Get(0) == setName {
+            log.Info("prefixes_exits_by_set_name: Found PREFIX table key set ", key.Get(0), "prefix ", key.Get(1), "mask ", key.Get(2))
+            return true
+        }
+    }
+    return false
+}
+
+func prefix_set_mode_get_by_set_name (d *db.DB , setName string, tblName string) (string, error) {
+    var err error
+
+    dbspec := &db.TableSpec { Name: tblName }
+
+    log.Info("prefix_set_mode_get_by_set_name  ", db.Key{Comp: []string{setName}})
+    dbEntry, err := d.GetEntry(dbspec, db.Key{Comp: []string{setName}})
+    if err != nil {
+        log.Error("No Entry found e = ", err)
+        return "", err
+    }
+    mode, ok := dbEntry.Field["mode"]
+    if ok {
+        log.Info("Previous Mode ", mode)
+    } else {
+        log.Info("New Table, No previous mode ", mode)
+    }
+    return mode, nil;
+}
+
+
 var YangToDb_prefix_set_mode_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
     res_map := make(map[string]string)
     var err error
@@ -148,9 +197,30 @@ var YangToDb_prefix_set_mode_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrPara
         return res_map, err
     }
 
+    pathInfo := NewPathInfo(inParams.uri)
+    /* Key should contain, <name> */
+    setName := pathInfo.Var("name")
+    if len(setName) == 0 {
+        err = errors.New("set name is missing");
+        log.Error("Set Name is Missing")
+        return res_map, err
+    }
+    is_prefixes_exits := prefixes_exits_by_set_name (inParams.d, setName, "PREFIX")
+    log.Info("YangToDb_prefix_set_mode_fld_xfmr: setName ", setName, "is_prefixes_exits ", is_prefixes_exits)
+
     mode, _ := inParams.param.(ocbinds.E_OpenconfigRoutingPolicy_RoutingPolicy_DefinedSets_PrefixSets_PrefixSet_Config_Mode)
     log.Info("YangToDb_prefix_set_mode_fld_xfmr: ", inParams.ygRoot, " Xpath: ", inParams.uri, " Mode: ", mode)
-    res_map["mode"] = findInMap(PREFIX_SET_MODE_MAP, strconv.FormatInt(int64(mode), 10))
+    new_mode := findInMap(PREFIX_SET_MODE_MAP, strconv.FormatInt(int64(mode), 10))
+
+    prev_mode, _ := prefix_set_mode_get_by_set_name (inParams.d, setName, "PREFIX_SET")
+
+    log.Info("YangToDb_prefix_set_mode_fld_xfmr: prev_mode ", prev_mode, "new mode ", res_map["mode"], "is_prefixes_exits ", is_prefixes_exits)
+    if ((is_prefixes_exits == true) && (prev_mode != new_mode)) {
+        err = errors.New("Prefixes Configured already, Mode Change not supported");
+        log.Error("Prefixes Configured already, Mode Change not supported")
+        return res_map, err
+    }
+    res_map["mode"] = new_mode
     return res_map, err
 }
 
@@ -161,7 +231,6 @@ var DbToYang_prefix_set_mode_fld_xfmr FieldXfmrDbtoYang = func(inParams XfmrPara
     log.Info("DbToYang_prefix_set_mode_fld_xfmr: Input", data, inParams.ygRoot)
     mode, ok := data["PREFIX_SET"][inParams.key].Field["mode"]
     if ok {
-        log.Info("DbToYang_prefix_set_mode_fld_xfmr **** ", mode)
         oc_mode := findInMap(PREFIX_SET_MODE_MAP, mode)
         n, err := strconv.ParseInt(oc_mode, 10, 64)
         result["mode"] = ocbinds.E_OpenconfigRoutingPolicy_RoutingPolicy_DefinedSets_PrefixSets_PrefixSet_Config_Mode(n).ΛMap()["E_OpenconfigRoutingPolicy_RoutingPolicy_DefinedSets_PrefixSets_PrefixSet_Config_Mode"][n].Name
@@ -219,6 +288,35 @@ var YangToDb_prefix_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (string
             return masklenrange, err
         }
 
+        log.Info("YangToDb_prefix_key_xfmr: in prefix: ", ipPrefix)
+
+        prefix_mask := strings.Split(ipPrefix, "/")
+
+        if (!validIPv6(prefix_mask[0]) && !validIPv4(prefix_mask[0])) {
+            err = errors.New("YangToDb_prefix_key_xfmr: Invalid IP address");
+            return ipPrefix, err
+        }
+
+        if masklenrange != "exact" {
+            length, _ := strconv.Atoi(prefix_mask[1])
+
+            m_range := strings.Split(masklenrange, "..")
+            ge, _ := strconv.Atoi(m_range[0])
+            le, _ := strconv.Atoi(m_range[1])
+
+            log.Infof("YangToDb_prefix_key_xfmr: mask length %d ge %d le %d", length, ge, le)
+
+        /*    if (length < ge) != true {
+                err = errors.New("Invalid maskrange, len < ge-value")
+                log.Error("YangToDb_prefix_key_xfmr: Invalid maskrange, make len < ge-value <= ge-value")
+                return ipPrefix, err
+            } */
+            if (ge <= le) != true {
+                err = errors.New("Invalid maskrange, ge-value <= ge-value")
+                log.Error("YangToDb_prefix_key_xfmr: Invalid maskrange, make sure len < ge-value <= ge-value")
+                return ipPrefix, err
+            }
+        }
         prefixTblKey = setName + "|" + ipPrefix + "|" + masklenrange
     }
     log.Info("YangToDb_prefix_key_xfmr: prefixTblKey: ", prefixTblKey)
@@ -544,7 +642,10 @@ var YangToDb_community_member_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrPar
     }
 
     res_map["community_member@"] = strings.TrimSuffix(community_list, ",")
-    res_map["set_type"] = new_type
+
+    if ((inParams.oper != DELETE) && (prev_type != "")) {
+       res_map["set_type"] = prev_type
+    }
 
     log.Info("YangToDb_community_member_fld_xfmr: ", res_map["community_member@"], " type ", res_map["set_type"])
     return res_map, err
@@ -728,7 +829,7 @@ var YangToDb_ext_community_member_fld_xfmr FieldXfmrYangToDb = func(inParams Xfm
 
         has_rt := strings.HasPrefix(member, "route-target")
         has_ro := strings.HasPrefix(member, "route-origin")
-        if ((has_rt == false) && (has_ro == false)){
+        if ((new_type == "STANDARD") && (has_rt == false) && (has_ro == false)){
             err = errors.New("Community member is not of type route-target or route-origin");
             log.Error("Community member is not of type route-target or route-origin")
             return res_map, err
@@ -744,7 +845,11 @@ var YangToDb_ext_community_member_fld_xfmr FieldXfmrYangToDb = func(inParams Xfm
         }
     }
     res_map["community_member@"] = strings.TrimSuffix(community_list, ",")
-    res_map["set_type"] = new_type
+
+    if ((inParams.oper != DELETE) && (prev_type != "")) {
+       res_map["set_type"] = prev_type
+    }
+
     log.Info("YangToDb_ext_community_member_fld_xfmr: ", res_map["community_member@"], " type ", res_map["set_type"])
     return res_map, err
 }

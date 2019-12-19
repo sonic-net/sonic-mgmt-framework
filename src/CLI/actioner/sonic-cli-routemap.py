@@ -38,7 +38,7 @@ def invoke_api(func, args=[]):
     if op == 'patch':
         if attr == 'openconfig_routing_policy_routing_policy_policy_definitions_policy_definition_statements_statement_actions_config_policy_result':
             keypath = cc.Path(uri, name=args[0], name1=args[1])
-            body = { "openconfig-routing-policy:policy-result" : "ACCEPT_ROUTE" if "permit" == args[2] else "REJECT_ROUTE" }
+            body = { "openconfig-routing-policy:policy-result": args[2]}
             return api.patch(keypath, body)
         elif attr == 'openconfig_bgp_policy_routing_policy_policy_definitions_policy_definition_statements_statement_actions_bgp_actions_config_set_next_hop':
             keypath = cc.Path(uri, name=args[0], name1=args[1])
@@ -88,6 +88,16 @@ def invoke_api(func, args=[]):
                 name=args[0], name1=args[1])
         return api.delete(keypath)
 
+    elif op == 'get':
+
+         if attr == 'openconfig_routing_policy_routing_policy_policy_definitions':
+	   keypath = cc.Path('/restconf/data/openconfig-routing-policy:routing-policy/policy-definitions')
+           return api.get(keypath)
+
+         elif attr == 'openconfig_routing_policy_routing_policy_policy_definitions_policy_definition':
+	   keypath = cc.Path('/restconf/data/openconfig-routing-policy:routing-policy/policy-definitions/policy-definition={name}',name=args[1])
+           return api.get(keypath)
+
     return api.cli_not_implemented(func)
 
 def run(func, args):
@@ -100,6 +110,7 @@ def run(func, args):
             if api_response is None:
                 print("Failed")
                 sys.exit(1)
+            show_cli_output(args[0], api_response)
     else:
         print response.error_message()
         sys.exit(1)

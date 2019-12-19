@@ -286,7 +286,7 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (cvlErr CVLErrorIn
 
 	defer func() {
 		if (cvlErr.ErrCode != CVL_SUCCESS) {
-			CVL_LOG(ERROR, "ValidateEditConfig() failed , %v", cvlErr)
+			CVL_LOG(ERROR, "ValidateEditConfig() failed , %+v", cvlErr)
 		}
 	}()
 
@@ -343,6 +343,7 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (cvlErr CVLErrorIn
 		//Invalid table name or invalid key separator 
 		if key == "" {
 			cvlErrObj.ErrCode = CVL_SYNTAX_ERROR
+			cvlErrObj.Msg = "Invalid table or key for " + cfgData[i].Key
 			cvlErrObj.CVLErrDetails = cvlErrorMap[cvlErrObj.ErrCode]
 			return cvlErrObj, CVL_SYNTAX_ERROR
 		}
@@ -353,6 +354,7 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (cvlErr CVLErrorIn
 			if ret := c.checkMaxElemConstraint(tbl); ret != CVL_SUCCESS {
 				cvlErrObj.ErrCode = CVL_SYNTAX_ERROR
 				cvlErrObj.ErrAppTag = "too-many-elements"
+				cvlErrObj.Msg = "Max elements limit reached"
 				cvlErrObj.CVLErrDetails = cvlErrorMap[cvlErrObj.ErrCode]
 				return cvlErrObj, CVL_SYNTAX_ERROR
 			}
@@ -374,6 +376,7 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (cvlErr CVLErrorIn
 				for field, _ := range cfgData[i].Data {
 					if (c.checkDeleteConstraint(cfgData, tbl, key, field) != CVL_SUCCESS) {
 						cvlErrObj.ErrCode = CVL_SEMANTIC_ERROR
+						cvlErrObj.Msg = "Delete constraint failed"
 						cvlErrObj.CVLErrDetails = cvlErrorMap[cvlErrObj.ErrCode]
 						return cvlErrObj, CVL_SEMANTIC_ERROR
 					}
@@ -382,6 +385,7 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (cvlErr CVLErrorIn
 				//Entire entry to be deleted
 				if (c.checkDeleteConstraint(cfgData, tbl, key, "") != CVL_SUCCESS) {
 					cvlErrObj.ErrCode = CVL_SEMANTIC_ERROR
+					cvlErrObj.Msg = "Delete constraint failed"
 					cvlErrObj.CVLErrDetails = cvlErrorMap[cvlErrObj.ErrCode]
 					return cvlErrObj, CVL_SEMANTIC_ERROR
 				}

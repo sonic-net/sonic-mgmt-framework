@@ -2,32 +2,155 @@ module openconfig-system-annot {
 
     yang-version "1";
 
-    namespace "http://openconfig.net/yang/annotation/oc-sys-annot";
+    namespace "http://openconfig.net/yang/openconfig-system-annot";
     prefix "oc-sys-annot";
 
+    import openconfig-system-management { prefix oc-sys-mgmt; }
+    import openconfig-system-terminal { prefix oc-sys-term; }
+    import openconfig-procmon { prefix oc-proc; }
+    import openconfig-messages { prefix oc-messages; }
+    import openconfig-types { prefix oc-types; }
+    import openconfig-extensions { prefix oc-ext; }
+    import openconfig-system-logging { prefix oc-log; }
+    import openconfig-alarms { prefix oc-alarms; }
+    import openconfig-inet-types { prefix oc-inet; }
+    import openconfig-yang-types { prefix oc-yang; }
+    import openconfig-aaa { prefix oc-aaa; }
     import openconfig-system { prefix oc-sys; }
     import sonic-extensions {prefix sonic-ext; }
     import openconfig-system-ext { prefix oc-sys-ext; }
 
+    deviation /oc-sys:system/oc-sys:aaa/oc-sys:authentication/oc-sys:users/oc-sys:user {
+        deviate add {
+            sonic-ext:subtree-transformer "sys_aaa_auth_xfmr";
+        }
+    }
+ 
     deviation /oc-sys:system/oc-sys:state {
         deviate add {
             sonic-ext:subtree-transformer "sys_state_xfmr";
         }
     }
+
+    deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:config {
+      deviate add {
+          sonic-ext:key-transformer "global_sg_key_xfmr";
+          sonic-ext:table-transformer "global_sg_tbl_xfmr";
+      }
+    }
+
     deviation /oc-sys:system/oc-sys:memory {
         deviate add {
             sonic-ext:subtree-transformer "sys_memory_xfmr";
         }
     }
+
+    deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:config/oc-sys-ext:timeout {
+      deviate add {
+          sonic-ext:field-name "timeout";
+      }
+    }
+
+    deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:config/oc-sys-ext:auth-type {
+      deviate add {
+          sonic-ext:field-name "auth_type";
+      }
+    }
+
+    deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:config/oc-sys-ext:secret-key {
+      deviate add {
+          sonic-ext:field-name "passkey";
+      }
+    }
+
+    deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:config/oc-sys-ext:source-address {
+      deviate add {
+          sonic-ext:field-name "src_ip";
+      }
+    }
+
+    deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:servers/oc-sys:server/oc-sys:config {
+      deviate add {
+          sonic-ext:table-transformer "server_table_xfmr";
+          sonic-ext:key-transformer "server_key_xfmr";
+      }
+    }
+
+    deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:servers/oc-sys:server/oc-sys:config/oc-sys:timeout {
+      deviate add {
+          sonic-ext:field-name "timeout";
+      }
+    }
+
+    deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:servers/oc-sys:server/oc-sys:config/oc-sys:name {
+      deviate add {
+      }
+    }
+
+    deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:servers/oc-sys:server/oc-sys:config/oc-sys:address {
+      deviate add {
+          sonic-ext:field-name "ipaddress";
+      }
+    }
+
     deviation /oc-sys:system/oc-sys:cpus {
         deviate add {
             sonic-ext:subtree-transformer "sys_cpus_xfmr";
         }
     }
+
+    deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:servers/oc-sys:server/oc-sys:config/oc-sys-ext:auth-type {
+      deviate add {
+          sonic-ext:field-name "auth_type";
+      }
+    }
+
+    deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:servers/oc-sys:server/oc-sys:config/oc-sys-ext:priority {
+      deviate add {
+          sonic-ext:field-name "priority";
+      }
+    }
+
+    deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:servers/oc-sys:server/oc-sys:tacacs/oc-sys:config {
+      deviate add {
+          sonic-ext:table-transformer "server_table_xfmr";
+          sonic-ext:key-transformer "server_key_xfmr";
+      }
+    }
+
+    deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:servers/oc-sys:server/oc-sys:tacacs/oc-sys:config/oc-sys:secret-key {
+      deviate add {
+          sonic-ext:field-name "passkey";
+      }
+    }
+
     deviation /oc-sys:system/oc-sys:processes {
         deviate add {
             sonic-ext:subtree-transformer "sys_procs_xfmr";
         }
+    }
+
+    deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:servers/oc-sys:server/oc-sys:tacacs/oc-sys:config/oc-sys:source-address {
+        deviate not-supported;
+    }
+
+    deviation /oc-sys:system/oc-sys:aaa/oc-sys:server-groups/oc-sys:server-group/oc-sys:servers/oc-sys:server/oc-sys:tacacs/oc-sys:config/oc-sys:port {
+      deviate add {
+          sonic-ext:field-name "tcp_port";
+      }
+    }
+
+    deviation /oc-sys:system/oc-sys:aaa/oc-sys:authentication/oc-sys:config {
+      deviate add {
+          sonic-ext:table-name "AAA";
+          sonic-ext:key-transformer "auth_set_key_xfmr";
+      }
+    }
+
+    deviation /oc-sys:system/oc-sys:aaa/oc-sys:authentication/oc-sys:config/oc-sys:authentication-method {
+      deviate add {
+          sonic-ext:field-name "login";
+      }
     }
 
 /*********************************************************/
@@ -207,6 +330,4 @@ module openconfig-system-annot {
     }
 
 /*********************************************************/
-
-
 }

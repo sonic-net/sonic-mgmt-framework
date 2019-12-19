@@ -366,9 +366,9 @@ func dbMapDelete(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requestU
 	var xfmrErr error
 	*skipOrdTbl = false
 
-	for i := 0; i < MAXOPER; i++ {
-		resultMap[i] = make(map[db.DBNum]map[string]map[string]db.Value)
-	}
+    for i := 0; i < MAXOPER; i++ {
+        resultMap[i] = make(map[db.DBNum]map[string]map[string]db.Value)
+    }
 	if isSonicYang(uri) {
 		*skipOrdTbl = true
 		xpathPrefix, keyName, tableName := sonicXpathKeyExtract(uri)
@@ -381,8 +381,8 @@ func dbMapDelete(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requestU
 		spec, ok := xYangSpecMap[xpathPrefix]
 		if ok {
 			specYangType := yangTypeGet(spec.yangEntry)
-                        moduleNm := "/" + strings.Split(uri, "/")[1]
-                        log.Infof("Module name for uri %s is %s", uri, moduleNm)
+			moduleNm := "/" + strings.Split(uri, "/")[1]
+			log.Infof("Module name for uri %s is %s", uri, moduleNm)
 			if len(spec.xfmrFunc) > 0 {
 				var dbs [db.MaxDB]*db.DB
 				cdb := spec.dbIndex
@@ -421,11 +421,11 @@ func dbMapDelete(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requestU
 							} else {
 								var redisMap = new(RedisDbMap)
 								var dbresult = make(RedisDbMap)
-								for i := db.ApplDB; i < db.MaxDB; i++ {
-									dbresult[i] = make(map[string]map[string]db.Value)
-								}
-								redisMap = &dbresult
-								(*redisMap)[db.ConfigDB] = result
+                                for i := db.ApplDB; i < db.MaxDB; i++ {
+                                    dbresult[i] = make(map[string]map[string]db.Value)
+                                }
+                                redisMap = &dbresult
+                                (*redisMap)[db.ConfigDB] = result
 								subOpDataMap[UPDATE]     = redisMap
 							}
 							result = make(map[string]map[string]db.Value)
@@ -478,10 +478,10 @@ func dbMapDelete(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requestU
 					if len(*data) > 0 {
 						for dbType, dbData := range (*data) {
 							if len(dbData) > 0 {
-								if _, ok := resultMap[op][dbType]; !ok {
-									resultMap[op][dbType] = make(map[string]map[string]db.Value)
-								}
-								mapCopy(resultMap[op][dbType], (*subOpDataMap[op])[dbType])
+                                if _, ok := resultMap[op][dbType]; !ok {
+                                    resultMap[op][dbType] = make(map[string]map[string]db.Value)
+                                }
+                                mapCopy(resultMap[op][dbType], (*subOpDataMap[op])[dbType])
 							}
 						}
 					}
@@ -491,7 +491,6 @@ func dbMapDelete(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requestU
 			/* for container/list delete req , it should go through, even if there are any leaf default-yang-values */
 		}
 	}
-	printDbData(resultMap, "/tmp/yangToDbDataDel.txt")
 
     printDbData(resultMap, "/tmp/yangToDbDataDel.txt")
 	log.Infof("Delete req: uri(\"%v\") resultMap(\"%v\").", uri, resultMap)

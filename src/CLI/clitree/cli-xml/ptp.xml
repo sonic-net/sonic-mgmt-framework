@@ -2,8 +2,14 @@
 <CLISH_MODULE xmlns="http://www.dellemc.com/sonic/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xi="http://www.w3.org/2001/XInclude" xsi:schemaLocation="http://www.dellemc.com/sonic/XMLSchema http://www.dellemc.com/sonic/XMLSchema/clish.xsd">
 	<PTYPE
 		name="PTP_V6SCOPE_TYPE"
-		pattern="0[xX][0-9a-fA-F]{2}"
-		help="Hexadecimal range (0x00-0xff)"
+		pattern="0[xX][0-9a-fA-F]"
+		help="Hexadecimal range (0x0-0xf)"
+		/>
+	<PTYPE
+		name="RANGE_2_255"
+		method="integer"
+		pattern="2..255"
+		help=""
 		/>
 	<VIEW name="enable-view">
 		<!--show ptp -->
@@ -45,7 +51,7 @@
 					<PARAM name="ptp_network_transport_type" help="Enter PTP network transport type" ptype="PTP_TRANSPORT"/>
 					<PARAM name="ptp_master_slave" help="unicast mode/multicast" ptype="PTP_MST_SLV"/>
 				</PARAM>
-				<PARAM name="ipv6_scope" help="PTP IPv6 multicast scope" ptype="SUBCOMMAND" mode="subcommand">
+				<PARAM name="ipv6-scope" help="PTP IPv6 multicast scope" ptype="SUBCOMMAND" mode="subcommand">
 					<PARAM name="ptp_ipv6_scope" help="Scope used for IPv6 multicast message. Used as second byte of the primary address" ptype="PTP_V6SCOPE_TYPE"/>
 				</PARAM>
 				<PARAM name="domain" help="PTP domain" ptype="SUBCOMMAND" mode="subcommand">
@@ -67,7 +73,7 @@
 					<PARAM name="ptp_announce_interval" help="Enter PTP announce interval value" ptype="INT8_RANGE"/>
 				</PARAM>
 				<PARAM name="announce-timeout" help="PTP announce timeout" ptype="SUBCOMMAND" mode="subcommand">
-					<PARAM name="ptp_announce_timeout" help="Enter PTP announce timeout value" ptype="RANGE_1_255"/>
+					<PARAM name="ptp_announce_timeout" help="Enter PTP announce timeout value" ptype="RANGE_2_255"/>
 				</PARAM>
 				<PARAM name="log-sync-interval" help="PTP sync interval" ptype="SUBCOMMAND" mode="subcommand">
 					<PARAM name="ptp_sync_interval" help="Enter PTP sync interval value" ptype="INT8_RANGE"/>
@@ -103,7 +109,7 @@
  python $SONIC_CLI_ROOT/sonic-cli-ptp.py patch_ietf_ptp_ptp_transparent_clock_default_ds_delay_mechanism ${ptp_delay_mechanism_type}&#xA;
  elif test "${cfg-ptp-subcommands}" = "network-transport"; then&#xA;
  python $SONIC_CLI_ROOT/sonic-cli-ptp.py "network-transport" ${ptp_network_transport_type} ${ptp_master_slave}&#xA;
- elif test "${cfg-ptp-subcommands}" = "ipv6_scope"; then&#xA;
+ elif test "${cfg-ptp-subcommands}" = "ipv6-scope"; then&#xA;
  python $SONIC_CLI_ROOT/sonic-cli-ptp.py "udp6-scope" ${ptp_ipv6_scope}&#xA;
  elif test "${cfg-ptp-subcommands}" = "domain"; then&#xA;
  python $SONIC_CLI_ROOT/sonic-cli-ptp.py patch_ietf_ptp_ptp_instance_list_default_ds_domain_number 0 ${ptp_domain}&#xA;

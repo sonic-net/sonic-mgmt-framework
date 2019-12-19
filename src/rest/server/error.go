@@ -196,6 +196,12 @@ func toErrorEntry(err error, r *http.Request) (status int, errInfo errorEntry) {
 		errInfo.Message = e.Error()
 		errInfo.Path = e.Path
 
+	case tlerr.AuthorizationError:
+		status = http.StatusUnauthorized
+		errInfo.Message = "unauthorized"
+		errInfo.Path = e.Path
+		errInfo.Tag = errtagAccessDenied
+
 	}
 
 	return

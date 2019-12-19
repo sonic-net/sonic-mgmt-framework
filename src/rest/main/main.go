@@ -25,6 +25,7 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -32,19 +33,21 @@ import (
 	"swagger"
 	"syscall"
 	"time"
+
 	"github.com/golang/glog"
 	"github.com/pkg/profile"
 )
 
 // Command line parameters
 var (
-	port        int    // Server port
-	uiDir       string // SwaggerUI directory
-	certFile    string // Server certificate file path
-	keyFile     string // Server private key file path
-	caFile      string // Client CA certificate file path
-	jwtValInt   uint64    // JWT Valid Interval
-	jwtRefInt   uint64    // JWT Refresh seconds before expiry
+	port      int    // Server port
+	uiDir     string // SwaggerUI directory
+	certFile  string // Server certificate file path
+	keyFile   string // Server private key file path
+	caFile    string // Client CA certificate file path
+	cliCAFile string // CLI client CA certificate file path
+	jwtValInt uint64 // JWT Valid Interval
+	jwtRefInt uint64 // JWT Refresh seconds before expiry
 )
 
 func init() {
@@ -54,6 +57,7 @@ func init() {
 	flag.StringVar(&certFile, "cert", "", "Server certificate file path")
 	flag.StringVar(&keyFile, "key", "", "Server private key file path")
 	flag.StringVar(&caFile, "cacert", "", "CA certificate for client certificate validation")
+	flag.StringVar(&cliCAFile, "clicacert", "", "CA certificate for CLI client validation")
 	flag.Var(server.ClientAuth, "client_auth", "Client auth mode(s) - cert,password,jwt")
 	flag.Uint64Var(&jwtRefInt, "jwt_refresh_int", 30, "Seconds before JWT expiry the token can be refreshed.")
 	flag.Uint64Var(&jwtValInt, "jwt_valid_int", 3600, "Seconds that JWT token is valid for.")
@@ -80,26 +84,30 @@ func main() {
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGUSR1)
 	go func() {
-	  for {
-		<-sigs
-		if (profRunning) {
-			prof.Stop()
-			profRunning = false
-		} else {
-			prof = profile.Start()
-			defer prof.Stop()
-			profRunning = true
+		for {
+			<-sigs
+			if profRunning {
+				prof.Stop()
+				profRunning = false
+			} else {
+				prof = profile.Start()
+				defer prof.Stop()
+				profRunning = true
+			}
 		}
-	  }
 	}()
+
+	if caFile == "" && server.ClientAuth.Enabled("cert") {
+		glog.Fatal("Must specify -cacert with -client_auth cert")
+	}
 
 	swagger.Load()
 
 	server.SetUIDirectory(uiDir)
 
 	server.GenerateJwtSecretKey()
-	server.JwtRefreshInt = time.Duration(jwtRefInt*uint64(time.Second))
-	server.JwtValidInt = time.Duration(jwtValInt*uint64(time.Second))
+	server.JwtRefreshInt = time.Duration(jwtRefInt * uint64(time.Second))
+	server.JwtValidInt = time.Duration(jwtValInt * uint64(time.Second))
 
 	router := server.NewRouter()
 
@@ -109,7 +117,7 @@ func main() {
 	tlsConfig := tls.Config{
 		ClientAuth:               getTLSClientAuthType(),
 		Certificates:             prepareServerCertificate(),
-		ClientCAs:                prepareCACertificates(),
+		ClientCAs:                prepareCACertificates(caFile),
 		MinVersion:               tls.VersionTLS12,
 		PreferServerCipherSuites: true,
 		CipherSuites:             getPreferredCipherSuites(),
@@ -122,11 +130,48 @@ func main() {
 		TLSConfig: &tlsConfig,
 	}
 
+	if cliCAFile != "" {
+		spawnUnixListener()
+	}
+
 	glog.Infof("**** Server started on %v", address)
 	glog.Infof("**** UI directory is %v", uiDir)
 
 	// Start HTTPS server
 	glog.Fatal(restServer.ListenAndServeTLS("", ""))
+}
+
+// spawnUnixListener listens using certificate authentication on a local
+// unix socket. This is used for authentication of the CLI client to the REST
+// server, and will not be used for any other client.
+func spawnUnixListener() {
+	server.ClientAuth.Set("cert")
+	tlsConfig := tls.Config{
+		ClientAuth:               tls.RequireAndVerifyClientCert,
+		Certificates:             prepareServerCertificate(),
+		ClientCAs:                prepareCACertificates(cliCAFile),
+		MinVersion:               tls.VersionTLS12,
+		CurvePreferences:         getPreferredCurveIDs(),
+		PreferServerCipherSuites: true,
+		CipherSuites:             getPreferredCipherSuites(),
+	}
+
+	// localListener, err := net.Listen("unix", "/var/run/rest-local.sock")
+	localListener, err := net.Listen("tcp", "127.0.0.1:8443")
+	if err != nil {
+		glog.Fatal(err)
+	}
+
+	localServer := &http.Server{
+		Handler:   server.NewRouter(),
+		TLSConfig: &tlsConfig,
+	}
+
+	go func() {
+		if err := localServer.ServeTLS(localListener, "", ""); err != nil && err != http.ErrServerClosed {
+			glog.Fatal(err)
+		}
+	}()
 }
 
 // prepareServerCertificate function parses --cert and --key parameter
@@ -157,14 +202,14 @@ func prepareServerCertificate() []tls.Certificate {
 // path to CA certificate file. Loads file contents to a x509.CertPool
 // object. Returns nil if file name is empty (not specified). Exists
 // the process if file path is invalid or file is corrupted.
-func prepareCACertificates() *x509.CertPool {
-	if caFile == "" { // no CA file..
+func prepareCACertificates(file string) *x509.CertPool {
+	if file == "" { // no CA file..
 		return nil
 	}
 
-	glog.Infof("Client CA certificate file: %s", caFile)
+	glog.Infof("Client CA certificate file: %s", file)
 
-	caCert, err := ioutil.ReadFile(caFile)
+	caCert, err := ioutil.ReadFile(file)
 	if err != nil {
 		glog.Fatal("Failed to load CA certificate file -- ", err)
 	}
@@ -178,25 +223,21 @@ func prepareCACertificates() *x509.CertPool {
 	return caPool
 }
 
-// getTLSClientAuthType function parses the --client_auth parameter.
-// Returns corresponding tls.ClientAuthType value. Exits the process
-// if value is not valid ('none', 'cert' or 'auth')
+// getTLSClientAuthType function parses requires client cert
+// if caFile is provided, otherwise we just request the client cert.
 func getTLSClientAuthType() tls.ClientAuthType {
-	if !server.ClientAuth.Any() {
-		return tls.RequestClientCert
-	}
-	if server.ClientAuth.Enabled("cert") {
-		if caFile == "" {
-			glog.Fatal("--cacert option is mandatory when --client_auth is 'cert'")
-		}
+	if caFile != "" {
 		return tls.RequireAndVerifyClientCert
 	}
-	if server.ClientAuth.Enabled("password") || server.ClientAuth.Enabled("jwt") {
-		return tls.RequestClientCert
-	}
+	return tls.RequestClientCert
+}
 
-	return tls.RequireAndVerifyClientCert // dummy
-	
+func getPreferredCurveIDs() []tls.CurveID {
+	return []tls.CurveID{
+		tls.CurveP521,
+		tls.CurveP384,
+		tls.CurveP256,
+	}
 }
 
 func getPreferredCipherSuites() []uint16 {

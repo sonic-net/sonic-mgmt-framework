@@ -126,9 +126,10 @@ module openconfig-network-instance-annot {
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:fdb/oc-netinst:mac-table/oc-netinst:entries {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:fdb/oc-netinst:mac-table {
       deviate add {
-            sonic-ext:db-name "STATE_DB";
+            sonic-ext:db-name "APPL_DB";
+            sonic-ext:subtree-transformer "fdb_mac_table_xfmr";
       }
     }
 /*
@@ -863,11 +864,10 @@ module openconfig-network-instance-annot {
       }
     }
 
-
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:table-connections/oc-netinst:table-connection {
-      deviate add {
-        sonic-ext:key-transformer "route_table_conn_key_xfmr";
-      }
+        deviate add {
+            sonic-ext:key-transformer "route_table_conn_key_xfmr";
+        }
     }
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:table-connections/oc-netinst:table-connection/oc-netinst:config/oc-netinst:src-protocol {
@@ -919,9 +919,15 @@ module openconfig-network-instance-annot {
     }
 
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:dynamic-neighbor-prefixes/oc-netinst:dynamic-neighbor-prefix {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:dynamic-neighbor-prefixes {
       deviate add {
         sonic-ext:table-name "BGP_GLOBALS_LISTEN_PREFIX";
+      }
+    }
+
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:dynamic-neighbor-prefixes/oc-netinst:dynamic-neighbor-prefix {
+      deviate add {
         sonic-ext:key-transformer "bgp_dyn_neigh_listen_key_xfmr";
       }
     }
@@ -956,31 +962,6 @@ module openconfig-network-instance-annot {
             sonic-ext:table-name "NONE";
             sonic-ext:subtree-transformer "bgp_routes_get_xfmr";
         }
-    }
-
-  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:fdb/oc-netinst:mac-table/oc-netinst:entries {
-      deviate add {
-            sonic-ext:db-name "APPL_DB";
-      }
-    }
-
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:fdb/oc-netinst:mac-table/oc-netinst:entries/oc-netinst:entry {
-      deviate add {
-            sonic-ext:table-name "FDB_TABLE";
-            sonic-ext:key-transformer "fdb_tbl_key_xfmr";    
-      }
-    }
-
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:fdb/oc-netinst:mac-table/oc-netinst:entries/oc-netinst:entry/oc-netinst:state/oc-netinst:entry-type {
-      deviate add {
-            sonic-ext:field-transformer "entry_type_field_xfmr";
-      }
-    }
-
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:fdb/oc-netinst:mac-table/oc-netinst:entries/oc-netinst:entry/oc-netinst:interface/oc-netinst:interface-ref/oc-netinst:state/oc-netinst:interface {
-      deviate add {
-            sonic-ext:field-name "port";
-      }
     }
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-bgp-ext:logging-options/oc-bgp-ext:config/oc-bgp-ext:log-neighbor-state-changes {
@@ -1323,40 +1304,58 @@ module openconfig-network-instance-annot {
             sonic-ext:field-name "max_med_val";
       }
     }
-
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:aggregate-address/oc-bgp-ext:config/oc-bgp-ext:prefix {
+     
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:aggregate-address-config {
       deviate add {
-            sonic-ext:field-name "aggregate_prefix";
+        sonic-ext:table-name "BGP_GLOBALS_AF_AGGREGATE_ADDR";
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:aggregate-address/oc-bgp-ext:config/oc-bgp-ext:as-set {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:aggregate-address-config/oc-bgp-ext:aggregate-address {
       deviate add {
-            sonic-ext:field-name "aggregate_as_set";
+        sonic-ext:key-transformer "bgp_gbl_afi_safi_addr_key_xfmr";
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:aggregate-address/oc-bgp-ext:config/oc-bgp-ext:summary-only {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:aggregate-address-config/oc-bgp-ext:aggregate-address/oc-bgp-ext:prefix {
       deviate add {
-            sonic-ext:field-name "aggregate_summary_only";
+            sonic-ext:field-transformer "bgp_gbl_afi_safi_addr_field_xfmr";
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:aggregate-address/oc-bgp-ext:state/oc-bgp-ext:prefix {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:aggregate-address-config/oc-bgp-ext:aggregate-address/oc-bgp-ext:config/oc-bgp-ext:prefix {
       deviate add {
-            sonic-ext:field-name "aggregate_prefix";
+            sonic-ext:field-transformer "bgp_gbl_afi_safi_addr_field_xfmr";
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:aggregate-address/oc-bgp-ext:state/oc-bgp-ext:as-set {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:aggregate-address-config/oc-bgp-ext:aggregate-address/oc-bgp-ext:state/oc-bgp-ext:prefix {
       deviate add {
-            sonic-ext:field-name "aggregate_as_set";
+            sonic-ext:field-transformer "bgp_gbl_afi_safi_addr_field_xfmr";
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:aggregate-address/oc-bgp-ext:state/oc-bgp-ext:summary-only {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:aggregate-address-config/oc-bgp-ext:aggregate-address/oc-bgp-ext:config/oc-bgp-ext:as-set {
       deviate add {
-            sonic-ext:field-name "aggregate_summary_only";
+            sonic-ext:field-name "as_set";
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:aggregate-address-config/oc-bgp-ext:aggregate-address/oc-bgp-ext:state/oc-bgp-ext:as-set {
+      deviate add {
+            sonic-ext:field-name "as_set";
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:aggregate-address-config/oc-bgp-ext:aggregate-address/oc-bgp-ext:config/oc-bgp-ext:summary-only {
+      deviate add {
+            sonic-ext:field-name "summary_only";
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:aggregate-address-config/oc-bgp-ext:aggregate-address/oc-bgp-ext:state/oc-bgp-ext:summary-only {
+      deviate add {
+            sonic-ext:field-name "summary_only";
       }
     }
 
@@ -1384,39 +1383,57 @@ module openconfig-network-instance-annot {
         }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:network/oc-bgp-ext:config/oc-bgp-ext:prefix {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:network-config {
+        deviate add {
+            sonic-ext:table-name "BGP_GLOBALS_AF_NETWORK";
+        }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:network-config/oc-bgp-ext:network {
+        deviate add {
+            sonic-ext:key-transformer "bgp_gbl_afi_safi_addr_key_xfmr";
+        }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:network-config/oc-bgp-ext:network/oc-bgp-ext:prefix {
       deviate add {
-            sonic-ext:field-name "network_prefix";
+            sonic-ext:field-transformer "bgp_gbl_afi_safi_addr_field_xfmr";
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:network/oc-bgp-ext:config/oc-bgp-ext:policy-name {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:network-config/oc-bgp-ext:network/oc-bgp-ext:config/oc-bgp-ext:prefix {
       deviate add {
-            sonic-ext:field-name "network_policy";
+            sonic-ext:field-transformer "bgp_gbl_afi_safi_addr_field_xfmr";
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:network/oc-bgp-ext:config/oc-bgp-ext:backdoor {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:network-config/oc-bgp-ext:network/oc-bgp-ext:state/oc-bgp-ext:prefix {
       deviate add {
-            sonic-ext:field-name "network_backdoor";
+            sonic-ext:field-transformer "bgp_gbl_afi_safi_addr_field_xfmr";
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:network/oc-bgp-ext:state/oc-bgp-ext:prefix {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:network-config/oc-bgp-ext:network/oc-bgp-ext:config/oc-bgp-ext:policy-name {
       deviate add {
-            sonic-ext:field-name "network_prefix";
+            sonic-ext:field-name "policy";
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:network/oc-bgp-ext:state/oc-bgp-ext:policy-name {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:network-config/oc-bgp-ext:network/oc-bgp-ext:state/oc-bgp-ext:policy-name {
       deviate add {
-            sonic-ext:field-name "network_policy";
+            sonic-ext:field-name "policy";
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:network/oc-bgp-ext:state/oc-bgp-ext:backdoor {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:network-config/oc-bgp-ext:network/oc-bgp-ext:config/oc-bgp-ext:backdoor {
       deviate add {
-            sonic-ext:field-name "network_backdoor";
+            sonic-ext:field-name "backdoor";
+      }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:network-config/oc-bgp-ext:network/oc-bgp-ext:state/oc-bgp-ext:backdoor {
+      deviate add {
+            sonic-ext:field-name "backdoor";
       }
     }
 
@@ -2691,7 +2708,7 @@ module openconfig-network-instance-annot {
 				sonic-ext:subtree-transformer "igmp_snooping_subtree_xfmr";
 			}    
     }  
-
+    
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:l2vpn-evpn/oc-bgp-evpn-ext:vnis/oc-bgp-evpn-ext:vni {
       deviate add {
         sonic-ext:table-name "BGP_GLOBALS_EVPN_VNI";

@@ -35,4 +35,3 @@ func TestMain(t *testing.T) {
 	<-sigs
 	fmt.Println("Returning from TestMain on sig kill")
 }
-

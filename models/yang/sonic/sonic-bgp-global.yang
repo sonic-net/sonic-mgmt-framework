@@ -11,12 +11,12 @@ module sonic-bgp-global {
         prefix inet;
     }
 
-    import sonic-route-map {
-        prefix srmap;
-    }
-
     import sonic-bgp-common {
         prefix sbc;
+    }
+
+    import sonic-route-map {
+        prefix srmap;
     }
 
     organization
@@ -41,9 +41,9 @@ module sonic-bgp-global {
     container sonic-bgp-global {
         container BGP_GLOBALS {
             list BGP_GLOBALS_LIST {
-                key "vrf";
+                key "vrf_name";
 
-                leaf vrf {
+                leaf vrf_name {
                     type union {
                         type string {
                             pattern "default";
@@ -296,11 +296,11 @@ module sonic-bgp-global {
 
         container BGP_GLOBALS_AF {
             list BGP_GLOBALS_AF_LIST {
-                key "vrf afi_safi";
+                key "vrf_name afi_safi";
 
-                leaf vrf {
+                leaf vrf_name {
                     type leafref {
-                        path "../../../BGP_GLOBALS/BGP_GLOBALS_LIST/vrf";
+                        path "../../../BGP_GLOBALS/BGP_GLOBALS_LIST/vrf_name";
                     }
                 }
 
@@ -318,33 +318,6 @@ module sonic-bgp-global {
                     type uint16 {
                         range "1..256";
                     }
-                }
-
-
-                leaf aggregate_prefix {
-                    type inet:ip-prefix;
-                }
-
-                leaf aggregate_as_set {
-                    type boolean;
-                }
-
-                leaf aggregate_summary_only {
-                    type boolean;
-                }
-
-                leaf network_prefix{
-                    type inet:ip-prefix;
-                }
-
-                leaf network_policy {
-                    type leafref {
-                        path "/srmap:sonic-route-map/srmap:ROUTE_MAP_SET/srmap:ROUTE_MAP_SET_LIST/srmap:name";
-                    }
-                }
-
-                leaf network_backdoor {
-                    type boolean;
                 }
 
                 leaf route_download_filter {
@@ -375,24 +348,61 @@ module sonic-bgp-global {
             }
         }
 
-        container BGP_GLOBALS_LISTEN_PREFIX {
-            list BGP_GLOBALS_LISTEN_PREFIX_LIST {
-                key "vrf ip_prefix";
+        container BGP_GLOBALS_AF_AGGREGATE_ADDR {
+            list BGP_GLOBALS_AF_AGGREGATE_ADDR_LIST {
+                key "vrf_name afi_safi ip_prefix";
 
-                leaf vrf {
+                leaf vrf_name {
                     type leafref {
-                        path "../../../BGP_GLOBALS/BGP_GLOBALS_LIST/vrf";
+                        path "../../../BGP_GLOBALS/BGP_GLOBALS_LIST/vrf_name";
                     }
+                }
+
+                leaf afi_safi {
+                    type string;
                 }
 
                 leaf ip_prefix {
                     type inet:ip-prefix;
                 }
 
-                leaf peer_group {
+                leaf as_set {
+                    type boolean;
+                }
+
+                leaf summary_only {
+                    type boolean;
+                }
+            }
+        }
+
+        container BGP_GLOBALS_AF_NETWORK {
+            list BGP_GLOBALS_AF_NETWORK_LIST {
+                key "vrf_name afi_safi ip_prefix";
+
+                leaf vrf_name {
+                    type leafref {
+                        path "../../../BGP_GLOBALS/BGP_GLOBALS_LIST/vrf_name";
+                    }
+                }
+
+                leaf afi_safi {
                     type string;
                 }
 
+                leaf ip_prefix {
+                    type inet:ip-prefix;
+                }
+
+                leaf policy {
+                    type leafref {
+                        path "/srmap:sonic-route-map/srmap:ROUTE_MAP_SET/srmap:ROUTE_MAP_SET_LIST/srmap:name";
+                    }
+                }
+
+                leaf backdoor {
+                    type boolean;
+                }
             }
         }
 

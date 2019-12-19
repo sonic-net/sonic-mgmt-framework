@@ -37,7 +37,7 @@ const (
 	REPLACE
 	UPDATE
 	DELETE
-	MAXOPER
+    MAXOPER
 )
 
 type KeySpec struct {

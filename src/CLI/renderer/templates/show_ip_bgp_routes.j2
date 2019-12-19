@@ -10,8 +10,11 @@
 {% set vars = {'validRoute': ""} %}
 {% if json_output -%}
 {% for key in json_output %}
-{% if vars.update({'routerId':json_output["openconfig-network-instance:router-id"]}) %}{% endif %}
-{% if vars.update({'asNum':json_output["openconfig-network-instance:as"]}) %}{% endif %}
+{% if "openconfig-network-instance:config" in key %}
+{% set globalConfig = json_output["openconfig-network-instance:config"] %}
+{% if vars.update({'routerId':globalConfig["router-id"]}) %}{% endif %}
+{% if vars.update({'asNum':globalConfig["as"]}) %}{% endif %}
+{% endif %}
 {% endfor %}
 BGP routing table information for VRF default
 Router identifier {{ vars.routerId }}, local AS number {{ vars.asNum }} 
@@ -21,8 +24,19 @@ Origin codes: i - IGP, e - EGP, ? - incomplete
 AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Link Local Nexthop
      {{'%-20s'|format("Network")}}{{'%-20s'|format("Next Hop")}}{{'%-15s'|format("Metric")}}{{'%-15s'|format("LocPref")}}{{'%-15s'|format("Path")}}
 {% for key in json_output %}
-{% if "openconfig-network-instance:adj-rib-in-post" in key %}
+{% if "openconfig-network-instance:adj-rib-in-pre" in key %}
+{% set routeList = json_output["openconfig-network-instance:adj-rib-in-pre"]["routes"]["route"] %}
+{% elif "openconfig-network-instance:adj-rib-out-pre" in key %}
+{% set routeList = json_output["openconfig-network-instance:adj-rib-out-pre"]["routes"]["route"] %}
+{% elif "openconfig-network-instance:adj-rib-out-post" in key %}
+{% set routeList = json_output["openconfig-network-instance:adj-rib-out-post"]["routes"]["route"] %}
+{% elif "openconfig-network-instance:adj-rib-in-post" in key %}
 {% set routeList = json_output["openconfig-network-instance:adj-rib-in-post"]["routes"]["route"] %}
+{% elif "openconfig-network-instance:loc-rib" in key %}
+{% set routeList = json_output["openconfig-network-instance:adj-rib-in-post"]["routes"]["route"] %}
+{% else %}
+{% endif %}
+{% if routeList %}
 {% for route in routeList %}
 {% for key in route %}
   {% if vars.update({'prefix':route["prefix"]}) %}{% endif %}

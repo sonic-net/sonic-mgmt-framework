@@ -15,7 +15,7 @@
         {% set flow_list = json_output[key_json] %}
     {% endif %}
 ------------------------------------------------------------------------------------------------
-{{'%-15s'|format("FLOW")}}{{'%-15s'|format("ACL TABLE")}}{{'%-15s'|format("ACL RULE")}} {{'%-15s'|format("COLLECTOR")}} {{'%-15s'|format("SAMPLING RATE")}} {{'%-15s'|format("FLOWGROUP ID")}}
+{{'%-15s'|format("FLOW")}}{{'%-15s'|format("ACL TABLE")}}{{'%-15s'|format("ACL RULE")}} {{'%-15s'|format("COLLECTOR")}} {{'%-15s'|format("SAMPLE")}} {{'%-15s'|format("FLOWGROUP ID")}}
 ------------------------------------------------------------------------------------------------
 {% for flow in flow_list %}
 

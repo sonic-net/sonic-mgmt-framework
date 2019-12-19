@@ -32,10 +32,10 @@ index e86c0c3..028867c 100644
  
  func (n *Node) sanitizedData(preserveSpaces bool) string {
 diff --git a/query.go b/query.go
-index 146c2a4..575fedd 100644
+index 146c2a4..f21b61b 100644
 --- a/query.go
 +++ b/query.go
-@@ -49,6 +49,17 @@ func CreateXPathNavigator(top *Node) *NodeNavigator {
+@@ -49,6 +49,29 @@ func CreateXPathNavigator(top *Node) *NodeNavigator {
  	return &NodeNavigator{curr: top, root: top, attr: -1}
  }
  
@@ -47,13 +47,25 @@ index 146c2a4..575fedd 100644
 +
 +	v := exp.Evaluate(&NodeNavigator{curr: ctx, ctxt: ctx, root: top, attr: -1})
 +
-+	return v.(bool)
++	switch val := v.(type) {
++	case bool:
++		return val
++	case string:
++		return (val != "")
++	case float64:
++		return (val != 0)
++	case *xpath.NodeIterator:
++		return (val != nil)
++	}
++
++	//return v.(bool)
++	return false
 +}
 +
  func getCurrentNode(it *xpath.NodeIterator) *Node {
  	n := it.Current().(*NodeNavigator)
  	if n.NodeType() == xpath.AttributeNode {
-@@ -145,7 +156,7 @@ func FindEachWithBreak(top *Node, expr string, cb func(int, *Node) bool) {
+@@ -145,7 +168,7 @@ func FindEachWithBreak(top *Node, expr string, cb func(int, *Node) bool) {
  }
  
  type NodeNavigator struct {
@@ -62,7 +74,7 @@ index 146c2a4..575fedd 100644
  	attr       int
  }
  
-@@ -212,6 +223,17 @@ func (x *NodeNavigator) MoveToRoot() {
+@@ -212,6 +235,17 @@ func (x *NodeNavigator) MoveToRoot() {
  	x.curr = x.root
  }
  

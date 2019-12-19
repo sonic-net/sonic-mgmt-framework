@@ -34,9 +34,9 @@ limitations under the License.
         </PARAM>
         <ACTION>
             if test "${session-name}" = ""; then&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-mirror.py -show&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-mirror.py --show "show_mirror_session_all" --renderer show_mirror.j2&#xA;
             else&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-mirror.py -show --session ${session-name}&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-mirror.py --show "show_mirror_session" --session ${session-name} --renderer show_mirror.j2&#xA;
             fi&#xA;
        </ACTION>
    </COMMAND>
@@ -70,9 +70,7 @@ limitations under the License.
             ptype="STRING"
             >
         </PARAM>
-     <ACTION>
-        python $SONIC_CLI_ROOT/sonic-cli-mirror.py -clear --session ${session-name}
-     </ACTION>
+        <ACTION>python $SONIC_CLI_ROOT/sonic-cli-mirror.py --config "delete_mirror_session" --session ${session-name}&#xA;</ACTION>
      </COMMAND>
   </VIEW>
   <VIEW name="configure-mirror-view"
@@ -118,8 +116,8 @@ limitations under the License.
              >
                  <PARAM
                     name="sess-direction"
-                    help="Mirror session direction rx/tx/both"
-                    ptype="STRING"
+                    help="Mirror session direction"
+                    ptype="MIRROR_DIRECTION"
                     optional="false"
                     >
                  </PARAM>
@@ -164,7 +162,7 @@ limitations under the License.
                  <PARAM
                     name="ip_dscp"
                     help="ERSPAN dscp"
-                    ptype="UINT"
+                    ptype="RANGE_0_63"
                     optional="false"
                     >
                  </PARAM>
@@ -179,7 +177,7 @@ limitations under the License.
                  <PARAM
                     name="ip_gre"
                     help="ERSPAN gre-type"
-                    ptype="UINT"
+                    ptype="RANGE_0_65535"
                     optional="false"
                     >
                  </PARAM>
@@ -194,7 +192,7 @@ limitations under the License.
                  <PARAM
                     name="ip_ttl"
                     help="ERSPAN ttl"
-                    ptype="UINT"
+                    ptype="RANGE_0_63"
                     optional="false"
                     >
                  </PARAM>
@@ -203,22 +201,22 @@ limitations under the License.
                  if test "${dst_ip}" != ""; then&#xA;
                     if test "${src-phy-if-id}" = ""; then&#xA;
                         if test "${ip_gre}" = ""; then&#xA;
-                            python $SONIC_CLI_ROOT/sonic-cli-mirror.py -config --session ${session_name} --dst_ip ${dst_ip} --src_ip ${src_ip} --dscp ${ip_dscp} --ttl ${ip_ttl}&#xA;
+                            python $SONIC_CLI_ROOT/sonic-cli-mirror.py --config "create_mirror_session" --session ${session_name} --dst_ip ${dst_ip} --src_ip ${src_ip} --dscp ${ip_dscp} --ttl ${ip_ttl}&#xA;
                         else&#xA;
-                            python $SONIC_CLI_ROOT/sonic-cli-mirror.py -config --session ${session_name} --dst_ip ${dst_ip} --src_ip ${src_ip} --dscp ${ip_dscp} --gre ${ip_gre} --ttl ${ip_ttl}&#xA;
+                            python $SONIC_CLI_ROOT/sonic-cli-mirror.py -config "create_mirror_session" --session ${session_name} --dst_ip ${dst_ip} --src_ip ${src_ip} --dscp ${ip_dscp} --ttl ${ip_ttl} --gre ${ip_gre}&#xA;
                         fi&#xA;
                     else&#xA;
                         if test "${ip_gre}" = ""; then&#xA;
-                            python $SONIC_CLI_ROOT/sonic-cli-mirror.py -config --session ${session_name} --dst_ip ${dst_ip} --src_ip ${src_ip} --dscp ${ip_dscp} --ttl ${ip_ttl} --source ${src-phy-if-id} --direction ${sess-direction}&#xA;
+                            python $SONIC_CLI_ROOT/sonic-cli-mirror.py -config "create_mirror_session" --session ${session_name} --dst_ip ${dst_ip} --src_ip ${src_ip} --dscp ${ip_dscp} --ttl ${ip_ttl} --source ${src-phy-if-id} --direction ${sess-direction}&#xA;
                         else&#xA;
-                            python $SONIC_CLI_ROOT/sonic-cli-mirror.py -config --session ${session_name} --dst_ip ${dst_ip} --src_ip ${src_ip} --dscp ${ip_dscp} --gre ${ip_gre} --ttl ${ip_ttl} --source ${src-phy-if-id} --direction ${sess-direction}&#xA;
+                            python $SONIC_CLI_ROOT/sonic-cli-mirror.py -config "create_mirror_session" --session ${session_name} --dst_ip ${dst_ip} --src_ip ${src_ip} --dscp ${ip_dscp} --ttl ${ip_ttl} --gre ${ip_gre} --source ${src-phy-if-id} --direction ${sess-direction}&#xA;
                         fi&#xA;
                     fi&#xA;
                 elif test "${phy-if-id}" != ""; then&#xA;
                  if test "${src-phy-if-id}" = ""; then&#xA;
-                    python $SONIC_CLI_ROOT/sonic-cli-mirror.py -config --session ${session_name} --destination ${phy-if-id}&#xA;
+                    python $SONIC_CLI_ROOT/sonic-cli-mirror.py -config "create_mirror_session" --session ${session_name} --destination ${phy-if-id}&#xA;
                  else&#xA;
-                    python $SONIC_CLI_ROOT/sonic-cli-mirror.py -config --session ${session_name} --destination ${phy-if-id} --source ${src-phy-if-id} --direction ${sess-direction}&#xA;
+                    python $SONIC_CLI_ROOT/sonic-cli-mirror.py -config "create_mirror_session" --session ${session_name} --destination ${phy-if-id} --source ${src-phy-if-id} --direction ${sess-direction}&#xA;
                  fi&#xA;
                 fi&#xA;
                 </ACTION>
