@@ -101,7 +101,7 @@ func TraverseDb(dbs [db.MaxDB]*db.DB, spec KeySpec, result *map[db.DBNum]map[str
 		if spec.Ts.Name != XFMR_NONE_STRING { // Do not traverse for NONE table
 			data, err := dbs[spec.dbNum].GetEntry(&spec.Ts, spec.Key)
 			if err != nil {
-				log.Infof("Failed to get data for tbl(%v), key(%v) in TraverseDb", spec.Ts.Name, spec.Key)
+				log.Warningf("Failed to get data for tbl(%v), key(%v) in TraverseDb", spec.Ts.Name, spec.Key)
 				return err
 			}
 
@@ -121,7 +121,7 @@ func TraverseDb(dbs [db.MaxDB]*db.DB, spec KeySpec, result *map[db.DBNum]map[str
 		if spec.Ts.Name != XFMR_NONE_STRING { //Do not traverse for NONE table
 			keys, err := dbs[spec.dbNum].GetKeys(&spec.Ts)
 			if err != nil {
-				log.Infof("Failed to get keys for tbl(%v) in TraverseDb", spec.Ts.Name)
+				log.Warningf("Failed to get keys for tbl(%v) in TraverseDb", spec.Ts.Name)
 				return err
 			}
 			log.Infof("keys for table %v in Db %v are %v", spec.Ts.Name, spec.dbNum, keys)
