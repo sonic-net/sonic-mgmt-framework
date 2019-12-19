@@ -10,7 +10,6 @@ import (
     "syscall"
     "strconv"
     "os"
-    "reflect"
     "fmt"
     log "github.com/golang/glog"
     ygot "github.com/openconfig/ygot/ygot"
@@ -318,10 +317,7 @@ var YangToDb_sys_aaa_auth_xfmr SubTreeXfmrYangToDb = func(inParams XfmrParams) (
     targetUriPath,_ := getYangPathFromUri(pathInfo.Path)
     log.Info("TARGET URI PATH SYS AUTH:", targetUriPath)
     sysObj := getAppRootObject(inParams)
-    log.Infof("Yang to db aaa authentication")
     usersObj := sysObj.Aaa.Authentication.Users
-    log.Info("type of sysobj:", reflect.TypeOf(usersObj.User))
-    //pathInfo := NewPathInfo(inParams.uri)
     userName := pathInfo.Var("username")
     log.Info("username:",userName)
 
@@ -331,17 +327,15 @@ var YangToDb_sys_aaa_auth_xfmr SubTreeXfmrYangToDb = func(inParams XfmrParams) (
 	status , err_str = hostAccountUserDel(userName)
     } else {
         if value,present := usersObj.User[userName]; present {
-	    log.Info("config-user:",*(value.Config.Username))
-	    log.Info("config-Pass:",*(value.Config.Password))
+	    log.Info("User:",*(value.Config.Username))
 	    temp := value.Config.Role.(*ocbinds.OpenconfigSystem_System_Aaa_Authentication_Users_User_Config_Role_Union_String)
-   	    log.Info("temp:",temp)
-	    log.Info("temp.String:",temp.String)
+	    log.Info("Role:",temp.String)
             status, err_str = hostAccountUserAdd(*(value.Config.Username), temp.String, *(value.Config.PasswordHashed))
         }
     }
 
 	if !status {
- 		log.Info("Error in operation:",err_str)
+		log.Info("Error in operation:",err_str)
 		return nil, fmt.Errorf("%s",err_str)
 	} else {
 		return nil, nil
