@@ -1,0 +1,64 @@
+{% if 'openconfig-network-instance:neighbors' in json_output %}
+    {% set neighbor_list = json_output['openconfig-network-instance:neighbors'] %}
+    {% if 'neighbor' in neighbor_list %}
+        {% set neighbors = neighbor_list['neighbor'] %}
+        {% for neighbor in neighbors %}
+            {% set n_state = neighbor['state'] %}
+            {{-'BGP neighbor is '}}{{neighbor['neighbor-address']-}}
+            {{-', remote AS '}}{{n_state['peer-as']-}}
+            {{-', local AS '}}{{n_state['local-as']-}}
+            {{-', internal link\n'}}
+            {{-'  BGP version '}}{{'4'-}}
+            {{-', remote router ID '}}{{' '-}}
+            {{-', local router ID '}}{{' '}}
+            {% if 'session-state' in n_state %}
+                {{-'  BGP state = '}}{{(n_state['session-state']|string)-}}
+                {% if 'last-established' in n_state %} 
+                    {{-', up for '}}{{datetimeformat(n_state['last-established'])|string}}{{'\n'}}
+                {% else %}
+                    {{-', up for '}}{{'00:00:00'}}{{'\n'}}
+                {% endif %}
+            {% else %}
+                {{-'  BGP state = Unestablished'}}
+            {% endif %}
+            {% set n_timers_state = neighbor['timers']['state'] %}
+            {{-'  Hold time is '}}{{n_timers_state['negotiated-hold-time']-}}
+            {{-', keepalive interval is '}}{{n_timers_state['keepalive-interval']}}{{' seconds\n'}}
+            {{-'  Neighbor capabilities:\n'}}
+            {{-'    4 Byte AS: advertised and received\n'}}
+            {{-'    AddPath:\n'}} 
+            {{-'      IPv4 Unicast: RX advertised IPv4 Unicast\n'}}
+            {{-'    Route refresh: advertised and received(old & new)\n'}}
+            {{-'    Address Family IPv4 Unicast: advertised and received\n'}}
+            {{-'    Hostname Capability: advertised (name: sonic,domain name: n/a) not received\n'}}
+            {{-'    Graceful Restart Capabilty: advertised\n'}}
+            {% if 'queues' in n_state %}
+                {% set n_queues = n_state['queues'] %}
+                {{-'  Message statistics:\n'}}
+                {{-'    Inq depth is '}}{{n_queues['input']}}{{'\n'}}
+                {{-'    Outq depth is '}}{{n_queues['output']}}{{'\n'}}
+            {% endif %}
+            {% if 'messages' in n_state %}
+                {% set n_messages = n_state['messages'] %}
+                {{-'                         Sent        Rcvd\n'}}
+                {{-'    Notifications:'.ljust(25)-}}
+                {{-(n_messages['sent']['NOTIFICATION']|string).ljust(12)-}}
+                {{-(n_messages['received']['NOTIFICATION']|string)}}{{'\n'}}
+                {{-'    Updates:'.ljust(25)-}}
+                {{-(n_messages['sent']['UPDATE']|string).ljust(12)-}}
+                {{-(n_messages['received']['UPDATE']|string)}}{{'\n'}}
+                {{-'    Total:'.ljust(25)-}}
+                {{-(n_messages['sent']['NOTIFICATION']+n_messages['sent']['UPDATE']|string).ljust(12)-}}
+                {{-(n_messages['received']['NOTIFICATION']+n_messages['received']['UPDATE']|string)}}{{'\n'}}
+            {% endif %}
+            {% if 'transport' in neighbor %}
+                {% set n_tp_state = neighbor['transport']['state'] %}
+                {{-'Local host: '}}{{n_tp_state['local-address']-}}
+                {{-', Local port: '}}{{n_tp_state['local-port']}}{{'\n'}}
+                {{-'Foreign host: '}}{{n_tp_state['remote-address']-}}
+                {{-', Foreign port: '}}{{n_tp_state['remote-port']}}{{'\n'}}
+            {% endif %}
+        {% endfor %}
+        {{ '\n' }}
+    {% endif %}
+{% endif %}
