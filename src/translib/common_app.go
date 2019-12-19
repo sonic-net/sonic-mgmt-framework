@@ -238,13 +238,25 @@ func (app *CommonApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
 			    break
 		    }
 
-		    // Merge the ygotRoots filled by transformer and app.ygotRoot used to Unmarshal the payload (required as Unmarshal does replace operation on ygotRoot)
-		    resYgot, _ := ygot.MergeStructs(xfmrYgotRoot.(*ocbinds.Device),(*app.ygotRoot).(*ocbinds.Device))
-		    resPayload, err = generateGetResponsePayload(app.pathInfo.Path, resYgot.(*ocbinds.Device), app.ygotTarget)
-		    if err != nil {
-			    log.Error("generateGetResponsePayload()  failed")
-			    resPayload = payload
+		    resYgot := (*app.ygotRoot)
+		    if !strings.HasPrefix(app.pathInfo.Path, "/sonic") {
+			    // Merge the ygotRoots filled by transformer and app.ygotRoot used to Unmarshal the payload (required as Unmarshal does replace operation on ygotRoot)
+			    var mrgErr error
+			    resYgot, mrgErr = ygot.MergeStructs(xfmrYgotRoot.(*ocbinds.Device),(*app.ygotRoot).(*ocbinds.Device))
+			    if mrgErr != nil {
+				    log.Error("Error in ygot.MergeStructs: ", mrgErr)
+			    }
 		    }
+		    if resYgot != nil {
+			    resPayload, err = generateGetResponsePayload(app.pathInfo.Path, resYgot.(*ocbinds.Device), app.ygotTarget)
+			    if err != nil {
+				    log.Error("generateGetResponsePayload()  failed")
+				    resPayload = payload
+			    }
+		    } else {
+			resPayload = payload
+		    }
+
 		    break
 	    } else {
 		log.Warning("processGet. targetObj is null. Unable to Unmarshal payload")
