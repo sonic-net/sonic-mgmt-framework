@@ -39,17 +39,15 @@
 
 # ==============================================================================
 # Parameter: certgen
-#   User certificate generation command.
-#
-#   The following variables are supported and will be replaced by the
-#   appropriate values when the command is used:
-#      $USERNAME : User's name
-#      $CERTDIR  : Certificate directory -> /home/$USERNAME/.cert
-#
-#   Use $$ to insert a literal $.
+#   User certificate generation script. The script specified by "certgen" will
+#   be invoked to generate user certicates. The script will be provided with
+#   the name of the user as an argument. On succes the script must return 0.
+#   On failure, the script should return a non-0 return code and output the
+#   cause of the failure to stderr. On success, stdout may optionally be used
+#   to return a success message.
 #
 # type: string
-#certgen=/usr/bin/openssl req -newkey rsa:2048 -nodes -keyout $CERTDIR/key.pem -subj "/O=SONiC/OU=CLI/CN=$USERNAME" | /usr/bin/openssl x509 -req -days 365000 -out $CERTDIR/certificate.pem -CA /root/cli-ca/cert.pem -CAkey /root/cli-ca/key.pem -CAcreateserial -sha256
+#certgen=/usr/bin/certgen
 
 # ==============================================================================
 # Parameter: shell
