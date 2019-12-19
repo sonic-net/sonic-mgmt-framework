@@ -57,7 +57,9 @@ limitations under the License.
   </COMMAND>
 
   <COMMAND name="show ip bgp summary" help="BGP Summary information">
-  <ACTION builtin="clish_nop"/>
+    <ACTION>
+      python $SONIC_CLI_ROOT/sonic-cli-bgp.py get_ip_bgp_summary show_ip_bgp_summary.j2
+    </ACTION>
   </COMMAND>
 </VIEW>
 
@@ -312,7 +314,7 @@ limitations under the License.
   </COMMAND>
   <COMMAND name="no client-to-client" help="Configure client to client route reflection"/>
   <COMMAND name="no client-to-client reflection" help="Route reflection">
-    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_config_clnt_to_clnt_reflection ${vrf-name}</ACTION>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_config_clnt_to_clnt_reflection ${vrf-name} False</ACTION>
   </COMMAND>
   <COMMAND name="no cluster-id" help="Configure Route-Reflector Cluster-id">
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_bgp_ext_route_reflector_config_route_reflector_cluster_id ${vrf-name}</ACTION>
