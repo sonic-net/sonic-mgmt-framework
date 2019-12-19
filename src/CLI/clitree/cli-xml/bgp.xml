@@ -47,7 +47,7 @@ limitations under the License.
            if test -n "${neighbor-subcommands}"; then&#xA;
               python $SONIC_CLI_ROOT/sonic-cli-bgp.py get_show_bgp ${__full_line}&#xA;
            else&#xA;
-              builtin="clish_nop"&#xA;
+              python $SONIC_CLI_ROOT/sonic-cli-bgp.py get_ip_bgp_neighbors show_ip_bgp_neighbors.j2&#xA;
            fi&#xA;
         else&#xA;
            python $SONIC_CLI_ROOT/sonic-cli-bgp.py get_show_bgp ${__full_line}&#xA;
