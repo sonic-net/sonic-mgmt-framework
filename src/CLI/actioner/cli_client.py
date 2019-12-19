@@ -20,6 +20,8 @@
 import os
 import json
 import urllib3
+import pwd
+import os
 from six.moves.urllib.parse import quote
 
 urllib3.disable_warnings()
@@ -33,11 +35,20 @@ class ApiClient(object):
         """
         Create a RESTful API client.
         """
-        self.api_uri = os.getenv('REST_API_ROOT', 'https://localhost')
+        self.api_uri = os.getenv('REST_API_ROOT', 'https://localhost:8443')
 
         self.checkCertificate = False
 
         self.version = "0.0.1"
+
+        username = os.getenv('CLI_USER', None)
+        if username is not None:
+            certdir = os.path.join(pwd.getpwnam(username)[5], ".cert")
+            cert = os.path.join(certdir, "certificate.pem")
+            key = os.path.join(certdir, "key.pem")
+            self.clientCert = (cert, key)
+        else:
+            self.clientCert = None
 
     def set_headers(self):
         from requests.structures import CaseInsensitiveDict
@@ -67,7 +78,7 @@ class ApiClient(object):
             body = json.dumps(data)
 
         try:
-            r = request(method, url, headers=req_headers, data=body, verify=self.checkCertificate)
+            r = request(method, url, headers=req_headers, data=body, cert=self.clientCert, verify=self.checkCertificate)
             return Response(r)
         except RequestException:
             #TODO have more specific error message based
