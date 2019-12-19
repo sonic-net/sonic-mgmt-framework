@@ -1269,6 +1269,45 @@ func (c *CVL) findUsedAsLeafRef(tableName, field string) []tblFieldPair {
 	return tblFieldPairArr
 }
 
+//This function returns true if any entry 
+//in request cache is using the given entry
+//getting deleted. The given entry can be found
+//either in key or in hash-field.
+//Example : If T1|K1 is getting deleted,
+//check if T2*|K1 or T2|*:{H1: K1}
+//was using T1|K1 and getting deleted
+//in same session also.
+func (c *CVL) checkDeleteInRequestCache(cfgData []CVLEditConfigData,
+	leafRef *tblFieldPair, keyVal string) bool {
+
+	entryTableName := leafRef.tableName + modelInfo.tableInfo[leafRef.tableName].redisKeyDelim
+	entryKeyVal := modelInfo.tableInfo[leafRef.tableName].redisKeyDelim + keyVal
+
+	for _, cfgDataItem := range cfgData {
+		if (cfgDataItem.VType != VALIDATE_NONE) ||
+		(cfgDataItem.VOp != OP_DELETE) {
+			continue
+		}
+
+		//If any entry is using the given entry
+		//getting deleted, break immediately
+
+		//Find in request key, case - T2*|K1
+		if (strings.HasPrefix(cfgDataItem.Key, entryTableName)) &&
+		(strings.Contains(cfgDataItem.Key, entryKeyVal)) {
+			return true
+		}
+
+		//Find in request hash-field, case - T2*|K2:{H1: K1}
+		val, exists := cfgDataItem.Data[leafRef.field]
+		if (exists == true) && (val == keyVal) {
+			return true
+		}
+	}
+
+	return false
+}
+
 //Check delete constraint for leafref if key/field is deleted
 func (c *CVL) checkDeleteConstraint(cfgData []CVLEditConfigData,
 			tableName, keyVal, field string) CVLRetCode {
@@ -1292,23 +1331,12 @@ func (c *CVL) checkDeleteConstraint(cfgData []CVLEditConfigData,
 	for _, leafRef := range leafRefs {
 		TRACE_LOG((TRACE_DELETE | TRACE_SEMANTIC), "Checking delete constraint for leafRef %s/%s", leafRef.tableName, leafRef.field)
 		//Check in dependent data first, if the referred entry is already deleted
-		leafRefDeleted := false
-		for _, cfgDataItem := range cfgData {
-			if (cfgDataItem.VType == VALIDATE_NONE) &&
-			(cfgDataItem.VOp == OP_DELETE ) &&
-			(strings.HasPrefix(cfgDataItem.Key, (leafRef.tableName + modelInfo.tableInfo[leafRef.tableName].redisKeyDelim + keyVal))) {
-				//Currently, checking for one entry is being deleted in same session
-				//We should check for all entries
-				leafRefDeleted = true
-				break
-			}
-		}
 
-		if (leafRefDeleted == true) {
+		if c.checkDeleteInRequestCache(cfgData, &leafRef, keyVal) == true {
 			continue //check next leafref
 		}
 
-		//Else, check if any referred enrty is present in DB
+		//Else, check if any referred entry is present in DB
 		var nokey []string
 		refKeyVal, err := luaScripts["find_key"].Run(redisClient, nokey, leafRef.tableName,
 		modelInfo.tableInfo[leafRef.tableName].redisKeyDelim, leafRef.field, keyVal).Result()
