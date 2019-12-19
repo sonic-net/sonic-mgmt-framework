@@ -32,11 +32,6 @@ public:
      */
     const std::string & shell() const {return shell_m;}
 
-    /**
-     * @brief return the command to execute to create a user's certificates.
-     */
-    std::string certgen_cmd(const std::string & user_r, const std::string & certdir_r) const;
-
     std::string to_string() const;
     bool        is_tron()   const { return tron_m; }
 
@@ -48,7 +43,7 @@ private:
     static const  gint  sac_uid_max_default_m     = 59999; // range [sac_uid_min_m..sac_uid_max_m]
     static const  bool  tron_default_m            = false;
     const gchar       * conf_file_default_pm      = "/etc/sonic/hamd/config";
-    std::string         certgen_cmd_default_m     = "/usr/bin/openssl req -newkey rsa:2048 -nodes -keyout $CERTDIR/key.pem -subj \"/O=SONiC/OU=CLI/CN=$USERNAME\" | /usr/bin/openssl x509 -req -days 365000 -out $CERTDIR/certificate.pem -CA /root/cli-ca/cert.pem -CAkey /root/cli-ca/key.pem -CAcreateserial -sha256";
+    std::string         certgen_default_m         = "/usr/bin/certgen";
     //std::string         shell_default_m           = "/usr/bin/sonic-cli";
     //std::string         shell_default_m           = ""; // empty string -> let linux assign default shell (as per /etc/default/useradd)
     std::string         shell_default_m           = "/bin/bash";
@@ -60,11 +55,12 @@ public:
     gint                sac_uid_min_m             = sac_uid_min_default_m;  // System-Assigned IDs will be in the
     gint                sac_uid_max_m             = sac_uid_max_default_m;  // range [sac_uid_min_m..sac_uid_max_m]
 
+    std::string         certgen_m                 = certgen_default_m;
+
 private:
     const gchar       * conf_file_pm              = conf_file_default_pm;
     std::string         shell_m                   = shell_default_m;
     gint                sac_uid_range_m           = 1 + (sac_uid_max_m - sac_uid_min_m);
-    std::string         certgen_cmd_m             = certgen_cmd_default_m;
 };
 
 std::ostream & operator<<(std::ostream  & stream_r, const hamd_config_c  & obj_r);
