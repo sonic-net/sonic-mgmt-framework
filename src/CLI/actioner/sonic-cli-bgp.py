@@ -98,6 +98,9 @@ OCEXTPREFIX_DELETE='DELETE'
 OCEXTPREFIX_DELETE_LEN=len(OCEXTPREFIX_DELETE)
 
 def generate_show_bgp_routes(args):
+   api = cc.ApiClient()
+   keypath = []
+   body = None
    afisafi = "IPV4_UNICAST"
    vrf = "default"
    neighbour_ip = ''
