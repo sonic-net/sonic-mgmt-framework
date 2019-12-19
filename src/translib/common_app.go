@@ -441,6 +441,11 @@ func (app *CommonApp) cmnAppCRUCommonDbOpn(d *db.DB, opcode int, dbMap map[strin
 				if len(tblRw.Field) == 0 {
 					tblRw.Field["NULL"] = "NULL"
 				}
+				if len(tblRw.Field) > 1 {
+					if _, ok := tblRw.Field["NULL"]; ok {
+						delete(tblRw.Field, "NULL")
+					}
+				}
 				log.Info("Processing Table row ", tblRw)
 				existingEntry, _ := d.GetEntry(cmnAppTs, db.Key{Comp: []string{tblKey}})
 				switch opcode {
