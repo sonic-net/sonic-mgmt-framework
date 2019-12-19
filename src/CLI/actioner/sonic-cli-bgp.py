@@ -121,19 +121,64 @@ def generate_show_bgp_routes(args):
         else:
            pass
         i = i + 1
-
+   print vrf 
+   print afisafi
+   print neighbour_ip
+   print route_option
    d = {}
-   keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/rib/afi-safis/afi-safi={afi_safi_name}/ipv4-unicast/neighbors/neighbor={nbr_address}/adj-rib-in-pre', name=vrf, identifier=IDENTIFIER, name1=NAME1, afi_safi_name=afisafi, nbr_address = neighbour_ip)
-   response = api.get(keypath)
-   if(response.ok()):
-      d.update(response.content)
-      keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/config', name=vrf, identifier=IDENTIFIER,name1=NAME1)
-      response1 = api.get(keypath)
-      if(response1.ok()):
-         d.update(response1.content)
-         return d
-   return d
+   if route_option == "loc-rib":
+      keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/rib/afi-safis/afi-safi={afi_safi_name}/ipv4-unicast/loc-rib', name=vrf, identifier=IDENTIFIER, name1=NAME1, afi_safi_name=afisafi)
+      response = api.get(keypath)
+      if(response.ok()):
+         d.update(response.content)
+         keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/config', name=vrf, identifier=IDENTIFIER,name1=NAME1)
+         response1 = api.get(keypath)
+         if(response1.ok()):
+            d.update(response1.content)
+      print "loc-rib response"
+      print response
+      show_cli_output(show_ip_bgp_routes.j2, response)
 
+   elif route_option == "routes":
+      keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/rib/afi-safis/afi-safi={afi_safi_name}/ipv4-unicast/neighbors/neighbor={nbr_address}/adj-rib-in-post', name=vrf, identifier=IDENTIFIER, name1=NAME1, afi_safi_name=afisafi, nbr_address = neighbour_ip)
+      response = api.get(keypath)
+      if(response.ok()):
+         d.update(response.content)
+         keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/config', name=vrf, identifier=IDENTIFIER,name1=NAME1)
+         response1 = api.get(keypath)
+         if(response1.ok()):
+            d.update(response1.content)
+      print "nbr adj-rib-in-post response"
+      print response
+      show_cli_output(show_ip_bgp_routes.j2, response)
+   elif route_option == "received-routes":
+      keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/rib/afi-safis/afi-safi={afi_safi_name}/ipv4-unicast/neighbors/neighbor={nbr_address}/adj-rib-in-pre', name=vrf, identifier=IDENTIFIER, name1=NAME1, afi_safi_name=afisafi, nbr_address = neighbour_ip)
+      response = api.get(keypath)
+      if(response.ok()):
+         d.update(response.content)
+         keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/config', name=vrf, identifier=IDENTIFIER,name1=NAME1)
+         response1 = api.get(keypath)
+         if(response1.ok()):
+            d.update(response1.content)
+      print "adj-rib-in-pre response"
+      print response
+      show_cli_output(show_ip_bgp_routes.j2, response)
+
+   elif route_option == "advertised-routes":
+      keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/rib/afi-safis/afi-safi={afi_safi_name}/ipv4-unicast/neighbors/neighbor={nbr_address}/adj-rib-out-post', name=vrf, identifier=IDENTIFIER, name1=NAME1, afi_safi_name=afisafi, nbr_address = neighbour_ip)
+      response = api.get(keypath)
+      if(response.ok()):
+         d.update(response.content)
+         keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/config', name=vrf, identifier=IDENTIFIER,name1=NAME1)
+         response1 = api.get(keypath)
+         if(response1.ok()):
+            d.update(response1.content)
+      print "adj-rib-out-post response"
+      print response
+      show_cli_output(show_ip_bgp_routes.j2, response)
+   else: 
+       pass
+   return d
 
 def invoke_api(func, args=[]):
     api = cc.ApiClient()
@@ -852,9 +897,6 @@ def invoke_api(func, args=[]):
                 name=args[0], identifier=IDENTIFIER, name1=NAME1, peer_group_name=args[1], afi_safi_name=args[2])
         body = { "openconfig-bgp-ext:origin": True if 'True' == args[3] else False }
         return api.patch(keypath, body)
-    elif func == 'get_show_bgp':
-        return generate_show_bgp_routes(args)
-
     elif attr == 'openconfig_network_instance_network_instances_network_instance_table_connections_table_connection_config_import_policy':
         keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/table-connections/table-connection={src_protocol},{dst_protocol},{address_family}/config/import-policy',
                 name=args[0], src_protocol= "STATIC" if 'static' == args[2] else "DIRECTLY_CONNECTED" if 'connected' == args[2] else 'OSPF', dst_protocol=IDENTIFIER, address_family=args[1].split('_',1)[0])
@@ -1263,18 +1305,8 @@ def invoke_show_api(func, args=[]):
     keypath = []
     body = None
 
-    if func == 'get_adj_rib_in_pre':
-        d = {}
-        keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/rib/afi-safis/afi-safi={afi_safi_name}/ipv4-unicast/neighbors/neighbor={nbr_address}/adj-rib-in-pre', name=args[0], identifier=IDENTIFIER, name1=NAME1, afi_safi_name=args[1], nbr_address = args[2])
-        response = api.get(keypath)
-        if(response.ok()):
-            d.update(response.content)
-            keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/config', name=args[0], identifier=IDENTIFIER,name1=NAME1)
-            response1 = api.get(keypath)
-            if(response1.ok()):
-                d.update(response1.content)
-                return d
-        return d
+    if func == 'get_show_bgp':
+        return generate_show_bgp_routes(args)
 
     elif func == 'get_ip_bgp_summary':
         d = {}
@@ -1300,9 +1332,8 @@ def invoke_show_api(func, args=[]):
     return api.cli_not_implemented(func)
 
 def run(func, args):
-    if func == 'get_adj_rib_in_pre':
+    if func == 'get_show_bgp':
         response = invoke_show_api(func, args)
-        show_cli_output(args[3], response)
     elif func == 'get_ip_bgp_summary':
         response = invoke_show_api(func, args)
         show_cli_output(args[0], response)
