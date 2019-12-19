@@ -1,0 +1,5 @@
+/etc/dbus-1/system.d/org.SONiC.HostAccountManagement.conf
+/etc/sonic/hamd/config
+/lib/systemd/system/hamd.service
+/usr/sbin/hamd
+/usr/bin/hamctl

@@ -1,72 +1,146 @@
 module sonic-mirror-session {
-	namespace "http://github.com/Azure/sonic-mirror-session";
-	prefix sms;
+    namespace "http://github.com/Azure/sonic-mirror-session";
+    prefix sms;
+    yang-version 1.1;
 
-	import ietf-inet-types {
-		prefix inet;
-	}
+    import ietf-inet-types {
+        prefix inet;
+    }
 
-	organization
-		"SONiC";
+    import ietf-yang-types {
+        prefix yang;
+    }
 
-	contact
-		"SONiC";
+    import sonic-extension {
+        prefix sonic-ext;
+    }
 
-	description
-		"SONIC MIRROR SESSION";
+    import sonic-port {
+        prefix prt;
+    }
 
-	revision 2019-05-15 {
-		description
-			"Initial revision.";
-	}
+    import sonic-portchannel {
+        prefix spc;
+    }
 
-	container sonic-mirror-session {
 
-		container MIRROR_SESSION {
+    organization
+        "SONiC";
 
-			list MIRROR_SESSION_LIST {
-				key "name";
+    contact
+        "SONiC";
 
-				leaf name {
-					type string;
-				}
+    description
+        "SONIC MIRROR SESSION";
 
-				leaf src_ip {
-					type inet:ipv4-address;
-				}
+    revision 2019-05-15 {
+        description
+            "Initial revision.";
+    }
 
-				leaf dst_ip {
-					type inet:ipv4-address;
-				}
+    container sonic-mirror-session {
 
-				leaf gre_type {
-					type string;
-				}
+        container MIRROR_SESSION {
 
-				leaf dscp {
-					type uint8;
-				}
+            list MIRROR_SESSION_LIST {
+                key "name";
 
-				leaf ttl {
-					type uint8;
-				}
+                leaf name {
+                    type string;
+                }
 
-				leaf queue {
-					type uint8;
-				}
+                leaf src_ip {
+                    type inet:ipv4-address;
+                }
 
-				leaf dst_port {
-					type string;
-				}
+                leaf dst_ip {
+                    type inet:ipv4-address;
+                }
 
-				leaf src_port {
-					type string;
-				}
+                leaf gre_type {
+                    type yang:hex-string;
+                }
 
-				leaf direction {
-					type string;
-				}
-			}
-		}
-	}
+                leaf dscp {
+                    type uint8;
+                }
+
+                leaf ttl {
+                    type uint8;
+                }
+
+                leaf queue {
+                    type uint8;
+                }
+
+                leaf dst_port {
+                    type string;
+                }
+
+                leaf src_port {
+                    type union {
+                        type leafref {
+                            path "/prt:sonic-port/prt:PORT/prt:PORT_LIST/prt:ifname";
+                        }
+                        type leafref {
+                            path "/spc:sonic-portchannel/spc:PORTCHANNEL/spc:PORTCHANNEL_LIST/spc:name";
+                        }
+                    }
+                }
+
+                leaf direction {
+                    type enumeration {
+                        enum rx;
+                        enum tx;
+                        enum both;
+                    }
+                }
+
+                must "not (src_port) or not (dst_port) or (dst_port != src_port)" {
+                    error-message "destination port cant be same as source port";
+                    error-app-tag mirror_session-invalid;
+                }
+            }
+        }
+
+        //state sonic mirror session table
+        container MIRROR_SESSION_TABLE { 
+
+            sonic-ext:db-name "STATE_DB"; 
+            sonic-ext:key-delim ":"; 
+
+            config false;
+            description "state mirror session table";
+
+            list MIRROR_SESSION_TABLE_LIST { 
+                sonic-ext:db-name "STATE_DB"; 
+
+                key "name";
+
+                leaf name {
+                    type string;
+                }
+
+                leaf status {
+                    type string;
+                }
+
+                leaf monitor_port {
+                    type string;
+                }
+
+                leaf dst_mac {
+                    type string;
+                }
+
+                leaf route_prefix {
+                    type string;
+                }
+
+                leaf vlan_header_valid {
+                    type uint32;
+                }
+            }
+        }
+    }
 }

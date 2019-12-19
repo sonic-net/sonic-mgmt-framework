@@ -1,7 +1,12 @@
 Source: sonic-mgmt-framework 
 Maintainer: Prabhu Sreenivasan <prabhu.sreenivasan@broadcom.com>
 Build-Depends: debhelper (>= 8.0.0),
-               dh-systemd
+               dh-systemd,
+               libdbus-c++-dev,
+               libglib2.0-dev,
+               pkg-config
+Vcs-Git: https://github.com/project-arlo/sonic-mgmt-framework
+Homepage: https://azure.github.io/SONiC/
 Standards-Version: 3.9.3
 Section: net
 
@@ -16,3 +21,25 @@ Priority: extra
 Architecture: amd64
 Depends: python3-systemd, python3-dbus, python3-gi, ${shlibs:Depends}, ${misc:Depends}
 Description: SONiC Host Service
+
+Package: sonic-hamd
+Priority: extra
+Architecture: amd64
+Depends: libdbus-c++-1-0v5, libglib2.0-0, ${shlibs:Depends}, ${misc:Depends}
+Description: SONiC Host Account Management Daemon (hamd)
+ This daemon, hamd, runs on the host and provides user and group account
+ management services. It allows applications running in containers to retrieve
+ account from the host. It can also users with administrative privileges to
+ create, modify, or delete user accounts on the host. For example, an admin
+ user running a klish session in a containers could request hamd to create a
+ new user account.
+
+Package: sonic-libnss-ham
+Priority: extra
+Architecture: amd64
+Depends: libdbus-c++-1-0v5, ${shlibs:Depends}, ${misc:Depends}
+Description: SONiC Host Account Management NSS module
+ The HAM NSS module allows applications running in containers to retrieve
+ host's user accounts (e.g. /etc/passwd, /etc/group, and /etc/shadow). To do
+ that, the NSS module contacts the HAM daemon (hamd) running on the host over
+ DBus.

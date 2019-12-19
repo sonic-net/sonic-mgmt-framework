@@ -12,4 +12,3 @@ __pycache__
 *.yin
 *.tree
 src/translib/ocbinds/ocbinds.go
-

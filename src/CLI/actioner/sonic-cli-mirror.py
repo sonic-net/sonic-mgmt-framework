@@ -1,147 +1,159 @@
 #!/usr/bin/python
-
-############################################################################
+###########################################################################
 #
-# mirror is a tool for handling MIRROR commands.
+# Copyright 2019 Dell, Inc.
 #
-############################################################################
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+###########################################################################
 
 import argparse
-import getopt
-import json
-import os
-import re
 import sys
-import swsssdk
-from swsssdk import ConfigDBConnector
+import json
+import collections
+import re
+import cli_client as cc
+from rpipe_utils import pipestr
 from scripts.render_cli import show_cli_output
-from os import path
 
-CFG_MIRROR_SESSION_TABLE = "MIRROR_SESSION"
-STATE_MIRROR_SESSION_TABLE = "MIRROR_SESSION_TABLE"
 
-def show_session(session_name):
-        """
-        Show mirror session configuration. Temporary implementation for now. will be modified to Jinja files in next commit.
-        :param session_name: Optional. Mirror session name. Filter sessions by specified name.
-        :return:
-        """
-        configdb = ConfigDBConnector()
-        configdb.connect()
-        statedb = swsssdk.SonicV2Connector(host='127.0.0.1')
-        statedb.connect(statedb.STATE_DB)
-        sessions_db_info = configdb.get_table(CFG_MIRROR_SESSION_TABLE)
-        for key in sessions_db_info.keys():
-            state_db_info = statedb.get_all(statedb.STATE_DB, "{}|{}".format(STATE_MIRROR_SESSION_TABLE, key))
-            if state_db_info:
-                status = state_db_info.get("status", "inactive")
+def invoke(func, args):
+    body = None
+    aa = cc.ApiClient()
+
+    if func == 'create_mirror_session':
+        keypath = cc.Path('/restconf/data/sonic-mirror-session:sonic-mirror-session/MIRROR_SESSION/MIRROR_SESSION_LIST={name}',
+                name=args.session)
+        body=collections.defaultdict(dict)
+        entry = {
+                "name": args.session,
+                }
+
+        if args.destination is not None:
+            entry["dst_port"] = args.destination
+
+        if args.source is not None:
+            entry["src_port"] = args.source
+
+        if args.direction is not None:
+            entry["direction"] = args.direction
+
+        if args.dst_ip is not None:
+            entry["dst_ip"] = args.dst_ip
+
+        if args.src_ip is not None:
+            entry["src_ip"] = args.src_ip
+
+        if args.dscp is not None:
+            entry["dscp"] = int(args.dscp)
+
+        if args.ttl is not None:
+            entry["ttl"] = int(args.ttl)
+
+        if args.gre is not None:
+            entry["gre_type"] = args.gre
+
+        if args.queue is not None:
+            entry["queue"] = args.queue
+
+        body["MIRROR_SESSION_LIST"]=[entry]
+
+        return aa.patch(keypath, body)
+
+    # Remove mirror session
+    if func == 'delete_mirror_session':
+        keypath = cc.Path('/restconf/data/sonic-mirror-session:sonic-mirror-session/MIRROR_SESSION/MIRROR_SESSION_LIST={name}',
+                name=args.session)
+        return aa.delete(keypath)
+
+    else:
+        print("%Error: not implemented")
+        exit(1)
+
+def config(args):
+    try:
+        api_response = invoke(args.config, args)
+
+        if api_response.ok():
+            # Get Command Output
+            response = api_response.content
+            if response is None:
+                print "Success"
             else:
-                status = "error"
-            sessions_db_info[key]["status"] = status
-        erspan_header = ("Name", "Status", "SRC IP", "DST IP", "GRE", "DSCP", "TTL", "Queue",
-                            "Policer", "SRC Port", "Direction")
-        span_header = ("Name", "Status", "DST Port", "SRC Port", "Direction")
+                print "Failure"
+        else:
+            #error response
+            print "Failed. Invalid mirror configuration. "
 
-        erspan_data = []
-        span_data = []
-        if session_name is None:
-            print("\nERSPAN Sessions")
-            print("---------------------------------------------------------------------------------------------------------")
-            print("%10s %6s %16s %16s %6s %6s %6s %6s %6s %12s %6s" %("Name", "Status", "SRC IP", "DST IP", "GRE", "DSCP", "TTL", "Queue", "Policer", "SRC Port", "Direction"))
+    except:
+            # system/network error
+            raise
+            print "%Error: Transaction Failure"
 
-        for key, val in sessions_db_info.iteritems():
-            if session_name and key != session_name:
-                continue
+def show(args):
+    try:
+        # Get the rules of all ACL table entries.
+        body = None
+        aa = cc.ApiClient()
+        if args.show == 'show_mirror_session_all':
+            # Get mirror-session-info
+            keypath = cc.Path('/restconf/data/sonic-mirror-session:sonic-mirror-session')
+            response = aa.get(keypath)
+            gbl_oper_dict = {}
+            session_list = 0
+            if response.ok() and 'sonic-mirror-session:sonic-mirror-session' in response.content.keys():
+                value = response['sonic-mirror-session:sonic-mirror-session']
+                if 'MIRROR_SESSION' in value.keys():
+                    list = value['MIRROR_SESSION']
+                    if 'MIRROR_SESSION_LIST' in list.keys():
+                        session_list = list['MIRROR_SESSION_LIST']
+                    else:
+                        print "No sessions configured"
+                        return
+                else:
+                    print "No sessions configured"
+                    return
+            else:
+                print "No sessions configured"
+                return
 
-            if "src_ip" in val:
-                if session_name and key == session_name:
-                    print("\nERSPAN Sessions")
-                    print("---------------------------------------------------------------------------------------------------------")
-                    print("%10s %6s %16s %16s %6s %6s %6s %6s %6s %12s %6s" %("Name", "Status", "SRC IP", "DST IP", "GRE", "DSCP", "TTL", "Queue", "Policer", "SRC Port", "Direction"))
-                print("%10s %6s %16s %16s %6s %6s %6s %6s %6s %12s %6s" %(key, val.get("status", ""), val.get("src_ip", ""), val.get("dst_ip", ""), val.get("gre_type", ""), val.get("dscp", ""),
-                                         val.get("ttl", ""), val.get("queue", ""), val.get("policer", ""),
-                                                                  val.get("src_port", ""), val.get("direction", "")))
-        if session_name is None:
-            print("\nSPAN Sessions")
-            print("---------------------------------------------------------------------------------------------------------")
-            print("%10s %6s %16s %16s %6s" %("Name", "Status", "DST Port", "SRC Port", "Direction"))
-        for key, val in sessions_db_info.iteritems():
-            if session_name and key != session_name:
-                continue
-            if "dst_port" in val:
-                if session_name and key == session_name:
-                    print("\nSPAN Sessions")
-                    print("---------------------------------------------------------------------------------------------------------")
-                    print("%10s %6s %16s %16s %6s" %("Name", "Status", "DST Port", "SRC Port", "Direction"))
-                print("%10s %6s %16s %16s %6s" %(key, val.get("status", ""), val.get("dst_port", ""), val.get("src_port", ""), val.get("direction", "")))
+            # Retrieve mirror session status.
+            keypath = cc.Path('/restconf/data/sonic-mirror-session:sonic-mirror-session/MIRROR_SESSION_TABLE')
+            response = aa.get(keypath)
+            session_status = 0
+            if response.ok() and 'sonic-mirror-session:MIRROR_SESSION_TABLE' in response.content.keys():
+                value = response['sonic-mirror-session:MIRROR_SESSION_TABLE']
+                if 'MIRROR_SESSION_TABLE_LIST' in value.keys():
+                    session_status = value['MIRROR_SESSION_TABLE_LIST']
+                else:
+                    print "Session state info not found"
+                    return
+            else:
+                print "Session state info not found"
+                return
+            final_dict = {}
+            final_dict['session_list'] = session_list
+            final_dict['session_status'] = session_status
+            show_cli_output(args.renderer, final_dict)
+    except:
+            # system/network error
+            raise
+            print "%Error: Transaction Failure"
 
+    return
 
-def session(session_name):
-    """
-    Show mirror session configuration.
-    :return:
-    """
-    show_session(session_name)
-
-def show_mirror(args):
-    """
-    Add port mirror session
-    """
-    session(args.session)
-
-def config_span(args):
-    """
-    Add port mirror session
-    """
-    config_db = ConfigDBConnector()
-    config_db.connect()
-
-    session_info = {
-            }
-
-    if args.destination is not None:
-        session_info['dst_port'] = args.destination
-
-    if args.source is not None:
-        session_info['src_port'] = args.source
-
-    if args.direction is not None:
-        session_info['direction'] = args.direction
-
-    if args.dst_ip is not None:
-        session_info['dst_ip'] = args.dst_ip
-
-    if args.src_ip is not None:
-        session_info['src_ip'] = args.src_ip
-
-    if args.dscp is not None:
-        session_info['dscp'] = args.dscp
-
-    if args.ttl is not None:
-        session_info['ttl'] = args.ttl
-
-    if args.gre is not None:
-        session_info['gre_type'] = args.gre
-
-    if args.source is not None:
-        print("sucess. create mirror session " + args.session + " destination " + args.destination + " source " + args.source + " direction " + args.direction)
-
-    if args.dst_ip is not None:
-        print("sucess. create mirror session " + args.session + " dst_ip " + args.dst_ip + " src_ip " + args.src_ip + " dscp " + args.dscp + " ttl " + args.ttl)
-
-    config_db.set_entry("MIRROR_SESSION", args.session, session_info)
-
-def remove_span(args):
-    """
-    Delete mirror session
-    """
-    config_db = ConfigDBConnector()
-    config_db.connect()
-
-    print("sucess. remove mirror session " + args.session)
-    config_db.set_entry("MIRROR_SESSION", args.session, None)
-
-def main():
+if __name__ == '__main__':
+    pipestr().write(sys.argv)
 
     parser = argparse.ArgumentParser(description='Handles MIRROR commands',
                                      version='1.0.0',
@@ -156,9 +168,10 @@ Examples:
     mirror -show -collector collectorname
 """)
 
-    parser.add_argument('-clear', '--clear', action='store_true', help='Clear mirror information')
-    parser.add_argument('-show', '--show', action='store_true', help='Show mirror information')
-    parser.add_argument('-config', '--config', action='store_true', help='Config mirror information')
+    parser.add_argument('-clear', '--clear', type=str, help='Clear mirror information')
+    parser.add_argument('-show', '--show', type=str, help='Show mirror information')
+    parser.add_argument('-renderer', '--renderer', type=str, help='Show mirror information')
+    parser.add_argument('-config', '--config', type=str, help='Config mirror information')
     parser.add_argument('-session', '--session', type=str, help='mirror session name')
     parser.add_argument('-destination', '--destination', help='destination port')
     parser.add_argument('-source', '--source', type=str, help='mirror source port')
@@ -168,17 +181,14 @@ Examples:
     parser.add_argument('-dscp', '--dscp', help='ERSPAN dscp')
     parser.add_argument('-gre', '--gre', help='ERSPAN gre')
     parser.add_argument('-ttl', '--ttl', help='ERSPAN ttl')
+    parser.add_argument('-queue', '--queue', help='ERSPAN ttl')
 
     args = parser.parse_args()
-
     if args.config:
-            config_span(args)
-    elif args.clear:
-            remove_span(args)
+        print "args.config is " + args.config
+        config(args)
     elif args.show:
-            show_mirror(args)
+        print "args.show is " + args.show
+        show(args)
 
-    sys.exit(0)
 
-if __name__ == "__main__":
-    main()

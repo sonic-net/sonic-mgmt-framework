@@ -1,0 +1,59 @@
+module sonic-aaa {
+    namespace "http://github.com/Azure/sonic-aaa";
+    prefix saaa;
+    yang-version 1.1;
+
+    organization
+        "SONiC";
+
+    contact
+        "SONiC";
+
+    description
+        "SONiC AAA";
+
+    revision 2019-11-05 {
+        description
+            "Initial revision.";
+    }
+
+    container sonic-aaa {
+
+        container USER_DB {
+            list USER_TABLE {
+                key "user tenant";
+
+                leaf user {
+                    type string {
+                        pattern '[a-z_][a-z0-9_-]*[$]';
+                        length 1..31;
+                    }
+                }
+
+                leaf tenant {
+                    type string;
+                }
+
+                leaf-list role {
+                    type string;
+                }
+            }
+
+            list PRIVILEGE_TABLE {
+                key "role feature";
+
+                leaf role {
+                    type string;
+                }
+
+                leaf feature {
+                    type string;
+                }
+
+                leaf permissions {
+                    type string;
+                }
+            }
+        }
+    }
+}
