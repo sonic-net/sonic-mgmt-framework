@@ -123,7 +123,7 @@ def run(func, args):
            else:
                api_response = getattr(aa,func.__name__)(*keypath)
         if api_response is None:
-            print ("Success")
+            #DO NOTHING 
         else:
             response = api_response.to_dict()
             if 'openconfig_systemstate' in response.keys():
