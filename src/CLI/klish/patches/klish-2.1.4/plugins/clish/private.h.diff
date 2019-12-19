@@ -1,9 +1,3 @@
-diff --git a/plugins/clish/private.h b/plugins/clish/private.h
-index 0348264..88c0f18 100644
---- a/plugins/clish/private.h
-+++ b/plugins/clish/private.h
-@@ -21,3 +21,4 @@ CLISH_PLUGIN_SYM(clish_nop);
- CLISH_PLUGIN_SYM(clish_wdog);
- CLISH_PLUGIN_OSYM(clish_script);
- CLISH_PLUGIN_SYM(clish_macros);
-+CLISH_PLUGIN_SYM(clish_extn);
+23a24,25
+> CLISH_PLUGIN_SYM(clish_extn);
+> CLISH_PLUGIN_SYM(clish_pyobj);
