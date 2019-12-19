@@ -91,8 +91,9 @@ def invoke_api(func, args=[]):
     elif func == 'patch_openconfig_routing_policy_ext_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_match_tag_set_config_tag_value':
         keypath  = cc.Path('/restconf/data/openconfig-routing-policy:routing-policy/policy-definitions/policy-definition={name}/statements/statement={name1}/conditions/match-tag-set/config/openconfig-routing-policy-ext:tag-value',
              name=args[0], name1= args[1])
+        api.delete(keypath)
         body = {"openconfig-routing-policy:tag-value":[args[2]]}
-        return api.put(keypath, body)
+        return api.patch(keypath, body)
     elif func == 'delete_openconfig_routing_policy_ext_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_match_tag_set_config_tag_value':
         keypath  = cc.Path('/restconf/data/openconfig-routing-policy:routing-policy/policy-definitions/policy-definition={name}/statements/statement={name1}/conditions/match-tag-set/config/openconfig-routing-policy-ext:tag-value',
              name=args[0], name1= args[1])
@@ -131,8 +132,9 @@ def invoke_api(func, args=[]):
     elif func == 'patch_openconfig_routing_policy_ext_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_match_neighbor_set_config_address':
         keypath  = cc.Path('/restconf/data/openconfig-routing-policy:routing-policy/policy-definitions/policy-definition={name}/statements/statement={name1}/conditions/match-neighbor-set/config/openconfig-routing-policy-ext:address',
              name=args[0], name1= args[1])
+        api.delete(keypath)
         body = {"openconfig-routing-policy-ext:address":[args[2]]}
-        return api.put(keypath, body)
+        return api.patch(keypath, body)
     elif func == 'delete_openconfig_routing_policy_ext_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_match_neighbor_set_config_address':
         keypath  = cc.Path('/restconf/data/openconfig-routing-policy:routing-policy/policy-definitions/policy-definition={name}/statements/statement={name1}/conditions/match-neighbor-set/config/openconfig-routing-policy-ext:address',
              name=args[0], name1= args[1])
