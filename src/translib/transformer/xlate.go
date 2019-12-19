@@ -274,7 +274,7 @@ func XlateToDb(path string, opcode int, d *db.DB, yg *ygot.GoStruct, yt *interfa
 	err = json.Unmarshal([]byte(jsonStr), &jsonData)
 	if err != nil {
 		errStr := "Error: failed to unmarshal json."
-		log.Errorf("Error: failed to unmarshal json.")
+		log.Error(errStr)
 		err = tlerr.InternalError{Format: errStr}
 		return nil, err
 	}
