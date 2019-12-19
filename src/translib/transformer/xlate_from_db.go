@@ -546,13 +546,8 @@ func yangListDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, r
 		}
 	}
 
-	var tblWg sync.WaitGroup
 	for _, tbl = range(tblList) {
-		tblWg.Add(1)
 
-		go func(tbl string) {
-
-		defer tblWg.Done()
 		tblData, ok := (*dbDataMap)[cdb][tbl]
 
 		if ok {
@@ -600,9 +595,7 @@ func yangListDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, r
 			}
 		}
 
-	}(tbl)
 	}// end of tblList for
-	tblWg.Wait()
 	return nil
 }
 
