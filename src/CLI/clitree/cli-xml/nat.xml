@@ -48,7 +48,7 @@ limitations under the License.
 
    <VIEW
         name="configure-nat-view"
-        prompt="${SYSTEM_NAME}(conf-nat) "
+        prompt="${SYSTEM_NAME}(config-nat)# "
         depth="2"
         >
         <NAMESPACE
