@@ -569,7 +569,8 @@ limitations under the License.
             </ACTION>
        </COMMAND>
 
-       <COMMAND name="no sflow" help="Disable sflow">
+       <COMMAND name="no sflow" help="Interface sFlow settings"/>
+       <COMMAND name="no sflow enable" help="Disable sflow">
            <ACTION>
                python $SONIC_CLI_ROOT/sonic-cli-sflow.py patch_sonic_sflow_sonic_sflow_sflow_session_sflow_session_list_admin_state ${iface} down
            </ACTION>
