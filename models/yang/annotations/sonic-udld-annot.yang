@@ -16,19 +16,19 @@ module sonic-udld-annot {
         }
     }
 
-    deviation /udld:sonic-udld/udld:UDLD_GLOBAL_TABLE/udld:UDLD_GLOBAL_TABLE_LIST {
+    deviation /udld:sonic-udld/udld:_UDLD_GLOBAL_TABLE/udld:_UDLD_GLOBAL_TABLE_LIST {
         deviate add {
             sonic-ext:db-name "APPL_DB";
         }
     }
 
-    deviation /udld:sonic-udld/udld:UDLD_PORT_TABLE/udld:UDLD_PORT_TABLE_LIST {
+    deviation /udld:sonic-udld/udld:_UDLD_PORT_TABLE/udld:_UDLD_PORT_TABLE_LIST {
         deviate add {
             sonic-ext:db-name "APPL_DB";
         }
     }
 
-    deviation /udld:sonic-udld/udld:UDLD_PORT_NEIGH_TABLE/udld:UDLD_PORT_NEIGH_TABLE_LIST {
+    deviation /udld:sonic-udld/udld:_UDLD_PORT_NEIGH_TABLE/udld:_UDLD_PORT_NEIGH_TABLE_LIST {
         deviate add {
             sonic-ext:db-name "APPL_DB";
         }

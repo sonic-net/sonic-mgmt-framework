@@ -4,11 +4,13 @@ import (
     "encoding/json"
     "translib/ocbinds"
     "translib/tlerr"
+    "translib/db"
     "time"
     "io/ioutil"
     "syscall"
     "strconv"
     "os"
+    "fmt"
     log "github.com/golang/glog"
     ygot "github.com/openconfig/ygot/ygot"
 )
@@ -18,6 +20,8 @@ func init () {
     XlateFuncBind("DbToYang_sys_memory_xfmr", DbToYang_sys_memory_xfmr)
     XlateFuncBind("DbToYang_sys_cpus_xfmr", DbToYang_sys_cpus_xfmr)
     XlateFuncBind("DbToYang_sys_procs_xfmr", DbToYang_sys_procs_xfmr)
+   // XlateFuncBind("DbToYang_sys_aaa_auth_xfmr", DbToYang_sys_aaa_auth_xfmr)
+    XlateFuncBind("YangToDb_sys_aaa_auth_xfmr", YangToDb_sys_aaa_auth_xfmr)
 }
 
 type JSONSystem  struct {
@@ -66,15 +70,15 @@ type ProcessState struct {
     Uptime            uint64
 }
 
-func getAppRootObject(inParams XfmrParams) (*ocbinds.OpenconfigSystem_System) {                                                                  
+func getAppRootObject(inParams XfmrParams) (*ocbinds.OpenconfigSystem_System) {
     deviceObj := (*inParams.ygRoot).(*ocbinds.Device)
-    return deviceObj.System                                                                                                                 
-}            
+    return deviceObj.System
+}
 
 func getSystemInfoFromFile () (JSONSystem, error) {
     log.Infof("getSystemInfoFromFile Enter")
 
-    var jsonsystem JSONSystem 
+    var jsonsystem JSONSystem
     jsonFile, err := os.Open("/mnt/platform/system")
     if err != nil {
         log.Infof("system json open failed")
@@ -96,7 +100,7 @@ func getSystemInfoFromFile () (JSONSystem, error) {
         errStr := "json.Unmarshal failed"
         terr := tlerr.InternalError{Format: errStr}
         return jsonsystem, terr
-	
+
 	}
     return jsonsystem, nil
 }
@@ -304,5 +308,37 @@ var DbToYang_sys_procs_xfmr SubTreeXfmrDbToYang = func(inParams XfmrParams) erro
     }
     getSystemProcesses(&jsonsystem, sysObj.Processes, uint64(pid))
     return err;
+}
+
+
+var YangToDb_sys_aaa_auth_xfmr SubTreeXfmrYangToDb = func(inParams XfmrParams) (map[string]map[string]db.Value,error){
+    log.Info("SubtreeXfmrFunc - Uri SYS AUTH: ", inParams.uri);
+    pathInfo := NewPathInfo(inParams.uri)
+    targetUriPath,_ := getYangPathFromUri(pathInfo.Path)
+    log.Info("TARGET URI PATH SYS AUTH:", targetUriPath)
+    sysObj := getAppRootObject(inParams)
+    usersObj := sysObj.Aaa.Authentication.Users
+    userName := pathInfo.Var("username")
+    log.Info("username:",userName)
+
+	var status bool
+	var err_str string
+    if inParams.oper == DELETE {
+	status , err_str = hostAccountUserDel(userName)
+    } else {
+        if value,present := usersObj.User[userName]; present {
+	    log.Info("User:",*(value.Config.Username))
+	    temp := value.Config.Role.(*ocbinds.OpenconfigSystem_System_Aaa_Authentication_Users_User_Config_Role_Union_String)
+	    log.Info("Role:",temp.String)
+            status, err_str = hostAccountUserAdd(*(value.Config.Username), temp.String, *(value.Config.PasswordHashed))
+        }
+    }
+
+	if !status {
+		log.Info("Error in operation:",err_str)
+		return nil, fmt.Errorf("%s",err_str)
+	} else {
+		return nil, nil
+	}
 }
 

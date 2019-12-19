@@ -20,13 +20,9 @@ limitations under the License.
   <VIEW name="enable-view">
     <COMMAND name="show sflow" help="Show sFlow information">
       <ACTION> python $SONIC_CLI_ROOT/sonic-cli-sflow.py get_sonic_sflow_sonic_sflow show_sflow.j2 ${__full_line} </ACTION>
-      <xi:include href="include/pipe.xml"/>
-      <xi:include href="include/pipe.xml"/>
     </COMMAND>
     <COMMAND name="show sflow interface" help="Show sFlow interface information">
       <ACTION> python $SONIC_CLI_ROOT/sonic-cli-sflow.py get_sonic_sflow_sonic_sflow_sflow_session_table show_sflow_intf.j2 ${__full_line} </ACTION>
-      <xi:include href="include/pipe.xml"/>
-      <xi:include href="include/pipe.xml"/>
     </COMMAND>
   </VIEW>
   <VIEW name="configure-view">
@@ -48,7 +44,8 @@ limitations under the License.
       <PARAM name="interval" help="Interval (default: 20)" ptype="SFLOW_POLL_INTERVAL"/>
       <ACTION> python $SONIC_CLI_ROOT/sonic-cli-sflow.py patch_sonic_sflow_sonic_sflow_sflow_sflow_list_polling_interval ${interval} </ACTION>
     </COMMAND>
-    <COMMAND name="no sflow" help="Disable sFlow">
+    <COMMAND name="no sflow" help="sFlow Configurations"/>
+    <COMMAND name="no sflow enable" help="Disable sFlow">
       <ACTION> python $SONIC_CLI_ROOT/sonic-cli-sflow.py patch_sonic_sflow_sonic_sflow_sflow_sflow_list_admin_state down </ACTION>
     </COMMAND>
     <COMMAND name="no sflow collector" help="Remove a collector" ptype="SUBCOMMAND" mode="subcommand">

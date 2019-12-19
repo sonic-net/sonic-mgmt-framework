@@ -34,7 +34,6 @@ This package can also talk to non-DB clients.
 package translib
 
 import (
-	"errors"
 	"sync"
 	"translib/db"
 	"translib/tlerr"
@@ -60,6 +59,8 @@ type SetRequest struct {
 	Path    string
 	Payload []byte
 	User    string
+	Group   string
+	Role	string
 }
 
 type SetResponse struct {
@@ -70,6 +71,8 @@ type SetResponse struct {
 type GetRequest struct {
 	Path    string
 	User    string
+	Group   string
+	Role    string
 }
 
 type GetResponse struct {
@@ -81,6 +84,8 @@ type ActionRequest struct {
 	Path    string
 	Payload []byte
 	User    string
+	Group   string
+	Role    string
 }
 
 type ActionResponse struct {
@@ -94,6 +99,8 @@ type BulkRequest struct {
 	UpdateRequest  []SetRequest
 	CreateRequest  []SetRequest
 	User           string
+	Group          string
+	Role           string
 }
 
 type BulkResponse struct {
@@ -108,6 +115,8 @@ type SubscribeRequest struct {
 	Q				*queue.PriorityQueue
 	Stop			chan struct{}
 	User			string
+	Group           string
+	Role            string
 }
 
 type SubscribeResponse struct {
@@ -128,6 +137,8 @@ const (
 type IsSubscribeRequest struct {
 	Paths				[]string
 	User				string
+	Group               string
+	Role                string
 }
 
 type IsSubscribeResponse struct {
@@ -158,14 +169,14 @@ func init() {
 func Create(req SetRequest) (SetResponse, error) {
 	var keys []db.WatchKeys
 	var resp SetResponse
-
-	if (!isUserAuthorizedForSet(req.User)) {
-		resp.ErrSrc = ProtoErr
-		return resp, errors.New("User is not authorized to perform this operation")
-	}
-
 	path := req.Path
 	payload := req.Payload
+	if !isAuthorizedForSet(req) {
+		return resp, tlerr.AuthorizationError{
+			Format: "User is unauthorized for Create Operation",
+			Path: path,
+		}
+	}
 
 	log.Info("Create request received with path =", path)
 	log.Info("Create request received with payload =", string(payload))
@@ -232,14 +243,15 @@ func Create(req SetRequest) (SetResponse, error) {
 func Update(req SetRequest) (SetResponse, error) {
 	var keys []db.WatchKeys
 	var resp SetResponse
-
-    if (!isUserAuthorizedForSet(req.User)) {
-        resp.ErrSrc = ProtoErr
-        return resp, errors.New("User is not authorized to perform this operation")
-    }
-
 	path := req.Path
 	payload := req.Payload
+	if !isAuthorizedForSet(req) {
+		return resp, tlerr.AuthorizationError{
+			Format: "User is unauthorized for Update Operation",
+			Path: path,
+		}
+	}
+
 
 	log.Info("Update request received with path =", path)
 	log.Info("Update request received with payload =", string(payload))
@@ -307,14 +319,14 @@ func Replace(req SetRequest) (SetResponse, error) {
 	var err error
 	var keys []db.WatchKeys
 	var resp SetResponse
-
-    if (!isUserAuthorizedForSet(req.User)) {
-        resp.ErrSrc = ProtoErr
-        return resp, errors.New("User is not authorized to perform this operation")
-    }
-
 	path := req.Path
 	payload := req.Payload
+	if !isAuthorizedForSet(req) {
+		return resp, tlerr.AuthorizationError{
+			Format: "User is unauthorized for Replace Operation",
+			Path: path,
+		}
+	}
 
 	log.Info("Replace request received with path =", path)
 	log.Info("Replace request received with payload =", string(payload))
@@ -382,13 +394,13 @@ func Delete(req SetRequest) (SetResponse, error) {
 	var err error
 	var keys []db.WatchKeys
 	var resp SetResponse
-
-    if (!isUserAuthorizedForSet(req.User)) {
-        resp.ErrSrc = ProtoErr
-        return resp, errors.New("User is not authorized to perform this operation")
-    }
-
 	path := req.Path
+	if !isAuthorizedForSet(req) {
+		return resp, tlerr.AuthorizationError{
+			Format: "User is unauthorized for Delete Operation",
+			Path: path,
+		}
+	}
 
 	log.Info("Delete request received with path =", path)
 
@@ -454,13 +466,13 @@ func Delete(req SetRequest) (SetResponse, error) {
 func Get(req GetRequest) (GetResponse, error) {
 	var payload []byte
 	var resp GetResponse
-
-    if (!isUserAuthorizedForGet(req.User)) {
-		resp = GetResponse{Payload: payload, ErrSrc: ProtoErr}
-        return resp, errors.New("User is not authorized to perform this operation")
-    }
-
 	path := req.Path
+	if !isAuthorizedForGet(req) {
+		return resp, tlerr.AuthorizationError{
+			Format: "User is unauthorized for Get Operation",
+			Path: path,
+		}
+	}
 
 	log.Info("Received Get request for path = ", path)
 
@@ -503,13 +515,13 @@ func Get(req GetRequest) (GetResponse, error) {
 func Action(req ActionRequest) (ActionResponse, error) {
 	var payload []byte
 	var resp ActionResponse
-
-    if (!isUserAuthorizedForAction(req.User)) {
-        resp = ActionResponse{Payload: payload, ErrSrc: ProtoErr}
-        return resp, errors.New("User is not authorized to perform this operation")
-    }
-
 	path := req.Path
+	if !isAuthorizedForAction(req) {
+		return resp, tlerr.AuthorizationError{
+			Format: "User is unauthorized for Action Operation",
+			Path: path,
+		}
+	}
 
 	log.Info("Received Action request for path = ", path)
 
@@ -569,7 +581,9 @@ func Bulk(req BulkRequest) (BulkResponse, error) {
 		CreateResponse: createResp}
 
     if (!isUserAuthorizedForSet(req.User)) {
-        return resp, errors.New("User is not authorized to perform this operation")
+		return resp, tlerr.AuthorizationError{
+			Format: "User is unauthorized for Action Operation",
+		}
     }
 
 	writeMutex.Lock()
@@ -820,7 +834,9 @@ func Subscribe(req SubscribeRequest) ([]*IsSubscribeResponse, error) {
 	}
 
     if (!isUserAuthorizedForGet(req.User)) {
-        return resp, errors.New("User is not authorized to perform this operation")
+		return resp, tlerr.AuthorizationError{
+			Format: "User is unauthorized for Action Operation",
+		}
     }
 
 	isGetCase := true
@@ -925,7 +941,9 @@ func IsSubscribeSupported(req IsSubscribeRequest) ([]*IsSubscribeResponse, error
 	}
 
     if (!isUserAuthorizedForGet(req.User)) {
-        return resp, errors.New("User is not authorized to perform this operation")
+		return resp, tlerr.AuthorizationError{
+			Format: "User is unauthorized for Action Operation",
+		}
     }
 
 	isGetCase := true
@@ -1058,6 +1076,14 @@ func getAllDbs(isGetCase bool) ([db.MaxDB]*db.DB, error) {
 		return dbs, err
 	}
 
+    //Create User DB connection
+    dbs[db.UserDB], err = db.NewDB(getDBOptions(db.UserDB, isWriteDisabled))
+
+	if err != nil {
+		closeAllDbs(dbs[:])
+		return dbs, err
+	}
+
 	return dbs, err
 }
 
@@ -1086,10 +1112,10 @@ func getDBOptions(dbNo db.DBNum, isWriteDisabled bool) db.Options {
 	var opt db.Options
 
 	switch dbNo {
-	case db.ApplDB, db.CountersDB:
+	case db.ApplDB, db.CountersDB, db.AsicDB:
 		opt = getDBOptionsWithSeparator(dbNo, "", ":", ":", isWriteDisabled)
 		break
-	case db.FlexCounterDB, db.AsicDB, db.LogLevelDB, db.ConfigDB, db.StateDB, db.ErrorDB:
+	case db.FlexCounterDB, db.LogLevelDB, db.ConfigDB, db.StateDB, db.ErrorDB, db.UserDB:
 		opt = getDBOptionsWithSeparator(dbNo, "", "|", "|", isWriteDisabled)
 		break
 	}

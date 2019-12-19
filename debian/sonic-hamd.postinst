@@ -1,0 +1,45 @@
+#!/bin/sh
+
+set -e
+
+action="$1"
+oldversion="$2"
+
+umask 022
+
+#****************************************
+hamd_dbus_config() {
+	conf_file="/etc/dbus-1/system.d/org.SONiC.HostAccountManagement.conf"
+	chmod 644 ${conf_file}
+}
+
+#****************************************
+systemd_add() {
+	service=$1
+	deb-systemd-helper unmask ${service} >/dev/null || true
+	if deb-systemd-helper --quiet was-enabled ${service}; then
+		deb-systemd-helper enable ${service} >/dev/null || true
+		if [ -d /run/systemd/system ]; then
+			systemctl --system daemon-reload >/dev/null || true
+			deb-systemd-invoke start ${service} >/dev/null || true
+		fi
+	else
+		deb-systemd-helper update-state ${service} >/dev/null || true
+	fi
+}
+
+#****************************************
+# configure
+#****************************************
+if [ "${action}" = configure ]; then
+
+	hamd_dbus_config
+	systemd_add hamd.service
+
+fi
+
+#DEBHELPER#
+
+exit 0
+
+

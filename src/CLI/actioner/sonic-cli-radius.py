@@ -129,6 +129,10 @@ def invoke_api(func, args=[]):
         keypath = cc.Path(RADIUS_SERVER_GROUP +
             'config/openconfig-system-ext:auth-type')
         return api.delete(keypath)
+    elif func == 'delete_openconfig_radius_global_config_timeout':
+        keypath = cc.Path(RADIUS_SERVER_GROUP +
+            'config/openconfig-system-ext:timeout')
+        return api.delete(keypath)
     elif func == 'delete_openconfig_radius_global_config_host':
         path = RADIUS_SERVER_GROUP + 'servers/server={address}'
         if (len(args) >= 2) and (len(args[1]) != 0):
@@ -173,6 +177,10 @@ def get_sonic_radius_servers(args):
 
     if not response.ok():
         print("%Error: Get Failure")
+        return
+
+    if (not ('openconfig-system:servers' in response.content)) \
+        or (not ('server' in response.content['openconfig-system:servers'])):
         return
 
     api_response['header'] = 'True'

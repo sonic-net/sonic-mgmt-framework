@@ -379,8 +379,8 @@ func dbMapDelete(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requestU
 		spec, ok := xYangSpecMap[xpathPrefix]
 		if ok {
 			specYangType := yangTypeGet(spec.yangEntry)
-                        moduleNm := "/" + strings.Split(uri, "/")[1]
-                        log.Infof("Module name for uri %s is %s", uri, moduleNm)
+			moduleNm := "/" + strings.Split(uri, "/")[1]
+			log.Infof("Module name for uri %s is %s", uri, moduleNm)
 			if len(spec.xfmrFunc) > 0 {
 				var dbs [db.MaxDB]*db.DB
 				cdb := spec.dbIndex

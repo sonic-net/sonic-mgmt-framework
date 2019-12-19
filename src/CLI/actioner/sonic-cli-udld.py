@@ -39,8 +39,8 @@ def invoke(func, args):
         return resp
 
     # show udld neighbors
-    if func == 'get_list_sonic_udld_sonic_udld_udld_port_neigh_table_udld_port_neigh_table_list_zz':
-        keypath = cc.Path('/restconf/data/sonic-udld:sonic-udld/UDLD_PORT_NEIGH_TABLE/UDLD_PORT_NEIGH_TABLE_LIST')
+    if func == 'get_list_sonic_udld_sonic_udld_udld_port_neigh_table_udld_port_neigh_table_list':
+        keypath = cc.Path('/restconf/data/sonic-udld:sonic-udld/_UDLD_PORT_NEIGH_TABLE/_UDLD_PORT_NEIGH_TABLE_LIST')
         return aa.get(keypath)
 
     # show udld interface <ifname>
@@ -48,13 +48,13 @@ def invoke(func, args):
         return generateShowUdldInterfaceResponse(aa, args)
 
     # show udld statistics
-    if func == 'get_list_sonic_udld_sonic_udld_udld_port_table_udld_port_table_list_zz':
-        keypath = cc.Path('/restconf/data/sonic-udld:sonic-udld/UDLD_PORT_TABLE/UDLD_PORT_TABLE_LIST')
+    if func == 'get_list_sonic_udld_sonic_udld_udld_port_table_udld_port_table_list':
+        keypath = cc.Path('/restconf/data/sonic-udld:sonic-udld/_UDLD_PORT_TABLE/_UDLD_PORT_TABLE_LIST')
         return aa.get(keypath)
 
     # show udld statistics interface <ifname>
-    if func == 'get_sonic_udld_sonic_udld_udld_port_table_udld_port_table_list_zz':
-        keypath = cc.Path('/restconf/data/sonic-udld:sonic-udld/UDLD_PORT_TABLE/UDLD_PORT_TABLE_LIST={ifname}', ifname=args[1])
+    if func == 'get_sonic_udld_sonic_udld_udld_port_table_udld_port_table_list':
+        keypath = cc.Path('/restconf/data/sonic-udld:sonic-udld/_UDLD_PORT_TABLE/_UDLD_PORT_TABLE_LIST={ifname}', ifname=args[1])
         return aa.get(keypath)
 
     # Enable UDLD global
@@ -156,25 +156,26 @@ def generateShowUdldInterfaceResponse(clientApi, args):
         return resp
 
     # Retrieve UDLD Global operatioal info
-    keypath = cc.Path('/restconf/data/sonic-udld:sonic-udld/UDLD_GLOBAL_TABLE/UDLD_GLOBAL_TABLE_LIST={id}', id='GLOBAL')
+    keypath = cc.Path('/restconf/data/sonic-udld:sonic-udld/_UDLD_GLOBAL_TABLE/_UDLD_GLOBAL_TABLE_LIST={id}', id='GLOBAL')
     resp = clientApi.get(keypath)
     gbl_oper_dict = {}
-    if resp.ok() and 'sonic-udld:UDLD_GLOBAL_TABLE_LIST' in resp.content.keys():
-        gbl_oper_dict = resp.content['sonic-udld:UDLD_GLOBAL_TABLE_LIST'][0]
+    if resp.ok() and 'sonic-udld:_UDLD_GLOBAL_TABLE_LIST' in resp.content.keys():
+        gbl_oper_dict = resp.content['sonic-udld:_UDLD_GLOBAL_TABLE_LIST'][0]
 
     # Retrieve UDLD port local status
-    keypath = cc.Path('/restconf/data/sonic-udld:sonic-udld/UDLD_PORT_TABLE/UDLD_PORT_TABLE_LIST={ifname}/status', ifname=args[1])
+    keypath = cc.Path('/restconf/data/sonic-udld:sonic-udld/_UDLD_PORT_TABLE/_UDLD_PORT_TABLE_LIST={ifname}/status', ifname=args[1])
     resp = clientApi.get(keypath)
     port_status = 0
     if resp.ok() and 'sonic-udld:status' in resp.content.keys():
         port_status = resp.content['sonic-udld:status']
 
     # Retrieve neighbors info for a given interface
-    keypath = cc.Path('/restconf/data/sonic-udld:sonic-udld/UDLD_PORT_NEIGH_TABLE/UDLD_PORT_NEIGH_TABLE_LIST={ifname},{index}', ifname=args[1], index='*')
+    # keypath = cc.Path('/restconf/data/sonic-udld:sonic-udld/UDLD_PORT_NEIGH_TABLE/UDLD_PORT_NEIGH_TABLE_LIST={ifname},{index}', ifname=args[1], index='*')
+    keypath = cc.Path('/restconf/data/sonic-udld:sonic-udld/_UDLD_PORT_NEIGH_TABLE/_UDLD_PORT_NEIGH_TABLE_LIST')
     resp = clientApi.get(keypath)
     neigh_dict = {}
-    if resp.ok() and 'sonic-udld:UDLD_PORT_NEIGH_TABLE_LIST' in resp.content.keys():
-        neigh_dict = resp.content['sonic-udld:UDLD_PORT_NEIGH_TABLE_LIST'][0]
+    if resp.ok() and 'sonic-udld:_UDLD_PORT_NEIGH_TABLE_LIST' in resp.content.keys():
+        neigh_dict = resp.content['sonic-udld:_UDLD_PORT_NEIGH_TABLE_LIST']
     else:
         if resp.status_code != 404:
             return resp
@@ -226,11 +227,6 @@ def str2bool(s):
 
 def run(func, args):
         api_response = invoke(func, args)
-        # Temporary for Mock CLI. Needs to be removed
-        if api_response is None:
-            value = [{'id': 'GLOBAL'}]
-            show_cli_output(args[0], value)
-            return
         if api_response.ok():
             response = api_response.content
             if response is None:
@@ -241,8 +237,8 @@ def run(func, args):
                     return
                 else:
                     show_cli_output(args[0], value)
-            elif 'sonic-udld:UDLD_PORT_TABLE_LIST' in response.keys():
-                value = response['sonic-udld:UDLD_PORT_TABLE_LIST']
+            elif 'sonic-udld:_UDLD_PORT_TABLE_LIST' in response.keys():
+                value = response['sonic-udld:_UDLD_PORT_TABLE_LIST']
                 if value is None:
                     return
                 else:
@@ -253,8 +249,8 @@ def run(func, args):
                     return
                 else:
                     show_cli_output(args[0], value)
-            elif 'sonic-udld:UDLD_PORT_NEIGH_TABLE_LIST' in response.keys():
-                value = response['sonic-udld:UDLD_PORT_NEIGH_TABLE_LIST']
+            elif 'sonic-udld:_UDLD_PORT_NEIGH_TABLE_LIST' in response.keys():
+                value = response['sonic-udld:_UDLD_PORT_NEIGH_TABLE_LIST']
                 if value is None:
                     return
                 else:

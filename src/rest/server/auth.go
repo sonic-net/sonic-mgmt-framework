@@ -20,17 +20,75 @@
 package server
 
 import (
+	"bytes"
+	"errors"
+	"fmt"
 	"net/http"
 	"os/user"
+	"strings"
+
 	"github.com/golang/glog"
-	//"github.com/msteinert/pam"
-	"golang.org/x/crypto/ssh"
+
+	"github.com/msteinert/pam"
 )
 
-/*
 type UserCredential struct {
 	Username string
 	Password string
+}
+type UserAuth map[string]bool
+
+var ClientAuth = UserAuth{"password": false, "cert": false, "jwt": false, "cliuser": false}
+
+
+func (i UserAuth) String() string {
+	b := new(bytes.Buffer)
+	for key, value := range i {
+		if value {
+			fmt.Fprintf(b, "%s ", key)
+		}
+	}
+	return b.String()
+}
+
+func (i UserAuth) Any() bool {
+	for _, value := range i {
+		if value {
+			return true
+		}
+	}
+	return false
+}
+
+func (i UserAuth) Enabled(mode string) bool {
+	if value, exist := i[mode]; exist && value {
+		return true
+	}
+	return false
+}
+
+func (i UserAuth) Set(mode string) error {
+	modes := strings.Split(mode, ",")
+	for _, m := range modes {
+		m = strings.Trim(m, " ")
+		if _, exist := i[m]; !exist {
+			return fmt.Errorf("Expecting one or more of 'cert', 'password' or 'jwt'")
+		}
+		i[m] = true
+	}
+	return nil
+}
+
+func (i UserAuth) Unset(mode string) error {
+	modes := strings.Split(mode, ",")
+	for _, m := range modes {
+		m = strings.Trim(m, " ")
+		if _, exist := i[m]; !exist {
+			return fmt.Errorf("Expecting one or more of 'cert', 'password' or 'jwt'")
+		}
+		i[m] = false
+	}
+	return nil
 }
 
 //PAM conversation handler.
@@ -65,7 +123,39 @@ func PAMAuthUser(u string, p string) error {
 	err := cred.PAMAuthenticate()
 	return err
 }
-*/
+
+func PopulateAuthStruct(username string, auth *AuthInfo) error {
+	usr, err := user.Lookup(username)
+	if err != nil {
+		return err
+	}
+
+	auth.User = username
+
+	// Get primary group
+	group, err := user.LookupGroupId(usr.Gid)
+	if err != nil {
+		return err
+	}
+	auth.Group = group.Name
+
+	// Lookup remaining groups
+	gids, err := usr.GroupIds()
+	if err != nil {
+		return err
+	}
+	auth.Groups = make([]string, len(gids))
+	for idx, gid := range gids {
+		group, err := user.LookupGroupId(gid)
+		if err != nil {
+			return err
+		}
+		auth.Groups[idx] = group.Name
+	}
+
+	// TODO: Populate roles list
+	return nil
+}
 
 func DoesUserExist(username string) bool {
 	_, err := user.Lookup(username)
@@ -74,28 +164,7 @@ func DoesUserExist(username string) bool {
 	}
 	return true
 }
-func IsAdminGroup(username string) bool {
 
-	usr, err := user.Lookup(username)
-	if err != nil {
-		return false
-	}
-	gids, err := usr.GroupIds()
-	if err != nil {
-		return false
-	}
-	glog.V(2).Infof("User:%s, groups=%s", username, gids)
-	admin, err := user.Lookup("admin")
-	if err != nil {
-		return false
-	}
-	for _, x := range gids {
-		if x == admin.Gid {
-			return true
-		}
-	}
-	return false
-}
 func UserPwAuth(username string, passwd string) (bool, error) {
 	/*
 	 * mgmt-framework container does not have access to /etc/passwd, /etc/group,
@@ -103,22 +172,9 @@ func UserPwAuth(username string, passwd string) (bool, error) {
 	 * /etc of host with /etc of container. For now disable this and use ssh
 	 * for authentication.
 	 */
-	/* err := PAMAuthUser(username, passwd)
-	    if err != nil {
-			log.Printf("Authentication failed. user=%s, error:%s", username, err.Error())
-	        return err
-	    }*/
-
-	//Use ssh for authentication.
-	config := &ssh.ClientConfig{
-		User: username,
-		Auth: []ssh.AuthMethod{
-			ssh.Password(passwd),
-		},
-		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-	}
-	_, err := ssh.Dial("tcp", "127.0.0.1:22", config)
+	err := PAMAuthUser(username, passwd)
 	if err != nil {
+		glog.Infof("Authentication failed. user=%s, error:%s", username, err.Error())
 		return false, err
 	}
 
