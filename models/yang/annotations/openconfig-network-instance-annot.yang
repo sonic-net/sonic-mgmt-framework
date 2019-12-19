@@ -2733,7 +2733,7 @@ module openconfig-network-instance-annot {
 			}    
     }  
 
-    /*deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:l2vpn-evpn/oc-bgp-evpn-ext:vnis/oc-bgp-evpn-ext:vni {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:l2vpn-evpn/oc-bgp-evpn-ext:vnis/oc-bgp-evpn-ext:vni {
       deviate add {
         sonic-ext:table-name "BGP_GLOBALS_EVPN_VNI";
         sonic-ext:key-transformer "bgp_evpn_vni_key_xfmr";
@@ -2759,11 +2759,11 @@ module openconfig-network-instance-annot {
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:l2vpn-evpn/oc-bgp-evpn-ext:vpn-target/oc-bgp-evpn-ext:route-target-type {
+    /*deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:l2vpn-evpn/oc-bgp-evpn-ext:vpn-target/oc-bgp-evpn-ext:route-target-type {
       deviate add {
         sonic-ext:field-transformer "bgp_rt_type_fld_xfmr";
       }
-    }
+    }*/
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:l2vpn-evpn/oc-bgp-evpn-ext:vnis/oc-bgp-evpn-ext:vni/oc-bgp-evpn-ext:vpn-target {
       deviate add {
@@ -2772,17 +2772,17 @@ module openconfig-network-instance-annot {
       }
     } 
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:l2vpn-evpn/oc-bgp-evpn-ext:vnis/oc-bgp-evpn-ext:vni/oc-bgp-evpn-ext:vpn-target/oc-bgp-evpn-ext:route-target {
+    /*deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:l2vpn-evpn/oc-bgp-evpn-ext:vnis/oc-bgp-evpn-ext:vni/oc-bgp-evpn-ext:vpn-target/oc-bgp-evpn-ext:route-target {
       deviate add {
             sonic-ext:field-transformer "bgp_rt_fld_xfmr";
       }
-    }
+    }*/
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:l2vpn-evpn/oc-bgp-evpn-ext:vnis/oc-bgp-evpn-ext:vni/oc-bgp-evpn-ext:vpn-target/oc-bgp-evpn-ext:route-target-type {
+    /*deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:l2vpn-evpn/oc-bgp-evpn-ext:vnis/oc-bgp-evpn-ext:vni/oc-bgp-evpn-ext:vpn-target/oc-bgp-evpn-ext:route-target-type {
       deviate add {
         sonic-ext:field-transformer "bgp_rt_type_fld_xfmr";
       }
-    }
+    }*/
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:l2vpn-evpn/oc-bgp-evpn-ext:default-originate/oc-bgp-evpn-ext:ipv4 {
       deviate add {
@@ -2830,6 +2830,6 @@ module openconfig-network-instance-annot {
       deviate add {
             sonic-ext:subtree-transformer "bgp_evpn_vni_state_xfmr";
       }
-    }*/
+    }
 }
 

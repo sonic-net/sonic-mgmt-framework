@@ -17,8 +17,6 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-// +build evpn
-
 package transformer
 
 import (
@@ -27,6 +25,7 @@ import (
     "translib/ocbinds"
     "translib/db"
     "strconv"
+    "fmt"
     log "github.com/golang/glog"
 )
 
@@ -127,10 +126,12 @@ var DbToYang_bgp_evpn_vni_key_xfmr KeyXfmrDbToYang = func(inParams XfmrParams) (
     entry_key := inParams.key
     log.Info("DbToYang_bgp_evpn_vni_key_xfmr: ", entry_key)
 
-    afPgrpKey := strings.Split(entry_key, "|")
-    afName  := afPgrpKey[1]
+    vniNumberKey := strings.Split(entry_key, "|")
+    vniNumber, _  := strconv.ParseFloat(vniNumberKey[2], 64)
 
-    rmap["afi-safi-name"]   = afName
+    rmap["vni-number"] = vniNumber
+
+    log.Info("Rmap", rmap)
 
     return rmap, nil
 }
@@ -147,9 +148,11 @@ var DbToYang_bgp_vni_number_fld_xfmr FieldXfmrDbtoYang = func(inParams XfmrParam
     var err error
     result := make(map[string]interface{})
 
+    log.Info("DbToYang_bgp_vni_number_fld_xfmr: ", inParams.key)
+
     entry_key := inParams.key
     vniKey := strings.Split(entry_key, "|")
-    vniNumber:= vniKey[2]
+    vniNumber, _ := strconv.ParseFloat(vniKey[2], 64)
 
     result["vni-number"] = vniNumber
 
@@ -239,7 +242,7 @@ var DbToYang_bgp_evpn_rt_key_xfmr KeyXfmrDbToYang = func(inParams XfmrParams) (m
     log.Info("DbToYang_bgp_evpn_rt_key_xfmr: ", entry_key)
 
     routeTargetKey := strings.Split(entry_key, "|")
-    routeTarget  := routeTargetKey[1]
+    routeTarget  := routeTargetKey[2]
 
     rmap["route-target"]   = routeTarget
 
@@ -377,7 +380,7 @@ var DbToYang_bgp_evpn_vni_rt_key_xfmr KeyXfmrDbToYang = func(inParams XfmrParams
     log.Info("DbToYang_bgp_evpn_vni_rt_key_xfmr: ", entry_key)
 
     vniRouteTargetKey := strings.Split(entry_key, "|")
-    routeTarget  := vniRouteTargetKey[1]
+    routeTarget  := vniRouteTargetKey[3]
 
     rmap["route-target"]   = routeTarget
 
@@ -410,14 +413,41 @@ var DbToYang_bgp_advertise_fld_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams
 
     var err error
     result := make(map[string]interface{})
+    var afi_list []string
 
-    /*
-    entry_key := inParams.key
-    afiSafiKey := strings.Split(entry_key, "|")
-    afiSafi:= afiSafiKey[2]
+    log.Info(inParams.key)
 
-    result["advertise-list"] = afiSafi
-*/
+    data := (*inParams.dbDataMap)[inParams.curDb]
+    log.Info("DbToYang_bgp_advertise_fld_xfmr : ", data, "inParams : ", inParams)
+
+    pTbl := data["BGP_GLOBALS_AF"]
+    log.Info("Table: ", pTbl)
+    if _, ok := pTbl[inParams.key]; !ok {
+        log.Info("DbToYang_bgp_advertise_fld_xfmr BGP AF not found : ", inParams.key)
+        return result, errors.New("BGP AF not found : " + inParams.key)
+    }
+    GblAfData := pTbl[inParams.key]
+
+    adv_ipv4_uni, ok := GblAfData.Field["advertise-ipv4-unicast"]
+    if ok {
+        if adv_ipv4_uni == "true" {
+            afi_list = append(afi_list, "IPV4_UNICAST")
+        }
+    } else {
+        log.Info("advertise-ipv4-unicast field not found in DB")
+    }
+
+    adv_ipv6_uni, ok := GblAfData.Field["advertise-ipv6-unicast"]
+    if ok {
+        if adv_ipv6_uni == "true" {
+            afi_list = append(afi_list, "IPV6_UNICAST")
+        }
+    } else {
+        log.Info("advertise-ipv6-unicast field not found in DB")
+    }
+
+    result["advertise-list"] = afi_list
+    
     return result, err
 }
 
@@ -450,9 +480,10 @@ func fill_vni_state_info (vni_key *_xfmr_bgp_vni_state_key, vniDataValue interfa
     
     vniState := vni_obj.State
 
-    vninum := vniDataJson["vni"].(uint32)
-    importlist := vniDataJson["importRts"].([]string)
-    exportlist := vniDataJson["exportRts"].([]string)
+    if value, ok := vniDataJson["vni"].(float64) ; ok {
+        vninum := uint32(value)
+        vniState.VniNumber = &vninum
+    }   
 
     if value, ok := vniDataJson["kernelFlag"] ; ok {
         switch value {
@@ -492,15 +523,25 @@ func fill_vni_state_info (vni_key *_xfmr_bgp_vni_state_key, vniDataValue interfa
         vniState.Originator = &value
     }
 
-    for _,importrt := range importlist {
-        vniState.ImportRts = append(vniState.ImportRts, importrt)
+    if importlist, ok := vniDataJson["importRts"].([]interface{}) ; ok {
+        s := make([]string, len(importlist))
+        for i, v := range importlist {
+            s[i] = fmt.Sprint(v)
+        }
+        for _,importrt := range s {
+            vniState.ImportRts = append(vniState.ImportRts, importrt)
+        }
     }
 
-    for _,exportrt := range exportlist {
-        vniState.ExportRts = append(vniState.ExportRts, exportrt)
+    if exportlist, ok := vniDataJson["exportRts"].([]interface{}) ; ok {
+        s := make([]string, len(exportlist))
+        for i, v := range exportlist {
+            s[i] = fmt.Sprint(v)
+        }
+        for _,exportrt := range s {
+            vniState.ExportRts = append(vniState.ExportRts, exportrt)
+        }
     }
-
-    vniState.VniNumber = &vninum
 
     return err
 }
@@ -508,31 +549,16 @@ func fill_vni_state_info (vni_key *_xfmr_bgp_vni_state_key, vniDataValue interfa
 func get_specific_vni_state (vni_obj *ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Global_AfiSafis_AfiSafi_L2VpnEvpn_Vnis_Vni,
                              cfgDb *db.DB, vni_key *_xfmr_bgp_vni_state_key) error {
     var err error
+    vniMapJson := make(map[string]interface{})
  
-    vtysh_cmd := "show ip bgp l2vpn evpn " + vni_key.vniNumber + " json"
-    vniMapJson, cmd_err := exec_vtysh_cmd (vtysh_cmd)
+    vtysh_cmd := "show bgp l2vpn evpn vni " + vni_key.vniNumber + " json"
+    output, cmd_err := exec_vtysh_cmd (vtysh_cmd)
     if cmd_err != nil {
         log.Errorf("Failed to fetch bgp l2vpn evpn state info for niName:%s vniNumber:%s. Err: %s\n", vni_key.niName, vni_key.vniNumber, err)
         return cmd_err
     }
 
-    /*
-    //This is test data from sample json output for test off-device
-    vniMapJson := make(map[string]interface{})
-    importlist := []string{"10:10", "20:20", "30:30"} 
-    exportlist := []string{"100:100", "200:200"} 
-    vniMapJson["output"] = map[string]interface{}{
-        "vni":uint32(100), 
-        "type":"L2", 
-        "importRts":importlist, 
-        "exportRts":exportlist, 
-        "kernelFlag":"Yes",
-        "rd":"2.2.2.2:56",
-        "originatorIp":"1.1.1.1",
-        "mcastGroup":"0.0.0.0",
-        "advertiseGatewayMacip":"No",
-    }
-    */
+    vniMapJson["output"] = output
 
     if vniDataJson, ok := vniMapJson["output"].(map[string]interface{}) ; ok {
         err = fill_vni_state_info (vni_key, vniDataJson, cfgDb, vni_obj)

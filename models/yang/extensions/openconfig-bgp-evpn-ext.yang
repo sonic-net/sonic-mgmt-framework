@@ -197,8 +197,8 @@ module openconfig-bgp-evpn-ext {
 
   }//end augment
 
-  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:l2vpn-evpn {
+  /*deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:l2vpn-evpn {
     deviate not-supported;
-  }
+  }*/
 
 }//end module
