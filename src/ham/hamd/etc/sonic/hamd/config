@@ -57,5 +57,6 @@
 #
 # type: string
 #shell=/usr/bin/sonic-cli
+#shell=/bin/bash
 
 
