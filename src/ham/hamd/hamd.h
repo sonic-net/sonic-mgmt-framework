@@ -50,7 +50,8 @@ private:
     const gchar       * conf_file_default_pm      = "/etc/sonic/hamd/config";
     std::string         certgen_cmd_default_m     = "/usr/bin/openssl req -newkey rsa:2048 -nodes -keyout $CERTDIR/key.pem -subj \"/O=SONiC/OU=CLI/CN=$USERNAME\" | /usr/bin/openssl x509 -req -days 365000 -out $CERTDIR/certificate.pem -CA /root/cli-ca/cert.pem -CAkey /root/cli-ca/key.pem -CAcreateserial -sha256";
     //std::string         shell_default_m           = "/usr/bin/sonic-cli";
-    std::string         shell_default_m           = ""; // empty string -> let linux assign default shell
+    //std::string         shell_default_m           = ""; // empty string -> let linux assign default shell (as per /etc/default/useradd)
+    std::string         shell_default_m           = "/bin/bash";
 
 public:
     bool                tron_m                    = tron_default_m;
