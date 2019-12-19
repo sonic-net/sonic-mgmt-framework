@@ -167,14 +167,11 @@ def invoke_api(func, args=[]):
             print("%Error: Invalid protocol number in route-match config")
             exit(1)
         else:
- #TDO: REMOVE DEBUG PRINT
             protocol = proto_number.get(args[2])
-            print protocol
-
-        keypath  = cc.Path('/restconf/data/openconfig-routing-policy:routing-policy/policy-definitions/policy-definition={name}/statements/statement={name1}/conditions/config/install-protocol-eq',
-             name=args[0], name1= args[1])
-        body = {"openconfig-routing-policy:install-protocol-eq":protocol}
-        return api.patch(keypath, body)
+            keypath  = cc.Path('/restconf/data/openconfig-routing-policy:routing-policy/policy-definitions/policy-definition={name}/statements/statement={name1}/conditions/config/install-protocol-eq',
+            name=args[0], name1= args[1])
+            body = {"openconfig-routing-policy:install-protocol-eq":protocol}
+            return api.patch(keypath, body)
     elif func == 'delete_openconfig_routing_policy_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_config_install_protocol_eq':
         keypath  = cc.Path('/restconf/data/openconfig-routing-policy:routing-policy/policy-definitions/policy-definition={name}/statements/statement={name1}/conditions/config/install-protocol-eq',
              name=args[0], name1= args[1])
