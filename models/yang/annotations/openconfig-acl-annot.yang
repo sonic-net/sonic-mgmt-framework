@@ -33,6 +33,7 @@ module openconfig-acl-annot {
       deviate add {
         sonic-ext:table-name "ACL_TABLE";
         sonic-ext:key-transformer "acl_set_key_xfmr";
+        sonic-ext:key-delim "|";
       }
     }
 

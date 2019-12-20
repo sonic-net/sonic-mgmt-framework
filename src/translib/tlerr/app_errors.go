@@ -45,6 +45,9 @@ type NotSupportedError errordata
 // InternalError indicates a generic error during app execution.
 type InternalError errordata
 
+// AuthorizationError indicates the user is not authorized for an operation.
+type AuthorizationError errordata
+
 /////////////
 
 func (e InvalidArgsError) Error() string {
@@ -89,4 +92,8 @@ func (e InternalError) Error() string {
 // New creates an InternalError
 func New(msg string, args ...interface{}) InternalError {
 	return InternalError{Format: msg, Args: args}
+}
+
+func (e AuthorizationError) Error() string {
+	return p.Sprintf(e.Format, e.Args...)
 }

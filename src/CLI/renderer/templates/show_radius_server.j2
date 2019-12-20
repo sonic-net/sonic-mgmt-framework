@@ -20,7 +20,7 @@
     {% if vars.update({'timeout':json_output["timeout"]}) %}{% endif %}
     {% if vars.update({'retransmit':json_output["retransmit"]}) %}{% endif %}
     {% if vars.update({'vrf':json_output["vrf"]}) %}{% endif %}
-{{'%-16s'|format(vars.address)}}{{'%-10s'|format(vars.authtype)}}{{'%-10s'|format(vars.key)}}{{'%-10s'|format(vars.port)}}{{'%-9s'|format(vars.priority)}}{{'%-8s'|format(vars.timeout)}}{{'%-6s'|format(vars.retransmit)}}{{'%-5s'|format(vars.vrf)}}
+{{'%-15s'|format(vars.address)}} {{'%-9s'|format(vars.authtype)}} {{'%-9s'|format(vars.key)}} {{'%-9s'|format(vars.port)}} {{'%-8s'|format(vars.priority)}} {{'%-7s'|format(vars.timeout)}} {{'%-5s'|format(vars.retransmit)}} {{'%-5s'|format(vars.vrf)}}
 {% endif %}
 {% endif %}
 

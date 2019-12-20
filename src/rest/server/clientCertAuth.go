@@ -1,11 +1,12 @@
-
 package server
 
 import (
 	"net/http"
-	"github.com/golang/glog"
 	"strings"
+
+	"github.com/golang/glog"
 )
+
 func ClientCertAuthenAndAuthor(r *http.Request, rc *RequestContext) error {
 
 	var username string
@@ -22,16 +23,13 @@ func ClientCertAuthenAndAuthor(r *http.Request, rc *RequestContext) error {
 		glog.Errorf("[%s] Invalid username", rc.ID)
 		return httpError(http.StatusUnauthorized, "")
 	}
-
+	if err := PopulateAuthStruct(username, &rc.Auth); err != nil {
+		glog.Infof("[%s] Failed to retrieve authentication information; %v", rc.ID, err)
+		return httpError(http.StatusUnauthorized, "")
+	}
 	glog.Infof("[%s] Received user=%s", rc.ID, username)
 
 	glog.Infof("[%s] Authentication passed. user=%s ", rc.ID, username)
-
-	//Allow SET request only if user belong to admin group
-	if isWriteOperation(r) && IsAdminGroup(username) == false {
-		glog.Errorf("[%s] Not an admin; cannot allow %s", rc.ID, r.Method)
-		return httpError(http.StatusForbidden, "Not an admin user")
-	}
 
 	glog.Infof("[%s] Authorization passed", rc.ID)
 	return nil

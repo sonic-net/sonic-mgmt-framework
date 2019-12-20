@@ -1,0 +1,54 @@
+{% if 'openconfig-network-instance:config' in json_output %}
+    {% set config = json_output['openconfig-network-instance:config'] %}
+    {{-'BGP router identifier '}}{{config['router-id']}}{{', local AS number '}}{{config['as']}}
+    {{ '\n' }}
+    {{-'Neighbor        V   AS    MsgRcvd   MsgSent   TblVer  InQ     OutQ    Up/Down                 State/PfxRcd'}}
+    {% set neighbor_list = json_output['openconfig-network-instance:neighbors'] %}
+    {% set ns = namespace(numof_neighbors = 0) %}
+    {% if 'neighbor' in neighbor_list %}
+        {% set neighbors = neighbor_list['neighbor'] %}
+        {% for neighbor in neighbors %}
+            {% set ns.numof_neighbors = ns.numof_neighbors + 1 %}
+            {% set n_config = neighbor['config'] %}
+            {% set n_state = neighbor['state'] %}
+            {{-neighbor['neighbor-address'].ljust(16)-}}
+            {{-'4'.ljust(4)-}}
+            {% if 'peer-as' in n_state %}
+                {{-(n_state['peer-as']|string).ljust(6)-}}
+            {% else %}
+                {{-' '.ljust(6)-}}
+            {% endif %}
+            {% if 'messages' in n_state %}
+                {% set n_messages = n_state['messages'] %}
+                {{-(n_messages['received']['UPDATE']|string).ljust(10)-}}
+                {{-(n_messages['sent']['UPDATE']|string).ljust(10)-}}
+            {% else %}
+                {{-'0'.ljust(10)-}}
+                {{-'0'.ljust(10)-}}
+            {% endif %}
+            {{-'0'.ljust(8)-}}
+            {% if 'queues' in n_state %}
+                {% set n_queues = n_state['queues'] %}
+                {{-(n_queues['input']|string).ljust(8)-}}
+                {{-(n_queues['output']|string).ljust(8)-}}
+            {% else %}
+                {{-'0'.ljust(8)-}}
+                {{-'0'.ljust(8)-}}
+            {% endif %}
+            {% if 'last-established' in n_state %}
+                {% set le_timestamp = datetimeformat(n_state['last-established']) %}
+                {{-le_timestamp.ljust(24)-}}
+            {% else %}
+                {{-'00:00:00'.ljust(24)-}}
+            {% endif %}
+            {% if 'session-state' in n_state %}
+                {{-(n_state['session-state']|string).ljust(8)}}
+            {% else %}
+                {{-'0'.ljust(8)}}
+            {% endif %}
+        {% endfor %}
+        {{ '\n' }}
+        {{-'Total number of neighbors ' }}{{ ns.numof_neighbors }}
+    {% endif %}
+{% endif %}
+
