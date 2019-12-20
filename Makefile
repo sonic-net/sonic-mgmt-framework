@@ -166,6 +166,10 @@ install:
 	$(INSTALL) -d $(DESTDIR)/lib/x86_64-linux-gnu/
 	$(INSTALL) -D $(TOPDIR)/src/ham/libnss_ham/libnss_ham.so.2 $(DESTDIR)/lib/x86_64-linux-gnu/.
 
+	# Scripts for the certificate fixer oneshot service
+	$(INSTALL) -D $(TOPDIR)/src/certfix/usr/sbin/*             $(DESTDIR)/usr/sbin/
+	$(INSTALL) -D $(TOPDIR)/src/certfix/lib/systemd/system/*   $(DESTDIR)/lib/systemd/system/
+
 ifeq ($(SONIC_COVERAGE_ON),y)
 	echo "" > $(DESTDIR)/usr/sbin/.test
 endif

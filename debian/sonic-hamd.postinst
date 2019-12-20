@@ -53,11 +53,11 @@ systemd_add() {
 #****************************************
 if [ "${action}" = configure ]; then
 
-	# Make sure root certificates are present
-	rootcert
-
-	# Check that user admin has certificates
-	certgen admin
+#    # Make sure root certificates are present
+#    rootcert
+#
+#    # Check that user admin has certificates
+#    certgen admin
 
 	hamd_dbus_config
 	systemd_add hamd.service
