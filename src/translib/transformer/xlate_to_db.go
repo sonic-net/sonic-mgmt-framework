@@ -91,14 +91,16 @@ func xfmrHandler(inParams XfmrParams, xfmrFuncNm string) (map[string]map[string]
 }
 
 /* Invoke the post tansformer */
-func postXfmrHandlerFunc(inParams XfmrParams) (map[string]map[string]db.Value, error) {
-    xpath, _ := XfmrRemoveXPATHPredicates(inParams.uri)
-    ret, err := XlateFuncCall(xYangSpecMap[xpath].xfmrPost, inParams)
+func postXfmrHandlerFunc(xfmrPost string, inParams XfmrParams) (map[string]map[string]db.Value, error) {
+    retData := make(map[string]map[string]db.Value)
+    ret, err := XlateFuncCall(xfmrPost, inParams)
     if err != nil {
         return nil, err
     }
-    retData := ret[0].Interface().(map[string]map[string]db.Value)
-    log.Info("Post Transformer function :", xYangSpecMap[xpath].xfmrPost, " Xpath: ", xpath, " retData: ", retData)
+    if ((ret != nil) && (len(ret)>0)) {
+        retData = ret[0].Interface().(map[string]map[string]db.Value)
+        log.Info("Post Transformer function :", xfmrPost, " retData: ", retData)
+    }
     return retData, err
 }
 
@@ -460,9 +462,10 @@ func dbMapDelete(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requestU
 				var dbresult = make(RedisDbMap)
 				dbresult[db.ConfigDB] = result
 				inParams := formXfmrInputRequest(d, dbs, db.ConfigDB, ygRoot, uri, requestUri, oper, "", &dbresult, subOpDataMap, nil, txCache)
-				result, err = postXfmrHandlerFunc(inParams)
+				result, err = postXfmrHandlerFunc(xYangSpecMap[moduleNm].xfmrPost, inParams)
 				if inParams.skipOrdTblChk != nil {
 					*skipOrdTbl = *(inParams.skipOrdTblChk)
+					log.Info("skipOrdTbl flag: ", *skipOrdTbl)
 				}
 			}
 
@@ -697,11 +700,12 @@ func dbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requestU
 			log.Infof("Module name for uri %s is %s", uri, moduleNm)
 			if _, ok := xYangSpecMap[moduleNm]; ok {
 				if xYangSpecMap[moduleNm].yangDataType == "container" && len(xYangSpecMap[moduleNm].xfmrPost) > 0 {
-					log.Info("Invoke post transformer: ", xYangSpecMap[moduleNm].xfmrPost)
-					var dbDataMap = resultMap[oper]
+					log.Infof("Invoke post transformer: %v, result map: %v ", xYangSpecMap[moduleNm].xfmrPost, result)
+					var dbDataMap = make(RedisDbMap)
+					dbDataMap[db.ConfigDB] = result
 					var dbs [db.MaxDB]*db.DB
 					inParams := formXfmrInputRequest(d, dbs, db.ConfigDB, ygRoot, uri, requestUri, oper, "", &dbDataMap, subOpDataMap, nil, txCache)
-					result, err = postXfmrHandlerFunc(inParams)
+					result, err = postXfmrHandlerFunc(xYangSpecMap[moduleNm].xfmrPost, inParams)
 				}
 			} else {
 				log.Errorf("No Entry exists for module %s in xYangSpecMap. Unable to process post xfmr (\"%v\") uri(\"%v\") error (\"%v\").", oper, uri, err)

@@ -43,7 +43,7 @@ systemd_add() {
 if [ "${action}" = configure ]; then
 
 	# Check that user admin has certificates
-	certgen admin
+	# certgen admin
 
 	hamd_dbus_config
 	systemd_add hamd.service

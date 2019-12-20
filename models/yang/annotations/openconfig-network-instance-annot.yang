@@ -1383,6 +1383,18 @@ module openconfig-network-instance-annot {
         }
     }
 
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:default-route-distance/oc-bgp-ext:config/oc-bgp-ext:local-route-distance {
+        deviate add {
+            sonic-ext:field-name "local_route_distance";
+        }
+    }
+
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:default-route-distance/oc-bgp-ext:state/oc-bgp-ext:local-route-distance {
+        deviate add {
+            sonic-ext:field-name "local_route_distance";
+        }
+    }
+
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:network-config {
         deviate add {
             sonic-ext:table-name "BGP_GLOBALS_AF_NETWORK";

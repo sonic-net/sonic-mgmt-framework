@@ -61,6 +61,7 @@ func keyCreate(keyPrefix string, xpath string, data interface{}, dbKeySep string
 
 /* Copy redis-db source to destn map */
 func mapCopy(destnMap map[string]map[string]db.Value, srcMap map[string]map[string]db.Value) {
+	mapCopyMutex.Lock()
    for table, tableData := range srcMap {
         _, ok := destnMap[table]
         if !ok {
@@ -76,6 +77,7 @@ func mapCopy(destnMap map[string]map[string]db.Value, srcMap map[string]map[stri
             }
         }
    }
+   mapCopyMutex.Unlock()
 }
 
 func parentXpathGet(xpath string) string {
@@ -757,3 +759,38 @@ func copyYangXpathSpecData(dstNode *yangXpathInfo, srcNode *yangXpathInfo) {
 	}
 	return
 }
+
+func tblSchemaCopy(dst, src map[string]map[string]db.Value){
+	for tbl, tblData := range src {
+		_, ok := dst[tbl]
+		if !ok {
+			dst[tbl] = make(map[string]db.Value)
+		}
+		for k, data := range tblData {
+			if !ok {
+				dst[tbl][k] = db.Value{Field: make(map[string]string)}
+			}
+			for f, _ := range data.Field {
+				if f != "NULL" {
+					dst[tbl][k].Field[f] = ""
+				}
+			}
+		}
+	}
+	return
+}
+
+func isYangLeaf(uri string) (bool, error) {
+	xpath, err := XfmrRemoveXPATHPredicates(uri)
+	if err == nil {
+		if d, ok := xYangSpecMap[xpath]; ok {
+			if d.yangDataType == YANG_LEAF {
+				return true, nil
+			}
+		} else {
+			err = fmt.Errorf("YangSpecData doest not have data for xpath(%v)\r\n", xpath)
+		}
+	}
+	return false, err
+}
+
