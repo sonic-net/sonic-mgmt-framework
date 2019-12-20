@@ -27,15 +27,6 @@ limitations under the License.
 <VIEW name="enable-view">
   <COMMAND name="show ip bgp" help="BGP information">
     <PARAM name="bgp subcommands" help="BGP Subcommands" ptype="SUBCOMMAND" mode="switch" optional="true">
-       <PARAM name="neighbors" help="Detailed information on TCP and BGP neighbor connections" ptype="SUBCOMMAND" mode="subcommand">
-         <PARAM name="neighbor-ip" help="Neighbor to display information about" ptype="IP_ADDR" optional="true">
-           <PARAM name="neighbor-subcommands" help="Neighbor subcommands" ptype="SUBCOMMAND" mode="switch">
-
-             <PARAM name="received-routes" help="Display the received routes from neighbor" ptype="SUBCOMMAND" mode="subcommand"/>
-             <PARAM name="advertised-routes" help="Display the routes advertised to a BGP neighbor" ptype="SUBCOMMAND" mode="subcommand"/>
-           </PARAM>
-         </PARAM>
-       </PARAM>
        <MACRO name="IP_BGP_SUB_CMDS" arg=""></MACRO>
        <PARAM name="vrf" help="BGP VRF" mode="subcommand" ptype="SUBCOMMAND" optional="true">
          <PARAM name="vrf-Name" help="VRF Name" ptype="STRING">
@@ -45,26 +36,23 @@ limitations under the License.
          </PARAM>
        </PARAM>
     </PARAM>
-  <ACTION>
-      if test "${ip subcommands}" = "ipv4"; then&#xA;
-          if test "${ipv4 Subcommands}" = "neighbors"; then&#xA;
-              if test "${neighbor-subcommands}" = "received-routes"; then&#xA;
-                  python $SONIC_CLI_ROOT/sonic-cli-bgp.py get_adj_rib_in_pre ${vrf-Name} IPV4_UNICAST ${neighbor-ip} show_ip_bgp_routes.j2 ${__full_line}&#xA;
-              fi&#xA;
-          fi&#xA;
-      fi&#xA;
+    <ACTION>
+        if test -n "${summary}"; then&#xA;
+           python $SONIC_CLI_ROOT/sonic-cli-bgp.py get_ip_bgp_summary show_ip_bgp_summary.j2&#xA;
+        elif test -n "${prefix}"; then&#xA;
+           builtin="clish_nop"&#xA;
+        elif test -n "${peer-group}"; then&#xA;
+           builtin="clish_nop"&#xA;
+        elif test -n "${neighbors}"; then&#xA;
+           if test -n "${neighbor-subcommands}"; then&#xA;
+              python $SONIC_CLI_ROOT/sonic-cli-bgp.py get_show_bgp ${__full_line}&#xA;
+           else&#xA;
+              python $SONIC_CLI_ROOT/sonic-cli-bgp.py get_ip_bgp_neighbors show_ip_bgp_neighbors.j2&#xA;
+           fi&#xA;
+        else&#xA;
+           python $SONIC_CLI_ROOT/sonic-cli-bgp.py get_show_bgp ${__full_line}&#xA;
+        fi&#xA;
   </ACTION>
-  </COMMAND>
-
-  <COMMAND name="show ip bgp summary" help="BGP summary information">
-    <ACTION>
-      python $SONIC_CLI_ROOT/sonic-cli-bgp.py get_ip_bgp_summary show_ip_bgp_summary.j2
-    </ACTION>
-  </COMMAND>
-  <COMMAND name="show ip bgp neighbors" help="BGP neighbor information">
-    <ACTION>
-      python $SONIC_CLI_ROOT/sonic-cli-bgp.py get_ip_bgp_neighbors show_ip_bgp_neighbors.j2
-    </ACTION>
   </COMMAND>
 </VIEW>
 
