@@ -329,7 +329,7 @@ def invoke_api(func, args=[]):
     elif func == 'patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_default_route_distance_config':
         keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi_safi_name}/openconfig-bgp-ext:default-route-distance/config',
                 name=args[0], identifier=IDENTIFIER, name1=NAME1, afi_safi_name=args[1])
-        body = { "oc-bgp-ext:config" : { "external-route-distance" : int(args[2]), "internal-route-distance" : int(args[3]) } }
+        body = { "oc-bgp-ext:config" : { "external-route-distance" : int(args[2]), "internal-route-distance" : int(args[3]), "local-route-distance" : int(args[4]) } }
         return api.patch(keypath, body)
 
     elif func == 'patch_openconfig_network_instance1348121867' or func == 'delete_openconfig_network_instance1348121867':
@@ -1165,6 +1165,12 @@ def invoke_api(func, args=[]):
         elif attr == 'openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_default_route_distance_config_internal_route_distance':
             # openconfig_bgp_ext1240612726
             keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi_safi_name}/openconfig-bgp-ext:default-route-distance/config/internal-route-distance',
+                name=args[0], identifier=IDENTIFIER, name1=NAME1, afi_safi_name=args[1])
+            if op == OCEXTPREFIX_PATCH:
+                body = { "openconfig-bgp-ext:internal-route-distance" : int(args[2]) }
+        elif attr == 'openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_default_route_distance_config_local_route_distance':
+            # openconfig_bgp_ext1240612726
+            keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi_safi_name}/openconfig-bgp-ext:default-route-distance/config/local-route-distance',
                 name=args[0], identifier=IDENTIFIER, name1=NAME1, afi_safi_name=args[1])
             if op == OCEXTPREFIX_PATCH:
                 body = { "openconfig-bgp-ext:internal-route-distance" : int(args[2]) }
