@@ -27,12 +27,12 @@ hamd_config_c::hamd_config_c(int argc, char **argv)
 
     const std::string description =
         "Configuration file parameters:\n"
-        "  debug=[yes/no]      Enable additional debug info to the syslog                       [" + std::string(true_false(tron_default_m, "yes", "no")) + "]\n" +
-        "  poll_period=[sec]   Daemon's polling period. Used for periodic house keeping tasks   [" + std::to_string(poll_period_sec_default_m) + "s]\n" +
-        "  uid_min=[uint32]    System-assigned credentials minimum UID. Should be >= 1000       [" + std::to_string(sac_uid_min_default_m) + "]\n" +
-        "  uid_max=[uint32]    System-assigned credentials maximum UID. Should be > uid_min     [" + std::to_string(sac_uid_max_default_m) + "]\n" +
-        "  certgen=[command]   Certificate generation command. Supp. vars: $CERTDIR, $USERNAME  [" + certgen_default_m + "]\n" +
-        "  shell=[path]        Shell to be assigned to new users                                [" + shell_default_m + "]";
+        "  debug=[yes/no]      Enable additional debug info to the syslog                     [" + std::string(true_false(tron_default_m, "yes", "no")) + "]\n" +
+        "  poll_period=[sec]   Daemon's polling period. Used for periodic house keeping tasks [" + std::to_string(poll_period_sec_default_m) + "s]\n" +
+        "  uid_min=[uint32]    System-assigned credentials minimum UID. Should be >= 1000     [" + std::to_string(sac_uid_min_default_m) + "]\n" +
+        "  uid_max=[uint32]    System-assigned credentials maximum UID. Should be > uid_min   [" + std::to_string(sac_uid_max_default_m) + "]\n" +
+        "  certgen=[path]      Certificate generation program                                 [" + certgen_default_m + "]\n" +
+        "  shell=[path]        Shell to be assigned to new users                              [" + shell_default_m + "]";
 
     ctx_p = g_option_context_new(nullptr);
     g_option_context_set_summary(ctx_p, "Host Account Management Daemon (hamd)");

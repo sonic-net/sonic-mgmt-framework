@@ -14,6 +14,15 @@ hamd_dbus_config() {
 }
 
 #****************************************
+certgen() {
+	user=$1
+	CERTDIR="$(getent passwd ${user} | cut -d: -f6)/.cert"
+	if [ ! -d ${CERTDIR} ]; then
+		/usr/bin/certgen ${user}
+	fi
+}
+
+#****************************************
 systemd_add() {
 	service=$1
 	deb-systemd-helper unmask ${service} >/dev/null || true
@@ -32,6 +41,9 @@ systemd_add() {
 # configure
 #****************************************
 if [ "${action}" = configure ]; then
+
+	# Check that user admin has certificates
+	certgen admin
 
 	hamd_dbus_config
 	systemd_add hamd.service
