@@ -61,6 +61,7 @@ func keyCreate(keyPrefix string, xpath string, data interface{}, dbKeySep string
 
 /* Copy redis-db source to destn map */
 func mapCopy(destnMap map[string]map[string]db.Value, srcMap map[string]map[string]db.Value) {
+	mapCopyMutex.Lock()
    for table, tableData := range srcMap {
         _, ok := destnMap[table]
         if !ok {
@@ -76,6 +77,7 @@ func mapCopy(destnMap map[string]map[string]db.Value, srcMap map[string]map[stri
             }
         }
    }
+   mapCopyMutex.Unlock()
 }
 
 func parentXpathGet(xpath string) string {

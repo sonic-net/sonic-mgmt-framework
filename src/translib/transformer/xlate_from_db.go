@@ -39,6 +39,8 @@ type typeChMapErr struct {
     err    error
 }
 
+var mapCopyMutex = &sync.Mutex{}
+
 func xfmrHandlerFunc(inParams XfmrParams) (error) {
     xpath, _ := XfmrRemoveXPATHPredicates(inParams.uri)
     log.Infof("Subtree transformer function(\"%v\") invoked for yang path(\"%v\").", xYangSpecMap[xpath].xfmrFunc, xpath)
