@@ -1,0 +1,36 @@
+module openconfig-aft-ipv6-ext {
+
+  yang-version "1";
+
+  // namespace
+  namespace "http://openconfig.net/yang/aft-ipv6/extension";
+
+  prefix "oc-aft-ipv6-ext";
+
+  // import some basic types
+  import openconfig-network-instance { prefix oc-netinst; }
+  import openconfig-aft { prefix oc-aft; }
+  import openconfig-aft-ext { prefix oc-aft-ext; }
+
+  description
+    "This module describes a deviation for network instance aft-ipv6
+     extensions.";
+
+  revision "2019-11-13" {
+    description
+      "Network instance aft-ipv6 extensions.";
+  }
+
+  augment /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:afts/oc-netinst:ipv6-unicast/oc-netinst:ipv6-entry {
+      uses oc-aft:aft-nhop-structural;
+      uses oc-aft-ext:aft-common-ip-state-ext;
+  }
+
+  augment /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:afts/oc-netinst:ipv6-unicast/oc-netinst:ipv6-entry/next-hops/next-hop/state {
+      uses oc-aft-ext:aft-common-entry-nexthop-state-ext;
+  }
+
+//  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:afts/oc-netinst:ipv6-unicast/oc-netinst:ipv6-entry/next-hops/next-hop/config {
+//      deviate not-supported;
+// }
+}

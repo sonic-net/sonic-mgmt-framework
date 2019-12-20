@@ -1,0 +1,51 @@
+module openconfig-aft-ext {
+
+    yang-version "1";
+  
+    //namespace
+    namespace "http://openconfig.net/yang/aft/extension";
+
+    prefix "oc-aft-ext";
+
+    import openconfig-policy-types { prefix "oc-pol-types"; }
+
+    grouping aft-common-ip-state-ext {
+        description "Operational state parameters relating to a forwarding entry";
+
+        leaf origin-protocol {
+          type identityref {
+            base "oc-pol-types:INSTALL_PROTOCOL_TYPE";
+          }
+          description
+          "The protocol from which the AFT entry was learned.";
+        }
+
+        leaf distance {
+           type uint32;
+           description
+              "Admin distance for this route";
+        }
+
+        leaf metric {
+           type uint32;
+           description
+              "Distance metric for this route";
+        }
+
+        leaf uptime {
+         type string;
+         description 
+         "Time since route is configured or learned in RIB";
+       }        
+     }
+
+    grouping aft-common-entry-nexthop-state-ext {
+      leaf directlyConnected {
+        type boolean;
+        default false;
+        description
+          "Defines whether the nexthop is directly connected.";
+      }
+
+    }
+  }
