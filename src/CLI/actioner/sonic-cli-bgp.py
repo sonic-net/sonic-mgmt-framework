@@ -722,7 +722,12 @@ def invoke_api(func, args=[]):
     elif func == 'patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_config_capability_extended_nexthop':
         keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/peer-groups/peer-group={peer_group_name}/config/openconfig-bgp-ext:capability-extended-nexthop',
                 name=args[0], identifier=IDENTIFIER, name1=NAME1, peer_group_name=args[1])
-        body = { "openconfig-bgp-ext:capability-extended-nexthop": True if args[2] == 'extended-nexthop' else False }
+        body = { "openconfig-bgp-ext:capability-extended-nexthop": True if args[2] == 'True' else False }
+        return api.patch(keypath, body)
+    elif func == 'patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_config_capability_dynamic':
+        keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/peer-groups/peer-group={peer_group_name}/config/openconfig-bgp-ext:capability-dynamic',
+                name=args[0], identifier=IDENTIFIER, name1=NAME1, peer_group_name=args[1])
+        body = { "openconfig-bgp-ext:capability-dynamic": True if args[2] == 'True' else False }
         return api.patch(keypath, body)
     elif func == 'patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_config_disable_ebgp_connected_route_check':
         keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/peer-groups/peer-group={peer_group_name}/config/openconfig-bgp-ext:disable-ebgp-connected-route-check',
