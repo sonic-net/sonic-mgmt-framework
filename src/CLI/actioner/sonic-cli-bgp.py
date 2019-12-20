@@ -138,9 +138,7 @@ def generate_show_bgp_routes(args):
          response1 = api.get(keypath)
          if(response1.ok()):
             d.update(response1.content)
-      print "loc-rib response"
-      print response
-      show_cli_output(show_ip_bgp_routes.j2, response)
+      show_cli_output("show_ip_bgp_routes.j2", d)
 
    elif route_option == "routes":
       keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/rib/afi-safis/afi-safi={afi_safi_name}/ipv4-unicast/neighbors/neighbor={nbr_address}/adj-rib-in-post', name=vrf, identifier=IDENTIFIER, name1=NAME1, afi_safi_name=afisafi, nbr_address = neighbour_ip)
@@ -152,8 +150,7 @@ def generate_show_bgp_routes(args):
          if(response1.ok()):
             d.update(response1.content)
       print "nbr adj-rib-in-post response"
-      print response
-      show_cli_output(show_ip_bgp_routes.j2, response)
+      show_cli_output("show_ip_bgp_routes.j2", d)
    elif route_option == "received-routes":
       keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/rib/afi-safis/afi-safi={afi_safi_name}/ipv4-unicast/neighbors/neighbor={nbr_address}/adj-rib-in-pre', name=vrf, identifier=IDENTIFIER, name1=NAME1, afi_safi_name=afisafi, nbr_address = neighbour_ip)
       response = api.get(keypath)
@@ -164,8 +161,7 @@ def generate_show_bgp_routes(args):
          if(response1.ok()):
             d.update(response1.content)
       print "adj-rib-in-pre response"
-      print response
-      show_cli_output(show_ip_bgp_routes.j2, response)
+      show_cli_output("show_ip_bgp_routes.j2", d)
 
    elif route_option == "advertised-routes":
       keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/rib/afi-safis/afi-safi={afi_safi_name}/ipv4-unicast/neighbors/neighbor={nbr_address}/adj-rib-out-post', name=vrf, identifier=IDENTIFIER, name1=NAME1, afi_safi_name=afisafi, nbr_address = neighbour_ip)
@@ -177,9 +173,8 @@ def generate_show_bgp_routes(args):
          if(response1.ok()):
             d.update(response1.content)
       print "adj-rib-out-post response"
-      print response
-      show_cli_output(show_ip_bgp_routes.j2, response)
-   else: 
+      show_cli_output("show_ip_bgp_routes.j2", d)
+   else:
        pass
    return d
 
