@@ -25,7 +25,7 @@ certgen() {
 	user=$1
 	USRHOME=$(getent passwd "${user}" | cut -d: -f6)
 	if [ -d "${USRHOME}" ]; then # First make sure user's home directory exists
-		CERTDIR=${USRHOME}"/.cert"
+		CERTDIR="${USRHOME}/.cert"
 		if [ ! -d "${CERTDIR}" ]; then
 			echo "Generating ${user} certificates"
 			/usr/bin/certgen "${user}"
@@ -54,7 +54,7 @@ systemd_add() {
 if [ "${action}" = configure ]; then
 
 	# Make sure root certificates are present
-    rootcert
+	rootcert
 
 	# Check that user admin has certificates
 	certgen admin

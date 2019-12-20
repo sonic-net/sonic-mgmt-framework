@@ -338,6 +338,12 @@ module sonic-bgp-global {
                     }
                 }
 
+                leaf local_route_distance {
+                    type uint8 {
+                        range "1..255";
+                    }
+                }
+
                 leaf ibgp_equal_cluster_length {
                     type boolean;
                     description
