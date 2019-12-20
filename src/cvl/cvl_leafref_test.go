@@ -125,7 +125,7 @@ func TestValidateEditConfig_Create_Leafref_To_NonKey_Positive(t *testing.T) {
 			cvl.OP_UPDATE,
 			"DEVICE_METADATA|localhost",
 			map[string]string {
-				"vrf": "default",
+				"vrf_name": "default",
 				"bgp_asn": "12338",
 			},
 		},
@@ -162,7 +162,7 @@ func TestValidateEditConfig_Update_Leafref_To_NonKey_Negative(t *testing.T) {
 			cvl.OP_UPDATE,
 			"DEVICE_METADATA|localhost",
 			map[string]string {
-				"vrf": "default",
+				"vrf_name": "default",
 				"bgp_asn": "17698",
 			},
 		},
