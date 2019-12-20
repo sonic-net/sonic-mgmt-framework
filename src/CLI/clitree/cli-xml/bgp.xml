@@ -54,11 +54,6 @@ limitations under the License.
         fi&#xA;
   </ACTION>
   </COMMAND>
-  <COMMAND name="show ip bgp neighbors" help="BGP neighbor information">
-    <ACTION>
-      python $SONIC_CLI_ROOT/sonic-cli-bgp.py get_ip_bgp_neighbors show_ip_bgp_neighbors.j2
-    </ACTION>
-  </COMMAND>
 </VIEW>
 
 <VIEW name="configure-view">
