@@ -35,7 +35,7 @@ class ApiClient(object):
         """
         Create a RESTful API client.
         """
-        self.api_uri = os.getenv('REST_API_ROOT', 'https://localhost:8443')
+        self.api_uri = os.getenv('REST_API_ROOT', 'https://localhost:443')
 
         self.checkCertificate = False
 
