@@ -282,7 +282,7 @@ func clearDb() {
 		"QUEUE",
 		"SCHEDULER",
 		"STP",
-		"STP_INTF",
+		"STP_PORT",
 		"STP_VLAN",
 		"TAM_COLLECTOR_TABLE",
 		"TAM_INT_IFA_FLOW_TABLE",
@@ -3392,50 +3392,44 @@ func TestMaxElements_All_Entries_In_Request(t *testing.T) {
                 cvl.CVLEditConfigData{
                         cvl.VALIDATE_ALL,
                         cvl.OP_CREATE,
-                        "STP|GLOBAL",
+                        "VXLAN_TUNNEL|tun1",
 			map[string]string{
-				"mode": "pvst",
+				"src_ip": "20.1.1.1",
 			},
                 },
         }
 
-	//Add first element
+	//Check addition of first element
         cvlErrInfo, _ := cvSess.ValidateEditConfig(cfgData)
-
-	/*
-        if cvlErrInfo.ErrCode != cvl.CVL_SUCCESS {
-                t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
-        }
-	*/
 
         cfgData1 := []cvl.CVLEditConfigData{
                 cvl.CVLEditConfigData{
                         cvl.VALIDATE_ALL,
                         cvl.OP_CREATE,
-                        "STP|GLOBAL1",
+                        "VXLAN_TUNNEL|tun2",
 			map[string]string{
-				"mode": "mstp",
+				"src_ip": "30.1.1.1",
 			},
                 },
         }
 
-	//Try to add second element
+	//Try to validate addition of second element
         cvlErrInfo, _ = cvSess.ValidateEditConfig(cfgData1)
 
         cvl.ValidationSessClose(cvSess)
 
-	//Should fail as "DEVICE_METADATA" has max-elements as '1'
+	//Should fail as "VXLAN_TUNNEL" has max-elements as '1'
         if cvlErrInfo.ErrCode == cvl.CVL_SUCCESS {
-                t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
+                t.Errorf("VXLAN_TUNNEL Config Validation failed -- error details %v", cvlErrInfo)
         }
 
 }
 
 func TestMaxElements_Entries_In_Redis(t *testing.T) {
 	depDataMap := map[string]interface{} {
-		"STP": map[string]interface{}{
-			"GLOBAL": map[string]interface{}{
-				"mode": "pvst",
+		"VXLAN_TUNNEL" : map[string]interface{} {
+			"tun1" : map[string]interface{} {
+				"src_ip": "20.1.1.1",
 			},
 		},
 	}
@@ -3444,29 +3438,74 @@ func TestMaxElements_Entries_In_Redis(t *testing.T) {
 
         cvSess, _ := cvl.ValidationSessOpen()
 
-        cfgData := []cvl.CVLEditConfigData{
-                cvl.CVLEditConfigData{
-                        cvl.VALIDATE_ALL,
-                        cvl.OP_CREATE,
-                        "STP|GLOBAL1",
+	cfgData := []cvl.CVLEditConfigData{
+		cvl.CVLEditConfigData{
+			cvl.VALIDATE_ALL,
+			cvl.OP_CREATE,
+			"VXLAN_TUNNEL|tun2",
 			map[string]string{
-				"mode": "mstp",
+				"src_ip": "30.1.1.1",
 			},
-                },
-        }
+		},
+	}
 
-	//Try to add second element
+	//Check addition of second element
 	cvlErrInfo, _ := cvSess.ValidateEditConfig(cfgData)
 
-	unloadConfigDB(rclient, depDataMap)
 
         cvl.ValidationSessClose(cvSess)
 
-	//Should fail as "DEVICE_METADATA" has max-elements as '1'
+	//Should fail as "VXLAN_TUNNEL" has max-elements as '1'
         if cvlErrInfo.ErrCode == cvl.CVL_SUCCESS {
+                t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
+		unloadConfigDB(rclient, depDataMap)
+		return
+        }
+
+	cfgData1 := []cvl.CVLEditConfigData{
+		cvl.CVLEditConfigData{
+			cvl.VALIDATE_ALL,
+			cvl.OP_DELETE,
+			"VXLAN_TUNNEL|tun1",
+			map[string]string{
+			},
+		},
+	}
+
+	//Delete the existing entry, should succeed 
+	cvlErrInfo, _ = cvSess.ValidateEditConfig(cfgData1)
+        if cvlErrInfo.ErrCode != cvl.CVL_SUCCESS {
+                t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
+		unloadConfigDB(rclient, depDataMap)
+		return
+        }
+
+	cfgData1 = []cvl.CVLEditConfigData{
+		cvl.CVLEditConfigData{
+			cvl.VALIDATE_NONE,
+			cvl.OP_DELETE,
+			"VXLAN_TUNNEL|tun1",
+			map[string]string{
+				"src_ip": "20.1.1.1",
+			},
+		},
+		cvl.CVLEditConfigData{
+			cvl.VALIDATE_ALL,
+			cvl.OP_CREATE,
+			"VXLAN_TUNNEL|tun2",
+			map[string]string{
+				"src_ip": "30.1.1.1",
+			},
+		},
+	}
+
+	//Check validation of new entry, should succeed now
+	cvlErrInfo, _ = cvSess.ValidateEditConfig(cfgData1)
+        if cvlErrInfo.ErrCode != cvl.CVL_SUCCESS {
                 t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
         }
 
+	unloadConfigDB(rclient, depDataMap)
 }
 
 func TestValidateEditConfig_Two_Create_Requests_Positive(t *testing.T) {
@@ -3647,5 +3686,108 @@ func TestVailidateStaticPlatformLimits_YANG_Deviation_Ngeative(t *testing.T) {
         cvl.ValidationSessClose(cvSess)
 
 	unloadConfigDB(rclient, depDataMapAcl)
+}
+
+//Check delete constraing with table having multiple keys
+func TestValidateEditConfig_Multi_Delete_MultiKey_Same_Session_Positive(t *testing.T) {
+	depDataMap := map[string]interface{}{
+		"VLAN": map[string]interface{}{
+			"Vlan511": map[string]interface{}{
+				"vlanid": "511",
+			},
+		},
+		"VLAN_MEMBER": map[string]interface{}{
+			"Vlan511|Ethernet16": map[string]interface{}{
+				"tagging_mode": "untagged",
+			},
+		},
+		"STP_VLAN_PORT": map[string]interface{}{
+			"Vlan511|Ethernet16": map[string]interface{}{
+				"path_cost": "200",
+				"priority": "128",
+			},
+		},
+		"STP_PORT": map[string]interface{}{
+			"Ethernet16": map[string]interface{}{
+				"bpdu_filter": "global",
+				"enabled": "true",
+				"portfast": "true",
+			},
+		},
+	}
+
+	loadConfigDB(rclient, depDataMap)
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	cfgData := []cvl.CVLEditConfigData {
+		cvl.CVLEditConfigData {
+			cvl.VALIDATE_ALL,
+			cvl.OP_DELETE,
+			"STP_VLAN_PORT|Vlan511|Ethernet16",
+			map[string]string {
+			},
+		},
+	}
+
+	cvlErrInfo, _ := cvSess.ValidateEditConfig(cfgData)
+        if cvlErrInfo.ErrCode != cvl.CVL_SUCCESS {
+		t.Errorf("STP_VLAN_PORT Delete: Config Validation failed")
+		unloadConfigDB(rclient, depDataMap)
+		return
+        }
+
+	cfgData = []cvl.CVLEditConfigData {
+		cvl.CVLEditConfigData {
+			cvl.VALIDATE_ALL,
+			cvl.OP_DELETE,
+			"VLAN_MEMBER|Vlan511|Ethernet16",
+			map[string]string {
+				"tagging_mode": "untagged",
+			},
+		},
+	}
+
+	cvlErrInfo, _ = cvSess.ValidateEditConfig(cfgData)
+        if cvlErrInfo.ErrCode != cvl.CVL_SUCCESS {
+		t.Errorf("VLAN_MEMBER Delete: Config Validation failed")
+		unloadConfigDB(rclient, depDataMap)
+		return
+        }
+
+	cfgData = []cvl.CVLEditConfigData {
+		cvl.CVLEditConfigData {
+			cvl.VALIDATE_NONE,
+			cvl.OP_DELETE,
+			"STP_VLAN_PORT|Vlan511|Ethernet16",
+			map[string]string {
+			},
+		},
+		cvl.CVLEditConfigData {
+			cvl.VALIDATE_NONE,
+			cvl.OP_DELETE,
+			"VLAN_MEMBER|Vlan511|Ethernet16",
+			map[string]string {
+				"tagging_mode": "untagged",
+			},
+		},
+		cvl.CVLEditConfigData {
+			cvl.VALIDATE_ALL,
+			cvl.OP_DELETE,
+			"STP_PORT|Ethernet16",
+			map[string]string {
+			},
+		},
+	}
+
+	cvlErrInfo, _ = cvSess.ValidateEditConfig(cfgData)
+
+        cvl.ValidationSessClose(cvSess)
+
+        if cvlErrInfo.ErrCode != cvl.CVL_SUCCESS {
+		t.Errorf("STP_PORT Delete: Config Validation failed")
+		return
+        }
+
+	unloadConfigDB(rclient, depDataMap)
 }
 
