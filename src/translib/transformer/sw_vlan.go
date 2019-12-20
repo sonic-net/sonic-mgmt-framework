@@ -120,7 +120,6 @@ func isLastVlanMemberOnPort (d *db.DB, vlanName *string, ifName *string) bool {
 }
 
 func enableStpOnVlanCreation(inParams *XfmrParams, vlanName *string) {
-    log.Info("enableStpOnVlanCreation() called")
     if len(*vlanName) == 0 {
         return
     }
@@ -163,7 +162,6 @@ func enableStpOnVlanCreation(inParams *XfmrParams, vlanName *string) {
 
 func enableStpOnInterfaceVlanMembership(d *db.DB, vlanName *string, intfList []string,
                                         stpVlanPortMap map[string]db.Value, stpPortMap map[string]db.Value) {
-    log.Info("enableStpOnInterfaceVlanMembership() called")
     if len(intfList) == 0 {
         return
     }
@@ -227,7 +225,6 @@ func enableStpOnInterfaceVlanMembership(d *db.DB, vlanName *string, intfList []s
 }
 
 func removeStpConfigOnVlanDeletion(inParams *XfmrParams, vlanName *string, memberPorts []string, resMap map[string]map[string]db.Value) {
-    log.Info("removeStpConfigOnVlanDeletion() called")
 
     _, serr := (inParams.d).GetEntry(&db.TableSpec{Name: STP_GLOBAL_TABLE}, db.Key{Comp:[]string {"GLOBAL"}})
     if serr != nil {
@@ -278,7 +275,6 @@ func removeStpOnInterfaceSwitchportDeletion(d *db.DB, vlanName *string, intfList
                                             stpVlanPortMap map[string]db.Value, 
                                             stpPortMap map[string]db.Value,
                                             isTagged bool) {
-    log.Info("removeStpOnInterfaceSwitchportDeletion() called")
 
     _, serr := d.GetEntry(&db.TableSpec{Name: STP_GLOBAL_TABLE}, db.Key{Comp:[]string {"GLOBAL"}})
     if serr != nil {
