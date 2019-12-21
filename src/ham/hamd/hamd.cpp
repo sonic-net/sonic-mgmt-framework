@@ -199,7 +199,6 @@ static std::string roles_as_string(const std::vector< std::string > & roles)
 
     std::string cmd = "/usr/sbin/useradd"
                       " --create-home"
-                      " --user-group"
                       " --password '" + hashed_pw + "'";
 
     const std::string & shell_r = config_rm.shell();
