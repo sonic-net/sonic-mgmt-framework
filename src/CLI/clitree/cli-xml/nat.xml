@@ -48,7 +48,7 @@ limitations under the License.
 
    <VIEW
         name="configure-nat-view"
-        prompt="${SYSTEM_NAME}(conf-nat) "
+        prompt="${SYSTEM_NAME}(config-nat)# "
         depth="2"
         >
         <NAMESPACE
@@ -187,7 +187,7 @@ limitations under the License.
              >
          </PARAM>
          <ACTION>
-             python $SONIC_CLI_ROOT/sonic-cli-nat.py delete_openconfig_nat_nat_instances_instance_nat_pool_nat_pool_entry_config ${pool-name}
+             python $SONIC_CLI_ROOT/sonic-cli-nat.py delete_openconfig_nat_nat_instances_instance_nat_pool_nat_pool_entry ${pool-name}
          </ACTION>
      </COMMAND>
 
@@ -479,9 +479,9 @@ limitations under the License.
            python $SONIC_CLI_ROOT/sonic-cli-nat.py delete_openconfig_nat_nat_instances_instance_nat_mapping_table ${global-ip}&#xA;
            python $SONIC_CLI_ROOT/sonic-cli-nat.py delete_openconfig_nat_nat_instances_instance_napt_mapping_table ${global-ip} ${natPortType} ${global-port} &#xA;
        elif test "${no-static-subcommands}" = "basic"; then&#xA;
-           python $SONIC_CLI_ROOT/sonic-cli-nat.py delete_openconfig_nat_nat_instances_instance_nat_mapping_table_nat_mapping_entry_config_internal_address ${global-ip}&#xA;
+           python $SONIC_CLI_ROOT/sonic-cli-nat.py delete_openconfig_nat_nat_instances_instance_nat_mapping_table_nat_mapping_entry ${global-ip}&#xA;
        else&#xA;
-           python $SONIC_CLI_ROOT/sonic-cli-nat.py delete_openconfig_nat_nat_instances_instance_napt_mapping_table_napt_mapping_entry_config ${global-ip} ${natPortType} ${global-port}&#xA;
+           python $SONIC_CLI_ROOT/sonic-cli-nat.py delete_openconfig_nat_nat_instances_instance_napt_mapping_table_napt_mapping_entry ${global-ip} ${natPortType} ${global-port}&#xA;
        fi&#xA;
    </ACTION>
 
@@ -581,13 +581,25 @@ limitations under the License.
          <ACTION builtin="clish_nop"></ACTION>
          <ACTION>
           if test "${nat-subcommands}" = "config"; then&#xA;
-                  if test "${config-subcommands}" = "globalvalues"; then&#xA;
-                      python $SONIC_CLI_ROOT/sonic-cli-nat.py get_openconfig_nat_nat_instances_instance_config show_nat_global_config.j2&#xA;
-                  elif test "${config-subcommands}" = "bindings"; then&#xA;
-                      python $SONIC_CLI_ROOT/sonic-cli-nat.py get_openconfig_nat_nat_instances_instance_nat_acl_pool_binding show_nat_bindings.j2&#xA;
-                  elif test "${config-subcommands}" = "pool"; then&#xA;
-                      python $SONIC_CLI_ROOT/sonic-cli-nat.py get_openconfig_nat_nat_instances_instance_nat_pool show_nat_pool.j2&#xA;
-                  fi&#xA;
+              if test "${config-subcommands}" = "globalvalues"; then&#xA;
+                  python $SONIC_CLI_ROOT/sonic-cli-nat.py get_openconfig_nat_nat_instances_instance_config show_nat_global_config.j2&#xA;
+              elif test "${config-subcommands}" = "zones"; then&#xA;
+                  python $SONIC_CLI_ROOT/sonic-cli-nat.py get_nat_zones show_nat_zones.j2&#xA;
+              elif test "${config-subcommands}" = "bindings"; then&#xA;
+                  python $SONIC_CLI_ROOT/sonic-cli-nat.py get_openconfig_nat_nat_instances_instance_nat_acl_pool_binding show_nat_bindings.j2&#xA;
+              elif test "${config-subcommands}" = "pool"; then&#xA;
+                  python $SONIC_CLI_ROOT/sonic-cli-nat.py get_openconfig_nat_nat_instances_instance_nat_pool show_nat_pool.j2&#xA;
+              elif test "${config-subcommands}" = "static"; then&#xA;
+                  python $SONIC_CLI_ROOT/sonic-cli-nat.py get_nat_static_configs show_nat_static_configs.j2&#xA;
+              fi&#xA;
+          elif test "${nat-subcommands}" = "translations"; then&#xA;
+          if test "${count}" = ""; then&#xA;
+              python $SONIC_CLI_ROOT/sonic-cli-nat.py get_nat_translations show_nat_translations.j2&#xA;
+          else&#xA;
+              python $SONIC_CLI_ROOT/sonic-cli-nat.py get_nat_translations_count show_nat_translations_count.j2&#xA;
+          fi&#xA;
+          elif test "${nat-subcommands}" = "statistics"; then&#xA;
+              python $SONIC_CLI_ROOT/sonic-cli-nat.py get_nat_statistics show_nat_statistics.j2&#xA;
           fi&#xA;
       </ACTION>
      </COMMAND>
