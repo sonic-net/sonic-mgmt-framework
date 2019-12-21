@@ -332,7 +332,7 @@ func fill_ipv6_spec_pfx_path_loc_rib_data (ipv6LocRibRoutes_obj *ocbinds.Opencon
     if nexthops, ok := pathData["nexthops"].([]interface {}) ; ok {
         for _, _nexthopData := range nexthops {
             nexthopData := _nexthopData.(map[string]interface {})
-            if _scope, ok := nexthopData["scope"] ; ok && _scope == "global" {
+            if _scope, ok := nexthopData["used"] ; ok && _scope == true {
                 if ip, ok := nexthopData["ip"].(string) ; ok {
                     ipv6LocRibRouteAttrSets.NextHop = &ip
                     break
@@ -1418,7 +1418,7 @@ func hdl_get_bgp_nbrs_adj_rib_in_pre (bgpRib_obj *ocbinds.OpenconfigNetworkInsta
         ygot.BuildEmptyTree(ipv4NbrsRibNbr_obj)
 
         ipv4NbrsRibNbr_obj.State.NeighborAddress = &rib_key.nbrAddr
-        routesData, ok := bgpRibOutputJson["routes"].(map[string]interface{})
+        routesData, ok := bgpRibOutputJson["receivedRoutes"].(map[string]interface{})
         if !ok {return err}
         err = fill_bgp_ipv4_nbr_adj_rib_in_pre (ipv4NbrsRibNbr_obj, rib_key, routesData, dbg_log)
     }
@@ -1432,7 +1432,7 @@ func hdl_get_bgp_nbrs_adj_rib_in_pre (bgpRib_obj *ocbinds.OpenconfigNetworkInsta
         }
         ygot.BuildEmptyTree(ipv6NbrsRibNbr_obj)
         ipv6NbrsRibNbr_obj.State.NeighborAddress = &rib_key.nbrAddr
-        routesData, ok := bgpRibOutputJson["routes"].(map[string]interface{})
+        routesData, ok := bgpRibOutputJson["receivedRoutes"].(map[string]interface{})
         if !ok {return err}
 
         err = fill_bgp_ipv6_nbr_adj_rib_in_pre (ipv6NbrsRibNbr_obj, rib_key, routesData, dbg_log)
@@ -1527,6 +1527,7 @@ func hdl_get_bgp_nbrs_adj_rib_out_post (bgpRib_obj *ocbinds.OpenconfigNetworkIns
         return oper_err
     }
 
+    log.Infof("NBRS-RIB ==> Got FRR response ")
     if outError, ok := bgpRibOutputJson["warning"] ; ok {
         log.Errorf ("%s failed !!, %s", outError)
         return oper_err
@@ -1545,7 +1546,7 @@ func hdl_get_bgp_nbrs_adj_rib_out_post (bgpRib_obj *ocbinds.OpenconfigNetworkIns
         ygot.BuildEmptyTree(ipv4NbrsRibNbr_obj)
 
         ipv4NbrsRibNbr_obj.State.NeighborAddress = &rib_key.nbrAddr
-        routesData, ok := bgpRibOutputJson["routes"].(map[string]interface{})
+        routesData, ok := bgpRibOutputJson["advertisedRoutes"].(map[string]interface{})
         if !ok {return err}
 
         err = fill_bgp_ipv4_nbr_adj_rib_out_post (ipv4NbrsRibNbr_obj, rib_key, routesData, dbg_log)
@@ -1558,7 +1559,7 @@ func hdl_get_bgp_nbrs_adj_rib_out_post (bgpRib_obj *ocbinds.OpenconfigNetworkIns
         }
         ygot.BuildEmptyTree(ipv6NbrsRibNbr_obj)
 
-        routesData, ok := bgpRibOutputJson["routes"].(map[string]interface{})
+        routesData, ok := bgpRibOutputJson["advertisedRoutes"].(map[string]interface{})
         if !ok {return err}
 
         err = fill_bgp_ipv6_nbr_adj_rib_out_post (ipv6NbrsRibNbr_obj, rib_key, routesData, dbg_log)

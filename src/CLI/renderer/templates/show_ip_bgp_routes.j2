@@ -7,7 +7,9 @@
 {% set vars = {'locPref': ""} %}
 {% set vars = {'origin': "IGP"} %}
 {% set vars = {'weight': "0"} %}
-{% set vars = {'validRoute': ""} %}
+{% set vars = {'validRoute': False} %}
+{% set vars = {'bestRoute': False} %}
+{% set vars = {'members': ""} %}
 {% if json_output -%}
 {% for key in json_output %}
 {% if "openconfig-network-instance:config" in key %}
@@ -18,11 +20,9 @@
 {% endfor %}
 BGP routing table information for VRF default
 Router identifier {{ vars.routerId }}, local AS number {{ vars.asNum }} 
-Route status codes: s - suppressed, * - valid, > - active, # - not installed, E - ECMP head, e - ECMP
-                    S - stale, c - contributing to ECMP, b - backup, L - labeled-unicast
+Route status codes: * - valid, > - best
 Origin codes: i - IGP, e - EGP, ? - incomplete
-AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Link Local Nexthop
-     {{'%-20s'|format("Network")}}{{'%-20s'|format("Next Hop")}}{{'%-15s'|format("Metric")}}{{'%-15s'|format("LocPref")}}{{'%-15s'|format("Path")}}
+     {{'%-20s'|format("Network")}}{{'%-20s'|format("Next Hop")}}{{'%-15s'|format("Metric")}}{{'%-15s'|format("LocPref")}}{{'%s'|format("Path")}}
 {% for key in json_output %}
 {% if "openconfig-network-instance:adj-rib-in-pre" in key %}
 {% set routeList = json_output["openconfig-network-instance:adj-rib-in-pre"]["routes"]["route"] %}
@@ -33,23 +33,42 @@ AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Li
 {% elif "openconfig-network-instance:adj-rib-in-post" in key %}
 {% set routeList = json_output["openconfig-network-instance:adj-rib-in-post"]["routes"]["route"] %}
 {% elif "openconfig-network-instance:loc-rib" in key %}
-{% set routeList = json_output["openconfig-network-instance:adj-rib-in-post"]["routes"]["route"] %}
+{% set routeList = json_output["openconfig-network-instance:loc-rib"]["routes"]["route"] %}
 {% else %}
 {% endif %}
 {% if routeList %}
 {% for route in routeList %}
 {% for key in route %}
+  {% if vars.update({'members':''}) %} {% endif %}
   {% if vars.update({'prefix':route["prefix"]}) %}{% endif %}
   {% if vars.update({'weight':"0"}) %}{% endif %}
   {% if "state" in key %}
     {% if vars.update({'validRoute':route["state"]["valid-route"]}) %}{% endif %}
+    {% if vars.update({'bestRoute':route["state"]["best-path"]}) %}{% endif %}
     {% if vars.update({'pathId':route["state"]["path-id"]}) %}{% endif %}
   {% endif %}
   {% if "openconfig-bgp-ext:attr-sets" in key %}
-    {% if vars.update({'origin':route["openconfig-bgp-ext:attr-sets"]["origin"]}) %}{% endif %}
-    {% if vars.update({'nxtHop':route["openconfig-bgp-ext:attr-sets"]["next-hop"]}) %}{% endif %}
-    {% if vars.update({'med':route["openconfig-bgp-ext:attr-sets"]["med"]}) %}{% endif %}
-    {% if vars.update({'locPref':route["openconfig-bgp-ext:attr-sets"]["local-pref"]}) %}{% endif %}
+    {% set attr_sets = route[key] %}
+    {% if vars.update({'origin':attr_sets["origin"]}) %}{% endif %}
+    {% if vars.update({'nxtHop':attr_sets["next-hop"]}) %}{% endif %}
+    {% if vars.update({'med':attr_sets["med"]}) %}{% endif %}
+    {% if vars.update({'locPref':attr_sets["local-pref"]}) %}{% endif %}
+    {% if "as-path" in attr_sets %}
+      {% set as_path = attr_sets['as-path'] %}
+      {% if "as-segment" in as_path %}
+         {% set segements = as_path['as-segment'] %}
+         {% set temp = [] %}
+         {% for segment in segements %}
+              {% if "state" in segment %}
+                {% set mems = segment['state']['member'] %}
+                {% for mem in mems %}
+                {%  do temp.append(mem) %}
+                {% endfor %}
+              {% endif %}
+         {% endfor %}
+         {% if vars.update({'members': temp|join(" ")}) %} {% endif %}
+      {% endif %}
+    {% endif %}
   {% endif %}
   {% if vars.origin == 'IGP' %}
     {% if vars.update({'origin':"i"}) %}{% endif %}
@@ -59,12 +78,17 @@ AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Li
     {% if vars.update({'origin':"?"}) %}{% endif %}
   {% endif %}
 {% endfor %}
-{% if vars.validRoute == 'true' %}
+{% if vars.validRoute == True %}
 {% if vars.update({'validRoute':"*"}) %}{% endif %}
 {% else %}
 {% if vars.update({'validRoute':""}) %}{% endif %}
 {% endif %}
-{{'%-5s'|format(vars.validRoute)}}{{'%-20s'|format(vars.prefix)}}{{'%-20s'|format(vars.nxtHop)}}{{'%-15s'|format(vars.med)}}{{'%-15s'|format(vars.locPref)}}{{'%-1s'|format(vars.pathId)}} {{vars.origin}}
+{% if vars.bestRoute == True %}
+{% if vars.update({'bestRoute':">"}) %}{% endif %}
+{% else %}
+{% if vars.update({'bestRoute':""}) %}{% endif %}
+{% endif %}
+{{'%-1s'|format(vars.validRoute)}}{{'%-4s'|format(vars.bestRoute)}}{{'%-20s'|format(vars.prefix)}}{{'%-20s'|format(vars.nxtHop)}}{{'%-15s'|format(vars.med)}}{{'%-15s'|format(vars.locPref)}}{{'%s'|format(vars.members)}} {{vars.origin}}
 {% endfor %}
 {% endif %}
 {% endfor %}
