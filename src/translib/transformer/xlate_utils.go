@@ -483,10 +483,56 @@ func getXpathFromYangEntry(entry *yang.Entry) string {
         return xpath
 }
 
-func stripAugmentedModuleNames(xpath string) string {
-	if !strings.HasPrefix(xpath, "/") {
-		xpath = "/" + xpath
+func stripModuleNamesFromUri(uri string) (string, error) {
+	if !strings.HasPrefix(uri, "/") {
+		uri = "/" + uri
 	}
+	pathList := strings.Split(uri, "/")
+	pathList = pathList[1:]
+	for i, pvar := range pathList {
+		si := strings.IndexAny(pvar, "[")
+		if si != -1 {
+			prekey := pvar[:si+1]
+			if i > 0 && strings.Contains(prekey, ":") {
+				prekey = strings.Split(prekey,":")[1]
+			}
+			key := pvar[si+1:]
+			if strings.Contains(key, "=") {
+				kvList := strings.Split(key, "=")
+				if len(kvList) > 1 {
+					k := kvList[0]
+					v := kvList[1]
+					//Strip the modduleName
+					if strings.Contains(k, ":") {
+						k = strings.Split(k, ":")[1]
+					}/*
+					if strings.Contains(v, ":") {
+						// TODO:In case value has : like an ipv6 address need to differenciate module name present vs not present case correctly
+						if strings.Count(v, ":") > 1 {
+							v = v[strings.IndexAny(v, ":")+1:]
+						} else {
+							v = strings.Split(v, ":")[1]
+						}
+					}*/
+					key = k + "=" + v
+				}
+				newpvar := prekey + key
+				pathList[i] = newpvar
+			}
+		} else {
+			if i > 0 && strings.Contains(pvar, ":") {
+				pathList[i] = strings.Split(pvar,":")[1]
+			}
+		}
+	}
+	path := "/" + strings.Join(pathList, "/")
+	return path, nil
+}
+
+func stripAugmentedModuleNames(xpath string) string {
+        if !strings.HasPrefix(xpath, "/") {
+                xpath = "/" + xpath
+        }
         pathList := strings.Split(xpath, "/")
         pathList = pathList[1:]
         for i, pvar := range pathList {
