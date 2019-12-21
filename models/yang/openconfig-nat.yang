@@ -162,7 +162,7 @@ module openconfig-nat {
             description
                 "Counters associated with this NAPT entry.";
 
-            uses nat-counters-common-top;
+            uses nat-type-counters-common-top;
         }
     }
 
@@ -279,7 +279,7 @@ module openconfig-nat {
         container counters {
             description
                 "Counters associated with this NAT entry.";
-            uses nat-counters-common-top;
+            uses nat-type-counters-common-top;
         }
     }
 
@@ -568,6 +568,23 @@ module openconfig-nat {
         }
     }
 
+    grouping nat-type-counters-common-top {
+        description
+            "Top grouping for NAT counters.";
+
+        leaf nat-translations-pkts {
+            description
+                "NAT translations packet count.";
+            type oc-yang:counter64;
+        }
+
+        leaf nat-translations-bytes {
+            description
+                "NAT translations byte count.";
+            type oc-yang:counter64;
+        }
+    }
+
     grouping nat-counters-common-top {
         description
             "Top grouping for NAT counters.";
@@ -616,11 +633,7 @@ module openconfig-nat {
             case ip-address-range {
                 leaf IP-ADDRESS-RANGE {
                     type string {
-                        pattern '^(([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|'  +
-                                    '25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4]' +
-                                    '[0-9]|25[0-5])$ (-) ^(([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|'  +
-                                            '25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4]'  +
-                                            '[0-9]|25[0-5])$';
+                        pattern '(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])(-(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9]))?';
                     }
                 }
             }
@@ -678,12 +691,6 @@ module openconfig-nat {
         description
             "Top grouping for NAT ACL pool binding entry data.";
 
-        leaf name {
-            description
-                "NAT ACL pool binding name.";
-            type string;
-        }
-
         leaf access-list {
             description
                 "Access list name.";
@@ -730,11 +737,9 @@ module openconfig-nat {
                 key "name";
 
                 leaf name {
+                    type string;
                     description
                         "NAT ACL pool binding name.";
-                    type leafref {
-                        path "../config/name";
-                    }
                 }
 
                 container config {

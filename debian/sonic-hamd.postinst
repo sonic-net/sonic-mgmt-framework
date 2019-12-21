@@ -3,7 +3,7 @@
 set -e
 
 action="$1"
-oldversion="$2"
+#oldversion="$2"
 
 umask 022
 
@@ -14,17 +14,37 @@ hamd_dbus_config() {
 }
 
 #****************************************
+rootcert() {
+	if [ ! -d "/root/cli-ca" ]; then
+		echo "Generating root certificates"
+	fi
+}
+
+#****************************************
+certgen() {
+	user=$1
+	USRHOME=$(getent passwd "${user}" | cut -d: -f6)
+	if [ -d "${USRHOME}" ]; then # First make sure user's home directory exists
+		CERTDIR="${USRHOME}/.cert"
+		if [ ! -d "${CERTDIR}" ]; then
+			echo "Generating ${user} certificates"
+			/usr/bin/certgen "${user}"
+		fi
+	fi
+}
+
+#****************************************
 systemd_add() {
 	service=$1
-	deb-systemd-helper unmask ${service} >/dev/null || true
-	if deb-systemd-helper --quiet was-enabled ${service}; then
-		deb-systemd-helper enable ${service} >/dev/null || true
+	deb-systemd-helper unmask "${service}" >/dev/null || true
+	if deb-systemd-helper --quiet was-enabled "${service}"; then
+		deb-systemd-helper enable "${service}" >/dev/null || true
 		if [ -d /run/systemd/system ]; then
 			systemctl --system daemon-reload >/dev/null || true
-			deb-systemd-invoke start ${service} >/dev/null || true
+			deb-systemd-invoke start "${service}" >/dev/null || true
 		fi
 	else
-		deb-systemd-helper update-state ${service} >/dev/null || true
+		deb-systemd-helper update-state "${service}" >/dev/null || true
 	fi
 }
 
@@ -32,6 +52,12 @@ systemd_add() {
 # configure
 #****************************************
 if [ "${action}" = configure ]; then
+
+#    # Make sure root certificates are present
+#    rootcert
+#
+#    # Check that user admin has certificates
+#    certgen admin
 
 	hamd_dbus_config
 	systemd_add hamd.service

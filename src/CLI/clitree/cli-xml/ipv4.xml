@@ -116,6 +116,48 @@ limitations under the License.
             python $SONIC_CLI_ROOT/sonic-cli-arp-neigh.py get_sonic_neigh_sonic_neigh_neigh_table arp_summary_show.j2 summary None&#xA;
         </ACTION>
     </COMMAND>
+
+<!-- show ip route -->
+    <COMMAND
+        help="IP route information"
+        name="show ip route">
+	<PARAM
+	   name="route-cmd"
+	   help=""
+	   mode="switch"
+	   ptype="SUBCOMMAND"
+	   optional="true">
+           <PARAM
+              help="IP route information per vrf"
+              name="vrf"
+              optional = "true"
+	            mode="subcommand"
+              ptype="SUBCOMMAND">
+	           <PARAM
+		            help="VRF name"
+		            name="vrfname"
+		            ptype="STRING">
+                   <PARAM
+	                    help="Destination prefix"
+		                  name="A.B.C.D/M"
+		                  optional="true"
+		                  ptype="IP_ADDR_MASK">
+                   </PARAM> 
+              </PARAM>
+           </PARAM> 
+           <PARAM
+               help="Destination prefix"
+	             optional="true"
+               name="A.B.C.D/M"
+               ptype="IP_ADDR_MASK">
+           </PARAM>
+        </PARAM>
+        <ACTION>
+	       python $SONIC_CLI_ROOT/sonic-cli-ip-route.py get_network_instance_afts_ipv4_unicast show_ip_route.j2 ${__full_line}&#xA;
+        </ACTION>
+    </COMMAND>
+
+    
 </VIEW>
 
 <!--=======================================================-->
