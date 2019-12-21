@@ -763,7 +763,7 @@ func yangDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, reque
 								continue
 							}
 							dbDataFromTblXfmrGet(tblList[0], inParams, dbDataMap)
-							tbl = tblList[0]
+							chtbl = tblList[0]
 						}
 					}
 					if len(xYangSpecMap[chldXpath].xfmrFunc) > 0 {
