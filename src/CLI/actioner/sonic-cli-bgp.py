@@ -1319,11 +1319,11 @@ def invoke_show_api(func, args=[]):
 
     elif func == 'get_ip_bgp_summary':
         d = {}
-        keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/config', name='default', identifier=IDENTIFIER, name1=NAME1)
+        keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/config', name=args[1], identifier=IDENTIFIER, name1=NAME1)
         response = api.get(keypath)
         if response.ok():
             d.update(response.content)
-            keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/neighbors', name='default', identifier=IDENTIFIER, name1=NAME1)
+            keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/neighbors', name=args[1], identifier=IDENTIFIER, name1=NAME1)
             response = api.get(keypath)
             if response.ok():
                 d.update(response.content)
@@ -1337,13 +1337,28 @@ def invoke_show_api(func, args=[]):
 
     elif func == 'get_ip_bgp_neighbors':
         d = {}
-        keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/neighbors', name='default', identifier=IDENTIFIER, name1=NAME1)
-        response = api.get(keypath)
-        if response.ok():
-            d.update(response.content)
-            return d
+
+        if len(args) == 3:
+            keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/neighbors/neighbor={nbr_addr}', name=args[1], identifier=IDENTIFIER, name1=NAME1, nbr_addr=args[2])
+            response = api.get(keypath)
+            if response.ok():
+                tmp = {}
+                tmp['neighbor'] = response.content['openconfig-network-instance:neighbor']
+                d['openconfig-network-instance:neighbors'] = tmp
+                d.update(response.content)
+                return d
+            else:
+                print response.error_message()
+
         else:
-            print response.error_message()
+            keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/neighbors', name=args[1], identifier=IDENTIFIER, name1=NAME1)
+        
+            response = api.get(keypath)
+            if response.ok():
+                d.update(response.content)
+                return d
+            else:
+                print response.error_message()
 
         return d
 
