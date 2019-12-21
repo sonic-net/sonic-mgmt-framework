@@ -210,6 +210,9 @@ static std::string roles_as_string(const std::vector< std::string > & roles)
     if (!roles_str.empty())
         cmd += " --groups " + roles_str;
 
+    if (!roles.empty())
+        cmd += " --gid " + roles[0];
+
     cmd += ' ' + login;
 
     LOG_CONDITIONAL(is_tron(), LOG_DEBUG, "hamd_c::useradd() - Create user \"%s\" [%s]", login.c_str(), cmd.c_str());
