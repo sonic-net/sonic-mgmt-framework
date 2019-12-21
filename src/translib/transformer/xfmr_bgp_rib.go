@@ -1113,7 +1113,6 @@ func fill_ipv4_spec_pfx_nbr_out_post_rib_data (ipv4OutPostRoute_obj *ocbinds.
     ipv4NbrOutPostRouteState.Prefix = &prefix
     ipv4NbrOutPostRouteState.PathId = &pathId
 
-    log.Info("Entry 2")
     lastUpdate, ok := prefixData["lastUpdate"].(map[string]interface{})
     if ok {
         if value, ok := lastUpdate["epoch"] ; ok {
@@ -1219,13 +1218,11 @@ func fill_bgp_ipv4_nbr_adj_rib_out_post (ipv4Nbr_obj *ocbinds.OpenconfigNetworkI
         ipv4OutPostRoutes_obj = ipv4NbrAdjRibOutPost_obj.Routes
     }
 
-    log.Info("Entry 1 ")
     for prefix, _ := range routes {
         prefixData, ok := routes[prefix].(map[string]interface{}) ; if !ok {continue}
         value, ok := prefixData["pathId"] ; if !ok {continue}
         pathId := uint32(value.(float64))
 
-        log.Info("prefixData ", prefixData, "prefix ", prefix, "pathId ", pathId)
         if (rib_key.prefix != "" && (prefix != rib_key.prefix)) {continue}
         if (rib_key.pathIdKey != "" && (pathId != rib_key.pathId)) {continue}
 
@@ -1536,7 +1533,6 @@ func hdl_get_bgp_nbrs_adj_rib_out_post (bgpRib_obj *ocbinds.OpenconfigNetworkIns
         return oper_err
     }
 
-    log.Info("NBRS-RIB ==> Got FRR response ", bgpRibOutputJson)
     if vrfName, ok := bgpRibOutputJson["vrfName"] ; (!ok || vrfName != rib_key.niName) {
         log.Errorf ("%s failed !! GET-req niName:%s not same as JSON-VRFname:%s", *dbg_log, rib_key.niName, vrfName)
         return oper_err
