@@ -43,3 +43,12 @@ Description: SONiC Host Account Management NSS module
  host's user accounts (e.g. /etc/passwd, /etc/group, and /etc/shadow). To do
  that, the NSS module contacts the HAM daemon (hamd) running on the host over
  DBus.
+
+Package: sonic-certfix
+Priority: extra
+Architecture: amd64
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: This oneshot service is used to fix certificates at run time.
+ This is an ugly kludge because SONiC does not allow running Debian postinst
+ scripts on the target. Hopefully, this is temporary and somebody will fix
+ the inability to run postinst on target at a later time.
