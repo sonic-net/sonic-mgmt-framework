@@ -25,6 +25,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 	"translib"
 
 	"github.com/golang/glog"
@@ -53,7 +54,7 @@ func Process(w http.ResponseWriter, r *http.Request) {
 	path = getPathForTranslib(r)
 	glog.Infof("[%s] Translated path = %s", reqID, path)
 
-	status, data, err = invokeTranslib(r, path, body)
+	status, data, err = invokeTranslib(r, rc, path, body)
 	if err != nil {
 		glog.Errorf("[%s] Translib error %T - %v", reqID, err, err)
 		status, data, rtype = prepareErrorResponse(err, r)
@@ -239,10 +240,12 @@ func getRequestID(r *http.Request) string {
 
 // invokeTranslib calls appropriate TransLib API for the given HTTP
 // method. Returns response status code and content.
-func invokeTranslib(r *http.Request, path string, payload []byte) (int, []byte, error) {
+func invokeTranslib(r *http.Request, rc *RequestContext, path string, payload []byte) (int, []byte, error) {
 	var status = 400
 	var content []byte
 	var err error
+
+	ts := time.Now()
 
 	switch r.Method {
 	case "GET", "HEAD":
@@ -290,6 +293,12 @@ func invokeTranslib(r *http.Request, path string, payload []byte) (int, []byte, 
 	default:
 		glog.Errorf("[%s] Unknown method '%v'", getRequestID(r), r.Method)
 		err = httpBadRequest("Invalid method")
+	}
+
+	tt := time.Since(ts)
+	if rc.stats != nil {
+		rc.stats.translibTime = tt
+		//TODO record per operation time
 	}
 
 	return status, content, err

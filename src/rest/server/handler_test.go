@@ -39,7 +39,7 @@ var testRouter *mux.Router
 
 // Basic mux.Router tests
 func TestRoutes(t *testing.T) {
-	initCount := countRoutes(NewRouter())
+	initCount := countRoutes(NewMuxRouter())
 
 	// Add couple of test handlers
 
@@ -52,7 +52,7 @@ func TestRoutes(t *testing.T) {
 	})
 
 	SetUIDirectory("/tmp/ui") // !!?
-	testRouter = NewRouter()
+	testRouter = NewMuxRouter()
 	newCount := countRoutes(testRouter)
 	expCount := initCount + 4 // OPTIONS handler is automaticall added for above 2 GET handlers
 
@@ -71,7 +71,7 @@ func TestRoutes(t *testing.T) {
 	// fail the requests with 401 error. Unknown path should still
 	// return 404.
 	ClientAuth.Set("password")
-	testRouter = NewRouter()
+	testRouter = NewMuxRouter()
 	t.Run("Get1_auth", testGet("/test/1", 401))
 	t.Run("Get2_auth", testGet("/test/2", 401))
 	t.Run("GetUnknown_auth", testGet("/test/unknown", 404))
@@ -87,7 +87,9 @@ func TestRoutes(t *testing.T) {
 func countRoutes(r *mux.Router) int {
 	var count int
 	r.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
-		count++
+		if route.GetHandler() != nil {
+			count++
+		}
 		return nil
 	})
 
@@ -117,7 +119,7 @@ func TestOptions(t *testing.T) {
 	AddRoute("OPTPAT2", "PATCH", path2, h)
 	AddRoute("OPTPAT3", "PATCH", path3, h)
 
-	testRouter = NewRouter()
+	testRouter = NewMuxRouter()
 	t.Run("OPT-1", testOptions(path1, "GET, OPTIONS", ""))
 	t.Run("OPT-2", testOptions(path2, "GET, PUT, PATCH, OPTIONS", ""))
 	t.Run("OPT-3", testOptions(path3, "PATCH, OPTIONS", mimeYangDataJSON))
@@ -291,7 +293,7 @@ func testPathConv(template, path, expPath string) func(*testing.T) {
 
 func testPathConv2(m map[string]string, template, path, expPath string) func(*testing.T) {
 	return func(t *testing.T) {
-		router := NewRouter() //mux.NewRouter()
+		router := NewMuxRouter()
 		if template == "*" {
 			t.Logf("No template...")
 			router.Methods("GET").HandlerFunc(pathConvHandler)
