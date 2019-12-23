@@ -1,0 +1,48 @@
+module sonic-portchannel-interface {
+	namespace "http://github.com/Azure/sonic-portchannel-interface";
+	prefix spchint;
+
+	import ietf-inet-types {
+		prefix inet;
+	}
+
+	import sonic-portchannel {
+		prefix spc;
+	}
+
+	organization
+		"SONiC";
+
+	contact
+		"SONiC";
+
+	description
+		"SONIC PORTCHANNEL INTERFACE";
+
+	revision 2019-07-02 {
+		description
+			"Initial revision.";
+	}
+
+	container sonic-portchannel-interface {
+
+		container PORTCHANNEL_INTERFACE {
+
+			list PORTCHANNEL_INTERFACE_LIST {
+				key "pch_name ip_prefix";
+
+				leaf pch_name{
+					type leafref {
+						path "/spc:sonic-portchannel/spc:PORTCHANNEL/spc:PORTCHANNEL_LIST/spc:name";
+					}
+				}
+
+				leaf ip_prefix {
+					mandatory true;
+					type inet:ip-prefix;
+
+				}
+			}
+		}
+	}
+}

@@ -1,0 +1,12 @@
+{{'----------------------------------------------------------------------'}}
+{{'CPU'.ljust(20)}}{{'%KERNEL'.ljust(20)}}{{'%USER'.ljust(20)}}{{'%IDLE'}}
+{{'----------------------------------------------------------------------'}}
+{% for cpu in json_output %}
+        {% if (cpu['index'] != '0') %}
+                {% set index = (cpu['index'] | string) %}
+        {% else %}
+                {% set index = (('total') | string) %}
+        {% endif %}
+{{('CPU-'+ index).ljust(20)}} {{(cpu['state']['kernel']['instant'] | string).ljust(20)}} {{(cpu['state']['user']['instant'] | string).ljust(20)}} {{(cpu['state']['idle']['instant'] | string)}}
+{% endfor %}
+

@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Copyright 2019 Dell, Inc.  
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+--> 
+
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+    <xs:simpleType name="featurename_t">
+        <xs:annotation>
+        	<xs:documentation>This contains the allowed feature names for any platform specific customizable feature names. If you are adding a new platform customizable feature, add a record in the enumerated list here.</xs:documentation>
+        </xs:annotation>
+        <xs:restriction base="xs:string">
+       <!-- Feature NOT_SUPPORTED -->
+       <xs:enumeration value="NOT_SUPPORTED"/>
+      </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="entityname_t">
+        <xs:annotation>
+        	<xs:documentation>This contains the allowed feature-value names for any platform specific customizable feature-value strings. If you are adding a new platform customizable entity, add a record in the enumerated list here.</xs:documentation>
+        </xs:annotation>
+        <xs:restriction base="xs:string">
+       <xs:enumeration value="START_PORT_ID"/>
+       <xs:enumeration value="MAX_PORT_ID"/>
+       <xs:enumeration value="START_SUB_PORT_ID"/>
+       <xs:enumeration value="MAX_SUB_PORT_ID"/>
+       <xs:enumeration value="MAX_MTU"/>
+      </xs:restriction>
+    </xs:simpleType>
+    <xs:complexType name="feature_t">
+        <xs:annotation>
+        	<xs:documentation>This represents a feature-value entity. Do not add or delete anything here.
+For adding a new feature-value, use entityname_t. For adding constraints on the count of
+entities, use entity_list_t</xs:documentation>
+        </xs:annotation>
+        <xs:simpleContent>
+          <xs:extension base="featurename_t">
+           <xs:attribute name="enabled" type="xs:string" use="required"/>
+           <xs:attribute name="dynamic" type="xs:boolean" use="optional"/>
+           <xs:attribute name="condition" type="xs:string" use="optional"/>
+           <xs:attribute name="namespace" type="xs:string" use="optional"/>
+           <xs:attribute name="xpath" type="xs:string" use="optional"/>
+           <xs:attribute name="expected_value" type="xs:string" use="optional"/>
+          </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>
+    <xs:complexType name="entity_t">
+        <xs:annotation>
+        	<xs:documentation>This represents a feature-value entity. Do not add or delete anything here.
+For adding a new feature-value, use entityname_t. For adding constraints on the count
+of entities, use entity_list_t</xs:documentation>
+        </xs:annotation>
+        <xs:simpleContent>
+          <xs:extension base="entityname_t">
+           <xs:attribute name="value" type="xs:string" use="required"/>
+          </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>
+    <xs:complexType name="feature_list_t">
+        <xs:sequence>
+        <xs:element name="FEATURE" type="feature_t"
+               minOccurs="1" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="entity_list_t">
+        <xs:sequence>
+        <xs:element name="ENTITYNAME" type="entity_t"
+               minOccurs="1" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:element name="PLATFORMMODULE">
+        <xs:annotation>
+        	<xs:documentation>This is the top level module that lists the master list of all features and feature-value names.
+If you are adding a new feature, add a record in the featurename_t.
+If you are adding a new feature-value, add a record in the entityname_t</xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+    	<xs:sequence>
+    		<xs:element name="FEATURELIST" type="feature_list_t"
+    			minOccurs="1">
+    		</xs:element>
+    		<xs:element name="ENTITYLIST" type="entity_list_t"
+                minOccurs="1">
+            </xs:element>
+    	</xs:sequence>
+    </xs:complexType>
+    </xs:element>
+</xs:schema>

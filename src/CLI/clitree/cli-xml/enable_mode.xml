@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Copyright 2019 Dell, Inc.  
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+--> 
+
+<CLISH_MODULE
+    xmlns="http://www.dellemc.com/sonic/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xi="http://www.w3.org/2001/XInclude"
+    xsi:schemaLocation="http://www.dellemc.com/sonic/XMLSchema
+			http://www.dellemc.com/sonic/XMLSchema/clish.xsd"
+    >
+    <VIEW name="hidden-view" prompt="hidden-view">
+        <COMMAND name="!"
+                 help="Comments"
+                 args="args"
+                 args_help="Comments">
+                 <ACTION builtin="clish_nop"/>
+        </COMMAND>
+    </VIEW>
+    <!--=======================================================-->
+    <VIEW
+        name="enable-view"
+        prompt="${SYSTEM_NAME}# "
+        >
+        <NAMESPACE ref="hidden-view" help="false" completion="false"/>
+        <COMMAND
+            name="no"
+            help="No commands under exec mode"/>
+        <COMMAND
+            name="exit"
+            help="Exit from the CLI"
+            lock="false"
+            >
+            <ACTION
+                builtin="clish_close"
+                />
+        </COMMAND>
+        <COMMAND
+            name="configure" access="sysadmin"
+            help="Enter configuration mode"
+            />
+        <COMMAND
+            name="configure terminal" access="sysadmin"
+            help="Configure from the terminal"
+            view="configure-view"
+            >
+        </COMMAND>
+        <!-- Show commands -->
+        <COMMAND
+            name="show"
+            help="Show running system information"
+        />
+        <!-- Special commands -->
+        <COMMAND
+            name="system"
+            help="System command"
+            >
+            <PARAM
+                name="cmd"
+                help="Enter the linux command to execute"
+                ptype="STRING_WITH_PIPE"
+                >
+            </PARAM>
+            <ACTION>
+                ${cmd}
+            </ACTION>
+        </COMMAND>
+    </VIEW>
+</CLISH_MODULE>

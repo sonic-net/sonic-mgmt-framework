@@ -1,0 +1,17 @@
+{{>partial_header}}
+package {{packageName}}
+
+import (
+	"rest/server"
+)
+
+func init() {
+	{{#apiInfo}}{{#apis}}{{#operations}}{{#operation}}
+	server.AddRoute(
+		"{{operationId}}",
+		"{{httpMethod}}",
+		"{{{basePathWithoutHost}}}{{{path}}}",
+		{{operationId}},
+	)
+	{{/operation}}{{/operations}}{{/apis}}{{/apiInfo}}
+}
