@@ -637,10 +637,12 @@ func addTableNamesForMustExp() {
 				if (strings.Contains(mustExp.expr,
 				":operation != 'CREATE'") == true) {
 					op = op | OP_CREATE
-				} else if (strings.Contains(mustExp.expr,
+				}
+				if (strings.Contains(mustExp.expr,
 				":operation != 'UPDATE'") == true) {
 					op = op | OP_UPDATE
-				} else if (strings.Contains(mustExp.expr,
+				}
+				if (strings.Contains(mustExp.expr,
 				":operation != 'DELETE'") == true) {
 					op = op | OP_DELETE
 				}
