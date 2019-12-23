@@ -94,20 +94,6 @@ def emit_tree(ctx, modules, fd, depth, llen, path):
     for module in modules:
         fd.write("## %s\n" % (module.arg))
 
-        if len(module.i_prefixes) > 0:
-            fd.write("| Prefix |     Module Name    |\n")
-            fd.write("|:---:|:-----------:|\n")
-            for i_prefix in module.i_prefixes:
-                fd.write("| %s | %s  |\n" % (i_prefix, module.i_prefixes[i_prefix][0]))
-
-        submods = []
-        get_sub_mods(ctx, module, submods)
-        if len(submods) > 0:
-            fd.write("\n| Submodules |\n")
-            fd.write("|:---:|\n")
-            for submod in submods:
-                fd.write("| %s |\n" % (submod))
-
         fd.write('```diff\n')
 
         chs = [ch for ch in module.i_children
@@ -138,6 +124,22 @@ def emit_tree(ctx, modules, fd, depth, llen, path):
                            None, 0, False, False,
                            prefix_with_modname=False)
         fd.write('\n```\n')
+
+        if len(module.i_prefixes) > 0:
+            fd.write("| Prefix |     Module Name    |\n")
+            fd.write("|:---:|:-----------:|\n")
+            for i_prefix in module.i_prefixes:
+                fd.write("| %s | %s  |\n" % (i_prefix, module.i_prefixes[i_prefix][0]))
+
+        submods = []
+        get_sub_mods(ctx, module, submods)
+        if len(submods) > 0:
+            fd.write("\n| Submodules |\n")
+            fd.write("|:---:|\n")
+            for submod in submods:
+                fd.write("| %s |\n" % (submod))        
+            
+        fd.write('\n')
 
 def print_children(i_children, module, fd, prefix, path, mode, depth,
                    llen, no_expand_uses, width=0, isExtended=False, not_supported=False,
