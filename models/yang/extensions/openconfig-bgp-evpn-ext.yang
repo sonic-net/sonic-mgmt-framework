@@ -10,7 +10,9 @@ module openconfig-bgp-evpn-ext {
   import openconfig-network-instance-types { prefix "oc-ni-types"; }
   import ietf-routing-types { prefix "ietfrt"; }
   import openconfig-bgp-types { prefix oc-bgp-types; }
-  //import openconfig-bgp { prefix ocbgpmp; }
+  import openconfig-rib-bgp { prefix oc-rib-bgp; }
+  import openconfig-bgp-ext { prefix oc-bgp-ext; }
+  import openconfig-inet-types { prefix oc-inet; }
 
   organization "Broadcom";
 
@@ -79,6 +81,9 @@ module openconfig-bgp-evpn-ext {
       }
 
       container state {
+
+        config false;
+        
         leaf vni-number {
           type uint32;
         }
@@ -200,5 +205,355 @@ module openconfig-bgp-evpn-ext {
   /*deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:l2vpn-evpn {
     deviate not-supported;
   }*/
+
+  grouping evpn-rib-key-refs {
+    description
+      "Key references to support operational state structure for
+      the BGP Adj-RIB tables";
+
+    leaf route-distinguisher {
+      type leafref {
+        path "../state/route-distinguisher";
+      }
+      description
+        "Reference to the route-distinguisher list key";
+    }
+
+    leaf prefix {
+      type leafref {
+        path "../state/prefix";
+      }
+      description
+        "Reference to the prefix list key";
+    }
+  }
+
+  grouping evpn-adj-rib-common {
+    description
+      "Common structural grouping for each EVPN adj-RIB table";
+
+    uses oc-rib-bgp:bgp-common-table-attrs-top;
+
+    container routes {
+      config false;
+      description
+        "Enclosing container for list of routes in the routing
+        table.";
+
+      list route {
+        key "route-distinguisher prefix";
+
+        description
+          "List of routes in the table, keyed by the route
+          distinguisher and route prefix.";
+
+        uses evpn-rib-key-refs;
+
+        container state {
+          description
+            "Operational state data for BGP Adj-RIB entries";
+
+          leaf prefix {
+            type string;
+            description
+              "The EVPN prefix string corresponding to the route";
+          }
+
+          leaf route-distinguisher {
+            type string;
+            description
+              "Route distinguisher for the prefix";
+          }
+
+          uses oc-rib-bgp:bgp-adj-rib-attr-state;
+          uses oc-rib-bgp:bgp-adj-rib-common-attr-refs;
+          uses oc-rib-bgp:bgp-common-route-annotations-state;
+        }
+
+        uses oc-rib-bgp:bgp-unknown-attr-top;
+
+      }
+    }
+  }
+
+  grouping evpn-adj-rib-in-post {
+    description
+      "Common structural grouping for the EVPN adj-rib-in
+      post-policy table";
+
+    uses oc-rib-bgp:bgp-common-table-attrs-top;
+
+    container routes {
+      config false;
+      description
+        "Enclosing container for list of routes in the routing
+        table.";
+
+      list route {
+        key "route-distinguisher prefix";
+
+        description
+          "List of routes in the table, keyed by the route
+          distinguisher and route prefix.";
+
+        uses evpn-rib-key-refs;
+
+        container state {
+          description
+            "Operational state data for BGP Adj-RIB entries";
+
+          leaf prefix {
+            type string;
+            description
+              "The EVPN prefix string corresponding to the route";
+          }
+
+          leaf route-distinguisher {
+            type string;
+            description
+              "Route distinguisher for the prefix";
+          }
+
+          uses oc-rib-bgp:bgp-adj-rib-attr-state;
+          uses oc-rib-bgp:bgp-adj-rib-common-attr-refs;
+          uses oc-rib-bgp:bgp-common-route-annotations-state;
+          uses oc-rib-bgp:bgp-adj-rib-in-post-route-annotations-state;
+        }
+
+        uses oc-rib-bgp:bgp-unknown-attr-top;
+      }
+    }
+  }
+
+  grouping evpn-loc-rib-top {
+    description
+      "Top-level grouping for EVPN routing tables";
+
+    container loc-rib {
+      config false;
+      description
+        "Container for the EVPN BGP LOC-RIB data";
+
+      uses oc-rib-bgp:bgp-common-table-attrs-top;
+
+      container routes {
+        description
+          "Enclosing container for list of routes in the routing
+          table.";
+
+        list route {
+          key "route-distinguisher prefix";
+
+          description
+            "List of routes in the table, keyed by the route
+            distinguisher and route prefix.";
+
+          uses evpn-rib-key-refs;
+
+          container state {
+            description
+              "Operational state data for route entries in the
+              BGP LOC-RIB";
+
+            leaf prefix {
+              type string;
+              description
+                "The EVPN prefix string corresponding to the route";
+            }
+
+            leaf route-distinguisher {
+              type string;
+              description
+                "Route distinguisher for the prefix";
+            }
+
+            uses oc-rib-bgp:bgp-loc-rib-common-keys;
+            uses oc-rib-bgp:bgp-loc-rib-common-attr-refs;
+            uses oc-rib-bgp:bgp-loc-rib-attr-state;
+            uses oc-rib-bgp:bgp-common-route-annotations-state;
+            uses oc-rib-bgp:bgp-loc-rib-route-annotations-state;
+
+           }
+
+           uses oc-rib-bgp:bgp-unknown-attr-top;
+
+        }
+      }
+    }
+  }
+
+  grouping evpn-adj-rib-top {
+    description
+      "Top-level grouping for Adj-RIB table";
+
+    container neighbors {
+      config false;
+      description
+        "Enclosing container for neighbor list";
+
+      list neighbor {
+        key "neighbor-address";
+        description
+          "List of neighbors (peers) of the local BGP speaker";
+
+        leaf neighbor-address {
+          type leafref {
+            path "../state/neighbor-address";
+          }
+          description
+            "Reference to the list key";
+        }
+
+        container state {
+          description
+            "Operational state for each neighbor BGP Adj-RIB";
+
+          leaf neighbor-address {
+            type oc-inet:ip-address;
+            description
+              "IP address of the BGP neighbor or peer";
+          }
+        }
+
+        container adj-rib-in-pre {
+          description
+            "Per-neighbor table containing the NLRI updates
+            received from the neighbor before any local input
+            policy rules or filters have been applied.  This can
+            be considered the 'raw' updates from the neighbor.";
+
+          uses evpn-adj-rib-common;
+
+        }
+
+        container adj-rib-in-post {
+          description
+            "Per-neighbor table containing the paths received from
+            the neighbor that are eligible for best-path selection
+            after local input policy rules have been applied.";
+
+          uses evpn-adj-rib-in-post;
+        }
+
+        container adj-rib-out-pre {
+          description
+            "Per-neighbor table containing paths eligble for
+            sending (advertising) to the neighbor before output
+            policy rules have been applied";
+
+          uses evpn-adj-rib-common;
+
+        }
+
+        container adj-rib-out-post {
+          description
+            "Per-neighbor table containing paths eligble for
+            sending (advertising) to the neighbor after output
+            policy rules have been applied";
+
+          uses evpn-adj-rib-common;
+
+        }
+      }
+    }
+  }
+
+  augment "/oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol"
+  +"/oc-netinst:bgp/oc-netinst:rib/oc-netinst:afi-safis/oc-netinst:afi-safi" {
+
+    container l2vpn-evpn {
+      when "../afi-safi-name = 'oc-bgp-types:L2VPN_EVPN'" {
+        description
+        "Include this container only for the L2VPN AFI, EVPN
+        SAFI.";
+      }
+      description
+      "Routing tables for the L2VPN, EVPN SAFI.";
+
+      uses evpn-loc-rib-top;
+      uses evpn-adj-rib-top;
+
+    }
+  }//augment
+
+  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:rib/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-evpn-ext:l2vpn-evpn/oc-bgp-evpn-ext:loc-rib/oc-bgp-evpn-ext:routes/oc-bgp-evpn-ext:route/oc-bgp-evpn-ext:state/oc-bgp-evpn-ext:attr-index {
+    deviate not-supported;
+  }
+
+  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:rib/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-evpn-ext:l2vpn-evpn/oc-bgp-evpn-ext:loc-rib/oc-bgp-evpn-ext:routes/oc-bgp-evpn-ext:route/oc-bgp-evpn-ext:state/oc-bgp-evpn-ext:community-index {
+    deviate not-supported;
+  }
+
+  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:rib/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-evpn-ext:l2vpn-evpn/oc-bgp-evpn-ext:loc-rib/oc-bgp-evpn-ext:routes/oc-bgp-evpn-ext:route/oc-bgp-evpn-ext:state/oc-bgp-evpn-ext:ext-community-index {
+    deviate not-supported;
+  }
+
+  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:rib/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-evpn-ext:l2vpn-evpn/oc-bgp-evpn-ext:neighbors/oc-bgp-evpn-ext:neighbor/oc-bgp-evpn-ext:adj-rib-in-pre/oc-bgp-evpn-ext:routes/oc-bgp-evpn-ext:route/oc-bgp-evpn-ext:state/oc-bgp-evpn-ext:attr-index {
+    deviate not-supported;
+  }
+
+  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:rib/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-evpn-ext:l2vpn-evpn/oc-bgp-evpn-ext:neighbors/oc-bgp-evpn-ext:neighbor/oc-bgp-evpn-ext:adj-rib-in-pre/oc-bgp-evpn-ext:routes/oc-bgp-evpn-ext:route/oc-bgp-evpn-ext:state/oc-bgp-evpn-ext:community-index {
+    deviate not-supported;
+  }
+
+  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:rib/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-evpn-ext:l2vpn-evpn/oc-bgp-evpn-ext:neighbors/oc-bgp-evpn-ext:neighbor/oc-bgp-evpn-ext:adj-rib-in-pre/oc-bgp-evpn-ext:routes/oc-bgp-evpn-ext:route/oc-bgp-evpn-ext:state/oc-bgp-evpn-ext:ext-community-index {
+    deviate not-supported;
+  }
+
+
+  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:rib/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-evpn-ext:l2vpn-evpn/oc-bgp-evpn-ext:neighbors/oc-bgp-evpn-ext:neighbor/oc-bgp-evpn-ext:adj-rib-in-post/oc-bgp-evpn-ext:routes/oc-bgp-evpn-ext:route/oc-bgp-evpn-ext:state/oc-bgp-evpn-ext:attr-index {
+    deviate not-supported;
+  }
+
+  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:rib/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-evpn-ext:l2vpn-evpn/oc-bgp-evpn-ext:neighbors/oc-bgp-evpn-ext:neighbor/oc-bgp-evpn-ext:adj-rib-in-post/oc-bgp-evpn-ext:routes/oc-bgp-evpn-ext:route/oc-bgp-evpn-ext:state/oc-bgp-evpn-ext:community-index {
+    deviate not-supported;
+  }
+
+  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:rib/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-evpn-ext:l2vpn-evpn/oc-bgp-evpn-ext:neighbors/oc-bgp-evpn-ext:neighbor/oc-bgp-evpn-ext:adj-rib-in-post/oc-bgp-evpn-ext:routes/oc-bgp-evpn-ext:route/oc-bgp-evpn-ext:state/oc-bgp-evpn-ext:ext-community-index {
+    deviate not-supported;
+  }
+
+
+  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:rib/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-evpn-ext:l2vpn-evpn/oc-bgp-evpn-ext:neighbors/oc-bgp-evpn-ext:neighbor/oc-bgp-evpn-ext:adj-rib-out-pre/oc-bgp-evpn-ext:routes/oc-bgp-evpn-ext:route/oc-bgp-evpn-ext:state/oc-bgp-evpn-ext:attr-index {
+    deviate not-supported;
+  }
+
+  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:rib/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-evpn-ext:l2vpn-evpn/oc-bgp-evpn-ext:neighbors/oc-bgp-evpn-ext:neighbor/oc-bgp-evpn-ext:adj-rib-out-pre/oc-bgp-evpn-ext:routes/oc-bgp-evpn-ext:route/oc-bgp-evpn-ext:state/oc-bgp-evpn-ext:community-index {
+    deviate not-supported;
+  }
+
+  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:rib/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-evpn-ext:l2vpn-evpn/oc-bgp-evpn-ext:neighbors/oc-bgp-evpn-ext:neighbor/oc-bgp-evpn-ext:adj-rib-out-pre/oc-bgp-evpn-ext:routes/oc-bgp-evpn-ext:route/oc-bgp-evpn-ext:state/oc-bgp-evpn-ext:ext-community-index {
+    deviate not-supported;
+  }
+
+  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:rib/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-evpn-ext:l2vpn-evpn/oc-bgp-evpn-ext:neighbors/oc-bgp-evpn-ext:neighbor/oc-bgp-evpn-ext:adj-rib-out-post/oc-bgp-evpn-ext:routes/oc-bgp-evpn-ext:route/oc-bgp-evpn-ext:state/oc-bgp-evpn-ext:attr-index {
+    deviate not-supported;
+  }
+
+  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:rib/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-evpn-ext:l2vpn-evpn/oc-bgp-evpn-ext:neighbors/oc-bgp-evpn-ext:neighbor/oc-bgp-evpn-ext:adj-rib-out-post/oc-bgp-evpn-ext:routes/oc-bgp-evpn-ext:route/oc-bgp-evpn-ext:state/oc-bgp-evpn-ext:community-index {
+    deviate not-supported;
+  }
+
+  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:rib/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-evpn-ext:l2vpn-evpn/oc-bgp-evpn-ext:neighbors/oc-bgp-evpn-ext:neighbor/oc-bgp-evpn-ext:adj-rib-out-post/oc-bgp-evpn-ext:routes/oc-bgp-evpn-ext:route/oc-bgp-evpn-ext:state/oc-bgp-evpn-ext:ext-community-index {
+    deviate not-supported;
+  }
+
+  augment /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:rib/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-evpn-ext:l2vpn-evpn/oc-bgp-evpn-ext:loc-rib/oc-bgp-evpn-ext:routes/oc-bgp-evpn-ext:route {
+      uses oc-bgp-ext:bgp-ext-attr-sets;
+  }
+
+  augment /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:rib/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-evpn-ext:l2vpn-evpn/oc-bgp-evpn-ext:neighbors/oc-bgp-evpn-ext:neighbor/oc-bgp-evpn-ext:adj-rib-in-pre/oc-bgp-evpn-ext:routes/oc-bgp-evpn-ext:route {
+      uses oc-bgp-ext:bgp-ext-attr-sets;
+  }
+  augment /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:rib/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-evpn-ext:l2vpn-evpn/oc-bgp-evpn-ext:neighbors/oc-bgp-evpn-ext:neighbor/oc-bgp-evpn-ext:adj-rib-in-post/oc-bgp-evpn-ext:routes/oc-bgp-evpn-ext:route {
+      uses oc-bgp-ext:bgp-ext-attr-sets;
+  }
+
+  augment /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:rib/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-evpn-ext:l2vpn-evpn/oc-bgp-evpn-ext:neighbors/oc-bgp-evpn-ext:neighbor/oc-bgp-evpn-ext:adj-rib-out-pre/oc-bgp-evpn-ext:routes/oc-bgp-evpn-ext:route {
+      uses oc-bgp-ext:bgp-ext-attr-sets;
+  }
+  augment /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:rib/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-evpn-ext:l2vpn-evpn/oc-bgp-evpn-ext:neighbors/oc-bgp-evpn-ext:neighbor/oc-bgp-evpn-ext:adj-rib-out-post/oc-bgp-evpn-ext:routes/oc-bgp-evpn-ext:route {
+      uses oc-bgp-ext:bgp-ext-attr-sets;
+  }
 
 }//end module

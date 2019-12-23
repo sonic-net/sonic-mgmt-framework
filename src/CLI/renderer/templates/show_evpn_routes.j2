@@ -1,0 +1,73 @@
+{% set vars = {'routerId': ""} %}
+{% set vars = {'asNum': ""} %}
+{% set vars = {'rd': ""} %}
+{% set vars = {'prefix': ""} %}
+{% set vars = {'nxtHop': ""} %}
+{% set vars = {'pathId': ""} %}
+{% set vars = {'med': ""} %}
+{% set vars = {'locPref': ""} %}
+{% set vars = {'origin': "IGP"} %}
+{% set vars = {'weight': "0"} %}
+{% set vars = {'validRoute': ""} %}
+{% set vars = {'tableVersion': "1"} %}
+{% if json_output -%}
+{% for key in json_output %}
+{% if "openconfig-network-instance:config" in key %}
+{% set globalConfig = json_output["openconfig-network-instance:config"] %}
+{% if vars.update({'routerId':globalConfig["router-id"]}) %}{% endif %}
+{% if vars.update({'asNum':globalConfig["as"]}) %}{% endif %}
+{% endif %}
+{% endfor %}
+BGP table version is {{ vars.tableVersion }}, local router ID is {{ vars.routerId }}
+Status codes: s suppressed, d damped, h history, * valid, > best, i - internal
+Origin codes: i - IGP, e - EGP, ? - incomplete
+EVPN type-1 prefix: [1]:[ESI]:[EthTag]
+EVPN type-2 prefix: [2]:[EthTag]:[MAClen]:[MAC]:[IPlen]:[IP]
+EVPN type-3 prefix: [3]:[EthTag]:[IPlen]:[OrigIP]
+EVPN type-4 prefix: [4]:[ESI]:[IPlen]:[OrigIP]
+EVPN type-5 prefix: [5]:[EthTag]:[IPlen]:[IP]
+{{' '}}
+     {{'%-20s'|format("Network")}}{{'%-20s'|format("Next Hop")}}{{'%-8s'|format("Metric")}}{{'%-8s'|format("LocPref")}}{{'%-8s'|format("Weight")}}{{'%-15s'|format("Path")}}
+     {{'%-20s'|format(" ")}}{{'%-20s'|format("Extended Community")}}
+{% for key in json_output %}
+{% if "openconfig-bgp-evpn-ext:routes" in key %}
+{% set routeList = json_output["openconfig-bgp-evpn-ext:routes"] %}
+{% endif %}
+{% if routeList %}
+{% for route in routeList["route"] %}
+{% for key in route %}
+{% if vars.rd != route["route-distinguisher"] %}
+{{'Route Distinguisher: '}}{{route["route-distinguisher"]}}
+{% endif %}
+  {% if vars.update({'rd':route["route-distinguisher"]}) %}{% endif %}
+  {% if vars.update({'prefix':route["prefix"]}) %}{% endif %}
+  {% if vars.update({'weight':"0"}) %}{% endif %}
+  {% if "state" in key %}
+    {% if vars.update({'validRoute':route["state"]["valid-route"]}) %}{% endif %}
+    {% if vars.update({'pathId':route["state"]["path-id"]}) %}{% endif %}
+  {% endif %}
+  {% if "attr-sets" in key %}
+    {% if vars.update({'origin':route["attr-sets"]["origin"]}) %}{% endif %}
+    {% if vars.update({'nxtHop':route["attr-sets"]["next-hop"]}) %}{% endif %}
+    {% if vars.update({'med':route["attr-sets"]["med"]}) %}{% endif %}
+    {% if vars.update({'locPref':route["attr-sets"]["local-pref"]}) %}{% endif %}
+  {% endif %}
+  {% if vars.origin == 'IGP' %}
+    {% if vars.update({'origin':"i"}) %}{% endif %}
+  {% elif vars.origin == 'EGP' %}
+    {% if vars.update({'origin':"e"}) %}{% endif %}
+  {% else %}
+    {% if vars.update({'origin':"?"}) %}{% endif %}
+  {% endif %}
+{% endfor %}
+{% if vars.validRoute == True %}
+{% if vars.update({'validRoute':"*"}) %}{% endif %}
+{% else %}
+{% if vars.update({'validRoute':""}) %}{% endif %}
+{% endif %}
+{{'%-5s'|format(vars.validRoute)}}{{'%-20s'|format(vars.prefix)}}
+{{'%-25s'|format("")}}{{'%-20s'|format(vars.nxtHop)}}{{'%-8s'|format(vars.med)}}{{'%-8s'|format(vars.locPref)}}{{'%-8s'|format(vars.weight)}}{{'%-1s'|format(vars.pathId)}} {{vars.origin}}
+{% endfor %}
+{% endif %}
+{% endfor %}
+{% endif %}
