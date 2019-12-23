@@ -21,7 +21,7 @@
     <COMMAND name="sample" help="Sample Name">
       <PARAM name="sample-name" help="Sample Name" ptype="STRING"> </PARAM>
       <PARAM name="rate" help="Configure sample rate" ptype="SUBCOMMAND" mode="subcommand"> </PARAM>
-      <PARAM name="rate-name" help="Configure Sampling rate" ptype="UINT16"> </PARAM>
+      <PARAM name="rate-name" help="Configure Sampling rate" ptype="SAMPLE_RATE"> </PARAM>
       <ACTION> python $SONIC_CLI_ROOT/sonic-cli-drop-monitor.py patch_sonic_tam_drop_monitor_sonic_tam_drop_monitor_sample_rate_table_sample_rate_table_list ${sample-name} ${rate-name}</ACTION>
     </COMMAND>
   </VIEW>
@@ -139,7 +139,7 @@
       <ACTION> python $SONIC_CLI_ROOT/sonic-cli-drop-monitor.py patch_sonic_tam_drop_monitor_sonic_tam_drop_monitor_tam_drop_monitor_flow_table_tam_drop_monitor_flow_table_list ${flow-name} ${acl-table-name} ${acl-rule-name} ${collector-name} ${sampling-name} ${flowgroup_id}</ACTION>
     </COMMAND>
     <COMMAND name="aging-interval" help="Configure aging interval (1-10)">
-      <PARAM name="aging-interval-time" help="Specify aging Interval in ms" ptype="UINT16"> </PARAM>
+      <PARAM name="aging-interval-time" help="Specify aging Interval in seconds" ptype="AGING_INTERVAL"> </PARAM>
       <ACTION> python $SONIC_CLI_ROOT/sonic-cli-drop-monitor.py patch_sonic_tam_drop_monitor_sonic_tam_drop_monitor_tam_drop_monitor_aging_interval_table_tam_drop_monitor_aging_interval_table_list_aging_interval aging ${aging-interval-time} </ACTION>
     </COMMAND>
   </VIEW>
