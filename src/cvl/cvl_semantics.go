@@ -643,13 +643,13 @@ func (c *CVL) addDepYangData(redisKeys []string, redisKeyFilter,
 
 	singleLeaf := "" //leaf data for single leaf
 
-	if (cfgData == nil) {
-		return ""
-	}
-
 	TRACE_LOG(TRACE_SEMANTIC, "addDepYangData() with redisKeyFilter=%s, " +
 	"predicate=%s, fields=%s, returned cfgData = %s, err=%v",
 	redisKeyFilter, predicate, fields, cfgData, err)
+
+	if (cfgData == nil) {
+		return ""
+	}
 
 	//Parse the JSON map received from lua script
 	b := []byte(cfgData.(string))
@@ -747,6 +747,14 @@ func (c *CVL) addYangDataForMustExp(op CVLOperation, tableName string, oneEntry 
 		tablePrefixLen := len(redisTblName + modelInfo.tableInfo[mustTblName].redisKeyDelim)
 		for _, tableKey := range tableKeys {
 			tableKey = tableKey[tablePrefixLen:] //remove table prefix
+
+			tmpKeyArr := strings.Split(tableKey, modelInfo.tableInfo[mustTblName].redisKeyDelim)
+			if (len(tmpKeyArr) != len(modelInfo.tableInfo[mustTblName].keys)) {
+				//Number of keys should be same as in YANG list keys
+				//Need to check this for one Redis table to many YANG list case
+				continue
+			}
+
 			if (cvg.cv.tmpDbCache[redisTblName] == nil) {
 				cvg.cv.tmpDbCache[redisTblName] = map[string]interface{}{tableKey: nil}
 			} else {
@@ -756,6 +764,8 @@ func (c *CVL) addYangDataForMustExp(op CVLOperation, tableName string, oneEntry 
 			}
 			//Load only one entry 
 			if (oneEntry == true) {
+				TRACE_LOG(TRACE_SEMANTIC, "addYangDataForMustExp(): Adding one entry table %s, key %s",
+				redisTblName, tableKey)
 				break
 			}
 		}
