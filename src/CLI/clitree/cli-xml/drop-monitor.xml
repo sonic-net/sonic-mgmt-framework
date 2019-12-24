@@ -47,9 +47,9 @@
 	      </ACTION>
       </COMMAND>
       <COMMAND name="show tam drop-monitor statistics" help="Show drop monitor statistics" mode="subcommand" ptype="SUBCOMMAND">
-	      <PARAM name="flow-name" help="Name of the flow" ptype="STRING_32" optional="true"> </PARAM>
+	      <PARAM name="flow-name" help="Name of the flow" ptype="STRING_32"> </PARAM>
 	      <ACTION>
-                   python $SONIC_CLI_ROOT/sonic-cli-drop-monitor.py -show -statistics -flow ${flow-name} -templ -showstatisticsflow.j2;
+                   python $SONIC_CLI_ROOT/drop-monitor.py -show -statistics -flow ${flow-name} -templ -showstatisticsflow.j2;
 	      </ACTION>
      </COMMAND>
 
