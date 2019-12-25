@@ -21,6 +21,7 @@ package server
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"net/http"
 	"os/user"
@@ -28,14 +29,17 @@ import (
 
 	"github.com/golang/glog"
 
-	//"github.com/msteinert/pam"
-	"golang.org/x/crypto/ssh"
+	"github.com/msteinert/pam"
 )
 
-
+type UserCredential struct {
+	Username string
+	Password string
+}
 type UserAuth map[string]bool
 
-var ClientAuth = UserAuth{"password": false, "cert": false, "jwt": false}
+var ClientAuth = UserAuth{"password": false, "cert": false, "jwt": false, "cliuser": false}
+
 
 func (i UserAuth) String() string {
 	b := new(bytes.Buffer)
@@ -87,51 +91,6 @@ func (i UserAuth) Unset(mode string) error {
 	return nil
 }
 
-// authMiddleware function creates a middleware for request
-// authentication and authorization. This middleware will return
-// 401 response if authentication fails and 403 if authorization
-// fails.
-func authMiddleware(inner http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		rc, r := GetContext(r)
-		var err error
-		success := false
-		if ClientAuth.Enabled("password") {
-			err = BasicAuthenAndAuthor(r, rc)
-			if err == nil {
-				success = true
-			}
-		}
-		if !success && ClientAuth.Enabled("jwt") {
-			_, err = JwtAuthenAndAuthor(r, rc)
-			if err == nil {
-				success = true
-			}
-		}
-		if !success && ClientAuth.Enabled("cert") {
-			err = ClientCertAuthenAndAuthor(r, rc)
-			if err == nil {
-				success = true
-			}
-		}
-
-		if !success {
-			status, data, ctype := prepareErrorResponse(err, r)
-			w.Header().Set("Content-Type", ctype)
-			w.WriteHeader(status)
-			w.Write(data)
-		} else {
-			inner.ServeHTTP(w, r)
-		}
-	})
-}
-
-/*
-type UserCredential struct {
-	Username string
-	Password string
-}
-
 //PAM conversation handler.
 func (u UserCredential) PAMConvHandler(s pam.Style, msg string) (string, error) {
 
@@ -164,7 +123,39 @@ func PAMAuthUser(u string, p string) error {
 	err := cred.PAMAuthenticate()
 	return err
 }
-*/
+
+func PopulateAuthStruct(username string, auth *AuthInfo) error {
+	usr, err := user.Lookup(username)
+	if err != nil {
+		return err
+	}
+
+	auth.User = username
+
+	// Get primary group
+	group, err := user.LookupGroupId(usr.Gid)
+	if err != nil {
+		return err
+	}
+	auth.Group = group.Name
+
+	// Lookup remaining groups
+	gids, err := usr.GroupIds()
+	if err != nil {
+		return err
+	}
+	auth.Groups = make([]string, len(gids))
+	for idx, gid := range gids {
+		group, err := user.LookupGroupId(gid)
+		if err != nil {
+			return err
+		}
+		auth.Groups[idx] = group.Name
+	}
+
+	// TODO: Populate roles list
+	return nil
+}
 
 func DoesUserExist(username string) bool {
 	_, err := user.Lookup(username)
@@ -174,29 +165,6 @@ func DoesUserExist(username string) bool {
 	return true
 }
 
-func IsAdminGroup(username string) bool {
-
-	usr, err := user.Lookup(username)
-	if err != nil {
-		return false
-	}
-	gids, err := usr.GroupIds()
-	if err != nil {
-		return false
-	}
-	glog.V(2).Infof("User:%s, groups=%s", username, gids)
-	admin, err := user.Lookup("admin")
-	if err != nil {
-		return false
-	}
-	for _, x := range gids {
-		if x == admin.Gid {
-			return true
-		}
-	}
-	return false
-}
-
 func UserPwAuth(username string, passwd string) (bool, error) {
 	/*
 	 * mgmt-framework container does not have access to /etc/passwd, /etc/group,
@@ -204,22 +172,9 @@ func UserPwAuth(username string, passwd string) (bool, error) {
 	 * /etc of host with /etc of container. For now disable this and use ssh
 	 * for authentication.
 	 */
-	/* err := PAMAuthUser(username, passwd)
-	    if err != nil {
-			log.Printf("Authentication failed. user=%s, error:%s", username, err.Error())
-	        return err
-	    }*/
-
-	//Use ssh for authentication.
-	config := &ssh.ClientConfig{
-		User: username,
-		Auth: []ssh.AuthMethod{
-			ssh.Password(passwd),
-		},
-		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-	}
-	_, err := ssh.Dial("tcp", "127.0.0.1:22", config)
+	err := PAMAuthUser(username, passwd)
 	if err != nil {
+		glog.Infof("Authentication failed. user=%s, error:%s", username, err.Error())
 		return false, err
 	}
 

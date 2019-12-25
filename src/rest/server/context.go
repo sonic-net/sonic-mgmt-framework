@@ -28,6 +28,21 @@ import (
 	"sync/atomic"
 )
 
+// AuthInfo holds data about the authenticated user
+type AuthInfo struct {
+	// Username
+	User string
+
+	// Group name (primary group)
+	Group string
+
+	// Additional groups
+	Groups []string
+
+	// Roles
+	Roles []string
+}
+
 // RequestContext holds metadata about REST request.
 type RequestContext struct {
 
@@ -56,6 +71,9 @@ type RequestContext struct {
 
 	// stats is the apiStats object from the context
 	stats *apiStats
+
+	// Auth contains the authorized user information
+	Auth AuthInfo
 }
 
 type contextkey int

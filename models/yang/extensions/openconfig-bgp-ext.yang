@@ -359,6 +359,16 @@ module openconfig-bgp-ext {
       }
   }
 
+  grouping bgp-ext-default-route-distance {
+      leaf local-route-distance {
+          type uint8 {
+              range "1..255";
+          }
+          description
+              "Administrative distance for local routes.";
+      }
+  }
+
   grouping bgp-ext-global-afi-safi {
         container aggregate-address-config {
           description
@@ -433,12 +443,14 @@ module openconfig-bgp-ext {
                   "Configuration parameters relating to the default route
                   distance";
               uses oc-bgp:bgp-global-default-route-distance-config;
+              uses bgp-ext-default-route-distance;
           }
           container state {
               config false;
               description
                   "State information relating to the default route distance";
               uses oc-bgp:bgp-global-default-route-distance-config;
+              uses bgp-ext-default-route-distance;
           }
       }
   }

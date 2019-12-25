@@ -2,7 +2,7 @@ module openconfig-system-annot {
 
     yang-version "1";
 
-    namespace "http://openconfig.net/yang/annotation/oc-sys-annot";
+    namespace "http://openconfig.net/yang/openconfig-system-annot";
     prefix "oc-sys-annot";
 
     import openconfig-system-management { prefix oc-sys-mgmt; }
@@ -20,6 +20,12 @@ module openconfig-system-annot {
     import sonic-extensions {prefix sonic-ext; }
     import openconfig-system-ext { prefix oc-sys-ext; }
 
+    deviation /oc-sys:system/oc-sys:aaa/oc-sys:authentication/oc-sys:users/oc-sys:user {
+        deviate add {
+            sonic-ext:subtree-transformer "sys_aaa_auth_xfmr";
+        }
+    }
+ 
     deviation /oc-sys:system/oc-sys:state {
         deviate add {
             sonic-ext:subtree-transformer "sys_state_xfmr";

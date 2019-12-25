@@ -21,11 +21,10 @@ package server
 
 import (
 	"net/http"
-	"sort"
 	"strings"
 	"time"
-	"translib"
-
+        "translib"
+	"sort"
 	"github.com/golang/glog"
 	"github.com/gorilla/mux"
 )
@@ -320,5 +319,44 @@ func withMiddleware(h http.Handler, name string) http.Handler {
 	}
 
 	return loggingMiddleware(h, name)
+}
+
+// authMiddleware function creates a middleware for request
+// authentication and authorization. This middleware will return
+// 401 response if authentication fails and 403 if authorization
+// fails.
+func authMiddleware(inner http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		rc, r := GetContext(r)
+		var err error
+		success := false
+		if ClientAuth.Enabled("password") {
+			err = BasicAuthenAndAuthor(r, rc)
+			if err == nil {
+				success = true
+			}
+		}
+		if !success && ClientAuth.Enabled("jwt") {
+			_, err = JwtAuthenAndAuthor(r, rc)
+			if err == nil {
+				success = true
+			}
+		}
+		if !success && (ClientAuth.Enabled("cert") || ClientAuth.Enabled("cliuser")) {
+			err = ClientCertAuthenAndAuthor(r, rc)
+			if err == nil {
+				success = true
+			}
+		}
+
+		if !success {
+			status, data, ctype := prepareErrorResponse(err, r)
+			w.Header().Set("Content-Type", ctype)
+			w.WriteHeader(status)
+			w.Write(data)
+		} else {
+			inner.ServeHTTP(w, r)
+		}
+	})
 }
 

@@ -9,11 +9,11 @@ import (
 	"gopkg.in/godbus/dbus.v5"
 )
 
-// hostResult contains the body of the response and the error if any, when the 
+// hostResult contains the body of the response and the error if any, when the
 // endpoint finishes servicing the D-Bus request.
 type hostResult struct {
-	Body	[]interface{}
-	Err		error
+	Body []interface{}
+	Err  error
 }
 
 // hostQuery calls the corresponding D-Bus endpoint on the host and returns
@@ -124,23 +124,3 @@ func ztpAction(action string) (string, error) {
 }
 
 */
-
-// showtechAction calls the Showtech endpoint on the host and returns
-// the status
-func showtechAction(date string) (string, error) {
-	var output string
-	// result.Body is of type []interface{}, since any data may be returned by
-	// the host server. The application is responsible for performing
-	// type assertions to get the correct data.
-	result := hostQuery("Showtech.showtech_info", date)
-
-	if result.Err != nil {
-		return output, result.Err
-	}
-
-    // Showtech.showtech_info returns an exit code and the stdout of the command
-    // We only care about the stdout (which is at offset 1 in the "Body".)
-    output, _ = result.Body[1].(string)
-
-	return output, nil
-}
