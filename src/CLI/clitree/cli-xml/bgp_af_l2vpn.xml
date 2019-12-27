@@ -1008,9 +1008,12 @@ limitations under the License.
 </VIEW>
 
 <VIEW name="enable-view">
-  <COMMAND name="show ip bgp l2vpn" help="L2VPN route information"/>
-  <COMMAND name="show ip bgp l2vpn evpn" help="L2VPN EVPN route information">
+  <COMMAND name="show bgp l2vpn" help="Layer 2 Virtual Private Network"/>
+  <COMMAND name="show bgp l2vpn evpn" help="Ethernet Virtual Private Network">
     <ACTION builtin="clish_nop"/>
+  </COMMAND>
+  <COMMAND name="show bgp l2vpn evpn route" help="EVPN Route information">
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-show-bgp-evpn.py get_bgp_evpn_routes show_evpn_routes.j2 default L2VPN_EVPN</ACTION>
   </COMMAND>
 </VIEW>
 
