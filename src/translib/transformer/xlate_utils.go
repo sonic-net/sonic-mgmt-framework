@@ -840,3 +840,9 @@ func isYangLeaf(uri string) (bool, error) {
 	return false, err
 }
 
+func isJsonDataEmpty(jsonData string) bool {
+	if string(jsonData) == "{}" {
+		return true
+	}
+	return false
+}

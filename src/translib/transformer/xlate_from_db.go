@@ -369,7 +369,7 @@ func sonicDbToYangDataFill(uri string, xpath string, dbIdx db.DBNum, table strin
 }
 
 /* Traverse db map and create json for cvl yang */
-func directDbToYangJsonCreate(uri string, dbDataMap *map[db.DBNum]map[string]map[string]db.Value, resultMap map[string]interface{}) (string, error) {
+func directDbToYangJsonCreate(uri string, dbDataMap *map[db.DBNum]map[string]map[string]db.Value, resultMap map[string]interface{}) (string, error, bool) {
 	xpath, key, table := sonicXpathKeyExtract(uri)
 
 	if len(xpath) > 0 {
@@ -429,7 +429,7 @@ func directDbToYangJsonCreate(uri string, dbDataMap *map[db.DBNum]map[string]map
 	jsonMapData, _ := json.Marshal(resultMap)
 	jsonData := fmt.Sprintf("%v", string(jsonMapData))
 	jsonDataPrint(jsonData)
-	return jsonData, nil
+	return jsonData, nil, false
 }
 
 func tableNameAndKeyFromDbMapGet(dbDataMap map[string]map[string]db.Value) (string, string, error) {
@@ -823,7 +823,7 @@ func yangDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, reque
 }
 
 /* Traverse linear db-map data and add to nested json data */
-func dbDataToYangJsonCreate(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db.DB, dbDataMap *map[db.DBNum]map[string]map[string]db.Value, cdb db.DBNum, txCache interface{}) (string, error) {
+func dbDataToYangJsonCreate(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db.DB, dbDataMap *map[db.DBNum]map[string]map[string]db.Value, cdb db.DBNum, txCache interface{}) (string, error, bool) {
 	var err error
 	jsonData := ""
 	resultMap := make(map[string]interface{})
@@ -957,9 +957,11 @@ func dbDataToYangJsonCreate(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db
 	}
 
 	jsonMapData, _ := json.Marshal(resultMap)
+	isEmptyPayload := isJsonDataEmpty(string(jsonMapData))
 	jsonData        = fmt.Sprintf("%v", string(jsonMapData))
 	jsonDataPrint(jsonData)
-	return jsonData, nil
+
+	return jsonData, nil, isEmptyPayload
 }
 
 func jsonDataPrint(data string) {
