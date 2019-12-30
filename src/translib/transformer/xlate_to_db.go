@@ -681,7 +681,8 @@ func dbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requestU
 		if !isSonicYang(uri) {
 			xpath, _ := XfmrRemoveXPATHPredicates(uri)
 			yangNode, ok := xYangSpecMap[xpath]
-			if ok && yangNode.yangDataType != YANG_LEAF && (oper == CREATE || oper == REPLACE) {
+			if ok && yangNode.yangDataType != YANG_LEAF && yangNode.yangDataType != YANG_LEAF_LIST &&
+			   (oper == CREATE || oper == REPLACE) {
 				log.Infof("Fill default value for %v, oper(%v)\r\n", uri, oper)
 				err = dbMapDefaultValFill(d, ygRoot, oper, uri, requestUri, result, subOpDataMap, tblXpathMap, txCache)
 				if err != nil {
@@ -689,11 +690,22 @@ func dbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requestU
 				}
 			}
 
-			if ok && yangNode.yangDataType == YANG_LEAF && oper == REPLACE {
-				log.Infof("Fill default value for %v, oper(%v)\r\n", uri, oper)
-				resultMap[UPDATE] = make(RedisDbMap)
-				resultMap[UPDATE][db.ConfigDB] = result
-				result = make(map[string]map[string]db.Value)
+			if ok && oper == REPLACE {
+				if yangNode.yangDataType == YANG_LEAF {
+					log.Infof("Change leaf oper to UPDATE for %v, oper(%v)\r\n", uri, oper)
+					resultMap[UPDATE] = make(RedisDbMap)
+					resultMap[UPDATE][db.ConfigDB] = result
+					result = make(map[string]map[string]db.Value)
+				} else if yangNode.yangDataType == YANG_LEAF_LIST {
+					log.Infof("Change leaflist oper to UPDATE for %v, oper(%v)\r\n", uri, oper)
+					delMap := make(map[string]map[string]db.Value)
+					resultMap[DELETE] = make(RedisDbMap)
+					tblSchemaCopy(delMap, result)
+					resultMap[DELETE][db.ConfigDB] = delMap
+					resultMap[UPDATE] = make(RedisDbMap)
+					resultMap[UPDATE][db.ConfigDB] = result
+					result = make(map[string]map[string]db.Value)
+				}
 			}
 
 			moduleNm := "/" + strings.Split(uri, "/")[1]
