@@ -2664,6 +2664,17 @@ module openconfig-network-instance-annot {
         sonic-ext:field-name "default_rmap";
       }
     }
+     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:afts/oc-netinst:ipv4-unicast {
+      deviate add {
+        sonic-ext:subtree-transformer "ipv4_route_get_xfmr";
+      }
+     }
+
+     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:afts/oc-netinst:ipv6-unicast {
+      deviate add {
+        sonic-ext:subtree-transformer "ipv6_route_get_xfmr";
+      }
+     }
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst-deviation:igmp-snooping/oc-netinst-deviation:interfaces/oc-netinst-deviation:interface/oc-netinst-deviation:config
     {

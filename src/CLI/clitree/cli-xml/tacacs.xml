@@ -79,11 +79,11 @@ limitations under the License.
              optional="true"> 
       </PARAM>
       <ACTION> 
-        if test -z "${address}"; then;
+        if test -z "${address}"; then
           python $SONIC_CLI_ROOT/sonic-cli-tacacs.py get_sonic_tacacs_server show_tacacs_server.j2;
-        else;
+        else
           python $SONIC_CLI_ROOT/sonic-cli-tacacs.py get_sonic_tacacs_server ${address} show_tacacs_server.j2;
-        fi;
+        fi
       </ACTION>
     </COMMAND>
   </VIEW>
@@ -154,7 +154,8 @@ limitations under the License.
       <PARAM name="port"
              help="server port"
              ptype="SUBCOMMAND"
-             mode="subcommand">
+             mode="subcommand"
+             optional="true">
         <PARAM name="port-val"
                help="server Port"
                ptype="TACACS_AUTH_PORT">
@@ -164,7 +165,8 @@ limitations under the License.
       <PARAM name="timeout"
              help="server timeout"
              ptype="SUBCOMMAND"
-             mode="subcommand">
+             mode="subcommand"
+             optional="true">
         <PARAM name="timeout-val"
                help="server timeout"
                ptype="TACACS_TIMEOUT">
@@ -174,7 +176,8 @@ limitations under the License.
       <PARAM name="key"
              help="server key"
              ptype="SUBCOMMAND"
-             mode="subcommand">
+             mode="subcommand"
+             optional="true">
         <PARAM name="key-val"
                help="server key"
                ptype="TACACS_KEY">
@@ -184,7 +187,8 @@ limitations under the License.
       <PARAM name="type"
              help="server authentication type"
              ptype="SUBCOMMAND"
-             mode="subcommand">
+             mode="subcommand"
+             optional="true">
         <PARAM name="type-val"
                help="server authentication type"
                ptype="AAA_AUTH_TYPE">
@@ -194,14 +198,15 @@ limitations under the License.
       <PARAM name="priority"
              help="server priority"
              ptype="SUBCOMMAND"
-             mode="subcommand">
+             mode="subcommand"
+             optional="true">
         <PARAM name="priority-val"
                help="server priority"
                ptype="TACACS_PRIORITY">
         </PARAM>
       </PARAM>
 
-      <ACTION>python $SONIC_CLI_ROOT/sonic-cli-tacacs.py patch_tacacs_server ${host} ${port-val} ${key-val} ${timeout-val} ${type-val} ${priority-val}</ACTION>
+      <ACTION>python $SONIC_CLI_ROOT/sonic-cli-tacacs.py patch_tacacs_server ${host} port:${port-val} key:${key-val} timeout:${timeout-val} authtype:${type-val} priority:${priority-val}</ACTION>
     </COMMAND>
 
     <!-- no tacacs server -->
@@ -225,12 +230,12 @@ limitations under the License.
 
     <COMMAND name="no tacacs-server timeout"
              help="Unconfigure global timeout for TACACS">
-      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-tacacs.py delete_openconfig_system_ext_system_aaa_server_groups_server_group_config_timeout</ACTION>
+      <ACTION>python $SONIC_CLI_ROOT/sonic-cli-tacacs.py patch_openconfig_system_ext_system_aaa_server_groups_server_group_config_timeout 5</ACTION>
     </COMMAND>
 
     <COMMAND name="no tacacs-server auth-type"
              help="Unconfigure global auth-type for TACACS">
-      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-tacacs.py delete_openconfig_system_ext_system_aaa_server_groups_server_group_config_auth_type</ACTION>
+      <ACTION>python $SONIC_CLI_ROOT/sonic-cli-tacacs.py patch_openconfig_system_ext_system_aaa_server_groups_server_group_config_auth_type pap</ACTION>
     </COMMAND>
 
     <COMMAND name="no tacacs-server key"

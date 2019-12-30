@@ -1,0 +1,138 @@
+{% set vars = {'protocol': "----"} %}
+{% set vars = {'source': "----"} %}
+{% set vars = {'destination': "----"} %}
+{% set vars = {'translated_source': "----"} %}
+{% set vars = {'translated_destination': "----"} %}
+
+
+{{'%-20s'|format("Protocol")}}{{'%-20s'|format("Source")}}{{'%-20s'|format("Destination")}}{{'%-20s'|format("Translated Source")}}{{'%-20s'|format("Translated Destination")}}
+
+{{'----------------------------------------------------------------------------------------------------------------------------'}}
+
+{% if 'openconfig-nat:nat-mapping-table' in json_output and 'nat-mapping-entry' in json_output['openconfig-nat:nat-mapping-table'] %}
+{% for dict in json_output['openconfig-nat:nat-mapping-table']['nat-mapping-entry'] %}
+{% if 'state' in dict %}
+{% if vars.update({'protocol':"all"}) %}{% endif %}
+{% if 'type' in dict['state'] %}
+{% if dict['state']['type'] == 'openconfig-nat:DNAT' %}
+{% if vars.update({'translated_destination': dict['state']['translated-ip']}) %}{% endif %}
+{% if vars.update({'destination': dict['external-address']}) %}{% endif %}
+{% if vars.update({'source':"----"}) %}{% endif %}
+{% if vars.update({'translated_source':"----"}) %}{% endif %}
+{% else %}
+{% if vars.update({'translated_source': dict['state']['translated-ip']}) %}{% endif %}
+{% if vars.update({'source': dict['external-address']}) %}{% endif %}
+{% if vars.update({'destination':"----"}) %}{% endif %}
+{% if vars.update({'translated_destination':"----"}) %}{% endif %}
+{% endif %}
+{% else %}
+{% if vars.update({'source':"----"}) %}{% endif %}
+{% if vars.update({'destination':"----"}) %}{% endif %}
+{% if vars.update({'translated_source':"----"}) %}{% endif %}
+{% if vars.update({'translated_destination':"----"}) %}{% endif %}
+{% endif %}
+
+{{'%-20s'|format(vars.protocol)}}{{'%-20s'|format(vars.source)}}{{'%-20s'|format(vars.destination)}}{{'%-20s'|format(vars.translated_source)}}{{'%-20s'|format(vars.translated_destination)}}
+
+{% endif %}
+{% endfor %}
+{% endif %}
+
+
+{% if 'openconfig-nat:napt-mapping-table' in json_output and 'napt-mapping-entry' in json_output['openconfig-nat:napt-mapping-table'] %}
+{% for dict in json_output['openconfig-nat:napt-mapping-table']['napt-mapping-entry'] %}
+{% if 'state' in dict %}
+
+{% if dict['protocol'] == 6 %}
+{% if vars.update({'protocol': 'tcp'}) %}{% endif %}
+{% elif dict['protocol'] == 17 %}
+{% if vars.update({'protocol': 'ucp'}) %}{% endif %}
+{% elif dict['protocol'] == 1 %}
+{% if vars.update({'protocol': 'icmp'}) %}{% endif %}
+{% else %}
+{% if vars.update({'protocol': "----"}) %}{% endif %}
+{% endif %}
+
+{% if 'type' in dict['state'] %}
+{% if dict['state']['type'] == 'openconfig-nat:DNAT' %}
+{% if vars.update({'translated_destination': dict['state']['translated-ip'] + ':' + (dict['state']['translated-port']|string) }) %}{% endif %}
+{% if vars.update({'destination': dict['external-address'] + ':' + (dict['external-port']|string) }) %}{% endif %}
+{% if vars.update({'source':"----"}) %}{% endif %}
+{% if vars.update({'translated_source':"----"}) %}{% endif %}
+{% else %}
+{% if vars.update({'translated_source': dict['state']['translated-ip'] + ':' + (dict['state']['translated-port']|string) }) %}{% endif %}
+{% if vars.update({'source': dict['external-address'] + ':' + (dict['external-port']|string) }) %}{% endif %}
+{% if vars.update({'destination':"----"}) %}{% endif %}
+{% if vars.update({'translated_destination':"----"}) %}{% endif %}
+{% endif %}
+{% else %}
+{% if vars.update({'source':"----"}) %}{% endif %}
+{% if vars.update({'destination':"----"}) %}{% endif %}
+{% if vars.update({'translated_source':"----"}) %}{% endif %}
+{% if vars.update({'translated_destination':"----"}) %}{% endif %}
+{% endif %}
+
+{{'%-20s'|format(vars.protocol)}}{{'%-20s'|format(vars.source)}}{{'%-20s'|format(vars.destination)}}{{'%-20s'|format(vars.translated_source)}}{{'%-20s'|format(vars.translated_destination)}}
+
+{% endif %}
+{% endfor %}
+{% endif %}
+
+
+
+{% if 'openconfig-nat:nat-twice-mapping-table' in json_output and 'nat-twice-entry' in json_output['openconfig-nat:nat-twice-mapping-table'] %}
+{% for dict in json_output['openconfig-nat:nat-twice-mapping-table']['nat-twice-entry'] %}
+
+{% if 'state' in dict %}
+{% if vars.update({'protocol':"all"}) %}{% endif %}
+{% if vars.update({'translated_destination': dict['state']['translated-dst-ip']}) %}{% endif %}
+{% if vars.update({'destination': dict['dst-ip']}) %}{% endif %}
+{% if vars.update({'source': dict['src-ip']}) %}{% endif %}
+{% if vars.update({'translated_source': dict['state']['translated-src-ip']}) %}{% endif %}
+{% else %}
+{% if vars.update({'source':"----"}) %}{% endif %}
+{% if vars.update({'destination':"----"}) %}{% endif %}
+{% if vars.update({'translated_source':"----"}) %}{% endif %}
+{% if vars.update({'translated_destination':"----"}) %}{% endif %}
+{% endif %}
+
+{{'%-20s'|format(vars.protocol)}}{{'%-20s'|format(vars.source)}}{{'%-20s'|format(vars.destination)}}{{'%-20s'|format(vars.translated_source)}}{{'%-20s'|format(vars.translated_destination)}}
+
+{% endfor %}
+{% endif %}
+
+
+
+{% if 'openconfig-nat:napt-twice-mapping-table' in json_output and 'napt-twice-entry' in json_output['openconfig-nat:napt-twice-mapping-table'] %}
+{% for dict in json_output['openconfig-nat:napt-twice-mapping-table']['napt-twice-entry'] %}
+
+{% if 'state' in dict %}
+
+{% if dict['protocol'] == 6 %}
+{% if vars.update({'protocol': 'tcp'}) %}{% endif %}
+{% elif dict['protocol'] == 17 %}
+{% if vars.update({'protocol': 'ucp'}) %}{% endif %}
+{% elif dict['protocol'] == 1 %}
+{% if vars.update({'protocol': 'icmp'}) %}{% endif %}
+{% else %}
+{% if vars.update({'protocol': "----"}) %}{% endif %}
+{% endif %}
+
+
+{% if vars.update({'translated_destination': dict['state']['translated-dst-ip'] + ':' + (dict['state']['translated-dst-port']|string) }) %}{% endif %}
+{% if vars.update({'destination': dict['dst-ip'] + ':' + (dict['dst-port']|string) }) %}{% endif %}
+{% if vars.update({'source': dict['src-ip'] + ':' + (dict['src-port']|string) }) %}{% endif %}
+{% if vars.update({'translated_source': dict['state']['translated-src-ip'] + ':' + (dict['state']['translated-src-port']|string)  }) %}{% endif %}
+{% else %}
+{% if vars.update({'source':"----"}) %}{% endif %}
+{% if vars.update({'destination':"----"}) %}{% endif %}
+{% if vars.update({'translated_source':"----"}) %}{% endif %}
+{% if vars.update({'translated_destination':"----"}) %}{% endif %}
+{% endif %}
+
+
+{{'%-20s'|format(vars.protocol)}}{{'%-20s'|format(vars.source)}}{{'%-20s'|format(vars.destination)}}{{'%-20s'|format(vars.translated_source)}}{{'%-20s'|format(vars.translated_destination)}}
+
+{% endfor %}
+{% endif %}
+
