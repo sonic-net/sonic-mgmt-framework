@@ -10,6 +10,7 @@
 {% set vars = {'weight': "0"} %}
 {% set vars = {'validRoute': ""} %}
 {% set vars = {'tableVersion': "1"} %}
+{% set vars = {'extcommstr': ""} %}
 {% if json_output -%}
 {% for key in json_output %}
 {% if "openconfig-network-instance:config" in key %}
@@ -45,12 +46,18 @@ EVPN type-5 prefix: [5]:[EthTag]:[IPlen]:[IP]
   {% if "state" in key %}
     {% if vars.update({'validRoute':route["state"]["valid-route"]}) %}{% endif %}
     {% if vars.update({'pathId':route["state"]["path-id"]}) %}{% endif %}
+    {% if vars.update({'origin':route["state"]["origin"]}) %}{% endif %}
   {% endif %}
   {% if "attr-sets" in key %}
     {% if vars.update({'origin':route["attr-sets"]["origin"]}) %}{% endif %}
     {% if vars.update({'nxtHop':route["attr-sets"]["next-hop"]}) %}{% endif %}
     {% if vars.update({'med':route["attr-sets"]["med"]}) %}{% endif %}
     {% if vars.update({'locPref':route["attr-sets"]["local-pref"]}) %}{% endif %}
+    {% if vars.update({'extcommstr':''}) %}{% endif %}
+    {% for comm in route["attr-sets"]["ext-community"] %}
+      {% set cs = vars['extcommstr'] + comm + ' ' %}
+      {% if vars.update({'extcommstr':cs}) %}{% endif %}
+    {% endfor %}
   {% endif %}
   {% if vars.origin == 'IGP' %}
     {% if vars.update({'origin':"i"}) %}{% endif %}
@@ -67,6 +74,7 @@ EVPN type-5 prefix: [5]:[EthTag]:[IPlen]:[IP]
 {% endif %}
 {{'%-5s'|format(vars.validRoute)}}{{'%-20s'|format(vars.prefix)}}
 {{'%-25s'|format("")}}{{'%-20s'|format(vars.nxtHop)}}{{'%-8s'|format(vars.med)}}{{'%-8s'|format(vars.locPref)}}{{'%-8s'|format(vars.weight)}}{{'%-1s'|format(vars.pathId)}} {{vars.origin}}
+{{'%-25s'|format("")}}{{'%s'|format(vars.extcommstr)}}
 {% endfor %}
 {% endif %}
 {% endfor %}

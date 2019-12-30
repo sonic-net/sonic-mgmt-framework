@@ -628,7 +628,7 @@ func hdl_get_bgp_l2vpn_evpn_local_rib (bgpRib_obj *ocbinds.OpenconfigNetworkInst
 
     log.Infof("%s ==> Local-RIB invoke with keys {%s} afiSafiType:%d", *dbg_log, print_rib_keys(rib_key), afiSafiType)
 
-    cmd := "show bgp l2vpn evpn route json"
+    cmd := "show bgp l2vpn evpn route detail json"
 
     bgpRibOutputJson := make(map[string]interface{})
 
@@ -638,6 +638,8 @@ func hdl_get_bgp_l2vpn_evpn_local_rib (bgpRib_obj *ocbinds.OpenconfigNetworkInst
         return oper_err
     }
     bgpRibOutputJson["output"] = output
+
+    log.Info(bgpRibOutputJson)
 
     var ribAfiSafis_obj *ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Rib_AfiSafis
     if ribAfiSafis_obj = bgpRib_obj.AfiSafis ; ribAfiSafis_obj == nil {
@@ -751,6 +753,29 @@ func fill_evpn_spec_pfx_path_loc_rib_data (ipv4LocRibRoutes_obj *ocbinds.Opencon
         if nhop, ok := value[0].(map[string]interface{}) ; ok {
             if ip, ok := nhop["ip"].(string) ; ok {
                 ipv4LocRibRouteAttrSets.NextHop = &ip
+            }
+        }
+    }
+
+    if value, ok := pathData["aspath"].(map[string]interface{}) ; ok {
+        if asPathSegments, ok := value["segments"].([]interface {}) ; ok {
+            for _, asPathSegmentsData := range asPathSegments {
+                var _segment ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Rib_AfiSafis_AfiSafi_L2VpnEvpn_LocRib_Routes_Route_AttrSets_AsPath_AsSegment
+                ygot.BuildEmptyTree (&_segment)
+                if ok = parse_aspath_segment_data (asPathSegmentsData.(map[string]interface {}), &_segment.State.Type, &_segment.State.Member) ; ok {
+                   ipv4LocRibRouteAttrSets.AsPath.AsSegment = append (ipv4LocRibRouteAttrSets.AsPath.AsSegment, &_segment)
+                }
+            }
+        }
+    }
+
+    if value, ok := pathData["extendedCommunity"].(map[string]interface{}) ; ok {
+        if _value, ok := value["string"] ; ok {
+            _community_slice := strings.Split (_value.(string), " ")
+            for _, _data := range _community_slice {
+                if _ext_community_union, err := ipv4LocRibRouteAttrSets.To_OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Rib_AfiSafis_AfiSafi_L2VpnEvpn_LocRib_Routes_Route_AttrSets_ExtCommunity_Union (_data) ; err == nil {
+                    ipv4LocRibRouteAttrSets.ExtCommunity = append (ipv4LocRibRouteAttrSets.ExtCommunity, _ext_community_union)
+                }
             }
         }
     }
