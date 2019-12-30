@@ -197,8 +197,8 @@ func toErrorEntry(err error, r *http.Request) (status int, errInfo errorEntry) {
 		errInfo.Path = e.Path
 
 	case tlerr.AuthorizationError:
-		status = http.StatusUnauthorized
-		errInfo.Message = "unauthorized"
+		status = http.StatusForbidden
+		errInfo.Message = "Client is not authorized to perform this operation"
 		errInfo.Path = e.Path
 		errInfo.Tag = errtagAccessDenied
 
