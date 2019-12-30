@@ -11,6 +11,7 @@
 {% set vars = {'validRoute': ""} %}
 {% set vars = {'tableVersion': "1"} %}
 {% set vars = {'extcommstr': ""} %}
+{% set vars = {'aspathstr': ""} %}
 {% if json_output -%}
 {% for key in json_output %}
 {% if "openconfig-network-instance:config" in key %}
@@ -58,6 +59,16 @@ EVPN type-5 prefix: [5]:[EthTag]:[IPlen]:[IP]
       {% set cs = vars['extcommstr'] + comm + ' ' %}
       {% if vars.update({'extcommstr':cs}) %}{% endif %}
     {% endfor %}
+    {% if vars.update({'aspathstr':''}) %}{% endif %}
+    {% set aspathobj = route["attr-sets"]["as-path"] %}
+    {% if aspathobj %}
+    {% for assegment in aspathobj["as-segment"] %}
+      {% for asmember in assegment["state"]["member"] %}
+      {% set cs = vars['aspathstr'] + asmember|string + ' ' %}
+      {% if vars.update({'aspathstr':cs}) %}{% endif %}
+      {% endfor %}
+    {% endfor %}
+    {% endif %}
   {% endif %}
   {% if vars.origin == 'IGP' %}
     {% if vars.update({'origin':"i"}) %}{% endif %}
@@ -73,7 +84,7 @@ EVPN type-5 prefix: [5]:[EthTag]:[IPlen]:[IP]
 {% if vars.update({'validRoute':""}) %}{% endif %}
 {% endif %}
 {{'%-5s'|format(vars.validRoute)}}{{'%-20s'|format(vars.prefix)}}
-{{'%-25s'|format("")}}{{'%-20s'|format(vars.nxtHop)}}{{'%-8s'|format(vars.med)}}{{'%-8s'|format(vars.locPref)}}{{'%-8s'|format(vars.weight)}}{{'%-1s'|format(vars.pathId)}} {{vars.origin}}
+{{'%-25s'|format("")}}{{'%-20s'|format(vars.nxtHop)}}{{'%8s'|format(vars.med)}}{{'%8s'|format(vars.locPref)}}{{'%8s'|format(vars.weight)}}{{' '}}{{'%s'|format(vars.aspathstr)}}{{' '}}{{vars.origin}}
 {{'%-25s'|format("")}}{{'%s'|format(vars.extcommstr)}}
 {% endfor %}
 {% endif %}
