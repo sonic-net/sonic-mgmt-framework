@@ -77,8 +77,8 @@ limitations under the License.
         <!-- Special commands -->
         <COMMAND name="interface" help="Interface commands"/>
         <COMMAND name="interface Vlan" help="Vlan Interface Configuration" mode="subcommand" ptype="SUBCOMMAND">
-      		<PARAM name="vlan-id" help="Vlan identifier(1-4094)" ptype="VLAN_ID"> </PARAM>
-      			<ACTION builtin="clish_extn">oper=patch url=/restconf/data/openconfig-interfaces:interfaces/interface=Vlan${vlan-id}/config body={"openconfig-interfaces:config": {"name": "Vlan${vlan-id}"}}</ACTION>
+            <PARAM name="vlan-id" help="Vlan identifier(1-4094)" ptype="VLAN_ID"> </PARAM>
+            <ACTION>python $SONIC_CLI_ROOT/sonic_cli_if.py patch_openconfig_interfaces_interfaces_interface_config Vlan${vlan-id}</ACTION>
         </COMMAND>
     	<COMMAND name="router" help="Router mode" >
       		<PARAM name="bgp" help="Border Gateway protocol (BGP)" mode="subcommand" ptype="SUBCOMMAND">
@@ -88,7 +88,7 @@ limitations under the License.
           				</PARAM>
         			</PARAM>
       		</PARAM>
-      		<ACTION builtin="clish_extn">oper=patch url=/restconf/data/openconfig-network-instance:network-instances/network-instance=${vrf-name}/protocols/protocol=BGP,bgp/bgp/global/config/as body={"openconfig-network-instance:as": ${as-num-dot}} </ACTION>
+			<ACTION builtin="clish_restcl">oper=patch url=/restconf/data/openconfig-network-instance:network-instances/network-instance=${vrf-name}/protocols/protocol=BGP,bgp/bgp/global/config/as body={"openconfig-network-instance:as": ${as-num-dot}} </ACTION>
     	</COMMAND>
 
         <COMMAND name="Vlan" help="Vlan Interface Configuration" mode="subcommand" ptype="SUBCOMMAND">

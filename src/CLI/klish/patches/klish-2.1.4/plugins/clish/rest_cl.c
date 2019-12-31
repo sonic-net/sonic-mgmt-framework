@@ -4,10 +4,18 @@
 #include <curl/curl.h>
 #include <string.h>
 #include <stdlib.h>
+#include <pwd.h>
+#include <cJSON.h>
+#include <syslog.h>
+
+#include "private.h"
+#include "lub/dump.h"
+
+char *REST_API_ROOT;
 
 typedef struct {
-    int code;
-    //std::string body;
+    int size;
+    char *memory;
 } Response;
 
 typedef struct {
@@ -38,119 +46,207 @@ static size_t read_callback(void *ptr, size_t size, size_t nmemb, void *userp)
 
 static size_t write_callback(void *data, size_t size,
                                     size_t nmemb, void *userdata) {
-/*
-    Response *r;
-    r = (Response *)(userdata);
+  size_t realsize = size * nmemb;
+  Response *mem = (Response *)(userdata);
 
-    r->body.append(reinterpret_cast<char*>(data), size*nmemb);
- */
+  char *ptr = realloc(mem->memory, mem->size + realsize + 1);
+  if(ptr == NULL) {
+    /* out of memory! */
+    return 0;
+  }
 
-    return (size * nmemb);
+  mem->memory = ptr;
+  memcpy(&(mem->memory[mem->size]), data, realsize);
+  mem->size += realsize;
+  mem->memory[mem->size] = 0;
+
+  return realsize;
+
+}
+
+int print_error(char *str) {
+
+    cJSON *ret_json = cJSON_Parse(str);
+    if (!ret_json) {
+        syslog(LOG_DEBUG, "clish_restcl: Failed parsing error string\r\n");
+        return 1;
+    }
+
+    cJSON *ietf_err = cJSON_GetObjectItemCaseSensitive(ret_json, "ietf-restconf:errors");
+    if (!ietf_err) {
+        syslog(LOG_DEBUG, "clish_restcl: No errors\r\n");
+        return 1;
+    }
+
+    cJSON *errors = cJSON_GetObjectItemCaseSensitive(ietf_err, "error");
+    if (!errors) {
+        syslog(LOG_DEBUG, "clish_restcl: No error\r\n");
+        return 1;
+    }
+
+    cJSON *error;
+    cJSON_ArrayForEach(error, errors) {
+        cJSON *err_msg = cJSON_GetObjectItemCaseSensitive(error, "error-message");
+        if (err_msg) {
+            lub_dump_printf("%% Error: %s\r\n", err_msg->valuestring);
+        }
+    }
+
+    return 0;
 }
 
 CURL *curl = NULL;
+#define CERT_PATH_LEN 256
 
-int rest_cl(char *arg)
-{
-  CURLcode res;
-  char *url = NULL;
-  char *body = NULL;
-  char full_uri[1024];
+static int _init_curl() {
 
-  //printf("[%s]\r\n", arg);
-  url = strstr(arg, "url=");
-  if (!url) {
-      printf("url= missing in %s\r\n", arg);
-      return 1;
-  } else {
-    url = url + 4;  //skip url=
-    body = strstr(url, "body=");
-    if (body) {
-        *(body-1) = '\0';
-        body = body + 5; //skip body=
-    } 
-    else {
-        printf("no body= found in %s\r\n", url);
+    REST_API_ROOT = getenv(REST_API_ROOT);
+    if (!REST_API_ROOT) {
+        REST_API_ROOT = "https://localhost:8443";
+    }
+    curl_global_init(CURL_GLOBAL_ALL);
+
+    curl = curl_easy_init();
+    if (!curl) {
         return 1;
     }
-    snprintf(full_uri, sizeof(full_uri), "https://localhost%s", url);
-    url = full_uri;
-  }
+    
+    char *cli_user = getenv("CLI_USER");
+    if (cli_user) {
+        struct passwd *p;
+        p=getpwnam(cli_user);
+        if (p) {
+            char cert[CERT_PATH_LEN+1], key[CERT_PATH_LEN+1];
 
-  //printf("url=%s\r\n", url);
-  //printf("body=%s\r\n", body);
+            snprintf(cert, CERT_PATH_LEN, "%s/.cert/certificate.pem", p->pw_dir);
+            snprintf(key, CERT_PATH_LEN, "%s/.cert/key.pem", p->pw_dir);
+            cert[CERT_PATH_LEN] = '\0';
+            key[CERT_PATH_LEN] = '\0';
 
-  UploadObject up_obj;
-  up_obj.readptr = body;
-  up_obj.sizeleft = strlen(body);
-
-  Response ret = {};
-
-  if (curl == NULL) {
-      /* In windows, this will init the winsock stuff */
-      curl_global_init(CURL_GLOBAL_ALL);
-
-      /* get a curl handle */
-      curl = curl_easy_init();
-  }
-
-  if(curl) {
-
-    const char* http_patch = "PATCH";
-    curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, http_patch);
-
+            curl_easy_setopt(curl, CURLOPT_SSLCERT, cert);
+            curl_easy_setopt(curl, CURLOPT_SSLKEY, key);
+            syslog(LOG_DEBUG, "clish_restcl: [key:%s][cert:%s]\r\n", key, cert);
+        }
+    }
     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
 
-    /* enable uploading */
-    curl_easy_setopt(curl, CURLOPT_UPLOAD, 1L);
+    curl_easy_setopt(curl, CURLOPT_USERAGENT, "CLI");
 
     curl_easy_setopt(curl, CURLOPT_READFUNCTION, read_callback);
-
-    /* specify target URL, and note that this URL should include a file
-       name, not only a directory */
-    curl_easy_setopt(curl, CURLOPT_URL, url);
-
-    /* now specify which file to upload */
-    curl_easy_setopt(curl, CURLOPT_READDATA, &up_obj);
-
-    /* provide the size of the upload, we specicially typecast the value
-       to curl_off_t since we must be sure to use the correct data size */
-    curl_easy_setopt(curl, CURLOPT_INFILESIZE_LARGE,
-                     (curl_off_t)up_obj.sizeleft);
-
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
- 
-    /** set data object to pass to callback function */
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &ret);
-    /* Now run off and do what you've been told! */
 
     struct curl_slist* headerList = NULL;
     headerList = curl_slist_append(headerList, "accept: application/yang-data+json");
     headerList = curl_slist_append(headerList, "Content-Type: application/yang-data+json");
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headerList);
 
+    return 0;
+}
+
+#define CMD_MAX_SIZE 1280
+
+int rest_cl(char *cmd, const char *buff)
+{
+
+  CURLcode res;
+  char *url = NULL;
+  char *body = NULL;
+  char *oper = NULL;
+  char full_uri[1024];
+  char arg[CMD_MAX_SIZE];
+
+  strncpy(arg, buff, sizeof(arg)-1);
+  arg[sizeof(arg)-1] = '\0';
+
+  syslog(LOG_DEBUG, "clish_restcl: cmd=%s", cmd);
+
+  oper = strstr(arg, "oper=");
+  if (oper) {
+    oper = oper+5;
+  }
+
+  url = strstr(arg, "url=");
+  if (!url) {
+      syslog(LOG_ERR, "url= missing in %s\r\n", arg);
+      return 1;
+  } else {
+    *(url-1) = '\0';
+    url = url + 4;  //skip url=
+    body = strstr(url, "body=");
+    if (body) {
+        *(body-1) = '\0';
+        body = body + 5; //skip body=
+    } 
+    snprintf(full_uri, sizeof(full_uri), "%s%s", REST_API_ROOT, url);
+    url = full_uri;
+  }
+  syslog(LOG_DEBUG, "clish_restcl: [oper:%s][path:%s][body:%s]", oper, url, body);
+
+  Response ret = {};
+  ret.memory = NULL;
+  ret.size = 0;
+
+  if (curl == NULL) {
+      _init_curl();
+  }
+
+  if(curl) {
+
+    curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, oper);
+
+    curl_easy_setopt(curl, CURLOPT_URL, url);
+
+    UploadObject up_obj = {};
+    if (body) {
+
+        up_obj.readptr = body;
+        up_obj.sizeleft = strlen(body);
+        curl_easy_setopt(curl, CURLOPT_READDATA, &up_obj);
+
+        curl_easy_setopt(curl, CURLOPT_INFILESIZE_LARGE,
+                (curl_off_t)up_obj.sizeleft);
+
+        curl_easy_setopt(curl, CURLOPT_UPLOAD, 1L);
+    }
+ 
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &ret);
+
     res = curl_easy_perform(curl);
     /* Check for errors */
     if(res != CURLE_OK) {
-      fprintf(stderr, "curl_easy_perform() failed: %s\n",
+        lub_dump_printf("%%Error: Could not connect to Management REST Server\n");
+        syslog(LOG_WARNING, "curl_easy_perform() failed: %s\n",
               curl_easy_strerror(res));
     } else {
       int64_t http_code = 0;
       curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
-      if (http_code != 204) {
-        printf("ret.code:%d\r\n", (int)http_code);
-      }
+      if (ret.size) {
+          syslog(LOG_DEBUG, "clish_restcl: http_code:%ld [%d:%s]", http_code, ret.size, ret.memory);
+          print_error(ret.memory);
+
+          if (ret.memory) {
+            free(ret.memory);
+          }
+	  }
     }
 
     /* Not calling cleanup to reuse connection */
     //curl_easy_cleanup(curl);
   } else {
-    fprintf(stderr, "Couldn't initialize curl handle");
+        lub_dump_printf("%%Error: Could not connect to Management REST Server\n");
+        syslog(LOG_WARNING, "Couldn't initialize curl handle");
     return 1;
   }
 
-  //curl_global_cleanup();
   return 0;
 }
+
+CLISH_PLUGIN_SYM(clish_restcl)
+{
+    char *cmd = clish_shell__get_full_line(clish_context);
+    rest_cl(cmd, script);
+    return 0;
+}
+
 

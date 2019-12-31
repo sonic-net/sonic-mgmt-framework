@@ -1,11 +1,18 @@
+#include "private.h"
 #include <stdio.h>
 #include <Python.h>
 #include <stdarg.h>
+#include <syslog.h>
 
-int call_pyobj(char *arg) {
+void pyobj_init() {
+    Py_Initialize();
+}
+
+int call_pyobj(char *cmd, const char *arg) {
     char *token[10];
     char buf[256]; 
 
+    syslog(LOG_DEBUG, "clish_pyobj: cmd=%s", cmd);
     strcpy(buf, arg);
     char *p = strtok(buf, " ");
     size_t idx = 0;
@@ -14,10 +21,7 @@ int call_pyobj(char *arg) {
     	p = strtok(NULL, " "); 
     }
 
-    Py_Initialize();
-
     PyObject *module, *name, *func, *args, *value;
-    PySys_SetPath(".:./scripts:/usr/lib/python2.7:/usr/lib/python2.7/dist-packages:/usr/local/lib/python2.7/dist-packages:../:../lib/swagger_client_py:/usr/lib/python2.7:/usr/lib/python2.7/plat-x86_64-linux-gnu:/usr/lib/python2.7/lib-tk:/usr/lib/python2.7/lib-old:/usr/lib/python2.7/lib-dynload:/usr/local/lib/python2.7/dist-packages:/usr/local/lib/python2.7/dist-packages/pyang-2.0.1-py2.7.egg:/usr/local/lib/python2.7/dist-packages/lxml-4.3.4-py2.7-linux-x86_64.egg:/usr/local/lib/python2.7/dist-packages/pyang_json_schema_plugin-0.1-py2.7.egg:/usr/lib/python2.7/dist-packages:/usr/lib/python2.7/dist-packages/gtk-2.0");
 
     name = PyBytes_FromString(token[0]);
     module = PyImport_Import(name);
@@ -25,9 +29,10 @@ int call_pyobj(char *arg) {
     	PyErr_Print();
     	return -1;
     }
+
     func = PyObject_GetAttrString(module, "run");
 
-        args = PyTuple_New(idx - 1);
+    args = PyTuple_New(2);
     PyTuple_SetItem(args, 0, PyBytes_FromString(token[1]));
 
     PyObject *args_list = PyList_New(0);
@@ -38,9 +43,16 @@ int call_pyobj(char *arg) {
 
 
     value = PyObject_CallObject(func, args);
+    if (value == NULL) {
+        syslog(LOG_WARNING, "clish_pyobj: Failed [cmd=%s][args:%s]", cmd, arg);
+        return 1;
+    }
+    return 0;
+}
 
-    Py_Finalize();
-    /* Exit, cleaning up the interpreter */
-    //Py_Exit(0);
+CLISH_PLUGIN_SYM(clish_pyobj)
+{
+    char *cmd = clish_shell__get_full_line(clish_context);
+    call_pyobj(cmd, script);
     return 0;
 }

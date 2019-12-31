@@ -44,7 +44,7 @@ limitations under the License.
             name="addr"
             help="IPv6 address with mask"
             ptype="IPV6_ADDR_MASK" />
-    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config ${iface} ${addr} </ACTION>
+        <ACTION>python $SONIC_CLI_ROOT/sonic_cli_if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config ${iface} ${addr} </ACTION>
     </COMMAND>
 
     <COMMAND
@@ -54,7 +54,7 @@ limitations under the License.
             name="addr"
             help="IPv6 address"
             ptype="IPV6_ADDR" />
-        <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config_prefix_length ${iface} ${addr} </ACTION>
+        <ACTION>python $SONIC_CLI_ROOT/sonic_cli_if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config_prefix_length ${iface} ${addr} </ACTION>
     </COMMAND>
   </VIEW>
 
@@ -79,9 +79,9 @@ limitations under the License.
         </PARAM>
         <ACTION>
             if test "${gw_addr}" = ""; then&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config ${iface} ${addr}&#xA;
+            python $SONIC_CLI_ROOT/sonic_cli_if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config ${iface} ${addr}&#xA;
             else&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config ${iface} ${addr} ${gw_addr}&#xA;
+            python $SONIC_CLI_ROOT/sonic_cli_if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config ${iface} ${addr} ${gw_addr}&#xA;
             fi&#xA;
         </ACTION>
     </COMMAND>
@@ -93,7 +93,7 @@ limitations under the License.
             name="addr"
             help="IPv6 address"
             ptype="IPV6_ADDR" />
-        <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config_prefix_length ${iface} ${addr} </ACTION>
+        <ACTION>python $SONIC_CLI_ROOT/sonic_cli_if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config_prefix_length ${iface} ${addr} </ACTION>
     </COMMAND>
 </VIEW>
 
@@ -113,7 +113,7 @@ limitations under the License.
             name="addr"
             help="IPv6 address with mask"
             ptype="IPV6_ADDR_MASK" />
-        <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config ${po_name} ${addr} </ACTION>
+        <ACTION>python $SONIC_CLI_ROOT/sonic_cli_if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config ${po_name} ${addr} </ACTION>
     </COMMAND>
 
     <COMMAND
@@ -123,7 +123,7 @@ limitations under the License.
             name="addr"
             help="IPv6 address"
             ptype="IPV6_ADDR" />
-        <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config_prefix_length ${po_name} ${addr} </ACTION>
+        <ACTION>python $SONIC_CLI_ROOT/sonic_cli_if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config_prefix_length ${po_name} ${addr} </ACTION>
     </COMMAND>
 </VIEW>
 
@@ -147,7 +147,7 @@ limitations under the License.
              name="addr"
              help="IPv6 address with mask"
              ptype="IPV6_ADDR_MASK" />
-          <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config ${vlan_id} ${addr} </ACTION>
+         <ACTION>python $SONIC_CLI_ROOT/sonic_cli_if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config ${vlan_id} ${addr} </ACTION>
       </COMMAND>
 
       <COMMAND
@@ -157,7 +157,7 @@ limitations under the License.
               name="addr"
               help="IPv6 address"
               ptype="IPV6_ADDR" />
-          <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config_prefix_length ${vlan_id} ${addr} </ACTION>
+          <ACTION>python $SONIC_CLI_ROOT/sonic_cli_if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config_prefix_length ${vlan_id} ${addr} </ACTION>
       </COMMAND>
 </VIEW>
 
@@ -180,7 +180,7 @@ limitations under the License.
              name="addr"
              help="IPv6 address with mask (/128 is supported)"
              ptype="IPV6_ADDR_MASK" />
-          <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config ${lo_name} ${addr} </ACTION>
+         <ACTION>python $SONIC_CLI_ROOT/sonic_cli_if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config ${lo_name} ${addr} </ACTION>
       </COMMAND>
 
       <COMMAND
@@ -190,7 +190,7 @@ limitations under the License.
               name="addr"
               help="IPv6 address"
               ptype="IPV6_ADDR" />
-          <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config_prefix_length ${lo_name} ${addr} </ACTION>
+          <ACTION>python $SONIC_CLI_ROOT/sonic_cli_if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config_prefix_length ${lo_name} ${addr} </ACTION>
       </COMMAND>
 </VIEW>
 
