@@ -94,6 +94,41 @@ def get_tam_int_ifa_ts_supported(args):
 
     show_cli_output("show_tam_ifa_ts_feature_supported.j2", api_response)
 
+def get_tam_int_ifa_ts_flow_stats(args):
+    api_response = {}
+    api = cc.ApiClient()
+
+    # connect to COUNTERS_DB
+    counters_db = ConfigDBConnector()
+    counters_db.db_connect('COUNTERS_DB')
+
+    if len(args) == 0:
+       path = cc.Path('/restconf/data/sonic-tam-int-ifa-ts:sonic-tam-int-ifa-ts/TAM_INT_IFA_TS_FLOW_TABLE')
+    else:
+       path = cc.Path('/restconf/data/sonic-tam-int-ifa-ts:sonic-tam-int-ifa-ts/TAM_INT_IFA_TS_FLOW_TABLE/TAM_INT_IFA_TS_FLOW_TABLE_LIST={name}', name=args[0])
+
+    response = api.get(path)
+
+    if response.ok():
+        if response.content:
+            if len(args) == 0:
+                api_response = response.content['sonic-tam-int-ifa-ts:TAM_INT_IFA_TS_FLOW_TABLE']['TAM_INT_IFA_TS_FLOW_TABLE_LIST']
+            else:
+                api_response = response.content['sonic-tam-int-ifa-ts:TAM_INT_IFA_TS_FLOW_TABLE_LIST']
+            for i in range(len(api_response)):
+                api_response[i]['Packets'] = 0
+                api_response[i]['Bytes'] = 0
+                if "acl-table-name" not in api_response[i] and "acl-rule-name" not in api_response[i]:
+                  return
+
+                acl_counter_key = 'COUNTERS:' + api_response[i]['acl-table-name'] + ':' + api_response[i]['acl-rule-name']
+                flow_stats = counters_db.get_all(counters_db.COUNTERS_DB, acl_counter_key)
+                if flow_stats is not None:
+			api_response[i]['Packets'] = flow_stats['Packets']
+			api_response[i]['Bytes'] = flow_stats['Bytes']
+
+    show_cli_output("show_tam_int_ifa_ts_flow_stats.j2", api_response)
+
 
 def run(func, args):
     response = invoke_api(func, args)
@@ -146,6 +181,8 @@ if __name__ == '__main__':
         get_tam_ifa_ts_status(sys.argv[2:])
     elif func == 'get_tam_int_ifa_ts_supported':
         get_tam_int_ifa_ts_supported(sys.argv[2:])
+    elif func == 'get_tam_int_ifa_ts_flow_stats':
+	get_tam_int_ifa_ts_flow_stats(sys.argv[2:])
     else: 
         run(func, sys.argv[2:])
 
