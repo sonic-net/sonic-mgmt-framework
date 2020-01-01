@@ -11,6 +11,10 @@ module sonic-vxlan {
         prefix inet;
     }
 
+    import sonic-common {
+	    prefix cmn;
+    }
+
     import sonic-extension {
         prefix sonic-ext;
     }
@@ -71,6 +75,11 @@ module sonic-vxlan {
                     type leafref {
                         path "/svlan:sonic-vlan/svlan:VLAN/svlan:VLAN_LIST/svlan:name";
                     }
+
+		    must "((/cmn:operation/cmn:operation != 'CREATE') and (/cmn:operation/cmn:operation != 'UPDATE')) or " + 
+			    "(count(../../VXLAN_TUNNEL_MAP_LIST[vlan=current()]) = 1)" {
+			    error-app-tag not-unique-vlanid;
+		    }
                 }
 
                 leaf vni {
@@ -81,6 +90,11 @@ module sonic-vxlan {
                             error-app-tag vnid-invalid;
                         }
                     }
+
+		    must "((/cmn:operation/cmn:operation != 'CREATE') and (/cmn:operation/cmn:operation != 'UPDATE')) or " + 
+			    "(count(../../VXLAN_TUNNEL_MAP_LIST[vni=current()]) = 1)" {
+			    error-app-tag not-unique-vni;
+		    }
                 }
             }
         }

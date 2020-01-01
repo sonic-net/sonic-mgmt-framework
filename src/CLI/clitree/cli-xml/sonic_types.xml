@@ -150,6 +150,13 @@ limitations under the License.
         />
     <!--=======================================================-->
     <PTYPE
+        name="RANGE_1_16777215"
+        method="unsignedInteger"
+        pattern="1..16777215"
+        help=""
+        />
+    <!--=======================================================-->
+    <PTYPE
 	name="RANGE_1_128"
 	method="integer"
 	pattern="1..128"
