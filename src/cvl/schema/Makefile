@@ -68,8 +68,8 @@ $(out_dir)/%.yin:$(sonic_yang_common)/%.yang
 $(out_platform):$(out_platform_dep)
 	@mkdir -p `dirname $@`
 	@echo "Generating $@ ..."
-	@pyang -p $(search_path)	--plugindir $(pyang_plugin_dir) \
-		-f yin-cvl $< -o $@
+	@pyang -p $(search_path) --plugindir $(pyang_plugin_dir) \
+		-f yin-cvl "$(sonic_yang)/`echo $@ | grep -o 'platform/.*\.'`yang" -o $@
 
 $(out_dir)/%.tree:%.yang
 	@echo "Generating `basename $@` ..."

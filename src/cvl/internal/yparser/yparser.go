@@ -37,6 +37,8 @@ import (
 #include <stdio.h>
 #include <string.h>
 
+extern int lyd_check_mandatory_tree(struct lyd_node *root, struct ly_ctx *ctx, const struct lys_module **modules, int mod_count, int options);
+
 struct lyd_node* lyd_parse_data_path(struct ly_ctx *ctx,  const char *path, LYD_FORMAT format, int options) {
 	return lyd_parse_path(ctx, path, format, options);
 }
@@ -48,6 +50,16 @@ struct lyd_node *lyd_parse_data_mem(struct ly_ctx *ctx, const char *data, LYD_FO
 
 int lyd_data_validate(struct lyd_node **node, int options, struct ly_ctx *ctx)
 {
+	int ret = -1;
+
+	//Check mandatory elements as it is skipped for LYD_OPT_EDIT
+	ret = lyd_check_mandatory_tree(*node, ctx, NULL, 0, LYD_OPT_CONFIG | LYD_OPT_NOEXTDEPS);
+
+	if (ret != 0) 
+	{
+		return ret;
+	}
+
 	return lyd_validate(node, options, ctx);
 }
 
@@ -56,6 +68,9 @@ int lyd_multi_new_leaf(struct lyd_node *parent, const struct lys_module *module,
 	char s[4048];
         char *name, *val;
         char *saveptr;
+	struct lyd_node *leaf;
+	struct lys_type *type = NULL;
+	int has_ptr_type = 0;
 
         strcpy(s, leafVal);
 
@@ -64,16 +79,41 @@ int lyd_multi_new_leaf(struct lyd_node *parent, const struct lys_module *module,
 	while (name != NULL)
 	{
 		val = strtok_r(NULL, "|", &saveptr);
-		if (val != NULL)
+		if (val == NULL)
 		{
-			if (NULL == lyd_new_leaf(parent, module, name, val))
+			name = strtok_r(NULL, "|", &saveptr);
+			continue;
+		}
+
+		if (NULL == (leaf = lyd_new_leaf(parent, module, name, val)))
+		{
+			return -1;
+		}
+
+		//Validate all union types as it is skipped for LYD_OPT_EDIT
+		if (((struct lys_node_leaflist*)leaf->schema)->type.base == LY_TYPE_UNION)
+		{
+			type = &((struct lys_node_leaflist*)leaf->schema)->type;
+
+			//save the has_ptr_type field
+			has_ptr_type = type->info.uni.has_ptr_type;
+
+			//Work around, set to 0 to check all union types
+			type->info.uni.has_ptr_type = 0;
+
+			if (lyd_validate_value(leaf->schema, val))
 			{
 				return -1;
 			}
+
+			//Restore has_ptr_type
+			type->info.uni.has_ptr_type = has_ptr_type;
 		}
 
 		name = strtok_r(NULL, "|", &saveptr);
 	}
+
+	return 0;
 }
 
 struct lyd_node *lyd_find_node(struct lyd_node *root, const char *xpath) 
