@@ -478,8 +478,13 @@ func fill_vni_state_info (vni_key *_xfmr_bgp_vni_state_key, vniDataValue interfa
     var err error
 
     vniDataJson := vniDataValue.(map[string]interface{})
-    
-    vniState := vni_obj.State
+
+    var vniState *ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Global_AfiSafis_AfiSafi_L2VpnEvpn_Vnis_Vni_State
+    if vniState = vni_obj.State ; vniState == nil {
+        var _vniState ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Global_AfiSafis_AfiSafi_L2VpnEvpn_Vnis_Vni_State
+        vni_obj.State = &_vniState
+        vniState = vni_obj.State
+    }
 
     if value, ok := vniDataJson["vni"].(float64) ; ok {
         vninum := uint32(value)
@@ -612,8 +617,8 @@ func validate_vni_get (inParams XfmrParams, dbg_log string) (*ocbinds.Openconfig
 
     vni_obj, ok := nbrs_obj.Vni[vninum]
     if !ok {
-        log.Errorf("%s failed !! Error: Vni object %u missing", dbg_log, vninum)
-        return nil, vni_key, oper_err
+        log.Infof("%s Vni object %u missing. Create", dbg_log, vninum)
+        vni_obj, _ = nbrs_obj.NewVni (vninum)
     }
 
     return vni_obj, vni_key, err
