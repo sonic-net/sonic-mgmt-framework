@@ -233,4 +233,10 @@ module openconfig-interfaces-annot {
             sonic-ext:field-name "NONE";
         }
     }
+
+    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv4/oc-ip:unnumbered/oc-ip:interface-ref {
+        deviate add {
+            sonic-ext:subtree-transformer "unnumbered_intf_xfmr";
+        }
+    }
 }

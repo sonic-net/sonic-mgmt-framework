@@ -179,8 +179,17 @@ def invoke_api(func, args=[]):
         else :
             body = { "openconfig-interfaces-ext:fallback": False }
         return api.patch(path, body)
-        
-        
+
+    # Config IPv4 Unnumbered interface
+    elif func == 'patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_unnumbered_interface_ref_config_interface':
+        path = cc.Path('/restconf/data/openconfig-interfaces:interfaces/interface={name}/subinterfaces/subinterface={index}/openconfig-if-ip:ipv4/unnumbered/interface-ref/config/interface', name=args[0], index="0")
+
+        body = { "openconfig-if-ip:interface" : args[1] }
+        return api.patch(path, body)    
+    elif func == 'delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_unnumbered_interface_ref_config_interface':
+        path = cc.Path('/restconf/data/openconfig-interfaces:interfaces/interface={name}/subinterfaces/subinterface={index}/openconfig-if-ip:ipv4/unnumbered/interface-ref/config/interface', name=args[0], index="0")
+        return api.delete(path)    
+
     return api.cli_not_implemented(func)
 
 
