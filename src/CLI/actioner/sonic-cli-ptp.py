@@ -59,6 +59,8 @@ def check_network_transport_allowed(c, network_transport, unicast_multicast):
             return 0
     if unicast_multicast == 'multicast':
         raw_data = db.keys(db.STATE_DB, "PTP_PORT|GLOBAL|*")
+        if not raw_data:
+            return 1
         for key in raw_data:
             state_data = db.get_all(db.STATE_DB, key)
             uc_tbl = state_data.get('unicast-table', 'None')

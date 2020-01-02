@@ -29,7 +29,7 @@ limitations under the License.
     <PARAM name="bgp subcommands" help="BGP Subcommands" ptype="SUBCOMMAND" mode="switch" optional="true">
        <MACRO name="IP_BGP_SUB_CMDS" arg=""></MACRO>
        <PARAM name="vrf" help="BGP VRF" mode="subcommand" ptype="SUBCOMMAND" optional="true">
-         <PARAM name="vrf-Name" help="VRF Name" ptype="STRING">
+         <PARAM name="vrf-name" help="VRF Name" ptype="STRING" default="default">
            <PARAM name="ip subcommands" help="IP subcommands" ptype="SUBCOMMAND" mode="switch" optional="true">
            <MACRO name="IP_BGP_SUB_CMDS" arg=""></MACRO>
            </PARAM>
@@ -38,7 +38,7 @@ limitations under the License.
     </PARAM>
     <ACTION>
         if test -n "${summary}"; then&#xA;
-           python $SONIC_CLI_ROOT/sonic-cli-bgp.py get_ip_bgp_summary show_ip_bgp_summary.j2&#xA;
+           python $SONIC_CLI_ROOT/sonic-cli-bgp.py get_ip_bgp_summary show_ip_bgp_summary.j2 ${vrf-name}&#xA;
         elif test -n "${prefix}"; then&#xA;
            builtin="clish_nop"&#xA;
         elif test -n "${peer-group}"; then&#xA;
@@ -47,7 +47,7 @@ limitations under the License.
            if test -n "${neighbor-subcommands}"; then&#xA;
               python $SONIC_CLI_ROOT/sonic-cli-bgp.py get_show_bgp ${__full_line}&#xA;
            else&#xA;
-              python $SONIC_CLI_ROOT/sonic-cli-bgp.py get_ip_bgp_neighbors show_ip_bgp_neighbors.j2&#xA;
+              python $SONIC_CLI_ROOT/sonic-cli-bgp.py get_ip_bgp_neighbors show_ip_bgp_neighbors.j2 ${vrf-name} ${neighbor-ip}&#xA;
            fi&#xA;
         else&#xA;
            python $SONIC_CLI_ROOT/sonic-cli-bgp.py get_show_bgp ${__full_line}&#xA;
