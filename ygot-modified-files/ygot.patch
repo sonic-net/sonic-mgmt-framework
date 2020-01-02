@@ -180,9 +180,17 @@ diff -ruN ygot-dir-orig/ygot/util/schema.go ygot-dir/ygot/util/schema.go
  			DbgSchema(" - match\n")
  			return entry, nil
 diff -ruN ygot-dir-orig/ygot/ygot/struct_validation_map.go ygot-dir/ygot/ygot/struct_validation_map.go
---- ygot-dir-orig/ygot/ygot/struct_validation_map.go	2019-12-09 11:38:11.730803000 -0800
-+++ ygot-dir/ygot/ygot/struct_validation_map.go	2019-12-09 13:23:43.891119000 -0800
-@@ -335,19 +335,20 @@
+--- ygot-dir-orig/ygot/ygot/struct_validation_map.go    2020-01-02 13:49:10.462936492 -0800
++++ ygot-dir/ygot/ygot/struct_validation_map.go 2020-01-02 14:12:43.677059631 -0800
+@@ -30,6 +30,7 @@
+    "strings"
+
+    "github.com/openconfig/ygot/util"
++   "github.com/openconfig/ygot/ygot"
+ )
+
+ const (
+@@ -335,19 +336,20 @@
  // EmitJSON takes an input ValidatedGoStruct (produced by ygen with validation enabled)
  // and serialises it to a JSON string. By default, produces the Internal format JSON.
  func EmitJSON(s ValidatedGoStruct, opts *EmitJSONConfig) (string, error) {
@@ -216,6 +224,21 @@ diff -ruN ygot-dir-orig/ygot/ygot/struct_validation_map.go ygot-dir/ygot/ygot/st
  
  	v, err := makeJSON(s, opts)
  	if err != nil {
+@@ -526,7 +528,13 @@
+                return err
+            }
+        default:
+-       	dstField.Set(srcField)
++       	if srcField.Type().Implements(reflect.TypeOf((*ygot.GoEnum)(nil)).Elem()) == true {
++           	if srcField.Type().Name() == "int64" && srcField.Int() != 0 {
++               	dstField.Set(srcField)
++           	}
++       	} else {
++           	dstField.Set(srcField)
++       	}
+        }
+    }
+    return nil
 diff -ruN ygot-dir-orig/ygot/ytypes/container.go ygot-dir/ygot/ytypes/container.go
 --- ygot-dir-orig/ygot/ytypes/container.go	2019-12-09 11:38:12.271139000 -0800
 +++ ygot-dir/ygot/ytypes/container.go	2019-12-09 13:23:44.363409000 -0800
