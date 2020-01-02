@@ -24,12 +24,12 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"sort"
 	"strings"
 	"time"
 	"translib"
 
 	"github.com/golang/glog"
-	"github.com/gorilla/mux"
 )
 
 // Process function is the common landing place for all REST requests.
@@ -52,7 +52,7 @@ func Process(w http.ResponseWriter, r *http.Request) {
 	}
 
 	path = getPathForTranslib(r)
-	glog.Infof("[%s] Translated path = %s", reqID, path)
+	glog.V(2).Infof("[%s] Translated path = %s", reqID, path)
 
 	status, data, err = invokeTranslib(r, rc, path, body)
 	if err != nil {
@@ -161,16 +161,13 @@ func resolveResponseContentType(data []byte, r *http.Request, rc *RequestContext
 
 // getPathForTranslib converts REST URIs into GNMI paths
 func getPathForTranslib(r *http.Request) string {
-	// Return the URL path if no variables in the template..
-	vars := mux.Vars(r)
-	if len(vars) == 0 {
-		return trimRestconfPrefix(r.URL.Path)
-	}
+	rc, _ := GetContextWithRouteInfo(r)
+	path := rc.route.path
+	vars := rc.route.vars
 
-	path, err := mux.CurrentRoute(r).GetPathTemplate()
-	if err != nil {
-		glog.Infof("No path template for this route")
-		return trimRestconfPrefix(r.URL.Path)
+	// Return the URL path if no variables in the template..
+	if len(vars) == 0 {
+		return trimRestconfPrefix(path)
 	}
 
 	// Path is a template.. Convert it into GNMI style path
@@ -182,7 +179,7 @@ func getPathForTranslib(r *http.Request) string {
 	path = trimRestconfPrefix(path)
 	path = strings.Replace(path, "={", "{", -1)
 	path = strings.Replace(path, "},{", "}{", -1)
-	rc, _ := GetContext(r)
+	var err error
 
 	for k, v := range vars {
 		v, err = url.PathUnescape(v)
@@ -230,12 +227,6 @@ func isOperationsRequest(r *http.Request) bool {
 	return k >= 0
 	//FIXME URI pattern will not help identifying yang action APIs.
 	//Use swagger generated API name instead???
-}
-
-// getRequestID returns the request id encoded in the context
-func getRequestID(r *http.Request) string {
-	rc, _ := GetContext(r)
-	return rc.ID
 }
 
 // invokeTranslib calls appropriate TransLib API for the given HTTP
@@ -291,7 +282,7 @@ func invokeTranslib(r *http.Request, rc *RequestContext, path string, payload []
 		_, err = translib.Delete(req)
 
 	default:
-		glog.Errorf("[%s] Unknown method '%v'", getRequestID(r), r.Method)
+		glog.Errorf("[%s] Unknown method '%v'", rc.ID, r.Method)
 		err = httpBadRequest("Invalid method")
 	}
 
@@ -302,4 +293,38 @@ func invokeTranslib(r *http.Request, rc *RequestContext, path string, payload []
 	}
 
 	return status, content, err
+}
+
+// commonOptionsHandler is the common HTTP OPTIONS method handler
+// for all REST API paths. Resolves allowed methods for current
+// path by traversing allRoutes cache.
+func commonOptionsHandler(w http.ResponseWriter, r *http.Request) {
+	rc, _ := GetContextWithRouteInfo(r)
+	methods := rc.route.getAllMethodsForPath()
+	hasPatch := containsString(methods, "PATCH")
+
+	// "Allow" header
+	if len(methods) != 0 {
+		if !containsString(methods, "OPTIONS") {
+			methods = append(methods, "OPTIONS")
+		}
+
+		sort.Strings(methods)
+		w.Header().Set("Allow", strings.Join(methods, ", "))
+	}
+
+	// "Accept-Patch" header for RESTCONF data paths
+	if hasPatch && strings.HasPrefix(rc.route.path, restconfDataPathPrefix) {
+		w.Header().Set("Accept-Patch", mimeYangDataJSON)
+	}
+}
+
+// containsString checks if slice 'arr' contains the string value 's'
+func containsString(arr []string, s string) bool {
+	for _, v := range arr {
+		if v == s {
+			return true
+		}
+	}
+	return false
 }

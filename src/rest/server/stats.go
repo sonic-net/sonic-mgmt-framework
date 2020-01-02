@@ -28,8 +28,6 @@ import (
 	"sync"
 	"text/tabwriter"
 	"time"
-
-	"github.com/gorilla/mux"
 )
 
 func init() {
@@ -48,6 +46,9 @@ var apiRequestStat opStat
 // handlerStat tracks time taken by REST API handlers.
 // Includes aut, handler core and translib (translibStat) timings.
 var handlerStat opStat
+
+// authStat tracks time taken by authentication of REST APIs.
+var authStat opStat
 
 // translibStat tracks time taken by translib.
 // Includes translib infra, ygot, app and cvl timings.
@@ -84,6 +85,7 @@ func clearAllStats() {
 	svcRequestStat.clear()
 	apiRequestStat.clear()
 	handlerStat.clear()
+	authStat.clear()
 	translibStat.clear()
 
 	theStatMutex.Unlock()
@@ -96,6 +98,7 @@ func clearAllStats() {
 type apiStats struct {
 	handlerTime  time.Duration
 	translibTime time.Duration
+	authTime     time.Duration
 	internal     bool
 }
 
@@ -115,7 +118,7 @@ func markInternal(r *http.Request) {
 }
 
 // withStat creates a stats tracking for given mux.Router.
-func withStat(router *mux.Router) http.Handler {
+func withStat(router http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var stats apiStats
 		r = r.WithContext(context.WithValue(r.Context(), statsContextKey, &stats))
@@ -133,6 +136,9 @@ func withStat(router *mux.Router) http.Handler {
 		} else {
 			apiRequestStat.add(tt)
 			handlerStat.add(stats.handlerTime)
+			if stats.authTime > 0 {
+				authStat.add(stats.authTime)
+			}
 			if stats.translibTime > 0 {
 				translibStat.add(stats.translibTime)
 			}
@@ -164,6 +170,7 @@ func writeStatsText(w http.ResponseWriter) {
 	fmt.Fprintf(tw, "REST APIs")
 	fmt.Fprintf(tw, "\tServer\t%d\t%s\t%s\n", apiRequestStat.Hits, apiRequestStat.Time, apiRequestStat.Peak)
 	fmt.Fprintf(tw, "\tHandler\t%d\t%s\t%s\n", handlerStat.Hits, handlerStat.Time, handlerStat.Peak)
+	fmt.Fprintf(tw, "\tAuth\t%d\t%s\t%s\n", authStat.Hits, authStat.Time, authStat.Peak)
 	fmt.Fprintf(tw, "\tTranslib\t%d\t%s\t%s\n", translibStat.Hits, translibStat.Time, translibStat.Peak)
 
 	fmt.Fprintf(tw, "Service APIs")
@@ -183,6 +190,7 @@ func writeStatsJSON(w http.ResponseWriter) {
 	data["rest-api"] = map[string]interface{}{
 		"server":   apiRequestStat,
 		"handler":  handlerStat,
+		"auth":     authStat,
 		"translib": translibStat,
 	}
 
