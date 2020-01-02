@@ -185,7 +185,12 @@ func mapFillData(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requestU
 
 func mapFillDataUtil(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requestUri string, xpath string, tableName string, dbKey string, result map[string]map[string]db.Value, subOpDataMap map[int]*RedisDbMap, name string, value interface{}, txCache interface{}, xfmrErr *error) error {
 	var dbs [db.MaxDB]*db.DB
-	xpathInfo := xYangSpecMap[xpath]
+
+	xpathInfo, ok := xYangSpecMap[xpath]
+	if !ok {
+		errStr := fmt.Sprintf("Invalid yang-path(\"%v\").", xpath)
+		return tlerr.InternalError{Format: errStr}
+	}
 
 	if len(xpathInfo.xfmrField) > 0 {
 		uri = uri + "/" + name
@@ -407,7 +412,8 @@ func dbMapDelete(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requestU
 
 					}
 					if specYangType == YANG_LEAF {
-						if len(xYangSpecMap[xpath].defVal) > 0 {
+						_, ok := xYangSpecMap[xpath]
+						if ok && len(xYangSpecMap[xpath].defVal) > 0 {
 							err = mapFillDataUtil(d, ygRoot, oper, luri, requestUri, xpath, tableName, keyName, result, subOpDataMap, spec.fieldName, xYangSpecMap[xpath].defVal, txCache, &xfmrErr)
 							if xfmrErr != nil {
 								return xfmrErr
@@ -456,7 +462,8 @@ func dbMapDelete(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requestU
 				}
 			}
 
-			if len(xYangSpecMap[moduleNm].xfmrPost) > 0 {
+			_, ok := xYangSpecMap[moduleNm]
+			if ok && len(xYangSpecMap[moduleNm].xfmrPost) > 0 {
 				log.Info("Invoke post transformer: ", xYangSpecMap[moduleNm].xfmrPost)
 				var dbs [db.MaxDB]*db.DB
 				var dbresult = make(RedisDbMap)
@@ -813,7 +820,7 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
 				if ret != nil {
 					curKey = ret[0].Interface().(string)
 				}
-			} else if xYangSpecMap[xpathPrefix].keyName != nil {
+			} else if ok && xYangSpecMap[xpathPrefix].keyName != nil {
 				curKey = *xYangSpecMap[xpathPrefix].keyName
 			} else {
 				curKey = keyCreate(keyName, xpathPrefix, data, d.Opts.KeySeparator)
@@ -894,7 +901,8 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
 					   Inside full-spec isKey is set to true for list key-leaf dierctly under the list(outside of config container) 
 					   For ietf yang(eg.ietf-ptp) list key-leaf might have a field transformer.
 					 */
-					if ((!xYangSpecMap[xpath].isKey) || (len(xYangSpecMap[xpath].xfmrField) > 0)) {
+					 _, ok := xYangSpecMap[xpath]
+					if ok && ((!xYangSpecMap[xpath].isKey) || (len(xYangSpecMap[xpath].xfmrField) > 0)) {
 						if len(xYangSpecMap[xpath].xfmrFunc) == 0 {
 							value := jData.MapIndex(key).Interface()
 							log.Infof("data field: key(\"%v\"), value(\"%v\").", key, value)
