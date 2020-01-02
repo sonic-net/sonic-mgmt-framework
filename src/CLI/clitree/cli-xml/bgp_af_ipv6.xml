@@ -300,7 +300,7 @@ limitations under the License.
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_config_unsuppress_map_name ${vrf-name} ${nbr-addr} IPV6_UNICAST ${map}</ACTION>
   </COMMAND>
   <COMMAND name="weight" help="Set default weight for routes from this neighbor">
-    <PARAM name="val" help="Default weight" ptype="RANGE_1_255"/>
+    <PARAM name="val" help="Default weight" ptype="RANGE_0_65535"/>
      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_config_weight ${vrf-name} ${nbr-addr} IPV6_UNICAST ${val}</ACTION>
   </COMMAND>
   <COMMAND name="maximum-prefix" help="Maximum number of prefixes to accept from this peer">

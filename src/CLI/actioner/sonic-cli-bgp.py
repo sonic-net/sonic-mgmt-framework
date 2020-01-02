@@ -278,7 +278,10 @@ def invoke_api(func, args=[]):
     elif func == 'patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_bgp_ext_route_reflector_config_route_reflector_cluster_id':
         keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/openconfig-bgp-ext:bgp-ext-route-reflector/config/route-reflector-cluster-id',
                 name=args[0], identifier=IDENTIFIER, name1=NAME1)
-        body = { "openconfig-bgp-ext:route-reflector-cluster-id": args[1] }
+        cluster_id = args[1]
+        if cluster_id.isdigit():
+            cluster_id = int(cluster_id)
+        body = { "openconfig-bgp-ext:route-reflector-cluster-id": cluster_id}
         return api.patch(keypath, body)
     elif func == 'patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_logging_options_config_log_neighbor_state_changes':
         keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/openconfig-bgp-ext:logging-options/config/log-neighbor-state-changes',

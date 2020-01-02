@@ -173,7 +173,7 @@ limitations under the License.
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_global_defaults_config_ipv4_unicast ${vrf-name} True</ACTION>
   </COMMAND>
   <COMMAND name="default local-preference" help="Local preference (higher=more preferred)">
-       <PARAM name="lprftime" help="Seconds" ptype="RANGE_0_4294967295"/>
+       <PARAM name="lprftime" help="Configure default local preference value" ptype="RANGE_0_4294967295"/>
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_global_defaults_config_local_preference ${vrf-name} ${lprftime}</ACTION>
   </COMMAND>
   <COMMAND name="default show-hostname" help="Show hostname in certain command outputs">
