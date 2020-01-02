@@ -3,3 +3,4 @@
 /lib/systemd/system/hamd.service
 /usr/sbin/hamd
 /usr/bin/hamctl
+/usr/bin/certgen
