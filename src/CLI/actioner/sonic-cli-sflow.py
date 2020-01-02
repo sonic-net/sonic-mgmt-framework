@@ -8,6 +8,7 @@ from collections import OrderedDict
 from scripts.render_cli import show_cli_output
 import cli_client as cc
 
+SFLOW_DEFAULT_PORT = 6343
 
 import urllib3
 urllib3.disable_warnings()
@@ -50,6 +51,7 @@ def getId(item):
 
 def invoke_api(func, args=[]):
     api = cc.ApiClient()
+    port = SFLOW_DEFAULT_PORT
 
     if func == 'put_sonic_sflow_sonic_sflow_sflow_collector_sflow_collector_list':
 	path = cc.Path('/restconf/data/sonic-sflow:sonic-sflow/SFLOW_COLLECTOR/SFLOW_COLLECTOR_LIST={collector_name}',
@@ -57,7 +59,8 @@ def invoke_api(func, args=[]):
         body = {  "sonic-sflow:SFLOW_COLLECTOR_LIST": [
           {
               "collector_name": args[0],
-              "collector_ip": args[1]
+              "collector_ip": args[1],
+              "collector_port": port
           }] }
         if len(args) == 3:
             body["sonic-sflow:SFLOW_COLLECTOR_LIST"][0].update({"collector_port":int(args[2])})
