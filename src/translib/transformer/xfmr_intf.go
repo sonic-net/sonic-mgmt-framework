@@ -213,6 +213,51 @@ func getIntfsRoot (s *ygot.GoStruct) *ocbinds.OpenconfigInterfaces_Interfaces {
     return deviceObj.Interfaces
 }
 
+/* Perform action based on the operation and Interface type wrt Interface name key */
+/* It should handle only Interface name key xfmr operations */
+func performIfNameKeyXfmrOp(inParams *XfmrParams, requestUriPath *string, ifName *string, ifType E_InterfaceType) error {
+    var err error
+
+    switch inParams.oper {
+    case DELETE:
+        if *requestUriPath == "/openconfig-interfaces:interfaces/interface" {
+            switch ifType {
+            case IntfTypeVlan:
+                /* VLAN Interface Delete Handling */
+                /* Update the map for VLAN and VLAN MEMBER table */
+                err := deleteVlanIntfAndMembers(inParams, ifName)
+                if err != nil {
+                    log.Errorf("Deleting VLAN: %s failed!", *ifName)
+                    return err
+                }
+            case IntfTypePortChannel:
+                err := deleteLagIntfAndMembers(inParams, ifName)
+                if err != nil {
+                    log.Errorf("Deleting LAG: %s failed!", *ifName)
+                    return err
+                }
+            case IntfTypeLoopback:
+                err := deleteLoopbackIntf(inParams, ifName)
+                if err != nil {
+                    log.Errorf("Deleting Loopback: %s failed!", *ifName)
+                    return err
+                }
+            }
+            log.Errorf("Invalid interface for delete:%s", *ifName)
+            return err
+        }
+    case CREATE:
+    case UPDATE:
+        if *requestUriPath == "/openconfig-interfaces:interfaces/interface/config" {
+            switch ifType {
+            case IntfTypeVlan:
+                enableStpOnVlanCreation(inParams, ifName) 
+            }
+        }
+    }
+    return err
+}
+
 /* RPC for clear counters */
 var rpc_clear_counters RpcCallpoint = func(body []byte, dbs [db.MaxDB]*db.DB) ([]byte, error) {
     var err error
@@ -338,32 +383,9 @@ var YangToDb_intf_tbl_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (stri
     }
     requestUriPath, err := getYangPathFromUri(inParams.requestUri)
     log.Info("inParams.requestUri: ", requestUriPath)
-    if inParams.oper == DELETE && requestUriPath == "/openconfig-interfaces:interfaces/interface" {
-        switch intfType {
-        case IntfTypeVlan:
-            /* VLAN Interface Delete Handling */
-            /* Update the map for VLAN and VLAN MEMBER table */
-            err := deleteVlanIntfAndMembers(&inParams, &ifName)
-            if err != nil {
-                log.Errorf("Deleting VLAN: %s failed!", ifName)
-                return "", err
-            }
-        case IntfTypePortChannel:
-            err := deleteLagIntfAndMembers(&inParams, &ifName)
-            if err != nil {
-                log.Errorf("Deleting LAG: %s failed!", ifName)
-                return "", err
-            }
-        case IntfTypeLoopback:
-            err := deleteLoopbackIntf(&inParams, &ifName)
-            if err != nil {
-                log.Errorf("Deleting Loopback: %s failed!", ifName)
-                return "", err
-            }
-        }
-        log.Errorf("Invalid interface for delete:%s", ifName)
+    err = performIfNameKeyXfmrOp(&inParams, &requestUriPath, &ifName, intfType)
+    if err != nil {
         return "", err
-
     }
     return ifName, err
 }
@@ -1132,9 +1154,9 @@ func deleteLoopbackIntf(inParams *XfmrParams, loName *string) error {
         return err
     }
     err = validateIPExists(intTbl.cfgDb.intfTN, inParams.d, loName)
-	if err != nil {
-		return err
-	}
+  if err != nil {
+    return err
+  }
     resMap[intTbl.cfgDb.intfTN] = loMap
 
     subOpMap[db.ConfigDB] = resMap

@@ -120,12 +120,15 @@ var DbToYang_intf_nat_zone_xfmr SubTreeXfmrDbToYang = func (inParams XfmrParams)
 
     config, state := false, false
 
-    if strings.HasPrefix(targetUriPath, "/openconfig-interfaces:interfaces/interface/openconfig-interfaces-ext:nat-zone") {
+    if strings.HasPrefix(targetUriPath, "/openconfig-interfaces:interfaces/interface/openconfig-interfaces-ext:nat-zone/config") || 
+        strings.HasPrefix(targetUriPath, "/openconfig-interfaces:interfaces/interface/nat-zone/config"){
         config = true
+    } else if strings.HasPrefix(targetUriPath, "/openconfig-interfaces:interfaces/interface/openconfig-interfaces-ext:nat-zone/state") ||
+        strings.HasPrefix(targetUriPath, "/openconfig-interfaces:interfaces/interface/nat-zone/state") {
         state = true
-    } else if strings.HasPrefix(targetUriPath, "/openconfig-interfaces:interfaces/interface/openconfig-interfaces-ext:nat-zone/config") {
+    } else if strings.HasPrefix(targetUriPath, "/openconfig-interfaces:interfaces/interface/openconfig-interfaces-ext:nat-zone") ||
+        strings.HasPrefix(targetUriPath, "/openconfig-interfaces:interfaces/interface/nat-zone") {
         config = true
-    } else if strings.HasPrefix(targetUriPath, "/openconfig-interfaces:interfaces/interface/nat-zone/openconfig-interfaces-ext:state") {
         state = true
     } else {
         return errors.New("DbToYang_intf_nat_zone_xfmr : Invalid URI, " + inParams.uri)

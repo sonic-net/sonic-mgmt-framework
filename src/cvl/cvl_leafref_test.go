@@ -302,7 +302,7 @@ func TestValidateEditConfig_Create_Leafref_With_Other_DataType_Positive(t *testi
 		cvl.CVLEditConfigData{
 			cvl.VALIDATE_ALL,
 			cvl.OP_CREATE,
-			"STP_INTF|Test12", //Non-leafref
+			"STP_PORT|Test12", //Non-leafref
 			map[string]string{
 				"enabled": "true",
 				"edge_port": "true",

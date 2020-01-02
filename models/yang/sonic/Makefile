@@ -13,7 +13,7 @@ SONIC_PYANG_DIR        := $(SONIC_TOOLS_DIR)/pyang
 SONIC_PYANG_PLUGIN_DIR := $(SONIC_PYANG_DIR)/pyang_plugins
 SONIC_PYANG_BIN        := pyang
 
-all: yamlGen allyangs.tree allyangs_tree.html
+all: yamlGen allyangs.tree allyangs_tree.html yang_tree.md
 
 yamlGen: $(SONIC_YANGAPI_DIR)/.sonic_done
 
@@ -24,6 +24,15 @@ allyangs.tree:  $(SONIC_YANG_MOD_FILES) $(SONIC_YANG_COMMON_FILES)
 		-p $(SONIC_YANGDIR_COMMON):$(SONIC_YANGDIR) \
 		$(SONIC_YANG_MOD_FILES)
 	@echo "+++++ Generation of  YANG tree for Sonic Yang modules completed +++++"
+
+yang_tree.md:  $(SONIC_YANG_MOD_FILES) $(SONIC_YANG_COMMON_FILES)
+	$(SONIC_PYANG_BIN) \
+		-f doctree \
+		-o $@ \
+		--plugindir $(SONIC_PYANG_PLUGIN_DIR) \
+		-p $(SONIC_YANGDIR_COMMON):$(SONIC_YANGDIR) \
+		$(SONIC_YANG_MOD_FILES)
+	@echo "+++++ Generation of  YANG tree in Md Format for Sonic Yang modules completed +++++"
 
 allyangs_tree.html:  $(SONIC_YANG_MOD_FILES) $(SONIC_YANG_COMMON_FILES)
 	$(SONIC_PYANG_BIN) \
@@ -52,4 +61,4 @@ clean:
 	@echo "Removing files ..."
 	rm -f $(SONIC_YANGAPI_DIR)/.sonic_done
 	rm -f $(patsubst %.yang, $(SONIC_YANGAPI_DIR)/%.yaml, $(notdir $(SONIC_YANG_MOD_FILES)))
-	rm -rf allyangs.tree allyangs_tree.html
+	rm -rf allyangs.tree allyangs_tree.html yang_tree.md

@@ -351,7 +351,7 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (cvlErr CVLErrorIn
 		switch cfgData[i].VOp {
 		case OP_CREATE:
 			//Check max-element constraint 
-			if ret := c.checkMaxElemConstraint(tbl); ret != CVL_SUCCESS {
+			if ret := c.checkMaxElemConstraint(OP_CREATE, tbl); ret != CVL_SUCCESS {
 				cvlErrObj.ErrCode = CVL_SYNTAX_ERROR
 				cvlErrObj.ErrAppTag = "too-many-elements"
 				cvlErrObj.Msg = "Max elements limit reached"
@@ -383,6 +383,11 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (cvlErr CVLErrorIn
 				}
 			} else {
 				//Entire entry to be deleted
+
+				//Update max-elements count
+				c.checkMaxElemConstraint(OP_DELETE, tbl)
+
+				//Now check delete constraints
 				if (c.checkDeleteConstraint(cfgData, tbl, key, "") != CVL_SUCCESS) {
 					cvlErrObj.ErrCode = CVL_SEMANTIC_ERROR
 					cvlErrObj.Msg = "Delete constraint failed"

@@ -105,6 +105,11 @@ limitations under the License.
       </PARAM>
       <ACTION> python $SONIC_CLI_ROOT/sonic-cli-aaa.py put_openconfig_system_system_aaa_authentication_config_authentication_method ${login} ${local} ${tacacs+} </ACTION>
     </COMMAND>
+    <COMMAND name="no aaa" help="Unconfigure aaa authentication configuration"/>
+    <COMMAND name="no aaa authentication" help="Unconfigure aaa authentication configuration"/>
+    <COMMAND name="no aaa authentication login-method" help="Unconfigure aaa authentication login method">
+      <ACTION>python $SONIC_CLI_ROOT/sonic-cli-aaa.py put_openconfig_system_system_aaa_authentication_config_authentication_method local</ACTION>
+    </COMMAND>
   </VIEW>
 
 </CLISH_MODULE>

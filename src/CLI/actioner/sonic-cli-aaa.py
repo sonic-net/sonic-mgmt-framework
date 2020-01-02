@@ -32,7 +32,7 @@ def invoke_api(func, args):
     api = cc.ApiClient()
 
     # Set/Get aaa configuration
-    body = { "openconfig-system-ext:failthrough": False, "openconfig-system-ext:authentication-method": 'None' }
+    body = { "openconfig-system-ext:failthrough": False, "openconfig-system:authentication-method": ['local'] }
     failthrough='None'
     authmethod=[]
 
@@ -48,7 +48,7 @@ def invoke_api(func, args):
             if 'failthrough' in api_response['openconfig-system:config']:
                 body["openconfig-system-ext:failthrough"] = api_response['openconfig-system:config']['failthrough']
             if 'authentication-method' in api_response['openconfig-system:config']:
-                body["openconfig-system-ext:authentication-method"] = api_response['openconfig-system:config']['authentication-method']
+                body["openconfig-system:authentication-method"] = api_response['openconfig-system:config']['authentication-method']
     if func == 'put_openconfig_system_ext_system_aaa_authentication_config_failthrough':
        path = cc.Path('/restconf/data/openconfig-system:system/aaa/authentication/config/openconfig-system-ext:failthrough')
        body["openconfig-system-ext:failthrough"] = (args[0] == "True")
@@ -67,7 +67,7 @@ def invoke_api(func, args):
                authmethod.append(args[1])
        else:
            pass
-       body["openconfig-system-ext:authentication-method"] = authmethod
+       body["openconfig-system:authentication-method"] = authmethod
        return api.put(path, body)
     elif func == 'get_openconfig_system_system_aaa_authentication_config':
        return get_response

@@ -85,7 +85,7 @@ func TestValidateEditConfig_When_Exp_In_Leaf_Positive(t *testing.T) {
 		cvl.CVLEditConfigData{
 			cvl.VALIDATE_ALL,
 			cvl.OP_CREATE,
-			"STP_INTF|Ethernet4",
+			"STP_PORT|Ethernet4",
 			map[string]string{
 				"enabled": "true",
 				"edge_port": "true",
@@ -124,7 +124,7 @@ func TestValidateEditConfig_When_Exp_In_Leaf_Negative(t *testing.T) {
 		cvl.CVLEditConfigData{
 			cvl.VALIDATE_ALL,
 			cvl.OP_CREATE,
-			"STP_INTF|Ethernet4",
+			"STP_PORT|Ethernet4",
 			map[string]string{
 				"enabled": "true",
 				"edge_port": "true",

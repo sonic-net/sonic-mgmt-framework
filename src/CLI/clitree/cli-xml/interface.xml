@@ -686,14 +686,14 @@ limitations under the License.
                 help="NAT zone of the vlan"
                 ptype="UINT" />
         <ACTION>
-            python $SONIC_CLI_ROOT/sonic-cli-nat.py patch_openconfig_interfaces_ext_interfaces_interface_nat_zone_config_nat_zone Vlan${vlan_id} ${zone}
+            python $SONIC_CLI_ROOT/sonic-cli-nat.py patch_openconfig_interfaces_ext_interfaces_interface_nat_zone_config_nat_zone ${vlan_id} ${zone}
         </ACTION>
         </COMMAND>
         <COMMAND
             name="no nat-zone"
             help="Remove Nat Zone on a vlan" >
         <ACTION>
-            python $SONIC_CLI_ROOT/sonic-cli-nat.py delete_openconfig_interfaces_ext_interfaces_interface_nat_zone_config_nat_zone Vlan${vlan_id}
+            python $SONIC_CLI_ROOT/sonic-cli-nat.py delete_openconfig_interfaces_ext_interfaces_interface_nat_zone_config_nat_zone ${vlan_id}
         </ACTION>
         </COMMAND>
 

@@ -29,16 +29,22 @@ import (
 //Checks max-elements defined with (current number of entries
 //getting added + entries already added and present in request
 //cache + entries present in Redis DB)
-func (c *CVL) checkMaxElemConstraint(tableName string) CVLRetCode {
+func (c *CVL) checkMaxElemConstraint(op CVLOperation, tableName string) CVLRetCode {
 	var nokey []string
+
+	if (op != OP_CREATE) && (op != OP_DELETE) {
+		//Nothing to do, just return
+		return CVL_SUCCESS
+	}
 
 	if modelInfo.tableInfo[tableName].redisTableSize == -1 {
 		//No limit for table size
 		return CVL_SUCCESS
 	}
 
-	curSize := c.maxTableElem[tableName]
-	if (curSize == 0) { //fetch from Redis first time in the session
+	curSize, exists := c.maxTableElem[tableName]
+
+	if (exists == false) { //fetch from Redis first time in the session
 		redisEntries, err := luaScripts["count_entries"].Run(redisClient, nokey, tableName + "|*").Result()
 		curSize = int(redisEntries.(int64))
 
@@ -47,8 +53,23 @@ func (c *CVL) checkMaxElemConstraint(tableName string) CVLRetCode {
 			tableName, err)
 			return CVL_FAILURE
 		}
+
+		//Store the current table size
+		c.maxTableElem[tableName] = curSize
 	}
 
+	if (op == OP_DELETE) {
+		//For delete operation we need to reduce the count.
+		//Because same table can be deleted and added back 
+		//in same session.
+
+		if (curSize > 0) {
+			c.maxTableElem[tableName] = (curSize - 1)
+		}
+		return CVL_SUCCESS
+	}
+
+	//Otherwise CREATE case
 	if curSize >=  modelInfo.tableInfo[tableName].redisTableSize {
 		CVL_LOG(ERROR, "%s table size has already reached to max-elements %d",
 		tableName, modelInfo.tableInfo[tableName].redisTableSize)
