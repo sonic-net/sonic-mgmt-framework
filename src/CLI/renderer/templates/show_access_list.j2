@@ -15,8 +15,10 @@
         {%- endif %}
         {% set _list = response_list.append( fwd_action ) %}
         {# Get protocol #}
-        {% set proto = seq["ipv4"]["state"]["protocol"].split(':')[1].split('_')[1]|lower %}
-        {% set _list = response_list.append( proto ) %}
+        {% if seq["ipv4"]["state"]["protocol"] %}
+            {% set proto = seq["ipv4"]["state"]["protocol"].split(':')[1].split('_')[1]|lower %}
+            {% set _list = response_list.append( proto ) %}
+        {%- endif %}
         {# Get Source IP #}
         {% set src_ip = seq["ipv4"]["state"]["source-address"] %}
         {% set _list = response_list.append( src_ip ) %}
@@ -34,13 +36,13 @@
         {%- if seq["transport"] %}
             {%- if seq["transport"]["config"]["destination-port"] %}
                 {% set dstn_port = "eq " + seq["transport"]["config"]["destination-port"]|string %}
-	        {% set _list = response_list.append( dstn_port ) %}
+                {% set _list = response_list.append( dstn_port ) %}
             {%- endif %}
             {%- if seq["transport"]["config"]["tcp-flags"] %}
-		{% for var in seq["transport"]["config"]["tcp-flags"] %}
-		    {% set flag = var.split(':')[1].split('_')[1]|lower %}
-	            {% set _list = response_list.append( flag ) %}
-		{% endfor %}
+                {% for var in seq["transport"]["config"]["tcp-flags"] %}
+                    {% set flag = var.split(':')[1].split('_')[1]|lower %}
+                    {% set _list = response_list.append( flag ) %}
+                {% endfor %}
             {%- endif %}
         {%- endif %}
         {%- if seq["ipv4"]["state"]["dscp"] %}

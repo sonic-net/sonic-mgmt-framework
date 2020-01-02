@@ -1484,9 +1484,15 @@ func (app *StpApp) setStpInterfacesDataInDB(d *db.DB, createFlag bool) error {
 		}
 		if createFlag || (!createFlag && err != nil && !existingEntry.IsPopulated()) {
 			err = d.CreateEntry(app.interfaceTable, asKey(intfName), app.intfTableMap[intfName])
+			if err != nil {
+				return err
+			}
 		} else {
 			if existingEntry.IsPopulated() {
 				err = d.ModEntry(app.interfaceTable, asKey(intfName), app.intfTableMap[intfName])
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -1991,7 +1997,10 @@ func (app *StpApp) enableStpForInterfaces(d *db.DB) error {
 	for i, _ := range portKeys {
 		portKey := portKeys[i]
 		if contains(intfList, (&portKey).Get(0)) {
-			d.CreateEntry(app.interfaceTable, portKey, defaultDBValues)
+			err = d.CreateEntry(app.interfaceTable, portKey, defaultDBValues)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
@@ -2003,7 +2012,10 @@ func (app *StpApp) enableStpForInterfaces(d *db.DB) error {
 	for i, _ := range portchKeys {
 		portchKey := portchKeys[i]
 		if contains(intfList, (&portchKey).Get(0)) {
-			d.CreateEntry(app.interfaceTable, portchKey, defaultDBValues)
+			err = d.CreateEntry(app.interfaceTable, portchKey, defaultDBValues)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return err

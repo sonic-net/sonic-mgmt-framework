@@ -231,32 +231,31 @@ def run(func, args):
         api_response = invoke(func, args)
         if api_response.ok():
             response = api_response.content
-            if response is None:
-                print "Success"
-            elif 'sonic-udld:UDLD_LIST' in response.keys():
-                value = response['sonic-udld:UDLD_LIST']
-                if value is None:
-                    return
-                else:
-                    show_cli_output(args[0], value)
-            elif 'sonic-udld:_UDLD_PORT_TABLE_LIST' in response.keys():
-                value = response['sonic-udld:_UDLD_PORT_TABLE_LIST']
-                if value is None:
-                    return
-                else:
-                    show_cli_output(args[0], value)
-            elif 'intf_show' in response.keys():
-                value = response['intf_show']
-                if value is None:
-                    return
-                else:
-                    show_cli_output(args[0], value)
-            elif 'sonic-udld:_UDLD_PORT_NEIGH_TABLE_LIST' in response.keys():
-                value = response['sonic-udld:_UDLD_PORT_NEIGH_TABLE_LIST']
-                if value is None:
-                    return
-                else:
-                    show_cli_output(args[0], value)
+            if response is not None:
+                if 'sonic-udld:UDLD_LIST' in response.keys():
+                    value = response['sonic-udld:UDLD_LIST']
+                    if value is None:
+                        return
+                    else:
+                        show_cli_output(args[0], value)
+                elif 'sonic-udld:_UDLD_PORT_TABLE_LIST' in response.keys():
+                    value = response['sonic-udld:_UDLD_PORT_TABLE_LIST']
+                    if value is None:
+                        return
+                    else:
+                        show_cli_output(args[0], value)
+                elif 'intf_show' in response.keys():
+                    value = response['intf_show']
+                    if value is None:
+                        return
+                    else:
+                        show_cli_output(args[0], value)
+                elif 'sonic-udld:_UDLD_PORT_NEIGH_TABLE_LIST' in response.keys():
+                    value = response['sonic-udld:_UDLD_PORT_NEIGH_TABLE_LIST']
+                    if value is None:
+                        return
+                    else:
+                        show_cli_output(args[0], value)
         else:
             print(api_response.error_message())
 
