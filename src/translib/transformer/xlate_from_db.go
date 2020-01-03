@@ -492,7 +492,8 @@ func yangListDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, r
 	var tblList []string
 
 	_, ok := xYangSpecMap[xpath]
-	if tbl == "" && ok && xYangSpecMap[xpath].xfmrTbl != nil {
+	if ok {
+	if tbl == "" && xYangSpecMap[xpath].xfmrTbl != nil {
 		xfmrTblFunc := *xYangSpecMap[xpath].xfmrTbl
 		if len(xfmrTblFunc) > 0 {
 			inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, uri, requestUri, GET, tblKey, dbDataMap, nil, nil, txCache)
@@ -503,15 +504,15 @@ func yangListDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, r
 				}
 			}
 		}
-	} else if tbl != "" && ok && xYangSpecMap[xpath].xfmrTbl == nil {
+	} else if tbl != "" && xYangSpecMap[xpath].xfmrTbl == nil {
 		tblList = append(tblList, tbl)
-	} else if tbl != "" && ok && xYangSpecMap[xpath].xfmrTbl != nil {
+	} else if tbl != "" && xYangSpecMap[xpath].xfmrTbl != nil {
 		/*key instance level GET, table name and table key filled from xpathKeyExtract which internally calls table transformer*/
 		inParams := formXfmrInputRequest(dbs[cdb], dbs, cdb, ygRoot, uri, requestUri, GET, tblKey, dbDataMap, nil, nil, txCache)
 		dbDataFromTblXfmrGet(tbl, inParams, dbDataMap)
 		tblList = append(tblList, tbl)
 
-	} else if tbl == "" && ok && xYangSpecMap[xpath].xfmrTbl == nil {
+	} else if tbl == "" && xYangSpecMap[xpath].xfmrTbl == nil {
 		// Handling for case: Parent list is not associated with a tableName but has children containers/lists having tableNames.
 		if tblKey != "" {
 			var wg sync.WaitGroup
@@ -547,6 +548,7 @@ func yangListDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, r
 				}
 			}
 		}
+	}
 	}
 
 	var tblWg sync.WaitGroup
