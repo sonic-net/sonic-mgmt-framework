@@ -35,11 +35,11 @@ func init() {
 	fmt.Println("+++++ init handler_test +++++")
 }
 
-var testRouter *mux.Router
+var testRouter *Router
 
 // Basic mux.Router tests
 func TestRoutes(t *testing.T) {
-	initCount := countRoutes(NewMuxRouter())
+	initCount := countRoutes(newRouter())
 
 	// Add couple of test handlers
 
@@ -51,8 +51,7 @@ func TestRoutes(t *testing.T) {
 		w.WriteHeader(2)
 	})
 
-	SetUIDirectory("/tmp/ui") // !!?
-	testRouter = NewMuxRouter()
+	testRouter = newRouter()
 	newCount := countRoutes(testRouter)
 	expCount := initCount + 4 // OPTIONS handler is automaticall added for above 2 GET handlers
 
@@ -71,7 +70,7 @@ func TestRoutes(t *testing.T) {
 	// fail the requests with 401 error. Unknown path should still
 	// return 404.
 	ClientAuth.Set("password")
-	testRouter = NewMuxRouter()
+	testRouter = newRouter()
 	t.Run("Get1_auth", testGet("/test/1", 401))
 	t.Run("Get2_auth", testGet("/test/2", 401))
 	t.Run("GetUnknown_auth", testGet("/test/unknown", 404))
@@ -84,9 +83,9 @@ func TestRoutes(t *testing.T) {
 
 // countRoutes counts the registered routes in a mux.Router
 // object by walking it
-func countRoutes(r *mux.Router) int {
+func countRoutes(r *Router) int {
 	var count int
-	r.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
+	r.muxRoutes.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
 		if route.GetHandler() != nil {
 			count++
 		}
@@ -111,6 +110,8 @@ func TestOptions(t *testing.T) {
 	path1 := "/optionstest/1"
 	path2 := "/optionstest/2"
 	path3 := restconfDataPathPrefix + "optionstest/3"
+	path4 := restconfDataPathPrefix + "optionstest/4"
+	path5 := restconfDataPathPrefix + "optionstest/unknown"
 
 	h := func(w http.ResponseWriter, r *http.Request) {}
 	AddRoute("OPTGET1", "GET", path1, h)
@@ -118,11 +119,14 @@ func TestOptions(t *testing.T) {
 	AddRoute("OPTPUT2", "PUT", path2, h)
 	AddRoute("OPTPAT2", "PATCH", path2, h)
 	AddRoute("OPTPAT3", "PATCH", path3, h)
+	AddRoute("OPTPAT4", "POST", path4, h)
 
-	testRouter = NewMuxRouter()
+	testRouter = newRouter()
 	t.Run("OPT-1", testOptions(path1, "GET, OPTIONS", ""))
 	t.Run("OPT-2", testOptions(path2, "GET, PUT, PATCH, OPTIONS", ""))
 	t.Run("OPT-3", testOptions(path3, "PATCH, OPTIONS", mimeYangDataJSON))
+	t.Run("OPT-4", testOptions(path4, "POST, OPTIONS", ""))
+	t.Run("OPT-5", testResponseStatus("OPTIONS", path5, 404))
 	testRouter = nil
 }
 
@@ -293,13 +297,8 @@ func testPathConv(template, path, expPath string) func(*testing.T) {
 
 func testPathConv2(m map[string]string, template, path, expPath string) func(*testing.T) {
 	return func(t *testing.T) {
-		router := NewMuxRouter()
-		if template == "*" {
-			t.Logf("No template...")
-			router.Methods("GET").HandlerFunc(pathConvHandler)
-		} else {
-			router.HandleFunc(template, pathConvHandler)
-		}
+		router := newRouter()
+		router.addRoute(t.Name(), "GET", template, pathConvHandler)
 
 		r := httptest.NewRequest("GET", path, nil)
 		w := httptest.NewRecorder()
@@ -638,5 +637,46 @@ func prepareRequest(t *testing.T, method, path, data string) *http.Request {
 func verifyResponse(t *testing.T, w *httptest.ResponseRecorder, expCode int) {
 	if w.Code != expCode {
 		t.Fatalf("Expecting response status %d; got %d", expCode, w.Code)
+	}
+}
+
+func testResponseStatus(method, path string, expStatus int) func(*testing.T) {
+	return func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(method, path, nil)
+
+		testRouter.ServeHTTP(w, r)
+		verifyResponse(t, w, expStatus)
+	}
+}
+
+func (r *Router) addRoute(name, method, path string, h http.HandlerFunc) {
+	if isServeFromTree(path) {
+		rr := routeRegInfo{name: name, method: method, path: path, handler: h}
+		r.rcRoutes.add("", path, &rr)
+	} else if path == "*" {
+		r.muxRoutes.Methods(method).HandlerFunc(h)
+	} else {
+		r.muxRoutes.Methods(method).Path(path).HandlerFunc(h)
+	}
+}
+
+func (tree *routeTree) Print(t *testing.T, indent int) {
+	var buff strings.Builder
+	for i := 1; i < indent; i++ {
+		buff.WriteString(" |  ")
+	}
+	if indent > 0 {
+		buff.WriteString(" +--")
+	}
+
+	padding := buff.String()
+	indent++
+
+	for pp, node := range *tree {
+		t.Logf("%s%s\n", padding, pp)
+		if node.subpaths != nil {
+			node.subpaths.Print(t, indent)
+		}
 	}
 }

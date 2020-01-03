@@ -41,7 +41,6 @@ import (
 // Command line parameters
 var (
 	port      int    // Server port
-	uiDir     string // SwaggerUI directory
 	certFile  string // Server certificate file path
 	keyFile   string // Server private key file path
 	caFile    string // Client CA certificate file path
@@ -53,7 +52,6 @@ var (
 func init() {
 	// Parse command line
 	flag.IntVar(&port, "port", 443, "Listen port")
-	flag.StringVar(&uiDir, "ui", "/rest_ui", "UI directory")
 	flag.StringVar(&certFile, "cert", "", "Server certificate file path")
 	flag.StringVar(&keyFile, "key", "", "Server private key file path")
 	flag.StringVar(&caFile, "cacert", "", "CA certificate for client certificate validation")
@@ -103,8 +101,6 @@ func main() {
 
 	swagger.Load()
 
-	server.SetUIDirectory(uiDir)
-
 	server.GenerateJwtSecretKey()
 	server.JwtRefreshInt = time.Duration(jwtRefInt * uint64(time.Second))
 	server.JwtValidInt = time.Duration(jwtValInt * uint64(time.Second))
@@ -135,7 +131,6 @@ func main() {
 	}
 
 	glog.Infof("**** Server started on %v", address)
-	glog.Infof("**** UI directory is %v", uiDir)
 
 	// Start HTTPS server
 	glog.Fatal(restServer.ListenAndServeTLS("", ""))
@@ -151,7 +146,6 @@ func spawnUnixListener() {
 		Certificates:             prepareServerCertificate(),
 		ClientCAs:                prepareCACertificates(cliCAFile),
 		MinVersion:               tls.VersionTLS12,
-		CurvePreferences:         getPreferredCurveIDs(),
 		PreferServerCipherSuites: true,
 		CipherSuites:             getPreferredCipherSuites(),
 	}
@@ -230,14 +224,6 @@ func getTLSClientAuthType() tls.ClientAuthType {
 		return tls.RequireAndVerifyClientCert
 	}
 	return tls.RequestClientCert
-}
-
-func getPreferredCurveIDs() []tls.CurveID {
-	return []tls.CurveID{
-		tls.CurveP521,
-		tls.CurveP384,
-		tls.CurveP256,
-	}
 }
 
 func getPreferredCipherSuites() []uint16 {

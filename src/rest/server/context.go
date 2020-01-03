@@ -72,14 +72,20 @@ type RequestContext struct {
 	// stats is the apiStats object from the context
 	stats *apiStats
 
+	// route contains current route information
+	route *routeMatchInfo
+
 	// Auth contains the authorized user information
 	Auth AuthInfo
 }
 
 type contextkey int
 
-const requestContextKey contextkey = 0
-const statsContextKey	contextkey = 1
+const (
+	requestContextKey contextkey = iota + 1
+	statsContextKey
+	routeContextKey
+)
 
 // Request Id generator
 var requestCounter uint64
