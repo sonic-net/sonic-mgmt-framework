@@ -241,8 +241,8 @@ func (app *CommonApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
 
 		    resYgot := (*app.ygotRoot)
 		    if !strings.HasPrefix(app.pathInfo.Path, "/sonic") {
+			    // if payload is empty, no need to invoke merge-struct
 			    if isEmptyPayload == true {
-				    // if payload is empty, ne need to invoke merge-struct
 				    resYgot = xfmrYgotRoot
 			    } else {
 				    // Merge the ygotRoots filled by transformer and app.ygotRoot used to Unmarshal the payload (required as Unmarshal does replace operation on ygotRoot)
