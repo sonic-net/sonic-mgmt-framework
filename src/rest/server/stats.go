@@ -28,6 +28,7 @@ import (
 	"sync"
 	"text/tabwriter"
 	"time"
+	"cvl"
 )
 
 func init() {
@@ -87,6 +88,7 @@ func clearAllStats() {
 	handlerStat.clear()
 	authStat.clear()
 	translibStat.clear()
+	cvl.ClearValidationTimeStats()
 
 	theStatMutex.Unlock()
 }
@@ -164,6 +166,9 @@ func writeStatsText(w http.ResponseWriter) {
 	tw := tabwriter.NewWriter(w, 0, 0, 1, ' ', 0)
 	theStatMutex.Lock()
 
+	// Get CVL time stats.
+	cvlStat := cvl.GetValidationTimeStats()
+
 	fmt.Fprintln(tw, "API TYPE\tTIMER TYPE\tNUM HITS\tTOTAL TIME\tPEAK")
 	fmt.Fprintln(tw, "============\t============\t==========\t============\t============")
 
@@ -172,6 +177,7 @@ func writeStatsText(w http.ResponseWriter) {
 	fmt.Fprintf(tw, "\tHandler\t%d\t%s\t%s\n", handlerStat.Hits, handlerStat.Time, handlerStat.Peak)
 	fmt.Fprintf(tw, "\tAuth\t%d\t%s\t%s\n", authStat.Hits, authStat.Time, authStat.Peak)
 	fmt.Fprintf(tw, "\tTranslib\t%d\t%s\t%s\n", translibStat.Hits, translibStat.Time, translibStat.Peak)
+	fmt.Fprintf(tw, "\tCVL\t%d\t%s\t%s\n", cvlStat.Hits, cvlStat.Time, cvlStat.Peak)
 
 	fmt.Fprintf(tw, "Service APIs")
 	fmt.Fprintf(tw, "\tServer\t%d\t%s\t%s\n", svcRequestStat.Hits, svcRequestStat.Time, svcRequestStat.Peak)
@@ -187,11 +193,16 @@ func writeStatsJSON(w http.ResponseWriter) {
 	data := map[string]interface{}{}
 	theStatMutex.Lock()
 
+	// Get CVL time stats.
+	ret := cvl.GetValidationTimeStats()
+	cvlStat := opStat{Hits: ret.Hits, Peak: ret.Peak, Time: ret.Time}
+
 	data["rest-api"] = map[string]interface{}{
 		"server":   apiRequestStat,
 		"handler":  handlerStat,
 		"auth":     authStat,
 		"translib": translibStat,
+		"cvl":      cvlStat,
 	}
 
 	data["service-api"] = map[string]interface{}{

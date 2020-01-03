@@ -253,6 +253,8 @@ func init() {
 	cvg.stopChan = make(chan int, 1)
 	//Initialize mutex
 	cvg.mutex = &sync.Mutex{}
+	//Intialize mutex for stats
+	statsMutex = &sync.Mutex{}
 
 	_, err := redisClient.ConfigSet("notify-keyspace-events", "AKE").Result()
 	if err != nil {

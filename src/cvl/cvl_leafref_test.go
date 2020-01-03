@@ -285,7 +285,46 @@ func TestValidateEditConfig_Create_Leafref_Multi_Key_Negative(t *testing.T) {
 	unloadConfigDB(rclient, depDataMap)
 }
 
-func TestValidateEditConfig_Create_Leafref_With_Other_DataType_Positive(t *testing.T) {
+func TestValidateEditConfig_Create_Leafref_With_Other_DataType_In_Union_Positive(t *testing.T) {
+
+	depDataMap := map[string]interface{}{
+		"STP": map[string]interface{}{
+			"GLOBAL": map[string]interface{}{
+				"mode": "rpvst",
+			},
+		},
+	}
+
+	loadConfigDB(rclient, depDataMap)
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	cfgData := []cvl.CVLEditConfigData{
+		cvl.CVLEditConfigData{
+			cvl.VALIDATE_ALL,
+			cvl.OP_CREATE,
+			"STP_PORT|StpIntf10", //Non-leafref
+			map[string]string{
+				"enabled": "true",
+				"edge_port": "true",
+				"link_type": "shared",
+			},
+		},
+	}
+
+
+	cvlErrInfo, err := cvSess.ValidateEditConfig(cfgData)
+
+	cvl.ValidationSessClose(cvSess)
+
+	if err != cvl.CVL_SUCCESS {
+		//Should succeed
+		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
+	}
+
+	unloadConfigDB(rclient, depDataMap)
+}
+
+func TestValidateEditConfig_Create_Leafref_With_Other_DataType_In_Union_Negative(t *testing.T) {
 
 	depDataMap := map[string]interface{}{
 		"STP": map[string]interface{}{
@@ -316,7 +355,7 @@ func TestValidateEditConfig_Create_Leafref_With_Other_DataType_Positive(t *testi
 
 	cvl.ValidationSessClose(cvSess)
 
-	if err != cvl.CVL_SUCCESS {
+	if err == cvl.CVL_SUCCESS {
 		//Should succeed
 		t.Errorf("Config Validation failed -- error details %v", cvlErrInfo)
 	}

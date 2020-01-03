@@ -1160,7 +1160,7 @@ func (c *CVL) validateWhenExp(node *xmlquery.Node,
 //type leafref { path "../../../ACL_TABLE/ACL_TABLE_LIST/aclname";} converts to
 // "current() = ../../../ACL_TABLE/ACL_TABLE_LIST[aclname=current()]/aclname"
 func (c *CVL) validateLeafRef(node *xmlquery.Node,
-	tableName, key string, op CVLOperation) (r CVLRetCode) {
+	tableName, key string, op CVLOperation) (r CVLErrorInfo) {
 	defer func() {
 		ret := &r
 		CVL_LOG(INFO_API, "validateLeafRef(): table name = %s, " +
@@ -1169,7 +1169,7 @@ func (c *CVL) validateLeafRef(node *xmlquery.Node,
 
 	if (op == OP_DELETE) {
 		//No new node getting added so skip leafref validation
-		return CVL_SUCCESS
+		return CVLErrorInfo{ErrCode:CVL_SUCCESS}
 	}
 
 	//Set xpath callback for retreiving dependent data
@@ -1182,7 +1182,13 @@ func (c *CVL) validateLeafRef(node *xmlquery.Node,
 
 	listNode := node//c.moveToYangList(tableName, key)
 	if (listNode == nil || listNode.FirstChild == nil) {
-		return CVL_SEMANTIC_ERROR
+		return CVLErrorInfo{
+			TableName: tableName,
+			Keys: strings.Split(key, modelInfo.tableInfo[tableName].redisKeyDelim),
+			ErrCode: CVL_SEMANTIC_ERROR,
+			CVLErrDetails: cvlErrorMap[CVL_SEMANTIC_ERROR],
+			Msg: "Failed to find YANG data for leafref expression validation",
+		}
 	}
 
 	tblInfo := modelInfo.tableInfo[tableName]
@@ -1209,9 +1215,11 @@ func (c *CVL) validateLeafRef(node *xmlquery.Node,
 
 			leafRefSuccess := false
 			nonLeafRefPresent := false //If leaf has non-leafref data type due to union
+			refPathExpr := ""
 			//Excute all leafref checks, multiple leafref for unions
 			leafRefLoop:
 			for _, leafRefPath := range leafRefs {
+				refPathExpr = leafRefPath.path
 				if (leafRefPath.path == "non-leafref") {
 					//Leaf has at-least one non-leaferf data type in union
 					nonLeafRefPresent = true
@@ -1290,7 +1298,15 @@ func (c *CVL) validateLeafRef(node *xmlquery.Node,
 			if (leafRefSuccess == false) && (nonLeafRefPresent == false) {
 				//Return failure if none of the leafref exists and
 				//the leaf has no non-leafref data type as well
-				return CVL_SEMANTIC_DEPENDENT_DATA_MISSING
+				return CVLErrorInfo{
+					TableName: tableName,
+					Keys: strings.Split(key,
+					modelInfo.tableInfo[tableName].redisKeyDelim),
+					ErrCode: CVL_SEMANTIC_DEPENDENT_DATA_MISSING,
+					CVLErrDetails: cvlErrorMap[CVL_SEMANTIC_DEPENDENT_DATA_MISSING],
+					ErrAppTag: "instance-required",
+					ConstraintErrMsg: "Instance missing for path '" + refPathExpr + "'",
+				}
 			} else if (leafRefSuccess == false) {
 				TRACE_LOG(TRACE_SEMANTIC, "validateLeafRef(): " +
 				"Leafref dependent data not found but leaf has " +
@@ -1299,7 +1315,7 @@ func (c *CVL) validateLeafRef(node *xmlquery.Node,
 		} //for each leaf-list node
 	}
 
-	return CVL_SUCCESS
+	return CVLErrorInfo{ErrCode:CVL_SUCCESS}
 }
 
 //Find which all tables (and which field) is using given (tableName/field)
@@ -1428,12 +1444,9 @@ func (c *CVL) validateSemantics(node *xmlquery.Node,
 	cfgData *CVLEditConfigData) (r CVLErrorInfo) {
 
 	//Check all leafref
-	if errCode := c.validateLeafRef(node, yangListName, key, cfgData.VOp) ;
-	errCode != CVL_SUCCESS {
-		return CVLErrorInfo {
-			ErrCode: errCode,
-			CVLErrDetails: cvlErrorMap[errCode],
-		}
+	if errObj := c.validateLeafRef(node, yangListName, key, cfgData.VOp) ;
+	errObj.ErrCode != CVL_SUCCESS {
+		return errObj
 	}
 
 	//Validate when expression

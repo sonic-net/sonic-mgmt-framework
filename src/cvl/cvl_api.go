@@ -32,6 +32,8 @@ import (
 	"unsafe"
 	"runtime"
 	custv "cvl/custom_validation"
+	"time"
+	"sync"
 )
 
 type CVLValidateType uint
@@ -113,6 +115,21 @@ type CVLEditConfigData struct {
 	Key string      //Key format : "PORT|Ethernet4"
 	Data map[string]string //Value :  {"alias": "40GE0/28", "mtu" : 9100,  "admin_status":  down}
 }
+
+//CVL validations stats 
+//Maintain time stats for call to ValidateEditConfig().
+//Hits : Total number of times ValidateEditConfig() called
+//Time : Total time spent in ValidateEditConfig()
+//Peak : Highest time spent in ValidateEditConfig()
+type ValidationTimeStats struct {
+	Hits uint
+	Time time.Duration
+	Peak time.Duration
+}
+
+//Global data structure for maintaining validation stats
+var cfgValidationStats ValidationTimeStats
+var statsMutex *sync.Mutex
 
 func Initialize() CVLRetCode {
 	if (cvlInitialized == true) {
@@ -284,10 +301,14 @@ func (c *CVL) ValidateConfig(jsonData string) CVLRetCode {
 //Validate config data based on edit operation
 func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (cvlErr CVLErrorInfo, ret CVLRetCode) {
 
+	ts := time.Now()
+
 	defer func() {
 		if (cvlErr.ErrCode != CVL_SUCCESS) {
 			CVL_LOG(ERROR, "ValidateEditConfig() failed , %+v", cvlErr)
 		}
+		//Update validation time stats
+		updateValidationTimeStats(time.Since(ts))
 	}()
 
 	var cvlErrObj CVLErrorInfo
@@ -777,4 +798,34 @@ func (c *CVL) GetDepDataForDelete(redisKey string) ([]string, []string) {
 	}
 
 	return depKeys, depKeysForMod
+}
+
+//Update global stats for all sessions
+func updateValidationTimeStats(td time.Duration) {
+	statsMutex.Lock()
+
+	cfgValidationStats.Hits++
+	if (td > cfgValidationStats.Peak) {
+		cfgValidationStats.Peak = td
+	}
+
+	cfgValidationStats.Time += td
+
+	statsMutex.Unlock()
+}
+
+//Retrieve global stats
+func GetValidationTimeStats() ValidationTimeStats {
+	return cfgValidationStats
+}
+
+//Clear global stats
+func ClearValidationTimeStats() {
+	statsMutex.Lock()
+
+	cfgValidationStats.Hits = 0
+	cfgValidationStats.Peak = 0
+	cfgValidationStats.Time = 0
+
+	statsMutex.Unlock()
 }
