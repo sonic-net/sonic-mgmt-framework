@@ -85,7 +85,7 @@ def get_tam_int_ifa_ts_supported(args):
     app_db.db_connect('APPL_DB')
 
     key = 'SWITCH_TABLE:switch'
-    data = app_db.get(app_db.APPL_DB, key, 'ts_supported')
+    data = app_db.get(app_db.APPL_DB, key, 'tam_int_ifa_ts_supported')
 
     if data and data == 'True':
         api_response['feature'] = data
