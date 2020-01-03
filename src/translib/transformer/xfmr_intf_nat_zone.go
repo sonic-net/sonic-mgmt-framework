@@ -139,15 +139,17 @@ var DbToYang_intf_nat_zone_xfmr SubTreeXfmrDbToYang = func (inParams XfmrParams)
         if intfObj, ok = intfsObj.Interface[ifName]; !ok {
             intfObj, _ = intfsObj.NewInterface(ifName)
         }
-        ygot.BuildEmptyTree(intfObj)
+    } else {
+        ygot.BuildEmptyTree(intfsObj)
+        intfObj, _ = intfsObj.NewInterface(ifName)
     }
-    ygot.BuildEmptyTree(intfObj.NatZone)
+    ygot.BuildEmptyTree(intfObj)
     if config == true {
         ygot.BuildEmptyTree(intfObj.NatZone.Config)
         entry, dbErr := inParams.dbs[db.ConfigDB].GetEntry(&db.TableSpec{Name:intTbl.cfgDb.intfTN}, db.Key{Comp: []string{ifName}})
         if dbErr != nil {
             log.Info("Failed to read DB entry, " + intTbl.cfgDb.intfTN + " " + ifName)
-            return  dbErr
+            return nil
         }
         if entry.Has("nat_zone") {
             var natZone uint8
@@ -163,7 +165,7 @@ var DbToYang_intf_nat_zone_xfmr SubTreeXfmrDbToYang = func (inParams XfmrParams)
         entry, dbErr := inParams.dbs[db.ApplDB].GetEntry(&db.TableSpec{Name:intTbl.appDb.intfTN}, db.Key{Comp: []string{ifName}})
         if dbErr != nil {
             log.Info("Failed to read DB entry, " + intTbl.appDb.intfTN + " " + ifName)
-            return  dbErr
+            return nil
         }
         if entry.Has("nat_zone") {
             var natZone uint8
