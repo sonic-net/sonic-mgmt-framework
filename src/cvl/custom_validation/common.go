@@ -95,6 +95,10 @@ type CVLErrorInfo struct {
 	ErrAppTag string
 }
 
+type CustValidationCache struct {
+	Data interface{}
+}
+
 //Custom validation context passed to custom validation function 
 type CustValidationCtxt struct {
 	ReqData []CVLEditConfigData //All request data
@@ -102,6 +106,7 @@ type CustValidationCtxt struct {
 	YNodeName string //YANG node name
 	YNodeVal string  //YANG node value, leaf-list will have "," separated value
 	YCur *xmlquery.Node //YANG data tree
+	SessCache *CustValidationCache //Session cache, can be used for storing data, persistent in session
 	RClient *redis.Client //Redis client
 }
 

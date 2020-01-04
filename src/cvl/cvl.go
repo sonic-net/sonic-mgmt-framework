@@ -146,6 +146,7 @@ type CVL struct {
 	batchLeaf string
 	chkLeafRefWithOthCache bool
 	yv *YValidator //Custom YANG validator for validating external dependencies
+	custvCache custv.CustValidationCache //Custom validation cache per session
 }
 
 // Struct for model namepsace and prefix
@@ -1490,22 +1491,25 @@ func (c *CVL) doCustomValidation(node *xmlquery.Node,
 
 		}
 
-		//Call csutom validation functions
+		//Call custom validation functions
 		CVL_LOG(INFO_TRACE, "Calling custom validation function %s", custFunc)
-		errObj := custv.InvokeCustomValidation(&custv.CustomValidation{},
-		custFunc,
-		&custv.CustValidationCtxt{
+		pCustv := &custv.CustValidationCtxt{
 			ReqData: custvCfg,
 			CurCfg: curCustvCfg,
 			YNodeName: nodeName,
 			YNodeVal: nodeVal,
 			YCur: node,
-			RClient: redisClient})
+			SessCache: &(c.custvCache),
+			RClient: redisClient}
+
+		errObj := custv.InvokeCustomValidation(&custv.CustomValidation{},
+		custFunc, pCustv)
 
 		cvlErrObj = *(*CVLErrorInfo)(unsafe.Pointer(&errObj))
 
 		if (cvlErrObj.ErrCode != CVL_SUCCESS) {
 			CVL_LOG(ERROR, "Custom validation failed, Error = %v", cvlErrObj)
+			return cvlErrObj
 		}
 	}
 

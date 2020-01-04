@@ -76,10 +76,7 @@ module sonic-vxlan {
                         path "/svlan:sonic-vlan/svlan:VLAN/svlan:VLAN_LIST/svlan:name";
                     }
 
-		    must "((/cmn:operation/cmn:operation != 'CREATE') and (/cmn:operation/cmn:operation != 'UPDATE')) or " + 
-			    "(count(../../VXLAN_TUNNEL_MAP_LIST[vlan=current()]) = 1)" {
-			    error-app-tag not-unique-vlanid;
-		    }
+		    sonic-ext:custom-validation ValidateUniqueVlan;
                 }
 
                 leaf vni {
@@ -91,10 +88,7 @@ module sonic-vxlan {
                         }
                     }
 
-		    must "((/cmn:operation/cmn:operation != 'CREATE') and (/cmn:operation/cmn:operation != 'UPDATE')) or " + 
-			    "(count(../../VXLAN_TUNNEL_MAP_LIST[vni=current()]) = 1)" {
-			    error-app-tag not-unique-vni;
-		    }
+		    sonic-ext:custom-validation ValidateUniqueVNI;
                 }
             }
         }
