@@ -168,7 +168,7 @@ module openconfig-network-instance-annot {
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:config/oc-netinst:as {
         deviate add {
-            sonic-ext:field-name "local_asn";
+            sonic-ext:field-transformer "bgp_local_asn_fld_xfmr";
         }
     }
 
@@ -1135,62 +1135,62 @@ module openconfig-network-instance-annot {
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-bgp-ext:route-flap-damping/oc-bgp-ext:config/oc-bgp-ext:enabled {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:route-flap-damping/oc-bgp-ext:config/oc-bgp-ext:enabled {
       deviate add {
             sonic-ext:field-name "route_flap_dampen";
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-bgp-ext:route-flap-damping/oc-bgp-ext:config/oc-bgp-ext:half-life {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:route-flap-damping/oc-bgp-ext:config/oc-bgp-ext:half-life {
       deviate add {
             sonic-ext:field-name "route_flap_dampen_half_life";
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-bgp-ext:route-flap-damping/oc-bgp-ext:config/oc-bgp-ext:reuse-threshold {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:route-flap-damping/oc-bgp-ext:config/oc-bgp-ext:reuse-threshold {
       deviate add {
             sonic-ext:field-name "route_flap_dampen_reuse_threshold";
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-bgp-ext:route-flap-damping/oc-bgp-ext:config/oc-bgp-ext:suppress-threshold {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:route-flap-damping/oc-bgp-ext:config/oc-bgp-ext:suppress-threshold {
       deviate add {
             sonic-ext:field-name "route_flap_dampen_suppress_threshold";
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-bgp-ext:route-flap-damping/oc-bgp-ext:config/oc-bgp-ext:max-suppress {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:route-flap-damping/oc-bgp-ext:config/oc-bgp-ext:max-suppress {
       deviate add {
             sonic-ext:field-name "route_flap_dampen_max_suppress";
       }
     }
 
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-bgp-ext:route-flap-damping/oc-bgp-ext:state/oc-bgp-ext:enabled {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:route-flap-damping/oc-bgp-ext:state/oc-bgp-ext:enabled {
       deviate add {
             sonic-ext:field-name "route_flap_dampen";
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-bgp-ext:route-flap-damping/oc-bgp-ext:state/oc-bgp-ext:half-life {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:route-flap-damping/oc-bgp-ext:state/oc-bgp-ext:half-life {
       deviate add {
             sonic-ext:field-name "route_flap_dampen_half_life";
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-bgp-ext:route-flap-damping/oc-bgp-ext:state/oc-bgp-ext:reuse-threshold {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:route-flap-damping/oc-bgp-ext:state/oc-bgp-ext:reuse-threshold {
       deviate add {
             sonic-ext:field-name "route_flap_dampen_reuse_threshold";
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-bgp-ext:route-flap-damping/oc-bgp-ext:state/oc-bgp-ext:suppress-threshold {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:route-flap-damping/oc-bgp-ext:state/oc-bgp-ext:suppress-threshold {
       deviate add {
             sonic-ext:field-name "route_flap_dampen_suppress_threshold";
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-bgp-ext:route-flap-damping/oc-bgp-ext:state/oc-bgp-ext:max-suppress {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:route-flap-damping/oc-bgp-ext:state/oc-bgp-ext:max-suppress {
       deviate add {
             sonic-ext:field-name "route_flap_dampen_max_suppress";
       }
