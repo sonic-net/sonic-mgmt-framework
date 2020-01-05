@@ -265,6 +265,32 @@ module sonic-bgp-global {
                     description
                         "Maximum delay for updates.";
                 }
+
+                leaf confed_id {
+                    type uint32 {
+                        range "1..4294967295";
+                    }
+                    description
+                        "Set routing domain confederation AS.";
+                }
+
+                leaf-list confed_peers {
+                    type uint32 {
+                        range "1..4294967295";
+                    }
+                    description
+                        "Peer ASs in BGP confederation";
+                }
+
+                leaf keepalive {
+                    type uint16;
+                    description "Keepalive interval";
+                }
+
+                leaf holdtime {
+                    type uint16;
+                    description "Hold time";
+                }
             }
         }
 

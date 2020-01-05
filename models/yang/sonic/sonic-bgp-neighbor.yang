@@ -11,18 +11,6 @@ module sonic-bgp-neighbor {
         prefix sbc;
     }
 
-    import sonic-port {
-        prefix prt;
-    }
-
-    import sonic-portchannel {
-        prefix spc;
-    }
-
-    import sonic-vlan {
-        prefix svlan;
-    }
-
     import sonic-bgp-global {
         prefix sbgpg;
     }
@@ -58,18 +46,7 @@ module sonic-bgp-neighbor {
                 }
 
                 leaf neighbor {
-                    type union {
-                        type inet:ip-address;
-                        type leafref {
-                            path "/prt:sonic-port/prt:PORT/prt:PORT_LIST/prt:ifname";
-                        }
-                        type leafref {
-                            path "/spc:sonic-portchannel/spc:PORTCHANNEL/spc:PORTCHANNEL_LIST/spc:name";
-                        }
-                        type leafref {
-                            path "/svlan:sonic-vlan/svlan:VLAN/svlan:VLAN_LIST/svlan:name";
-                        }
-                    }
+                    type sbc:bgp_ip_or_intf;
                     description "Neighbor description, it will be neighbor address or interface name";
                 }
 

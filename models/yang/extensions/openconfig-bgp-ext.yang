@@ -59,6 +59,37 @@ module openconfig-bgp-ext {
         "Type to describe the BGP ORF(Outbound route filtering) capability";
   }
 
+  typedef bgp-ext-community-type {
+	  type enumeration {
+		  enum STANDARD {
+			  description "Send only standard communities";
+		  }
+		  enum EXTENDED {
+			  description "Send only extended communities";
+		  }
+		  enum BOTH {
+			  description "Send both standard and extended communities";
+		  }
+		  enum LARGE {
+			  description "Send only large communities";
+		  }
+
+		  enum ALL {
+			  description "Send standrd, extended and large communities";
+		  }
+		  enum NONE {
+			  description "Do not send any community attribute";
+		  }
+	  }
+	  description
+		  "type describing variations of community attributes:
+		  STANDARD: standard BGP community [rfc1997]
+		  EXTENDED: extended BGP community [rfc4360]
+		  BOTH: both standard and extended community
+          LARGE: large BGP community
+          ALL: standard, extended and large community";
+  }
+
   grouping bgp-ext-peer-group-config {
       leaf enabled {
           type boolean;
@@ -234,6 +265,31 @@ module openconfig-bgp-ext {
           description
               "Pick the best-MED path among paths advertised from the neighboring AS.";
       }
+
+      leaf hold-time {
+          type decimal64 {
+              fraction-digits 2;
+          }
+          default 90;
+          description
+              "Time interval in seconds that a BGP session will be
+              considered active in the absence of keepalive or other
+              messages from the peer.  The hold-time is typically
+              set to 3x the keepalive-interval.";
+          reference
+              "RFC 4271 - A Border Gateway Protocol 4, Sec. 10";
+      }
+
+      leaf keepalive-interval {
+          type decimal64 {
+              fraction-digits 2;
+          }
+          default 30;
+          description
+              "Time interval in seconds between transmission of keepalive
+              messages to the neighbor.  Typically set to 1/3 the
+              hold-time.";
+      }
   }
 
   grouping bgp-ext-global-route-flap-damping {
@@ -353,6 +409,11 @@ module openconfig-bgp-ext {
           type uint32;
           description
               "Max MED value to be used";
+      }
+      leaf administrative {
+          type boolean;
+          description
+              "Administratively applied, for an indefinite period.";
       }
   }
 
@@ -509,6 +570,12 @@ module openconfig-bgp-ext {
               "Enable BFD for the neighbor group.";
       }
 
+      leaf bfd-check-control-plane-failure {
+          type boolean;
+          description
+              "Link dataplane status with BGP control plane.";
+      }
+
       leaf capability-dynamic {
           type boolean;
           description
@@ -553,6 +620,18 @@ module openconfig-bgp-ext {
           type boolean;
           description
               "Strict capability negotiation match";
+      }
+
+      leaf local-as-no-prepend {
+          type boolean;
+          description
+              "Do not prepend the local-as number in AS-Path advertisements.";
+      }
+
+      leaf local-as-replace-as {
+          type boolean;
+          description
+              "Replace the configured AS Number with the local-as number in AS-Path advertisements";
       }
   }
 
@@ -608,6 +687,16 @@ module openconfig-bgp-ext {
           type oc-inet:ip-prefix;
           description
               "This specifies an aggregate address.";
+      }
+
+      leaf policy-name {
+          type leafref {
+              path "/oc-rpol:routing-policy/oc-rpol:policy-definitions/" +
+                  "oc-rpol:policy-definition/oc-rpol:name";
+          }
+          description
+              "A reference to a routing policy which can be used to
+              restrict the prefixes for which advertisement is enabled";
       }
 
       leaf as-set {
@@ -693,7 +782,7 @@ module openconfig-bgp-ext {
   }
 
   grouping bgp-ext-filter-list-config {
-      leaf as-path-set-name {
+      leaf import-policy {
           type leafref {
               path "/oc-rpol:routing-policy/oc-rpol:defined-sets/" +
                   "oc-bgp-pol:bgp-defined-sets/oc-bgp-pol:as-path-sets/" +
@@ -702,14 +791,18 @@ module openconfig-bgp-ext {
           description "References a defined AS path set";
       }
 
-      leaf direction {
-          type bgp-direction;
-          description "Indicates the route filter direction.";
+      leaf export-policy {
+          type leafref {
+              path "/oc-rpol:routing-policy/oc-rpol:defined-sets/" +
+                  "oc-bgp-pol:bgp-defined-sets/oc-bgp-pol:as-path-sets/" +
+                  "oc-bgp-pol:as-path-set/oc-bgp-pol:as-path-set-name";
+          }
+          description "References a defined AS path set";
       }
   }
   
   grouping bgp-ext-prefix-list-config {
-      leaf prefix-set-name {
+      leaf import-policy {
           type leafref {
               path "/oc-rpol:routing-policy/oc-rpol:defined-sets/" +
                   "oc-rpol:prefix-sets/oc-rpol:prefix-set/oc-rpol:name";
@@ -717,9 +810,12 @@ module openconfig-bgp-ext {
           description "References a defined prefix set";
       }
 
-      leaf direction {
-          type bgp-direction;
-          description "Indicates the route filter direction.";
+      leaf export-policy {
+          type leafref {
+              path "/oc-rpol:routing-policy/oc-rpol:defined-sets/" +
+                  "oc-rpol:prefix-sets/oc-rpol:prefix-set/oc-rpol:name";
+          }
+          description "References a defined prefix set";
       }
   }
 
@@ -789,12 +885,12 @@ module openconfig-bgp-ext {
       }
 
       leaf send-community {
-          type oc-bgp-types:community-type;
-          default "NONE";
+          type bgp-ext-community-type;
+          default "BOTH";
           description
               "Specify which types of community should be sent to the
-              neighbor or group. The default is to not send the
-              community attribute";
+              neighbor or group. The default is to send both standard and extended
+              community attributes";
       }
 
       leaf route-reflector-client {
@@ -954,10 +1050,6 @@ module openconfig-bgp-ext {
   }
 
   deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:state/oc-netinst:total-prefixes {
-	  deviate not-supported;
-  }
-
-  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:confederation {
 	  deviate not-supported;
   }
 

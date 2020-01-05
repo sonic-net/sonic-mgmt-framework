@@ -7,6 +7,18 @@ module sonic-bgp-common {
         prefix inet;
     }
 
+    import sonic-port {
+        prefix prt;
+    }
+
+    import sonic-portchannel {
+        prefix spc;
+    }
+
+    import sonic-vlan {
+        prefix svlan;
+    }
+
     import sonic-routing-policy-sets {
         prefix srpolsets;
     }
@@ -45,18 +57,44 @@ module sonic-bgp-common {
             enum standard {
                 description "Standard communities";
             }
+
             enum extended {
                 description "Extended communities";
             }
+
             enum both {
                 description "Both standard and extended communities";
             }
+
+            enum large {
+                description "Large communities";
+            }
+
+            enum all {
+                description "Standard, Extended and Large communities";
+            }
+
             enum none {
                 description "No community attribute";
             }
         }
         description
             "type describing variations of community attributes";
+    }
+
+    typedef bgp_ip_or_intf {
+        type union {
+            type inet:ip-address;
+            type leafref {
+                path "/prt:sonic-port/prt:PORT/prt:PORT_LIST/prt:ifname";
+            }
+            type leafref {
+                path "/spc:sonic-portchannel/spc:PORTCHANNEL/spc:PORTCHANNEL_LIST/spc:name";
+            }
+            type leafref {
+                path "/svlan:sonic-vlan/svlan:VLAN/svlan:VLAN_LIST/svlan:name";
+            }
+        }
     }
 
     typedef sonic_bgp_direction {
@@ -136,16 +174,12 @@ module sonic-bgp-common {
         }
 
         leaf keepalive {
-            type uint16 {
-                range "1..3600";
-            }
+            type uint16;
             description "Keepalive interval";
         }
 
         leaf holdtime {
-            type uint16 {
-                range "1..3600";
-            }
+            type uint16;
             description "Hold time";
         }
 
@@ -164,8 +198,8 @@ module sonic-bgp-common {
         }
 
         leaf local_addr {
-            type inet:ip-address;
-            description "Local source address to use for connection";
+            type sbc:bgp_ip_or_intf;
+            description "Local source address or interface name to use for connection.";
         }
 
         leaf passive_mode {
@@ -361,16 +395,18 @@ module sonic-bgp-common {
             description "nexthop attribute unchanged";
         }
 
-        leaf filter_list_name {
+        leaf filter_list_in {
             type leafref {
                 path "/srpolsets:sonic-routing-policy-sets/srpolsets:AS_PATH_SET/srpolsets:AS_PATH_SET_LIST/srpolsets:name";
             }
             description "Filter list name";
         }
 
-        leaf filter_list_direction {
-            type sonic_bgp_direction;
-            description "Filter list direction";
+        leaf filter_list_out {
+            type leafref {
+                path "/srpolsets:sonic-routing-policy-sets/srpolsets:AS_PATH_SET/srpolsets:AS_PATH_SET_LIST/srpolsets:name";
+            }
+            description "Filter list name";
         }
 
         leaf nhself {
@@ -383,16 +419,18 @@ module sonic-bgp-common {
             description "Force nexthop to be self for reflected routes";
         }
 
-        leaf prefix_list_name {
+        leaf prefix_list_in {
             type leafref {
                 path "/srpolsets:sonic-routing-policy-sets/srpolsets:PREFIX_SET/srpolsets:PREFIX_SET_LIST/srpolsets:name";
             }
             description "Prefix list name";
         }
 
-        leaf prefix_list_direction {
-            type sonic_bgp_direction;
-            description "Prefix list direction";
+        leaf prefix_list_out {
+            type leafref {
+                path "/srpolsets:sonic-routing-policy-sets/srpolsets:PREFIX_SET/srpolsets:PREFIX_SET_LIST/srpolsets:name";
+            }
+            description "Prefix list name";
         }
 
         leaf remove_private_as_enabled {
