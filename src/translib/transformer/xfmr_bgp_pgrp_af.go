@@ -267,6 +267,12 @@ var YangToDb_bgp_pgrp_community_type_fld_xfmr FieldXfmrYangToDb = func(inParams 
         err = errors.New("No Params");
         return res_map, err
     }
+    
+    if inParams.oper == DELETE {
+        res_map["send_community"] = ""
+        return res_map, nil
+    }
+
     community_type, _ := inParams.param.(ocbinds.E_OpenconfigBgpExt_BgpExtCommunityType)
     log.Info("YangToDb_bgp_pgrp_community_type_fld_xfmr: ", inParams.ygRoot, " Xpath: ", inParams.uri, " community_type: ", community_type)
 
@@ -335,6 +341,11 @@ var YangToDb_bgp_pgrp_orf_type_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrPa
         err = errors.New("No Params");
         return res_map, err
     }
+    if inParams.oper == DELETE {
+        res_map["cap_orf"] = ""
+        return res_map, nil
+    }
+
     orf_type, _ := inParams.param.(ocbinds.E_OpenconfigBgpExt_BgpOrfType)
     log.Info("YangToDb_bgp_pgrp_orf_type_fld_xfmr: ", inParams.ygRoot, " Xpath: ", inParams.uri, " orf_type: ", orf_type)
 
@@ -390,6 +401,11 @@ var YangToDb_bgp_pgrp_tx_add_paths_fld_xfmr FieldXfmrYangToDb = func(inParams Xf
         err = errors.New("No Params");
         return res_map, err
     }
+    if inParams.oper == DELETE {
+        res_map["tx_add_paths"] = ""
+        return res_map, nil
+    }
+
     tx_add_paths_type, _ := inParams.param.(ocbinds.E_OpenconfigBgpExt_TxAddPathsType)
     log.Info("YangToDb_pgrp_tx_add_paths_fld_xfmr: ", inParams.ygRoot, " Xpath: ", inParams.uri, " add-paths-type: ", tx_add_paths_type)
 
