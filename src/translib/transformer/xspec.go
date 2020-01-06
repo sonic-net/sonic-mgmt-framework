@@ -155,6 +155,14 @@ func yangToDbMapFill (keyLevel int, xYangSpecMap map[string]*yangXpathInfo, entr
 		if _, ok := xYangSpecMap[xpathPrefix]; ok {
 			curKeyLevel = xYangSpecMap[xpathPrefix].keyLevel
 		}
+		curXpathData, ok := xYangSpecMap[curXpathFull]
+		if !ok {
+			curXpathData = new(yangXpathInfo)
+			xYangSpecMap[curXpathFull] = curXpathData
+			curXpathData.dbIndex = db.ConfigDB // default value
+		}
+		curXpathData.yangDataType = entry.Node.Statement().Keyword
+		curXpathData.yangEntry    = entry
 		xpath = xpathPrefix
 	} else {
 	/* create the yang xpath */
@@ -165,6 +173,7 @@ func yangToDbMapFill (keyLevel int, xYangSpecMap map[string]*yangXpathInfo, entr
 		xpath = xpathPrefix + "/" + entry.Name
 	}
 
+	updateChoiceCaseXpath := false
 	curXpathFull = xpath
 	if xpathPrefix != xpathFull {
 		curXpathFull = xpathFull + "/" + entry.Name
@@ -172,6 +181,7 @@ func yangToDbMapFill (keyLevel int, xYangSpecMap map[string]*yangXpathInfo, entr
 			xpathData := new(yangXpathInfo)
 			xYangSpecMap[xpath] = xpathData
 			copyYangXpathSpecData(xYangSpecMap[xpath], annotNode)
+			updateChoiceCaseXpath = true
 		}
 	}
 
@@ -272,6 +282,9 @@ func yangToDbMapFill (keyLevel int, xYangSpecMap map[string]*yangXpathInfo, entr
 		xpathData.keyXpath = parentXpathData.keyXpath
 	}
 	xpathData.yangEntry = entry
+	if updateChoiceCaseXpath == true {
+		copyYangXpathSpecData(xYangSpecMap[curXpathFull], xYangSpecMap[xpath])
+	}
 	}
 
 	/* get current obj's children */
