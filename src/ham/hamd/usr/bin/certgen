@@ -47,7 +47,7 @@ else:
 
 cmd = ['/usr/bin/openssl', 'x509', '-req', '-days',  '365000',
        '-out', os.path.join(certdir, 'certificate.pem'),
-       '-CA', '/root/cli-ca/cert.pem', '-CAkey', '/root/cli-ca/key.pem',
+       '-CA', '/host/cli-ca/cert.pem', '-CAkey', '/host/cli-ca/key.pem',
        '-CAcreateserial', '-sha256' ]
 if args.dry_run:
     print(' '.join(cmd))
