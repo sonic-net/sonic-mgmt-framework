@@ -67,6 +67,13 @@ export GOPATH=$TOPDIR:$TOPDIR/build/gopkgs:$TOPDIR/build/rest_server/dist
 
 export CVL_SCHEMA_PATH=$TOPDIR/build/cvl/schema
 
-export YANG_MODELS_PATH=$TOPDIR/build/all_yangs
+if [ -z $YANG_MODELS_PATH ]; then
+    export YANG_MODELS_PATH=$TOPDIR/build/all_test_yangs
+    mkdir -p $YANG_MODELS_PATH
+    pushd $YANG_MODELS_PATH > /dev/null
+    rm -f *
+    find $TOPDIR/models/yang -name "ietf-*.yang" -not -path "*/annotations/*" -exec ln -sf {} \;
+    popd > /dev/null
+fi
 
 ${GO} test rest/server -v -cover "${TEST_ARGS[@]}" -args -logtostderr "${REST_ARGS[@]}" | ${PIPE}
