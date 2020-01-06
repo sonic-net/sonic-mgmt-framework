@@ -824,6 +824,8 @@ func yangDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, reque
 						lTblName = *ynode.tableName
 					}
 					yangListDataFill(dbs, ygRoot, chldUri, requestUri, chldXpath, dbDataMap, resultMap, lTblName, tblKey, cdb, isValid, txCache, false)
+				} else if chldYangType == "choice" || chldYangType == "case" {
+					yangDataFill(dbs, ygRoot, chldUri, requestUri, chldXpath, dbDataMap, resultMap, tbl, tblKey, cdb, isValid, txCache)
 				} else {
 					return err
 				}
