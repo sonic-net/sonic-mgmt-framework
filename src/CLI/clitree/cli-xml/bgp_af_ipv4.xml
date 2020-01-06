@@ -232,10 +232,17 @@ limitations under the License.
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_capability_orf_config_orf_type ${vrf-name} ${nbr-addr} IPV4_UNICAST ${capopt}</ACTION>
   </COMMAND>
   <COMMAND name="default-originate" help="Originate default route to this neighbor">
-    <PARAM name="route-map" help="Route-map to specify criteria to originate default" mode="subcommand" ptype="SUBCOMMAND">
+    <PARAM name="route-map" help="Route-map to specify criteria to originate default" mode="subcommand" ptype="SUBCOMMAND" optional="true">
        <PARAM name="rtemap" help="Route-map name" ptype="STRING"/>
     </PARAM>
-    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py PATCH_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_ipv4_unicast_config_default_policy_name ${vrf-name} ${nbr-addr} IPV4_UNICAST ${rtemap}</ACTION>
+    <ACTION>
+             if test -n "${route-map}" ; then&#xA;
+                 python $SONIC_CLI_ROOT/sonic-cli-bgp.py PATCH_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_ipv4_unicast_config_send_default_route ${vrf-name} ${nbr-addr} IPV4_UNICAST True&#xA;
+                 python $SONIC_CLI_ROOT/sonic-cli-bgp.py PATCH_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_ipv4_unicast_config_default_policy_name ${vrf-name} ${nbr-addr} IPV4_UNICAST ${rtemap}&#xA;
+             else&#xA;
+                 python $SONIC_CLI_ROOT/sonic-cli-bgp.py PATCH_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_ipv4_unicast_config_send_default_route ${vrf-name} ${nbr-addr} IPV4_UNICAST True&#xA;
+             fi&#xA;     
+    </ACTION>
   </COMMAND>
   <COMMAND name="filter-list" help="Establish BGP filters">
     <PARAM name="fname" help="AS path access-list name" ptype="STRING">
@@ -399,10 +406,17 @@ limitations under the License.
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_capability_orf_config_orf_type ${vrf-name} ${nbr-addr} IPV4_UNICAST ${capopt}</ACTION>
   </COMMAND>
   <COMMAND name="no default-originate" help="Originate default route to this neighbor">
-    <PARAM name="route-map" help="Route-map to specify criteria to originate default" mode="subcommand" ptype="SUBCOMMAND">
+    <PARAM name="route-map" help="Route-map to specify criteria to originate default" mode="subcommand" ptype="SUBCOMMAND" optional="true">
        <PARAM name="rtemap" help="Route-map name" ptype="STRING"/>
     </PARAM>
-    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py DELETE_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_ipv4_unicast_config_default_policy_name ${vrf-name} ${nbr-addr} IPV4_UNICAST ${rtemap}</ACTION>
+    <ACTION> 
+             if test -n "${route-map}" ; then&#xA;
+                 python $SONIC_CLI_ROOT/sonic-cli-bgp.py PATCH_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_ipv4_unicast_config_send_default_route ${vrf-name} ${nbr-addr} IPV4_UNICAST False&#xA;
+                 python $SONIC_CLI_ROOT/sonic-cli-bgp.py DELETE_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_ipv4_unicast_config_default_policy_name ${vrf-name} ${nbr-addr} IPV4_UNICAST ${rtemap}&#xA;
+             else&#xA;
+                 python $SONIC_CLI_ROOT/sonic-cli-bgp.py PATCH_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_ipv4_unicast_config_send_default_route ${vrf-name} ${nbr-addr} IPV4_UNICAST False&#xA;
+             fi&#xA;
+    </ACTION>
   </COMMAND>
   <COMMAND name="no filter-list" help="Establish BGP filters">
     <PARAM name="fname" help="AS path access-list name" ptype="STRING">
@@ -567,10 +581,17 @@ limitations under the License.
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_afi_safis_afi_safi_capability_orf_config_orf_type ${vrf-name} ${template-name} IPV4_UNICAST ${capopt}</ACTION>
   </COMMAND>
   <COMMAND name="default-originate" help="Originate default route to this neighbor">
-    <PARAM name="route-map" help="Route-map to specify criteria to originate default" mode="subcommand" ptype="SUBCOMMAND">
+    <PARAM name="route-map" help="Route-map to specify criteria to originate default" mode="subcommand" ptype="SUBCOMMAND" optional="true">
        <PARAM name="rtemap" help="Route-map name" ptype="STRING"/>
     </PARAM>
-    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py PATCH_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_afi_safis_afi_safi_ipv4_unicast_config_default_policy_name ${vrf-name} ${template-name} IPV4_UNICAST ${rtemap}</ACTION>
+    <ACTION> 
+             if test -n "${route-map}" ; then&#xA;
+                 python $SONIC_CLI_ROOT/sonic-cli-bgp.py PATCH_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_afi_safis_afi_safi_ipv4_unicast_config_send_default_route ${vrf-name} ${template-name} IPV4_UNICAST True&#xA;
+                 python $SONIC_CLI_ROOT/sonic-cli-bgp.py PATCH_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_afi_safis_afi_safi_ipv4_unicast_config_default_policy_name ${vrf-name} ${template-name} IPV4_UNICAST ${rtemap}&#xA;
+             else&#xA;
+                 python $SONIC_CLI_ROOT/sonic-cli-bgp.py PATCH_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_afi_safis_afi_safi_ipv4_unicast_config_send_default_route ${vrf-name} ${template-name} IPV4_UNICAST True&#xA;
+             fi&#xA;
+    </ACTION>
   </COMMAND>
   <COMMAND name="filter-list" help="Establish BGP filters">
     <PARAM name="fname" help="AS path access-list name" ptype="STRING">
@@ -734,10 +755,17 @@ limitations under the License.
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_afi_safis_afi_safi_capability_orf_config_orf_type ${vrf-name} ${template-name} IPV4_UNICAST ${capopt}</ACTION>
   </COMMAND>
   <COMMAND name="no default-originate" help="Originate default route to this neighbor">
-    <PARAM name="route-map" help="Route-map to specify criteria to originate default" mode="subcommand" ptype="SUBCOMMAND">
+    <PARAM name="route-map" help="Route-map to specify criteria to originate default" mode="subcommand" ptype="SUBCOMMAND" optional="true">
        <PARAM name="rtemap" help="Route-map name" ptype="STRING"/>
     </PARAM>
-    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py DELETE_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_afi_safis_afi_safi_ipv4_unicast_config_default_policy_name ${vrf-name} ${template-name} IPV4_UNICAST ${rtemap}</ACTION>
+    <ACTION> 
+             if test -n "${route-map}" ; then&#xA;
+                 python $SONIC_CLI_ROOT/sonic-cli-bgp.py PATCH_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_afi_safis_afi_safi_ipv4_unicast_config_send_default_route ${vrf-name} ${template-name} IPV4_UNICAST False&#xA;
+                 python $SONIC_CLI_ROOT/sonic-cli-bgp.py DELETE_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_afi_safis_afi_safi_ipv4_unicast_config_default_policy_name ${vrf-name} ${template-name} IPV4_UNICAST ${rtemap}&#xA;
+             else&#xA;
+                 python $SONIC_CLI_ROOT/sonic-cli-bgp.py PATCH_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_afi_safis_afi_safi_ipv4_unicast_config_send_default_route ${vrf-name} ${template-name} IPV4_UNICAST False&#xA;
+             fi&#xA;
+    </ACTION>
   </COMMAND>
   <COMMAND name="no filter-list" help="Establish BGP filters">
     <PARAM name="fname" help="AS path access-list name" ptype="STRING">
