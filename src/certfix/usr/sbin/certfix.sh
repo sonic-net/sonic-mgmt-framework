@@ -2,7 +2,7 @@
 
 #****************************************
 rootcert() {
-	ROOTCERTDIR="/root/cli-ca"
+	ROOTCERTDIR="/host/cli-ca"
 	if [ ! -d "${ROOTCERTDIR}" ]; then
 		echo "Generating root certificates"
 

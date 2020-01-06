@@ -6,7 +6,7 @@ module sonic-routing-policy-sets {
     import ietf-inet-types {
         prefix inet;
     }
-    
+
     organization
         "SONiC";
 
@@ -74,13 +74,13 @@ module sonic-routing-policy-sets {
 
                         Example: 10.3.192.0/21 through 10.3.192.0/24 would be
                         expressed as prefix: 10.3.192.0/21,
-                                   masklength_range: 21..24.
+                                  masklength_range: 21..24.
 
-                        Example: 10.3.192.0/21 would be expressed as
-                                  prefix: 10.3.192.0/21,
+                                      Example: 10.3.192.0/21 would be expressed as
+                                      prefix: 10.3.192.0/21,
                                   masklength_range: exact";
                 }
-                
+
                 leaf action {
                     type string;
                     description
@@ -117,7 +117,7 @@ module sonic-routing-policy-sets {
                 leaf-list community_member {
                     type string;
                     description
-                            "members of the community set.";
+                        "members of the community set.";
                 }
             }
         }
@@ -171,7 +171,7 @@ module sonic-routing-policy-sets {
                 leaf-list as_path_set_member {
                     type string;
                     description
-                       "AS path expression -- list of ASes in the set";
+                        "AS path expression -- list of ASes in the set";
                 }
             }
         }

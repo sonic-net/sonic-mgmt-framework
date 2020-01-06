@@ -2,9 +2,11 @@ package transformer
 
 import (
     "errors"
+    "strconv"
     "strings"
     "encoding/json"
     "translib/ocbinds"
+    "translib/tlerr"
     "translib/db"
     "os/exec"
     log "github.com/golang/glog"
@@ -104,6 +106,8 @@ func init () {
     XlateFuncBind("DbToYang_network_instance_protocol_key_xfmr", DbToYang_network_instance_protocol_key_xfmr)
     XlateFuncBind("YangToDb_bgp_gbl_tbl_key_xfmr", YangToDb_bgp_gbl_tbl_key_xfmr)
     XlateFuncBind("DbToYang_bgp_gbl_tbl_key_xfmr", DbToYang_bgp_gbl_tbl_key_xfmr)
+    XlateFuncBind("YangToDb_bgp_local_asn_fld_xfmr", YangToDb_bgp_local_asn_fld_xfmr)
+    XlateFuncBind("DbToYang_bgp_local_asn_fld_xfmr", DbToYang_bgp_local_asn_fld_xfmr)
     XlateFuncBind("YangToDb_bgp_gbl_afi_safi_field_xfmr", YangToDb_bgp_gbl_afi_safi_field_xfmr)
     XlateFuncBind("DbToYang_bgp_gbl_afi_safi_field_xfmr", DbToYang_bgp_gbl_afi_safi_field_xfmr)
 	XlateFuncBind("YangToDb_bgp_dyn_neigh_listen_key_xfmr", YangToDb_bgp_dyn_neigh_listen_key_xfmr)
@@ -117,6 +121,78 @@ func init () {
 	XlateFuncBind("YangToDb_bgp_gbl_afi_safi_addr_field_xfmr", YangToDb_bgp_gbl_afi_safi_addr_field_xfmr)
 	XlateFuncBind("DbToYang_bgp_gbl_afi_safi_addr_field_xfmr", DbToYang_bgp_gbl_afi_safi_addr_field_xfmr) 
     XlateFuncBind("YangToDb_bgp_global_subtree_xfmr", YangToDb_bgp_global_subtree_xfmr)
+}
+
+func bgp_global_get_local_asn(d *db.DB , niName string, tblName string) (string, error) {
+    var err error
+
+    dbspec := &db.TableSpec { Name: tblName }
+
+    log.Info("bgp_global_get_local_asn", db.Key{Comp: []string{niName}})
+    dbEntry, err := d.GetEntry(dbspec, db.Key{Comp: []string{niName}})
+    if err != nil {
+        return "", err
+    }
+    asn, ok := dbEntry.Field["local_asn"]
+    if ok {
+        log.Info("Current ASN ", asn)
+    } else {
+        log.Info("No ASN assigned")
+    }
+    return asn, nil;
+}
+
+
+var YangToDb_bgp_local_asn_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
+    rmap := make(map[string]string)
+    var err error
+    if inParams.param == nil {
+        rmap["local_asn"] = ""
+        return rmap, err
+    }
+
+
+    log.Info("YangToDb_bgp_local_asn_fld_xfmr")
+    pathInfo := NewPathInfo(inParams.uri)
+
+    niName := pathInfo.Var("name")
+
+    asn, _ := inParams.param.(*uint32)
+
+    curr_asn, err_val := bgp_global_get_local_asn (inParams.d, niName, "BGP_GLOBALS")
+    if err_val == nil {
+       local_asn64, err_conv := strconv.ParseUint(curr_asn, 10, 32)
+       local_asn := uint32(local_asn64)
+       if err_conv == nil && local_asn != *asn {
+           log.Info("YangToDb_bgp_local_asn_fld_xfmr Local ASN is already present", local_asn, *asn)
+           return rmap, tlerr.InvalidArgs("Local AS '%d' can't be modified!", local_asn)
+       }
+    }
+    rmap["local_asn"] = strconv.FormatUint(uint64(*asn), 10)
+    return rmap, err
+}
+
+var DbToYang_bgp_local_asn_fld_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (map[string]interface{}, error) {
+    var err error
+    result := make(map[string]interface{})
+
+    data := (*inParams.dbDataMap)[inParams.curDb]
+    log.Info("DbToYang_bgp_local_asn_fld_xfmr: ")
+
+    pTbl := data["BGP_GLOBALS"]
+    if _, ok := pTbl[inParams.key]; !ok {
+        return result, err
+    }
+    pGblKey := pTbl[inParams.key]
+    curr_asn, ok := pGblKey.Field["local_asn"]
+    if ok {
+       local_asn64, _:= strconv.ParseUint(curr_asn, 10, 32)
+       local_asn := uint32(local_asn64)
+       result["as"] = local_asn
+    } else {
+        log.Info("Local ASN field not found in DB")
+    }
+    return result, err
 }
 
 var YangToDb_bgp_gbl_afi_safi_field_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {

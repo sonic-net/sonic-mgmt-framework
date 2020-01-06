@@ -59,7 +59,9 @@ module sonic-bgp-global {
                 }
 
                 leaf local_asn {
-                    type uint32;
+                    type uint32 {
+                        range "1..4294967295";
+                    }
                 }
 
                 leaf always_compare_med {
@@ -126,34 +128,6 @@ module sonic-bgp-global {
 
                 leaf graceful_shutdown {
                     type boolean;
-                }
-
-                leaf route_flap_dampen {
-                    type boolean;
-                }
-
-                leaf route_flap_dampen_half_life {
-                    type uint8 {
-                        range "1..45";
-                    }
-                }
-
-                leaf route_flap_dampen_reuse_threshold {
-                    type uint16 {
-                        range "1..20000";
-                    }
-                }
-
-                leaf route_flap_dampen_suppress_threshold {
-                    type uint16 {
-                        range "1..20000";
-                    }
-                }
-
-                leaf route_flap_dampen_max_suppress {
-                    type uint8 {
-                        range "1..255";
-                    }
                 }
 
                 leaf rr_clnt_to_clnt_reflection {
@@ -269,7 +243,7 @@ module sonic-bgp-global {
                     description
                         "Time (seconds) period for max-med";
                 }
-                
+
                 leaf max_med_val {
                     type uint32;
                     description
@@ -290,6 +264,32 @@ module sonic-bgp-global {
                     }
                     description
                         "Maximum delay for updates.";
+                }
+
+                leaf confed_id {
+                    type uint32 {
+                        range "1..4294967295";
+                    }
+                    description
+                        "Set routing domain confederation AS.";
+                }
+
+                leaf-list confed_peers {
+                    type uint32 {
+                        range "1..4294967295";
+                    }
+                    description
+                        "Peer ASs in BGP confederation";
+                }
+
+                leaf keepalive {
+                    type uint16;
+                    description "Keepalive interval";
+                }
+
+                leaf holdtime {
+                    type uint16;
+                    description "Hold time";
                 }
             }
         }
@@ -348,6 +348,39 @@ module sonic-bgp-global {
                     type boolean;
                     description
                         "Match the cluster length.";
+                }
+
+                leaf route_flap_dampen {
+                    must "current()/../afi_safi = 'ipv4_unicast'" { error-message "Route flap dampening is supported only for IPv4 address family!"; }
+                    type boolean;
+                }
+
+                leaf route_flap_dampen_half_life {
+                    must "current()/../afi_safi = 'ipv4_unicast'" { error-message "Route flap dampening is supported only for IPv4 address family!"; }
+                    type uint8 {
+                        range "1..45";
+                    }
+                }
+
+                leaf route_flap_dampen_reuse_threshold {
+                    must "current()/../afi_safi = 'ipv4_unicast'" { error-message "Route flap dampening is supported only for IPv4 address family!"; }
+                    type uint16 {
+                        range "1..20000";
+                    }
+                }
+
+                leaf route_flap_dampen_suppress_threshold {
+                    must "current()/../afi_safi = 'ipv4_unicast'" { error-message "Route flap dampening is supported only for IPv4 address family!"; }
+                    type uint16 {
+                        range "1..20000";
+                    }
+                }
+
+                leaf route_flap_dampen_max_suppress {
+                    must "current()/../afi_safi = 'ipv4_unicast'" { error-message "Route flap dampening is supported only for IPv4 address family!"; }
+                    type uint8 {
+                        range "1..255";
+                    }
                 }
 
                 uses sbc:sonic-bgp-af-evpn-global;

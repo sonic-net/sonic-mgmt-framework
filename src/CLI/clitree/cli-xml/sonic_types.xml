@@ -18,6 +18,7 @@ limitations under the License.
 <!DOCTYPE CLISH_MODULE [
 <!ENTITY MAX_MTU         "9216">
 <!ENTITY VLAN_NUM        "(409[0-3]|40[0-8][0-9]|[1-3][0-9]{3}|[1-9][0-9]{2}|[1-9][0-9]|[1-9])">
+<!ENTITY VLAN_RNG        "(&VLAN_NUM;-&VLAN_NUM;)">
 <!ENTITY PORT_NUM        "(6553[0-5]|655[0-2][0-9]|65[0-4][0-9][0-9]|6[0-4][0-9]{3}|[1-5][0-9]{4}|[1-9][0-9]{0,3}|0)">
 <!ENTITY IPV4_OPTIONAL_PORT "((((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)))(:&PORT_NUM;)?">
 <!ENTITY IPV6_WITH_PORT     "\[((([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)))\]:(&PORT_NUM;)">
@@ -40,7 +41,12 @@ limitations under the License.
     <PTYPE
         name="VLAN_ID"
         method="integer"
-        pattern="1..4093"
+        pattern="1..4094"
+        help=""
+        />
+    <PTYPE
+        name="VLAN_RANGE"
+        pattern="((&VLAN_NUM;|&VLAN_RNG;)(,(&VLAN_NUM;|&VLAN_RNG;))*)$"
         help=""
         />
     <!--=======================================================-->
@@ -847,6 +853,13 @@ limitations under the License.
         name="RANGE_0_600"
         method="integer"
         pattern="0..600"
+        help=""
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="RANGE_1_5000"
+        method="integer"
+        pattern="1..5000"
         help=""
         />
     <!--=======================================================-->
