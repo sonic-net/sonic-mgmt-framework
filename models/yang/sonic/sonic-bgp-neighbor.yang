@@ -10,18 +10,6 @@ module sonic-bgp-neighbor {
     import sonic-bgp-common {
         prefix sbc;
     }
-        
-    import sonic-port {
-        prefix prt;
-    }
-
-    import sonic-portchannel {
-        prefix spc;
-    }
-
-    import sonic-vlan {
-        prefix svlan;
-    }
 
     import sonic-bgp-global {
         prefix sbgpg;
@@ -49,27 +37,16 @@ module sonic-bgp-neighbor {
         container BGP_NEIGHBOR {
             list BGP_NEIGHBOR_LIST {
                 key "vrf_name neighbor";
-                
+
                 leaf vrf_name {
                     type leafref {
                         path "/sbgpg:sonic-bgp-global/sbgpg:BGP_GLOBALS/sbgpg:BGP_GLOBALS_LIST/sbgpg:vrf_name";
                     }
-                   description "Network-instance/VRF name";
+                    description "Network-instance/VRF name";
                 }
 
                 leaf neighbor {
-                    type union {
-                        type inet:ip-address;
-                        type leafref {
-                            path "/prt:sonic-port/prt:PORT/prt:PORT_LIST/prt:ifname";
-                        }
-                        type leafref {
-                            path "/spc:sonic-portchannel/spc:PORTCHANNEL/spc:PORTCHANNEL_LIST/spc:name";
-                        }
-                        type leafref {
-                            path "/svlan:sonic-vlan/svlan:VLAN/svlan:VLAN_LIST/svlan:name";
-                        }
-                    }
+                    type sbc:bgp_ip_or_intf;
                     description "Neighbor description, it will be neighbor address or interface name";
                 }
 
@@ -81,11 +58,6 @@ module sonic-bgp-neighbor {
                 }
 
                 uses sbc:sonic-bgp-cmn;
-
-                leaf admin_status {
-                    type boolean;
-                    description "To enable BGP peer";
-                }
             }
         }
 
@@ -97,7 +69,7 @@ module sonic-bgp-neighbor {
                     type leafref {
                         path "/sbgpg:sonic-bgp-global/sbgpg:BGP_GLOBALS/sbgpg:BGP_GLOBALS_LIST/sbgpg:vrf_name";
                     }
-                   description "Network-instance/VRF name";
+                    description "Network-instance/VRF name";
                 }
 
                 leaf neighbor {
@@ -105,7 +77,6 @@ module sonic-bgp-neighbor {
                         path "../../../BGP_NEIGHBOR/BGP_NEIGHBOR_LIST[vrf_name=current()/../vrf_name]/neighbor";
                     }
                 }
-
                 uses sbc:sonic-bgp-cmn-af;
             }
         }

@@ -1,497 +1,551 @@
 module sonic-bgp-common {
-  namespace "http://github.com/Azure/sonic-bgp-common";
-  prefix sbc;
-  yang-version 1.1;
+    namespace "http://github.com/Azure/sonic-bgp-common";
+    prefix sbc;
+    yang-version 1.1;
 
-  import ietf-inet-types {
-    prefix inet;
-  }
-
-  import sonic-routing-policy-sets {
-    prefix srpolsets;
-  }
-
-  import sonic-route-map {
-    prefix srmap;
-  }
-  
-  organization
-    "SONiC";
-
-  contact
-    "SONiC";
-
-  description
-    "SONIC BGP common YANG attributes for Neighbors and Peer group";
-
-  revision 2019-11-04 {
-    description
-      "Initial revision.";
-  }
-
-  typedef bgp_peer_type {
-    type enumeration {
-      enum internal {
-        description "Internal peer";
-      }
-      enum external {
-        description "External peer";
-      }
+    import ietf-inet-types {
+        prefix inet;
     }
-  }
 
-  typedef bgp_community_type {
-    type enumeration {
-      enum standard {
-        description "Standard communities";
-      }
-      enum extended {
-        description "Extended communities";
-      }
-      enum both {
-        description "Both standard and extended communities";
-      }
-      enum none {
-        description "No community attribute";
-      }
+    import sonic-port {
+        prefix prt;
     }
-    description
-      "type describing variations of community attributes";
-  }
 
-  typedef sonic_bgp_direction {
-    type enumeration {
-      enum in {
+    import sonic-portchannel {
+        prefix spc;
+    }
+
+    import sonic-vlan {
+        prefix svlan;
+    }
+
+    import sonic-routing-policy-sets {
+        prefix srpolsets;
+    }
+
+    import sonic-route-map {
+        prefix srmap;
+    }
+
+    organization
+        "SONiC";
+
+    contact
+        "SONiC";
+
+    description
+        "SONIC BGP common YANG attributes for Neighbors and Peer group";
+
+    revision 2019-11-04 {
         description
-          "Refers to information received from the BGP peer";
+            "Initial revision.";
+    }
+
+    typedef bgp_peer_type {
+        type enumeration {
+            enum internal {
+                description "Internal peer";
+            }
+            enum external {
+                description "External peer";
+            }
+        }
+    }
+
+    typedef bgp_tx_add_paths_type {
+      type enumeration {
+          enum tx_all_paths {
+              description
+                  "Send multiple path advertisements for an NLRI from 
+                  the neighbor or group";
+          }
+          enum tx_best_path_per_as {
+              description
+                  "Send only best path per AS advertisements for an NLRI from 
+                  the neighbor or group";
+          }
       }
-      enum out {
+      description
+          "Type to describe the add paths advertisement method.";
+    }
+
+    typedef bgp_community_type {
+        type enumeration {
+            enum standard {
+                description "Standard communities";
+            }
+
+            enum extended {
+                description "Extended communities";
+            }
+
+            enum both {
+                description "Both standard and extended communities";
+            }
+
+            enum large {
+                description "Large communities";
+            }
+
+            enum all {
+                description "Standard, Extended and Large communities";
+            }
+
+            enum none {
+                description "No community attribute";
+            }
+        }
         description
-          "Refers to information advertised to the BGP peer";
-      }
-    }
-    description
-        "Type to describe the direction";
-  }
-
-  typedef sonic_bgp_orf {
-    type enumeration {
-      enum send {
-          description
-              "Capability to receive the outbound route filtering from this neighbor";
-      }
-      enum receive {
-          description
-              "Capability to send the outbound route filtering to this neighbor";
-      }
-      enum both {
-          description
-              "Capability to send and receive the outbound route filtering to/from this neighbor";
-      }
-    }
-    description
-        "Type to describe the BGP ORF(Outbound route filtering) capability";
-  }
-
-  grouping sonic-bgp-cmn {
-
-      leaf local_asn {
-          type uint32;
-          description "Local AS number";
+            "type describing variations of community attributes";
     }
 
-    leaf name {
-      type string;
-        description "Peer description";
-    }
-
-    leaf asn {
-      type uint32;
-        description "Peer AS number";
-    }
-
-    leaf peer_type {
-      type bgp_peer_type;
-    }
-
-    leaf ebgp_multihop {
-      type boolean;
-        description "EBGP Multihop enabled";
-    }
-
-    leaf ebgp_multihop_ttl {
-      type uint8 {
-        range "1..255";
-      }
-        description "EBGP Multihop TTL";
-    }
-
-    leaf auth_password {
-      type string;
-        description "Authuntiation password";
-    }
-
-    leaf keepalive {
-      type uint16 {
-        range "1..3600";
-      }
-        description "Keepalive interval";
-    }
-
-    leaf holdtime {
-      type uint16 {
-        range "1..3600";
-      }
-        description "Hold time";
-    }
-
-    leaf conn_retry {
-      type uint16 {
-        range "1..65535";
-      }
-        description "Connection retry time";
-    }
-
-    leaf min_adv_interval {
-      type uint16 {
-        range "1..600";
-      }
-        description "minium advertisement interval";
-    }
-
-    leaf local_addr {
-      type inet:ip-address;
-        description "Local source address to use for connection";
-    }
-
-    leaf passive_mode {
-      type boolean;
-        description "Passive mode";
-    }
-
-    leaf capability_ext_nexthop {
-      type boolean;
-        description "Advertise extended nexthop capability";
-    }
-
-    leaf disable_ebgp_connected_route_check {
-      type boolean;
-        description "Connected checked disabled";
-    }
-
-    leaf enforce_first_as {
-      type boolean;
-        description "Enforce first AS for EBGP";
-    }
-
-    leaf solo_peer {
-      type boolean;
-        description "Part of own update group";
-    }
-
-    leaf ttl_security_hops {
-      type uint8 {
-          range 1..254;
-      }
-        description "TTL";
-    }
-
-    leaf bfd {
-      type boolean;
-        description "BFD status";
-    }
-
-    leaf capability_dynamic {
-      type boolean;
-        description "Advertise dynamic capability";
-    }
-
-    leaf dont_negotiate_capability {
-      type boolean;
-        description "Do not perform capability negotiation";
-    }
-
-    leaf enforce_multihop {
-      type boolean;
-        description "Enforce EBGP neighbors perform multihop";
-    }
-
-    leaf override_capability {
-      type boolean;
-        description "Override capability negotiation result";
-    }
-
-    leaf peer_port {
-      type uint16;
-        description "Peer port number";
-    }
-
-    leaf shutdown_message {
-      type string {
-	length "1..127";
-      }
-        description "Message on peer/Neighbor shutdown";
-    }
-
-    leaf strict_capability_match {
-      type boolean;
-        description "Strict capability negotiation match";
-    }
-
-  }
-
-
-  grouping sonic-bgp-cmn-af {
-
-    leaf afi_safi {
-        type string;
-        description "Address family";
-    }
-
-    leaf admin_status {
-      type boolean;
-        description "Enabled status";
-    }
-   
-    leaf send_default_route {
-      type boolean;
-        description "Send default route";
-    }
-
-    leaf default_rmap {
-        type leafref {
-            path "/srmap:sonic-route-map/srmap:ROUTE_MAP_SET/srmap:ROUTE_MAP_SET_LIST/srmap:name";
+    typedef bgp_ip_or_intf {
+        type union {
+            type inet:ip-address;
+            type leafref {
+                path "/prt:sonic-port/prt:PORT/prt:PORT_LIST/prt:ifname";
+            }
+            type leafref {
+                path "/spc:sonic-portchannel/spc:PORTCHANNEL/spc:PORTCHANNEL_LIST/spc:name";
+            }
+            type leafref {
+                path "/svlan:sonic-vlan/svlan:VLAN/svlan:VLAN_LIST/svlan:name";
+            }
         }
-        description "Default route map to originate";
     }
 
-    leaf max_prefix_limit {
-      type uint32;
-        description "Maximum prefix limit";
-    }
-
-    leaf max_prefix_warning_only {
-      type boolean;
-        description "On maximum prefix limit, warn only";
-    }
-
-    leaf max_prefix_warning_threshold {
-      type uint8 {
-        range "1..100";
-      }
-        description "Maximum prefix limit threshold for warning";
-    }
-
-    leaf max_prefix_restart_interval {
-      type uint16 {
-        range "1..65535";
-      }
-        description "Interval after which connection will get re-established";
-    }
-
-    leaf-list route_map_in {
-      type leafref {
-        path "/srmap:sonic-route-map/srmap:ROUTE_MAP_SET/srmap:ROUTE_MAP_SET_LIST/srmap:name";
-      }
-    }
-
-    leaf-list route_map_out {
-      type leafref {
-        path "/srmap:sonic-route-map/srmap:ROUTE_MAP_SET/srmap:ROUTE_MAP_SET_LIST/srmap:name";
-      }
-    }
-
-    leaf soft_reconfiguration_in {
-      type boolean;
-        description "Inbound soft reconfiguration";
-    }
-
-    leaf unsuppress_map_name {
-      type leafref {
-        path "/srmap:sonic-route-map/srmap:ROUTE_MAP_SET/srmap:ROUTE_MAP_SET_LIST/srmap:name";
-      }
-      description "Route map";
-    }
-
-    leaf rrclient {
-      type boolean;
-        description "Route reflector client";
-    }
-
-    leaf weight {
-      type uint16 {
-          range 0..65535;
-      }
-    }
-
-    leaf as_override {
-      type boolean;
-    }
-
-    leaf send_community {
-      type bgp_community_type;
-    }
-
-    leaf add_path_tx_all {
-      type boolean;
-        description "Advertise all paths using add path";
-    }
-
-    leaf add_path_tx_bestpath {
-      type boolean;
-        description "Advertise best path per AS using add path";
-    }
-
-    leaf unchanged_as_path {
-      type boolean;
-        description "AS path attribute unchanged";
-    }
-
-    leaf unchanged_med{
-      type boolean;
-        description "MED attribute unchanged";
-    }
-
-    leaf unchanged_nexthop {
-      type boolean;
-        description "nexthop attribute unchanged";
-    }
-
-    leaf filter_list_name {
-        type leafref {
-            path "/srpolsets:sonic-routing-policy-sets/srpolsets:AS_PATH_SET/srpolsets:AS_PATH_SET_LIST/srpolsets:name";
+    typedef sonic_bgp_direction {
+        type enumeration {
+            enum in {
+                description
+                    "Refers to information received from the BGP peer";
+            }
+            enum out {
+                description
+                    "Refers to information advertised to the BGP peer";
+            }
         }
-        description "Filter list name";
+        description
+            "Type to describe the direction";
     }
 
-    leaf filter_list_direction {
-      type sonic_bgp_direction;
-        description "Filter list direction";
-    }
-
-    leaf nhself {
-      type boolean;
-        description "Nexthop is self, no nexthop calculation";
-    }
-
-    leaf nexthop_self_force {
-      type boolean;
-        description "Force nexthop to be self for reflected routes";
-    }
-
-    leaf prefix_list_name {
-        type leafref {
-            path "/srpolsets:sonic-routing-policy-sets/srpolsets:PREFIX_SET/srpolsets:PREFIX_SET_LIST/srpolsets:name";
+    typedef sonic_bgp_orf {
+        type enumeration {
+            enum send {
+                description
+                    "Capability to receive the outbound route filtering from this neighbor";
+            }
+            enum receive {
+                description
+                    "Capability to send the outbound route filtering to this neighbor";
+            }
+            enum both {
+                description
+                    "Capability to send and receive the outbound route filtering to/from this neighbor";
+            }
         }
-        description "Prefix list name";
+        description
+            "Type to describe the BGP ORF(Outbound route filtering) capability";
     }
 
-    leaf prefix_list_direction {
-      type sonic_bgp_direction;
-        description "Prefix list direction";
+    grouping sonic-bgp-cmn {
+
+        leaf local_asn {
+            type uint32 {
+                range "1..4294967295";
+            }
+            description "Local AS number";
+        }
+
+        leaf name {
+            type string;
+            description "Peer description";
+        }
+
+        leaf asn {
+            type uint32 {
+                range "1..4294967295";
+            }
+            description "Peer AS number";
+        }
+
+        leaf peer_type {
+            type bgp_peer_type;
+        }
+
+        leaf ebgp_multihop {
+            type boolean;
+            description "EBGP Multihop enabled";
+        }
+
+        leaf ebgp_multihop_ttl {
+            type uint8 {
+                range "1..255";
+            }
+            description "EBGP Multihop TTL";
+        }
+
+        leaf auth_password {
+            type string;
+            description "Authuntiation password";
+        }
+
+        leaf keepalive {
+            type uint16;
+            description "Keepalive interval";
+        }
+
+        leaf holdtime {
+            type uint16;
+            description "Hold time";
+        }
+
+        leaf conn_retry {
+            type uint16 {
+                range "1..65535";
+            }
+            description "Connection retry time";
+        }
+
+        leaf min_adv_interval {
+            type uint16 {
+                range "1..600";
+            }
+            description "minium advertisement interval";
+        }
+
+        leaf local_addr {
+            type sbc:bgp_ip_or_intf;
+            description "Local source address or interface name to use for connection.";
+        }
+
+        leaf passive_mode {
+            type boolean;
+            description "Passive mode";
+        }
+
+        leaf capability_ext_nexthop {
+            type boolean;
+            description "Advertise extended nexthop capability";
+        }
+
+        leaf disable_ebgp_connected_route_check {
+            type boolean;
+            description "Connected checked disabled";
+        }
+
+        leaf enforce_first_as {
+            type boolean;
+            description "Enforce first AS for EBGP";
+        }
+
+        leaf solo_peer {
+            type boolean;
+            description "Part of own update group";
+        }
+
+        leaf ttl_security_hops {
+            type uint8 {
+                range 1..254;
+            }
+            description "TTL";
+        }
+
+        leaf bfd {
+            type boolean;
+            description "BFD status";
+        }
+
+        leaf capability_dynamic {
+            type boolean;
+            description "Advertise dynamic capability";
+        }
+
+        leaf dont_negotiate_capability {
+            type boolean;
+            description "Do not perform capability negotiation";
+        }
+
+        leaf enforce_multihop {
+            type boolean;
+            description "Enforce EBGP neighbors perform multihop";
+        }
+
+        leaf override_capability {
+            type boolean;
+            description "Override capability negotiation result";
+        }
+
+        leaf peer_port {
+            type uint16;
+            description "Peer port number";
+        }
+
+        leaf shutdown_message {
+            type string {
+                length "1..127";
+            }
+            description "Message on peer/Neighbor shutdown";
+        }
+
+        leaf strict_capability_match {
+            type boolean;
+            description "Strict capability negotiation match";
+        }
+
     }
 
-    leaf remove_private_as_enabled {
-      type boolean;
-        description "Remove private ASN's in outbound updates";
+
+    grouping sonic-bgp-cmn-af {
+
+        leaf afi_safi {
+            type string;
+            description "Address family";
+        }
+
+        leaf admin_status {
+            type boolean;
+            description "Enabled status";
+        }
+
+        leaf send_default_route {
+            type boolean;
+            description "Send default route";
+        }
+
+        leaf default_rmap {
+            type leafref {
+                path "/srmap:sonic-route-map/srmap:ROUTE_MAP_SET/srmap:ROUTE_MAP_SET_LIST/srmap:name";
+            }
+            description "Default route map to originate";
+        }
+
+        leaf max_prefix_limit {
+            type uint32;
+            description "Maximum prefix limit";
+        }
+
+        leaf max_prefix_warning_only {
+            type boolean;
+            description "On maximum prefix limit, warn only";
+        }
+
+        leaf max_prefix_warning_threshold {
+            type uint8 {
+                range "1..100";
+            }
+            description "Maximum prefix limit threshold for warning";
+        }
+
+        leaf max_prefix_restart_interval {
+            type uint16 {
+                range "1..65535";
+            }
+            description "Interval after which connection will get re-established";
+        }
+
+        leaf-list route_map_in {
+            type leafref {
+                path "/srmap:sonic-route-map/srmap:ROUTE_MAP_SET/srmap:ROUTE_MAP_SET_LIST/srmap:name";
+            }
+        }
+
+        leaf-list route_map_out {
+            type leafref {
+                path "/srmap:sonic-route-map/srmap:ROUTE_MAP_SET/srmap:ROUTE_MAP_SET_LIST/srmap:name";
+            }
+        }
+
+        leaf soft_reconfiguration_in {
+            type boolean;
+            description "Inbound soft reconfiguration";
+        }
+
+        leaf unsuppress_map_name {
+            type leafref {
+                path "/srmap:sonic-route-map/srmap:ROUTE_MAP_SET/srmap:ROUTE_MAP_SET_LIST/srmap:name";
+            }
+            description "Route map";
+        }
+
+        leaf rrclient {
+            type boolean;
+            description "Route reflector client";
+        }
+
+        leaf weight {
+            type uint16 {
+                range 0..65535;
+            }
+        }
+
+        leaf as_override {
+            type boolean;
+        }
+
+        leaf send_community {
+            type bgp_community_type;
+        }
+
+        leaf tx_add_paths {
+            type bgp_tx_add_paths_type;
+            description "Advertise all paths or best path per AS using add path";
+        }
+
+        leaf unchanged_as_path {
+            type boolean;
+            description "AS path attribute unchanged";
+        }
+
+        leaf unchanged_med{
+            type boolean;
+            description "MED attribute unchanged";
+        }
+
+        leaf unchanged_nexthop {
+            type boolean;
+            description "nexthop attribute unchanged";
+        }
+
+        leaf filter_list_in {
+            type leafref {
+                path "/srpolsets:sonic-routing-policy-sets/srpolsets:AS_PATH_SET/srpolsets:AS_PATH_SET_LIST/srpolsets:name";
+            }
+            description "Filter list name";
+        }
+
+        leaf filter_list_out {
+            type leafref {
+                path "/srpolsets:sonic-routing-policy-sets/srpolsets:AS_PATH_SET/srpolsets:AS_PATH_SET_LIST/srpolsets:name";
+            }
+            description "Filter list name";
+        }
+
+        leaf nhself {
+            type boolean;
+            description "Nexthop is self, no nexthop calculation";
+        }
+
+        leaf nexthop_self_force {
+            type boolean;
+            description "Force nexthop to be self for reflected routes";
+        }
+
+        leaf prefix_list_in {
+            type leafref {
+                path "/srpolsets:sonic-routing-policy-sets/srpolsets:PREFIX_SET/srpolsets:PREFIX_SET_LIST/srpolsets:name";
+            }
+            description "Prefix list name";
+        }
+
+        leaf prefix_list_out {
+            type leafref {
+                path "/srpolsets:sonic-routing-policy-sets/srpolsets:PREFIX_SET/srpolsets:PREFIX_SET_LIST/srpolsets:name";
+            }
+            description "Prefix list name";
+        }
+
+        leaf remove_private_as_enabled {
+            type boolean;
+            description "Remove private ASN's in outbound updates";
+        }
+
+        leaf replace_private_as {
+            type boolean;
+            description "Replace private ASN's with our ASN in outbound updates";
+        }
+
+        leaf remove_private_as_all {
+            type boolean;
+            description "Remove all ASN's in outbound updates";
+        }
+
+        leaf allow_as_in {
+            type boolean;
+            description "Allow own ASN in AS path";
+        }
+
+        leaf allow_as_count {
+            type uint8;
+            description "Number of occurances of ASN";
+        }
+
+        leaf allow_as_origin {
+            type boolean;
+            description "Allow own AS in AS path, if route originated in own AS";
+        }
+
+        leaf cap_orf {
+            type sonic_bgp_orf;
+            description "ORF(Outbound Route Filtering) capability";
+        }
+
+        leaf route_server_client {
+            type boolean;
+            description "Route server client";
+        }
     }
 
-    leaf replace_private_as {
-      type boolean;
-        description "Replace private ASN's with our ASN in outbound updates";
+    grouping sonic-bgp-evpn-vni-common {
+
+        leaf advertise-default-gw {
+            type boolean;
+        }
+
+        leaf route-distinguisher {
+            type string;
+        }
+
     }
 
-    leaf remove_private_as_all {
-      type boolean;
-        description "Remove all ASN's in outbound updates";
+    grouping sonic-bgp-af-evpn-global {
+
+        uses sonic-bgp-evpn-vni-common;
+
+        leaf advertise-all-vni {
+            type boolean;
+        }     
+
+        leaf advertise-ipv4-unicast {
+            type boolean;
+        }
+
+        leaf advertise-ipv6-unicast {
+            type boolean;
+        }
+
+        leaf default-originate-ipv4 {
+            type boolean;
+        }
+
+        leaf default-originate-ipv6 {
+            type boolean;
+        } 
+
+        leaf autort {
+            type string;
+        }
+
+        leaf flooding {
+            type string;
+        }
+
+        leaf dad-enabled {
+            type boolean;
+        } 
+
+        leaf dad-max-moves {
+            type uint32;
+        }
+
+        leaf dad-time {
+            type uint32;
+        }
+
+        leaf dad-freeze {
+            type string;
+        } 
+
     }
-
-    leaf allow_as_in {
-      type boolean;
-        description "Allow own ASN in AS path";
-    }
-
-    leaf allow_as_count {
-      type uint8;
-        description "Number of occurances of ASN";
-    }
-
-    leaf allow_as_origin {
-      type boolean;
-        description "Allow own AS in AS path, if route originated in own AS";
-    }
-
-    leaf cap_orf {
-      type sonic_bgp_orf;
-        description "ORF(Outbound Route Filtering) capability";
-    }
-
-    leaf route_server_client {
-      type boolean;
-        description "Route server client";
-    }
-  }
-
-  grouping sonic-bgp-evpn-vni-common {
-
-    leaf advertise-default-gw {
-      type boolean;
-    }
-        
-    leaf route-distinguisher {
-      type string;
-    }
-
-  }
-
-  grouping sonic-bgp-af-evpn-global {
-
-    uses sonic-bgp-evpn-vni-common;
-        
-    leaf advertise-all-vni {
-      type boolean;
-    }     
-
-    leaf advertise-ipv4-unicast {
-      type boolean;
-    }
-
-    leaf advertise-ipv6-unicast {
-      type boolean;
-    }
-
-    leaf default-originate-ipv4 {
-      type boolean;
-    }
-
-    leaf default-originate-ipv6 {
-      type boolean;
-    } 
-        
-    leaf autort {
-      type string;
-    }
-
-    leaf flooding {
-      type string;
-    }
-
-    leaf dad-enabled {
-      type boolean;
-    } 
-
-    leaf dad-max-moves {
-      type uint32;
-    }
-
-    leaf dad-time {
-      type uint32;
-    }
-
-    leaf dad-freeze {
-      type string;
-    } 
-
-  }
 
 }

@@ -10,6 +10,7 @@ import (
 	"translib/ocbinds"
 	"reflect"
 	"github.com/openconfig/ygot/ygot"
+    "translib/tlerr"
 	"translib/db"
 )
 
@@ -90,14 +91,15 @@ var YangToDb_route_map_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (str
     rtMapName := pathInfo.Var("name")
     stmtName := pathInfo.Var("name#2")
 
+    if len(stmtName) == 0 {
+        return entry_key, err
+    }
     /* @@TODO For now, due to infra. ordering issue, always assuming statement name is uint16 value. */
-    /*
     _, err = strconv.ParseUint(stmtName, 10, 16)
     if err != nil {
         log.Info("URI route-map invalid statement name type, use values in range (1-65535)", stmtName)
 	    return entry_key, tlerr.InvalidArgs("Statement '%s' not supported, use values in range (1-65535)", stmtName)
     }
-    */
     entry_key = rtMapName + "|" + stmtName
     log.Info("URI route-map ", entry_key)
 
@@ -126,7 +128,7 @@ var YangToDb_route_map_action_policy_result_xfmr FieldXfmrYangToDb = func(inPara
         return res_map, err
     }
     action, _ := inParams.param.(ocbinds.E_OpenconfigRoutingPolicy_PolicyResultType)
-    log.Info("YangToDb_acl_forwarding_action_xfmr: ", inParams.ygRoot, " Xpath: ", inParams.uri, " route-operation: ", action)
+    log.Info("YangToDb_route_map_action_policy_result_xfmr: ", inParams.ygRoot, " Xpath: ", inParams.uri, " route-operation: ", action)
     if action == ocbinds.OpenconfigRoutingPolicy_PolicyResultType_ACCEPT_ROUTE {
         res_map["route_operation"] = "permit"
     } else if action == ocbinds.OpenconfigRoutingPolicy_PolicyResultType_REJECT_ROUTE {
@@ -232,7 +234,7 @@ var YangToDb_route_map_match_set_options_xfmr FieldXfmrYangToDb = func(inParams 
         return res_map, err
     }
     action, _ := inParams.param.(ocbinds.E_OpenconfigRoutingPolicy_MatchSetOptionsType)
-    log.Info("YangToDb_acl_forwarding_action_xfmr: ", inParams.ygRoot, " Xpath: ", inParams.uri, " match-set-option: ", action)
+    log.Info("YangToDb_route_map_match_set_options_xfmr: ", inParams.ygRoot, " Xpath: ", inParams.uri, " match-set-option: ", action)
     if action != ocbinds.OpenconfigRoutingPolicy_MatchSetOptionsType_ANY {
         err = errors.New("Invalid match set option")
         return res_map, err
@@ -256,7 +258,7 @@ var YangToDb_route_map_match_set_options_restrict_type_xfmr FieldXfmrYangToDb = 
         return res_map, err
     }
     action, _ := inParams.param.(ocbinds.E_OpenconfigRoutingPolicy_MatchSetOptionsRestrictedType)
-    log.Info("YangToDb_acl_forwarding_action_xfmr: ", inParams.ygRoot, " Xpath: ", inParams.uri, " match-set-option: ", action)
+    log.Info("YangToDb_route_map_match_set_options_restrict_type_xfmr: ", inParams.ygRoot, " Xpath: ", inParams.uri, " match-set-option: ", action)
     if action != ocbinds.OpenconfigRoutingPolicy_MatchSetOptionsRestrictedType_ANY {
         err = errors.New("Invalid match set option")
         return res_map, err

@@ -168,7 +168,7 @@ module openconfig-network-instance-annot {
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:config/oc-netinst:as {
         deviate add {
-            sonic-ext:field-name "local_asn";
+            sonic-ext:field-transformer "bgp_local_asn_fld_xfmr";
         }
     }
 
@@ -1135,62 +1135,62 @@ module openconfig-network-instance-annot {
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-bgp-ext:route-flap-damping/oc-bgp-ext:config/oc-bgp-ext:enabled {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:route-flap-damping/oc-bgp-ext:config/oc-bgp-ext:enabled {
       deviate add {
             sonic-ext:field-name "route_flap_dampen";
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-bgp-ext:route-flap-damping/oc-bgp-ext:config/oc-bgp-ext:half-life {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:route-flap-damping/oc-bgp-ext:config/oc-bgp-ext:half-life {
       deviate add {
             sonic-ext:field-name "route_flap_dampen_half_life";
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-bgp-ext:route-flap-damping/oc-bgp-ext:config/oc-bgp-ext:reuse-threshold {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:route-flap-damping/oc-bgp-ext:config/oc-bgp-ext:reuse-threshold {
       deviate add {
             sonic-ext:field-name "route_flap_dampen_reuse_threshold";
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-bgp-ext:route-flap-damping/oc-bgp-ext:config/oc-bgp-ext:suppress-threshold {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:route-flap-damping/oc-bgp-ext:config/oc-bgp-ext:suppress-threshold {
       deviate add {
             sonic-ext:field-name "route_flap_dampen_suppress_threshold";
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-bgp-ext:route-flap-damping/oc-bgp-ext:config/oc-bgp-ext:max-suppress {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:route-flap-damping/oc-bgp-ext:config/oc-bgp-ext:max-suppress {
       deviate add {
             sonic-ext:field-name "route_flap_dampen_max_suppress";
       }
     }
 
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-bgp-ext:route-flap-damping/oc-bgp-ext:state/oc-bgp-ext:enabled {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:route-flap-damping/oc-bgp-ext:state/oc-bgp-ext:enabled {
       deviate add {
             sonic-ext:field-name "route_flap_dampen";
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-bgp-ext:route-flap-damping/oc-bgp-ext:state/oc-bgp-ext:half-life {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:route-flap-damping/oc-bgp-ext:state/oc-bgp-ext:half-life {
       deviate add {
             sonic-ext:field-name "route_flap_dampen_half_life";
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-bgp-ext:route-flap-damping/oc-bgp-ext:state/oc-bgp-ext:reuse-threshold {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:route-flap-damping/oc-bgp-ext:state/oc-bgp-ext:reuse-threshold {
       deviate add {
             sonic-ext:field-name "route_flap_dampen_reuse_threshold";
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-bgp-ext:route-flap-damping/oc-bgp-ext:state/oc-bgp-ext:suppress-threshold {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:route-flap-damping/oc-bgp-ext:state/oc-bgp-ext:suppress-threshold {
       deviate add {
             sonic-ext:field-name "route_flap_dampen_suppress_threshold";
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-bgp-ext:route-flap-damping/oc-bgp-ext:state/oc-bgp-ext:max-suppress {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:route-flap-damping/oc-bgp-ext:state/oc-bgp-ext:max-suppress {
       deviate add {
             sonic-ext:field-name "route_flap_dampen_max_suppress";
       }
@@ -2101,53 +2101,30 @@ module openconfig-network-instance-annot {
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:add-paths/oc-netinst:config/oc-bgp-ext:tx-all-paths {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:add-paths/oc-netinst:config/oc-bgp-ext:tx-add-paths {
       deviate add {
-        sonic-ext:field-name "add_path_tx_all";
+        sonic-ext:field-transformer "bgp_nbr_tx_add_paths_fld_transformer";
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:add-paths/oc-netinst:config/oc-bgp-ext:tx-bestpath-per-as {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:add-paths/oc-netinst:state/oc-bgp-ext:tx-add-paths {
       deviate add {
-        sonic-ext:field-name "add_path_tx_bestpath";
+        sonic-ext:field-transformer "bgp_nbr_tx_add_paths_fld_transformer";
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:add-paths/oc-netinst:state/oc-bgp-ext:tx-all-paths {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:add-paths/oc-netinst:config/oc-bgp-ext:tx-add-paths {
       deviate add {
-        sonic-ext:field-name "add_path_tx_all";
+        sonic-ext:field-transformer "bgp_pgrp_tx_add_paths_fld_transformer";
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:add-paths/oc-netinst:state/oc-bgp-ext:tx-bestpath-per-as {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:add-paths/oc-netinst:state/oc-bgp-ext:tx-add-paths {
       deviate add {
-        sonic-ext:field-name "add_path_tx_bestpath";
+        sonic-ext:field-transformer "bgp_pgrp_tx_add_paths_fld_transformer";
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:add-paths/oc-netinst:config/oc-bgp-ext:tx-all-paths {
-      deviate add {
-        sonic-ext:field-name "add_path_tx_all";
-      }
-    }
-
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:add-paths/oc-netinst:config/oc-bgp-ext:tx-bestpath-per-as {
-      deviate add {
-        sonic-ext:field-name "add_path_tx_bestpath";
-      }
-    }
-
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:add-paths/oc-netinst:state/oc-bgp-ext:tx-all-paths {
-      deviate add {
-        sonic-ext:field-name "add_path_tx_all";
-      }
-    }
-
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:add-paths/oc-netinst:state/oc-bgp-ext:tx-bestpath-per-as {
-      deviate add {
-        sonic-ext:field-name "add_path_tx_bestpath";
-      }
-    }
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:config/oc-bgp-ext:soft-reconfiguration-in {
       deviate add {
@@ -2305,29 +2282,30 @@ module openconfig-network-instance-annot {
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:filter-list/oc-bgp-ext:config/oc-bgp-ext:as-path-set-name {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:filter-list/oc-bgp-ext:config/oc-bgp-ext:import-policy {
       deviate add {
-        sonic-ext:field-name "filter_list_name";
+        sonic-ext:field-name "filter_list_in";
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:filter-list/oc-bgp-ext:config/oc-bgp-ext:direction {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:filter-list/oc-bgp-ext:config/oc-bgp-ext:export-policy {
       deviate add {
-        sonic-ext:field-transformer "bgp_nbr_flist_direction_fld_xfmr";
+        sonic-ext:field-name "filter_list_out";
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:filter-list/oc-bgp-ext:state/oc-bgp-ext:as-path-set-name {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:filter-list/oc-bgp-ext:state/oc-bgp-ext:import-policy {
       deviate add {
-        sonic-ext:field-name "filter_list_name";
+        sonic-ext:field-name "filter_list_in";
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:filter-list/oc-bgp-ext:state/oc-bgp-ext:direction {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:filter-list/oc-bgp-ext:state/oc-bgp-ext:export-policy {
       deviate add {
-        sonic-ext:field-transformer "bgp_nbr_flist_direction_fld_xfmr";
+        sonic-ext:field-name "filter_list_out";
       }
     }
+
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:next-hop-self/oc-bgp-ext:config/oc-bgp-ext:enabled {
       deviate add {
@@ -2353,27 +2331,27 @@ module openconfig-network-instance-annot {
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:prefix-list/oc-bgp-ext:config/oc-bgp-ext:prefix-set-name {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:prefix-list/oc-bgp-ext:config/oc-bgp-ext:import-policy {
       deviate add {
-        sonic-ext:field-name "prefix_list_name";
+        sonic-ext:field-name "prefix_list_in";
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:prefix-list/oc-bgp-ext:config/oc-bgp-ext:direction {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:prefix-list/oc-bgp-ext:config/oc-bgp-ext:export-policy {
       deviate add {
-        sonic-ext:field-transformer "bgp_nbr_plist_direction_fld_xfmr";
+        sonic-ext:field-name "prefix_list_out";
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:prefix-list/oc-bgp-ext:state/oc-bgp-ext:prefix-set-name {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:prefix-list/oc-bgp-ext:state/oc-bgp-ext:import-policy {
       deviate add {
-        sonic-ext:field-name "prefix_list_name";
+        sonic-ext:field-name "prefix_list_in";
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:prefix-list/oc-bgp-ext:state/oc-bgp-ext:direction {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:prefix-list/oc-bgp-ext:state/oc-bgp-ext:export-policy {
       deviate add {
-        sonic-ext:field-transformer "bgp_nbr_plist_direction_fld_xfmr";
+        sonic-ext:field-name "prefix_list_out";
       }
     }
 
@@ -2497,27 +2475,27 @@ module openconfig-network-instance-annot {
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:filter-list/oc-bgp-ext:config/oc-bgp-ext:as-path-set-name {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:filter-list/oc-bgp-ext:config/oc-bgp-ext:import-policy {
       deviate add {
-        sonic-ext:field-name "filter_list_name";
+        sonic-ext:field-name "filter_list_in";
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:filter-list/oc-bgp-ext:config/oc-bgp-ext:direction {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:filter-list/oc-bgp-ext:config/oc-bgp-ext:export-policy {
       deviate add {
-        sonic-ext:field-transformer "bgp_pgrp_flist_direction_fld_xfmr";
+        sonic-ext:field-name "filter_list_out";
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:filter-list/oc-bgp-ext:state/oc-bgp-ext:as-path-set-name {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:filter-list/oc-bgp-ext:state/oc-bgp-ext:import-policy {
       deviate add {
-        sonic-ext:field-name "filter_list_name";
+        sonic-ext:field-name "filter_list_in";
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:filter-list/oc-bgp-ext:state/oc-bgp-ext:direction {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:filter-list/oc-bgp-ext:state/oc-bgp-ext:export-policy {
       deviate add {
-        sonic-ext:field-transformer "bgp_pgrp_flist_direction_fld_xfmr";
+        sonic-ext:field-name "filter_list_out";
       }
     }
 
@@ -2545,27 +2523,27 @@ module openconfig-network-instance-annot {
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:prefix-list/oc-bgp-ext:config/oc-bgp-ext:prefix-set-name {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:prefix-list/oc-bgp-ext:config/oc-bgp-ext:import-policy {
       deviate add {
-        sonic-ext:field-name "prefix_list_name";
+        sonic-ext:field-name "prefix_list_in";
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:prefix-list/oc-bgp-ext:config/oc-bgp-ext:direction {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:prefix-list/oc-bgp-ext:config/oc-bgp-ext:export-policy {
       deviate add {
-        sonic-ext:field-transformer "bgp_pgrp_plist_direction_fld_xfmr";
+        sonic-ext:field-name "prefix_list_out";
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:prefix-list/oc-bgp-ext:state/oc-bgp-ext:prefix-set-name {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:prefix-list/oc-bgp-ext:state/oc-bgp-ext:import-policy {
       deviate add {
-        sonic-ext:field-name "prefix_list_name";
+        sonic-ext:field-name "prefix_list_in";
       }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:prefix-list/oc-bgp-ext:state/oc-bgp-ext:direction {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:prefix-list/oc-bgp-ext:state/oc-bgp-ext:export-policy {
       deviate add {
-        sonic-ext:field-transformer "bgp_pgrp_plist_direction_fld_xfmr";
+        sonic-ext:field-name "prefix_list_out";
       }
     }
 
