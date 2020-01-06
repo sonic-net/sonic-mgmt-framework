@@ -198,6 +198,41 @@ def generate_show_bgp_routes(args):
 
    return d
 
+def generate_show_bgp_prefix_routes(args):
+   api = cc.ApiClient()
+   keypath = []
+   body = None
+   afisafi = "IPV4_UNICAST"
+   rib_type = "ipv4-unicast"
+   vrf = "default"
+   i = 0
+   for arg in args:
+        if "vrf" == arg:
+           vrf = args[i+1]
+        elif "ipv4" == arg:
+           afisafi = "IPV4_UNICAST"
+           rib_type = "ipv4-unicast"
+        elif "ipv6" == arg:
+           afisafi = "IPV6_UNICAST"
+           rib_type = "ipv6-unicast"
+        else:
+           pass
+        i = i + 1
+   prefix_ip = args[i-1]
+   d = {}
+   keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/config', name=vrf, identifier=IDENTIFIER,name1=NAME1)
+   response = api.get(keypath)
+   if(response.ok()):
+       d.update(response.content)
+       keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/rib/afi-safis/afi-safi={afi_safi_name}/{type_name}/openconfig-rib-bgp-ext:loc-rib-prefix/routes/route={prefix_name}', name=vrf, identifier=IDENTIFIER, name1=NAME1, afi_safi_name=afisafi, type_name=rib_type, prefix_name=prefix_ip)
+       response1 = api.get(keypath)
+       if(response1.ok()):
+           if 'openconfig-rib-bgp-ext:route' in response1.content:
+               d.update(response1.content)
+               show_cli_output("show_ip_bgp_prefix_routes.j2", d)
+   return d
+
+
 def invoke_api(func, args=[]):
     api = cc.ApiClient()
     keypath = []
@@ -1381,6 +1416,8 @@ def invoke_show_api(func, args=[]):
                 print response.error_message()
 
         return d
+    elif func == 'get_show_bgp_prefix':
+        return generate_show_bgp_prefix_routes(args)
 
     else:
         body = {}
@@ -1396,6 +1433,8 @@ def run(func, args):
     elif func == 'get_ip_bgp_neighbors':
         response = invoke_show_api(func, args)
         show_cli_output(args[0], response)
+    elif func == 'get_show_bgp_prefix':
+        response = invoke_show_api(func, args)
     else:
         response = invoke_api(func, args)
         if response.ok():

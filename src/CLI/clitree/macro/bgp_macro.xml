@@ -28,11 +28,7 @@ limitations under the License.
                         </PARAM>
                     </PARAM>
                 </PARAM>
-                <PARAM name="prefix" help="IPv4 prefix" ptype="IP_ADDR_MASK">
-                    <PARAM name="neighbor-ip" help="Neighbor to display information about" ptype="IPV4_ADDR_ABC">
-                        <PARAM name="path-id" help="Path Identifier" ptype="UINT"/>
-                    </PARAM>
-                </PARAM>
+                <PARAM name="prefix" help="IPv4 prefix" ptype="IP_ADDR_MASK"></PARAM>
                 <PARAM name="summary" help="Summary of BGP neighbor status" ptype="SUBCOMMAND" mode="subcommand"/>
             </PARAM>
         </PARAM>
@@ -49,14 +45,7 @@ limitations under the License.
                         </PARAM>
                     </PARAM>
                 </PARAM>
-
-                <PARAM name="prefix" help="IPv6 prefix" ptype="IPV6_ADDR_MASK">
-                    <PARAM name="neighbour-ip" help="Neighbor to display information about" ptype="IPV6_ADDR">
-                        <PARAM name="path-id" help="Path identifier" ptype="UINT"/>
-                    </PARAM>
-                </PARAM>
-
-
+                <PARAM name="prefix" help="IPv6 prefix" ptype="IPV6_ADDR_MASK"></PARAM>
                 <PARAM name="summary" help="Summary of BGP neighbor status" ptype="SUBCOMMAND" mode="subcommand"/>
             </PARAM>
         </PARAM>
@@ -72,11 +61,7 @@ limitations under the License.
         <PARAM name="peer-group" help="Detailed information on BGP peer groups" ptype="SUBCOMMAND" mode="subcommand">
             <PARAM name="peer-group name" help="Peer-group name" ptype="STRING"/>
         </PARAM>
-         <PARAM name="prefix" help="IPv4 prefix" ptype="IP_ADDR_MASK">
-            <PARAM name="neighbor-ip" help="Neighbor to display information about" ptype="IPV4_ADDR_ABC">
-               <PARAM name="path-id" help="Path Identifier" ptype="UINT"/>
-            </PARAM>
-         </PARAM>
+         <PARAM name="prefix" help="IPv4 prefix" ptype="IP_ADDR_MASK"></PARAM>
          <PARAM name="summary" help="Summary of BGP neighbor status" ptype="SUBCOMMAND" mode="subcommand"/>
     </MACRODEF>
 </ROOT>
