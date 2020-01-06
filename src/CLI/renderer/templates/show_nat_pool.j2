@@ -6,10 +6,10 @@
 {% if 'openconfig-nat:nat-pool' in json_output and 'nat-pool-entry' in json_output['openconfig-nat:nat-pool'] %}
 {% for dict in json_output['openconfig-nat:nat-pool']['nat-pool-entry'] %}
 
-{% if 'state' in dict  and 'ip-address' in dict['state']%}
-{% if vars.update({'ip_range': dict['state']['ip-address']}) %}{% endif %}
-{% elif 'state' in dict  and 'ip-address-range' in dict['state']%}
-{% if vars.update({'ip_range': dict['state']['ip-address-range']}) %}{% endif %}
+{% if 'state' in dict  and 'IP-ADDRESS' in dict['state']%}
+{% if vars.update({'ip_range': dict['state']['IP-ADDRESS']}) %}{% endif %}
+{% elif 'state' in dict  and 'IP-ADDRESS-RANGE' in dict['state']%}
+{% if vars.update({'ip_range': dict['state']['IP-ADDRESS-RANGE']}) %}{% endif %}
 {% else %}
 {% if vars.update({'ip_range':"----"}) %}{% endif %}
 {% endif %}
