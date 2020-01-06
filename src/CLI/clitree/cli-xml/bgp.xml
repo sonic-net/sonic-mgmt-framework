@@ -269,7 +269,7 @@ limitations under the License.
   <COMMAND name="listen" help="Set the prefix range for dynamic peers">
     <PARAM name="listen-opt" help="Listen options" mode="switch" ptype="SUBCOMMAND">
      <PARAM name="range" help="Range for dynamic peers" mode="subcommand" ptype="SUBCOMMAND"> 
-       <PARAM name="addr" help="Neighbor prefix" ptype="IP_ADDR_MASK">
+       <PARAM name="addr" help="Neighbor prefix" ptype="IPV4_IPV6_NETWORK">
          <PARAM name="peer-group" help="Member of the peer-group" mode="subcommand" ptype="SUBCOMMAND">
            <PARAM name="pgname" help="Peer-group name" ptype="STRING"/>
          </PARAM>
