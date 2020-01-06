@@ -40,6 +40,23 @@ module openconfig-bgp-ext {
         "Type to describe the direction";
   }
 
+  typedef tx-add-paths-type {
+      type enumeration {
+          enum TX_ALL_PATHS {
+              description
+                  "Send multiple path advertisements for an NLRI from 
+                  the neighbor or group";
+          }
+          enum TX_BEST_PATH_PER_AS {
+              description
+                  "Send only best path per AS advertisements for an NLRI from 
+                  the neighbor or group";
+          }
+      }
+      description
+          "Type to describe the add paths advertisement method.";
+  }
+
   typedef bgp-orf-type {
     type enumeration {
       enum SEND {
@@ -908,21 +925,10 @@ module openconfig-bgp-ext {
   }
 
   grouping bgp-ext-neighbor-group-add-paths {
-      leaf tx-all-paths {
-          type boolean;
-          default false;
+      leaf tx-add-paths {
+          type tx-add-paths-type;
           description
-              "Send multiple path advertisements for an NLRI from 
-              the neighbor or group";
-          reference
-              "RFC 7911 - Advertisement of Multiple Paths in BGP";
-      }
-
-      leaf tx-bestpath-per-as {
-          type boolean;
-          default false;
-          description
-              "Send only the best path per AS advertisements for an NLRI from 
+              "Send multiple path or only best path per AS advertisements for an NLRI from 
               the neighbor or group";
           reference
               "RFC 7911 - Advertisement of Multiple Paths in BGP";

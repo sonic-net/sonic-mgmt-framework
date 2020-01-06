@@ -52,6 +52,23 @@ module sonic-bgp-common {
         }
     }
 
+    typedef bgp_tx_add_paths_type {
+      type enumeration {
+          enum tx_all_paths {
+              description
+                  "Send multiple path advertisements for an NLRI from 
+                  the neighbor or group";
+          }
+          enum tx_best_path_per_as {
+              description
+                  "Send only best path per AS advertisements for an NLRI from 
+                  the neighbor or group";
+          }
+      }
+      description
+          "Type to describe the add paths advertisement method.";
+    }
+
     typedef bgp_community_type {
         type enumeration {
             enum standard {
@@ -370,14 +387,9 @@ module sonic-bgp-common {
             type bgp_community_type;
         }
 
-        leaf add_path_tx_all {
-            type boolean;
-            description "Advertise all paths using add path";
-        }
-
-        leaf add_path_tx_bestpath {
-            type boolean;
-            description "Advertise best path per AS using add path";
+        leaf tx_add_paths {
+            type bgp_tx_add_paths_type;
+            description "Advertise all paths or best path per AS using add path";
         }
 
         leaf unchanged_as_path {

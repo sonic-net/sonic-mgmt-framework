@@ -29,6 +29,8 @@ func init () {
     XlateFuncBind("DbToYang_bgp_nbr_community_type_fld_xfmr", DbToYang_bgp_nbr_community_type_fld_xfmr)
     XlateFuncBind("YangToDb_bgp_nbr_orf_type_fld_xfmr", YangToDb_bgp_nbr_orf_type_fld_xfmr)
     XlateFuncBind("DbToYang_bgp_nbr_orf_type_fld_xfmr", DbToYang_bgp_nbr_orf_type_fld_xfmr)
+    XlateFuncBind("YangToDb_bgp_nbr_tx_add_paths_fld_xfmr", YangToDb_bgp_nbr_tx_add_paths_fld_xfmr)
+    XlateFuncBind("DbToYang_bgp_nbr_tx_add_paths_fld_xfmr", DbToYang_bgp_nbr_tx_add_paths_fld_xfmr)
 }
 
 var YangToDb_bgp_nbr_tbl_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (string, error) {
@@ -148,6 +150,57 @@ var DbToYang_bgp_nbr_peer_type_fld_xfmr FieldXfmrDbtoYang = func(inParams XfmrPa
     return result, err
 }
 
+var YangToDb_bgp_nbr_tx_add_paths_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
+    res_map := make(map[string]string)
+
+    var err error
+    if inParams.param == nil {
+        err = errors.New("No Params");
+        return res_map, err
+    }
+    tx_add_paths_type, _ := inParams.param.(ocbinds.E_OpenconfigBgpExt_TxAddPathsType)
+    log.Info("YangToDb_bgp_nbr_tx_add_paths_fld_xfmr: ", inParams.ygRoot, " Xpath: ", inParams.uri, " add-paths-type: ", tx_add_paths_type)
+
+    if (tx_add_paths_type == ocbinds.OpenconfigBgpExt_TxAddPathsType_TX_ALL_PATHS) {
+        res_map["tx_add_paths"] = "tx_all_paths"
+    }  else if (tx_add_paths_type == ocbinds.OpenconfigBgpExt_TxAddPathsType_TX_BEST_PATH_PER_AS) {
+        res_map["tx_add_paths"] = "tx_best_path_per_as"
+    } else {
+        err = errors.New("Invalid add Paths type Missing");
+        return res_map, err
+    }
+
+    return res_map, nil
+
+}
+
+var DbToYang_bgp_nbr_tx_add_paths_fld_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (map[string]interface{}, error) {
+
+    var err error
+    result := make(map[string]interface{})
+
+    data := (*inParams.dbDataMap)[inParams.curDb]
+    log.Info("DbToYang_bgp_nbr_tx_add_paths_fld_xfmr: ", data, "inParams : ", inParams)
+
+    pTbl := data["BGP_NEIGHBOR_AF"]
+    if _, ok := pTbl[inParams.key]; !ok {
+        log.Info("DbToYang_bgp_nbr_tx_add_paths_fld_xfmr BGP neighbor not found : ", inParams.key)
+        return result, errors.New("BGP neighbor not found : " + inParams.key)
+    }
+    pNbrKey := pTbl[inParams.key]
+    tx_add_paths_type, ok := pNbrKey.Field["tx_add_paths"]
+
+    if ok {
+        if (tx_add_paths_type == "tx_all_paths") {
+            result["tx-add-paths"] = "TX_ALL_PATHS"
+        } else if (tx_add_paths_type == "tx_best_path_per_as") {
+            result["tx-add-paths"] = "TX_BEST_PATH_PER_AS"
+        }
+    } else {
+        log.Info("Tx add Paths field not found in DB")
+    }
+    return result, err
+}
 
 var YangToDb_bgp_nbr_address_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
     res_map := make(map[string]string)
