@@ -503,7 +503,6 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (cvlErr CVLErrorIn
 			}
 
 			c.yp.SetOperation("DELETE")
-			//store deleted keys
 		}
 
 		yangListName := getRedisTblToYangList(tbl, key)

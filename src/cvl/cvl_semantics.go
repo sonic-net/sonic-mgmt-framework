@@ -989,7 +989,6 @@ func (c *CVL) validateMustExp(node *xmlquery.Node,
 		return count
 	})
 
-	//node = c.moveToYangList(tableName, key)
 	if (node == nil || node.FirstChild == nil) {
 		return CVLErrorInfo{
 			TableName: tableName,
@@ -1075,7 +1074,6 @@ func (c *CVL) validateWhenExp(node *xmlquery.Node,
 		return c.addDepYangData(redisKeys, redisKeyFilter, keyNames, pred, fields, "")
 	})
 
-	//node := c.moveToYangList(tableName, key)
 	if (node == nil || node.FirstChild == nil) {
 		return CVLErrorInfo{
 			TableName: tableName,
@@ -1180,7 +1178,7 @@ func (c *CVL) validateLeafRef(node *xmlquery.Node,
 		return c.addDepYangData(redisKeys, redisKeyFilter, keyNames, pred, fields, "")
 	})
 
-	listNode := node//c.moveToYangList(tableName, key)
+	listNode := node
 	if (listNode == nil || listNode.FirstChild == nil) {
 		return CVLErrorInfo{
 			TableName: tableName,
