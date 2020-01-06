@@ -219,7 +219,7 @@ def generate_show_bgp_prefix_routes(args):
            pass
         i = i + 1
    prefix_ip = args[i-1]
-   d = {}
+   d = { 'vrf': vrf }
    keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/config', name=vrf, identifier=IDENTIFIER,name1=NAME1)
    response = api.get(keypath)
    if(response.ok()):

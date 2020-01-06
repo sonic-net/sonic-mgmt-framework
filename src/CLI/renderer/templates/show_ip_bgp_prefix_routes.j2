@@ -1,5 +1,6 @@
 {% set vars = {'routerId': ""} %}
 {% set vars = {'asNum': ""} %}
+{% set vars = {'vrf': ""} %}
 {% set vars = {'prefix': ""} %}
 {% set vars = {'nxtHop': ""} %}
 {% set vars = {'neighbor': ""} %}
@@ -59,6 +60,9 @@
          {% endif %}
          {% endfor %}
         {% endif %}
+      {% endif %}
+      {% if "vrf" in key %}
+         {% if vars.update({'vrf':json_output["vrf"]}) %}{% endif %}
       {% endif %}
    {% endfor %}
 BGP routing table entry for {{ vars.prefix }}
