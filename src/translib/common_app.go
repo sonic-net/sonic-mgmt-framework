@@ -241,17 +241,17 @@ func (app *CommonApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
 
 		    resYgot := (*app.ygotRoot)
 		    if !strings.HasPrefix(app.pathInfo.Path, "/sonic") {
-				if isEmptyPayload == true {
-					// if payload is empty, ne need to invoke merge-struct
-					resYgot = xfmrYgotRoot
-				} else {
-			    // Merge the ygotRoots filled by transformer and app.ygotRoot used to Unmarshal the payload (required as Unmarshal does replace operation on ygotRoot)
-			    var mrgErr error
-			    resYgot, mrgErr = ygot.MergeStructs(xfmrYgotRoot.(*ocbinds.Device),(*app.ygotRoot).(*ocbinds.Device))
-			    if mrgErr != nil {
-				    log.Error("Error in ygot.MergeStructs: ", mrgErr)
+			    // if payload is empty, no need to invoke merge-struct
+			    if isEmptyPayload == true {
+				    resYgot = xfmrYgotRoot
+			    } else {
+				    // Merge the ygotRoots filled by transformer and app.ygotRoot used to Unmarshal the payload (required as Unmarshal does replace operation on ygotRoot)
+				    var mrgErr error
+				    resYgot, mrgErr = ygot.MergeStructs(xfmrYgotRoot.(*ocbinds.Device),(*app.ygotRoot).(*ocbinds.Device))
+				    if mrgErr != nil {
+					    log.Error("Error in ygot.MergeStructs: ", mrgErr)
+				    }
 			    }
-				}
 		    }
 		    if resYgot != nil {
 			    resPayload, err = generateGetResponsePayload(app.pathInfo.Path, resYgot.(*ocbinds.Device), app.ygotTarget)
