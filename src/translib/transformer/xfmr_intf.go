@@ -385,7 +385,7 @@ var YangToDb_intf_tbl_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (stri
     log.Info("inParams.requestUri: ", requestUriPath)
     err = performIfNameKeyXfmrOp(&inParams, &requestUriPath, &ifName, intfType)
     if err != nil {
-        return "", err
+        return "", tlerr.InvalidArgsError{Format: err.Error()}
     }
     return ifName, err
 }
@@ -396,7 +396,7 @@ var DbToYang_intf_tbl_key_xfmr  KeyXfmrDbToYang = func(inParams XfmrParams) (map
     res_map := make(map[string]interface{})
 
     log.Info("Interface Name = ", inParams.key)
-    res_map["name"] = inParams.key 
+    res_map["name"] = inParams.key
     return res_map, nil
 }
 
@@ -810,10 +810,16 @@ func intf_ip_addr_del (d *db.DB , ifName string, tblName string, subIntf *ocbind
         }
         count := 0
         _ = interfaceIPcount(tblName, d, &ifName, &count)
-        if (count - len(intfIpMap)) == 1 {
-            _, dbErr := d.GetEntry(&db.TableSpec{Name:tblName}, db.Key{Comp: []string{ifName}})
-            if dbErr == nil {
-                subIntfmap[tblName][ifName] = data
+        if (count - len(intfIpMap)) == 1 { //Only 1 IP address entry existing
+            IntfMapObj, err := d.GetMapAll(&db.TableSpec{Name:tblName+"|"+ifName})
+            if err != nil {
+                return nil, errors.New("Entry "+tblName+"|"+ifName+" missing from ConfigDB")
+            }
+            IntfMap := IntfMapObj.Field
+            if len(IntfMap) == 1 {
+                if _, ok := IntfMap["NULL"]; ok {
+                    subIntfmap[tblName][ifName] = data
+                }
             }
         }
     }
@@ -821,14 +827,18 @@ func intf_ip_addr_del (d *db.DB , ifName string, tblName string, subIntf *ocbind
     return subIntfmap, err
 }
 
-/* Validate IP exists in the INTERFACE table of corresponding Interface type */
-func validateIPExists(tblName string, d *db.DB, ifName *string) error {
-    ipCnt := 0
-    _    = interfaceIPcount(tblName, d, ifName, &ipCnt)
-    if ipCnt > 0 {
+/* Validate interface in L3 mode, if true return error */
+func validateL3ConfigExists(d *db.DB, ifName *string) error {
+    intfType, _, ierr := getIntfTypeByName(*ifName)
+    if intfType == IntfTypeUnset || ierr != nil {
+        return errors.New("Invalid interface type IntfTypeUnset");
+    }
+    intTbl := IntfTypeTblMap[intfType]
+    IntfMap, _ := d.GetMapAll(&db.TableSpec{Name:intTbl.cfgDb.intfTN+"|"+*ifName})
+    if IntfMap.IsPopulated() {
         errStr := "L3 Configuration exists for Interface: " + *ifName
         log.Error(errStr)
-        return errors.New(errStr)
+        return tlerr.InvalidArgsError{Format:errStr}
     }
     return nil
 }
@@ -1153,10 +1163,10 @@ func deleteLoopbackIntf(inParams *XfmrParams, loName *string) error {
         log.Errorf("Retrieving data from LOOPBACK_INTERFACE table for Loopback: %s failed!", *loName)
         return err
     }
-    err = validateIPExists(intTbl.cfgDb.intfTN, inParams.d, loName)
-  if err != nil {
-    return err
-  }
+    err = validateL3ConfigExists(inParams.d, loName)
+    if err != nil {
+            return err
+    }
     resMap[intTbl.cfgDb.intfTN] = loMap
 
     subOpMap[db.ConfigDB] = resMap
@@ -1805,6 +1815,11 @@ var YangToDb_intf_eth_port_config_xfmr SubTreeXfmrYangToDb = func(inParams XfmrP
                             return nil, err
                         }
                     }
+                }
+                /* Check if L3 configs present on given physical interface */
+                err = validateL3ConfigExists(inParams.d, &ifName)
+                if err != nil {
+                    return nil, err
                 }
 
             case DELETE:
