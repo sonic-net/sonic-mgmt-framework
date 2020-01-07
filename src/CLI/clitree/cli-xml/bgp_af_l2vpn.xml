@@ -680,7 +680,7 @@ limitations under the License.
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_config_unsuppress_map_name ${vrf-name} ${nbr-addr} L2VPN_EVPN</ACTION>
   </COMMAND>
   <COMMAND name="no weight" help="Set default weight for routes from this neighbor">
-    <PARAM name="val" help="Default weight" ptype="RANGE_1_255" optional="true"/>
+    <PARAM name="val" help="Default weight" ptype="RANGE_0_65535" optional="true"/>
      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_config_weight ${vrf-name} ${nbr-addr} L2VPN_EVPN</ACTION>
   </COMMAND>
   <COMMAND name="no maximum-prefix" help="Maximum number of prefixes to accept from this peer">
@@ -859,7 +859,7 @@ limitations under the License.
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_afi_safis_afi_safi_config_unsuppress_map_name ${vrf-name} ${template-name} L2VPN_EVPN ${map}</ACTION>
   </COMMAND>
   <COMMAND name="weight" help="Set default weight for routes from this neighbor">
-    <PARAM name="val" help="Default weight" ptype="RANGE_1_255"/>
+    <PARAM name="val" help="Default weight" ptype="RANGE_0_65535"/>
      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_afi_safis_afi_safi_config_weight ${vrf-name} ${template-name} L2VPN_EVPN ${val}</ACTION>
   </COMMAND>
   <COMMAND name="maximum-prefix" help="Maximum number of prefixes to accept from this peer">
@@ -1032,7 +1032,7 @@ limitations under the License.
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_afi_safis_afi_safi_config_unsuppress_map_name ${vrf-name} ${template-name} L2VPN_EVPN</ACTION>
   </COMMAND>
   <COMMAND name="no weight" help="Set default weight for routes from this neighbor">
-    <PARAM name="val" help="Default weight" ptype="RANGE_1_255" optional="true"/>
+    <PARAM name="val" help="Default weight" ptype="RANGE_0_65535" optional="true"/>
      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_afi_safis_afi_safi_config_weight ${vrf-name} ${template-name} L2VPN_EVPN</ACTION>
   </COMMAND>
   <COMMAND name="no maximum-prefix" help="Maximum number of prefixes to accept from this peer">
