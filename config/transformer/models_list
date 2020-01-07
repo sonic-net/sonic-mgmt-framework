@@ -13,6 +13,7 @@ openconfig-bgp-evpn-ext.yang
 openconfig-network-instance-annot.yang
 ietf-ptp.yang
 ietf-ptp-annot.yang
+ietf-ptp-ext.yang
 openconfig-lacp.yang
 openconfig-lacp-annot.yang
 openconfig-routing-policy.yang

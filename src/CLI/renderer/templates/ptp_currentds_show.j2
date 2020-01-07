@@ -1,0 +1,11 @@
+{% for key,value in json_output.items() %}
+{% if 'mean-path-delay' in value.keys() %}
+{{ 'Mean Path Delay'.ljust(21)}} {{ value['mean-path-delay']}}
+{% endif %}
+{% if 'steps-removed' in value.keys() %}
+{{ 'Steps Removed'.ljust(21)}} {{ value['steps-removed']}}
+{% endif %}
+{% if 'steps-removed' in value.keys() %}
+{{ 'Offset from master'.ljust(21)}} {{ value['offset-from-master']}}
+{% endif %}
+{% endfor %}

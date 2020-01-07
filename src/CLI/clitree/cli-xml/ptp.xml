@@ -32,6 +32,7 @@
  python $SONIC_CLI_ROOT/sonic-cli-ptp.py get_ietf_ptp_ptp_instance_list_time_properties_ds 0 ptp_tp_show.j2 &#xA;
  elif test "${ptp-subcommands}" = "clock"; then&#xA;
  python $SONIC_CLI_ROOT/sonic-cli-ptp.py get_ietf_ptp_ptp_instance_list_default_ds 0 ptp_clock_show.j2 &#xA;
+ python $SONIC_CLI_ROOT/sonic-cli-ptp.py get_ietf_ptp_ptp_instance_list_current_ds 0 ptp_currentds_show.j2 &#xA;
  elif test "${ptp-subcommands}" = "parent"; then&#xA;
  python $SONIC_CLI_ROOT/sonic-cli-ptp.py get_ietf_ptp_ptp_instance_list_parent_ds 0 ptp_parent_show.j2 &#xA;
  elif test "${ptp-subcommands}" = "port"; then&#xA;
@@ -49,9 +50,6 @@
 			<PARAM name="cfg-ptp-subcommands" help="PTP subcommands" mode="switch" ptype="SUBCOMMAND">
 				<PARAM name="mode" help="PTP mode" ptype="SUBCOMMAND" mode="subcommand">
 					<PARAM name="mode_type" help="Enter ptp mode" ptype="PTP_MODE"/>
-				</PARAM>
-				<PARAM name="delay-mechanism" help="PTP delay mechanism" ptype="SUBCOMMAND" mode="subcommand">
-					<PARAM name="ptp_delay_mechanism_type" help="Enter PTP delay mechanism type" ptype="PTP_DELAY_MECHANISM"/>
 				</PARAM>
 				<PARAM name="network-transport" help="PTP network transport" ptype="SUBCOMMAND" mode="subcommand">
 					<PARAM name="ptp_network_transport_type" help="Enter PTP network transport type" ptype="PTP_TRANSPORT"/>
@@ -110,17 +108,18 @@
 				</PARAM>
 			</PARAM>
 			<ACTION>if test "${cfg-ptp-subcommands}" = "mode"; then&#xA;
- python $SONIC_CLI_ROOT/sonic-cli-ptp.py "clock-type" ${mode_type}&#xA;
- elif test "${cfg-ptp-subcommands}" = "delay-mechanism"; then&#xA;
- python $SONIC_CLI_ROOT/sonic-cli-ptp.py patch_ietf_ptp_ptp_transparent_clock_default_ds_delay_mechanism ${ptp_delay_mechanism_type}&#xA;
+ python $SONIC_CLI_ROOT/sonic-cli-ptp.py "clock-type" 0 ${mode_type}&#xA;
  elif test "${cfg-ptp-subcommands}" = "network-transport"; then&#xA;
- python $SONIC_CLI_ROOT/sonic-cli-ptp.py "network-transport" ${ptp_network_transport_type} ${ptp_master_slave}&#xA;
+ python $SONIC_CLI_ROOT/sonic-cli-ptp.py "network-transport" 0 ${ptp_network_transport_type} &#xA;
+ if [ $? -eq 0 ]; then&#xA;
+ python $SONIC_CLI_ROOT/sonic-cli-ptp.py "unicast-multicast" 0 ${ptp_master_slave}&#xA;
+ fi&#xA;
  elif test "${cfg-ptp-subcommands}" = "ipv6-scope"; then&#xA;
- python $SONIC_CLI_ROOT/sonic-cli-ptp.py "udp6-scope" ${ptp_ipv6_scope}&#xA;
+ python $SONIC_CLI_ROOT/sonic-cli-ptp.py "udp6-scope" 0 ${ptp_ipv6_scope}&#xA;
  elif test "${cfg-ptp-subcommands}" = "domain"; then&#xA;
  python $SONIC_CLI_ROOT/sonic-cli-ptp.py patch_ietf_ptp_ptp_instance_list_default_ds_domain_number 0 ${ptp_domain}&#xA;
  elif test "${cfg-ptp-subcommands}" = "domain-profile"; then&#xA;
- python $SONIC_CLI_ROOT/sonic-cli-ptp.py "domain-profile" ${ptp_domain_profile}&#xA;
+ python $SONIC_CLI_ROOT/sonic-cli-ptp.py "domain-profile" 0 ${ptp_domain_profile}&#xA;
  elif test "${cfg-ptp-subcommands}" = "two-step"; then&#xA;
  python $SONIC_CLI_ROOT/sonic-cli-ptp.py patch_ietf_ptp_ptp_instance_list_default_ds_two_step_flag 0 ${ptp_two_step}&#xA;
  elif test "${cfg-ptp-subcommands}" = "priority1"; then&#xA;
@@ -128,23 +127,23 @@
  elif test "${cfg-ptp-subcommands}" = "priority2"; then&#xA;
  python $SONIC_CLI_ROOT/sonic-cli-ptp.py patch_ietf_ptp_ptp_instance_list_default_ds_priority2 0 ${ptp_priority2}&#xA;
  elif test "${cfg-ptp-subcommands}" = "log-announce-interval"; then&#xA;
- python $SONIC_CLI_ROOT/sonic-cli-ptp.py "log-announce-interval" ${ptp_announce_interval}&#xA;
+ python $SONIC_CLI_ROOT/sonic-cli-ptp.py patch_ietf_ptp_ptp_instance_list_port_ds_list_log_announce_interval 0 ${ptp_announce_interval}&#xA;
  elif test "${cfg-ptp-subcommands}" = "announce-timeout"; then&#xA;
- python $SONIC_CLI_ROOT/sonic-cli-ptp.py "announce-receipt-timeout" ${ptp_announce_timeout}&#xA;
+ python $SONIC_CLI_ROOT/sonic-cli-ptp.py patch_ietf_ptp_ptp_instance_list_port_ds_list_announce_receipt_timeout 0 ${ptp_announce_timeout}&#xA;
  elif test "${cfg-ptp-subcommands}" = "log-sync-interval"; then&#xA;
- python $SONIC_CLI_ROOT/sonic-cli-ptp.py "log-sync-interval" ${ptp_sync_interval}&#xA;
+ python $SONIC_CLI_ROOT/sonic-cli-ptp.py patch_ietf_ptp_ptp_instance_list_port_ds_list_log_sync_interval 0 ${ptp_sync_interval}&#xA;
  elif test "${cfg-ptp-subcommands}" = "log-min-delay-req-interval"; then&#xA;
- python $SONIC_CLI_ROOT/sonic-cli-ptp.py "log-min-delay-req-interval" ${ptp_delay_request_interval}&#xA;
+ python $SONIC_CLI_ROOT/sonic-cli-ptp.py patch_ietf_ptp_ptp_instance_list_port_ds_list_log_min_delay_req_interval 0 ${ptp_delay_request_interval}&#xA;
  elif test "${cfg-ptp-subcommands}" = "port"; then&#xA;
  if test "${cfg-ptp-port-subcommands}" = "add"; then&#xA;
- python $SONIC_CLI_ROOT/sonic-cli-ptp.py "add_port" ${cfg-if-type}${ptp_port_number}&#xA;
+ python $SONIC_CLI_ROOT/sonic-cli-ptp.py post_ietf_ptp_ptp_instance_list_port_ds_list_port_state 0 ${cfg-if-type}${ptp_port_number}&#xA;
  elif test "${cfg-ptp-port-subcommands}" = "del"; then&#xA;
- python $SONIC_CLI_ROOT/sonic-cli-ptp.py "del_port" ${cfg-if-type}${ptp_port_number}&#xA;
+ python $SONIC_CLI_ROOT/sonic-cli-ptp.py delete_ietf_ptp_ptp_instance_list_port_ds_list 0 ${cfg-if-type}${ptp_port_number}&#xA;
  elif test "${cfg-ptp-port-subcommands}" = "master-table"; then&#xA;
  if test "${cfg-ptp-mt-subcommands}" = "add"; then&#xA;
- python $SONIC_CLI_ROOT/sonic-cli-ptp.py "add_master_table" ${cfg-if-type}${ptp_port_number} ${l3_ip}${mac}&#xA;
+ python $SONIC_CLI_ROOT/sonic-cli-ptp.py "add_master_table" 0 ${cfg-if-type}${ptp_port_number} ${l3_ip}${mac}&#xA;
  elif test "${cfg-ptp-mt-subcommands}" = "del"; then&#xA;
- python $SONIC_CLI_ROOT/sonic-cli-ptp.py "del_master_table" ${cfg-if-type}${ptp_port_number} ${l3_ip}${mac}&#xA;
+ python $SONIC_CLI_ROOT/sonic-cli-ptp.py "del_master_table" 0 ${cfg-if-type}${ptp_port_number} ${l3_ip}${mac}&#xA;
  fi&#xA;
  fi&#xA;
  fi&#xA;
