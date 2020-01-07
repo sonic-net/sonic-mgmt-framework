@@ -395,7 +395,7 @@ limitations under the License.
             <PARAM
                 name="zone"
                 help="NAT zone of the interface"
-                ptype="UINT" />
+                ptype="RANGE_NAT_ZONE" />
         <ACTION>
             python $SONIC_CLI_ROOT/sonic-cli-nat.py patch_openconfig_interfaces_ext_interfaces_interface_nat_zone_config_nat_zone ${iface} ${zone}
         </ACTION>
@@ -684,7 +684,7 @@ limitations under the License.
             <PARAM
                 name="zone"
                 help="NAT zone of the vlan"
-                ptype="UINT" />
+                ptype="RANGE_NAT_ZONE" />
         <ACTION>
             python $SONIC_CLI_ROOT/sonic-cli-nat.py patch_openconfig_interfaces_ext_interfaces_interface_nat_zone_config_nat_zone ${vlan_id} ${zone}
         </ACTION>
@@ -764,7 +764,7 @@ limitations under the License.
             <PARAM
                 name="zone"
                 help="NAT zone of the port channel"
-                ptype="UINT" />
+                ptype="RANGE_NAT_ZONE" />
         <ACTION>
             python $SONIC_CLI_ROOT/sonic-cli-nat.py patch_openconfig_interfaces_ext_interfaces_interface_nat_zone_config_nat_zone ${po_name} ${zone}
         </ACTION>

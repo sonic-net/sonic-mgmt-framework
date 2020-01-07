@@ -86,6 +86,13 @@ limitations under the License.
         />
     <!--=======================================================-->
     <PTYPE
+        name="RANGE_NAT_ZONE"
+        method="integer"
+        pattern="0..3"
+        help=""
+        />
+    <!--=======================================================-->
+    <PTYPE
         name="ON_OFF"
         method="select"
         pattern="on(true) off(false)"
