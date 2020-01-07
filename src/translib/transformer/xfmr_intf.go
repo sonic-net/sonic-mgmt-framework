@@ -227,31 +227,33 @@ func performIfNameKeyXfmrOp(inParams *XfmrParams, requestUriPath *string, ifName
                 /* Update the map for VLAN and VLAN MEMBER table */
                 err := deleteVlanIntfAndMembers(inParams, ifName)
                 if err != nil {
-                    log.Errorf("Deleting VLAN: %s failed!", *ifName)
-                    return err
+                    log.Errorf("Deleting VLAN: %s failed! Err:%v", *ifName, err)
+                    return tlerr.InvalidArgsError{Format: err.Error()}
                 }
             case IntfTypePortChannel:
                 err := deleteLagIntfAndMembers(inParams, ifName)
                 if err != nil {
-                    log.Errorf("Deleting LAG: %s failed!", *ifName)
-                    return err
+                    log.Errorf("Deleting LAG: %s failed! Err:%v", *ifName, err)
+                    return tlerr.InvalidArgsError{Format: err.Error()}
                 }
             case IntfTypeLoopback:
                 err := deleteLoopbackIntf(inParams, ifName)
                 if err != nil {
-                    log.Errorf("Deleting Loopback: %s failed!", *ifName)
-                    return err
+                    log.Errorf("Deleting Loopback: %s failed! Err:%s", *ifName, err.Error())
+                    return tlerr.InvalidArgsError{Format: err.Error()}
                 }
+            default:
+                errStr := "Invalid interface for delete:"+*ifName
+                log.Error(errStr)
+                return tlerr.InvalidArgsError{Format:errStr}
             }
-            log.Errorf("Invalid interface for delete:%s", *ifName)
-            return err
         }
     case CREATE:
     case UPDATE:
         if *requestUriPath == "/openconfig-interfaces:interfaces/interface/config" {
             switch ifType {
             case IntfTypeVlan:
-                enableStpOnVlanCreation(inParams, ifName) 
+                enableStpOnVlanCreation(inParams, ifName)
             }
         }
     }
@@ -810,7 +812,7 @@ func intf_ip_addr_del (d *db.DB , ifName string, tblName string, subIntf *ocbind
         }
         count := 0
         _ = interfaceIPcount(tblName, d, &ifName, &count)
-        if (count - len(intfIpMap)) == 1 { //Only 1 IP address entry existing
+        if (count - len(intfIpMap)) == 1 {
             IntfMapObj, err := d.GetMapAll(&db.TableSpec{Name:tblName+"|"+ifName})
             if err != nil {
                 return nil, errors.New("Entry "+tblName+"|"+ifName+" missing from ConfigDB")
@@ -1165,7 +1167,7 @@ func deleteLoopbackIntf(inParams *XfmrParams, loName *string) error {
     }
     err = validateL3ConfigExists(inParams.d, loName)
     if err != nil {
-            return err
+        return err
     }
     resMap[intTbl.cfgDb.intfTN] = loMap
 
