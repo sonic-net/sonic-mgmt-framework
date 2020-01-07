@@ -11,6 +11,12 @@
 		pattern="2..255"
 		help=""
 		/>
+	<PTYPE
+		name="RANGE_0_127"
+		method="integer"
+		pattern="0..127"
+		help=""
+		/>
 	<VIEW name="enable-view">
 		<!--show ptp -->
 		<COMMAND name="show ptp" help="Show PTP config info/status">
@@ -55,7 +61,7 @@
 					<PARAM name="ptp_ipv6_scope" help="Scope used for IPv6 multicast message. Used as second byte of the primary address" ptype="PTP_V6SCOPE_TYPE"/>
 				</PARAM>
 				<PARAM name="domain" help="PTP domain" ptype="SUBCOMMAND" mode="subcommand">
-					<PARAM name="ptp_domain" help="Enter PTP domain value" ptype="RANGE_1_255"/>
+					<PARAM name="ptp_domain" help="Enter PTP domain value" ptype="RANGE_0_127"/>
 				</PARAM>
 				<PARAM name="domain-profile" help="PTP domain profile" ptype="SUBCOMMAND" mode="subcommand">
 					<PARAM name="ptp_domain_profile" help="Enter PTP domain profile type" ptype="PTP_DOMAIN_PROFILE"/>
@@ -64,10 +70,10 @@
 					<PARAM name="ptp_two_step" help="Enable/Disable " ptype="ENA_DISA"/>
 				</PARAM>
 				<PARAM name="priority1" help="PTP priority1" ptype="SUBCOMMAND" mode="subcommand">
-					<PARAM name="ptp_priority1" help="Enter PTP priority1 value" ptype="RANGE_1_255"/>
+					<PARAM name="ptp_priority1" help="Enter PTP priority1 value" ptype="RANGE_0_255"/>
 				</PARAM>
 				<PARAM name="priority2" help="PTP priority2" ptype="SUBCOMMAND" mode="subcommand">
-					<PARAM name="ptp_priority2" help="Enter PTP priority2 value" ptype="RANGE_1_255"/>
+					<PARAM name="ptp_priority2" help="Enter PTP priority2 value" ptype="RANGE_0_255"/>
 				</PARAM>
 				<PARAM name="log-announce-interval" help="PTP announce interval" ptype="SUBCOMMAND" mode="subcommand">
 					<PARAM name="ptp_announce_interval" help="Enter PTP announce interval value" ptype="INT8_RANGE"/>

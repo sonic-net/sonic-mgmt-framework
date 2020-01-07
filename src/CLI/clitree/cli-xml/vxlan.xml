@@ -26,37 +26,36 @@
       </COMMAND>
 
       <!--show vxlan evpn remote vni-->
-      <COMMAND name="show vxlan evpn" help="show vxlan evpn commands"> </COMMAND>
-      <COMMAND name="show vxlan evpn remote" help="show vxlan evpn remote commands"> </COMMAND>
-      <COMMAND name="show vxlan evpn remote vni" help="Show Vxlan EVPN Remote VNI">
+      <COMMAND name="show vxlan remote" help="show vxlan remote commands"> </COMMAND>
+      <COMMAND name="show vxlan remote vni" help="Show Vxlan Remote VNI">
           <PARAM
               name="remote_ip_addr"
-              help="remote evpn peer ip"
-              ptype="IP_ADDR"
+              help="remote vtep ip"
+              ptype="IPV4_ADDR_ABC"
               optional="true"
               >
           </PARAM>
         <ACTION> 
             if test "${remote_ip_addr}" = ""; then&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-vxlan.py "show vxlan evpn remote vni" show_vxlan_evpn_remote_vni.j2&#xA; 
+                python $SONIC_CLI_ROOT/sonic-cli-vxlan.py "show vxlan remote vni" show_vxlan_evpn_remote_vni.j2&#xA; 
             else&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-vxlan.py "show vxlan evpn remote vni" show_vxlan_evpn_remote_vni.j2 ${remote_ip_addr}&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-vxlan.py "show vxlan remote vni" show_vxlan_evpn_remote_vni.j2 ${remote_ip_addr}&#xA;
             fi&#xA;
       </ACTION>
       </COMMAND>
-      <COMMAND name="show vxlan evpn remote mac" help="Show Vxlan EVPN Remote mac">
+      <COMMAND name="show vxlan remote mac" help="Show Vxlan Remote mac">
           <PARAM
               name="remote_ip_addr"
-              help="remote evpn peer ip"
-              ptype="IP_ADDR"
+              help="remote vtep ip"
+              ptype="IPV4_ADDR_ABC"
               optional="true"
               >
           </PARAM>
         <ACTION> 
             if test "${remote_ip_addr}" = ""; then&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-vxlan.py "show vxlan evpn remote mac" show_vxlan_evpn_remote_mac.j2&#xA; 
+                python $SONIC_CLI_ROOT/sonic-cli-vxlan.py "show vxlan remote mac" show_vxlan_evpn_remote_mac.j2&#xA; 
             else&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-vxlan.py "show vxlan evpn remote mac" show_vxlan_evpn_remote_mac.j2 ${remote_ip_addr}&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-vxlan.py "show vxlan remote mac" show_vxlan_evpn_remote_mac.j2 ${remote_ip_addr}&#xA;
             fi&#xA;
       </ACTION>
       </COMMAND>
@@ -118,7 +117,7 @@
         </COMMAND>
     <COMMAND name="no map" help="Delete VNI Mapping">
       <PARAM name="vni" help="Configure VNI mapping" ptype="SUBCOMMAND" mode="subcommand"> 
-       <PARAM name="vnid" help="VNID" ptype="RANGE_1_65535"> 
+       <PARAM name="vnid" help="VNID" ptype="RANGE_1_16777215"> 
         <PARAM name="mapoptions" help="" ptype="SUBCOMMAND" mode="switch"> 
          <PARAM name="vlan" help="Configure VLAN" ptype="SUBCOMMAND" mode="subcommand"> 
          <PARAM name="vid" help="VLAN ID" ptype="VLAN_ID"> </PARAM>
@@ -148,7 +147,7 @@
             <PARAM
                 name="SIP"
                 help="Source IPv4 address"
-                ptype="IP_ADDR"
+                ptype="IPV4_ADDR_ABC"
                 >
             </PARAM>
             <ACTION> python $SONIC_CLI_ROOT/sonic-cli-vxlan.py patch_sonic_vxlan_sonic_vxlan_vxlan_tunnel_vxlan_tunnel_list ${iface} ${SIP}
@@ -156,7 +155,7 @@
         </COMMAND>
     <COMMAND name="map" help="Configure Mapping">
       <PARAM name="vni" help="Configure VNI mapping" ptype="SUBCOMMAND" mode="subcommand"> 
-       <PARAM name="vnid" help="VNID" ptype="RANGE_1_65535"> 
+       <PARAM name="vnid" help="VNID" ptype="RANGE_1_16777215"> 
         <PARAM name="mapoptions" help="" ptype="SUBCOMMAND" mode="switch"> 
          <PARAM name="vlan" help="Configure VLAN" ptype="SUBCOMMAND" mode="subcommand"> 
           <PARAM name="vid" help="VLAN ID" ptype="VLAN_ID"> 

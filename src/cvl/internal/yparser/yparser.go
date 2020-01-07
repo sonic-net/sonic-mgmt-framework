@@ -37,6 +37,8 @@ import (
 #include <stdio.h>
 #include <string.h>
 
+extern int lyd_check_mandatory_tree(struct lyd_node *root, struct ly_ctx *ctx, const struct lys_module **modules, int mod_count, int options);
+
 struct lyd_node* lyd_parse_data_path(struct ly_ctx *ctx,  const char *path, LYD_FORMAT format, int options) {
 	return lyd_parse_path(ctx, path, format, options);
 }
@@ -48,49 +50,17 @@ struct lyd_node *lyd_parse_data_mem(struct ly_ctx *ctx, const char *data, LYD_FO
 
 int lyd_data_validate(struct lyd_node **node, int options, struct ly_ctx *ctx)
 {
+	int ret = -1;
+
+	//Check mandatory elements as it is skipped for LYD_OPT_EDIT
+	ret = lyd_check_mandatory_tree(*node, ctx, NULL, 0, LYD_OPT_CONFIG | LYD_OPT_NOEXTDEPS);
+
+	if (ret != 0) 
+	{
+		return ret;
+	}
+
 	return lyd_validate(node, options, ctx);
-}
-
-int lyd_data_validate_all(const char *data, const char *depData, const char *othDepData, int options, struct ly_ctx *ctx)
-{
-	struct lyd_node *pData;
-	struct lyd_node *pDepData;
-	struct lyd_node *pOthDepData;
-
-	if ((data == NULL)  || (data[0] == '\0'))
-	{
-		return -1; 
-	}
-
-	pData =  lyd_parse_mem(ctx, data, LYD_XML, LYD_OPT_EDIT | LYD_OPT_NOEXTDEPS);
-	if (pData == NULL) 
-	{
-		return -1;
-	}
-
-	if ((depData != NULL) && (depData[0] != '\0'))
-	{
-		if (NULL != (pDepData = lyd_parse_mem(ctx, depData, LYD_XML, LYD_OPT_EDIT | LYD_OPT_NOEXTDEPS)))
-		{
-			if (0 != lyd_merge_to_ctx(&pData, pDepData, LYD_OPT_DESTRUCT, ctx))
-			{
-				return -1;
-			}
-		}
-	}
-
-	if ((othDepData != NULL) && (othDepData[0] != '\0'))
-	{
-		if (NULL != (pOthDepData = lyd_parse_mem(ctx, othDepData, LYD_XML, LYD_OPT_EDIT | LYD_OPT_NOEXTDEPS)))
-		{
-			if (0 != lyd_merge_to_ctx(&pData, pOthDepData, LYD_OPT_DESTRUCT, ctx))
-			{
-				return -1;
-			}
-		}
-	}
-
-	return lyd_validate(&pData, LYD_OPT_CONFIG, ctx);
 }
 
 int lyd_multi_new_leaf(struct lyd_node *parent, const struct lys_module *module, const char *leafVal)
@@ -98,6 +68,9 @@ int lyd_multi_new_leaf(struct lyd_node *parent, const struct lys_module *module,
 	char s[4048];
         char *name, *val;
         char *saveptr;
+	struct lyd_node *leaf;
+	struct lys_type *type = NULL;
+	int has_ptr_type = 0;
 
         strcpy(s, leafVal);
 
@@ -106,16 +79,41 @@ int lyd_multi_new_leaf(struct lyd_node *parent, const struct lys_module *module,
 	while (name != NULL)
 	{
 		val = strtok_r(NULL, "|", &saveptr);
-		if (val != NULL)
+		if (val == NULL)
 		{
-			if (NULL == lyd_new_leaf(parent, module, name, val))
+			name = strtok_r(NULL, "|", &saveptr);
+			continue;
+		}
+
+		if (NULL == (leaf = lyd_new_leaf(parent, module, name, val)))
+		{
+			return -1;
+		}
+
+		//Validate all union types as it is skipped for LYD_OPT_EDIT
+		if (((struct lys_node_leaflist*)leaf->schema)->type.base == LY_TYPE_UNION)
+		{
+			type = &((struct lys_node_leaflist*)leaf->schema)->type;
+
+			//save the has_ptr_type field
+			has_ptr_type = type->info.uni.has_ptr_type;
+
+			//Work around, set to 0 to check all union types
+			type->info.uni.has_ptr_type = 0;
+
+			if (lyd_validate_value(leaf->schema, val))
 			{
 				return -1;
 			}
+
+			//Restore has_ptr_type
+			type->info.uni.has_ptr_type = has_ptr_type;
 		}
 
 		name = strtok_r(NULL, "|", &saveptr);
 	}
+
+	return 0;
 }
 
 struct lyd_node *lyd_find_node(struct lyd_node *root, const char *xpath) 
@@ -403,6 +401,7 @@ func (yp *YParser) MergeSubtree(root, node *YParserNode) (*YParserNode, YParserE
 	return (*YParserNode)(rootTmp), YParserError {ErrCode : YP_SUCCESS,}
 }
 
+/*
 //Cache subtree
 func (yp *YParser) CacheSubtree(dupSrc bool, node *YParserNode) YParserError {
 	rootTmp := (*C.struct_lyd_node)(yp.root)
@@ -434,7 +433,7 @@ func (yp *YParser) CacheSubtree(dupSrc bool, node *YParserNode) YParserError {
 	}
 
 	return YParserError {ErrCode : YP_SUCCESS,}
-}
+}*/
 
 func (yp *YParser) DestroyCache() YParserError {
 
@@ -460,6 +459,7 @@ func (yp *YParser) SetOperation(op string) YParserError {
 	return YParserError {ErrCode : YP_SUCCESS,}
 }
 
+/*
 //Validate config - syntax and semantics
 func (yp *YParser) ValidateData(data, depData *YParserNode) YParserError {
 
@@ -485,11 +485,20 @@ func (yp *YParser) ValidateData(data, depData *YParserNode) YParserError {
 	}
 
 	return YParserError {ErrCode : YP_SUCCESS,}
-}
+} */
 
 //Perform syntax checks
-func (yp *YParser) ValidateSyntax(data *YParserNode) YParserError {
+func (yp *YParser) ValidateSyntax(data, depData *YParserNode) YParserError {
 	dataTmp := (*C.struct_lyd_node)(data)
+
+	if (data != nil && depData != nil) {
+		//merge ependent data for synatx validation - Update/Delete case
+		if (0 != C.lyd_merge_to_ctx(&dataTmp, (*C.struct_lyd_node)(depData),
+		C.LYD_OPT_DESTRUCT, (*C.struct_ly_ctx)(ypCtx))) {
+			TRACE_LOG((TRACE_SYNTAX | TRACE_LIBYANG), "Unable to merge dependent data\n")
+			return getErrorDetails()
+		}
+	}
 
 	//Just validate syntax
 	if (0 != C.lyd_data_validate(&dataTmp, C.LYD_OPT_EDIT | C.LYD_OPT_NOEXTDEPS,
@@ -500,11 +509,11 @@ func (yp *YParser) ValidateSyntax(data *YParserNode) YParserError {
 		}
 		return  getErrorDetails()
 	}
-		 //fmt.Printf("Error Code from libyang is %d\n", C.ly_errno) 
 
 	return YParserError {ErrCode : YP_SUCCESS,}
 }
 
+/*
 //Perform semantic checks 
 func (yp *YParser) ValidateSemantics(data, depData, appDepData *YParserNode) YParserError {
 
@@ -579,6 +588,7 @@ func (yp *YParser) ValidateSemantics(data, depData, appDepData *YParserNode) YPa
 
 	return YParserError {ErrCode : YP_SUCCESS,}
 }
+*/
 
 func (yp *YParser) FreeNode(node *YParserNode) YParserError {
 

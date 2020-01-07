@@ -31,6 +31,7 @@ response = api.get(path)
 
 Check API status through `response.ok()` function, which returns true if API was success - REST server
 returned HTTP 2xx status code. `ok()` function returns false if server returned any other status response.
+Use `response.status_code` to inspect actual status code.
 
 ```python
 if response.ok() {
@@ -64,7 +65,7 @@ response = api.patch(path, data=jsonDict)
 response = api.delete(path)
 ```
 
-Above example used `response.error_message()` function to get ser displayable error message from
+Above example used `response.error_message()` function to get displayable error message from
 the REST response. REST server always returns error information in standard RESTCONF error format.
 The `error_message()` function looks for the **error-message** attribute to get user displayable message.
 A generic message will be returned based on **error-tag** attribute value if there was no **error-message**
@@ -80,9 +81,8 @@ The custom formtter function would receive RESTCONF error json and should return
 Below is a sample implementation which uses error-type attribute to format an error message.
 
 ```python
-def my_new_error_message_formatter(error_entry):
+def my_new_error_message_formatter(status_code, error_entry):
     if err_entry['error-type'] == 'protocol':
         return "System error.. Please reboot!!"
     return "Application error.. Please retry."
 ```
-

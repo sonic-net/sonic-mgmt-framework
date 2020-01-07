@@ -1730,6 +1730,8 @@ var DbToYang_bgp_routes_get_xfmr SubTreeXfmrDbToYang = func(inParams XfmrParams)
 
     dbg_log := cmn_log + " Path: " + targetUriPath
 
+    log.Info(dbg_log)
+
     switch targetUriPath {
         case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib": fallthrough
         case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis": fallthrough
@@ -1851,5 +1853,24 @@ var DbToYang_bgp_routes_get_xfmr SubTreeXfmrDbToYang = func(inParams XfmrParams)
             }
     }
 
+    switch targetUriPath {
+        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib": fallthrough
+        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis": fallthrough
+        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi": fallthrough
+        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/openconfig-bgp-evpn-ext:l2vpn-evpn": fallthrough
+        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/openconfig-bgp-evpn-ext:l2vpn-evpn/loc-rib": fallthrough
+        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/openconfig-bgp-evpn-ext:l2vpn-evpn/loc-rib/routes": fallthrough
+        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/openconfig-bgp-evpn-ext:l2vpn-evpn/loc-rib/routes/route":
+            if (rib_key.afiSafiName == "") || (rib_key.afiSafiName == "L2VPN_EVPN") {
+                err = hdl_get_bgp_l2vpn_evpn_local_rib (bgpRib_obj, &rib_key, ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_L2VPN_EVPN, &dbg_log)
+                if err != nil {
+                    log.Errorf("%s L2VPN_EVPN failed !! Error: BGP RIB container missing", cmn_log)
+                    return oper_err
+                }
+            }
+    }
+
     return err;
 }
+
+

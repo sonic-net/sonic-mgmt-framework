@@ -414,17 +414,17 @@ module sonic-bgp-global {
 
         container BGP_GLOBALS_EVPN_RT {
             list BGP_GLOBALS_EVPN_RT_LIST {
-                key "vrf af_name route_target";
+                key "vrf afi-safi-name route-target";
 
                 leaf vrf {
                     type string;
                 }
 
-                leaf af_name {
+                leaf afi-safi-name {
                     type string;
                 }
 
-                leaf route_target {
+                leaf route-target {
                     type string;
                 }
 
@@ -436,17 +436,17 @@ module sonic-bgp-global {
 
         container BGP_GLOBALS_EVPN_VNI {
             list BGP_GLOBALS_EVPN_VNI_LIST {
-                key "vrf af_name vni_number";
+                key "vrf afi-safi-name vni-number";
 
                 leaf vrf {
                     type string;
                 }
 
-                leaf af_name {
+                leaf afi-safi-name {
                     type string;
                 }
 
-                leaf vni_number {
+                leaf vni-number {
                     type uint32;
                 }
 
@@ -456,21 +456,21 @@ module sonic-bgp-global {
 
         container BGP_GLOBALS_EVPN_VNI_RT {
             list BGP_GLOBALS_EVPN_VNI_RT_LIST {
-                key "vrf af_name vni_number route_target";
+                key "vrf afi-safi-name vni-number route-target";
 
                 leaf vrf {
                     type string;
                 }
 
-                leaf af_name {
+                leaf afi-safi-name {
                     type string;
                 }
 
-                leaf vni_number {
+                leaf vni-number {
                     type uint32;
                 }
 
-                leaf route_target {
+                leaf route-target {
                     type string;
                 }
 
