@@ -582,7 +582,7 @@ func replacePrefixWithModuleName(xpath string) (string) {
 
 
 /* Extract key vars, create db key and xpath */
-func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, requestUri string, subOpDataMap map[int]*RedisDbMap, txCache interface{}) (string, string, string) {
+func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, requestUri string, subOpDataMap map[int]*RedisDbMap, txCache interface{}) (string, string, string, error) {
 	 keyStr    := ""
 	 tableName := ""
 	 pfxPath := ""
@@ -590,12 +590,13 @@ func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, req
 	 curPathWithKey := ""
 	 cdb := db.ConfigDB
 	 var dbs [db.MaxDB]*db.DB
+	 var err error
 
 	 pfxPath, _ = XfmrRemoveXPATHPredicates(path)
 	 xpathInfo, ok := xYangSpecMap[pfxPath]
 	 if !ok {
 		 log.Errorf("No entry found in xYangSpecMap for xpath %v.", pfxPath)
-		 return pfxPath, keyStr, tableName
+		 return pfxPath, keyStr, tableName, err
 	 }
 	 cdb = xpathInfo.dbIndex
 	 dbOpts := getDBOptions(cdb)
@@ -625,12 +626,20 @@ func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, req
 				 if len(xYangSpecMap[yangXpath].xfmrKey) > 0 {
 					 xfmrFuncName := yangToDbXfmrFunc(xYangSpecMap[yangXpath].xfmrKey)
 					 inParams := formXfmrInputRequest(d, dbs, cdb, ygRoot, curPathWithKey, requestUri, oper, "", nil, subOpDataMap, nil, txCache)
-					 ret, err := XlateFuncCall(xfmrFuncName, inParams)
-					 if err != nil {
-						 return "", "", ""
-					 }
-					 if ret != nil {
-						 keyStr = ret[0].Interface().(string)
+					 if oper == GET {
+						 ret, err := XlateFuncCall(xfmrFuncName, inParams)
+						 if err != nil {
+							 return "", "", "", err
+						 }
+						 if ret != nil {
+							 keyStr = ret[0].Interface().(string)
+						 }
+					 } else {
+						 ret, err := keyXfmrHandler(inParams, xfmrFuncName)
+						 if err != nil {
+							 return "", "", "", err
+						 }
+						 keyStr = ret
 					 }
 				 } else if xYangSpecMap[yangXpath].keyName != nil {
 					 keyStr += *xYangSpecMap[yangXpath].keyName
@@ -646,15 +655,23 @@ func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, req
 						 keyStr += keys[1]
 					 }
 				 }
-			 } else if len(xYangSpecMap[yangXpath].xfmrKey) > 0 {
+			 } else if ((len(xYangSpecMap[yangXpath].xfmrKey) > 0) && (yangType != YANG_LIST))  {
 				 xfmrFuncName := yangToDbXfmrFunc(xYangSpecMap[yangXpath].xfmrKey)
 				 inParams := formXfmrInputRequest(d, dbs, cdb, ygRoot, curPathWithKey, requestUri, oper, "", nil, subOpDataMap, nil, txCache)
-				 ret, err := XlateFuncCall(xfmrFuncName, inParams)
-				 if err != nil {
-					 return "", "", ""
-				 }
-				 if ret != nil {
-					 keyStr = ret[0].Interface().(string)
+				 if oper == GET {
+					 ret, err := XlateFuncCall(xfmrFuncName, inParams)
+					 if err != nil {
+						 return "", "", "", err
+					 }
+					 if ret != nil {
+						 keyStr = ret[0].Interface().(string)
+					 }
+				 } else {
+					 ret, err := keyXfmrHandler(inParams, xfmrFuncName)
+					 if err != nil {
+						 return "", "", "", err
+					 }
+					 keyStr = ret
 				 }
 			 } else if xYangSpecMap[yangXpath].keyName != nil {
 				 keyStr += *xYangSpecMap[yangXpath].keyName
@@ -670,7 +687,7 @@ func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, req
 		 inParams := formXfmrInputRequest(d, dbs, cdb, ygRoot, curPathWithKey, requestUri, oper, "", nil, subOpDataMap, nil, txCache)
 		 tableName, _ = tblNameFromTblXfmrGet(*xpathInfo.xfmrTbl, inParams)
 	 }
-	 return pfxPath, keyStr, tableName
+	 return pfxPath, keyStr, tableName, err
  }
 
  func sonicXpathKeyExtract(path string) (string, string, string) {
