@@ -911,6 +911,7 @@ python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_networ
              else&#xA;
 python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_timers_config_keepalive_interval ${vrf-name} ${template-name} ${keepalive-intvl}&#xA;
              python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_timers_config_hold_time ${vrf-name} ${template-name} ${hold-time}&#xA;
+             fi&#xA;
     </ACTION>
   </COMMAND>
   <COMMAND name="no update-source" help="Source of routing updates">
