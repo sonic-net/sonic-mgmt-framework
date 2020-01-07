@@ -349,7 +349,7 @@ module sonic-bgp-global {
                     description
                         "Match the cluster length.";
                 }
-
+                
                 leaf route_flap_dampen {
                     must "current()/../afi_safi = 'ipv4_unicast'" { error-message "Route flap dampening is supported only for IPv4 address family!"; }
                     type boolean;
@@ -382,7 +382,7 @@ module sonic-bgp-global {
                         range "1..255";
                     }
                 }
-
+                
                 uses sbc:sonic-bgp-af-evpn-global;
             }
         }

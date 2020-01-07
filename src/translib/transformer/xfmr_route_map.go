@@ -127,6 +127,12 @@ var YangToDb_route_map_action_policy_result_xfmr FieldXfmrYangToDb = func(inPara
     if inParams.param == nil {
         return res_map, err
     }
+ 
+    if inParams.oper == DELETE {
+        res_map["route_operation"] = ""
+        return res_map, nil
+    }
+
     action, _ := inParams.param.(ocbinds.E_OpenconfigRoutingPolicy_PolicyResultType)
     log.Info("YangToDb_route_map_action_policy_result_xfmr: ", inParams.ygRoot, " Xpath: ", inParams.uri, " route-operation: ", action)
     if action == ocbinds.OpenconfigRoutingPolicy_PolicyResultType_ACCEPT_ROUTE {
@@ -170,6 +176,12 @@ var YangToDb_route_map_match_protocol_xfmr FieldXfmrYangToDb = func(inParams Xfm
     if inParams.param == nil {
         return res_map, err
     }
+ 
+    if inParams.oper == DELETE {
+        res_map["match_protocol"] = ""
+        return res_map, nil
+    }
+
     protocol, _ := inParams.param.(ocbinds.E_OpenconfigPolicyTypes_INSTALL_PROTOCOL_TYPE)
     log.Info("YangToDb_route_map_match_protocol_xfmr: ", inParams.ygRoot, " Xpath: ", inParams.uri, " protocol: ", protocol)
     switch protocol {

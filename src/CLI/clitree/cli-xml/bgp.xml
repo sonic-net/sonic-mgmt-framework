@@ -129,25 +129,6 @@ limitations under the License.
   <COMMAND name="log-neighbor-changes" help="Log neighbor up/down and reset reason(default)">
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_logging_options_config_log_neighbor_state_changes ${vrf-name} True</ACTION>
   </COMMAND>
-  <COMMAND name="dampening" help="Enable route-flap dampening">
-    <PARAM name="halflife" help="Half-life time for the penalty" ptype="RANGE_1_45" optional='true'>
-      <PARAM name="reusethr" help="Value to start reusing a route" ptype="RANGE_1_20000" optional='true'>
-        <PARAM name="suppressthr" help="Value to start suppressing a route" ptype="RANGE_1_20000">
-          <PARAM name="maxsuppress" help="Maximum duration to suppress a stable route" ptype="RANGE_1_255"/>
-        </PARAM>
-      </PARAM>
-    </PARAM>
-    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_route_flap_damping_config ${vrf-name} True ${halflife} ${reusethr} ${suppressthr} ${maxsuppress}&#xA;
-             if test -z "${reusethr}" ; then&#xA;
-                 python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_route_flap_damping_config_reuse_threshold ${vrf-name}&#xA;
-                 python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_route_flap_damping_config_suppress_threshold ${vrf-name}&#xA;
-                 python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_route_flap_damping_config_max_suppress ${vrf-name}&#xA;
-                 if test -z "${halflife}" ; then&#xA;
-                     python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_route_flap_damping_config_half_life ${vrf-name}&#xA;
-                 fi&#xA;
-             fi&#xA;
-    </ACTION>
-  </COMMAND>
   <COMMAND name="deterministic-med" help="Pick the best-MED path among paths advertised from the neighboring AS">
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_config_deterministic_med ${vrf-name} True</ACTION>
   </COMMAND>
@@ -327,14 +308,6 @@ limitations under the License.
   </COMMAND>
   <COMMAND name="no log-neighbor-changes" help="Log neighbor up/down and reset reason(default)">
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_logging_options_config_log_neighbor_state_changes ${vrf-name} False</ACTION>
-  </COMMAND>
-  <COMMAND name="no dampening" help="Enable route-flap dampening">
-    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_route_flap_damping_config_enabled ${vrf-name}&#xA;
-             python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_route_flap_damping_config_half_life ${vrf-name}&#xA;
-             python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_route_flap_damping_config_reuse_threshold ${vrf-name}&#xA;
-             python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_route_flap_damping_config_suppress_threshold ${vrf-name}&#xA;
-             python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_route_flap_damping_config_max_suppress ${vrf-name}&#xA;
-    </ACTION>
   </COMMAND>
   <COMMAND name="no deterministic-med" help="Pick the best-MED path among paths advertised from the neighboring AS">
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_config_deterministic_med ${vrf-name}</ACTION>
@@ -789,7 +762,7 @@ python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_networ
     <ACTION> if test -n "${message}" ; then&#xA;
                  python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_config_shutdown_message ${vrf-name} ${template-name} ${MSG}&#xA;
              else&#xA;
-                 python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_config_enabled ${vrf-name} ${template-name} False&#xA;
+                 python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_config_enabled ${vrf-name} ${template-name} False&#xA;
              fi&#xA;
     </ACTION>
   </COMMAND>
@@ -925,7 +898,7 @@ python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_netwo
     <ACTION> if test -n "${message}" ; then&#xA;
                  python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_config_shutdown_message ${vrf-name} ${template-name} ${MSG}&#xA;
              else&#xA;
-                 python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_config_enabled ${vrf-name} ${template-name} True&#xA;
+                 python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_config_enabled ${vrf-name} ${template-name} True&#xA;
              fi&#xA;
     </ACTION>
   </COMMAND>

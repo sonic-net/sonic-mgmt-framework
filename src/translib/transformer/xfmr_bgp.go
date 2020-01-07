@@ -151,6 +151,10 @@ var YangToDb_bgp_local_asn_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrParams
         return rmap, err
     }
 
+    if inParams.oper == DELETE {
+        rmap["local_asn"] = ""
+        return rmap, nil
+    }
 
     log.Info("YangToDb_bgp_local_asn_fld_xfmr")
     pathInfo := NewPathInfo(inParams.uri)
