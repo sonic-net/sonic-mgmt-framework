@@ -15,7 +15,7 @@ hamd_dbus_config() {
 
 #****************************************
 rootcert() {
-	if [ ! -d "/root/cli-ca" ]; then
+	if [ ! -d "/host/cli-ca" ]; then
 		echo "Generating root certificates"
 	fi
 }
