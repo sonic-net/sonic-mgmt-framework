@@ -25,3 +25,16 @@ openconfig-system-ext.yang
 openconfig-system-annot.yang
 openconfig-nat.yang
 openconfig-nat-annot.yang
+ietf-snmp.yang
+ietf-snmp-common.yang
+ietf-snmp-community.yang
+ietf-snmp-engine.yang
+ietf-snmp-notification.yang
+ietf-snmp-proxy.yang
+ietf-snmp-ssh.yang
+ietf-snmp-target.yang
+ietf-snmp-tls.yang
+ietf-snmp-tsm.yang
+ietf-snmp-usm.yang
+ietf-snmp-vacm.yang
+ietf-snmp-annot.yang

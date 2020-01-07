@@ -1,0 +1,333 @@
+module sonic-snmp {
+  namespace "http://github.com/Azure/sonic-snmp";
+  prefix ssnmp;
+  yang-version 1;
+
+  import ietf-yang-types {
+    prefix yang;
+  }
+
+  import ietf-inet-types {
+    prefix inet;
+  }
+
+  organization
+    "SONiC";
+
+  contact
+    "SONiC";
+
+  description
+    "SONIC SNMP";
+
+  revision 2019-11-12 {
+    description
+      "Initial revision.";
+  }
+
+  /* Definitions from ietf-snmp-common.yang. That model cannot be imported
+     because it "belongs" to ietf-snmp.
+   */
+  typedef admin-string {
+    type string {
+      length "0..255";
+    }
+    description
+      "Represents SnmpAdminString as defined in RFC 3411.
+
+      Note that the size of an SnmpAdminString is measured in
+      octets, not characters.";
+
+    reference
+      "RFC 3411: An Architecture for Describing Simple Network
+         Management Protocol (SNMP) Management Frameworks.
+         SNMP-FRAMEWORK-MIB.SnmpAdminString";
+  }
+
+  typedef identifier {
+    type admin-string {
+      length "1..32";
+    }
+    description
+      "Identifiers are used to name items in the SNMP configuration
+      datastore.";
+  }
+
+  typedef context-name {
+    type admin-string {
+      length "0..32";
+    }
+    description
+      "The context type represents an SNMP context name.";
+    reference
+      "RFC 3411: An Architecture for Describing Simple Network
+         Management Protocol (SNMP) Management Frameworks";
+  }
+
+  typedef security-name {
+    type admin-string {
+      length "1..32";
+    }
+    description
+      "The security-name type represents an SNMP security name.";
+    reference
+      "RFC 3411: An Architecture for Describing Simple Network
+         Management Protocol (SNMP) Management Frameworks";
+  }
+
+  typedef security-model {
+    type union {
+      type enumeration {
+        enum v1  { value 1; }
+        enum v2c { value 2; }
+        enum usm { value 3; }
+        enum tsm { value 4; }
+      }
+      type int32 {
+        range "1..2147483647";
+      }
+    }
+    reference
+      "RFC 3411: An Architecture for Describing Simple Network
+         Management Protocol (SNMP) Management Frameworks";
+  }
+
+  typedef security-model-or-any {
+    type union {
+      type enumeration {
+        enum any { value 0; }
+      }
+      type security-model;
+    }
+    reference
+      "RFC 3411: An Architecture for Describing Simple Network
+         Management Protocol (SNMP) Management Frameworks";
+  }
+
+  typedef security-level {
+    type enumeration {
+      enum no-auth-no-priv { value 1; }
+      enum auth-no-priv    { value 2; }
+      enum auth-priv       { value 3; }
+    }
+    reference
+      "RFC 3411: An Architecture for Describing Simple Network
+         Management Protocol (SNMP) Management Frameworks";
+  }
+
+  typedef engine-id {
+    type yang:hex-string {
+      pattern '([0-9a-fA-F]){2}(:([0-9a-fA-F]){2}){4,31}';
+    }
+    description
+      "The engine ID specified as a list of colon-specified
+      hexadecimal octets, e.g., '80:00:02:b8:04:61:62:63'.";
+    reference
+      "RFC 3411: An Architecture for Describing Simple Network
+         Management Protocol (SNMP) Management Frameworks";
+  }
+
+  typedef wildcard-object-identifier {
+    type string;
+    description
+      "The wildcard-object-identifier type represents an SNMP object
+      identifier where subidentifiers can be given either as a label,
+      in numeric form, or a wildcard, represented by an asterisk
+      ('*').";
+  }
+
+  typedef tag-value {
+    type string {
+      length "0..255";
+    }
+    description
+      "Represents SnmpTagValue as defined in RFC 3413.
+
+      Note that the size of an SnmpTagValue is measured in
+      octets, not characters.";
+    reference
+      "RFC 3413: Simple Network Management Protocol (SNMP)
+         Applications.
+         SNMP-TARGET-MIB.SnmpTagValue";
+  }
+
+  typedef view-name {
+    type ssnmp:identifier;
+    description
+      "The view-name type represents an SNMP VACM view name.";
+  }
+
+  typedef group-name {
+    type ssnmp:identifier;
+    description
+      "The group-name type represents an SNMP VACM group name.";
+  }
+
+  container sonic-snmp {
+
+		container SNMP_SERVER_COMMUNITY {
+      list SNMP_SERVER_COMMUNITY_LIST {
+        key index;
+
+        leaf index {
+          type identifier;
+        }
+
+        leaf group {
+          type security-name;
+        }
+      }
+    }
+
+    container SNMP_SERVER_VIEW {
+      list SNMP_SERVER_VIEW_LIST {
+        key name;
+
+        leaf name {
+          type view-name;
+        }
+
+        leaf-list include {
+           type wildcard-object-identifier;
+        }
+
+        leaf-list exclude {
+          type wildcard-object-identifier;
+        }
+      }
+    }
+
+    container SNMP_SERVER_GROUP {
+      list SNMP_SERVER_GROUP_LIST {
+        key "name context securityModel securityLevel";
+
+        leaf name {
+          type group-name;
+        }
+
+        leaf context {
+          type context-name;
+        }
+
+        leaf contextMatch {
+          type enumeration {
+            enum exact { value 1; }
+            enum prefix { value 2; }
+          }
+          default "exact";
+        }
+
+        leaf securityModel {
+          type security-model-or-any;
+        }
+
+        leaf securityLevel {
+          type security-level;
+        }
+
+        leaf readView {
+          type view-name;
+        }
+
+        leaf writeView {
+          type view-name;
+        }
+
+        leaf notifyView {
+          type view-name;
+        }
+      }
+    }
+
+    container SNMP_SERVER_USER {
+      list SNMP_SERVER_USER_LIST {
+        key name;
+
+        leaf name {
+          type identifier;
+        }
+
+        leaf group {
+          type group-name;
+        }
+
+        leaf shaKey {
+          type yang:hex-string;
+        }
+
+        leaf md5Key {
+          type yang:hex-string;
+        }
+
+        leaf desKey {
+          type yang:hex-string;
+        }
+
+        leaf aesKey {
+          type yang:hex-string;
+        }
+      }
+    }
+
+    container SNMP_SERVER_TARGET {
+      list SNMP_SERVER_TARGET_LIST {
+        key name;
+
+        leaf name {
+          type identifier;
+        }
+
+        leaf-list tag {
+          type tag-value;
+        }
+
+        leaf timeout {
+          type uint32;
+        }
+
+        leaf retries {
+          type uint8;
+        }
+
+        leaf targetParams {
+          type identifier;
+        }
+
+        leaf ip {
+          type inet:ip-address;
+        }
+
+        leaf port {
+          type inet:port-number;
+        }
+      }
+    }
+
+    container SNMP_SERVER_PARAMS {
+      list SNMP_SERVER_PARAMS_LIST {
+        key name;
+
+        leaf name {
+          type identifier;
+        }
+
+        leaf securityNameV1 {
+          type security-name;
+        }
+
+        leaf securityNameV2 {
+          type security-name;
+        }
+
+        leaf user {
+          type security-name;
+        }
+
+        leaf securityLevel {
+          type security-level;
+        }
+      }
+    }
+
+  }
+}
