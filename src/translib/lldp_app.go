@@ -209,7 +209,7 @@ func (app *lldpApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error)  {
     log.Info("lldp processGet")
     log.Info("targetUriPath: ", targetUriPath)
 
-    if targetUriPath == "/openconfig-lldp:lldp/interfaces" {
+    if ((targetUriPath == "/openconfig-lldp:lldp/interfaces") || (targetUriPath == "/openconfig-lldp:lldp")) {
         log.Info("Requesting interfaces")
         app.getLldpInfoFromDB(nil)
         ygot.BuildEmptyTree(lldpIntfObj)
@@ -223,7 +223,9 @@ func (app *lldpApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error)  {
             }
             ygot.BuildEmptyTree(oneIfInfo)
             app.getLldpNeighInfoFromInternalMap(&ifname, oneIfInfo)
-            if *app.ygotTarget == lldpIntfObj.Interfaces {
+            if *app.ygotTarget == lldpIntfObj {
+                payload, err = dumpIetfJson(lldpIntfObj, true)
+            } else if *app.ygotTarget == lldpIntfObj.Interfaces {
                 payload, err = dumpIetfJson(lldpIntfObj, true)
             } else {
                 log.Info("Wrong request!")
@@ -425,6 +427,9 @@ func (app *lldpApp) getLldpInfoFromDB(ifname *string) {
 
 /** Helper function to get remote system capabilities into a map **/
 func (app *lldpApp) getRemoteSysCap(capb string, ifname string, setCap bool) {
+    if (len(capb) == 0) {
+        return
+    }
     num_str := strings.Split(capb, " ")
     byte, _ := hex.DecodeString(num_str[0] + num_str[1])
     sysCap := byte[0]
