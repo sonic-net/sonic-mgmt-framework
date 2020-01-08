@@ -274,14 +274,13 @@ func deleteLagIntfAndMembers(inParams *XfmrParams, lagName *string) error {
         log.Error(errStr)
         return errors.New(errStr)
     }
+
     /* Handle PORTCHANNEL_INTERFACE TABLE */
-    ipCnt := 0
-    _ = interfaceIPcount(intTbl.cfgDb.intfTN, inParams.d, lagName, &ipCnt)
-    if ipCnt > 0 {
-        errStr := "Need to first remove IP address entry"
-        log.Error(errStr)
-        return errors.New(errStr)
+    err = validateL3ConfigExists(inParams.d, lagName)
+    if err != nil {
+        return err
     }
+
     /* Handle PORTCHANNEL_MEMBER TABLE */
     var flag bool = false
     lagKeys, err := inParams.d.GetKeys(&db.TableSpec{Name:intTbl.cfgDb.memberTN})
