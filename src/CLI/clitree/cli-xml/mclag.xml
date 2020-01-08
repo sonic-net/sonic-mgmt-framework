@@ -21,7 +21,7 @@
     </COMMAND>
   </VIEW>
   <!--MODE : mclag domain view -->
-  <VIEW name="configure-mclag-view" prompt="${SYSTEM_NAME}(mclag-domain-${id})# " depth="2">
+  <VIEW name="configure-mclag-view" prompt="${SYSTEM_NAME}(config-mclag-domain-${id})# " depth="2">
     <!-- Inheritance -->
     <NAMESPACE ref="configure-view" help="false" completion="false"/>
     <!-- show configuration -->
