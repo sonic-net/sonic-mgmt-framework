@@ -222,22 +222,22 @@ def run(func, args):
             response = api_response.content
             if response is None:
                 return
-            elif (len(args) >= 2 and args[1].lower() == 'snooping') or (len(args) >= 4 and args[2].lower() == 'vlan'):
-                if 'openconfig-network-instance-deviation:interfaces' in response.keys():
-                    value = response['openconfig-network-instance-deviation:interfaces']
-                    if value is None:
-                        return
-                    show_cli_output(args[0], value)                
-                elif 'openconfig-network-instance-deviation:interface' in response.keys():
-                    show_cli_output(args[0], response)
             elif len(args) >= 3 and args[2].lower() == 'groups':
                 if 'openconfig-network-instance-deviation:interfaces' in response.keys():
                     value = response['openconfig-network-instance-deviation:interfaces']
                     if value is None:
                         return
-                    show_cli_output('show_igmp_snooping-groups.j2', value)                
+                    show_cli_output('show_igmp_snooping-groups.j2', value)
                 elif 'openconfig-network-instance-deviation:interface' in response.keys():
                     show_cli_output('show_igmp_snooping-groups.j2', response)
+            elif (len(args) >= 2 and args[1].lower() == 'snooping') or (len(args) >= 4 and args[2].lower() == 'vlan'):
+                if 'openconfig-network-instance-deviation:interfaces' in response.keys():
+                    value = response['openconfig-network-instance-deviation:interfaces']
+                    if value is None:
+                        return
+                    show_cli_output(args[0], value)
+                elif 'openconfig-network-instance-deviation:interface' in response.keys():
+                    show_cli_output(args[0], response)
             else:
                 print "%Error: Invalid command"
         else:
