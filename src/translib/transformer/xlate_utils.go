@@ -490,40 +490,32 @@ func stripModuleNamesFromUri(uri string) (string, error) {
 	pathList := strings.Split(uri, "/")
 	pathList = pathList[1:]
 	for i, pvar := range pathList {
-		si := strings.IndexAny(pvar, "[")
-		if si != -1 {
-			prekey := pvar[:si+1]
-			if i > 0 && strings.Contains(prekey, ":") {
-				prekey = strings.Split(prekey,":")[1]
-			}
-			key := pvar[si+1:]
-			if strings.Contains(key, "=") {
-				kvList := strings.Split(key, "=")
-				if len(kvList) > 1 {
-					k := kvList[0]
-					v := kvList[1]
-					//Strip the modduleName
-					if strings.Contains(k, ":") {
-						k = strings.Split(k, ":")[1]
-					}/*
-					if strings.Contains(v, ":") {
-						// TODO:In case value has : like an ipv6 address need to differenciate module name present vs not present case correctly
-						if strings.Count(v, ":") > 1 {
-							v = v[strings.IndexAny(v, ":")+1:]
-						} else {
-							v = strings.Split(v, ":")[1]
-						}
-					}*/
-					key = k + "=" + v
-				}
-				newpvar := prekey + key
-				pathList[i] = newpvar
-			}
-		} else {
-			if i > 0 && strings.Contains(pvar, ":") {
-				pathList[i] = strings.Split(pvar,":")[1]
-			}
+		if i == 0 {
+			continue
 		}
+		keysList := strings.Split(pvar, "[")
+		for inx, key := range keysList {
+			if !strings.Contains(key, "=") && strings.Contains(key, ":") {
+				key = strings.Split(key, ":")[1]
+			}
+			kvList := strings.Split(key, "=")
+			if len(kvList) > 1 {
+				k := kvList[0]
+				v := kvList[1]
+				//Strip the moduleName in key from key value pair
+				if strings.Contains(k, ":") {
+					k = strings.Split(k, ":")[1]
+				}
+				//Strip the moduleName in value from key value pair
+				if ((strings.Contains(v, ":")) && (strings.HasPrefix(v, OC_MDL_PFX) || strings.HasPrefix(v, IETF_MDL_PFX) || strings.HasPrefix(v, IANA_MDL_PFX))) {
+					v = strings.SplitN(v, ":", 2)[1]
+				}
+				key = k + "=" + v
+			}
+			keysList[inx] = key
+		}
+		newpvar := strings.Join(keysList, "[")
+		pathList[i] = newpvar
 	}
 	path := "/" + strings.Join(pathList, "/")
 	return path, nil
@@ -582,7 +574,7 @@ func replacePrefixWithModuleName(xpath string) (string) {
 
 
 /* Extract key vars, create db key and xpath */
-func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, requestUri string, subOpDataMap map[int]*RedisDbMap, txCache interface{}) (string, string, string) {
+func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, requestUri string, subOpDataMap map[int]*RedisDbMap, txCache interface{}) (string, string, string, error) {
 	 keyStr    := ""
 	 tableName := ""
 	 pfxPath := ""
@@ -590,12 +582,13 @@ func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, req
 	 curPathWithKey := ""
 	 cdb := db.ConfigDB
 	 var dbs [db.MaxDB]*db.DB
+	 var err error
 
 	 pfxPath, _ = XfmrRemoveXPATHPredicates(path)
 	 xpathInfo, ok := xYangSpecMap[pfxPath]
 	 if !ok {
 		 log.Errorf("No entry found in xYangSpecMap for xpath %v.", pfxPath)
-		 return pfxPath, keyStr, tableName
+		 return pfxPath, keyStr, tableName, err
 	 }
 	 cdb = xpathInfo.dbIndex
 	 dbOpts := getDBOptions(cdb)
@@ -625,12 +618,20 @@ func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, req
 				 if len(xYangSpecMap[yangXpath].xfmrKey) > 0 {
 					 xfmrFuncName := yangToDbXfmrFunc(xYangSpecMap[yangXpath].xfmrKey)
 					 inParams := formXfmrInputRequest(d, dbs, cdb, ygRoot, curPathWithKey, requestUri, oper, "", nil, subOpDataMap, nil, txCache)
-					 ret, err := XlateFuncCall(xfmrFuncName, inParams)
-					 if err != nil {
-						 return "", "", ""
-					 }
-					 if ret != nil {
-						 keyStr = ret[0].Interface().(string)
+					 if oper == GET {
+						 ret, err := XlateFuncCall(xfmrFuncName, inParams)
+						 if err != nil {
+							 return "", "", "", err
+						 }
+						 if ret != nil {
+							 keyStr = ret[0].Interface().(string)
+						 }
+					 } else {
+						 ret, err := keyXfmrHandler(inParams, xfmrFuncName)
+						 if err != nil {
+							 return "", "", "", err
+						 }
+						 keyStr = ret
 					 }
 				 } else if xYangSpecMap[yangXpath].keyName != nil {
 					 keyStr += *xYangSpecMap[yangXpath].keyName
@@ -646,15 +647,23 @@ func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, req
 						 keyStr += keys[1]
 					 }
 				 }
-			 } else if len(xYangSpecMap[yangXpath].xfmrKey) > 0 {
+			 } else if len(xYangSpecMap[yangXpath].xfmrKey) > 0  {
 				 xfmrFuncName := yangToDbXfmrFunc(xYangSpecMap[yangXpath].xfmrKey)
 				 inParams := formXfmrInputRequest(d, dbs, cdb, ygRoot, curPathWithKey, requestUri, oper, "", nil, subOpDataMap, nil, txCache)
-				 ret, err := XlateFuncCall(xfmrFuncName, inParams)
-				 if err != nil {
-					 return "", "", ""
-				 }
-				 if ret != nil {
-					 keyStr = ret[0].Interface().(string)
+				 if oper == GET {
+					 ret, err := XlateFuncCall(xfmrFuncName, inParams)
+					 if err != nil {
+						 return "", "", "", err
+					 }
+					 if ret != nil {
+						 keyStr = ret[0].Interface().(string)
+					 }
+				 } else {
+					 ret, err := keyXfmrHandler(inParams, xfmrFuncName)
+					 if ((yangType != YANG_LIST) && (err != nil)) {
+						 return "", "", "", err
+					 }
+					 keyStr = ret
 				 }
 			 } else if xYangSpecMap[yangXpath].keyName != nil {
 				 keyStr += *xYangSpecMap[yangXpath].keyName
@@ -670,7 +679,7 @@ func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, req
 		 inParams := formXfmrInputRequest(d, dbs, cdb, ygRoot, curPathWithKey, requestUri, oper, "", nil, subOpDataMap, nil, txCache)
 		 tableName, _ = tblNameFromTblXfmrGet(*xpathInfo.xfmrTbl, inParams)
 	 }
-	 return pfxPath, keyStr, tableName
+	 return pfxPath, keyStr, tableName, err
  }
 
  func sonicXpathKeyExtract(path string) (string, string, string) {

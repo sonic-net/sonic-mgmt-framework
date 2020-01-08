@@ -156,7 +156,7 @@ func XlateUriToKeySpec(uri string, requestUri string, ygRoot *ygot.GoStruct, t *
 		retdbFormat = fillSonicKeySpec(xpath, tableName, keyStr)
 	} else {
 		/* Extract the xpath and key from input xpath */
-		xpath, keyStr, _ := xpathKeyExtract(nil, ygRoot, GET, uri, requestUri, nil, txCache)
+		xpath, keyStr, _, _ := xpathKeyExtract(nil, ygRoot, GET, uri, requestUri, nil, txCache)
 		retdbFormat = FillKeySpecs(xpath, keyStr, &retdbFormat)
 	}
 

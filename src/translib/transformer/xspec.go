@@ -225,7 +225,8 @@ func yangToDbMapFill (keyLevel int, xYangSpecMap map[string]*yangXpathInfo, entr
 		xpathData.xfmrFunc = parentXpathData.xfmrFunc
 	}
 
-	if xpathData.yangDataType == "leaf" && len(xpathData.fieldName) == 0 {
+	if ((xpathData.yangDataType ==  YANG_LEAF || xpathData.yangDataType == YANG_LEAF_LIST) && (len(xpathData.fieldName) == 0)) {
+
 		if len(xpathData.xfmrField) != 0 {
 			xpathData.xfmrFunc = ""
 		}
@@ -235,6 +236,9 @@ func yangToDbMapFill (keyLevel int, xYangSpecMap map[string]*yangXpathInfo, entr
 			} else {
 				if _, ok := xDbSpecMap[*xpathData.tableName + "/" + strings.ToUpper(entry.Name)]; ok {
 					xpathData.fieldName = strings.ToUpper(entry.Name)
+				}
+				if _, ok := xDbSpecMap[*xpathData.tableName + "/" + entry.Name]; ok {
+					xpathData.fieldName = entry.Name
 				}
 			}
 		} else if xpathData.xfmrTbl != nil {
@@ -246,7 +250,7 @@ func yangToDbMapFill (keyLevel int, xYangSpecMap map[string]*yangXpathInfo, entr
 		xpathData.defVal = entry.Default
 	}
 
-	if xpathData.yangDataType == "leaf" && len(xpathData.fieldName) > 0 && xpathData.tableName != nil {
+	if (xpathData.yangDataType == YANG_LEAF || xpathData.yangDataType == YANG_LEAF_LIST) && len(xpathData.fieldName) > 0 && xpathData.tableName != nil {
 		dbPath := *xpathData.tableName + "/" + xpathData.fieldName
 		if xDbSpecMap[dbPath] != nil {
 			xDbSpecMap[dbPath].yangXpath = append(xDbSpecMap[dbPath].yangXpath, xpath)
