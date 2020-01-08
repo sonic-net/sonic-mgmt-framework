@@ -647,7 +647,7 @@ func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, req
 						 keyStr += keys[1]
 					 }
 				 }
-			 } else if ((len(xYangSpecMap[yangXpath].xfmrKey) > 0) && (yangType != YANG_LIST))  {
+			 } else if len(xYangSpecMap[yangXpath].xfmrKey) > 0  {
 				 xfmrFuncName := yangToDbXfmrFunc(xYangSpecMap[yangXpath].xfmrKey)
 				 inParams := formXfmrInputRequest(d, dbs, cdb, ygRoot, curPathWithKey, requestUri, oper, "", nil, subOpDataMap, nil, txCache)
 				 if oper == GET {
@@ -660,7 +660,7 @@ func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, req
 					 }
 				 } else {
 					 ret, err := keyXfmrHandler(inParams, xfmrFuncName)
-					 if err != nil {
+					 if ((yangType != YANG_LIST) && (err != nil)) {
 						 return "", "", "", err
 					 }
 					 keyStr = ret

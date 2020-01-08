@@ -848,17 +848,16 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
 				if nodeErr != nil {
 					curYgotNode = nil
 				}
-				if strings.HasSuffix(curUri, "]") { //call key transformer with key-value(s) present in uri, not without
-					inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, curUri, requestUri, oper, "", nil, subOpDataMap, curYgotNode, txCache)
-					ktRetData, err := keyXfmrHandler(inParams, xYangSpecMap[xpathPrefix].xfmrKey)
-					if err != nil {
-						if xfmrErr != nil && *xfmrErr == nil {
-							*xfmrErr = err
-						}
-						return nil
+				inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, curUri, requestUri, oper, "", nil, subOpDataMap, curYgotNode, txCache)
+				ktRetData, err := keyXfmrHandler(inParams, xYangSpecMap[xpathPrefix].xfmrKey)
+				//if key transformer is called without key values in curUri ignore the error
+				if err != nil  && strings.HasSuffix(curUri, "]") {
+					if xfmrErr != nil && *xfmrErr == nil {
+						*xfmrErr = err
 					}
-					curKey = ktRetData
+					return nil
 				}
+				curKey = ktRetData
 			} else if ok && xYangSpecMap[xpathPrefix].keyName != nil {
 				curKey = *xYangSpecMap[xpathPrefix].keyName
 			} else {
@@ -889,21 +888,19 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
 				curKey, xpath, curUri)
 				if ok && xYangSpecMap[xpath] != nil && len(xYangSpecMap[xpath].xfmrKey) > 0 {
 					specYangType := yangTypeGet(xYangSpecMap[xpath].yangEntry)
-					if (specYangType != YANG_LIST) || ((specYangType == YANG_LIST) && (strings.HasSuffix(curUri, "]"))) { //call key transformer with key-value(s) present in uri, not without
-                                                curYgotNode, nodeErr := yangNodeForUriGet(curUri, ygRoot)
-                                                if nodeErr != nil {
-                                                        curYgotNode = nil
-                                                }
-                                                inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, curUri, requestUri, oper, "", nil, subOpDataMap, curYgotNode, txCache)
-                                                ktRetData, err := keyXfmrHandler(inParams, xYangSpecMap[xpath].xfmrKey)
-                                                if err != nil {
-                                                        if xfmrErr != nil && *xfmrErr == nil {
-                                                                *xfmrErr = err
-                                                        }
-                                                        return nil
-                                                }
-						curKey = ktRetData
-                                        }
+					curYgotNode, nodeErr := yangNodeForUriGet(curUri, ygRoot)
+					if nodeErr != nil {
+						curYgotNode = nil
+					}
+					inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, curUri, requestUri, oper, "", nil, subOpDataMap, curYgotNode, txCache)
+					ktRetData, err := keyXfmrHandler(inParams, xYangSpecMap[xpath].xfmrKey)
+					if ((err != nil) && (specYangType != YANG_LIST || strings.HasSuffix(curUri, "]"))) {
+						if xfmrErr != nil && *xfmrErr == nil {
+							*xfmrErr = err
+						}
+						return nil
+					}
+					curKey = ktRetData
 				} else if ok && xYangSpecMap[xpath].keyName != nil {
 					curKey = *xYangSpecMap[xpath].keyName
 				}
