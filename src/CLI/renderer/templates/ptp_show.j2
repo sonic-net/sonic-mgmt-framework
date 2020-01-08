@@ -2,18 +2,24 @@
 {{'Interface'.ljust(20)}} {{'State'}}
 {{'-----------------------------------------------------------'}}
 {% for key,value in json_output.items() %}
-{% for i in value %}
+{% for tmp in value %}
 
-{% for key2,value2 in i.items() %}
-{% for i2 in value2 %}
-
-{% if 'port-number' in i2.keys() and 'port-state' in i2.keys() %}
-{{ i2['port-number'].ljust(20)}}{{ i2['port-state']}}
+{% if 'port-ds-list' in tmp.keys() %}
+{% for ports in tmp['port-ds-list'] %}
+{% if 'port-number' in ports.keys() %}
+{% set port_state = ports['port-state'] %}
+{% if not port_state %}{% set port_state = 'none' %}{% endif %}
+{% set number = ports['port-number'] | int %}
+{% if number < 1000 %}
+{% print("Ethernet%-12s") % ports['port-number'] %} {{ port_state }}
+{% else %}
+{% set vlannumber = number - 1000 %}
+{% print("Vlan%-16d") % vlannumber %} {{ port_state }}
+{% endif %}
+{% endif %}
+{% endfor %}
 {% endif %}
 
-{% endfor %}
-{% endfor %}
 
 {% endfor %}
 {% endfor %}
-
