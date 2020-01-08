@@ -3,6 +3,7 @@ package transformer
 import (
     "errors"
     "strings"
+    "translib/db"
     "translib/ocbinds"
     log "github.com/golang/glog"
 )
