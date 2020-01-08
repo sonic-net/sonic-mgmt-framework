@@ -627,7 +627,7 @@ func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, req
 							 keyStr = ret[0].Interface().(string)
 						 }
 					 } else {
-						 ret, err := keyXfmrHandler(inParams, xfmrFuncName)
+						 ret, err := keyXfmrHandler(inParams, xYangSpecMap[yangXpath].xfmrKey)
 						 if err != nil {
 							 return "", "", "", err
 						 }
@@ -659,7 +659,7 @@ func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, req
 						 keyStr = ret[0].Interface().(string)
 					 }
 				 } else {
-					 ret, err := keyXfmrHandler(inParams, xfmrFuncName)
+					 ret, err := keyXfmrHandler(inParams, xYangSpecMap[yangXpath].xfmrKey)
 					 if ((yangType != YANG_LIST) && (err != nil)) {
 						 return "", "", "", err
 					 }
