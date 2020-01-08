@@ -26,12 +26,6 @@
             {{-', keepalive interval is '}}{{n_timers_state['keepalive-interval']}}{{' seconds\n'}}
             {{-'  Neighbor capabilities:\n'}}
             {{-'    4 Byte AS: advertised and received\n'}}
-            {{-'    AddPath:\n'}} 
-            {{-'      IPv4 Unicast: RX advertised IPv4 Unicast\n'}}
-            {{-'    Route refresh: advertised and received(old & new)\n'}}
-            {{-'    Address Family IPv4 Unicast: advertised and received\n'}}
-            {{-'    Hostname Capability: advertised (name: sonic,domain name: n/a) not received\n'}}
-            {{-'    Graceful Restart Capabilty: advertised\n'}}
             {% if 'queues' in n_state %}
                 {% set n_queues = n_state['queues'] %}
                 {{-'  Message statistics:\n'}}

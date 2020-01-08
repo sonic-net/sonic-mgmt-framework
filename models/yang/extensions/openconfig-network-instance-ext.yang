@@ -19,6 +19,22 @@ module openconfig-network-instance-ext {
       "Add OpenConfig unsupported attributes.";
   }
 
+  grouping oc-table-connection-ext-config {
+      leaf metric {
+          type uint32;
+          description
+              "Metric for redistributed routes";
+      }
+  }
+  
+  augment /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:table-connections/oc-netinst:table-connection/oc-netinst:config {
+      uses oc-table-connection-ext-config;
+  }
+ 
+  augment /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:table-connections/oc-netinst:table-connection/oc-netinst:state {
+      uses oc-table-connection-ext-config;
+  }
+
   deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:inter-instance-policies {
       deviate not-supported;
   }

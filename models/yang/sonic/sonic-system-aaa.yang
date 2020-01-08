@@ -22,6 +22,7 @@ module sonic-system-aaa {
                 }
                 leaf failthrough {
                     type boolean;
+                    default false;
                 }
             }
         }

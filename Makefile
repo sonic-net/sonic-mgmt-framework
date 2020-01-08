@@ -137,6 +137,7 @@ install:
 	$(INSTALL) -D $(TOPDIR)/config/transformer/models_list $(DESTDIR)/usr/models/yang/
 	$(INSTALL) -D $(TOPDIR)/models/yang/common/*.yang $(DESTDIR)/usr/models/yang/
 	$(INSTALL) -D $(TOPDIR)/models/yang/annotations/*.yang $(DESTDIR)/usr/models/yang/
+	$(INSTALL) -D $(TOPDIR)/models/yang/extensions/*.yang $(DESTDIR)/usr/models/yang/
 	$(INSTALL) -D $(TOPDIR)/build/yaml/api_ignore $(DESTDIR)/usr/models/yang/
 	cp -rf $(TOPDIR)/build/rest_server/dist/ui/ $(DESTDIR)/rest_ui/
 	cp -rf $(TOPDIR)/build/cli $(DESTDIR)/usr/sbin/
@@ -165,6 +166,10 @@ install:
 	$(INSTALL) -D $(TOPDIR)/src/ham/hamctl/hamctl $(DESTDIR)/usr/bin/.
 	$(INSTALL) -d $(DESTDIR)/lib/x86_64-linux-gnu/
 	$(INSTALL) -D $(TOPDIR)/src/ham/libnss_ham/libnss_ham.so.2 $(DESTDIR)/lib/x86_64-linux-gnu/.
+
+	# Scripts for the certificate fixer oneshot service
+	$(INSTALL) -D $(TOPDIR)/src/certfix/usr/sbin/*             $(DESTDIR)/usr/sbin/
+	$(INSTALL) -D $(TOPDIR)/src/certfix/lib/systemd/system/*   $(DESTDIR)/lib/systemd/system/
 
 ifeq ($(SONIC_COVERAGE_ON),y)
 	echo "" > $(DESTDIR)/usr/sbin/.test

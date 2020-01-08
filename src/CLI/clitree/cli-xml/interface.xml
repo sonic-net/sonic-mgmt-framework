@@ -51,7 +51,7 @@ limitations under the License.
                  >
                  <PARAM
                     name="phy-if-id"
-                    help="Physical interface(Multiples of 4)"
+                    help="Physical interface"
                     ptype="UINT"
                     optional="true"
                     >
@@ -239,7 +239,7 @@ limitations under the License.
         >
         <PARAM
             name="phy-if-name"
-            help="Physical interface(Multiples of 4)"
+            help="Physical interface"
             ptype="UINT"
             >
         </PARAM>
@@ -272,7 +272,7 @@ limitations under the License.
          >
          <PARAM
              name="vlan-id"
-             help="Vlan identifier(1-4094)"
+             help="Vlan identifier"
              ptype="VLAN_ID"
              >
          </PARAM>
@@ -343,7 +343,7 @@ limitations under the License.
                 >
                 <PARAM
                     name="vlan-id"
-                    help="Vlan identifier(1-4094)"
+                    help="Vlan identifier"
                     ptype="VLAN_ID"
                 />
              </PARAM>
@@ -395,7 +395,7 @@ limitations under the License.
             <PARAM
                 name="zone"
                 help="NAT zone of the interface"
-                ptype="UINT" />
+                ptype="RANGE_NAT_ZONE" />
         <ACTION>
             python $SONIC_CLI_ROOT/sonic-cli-nat.py patch_openconfig_interfaces_ext_interfaces_interface_nat_zone_config_nat_zone ${iface} ${zone}
         </ACTION>
@@ -537,9 +537,9 @@ limitations under the License.
                             mode="subcommand"
                             >
                             <PARAM
-                                name="vlan-id"
-                                help="VLAN ID of the VLAN when this port is in trunk mode"
-                                ptype="VLAN_ID"
+                                name="vlan-id-list"
+                                help="(-) or (,) separated individual VLAN IDs and ranges of VLAN IDs; for example, 20,70-100,142"
+                                ptype="VLAN_RANGE"
                                 >
                             </PARAM>
                         </PARAM>
@@ -550,7 +550,7 @@ limitations under the License.
          if test "${switchport-subcommands}" = "access"; then&#xA;
              python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_vlan_interfaces_interface_ethernet_switched_vlan_config ${iface} ACCESS ${vlan-id}&#xA;
          else&#xA;
-             python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_vlan_interfaces_interface_ethernet_switched_vlan_config ${iface} TRUNK ${vlan-id}&#xA;
+             python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_vlan_interfaces_interface_ethernet_switched_vlan_config ${iface} TRUNK ${vlan-id-list}&#xA;
         fi
        </ACTION>
        </COMMAND>
@@ -626,9 +626,9 @@ limitations under the License.
                             mode="subcommand"
                             >
                             <PARAM
-                                name="vlan-id"
-                                help="VLAN ID of the VLAN when this port is in trunk mode"
-                                ptype="VLAN_ID"
+                                name="vlan-id-list"
+                                help="(-) or (,) separated individual VLAN IDs and ranges of VLAN IDs; for example, 20,70-100,142"
+                                ptype="VLAN_RANGE"
                                 >
                             </PARAM>
                         </PARAM>
@@ -639,7 +639,7 @@ limitations under the License.
           if test "${switchport-subcommands}" = "access"; then&#xA;
               python $SONIC_CLI_ROOT/sonic-cli-if.py delete_openconfig_vlan_interfaces_interface_ethernet_switched_vlan_config_access_vlan ${iface} ACCESS&#xA;
           else&#xA;
-              python $SONIC_CLI_ROOT/sonic-cli-if.py del_llist_openconfig_vlan_interfaces_interface_ethernet_switched_vlan_config_trunk_vlans ${iface} TRUNK ${vlan-id}&#xA;
+              python $SONIC_CLI_ROOT/sonic-cli-if.py del_llist_openconfig_vlan_interfaces_interface_ethernet_switched_vlan_config_trunk_vlans ${iface} TRUNK ${vlan-id-list}&#xA;
           fi
       </ACTION>
       </COMMAND>
@@ -684,16 +684,16 @@ limitations under the License.
             <PARAM
                 name="zone"
                 help="NAT zone of the vlan"
-                ptype="UINT" />
+                ptype="RANGE_NAT_ZONE" />
         <ACTION>
-            python $SONIC_CLI_ROOT/sonic-cli-nat.py patch_openconfig_interfaces_ext_interfaces_interface_nat_zone_config_nat_zone Vlan${vlan_id} ${zone}
+            python $SONIC_CLI_ROOT/sonic-cli-nat.py patch_openconfig_interfaces_ext_interfaces_interface_nat_zone_config_nat_zone ${vlan_id} ${zone}
         </ACTION>
         </COMMAND>
         <COMMAND
             name="no nat-zone"
             help="Remove Nat Zone on a vlan" >
         <ACTION>
-            python $SONIC_CLI_ROOT/sonic-cli-nat.py delete_openconfig_interfaces_ext_interfaces_interface_nat_zone_config_nat_zone Vlan${vlan_id}
+            python $SONIC_CLI_ROOT/sonic-cli-nat.py delete_openconfig_interfaces_ext_interfaces_interface_nat_zone_config_nat_zone ${vlan_id}
         </ACTION>
         </COMMAND>
 
@@ -764,7 +764,7 @@ limitations under the License.
             <PARAM
                 name="zone"
                 help="NAT zone of the port channel"
-                ptype="UINT" />
+                ptype="RANGE_NAT_ZONE" />
         <ACTION>
             python $SONIC_CLI_ROOT/sonic-cli-nat.py patch_openconfig_interfaces_ext_interfaces_interface_nat_zone_config_nat_zone ${po_name} ${zone}
         </ACTION>
@@ -829,8 +829,8 @@ limitations under the License.
                             >
                             <PARAM
                                 name="vlan-id"
-                                help="VLAN ID of the VLAN when this port is in trunk mode"
-                                ptype="VLAN_ID"
+                                help="(-) or (,) separated individual VLAN IDs and ranges of VLAN IDs; for example, 20,70-100,142"
+                                ptype="VLAN_RANGE"
                                 >
                             </PARAM>
                         </PARAM>
@@ -889,9 +889,9 @@ limitations under the License.
                             mode="subcommand"
                             >
                             <PARAM
-                                name="vlan-id"
-                                help="VLAN ID of the VLAN when this port is in trunk mode"
-                                ptype="VLAN_ID"
+                                name="vlan-id-list"
+                                help="(-) or (,) separated individual VLAN IDs and ranges of VLAN IDs; for example, 20,70-100,142"
+                                ptype="VLAN_RANGE"
                                 >
                             </PARAM>
                         </PARAM>
@@ -902,7 +902,7 @@ limitations under the License.
           if test "${switchport-subcommands}" = "access"; then&#xA;
               python $SONIC_CLI_ROOT/sonic-cli-if.py delete_openconfig_vlan_interfaces_interface_aggregation_switched_vlan_config_access_vlan ${po_name} ACCESS&#xA;
           else&#xA;
-              python $SONIC_CLI_ROOT/sonic-cli-if.py del_llist_openconfig_vlan_interfaces_interface_aggregation_switched_vlan_config_trunk_vlans ${po_name} TRUNK ${vlan-id}&#xA;
+              python $SONIC_CLI_ROOT/sonic-cli-if.py del_llist_openconfig_vlan_interfaces_interface_aggregation_switched_vlan_config_trunk_vlans ${po_name} TRUNK ${vlan-id-list}&#xA;
           fi
       </ACTION>
       </COMMAND>

@@ -34,7 +34,7 @@ limitations under the License.
         </PARAM>
         <ACTION>
             if test "${session-name}" = ""; then&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-mirror.py --show "show_mirror_session_all" --renderer show_mirror.j2&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-mirror.py --show "show_mirror_session" --renderer show_mirror.j2&#xA;
             else&#xA;
                 python $SONIC_CLI_ROOT/sonic-cli-mirror.py --show "show_mirror_session" --session ${session-name} --renderer show_mirror.j2&#xA;
             fi&#xA;
@@ -177,7 +177,7 @@ limitations under the License.
                  <PARAM
                     name="ip_gre"
                     help="ERSPAN gre-type"
-                    ptype="RANGE_0_65535"
+                    ptype="HEX_TYPE"
                     optional="false"
                     >
                  </PARAM>

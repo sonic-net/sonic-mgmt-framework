@@ -84,12 +84,10 @@ type StpApp struct {
 func init() {
 	err := register("/openconfig-spanning-tree:stp",
 		&appInfo{appType: reflect.TypeOf(StpApp{}),
-			ygotRootType:  reflect.TypeOf(ocbinds.OpenconfigSpanningTree_Stp{}),
-			isNative:      false,
-			tablesToWatch: []*db.TableSpec{&db.TableSpec{Name:
-            STP_GLOBAL_TABLE}, &db.TableSpec{Name: STP_VLAN_TABLE},
-            &db.TableSpec{Name: STP_VLAN_PORT_TABLE}, &db.TableSpec{Name:
-            STP_PORT_TABLE}}})
+			ygotRootType: reflect.TypeOf(ocbinds.OpenconfigSpanningTree_Stp{}),
+			isNative:     false,
+			tablesToWatch: []*db.TableSpec{&db.TableSpec{Name: STP_GLOBAL_TABLE}, &db.TableSpec{Name: STP_VLAN_TABLE},
+				&db.TableSpec{Name: STP_VLAN_PORT_TABLE}, &db.TableSpec{Name: STP_PORT_TABLE}}})
 
 	if err != nil {
 		log.Fatal("Register STP app module with App Interface failed with error=", err)
@@ -1725,6 +1723,8 @@ func (app *StpApp) convertOperInternalToOCVlanInterface(vlanName string, intfId 
 
 			portState := (&operDbVal).Get("port_state")
 
+			portRole := (&operDbVal).Get("role")
+
 			//Counters
 			num, _ = strconv.ParseUint((&operDbVal).Get("bpdu_sent"), 10, 64)
 			opBpduSent := num
@@ -1732,10 +1732,10 @@ func (app *StpApp) convertOperInternalToOCVlanInterface(vlanName string, intfId 
 			num, _ = strconv.ParseUint((&operDbVal).Get("bpdu_received"), 10, 64)
 			opBpduReceived := num
 
-			num, _ = strconv.ParseUint((&operDbVal).Get("tcn_sent"), 10, 64)
+			num, _ = strconv.ParseUint((&operDbVal).Get("tc_sent"), 10, 64)
 			opTcnSent := num
 
-			num, _ = strconv.ParseUint((&operDbVal).Get("tcn_received"), 10, 64)
+			num, _ = strconv.ParseUint((&operDbVal).Get("tc_received"), 10, 64)
 			opTcnReceived := num
 
 			// For RPVST+ only
@@ -1768,6 +1768,18 @@ func (app *StpApp) convertOperInternalToOCVlanInterface(vlanName string, intfId 
 				case "FORWARDING":
 					pvstVlanIntf.State.PortState = ocbinds.OpenconfigSpanningTreeTypes_STP_PORT_STATE_FORWARDING
 				}
+
+				switch portRole {
+				case "ROOT":
+					pvstVlanIntf.State.Role = ocbinds.OpenconfigSpanningTreeTypes_STP_PORT_ROLE_ROOT
+				case "DESIGNATED":
+					pvstVlanIntf.State.Role = ocbinds.OpenconfigSpanningTreeTypes_STP_PORT_ROLE_DESIGNATED
+				case "ALTERNATE":
+					pvstVlanIntf.State.Role = ocbinds.OpenconfigSpanningTreeTypes_STP_PORT_ROLE_ALTERNATE
+				case "BACKUP":
+					pvstVlanIntf.State.Role = ocbinds.OpenconfigSpanningTreeTypes_STP_PORT_ROLE_BACKUP
+				}
+
 				if pvstVlanIntf.State.Counters != nil {
 					pvstVlanIntf.State.Counters.BpduSent = &opBpduSent
 					pvstVlanIntf.State.Counters.BpduReceived = &opBpduReceived
@@ -1797,6 +1809,18 @@ func (app *StpApp) convertOperInternalToOCVlanInterface(vlanName string, intfId 
 				case "FORWARDING":
 					rpvstVlanIntf.State.PortState = ocbinds.OpenconfigSpanningTreeTypes_STP_PORT_STATE_FORWARDING
 				}
+
+				switch portRole {
+				case "ROOT":
+					rpvstVlanIntf.State.Role = ocbinds.OpenconfigSpanningTreeTypes_STP_PORT_ROLE_ROOT
+				case "DESIGNATED":
+					rpvstVlanIntf.State.Role = ocbinds.OpenconfigSpanningTreeTypes_STP_PORT_ROLE_DESIGNATED
+				case "ALTERNATE":
+					rpvstVlanIntf.State.Role = ocbinds.OpenconfigSpanningTreeTypes_STP_PORT_ROLE_ALTERNATE
+				case "BACKUP":
+					rpvstVlanIntf.State.Role = ocbinds.OpenconfigSpanningTreeTypes_STP_PORT_ROLE_BACKUP
+				}
+
 				if rpvstVlanIntf.State.Counters != nil {
 					rpvstVlanIntf.State.Counters.BpduSent = &opBpduSent
 					rpvstVlanIntf.State.Counters.BpduReceived = &opBpduReceived

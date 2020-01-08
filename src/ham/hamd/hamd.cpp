@@ -141,33 +141,7 @@ static struct passwd * fgetpwname(const char * login, const char * fname_p)
 
 std::string hamd_c::certgen(const std::string  & login) const
 {
-    struct passwd * pwd = ::getpwnam(login.c_str());
-    if (pwd == nullptr)
-        return "No record of uyser " + login + " in Linux user database";
-
-    path_t certdir = path_t(pwd->pw_dir) / ".cert";
-
-    // We're going to run the certificate generation with the user's
-    // credentials so that file/dir ownership is reflected properly.
-    // First let's save current User and Group IDs so it can be restored
-    // later.
-    uid_t  euid = geteuid();
-    gid_t  egid = getegid();
-    if (0 != change_credentials(pwd->pw_uid, pwd->pw_gid))
-        return "Failed to switch to user " + login;
-
-    // Make sure certificate directory exists and set permissions to
-    // 700 so that only "user" (or root) can access the certificates.
-    if (0 != g_mkdir_with_parents(certdir.c_str(), S_IRWXU/*0700*/))
-        return "Failed to create certificate directory: " + certdir.native();
-
-    #if (1)
-    // Restore credentials
-    change_credentials(euid, egid);
-    #endif
-
-    // Generate certificates
-    std::string cmd = config_rm.certgen_cmd(login, certdir.native());
+    std::string cmd = config_rm.certgen_m + ' ' + login;
 
     LOG_CONDITIONAL(is_tron(), LOG_DEBUG, "hamd_c::certgen() - Generate user \"%s\" certificates [%s]", login.c_str(), cmd.c_str());
 
@@ -179,30 +153,8 @@ std::string hamd_c::certgen(const std::string  & login) const
     LOG_CONDITIONAL(is_tron(), LOG_DEBUG, "hamd_c::certgen() - Generate user \"%s\" certificates rc=%d, stdout=%s, stderr=%s",
                     login.c_str(), rc, std_out.c_str(), std_err.c_str());
 
-    #if (0)
-    // Restore credentials
-    change_credentials(euid, egid);
-    #endif
-
     if (rc != 0)
         return "Failed to generate certificates for " + login + ". " + std_err;
-
-    // Set permissions on newly created certificates
-    GDir * dir = g_dir_open(certdir.c_str(), 0, nullptr);
-    if (dir != nullptr)
-    {
-        path_t         fullname;
-        const gchar  * name;
-        while ((name = g_dir_read_name(dir)) != nullptr)
-        {
-            fullname = certdir / name;
-            g_chmod(fullname.c_str(), (S_IRUSR | S_IWUSR)/*0600*/);
-            if (0 != chown(fullname.c_str(), pwd->pw_uid, pwd->pw_gid))
-                syslog(LOG_ERR, "failed to change ownership of file %s. errno=%d (%s)",
-                       fullname.c_str(), errno, strerror(errno));
-        }
-        g_dir_close(dir);
-    }
 
     return "";
 }
@@ -247,7 +199,6 @@ static std::string roles_as_string(const std::vector< std::string > & roles)
 
     std::string cmd = "/usr/sbin/useradd"
                       " --create-home"
-                      " --user-group"
                       " --password '" + hashed_pw + "'";
 
     const std::string & shell_r = config_rm.shell();
@@ -257,6 +208,9 @@ static std::string roles_as_string(const std::vector< std::string > & roles)
     std::string roles_str = roles_as_string(roles);
     if (!roles_str.empty())
         cmd += " --groups " + roles_str;
+
+    if (!roles.empty())
+        cmd += " --gid " + roles[0];
 
     cmd += ' ' + login;
 

@@ -39,6 +39,8 @@ type typeChMapErr struct {
     err    error
 }
 
+var mapCopyMutex = &sync.Mutex{}
+
 func xfmrHandlerFunc(inParams XfmrParams) (error) {
     xpath, _ := XfmrRemoveXPATHPredicates(inParams.uri)
     log.Infof("Subtree transformer function(\"%v\") invoked for yang path(\"%v\").", xYangSpecMap[xpath].xfmrFunc, xpath)
@@ -229,31 +231,16 @@ func DbToYangType(yngTerminalNdDtType yang.TypeKind, fldXpath string, dbFldVal s
 }
 
 /*convert leaf-list in Db to leaf-list in yang*/
-func processLfLstDbToYang(fieldXpath string, dbFldVal string) []interface{} {
+func processLfLstDbToYang(fieldXpath string, dbFldVal string, yngTerminalNdDtType yang.TypeKind) []interface{} {
 	valLst := strings.Split(dbFldVal, ",")
 	var resLst []interface{}
 	const INTBASE = 10
 
 	log.Info("xpath:", fieldXpath, ", dbFldVal:", dbFldVal)
-	xpathData, ok := xYangSpecMap[fieldXpath]
-	if !ok {
-		log.Info("xpath ", fieldXpath, " doesnt have entry in xYangSpecMap")
-		return resLst
-	}
-
-	dbPath := *xpathData.tableName + "/" + xpathData.fieldName
-	dbNode := xDbSpecMap[dbPath]
-	log.Info("xDbSpecMap[",dbPath,"]:",dbNode)
-
-	if dbNode == nil {
-		log.Info("xDbSpecMap[", dbPath, "] is NULL")
-		return resLst
-	}
-
-	yngTerminalNdDtType := xDbSpecMap[dbPath].dbEntry.Type.Kind
 	switch  yngTerminalNdDtType {
-	case yang.Yenum, yang.Ystring, yang.Yunion, yang.Yleafref:
-		// TODO handle leaf-ref base type
+	case yang.Ybinary, yang.Ydecimal64, yang.Yenum, yang.Yidentityref, yang.Yint64, yang.Yuint64, yang.Ystring, yang.Yunion:
+                // TODO - handle the union type.OC yang should have field xfmr.sonic-yang?
+                // Make sure to encode as string, expected by util_types.go: ytypes.yangToJSONType:
 		log.Info("DB leaf-list and Yang leaf-list are of same data-type")
 		for _, fldVal := range valLst {
 			resLst = append(resLst, fldVal)
@@ -290,16 +277,16 @@ func sonicDbToYangTerminalNodeFill(tblName string, field string, value string, r
 	}
 
 	yangType := yangTypeGet(xDbSpecMapEntry.dbEntry)
+	yngTerminalNdDtType := xDbSpecMapEntry.dbEntry.Type.Kind
 	if yangType ==  YANG_LEAF_LIST {
 		/* this should never happen but just adding for safetty */
 		if !strings.HasSuffix(field, "@") {
 			log.Warningf("Leaf-list in Sonic yang should also be a leaf-list in DB, its not for xpath %v", fieldXpath)
 			return
 		}
-		resLst := processLfLstDbToYang(fieldXpath, value)
+		resLst := processLfLstDbToYang(fieldXpath, value, yngTerminalNdDtType)
 		resultMap[resField] = resLst
 	} else { /* yangType is leaf - there are only 2 types of yang terminal node leaf and leaf-list */
-		yngTerminalNdDtType := xDbSpecMapEntry.dbEntry.Type.Kind
 		resVal, _, err := DbToYangType(yngTerminalNdDtType, fieldXpath, value)
 		if err != nil {
 			log.Warningf("Failure in converting Db value type to yang type for xpath", fieldXpath)
@@ -561,13 +548,8 @@ func yangListDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, r
 		}
 	}
 
-	var tblWg sync.WaitGroup
 	for _, tbl = range(tblList) {
-		tblWg.Add(1)
 
-		go func(tbl string) {
-
-		defer tblWg.Done()
 		tblData, ok := (*dbDataMap)[cdb][tbl]
 
 		if ok {
@@ -615,9 +597,7 @@ func yangListDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, r
 			}
 		}
 
-	}(tbl)
 	}// end of tblList for
-	tblWg.Wait()
 	return nil
 }
 
@@ -694,17 +674,17 @@ func terminalNodeProcess(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string
 		/* if there is no transformer extension/annotation then it means leaf-list in yang is also leaflist in db */
 		if len(dbFldName) > 0  && !xYangSpecMap[xpath].isKey {
 			yangType := yangTypeGet(xYangSpecMap[xpath].yangEntry)
+			yngTerminalNdDtType := xYangSpecMap[xpath].yangEntry.Type.Kind
 			if yangType ==  YANG_LEAF_LIST {
 				dbFldName += "@"
 				val, ok := (*dbDataMap)[cdb][tbl][tblKey].Field[dbFldName]
 				if ok {
-					resLst := processLfLstDbToYang(xpath, val)
+					resLst := processLfLstDbToYang(xpath, val, yngTerminalNdDtType)
 					resFldValMap[xYangSpecMap[xpath].yangEntry.Name] = resLst
 				}
 			} else {
 				val, ok := (*dbDataMap)[cdb][tbl][tblKey].Field[dbFldName]
 				if ok {
-					yngTerminalNdDtType := xYangSpecMap[xpath].yangEntry.Type.Kind
 					resVal, _, err := DbToYangType(yngTerminalNdDtType, xpath, val)
 					if err != nil {
 						log.Error("Failure in converting Db value type to yang type for field", xpath)
@@ -783,7 +763,7 @@ func yangDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, reque
 								continue
 							}
 							dbDataFromTblXfmrGet(tblList[0], inParams, dbDataMap)
-							tbl = tblList[0]
+							chtbl = tblList[0]
 						}
 					}
 					if len(xYangSpecMap[chldXpath].xfmrFunc) > 0 {

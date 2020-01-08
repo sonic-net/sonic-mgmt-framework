@@ -49,20 +49,40 @@ def invoke_api(func, args):
        body = { "openconfig-system-ext:secret-key": args[0] }
        return api.patch(path, body)
     elif func == 'patch_tacacs_server':
+       indata = {}
+       # get server data
+       api_response = get_sonic_tacacs_server_api(args)
+       if api_response:
+           indata = api_response[0]
+       else:
+           # default server values
+           indata['port'] = 49
+           indata['key'] = ''
+           indata['timeout'] = 5
+           indata['authtype'] = 'pap'
+           indata['priority'] = 1
+
+       # fetch parameter values
+       for i in range(len(args)):
+           val = (args[i].split(":", 1))[-1]
+           val_name = (args[i].split(":", 1))[0]
+           if val:
+               indata[val_name] = val
+
        path = cc.Path('/restconf/data/openconfig-system:system/aaa/server-groups/server-group=TACACS/servers/server={address}/tacacs/config', address=args[0])
        body = {
          "openconfig-system:config": {
-           "port": int(args[1]),
-           "secret-key": args[2]
+           "port": int(indata['port']),
+           "secret-key": indata['key']
          }
        }
        api.patch(path, body)
        path = cc.Path('/restconf/data/openconfig-system:system/aaa/server-groups/server-group=TACACS/servers/server={address}/config', address=args[0])
        body = {
            "openconfig-system:config": {
-             "timeout": int(args[3]),
-             "openconfig-system-ext:auth-type": args[4],
-             "openconfig-system-ext:priority": int(args[5])
+             "timeout": int(indata['timeout']),
+             "openconfig-system-ext:auth-type": indata['authtype'],
+             "openconfig-system-ext:priority": int(indata['priority'])
           }
        }
        return api.patch(path, body)
@@ -86,7 +106,7 @@ def invoke_api(func, args):
 
     return api.cli_not_implemented(func)
 
-def get_sonic_tacacs_server(args):
+def get_sonic_tacacs_server_api(args):
     api_response = []
     api = cc.ApiClient()
 
@@ -102,12 +122,16 @@ def get_sonic_tacacs_server(args):
                     api_response_data['authtype'] = server_list[i]['config']['openconfig-system-ext:auth-type']
                     api_response_data['priority'] = server_list[i]['config']['openconfig-system-ext:priority']
                     api_response_data['timeout'] = server_list[i]['config']['timeout']
-                    tac_cfg = {}
-                    tac_cfg = server_list[i]['tacacs']['config']
-                    api_response_data['port'] = tac_cfg['port']
-                    api_response_data['key'] = tac_cfg['secret-key']
+                    if 'tacacs' in server_list[i]:
+                        tac_cfg = {}
+                        tac_cfg = server_list[i]['tacacs']['config']
+                        api_response_data['port'] = tac_cfg['port']
+                        api_response_data['key'] = tac_cfg['secret-key']
                     api_response.append(api_response_data)
+    return api_response
 
+def get_sonic_tacacs_server(args):
+    api_response = get_sonic_tacacs_server_api(args)
     show_cli_output("show_tacacs_server.j2", api_response)
 
 def get_sonic_tacacs_global():

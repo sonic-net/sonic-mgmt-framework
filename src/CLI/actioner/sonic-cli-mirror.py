@@ -88,26 +88,29 @@ def config(args):
             # Get Command Output
             response = api_response.content
             if response is None:
-                print "Success"
+                print("Success")
             else:
-                print "Failure"
+                print("Failure")
         else:
             #error response
-            print "Failed. Invalid mirror configuration. "
+            print("Failed. Invalid mirror configuration. ")
 
     except:
             # system/network error
             raise
-            print "%Error: Transaction Failure"
 
 def show(args):
     try:
         # Get the rules of all ACL table entries.
         body = None
         aa = cc.ApiClient()
-        if args.show == 'show_mirror_session_all':
+        if args.show == 'show_mirror_session':
             # Get mirror-session-info
-            keypath = cc.Path('/restconf/data/sonic-mirror-session:sonic-mirror-session')
+            if args.session is not None:
+                keypath = cc.Path('/restconf/data/sonic-mirror-session:sonic-mirror-session/MIRROR_SESSION/MIRROR_SESSION_LIST={name}',
+                        name=args.session)
+            else:
+                keypath = cc.Path('/restconf/data/sonic-mirror-session:sonic-mirror-session')
             response = aa.get(keypath)
             gbl_oper_dict = {}
             session_list = 0
@@ -118,17 +121,23 @@ def show(args):
                     if 'MIRROR_SESSION_LIST' in list.keys():
                         session_list = list['MIRROR_SESSION_LIST']
                     else:
-                        print "No sessions configured"
+                        print("No sessions configured")
                         return
                 else:
-                    print "No sessions configured"
+                    print("No sessions configured")
                     return
+            elif response.ok() and 'sonic-mirror-session:MIRROR_SESSION_LIST' in response.content.keys():
+                session_list = response['sonic-mirror-session:MIRROR_SESSION_LIST']
             else:
-                print "No sessions configured"
+                print("No sessions configured")
                 return
 
             # Retrieve mirror session status.
-            keypath = cc.Path('/restconf/data/sonic-mirror-session:sonic-mirror-session/MIRROR_SESSION_TABLE')
+            if args.session is not None:
+                keypath = cc.Path('/restconf/data/sonic-mirror-session:sonic-mirror-session/MIRROR_SESSION_TABLE/MIRROR_SESSION_TABLE_LIST={name}',
+                        name=args.session)
+            else:
+                keypath = cc.Path('/restconf/data/sonic-mirror-session:sonic-mirror-session/MIRROR_SESSION_TABLE')
             response = aa.get(keypath)
             session_status = 0
             if response.ok() and 'sonic-mirror-session:MIRROR_SESSION_TABLE' in response.content.keys():
@@ -136,10 +145,12 @@ def show(args):
                 if 'MIRROR_SESSION_TABLE_LIST' in value.keys():
                     session_status = value['MIRROR_SESSION_TABLE_LIST']
                 else:
-                    print "Session state info not found"
+                    print("Session state info not found")
                     return
+            elif response.ok() and 'sonic-mirror-session:MIRROR_SESSION_TABLE_LIST' in response.content.keys():
+                session_status = response['sonic-mirror-session:MIRROR_SESSION_TABLE_LIST']
             else:
-                print "Session state info not found"
+                print("Session state info not found")
                 return
             final_dict = {}
             final_dict['session_list'] = session_list
@@ -148,7 +159,6 @@ def show(args):
     except:
             # system/network error
             raise
-            print "%Error: Transaction Failure"
 
     return
 
@@ -185,10 +195,8 @@ Examples:
 
     args = parser.parse_args()
     if args.config:
-        print "args.config is " + args.config
         config(args)
     elif args.show:
-        print "args.show is " + args.show
         show(args)
 
 

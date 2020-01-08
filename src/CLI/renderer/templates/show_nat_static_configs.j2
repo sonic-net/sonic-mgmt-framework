@@ -1,0 +1,6 @@
+{{'----------------------------------------------------------------------------------------------------------------------------'}}
+{{'%-15s'|format("Nat Type")}}{{'%-20s'|format("IP Protocol")}}{{'%-30s'|format("Global IP")}}{{'%-20s'|format("Global L4 Port")}}{{'%-30s'|format("Local IP")}}{{'%-20s'|format("Local L4 Port")}}{{'%-20s'|format("Twice-Nat Id")}}
+{{'----------------------------------------------------------------------------------------------------------------------------'}}
+{% for dict in json_output %}
+{{'%-15s'|format(dict['nat_type'])}}{{'%-20s'|format(dict['ip_protocol'])}}{{'%-30s'|format(dict['global_ip'])}}{{'%-20s'|format(dict['global_l4_port'])}}{{'%-30s'|format(dict['local_ip'])}}{{'%-20s'|format(dict['local_l4_port'])}}{{'%-20s'|format(dict['twice_nat_id'])}}
+{% endfor %}

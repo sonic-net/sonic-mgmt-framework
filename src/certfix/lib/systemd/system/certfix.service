@@ -1,0 +1,12 @@
+[Unit]
+Description=Certificate Fixer
+
+Before=hamd.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/sbin/certfix.sh
+
+[Install]
+WantedBy=multi-user.target
+

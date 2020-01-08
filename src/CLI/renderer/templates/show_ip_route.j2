@@ -1,0 +1,31 @@
+{% set vars = {'prefix': ""} %}
+{% set vars = {'origin': ""} %}
+{% set vars = {'distance': ""} %}
+{% set vars = {'gateway': ""} %}
+{% set vars = {'interface': ""} %}
+{% set vars = {'uptime': ""} %}
+
+Codes: C - connected, S - static, B - BGP, O - OSPF
+
+   {{'%-29s'|format("Destination")}}{{'%-48s'|format("Gateway")}}{{'%-17s'|format("Dist/Metric")}}{{'%-12s'|format("Uptime")}}
+----------------------------------------------------------------------------------------------------------
+{% if json_output -%}
+{% for key in json_output %}
+{% if vars.update({'prefix':key["prefix"]}) %}{% endif %}
+{% if vars.update({'origin':key["originProtocol"]}) %}{% endif %}
+{% if vars.update({'distance':key["distance"]}) %}{% endif %}
+{% if vars.update({'uptime':key["uptime"]}) %}{% endif %}
+{% if "nexthops" in key %}
+{% set nextHops =  key["nexthops"] %}
+{% for nexthop in nextHops %}
+{% if vars.update({'gateway':nexthop["gateway"]}) %}{% endif %}
+{% if vars.update({'interface':nexthop["interface"]}) %}{% endif %}
+{% if loop.index == 1 %}
+{{'%-2s'|format(" ")}}{{'%-3s'|format(vars.origin)}}{{'%-28s'|format(vars.prefix)}}{{'%-30s'|format(vars.gateway)}}{{'%-18s'|format(vars.interface)}}{{'%-17s'|format(vars.distance)}}{{'%-12s'|format(vars.uptime)}}
+{% else %}
+{{'%-33s'|format(" ")}}{{'%-30s'|format(vars.gateway)}}{{'%-18s'|format(vars.interface)}}{{'%-17s'|format(" ")}}
+{% endif %}
+{% endfor %}
+{% endif %}
+{% endfor %}
+{% endif %}

@@ -7,7 +7,7 @@
 
 {% if json_output -%}
 ------------------------------------------------------------------------------------------------
-{{'%-20s'|format("HOST")}}{{'%-15s'|format("AUTH-TYPE")}}{{'%-10s'|format("KEY")}}{{'%-10s'|format("PORT")}}{{'%-10s'|format("PRIORITY")}}{{'%-10s'|format("TIMEOUT")}}
+{{'%-20s'|format("HOST")}} {{'%-15s'|format("AUTH-TYPE")}} {{'%-10s'|format("KEY")}} {{'%-10s'|format("PORT")}} {{'%-10s'|format("PRIORITY")}} {{'%-10s'|format("TIMEOUT")}}
 ------------------------------------------------------------------------------------------------
 {% set server_list = json_output %}
 
@@ -18,7 +18,7 @@
     {% if vars.update({'port':server["port"]}) %}{% endif %}
     {% if vars.update({'priority':server["priority"]}) %}{% endif %}
     {% if vars.update({'timeout':server["timeout"]}) %}{% endif %}
-{{'%-20s'|format(vars.address)}}{{'%-15s'|format(vars.authtype)}}{{'%-10s'|format(vars.key)}}{{'%-10s'|format(vars.port)}}{{'%-10s'|format(vars.priority)}}{{'%-10s'|format(vars.timeout)}}
+{{'%-20s'|format(vars.address)}} {{'%-15s'|format(vars.authtype)}} {{'%-10s'|format(vars.key)}} {{'%-10s'|format(vars.port)}} {{'%-10s'|format(vars.priority)}} {{'%-10s'|format(vars.timeout)}}
 {% endfor %}
 
 {% endif %}

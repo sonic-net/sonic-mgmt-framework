@@ -10,7 +10,6 @@
 
 
 static long long numberize(const char  * str_p, long long minval, long long maxval, const char ** errstr_pp = nullptr);
-static std::string expand_certgen_cmd(const std::string & certgen_cmd_r, const std::string  & user_r, const std::string  & certdir_r);
 
 //******************************************************************************
 hamd_config_c::hamd_config_c(int argc, char **argv)
@@ -28,12 +27,12 @@ hamd_config_c::hamd_config_c(int argc, char **argv)
 
     const std::string description =
         "Configuration file parameters:\n"
-        "  debug=[yes/no]      Enable additional debug info to the syslog                       [" + std::string(true_false(tron_default_m, "yes", "no")) + "]\n" +
-        "  poll_period=[sec]   Daemon's polling period. Used for periodic house keeping tasks   [" + std::to_string(poll_period_sec_default_m) + "s]\n" +
-        "  uid_min=[uint32]    System-assigned credentials minimum UID. Should be >= 1000       [" + std::to_string(sac_uid_min_default_m) + "]\n" +
-        "  uid_max=[uint32]    System-assigned credentials maximum UID. Should be > uid_min     [" + std::to_string(sac_uid_max_default_m) + "]\n" +
-        "  certgen=[command]   Certificate generation command. Supp. vars: $CERTDIR, $USERNAME  [" + certgen_cmd_default_m + "]\n" +
-        "  shell=[path]        Shell to be assigned to new users                                [" + shell_default_m + "]";
+        "  debug=[yes/no]      Enable additional debug info to the syslog                     [" + std::string(true_false(tron_default_m, "yes", "no")) + "]\n" +
+        "  poll_period=[sec]   Daemon's polling period. Used for periodic house keeping tasks [" + std::to_string(poll_period_sec_default_m) + "s]\n" +
+        "  uid_min=[uint32]    System-assigned credentials minimum UID. Should be >= 1000     [" + std::to_string(sac_uid_min_default_m) + "]\n" +
+        "  uid_max=[uint32]    System-assigned credentials maximum UID. Should be > uid_min   [" + std::to_string(sac_uid_max_default_m) + "]\n" +
+        "  certgen=[path]      Certificate generation program                                 [" + certgen_default_m + "]\n" +
+        "  shell=[path]        Shell to be assigned to new users                              [" + shell_default_m + "]";
 
     ctx_p = g_option_context_new(nullptr);
     g_option_context_set_summary(ctx_p, "Host Account Management Daemon (hamd)");
@@ -51,12 +50,12 @@ void hamd_config_c::reload()
     FILE * file = fopen(conf_file_pm, "re");
     if (file)
     {
-        gint poll_period_sec       = poll_period_sec_default_m;
-        gint sac_uid_min           = sac_uid_min_default_m;
-        gint sac_uid_max           = sac_uid_max_default_m;
-        bool tron                  = tron_default_m;
-        std::string certgen_cmd    = certgen_cmd_default_m;
-        std::string shell          = shell_default_m;
+        gint poll_period_sec = poll_period_sec_default_m;
+        gint sac_uid_min     = sac_uid_min_default_m;
+        gint sac_uid_max     = sac_uid_max_default_m;
+        bool tron            = tron_default_m;
+        std::string certgen  = certgen_default_m;
+        std::string shell    = shell_default_m;
 
         #define WHITESPACE " \t\n\r"
         char    line[LINE_MAX];
@@ -106,7 +105,7 @@ void hamd_config_c::reload()
             else if (nullptr != (s = startswith(p, "certgen")))
             {
                 s += strspn(s, " \t=");            // Skip leading spaces and equal sign (=)
-                certgen_cmd = s;
+                certgen = s;
             }
             else if (nullptr != (s = startswith(p, "shell")))
             {
@@ -135,30 +134,22 @@ void hamd_config_c::reload()
             sac_uid_range_m = 1 + (sac_uid_max_m - sac_uid_min_m);
         }
 
-        if (certgen_cmd_m != certgen_cmd)
+        if (certgen_m != certgen)
         {
-#if (0)
-            // Make sure that the program exists and can be executed
-            std::string cmd = expand_certgen_cmd(certgen_cmd, "____bozo____", "/tmp");
-
-            int  rc          = system(cmd.c_str());
-            bool term_normal = WIFEXITED(rc);
-            if (term_normal)
+            // Make sure that the file exists
+            if (g_file_test(certgen.c_str(), G_FILE_TEST_EXISTS))
             {
-#endif
-                certgen_cmd_m = certgen_cmd;
-#if (0)
+                certgen_m = certgen;
             }
             else
             {
-                syslog(LOG_ERR, "Error reading %s: certgen=%s. Invalid command.", conf_file_pm, certgen_cmd.c_str());
+                syslog(LOG_ERR, "Error reading %s: certgen=%s. File not found.", conf_file_pm, certgen.c_str());
             }
-#endif
         }
 
         if (shell_m != shell)
         {
-            // Make sure that the shell exists
+            // Make sure that the file exists
             if (g_file_test(shell.c_str(), G_FILE_TEST_EXISTS))
             {
                 shell_m = shell;
@@ -182,20 +173,13 @@ void hamd_config_c::reload()
 }
 
 //******************************************************************************
-std::string hamd_config_c::certgen_cmd(const std::string & user_r,
-                                       const std::string & certdir_r) const
-{
-    return expand_certgen_cmd(certgen_cmd_m, user_r, certdir_r);
-}
-
-//******************************************************************************
 std::string hamd_config_c::to_string() const
 {
     std::ostringstream  oss;
 
     oss << "Running config:\n"
         << "  conf_file_pm              = " << conf_file_pm << '\n'
-        << "  certgen_cmd_m             = " << certgen_cmd_m << '\n'
+        << "  certgen_m                 = " << certgen_m << '\n'
         << "  poll_period_sec_m         = " << std::to_string(poll_period_sec_m)  << "s\n"
         << "  sac_uid_min_m             = " << std::to_string(sac_uid_min_m) << '\n'
         << "  sac_uid_max_m             = " << std::to_string(sac_uid_max_m) << '\n'
@@ -205,7 +189,7 @@ std::string hamd_config_c::to_string() const
         << '\n'
         << "Default config:\n"
         << "  conf_file_default_pm      = " << conf_file_default_pm << '\n'
-        << "  certgen_cmd_default_m     = " << certgen_cmd_default_m << '\n'
+        << "  certgen_default_m         = " << certgen_default_m << '\n'
         << "  poll_period_sec_default_m = " << std::to_string(poll_period_sec_default_m)  << "s\n"
         << "  sac_uid_min_default_m     = " << std::to_string(sac_uid_min_default_m) << '\n'
         << "  sac_uid_max_default_m     = " << std::to_string(sac_uid_max_default_m) << '\n'
@@ -227,75 +211,6 @@ static inline char * _startswith(const char *s, const char *prefix_p, size_t pre
 {
     if (strneq(s, prefix_p, prefix_l)) return (char *)s + prefix_l - 1;
     return nullptr;
-}
-
-//******************************************************************************
-/**
- * @brief Replace variable fields of the certificate generation command
- *        (#certgen_cmd_r) with the values provided (#user_r, #certdir_r)
- *
- *        There are two variables recognized:
- *          $CERTDIR  - User's home directory
- *          $USERNAME - User's name
- *
- * @param certgen_cmd_r: Certificate generation command that may contain
- *                       $USERNAME and/or $CERTDIR to be replaced by user_r
- *                       and/or certdir_r respectively.
- * @param user_r:        User's name
- * @param certdir_r:     Location where to put certificates
- *
- * @return This method will return #certgen_cmd_r with $CERTDIR replaced by
- *         certdir_r and $USERNAME by user_r.
- */
-static std::string expand_certgen_cmd(const std::string  & certgen_cmd_r,
-                                      const std::string  & user_r,
-                                      const std::string  & certdir_r)
-{
-    struct
-    {
-        const char          * pattern_p;
-        size_t                pattern_l;
-        const std::string   & replacement_r;
-    } patterns[] =
-    {
-        { "$USERNAME",  sizeof("$USERNAME")-1, user_r    }, // Replace $USERNAME by user_r
-        { "$CERTDIR",   sizeof("$CERTDIR")-1,  certdir_r }, // Replace $CERTDIR by certdir_r
-        { nullptr ,     0,                     ""        }, // sentinel
-    };
-
-    std::string  output = "";
-
-    const char * certgen_cmd_p = certgen_cmd_r.c_str();
-    for (; certgen_cmd_p[0] != '\0'; certgen_cmd_p++)
-    {
-        if (certgen_cmd_p[0] == '$')
-        {
-            if (certgen_cmd_p[1] == '$')
-            {
-                output += '$';
-                certgen_cmd_p++;
-            }
-            else
-            {
-                for (unsigned i = 0; patterns[i].pattern_p != nullptr; i++)
-                {
-                    const char * s = _startswith(certgen_cmd_p, patterns[i].pattern_p, patterns[i].pattern_l);
-                    if (s != nullptr)
-                    {
-                        output += patterns[i].replacement_r;
-                        certgen_cmd_p = s;
-                        break;
-                    }
-                }
-            }
-
-            continue;
-        }
-
-        output += certgen_cmd_p[0];
-    }
-
-    return output;
 }
 
 /**

@@ -689,6 +689,7 @@ func mapPrint(inMap map[string]*yangXpathInfo, fileName string) {
         if d.tableName != nil {
             fmt.Fprintf(fp, "%v", *d.tableName)
         }
+	fmt.Fprintf(fp, "\r\n    postXfmr : %v", d.xfmrPost)
         fmt.Fprintf(fp, "\r\n    xfmrTbl  : ")
         if d.xfmrTbl != nil {
             fmt.Fprintf(fp, "%v", *d.xfmrTbl)

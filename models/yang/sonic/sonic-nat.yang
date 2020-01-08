@@ -80,6 +80,18 @@ module sonic-nat {
         uses sonic-twice-nat-id;
     }
 
+    typedef ip-address {
+        type union {
+          type inet:ipv4-address;
+          type string {
+                          pattern '(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])(-(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9]))?';
+                      }
+        }
+
+        description
+          "This type denotes a single IP address or a range of addresses.";
+    }
+
     container sonic-nat {
 
         container STATIC_NAPT {
@@ -177,23 +189,8 @@ module sonic-nat {
                     }
                 }
 
-                choice nat_ip {
-                    case ip_address {
-                        leaf IP_ADDRESS {
-                            type inet:ipv4-address;
-                        }
-                    }
-                    case ip_address_range {
-                        leaf IP_ADDRESS_RANGE {
-                            type string {
-                                pattern '(([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|'  +
-                                            '25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4]' + 
-                                            '[0-9]|25[0-5])$ (-) ^(([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|'  +
-                                                    '25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4]'  +
-                                                    '[0-9]|25[0-5])';
-                            }
-                        }
-                    }
+                leaf nat_ip {
+                    type ip-address;
                 }
 
                 leaf nat_port {
@@ -208,10 +205,10 @@ module sonic-nat {
 
             list NAT_BINDINGS_LIST {
 
-                key "binding_name";
+                key "name";
                 max-elements 16;
 
-                leaf binding_name {
+                leaf name {
                     type string {
 
                         pattern '[a-zA-Z0-9]{1}([-a-zA-Z0-9_]{0,31})';
