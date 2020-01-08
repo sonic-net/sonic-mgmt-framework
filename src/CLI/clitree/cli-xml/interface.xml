@@ -51,7 +51,7 @@ limitations under the License.
                  >
                  <PARAM
                     name="phy-if-id"
-                    help="Physical interface(Multiples of 4)"
+                    help="Physical interface"
                     ptype="UINT"
                     optional="true"
                     >
@@ -239,7 +239,7 @@ limitations under the License.
         >
         <PARAM
             name="phy-if-name"
-            help="Physical interface(Multiples of 4)"
+            help="Physical interface"
             ptype="UINT"
             >
         </PARAM>
@@ -272,7 +272,7 @@ limitations under the License.
          >
          <PARAM
              name="vlan-id"
-             help="Vlan identifier(1-4094)"
+             help="Vlan identifier"
              ptype="VLAN_ID"
              >
          </PARAM>
@@ -343,7 +343,7 @@ limitations under the License.
                 >
                 <PARAM
                     name="vlan-id"
-                    help="Vlan identifier(1-4094)"
+                    help="Vlan identifier"
                     ptype="VLAN_ID"
                 />
              </PARAM>
