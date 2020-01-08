@@ -196,7 +196,7 @@ func mapFillDataUtil(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requ
 		if nodeErr != nil {
 			return nil
 		}
-		inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, uri, requestUri, oper, "", nil, subOpDataMap, curYgotNodeData, txCache)
+		inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, uri, requestUri, oper, dbKey, nil, subOpDataMap, curYgotNodeData, txCache)
 		retData, err := leafXfmrHandler(inParams, xpathInfo.xfmrField)
 		if err != nil {
 			if xfmrErr != nil && *xfmrErr == nil {
@@ -430,7 +430,13 @@ func dbMapDelete(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requestU
 							}
 							result = make(map[string]map[string]db.Value)
 						} else {
-							result[tableName][keyName].Field[spec.fieldName] = ""
+                            err = mapFillDataUtil(d, ygRoot, oper, luri, requestUri, xpath, tableName, keyName, result, subOpDataMap, spec.fieldName, "", txCache, &xfmrErr)
+							if xfmrErr != nil {
+								return xfmrErr
+							}
+							if err != nil {
+								return err
+							}
 						}
 					} else if specYangType == YANG_LEAF_LIST {
 						var fieldVal []interface{}
@@ -851,7 +857,7 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
 					// Call subtree only if start processing for the requestUri. Skip for parent uri traversal
 					if strings.HasPrefix(curUri,requestUri) {
 						if xYangSpecMap[xpath] != nil && len(xYangSpecMap[xpath].xfmrFunc) > 0 &&
-						(xYangSpecMap[xpathPrefix] != xYangSpecMap[xpath]) {
+                        (xYangSpecMap[xpathPrefix].xfmrFunc != xYangSpecMap[xpath].xfmrFunc) {
 							/* subtree transformer present */
 							curYgotNode, nodeErr := yangNodeForUriGet(curUri, ygRoot)
 							if nodeErr != nil {
