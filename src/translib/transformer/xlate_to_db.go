@@ -906,11 +906,14 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
 				}
 
 				if ok && (typeOfValue == reflect.Map || typeOfValue == reflect.Slice) && xYangSpecMap[xpath].yangDataType != "leaf-list" {
-					log.Infof("CurUri: %v, requestUri: %v", curUri, requestUri)
 					// Call subtree only if start processing for the requestUri. Skip for parent uri traversal
-					if strings.HasPrefix(curUri,requestUri) {
+					curXpath, _ := XfmrRemoveXPATHPredicates(curUri)
+					reqXpath, _ := XfmrRemoveXPATHPredicates(requestUri)
+					log.Infof("CurUri: %v, requestUri: %v\r\n", curUri, requestUri)
+					log.Infof("curxpath: %v, requestxpath: %v\r\n", curXpath, reqXpath)
+					if strings.HasPrefix(curXpath, reqXpath) {
 						if xYangSpecMap[xpath] != nil && len(xYangSpecMap[xpath].xfmrFunc) > 0 &&
-						(xYangSpecMap[xpathPrefix].xfmrFunc != xYangSpecMap[xpath].xfmrFunc) {
+						(xYangSpecMap[xpathPrefix] != xYangSpecMap[xpath]) {
 							/* subtree transformer present */
 							curYgotNode, nodeErr := yangNodeForUriGet(curUri, ygRoot)
 							if nodeErr != nil {
