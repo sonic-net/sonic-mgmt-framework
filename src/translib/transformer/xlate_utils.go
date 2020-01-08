@@ -490,40 +490,32 @@ func stripModuleNamesFromUri(uri string) (string, error) {
 	pathList := strings.Split(uri, "/")
 	pathList = pathList[1:]
 	for i, pvar := range pathList {
-		si := strings.IndexAny(pvar, "[")
-		if si != -1 {
-			prekey := pvar[:si+1]
-			if i > 0 && strings.Contains(prekey, ":") {
-				prekey = strings.Split(prekey,":")[1]
-			}
-			key := pvar[si+1:]
-			if strings.Contains(key, "=") {
-				kvList := strings.Split(key, "=")
-				if len(kvList) > 1 {
-					k := kvList[0]
-					v := kvList[1]
-					//Strip the modduleName
-					if strings.Contains(k, ":") {
-						k = strings.Split(k, ":")[1]
-					}/*
-					if strings.Contains(v, ":") {
-						// TODO:In case value has : like an ipv6 address need to differenciate module name present vs not present case correctly
-						if strings.Count(v, ":") > 1 {
-							v = v[strings.IndexAny(v, ":")+1:]
-						} else {
-							v = strings.Split(v, ":")[1]
-						}
-					}*/
-					key = k + "=" + v
-				}
-				newpvar := prekey + key
-				pathList[i] = newpvar
-			}
-		} else {
-			if i > 0 && strings.Contains(pvar, ":") {
-				pathList[i] = strings.Split(pvar,":")[1]
-			}
+		if i == 0 {
+			continue
 		}
+		keysList := strings.Split(pvar, "[")
+		for inx, key := range keysList {
+			if !strings.Contains(key, "=") && strings.Contains(key, ":") {
+				key = strings.Split(key, ":")[1]
+			}
+			kvList := strings.Split(key, "=")
+			if len(kvList) > 1 {
+				k := kvList[0]
+				v := kvList[1]
+				//Strip the moduleName in key from key value pair
+				if strings.Contains(k, ":") {
+					k = strings.Split(k, ":")[1]
+				}
+				//Strip the moduleName in value from key value pair
+				if ((strings.Contains(v, ":")) && (strings.HasPrefix(v, OC_MDL_PFX) || strings.HasPrefix(v, IETF_MDL_PFX) || strings.HasPrefix(v, IANA_MDL_PFX))) {
+					v = strings.SplitN(v, ":", 2)[1]
+				}
+				key = k + "=" + v
+			}
+			keysList[inx] = key
+		}
+		newpvar := strings.Join(keysList, "[")
+		pathList[i] = newpvar
 	}
 	path := "/" + strings.Join(pathList, "/")
 	return path, nil
