@@ -1,5 +1,5 @@
 diff --git a/build.go b/build.go
-index 74f266b..95ad033 100644
+index 74f266b..d7d3aab 100644
 --- a/build.go
 +++ b/build.go
 @@ -44,7 +44,9 @@ func axisPredicate(root *axisNode) func(NodeNavigator) bool {
@@ -121,7 +121,24 @@ index 74f266b..95ad033 100644
  	default:
  		return nil, fmt.Errorf("not yet support this function %s()", root.FuncName)
  	}
-@@ -435,6 +505,10 @@ func (b *builder) processOperatorNode(root *operatorNode) (query, error) {
+@@ -396,13 +466,15 @@ func (b *builder) processOperatorNode(root *operatorNode) (query, error) {
+ 	}
+ 	var qyOutput query
+ 	switch root.Op {
+-	case "+", "-", "div", "mod": // Numeric operator
++	case "+", "-", "*", "div", "mod": // Numeric operator
+ 		var exprFunc func(interface{}, interface{}) interface{}
+ 		switch root.Op {
+ 		case "+":
+ 			exprFunc = plusFunc
+ 		case "-":
+ 			exprFunc = minusFunc
++		case "*":
++			exprFunc = mulFunc
+ 		case "div":
+ 			exprFunc = divFunc
+ 		case "mod":
+@@ -435,6 +507,10 @@ func (b *builder) processOperatorNode(root *operatorNode) (query, error) {
  	case "|":
  		qyOutput = &unionQuery{Left: left, Right: right}
  	}
@@ -308,7 +325,7 @@ index 308d3cb..e40b4b7 100644
  }
  
 diff --git a/query.go b/query.go
-index afeb890..d27a7af 100644
+index afeb890..ba1d896 100644
 --- a/query.go
 +++ b/query.go
 @@ -1,10 +1,12 @@
@@ -1022,6 +1039,15 @@ index afeb890..d27a7af 100644
  }
  
  func (l *logicalQuery) Clone() query {
+@@ -672,7 +1226,7 @@ func (n *numericQuery) Select(t iterator) NodeNavigator {
+ func (n *numericQuery) Evaluate(t iterator) interface{} {
+ 	m := n.Left.Evaluate(t)
+ 	k := n.Right.Evaluate(t)
+-	return n.Do(m, k)
++	return n.Do(asNumber(t, m), asNumber(t, k))
+ }
+ 
+ func (n *numericQuery) Clone() query {
 @@ -683,6 +1237,8 @@ type booleanQuery struct {
  	IsOr        bool
  	Left, Right query
