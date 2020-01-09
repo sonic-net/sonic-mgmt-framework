@@ -90,6 +90,33 @@ func xfmrHandler(inParams XfmrParams, xfmrFuncNm string) (map[string]map[string]
         return nil, nil
 }
 
+func keyXfmrHandler(inParams XfmrParams, xfmrFuncNm string) (string, error) {
+        log.Info("Received inParams ", inParams, "key transformer function name ", xfmrFuncNm)
+        ret, err := XlateFuncCall(yangToDbXfmrFunc(xfmrFuncNm), inParams)
+	retVal := ""
+        if err != nil {
+                return retVal, err
+        }
+
+        if ((ret != nil) && (len(ret)>0)) {
+                if len(ret) == 2 {
+                        // key xfmr returns err as second value in return data list from <xfmr_func>.Call()
+                        if ret[1].Interface() != nil {
+                                err = ret[1].Interface().(error)
+                                if err != nil {
+                                        log.Warningf("Transformer function(\"%v\") returned error - %v.", xfmrFuncNm, err)
+                                        return retVal, err
+                                }
+                        }
+                }
+                if ret[0].Interface() != nil {
+                        retVal = ret[0].Interface().(string)
+                        return retVal, nil
+                }
+        }
+        return retVal, nil
+}
+
 /* Invoke the post tansformer */
 func postXfmrHandlerFunc(xfmrPost string, inParams XfmrParams) (map[string]map[string]db.Value, error) {
     retData := make(map[string]map[string]db.Value)
@@ -381,7 +408,10 @@ func dbMapDelete(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requestU
 		resultMap[oper][db.ConfigDB] = result
 		err = sonicYangReqToDbMapDelete(requestUri, xpathPrefix, tableName, keyName, result)
 	} else {
-		xpathPrefix, keyName, tableName := xpathKeyExtract(d, ygRoot, oper, uri, requestUri, subOpDataMap, txCache)
+		xpathPrefix, keyName, tableName, err := xpathKeyExtract(d, ygRoot, oper, uri, requestUri, subOpDataMap, txCache)
+		if err != nil {
+			return err
+		}
 		log.Infof("Delete req: uri(\"%v\"), key(\"%v\"), xpathPrefix(\"%v\"), tableName(\"%v\").", uri, keyName, xpathPrefix, tableName)
 		spec, ok := xYangSpecMap[xpathPrefix]
 		if ok {
@@ -819,13 +849,15 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
 					curYgotNode = nil
 				}
 				inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, curUri, requestUri, oper, "", nil, subOpDataMap, curYgotNode, txCache)
-				ret, err := XlateFuncCall(yangToDbXfmrFunc(xYangSpecMap[xpathPrefix].xfmrKey), inParams)
-				if err != nil {
-					return err
+				ktRetData, err := keyXfmrHandler(inParams, xYangSpecMap[xpathPrefix].xfmrKey)
+				//if key transformer is called without key values in curUri ignore the error
+				if err != nil  && strings.HasSuffix(curUri, "]") {
+					if xfmrErr != nil && *xfmrErr == nil {
+						*xfmrErr = err
+					}
+					return nil
 				}
-				if ret != nil {
-					curKey = ret[0].Interface().(string)
-				}
+				curKey = ktRetData
 			} else if ok && xYangSpecMap[xpathPrefix].keyName != nil {
 				curKey = *xYangSpecMap[xpathPrefix].keyName
 			} else {
@@ -855,28 +887,33 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
 				log.Infof("slice/map data: curKey(\"%v\"), xpath(\"%v\"), curUri(\"%v\").",
 				curKey, xpath, curUri)
 				if ok && xYangSpecMap[xpath] != nil && len(xYangSpecMap[xpath].xfmrKey) > 0 {
+					specYangType := yangTypeGet(xYangSpecMap[xpath].yangEntry)
 					curYgotNode, nodeErr := yangNodeForUriGet(curUri, ygRoot)
 					if nodeErr != nil {
 						curYgotNode = nil
 					}
 					inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, curUri, requestUri, oper, "", nil, subOpDataMap, curYgotNode, txCache)
-					ret, err := XlateFuncCall(yangToDbXfmrFunc(xYangSpecMap[xpath].xfmrKey), inParams)
-					if err != nil {
-						return err
+					ktRetData, err := keyXfmrHandler(inParams, xYangSpecMap[xpath].xfmrKey)
+					if ((err != nil) && (specYangType != YANG_LIST || strings.HasSuffix(curUri, "]"))) {
+						if xfmrErr != nil && *xfmrErr == nil {
+							*xfmrErr = err
+						}
+						return nil
 					}
-					if ret != nil {
-						curKey = ret[0].Interface().(string)
-					}
+					curKey = ktRetData
 				} else if ok && xYangSpecMap[xpath].keyName != nil {
 					curKey = *xYangSpecMap[xpath].keyName
 				}
 
 				if ok && (typeOfValue == reflect.Map || typeOfValue == reflect.Slice) && xYangSpecMap[xpath].yangDataType != "leaf-list" {
-					log.Infof("CurUri: %v, requestUri: %v", curUri, requestUri)
 					// Call subtree only if start processing for the requestUri. Skip for parent uri traversal
-					if strings.HasPrefix(curUri,requestUri) {
+					curXpath, _ := XfmrRemoveXPATHPredicates(curUri)
+					reqXpath, _ := XfmrRemoveXPATHPredicates(requestUri)
+					log.Infof("CurUri: %v, requestUri: %v\r\n", curUri, requestUri)
+					log.Infof("curxpath: %v, requestxpath: %v\r\n", curXpath, reqXpath)
+					if strings.HasPrefix(curXpath, reqXpath) {
 						if xYangSpecMap[xpath] != nil && len(xYangSpecMap[xpath].xfmrFunc) > 0 &&
-						(xYangSpecMap[xpathPrefix].xfmrFunc != xYangSpecMap[xpath].xfmrFunc) {
+						(xYangSpecMap[xpathPrefix] != xYangSpecMap[xpath]) {
 							/* subtree transformer present */
 							curYgotNode, nodeErr := yangNodeForUriGet(curUri, ygRoot)
 							if nodeErr != nil {

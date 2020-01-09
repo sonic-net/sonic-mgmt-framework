@@ -150,7 +150,7 @@ func yangToDbMapFill (keyLevel int, xYangSpecMap map[string]*yangXpathInfo, entr
 	curKeyLevel  := 0
 	curXpathFull := ""
 
-	if entry != nil && entry.Node != nil && isYangResType(entry.Node.Statement().Keyword) == true {
+	if entry != nil && (entry.Kind == yang.CaseEntry || entry.Kind == yang.ChoiceEntry) {
 		curXpathFull = xpathFull + "/" + entry.Name
 		if _, ok := xYangSpecMap[xpathPrefix]; ok {
 			curKeyLevel = xYangSpecMap[xpathPrefix].keyLevel
@@ -161,7 +161,7 @@ func yangToDbMapFill (keyLevel int, xYangSpecMap map[string]*yangXpathInfo, entr
 			xYangSpecMap[curXpathFull] = curXpathData
 			curXpathData.dbIndex = db.ConfigDB // default value
 		}
-		curXpathData.yangDataType = entry.Node.Statement().Keyword
+		curXpathData.yangDataType = strings.ToLower(yang.EntryKindToName[entry.Kind])
 		curXpathData.yangEntry    = entry
 		xpath = xpathPrefix
 	} else {
@@ -225,7 +225,8 @@ func yangToDbMapFill (keyLevel int, xYangSpecMap map[string]*yangXpathInfo, entr
 		xpathData.xfmrFunc = parentXpathData.xfmrFunc
 	}
 
-	if xpathData.yangDataType == "leaf" && len(xpathData.fieldName) == 0 {
+	if ((xpathData.yangDataType ==  YANG_LEAF || xpathData.yangDataType == YANG_LEAF_LIST) && (len(xpathData.fieldName) == 0)) {
+
 		if len(xpathData.xfmrField) != 0 {
 			xpathData.xfmrFunc = ""
 		}
@@ -235,6 +236,9 @@ func yangToDbMapFill (keyLevel int, xYangSpecMap map[string]*yangXpathInfo, entr
 			} else {
 				if _, ok := xDbSpecMap[*xpathData.tableName + "/" + strings.ToUpper(entry.Name)]; ok {
 					xpathData.fieldName = strings.ToUpper(entry.Name)
+				}
+				if _, ok := xDbSpecMap[*xpathData.tableName + "/" + entry.Name]; ok {
+					xpathData.fieldName = entry.Name
 				}
 			}
 		} else if xpathData.xfmrTbl != nil {
@@ -246,7 +250,7 @@ func yangToDbMapFill (keyLevel int, xYangSpecMap map[string]*yangXpathInfo, entr
 		xpathData.defVal = entry.Default
 	}
 
-	if xpathData.yangDataType == "leaf" && len(xpathData.fieldName) > 0 && xpathData.tableName != nil {
+	if (xpathData.yangDataType == YANG_LEAF || xpathData.yangDataType == YANG_LEAF_LIST) && len(xpathData.fieldName) > 0 && xpathData.tableName != nil {
 		dbPath := *xpathData.tableName + "/" + xpathData.fieldName
 		if xDbSpecMap[dbPath] != nil {
 			xDbSpecMap[dbPath].yangXpath = append(xDbSpecMap[dbPath].yangXpath, xpath)
@@ -442,6 +446,7 @@ func dbMapBuild(entries []*yang.Entry) {
 		moduleNm := e.Name
 		dbMapFill("", "", moduleNm, xDbSpecMap, e)
 	}
+	xDbSpecTblSeqnMapPrint("/tmp/dbSpecTblSeqnMap.txt")
 }
 
 func childToUpdateParent( xpath string, tableName string) {
@@ -497,10 +502,6 @@ func dbNameToIndex(dbName string) db.DBNum {
 /* Build lookup map based on yang xpath */
 func annotEntryFill(xYangSpecMap map[string]*yangXpathInfo, xpath string, entry *yang.Entry) {
 	xpathData := new(yangXpathInfo)
-	_, ok := xYangSpecMap[xpath]
-	if !ok {
-		fmt.Printf("Xpath not found(%v) \r\n", xpath)
-	}
 
 	xpathData.dbIndex = db.ConfigDB // default value
 	/* fill table with yang extension data. */
@@ -753,6 +754,36 @@ func dbMapPrint( fname string) {
         fmt.Fprintf (fp, "-----------------------------------------------------------------\r\n")
 
     }
+}
+
+func xDbSpecTblSeqnMapPrint(fname string) {
+        fp, err := os.Create(fname)
+        if err != nil {
+                return
+        }
+        defer fp.Close()
+        fmt.Fprintf (fp, "-----------------------------------------------------------------\r\n")
+        if xDbSpecTblSeqnMap == nil {
+                return
+        }
+        for mdlNm, mdlTblSeqnDt := range xDbSpecTblSeqnMap {
+                fmt.Fprintf(fp, "%v : { \r\n", mdlNm)
+                if mdlTblSeqnDt == nil {
+                        continue
+                }
+                fmt.Fprintf(fp, "        OrderedTableList : %v\r\n", mdlTblSeqnDt.OrdTbl)
+                fmt.Fprintf(fp, "        Dependent table list  : {\r\n")
+                if mdlTblSeqnDt.DepTbl == nil {
+                        fmt.Fprintf(fp, "                        }\r\n")
+                        fmt.Fprintf(fp, "}\r\n")
+                        continue
+                }
+                for tblNm, DepTblLst := range mdlTblSeqnDt.DepTbl {
+                        fmt.Fprintf(fp, "                                        %v : %v\r\n", tblNm, DepTblLst)
+                }
+                fmt.Fprintf(fp, "                                }\r\n")
+                fmt.Fprintf(fp, "}\r\n")
+        }
 }
 
 func updateSchemaOrderedMap(module string, entry *yang.Entry) {
