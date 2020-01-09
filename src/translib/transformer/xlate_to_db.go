@@ -913,7 +913,7 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
 					log.Infof("curxpath: %v, requestxpath: %v\r\n", curXpath, reqXpath)
 					if strings.HasPrefix(curXpath, reqXpath) {
 						if xYangSpecMap[xpath] != nil && len(xYangSpecMap[xpath].xfmrFunc) > 0 &&
-                        (xYangSpecMap[xpathPrefix].xfmrFunc != xYangSpecMap[xpath].xfmrFunc) {
+                        (xYangSpecMap[xpathPrefix] != xYangSpecMap[xpath]) {
 							/* subtree transformer present */
 							curYgotNode, nodeErr := yangNodeForUriGet(curUri, ygRoot)
 							if nodeErr != nil {
