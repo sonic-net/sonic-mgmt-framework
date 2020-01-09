@@ -150,7 +150,7 @@ func yangToDbMapFill (keyLevel int, xYangSpecMap map[string]*yangXpathInfo, entr
 	curKeyLevel  := 0
 	curXpathFull := ""
 
-	if entry != nil && entry.Node != nil && isYangResType(entry.Node.Statement().Keyword) == true {
+	if entry != nil && (entry.Kind == yang.CaseEntry || entry.Kind == yang.ChoiceEntry) {
 		curXpathFull = xpathFull + "/" + entry.Name
 		if _, ok := xYangSpecMap[xpathPrefix]; ok {
 			curKeyLevel = xYangSpecMap[xpathPrefix].keyLevel
@@ -161,7 +161,7 @@ func yangToDbMapFill (keyLevel int, xYangSpecMap map[string]*yangXpathInfo, entr
 			xYangSpecMap[curXpathFull] = curXpathData
 			curXpathData.dbIndex = db.ConfigDB // default value
 		}
-		curXpathData.yangDataType = entry.Node.Statement().Keyword
+		curXpathData.yangDataType = strings.ToLower(yang.EntryKindToName[entry.Kind])
 		curXpathData.yangEntry    = entry
 		xpath = xpathPrefix
 	} else {
@@ -501,10 +501,6 @@ func dbNameToIndex(dbName string) db.DBNum {
 /* Build lookup map based on yang xpath */
 func annotEntryFill(xYangSpecMap map[string]*yangXpathInfo, xpath string, entry *yang.Entry) {
 	xpathData := new(yangXpathInfo)
-	_, ok := xYangSpecMap[xpath]
-	if !ok {
-		fmt.Printf("Xpath not found(%v) \r\n", xpath)
-	}
 
 	xpathData.dbIndex = db.ConfigDB // default value
 	/* fill table with yang extension data. */
