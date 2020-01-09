@@ -1,0 +1,327 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Copyright 2020 Broadcom, Inc.
+-->
+
+<CLISH_MODULE
+    xmlns="http://www.dellemc.com/sonic/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xi="http://www.w3.org/2001/XInclude"
+    xsi:schemaLocation="http://www.dellemc.com/sonic/XMLSchema
+                        http://www.dellemc.com/sonic/XMLSchema/clish.xsd"
+    >
+
+<!--=========================================================================-->
+<VIEW name="enable-view">
+  <!-- show snmp-server -->
+  <COMMAND name="show snmp-server" help="Show SNMP Server information">
+    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-snmp.py snmp_get show_snmp.j2&#xA;</ACTION>
+    <xi:include href="include/pipe.xml"/>
+    <xi:include href="include/pipe.xml"/>
+  </COMMAND>
+
+<!-- show snmp-server community -->
+  <COMMAND name="show snmp-server community" help="Show SNMP Community Configuration">
+    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-snmp.py snmp_community_get show_snmp_community.j2&#xA;</ACTION>
+    <xi:include href="include/pipe.xml"/>
+    <xi:include href="include/pipe.xml"/>
+   </COMMAND>
+
+<!-- show snmp-server group -->
+  <COMMAND name="show snmp-server group" help="Show SNMP Group Configuration">
+    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-snmp.py snmp_group_get show_snmp_group.j2&#xA;</ACTION>
+    <xi:include href="include/pipe.xml"/>
+    <xi:include href="include/pipe.xml"/>
+  </COMMAND>
+
+<!-- show snmp-server user -->
+  <COMMAND name="show snmp-server user" help="Show SNMP User Configuration">
+    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-snmp.py snmp_user_get show_snmp_user.j2&#xA;</ACTION>
+    <xi:include href="include/pipe.xml"/>
+    <xi:include href="include/pipe.xml"/>
+  </COMMAND>
+
+<!-- show snmp-server view -->
+<COMMAND name="show snmp-server view" help="Show SNMP View Configuration">
+  <ACTION>python $SONIC_CLI_ROOT/sonic-cli-snmp.py snmp_view_get show_snmp_view.j2&#xA;</ACTION>
+  <xi:include href="include/pipe.xml"/>
+  <xi:include href="include/pipe.xml"/>
+</COMMAND>
+
+<!-- show snmp-server host -->
+<COMMAND name="show snmp-server host" help="Show SNMP Trap/Notification Configuration">
+  <ACTION>python $SONIC_CLI_ROOT/sonic-cli-snmp.py snmp_host_get show_snmp_host.j2&#xA;</ACTION>
+  <xi:include href="include/pipe.xml"/>
+  <xi:include href="include/pipe.xml"/>
+</COMMAND>
+
+</VIEW>
+
+<!--=========================================================================-->
+<VIEW name="configure-view">
+
+<!--=========================================================================
+Before each command articulation, a comment is shown with the desired command syntax. Here are the rules:
+  1. Keywords are in lower case.
+  2. User supplied strings are enclosed in quotes, "user name".
+  3. Optional parameters are denoted with square brackets, '[ optional ]'.
+  4. Select parameters are denoted with curly braces and a logical or operator, '{ this | that }'.
+      If this parameter is optional as well, the default is the first one.
+========================================================================= -->
+
+<!--=========================================================================
+  snmp-server [ contact <contact> ] [ location <location> ] [ sysname <system name> ] [ engine <octet-byte-string> ]
+  snmp-server enable trap
+========================================================================= -->
+  <COMMAND name="snmp-server" help="SNMP Server Configuration"/>
+
+  <COMMAND name="snmp-server sysname" help="Configure SNMP System Name">
+    <PARAM name="system-name" help="SNMP System Name" ptype="STRING"/>
+    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-snmp.py  snmp_sysname  "${system-name}"&#xA; </ACTION>
+  </COMMAND>
+
+  <COMMAND name="snmp-server location" help="Configure SNMP Location">
+    <PARAM name="location-name" help="SNMP location" ptype="STRING"/>
+    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-snmp.py  snmp_location  "${location-name}"&#xA; </ACTION>
+  </COMMAND>
+
+  <COMMAND name="snmp-server contact" help="Configure SNMP Contact">
+    <PARAM name="contact-name" help="SNMP contact" ptype="STRING"/>
+    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-snmp.py  snmp_contact  "${contact-name}"&#xA; </ACTION>
+  </COMMAND>
+
+  <COMMAND name="snmp-server enable" help="Configure SNMP Traps">
+    <PARAM name="trap" help="Enable traps" ptype="SUBCOMMAND"  mode="subcommand"/>
+    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-snmp.py  snmp_trap enable&#xA; </ACTION>
+  </COMMAND>
+
+  <COMMAND name="snmp-server engine" help="Configure SNMP Engine ID">
+    <PARAM name="engineID" help="SNMP Engine ID" ptype="ENGINE_ID_TYPE"/>
+    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-snmp.py  snmp_engine  "${engineID}"&#xA; </ACTION>
+  </COMMAND>
+
+<!--=========================================================================
+  snmp-server  community  "community name"  [groupname  "group name"]
+========================================================================= -->
+  <COMMAND name="snmp-server community" help="Configure SNMP Community">
+    <PARAM name="community-name" help="Unique SNMP Community Name" ptype="SNMP_IDENTIFIER">
+      <PARAM name="group" help="Configure community group" ptype="SUBCOMMAND" mode="subcommand" optional="true">
+        <PARAM name="group-name" help="SNMP Community Group" ptype="SNMP_IDENTIFIER" />
+      </PARAM>
+    </PARAM>
+    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-snmp.py  snmp_community_add  ${community-name}  ${group-name}&#xA; </ACTION>
+  </COMMAND>
+
+<!--=========================================================================
+  snmp-server group  "group name" {any| v1 | v2c | v3 { auth | noauth | priv }}  [ read "viewname" ]  [ write "viewname" ]  [ notify "viewname" ]
+    note: Authentication/Privacy is only specified when security option is SNMPv3
+========================================================================= -->
+  <COMMAND name="snmp-server group" help="Configure SNMP Group">
+    <PARAM name="group-name" help="Unique SNMP Group Name" ptype="SNMP_IDENTIFIER">
+      <MACRO name="SNMP-SECURITY-MODELS" arg=""/>
+      <MACRO name="SNMP-RWN-VIEWS-OPTIONS" arg=""/>
+    </PARAM>
+    <ACTION>
+        python $SONIC_CLI_ROOT/sonic-cli-snmp.py  snmp_group_add ${__params}&#xA;
+    </ACTION>
+  </COMMAND>
+
+<!--=========================================================================
+  snmp-server user username [ encrypted ] [ group group-name ] [ auth { md5 | sha | noauth } [ auth-password string ] [ priv { DES | AES128 } [ priv-password string ]  ]
+    if noauth is specified, neither "auth-password" no "priv" may be specified
+    "encrypted" may be specified but only prior to "auth"
+========================================================================= -->
+  <COMMAND name="snmp-server user" help="Configure SNMP User">
+    <PARAM name="username" help="Unique SNMP User Name" ptype="SNMP_IDENTIFIER">
+      <PARAM name="group" help="User's group" ptype="SUBCOMMAND"  mode="subcommand" optional="true">
+        <PARAM name="group-name" help="Unique SNMP Group Name" ptype="SNMP_IDENTIFIER"/>
+      </PARAM>
+      <PARAM name="encryptedOrNot" help="" ptype="SUBCOMMAND" mode="switch" optional="true">
+        <PARAM name="encrypted" help="Specified passwords are encrypted keys" ptype="SUBCOMMAND" mode="subcommand" optional="true">
+          <PARAM name="auth" help="Authentication" ptype="SUBCOMMAND"  mode="subcommand">
+            <PARAM name="auth-option" help="" ptype="SUBCOMMAND" mode="switch">
+              <PARAM name="md5" help="MD5 Authentication" ptype="SUBCOMMAND"  mode="subcommand">
+                <PARAM name="auth-password" help="" ptype="SUBCOMMAND" mode="subcommand">
+                  <PARAM name="authpassword" help="Encrypted MD5 Password" ptype="AUTH_KEY_TYPE">
+                    <MACRO name="SNMP-USER-PRIVENCRYPT-OPTIONS" arg=""/>
+                  </PARAM>
+                </PARAM>
+              </PARAM>
+              <PARAM name="sha"    help="SHA Authentication" ptype="SUBCOMMAND"  mode="subcommand">
+                <PARAM name="auth-password" help="" ptype="SUBCOMMAND" mode="subcommand">
+                  <PARAM name="authpassword" help="Encrypted SHA Password" ptype="AUTH_KEY_TYPE">
+                    <MACRO name="SNMP-USER-PRIVENCRYPT-OPTIONS" arg=""/>
+                  </PARAM>
+                </PARAM>
+              </PARAM>
+            </PARAM>
+          </PARAM>
+        </PARAM>
+        <PARAM name="auth" help="Authentication" ptype="SUBCOMMAND"  mode="subcommand" optional="true">
+          <PARAM name="auth-option" help="" ptype="SUBCOMMAND" mode="switch">
+            <PARAM name="noauth" help="No Authentication"  ptype="SUBCOMMAND"  mode="subcommand"/>
+            <PARAM name="md5" help="MD5 Authentication" ptype="SUBCOMMAND"  mode="subcommand">
+              <PARAM name="auth-password" help="" ptype="SUBCOMMAND" mode="subcommand">
+                <PARAM name="authpassword" help="Authentication Password" ptype="STRING">
+                  <MACRO name="SNMP-USER-PRIV-OPTIONS" arg=""/>
+                </PARAM>
+              </PARAM>
+            </PARAM>
+            <PARAM name="sha"    help="SHA Authentication" ptype="SUBCOMMAND"  mode="subcommand">
+              <PARAM name="auth-password" help="" ptype="SUBCOMMAND" mode="subcommand">
+                <PARAM name="authpassword" help="Authentication Password" ptype="STRING">
+                  <MACRO name="SNMP-USER-PRIV-OPTIONS" arg=""/>
+                </PARAM>
+              </PARAM>
+            </PARAM>
+          </PARAM>
+        </PARAM>
+      </PARAM>
+    </PARAM>
+    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-snmp.py snmp_user_add ${__params}&#xA; </ACTION>
+  </COMMAND>
+
+<!--=========================================================================
+        snmp-server view "view name" "oid-tree"  {included | excluded}
+========================================================================= -->
+  <COMMAND name="snmp-server view" help="Configure SNMP View">
+    <PARAM name="view-name" help="SNMP View Name" ptype="SNMP_IDENTIFIER">
+      <PARAM name="oid-tree" help="OID Tree" ptype="OID_IDENTIFIER">
+        <MACRO name="SNMP-INCLUSION-OPTIONS" arg=""/>
+      </PARAM>
+    </PARAM>
+    <ACTION>
+      python $SONIC_CLI_ROOT/sonic-cli-snmp.py  snmp_view_add  ${view-name}  ${oid-tree} ${inclusion-option}&#xA;
+    </ACTION>
+  </COMMAND>
+
+<!--=========================================================================
+        v1 & v2c
+          snmp-server host  "host-addr" community "community name" {[ traps { v2c | v1 }] | informs [timeout seconds] [retries retries]}
+        v3
+          snmp-server host  "host-addr" user           "username"            {[traps  {auth | noauth | priv}] | [informs {auth | noauth | priv} [timeout seconds] [retries retries]]}
+========================================================================= -->
+  <COMMAND name="snmp-server host" help="Configure SNMP Host for Traps or Notifications">
+    <PARAM name="host-addr" help="Host address, IPv4, IPv6 or hostname" ptype="IPV4_OR_IPV6_ADDR">
+      <PARAM name="selector" help="" ptype="SUBCOMMAND" mode="switch">
+<!--=========================================================================
+ v1&v2  snmp-server host "host-addr" community "community name" {[ traps { v2c | v1 }] | informs [timeout seconds] [retries retries]}
+========================================================================= -->
+        <PARAM name="community" help="Community for v1/v2c" ptype="SUBCOMMAND"  mode="subcommand">
+          <PARAM name="community-name" help="Unique SNMP Community Name" ptype="SNMP_IDENTIFIER">
+            <PARAM name="trap-or-inform" help="" ptype="SUBCOMMAND" mode="switch" optional="true">
+              <PARAM name="traps" help="Specify Traps" ptype="SUBCOMMAND" mode="subcommand">
+                <PARAM name="v1-or-v2c" help="" ptype="SUBCOMMAND" mode="switch">
+                  <PARAM name="v1"  help="SNMP Version 1"  ptype="SUBCOMMAND"  mode="subcommand"></PARAM>
+                  <PARAM name="v2c" help="SNMP Version 2c" ptype="SUBCOMMAND"  mode="subcommand"></PARAM>
+                </PARAM>
+              </PARAM>
+              <PARAM name="informs" help="Specify Informs" ptype="SUBCOMMAND"  mode="subcommand">
+                <PARAM name="timeout" help="Inform Timeout" ptype="SUBCOMMAND" mode="subcommand" optional="true">
+                  <PARAM name="time-out" help="Inform acknowledgement timeout period in seconds" ptype="RANGE_1_300"/>
+                </PARAM>
+                <PARAM name="retries" help="Inform Retries" ptype="SUBCOMMAND" mode="subcommand" optional="true">
+                  <PARAM name="retry" help="Number of retry attempts per inform" ptype="RANGE_1_255"/>
+                </PARAM>
+              </PARAM>
+            </PARAM>
+          </PARAM>
+        </PARAM>
+
+<!--=========================================================================
+v3      snmp-server host "host-addr" user "username" {[traps  {auth | noauth | priv}] | [informs {auth | noauth | priv} [timeout seconds] [retries retries]]}
+========================================================================= -->
+        <PARAM name="user" help="User for v3" ptype="SUBCOMMAND"  mode="subcommand">
+          <PARAM name="username" help="Unique SNMP User Name" ptype="SNMP_IDENTIFIER">
+            <PARAM name="trap-or-inform" help="" ptype="SUBCOMMAND" mode="switch" optional="true">
+              <PARAM name="traps" help="Specify Traps" ptype="SUBCOMMAND" mode="subcommand">
+                <MACRO name="SNMP-SECURITY-LEVELS" arg=""/>
+              </PARAM>
+              <PARAM name="informs" help="Specify Informs" ptype="SUBCOMMAND"  mode="subcommand">
+                <MACRO name="SNMP-SECURITY-LEVELS" arg=""/>
+                <PARAM name="timeout" help="Inform Timeout" ptype="SUBCOMMAND" mode="subcommand" optional="true">
+                  <PARAM name="time-out" help="Inform acknowledgement timeout period in seconds" ptype="RANGE_1_300"/>
+                </PARAM>
+                <PARAM name="retries" help="Inform Retries" ptype="SUBCOMMAND" mode="subcommand" optional="true">
+                  <PARAM name="retry" help="Number of retry attempts per inform" ptype="RANGE_1_255"/>
+                </PARAM>
+              </PARAM>
+            </PARAM>
+          </PARAM>
+        </PARAM>
+      </PARAM>
+    </PARAM>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-snmp.py  snmp_host_add ${__params}&#xA;</ACTION>
+  </COMMAND>
+
+<!--=========================================================================
+  no snmp-server [ contact ] [ location ] [ sysname ] [ engine ]
+========================================================================= -->
+  <COMMAND name="no snmp-server" help="SNMP Server Configuration"/>
+
+  <COMMAND name="no snmp-server sysname" help="Unconfigure SNMP System Name">
+    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-snmp.py  snmp_sysname&#xA; </ACTION>
+  </COMMAND>
+
+  <COMMAND name="no snmp-server location" help="Remove SNMP Location">
+    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-snmp.py  snmp_location&#xA; </ACTION>
+  </COMMAND>
+
+  <COMMAND name="no snmp-server contact" help="Remove SNMP Contact">
+    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-snmp.py  snmp_contact&#xA; </ACTION>
+  </COMMAND>
+
+  <COMMAND name="no snmp-server enable" help="Configure SNMP Traps">
+    <PARAM name="trap" help="Enable traps" ptype="SUBCOMMAND"  mode="subcommand"/>
+    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-snmp.py  snmp_trap disable&#xA; </ACTION>
+  </COMMAND>
+
+<!--=========================================================================
+        no snmp-server community  "community name"
+========================================================================= -->
+  <COMMAND name="no snmp-server community" help="Remove SNMP Community" ptype="SUBCOMMAND" mode="subcommand">
+    <PARAM name="community-name" help="SNMP Community to remove" ptype="SNMP_IDENTIFIER"/>
+    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-snmp.py  snmp_community_delete  ${community-name}&#xA;</ACTION>
+  </COMMAND>
+
+<!--=========================================================================
+        no snmp-server group  "group name" "model" <priv>
+  snmp-server group  "group name" { v1 | v2c | v3 { auth | noauth | priv }}  [ read "viewname" ]  [ write "viewname" ]  [ notify "viewname" ]
+========================================================================= -->
+  <COMMAND name="no snmp-server group" help="Remove SNMP Group" ptype="SUBCOMMAND" mode="subcommand">
+    <PARAM name="group-name" help="Unique SNMP Group Name" ptype="SNMP_IDENTIFIER">
+      <MACRO name="SNMP-SECURITY-MODELS" arg=""/>
+    </PARAM>
+    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-snmp.py  snmp_group_delete  ${__params}&#xA; </ACTION>
+  </COMMAND>
+
+<!--=========================================================================
+        no snmp-server user username
+========================================================================= -->
+  <COMMAND name="no snmp-server user" help="Remove SNMP User" ptype="SUBCOMMAND" mode="subcommand">
+    <PARAM name="username" help="Unique SNMP Group Name" ptype="SNMP_IDENTIFIER">
+    </PARAM>
+    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-snmp.py  snmp_user_delete  ${username}&#xA; </ACTION>
+  </COMMAND>
+
+<!--=========================================================================
+        no snmp-server view "view name" "oid-tree"
+========================================================================= -->
+  <COMMAND name="no snmp-server view" help="Remove SNMP View">
+    <PARAM name="view-name" help="SNMP View Name" ptype="SNMP_IDENTIFIER">
+      <PARAM name="oid-tree" help="OID Tree" ptype="OID_IDENTIFIER"/>
+    </PARAM>
+    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-snmp.py  snmp_view_delete  ${view-name}  ${oid-tree}&#xA; </ACTION>
+  </COMMAND>
+
+<!--=========================================================================
+        no snmp-server "host-addr"
+========================================================================= -->
+  <COMMAND name="no snmp-server host" help="Remove SNMP Host">
+    <PARAM name="host-addr" help="Host address, IPv4, IPv6 or hostname" ptype="HOSTNAME_OR_IPADDR"/>
+    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-snmp.py  snmp_host_delete  ${host-addr}&#xA; </ACTION>
+  </COMMAND>
+
+</VIEW>
+
+</CLISH_MODULE>

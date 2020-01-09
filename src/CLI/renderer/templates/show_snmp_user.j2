@@ -1,0 +1,11 @@
+{{ ' ' }}
+{{ 'User Name'|center(27) }} {{ 'Group Name'|center(27) }} {{ 'Authentication' }} {{ 'Privacy' }}
+{{'--------------------------- --------------------------- -------------- -------'}}
+{% for i in json_output %}
+  {% set i1 = json_output[loop.index-1] %}
+{{ '%-27s'|format(i1['username'])|truncate(27,true,"") -}}
+{{ ' %-27s'|format(i1['group'])|truncate(27,true,"") -}}
+{{ ' %-14s'|format(i1['auth']) -}}
+{{ ' %-7s'|format(i1['priv']) }}
+{% endfor %}
+{{ ' ' }}

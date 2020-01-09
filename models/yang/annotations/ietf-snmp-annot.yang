@@ -1,0 +1,910 @@
+module ietf-snmp-annot {
+
+    yang-version "1";
+
+    namespace "http://openconfig.net/yang/annotation/snmp-annot";
+    prefix "snmp-annot";
+
+    import ietf-snmp { prefix snmp; }
+    import sonic-extensions { prefix sonic-ext; }
+
+    deviation /snmp:snmp {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:notify {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:notify/snmp:name {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:notify/snmp:tag {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:notify/snmp:type {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:community {
+      deviate add {
+        sonic-ext:table-name "SNMP_SERVER_COMMUNITY";
+      }
+    }
+
+    deviation /snmp:snmp/snmp:community/snmp:index {
+      deviate add {
+        sonic-ext:field-name "index";
+      }
+    }
+
+    deviation /snmp:snmp/snmp:community/snmp:security-name {
+      deviate add {
+        sonic-ext:field-name "group";
+      }
+    }
+
+    deviation /snmp:snmp/snmp:community/snmp:engine-id {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:community/snmp:context {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:community/snmp:target-tag {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:community/snmp:name {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:community/snmp:name/snmp:text-name {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:community/snmp:name/snmp:text-name/snmp:text-name {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:community/snmp:name/snmp:binary-name {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:community/snmp:name/snmp:binary-name/snmp:binary-name {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:proxy {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:proxy/snmp:target-params-in {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:proxy/snmp:single-target-out {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:proxy/snmp:multiple-target-out {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:proxy/snmp:name {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:proxy/snmp:type {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:proxy/snmp:context-engine-id {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:proxy/snmp:context-name {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:usm {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:usm/snmp:local {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:usm/snmp:local/snmp:user {
+      deviate add {
+        sonic-ext:table-name "SNMP_SERVER_USER";
+      }
+    }
+
+    deviation /snmp:snmp/snmp:usm/snmp:local/snmp:user/snmp:name {
+      deviate add {
+        sonic-ext:field-name "name";
+      }
+    }
+
+    deviation /snmp:snmp/snmp:usm/snmp:local/snmp:user/snmp:group {
+      deviate add {
+        sonic-ext:field-name "group";
+      }
+    }
+
+    deviation /snmp:snmp/snmp:usm/snmp:local/snmp:user/snmp:auth {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:usm/snmp:local/snmp:user/snmp:auth/snmp:protocol {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:usm/snmp:local/snmp:user/snmp:auth/snmp:protocol/snmp:sha {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:usm/snmp:local/snmp:user/snmp:auth/snmp:protocol/snmp:sha/snmp:sha {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:usm/snmp:local/snmp:user/snmp:auth/snmp:protocol/snmp:sha/snmp:sha/snmp:key {
+      deviate add {
+        sonic-ext:field-name "shaKey";
+      }
+    }
+
+    deviation /snmp:snmp/snmp:usm/snmp:local/snmp:user/snmp:auth/snmp:protocol/snmp:md5 {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:usm/snmp:local/snmp:user/snmp:auth/snmp:protocol/snmp:md5/snmp:md5 {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:usm/snmp:local/snmp:user/snmp:auth/snmp:protocol/snmp:md5/snmp:md5/snmp:key {
+      deviate add {
+        sonic-ext:field-name "md5Key";
+      }
+    }
+
+    deviation /snmp:snmp/snmp:usm/snmp:local/snmp:user/snmp:priv {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:usm/snmp:local/snmp:user/snmp:priv/snmp:protocol {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:usm/snmp:local/snmp:user/snmp:priv/snmp:protocol/snmp:des {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:usm/snmp:local/snmp:user/snmp:priv/snmp:protocol/snmp:des/snmp:des {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:usm/snmp:local/snmp:user/snmp:priv/snmp:protocol/snmp:des/snmp:des/snmp:key {
+      deviate add {
+        sonic-ext:field-name "desKey";
+      }
+    }
+
+    deviation /snmp:snmp/snmp:usm/snmp:local/snmp:user/snmp:priv/snmp:protocol/snmp:aes {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:usm/snmp:local/snmp:user/snmp:priv/snmp:protocol/snmp:aes/snmp:aes {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:usm/snmp:local/snmp:user/snmp:priv/snmp:protocol/snmp:aes/snmp:aes/snmp:key {
+      deviate add {
+        sonic-ext:field-name "aesKey";
+      }
+    }
+
+    deviation /snmp:snmp/snmp:usm/snmp:remote {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:usm/snmp:remote/snmp:user {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:usm/snmp:remote/snmp:user/snmp:priv {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:usm/snmp:remote/snmp:user/snmp:priv/snmp:protocol {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:usm/snmp:remote/snmp:user/snmp:priv/snmp:protocol/snmp:aes {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:usm/snmp:remote/snmp:user/snmp:priv/snmp:protocol/snmp:aes/snmp:aes {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:usm/snmp:remote/snmp:user/snmp:priv/snmp:protocol/snmp:aes/snmp:aes/snmp:key {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:usm/snmp:remote/snmp:user/snmp:priv/snmp:protocol/snmp:des {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:usm/snmp:remote/snmp:user/snmp:priv/snmp:protocol/snmp:des/snmp:des {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:usm/snmp:remote/snmp:user/snmp:priv/snmp:protocol/snmp:des/snmp:des/snmp:key {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:usm/snmp:remote/snmp:user/snmp:name {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:usm/snmp:remote/snmp:user/snmp:auth {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:usm/snmp:remote/snmp:user/snmp:auth/snmp:protocol {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:usm/snmp:remote/snmp:user/snmp:auth/snmp:protocol/snmp:md5 {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:usm/snmp:remote/snmp:user/snmp:auth/snmp:protocol/snmp:md5/snmp:md5 {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:usm/snmp:remote/snmp:user/snmp:auth/snmp:protocol/snmp:md5/snmp:md5/snmp:key {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:usm/snmp:remote/snmp:user/snmp:auth/snmp:protocol/snmp:sha {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:usm/snmp:remote/snmp:user/snmp:auth/snmp:protocol/snmp:sha/snmp:sha {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:usm/snmp:remote/snmp:user/snmp:auth/snmp:protocol/snmp:sha/snmp:sha/snmp:key {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:usm/snmp:remote/snmp:engine-id {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:tlstm {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:tlstm/snmp:cert-to-name {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:tlstm/snmp:cert-to-name/snmp:id {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:tlstm/snmp:cert-to-name/snmp:fingerprint {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:tlstm/snmp:cert-to-name/snmp:map-type {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:tlstm/snmp:cert-to-name/snmp:name {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:vacm {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:vacm/snmp:group {
+      deviate add {
+        sonic-ext:table-name "SNMP_SERVER_GROUP";
+      }
+    }
+
+    deviation /snmp:snmp/snmp:vacm/snmp:group/snmp:name {
+      deviate add {
+        sonic-ext:field-name "name";
+      }
+    }
+
+    deviation /snmp:snmp/snmp:vacm/snmp:group/snmp:member {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:vacm/snmp:group/snmp:member/snmp:security-name {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:vacm/snmp:group/snmp:member/snmp:security-model {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:vacm/snmp:group/snmp:access {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:vacm/snmp:group/snmp:access/snmp:context {
+      deviate add {
+        sonic-ext:field-name "context";
+      }
+    }
+
+    deviation /snmp:snmp/snmp:vacm/snmp:group/snmp:access/snmp:context-match {
+      deviate add {
+        sonic-ext:field-name "contextMatch";
+      }
+    }
+
+    deviation /snmp:snmp/snmp:vacm/snmp:group/snmp:access/snmp:security-model {
+      deviate add {
+        sonic-ext:field-name "securityModel";
+      }
+    }
+
+    deviation /snmp:snmp/snmp:vacm/snmp:group/snmp:access/snmp:security-level {
+      deviate add {
+        sonic-ext:field-name "securityLevel";
+      }
+    }
+
+    deviation /snmp:snmp/snmp:vacm/snmp:group/snmp:access/snmp:read-view {
+      deviate add {
+        sonic-ext:field-name "readView";
+      }
+    }
+
+    deviation /snmp:snmp/snmp:vacm/snmp:group/snmp:access/snmp:write-view {
+      deviate add {
+        sonic-ext:field-name "writeView";
+      }
+    }
+
+    deviation /snmp:snmp/snmp:vacm/snmp:group/snmp:access/snmp:notify-view {
+      deviate add {
+        sonic-ext:field-name "notifyView";
+      }
+    }
+
+    deviation /snmp:snmp/snmp:vacm/snmp:view {
+      deviate add {
+        sonic-ext:table-name "SNMP_SERVER_VIEW";
+      }
+    }
+
+    deviation /snmp:snmp/snmp:vacm/snmp:view/snmp:name {
+      deviate add {
+        sonic-ext:field-name "name";
+      }
+    }
+
+    deviation /snmp:snmp/snmp:vacm/snmp:view/snmp:include {
+      deviate add {
+        sonic-ext:field-name "include";
+      }
+    }
+
+    deviation /snmp:snmp/snmp:vacm/snmp:view/snmp:exclude {
+      deviate add {
+        sonic-ext:field-name "exclude";
+      }
+    }
+
+    deviation /snmp:snmp/snmp:tsm {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:tsm/snmp:use-prefix {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:engine {
+      deviate add {
+        sonic-ext:table-name "SNMP_SERVER_ENGINE";
+      }
+    }
+
+    deviation /snmp:snmp/snmp:engine/snmp:engine-id {
+      deviate add {
+        sonic-ext:field-name "engineID";
+      }
+    }
+
+    deviation /snmp:snmp/snmp:engine/snmp:enable-authen-traps {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:engine/snmp:version {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:engine/snmp:version/snmp:v1 {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:engine/snmp:version/snmp:v2c {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:engine/snmp:version/snmp:v3 {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:engine/snmp:listen {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:engine/snmp:listen/snmp:name {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:engine/snmp:listen/snmp:transport {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:engine/snmp:listen/snmp:transport/snmp:udp {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:engine/snmp:listen/snmp:transport/snmp:udp/snmp:udp {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:engine/snmp:listen/snmp:transport/snmp:udp/snmp:udp/snmp:ip {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:engine/snmp:listen/snmp:transport/snmp:udp/snmp:udp/snmp:port {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:engine/snmp:listen/snmp:transport/snmp:tls {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:engine/snmp:listen/snmp:transport/snmp:tls/snmp:tls {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:engine/snmp:listen/snmp:transport/snmp:tls/snmp:tls/snmp:port {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:engine/snmp:listen/snmp:transport/snmp:tls/snmp:tls/snmp:ip {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:engine/snmp:listen/snmp:transport/snmp:dtls {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:engine/snmp:listen/snmp:transport/snmp:dtls/snmp:dtls {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:engine/snmp:listen/snmp:transport/snmp:dtls/snmp:dtls/snmp:port {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:engine/snmp:listen/snmp:transport/snmp:dtls/snmp:dtls/snmp:ip {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:engine/snmp:listen/snmp:transport/snmp:ssh {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:engine/snmp:listen/snmp:transport/snmp:ssh/snmp:ssh {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:engine/snmp:listen/snmp:transport/snmp:ssh/snmp:ssh/snmp:ip {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:engine/snmp:listen/snmp:transport/snmp:ssh/snmp:ssh/snmp:port {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:engine/snmp:enabled {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:notify-filter-profile {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:notify-filter-profile/snmp:include {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:notify-filter-profile/snmp:exclude {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:notify-filter-profile/snmp:name {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:target {
+      deviate add {
+        sonic-ext:table-name "SNMP_SERVER_TARGET";
+      }
+    }
+
+    deviation /snmp:snmp/snmp:target/snmp:name {
+      deviate add {
+        sonic-ext:field-name "name";
+      }
+    }
+
+    deviation /snmp:snmp/snmp:target/snmp:tag {
+      deviate add {
+        sonic-ext:field-name "tag";
+      }
+    }
+
+    deviation /snmp:snmp/snmp:target/snmp:timeout {
+      deviate add {
+        sonic-ext:field-name "timeout";
+      }
+    }
+
+    deviation /snmp:snmp/snmp:target/snmp:retries {
+      deviate add {
+        sonic-ext:field-name "retries";
+      }
+    }
+
+    deviation /snmp:snmp/snmp:target/snmp:target-params {
+      deviate add {
+        sonic-ext:field-name "targetParams";
+      }
+    }
+
+    deviation /snmp:snmp/snmp:target/snmp:mms {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:target/snmp:transport {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:target/snmp:transport/snmp:udp {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:target/snmp:transport/snmp:udp/snmp:udp {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:target/snmp:transport/snmp:udp/snmp:udp/snmp:ip {
+      deviate add {
+        sonic-ext:field-name "ip";
+      }
+    }
+
+    deviation /snmp:snmp/snmp:target/snmp:transport/snmp:udp/snmp:udp/snmp:port {
+      deviate add {
+        sonic-ext:field-name "port";
+      }
+    }
+
+    deviation /snmp:snmp/snmp:target/snmp:transport/snmp:udp/snmp:udp/snmp:prefix-length {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:target/snmp:transport/snmp:tls {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:target/snmp:transport/snmp:tls/snmp:tls {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:target/snmp:transport/snmp:tls/snmp:tls/snmp:server-identity {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:target/snmp:transport/snmp:tls/snmp:tls/snmp:ip {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:target/snmp:transport/snmp:tls/snmp:tls/snmp:port {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:target/snmp:transport/snmp:tls/snmp:tls/snmp:client-fingerprint {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:target/snmp:transport/snmp:tls/snmp:tls/snmp:server-fingerprint {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:target/snmp:transport/snmp:dtls {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:target/snmp:transport/snmp:dtls/snmp:dtls {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:target/snmp:transport/snmp:dtls/snmp:dtls/snmp:server-fingerprint {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:target/snmp:transport/snmp:dtls/snmp:dtls/snmp:server-identity {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:target/snmp:transport/snmp:dtls/snmp:dtls/snmp:ip {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:target/snmp:transport/snmp:dtls/snmp:dtls/snmp:port {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:target/snmp:transport/snmp:dtls/snmp:dtls/snmp:client-fingerprint {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:target/snmp:transport/snmp:ssh {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:target/snmp:transport/snmp:ssh/snmp:ssh {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:target/snmp:transport/snmp:ssh/snmp:ssh/snmp:ip {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:target/snmp:transport/snmp:ssh/snmp:ssh/snmp:port {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:target/snmp:transport/snmp:ssh/snmp:ssh/snmp:username {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:target-params {
+      deviate add {
+        sonic-ext:table-name "SNMP_SERVER_PARAMS";
+      }
+    }
+
+    deviation /snmp:snmp/snmp:target-params/snmp:name {
+      deviate add {
+        sonic-ext:key-transformer "snmp_target_params_key_xfmr";
+      }
+    }
+
+    deviation /snmp:snmp/snmp:target-params/snmp:params {
+      deviate add {
+      }
+    }
+    deviation /snmp:snmp/snmp:target-params/snmp:params/snmp:v1 {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:target-params/snmp:params/snmp:v1/snmp:v1 {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:target-params/snmp:params/snmp:v1/snmp:v1/snmp:security-name {
+      deviate add {
+        sonic-ext:field-name "securityNameV1";
+      }
+    }
+
+    deviation /snmp:snmp/snmp:target-params/snmp:params/snmp:v2c {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:target-params/snmp:params/snmp:v2c/snmp:v2c {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:target-params/snmp:params/snmp:v2c/snmp:v2c/snmp:security-name {
+      deviate add {
+        sonic-ext:field-name "securityNameV2";
+      }
+    }
+
+    deviation /snmp:snmp/snmp:target-params/snmp:params/snmp:usm {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:target-params/snmp:params/snmp:usm/snmp:usm {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:target-params/snmp:params/snmp:usm/snmp:usm/snmp:user-name {
+      deviate add {
+        sonic-ext:field-name "user";
+      }
+    }
+
+    deviation /snmp:snmp/snmp:target-params/snmp:params/snmp:usm/snmp:usm/snmp:security-level {
+      deviate add {
+        sonic-ext:field-name "securityLevel";
+      }
+    }
+
+
+    deviation /snmp:snmp/snmp:target-params/snmp:params/snmp:tsm {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:target-params/snmp:params/snmp:tsm/snmp:tsm {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:target-params/snmp:params/snmp:tsm/snmp:tsm/snmp:security-name {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:target-params/snmp:params/snmp:tsm/snmp:tsm/snmp:security-level {
+      deviate add {
+      }
+    }
+
+    deviation /snmp:snmp/snmp:target-params/snmp:notify-filter-profile {
+      deviate add {
+      }
+    }
+
+}
