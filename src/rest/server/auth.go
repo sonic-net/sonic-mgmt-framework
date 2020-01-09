@@ -157,14 +157,6 @@ func PopulateAuthStruct(username string, auth *AuthInfo) error {
 	return nil
 }
 
-func DoesUserExist(username string) bool {
-	_, err := user.Lookup(username)
-	if err != nil {
-		return false
-	}
-	return true
-}
-
 func UserPwAuth(username string, passwd string) (bool, error) {
 	/*
 	 * mgmt-framework container does not have access to /etc/passwd, /etc/group,

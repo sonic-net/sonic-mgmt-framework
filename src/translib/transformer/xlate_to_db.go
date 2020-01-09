@@ -228,7 +228,7 @@ func mapFillDataUtil(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requ
 		if nodeErr != nil {
 			return nil
 		}
-		inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, uri, requestUri, oper, "", nil, subOpDataMap, curYgotNodeData, txCache)
+		inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, uri, requestUri, oper, dbKey, nil, subOpDataMap, curYgotNodeData, txCache)
 		retData, err := leafXfmrHandler(inParams, xpathInfo.xfmrField)
 		if err != nil {
 			if xfmrErr != nil && *xfmrErr == nil {
@@ -913,7 +913,7 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
 					log.Infof("curxpath: %v, requestxpath: %v\r\n", curXpath, reqXpath)
 					if strings.HasPrefix(curXpath, reqXpath) {
 						if xYangSpecMap[xpath] != nil && len(xYangSpecMap[xpath].xfmrFunc) > 0 &&
-						(xYangSpecMap[xpathPrefix] != xYangSpecMap[xpath]) {
+                        (xYangSpecMap[xpathPrefix].xfmrFunc != xYangSpecMap[xpath].xfmrFunc) {
 							/* subtree transformer present */
 							curYgotNode, nodeErr := yangNodeForUriGet(curUri, ygRoot)
 							if nodeErr != nil {
