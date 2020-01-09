@@ -282,7 +282,7 @@ func (app *CommonApp) translateCRUDCommon(d *db.DB, opcode int) ([]db.WatchKeys,
 	var err error
 	var keys []db.WatchKeys
 	var tblsToWatch []*db.TableSpec
-	var txCache interface{}
+	txCache:= make(map[string]interface{})
 	log.Info("translateCRUDCommon:path =", app.pathInfo.Path)
 
 	// translate yang to db

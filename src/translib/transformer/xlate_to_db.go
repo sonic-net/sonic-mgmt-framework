@@ -66,7 +66,7 @@ func leafXfmrHandler(inParams XfmrParams, xfmrFieldFuncNm string) (map[string]st
 
 func xfmrHandler(inParams XfmrParams, xfmrFuncNm string) (map[string]map[string]db.Value, error) {
         log.Info("Received inParams ", inParams, "Subtree function name ", xfmrFuncNm)
-        ret, err := XlateFuncCall(yangToDbXfmrFunc(xfmrFuncNm), inParams)
+	ret, err := XlateFuncCall(yangToDbXfmrFunc(xfmrFuncNm), inParams)
         if err != nil {
                 return nil, err
         }
@@ -793,9 +793,10 @@ func yangReqToDbMapCreate(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string,
 				if nodeErr != nil {
 					curYgotNode = nil
 				}
+				
 				inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, curUri, requestUri, oper, "", nil, subOpDataMap, curYgotNode, txCache)
 				ret, err := XlateFuncCall(yangToDbXfmrFunc(xYangSpecMap[xpathPrefix].xfmrKey), inParams)
-				if err != nil {
+			        if err != nil {
 					return err
 				}
 				if ret != nil {
