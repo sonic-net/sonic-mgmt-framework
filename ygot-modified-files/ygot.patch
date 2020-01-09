@@ -222,7 +222,7 @@ diff -ruN ygot-dir-orig/ygot/ygot/struct_validation_map.go ygot-dir/ygot/ygot/st
  		default:
 -			dstField.Set(srcField)
 +                    if srcField.Type().Implements(reflect.TypeOf((*GoEnum)(nil)).Elem()) == true {
-+                        if srcField.Type().Name() == "int64" && srcField.Int() != 0 {
++                        if srcField.Int() != 0 {
 +                            dstField.Set(srcField)
 +                        }
 +                    } else {
