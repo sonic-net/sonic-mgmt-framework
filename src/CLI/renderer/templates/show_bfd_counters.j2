@@ -1,0 +1,60 @@
+{{-'BFD Peers:'\n}}
+{% if 'openconfig-bfd:sessions' in json_output %}
+    {% set sessions_list = json_output['openconfig-bfd:sessions'] %}
+    {% if 'single-hop' in sessions_list %}
+        {% set singlehop = sessions_list['single-hop'] %}
+        {% for peer in singlehop %}
+            {{-'     peer '}}{{peer['remote-address']-}}
+            {{-', vrf '}}{{peer['vrf']-}}
+            {% if 'local-address' in peer %}
+                {{-', interface '}}{{peer['interface']-}}
+                {{-', local-address '}}{{peer['local-address']\n}}
+            {% else %}
+                {{-', interface '}}{{peer['interface']\n}}
+            {% endif %}
+            {% set peer_state = peer['stats'] %}
+            {% if 'async' in peer_state %}   
+                {% set async_stats = peer_state['async'] %}           
+                {{-'              Control packet input: '}}{{async_stats['transmitted-packets']}}{{ packets\n}}
+                {{-'              Control packet output: '}}{{async_stats['received-packets']}}{{ packets\n}}
+            {% endif %}
+            {% if 'echo' in peer_state %} 
+                {% set echo_stats = peer_state['async'] %}           
+                {{-'              Echo packet input: '}}{{echo_stats['transmitted-packets']}}{{ packets\n}}
+                {{-'              Echo packet output: '}}{{echo_stats['received-packets']}}{{ packets\n}}
+            {% endif %}
+            {{-'              Session up events: '}}{{peer_state['up-transitions']\n}}
+            {{-'              Session down events: '}}{{peer_state['up-transitions']\n}}
+            {{-'              Zebra notifications: '}}{{peer_state['up-transitions']\n}}
+        {% endfor %}
+        {{ '\n' }}
+    {% endif %}
+    {% if 'multi-hop' in sessions_list %}
+        {% set multihop = sessions_list['multi-hop'] %}
+        {% for peer in multihop %}
+            {{-'     peer '}}{{peer['remote-address']-}}
+            {{-', vrf '}}{{peer['vrf']-}}
+            {% if 'local-address' in peer %}
+                {{-', interface '}}{{peer['interface']-}}
+                {{-', local-address '}}{{peer['local-address']\n}}
+            {% else %}
+                {{-', interface '}}{{peer['interface']\n}}
+            {% endif %}
+            {% set peer_state = peer['stats'] %}
+            {% if 'async' in peer_state %}   
+                {% set async_stats = peer_state['async'] %}           
+                {{-'              Control packet input: '}}{{async_stats['transmitted-packets']}}{{ packets\n}}
+                {{-'              Control packet output: '}}{{async_stats['received-packets']}}{{ packets\n}}
+            {% endif %}
+            {% if 'echo' in peer_state %} 
+                {% set echo_stats = peer_state['async'] %}           
+                {{-'              Echo packet input: '}}{{echo_stats['transmitted-packets']}}{{ packets\n}}
+                {{-'              Echo packet output: '}}{{echo_stats['received-packets']}}{{ packets\n}}
+            {% endif %}
+            {{-'              Session up events: '}}{{peer_state['up-transitions']\n}}
+            {{-'              Session down events: '}}{{peer_state['up-transitions']\n}}
+            {{-'              Zebra notifications: '}}{{peer_state['up-transitions']\n}}
+        {% endfor %}
+        {{ '\n' }}
+    {% endif %}
+{% endif %}
