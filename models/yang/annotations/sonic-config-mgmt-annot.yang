@@ -13,5 +13,12 @@ module sonic-config-mgmt-annot {
             sonic-ext:rpc-callback "rpc_config_copy";
         }
     }
+
+    deviation /cmgmt:write-erase {
+        deviate add {
+            sonic-ext:rpc-callback "rpc_write_erase";
+        }
+    }
+
 }
 
