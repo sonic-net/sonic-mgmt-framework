@@ -446,6 +446,7 @@ func dbMapBuild(entries []*yang.Entry) {
 		moduleNm := e.Name
 		dbMapFill("", "", moduleNm, xDbSpecMap, e)
 	}
+	xDbSpecTblSeqnMapPrint("/tmp/dbSpecTblSeqnMap.txt")
 }
 
 func childToUpdateParent( xpath string, tableName string) {
@@ -753,6 +754,36 @@ func dbMapPrint( fname string) {
         fmt.Fprintf (fp, "-----------------------------------------------------------------\r\n")
 
     }
+}
+
+func xDbSpecTblSeqnMapPrint(fname string) {
+        fp, err := os.Create(fname)
+        if err != nil {
+                return
+        }
+        defer fp.Close()
+        fmt.Fprintf (fp, "-----------------------------------------------------------------\r\n")
+        if xDbSpecTblSeqnMap == nil {
+                return
+        }
+        for mdlNm, mdlTblSeqnDt := range xDbSpecTblSeqnMap {
+                fmt.Fprintf(fp, "%v : { \r\n", mdlNm)
+                if mdlTblSeqnDt == nil {
+                        continue
+                }
+                fmt.Fprintf(fp, "        OrderedTableList : %v\r\n", mdlTblSeqnDt.OrdTbl)
+                fmt.Fprintf(fp, "        Dependent table list  : {\r\n")
+                if mdlTblSeqnDt.DepTbl == nil {
+                        fmt.Fprintf(fp, "                        }\r\n")
+                        fmt.Fprintf(fp, "}\r\n")
+                        continue
+                }
+                for tblNm, DepTblLst := range mdlTblSeqnDt.DepTbl {
+                        fmt.Fprintf(fp, "                                        %v : %v\r\n", tblNm, DepTblLst)
+                }
+                fmt.Fprintf(fp, "                                }\r\n")
+                fmt.Fprintf(fp, "}\r\n")
+        }
 }
 
 func updateSchemaOrderedMap(module string, entry *yang.Entry) {
