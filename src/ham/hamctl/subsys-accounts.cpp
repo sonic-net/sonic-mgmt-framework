@@ -161,17 +161,19 @@ void read_pw(char *pw)
  */
 static std::string get_salt()
 {
+    srand(time(NULL)); // Seed the randomizer
+
+    static const char   valid_salts[]  = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789./";
+    static const size_t valid_salts_sz = sizeof(valid_salts) - 1;
+
     std::string  salt;
     unsigned     salt_len = 0;         // Salt can be at most 16 chars long
+
     while (salt_len < 4)               // Make sure salt is at least 4 chars long
         salt_len = 1 + (rand() & 0xF); // Yields a value in the range 1..16
 
     while (salt.length() < salt_len)
-    {
-        char c = (char)rand();
-        if (isprint(c) && (c != '\\') && (c != '$'))
-            salt.push_back(c);
-    }
+        salt.push_back(valid_salts[rand() % valid_salts_sz]);
 
     salt.insert(0, "$6$");
     salt.push_back('$');
@@ -190,11 +192,9 @@ static std::string get_salt()
  */
 static std::string get_hashed_pw()
 {
-    srand(time(NULL)); // Seed the randomizer
-
     std::string hashed_pw = "";
-    char        clear_pw1[1024];
-    char        clear_pw2[1024];
+    char        clear_pw1[200];
+    char        clear_pw2[200];
 
     printf("Enter new UNIX password: ");
     read_pw(clear_pw1);
