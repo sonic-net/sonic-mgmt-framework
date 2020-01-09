@@ -1,0 +1,5 @@
+32a33,36
+> 	clish_plugin_add_osym(plugin, clish_restcl, "clish_restcl");
+> 	clish_plugin_add_osym(plugin, clish_pyobj, "clish_pyobj");
+> 
+> 	pyobj_init();
