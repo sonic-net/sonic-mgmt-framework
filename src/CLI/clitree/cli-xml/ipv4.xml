@@ -24,16 +24,6 @@ limitations under the License.
     xsi:schemaLocation="http://www.dellemc.com/sonic/XMLSchema
                         http://www.dellemc.com/sonic/XMLSchema/clish.xsd">
 
-<!--=======================================================-->
-<!--              show ip arp changes                      -->
-<!--=======================================================-->
-<PTYPE
-    name="INTF_TYPE"
-    method="select"
-    pattern="Ethernet Vlan PortChannel Management(eth)"
-    help="Interface type"/>
-
-
 <VIEW name="enable-view">
     <COMMAND
         help="show IP commands"
@@ -42,78 +32,43 @@ limitations under the License.
     <ACTION builtin="clish_nop"/>
     </COMMAND>
 
-<!-- show ip arp <ip-addr> commands -->
+<!-- show ip route -->
     <COMMAND
-        help="show ARP commands"
-        name="show ip arp">
-        <PARAM
-            name="arp-subcommands"
-            help="ARP subcommands"
-            mode="switch"
-            ptype="SUBCOMMAND"
-            optional="true">
-                <PARAM
-                    help="ARP entry for this IP address"
-                    name="ip-addr"
-                    ptype="IP_ADDR"
-                    optional="true">
-                </PARAM>
-        </PARAM>
-       <ACTION>
-               python $SONIC_CLI_ROOT/sonic-cli-arp-neigh.py get_sonic_neigh_sonic_neigh_neigh_table arp_show.j2 IPv4 ${ip-addr}&#xA;
-       </ACTION>
-    </COMMAND>
-
-<!-- show ip arp interface <intf> [summary] -->
-    <COMMAND
-        help="ARP entries for this interface"
-        name="show ip arp interface">
-        <PARAM
-            name="ifType"
-            help=""
-            ptype="INTF_TYPE">
-            <PARAM
-                name="phy-if-id"
-                help="Numeric ID for the given interface type"
-                ptype="UINT">
-                <PARAM
-                    help="Summary of ARP entries"
-                    name="summary"
-                    ptype="SUBCOMMAND"
-                    mode="subcommand"
-                    optional="true">
-                </PARAM>
-            </PARAM>
+        help="IP route information"
+        name="show ip route">
+	<PARAM
+	   name="route-cmd"
+	   help=""
+	   mode="switch"
+	   ptype="SUBCOMMAND"
+	   optional="true">
+           <PARAM
+              help="IP route information per vrf"
+              name="vrf"
+              optional = "true"
+	            mode="subcommand"
+              ptype="SUBCOMMAND">
+	           <PARAM
+		            help="VRF name"
+		            name="vrfname"
+		            ptype="STRING">
+                   <PARAM
+	                    help="Destination prefix"
+		                  name="A.B.C.D/M"
+		                  optional="true"
+		                  ptype="IP_ADDR_MASK">
+                   </PARAM>
+              </PARAM>
+           </PARAM>
+           <PARAM
+               help="Destination prefix"
+	           optional="true"
+               name="A.B.C.D/M"
+               ptype="IP_ADDR_MASK">
+           </PARAM>
         </PARAM>
         <ACTION>
-            if test "${summary}" = ""; then&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-arp-neigh.py get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_neighbors arp_show.j2 ${ifType}${phy-if-id} None&#xA;
-            else&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-arp-neigh.py get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_neighbors arp_summary_show.j2 ${ifType}${phy-if-id} summary&#xA;
-            fi&#xA;
-        </ACTION>
-    </COMMAND>
-
-<!--- show ip arp [mac-address <mac-addr>] -->
-    <COMMAND
-        help="HW address"
-        name="show ip arp mac-address">
-        <PARAM
-            help="48 bit MAC address"
-            name="mac-addr"
-            ptype="MAC_ADDR">
-        </PARAM>
-        <ACTION>
-            python $SONIC_CLI_ROOT/sonic-cli-arp-neigh.py get_sonic_neigh_sonic_neigh_neigh_table arp_show.j2 IPv4 mac ${mac-addr}&#xA;
-        </ACTION>
-   </COMMAND>
-
-<!-- show ip arp summary -->
-    <COMMAND
-        help="Summary of ARP entries"
-        name="show ip arp summary">
-        <ACTION>
-            python $SONIC_CLI_ROOT/sonic-cli-arp-neigh.py get_sonic_neigh_sonic_neigh_neigh_table arp_summary_show.j2 summary None&#xA;
+	       python $SONIC_CLI_ROOT/sonic-cli-ip-route.py get_network_instance_afts_ipv4_unicast show_ip_route.j2 ${__full_line}&#xA;
         </ACTION>
     </COMMAND>
 </VIEW>
@@ -141,7 +96,7 @@ limitations under the License.
             name="addr"
             help="IP address with mask"
             ptype="IP_ADDR_MASK" />
-	<ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config ${iface} ${addr} </ACTION>
+        <ACTION>python $SONIC_CLI_ROOT/sonic_cli_if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config ${iface} ${addr} </ACTION>
     </COMMAND>
 
     <COMMAND
@@ -153,7 +108,7 @@ limitations under the License.
             help="IP address"
 	    ptype="IP_ADDR" />
     <ACTION>
-	    python $SONIC_CLI_ROOT/sonic-cli-if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config_prefix_length ${iface} ${addr}
+        python $SONIC_CLI_ROOT/sonic_cli_if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config_prefix_length ${iface} ${addr}
     </ACTION>
     </COMMAND>
 </VIEW>
@@ -193,9 +148,9 @@ limitations under the License.
         </PARAM>
         <ACTION>
             if test "${gw_addr}" = ""; then&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config ${iface} ${addr}&#xA;
+            python $SONIC_CLI_ROOT/sonic_cli_if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config ${iface} ${addr}&#xA;
             else&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config ${iface} ${addr} ${gw_addr}&#xA;
+            python $SONIC_CLI_ROOT/sonic_cli_if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config ${iface} ${addr} ${gw_addr}&#xA;
             fi&#xA;
         </ACTION>
     </COMMAND>
@@ -209,7 +164,7 @@ limitations under the License.
             help="IP address"
 	    ptype="IP_ADDR" />
     <ACTION>
-        python $SONIC_CLI_ROOT/sonic-cli-if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config_prefix_length ${iface} ${addr}
+        python $SONIC_CLI_ROOT/sonic_cli_if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config_prefix_length ${iface} ${addr}
     </ACTION>
     </COMMAND>
 </VIEW>
@@ -236,7 +191,7 @@ limitations under the License.
               name="addr"
               help="IP address with mask"
               ptype="IP_ADDR_MASK" />
-          <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config ${vlan_id} ${addr} </ACTION>
+          <ACTION>python $SONIC_CLI_ROOT/sonic_cli_if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config ${vlan_id} ${addr} </ACTION>
       </COMMAND>
       <COMMAND
          name="no ip address"
@@ -247,7 +202,7 @@ limitations under the License.
              help="IP address"
              ptype="IP_ADDR" />
          <ACTION>
-            python $SONIC_CLI_ROOT/sonic-cli-if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config_prefix_length ${vlan_id} ${addr}
+             python $SONIC_CLI_ROOT/sonic_cli_if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config_prefix_length ${vlan_id} ${addr}
          </ACTION>
       </COMMAND>
 </VIEW>
@@ -274,7 +229,7 @@ limitations under the License.
               name="addr"
               help="IP address with mask"
               ptype="IP_ADDR_MASK" />
-          <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config ${po_name} ${addr} </ACTION>
+          <ACTION>python $SONIC_CLI_ROOT/sonic_cli_if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config ${po_name} ${addr} </ACTION>
       </COMMAND>
       <COMMAND
          name="no ip address"
@@ -285,7 +240,7 @@ limitations under the License.
              help="IP address"
              ptype="IP_ADDR" />
          <ACTION>
-            python $SONIC_CLI_ROOT/sonic-cli-if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config_prefix_length ${po_name} ${addr}
+             python $SONIC_CLI_ROOT/sonic_cli_if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config_prefix_length ${po_name} ${addr}
          </ACTION>
       </COMMAND>
 </VIEW>
@@ -312,7 +267,7 @@ limitations under the License.
               name="addr"
               help="IP address with mask (/32 is supported)"
               ptype="IP_ADDR_MASK" />
-          <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config ${lo_name} ${addr} </ACTION>
+          <ACTION>python $SONIC_CLI_ROOT/sonic_cli_if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config ${lo_name} ${addr} </ACTION>
       </COMMAND>
       <COMMAND
          name="no ip address"
@@ -323,7 +278,7 @@ limitations under the License.
              help="IP address"
              ptype="IP_ADDR" />
          <ACTION>
-            python $SONIC_CLI_ROOT/sonic-cli-if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config_prefix_length ${lo_name} ${addr}
+             python $SONIC_CLI_ROOT/sonic_cli_if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config_prefix_length ${lo_name} ${addr}
          </ACTION>
       </COMMAND>
 </VIEW>

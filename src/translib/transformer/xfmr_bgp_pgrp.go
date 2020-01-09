@@ -48,6 +48,11 @@ var YangToDb_bgp_pgrp_peer_type_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrP
         err = errors.New("No Params");
         return res_map, err
     }
+    if inParams.oper == DELETE {
+        res_map["peer_type"] = ""
+        return res_map, nil
+    }
+
     peer_type, _ := inParams.param.(ocbinds.E_OpenconfigBgp_PeerType)
     log.Info("YangToDb_bgp_pgrp_peer_type_fld_xfmr: ", inParams.ygRoot, " Xpath: ", inParams.uri, " peer-type: ", peer_type)
 

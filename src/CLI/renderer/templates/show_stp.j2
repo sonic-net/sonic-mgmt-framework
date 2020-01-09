@@ -160,15 +160,15 @@ RSTP (IEEE 802.1w) Bridge Parameters:
         {% if vars.update({'root_br':vlan['state']['designated-root-address']}) %}{% endif %}
         {% if vars.update({'root_path':vlan['state']['root-cost']}) %}{% endif %}
         {% if vars.update({'desig_br':vlan['state']['openconfig-spanning-tree-ext:designated-bridge-id']}) %}{% endif %}
-        {% if vars.update({'root_port_name_name':vlan['state']['openconfig-spanning-tree-ext:root-port-name']}) %}{% endif %}
+        {% if vars.update({'root_port_name':vlan['state']['openconfig-spanning-tree-ext:root-port-name']}) %}{% endif %}
         {% if vars.update({'max_age':vlan['state']['openconfig-spanning-tree-ext:root-max-age']}) %}{% endif %}
         {% if vars.update({'hello':vlan['state']['openconfig-spanning-tree-ext:root-hello-time']}) %}{% endif %}
         {% if vars.update({'fDly':vlan['state']['openconfig-spanning-tree-ext:root-forward-delay']}) %}{% endif %}
 {{'%-18s'|format(vars.root_br)}}{{'%-10s'|format(vars.root_path)}}{{'%-18s'|format(vars.desig_br)}}{{'%-12s'|format(vars.root_port_name)}}{{'%-5s'|format(vars.max_age)}}{{'%-5s'|format(vars.hello)}}{{'%-5s'|format(vars.fDly)}}
 {{' ' }}
 RSTP (IEEE 802.1w) Port Parameters:
-{{'%-16s'|format("Port")}}{{'%-5s'|format("Prio")}}{{'%-10s'|format("Path")}}{{'%-4s'|format("P2P")}}{{'%-5s'|format("Edge")}}{{'%-7s'|format("BPDU")}}{{'%-10s'|format("Role")}}{{'%-11s'|format("State")}}{{'%-11s'|format("Designa-")}}{{'%-17s'|format("Designated")}}
-{{'%-16s'|format("Num")}}{{'%-5s'|format("rity")}}{{'%-10s'|format("Cost")}}{{'%-4s'|format("Mac")}}{{'%-5s'|format("Port")}}{{'%-7s'|format("Filter")}}{{'%-10s'|format("")}}{{'%-11s'|format("")}}{{'%-11s'|format("ted cost")}}{{'%-17s'|format("bridge")}}
+{{'%-16s'|format("Port")}}{{'%-5s'|format("Prio")}}{{'%-10s'|format("Path")}}{{'%-4s'|format("P2P")}}{{'%-5s'|format("Edge")}}{{'%-7s'|format("BPDU")}}{{'%-12s'|format("Role")}}{{'%-11s'|format("State")}}{{'%-11s'|format("Designa-")}}{{'%-17s'|format("Designated")}}
+{{'%-16s'|format("Num")}}{{'%-5s'|format("rity")}}{{'%-10s'|format("Cost")}}{{'%-4s'|format("Mac")}}{{'%-5s'|format("Port")}}{{'%-7s'|format("Filter")}}{{'%-12s'|format("")}}{{'%-11s'|format("")}}{{'%-11s'|format("ted cost")}}{{'%-17s'|format("bridge")}}
 
 {% set interface_list  = {} %}
 {% if "interfaces" in vlan and "interface" in vlan['interfaces'] %}
@@ -183,7 +183,7 @@ RSTP (IEEE 802.1w) Port Parameters:
         {% if intf['state'] %}
             {% if vars.update({'intf_pri':intf['state']['port-priority']}) %}{% endif %}
             {% if vars.update({'intf_path_cost':intf['state']['cost']}) %}{% endif %}
-            {% if vars.update({'intf_role':intf['state']['role']}) %}{% endif %}
+            {% if vars.update({'intf_role':intf['state']['role']| replace('openconfig-spanning-tree-types:',"")}) %}{% endif %}
             {% if vars.update({'intf_state':intf['state']['port-state']| replace('openconfig-spanning-tree-types:',"")}) %}{% endif %}
             {% if vars.update({'intf_desig_cost':intf['state']['designated-cost']}) %}{% endif %}
             {% if vars.update({'intf_desig_bridge':intf['state']['designated-bridge-address']}) %}{% endif %}
@@ -198,12 +198,12 @@ RSTP (IEEE 802.1w) Port Parameters:
                {%else %}
                      {% if vars.update({'intf_p2pmac': "N"}) %}{% endif %}
                {%endif %}
-               {% if stp_intf['config']['edge-port'] == "EDGE_ENABLE" %}
+               {% if stp_intf['config']['edge-port'] == "openconfig-spanning-tree-types:EDGE_ENABLE" %}
                      {% if vars.update({'intf_edge': "Y"}) %}{% endif %}
                {%else %}
                      {% if vars.update({'intf_edge': "N"}) %}{% endif %}
                {%endif %}
-{{'%-16s'|format(vars.intf_name)}}{{'%-5s'|format(vars.intf_pri)}}{{'%-10s'|format(vars.intf_path_cost)}}{{'%-4s'|format(vars.intf_p2pmac)}}{{'%-5s'|format(vars.intf_edge)}}{{'%-7s'|format(vars.intf_bpdu_filter)}}{{'%-10s'|format(vars.intf_role)}}{{'%-11s'|format(vars.intf_state)}}{{'%-11s'|format(vars.intf_desig_cost)}}{{'%-17s'|format(vars.intf_desig_bridge)}}
+{{'%-16s'|format(vars.intf_name)}}{{'%-5s'|format(vars.intf_pri)}}{{'%-10s'|format(vars.intf_path_cost)}}{{'%-4s'|format(vars.intf_p2pmac)}}{{'%-5s'|format(vars.intf_edge)}}{{'%-7s'|format(vars.intf_bpdu_filter)}}{{'%-12s'|format(vars.intf_role)}}{{'%-11s'|format(vars.intf_state)}}{{'%-11s'|format(vars.intf_desig_cost)}}{{'%-17s'|format(vars.intf_desig_bridge)}}
         {%endif %}
         {%endfor %}
     {% endfor %}

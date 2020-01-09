@@ -1,2 +1,2 @@
 /lib/systemd/system/certfix.service
-/usr/sbin/certfix
+/usr/sbin/certfix.sh

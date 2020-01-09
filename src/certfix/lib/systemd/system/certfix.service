@@ -5,7 +5,7 @@ Before=hamd.service
 
 [Service]
 Type=oneshot
-ExecStart=/usr/bin/cerfix.sh
+ExecStart=/usr/sbin/certfix.sh
 
 [Install]
 WantedBy=multi-user.target

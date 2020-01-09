@@ -1,3 +1,4 @@
+
 module sonic-spanning-tree {
     namespace "http://github.com/Azure/sonic-spanning-tree";
     prefix sstp;
@@ -94,7 +95,7 @@ module sonic-spanning-tree {
 
         container STP {
             list STP_LIST {
-		max-elements 1;
+                max-elements 1;
                 key "keyleaf";
 
                 leaf keyleaf {
@@ -244,3 +245,4 @@ module sonic-spanning-tree {
         }
     }
 }
+

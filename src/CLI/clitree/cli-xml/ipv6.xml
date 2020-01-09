@@ -44,7 +44,7 @@ limitations under the License.
             name="addr"
             help="IPv6 address with mask"
             ptype="IPV6_ADDR_MASK" />
-    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config ${iface} ${addr} </ACTION>
+        <ACTION>python $SONIC_CLI_ROOT/sonic_cli_if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config ${iface} ${addr} </ACTION>
     </COMMAND>
 
     <COMMAND
@@ -54,7 +54,7 @@ limitations under the License.
             name="addr"
             help="IPv6 address"
             ptype="IPV6_ADDR" />
-        <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config_prefix_length ${iface} ${addr} </ACTION>
+        <ACTION>python $SONIC_CLI_ROOT/sonic_cli_if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config_prefix_length ${iface} ${addr} </ACTION>
     </COMMAND>
   </VIEW>
 
@@ -79,9 +79,9 @@ limitations under the License.
         </PARAM>
         <ACTION>
             if test "${gw_addr}" = ""; then&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config ${iface} ${addr}&#xA;
+            python $SONIC_CLI_ROOT/sonic_cli_if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config ${iface} ${addr}&#xA;
             else&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config ${iface} ${addr} ${gw_addr}&#xA;
+            python $SONIC_CLI_ROOT/sonic_cli_if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config ${iface} ${addr} ${gw_addr}&#xA;
             fi&#xA;
         </ACTION>
     </COMMAND>
@@ -93,7 +93,7 @@ limitations under the License.
             name="addr"
             help="IPv6 address"
             ptype="IPV6_ADDR" />
-        <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config_prefix_length ${iface} ${addr} </ACTION>
+        <ACTION>python $SONIC_CLI_ROOT/sonic_cli_if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config_prefix_length ${iface} ${addr} </ACTION>
     </COMMAND>
 </VIEW>
 
@@ -113,7 +113,7 @@ limitations under the License.
             name="addr"
             help="IPv6 address with mask"
             ptype="IPV6_ADDR_MASK" />
-        <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config ${po_name} ${addr} </ACTION>
+        <ACTION>python $SONIC_CLI_ROOT/sonic_cli_if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config ${po_name} ${addr} </ACTION>
     </COMMAND>
 
     <COMMAND
@@ -123,7 +123,7 @@ limitations under the License.
             name="addr"
             help="IPv6 address"
             ptype="IPV6_ADDR" />
-        <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config_prefix_length ${po_name} ${addr} </ACTION>
+        <ACTION>python $SONIC_CLI_ROOT/sonic_cli_if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config_prefix_length ${po_name} ${addr} </ACTION>
     </COMMAND>
 </VIEW>
 
@@ -147,7 +147,7 @@ limitations under the License.
              name="addr"
              help="IPv6 address with mask"
              ptype="IPV6_ADDR_MASK" />
-          <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config ${vlan_id} ${addr} </ACTION>
+         <ACTION>python $SONIC_CLI_ROOT/sonic_cli_if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config ${vlan_id} ${addr} </ACTION>
       </COMMAND>
 
       <COMMAND
@@ -157,7 +157,7 @@ limitations under the License.
               name="addr"
               help="IPv6 address"
               ptype="IPV6_ADDR" />
-          <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config_prefix_length ${vlan_id} ${addr} </ACTION>
+          <ACTION>python $SONIC_CLI_ROOT/sonic_cli_if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config_prefix_length ${vlan_id} ${addr} </ACTION>
       </COMMAND>
 </VIEW>
 
@@ -180,7 +180,7 @@ limitations under the License.
              name="addr"
              help="IPv6 address with mask (/128 is supported)"
              ptype="IPV6_ADDR_MASK" />
-          <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config ${lo_name} ${addr} </ACTION>
+         <ACTION>python $SONIC_CLI_ROOT/sonic_cli_if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config ${lo_name} ${addr} </ACTION>
       </COMMAND>
 
       <COMMAND
@@ -190,19 +190,9 @@ limitations under the License.
               name="addr"
               help="IPv6 address"
               ptype="IPV6_ADDR" />
-          <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config_prefix_length ${lo_name} ${addr} </ACTION>
+          <ACTION>python $SONIC_CLI_ROOT/sonic_cli_if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_addresses_address_config_prefix_length ${lo_name} ${addr} </ACTION>
       </COMMAND>
 </VIEW>
-
-<!--=======================================================-->
-<!--                show ipv6 neighbors                    -->
-<!--=======================================================-->
-<PTYPE
-    name="INTF_TYPE"
-    method="select"
-    pattern="Ethernet Vlan PortChannel Management(eth)"
-    help="Interface type"/>
-
 
 <VIEW name="enable-view">
     <COMMAND
@@ -210,81 +200,6 @@ limitations under the License.
         name="show ipv6"
         >
     <ACTION builtin="clish_nop"/>
-    </COMMAND>
-
-<!-- show ipv6 neighbors <ipv6-addr> -->
-    <COMMAND
-        help="show IPv6 neighbors commands"
-        name="show ipv6 neighbors">
-        <PARAM
-            name="neighbors-subcommands"
-            help="Neighbors subcommands"
-            mode="switch"
-            ptype="SUBCOMMAND"
-            optional="true">
-                <PARAM
-                    help="neighbor entry for this IPv6 address"
-                    name="ipv6-addr"
-                    ptype="IPV6_ADDR"
-                    optional="true">
-                </PARAM>
-        </PARAM>
-       <ACTION>
-               python $SONIC_CLI_ROOT/sonic-cli-arp-neigh.py get_sonic_neigh_sonic_neigh_neigh_table arp_show.j2 IPv6 ${ipv6-addr}&#xA;
-       </ACTION>
-    </COMMAND>
-
-<!-- show ipv6 neighbors interface <intf> [summary] -->
-    <COMMAND
-        help="neighbors entries for this interface"
-        name="show ipv6 neighbors interface">
-        <PARAM
-            name="ifType"
-            help=""
-            ptype="INTF_TYPE">
-            <PARAM
-                name="phy-if-id"
-                help="Numeric ID for the given interface type"
-                ptype="UINT">
-                <PARAM
-                    help="Summary of neighbors entries"
-                    name="summary"
-                    ptype="SUBCOMMAND"
-                    mode="subcommand"
-                    optional="true">
-                </PARAM>
-            </PARAM>
-        </PARAM>
-        <ACTION>
-            if test "${summary}" = ""; then&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-arp-neigh.py get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_neighbors arp_show.j2 ${ifType}${phy-if-id} None&#xA;
-            else&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-arp-neigh.py get_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv6_neighbors arp_summary_show.j2 ${ifType}${phy-if-id} summary&#xA;
-            fi&#xA;
-        </ACTION>
-    </COMMAND>
-
-<!-- show ipv6 neighbors [mac-address <mac-addr>] -->
-    <COMMAND
-        help="HW address"
-        name="show ipv6 neighbors mac-address">
-        <PARAM
-            help="48 bit MAC address"
-            name="mac-addr"
-            ptype="MAC_ADDR">
-        </PARAM>
-        <ACTION>
-            python $SONIC_CLI_ROOT/sonic-cli-arp-neigh.py get_sonic_neigh_sonic_neigh_neigh_table arp_show.j2 IPv6 mac ${mac-addr}&#xA;
-        </ACTION>
-   </COMMAND>
-
-<!-- show ipv6 neighbors summary -->
-    <COMMAND
-        help="Summary of neighbors entries"
-        name="show ipv6 neighbors summary">
-        <ACTION>
-            python $SONIC_CLI_ROOT/sonic-cli-arp-neigh.py get_sonic_neigh_sonic_neigh_neigh_table arp_summary_show.j2 summary None&#xA;
-        </ACTION>
     </COMMAND>
 </VIEW>
 </CLISH_MODULE>

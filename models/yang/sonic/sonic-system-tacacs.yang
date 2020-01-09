@@ -22,6 +22,7 @@ module sonic-system-tacacs {
 
         container TACPLUS_SERVER {
             list TACPLUS_SERVER_LIST {
+                max-elements 8;
                 key "ipaddress";
 
                 leaf ipaddress {
@@ -29,16 +30,25 @@ module sonic-system-tacacs {
                 }
 
                 leaf priority {
-                    type uint8;
+                    type uint8 {
+                        range "1..64" {
+                            error-message "TACACS server priority must be 1..64";
+                        }
+                    }
                 }
 
                 leaf tcp_port {
                     type inet:port-number;
+                    default 49;
                 }
 
                 leaf timeout {
                     default 5;
-                    type uint16;
+                    type uint16 {
+                        range "1..60" {
+                            error-message "TACACS server timeout must be 1..60";
+                        }
+                    }
                 }
 
                 leaf auth_type {
@@ -75,7 +85,11 @@ module sonic-system-tacacs {
                 }
 
                 leaf timeout {
-                    type uint16;
+                    type uint16 {
+                        range "1..60" {
+                            error-message "TACACS timeout must be 1..60";
+                        }
+                    }
                     default 5;
                 }
 

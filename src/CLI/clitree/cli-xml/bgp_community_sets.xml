@@ -56,12 +56,7 @@ limitations under the License.
        >
     <COMMAND
         name="bgp"
-        help="bgp command list">
-    <ACTION>
-        builtin=clish_nop"
-    </ACTION>
-    </COMMAND>
-
+        help="bgp command list"/>
 
     <COMMAND
         name="bgp community-list"
@@ -507,11 +502,7 @@ limitations under the License.
 
     <COMMAND
         name="no bgp"
-        help="bgp command list">
-    <ACTION>
-        builtin=clish_nop"
-    </ACTION>
-    </COMMAND>
+        help="bgp command list"/>
 
     <COMMAND
         name="no bgp community-list"
