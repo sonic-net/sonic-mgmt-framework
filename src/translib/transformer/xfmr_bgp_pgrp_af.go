@@ -3,6 +3,7 @@ package transformer
 import (
     "errors"
     "strings"
+    "translib/db"
     "translib/ocbinds"
     log "github.com/golang/glog"
 )
@@ -269,7 +270,18 @@ var YangToDb_bgp_pgrp_community_type_fld_xfmr FieldXfmrYangToDb = func(inParams 
     }
     
     if inParams.oper == DELETE {
-        res_map["send_community"] = ""
+        subOpMap := make(map[db.DBNum]map[string]map[string]db.Value)
+
+        if _, ok := subOpMap[db.ConfigDB]; !ok {
+            subOpMap[db.ConfigDB] = make(map[string]map[string]db.Value)
+        }
+        if _, ok := subOpMap[db.ConfigDB]["BGP_PEER_GROUP_AF"]; !ok {
+            subOpMap[db.ConfigDB]["BGP_PEER_GROUP_AF"] = make(map[string]db.Value)
+        }
+        subOpMap[db.ConfigDB]["BGP_PEER_GROUP_AF"][inParams.key] = db.Value{Field: make(map[string]string)}
+        subOpMap[db.ConfigDB]["BGP_PEER_GROUP_AF"][inParams.key].Field["send_community"] = "both"
+
+        inParams.subOpDataMap[UPDATE] = &subOpMap
         return res_map, nil
     }
 

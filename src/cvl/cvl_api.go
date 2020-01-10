@@ -611,7 +611,7 @@ func (c *CVL) addDepEdges(graph *toposort.Graph, tableList []string) {
 //Sort list of given tables as per their dependency
 func (c *CVL) SortDepTables(inTableList []string) ([]string, CVLRetCode) {
 
-	tableList := []string{}
+	tableListMap :=  make(map[string]bool)
 
 	//Skip all unknown tables
 	for ti := 0; ti < len(inTableList); ti++ {
@@ -620,13 +620,17 @@ func (c *CVL) SortDepTables(inTableList []string) ([]string, CVLRetCode) {
 			continue
 		}
 
-		tableList = append(tableList, inTableList[ti])
+		//Add to map to avoid duplicate nodes
+		tableListMap[inTableList[ti]] = true
 	}
 
+	tableList := []string{}
+
 	//Add all the table names in graph nodes
-	graph := toposort.NewGraph(len(tableList))
-	for ti := 0; ti < len(tableList); ti++ {
-		graph.AddNodes(tableList[ti])
+	graph := toposort.NewGraph(len(tableListMap))
+	for tbl, _ := range tableListMap {
+		graph.AddNodes(tbl)
+		tableList = append(tableList, tbl)
 	}
 
 	//Add all dependency egdes
@@ -768,7 +772,7 @@ func (c *CVL) GetDepDataForDelete(redisKey string) ([]string, []string) {
 			CVL_LOG(ERROR, "Lua script error (%v)", err)
 		}
 		if (refKeys == nil) {
-		//No reference field found
+			//No reference field found
 			continue
 		}
 

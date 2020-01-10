@@ -931,16 +931,9 @@ module openconfig-network-instance-annot {
       }
     }
 
-
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:dynamic-neighbor-prefixes {
-      deviate add {
-        sonic-ext:table-name "BGP_GLOBALS_LISTEN_PREFIX";
-      }
-    }
-
-
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:dynamic-neighbor-prefixes/oc-netinst:dynamic-neighbor-prefix {
       deviate add {
+        sonic-ext:table-name "BGP_GLOBALS_LISTEN_PREFIX";
         sonic-ext:key-transformer "bgp_dyn_neigh_listen_key_xfmr";
       }
     }
@@ -1318,14 +1311,9 @@ module openconfig-network-instance-annot {
       }
     }
      
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:aggregate-address-config {
-      deviate add {
-        sonic-ext:table-name "BGP_GLOBALS_AF_AGGREGATE_ADDR";
-      }
-    }
-
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:aggregate-address-config/oc-bgp-ext:aggregate-address {
       deviate add {
+        sonic-ext:table-name "BGP_GLOBALS_AF_AGGREGATE_ADDR";
         sonic-ext:key-transformer "bgp_gbl_afi_safi_addr_key_xfmr";
       }
     }
@@ -1408,14 +1396,9 @@ module openconfig-network-instance-annot {
         }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:network-config {
-        deviate add {
-            sonic-ext:table-name "BGP_GLOBALS_AF_NETWORK";
-        }
-    }
-
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-bgp-ext:network-config/oc-bgp-ext:network {
         deviate add {
+            sonic-ext:table-name "BGP_GLOBALS_AF_NETWORK";
             sonic-ext:key-transformer "bgp_gbl_afi_safi_addr_key_xfmr";
         }
     }
@@ -2116,25 +2099,25 @@ module openconfig-network-instance-annot {
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:add-paths/oc-netinst:config/oc-bgp-ext:tx-add-paths {
       deviate add {
-        sonic-ext:field-transformer "bgp_nbr_tx_add_paths_fld_transformer";
+        sonic-ext:field-transformer "bgp_nbr_tx_add_paths_fld_xfmr";
       }
     }
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:add-paths/oc-netinst:state/oc-bgp-ext:tx-add-paths {
       deviate add {
-        sonic-ext:field-transformer "bgp_nbr_tx_add_paths_fld_transformer";
+        sonic-ext:field-transformer "bgp_nbr_tx_add_paths_fld_xfmr";
       }
     }
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:add-paths/oc-netinst:config/oc-bgp-ext:tx-add-paths {
       deviate add {
-        sonic-ext:field-transformer "bgp_pgrp_tx_add_paths_fld_transformer";
+        sonic-ext:field-transformer "bgp_pgrp_tx_add_paths_fld_xfmr";
       }
     }
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-netinst:afi-safis/oc-netinst:afi-safi/oc-netinst:add-paths/oc-netinst:state/oc-bgp-ext:tx-add-paths {
       deviate add {
-        sonic-ext:field-transformer "bgp_pgrp_tx_add_paths_fld_transformer";
+        sonic-ext:field-transformer "bgp_pgrp_tx_add_paths_fld_xfmr";
       }
     }
 

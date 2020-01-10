@@ -200,8 +200,6 @@ module sonic-bgp-common {
         }
 
         leaf local_addr {
-            type inet:ip-address;
-            /*
             type union {
                 type inet:ip-address;
                 type leafref {
@@ -213,7 +211,7 @@ module sonic-bgp-common {
                 type leafref {
                     path "/svlan:sonic-vlan/svlan:VLAN/svlan:VLAN_LIST/svlan:name";
                 }
-            }*/
+            }
             description "Local source address or interface name to use for connection.";
         }
 

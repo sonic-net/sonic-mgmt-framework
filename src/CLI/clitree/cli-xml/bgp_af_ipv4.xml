@@ -436,12 +436,8 @@ limitations under the License.
        <PARAM name="rtemap" help="Route-map name" ptype="STRING"/>
     </PARAM>
     <ACTION>
-             if test -n "${route-map}" ; then&#xA;
                  python $SONIC_CLI_ROOT/sonic-cli-bgp.py PATCH_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_ipv4_unicast_config_send_default_route ${vrf-name} ${nbr-addr} IPV4_UNICAST False&#xA;
                  python $SONIC_CLI_ROOT/sonic-cli-bgp.py DELETE_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_ipv4_unicast_config_default_policy_name ${vrf-name} ${nbr-addr} IPV4_UNICAST ${rtemap}&#xA;
-             else&#xA;
-                 python $SONIC_CLI_ROOT/sonic-cli-bgp.py PATCH_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_ipv4_unicast_config_send_default_route ${vrf-name} ${nbr-addr} IPV4_UNICAST False&#xA;
-             fi&#xA;
     </ACTION>
   </COMMAND>
   <COMMAND name="no filter-list" help="Establish BGP filters">
@@ -773,12 +769,8 @@ limitations under the License.
        <PARAM name="rtemap" help="Route-map name" ptype="STRING"/>
     </PARAM>
     <ACTION>
-             if test -n "${route-map}" ; then&#xA;
                  python $SONIC_CLI_ROOT/sonic-cli-bgp.py PATCH_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_afi_safis_afi_safi_ipv4_unicast_config_send_default_route ${vrf-name} ${template-name} IPV4_UNICAST False&#xA;
                  python $SONIC_CLI_ROOT/sonic-cli-bgp.py DELETE_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_afi_safis_afi_safi_ipv4_unicast_config_default_policy_name ${vrf-name} ${template-name} IPV4_UNICAST ${rtemap}&#xA;
-             else&#xA;
-                 python $SONIC_CLI_ROOT/sonic-cli-bgp.py PATCH_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_afi_safis_afi_safi_ipv4_unicast_config_send_default_route ${vrf-name} ${template-name} IPV4_UNICAST False&#xA;
-             fi&#xA;
     </ACTION>
   </COMMAND>
   <COMMAND name="no filter-list" help="Establish BGP filters">
