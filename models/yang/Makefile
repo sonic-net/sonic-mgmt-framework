@@ -21,6 +21,7 @@ TOPDIR := ../..
 BUILD_DIR := $(TOPDIR)/build
 
 YANGAPI_DIR                 := $(TOPDIR)/build/yaml
+MD_DIR                      := $(TOPDIR)/build/restconf_md
 YANGDIR                     := .
 YANGDIR_COMMON              := $(YANGDIR)/common
 YANGDIR_ANNOTATIONS         := $(YANGDIR)/annotations
@@ -79,9 +80,12 @@ yang_tree.md:  $(YANG_MOD_FILES) $(YANG_COMMON_FILES) $(YANG_MOD_EXTENSION_FILES
 $(YANGAPI_DIR)/.done:  $(YANG_MOD_FILES) $(YANG_COMMON_FILES)
 	@echo "+++++ Generating YAML files for Yang modules +++++"
 	mkdir -p $(YANGAPI_DIR)
+	mkdir -p $(MD_DIR)
 	$(PYANG_BIN) \
 		-f swaggerapi \
+		--with-md-doc \
 		--outdir $(YANGAPI_DIR) \
+		--mdoutdir $(MD_DIR) \
 		--plugindir $(PYANG_PLUGIN_DIR) \
 		-p $(YANGDIR_COMMON):$(YANGDIR):$(YANGDIR_EXTENSIONS_DIR) \
 		$(YANG_MOD_FILES) $(YANG_MOD_EXTENSION_FILES)
@@ -101,4 +105,5 @@ $(YANGAPI_DIR)/api_ignore: $(YANG_ANNOTATIONS_FILES)
 
 clean:
 	rm -rf $(YANGAPI_DIR)
+	rm -rf $(MD_DIR)
 	rm -rf allyangs.tree allyangs_tree.html yang_tree.md

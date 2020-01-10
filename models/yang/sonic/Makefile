@@ -1,5 +1,6 @@
 TOPDIR := ../../..
 SONIC_YANGAPI_DIR     := $(TOPDIR)/build/yaml
+SONIC_MD_DIR          := $(TOPDIR)/build/restconf_md
 SONIC_YANGDIR           := .
 SONIC_YANGDIR_DEVIATION := $(SONIC_YANGDIR)/deviation
 SONIC_YANGDIR_COMMON    := $(SONIC_YANGDIR)/common
@@ -48,9 +49,12 @@ allyangs_tree.html:  $(SONIC_YANG_MOD_FILES) $(SONIC_YANG_COMMON_FILES)
 $(SONIC_YANGAPI_DIR)/.sonic_done: $(SONIC_YANG_MOD_FILES) $(SONIC_YANG_COMMON_FILES)
 	@echo "+++++ Generating YAML files for Sonic Yang modules +++++"
 	mkdir -p $(SONIC_YANGAPI_DIR)
+	mkdir -p $(SONIC_MD_DIR)
 	$(SONIC_PYANG_BIN) \
 		-f swaggerapi \
+		--with-md-doc \
 		--outdir $(SONIC_YANGAPI_DIR) \
+		--mdoutdir $(SONIC_MD_DIR) \
 		--plugindir $(SONIC_PYANG_PLUGIN_DIR) \
 		-p $(SONIC_YANGDIR_COMMON):$(SONIC_YANGDIR) \
 		$(SONIC_YANG_MOD_FILES)
@@ -61,4 +65,5 @@ clean:
 	@echo "Removing files ..."
 	rm -f $(SONIC_YANGAPI_DIR)/.sonic_done
 	rm -f $(patsubst %.yang, $(SONIC_YANGAPI_DIR)/%.yaml, $(notdir $(SONIC_YANG_MOD_FILES)))
+	rm -f $(patsubst %.yang, $(SONIC_MD_DIR)/%.md, $(notdir $(SONIC_YANG_MOD_FILES)))
 	rm -rf allyangs.tree allyangs_tree.html yang_tree.md
