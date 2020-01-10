@@ -1,0 +1,75 @@
+{% if 'openconfig-bfd:sessions' in json_output %}
+    {% set sessions_list = json_output['openconfig-bfd:sessions'] %}
+    {% if 'single-hop' in sessions_list %}
+        {% set singlehop = sessions_list['single-hop'] %}
+        {% for peer in singlehop %}
+            {{-' peer '}}{{peer['remote-address']-}}
+            {{-', vrf '}}{{peer['vrf']-}}
+            {% if 'local-address' in peer %}
+                {{-', interface '}}{{peer['interface']-}}
+                {{-', local-address '}}{{peer['local-address']}}{{'\n'}}
+            {% else %}
+                {{-', interface '}}{{peer['interface']}}{{'\n'}}
+            {% endif %}
+            {% set peer_state = peer['stats'] %}
+            {{-'  ID: '}}{{peer_state['local-discriminator']}}{{'\n'}}
+            {{-'  Remote ID: '}}{{peer_state['remote-discriminator']}}{{'\n'}}
+            {{-'  Status: '}}{{peer_state['session-state']}}{{'\n'}}
+            {% if 'UP' in peer_state['session-state'] %}
+                {{-'  Uptime: '}}{{peer_state['last-up-time']}}{{ 'second(s)\n'}}
+            {% else %}
+                {{-'  Downtime: '}}{{peer_state['last-failure-time']}}{{ 'second(s)\n'}}
+            {% endif %}
+            {{-'  Diagnostics: '}}{{peer_state['local-diagnostic-code']}}{{'\n'}}
+            {{-'  Remote Diagnostics: '}}{{peer_state['remote-diagnostic-code']}}{{'\n'}}
+            {{-'  Peer Type: '}}{{peer_state['session-type']}}{{'\n'}}
+            {{-'  Local timers:\n'}}
+            {{-'   Detect-multiplier: '}}{{peer_state['local-multiplier']}}{{'\n'}}
+            {{-'   Receive interval: '}}{{peer_state['negotiated-transmission-interval']}}{{'\n'}}
+            {{-'   Transmission interval: '}}{{peer_state['negotiated-receive-interval']}}{{'\n'}}
+            {{-'   Echo transmission interval: '}}{{peer_state['desired-minimum-echo-receive']}}{{'\n'}}
+            {{-'  Remote timers:\n'}}
+            {{-'   Detect-multiplier: '}}{{peer_state['remote-multiplier']}}{{'\n'}}
+            {{-'   Receive interval: '}}{{peer_state['remote-minimum-receive-interval']}}{{'\n'}}
+            {{-'   Transmission interval: '}}{{peer_state['remote-desired-transmission-interval']}}{{'\n'}}
+            {{-'   Echo transmission interval: '}}{{peer_state['remote-echo-receive-interval']}}{{'\n'}}
+        {% endfor %}
+        {{ '\n' }}
+    {% endif %}
+    {% if 'multi-hop' in sessions_list %}
+        {% set multihop = sessions_list['multi-hop'] %}
+        {% for peer in multihop %}
+            {{-' peer '}}{{peer['remote-address']-}}
+            {{-', vrf '}}{{peer['vrf']-}}
+            {% if 'local-address' in peer %}
+                {{-', interface '}}{{peer['interface']-}}
+                {{-', local-address '}}{{peer['local-address']}}{{'\n'}}
+            {% else %}
+                {{-', interface '}}{{peer['interface']}}{{'\n'}}
+            {% endif %}
+            {% set peer_state = peer['stats'] %}
+            {{-'  ID: '}}{{peer_state['local-discriminator']}}{{'\n'}}
+            {{-'  Remote ID: '}}{{peer_state['remote-discriminator']}}{{'\n'}}
+            {{-'  Status: '}}{{peer_state['session-state']}}{{'\n'}}
+            {% if peer_state['session-state'] == 'UP' %}
+                {{-'  Uptime: '}}{{peer_state['last-up-time']}}{{ 'second(s)\n'}}
+            {% else %}
+                {{-'  Downtime: '}}{{peer_state['last-failure-time']}}{{ 'second(s)\n'}}
+            {% endif %}
+            {{-'  Diagnostics: '}}{{peer_state['local-diagnostic-code']}}{{'\n'}}
+            {{-'  Remote Diagnostics: '}}{{peer_state['remote-diagnostic-code']}}{{'\n'}}
+            {{-'  Peer Type: '}}{{peer_state['session-type']}}{{'\n'}}
+            {{-'  Local timers:\n'}}
+            {{-'   Detect-multiplier: '}}{{peer_state['local-multiplier']}}{{'\n'}}
+            {{-'   Receive interval: '}}{{peer_state['negotiated-transmission-interval']}}{{'\n'}}
+            {{-'   Transmission interval: '}}{{peer_state['negotiated-receive-interval']}}{{'\n'}}
+            {{-'   Echo transmission interval: '}}{{peer_state['desired-minimum-echo-receive']}}{{'\n'}}
+            {{-'  Remote timers:\n'}}
+            {{-'   Detect-multiplier: '}}{{peer_state['remote-multiplier']}}{{'\n'}}
+            {{-'   Receive interval: '}}{{peer_state['remote-minimum-receive-interval']}}{{'\n'}}
+            {{-'   Transmission interval: '}}{{peer_state['remote-desired-transmission-interval']}}{{'\n'}}
+            {{-'   Echo transmission interval: '}}{{peer_state['remote-echo-receive-interval']}}{{'\n'}}
+        {% endfor %}
+        {{ '\n' }}
+    {% endif %}    
+{% endif %}

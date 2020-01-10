@@ -1,0 +1,32 @@
+{{-'Session Count:'\n}}
+{{-'SessionId  LocalAddress                             PeerAddress'}}
+{{-'                             Status         Vrf'\n}}
+{{-'=========  ============                             ==========='}}
+{{-'                             ======         ==='\n}}
+{% if 'openconfig-bfd:sessions' in json_output %}
+    {% set sessions_list = json_output['openconfig-bfd:sessions'] %}
+    {% if 'single-hop' in sessions_list %}
+        {% set singlehop = sessions_list['single-hop'] %}
+        {% for peer in singlehop %}
+            {% set peer_state = peer['stats'] %}
+            {{-'peer_state['local-discriminator'].ljust(10)-'}}
+            {{-'peer['local-address'].ljust(40)-'}}
+            {{-'peer['remote-address'].ljust(40)-'}}
+            {{-'peer['session-state'].ljust(15)-'}}
+            {{-'peer['vrf'].ljust(32)-'}}
+        {% endfor %}
+        {{ '\n' }}
+    {% endif %}
+    {% if 'multi-hop' in sessions_list %}
+        {% set multihop = sessions_list['multi-hop'] %}
+        {% for peer in multihop %}
+            {% set peer_state = peer['stats'] %}
+            {{-'peer_state['local-discriminator'].ljust(10)-'}}
+            {{-'peer['local-address'].ljust(40)-'}}
+            {{-'peer['remote-address'].ljust(40)-'}}
+            {{-'peer['session-state'].ljust(15)-'}}
+            {{-'peer['vrf'].ljust(32)-'}}
+        {% endfor %}
+        {{ '\n' }}
+    {% endif %}
+{% endif %}
