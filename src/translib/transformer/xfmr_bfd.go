@@ -3,19 +3,20 @@ package transformer
 import (
     "errors"
     "translib/ocbinds"
-	"strings"
-	"encoding/json"
-	"os/exec"
-	"io/ioutil"
+    "strings"
+    "encoding/json"
+    "strconv"
+    "os/exec"
+    "io/ioutil"
     "github.com/openconfig/ygot/ygot"
     log "github.com/golang/glog"
 )
 
 func init () {
-	XlateFuncBind("YangToDb_bfd_shop_session_key_xfmr", YangToDb_bfd_shop_session_key_xfmr)
+    XlateFuncBind("YangToDb_bfd_shop_session_key_xfmr", YangToDb_bfd_shop_session_key_xfmr)
     XlateFuncBind("DbToYang_bfd_shop_session_key_xfmr", DbToYang_bfd_shop_session_key_xfmr)
     XlateFuncBind("YangToDb_bfd_smhop_session_key_xfmr", YangToDb_bfd_mhop_session_key_xfmr)
-	XlateFuncBind("DbToYang_bfd_mhop_session_key_xfmr", DbToYang_bfd_mhop_session_key_xfmr)
+    XlateFuncBind("DbToYang_bfd_mhop_session_key_xfmr", DbToYang_bfd_mhop_session_key_xfmr)
     XlateFuncBind("DbToYang_bfd_state_xfmr", DbToYang_bfd_state_xfmr)
     XlateFuncBind("DbToYang_bfd_shop_state_xfmr", DbToYang_bfd_shop_state_xfmr)
     XlateFuncBind("DbToYang_bfd_mhop_state_xfmr", DbToYang_bfd_mhop_state_xfmr)
@@ -158,10 +159,10 @@ var DbToYang_bfd_mhop_session_key_xfmr KeyXfmrDbToYang = func(inParams XfmrParam
 }
 
 func validate_bfd_get (inParams XfmrParams, dbg_log string) (*ocbinds.OpenconfigBfd_Bfd_BfdState, error) {
-	var err error
+    var err error
     var bfd_obj *ocbinds.OpenconfigBfd_Bfd
 
-	deviceObj := (*inParams.ygRoot).(*ocbinds.Device)
+    deviceObj := (*inParams.ygRoot).(*ocbinds.Device)
     bfd_obj = deviceObj.Bfd
 
     if bfd_obj.BfdState == nil {
@@ -172,36 +173,36 @@ func validate_bfd_get (inParams XfmrParams, dbg_log string) (*ocbinds.Openconfig
 }
 
 func get_bfd_specific_shop_peer (bfd_obj *ocbinds.OpenconfigBfd_Bfd_BfdState, inParams XfmrParams) error {
-	var err error
-	var vtysh_cmd string
-	var bfdshop_obj *ocbinds.OpenconfigBfd_Bfd_BfdState_SingleHopState
-	var bfdshop_key ocbinds.OpenconfigBfd_Bfd_BfdState_SingleHopState_Key
-	bfdMapJson := make(map[string]interface{})	
-	bfdCounterMapJson := make(map[string]interface{})
+    var err error
+    var vtysh_cmd string
+    var bfdshop_obj *ocbinds.OpenconfigBfd_Bfd_BfdState_SingleHopState
+    var bfdshop_key ocbinds.OpenconfigBfd_Bfd_BfdState_SingleHopState_Key
+    bfdMapJson := make(map[string]interface{})  
+    bfdCounterMapJson := make(map[string]interface{})
 
-	pathInfo := NewPathInfo(inParams.uri)
+    pathInfo := NewPathInfo(inParams.uri)
 
     log.Info(inParams.uri)
 
-	bfdshop_key.RemoteAddress = pathInfo.Var("neighbor-address")
-	bfdshop_key.Vrf = pathInfo.Var("vrf")
-	bfdshop_key.Interface = pathInfo.Var("interface")
-	bfdshop_key.LocalAddress = pathInfo.Var("local-address")
+    bfdshop_key.RemoteAddress = pathInfo.Var("neighbor-address")
+    bfdshop_key.Vrf = pathInfo.Var("vrf")
+    bfdshop_key.Interface = pathInfo.Var("interface")
+    bfdshop_key.LocalAddress = pathInfo.Var("local-address")
 
     log.Info(bfdshop_key)
 
-	bfdshop_obj = bfd_obj.SingleHopState[bfdshop_key]
-	if bfdshop_obj == nil {
-		get_bfd_peers(bfd_obj)
-		return err
-		//return errors.New("BFD shop State container missing")
-	}
+    bfdshop_obj = bfd_obj.SingleHopState[bfdshop_key]
+    if bfdshop_obj == nil {
+        get_bfd_peers(bfd_obj)
+        return err
+        //return errors.New("BFD shop State container missing")
+    }
 
-	if (bfdshop_key.LocalAddress == "null") {
-		vtysh_cmd = "show bfd peer " + bfdshop_key.RemoteAddress + " vrf " + bfdshop_key.Vrf + " interface " + bfdshop_key.Interface
-	}else {
-		vtysh_cmd = "show bfd peer " + bfdshop_key.RemoteAddress + " vrf " + bfdshop_key.Vrf + " interface " + bfdshop_key.Interface + " local-address " + bfdshop_key.LocalAddress
-	}
+    if (bfdshop_key.LocalAddress == "null") {
+        vtysh_cmd = "show bfd peer " + bfdshop_key.RemoteAddress + " vrf " + bfdshop_key.Vrf + " interface " + bfdshop_key.Interface
+    }else {
+        vtysh_cmd = "show bfd peer " + bfdshop_key.RemoteAddress + " vrf " + bfdshop_key.Vrf + " interface " + bfdshop_key.Interface + " local-address " + bfdshop_key.LocalAddress
+    }
 
     output, cmd_err := exec_vtysh_cmd (vtysh_cmd)
     if cmd_err != nil {
@@ -211,14 +212,14 @@ func get_bfd_specific_shop_peer (bfd_obj *ocbinds.OpenconfigBfd_Bfd_BfdState, in
 
     bfdMapJson["output"] = output
 
-	log.Info(bfdMapJson)
+    log.Info(bfdMapJson)
 
-	if (bfdshop_key.LocalAddress == "null") {
-		vtysh_cmd = "show bfd peer " + bfdshop_key.RemoteAddress + " vrf " + bfdshop_key.Vrf + " interface " + bfdshop_key.Interface + " counters"
-	}else {
-		vtysh_cmd = "show bfd peer " + bfdshop_key.RemoteAddress + " vrf " + bfdshop_key.Vrf + " interface " + bfdshop_key.Interface + " local-address " + bfdshop_key.LocalAddress + " counters"
-	}
-	
+    if (bfdshop_key.LocalAddress == "null") {
+        vtysh_cmd = "show bfd peer " + bfdshop_key.RemoteAddress + " vrf " + bfdshop_key.Vrf + " interface " + bfdshop_key.Interface + " counters"
+    }else {
+        vtysh_cmd = "show bfd peer " + bfdshop_key.RemoteAddress + " vrf " + bfdshop_key.Vrf + " interface " + bfdshop_key.Interface + " local-address " + bfdshop_key.LocalAddress + " counters"
+    }
+    
     output, cmd_err = exec_vtysh_cmd (vtysh_cmd)
     if cmd_err != nil {
         log.Errorf("Failed to fetch bfd peers counter:, err")
@@ -230,11 +231,11 @@ func get_bfd_specific_shop_peer (bfd_obj *ocbinds.OpenconfigBfd_Bfd_BfdState, in
 
     log.Info(bfdCounterMapJson)
 
-	session, _ := bfdMapJson["output"].(map[string]interface{})
-	counter, _ := bfdCounterMapJson["output"].(map[string]interface{})
+    session, _ := bfdMapJson["output"].(map[string]interface{})
+    counter, _ := bfdCounterMapJson["output"].(map[string]interface{})
 
-	//session_data, ok := session.(map[string][]reflect.Type); 
-	//counter_data, ok := counter.(map[string]interface{}); 
+    //session_data, ok := session.(map[string][]reflect.Type); 
+    //counter_data, ok := counter.(map[string]interface{}); 
 
     fill_bfd_shop_data (bfd_obj, bfdshop_obj, session, counter) ;
 
@@ -257,43 +258,43 @@ var DbToYang_bfd_shop_state_xfmr SubTreeXfmrDbToYang = func(inParams XfmrParams)
 }
 
 func get_bfd_specific_mhop_peer (bfd_obj *ocbinds.OpenconfigBfd_Bfd_BfdState, inParams XfmrParams) error {
-	var err error
-	var bfdmhop_obj *ocbinds.OpenconfigBfd_Bfd_BfdState_MultiHopState
-	var bfdmhop_key ocbinds.OpenconfigBfd_Bfd_BfdState_MultiHopState_Key
+    var err error
+    var bfdmhop_obj *ocbinds.OpenconfigBfd_Bfd_BfdState_MultiHopState
+    var bfdmhop_key ocbinds.OpenconfigBfd_Bfd_BfdState_MultiHopState_Key
         bfdMapJson := make(map[string]interface{})
         bfdCounterMapJson := make(map[string]interface{})
-	
+    
 
-	pathInfo := NewPathInfo(inParams.uri)
+    pathInfo := NewPathInfo(inParams.uri)
 
     log.Info(pathInfo)
 
-	bfdmhop_key.RemoteAddress = pathInfo.Var("neighbor-address")
-	bfdmhop_key.Vrf = pathInfo.Var("vrf")
-	bfdmhop_key.LocalAddress = pathInfo.Var("local-address")
+    bfdmhop_key.RemoteAddress = pathInfo.Var("neighbor-address")
+    bfdmhop_key.Vrf = pathInfo.Var("vrf")
+    bfdmhop_key.LocalAddress = pathInfo.Var("local-address")
 
-	bfdmhop_obj = bfd_obj.MultiHopState[bfdmhop_key]
-	if bfdmhop_obj == nil {
+    bfdmhop_obj = bfd_obj.MultiHopState[bfdmhop_key]
+    if bfdmhop_obj == nil {
         return errors.New("BFD mhop state container missing")
-	}
+    }
 
     log.Info(bfdmhop_key)
-	//bfdmhop_key =  bfdmhop_obj[key]
+    //bfdmhop_key =  bfdmhop_obj[key]
 
-	vtysh_cmd := "show bfd peer " + bfdmhop_key.RemoteAddress + " vrf " + bfdmhop_key.Vrf + " multihop " + " local-address " + bfdmhop_key.LocalAddress
+    vtysh_cmd := "show bfd peer " + bfdmhop_key.RemoteAddress + " vrf " + bfdmhop_key.Vrf + " multihop " + " local-address " + bfdmhop_key.LocalAddress
 
     output, cmd_err := exec_vtysh_cmd (vtysh_cmd)
     if cmd_err != nil {
-		log.Errorf("Failed to fetch bfd mhop peer:, err")
+        log.Errorf("Failed to fetch bfd mhop peer:, err")
         return cmd_err
     }
 
     bfdMapJson["output"] = output
 
-	log.Info(bfdMapJson)
+    log.Info(bfdMapJson)
 
-	vtysh_cmd = "show bfd peer " + bfdmhop_key.RemoteAddress + " vrf " + bfdmhop_key.Vrf + " multihop " + " local-address " + bfdmhop_key.LocalAddress + " counters"
-	
+    vtysh_cmd = "show bfd peer " + bfdmhop_key.RemoteAddress + " vrf " + bfdmhop_key.Vrf + " multihop " + " local-address " + bfdmhop_key.LocalAddress + " counters"
+    
     output, cmd_err = exec_vtysh_cmd (vtysh_cmd)
     if cmd_err != nil {
         log.Errorf("Failed to fetch mhop bfd peers counter:, err")
@@ -305,11 +306,11 @@ func get_bfd_specific_mhop_peer (bfd_obj *ocbinds.OpenconfigBfd_Bfd_BfdState, in
 
     log.Info(bfdCounterMapJson)
 
-	session, _ := bfdMapJson["output"].(map[string]interface{})
-	counter, _ := bfdCounterMapJson["output"].(map[string]interface{})
+    session, _ := bfdMapJson["output"].(map[string]interface{})
+    counter, _ := bfdCounterMapJson["output"].(map[string]interface{})
 
-	//session_data, ok := session.(map[string]interface{}); 
-	//counter_data, ok := counter.(map[string]interface{}); 
+    //session_data, ok := session.(map[string]interface{}); 
+    //counter_data, ok := counter.(map[string]interface{}); 
 
     fill_bfd_mhop_data (bfd_obj, bfdmhop_obj, session, counter) ;
 
@@ -353,11 +354,11 @@ func exec_vtysh_bfd_cmd (vtysh_cmd string) (map[string]interface{}, error) {
     var outputJson interface{}
     var output1Json map[string]interface{}
     b, err := ioutil.ReadAll(out_stream)
-	if err != nil { 
-		log.Fatal(err) 
-	}
+    if err != nil { 
+        log.Fatal(err) 
+    }
 
-	//fmt.Printf("%s", b) 
+    //fmt.Printf("%s", b) 
     
     err = json.Unmarshal(b, &outputJson)
     if err != nil {
@@ -366,7 +367,7 @@ func exec_vtysh_bfd_cmd (vtysh_cmd string) (map[string]interface{}, error) {
     }
 
 
-	//log.Infof(outputJson)
+    //log.Infof(outputJson)
 
     err = cmd.Wait()
     if err != nil {
@@ -384,83 +385,96 @@ func exec_vtysh_bfd_cmd (vtysh_cmd string) (map[string]interface{}, error) {
     return output1Json, err
 }
 
+func exec_vtysh_cmd_array (vtysh_cmd string) ([]interface{}, error) {
+    var err error
+    oper_err := errors.New("Operational error")
+
+    log.Infof("Going to execute vtysh cmd ==> \"%s\"", vtysh_cmd)
+
+    cmd := exec.Command("/usr/bin/docker", "exec", "bgp", "vtysh", "-c", vtysh_cmd)
+    out_stream, err := cmd.StdoutPipe()
+    if err != nil {
+        log.Errorf("Can't get stdout pipe: %s\n", err)
+        return nil, oper_err
+    }
+
+    err = cmd.Start()
+    if err != nil {
+        log.Errorf("cmd.Start() failed with %s\n", err)
+        return nil, oper_err
+    }
+
+    var outputJson []interface{}
+    err = json.NewDecoder(out_stream).Decode(&outputJson)
+    if err != nil {
+        log.Errorf("Not able to decode vtysh json output as array of objects: %s\n", err)
+        return nil, oper_err
+    }
+
+    err = cmd.Wait()
+    if err != nil {
+        log.Errorf("Command execution completion failed with %s\n", err)
+        return nil, oper_err
+    }
+
+    log.Infof("Successfully executed vtysh-cmd ==> \"%s\"", vtysh_cmd)
+
+    if outputJson == nil {
+        log.Errorf("VTYSH output empty !!!")
+        return nil, oper_err
+    }
+
+    return outputJson, err
+}
+
 
 func get_bfd_peers (bfd_obj *ocbinds.OpenconfigBfd_Bfd_BfdState) error {
-	var err error
-	output := make(map[string]interface{})
-	bfdMapJson := make(map[string]interface{})
-	bfdCounterMapJson := make(map[string]interface{})
+    var err error
 
-    //vtysh_cmd := "show bfd peers " + "json"
-	vtysh_cmd := "show peer 1.1.1.1 local-address 1.1.1.2 vrf default interface Ethernet0 " + "json"
-    output, cmd_err := exec_vtysh_cmd (vtysh_cmd)
+    bfdMapJson := make(map[string]interface{})
+    bfdCounterMapJson := make(map[string]interface{})
+
+    vtysh_cmd := "show bfd peers json"
+    output_peer, cmd_err := exec_vtysh_cmd_array (vtysh_cmd)
     if cmd_err != nil {
-        log.Errorf("Failed to fetch bfd peers:, err")
-
+        log.Errorf("Failed to fetch bfd peers array:, err")
         return cmd_err
     }
 
-    log.Info(output)
-
-	//output = [{"multihop":false}]	
-
-    //output = map[string]interface{}{
-                //"local-address": "1.1.1.1",
-        //}
-	
-    bfdMapJson["output"] = output
-
-	log.Info(bfdMapJson)
-	
-	vtysh_cmd = "show bfd peers counters " + " json"
-    output, cmd_err = exec_vtysh_cmd (vtysh_cmd)
+    log.Info(output_peer)  
+    bfdMapJson["output"] = output_peer
+    
+    vtysh_cmd = "show bfd peers counters json"
+    output_counter, cmd_err := exec_vtysh_cmd_array (vtysh_cmd)
     if cmd_err != nil {
-		log.Errorf("Failed to fetch bfd peers counters:, err")
-
+        log.Errorf("Failed to fetch bfd peers counters array:, err")
         return cmd_err
     }
 
-	log.Info(output)
-
-    bfdCounterMapJson["output"] = output
-
-    log.Info(bfdCounterMapJson)
+    log.Info(output_counter)
+    bfdCounterMapJson["output"] = output_counter
 
     var bfdmhop_obj *ocbinds.OpenconfigBfd_Bfd_BfdState_MultiHopState
-    //if bfdmhop_obj = bfd_obj.MultiHop; bfdmhop_obj == nil {
-        //var _bfdmhop ocbinds.OpenconfigBfd_Bfd_Sessions_MultiHop
-        //bfd_obj.MultiHop = &_bfdmhop
-        //bfdmhop_obj = bfd_obj.MultiHop
-    //}
-
     var bfdshop_obj *ocbinds.OpenconfigBfd_Bfd_BfdState_SingleHopState
-    //if bfdshop_obj = bfd_obj.SingleHop ; bfdshop_obj == nil {
-        //var _bfdshop ocbinds.OpenconfigBfd_Bfd_Sessions_SingleHop
-        //bfd_obj.SingleHop = &_bfdshop
-        //bfdshop_obj = bfd_obj.SingleHop
-    //}
 
-	sessions, _ := bfdMapJson["output"].(map[string]interface{})
-	counters, _ := bfdCounterMapJson["output"].(map[string]interface{})
+    sessions, _ := bfdMapJson["output"].([]interface{})
+    counters, _ := bfdCounterMapJson["output"].([]interface{})
 
-    for session, _ := range sessions {
-	//sessioncount := len(sessions)
-	//countercount := len(counters)
-
-	//for i, j := 0, 0; i < sessioncount && j < countercount; i, j = i+1, j+1 {
-		session_data, ok := sessions[session].(map[string]interface{}) ; if !ok {continue}
-        counter_data, ok := counters[session].(map[string]interface{}) ; if !ok {continue}
-        if value, ok := session_data["multihop"].(string) ; ok {
-            if value == "false" {
-                if ok := fill_bfd_shop_data (bfd_obj, bfdshop_obj, session_data, counter_data) ; !ok {continue}
+    for i, session := range sessions {
+        session_data, _ := session.(map[string]interface{})
+        counter_data, _ := counters[i].(map[string]interface{})
+        log.Info(session_data)
+        log.Info(counter_data)
+        if value, ok := session_data["multihop"].(bool) ; ok {
+            if value == false {
+                if ok := fill_bfd_shop_data (bfd_obj, bfdshop_obj, session_data, counter_data) ; !ok {return err}
             }else {
-                if ok := fill_bfd_mhop_data (bfd_obj, bfdmhop_obj, session_data, counter_data) ; !ok {continue}
+                if ok := fill_bfd_mhop_data (bfd_obj, bfdmhop_obj, session_data, counter_data) ; !ok {return err}
             }
         }
-	}
+    }
 
-	//bfd_obj.SingleHop = &bfdshop_obj
-	//bfd_obj.MultiHop = &bfdmhop_obj
+    log.Info(bfd_obj)
 
     return err
 }
@@ -482,11 +496,13 @@ var DbToYang_bfd_state_xfmr SubTreeXfmrDbToYang = func(inParams XfmrParams) erro
 
 func fill_bfd_shop_data (bfd_obj *ocbinds.OpenconfigBfd_Bfd_BfdState, bfdshop_obj *ocbinds.OpenconfigBfd_Bfd_BfdState_SingleHopState, session_data map[string]interface{}, counter_data map[string]interface{}) bool {
 
-	var bfdshopkey ocbinds.OpenconfigBfd_Bfd_BfdState_SingleHopState_Key
-	var bfdasyncstats *ocbinds.OpenconfigBfd_Bfd_BfdState_SingleHopState_Async
-	var bfdechocstats *ocbinds.OpenconfigBfd_Bfd_BfdState_SingleHopState_Echo
+    var bfdshopkey ocbinds.OpenconfigBfd_Bfd_BfdState_SingleHopState_Key
+    var bfdasyncstats *ocbinds.OpenconfigBfd_Bfd_BfdState_SingleHopState_Async
+    var bfdechocstats *ocbinds.OpenconfigBfd_Bfd_BfdState_SingleHopState_Echo
 
-    if value, ok := session_data["status"].(string) ; ok {
+    log.Info("fill_bfd_shop_data")
+
+    if value, ok := session_data["peer"].(string) ; ok {
         bfdshopkey.RemoteAddress = value
     }
 
@@ -498,7 +514,7 @@ func fill_bfd_shop_data (bfd_obj *ocbinds.OpenconfigBfd_Bfd_BfdState, bfdshop_ob
         bfdshopkey.Vrf = value
     }
 
-    if value, ok := session_data["peer"].(string) ; ok {
+    if value, ok := session_data["local"].(string) ; ok {
         bfdshopkey.LocalAddress = value
     }
 
@@ -506,39 +522,95 @@ func fill_bfd_shop_data (bfd_obj *ocbinds.OpenconfigBfd_Bfd_BfdState, bfdshop_ob
     if err != nil {return false}
     ygot.BuildEmptyTree(bfdshop_obj)
 
-    if value, ok := session_data["status"].(ocbinds.E_OpenconfigBfd_BfdSessionState) ; ok {
-        bfdshop_obj.SessionState = value
+    if value, ok := session_data["status"].(string) ; ok {
+        if value == "down" {
+            bfdshop_obj.SessionState = ocbinds.OpenconfigBfd_BfdSessionState_DOWN
+        } else if value == "up" {
+            bfdshop_obj.SessionState = ocbinds.OpenconfigBfd_BfdSessionState_UP
+        } else if value == "shutdown" {
+            bfdshop_obj.SessionState = ocbinds.OpenconfigBfd_BfdSessionState_ADMIN_DOWN
+        } else if value == "init" {
+            bfdshop_obj.SessionState = ocbinds.OpenconfigBfd_BfdSessionState_INIT
+        } else {
+            bfdshop_obj.SessionState = ocbinds.OpenconfigBfd_BfdSessionState_UNSET
+        }
+
     }
-/*
-    if value, ok := session_data["status"].(ocbinds.E_OpenconfigBfd_BfdSessionState) ; ok {
+
+    /*if value, ok := session_data["remote-status"].(ocbinds.E_OpenconfigBfd_BfdSessionState) ; ok {
         bfdshop_obj.RemoteSessionState = value
-    }
-*/
-    if value, ok := session_data["downtime"].(uint64) ; ok {
-        bfdshop_obj.LastFailureTime = &value
-	}	
+    }*/
 
-    if value, ok := session_data["id"].(string) ; ok {
-        bfdshop_obj.LocalDiscriminator = &value
-    }
+    if value, ok := session_data["downtime"].(float64) ; ok {
+        value64 := uint64(value)
+        bfdshop_obj.LastFailureTime = &value64
+    }   
 
-    if value, ok := session_data["remote-id"].(string) ; ok {
-        bfdshop_obj.RemoteDiscriminator = &value
+    if value, ok := session_data["id"].(float64) ; ok {
+        s := strconv.FormatFloat(value, 'f', -1, 64)
+        bfdshop_obj.LocalDiscriminator = &s
     }
 
-    if value, ok := session_data["diagnostic"].(ocbinds.E_OpenconfigBfd_BfdDiagnosticCode) ; ok {
-        bfdshop_obj.LocalDiagnosticCode = value
+    if value, ok := session_data["remote-id"].(float64) ; ok {
+        s := strconv.FormatFloat(value, 'f', -1, 64)
+        bfdshop_obj.RemoteDiscriminator = &s
     }
 
-    if value, ok := session_data["remote-diagnostic"].(ocbinds.E_OpenconfigBfd_BfdDiagnosticCode) ; ok {
-        bfdshop_obj.RemoteDiagnosticCode = value
+    if value, ok := session_data["diagnostic"].(string) ; ok {
+        if value == "ok" {
+            bfdshop_obj.LocalDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_UNSET
+        } else if value == "control detection time expired" {
+            bfdshop_obj.LocalDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_DETECTION_TIMEOUT
+        } else if value == "echo function failed" {
+            bfdshop_obj.LocalDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_ECHO_FAILED
+        } else if value == "neighbor signaled session down" {
+            bfdshop_obj.LocalDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_UNSET
+        } else if value == "forwarding plane reset" {
+            bfdshop_obj.LocalDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_FORWARDING_RESET
+        } else if value == "path down" {
+            bfdshop_obj.LocalDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_PATH_DOWN
+        } else if value == "concatenated path down" {
+            bfdshop_obj.LocalDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_CONCATENATED_PATH_DOWN
+        } else if value == "administratively down" {
+            bfdshop_obj.LocalDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_ADMIN_DOWN
+        } else if value == "reverse concatenated path down" {
+            bfdshop_obj.LocalDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_REVERSE_CONCATENATED_PATH_DOWN
+        } else {
+            bfdshop_obj.LocalDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_NO_DIAGNOSTIC
+        }
+
     }
 
-    if value, ok := session_data["remote-receive-interval"].(uint32) ; ok {
-        bfdshop_obj.RemoteMinimumReceiveInterval = &value
+    if value, ok := session_data["remote-diagnostic"].(string) ; ok {
+        if value == "ok" {
+            bfdshop_obj.RemoteDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_UNSET
+        } else if value == "control detection time expired" {
+            bfdshop_obj.RemoteDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_DETECTION_TIMEOUT
+        } else if value == "echo function failed" {
+            bfdshop_obj.RemoteDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_ECHO_FAILED
+        } else if value == "neighbor signaled session down" {
+            bfdshop_obj.RemoteDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_UNSET
+        } else if value == "forwarding plane reset" {
+            bfdshop_obj.RemoteDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_FORWARDING_RESET
+        } else if value == "path down" {
+            bfdshop_obj.RemoteDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_PATH_DOWN
+        } else if value == "concatenated path down" {
+            bfdshop_obj.RemoteDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_CONCATENATED_PATH_DOWN
+        } else if value == "administratively down" {
+            bfdshop_obj.RemoteDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_ADMIN_DOWN
+        } else if value == "reverse concatenated path down" {
+            bfdshop_obj.RemoteDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_REVERSE_CONCATENATED_PATH_DOWN
+        } else {
+            bfdshop_obj.RemoteDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_NO_DIAGNOSTIC
+        }
     }
 
-    if value, ok := session_data[""].(bool) ; ok {
+    if value, ok := session_data["remote-receive-interval"].(float64) ; ok {
+        value32 := uint32(value)
+        bfdshop_obj.RemoteMinimumReceiveInterval = &value32
+    }
+
+    /*if value, ok := session_data[""].(bool) ; ok {
         bfdshop_obj.DemandModeRequested = &value
     }
 
@@ -560,201 +632,324 @@ func fill_bfd_shop_data (bfd_obj *ocbinds.OpenconfigBfd_Bfd_BfdState, bfdshop_ob
 
     if value, ok := session_data[""].(uint32) ; ok {
         bfdshop_obj.LocalMultiplier = &value
+    }*/
+
+    if value, ok := session_data["transmit-interval"].(float64) ; ok {
+        value32 := uint32(value)
+        bfdshop_obj.NegotiatedTransmissionInterval = &value32
     }
 
-    if value, ok := session_data["transmit-interval"].(uint32) ; ok {
-        bfdshop_obj.NegotiatedTransmissionInterval = &value
+    if value, ok := session_data["receive-interval"].(float64) ; ok {
+        value32 := uint32(value)
+        bfdshop_obj.NegotiatedReceiveInterval = &value32
     }
 
-    if value, ok := session_data["receive-interval"].(uint32) ; ok {
-        bfdshop_obj.NegotiatedReceiveInterval = &value
+    if value, ok := session_data["remote-transmit-interval"].(float64) ; ok {
+        value32 := uint32(value)
+        bfdshop_obj.RemoteDesiredTransmissionInterval = &value32
     }
 
-    if value, ok := session_data["remote-transmit-interval"].(uint32) ; ok {
-        bfdshop_obj.RemoteDesiredTransmissionInterval = &value
+    if value, ok := session_data["remote-echo-interval"].(float64) ; ok {
+        value32 := uint32(value)
+        bfdshop_obj.RemoteEchoReceiveInterval = &value32
     }
 
-    if value, ok := session_data["remote-echo-interval"].(uint32) ; ok {
-        bfdshop_obj.RemoteEchoReceiveInterval = &value
+    if value, ok := session_data["echo-interval"].(float64) ; ok {
+        value32 := uint32(value)
+        bfdshop_obj.MinimumEchoInterval = &value32
     }
 
-    if value, ok := session_data[""].(uint64) ; ok {
+    /*if value, ok := session_data[""].(uint64) ; ok {
         bfdshop_obj.LastUpTime = &value
-	}
+    }*/
 
-	bfdasyncstats = bfdshop_obj.Async
-	bfdechocstats = bfdshop_obj.Echo
-/*
-	if value, ok := counter_data[""].(uint64) ; ok {
+    bfdasyncstats = bfdshop_obj.Async
+    bfdechocstats = bfdshop_obj.Echo
+
+    /*if value, ok := counter_data[""].(uint64) ; ok {
         bfdasyncstats.LastPacketReceived = &value
-	}
+    }
 
-	if value, ok := counter_data[""].(uint64) ; ok {
+    if value, ok := counter_data[""].(uint64) ; ok {
         bfdasyncstats.LastPacketTransmitted = &value
-	}
-*/
-	if value, ok := counter_data["control-packet-input"].(uint64) ; ok {
-        bfdasyncstats.ReceivedPackets = &value
-	}
+    }*/
 
-	if value, ok := counter_data["control-packet-output"].(uint64) ; ok {
-        bfdasyncstats.TransmittedPackets = &value
-	}
+    if value, ok := counter_data["control-packet-input"].(float64) ; ok {
+        value64 := uint64(value)
+        bfdasyncstats.ReceivedPackets = &value64
+    }
 
-	if value, ok := counter_data["stats.session_up"].(uint64) ; ok {
-        bfdasyncstats.UpTransitions = &value
-	}
+    if value, ok := counter_data["control-packet-output"].(float64) ; ok {
+        value64 := uint64(value)
+        bfdasyncstats.TransmittedPackets = &value64
+    }
 
-	if value, ok := counter_data["session-down"].(uint64) ; ok {
-        bfdshop_obj.FailureTransitions = &value
-	}
+    if value, ok := counter_data["session-up"].(float64) ; ok {
+        value64 := uint64(value)
+        bfdasyncstats.UpTransitions = &value64
+    }
 
-	if value, ok := counter_data[""].(bool) ; ok {
+    if value, ok := counter_data["session-down"].(float64) ; ok {
+        value64 := uint64(value)
+        bfdshop_obj.FailureTransitions = &value64
+    }
+
+    /*if value, ok := counter_data[""].(bool) ; ok {
         bfdechocstats.Active = &value
-	}
-/*
-	if value, ok := counter_data[""].(uint64) ; ok {
+    }
+
+    if value, ok := counter_data[""].(uint64) ; ok {
         bfdechocstats.LastPacketReceived = &value
-	}
+    }
 
-	if value, ok := counter_data[""].(uint64) ; ok {
+    if value, ok := counter_data[""].(uint64) ; ok {
         bfdechocstats.LastPacketTransmitted = &value
-	}
-*/
-	if value, ok := counter_data["bs->stats.rx_echo_pkt"].(uint64) ; ok {
-        bfdechocstats.ReceivedPackets = &value
-	}
+    }*/
 
-	if value, ok := counter_data["bs->stats.tx_echo_pkt"].(uint64) ; ok {
-        bfdechocstats.TransmittedPackets = &value
-	}
+    if value, ok := counter_data["echo-packet-input"].(float64) ; ok {
+        value64 := uint64(value)
+        bfdechocstats.ReceivedPackets = &value64
+    }
 
-	if value, ok := counter_data[""].(uint64) ; ok {
+    if value, ok := counter_data["echo-packet-output"].(float64) ; ok {
+        value64 := uint64(value)
+        bfdechocstats.TransmittedPackets = &value64
+    }
+
+    /*if value, ok := counter_data[""].(uint64) ; ok {
         bfdechocstats.UpTransitions = &value
-	}
+    }*/
 
     return true;
 }
 
 
+
 func fill_bfd_mhop_data (bfd_obj *ocbinds.OpenconfigBfd_Bfd_BfdState, bfdmhop_obj *ocbinds.OpenconfigBfd_Bfd_BfdState_MultiHopState, session_data map[string]interface{}, counter_data map[string]interface{}) bool {
 
-    var bfdmhopkey ocbinds.OpenconfigBfd_Bfd_BfdState_MultiHopState_Key
+    var bfdshopkey ocbinds.OpenconfigBfd_Bfd_BfdState_MultiHopState_Key
+    var bfdasyncstats *ocbinds.OpenconfigBfd_Bfd_BfdState_MultiHopState_Async
+    //var bfdechocstats *ocbinds.OpenconfigBfd_Bfd_BfdState_MultiHopState_Echo
 
-    if value, ok := session_data["status"].(string) ; ok {
-        bfdmhopkey.RemoteAddress = value
-    }
-
-    if value, ok := session_data["vrf"].(string) ; ok {
-        bfdmhopkey.Vrf = value
-    }
+    log.Info("fill_bfd_mhop_data")
 
     if value, ok := session_data["peer"].(string) ; ok {
-        bfdmhopkey.LocalAddress = value
+        bfdshopkey.RemoteAddress = value
     }
 
-    bfdmhop_obj, err := bfd_obj.NewMultiHopState(bfdmhopkey.RemoteAddress, bfdmhopkey.Vrf, bfdmhopkey.LocalAddress)
+    /*if value, ok := session_data["interface"].(string) ; ok {
+        bfdshopkey.Interface = value
+    }*/
+
+    if value, ok := session_data["vrf"].(string) ; ok {
+        bfdshopkey.Vrf = value
+    }
+
+    if value, ok := session_data["local"].(string) ; ok {
+        bfdshopkey.LocalAddress = value
+    }
+
+    bfdshop_obj, err := bfd_obj.NewMultiHopState(bfdshopkey.RemoteAddress, bfdshopkey.Vrf, bfdshopkey.LocalAddress)
     if err != nil {return false}
-    ygot.BuildEmptyTree(bfdmhop_obj)
+    ygot.BuildEmptyTree(bfdshop_obj)
 
+    if value, ok := session_data["status"].(string) ; ok {
+        if value == "down" {
+            bfdshop_obj.SessionState = ocbinds.OpenconfigBfd_BfdSessionState_DOWN
+        } else if value == "up" {
+            bfdshop_obj.SessionState = ocbinds.OpenconfigBfd_BfdSessionState_UP
+        } else if value == "shutdown" {
+            bfdshop_obj.SessionState = ocbinds.OpenconfigBfd_BfdSessionState_ADMIN_DOWN
+        } else if value == "init" {
+            bfdshop_obj.SessionState = ocbinds.OpenconfigBfd_BfdSessionState_INIT
+        } else {
+            bfdshop_obj.SessionState = ocbinds.OpenconfigBfd_BfdSessionState_UNSET
+        }
 
-    if value, ok := session_data["status"].(ocbinds.E_OpenconfigBfd_BfdSessionState) ; ok {
-        bfdmhop_obj.SessionState = value
-    }
-/*
-    if value, ok := session_data["status"].(ocbinds.E_OpenconfigBfd_BfdSessionState) ; ok {
-        bfdmhop_obj.RemoteSessionState = value
-    }
-*/
-    if value, ok := session_data["downtime"].(uint64) ; ok {
-        bfdmhop_obj.LastFailureTime = &value
-	}	
-
-    if value, ok := session_data["id"].(string) ; ok {
-        bfdmhop_obj.LocalDiscriminator = &value
     }
 
-    if value, ok := session_data["remote-id"].(string) ; ok {
-        bfdmhop_obj.RemoteDiscriminator = &value
+    /*if value, ok := session_data["remote-status"].(ocbinds.E_OpenconfigBfd_BfdSessionState) ; ok {
+        bfdshop_obj.RemoteSessionState = value
+    }*/
+
+    if value, ok := session_data["downtime"].(float64) ; ok {
+        value64 := uint64(value)
+        bfdshop_obj.LastFailureTime = &value64
+    }   
+
+    if value, ok := session_data["id"].(float64) ; ok {
+        s := strconv.FormatFloat(value, 'f', -1, 64)
+        bfdshop_obj.LocalDiscriminator = &s
     }
 
-    if value, ok := session_data["diagnostic"].(ocbinds.E_OpenconfigBfd_BfdDiagnosticCode) ; ok {
-        bfdmhop_obj.LocalDiagnosticCode = value
+    if value, ok := session_data["remote-id"].(float64) ; ok {
+        s := strconv.FormatFloat(value, 'f', -1, 64)
+        bfdshop_obj.RemoteDiscriminator = &s
     }
 
-    if value, ok := session_data["remote-diagnostic"].(ocbinds.E_OpenconfigBfd_BfdDiagnosticCode) ; ok {
-        bfdmhop_obj.RemoteDiagnosticCode = value
+    if value, ok := session_data["diagnostic"].(string) ; ok {
+        if value == "ok" {
+            bfdshop_obj.LocalDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_UNSET
+        } else if value == "control detection time expired" {
+            bfdshop_obj.LocalDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_DETECTION_TIMEOUT
+        } else if value == "echo function failed" {
+            bfdshop_obj.LocalDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_ECHO_FAILED
+        } else if value == "neighbor signaled session down" {
+            bfdshop_obj.LocalDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_UNSET
+        } else if value == "forwarding plane reset" {
+            bfdshop_obj.LocalDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_FORWARDING_RESET
+        } else if value == "path down" {
+            bfdshop_obj.LocalDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_PATH_DOWN
+        } else if value == "concatenated path down" {
+            bfdshop_obj.LocalDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_CONCATENATED_PATH_DOWN
+        } else if value == "administratively down" {
+            bfdshop_obj.LocalDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_ADMIN_DOWN
+        } else if value == "reverse concatenated path down" {
+            bfdshop_obj.LocalDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_REVERSE_CONCATENATED_PATH_DOWN
+        } else {
+            bfdshop_obj.LocalDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_NO_DIAGNOSTIC
+        }
+
     }
 
-    if value, ok := session_data["remote-receive-interval"].(uint32) ; ok {
-        bfdmhop_obj.RemoteMinimumReceiveInterval = &value
+    if value, ok := session_data["remote-diagnostic"].(string) ; ok {
+        if value == "ok" {
+            bfdshop_obj.RemoteDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_UNSET
+        } else if value == "control detection time expired" {
+            bfdshop_obj.RemoteDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_DETECTION_TIMEOUT
+        } else if value == "echo function failed" {
+            bfdshop_obj.RemoteDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_ECHO_FAILED
+        } else if value == "neighbor signaled session down" {
+            bfdshop_obj.RemoteDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_UNSET
+        } else if value == "forwarding plane reset" {
+            bfdshop_obj.RemoteDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_FORWARDING_RESET
+        } else if value == "path down" {
+            bfdshop_obj.RemoteDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_PATH_DOWN
+        } else if value == "concatenated path down" {
+            bfdshop_obj.RemoteDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_CONCATENATED_PATH_DOWN
+        } else if value == "administratively down" {
+            bfdshop_obj.RemoteDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_ADMIN_DOWN
+        } else if value == "reverse concatenated path down" {
+            bfdshop_obj.RemoteDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_REVERSE_CONCATENATED_PATH_DOWN
+        } else {
+            bfdshop_obj.RemoteDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_NO_DIAGNOSTIC
+        }
+    }
+
+    if value, ok := session_data["remote-receive-interval"].(float64) ; ok {
+        value32 := uint32(value)
+        bfdshop_obj.RemoteMinimumReceiveInterval = &value32
+    }
+
+    /*if value, ok := session_data[""].(bool) ; ok {
+        bfdshop_obj.DemandModeRequested = &value
     }
 
     if value, ok := session_data[""].(bool) ; ok {
-        bfdmhop_obj.DemandModeRequested = &value
+        bfdshop_obj.RemoteAuthenticationEnabled = &value
     }
 
     if value, ok := session_data[""].(bool) ; ok {
-        bfdmhop_obj.RemoteAuthenticationEnabled = &value
-    }
-
-    if value, ok := session_data[""].(bool) ; ok {
-        bfdmhop_obj.RemoteControlPlaneIndependent = &value
+        bfdshop_obj.RemoteControlPlaneIndependent = &value
     }
 
     if value, ok := session_data[""].(ocbinds.E_OpenconfigBfdExt_BfdSessionType) ; ok {
-        bfdmhop_obj.SessionType = value
+        bfdshop_obj.SessionType = value
     }
 
     if value, ok := session_data[""].(uint32) ; ok {
-        bfdmhop_obj.RemoteMultiplier = &value
+        bfdshop_obj.RemoteMultiplier = &value
     }
 
     if value, ok := session_data[""].(uint32) ; ok {
-        bfdmhop_obj.LocalMultiplier = &value
+        bfdshop_obj.LocalMultiplier = &value
+    }*/
+
+    if value, ok := session_data["transmit-interval"].(float64) ; ok {
+        value32 := uint32(value)
+        bfdshop_obj.NegotiatedTransmissionInterval = &value32
     }
 
-    if value, ok := session_data["transmit-interval"].(uint32) ; ok {
-        bfdmhop_obj.NegotiatedTransmissionInterval = &value
+    if value, ok := session_data["receive-interval"].(float64) ; ok {
+        value32 := uint32(value)
+        bfdshop_obj.NegotiatedReceiveInterval = &value32
     }
 
-    if value, ok := session_data["receive-interval"].(uint32) ; ok {
-        bfdmhop_obj.NegotiatedReceiveInterval = &value
+    if value, ok := session_data["remote-transmit-interval"].(float64) ; ok {
+        value32 := uint32(value)
+        bfdshop_obj.RemoteDesiredTransmissionInterval = &value32
     }
 
-    if value, ok := session_data["remote-transmit-interval"].(uint32) ; ok {
-        bfdmhop_obj.RemoteDesiredTransmissionInterval = &value
+    if value, ok := session_data["remote-echo-interval"].(float64) ; ok {
+        value32 := uint32(value)
+        bfdshop_obj.RemoteEchoReceiveInterval = &value32
     }
 
-    if value, ok := session_data["remote-echo-interval"].(uint32) ; ok {
-        bfdmhop_obj.RemoteEchoReceiveInterval = &value
-    }
+    /*if value, ok := session_data["echo-interval"].(float64) ; ok {
+        value32 := uint32(value)
+        bfdshop_obj.MinimumEchoInterval = &value32
+    }*/
 
-    if value, ok := session_data[""].(uint64) ; ok {
-        bfdmhop_obj.LastUpTime = &value
-	}
+    /*if value, ok := session_data[""].(uint64) ; ok {
+        bfdshop_obj.LastUpTime = &value
+    }*/
 
-	bfdasyncstats := bfdmhop_obj.Async
-/*
-	if value, ok := counter_data[""].(uint64) ; ok {
+    bfdasyncstats = bfdshop_obj.Async
+    //bfdechocstats = bfdshop_obj.Echo
+
+    /*if value, ok := counter_data[""].(uint64) ; ok {
         bfdasyncstats.LastPacketReceived = &value
-	}
+    }
 
-	if value, ok := counter_data[""].(uint64) ; ok {
+    if value, ok := counter_data[""].(uint64) ; ok {
         bfdasyncstats.LastPacketTransmitted = &value
-	}
-*/
-	if value, ok := counter_data[""].(uint64) ; ok {
-        bfdasyncstats.ReceivedPackets = &value
-	}
+    }*/
 
-	if value, ok := counter_data[""].(uint64) ; ok {
-        bfdasyncstats.TransmittedPackets = &value
-	}
+    if value, ok := counter_data["control-packet-input"].(float64) ; ok {
+        value64 := uint64(value)
+        bfdasyncstats.ReceivedPackets = &value64
+    }
 
-	if value, ok := counter_data["bs->stats.session_up"].(uint64) ; ok {
-        bfdasyncstats.UpTransitions = &value
-	}
+    if value, ok := counter_data["control-packet-output"].(float64) ; ok {
+        value64 := uint64(value)
+        bfdasyncstats.TransmittedPackets = &value64
+    }
+
+    if value, ok := counter_data["session-up"].(float64) ; ok {
+        value64 := uint64(value)
+        bfdasyncstats.UpTransitions = &value64
+    }
+
+    if value, ok := counter_data["session-down"].(float64) ; ok {
+        value64 := uint64(value)
+        bfdshop_obj.FailureTransitions = &value64
+    }
+
+    /*if value, ok := counter_data[""].(bool) ; ok {
+        bfdechocstats.Active = &value
+    }
+
+    if value, ok := counter_data[""].(uint64) ; ok {
+        bfdechocstats.LastPacketReceived = &value
+    }
+
+    if value, ok := counter_data[""].(uint64) ; ok {
+        bfdechocstats.LastPacketTransmitted = &value
+    }
+
+    if value, ok := counter_data["echo-packet-input"].(float64) ; ok {
+        value64 := uint64(value)
+        bfdechocstats.ReceivedPackets = &value64
+    }
+
+    if value, ok := counter_data["echo-packet-output"].(float64) ; ok {
+        value64 := uint64(value)
+        bfdechocstats.TransmittedPackets = &value64
+    }
+
+    if value, ok := counter_data[""].(uint64) ; ok {
+        bfdechocstats.UpTransitions = &value
+    }*/
 
     return true;
 }
