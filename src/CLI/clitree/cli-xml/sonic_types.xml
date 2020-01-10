@@ -871,6 +871,13 @@ limitations under the License.
         />
     <!--=======================================================-->
     <PTYPE
+        name="RANGE_1_5000"
+        method="integer"
+        pattern="1..5000"
+        help=""
+        />
+    <!--=======================================================-->
+    <PTYPE
         name="INT32_OR_IP_ADDR"
         pattern="(&IPV4_ADDRESS;|&UINT_32_RANGE;)"
         help="A.B.C.D or [1..4294967295]"

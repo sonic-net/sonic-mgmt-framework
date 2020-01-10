@@ -1,0 +1,21 @@
+module sonic-neighbor-annot {
+
+    yang-version "1";
+
+    namespace "http://openconfig.net/yang/annotation/snbr-annot";
+    prefix "snbr-annot";
+
+    import sonic-neighbor { prefix snbr; }
+    import sonic-extensions { prefix sonic-ext; }
+
+    deviation /snbr:sonic-neighbor/snbr:NEIGH_TABLE {
+        deviate add {
+            sonic-ext:db-name "APPL_DB";
+        }
+    }
+    deviation /snbr:clear-neighbors {
+        deviate add {
+            sonic-ext:rpc-callback "rpc_clear_neighbors";
+        }
+    }
+}

@@ -42,3 +42,4 @@ ietf-snmp-annot.yang
 openconfig-bfd.yang
 openconfig-bfd-ext.yang
 openconfig-bfd-annot.yang
+openconfig-rib-bgp-ext.yang
