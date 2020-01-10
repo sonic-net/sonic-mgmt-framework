@@ -85,7 +85,7 @@ $(YANGAPI_DIR)/.done:  $(YANG_MOD_FILES) $(YANG_COMMON_FILES)
 		-f swaggerapi \
 		--with-md-doc \
 		--outdir $(YANGAPI_DIR) \
-		--mdoutdir $(MD_DIR) \
+		--md-outdir $(MD_DIR) \
 		--plugindir $(PYANG_PLUGIN_DIR) \
 		-p $(YANGDIR_COMMON):$(YANGDIR):$(YANGDIR_EXTENSIONS_DIR) \
 		$(YANG_MOD_FILES) $(YANG_MOD_EXTENSION_FILES)

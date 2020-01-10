@@ -54,7 +54,7 @@ $(SONIC_YANGAPI_DIR)/.sonic_done: $(SONIC_YANG_MOD_FILES) $(SONIC_YANG_COMMON_FI
 		-f swaggerapi \
 		--with-md-doc \
 		--outdir $(SONIC_YANGAPI_DIR) \
-		--mdoutdir $(SONIC_MD_DIR) \
+		--md-outdir $(SONIC_MD_DIR) \
 		--plugindir $(SONIC_PYANG_PLUGIN_DIR) \
 		-p $(SONIC_YANGDIR_COMMON):$(SONIC_YANGDIR) \
 		$(SONIC_YANG_MOD_FILES)
