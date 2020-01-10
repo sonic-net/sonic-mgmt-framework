@@ -57,8 +57,8 @@ function insert_in()
         printvalue="${pref}${value} ]>"
     fi
     #echo Insert_in $filename. Option $option
-    while read -r line; do
-        echo ${line} >> $outfile
+    while IFS= read -r line; do
+        echo "${line}" >> $outfile
         if [[ "${line}" =~ ${matchpattern} ]]; then
             #echo Match found for ${line}
             echo "${printvalue}" >> $outfile
