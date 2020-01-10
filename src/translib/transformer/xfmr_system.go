@@ -20,7 +20,6 @@ func init () {
     XlateFuncBind("DbToYang_sys_memory_xfmr", DbToYang_sys_memory_xfmr)
     XlateFuncBind("DbToYang_sys_cpus_xfmr", DbToYang_sys_cpus_xfmr)
     XlateFuncBind("DbToYang_sys_procs_xfmr", DbToYang_sys_procs_xfmr)
-   // XlateFuncBind("DbToYang_sys_aaa_auth_xfmr", DbToYang_sys_aaa_auth_xfmr)
     XlateFuncBind("YangToDb_sys_aaa_auth_xfmr", YangToDb_sys_aaa_auth_xfmr)
 }
 
@@ -321,8 +320,16 @@ var YangToDb_sys_aaa_auth_xfmr SubTreeXfmrYangToDb = func(inParams XfmrParams) (
     userName := pathInfo.Var("username")
     log.Info("username:",userName)
 
-	var status bool
-	var err_str string
+    var status bool
+    var err_str string
+    if _ , _ok := inParams.txCache[userName];!_ok {
+	    inParams.txCache[userName] = userName
+    } else {
+	    if _,present := inParams.txCache["tx_err"]; present {
+	            return nil, fmt.Errorf("%s",inParams.txCache["tx_err"])
+	        }
+	    return nil,nil
+    }
     if inParams.oper == DELETE {
 	status , err_str = hostAccountUserDel(userName)
     } else {
@@ -333,12 +340,15 @@ var YangToDb_sys_aaa_auth_xfmr SubTreeXfmrYangToDb = func(inParams XfmrParams) (
             status, err_str = hostAccountUserAdd(*(value.Config.Username), temp.String, *(value.Config.PasswordHashed))
         }
     }
-
-	if !status {
-		log.Info("Error in operation:",err_str)
-		return nil, fmt.Errorf("%s",err_str)
+	if (!status) {
+		if _,present := inParams.txCache["tx_err"]; !present {
+		    log.Info("Error in operation:",err_str)
+	            inParams.txCache["tx_err"] =err_str 
+	            return nil, fmt.Errorf("%s",err_str)
+	        }
 	} else {
 		return nil, nil
 	}
+	return nil,nil
 }
 
