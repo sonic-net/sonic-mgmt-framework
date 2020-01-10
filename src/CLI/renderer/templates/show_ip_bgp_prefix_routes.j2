@@ -1,0 +1,149 @@
+{% set vars = {'routerId': ""} %}
+{% set vars = {'asNum': ""} %}
+{% set vars = {'vrf': ""} %}
+{% set vars = {'prefix': ""} %}
+{% set vars = {'nxtHop': ""} %}
+{% set vars = {'neighbor': ""} %}
+{% set vars = {'pathId': ""} %}
+{% set vars = {'med': ""} %}
+{% set vars = {'locPref': ""} %}
+{% set vars = {'origin': "IGP"} %}
+{% set vars = {'weight': "0"} %}
+{% set vars = {'numpaths': "0"} %}
+{% set vars = {'bestpaths': "0"} %}
+{% set numpaths = 0 %}
+{% set bestpaths = 0 %}
+{% set vars = {'validRoute': False} %}
+{% set vars = {'bestRoute': False} %}
+{% set vars = {'time': "0"} %}
+{% set vars = {'members': ""} %}
+{% if json_output -%}
+  {% for key in json_output %}
+    {% if "openconfig-network-instance:config" in key %}
+      {% set globalConfig = json_output["openconfig-network-instance:config"] %}
+      {% if vars.update({'routerId':globalConfig["router-id"]}) %}{% endif %}
+      {% if vars.update({'asNum':globalConfig["as"]}) %}{% endif %}
+    {% endif %}
+  {% endfor %}
+{% endif %}
+{% if json_output -%}
+  {% for key in json_output %}
+     {% if "openconfig-rib-bgp-ext:route" in key %}
+        {% set routeList = json_output["openconfig-rib-bgp-ext:route"] %}
+        {% if routeList %}
+         {% for route in routeList %}
+         {% if vars.update({'prefix':route["prefix"]}) %}{% endif %}
+         {% set prefixPathsList = route["loc-rib-prefix-paths"] %}
+         {% set pathsList = prefixPathsList["paths"] %}
+         {% if pathsList %}
+          {% set pathList = pathsList["path"] %}
+          {% if pathList %}
+            {% for path in pathList %}
+               {% set numpaths = numpaths + 1 %}
+               {% for key in path %}
+                 {% if "state" in key %}
+                    {% if vars.update({'validRoute':False}) %} {% endif %}
+                    {% if vars.update({'bestRoute':False}) %} {% endif %}
+                    {% if vars.update({'validRoute':path["state"]["valid-route"]}) %}{% endif %}
+                    {% if vars.update({'bestRoute':path["state"]["best-path"]}) %}{% endif %}
+                    {% if vars.update({'pathId':path["state"]["path-id"]}) %}{% endif %}
+                    {% if vars.update({'routerId':path["state"]["remote-router-id"]}) %}{% endif %}
+                    {% if vars.bestRoute == True %}
+                      {% set bestpaths = bestpaths + 1 %}
+                      {% if vars.update({'bestpaths': bestpaths}) %}{% endif %}
+                    {% endif %}
+                 {% endif %}
+               {% endfor %}
+               {% if vars.update({'numpaths': numpaths}) %}{% endif %}
+            {% endfor %}
+          {% endif %}
+         {% endif %}
+         {% endfor %}
+        {% endif %}
+      {% endif %}
+      {% if "vrf" in key %}
+         {% if vars.update({'vrf':json_output["vrf"]}) %}{% endif %}
+      {% endif %}
+   {% endfor %}
+BGP routing table entry for {{ vars.prefix }}
+Paths: ({{ vars.numpaths }} available, best #{{ vars.bestpaths }}, table default)
+{% endif %}
+{% if json_output -%}
+  {% for key in json_output %}
+     {% if "openconfig-rib-bgp-ext:route" in key %}
+         {% set routeList = json_output["openconfig-rib-bgp-ext:route"] %}
+         {% if routeList %}
+         {% for route in routeList %}
+         {% set prefixPathsList = route["loc-rib-prefix-paths"] %}
+         {% set pathsList = prefixPathsList["paths"] %}
+         {% if pathsList %}
+         {% set pathList = pathsList["path"] %}
+         {% if pathList %}
+            {% for path in pathList %}
+               {% if vars.update({'members':''}) %} {% endif %}
+               {% if vars.update({'weight':"0"}) %}{% endif %}
+               {% for key in path %}
+                 {% if "state" in key %}
+                    {% if vars.update({'neighbor':path["state"]["origin"]}) %}{% endif %}
+                    {% if vars.update({'time':path["state"]["last-modified"]}) %}{% endif %}
+                    {% if vars.update({'validRoute':False}) %} {% endif %}
+                    {% if vars.update({'bestRoute':False}) %} {% endif %}
+                    {% if vars.update({'validRoute':path["state"]["valid-route"]}) %}{% endif %}
+                    {% if vars.update({'bestRoute':path["state"]["best-path"]}) %}{% endif %}
+                    {% if vars.update({'pathId':path["state"]["path-id"]}) %}{% endif %}
+                    {% if vars.validRoute == True %}
+                       {% if vars.update({'validRoute':"valid"}) %}{% endif %}
+                    {% else %}
+                       {% if vars.update({'validRoute':""}) %}{% endif %}
+                    {% endif %}
+                    {% if vars.bestRoute == True %}
+                      {% if vars.update({'bestRoute':"best"}) %}{% endif %}
+                    {% else %}
+                      {% if vars.update({'bestRoute':""}) %}{% endif %}
+                    {% endif %}
+                 {% endif %}
+                 {% if "attr-sets" in key %}
+                    {% set attr_sets = path[key] %}
+                    {% if vars.update({'origin':attr_sets["origin"]}) %}{% endif %}
+                    {% if vars.origin == 'IGP' %}
+                    {% if vars.update({'origin':"IGP"}) %}{% endif %}
+                    {% elif vars.origin == 'EGP' %}
+                    {% if vars.update({'origin':"EGP"}) %}{% endif %}
+                    {% else %}
+                    {% if vars.update({'origin':"incomplete"}) %}{% endif %}
+                    {% endif %}
+                    {% if vars.update({'nxtHop':attr_sets["next-hop"]}) %}{% endif %}
+                    {% if vars.update({'med':attr_sets["med"]}) %}{% endif %}
+                    {% if vars.update({'locPref':attr_sets["local-pref"]}) %}{% endif %}
+                    {% if "as-path" in attr_sets %}
+                       {% set as_path = attr_sets['as-path'] %}
+                       {% if "as-segment" in as_path %}
+                        {% set segements = as_path['as-segment'] %}
+                        {% set temp = [] %}
+                        {% for segment in segements %}
+                          {% if "state" in segment %}
+                             {% set mems = segment['state']['member'] %}
+                             {% for mem in mems %}
+                                {%  do temp.append(mem) %}
+                             {% endfor %}
+                          {% endif %}
+                        {% endfor %}
+                        {% if vars.update({'members': temp|join(" ")}) %} {% endif %}
+                       {% endif %}
+                    {% endif %}
+                 {% endif %}
+              {% endfor %}
+ 
+{{'  %s'|format(vars.members)}}
+{{'    %s'|format(vars.neighbor)}} from {{'%-1s'|format(vars.nxtHop)}} ({{'%-1s'|format(vars.routerId)}})
+{{'      Origin '}}{{ vars.origin }}{{', '}}{{vars.validRoute}}{% if vars.bestRoute == 'best' %}{{', '}}{{vars.bestRoute}}{% endif %}{{'\n'}}
+{{'      Last update: '}} {{datetimeformat(vars.time)|string}}{{'\n'}}
+            {% endfor %}
+         {% endif %}
+         {% endif %}
+         {% endfor %}
+         {% endif %}
+     {% endif %}
+  {% endfor %}
+{% endif %}
+

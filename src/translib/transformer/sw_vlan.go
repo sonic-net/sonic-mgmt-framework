@@ -1118,13 +1118,9 @@ func deleteVlanIntfAndMembers(inParams *XfmrParams, vlanName *string) error {
         return errors.New(errStr)
     }
     /* Handle VLAN_INTERFACE TABLE */
-    ipCnt := 0
-    _ = interfaceIPcount(VLAN_INTERFACE_TN, inParams.d, vlanName, &ipCnt)
-    if ipCnt > 0 {
-        errStr := "Need to first remove IP address entry"
-        log.Error(errStr)
-        return errors.New(errStr)
-
+    err = validateL3ConfigExists(inParams.d, vlanName)
+    if err != nil {
+        return err
     }
 
     memberPortsVal, ok := vlanEntry.Field["members@"]

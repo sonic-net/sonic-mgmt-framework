@@ -3,7 +3,6 @@
 {% set vars = {'name': ""} %}
 {% set vars = {'admin_state': ""} %}
 {% set vars = {'oper_state': ""} %}
-{% set vars = {'index': ""} %}
 {% set vars = {'description':""} %}
 {% set vars = {'mtu': ""} %}
 {% set vars = {'ipv4_src_pfx': ""} %}
@@ -38,7 +37,6 @@
         {% if vars.update({'name':interface[key]["name"]}) %}{% endif %}
         {% if vars.update({'admin_state':interface[key]["admin-status"]}) %}{% endif %}
         {% if vars.update({'oper_state':interface[key]["oper-status"]}) %}{% endif %}
-        {% if vars.update({'index':interface[key]["ifindex"]}) %}{% endif %}
 	{% if vars.update({'description':interface[key]["description"]}) %}{% endif %}
         {% if vars.update({'mtu':interface[key]["mtu"]}) %}{% endif %}
         {% if vars.update({'in_pkts':interface[key]["counters"]["in-pkts"]}) %}{% endif %}
