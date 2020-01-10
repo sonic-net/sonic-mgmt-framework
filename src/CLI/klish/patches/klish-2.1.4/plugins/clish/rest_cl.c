@@ -100,10 +100,11 @@ CURL *curl = NULL;
 
 static int _init_curl() {
 
-    REST_API_ROOT = getenv(REST_API_ROOT);
+    REST_API_ROOT = getenv("REST_API_ROOT");
     if (!REST_API_ROOT) {
         REST_API_ROOT = "https://localhost:8443";
     }
+
     curl_global_init(CURL_GLOBAL_ALL);
 
     curl = curl_easy_init();
@@ -161,6 +162,10 @@ int rest_cl(char *cmd, const char *buff)
 
   syslog(LOG_DEBUG, "clish_restcl: cmd=%s", cmd);
 
+  if (curl == NULL) {
+      _init_curl();
+  }
+
   oper = strstr(arg, "oper=");
   if (oper) {
     oper = oper+5;
@@ -186,10 +191,6 @@ int rest_cl(char *cmd, const char *buff)
   Response ret = {};
   ret.memory = NULL;
   ret.size = 0;
-
-  if (curl == NULL) {
-      _init_curl();
-  }
 
   if(curl) {
 
