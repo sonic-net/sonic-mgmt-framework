@@ -209,6 +209,8 @@ int rest_cl(char *cmd, const char *buff)
                 (curl_off_t)up_obj.sizeleft);
 
         curl_easy_setopt(curl, CURLOPT_UPLOAD, 1L);
+    } else {
+        curl_easy_setopt(curl, CURLOPT_UPLOAD, 0L);
     }
  
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &ret);
