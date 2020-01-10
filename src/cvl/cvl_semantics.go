@@ -440,7 +440,7 @@ func (c *CVL) checkIfListNodeExists(dest, src *xmlquery.Node) *xmlquery.Node {
 	}
 
 	tableName := getYangListToRedisTbl(src.Data)
-	redisKey :=getAttrNodeVal(src, "key")
+	redisKey := getAttrNodeVal(src, "key")
 
 	if (tableName == "" || redisKey == "") {
 		return nil
@@ -454,6 +454,12 @@ func (c *CVL) checkIfListNodeExists(dest, src *xmlquery.Node) *xmlquery.Node {
 	//CREATE/UPDATE/DELETE request for same table/key points to
 	//same yang list in request cache
 	yangList := entry[0].yangData
+
+	if (yangList == nil || yangList.Parent == nil) {
+		//Source node does not exist in destination
+		return nil
+	}
+
 	if (dest.Parent == yangList.Parent) {
 		//Same parent means yang list already exists in destination tree
 		return yangList
