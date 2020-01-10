@@ -2336,7 +2336,6 @@ var DbToYang_bgp_routes_get_xfmr SubTreeXfmrDbToYang = func(inParams XfmrParams)
             }
     }
 
-<<<<<<< HEAD
     switch targetUriPath {
         case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib": fallthrough
         case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis": fallthrough
@@ -2354,8 +2353,6 @@ var DbToYang_bgp_routes_get_xfmr SubTreeXfmrDbToYang = func(inParams XfmrParams)
             }
     }
 
-||||||| merged common ancestors
-=======
     switch targetUriPath {
         case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv4-unicast/openconfig-rib-bgp-ext:loc-rib-prefix/routes/route":
             if (rib_key.afiSafiName == "") || (rib_key.afiSafiName == "IPV4_UNICAST") {
@@ -2375,7 +2372,6 @@ var DbToYang_bgp_routes_get_xfmr SubTreeXfmrDbToYang = func(inParams XfmrParams)
             }
     }
 
->>>>>>> github/dell_sonic
     return err;
 }
 
