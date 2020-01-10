@@ -166,11 +166,11 @@ def resetSwaggerDict():
 def documentFormatter(doc_obj, mdFh, mode):
     if len(doc_obj) > 0:
         if mode == "config":
-            mdFh.write("## %s\n" % ("Configuration APIs"))
+            mdFh.write("\n## %s\n\n" % ("Configuration APIs"))
         elif mode == "operstate":
-            mdFh.write("## %s\n" % ("Operational-state APIs"))
+            mdFh.write("\n## %s\n\n" % ("Operational-state APIs"))
         elif mode == "operations":
-            mdFh.write("## %s\n" % ("Operations APIs"))
+            mdFh.write("\n## %s\n\n" % ("Operations APIs"))
         else:
             pass
 
@@ -237,7 +237,9 @@ def mdGen(ctx, module):
         else:
             mdFn = ctx.opts.mdoutdir + '/' + module.i_modulename + ".md"
         mdFh = open(mdFn,'w')
-        mdFh.write("# The RESTCONF APIs for %s\n" % (module.i_modulename))
+        mdFh.write("# The RESTCONF APIs for %s\n\n" % (module.i_modulename))
+        if module.search_one('description') is not None:
+            mdFh.write("%s\n\n" % (module.search_one('description').arg.encode('utf8')))
     else:
         # No content
         return
@@ -248,7 +250,7 @@ def mdGen(ctx, module):
     if len(doc_operstate) > 0:
         mdFh.write("* [%s](#%s)\n" % ("Operational-state APIs","Operational-state-APIs"))
     if len(doc_operations) > 0:
-        mdFh.write("* [%s](#%s)\n\n\n" % ("Operations API","Operations-API"))
+        mdFh.write("* [%s](#%s)\n" % ("Operations API","Operations-API"))
 
     documentFormatter(doc_config, mdFh, mode = "config")
     documentFormatter(doc_operstate, mdFh, mode = "operstate")
@@ -267,7 +269,7 @@ class OpenApiPlugin(plugin.PyangPlugin):
                                  type="string",
                                  dest="outdir",
                                  help="Output directory for specs"),
-            optparse.make_option("--mdoutdir",
+            optparse.make_option("--md-outdir",
                                  type="string",
                                  dest="mdoutdir",
                                  help="Output directory for markdown documents"),                                 
