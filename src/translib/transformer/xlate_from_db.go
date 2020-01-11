@@ -885,14 +885,16 @@ func dbDataToYangJsonCreate(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db
 						tblList := xfmrTblHandlerFunc(xfmrTblFunc, inParams)
 						if len(tblList) > 1 {
 							log.Warningf("Table transformer returned more than one table for container %v", reqXpath)
-							tableXfmrFlag = true
 						}
 						if len(tblList) == 0 {
 							log.Warningf("Table transformer returned no table for conatiner %v", reqXpath)
 							tableXfmrFlag = true
 						}
 						if !tableXfmrFlag {
-							dbDataFromTblXfmrGet(tblList[0], inParams, dbDataMap)
+                                                      for _, tbl := range tblList {
+                                                               dbDataFromTblXfmrGet(tbl, inParams, dbDataMap)
+                                                      }
+
 						}
 					} else {
 						log.Warningf("empty table transformer function name for xpath - %v", reqXpath)
