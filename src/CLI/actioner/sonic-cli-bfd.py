@@ -142,12 +142,7 @@ def invoke_show_api(func, args=[]):
 		keypath = cc.Path('/restconf/data/openconfig-bfd:bfd/openconfig-bfd-ext:bfd-state')
 		response = api.get(keypath)
 		if response.ok():
-			tmp = {}
-			tmp['sessions'] = response.content['openconfig-bfd-ext:bfd-state']
-			d['openconfig-bfd-ext:sessions'] = tmp
-			d.update(response.content)
-	
-			return d
+			return response.content
   
 	elif func == 'get_openconfig_bfd_ext_bfd_sessions_single_hop':
 		d = {}
@@ -180,7 +175,8 @@ def invoke_show_api(func, args=[]):
 
 def run(func, args):
 	if func == 'get_bfd_peers':
-		response = invoke_show_api(func, args)
+		content = invoke_show_api(func, args)
+		show_cli_output(args[0], content)
 	elif func == 'get_openconfig_bfd_ext_bfd_sessions_single_hop':
 		response = invoke_show_api(func, args)
 		show_cli_output(args[0], response)
@@ -188,13 +184,13 @@ def run(func, args):
 		response = invoke_show_api(func, args)
 		show_cli_output(args[0], response)
 	else:
-	response = invoke_api(func, args)
+		response = invoke_api(func, args)
 
-	if response.ok():
-		if response.content is not None:
-			print("Failed")
-	else:
-		print(response.error_message())
+		if response.ok():
+			if response.content is not None:
+				print("Failed")
+		else:
+			print(response.error_message())
 
 if __name__ == '__main__':
 

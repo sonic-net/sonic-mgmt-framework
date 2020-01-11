@@ -40,15 +40,15 @@ module openconfig-bfd-annot {
       }
     }
 
-    deviation /oc-bfd:bfd/oc-bfd-ext:bfd-state/oc-bfd-ext:single-hop-state {
+    deviation /oc-bfd:bfd/oc-bfd-ext:bfd-state {
       deviate add {
-        sonic-ext:subtree-transformer "bfd_shop_state_xfmr";
+        sonic-ext:subtree-transformer "bfd_state_xfmr";
       }
     }
 
-    deviation /oc-bfd:bfd/oc-bfd-ext:bfd-state/oc-bfd-ext:multi-hop-state {
+    /*deviation /oc-bfd:bfd/oc-bfd-ext:bfd-state/oc-bfd-ext:multi-hop-state {
       deviate add {
         sonic-ext:subtree-transformer "bfd_mhop_state_xfmr";
       }
-    }
+    }*/
 }
