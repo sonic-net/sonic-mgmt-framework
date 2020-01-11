@@ -2,7 +2,7 @@
     {% set config = json_output['openconfig-network-instance:config'] %}
     {{-'BGP router identifier '}}{{config['router-id']}}{{', local AS number '}}{{config['as']}}
     {{-'\n' }}
-    {{-'Neighbor        V   AS    MsgRcvd   MsgSent   InQ     OutQ    Up/Down                 State'}}
+    {{-'Neighbor        V   AS    MsgRcvd   MsgSent   InQ     OutQ    Up/Down                 State/PfxRcd'}}
     {% set neighbor_list = json_output['openconfig-network-instance:neighbors'] %}
     {% if 'neighbor' in neighbor_list %}
         {% set neighbors = neighbor_list['neighbor'] %}
