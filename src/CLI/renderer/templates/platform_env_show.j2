@@ -1,0 +1,38 @@
+{% for subcomponent, subcomponent_val in json_output.items() %}
+{{ '\n'.ljust(20) }}
+{% if subcomponent == 'openconfig-platform:subcomponents' %}
+{% set  subcomponent_list = subcomponent_val['subcomponent'] %}
+{% for subcomponent_inst in subcomponent_list %}
+{% set subcomp_name = subcomponent_inst['name'].strip() %}
+{{subcomp_name.ljust(20)}}
+{% set sub_comp_state = subcomponent_inst['state'] %}
+{% for attr1 in sub_comp_state %}
+{% if attr1 == 'openconfig-platform-ext:sensor-category' %}
+{% for sensor_cat_inst in sub_comp_state['openconfig-platform-ext:sensor-category'] %}
+{% set sensor_cat_name = sensor_cat_inst['category'].strip() %}
+{{' '.ljust(3) }}{{sensor_cat_name.ljust(20)}}
+{% for sensor_inst in sensor_cat_inst['sensor'] %}
+{% set sensor_name = sensor_inst['name'].strip() + ':'  %}
+{% set sensor_state = sensor_inst['state'].strip() %}
+{{ ' '.ljust(7) }}{{sensor_name.ljust(30)}}{{sensor_state.ljust(20)}}
+{% endfor %}
+{% if state == 'openconfig-platform:state' %}
+{% for key in component %}
+{% set key_val = component[key] %}
+{% if key == 'oper-status' %}
+{% set temp = key_val.split(':') %}
+{% if temp[temp|length - 1] is not none %}
+{% set  key_val = temp[temp|length - 1] %}
+{% endif %}
+{% endif %}
+{{key.ljust(20)}}:{{key_val}}
+{% endfor %}
+{% endif %}
+{% endfor %}
+{% endif %}
+{% endfor %}
+{{ '\n'.ljust(20) }}
+{{ '\n'.ljust(20) }}
+{% endfor %}
+{% endif %}
+{% endfor %}
