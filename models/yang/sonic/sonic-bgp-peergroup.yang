@@ -8,7 +8,7 @@ module sonic-bgp-peergroup {
     }
 
     import sonic-bgp-common {
-      prefix sbc;
+        prefix sbc;
     }
 
     import sonic-bgp-global {
@@ -43,55 +43,55 @@ module sonic-bgp-peergroup {
 
                 leaf peer_group_name {
                     type string;
-		    description "Peer group name";
-		}
-		uses sbc:sonic-bgp-cmn;
+                    description "Peer group name";
+                }
+                uses sbc:sonic-bgp-cmn;
             }
         }
 
         container BGP_PEER_GROUP_AF {
-	    list BGP_PEER_GROUP_AF_LIST {
+            list BGP_PEER_GROUP_AF_LIST {
                 key "vrf_name peer_group_name afi_safi";
 
-	        leaf vrf_name {
-                type leafref {
-		        path "/sbgpg:sonic-bgp-global/sbgpg:BGP_GLOBALS/sbgpg:BGP_GLOBALS_LIST/sbgpg:vrf_name";
-		    }
-		    description "Network-instance/VRF name";
-            }
-
-            leaf peer_group_name {
-                type leafref {
-                    path "../../../BGP_PEER_GROUP/BGP_PEER_GROUP_LIST[vrf_name=current()/../vrf_name]/peer_group_name";
+                leaf vrf_name {
+                    type leafref {
+                        path "/sbgpg:sonic-bgp-global/sbgpg:BGP_GLOBALS/sbgpg:BGP_GLOBALS_LIST/sbgpg:vrf_name";
+                    }
+                    description "Network-instance/VRF name";
                 }
-            }
 
-            uses sbc:sonic-bgp-cmn-af;
+                leaf peer_group_name {
+                    type leafref {
+                        path "../../../BGP_PEER_GROUP/BGP_PEER_GROUP_LIST[vrf_name=current()/../vrf_name]/peer_group_name";
+                    }
+                }
+
+                uses sbc:sonic-bgp-cmn-af;
             }
         }
 
         container BGP_GLOBALS_LISTEN_PREFIX {
-          list BGP_GLOBALS_LISTEN_PREFIX_LIST {
-              key "vrf_name ip_prefix";
+            list BGP_GLOBALS_LISTEN_PREFIX_LIST {
+                key "vrf_name ip_prefix";
 
-              leaf vrf_name {
-                  type leafref {
-                      path "/sbgpg:sonic-bgp-global/sbgpg:BGP_GLOBALS/sbgpg:BGP_GLOBALS_LIST/sbgpg:vrf_name";
-                  }
-              }
+                leaf vrf_name {
+                    type leafref {
+                        path "/sbgpg:sonic-bgp-global/sbgpg:BGP_GLOBALS/sbgpg:BGP_GLOBALS_LIST/sbgpg:vrf_name";
+                    }
+                }
 
-              leaf ip_prefix {
-                  type inet:ip-prefix;
-              }
+                leaf ip_prefix {
+                    type inet:ip-prefix;
+                }
 
-              leaf peer_group {
-                  type leafref {
-                      path "../../../BGP_PEER_GROUP/BGP_PEER_GROUP_LIST[vrf_name=current()/../vrf_name]/peer_group_name";
-                  }
-                  description "Peer group name";
-              }
-          }
-      }
+                leaf peer_group {
+                    type leafref {
+                        path "../../../BGP_PEER_GROUP/BGP_PEER_GROUP_LIST[vrf_name=current()/../vrf_name]/peer_group_name";
+                    }
+                    description "Peer group name";
+                }
+            }
+        }
 
     }
 }

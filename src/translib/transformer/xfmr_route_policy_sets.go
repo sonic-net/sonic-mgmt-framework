@@ -73,6 +73,11 @@ var YangToDb_prefix_action_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrParams
     if inParams.param == nil {
         return res_map, err
     }
+    if inParams.oper == DELETE {
+        res_map["action"] = ""
+        return res_map, nil
+    }
+
     action, _ := inParams.param.(ocbinds.E_OpenconfigRoutingPolicyExt_RoutingPolicyExtActionType)
     log.Info("YangToDb_prefix_action_fld_xfmr: ", inParams.ygRoot, " Xpath: ", inParams.uri, " route-operation: ", action)
     if action == ocbinds.OpenconfigRoutingPolicyExt_RoutingPolicyExtActionType_PERMIT {
@@ -195,6 +200,10 @@ var YangToDb_prefix_set_mode_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrPara
     if inParams.param == nil {
         res_map["mode"] = ""
         return res_map, err
+    }
+    if inParams.oper == DELETE {
+        res_map["mode"] = ""
+        return res_map, nil
     }
 
     pathInfo := NewPathInfo(inParams.uri)
@@ -451,6 +460,10 @@ var YangToDb_community_match_set_options_fld_xfmr FieldXfmrYangToDb = func(inPar
         res_map["match_action"] = ""
         return res_map, err
     }
+    if inParams.oper == DELETE {
+        res_map["match_action"] = ""
+        return res_map, nil
+    }
 
     log.Info("YangToDb_community_match_set_options_fld_xfmr: ", inParams.ygRoot, " Xpath: ", inParams.uri)
 
@@ -563,6 +576,10 @@ var YangToDb_community_member_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrPar
     if inParams.param == nil {
         res_map["community_member@"] = ""
         return res_map, errors.New("Invalid Inputs")
+    }
+    if inParams.oper == DELETE {
+        res_map["community_member@"] = ""
+        return res_map, nil
     }
 
     pathInfo := NewPathInfo(inParams.uri)
@@ -725,6 +742,10 @@ var YangToDb_ext_community_match_set_options_fld_xfmr FieldXfmrYangToDb = func(i
         res_map["match_action"] = ""
         return res_map, err
     }
+    if inParams.oper == DELETE {
+        res_map["match_action"] = ""
+        return res_map, nil
+    }
 
     log.Info("YangToDb_ext_community_match_set_options_fld_xfmr: ", inParams.ygRoot, " Xpath: ", inParams.uri)
 
@@ -791,6 +812,10 @@ var YangToDb_ext_community_member_fld_xfmr FieldXfmrYangToDb = func(inParams Xfm
     if inParams.param == nil {
         res_map["community_member@"] = ""
         return res_map, errors.New("Invalid Inputs")
+    }
+    if inParams.oper == DELETE {
+        res_map["community_member@"] = ""
+        return res_map, nil
     }
 
     pathInfo := NewPathInfo(inParams.uri)

@@ -49,7 +49,7 @@
     <COMMAND name="peer-link" help="Set mclag Peer Interface">
       <PARAM name="if-subcommands" help="Interface subcommands" mode="switch" ptype="SUBCOMMAND">
         <PARAM name="Ethernet" help="Ethernet IEEE 802.3" ptype="SUBCOMMAND" mode="subcommand">
-          <PARAM name="PLK" help="Physical interface(Multiples of 4)" ptype="UINT"> </PARAM>
+          <PARAM name="PLK" help="Physical interface" ptype="UINT"> </PARAM>
         </PARAM>
         <PARAM name="PortChannel" help="Port-channel ID" ptype="SUBCOMMAND" mode="subcommand">
           <PARAM name="PLK" help="Port-channel id" ptype="LAG_ID"> </PARAM>

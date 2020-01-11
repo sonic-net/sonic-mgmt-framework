@@ -1,0 +1,155 @@
+module sonic-neighbor {
+    namespace "http://github.com/Azure/sonic-neighbor";
+    prefix snbrs;
+    yang-version 1.1;
+
+    import ietf-inet-types {
+        prefix inet;
+    }
+
+    import ietf-yang-types {
+        prefix yang;
+    }
+
+    import sonic-port {
+        prefix prt;
+    }
+
+    import sonic-portchannel {
+        prefix spc;
+    }
+
+    import sonic-vlan {
+        prefix svlan;
+    }
+
+    import sonic-mgmt-port {
+        prefix smt;
+    }
+
+    organization
+        "SONiC";
+
+    contact
+        "SONiC";
+
+    description
+        "SONiC yang for NEIGH_TABLE";
+
+    revision 2019-10-10 {
+        description
+            "Initial revision.";
+    }
+
+    rpc clear-neighbors {
+        input {
+            leaf force {
+                type boolean;
+                description "Set it to True to delete PERMANENT/Static entries as well";
+            }
+
+            leaf family {
+                type enumeration {
+                    enum IPv4;
+                    enum IPv6;
+                }
+                description "Address family (IPv4/IPv6)";
+            }
+
+            choice option {
+                leaf all {
+                    type boolean;
+                    description
+                        "Parameter for clearing all dynamic entries from ARP/NDP table";
+                }
+
+                leaf ip {
+                    type inet:ip-prefix;
+                    description
+                        "Parameter for deleting ARP/NDP entries related to the given IPv4/IPv6 address";
+                }
+
+                leaf ifname {
+                    type union {
+                        type leafref {
+                            path "/prt:sonic-port/prt:PORT/prt:PORT_LIST/prt:ifname";
+                        }
+                        type leafref {
+                            path "/spc:sonic-portchannel/spc:PORTCHANNEL/spc:PORTCHANNEL_LIST/spc:name";
+                        }
+                        type leafref {
+                            path "/svlan:sonic-vlan/svlan:VLAN/svlan:VLAN_LIST/svlan:name";
+                        }
+                        type leafref {
+                            path "/smt:sonic-mgmt-port/smt:MGMT_PORT/smt:MGMT_PORT_LIST/smt:ifname";
+                        }
+                    }
+                    description
+                        "Interface name: Parameter for deleting all ARP  entries
+                        related to the given inteface name Valid inputs are:
+                        Ethernet<port-number>/Vlan<Vlan ID>/PortChannel<port-channel ID>/Management<interface ID>.
+                        For example: Ethernet0, Vlan100, PortChannel10, eth0";
+                }
+            }
+        }
+
+        output {
+            leaf response {
+                type string;
+                description
+                    "Success / failure in clearing up the entire ARP table";
+            }
+        }
+    }
+
+    container sonic-neighbor {
+
+        container NEIGH_TABLE {
+            config false;
+
+            list NEIGH_TABLE_LIST {
+
+                key "ifname ip";
+
+                leaf ifname {
+                    type union {
+                        type leafref {
+                            path "/prt:sonic-port/prt:PORT/prt:PORT_LIST/prt:ifname";
+                        }
+                        type leafref {
+                            path "/spc:sonic-portchannel/spc:PORTCHANNEL/spc:PORTCHANNEL_LIST/spc:name";
+                        }
+                        type leafref {
+                            path "/svlan:sonic-vlan/svlan:VLAN/svlan:VLAN_LIST/svlan:name";
+                        }
+                        type leafref {
+                            path "/smt:sonic-mgmt-port/smt:MGMT_PORT/smt:MGMT_PORT_LIST/smt:ifname";
+                        }
+                    }
+                    description
+                        "Valid inputs are:
+                        Ethernet<port-number>/Vlan<Vlan ID>/PortChannel<port-channel ID>/Management<interface ID>.
+                        For example: Ethernet0, Vlan100, PortChannel10, eth0";
+                }
+
+                leaf ip {
+                    type inet:ip-prefix;
+                    description "IP address";
+                }
+
+                leaf neigh {
+                    type yang:mac-address;
+                    description "MAC address of the neighbor";
+                }
+
+                leaf family {
+                    type enumeration {
+                        enum IPv4;
+                        enum IPv6;
+                    }
+                    description "Address family (IPv4/IPv6)";
+                }
+            }
+        }
+    }
+}
