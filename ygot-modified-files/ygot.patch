@@ -1,7 +1,7 @@
 Binary files ygot-dir-orig/ygot/.git/index and ygot-dir/ygot/.git/index differ
 diff -ruN ygot-dir-orig/ygot/util/debug.go ygot-dir/ygot/util/debug.go
---- ygot-dir-orig/ygot/util/debug.go	2019-12-27 14:11:05.598981000 -0800
-+++ ygot-dir/ygot/util/debug.go	2019-12-27 14:27:05.102924000 -0800
+--- ygot-dir-orig/ygot/util/debug.go	2020-01-03 00:11:26.345137304 +0000
++++ ygot-dir/ygot/util/debug.go	2020-01-03 01:17:48.180322999 +0000
 @@ -12,6 +12,9 @@
  // See the License for the specific language governing permissions and
  // limitations under the License.
@@ -38,8 +38,8 @@ diff -ruN ygot-dir-orig/ygot/util/debug.go ygot-dir/ygot/util/debug.go
  	if len(yt.Pattern) != 0 {
  		out += fmt.Sprintf(", Pattern: %s", strings.Join(yt.Pattern, " or "))
 diff -ruN ygot-dir-orig/ygot/util/reflect.go ygot-dir/ygot/util/reflect.go
---- ygot-dir-orig/ygot/util/reflect.go	2019-12-27 14:11:05.605888000 -0800
-+++ ygot-dir/ygot/util/reflect.go	2019-12-27 14:27:05.106528000 -0800
+--- ygot-dir-orig/ygot/util/reflect.go	2020-01-03 00:12:50.750825980 +0000
++++ ygot-dir/ygot/util/reflect.go	2020-01-03 01:17:48.180322999 +0000
 @@ -12,6 +12,9 @@
  // See the License for the specific language governing permissions and
  // limitations under the License.
@@ -73,8 +73,8 @@ diff -ruN ygot-dir-orig/ygot/util/reflect.go ygot-dir/ygot/util/reflect.go
  	}
  
 diff -ruN ygot-dir-orig/ygot/util/schema.go ygot-dir/ygot/util/schema.go
---- ygot-dir-orig/ygot/util/schema.go	2019-12-27 14:11:05.610922000 -0800
-+++ ygot-dir/ygot/util/schema.go	2019-12-27 14:27:05.110248000 -0800
+--- ygot-dir-orig/ygot/util/schema.go	2020-01-03 00:12:50.750825980 +0000
++++ ygot-dir/ygot/util/schema.go	2020-01-03 01:17:48.180322999 +0000
 @@ -12,6 +12,9 @@
  // See the License for the specific language governing permissions and
  // limitations under the License.
@@ -240,8 +240,8 @@ diff -ruN ygot-dir-orig/ygot/ygen/genstate.go ygot-dir/ygot/ygen/genstate.go
  
  		es = append(es, en)
 diff -ruN ygot-dir-orig/ygot/ygot/struct_validation_map.go ygot-dir/ygot/ygot/struct_validation_map.go
---- ygot-dir-orig/ygot/ygot/struct_validation_map.go	2019-12-27 14:11:06.515058000 -0800
-+++ ygot-dir/ygot/ygot/struct_validation_map.go	2019-12-27 14:27:05.861545000 -0800
+--- ygot-dir-orig/ygot/ygot/struct_validation_map.go	2020-01-03 00:12:50.762826220 +0000
++++ ygot-dir/ygot/ygot/struct_validation_map.go	2020-01-03 01:19:17.538098419 +0000
 @@ -335,19 +335,20 @@
  // EmitJSON takes an input ValidatedGoStruct (produced by ygen with validation enabled)
  // and serialises it to a JSON string. By default, produces the Internal format JSON.
@@ -276,9 +276,24 @@ diff -ruN ygot-dir-orig/ygot/ygot/struct_validation_map.go ygot-dir/ygot/ygot/st
  
  	v, err := makeJSON(s, opts)
  	if err != nil {
+@@ -526,7 +527,13 @@
+ 				return err
+ 			}
+ 		default:
+-			dstField.Set(srcField)
++                    if srcField.Type().Implements(reflect.TypeOf((*GoEnum)(nil)).Elem()) == true {
++                        if srcField.Int() != 0 {
++                            dstField.Set(srcField)
++                        }
++                    } else {
++                        dstField.Set(srcField)
++                    }
+ 		}
+ 	}
+ 	return nil
 diff -ruN ygot-dir-orig/ygot/ytypes/container.go ygot-dir/ygot/ytypes/container.go
---- ygot-dir-orig/ygot/ytypes/container.go	2019-12-27 14:11:06.791850000 -0800
-+++ ygot-dir/ygot/ytypes/container.go	2019-12-27 14:27:06.068865000 -0800
+--- ygot-dir-orig/ygot/ytypes/container.go	2020-01-03 00:12:50.762826220 +0000
++++ ygot-dir/ygot/ytypes/container.go	2020-01-03 01:17:48.180322999 +0000
 @@ -12,12 +12,15 @@
  // See the License for the specific language governing permissions and
  // limitations under the License.
@@ -318,8 +333,8 @@ diff -ruN ygot-dir-orig/ygot/ytypes/container.go ygot-dir/ygot/ytypes/container.
  }
  
 diff -ruN ygot-dir-orig/ygot/ytypes/leaf.go ygot-dir/ygot/ytypes/leaf.go
---- ygot-dir-orig/ygot/ytypes/leaf.go	2019-12-27 14:11:06.797657000 -0800
-+++ ygot-dir/ygot/ytypes/leaf.go	2019-12-27 14:27:06.072560000 -0800
+--- ygot-dir-orig/ygot/ytypes/leaf.go	2020-01-03 00:12:50.762826220 +0000
++++ ygot-dir/ygot/ytypes/leaf.go	2020-01-03 01:17:48.184323078 +0000
 @@ -12,6 +12,9 @@
  // See the License for the specific language governing permissions and
  // limitations under the License.
@@ -414,8 +429,8 @@ diff -ruN ygot-dir-orig/ygot/ytypes/leaf.go ygot-dir/ygot/ytypes/leaf.go
  	return enumTypesMap[absoluteSchemaDataPath(schema)], nil
  }
 diff -ruN ygot-dir-orig/ygot/ytypes/list.go ygot-dir/ygot/ytypes/list.go
---- ygot-dir-orig/ygot/ytypes/list.go	2019-12-27 14:11:06.802797000 -0800
-+++ ygot-dir/ygot/ytypes/list.go	2019-12-27 14:27:06.076082000 -0800
+--- ygot-dir-orig/ygot/ytypes/list.go	2020-01-03 00:12:50.762826220 +0000
++++ ygot-dir/ygot/ytypes/list.go	2020-01-03 01:17:48.184323078 +0000
 @@ -12,6 +12,9 @@
  // See the License for the specific language governing permissions and
  // limitations under the License.
@@ -579,8 +594,8 @@ diff -ruN ygot-dir-orig/ygot/ytypes/list.go ygot-dir/ygot/ytypes/list.go
  	if err != nil {
  		return nil, fmt.Errorf("failed to create map value for insert, root %T, keys %v: %v", root, keys, err)
 diff -ruN ygot-dir-orig/ygot/ytypes/node.go ygot-dir/ygot/ytypes/node.go
---- ygot-dir-orig/ygot/ytypes/node.go	2019-12-27 14:11:06.809145000 -0800
-+++ ygot-dir/ygot/ytypes/node.go	2019-12-27 14:27:06.080093000 -0800
+--- ygot-dir-orig/ygot/ytypes/node.go	2020-01-03 00:12:50.762826220 +0000
++++ ygot-dir/ygot/ytypes/node.go	2020-01-03 01:17:48.184323078 +0000
 @@ -12,17 +12,19 @@
  // See the License for the specific language governing permissions and
  // limitations under the License.
@@ -633,8 +648,8 @@ diff -ruN ygot-dir-orig/ygot/ytypes/node.go ygot-dir/ygot/ytypes/node.go
  		if err != nil {
  			return nil, err
 diff -ruN ygot-dir-orig/ygot/ytypes/string_type.go ygot-dir/ygot/ytypes/string_type.go
---- ygot-dir-orig/ygot/ytypes/string_type.go	2019-12-27 14:11:06.813789000 -0800
-+++ ygot-dir/ygot/ytypes/string_type.go	2019-12-27 14:27:06.083024000 -0800
+--- ygot-dir-orig/ygot/ytypes/string_type.go	2020-01-03 00:11:26.357137545 +0000
++++ ygot-dir/ygot/ytypes/string_type.go	2020-01-03 01:17:48.184323078 +0000
 @@ -12,6 +12,9 @@
  // See the License for the specific language governing permissions and
  // limitations under the License.
@@ -711,8 +726,8 @@ diff -ruN ygot-dir-orig/ygot/ytypes/string_type.go ygot-dir/ygot/ytypes/string_t
  
  // fixYangRegexp takes a pattern regular expression from a YANG module and
 diff -ruN ygot-dir-orig/ygot/ytypes/unmarshal.go ygot-dir/ygot/ytypes/unmarshal.go
---- ygot-dir-orig/ygot/ytypes/unmarshal.go	2019-12-27 14:11:06.818373000 -0800
-+++ ygot-dir/ygot/ytypes/unmarshal.go	2019-12-27 14:27:06.086521000 -0800
+--- ygot-dir-orig/ygot/ytypes/unmarshal.go	2020-01-03 00:11:26.357137545 +0000
++++ ygot-dir/ygot/ytypes/unmarshal.go	2020-01-03 01:17:48.184323078 +0000
 @@ -12,6 +12,9 @@
  // See the License for the specific language governing permissions and
  // limitations under the License.
@@ -736,8 +751,8 @@ diff -ruN ygot-dir-orig/ygot/ytypes/unmarshal.go ygot-dir/ygot/ytypes/unmarshal.
  	if enc == GNMIEncoding && !(schema.IsLeaf() || schema.IsLeafList()) {
  		return errors.New("unmarshalling a non leaf node isn't supported in GNMIEncoding mode")
 diff -ruN ygot-dir-orig/ygot/ytypes/util_schema.go ygot-dir/ygot/ytypes/util_schema.go
---- ygot-dir-orig/ygot/ytypes/util_schema.go	2019-12-27 14:11:06.824666000 -0800
-+++ ygot-dir/ygot/ytypes/util_schema.go	2019-12-27 14:27:06.090113000 -0800
+--- ygot-dir-orig/ygot/ytypes/util_schema.go	2020-01-03 00:12:50.766826300 +0000
++++ ygot-dir/ygot/ytypes/util_schema.go	2020-01-03 01:17:48.184323078 +0000
 @@ -12,6 +12,9 @@
  // See the License for the specific language governing permissions and
  // limitations under the License.
@@ -862,8 +877,8 @@ diff -ruN ygot-dir-orig/ygot/ytypes/util_schema.go ygot-dir/ygot/ytypes/util_sch
  
  // directDescendantSchema returns the direct descendant schema for the struct
 diff -ruN ygot-dir-orig/ygot/ytypes/validate.go ygot-dir/ygot/ytypes/validate.go
---- ygot-dir-orig/ygot/ytypes/validate.go	2019-12-27 14:11:06.831232000 -0800
-+++ ygot-dir/ygot/ytypes/validate.go	2019-12-27 14:27:06.093886000 -0800
+--- ygot-dir-orig/ygot/ytypes/validate.go	2020-01-03 00:11:26.357137545 +0000
++++ ygot-dir/ygot/ytypes/validate.go	2020-01-03 01:17:48.184323078 +0000
 @@ -12,6 +12,9 @@
  // See the License for the specific language governing permissions and
  // limitations under the License.
