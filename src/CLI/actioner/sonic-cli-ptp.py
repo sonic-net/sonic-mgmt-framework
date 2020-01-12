@@ -23,7 +23,7 @@ def node_addr_type(address):
 
 def decode_base64(string):
     my_bin = base64.b64decode(string)
-    return "%02x%02x%02x.%02x%02x%02x.%02x%02x" % struct.unpack("BBBBBBBB", my_bin)
+    return "%02x%02x%02x.%02x%02x.%02x%02x%02x" % struct.unpack("BBBBBBBB", my_bin)
 
 
 def get_unicast_table(aa, instance_num, port_num):
