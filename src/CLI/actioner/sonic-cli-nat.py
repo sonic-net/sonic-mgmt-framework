@@ -287,6 +287,8 @@ def get_count(count, table_name, l):
                         'openconfig-nat:nat-twice-mapping-table': ['static_twice_nat', 'dynamic_twice_nat'],
                         'openconfig-nat:napt-twice-mapping-table': ['static_twice_napt', 'dynamic_twice_napt'],
                       }
+    if 'state' in l:
+        count['total_entries'] += 1
 
     if 'state' in l and 'entry-type' in l['state']:
         if l['state']['entry-type'] == 'openconfig-nat:STATIC':
@@ -313,7 +315,8 @@ def get_nat_translations_count(func, args):
               'dynamic_twice_nat': 0,
               'dynamic_twice_napt': 0,
               'snat_snapt': 0,
-              'dnat_dnapt': 0
+              'dnat_dnapt': 0,
+              'total_entries': 0
 	     }
 
     for key in response:
