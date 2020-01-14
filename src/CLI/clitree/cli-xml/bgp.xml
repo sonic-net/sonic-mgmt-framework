@@ -292,6 +292,16 @@ limitations under the License.
                  python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_confederation_config_member_as ${vrf-name} ${peer-as}&#xA;
              fi&#xA;
     </ACTION>
+  <COMMAND name="timers" help="Adjust routing timers">
+    <PARAM name="keepalive-intvl" help="Keepalive interval (default=60)" ptype="RANGE_1_3600">
+      <PARAM name="hold-time" help="Holdtime (default=180)" ptype="RANGE_1_3600"/>
+    </PARAM>
+    <ACTION>
+              python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_config_keepalive_interval ${vrf-name} ${keepalive-intvl}&#xA;
+
+              python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_config_hold_time ${vrf-name} ${hold-time}&#xA;
+    </ACTION>
+  </COMMAND>  
   </COMMAND>
   <COMMAND name="no" help="no commands"/>
   <COMMAND name="no router-id" help="Override configured router identifier">
@@ -493,7 +503,17 @@ limitations under the License.
              fi&#xA;
     </ACTION>
   </COMMAND>
+  <COMMAND name="no timers" help="Adjust routing timers">
+    <PARAM name="keepalive-intvl" help="Keepalive interval (default=60)" ptype="RANGE_1_3600">
+      <PARAM name="hold-time" help="Holdtime (default=180)" ptype="RANGE_1_3600"/>
+    </PARAM>
+    <ACTION>
+              python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_config_keepalive_interval ${vrf-name} ${keepalive-intvl}&#xA;
 
+              python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_config_hold_time ${vrf-name} ${hold-time}&#xA;
+
+    </ACTION>
+  </COMMAND>
 </VIEW>
 
 

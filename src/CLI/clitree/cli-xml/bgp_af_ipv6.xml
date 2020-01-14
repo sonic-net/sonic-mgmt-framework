@@ -89,7 +89,10 @@ limitations under the License.
         <PARAM name="rtemap" help="Route-map name" ptype="STRING"/>
       </PARAM>
     </PARAM>
-    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py PATCH_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_aggregate_address_config_aggregate_address_config ${vrf-name} IPV6_UNICAST ${prefix} ${as-set} ${summary-only} ${route-map} ${rtemap}&#xA;
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py PATCH_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_aggregate_address_config_aggregate_address_config ${vrf-name} IPV6_UNICAST ${prefix} ${as-set} ${summary-only}&#xA;
+             if test -n "${rtemap}" ; then&#xA;
+                 python $SONIC_CLI_ROOT/sonic-cli-bgp.py PATCH_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_aggregate_address_config_aggregate_address_config_policy_name ${vrf-name} IPV4_UNICAST ${prefix} ${rtemap}&#xA;
+             fi&#xA;
              if test -z "${as-set}" ; then&#xA;
                  python $SONIC_CLI_ROOT/sonic-cli-bgp.py DELETE_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_aggregate_address_config_aggregate_address_config_as_set ${vrf-name} IPV6_UNICAST ${prefix}&#xA;
              fi&#xA;

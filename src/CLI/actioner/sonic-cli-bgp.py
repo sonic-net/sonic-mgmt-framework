@@ -517,6 +517,16 @@ def invoke_api(func, args=[]):
                 name=args[0], identifier=IDENTIFIER, name1=NAME1)
         body = { "openconfig-network-instance:member-as": int(args[1]) }
         return api.patch(keypath, body)
+    elif func == 'patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_config_keepalive_interval':
+        keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/config/openconfig-bgp-ext:keepalive-interval',
+                name=args[0], identifier=IDENTIFIER, name1=NAME1)
+        body = { "openconfig-network-instance:keepalive-interval": args[1] }
+        return api.patch(keypath, body)
+    elif func == 'patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_config_hold_time_':
+        keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/config/openconfig-bgp-ext:hold-time',
+                name=args[0], identifier=IDENTIFIER, name1=NAME1)
+        body = { "openconfig-network-instance:hold-time": args[1] }
+        return api.patch(keypath, body)
     elif func == 'patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_enabled':
         keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/neighbors/neighbor={neighbor_address}/config/enabled',
                 name=args[0], identifier=IDENTIFIER, name1=NAME1, neighbor_address=args[1])
@@ -1066,7 +1076,6 @@ def invoke_api(func, args=[]):
                 body = { "openconfig-bgp-ext:config" : { "prefix" : args[2] } }
                 if 'as-set' in args[3:]: body["openconfig-bgp-ext:config"]['as-set'] = True
                 if 'summary-only' in args[3:]: body["openconfig-bgp-ext:config"]['summary-only'] = True
-                if 'route-map' in args[3:]: body["openconfig-bgp-ext:config"]['policy-name'] = args[6]
         elif attr == 'openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_aggregate_address_config_aggregate_address_config_as_set':
             # openconfig_bgp_ext2155307832
             keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi_safi_name}/openconfig-bgp-ext:aggregate-address-config/aggregate-address={prefix}/config/as-set',
@@ -1079,6 +1088,12 @@ def invoke_api(func, args=[]):
                     name=args[0], identifier=IDENTIFIER, name1=NAME1, afi_safi_name=args[1], prefix=args[2])
             if op == OCEXTPREFIX_PATCH:
                 body = { "openconfig-bgp-ext:summary-only" : True if 'True' == args[3] else False }
+        elif attr == 'openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_aggregate_address_config_aggregate_address_config_policy_name':
+            # patch_openconfig_bgp_ext2461397931
+            keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/afi-safis/afi-safi={afi_safi_name}/openconfig-bgp-ext:aggregate-address-config/aggregate-address={prefix}/config/policy-name',
+                    name=args[0], identifier=IDENTIFIER, name1=NAME1, afi_safi_name=args[1], prefix=args[2])
+            if op == OCEXTPREFIX_PATCH:
+                body = { "openconfig-bgp-ext:policy-name" : args[3] } 
 
         elif attr == 'openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_apply_policy_config_import_policy':
             # openconfig_network_instance3764031561
