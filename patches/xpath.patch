@@ -325,7 +325,7 @@ index 308d3cb..e40b4b7 100644
  }
  
 diff --git a/query.go b/query.go
-index afeb890..ba1d896 100644
+index afeb890..d3322cf 100644
 --- a/query.go
 +++ b/query.go
 @@ -1,10 +1,12 @@
@@ -448,10 +448,10 @@ index afeb890..ba1d896 100644
 +					default:
 +						if (isChildAKey == true) {
 +							//match with keys
-+							typ.SFilter.Predicate = "k." + *(typ.Name)
++							typ.SFilter.Predicate = "k['" + *(typ.Name) + "']"
 +						} else {
 +							//match with hash-field
-+							typ.SFilter.Predicate = "h." + *(typ.Name)
++							typ.SFilter.Predicate = "h['" + *(typ.Name) + "']"
 +						}
 +					}
 +				}
