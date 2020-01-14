@@ -252,6 +252,11 @@ module sonic-bgp-common {
             description "BFD status";
         }
 
+        leaf bfd_check_ctrl_plane_failure {
+            type boolean;
+            description "Link dataplane status with BGP control plane";
+        }
+
         leaf capability_dynamic {
             type boolean;
             description "Advertise dynamic capability";
@@ -293,6 +298,16 @@ module sonic-bgp-common {
 			type boolean;
 			description "To enable BGP peer";
 		}
+
+		leaf local_as_no_prepend {
+			type boolean;
+            description "Do not prepend local-as to updates from ebgp peers";
+		}
+
+        leaf local_as_replace_as {
+            type boolean;
+            description "Do not prepend local-as to updates from ibgp peers";
+        }
 	}
 
 
