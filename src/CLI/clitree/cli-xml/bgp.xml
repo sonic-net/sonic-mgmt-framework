@@ -267,9 +267,26 @@ limitations under the License.
                  python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_config_max_dynamic_neighbors ${vrf-name} ${lmt-val}&#xA;
              fi&#xA;
     </ACTION>
+  
   </COMMAND>
-
-    <COMMAND name="no" help="no commands"/>
+  <COMMAND name="confederation" help="AS confederation parameters">
+    <PARAM name="conf-opt" help="Listen options" mode="switch" ptype="SUBCOMMAND">
+      <PARAM name="identifier" help="AS number" mode="subcommand" ptype="SUBCOMMAND">
+        <PARAM name="id-as" help="Autonomous system number" ptype="RANGE_1_4294967295"/>
+      </PARAM>
+      <PARAM name="peers" help="Peer ASs in BGP confederation" mode="subcommand" ptype="SUBCOMMAND">
+        <PARAM name="peer-as" help="Autonomous system number" ptype="RANGE_1_4294967295"/>
+      </PARAM>
+    </PARAM>
+    <ACTION>
+             if test "${conf-opt}" = "identifier" ; then&#xA;
+                 python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_confederation_config_identifier ${vrf-name} ${id-as}&#xA;
+             else&#xA;
+                 python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_confederation_config_member_as ${vrf-name} ${peer-as}&#xA;
+             fi&#xA;
+    </ACTION>
+  </COMMAND>
+  <COMMAND name="no" help="no commands"/>
   <COMMAND name="no router-id" help="Override configured router identifier">
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_config_router_id ${vrf-name} ${ip-addr}</ACTION>
   </COMMAND>
@@ -444,6 +461,23 @@ limitations under the License.
              fi&#xA;
     </ACTION>
   </COMMAND>
+  <COMMAND name="no confederation" help="AS confederation parameters">
+    <PARAM name="conf-opt" help="Listen options" mode="switch" ptype="SUBCOMMAND">
+      <PARAM name="identifier" help="AS number" mode="subcommand" ptype="SUBCOMMAND">
+        <PARAM name="id-as" help="Autonomous system number" ptype="RANGE_1_4294967295"/>
+      </PARAM>
+      <PARAM name="peers" help="Peer ASs in BGP confederation" mode="subcommand" ptype="SUBCOMMAND">
+        <PARAM name="peer-as" help="Autonomous system number" ptype="RANGE_1_4294967295"/>
+      </PARAM>
+    </PARAM>
+    <ACTION>
+             if test "${conf-opt}" = "identifier" ; then&#xA;
+                 python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_confederation_config_identifier ${vrf-name} ${id-as}&#xA;
+             else&#xA;
+                 python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_confederation_config_member_as ${vrf-name} ${peer-as}&#xA;
+             fi&#xA;
+    </ACTION>
+  </COMMAND>
 
 </VIEW>
 
@@ -551,7 +585,9 @@ python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_networ
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_transport_config_passive_mode ${vrf-name} ${nbr-addr} True</ACTION>
   </COMMAND>
   <COMMAND name="password" help="Set a password">
-    <PARAM name="String" help="Password" ptype="STRING"/>
+    <PARAM name="String" help="Password" ptype="STRING">
+      <PARAM name="encrypted" help="The password is stored in an encrypted format" mode="subcommand" ptype="SUBCOMMAND" optional="true"/>
+    </PARAM>
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_auth_password ${vrf-name} ${nbr-addr} ${String}</ACTION>
   </COMMAND>
   <COMMAND name="port" help="Neighbor's BGP port">
@@ -803,7 +839,9 @@ python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_networ
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_transport_config_passive_mode ${vrf-name} ${template-name} True</ACTION>
   </COMMAND>
   <COMMAND name="password" help="Set a password">
-    <PARAM name="String" help="Password" ptype="STRING"/>
+    <PARAM name="String" help="Password" ptype="STRING">
+      <PARAM name="encrypted" help="The password is stored in an encrypted format" mode="subcommand" ptype="SUBCOMMAND" optional="true"/>
+    </PARAM>
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_config_auth_password ${vrf-name} ${template-name} ${String}</ACTION>
   </COMMAND>
   <COMMAND name="port" help="Neighbor's BGP port" ref="hidden">
