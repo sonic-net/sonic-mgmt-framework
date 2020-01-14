@@ -381,11 +381,14 @@ def invoke_api(func, args=[]):
     elif func == 'patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_max_med_config':
         keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/openconfig-bgp-ext:max-med/config',
                 name=args[0], identifier=IDENTIFIER, name1=NAME1)
-        body = { "openconfig-bgp-ext:config" : { } }
-        if len(args) > 1:
-            body["openconfig-bgp-ext:config"]["time"] = int(args[1])
+        if args[1] == 'administrative':
+            body = { "openconfig-bgp-ext:config" : { "administrative": True } }
             if len(args) > 2:
-                body["openconfig-bgp-ext:config"]["max-med-val"] = int(args[2])
+                body["openconfig-bgp-ext:config"]["admin-max-med-val"] = int(args[2])
+        else:
+            body = { "openconfig-bgp-ext:config" : { "time" : int(args[2]) } }
+            if len(args) > 3:
+                body["openconfig-bgp-ext:config"]["max-med-val"] = int(args[3])
         return api.patch(keypath, body)
     elif func == 'patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_global_defaults_config_ipv4_unicast':
         keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/openconfig-bgp-ext:global-defaults/config/ipv4-unicast',
@@ -604,6 +607,16 @@ def invoke_api(func, args=[]):
                 name=args[0], identifier=IDENTIFIER, name1=NAME1, neighbor_address=args[1])
         body = { "openconfig-network-instance:local-as": int(args[2]) }
         return api.patch(keypath, body)
+    elif func == 'patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_local_as_no_prepend':
+        keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/neighbors/neighbor={neighbor_address}/config/openconfig-bgp-ext:local-as-no-prepend',
+                name=args[0], identifier=IDENTIFIER, name1=NAME1, neighbor_address=args[1])
+        body = { "openconfig-bgp-ext:local-as-no-prepend": True if args[2] == 'True' else False }
+        return api.patch(keypath, body)
+    elif func == 'patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_local_as_replace_as':
+        keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/neighbors/neighbor={neighbor_address}/config/openconfig-bgp-ext:local-as-replace-as',
+                name=args[0], identifier=IDENTIFIER, name1=NAME1, neighbor_address=args[1])
+        body = { "openconfig-bgp-ext:local-as-replace-as": True if args[2] == 'True' else False }
+        return api.patch(keypath, body)
     elif func == 'patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_transport_config_passive_mode':
         keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/neighbors/neighbor={neighbor_address}/transport/config/passive-mode',
                 name=args[0], identifier=IDENTIFIER, name1=NAME1, neighbor_address=args[1])
@@ -628,6 +641,11 @@ def invoke_api(func, args=[]):
         keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/neighbors/neighbor={neighbor_address}/config/openconfig-bgp-ext:bfd',
                 name=args[0], identifier=IDENTIFIER, name1=NAME1, neighbor_address=args[1])
         body = { "openconfig-bgp-ext:bfd" : True if args[2] == 'True' else False }
+        return api.patch(keypath, body)
+    elif func == 'patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_bfd_check_control_plane_failure':
+        keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/neighbors/neighbor={neighbor_address}/config/openconfig-bgp-ext:bfd-check-control-plane-failure',
+                name=args[0], identifier=IDENTIFIER, name1=NAME1, neighbor_address=args[1])
+        body = { "openconfig-bgp-ext:bfd-check-control-plane-failure" : True if args[2] == 'True' else False }
         return api.patch(keypath, body)
     elif func == 'patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_dont_negotiate_capability':
         keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/neighbors/neighbor={neighbor_address}/config/openconfig-bgp-ext:dont-negotiate-capability',
@@ -840,6 +858,16 @@ def invoke_api(func, args=[]):
                 name=args[0], identifier=IDENTIFIER, name1=NAME1, peer_group_name=args[1])
         body = { "openconfig-network-instance:local-as": int(args[2]) }
         return api.patch(keypath, body)
+    elif func == 'patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_config_local_as_no_prepend':
+        keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/peer-groups/peer-group={peer_group_name}/config/openconfig-bgp-ext:local-as-no-prepend',
+                name=args[0], identifier=IDENTIFIER, name1=NAME1, peer_group_name=args[1])
+        body = { "openconfig-bgp-ext:local-as-no-prepend": True if args[2] == 'True' else False }
+        return api.patch(keypath, body)
+    elif func == 'patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_config_local_as_replace_as':
+        keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/peer-groups/peer-group={peer_group_name}/config/openconfig-bgp-ext:local-as-replace-as',
+                name=args[0], identifier=IDENTIFIER, name1=NAME1, peer_group_name=args[1])
+        body = { "openconfig-bgp-ext:local-as-replace-as": True if args[2] == 'True' else False }
+        return api.patch(keypath, body)
     elif func == 'patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_transport_config_passive_mode':
         keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/peer-groups/peer-group={peer_group_name}/transport/config/passive-mode',
                 name=args[0], identifier=IDENTIFIER, name1=NAME1, peer_group_name=args[1])
@@ -864,6 +892,11 @@ def invoke_api(func, args=[]):
         keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/peer-groups/peer-group={peer_group_name}/config/openconfig-bgp-ext:bfd',
                 name=args[0], identifier=IDENTIFIER, name1=NAME1, peer_group_name=args[1])
         body = { "openconfig-bgp-ext:bfd" : True if args[2] == 'True' else False }
+        return api.patch(keypath, body)
+    elif func == 'patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_config_bfd_check_control_plane_failure':
+        keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/peer-groups/peer-group={peer_group_name}/config/openconfig-bgp-ext:bfd-check-control-plane-failure',
+                name=args[0], identifier=IDENTIFIER, name1=NAME1, peer_group_name=args[1])
+        body = { "openconfig-bgp-ext:bfd-check-control-plane-failure" : True if args[2] == 'True' else False }
         return api.patch(keypath, body)
     elif func == 'patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_config_dont_negotiate_capability':
         keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/peer-groups/peer-group={peer_group_name}/config/openconfig-bgp-ext:dont-negotiate-capability',
@@ -995,6 +1028,14 @@ def invoke_api(func, args=[]):
                 name=args[0], src_protocol= "STATIC" if 'static' == args[2] else "DIRECTLY_CONNECTED" if 'connected' == args[2] else 'OSPF', dst_protocol=IDENTIFIER, address_family=args[1].split('_',1)[0])
         if op == 'patch':
             body = { "openconfig-network-instance:import-policy" : [ args[3] ] }
+            return api.patch(keypath, body)
+        else:
+            return api.delete(keypath)
+    elif attr == 'openconfig_network_instance_ext_network_instances_network_instance_table_connections_table_connection_config_metric':
+        keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/table-connections/table-connection={src_protocol},{dst_protocol},{address_family}/config/openconfig-network-instance-ext:metric',
+                name=args[0], src_protocol= "STATIC" if 'static' == args[2] else "DIRECTLY_CONNECTED" if 'connected' == args[2] else 'OSPF', dst_protocol=IDENTIFIER, address_family=args[1].split('_',1)[0])
+        if op == 'patch':
+            body = { "openconfig-network-instance-ext:metric" : int(args[3]) }
             return api.patch(keypath, body)
         else:
             return api.delete(keypath)
