@@ -292,6 +292,7 @@ limitations under the License.
                  python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_confederation_config_member_as ${vrf-name} ${peer-as}&#xA;
              fi&#xA;
     </ACTION>
+  </COMMAND>
   <COMMAND name="timers" help="Adjust routing timers">
     <PARAM name="keepalive-intvl" help="Keepalive interval (default=60)" ptype="RANGE_1_3600">
       <PARAM name="hold-time" help="Holdtime (default=180)" ptype="RANGE_1_3600"/>
@@ -301,7 +302,6 @@ limitations under the License.
 
               python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_config_hold_time ${vrf-name} ${hold-time}&#xA;
     </ACTION>
-  </COMMAND>  
   </COMMAND>
   <COMMAND name="no" help="no commands"/>
   <COMMAND name="no router-id" help="Override configured router identifier">
@@ -570,9 +570,21 @@ python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_networ
     </ACTION>
   </COMMAND>
   <COMMAND name="update-source" help="Source of routing updates">
-    <PARAM name="ip" help="IP source" ptype="IPV4V6_ADDR" view="configure-router-bgp-nbr-view" viewid="nbr-addr=${ip};vrf-name=${vrf-name}"/>
-    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_transport_config_local_address ${vrf-name} ${nbr-addr} ${ip}</ACTION>
+    <PARAM name="source_param" help="update-source param"  mode="switch" ptype="SUBCOMMAND">
+      <PARAM name="ip" help="IP source" ptype="IPV4V6_ADDR" view="configure-router-bgp-nbr-view" viewid="nbr-addr=${ip};vrf-name=${vrf-name}"/>
+      <PARAM name="interface" help="Interface name" ptype="STRING"/>
+    </PARAM>
+    <ACTION> 
+            if test "${source_param}" = "ip" ; then&#xA;
+                   python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_transport_config_local_address ${vrf-name} ${nbr-addr} ${ip}&#xA;
+            else&#xA; 
+                   python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_transport_config_local_address ${vrf-name} ${nbr-addr} ${interface}&#xA;
+            fi&#xA;            
+
+                   
+    </ACTION>
   </COMMAND>
+
   <COMMAND name="shutdown" help="Shutdown a neighbor">
     <PARAM name="message" help="Add a shutdown message (draft-ietf-idr-shutdown-06)" mode="subcommand" ptype="SUBCOMMAND" optional="true">
        <PARAM name="MSG" help="Shutdown message" ptype="STRING"/>  
@@ -853,9 +865,20 @@ python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_networ
              fi&#xA;
     </ACTION>
   </COMMAND>
+
   <COMMAND name="update-source" help="Source of routing updates">
-    <PARAM name="ip" help="IP source" ptype="IPV4V6_ADDR" view="configure-router-bgp-template-view" />
-    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_transport_config_local_address ${vrf-name} ${template-name} ${ip}</ACTION>
+    <PARAM name="source_param" help="update-source param"  mode="switch" ptype="SUBCOMMAND">
+      <PARAM name="ip" help="IP source" ptype="IPV4V6_ADDR" view="configure-router-bgp-template-view"/>
+      <PARAM name="interface" help="Interface name" ptype="STRING" view="configure-router-bgp-template-view" />
+    </PARAM>
+    <ACTION>
+             if test "${source_param}" = "ip"; then&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_transport_config_local_address ${vrf-name} ${template-name} ${ip}&#xA;
+             else&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_transport_config_local_address ${vrf-name} ${template-name} ${interface}&#xA;
+             fi&#xA;
+    </ACTION>
+    
   </COMMAND>
   <COMMAND name="shutdown" help="Shutdown a neighbor">
     <PARAM name="message" help="Add a shutdown message (draft-ietf-idr-shutdown-06)" mode="subcommand" ptype="SUBCOMMAND" optional="true">

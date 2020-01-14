@@ -321,6 +321,8 @@ limitations under the License.
       <PARAM name="standard" help="Send Standard Community attributes" mode="subcommand" ptype="SUBCOMMAND"/>
       <PARAM name="extended" help="Send Extended Community attributes" mode="subcommand" ptype="SUBCOMMAND"/>
       <PARAM name="both" help="Send Standard and Extended Community attributes" mode="subcommand" ptype="SUBCOMMAND"/>
+      <PARAM name="large" help="Send large Community attributes" mode="subcommand" ptype="SUBCOMMAND"/>
+      <PARAM name="all" help="Send all Community attributes" mode="subcommand" ptype="SUBCOMMAND"/>
       <PARAM name="none" help="Do not send Community attributes" mode="subcommand" ptype="SUBCOMMAND"/>
     </PARAM>
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_afi_safis_afi_safi_config_send_community ${vrf-name} ${nbr-addr} IPV6_UNICAST ${comtype}</ACTION>
@@ -654,6 +656,8 @@ limitations under the License.
       <PARAM name="standard" help="Send Standard Community attributes" mode="subcommand" ptype="SUBCOMMAND"/>
       <PARAM name="extended" help="Send Extended Community attributes" mode="subcommand" ptype="SUBCOMMAND"/>
       <PARAM name="both" help="Send Standard and Extended Community attributes" mode="subcommand" ptype="SUBCOMMAND"/>
+      <PARAM name="large" help="Send large Community attributes" mode="subcommand" ptype="SUBCOMMAND"/>
+      <PARAM name="all" help="Send all Community attributes" mode="subcommand" ptype="SUBCOMMAND"/>
       <PARAM name="none" help="Do not send Community attributes" mode="subcommand" ptype="SUBCOMMAND"/>
     </PARAM>
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_afi_safis_afi_safi_config_send_community ${vrf-name} ${template-name} IPV6_UNICAST ${comtype}</ACTION>
