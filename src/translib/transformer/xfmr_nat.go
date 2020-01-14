@@ -265,14 +265,14 @@ var YangToDb_nat_mapping_subtree_xfmr SubTreeXfmrYangToDb = func(inParams XfmrPa
     tblName := STATIC_NAT
 
     natTblObj := getNatTblRoot(inParams.ygRoot, false)
-    if natTblObj == nil || natTblObj.NatMappingEntry == nil || len(natTblObj.NatMappingEntry) < 1 {
+    if inParams.oper != DELETE && (natTblObj == nil || natTblObj.NatMappingEntry == nil || len(natTblObj.NatMappingEntry) < 1) {
         errStr := "NAT [container/list] not populated."
         log.Info("YangToDb_nat_mapping_subtree_xfmr: " + errStr)
         return natMap, errors.New(errStr)
     }
 
     if inParams.oper == DELETE {
-        if natTblObj.NatMappingEntry == nil || len(natTblObj.NatMappingEntry) < 1 {
+        if natTblObj == nil || natTblObj.NatMappingEntry == nil || len(natTblObj.NatMappingEntry) < 1 {
             //All entries from db needs to be deleted
             allKeys, keyErr :=  getAllTableKeys(inParams.d, &db.TableSpec{Name:tblName})
             if keyErr != nil {
@@ -656,14 +656,14 @@ var YangToDb_napt_mapping_subtree_xfmr SubTreeXfmrYangToDb = func(inParams XfmrP
     tblName := STATIC_NAPT
 
     naptTblObj := getNaptTblRoot(inParams.ygRoot, false)
-    if naptTblObj == nil || naptTblObj.NaptMappingEntry == nil || len(naptTblObj.NaptMappingEntry) < 1 {
+    if inParams.oper != DELETE && (naptTblObj == nil || naptTblObj.NaptMappingEntry == nil || len(naptTblObj.NaptMappingEntry) < 1) {
         errStr := "NAPT [container/list] not populated."
         log.Info("YangToDb_napt_mapping_subtree_xfmr: " + errStr)
         return naptMap, errors.New(errStr)
     }
 
     if inParams.oper == DELETE {
-        if naptTblObj.NaptMappingEntry == nil || len(naptTblObj.NaptMappingEntry) < 1 {
+        if naptTblObj == nil || naptTblObj.NaptMappingEntry == nil || len(naptTblObj.NaptMappingEntry) < 1 {
             //All entries from db needs to be deleted
             allKeys, keyErr :=  getAllTableKeys(inParams.d, &db.TableSpec{Name:tblName})
             if keyErr != nil {
