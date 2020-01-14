@@ -999,42 +999,5 @@ limitations under the License.
         help="Aging interval"
         />
     <!--=======================================================-->
-    <PTYPE
-        name="SNMP_IDENTIFIER"
-        pattern="(^([a-zA-Z0-9_-]){0,32})$"
-        help="String (Max: 32 characters)"
-        />
-    <!--=======================================================-->
-    <PTYPE
-        name="STRING_255"
-        pattern="(^([a-zA-Z0-9_-]){0,255})$"
-        help="String(Max: 255 characters)"
-        />
-    <!--=======================================================-->
-    <PTYPE
-        name="OID_IDENTIFIER"
-        pattern="(^([a-zA-Z0-9\.-]){0,255})$"
-        help="OID (Max: 255 characters)"
-        />
-    <!--=======================================================-->
-    <PTYPE
-       name="AUTH_KEY_TYPE"
-       pattern="[0-9a-fA-F]{32,32}+"
-       help="16-byte Hex String"
-       />
-   <!--=======================================================-->
-   <PTYPE
-      name="ENGINE_ID_TYPE"
-      pattern="[0-9a-fA-F]{10,64}$"
-      help="Octet (hex) string, 5-32 octets"
-      />
-  <!--=======================================================-->
-   <PTYPE
-       name="RANGE_1_300"
-       method="integer"
-       pattern="1..300"
-       help=""
-       />
-   <!--=======================================================-->
 
 </CLISH_MODULE>

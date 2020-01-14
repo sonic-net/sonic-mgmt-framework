@@ -153,12 +153,6 @@ module ietf-snmp-annot {
       }
     }
 
-    deviation /snmp:snmp/snmp:usm/snmp:local/snmp:user/snmp:group {
-      deviate add {
-        sonic-ext:field-name "group";
-      }
-    }
-
     deviation /snmp:snmp/snmp:usm/snmp:local/snmp:user/snmp:auth {
       deviate add {
       }
@@ -489,12 +483,19 @@ module ietf-snmp-annot {
     deviation /snmp:snmp/snmp:engine {
       deviate add {
         sonic-ext:table-name "SNMP_SERVER_ENGINE";
+        sonic-ext:key-transformer "snmp_engine_key_xfmr";
+      }
+    }
+
+    deviation /snmp:snmp/snmp:engine/snmp:enabled {
+      deviate add {
+        sonic-ext:field-name "enabled";
       }
     }
 
     deviation /snmp:snmp/snmp:engine/snmp:engine-id {
       deviate add {
-        sonic-ext:field-name "engineID";
+        sonic-ext:field-name "engine-id";
       }
     }
 
@@ -614,11 +615,6 @@ module ietf-snmp-annot {
     }
 
     deviation /snmp:snmp/snmp:engine/snmp:listen/snmp:transport/snmp:ssh/snmp:ssh/snmp:port {
-      deviate add {
-      }
-    }
-
-    deviation /snmp:snmp/snmp:engine/snmp:enabled {
       deviate add {
       }
     }
@@ -819,6 +815,7 @@ module ietf-snmp-annot {
 
     deviation /snmp:snmp/snmp:target-params/snmp:name {
       deviate add {
+        sonic-ext:field-name "name";
         sonic-ext:key-transformer "snmp_target_params_key_xfmr";
       }
     }
@@ -877,7 +874,7 @@ module ietf-snmp-annot {
 
     deviation /snmp:snmp/snmp:target-params/snmp:params/snmp:usm/snmp:usm/snmp:security-level {
       deviate add {
-        sonic-ext:field-name "securityLevel";
+        sonic-ext:field-name "security-level";
       }
     }
 

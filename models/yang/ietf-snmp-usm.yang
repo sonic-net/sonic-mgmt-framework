@@ -89,15 +89,7 @@ submodule ietf-snmp-usm {
              of the Simple Network Management Protocol (SNMPv3).
              SNMP-USER-BASED-SM-MIB.usmUserName";
       }
-      leaf group {
-        type snmp:group-name;
-        description
-          "The name of this VACM group.";
-        reference
-          "RFC 3415: View-based Access Control Model (VACM) for the
-             Simple Network Management Protocol (SNMP).
-             SNMP-VIEW-BASED-ACM-MIB.vacmGroupName";
-      }
+
       container auth {
         presence "enables authentication";
         description
