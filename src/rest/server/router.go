@@ -26,7 +26,9 @@ import (
 	"regexp"
 	"strings"
 	"time"
-	"translib"
+
+  "translib"
+	"sort"
 
 	"github.com/golang/glog"
 	"github.com/gorilla/mux"
@@ -385,8 +387,9 @@ func (mb *muxBuilder) finish() {
 		Handler(http.RedirectHandler("/ui/index.html", 301))
 
 	if ClientAuth.Enabled("jwt") {
-		router.Methods("POST").Path("/authenticate").Handler(http.HandlerFunc(Authenticate))
-		router.Methods("POST").Path("/refresh").Handler(http.HandlerFunc(Refresh))
+		//Allow POST for user/pass auth and or GET for cert auth.
+		router.Methods("POST","GET").Path("/authenticate").Handler(http.HandlerFunc(Authenticate))
+		router.Methods("POST","GET").Path("/refresh").Handler(http.HandlerFunc(Refresh))
 	}
 
 	// To download yang models
