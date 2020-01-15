@@ -515,7 +515,7 @@ def invoke_api(func, args=[]):
     elif func == 'patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_confederation_config_member_as':
         keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/confederation/config/member-as',
                 name=args[0], identifier=IDENTIFIER, name1=NAME1)
-        body = { "openconfig-network-instance:member-as": int(args[1]) }
+        body = { "openconfig-network-instance:member-as": [ int(args[1]) ] }
         return api.patch(keypath, body)
     elif func == 'patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_config_keepalive_interval':
         keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/config/openconfig-bgp-ext:keepalive-interval',
