@@ -110,12 +110,6 @@ func (c *CVL) addChildLeaf(config bool, tableName string, parent *yparser.YParse
 
 	//Batch leaf creation
 	c.batchLeaf = c.batchLeaf + name + "|" + value + "|"
-	//Check if this leaf has leafref,
-	//If so add the add redis key to its table so that those 
-	// details can be fetched for dependency validation
-
-	//TBD : not needed as Leafref is not handled by libyang
-	//c.addLeafRef(config, tableName, name, value)
 }
 
 func (c *CVL) generateTableFieldsData(config bool, tableName string, jsonNode *jsonquery.Node,
@@ -145,9 +139,6 @@ parent *yparser.YParserNode) CVLRetCode {
 				hashRefMatch := reHashRef.FindStringSubmatch(jsonFieldNode.FirstChild.Data)
 
 				if (hashRefMatch != nil && len(hashRefMatch) == 3) {
-				/*if (strings.HasPrefix(jsonFieldNode.FirstChild.Data, "[")) &&
-				(strings.HasSuffix(jsonFieldNode.FirstChild.Data, "]")) &&
-				(strings.Index(jsonFieldNode.FirstChild.Data, "|") > 0) {*/
 
 					c.addChildLeaf(config, tableName,
 					parent, jsonFieldNode.Data,

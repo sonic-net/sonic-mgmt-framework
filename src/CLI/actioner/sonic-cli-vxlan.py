@@ -29,6 +29,45 @@ from scripts.render_cli import show_cli_output
 
 vxlan_global_info = []
 
+def config_response_handler(api_response, func, args):
+    if api_response.ok():
+        resp_content = api_response.content
+        if resp_content is not None:
+            print("Error: {}".format(str(resp_content)))
+    else:
+        try:
+            error_data = api_response.content['ietf-restconf:errors']['error'][0]
+            if 'error-app-tag' in error_data: 
+                err_app_tag = error_data['error-app-tag'] 
+                if err_app_tag == 'too-many-elements':
+                   if (func == 'patch_sonic_vxlan_sonic_vxlan_vxlan_tunnel_vxlan_tunnel_list'):
+                     print('Error: VTEP already configured')
+                   elif (func == 'patch_sonic_vxlan_sonic_vxlan_evpn_nvo_evpn_nvo_list'):
+                     print('Error: EVPN NVO already configured')
+                elif err_app_tag == 'not-unique-vlanid':
+                   print('Error: Vlan Id already mapped')
+                elif err_app_tag == 'not-unique-vni':
+                   print('Error: VNI Id already mapped')
+                elif err_app_tag == 'vnid-invalid':
+                   print('Error: Invalid VNI. Valid range [1 to 16777215]')
+                else:
+                   print('Error: Unknown err-app-tag {}'.format(str(err_app_tag)))
+            elif 'error-message' in error_data: 
+                err_msg = error_data['error-message'] 
+                if err_msg == 'Entry not found':
+                   if func == 'delete_sonic_vxlan_sonic_vxlan_vxlan_tunnel_map_vxlan_tunnel_map_list':
+                      print('Error:{} Vlan:{} VNI:{}'.format(str(err_msg),str(args[0]),str(args[1]))) 
+                   else:
+                       print 'unknown func'
+                else:
+                    print 'unknown error message'
+
+            else:
+                print(api_response.error_message())
+
+        except Exception as e:
+            print(api_response.error_message())
+
 def invoke(func, args):
     body = None
     aa = cc.ApiClient()
@@ -74,54 +113,35 @@ def invoke(func, args):
     if (func == 'patch_sonic_vxlan_sonic_vxlan_vxlan_tunnel_map_vxlan_tunnel_map_list' or
         func == 'delete_sonic_vxlan_sonic_vxlan_vxlan_tunnel_map_vxlan_tunnel_map_list'):
         fail = 0
+        keypath = cc.Path('/restconf/data/sonic-vxlan:sonic-vxlan/VXLAN_TUNNEL_MAP/VXLAN_TUNNEL_MAP_LIST')
+        maplist = []
         for count in range(int(args[3])):
           vidstr = str(int(args[2]) + count)
           vnid = int(args[1]) + count
           vnistr = str(vnid)
-          mapname = 'map_'+ vnistr + '_' + vidstr
-          keypath = cc.Path('/restconf/data/sonic-vxlan:sonic-vxlan/VXLAN_TUNNEL_MAP/VXLAN_TUNNEL_MAP_LIST={name},{mapname1}', name=args[0][6:], mapname1=mapname)
+          mapname = 'map_'+ vnistr + '_' + 'Vlan' + vidstr
 
-          if (func.startswith("patch") is True):
-              body = {
-                "sonic-vxlan:VXLAN_TUNNEL_MAP_LIST": [
-                  {
+          if (func.startswith("delete") is True):
+            delkeypath = cc.Path('/restconf/data/sonic-vxlan:sonic-vxlan/VXLAN_TUNNEL_MAP/VXLAN_TUNNEL_MAP_LIST={name},{mapname1}', name=args[0][6:], mapname1=mapname)
+            api_response = aa.delete(delkeypath)
+            resp_args = [vidstr, vnistr]
+            config_response_handler(api_response, func, resp_args)
+
+          else:
+            listobj = {
                     "name": args[0][6:],
                     "mapname": mapname,
                     "vlan": 'Vlan' + vidstr,
                     "vni": vnid 
-                  }
-                ]
-              }
-              api_response =  aa.patch(keypath, body)
-          else:
-              api_response = aa.delete(keypath)
+                    }
+            maplist.append(listobj)
 
-          if api_response.ok():
-              response = api_response.content
-              if response is None:
-                  result = "Success"
-              elif 'sonic-vxlan:sonic-vxlan' in response.keys():
-                  value = response['sonic-vxlan:sonic-vxlan']
-                  if value is None:
-                      result = "Success"
-                  else:
-                      result = "Failed"
-              
-          else:
-              #error response
-              result =  "Failed"
-              fail = 1
-              #print(api_response.error_message())
-              if (func.startswith("patch") is True):
-                print("Error:Map creation for VID:{} failed. Verify if the VLAN is created".format(vidstr)) 
-              else:
-                print ("Error:Map deletion for VID:{} failed with error = {}".format(vidstr,api_response.error_message()[7:]))
-
-        if fail == 0:
-          if (func.startswith("patch") is True):
-            print("Map creation for {} vids succeeded.".format(count+1))
-          else:
-            print("Map deletion for {} vids succeeded.".format(count+1))
+        if (func.startswith("patch") is True):
+            body = {
+              "sonic-vxlan:VXLAN_TUNNEL_MAP_LIST": maplist
+            }
+            api_response =  aa.patch(keypath, body)
+            config_response_handler(api_response, func, args)
 
         return api_response
           
@@ -300,6 +320,7 @@ def vxlan_show_vxlan_evpn_remote_mac(args):
                    print("{0:^20} {1:^10} {2:^20} {3:^15} {4:^10}".format(iter['vlan'], iter['mac_addr'], iter['type'], iter['remote_vtep'], iter['vni']))
     return
 
+
 def run(func, args):
 
     #show commands
@@ -314,10 +335,10 @@ def run(func, args):
         if func == 'show vxlan tunnel':
             vxlan_show_vxlan_tunnel(args)
             return
-        if func == 'show vxlan evpn remote vni':
+        if func == 'show vxlan remote vni':
             vxlan_show_vxlan_evpn_remote_vni(args)
             return
-        if func == 'show vxlan evpn remote mac':
+        if func == 'show vxlan remote mac':
             vxlan_show_vxlan_evpn_remote_mac(args)
             return
 
@@ -332,26 +353,7 @@ def run(func, args):
 
         if (func != 'patch_sonic_vxlan_sonic_vxlan_vxlan_tunnel_map_vxlan_tunnel_map_list' and
             func != 'delete_sonic_vxlan_sonic_vxlan_vxlan_tunnel_map_vxlan_tunnel_map_list'):
-          if api_response.ok():
-              response = api_response.content
-              if response is None:
-                  print("Success")
-              elif 'sonic-vxlan:sonic-vxlan' in response.keys():
-                  value = response['sonic-vxlan:sonic-vxlan']
-                  if value is None:
-                      print("Success")
-                  else:
-                      print ("Failed")
-              
-          else:
-              #error response
-              #print(api_response.error_message())
-              if func == 'patch_sonic_vxlan_sonic_vxlan_vxlan_tunnel_vxlan_tunnel_list':
-                 print("Error : Only a single VTEP is supported.")
-              if func == 'delete_sonic_vxlan_sonic_vxlan_vxlan_tunnel_vxlan_tunnel_list':
-                 print("Error : Remove all VLAN-VNI mappings and also the EVPN NVO object .")
-              if func == 'patch_sonic_vxlan_sonic_vxlan_evpn_nvo_evpn_nvo_list':
-                 print("Error : Verify if the source vtep is configured and that this is the only EVPN object")
+          config_response_handler(api_response,func,args)
 
     except:
             # system/network error
@@ -363,3 +365,30 @@ if __name__ == '__main__':
     #pdb.set_trace()
     run(sys.argv[1], sys.argv[2:])
 
+
+#       if api_response.ok():
+#           response = api_response.content
+#           if response is None:
+#               result = "Success"
+#           elif 'sonic-vxlan:sonic-vxlan' in response.keys():
+#               value = response['sonic-vxlan:sonic-vxlan']
+#               if value is None:
+#                   result = "Success"
+#               else:
+#                   result = "Failed"
+#           
+#       else:
+#           #error response
+#           result =  "Failed"
+#           fail = 1
+#           #print(api_response.error_message())
+#           if (func.startswith("patch") is True):
+#             print("Error:Map creation for VID:{} failed. Verify if the VLAN is created".format(vidstr)) 
+#           else:
+#             print ("Error:Map deletion for VID:{} failed with error = {}".format(vidstr,api_response.error_message()[7:]))
+
+#       if fail == 0:
+#         if (func.startswith("patch") is True):
+#           print("Map creation for {} vids succeeded.".format(count+1))
+#         else:
+#           print("Map deletion for {} vids succeeded.".format(count+1))

@@ -170,12 +170,14 @@ def generateShowUdldInterfaceResponse(clientApi, args):
         port_status = resp.content['sonic-udld:status']
 
     # Retrieve neighbors info for a given interface
-    # keypath = cc.Path('/restconf/data/sonic-udld:sonic-udld/UDLD_PORT_NEIGH_TABLE/UDLD_PORT_NEIGH_TABLE_LIST={ifname},{index}', ifname=args[1], index='*')
     keypath = cc.Path('/restconf/data/sonic-udld:sonic-udld/_UDLD_PORT_NEIGH_TABLE/_UDLD_PORT_NEIGH_TABLE_LIST')
     resp = clientApi.get(keypath)
-    neigh_dict = {}
+    neigh_intf_info = []
     if resp.ok() and 'sonic-udld:_UDLD_PORT_NEIGH_TABLE_LIST' in resp.content.keys():
         neigh_dict = resp.content['sonic-udld:_UDLD_PORT_NEIGH_TABLE_LIST']
+        for neigh_info in neigh_dict:
+            if neigh_info['ifname'] == args[1]:
+                neigh_intf_info.append(neigh_info)
     else:
         if resp.status_code != 404:
             return resp
@@ -186,7 +188,7 @@ def generateShowUdldInterfaceResponse(clientApi, args):
     final_dict['status'] = port_status
     final_dict['port_config'] = port_conf_dict
     final_dict['global_oper'] = gbl_oper_dict
-    final_dict['neighbor'] = neigh_dict
+    final_dict['neighbor'] = neigh_intf_info
 
     body=collections.defaultdict(dict)
     body['intf_show'] = final_dict
@@ -229,32 +231,31 @@ def run(func, args):
         api_response = invoke(func, args)
         if api_response.ok():
             response = api_response.content
-            if response is None:
-                print "Success"
-            elif 'sonic-udld:UDLD_LIST' in response.keys():
-                value = response['sonic-udld:UDLD_LIST']
-                if value is None:
-                    return
-                else:
-                    show_cli_output(args[0], value)
-            elif 'sonic-udld:_UDLD_PORT_TABLE_LIST' in response.keys():
-                value = response['sonic-udld:_UDLD_PORT_TABLE_LIST']
-                if value is None:
-                    return
-                else:
-                    show_cli_output(args[0], value)
-            elif 'intf_show' in response.keys():
-                value = response['intf_show']
-                if value is None:
-                    return
-                else:
-                    show_cli_output(args[0], value)
-            elif 'sonic-udld:_UDLD_PORT_NEIGH_TABLE_LIST' in response.keys():
-                value = response['sonic-udld:_UDLD_PORT_NEIGH_TABLE_LIST']
-                if value is None:
-                    return
-                else:
-                    show_cli_output(args[0], value)
+            if response is not None:
+                if 'sonic-udld:UDLD_LIST' in response.keys():
+                    value = response['sonic-udld:UDLD_LIST']
+                    if value is None:
+                        return
+                    else:
+                        show_cli_output(args[0], value)
+                elif 'sonic-udld:_UDLD_PORT_TABLE_LIST' in response.keys():
+                    value = response['sonic-udld:_UDLD_PORT_TABLE_LIST']
+                    if value is None:
+                        return
+                    else:
+                        show_cli_output(args[0], value)
+                elif 'intf_show' in response.keys():
+                    value = response['intf_show']
+                    if value is None:
+                        return
+                    else:
+                        show_cli_output(args[0], value)
+                elif 'sonic-udld:_UDLD_PORT_NEIGH_TABLE_LIST' in response.keys():
+                    value = response['sonic-udld:_UDLD_PORT_NEIGH_TABLE_LIST']
+                    if value is None:
+                        return
+                    else:
+                        show_cli_output(args[0], value)
         else:
             print(api_response.error_message())
 

@@ -4,6 +4,9 @@
 *.substvars
 sonic-mgmt-framework/
 sonic-host-service/
+sonic-certfix/
+sonic-hamd/
+sonic-libnss-ham/
 tmp/
 files
 

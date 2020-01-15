@@ -84,14 +84,9 @@ module sonic-igmp-snooping {
 				}
 				
 				leaf-list out-intf {
-          type union {
-              type leafref {
-                  path "/prt:sonic-port/prt:PORT/prt:PORT_LIST/prt:ifname";
-              }
-              type leafref {
-                  path "/spc:sonic-portchannel/spc:PORTCHANNEL/spc:PORTCHANNEL_LIST/spc:name";
-              }
-          }
+					type leafref {
+						path "/svlan:sonic-vlan/svlan:VLAN_MEMBER/svlan:VLAN_MEMBER_LIST[svlan:name=current()/../sigmps:vlan-name]/svlan:ifname";
+					}									
 				}
 			}			
 		}
@@ -113,14 +108,9 @@ module sonic-igmp-snooping {
 				}
 				
 				leaf out-intf {
-          type union {
-              type leafref {
-                  path "/prt:sonic-port/prt:PORT/prt:PORT_LIST/prt:ifname";
-              }
-              type leafref {
-                  path "/spc:sonic-portchannel/spc:PORTCHANNEL/spc:PORTCHANNEL_LIST/spc:name";
-              }
-          }
+					type leafref {
+						path "/svlan:sonic-vlan/svlan:VLAN_MEMBER/svlan:VLAN_MEMBER_LIST[svlan:name=current()/../sigmps:vlan-name]/svlan:ifname";
+					}
 				}				
 			}
 		}
@@ -159,14 +149,9 @@ module sonic-igmp-snooping {
 				}
 				
 				leaf mrouter-intf {
-          type union {
-              type leafref {
-                  path "/prt:sonic-port/prt:PORT/prt:PORT_LIST/prt:ifname";
-              }
-              type leafref {
-                  path "/spc:sonic-portchannel/spc:PORTCHANNEL/spc:PORTCHANNEL_LIST/spc:name";
-              }
-          }				
+					type leafref {
+						path "/svlan:sonic-vlan/svlan:VLAN_MEMBER/svlan:VLAN_MEMBER_LIST[svlan:name=current()/../sigmps:vlan-name]/svlan:ifname";
+					}
 				}				
 			}		
 		}

@@ -405,7 +405,7 @@ func formXfmrInputRequest(d *db.DB, dbs [db.MaxDB]*db.DB, cdb db.DBNum, ygRoot *
 	inParams.dbDataMap = dbDataMap
 	inParams.subOpDataMap = subOpDataMap
 	inParams.param = param // generic param
-	inParams.txCache = txCache
+	inParams.txCache = txCache.(map[string]interface{})
 	inParams.skipOrdTblChk = new(bool)
 
 	return inParams

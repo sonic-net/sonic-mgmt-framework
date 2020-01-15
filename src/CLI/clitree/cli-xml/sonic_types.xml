@@ -79,9 +79,22 @@ limitations under the License.
         />
     <!--=======================================================-->
     <PTYPE
+        name="PO_MODE"
+        method="select"
+        pattern="active on"
+        help="PortChannel Mode"/>
+    <!--=======================================================-->
+    <PTYPE
         name="UNIT_ID"
         method="integer"
         pattern="1..99"
+        help=""
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="RANGE_NAT_ZONE"
+        method="integer"
+        pattern="0..3"
         help=""
         />
     <!--=======================================================-->
@@ -152,6 +165,13 @@ limitations under the License.
         name="RANGE_1_4294967295"
         method="unsignedInteger"
         pattern="1..4294967295"
+        help=""
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="RANGE_1_16777215"
+        method="unsignedInteger"
+        pattern="1..16777215"
         help=""
         />
     <!--=======================================================-->
@@ -857,6 +877,13 @@ limitations under the License.
         />
     <!--=======================================================-->
     <PTYPE
+        name="RANGE_1_5000"
+        method="integer"
+        pattern="1..5000"
+        help=""
+        />
+    <!--=======================================================-->
+    <PTYPE
         name="INT32_OR_IP_ADDR"
         pattern="(&IPV4_ADDRESS;|&UINT_32_RANGE;)"
         help="A.B.C.D or [1..4294967295]"
@@ -964,5 +991,18 @@ limitations under the License.
         help="Port mirror session direction"
         />
     <!--=======================================================-->
-
+    <PTYPE
+        name="SAMPLE_RATE"
+        method="integer"
+        pattern="1..65536"
+        help="Sampling rate"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="AGING_INTERVAL"
+        method="integer"
+        pattern="1..30"
+        help="Aging interval"
+        />
+    <!--=======================================================-->
 </CLISH_MODULE>

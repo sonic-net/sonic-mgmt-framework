@@ -48,7 +48,7 @@ var rpc_image_default RpcCallpoint = func(body []byte, dbs [db.MaxDB]*db.DB) ([]
 
 func image_mgmt_operation(command string, body []byte) ([]byte, error) {
 
-    var query_result  hostResult
+    var query_result  HostResult
    var result struct { 
     Output struct {
           Status int32 `json:"status"`
@@ -107,7 +107,7 @@ func image_mgmt_operation(command string, body []byte) ([]byte, error) {
             options = append(options, imagename)
           }
           log.Info("Command:", options)
-          query_result = hostQuery("image_mgmt.action", options)
+          query_result = HostQuery("image_mgmt.action", options)
         }
       }
     }

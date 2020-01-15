@@ -751,7 +751,7 @@ func yangDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, reque
 						isValid = res
 					}
 				}
-				chldYangType := yangTypeGet(xYangSpecMap[chldXpath].yangEntry)
+				chldYangType := xYangSpecMap[chldXpath].yangDataType
 				if  chldYangType == YANG_LEAF || chldYangType == YANG_LEAF_LIST {
 					if len(xYangSpecMap[xpath].xfmrFunc) > 0 {
 						continue
