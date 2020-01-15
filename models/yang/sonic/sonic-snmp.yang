@@ -247,10 +247,6 @@ module sonic-snmp {
           type identifier;
         }
 
-        leaf group {
-          type group-name;
-        }
-
         leaf shaKey {
           type yang:hex-string;
         }
@@ -323,8 +319,28 @@ module sonic-snmp {
           type security-name;
         }
 
-        leaf securityLevel {
+        leaf security-level {
           type security-level;
+        }
+      }
+    }
+
+    container SNMP_SERVER_ENGINE {
+      list SNMP_SERVER_ENGINE_LIST {
+        key "id";
+
+        leaf id {
+          type enumeration {
+            enum GLOBAL;
+          }
+        }
+
+        leaf enabled {
+          type boolean;
+        }
+
+        leaf engine-id {
+          type engine-id;
         }
       }
     }

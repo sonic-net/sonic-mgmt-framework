@@ -70,7 +70,7 @@ Before each command articulation, a comment is shown with the desired command sy
 ========================================================================= -->
 
 <!--=========================================================================
-  snmp-server [ contact <contact> ] [ location <location> ] [ sysname <system name> ] [ engine <octet-byte-string> ]
+  snmp-server [ contact <contact> ] [ location <location> ] [ sysname <system name> ] [ engine <octet-byte-string> ] [ agentaddress <addressstring> ]
   snmp-server enable trap
 ========================================================================= -->
   <COMMAND name="snmp-server" help="SNMP Server Configuration"/>
@@ -98,6 +98,18 @@ Before each command articulation, a comment is shown with the desired command sy
   <COMMAND name="snmp-server engine" help="Configure SNMP Engine ID">
     <PARAM name="engineID" help="SNMP Engine ID" ptype="ENGINE_ID_TYPE"/>
     <ACTION>python $SONIC_CLI_ROOT/sonic-cli-snmp.py  snmp_engine  "${engineID}"&#xA; </ACTION>
+  </COMMAND>
+
+  <COMMAND name="snmp-server agentaddress" help="Configure SNMP Agent Address">
+    <PARAM name="host-addr" help="IPv4 or IPv6" ptype="IPV4_OR_IPV6_ADDR">
+      <PARAM name="port" help="" ptype="SUBCOMMAND" mode="subcommand" optional="true">
+        <PARAM name="udp-port" help="UDP Listening Port" ptype="LISTEN_PORT" />
+      </PARAM>
+      <PARAM name = "interface" help = "Specify an interface" ptype="SUBCOMMAND" mode="subcommand" optional="true">
+          <PARAM name = "ifname" help = "Interface Name" ptype = "STRING" > </PARAM>
+      </PARAM>
+    </PARAM>
+    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-snmp.py  snmp_agentaddr  ${__params}&#xA; </ACTION>
   </COMMAND>
 
 <!--=========================================================================
@@ -202,7 +214,7 @@ Before each command articulation, a comment is shown with the desired command sy
           snmp-server host  "host-addr" user           "username"            {[traps  {auth | noauth | priv}] | [informs {auth | noauth | priv} [timeout seconds] [retries retries]]}
 ========================================================================= -->
   <COMMAND name="snmp-server host" help="Configure SNMP Host for Traps or Notifications">
-    <PARAM name="host-addr" help="Host address, IPv4, IPv6 or hostname" ptype="IPV4_OR_IPV6_ADDR">
+    <PARAM name="host-addr" help="Host address, IPv4 or IPv6" ptype="IPV4_OR_IPV6_ADDR">
       <PARAM name="selector" help="" ptype="SUBCOMMAND" mode="switch">
 <!--=========================================================================
  v1&v2  snmp-server host "host-addr" community "community name" {[ traps { v2c | v1 }] | informs [timeout seconds] [retries retries]}
@@ -276,6 +288,21 @@ v3      snmp-server host "host-addr" user "username" {[traps  {auth | noauth | p
     <ACTION>python $SONIC_CLI_ROOT/sonic-cli-snmp.py  snmp_trap disable&#xA; </ACTION>
   </COMMAND>
 
+  <COMMAND name="no snmp-server engine" help="Configure SNMP Engine ID">
+    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-snmp.py  snmp_engine&#xA; </ACTION>
+  </COMMAND>
+
+  <COMMAND name="no snmp-server agentaddress" help="Configure SNMP Agent Address">
+    <PARAM name="host-addr" help="Host address, IPv4 or IPv6" ptype="IPV4_OR_IPV6_ADDR">
+      <PARAM name="port" help="" ptype="SUBCOMMAND" mode="subcommand" optional="true">
+        <PARAM name="udp-port" help="UDP Listening Port" ptype="LISTEN_PORT" />
+      </PARAM>
+      <PARAM name = "interface" help = "Specify an Interface" ptype="SUBCOMMAND" mode="subcommand" optional="true">
+        <PARAM name = "ifname" help = "Interface Name" ptype = "STRING" > </PARAM>
+      </PARAM>
+    </PARAM>
+    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-snmp.py  no_snmp_agentaddr  ${__params}&#xA; </ACTION>
+  </COMMAND>
 <!--=========================================================================
         no snmp-server community  "community name"
 ========================================================================= -->
