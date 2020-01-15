@@ -55,6 +55,8 @@ func init () {
     XlateFuncBind("YangToDb_intf_tbl_key_xfmr", YangToDb_intf_tbl_key_xfmr)
     XlateFuncBind("DbToYang_intf_tbl_key_xfmr", DbToYang_intf_tbl_key_xfmr)
     XlateFuncBind("YangToDb_intf_name_empty_xfmr", YangToDb_intf_name_empty_xfmr)
+    XlateFuncBind("YangToDb_unnumbered_intf_xfmr", YangToDb_unnumbered_intf_xfmr)
+    XlateFuncBind("DbToYang_unnumbered_intf_xfmr", DbToYang_unnumbered_intf_xfmr)
     XlateFuncBind("rpc_clear_counters", rpc_clear_counters)
 }
 
@@ -69,6 +71,7 @@ const (
     VLAN_TN            = "VLAN"
     VLAN_MEMBER_TN     = "VLAN_MEMBER"
     VLAN_INTERFACE_TN  = "VLAN_INTERFACE"
+    UNNUMBERED         = "unnumbered"
 )
 
 const (
@@ -1886,3 +1889,126 @@ var YangToDb_intf_eth_port_config_xfmr SubTreeXfmrYangToDb = func(inParams XfmrP
     }
     return memMap, err
 }
+
+var YangToDb_unnumbered_intf_xfmr SubTreeXfmrYangToDb = func(inParams XfmrParams) (map[string]map[string]db.Value, error) {
+    var err error
+    subIntfmap := make(map[string]map[string]db.Value)
+
+    intfsObj := getIntfsRoot(inParams.ygRoot)
+    if intfsObj == nil || len(intfsObj.Interface) < 1 {
+        log.Info("YangToDb_unnumbered_intf_xfmr: IntfsObj/interface list is empty.")
+        return subIntfmap, errors.New("IntfsObj/Interface is not specified")
+    }
+
+    pathInfo := NewPathInfo(inParams.uri)
+    ifName := pathInfo.Var("name")
+
+    if ifName == "" {
+        errStr := "Interface KEY not present"
+        log.Info("YangToDb_unnumbered_intf_xfmr: " + errStr)
+        return subIntfmap, errors.New(errStr)
+    }
+
+    if _, ok := intfsObj.Interface[ifName]; !ok {
+        errStr := "Interface entry not found in Ygot tree, ifname: " + ifName
+        log.Info("YangToDb_unnumbered_intf_xfmr : " + errStr)
+        return subIntfmap, errors.New(errStr)
+    }
+
+    intfObj := intfsObj.Interface[ifName]
+
+    if intfObj.Subinterfaces == nil || len(intfObj.Subinterfaces.Subinterface) < 1 {
+        errStr := "SubInterface node is not set"
+        log.Info("YangToDb_unnumbered_intf_xfmr : " + errStr)
+        return subIntfmap, errors.New(errStr)
+    }
+
+    if _, ok := intfObj.Subinterfaces.Subinterface[0]; !ok {
+        log.Info("YangToDb_unnumbered_intf_xfmr : No Unnumbered IP interface handling required")
+        return subIntfmap, err
+    }
+
+    intfType, _, ierr := getIntfTypeByName(ifName)
+    if intfType == IntfTypeUnset || ierr != nil {
+        errStr := "Invalid interface type IntfTypeUnset"
+        log.Info("YangToDb_unnumbered_intf_xfmr : " + errStr)
+        return subIntfmap, errors.New(errStr)
+    }
+
+    intTbl := IntfTypeTblMap[intfType]
+    tblName, _ := getIntfTableNameByDBId(intTbl, inParams.curDb)
+
+    subIntfObj := intfObj.Subinterfaces.Subinterface[0]
+
+    log.Info("subIntfObj:=", subIntfObj)
+    if subIntfObj.Ipv4 != nil && subIntfObj.Ipv4.Unnumbered.InterfaceRef != nil {
+        if _, ok := subIntfmap[tblName]; !ok {
+            subIntfmap[tblName] = make(map[string]db.Value)
+        }
+
+		ifdb := make(map[string]string)
+		var value db.Value
+
+        if inParams.oper == DELETE {
+            log.Info("DELETE Unnum Intf:=", tblName, ifName)
+
+            intfIPKeys, _ := inParams.d.GetKeys(&db.TableSpec{Name:tblName})
+            if len(intfIPKeys) > 0 {
+                for i := range intfIPKeys {
+                    if len(intfIPKeys[i].Comp) > 1 {
+                        ifdb[UNNUMBERED] = "NULL"
+                        break;
+                    }
+                }
+            }
+        } else {
+            unnumberedObj := subIntfObj.Ipv4.Unnumbered.InterfaceRef
+            if unnumberedObj.Config != nil {
+                log.Info("Unnum Intf:=", *unnumberedObj.Config.Interface)
+				ifdb[UNNUMBERED] = *unnumberedObj.Config.Interface 
+            }
+        }
+
+		value = db.Value{Field: ifdb}
+		subIntfmap[tblName][ifName] = value
+    }
+
+    log.Info("YangToDb_unnumbered_intf_xfmr : subIntfmap : ", subIntfmap)
+
+    return subIntfmap, err
+}
+
+var DbToYang_unnumbered_intf_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (map[string]interface{}, error) {
+    var err error
+    result := make(map[string]interface{})
+
+    data := (*inParams.dbDataMap)[inParams.curDb]
+
+    intfType, _, ierr := getIntfTypeByName(inParams.key)
+    if intfType == IntfTypeUnset || ierr != nil {
+        log.Info("DbToYang_intf_enabled_xfmr - Invalid interface type IntfTypeUnset");
+        return result, errors.New("Invalid interface type IntfTypeUnset");
+    }
+    intTbl := IntfTypeTblMap[intfType]
+
+    tblName, _ := getPortTableNameByDBId(intTbl, inParams.curDb)
+    if _, ok := data[tblName]; !ok {
+        log.Info("DbToYang_intf_enabled_xfmr table not found : ", tblName)
+        return result, errors.New("table not found : " + tblName)
+    }
+
+    pTbl := data[tblName]
+    if _, ok := pTbl[inParams.key]; !ok {
+        log.Info("DbToYang_intf_enabled_xfmr Interface not found : ", inParams.key)
+        return result, errors.New("Interface not found : " + inParams.key)
+    }
+    prtInst := pTbl[inParams.key]
+    unnumbered_intf, ok := prtInst.Field[UNNUMBERED]
+    if ok {
+        log.Info("Unnumbered field found", unnumbered_intf)
+    } else {
+        log.Info("Unnumbered field not found in DB")
+    }
+    return result, err
+}
+

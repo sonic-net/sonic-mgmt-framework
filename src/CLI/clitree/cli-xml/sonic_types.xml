@@ -79,6 +79,12 @@ limitations under the License.
         />
     <!--=======================================================-->
     <PTYPE
+        name="PO_MODE"
+        method="select"
+        pattern="active on"
+        help="PortChannel Mode"/>
+    <!--=======================================================-->
+    <PTYPE
         name="UNIT_ID"
         method="integer"
         pattern="1..99"
@@ -159,6 +165,13 @@ limitations under the License.
         name="RANGE_1_4294967295"
         method="unsignedInteger"
         pattern="1..4294967295"
+        help=""
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="RANGE_1_16777215"
+        method="unsignedInteger"
+        pattern="1..16777215"
         help=""
         />
     <!--=======================================================-->
@@ -978,5 +991,18 @@ limitations under the License.
         help="Port mirror session direction"
         />
     <!--=======================================================-->
-
+    <PTYPE
+        name="SAMPLE_RATE"
+        method="integer"
+        pattern="1..65536"
+        help="Sampling rate"
+        />
+    <!--=======================================================-->
+    <PTYPE
+        name="AGING_INTERVAL"
+        method="integer"
+        pattern="1..30"
+        help="Aging interval"
+        />
+    <!--=======================================================-->
 </CLISH_MODULE>

@@ -97,7 +97,11 @@ func TestMain(m *testing.M) {
 // authentication failure and 403 on authorization failure
 var authTestHandler = authMiddleware(http.HandlerFunc(
 	func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(200)
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(200)
+		} else {
+			Process(w, r)
+		}
 	}))
 
 func TestAuthLocalUser_Get(t *testing.T) {
@@ -171,10 +175,10 @@ func testAuthGet(t *testing.T, username, password string, expStatus int) {
 }
 
 func testAuthSet(t *testing.T, username, password string, expStatus int) {
-	t.Run("PUT", testAuth("PUT", username, password, expStatus))
-	t.Run("POST", testAuth("POST", username, password, expStatus))
-	t.Run("PATCH", testAuth("PATCH", username, password, expStatus))
-	t.Run("DELETE", testAuth("DELETE", username, password, expStatus))
+	t.Run("PUT", testAuth("PUT", username, password, max(204, expStatus)))
+	t.Run("POST", testAuth("POST", username, password, max(201, expStatus)))
+	t.Run("PATCH", testAuth("PATCH", username, password, max(204, expStatus)))
+	t.Run("DELETE", testAuth("DELETE", username, password, max(204, expStatus)))
 }
 
 func testAuth(method, username, password string, expStatus int) func(*testing.T) {
@@ -185,7 +189,7 @@ func testAuth(method, username, password string, expStatus int) func(*testing.T)
 			defer ClientAuth.Unset("password")
 		}
 
-		r := httptest.NewRequest(method, "/auth", nil)
+		r := httptest.NewRequest(method, "/api-tests:auth", nil)
 		w := httptest.NewRecorder()
 
 		if username != "" {
@@ -198,4 +202,11 @@ func testAuth(method, username, password string, expStatus int) func(*testing.T)
 			t.Fatalf("Expected response %d; got %d", expStatus, w.Code)
 		}
 	}
+}
+
+func max(x, y int) int {
+	if x > y {
+		return x
+	}
+	return y
 }

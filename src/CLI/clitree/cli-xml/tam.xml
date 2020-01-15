@@ -116,7 +116,7 @@ limitations under the License.
              mode="subcommand">
         <PARAM name="port-val" 
                help="Collector Port" 
-               ptype="UINT"> 
+               ptype="RANGE_0_65535"> 
         </PARAM>
       </PARAM>
       <ACTION>python $SONIC_CLI_ROOT/sonic-cli-tam.py patch_list_sonic_tam_sonic_tam_tam_collector_table_tam_collector_table_list ${name} ${ip-type-val} ${ip-addr-val} ${port-val}</ACTION>

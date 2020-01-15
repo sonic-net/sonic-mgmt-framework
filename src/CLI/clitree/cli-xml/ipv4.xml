@@ -96,7 +96,7 @@ limitations under the License.
             name="addr"
             help="IP address with mask"
             ptype="IP_ADDR_MASK" />
-	<ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config ${iface} ${addr} </ACTION>
+        <ACTION>python $SONIC_CLI_ROOT/sonic_cli_if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config ${iface} ${addr} </ACTION>
     </COMMAND>
 
     <COMMAND
@@ -108,7 +108,25 @@ limitations under the License.
             help="IP address"
 	    ptype="IP_ADDR" />
     <ACTION>
-	    python $SONIC_CLI_ROOT/sonic-cli-if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config_prefix_length ${iface} ${addr}
+        python $SONIC_CLI_ROOT/sonic_cli_if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config_prefix_length ${iface} ${addr}
+    </ACTION>
+    </COMMAND>
+
+    <COMMAND
+        name="ip unnumbered"
+        help="Configure IPv4 unnumbered interface" >
+        <PARAM
+            name="donor-interface"
+            help="Donor Interface Name"
+            ptype="STRING" />
+	<ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_unnumbered_interface_ref_config_interface ${iface} ${donor-interface}
+    </ACTION>
+    </COMMAND>
+
+    <COMMAND
+        name="no ip unnumbered"
+	    help="Configure IPv4 unnumbered interface" >
+    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_unnumbered_interface_ref_config_interface ${iface}
     </ACTION>
     </COMMAND>
 </VIEW>
@@ -148,9 +166,9 @@ limitations under the License.
         </PARAM>
         <ACTION>
             if test "${gw_addr}" = ""; then&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config ${iface} ${addr}&#xA;
+            python $SONIC_CLI_ROOT/sonic_cli_if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config ${iface} ${addr}&#xA;
             else&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config ${iface} ${addr} ${gw_addr}&#xA;
+            python $SONIC_CLI_ROOT/sonic_cli_if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config ${iface} ${addr} ${gw_addr}&#xA;
             fi&#xA;
         </ACTION>
     </COMMAND>
@@ -164,7 +182,7 @@ limitations under the License.
             help="IP address"
 	    ptype="IP_ADDR" />
     <ACTION>
-        python $SONIC_CLI_ROOT/sonic-cli-if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config_prefix_length ${iface} ${addr}
+        python $SONIC_CLI_ROOT/sonic_cli_if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config_prefix_length ${iface} ${addr}
     </ACTION>
     </COMMAND>
 </VIEW>
@@ -191,7 +209,7 @@ limitations under the License.
               name="addr"
               help="IP address with mask"
               ptype="IP_ADDR_MASK" />
-          <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config ${vlan_id} ${addr} </ACTION>
+          <ACTION>python $SONIC_CLI_ROOT/sonic_cli_if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config ${vlan_id} ${addr} </ACTION>
       </COMMAND>
       <COMMAND
          name="no ip address"
@@ -202,7 +220,7 @@ limitations under the License.
              help="IP address"
              ptype="IP_ADDR" />
          <ACTION>
-            python $SONIC_CLI_ROOT/sonic-cli-if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config_prefix_length ${vlan_id} ${addr}
+             python $SONIC_CLI_ROOT/sonic_cli_if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config_prefix_length ${vlan_id} ${addr}
          </ACTION>
       </COMMAND>
 </VIEW>
@@ -229,7 +247,7 @@ limitations under the License.
               name="addr"
               help="IP address with mask"
               ptype="IP_ADDR_MASK" />
-          <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config ${po_name} ${addr} </ACTION>
+          <ACTION>python $SONIC_CLI_ROOT/sonic_cli_if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config ${po_name} ${addr} </ACTION>
       </COMMAND>
       <COMMAND
          name="no ip address"
@@ -240,9 +258,27 @@ limitations under the License.
              help="IP address"
              ptype="IP_ADDR" />
          <ACTION>
-            python $SONIC_CLI_ROOT/sonic-cli-if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config_prefix_length ${po_name} ${addr}
+             python $SONIC_CLI_ROOT/sonic_cli_if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config_prefix_length ${po_name} ${addr}
          </ACTION>
       </COMMAND>
+
+      <COMMAND
+         name="ip unnumbered"
+         help="Configure IPv4 unnumbered interface" >
+         <PARAM
+             name="donor-interface"
+             help="Donor Interface Name"
+             ptype="STRING" />
+         <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_unnumbered_interface_ref_config_interface ${po_name} ${donor-interface}
+         </ACTION>
+     </COMMAND>
+
+     <COMMAND
+         name="no ip unnumbered"
+         help="Configure IPv4 unnumbered interface" >
+         <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_unnumbered_interface_ref_config_interface ${po_name}
+         </ACTION>
+     </COMMAND>
 </VIEW>
 
 <!--=======================================================-->
@@ -267,7 +303,7 @@ limitations under the License.
               name="addr"
               help="IP address with mask (/32 is supported)"
               ptype="IP_ADDR_MASK" />
-          <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config ${lo_name} ${addr} </ACTION>
+          <ACTION>python $SONIC_CLI_ROOT/sonic_cli_if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config ${lo_name} ${addr} </ACTION>
       </COMMAND>
       <COMMAND
          name="no ip address"
@@ -278,7 +314,7 @@ limitations under the License.
              help="IP address"
              ptype="IP_ADDR" />
          <ACTION>
-            python $SONIC_CLI_ROOT/sonic-cli-if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config_prefix_length ${lo_name} ${addr}
+             python $SONIC_CLI_ROOT/sonic_cli_if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config_prefix_length ${lo_name} ${addr}
          </ACTION>
       </COMMAND>
 </VIEW>

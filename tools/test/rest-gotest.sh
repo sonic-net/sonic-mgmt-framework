@@ -25,6 +25,7 @@ TOPDIR=$PWD
 TEST_ARGS=()
 REST_ARGS=()
 PIPE=tee
+GO=go
 
 while [[ $# -gt 0 ]]; do
 case "$1" in
@@ -32,19 +33,19 @@ case "$1" in
         echo "usage: $0 [-run NAME] [-auth] [-json] [-tparse] [ARGS...]"
         echo ""
         echo " -run NAME  Run specific test cases."
-        echo "            Value starting with 'Auth' implicitly enables -auth"
-        echo " -auth      Enable local password authentication test cases"
-        echo "            Extra arguments may be needed as described in pamAuth_test.go"
+        echo " -auth      Run local password authentication test cases"
+        echo "            Extra arguments may be needed as described in auth_test.go"
+        echo " -sudo      Run as 'sudo -E go test ...'. Usually required for auth tests"
         echo " -json      Prints output in json format"
         echo " -tparse    Render output through tparse; implicitly enables -json"
         echo " ARGS...    Arguments to test program (log level, auth test arguments etc)"
         exit 0 ;;
     -auth)
+        TEST_ARGS+=("-run" "Auth")
         REST_ARGS+=("-authtest" "local")
         shift ;;
     -run)
         TEST_ARGS+=("-run" "$2")
-        [[ $2 == Auth* ]] && REST_ARGS+=("-authtest" "local")
         shift 2 ;;
     -json)
         TEST_ARGS+=("-json")
@@ -52,6 +53,9 @@ case "$1" in
     -tparse)
         TEST_ARGS+=("-json")
         PIPE=tparse
+        shift ;;
+    -sudo)
+        GO="sudo -E $(which go)"
         shift ;;
     *)
         REST_ARGS+=("$1")
@@ -65,5 +69,4 @@ export CVL_SCHEMA_PATH=$TOPDIR/build/cvl/schema
 
 export YANG_MODELS_PATH=$TOPDIR/build/all_yangs
 
-go test rest/server -v -cover "${TEST_ARGS[@]}" -args -logtostderr "${REST_ARGS[@]}" | $PIPE
-
+${GO} test rest/server -v -cover "${TEST_ARGS[@]}" -args -logtostderr "${REST_ARGS[@]}" | ${PIPE}

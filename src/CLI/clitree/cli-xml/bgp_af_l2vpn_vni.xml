@@ -69,10 +69,10 @@ limitations under the License.
     </VIEW>
 
     <VIEW name="enable-view">
-      <COMMAND name="show ip bgp l2vpn evpn vni" help="L2VPN EVPN VNI information">
+      <COMMAND name="show bgp l2vpn evpn vni" help="Show VNI">
         <PARAM name="vninum" help="VxLAN Network Identifier" ptype="VNI_RANGE">
         </PARAM>
-        <ACTION> python $SONIC_CLI_ROOT/sonic-cli-show-bgp-evpn.py get_bgp_evpn_vni default L2VPN_EVPN ${vninum} show_evpn_vni.j2</ACTION>
+        <ACTION> python $SONIC_CLI_ROOT/sonic-cli-show-bgp-evpn.py get_bgp_evpn_vni show_evpn_vni.j2 default L2VPN_EVPN ${vninum}</ACTION>
       </COMMAND>
     </VIEW>
 

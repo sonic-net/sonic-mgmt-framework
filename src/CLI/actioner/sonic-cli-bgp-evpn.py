@@ -40,11 +40,11 @@ def invoke_api(func, args=[]):
         body = { "openconfig-bgp-evpn-ext:advertise-all-vni": True if args[2] == 'True' else False }
         return api.patch(keypath, body)
     elif func == 'patch_bgp_evpn_advertise_default_gw':
-        #TODO: Change to Openconfig API
-        keypath = cc.Path('/restconf/data/sonic-bgp-global:sonic-bgp-global/BGP_GLOBALS_AF/'
-            +'BGP_GLOBALS_AF_LIST={vrf},{af_name}/advertise-default-gw',
+        keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={vrf}'
+            +'/protocols/protocol=BGP,bgp/bgp/global/afi-safis/afi-safi={af_name}/l2vpn-evpn'
+            +'/openconfig-bgp-evpn-ext:advertise-default-gw',
                 vrf=args[0], af_name=args[1])
-        body = { "sonic-bgp-global:advertise-default-gw": True if args[2] == 'True' else False }
+        body = { "openconfig-bgp-evpn-ext:advertise-default-gw": True if args[2] == 'True' else False }
         return api.patch(keypath, body)
     elif func == 'patch_bgp_evpn_default_originate':
         keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={vrf}'
@@ -164,9 +164,9 @@ def invoke_api(func, args=[]):
                 vrf=args[0], af_name=args[1])
         return api.delete(keypath)
     elif func == 'delete_bgp_evpn_advertise_default_gw':
-        #TODO: Change to Openconfig API
-        keypath = cc.Path('/restconf/data/sonic-bgp-global:sonic-bgp-global/BGP_GLOBALS_AF/'
-            +'BGP_GLOBALS_AF_LIST={vrf},{af_name}/advertise-default-gw',
+        keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={vrf}'
+            +'/protocols/protocol=BGP,bgp/bgp/global/afi-safis/afi-safi={af_name}/l2vpn-evpn'
+            +'/openconfig-bgp-evpn-ext:advertise-default-gw',
                 vrf=args[0], af_name=args[1])
         return api.delete(keypath)
     elif func == 'delete_bgp_evpn_default_originate':

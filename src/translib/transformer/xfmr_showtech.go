@@ -65,7 +65,7 @@ var rpc_showtech_cb RpcCallpoint = func(body []byte, dbs [db.MaxDB]*db.DB) ([]by
         return result, nil
     }
 
-    host_output := hostQuery("showtech.info", operand.Input.Date)
+    host_output := HostQuery("showtech.info", operand.Input.Date)
     if host_output.Err != nil {
         glog.Errorf("%Error: Showtech host Query failed: err=%v", host_output.Err)
         glog.Flush()

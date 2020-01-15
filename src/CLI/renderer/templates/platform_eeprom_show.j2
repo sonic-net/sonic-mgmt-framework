@@ -1,0 +1,17 @@
+{{'-----------------------------------------------------------'}}
+{{'Attribute'.ljust(20)}} {{'Value/State'}}
+{{'-----------------------------------------------------------'}}
+{% for state,component in json_output.items() %}
+{% if state == 'openconfig-platform:state' %}
+{% for key in component %}
+{% set key_val = component[key] %}
+{% if key == 'oper-status' %}
+{% set temp = key_val.split(':') %}
+{% if temp[temp|length - 1] is not none %}
+{% set  key_val = temp[temp|length - 1] %}
+{% endif %}
+{% endif %}
+{{key.ljust(20)}}:{{key_val}}
+{% endfor %}
+{% endif %}
+{% endfor %}

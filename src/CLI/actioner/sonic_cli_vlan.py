@@ -157,17 +157,18 @@ def run(func, args):
             # Get Command Output
             api_response = response.content
             if 'sonic-vlan:sonic-vlan' in api_response:
+                vlanId = '' if args[0] == 'Vlan' else args[0]
                 value = api_response['sonic-vlan:sonic-vlan']
                 if 'VLAN_MEMBER_TABLE' in value:
                     vlanMemberCont = value['VLAN_MEMBER_TABLE']
                     if 'VLAN_MEMBER_TABLE_LIST' in vlanMemberCont:
                         vlanMemberTup = vlanMemberCont['VLAN_MEMBER_TABLE_LIST']
-                        updateVlanToIntfMap(vlanMemberTup, args[0])
+                        updateVlanToIntfMap(vlanMemberTup, vlanId)
                 if 'VLAN_TABLE' in value:
                     vlanCont = value['VLAN_TABLE']
                     if 'VLAN_TABLE_LIST' in vlanCont:
                          vlanTup = vlanCont['VLAN_TABLE_LIST']
-                         updateVlanInfoMap(vlanTup, args[0])
+                         updateVlanInfoMap(vlanTup, vlanId)
 
                 func1 = 'get_sonic_vxlan_remote_vni'
                 response2 = invoke_api(func1, args)

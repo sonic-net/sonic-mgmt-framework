@@ -669,13 +669,6 @@ limitations under the License.
                     mode="switch"
                     >
                     <PARAM
-                        name="auto"
-                        help = "link type is set based on the duplex setting of the interface."
-                        ptype="SUBCOMMAND"
-                        mode="subcommand"
-                        >
-                    </PARAM>
-                    <PARAM
                         name="point-to-point"
                         help = "link type of given interface is point-to-point."
                         ptype="SUBCOMMAND"

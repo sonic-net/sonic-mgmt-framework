@@ -19,7 +19,7 @@
 
 package cvl
 import (
-	"fmt"
+	//"fmt"
 	"encoding/json"
 	"github.com/go-redis/redis"
 	. "cvl/internal/util"
@@ -297,6 +297,7 @@ func (c *CVL) clearTmpDbCache() {
 	}
 }
 
+/*
 //Get table entry from cache for redis key
 func dbCacheEntryGet(tableName, key string) (*yparser.YParserNode, CVLRetCode) {
 	//First check if the table is cached
@@ -503,4 +504,4 @@ func dbCacheClear(tableName string) CVLRetCode {
 
 	return CVL_SUCCESS
 }
-
+*/
