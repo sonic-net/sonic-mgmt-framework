@@ -40,7 +40,7 @@ func keyCreate(keyPrefix string, xpath string, data interface{}, dbKeySep string
 			delim := dbKeySep
 			if len(xYangSpecMap[xpath].delim) > 0 {
 				delim = xYangSpecMap[xpath].delim
-				log.Infof("key concatenater(\"%v\") found for xpath %v ", delim, xpath)
+				xfmrLogInfoAll("key concatenater(\"%v\") found for xpath %v ", delim, xpath)
 			}
 
 			if len(keyPrefix) > 0 { keyPrefix += delim }
@@ -158,7 +158,7 @@ func dbKeyToYangDataConvert(uri string, requestUri string, xpath string, dbKey s
 
 	rmap := make(map[string]interface{})
 	if len(keyNameList) > 1 {
-		log.Infof("No key transformer found for multi element yang key mapping to a single redis key string.")
+		xfmrLogInfoAll("No key transformer found for multi element yang key mapping to a single redis key string.")
 	        return rmap, uriWithKey, nil
 	}
 	keyXpath := xpath + "/" + keyNameList[0]
@@ -239,7 +239,7 @@ func sonicKeyDataAdd(dbIndex db.DBNum, keyNameList []string, xpathPrefix string,
 	dbOpts = getDBOptions(dbIndex)
 	keySeparator := dbOpts.KeySeparator
     keyValList := strings.SplitN(keyStr, keySeparator, len(keyNameList))
-    log.Infof("yang keys list - %v, xpathprefix - %v, DB-key string - %v, DB-key list after db key separator split - %v, dbIndex - %v", keyNameList, xpathPrefix, keyStr, keyValList, dbIndex) 
+    xfmrLogInfoAll("yang keys list - %v, xpathprefix - %v, DB-key string - %v, DB-key list after db key separator split - %v, dbIndex - %v", keyNameList, xpathPrefix, keyStr, keyValList, dbIndex) 
 
     if len(keyNameList) != len(keyValList) {
         return
@@ -329,7 +329,7 @@ func uriModuleNameGet(uri string) (string, error) {
 		log.Error("Empty module name")
 		err = fmt.Errorf("No module name found in uri %s", uri)
         }
-	log.Info("module name = ", result)
+	xfmrLogInfo("module name = %v", result)
 	return result, err
 }
 
@@ -694,7 +694,7 @@ func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, req
 		 fldPth := strings.Split(xpath, "/")
 		 if len(fldPth) > SONIC_FIELD_INDEX {
 			 fldNm = fldPth[SONIC_FIELD_INDEX]
-			 log.Info("Field Name : ", fldNm)
+			 xfmrLogInfoAll("Field Name : %v", fldNm)
 		 }
 	 }
 	 rgp := regexp.MustCompile(`\[([^\[\]]*)\]`)
@@ -708,7 +708,7 @@ func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, req
 		 dbInfo, ok := xDbSpecMap[tableName]
 		 cdb := db.ConfigDB
 		 if !ok {
-			 log.Infof("No entry in xDbSpecMap for xpath %v in order to fetch DB index.", tableName)
+			 xfmrLogInfoAll("No entry in xDbSpecMap for xpath %v in order to fetch DB index", tableName)
 			 return xpath, keyStr, tableName
 		 }
 		 cdb = dbInfo.dbIndex
@@ -722,7 +722,7 @@ func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, req
 			 if fldNm != "" {
 				 chompFld := strings.Split(path, "/")
 				 lpath = strings.Join(chompFld[:SONIC_FIELD_INDEX], "/")
-				 log.Info("path after removing the field portion ", lpath)
+				 xfmrLogInfoAll("path after removing the field portion %v", lpath)
 
 			 }
 			 for i, kname := range rgp.FindAllString(lpath, -1) {
@@ -740,7 +740,7 @@ func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, req
 func getYangMdlToSonicMdlList(moduleNm string) []string {
 	var sncMdlList []string
         if xDbSpecTblSeqnMap == nil || len(xDbSpecTblSeqnMap) == 0 {
-                log.Info("xDbSpecTblSeqnMap is empty.")
+                xfmrLogInfo("xDbSpecTblSeqnMap is empty.")
                 return sncMdlList
         }
         if strings.HasPrefix(moduleNm, SONIC_MDL_PFX) {
@@ -854,4 +854,14 @@ func isJsonDataEmpty(jsonData string) bool {
 		return true
 	}
 	return false
+}
+
+func xfmrLogInfo(format string, args ...interface{}) {
+	log.Infof(format, args...)
+}
+
+func xfmrLogInfoAll(format string, args ...interface{}) {
+	if log.V(5) {
+		log.Infof(format, args...)
+	}
 }
