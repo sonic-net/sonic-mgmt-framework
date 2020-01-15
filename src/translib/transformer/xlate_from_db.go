@@ -437,7 +437,7 @@ func directDbToYangJsonCreate(uri string, dbDataMap *map[db.DBNum]map[string]map
 		log.Error(errStr)
 		err = tlerr.NotFound("Resource not found")
         }
-        return jsonData, nil, false
+        return jsonData, err, false
 }
 
 func tableNameAndKeyFromDbMapGet(dbDataMap map[string]map[string]db.Value) (string, string, error) {
@@ -832,6 +832,12 @@ func yangDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, reque
 					lTblName := ""
 					if ok && ynode.tableName != nil {
 						lTblName = *ynode.tableName
+					}
+					if _, ok := (*dbDataMap)[cdb][lTblName]; !ok && len(lTblName) > 0 {
+						curDbDataMap, err := fillDbDataMapForTbl(chldUri, chldXpath, lTblName, "", cdb, dbs)
+						if err == nil {
+							mapCopy((*dbDataMap)[cdb], curDbDataMap[cdb])
+						}
 					}
 					yangListDataFill(dbs, ygRoot, chldUri, requestUri, chldXpath, dbDataMap, resultMap, lTblName, tblKey, cdb, isValid, txCache, false)
 				} else if chldYangType == "choice" || chldYangType == "case" {
