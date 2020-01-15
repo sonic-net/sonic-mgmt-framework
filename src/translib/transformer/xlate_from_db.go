@@ -21,6 +21,7 @@ package transformer
 import (
     "fmt"
     "translib/db"
+    "translib/tlerr"
     "strings"
     "encoding/json"
     "os"
@@ -370,6 +371,7 @@ func sonicDbToYangDataFill(uri string, xpath string, dbIdx db.DBNum, table strin
 
 /* Traverse db map and create json for cvl yang */
 func directDbToYangJsonCreate(uri string, dbDataMap *map[db.DBNum]map[string]map[string]db.Value, resultMap map[string]interface{}) (string, error, bool) {
+	var err error
 	xpath, key, table := sonicXpathKeyExtract(uri)
 
 	if len(xpath) > 0 {
@@ -427,9 +429,15 @@ func directDbToYangJsonCreate(uri string, dbDataMap *map[db.DBNum]map[string]map
 	}
 
 	jsonMapData, _ := json.Marshal(resultMap)
+	isEmptyPayload := isJsonDataEmpty(string(jsonMapData))
 	jsonData := fmt.Sprintf("%v", string(jsonMapData))
 	jsonDataPrint(jsonData)
-	return jsonData, nil, false
+        if isEmptyPayload {
+		errStr := fmt.Sprintf("No data available")
+		log.Error(errStr)
+		err = tlerr.NotFound("Resource not found")
+        }
+        return jsonData, nil, false
 }
 
 func tableNameAndKeyFromDbMapGet(dbDataMap map[string]map[string]db.Value) (string, string, error) {

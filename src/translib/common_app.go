@@ -24,6 +24,7 @@ import (
 	"strings"
 	log "github.com/golang/glog"
 	"github.com/openconfig/ygot/ygot"
+	"github.com/openconfig/ygot/util"
 	"reflect"
 	"translib/db"
 	"translib/ocbinds"
@@ -198,7 +199,7 @@ func (app *CommonApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
     for {
 	    // Keep a copy of the ygotRoot and let Transformer use this copy of ygotRoot
 	    xfmrYgotRoot, _ := ygot.DeepCopy((*app.ygotRoot).(ygot.GoStruct))
-		isEmptyPayload  := false
+            isEmptyPayload  := false
 	    payload, err, isEmptyPayload = transformer.GetAndXlateFromDB(app.pathInfo.Path, &xfmrYgotRoot, dbs, txCache)
 	    if err != nil {
 		    log.Error("transformer.transformer.GetAndXlateFromDB failure. error:", err)
@@ -243,6 +244,15 @@ func (app *CommonApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
 		    if !strings.HasPrefix(app.pathInfo.Path, "/sonic") {
 			    // if payload is empty, no need to invoke merge-struct
 			    if isEmptyPayload == true {
+				    if areEqual(xfmrYgotRoot, resYgot.(ygot.GoStruct)) {
+					    // No data available in xfmrYgotRoot. Hence return error
+					    resPayload = payload
+					    err = tlerr.NotFound("Resource not found")
+					    errStr := fmt.Sprintf("No data available")
+					    log.Error(errStr)
+					    break
+
+				    }
 				    resYgot = xfmrYgotRoot
 			    } else {
 				    // Merge the ygotRoots filled by transformer and app.ygotRoot used to Unmarshal the payload (required as Unmarshal does replace operation on ygotRoot)
@@ -706,3 +716,19 @@ func checkAndProcessLeafList(existingEntry db.Value, tblRw db.Value, opcode int,
 	log.Infof("Returning Table Row %v", tblRw)
 	return tblRw
 }
+
+// This function is a copy of the function areEqual in ygot.util package.
+// areEqual compares a and b. If a and b are both pointers, it compares the
+// values they are pointing to.
+func areEqual(a, b interface{}) bool {
+        if util.IsValueNil(a) && util.IsValueNil(b) {
+                return true
+        }
+        va, vb := reflect.ValueOf(a), reflect.ValueOf(b)
+        if va.Kind() == reflect.Ptr && vb.Kind() == reflect.Ptr {
+                return reflect.DeepEqual(va.Elem().Interface(), vb.Elem().Interface())
+        }
+
+        return reflect.DeepEqual(a, b)
+}
+
