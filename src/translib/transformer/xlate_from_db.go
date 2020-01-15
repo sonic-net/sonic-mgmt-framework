@@ -431,7 +431,6 @@ func directDbToYangJsonCreate(uri string, dbDataMap *map[db.DBNum]map[string]map
 	jsonMapData, _ := json.Marshal(resultMap)
 	isEmptyPayload := isJsonDataEmpty(string(jsonMapData))
 	jsonData := fmt.Sprintf("%v", string(jsonMapData))
-	jsonDataPrint(jsonData)
         if isEmptyPayload {
 		errStr := fmt.Sprintf("No data available")
 		log.Error(errStr)
@@ -990,20 +989,6 @@ func dbDataToYangJsonCreate(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db
 	jsonMapData, _ := json.Marshal(resultMap)
 	isEmptyPayload := isJsonDataEmpty(string(jsonMapData))
 	jsonData        = fmt.Sprintf("%v", string(jsonMapData))
-	jsonDataPrint(jsonData)
 
 	return jsonData, nil, isEmptyPayload
 }
-
-func jsonDataPrint(data string) {
-    fp, err := os.Create("/tmp/dbToYangJson.txt")
-    if err != nil {
-        return
-    }
-    defer fp.Close()
-
-    fmt.Fprintf (fp, "-----------------------------------------------------------------\r\n")
-    fmt.Fprintf (fp, "%v \r\n", data)
-    fmt.Fprintf (fp, "-----------------------------------------------------------------\r\n")
-}
-
