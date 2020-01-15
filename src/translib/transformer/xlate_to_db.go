@@ -35,7 +35,7 @@ import (
 var ocbSch, _ = ocbinds.Schema()
 
 func leafXfmrHandler(inParams XfmrParams, xfmrFieldFuncNm string) (map[string]string, error) {
-        xfmrLogInfoAll("Received inParams ", inParams, " Field transformer name ", xfmrFieldFuncNm)
+    xfmrLogInfoAll("Received inParams %v Field transformer name %v", inParams, xfmrFieldFuncNm)
     ret, err := XlateFuncCall(yangToDbXfmrFunc(xfmrFieldFuncNm), inParams)
     if err != nil {
         return nil, err
@@ -65,7 +65,7 @@ func leafXfmrHandler(inParams XfmrParams, xfmrFieldFuncNm string) (map[string]st
 }
 
 func xfmrHandler(inParams XfmrParams, xfmrFuncNm string) (map[string]map[string]db.Value, error) {
-        xfmrLogInfoAll("Received inParams ", inParams, "Subtree function name ", xfmrFuncNm)
+        xfmrLogInfoAll("Received inParams %v Subtree function name %v", inParams, xfmrFuncNm)
         ret, err := XlateFuncCall(yangToDbXfmrFunc(xfmrFuncNm), inParams)
         if err != nil {
                 return nil, err
@@ -91,7 +91,7 @@ func xfmrHandler(inParams XfmrParams, xfmrFuncNm string) (map[string]map[string]
 }
 
 func keyXfmrHandler(inParams XfmrParams, xfmrFuncNm string) (string, error) {
-        xfmrLogInfoAll("Received inParams ", inParams, "key transformer function name ", xfmrFuncNm)
+        xfmrLogInfoAll("Received inParams %v key transformer function name %v", inParams, xfmrFuncNm)
         ret, err := XlateFuncCall(yangToDbXfmrFunc(xfmrFuncNm), inParams)
 	retVal := ""
         if err != nil {
@@ -126,7 +126,7 @@ func postXfmrHandlerFunc(xfmrPost string, inParams XfmrParams) (map[string]map[s
     }
     if ((ret != nil) && (len(ret)>0)) {
         retData = ret[0].Interface().(map[string]map[string]db.Value)
-        xfmrLogInfoAll("Post Transformer function :", xfmrPost, " retData: ", retData)
+        xfmrLogInfoAll("Post Transformer function : %v retData : %v", xfmrPost, retData)
     }
     return retData, err
 }
@@ -237,7 +237,7 @@ func mapFillDataUtil(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requ
 			return err
 		}
 		if retData != nil {
-			xfmrLogInfoAll("Transformer function :", xpathInfo.xfmrField, " Xpath: ", xpath, " retData: ", retData)
+			xfmrLogInfoAll("Transformer function : %v Xpath : %v retData: %v", xpathInfo.xfmrField, xpath, retData)
 			for f, v := range retData {
 				dataToDBMapAdd(tableName, dbKey, result, f, v)
 			}
@@ -254,7 +254,7 @@ func mapFillDataUtil(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requ
 	valueStr := ""
 	if xpathInfo.yangEntry.IsLeafList() {
 		/* Both yang side and Db side('@' suffix field) the data type is leaf-list */
-		xfmrLogInfoAll("Yang type and Db type is Leaflist for field  = ", xpath)
+		xfmrLogInfoAll("Yang type and Db type is Leaflist for field  = %v", xpath)
 		fieldName += "@"
 		if reflect.ValueOf(value).Kind() != reflect.Slice {
 			logStr := fmt.Sprintf("Value for yang xpath %v which is a leaf-list should be a slice", xpath)
@@ -309,9 +309,9 @@ func dbMapDataFill(uri string, tableName string, keyName string, d map[string]in
 	for field, value := range d {
 		fieldXpath := tableName + "/" + field
 		if _, fieldOk := xDbSpecMap[fieldXpath]; (fieldOk  && (xDbSpecMap[fieldXpath].dbEntry != nil)) {
-			xfmrLogInfoAll("Found non-nil yang entry in xDbSpecMap for field xpath = ", fieldXpath)
+			xfmrLogInfoAll("Found non-nil yang entry in xDbSpecMap for field xpath = %v", fieldXpath)
 			if xDbSpecMap[fieldXpath].dbEntry.IsLeafList() {
-				xfmrLogInfoAll("Yang type is Leaflist for field  = ", field)
+				xfmrLogInfoAll("Yang type is Leaflist for field  = %v", field)
 				field += "@"
 				fieldDt := reflect.ValueOf(value)
 				fieldValue := ""
@@ -327,7 +327,7 @@ func dbMapDataFill(uri string, tableName string, keyName string, d map[string]in
 			}
 		} else {
 			// should ideally never happen , just adding for safety
-			xfmrLogInfoAll("Did not find entry in xDbSpecMap for field xpath = ", fieldXpath)
+			xfmrLogInfoAll("Did not find entry in xDbSpecMap for field xpath = %v", fieldXpath)
 		}
 		dbval, err := unmarshalJsonToDbData(xDbSpecMap[fieldXpath].dbEntry, field, value)
 		if err != nil {
@@ -500,7 +500,7 @@ func dbMapDelete(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requestU
 
 			_, ok := xYangSpecMap[moduleNm]
 			if ok && len(xYangSpecMap[moduleNm].xfmrPost) > 0 {
-				xfmrLogInfo("Invoke post transformer: ", xYangSpecMap[moduleNm].xfmrPost)
+				xfmrLogInfo("Invoke post transformer: %v", xYangSpecMap[moduleNm].xfmrPost)
 				var dbs [db.MaxDB]*db.DB
 				var dbresult = make(RedisDbMap)
 				dbresult[db.ConfigDB] = result
@@ -508,7 +508,7 @@ func dbMapDelete(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requestU
 				result, err = postXfmrHandlerFunc(xYangSpecMap[moduleNm].xfmrPost, inParams)
 				if inParams.skipOrdTblChk != nil {
 					*skipOrdTbl = *(inParams.skipOrdTblChk)
-					xfmrLogInfo("skipOrdTbl flag: ", *skipOrdTbl)
+					xfmrLogInfo("skipOrdTbl flag: %v", *skipOrdTbl)
 				}
 			}
 
@@ -656,7 +656,7 @@ func dbMapDefaultFieldValFill(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri str
 										return err
 									}
 									if retData != nil {
-										xfmrLogInfoAll("Transformer function :", childNode.xfmrField, " Xpath: ", childXpath, " retData: ", retData)
+										xfmrLogInfoAll("Transformer function : %v Xpath: %v retData: %v", childNode.xfmrField, childXpath, retData)
 										for f, v := range retData {
 											dataToDBMapAdd(tblName, dbKey, result, f, v)
 										}
@@ -822,7 +822,7 @@ func yangNodeForUriGet(uri string, ygRoot *ygot.GoStruct) (interface{}, error) {
 		errStr := "GetNode returned nil for the given uri."
 		return nil, tlerr.InternalError{Format: errStr}
 	}
-	xfmrLogInfoAll("GetNode data: ", node[0].Data)
+	xfmrLogInfoAll("GetNode data: %v", node[0].Data)
 	return node[0].Data, nil
 }
 

@@ -329,7 +329,7 @@ func uriModuleNameGet(uri string) (string, error) {
 		log.Error("Empty module name")
 		err = fmt.Errorf("No module name found in uri %s", uri)
         }
-	xfmrLogInfo("module name = ", result)
+	xfmrLogInfo("module name = %v", result)
 	return result, err
 }
 
@@ -694,7 +694,7 @@ func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, req
 		 fldPth := strings.Split(xpath, "/")
 		 if len(fldPth) > SONIC_FIELD_INDEX {
 			 fldNm = fldPth[SONIC_FIELD_INDEX]
-			 xfmrLogInfoAll("Field Name : ", fldNm)
+			 xfmrLogInfoAll("Field Name : %v", fldNm)
 		 }
 	 }
 	 rgp := regexp.MustCompile(`\[([^\[\]]*)\]`)
@@ -708,7 +708,7 @@ func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, req
 		 dbInfo, ok := xDbSpecMap[tableName]
 		 cdb := db.ConfigDB
 		 if !ok {
-			 xfmrLogInfoAll("No entry in xDbSpecMap for xpath %v in order to fetch DB index.", tableName)
+			 xfmrLogInfoAll("No entry in xDbSpecMap for xpath %v in order to fetch DB index", tableName)
 			 return xpath, keyStr, tableName
 		 }
 		 cdb = dbInfo.dbIndex
@@ -722,7 +722,7 @@ func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, req
 			 if fldNm != "" {
 				 chompFld := strings.Split(path, "/")
 				 lpath = strings.Join(chompFld[:SONIC_FIELD_INDEX], "/")
-				 xfmrLogInfoAll("path after removing the field portion ", lpath)
+				 xfmrLogInfoAll("path after removing the field portion %v", lpath)
 
 			 }
 			 for i, kname := range rgp.FindAllString(lpath, -1) {
@@ -861,7 +861,7 @@ func xfmrLogInfo(format string, args ...interface{}) {
 }
 
 func xfmrLogInfoAll(format string, args ...interface{}) {
-	if log.V(8) {
+	if log.V(5) {
 		log.Infof(format, args...)
 	}
 }

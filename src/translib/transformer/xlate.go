@@ -315,7 +315,7 @@ func XlateToDb(path string, opcode int, d *db.DB, yg *ygot.GoStruct, yt *interfa
 func GetAndXlateFromDB(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db.DB, txCache interface{}) ([]byte, error, bool) {
 	var err error
 	var payload []byte
-	xfmrLogInfo("received xpath =", uri)
+	xfmrLogInfo("received xpath = " + uri)
 
 	requestUri := uri
 	keySpec, err := XlateUriToKeySpec(uri, requestUri, ygRoot, nil, txCache)
@@ -386,7 +386,7 @@ func XlateFromDb(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db.DB, data R
 		}
 	}
 	payload, err, isEmptyPayload := dbDataToYangJsonCreate(uri, ygRoot, dbs, &dbData, cdb, txCache)
-	xfmrLogInfo("Payload generated:", payload)
+	xfmrLogInfo("Payload generated : " + payload)
 
 	if err != nil {
 		log.Errorf("Error: failed to create json response from DB data.")
