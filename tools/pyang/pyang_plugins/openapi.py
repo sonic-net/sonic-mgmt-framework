@@ -185,6 +185,7 @@ def documentFormatter(doc_obj, mdFh, mode):
                     mdFh.write("\n| Name | Type | Description |\n")
                     mdFh.write("|:---:|:-----:|:-----:|\n")
                     for param in doc_obj[uri]["parameters"]:
+                        param["description"] = param["description"].replace('\n', ' ')
                         mdFh.write("| %s | %s  | %s  |\n" % (param["name"], param["type"], param["description"].encode('utf8')))                
 
                 for stmt in doc_obj[uri]:
