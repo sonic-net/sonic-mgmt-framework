@@ -4,7 +4,6 @@
 {% if vars.update({'status': ""}) %}{% endif %}
 {% if vars.update({'vrf': ""}) %}{% endif %}
 {% if vars.update({'interface': ""}) %}{% endif %}
-
 {% if vars.update({'remoteId': ""}) %}{% endif %}
 {% if vars.update({'downtime': ""}) %}{% endif %}
 {% if vars.update({'localDiag': "ok"}) %}{% endif %}
@@ -18,12 +17,16 @@
 {% if vars.update({'remoteMult': "3"}) %}{% endif %}
 {% if vars.update({'localEchoTx': "60"}) %}{% endif %}
 {% if vars.update({'remoteEchoTx': "60"}) %}{% endif %}
-BFD Peers:
-{% if 'openconfig-bfd-ext:bfd-state' in json_output %}
-    {% set sessions_list = json_output['openconfig-bfd-ext:bfd-state'] %}
-    {% for key in sessions_list %}
-        {% set singlehop = sessions_list[key] %}
-        {% for peer in singlehop %}
+BFD Peer:
+{% if 'openconfig-bfd-ext:single-hop-state' in json_output or 'openconfig-bfd-ext:multi-hop-state' in json_output %}
+    {% if 'openconfig-bfd-ext:single-hop-state' in json_output %}
+        {% set sessions = json_output['openconfig-bfd-ext:single-hop-state'] %}
+    {% endif %}
+    {% if 'openconfig-bfd-ext:multi-hop-state' in json_output %}
+        {% set sessions = json_output['openconfig-bfd-ext:multi-hop-state'] %}
+    {% endif %}
+    {% if sessions %}
+        {% for peer in sessions %}
             {% if "local-discriminator" in peer %}
                 {% if vars.update({'sessionId':peer['local-discriminator']}) %}{% endif %}
             {% endif %}
@@ -74,7 +77,7 @@ BFD Peers:
                 {% if vars.update({'remoteEchoTx':peer['remote-echo-receive-interval']}) %}{% endif %}
             {% endif %}
 {% set peerkey = 'peer %s'|format(vars.peerAddress)%}
-{% if key == 'multi-hop-state'%}
+{% if 'openconfig-bfd-ext:multi-hop-state' in json_output %}
 {% set peerkey = '%s %s'|format(peerkey, 'multihop')%}
 {% endif %}
 {% if vars.localAddress != 'null'%}
@@ -83,10 +86,10 @@ BFD Peers:
 {% if vars.vrf != ''%}
 {% set peerkey = '%s vrf %s'|format(peerkey, vars.vrf)%}
 {% endif %}
-{% if key == 'single-hop-state'%}
-{% if vars.interface != ''%}
-{% set peerkey = '%s interface %s'|format(peerkey, vars.interface)%}
-{% endif %}
+{% if 'openconfig-bfd-ext:single-hop-state' in json_output %}
+    {% if vars.interface != ''%}
+        {% set peerkey = '%s interface %s'|format(peerkey, vars.interface)%}
+    {% endif %}
 {% endif %}
 {{'%4s%s'|format(' ', peerkey)}}
 {{'%8sID: %s'|format(' ', vars.sessionId)}}
@@ -106,7 +109,6 @@ BFD Peers:
 {{'%12sReceive interval: %s'|format(' ', vars.remoteRx)}}
 {{'%12sTransmission interval: %s'|format(' ', vars.remoteTx)}}
 {{'%12sEcho transmission interval: %s'|format(' ', vars.remoteEchoTx)}}
-
         {% endfor %}
-    {% endfor %}
+    {% endif %}
 {% endif %}
