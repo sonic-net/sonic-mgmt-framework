@@ -47,11 +47,14 @@ func keyCreate(keyPrefix string, xpath string, data interface{}, dbKeySep string
 			keyVal := ""
 			for i, k := range (strings.Split(yangEntry.Key, " ")) {
 				if i > 0 { keyVal = keyVal + delim }
-				val := fmt.Sprint(data.(map[string]interface{})[k])
-				if strings.Contains(val, ":") {
-					val = strings.Split(val, ":")[1]
+				// SNC-3166: fix ipv6 key
+				fVal := fmt.Sprint(data.(map[string]interface{})[k])
+				if ((strings.Contains(fVal, ":")) &&
+				    (strings.HasPrefix(fVal, OC_MDL_PFX) || strings.HasPrefix(fVal, IETF_MDL_PFX) || strings.HasPrefix(fVal, IANA_MDL_PFX))) {
+					// identity-ref/enum has module prefix
+					fVal = strings.SplitN(fVal, ":", 2)[1]
 				}
-				keyVal += val
+				keyVal += fVal
 			}
 			keyPrefix += string(keyVal)
 		}

@@ -320,6 +320,10 @@ var YangToDb_sys_aaa_auth_xfmr SubTreeXfmrYangToDb = func(inParams XfmrParams) (
     userName := pathInfo.Var("username")
     log.Info("username:",userName)
 
+
+    if len(userName) == 0 {
+	return nil, nil
+    }
     var status bool
     var err_str string
     if _ , _ok := inParams.txCache[userName];!_ok {
