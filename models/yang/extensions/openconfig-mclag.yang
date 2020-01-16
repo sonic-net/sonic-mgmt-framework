@@ -283,6 +283,65 @@ module openconfig-mclag {
     }
   }
 
+  grouping mclag-unique-ip-config {
+    description
+      "Configuration data for mclag unique ip";
+
+    leaf name {
+      type oc-if:base-interface-ref;
+      description
+        "Reference to the vlan routed Interface (SVI)";
+    }
+
+    leaf unique-ip-enable {
+        type boolean;
+        description
+            "unique ip enable, default : not enabled";
+    }
+  }
+
+  grouping mclag-unique-ip-top {
+    description
+      "Top-level grouping for MCLAG unique-ip specific data";
+
+    container vlan-interfaces {
+      description
+        "Enclosing container for the list of routed vlan
+        interfaces on which MCLAG unique-ip are enabled";
+
+      list vlan-interface {
+        key "name";
+        description
+          "List of interfaces on which MCLAG unique-ip is configured";
+
+        leaf name {
+          type leafref {
+            path "../config/name";
+          }
+          description
+            "Reference to the interface id list key";
+        }
+
+        container config {
+          description
+            "Configuration for MCLAG unique-ip per vlan interface data";
+
+          uses mclag-unique-ip-config;
+        }
+
+        container state {
+
+          config false;
+
+          description
+            "Operational state for MCLAG unique-ip per
+            vlan interface data";
+
+          uses mclag-unique-ip-config;
+        }
+      }
+    }
+  }
 
   grouping mclag-config {
     description
@@ -323,6 +382,7 @@ module openconfig-mclag {
       //mclag domain config and state
       uses mclag-domain-top;
       uses mclag-interfaces-top;
+      uses mclag-unique-ip-top;
     }
   }
 
