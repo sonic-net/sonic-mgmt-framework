@@ -2,6 +2,8 @@ import sys
 import base64
 import struct
 import socket
+import os.path
+from os import path
 import cli_client as cc
 from rpipe_utils import pipestr
 from scripts.render_cli import show_cli_output
@@ -226,6 +228,10 @@ def invoke(func, args):
 
 
 def run(func, args):
+    if not path.exists('/proc/bcm/ksync/stats'):
+        print("%Error: PTP feature not supported")
+        sys.exit(-1)
+
     api_response = invoke(func, args)
     if api_response is None:
         return
