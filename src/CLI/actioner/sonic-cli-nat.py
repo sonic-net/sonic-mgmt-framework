@@ -132,12 +132,24 @@ def invoke_api(func, args=[]):
     # Config NAT Binding
     elif func == 'patch_openconfig_nat_nat_instances_instance_nat_acl_pool_binding_nat_acl_pool_binding_entry_config':
         path = cc.Path('/restconf/data/openconfig-nat:nat/instances/instance={id}/nat-acl-pool-binding/nat-acl-pool-binding-entry={name}/config', id=args[0],name=args[1])
-        body = { "openconfig-nat:config": {"nat-pool": args[2], "access-list": args[3]} }
-        l = len(args)
-        if l >= 5:
-            body["openconfig-nat:config"].update( {"type": nat_type_map[args[4]] } )
-        if l == 6:
-            body["openconfig-nat:config"].update( {"twice-nat-id": int(args[5])} )
+
+        body = { "openconfig-nat:config": {"nat-pool": args[2] }}
+
+        # ACL Name
+        acl_name = args[3].split("=")[1]
+        if acl_name != "" :
+            body["openconfig-nat:config"].update( {"access-list": acl_name } )
+
+        # NAT Type
+        nat_type = args[4].split("=")[1]
+        if nat_type != "":
+            body["openconfig-nat:config"].update( {"type": nat_type_map[nat_type] } )
+
+        # Twice NAT ID
+        twice_nat_id = args[5].split("=")[1]
+        if twice_nat_id != "":
+            body["openconfig-nat:config"].update( {"twice-nat-id": int(twice_nat_id)} )
+
         return api.patch(path, body)
 
     # Remove NAT Binding
@@ -287,6 +299,8 @@ def get_count(count, table_name, l):
                         'openconfig-nat:nat-twice-mapping-table': ['static_twice_nat', 'dynamic_twice_nat'],
                         'openconfig-nat:napt-twice-mapping-table': ['static_twice_napt', 'dynamic_twice_napt'],
                       }
+    if 'state' in l:
+        count['total_entries'] += 1
 
     if 'state' in l and 'entry-type' in l['state']:
         if l['state']['entry-type'] == 'openconfig-nat:STATIC':
@@ -313,7 +327,8 @@ def get_nat_translations_count(func, args):
               'dynamic_twice_nat': 0,
               'dynamic_twice_napt': 0,
               'snat_snapt': 0,
-              'dnat_dnapt': 0
+              'dnat_dnapt': 0,
+              'total_entries': 0
 	     }
 
     for key in response:

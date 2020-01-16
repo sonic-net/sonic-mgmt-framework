@@ -221,8 +221,8 @@ def run(func, args):
         if api_response.ok():
             response = api_response.content
             if response is None:
-                print "Success"
-            elif (len(args) == 2 and args[1].lower() == 'snooping') or (len(args) == 4 and args[2].lower() == 'vlan'):   
+                return
+            elif (len(args) >= 2 and args[1].lower() == 'snooping') or (len(args) >= 4 and args[2].lower() == 'vlan'):
                 if 'openconfig-network-instance-deviation:interfaces' in response.keys():
                     value = response['openconfig-network-instance-deviation:interfaces']
                     if value is None:
@@ -239,7 +239,7 @@ def run(func, args):
                 elif 'openconfig-network-instance-deviation:interface' in response.keys():
                     show_cli_output('show_igmp_snooping-groups.j2', response)
             else:
-                print "Error"                
+                print "%Error: Invalid command"
         else:
             #error response
             print api_response.error_message()

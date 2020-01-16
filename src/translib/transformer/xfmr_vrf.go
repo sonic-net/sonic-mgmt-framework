@@ -8,7 +8,7 @@ import (
         "translib/ocbinds"
         "translib/db"
         "translib/tlerr"
-        "sync"
+  //      "sync"
 )
 
 type NwInstMapKey struct {
@@ -201,7 +201,7 @@ func isIntfBindToOtherVrf(intf_tbl_name string, intf_name string, nwInst_name st
         }
 }
 
-var writemutex = &sync.Mutex{}
+//var writemutex = &sync.Mutex{}
 
 func xfmr_set_default_vrf_configDb() error {
         log.Info ("xfmr_set_default_vrf_configDb")

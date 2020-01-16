@@ -91,41 +91,7 @@ type reqProcessor struct {
 
 var YangToDb_igmp_snooping_static_member_state_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (string, error) {
 	fmt.Println("YangToDb_igmp_snooping_static_member_state_key_xfmr ==> ", inParams)
-
-	path, err := getUriPath(inParams.uri)
-
-	if err != nil {
-		return "", tlerr.InvalidArgs("Invalid IGMP snooping key present in the request - %v", err)
-	}
-
-	reqP := &reqProcessor{&inParams.uri, path, inParams.oper, (*inParams.ygRoot).(*ocbinds.Device), inParams.param, inParams.d, inParams.dbs, nil, nil, nil, nil}
-
-	if err := reqP.setIGMPSnoopingObjFromReq(); err != nil || reqP.igmpsObj == nil {
-		return "", err
-	}
-
-	var staticMemKey string
-
-	for key, intfObj := range reqP.igmpsObj.Interfaces.Interface {
-		
-		fmt.Println("YangToDb_igmp_snooping_static_member_state_key_xfmr - IGMP KEY ==> ", key)
-		
-		for sKey, sObj := range intfObj.State.StaticMulticastGroup {
-			if len (sObj.OutgoingInterface) > 0 { 
-				staticMemKey = key + ":" + sKey.SourceAddr + ":" + sKey.Group + ":" + sObj.OutgoingInterface[0]
-			}
-			break // since only one entry should be in the request
-		}
-		break  // since only one entry should be in the request
-	}
-	
-	fmt.Println("YangToDb_igmp_snooping_static_member_state_key_xfmr - staticMemKey KEY ==> ", staticMemKey)
-
-	if len(reqP.igmpsObj.Interfaces.Interface) == 0 {
-		return staticMemKey, tlerr.InvalidArgs("IGMP Snooping key is not present in the request")
-	}
-	
-	return staticMemKey, nil	
+	return "", nil	
 }
 
 var DbToYang_igmp_snooping_static_member_state_key_xfmr KeyXfmrDbToYang = func(inParams XfmrParams) (map[string]interface{}, error) {
@@ -136,45 +102,7 @@ var DbToYang_igmp_snooping_static_member_state_key_xfmr KeyXfmrDbToYang = func(i
 
 var YangToDb_igmp_snooping_static_group_config_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (string, error) {
 	fmt.Println("YangToDb_igmp_snooping_static_group_config_key_xfmr ==> ", inParams)
-
-	path, err := getUriPath(inParams.uri)
-
-	if err != nil {
-		return "", tlerr.InvalidArgs("Invalid IGMP snooping key present in the request - %v", err)
-	}
-
-	reqP := &reqProcessor{&inParams.uri, path, inParams.oper, (*inParams.ygRoot).(*ocbinds.Device), inParams.param, inParams.d, inParams.dbs, nil, nil, nil, nil}
-
-	if err := reqP.setIGMPSnoopingObjFromReq(); err != nil || reqP.igmpsObj == nil {
-		return "", err
-	}
-
-	var staticMemKey string
-
-	for key, intfObj := range reqP.igmpsObj.Interfaces.Interface {
-		
-		fmt.Println("YangToDb_igmp_snooping_static_group_config_key_xfmr - IGMP KEY ==> ", key)
-		
-		if len(intfObj.Config.StaticMulticastGroup) > 0 {
-			for sKey, sObj := range intfObj.Config.StaticMulticastGroup {
-				if len (sObj.OutgoingInterface) > 0 {
-					staticMemKey = key + "|" + sKey + "|" + sObj.OutgoingInterface[0]
-				}
-				break // since only one entry should be in the request
-			}
-		}
-		
-		break // since only one entry should be in the request
-	}
-
-	
-	fmt.Println("YangToDb_igmp_snooping_static_group_config_key_xfmr - staticMemKey KEY ==> ", staticMemKey)
-
-	if len(reqP.igmpsObj.Interfaces.Interface) == 0 {
-		return staticMemKey, tlerr.InvalidArgs("IGMP Snooping key is not present in the request")
-	}
-	
-	return staticMemKey, nil	
+	return "", nil	
 }
 
 var DbToYang_igmp_snooping_static_group_config_key_xfmr KeyXfmrDbToYang = func(inParams XfmrParams) (map[string]interface{}, error) {
@@ -185,39 +113,7 @@ var DbToYang_igmp_snooping_static_group_config_key_xfmr KeyXfmrDbToYang = func(i
 
 var YangToDb_igmp_snooping_mrouter_config_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (string, error) {
 	fmt.Println("YangToDb_igmp_snooping_mrouter_config_key_xfmr ==> ", inParams)
-
-	path, err := getUriPath(inParams.uri)
-
-	if err != nil {
-		return "", tlerr.InvalidArgs("Invalid IGMP snooping key present in the request - %v", err)
-	}
-
-	reqP := &reqProcessor{&inParams.uri, path, inParams.oper, (*inParams.ygRoot).(*ocbinds.Device), inParams.param, inParams.d, inParams.dbs, nil, nil, nil, nil}
-
-	if err := reqP.setIGMPSnoopingObjFromReq(); err != nil || reqP.igmpsObj == nil {
-		return "", err
-	}
-
-	var mrouterKey string
-
-	for key, intfObj := range reqP.igmpsObj.Interfaces.Interface {
-		
-		fmt.Println("YangToDb_igmp_snooping_mrouter_config_key_xfmr - IGMMP interface KEY ==> ", key)
-				
-		if len (intfObj.Config.MrouterInterface) > 0 {
-			mrouterKey = key + "|" + intfObj.Config.MrouterInterface[0]	
-		}
-		
-		break // since only one entry should be in the request
-	}
-
-	fmt.Println("YangToDb_igmp_snooping_mrouter_config_key_xfmr - mrouterKey KEY ==> ", mrouterKey)
-
-	if len(reqP.igmpsObj.Interfaces.Interface) == 0 {
-		return mrouterKey, tlerr.InvalidArgs("IGMP Snooping key is not present in the request")
-	}
-	
-	return mrouterKey, nil
+	return "", nil
 }
 
 var DbToYang_igmp_snooping_mrouter_config_key_xfmr KeyXfmrDbToYang = func(inParams XfmrParams) (map[string]interface{}, error) {
@@ -228,37 +124,7 @@ var DbToYang_igmp_snooping_mrouter_config_key_xfmr KeyXfmrDbToYang = func(inPara
 
 var YangToDb_igmp_snooping_mrouter_state_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (string, error) {
 	fmt.Println("YangToDb_igmp_snooping_mrouter_state_key_xfmr ==> ", inParams)
-
-	path, err := getUriPath(inParams.uri)
-
-	if err != nil {
-		return "", tlerr.InvalidArgs("Invalid IGMP snooping key present in the request - %v", err)
-	}
-
-	reqP := &reqProcessor{&inParams.uri, path, inParams.oper, (*inParams.ygRoot).(*ocbinds.Device), inParams.param, inParams.d, inParams.dbs, nil, nil, nil, nil}
-
-	if err := reqP.setIGMPSnoopingObjFromReq(); err != nil || reqP.igmpsObj == nil {
-		return "", err
-	}
-
-	var mrouterKey string
-
-	for key, intfObj := range reqP.igmpsObj.Interfaces.Interface {
-		fmt.Println("YangToDb_igmp_snooping_mrouter_state_key_xfmr - IGMP intf KEY ==> ", key)
-		if len (intfObj.State.MrouterInterface) > 0 {
-			mrouterKey = key + ":" + intfObj.State.MrouterInterface[0]	
-		}
-		break // since only one entry should be in the request
-	}
-
-	
-	fmt.Println("YangToDb_igmp_snooping_mrouter_state_key_xfmr - mrouterKey KEY ==> ", mrouterKey)
-
-	if len(reqP.igmpsObj.Interfaces.Interface) == 0 {
-		return mrouterKey, tlerr.InvalidArgs("IGMP Snooping key is not present in the request")
-	}
-	
-	return mrouterKey, nil
+	return "", nil
 }
 
 var DbToYang_igmp_snooping_mrouter_state_key_xfmr KeyXfmrDbToYang = func(inParams XfmrParams) (map[string]interface{}, error) {
@@ -269,33 +135,7 @@ var DbToYang_igmp_snooping_mrouter_state_key_xfmr KeyXfmrDbToYang = func(inParam
 
 var YangToDb_igmp_snooping_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (string, error) {
 	fmt.Println("YangToDb_igmp_snooping_key_xfmr ==> ", inParams)
-
-	path, err := getUriPath(inParams.uri)
-
-	if err != nil {
-		return "", tlerr.InvalidArgs("Invalid IGMP snooping key present in the request - %v", err)
-	}
-
-	reqP := &reqProcessor{&inParams.uri, path, inParams.oper, (*inParams.ygRoot).(*ocbinds.Device), inParams.param, inParams.d, inParams.dbs, nil, nil, nil, nil}
-
-	if err := reqP.setIGMPSnoopingObjFromReq(); err != nil || reqP.igmpsObj == nil {
-		return "", err
-	}
-
-	var igmpsKey string
-
-	for key, _ := range reqP.igmpsObj.Interfaces.Interface {
-		igmpsKey = key
-		break
-	}
-
-	fmt.Println("YangToDb_igmp_snooping_key_xfmr - IGMP KEY ==> ", igmpsKey)
-
-	if len(reqP.igmpsObj.Interfaces.Interface) == 0 {
-		return igmpsKey, tlerr.InvalidArgs("IGMP Snooping key is not present in the request")
-	}
-
-	return igmpsKey, nil
+	return "", nil
 }
 
 var DbToYang_igmp_snooping_key_xfmr KeyXfmrDbToYang = func(inParams XfmrParams) (map[string]interface{}, error) {
@@ -389,10 +229,105 @@ func (reqP *reqProcessor) handleDeleteReq() (*map[string]map[string]db.Value, er
 		if len(igmpsObj.Interfaces.Interface) == 1 {
 			for igmpsKey, igmpsVal := range igmpsObj.Interfaces.Interface {
 				if igmpsVal.Config == nil {
+					igmpsTblMap[igmpsKey] = db.Value{Field: make(map[string]string)}
 					res_map[CFG_L2MC_TABLE] = igmpsTblMap
-					res_map[CFG_L2MC_MROUTER_TABLE] = igmpsMrouterTblMap
-					res_map[CFG_L2MC_STATIC_GROUP_TABLE] = igmpsMcastGroupTblMap
-					res_map[CFG_L2MC_STATIC_MEMBER_TABLE] = igmpsMcastGroupMemTblMap
+					var mRouterDbTbl db.Table
+					var err error
+					if mRouterDbTbl, err = reqP.db.GetTable(CFG_L2MC_MROUTER_TABLE_TS); err != nil {
+						fmt.Println("DB error in GetEntry => ", err)
+					}
+				
+					fmt.Println("handleDeleteReq - printing db mRouterDbTbl data")
+					pretty.Print(mRouterDbTbl)
+				
+					mrouterKeys, _ := mRouterDbTbl.GetKeys()
+					fmt.Println("handleDeleteReq - printing db table mRouterDbTbl keys")
+					pretty.Print(mrouterKeys)
+				
+					for j, _ := range mrouterKeys {
+						mrouterDbV, err := mRouterDbTbl.GetEntry(mrouterKeys[j])
+						if err != nil {
+							fmt.Println("mRouterDbTbl.GetEntry fails => ", err)
+							continue;
+						}
+						fmt.Println("handleDeleteReq - printing db table mrouterDbVEntry")
+						pretty.Print(mrouterDbV)
+				
+						if igmpsKey != mrouterKeys[j].Comp[0] {
+							continue
+						}
+				
+						igmpsMrouterKey := igmpsKey + "|" + mrouterKeys[j].Comp[1]
+						igmpsMrouterTblMap[igmpsMrouterKey] = db.Value{Field: make(map[string]string)}
+					}
+					if len (igmpsMrouterTblMap) > 0 {
+						res_map[CFG_L2MC_MROUTER_TABLE] = igmpsMrouterTblMap	
+					}
+					
+					// -- static group table
+					var staticGrpDbTbl db.Table
+					if staticGrpDbTbl, err = reqP.db.GetTable(CFG_L2MC_STATIC_MEMBER_TABLE_TS); err != nil {
+						fmt.Println("DB error in GetEntry => ", err)
+					}
+					
+					fmt.Println("handleDeleteReq - printing db staticGrDbTbl data")
+					pretty.Print(staticGrpDbTbl)
+			
+					staticGrpKeys, _ := staticGrpDbTbl.GetKeys()
+					fmt.Println("handleDeleteReq - printing db table staticGrpKeys keys")
+					pretty.Print(staticGrpKeys)
+					
+					for k, _ := range staticGrpKeys {
+						staticGrpDbV, err := staticGrpDbTbl.GetEntry(staticGrpKeys[k])
+						if err != nil {
+							fmt.Println("staticGrpDbTbl memeber - GetEntry fails => ", err)
+							continue;
+						}
+						fmt.Println("handleDeleteReq - printing db table staticGrpKeysEntry")
+						pretty.Print(staticGrpDbV)
+			
+						if igmpsKey != staticGrpKeys[k].Comp[0] {
+							continue
+						}
+					
+						igmpsGrpMemKey := igmpsKey + "|" + staticGrpKeys[k].Comp[1] + "|" + staticGrpKeys[k].Comp[2]
+						igmpsMcastGroupMemTblMap[igmpsGrpMemKey] = db.Value{Field: make(map[string]string)}
+					}
+					
+					if len (igmpsMcastGroupMemTblMap) > 0 {
+						res_map[CFG_L2MC_STATIC_MEMBER_TABLE] = igmpsMcastGroupMemTblMap	
+					}
+
+					if staticGrpDbTbl, err = reqP.db.GetTable(CFG_L2MC_STATIC_GROUP_TABLE_TS); err != nil {
+						fmt.Println("handleDeleteReq - DB error in CFG_L2MC_STATIC_GROUP_TABLE_TS - GetTable => ", err)
+						return nil, err
+					}
+					fmt.Println("handleDeleteReq - printing db staticGrDbTbl data")
+					pretty.Print(staticGrpDbTbl)
+					
+					staticGrpKeys, _ = staticGrpDbTbl.GetKeys()
+					fmt.Println("handleDeleteReq - printing db table staticGrpKeys keys")
+					pretty.Print(staticGrpKeys)
+					// fetch all group entries from the db and delete the entries matches with the given grpKey							
+					for k, _ := range staticGrpKeys {
+						staticGrpDbV, err := staticGrpDbTbl.GetEntry(staticGrpKeys[k])
+						if err != nil {
+							fmt.Println("staticGrpDbTbl.GetEntry fails => ", err)
+						}
+						fmt.Println("handleDeleteReq - printing db table staticGrpKeysEntry")
+						pretty.Print(staticGrpDbV)
+			
+						if igmpsKey != staticGrpKeys[k].Comp[0] {
+							continue
+						}
+						
+						igmpsGrpKey := igmpsKey + "|" + staticGrpKeys[k].Comp[1]
+						igmpsMcastGroupTblMap[igmpsGrpKey] = db.Value{Field: make(map[string]string)}
+					}
+					
+					if len (igmpsMcastGroupTblMap) > 0 {
+						res_map[CFG_L2MC_STATIC_GROUP_TABLE] = igmpsMcastGroupTblMap	
+					}
 					break
 				}
 
@@ -450,8 +385,8 @@ func (reqP *reqProcessor) handleDeleteReq() (*map[string]map[string]db.Value, er
 							var err error
 							var staticGrpDbTbl db.Table
 							if staticGrpDbTbl, err = reqP.db.GetTable(CFG_L2MC_STATIC_GROUP_TABLE_TS); err != nil {
-								fmt.Println("DB error in test GetEntry => ", err)
-								return nil, err;
+								fmt.Println("DB error in GetEntry => ", err)
+								return nil, err
 							}
 							fmt.Println("handleDeleteReq - printing db staticGrDbTbl data")
 							pretty.Print(staticGrpDbTbl)
@@ -580,11 +515,6 @@ func (reqP *reqProcessor) handleCRUReq() (*map[string]map[string]db.Value, error
 			}
 
 			if len(igmpsMrouterTblMap) > 0 {
-//				if len(dbV.Field) == 0 {
-//					dbV.Field["enabled"] = "true"
-//					igmpsTblMap[igmpsKey] = dbV
-//					res_map[CFG_L2MC_TABLE] = igmpsTblMap
-//				}
 				fmt.Println(" handleCRUReq ============> setting CFG_L2MC_MROUTER_TABLE igmpsMrouterTblMap => ", igmpsMrouterTblMap)
 				res_map[CFG_L2MC_MROUTER_TABLE] = igmpsMrouterTblMap
 			}
@@ -618,11 +548,6 @@ func (reqP *reqProcessor) handleCRUReq() (*map[string]map[string]db.Value, error
 			}
 
 			if len(igmpsMcastGroupTblMap) > 0 {
-//				if len(dbV.Field) == 0 {
-//					dbV.Field["enabled"] = "true"
-//					igmpsTblMap[igmpsKey] = dbV
-//					res_map[CFG_L2MC_TABLE] = igmpsTblMap
-//				}
 				fmt.Println(" handleCRUReq ============> setting CFG_L2MC_STATIC_MEMBER_TABLE igmpsMcastGroupTblMap => ", igmpsMcastGroupTblMap)
 				res_map[CFG_L2MC_STATIC_GROUP_TABLE] = igmpsMcastGroupTblMap
 			}
@@ -826,23 +751,44 @@ func (reqP *reqProcessor) unMarshalStaticGrpStateObj() (error) {
 			fmt.Println("unMarshalStaticGrpStateObj - grpKey => ", grpKey.SourceAddr)
 			fmt.Println("unMarshalStaticGrpStateObj - grpObj => ", staticGrpObj)
 			intfKeys := reflect.ValueOf(reqP.igmpsObj.Interfaces.Interface).MapKeys()
-			// temp for now - hardcoded
-			portIntfName := "Ethernet10"
-			_, err := reqP.dbs[0].GetEntry(APP_L2MC_MEMBER_TABLE_TS, db.Key{[]string{intfKeys[0].Interface().(string), grpKey.Group, grpKey.SourceAddr, portIntfName}})
-			if err != nil {
-				return err
-			}
-			if reqP.targetNode.Name == "group" {
-				staticGrpObj.Group = &grpKey.Group
-			} else if reqP.targetNode.Name == "source-addr" {
-				staticGrpObj.SourceAddr = &grpKey.SourceAddr								
-			} else if reqP.targetNode.Name == "outgoing-interface" {
-				staticGrpObj.OutgoingInterface = append(staticGrpObj.OutgoingInterface, portIntfName)				
-			} else {
-				staticGrpObj.Group = &grpKey.Group
-				staticGrpObj.SourceAddr = &grpKey.SourceAddr
+			
+			if reqP.targetNode.Name == "outgoing-interface" && len(staticGrpObj.OutgoingInterface) > 0 {
+				portIntfName := staticGrpObj.OutgoingInterface[0]
+				_, err := reqP.dbs[0].GetEntry(APP_L2MC_MEMBER_TABLE_TS, db.Key{[]string{intfKeys[0].Interface().(string), grpKey.SourceAddr, grpKey.Group, portIntfName}})
+				if err != nil {
+					return err
+				}
 				staticGrpObj.OutgoingInterface = append(staticGrpObj.OutgoingInterface, portIntfName)
+			} else {
+				var staticGrpDbTbl db.Table
+				var err error
+				if staticGrpDbTbl, err = reqP.dbs[0].GetTable(APP_L2MC_MEMBER_TABLE_TS); err != nil {
+					fmt.Println("DB error in GetEntry => ", err)
+				}
+				staticGrpKeys, _ := staticGrpDbTbl.GetKeys()
+				fmt.Println("unMarshalStaticGrpStateObj - printing db table staticGrpKeys keys")
+				pretty.Print(staticGrpKeys)
+		
+				for k, _ := range staticGrpKeys {
+					staticGrpDbV, err := staticGrpDbTbl.GetEntry(staticGrpKeys[k])
+					if err != nil {
+						return err
+					}
+					fmt.Println("unMarshalStaticGrpStateObj - printing db table staticGrpKeysEntry")
+					pretty.Print(staticGrpDbV)
+		
+					if *reqP.intfStateObj.Name != staticGrpKeys[k].Comp[0] || grpKey.SourceAddr != staticGrpKeys[k].Comp[1] || grpKey.Group != staticGrpKeys[k].Comp[2] {
+						continue
+					}
+					
+					staticGrpObj.Group = &grpKey.Group
+					staticGrpObj.SourceAddr = &grpKey.SourceAddr
+					staticGrpObj.OutgoingInterface = append(staticGrpObj.OutgoingInterface, staticGrpKeys[k].Comp[3])
+					break
+				}
 			}
+			
+			break
 		}
 	} else if reqP.isStateTargetNode ("static-multicast-group") {
 		var staticGrpDbTbl db.Table
@@ -876,11 +822,11 @@ func (reqP *reqProcessor) unMarshalStaticGrpStateObj() (error) {
 				continue
 			}
 
-			staticGrpKey := ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_IgmpSnooping_Interfaces_Interface_State_StaticMulticastGroup_Key{staticGrpKeys[k].Comp[1], staticGrpKeys[k].Comp[2]}
+			staticGrpKey := ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_IgmpSnooping_Interfaces_Interface_State_StaticMulticastGroup_Key{staticGrpKeys[k].Comp[2], staticGrpKeys[k].Comp[1]}
 			staticGrpObj, _ := reqP.intfStateObj.StaticMulticastGroup[staticGrpKey]
 
 			if staticGrpObj == nil {
-				staticGrpObj, err = reqP.intfStateObj.NewStaticMulticastGroup(staticGrpKeys[k].Comp[1], staticGrpKeys[k].Comp[2])
+				staticGrpObj, err = reqP.intfStateObj.NewStaticMulticastGroup(staticGrpKeys[k].Comp[2], staticGrpKeys[k].Comp[1])
 				if err != nil {
 					return err
 				}
@@ -1212,7 +1158,7 @@ func (reqP *reqProcessor) translateToYgotObj() error {
 
 	var err error
 	
-	fmt.Println("translateToYgotObj param reqP.targetNode.Name ==> ", reqP.targetNode.Name)
+	fmt.Println("translateToYgotObj param reqP.targetNode.Name test ==> ", reqP.targetNode.Name)
 
 	if reqP.igmpsObj == nil {
 		reqP.igmpsObj = &(ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_IgmpSnooping{nil})
@@ -1242,16 +1188,16 @@ func (reqP *reqProcessor) translateToYgotObj() error {
 	
 			dbV, err := reqP.db.GetEntry(CFG_L2MC_TABLE_TS, db.Key{[]string{intfKeys[0].Interface().(string)}})
 			if err != nil {
-				return err
+				fmt.Println("db.GetEntry - CFG_L2MC_TABLE_TS - fails ==> ", err)
 			}
 			reqP.unMarshalIGMPSnoopingIntfConfigObjInst(&dbV)
 	
 			if err = reqP.unMarshalMrouterConfig(); err != nil {
-				return err
+				fmt.Println("unMarshalMrouterConfig - fails ==> ", err)
 			}
 			
 			if err = reqP.unMarshalStaticGrpConfigObj(); err != nil {
-				return err
+				fmt.Println("unMarshalStaticGrpConfigObj - fails ==> ", err)
 			}
 		}
 		
@@ -1261,23 +1207,19 @@ func (reqP *reqProcessor) translateToYgotObj() error {
 			intfObj.State.Name = intfObj.Name
 			reqP.intfStateObj = intfObj.State
 			
-			fmt.Println("test ---> 1 => ", reqP.dbs[4])
-			
 			dbV, err := reqP.dbs[4].GetEntry(CFG_L2MC_TABLE_TS, db.Key{[]string{*intfObj.Name}})
 			if err != nil {
-				return err
+				fmt.Println("db.GetEntry - CFG_L2MC_TABLE_TS - fails ==> ", err)
 			}
-			
-			fmt.Println("test ---> 2")
 			
 			reqP.unMarshalIGMPSnoopingIntfStateObjInst(&dbV)
 			
 			if err := reqP.unMarshalMrouterState(); err != nil {
-				return err
+				fmt.Println("unMarshalMrouterState - fails ==> ", err)
 			}
 			
 			if err := reqP.unMarshalStaticGrpStateObj(); err != nil {
-				return err
+				fmt.Println("unMarshalStaticGrpStateObj - fails ==> ", err)
 			}
 		}							
 	}

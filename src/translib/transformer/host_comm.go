@@ -7,18 +7,20 @@ import (
 	// "github.com/godbus/dbus/v5"
 	// This works around that problem by using gopkg.in instead
 	"gopkg.in/godbus/dbus.v5"
+    log "github.com/golang/glog"
 )
 
-// hostResult contains the body of the response and the error if any, when the
+// HostResult contains the body of the response and the error if any, when the 
 // endpoint finishes servicing the D-Bus request.
-type hostResult struct {
-	Body []interface{}
-	Err  error
+type HostResult struct {
+	Body	[]interface{}
+	Err		error
 }
 
-// hostQuery calls the corresponding D-Bus endpoint on the host and returns
+// HostQuery calls the corresponding D-Bus endpoint on the host and returns
 // any error and response body
-func hostQuery(endpoint string, args ...interface{}) (result hostResult) {
+func HostQuery(endpoint string, args ...interface{}) (result HostResult) {
+    log.Infof("HostQuery called")
 	result_ch, err := hostQueryAsync(endpoint, args...)
 
 	if err != nil {
@@ -32,12 +34,14 @@ func hostQuery(endpoint string, args ...interface{}) (result hostResult) {
 
 // hostQueryAsync calls the corresponding D-Bus endpoint on the host and returns
 // a channel for the result, and any error
-func hostQueryAsync(endpoint string, args ...interface{}) (chan hostResult, error) {
-	var result_ch = make(chan hostResult, 1)
+func hostQueryAsync(endpoint string, args ...interface{}) (chan HostResult, error) {
+    log.Infof("HostQueryAsync called")
+	var result_ch = make(chan HostResult, 1)
 	conn, err := dbus.SystemBus()
 	if err != nil {
 		return result_ch, err
 	}
+    log.Infof("HostQueryAsync conn established")
 
 	service := strings.SplitN(endpoint, ".", 2)
 	const bus_name_base = "org.SONiC.HostService."
@@ -47,16 +51,20 @@ func hostQueryAsync(endpoint string, args ...interface{}) (chan hostResult, erro
 	obj := conn.Object(bus_name, bus_path)
 	dest := bus_name_base + endpoint
 	dbus_ch := make(chan *dbus.Call, 1)
+    //log.Infof("HostQueryAsync dbus called %s "% string(bus_path))
+    //log.Infof("HostQueryAsync dbus called %s  "% string(bus_name))
 
 	go func() {
-		var result hostResult
+		var result HostResult
 
 		// Wait for a read on the channel
 		call := <-dbus_ch
 
 		if call.Err != nil {
+            log.Infof("HostQueryAsync Err is not nill while reading")
 			result.Err = call.Err
 		} else {
+            log.Infof("HostQueryAsync Body is taken")
 			result.Body = call.Body
 		}
 
@@ -64,9 +72,11 @@ func hostQueryAsync(endpoint string, args ...interface{}) (chan hostResult, erro
 		result_ch <- result
 	}()
 
+    log.Infof("HostQueryAsync Before objgo")
 	call := obj.Go(dest, 0, dbus_ch, args...)
 
 	if call.Err != nil {
+        log.Infof("HostQueryAsync Err is not after obj.Go")
 		return result_ch, call.Err
 	}
 
@@ -81,7 +91,7 @@ func ztpAction(action string) (string, error) {
 	// result.Body is of type []interface{}, since any data may be returned by
 	// the host server. The application is responsible for performing
 	// type assertions to get the correct data.
-	result := hostQuery("ztp." + action)
+	result := HostQuery("ztp." + action)
 
 	if result.Err != nil {
 		return output, result.Err

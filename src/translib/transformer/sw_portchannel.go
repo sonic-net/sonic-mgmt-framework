@@ -33,8 +33,14 @@ func init () {
     XlateFuncBind("YangToDb_lag_min_links_xfmr", YangToDb_lag_min_links_xfmr)
     XlateFuncBind("YangToDb_lag_fallback_xfmr", YangToDb_lag_fallback_xfmr)
     XlateFuncBind("DbToYang_intf_lag_state_xfmr", DbToYang_intf_lag_state_xfmr)
+    XlateFuncBind("YangToDb_lag_type_xfmr", YangToDb_lag_type_xfmr)
+    XlateFuncBind("DbToYang_lag_type_xfmr", DbToYang_lag_type_xfmr)
 }
 
+const (
+       LAG_TYPE           = "lag_type"
+       PORTCHANNEL_TABLE  = "PORTCHANNEL"
+)
 
 /* Validate whether LAG exists in DB */
 func validateLagExists(d *db.DB, lagTs *string, lagName *string) error {
@@ -49,14 +55,74 @@ func validateLagExists(d *db.DB, lagTs *string, lagName *string) error {
     return nil
 }
 
+func get_min_links(d *db.DB, lagName *string, links *uint16) error {
+    intTbl := IntfTypeTblMap[IntfTypePortChannel]
+    curr, err := d.GetEntry(&db.TableSpec{Name:intTbl.cfgDb.portTN}, db.Key{Comp: []string{*lagName}})
+    if err != nil {
+        errStr := "Failed to Get PortChannel details"
+        log.Info(errStr)
+        return errors.New(errStr)
+    }
+    log.Info("Got table entry; About to get min links")
+    if val, ok := curr.Field["min_links"]; ok {
+        min_links, err := strconv.ParseUint(val, 10, 16)
+        if err != nil {
+            errStr := "Conversion of string to int failed"
+            log.Info(errStr)
+            return errors.New(errStr)
+        }
+        *links = uint16(min_links)
+    } else {
+        log.Info("Minlinks set to 1 (dafault value)")
+        *links = 1
+    }
+    log.Infof("Got min links from DB : %d\n", *links)
+    return nil
+}
+
+
+func get_lag_type(d *db.DB, lagName *string, mode *string) error {
+    intTbl := IntfTypeTblMap[IntfTypePortChannel]
+    curr, err := d.GetEntry(&db.TableSpec{Name:intTbl.cfgDb.portTN}, db.Key{Comp: []string{*lagName}})
+    if err != nil {
+        errStr := "Failed to Get PortChannel details"
+        log.Info(errStr)
+        return errors.New(errStr)
+    }
+    if val, ok := curr.Field["static"]; ok {
+        *mode = val
+        log.Infof("Mode from DB: %s\n", *mode)
+    } else {
+        log.Info("Default LACP mode (static false)")
+        *mode = "false"
+        log.Infof("Default Mode: %s\n", *mode)
+    }
+    return nil
+}
+
 /* Handle min-links config */
 var YangToDb_lag_min_links_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
     res_map := make(map[string]string)
     var err error
 
+    pathInfo := NewPathInfo(inParams.uri)
+    ifKey := pathInfo.Var("name")
+
+    log.Infof("Received Min links config for path: %s; template: %s vars: %v ifKey: %s", pathInfo.Path, pathInfo.Template, pathInfo.Vars, ifKey)
+
+    var links uint16
+    err = get_min_links(inParams.d, &ifKey, &links)
+
+    if err == nil && links != *(inParams.param.(*uint16))  {
+        errStr := "Cannot reconfigure min links for an existing PortChannel: " + ifKey
+        log.Info(errStr)
+        err = tlerr.InvalidArgsError{Format: errStr}
+        return res_map, err
+    }
+
     minLinks, _ := inParams.param.(*uint16)
     res_map["min_links"] = strconv.Itoa(int(*minLinks))
-    return res_map, err
+    return res_map, nil
 }
 
 /* Handle fallback config */
@@ -274,14 +340,13 @@ func deleteLagIntfAndMembers(inParams *XfmrParams, lagName *string) error {
         log.Error(errStr)
         return errors.New(errStr)
     }
+
     /* Handle PORTCHANNEL_INTERFACE TABLE */
-    ipCnt := 0
-    _ = interfaceIPcount(intTbl.cfgDb.intfTN, inParams.d, lagName, &ipCnt)
-    if ipCnt > 0 {
-        errStr := "Need to first remove IP address entry"
-        log.Error(errStr)
-        return errors.New(errStr)
+    err = validateL3ConfigExists(inParams.d, lagName)
+    if err != nil {
+        return err
     }
+
     /* Handle PORTCHANNEL_MEMBER TABLE */
     var flag bool = false
     lagKeys, err := inParams.d.GetKeys(&db.TableSpec{Name:intTbl.cfgDb.memberTN})
@@ -304,5 +369,53 @@ func deleteLagIntfAndMembers(inParams *XfmrParams, lagName *string) error {
     log.Info("subOpMap: ", subOpMap)
     inParams.subOpDataMap[DELETE] = &subOpMap
     return nil
+}
+
+var LAG_TYPE_MAP = map[string]string{
+    strconv.FormatInt(int64(ocbinds.OpenconfigIfAggregate_AggregationType_LACP), 10): "false",
+    strconv.FormatInt(int64(ocbinds.OpenconfigIfAggregate_AggregationType_STATIC), 10): "true",
+}
+
+
+var YangToDb_lag_type_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
+    result := make(map[string]string)
+    var err error
+
+    if inParams.param == nil {
+        return result, err
+    }
+
+    pathInfo := NewPathInfo(inParams.uri)
+    ifKey := pathInfo.Var("name")
+
+    log.Infof("Received Mode configuration for path: %s; template: %s vars: %v ifKey: %s", pathInfo.Path, pathInfo.Template, pathInfo.Vars, ifKey)
+
+    var mode string
+    err = get_lag_type(inParams.d, &ifKey, &mode)
+
+    t, _ := inParams.param.(ocbinds.E_OpenconfigIfAggregate_AggregationType)
+    user_mode := findInMap(LAG_TYPE_MAP, strconv.FormatInt(int64(t), 10))
+
+    if err == nil && mode != user_mode  {
+        errStr := "Cannot reconfigure Mode for an existing PortChannel: " + ifKey
+        err = tlerr.InvalidArgsError{Format: errStr}
+        return result, err
+    }
+
+    log.Info("YangToDb_lag_type_xfmr: ", inParams.ygRoot, " Xpath: ", inParams.uri, " type: ", t)
+    result["static"] = user_mode
+    return result, nil
+
+}
+
+var DbToYang_lag_type_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (map[string]interface{}, error) {
+    var err error
+    result := make(map[string]interface{})
+    data := (*inParams.dbDataMap)[inParams.curDb]
+    log.Info("DbToYang_lag_type_xfmr", data, inParams.ygRoot)
+    oc_action := findInMap(LAG_TYPE_MAP, data[PORTCHANNEL_TABLE][inParams.key].Field["static"])
+    n, err := strconv.ParseInt(oc_action, 10, 64)
+    result[LAG_TYPE] = ocbinds.E_OpenconfigIfAggregate_AggregationType(n).ΛMap()["E_OpenconfigIfAggregate_AggregationType"][n].Name
+    return result, err
 }
 

@@ -84,7 +84,7 @@ $(SERVER_DIST_UI_HOME): $(YANGAPI_SERVERS) $(OPENAPI_SERVERS) $(UIGEN_SRCS)
 #======================================================================
 $(CODEGEN_JAR): | $$(@D)/.
 	cd $(@D) && \
-	wget http://central.maven.org/maven2/io/swagger/swagger-codegen-cli/$(CODEGEN_VER)/$(@F)
+	wget https://repo1.maven.org/maven2/io/swagger/swagger-codegen-cli/$(CODEGEN_VER)/$(@F)
 
 #======================================================================
 # Generate swagger server in GO language for Yang generated OpenAPIs

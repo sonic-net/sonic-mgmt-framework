@@ -14,6 +14,14 @@ module sonic-portchannel-interface {
         prefix vrf;
     }
 
+    import sonic-loopback-interface {
+        prefix lointf;
+    }
+
+    import sonic-common {
+        prefix cmn;
+    }
+
     organization
         "SONiC";
 
@@ -57,9 +65,48 @@ module sonic-portchannel-interface {
                         }
                 }
 
+                leaf unnumbered {
+					must "((/cmn:operation/cmn:operation != 'CREATE') and (/cmn:operation/cmn:operation != 'UPDATE')) or " +
+						 "not(contains(/sonic-portchannel-interface/PORTCHANNEL_INTERFACE/PORTCHANNEL_INTERFACE_IPADDR_LIST[pch_name=current()/../pch_name]/ip_prefix, '.'))"
+					{
+						error-message "Cannot configure IP address and IP Unnumbered interface configurations on the same interface";
+						error-app-tag pointf-ip-config;
+					}
+
+					must "((/cmn:operation/cmn:operation != 'CREATE') and (/cmn:operation/cmn:operation != 'UPDATE')) or " +
+						 "(count(/sonic-portchannel-interface/PORTCHANNEL_INTERFACE/PORTCHANNEL_INTERFACE_LIST[pch_name=current()/../pch_name]/unnumbered)  <= 1)"
+                    {
+                        error-message "IP Unnumbered interface configuration is already done on this interface";
+                        error-app-tag pointf-unnum-config;
+                    }
+
+                    must "count(current()/../vrf_name) = 0"
+                    {
+                        error-message "Non default VRF binded to interface. Cannot configure IP Unnumbered";
+                        error-app-tag pointf-non-def-vrf;
+                    }
+
+                    must "count(/lointf:sonic-loopback-interface/lointf:LOOPBACK_INTERFACE/lointf:LOOPBACK_INTERFACE_LIST[lointf:loIfName=current()/./unnumbered]/lointf:vrf_name) = 0"
+                    {
+                        error-message "Non default VRF binded to Donor interface. Cannot configure IP Unnumbered";
+                        error-app-tag donor-intf-non-def-vrf;
+                    }
+
+                    type leafref {
+                        path "/lointf:sonic-loopback-interface/lointf:LOOPBACK_INTERFACE/lointf:LOOPBACK_INTERFACE_LIST/lointf:loIfName";
+                    }
+                }
             }
             list PORTCHANNEL_INTERFACE_IPADDR_LIST {
                 key "pch_name ip_prefix";
+
+				must "(/cmn:operation/cmn:operation != 'CREATE') or " +
+					 "(not(contains(current()/ip_prefix, '.')) or "  +
+					 "(count(current()/../PORTCHANNEL_INTERFACE_LIST[pch_name=current()/pch_name]/unnumbered) = 0))"
+				{
+					error-message "Cannot configure IPv4 address and IP Unnumbered interface configurations on the same interface";
+					error-app-tag pointf-unnum;
+				}
 
                 leaf pch_name{
                     type leafref {

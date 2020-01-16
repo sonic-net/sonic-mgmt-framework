@@ -100,7 +100,7 @@ limitations under the License.
                 >
                 <PARAM
                     name="phy-if-id"
-                    help="Physical interface(Multiples of 4)"
+                    help="Physical interface"
                     ptype="UINT"
                     >
                 </PARAM>
@@ -187,7 +187,7 @@ limitations under the License.
                         >
                         <PARAM
                             name="phy-if-id"
-                            help="Physical interface(Multiples of 4)"
+                            help="Physical interface"
                             ptype="UINT"
                             >
                         </PARAM>
@@ -282,7 +282,7 @@ limitations under the License.
                         >
                         <PARAM
                             name="phy-if-id"
-                            help="Physical interface(Multiples of 4)"
+                            help="Physical interface"
                             ptype="UINT"
                             >
                          </PARAM>
