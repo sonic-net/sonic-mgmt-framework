@@ -24,7 +24,6 @@ import (
     "translib/tlerr"
     "strings"
     "encoding/json"
-    "os"
     "strconv"
     "errors"
 	"sync"
