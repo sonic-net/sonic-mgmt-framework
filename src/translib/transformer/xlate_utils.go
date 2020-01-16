@@ -861,7 +861,7 @@ func isJsonDataEmpty(jsonData string) bool {
 }
 
 func getFileNmLineNumStr() string {
-	_, AbsfileName, lineNum, _ := runtime.Caller(3)
+	_, AbsfileName, lineNum, _ := runtime.Caller(2)
 	fileNmElems := strings.Split(AbsfileName, "/")
 	fileNm := fileNmElems[len(fileNmElems)-1]
 	fNmLnoStr := fmt.Sprintf("[%v:%v]", fileNm, lineNum)
