@@ -491,15 +491,13 @@ limitations under the License.
       <PARAM name="identifier" help="AS number" mode="subcommand" ptype="SUBCOMMAND">
         <PARAM name="id-as" help="Autonomous system number" ptype="RANGE_1_4294967295"/>
       </PARAM>
-      <PARAM name="peers" help="Peer ASs in BGP confederation" mode="subcommand" ptype="SUBCOMMAND">
-        <PARAM name="peer-as" help="Autonomous system number" ptype="RANGE_1_4294967295"/>
-      </PARAM>
+      <PARAM name="peers" help="Peer ASs in BGP confederation" mode="subcommand" ptype="SUBCOMMAND"/>
     </PARAM>
     <ACTION>
              if test "${conf-opt}" = "identifier" ; then&#xA;
                  python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_confederation_config_identifier ${vrf-name} ${id-as}&#xA;
              else&#xA;
-                 python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_confederation_config_member_as ${vrf-name} ${peer-as}&#xA;
+                 python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_confederation_config_member_as ${vrf-name}&#xA;
              fi&#xA;
     </ACTION>
   </COMMAND>
