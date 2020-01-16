@@ -48,9 +48,7 @@ def run(func, args):
             # Get Command Output
             api_response = response.content
 
-            if api_response is None:
-                print("api_response is None")
-            else:
+            if api_response:
                 response = api_response
                 if 'openconfig-lldp:interfaces' in response.keys():
                     if not response['openconfig-lldp:interfaces']:
