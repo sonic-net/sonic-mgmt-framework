@@ -7,7 +7,14 @@
             {{-'BGP neighbor is '}}{{neighbor['neighbor-address']-}}
             {{-', remote AS '}}{{n_state['peer-as']-}}
             {{-', local AS '}}{{n_state['local-as']-}}
-            {{-', internal link\n'}}
+            {% if not n_state['peer-as'] %}
+                {{-', unspecified link\n'}}
+            {% elif n_state['peer-as'] == n_state['local-as'] %}
+                {{-', internal link\n'}}
+            {% else %}
+                {{-', external link\n'}}
+            {% endif %}
+
             {{-'  BGP version '}}{{'4'-}}
             {{-', remote router ID '}}{{' '-}}
             {{-', local router ID '}}{{' '}}
@@ -29,8 +36,8 @@
             {% if 'queues' in n_state %}
                 {% set n_queues = n_state['queues'] %}
                 {{-'  Message statistics:\n'}}
-                {{-'    Inq depth is '}}{{n_queues['input']}}{{'\n'}}
-                {{-'    Outq depth is '}}{{n_queues['output']}}{{'\n'}}
+                {{-'    InQ depth is '}}{{n_queues['input']}}{{'\n'}}
+                {{-'    OutQ depth is '}}{{n_queues['output']}}{{'\n'}}
             {% endif %}
             {% if 'messages' in n_state %}
                 {% set n_messages = n_state['messages'] %}
