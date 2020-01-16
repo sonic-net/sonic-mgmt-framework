@@ -744,8 +744,17 @@ python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_netwo
     </ACTION>
   </COMMAND>
   <COMMAND name="no update-source" help="Source of routing updates">
-    <PARAM name="ip" help="IP source" ptype="IPV4V6_ADDR" view="configure-router-bgp-nbr-view" viewid="nbr-addr=${ip};vrf-name=${vrf-name}" optional="true"/>
-    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_transport_config_local_address ${vrf-name} ${nbr-addr} ${ip}</ACTION>
+    <PARAM name="source_param" help="update-source param"  mode="switch" ptype="SUBCOMMAND">
+      <PARAM name="ip" help="IP source" ptype="IPV4V6_ADDR" view="configure-router-bgp-nbr-view" viewid="nbr-addr=${ip};vrf-name=${vrf-name}" optional="true"/>
+      <PARAM name="interface" help="Interface name" ptype="STRING"/>
+    </PARAM>
+    <ACTION>
+            if test "${source_param}" = "ip" ; then&#xA;
+                   python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_transport_config_local_address ${vrf-name} ${nbr-addr} ${ip}&#xA;
+            else&#xA;
+                   python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_transport_config_local_address ${vrf-name} ${nbr-addr} ${interface}&#xA;
+            fi&#xA;
+    </ACTION>
   </COMMAND>
   <COMMAND name="no shutdown" help="Shutdown a neighbor">
     <PARAM name="message" help="Add a shutdown message (draft-ietf-idr-shutdown-06)" mode="subcommand" ptype="SUBCOMMAND" optional="true">
@@ -1034,8 +1043,17 @@ python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_netwo
     </ACTION>
   </COMMAND>
   <COMMAND name="no update-source" help="Source of routing updates">
-    <PARAM name="ip" help="IP source" ptype="IPV4V6_ADDR" view="configure-router-bgp-template-view" viewid="nbr-addr=${ip};vrf-name=${vrf-name}" optional="true"/>
-    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_transport_config_local_address ${vrf-name} ${template-name} ${ip}</ACTION>
+    <PARAM name="source_param" help="update-source param"  mode="switch" ptype="SUBCOMMAND">
+      <PARAM name="ip" help="IP source" ptype="IPV4V6_ADDR" view="configure-router-bgp-template-view" viewid="nbr-addr=${ip};vrf-name=${vrf-name}" optional="true"/>
+      <PARAM name="interface" help="Interface name" ptype="STRING" view="configure-router-bgp-template-view" />
+    </PARAM>
+    <ACTION>
+             if test "${source_param}" = "ip"; then&#xA;
+                 python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_transport_config_local_address ${vrf-name} ${template-name} ${ip}&#xA;
+             else&#xA;
+                 python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_transport_config_local_address ${vrf-name} ${template-name} ${interface}&#xA;
+             fi&#xA;
+    </ACTION>
   </COMMAND>
   <COMMAND name="no shutdown" help="Shutdown a neighbor">
     <PARAM name="message" help="Add a shutdown message (draft-ietf-idr-shutdown-06)" mode="subcommand" ptype="SUBCOMMAND" optional="true">
