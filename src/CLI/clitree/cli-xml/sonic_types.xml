@@ -159,7 +159,7 @@ limitations under the License.
         name="RANGE_1_4294967295"
         method="unsignedInteger"
         pattern="1..4294967295"
-        help=""
+        help="1-4294967295"
         />
     <!--=======================================================-->
     <PTYPE

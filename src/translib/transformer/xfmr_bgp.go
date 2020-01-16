@@ -121,6 +121,7 @@ func init () {
 	XlateFuncBind("YangToDb_bgp_gbl_afi_safi_addr_field_xfmr", YangToDb_bgp_gbl_afi_safi_addr_field_xfmr)
 	XlateFuncBind("DbToYang_bgp_gbl_afi_safi_addr_field_xfmr", DbToYang_bgp_gbl_afi_safi_addr_field_xfmr) 
     XlateFuncBind("YangToDb_bgp_global_subtree_xfmr", YangToDb_bgp_global_subtree_xfmr)
+    XlateFuncBind("rpc_clear_bgp", rpc_clear_bgp)
 }
 
 func bgp_global_get_local_asn(d *db.DB , niName string, tblName string) (string, error) {
@@ -588,3 +589,116 @@ var DbToYang_bgp_gbl_afi_safi_addr_key_xfmr KeyXfmrDbToYang = func(inParams Xfmr
 }
 
 
+var rpc_clear_bgp RpcCallpoint = func(body []byte, dbs [db.MaxDB]*db.DB) ([]byte, error) {
+    log.Info("In rpc_clear_bgp")
+    var err error
+    var status string
+    var clear_all string
+    var af_str, vrf_name, all, soft, in, out,neigh_address, prefix, peer_group, asn, intf string
+    var cmd string
+    var mapData map[string]interface{}
+    err = json.Unmarshal(body, &mapData)
+    if err != nil {
+        log.Info("Failed to unmarshall given input data")
+        return nil, err
+    }
+
+    var result struct {
+        Output struct {
+              Status string `json:"response"`
+        } `json:"sonic-bgp-clear:output"`
+    }
+
+    log.Info("In rpc_clear_bgp", mapData)
+
+    input, _ := mapData["sonic-bgp-clear:input"]
+    mapData = input.(map[string]interface{})
+
+    log.Info("In rpc_clear_bgp", mapData)
+    if _, ok := mapData["clear-all"].(string) ; ok {
+        clear_all = "* "
+    }
+
+    if value, ok := mapData["vrf-name"].(string) ; ok {
+        vrf_name = value
+        vrf_name = "vrf " + vrf_name + " "
+    }
+
+    if value, ok := mapData["family"].(string) ; ok {
+        af := value
+        if af == "IPv4" {
+            af_str = "ipv4 "
+        } else {
+            af_str = "ipv6 "
+        }
+    }
+
+    if _, ok := mapData["all"].(string) ; ok {
+        all = "* "
+    }
+
+    if value, ok := mapData["address"].(string) ; ok {
+        neigh_address = value
+        neigh_address = neigh_address + " "
+    }
+
+    if value, ok := mapData["interface"].(string) ; ok {
+        intf = value
+        intf = intf + " "
+    }
+
+    if value, ok := mapData["asn"].(float64) ; ok {
+        _asn := uint64(value)
+        asn = strconv.FormatUint(_asn, 10)
+        asn = asn + " "
+    }
+
+    if value, ok := mapData["prefix"].(string) ; ok {
+        prefix = value
+        prefix = "prefix " + prefix + " "
+    }
+
+    if value, ok := mapData["peer-group"].(string) ; ok {
+        peer_group = value
+        peer_group = "peer_group " + peer_group + " "
+    }
+
+    if _, ok := mapData["in"].(bool) ; ok {
+        in = "in"
+        in = in + " "
+    }
+
+    if _, ok := mapData["out"].(bool) ; ok {
+        out = "out"
+        out = out + " "
+    }
+
+    if _, ok := mapData["soft"].(bool) ; ok {
+        soft = "soft"
+        soft = soft + " "
+    }
+
+    log.Info("In rpc_clear_bgp", clear_all, vrf_name, af_str, all, neigh_address, intf, asn, prefix, peer_group, in, out, soft)
+
+    if clear_all != "" {
+        cmd = "clear ip bgp " + clear_all
+    } else if vrf_name != "" {
+        cmd = "clear ip bgp " + vrf_name
+
+        if all != "" {
+          cmd = cmd + all
+        } else {
+          cmd = cmd + neigh_address + intf + asn + prefix + peer_group + in + out + soft
+        }
+    }
+
+    log.Info("In rpc_clear_bgp cmd:", cmd)
+    _, cmd_err := exec_vtysh_cmd (cmd)
+
+    log.Info("In rpc_clear_bgp status:", cmd_err)
+    status = "Success"
+    result.Output.Status = status
+
+    log.Info("result: ", result.Output.Status)
+    return json.Marshal(&result)
+}

@@ -64,5 +64,97 @@ limitations under the License.
          <PARAM name="prefix" help="IPv4 prefix" ptype="IP_ADDR_MASK"></PARAM>
          <PARAM name="summary" help="Summary of BGP neighbor status" ptype="SUBCOMMAND" mode="subcommand"/>
     </MACRODEF>
+
+    <MACRODEF name="CLEAR_BGP_INOUT_SUB_CMDS">
+        <PARAM name="inout_subcommands" help="Clear inout subcommands" ptype="SUBCOMMAND" mode="switch" optional="true">
+           <PARAM name="in" help="Send route-refresh unless using 'soft-reconfiguration inbound" ptype="SUBCOMMAND" mode="subcommand" optional="true">
+               <PARAM name="soft" help=" Soft reconfig inbound and outbound updates" ptype="SUBCOMMAND" mode="subcommand" optional="true"></PARAM>
+           </PARAM>
+           <PARAM name="out" help="Resend all outbound updates" ptype="SUBCOMMAND" mode="subcommand" optional="true">
+              <PARAM name="soft" help=" Soft reconfig inbound and outbound updates" ptype="SUBCOMMAND" mode="subcommand" optional="true"></PARAM>
+           </PARAM>
+        </PARAM>
+    </MACRODEF>
+
+    <MACRODEF name="CLEAR_BGP_COMMON_OPTIONS_SUB_CMDS">
+        <PARAM name="as-num-dot" help="Clear BGP by Autonomous system number" ptype="RANGE_1_4294967295" optional="true"> 
+           <MACRO name="CLEAR_BGP_INOUT_SUB_CMDS" arg=""></MACRO>
+        </PARAM>
+        <PARAM name="*" help=" Clear all peers" ptype="SUBCOMMAND" mode="subcommand" optional="true"> 
+           <MACRO name="CLEAR_BGP_INOUT_SUB_CMDS" arg=""></MACRO>
+        </PARAM>
+        <PARAM name="external" help="Clear all external peers" ptype="SUBCOMMAND" mode="subcommand" optional="true">
+           <MACRO name="CLEAR_BGP_INOUT_SUB_CMDS" arg=""></MACRO>
+       </PARAM>
+       <PARAM name="interface" help="Interface to clear BGP" ptype="SUBCOMMAND" mode="subcommand" optional="true">
+           <PARAM name="ifname" help="Interface name to clear" ptype="SUBCOMMAND">
+               <MACRO name="CLEAR_BGP_INOUT_SUB_CMDS" arg=""></MACRO>
+           </PARAM>
+       </PARAM>
+       <PARAM name="peer-group" help="Clear all members of peer-group" ptype="SUBCOMMAND" mode="subcommand" optional="true">
+            <PARAM name="peer-group name" help="Peer-group name" ptype="STRING">
+              <MACRO name="CLEAR_BGP_INOUT_SUB_CMDS" arg=""></MACRO>
+            </PARAM>
+        </PARAM>
+    </MACRODEF>
+
+    <MACRODEF name="CLEAR_IPV4_BGP_ADDR_OPTIONS_SUB_CMDS">
+        <PARAM name="neighbor-ipv4" help="BGP neighbor address to clear" ptype="IPV4_ADDR_ABC" optional="true">
+           <MACRO name="CLEAR_BGP_INOUT_SUB_CMDS" arg=""></MACRO>
+        </PARAM>
+        <PARAM name="prefix" help="IPv4 Prefix to clear BGP" ptype="SUBCOMMAND" mode="subcommand" optional="true">
+           <PARAM name="prefix-ip4" help="IPv4 Prefix to clear BGP" ptype="IP_ADDR_MASK">
+             <MACRO name="CLEAR_BGP_INOUT_SUB_CMDS" arg=""></MACRO>
+           </PARAM>
+        </PARAM>
+    </MACRODEF>
+
+    <MACRODEF name="CLEAR_IPV6_BGP_ADDR_OPTIONS_SUB_CMDS">
+        <PARAM name="neighbor-ipv6" help="BGP neighbor address to clear" ptype="IPV6_ADDR" optional="true">
+           <MACRO name="CLEAR_BGP_INOUT_SUB_CMDS" arg=""></MACRO>
+        </PARAM>
+        <PARAM name="prefix" help="IPv6 Prefix to clear BGP" ptype="SUBCOMMAND" mode="subcommand" optional="true">
+          <PARAM name="prefix-ip6" help="IPv6 Prefix to clear BGP" ptype="IPV6_ADDR_MASK">
+           <MACRO name="CLEAR_BGP_INOUT_SUB_CMDS" arg=""></MACRO>
+          </PARAM>
+        </PARAM>
+    </MACRODEF>
+
+    <MACRODEF name="CLEAR_IPV4_BGP_OPTIONS_SUB_CMDS">
+        <MACRO name="CLEAR_BGP_COMMON_OPTIONS_SUB_CMDS" arg=""></MACRO>
+        <MACRO name="CLEAR_IPV4_BGP_ADDR_OPTIONS_SUB_CMDS" arg=""></MACRO>
+        <PARAM name="in" help="Send route-refresh unless using 'soft-reconfiguration inbound" ptype="SUBCOMMAND" mode="subcommand" optional="true">
+            <PARAM name="soft" help=" Soft reconfig inbound and outbound updates" ptype="SUBCOMMAND" mode="subcommand" optional="true"></PARAM>
+        </PARAM>
+        <PARAM name="out" help="Resend all outbound updates" ptype="SUBCOMMAND" mode="subcommand" optional="true">
+            <PARAM name="soft" help=" Soft reconfig inbound and outbound updates" ptype="SUBCOMMAND" mode="subcommand" optional="true"></PARAM>
+        </PARAM>
+    </MACRODEF>
+
+    <MACRODEF name="CLEAR_IPV6_BGP_OPTIONS_SUB_CMDS">
+        <MACRO name="CLEAR_BGP_COMMON_OPTIONS_SUB_CMDS" arg=""></MACRO>
+        <MACRO name="CLEAR_IPV6_BGP_ADDR_OPTIONS_SUB_CMDS" arg=""></MACRO>
+        <PARAM name="in" help="Send route-refresh unless using 'soft-reconfiguration inbound" ptype="SUBCOMMAND" mode="subcommand" optional="true">
+            <PARAM name="soft" help=" Soft reconfig inbound and outbound updates" ptype="SUBCOMMAND" mode="subcommand" optional="true"></PARAM>
+        </PARAM>
+        <PARAM name="out" help="Resend all outbound updates" ptype="SUBCOMMAND" mode="subcommand" optional="true">
+            <PARAM name="soft" help=" Soft reconfig inbound and outbound updates" ptype="SUBCOMMAND" mode="subcommand" optional="true"></PARAM>
+        </PARAM>
+    </MACRODEF>
+ 
+    <MACRODEF name="CLEAR_IP_BGP_SUB_CMDS">
+        <PARAM name="ipv4" help="Address family" ptype="SUBCOMMAND" mode="subcommand">
+            <PARAM name="ip_bgp_subcommands" help="IPv4 subcommands" ptype="SUBCOMMAND" mode="switch" optional="true">
+               <MACRO name="CLEAR_IPV4_BGP_OPTIONS_SUB_CMDS" arg=""></MACRO>
+            </PARAM>
+        </PARAM>
+
+        <PARAM name="ipv6" help="Address family" ptype="SUBCOMMAND" mode="subcommand">
+            <PARAM name="ipv6_bgp Subcommands" help="IPv6 subcommands" ptype="SUBCOMMAND" mode="switch" optional="true">
+               <MACRO name="CLEAR_IPV6_BGP_OPTIONS_SUB_CMDS" arg=""></MACRO>
+            </PARAM>
+        </PARAM>
+    </MACRODEF>
+
 </ROOT>
 

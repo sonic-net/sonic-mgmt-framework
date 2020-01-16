@@ -26,3 +26,5 @@ openconfig-system-annot.yang
 openconfig-nat.yang
 openconfig-nat-annot.yang
 openconfig-rib-bgp-ext.yang
+sonic-bgp-clear.yang
+sonic-bgp-clear-annot.yang
