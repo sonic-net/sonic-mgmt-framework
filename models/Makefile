@@ -80,7 +80,7 @@ py-client: $(PY_CLIENT_TARGETS)
 #======================================================================
 $(CODEGEN_JAR): | $$(@D)/.
 	cd $(@D) && \
-	wget http://central.maven.org/maven2/io/swagger/swagger-codegen-cli/$(CODEGEN_VER)/$(@F)
+	wget https://central.maven.org/maven2/io/swagger/swagger-codegen-cli/$(CODEGEN_VER)/$(@F)
 
 #======================================================================
 # Generate swagger server in GO language for Yang generated OpenAPIs
