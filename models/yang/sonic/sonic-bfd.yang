@@ -1,0 +1,174 @@
+module sonic-bfd {                                                                                
+        namespace "http://github.com/Azure/sonic-bfd";                                            
+        prefix sbfd;                                                                              
+        yang-version 1.1;                                                                         
+
+        import ietf-inet-types {
+                prefix inet;    
+        }                       
+
+   	import sonic-vrf {
+        	prefix svrf;
+    	}
+    
+    	import sonic-port {
+       		prefix prt;
+    	}
+
+    	import sonic-portchannel {
+        	prefix spc;
+    	}
+
+   	import sonic-vlan {
+        	prefix svlan;
+    	}
+
+        import sonic-common {
+                prefix cmn;  
+        }                    
+
+        organization
+                "SONiC";
+
+        contact
+                "SONiC";
+
+        description
+                "SONIC BFD";
+
+        revision 2019-11-22 {
+                description  
+                        "Initial revision.";
+        }
+
+	grouping sonic-bfd-key-cmn {
+                leaf remote-address {
+                        //type inet:ip-address;
+                        type string;
+                        description "Neighbor IP";
+                }
+
+                leaf vrf {
+                        //type string;
+                 	type union {
+                     		type string {
+                         		pattern "default";
+                     		}
+                     		type leafref {
+                         		path "/svrf:sonic-vrf/svrf:VRF/svrf:VRF_LIST/svrf:vrf_name";
+                     		}
+                 	}
+                        description "Network-instance/VRF name";
+		}
+	}
+
+        grouping sonic-bfd-key-shop {
+		uses sonic-bfd-key-cmn;
+
+                leaf interface {
+                        //type string;
+                    	type union {
+                        	type leafref {
+                            		path "/prt:sonic-port/prt:PORT/prt:PORT_LIST/prt:ifname";
+                        	}
+                        	type leafref {
+                            		path "/spc:sonic-portchannel/spc:PORTCHANNEL/spc:PORTCHANNEL_LIST/spc:name";
+                        	}
+                        	type leafref {
+                            		path "/svlan:sonic-vlan/svlan:VLAN/svlan:VLAN_LIST/svlan:name";
+                        	}
+                    	}
+
+                        description "Interface name";
+                }
+
+                leaf local-address {
+                        type string;
+                                description "Local IP";
+                        }
+	}
+
+        grouping sonic-bfd-key-mhop {
+                uses sonic-bfd-key-cmn;
+
+                leaf local-address {
+                        type string;
+                                description "Local IP";
+                        }
+        }
+
+        grouping sonic-bfd-cmn {      
+    		leaf enabled {
+      			type boolean;
+			default true;
+      			description
+        			"When this leaf is set to true then the BFD session is enabled
+        			- if it is set to false, it is administratively disabled.";
+    			}
+
+                leaf desired-minimum-tx-interval {
+                        type uint32 {
+                                range "10..60000";
+                        }
+			default 300;
+                        description "Desired minimum Tx interval";
+                }        
+
+                leaf required-minimum-receive {
+                        type uint32 {
+                                range "10..60000";
+                        }
+                        default 300;
+                        description "Required minimum Rx interval";
+                }     
+
+                leaf detection-multiplier {
+                        type uint8 {
+                                range "2..255";
+                                }
+                        default 3;
+                        description "Detect multiplier for BFD timeout";
+                }
+        }                  
+
+        grouping sonic-bfd-echo {
+                leaf echo-active {
+                        type boolean;
+                        default false;
+                        description
+                        "This leaf is set to true when echo mode is enabled between
+                        the local and remote system.";
+                }
+
+                leaf desired-minimum-echo-receive {
+                        type uint32 {
+                                range "10..60000";
+                        }
+                        default 50;
+                        description "Desired minimum echo Rx interval";
+                }
+	}
+
+        container sonic-bfd {
+                container BFD_PEER_SINGLE_HOP {
+                        list BFD_PEER_SINGLE_HOP_LIST {
+                                key "remote-address interface vrf local-address";
+
+                                uses sonic-bfd-key-shop;
+                                uses sonic-bfd-cmn;
+				uses sonic-bfd-echo;
+                        }                                                                              
+                }
+
+                container BFD_PEER_MULTI_HOP {
+                        list BFD_PEER_MULTI_HOP_LIST {
+                                key "remote-address vrf local-address";
+				
+				uses sonic-bfd-key-mhop;
+                                uses sonic-bfd-cmn;
+                        }                                                                               
+                }
+        }
+}                                                                                        
+
+                

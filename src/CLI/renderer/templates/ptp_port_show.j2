@@ -29,9 +29,9 @@
 {{ 'Version Number'.ljust(30)}} {{ item['version-number'] }}
 {% endif %}
 
-{% if 'unicast-table' in item %}
+{% if 'ietf-ptp-ext:unicast-table' in item %}
 {{ 'Unicast Master Table:'.ljust(30)}}
-{% for i in item['unicast-table'].split(',') %}
+{% for i in item['ietf-ptp-ext:unicast-table'].split(',') %}
 {{ ''.ljust(30)}} {{ i }}
 {% endfor %}
 {% endif %}

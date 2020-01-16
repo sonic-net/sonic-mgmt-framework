@@ -13,6 +13,42 @@
     xsi:schemaLocation="http://www.dellemc.com/sonic/XMLSchema
     http://www.dellemc.com/sonic/XMLSchema/clish.xsd"
     >
+
+    <!--MODE : config terminal -->
+    <VIEW name="configure-view">
+        <COMMAND name="no write" help="write control commands">
+            <ACTION builtin="clish_nop"/>
+        </COMMAND>
+        <COMMAND
+            name="no write erase"
+            help="Cancel configuration erase operation">
+            <ACTION>
+                python $SONIC_CLI_ROOT/sonic-cli-cfg-mgmt.py rpc_sonic_config_mgmt_erase ${__full_line}
+            </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="write erase"
+            help="Erase configuration files except management interface configuration">
+            <ACTION>
+                python $SONIC_CLI_ROOT/sonic-cli-cfg-mgmt.py rpc_sonic_config_mgmt_erase ${__full_line}
+            </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="write erase boot"
+            help="Erase the configuration files including management interface configuration">
+            <ACTION>
+                python $SONIC_CLI_ROOT/sonic-cli-cfg-mgmt.py rpc_sonic_config_mgmt_erase ${__full_line}
+            </ACTION>
+        </COMMAND>
+        <COMMAND
+            name="write erase install"
+            help="Restore SONiC switch content to default values">
+            <ACTION>
+                python $SONIC_CLI_ROOT/sonic-cli-cfg-mgmt.py rpc_sonic_config_mgmt_erase ${__full_line}
+            </ACTION>
+        </COMMAND>
+   </VIEW>
+
     <VIEW name="enable-view">
         <COMMAND
             name="write"
@@ -29,6 +65,7 @@
             python $SONIC_CLI_ROOT/sonic-cli-cfg-mgmt.py rpc_sonic_config_mgmt_copy running-configuration startup-configuration
         </ACTION>
         </COMMAND>
+
         <COMMAND
             name="copy"
             help="Perform file copy operations"
@@ -91,5 +128,6 @@
                 </ACTION>
           </COMMAND>                           
     </VIEW>
+
 </CLISH_MODULE>
 
