@@ -246,6 +246,7 @@ def vxlan_show_vxlan_interface(args):
 def vxlan_show_vxlan_vlanvnimap(args):
 
     #print("VLAN-VNI Mapping")
+    list_len = 0
     print("")
     print("{0:^8}  {1:^8}".format('VLAN','VNI'))
     print("{0:^8}  {1:^8}".format('======','====='))
@@ -256,10 +257,12 @@ def vxlan_show_vxlan_vlanvnimap(args):
 	    print("no vxlan configuration")
 	elif response is not None:
            tunnel_list = response['sonic-vxlan:VXLAN_TUNNEL_MAP_LIST']
+           list_len = len(tunnel_list)
            for iter in tunnel_list:
              print("{0:^8}  {1:^8}".format(iter['vlan'],iter['vni']))
 	       #show_cli_output(args[0], vxlan_info)
 	#print(api_response.error_message())
+    print("Total count : {0}".format(list_len))
 
     return
 
@@ -267,6 +270,7 @@ def vxlan_show_vxlan_vlanvnimap(args):
 def vxlan_show_vxlan_tunnel(args):
 
     #print("{:*^70s}".format("List of Tunnels"))
+    list_len = 0
     print("")
     print("{0:^20} {1:^15} {2:^15} {3:^8} {4:^12}".format('Name','SIP','DIP','source','operstatus'))
     print("{0:^20} {1:^15} {2:^15} {3:^8} {4:^12}".format('======','=====','=====','========','============'))
@@ -277,16 +281,19 @@ def vxlan_show_vxlan_tunnel(args):
 	    print("no vxlan configuration")
 	elif response is not None:
            tunnel_list = response['sonic-vxlan:VXLAN_TUNNEL_TABLE_LIST']
+           list_len = len(tunnel_list)
            for iter in tunnel_list:
              print("{0:^20} {1:^15} {2:^15} {3:^8} {4:^12}".format(iter['name'],iter['src_ip'],iter['dst_ip'],iter['tnl_src'],iter['operstatus']))
 	       #show_cli_output(args[0], vxlan_info)
 	#print(api_response.error_message())
+    print("Total count : {0}".format(list_len))
 
     return
 
 #show vxlan evpn remote vni
 def vxlan_show_vxlan_evpn_remote_vni(args):
     arg_length = len(args);
+    list_len = 0
     print("")
     print("{0:^20} {1:^15} {2:^10}".format('Vlan', 'Tunnel', 'VNI'))
     print("{0:^20} {1:^15} {2:^10}".format('======', '========', '====='))
@@ -297,14 +304,17 @@ def vxlan_show_vxlan_evpn_remote_vni(args):
 	    print("no vxlan evpn remote vni entires")
 	elif response is not None:
            tunnel_vni_list = response['sonic-vxlan:EVPN_REMOTE_VNI_TABLE_LIST']
+           list_len = len(tunnel_vni_list)
            for iter in tunnel_vni_list:
                if (arg_length == 1) or (arg_length == 2 and args[1] == iter['remote_vtep']):
                    print("{0:^20} {1:^15} {2:^10}".format(iter['vlan'], iter['remote_vtep'], iter['vni']))
+    print("Total count : {0}".format(list_len))
     return
 
 #show vxlan evpn remote mac
 def vxlan_show_vxlan_evpn_remote_mac(args):
     arg_length = len(args);
+    list_len = 0
     print("")
     print("{0:^20} {1:^17} {2:^20} {3:^15} {4:^10}".format('Vlan', 'Mac', 'Type', 'Tunnel', 'VNI'))
     print("{0:^20} {1:^17} {2:^20} {3:^15} {4:^10}".format('======', '=====', '======', '========', '====='))
@@ -315,9 +325,11 @@ def vxlan_show_vxlan_evpn_remote_mac(args):
 	    print("no vxlan fdb entries")
 	elif response is not None:
            tunnel_fdb_list = response['sonic-vxlan:VXLAN_FDB_TABLE_LIST']
+           list_len = len(tunnel_fdb_list)
            for iter in tunnel_fdb_list:
                if (arg_length == 1) or (arg_length == 2 and args[1] == iter['remote_vtep']):
                    print("{0:^20} {1:^10} {2:^20} {3:^15} {4:^10}".format(iter['vlan'], iter['mac_addr'], iter['type'], iter['remote_vtep'], iter['vni']))
+    print("Total count : {0}".format(list_len))
     return
 
 
