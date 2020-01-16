@@ -432,6 +432,11 @@ module openconfig-bgp-ext {
           description
               "Administratively applied, for an indefinite period.";
       }
+      leaf admin-max-med-val {
+          type uint32;
+          description
+              "Administrative Max MED value to be used";
+      }
   }
 
   grouping bgp-ext-global-max-med {

@@ -39,7 +39,16 @@
                 {{-'00:00:00'.ljust(24)-}}
             {% endif %}
             {% if 'session-state' in n_state %}
-                {{-(n_state['session-state']|string).ljust(8)}}
+                {% if n_state['session-state'] == 'ESTABLISHED' %}
+                    {% if 'afi-safis' in neighbor and 'state' in neighbor['afi-safis'] %}
+                        {% set n_afi_safi_state = neighbor['afi-safis']['state'] %}
+                        {{-(n_afi_safi_state['prefixes']['received']|string).ljust(8)}}
+                    {% else %}
+                        {{-'0'.ljust(8)}}
+                    {% endif %}
+                {% else %}
+                    {{-(n_state['session-state']|string).ljust(8)}}
+                {% endif %}
             {% else %}
                 {{-'0'.ljust(8)}}
             {% endif %}
