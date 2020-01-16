@@ -83,7 +83,6 @@ var xMdlCpbltMap  map[string]*mdlInfo
 
 /* Add module name to map storing model info for model capabilities */
 func addMdlCpbltEntry(yangMdlNm string) {
-       log.Info("Received yang model name to be added to model info map for gnmi ", yangMdlNm)
        if xMdlCpbltMap == nil {
                xMdlCpbltMap = make(map[string]*mdlInfo)
        }
@@ -100,7 +99,6 @@ func addMdlCpbltEntry(yangMdlNm string) {
 
 /* Add version and organization info for model capabilities into map */
 func addMdlCpbltData(yangMdlNm string, version string, organization string) {
-	log.Infof("Adding version %v and organization %v for yang module %v", version, organization, yangMdlNm)
 	if xMdlCpbltMap == nil {
                xMdlCpbltMap = make(map[string]*mdlInfo)
         }
@@ -604,7 +602,6 @@ func annotDbSpecMapFill(xDbSpecMap map[string]*dbInfo, dbXpath string, entry *ya
 		}
 		dbXpathData, ok = xDbSpecMap[rpcName[1]]
 		if ok && dbXpathData.fieldType == "rpc" {
-			log.Infof("Annotate dbSpecMap for (%v)(rpcName:%v)\r\n", dbXpath, listName[1])
 			if entry != nil && len(entry.Exts) > 0 {
 				for _, ext := range entry.Exts {
 					dataTagArr := strings.Split(ext.Keyword, ":")
