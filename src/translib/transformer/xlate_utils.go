@@ -23,6 +23,7 @@ import (
     "strings"
     "reflect"
     "regexp"
+    "runtime"
     "translib/db"
     "translib/tlerr"
     "github.com/openconfig/goyang/pkg/yang"
@@ -856,12 +857,22 @@ func isJsonDataEmpty(jsonData string) bool {
 	return false
 }
 
+func getFileNmLineNumStr() string {
+	_, AbsfileName, lineNum, _ := runtime.Caller(3)
+	fileNmElems := strings.Split(AbsfileName, "/")
+	fileNm := fileNmElems[len(fileNmElems)-1]
+	fNmLnoStr := fmt.Sprintf("[%v:%v]", fileNm, lineNum)
+	return fNmLnoStr
+}
+
 func xfmrLogInfo(format string, args ...interface{}) {
-	log.Infof(format, args...)
+	fNmLnoStr := getFileNmLineNumStr()
+	log.Infof(fNmLnoStr + format, args...)
 }
 
 func xfmrLogInfoAll(format string, args ...interface{}) {
 	if log.V(5) {
-		log.Infof(format, args...)
+		fNmLnoStr := getFileNmLineNumStr()
+		log.Infof(fNmLnoStr + format, args...)
 	}
 }
