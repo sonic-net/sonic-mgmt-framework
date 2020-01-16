@@ -59,6 +59,10 @@ module sonic-route-common {
                     }
                     max-elements 1;
                 }
+
+                leaf metric {
+                    type uint32;
+                }
             }
         }
     }

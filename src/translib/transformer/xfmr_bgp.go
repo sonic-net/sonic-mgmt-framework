@@ -169,7 +169,8 @@ var YangToDb_bgp_local_asn_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrParams
        local_asn := uint32(local_asn64)
        if err_conv == nil && local_asn != *asn {
            log.Info("YangToDb_bgp_local_asn_fld_xfmr Local ASN is already present", local_asn, *asn)
-           return rmap, tlerr.InvalidArgs("Local AS '%d' can't be modified!", local_asn)
+           return rmap, tlerr.InvalidArgs("BGP is already running with AS number %s", 
+                                          strconv.FormatUint(local_asn64, 10))
        }
     }
     rmap["local_asn"] = strconv.FormatUint(uint64(*asn), 10)
