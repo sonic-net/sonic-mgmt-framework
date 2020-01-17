@@ -103,7 +103,6 @@ func get_bfd_shop_peers (bfd_obj *ocbinds.OpenconfigBfd_Bfd_BfdState, inParams X
         return cmd_err;
     }
 
-
     if (bfdshop_key.LocalAddress == "null") {
         vtysh_cmd = "show bfd vrf " + bfdshop_key.Vrf + " peer " + bfdshop_key.RemoteAddress + " interface " + bfdshop_key.Interface + " counters" + " json"
     } else {
@@ -116,17 +115,11 @@ func get_bfd_shop_peers (bfd_obj *ocbinds.OpenconfigBfd_Bfd_BfdState, inParams X
         return cmd_err;
     }
 
-
-    //return output_peer, output_counter, cmd_err;
-    //return nil, nil, cmd_err;
-
     log.Info(output_peer)
     bfdMapJson["output"] = output_peer
 
     log.Info(output_counter)
     bfdCounterMapJson["output"] = output_counter
-
-    //var bfdshop_obj *ocbinds.OpenconfigBfd_Bfd_BfdState_SingleHopState
 
     sessions, _ := bfdMapJson["output"].(map[string]interface{})
     counters, _ := bfdCounterMapJson["output"].(map[string]interface{})
@@ -134,7 +127,12 @@ func get_bfd_shop_peers (bfd_obj *ocbinds.OpenconfigBfd_Bfd_BfdState, inParams X
     log.Info(sessions)
     log.Info(counters)
 
-    if ok := fill_bfd_shop_data (bfd_obj, sessions, counters) ; !ok {return err}
+    if (len(sessions) != 0) {
+        if ok := fill_bfd_shop_data (bfd_obj, sessions, counters) ; !ok {return err}
+    } else { 
+        log.Errorf("Shop peer with input key doesn't exist")
+    }
+
     return err;
 }
 
@@ -177,7 +175,12 @@ func get_bfd_mhop_peers (bfd_obj *ocbinds.OpenconfigBfd_Bfd_BfdState, inParams X
     log.Info(sessions)
     log.Info(counters)
 
-    if ok := fill_bfd_mhop_data (bfd_obj, sessions, counters) ; !ok {return err}
+    if (len(sessions) != 0) {
+        if ok := fill_bfd_mhop_data (bfd_obj, sessions, counters) ; !ok {return err}
+    } else {
+        log.Errorf("Shop peer with input key doesn't exist")
+    }
+
     return err;
 }
 
@@ -208,17 +211,12 @@ func get_bfd_peers (bfd_obj *ocbinds.OpenconfigBfd_Bfd_BfdState, inParams XfmrPa
             return cmd_err
         }
 
-        log.Info(output_peer)  
-        bfdMapJson["output"] = output_peer
-    
         vtysh_cmd = "show bfd peers counters json"
         output_counter, cmd_err = exec_vtysh_cmd_array (vtysh_cmd)
         if cmd_err != nil {
             log.Errorf("Failed to fetch bfd peers counters array:, err")
             return cmd_err
         }
-
-        log.Info(output_counter)
     }
 
     log.Info(output_peer)
@@ -226,9 +224,6 @@ func get_bfd_peers (bfd_obj *ocbinds.OpenconfigBfd_Bfd_BfdState, inParams XfmrPa
 
     log.Info(output_counter)
     bfdCounterMapJson["output"] = output_counter
-
-    //var bfdmhop_obj *ocbinds.OpenconfigBfd_Bfd_BfdState_MultiHopState
-    //var bfdshop_obj *ocbinds.OpenconfigBfd_Bfd_BfdState_SingleHopState
 
     sessions, _ := bfdMapJson["output"].([]interface{})
     counters, _ := bfdCounterMapJson["output"].([]interface{})
@@ -405,15 +400,15 @@ func fill_bfd_shop_data (bfd_obj *ocbinds.OpenconfigBfd_Bfd_BfdState, session_da
 
     if value, ok := session_data[""].(ocbinds.E_OpenconfigBfdExt_BfdSessionType) ; ok {
         bfdshop_obj.SessionType = value
-    }
+    }*/
 
-    if value, ok := session_data[""].(uint32) ; ok {
+    if value, ok := session_data["remote-detect-multiplier"].(uint32) ; ok {
         bfdshop_obj.RemoteMultiplier = &value
     }
 
-    if value, ok := session_data[""].(uint32) ; ok {
+    if value, ok := session_data["detect-multiplier"].(uint32) ; ok {
         bfdshop_obj.LocalMultiplier = &value
-    }*/
+    }
 
     if value, ok := session_data["transmit-interval"].(float64) ; ok {
         value32 := uint32(value)
@@ -508,179 +503,173 @@ func fill_bfd_shop_data (bfd_obj *ocbinds.OpenconfigBfd_Bfd_BfdState, session_da
 
 func fill_bfd_mhop_data (bfd_obj *ocbinds.OpenconfigBfd_Bfd_BfdState, session_data map[string]interface{}, counter_data map[string]interface{}) bool {
     var err error
-    var bfdshopkey ocbinds.OpenconfigBfd_Bfd_BfdState_MultiHopState_Key
+    var bfdmhopkey ocbinds.OpenconfigBfd_Bfd_BfdState_MultiHopState_Key
     var bfdasyncstats *ocbinds.OpenconfigBfd_Bfd_BfdState_MultiHopState_Async
-    //var bfdechocstats *ocbinds.OpenconfigBfd_Bfd_BfdState_MultiHopState_Echo
 
     log.Info("fill_bfd_mhop_data")
 
     if value, ok := session_data["peer"].(string) ; ok {
-        bfdshopkey.RemoteAddress = value
+        bfdmhopkey.RemoteAddress = value
     }
 
-    /*if value, ok := session_data["interface"].(string) ; ok {
-        bfdshopkey.Interface = value
-    }*/
-
     if value, ok := session_data["vrf"].(string) ; ok {
-        bfdshopkey.Vrf = value
+        bfdmhopkey.Vrf = value
     }
 
     if value, ok := session_data["local"].(string) ; ok {
-        bfdshopkey.LocalAddress = value
+        bfdmhopkey.LocalAddress = value
     }
 
-    bfdshop_obj := bfd_obj.MultiHopState[bfdshopkey]
-    if bfdshop_obj == nil {
-        bfdshop_obj, err = bfd_obj.NewMultiHopState(bfdshopkey.RemoteAddress, bfdshopkey.Vrf, bfdshopkey.LocalAddress)
+    bfdmhop_obj := bfd_obj.MultiHopState[bfdmhopkey]
+    if bfdmhop_obj == nil {
+        bfdmhop_obj, err = bfd_obj.NewMultiHopState(bfdmhopkey.RemoteAddress, bfdmhopkey.Vrf, bfdmhopkey.LocalAddress)
         if err != nil {return false}
     }
 
-    ygot.BuildEmptyTree(bfdshop_obj)
+    ygot.BuildEmptyTree(bfdmhop_obj)
 
     if value, ok := session_data["status"].(string) ; ok {
         if value == "down" {
-            bfdshop_obj.SessionState = ocbinds.OpenconfigBfd_BfdSessionState_DOWN
+            bfdmhop_obj.SessionState = ocbinds.OpenconfigBfd_BfdSessionState_DOWN
         } else if value == "up" {
-            bfdshop_obj.SessionState = ocbinds.OpenconfigBfd_BfdSessionState_UP
+            bfdmhop_obj.SessionState = ocbinds.OpenconfigBfd_BfdSessionState_UP
         } else if value == "shutdown" {
-            bfdshop_obj.SessionState = ocbinds.OpenconfigBfd_BfdSessionState_ADMIN_DOWN
+            bfdmhop_obj.SessionState = ocbinds.OpenconfigBfd_BfdSessionState_ADMIN_DOWN
         } else if value == "init" {
-            bfdshop_obj.SessionState = ocbinds.OpenconfigBfd_BfdSessionState_INIT
+            bfdmhop_obj.SessionState = ocbinds.OpenconfigBfd_BfdSessionState_INIT
         } else {
-            bfdshop_obj.SessionState = ocbinds.OpenconfigBfd_BfdSessionState_UNSET
+            bfdmhop_obj.SessionState = ocbinds.OpenconfigBfd_BfdSessionState_UNSET
         }
-
     }
 
     /*if value, ok := session_data["remote-status"].(ocbinds.E_OpenconfigBfd_BfdSessionState) ; ok {
-        bfdshop_obj.RemoteSessionState = value
+        bfdmhop_obj.RemoteSessionState = value
     }*/
 
     if value, ok := session_data["downtime"].(float64) ; ok {
         value64 := uint64(value)
-        bfdshop_obj.LastFailureTime = &value64
+        bfdmhop_obj.LastFailureTime = &value64
     }   
 
     if value, ok := session_data["id"].(float64) ; ok {
         s := strconv.FormatFloat(value, 'f', -1, 64)
-        bfdshop_obj.LocalDiscriminator = &s
+        bfdmhop_obj.LocalDiscriminator = &s
     }
 
     if value, ok := session_data["remote-id"].(float64) ; ok {
         s := strconv.FormatFloat(value, 'f', -1, 64)
-        bfdshop_obj.RemoteDiscriminator = &s
+        bfdmhop_obj.RemoteDiscriminator = &s
     }
 
     if value, ok := session_data["diagnostic"].(string) ; ok {
         if value == "ok" {
-            bfdshop_obj.LocalDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_UNSET
+            bfdmhop_obj.LocalDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_UNSET
         } else if value == "control detection time expired" {
-            bfdshop_obj.LocalDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_DETECTION_TIMEOUT
+            bfdmhop_obj.LocalDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_DETECTION_TIMEOUT
         } else if value == "echo function failed" {
-            bfdshop_obj.LocalDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_ECHO_FAILED
+            bfdmhop_obj.LocalDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_ECHO_FAILED
         } else if value == "neighbor signaled session down" {
-            bfdshop_obj.LocalDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_UNSET
+            bfdmhop_obj.LocalDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_UNSET
         } else if value == "forwarding plane reset" {
-            bfdshop_obj.LocalDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_FORWARDING_RESET
+            bfdmhop_obj.LocalDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_FORWARDING_RESET
         } else if value == "path down" {
-            bfdshop_obj.LocalDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_PATH_DOWN
+            bfdmhop_obj.LocalDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_PATH_DOWN
         } else if value == "concatenated path down" {
-            bfdshop_obj.LocalDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_CONCATENATED_PATH_DOWN
+            bfdmhop_obj.LocalDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_CONCATENATED_PATH_DOWN
         } else if value == "administratively down" {
-            bfdshop_obj.LocalDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_ADMIN_DOWN
+            bfdmhop_obj.LocalDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_ADMIN_DOWN
         } else if value == "reverse concatenated path down" {
-            bfdshop_obj.LocalDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_REVERSE_CONCATENATED_PATH_DOWN
+            bfdmhop_obj.LocalDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_REVERSE_CONCATENATED_PATH_DOWN
         } else {
-            bfdshop_obj.LocalDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_NO_DIAGNOSTIC
+            bfdmhop_obj.LocalDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_NO_DIAGNOSTIC
         }
 
     }
 
     if value, ok := session_data["remote-diagnostic"].(string) ; ok {
         if value == "ok" {
-            bfdshop_obj.RemoteDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_UNSET
+            bfdmhop_obj.RemoteDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_UNSET
         } else if value == "control detection time expired" {
-            bfdshop_obj.RemoteDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_DETECTION_TIMEOUT
+            bfdmhop_obj.RemoteDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_DETECTION_TIMEOUT
         } else if value == "echo function failed" {
-            bfdshop_obj.RemoteDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_ECHO_FAILED
+            bfdmhop_obj.RemoteDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_ECHO_FAILED
         } else if value == "neighbor signaled session down" {
-            bfdshop_obj.RemoteDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_UNSET
+            bfdmhop_obj.RemoteDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_UNSET
         } else if value == "forwarding plane reset" {
-            bfdshop_obj.RemoteDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_FORWARDING_RESET
+            bfdmhop_obj.RemoteDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_FORWARDING_RESET
         } else if value == "path down" {
-            bfdshop_obj.RemoteDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_PATH_DOWN
+            bfdmhop_obj.RemoteDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_PATH_DOWN
         } else if value == "concatenated path down" {
-            bfdshop_obj.RemoteDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_CONCATENATED_PATH_DOWN
+            bfdmhop_obj.RemoteDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_CONCATENATED_PATH_DOWN
         } else if value == "administratively down" {
-            bfdshop_obj.RemoteDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_ADMIN_DOWN
+            bfdmhop_obj.RemoteDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_ADMIN_DOWN
         } else if value == "reverse concatenated path down" {
-            bfdshop_obj.RemoteDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_REVERSE_CONCATENATED_PATH_DOWN
+            bfdmhop_obj.RemoteDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_REVERSE_CONCATENATED_PATH_DOWN
         } else {
-            bfdshop_obj.RemoteDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_NO_DIAGNOSTIC
+            bfdmhop_obj.RemoteDiagnosticCode = ocbinds.OpenconfigBfd_BfdDiagnosticCode_NO_DIAGNOSTIC
         }
     }
 
     if value, ok := session_data["remote-receive-interval"].(float64) ; ok {
         value32 := uint32(value)
-        bfdshop_obj.RemoteMinimumReceiveInterval = &value32
+        bfdmhop_obj.RemoteMinimumReceiveInterval = &value32
     }
 
     /*if value, ok := session_data[""].(bool) ; ok {
-        bfdshop_obj.DemandModeRequested = &value
+        bfdmhop_obj.DemandModeRequested = &value
     }
 
     if value, ok := session_data[""].(bool) ; ok {
-        bfdshop_obj.RemoteAuthenticationEnabled = &value
+        bfdmhop_obj.RemoteAuthenticationEnabled = &value
     }
 
     if value, ok := session_data[""].(bool) ; ok {
-        bfdshop_obj.RemoteControlPlaneIndependent = &value
+        bfdmhop_obj.RemoteControlPlaneIndependent = &value
     }
 
     if value, ok := session_data[""].(ocbinds.E_OpenconfigBfdExt_BfdSessionType) ; ok {
-        bfdshop_obj.SessionType = value
+        bfdmhop_obj.SessionType = value
     }
 
     if value, ok := session_data[""].(uint32) ; ok {
-        bfdshop_obj.RemoteMultiplier = &value
+        bfdmhop_obj.RemoteMultiplier = &value
     }
 
     if value, ok := session_data[""].(uint32) ; ok {
-        bfdshop_obj.LocalMultiplier = &value
+        bfdmhop_obj.LocalMultiplier = &value
     }*/
 
     if value, ok := session_data["transmit-interval"].(float64) ; ok {
         value32 := uint32(value)
-        bfdshop_obj.NegotiatedTransmissionInterval = &value32
+        bfdmhop_obj.NegotiatedTransmissionInterval = &value32
     }
 
     if value, ok := session_data["receive-interval"].(float64) ; ok {
         value32 := uint32(value)
-        bfdshop_obj.NegotiatedReceiveInterval = &value32
+        bfdmhop_obj.NegotiatedReceiveInterval = &value32
     }
 
     if value, ok := session_data["remote-transmit-interval"].(float64) ; ok {
         value32 := uint32(value)
-        bfdshop_obj.RemoteDesiredTransmissionInterval = &value32
+        bfdmhop_obj.RemoteDesiredTransmissionInterval = &value32
     }
 
     if value, ok := session_data["remote-echo-interval"].(float64) ; ok {
         value32 := uint32(value)
-        bfdshop_obj.RemoteEchoReceiveInterval = &value32
+        bfdmhop_obj.RemoteEchoReceiveInterval = &value32
     }
 
     /*if value, ok := session_data["echo-interval"].(float64) ; ok {
         value32 := uint32(value)
-        bfdshop_obj.MinimumEchoInterval = &value32
+        bfdmhop_obj.MinimumEchoInterval = &value32
     }*/
 
     /*if value, ok := session_data[""].(uint64) ; ok {
-        bfdshop_obj.LastUpTime = &value
+        bfdmhop_obj.LastUpTime = &value
     }*/
 
-    bfdasyncstats = bfdshop_obj.Async
-    //bfdechocstats = bfdshop_obj.Echo
+    bfdasyncstats = bfdmhop_obj.Async
+    //bfdechocstats = bfdmhop_obj.Echo
 
     /*if value, ok := counter_data[""].(uint64) ; ok {
         bfdasyncstats.LastPacketReceived = &value
@@ -707,7 +696,7 @@ func fill_bfd_mhop_data (bfd_obj *ocbinds.OpenconfigBfd_Bfd_BfdState, session_da
 
     if value, ok := counter_data["session-down"].(float64) ; ok {
         value64 := uint64(value)
-        bfdshop_obj.FailureTransitions = &value64
+        bfdmhop_obj.FailureTransitions = &value64
     }
 
     /*if value, ok := counter_data[""].(bool) ; ok {

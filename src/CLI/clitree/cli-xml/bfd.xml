@@ -269,13 +269,13 @@ limitations under the License.
         <PARAM name = "multiplier" help= "Configure peer detection multiplier value" ptype = "RANGE_2_255" > </PARAM>
         <ACTION>
         if test "${multi-hop}" != ""; then&#xA;
-	    if test "${address}" != "peer_ipv6"; then&#xA;
+	    if test "${peer-ipv4addr}" != ""; then&#xA;
                 python $SONIC_CLI_ROOT/sonic-cli-bfd.py patch_openconfig_bfd_ext_bfd_sessions_multi_hop_detection_multiplier ${peer-ipv4addr} ${vrf-name} ${local-ipv4addr} ${multiplier} &#xA;
 	    else&#xA;
 		python $SONIC_CLI_ROOT/sonic-cli-bfd.py patch_openconfig_bfd_ext_bfd_sessions_multi_hop_detection_multiplier ${peer-ipv6addr} ${vrf-name} ${local-ipv6addr} ${multiplier} &#xA;
 	    fi&#xA;
         else&#xA;
-	    if test "${address}" != "peer_ipv6"; then&#xA;
+	    if test "${peer-ipv4addr}" != ""; then&#xA;
                 python $SONIC_CLI_ROOT/sonic-cli-bfd.py patch_openconfig_bfd_ext_bfd_sessions_single_hop_detection_multiplier ${peer-ipv4addr} ${interface-name} ${vrf-name} ${local-ipv4addr} ${multiplier}&#xA;
             else&#xA;
 		python $SONIC_CLI_ROOT/sonic-cli-bfd.py patch_openconfig_bfd_ext_bfd_sessions_single_hop_detection_multiplier ${peer-ipv6addr} ${interface-name} ${vrf-name} ${local-ipv6addr} ${multiplier}&#xA;
@@ -288,13 +288,13 @@ limitations under the License.
         <PARAM name = "echo_interval" help = "Configure peer echo interval value in milliseconds" ptype = "RANGE_10_60000" > </PARAM>
         <ACTION>
 	if test "${multi-hop}" != ""; then&#xA;
-	    if test "${address}" != "peer_ipv6"; then&#xA;
+	    if test "${peer-ipv4addr}" != ""; then&#xA;
                 python $SONIC_CLI_ROOT/sonic-cli-bfd.py patch_openconfig_bfd_ext_bfd_sessions_multi_hop_desired_minimum_echo_receive &#xA;
 	    else&#xA;
 		python $SONIC_CLI_ROOT/sonic-cli-bfd.py patch_openconfig_bfd_ext_bfd_sessions_multi_hop_desired_minimum_echo_receive &#xA;
 	    fi&#xA;
         else&#xA;
-	    if test "${address}" != "peer_ipv6"; then&#xA;
+	    if test "${peer-ipv4addr}" != ""; then&#xA;
                 python $SONIC_CLI_ROOT/sonic-cli-bfd.py patch_openconfig_bfd_ext_bfd_sessions_single_hop_desired_minimum_echo_receive ${peer-ipv4addr} ${interface-name} ${vrf-name} ${local-ipv4addr} ${echo_interval}&#xA;
 	    else&#xA;
 		python $SONIC_CLI_ROOT/sonic-cli-bfd.py patch_openconfig_bfd_ext_bfd_sessions_single_hop_desired_minimum_echo_receive ${peer-ipv6addr} ${interface-name} ${vrf-name} ${local-ipv6addr} ${echo_interval}&#xA;
@@ -308,7 +308,7 @@ limitations under the License.
 	if test "${multi-hop}" != ""; then&#xA;
             python $SONIC_CLI_ROOT/sonic-cli-bfd.py patch_openconfig_bfd_ext_bfd_sessions_multi_hop_echo_active &#xA;
         else&#xA;
-            if test "${address}" != "peer_ipv6"; then&#xA;
+            if test "${peer-ipv4addr}" != ""; then&#xA;
                 python $SONIC_CLI_ROOT/sonic-cli-bfd.py patch_openconfig_bfd_ext_bfd_sessions_single_hop_echo_active ${peer-ipv4addr} ${interface-name} ${vrf-name} ${local-ipv4addr} &#xA;
 	    else&#xA;
 		python $SONIC_CLI_ROOT/sonic-cli-bfd.py patch_openconfig_bfd_ext_bfd_sessions_single_hop_echo_active ${peer-ipv6addr} ${interface-name} ${vrf-name} ${local-ipv6addr} &#xA;
@@ -322,7 +322,7 @@ limitations under the License.
 	if test "${multi-hop}" != ""; then&#xA;
             python $SONIC_CLI_ROOT/sonic-cli-bfd.py patch_openconfig_bfd_ext_bfd_sessions_multi_hop_echo_active &#xA;
         else&#xA;
-	    if test "${address}" != "peer_ipv6"; then&#xA;
+	    if test "${peer-ipv4addr}" != ""; then&#xA;
                 python $SONIC_CLI_ROOT/sonic-cli-bfd.py patch_openconfig_bfd_ext_bfd_sessions_single_hop_echo_active_disable ${peer-ipv4addr} ${interface-name} ${vrf-name} ${local-ipv4addr} &#xA;
 	    else&#xA;
 		python $SONIC_CLI_ROOT/sonic-cli-bfd.py patch_openconfig_bfd_ext_bfd_sessions_single_hop_echo_active_disable ${peer-ipv6addr} ${interface-name} ${vrf-name} ${local-ipv6addr} &#xA;
@@ -335,13 +335,13 @@ limitations under the License.
         <PARAM name = "receive_interval" help = "Configure peer receive interval value in milliseconds" ptype = "RANGE_10_60000" > </PARAM>
         <ACTION>
 	if test "${multi-hop}" != ""; then&#xA;
-	    if test "${address}" != "peer_ipv6"; then&#xA;
+	    if test "${peer-ipv4addr}" != ""; then&#xA;
                 python $SONIC_CLI_ROOT/sonic-cli-bfd.py patch_openconfig_bfd_ext_bfd_sessions_multi_hop_required_minimum_receive ${peer-ipv4addr} ${interface-name} ${vrf-name} ${local-ipv4addr} ${receive_interval} &#xA;
 	    else&#xA;
 		python $SONIC_CLI_ROOT/sonic-cli-bfd.py patch_openconfig_bfd_ext_bfd_sessions_multi_hop_required_minimum_receive ${peer-ipv6addr} ${interface-name} ${vrf-name} ${local-ipv6addr} ${receive_interval} &#xA;
 	    fi&#xA;
         else&#xA;
-	    if test "${address}" != "peer_ipv6"; then&#xA;
+	    if test "${peer-ipv4addr}" != ""; then&#xA;
                 python $SONIC_CLI_ROOT/sonic-cli-bfd.py patch_openconfig_bfd_ext_bfd_sessions_single_hop_required_minimum_receive ${peer-ipv4addr} ${interface-name} ${vrf-name} ${local-ipv4addr} ${receive_interval} &#xA;
 	    else&#xA;
 		python $SONIC_CLI_ROOT/sonic-cli-bfd.py patch_openconfig_bfd_ext_bfd_sessions_single_hop_required_minimum_receive ${peer-ipv6addr} ${interface-name} ${vrf-name} ${local-ipv6addr} ${receive_interval} &#xA;
@@ -353,13 +353,13 @@ limitations under the License.
     <COMMAND name = "shutdown" help = "Disable BFD peer" >
         <ACTION>
 	if test "${multi-hop}" != ""; then&#xA;
-	    if test "${address}" != "peer_ipv6"; then&#xA;
+	    if test "${peer-ipv4addr}" != ""; then&#xA;
                 python $SONIC_CLI_ROOT/sonic-cli-bfd.py patch_openconfig_bfd_ext_bfd_sessions_multi_hop_disable ${peer-ipv4addr} ${vrf-name} ${local-ipv4addr} &#xA;
 	    else&#xA;
 		python $SONIC_CLI_ROOT/sonic-cli-bfd.py patch_openconfig_bfd_ext_bfd_sessions_multi_hop_disable ${peer-ipv6addr} ${vrf-name} ${local-ipv6addr} &#xA;
 	    fi&#xA;
         else&#xA;
-	    if test "${address}" != "peer_ipv6"; then&#xA;
+	    if test "${peer-ipv4addr}" != ""; then&#xA;
                 python $SONIC_CLI_ROOT/sonic-cli-bfd.py patch_openconfig_bfd_ext_bfd_sessions_single_hop_disable ${peer-ipv4addr} ${interface-name} ${vrf-name} ${local-ipv4addr} &#xA;
 	    else&#xA;
 		python $SONIC_CLI_ROOT/sonic-cli-bfd.py patch_openconfig_bfd_ext_bfd_sessions_single_hop_disable ${peer-ipv6addr} ${interface-name} ${vrf-name} ${local-ipv6addr} &#xA;
@@ -371,13 +371,13 @@ limitations under the License.
     <COMMAND name = "no shutdown" help = "Disable BFD peer" >
         <ACTION>
 	if test "${multi-hop}" != ""; then&#xA;
-	    if test "${address}" != "peer_ipv6"; then&#xA;
+	    if test "${peer-ipv4addr}" != ""; then&#xA;
                 python $SONIC_CLI_ROOT/sonic-cli-bfd.py patch_openconfig_bfd_ext_bfd_sessions_multi_hop_enabled ${peer-ipv4addr} ${vrf-name} ${local-ipv4addr} &#xA;
 	    else&#xA;
 		python $SONIC_CLI_ROOT/sonic-cli-bfd.py patch_openconfig_bfd_ext_bfd_sessions_multi_hop_enabled ${peer-ipv6addr} ${vrf-name} ${local-ipv6addr} &#xA;
 	    fi&#xA;
         else&#xA;
-	    if test "${address}" != "peer_ipv6"; then&#xA;
+	    if test "${peer-ipv4addr}" != ""; then&#xA;
                 python $SONIC_CLI_ROOT/sonic-cli-bfd.py patch_openconfig_bfd_ext_bfd_sessions_single_hop_enabled ${peer-ipv4addr} ${interface-name} ${vrf-name} ${local-ipv4addr} &#xA;
 	    else&#xA;
 		python $SONIC_CLI_ROOT/sonic-cli-bfd.py patch_openconfig_bfd_ext_bfd_sessions_single_hop_enabled ${peer-ipv6addr} ${interface-name} ${vrf-name} ${local-ipv6addr} &#xA;
@@ -390,13 +390,13 @@ limitations under the License.
         <PARAM name = "transmit_interval" help = "Configure peer transmit interval value in milliseconds" ptype = "RANGE_10_60000" > </PARAM>
         <ACTION>
 	if test "${multi-hop}" != ""; then&#xA;
-	    if test "${address}" != "peer_ipv6"; then&#xA;
+	    if test "${peer-ipv4addr}" != ""; then&#xA;
                 python $SONIC_CLI_ROOT/sonic-cli-bfd.py patch_openconfig_bfd_ext_bfd_sessions_multi_hop_desired_minimum_tx_interval ${peer-ipv4addr} ${vrf-name} ${local-ipv4addr} ${transmit_interval} &#xA;
 	    else&#xA;
 		python $SONIC_CLI_ROOT/sonic-cli-bfd.py patch_openconfig_bfd_ext_bfd_sessions_multi_hop_desired_minimum_tx_interval ${peer-ipv6addr} ${vrf-name} ${local-ipv6addr} ${transmit_interval} &#xA;
 	    fi&#xA;
         else&#xA;
-	    if test "${address}" != "peer_ipv6"; then&#xA;
+	    if test "${peer-ipv4addr}" != ""; then&#xA;
                 python $SONIC_CLI_ROOT/sonic-cli-bfd.py patch_openconfig_bfd_ext_bfd_sessions_single_hop_desired_minimum_tx_interval ${peer-ipv4addr} ${interface-name} ${vrf-name} ${local-ipv4addr} ${transmit_interval} &#xA;
 	    else&#xA;
 		python $SONIC_CLI_ROOT/sonic-cli-bfd.py patch_openconfig_bfd_ext_bfd_sessions_single_hop_desired_minimum_tx_interval ${peer-ipv6addr} ${interface-name} ${vrf-name} ${local-ipv6addr} ${transmit_interval} &#xA;
