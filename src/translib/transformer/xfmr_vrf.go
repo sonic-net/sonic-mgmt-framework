@@ -8,7 +8,6 @@ import (
         "translib/ocbinds"
         "translib/db"
         "translib/tlerr"
-  //      "sync"
 )
 
 type NwInstMapKey struct {
@@ -200,8 +199,6 @@ func isIntfBindToOtherVrf(intf_tbl_name string, intf_name string, nwInst_name st
                 return false, "" 
         }
 }
-
-//var writemutex = &sync.Mutex{}
 
 func xfmr_set_default_vrf_configDb() error {
         log.Info ("xfmr_set_default_vrf_configDb")
@@ -436,6 +433,16 @@ var DbToYang_network_instance_table_key_xfmr KeyXfmrDbToYang = func(inParams Xfm
 
         log.Info("DbToYang_network_instance_table_key_xfmr: ", inParams.key)
 
+         if (inParams.key != "") {
+                if ((inParams.key == "default") || (strings.HasPrefix(inParams.key, "Vrf"))) {
+                        res_map["name"] = inParams.key
+                } else if (strings.HasPrefix(inParams.key, "vrf_global")) {
+                        res_map["name"] = "mgmt"
+                }
+        } else {
+                log.Info("DbToYang_network_instance_table_key_xfmr, empty key")
+        }
+
         return  res_map, err
 }
 
@@ -479,14 +486,14 @@ var DbToYang_network_instance_name_field_xfmr KeyXfmrDbToYang = func(inParams Xf
         pathInfo := NewPathInfo(inParams.uri)
         keyName := pathInfo.Var("name")
 
-        /* bsun debug start */
         targetUriPath, _ := getYangPathFromUri(pathInfo.Path)
 
+/* for debug start */
         log.Info("name transfomrer key: ", keyName)
         log.Info("name transformer requestUri: ", inParams.requestUri)
         log.Info("name transformer targetUri: ", targetUriPath)
 
-        log.Info("name transformer inParams: ", inParams)
+/* for debug end */
 
         if (inParams.key != "") {
                 if ((inParams.key == "default") || (strings.HasPrefix(inParams.key, "Vrf"))) {
@@ -495,7 +502,7 @@ var DbToYang_network_instance_name_field_xfmr KeyXfmrDbToYang = func(inParams Xf
                         res_map["name"] = "mgmt"
                 }
         } else {
-                log.Info("name transformer, empty key")
+                log.Info("DbToYang_network_instance_name_field_xfmr, empty key")
         }
 
         /* ToDo in else if cases */
@@ -644,8 +651,15 @@ var YangToDb_network_instance_interface_binding_subtree_xfmr SubTreeXfmrYangToDb
         keyName := pathInfo.Var("name")
         intfId := pathInfo.Var("id")
 
+        if ((keyName == "") || (keyName == "mgmt")) {
+                log.Info("YangToDb_network_instance_interface_binding_subtree_xfmr: no interface binding for VRF  ", keyName)
+                err = tlerr.InvalidArgsError{Format: "Not able to bind interface to " + keyName} 
+                return res_map, err
+        }
+
         if intfId == "" {
                 log.Info("YangToDb_network_instance_interface_binding_subtree_xfmr: empty interface id for VRF ", keyName)
+                err = tlerr.InvalidArgsError{Format: "Not able to bind empty interface "}
                 return res_map, err
         }
 
@@ -721,6 +735,11 @@ var DbToYang_network_instance_interface_binding_subtree_xfmr SubTreeXfmrDbToYang
         targetUriPath, _ := getYangPathFromUri(pathInfo.Path)
 
         log.Info("DbToYang_network_instance_interface_binding_subtree_xfmr, targeturiPath: ", targetUriPath)
+
+        if (pathNwInstName  == "mgmt") {
+                log.Info("DbToYang_network_instance_interface_binding_subtree_xfmr, no intf binding for: ", pathNwInstName)
+                return err
+        }
 
         /* If nwInst name and intf Id are given, get the db entry directly, else go through all interface tables */
         if ((pathNwInstName != "") && (pathIntfId != "")) {
