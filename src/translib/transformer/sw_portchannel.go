@@ -173,7 +173,7 @@ func can_configure_fallback(inParams XfmrParams) error {
            var mode string
            e = get_lag_type(inParams.d, &ifKey, &mode)
            if e == nil {
-               errStr := "Fallback option cannot be re-configured for an already existing PortChannel: " + ifKey
+               errStr := "Fallback option cannot be configured for an already existing PortChannel: " + ifKey
                return tlerr.InvalidArgsError{Format:errStr}
            }
        }
@@ -486,7 +486,7 @@ var YangToDb_lag_type_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[st
     user_mode := findInMap(LAG_TYPE_MAP, strconv.FormatInt(int64(t), 10))
 
     if err == nil && mode != user_mode  {
-        errStr := "Cannot reconfigure Mode for an existing PortChannel: " + ifKey
+        errStr := "Cannot configure Mode for an existing PortChannel: " + ifKey
         err = tlerr.InvalidArgsError{Format: errStr}
         return result, err
     }
