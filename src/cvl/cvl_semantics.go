@@ -440,7 +440,7 @@ func (c *CVL) checkIfListNodeExists(dest, src *xmlquery.Node) *xmlquery.Node {
 	}
 
 	tableName := getYangListToRedisTbl(src.Data)
-	redisKey :=getAttrNodeVal(src, "key")
+	redisKey := getAttrNodeVal(src, "key")
 
 	if (tableName == "" || redisKey == "") {
 		return nil
@@ -454,6 +454,12 @@ func (c *CVL) checkIfListNodeExists(dest, src *xmlquery.Node) *xmlquery.Node {
 	//CREATE/UPDATE/DELETE request for same table/key points to
 	//same yang list in request cache
 	yangList := entry[0].yangData
+
+	if (yangList == nil || yangList.Parent == nil) {
+		//Source node does not exist in destination
+		return nil
+	}
+
 	if (dest.Parent == yangList.Parent) {
 		//Same parent means yang list already exists in destination tree
 		return yangList
@@ -989,7 +995,6 @@ func (c *CVL) validateMustExp(node *xmlquery.Node,
 		return count
 	})
 
-	//node = c.moveToYangList(tableName, key)
 	if (node == nil || node.FirstChild == nil) {
 		return CVLErrorInfo{
 			TableName: tableName,
@@ -1075,7 +1080,6 @@ func (c *CVL) validateWhenExp(node *xmlquery.Node,
 		return c.addDepYangData(redisKeys, redisKeyFilter, keyNames, pred, fields, "")
 	})
 
-	//node := c.moveToYangList(tableName, key)
 	if (node == nil || node.FirstChild == nil) {
 		return CVLErrorInfo{
 			TableName: tableName,
@@ -1180,7 +1184,7 @@ func (c *CVL) validateLeafRef(node *xmlquery.Node,
 		return c.addDepYangData(redisKeys, redisKeyFilter, keyNames, pred, fields, "")
 	})
 
-	listNode := node//c.moveToYangList(tableName, key)
+	listNode := node
 	if (listNode == nil || listNode.FirstChild == nil) {
 		return CVLErrorInfo{
 			TableName: tableName,

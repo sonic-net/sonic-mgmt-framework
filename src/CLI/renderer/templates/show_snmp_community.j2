@@ -1,0 +1,9 @@
+{{ ' ' }}
+{{ 'Community Name'|center(32) }} {{ 'Group Name'|center(32) }}
+{{'-------------------------------- --------------------------------'}}
+{% for i in json_output %}
+  {% set i1 = json_output[loop.index-1] %}
+{{ '%-32s'|format(i1['index']) -}}
+{{ ' %-32s'|format(i1['security-name']) }}
+{% endfor %}
+{{ ' ' }}

@@ -1,0 +1,350 @@
+module openconfig-bfd-ext {
+
+  yang-version "1";
+
+  // namespace
+  namespace "http://openconfig.net/yang/bfd-ext";
+
+  prefix "oc-bfd-ext";
+
+  // import some basic types
+  import openconfig-types { prefix "oc-types"; }
+  import openconfig-interfaces { prefix "oc-if"; }
+  import openconfig-inet-types { prefix "oc-inet"; }
+  import openconfig-network-instance { prefix "oc-ni"; }
+  import openconfig-bfd { prefix "oc-bfdd"; }
+
+  description
+    "An OpenConfig model extension of Bi-Directional Forwarding Detection (BFD)
+    configuration and operational state.";
+
+  typedef bfd-session-type {
+    type enumeration {
+      enum CONFIGURED {
+        description
+          "The BFD session is Configured.";
+      }
+      enum DYNAMIC {
+        description
+          "The BFD session is ceated by an application trigger.";
+      }
+    }
+    description
+      "The type of the BFD session according to the system referred
+      to by the context of the leaf.";
+  }
+
+  grouping bfd-config {
+    description
+      "Top-level configuration parameters for BFD peer.";
+
+    leaf enabled {
+      type boolean;
+      default true;
+      description
+        "When this leaf is set to true then the BFD session is enabled
+        - if it is set to false, it is administratively disabled.";
+    }
+
+    leaf desired-minimum-tx-interval {
+      type uint32;
+      units microseconds;
+      default 300;
+      description
+        "The minimum interval between transmission of BFD control
+        packets that the operator desires. This value is advertised to
+        the peer, however the actual interval used is specified by
+        taking the maximum of desired-minimum-tx-interval and the
+        value of the remote required-minimum-receive interval value.
+        This value is specified as an integer number of microseconds.";
+    }
+
+    leaf required-minimum-receive {
+      type uint32;
+      units microseconds;
+      default 300;
+      description
+        "The minimum interval between received BFD control packets that
+        this system should support. This value is advertised to the
+        remote peer to indicate the maximum frequency (i.e., minimum
+        inter-packet interval) between BFD control packets that is
+        acceptable to the local system.";
+    }
+
+    leaf detection-multiplier {
+      type uint8 {
+        range "1..max";
+      }
+      default 3;
+      description
+        "The number of packets that must be missed to declare this
+        session as down. The detection interval for the BFD session
+        is calculated by multiplying the value of the negotiated
+        transmission interval by this value.";
+    }
+  }
+
+  grouping bfd-echo-config {
+    description
+      "Top-level configuration parameters for BFD echo.";
+
+    leaf desired-minimum-echo-receive {
+      type uint32;
+      units microseconds;
+      default 50;
+      description
+        "The minimum interval between received BFD control packets that
+        the operator desires. This value is advertised to the remote peer
+        to indicate the maximum frequency (i.e., minimum inter-packet interval)
+        between BFD control packets that is acceptable to the local system.";
+    }
+
+    leaf echo-active {
+        type boolean;
+        default false;
+        description
+          "This leaf is set to true when echo mode is enabled between
+          the local and remote system. When it is set to false, solely
+          asynchronous mode is active.";
+    }
+  }
+
+  grouping bfd-session-state-sessiondetails-common-ext {
+    description
+      "Common session details extension for a BFD session.";
+
+    leaf session-type {
+      type bfd-session-type;
+      description
+        "The type of the BFD session perceived by the local system.";    
+    }
+
+    leaf remote-multiplier {
+      type uint32;
+      description "Remote session detection multiplier";
+    }
+
+    leaf local-multiplier {
+      type uint32;
+      description "Remote session detection multiplier";
+    }
+
+    leaf negotiated-transmission-interval {
+      description "Negotiated transmit interval";
+      type uint32;
+      units microseconds;
+    }
+
+    leaf negotiated-receive-interval {
+      description "Negotiated receive interval";
+      type uint32;
+      units microseconds;
+    }
+
+    leaf remote-desired-transmission-interval {
+      description "Remote Tx interval";
+      type uint32;
+      units microseconds;
+    }
+
+    leaf remote-echo-receive-interval {
+      description "Remote Echo Rx interval";
+      type uint32;
+      units microseconds;
+    }
+
+    leaf last-up-time {
+      type oc-types:timeticks64;
+      description
+        "The time of the last transition of the BFD session to UP
+        state, expressed as the number of nanoseconds since the 
+        Unix epoch.";
+    }
+  }
+
+  grouping bfd-echo-state {
+    leaf minimum-echo-interval {
+      type uint32;
+      units microseconds;
+      default 50;
+      description
+        "The minimum interval between sent BFD control packets that
+        the operator desires. This value is advertised to the remote peer
+        to indicate the maximum frequency (i.e., minimum inter-packet interval)
+        between BFD control packets the local system desires.";
+    }
+  }
+
+
+  grouping session-states {
+    description
+      "Common operational state parameters that may be re-used across
+      multiple BFD session contexts.";
+
+    uses oc-bfdd:bfd-session-state-sessiondetails-common;
+    uses bfd-session-state-sessiondetails-common-ext;
+    uses bfd-echo-state;
+    uses oc-bfdd:bfd-session-state-echo-common;
+    uses oc-bfdd:bfd-session-state-async-common;
+  }
+
+  grouping bfd-cmn-key {
+    description
+      "grouping of common session key identifiers";
+  
+      leaf remote-address {
+        type oc-inet:ip-address;
+        description
+        "The IP address used by the remote system for this BFD session.";
+      }
+
+      leaf vrf {
+        type leafref {
+          path "/oc-ni:network-instances/" +
+            "oc-ni:network-instance/oc-ni:config/oc-ni:name";
+        }
+        description "Virtual Routing Domain name";
+      }
+  }
+
+  grouping bfd-shop-key {
+    description
+      "Key params for single-hop sessions.";
+
+      uses bfd-cmn-key;
+
+      leaf interface {
+        type leafref {
+          path "/oc-if:interfaces/" +
+            "oc-if:interface/oc-if:config/oc-if:name";
+        }
+        description "Interface to use to contact peer";
+      }
+
+      leaf local-address {
+        type string;
+        description
+          "The source IP address to be used for BFD sessions over this
+          interface.";
+      }
+  }
+
+  grouping bfd-mhop-key {
+    description
+      "Key params for multi-hop sessions.";
+
+      uses bfd-cmn-key;
+
+      leaf local-address {
+        type string;
+        description
+          "The source IP address to be used for BFD sessions over this
+          interface.";
+      }
+  }
+
+  grouping bfd-peer {
+    description
+      "Configuration and operational state parameters for BFD.";
+    reference "RFC5880, RFC5881";
+    container sessions {
+      list single-hop {
+        key "remote-address interface vrf local-address";
+        description "List of single hop sessions";
+
+		uses bfd-shop-key;
+        uses bfd-config;
+		uses bfd-echo-config;
+      }
+
+      list multi-hop {
+        key "remote-address vrf local-address";
+        description "List of multi hop sessions";
+
+        uses bfd-mhop-key;
+        uses bfd-config;
+      }
+	}
+
+	container bfd-state {
+      list single-hop-state {
+        key "remote-address interface vrf local-address";
+        description "List of single hop sessions state";
+
+        uses bfd-shop-key;
+	uses session-states;
+        config false;
+      }
+
+	  list multi-hop-state {
+        key "remote-address vrf local-address";
+        description "List of multi hop sessions state";
+
+	  uses bfd-mhop-key;
+	  uses session-states;
+	  config false;
+        }
+      }
+  }
+
+  deviation /oc-ni:network-instances/oc-ni:network-instance/oc-ni:protocols/oc-ni:protocol/oc-ni:bgp/oc-ni:neighbors/oc-ni:neighbor/oc-bfdd:enable-bfd/oc-bfdd:state/oc-bfdd:associated-session{
+	deviate not-supported;
+  }
+
+  deviation /oc-ni:network-instances/oc-ni:network-instance/oc-ni:protocols/oc-ni:protocol/oc-ni:bgp/oc-ni:peer-groups/oc-ni:peer-group/oc-bfdd:enable-bfd/oc-bfdd:state/oc-bfdd:associated-session{
+	deviate not-supported;
+  }
+
+  deviation /oc-ni:network-instances/oc-ni:network-instance/oc-ni:protocols/oc-ni:protocol/oc-ni:static-routes/oc-ni:static/oc-ni:next-hops/oc-ni:next-hop/oc-bfdd:enable-bfd/oc-bfdd:state/oc-bfdd:associated-session{
+	deviate not-supported;
+  } 
+
+  deviation /oc-bfdd:bfd/oc-bfdd:interfaces{
+	deviate not-supported;
+  }
+
+  augment /oc-bfdd:bfd {
+
+       uses bfd-peer;
+  }
+
+  deviation /oc-bfdd:bfd/oc-bfd-ext:bfd-state/oc-bfd-ext:multi-hop-state/oc-bfd-ext:echo {
+        deviate not-supported;
+  }
+
+  deviation /oc-bfdd:bfd/oc-bfd-ext:bfd-state/oc-bfd-ext:single-hop-state/oc-bfd-ext:echo/oc-bfd-ext:last-packet-transmitted {
+        deviate not-supported;
+  }
+
+  deviation /oc-bfdd:bfd/oc-bfd-ext:bfd-state/oc-bfd-ext:single-hop-state/oc-bfd-ext:echo/oc-bfd-ext:last-packet-received {
+        deviate not-supported;
+  }
+
+  deviation /oc-bfdd:bfd/oc-bfd-ext:bfd-state/oc-bfd-ext:single-hop-state/oc-bfd-ext:async/oc-bfd-ext:last-packet-transmitted {
+        deviate not-supported;
+  }
+
+  deviation /oc-bfdd:bfd/oc-bfd-ext:bfd-state/oc-bfd-ext:single-hop-state/oc-bfd-ext:async/oc-bfd-ext:last-packet-received {
+        deviate not-supported;
+  }
+
+  deviation /oc-bfdd:bfd/oc-bfd-ext:bfd-state/oc-bfd-ext:multi-hop-state/oc-bfd-ext:async/oc-bfd-ext:last-packet-transmitted {
+        deviate not-supported;
+  }
+
+  deviation /oc-bfdd:bfd/oc-bfd-ext:bfd-state/oc-bfd-ext:multi-hop-state/oc-bfd-ext:async/oc-bfd-ext:last-packet-received {
+        deviate not-supported;
+  }
+
+  deviation /oc-bfdd:bfd/oc-bfd-ext:bfd-state/oc-bfd-ext:single-hop-state/oc-bfd-ext:remote-session-state {
+        deviate not-supported;
+  }
+
+  deviation /oc-bfdd:bfd/oc-bfd-ext:bfd-state/oc-bfd-ext:multi-hop-state/oc-bfd-ext:remote-session-state {
+        deviate not-supported;
+  }
+
+  deviation /oc-bfdd:bfd/oc-bfd-ext:bfd-state/oc-bfd-ext:multi-hop-state/oc-bfd-ext:minimum-echo-interval {
+        deviate not-supported;
+  }
+}

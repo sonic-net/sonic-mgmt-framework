@@ -1,27 +1,19 @@
-#!/usr/bin/python
-
 import sys
-import swsssdk
+import base64
+import struct
 import socket
+import cli_client as cc
 from rpipe_utils import pipestr
 from scripts.render_cli import show_cli_output
-from swsssdk import ConfigDBConnector
-
-import urllib3
-urllib3.disable_warnings()
-
-PTP_CLOCK = 'PTP_CLOCK'
-PTP_PORT = 'PTP_PORT|GLOBAL'
-PTP_GLOBAL = 'GLOBAL'
 
 
 def node_addr_type(address):
     try:
         socket.inet_pton(socket.AF_INET, address)
-    except:
+    except socket.error:
         try:
             socket.inet_pton(socket.AF_INET6, address)
-        except:
+        except socket.error:
             return "mac"
 
         return "ipv6"
@@ -29,367 +21,267 @@ def node_addr_type(address):
     return "ipv4"
 
 
-def port_state_to_str(state_num):
-    port_state_tbl = {"0": "none", "1": "initializing", "2": "faulty", "3": "disabled", "4": "listening",
-                      "5": "pre_master", "6": "master", "7": "passive", "8": "uncalibrated", "9": "slave"}
-    return port_state_tbl[state_num]
+def decode_base64(string):
+    my_bin = base64.b64decode(string)
+    return "%02x%02x%02x.%02x%02x.%02x%02x%02x" % struct.unpack("BBBBBBBB", my_bin)
 
 
-def get_attrib(c, attrib):
-    attrib_val = c.get(attrib, 'None')
-    return attrib_val
+def get_unicast_table(aa, instance_num, port_num):
+    tmp_keypath = cc.Path('/restconf/data/ietf-ptp:ptp/instance-list={instance_number}',
+                          instance_number=instance_num)
+    tmp_response = aa.get(tmp_keypath)
+    if tmp_response is None:
+        return 0, "None"
+
+    found = 0
+    if tmp_response.ok():
+        response = tmp_response.content
+
+        if response is not None and response != {}:
+            for i in response['ietf-ptp:instance-list']:
+                if 'port-ds-list' in i:
+                    for j in i['port-ds-list']:
+                        if 'port-number' in j:
+                            if j['port-number'] == int(port_num):
+                                found = 1
+                                if 'ietf-ptp-ext:unicast-table' in j:
+                                    if j['ietf-ptp-ext:unicast-table'] == '':
+                                        return found, "None"
+                                    else:
+                                        return found, j['ietf-ptp-ext:unicast-table']
+
+    return found, "None"
 
 
-def check_network_transport_allowed(c, network_transport, unicast_multicast):
-    domain_profile = get_attrib(c, 'domain-profile')
-    domain_number = int(get_attrib(c, 'domain-number'))
-    clock_type = get_attrib(c, 'clock-type')
-    if domain_profile == 'G.8275.x':
-        if network_transport == "L2":
-            print "%Error: L2 not supported with G.8275.2"
-            return 0
-        if unicast_multicast == "multicast":
-            print "%Error: multicast not supported with G.8275.2"
-            return 0
-        if domain_number < 44 or domain_number > 63:
-            print "%Error: domain must be in range 44-63 with G.8275.2"
-            return 0
-        if clock_type == 'P2P_TC' or clock_type == 'E2E_TC':
-            print "%Error: transparent-clock not supported with G.8275.2"
-            return 0
-    if unicast_multicast == 'unicast':
-        if domain_profile == 'ieee1588' and (clock_type == 'PTP_TC' or clock_type == 'E2E_TC'):
-            print "%Error: unicast not supported with transparent-clock and default profile"
-            return 0
-        if network_transport == 'UDPv6':
-            print "%Error: ipv6 not supported with unicast"
-            return 0
-    if unicast_multicast == 'multicast':
-        tmp_data = db.keys(db.STATE_DB, "PTP_PORT|GLOBAL|*")
-        if not tmp_data:
-            return 1
-        for tmp_key in tmp_data:
-            tmp_data = db.get_all(db.STATE_DB, tmp_key)
-            tmp_uc_tbl = tmp_data.get('unicast-table', 'None')
-            if tmp_uc_tbl != 'None':
-                print "%Error: master table must be removed from " + tmp_key.replace("PTP_PORT|GLOBAL|", "")
-                return 0
-    return 1
+def get_port_num(interface):
+    if 'Ethernet' in interface:
+        port_num = interface.replace("Ethernet", "")
+    if 'Vlan' in interface:
+        port_num = str(int(interface.replace("Vlan", "")) + 1000)
+    return port_num
 
 
-def check_domain_number_allowed(c, domain_number):
-    domain_profile = get_attrib(c, 'domain-profile')
-    if domain_profile == 'G.8275.x':
-        if domain_number < 44 or domain_number > 63:
-            print "%Error: domain must be in range 44-63 with G.8275.2"
-            return 0
-    return 1
+def invoke(func, args):
+    rc = None
+    body = None
+    aa = cc.ApiClient()
 
-
-def check_clock_type_allowed(c, clock_type):
-    domain_profile = get_attrib(c, 'domain-profile')
-    network_transport = get_attrib(c, 'network-transport')
-    unicast_multicast = get_attrib(c, 'unicast-multicast')
-    if clock_type == 'P2P_TC' or clock_type == 'E2E_TC':
-        if domain_profile == 'G.8275.x':
-            print "%Error: transparent-clock not supported with G.8275.2"
-            return 0
-        if domain_profile == 'ieee1588' and unicast_multicast == 'unicast':
-            print "%Error: transparent-clock not supported with default profile and unicast"
-            return 0
-    if clock_type == 'BC':
-        if domain_profile == 'G.8275.x' and network_transport == 'L2':
-            print "%Error: boundary-clock not supported with G.8275.2 and L2"
-            return 0
-        if domain_profile == 'G.8275.x' and unicast_multicast == 'multicast':
-            print "%Error: boundary-clock not supported with G.8275.2 and multicast"
-            return 0
-        if domain_profile == 'G.8275.x' and network_transport == 'UDPv6':
-            print "%Error: boundary-clock not supported with G.8275.2 and ipv6"
-            return 0
-
-    return 1
-
-
-def check_master_table_allowed(c):
-    unicast_multicast = get_attrib(c, 'unicast-multicast')
-    if unicast_multicast == 'multicast':
-        print "%Error: master-table is not needed in with multicast transport"
-        return 0
-    return 1
-
-
-def check_domain_profile_allowed(c, domain_profile):
-    network_transport = get_attrib(c, 'network-transport')
-    unicast_multicast = get_attrib(c, 'unicast-multicast')
-    domain_number = int(get_attrib(c, 'domain-number'))
-    clock_type = get_attrib(c, 'clock-type')
-    if domain_profile == 'G.8275.2':
-        if clock_type == 'BC' and network_transport == "L2":
-            print "%Error: G.8275.2 not supported with L2 transport"
-            return 0
-        if clock_type == 'BC' and unicast_multicast == "multicast":
-            print "%Error: G.8275.2 not supported with multicast transport"
-            return 0
-        if clock_type == 'BC' and domain_number < 44 or domain_number > 63:
-            print "%Error: domain must be in range 44-63 with G.8275.2"
-            return 0
-        if clock_type == 'BC' and network_transport == 'UDPv6':
-            print "%Error: ipv6 not supported with boundary-clock and G.8275.2"
-            return 0
-        if clock_type == 'P2P_TC' or clock_type == 'E2E_TC':
-            print "%Error: G.8275.2 not supported with transparent-clock"
-            return 0
-    if domain_profile == 'ieee1588':
-        if unicast_multicast == 'unicast' and (clock_type == 'PTP_TC' or clock_type == 'E2E_TC'):
-            print "%Error: default profile not supported with transparent-clock and unicast"
-            return 0
-    return 1
-
-
-if __name__ == '__main__':
-    pipestr().write(sys.argv)
-    db = swsssdk.SonicV2Connector(host='127.0.0.1')
-    db.connect(db.STATE_DB)
-
-    config_db = ConfigDBConnector()
-    if config_db is None:
-        sys.exit()
-    config_db.connect()
-
-    clock_global = db.get_all(db.STATE_DB, "PTP_CLOCK|GLOBAL")
-
-    if sys.argv[1] == 'get_ietf_ptp_ptp_instance_list_default_ds':
-        raw_data = clock_global
-        if not raw_data:
-            sys.exit()
+    if func == 'patch_ietf_ptp_ptp_instance_list_default_ds_domain_number':
+        keypath = cc.Path('/restconf/data/ietf-ptp:ptp/instance-list={instance_number}/default-ds/domain-number',
+                          instance_number=args[0])
+        body = {"ietf-ptp:domain-number": int(args[1])}
+        rc = aa.patch(keypath, body)
+    elif func == 'patch_ietf_ptp_ptp_instance_list_default_ds_two_step_flag':
+        keypath = cc.Path('/restconf/data/ietf-ptp:ptp/instance-list={instance_number}/default-ds/two-step-flag',
+                          instance_number=args[0])
+        if args[1] == "enable":
+            body = {"ietf-ptp:two-step-flag": True}
         else:
-            api_response = {}
-            api_inner_response = {}
-            api_clock_quality_response = {}
+            body = {"ietf-ptp:two-step-flag": False}
+        rc = aa.patch(keypath, body)
+    elif func == 'patch_ietf_ptp_ptp_instance_list_default_ds_priority1':
+        keypath = cc.Path('/restconf/data/ietf-ptp:ptp/instance-list={instance_number}/default-ds/priority1',
+                          instance_number=args[0])
+        body = {"ietf-ptp:priority1": int(args[1])}
+        rc = aa.patch(keypath, body)
+    elif func == 'patch_ietf_ptp_ptp_instance_list_default_ds_priority2':
+        keypath = cc.Path('/restconf/data/ietf-ptp:ptp/instance-list={instance_number}/default-ds/priority2',
+                          instance_number=args[0])
+        body = {"ietf-ptp:priority2": int(args[1])}
+        rc = aa.patch(keypath, body)
+    elif func == 'patch_ietf_ptp_ptp_instance_list_port_ds_list_log_announce_interval':
+        keypath = cc.Path('/restconf/data/ietf-ptp:ptp/instance-list={instance_number}/default-ds/ietf-ptp-ext:log-announce-interval',
+                          instance_number=args[0])
+        body = {"ietf-ptp-ext:log-announce-interval": int(args[1])}
+        rc = aa.patch(keypath, body)
+    elif func == 'patch_ietf_ptp_ptp_instance_list_port_ds_list_announce_receipt_timeout':
+        keypath = cc.Path('/restconf/data/ietf-ptp:ptp/instance-list={instance_number}/default-ds/ietf-ptp-ext:announce-receipt-timeout',
+                          instance_number=args[0])
+        body = {"ietf-ptp-ext:announce-receipt-timeout": int(args[1])}
+        rc = aa.patch(keypath, body)
+    elif func == 'patch_ietf_ptp_ptp_instance_list_port_ds_list_log_sync_interval':
+        keypath = cc.Path('/restconf/data/ietf-ptp:ptp/instance-list={instance_number}/default-ds/ietf-ptp-ext:log-sync-interval',
+                          instance_number=args[0])
+        body = {"ietf-ptp-ext:log-sync-interval": int(args[1])}
+        rc = aa.patch(keypath, body)
+    elif func == 'patch_ietf_ptp_ptp_instance_list_port_ds_list_log_min_delay_req_interval':
+        keypath = cc.Path('/restconf/data/ietf-ptp:ptp/instance-list={instance_number}/default-ds/ietf-ptp-ext:log-min-delay-req-interval',
+                          instance_number=args[0])
+        body = {"ietf-ptp-ext:log-min-delay-req-interval": int(args[1])}
+        rc = aa.patch(keypath, body)
+    elif func == 'clock-type':
+        keypath = cc.Path('/restconf/data/ietf-ptp:ptp/instance-list={instance_number}/default-ds/ietf-ptp-ext:clock-type',
+                          instance_number=args[0])
 
-            for key, val in raw_data.items():
-                if key == "clock-class" or key == "clock-accuracy" or key == "offset-scaled-log-variance":
-                    api_clock_quality_response[key] = val
-                else:
-                    api_inner_response[key] = val
+        body = {"ietf-ptp-ext:clock-type": args[1]}
+        rc = aa.patch(keypath, body)
+    elif func == 'network-transport':
+        keypath = cc.Path('/restconf/data/ietf-ptp:ptp/instance-list={instance_number}/default-ds/ietf-ptp-ext:network-transport',
+                          instance_number=args[0])
+        body = {"ietf-ptp-ext:network-transport": args[1]}
+        rc = aa.patch(keypath, body)
+    elif func == 'unicast-multicast':
+        keypath = cc.Path('/restconf/data/ietf-ptp:ptp/instance-list={instance_number}/default-ds/ietf-ptp-ext:unicast-multicast',
+                          instance_number=args[0])
+        body = {"ietf-ptp-ext:unicast-multicast": args[1]}
+        rc = aa.patch(keypath, body)
+    elif func == 'domain-profile':
+        keypath = cc.Path('/restconf/data/ietf-ptp:ptp/instance-list={instance_number}/default-ds/ietf-ptp-ext:domain-profile',
+                          instance_number=args[0])
+        body = {"ietf-ptp-ext:domain-profile": args[1]}
+        rc = aa.patch(keypath, body)
+    elif func == 'udp6-scope':
+        keypath = cc.Path('/restconf/data/ietf-ptp:ptp/instance-list={instance_number}/default-ds/ietf-ptp-ext:udp6-scope',
+                          instance_number=args[0])
+        body = {"ietf-ptp-ext:udp6-scope": int(args[1], 0)}
+        rc = aa.patch(keypath, body)
+    elif func == 'add_master_table':
+        port_num = get_port_num(args[1])
+        found, uc_tbl = get_unicast_table(aa, args[0], port_num)
 
-                if bool(api_clock_quality_response):
-                    api_inner_response["clock-quality"] = api_clock_quality_response
-                api_response['ietf-ptp:default-ds'] = api_inner_response
-
-        show_cli_output(sys.argv[3], api_response)
-
-        raw_data = db.get_all(db.STATE_DB, "PTP_CURRENTDS|GLOBAL")
-        if not raw_data:
+        if not found:
+            print("%Error: " + args[1] + " has not been added")
             sys.exit()
-        for key, val in raw_data.items():
-            if key == "mean-path-delay":
-                print("%-21s %s") % ("Mean Path Delay", val)
-            if key == "steps-removed":
-                print("%-21s %s") % ("Steps Removed", val)
-            if key == "offset-from-master":
-                print("%-21s %s") % ("Ofst From Master", val)
-    elif sys.argv[1] == 'get_ietf_ptp_ptp_instance_list_time_properties_ds':
-        raw_data = db.get_all(db.STATE_DB, "PTP_TIMEPROPDS|GLOBAL")
-        if not raw_data:
-            sys.exit()
-        api_response = {}
-        api_inner_response = {}
 
-        for key, val in raw_data.items():
-            if key == "time-traceable" or key == "frequency-traceable" or key == "ptp-timescale" or key == "leap59" or key == "leap61" or key == "current-utc-offset-valid":
-                if val == "0":
-                    val = "false"
-                else:
-                    val = "true"
-            api_inner_response[key] = val
-
-        api_response['ietf-ptp:time-properties-ds'] = api_inner_response
-        show_cli_output(sys.argv[3], api_response)
-
-        sys.exit()
-    elif sys.argv[1] == 'get_ietf_ptp_ptp_instance_list_parent_ds':
-        raw_data = db.get_all(db.STATE_DB, "PTP_PARENTDS|GLOBAL")
-        if not raw_data:
-            sys.exit()
-        api_response = {}
-        api_inner_response = {}
-        api_parent_id_response = {}
-        api_gm_response = {}
-
-        for key, val in raw_data.items():
-            if key == "parent-stats":
-                if val == "0":
-                    val = "false"
-                else:
-                    val = "true"
-            if key == "clock-identity" or key == "port-number":
-                api_parent_id_response[key] = val
-            elif key == "clock-class" or key == "clock-accuracy" or key == "offset-scaled-log-variance":
-                api_gm_response[key] = val
-            else:
-                api_inner_response[key] = val
-
-        api_inner_response["parent-port-identity"] = api_parent_id_response
-        api_inner_response["grandmaster-clock-quality"] = api_gm_response
-        api_response['ietf-ptp:parent-ds'] = api_inner_response
-
-        show_cli_output(sys.argv[3], api_response)
-
-        sys.exit()
-    elif sys.argv[1] == 'get_ietf_ptp_ptp_instance_list_port_ds_list':
-        raw_data = db.get_all(db.STATE_DB, "PTP_PORT|GLOBAL|" + sys.argv[3])
-        if not raw_data:
-            sys.exit()
-        api_response = {}
-        api_response_list = []
-        api_inner_response = {}
-
-        for key, val in raw_data.items():
-            if key == "port-state":
-                val = port_state_to_str(val)
-            if key == "delay-mechanism":
-                if val == "1":
-                    val = "e2e"
-                if val == "2":
-                    val = "p2p"
-
-            api_inner_response[key] = val
-
-        api_response_list.append(api_inner_response)
-        api_response['ietf-ptp:port-ds-list'] = api_response_list
-
-        show_cli_output(sys.argv[4], api_response)
-        sys.exit()
-    elif sys.argv[1] == 'get_ietf_ptp_ptp_instance_list':
-        raw_data = db.keys(db.STATE_DB, "PTP_PORT|GLOBAL|*")
-        if not raw_data:
-            sys.exit()
-        api_response = {}
-        api_response_list = []
-        port_ds_dict = {}
-        port_ds_list = []
-        port_ds_entry = {}
-        for key in raw_data:
-            port_ds_entry = {}
-            port_ds_entry["port-number"] = key.replace("PTP_PORT|GLOBAL|", "")
-            state_data = db.get_all(db.STATE_DB, key)
-
-            port_ds_entry["port-state"] = port_state_to_str(state_data["port-state"])
-            port_ds_list.append(port_ds_entry)
-        port_ds_dict['port-ds-list'] = port_ds_list
-        api_response_list.append(port_ds_dict)
-        api_response['ietf-ptp:instance_list'] = api_response_list
-        show_cli_output(sys.argv[3], api_response)
-    elif sys.argv[1] == 'patch_ietf_ptp_ptp_instance_list_default_ds_domain_number':
-        data = {}
-        if not check_domain_number_allowed(clock_global, sys.argv[3]):
-            sys.exit()
-        data['domain-number'] = sys.argv[3]
-        config_db.mod_entry(PTP_CLOCK, PTP_GLOBAL, data)
-    elif sys.argv[1] == 'patch_ietf_ptp_ptp_instance_list_default_ds_priority1':
-        data = {}
-        data['priority1'] = sys.argv[3]
-        config_db.mod_entry(PTP_CLOCK, PTP_GLOBAL, data)
-    elif sys.argv[1] == 'patch_ietf_ptp_ptp_instance_list_default_ds_priority2':
-        data = {}
-        data['priority2'] = sys.argv[3]
-        config_db.mod_entry(PTP_CLOCK, PTP_GLOBAL, data)
-    elif sys.argv[1] == 'patch_ietf_ptp_ptp_instance_list_default_ds_two_step_flag':
-        data = {}
-        if sys.argv[3] == "enable":
-            data['two-step-flag'] = '1'
-        else:
-            data['two-step-flag'] = '0'
-        config_db.mod_entry(PTP_CLOCK, PTP_GLOBAL, data)
-    elif sys.argv[1] == 'patch_ietf_ptp_ptp_transparent_clock_default_ds_delay_mechanism':
-        if sys.argv[2] == 'P2P':
-            print "%Error: peer-to-peer is not supported"
-            sys.exit()
-        data = {}
-        data['tc-delay-mechanism'] = sys.argv[2]
-        config_db.mod_entry(PTP_CLOCK, PTP_GLOBAL, data)
-    elif sys.argv[1] == 'add_port':
-        data = {}
-        data['enable'] = '1'
-        config_db.set_entry(PTP_PORT, sys.argv[2], data)
-    elif sys.argv[1] == 'del_port':
-        config_db.set_entry(PTP_PORT, sys.argv[2], None)
-    elif sys.argv[1] == 'clock-type':
-        if sys.argv[2] == 'P2P_TC':
-            print "%Error: peer-to-peer-transparent-clock is not supported"
-            sys.exit()
-        if not check_clock_type_allowed(clock_global, sys.argv[2]):
-            sys.exit()
-        data = {}
-        data[sys.argv[1]] = sys.argv[2]
-        config_db.mod_entry(PTP_CLOCK, PTP_GLOBAL, data)
-    elif sys.argv[1] == 'domain-profile':
-        data = {}
-        if sys.argv[2] == 'G.8275.1':
-            print "%Error: g8275.1 is not supported"
-            sys.exit()
-        elif sys.argv[2] == 'G.8275.2':
-            data[sys.argv[1]] = 'G.8275.x'
-        else:
-            data[sys.argv[1]] = sys.argv[2]
-        if not check_domain_profile_allowed(clock_global, sys.argv[2]):
-            sys.exit()
-        config_db.mod_entry(PTP_CLOCK, PTP_GLOBAL, data)
-    elif sys.argv[1] == 'add_master_table':
-        tbl = db.get_all(db.STATE_DB, "PTP_PORT|GLOBAL|" + sys.argv[2])
         nd_list = []
-        if not tbl:
-            print "%Error: " + sys.argv[2] + " has not been added"
-            sys.exit()
-
-        uc_tbl = tbl.get('unicast-table', 'None')
         if uc_tbl != 'None':
             nd_list = uc_tbl.split(',')
-        if sys.argv[3] in nd_list:
+        if args[2] in nd_list:
             # entry already exists
             sys.exit()
         if len(nd_list) == 1 and nd_list[0] == '':
             nd_list = []
-        if len(nd_list) > 0 and node_addr_type(nd_list[0]) != node_addr_type(sys.argv[3]):
-            print "%Error: Mixed address types not allowed"
+        if len(nd_list) > 0 and node_addr_type(nd_list[0]) != node_addr_type(args[2]):
+            print("%Error: Mixed address types not allowed")
             sys.exit()
         if len(nd_list) >= 8:
-            print "%Error: maximum 8 nodes"
+            print("%Error: maximum 8 nodes")
             sys.exit()
-        if not check_master_table_allowed(clock_global):
-            sys.exit()
-        nd_list.append(sys.argv[3])
+        nd_list.append(args[2])
         value = ','.join(nd_list)
-        data = {}
-        data['unicast-table'] = value
-        config_db.mod_entry("PTP_PORT|GLOBAL", sys.argv[2], data)
-    elif sys.argv[1] == 'del_master_table':
-        tbl = db.get_all(db.STATE_DB, "PTP_PORT|GLOBAL|" + sys.argv[2])
+        args[2] = value
+        keypath = cc.Path('/restconf/data/ietf-ptp:ptp/instance-list={instance_number}/port-ds-list={port_number}/ietf-ptp-ext:unicast-table',
+                          instance_number=args[0], port_number=port_num)
+        body = {"ietf-ptp-ext:unicast-table": args[2]}
+        rc = aa.patch(keypath, body)
+    elif func == 'del_master_table':
+        port_num = get_port_num(args[1])
+        found, uc_tbl = get_unicast_table(aa, args[0], port_num)
+
         nd_list = []
-        if tbl:
-            uc_tbl = tbl.get('unicast-table', 'None')
-            if uc_tbl != 'None':
-                nd_list = uc_tbl.split(',')
-        if sys.argv[3] not in nd_list:
+        if uc_tbl != 'None':
+            nd_list = uc_tbl.split(',')
+        if args[2] not in nd_list:
             # entry doesn't exists
             sys.exit()
 
-        nd_list.remove(sys.argv[3])
+        nd_list.remove(args[2])
         value = ','.join(nd_list)
-        data = {}
-        data['unicast-table'] = value
-        config_db.mod_entry("PTP_PORT|GLOBAL", sys.argv[2], data)
-    elif sys.argv[1] == 'network-transport':
-        data = {}
-        if not check_network_transport_allowed(clock_global, sys.argv[2], sys.argv[3]):
-            sys.exit()
-        data[sys.argv[1]] = sys.argv[2]
-        data["unicast-multicast"] = sys.argv[3]
-        config_db.mod_entry(PTP_CLOCK, PTP_GLOBAL, data)
+        args[2] = value
+        keypath = cc.Path('/restconf/data/ietf-ptp:ptp/instance-list={instance_number}/port-ds-list={port_number}/ietf-ptp-ext:unicast-table',
+                          instance_number=args[0], port_number=port_num)
+        body = {"ietf-ptp-ext:unicast-table": args[2]}
+        rc = aa.patch(keypath, body)
+    elif func == 'post_ietf_ptp_ptp_instance_list_port_ds_list_port_state':
+        port_num = get_port_num(args[1])
+        keypath = cc.Path('/restconf/data/ietf-ptp:ptp/instance-list={instance_number}/port-ds-list={port_number}/underlying-interface',
+                          instance_number=args[0], port_number=port_num)
+        body = {"ietf-ptp:underlying-interface": args[1]}
+        rc = aa.patch(keypath, body)
+    elif func == 'delete_ietf_ptp_ptp_instance_list_port_ds_list':
+        port_num = get_port_num(args[1])
+        keypath = cc.Path('/restconf/data/ietf-ptp:ptp/instance-list={instance_number}/port-ds-list={port_number}',
+                          instance_number=args[0], port_number=port_num)
+        rc = aa.delete(keypath)
+    elif func == 'get_ietf_ptp_ptp_instance_list_time_properties_ds':
+        keypath = cc.Path('/restconf/data/ietf-ptp:ptp/instance-list={instance_number}/time-properties-ds',
+                          instance_number=args[0])
+        rc = aa.get(keypath)
+    elif func == 'get_ietf_ptp_ptp_instance_list_parent_ds':
+        keypath = cc.Path('/restconf/data/ietf-ptp:ptp/instance-list={instance_number}/parent-ds',
+                          instance_number=args[0])
+        rc = aa.get(keypath)
+    elif func == 'get_ietf_ptp_ptp_instance_list_port_ds_list':
+        port_num = get_port_num(args[1])
+        keypath = cc.Path('/restconf/data/ietf-ptp:ptp/instance-list={instance_number}/port-ds-list={port_number}',
+                          instance_number=args[0], port_number=port_num)
+        rc = aa.get(keypath)
+    elif func == 'get_ietf_ptp_ptp_instance_list_default_ds':
+        keypath = cc.Path('/restconf/data/ietf-ptp:ptp/instance-list={instance_number}/default-ds',
+                          instance_number=args[0])
+        rc = aa.get(keypath)
+    elif func == 'get_ietf_ptp_ptp_instance_list':
+        keypath = cc.Path('/restconf/data/ietf-ptp:ptp/instance-list={instance_number}',
+                          instance_number=args[0])
+        rc = aa.get(keypath)
+    elif func == 'get_ietf_ptp_ptp_instance_list_current_ds':
+        keypath = cc.Path('/restconf/data/ietf-ptp:ptp/instance-list={instance_number}/current-ds',
+                          instance_number=args[0])
+        rc = aa.get(keypath)
     else:
-        data = {}
-        data[sys.argv[1]] = sys.argv[2]
-        config_db.mod_entry(PTP_CLOCK, PTP_GLOBAL, data)
-    db.close(db.STATE_DB)
+        print("%Error: not implemented")
+        exit(1)
+
+    return rc
+
+
+def run(func, args):
+    api_response = invoke(func, args)
+    if api_response is None:
+        return
+
+    if api_response.ok():
+        response = api_response.content
+        if response is None:
+            if func != 'network-transport':
+                print("Success")
+        else:
+            # Get Command Output
+            if func == 'get_ietf_ptp_ptp_instance_list_default_ds':
+                if not response == {}:
+                    if 'clock-identity' in response['ietf-ptp:default-ds']:
+                        response['ietf-ptp:default-ds']['clock-identity'] = decode_base64(response['ietf-ptp:default-ds']['clock-identity'])
+                show_cli_output(args[1], response)
+            elif func == 'get_ietf_ptp_ptp_instance_list_port_ds_list':
+                show_cli_output(args[2], response)
+            elif func == 'get_ietf_ptp_ptp_instance_list_parent_ds':
+                if not response == {}:
+                    if 'parent-port-identity' in response['ietf-ptp:parent-ds']:
+                        response['ietf-ptp:parent-ds']['parent-port-identity']['clock-identity'] = decode_base64(response['ietf-ptp:parent-ds']['parent-port-identity']['clock-identity'])
+                    if 'grandmaster-identity' in response['ietf-ptp:parent-ds']:
+                        response['ietf-ptp:parent-ds']['grandmaster-identity'] = decode_base64(response['ietf-ptp:parent-ds']['grandmaster-identity'])
+                show_cli_output(args[1], response)
+            elif func == 'get_ietf_ptp_ptp_instance_list_time_properties_ds':
+                show_cli_output(args[1], response)
+            elif func == 'get_ietf_ptp_ptp_instance_list':
+                show_cli_output(args[1], response)
+            elif func == 'get_ietf_ptp_ptp_instance_list_current_ds':
+                show_cli_output(args[1], response)
+            else:
+                return
+    else:
+        response = api_response.content
+        if "ietf-restconf:errors" in response:
+            err = response["ietf-restconf:errors"]
+            if "error" in err:
+                errList = err["error"]
+
+                errDict = {}
+                for err_list_dict in errList:
+                    for k, v in err_list_dict.iteritems():
+                        errDict[k] = v
+
+                        if "error-message" in errDict:
+                            print("%Error: " + errDict["error-message"])
+                            sys.exit(-1)
+                print("%Error: Transaction Failure")
+                sys.exit(-1)
+        print(api_response.error_message())
+        print("%Error: Transaction Failure")
+        sys.exit(-1)
+
+
+if __name__ == '__main__':
+    pipestr().write(sys.argv)
+    # pdb.set_trace()
+    run(sys.argv[1], sys.argv[2:])

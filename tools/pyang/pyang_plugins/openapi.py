@@ -28,6 +28,7 @@ from collections import OrderedDict
 import copy
 import os
 import mmh3
+import json
 
 # globals
 codegenTypesToYangTypesMap = {"int8":   {"type":"integer", "format": "int32"}, 
@@ -114,6 +115,10 @@ def ordered_dump(data, stream=None, Dumper=yaml.Dumper, **kwds):
     return yaml.dump(data, stream, OrderedDumper, **kwds)
 
 swaggerDict = OrderedDict()
+docJson = OrderedDict()
+docJson["config"] = OrderedDict()
+docJson["operstate"] = OrderedDict()
+docJson["operations"] = OrderedDict()
 swaggerDict["swagger"] = "2.0"
 swaggerDict["info"] = OrderedDict()
 swaggerDict["info"]["description"] = "Network management Open APIs for Broadcom's Sonic."
@@ -124,6 +129,13 @@ swagger_tags = []
 swaggerDict["tags"] = swagger_tags
 swaggerDict["paths"] = OrderedDict()
 swaggerDict["definitions"] = OrderedDict()
+
+def resetDocJson():
+    global docJson
+    docJson = OrderedDict()
+    docJson["config"] = OrderedDict()
+    docJson["operstate"] = OrderedDict()
+    docJson["operations"] = OrderedDict()
 
 def resetSwaggerDict():
     global moduleDict
@@ -151,8 +163,101 @@ def resetSwaggerDict():
     swaggerDict["paths"] = OrderedDict()
     swaggerDict["definitions"] = OrderedDict()    
 
+def documentFormatter(doc_obj, mdFh, mode):
+    if len(doc_obj) > 0:
+        if mode == "config":
+            mdFh.write("\n## %s\n\n" % ("Configuration APIs"))
+        elif mode == "operstate":
+            mdFh.write("\n## %s\n\n" % ("Operational-state APIs"))
+        elif mode == "operations":
+            mdFh.write("\n## %s\n\n" % ("Operations APIs"))
+        else:
+            pass
+
+        for uri in doc_obj:
+            mdFh.write("### %s\n" % (uri))
+            mdFh.write("#### Description\n")
+            mdFh.write("%s\n\n" % (doc_obj[uri]["description"].encode('utf8')))
+
+            if mode != "operations":
+                if len(doc_obj[uri]["parameters"]) > 0:
+                    mdFh.write("#### URI Parameters\n")
+                    mdFh.write("\n| Name | Type | Description |\n")
+                    mdFh.write("|:---:|:-----:|:-----:|\n")
+                    for param in doc_obj[uri]["parameters"]:
+                        param["description"] = param["description"].replace('\n', ' ')
+                        mdFh.write("| %s | %s  | %s  |\n" % (param["name"], param["type"], param["description"].encode('utf8')))                
+
+                for stmt in doc_obj[uri]:
+                    if stmt == "description" or stmt == "parameters":
+                        continue
+                    verb = stmt
+                    if len(doc_obj[uri][verb]["body"]) > 0:
+                        reqPrefix = "Request"
+                        if verb.lower() == "get":
+                            reqPrefix = "Response"
+                        mdFh.write("\n<details>\n<summary>%s payload for %s</summary>\n<p>" % (reqPrefix, verb.upper()))
+                        mdFh.write("\n\n```json\n")
+                        mdFh.write(json.dumps(doc_obj[uri][verb]["body"], indent=2))
+                        mdFh.write("\n```\n")
+                        mdFh.write("</p>\n</details>\n\n")
+            else:
+                if 'input' in doc_obj[uri]:
+                    mdFh.write("\n<details>\n<summary>%s payload for %s</summary>\n<p>" % ("Request", "POST"))
+                    mdFh.write("\n\n```json\n")
+                    mdFh.write(json.dumps(doc_obj[uri]["input"], indent=2))
+                    mdFh.write("\n```\n")
+                    mdFh.write("</p>\n</details>\n\n")
+                    
+                if 'output' in doc_obj[uri]:
+                    mdFh.write("\n<details>\n<summary>%s payload for %s</summary>\n<p>" % ("Response", "POST"))
+                    mdFh.write("\n\n```json\n")
+                    mdFh.write(json.dumps(doc_obj[uri]["output"], indent=2))
+                    mdFh.write("\n```\n")
+                    mdFh.write("</p>\n</details>\n\n")                
+
 def pyang_plugin_init():
     plugin.register_plugin(OpenApiPlugin())
+
+def mdGen(ctx, module):
+    if ctx.opts.with_md is None:
+        return
+    doc_config = docJson["config"]
+    if "/restconf/data/" in doc_config:
+        del(doc_config["/restconf/data/"])
+    doc_operstate = docJson["operstate"]
+    if "/restconf/data/" in doc_operstate:
+        del(doc_operstate["/restconf/data/"])        
+    doc_operations = docJson["operations"]
+    if "/restconf/data/" in doc_operations:
+        del(doc_operations["/restconf/data/"]) 
+
+    if len(doc_config) > 0 or len(doc_operstate) > 0 or len(doc_operations) > 0:
+        if ctx.opts.mdoutdir is None:
+            mdFn = ctx.opts.outdir + '/../restconf_md/' + module.i_modulename + ".md"
+        else:
+            mdFn = ctx.opts.mdoutdir + '/' + module.i_modulename + ".md"
+        mdFh = open(mdFn,'w')
+        mdFh.write("# The RESTCONF APIs for %s\n\n" % (module.i_modulename))
+        if module.search_one('description') is not None:
+            mdFh.write("%s\n\n" % (module.search_one('description').arg.encode('utf8')))
+    else:
+        # No content
+        return
+
+    # Write some headers
+    if len(doc_config) > 0:
+        mdFh.write("* [%s](#%s)\n" % ("Configuration APIs","Configuration-APIs"))
+    if len(doc_operstate) > 0:
+        mdFh.write("* [%s](#%s)\n" % ("Operational-state APIs","Operational-state-APIs"))
+    if len(doc_operations) > 0:
+        mdFh.write("* [%s](#%s)\n" % ("Operations API","Operations-API"))
+
+    documentFormatter(doc_config, mdFh, mode = "config")
+    documentFormatter(doc_operstate, mdFh, mode = "operstate")
+    documentFormatter(doc_operations, mdFh, mode = "operations")
+    mdFh.close()
+    resetDocJson()
 
 class OpenApiPlugin(plugin.PyangPlugin):
     def add_output_format(self, fmts):
@@ -164,7 +269,15 @@ class OpenApiPlugin(plugin.PyangPlugin):
             optparse.make_option("--outdir",
                                  type="string",
                                  dest="outdir",
-                                 help="Output directory for specs"),        
+                                 help="Output directory for specs"),
+            optparse.make_option("--md-outdir",
+                                 type="string",
+                                 dest="mdoutdir",
+                                 help="Output directory for markdown documents"),                                 
+            optparse.make_option("--with-md-doc",
+                                 dest="with_md",
+                                 action="store_true",
+                                 help="Generate markdown(.md) RESTCONF API documents"),                    
         ]
         g = optparser.add_option_group("OpenApiPlugin options")
         g.add_options(optlist)
@@ -217,9 +330,11 @@ class OpenApiPlugin(plugin.PyangPlugin):
                 fout = open(yamlFn,'w')
                 fout.write(code)
                 fout.close()
+                mdGen(ctx, module)
         else:        
             with open(ctx.opts.outdir + '/' + module.i_modulename + ".yaml", "w") as spec:
-              spec.write(ordered_dump(swaggerDict, Dumper=yaml.SafeDumper))      
+              spec.write(ordered_dump(swaggerDict, Dumper=yaml.SafeDumper))
+              mdGen(ctx, module)
     
       if len(warnList) > 0:
           print("========= Warnings observed =======")
@@ -246,11 +361,19 @@ def add_swagger_tag(module):
     else:
         return
 
-def swagger_it(child, defName, pathstr, payload, metadata, verb, operId=False, xParamsList=[]):
+def swagger_it(child, defName, pathstr, payload, metadata, verb, operId=False, xParamsList=[], jsonPayload=OrderedDict()):
 
     firstEncounter = True
     verbPathStr = pathstr
     global currentTag
+    global docJson
+    
+    docObj = None
+    if child.i_config:
+        docObj = docJson["config"]
+    else:
+        docObj = docJson["operstate"] 
+
     if verb == "post":
         pathstrList = pathstr.split('/')
         pathstrList.pop()
@@ -261,6 +384,16 @@ def swagger_it(child, defName, pathstr, payload, metadata, verb, operId=False, x
     verbPathStr = "/restconf/data" + verbPathStr
     if verbPathStr not in swaggerDict["paths"]:
         swaggerDict["paths"][verbPathStr] = OrderedDict()
+
+    paramsFilled = False
+    if verbPathStr not in docObj:
+        docObj[verbPathStr] = OrderedDict()
+        docObj[verbPathStr]["parameters"] = []
+    else:
+        paramsFilled = True
+
+    if verb not in docObj[verbPathStr]:
+        docObj[verbPathStr][verb] = OrderedDict()
 
     if verb not in swaggerDict["paths"][verbPathStr]:
         swaggerDict["paths"][verbPathStr][verb] = OrderedDict()
@@ -301,6 +434,7 @@ def swagger_it(child, defName, pathstr, payload, metadata, verb, operId=False, x
             desc = ''
         else:
             desc = desc.arg
+        docObj[verbPathStr]["description"] = copy.deepcopy(desc)
         desc = "OperationId: " + opId + "\n" + desc        
         swaggerDict["paths"][verbPathStr][verb]["description"] = desc        
 
@@ -309,6 +443,9 @@ def swagger_it(child, defName, pathstr, payload, metadata, verb, operId=False, x
 
     verbPath = swaggerDict["paths"][verbPathStr][verb]
     uriPath = swaggerDict["paths"][verbPathStr]
+
+    doc_verbPath = docObj[verbPathStr][verb]
+    doc_uriPath = docObj[verbPathStr]
 
     if not firstEncounter:
         for meta in metadata:
@@ -324,6 +461,8 @@ def swagger_it(child, defName, pathstr, payload, metadata, verb, operId=False, x
                     metaTag["format"] = meta["format"]
             metaTag["description"] = meta["desc"]
             verbPath["parameters"].append(metaTag)
+            if not paramsFilled:
+                doc_uriPath["parameters"].append(copy.deepcopy(metaTag))
 
 
     if verb in ["post", "put", "patch"]:
@@ -338,7 +477,8 @@ def swagger_it(child, defName, pathstr, payload, metadata, verb, operId=False, x
             swaggerDict["definitions"][operationDefnName]["allOf"] = []
             bodyTag["schema"]["$ref"] = "#/definitions/" + operationDefnName
             verbPath["parameters"].append(bodyTag)
-            swaggerDict["definitions"][operationDefnName]["allOf"].append({"$ref" : "#/definitions/" + defName})                
+            swaggerDict["definitions"][operationDefnName]["allOf"].append({"$ref" : "#/definitions/" + defName})
+            doc_verbPath["body"] = copy.deepcopy(jsonPayload)
         else:
             bodyTag = None
             for entry in verbPath["parameters"]:
@@ -347,10 +487,12 @@ def swagger_it(child, defName, pathstr, payload, metadata, verb, operId=False, x
                     break
             operationDefnName = bodyTag["schema"]["$ref"].split('/')[-1]
             swaggerDict["definitions"][operationDefnName]["allOf"].append({"$ref" : "#/definitions/" + defName})
+            doc_verbPath["body"] = merge_two_dicts(doc_verbPath["body"], copy.deepcopy(jsonPayload))
 
     if verb == "get":
         verbPath["responses"]["200"]["schema"] = OrderedDict()
         verbPath["responses"]["200"]["schema"]["$ref"] = "#/definitions/" + defName
+        doc_verbPath["body"] = copy.deepcopy(jsonPayload)
 
         # Generate HEAD requests
         uriPath["head"] = copy.deepcopy(verbPath)
@@ -358,9 +500,14 @@ def swagger_it(child, defName, pathstr, payload, metadata, verb, operId=False, x
         uriPath["head"]["description"] = uriPath["head"]["description"].replace(verbPath["operationId"],uriPath["head"]["operationId"])
         del(uriPath["head"]["responses"]["200"]["schema"])
         del(uriPath["head"]["produces"])
+    
+    if verb == "delete":
+        doc_verbPath["body"] = OrderedDict()
 
 def handle_rpc(child, actXpath, pathstr):
     global currentTag
+    global docJson
+    docObj = docJson["operations"]
     verbPathStr = "/restconf/operations" + pathstr
     verb = "post"
     customName = getOpId(child)
@@ -368,23 +515,25 @@ def handle_rpc(child, actXpath, pathstr):
     opId = "rpc_" + DefName
     add_swagger_tag(child.i_module)
     
+    jsonPayload_input = OrderedDict()
     # build input payload
     input_payload = OrderedDict()       
     input_child = child.search_one('input', None, child.i_children)
     if input_child is None:
         print("There is no input node for RPC ", "Xpath: ", actXpath)    
-    build_payload(input_child, input_payload, pathstr, True, actXpath, True, False, [])    
+    build_payload(input_child, input_payload, pathstr, True, actXpath, True, False, [], jsonPayload_input)    
     input_Defn = "rpc_input_" + DefName
     swaggerDict["definitions"][input_Defn] = OrderedDict()
     swaggerDict["definitions"][input_Defn]["type"] = "object"
-    swaggerDict["definitions"][input_Defn]["properties"] = copy.deepcopy(input_payload)    
+    swaggerDict["definitions"][input_Defn]["properties"] = copy.deepcopy(input_payload)
 
     # build output payload
+    jsonPayload_output = OrderedDict()
     output_payload = OrderedDict()       
     output_child = child.search_one('output', None, child.i_children)
     if output_child is None:
         print("There is no output node for RPC ", "Xpath: ", actXpath)
-    build_payload(output_child, output_payload, pathstr, True, actXpath, True, False, []) 
+    build_payload(output_child, output_payload, pathstr, True, actXpath, True, False, [], jsonPayload_output) 
     output_Defn = "rpc_output_" + DefName
     swaggerDict["definitions"][output_Defn] = OrderedDict()
     swaggerDict["definitions"][output_Defn]["type"] = "object"
@@ -392,7 +541,10 @@ def handle_rpc(child, actXpath, pathstr):
 
     if verbPathStr not in swaggerDict["paths"]:
         swaggerDict["paths"][verbPathStr] = OrderedDict()
-
+    
+    if verbPathStr not in docObj:
+        docObj[verbPathStr] = OrderedDict()
+    
     swaggerDict["paths"][verbPathStr][verb] = OrderedDict()
     swaggerDict["paths"][verbPathStr][verb]["tags"] = [currentTag]
     
@@ -405,6 +557,7 @@ def handle_rpc(child, actXpath, pathstr):
         desc = ''
     else:
         desc = desc.arg
+    docObj[verbPathStr]["description"] = copy.deepcopy(desc)
     desc = "OperationId: " + opId + "\n" + desc        
     swaggerDict["paths"][verbPathStr][verb]["description"] = desc
     verbPath = swaggerDict["paths"][verbPathStr][verb]
@@ -428,6 +581,10 @@ def handle_rpc(child, actXpath, pathstr):
         verbPath["responses"]["204"]["schema"] = OrderedDict()    
         verbPath["responses"]["204"]["schema"]["$ref"] = "#/definitions/" + output_Defn    
 
+    docObj[verbPathStr]["parameters"] = []
+    docObj[verbPathStr]["input"] = copy.deepcopy(jsonPayload_input)   
+    docObj[verbPathStr]["output"] = copy.deepcopy(jsonPayload_output)   
+
 def walk_child(child):
     global XpathToBodyTagDict
     customName =  None
@@ -447,10 +604,11 @@ def walk_child(child):
         return 
 
     if child.keyword in ["list", "container", "leaf", "leaf-list"]:
-        payload = OrderedDict()       
+        payload = OrderedDict() 
+        jsonPayload = OrderedDict()   
 
         add_swagger_tag(child.i_module)
-        build_payload(child, payload, pathstr, True, actXpath, True, False, [])
+        build_payload(child, payload, pathstr, True, actXpath, True, False, [], jsonPayload)
 
         if len(payload) == 0 and child.i_config == True:
             return
@@ -468,7 +626,8 @@ def walk_child(child):
 
         if child.i_config == False:   
             payload_get = OrderedDict()
-            build_payload(child, payload_get, pathstr, True, actXpath, True, True, [])
+            json_payload_get = OrderedDict()
+            build_payload(child, payload_get, pathstr, True, actXpath, True, True, [], json_payload_get)
             if len(payload_get) == 0:
                 return  
 
@@ -476,7 +635,7 @@ def walk_child(child):
             swaggerDict["definitions"][defName_get] = OrderedDict()
             swaggerDict["definitions"][defName_get]["type"] = "object"
             swaggerDict["definitions"][defName_get]["properties"] = copy.deepcopy(payload_get)
-            swagger_it(child, defName_get, pathstr, payload_get, metadata, "get", defName_get, paramsList)
+            swagger_it(child, defName_get, pathstr, payload_get, metadata, "get", defName_get, paramsList, json_payload_get)
         else:
             swaggerDict["definitions"][defName] = OrderedDict()
             swaggerDict["definitions"][defName]["type"] = "object"
@@ -491,18 +650,19 @@ def walk_child(child):
 
                 if verb == "get":
                     payload_get = OrderedDict()
-                    build_payload(child, payload_get, pathstr, True, actXpath, True, True, [])
+                    json_payload_get = OrderedDict()
+                    build_payload(child, payload_get, pathstr, True, actXpath, True, True, [], json_payload_get)
                     if len(payload_get) == 0:
                         continue  
                     defName_get = "get" + '_' + defName
                     swaggerDict["definitions"][defName_get] = OrderedDict()
                     swaggerDict["definitions"][defName_get]["type"] = "object"
                     swaggerDict["definitions"][defName_get]["properties"] = copy.deepcopy(payload_get)
-                    swagger_it(child, defName_get, pathstr, payload_get, metadata, verb, defName_get, paramsList)
+                    swagger_it(child, defName_get, pathstr, payload_get, metadata, verb, defName_get, paramsList, json_payload_get)
 
                     if child.keyword == "leaf-list":
                         defName_get_leaf_list = "get" + '_llist_' + defName
-                        swagger_it(child, defName_get, pathstr_leaf_list, payload_get, metadata_leaf_list, verb, defName_get_leaf_list, paramsLeafList)
+                        swagger_it(child, defName_get, pathstr_leaf_list, payload_get, metadata_leaf_list, verb, defName_get_leaf_list, paramsLeafList, json_payload_get)
 
                     continue
                 
@@ -515,10 +675,10 @@ def walk_child(child):
                     if isUriKeyInPayload(child,keyNodesInPath):
                         continue
 
-                swagger_it(child, defName, pathstr, payload, metadata, verb, False, paramsList)
+                swagger_it(child, defName, pathstr, payload, metadata, verb, False, paramsList, jsonPayload)
                 if verb == "delete" and child.keyword == "leaf-list":
                     defName_del_leaf_list = "del" + '_llist_' + defName
-                    swagger_it(child, defName, pathstr_leaf_list, payload, metadata_leaf_list, verb, defName_del_leaf_list, paramsLeafList)
+                    swagger_it(child, defName, pathstr_leaf_list, payload, metadata_leaf_list, verb, defName_del_leaf_list, paramsLeafList, jsonPayload)
 
         if  child.keyword == "list":
             listMetaData = copy.deepcopy(metadata)
@@ -532,6 +692,7 @@ def walk_child(child):
 def walk_child_for_list_base(child, actXpath, pathstr, metadata, nonBaseDefName=None, paramsList=[]):
 
     payload = OrderedDict()
+    jsonPayload = OrderedDict()
     pathstrList = pathstr.split('/')
 
     lastNode = pathstrList[-1]
@@ -551,7 +712,7 @@ def walk_child_for_list_base(child, actXpath, pathstr, metadata, nonBaseDefName=
             paramsList.pop()
 
     add_swagger_tag(child.i_module)    
-    build_payload(child, payload, pathstr, False, "", True, False, [])
+    build_payload(child, payload, pathstr, False, "", True, False, [], jsonPayload)
 
     if len(payload) == 0 and child.i_config == True:
         return
@@ -563,19 +724,20 @@ def walk_child_for_list_base(child, actXpath, pathstr, metadata, nonBaseDefName=
     if child.i_config == False:
         
         payload_get = OrderedDict()
-        build_payload(child, payload_get, pathstr, False, "", True, True, [])
+        json_payload_get = OrderedDict()
+        build_payload(child, payload_get, pathstr, False, "", True, True, [], json_payload_get)
         
         if len(payload_get) == 0:
             return
 
         defName_get = "get" + '_' + defName
         if nonBaseDefName is not None:
-            swagger_it(child, "get" + '_' + nonBaseDefName, pathstr, payload_get, metadata, "get", defName_get, paramsList)
+            swagger_it(child, "get" + '_' + nonBaseDefName, pathstr, payload_get, metadata, "get", defName_get, paramsList, json_payload_get)
         else:
             swaggerDict["definitions"][defName_get] = OrderedDict()
             swaggerDict["definitions"][defName_get]["type"] = "object"
             swaggerDict["definitions"][defName_get]["properties"] = copy.deepcopy(payload_get)            
-            swagger_it(child, defName_get, pathstr, payload_get, metadata, "get", defName_get, paramsList)
+            swagger_it(child, defName_get, pathstr, payload_get, metadata, "get", defName_get, paramsList, json_payload_get)
     else:
         if nonBaseDefName is None:
             swaggerDict["definitions"][defName] = OrderedDict()
@@ -584,28 +746,29 @@ def walk_child_for_list_base(child, actXpath, pathstr, metadata, nonBaseDefName=
 
         for verb in verbs:
             if verb == "get":
-                payload_get = OrderedDict()                
-                build_payload(child, payload_get, pathstr, False, "", True, True, [])
+                payload_get = OrderedDict()   
+                json_payload_get = OrderedDict()                
+                build_payload(child, payload_get, pathstr, False, "", True, True, [], json_payload_get)
                 
                 if len(payload_get) == 0:
                     continue
 
                 defName_get = "get" + '_' + defName
                 if nonBaseDefName is not None:
-                    swagger_it(child, "get" + '_' + nonBaseDefName, pathstr, payload_get, metadata, verb, defName_get, paramsList)
+                    swagger_it(child, "get" + '_' + nonBaseDefName, pathstr, payload_get, metadata, verb, defName_get, paramsList, json_payload_get)
                 else:
                     swaggerDict["definitions"][defName_get] = OrderedDict()
                     swaggerDict["definitions"][defName_get]["type"] = "object"
                     swaggerDict["definitions"][defName_get]["properties"] = copy.deepcopy(payload_get)
-                    swagger_it(child, defName_get, pathstr, payload_get, metadata, verb, defName_get, paramsList)
+                    swagger_it(child, defName_get, pathstr, payload_get, metadata, verb, defName_get, paramsList, json_payload_get)
                 continue
             
             if nonBaseDefName is not None:
-                swagger_it(child, nonBaseDefName, pathstr, payload, metadata, verb, verb + '_' + defName, paramsList)
+                swagger_it(child, nonBaseDefName, pathstr, payload, metadata, verb, verb + '_' + defName, paramsList, jsonPayload)
             else:
-                swagger_it(child, defName, pathstr, payload, metadata, verb, verb + '_' + defName, paramsList)
+                swagger_it(child, defName, pathstr, payload, metadata, verb, verb + '_' + defName, paramsList, jsonPayload)
 
-def build_payload(child, payloadDict, uriPath="", oneInstance=False, Xpath="", firstCall=False, config_false=False, moduleList=[]):
+def build_payload(child, payloadDict, uriPath="", oneInstance=False, Xpath="", firstCall=False, config_false=False, moduleList=[], jsonPayloadDict=OrderedDict()):
 
     nodeModuleName = child.i_module.i_modulename
     if nodeModuleName not in moduleList:
@@ -626,6 +789,7 @@ def build_payload(child, payloadDict, uriPath="", oneInstance=False, Xpath="", f
         pass
 
     childJson = None
+    payloadJson = None
     if child.keyword == "container" and len(chs) > 0:
         if firstCall:
             nodeName = child.i_module.i_modulename + ':' + child.arg
@@ -635,6 +799,9 @@ def build_payload(child, payloadDict, uriPath="", oneInstance=False, Xpath="", f
         payloadDict[nodeName]["type"] = "object"
         payloadDict[nodeName]["properties"] = OrderedDict()
         childJson = payloadDict[nodeName]["properties"]
+
+        jsonPayloadDict[nodeName] = OrderedDict()
+        payloadJson = jsonPayloadDict[nodeName]
     
     elif child.keyword == "list" and len(chs) > 0:
         if firstCall:
@@ -642,7 +809,9 @@ def build_payload(child, payloadDict, uriPath="", oneInstance=False, Xpath="", f
         else:
             nodeName = child.arg
         payloadDict[nodeName] = OrderedDict()
+        jsonPayloadDict[nodeName] = [OrderedDict()]      
         returnJson = None
+        payloadreturnJson = None
         
         payloadDict[nodeName]["type"] = "array"
         payloadDict[nodeName]["items"] = OrderedDict()
@@ -654,8 +823,11 @@ def build_payload(child, payloadDict, uriPath="", oneInstance=False, Xpath="", f
 
         payloadDict[nodeName]["items"]["properties"] = OrderedDict()
         returnJson = payloadDict[nodeName]["items"]["properties"]
+        payloadreturnJson = jsonPayloadDict[nodeName][0]
 
         childJson = returnJson
+        payloadJson = payloadreturnJson
+
 
     elif child.keyword == "leaf":
 
@@ -664,6 +836,7 @@ def build_payload(child, payloadDict, uriPath="", oneInstance=False, Xpath="", f
         else:
             nodeName = child.arg
         payloadDict[nodeName] = OrderedDict()
+        jsonPayloadDict[nodeName] = OrderedDict()
         typeInfo = getType(child)
         enums = None
         if isinstance(typeInfo, tuple):
@@ -681,6 +854,8 @@ def build_payload(child, payloadDict, uriPath="", oneInstance=False, Xpath="", f
 
         if 'format' in typeInfo:
             payloadDict[nodeName]["format"] = typeInfo["format"]
+        
+        jsonPayloadDict[nodeName] = dType       
 
     elif child.keyword == "leaf-list":
 
@@ -690,6 +865,7 @@ def build_payload(child, payloadDict, uriPath="", oneInstance=False, Xpath="", f
             nodeName = child.arg
 
         payloadDict[nodeName] = OrderedDict()
+        jsonPayloadDict[nodeName] = OrderedDict()
         payloadDict[nodeName]["type"] = "array"
         payloadDict[nodeName]["items"] = OrderedDict()
 
@@ -709,10 +885,13 @@ def build_payload(child, payloadDict, uriPath="", oneInstance=False, Xpath="", f
             payloadDict[nodeName]["items"]["enum"] = enums           
 
         if 'format' in typeInfo:
-            payloadDict[nodeName]["items"]["format"] = typeInfo["format"]            
+            payloadDict[nodeName]["items"]["format"] = typeInfo["format"]   
+
+        jsonPayloadDict[nodeName] = [dType]         
 
     elif child.keyword == "choice" or child.keyword == "case":
         childJson = payloadDict
+        payloadJson = jsonPayloadDict
     
     elif child.keyword == "input" or child.keyword == "output":
         if firstCall:
@@ -723,11 +902,14 @@ def build_payload(child, payloadDict, uriPath="", oneInstance=False, Xpath="", f
         payloadDict[nodeName] = OrderedDict()
         payloadDict[nodeName]["type"] = "object"
         payloadDict[nodeName]["properties"] = OrderedDict()
-        childJson = payloadDict[nodeName]["properties"]            
+        childJson = payloadDict[nodeName]["properties"]   
+
+        jsonPayloadDict[nodeName] =  OrderedDict()  
+        payloadJson = jsonPayloadDict[nodeName]
 
     if hasattr(child, 'i_children'):
         for ch in child.i_children:
-            build_payload(ch,childJson,uriPath, False, Xpath, False, config_false, copy.deepcopy(moduleList))
+            build_payload(ch,childJson,uriPath, False, Xpath, False, config_false, copy.deepcopy(moduleList), payloadJson)
 
 def handleDuplicateParams(node, paramMeta={}):
     paramNamesList = paramMeta["paramNamesList"]

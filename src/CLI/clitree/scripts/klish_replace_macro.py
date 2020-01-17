@@ -231,7 +231,10 @@ def process_input_file(filename, fd, macro_data):
             data = input_file.readlines()
             for line in data:
                 nargs = 0
-                line = ' '.join(line.split())
+                if (line.find("<DOCGEN") == -1 and line.find("<DESCRIPTION") == -1 and
+                    line.find("<USAGE") == -1 and line.find("<EXAMPLE") == -1):
+                    line = ' '.join(line.split())
+                #line = ' '.join(line.split())
                 if DBG_FLAG == True:
                     print line, multi_line
                 if re.search(MACRO_START, line, 0) != None or multi_line == True:

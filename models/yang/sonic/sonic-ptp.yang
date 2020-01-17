@@ -3,6 +3,10 @@ module sonic-ptp {
 	prefix sptp;
 	yang-version 1.1;
 
+	import sonic-common {
+		prefix cmn;
+	}
+
 	organization
 		"SONiC";
 
@@ -150,6 +154,7 @@ module sonic-ptp {
 		container PTP_PORT {
 			list PTP_PORT_LIST {
 				key "instance-number port-number";
+
 				leaf instance-number {
 					type leafref {
 						path "../../../PTP_INSTANCE/PTP_INSTANCE_LIST/instance-number";
@@ -186,6 +191,9 @@ module sonic-ptp {
 					type int8;
 				}
 				leaf delay-mechanism {
+					type string;
+				}
+				leaf unicast-table {
 					type string;
 				}
 			}
@@ -247,7 +255,41 @@ module sonic-ptp {
 				leaf number-ports {
 					type uint16;
 				}
-
+				leaf log-announce-interval {
+					type int8;
+				}
+				leaf announce-receipt-timeout {
+					type uint8;
+				}
+				leaf log-sync-interval {
+					type int8;
+				}
+				leaf log-min-delay-req-interval {
+					type int8;
+				}
+				leaf clock-type {
+					type string;
+				}
+				leaf network-transport {
+					type string;
+				}
+				leaf unicast-multicast {
+					type string;
+				}
+				leaf domain-profile {
+					type string;
+				}
+				leaf udp6-scope {
+					type string;
+				}
+				/*
+				must "domain-profile != 'G.8275.x' or (domain-number >= 44 and domain-number <= 63)" {
+					error-message "domain-number must be 44..63 when domain-profile is G.8275.2";
+				}
+				must "domain-profile != 'G.8275.x' or (clock_type != 'BC' or unicast_multicast != 'multicast')" {
+					error-message "G.8275.2 only has support for multicast transport in BC mode";
+				}
+				*/
 			}
 		}
 	}

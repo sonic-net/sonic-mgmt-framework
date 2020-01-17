@@ -2011,4 +2011,3 @@ var DbToYang_unnumbered_intf_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) 
     }
     return result, err
 }
-

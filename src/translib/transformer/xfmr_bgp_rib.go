@@ -2368,7 +2368,10 @@ var DbToYang_bgp_routes_get_xfmr SubTreeXfmrDbToYang = func(inParams XfmrParams)
         case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv6-unicast/openconfig-rib-bgp-ext:loc-rib-prefix/routes/route":
             if (rib_key.afiSafiName == "") || (rib_key.afiSafiName == "IPV6_UNICAST") {
                 err = hdl_get_bgp_local_rib_prefix (bgpRib_obj, &rib_key, ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_IPV6_UNICAST, &dbg_log)
-                if err != nil {return oper_err}
+                if err != nil {
+                    log.Errorf("%s IPV6_UNICAST failed !! Error: BGP RIB container missing", cmn_log)
+                    return oper_err
+				}
             }
     }
 

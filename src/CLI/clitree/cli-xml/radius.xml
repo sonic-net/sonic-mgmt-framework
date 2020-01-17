@@ -69,14 +69,14 @@ limitations under the License.
 <!--=======================================================-->
 <PTYPE
      name="RADIUS_VRF"
-     pattern="Vrf_(([0-9A-Za-z]){1,28})"
-     help="Name of VRF (Max size 32, prefixed by Vrf_)"
+     pattern="(Vrf_(([0-9A-Za-z]){1,28}))|(mgmt)"
+     help="Name of VRF (Max size 32, (mgmt, or prefixed by Vrf_)"
 />
 <!--=======================================================-->
 
 <VIEW name="enable-view">
     <COMMAND
-        name="show radius"
+        name="show radius-server"
         help="Show RADIUS information"
         >
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-radius.py get_sonic_radius
