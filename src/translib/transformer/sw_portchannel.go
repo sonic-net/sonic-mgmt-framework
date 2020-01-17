@@ -411,11 +411,26 @@ var YangToDb_lag_type_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[st
 var DbToYang_lag_type_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (map[string]interface{}, error) {
     var err error
     result := make(map[string]interface{})
+
+
+    intfType, _, ierr := getIntfTypeByName(inParams.key)
+    if ierr != nil || intfType != IntfTypePortChannel  {
+        return result, err
+    }
+
+
     data := (*inParams.dbDataMap)[inParams.curDb]
-    log.Info("DbToYang_lag_type_xfmr", data, inParams.ygRoot)
-    oc_action := findInMap(LAG_TYPE_MAP, data[PORTCHANNEL_TABLE][inParams.key].Field["static"])
-    n, err := strconv.ParseInt(oc_action, 10, 64)
-    result[LAG_TYPE] = ocbinds.E_OpenconfigIfAggregate_AggregationType(n).ΛMap()["E_OpenconfigIfAggregate_AggregationType"][n].Name
+    var agg_type ocbinds.E_OpenconfigIfAggregate_AggregationType
+    agg_type = ocbinds.OpenconfigIfAggregate_AggregationType_LACP
+
+    lag_type,ok := data[PORTCHANNEL_TABLE][inParams.key].Field["static"]
+    if ok {
+        if lag_type == "true" {
+            agg_type = ocbinds.OpenconfigIfAggregate_AggregationType_STATIC
+        }
+    }
+        result[LAG_TYPE] = ocbinds.E_OpenconfigIfAggregate_AggregationType.ΛMap(agg_type)["E_OpenconfigIfAggregate_AggregationType"][int64(agg_type)].Name
+    log.Infof("Lag Type returned from Field Xfmr: %v\n", result)
     return result, err
 }
 
