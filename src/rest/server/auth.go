@@ -28,7 +28,7 @@ import (
 	"strings"
 
 	"github.com/golang/glog"
-
+	"golang.org/x/crypto/ssh"
 	"github.com/msteinert/pam"
 )
 
@@ -164,7 +164,17 @@ func UserPwAuth(username string, passwd string) (bool, error) {
 	 * /etc of host with /etc of container. For now disable this and use ssh
 	 * for authentication.
 	 */
-	err := PAMAuthUser(username, passwd)
+	// err := PAMAuthUser(username, passwd)
+
+	//Use ssh for authentication.
+	config := &ssh.ClientConfig{
+	        User: username,
+	        Auth: []ssh.AuthMethod{
+	                ssh.Password(passwd),
+	        },
+	        HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+	}
+	_, err := ssh.Dial("tcp", "127.0.0.1:22", config)
 	if err != nil {
 		glog.Infof("Authentication failed. user=%s, error:%s", username, err.Error())
 		return false, err

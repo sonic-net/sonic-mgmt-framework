@@ -193,7 +193,7 @@ func (app *CommonApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
     var payload []byte
     var resPayload []byte
     log.Info("processGet:path =", app.pathInfo.Path)
-    var txCache interface{}
+    txCache:= make(map[string]interface{})
 
     for {
 	    // Keep a copy of the ygotRoot and let Transformer use this copy of ygotRoot
