@@ -71,6 +71,10 @@ const (
     VLAN_TN            = "VLAN"
     VLAN_MEMBER_TN     = "VLAN_MEMBER"
     VLAN_INTERFACE_TN  = "VLAN_INTERFACE"
+    PORTCHANNEL_TN     = "PORTCHANNEL"
+    PORTCHANNEL_INTERFACE_TN  = "PORTCHANNEL_INTERFACE"
+    PORTCHANNEL_MEMBER_TN  = "PORTCHANNEL_MEMBER"
+    LOOPBACK_INTERFACE_TN  = "LOOPBACK_INTERFACE"
     UNNUMBERED         = "unnumbered"
 )
 
@@ -1312,6 +1316,7 @@ func validIPv6(ip6Address string) bool {
     return false
 }
 
+/* Get all keys for given interface tables */
 func doGetAllIpKeys(d *db.DB, dbSpec *db.TableSpec) ([]db.Key, error) {
 
     var keys []db.Key
@@ -1324,6 +1329,13 @@ func doGetAllIpKeys(d *db.DB, dbSpec *db.TableSpec) ([]db.Key, error) {
     keys, err = intfTable.GetKeys()
     log.Infof("Found %d INTF table keys", len(keys))
     return keys, err
+}
+
+/* Get all IP keys for given interface */
+func doGetIntfIpKeys(d *db.DB, tblName string, intfName string) ([]db.Key, error) {
+    ipKeys, err := d.GetKeys(&db.TableSpec{Name: tblName+"|"+intfName})
+    log.Info("doGetIntfIpKeys for interface: ", intfName, " - ", ipKeys)
+    return ipKeys, err
 }
 
 func getMemTableNameByDBId (intftbl IntfTblData, curDb db.DBNum) (string, error) {

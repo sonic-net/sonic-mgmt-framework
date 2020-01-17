@@ -19,6 +19,7 @@
 package transformer
 
 import (
+    "encoding/json"
     "errors"
     "strconv"
     "translib/db"
@@ -38,7 +39,7 @@ func init () {
 }
 
 const (
-       LAG_TYPE           = "lag_type"
+       LAG_TYPE           = "lag-type"
        PORTCHANNEL_TABLE  = "PORTCHANNEL"
 )
 
@@ -63,11 +64,10 @@ func get_min_links(d *db.DB, lagName *string, links *uint16) error {
         log.Info(errStr)
         return errors.New(errStr)
     }
-    log.Info("Got table entry; About to get min links")
     if val, ok := curr.Field["min_links"]; ok {
         min_links, err := strconv.ParseUint(val, 10, 16)
         if err != nil {
-            errStr := "Conversion of string to int failed"
+            errStr := "Conversion of string to int failed: " + val
             log.Info(errStr)
             return errors.New(errStr)
         }
@@ -100,6 +100,26 @@ func get_lag_type(d *db.DB, lagName *string, mode *string) error {
     return nil
 }
 
+/* Validate physical interface configured as member of PortChannel */
+func validateIntfAssociatedWithPortChannel(d *db.DB, ifName *string) error {
+    var err error
+
+    if len(*ifName) == 0 {
+        return errors.New("Interface name is empty!")
+    }
+    lagKeys, err := d.GetKeys(&db.TableSpec{Name:PORTCHANNEL_MEMBER_TN})
+    if err == nil {
+        for i, _ := range lagKeys {
+            if *ifName == lagKeys[i].Get(1) {
+                errStr := "Given interface is member of " + lagKeys[i].Get(0)
+                log.Error(errStr)
+                return tlerr.InvalidArgsError{Format:errStr}
+            }
+        }
+    }
+    return err
+}
+
 /* Handle min-links config */
 var YangToDb_lag_min_links_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
     res_map := make(map[string]string)
@@ -125,14 +145,70 @@ var YangToDb_lag_min_links_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (m
     return res_map, nil
 }
 
+func can_configure_fallback(inParams XfmrParams) error {
+    device := (*inParams.ygRoot).(*ocbinds.Device)
+    user_config_json, e := ygot.EmitJSON(device, &ygot.EmitJSONConfig{
+    Format: ygot.RFC7951,
+    Indent: "  ",
+    RFC7951Config: &ygot.RFC7951JSONConfig{
+        AppendModuleName: true,
+    }})
+
+    if e != nil {
+        log.Infof("EmitJSON error: %v", e)
+        return e
+    }
+
+    type intf struct {
+        IntfS map[string]interface{}  `json:"openconfig-interfaces:interfaces"`
+    }
+    var res intf
+    e = json.Unmarshal([]byte(user_config_json), &res)
+    if e != nil {
+        log.Infof("UnMarshall Error %v\n", e)
+        return e
+    }
+
+    i := res.IntfS["interface"].([]interface{})
+    po_map := i[0].(map[string]interface{})
+
+    if agg,ok := po_map["openconfig-if-aggregate:aggregation"]; ok {
+       a := agg.(map[string]interface{})
+       agg_conf := a["config"].(map[string]interface{})
+       if lag_type,k := agg_conf["lag-type"]; k {
+           if lag_type == "STATIC" {
+               errStr := "Fallback is not supported for Static LAGs"
+               return tlerr.InvalidArgsError{Format:errStr}
+           }
+       } else {
+           //User did not specify LAG Type; Check from DB
+           pathInfo := NewPathInfo(inParams.uri)
+           ifKey := pathInfo.Var("name")
+           var mode string
+           e = get_lag_type(inParams.d, &ifKey, &mode)
+           if e == nil {
+               errStr := "Fallback option cannot be re-configured for an already existing PortChannel: " + ifKey
+               return tlerr.InvalidArgsError{Format:errStr}
+           }
+       }
+    }
+
+    return nil
+}
+
 /* Handle fallback config */
 var YangToDb_lag_fallback_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
     res_map := make(map[string]string)
     var err error
 
+    err = can_configure_fallback(inParams)
+    if err != nil {
+        return res_map, err
+    }
+
     fallback, _ := inParams.param.(*bool)
     res_map["fallback"] = strconv.FormatBool(*fallback)
-    return res_map, err
+    return res_map, nil
 }
 
 func getLagStateAttr(attr *string, ifName *string, lagInfoMap  map[string]db.Value,
@@ -411,11 +487,26 @@ var YangToDb_lag_type_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[st
 var DbToYang_lag_type_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (map[string]interface{}, error) {
     var err error
     result := make(map[string]interface{})
+
+
+    intfType, _, ierr := getIntfTypeByName(inParams.key)
+    if ierr != nil || intfType != IntfTypePortChannel  {
+        return result, err
+    }
+
+
     data := (*inParams.dbDataMap)[inParams.curDb]
-    log.Info("DbToYang_lag_type_xfmr", data, inParams.ygRoot)
-    oc_action := findInMap(LAG_TYPE_MAP, data[PORTCHANNEL_TABLE][inParams.key].Field["static"])
-    n, err := strconv.ParseInt(oc_action, 10, 64)
-    result[LAG_TYPE] = ocbinds.E_OpenconfigIfAggregate_AggregationType(n).ΛMap()["E_OpenconfigIfAggregate_AggregationType"][n].Name
+    var agg_type ocbinds.E_OpenconfigIfAggregate_AggregationType
+    agg_type = ocbinds.OpenconfigIfAggregate_AggregationType_LACP
+
+    lag_type,ok := data[PORTCHANNEL_TABLE][inParams.key].Field["static"]
+    if ok {
+        if lag_type == "true" {
+            agg_type = ocbinds.OpenconfigIfAggregate_AggregationType_STATIC
+        }
+    }
+        result[LAG_TYPE] = ocbinds.E_OpenconfigIfAggregate_AggregationType.ΛMap(agg_type)["E_OpenconfigIfAggregate_AggregationType"][int64(agg_type)].Name
+    log.Infof("Lag Type returned from Field Xfmr: %v\n", result)
     return result, err
 }
 
