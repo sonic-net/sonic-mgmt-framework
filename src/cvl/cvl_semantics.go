@@ -454,7 +454,7 @@ func (c *CVL) checkIfListNodeExists(dest, src *xmlquery.Node) *xmlquery.Node {
 	//CREATE/UPDATE/DELETE request for same table/key points to
 	//same yang list in request cache
 	yangList := entry[0].yangData
-	if (dest.Parent == yangList.Parent) {
+	if ((yangList != nil)  && (dest.Parent == yangList.Parent)) {
 		//Same parent means yang list already exists in destination tree
 		return yangList
 	}

@@ -5,13 +5,16 @@
 {% set value = neigh['neighbors']['neighbor'][0] %}
 {{'Interface:'}}{{'   '}}{{value['id']}}{{',via:'}}{{' LLDP'}}
 {{'  Chassis:'}}
-{{'    ChassisID:    '}}{{value['state']['chassis_id']}}
-{{'    SysName:      '}}{{value['state']['system_name']}}
-{% set desc = value['state']['system_description'].split('\r\n')[1:] %}
-{{'    SysDescr:     '}}{{value['state']['system_description'].split('\r\n')[0]}}
+{{'    ChassisID:    '}}{{value['state']['chassis-id']}}
+{{'    SysName:      '}}{{value['state']['system-name']}}
+{% set desc = value['state']['system-description'].split('\r\n')[1:] %}
+{{'    SysDescr:     '}}{{value['state']['system-description'].split('\r\n')[0]}}
+{{'    MgmtIP:       '}}{{value['state']['management-address'].split(',')[0]}}
+{{'    MgmtIP:       '}}{{value['state']['management-address'].split(',')[-1]}}
 {% for v in desc %}
 {{'                  '}}{{v}}
 {% endfor %}
+{% if 'capabilities' in value.keys() %}
 {% for cap in  value['capabilities']['capability'] %}
 {%  if cap['state']['enabled'] == true %}
 {%  set en = 'ON' %}
@@ -21,9 +24,10 @@
 {% endif %}
 {{'    Capability:   '}}{{cap['name'].split(':')[1]}}{{', '}}{{en}}
 {% endfor %}
+{% endif %}
 {{'  Port'}}
-{{'    PortID:       '}}{{value['state']['port_id']}}
-{{'    PortDescr:    '}}{{value['state']['port_description']}}
+{{'    PortID:       '}}{{value['state']['port-id']}}
+{{'    PortDescr:    '}}{{value['state']['port-description']}}
 {{'-----------------------------------------------------------'}}
 {% endfor %}
 
