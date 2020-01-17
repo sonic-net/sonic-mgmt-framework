@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Copyright 2019 Dell, Inc.  
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+--> 
+
+<CLISH_MODULE
+    xmlns="http://www.dellemc.com/sonic/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xi="http://www.w3.org/2001/XInclude"
+    xsi:schemaLocation="http://www.dellemc.com/sonic/XMLSchema
+                        http://www.dellemc.com/sonic/XMLSchema/clish.xsd"
+    >
+<!--=========================================================================-->
+<!--=======================================================-->
+<!--              show ipvx static-anycast-gateway         -->
+<!--=======================================================-->
+<VIEW name="enable-view">
+    <COMMAND
+        help="show IP SAG commands"
+        name="show ip static-anycast-gateway"
+        >
+        <ACTION>
+               python $SONIC_CLI_ROOT/sonic-cli-show-sag.py get_ip_sag show_ip_sag.j2 None&#xA;
+       </ACTION>
+    </COMMAND>
+    <COMMAND
+        help="show IPv6 SAG commands"
+        name="show ipv6 static-anycast-gateway"
+        >
+        <ACTION>
+               python $SONIC_CLI_ROOT/sonic-cli-show-sag.py get_ipv6_sag show_ip_sag.j2 None&#xA;
+       </ACTION>
+    </COMMAND>
+
+</VIEW>
+
+<!--MODE : interface -->
+
+<VIEW name="configure-if-view">
+
+<!-- ip static-anycast-gateway -->
+   <COMMAND
+         name="ip anycast-address"
+         help="Configure IPv4 Static Anycast Gateway"
+         >
+         <PARAM
+             name="anycast-addr"
+             help="Anycast Gateway Address"
+             ptype="IP_ADDR"
+             >
+        </PARAM>
+		<ACTION builtin="clish_nop"> </ACTION>          
+    </COMMAND>
+
+<!-- no ip static-anycast-gateway -->
+   <COMMAND
+         name="no ip anycast-address"
+         help="Unconfigure IPv4 Static Anycast Gateway"
+         >
+         <PARAM
+             name="anycast-addr"
+             help="Anycast Gateway Address"
+             ptype="IP_ADDR"
+             >
+        </PARAM>
+		<ACTION builtin="clish_nop"> </ACTION>          
+    </COMMAND>	
+
+
+<!-- ipv6 anycast-address -->
+   <COMMAND
+         name="ipv6 anycast-address"
+         help="Configure IPv6 Static Anycast Gateway"
+         >
+         <PARAM
+             name="anycast-addr"
+             help="Anycast Gateway Address"
+             ptype="IP_ADDR"
+             >
+        </PARAM>
+		<ACTION builtin="clish_nop"> </ACTION>          
+    </COMMAND>
+
+<!-- no ipv6 anycast-address -->
+   <COMMAND
+         name="no ipv6 anycast-address"
+         help="Unconfigure IPv6 Static Anycast Gateway"
+         >
+         <PARAM
+             name="anycast-addr"
+             help="Anycast Gateway Address"
+             ptype="IP_ADDR"
+             >
+        </PARAM>
+		<ACTION builtin="clish_nop"> </ACTION>          
+    </COMMAND>	
+
+
+</VIEW>
+
+
+<VIEW name="configure-view">
+
+<!-- ip anycast-mac-address -->
+   <COMMAND
+         name="ip anycast-mac-address"
+         help="Configure Anycast Gateway MAC address"
+         >
+         <PARAM
+             name="anycast-mac"
+             help="Anycast Gateway MAC Address"
+             ptype="STRING_32"
+             >
+        </PARAM>
+		<ACTION builtin="clish_nop"> </ACTION>          
+    </COMMAND>
+
+<!-- no ip anycast-mac-address -->
+   <COMMAND
+         name="no ip anycast-mac-address"
+         help="Configure Anycast Gateway MAC address"
+         >
+         <PARAM
+             name="anycast-mac"
+             help="Anycast Gateway MAC Address"
+             ptype="STRING_32"
+             >
+        </PARAM>
+		<ACTION builtin="clish_nop"> </ACTION>          
+    </COMMAND>
+
+<!-- ip anycast-address disable -->
+   <COMMAND
+         name="ip anycast-address disable"
+         help="Enable IPv4 Anycast Gateway"
+         >
+		<ACTION builtin="clish_nop"> </ACTION>          
+    </COMMAND>
+
+<!-- ip anycast-address eanble -->
+   <COMMAND
+         name="ip anycast-address enable"
+         help="Enable IPv4 Anycast Gateway"
+         >
+		<ACTION builtin="clish_nop"> </ACTION>          
+    </COMMAND>
+
+	
+<!-- ipv6 anycast-address disable -->
+   <COMMAND
+         name="ipv6 anycast-address disable"
+         help="Enable IPv6 Anycast Gateway"
+         >
+		<ACTION builtin="clish_nop"> </ACTION>          
+    </COMMAND>
+
+<!-- ipv6 anycast-address eanble -->
+   <COMMAND
+         name="ipv6 anycast-address enable"
+         help="Enable IPv6 Anycast Gateway"
+         >
+		<ACTION builtin="clish_nop"> </ACTION>          
+    </COMMAND>
+
+</VIEW>
+
+
+
+
+</CLISH_MODULE>
