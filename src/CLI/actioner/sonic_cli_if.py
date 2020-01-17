@@ -28,6 +28,7 @@ from scripts.render_cli import show_cli_output
 import urllib3
 urllib3.disable_warnings()
 
+lag_type_map = {"active" : "LACP", "on": "STATIC"}
 
 def invoke_api(func, args=[]):
     api = cc.ApiClient()
@@ -41,6 +42,35 @@ def invoke_api(func, args=[]):
         body = { "openconfig-interfaces:config": { "name": args[0] }}
         path = cc.Path('/restconf/data/openconfig-interfaces:interfaces/interface={name}/config', name=args[0])
         return api.patch(path, body)
+
+    #Configure PortChannel
+    elif func == 'portchannel_config':
+        body ={
+                 "openconfig-interfaces:interface": [{
+                                                      "name": args[0],
+                                                      "config": {"name": args[0]},
+                                                      "openconfig-if-aggregate:aggregation" : {"config": {}}
+                                                    }]
+               }
+
+        # Configure lag type (active/on)
+        mode = args[1].split("=")[1]
+        if mode != "" :
+            body["openconfig-interfaces:interface"][0]["openconfig-if-aggregate:aggregation"]["config"].update( {"lag-type": lag_type_map[mode] } )
+
+        # Configure Min links
+        links = args[2].split("=")[1]
+        if links != "":
+            body["openconfig-interfaces:interface"][0]["openconfig-if-aggregate:aggregation"]["config"].update( {"min-links": int(links) } )
+
+        # Configure Fallback
+        fallback = args[3].split("=")[1]
+        if fallback != "":
+            body["openconfig-interfaces:interface"][0]["openconfig-if-aggregate:aggregation"]["config"].update( {"openconfig-interfaces-ext:fallback": True} )
+
+        path = cc.Path('/restconf/data/openconfig-interfaces:interfaces/interface={name}', name=args[0])
+        return api.patch(path, body)
+
     
     # Delete interface
     elif func == 'delete_openconfig_interfaces_interfaces_interface':
@@ -186,8 +216,17 @@ def invoke_api(func, args=[]):
         else :
             body = { "openconfig-interfaces-ext:fallback": False }
         return api.patch(path, body)
-        
-        
+
+    # Config IPv4 Unnumbered interface
+    elif func == 'patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_unnumbered_interface_ref_config_interface':
+        path = cc.Path('/restconf/data/openconfig-interfaces:interfaces/interface={name}/subinterfaces/subinterface={index}/openconfig-if-ip:ipv4/unnumbered/interface-ref/config/interface', name=args[0], index="0")
+
+        body = { "openconfig-if-ip:interface" : args[1] }
+        return api.patch(path, body)    
+    elif func == 'delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_unnumbered_interface_ref_config_interface':
+        path = cc.Path('/restconf/data/openconfig-interfaces:interfaces/interface={name}/subinterfaces/subinterface={index}/openconfig-if-ip:ipv4/unnumbered/interface-ref/config/interface', name=args[0], index="0")
+        return api.delete(path)    
+
     return api.cli_not_implemented(func)
 
 

@@ -39,14 +39,14 @@ $(out_dir)/%.yin:%.yang
 	@echo "Generating `basename $@` ..."
 	@devFile="`echo $< | cut -d . -f1`-deviation.yang"; \
 	if [ -f $$devFile ] ; then devOpt="--deviation-module $$devFile"; fi; \
-	pyang -p $(sonic_yang):$(sonic_yang)/common:$(sonic_yang)/common/ietf \
+	pyang -p $(sonic_yang)/common:$(sonic_yang)/common/ietf \
 		--plugindir $(pyang_plugin_dir) -f yin-cvl $$devOpt $< -o $@
 
 $(out_dir)/%.tree:%.yang
 	@echo "Generating `basename $@` ..."
 	@devFile="`echo $< | cut -d . -f1`-deviation.yang"; \
 	if [ -f $$devFile ] ; then devOpt="--deviation-module $$devFile"; fi; \
-	pyang -p $(sonic_yang):$(sonic_yang)/common:$(sonic_yang)/common/ietf \
+	pyang -p $(sonic_yang)/common:$(sonic_yang)/common/ietf \
 			-f tree $$devOpt $< -o $@
 
 clean:

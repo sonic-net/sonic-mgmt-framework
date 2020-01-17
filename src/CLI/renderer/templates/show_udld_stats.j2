@@ -5,9 +5,21 @@
 {% for i in range(json_output.__len__()) %}
 {% set intf_stats_info = json_output[i] %}
 {{'UDLD Interface statistics for'}} {{intf_stats_info['ifname']}}
-{{'%-18s'|format("Frames Transmitted")}} : {{intf_stats_info['pdu_sent']}}
-{{'%-18s'|format("Frames Received")}} : {{intf_stats_info['pdu_received']}}
-{{'%-18s'|format("Frames with Error")}} : {{intf_stats_info['pdu_recv_error']}}
+{% set fr_tx = 0 %}
+{% set fr_rx = 0 %}
+{% set fr_err = 0 %}
+{% if intf_stats_info['pdu_sent'] %}
+    {% set fr_tx = intf_stats_info['pdu_sent'] %}
+{%endif%}
+{% if intf_stats_info['pdu_received'] %}
+    {% set fr_rx = intf_stats_info['pdu_received'] %}
+{%endif%}
+{% if intf_stats_info['pdu_recv_error'] %}
+    {% set fr_err = intf_stats_info['pdu_recv_error'] %}
+{%endif%}
+{{'%-18s'|format("Frames Transmitted")}} : {{fr_tx}}
+{{'%-18s'|format("Frames Received")}} : {{fr_rx}}
+{{'%-18s'|format("Frames with Error")}} : {{fr_err}}
 {% endfor %}
 {%endif%}
 {%endif%}

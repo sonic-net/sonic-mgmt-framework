@@ -1,3 +1,4 @@
+Binary files ygot-dir-orig/ygot/.git/index and ygot-dir/ygot/.git/index differ
 diff -ruN ygot-dir-orig/ygot/util/debug.go ygot-dir/ygot/util/debug.go
 --- ygot-dir-orig/ygot/util/debug.go	2020-01-03 00:11:26.345137304 +0000
 +++ ygot-dir/ygot/util/debug.go	2020-01-03 01:17:48.180322999 +0000
@@ -179,6 +180,65 @@ diff -ruN ygot-dir-orig/ygot/util/schema.go ygot-dir/ygot/util/schema.go
  		if pe == p[0] {
  			DbgSchema(" - match\n")
  			return entry, nil
+diff -ruN ygot-dir-orig/ygot/ygen/genstate.go ygot-dir/ygot/ygen/genstate.go
+--- ygot-dir-orig/ygot/ygen/genstate.go	2019-12-27 14:11:06.385330000 -0800
++++ ygot-dir/ygot/ygen/genstate.go	2019-12-27 14:50:09.188589000 -0800
+@@ -121,6 +121,7 @@
+ // noUnderscores boolean.
+ func (s *genState) enumeratedUnionEntry(e *yang.Entry, compressPaths, noUnderscores bool) ([]*yangEnum, error) {
+ 	var es []*yangEnum
++	enumSet := make(map[string]*yangEnum)
+ 
+ 	for _, t := range enumeratedUnionTypes(e.Type.Type) {
+ 		var en *yangEnum
+@@ -148,19 +149,35 @@
+ 					return nil, err
+ 				}
+ 			}
+-
+-			en = &yangEnum{
+-				name: enumName,
+-				entry: &yang.Entry{
+-					Name: e.Name,
+-					Type: &yang.YangType{
+-						Name: e.Type.Name,
+-						Kind: yang.Yenum,
+-						Enum: t.Enum,
++			if tmpEn, ok := enumSet[enumName]; ok {
++				enumTmp := yang.NewEnumType()
++				for eNm, eVal := range t.Enum.NameMap() {
++					if err := enumTmp.Set(eNm, eVal); err != nil {
++						return nil, fmt.Errorf("%v", err)
++					}
++				}
++				for eNm, eVal := range tmpEn.entry.Type.Enum.NameMap() {
++					if err := enumTmp.Set(eNm, eVal); err != nil {
++						return nil, fmt.Errorf("%v", err)
++					}
++				}
++				tmpEn.entry.Type.Enum = enumTmp
++				continue
++			} else {
++				en = &yangEnum{
++					name: enumName,
++					entry: &yang.Entry{
++						Name: e.Name,
++						Type: &yang.YangType{
++							Name: e.Type.Name,
++							Kind: yang.Yenum,
++							Enum: t.Enum,
++						},
++						Annotation: map[string]interface{}{"valuePrefix": traverseElementSchemaPath(e)},
+ 					},
+-					Annotation: map[string]interface{}{"valuePrefix": traverseElementSchemaPath(e)},
+-				},
+-			}
++				}
++				enumSet[enumName] = en
++			}	
+ 		}
+ 
+ 		es = append(es, en)
 diff -ruN ygot-dir-orig/ygot/ygot/struct_validation_map.go ygot-dir/ygot/ygot/struct_validation_map.go
 --- ygot-dir-orig/ygot/ygot/struct_validation_map.go	2020-01-03 00:12:50.762826220 +0000
 +++ ygot-dir/ygot/ygot/struct_validation_map.go	2020-01-03 01:19:17.538098419 +0000
@@ -331,7 +391,18 @@ diff -ruN ygot-dir-orig/ygot/ytypes/leaf.go ygot-dir/ygot/ytypes/leaf.go
  		ybt := yangBuiltinTypeToGoType(t.Kind)
  		if reflect.ValueOf(value).Kind() == reflect.Ptr {
  			ybt = ygot.ToPtr(yangBuiltinTypeToGoType(t.Kind))
-@@ -418,12 +429,10 @@
+@@ -397,6 +408,10 @@
+ 		}
+ 		refSchema = refSchema.Dir[pe]
+ 	}
++	
++	if refSchema.Type.Kind == yang.Yleafref {
++		return findLeafRefSchema (refSchema, refSchema.Type.Path)
++	}
+ 
+ 	return refSchema, nil
+ }
+@@ -418,12 +433,10 @@
  	return nil
  }
  
@@ -346,7 +417,7 @@ diff -ruN ygot-dir-orig/ygot/ytypes/leaf.go ygot-dir/ygot/ytypes/leaf.go
  // unmarshalLeaf unmarshals a scalar value (determined by json.Unmarshal) into
  // the parent containing the leaf.
  //   schema points to the schema for the leaf type.
-@@ -720,7 +729,9 @@
+@@ -720,7 +733,9 @@
  		return nil, fmt.Errorf("%s ΛEnumTypes function returned wrong type %T, want map[string][]reflect.Type", t, ei)
  	}
  
@@ -442,7 +513,7 @@ diff -ruN ygot-dir-orig/ygot/ytypes/list.go ygot-dir/ygot/ytypes/list.go
 +		}
 +
 +		var nv reflect.Value
-+		if keyLeafKind == yang.Yunion && strings.HasSuffix(keyT.Name(), "_Union") {
++		if keyLeafKind == yang.Yunion && strings.HasSuffix(ft.Name(), "_Union") {
 +			sks, err := getUnionKindsNotEnums(cschema)
 +			if err != nil {
 +				return err
@@ -470,7 +541,7 @@ diff -ruN ygot-dir-orig/ygot/ytypes/list.go ygot-dir/ygot/ytypes/list.go
 +			}
 +			
 +			if nv.IsValid() == false {
-+				ets, err := schemaToEnumTypes(cschema, elmT)
++				ets, err := schemaToEnumTypes(cschema, val.Type())
 +				if err != nil {
 +					return err
 +				}

@@ -68,13 +68,13 @@ func Test_StpApp_Rapid_Pvst_Enable_Disable(t *testing.T) {
 func Test_StpApp_TopLevelPathInPvstMode(t *testing.T) {
 	topStpUrl := "/openconfig-spanning-tree:stp"
 	enableStpUrl := topStpUrl + "/global"
-	vlanUrl := "/openconfig-interfaces:interfaces/interface[name=Vlan4090]"
+	vlanUrl := "/openconfig-interfaces:interfaces/interface[name=Vlan4090]/config"
 	createswitchportUrl := "/openconfig-interfaces:interfaces/interface[name=Ethernet28]/openconfig-if-ethernet:ethernet/openconfig-vlan:switched-vlan/config"
 	deleteSwitchportUrl := createswitchportUrl + "/trunk-vlans[trunk-vlans=4090]"
 
 	t.Run("Empty_Response_Top_Level", processGetRequest(topStpUrl, "", true))
 
-	t.Run("Create_Single_Vlan", processSetRequest(vlanUrl, emptyJson, "PATCH", false))
+	t.Run("Create_Single_Vlan", processSetRequest(vlanUrl, createVlanJsonRequest, "PATCH", false))
 	t.Run("Create_Switchport", processSetRequest(createswitchportUrl, switchportCreateJsonRequest, "PATCH", false))
 
 	t.Run("Enable_PVST_Mode", processSetRequest(enableStpUrl, enablePVSTModeJsonRequest, "POST", false))
@@ -90,13 +90,13 @@ func Test_StpApp_TopLevelPathInPvstMode(t *testing.T) {
 func Test_StpApp_TopLevelPathInRapidPvstMode(t *testing.T) {
 	topStpUrl := "/openconfig-spanning-tree:stp"
 	enableStpUrl := topStpUrl + "/global"
-	vlanUrl := "/openconfig-interfaces:interfaces/interface[name=Vlan4090]"
+	vlanUrl := "/openconfig-interfaces:interfaces/interface[name=Vlan4090]/config"
 	createswitchportUrl := "/openconfig-interfaces:interfaces/interface[name=Ethernet28]/openconfig-if-ethernet:ethernet/openconfig-vlan:switched-vlan/config"
 	deleteSwitchportUrl := createswitchportUrl + "/trunk-vlans[trunk-vlans=4090]"
 
 	t.Run("Empty_Response_Top_Level", processGetRequest(topStpUrl, "", true))
 
-	t.Run("Create_Single_Vlan", processSetRequest(vlanUrl, emptyJson, "PATCH", false))
+	t.Run("Create_Single_Vlan", processSetRequest(vlanUrl, createVlanJsonRequest, "PATCH", false))
 	t.Run("Create_Switchport", processSetRequest(createswitchportUrl, switchportCreateJsonRequest, "PATCH", false))
 
 	t.Run("Enable_Rapid_PVST_Mode", processSetRequest(enableStpUrl, enableRapidPVSTModeJsonRequest, "POST", false))
@@ -185,6 +185,8 @@ func processGetRequestToFile(url string, expectedRespJson string, errorCase bool
 /***************************************************************************/
 ///////////                  JSON Data for Tests              ///////////////
 /***************************************************************************/
+
+var createVlanJsonRequest string = "{\"openconfig-interfaces:config\": {\"name\": \"Vlan4090\"}}"
 
 var switchportCreateJsonRequest string = "{\"openconfig-vlan:config\": {\"trunk-vlans\": [4090], \"interface-mode\": \"TRUNK\"}}"
 

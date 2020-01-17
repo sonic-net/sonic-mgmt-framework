@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 	"time"
-
+	"os/user"
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/golang/glog"
 )
@@ -24,6 +24,7 @@ type Credentials struct {
 
 type Claims struct {
 	Username string `json:"username"`
+	Gid string `json:"gid"`
 	jwt.StandardClaims
 }
 
@@ -33,11 +34,12 @@ type jwtToken struct {
 	ExpIn     int64  `json:"expires_in"`
 }
 
-func generateJWT(username string, expire_dt time.Time) string {
+func generateJWT(username string, gid string, expire_dt time.Time) string {
 	// Create a new token object, specifying signing method and the claims
 	// you would like it to contain.
 	claims := &Claims{
 		Username: username,
+		Gid: gid,
 		StandardClaims: jwt.StandardClaims{
 			// In JWT, the expiry time is expressed as unix milliseconds
 			ExpiresAt: expire_dt.Unix(),
@@ -54,9 +56,9 @@ func GenerateJwtSecretKey() {
 	rand.Read(hmacSampleSecret)
 }
 
-func tokenResp(w http.ResponseWriter, r *http.Request, username string) {
+func tokenResp(w http.ResponseWriter, r *http.Request, username string, gid string) {
 	exp_tm := time.Now().Add(JwtValidInt)
-	token := jwtToken{Token: generateJWT(username, exp_tm), TokenType: "Bearer", ExpIn: int64(JwtValidInt / time.Second)}
+	token := jwtToken{Token: generateJWT(username, gid, exp_tm), TokenType: "Bearer", ExpIn: int64(JwtValidInt / time.Second)}
 	resp, err := json.Marshal(token)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -72,24 +74,47 @@ func tokenResp(w http.ResponseWriter, r *http.Request, username string) {
 
 func Authenticate(w http.ResponseWriter, r *http.Request) {
 	var creds Credentials
-	err := json.NewDecoder(r.Body).Decode(&creds)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
+
+	var username string
+	auth_success := false
+	if ClientAuth.Enabled("cert") && r.TLS != nil && len(r.TLS.PeerCertificates) > 0 {
+		//Check if they are using certificate based auth
+		username = strings.ToLower(r.TLS.PeerCertificates[0].Subject.CommonName)
 	}
 
-	auth_success, err := UserPwAuth(creds.Username, creds.Password)
+
+	if len(username) > 0 {
+		auth_success = true
+		creds.Username = username
+	}
+
+	if auth_success == false {
+		//Check if they are using user/password based auth
+		err := json.NewDecoder(r.Body).Decode(&creds)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		auth_success, err = UserPwAuth(creds.Username, creds.Password)
+	}
 	if auth_success {
-		tokenResp(w, r, creds.Username)
-		return
-
-	} else {
-		status, data, ctype := prepareErrorResponse(httpError(http.StatusUnauthorized, ""), r)
-		w.Header().Set("Content-Type", ctype)
-		w.WriteHeader(status)
-		w.Write(data)
-		return
+		usr, err := user.Lookup(username)
+		if err == nil {
+			group, err := user.LookupGroupId(usr.Gid)
+			if err == nil {
+				tokenResp(w, r, creds.Username, group.Name)
+				return
+			}
+		}
 	}
+	status, data, ctype := prepareErrorResponse(httpError(http.StatusUnauthorized, ""), r)
+	w.Header().Set("Content-Type", ctype)
+	w.WriteHeader(status)
+	w.Write(data)
+	return
+	
+	
 }
 
 func Refresh(w http.ResponseWriter, r *http.Request) {
@@ -115,7 +140,7 @@ func Refresh(w http.ResponseWriter, r *http.Request) {
 		w.Write(data)
 		return
 	}
-	tokenResp(w, r, claims.Username)
+	tokenResp(w, r, claims.Username, claims.Gid)
 
 }
 
@@ -151,9 +176,11 @@ func JwtAuthenAndAuthor(r *http.Request, rc *RequestContext) (jwtToken, error) {
 		glog.Errorf("[%s] Failed to authenticate, Invalid JWT Token", rc.ID)
 		return token, httpError(http.StatusUnauthorized, "Invalid JWT Token")
 	}
-	if err := PopulateAuthStruct(claims.Username, &rc.Auth); err != nil {
-		glog.Infof("[%s] Failed to retrieve authentication information; %v", rc.ID, err)
-		return token, httpError(http.StatusUnauthorized, "")
-	}
+	// if err := PopulateAuthStruct(claims.Username, &rc.Auth); err != nil {
+	// 	glog.Infof("[%s] Failed to retrieve authentication information; %v", rc.ID, err)
+	// 	return token, httpError(http.StatusUnauthorized, "")
+	// }
+	rc.Auth.User = claims.Username
+	rc.Auth.Group = claims.Gid
 	return token, nil
 }

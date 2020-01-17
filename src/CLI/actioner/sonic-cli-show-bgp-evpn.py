@@ -38,19 +38,25 @@ def invoke_api(func, args=[]):
             +'/openconfig-bgp-evpn-ext:vnis/vni={vni_number}/state',
                 vrf=args[0], af_name=args[1], vni_number=args[2])
         return api.get(keypath)
+    elif func == 'get_bgp_evpn_routes':
+        keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={vrf}'
+            +'/protocols/protocol=BGP,bgp/bgp/rib/afi-safis/afi-safi={af_name}/openconfig-bgp-evpn-ext:l2vpn-evpn'
+            +'/loc-rib/routes',
+                vrf=args[0], af_name=args[1])
+        return api.get(keypath)
 
     else:
         body = {}
 
     return api.cli_not_implemented(func)
 
-def run(func, args):
+def run(func, args, renderer):
     response = invoke_api(func, args)
 
     if response.ok():
         if response.content is not None:
             api_response = response.content
-            show_cli_output(args[3], api_response)
+            show_cli_output(renderer, api_response)
         else:
             print("Empty response")
     else:
@@ -61,5 +67,5 @@ if __name__ == '__main__':
     pipestr().write(sys.argv)
     func = sys.argv[1]
 
-    run(func, sys.argv[2:])
+    run(func, sys.argv[3:], sys.argv[2])
 

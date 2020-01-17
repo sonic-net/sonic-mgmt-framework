@@ -73,7 +73,7 @@ func cfg_copy_action(body []byte) ([]byte, error) {
     var err error
     var result []byte
     var options []string
-    var query_result  hostResult
+    var query_result  HostResult
     var source,destination,filename string
 
     var operand struct {
@@ -122,7 +122,7 @@ func cfg_copy_action(body []byte) ([]byte, error) {
                        options = append(options, filename)
                        log.Info("filename", filename)
                }
-               query_result = hostQuery(cfg_cmd, options)
+               query_result = HostQuery(cfg_cmd, options)
             } else {
                log.Error("Invalid command src %s, dest %s, overwrite %t\n",
                 source, destination, operand.Input.Overwrite) 

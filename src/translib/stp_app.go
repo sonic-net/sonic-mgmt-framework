@@ -380,8 +380,8 @@ func (app *StpApp) processCommon(d *db.DB, opcode int) error {
 			// Handle top PVST
 			switch opcode {
 			case CREATE, REPLACE, UPDATE, DELETE:
-				log.Infof("Implementation in progress for URL: %s", app.pathInfo.Template)
-				return tlerr.NotSupported("Implementation in progress")
+				log.Infof("URL: %s Not Supported", app.pathInfo.Template)
+				return tlerr.NotSupported("Operation Not Supported")
 			case GET:
 				ygot.BuildEmptyTree(stp.Pvst)
 				err = app.convertDBRpvstVlanConfigToInternal(d, db.Key{})
@@ -443,8 +443,8 @@ func (app *StpApp) processCommon(d *db.DB, opcode int) error {
 			// Handle both rapid-pvst and rapid-pvst/vlan
 			switch opcode {
 			case CREATE, REPLACE, UPDATE, DELETE:
-				log.Infof("Implementation in progress for URL: %s", app.pathInfo.Template)
-				return tlerr.NotSupported("Implementation in progress")
+				log.Infof("URL: %s Not Supported", app.pathInfo.Template)
+				return tlerr.NotSupported("Operation Not Supported")
 			case GET:
 				ygot.BuildEmptyTree(stp.RapidPvst)
 				err = app.convertDBRpvstVlanConfigToInternal(d, db.Key{})
@@ -496,8 +496,8 @@ func (app *StpApp) processCommon(d *db.DB, opcode int) error {
 		} else {
 			switch opcode {
 			case CREATE, REPLACE, UPDATE, DELETE:
-				log.Infof("Implementation in progress for URL: %s", app.pathInfo.Template)
-				return tlerr.NotSupported("Implementation in progress")
+				log.Infof("URL: %s Not Supported", app.pathInfo.Template)
+				return tlerr.NotSupported("Operation Not Supported")
 			case GET:
 				ygot.BuildEmptyTree(stp.Interfaces)
 				err = app.convertDBStpInterfacesToInternal(d, db.Key{})
@@ -1484,9 +1484,15 @@ func (app *StpApp) setStpInterfacesDataInDB(d *db.DB, createFlag bool) error {
 		}
 		if createFlag || (!createFlag && err != nil && !existingEntry.IsPopulated()) {
 			err = d.CreateEntry(app.interfaceTable, asKey(intfName), app.intfTableMap[intfName])
+			if err != nil {
+				return err
+			}
 		} else {
 			if existingEntry.IsPopulated() {
 				err = d.ModEntry(app.interfaceTable, asKey(intfName), app.intfTableMap[intfName])
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -1991,7 +1997,10 @@ func (app *StpApp) enableStpForInterfaces(d *db.DB) error {
 	for i, _ := range portKeys {
 		portKey := portKeys[i]
 		if contains(intfList, (&portKey).Get(0)) {
-			d.CreateEntry(app.interfaceTable, portKey, defaultDBValues)
+			err = d.CreateEntry(app.interfaceTable, portKey, defaultDBValues)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
@@ -2003,7 +2012,10 @@ func (app *StpApp) enableStpForInterfaces(d *db.DB) error {
 	for i, _ := range portchKeys {
 		portchKey := portchKeys[i]
 		if contains(intfList, (&portchKey).Get(0)) {
-			d.CreateEntry(app.interfaceTable, portchKey, defaultDBValues)
+			err = d.CreateEntry(app.interfaceTable, portchKey, defaultDBValues)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return err
