@@ -193,7 +193,7 @@ func cfg_write_erase_action(body []byte) ([]byte, error) {
 
     sum.Output.Status = 1
 
-    host_output := hostQuery(fcnt, option)
+    host_output := HostQuery(fcnt, option)
     if host_output.Err != nil {
         glog.Errorf("host Query failed: err=%v", host_output.Err)
         glog.Flush()
