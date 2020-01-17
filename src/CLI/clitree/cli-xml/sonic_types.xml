@@ -271,6 +271,12 @@ limitations under the License.
         />
     <!--=======================================================-->
     <PTYPE
+        name="LINE"
+        pattern=".*" 
+        help="Line"
+        />
+    <!--=======================================================-->
+    <PTYPE
         name="EMAILID"
         pattern="^([A-Za-z0-9][A-Za-z0-9._%+-]{1,64}@([A-Za-z0-9-]{1,63}\.){1,8}[A-Za-z]{2,63})$"
         help="Email address"
