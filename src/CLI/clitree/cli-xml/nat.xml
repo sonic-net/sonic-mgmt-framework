@@ -220,6 +220,7 @@ limitations under the License.
              name="acl-name"
              help="ACL Name"
              ptype="STRING"
+             optional="true"
              >
          </PARAM>
          <PARAM
@@ -245,14 +246,8 @@ limitations under the License.
          </PARAM>
 
          <ACTION> 
-             if test "${natType}" = ""; then&#xA;
-                 python $SONIC_CLI_ROOT/sonic-cli-nat.py patch_openconfig_nat_nat_instances_instance_nat_acl_pool_binding_nat_acl_pool_binding_entry_config ${binding-name} ${pool-name} ${acl-name}&#xA; 
-             elif test "${twice-nat-id-value}" = ""; then&#xA;
-                 python $SONIC_CLI_ROOT/sonic-cli-nat.py patch_openconfig_nat_nat_instances_instance_nat_acl_pool_binding_nat_acl_pool_binding_entry_config ${binding-name} ${pool-name} ${acl-name} ${natType}&#xA;
-             else&#xA;
-                 python $SONIC_CLI_ROOT/sonic-cli-nat.py patch_openconfig_nat_nat_instances_instance_nat_acl_pool_binding_nat_acl_pool_binding_entry_config ${binding-name} ${pool-name} ${acl-name} ${natType} ${twice-nat-id-value}&#xA;
-             fi&#xA;
-     </ACTION>
+             python $SONIC_CLI_ROOT/sonic-cli-nat.py patch_openconfig_nat_nat_instances_instance_nat_acl_pool_binding_nat_acl_pool_binding_entry_config ${binding-name} ${pool-name} acl-name=${acl-name} nat-type=${natType} twice-nat-id=${twice-nat-id-value}&#xA;
+         </ACTION>
      </COMMAND>
 
       <COMMAND
@@ -476,8 +471,8 @@ limitations under the License.
 
    <ACTION> 
        if test "${no-static-subcommands}" = "all"; then&#xA;
-           python $SONIC_CLI_ROOT/sonic-cli-nat.py delete_openconfig_nat_nat_instances_instance_nat_mapping_table ${global-ip}&#xA;
-           python $SONIC_CLI_ROOT/sonic-cli-nat.py delete_openconfig_nat_nat_instances_instance_napt_mapping_table ${global-ip} ${natPortType} ${global-port} &#xA;
+           python $SONIC_CLI_ROOT/sonic-cli-nat.py delete_openconfig_nat_nat_instances_instance_nat_mapping_table&#xA;
+           python $SONIC_CLI_ROOT/sonic-cli-nat.py delete_openconfig_nat_nat_instances_instance_napt_mapping_table&#xA;
        elif test "${no-static-subcommands}" = "basic"; then&#xA;
            python $SONIC_CLI_ROOT/sonic-cli-nat.py delete_openconfig_nat_nat_instances_instance_nat_mapping_table_nat_mapping_entry ${global-ip}&#xA;
        else&#xA;
@@ -591,6 +586,12 @@ limitations under the License.
                   python $SONIC_CLI_ROOT/sonic-cli-nat.py get_openconfig_nat_nat_instances_instance_nat_pool show_nat_pool.j2&#xA;
               elif test "${config-subcommands}" = "static"; then&#xA;
                   python $SONIC_CLI_ROOT/sonic-cli-nat.py get_nat_static_configs show_nat_static_configs.j2&#xA;
+              elif test "${config-subcommands}" = ""; then&#xA;
+                  python $SONIC_CLI_ROOT/sonic-cli-nat.py get_openconfig_nat_nat_instances_instance_config show_nat_global_config.j2&#xA;
+                  python $SONIC_CLI_ROOT/sonic-cli-nat.py get_nat_static_configs show_nat_static_configs.j2&#xA;
+                  python $SONIC_CLI_ROOT/sonic-cli-nat.py get_openconfig_nat_nat_instances_instance_nat_pool show_nat_pool.j2&#xA;
+                  python $SONIC_CLI_ROOT/sonic-cli-nat.py get_openconfig_nat_nat_instances_instance_nat_acl_pool_binding show_nat_bindings.j2&#xA;
+                  python $SONIC_CLI_ROOT/sonic-cli-nat.py get_nat_zones show_nat_zones.j2&#xA;
               fi&#xA;
           elif test "${nat-subcommands}" = "translations"; then&#xA;
           if test "${count}" = ""; then&#xA;

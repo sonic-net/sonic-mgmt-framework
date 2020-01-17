@@ -193,12 +193,13 @@ func (app *CommonApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
     var payload []byte
     var resPayload []byte
     log.Info("processGet:path =", app.pathInfo.Path)
-    var txCache interface{}
+    txCache:= make(map[string]interface{})
 
     for {
 	    // Keep a copy of the ygotRoot and let Transformer use this copy of ygotRoot
 	    xfmrYgotRoot, _ := ygot.DeepCopy((*app.ygotRoot).(ygot.GoStruct))
-	    payload, err = transformer.GetAndXlateFromDB(app.pathInfo.Path, &xfmrYgotRoot, dbs, txCache)
+		isEmptyPayload  := false
+	    payload, err, isEmptyPayload = transformer.GetAndXlateFromDB(app.pathInfo.Path, &xfmrYgotRoot, dbs, txCache)
 	    if err != nil {
 		    log.Error("transformer.transformer.GetAndXlateFromDB failure. error:", err)
 		    resPayload = payload
@@ -240,11 +241,16 @@ func (app *CommonApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
 
 		    resYgot := (*app.ygotRoot)
 		    if !strings.HasPrefix(app.pathInfo.Path, "/sonic") {
-			    // Merge the ygotRoots filled by transformer and app.ygotRoot used to Unmarshal the payload (required as Unmarshal does replace operation on ygotRoot)
-			    var mrgErr error
-			    resYgot, mrgErr = ygot.MergeStructs(xfmrYgotRoot.(*ocbinds.Device),(*app.ygotRoot).(*ocbinds.Device))
-			    if mrgErr != nil {
-				    log.Error("Error in ygot.MergeStructs: ", mrgErr)
+			    // if payload is empty, no need to invoke merge-struct
+			    if isEmptyPayload == true {
+				    resYgot = xfmrYgotRoot
+			    } else {
+				    // Merge the ygotRoots filled by transformer and app.ygotRoot used to Unmarshal the payload (required as Unmarshal does replace operation on ygotRoot)
+				    var mrgErr error
+				    resYgot, mrgErr = ygot.MergeStructs(xfmrYgotRoot.(*ocbinds.Device),(*app.ygotRoot).(*ocbinds.Device))
+				    if mrgErr != nil {
+					    log.Error("Error in ygot.MergeStructs: ", mrgErr)
+				    }
 			    }
 		    }
 		    if resYgot != nil {
@@ -282,7 +288,7 @@ func (app *CommonApp) translateCRUDCommon(d *db.DB, opcode int) ([]db.WatchKeys,
 	var err error
 	var keys []db.WatchKeys
 	var tblsToWatch []*db.TableSpec
-	var txCache interface{}
+	txCache:= make(map[string]interface{})
 	log.Info("translateCRUDCommon:path =", app.pathInfo.Path)
 
 	// translate yang to db

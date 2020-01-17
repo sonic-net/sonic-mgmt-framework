@@ -61,7 +61,7 @@ func ztpAction(action string) (string, error) {
 	// result.Body is of type []interface{}, since any data may be returned by
 	// the host server. The application is responsible for performing
 	// type assertions to get the correct data.
-	result := hostQuery("ztp." + action)
+	result := HostQuery("ztp." + action)
 	if result.Err != nil {
 		return output, result.Err
 	}

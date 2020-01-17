@@ -32,6 +32,8 @@ import (
 	"unsafe"
 	"runtime"
 	custv "cvl/custom_validation"
+	"time"
+	"sync"
 )
 
 type CVLValidateType uint
@@ -113,6 +115,21 @@ type CVLEditConfigData struct {
 	Key string      //Key format : "PORT|Ethernet4"
 	Data map[string]string //Value :  {"alias": "40GE0/28", "mtu" : 9100,  "admin_status":  down}
 }
+
+//CVL validations stats 
+//Maintain time stats for call to ValidateEditConfig().
+//Hits : Total number of times ValidateEditConfig() called
+//Time : Total time spent in ValidateEditConfig()
+//Peak : Highest time spent in ValidateEditConfig()
+type ValidationTimeStats struct {
+	Hits uint
+	Time time.Duration
+	Peak time.Duration
+}
+
+//Global data structure for maintaining validation stats
+var cfgValidationStats ValidationTimeStats
+var statsMutex *sync.Mutex
 
 func Initialize() CVLRetCode {
 	if (cvlInitialized == true) {
@@ -202,11 +219,12 @@ func (c *CVL) ValidateStartupConfig(jsonData string) CVLRetCode {
 	return CVL_NOT_IMPLEMENTED
 }
 
+//Steps:
+//	Check config data syntax
+//	Fetch the depedent data
+//	Merge config and dependent data
+//	Finally validate
 func (c *CVL) ValidateIncrementalConfig(jsonData string) CVLRetCode {
-	//Check config data syntax
-	//Fetch the depedent data
-	//Merge config and dependent data
-	//Finally validate
 	c.clearTmpDbCache()
 	var  v interface{}
 
@@ -223,6 +241,11 @@ func (c *CVL) ValidateIncrementalConfig(jsonData string) CVLRetCode {
 
 	}
 
+	errObj := c.yp.ValidateSyntax(root, nil)
+	if yparser.YP_SUCCESS != errObj.ErrCode {
+		return CVL_FAILURE
+	}
+
 	//Add and fetch entries if already exists in Redis
 	for tableName, data := range dataMap {
 		for key, _ := range data.(map[string]interface{}) {
@@ -233,7 +256,6 @@ func (c *CVL) ValidateIncrementalConfig(jsonData string) CVLRetCode {
 	existingData := c.fetchDataToTmpCache()
 
 	//Merge existing data for update syntax or checking duplicate entries
-	var errObj yparser.YParserError
 	if (existingData != nil) {
 		if root, errObj = c.yp.MergeSubtree(root, existingData);
 				errObj.ErrCode != yparser.YP_SUCCESS {
@@ -244,14 +266,9 @@ func (c *CVL) ValidateIncrementalConfig(jsonData string) CVLRetCode {
 	//Clear cache
 	c.clearTmpDbCache()
 
-	//Add tables for 'must' expression
-	for tableName, _ := range dataMap {
-		c.addTableDataForMustExp(OP_NONE, tableName)
-	}
-
 	//Perform validation
-	if _, cvlRetCode := c.validateSemantics(root, nil); cvlRetCode != CVL_SUCCESS {
-		return cvlRetCode
+	if cvlErrObj := c.validateCfgSemantics(c.yv.root); cvlErrObj.ErrCode != CVL_SUCCESS {
+		return cvlErrObj.ErrCode
 	}
 
 	return CVL_SUCCESS
@@ -266,7 +283,7 @@ func (c *CVL) ValidateConfig(jsonData string) CVLRetCode {
 	if err := json.Unmarshal(b, &v); err == nil {
 		var value map[string]interface{} = v.(map[string]interface{})
 		root, _ := c.translateToYang(&value)
-		//if ret == CVL_SUCCESS && root != nil {
+
 		if root == nil {
 			return CVL_FAILURE
 
@@ -281,13 +298,17 @@ func (c *CVL) ValidateConfig(jsonData string) CVLRetCode {
 	return CVL_SUCCESS
 }
 
-//Validate config data based on edit operation - no marshalling in between
+//Validate config data based on edit operation
 func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (cvlErr CVLErrorInfo, ret CVLRetCode) {
+
+	ts := time.Now()
 
 	defer func() {
 		if (cvlErr.ErrCode != CVL_SUCCESS) {
 			CVL_LOG(ERROR, "ValidateEditConfig() failed , %+v", cvlErr)
 		}
+		//Update validation time stats
+		updateValidationTimeStats(time.Since(ts))
 	}()
 
 	var cvlErrObj CVLErrorInfo
@@ -359,15 +380,9 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (cvlErr CVLErrorIn
 				return cvlErrObj, CVL_SYNTAX_ERROR
 			}
 
-			/*if (c.addTableEntryForMustExp(&cfgData[i], tbl) != CVL_SUCCESS) {
-				c.addTableDataForMustExp(cfgData[i].VOp, tbl)
-			}*/
-
 		case OP_UPDATE:
-			//Get the existing data from Redis to cache, so that final validation can be done after merging this dependent data
-			/*if (c.addTableEntryForMustExp(&cfgData[i], tbl) != CVL_SUCCESS) {
-				c.addTableDataForMustExp(cfgData[i].VOp, tbl)
-			}*/
+			//Get the existing data from Redis to cache, so that final 
+			//validation can be done after merging this dependent data
 			c.addTableEntryToCache(tbl, key)
 
 		case OP_DELETE:
@@ -394,22 +409,14 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (cvlErr CVLErrorIn
 					cvlErrObj.CVLErrDetails = cvlErrorMap[cvlErrObj.ErrCode]
 					return cvlErrObj, CVL_SEMANTIC_ERROR
 				}
-				//TBD : Can we do this ?
-				//No entry has depedency on this key, 
-				//remove from requestCache, we don't need any more as depedent data
-				//delete(c.requestCache[tbl], key)
 			}
-
-			/*if (c.addTableEntryForMustExp(&cfgData[i], tbl) != CVL_SUCCESS) {
-				c.addTableDataForMustExp(cfgData[i].VOp, tbl)
-			}*/
 
 			c.addTableEntryToCache(tbl, key)
 		}
 	}
 
-	//Only for tracing
 	if (IsTraceSet()) {
+		//Only for tracing
 		jsonData := ""
 
 		jsonDataBytes, err := json.Marshal(requestedData)
@@ -434,15 +441,7 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (cvlErr CVLErrorIn
 		return errN,errN.ErrCode
 	}
 
-	//Step 3 : Check keys and update dependent data
-	//dependentData := make(map[string]interface{})
-
-	//Step 4 : Perform validation
-	if cvlErrObj, cvlRetCode1 := c.validateSemantics(yang, nil);
-	cvlRetCode1 != CVL_SUCCESS {
-			return cvlErrObj, cvlRetCode1
-	}
-
+	//Step 3 : Check keys and perform semantics validation 
 	for i := 0; i < cfgDataLen; i++ {
 
 		if (cfgData[i].VType != VALIDATE_ALL && cfgData[i].VType != VALIDATE_SEMANTICS) {
@@ -476,7 +475,8 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (cvlErr CVLErrorIn
 					return cvlErrObj, CVL_SEMANTIC_KEY_ALREADY_EXIST 
 
 				} else {
-					TRACE_LOG(TRACE_CREATE, "\nKey %s is deleted in same session, skipping key existence check for OP_CREATE operation", cfgData[i].Key)
+					TRACE_LOG(TRACE_CREATE, "\nKey %s is deleted in same session, " +
+					"skipping key existence check for OP_CREATE operation", cfgData[i].Key)
 				}
 			}
 
@@ -508,37 +508,34 @@ func (c *CVL) ValidateEditConfig(cfgData []CVLEditConfigData) (cvlErr CVLErrorIn
 
 		yangListName := getRedisTblToYangList(tbl, key)
 
-		//Run all custom validations
-		cvlErrObj= c.doCustomValidation(custvCfg, &custvCfg[i], yangListName,
+		//Get the YANG validator node
+		var node *xmlquery.Node = nil
+		if (c.requestCache[tbl][key][0].yangData != nil) { //get the node for CREATE/UPDATE or DELETE operation
+			node = c.requestCache[tbl][key][0].yangData
+		} else {
+			//Find the node from YANG tree
+			node = c.moveToYangList(yangListName, key)
+		}
+
+		if (node == nil) {
+			CVL_LOG(WARNING, "Could not find data for semantic validation, " +
+			"table %s , key %s", tbl, key)
+			continue
+		}
+
+		//Step 3.2 : Run all custom validations
+		cvlErrObj= c.doCustomValidation(node, custvCfg, &custvCfg[i], yangListName,
 		tbl, key)
 		if cvlErrObj.ErrCode != CVL_SUCCESS {
 			return cvlErrObj,cvlErrObj.ErrCode
 		}
 
-		if cvlErrObj = c.validateEditCfgExtDep(yangListName, key, &cfgData[i]);
+		//Step 3.3 : Perform semantic validation
+		if cvlErrObj = c.validateSemantics(node, yangListName, key, &cfgData[i]);
 		cvlErrObj.ErrCode != CVL_SUCCESS {
 			return cvlErrObj,cvlErrObj.ErrCode
 		}
 	}
-
-	/* TBD
-	var depYang *yparser.YParserNode = nil
-	if (len(dependentData) > 0) {
-		depYang, errN = c.translateToYang(&dependentData)
-	}
-	//Step 4 : Perform validation
-	if cvlErrObj, cvlRetCode1 := c.validateSemantics(yang, depYang);
-	cvlRetCode1 != CVL_SUCCESS {
-			return cvlErrObj, cvlRetCode1
-	}
-	*/
-
-	//Cache validated data
-	/*
-	if errObj := c.yp.CacheSubtree(false, yang); errObj.ErrCode != yparser.YP_SUCCESS {
-		TRACE_LOG(TRACE_CACHE, "Could not cache validated data")
-	}
-	*/
 
 	c.yp.DestroyCache()
 	return cvlErrObj, CVL_SUCCESS
@@ -805,4 +802,34 @@ func (c *CVL) GetDepDataForDelete(redisKey string) ([]string, []string) {
 	}
 
 	return depKeys, depKeysForMod
+}
+
+//Update global stats for all sessions
+func updateValidationTimeStats(td time.Duration) {
+	statsMutex.Lock()
+
+	cfgValidationStats.Hits++
+	if (td > cfgValidationStats.Peak) {
+		cfgValidationStats.Peak = td
+	}
+
+	cfgValidationStats.Time += td
+
+	statsMutex.Unlock()
+}
+
+//Retrieve global stats
+func GetValidationTimeStats() ValidationTimeStats {
+	return cfgValidationStats
+}
+
+//Clear global stats
+func ClearValidationTimeStats() {
+	statsMutex.Lock()
+
+	cfgValidationStats.Hits = 0
+	cfgValidationStats.Peak = 0
+	cfgValidationStats.Time = 0
+
+	statsMutex.Unlock()
 }

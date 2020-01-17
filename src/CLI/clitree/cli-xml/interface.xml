@@ -22,6 +22,7 @@ limitations under the License.
     xsi:schemaLocation="http://www.dellemc.com/sonic/XMLSchema
     http://www.dellemc.com/sonic/XMLSchema/clish.xsd"
     >
+
     <VIEW name="enable-view">
     <!--show interface -->
     <COMMAND
@@ -287,7 +288,44 @@ limitations under the License.
                 ptype="LAG_ID"
                 >
         </PARAM>
-        <ACTION builtin="clish_restcl">oper=PATCH url=/restconf/data/openconfig-interfaces:interfaces/interface=PortChannel${lag-id}/config body={"openconfig-interfaces:config": {"name": "PortChannel${lag-id}"}}</ACTION>
+        <PARAM 
+                name="mode" 
+                help="PortChannel Mode" 
+                ptype="SUBCOMMAND" 
+                mode="subcommand" 
+                optional="true"
+                >
+                <PARAM 
+                        name="PoMode" 
+                        help="" 
+                        ptype="PO_MODE"
+                        > 
+                </PARAM>
+        </PARAM>
+        <PARAM 
+                name="min-links" 
+                help="Minimum links" 
+                ptype="SUBCOMMAND" 
+                mode="subcommand" 
+                optional="true"
+                >
+                <PARAM 
+                        name="min-links-value" 
+                        help="Minimum links value" 
+                        ptype="UINT"
+                        > 
+                </PARAM>
+        </PARAM>
+        <PARAM 
+                name="fallback" 
+                help="LACP Fallback" 
+                ptype="SUBCOMMAND" 
+                mode="subcommand" 
+                optional="true"
+                > 
+         </PARAM>
+
+         <ACTION builtin="clish_pyobj">sonic_cli_if portchannel_config PortChannel${lag-id} mode=${PoMode} min-links=${min-links-value} fallback=${fallback}</ACTION>
     </COMMAND>
 
     <COMMAND
@@ -425,29 +463,8 @@ limitations under the License.
                 help="Specify a PortChannel number"
                 ptype="LAG_ID"
             >
-            <!-- channel-group <number> mode [active] -->
-            <PARAM
-                name="mode"
-                help="Set the LACP actor mode, default: ACTIVE"
-                ptype="SUBCOMMAND"
-                mode="subcommand"
-                optional="true">
-                <PARAM
-                    name="portchannel-mode-switch"
-                    help="Specify channeling mode"
-                    ptype="SUBCOMMAND"
-                    mode="switch"
-                    >
-                    <PARAM
-                        name="active"
-                        help="Set channeling mode to ACTIVE"
-                        ptype="SUBCOMMAND"
-                        mode="subcommand"
-                        />
-                </PARAM>
-            </PARAM>
         </PARAM>
-        <ACTION builtin="clish_restcl">oper=PATCH url=/restconf/data/openconfig-interfaces:interfaces/interface=${iface}/openconfig-if-ethernet:ethernet/config/openconfig-if-aggregate:aggregate-id body={"openconfig-if-aggregate:aggregate-id": "${lag-id}}</ACTION>
+        <ACTION builtin="clish_restcl">oper=PATCH url=/restconf/data/openconfig-interfaces:interfaces/interface=${iface}/openconfig-if-ethernet:ethernet/config/openconfig-if-aggregate:aggregate-id body={"openconfig-if-aggregate:aggregate-id": "${lag-id}"}</ACTION>
         </COMMAND>
 
         <COMMAND
@@ -869,20 +886,6 @@ limitations under the License.
         help="Negate a command or set its defaults"
         />
     <COMMAND
-        name="min-links"
-        help="Configure the minimum number of links in a PortChannel">
-        <PARAM
-            name="min-links"
-            help="Configure the minimum number of links in a PortChannel"
-            ptype="MIN_LINK" />
-        <ACTION>python $SONIC_CLI_ROOT/sonic_cli_if.py patch_openconfig_if_aggregate_interfaces_interface_aggregation_config_min_links ${po_name} ${min-links} </ACTION>
-    </COMMAND>
-    <COMMAND
-        name="no min-links"
-        help="Default the minimum number of links in a PortChannel" >
-        <ACTION>python $SONIC_CLI_ROOT/sonic_cli_if.py patch_openconfig_if_aggregate_interfaces_interface_aggregation_config_min_links ${po_name} 0 </ACTION>
-    </COMMAND>
-    <COMMAND
         name="mtu"
         help="Configure MTU">
         <PARAM
@@ -905,25 +908,6 @@ limitations under the License.
         name="no shutdown"
         help="Enable the interface">
         <ACTION>python $SONIC_CLI_ROOT/sonic_cli_if.py patch_openconfig_interfaces_interfaces_interface_config_enabled ${po_name} True </ACTION>
-    </COMMAND>
-    <!-- lacp fallback -->
-    <COMMAND
-        help="Configure LACP fallback"
-        name="fallback"
-        >
-        <!-- lacp fallback enable -->
-        <PARAM
-            name="enable"
-            help="Enable lacp fallback"
-            ptype="SUBCOMMAND"
-            mode="subcommand"
-            /> <!-- lacp fallback enable -->
-        <ACTION> python $SONIC_CLI_ROOT/sonic_cli_if.py patch_dell_intf_augments_interfaces_interface_aggregation_config_fallback ${po_name} True </ACTION>
-    </COMMAND>
-    <COMMAND
-        name="no fallback"
-        help="Disable fallback">
-        <ACTION> python $SONIC_CLI_ROOT/sonic_cli_if.py patch_dell_intf_augments_interfaces_interface_aggregation_config_fallback ${po_name} False </ACTION>
     </COMMAND>
 
     <COMMAND

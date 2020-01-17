@@ -74,6 +74,11 @@ module sonic-udld {
             list UDLD_PORT_LIST {
                 key "ifname";
 
+                must "count(../../UDLD/UDLD_LIST[id='GLOBAL']) != 0" {
+                    error-message "UDLD not enabled globally";
+                    error-app-tag udld-invalid;
+                }
+
                 leaf ifname {
                     type leafref {
                         path "/prt:sonic-port/prt:PORT/prt:PORT_LIST/prt:ifname";
@@ -177,6 +182,10 @@ module sonic-udld {
 
                 leaf timeout_interval {
                     type uint16;
+                }
+
+                leaf status {
+                    type string;
                 }
             }
         }

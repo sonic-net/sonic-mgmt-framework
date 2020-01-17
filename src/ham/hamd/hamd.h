@@ -46,7 +46,7 @@ private:
     std::string         certgen_default_m         = "/usr/bin/certgen";
     //std::string         shell_default_m           = "/usr/bin/sonic-cli";
     //std::string         shell_default_m           = ""; // empty string -> let linux assign default shell (as per /etc/default/useradd)
-    std::string         shell_default_m           = "/bin/bash";
+    std::string         shell_default_m           = "/usr/bin/sonic-launch-shell";
 
 public:
     bool                tron_m                    = tron_default_m;

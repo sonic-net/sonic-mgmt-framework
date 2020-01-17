@@ -74,20 +74,5 @@ limitations under the License.
         <COMMAND
             name="no debug"
             help="No Debug commands" />
-        <!-- Special commands -->
-        <COMMAND
-            name="system"
-            help="System command"
-            >
-            <PARAM
-                name="cmd"
-                help="Enter the linux command to execute"
-                ptype="STRING_WITH_PIPE"
-                >
-            </PARAM>
-            <ACTION>
-                ${cmd}
-            </ACTION>
-        </COMMAND>
     </VIEW>
 </CLISH_MODULE>

@@ -53,7 +53,7 @@ var rpc_kdump_config_cb RpcCallpoint = func(body []byte, dbs [db.MaxDB]*db.DB) (
 		} `json:"sonic-kdump:output"`
 	}
 
-    host_output := hostQuery("kdump.command", operand.Input.Enabled, operand.Input.Num_Dumps, operand.Input.Memory)
+    host_output := HostQuery("kdump.command", operand.Input.Enabled, operand.Input.Num_Dumps, operand.Input.Memory)
     if host_output.Err != nil {
         glog.Errorf("host Query failed: err=%v", host_output.Err)
         glog.Flush()
@@ -90,7 +90,7 @@ var rpc_kdump_state_cb RpcCallpoint = func(body []byte, dbs [db.MaxDB]*db.DB) ([
 		} `json:"sonic-kdump:output"`
 	}
 
-    host_output := hostQuery("kdump.state", operand.Input.Param)
+    host_output := HostQuery("kdump.state", operand.Input.Param)
     if host_output.Err != nil {
         glog.Errorf("host Query failed: err=%v", host_output.Err)
         glog.Flush()

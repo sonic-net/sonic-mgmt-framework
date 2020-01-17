@@ -7,6 +7,7 @@ import (
         "strings"
         "translib/ocbinds"
         "translib/db"
+        "translib/tlerr"
 )
 
 type NwInstMapKey struct {
@@ -172,6 +173,25 @@ func isMgmtVrf(inParams XfmrParams) (bool, error) {
                 return true, err
         } else {
                 return false, err
+        }
+}
+
+func isIntfBindToOtherVrf(intf_tbl_name string, intf_name string, nwInst_name string, inParams XfmrParams) (bool, string) {
+        intfTable := &db.TableSpec{Name: intf_tbl_name}
+        intfEntry, err := inParams.d.GetEntry(intfTable, db.Key{Comp: []string{intf_name}})
+        if (err != nil) {
+               return false, "" 
+        }
+
+        vrfName_str :=  (&intfEntry).Get("vrf_name")
+
+        if (vrfName_str == ""){
+                return false, "" 
+        } else if (vrfName_str != nwInst_name) {
+                return true, vrfName_str
+        } else {
+                /* If the interface is binding with the same VRF, let it pass */
+                return false, "" 
         }
 }
 
@@ -567,6 +587,20 @@ var YangToDb_network_instance_interface_binding_subtree_xfmr SubTreeXfmrYangToDb
 
         intTbl := IntfTypeTblMap[intf_type]
         intf_tbl_name, _ :=  getIntfTableNameByDBId(intTbl, inParams.curDb)
+
+        /* Check if interface already has VRF association */
+        intfVrfBind, vrf_name := isIntfBindToOtherVrf(intf_tbl_name, intfId, keyName, inParams)
+        if (intfVrfBind == true) {
+                var errStr string
+                if (inParams.oper == DELETE) {
+                        errStr = "Interface is associated with VRF " + vrf_name
+                } else {
+                        errStr = "Interface is already associated with VRF " + vrf_name
+                }
+                log.Info("YangToDb_network_instance_interface_binding_subtree_xfmr: ", errStr);
+                err = tlerr.InvalidArgsError{Format: errStr}
+                return res_map, err
+        }
 
         res_map[intf_tbl_name] = make(map[string]db.Value)
 
