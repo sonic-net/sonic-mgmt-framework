@@ -40,8 +40,8 @@ limitations under the License.
             <PARAM name = "multihop" help = "Configure multihop" optional = "true" ptype = "SUBCOMMAND" mode="subcommand"> </PARAM>
             <PARAM name = "local-address" help = "Configure local address" optional = "true" ptype="SUBCOMMAND" mode="subcommand" >
                 <PARAM name = "localaddress" help = "" ptype = "SUBCOMMAND" mode="switch" >
-                    <PARAM name = "local_ipv4" help = "IPv4 local address" ptype = "IP_ADDR" > </PARAM>
-                    <PARAM name = "local_ipv6" help = "IPv6 local address" ptype = "IPV6_ADDR"> </PARAM>
+                    <PARAM name = "local_ipv4" help = "IPv4 local address" ptype = "IP_ADDR" default="null"> </PARAM>
+                    <PARAM name = "local_ipv6" help = "IPv6 local address" ptype = "IPV6_ADDR" default="null"> </PARAM>
                 </PARAM>
             </PARAM>
             <PARAM name = "interface" help = "Interface information" optional = "true" ptype = "SUBCOMMAND" mode="subcommand"> 
@@ -50,15 +50,15 @@ limitations under the License.
         <ACTION>
         if test "${multihop}" != ""; then&#xA;
             if test "${address}" != "peer_ipv6"; then&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-bfd.py get_openconfig_bfd_ext_bfd_sessions_multi_hop show_bfd_peers.j2 ${peer_ipv4} ${vrfname} ${local_ipv4}&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-bfd.py get_openconfig_bfd_ext_bfd_sessions_multi_hop show_bfd_peer.j2 ${peer_ipv4} ${vrfname} ${local_ipv4}&#xA;
             else&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-bfd.py get_openconfig_bfd_ext_bfd_sessions_multi_hop show_bfd_peers.j2 ${peer_ipv6} ${vrfname} ${local_ipv6}&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-bfd.py get_openconfig_bfd_ext_bfd_sessions_multi_hop show_bfd_peer.j2 ${peer_ipv6} ${vrfname} ${local_ipv6}&#xA;
             fi&#xA;
         else&#xA;
             if test "${address}" != "peer_ipv6"; then&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-bfd.py get_openconfig_bfd_ext_bfd_sessions_single_hop show_bfd_peers.j2 ${peer_ipv4} ${interfacename} ${vrfname} ${local_ipv4}&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-bfd.py get_openconfig_bfd_ext_bfd_sessions_single_hop show_bfd_peer.j2 ${peer_ipv4} ${interfacename} ${vrfname} ${local_ipv4}&#xA;
             else&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-bfd.py get_openconfig_bfd_ext_bfd_sessions_single_hop show_bfd_peers.j2 ${peer_ipv6} ${interfacename} ${vrfname} ${local_ipv6}&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-bfd.py get_openconfig_bfd_ext_bfd_sessions_single_hop show_bfd_peer.j2 ${peer_ipv6} ${interfacename} ${vrfname} ${local_ipv6}&#xA;
             fi&#xA;
         fi&#xA;
 	</ACTION>
@@ -75,25 +75,25 @@ limitations under the License.
             <PARAM name = "multihop" help = "Configure multihop" optional = "true" ptype = "SUBCOMMAND" mode="subcommand"> </PARAM>
             <PARAM name = "local-address" help = "Configure local address" optional = "true" ptype="SUBCOMMAND" mode="subcommand" >
                 <PARAM name = "localaddress" help = "" ptype = "SUBCOMMAND" mode="switch" >
-                    <PARAM name = "local_ipv4" help = "IPv4 local address" ptype = "IP_ADDR" > </PARAM>
-                    <PARAM name = "loacl_ipv6" help = "IPv6 local address" ptype = "IPV6_ADDR"> </PARAM>
+                    <PARAM name = "local_ipv4" help = "IPv4 local address" ptype = "IP_ADDR" default="null" > </PARAM>
+                    <PARAM name = "loacl_ipv6" help = "IPv6 local address" ptype = "IPV6_ADDR" default="null"> </PARAM>
                 </PARAM>
             </PARAM>
             <PARAM name = "interface" help = "Interface information" optional = "true" ptype = "SUBCOMMAND" mode="subcommand"> 
                 <PARAM name = "interfacename" help = "Configure local interface name" ptype = "STRING" > </PARAM>
             </PARAM>
         <ACTION>
-        if test "${multi-hop}" != ""; then&#xA;
+        if test "${multihop}" != ""; then&#xA;
             if test "${address}" != "peer_ipv6"; then&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-bfd.py get_openconfig_bfd_ext_bfd_sessions_multi_hop show_bfd_counters.j2 ${peer_ipv4} ${vrfname} ${local_ipv4}&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-bfd.py get_openconfig_bfd_ext_bfd_sessions_multi_hop show_bfd_counter.j2 ${peer_ipv4} ${vrfname} ${local_ipv4}&#xA;
             else&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-bfd.py get_openconfig_bfd_ext_bfd_sessions_multi_hop show_bfd_counters.j2 ${peer_ipv6} ${vrfname} ${local_ipv6}&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-bfd.py get_openconfig_bfd_ext_bfd_sessions_multi_hop show_bfd_counter.j2 ${peer_ipv6} ${vrfname} ${local_ipv6}&#xA;
             fi&#xA;
         else&#xA;
             if test "${address}" != "peer_ipv6"; then&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-bfd.py get_openconfig_bfd_ext_bfd_sessions_single_hop show_bfd_counters.j2 ${peer_ipv4} ${interfacename} ${vrfname} ${local_ipv4}&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-bfd.py get_openconfig_bfd_ext_bfd_sessions_single_hop show_bfd_counter.j2 ${peer_ipv4} ${interfacename} ${vrfname} ${local_ipv4}&#xA;
             else&#xA;
-                python $SONIC_CLI_ROOT/sonic-cli-bfd.py get_openconfig_bfd_ext_bfd_sessions_single_hop show_bfd_counters.j2 ${peer_ipv6} ${interfacename} ${vrfname} ${local_ipv6}&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-bfd.py get_openconfig_bfd_ext_bfd_sessions_single_hop show_bfd_counter.j2 ${peer_ipv6} ${interfacename} ${vrfname} ${local_ipv6}&#xA;
             fi&#xA;
         fi&#xA;
 	</ACTION> 
@@ -133,8 +133,8 @@ limitations under the License.
             <PARAM name = "multihop" help = "Configure multihop" optional = "true" ptype = "SUBCOMMAND" mode="subcommand"> </PARAM>
             <PARAM name = "local-address" help = "Configure local address" optional = "true" ptype="SUBCOMMAND" mode="subcommand" >
                 <PARAM name = "localaddress" help = "" ptype = "SUBCOMMAND" mode="switch" >
-                    <PARAM name = "IPv4" help = "IPv4 local address" ptype = "IP_ADDR" > </PARAM>
-                    <PARAM name = "IPv6" help = "IPv6 local address" ptype = "IPV6_ADDR"> </PARAM>
+                    <PARAM name = "IPv4" help = "IPv4 local address" ptype = "IP_ADDR" default="null"> </PARAM>
+                    <PARAM name = "IPv6" help = "IPv6 local address" ptype = "IPV6_ADDR" default="null"> </PARAM>
                 </PARAM>
             </PARAM>
             <PARAM name = "interface" help = "Interface information" optional = "true" ptype = "SUBCOMMAND" mode="subcommand"> 
