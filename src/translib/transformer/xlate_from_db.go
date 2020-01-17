@@ -21,7 +21,7 @@ package transformer
 import (
     "fmt"
     "translib/db"
-    "translib/tlerr"
+    //"translib/tlerr"
     "strings"
     "encoding/json"
     "strconv"
@@ -433,9 +433,9 @@ func directDbToYangJsonCreate(uri string, dbDataMap *map[db.DBNum]map[string]map
         if isEmptyPayload {
 		errStr := fmt.Sprintf("No data available")
 		log.Error(errStr)
-		err = tlerr.NotFound("Resource not found")
+		//err = tlerr.NotFound("Resource not found")
         }
-        return jsonData, err, false
+        return jsonData, err, isEmptyPayload
 }
 
 func tableNameAndKeyFromDbMapGet(dbDataMap map[string]map[string]db.Value) (string, string, error) {
