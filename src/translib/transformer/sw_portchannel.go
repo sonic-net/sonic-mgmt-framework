@@ -38,9 +38,15 @@ func init () {
 }
 
 const (
-       LAG_TYPE           = "lag_type"
+       LAG_TYPE           = "lag-type"
        PORTCHANNEL_TABLE  = "PORTCHANNEL"
 )
+
+var LAG_TYPE_MAP = map[string]string{
+    strconv.FormatInt(int64(ocbinds.OpenconfigIfAggregate_AggregationType_LACP), 10): "false",
+    strconv.FormatInt(int64(ocbinds.OpenconfigIfAggregate_AggregationType_STATIC), 10): "true",
+}
+
 
 /* Validate whether LAG exists in DB */
 func validateLagExists(d *db.DB, lagTs *string, lagName *string) error {
@@ -143,6 +149,15 @@ func getLagStateAttr(attr *string, ifName *string, lagInfoMap  map[string]db.Val
         return errors.New(errStr)
     }
     switch *attr {
+    case "mode":
+        oc_val.LagType = ocbinds.OpenconfigIfAggregate_AggregationType_LACP
+
+        lag_type,ok := lagEntries.Field["static"]
+        if ok {
+            if lag_type == "true" {
+                oc_val.LagType = ocbinds.OpenconfigIfAggregate_AggregationType_STATIC
+            }
+        }
     case "min-links":
         links, _ := strconv.Atoi(lagEntries.Field["min-links"])
         minlinks := uint16(links)
@@ -170,6 +185,15 @@ func getLagState(ifName *string, lagInfoMap  map[string]db.Value,
     oc_val.MinLinks = &minlinks
     fallbackVal, _:= strconv.ParseBool(lagEntries.Field["fallback"])
     oc_val.Fallback = &fallbackVal
+
+    oc_val.LagType = ocbinds.OpenconfigIfAggregate_AggregationType_LACP
+    lag_type,ok := lagEntries.Field["static"]
+    if ok {
+        if lag_type == "true" {
+            oc_val.LagType = ocbinds.OpenconfigIfAggregate_AggregationType_STATIC
+        }
+    }
+
     lagMembers := strings.Split(lagEntries.Field["member@"], ",")
     oc_val.Member = lagMembers
     return nil
@@ -231,6 +255,13 @@ func fillLagInfoForIntf(d *db.DB, ifName *string, lagInfoMap map[string]db.Value
         fallbackVal = "false"
     }
     lagInfoMap[*ifName].Field["fallback"] = fallbackVal
+
+    if v, k := curr.Field["static"]; k {
+        lagInfoMap[*ifName].Field["static"] = v
+    } else {
+        log.Info("Mode set to LACP, default value")
+        lagInfoMap[*ifName].Field["static"] = "false"
+    }
     log.Infof("Updated the lag-info-map for Interface: %s", *ifName)
 
     return err
@@ -293,6 +324,13 @@ var DbToYang_intf_lag_state_xfmr SubTreeXfmrDbToYang = func (inParams XfmrParams
         if err != nil {
             return err
         }
+    case "/openconfig-interfaces:interfaces/interface/openconfig-if-aggregate:aggregation/state/lag-type":
+         log.Info("Get is for lag type")
+         attr := "mode"
+         err = getLagStateAttr(&attr, &ifName, lagInfoMap, ocAggregationStateVal)
+         if err != nil {
+             return err
+         }
     case "/openconfig-interfaces:interfaces/interface/openconfig-if-aggregate:aggregation/state/openconfig-interfaces-ext:fallback":
         log.Info("Get is for fallback")
         attr := "fallback"
@@ -371,11 +409,6 @@ func deleteLagIntfAndMembers(inParams *XfmrParams, lagName *string) error {
     return nil
 }
 
-var LAG_TYPE_MAP = map[string]string{
-    strconv.FormatInt(int64(ocbinds.OpenconfigIfAggregate_AggregationType_LACP), 10): "false",
-    strconv.FormatInt(int64(ocbinds.OpenconfigIfAggregate_AggregationType_STATIC), 10): "true",
-}
-
 
 var YangToDb_lag_type_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
     result := make(map[string]string)
@@ -413,9 +446,24 @@ var DbToYang_lag_type_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (map[st
     result := make(map[string]interface{})
     data := (*inParams.dbDataMap)[inParams.curDb]
     log.Info("DbToYang_lag_type_xfmr", data, inParams.ygRoot)
-    oc_action := findInMap(LAG_TYPE_MAP, data[PORTCHANNEL_TABLE][inParams.key].Field["static"])
-    n, err := strconv.ParseInt(oc_action, 10, 64)
-    result[LAG_TYPE] = ocbinds.E_OpenconfigIfAggregate_AggregationType(n).ΛMap()["E_OpenconfigIfAggregate_AggregationType"][n].Name
+
+    intfType, _, ierr := getIntfTypeByName(inParams.key)
+    if ierr != nil || intfType != IntfTypePortChannel  {
+        return result, err
+    }
+
+
+    var agg_type ocbinds.E_OpenconfigIfAggregate_AggregationType
+    agg_type = ocbinds.OpenconfigIfAggregate_AggregationType_LACP
+
+    lag_type,ok := data[PORTCHANNEL_TABLE][inParams.key].Field["static"]
+    if ok {
+        if lag_type == "true" {
+            agg_type = ocbinds.OpenconfigIfAggregate_AggregationType_STATIC
+        }
+    }
+        result[LAG_TYPE] = ocbinds.E_OpenconfigIfAggregate_AggregationType.ΛMap(agg_type)["E_OpenconfigIfAggregate_AggregationType"][int64(agg_type)].Name
+    log.Infof("Lag Type returned from Field Xfmr: %v\n", result)
     return result, err
 }
 
