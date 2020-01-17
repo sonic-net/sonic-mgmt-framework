@@ -31,62 +31,64 @@ def clear_bgp_api(args):
    api = cc.ApiClient()
    keypath = []
    body = None
-   print len(args)
-   print args
+   asnval = None
+   address = ""
+   vrfname = ""
+   prefixip = ""
+   ifname = ""
+   pg = ""
+   af = ""
+   cinall = ""
+   clearall = ""
+   external = ""
+   cin = ""
+   cout = ""
+   soft = ""
    asn, asnval = args[0].split("=")
    nipv4, nipv4ip = args[1].split("=")
    nipv6, nipv6ip = args[2].split("=")
-   cmd = "{\"sonic-bgp-clear:input\": { "
    i = 6
    for arg in args[6:]:
         if "vrf" == arg:
-           cmd = cmd + "\"vrf\": " + args[i+1] + ", "
+           vrfname = args[i+1]
         elif "prefix" == arg:
-           cmd = cmd + "\"prefix\": " + args[i+1] + ", "
+           prefixip = args[i+1]
         elif "interface" == arg:
-           cmd = cmd + "\"interface\": " + args[i+1] + ", "
+           ifname = args[i+1]
         elif "peer-group" == arg:
-           cmd = cmd + "\"peer-group\": " + args[i+1] + ", "
+           pg = args[i+1]
         elif "ipv4" == arg:
-           cmd = cmd + "\"family\": \"IPv4\", "
+           af = "IPv4"
         elif "ipv6" == arg:
-           cmd = cmd + "\"family\": \"IPv6\", "
+           af = "IPv6"
         elif "*" == arg:
            if len(args) > 7:
-              cmd = cmd + "\"all\": true, "
+              cinall = True
            else:
-              cmd = cmd + "\"clear-all\": true, "
+              clearall = True
         elif "external" == arg:
-           cmd = cmd + "\"external\": true, "
+           external = True
         elif "in" == arg:
-           cmd = cmd + "\"in\": true, "
+           cin = True
         elif "out" == arg:
-           cmd = cmd + "\"out\": true, "
+           cout = True
         elif "soft" == arg:
-           cmd = cmd + "\"soft\": true, "
+           soft = True
         else:
            pass
         i = i + 1
-
-   if asnval:
-      cmd = cmd + "\"asn\": " + asnval + ", "
-   elif nipv4ip:
-      cmd = cmd + "\"address\": " + nipv4ip + ", "
-   elif nipv6ip:
-      cmd = cmd + "\"address\": " + nipv6ip + ", "
-   else:
-      pass
-   cmd = cmd[:-2]
-   cmd = cmd + "}}"
-   print "CMD"
-   print cmd
+   if nipv4ip != "":
+      address = nipv4ip
+   if nipv6ip != "":
+      address = nipv6ip
    keypath = cc.Path('/restconf/operations/sonic-bgp-clear:clear-bgp')
-   print "KEYPATH"
-   print keypath
-   body = { "sonic-bgp-clear:input":{"clear-all": true} }
-   print "BODY"
-   print body
-   return aa.post(keypath,body)
+   if clearall == True:
+      body = {"sonic-bgp-clear:input": { "clear-all": clearall}}
+   elif asnval != "":
+      body = {"sonic-bgp-clear:input": { "vrf-name": vrfname, "family": af, "all": cinall, "address": address, "interface": ifname, "asn": int(asnval), "prefix": prefixip, "peer-group": pg, "external": external, "in": cin, "out": cout, "soft": soft}}
+   else:
+      body = {"sonic-bgp-clear:input": { "vrf-name": vrfname, "family": af, "all": cinall, "address": address, "interface": ifname, "prefix": prefixip, "peer-group": pg, "external": external, "in": cin, "out": cout, "soft": soft}}
+   return api.post(keypath, body)
 
 def run(func, args):
     if func == 'clear_bgp':
@@ -95,7 +97,6 @@ def run(func, args):
             if response.content is not None:
                 # Get Command Output
                 api_response = response.content
-                print(api_response)
                 if api_response is None:
                     print("Failed")
                     sys.exit(1)

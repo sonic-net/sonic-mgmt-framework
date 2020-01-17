@@ -76,6 +76,11 @@ module sonic-bgp-clear {
                 description
                     "Clear all BGP peers.";
             }
+            leaf external {
+                type boolean;
+                description
+                    "Clear all BGP external peers.";
+            }
 
             leaf address {
                 type inet:ip-address;

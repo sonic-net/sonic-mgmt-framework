@@ -594,7 +594,7 @@ var rpc_clear_bgp RpcCallpoint = func(body []byte, dbs [db.MaxDB]*db.DB) ([]byte
     var err error
     var status string
     var clear_all string
-    var af_str, vrf_name, all, soft, in, out,neigh_address, prefix, peer_group, asn, intf string
+    var af_str, vrf_name, all, soft, in, out,neigh_address, prefix, peer_group, asn, intf, external string
     var cmd string
     var mapData map[string]interface{}
     err = json.Unmarshal(body, &mapData)
@@ -615,36 +615,52 @@ var rpc_clear_bgp RpcCallpoint = func(body []byte, dbs [db.MaxDB]*db.DB) ([]byte
     mapData = input.(map[string]interface{})
 
     log.Info("In rpc_clear_bgp", mapData)
-    if _, ok := mapData["clear-all"].(string) ; ok {
-        clear_all = "* "
+
+    if value, ok := mapData["clear-all"].(bool) ; ok {
+        log.Info("In clearall", value)
+        if value == true {
+           clear_all = "* "
+        }
     }
 
+    log.Info("In clearall", clear_all)
     if value, ok := mapData["vrf-name"].(string) ; ok {
-        vrf_name = value
-        vrf_name = "vrf " + vrf_name + " "
+        log.Info("In vrf", value)
+        if value != "" {
+            vrf_name = "vrf " + value + " "
+        }
     }
 
     if value, ok := mapData["family"].(string) ; ok {
-        af := value
-        if af == "IPv4" {
+        if value == "IPv4" {
             af_str = "ipv4 "
-        } else {
+        } else if value == "IPv6" {
             af_str = "ipv6 "
         }
     }
 
-    if _, ok := mapData["all"].(string) ; ok {
-        all = "* "
+    if value, ok := mapData["all"].(bool) ; ok {
+        if value == true {
+           all = "* "
+        }
+    }
+
+    if value, ok := mapData["external"].(bool) ; ok {
+        if value == true {
+           external = "external "
+        }
     }
 
     if value, ok := mapData["address"].(string) ; ok {
-        neigh_address = value
-        neigh_address = neigh_address + " "
+        if value != "" {
+            neigh_address = value + " "
+        }
     }
 
     if value, ok := mapData["interface"].(string) ; ok {
-        intf = value
-        intf = intf + " "
+        if value != "" {
+            intf = value + " "
+        }
     }
 
     if value, ok := mapData["asn"].(float64) ; ok {
@@ -654,51 +670,93 @@ var rpc_clear_bgp RpcCallpoint = func(body []byte, dbs [db.MaxDB]*db.DB) ([]byte
     }
 
     if value, ok := mapData["prefix"].(string) ; ok {
-        prefix = value
-        prefix = "prefix " + prefix + " "
+        if value != "" {
+            prefix = "prefix " + value + " "
+        }
     }
 
     if value, ok := mapData["peer-group"].(string) ; ok {
-        peer_group = value
-        peer_group = "peer_group " + peer_group + " "
+        if value != "" {
+            peer_group = "peer_group " + value + " "
+        }
     }
 
-    if _, ok := mapData["in"].(bool) ; ok {
-        in = "in"
-        in = in + " "
+    if value, ok := mapData["in"].(bool) ; ok {
+        if value == true {
+           in = "in "
+        }
     }
 
-    if _, ok := mapData["out"].(bool) ; ok {
-        out = "out"
-        out = out + " "
+    if value, ok := mapData["out"].(bool) ; ok {
+        if value == true {
+            out = "out "
+        }
     }
 
-    if _, ok := mapData["soft"].(bool) ; ok {
-        soft = "soft"
-        soft = soft + " "
+    if value, ok := mapData["soft"].(bool) ; ok {
+        if value == true {
+            soft = "soft "
+        }
     }
 
     log.Info("In rpc_clear_bgp", clear_all, vrf_name, af_str, all, neigh_address, intf, asn, prefix, peer_group, in, out, soft)
 
     if clear_all != "" {
         cmd = "clear ip bgp " + clear_all
-    } else if vrf_name != "" {
-        cmd = "clear ip bgp " + vrf_name
+    } else {
+        cmd = "clear ip bgp "
+        if vrf_name != "" {
+            cmd = "clear ip bgp " + vrf_name
+        }
+
+        if af_str != "" {
+            cmd = cmd + af_str
+        }
+
+        if neigh_address != "" {
+            cmd = cmd + neigh_address
+        }
+
+        if intf != "" {
+            cmd = cmd + intf
+        }
+
+        if prefix != "" {
+            cmd = cmd + prefix
+        }
+
+        if peer_group != "" {
+            cmd = cmd + peer_group
+        }
+
+        if external != "" {
+            cmd = cmd + external
+        }
+
+        if asn != "" {
+            cmd = cmd + asn
+        }
 
         if all != "" {
-          cmd = cmd + all
-        } else {
-          cmd = cmd + neigh_address + intf + asn + prefix + peer_group + in + out + soft
+            cmd = cmd + all
         }
+
+        if soft != "" {
+            cmd = cmd + soft
+        }
+
+        if in != "" {
+            cmd = cmd + in
+        }
+
+        if out != "" {
+            cmd = cmd + out
+        }
+
     }
-
-    log.Info("In rpc_clear_bgp cmd:", cmd)
-    _, cmd_err := exec_vtysh_cmd (cmd)
-
-    log.Info("In rpc_clear_bgp status:", cmd_err)
+    cmd = strings.TrimSuffix(cmd, " ")
+    exec_vtysh_cmd (cmd)
     status = "Success"
     result.Output.Status = status
-
-    log.Info("result: ", result.Output.Status)
     return json.Marshal(&result)
 }
