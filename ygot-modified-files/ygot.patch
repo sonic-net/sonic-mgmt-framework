@@ -251,7 +251,6 @@ diff -ruN ygot-dir-orig/ygot/ygen/genstate.go ygot-dir/ygot/ygen/genstate.go
  
  		es = append(es, en)
 diff -ruN ygot-dir-orig/ygot/ygot/struct_validation_map.go ygot-dir/ygot/ygot/struct_validation_map.go
-<<<<<<< HEAD
 --- ygot-dir-orig/ygot/ygot/struct_validation_map.go	2020-01-07 15:38:37.673046000 -0800
 +++ ygot-dir/ygot/ygot/struct_validation_map.go	2020-01-07 15:40:17.721117000 -0800
 @@ -335,19 +335,20 @@
