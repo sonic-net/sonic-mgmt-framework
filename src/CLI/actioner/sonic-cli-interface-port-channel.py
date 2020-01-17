@@ -37,6 +37,14 @@ def invoke_api(func, args=[]):
         path = cc.Path('/restconf/data/sonic-portchannel:sonic-portchannel/LAG_TABLE/LAG_TABLE_LIST={lagname}', lagname=args[0])
         return api.get(path)
 
+    if func == 'get_sonic_portchannel_sonic_portchannel_portchannel':
+        path = cc.Path('/restconf/data/sonic-portchannel:sonic-portchannel/PORTCHANNEL')
+        return api.get(path)
+
+    if func == 'get_sonic_portchannel_sonic_portchannel_portchannel_portchannel_list':
+        path = cc.Path('/restconf/data/sonic-portchannel:sonic-portchannel/PORTCHANNEL/PORTCHANNEL_LIST={lagname}', lagname=args[0])
+        return api.get(path)
+
     if func == 'get_openconfig_lacp_lacp_interfaces':
         path = cc.Path('/restconf/data/openconfig-lacp:lacp/interfaces')
         return api.get(path)
@@ -60,11 +68,14 @@ def get_lag_data():
     try:  
         if sys.argv[1] == "get_all_portchannels":
             portchannel_func = 'get_sonic_portchannel_sonic_portchannel_lag_table'
+            portchannel_conf_func = 'get_sonic_portchannel_sonic_portchannel_portchannel'
         else :
             portchannel_func = 'get_sonic_portchannel_sonic_portchannel_lag_table_lag_table_list'
+            portchannel_conf_func = 'get_sonic_portchannel_sonic_portchannel_portchannel_portchannel_list'
             
         args = sys.argv[2:]
         
+        output = {}
         response = invoke_api(portchannel_func, args)
         if response.ok():
             if response.content is not None:
@@ -76,7 +87,21 @@ def get_lag_data():
                         output['sonic-portchannel:LAG_TABLE']['LAG_TABLE_LIST'] = api_response['sonic-portchannel:LAG_TABLE_LIST']
                 else:
                     output = api_response        
- 
+
+        # GET Config params
+        resp = invoke_api(portchannel_conf_func, args)
+        if resp.ok():
+            if resp.content is not None:
+                # Get Command Output
+                api_resp = resp.content
+
+                if 'sonic-portchannel:PORTCHANNEL' not in api_resp.keys():
+                    output['sonic-portchannel:PORTCHANNEL'] = {}
+                    if 'sonic-portchannel:PORTCHANNEL_LIST' in api_resp.keys():
+                        output['sonic-portchannel:PORTCHANNEL']['PORTCHANNEL_LIST'] = api_resp['sonic-portchannel:PORTCHANNEL_LIST']
+                else:
+                    output.update( api_resp )
+
     except Exception as e:
         print("Exception when calling get_lag_data : %s\n" %(e))
 
@@ -153,6 +178,10 @@ def run():
         template_file = sys.argv[2]
     else:
         template_file = sys.argv[3]
+
+    # Check for PortChannel existence by checking its admin status from LAG TABLE
+    if 'admin_status' not in response['portchannel']['sonic-portchannel:LAG_TABLE']['LAG_TABLE_LIST'][0].keys():
+        response = {}
 
     show_cli_output(template_file, response)
 
