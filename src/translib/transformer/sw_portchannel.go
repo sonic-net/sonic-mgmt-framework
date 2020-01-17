@@ -39,7 +39,7 @@ func init () {
 }
 
 const (
-       LAG_TYPE           = "lag_type"
+       LAG_TYPE           = "lag-type"
        PORTCHANNEL_TABLE  = "PORTCHANNEL"
 )
 
@@ -166,10 +166,7 @@ func can_configure_fallback(inParams XfmrParams) error {
            ifKey := pathInfo.Var("name")
            var mode string
            e = get_lag_type(inParams.d, &ifKey, &mode)
-           if e == nil && mode == "true" {
-               errStr := "Fallback is not supported for Static LAGs (info read from DB)"
-               return tlerr.InvalidArgsError{Format:errStr}
-           } else if e == nil && mode == "false" {
+           if e == nil {
                errStr := "Fallback option cannot be re-configured for an already existing PortChannel: " + ifKey
                return tlerr.InvalidArgsError{Format:errStr}
            }
