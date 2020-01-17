@@ -2351,12 +2351,9 @@ var DbToYang_bgp_routes_get_xfmr SubTreeXfmrDbToYang = func(inParams XfmrParams)
                     return oper_err
                 }
             }
-<<<<<<< HEAD
     }
 
     switch targetUriPath {
-=======
->>>>>>> origin/broadcom_sonic_share
         case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv4-unicast/openconfig-rib-bgp-ext:loc-rib-prefix/routes/route":
             if (rib_key.afiSafiName == "") || (rib_key.afiSafiName == "IPV4_UNICAST") {
                 err = hdl_get_bgp_local_rib_prefix (bgpRib_obj, &rib_key, ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_IPV4_UNICAST, &dbg_log)
@@ -2365,12 +2362,9 @@ var DbToYang_bgp_routes_get_xfmr SubTreeXfmrDbToYang = func(inParams XfmrParams)
                     return oper_err
                 }
             }
-<<<<<<< HEAD
     }
 
     switch targetUriPath {
-=======
->>>>>>> origin/broadcom_sonic_share
         case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv6-unicast/openconfig-rib-bgp-ext:loc-rib-prefix/routes/route":
             if (rib_key.afiSafiName == "") || (rib_key.afiSafiName == "IPV6_UNICAST") {
                 err = hdl_get_bgp_local_rib_prefix (bgpRib_obj, &rib_key, ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_IPV6_UNICAST, &dbg_log)
