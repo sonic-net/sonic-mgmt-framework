@@ -1,0 +1,162 @@
+module sonic-bgp-clear {
+    namespace "http://github.com/Azure/sonic-bgp-clear";
+    prefix sbgpclear;
+    yang-version 1.1;
+
+    import ietf-inet-types {
+        prefix inet;
+    }
+
+    import ietf-yang-types {
+        prefix yang;
+    }
+
+    import sonic-port {
+        prefix prt;
+    }
+
+    import sonic-portchannel {
+        prefix spc;
+    }
+
+    import sonic-vlan {
+        prefix svlan;
+    }
+
+    import sonic-mgmt-port {
+        prefix smt;
+    }
+
+    organization
+        "SONiC";
+
+    contact
+        "SONiC";
+
+    description
+        "SONiC yang for BGP clear options";
+
+    revision 2020-12-01 {
+        description
+            "Initial revision.";
+    }
+
+   rpc clear-bgp {
+
+    description "RPC for clearing BGP. Input can be :
+        1. All BGP sessions 
+        2. All interfaces
+        3. All interfaces of a particular type";
+
+    input {
+        leaf clear-all {
+            type boolean;
+            description
+                "Clear all BGP peers.";
+        }
+
+        leaf vrf-name {
+            type string;
+            description
+                "Clear BGP by VRF name.";
+        }
+
+        leaf family {
+            type enumeration {
+                enum IPv4;
+                enum IPv6;
+            }
+            description "Address family (IPv4/IPv6)";
+        }
+
+        choice option {
+
+            leaf all {
+                type boolean;
+                description
+                    "Clear all BGP peers.";
+            }
+            leaf external {
+                type boolean;
+                description
+                    "Clear all BGP external peers.";
+            }
+
+            leaf address {
+                type inet:ip-address;
+                description
+                    "Clear BGP by neighbor address.";
+            }
+
+            leaf interface {
+                type union {
+                    type leafref {
+                        path "/prt:sonic-port/prt:PORT/prt:PORT_LIST/prt:ifname";
+                    }
+                    type leafref {
+                        path "/spc:sonic-portchannel/spc:PORTCHANNEL/spc:PORTCHANNEL_LIST/spc:name";
+                    }
+                    type leafref {
+                        path "/svlan:sonic-vlan/svlan:VLAN/svlan:VLAN_LIST/svlan:name";
+                    }
+                    type leafref {
+                        path "/smt:sonic-mgmt-port/smt:MGMT_PORT/smt:MGMT_PORT_LIST/smt:ifname";
+                    }
+                }
+                description
+                    "Interface name: Parameter for deleting all ARP  entries
+                    related to the given inteface name Valid inputs are:
+                    Ethernet<port-number>/Vlan<Vlan ID>/PortChannel<port-channel ID>/Management<interface ID>.
+                    For example: Ethernet0, Vlan100, PortChannel10, eth0";
+            }
+
+            leaf asn {
+                type uint32 {
+                    range "1..4294967295";
+                }
+                description
+                    "Clear BGP by AS number.";
+            }
+
+            leaf prefix {
+                type inet:ip-prefix;
+                description
+                    "Clear BGP by prefix.";
+            }
+
+            leaf peer-group {
+                type string;
+                description
+                    "Clear BGP by peer-group.";
+            }
+
+        }
+
+        leaf in {
+            type boolean;
+            description
+                "Send route-refresh unless using 'soft-reconfiguration inbound";
+        }
+
+        leaf out {
+            type boolean;
+            description
+                "Resend all outbound updates";
+        }
+
+        leaf soft {
+            type boolean;
+            description
+                "Soft reconfig inbound and outbound updates. i.e Initiates a soft reset. Does not tear down the session";
+        }
+    }
+
+    output {
+        leaf status {
+            type string;
+            description
+                "Success / failure in clearing BGP operation execution request.";
+        }
+    }
+  }
+}

@@ -156,7 +156,7 @@ func XlateUriToKeySpec(uri string, requestUri string, ygRoot *ygot.GoStruct, t *
 		retdbFormat = fillSonicKeySpec(xpath, tableName, keyStr)
 	} else {
 		/* Extract the xpath and key from input xpath */
-		xpath, keyStr, _ := xpathKeyExtract(nil, ygRoot, GET, uri, requestUri, nil, txCache)
+		xpath, keyStr, _, _ := xpathKeyExtract(nil, ygRoot, GET, uri, requestUri, nil, txCache)
 		retdbFormat = FillKeySpecs(xpath, keyStr, &retdbFormat)
 	}
 
@@ -313,7 +313,7 @@ func XlateToDb(path string, opcode int, d *db.DB, yg *ygot.GoStruct, yt *interfa
 	return result, err
 }
 
-func GetAndXlateFromDB(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db.DB, txCache interface{}) ([]byte, error) {
+func GetAndXlateFromDB(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db.DB, txCache interface{}) ([]byte, error, bool) {
 	var err error
 	var payload []byte
 	log.Info("received xpath =", uri)
@@ -332,16 +332,17 @@ func GetAndXlateFromDB(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db.DB, 
 		}
 	}
 
-	payload, err = XlateFromDb(uri, ygRoot, dbs, dbresult, txCache)
+	isEmptyPayload := false
+	payload, err, isEmptyPayload = XlateFromDb(uri, ygRoot, dbs, dbresult, txCache)
 	if err != nil {
 		log.Error("XlateFromDb() failure.")
-		return payload, err
+		return payload, err, true
 	}
 
-	return payload, err
+	return payload, err, isEmptyPayload
 }
 
-func XlateFromDb(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db.DB, data RedisDbMap, txCache interface{}) ([]byte, error) {
+func XlateFromDb(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db.DB, data RedisDbMap, txCache interface{}) ([]byte, error, bool) {
 
 	var err error
 	var result []byte
@@ -385,16 +386,16 @@ func XlateFromDb(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db.DB, data R
 			cdb = xYangSpecMap[xpath].dbIndex
 		}
 	}
-	payload, err := dbDataToYangJsonCreate(uri, ygRoot, dbs, &dbData, cdb, txCache)
+	payload, err, isEmptyPayload := dbDataToYangJsonCreate(uri, ygRoot, dbs, &dbData, cdb, txCache)
 	log.Info("Payload generated:", payload)
 
 	if err != nil {
 		log.Errorf("Error: failed to create json response from DB data.")
-		return nil, err
+		return nil, err, isEmptyPayload
 	}
 
 	result = []byte(payload)
-	return result, err
+	return result, err, isEmptyPayload
 
 }
 

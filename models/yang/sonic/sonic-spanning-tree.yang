@@ -229,12 +229,18 @@ module sonic-spanning-tree {
 
                 // For RPVST+
                 leaf edge_port {
-                    //when ("../../../STP/STP_LIST/mode='rpvst'");
+                    must "../../../STP/STP_LIST[keyleaf='GLOBAL']/mode='rpvst'" {
+                        error-message "Configuration allowed in Rapid PVST mode";
+                        error-app-tag stp-invalid;
+                    }
                     type boolean;
                 }
 
                 leaf link_type {
-                    //when ("../../../STP/STP_LIST/mode='rpvst'");
+                    must "../../../STP/STP_LIST[keyleaf='GLOBAL']/mode='rpvst'" {
+                        error-message "Configuration allowed in Rapid PVST mode";
+                        error-app-tag stp-invalid;
+                    }
                     type enumeration {
                         enum auto;
                         enum shared;

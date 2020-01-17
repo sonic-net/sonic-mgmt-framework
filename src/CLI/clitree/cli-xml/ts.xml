@@ -35,8 +35,13 @@
     </COMMAND>
     <COMMAND name="show tam int-ifa-ts statistics" help="Show TAM IFA TS Statistics" mode="subcommand" ptype="SUBCOMMAND">
       <PARAM name="name" help="Name of the flow" ptype="STRING_32"> </PARAM>
-      <ACTION>
-	   python $SONIC_CLI_ROOT/ts.py -show -statistics -flow ${name} -templ -showstatisticsflow.j2;
+      <ACTION> if test "${name}" = "all" ; then
+	 python $SONIC_CLI_ROOT/sonic-cli-tam-int-ifa-ts.py get_tam_int_ifa_ts_flow_stats;
+	 elif test -z "${name}"; then
+	 python $SONIC_CLI_ROOT/sonic-cli-tam-int-ifa-ts.py get_tam_int_ifa_ts_flow_stats;
+	 else
+	 python $SONIC_CLI_ROOT/sonic-cli-tam-int-ifa-ts.py get_tam_int_ifa_ts_flow_stats  ${name};
+	 fi
       </ACTION>
     </COMMAND>	    
   </VIEW>

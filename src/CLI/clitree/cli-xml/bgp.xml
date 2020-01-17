@@ -54,6 +54,25 @@ limitations under the License.
         fi&#xA;
   </ACTION>
   </COMMAND>
+  <COMMAND name="clear ip bgp" help="Clear BGP">
+    <PARAM name="clear_bgp_subcommands" help="BGP Subcommands" ptype="SUBCOMMAND" mode="switch">
+        <MACRO name="CLEAR_BGP_COMMON_OPTIONS_SUB_CMDS" arg=""></MACRO>
+        <MACRO name="CLEAR_IPV4_BGP_ADDR_OPTIONS_SUB_CMDS" arg=""></MACRO>
+        <MACRO name="CLEAR_IPV6_BGP_ADDR_OPTIONS_SUB_CMDS" arg=""></MACRO>
+        <MACRO name="CLEAR_IP_BGP_SUB_CMDS" arg=""></MACRO>
+        <PARAM name="vrf" help="BGP VRF" ptype="SUBCOMMAND" mode="subcommand" optional="true">
+         <PARAM name="vrf-name" help="VRF Name" ptype="STRING" default="default">
+           <PARAM name="ip_subcommands" help="IP subcommands" ptype="SUBCOMMAND" mode="switch">
+               <MACRO name="CLEAR_BGP_COMMON_OPTIONS_SUB_CMDS" arg=""></MACRO>
+               <MACRO name="CLEAR_IPV4_BGP_ADDR_OPTIONS_SUB_CMDS" arg=""></MACRO>
+               <MACRO name="CLEAR_IPV6_BGP_ADDR_OPTIONS_SUB_CMDS" arg=""></MACRO>
+               <MACRO name="CLEAR_IP_BGP_SUB_CMDS" arg=""></MACRO>
+           </PARAM>
+         </PARAM>
+       </PARAM>
+    </PARAM>
+    <ACTION builtin="clish_pyobj">sonic_cli_clear_bgp clear_bgp asn=${as-num-dot} n-ipv4=${neighbor-ipv4} n-ipv6=${neighbor-ipv6} ${__full_line}</ACTION>
+  </COMMAND>
 </VIEW>
 
 <VIEW name="configure-view">
@@ -252,6 +271,10 @@ limitations under the License.
   <COMMAND name="address-family ipv6" help="Enter Address Family command mode" view="configure-router-bgp-ipv6-view" viewid="vrf-name=${vrf-name};family=ipv6">
     <PARAM name="unicast" help="Address Family" mode="subcommand" ptype="SUBCOMMAND" view="configure-router-bgp-ipv6-view" viewid="family=ipv6"/>
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_config ${vrf-name} IPV6_UNICAST</ACTION>
+  </COMMAND>
+  <COMMAND name="address-family l2vpn" help="Enter Address Family command mode" view="configure-router-bgp-l2vpn-view" viewid="vrf-name=${vrf-name};family=l2vpn">
+    <PARAM name="evpn" help="Address Family" mode="subcommand" ptype="SUBCOMMAND" view="configure-router-bgp-l2vpn-view" viewid="family=l2vpn"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_config ${vrf-name} L2VPN_EVPN</ACTION>
   </COMMAND>
 
   <COMMAND name="listen" help="Set the prefix range for dynamic peers">
@@ -463,6 +486,10 @@ limitations under the License.
   <COMMAND name="no address-family ipv6" help="Enter Address Family command mode">
     <PARAM name="unicast" help="Address Family" mode="subcommand" ptype="SUBCOMMAND"/>
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi ${vrf-name} IPV6_UNICAST</ACTION>
+  </COMMAND>
+  <COMMAND name="no address-family l2vpn" help="Enter Address Family command mode">
+    <PARAM name="evpn" help="Address Family" mode="subcommand" ptype="SUBCOMMAND"/>
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi ${vrf-name} L2VPN_EVPN</ACTION>
   </COMMAND>
 
   <COMMAND name="no listen" help="Set the prefix range for dynamic peers">

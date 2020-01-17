@@ -61,7 +61,7 @@ module sonic-tam-drop-monitor {
 
 			leaf aging-interval {
 				type uint16 {
-					range "1..10" {
+					range "1..30" {
 						error-message "Drop monitor aging interval is out of range";
 						error-app-tag drop-monitor-aging-invalid;
 					}
@@ -86,7 +86,7 @@ module sonic-tam-drop-monitor {
 
 			leaf sampling-rate {
 				type uint16 {
-					range "1..10000"{
+					range "1..65535"{
 						error-app-tag "Invalid Drop Monitor Sampling Rate.";
 					}
 				}

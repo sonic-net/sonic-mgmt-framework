@@ -1196,8 +1196,9 @@ func TestValidateEditConfig_Create_Semantic_MissingMandatoryNode_Negative(t *tes
 		cvl.CVLEditConfigData{
 			cvl.VALIDATE_ALL,
 			cvl.OP_CREATE,
-			"VLAN|Vlan101",
+			"VXLAN_TUNNEL|Tunnel1",
 			map[string]string{
+				"NULL": "NULL",
 			},
 		},
 	}
@@ -3791,3 +3792,87 @@ func TestValidateEditConfig_Multi_Delete_MultiKey_Same_Session_Positive(t *testi
 	unloadConfigDB(rclient, depDataMap)
 }
 
+func TestValidateEditConfig_Update_Leaf_List_Max_Elements_Negative(t *testing.T) {
+	depDataMap := map[string]interface{}{
+		"VLAN": map[string]interface{} {
+			"Vlan801": map[string]interface{} {
+				"vlanid": "801",
+			},
+		},
+		"CFG_L2MC_STATIC_GROUP_TABLE": map[string]interface{} {
+			"Vlan801|16.2.2.1": map[string]interface{} {
+				"out-intf@": "Ethernet4,Ethernet8,Ethernet16",
+			},
+		},
+	}
+
+	loadConfigDB(rclient, depDataMap)
+
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	cfgData := []cvl.CVLEditConfigData {
+		cvl.CVLEditConfigData {
+			cvl.VALIDATE_ALL,
+			cvl.OP_UPDATE,
+			"CFG_L2MC_STATIC_GROUP_TABLE|Vlan801|16.2.2.1",
+			map[string]string {
+				"out-intf@": "Ethernet4,Ethernet8,Ethernet16,Ethernet20",
+			},
+		},
+	}
+
+	cvlErrInfo, _ := cvSess.ValidateEditConfig(cfgData)
+
+	if cvlErrInfo.ErrCode == cvl.CVL_SUCCESS {
+		cvl.ValidationSessClose(cvSess)
+		t.Errorf("CFG_L2MC_STATIC_GROUP_TABLE Update : Config Validation failed")
+		return
+	}
+
+	cvl.ValidationSessClose(cvSess)
+	unloadConfigDB(rclient, depDataMap)
+}
+
+func TestValidationTimeStats(t *testing.T) {
+	cvl.ClearValidationTimeStats()
+
+	stats := cvl.GetValidationTimeStats()
+
+	if (stats.Hits != 0 || stats.Time != 0 || stats.Peak != 0) {
+		t.Errorf("TestValidationTimeStats : clearing stats failed")
+		return
+	}
+
+	cvSess, _ := cvl.ValidationSessOpen()
+
+	cfgData := []cvl.CVLEditConfigData {
+		cvl.CVLEditConfigData {
+			cvl.VALIDATE_ALL,
+			cvl.OP_CREATE,
+			"VRF|VrfTest",
+			map[string]string {
+				"fallback": "true",
+			},
+		},
+	}
+
+	cvSess.ValidateEditConfig(cfgData)
+
+	cvl.ValidationSessClose(cvSess)
+
+	stats = cvl.GetValidationTimeStats()
+
+	if (stats.Hits == 0 || stats.Time == 0 || stats.Peak == 0) {
+		t.Errorf("TestValidationTimeStats : getting stats failed")
+		return
+	}
+
+	//Clear stats again and check
+	cvl.ClearValidationTimeStats()
+
+	stats = cvl.GetValidationTimeStats()
+
+	if (stats.Hits != 0 || stats.Time != 0 || stats.Peak != 0) {
+		t.Errorf("TestValidationTimeStats : clearing stats failed")
+	}
+}

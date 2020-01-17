@@ -30,6 +30,11 @@ CVL_TEST_DIR = $(TOP_DIR)/build/tests/cvl
 CVL_TEST_BIN = $(CVL_TEST_DIR)/cvl.test
 CVL_TEST_SCHEMA_DIR = $(CVL_TEST_DIR)/testdata/schema
 CVL_SCHEMA_DIR = $(BUILD_DIR)/schema
+CVL_SCHEMA_FILES := 
+
+CVL_SCHEMA_FILES += platform/quanta_ix8/sonic-acl-deviation.yin \
+		    sonic-extension.yin \
+		    sonic-common.yin 
 
 ifdef DEBUG
 	GOFLAGS += -gcflags="all=-N -l"
@@ -41,6 +46,7 @@ deps:
 	$(shell mkdir -p $(BUILD_DIR))
 	$(shell mkdir -p $(CVL_SCHEMA_DIR))
 	$(shell mkdir -p $(CVL_TEST_SCHEMA_DIR))
+	$(shell mkdir -p $(CVL_TEST_SCHEMA_DIR)/platform/quanta_ix8)
 
 $(CVL_PKG):schema test-schema
 	@echo "Building $@"
@@ -59,8 +65,10 @@ schema:deps
 
 test-schema:schema
 	make -C testdata/schema
-	#Don't overwrite with test schema if same schema is there in models/yang/sonic
-	cp -rn $(CVL_SCHEMA_DIR)/* $(CVL_TEST_SCHEMA_DIR) > /dev/null
+	#Copy all required schema to test-schema location
+	@for f in $(CVL_SCHEMA_FILES) ; do \
+		cp -f $(CVL_SCHEMA_DIR)/$$f $(CVL_TEST_SCHEMA_DIR)/`dirname $$f` ; \
+	done
 
 tests:
 	make -C tests

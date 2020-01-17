@@ -57,15 +57,22 @@ def check_network_transport_allowed(c, network_transport, unicast_multicast):
         if clock_type == 'P2P_TC' or clock_type == 'E2E_TC':
             print "%Error: transparent-clock not supported with G.8275.2"
             return 0
+    if unicast_multicast == 'unicast':
+        if domain_profile == 'ieee1588' and (clock_type == 'PTP_TC' or clock_type == 'E2E_TC'):
+            print "%Error: unicast not supported with transparent-clock and default profile"
+            return 0
+        if network_transport == 'UDPv6':
+            print "%Error: ipv6 not supported with unicast"
+            return 0
     if unicast_multicast == 'multicast':
-        raw_data = db.keys(db.STATE_DB, "PTP_PORT|GLOBAL|*")
-        if not raw_data:
+        tmp_data = db.keys(db.STATE_DB, "PTP_PORT|GLOBAL|*")
+        if not tmp_data:
             return 1
-        for key in raw_data:
-            state_data = db.get_all(db.STATE_DB, key)
-            uc_tbl = state_data.get('unicast-table', 'None')
-            if uc_tbl != 'None':
-                print "%Error: master table must be removed from " + key.replace("PTP_PORT|GLOBAL|", "")
+        for tmp_key in tmp_data:
+            tmp_data = db.get_all(db.STATE_DB, tmp_key)
+            tmp_uc_tbl = tmp_data.get('unicast-table', 'None')
+            if tmp_uc_tbl != 'None':
+                print "%Error: master table must be removed from " + tmp_key.replace("PTP_PORT|GLOBAL|", "")
                 return 0
     return 1
 
@@ -81,10 +88,26 @@ def check_domain_number_allowed(c, domain_number):
 
 def check_clock_type_allowed(c, clock_type):
     domain_profile = get_attrib(c, 'domain-profile')
-    if domain_profile == 'G.8275.x':
-        if clock_type == 'P2P_TC' or clock_type == 'E2E_TC':
+    network_transport = get_attrib(c, 'network-transport')
+    unicast_multicast = get_attrib(c, 'unicast-multicast')
+    if clock_type == 'P2P_TC' or clock_type == 'E2E_TC':
+        if domain_profile == 'G.8275.x':
             print "%Error: transparent-clock not supported with G.8275.2"
             return 0
+        if domain_profile == 'ieee1588' and unicast_multicast == 'unicast':
+            print "%Error: transparent-clock not supported with default profile and unicast"
+            return 0
+    if clock_type == 'BC':
+        if domain_profile == 'G.8275.x' and network_transport == 'L2':
+            print "%Error: boundary-clock not supported with G.8275.2 and L2"
+            return 0
+        if domain_profile == 'G.8275.x' and unicast_multicast == 'multicast':
+            print "%Error: boundary-clock not supported with G.8275.2 and multicast"
+            return 0
+        if domain_profile == 'G.8275.x' and network_transport == 'UDPv6':
+            print "%Error: boundary-clock not supported with G.8275.2 and ipv6"
+            return 0
+
     return 1
 
 
@@ -100,15 +123,26 @@ def check_domain_profile_allowed(c, domain_profile):
     network_transport = get_attrib(c, 'network-transport')
     unicast_multicast = get_attrib(c, 'unicast-multicast')
     domain_number = int(get_attrib(c, 'domain-number'))
+    clock_type = get_attrib(c, 'clock-type')
     if domain_profile == 'G.8275.2':
-        if network_transport == "L2":
+        if clock_type == 'BC' and network_transport == "L2":
             print "%Error: G.8275.2 not supported with L2 transport"
             return 0
-        if unicast_multicast == "multicast":
+        if clock_type == 'BC' and unicast_multicast == "multicast":
             print "%Error: G.8275.2 not supported with multicast transport"
             return 0
-        if domain_number < 44 or domain_number > 63:
+        if clock_type == 'BC' and domain_number < 44 or domain_number > 63:
             print "%Error: domain must be in range 44-63 with G.8275.2"
+            return 0
+        if clock_type == 'BC' and network_transport == 'UDPv6':
+            print "%Error: ipv6 not supported with boundary-clock and G.8275.2"
+            return 0
+        if clock_type == 'P2P_TC' or clock_type == 'E2E_TC':
+            print "%Error: G.8275.2 not supported with transparent-clock"
+            return 0
+    if domain_profile == 'ieee1588':
+        if unicast_multicast == 'unicast' and (clock_type == 'PTP_TC' or clock_type == 'E2E_TC'):
+            print "%Error: default profile not supported with transparent-clock and unicast"
             return 0
     return 1
 
