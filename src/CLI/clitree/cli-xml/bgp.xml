@@ -54,6 +54,25 @@ limitations under the License.
         fi&#xA;
   </ACTION>
   </COMMAND>
+  <COMMAND name="clear ip bgp" help="Clear BGP">
+    <PARAM name="clear_bgp_subcommands" help="BGP Subcommands" ptype="SUBCOMMAND" mode="switch">
+        <MACRO name="CLEAR_BGP_COMMON_OPTIONS_SUB_CMDS" arg=""></MACRO>
+        <MACRO name="CLEAR_IPV4_BGP_ADDR_OPTIONS_SUB_CMDS" arg=""></MACRO>
+        <MACRO name="CLEAR_IPV6_BGP_ADDR_OPTIONS_SUB_CMDS" arg=""></MACRO>
+        <MACRO name="CLEAR_IP_BGP_SUB_CMDS" arg=""></MACRO>
+        <PARAM name="vrf" help="BGP VRF" ptype="SUBCOMMAND" mode="subcommand" optional="true">
+         <PARAM name="vrf-name" help="VRF Name" ptype="STRING" default="default">
+           <PARAM name="ip_subcommands" help="IP subcommands" ptype="SUBCOMMAND" mode="switch">
+               <MACRO name="CLEAR_BGP_COMMON_OPTIONS_SUB_CMDS" arg=""></MACRO>
+               <MACRO name="CLEAR_IPV4_BGP_ADDR_OPTIONS_SUB_CMDS" arg=""></MACRO>
+               <MACRO name="CLEAR_IPV6_BGP_ADDR_OPTIONS_SUB_CMDS" arg=""></MACRO>
+               <MACRO name="CLEAR_IP_BGP_SUB_CMDS" arg=""></MACRO>
+           </PARAM>
+         </PARAM>
+       </PARAM>
+    </PARAM>
+    <ACTION builtin="clish_pyobj">sonic_cli_clear_bgp clear_bgp asn=${as-num-dot} n-ipv4=${neighbor-ipv4} n-ipv6=${neighbor-ipv6} ${__full_line}</ACTION>
+  </COMMAND>
 </VIEW>
 
 <VIEW name="configure-view">
