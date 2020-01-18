@@ -179,8 +179,9 @@ def run():
     else:
         template_file = sys.argv[3]
 
-    # Check for PortChannel existence by checking its admin status from LAG TABLE
-    if 'admin_status' not in response['portchannel']['sonic-portchannel:LAG_TABLE']['LAG_TABLE_LIST'][0].keys():
+    # Check for PortChannel existence
+    if 'LAG_TABLE_LIST' not in response['portchannel']['sonic-portchannel:LAG_TABLE'] or \
+        'admin_status' not in response['portchannel']['sonic-portchannel:LAG_TABLE']['LAG_TABLE_LIST'][0].keys():
         response = {}
 
     show_cli_output(template_file, response)
