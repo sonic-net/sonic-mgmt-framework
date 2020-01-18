@@ -276,7 +276,7 @@ var DbToYang_fdb_mac_table_xfmr SubTreeXfmrDbToYang = func (inParams XfmrParams)
     vlan := pathInfo.Var("vlan")
     macAddress := pathInfo.Var("mac-address")
 
-    if ((instance == "mgmt") || (strings.HasPrefix(instance, "Vrf") == true)) {
+    if (instance != "default") {
         return err
     }
 

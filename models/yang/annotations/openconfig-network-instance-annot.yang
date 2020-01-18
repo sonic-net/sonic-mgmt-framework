@@ -2970,11 +2970,5 @@ module openconfig-network-instance-annot {
             sonic-ext:subtree-transformer "bgp_evpn_vni_state_xfmr";
       }
     }
-
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:vlans/oc-netinst:vlan {
-      deviate add {
-        sonic-ext:table-name "NONE";
-      }
-    }
 }
 
