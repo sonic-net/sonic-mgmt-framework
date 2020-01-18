@@ -80,7 +80,6 @@ func get_min_links(d *db.DB, lagName *string, links *uint16) error {
     return nil
 }
 
-
 func get_lag_type(d *db.DB, lagName *string, mode *string) error {
     intTbl := IntfTypeTblMap[IntfTypePortChannel]
     curr, err := d.GetEntry(&db.TableSpec{Name:intTbl.cfgDb.portTN}, db.Key{Comp: []string{*lagName}})
