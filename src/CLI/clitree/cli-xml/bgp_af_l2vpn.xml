@@ -36,10 +36,16 @@ limitations under the License.
     <PARAM name="route-map" help="Route-map reference" mode="subcommand" ptype="SUBCOMMAND" optional="true">
       <PARAM name="route-map-name" help="Route map name" ptype="STRING"/>
     </PARAM>
+    <PARAM name="metric" help="Metric for redistributed routes" mode="subcommand" ptype="SUBCOMMAND" optional="true">
+      <PARAM name="metvalue" help="Default metric" ptype="RANGE_0_4294967295"/>
+    </PARAM>
     <ACTION> if test -n "${route-map-name}" ; then&#xA;
                  python $SONIC_CLI_ROOT/sonic_cli_bgp.py patch_openconfig_network_instance_network_instances_network_instance_table_connections_table_connection_config_import_policy ${vrf-name} L2VPN_EVPN ${protocol} ${route-map-name}&#xA;
              else&#xA;
                  python $SONIC_CLI_ROOT/sonic_cli_bgp.py patch_openconfig_network_instance_network_instances_network_instance_table_connections_table_connection_config ${vrf-name} L2VPN_EVPN ${protocol}&#xA;
+             fi&#xA;
+             if test -n "${metric}" ; then&#xA;
+                 python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_ext_network_instances_network_instance_table_connections_table_connection_config_metric ${vrf-name} L2VPN_EVPN ${protocol} ${metvalue}&#xA;
              fi&#xA;
     </ACTION>
   </COMMAND>
@@ -108,6 +114,9 @@ limitations under the License.
     </PARAM>
     <PARAM name="route-map" help="Route-map reference" mode="subcommand" ptype="SUBCOMMAND" optional="true">
       <PARAM name="route-map-name" help="Route map name" ptype="STRING"/>
+    </PARAM>
+    <PARAM name="metric" help="Metric for redistributed routes" mode="subcommand" ptype="SUBCOMMAND" optional="true">
+      <PARAM name="metvalue" help="Default metric" ptype="RANGE_0_4294967295"/>
     </PARAM>
     <ACTION> if test -n "${route-map-name}" ; then&#xA;
                  python $SONIC_CLI_ROOT/sonic_cli_bgp.py delete_openconfig_network_instance_network_instances_network_instance_table_connections_table_connection_config_import_policy ${vrf-name} L2VPN_EVPN ${protocol} ${route-map-name}&#xA;

@@ -17,7 +17,7 @@ module sonic-system-aaa {
                     }
                 }
 
-                leaf-list login {
+                leaf login {
                     type string;
                 }
                 leaf failthrough {
