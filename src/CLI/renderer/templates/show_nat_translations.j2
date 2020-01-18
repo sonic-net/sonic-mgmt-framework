@@ -46,7 +46,7 @@
 {% if dict['protocol'] == 6 %}
 {% if vars.update({'protocol': 'tcp'}) %}{% endif %}
 {% elif dict['protocol'] == 17 %}
-{% if vars.update({'protocol': 'ucp'}) %}{% endif %}
+{% if vars.update({'protocol': 'udp'}) %}{% endif %}
 {% elif dict['protocol'] == 1 %}
 {% if vars.update({'protocol': 'icmp'}) %}{% endif %}
 {% else %}
@@ -111,7 +111,7 @@
 {% if dict['protocol'] == 6 %}
 {% if vars.update({'protocol': 'tcp'}) %}{% endif %}
 {% elif dict['protocol'] == 17 %}
-{% if vars.update({'protocol': 'ucp'}) %}{% endif %}
+{% if vars.update({'protocol': 'udp'}) %}{% endif %}
 {% elif dict['protocol'] == 1 %}
 {% if vars.update({'protocol': 'icmp'}) %}{% endif %}
 {% else %}

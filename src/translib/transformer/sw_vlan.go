@@ -165,7 +165,7 @@ func enableStpOnInterfaceVlanMembership(d *db.DB, vlanName *string, intfList []s
     if len(intfList) == 0 {
         return
     }
-    _, serr := d.GetEntry(&db.TableSpec{Name: STP_GLOBAL_TABLE}, db.Key{Comp:[]string {"GLOBAL"}})
+    stpGlobalDBEntry, serr := d.GetEntry(&db.TableSpec{Name: STP_GLOBAL_TABLE}, db.Key{Comp:[]string {"GLOBAL"}})
     if serr != nil {
         return
     }
@@ -178,6 +178,9 @@ func enableStpOnInterfaceVlanMembership(d *db.DB, vlanName *string, intfList []s
     (&defaultDBValues).Set("bpdu_guard_do_disable", "false")
     (&defaultDBValues).Set("portfast", "true")
     (&defaultDBValues).Set("uplink_fast", "false")
+    if "rpvst" == (&stpGlobalDBEntry).Get("mode") {
+        (&defaultDBValues).Set("link_type", "auto")
+    }
 
     var stpEnabledIntfList []string
     intfKeys, err := d.GetKeys(&db.TableSpec{Name: STP_PORT_TABLE})
@@ -339,7 +342,7 @@ func validateIntfAssociatedWithVlan(d *db.DB, ifName *string) error {
             if strings.Contains(members, *ifName) {
                 errStr := "Interface: " + *ifName + " is part of VLAN: " + vlan.Get(0)
                 log.Error(errStr)
-                return errors.New(errStr)
+                return tlerr.InvalidArgsError{Format:errStr}
             }
         }
     }

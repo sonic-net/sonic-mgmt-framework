@@ -108,9 +108,6 @@ module openconfig-interfaces-ext {
     deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv4/oc-ip:proxy-arp {
         deviate not-supported;
     }
-    deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv4/oc-ip:unnumbered {
-        deviate not-supported;
-    }
     deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv4/oc-ip:config {
         deviate not-supported;
     }

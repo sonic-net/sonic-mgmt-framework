@@ -111,6 +111,24 @@ limitations under the License.
         python $SONIC_CLI_ROOT/sonic_cli_if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config_prefix_length ${iface} ${addr}
     </ACTION>
     </COMMAND>
+
+    <COMMAND
+        name="ip unnumbered"
+        help="Configure IPv4 unnumbered interface" >
+        <PARAM
+            name="donor-interface"
+            help="Donor Interface Name"
+            ptype="STRING" />
+	<ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_unnumbered_interface_ref_config_interface ${iface} ${donor-interface}
+    </ACTION>
+    </COMMAND>
+
+    <COMMAND
+        name="no ip unnumbered"
+	    help="Configure IPv4 unnumbered interface" >
+    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_unnumbered_interface_ref_config_interface ${iface}
+    </ACTION>
+    </COMMAND>
 </VIEW>
 
 <!--=======================================================-->
@@ -243,6 +261,24 @@ limitations under the License.
              python $SONIC_CLI_ROOT/sonic_cli_if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_addresses_address_config_prefix_length ${po_name} ${addr}
          </ACTION>
       </COMMAND>
+
+      <COMMAND
+         name="ip unnumbered"
+         help="Configure IPv4 unnumbered interface" >
+         <PARAM
+             name="donor-interface"
+             help="Donor Interface Name"
+             ptype="STRING" />
+         <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py patch_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_unnumbered_interface_ref_config_interface ${po_name} ${donor-interface}
+         </ACTION>
+     </COMMAND>
+
+     <COMMAND
+         name="no ip unnumbered"
+         help="Configure IPv4 unnumbered interface" >
+         <ACTION>python $SONIC_CLI_ROOT/sonic-cli-if.py delete_openconfig_if_ip_interfaces_interface_subinterfaces_subinterface_ipv4_unnumbered_interface_ref_config_interface ${po_name}
+         </ACTION>
+     </COMMAND>
 </VIEW>
 
 <!--=======================================================-->

@@ -150,6 +150,7 @@ module openconfig-system-annot {
     deviation /oc-sys:system/oc-sys:aaa/oc-sys:authentication/oc-sys:config/oc-sys:authentication-method {
       deviate add {
           sonic-ext:field-name "login";
+          sonic-ext:field-transformer "auth_method_xfmr";
       }
     }
 

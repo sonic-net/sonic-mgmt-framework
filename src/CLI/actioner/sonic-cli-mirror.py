@@ -106,11 +106,7 @@ def show(args):
         aa = cc.ApiClient()
         if args.show == 'show_mirror_session':
             # Get mirror-session-info
-            if args.session is not None:
-                keypath = cc.Path('/restconf/data/sonic-mirror-session:sonic-mirror-session/MIRROR_SESSION/MIRROR_SESSION_LIST={name}',
-                        name=args.session)
-            else:
-                keypath = cc.Path('/restconf/data/sonic-mirror-session:sonic-mirror-session')
+            keypath = cc.Path('/restconf/data/sonic-mirror-session:sonic-mirror-session')
             response = aa.get(keypath)
             gbl_oper_dict = {}
             session_list = 0
@@ -133,11 +129,7 @@ def show(args):
                 return
 
             # Retrieve mirror session status.
-            if args.session is not None:
-                keypath = cc.Path('/restconf/data/sonic-mirror-session:sonic-mirror-session/MIRROR_SESSION_TABLE/MIRROR_SESSION_TABLE_LIST={name}',
-                        name=args.session)
-            else:
-                keypath = cc.Path('/restconf/data/sonic-mirror-session:sonic-mirror-session/MIRROR_SESSION_TABLE')
+            keypath = cc.Path('/restconf/data/sonic-mirror-session:sonic-mirror-session/MIRROR_SESSION_TABLE')
             response = aa.get(keypath)
             session_status = 0
             if response.ok() and 'sonic-mirror-session:MIRROR_SESSION_TABLE' in response.content.keys():
@@ -152,6 +144,22 @@ def show(args):
             else:
                 print("Session state info not found")
                 return
+
+            if args.session is not None:
+                session_found = "0"
+                for session in session_list:
+                    if session['name'] == args.session:
+                        session_list = [ session ]
+                        session_found = "1"
+                        break
+                for session in session_status:
+                    if session['name'] == args.session:
+                        session_status = [ session ]
+                        break
+                if session_found == "0":
+                    print("No sessions configured")
+                    return
+
             final_dict = {}
             final_dict['session_list'] = session_list
             final_dict['session_status'] = session_status

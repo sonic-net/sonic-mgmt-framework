@@ -14,6 +14,19 @@ module sonic-interface {
                 prefix vrf;
         }
 
+    import sonic-loopback-interface {
+        prefix lointf;
+    }
+
+    import sonic-portchannel {
+        prefix spc;
+    }
+
+    import sonic-common {
+        prefix cmn;
+    }
+
+
 	organization
 		"SONiC";
 
@@ -92,10 +105,55 @@ module sonic-interface {
                                     }
                                 }
 
+                leaf unnumbered {
+                    must "((/cmn:operation/cmn:operation != 'CREATE') and (/cmn:operation/cmn:operation != 'UPDATE')) or " +
+                         "not(contains(/sonic-interface/INTERFACE/INTERFACE_IPADDR_LIST[portname=current()/../portname]/ip_prefix, '.'))"
+                    {
+                        error-message "Cannot configure IP address and IP Unnumbered interface configurations on the same interface";
+                        error-app-tag intf-ip-config;
+                    }
+
+                    must "((/cmn:operation/cmn:operation != 'CREATE') and (/cmn:operation/cmn:operation != 'UPDATE')) or " +
+                         "(count(/sonic-interface/INTERFACE/INTERFACE_LIST[portname=current()/../portname]/unnumbered)  <= 1)"
+                    {
+                        error-message "IP Unnumbered interface configuration is already done on this interface";
+                        error-app-tag intf-unnum-config;
+                    }
+
+                    must "count(/spc:sonic-portchannel/spc:PORTCHANNEL_MEMBER/spc:PORTCHANNEL_MEMBER_LIST[spc:ifname=current()/../portname]) = 0"
+                    {
+                        error-message "Interface configured as a member of portchannel. Cannot configure IP Unnumbered";
+                        error-app-tag intf-po-member;
+                    }
+
+                    must "count(current()/../vrf_name) = 0"
+                    {
+                        error-message "Non default VRF binded to interface. Cannot configure IP Unnumbered";
+                        error-app-tag intf-non-def-vrf;
+                    }
+
+                    must "count(/lointf:sonic-loopback-interface/lointf:LOOPBACK_INTERFACE/lointf:LOOPBACK_INTERFACE_LIST[lointf:loIfName=current()/./unnumbered]/lointf:vrf_name) = 0"
+                    {
+                        error-message "Non default VRF binded to Donor interface. Cannot configure IP Unnumbered";
+                        error-app-tag donor-intf-non-def-vrf;
+                    }
+
+                    type leafref {
+                        path "/lointf:sonic-loopback-interface/lointf:LOOPBACK_INTERFACE/lointf:LOOPBACK_INTERFACE_LIST/lointf:loIfName";
+                    }
+                }
 			}
 
 			list INTERFACE_IPADDR_LIST {
 				key "portname ip_prefix";
+
+				must "(/cmn:operation/cmn:operation != 'CREATE') or " +
+					 "(not(contains(current()/ip_prefix, '.')) or "  +
+					 "(count(current()/../INTERFACE_LIST[portname=current()/portname]/unnumbered) = 0))"
+				{
+					error-message "Cannot configure IPv4 address and IP Unnumbered interface configurations on the same interface";
+					error-app-tag intf-unnum;
+				}
 
 				leaf portname{
 					type leafref {
