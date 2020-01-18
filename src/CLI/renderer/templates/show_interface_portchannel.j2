@@ -1,4 +1,4 @@
-{% set mode, minlinks, fallback = "lacp", "1", "false" %}
+{% set mode, minlinks, fallback = "LACP", "1", "Disabled" %}
 
 
 {% if json_output['portchannel']['sonic-portchannel:LAG_TABLE'] and json_output['portchannel']['sonic-portchannel:LAG_TABLE']['LAG_TABLE_LIST'] %}
@@ -12,7 +12,7 @@
 
 
 {% if po_conf_intf['name'] == po_intf['lagname'] and po_conf_intf['static'] == "true" %}
-{% set mode = "static" %}
+{% set mode = "Static" %}
 {% endif %}
 
 {% if po_conf_intf['name'] == po_intf['lagname'] and 'min_links' in po_conf_intf %}
@@ -21,11 +21,12 @@
 
 
 {% if po_conf_intf['name'] == po_intf['lagname'] and 'fallback' in po_conf_intf %}
-{% set fallback = po_conf_intf['fallback']  %}
+{% set fallback = "Enabled"  %}
 {% endif %}
 
-{{po_intf['lagname']}} is {{po_intf['admin_status']}}, line protocol is {{po_intf['oper_status']}}
-mode {{mode}} min-links {{minlinks}} fallback {{fallback}}
+{{po_intf['lagname']}} is {{po_intf['admin_status']}}, line protocol is {{po_intf['oper_status']}}, mode {{mode}}
+Minimum number of links to bring PortChannel up is {{minlinks}}
+Fallback: {{fallback}}
 MTU {{po_intf['mtu']}}
 
 {% endif %}
@@ -50,8 +51,13 @@ LACP mode {{intf['state']['lacp-mode']}} interval {{intf['state']['interval']}} 
 
 {% if intf['members'] %}
 {% for mem in intf['members']['member'] %}
+
+{% if mem['state']['openconfig-interfaces-ext:selected'] == False %}
 Members in this channel: {{mem['interface'] }}
-selected {{mem['state']['openconfig-interfaces-ext:selected']}}
+{% else %}
+Members in this channel: {{mem['interface'] }}(Selected)
+{% endif %}
+
 LACP Actor port {{mem['state']['port-num']}}  address {{mem['state']['system-id']}} key {{mem['state']['oper-key']}}
 LACP Partner port {{mem['state']['partner-port-num']}}  address {{mem['state']['partner-id']}} key {{mem['state']['partner-key']}}
 {% endfor %}
