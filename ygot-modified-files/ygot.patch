@@ -287,6 +287,21 @@ diff -ruN ygot-dir-orig/ygot/ygot/struct_validation_map.go ygot-dir/ygot/ygot/st
  
  	v, err := makeJSON(s, opts)
  	if err != nil {
+@@ -526,7 +527,13 @@
+ 				return err
+ 			}
+ 		default:
+-			dstField.Set(srcField)
++                    if srcField.Type().Implements(reflect.TypeOf((*GoEnum)(nil)).Elem()) == true {
++                        if srcField.Int() != 0 {
++                            dstField.Set(srcField)
++                        }
++                    } else {
++                        dstField.Set(srcField)
++                    }
+ 		}
+ 	}
+ 	return nil
 diff -ruN ygot-dir-orig/ygot/ytypes/container.go ygot-dir/ygot/ytypes/container.go
 --- ygot-dir-orig/ygot/ytypes/container.go	2020-01-07 15:38:37.899711000 -0800
 +++ ygot-dir/ygot/ytypes/container.go	2020-01-07 15:40:18.079820000 -0800

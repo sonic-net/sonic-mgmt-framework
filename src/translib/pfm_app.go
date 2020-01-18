@@ -28,6 +28,9 @@ import (
     "os"
     "translib/tlerr"
     "io/ioutil"
+    "translib/transformer"
+    "bufio"
+    "strings"
     log "github.com/golang/glog"
 )
 
@@ -254,7 +257,9 @@ func (app *PlatformApp) getSysEepromFromFile (eeprom *ocbinds.OpenconfigPlatform
         if jsoneeprom.Base_MAC_Address != "" {
         }
         if jsoneeprom.Manufacture_Date != "" {
-            eeprom.MfgDate = &jsoneeprom.Manufacture_Date
+            mfg_date := jsoneeprom.Manufacture_Date[6:10] + "-" +
+                jsoneeprom.Manufacture_Date[0:2] + "-" + jsoneeprom.Manufacture_Date[3:5]
+            eeprom.MfgDate = &mfg_date
         }
         if jsoneeprom.Label_Revision != "" {
             eeprom.HardwareVersion = &jsoneeprom.Label_Revision
@@ -321,7 +326,9 @@ func (app *PlatformApp) getSysEepromFromFile (eeprom *ocbinds.OpenconfigPlatform
             }
         case "/openconfig-platform:components/component/state/mfg-date":
             if jsoneeprom.Manufacture_Date != "" {
-                eeprom.MfgDate = &jsoneeprom.Manufacture_Date
+                mfg_date := jsoneeprom.Manufacture_Date[6:10] + "-" +
+                    jsoneeprom.Manufacture_Date[0:2] + "-" + jsoneeprom.Manufacture_Date[3:5]
+                eeprom.MfgDate = &mfg_date
             }
         case "/openconfig-platform:components/component/state/hardware-version":
             if jsoneeprom.Label_Revision != "" {
@@ -354,6 +361,45 @@ func (app *PlatformApp) getSysEepromFromFile (eeprom *ocbinds.OpenconfigPlatform
     return nil 
 }
 
+func (app *PlatformApp) getPlatformEnvironment (pf_comp *ocbinds.OpenconfigPlatform_Components_Component) (error) {
+    var err error
+    var query_result transformer.HostResult
+
+    query_result = transformer.HostQuery("fetch_environment.action", "")
+    if query_result.Err != nil {
+        log.Infof("Error in Calling dbus fetch_environment %v", query_result.Err)
+    }
+    env_op := query_result.Body[1].(string)
+    scanner := bufio.NewScanner(strings.NewReader(env_op))
+    for scanner.Scan() {
+        var pf_sensor_cat *ocbinds.OpenconfigPlatform_Components_Component_Subcomponents_Subcomponent_State_SensorCategory
+        log.Infof("comp: %s",scanner.Text())
+        SubCatFound := false
+        pf_scomp,_ := pf_comp.Subcomponents.NewSubcomponent(scanner.Text())
+        ygot.BuildEmptyTree(pf_scomp)
+
+        scanner.Scan()
+        for scanner.Text() != "" {
+            s := strings.Split(scanner.Text(), ":")
+            if !SubCatFound || s[1] == "" {
+                log.Infof("scomp: %s",scanner.Text())
+                pf_sensor_cat,_ = pf_scomp.State.NewSensorCategory(scanner.Text())
+                ygot.BuildEmptyTree(pf_sensor_cat)
+                SubCatFound = true
+            } else {
+                val := s[1]
+                name := s[0]
+                pf_sensor,_ := pf_sensor_cat.NewSensor(name)
+                ygot.BuildEmptyTree(pf_sensor)
+                pf_sensor.State = &val
+            }
+            scanner.Scan()
+        }
+    }
+
+    return  err
+}
+
 func (app *PlatformApp) getSysEepromJson () (GetResponse, error) {
 
     log.Infof("Preparing json for system eeprom");
@@ -365,15 +411,27 @@ func (app *PlatformApp) getSysEepromJson () (GetResponse, error) {
     targetUriPath, _ := getYangPathFromUri(app.path.Path)
     switch targetUriPath {
     case "/openconfig-platform:components":
-        pf_comp,_ := pf_cpts.NewComponent("System Eeprom")
-        ygot.BuildEmptyTree(pf_comp)
-        err = app.getSysEepromFromFile(pf_comp.State, true)
+        sensor_comp,_  := pf_cpts.NewComponent("Sensor")
+        ygot.BuildEmptyTree(sensor_comp)
+        sensor_comp.State.Type,_ = sensor_comp.State.To_OpenconfigPlatform_Components_Component_State_Type_Union(
+                            ocbinds.OpenconfigPlatformTypes_OPENCONFIG_HARDWARE_COMPONENT_SENSOR)
+        err = app.getPlatformEnvironment(sensor_comp)
         if err != nil {
             return GetResponse{Payload: payload}, err
         }
+        eeprom_comp,_ := pf_cpts.NewComponent("System Eeprom")
+        ygot.BuildEmptyTree(eeprom_comp)
+        err = app.getSysEepromFromFile(eeprom_comp.State, true)
+        if err != nil {
+            return GetResponse{Payload: payload}, err
+        }
+        eeprom_comp.State.Type,_ = eeprom_comp.State.To_OpenconfigPlatform_Components_Component_State_Type_Union(
+                                ocbinds.OpenconfigPlatformTypes_OPENCONFIG_HARDWARE_COMPONENT_CHASSIS)
         payload, err = dumpIetfJson((*app.ygotRoot).(*ocbinds.Device), true)
+        return GetResponse{Payload: payload}, err
     case "/openconfig-platform:components/component":
         compName := app.path.Var("name")
+        log.Infof("compName: %v", compName)
         if compName == "" {
             pf_comp,_ := pf_cpts.NewComponent("System Eeprom")
             ygot.BuildEmptyTree(pf_comp)
@@ -383,9 +441,37 @@ func (app *PlatformApp) getSysEepromJson () (GetResponse, error) {
             }
             payload, err = dumpIetfJson(pf_cpts, false)
         } else {
-            if compName != "System Eeprom" {
+            if compName == "System Eeprom" {
+                pf_comp := pf_cpts.Component[compName]
+                if pf_comp != nil {
+                    ygot.BuildEmptyTree(pf_comp)
+                    err = app.getSysEepromFromFile(pf_comp.State, true)
+                    if err != nil {
+                        return GetResponse{Payload: payload}, err
+                    }
+                    payload, err = dumpIetfJson(pf_cpts.Component[compName], false)
+                } else {
+                    err = errors.New("Invalid input component name")
+                }
+            } else if compName == "Sensor" {
+                pf_comp := pf_cpts.Component[compName]
+                if pf_comp != nil {
+                    ygot.BuildEmptyTree(pf_comp)
+                    err = app.getPlatformEnvironment(pf_comp)
+                    if err != nil {
+                        return GetResponse{Payload: payload}, err
+                    }
+                    payload, err = dumpIetfJson(pf_cpts.Component[compName], false)
+                } else {
+                    err = errors.New("Invalid input component name")
+                }
+            } else {
                 err = errors.New("Invalid component name")
             }
+        }
+    case "/openconfig-platform:components/component/state":
+        compName := app.path.Var("name")
+        if compName != "" && compName == "System Eeprom" {
             pf_comp := pf_cpts.Component[compName]
             if pf_comp != nil {
                 ygot.BuildEmptyTree(pf_comp)
@@ -397,14 +483,11 @@ func (app *PlatformApp) getSysEepromJson () (GetResponse, error) {
             } else {
                 err = errors.New("Invalid input component name")
             }
-        }
-    case "/openconfig-platform:components/component/state":
-        compName := app.path.Var("name")
-        if compName != "" && compName == "System Eeprom" {
+        } else if compName != "" && compName == "Sensor" {
             pf_comp := pf_cpts.Component[compName]
             if pf_comp != nil {
                 ygot.BuildEmptyTree(pf_comp)
-                err = app.getSysEepromFromFile(pf_comp.State, true)
+                err = app.getPlatformEnvironment(pf_comp)
                 if err != nil {
                     return GetResponse{Payload: payload}, err
                 }

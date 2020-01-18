@@ -1,0 +1,42 @@
+module openconfig-platform-ext {
+
+    yang-version "1";
+
+    // namespace
+    namespace "http://openconfig.net/yang/platform/extension";
+
+    prefix "oc-pf-ext";
+
+    import openconfig-platform { prefix oc-pf; }
+
+    grouping platform-extra-sensor-reading {
+        list sensor-category {
+            description
+                "List of sensor category";
+            key "category";
+            leaf category {
+                type string;
+                description
+                    "Sensor Category Name";
+            }
+            list sensor {
+                description
+                    "List of sensors";
+                key "name";
+                leaf name {
+                    type string;
+                    description
+                        "Sensor Name";
+                }
+                leaf state {
+                    type string;
+                    description "Sensor State";
+                }
+            }
+        }
+    }
+
+    augment /oc-pf:components/oc-pf:component/oc-pf:subcomponents/oc-pf:subcomponent/oc-pf:state {
+        uses platform-extra-sensor-reading;
+    }
+}

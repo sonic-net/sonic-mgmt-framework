@@ -53,6 +53,10 @@ module sonic-portchannel {
                         }
                     }
                 }
+                
+                leaf static {
+                    type string;
+                }
 
                 leaf min_links {
                     type uint8;

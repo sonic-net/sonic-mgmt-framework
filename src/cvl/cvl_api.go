@@ -768,7 +768,7 @@ func (c *CVL) GetDepDataForDelete(redisKey string) ([]string, []string) {
 			CVL_LOG(ERROR, "Lua script error (%v)", err)
 		}
 		if (refKeys == nil) {
-		//No reference field found
+			//No reference field found
 			continue
 		}
 

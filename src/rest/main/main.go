@@ -141,6 +141,7 @@ func main() {
 // server, and will not be used for any other client.
 func spawnUnixListener() {
 	server.ClientAuth.Set("cert")
+	server.ClientAuth.Set("jwt")
 	tlsConfig := tls.Config{
 		ClientAuth:               tls.RequireAndVerifyClientCert,
 		Certificates:             prepareServerCertificate(),
