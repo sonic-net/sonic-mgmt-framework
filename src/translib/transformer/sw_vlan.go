@@ -1205,6 +1205,7 @@ var YangToDb_sw_vlans_xfmr SubTreeXfmrYangToDb = func(inParams XfmrParams) (map[
     }
     switch inParams.oper {
     case CREATE:
+        fallthrough
     case UPDATE:
         err = intfVlanMemberAdd(&swVlanConfig, &inParams, &ifName, vlanMap, vlanMemberMap, stpVlanPortMap, stpPortMap, intfType)
         if err != nil {
@@ -1229,6 +1230,8 @@ var YangToDb_sw_vlans_xfmr SubTreeXfmrYangToDb = func(inParams XfmrParams) (map[
         if (len(stpPortMap) != 0) {
             res_map[STP_PORT_TABLE] = stpPortMap
         }
+    case REPLACE:
+        return nil, tlerr.NotSupported("REPLACE of Vlan members is currently not supported.")
     }
     log.Info("YangToDb_sw_vlans_xfmr: vlan res map:", res_map)
     return res_map, err
