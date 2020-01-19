@@ -72,21 +72,6 @@ func getInternalNwInstName (name string) (string, error) {
 func getVrfTblKeyByName (name string) (string) {
         var vrf_key string
 
-/*
-        if (strings.Compare(name, "default") == 0) { 
-            log.Info("getVrfTblKeyByName:  network instance name contains default -VRF Name")
-            return  vrf_key
-        }
-*/
-/*
-        if name == "" {
-*/
-            /* Shouldn't even come here */
-/*
-            log.Info("getVrfTblKeyByName:  network instance name is empty")
-            return  vrf_key
-        }
-*/
         if (strings.Compare(name, "mgmt") == 0) { 
             vrf_key = "vrf_global"
         } else {
@@ -475,25 +460,11 @@ var DbToYang_network_instance_name_field_xfmr KeyXfmrDbToYang = func(inParams Xf
         var err error
 
         log.Info("DbToYang_network_instance_name_field_xfmr")
-/*
-        if (isMgmtVrfDbTbl(inParams) == true) {
-                res_map["name"] = "mgmt"
-        } else if (isVrfDbTbl(inParams) == true){
-                res_map["name"] = inParams.key
-        }
-*/
 
         pathInfo := NewPathInfo(inParams.uri)
         keyName := pathInfo.Var("name")
 
         targetUriPath, _ := getYangPathFromUri(pathInfo.Path)
-
-/* for debug start */
-        log.Info("name transfomrer key: ", keyName)
-        log.Info("name transformer requestUri: ", inParams.requestUri)
-        log.Info("name transformer targetUri: ", targetUriPath)
-
-/* for debug end */
 
         if (inParams.key != "") {
                 if ((inParams.key == "default") || (strings.HasPrefix(inParams.key, "Vrf"))) {
@@ -505,7 +476,6 @@ var DbToYang_network_instance_name_field_xfmr KeyXfmrDbToYang = func(inParams Xf
                 log.Info("DbToYang_network_instance_name_field_xfmr, empty key")
         }
 
-        /* ToDo in else if cases */
         return  res_map, err
 }
 
@@ -843,7 +813,7 @@ var DbToYang_network_instance_interface_binding_subtree_xfmr SubTreeXfmrDbToYang
                                 if (len(intfKeys[i].Comp)) > 1 {
                                         continue
                                 }
-                                
+
                                 intfEntry, _ := inParams.d.GetEntry(intfTable, intfKeys[i])
 
                                 vrfName_str :=  (&intfEntry).Get("vrf_name")
@@ -865,7 +835,7 @@ var DbToYang_network_instance_interface_binding_subtree_xfmr SubTreeXfmrDbToYang
                                                 vrfName_str = "default"
                                         }
                                 }
-                                /*if (vrfName_str != "") {*/
+
                                 log.Infof("DbToYang_network_instance_interface_binding_subtree_xfmr: nwInst %v vrfname_str %v",
                                           pathNwInstName, vrfName_str)
 
@@ -902,7 +872,6 @@ var DbToYang_network_instance_interface_binding_subtree_xfmr SubTreeXfmrDbToYang
 
                                 log.Infof("DbToYang_network_instance_interface_binding_subtree_xfmr: vrf_name %v intf %v ygRoot %v ", 
                                           vrfName_str, intfName[0], nwInstTree)
-                               /* } */
                         }
                 }
         }
