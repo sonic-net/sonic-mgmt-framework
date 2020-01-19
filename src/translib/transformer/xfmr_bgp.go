@@ -8,9 +8,13 @@ import (
     "translib/ocbinds"
     "translib/tlerr"
     "translib/db"
-    "os/exec"
+    "io"
+    "bytes"
+    "net"
+    "encoding/binary"
     log "github.com/golang/glog"
 )
+const sock_addr = "/etc/sonic/frr/bgpd_client_sock"
 
 func getBgpRoot (inParams XfmrParams) (*ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp, string, error) {
     pathInfo := NewPathInfo(inParams.uri)
@@ -58,45 +62,60 @@ func getBgpRoot (inParams XfmrParams) (*ocbinds.OpenconfigNetworkInstance_Networ
     }
     return protoInstObj.Bgp, niName, err
 }
-
 func exec_vtysh_cmd (vtysh_cmd string) (map[string]interface{}, error) {
     var err error
-    oper_err := errors.New("Opertational error")
-
-    log.Infof("Going to execute vtysh cmd ==> \"%s\"", vtysh_cmd)
-
-    cmd := exec.Command("/usr/bin/docker", "exec", "bgp", "vtysh", "-c", vtysh_cmd)
-    out_stream, err := cmd.StdoutPipe()
+    oper_err := errors.New("Operational error")
+    
+    log.Infof("Going to connect UDS socket call to reach BGP container  ==> \"%s\"", vtysh_cmd)
+    conn, err := net.DialUnix("unix", nil, &net.UnixAddr{sock_addr, "unix"})
     if err != nil {
-        log.Errorf("Can't get stdout pipe: %s\n", err)
+        log.Infof("Failed to connect proxy server: %s\n", err)
         return nil, oper_err
     }
-
-    err = cmd.Start()
+    defer conn.Close()
+    bs := make([]byte, 4)
+    binary.BigEndian.PutUint32(bs, uint32(len(vtysh_cmd)))
+    _, err = conn.Write(bs)
     if err != nil {
-        log.Errorf("cmd.Start() failed with %s\n", err)
+        log.Infof("Failed to write command length to server: %s\n", err)
         return nil, oper_err
     }
+    _, err = conn.Write([]byte(vtysh_cmd))
+    if err != nil {
+        log.Infof("Failed to write command length to server: %s\n", err)
+        return nil, oper_err
+    }
+    log.Infof("Reading data from server\n")
+    var buffer bytes.Buffer
+    data := make([]byte, 10240)
+    for {
+        count, err := conn.Read(data)
+        if err == io.EOF {
+            log.Infof("End reading\n")
+            break
+        }
+        if err != nil {
+            log.Infof("Failed to read from server: %s\n", err)
+            return nil, oper_err
+        }
+        buffer.WriteString(string(data[:count]))
+    }
+    json_str := buffer.String()
+    log.Infof("Successfully got data from BGP container thru UDS socket ==> \"%s\"", vtysh_cmd)
 
+    log.Infof("Data decoding started ==> \"%s\"", vtysh_cmd)
     var outputJson map[string]interface{}
-    err = json.NewDecoder(out_stream).Decode(&outputJson)
+    err = json.NewDecoder(strings.NewReader(json_str)).Decode(&outputJson)
     if err != nil {
-        log.Errorf("Not able to decode vtysh json output: %s\n", err)
+        log.Infof("Not able to decode vtysh json output: %s\n", err)
         return nil, oper_err
     }
-
-    err = cmd.Wait()
-    if err != nil {
-        log.Errorf("Command execution completion failed with %s\n", err)
-        return nil, oper_err
-    }
-
-    log.Infof("Successfully executed vtysh-cmd ==> \"%s\"", vtysh_cmd)
 
     if outputJson == nil {
-        log.Errorf("VTYSH output empty !!!")
+        log.Infof("VTYSH output empty\n")
         return nil, oper_err
     }
+    log.Infof("Data decoding completed ==> \"%s\"", vtysh_cmd)
 
     return outputJson, err
 }
