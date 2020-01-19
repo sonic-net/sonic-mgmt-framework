@@ -294,7 +294,12 @@ module openconfig-mclag {
     }
 
     leaf unique-ip-enable {
-        type boolean;
+        type enumeration {
+            enum enable {
+                description
+                    "Enable MCLAG Unique-ip";
+            }
+        }
         description
             "unique ip enable, default : not enabled";
     }
@@ -391,5 +396,10 @@ module openconfig-mclag {
 
   // augment statements
 
+
+  // port-isolate is not supported now
+  deviation /oc-mclag:mclag/oc-mclag:interfaces/oc-mclag:interface/oc-mclag:state/oc-mclag:local/oc-mclag:port_isolate {
+      deviate not-supported;
+  }
 
 }
