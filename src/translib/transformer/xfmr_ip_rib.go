@@ -34,7 +34,6 @@ func getIpRoot (inParams XfmrParams) (*ocbinds.OpenconfigNetworkInstance_Network
 
         netInstObj, _ := netInstsObj.NetworkInstance[niName]
 	if netInstObj == nil {
-                log.Info("getIpRoot network instance nil for ", niName)
                 netInstObj, _ = netInstsObj.NewNetworkInstance(niName)
                 ygot.BuildEmptyTree(netInstObj)
 	}
@@ -42,7 +41,6 @@ func getIpRoot (inParams XfmrParams) (*ocbinds.OpenconfigNetworkInstance_Network
 	netInstAftsObj := netInstObj.Afts
 
 	if netInstAftsObj == nil {
-                log.Info("getIpRoot afs nil for ", niName)
                 ygot.BuildEmptyTree(netInstObj)
                 netInstAftsObj  = netInstObj.Afts
 	}
@@ -290,7 +288,7 @@ var DbToYang_ipv4_route_get_xfmr SubTreeXfmrDbToYang = func (inParams XfmrParams
 
 	aftsObjIpv4 := aftsObj.Ipv4Unicast
 	if aftsObjIpv4  == nil {
-                ygot.BuildEmptyTree(aftsObj)
+                return errors.New("Network-instance IPv4 unicast object missing")
 	}
 
 	var outputJson map[string]interface{}
@@ -332,7 +330,7 @@ var DbToYang_ipv6_route_get_xfmr SubTreeXfmrDbToYang = func (inParams XfmrParams
 
 	aftsObjIpv6 := aftsObj.Ipv6Unicast
 	if aftsObjIpv6  == nil {
-                ygot.BuildEmptyTree(aftsObj)
+                return errors.New("Network-instance IPv6 unicast object missing")
 	}
 
 	var outputJson map[string]interface{}

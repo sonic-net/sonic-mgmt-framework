@@ -652,14 +652,12 @@ var YangToDb_network_instance_interface_binding_subtree_xfmr SubTreeXfmrYangToDb
         intfId := pathInfo.Var("id")
 
         if ((keyName == "") || (keyName == "mgmt")) {
-                log.Info("YangToDb_network_instance_interface_binding_subtree_xfmr: no interface binding for VRF  ", keyName)
-                err = tlerr.InvalidArgsError{Format: "Not able to bind interface to " + keyName} 
+                log.Info("YangToDb_network_instance_interface_binding_subtree_xfmr: no intf binding for VRF ", keyName)
                 return res_map, err
         }
 
         if intfId == "" {
                 log.Info("YangToDb_network_instance_interface_binding_subtree_xfmr: empty interface id for VRF ", keyName)
-                err = tlerr.InvalidArgsError{Format: "Not able to bind empty interface "}
                 return res_map, err
         }
 
@@ -806,6 +804,11 @@ var DbToYang_network_instance_interface_binding_subtree_xfmr SubTreeXfmrDbToYang
                         }
 
                         for i, _ := range intfKeys {
+                                /* Skip the interface entry with both interface name and ip as key, as vrf_name is not there */
+                                if (len(intfKeys[i].Comp)) > 1 {
+                                        continue
+                                }
+                                
                                 intfEntry, _ := inParams.d.GetEntry(intfTable, intfKeys[i])
 
                                 vrfName_str :=  (&intfEntry).Get("vrf_name")
@@ -821,8 +824,6 @@ var DbToYang_network_instance_interface_binding_subtree_xfmr SubTreeXfmrDbToYang
                                         tempIntfName  := intfKeys[i].Comp
                                         err3 := validateL3ConfigExists(inParams.d, &tempIntfName[0])
                                         if (err3 == nil) {
-                                                log.Infof("DbToYang_network_instance_interface_binding_subtree_xfmr, default instance, %v not L3 intf",
-                                                          tempIntfName[0])
                                                 continue
                                         } else {
                                                 /* Set the temp vrfName_str to default */
@@ -830,7 +831,7 @@ var DbToYang_network_instance_interface_binding_subtree_xfmr SubTreeXfmrDbToYang
                                         }
                                 }
                                 /*if (vrfName_str != "") {*/
-                                log.Infof("DbToYang_network_instance_interface_binding_subtree_xfmr: nwInst %v vrfname_str %v", 
+                                log.Infof("DbToYang_network_instance_interface_binding_subtree_xfmr: nwInst %v vrfname_str %v",
                                           pathNwInstName, vrfName_str)
 
                                 /* add the VRF name to the nwInstTree if not already there */
@@ -858,7 +859,6 @@ var DbToYang_network_instance_interface_binding_subtree_xfmr SubTreeXfmrDbToYang
                                 intfData, ok = nwInstTree.NetworkInstance[vrfName_str].Interfaces.Interface[intfName[0]]
                                 if  !ok {
                                         intfData, _ = nwInstData.Interfaces.NewInterface(intfName[0])
-
                                         ygot.BuildEmptyTree(intfData)
                                 }
 
