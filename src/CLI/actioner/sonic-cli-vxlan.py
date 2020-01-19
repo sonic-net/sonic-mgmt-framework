@@ -157,6 +157,10 @@ def invoke(func, args):
         keypath = cc.Path('/restconf/data/sonic-vxlan:sonic-vxlan/VXLAN_TUNNEL_MAP/VXLAN_TUNNEL_MAP_LIST')
         return aa.get(keypath)
 
+    if func == "get_list_sonic_vxlan_tunnel_vrf_vni_map_list":
+        keypath = cc.Path('/restconf/data/sonic-vrf:sonic-vrf/VRF/VRF_LIST')
+        return aa.get(keypath)
+
     if func == "get_list_sonic_vxlan_sonic_vxlan_vxlan_tunnel_table_vxlan_tunnel_table_list":
         keypath = cc.Path('/restconf/data/sonic-vxlan:sonic-vxlan/VXLAN_TUNNEL_TABLE/VXLAN_TUNNEL_TABLE_LIST')
         return aa.get(keypath)
@@ -242,7 +246,7 @@ def vxlan_show_vxlan_interface(args):
 
     return
 
-#show vxlan map 
+#show vxlan vlan vni map 
 def vxlan_show_vxlan_vlanvnimap(args):
 
     #print("VLAN-VNI Mapping")
@@ -263,6 +267,32 @@ def vxlan_show_vxlan_vlanvnimap(args):
 	       #show_cli_output(args[0], vxlan_info)
 	#print(api_response.error_message())
     print("Total count : {0}".format(list_len))
+
+    return
+
+#show vxlan vrf vni map 
+def vxlan_show_vxlan_vrfvnimap(args):
+
+    #print("VRF-VNI Mapping")
+    iter_len = 0
+    vrfvnimap_count = 0
+    print("")
+    print("{0:^8}  {1:^8}".format('VRF','VNI'))
+    print("{0:^8}  {1:^8}".format('======','====='))
+    api_response = invoke("get_list_sonic_vxlan_tunnel_vrf_vni_map_list", args)
+    if api_response.ok():
+        response = api_response.content
+	if response is None:
+	    print("no vrf configuration")
+	elif response is not None:
+           vrf_list = response['sonic-vrf:VRF_LIST']
+           for iter in vrf_list:
+             iter_len = len(iter)
+             if (iter_len == 3):
+                 vrfvnimap_count += 1
+                 print("{0:^8}  {1:^8}".format(iter['vrf_name'],iter['vni']))
+	#print(api_response.error_message())
+    print("Total count : {0}".format(vrfvnimap_count))
 
     return
 
@@ -343,6 +373,9 @@ def run(func, args):
             return
         if func == 'show vxlan vlanvnimap':
             vxlan_show_vxlan_vlanvnimap(args)
+            return
+        if func == 'show vxlan vrfvnimap':
+            vxlan_show_vxlan_vrfvnimap(args)
             return
         if func == 'show vxlan tunnel':
             vxlan_show_vxlan_tunnel(args)
