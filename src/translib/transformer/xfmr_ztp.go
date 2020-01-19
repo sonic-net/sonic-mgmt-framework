@@ -255,6 +255,9 @@ func getZtpStatusInfofromDb( statusObj *ocbinds.OpenconfigZtp_Ztp_State, statusC
 
 func getZtpStatus(ztpObj *ocbinds.OpenconfigZtp_Ztp) (error) {
 
+    if ztpObj.State == nil {
+	ygot.BuildEmptyTree(ztpObj)
+    }
     statusObj := ztpObj.State
     ygot.BuildEmptyTree(statusObj)
     var statusCache ztpStatusCache
@@ -303,6 +306,9 @@ var DbToYang_ztp_config_xfmr SubTreeXfmrDbToYang = func (inParams XfmrParams) (e
 	log.Info("Error from host service:",err)
     }
     log.Info("Message from host:",mess)
+    if ztpObj.Config == nil {
+	ygot.BuildEmptyTree(ztpObj)
+    }
     configObj := ztpObj.Config
     ygot.BuildEmptyTree(configObj)
     var temp bool

@@ -696,6 +696,41 @@ var YangToDb_network_instance_interface_binding_subtree_xfmr SubTreeXfmrYangToDb
                 return res_map, err
         }
 
+        if ((inParams.oper == CREATE) ||
+            (inParams.oper == REPLACE) ||
+            (inParams.oper == UPDATE)) {
+            /* Validate whether the Interface is configured as member-port with any portchannel */
+            if intf_type == IntfTypeEthernet {
+                err = validateIntfAssociatedWithPortChannel(inParams.d, &intfId)
+                if err != nil {
+                    return res_map, err
+                }
+            }
+
+            /* Validate whether the Interface is configured as member-port with any vlan */
+            if intf_type == IntfTypeEthernet || intf_type == IntfTypePortChannel {
+                err = validateIntfAssociatedWithVlan(inParams.d, &intfId)
+                if err != nil {
+                    return res_map, err
+                }
+            }
+
+            /* Check if L3 configs present on given interface */
+            if intf_type == IntfTypeLoopback {
+                ipKeys, err1 := doGetIntfIpKeys(inParams.d, LOOPBACK_INTERFACE_TN, intfId)
+                if (err1 == nil && len(ipKeys) > 0) {
+                    errStr := "Interface: " + intfId + " configured with IP address"
+                    log.Info("YangToDb_network_instance_interface_binding_subtree_xfmr: ", errStr);
+                    err = tlerr.InvalidArgsError{Format: errStr}
+                }
+            } else {
+                err = validateL3ConfigExists(inParams.d, &intfId)
+            }
+            if err != nil {
+                return res_map, err
+            }
+        }
+
         res_map[intf_tbl_name] = make(map[string]db.Value)
 
         res_map[intf_tbl_name][intfId] = db.Value{Field: map[string]string{}}
