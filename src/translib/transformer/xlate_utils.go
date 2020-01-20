@@ -51,11 +51,7 @@ func keyCreate(keyPrefix string, xpath string, data interface{}, dbKeySep string
 				// SNC-3166: fix ipv6 key
 				fVal := fmt.Sprint(data.(map[string]interface{})[k])
 				if ((strings.Contains(fVal, ":")) &&
-<<<<<<< HEAD
 				    (strings.HasPrefix(fVal, OC_MDL_PFX) || strings.HasPrefix(fVal, IETF_MDL_PFX) || strings.HasPrefix(fVal, IANA_MDL_PFX))) {
-=======
-				    (strings.HasPrefix(fVal, OC_MDL_PFX) || strings.HasPrefix(fVal, IETF_MDL_PFX) || strings.HasPrefix(fVal, IANA_MDL_PFX))){
->>>>>>> origin/broadcom_sonic_share
 					// identity-ref/enum has module prefix
 					fVal = strings.SplitN(fVal, ":", 2)[1]
 				}
