@@ -342,7 +342,7 @@ func validateIntfAssociatedWithVlan(d *db.DB, ifName *string) error {
             if strings.Contains(members, *ifName) {
                 errStr := "Interface: " + *ifName + " is part of VLAN: " + vlan.Get(0)
                 log.Error(errStr)
-                return errors.New(errStr)
+                return tlerr.InvalidArgsError{Format:errStr}
             }
         }
     }
