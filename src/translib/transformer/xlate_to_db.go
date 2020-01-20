@@ -41,10 +41,10 @@ func leafXfmrHandler(inParams XfmrParams, xfmrFieldFuncNm string) (map[string]st
         return nil, err
     }
     if ((ret != nil) && (len(ret)>0)) {
-            if len(ret) == 2 {
+            if len(ret) == YTDB_FLD_XFMR_RET_ARGS {
                     // field xfmr returns err as second value in return data list from <xfmr_func>.Call()
-                    if ret[1].Interface() != nil {
-                            err = ret[1].Interface().(error)
+                    if ret[YTDB_FLD_XFMR_RET_ERR_INDX].Interface() != nil {
+                            err = ret[YTDB_FLD_XFMR_RET_ERR_INDX].Interface().(error)
                             if err != nil {
                                     log.Warningf("Transformer function(\"%v\") returned error - %v.", xfmrFieldFuncNm, err)
                                     return nil, err
@@ -52,8 +52,8 @@ func leafXfmrHandler(inParams XfmrParams, xfmrFieldFuncNm string) (map[string]st
                     }
             }
 
-            if ret[0].Interface() != nil {
-                    fldValMap := ret[0].Interface().(map[string]string)
+            if ret[YTDB_FLD_XFMR_RET_VAL_INDX].Interface() != nil {
+                    fldValMap := ret[YTDB_FLD_XFMR_RET_VAL_INDX].Interface().(map[string]string)
                     return fldValMap, nil
             }
     } else {
@@ -72,18 +72,18 @@ func xfmrHandler(inParams XfmrParams, xfmrFuncNm string) (map[string]map[string]
         }
 
         if ((ret != nil) && (len(ret)>0)) {
-                if len(ret) == 2 {
+                if len(ret) == YTDB_SBT_XFMR_RET_ARGS {
                         // subtree xfmr returns err as second value in return data list from <xfmr_func>.Call()
-                        if ret[1].Interface() != nil {
-                                err = ret[1].Interface().(error)
+                        if ret[YTDB_SBT_XFMR_RET_ERR_INDX].Interface() != nil {
+                                err = ret[YTDB_SBT_XFMR_RET_ERR_INDX].Interface().(error)
                                 if err != nil {
                                         log.Warningf("Transformer function(\"%v\") returned error - %v.", xfmrFuncNm, err)
                                         return nil, err
                                 }
                         }
                 }
-                if ret[0].Interface() != nil {
-                        retMap := ret[0].Interface().(map[string]map[string]db.Value)
+                if ret[YTDB_SBT_XFMR_RET_VAL_INDX].Interface() != nil {
+                        retMap := ret[YTDB_SBT_XFMR_RET_VAL_INDX].Interface().(map[string]map[string]db.Value)
                         return retMap, nil
                 }
         }
@@ -99,18 +99,18 @@ func keyXfmrHandler(inParams XfmrParams, xfmrFuncNm string) (string, error) {
         }
 
         if ((ret != nil) && (len(ret)>0)) {
-                if len(ret) == 2 {
+                if len(ret) == YTDB_KEY_XFMR_RET_ARGS {
                         // key xfmr returns err as second value in return data list from <xfmr_func>.Call()
-                        if ret[1].Interface() != nil {
-                                err = ret[1].Interface().(error)
+                        if ret[YTDB_KEY_XFMR_RET_ERR_INDX].Interface() != nil {
+                                err = ret[YTDB_KEY_XFMR_RET_ERR_INDX].Interface().(error)
                                 if err != nil {
                                         log.Warningf("Transformer function(\"%v\") returned error - %v.", xfmrFuncNm, err)
                                         return retVal, err
                                 }
                         }
                 }
-                if ret[0].Interface() != nil {
-                        retVal = ret[0].Interface().(string)
+                if ret[YTDB_KEY_XFMR_RET_VAL_INDX].Interface() != nil {
+                        retVal = ret[YTDB_KEY_XFMR_RET_VAL_INDX].Interface().(string)
                         return retVal, nil
                 }
         }
