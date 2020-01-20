@@ -72,11 +72,17 @@ module openconfig-ztp {
 		leaf ignoreresult {
 		    type boolean; 
 		}
+		leaf description {
+		    type string; 
+		}
+		leaf haltonfailure {
+		    type boolean; 
+		}
 	    }
 	}
 	container config {
 	    leaf admin_mode {
-		type boolean;
+		type uint32;
 	    }
 	}
    }
