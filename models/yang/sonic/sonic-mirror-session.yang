@@ -77,6 +77,10 @@ module sonic-mirror-session {
 
                 leaf dst_port {
                     type string;
+                    must "count(../../MIRROR_SESSION_LIST[src_port=current()]) = 0" {
+                        error-message "destination port cannot be same as source port";
+                        error-app-tag mirror-session-invalid_dst_port;
+                    }
                 }
 
                 leaf src_port {
@@ -87,6 +91,10 @@ module sonic-mirror-session {
                         type leafref {
                             path "/spc:sonic-portchannel/spc:PORTCHANNEL/spc:PORTCHANNEL_LIST/spc:name";
                         }
+                    }
+                    must "count(../../MIRROR_SESSION_LIST[dst_port=current()]) = 0" {
+                        error-message "source port cannot be same as destination port";
+                        error-app-tag mirror-session-invalid_src_port;
                     }
                 }
 

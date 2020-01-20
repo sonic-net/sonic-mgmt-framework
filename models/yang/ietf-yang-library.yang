@@ -225,7 +225,6 @@ module ietf-yang-library {
    * Notifications
    */
 
-  /*
   notification yang-library-change {
     description
       "Generated when the set of modules and submodules supported
@@ -241,7 +240,6 @@ module ietf-yang-library {
          the time the notification is generated.";
     }
   }
-  */
 
 }
 

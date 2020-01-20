@@ -92,3 +92,10 @@ if __name__ == '__main__':
             cmd_set_memory("0M-2G:256M,2G-4G:320M,4G-8G:384M,8G-:448M")
         elif sys.argv[1] == 'no' and sys.argv[2] == 'kdump' and sys.argv[3] == 'num_dumps':
             cmd_set_num_dumps(int(3))
+    elif len(sys.argv) == 5 and sys.argv[1] == 'do':
+        if sys.argv[2] == 'show' and sys.argv[3] == 'kdump' and sys.argv[4] == 'status':
+            cmd_show_status()
+        elif sys.argv[2] == 'show' and sys.argv[3] == 'kdump' and sys.argv[4] == 'memory':
+            cmd_show_memory()
+        elif sys.argv[2] == 'show' and sys.argv[3] == 'kdump' and sys.argv[4] == 'num_dumps':
+            cmd_show_num_dumps()

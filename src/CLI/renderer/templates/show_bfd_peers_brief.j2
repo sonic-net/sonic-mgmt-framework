@@ -1,0 +1,33 @@
+{% set vars = {'sessionId': ""} %}
+{% set vars = {'localAddress': "unknown"} %}
+{% set vars = {'peerAddress': ""} %}
+{% set vars = {'status': ""} %}
+{% set vars = {'vrf': ""} %}
+{{'Session Count:'}}
+{{'%-10s %-41s %-41s %-14s %-8s'|format("SessionId", "LocalAddress", "PeerAddress", "Status", "Vrf")}}
+{{'%-10s %-41s %-41s %-14s %-8s'|format("=========", "============", "===========", "======", "===")}}
+
+{% if 'openconfig-bfd-ext:bfd-state' in json_output %}
+    {% set sessions_list = json_output['openconfig-bfd-ext:bfd-state'] %}
+    {% for key in sessions_list %}
+        {% set singlehop = sessions_list[key] %}
+        {% for peer in singlehop %}
+            {% if "local-discriminator" in peer %}
+                {% if vars.update({'sessionId':peer['local-discriminator']}) %}{% endif %}
+            {% endif %}
+            {% if "local-address" in peer %}
+                {% if vars.update({'localAddress':peer['local-address']}) %}{% endif %}
+            {% endif %}
+            {% if "remote-address" in peer %}
+                {% if vars.update({'peerAddress':peer['remote-address']}) %}{% endif %}
+            {% endif %}
+            {% if "session-state" in peer %}
+                {% if vars.update({'status':peer['session-state']}) %}{% endif %}
+            {% endif %}
+            {% if "vrf" in peer %}
+                {% if vars.update({'vrf':peer['vrf']}) %}{% endif %}
+            {% endif %}
+{{'%-10s %-41s %-41s %-14s %-8s'|format(vars.sessionId, vars.localAddress, vars.peerAddress, vars.status, vars.vrf)}}
+        {% endfor %}
+    {% endfor %}
+{% endif %}

@@ -1,0 +1,12 @@
+{{ ' ' }}
+{{ 'Target Address'|center(26) }} {{ 'Type'|center(12) }} {{ 'Community'|center(14) }} {{ 'Version ' }} {{ 'Timeout' }} {{ 'Retries' }}
+{{'-------------------------- ------------ -------------- -------- ------- -------'}}
+{% for i in json_output %}
+  {% set i1 = json_output[loop.index-1] %}
+{{ '%-26s'|format(i1['target'])|truncate(26,true,"") -}}
+{{ ' %-12s'|format(i1['trapOrInform'])|truncate(12,true,"") -}}
+{{ ' %-14s'|format(i1['security-name'])|truncate(14,true,"") -}}
+{{ ' %-8s'|format(i1['version']) -}}
+{{ ' %-7s'|format(i1['timeout']) -}}
+{{ ' %-7s'|format(i1['retries']) }}
+{% endfor %}

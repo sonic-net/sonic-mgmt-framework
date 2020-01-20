@@ -1,0 +1,405 @@
+module ietf-ptp-ext {
+
+	yang-version 1.1;
+
+	// namespace
+	namespace "urn:ietf:params:xml:ns:yang:ietf-ptp-ext";
+
+	prefix ptp-ext;
+
+
+	import ietf-ptp {prefix ptp; }
+
+	typedef ptp-clock-type {
+		type enumeration {
+			enum BC {
+				value 1;
+				description
+					"boundary clock";
+			}
+			enum P2P_TC {
+				value 2;
+				description
+					"peer-to-peer transparent clock";
+			}
+			enum E2E_TC {
+				value 3;
+				description
+					"end-to-end transparent clock";
+			}
+			enum disable {
+				value 4;
+				description
+					"disabled";
+			}
+		}
+		description
+			"Type definition for options when setting the clock-type
+			attribute in the default data set";
+	}
+
+	typedef ptp-network-transport {
+		type enumeration {
+			enum L2 {
+				value 1;
+				description
+					"Layer 2 network";
+			}
+			enum UDPv4 {
+				value 2;
+				description
+					"UDPv4 network";
+			}
+			enum UDPv6 {
+				value 3;
+				description
+					"UDPv2 network";
+			}
+		}
+		description
+			"Type definition for options when setting the network transport
+			attribute in the default data set";
+	}
+
+	typedef ptp-unicast-multicast {
+		type enumeration {
+			enum unicast {
+				value 1;
+				description
+					"unicast";
+			}
+			enum multicast {
+				value 2;
+				description
+					"multicast";
+			}
+		}
+		description
+			"Type definition for options when setting the unicast-multicast 
+			attribute in the default data set";
+	}
+
+	typedef ptp-domain-profile {
+		type enumeration {
+			enum ieee1588 {
+				value 1;
+				description
+					"default profile";
+			}
+			enum g8275.1 {
+				value 2;
+				description
+					"g8275.1 profile";
+			}
+			enum g8275.2 {
+				value 3;
+				description
+					"g8275.2 profile";
+			}
+		}
+		description
+			"Type definition for options when setting the domain-profile
+			attribute in the default data set";
+	}
+
+	// augment statements
+	augment "/ptp:ptp/ptp:instance-list/ptp:default-ds" {
+		description "default data set";
+		leaf log-announce-interval {
+			type int8;
+			description
+				"The base-2 logarithm of the mean
+				announceInterval (mean time interval between
+						successive Announce messages).";
+		}
+		leaf announce-receipt-timeout {
+			type uint8 {
+				range "2..255" {
+					error-message "Invalid value passed for announce-receipt-timeout";
+				}
+			}
+			description
+				"The number of announceIntervals that have to pass
+				without receipt of an Announce message before the
+				occurrence of the event ANNOUNCE_RECEIPT_TIMEOUT_
+				EXPIRES.";
+		}
+		leaf log-sync-interval {
+			type int8;
+			description
+				"The base-2 logarithm of the mean SyncInterval
+				for multicast messages.  The rates for unicast
+				transmissions are negotiated separately on a per-port
+				basis and are not constrained by this attribute.";
+		}
+		leaf log-min-delay-req-interval {
+			type int8;
+			description
+				"The base-2 logarithm of the minDelayReqInterval
+				(the minimum permitted mean time interval between
+				 successive Delay_Req messages).";
+		}
+		leaf clock-type {
+			type string {
+				pattern "(BC)|(P2P_TC)|(E2E_TC)|(disable)" {
+					error-message "Invalid value passed for clock-type";
+				}
+			}
+			description
+				"Defines the role of the default-data-set";
+		}
+		leaf network-transport {
+			type string {
+				pattern "(L2)|(UDPv4)|(UDPv6)" {
+					error-message "Invalid value passed for network-transport";
+				}
+			}
+			description
+				"The network transport used for communication";
+		}
+		leaf unicast-multicast {
+			type string {
+				pattern "(unicast)|(multicast)" {
+					error-message "Invalid value passed for unicast-multicast";
+				}
+			}
+			description
+				"Whether the network transport uses unicast or
+				multicast communication";
+		}
+		leaf domain-profile {
+			type string {
+				pattern "(ieee1588)|(G.8275.1)|(G.8275.2)" {
+					error-message "Invalid value passed for domain-profile";
+				}
+			}
+			description
+				"the method to be used when comparing data sets during
+				the Best Master Clock Algorithm.";
+		}
+		leaf udp6-scope {
+			type uint8;
+			description
+				"the desired scope for the IPv6 multicast messages.
+				This will be used as the second byte of the primary 
+				address. This option is only relevant with IPv6
+				transport. See RFC 4291. The default is 14 (0x0E) for
+				the global scope.";
+		}
+	}
+
+	augment "/ptp:ptp/ptp:instance-list/ptp:port-ds-list" {
+		description "port data set list";
+		leaf unicast-table {
+			type string;
+			description
+				"The comma-separated list of ip addresses to use for
+				master";
+		}
+	}
+	deviation "/ptp:ptp/ptp:instance-list/ptp:default-ds/ptp:domain-number" {
+		deviate replace {
+			type uint8 {
+				range "0..127" {
+					error-message "Invalid value passed for domain-number";
+				}
+			}
+		}
+	}
+	deviation "/ptp:ptp/ptp:instance-list/ptp:default-ds/ptp:number-ports" {
+		deviate replace {
+			config false;
+		}
+	}
+	deviation "/ptp:ptp/ptp:instance-list/ptp:default-ds/ptp:clock-quality" {
+		deviate replace {
+			config false;
+		}
+	}
+	deviation "/ptp:ptp/ptp:instance-list/ptp:default-ds/ptp:clock-quality/ptp:clock-class" {
+		deviate replace {
+			config false;
+		}
+	}
+	deviation "/ptp:ptp/ptp:instance-list/ptp:default-ds/ptp:clock-quality/ptp:clock-accuracy" {
+		deviate replace {
+			config false;
+		}
+	}
+	deviation "/ptp:ptp/ptp:instance-list/ptp:default-ds/ptp:clock-quality/ptp:offset-scaled-log-variance" {
+		deviate replace {
+			config false;
+		}
+	}
+	deviation "/ptp:ptp/ptp:instance-list/ptp:current-ds" {
+		deviate replace {
+			config false;
+		}
+	}
+	deviation "/ptp:ptp/ptp:instance-list/ptp:current-ds/ptp:steps-removed" {
+		deviate replace {
+			config false;
+		}
+	}
+	deviation "/ptp:ptp/ptp:instance-list/ptp:current-ds/ptp:offset-from-master" {
+		deviate replace {
+			config false;
+		}
+	}
+	deviation "/ptp:ptp/ptp:instance-list/ptp:current-ds/ptp:mean-path-delay" {
+		deviate replace {
+			config false;
+		}
+	}
+	deviation "/ptp:ptp/ptp:instance-list/ptp:parent-ds" {
+		deviate replace {
+			config false;
+		}
+	}
+	deviation "/ptp:ptp/ptp:instance-list/ptp:parent-ds/ptp:parent-port-identity" {
+		deviate replace {
+			config false;
+		}
+	}
+	deviation "/ptp:ptp/ptp:instance-list/ptp:parent-ds/ptp:parent-port-identity/ptp:clock-identity" {
+		deviate replace {
+			config false;
+		}
+	}
+	deviation "/ptp:ptp/ptp:instance-list/ptp:parent-ds/ptp:parent-port-identity/ptp:port-number" {
+		deviate replace {
+			config false;
+		}
+	}
+	deviation "/ptp:ptp/ptp:instance-list/ptp:parent-ds/ptp:parent-stats" {
+		deviate replace {
+			config false;
+		}
+	}
+	deviation "/ptp:ptp/ptp:instance-list/ptp:parent-ds/ptp:observed-parent-offset-scaled-log-variance" {
+		deviate replace {
+			config false;
+		}
+	}
+	deviation "/ptp:ptp/ptp:instance-list/ptp:parent-ds/ptp:observed-parent-clock-phase-change-rate" {
+		deviate replace {
+			config false;
+		}
+	}
+	deviation "/ptp:ptp/ptp:instance-list/ptp:parent-ds/ptp:grandmaster-identity" {
+		deviate replace {
+			config false;
+		}
+	}
+	deviation "/ptp:ptp/ptp:instance-list/ptp:parent-ds/ptp:grandmaster-clock-quality" {
+		deviate replace {
+			config false;
+		}
+	}
+	deviation "/ptp:ptp/ptp:instance-list/ptp:parent-ds/ptp:grandmaster-clock-quality/ptp:clock-class" {
+		deviate replace {
+			config false;
+		}
+	}
+	deviation "/ptp:ptp/ptp:instance-list/ptp:parent-ds/ptp:grandmaster-clock-quality/ptp:clock-accuracy" {
+		deviate replace {
+			config false;
+		}
+	}
+	deviation "/ptp:ptp/ptp:instance-list/ptp:parent-ds/ptp:grandmaster-clock-quality/ptp:offset-scaled-log-variance" {
+		deviate replace {
+			config false;
+		}
+	}
+	deviation "/ptp:ptp/ptp:instance-list/ptp:parent-ds/ptp:grandmaster-priority1" {
+		deviate replace {
+			config false;
+		}
+	}
+	deviation "/ptp:ptp/ptp:instance-list/ptp:parent-ds/ptp:grandmaster-priority2" {
+		deviate replace {
+			config false;
+		}
+	}
+	deviation "/ptp:ptp/ptp:instance-list/ptp:time-properties-ds" {
+		deviate replace {
+			config false;
+		}
+	}
+	deviation "/ptp:ptp/ptp:instance-list/ptp:time-properties-ds/ptp:current-utc-offset-valid" {
+		deviate replace {
+			config false;
+		}
+	}
+	deviation "/ptp:ptp/ptp:instance-list/ptp:time-properties-ds/ptp:current-utc-offset" {
+		deviate replace {
+			config false;
+		}
+	}
+	deviation "/ptp:ptp/ptp:instance-list/ptp:time-properties-ds/ptp:leap59" {
+		deviate replace {
+			config false;
+		}
+	}
+	deviation "/ptp:ptp/ptp:instance-list/ptp:time-properties-ds/ptp:leap61" {
+		deviate replace {
+			config false;
+		}
+	}
+	deviation "/ptp:ptp/ptp:instance-list/ptp:time-properties-ds/ptp:time-traceable" {
+		deviate replace {
+			config false;
+		}
+	}
+	deviation "/ptp:ptp/ptp:instance-list/ptp:time-properties-ds/ptp:frequency-traceable" {
+		deviate replace {
+			config false;
+		}
+	}
+	deviation "/ptp:ptp/ptp:instance-list/ptp:time-properties-ds/ptp:ptp-timescale" {
+		deviate replace {
+			config false;
+		}
+	}
+	deviation "/ptp:ptp/ptp:instance-list/ptp:time-properties-ds/ptp:time-source" {
+		deviate replace {
+			config false;
+		}
+	}
+	deviation "/ptp:ptp/ptp:instance-list/ptp:port-ds-list/ptp:log-min-delay-req-interval" {
+		deviate replace {
+			config false;
+		}
+	}
+	deviation "/ptp:ptp/ptp:instance-list/ptp:port-ds-list/ptp:peer-mean-path-delay" {
+		deviate replace {
+			config false;
+		}
+	}
+	deviation "/ptp:ptp/ptp:instance-list/ptp:port-ds-list/ptp:log-announce-interval" {
+		deviate replace {
+			config false;
+		}
+	}
+	deviation "/ptp:ptp/ptp:instance-list/ptp:port-ds-list/ptp:delay-mechanism" {
+		deviate replace {
+			config false;
+		}
+	}
+	deviation "/ptp:ptp/ptp:instance-list/ptp:port-ds-list/ptp:log-min-pdelay-req-interval" {
+		deviate replace {
+			config false;
+		}
+	}
+	deviation "/ptp:ptp/ptp:instance-list/ptp:port-ds-list/ptp:version-number" {
+		deviate replace {
+			config false;
+		}
+	}
+	deviation "/ptp:ptp/ptp:transparent-clock-default-ds" {
+		deviate not-supported;
+	}
+	deviation "/ptp:ptp/ptp:transparent-clock-port-ds-list" {
+		deviate not-supported;
+	}
+}

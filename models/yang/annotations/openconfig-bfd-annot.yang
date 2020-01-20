@@ -1,0 +1,54 @@
+module openconfig-bfd-annot {
+
+    yang-version "1.1";
+
+    namespace "http://openconfig.net/yang/bfd-annot";
+    prefix "oc-bfd-annot";
+
+    import sonic-extensions { prefix sonic-ext; }
+    import openconfig-bfd { prefix oc-bfd; }
+    import openconfig-bfd-ext { prefix oc-bfd-ext; }
+
+    // meta
+    organization
+       "SONiC";
+
+    contact
+       "SONiC";
+
+    description
+       "SONIC BFD";
+
+    revision 2019-12-11 {
+       description
+          "Initial revision.";
+    }
+
+    deviation /oc-bfd:bfd/oc-bfd-ext:sessions/oc-bfd-ext:single-hop {
+      deviate add {
+	//sonic-ext:key-transformer "bfd_shop_session_key_xfmr";
+        sonic-ext:table-name "BFD_PEER_SINGLE_HOP";
+        //sonic-ext:subtree-transformer "bfd_shop_state_xfmr";
+      }
+    }
+
+    deviation /oc-bfd:bfd/oc-bfd-ext:sessions/oc-bfd-ext:multi-hop {
+      deviate add {
+	//sonic-ext:key-transformer "bfd_mhop_session_key_xfmr";
+        sonic-ext:table-name "BFD_PEER_MULTI_HOP";
+        //sonic-ext:subtree-transformer "bfd_mhop_state_xfmr";
+      }
+    }
+
+    deviation /oc-bfd:bfd/oc-bfd-ext:bfd-state {
+      deviate add {
+        sonic-ext:subtree-transformer "bfd_state_xfmr";
+      }
+    }
+
+    /*deviation /oc-bfd:bfd/oc-bfd-ext:bfd-state/oc-bfd-ext:multi-hop-state {
+      deviate add {
+        sonic-ext:subtree-transformer "bfd_mhop_state_xfmr";
+      }
+    }*/
+}

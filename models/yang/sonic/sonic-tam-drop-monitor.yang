@@ -7,7 +7,7 @@ module sonic-tam-drop-monitor {
     }
 
     import sonic-common {
-	    prefix scommon;
+	    prefix cmn;
     }
 
     import sonic-extension {
@@ -134,7 +134,15 @@ module sonic-tam-drop-monitor {
 			type uint32 {
 				range "1..655356"{
 					error-app-tag "Invalid Flow Group Identifier.";
-				}
+			}
+			}
+			must "(/cmn:operation/cmn:operation != 'CREATE') or (count(../../TAM_DROP_MONITOR_FLOW_TABLE_LIST[acl-table-name=current()/../acl-table-name and  acl-rule-name=current()/../acl-rule-name]/flowgroup-id) = 1)" {
+				error-app-tag "invalid-flowgroup-id";
+				error-message "Only single flowgroup-id is allowed for unique ACL table and rule combination";
+			}
+			must "(/cmn:operation/cmn:operation != 'UPDATE') or (count(../../TAM_DROP_MONITOR_FLOW_TABLE_LIST[acl-table-name=current()/../acl-table-name and  acl-rule-name=current()/../acl-rule-name]/flowgroup-id) <= 2)" {
+				error-app-tag "invalid-flowgroup-id";
+				error-message "Only single flowgroup-id is allowed for unique ACL table and rule combination";
 			}
 		}
 

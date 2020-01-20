@@ -39,8 +39,12 @@ module sonic-common {
     }
 
     container operation {
-        leaf operation {
-            type string;
-        }
+	    leaf operation {
+		    type enumeration {
+			    enum CREATE;
+			    enum UPDATE;
+			    enum DELETE;
+		    }
+	    }
     }
 }
