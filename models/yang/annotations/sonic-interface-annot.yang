@@ -1,4 +1,4 @@
-module sonic-interfaces-annot {
+module sonic-interface-annot {
 
     yang-version "1.1";
 

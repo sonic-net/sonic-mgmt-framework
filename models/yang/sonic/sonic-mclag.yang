@@ -143,7 +143,9 @@ module sonic-mclag {
                     }
                 }
                 leaf unique_ip {
-                    type string;
+                    type enumeration {
+                        enum enable;
+                    }
                 }
             }
         }

@@ -12,13 +12,15 @@
 {% if vars.update({'sessionUp': "0"}) %}{% endif %}
 {% if vars.update({'sessionDown': "0"}) %}{% endif %}
 {% if vars.update({'zebraNotif': "0"}) %}{% endif %}
-BFD Peers:
-
-{% if 'openconfig-bfd-ext:bfd-state' in json_output %}
-    {% set sessions_list = json_output['openconfig-bfd-ext:bfd-state'] %}
-    {% for key in sessions_list %}
-        {% set singlehop = sessions_list[key] %}
-        {% for peer in singlehop %}
+{% if 'openconfig-bfd-ext:single-hop-state' in json_output or 'openconfig-bfd-ext:multi-hop-state' in json_output %}
+    {% if 'openconfig-bfd-ext:single-hop-state' in json_output %}
+        {% set sessions = json_output['openconfig-bfd-ext:single-hop-state'] %}
+    {% endif %}
+    {% if 'openconfig-bfd-ext:multi-hop-state' in json_output %}
+        {% set sessions = json_output['openconfig-bfd-ext:multi-hop-state'] %}
+    {% endif %}
+    {% if sessions %}
+        {% for peer in sessions %}
             {% if "local-discriminator" in peer %}
                 {% if vars.update({'sessionId':peer['local-discriminator']}) %}{% endif %}
             {% endif %}
@@ -60,7 +62,7 @@ BFD Peers:
                 {% if vars.update({'sessionDown':peer['failure-transitions']}) %}{% endif %}
             {% endif %}        
 {% set peerkey = 'peer %s'|format(vars.peerAddress)%}
-{% if key == 'multi-hop-state'%}
+{% if 'openconfig-bfd-ext:multi-hop-state' in json_output %}
 {% set peerkey = '%s %s'|format(peerkey, 'multihop')%}
 {% endif %}
 {% if vars.localAddress != 'null'%}
@@ -69,7 +71,7 @@ BFD Peers:
 {% if vars.vrf != ''%}
 {% set peerkey = '%s vrf %s'|format(peerkey, vars.vrf)%}
 {% endif %}
-{% if key == 'single-hop-state'%}
+{% if 'openconfig-bfd-ext:single-hop-state' in json_output %}
 {% if vars.interface != ''%}
 {% set peerkey = '%s interface %s'|format(peerkey, vars.interface)%}
 {% endif %}
@@ -82,7 +84,6 @@ BFD Peers:
 {{'%8sSession up events: %s'|format(' ', vars.sessionUp)}}
 {{'%8sSession down events: %s'|format(' ', vars.sessionDown)}}
 {{'%8sZebra notifications: %s'|format(' ', vars.zebraNotif)}}
-
         {% endfor %}
-    {% endfor %}
+    {% endif %}
 {% endif %}

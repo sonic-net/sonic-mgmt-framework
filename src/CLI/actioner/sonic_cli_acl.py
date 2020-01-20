@@ -32,7 +32,12 @@ def invoke(func, args):
 
     # Get the rules of all ACL table entries.
     if func == 'get_openconfig_acl_acl_acl_sets':
-        keypath = cc.Path('/restconf/data/openconfig-acl:acl/acl-sets')
+        keypath = None
+        if args[0] == "":
+            keypath = cc.Path('/restconf/data/openconfig-acl:acl/acl-sets')
+        else:
+            keypath = cc.Path('/restconf/data/openconfig-acl:acl/acl-sets/acl-set={name},{type}/acl-entries',
+                 name=args[0], type=args[1] )
         return aa.get(keypath)
 
     # Get Interface binding to ACL table info
@@ -132,7 +137,7 @@ def invoke(func, args):
     # Add the ACL table binding to an Interface(Ingress / Egress).
     if func == 'patch_list_openconfig_acl_acl_interfaces_interface':
         keypath = cc.Path('/restconf/data/openconfig-acl:acl/interfaces/interface')
-        if args[3] == "ingress":
+        if args[3] == "in":
             body = { "openconfig-acl:interface": [ {
                         "id": args[2],
                         "config": {
@@ -179,15 +184,14 @@ def invoke(func, args):
 
         return aa.patch(keypath, body)
 
-    # Remove the ACL table binding to an Ingress interface.
-    if func == 'delete_openconfig_acl_acl_interfaces_interface_ingress_acl_sets_ingress_acl_set':
-        keypath = cc.Path('/restconf/data/openconfig-acl:acl/interfaces/interface={id}/ingress-acl-sets/ingress-acl-set={set_name},{type}',
+    # Remove the ACL table binding to an Ingress/Egress interface.
+    if func == 'delete_openconfig_acl_accessgroup':
+        keypath = None
+        if args[3] == 'in':
+            keypath = cc.Path('/restconf/data/openconfig-acl:acl/interfaces/interface={id}/ingress-acl-sets/ingress-acl-set={set_name},{type}',
                 id=args[0], set_name=args[1], type=args[2] )
-        return aa.delete(keypath)
-
-    # Remove the ACL table binding to an Egress interface.
-    if func == 'delete_openconfig_acl_acl_interfaces_interface_egress_acl_sets_egress_acl_set':
-        keypath = cc.Path('/restconf/data/openconfig-acl:acl/interfaces/interface={id}/egress-acl-sets/egress-acl-set={set_name},{type}',
+        else:
+            keypath = cc.Path('/restconf/data/openconfig-acl:acl/interfaces/interface={id}/egress-acl-sets/egress-acl-set={set_name},{type}',
                 id=args[0], set_name=args[1], type=args[2] )
         return aa.delete(keypath)
 
@@ -224,7 +228,7 @@ def run(func, args):
                 value = response['openconfig-acl:acl-sets']
                 if value is None:
                     return
-                show_cli_output(args[0], value)
+                show_cli_output(args[2], value)
             elif 'openconfig-acl:interfaces' in response.keys():
                 value = response['openconfig-acl:interfaces']
                 if value is None:

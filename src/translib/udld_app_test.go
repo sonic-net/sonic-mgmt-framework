@@ -45,7 +45,7 @@ func Test_UdldApp_Udld_Global_Enable_Disable(t *testing.T) {
 	t.Run("Verify_UDLD_Global_Enabled", processGetRequest(topUdldUrl+"/UDLD", udldGlobalEnabledJsonResponse, false))
 	t.Run("Disable_UDLD_Global_Level", processDeleteRequest(topUdldUrl))
 
-	t.Run("Verify_UDLD_Disabled_Global_Level", processGetRequest(topUdldUrl, emptyJson, true))
+	t.Run("Verify_UDLD_Disabled_Global_Level", processGetRequest(topUdldUrl+"/UDLD", emptyJson, true))
 }
 
 func Test_UdldApp_Udld_Port_Level_Enable_Disable(t *testing.T) {
@@ -61,7 +61,7 @@ func Test_UdldApp_Udld_Port_Level_Enable_Disable(t *testing.T) {
 	t.Run("Verify_UDLD_Disabled_Port_Level", processGetRequest(portLevelUdldUrl, emptyJson, true))
 
 	t.Run("Disable_UDLD_Global_Level", processDeleteRequest(topUdldUrl))
-	t.Run("Verify_UDLD_Disabled_Global_Level", processGetRequest(topUdldUrl, emptyJson, true))
+	t.Run("Verify_UDLD_Disabled_Global_Level", processGetRequest(topUdldUrl+"/UDLD", emptyJson, true))
 }
 
 func clearUdldDataFromConfigDb() error {
