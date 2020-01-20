@@ -53,5 +53,7 @@ const (
 	OC_MDL_PFX = "openconfig-"
 	IETF_MDL_PFX = "ietf-"
 	IANA_MDL_PFX = "iana-"
-
+	TBL_XFMR_RET_ARGS = 2
+	TBL_XFMR_RET_VAL_INDX = 0
+	TBL_XFMR_RET_ERR_INDX = 1
 )

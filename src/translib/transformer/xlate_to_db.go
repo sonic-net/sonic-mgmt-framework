@@ -154,15 +154,19 @@ func dataToDBMapAdd(tableName string, dbKey string, result map[string]map[string
     return
 }
 
+/*use when single table name is expected*/
 func tblNameFromTblXfmrGet(xfmrTblFunc string, inParams XfmrParams) (string, error){
-	tblList := xfmrTblHandlerFunc(xfmrTblFunc, inParams)
-	if len(tblList) != 1 {
-		logStr := fmt.Sprintf("Invalid return value(%v) from table transformer for (%v)", tblList, inParams.uri)
-		log.Error(logStr)
-		err := tlerr.InternalError{Format: logStr}
+	var err error
+	var tblList []string
+	tblList, err = xfmrTblHandlerFunc(xfmrTblFunc, inParams)
+	if err != nil {
 		return "", err
 	}
-	return tblList[0], nil
+	if len(tblList) != 1 {
+		xfmrLogInfoAll("Uri (\"%v\") translates to 0 or multiple tables instead of single table - %v", inParams.uri, tblList)
+		return "", err
+	}
+	return tblList[0], err
 }
 
 /* Fill the redis-db map with data */
@@ -197,8 +201,15 @@ func mapFillData(d *db.DB, ygRoot *ygot.GoStruct, oper int, uri string, requestU
     if xpathInfo.xfmrTbl != nil {
 	    inParams := formXfmrInputRequest(d, dbs, db.MaxDB, ygRoot, uri, requestUri, oper, "", nil, subOpDataMap, "", txCache)
 	    // expecting only one table name from tbl-xfmr
-	    tableName, _ = tblNameFromTblXfmrGet(*xYangSpecMap[xpath].xfmrTbl, inParams)
+	    tableName, err = tblNameFromTblXfmrGet(*xYangSpecMap[xpath].xfmrTbl, inParams)
+	    if err != nil {
+		    if xfmrErr != nil && *xfmrErr == nil {
+			    *xfmrErr = err
+		    }
+		    return err
+	    }
 	    if tableName == "" {
+		    log.Warningf("No table name found for uri (\"%v\")", uri)
 		    return err
 	    }
 		tblXpathMap[tableName] = append(tblXpathMap[tableName], xpathPrefix)
