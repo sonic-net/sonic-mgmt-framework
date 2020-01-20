@@ -57,6 +57,7 @@ module sonic-bgp-clear {
 
         leaf vrf-name {
             type string;
+            default "default";
             description
                 "Clear BGP by VRF name.";
         }
@@ -66,6 +67,7 @@ module sonic-bgp-clear {
                 enum IPv4;
                 enum IPv6;
             }
+            default "IPv4";
             description "Address family (IPv4/IPv6)";
         }
 
@@ -99,15 +101,12 @@ module sonic-bgp-clear {
                     type leafref {
                         path "/svlan:sonic-vlan/svlan:VLAN/svlan:VLAN_LIST/svlan:name";
                     }
-                    type leafref {
-                        path "/smt:sonic-mgmt-port/smt:MGMT_PORT/smt:MGMT_PORT_LIST/smt:ifname";
-                    }
                 }
                 description
-                    "Interface name: Parameter for deleting all ARP  entries
+                    "Interface name: Parameter for deleting BGP entries
                     related to the given inteface name Valid inputs are:
-                    Ethernet<port-number>/Vlan<Vlan ID>/PortChannel<port-channel ID>/Management<interface ID>.
-                    For example: Ethernet0, Vlan100, PortChannel10, eth0";
+                    Ethernet<port-number>/Vlan<Vlan ID>/PortChannel<port-channel ID>>.
+                    For example: Ethernet0, Vlan100, PortChannel10";
             }
 
             leaf asn {
