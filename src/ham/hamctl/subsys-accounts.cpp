@@ -31,6 +31,8 @@ struct esc_data_c
     unsigned     npar  = 0;
 };
 
+static DBus::BusDispatcher  dispatcher;
+
 /**
  * @brief Eliminate escape sequences from the input. This may happen, for
  *  example, when the user presses the up/down/left/right arrows.
@@ -301,11 +303,9 @@ static int accounts(int argc, char *argv[])
 
     if (rc == 0)
     {
-        DBus::BusDispatcher         dispatcher;
-        DBus::default_dispatcher = &dispatcher;
+        DBus::default_dispatcher = &dispatcher; // DBus::default_dispatcher must be initialized before DBus::Connection.
         DBus::Connection    conn = DBus::Connection::SystemBus();
-
-        accounts_proxy_c accounts(conn, DBUS_BUS_NAME_BASE, DBUS_OBJ_PATH_BASE);
+        accounts_proxy_c    acct(conn, DBUS_BUS_NAME_BASE, DBUS_OBJ_PATH_BASE);
 
         if (0 == strcmp("useradd", command_p))
         {
@@ -323,7 +323,7 @@ static int accounts(int argc, char *argv[])
             {
                 std::vector< std::string > roles = get_roles();
 
-                ::DBus::Struct< bool, std::string > rv = accounts.useradd(login_p, roles, hashed_pw);
+                ::DBus::Struct< bool, std::string > rv = acct.useradd(login_p, roles, hashed_pw);
                 if (!rv._1)
                 {
                     rc = 1;
@@ -341,7 +341,7 @@ static int accounts(int argc, char *argv[])
 
             const char * login_p  = argv[2];
 
-            ::DBus::Struct< bool, std::string > rv = accounts.userdel(login_p);
+            ::DBus::Struct< bool, std::string > rv = acct.userdel(login_p);
             if (!rv._1)
             {
                 rc = 1;
@@ -362,7 +362,7 @@ static int accounts(int argc, char *argv[])
             rc = hashed_pw.length() == 0 ? 1 : 0;
             if (rc == 0)
             {
-                ::DBus::Struct< bool, std::string > rv = accounts.passwd(login_p, hashed_pw);
+                ::DBus::Struct< bool, std::string > rv = acct.passwd(login_p, hashed_pw);
                 if (!rv._1)
                 {
                     rc = 1;
@@ -381,7 +381,7 @@ static int accounts(int argc, char *argv[])
             const char                  * login_p = argv[2];
             std::vector< std::string >    roles   = get_roles();
 
-            ::DBus::Struct< bool, std::string > rv = accounts.set_roles(login_p, roles);
+            ::DBus::Struct< bool, std::string > rv = acct.set_roles(login_p, roles);
             if (!rv._1)
             {
                 rc = 1;
