@@ -100,6 +100,26 @@ func get_lag_type(d *db.DB, lagName *string, mode *string) error {
     return nil
 }
 
+/* Validate physical interface configured as member of PortChannel */
+func validateIntfAssociatedWithPortChannel(d *db.DB, ifName *string) error {
+    var err error
+
+    if len(*ifName) == 0 {
+        return errors.New("Interface name is empty!")
+    }
+    lagKeys, err := d.GetKeys(&db.TableSpec{Name:PORTCHANNEL_MEMBER_TN})
+    if err == nil {
+        for i, _ := range lagKeys {
+            if *ifName == lagKeys[i].Get(1) {
+                errStr := "Given interface is member of " + lagKeys[i].Get(0)
+                log.Error(errStr)
+                return tlerr.InvalidArgsError{Format:errStr}
+            }
+        }
+    }
+    return err
+}
+
 /* Handle min-links config */
 var YangToDb_lag_min_links_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
     res_map := make(map[string]string)
