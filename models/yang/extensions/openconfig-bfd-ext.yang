@@ -188,9 +188,9 @@ module openconfig-bfd-ext {
     uses oc-bfdd:bfd-session-state-async-common;
   }
 
-  grouping bfd-cmn-key {
+  grouping bfd-session-key {
     description
-      "grouping of common session key identifiers";
+      "grouping of session key identifiers";
   
       leaf remote-address {
         type oc-inet:ip-address;
@@ -205,13 +205,6 @@ module openconfig-bfd-ext {
         }
         description "Virtual Routing Domain name";
       }
-  }
-
-  grouping bfd-shop-key {
-    description
-      "Key params for single-hop sessions.";
-
-      uses bfd-cmn-key;
 
       leaf interface {
         type leafref {
@@ -220,20 +213,6 @@ module openconfig-bfd-ext {
         }
         description "Interface to use to contact peer";
       }
-
-      leaf local-address {
-        type string;
-        description
-          "The source IP address to be used for BFD sessions over this
-          interface.";
-      }
-  }
-
-  grouping bfd-mhop-key {
-    description
-      "Key params for multi-hop sessions.";
-
-      uses bfd-cmn-key;
 
       leaf local-address {
         type string;
@@ -252,35 +231,35 @@ module openconfig-bfd-ext {
         key "remote-address interface vrf local-address";
         description "List of single hop sessions";
 
-		uses bfd-shop-key;
+	uses bfd-session-key;
         uses bfd-config;
-		uses bfd-echo-config;
+	uses bfd-echo-config;
       }
 
       list multi-hop {
-        key "remote-address vrf local-address";
+        key "remote-address interface vrf local-address";
         description "List of multi hop sessions";
 
-        uses bfd-mhop-key;
+        uses bfd-session-key;
         uses bfd-config;
       }
-	}
+    }
 
-	container bfd-state {
+    container bfd-state {
       list single-hop-state {
         key "remote-address interface vrf local-address";
         description "List of single hop sessions state";
 
-        uses bfd-shop-key;
+        uses bfd-session-key;
 	uses session-states;
         config false;
       }
 
-	  list multi-hop-state {
-        key "remote-address vrf local-address";
+      list multi-hop-state {
+        key "remote-address interface vrf local-address";
         description "List of multi hop sessions state";
 
-	  uses bfd-mhop-key;
+	  uses bfd-session-key;
 	  uses session-states;
 	  config false;
         }
