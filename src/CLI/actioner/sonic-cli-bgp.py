@@ -1490,6 +1490,15 @@ def invoke_api(func, args=[]):
 
     return api.cli_not_implemented(func)
 
+def filter_bgp_nbrs(iptype, nbrs):
+    new_nbrs = []
+    for nbr in nbrs:
+        ipaddr = netaddr.IPAddress(nbr['neighbor-address'])
+        if ipaddr.version == iptype:
+            new_nbrs.append(nbr)
+    return new_nbrs
+
+
 def invoke_show_api(func, args=[]):
     api = cc.ApiClient()
     keypath = []
@@ -1507,7 +1516,13 @@ def invoke_show_api(func, args=[]):
             keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/neighbors', name=args[1], identifier=IDENTIFIER, name1=NAME1)
             response = api.get(keypath)
             if response.ok():
-                d.update(response.content)
+                iptype = 4
+                if args[2] == 'ipv6':
+                    iptype = 6
+                if 'openconfig-network-instance:neighbors' in response.content:
+                    tmp = {}
+                    tmp['neighbor'] = filter_bgp_nbrs(iptype, response.content['openconfig-network-instance:neighbors']['neighbor'])
+                    d['openconfig-network-instance:neighbors'] = tmp
                 return d
             else:
                 print response.error_message()
@@ -1518,15 +1533,18 @@ def invoke_show_api(func, args=[]):
 
     elif func == 'get_ip_bgp_neighbors':
         d = {}
+        iptype = 4
+        if args[2] == 'ipv6':
+            iptype = 6
 
-        if len(args) == 3:
-            keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/neighbors/neighbor={nbr_addr}', name=args[1], identifier=IDENTIFIER, name1=NAME1, nbr_addr=args[2])
+        if len(args) == 4:
+            keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/neighbors/neighbor={nbr_addr}', name=args[1], identifier=IDENTIFIER, name1=NAME1, nbr_addr=args[3])
             response = api.get(keypath)
             if response.ok():
-                tmp = {}
-                tmp['neighbor'] = response.content['openconfig-network-instance:neighbor']
-                d['openconfig-network-instance:neighbors'] = tmp
-                d.update(response.content)
+                if 'openconfig-network-instance:neighbor' in response.content:
+                    tmp = {}
+                    tmp['neighbor'] = filter_bgp_nbrs(iptype, response.content['openconfig-network-instance:neighbor'])
+                    d['openconfig-network-instance:neighbors'] = tmp
                 return d
             else:
                 print response.error_message()
@@ -1536,7 +1554,10 @@ def invoke_show_api(func, args=[]):
         
             response = api.get(keypath)
             if response.ok():
-                d.update(response.content)
+                if 'openconfig-network-instance:neighbors' in response.content:
+                    tmp = {}
+                    tmp['neighbor'] = filter_bgp_nbrs(iptype, response.content['openconfig-network-instance:neighbors']['neighbor'])
+                    d['openconfig-network-instance:neighbors'] = tmp
                 return d
             else:
                 print response.error_message()
