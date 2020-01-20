@@ -461,11 +461,6 @@ var DbToYang_network_instance_name_field_xfmr KeyXfmrDbToYang = func(inParams Xf
 
         log.Info("DbToYang_network_instance_name_field_xfmr")
 
-        pathInfo := NewPathInfo(inParams.uri)
-        keyName := pathInfo.Var("name")
-
-        targetUriPath, _ := getYangPathFromUri(pathInfo.Path)
-
         if (inParams.key != "") {
                 if ((inParams.key == "default") || (strings.HasPrefix(inParams.key, "Vrf"))) {
                         res_map["name"] = inParams.key
