@@ -23,6 +23,10 @@ module sonic-bfd {
         	prefix svlan;
     	}
 
+        import sonic-loopback-interface {
+                prefix sloif;
+        }
+
         import sonic-common {
                 prefix cmn;  
         }                    
@@ -41,7 +45,7 @@ module sonic-bfd {
                         "Initial revision.";
         }
 
-	grouping sonic-bfd-key-cmn {
+	grouping sonic-bfd-session-key {
                 leaf remote-address {
                         //type inet:ip-address;
                         type string;
@@ -60,24 +64,29 @@ module sonic-bfd {
                  	}
                         description "Network-instance/VRF name";
 		}
-	}
-
-        grouping sonic-bfd-key-shop {
-		uses sonic-bfd-key-cmn;
 
                 leaf interface {
                         //type string;
-                    	type union {
-                        	type leafref {
-                            		path "/prt:sonic-port/prt:PORT/prt:PORT_LIST/prt:ifname";
-                        	}
-                        	type leafref {
-                            		path "/spc:sonic-portchannel/spc:PORTCHANNEL/spc:PORTCHANNEL_LIST/spc:name";
-                        	}
-                        	type leafref {
-                            		path "/svlan:sonic-vlan/svlan:VLAN/svlan:VLAN_LIST/svlan:name";
-                        	}
-                    	}
+                        type union {
+                                type string {
+                                        pattern "null";
+                                }
+                                type leafref {
+                                        path "/prt:sonic-port/prt:PORT/prt:PORT_LIST/prt:ifname";
+                                }
+                                type leafref {
+                                        path "/spc:sonic-portchannel/spc:PORTCHANNEL/spc:PORTCHANNEL_LIST/spc:name";
+                                }
+                                type leafref {
+                                        path "/svlan:sonic-vlan/svlan:VLAN/svlan:VLAN_LIST/svlan:name";
+                                }
+                                type leafref {
+                                        path "/svlan:sonic-vlan/svlan:VLAN/svlan:VLAN_LIST/svlan:name";
+                                }
+                                type leafref {
+                                        path "/sloif:sonic-loopback-interface/sloif:LOOPBACK_INTERFACE/sloif:LOOPBACK_INTERFACE_LIST/sloif:loIfName";
+                                }
+                        }
 
                         description "Interface name";
                 }
@@ -87,15 +96,6 @@ module sonic-bfd {
                                 description "Local IP";
                         }
 	}
-
-        grouping sonic-bfd-key-mhop {
-                uses sonic-bfd-key-cmn;
-
-                leaf local-address {
-                        type string;
-                                description "Local IP";
-                        }
-        }
 
         grouping sonic-bfd-cmn {      
     		leaf enabled {
@@ -154,17 +154,16 @@ module sonic-bfd {
                         list BFD_PEER_SINGLE_HOP_LIST {
                                 key "remote-address interface vrf local-address";
 
-                                uses sonic-bfd-key-shop;
-                                uses sonic-bfd-cmn;
+                                uses sonic-bfd-session-key;
 				uses sonic-bfd-echo;
                         }                                                                              
                 }
 
                 container BFD_PEER_MULTI_HOP {
                         list BFD_PEER_MULTI_HOP_LIST {
-                                key "remote-address vrf local-address";
+                                key "remote-address interface vrf local-address";
 				
-				uses sonic-bfd-key-mhop;
+				uses sonic-bfd-session-key;
                                 uses sonic-bfd-cmn;
                         }                                                                               
                 }

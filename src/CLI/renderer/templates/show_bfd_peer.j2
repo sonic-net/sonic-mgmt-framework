@@ -1,3 +1,4 @@
+{% if json_output -%}
 {% set vars = {'sessionId': ""} %}
 {% if vars.update({'localAddress': "unknown"}) %}{% endif %}
 {% if vars.update({'peerAddress': ""}) %}{% endif %}
@@ -86,10 +87,8 @@ BFD Peer:
 {% if vars.vrf != ''%}
 {% set peerkey = '%s vrf %s'|format(peerkey, vars.vrf)%}
 {% endif %}
-{% if 'openconfig-bfd-ext:single-hop-state' in json_output %}
-    {% if vars.interface != ''%}
-        {% set peerkey = '%s interface %s'|format(peerkey, vars.interface)%}
-    {% endif %}
+{% if vars.interface != 'null'%}
+    {% set peerkey = '%s interface %s'|format(peerkey, vars.interface)%}
 {% endif %}
 {{'%4s%s'|format(' ', peerkey)}}
 {{'%8sID: %s'|format(' ', vars.sessionId)}}
@@ -111,4 +110,5 @@ BFD Peer:
 {{'%12sEcho transmission interval: %s'|format(' ', vars.remoteEchoTx)}}
         {% endfor %}
     {% endif %}
+{% endif %}
 {% endif %}
