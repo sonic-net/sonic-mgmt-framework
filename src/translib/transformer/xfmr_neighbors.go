@@ -485,7 +485,7 @@ var rpc_clear_neighbors RpcCallpoint = func(body []byte, dbs [db.MaxDB]*db.DB) (
     if input, ok := mapData["family"]; ok {
         input_str := fmt.Sprintf("%v", input)
         family := input_str
-        if family == "IPv6" {
+        if strings.EqualFold(family, "IPv6") || family == "1" {
             fam_switch = "-6"
         }
     }
