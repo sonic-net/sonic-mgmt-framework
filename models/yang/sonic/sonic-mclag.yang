@@ -127,15 +127,14 @@ module sonic-mclag {
                 key "if_name";
 
                 must "count(../../MCLAG_DOMAIN/MCLAG_DOMAIN_LIST/domain_id) != 0" {
-                //must "count(../../MCLAG_DOMAIN/MCLAG_DOMAIN_LIST) != 0" {
                     error-message "mclag not configured";
                     error-app-tag mclag-invalid;
                 }
 
-                //must "count(/svlan-intf:sonic-vlan-interface/svlan-intf:VLAN_INTERFACE/svlan-intf:VLAN_INTERFACE_IPADDR_LIST[svlan-intf:vlanName=./if_name]) = 0" {
-                //    error-message "remove configured ip/v6 address and reconfigure after seperate ip configuration";
-                //    error-app-tag vlan-intf-ip-invalid;
-                //}
+                must "count(/svlan-intf:sonic-vlan-interface/svlan-intf:VLAN_INTERFACE/svlan-intf:VLAN_INTERFACE_IPADDR_LIST[svlan-intf:vlanName=current()/if_name]) = 0" {
+                    error-message "remove configured ip/v6 address and reconfigure after seperate ip configuration";
+                    error-app-tag vlan-intf-ip-invalid;
+                }
 
                 leaf if_name {
                     type leafref {
