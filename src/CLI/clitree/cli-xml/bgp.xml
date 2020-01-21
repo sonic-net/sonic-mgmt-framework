@@ -47,7 +47,11 @@ limitations under the License.
         elif test -n "${prefix}"; then&#xA;
            python $SONIC_CLI_ROOT/sonic-cli-bgp.py get_show_bgp_prefix ${__full_line}&#xA;
         elif test -n "${peer-group}"; then&#xA;
-           builtin="clish_nop"&#xA;
+	   if test -n "${peer-group-name}"; then&#xA;
+              python $SONIC_CLI_ROOT/sonic-cli-bgp.py get_show_bgp_peer_group ${__full_line}&#xA;
+	   else&#xA;
+              python $SONIC_CLI_ROOT/sonic-cli-bgp.py get_show_bgp_peer_group_all ${__full_line}&#xA;
+	   fi&#xA;
         elif test -n "${neighbors}"; then&#xA;
            if test -n "${neighbor-subcommands}"; then&#xA;
               python $SONIC_CLI_ROOT/sonic-cli-bgp.py get_show_bgp ${__full_line}&#xA;

@@ -232,6 +232,39 @@ def generate_show_bgp_prefix_routes(args):
                show_cli_output("show_ip_bgp_prefix_routes.j2", d)
    return d
 
+def generate_show_bgp_peer_groups(args, show_all=False):
+   api = cc.ApiClient()
+   keypath = []
+   body = None
+   pg = None
+   vrf = "default"
+   i = 0
+   for arg in args:
+        if "vrf" == arg:
+           vrf = args[i+1]
+        elif "peer-group" == arg and show_all is False:
+           pg = args[i+1]
+        else:
+           pass
+        i = i + 1
+
+   d = {}
+
+   if pg is None:
+      keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/peer-groups', name=vrf, identifier=IDENTIFIER,name1=NAME1)
+   else:
+      keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/peer-groups/peer-group={pgname}', name=vrf, identifier=IDENTIFIER,name1=NAME1,pgname=pg)
+   response = api.get(keypath)
+   if(response.ok()):
+       d.update(response.content)
+       keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/dynamic-neighbor-prefixes', name=vrf, identifier=IDENTIFIER, name1=NAME1)
+       response1 = api.get(keypath)
+       if(response1.ok()):
+          d.update(response1.content)
+          show_cli_output("show_bgp_peer_group.j2", d)
+
+   return d
+
 
 def invoke_api(func, args=[]):
     api = cc.ApiClient()
@@ -1566,6 +1599,12 @@ def invoke_show_api(func, args=[]):
     elif func == 'get_show_bgp_prefix':
         return generate_show_bgp_prefix_routes(args)
 
+    elif func == 'get_show_bgp_peer_group':
+        return generate_show_bgp_peer_groups(args, False)
+
+    elif func == 'get_show_bgp_peer_group_all':
+        return generate_show_bgp_peer_groups(args, True)
+
     else:
         body = {}
 
@@ -1581,6 +1620,10 @@ def run(func, args):
         response = invoke_show_api(func, args)
         show_cli_output(args[0], response)
     elif func == 'get_show_bgp_prefix':
+        response = invoke_show_api(func, args)
+    elif func == 'get_show_bgp_peer_group':
+        response = invoke_show_api(func, args)
+    elif func == 'get_show_bgp_peer_group_all':
         response = invoke_show_api(func, args)
     else:
         response = invoke_api(func, args)
