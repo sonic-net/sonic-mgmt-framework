@@ -45,7 +45,7 @@ limitations under the License.
                  python $SONIC_CLI_ROOT/sonic_cli_bgp.py patch_openconfig_network_instance_network_instances_network_instance_table_connections_table_connection_config ${vrf-name} L2VPN_EVPN ${protocol}&#xA;
              fi&#xA;
              if test -n "${metric}" ; then&#xA;
-                 python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_ext_network_instances_network_instance_table_connections_table_connection_config_metric ${vrf-name} L2VPN_EVPN ${protocol} ${metvalue}&#xA;
+                 python $SONIC_CLI_ROOT/sonic_cli_bgp.py patch_openconfig_network_instance_ext_network_instances_network_instance_table_connections_table_connection_config_metric ${vrf-name} L2VPN_EVPN ${protocol} ${metvalue}&#xA;
              fi&#xA;
     </ACTION>
   </COMMAND>

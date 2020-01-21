@@ -40,12 +40,12 @@ limitations under the License.
       <PARAM name="metvalue" help="Default metric" ptype="RANGE_0_4294967295"/>
     </PARAM>
     <ACTION> if test -n "${route-map-name}" ; then&#xA;
-                 python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_table_connections_table_connection_config_import_policy ${vrf-name} IPV6_UNICAST ${protocol} ${route-map-name}&#xA;
+                 python $SONIC_CLI_ROOT/sonic_cli_bgp.py patch_openconfig_network_instance_network_instances_network_instance_table_connections_table_connection_config_import_policy ${vrf-name} IPV6_UNICAST ${protocol} ${route-map-name}&#xA;
              elif test -z "${metric}" ; then&#xA;
-                 python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_table_connections_table_connection_config ${vrf-name} IPV6_UNICAST ${protocol}&#xA;
+                 python $SONIC_CLI_ROOT/sonic_cli_bgp.py patch_openconfig_network_instance_network_instances_network_instance_table_connections_table_connection_config ${vrf-name} IPV6_UNICAST ${protocol}&#xA;
              fi&#xA;
              if test -n "${metric}" ; then&#xA;
-                 python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_ext_network_instances_network_instance_table_connections_table_connection_config_metric ${vrf-name} IPV6_UNICAST ${protocol} ${metvalue}&#xA;
+                 python $SONIC_CLI_ROOT/sonic_cli_bgp.py patch_openconfig_network_instance_ext_network_instances_network_instance_table_connections_table_connection_config_metric ${vrf-name} IPV6_UNICAST ${protocol} ${metvalue}&#xA;
              fi&#xA;
     </ACTION>
   </COMMAND>
@@ -89,9 +89,9 @@ limitations under the License.
         <PARAM name="rtemap" help="Route-map name" ptype="STRING"/>
       </PARAM>
     </PARAM>
-    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py PATCH_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_aggregate_address_config_aggregate_address_config ${vrf-name} IPV6_UNICAST ${prefix} ${as-set} ${summary-only}&#xA;
+    <ACTION> python $SONIC_CLI_ROOT/sonic_cli_bgp.py PATCH_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_aggregate_address_config_aggregate_address_config ${vrf-name} IPV6_UNICAST ${prefix} ${as-set} ${summary-only}&#xA;
              if test -n "${rtemap}" ; then&#xA;
-                 python $SONIC_CLI_ROOT/sonic-cli-bgp.py PATCH_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_aggregate_address_config_aggregate_address_config_policy_name ${vrf-name} IPV4_UNICAST ${prefix} ${rtemap}&#xA;
+                 python $SONIC_CLI_ROOT/sonic_cli_bgp.py PATCH_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_aggregate_address_config_aggregate_address_config_policy_name ${vrf-name} IPV4_UNICAST ${prefix} ${rtemap}&#xA;
              fi&#xA;
              if test -z "${as-set}" ; then&#xA;
                  python $SONIC_CLI_ROOT/sonic_cli_bgp.py DELETE_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_global_afi_safis_afi_safi_aggregate_address_config_aggregate_address_config_as_set ${vrf-name} IPV6_UNICAST ${prefix}&#xA;
@@ -124,8 +124,8 @@ limitations under the License.
     <PARAM name="metric" help="Metric for redistributed routes" mode="subcommand" ptype="SUBCOMMAND" optional="true">
       <PARAM name="metvalue" help="Default metric" ptype="RANGE_0_4294967295"/>
     </PARAM>
-    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_table_connections_table_connection ${vrf-name} IPV6_UNICAST ${protocol}&#xA;
-             python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_ext_network_instances_network_instance_table_connections_table_connection_config_metric ${vrf-name} IPV6_UNICAST ${protocol}&#xA;
+    <ACTION> python $SONIC_CLI_ROOT/sonic_cli_bgp.py delete_openconfig_network_instance_network_instances_network_instance_table_connections_table_connection ${vrf-name} IPV6_UNICAST ${protocol}&#xA;
+             python $SONIC_CLI_ROOT/sonic_cli_bgp.py delete_openconfig_network_instance_ext_network_instances_network_instance_table_connections_table_connection_config_metric ${vrf-name} IPV6_UNICAST ${protocol}&#xA;
     </ACTION>
   </COMMAND>
     <COMMAND name="no maximum-paths" help="Forward packets over multiple paths">
