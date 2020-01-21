@@ -20,6 +20,7 @@
 package server
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -31,9 +32,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func init() {
-	fmt.Println("+++++ init handler_test +++++")
-}
+type jsonObj map[string]interface{}
 
 var testRouter *Router
 
@@ -520,7 +519,19 @@ func testRespData(r *http.Request, rc *RequestContext, data []byte, expType stri
 func TestProcessGET(t *testing.T) {
 	w := httptest.NewRecorder()
 	Process(w, prepareRequest(t, "GET", "/api-tests:sample", ""))
-	verifyResponse(t, w, 200)
+	verifyResponseData(t, w, 200, jsonObj{"depth": 0})
+}
+
+func TestProcessGET_query(t *testing.T) {
+	w := httptest.NewRecorder()
+	Process(w, prepareRequest(t, "GET", "/api-tests:sample?depth=10", ""))
+	verifyResponseData(t, w, 200, jsonObj{"depth": 10})
+}
+
+func TestProcessGET_query_error(t *testing.T) {
+	w := httptest.NewRecorder()
+	Process(w, prepareRequest(t, "GET", "/api-tests:sample?depth=none", ""))
+	verifyResponse(t, w, 400)
 }
 
 func TestProcessGET_error(t *testing.T) {
@@ -660,6 +671,23 @@ func prepareRequest(t *testing.T, method, path, data string) *http.Request {
 func verifyResponse(t *testing.T, w *httptest.ResponseRecorder, expCode int) {
 	if w.Code != expCode {
 		t.Fatalf("Expecting response status %d; got %d", expCode, w.Code)
+	}
+}
+
+func verifyResponseData(t *testing.T, w *httptest.ResponseRecorder,
+	expCode int, expData jsonObj) {
+	verifyResponse(t, w, expCode)
+
+	data := make(jsonObj)
+	err := json.Unmarshal(w.Body.Bytes(), &data)
+	if err != nil {
+		t.Fatalf("Unmarshal error: %v", err)
+	}
+
+	for k, v := range expData {
+		if fmt.Sprintf("%v", v) != fmt.Sprintf("%v", data[k]) {
+			t.Fatalf("Data mismatch for key '%s'; exp='%v', found='%v'", k, v, data[k])
+		}
 	}
 }
 
