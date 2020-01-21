@@ -825,6 +825,12 @@ func yangDataFill(dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, uri string, reque
 					if ok && ynode.tableName != nil {
 						lTblName = *ynode.tableName
 					}
+					if _, ok := (*dbDataMap)[cdb][lTblName]; !ok && len(lTblName) > 0 {
+						curDbDataMap, err := fillDbDataMapForTbl(chldUri, chldXpath, lTblName, "", cdb, dbs)
+						if err == nil {
+							mapCopy((*dbDataMap)[cdb], curDbDataMap[cdb])
+						}
+					}
 					yangListDataFill(dbs, ygRoot, chldUri, requestUri, chldXpath, dbDataMap, resultMap, lTblName, tblKey, cdb, isValid, txCache, false)
 				} else if chldYangType == "choice" || chldYangType == "case" {
 					yangDataFill(dbs, ygRoot, chldUri, requestUri, chldXpath, dbDataMap, resultMap, tbl, tblKey, cdb, isValid, txCache)
@@ -885,14 +891,15 @@ func dbDataToYangJsonCreate(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db
 						tblList := xfmrTblHandlerFunc(xfmrTblFunc, inParams)
 						if len(tblList) > 1 {
 							log.Warningf("Table transformer returned more than one table for container %v", reqXpath)
-							tableXfmrFlag = true
 						}
 						if len(tblList) == 0 {
 							log.Warningf("Table transformer returned no table for conatiner %v", reqXpath)
 							tableXfmrFlag = true
 						}
 						if !tableXfmrFlag {
-							dbDataFromTblXfmrGet(tblList[0], inParams, dbDataMap)
+                            for _, tbl := range tblList {
+                                dbDataFromTblXfmrGet(tbl, inParams, dbDataMap)
+                            }
 						}
 					} else {
 						log.Warningf("empty table transformer function name for xpath - %v", reqXpath)
