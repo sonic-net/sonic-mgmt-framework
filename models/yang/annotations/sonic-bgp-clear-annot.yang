@@ -1,0 +1,16 @@
+module sonic-bgp-clear-annot {
+
+    yang-version "1.1";
+
+    namespace "http://openconfig.net/yang/annotation/sbgpclear-annot";
+    prefix "sbgpclear-annot";
+
+    import sonic-bgp-clear { prefix sbgpclear; }
+    import sonic-extensions { prefix sonic-ext; }
+
+    deviation /sbgpclear:clear-bgp {
+        deviate add {
+            sonic-ext:rpc-callback "rpc_clear_bgp";
+        }
+    }
+}

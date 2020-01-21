@@ -1,8 +1,8 @@
 # Prerequisite: sudo apt-get install libsystemd-dev libdbus-c++-dev
-TARGET    := libham.so
+TARGET    := libnss_sac.so.2
 SRCS      := $(wildcard *.cpp)
 
-PKGS      := libsystemd dbus-c++-glib-1
+PKGS      := dbus-c++-glib-1
 LDFLAGS   := -shared -Wl,-soname,${TARGET}
 LDLIBS    := $(shell pkg-config --libs   ${PKGS})
 CPPFLAGS  := $(shell pkg-config --cflags ${PKGS})
@@ -22,11 +22,10 @@ ifeq (,$(strip $(filter $(MAKECMDGOALS),clean install uninstall package)))
   endif
 endif
 
-
 ifeq (,$(strip $(filter $(MAKECMDGOALS),clean install uninstall)))
+
 # *******************************************************************
 # Make all
-# *******************************************************************
 .DEFAULT_GOAL := all
 all: ${TARGET}
 
@@ -37,10 +36,8 @@ ${TARGET}: ${OBJS} Makefile
 
 endif # (,$(strip $(filter $(MAKECMDGOALS),clean install uninstall)))
 
-
 # *******************************************************************
 # Implicit rules:
-# *******************************************************************
 %.o : %.cpp
 	@printf "%b[1;36m%s%b[0m\n" "\0033" "Compiling: $< -> $@" "\0033"
 	${CXX} ${CPPFLAGS} ${CXXFLAGS} -c $< -o $@
@@ -75,4 +72,5 @@ ifneq (,$(RM_LIST))
 	@printf "\n"
 endif
 	@printf "%b[1;32m%s%b[0m\n\n" "\0033" "Done!" "\0033"
+
 
