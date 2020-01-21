@@ -59,7 +59,7 @@ limitations under the License.
          </PARAM>
         </PARAM>
         <PARAM name="peer-group" help="Detailed information on BGP peer groups" ptype="SUBCOMMAND" mode="subcommand">
-            <PARAM name="peer-group name" help="Peer-group name" ptype="STRING"/>
+            <PARAM name="peer-group-name" help="Peer-group name" ptype="STRING" optional="true"/>
         </PARAM>
          <PARAM name="prefix" help="IPv4 prefix" ptype="IP_ADDR_MASK"></PARAM>
          <PARAM name="summary" help="Summary of BGP neighbor status" ptype="SUBCOMMAND" mode="subcommand"/>

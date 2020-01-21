@@ -9,8 +9,8 @@ void pyobj_init() {
 }
 
 int call_pyobj(char *cmd, const char *arg) {
-    char *token[10];
-    char buf[256]; 
+    char *token[20];
+    char buf[1024]; 
 
     syslog(LOG_DEBUG, "clish_pyobj: cmd=%s", cmd);
     strcpy(buf, arg);
