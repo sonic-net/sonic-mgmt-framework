@@ -55,12 +55,15 @@ const (
 	AppErr
 )
 
+type UserRoles struct {
+	Name    string
+	Roles	[]string
+}
+
 type SetRequest struct {
 	Path    string
 	Payload []byte
-	User    string
-	Group   string
-	Role	string
+	User    UserRoles
 }
 
 type SetResponse struct {
@@ -70,9 +73,7 @@ type SetResponse struct {
 
 type GetRequest struct {
 	Path    string
-	User    string
-	Group   string
-	Role    string
+	User    UserRoles
 }
 
 type GetResponse struct {
@@ -83,9 +84,7 @@ type GetResponse struct {
 type ActionRequest struct {
 	Path    string
 	Payload []byte
-	User    string
-	Group   string
-	Role    string
+	User    UserRoles
 }
 
 type ActionResponse struct {
@@ -98,9 +97,7 @@ type BulkRequest struct {
 	ReplaceRequest []SetRequest
 	UpdateRequest  []SetRequest
 	CreateRequest  []SetRequest
-	User           string
-	Group          string
-	Role           string
+	User           UserRoles
 }
 
 type BulkResponse struct {
@@ -114,9 +111,7 @@ type SubscribeRequest struct {
 	Paths			[]string
 	Q				*queue.PriorityQueue
 	Stop			chan struct{}
-	User			string
-	Group           string
-	Role            string
+	User            UserRoles
 }
 
 type SubscribeResponse struct {
@@ -136,9 +131,7 @@ const (
 
 type IsSubscribeRequest struct {
 	Paths				[]string
-	User				string
-	Group               string
-	Role                string
+	User                UserRoles
 }
 
 type IsSubscribeResponse struct {
@@ -580,7 +573,7 @@ func Bulk(req BulkRequest) (BulkResponse, error) {
 		UpdateResponse: updateResp,
 		CreateResponse: createResp}
 
-    if (!isUserAuthorizedForSet(req.User)) {
+    if (!isAuthorizedForBulk(req)) {
 		return resp, tlerr.AuthorizationError{
 			Format: "User is unauthorized for Action Operation",
 		}
@@ -833,7 +826,7 @@ func Subscribe(req SubscribeRequest) ([]*IsSubscribeResponse, error) {
 			Err:                 nil}
 	}
 
-    if (!isUserAuthorizedForGet(req.User)) {
+    if (!isAuthorizedForSubscribe(req)) {
 		return resp, tlerr.AuthorizationError{
 			Format: "User is unauthorized for Action Operation",
 		}
@@ -940,7 +933,7 @@ func IsSubscribeSupported(req IsSubscribeRequest) ([]*IsSubscribeResponse, error
 			Err:                 nil}
 	}
 
-    if (!isUserAuthorizedForGet(req.User)) {
+    if (!isAuthorizedForIsSubscribe(req)) {
 		return resp, tlerr.AuthorizationError{
 			Format: "User is unauthorized for Action Operation",
 		}
