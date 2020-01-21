@@ -117,11 +117,6 @@ func ordTblListCreate(ordTblList map[string][]string, tnMap map[string]*gphNode)
 			 err = fmt.Errorf("%v", errStr)
 			 return err
 		 }
-		 //sort.Sort(sort.Reverse(sortedTblList[:])) 
-		 for i := len(sortedTblList)/2-1; i >= 0; i-- {
-			 r := len(sortedTblList)-1-i
-			 sortedTblList[i], sortedTblList[r] = sortedTblList[r], sortedTblList[i]
-		 }
 		 ordTblListMap[tname] = sortedTblList
 	 }
 	 cvl.ValidationSessClose(cvSess)
