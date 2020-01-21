@@ -18,14 +18,7 @@
 ###########################################################################
 
 import sys
-import time
-import json
-import ast
-import netaddr
-from rpipe_utils import pipestr
 import cli_client as cc
-from scripts.render_cli import show_cli_output
-from bgp_openconfig_to_restconf_map import restconf_map
 
 def clear_bgp_api(args):
    api = cc.ApiClient()
