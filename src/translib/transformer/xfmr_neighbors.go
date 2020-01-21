@@ -502,13 +502,11 @@ var rpc_clear_neighbors RpcCallpoint = func(body []byte, dbs [db.MaxDB]*db.DB) (
     if input, ok := mapData["ifname"]; ok {
         input_str := fmt.Sprintf("%v", input)
         intf = input_str
-        log.Info("input_str: ", input_str," input: ", input, " len (input_str): ", len(input_str))
     }
 
     if input, ok := mapData["ip"]; ok {
         input_str := fmt.Sprintf("%v", input)
         ip = input_str
-        log.Info("input_str: ", input_str," input: ", input, " len (input_str): ", len(input_str))
     }
 
     if len(intf) > 0 {
