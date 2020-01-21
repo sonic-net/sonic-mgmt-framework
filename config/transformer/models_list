@@ -43,3 +43,5 @@ openconfig-bfd.yang
 openconfig-bfd-ext.yang
 openconfig-bfd-annot.yang
 openconfig-rib-bgp-ext.yang
+sonic-bgp-clear.yang
+sonic-bgp-clear-annot.yang
