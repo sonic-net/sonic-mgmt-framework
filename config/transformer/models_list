@@ -43,11 +43,7 @@ openconfig-bfd.yang
 openconfig-bfd-ext.yang
 openconfig-bfd-annot.yang
 openconfig-rib-bgp-ext.yang
-<<<<<<< HEAD
 openconfig-mclag.yang
 openconfig-mclag-annot.yang
-||||||| merged common ancestors
-=======
 sonic-bgp-clear.yang
 sonic-bgp-clear-annot.yang
->>>>>>> d7a67ada846e42a5f80c9786e588a2be8bc02eba
