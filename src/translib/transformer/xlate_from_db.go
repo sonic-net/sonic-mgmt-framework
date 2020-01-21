@@ -309,7 +309,7 @@ func sonicDbToYangListFill(uri string, xpath string, dbIdx db.DBNum, table strin
 			yangKeys := yangKeyFromEntryGet(xDbSpecMap[xpath].dbEntry)
 			sonicKeyDataAdd(dbIdx, yangKeys, table, keyStr, curMap)
 		}
-		if curMap != nil {
+		if curMap != nil && len(curMap) > 0 {
 			mapSlice = append(mapSlice, curMap)
 		}
 	}
@@ -348,18 +348,24 @@ func sonicDbToYangDataFill(uri string, xpath string, dbIdx db.DBNum, table strin
 						xfmrLogInfoAll("Empty container for xpath(%v)", curUri)
 					}
 				} else if chldYangType == YANG_LIST {
-					var mapSlice []typeMapOfInterface
-					curUri := xpath + "/" + yangChldName
-					mapSlice = sonicDbToYangListFill(curUri, curUri, dbIdx, table, key, dbDataMap)
-                                       if len(key) > 0 && len(mapSlice) == 1 {// Single instance query. Don't return array of maps
-                                               for k, val := range mapSlice[0] {
-                                                       resultMap[k] = val
-                                               }
-
-                                        } else if len(mapSlice) > 0 {
-						resultMap[yangChldName] = mapSlice
+					pathList := strings.Split(uri, "/")
+					// Skip the list entries if the uri has specific list query
+					if len(pathList) > SONIC_TABLE_INDEX+1 && !strings.Contains(uri,yangChldName) {
+						xfmrLogInfoAll("Skipping yangChldName: %v, pathList:%v, len:%v", yangChldName, pathList, len(pathList))
 					} else {
-						xfmrLogInfoAll("Empty list for xpath(%v)", curUri)
+						var mapSlice []typeMapOfInterface
+						curUri := xpath + "/" + yangChldName
+						mapSlice = sonicDbToYangListFill(curUri, curUri, dbIdx, table, key, dbDataMap)
+						if len(key) > 0 && len(mapSlice) == 1 {// Single instance query. Don't return array of maps
+							for k, val := range mapSlice[0] {
+								resultMap[k] = val
+							}
+
+						} else if len(mapSlice) > 0 {
+							resultMap[yangChldName] = mapSlice
+						} else {
+							xfmrLogInfoAll("Empty list for xpath(%v)", curUri)
+						}
 					}
 				}
 			}

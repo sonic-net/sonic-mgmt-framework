@@ -242,7 +242,7 @@ func sonicKeyDataAdd(dbIndex db.DBNum, keyNameList []string, xpathPrefix string,
 	var dbOpts db.Options
 	dbOpts = getDBOptions(dbIndex)
 	keySeparator := dbOpts.KeySeparator
-    keyValList := strings.SplitN(keyStr, keySeparator, len(keyNameList))
+    keyValList := strings.Split(keyStr, keySeparator)
     xfmrLogInfoAll("yang keys list - %v, xpathprefix - %v, DB-key string - %v, DB-key list after db key separator split - %v, dbIndex - %v", keyNameList, xpathPrefix, keyStr, keyValList, dbIndex) 
 
     if len(keyNameList) != len(keyValList) {
