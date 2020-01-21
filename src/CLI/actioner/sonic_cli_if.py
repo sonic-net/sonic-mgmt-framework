@@ -186,7 +186,11 @@ def invoke_api(func, args=[]):
     elif func == 'get_openconfig_interfaces_interfaces_interface':
         path = cc.Path('/restconf/data/openconfig-interfaces:interfaces/interface={name}', name=args[0])
         return api.get(path)
-        
+
+    elif func == 'get_sonic_port_sonic_port_port_table':
+        path = cc.Path('/restconf/data/sonic-port:sonic-port/PORT_TABLE')
+        return api.get(path)
+
     elif func == 'get_openconfig_interfaces_interfaces':
         path = cc.Path('/restconf/data/openconfig-interfaces:interfaces')
         return api.get(path)
@@ -242,6 +246,16 @@ def getId(item):
         return ifId
     return ifName
 
+def getSonicId(item):
+
+    prfx = "Ethernet"
+    state_dict = item
+    ifName = state_dict['ifname']
+    if ifName.startswith(prfx):
+        ifId = int(ifName[len(prfx):])
+        return ifId
+    return ifName
+
 def run(func, args):   
 
     try:
@@ -255,6 +269,11 @@ def run(func, args):
                 if 'interface' in value:
                     tup = value['interface']
                     value['interface'] = sorted(tup, key=getId)
+            elif 'sonic-port:PORT_TABLE' in api_response:
+                value = api_response['sonic-port:PORT_TABLE']
+                if 'PORT_TABLE_LIST' in value:
+                    tup = value['PORT_TABLE_LIST']
+                    value['PORT_TABLE_LIST'] =  sorted(tup, key=getSonicId)
 
             if api_response is None:
                 print("Failed")
@@ -262,6 +281,8 @@ def run(func, args):
                 if func == 'get_openconfig_interfaces_interfaces_interface':
                     show_cli_output(args[1], api_response)
                 elif func == 'get_openconfig_interfaces_interfaces':
+                    show_cli_output(args[0], api_response)
+                elif func == 'get_sonic_port_sonic_port_port_table':
                     show_cli_output(args[0], api_response)
                 else:
                     return
