@@ -8,11 +8,35 @@ void pyobj_init() {
     Py_Initialize();
 }
 
+static int pyobj_set_user_cmd(const char *cmd) {
+    PyObject *module, *value;
+
+    module = PyImport_ImportModule("cli_client");
+    if (module == NULL) {
+        PyErr_Print();
+        return -1;
+    }
+
+    value = PyObject_CallMethod(module, "set_command", "(s)", cmd);
+    if (value == NULL) {
+        syslog(LOG_WARNING, "%s failed calling set_command", __FUNCTION__);
+        PyErr_Print();
+        return 1;
+    }
+
+    Py_DECREF(module);
+    Py_DECREF(value);
+
+    return 0;
+}
+
 int call_pyobj(char *cmd, const char *arg) {
     char *token[10];
     char buf[256]; 
 
+    pyobj_set_user_cmd(cmd);
     syslog(LOG_DEBUG, "clish_pyobj: cmd=%s", cmd);
+
     strcpy(buf, arg);
     char *p = strtok(buf, " ");
     size_t idx = 0;
