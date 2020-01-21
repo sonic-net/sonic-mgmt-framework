@@ -341,7 +341,7 @@ def get_nat_translations_count(func, args):
 def get_stats(key, l):
 
     stats = { "protocol": "all",
-              "source": "",
+              "source": "---",
               "destination": "---",
               "pkts": "0",
               "bytes": "0"}
@@ -352,9 +352,16 @@ def get_stats(key, l):
                 stats["protocol"] = k
 
     if key == "openconfig-nat:nat-mapping-table":
-        stats["source"] = l['external-address']
+        if 'type' in l['state'] and l['state']['type'] == 'openconfig-nat:SNAT' :
+            stats["source"] = l['external-address']
+        elif 'type' in l['state'] and l['state']['type'] == 'openconfig-nat:DNAT' :
+            stats["destination"] = l['external-address']
     elif key == "openconfig-nat:napt-mapping-table":
-        stats["source"] = l['external-address']+":"+str(l['external-port'])
+        addr = l['external-address']+":"+str(l['external-port'])
+        if 'type' in l['state'] and l['state']['type'] == 'openconfig-nat:SNAT' :
+            stats["source"] = addr
+        elif 'type' in l['state'] and l['state']['type'] == 'openconfig-nat:DNAT' :
+            stats["destination"] = addr
     elif key == "openconfig-nat:nat-twice-mapping-table":
         stats["source"] = l["src-ip"]
         stats["destination"] = l["dst-ip"]
@@ -363,17 +370,10 @@ def get_stats(key, l):
         stats["destination"] = l["dst-ip"]+":"+str(l["dst-port"])
 
     if 'state' in l and 'counters' in l['state']:
-        if key == "openconfig-nat:nat-mapping-table" or key == "openconfig-nat:napt-mapping-table":
-            if 'nat-translations-bytes' in l['state']['counters']:
-                stats["bytes"] = l['state']['counters']['nat-translations-bytes']
-            if 'nat-translations-pkts' in l['state']['counters']:
-                stats["pkts"] = l['state']['counters']['nat-translations-pkts']
-
-        elif key == "openconfig-nat:nat-twice-mapping-table" or key == "openconfig-nat:napt-twice-mapping-table":
-            if 'dnat-translations-bytes' in l['state']['counters']:
-                stats["bytes"] = l['state']['counters']['dnat-translations-bytes']
-            if 'dnat-translations-pkts' in l['state']['counters']:
-                stats["pkts"] = l['state']['counters']['dnat-translations-pkts']
+        if 'nat-translations-bytes' in l['state']['counters']:
+            stats["bytes"] = l['state']['counters']['nat-translations-bytes']
+        if 'nat-translations-pkts' in l['state']['counters']:
+            stats["pkts"] = l['state']['counters']['nat-translations-pkts']
 
     return stats 
 
