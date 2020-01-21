@@ -292,17 +292,17 @@ module sonic-bgp-common {
         leaf strict_capability_match {
             type boolean;
             description "Strict capability negotiation match";
-		}
+        }
 
-		leaf admin_status {
-			type boolean;
-			description "To enable BGP peer";
-		}
+        leaf admin_status {
+            type boolean;
+            description "To enable BGP peer";
+        }
 
-		leaf local_as_no_prepend {
-			type boolean;
+        leaf local_as_no_prepend {
+            type boolean;
             description "Do not prepend local-as to updates from ebgp peers";
-		}
+        }
 
         leaf local_as_replace_as {
             type boolean;

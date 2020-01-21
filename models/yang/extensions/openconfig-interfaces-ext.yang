@@ -17,7 +17,7 @@ module openconfig-interfaces-ext {
     import openconfig-if-poe {prefix oc-poe; }
     import openconfig-if-tunnel {prefix oc-tun; }
     import openconfig-if-aggregate {prefix oc-lag; }
-
+    import ietf-inet-types { prefix ietf-inet; }
 
     augment "/oc-intf:interfaces/oc-intf:interface/oc-lag:aggregation/oc-lag:config" {
         leaf fallback {
@@ -84,12 +84,74 @@ module openconfig-interfaces-ext {
         }
     }
 
+	grouping interface-sag-ipv4-config {
+        leaf-list static-anycast-gateway {
+            description
+                "Static Anycast Gateway addresses";
+			max-elements 16;
+			type ietf-inet:ipv4-prefix;
+        }
+    }
+	
+    grouping interface-sag-ipv4-top {
+        container sag-ipv4 {
+            container config {
+                uses interface-sag-ipv4-config;
+            }
+            container state {
+                config false;
+                uses interface-sag-ipv4-config;
+            }
+        }
+    }	
+
+	grouping interface-sag-ipv6-config {
+        leaf-list static-anycast-gateway {
+            description
+                "Static Anycast Gateway addresses";
+			max-elements 16;
+			type ietf-inet:ipv6-prefix;
+        }
+    }
+	
+    grouping interface-sag-ipv6-top {
+        container sag-ipv6 {
+            container config {
+                uses interface-sag-ipv6-config;
+            }
+            container state {
+                config false;
+                uses interface-sag-ipv6-config;
+            }
+        }
+    }
+	
     augment "/oc-intf:interfaces/oc-intf:interface" {
         description
             "NAT zone config and state data.";
         uses interface-nat-zone-top;
     }
+	
+	augment "/oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv4" {
+        description
+            "SAG config and state data.";
+        uses interface-sag-ipv4-top {
+			when "oc-intf:config/oc-intf:type = 'oc-intf-types-ext:IF_NVE'";
+			description
+			  "SAG interface config/state";
+		}		  
+	}
 
+	augment "/oc-intf:interfaces/oc-intf:interface/oc-intf:subinterfaces/oc-intf:subinterface/oc-ip:ipv6" {
+        description
+            "SAG config and state data.";
+        uses interface-sag-ipv6-top {
+			when "oc-intf:config/oc-intf:type = 'oc-intf-types-ext:IF_NVE'";
+			description
+			  "SAG interface config/state";
+		}		  
+	}
+	
     deviation /oc-intf:interfaces/oc-intf:interface/oc-intf:hold-time {
         deviate not-supported;
     }

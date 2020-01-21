@@ -1,0 +1,114 @@
+{% set vars = {'sessionId': ""} %}
+{% if vars.update({'localAddress': "unknown"}) %}{% endif %}
+{% if vars.update({'peerAddress': ""}) %}{% endif %}
+{% if vars.update({'status': ""}) %}{% endif %}
+{% if vars.update({'vrf': ""}) %}{% endif %}
+{% if vars.update({'interface': ""}) %}{% endif %}
+{% if vars.update({'remoteId': ""}) %}{% endif %}
+{% if vars.update({'downtime': ""}) %}{% endif %}
+{% if vars.update({'localDiag': "ok"}) %}{% endif %}
+{% if vars.update({'remoteDiag': "ok"}) %}{% endif %}
+{% if vars.update({'type': "unknown"}) %}{% endif %}
+{% if vars.update( {'localTx': "300"}) %}{% endif %}
+{% if vars.update({'remoteTx': "300"}) %}{% endif %}
+{% if vars.update({'localRx': "300"}) %}{% endif %}
+{% if vars.update({'remoteRx': "300"}) %}{% endif %}
+{% if vars.update({'localMult': "3"}) %}{% endif %}
+{% if vars.update({'remoteMult': "3"}) %}{% endif %}
+{% if vars.update({'localEchoTx': "60"}) %}{% endif %}
+{% if vars.update({'remoteEchoTx': "60"}) %}{% endif %}
+BFD Peer:
+{% if 'openconfig-bfd-ext:single-hop-state' in json_output or 'openconfig-bfd-ext:multi-hop-state' in json_output %}
+    {% if 'openconfig-bfd-ext:single-hop-state' in json_output %}
+        {% set sessions = json_output['openconfig-bfd-ext:single-hop-state'] %}
+    {% endif %}
+    {% if 'openconfig-bfd-ext:multi-hop-state' in json_output %}
+        {% set sessions = json_output['openconfig-bfd-ext:multi-hop-state'] %}
+    {% endif %}
+    {% if sessions %}
+        {% for peer in sessions %}
+            {% if "local-discriminator" in peer %}
+                {% if vars.update({'sessionId':peer['local-discriminator']}) %}{% endif %}
+            {% endif %}
+            {% if "local-address" in peer %}
+                {% if vars.update({'localAddress':peer['local-address']}) %}{% endif %}
+            {% endif %}
+            {% if "remote-address" in peer %}
+                {% if vars.update({'peerAddress':peer['remote-address']}) %}{% endif %}
+            {% endif %}
+            {% if "session-state" in peer %}
+                {% if vars.update({'status':peer['session-state']}) %}{% endif %}
+            {% endif %}
+            {% if "vrf" in peer %}
+                {% if vars.update({'vrf':peer['vrf']}) %}{% endif %}
+            {% endif %}
+            {% if "interface" in peer %}
+                {% if vars.update({'interface':peer['interface']}) %}{% endif %}
+            {% endif %}
+            {% if "remote-discriminator" in peer %}
+                {% if vars.update({'remoteId':peer['remote-discriminator']}) %}{% endif %}
+            {% endif %}
+            {% if "last-failure-time" in peer %}
+                {% set time = peer['last-failure-time']|int %}
+                {% if vars.update({'downtime':'%d hours, %d mins, %d secs'|format(time/3600, (time%3600)/60, time%60 )}) %}{% endif %}
+            {% endif %}
+            {% if "local-diagnostic-code" in peer %}
+                {% if vars.update({'localDiag':peer['local-diagnostic-code']}) %}{% endif %}
+            {% endif %}
+            {% if "remote-diagnostic-code" in peer %}
+                {% if vars.update({'remoteDiag':peer['remote-diagnostic-code']}) %}{% endif %}
+            {% endif %}        
+            {% if "negotiated-transmission-interval" in peer %}
+                {% if vars.update({'localTx':peer['negotiated-transmission-interval']}) %}{% endif %}
+            {% endif %}
+            {% if "negotiated-receive-interval" in peer %}
+                {% if vars.update({'localRx':peer['negotiated-receive-interval']}) %}{% endif %}
+            {% endif %}
+            {% if "remote-desired-transmission-interval" in peer %}
+                {% if vars.update({'remoteTx':peer['remote-desired-transmission-interval']}) %}{% endif %}
+            {% endif %}
+            {% if "remote-minimum-receive-interval" in peer %}
+                {% if vars.update({'remoteRx':peer['remote-minimum-receive-interval']}) %}{% endif %}
+            {% endif %}
+            {% if "minimum-echo-interval" in peer %}
+                {% if vars.update({'localEchoTx':peer['minimum-echo-interval']}) %}{% endif %}
+            {% endif %}
+            {% if "remote-echo-receive-interval" in peer %}
+                {% if vars.update({'remoteEchoTx':peer['remote-echo-receive-interval']}) %}{% endif %}
+            {% endif %}
+{% set peerkey = 'peer %s'|format(vars.peerAddress)%}
+{% if 'openconfig-bfd-ext:multi-hop-state' in json_output %}
+{% set peerkey = '%s %s'|format(peerkey, 'multihop')%}
+{% endif %}
+{% if vars.localAddress != 'null'%}
+{% set peerkey = '%s local-address %s'|format(peerkey, vars.localAddress)%}
+{% endif %}
+{% if vars.vrf != ''%}
+{% set peerkey = '%s vrf %s'|format(peerkey, vars.vrf)%}
+{% endif %}
+{% if 'openconfig-bfd-ext:single-hop-state' in json_output %}
+    {% if vars.interface != ''%}
+        {% set peerkey = '%s interface %s'|format(peerkey, vars.interface)%}
+    {% endif %}
+{% endif %}
+{{'%4s%s'|format(' ', peerkey)}}
+{{'%8sID: %s'|format(' ', vars.sessionId)}}
+{{'%8sRemote ID: %s'|format(' ', vars.remoteId)}}
+{{'%8sStatus: %s'|format(' ', vars.status)}}
+{{'%8sDowntime: %s'|format(' ', vars.downtime)}}
+{{'%8sDiagnostics: %s'|format(' ', vars.localDiag)}}
+{{'%8sRemote diagnostics: %s'|format(' ', vars.remoteDiag)}}
+{{'%8sPeer Type: %s'|format(' ', vars.type)}}
+{{'%8sLocal timers:'|format(' ')}}
+{{'%12sDetect-multiplier: %s'|format(' ', vars.localMult)}}
+{{'%12sReceive interval: %s'|format(' ', vars.localRx)}}
+{{'%12sTransmission interval: %s'|format(' ', vars.localTx)}}
+{{'%12sEcho transmission interval: %s'|format(' ', vars.localEchoTx)}}
+{{'%8sRemote timers:'|format(' ')}}
+{{'%12sDetect-multiplier: %s'|format(' ', vars.remoteMult)}}
+{{'%12sReceive interval: %s'|format(' ', vars.remoteRx)}}
+{{'%12sTransmission interval: %s'|format(' ', vars.remoteTx)}}
+{{'%12sEcho transmission interval: %s'|format(' ', vars.remoteEchoTx)}}
+        {% endfor %}
+    {% endif %}
+{% endif %}

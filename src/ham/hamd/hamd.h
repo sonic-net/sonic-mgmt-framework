@@ -7,10 +7,7 @@
 #include "timer.h"                  // gtimer_c
 #include "../shared/dbus-address.h" // DBUS_BUS_NAME_BASE
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-but-set-variable"   /* SUPPRESS: warning: variable 'ri' set but not used [-Wunused-but-set-variable] */
 #include "../shared/org.SONiC.HostAccountManagement.dbus-adaptor.h"
-#pragma GCC diagnostic pop
 
 class hamd_config_c
 {
@@ -88,13 +85,16 @@ public:
     // DBus "nss" interface
     virtual ::DBus::Struct< bool, std::string, std::string, uint32_t, uint32_t, std::string, std::string, std::string > getpwnam(const std::string& name);
     virtual ::DBus::Struct< bool, std::string, std::string, uint32_t, uint32_t, std::string, std::string, std::string > getpwuid(const uint32_t& uid);
+    virtual std::string getpwcontents();
     virtual ::DBus::Struct< bool, std::string, std::string, uint32_t, std::vector< std::string > > getgrnam(const std::string& name);
     virtual ::DBus::Struct< bool, std::string, std::string, uint32_t, std::vector< std::string > > getgrgid(const uint32_t& gid);
+    virtual std::string getgrcontents();
     virtual ::DBus::Struct< bool, std::string, std::string, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, uint32_t > getspnam(const std::string& name);
 
+
     // DBus "sac" interface
-    virtual bool add_unconfirmed_user(const std::string & username, const uint32_t & pid);
-    virtual bool confirm_user(const std::string & username, const std::string & groupname, const std::string & groups, const std::string & label);
+    virtual std::string add_unconfirmed_user(const std::string & login, const uint32_t & pid);
+    virtual std::string user_confirm(const std::string & login, const std::vector<std::string> & roles);
 
     // DBus "debug" interface
     virtual std::string  tron();

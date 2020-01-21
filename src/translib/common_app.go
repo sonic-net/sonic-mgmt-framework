@@ -205,6 +205,11 @@ func (app *CommonApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
 		    resPayload = payload
 		    break
             }
+	    if strings.HasPrefix(app.pathInfo.Path, "/sonic") && isEmptyPayload {
+		    log.Error("transformer.transformer.GetAndXlateFromDB returned EmptyPayload")
+		    resPayload = payload
+		    break
+	    }
 
 	    targetObj, tgtObjCastOk := (*app.ygotTarget).(ygot.GoStruct)
 	    if tgtObjCastOk == false {
@@ -244,11 +249,12 @@ func (app *CommonApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
 			    // if payload is empty, no need to invoke merge-struct
 			    if isEmptyPayload == true {
 				    if areEqual(xfmrYgotRoot, resYgot.(ygot.GoStruct)) {
-					    // No data available in xfmrYgotRoot. Hence return error
+					    // No data available in xfmrYgotRoot.
 					    resPayload = payload
-					    err = tlerr.NotFound("Resource not found")
 					    errStr := fmt.Sprintf("No data available")
 					    log.Error(errStr)
+					    //TODO: Return not found error
+					    //err = tlerr.NotFound("Resource not found")
 					    break
 
 				    }

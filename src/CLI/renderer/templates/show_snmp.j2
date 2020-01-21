@@ -1,0 +1,15 @@
+{{ ' ' }}
+{% for key in json_output %}
+  {% if "sysName" in key %}
+{{ 'System Name'.ljust(11) }}: {{ json_output[key] }}
+  {% elif "sysContact" in key %}
+{{ 'Contact'.ljust(11) }}: {{ json_output[key] }}
+  {% elif "sysLocation" in key %}
+{{ 'Location'.ljust(11) }}: {{ json_output[key] }}
+  {% elif "traps" in key %}
+{{ 'Traps'.ljust(11) }}: {{ json_output[key] }}
+  {% elif "engineID" in key %}
+{{ 'EngineID'.ljust(11) }}: {{ json_output[key] }}
+  {% endif %}
+{% endfor %}
+{{ ' ' }}

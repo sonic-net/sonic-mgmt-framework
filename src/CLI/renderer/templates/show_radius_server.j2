@@ -9,7 +9,7 @@
 {% if json_output -%}
 {% if json_output["header"] == 'True' -%}
 --------------------------------------------------------------------------------
-{{'%-16s'|format("SERVER")}}{{'%-10s'|format("AUTH-TYPE")}}{{'%-10s'|format("KEY")}}{{'%-10s'|format("AUTH-PORT")}}{{'%-9s'|format("PRIORITY")}}{{'%-8s'|format("TIMEOUT")}}{{'%-6s'|format("RTSMT")}}{{'%-5s'|format("VRF")}}
+{{'%-16s'|format("HOST")}}{{'%-10s'|format("AUTH-TYPE")}}{{'%-10s'|format("KEY")}}{{'%-10s'|format("AUTH-PORT")}}{{'%-9s'|format("PRIORITY")}}{{'%-8s'|format("TIMEOUT")}}{{'%-6s'|format("RTSMT")}}{{'%-5s'|format("VRF")}}
 --------------------------------------------------------------------------------
 {% else %}
     {% if vars.update({'address':json_output["address"]}) %}{% endif %}

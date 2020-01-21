@@ -1,4 +1,4 @@
-# sudo apt-get install libsystemd-dev libglib2.0-dev libdbus-c++-dev
+# Prerequisite: sudo apt-get install libsystemd-dev libdbus-c++-dev libglib2.0-dev
 TARGET    := hamd
 
 SRCS      := $(wildcard *.c) $(wildcard *.cpp)
@@ -68,6 +68,10 @@ endif # (,$(strip $(filter $(MAKECMDGOALS),install debian)))
 ../shared/%.dbus-adaptor.h: ../shared/%.xml
 	@printf "%b[1;36m%s%b[0m\n" "\0033" "dbusxx-xml2cpp $< --adaptor=$@" "\0033"
 	@dbusxx-xml2cpp $< --adaptor=$@
+    # The following sed commands are used to add gcc warning suppression for:
+    #     warning: variable 'ri' set but not used [-Wunused-but-set-variable]
+	sed -i '1s/^/#pragma GCC diagnostic push\n#pragma GCC diagnostic ignored "-Wunused-but-set-variable"/' $@
+	sed -i '$$s/$$/\n#pragma GCC diagnostic pop/' $@
 
 # *******************************************************************
 #   ____ _
