@@ -43,7 +43,7 @@ limitations under the License.
            iptype="ipv4"&#xA;
         fi&#xA;
         if test -n "${summary}"; then&#xA;
-           python $SONIC_CLI_ROOT/sonic_cli_bgp.py get_ip_bgp_summary show_ip_bgp_summary.j2 ${vrf-name} $iptype&#xA;
+           python $SONIC_CLI_ROOT/sonic_cli_bgp.py get_ip_bgp_summary show_ip_bgp_summary.j2 ${vrf-name} $iptype ${__full_line}&#xA;
         elif test -n "${prefix}"; then&#xA;
            python $SONIC_CLI_ROOT/sonic_cli_bgp.py get_show_bgp_prefix ${__full_line}&#xA;
         elif test -n "${peer-group}"; then&#xA;
@@ -56,7 +56,7 @@ limitations under the License.
            if test -n "${neighbor-subcommands}"; then&#xA;
               python $SONIC_CLI_ROOT/sonic_cli_bgp.py get_show_bgp ${__full_line}&#xA;
            else&#xA;
-              python $SONIC_CLI_ROOT/sonic_cli_bgp.py get_ip_bgp_neighbors show_ip_bgp_neighbors.j2 ${vrf-name} $iptype ${neighbor-ip}&#xA;
+              python $SONIC_CLI_ROOT/sonic_cli_bgp.py get_ip_bgp_neighbors show_ip_bgp_neighbors.j2 ${vrf-name} $iptype ${neighbor-ip} ${__full_line}&#xA;
            fi&#xA;
         else&#xA;
            python $SONIC_CLI_ROOT/sonic_cli_bgp.py get_show_bgp ${__full_line}&#xA;
