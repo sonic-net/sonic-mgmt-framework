@@ -79,6 +79,8 @@ class CFG_MGMT(host_service.HostModule):
         version = CFG_MGMT._get_version()
         if version:
             filename = '/host/image-' + version + "/" + fname
+            if not os.path.exists(filename):
+                return 1, "No configuration erase operation to cancel."
             try:
                 os.remove(filename)
                 return 0, ""
