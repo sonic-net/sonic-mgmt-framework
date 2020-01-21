@@ -228,9 +228,20 @@ def invoke(func, args):
 
 
 def run(func, args):
+    pipestr().write(args)
+
     if not path.exists('/proc/bcm/ksync/stats'):
         print("%Error: PTP feature not supported")
         sys.exit(-1)
+
+    if func == "show_ptp_clock":
+        run("get_ietf_ptp_ptp_instance_list_default_ds", args)
+        run("get_ietf_ptp_ptp_instance_list_current_ds", args[2:])
+        return
+    elif func == "network_transport_uc_mc":
+        run("network-transport", args)
+        run("unicast-multicast", args[2:])
+        return
 
     api_response = invoke(func, args)
     if api_response is None:
