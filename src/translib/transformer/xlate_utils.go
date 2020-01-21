@@ -30,6 +30,7 @@ import (
     "github.com/openconfig/gnmi/proto/gnmi"
     "github.com/openconfig/ygot/ygot"
     log "github.com/golang/glog"
+    "sync"
 )
 
 /* Create db key from data xpath(request) */
@@ -409,7 +410,7 @@ func formXfmrInputRequest(d *db.DB, dbs [db.MaxDB]*db.DB, cdb db.DBNum, ygRoot *
 	inParams.dbDataMap = dbDataMap
 	inParams.subOpDataMap = subOpDataMap
 	inParams.param = param // generic param
-	inParams.txCache = txCache.(map[string]interface{})
+	inParams.txCache = txCache.(sync.Map)
 	inParams.skipOrdTblChk = new(bool)
 
 	return inParams

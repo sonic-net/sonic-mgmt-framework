@@ -21,6 +21,7 @@ package transformer
 import (
 	"github.com/openconfig/ygot/ygot"
 	"translib/db"
+	"sync"
 )
 
 type RedisDbMap = map[db.DBNum]map[string]map[string]db.Value
@@ -37,7 +38,7 @@ type XfmrParams struct {
 	dbDataMap *map[db.DBNum]map[string]map[string]db.Value
 	subOpDataMap map[int]*RedisDbMap // used to add an in-flight data with a sub-op
 	param interface{}
-	txCache map[string]interface{}
+	txCache sync.Map
 	skipOrdTblChk *bool
 }
 
