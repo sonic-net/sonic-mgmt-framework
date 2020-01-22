@@ -4,20 +4,35 @@
 {% if vars.update({'master': "unknown"}) %}{% endif %}
 {% if vars.update({'adminStatus': "unknown"}) %}{% endif %}
 {% if vars.update({'operStatus': "unknown"}) %}{% endif %}
+{% set gwmac = "Not Configured" %}
+{% set familyenabled = "disabled" %}
+{% set total = "0" %}
+{% set adminup = "0" %}
+{% set operup = "0" %}
 
 {% if 'global' in json_output %}
 {% if 'sonic-sag:SAG_GLOBAL_LIST' in json_output['global'] %}
 {% set sag_global = json_output['global']['sonic-sag:SAG_GLOBAL_LIST'] %}
-Configured Anycast Gateway MAC address: {{sag_global[0]['gwmac']}}
-{{json_output['family']}} Anycast Gateway MAC address: {{sag_global[0][json_output['family']]}}
-Total number of gateway: {{''}}
-Total number of gateway admin UP: {{''}}
-Total number of gateway oper UP: {{''}}
+{% set gwmac = sag_global[0]['gwmac'] %}
+{% set familyenabled = sag_global[0][json_output['family']] %}
+{% endif %}
+{% if "miscmap" in json_output %}
+{% if "counters" in json_output["miscmap"] %}
+{% set total = '%d'|format(json_output["miscmap"]["counters"]["totalgw"][json_output['family']]) %}
+{% set adminup = '%d'|format(json_output["miscmap"]["counters"]["adminupgw"][json_output['family']]) %}
+{% set operup = '%d'|format(json_output["miscmap"]["counters"]["operupgw"][json_output['family']]) %}
 {% endif %}
 {% endif %}
-
+Configured Anycast Gateway MAC address: {{gwmac}}
+{{json_output['family']}} Anycast Gateway MAC address: {{familyenabled}}
+{% if total != "0" %}
+Total number of gateway: {{total}}
+Total number of gateway admin UP: {{adminup}}
+Total number of gateway oper UP: {{operup}}
 {{'%-10s %-20s %-10s %-10s'|format("Interfaces", "Gateway Address", "Master", "Admin/Oper")}}
 {{'%-10s %-20s %-10s %-10s'|format("----------", "---------------", "------", "----------")}}
+{% endif %}
+{% endif %}
 
 {% if 'sag' in json_output %}
     {% set sag_list = json_output['sag']['sonic-sag:SAG_LIST'] %}

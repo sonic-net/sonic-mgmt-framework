@@ -33,7 +33,7 @@ def invoke(func, args):
     # Get the rules of all ACL table entries.
     if func == 'get_openconfig_acl_acl_acl_sets':
         keypath = None
-        if args[0] == "":
+        if len(args) == 2:
             keypath = cc.Path('/restconf/data/openconfig-acl:acl/acl-sets')
         else:
             keypath = cc.Path('/restconf/data/openconfig-acl:acl/acl-sets/acl-set={name},{type}/acl-entries',
@@ -212,6 +212,7 @@ def invoke(func, args):
         exit(1)
 
 def run(func, args):
+    pipestr().write(args)
     try:
         api_response = invoke(func, args)
 
@@ -228,7 +229,7 @@ def run(func, args):
                 value = response['openconfig-acl:acl-sets']
                 if value is None:
                     return
-                show_cli_output(args[2], value)
+                show_cli_output(args[1], value)
             elif 'openconfig-acl:interfaces' in response.keys():
                 value = response['openconfig-acl:interfaces']
                 if value is None:

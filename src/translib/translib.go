@@ -73,7 +73,21 @@ type SetResponse struct {
 
 type GetRequest struct {
 	Path    string
+<<<<<<< HEAD
 	User    UserRoles
+||||||| merged common ancestors
+	User    string
+	Group   string
+	Role    string
+=======
+	User    string
+	Group   string
+	Role    string
+
+	// Depth limits the depth of data subtree in the response
+	// payload. Default value 0 indicates there is no limit.
+	Depth   uint
+>>>>>>> origin/broadcom_sonic_share
 }
 
 type GetResponse struct {
@@ -181,7 +195,7 @@ func Create(req SetRequest) (SetResponse, error) {
 		return resp, err
 	}
 
-	err = appInitialize(app, appInfo, path, &payload, CREATE)
+	err = appInitialize(app, appInfo, path, &payload, nil, CREATE)
 
 	if err != nil {
 		resp.ErrSrc = AppErr
@@ -256,7 +270,7 @@ func Update(req SetRequest) (SetResponse, error) {
 		return resp, err
 	}
 
-	err = appInitialize(app, appInfo, path, &payload, UPDATE)
+	err = appInitialize(app, appInfo, path, &payload, nil, UPDATE)
 
 	if err != nil {
 		resp.ErrSrc = AppErr
@@ -331,7 +345,7 @@ func Replace(req SetRequest) (SetResponse, error) {
 		return resp, err
 	}
 
-	err = appInitialize(app, appInfo, path, &payload, REPLACE)
+	err = appInitialize(app, appInfo, path, &payload, nil, REPLACE)
 
 	if err != nil {
 		resp.ErrSrc = AppErr
@@ -404,7 +418,7 @@ func Delete(req SetRequest) (SetResponse, error) {
 		return resp, err
 	}
 
-	err = appInitialize(app, appInfo, path, nil, DELETE)
+	err = appInitialize(app, appInfo, path, nil, nil, DELETE)
 
 	if err != nil {
 		resp.ErrSrc = AppErr
@@ -476,7 +490,8 @@ func Get(req GetRequest) (GetResponse, error) {
 		return resp, err
 	}
 
-	err = appInitialize(app, appInfo, path, nil, GET)
+	opts := appOptions{ depth: req.Depth }
+	err = appInitialize(app, appInfo, path, nil, &opts, GET)
 
 	if err != nil {
 		resp = GetResponse{Payload: payload, ErrSrc: AppErr}
@@ -529,7 +544,7 @@ func Action(req ActionRequest) (ActionResponse, error) {
 
 	aInfo.isNative = true
 
-	err = appInitialize(app, &aInfo, path, &req.Payload, GET)
+	err = appInitialize(app, &aInfo, path, &req.Payload, nil, GET)
 
 	if err != nil {
 		resp = ActionResponse{Payload: payload, ErrSrc: AppErr}
@@ -610,7 +625,7 @@ func Bulk(req BulkRequest) (BulkResponse, error) {
 			goto BulkDeleteError
 		}
 
-		err = appInitialize(app, appInfo, path, nil, DELETE)
+		err = appInitialize(app, appInfo, path, nil, nil, DELETE)
 
 		if err != nil {
 			errSrc = AppErr
@@ -663,7 +678,7 @@ func Bulk(req BulkRequest) (BulkResponse, error) {
 		log.Info("Bulk replace request received with path =", path)
 		log.Info("Bulk replace request received with payload =", string(payload))
 
-		err = appInitialize(app, appInfo, path, &payload, REPLACE)
+		err = appInitialize(app, appInfo, path, &payload, nil, REPLACE)
 
         if err != nil {
             errSrc = AppErr
@@ -713,7 +728,7 @@ func Bulk(req BulkRequest) (BulkResponse, error) {
 			goto BulkUpdateError
 		}
 
-		err = appInitialize(app, appInfo, path, &payload, UPDATE)
+		err = appInitialize(app, appInfo, path, &payload, nil, UPDATE)
 
 		if err != nil {
 			errSrc = AppErr
@@ -763,7 +778,7 @@ func Bulk(req BulkRequest) (BulkResponse, error) {
 			goto BulkCreateError
 		}
 
-		err = appInitialize(app, appInfo, path, &payload, CREATE)
+		err = appInitialize(app, appInfo, path, &payload, nil, CREATE)
 
 		if err != nil {
 			errSrc = AppErr
@@ -1144,7 +1159,7 @@ func getAppModule(path string) (*appInterface, *appInfo, error) {
 	return &app, aInfo, err
 }
 
-func appInitialize(app *appInterface, appInfo *appInfo, path string, payload *[]byte, opCode int) error {
+func appInitialize(app *appInterface, appInfo *appInfo, path string, payload *[]byte, opts *appOptions, opCode int) error {
 	var err error
 	var input []byte
 
@@ -1155,6 +1170,7 @@ func appInitialize(app *appInterface, appInfo *appInfo, path string, payload *[]
 	if appInfo.isNative {
 		log.Info("Native MSFT format")
 		data := appData{path: path, payload: input}
+		data.setOptions(opts)
 		(*app).initialize(data)
 	} else {
 		ygotStruct, ygotTarget, err := getRequestBinder(&path, payload, opCode, &(appInfo.ygotRootType)).unMarshall()
@@ -1164,8 +1180,15 @@ func appInitialize(app *appInterface, appInfo *appInfo, path string, payload *[]
 		}
 
 		data := appData{path: path, payload: input, ygotRoot: ygotStruct, ygotTarget: ygotTarget}
+		data.setOptions(opts)
 		(*app).initialize(data)
 	}
 
 	return err
+}
+
+func (data *appData) setOptions(opts *appOptions) {
+	if opts != nil {
+		data.appOptions = *opts
+	}
 }
