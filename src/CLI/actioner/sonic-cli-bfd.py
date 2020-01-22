@@ -36,16 +36,16 @@ def invoke_api(func, args=[]):
 	    print("%Error: Interface must be configured for single-hop peer")
 	    exit(1)
 
+        if args[2] != "default" and args[1] == "null":
+            print("%Error: Interface must be configured for non-default vrf")
+            exit(1)
+
         keypath = cc.Path('/restconf/data/openconfig-bfd:bfd/openconfig-bfd-ext:sessions/single-hop={address},{interfacename},{vrfname},{localaddress}/enabled', address=args[0], interfacename=args[1], vrfname=args[2],localaddress=args[3])
         body = {"openconfig-bfd-ext:enabled": True}
         return api.patch(keypath, body)
     elif func == 'patch_openconfig_bfd_ext_bfd_sessions_multi_hop':
 	if args[3] == "null":
             print("%Error: Local Address must be configured for multi-hop peer")
-            exit(1)
-
-        if args[2] != "default" and args[1] == "null":
-            print("%Error: Interface must be configured for non-default vrf")
             exit(1)
 
         keypath = cc.Path('/restconf/data/openconfig-bfd:bfd/openconfig-bfd-ext:sessions/multi-hop={address},{interfacename},{vrfname},{localaddress}/enabled', address=args[0], interfacename=args[1], vrfname=args[2], localaddress=args[3])
@@ -122,10 +122,6 @@ def invoke_api(func, args=[]):
             print("%Error: Local Address must be configured for multi-hop peer")
             exit(1)
 
-        if args[2] != "default" and args[1] == "null":
-            print("%Error: Interface must be configured for non-default vrf")
-            exit(1)
-
         keypath = cc.Path('/restconf/data/openconfig-bfd:bfd/openconfig-bfd-ext:sessions/multi-hop={address},{interfacename},{vrfname},{localaddress}', address=args[0], interfacename=args[1], vrfname=args[2],localaddress=args[3])
         return api.delete(keypath)
 
@@ -166,10 +162,6 @@ def invoke_show_api(func, args=[]):
 
                 if args[4] == "null":
                     print("%Error: Local Address must be configured for multi-hop peer")
-                    exit(1)
-
-		if args[3] != "default" and args[2] == "null":
-                    print("%Error: Interface must be configured for non-default vrf")
                     exit(1)
 
 		keypath = cc.Path('/restconf/data/openconfig-bfd:bfd/openconfig-bfd-ext:bfd-state/multi-hop-state={address},{interfacename},{vrfname},{localaddress}', address=args[1], interfacename=args[2], vrfname=args[3], localaddress=args[4])
