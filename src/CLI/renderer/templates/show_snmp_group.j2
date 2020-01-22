@@ -1,0 +1,13 @@
+{{ ' ' }}
+{{ 'Group Name'|center(25) }} {{ 'Model: Security'|center(20) }} {{ 'Read View' }} {{ 'Write View' }} {{ 'Notify View' }}
+{{'------------------------- -------------------- --------- ---------- -----------'}}
+{% for i in json_output %}
+  {% set i1 = json_output[loop.index-1] %}
+{{ '%-25s'|format(i1['name'])|truncate(25,true,"") -}}
+{{ ' %-3s:'|format(i1['model']) -}}
+{{ ' %-15s'|format(i1['security']) -}}
+{{ ' %-9s'|format(i1['readView'])|truncate(9,true,"") -}}
+{{ ' %-10s'|format(i1['writeView'])|truncate(10,true,"") -}}
+{{ ' %-11s'|format(i1['notifyView'])|truncate(11,true,"") }}
+{% endfor %}
+{{ ' ' }}

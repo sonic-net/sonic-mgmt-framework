@@ -1,0 +1,163 @@
+module openconfig-mclag-annot {
+    yang-version "1";
+
+    namespace "http://openconfig.net/yang/mclag-annot";
+    prefix "oc-mclag-annot";
+
+    import sonic-extensions { prefix sonic-ext; }
+    import openconfig-mclag { prefix oc-mclag; }
+
+    // meta
+    organization
+        "SONiC";
+
+    contact
+        "SONiC";
+
+    description
+        "SONIC VLAN";
+
+    revision 2020-01-20 {
+        description
+            "Initial revision.";
+    }
+
+    deviation /oc-mclag:mclag/oc-mclag:mclag-domains/oc-mclag:mclag-domain {
+        deviate add {
+            sonic-ext:table-name "MCLAG_DOMAIN";
+        }
+    }
+
+    deviation /oc-mclag:mclag/oc-mclag:interfaces/oc-mclag:interface {
+        deviate add {
+            sonic-ext:table-name "MCLAG_INTERFACE";
+            sonic-ext:subtree-transformer "mclag_interface_subtree_xfmr";
+        }
+    }
+
+    deviation /oc-mclag:mclag/oc-mclag:vlan-interfaces/oc-mclag:vlan-interface {
+        deviate add {
+            sonic-ext:table-name "MCLAG_UNIQUE_IP";
+        }
+    }
+
+    deviation /oc-mclag:mclag/oc-mclag:mclag-domains/oc-mclag:mclag-domain/oc-mclag:config/oc-mclag:domain-id {
+        deviate add {
+            sonic-ext:field-name "domain_id";
+            sonic-ext:field-transformer "mclag_domainid_fld_xfmr";
+        }
+    }
+
+    deviation /oc-mclag:mclag/oc-mclag:mclag-domains/oc-mclag:mclag-domain/oc-mclag:config/oc-mclag:source-address {
+        deviate add {
+            sonic-ext:field-name "source_ip";
+        }
+    }
+
+    deviation /oc-mclag:mclag/oc-mclag:mclag-domains/oc-mclag:mclag-domain/oc-mclag:config/oc-mclag:peer-address {
+        deviate add {
+            sonic-ext:field-name "peer_ip";
+        }
+    }
+
+    deviation /oc-mclag:mclag/oc-mclag:mclag-domains/oc-mclag:mclag-domain/oc-mclag:config/oc-mclag:peer-link {
+        deviate add {
+            sonic-ext:field-name "peer_link";
+        }
+    }
+
+    deviation /oc-mclag:mclag/oc-mclag:mclag-domains/oc-mclag:mclag-domain/oc-mclag:config/oc-mclag:keepalive-interval {
+        deviate add {
+            sonic-ext:field-name "keepalive_interval";
+        }
+    }
+
+    deviation /oc-mclag:mclag/oc-mclag:mclag-domains/oc-mclag:mclag-domain/oc-mclag:config/oc-mclag:session-timeout {
+        deviate add {
+            sonic-ext:field-name "session_timeout";
+        }
+    }
+
+
+    deviation /oc-mclag:mclag/oc-mclag:mclag-domains/oc-mclag:mclag-domain/oc-mclag:state/oc-mclag:domain-id {
+        deviate add {
+            sonic-ext:field-name "domain_id";
+            sonic-ext:field-transformer "mclag_domainid_fld_xfmr";
+        }
+    }
+
+    deviation /oc-mclag:mclag/oc-mclag:mclag-domains/oc-mclag:mclag-domain/oc-mclag:state/oc-mclag:source-address {
+        deviate add {
+            sonic-ext:field-name "source_ip";
+        }
+    }
+
+    deviation /oc-mclag:mclag/oc-mclag:mclag-domains/oc-mclag:mclag-domain/oc-mclag:state/oc-mclag:peer-address {
+        deviate add {
+            sonic-ext:field-name "peer_ip";
+        }
+    }
+
+    deviation /oc-mclag:mclag/oc-mclag:mclag-domains/oc-mclag:mclag-domain/oc-mclag:state/oc-mclag:peer-link {
+        deviate add {
+            sonic-ext:field-name "peer_link";
+        }
+    }
+
+    deviation /oc-mclag:mclag/oc-mclag:mclag-domains/oc-mclag:mclag-domain/oc-mclag:state/oc-mclag:keepalive-interval {
+        deviate add {
+            sonic-ext:field-name "keepalive_interval";
+        }
+    }
+
+    deviation /oc-mclag:mclag/oc-mclag:mclag-domains/oc-mclag:mclag-domain/oc-mclag:state/oc-mclag:session-timeout {
+        deviate add {
+            sonic-ext:field-name "session_timeout";
+        }
+    }
+
+    deviation /oc-mclag:mclag/oc-mclag:mclag-domains/oc-mclag:mclag-domain/oc-mclag:state/oc-mclag:oper-status {
+        deviate add {
+            sonic-ext:field-transformer "mclag_domain_oper_status_fld_xfmr";
+        }
+    }
+
+    deviation /oc-mclag:mclag/oc-mclag:mclag-domains/oc-mclag:mclag-domain/oc-mclag:state/oc-mclag:role {
+        deviate add {
+            sonic-ext:field-transformer "mclag_domain_role_fld_xfmr";
+        }
+    }
+
+    deviation /oc-mclag:mclag/oc-mclag:mclag-domains/oc-mclag:mclag-domain/oc-mclag:state/oc-mclag:system-mac {
+        deviate add {
+            sonic-ext:field-transformer "mclag_domain_system_mac_fld_xfmr";
+        }
+    }
+
+
+    deviation /oc-mclag:mclag/oc-mclag:vlan-interfaces/oc-mclag:vlan-interface/oc-mclag:config/oc-mclag:name {
+        deviate add {
+            sonic-ext:field-name "if_name";
+            sonic-ext:field-transformer "mclag_vlan_name_fld_xfmr";
+        }
+    }
+
+    deviation /oc-mclag:mclag/oc-mclag:vlan-interfaces/oc-mclag:vlan-interface/oc-mclag:config/oc-mclag:unique-ip-enable {
+        deviate add {
+            sonic-ext:field-name "unique_ip";
+        }
+    }
+
+    deviation /oc-mclag:mclag/oc-mclag:vlan-interfaces/oc-mclag:vlan-interface/oc-mclag:state/oc-mclag:name {
+        deviate add {
+            sonic-ext:field-name "if_name";
+            sonic-ext:field-transformer "mclag_vlan_name_fld_xfmr";
+        }
+    }
+
+    deviation /oc-mclag:mclag/oc-mclag:vlan-interfaces/oc-mclag:vlan-interface/oc-mclag:state/oc-mclag:unique-ip-enable {
+        deviate add {
+            sonic-ext:field-name "unique_ip";
+        }
+    }
+}
