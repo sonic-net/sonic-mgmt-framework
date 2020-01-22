@@ -77,6 +77,5 @@ int call_pyobj(char *cmd, const char *arg) {
 CLISH_PLUGIN_SYM(clish_pyobj)
 {
     char *cmd = clish_shell__get_full_line(clish_context);
-    call_pyobj(cmd, script);
-    return 0;
+    return call_pyobj(cmd, script);
 }

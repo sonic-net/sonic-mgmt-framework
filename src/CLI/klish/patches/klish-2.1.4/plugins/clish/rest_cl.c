@@ -249,8 +249,7 @@ int rest_cl(char *cmd, const char *buff)
 CLISH_PLUGIN_SYM(clish_restcl)
 {
     char *cmd = clish_shell__get_full_line(clish_context);
-    rest_cl(cmd, script);
-    return 0;
+    return rest_cl(cmd, script);
 }
 
 
