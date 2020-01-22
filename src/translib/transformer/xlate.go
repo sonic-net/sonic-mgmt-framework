@@ -457,7 +457,16 @@ func GetOrdTblList(xfmrTbl string, uriModuleNm string) []string {
                         break
                 }
         }
-        return ordTblList
+		return ordTblList
+	}
+
+/* Table hierarchy read from json file */
+func GetXfmrOrdTblList(xfmrTbl string) []string {
+	var ordTblList []string
+	if _, ok := sonicOrdTblListMap[xfmrTbl]; ok {
+		ordTblList = sonicOrdTblListMap[xfmrTbl]
+	}
+	return ordTblList
 }
 
 func GetTablesToWatch(xfmrTblList []string, uriModuleNm string) []string {

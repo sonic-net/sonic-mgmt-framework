@@ -8,11 +8,35 @@ void pyobj_init() {
     Py_Initialize();
 }
 
+static int pyobj_set_user_cmd(const char *cmd) {
+    PyObject *module, *value;
+
+    module = PyImport_ImportModule("cli_client");
+    if (module == NULL) {
+        PyErr_Print();
+        return -1;
+    }
+
+    value = PyObject_CallMethod(module, "set_command", "(s)", cmd);
+    if (value == NULL) {
+        syslog(LOG_WARNING, "%s failed calling set_command", __FUNCTION__);
+        PyErr_Print();
+        return 1;
+    }
+
+    Py_DECREF(module);
+    Py_DECREF(value);
+
+    return 0;
+}
+
 int call_pyobj(char *cmd, const char *arg) {
     char *token[20];
     char buf[1024]; 
 
+    pyobj_set_user_cmd(cmd);
     syslog(LOG_DEBUG, "clish_pyobj: cmd=%s", cmd);
+
     strcpy(buf, arg);
     char *p = strtok(buf, " ");
     size_t idx = 0;
@@ -53,6 +77,5 @@ int call_pyobj(char *cmd, const char *arg) {
 CLISH_PLUGIN_SYM(clish_pyobj)
 {
     char *cmd = clish_shell__get_full_line(clish_context);
-    call_pyobj(cmd, script);
-    return 0;
+    return call_pyobj(cmd, script);
 }
