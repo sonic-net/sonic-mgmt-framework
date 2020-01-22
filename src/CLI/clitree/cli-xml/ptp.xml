@@ -19,135 +19,361 @@
 		/>
 	<VIEW name="enable-view">
 		<!--show ptp -->
-		<COMMAND name="show ptp" help="Show PTP config info/status">
-			<PARAM name="ptp-subcommands" help="PTP subcommands" mode="switch" ptype="SUBCOMMAND" optional="true">
-				<PARAM name="time-property" help="time property" ptype="SUBCOMMAND" mode="subcommand"> </PARAM>
-				<PARAM name="clock" help="clock" ptype="SUBCOMMAND" mode="subcommand"> </PARAM>
-				<PARAM name="parent" help="parent" ptype="SUBCOMMAND" mode="subcommand"> </PARAM>
-				<PARAM name="port" help="PTP port config" ptype="SUBCOMMAND" mode="subcommand">
-					<MACRO name="PTP-CFG-IF-TYPE" arg=""/>
-				</PARAM>
-			</PARAM>
-			<ACTION>if test "${ptp-subcommands}" = "time-property"; then&#xA;
- python $SONIC_CLI_ROOT/sonic-cli-ptp.py get_ietf_ptp_ptp_instance_list_time_properties_ds 0 ptp_tp_show.j2 &#xA;
- elif test "${ptp-subcommands}" = "clock"; then&#xA;
- python $SONIC_CLI_ROOT/sonic-cli-ptp.py get_ietf_ptp_ptp_instance_list_default_ds 0 ptp_clock_show.j2 &#xA;
- python $SONIC_CLI_ROOT/sonic-cli-ptp.py get_ietf_ptp_ptp_instance_list_current_ds 0 ptp_currentds_show.j2 &#xA;
- elif test "${ptp-subcommands}" = "parent"; then&#xA;
- python $SONIC_CLI_ROOT/sonic-cli-ptp.py get_ietf_ptp_ptp_instance_list_parent_ds 0 ptp_parent_show.j2 &#xA;
- elif test "${ptp-subcommands}" = "port"; then&#xA;
- python $SONIC_CLI_ROOT/sonic-cli-ptp.py get_ietf_ptp_ptp_instance_list_port_ds_list 0 ${cfg-if-type}${ptp_port_number} ptp_port_show.j2 &#xA;
- elif test "${ptp-subcommands}" = ""; then&#xA;
- python $SONIC_CLI_ROOT/sonic-cli-ptp.py get_ietf_ptp_ptp_instance_list 0 ptp_show.j2&#xA; 
- else&#xA;
- python $SONIC_CLI_ROOT/sonic-cli-ptp.py get_ietf_ptp_ptp_instance_list 0 ptp_port_show.j2 &#xA;
- fi&#xA;
-				</ACTION>
+		<COMMAND name="show ptp" help="Show PTP brief info/status" >
+			<ACTION builtin="clish_pyobj">
+				sonic_cli_ptp get_ietf_ptp_ptp_instance_list 0 ptp_show.j2 ${__full_line__}
+			</ACTION>
+			<DOCGEN>
+				<DESCRIPTION>
+					Display PTP status/configuration
+				</DESCRIPTION>
+				<EXAMPLE>
+					sonic# show ptp
+					-----------------------------------------------------------
+					Interface            State
+					-----------------------------------------------------------
+					Ethernet56           master
+					Ethernet64           slave
+				</EXAMPLE>
+			</DOCGEN>
+		</COMMAND>
+		<COMMAND name="show ptp time-property" help="Show PTP time property status">
+			<ACTION builtin="clish_pyobj">
+				sonic_cli_ptp get_ietf_ptp_ptp_instance_list_time_properties_ds 0 ptp_tp_show.j2 ${__full_line__}
+			</ACTION>
+			<DOCGEN>
+				<DESCRIPTION>
+					Display PTP time-property status
+				</DESCRIPTION>
+				<EXAMPLE>
+					sonic# show ptp time-property
+					Curr UTC Offset Vld  False
+					Curr UTC Offset      37
+					Leap59               False
+					Leap61               False
+					Time Traceable       False
+					Freq Traceable       False
+					PTP Timescale        True
+				</EXAMPLE>
+			</DOCGEN>
+		</COMMAND>
+		<COMMAND name="show ptp clock" help="Show PTP configuration info/status">
+			<ACTION builtin="clish_pyobj">
+				sonic_cli_ptp show_ptp_clock 0 ptp_clock_show.j2 0 ptp_currentds_show.j2 ${__full_line__}
+			</ACTION>
+			<DOCGEN>
+				<DESCRIPTION>
+					Display PTP clock configuration/status
+				</DESCRIPTION>
+				<EXAMPLE>
+					sonic# show ptp clock
+					Mode                  BC
+					Domain Profile        ieee1588
+					Network Transport     UDPv4 unicast
+					Domain Number         1
+					Clock Identity        3c2c99.fffe.2d7c35
+					Priority1             128
+					Priority2             128
+					Two Step              Enabled
+					Slave Only            False
+					Number Ports          2
+					Clock Quality:
+					Clock Class         248
+					Clock Accuracy      254
+					Ofst Scaled Log Var 65535
+					Mean Path Delay       0
+					Steps Removed         0
+					Offset from master    0
+				</EXAMPLE>
+			</DOCGEN>
+		</COMMAND>
+		<COMMAND name="show ptp parent" help="Show PTP config info/status">
+			<ACTION builtin="clish_pyobj">
+				sonic_cli_ptp get_ietf_ptp_ptp_instance_list_parent_ds 0 ptp_parent_show.j2  ${__full_line__}
+			</ACTION>
+			<DOCGEN>
+				<DESCRIPTION>
+					Display PTP parent status
+				</DESCRIPTION>
+				<EXAMPLE>
+					sonic# show ptp parent
+					Parent Clock Identity          3c2c99.fffe.2d7c35
+					Port Number                    0
+					Grandmaster Clock Class        248
+					Grandmaster Off Scaled Log Var 65535
+					Grandmaster Clock Accuracy     254
+					Grandmaster Identity           3c2c99.fffe.2d7c35
+					Grandmaster Priority1          128
+					Grandmaster Priority2          128
+					Stats Valid                    False
+					Observed Off Scaled Log Var    65535
+					Observed Clock Phase Chg Rate  2147483647
+				</EXAMPLE>
+			</DOCGEN>
+		</COMMAND>
+		<COMMAND name="show ptp port" help="Show PTP port config info/status">
+				<MACRO name="PTP-CFG-IF-TYPE" arg=""/>
+			<ACTION builtin="clish_pyobj">
+				sonic_cli_ptp get_ietf_ptp_ptp_instance_list_port_ds_list 0 ${cfg-if-type}${ptp_port_number} ptp_port_show.j2  ${__full_line__}
+			</ACTION>
+			<DOCGEN>
+				<DESCRIPTION>
+					Display PTP port status/configuration
+				</DESCRIPTION>
+				<EXAMPLE>
+					sonic# show ptp port Ethernet 64
+					Port Number                    64
+					Port State                     master
+					Log Min delay Req Intvl        0
+					Peer Mean Path Delay           0
+					Log Announce Interval          1
+					Log Sync Interval              0
+					Log Min PDelay Req Interval    0
+					Version Number                 2
+					Unicast Master Table:
+					                               10.1.1.1
+				</EXAMPLE>
+			</DOCGEN>
 		</COMMAND>
 	</VIEW>
 	<VIEW name="configure-view">
-		<COMMAND name="ptp" help="PTP commands">
-			<PARAM name="cfg-ptp-subcommands" help="PTP subcommands" mode="switch" ptype="SUBCOMMAND">
-				<PARAM name="mode" help="PTP mode" ptype="SUBCOMMAND" mode="subcommand">
-					<PARAM name="mode_type" help="Enter ptp mode" ptype="PTP_MODE"/>
+		<COMMAND name="ptp" help="PTP configuration commands" />
+		<COMMAND name="ptp mode" help="PTP commands">
+			<PARAM name="mode_type" help="PTP mode" ptype="PTP_MODE"/>
+			<ACTION builtin="clish_pyobj">
+				sonic_cli_ptp clock-type 0 ${mode_type}
+			</ACTION>
+			<DOCGEN>
+				<DESCRIPTION>
+					Configure PTP clock type
+				</DESCRIPTION>
+				<EXAMPLE>
+					sonic(config)# ptp mode boundary-clock
+					Success
+				</EXAMPLE>
+			</DOCGEN>
+		</COMMAND>
+		<COMMAND name="ptp network-transport" help="PTP network transport">
+			<PARAM name="ptp_network_transport_type" help="Enter PTP network transport type" ptype="PTP_TRANSPORT"/>
+			<PARAM name="ptp_master_slave" help="unicast mode/multicast" ptype="PTP_MST_SLV"/>
+			<ACTION builtin="clish_pyobj">
+					sonic_cli_ptp network_transport_uc_mc 0 ${ptp_network_transport_type} 0 ${ptp_master_slave}
+			</ACTION>
+			<DOCGEN>
+				<DESCRIPTION>
+					Configure PTP network-transport
+				</DESCRIPTION>
+				<EXAMPLE>
+					sonic(config)# ptp network-transport ipv4 unicast
+					Success
+				</EXAMPLE>
+			</DOCGEN>
+		</COMMAND>
+		<COMMAND name="ptp ipv6-scope" help="PTP IPv6 multicast scope">
+			<PARAM name="ptp_ipv6_scope" help="Scope used for IPv6 multicast message. Used as second byte of the primary address" ptype="PTP_V6SCOPE_TYPE"/>
+			<ACTION builtin="clish_pyobj">
+				sonic_cli_ptp udp6-scope 0 ${ptp_ipv6_scope}
+			</ACTION>
+			<DOCGEN>
+				<DESCRIPTION>
+					Configure PTP IPv6 multicast address scope
+				</DESCRIPTION>
+				<EXAMPLE>
+					sonic(config)# ptp ipv6-scope 0xe
+					Success
+				</EXAMPLE>
+			</DOCGEN>
+		</COMMAND>
+		<COMMAND name="ptp domain" help="PTP domain">
+			<PARAM name="ptp_domain" help="Enter PTP domain value" ptype="RANGE_0_127"/>
+			<ACTION builtin="clish_pyobj">
+				sonic_cli_ptp patch_ietf_ptp_ptp_instance_list_default_ds_domain_number 0 ${ptp_domain}
+			</ACTION>
+			<DOCGEN>
+				<DESCRIPTION>
+					Configure PTP domain
+				</DESCRIPTION>
+				<EXAMPLE>
+					sonic(config)# ptp domain 1
+					Success
+				</EXAMPLE>
+			</DOCGEN>
+		</COMMAND>
+		<COMMAND name="ptp domain-profile" help="PTP domain profile">
+			<PARAM name="ptp_domain_profile" help="Enter PTP domain profile type" ptype="PTP_DOMAIN_PROFILE"/>
+			<ACTION builtin="clish_pyobj">
+				sonic_cli_ptp  domain-profile 0 ${ptp_domain_profile}
+			</ACTION>
+			<DOCGEN>
+				<DESCRIPTION>
+					Configure PTP domain profile
+				</DESCRIPTION>
+				<EXAMPLE>
+					sonic(config)# ptp domain-profile default
+					Success
+				</EXAMPLE>
+			</DOCGEN>
+		</COMMAND>
+		<COMMAND name="ptp two-step" help="PTP two step enable">
+			<PARAM name="ptp_two_step" help="Enable/Disable " ptype="ENA_DISA"/>
+			<ACTION builtin="clish_pyobj">
+				sonic_cli_ptp patch_ietf_ptp_ptp_instance_list_default_ds_two_step_flag 0 ${ptp_two_step}
+			</ACTION>
+			<DOCGEN>
+				<DESCRIPTION>
+					Configure PTP two-step mode
+				</DESCRIPTION>
+				<EXAMPLE>
+					sonic(config)# ptp two-step enable
+					Success
+				</EXAMPLE>
+			</DOCGEN>
+		</COMMAND>
+		<COMMAND name="ptp priority1" help="PTP priority1">
+			<PARAM name="ptp_priority1" help="Enter PTP priority1 value" ptype="RANGE_0_255"/>
+			<ACTION builtin="clish_pyobj">
+				sonic_cli_ptp patch_ietf_ptp_ptp_instance_list_default_ds_priority1 0 ${ptp_priority1}
+			</ACTION>
+			<DOCGEN>
+				<DESCRIPTION>
+					Configure PTP priority1 value
+				</DESCRIPTION>
+				<EXAMPLE>
+					sonic(config)# ptp priority1 128
+					Success
+				</EXAMPLE>
+			</DOCGEN>
+		</COMMAND>
+		<COMMAND name="ptp priority2" help="PTP priority2">
+			<PARAM name="ptp_priority2" help="Enter PTP priority2 value" ptype="RANGE_0_255"/>
+			<ACTION builtin="clish_pyobj">
+				sonic_cli_ptp patch_ietf_ptp_ptp_instance_list_default_ds_priority2 0 ${ptp_priority2}
+			</ACTION>
+			<DOCGEN>
+				<DESCRIPTION>
+					Configure PTP priority2 value
+				</DESCRIPTION>
+				<EXAMPLE>
+					sonic(config)# ptp priority2 128
+					Success
+				</EXAMPLE>
+			</DOCGEN>
+		</COMMAND>
+		<COMMAND name="ptp log-announce-interval" help="PTP announce interval">
+			<PARAM name="ptp_announce_interval" help="Enter PTP announce interval value" ptype="INT8_RANGE"/>
+			<ACTION builtin="clish_pyobj">
+				sonic_cli_ptp patch_ietf_ptp_ptp_instance_list_port_ds_list_log_announce_interval 0 ${ptp_announce_interval}
+			</ACTION>
+			<DOCGEN>
+				<DESCRIPTION>
+					Configure PTP log announce interval value. The interval should be the sam in the whole domain. It's specified as a power of two in seconds. The default is 1 (2 seconds).
+				</DESCRIPTION>
+				<EXAMPLE>
+					sonic(config)# ptp log-announce-interval 0
+					Success
+				</EXAMPLE>
+			</DOCGEN>
+		</COMMAND>
+		<COMMAND name="ptp announce-timeout" help="PTP announce timeout">
+			<PARAM name="ptp_announce_timeout" help="Enter PTP announce timeout value" ptype="RANGE_2_255"/>
+			<ACTION builtin="clish_pyobj">
+				sonic_cli_ptp patch_ietf_ptp_ptp_instance_list_port_ds_list_announce_receipt_timeout 0 ${ptp_announce_timeout}
+			</ACTION>
+			<DOCGEN>
+				<DESCRIPTION>
+					Configure PTP announce receipt timeout value. The default value is 3.
+				</DESCRIPTION>
+				<EXAMPLE>
+					sonic(config)# ptp announce-timeout 2
+					Success
+				</EXAMPLE>
+			</DOCGEN>
+		</COMMAND>
+		<COMMAND name="ptp log-sync-interval" help="PTP sync interval">
+			<PARAM name="ptp_sync_interval" help="Enter PTP sync interval value" ptype="INT8_RANGE"/>
+			<ACTION builtin="clish_pyobj">
+				sonic_cli_ptp patch_ietf_ptp_ptp_instance_list_port_ds_list_log_sync_interval 0 ${ptp_sync_interval}
+			</ACTION>
+			<DOCGEN>
+				<DESCRIPTION>
+					Configure PTP log sync interval value. It is specified as a power of two in seconds. The default is 0 (1 second).
+				</DESCRIPTION>
+				<EXAMPLE>
+					sonic(config)# ptp log-sync-interval 0
+					Success
+				</EXAMPLE>
+			</DOCGEN>
+		</COMMAND>
+		<COMMAND name="ptp log-min-delay-req-interval" help="PTP delay request interval">
+			<PARAM name="ptp_delay_request_interval" help="Enter PTP delay request interval value" ptype="INT8_RANGE"/>
+			<ACTION builtin="clish_pyobj">
+				sonic_cli_ptp patch_ietf_ptp_ptp_instance_list_port_ds_list_log_min_delay_req_interval 0 ${ptp_delay_request_interval}
+			</ACTION>
+			<DOCGEN>
+				<DESCRIPTION>
+					Configure PTP log min delay req interval value. It is specified as a power of two in seconds. The default is 0 (1 second).
+				</DESCRIPTION>
+				<EXAMPLE>
+					sonic(config)# ptp log-min-delay-req-interval 0
+					Success
+				</EXAMPLE>
+			</DOCGEN>
+		</COMMAND>
+		<COMMAND name="ptp port" help="PTP port config" />
+		<COMMAND name="ptp port add" help="Add Interface">
+			<MACRO name="PTP-CFG-IF-TYPE" arg=""/>
+			<ACTION builtin="clish_pyobj">
+				sonic_cli_ptp post_ietf_ptp_ptp_instance_list_port_ds_list_port_state 0 ${cfg-if-type}${ptp_port_number}
+			</ACTION>
+			<DOCGEN>
+				<DESCRIPTION>
+					Add a PTP port
+				</DESCRIPTION>
+				<EXAMPLE>
+				sonic(config)# ptp port add Ethernet 64
+				Success
+				</EXAMPLE>
+			</DOCGEN>
+		</COMMAND>
+		<COMMAND name="ptp port del" help="Delete Interface">
+			<MACRO name="PTP-CFG-IF-TYPE" arg=""/>
+			<ACTION builtin="clish_pyobj">
+				sonic_cli_ptp delete_ietf_ptp_ptp_instance_list_port_ds_list 0 ${cfg-if-type}${ptp_port_number}
+			</ACTION>
+			<DOCGEN>
+				<DESCRIPTION>
+					Delete a PTP port
+				</DESCRIPTION>
+				<EXAMPLE>
+				sonic(config)# ptp port del Ethernet 64
+				Success
+				</EXAMPLE>
+			</DOCGEN>
+		</COMMAND>
+		<COMMAND name="ptp port master-table" help="Master nodes list when this node is configured as slave">
+			<MACRO name="PTP-CFG-IF-TYPE" arg=""/>
+			<PARAM name="cfg_ptp_mt_subcommands" help="PTP master-table subcommands" mode="switch" ptype="SUBCOMMAND">
+				<PARAM name="add" help="Add master nodes" ptype="SUBCOMMAND" mode="subcommand">
+					<MACRO name="PTP-DEST-NODE" arg=""/>
 				</PARAM>
-				<PARAM name="network-transport" help="PTP network transport" ptype="SUBCOMMAND" mode="subcommand">
-					<PARAM name="ptp_network_transport_type" help="Enter PTP network transport type" ptype="PTP_TRANSPORT"/>
-					<PARAM name="ptp_master_slave" help="unicast mode/multicast" ptype="PTP_MST_SLV"/>
-				</PARAM>
-				<PARAM name="ipv6-scope" help="PTP IPv6 multicast scope" ptype="SUBCOMMAND" mode="subcommand">
-					<PARAM name="ptp_ipv6_scope" help="Scope used for IPv6 multicast message. Used as second byte of the primary address" ptype="PTP_V6SCOPE_TYPE"/>
-				</PARAM>
-				<PARAM name="domain" help="PTP domain" ptype="SUBCOMMAND" mode="subcommand">
-					<PARAM name="ptp_domain" help="Enter PTP domain value" ptype="RANGE_0_127"/>
-				</PARAM>
-				<PARAM name="domain-profile" help="PTP domain profile" ptype="SUBCOMMAND" mode="subcommand">
-					<PARAM name="ptp_domain_profile" help="Enter PTP domain profile type" ptype="PTP_DOMAIN_PROFILE"/>
-				</PARAM>
-				<PARAM name="two-step" help="PTP two step enable" ptype="SUBCOMMAND" mode="subcommand">
-					<PARAM name="ptp_two_step" help="Enable/Disable " ptype="ENA_DISA"/>
-				</PARAM>
-				<PARAM name="priority1" help="PTP priority1" ptype="SUBCOMMAND" mode="subcommand">
-					<PARAM name="ptp_priority1" help="Enter PTP priority1 value" ptype="RANGE_0_255"/>
-				</PARAM>
-				<PARAM name="priority2" help="PTP priority2" ptype="SUBCOMMAND" mode="subcommand">
-					<PARAM name="ptp_priority2" help="Enter PTP priority2 value" ptype="RANGE_0_255"/>
-				</PARAM>
-				<PARAM name="log-announce-interval" help="PTP announce interval" ptype="SUBCOMMAND" mode="subcommand">
-					<PARAM name="ptp_announce_interval" help="Enter PTP announce interval value" ptype="INT8_RANGE"/>
-				</PARAM>
-				<PARAM name="announce-timeout" help="PTP announce timeout" ptype="SUBCOMMAND" mode="subcommand">
-					<PARAM name="ptp_announce_timeout" help="Enter PTP announce timeout value" ptype="RANGE_2_255"/>
-				</PARAM>
-				<PARAM name="log-sync-interval" help="PTP sync interval" ptype="SUBCOMMAND" mode="subcommand">
-					<PARAM name="ptp_sync_interval" help="Enter PTP sync interval value" ptype="INT8_RANGE"/>
-				</PARAM>
-				<PARAM name="log-min-delay-req-interval" help="PTP delay request interval" ptype="SUBCOMMAND" mode="subcommand">
-					<PARAM name="ptp_delay_request_interval" help="Enter PTP delay request interval value" ptype="INT8_RANGE"/>
-				</PARAM>
-				<PARAM name="port" help="PTP port config" ptype="SUBCOMMAND" mode="subcommand">
-					<PARAM name="cfg-ptp-port-subcommands" help="PTP subcommands" mode="switch" ptype="SUBCOMMAND">
-						<PARAM name="add" help="Add Interface" ptype="SUBCOMMAND" mode="subcommand">
-							<MACRO name="PTP-CFG-IF-TYPE" arg=""/>
-						</PARAM>
-						<PARAM name="del" help="Add Interface" ptype="SUBCOMMAND" mode="subcommand">
-							<MACRO name="PTP-CFG-IF-TYPE" arg=""/>
-						</PARAM>
-						<PARAM name="master-table" help="Master nodes list when this node is configured as slave" ptype="SUBCOMMAND" mode="subcommand">
-							<MACRO name="PTP-CFG-IF-TYPE" arg=""/>
-							<PARAM name="cfg-ptp-mt-subcommands" help="PTP master-table subcommands" mode="switch" ptype="SUBCOMMAND">
-								<PARAM name="add" help="Add master nodes" ptype="SUBCOMMAND" mode="subcommand">
-									<MACRO name="PTP-DEST-NODE" arg=""/>
-								</PARAM>
-								<PARAM name="del" help="Delete master nodes" ptype="SUBCOMMAND" mode="subcommand">
-									<MACRO name="PTP-DEST-NODE" arg=""/>
-								</PARAM>
-							</PARAM>
-						</PARAM>
-					</PARAM>
+				<PARAM name="del" help="Delete master nodes" ptype="SUBCOMMAND" mode="subcommand">
+					<MACRO name="PTP-DEST-NODE" arg=""/>
 				</PARAM>
 			</PARAM>
-			<ACTION>if test "${cfg-ptp-subcommands}" = "mode"; then&#xA;
- python $SONIC_CLI_ROOT/sonic-cli-ptp.py "clock-type" 0 ${mode_type}&#xA;
- elif test "${cfg-ptp-subcommands}" = "network-transport"; then&#xA;
- python $SONIC_CLI_ROOT/sonic-cli-ptp.py "network-transport" 0 ${ptp_network_transport_type} &#xA;
- if [ $? -eq 0 ]; then&#xA;
- python $SONIC_CLI_ROOT/sonic-cli-ptp.py "unicast-multicast" 0 ${ptp_master_slave}&#xA;
- fi&#xA;
- elif test "${cfg-ptp-subcommands}" = "ipv6-scope"; then&#xA;
- python $SONIC_CLI_ROOT/sonic-cli-ptp.py "udp6-scope" 0 ${ptp_ipv6_scope}&#xA;
- elif test "${cfg-ptp-subcommands}" = "domain"; then&#xA;
- python $SONIC_CLI_ROOT/sonic-cli-ptp.py patch_ietf_ptp_ptp_instance_list_default_ds_domain_number 0 ${ptp_domain}&#xA;
- elif test "${cfg-ptp-subcommands}" = "domain-profile"; then&#xA;
- python $SONIC_CLI_ROOT/sonic-cli-ptp.py "domain-profile" 0 ${ptp_domain_profile}&#xA;
- elif test "${cfg-ptp-subcommands}" = "two-step"; then&#xA;
- python $SONIC_CLI_ROOT/sonic-cli-ptp.py patch_ietf_ptp_ptp_instance_list_default_ds_two_step_flag 0 ${ptp_two_step}&#xA;
- elif test "${cfg-ptp-subcommands}" = "priority1"; then&#xA;
- python $SONIC_CLI_ROOT/sonic-cli-ptp.py patch_ietf_ptp_ptp_instance_list_default_ds_priority1 0 ${ptp_priority1}&#xA;
- elif test "${cfg-ptp-subcommands}" = "priority2"; then&#xA;
- python $SONIC_CLI_ROOT/sonic-cli-ptp.py patch_ietf_ptp_ptp_instance_list_default_ds_priority2 0 ${ptp_priority2}&#xA;
- elif test "${cfg-ptp-subcommands}" = "log-announce-interval"; then&#xA;
- python $SONIC_CLI_ROOT/sonic-cli-ptp.py patch_ietf_ptp_ptp_instance_list_port_ds_list_log_announce_interval 0 ${ptp_announce_interval}&#xA;
- elif test "${cfg-ptp-subcommands}" = "announce-timeout"; then&#xA;
- python $SONIC_CLI_ROOT/sonic-cli-ptp.py patch_ietf_ptp_ptp_instance_list_port_ds_list_announce_receipt_timeout 0 ${ptp_announce_timeout}&#xA;
- elif test "${cfg-ptp-subcommands}" = "log-sync-interval"; then&#xA;
- python $SONIC_CLI_ROOT/sonic-cli-ptp.py patch_ietf_ptp_ptp_instance_list_port_ds_list_log_sync_interval 0 ${ptp_sync_interval}&#xA;
- elif test "${cfg-ptp-subcommands}" = "log-min-delay-req-interval"; then&#xA;
- python $SONIC_CLI_ROOT/sonic-cli-ptp.py patch_ietf_ptp_ptp_instance_list_port_ds_list_log_min_delay_req_interval 0 ${ptp_delay_request_interval}&#xA;
- elif test "${cfg-ptp-subcommands}" = "port"; then&#xA;
- if test "${cfg-ptp-port-subcommands}" = "add"; then&#xA;
- python $SONIC_CLI_ROOT/sonic-cli-ptp.py post_ietf_ptp_ptp_instance_list_port_ds_list_port_state 0 ${cfg-if-type}${ptp_port_number}&#xA;
- elif test "${cfg-ptp-port-subcommands}" = "del"; then&#xA;
- python $SONIC_CLI_ROOT/sonic-cli-ptp.py delete_ietf_ptp_ptp_instance_list_port_ds_list 0 ${cfg-if-type}${ptp_port_number}&#xA;
- elif test "${cfg-ptp-port-subcommands}" = "master-table"; then&#xA;
- if test "${cfg-ptp-mt-subcommands}" = "add"; then&#xA;
- python $SONIC_CLI_ROOT/sonic-cli-ptp.py "add_master_table" 0 ${cfg-if-type}${ptp_port_number} ${l3_ip}${mac}&#xA;
- elif test "${cfg-ptp-mt-subcommands}" = "del"; then&#xA;
- python $SONIC_CLI_ROOT/sonic-cli-ptp.py "del_master_table" 0 ${cfg-if-type}${ptp_port_number} ${l3_ip}${mac}&#xA;
- fi&#xA;
- fi&#xA;
- fi&#xA;
+			<ACTION builtin="clish_pyobj">
+				sonic_cli_ptp ${cfg_ptp_mt_subcommands}_master_table 0 ${cfg-if-type}${ptp_port_number} ${l3_ip}${mac}
 			</ACTION>
+			<DOCGEN>
+				<DESCRIPTION>
+					Add/Delete a master IP/MAC from the master table for the designated slave port
+				</DESCRIPTION>
+				<EXAMPLE>
+				sonic(config)# ptp port master-table Ethernet 64 add 10.1.1.1
+				Success
+				sonic(config)# ptp port master-table Ethernet 64 del 10.1.1.1
+				Success
+				</EXAMPLE>
+			</DOCGEN>
 		</COMMAND>
 	</VIEW>
 </CLISH_MODULE>
