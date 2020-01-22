@@ -73,21 +73,10 @@ type SetResponse struct {
 
 type GetRequest struct {
 	Path    string
-<<<<<<< HEAD
 	User    UserRoles
-||||||| merged common ancestors
-	User    string
-	Group   string
-	Role    string
-=======
-	User    string
-	Group   string
-	Role    string
-
 	// Depth limits the depth of data subtree in the response
 	// payload. Default value 0 indicates there is no limit.
 	Depth   uint
->>>>>>> origin/broadcom_sonic_share
 }
 
 type GetResponse struct {
