@@ -1,0 +1,25 @@
+29a30,53
+>       char *yang_name;
+>       char *yang_filter;
+>       char *prompt_str;
+>       char *prompt_oper;
+>       char *prompt_fn;
+>       char *rest_translate_action;
+>       char *rest_translate_yang;
+>       char *rest_translate_notes;
+>       char *rest_translate_requests;
+>       char *name_space;
+>       char *pfeature;
+>       char *default_oper;
+>       char *sub_oper_yang;
+>       char *tmplate;
+>       char *viewname;
+>       char *viewid;
+>       bool_t recursive;
+>       char *range_common_yang;
+>       char *template_param;
+>       char *operation;
+>       char *app_common_yang;
+>       char *db_mode;
+>       char *refresh_yang_name;
+>       bool_t enabled;

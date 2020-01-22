@@ -1,0 +1,6 @@
+5c5,7
+< 	clish/param/private.h
+---
+> 	clish/param/private.h \
+> 	clish/param/param_dump_extn.c \
+> 	clish/param/mgmt_clish_extn_param.c

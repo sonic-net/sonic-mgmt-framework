@@ -1,0 +1,6 @@
+5c5,7
+< 	clish/plugin/private.h
+---
+> 	clish/plugin/private.h \
+> 	clish/plugin/clsh_api.h
+> 

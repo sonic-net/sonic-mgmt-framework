@@ -1,0 +1,327 @@
+14a15
+> #include <unistd.h>
+19a21,23
+> #include "clish/plugin/clish_api.h"
+> //#include "clish/plugin/mgmt_clish_alias.h"
+> //#include "clish/plugin/mgmt_clish_common_plugins.h"
+27a32,36
+> 	char hostname[HOSTNAME_STR_LEN];
+> 	char system_prompt[PROMPT_STR_LEN];
+> 	char *system_name, *new_system_name;
+> 	char *savePtr = NULL;
+> 	int result;
+34a44,62
+> 	memset(hostname, 0, sizeof(hostname));
+> 	memset(system_prompt, 0, sizeof(system_prompt));
+> 	result = gethostname(hostname, sizeof(hostname));
+> 	
+> 	/* 
+> 	if(!result)
+> 	{	
+> 		new_system_name = strtok_r(hostname, "." ,&savePtr);
+> 		system_name = getenv("SYSTEM_NAME");
+> 		if(!strncmp(LOADING_STR, system_name,strlen(LOADING_STR)))
+> 		{
+> 			snprintf(system_prompt, sizeof(system_prompt), "%s%s",LOADING_STR,new_system_name);
+> 		}else
+> 		{
+> 			snprintf(system_prompt, sizeof(system_prompt), "%s",new_system_name);
+> 		}
+> 		setenv("SYSTEM_NAME", system_prompt, 1);
+> 	}
+> 	*/
+58c86
+< 		clish_shell_help(shell, tinyrl__get_line(this));
+---
+> 		clish_shell_help(shell, tinyrl__get_line(this), context);
+61a90,94
+> 
+>     /* Reset variables req_sent and check_type before execution of next help */
+>     //reset_req_sent(false);
+>     //reset_check_type(false);
+> 
+73c106
+< static clish_pargv_status_e clish_shell_tinyrl_expand(tinyrl_t *this)
+---
+> static clish_pargv_status_t clish_shell_tinyrl_expand(tinyrl_t *this)
+75c108
+< 	clish_pargv_status_e status = CLISH_LINE_OK;
+---
+> 	clish_pargv_status_t status = CLISH_LINE_OK;
+111a145
+> 
+147a182,197
+> /*-------------------------------------------------------- */
+> /*
+>  * This is a CLISH specific completion function.
+>  * Perform completion of the entered word in case it is partial
+>  */
+> static void clish_shell_tinyrl_complete_ignore_error(tinyrl_t *this)
+> {
+> 
+> 	/* first of all perform any history expansion */
+>  	(void)clish_shell_tinyrl_expand(this);
+> 
+> 	/* perform normal completion */
+> 	tinyrl_complete_ignore_error(this);
+> 	return;
+> }
+> 
+156c206
+< 	clish_pargv_status_e arg_status;
+---
+> 	clish_pargv_status_t arg_status;
+165a216,220
+> 	} else if (tinyrl_is_cursor_in_middle(this)) {
+> 		/* if we are in the middle of a word then simply enter a space */
+> 		/* anyhow, line will be validated during ENTER */
+> 		/* Ex : Press space while cursor after "show ipv6" of "show ipv6route" */
+> 		result = BOOL_TRUE;
+170c225
+< 		arg_status = clish_shell_parse(shell, line, &cmd, &pargv);
+---
+> 		arg_status = clish_shell_parse(shell, line, &cmd, &pargv, context);
+187a243,244
+> 				result = BOOL_TRUE;
+> 				break;
+210,211c267,273
+< 		result = tinyrl_insert_text(this, " ");
+< 	/* keep compiler happy */
+---
+>  		result = tinyrl_insert_text(this, " ");
+> 
+>     /* Reset variables req_sent and check_type before execution of next space */
+>     //reset_req_sent(false);
+>     //reset_check_type(false);
+> 
+>  	/* keep compiler happy */
+225a288,292
+> 	char custom_errmsg[50];
+> 	clish_ptype_method_e method;
+> 	const clish_ptype_t *ptype = NULL;
+> 	const clish_param_t *failed_param = NULL;
+> 	int cnt = 0;
+230a298,300
+> 	/* Renew prompt */
+> 	clish_shell_renew_prompt(shell);
+> 
+237a308,313
+> 	clish_shell_tinyrl_complete_ignore_error(this);
+> 	line = tinyrl__get_line(this);
+> 	//if(try_alias_execution(shell, line)) {
+> 	//	return BOOL_TRUE;
+> 	//}
+> 
+239c315
+< 	cmd = clish_shell_resolve_command(shell, line);
+---
+> 	cmd = clish_shell_resolve_command(shell, line, context);
+243,244d318
+< 		case TINYRL_MATCH:
+< 		case TINYRL_MATCH_WITH_EXTENSIONS:
+251c325
+< 			cmd = clish_shell_resolve_command(shell, line);
+---
+> 			cmd = clish_shell_resolve_command(shell, line, context);
+258a333,369
+> 
+> 		case TINYRL_MATCH:
+>             result = tinyrl_insert_text(this, " ");
+>             //Try to auto-complete if there is any unique match
+>             status = clish_shell_tinyrl_complete(this);
+>             if(status == TINYRL_COMPLETED_MATCH)
+>             {
+>                 /* re-fetch the line as it may have changed
+>                  * due to auto-completion
+>                  */
+>                 line = tinyrl__get_line(this);
+>                 /* get the command to parse? */
+>                 cmd = clish_shell_resolve_command(shell, line, context);
+>                 /*
+>                  * We have had a match but it is not a command
+>                  * so add a space so as not to confuse the user
+>                  */
+>                 if (!cmd)
+>                     result = tinyrl_insert_text(this, " ");
+>             }
+>             else
+>             {
+>                 tinyrl_crlf(this);
+>                 tinyrl_printf(this,"%% Error: Ambiguous command.");
+>                 tinyrl_crlf(this);
+>                 tinyrl_done(this);
+>             }
+>             break;
+> 		case TINYRL_MATCH_WITH_EXTENSIONS:
+> 		case TINYRL_AMBIGUOUS:
+> 		case TINYRL_COMPLETED_AMBIGUOUS:
+> 			tinyrl_crlf(this);
+> 			tinyrl_printf(this,"%% Error: Ambiguous command.");
+> 			tinyrl_crlf(this);
+> 			tinyrl_done(this);
+> 			break;
+> 
+264c375,380
+< 				errmsg = "Unknown command";
+---
+> 				errmsg = "Unknown command.";
+> 			} else {
+> 				tinyrl_crlf(this);
+> 				tinyrl_printf(this,"%% Error: Unrecognized command.");
+> 				tinyrl_crlf(this);
+> 				tinyrl_done(this);
+270,271c386
+< 		clish_pargv_status_e arg_status;
+< 		tinyrl_multi_crlf(this);
+---
+> 		clish_pargv_status_t arg_status;
+274c389
+< 			line, &context->cmd, &context->pargv);
+---
+> 			line, &context->cmd, &context->pargv, context);
+277a393
+> 			tinyrl_multi_crlf(this);
+281c397
+< 			errmsg = "Bad history entry";
+---
+> 			errmsg = "Bad history entry.";
+284c400
+< 			errmsg = "Illegal command line";
+---
+> 			errmsg = "Illegal command line.";
+287c403,424
+< 			errmsg = "Illegal parameter";
+---
+> 			errmsg = "Illegal parameter.";
+> 			cnt = clish_pargv__get_count(context->pargv);
+> 			failed_param = clish_pargv__get_param(context->pargv,
+> 							      (cnt)?(cnt-1):0);
+> 			if(failed_param) {
+>  				/*Check the failure is due to
+> 				  out of range case */
+> 				ptype = clish_param__get_ptype(failed_param);
+> 				if(ptype) {
+> 					method = clish_ptype__get_method(ptype);
+> 					if(method == CLISH_PTYPE_METHOD_INTEGER ||
+> 					   method == CLISH_PTYPE_METHOD_UNSIGNEDINTEGER) {
+> 						snprintf(custom_errmsg,
+> 							 sizeof(custom_errmsg),
+> 							 "Value out of range(%s).",
+> 							 clish_ptype__get_range(ptype));
+> 						errmsg = custom_errmsg;
+> 					}
+> 				}
+> 				clish_pargv_delete(context->pargv);
+> 				context->pargv = NULL;
+> 			}
+290c427
+< 			errmsg = "The command is not completed";
+---
+> 			errmsg = "The command is not completed.";
+291a429,431
+> 		//case CLISH_DISABLED_CMD:
+> 		//	errmsg = "Command not permitted.";
+> 		//	break;
+293c433
+< 			errmsg = "Unknown problem";
+---
+> 			errmsg = "Unknown problem.";
+298,301c438,443
+< 	if (errmsg) {
+< 		if (tinyrl__get_isatty(this) || !shell->current_file) {
+< 			fprintf(stderr, "Syntax error: %s\n", errmsg);
+< 			tinyrl_reset_line_state(this);
+---
+>     if (errmsg) {
+>         if (tinyrl__get_isatty(this) || !shell->current_file) {
+>             //tinyrl_clear_last_buffer(this);
+>             tinyrl_crlf(this);
+>             fprintf(stderr, "%% Error: %s\n", errmsg);
+>             tinyrl_done(this);
+310a453,457
+> 
+>     /* Reset variables req_sent and check_type before execution of next enter*/
+>     //reset_req_sent(false);
+>     //reset_check_type(false);
+> 
+363a511
+>     clish_context_t local_context;
+374a523,527
+> 	//clish_shell_iterator_init(&iter, CLISH_NSPACE_COMPLETION);
+> 	//while ((cmd = clish_shell_find_next_completion(this, text, &iter)))
+> 	//	lub_argv_add(matches, clish_command__get_suffix(cmd));
+> 
+> 	/* Search for COMMAND completions */
+376c529,537
+< 	while ((cmd = clish_shell_find_next_completion(this, text, &iter)))
+---
+>     	clish_context_init(&local_context, this);
+> 	while ((cmd = clish_shell_find_next_completion(this, text, &iter))) {
+>         	clish_context__set_cmd(&local_context, cmd);
+> 		if(clish_shell_command_test(cmd, &local_context) == BOOL_FALSE)
+> 			continue;
+> 		if(clish_command__get_hidden(cmd) == BOOL_TRUE)
+> 			continue;
+>         	if(clish_command__get_enabled(cmd) == BOOL_FALSE)
+> 			continue;
+377a539
+> 	}
+380c542
+< 	cmd = clish_shell_resolve_command(this, text);
+---
+> 	cmd = clish_shell_resolve_command(this, text, context);
+462a625,631
+> bool_t clish_shell_tinyrl_key_enter_test(tinyrl_t *tinyrl, int key)
+> {
+>     bool_t res;
+>     res = clish_shell_tinyrl_key_enter(tinyrl, key);
+>     return res;
+> }
+> /*-------------------------------------------------------- */
+477a647
+> 	time_t timestamp;
+515,518c685,688
+< 		history = tinyrl__get_history(this->tinyrl);
+< 		tinyrl_history_add(history, str);
+< 	}
+< 	free(str);
+---
+>                 history = tinyrl__get_history(this->tinyrl);
+>                 tinyrl_history_add(history, str);
+>         }
+> 	context.commandstr = str;
+526a697
+> 			free(str);
+530a702,703
+> 	context.commandstr = NULL;
+> 	free(str);
+556c729
+< FILE * clish_shell__get_ostream(const clish_shell_t * this)
+---
+> void clish_shell__set_interactive(clish_shell_t * this, bool_t interactive)
+558c731,732
+< 	return tinyrl__get_ostream(this->tinyrl);
+---
+> 	assert(this);
+> 	this->interactive = interactive;
+560a735,740
+> /*-------------------------------------------------------- */
+> bool_t clish_shell__get_interactive(const clish_shell_t * this)
+> {
+> 	assert(this);
+> 	return this->interactive;
+> }
+575a756,762
+> /*-------------------------------------------------------- */
+> void clish_shell__set_timeout(clish_shell_t *this, int timeout)
+> {
+> 	assert(this);
+> 	this->idle_timeout = timeout;
+> }
+> 
+600,602c787
+< CLISH_SET(shell, unsigned int, idle_timeout);
+< CLISH_SET(shell, bool_t, interactive);
+< CLISH_GET(shell, bool_t, interactive);
+---
+> /*-------------------------------------------------------- */

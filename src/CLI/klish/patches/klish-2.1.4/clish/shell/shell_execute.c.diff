@@ -1,0 +1,244 @@
+20a21,67
+> #include <ctype.h>
+> 
+> #define CONFIG_VIEW        "configure-view"
+> 
+> static const clish_parg_t* clish_shell__get_parg(const clish_context_t *context);
+> 
+> int get_index(char *str)
+> {
+>         int i = 0;
+>         int len = 0;
+>         len = strlen(str);
+>         while (i < len)
+>         {
+>                 if (isdigit(*(str+i)))
+>                         break;
+>                 i++;
+>         }
+>         return i;
+> }
+> 
+> /*-------------------------------------------------------- */
+> const clish_parg_t* clish_shell__get_parg(const clish_context_t *context)
+> {
+>         const clish_pargv_t *pargv;
+>         if (context) {
+>                 if ((pargv = clish_context__get_pargv(context))) {
+>                         int i;
+>                         clish_ptype_t *ptype = NULL;
+>                         clish_parg_t *parg = NULL;
+> 
+>                         for (i = 0; i < clish_pargv__get_count((clish_pargv_t *)pargv); i++) {
+>                                 parg = clish_pargv__get_parg((clish_pargv_t *)pargv, i);
+>                                 if (parg) {
+>                                         /*
+>                                          *  Return the parg only for CLISH_PTYPE_REGEXP_SELECT ptype
+>                                          */
+>                                         ptype = (clish_ptype_t *)clish_parg__get_ptype(parg);
+>                                         if (CLISH_PTYPE_METHOD_REGEXP_SELECT ==
+>                                                         clish_ptype__get_method(ptype)) {
+>                                                 return parg;
+>                                         }
+>                                 }
+>                         }
+>                 }
+>         }
+>         return NULL;
+> }
+159a207
+> #if 0
+177a226,284
+> #else
+>         if (!result) {
+>                 int cnt, i;
+>                 char *viewname;
+>                 char *configureviewname = CONFIG_VIEW;
+>                 char *exec_view_name = "enable-view";
+>                 const char *cmdview, *cmdviewid, *paramview = NULL, *paramviewid = NULL;
+>                 const clish_param_t *param;
+>                 clish_pargv_t *pargv = clish_context__get_pargv(context);
+>                 const char *cur_cmd = NULL;
+>                 clish_view_t *parentview = clish_command__get_pview(cmd);
+> 
+>                 /* Check whether view and view id attributes are there in PARAM
+>                  * If so, use the one from the PARAM. If not, use the COMMAND attributes
+>                  */
+>                 cmdview= clish_command__get_viewname(cmd);
+>                 cmdviewid = clish_command__get_viewid(cmd);
+>                 cur_cmd = clish_command__get_name(cmd);
+>                 cnt = clish_pargv__get_count(pargv);
+>                 for (i = 0; i < cnt; i++) {
+>                         const char *tempview, *tempviewid;
+>                         param = clish_pargv__get_param(pargv, i);
+>                         tempview   = clish_param__get_viewname(param);
+>                         tempviewid = clish_param__get_viewid(param);
+>                         if(tempview) {
+>                                 paramview = tempview;
+>                         }
+>                         if(tempviewid) {
+>                                 paramviewid = tempviewid;
+>                         }
+>                 }
+> 
+>                 if(paramview) {
+>                         cmdview= paramview;
+>                 }
+>                 if(paramviewid) {
+>                         cmdviewid = paramviewid;
+>                 }
+> 
+>                 viewname = clish_shell_expand(cmdview, SHELL_VAR_NONE, context);
+> 
+>                 if (viewname) {
+>                         /* Search for the view */
+>                         clish_view_t *view = clish_shell_find_view(this, viewname);
+>                         if (!view)
+>                                 fprintf(stderr, "System error: Can't "
+>                                         "change view to %s\n", viewname);
+>                         lub_string_free(viewname);
+> 
+>                         /* Save the PWD */
+>                         if (view) {
+>                                 char *line = clish_shell__get_line(context);
+>                                 clish_shell__set_pwd(this, line, view, (char*)cmdviewid, context);
+>                                 lub_string_free(line);
+>                         }
+>                 }
+>         }
+>    	
+> #endif
+306c413,414
+< 	const void *func = NULL; /* We don't know the func API at this time */
+---
+> 	clish_hook_action_fn_t *func = NULL;
+> 
+308a417,420
+> 	clish_parg_t *parg = NULL;
+>         clish_ptype_t *ptype = NULL;
+>         clish_ptype_method_e method = CLISH_PTYPE_METHOD_REGEXP;
+> 
+346,359c458,561
+< 	/* Find out the function API */
+< 	/* CLISH_SYM_API_SIMPLE */
+< 	if (clish_sym__get_api(sym) == CLISH_SYM_API_SIMPLE) {
+< 		result = ((clish_hook_action_fn_t *)func)(context, script, out);
+< 
+< 	/* CLISH_SYM_API_STDOUT and output is not needed */
+< 	} else if ((clish_sym__get_api(sym) == CLISH_SYM_API_STDOUT) && (!out)) {
+< 		result = ((clish_hook_oaction_fn_t *)func)(context, script);
+< 
+< 	/* CLISH_SYM_API_STDOUT and outpus is needed */
+< 	} else if (clish_sym__get_api(sym) == CLISH_SYM_API_STDOUT) {
+< 		result = clish_shell_exec_oaction((clish_hook_oaction_fn_t *)func,
+< 			context, script, out);
+< 	}
+---
+> 	parg = (clish_parg_t*)clish_shell__get_parg(context);
+> 	if (!parg || !(ptype = (clish_ptype_t *)clish_parg__get_ptype(parg)))
+> 	{
+>                 result = func(context, script, out);
+> 	} else {
+>                 method = clish_ptype__get_method(ptype);
+>                 if (method == CLISH_PTYPE_METHOD_REGEXP_SELECT)
+>                 {
+>                         /* interface CLISH_PTYPE_REGEXP_SELECT type handling */
+>                         char *res = NULL;
+>                         char *ptr = NULL;
+>                         int index = -1, j;
+>                         bool_t matched = BOOL_FALSE;
+>                         bool_t isEthernet = BOOL_FALSE;
+>                         char *new_result = NULL;
+>                         char *name = NULL;
+>                         char *value = NULL;
+> 
+>                         lub_argv_t *pargv = clish_ptype_regexp_select__get_argv(ptype);
+>                         res = lub_string_dup(clish_parg__get_value(parg));
+>                         /* Loop through possible help string options,
+>                          * such as ethernet, vlan and portchannel
+>                          * if given CLI matches first two character
+>                          * like po 10 then start at array index 3 and
+>                          * skip if any space lies between po and 10.
+>                          * If given CLI is like p 10 then start at
+> 			                          * array index 2 and skip if any space lies
+>                          * between p and 10.
+>                          */
+>                         for (j = 0; j < lub_argv__get_count(pargv); j++) {
+>                                 /* Overwriting ptr name while looping
+>                                  * will leak dynamic memory that name
+>                                  * points to. So free memory that name points to
+>                                  * before overwriting.
+>                                  */
+>                                 if(name != NULL) {
+>                                         lub_string_free(name);
+>                                         name = NULL;
+>                                 }
+>                                 if(value != NULL) {
+>                                         lub_string_free(value);
+>                                         value = NULL;
+>                                 }
+>                                 name = clish_ptype_regexp_select__get_argname(ptype, j);
+>                                 value = clish_ptype_regexp_select__get_value(ptype, j);
+>                                 if (name && strncasecmp(name, res, strlen(name))) {
+>                                         index = get_index(res);
+>                                         if (!strncasecmp(name, res, index)) {
+>                                                 ptr = res + index;
+>                                                 matched = BOOL_TRUE;
+>                                         }
+>                                         if (matched == BOOL_TRUE) {
+>                                                 while (isspace(*ptr))
+>                                                         ptr++;
+>                                                 new_result = lub_string_dup(name);
+>                                                 lub_string_cat(&new_result, ptr);
+>                                                 lub_string_free(res);
+>                                                 res = new_result;
+>                                                 break;
+>                                         }
+> 				} else {
+>                                         /* CLI is given matches with complete help string
+>                                          * such as ethernet, vlan, portchannel, so nothing
+>                                          * do to here.
+>                                          */
+>                                         if (name)
+>                                                 ptr = res + strlen(name);
+>                                         else
+>                                                 ptr = res + get_index(res);
+>                                         matched = BOOL_TRUE;
+>                                         break;
+>                                 }
+>                         }
+>                         if (matched == BOOL_FALSE) {
+>                                 lub_string_free(res);
+>                                 res = NULL;
+>                         } else {
+>                                 //if (name && (mgmt_clish_chk_phy_intf(name)))
+>                                 //        isEthernet = BOOL_TRUE;
+>                         }
+>             		result = 0;
+>             		/* Validate entity macros */
+>             		if (isEthernet) {
+>                			//result = entity_macro_handling(ptr);
+>             		}
+>             		if (!result) {
+>                 		result = func(context, script, out);
+>             		}
+>                         isEthernet = BOOL_FALSE;
+>                         lub_string_free(res);
+> 
+>             		/* Free memory to avoid resource leak */
+>             		if(name != NULL) {
+>                 		lub_string_free(name);
+>                 		name = NULL;
+>             		}
+>             		if(value != NULL) {
+>                 		lub_string_free(value);
+>                 		value = NULL;
+>             		}
+>                 } else {
+>                         result = func(context, script, out);
+>                 }
+>         }
+377c579
+< 	lub_string_free(script);
+---
+> 	if (script) lub_string_free(script);
