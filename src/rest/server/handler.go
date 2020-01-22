@@ -267,19 +267,13 @@ func invokeTranslib(args *translibArgs, r *http.Request, rc *RequestContext) (in
 
 	switch r.Method {
 	case "GET", "HEAD":
-<<<<<<< HEAD
-		req := translib.GetRequest{Path: path, User: translib.UserRoles{Name: rc.Auth.User, Roles: rc.Auth.Roles}}
-||||||| merged common ancestors
-		req := translib.GetRequest{Path: path, User: rc.Auth.User, Group: rc.Auth.Group}
-=======
+
 		req := translib.GetRequest{
 			Path:  args.path,
 			Depth: args.depth,
-			User:  rc.Auth.User,
-			Group: rc.Auth.Group,
+			User: translib.UserRoles{Name: rc.Auth.User, Roles: rc.Auth.Roles},
 		}
 
->>>>>>> origin/broadcom_sonic_share
 		resp, err1 := translib.Get(req)
 		if err1 == nil {
 			status = 200
@@ -290,18 +284,13 @@ func invokeTranslib(args *translibArgs, r *http.Request, rc *RequestContext) (in
 
 	case "POST":
 		if isOperationsRequest(r) {
-<<<<<<< HEAD
-			req := translib.ActionRequest{Path: path, Payload: payload, User: translib.UserRoles{Name: rc.Auth.User, Roles: rc.Auth.Roles}}
-||||||| merged common ancestors
-			req := translib.ActionRequest{Path: path, Payload: payload, User: rc.Auth.User, Group: rc.Auth.Group}
-=======
+
 			req := translib.ActionRequest{
 				Path:    args.path,
 				Payload: args.data,
-				User:    rc.Auth.User,
-				Group:   rc.Auth.Group,
+				User: translib.UserRoles{Name: rc.Auth.User, Roles: rc.Auth.Roles},
 			}
->>>>>>> origin/broadcom_sonic_share
+
 			res, err1 := translib.Action(req)
 			if err1 == nil {
 				status = 200
@@ -311,67 +300,47 @@ func invokeTranslib(args *translibArgs, r *http.Request, rc *RequestContext) (in
 			}
 		} else {
 			status = 201
-<<<<<<< HEAD
-			req := translib.SetRequest{Path: path, Payload: payload, User: translib.UserRoles{Name: rc.Auth.User, Roles: rc.Auth.Roles}}
-||||||| merged common ancestors
-			req := translib.SetRequest{Path: path, Payload: payload, User: rc.Auth.User, Group: rc.Auth.Group}
-=======
+
 			req := translib.SetRequest{
 				Path:    args.path,
 				Payload: args.data,
-				User:    rc.Auth.User,
-				Group:   rc.Auth.Group,
+				User: translib.UserRoles{Name: rc.Auth.User, Roles: rc.Auth.Roles},
 			}
->>>>>>> origin/broadcom_sonic_share
+
 			_, err = translib.Create(req)
 		}
 
 	case "PUT":
 		//TODO send 201 if PUT resulted in creation
 		status = 204
-<<<<<<< HEAD
-		req := translib.SetRequest{Path: path, Payload: payload, User: translib.UserRoles{Name: rc.Auth.User, Roles: rc.Auth.Roles}}
-||||||| merged common ancestors
-		req := translib.SetRequest{Path: path, Payload: payload, User: rc.Auth.User, Group: rc.Auth.Group}
-=======
+
 		req := translib.SetRequest{
 			Path:    args.path,
 			Payload: args.data,
-			User:    rc.Auth.User,
-			Group:   rc.Auth.Group,
+			User: translib.UserRoles{Name: rc.Auth.User, Roles: rc.Auth.Roles},
 		}
->>>>>>> origin/broadcom_sonic_share
+
 		_, err = translib.Replace(req)
 
 	case "PATCH":
 		status = 204
-<<<<<<< HEAD
-		req := translib.SetRequest{Path: path, Payload: payload, User: translib.UserRoles{Name: rc.Auth.User, Roles: rc.Auth.Roles}}
-||||||| merged common ancestors
-		req := translib.SetRequest{Path: path, Payload: payload, User: rc.Auth.User, Group: rc.Auth.Group}
-=======
+
 		req := translib.SetRequest{
 			Path:    args.path,
 			Payload: args.data,
-			User:    rc.Auth.User,
-			Group:   rc.Auth.Group,
+			User: translib.UserRoles{Name: rc.Auth.User, Roles: rc.Auth.Roles},
 		}
->>>>>>> origin/broadcom_sonic_share
+
 		_, err = translib.Update(req)
 
 	case "DELETE":
 		status = 204
-<<<<<<< HEAD
-		req := translib.SetRequest{Path: path, User: translib.UserRoles{Name: rc.Auth.User, Roles: rc.Auth.Roles}}
-||||||| merged common ancestors
-		req := translib.SetRequest{Path: path, User: rc.Auth.User, Group: rc.Auth.Group}
-=======
+
 		req := translib.SetRequest{
 			Path:  args.path,
-			User:  rc.Auth.User,
-			Group: rc.Auth.Group,
+			User: translib.UserRoles{Name: rc.Auth.User, Roles: rc.Auth.Roles},
 		}
->>>>>>> origin/broadcom_sonic_share
+
 		_, err = translib.Delete(req)
 
 	default:

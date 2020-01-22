@@ -327,16 +327,10 @@ var DbToYang_ztp_config_xfmr SubTreeXfmrDbToYang = func (inParams XfmrParams) (e
     if err != nil {
 	    log.Info("Error from host service:",err)
     }
-<<<<<<< HEAD
     log.Info("Message from host:",mess)
     if ztpObj.Config == nil {
 	ygot.BuildEmptyTree(ztpObj)
     }
-||||||| merged common ancestors
-    log.Info("Message from host:",mess)
-=======
-    log.Info("Message from host: [%s]",mess)
->>>>>>> origin/broadcom_sonic_share
     configObj := ztpObj.Config
     ygot.BuildEmptyTree(configObj)
     var temp uint32
