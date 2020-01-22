@@ -326,11 +326,11 @@ var YangToDb_sys_aaa_auth_xfmr SubTreeXfmrYangToDb = func(inParams XfmrParams) (
     }
     var status bool
     var err_str string
-    if _ , _ok := inParams.txCache[userName];!_ok {
-	    inParams.txCache[userName] = userName
+    if _ , _ok := inParams.txCache.load(userName);!_ok {
+	    inParams.txCache.store(userName, userName)
     } else {
-	    if _,present := inParams.txCache["tx_err"]; present {
-	            return nil, fmt.Errorf("%s",inParams.txCache["tx_err"])
+	    if val,present := inParams.txCache.load("tx_err"); present {
+	            return nil, fmt.Errorf("%s",val)
 	        }
 	    return nil,nil
     }
@@ -345,9 +345,9 @@ var YangToDb_sys_aaa_auth_xfmr SubTreeXfmrYangToDb = func(inParams XfmrParams) (
         }
     }
 	if (!status) {
-		if _,present := inParams.txCache["tx_err"]; !present {
+		if _,present := inParams.txCache.load("tx_err"); !present {
 		    log.Info("Error in operation:",err_str)
-	            inParams.txCache["tx_err"] =err_str 
+	            inParams.txCache.store("tx_err",err_str) 
 	            return nil, fmt.Errorf("%s",err_str)
 	        }
 	} else {
