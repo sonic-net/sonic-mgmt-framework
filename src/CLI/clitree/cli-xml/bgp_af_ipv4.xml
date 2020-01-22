@@ -179,9 +179,8 @@ limitations under the License.
   </COMMAND>
   <COMMAND name="no aggregate-address" help="Configure BGP aggregate entries">
     <PARAM name="prefix" help="Aggregate prefix" ptype="IP_ADDR_MASK">
-      <PARAM name="as-set" help="Generate AS set path information" ptype="SUBCOMMAND" optional="true">
-        <PARAM name="summary-only" help="Filter more specific routes from updates" ptype="SUBCOMMAND" optional="true"/>
-      </PARAM>
+      <PARAM name="as-set" help="Generate AS set path information" mode="subcommand" ptype="SUBCOMMAND" optional="true"/>
+        <PARAM name="summary-only" help="Filter more specific routes from updates" mode="subcommand" ptype="SUBCOMMAND" optional="true"/>
       <PARAM name="route-map" help="Apply route map to aggregate network" mode="subcommand" ptype="SUBCOMMAND" optional="true">
         <PARAM name="rtemap" help="Route-map name" ptype="STRING"/>
       </PARAM>

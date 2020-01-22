@@ -110,6 +110,10 @@ limitations under the License.
   <xs:attribute name="access" type="stringType" use="optional"/>
 </xs:attributeGroup>
 
+<xs:attributeGroup name="exampleAttr">
+  <xs:attribute name="summary" type="stringType" use="optional"/>
+</xs:attributeGroup>
+
 <xs:attributeGroup name="viewAttr">
   <xs:attribute name="name" type="stringType" use="required"/>
   <xs:attribute name="prompt" type="stringType" use="optional"/>
@@ -170,6 +174,10 @@ limitations under the License.
 <xs:element name="ACTION" type="actionType"/>
 <xs:element name="PTYPE" type="ptypeType"/>
 <xs:element name="PARAM" type="paramType"/>
+<xs:element name="DOCGEN" type="docgenType"/>
+<xs:element name="DESCRIPTION" type="descriptionType"/>
+<xs:element name="USAGE" type="usageType"/>
+<xs:element name="EXAMPLE" type="exampleType"/>
 <xs:element name="NAMESPACE" type="namespaceType"/>
 <xs:element name="VAR" type="varType"/>
 <xs:element name="HOOK" type="hookType"/>
@@ -210,6 +218,7 @@ limitations under the License.
   <xs:choice minOccurs="0" maxOccurs="unbounded">
     <xs:element ref="PARAM" minOccurs="0" maxOccurs="unbounded"/>
     <xs:element ref="ACTION" minOccurs="0" maxOccurs="1"/>
+    <xs:element ref="DOCGEN" minOccurs="0" maxOccurs="1"/>
     <xs:any namespace="http://www.w3.org/2001/XInclude"
             processContents="skip" minOccurs="0" maxOccurs="unbounded"/>
   </xs:choice>
@@ -227,6 +236,36 @@ limitations under the License.
   <xs:simpleContent>
     <xs:extension base="xs:string">
       <xs:attributeGroup ref="actionAttr"/>
+    </xs:extension>
+  </xs:simpleContent>
+</xs:complexType>
+
+<xs:complexType name="docgenType">
+  <xs:choice minOccurs="0" maxOccurs="unbounded">
+    <xs:element ref="DESCRIPTION" minOccurs="0" maxOccurs="1"/>
+    <xs:element ref="USAGE" minOccurs="0" maxOccurs="1"/>
+    <xs:element ref="EXAMPLE" minOccurs="0" maxOccurs="unbounded"/>
+  </xs:choice>
+</xs:complexType>
+
+<xs:complexType name="descriptionType">
+  <xs:simpleContent>
+    <xs:extension base="xs:string">
+    </xs:extension>
+  </xs:simpleContent>
+</xs:complexType>
+
+<xs:complexType name="usageType">
+  <xs:simpleContent>
+    <xs:extension base="xs:string">
+    </xs:extension>
+  </xs:simpleContent>
+</xs:complexType>
+
+<xs:complexType name="exampleType">
+  <xs:simpleContent>
+    <xs:extension base="xs:string">
+      <xs:attributeGroup ref="exampleAttr"/>
     </xs:extension>
   </xs:simpleContent>
 </xs:complexType>

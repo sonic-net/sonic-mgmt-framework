@@ -69,6 +69,7 @@
             </ACTION>
         </COMMAND>
 
+        <!--
         <COMMAND name = "debug udld" help = "UDLD debug commands" />
         <COMMAND name = "no debug udld" help = "UDLD debug commands" />
         <COMMAND name = "debug udld dump" help = "Dump UDLD info commands" />
@@ -110,7 +111,9 @@
                 python $SONIC_CLI_ROOT/sonic-cli-udld.py udldInterfaceCountersClearHandler&#xA;
             </ACTION>
         </COMMAND>
+        -->
         <!-- clear udld counters interface <ifname> -->
+        <!--
         <COMMAND name = "clear udld statistics interface"
             help = "Clear UDLD interface level statistics">
             <PARAM 
@@ -122,6 +125,7 @@
                 python $SONIC_CLI_ROOT/sonic-cli-udld.py udldInterfaceCountersClearHandler ${interface-name}&#xA;
             </ACTION>
         </COMMAND>
+        -->
     </VIEW>
 
 

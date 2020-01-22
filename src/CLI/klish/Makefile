@@ -24,4 +24,4 @@ all : $(SRC_REPLACEMENTS)
 
 .PHONY: clean
 clean:
-	rm -rf ${KLISH_SRC}/klish-$(KLISH_VERSION)
+	rm -rf ${KLISH_SRC}

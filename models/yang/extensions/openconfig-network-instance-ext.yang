@@ -6,6 +6,10 @@ module openconfig-network-instance-ext {
   namespace "http://openconfig.net/yang/network-instance/extension";
 
   prefix "oc-netinst-ext";
+  
+  import ietf-yang-types {
+        prefix ietf;
+    }  
 
   // import some basic types
   import openconfig-network-instance { prefix "oc-netinst"; }
@@ -26,7 +30,41 @@ module openconfig-network-instance-ext {
               "Metric for redistributed routes";
       }
   }
-  
+
+  grouping global-sag-config {
+	  leaf anycast-mac {
+		  description
+			  "Static Anycast Gateway MAC addresses";
+		  type ietf:mac-address;
+	  }
+	  
+      leaf ipv4-enable {
+        type boolean;
+      }
+
+      leaf ipv6-enable {
+        type boolean;
+      }		  
+  }
+
+  grouping global-sag-top {
+	  container global-sag {
+		  container config {
+			  uses global-sag-config;
+		  }
+		  container state {
+			  config false;
+			  uses global-sag-config;
+		  }
+	  }
+  }	
+
+  augment "/oc-netinst:network-instances/oc-netinst:network-instance" {
+      description
+          "Global Anycast Gateway";
+      uses global-sag-top;	
+  }
+	
   augment /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:table-connections/oc-netinst:table-connection/oc-netinst:config {
       uses oc-table-connection-ext-config;
   }
@@ -100,10 +138,6 @@ module openconfig-network-instance-ext {
   }
 
   deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:ospfv2 {
-      deviate not-supported;
-  }
-
-  deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:static-routes {
       deviate not-supported;
   }
 

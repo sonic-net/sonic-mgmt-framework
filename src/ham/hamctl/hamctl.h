@@ -6,10 +6,7 @@
 
 #include <dbus-c++/dbus.h>  // DBus
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-but-set-variable"   /* SUPPRESS: warning: variable 'ri' set but not used [-Wunused-but-set-variable] */
 #include "../shared/org.SONiC.HostAccountManagement.dbus-proxy.h"
-#pragma GCC diagnostic pop
 
 class debug_proxy_c : public ham::debug_proxy,
                       public DBus::IntrospectableProxy,

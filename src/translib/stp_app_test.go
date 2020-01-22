@@ -68,12 +68,14 @@ func Test_StpApp_Rapid_Pvst_Enable_Disable(t *testing.T) {
 func Test_StpApp_TopLevelPathInPvstMode(t *testing.T) {
 	topStpUrl := "/openconfig-spanning-tree:stp"
 	enableStpUrl := topStpUrl + "/global"
+	deleteAllVlansUrl := "/openconfig-interfaces:interfaces/interface[name=Vlan*]"
 	vlanUrl := "/openconfig-interfaces:interfaces/interface[name=Vlan4090]/config"
 	createswitchportUrl := "/openconfig-interfaces:interfaces/interface[name=Ethernet28]/openconfig-if-ethernet:ethernet/openconfig-vlan:switched-vlan/config"
 	deleteSwitchportUrl := createswitchportUrl + "/trunk-vlans[trunk-vlans=4090]"
 
 	t.Run("Empty_Response_Top_Level", processGetRequest(topStpUrl, "", true))
 
+	t.Run("Delete_All_Vlans", processDeleteRequest(deleteAllVlansUrl))
 	t.Run("Create_Single_Vlan", processSetRequest(vlanUrl, createVlanJsonRequest, "PATCH", false))
 	t.Run("Create_Switchport", processSetRequest(createswitchportUrl, switchportCreateJsonRequest, "PATCH", false))
 
@@ -90,12 +92,14 @@ func Test_StpApp_TopLevelPathInPvstMode(t *testing.T) {
 func Test_StpApp_TopLevelPathInRapidPvstMode(t *testing.T) {
 	topStpUrl := "/openconfig-spanning-tree:stp"
 	enableStpUrl := topStpUrl + "/global"
+	deleteAllVlansUrl := "/openconfig-interfaces:interfaces/interface[name=Vlan*]"
 	vlanUrl := "/openconfig-interfaces:interfaces/interface[name=Vlan4090]/config"
 	createswitchportUrl := "/openconfig-interfaces:interfaces/interface[name=Ethernet28]/openconfig-if-ethernet:ethernet/openconfig-vlan:switched-vlan/config"
 	deleteSwitchportUrl := createswitchportUrl + "/trunk-vlans[trunk-vlans=4090]"
 
 	t.Run("Empty_Response_Top_Level", processGetRequest(topStpUrl, "", true))
 
+	t.Run("Delete_All_Vlans", processDeleteRequest(deleteAllVlansUrl))
 	t.Run("Create_Single_Vlan", processSetRequest(vlanUrl, createVlanJsonRequest, "PATCH", false))
 	t.Run("Create_Switchport", processSetRequest(createswitchportUrl, switchportCreateJsonRequest, "PATCH", false))
 
@@ -166,7 +170,7 @@ func clearStpDataFromConfigDb() error {
 
 func processGetRequestToFile(url string, expectedRespJson string, errorCase bool) func(*testing.T) {
 	return func(t *testing.T) {
-		response, err := Get(GetRequest{Path: url, User: "admin", Group: "admin"})
+		response, err := Get(GetRequest{Path: url, User: UserRoles{Name: "admin", Roles: []string{"admin"}}})
 		if err != nil && !errorCase {
 			t.Errorf("Error %v received for Url: %s", err, url)
 		}

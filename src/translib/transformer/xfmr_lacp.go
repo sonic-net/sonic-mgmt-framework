@@ -19,6 +19,7 @@
 package transformer
 
 import (
+    "errors"
     "encoding/json"
 	"translib/ocbinds"
     "translib/db"
@@ -56,8 +57,9 @@ func populateLacpData(ifKey string, state *ocbinds.OpenconfigLacp_Lacp_Interface
 
     err = json.NewDecoder(out_stream).Decode(&TeamdJson)
     if err != nil {
-        log.Fatalf("Not able to decode teamd json output: %s\n", err)
-        return err
+        errStr := "Not able to decode teamd json output"
+        log.Infof(errStr)
+        return errors.New(errStr)
     }
 
     err = cmd.Wait()
@@ -66,7 +68,13 @@ func populateLacpData(ifKey string, state *ocbinds.OpenconfigLacp_Lacp_Interface
         return err
     }
 
-    runner_map := TeamdJson["runner"].(map[string]interface{})
+    var runner_map map[string]interface{}
+    var status bool
+    if runner_map, status = TeamdJson["runner"].(map[string]interface{}); !status {
+        errStr := "LAG not in LACP mode: "+ ifKey
+        log.Infof(errStr)
+        return errors.New(errStr)
+    }
 
     prio := runner_map["sys_prio"].(float64)
     sys_prio := uint16(prio)
@@ -106,12 +114,12 @@ func populateLacpData(ifKey string, state *ocbinds.OpenconfigLacp_Lacp_Interface
 				}
 				ygot.BuildEmptyTree(lacpMemberObj)
 			}
-            
+
            member_map := ports_map[ifKey].(map[string]interface{})
            port_runner := member_map["runner"].(map[string]interface{})
 
-   			selected := port_runner["selected"].(bool)
-			lacpMemberObj.State.Selected = &selected
+           selected := port_runner["selected"].(bool)
+           lacpMemberObj.State.Selected = &selected
 
            actor := port_runner["actor_lacpdu_info"].(map[string]interface{})
 

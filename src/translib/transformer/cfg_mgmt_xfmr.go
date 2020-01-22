@@ -25,10 +25,12 @@ import (
 	"encoding/json"
 	"translib/db"
 	log "github.com/golang/glog"
+    "github.com/golang/glog"
 )
 
 func init() {
 	XlateFuncBind("rpc_config_copy", rpc_config_copy)
+	XlateFuncBind("rpc_write_erase", rpc_write_erase)
 }
 
 
@@ -147,3 +149,70 @@ func cfg_copy_action(body []byte) ([]byte, error) {
 
 	return result, err
 }
+
+func cfg_write_erase_action(body []byte) ([]byte, error) {
+    var err error
+    var result []byte
+    var subcmd string
+
+    var operand struct {
+		Input struct {
+			SubCmd string `json:"subcmd"`
+		} `json:"sonic-config-mgmt:input"`
+	}
+
+    err = json.Unmarshal(body, &operand)
+	if err != nil {
+        /* Unmarshall failed, no input provided.
+         * set to default */
+       log.Error("Config input not provided.")
+       err = errors.New("Input parameters missing.")
+	} else {
+       subcmd = operand.Input.SubCmd
+    }
+
+    var sum struct {
+		Output struct {
+			Status int32 `json:"status"`
+            Status_detail string`json:"status-detail"`
+		} `json:"sonic-config-mgmt:output"`
+	}
+
+    var fcnt string = "cfg_mgmt.write_erase"
+    var option string = "?"
+    switch subcmd {
+        case "op_write_erase":
+            option = ""
+        case "op_write_erase_boot":
+            option = "boot"
+        case "op_write_erase_install":
+            option = "install"
+        case "op_no_write_erase":
+            option = "no"
+    }
+
+    sum.Output.Status = 1
+
+    host_output := HostQuery(fcnt, option)
+    if host_output.Err != nil {
+        glog.Errorf("host Query failed: err=%v", host_output.Err)
+        glog.Flush()
+        return nil, host_output.Err
+    }
+
+    if host_output.Body[0].(int32) == 0 {
+        sum.Output.Status = 0
+        sum.Output.Status_detail = "SUCCESS."
+    } else {
+        sum.Output.Status_detail = host_output.Body[1].(string)
+    }
+
+	result, err = json.Marshal(&sum)
+
+	return result, err
+}
+
+var rpc_write_erase RpcCallpoint = func(body []byte, dbs [db.MaxDB]*db.DB) ([]byte, error) {
+    return cfg_write_erase_action(body)
+}
+
