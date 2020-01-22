@@ -1,0 +1,92 @@
+module sonic-sag {
+	namespace "http://github.com/Azure/sonic-sag";
+    prefix ssag;
+
+    import ietf-inet-types {
+		prefix "inet";
+    }
+
+    import ietf-yang-types {
+		prefix "yang";
+    }
+	 
+    import sonic-interface {
+		prefix "sint";
+    }
+
+	import sonic-vlan {
+        prefix "svlan";
+    }
+
+    description
+		"SONIC SAG";
+
+	revision 2020-01-15 {
+		description
+			"Initial revision.";
+	}
+
+	container sonic-sag {
+	 
+    container SAG {
+        description
+           "Configures Static Anycast Gateway for IPv4 and IPv6";
+
+        list SAG_LIST {
+		    
+			key "ifname table_distinguisher";
+
+			leaf ifname {
+				type leafref {
+					path "/svlan:sonic-vlan/svlan:VLAN/svlan:VLAN_LIST/svlan:name";
+				}
+			}
+			
+			leaf table_distinguisher {
+				type string {
+					pattern "IPv4|IPv6";
+				}
+			}
+			
+		    leaf-list gwip {
+			    max-elements 16;
+				type inet:ip-prefix;
+			}			
+        }
+    }	
+
+    container SAG_GLOBAL {
+        description
+           "Configures MAC for SAG";
+
+        list SAG_GLOBAL_LIST {
+		    
+			key "table_distinguisher";
+			
+			leaf table_distinguisher {
+				type string {
+					pattern 'IP';
+				}
+			}			
+			
+		    leaf IPv4 {
+				type string {
+					pattern 'disable|enable';
+				}
+			    // default "enable";
+		    }
+
+			leaf IPv6 {
+				type string {
+					pattern 'disable|enable';
+			   }
+			   // default "enable";
+		    }
+
+		    leaf gwmac {
+				type yang:mac-address;
+			}			
+        }
+    }
+}	
+}

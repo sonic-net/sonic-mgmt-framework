@@ -1792,7 +1792,7 @@ var DbToYang_intf_get_counters_xfmr SubTreeXfmrDbToYang = func(inParams XfmrPara
     targetUriPath, err := getYangPathFromUri(inParams.uri)
     log.Info("targetUriPath is ", targetUriPath)
 
-    if  targetUriPath != "/openconfig-interfaces:interfaces/interface/state/counters" {
+    if  (strings.Contains(targetUriPath, "/openconfig-interfaces:interfaces/interface/state/counters") == false) {
         log.Info("%s is redundant", targetUriPath)
         return err
     }
@@ -2103,4 +2103,3 @@ var DbToYang_unnumbered_intf_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) 
     }
     return result, err
 }
-

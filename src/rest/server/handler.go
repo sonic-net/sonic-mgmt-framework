@@ -240,7 +240,7 @@ func invokeTranslib(r *http.Request, rc *RequestContext, path string, payload []
 
 	switch r.Method {
 	case "GET", "HEAD":
-		req := translib.GetRequest{Path: path, User: rc.Auth.User, Group: rc.Auth.Group}
+		req := translib.GetRequest{Path: path, User: translib.UserRoles{Name: rc.Auth.User, Roles: rc.Auth.Roles}}
 		resp, err1 := translib.Get(req)
 		if err1 == nil {
 			status = 200
@@ -251,7 +251,7 @@ func invokeTranslib(r *http.Request, rc *RequestContext, path string, payload []
 
 	case "POST":
 		if isOperationsRequest(r) {
-			req := translib.ActionRequest{Path: path, Payload: payload, User: rc.Auth.User, Group: rc.Auth.Group}
+			req := translib.ActionRequest{Path: path, Payload: payload, User: translib.UserRoles{Name: rc.Auth.User, Roles: rc.Auth.Roles}}
 			res, err1 := translib.Action(req)
 			if err1 == nil {
 				status = 200
@@ -261,24 +261,24 @@ func invokeTranslib(r *http.Request, rc *RequestContext, path string, payload []
 			}
 		} else {
 			status = 201
-			req := translib.SetRequest{Path: path, Payload: payload, User: rc.Auth.User, Group: rc.Auth.Group}
+			req := translib.SetRequest{Path: path, Payload: payload, User: translib.UserRoles{Name: rc.Auth.User, Roles: rc.Auth.Roles}}
 			_, err = translib.Create(req)
 		}
 
 	case "PUT":
 		//TODO send 201 if PUT resulted in creation
 		status = 204
-		req := translib.SetRequest{Path: path, Payload: payload, User: rc.Auth.User, Group: rc.Auth.Group}
+		req := translib.SetRequest{Path: path, Payload: payload, User: translib.UserRoles{Name: rc.Auth.User, Roles: rc.Auth.Roles}}
 		_, err = translib.Replace(req)
 
 	case "PATCH":
 		status = 204
-		req := translib.SetRequest{Path: path, Payload: payload, User: rc.Auth.User, Group: rc.Auth.Group}
+		req := translib.SetRequest{Path: path, Payload: payload, User: translib.UserRoles{Name: rc.Auth.User, Roles: rc.Auth.Roles}}
 		_, err = translib.Update(req)
 
 	case "DELETE":
 		status = 204
-		req := translib.SetRequest{Path: path, User: rc.Auth.User, Group: rc.Auth.Group}
+		req := translib.SetRequest{Path: path, User: translib.UserRoles{Name: rc.Auth.User, Roles: rc.Auth.Roles}}
 		_, err = translib.Delete(req)
 
 	default:

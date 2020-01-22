@@ -3,29 +3,31 @@
 #include "dbus-proxy.h"
 #include "../shared/dbus-address.h" /* DBUS_BUS_NAME_BASE, DBUS_OBJ_PATH_BASE */
 
+
 #include <syslog.h>
 
-int ham_userdel(const char * login)
+bool ham_userdel(const char * login)
 {
-    DBus::BusDispatcher         dispatcher;
-    DBus::default_dispatcher = &dispatcher;
-    DBus::Connection conn    = DBus::Connection::SystemBus();
-
-    accounts_proxy_c interface(conn, DBUS_BUS_NAME_BASE, DBUS_OBJ_PATH_BASE);
-
-    ::DBus::Struct<bool, std::string> ret;
-
+    bool success = false;
     try
     {
-        ret = interface.userdel(login);
+        // DBus::default_dispatcher must be initialized before DBus::Connection.
+        DBus::default_dispatcher = get_dispatcher();
+        DBus::Connection    conn = DBus::Connection::SystemBus();
+        accounts_proxy_c    acct(conn, DBUS_BUS_NAME_BASE, DBUS_OBJ_PATH_BASE);
+
+        ::DBus::Struct<bool, std::string> ret;
+        ret = acct.userdel(login);
+        success = ret._1;
+        if (!success)
+            syslog(LOG_ERR, "ham_userdel(login=\"%s\") - Error %s\n", login, ret._2.c_str());
     }
     catch (DBus::Error & ex)
     {
         syslog(LOG_CRIT, "ham_userdel(login=\"%s\" - Exception %s\n", login, ex.what());
-        ret._1 = false;
     }
 
-    return ret._1;
+    return success;
 }
 
 

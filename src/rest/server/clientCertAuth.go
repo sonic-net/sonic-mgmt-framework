@@ -27,6 +27,6 @@ func ClientCertAuthenAndAuthor(r *http.Request, rc *RequestContext) error {
 
 	glog.Infof("[%s] Authentication passed. user=%s ", rc.ID, username)
 
-	glog.Infof("[%s] Authorization passed", rc.ID)
+	glog.Infof("[%s] Authorization passed for user=%s, roles=%s", rc.ID, rc.Auth.User, rc.Auth.Roles)
 	return nil
 }

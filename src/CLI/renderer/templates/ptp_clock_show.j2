@@ -1,15 +1,15 @@
 {% for key,value in json_output.items() %}
-{% if 'clock-type' in value.keys() %}
-{{ 'Mode'.ljust(21)}} {{ value['clock-type']}}
+{% if 'ietf-ptp-ext:clock-type' in value.keys() %}
+{{ 'Mode'.ljust(21)}} {{ value['ietf-ptp-ext:clock-type']}}
 {% endif %}
-{% if 'domain-profile' in value.keys() %}
-{{ 'Domain Profile'.ljust(21)}} {{ value['domain-profile']}}
+{% if 'ietf-ptp-ext:domain-profile' in value.keys() %}
+{{ 'Domain Profile'.ljust(21)}} {{ value['ietf-ptp-ext:domain-profile']}}
 {% endif %}
-{% if 'network-transport' in value.keys() %}
-{{ 'Network Transport'.ljust(21)}} {{ value['network-transport']}} {{ value['unicast-multicast']}}
+{% if 'ietf-ptp-ext:network-transport' in value.keys() %}
+{{ 'Network Transport'.ljust(21)}} {{ value['ietf-ptp-ext:network-transport']}} {{ value['ietf-ptp-ext:unicast-multicast']}}
 {% if 'udp6-scope' in value.keys() %}
-{% if value['network-transport'] == 'UDPv6' and value['unicast-multicast'] == 'multicast' %}
-{{ 'IPv6 Scope'.ljust(21)}} {{ value['udp6-scope']}}
+{% if value['ietf-ptp-ext:network-transport'] == 'UDPv6' and value['ietf-ptp-ext:unicast-multicast'] == 'multicast' %}
+{{ 'IPv6 Scope'.ljust(21)}} {{ hex(value['udp6-scope'])}}
 {% endif %}
 {% endif %}
 {% endif %}
@@ -26,18 +26,14 @@
 {{ 'Priority2'.ljust(21)}} {{ value['priority2']}}
 {% endif %}
 {% if 'two-step-flag' in value.keys() %}
-{{ 'Two Step'.ljust(21)}} {% if value['two-step-flag'] == '0' %}
-{%   print 'Disabled\n' %}
-{% else %}
+{{ 'Two Step'.ljust(21)}} {% if value['two-step-flag'] == True %}
 {%   print 'Enabled\n' %}
+{% else %}
+{%   print 'Disabled\n' %}
 {% endif %}
 {% endif %}
 {% if 'slave-only' in value.keys() %}
-{{ 'Slave Only'.ljust(21)}} {% if value['slave-only'] == '0' %}
-{%   print 'False\n' %}
-{% else %}
-{%   print 'True\n' %}
-{% endif %}
+{{ 'Slave Only'.ljust(21)}} {{ value['slave-only'] }}
 {% endif %}
 {% if 'number-ports' in value.keys() %}
 {{ 'Number Ports'.ljust(21)}} {{ value['number-ports']}}

@@ -1,0 +1,54 @@
+{% set vars = {'interface': "unknown"} %}
+{% if vars.update({'gwIp': ["unknown"]}) %}{% endif %}
+{% if vars.update({'family': "IPv4"}) %}{% endif %}
+{% if vars.update({'master': "unknown"}) %}{% endif %}
+{% if vars.update({'adminStatus': "unknown"}) %}{% endif %}
+{% if vars.update({'operStatus': "unknown"}) %}{% endif %}
+
+{% if 'global' in json_output %}
+{% if 'sonic-sag:SAG_GLOBAL_LIST' in json_output['global'] %}
+{% set sag_global = json_output['global']['sonic-sag:SAG_GLOBAL_LIST'] %}
+Configured Anycast Gateway MAC address: {{sag_global[0]['gwmac']}}
+{{json_output['family']}} Anycast Gateway MAC address: {{sag_global[0][json_output['family']]}}
+Total number of gateway: {{''}}
+Total number of gateway admin UP: {{''}}
+Total number of gateway oper UP: {{''}}
+{% endif %}
+{% endif %}
+
+{{'%-10s %-20s %-10s %-10s'|format("Interfaces", "Gateway Address", "Master", "Admin/Oper")}}
+{{'%-10s %-20s %-10s %-10s'|format("----------", "---------------", "------", "----------")}}
+
+{% if 'sag' in json_output %}
+    {% set sag_list = json_output['sag']['sonic-sag:SAG_LIST'] %}
+        {% for sag in sag_list %}
+            {% if json_output['family'] == sag['table_distinguisher'] %}
+            {% if "ifname" in sag %}
+                {% if vars.update({'interface':sag['ifname']}) %}{% endif %}
+            {% endif %}
+            {% if "gwip" in sag %}
+                {% if vars.update({'gwIp':sag['gwip']}) %}{% endif %}
+            {% endif %}
+            {% if "family" in sag %}
+                {% if vars.update({'family':sag['table_distinguisher']}) %}{% endif %}
+            {% endif %}
+            {% if "miscmap" in json_output %}
+                {% if vars.update({'master':json_output['miscmap'][vars.interface]['master']}) %}{% endif %}
+            {% endif %}
+            {% if "miscmap" in json_output %}
+                {% if vars.update({'operStatus':json_output['miscmap'][vars.interface][vars.gwIp[0]]['oper_state']}) %}{% endif %}
+                {% if vars.update({'adminStatus':json_output['miscmap'][vars.interface][vars.gwIp[0]]['admin_state']}) %}{% endif %}
+            {% endif %}
+{{'%-10s %-20s %-10s %5s/%-5s'|format(vars.interface, vars.gwIp[0], vars.master, vars.adminStatus, vars.operStatus)}}
+{% for i in vars.gwIp %}
+{% if i != '' and i != vars.gwIp[0] %}
+{% if "miscmap" in json_output %}
+    {% if vars.update({'operStatus':json_output['miscmap'][vars.interface][i]['oper_state']}) %}{% endif %}
+    {% if vars.update({'adminStatus':json_output['miscmap'][vars.interface][i]['admin_state']}) %}{% endif %}
+{% endif %}
+{{'%-10s %-20s %-10s %5s/%-5s'|format('', i, '', vars.adminStatus, vars.operStatus)}}
+{% endif %}
+{% endfor %}
+            {% endif %}
+        {% endfor %}
+{% endif %}

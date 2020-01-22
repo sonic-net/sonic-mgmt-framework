@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+Copyright 2019 Broadcom, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+<ROOT>
+
+<MACRODEF name="SNMP-USER-PRIV-OPTIONS">
+  <PARAM name="priv"  help="" ptype="SUBCOMMAND" mode="subcommand" optional="true">
+    <PARAM name="priv-option" help="" ptype="SUBCOMMAND" mode="switch">
+      <PARAM name="des" help="DES Encryption"     ptype="SUBCOMMAND"  mode="subcommand">
+        <PARAM name="priv-password" help="" ptype="SUBCOMMAND" mode="subcommand">
+          <PARAM name="privpassword" help="Clear Text Authentication Password" ptype="STRING"/>
+        </PARAM>
+      </PARAM>
+      <PARAM name="aes-128" help="AES-128 Encryption"  ptype="SUBCOMMAND"  mode="subcommand">
+        <PARAM name="priv-password" help="" ptype="SUBCOMMAND" mode="subcommand">
+          <PARAM name="privpassword" help="Clear Text Authentication Password" ptype="STRING"/>
+        </PARAM>
+      </PARAM>
+    </PARAM>
+  </PARAM>
+</MACRODEF>
+
+<MACRODEF name="SNMP-USER-PRIVENCRYPT-OPTIONS">
+  <PARAM name="priv"  help="" ptype="SUBCOMMAND" mode="subcommand" optional="true">
+    <PARAM name="priv-option" help="" ptype="SUBCOMMAND" mode="switch">
+      <PARAM name="des" help="DES Encryption"     ptype="SUBCOMMAND"  mode="subcommand">
+        <PARAM name="priv-password" help="" ptype="SUBCOMMAND" mode="subcommand">
+          <PARAM name="privpassword" help="Encrypted DES Key" ptype="AUTH_KEY_TYPE"/>
+        </PARAM>
+      </PARAM>
+      <PARAM name="aes-128" help="AES-128 Encryption"  ptype="SUBCOMMAND"  mode="subcommand">
+        <PARAM name="priv-password" help="" ptype="SUBCOMMAND" mode="subcommand">
+          <PARAM name="privpassword" help="Encrypted AES-128 Key" ptype="AUTH_KEY_TYPE"/>
+        </PARAM>
+      </PARAM>
+    </PARAM>
+  </PARAM>
+</MACRODEF>
+
+<MACRODEF name="SNMP-SECURITY-LEVELS">
+  <PARAM name="security-level" help="" ptype="SUBCOMMAND" mode="switch">
+    <PARAM name="noauth"  help="No Authentication/No Privacy"  ptype="SUBCOMMAND"  mode="subcommand"></PARAM>
+    <PARAM name="auth"    help="Authentication Only"           ptype="SUBCOMMAND"  mode="subcommand"></PARAM>
+    <PARAM name="priv"    help="Authentication and Privacy"    ptype="SUBCOMMAND"  mode="subcommand"></PARAM>
+  </PARAM>
+</MACRODEF>
+
+<MACRODEF name="SNMP-SECURITY-MODELS">
+  <PARAM name="security-model" help="" ptype="SUBCOMMAND" mode="switch">
+    <PARAM name="any"   help="All SNMP Versions"   ptype="SUBCOMMAND"  mode="subcommand"></PARAM>
+    <PARAM name="v1"   help="SNMP Version 1"   ptype="SUBCOMMAND"  mode="subcommand"></PARAM>
+    <PARAM name="v2c"  help="SNMP Version 2c"  ptype="SUBCOMMAND"  mode="subcommand"></PARAM>
+    <PARAM name="v3"   help="SNMP Version 3"   ptype="SUBCOMMAND"  mode="subcommand">
+      <MACRO name="SNMP-SECURITY-LEVELS" arg="" />
+    </PARAM>
+  </PARAM>
+</MACRODEF>
+
+<MACRODEF name="SNMP-RWN-VIEWS-OPTIONS">
+  <PARAM  name="read"  help="Configure read view" ptype="SUBCOMMAND"  mode="subcommand" optional="true">
+    <PARAM  name="read-view" help="Read Only view name"  ptype="SNMP_IDENTIFIER"/>
+  </PARAM>
+  <PARAM  name="write"  help="Configure write view" ptype="SUBCOMMAND"  mode="subcommand" optional="true">
+    <PARAM  name="write-view" help="Read/Write view name"  ptype="SNMP_IDENTIFIER"/>
+  </PARAM>
+  <PARAM  name="notify"  help="Configure notify view" ptype="SUBCOMMAND"  mode="subcommand" optional="true">
+    <PARAM  name="notify-view" help="Notification view name"  ptype="SNMP_IDENTIFIER"/>
+  </PARAM>
+</MACRODEF>
+
+<MACRODEF name="SNMP-INCLUSION-OPTIONS">
+  <PARAM name="inclusion-option" help="" ptype="SUBCOMMAND" mode="switch">
+    <PARAM name="included"  help="OID Tree is included"  ptype="SUBCOMMAND"  mode="subcommand"/>
+    <PARAM name="excluded"  help="OID Tree is excluded"  ptype="SUBCOMMAND"  mode="subcommand"/>
+  </PARAM>
+</MACRODEF>
+
+</ROOT>
