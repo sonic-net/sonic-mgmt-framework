@@ -46,10 +46,7 @@ def invoke_api(func, args=[]):
     else:
         output["family"] = "IPv6"
     return output
-
-    return api.cli_not_implemented(func)
-
-
+    
 
 def run(func, args, renderer):
     response = invoke_api(func, args)
