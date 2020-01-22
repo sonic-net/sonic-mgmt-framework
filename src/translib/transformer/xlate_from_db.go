@@ -88,7 +88,7 @@ func xfmrTblHandlerFunc(xfmrTblFunc string, inParams XfmrParams) ([]string, erro
 			 if ret[TBL_XFMR_RET_ERR_INDX].Interface() != nil {
 				 err = ret[TBL_XFMR_RET_ERR_INDX].Interface().(error)
 				 if err != nil {
-					 log.Warningf("Transformer function(\"%v\") returned error - %v.", xfmrTblFunc)
+					 log.Warningf("Transformer function(\"%v\") returned error - %v.", xfmrTblFunc, err)
 					 return retTblLst, err
 				 }
 			 }
