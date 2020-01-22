@@ -81,6 +81,9 @@ $(GO) install -v -gcflags "-N -l" $(BUILD_GOPATH)/src/github.com/go-redis/redis
 cli: 
 	$(MAKE) -C src/CLI
 
+clish:
+	SONIC_CLI_ROOT=$(BUILD_DIR) $(MAKE) -C src/CLI/klish
+
 clitree:
 	 TGT_DIR=$(BUILD_DIR)/cli $(MAKE) -C src/CLI/clitree
 

@@ -160,6 +160,7 @@ int rest_cl(char *cmd, const char *buff)
   strncpy(arg, buff, sizeof(arg)-1);
   arg[sizeof(arg)-1] = '\0';
 
+  setenv("USER_COMMAND", cmd, 1); 
   syslog(LOG_DEBUG, "clish_restcl: cmd=%s", cmd);
 
   if (curl == NULL) {
@@ -248,8 +249,7 @@ int rest_cl(char *cmd, const char *buff)
 CLISH_PLUGIN_SYM(clish_restcl)
 {
     char *cmd = clish_shell__get_full_line(clish_context);
-    rest_cl(cmd, script);
-    return 0;
+    return rest_cl(cmd, script);
 }
 
 
