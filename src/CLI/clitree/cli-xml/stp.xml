@@ -70,7 +70,7 @@ limitations under the License.
       <PTYPE
            name="STP_PORT_PRIORITY"
            method="integer"
-           pattern="0..240"
+           pattern="1..240"
            help=""
            />
        <!--=======================================================-->
