@@ -2,40 +2,55 @@
 {{'ZTP'}}
 {{'========================================'}}
 {% if 'admin_mode' in json_output %}
-{{'ZTP Admin Mode'.ljust(20)}}:{{json_output['admin_mode']}}
+{{'ZTP Admin Mode'.ljust(20)}}: {{json_output['admin_mode']}}
 {% endif %}
 {% if 'service' in json_output %}
-{{'ZTP Service'.ljust(20)}}:{{json_output['service']}}
+{{'ZTP Service'.ljust(20)}}: {{json_output['service']}}
 {% endif %}
 {% if 'status' in json_output %}
-{{'ZTP Status'.ljust(20)}}:{{json_output['status']}}
+{{'ZTP Status'.ljust(20)}}: {{json_output['status']}}
 {% endif %}
 {% if 'source' in json_output %}
-{{'ZTP Source'.ljust(20)}}:{{json_output['source']}}
+{{'ZTP Source'.ljust(20)}}: {{json_output['source']}}
 {% endif %}
 {% if 'runtime' in json_output %}
-{{'Runtime'.ljust(20)}}:{{json_output['runtime']}}
+{{'Runtime'.ljust(20)}}: {{json_output['runtime']}}
 {% endif %}
 {% if 'timestamp' in json_output %}
-{{'Timestamp'.ljust(20)}}:{{json_output['timestamp']}}
+{{'Timestamp'.ljust(20)}}: {{json_output['timestamp']}}
 {% endif %}
 {% if 'jsonversion' in json_output %}
-{{'JSON Version'.ljust(20)}}:{{json_output['jsonversion']}}
+{{'ZTP JSON Version'.ljust(20)}}: {{json_output['jsonversion']}}
 {% endif %}
-{% if 'error' in json_output %}
-{{'Error'.ljust(20)}}:{{json_output['error']}}
+{% if 'error' in json_output and json_output['error'] != 'NONE' %}
+{{'Error'.ljust(20)}}: {{json_output['error']}}
 {% endif %}
 {% if 'activity_string' in json_output %}
+{{' '}}
 {{json_output['activity_string']}}
 {% endif %}
 {% if 'CONFIG_SECTION_LIST' in json_output %}
 {% set c_dict = json_output['CONFIG_SECTION_LIST'] %}
 {% for val in c_dict %}
+{{' '}}
 {{'---------------------------------------------'}}
 {{val['sectionname'].ljust(20)}}
 {{'---------------------------------------------'}}
-{% for k,v in val.items() %}
-{{k.ljust(20)}}:{{v}}
-{% endfor %}
+{% if 'description' in val %}
+{{'Description'.ljust(20)}}: {{val['description']}}
+{% endif %}
+{{'Status'.ljust(20)}}: {{val['status']}}
+{{'Runtime'.ljust(20)}}: {{val['runtime']}}
+{{'Timestamp'.ljust(20)}}: {{val['timestamp']}}
+{% if 'exitcode' in val %}
+{{'Exit Code'.ljust(20)}}: {{val['exitcode']}}
+{% endif %}
+{% if 'error' in val and val['error'] != 'NONE' %}
+{{'Error'.ljust(20)}}: {{val['error']}}
+{% endif %}
+{{'Ignore Result'.ljust(20)}}: {{val['ignoreresult']}}
+{% if 'haltonfailure' in val %}
+{{'Halt on Failure'.ljust(20)}}: {{val['haltonfailure']}}
+{% endif %}
 {% endfor %}
 {% endif %}
