@@ -606,16 +606,53 @@ python $SONIC_CLI_ROOT/sonic_cli_bgp.py patch_openconfig_network_instance_networ
   <COMMAND name="update-source" help="Source of routing updates">
     <PARAM name="source_param" help="update-source param"  mode="switch" ptype="SUBCOMMAND">
       <PARAM name="ip" help="IP source" ptype="IPV4V6_ADDR" view="configure-router-bgp-nbr-view" viewid="nbr-addr=${ip};vrf-name=${vrf-name}"/>
-      <PARAM name="interface" help="Interface name" ptype="STRING"/>
+      <PARAM name="interface" help="Interface name" mode="subcommand" ptype="SUBCOMMAND" view="configure-router-bgp-nbr-view" viewid="nbr-addr=${ip};vrf-name=${vrf-name}">
+        <PARAM name="iftype" help="interface type" mode="switch" ptype="SUBCOMMAND">
+          <PARAM name="Ethernet" help="Select an interface" mode="subcommand" ptype="SUBCOMMAND">
+            <PARAM name="phy-if-name" help="Physical interface" ptype="UINT"/>
+          </PARAM>
+          <PARAM name="Loopback" help="Loopback Interface Configuration" mode="subcommand" ptype="SUBCOMMAND">
+            <PARAM name="lo-id" help="Loopback identifier" ptype="LO_ID"/>
+          </PARAM>
+          <PARAM name="Management" help="Management Interface commands" mode="subcommand" ptype="SUBCOMMAND">
+            <PARAM name="mgmt-if-id" help="Management interface" ptype="MGMT_INTF_ID"/>
+          </PARAM>
+          <PARAM name="PortChannel" help="Port channel Interface Configuration" mode="subcommand" ptype="SUBCOMMAND">
+            <PARAM name="lag-id" help="PortChannel identifier" ptype="LAG_ID"/>
+          </PARAM>
+          <PARAM name="Vlan" help="Vlan Interface Configuration" mode="subcommand" ptype="SUBCOMMAND">
+            <PARAM name="vlan-id" help="Vlan identifier" ptype="VLAN_ID"/>
+          </PARAM>
+          <PARAM name="Vxlan" help="VXLAN Configuration mode" mode="subcommand" ptype="SUBCOMMAND">
+            <PARAM name="vxlan-if-name" help="VTEP Name" ptype="STRING_63"/>
+          </PARAM>
+        </PARAM>
+      </PARAM>
     </PARAM>
-    <ACTION> 
-            if test "${source_param}" = "ip" ; then&#xA;
-                   python $SONIC_CLI_ROOT/sonic_cli_bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_transport_config_local_address ${vrf-name} ${nbr-addr} ${ip}&#xA;
-            else&#xA; 
-                   python $SONIC_CLI_ROOT/sonic_cli_bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_transport_config_local_address ${vrf-name} ${nbr-addr} ${interface}&#xA;
-            fi&#xA;            
+    <ACTION>
+             if test "${source_param}" = "ip" ; then&#xA;
+                 python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_transport_config_local_address ${vrf-name} ${nbr-addr} ${ip}&#xA;
+             else&#xA;
+                 if test "${iftype}" = "Ethernet" ; then&#xA;
+                     python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_transport_config_local_address ${vrf-name} ${nbr-addr} Ethernet${phy-if-name}&#xA;
+                 fi&#xA;
+                 if test "${iftype}" = "Loopback" ; then&#xA;
+                     python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_transport_config_local_address ${vrf-name} ${nbr-addr} Loopback${lo-id}&#xA;
+                 fi&#xA;
+                 if test "${iftype}" = "Management" ; then&#xA;
+                     python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_transport_config_local_address ${vrf-name} ${nbr-addr} Management${mgmt-if-id}&#xA;
+                 fi&#xA;
+                 if test "${iftype}" = "PortChannel" ; then&#xA;
+                     python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_transport_config_local_address ${vrf-name} ${nbr-addr} PortChannel${lag-id}&#xA;
+                 fi&#xA;
+                 if test "${iftype}" = "Vlan" ; then&#xA;
+                     python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_transport_config_local_address ${vrf-name} ${nbr-addr} Vlan${vlan-id}&#xA;
+                 fi&#xA;
+                 if test "${iftype}" = "Vxlan" ; then&#xA;
+                     python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_transport_config_local_address ${vrf-name} ${nbr-addr} Vxlan${vxlan-if-name}&#xA;
+                 fi&#xA;
 
-                   
+             fi&#xA;
     </ACTION>
   </COMMAND>
 
@@ -780,14 +817,53 @@ python $SONIC_CLI_ROOT/sonic_cli_bgp.py delete_openconfig_network_instance_netwo
   <COMMAND name="no update-source" help="Source of routing updates">
     <PARAM name="source_param" help="update-source param"  mode="switch" ptype="SUBCOMMAND">
       <PARAM name="ip" help="IP source" ptype="IPV4V6_ADDR" view="configure-router-bgp-nbr-view" viewid="nbr-addr=${ip};vrf-name=${vrf-name}" optional="true"/>
-      <PARAM name="interface" help="Interface name" ptype="STRING"/>
+      <PARAM name="interface" help="Interface name" mode="subcommand" ptype="SUBCOMMAND">
+        <PARAM name="iftype" help="interface type" mode="switch" ptype="SUBCOMMAND">
+          <PARAM name="Ethernet" help="Select an interface" mode="subcommand" ptype="SUBCOMMAND">
+            <PARAM name="phy-if-name" help="Physical interface" ptype="UINT"/>
+          </PARAM>
+          <PARAM name="Loopback" help="Loopback Interface Configuration" mode="subcommand" ptype="SUBCOMMAND">
+            <PARAM name="lo-id" help="Loopback identifier" ptype="LO_ID"/>
+          </PARAM>
+          <PARAM name="Management" help="Management Interface commands" mode="subcommand" ptype="SUBCOMMAND">
+            <PARAM name="mgmt-if-id" help="Management interface" ptype="MGMT_INTF_ID"/>
+          </PARAM>
+          <PARAM name="PortChannel" help="Port channel Interface Configuration" mode="subcommand" ptype="SUBCOMMAND">
+            <PARAM name="lag-id" help="PortChannel identifier" ptype="LAG_ID"/>
+          </PARAM>
+          <PARAM name="Vlan" help="Vlan Interface Configuration" mode="subcommand" ptype="SUBCOMMAND">
+            <PARAM name="vlan-id" help="Vlan identifier" ptype="VLAN_ID"/>
+          </PARAM>
+          <PARAM name="Vxlan" help="VXLAN Configuration mode" mode="subcommand" ptype="SUBCOMMAND">
+            <PARAM name="vxlan-if-name" help="VTEP Name" ptype="STRING_63"/>
+          </PARAM>
+        </PARAM>
+      </PARAM>
     </PARAM>
     <ACTION>
-            if test "${source_param}" = "ip" ; then&#xA;
-                   python $SONIC_CLI_ROOT/sonic_cli_bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_transport_config_local_address ${vrf-name} ${nbr-addr} ${ip}&#xA;
-            else&#xA;
-                   python $SONIC_CLI_ROOT/sonic_cli_bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_transport_config_local_address ${vrf-name} ${nbr-addr} ${interface}&#xA;
-            fi&#xA;
+             if test "${source_param}" = "ip" ; then&#xA;
+                 python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_transport_config_local_address ${vrf-name} ${nbr-addr} ${ip}&#xA;
+             else&#xA;
+                 if test "${iftype}" = "Ethernet" ; then&#xA;
+                     python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_transport_config_local_address ${vrf-name} ${nbr-addr} Ethernet${phy-if-name}&#xA;
+                 fi&#xA;
+                 if test "${iftype}" = "Loopback" ; then&#xA;
+                     python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_transport_config_local_address ${vrf-name} ${nbr-addr} Loopback${lo-id}&#xA;
+                 fi&#xA;
+                 if test "${iftype}" = "Management" ; then&#xA;
+                     python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_transport_config_local_address ${vrf-name} ${nbr-addr} Management${mgmt-if-id}&#xA;
+                 fi&#xA;
+                 if test "${iftype}" = "PortChannel" ; then&#xA;
+                     python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_transport_config_local_address ${vrf-name} ${nbr-addr} PortChannel${lag-id}&#xA;
+                 fi&#xA;
+                 if test "${iftype}" = "Vlan" ; then&#xA;
+                     python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_transport_config_local_address ${vrf-name} ${nbr-addr} Vlan${vlan-id}&#xA;
+                 fi&#xA;
+                if test "${iftype}" = "Vxlan" ; then&#xA;
+                    python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_transport_config_local_address ${vrf-name} ${nbr-addr} Vxlan${vxlan-if-name}&#xA;
+                fi&#xA;
+
+             fi&#xA;
     </ACTION>
   </COMMAND>
   <COMMAND name="no shutdown" help="Shutdown a neighbor">
@@ -912,13 +988,52 @@ python $SONIC_CLI_ROOT/sonic_cli_bgp.py patch_openconfig_network_instance_networ
   <COMMAND name="update-source" help="Source of routing updates">
     <PARAM name="source_param" help="update-source param"  mode="switch" ptype="SUBCOMMAND">
       <PARAM name="ip" help="IP source" ptype="IPV4V6_ADDR" view="configure-router-bgp-template-view"/>
-      <PARAM name="interface" help="Interface name" ptype="STRING" view="configure-router-bgp-template-view" />
+      <PARAM name="interface" help="Interface name" mode="subcommand" ptype="SUBCOMMAND" view="configure-router-bgp-template-view">
+        <PARAM name="iftype" help="interface type" mode="switch" ptype="SUBCOMMAND">
+          <PARAM name="Ethernet" help="Select an interface" mode="subcommand" ptype="SUBCOMMAND" >
+            <PARAM name="phy-if-name" help="Physical interface" ptype="UINT"/>
+          </PARAM>
+          <PARAM name="Loopback" help="Loopback Interface Configuration" mode="subcommand" ptype="SUBCOMMAND" >
+            <PARAM name="lo-id" help="Loopback identifier" ptype="LO_ID"/>
+          </PARAM>
+          <PARAM name="Management" help="Management Interface commands" mode="subcommand" ptype="SUBCOMMAND" >
+            <PARAM name="mgmt-if-id" help="Management interface" ptype="MGMT_INTF_ID"/>
+          </PARAM>
+          <PARAM name="PortChannel" help="Port channel Interface Configuration" mode="subcommand" ptype="SUBCOMMAND" >
+            <PARAM name="lag-id" help="PortChannel identifier" ptype="LAG_ID"/>
+          </PARAM>
+          <PARAM name="Vlan" help="Vlan Interface Configuration" mode="subcommand" ptype="SUBCOMMAND" >
+            <PARAM name="vlan-id" help="Vlan identifier" ptype="VLAN_ID"/>
+          </PARAM>
+          <PARAM name="Vxlan" help="VXLAN Configuration mode" mode="subcommand" ptype="SUBCOMMAND" >
+            <PARAM name="vxlan-if-name" help="VTEP Name" ptype="STRING_63"/>
+          </PARAM>
+        </PARAM>
+      </PARAM>
     </PARAM>
     <ACTION>
-             if test "${source_param}" = "ip"; then&#xA;
-                python $SONIC_CLI_ROOT/sonic_cli_bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_transport_config_local_address ${vrf-name} ${template-name} ${ip}&#xA;
+             if test "${source_param}" = "ip" ; then&#xA;
+                 python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_transport_config_local_address ${vrf-name} ${template-name} ${ip}&#xA;
              else&#xA;
-                python $SONIC_CLI_ROOT/sonic_cli_bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_transport_config_local_address ${vrf-name} ${template-name} ${interface}&#xA;
+                 if test "${iftype}" = "Ethernet" ; then&#xA;
+                     python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_transport_config_local_address ${vrf-name} ${template-name} Ethernet${phy-if-name}&#xA;
+                 fi&#xA;
+                 if test "${iftype}" = "Loopback" ; then&#xA;
+                     python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_transport_config_local_address ${vrf-name} ${template-name} Loopback${lo-id}&#xA;
+                 fi&#xA;
+                 if test "${iftype}" = "Management" ; then&#xA;
+                     python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_transport_config_local_address ${vrf-name} ${template-name} Management${mgmt-if-id}&#xA;
+                 fi&#xA;
+                 if test "${iftype}" = "PortChannel" ; then&#xA;
+                     python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_transport_config_local_address ${vrf-name} ${template-name} PortChannel${lag-id}&#xA;
+                 fi&#xA;
+                 if test "${iftype}" = "Vlan" ; then&#xA;
+                     python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_transport_config_local_address ${vrf-name} ${template-name} Vlan${vlan-id}&#xA;
+                 fi&#xA;
+                 if test "${iftype}" = "Vxlan" ; then&#xA;
+                     python $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_transport_config_local_address ${vrf-name} ${template-name} Vxlan${vxlan-if-name}&#xA;
+                 fi&#xA;
+
              fi&#xA;
     </ACTION>
   </COMMAND>
@@ -1078,13 +1193,52 @@ python $SONIC_CLI_ROOT/sonic_cli_bgp.py delete_openconfig_network_instance_netwo
   <COMMAND name="no update-source" help="Source of routing updates">
     <PARAM name="source_param" help="update-source param"  mode="switch" ptype="SUBCOMMAND">
       <PARAM name="ip" help="IP source" ptype="IPV4V6_ADDR" view="configure-router-bgp-template-view" viewid="nbr-addr=${ip};vrf-name=${vrf-name}" optional="true"/>
-      <PARAM name="interface" help="Interface name" ptype="STRING" view="configure-router-bgp-template-view" />
+      <PARAM name="interface" help="Interface name" mode="subcommand" ptype="SUBCOMMAND">
+        <PARAM name="iftype" help="interface type" mode="switch" ptype="SUBCOMMAND">
+          <PARAM name="Ethernet" help="Select an interface" mode="subcommand" ptype="SUBCOMMAND" >
+            <PARAM name="phy-if-name" help="Physical interface" ptype="UINT"/>
+          </PARAM>
+          <PARAM name="Loopback" help="Loopback Interface Configuration" mode="subcommand" ptype="SUBCOMMAND" >
+            <PARAM name="lo-id" help="Loopback identifier" ptype="LO_ID"/>
+          </PARAM>
+          <PARAM name="Management" help="Management Interface commands" mode="subcommand" ptype="SUBCOMMAND" >
+            <PARAM name="mgmt-if-id" help="Management interface" ptype="MGMT_INTF_ID"/>
+          </PARAM>
+          <PARAM name="PortChannel" help="Port channel Interface Configuration" mode="subcommand" ptype="SUBCOMMAND" >
+            <PARAM name="lag-id" help="PortChannel identifier" ptype="LAG_ID"/>
+          </PARAM>
+          <PARAM name="Vlan" help="Vlan Interface Configuration" mode="subcommand" ptype="SUBCOMMAND" >
+            <PARAM name="vlan-id" help="Vlan identifier" ptype="VLAN_ID"/>
+          </PARAM>
+          <PARAM name="Vxlan" help="VXLAN Configuration mode" mode="subcommand" ptype="SUBCOMMAND" >
+            <PARAM name="vxlan-if-name" help="VTEP Name" ptype="STRING_63"/>
+          </PARAM>
+        </PARAM>
+      </PARAM>
     </PARAM>
     <ACTION>
-             if test "${source_param}" = "ip"; then&#xA;
-                 python $SONIC_CLI_ROOT/sonic_cli_bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_transport_config_local_address ${vrf-name} ${template-name} ${ip}&#xA;
+             if test "${source_param}" = "ip" ; then&#xA;
+                 python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_transport_config_local_address ${vrf-name} ${template-name} ${ip}&#xA;
              else&#xA;
-                 python $SONIC_CLI_ROOT/sonic_cli_bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_transport_config_local_address ${vrf-name} ${template-name} ${interface}&#xA;
+                 if test "${iftype}" = "Ethernet" ; then&#xA;
+                     python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_transport_config_local_address ${vrf-name} ${template-name} Ethernet${phy-if-name}&#xA;
+                 fi&#xA;
+                 if test "${iftype}" = "Loopback" ; then&#xA;
+                     python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_transport_config_local_address ${vrf-name} ${template-name} Loopback${lo-id}&#xA;
+                 fi&#xA;
+                 if test "${iftype}" = "Management" ; then&#xA;
+                     python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_transport_config_local_address ${vrf-name} ${template-name} Management${mgmt-if-id}&#xA;
+                 fi&#xA;
+                 if test "${iftype}" = "PortChannel" ; then&#xA;
+                     python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_transport_config_local_address ${vrf-name} ${template-name} PortChannel${lag-id}&#xA;
+                 fi&#xA;
+                 if test "${iftype}" = "Vlan" ; then&#xA;
+                     python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_transport_config_local_address ${vrf-name} ${template-name} Vlan${vlan-id}&#xA;
+                 fi&#xA;
+                 if test "${iftype}" = "Vxlan" ; then&#xA;
+                     python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_transport_config_local_address ${vrf-name} ${template-name} Vxlan${vxlan-if-name}&#xA;
+                 fi&#xA;
+
              fi&#xA;
     </ACTION>
   </COMMAND>
