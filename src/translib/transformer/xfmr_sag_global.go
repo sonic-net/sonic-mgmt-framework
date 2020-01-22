@@ -19,12 +19,17 @@
 package transformer
 
 import (
+    "errors"
     log "github.com/golang/glog"
 )
 
 func init () {
     XlateFuncBind("YangToDb_sag_global_key_xfmr", YangToDb_sag_global_key_xfmr)
     XlateFuncBind("DbToYang_sag_global_key_xfmr", DbToYang_sag_global_key_xfmr)	
+    XlateFuncBind("YangToDb_sag_ipv4_enable_xfmr", YangToDb_sag_ipv4_enable_xfmr)
+    XlateFuncBind("DbToYang_sag_ipv4_enable_xfmr", DbToYang_sag_ipv4_enable_xfmr)
+    XlateFuncBind("YangToDb_sag_ipv6_enable_xfmr", YangToDb_sag_ipv6_enable_xfmr)
+    XlateFuncBind("DbToYang_sag_ipv6_enable_xfmr", DbToYang_sag_ipv6_enable_xfmr)		
 }
 
 
@@ -56,3 +61,94 @@ var DbToYang_sag_global_key_xfmr KeyXfmrDbToYang = func(inParams XfmrParams) (ma
     return rmap, nil
 }
 
+var YangToDb_sag_ipv4_enable_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
+    res_map := make(map[string]string)
+
+    enabled, _ := inParams.param.(*bool)
+    var enStr string
+    if *enabled == true {
+        enStr = "enable"
+    } else {
+        enStr = "disable"
+    }
+    res_map["IPv4"] = enStr
+
+    return res_map, nil
+}
+
+var YangToDb_sag_ipv6_enable_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
+    res_map := make(map[string]string)
+
+    enabled, _ := inParams.param.(*bool)
+    var enStr string
+    if *enabled == true {
+        enStr = "enable"
+    } else {
+        enStr = "disable"
+    }
+    res_map["IPv6"] = enStr
+
+    return res_map, nil
+}
+
+var DbToYang_sag_ipv4_enable_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (map[string]interface{}, error) {
+    var err error
+    result := make(map[string]interface{})
+
+    data := (*inParams.dbDataMap)[inParams.curDb]
+
+    tblName := "IP"
+    if _, ok := data[tblName]; !ok {
+        log.Info("DbToYang_sag_ipv4_enable_xfmr table not found : ", tblName)
+        return result, errors.New("table not found : " + tblName)
+    }
+	
+    pTbl := data[tblName]
+    if _, ok := pTbl[inParams.key]; !ok {
+        log.Info("DbToYang_sag_ipv4_enable_xfmr SAG not found : ", inParams.key)
+        return result, errors.New("SAG not found : " + inParams.key)
+    }
+    prtInst := pTbl[inParams.key]
+    adminStatus, ok := prtInst.Field["IPv4"]
+    if ok {
+        if adminStatus == "enable" {
+            result["ipv4-enable"] = true
+        } else {
+            result["ipv4-enable"] = false
+        }
+    } else {
+        log.Info("Admin status field not found in DB")
+    }
+    return result, err
+}
+
+var DbToYang_sag_ipv6_enable_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (map[string]interface{}, error) {
+    var err error
+    result := make(map[string]interface{})
+
+    data := (*inParams.dbDataMap)[inParams.curDb]
+
+    tblName := "SAG_GLOBAL|IP"
+    if _, ok := data[tblName]; !ok {
+        log.Info("DbToYang_sag_ipv6_enable_xfmr table not found : ", tblName)
+        return result, errors.New("table not found : " + tblName)
+    }
+
+    pTbl := data[tblName]
+    if _, ok := pTbl[inParams.key]; !ok {
+        log.Info("DbToYang_sag_ipv6_enable_xfmr SAG not found : ", inParams.key)
+        return result, errors.New("SAG not found : " + inParams.key)
+    }
+    prtInst := pTbl[inParams.key]
+    adminStatus, ok := prtInst.Field["IPv6"]
+    if ok {
+        if adminStatus == "enable" {
+            result["ipv6-enable"] = true
+        } else {
+            result["ipv6-enable"] = false
+        }
+    } else {
+        log.Info("Admin status field not found in DB")
+    }
+    return result, err
+}
