@@ -491,11 +491,12 @@ var DbToYang_network_instance_type_field_xfmr KeyXfmrDbToYang = func(inParams Xf
 
         log.Info("DbToYang_network_instance_type_field_xfmr")
 
-        if ((isMgmtVrfDbTbl(inParams) == true) || (isVrfDbTbl(inParams) == true)) {
+        if ((inParams.key == "vrf_global") || (strings.HasPrefix(inParams.key, "Vrf"))) {
                 res_map["type"] = "L3VRF"
+        } else if (inParams.key == "default") {
+                res_map["type"] = "DEFAULT_INSTANCE"
         }
 
-        /* ToDo in else if cases */
         return  res_map, err
 }
 
