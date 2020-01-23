@@ -1564,7 +1564,7 @@ module openconfig-network-instance-annot {
 /* BGP Neighbors*/
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor {
       deviate add {
-        sonic-ext:table-name "BGP_NEIGHBOR";
+        sonic-ext:table-transformer "bgp_nbr_tbl_xfmr";
         sonic-ext:key-transformer "bgp_nbr_tbl_key_xfmr";
       }
     }

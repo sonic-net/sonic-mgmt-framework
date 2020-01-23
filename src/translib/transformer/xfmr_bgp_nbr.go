@@ -11,6 +11,7 @@ import (
 )
 
 func init () {
+    XlateFuncBind("bgp_nbr_tbl_xfmr", bgp_nbr_tbl_xfmr)
     XlateFuncBind("YangToDb_bgp_nbr_tbl_key_xfmr", YangToDb_bgp_nbr_tbl_key_xfmr)
     XlateFuncBind("DbToYang_bgp_nbr_tbl_key_xfmr", DbToYang_bgp_nbr_tbl_key_xfmr)
     XlateFuncBind("YangToDb_bgp_nbr_address_fld_xfmr", YangToDb_bgp_nbr_address_fld_xfmr)
@@ -33,11 +34,106 @@ func init () {
     XlateFuncBind("DbToYang_bgp_nbr_tx_add_paths_fld_xfmr", DbToYang_bgp_nbr_tx_add_paths_fld_xfmr)
 }
 
+var bgp_nbr_tbl_xfmr TableXfmrFunc = func (inParams XfmrParams)  ([]string, error) {
+    var tblList []string
+    var err error
+    var vrf string
+    var key string
+
+    log.Info("bgp_nbr_tbl_xfmr: ", inParams.uri)
+    pathInfo := NewPathInfo(inParams.uri)
+
+    vrf = pathInfo.Var("name")
+    bgpId      := pathInfo.Var("identifier")
+    protoName  := pathInfo.Var("name#2")
+    pNbrAddr   := pathInfo.Var("neighbor-address")
+
+    if len(pathInfo.Vars) <  3 {
+        err = errors.New("Invalid Key length");
+        log.Info("Invalid Key length", len(pathInfo.Vars))
+        return tblList, err
+    }
+
+    if len(vrf) == 0 {
+        err = errors.New("vrf name is missing");
+        log.Info("VRF Name is Missing")
+        return tblList, err
+    }
+    if strings.Contains(bgpId,"BGP") == false {
+        err = errors.New("BGP ID is missing");
+        log.Info("BGP ID is missing")
+        return tblList, err
+    }
+    if len(protoName) == 0 {
+        err = errors.New("Protocol Name is missing");
+        log.Info("Protocol Name is Missing")
+        return tblList, err
+    }
+
+    if (inParams.oper != GET) {
+        tblList = append(tblList, "BGP_NEIGHBOR")
+        return tblList, nil
+    }
+
+    if len(pNbrAddr) != 0 {
+        key = vrf + "|" + pNbrAddr
+        log.Info("bgp_nbr_tbl_xfmr: key - ", key)
+        if (inParams.dbDataMap != nil) {
+            if _, ok := (*inParams.dbDataMap)[db.ConfigDB]["BGP_NEIGHBOR"]; !ok {
+                (*inParams.dbDataMap)[db.ConfigDB]["BGP_NEIGHBOR"] = make(map[string]db.Value)
+            }
+            if _, ok := (*inParams.dbDataMap)[db.ConfigDB]["BGP_NEIGHBOR"][key]; !ok {
+                (*inParams.dbDataMap)[db.ConfigDB]["BGP_NEIGHBOR"][key] = db.Value{Field: make(map[string]string)}
+            }
+        }
+    } else {
+        if(inParams.dbDataMap != nil) {
+            err = errors.New("Opertational error")
+            var ok bool
+            cmd := "show ip bgp vrf" + " " + vrf + " " + "summary json"
+            bgpNeighOutputJson, cmd_err := exec_vtysh_cmd (cmd)
+            if (cmd_err != nil) {
+                log.Errorf ("Failed !! Error:%s", cmd_err);
+                return tblList, err
+            }
+
+            if outError, ok := bgpNeighOutputJson["warning"] ; ok {
+                log.Errorf ("%s failed !!, %s", outError)
+                return tblList, err
+            }
+
+            ipv4Unicast, ok := bgpNeighOutputJson["ipv4Unicast"].(map[string]interface{})
+            if !ok {return tblList, err}
+
+            if vrfName, ok := ipv4Unicast["vrfName"] ; (!ok || vrfName != vrf) {
+                log.Errorf ("Failed !! GET-req vrf:%s not same as JSON-VRFname:%s", vrf, vrfName)
+                return tblList, err
+            }
+            peers, ok := ipv4Unicast["peers"].(map[string]interface{})
+            if !ok {return tblList,err}
+
+            if _, ok := (*inParams.dbDataMap)[db.ConfigDB]["BGP_NEIGHBOR"]; !ok {
+                (*inParams.dbDataMap)[db.ConfigDB]["BGP_NEIGHBOR"] = make(map[string]db.Value)
+            }
+
+            for peer, _ := range peers {
+                key = vrf + "|" + peer
+                log.Info("bgp_nbr_tbl_xfmr: key - ", key)
+                if _, ok := (*inParams.dbDataMap)[db.ConfigDB]["BGP_NEIGHBOR"][key]; !ok {
+                    (*inParams.dbDataMap)[db.ConfigDB]["BGP_NEIGHBOR"][key] = db.Value{Field: make(map[string]string)}
+                }
+            }
+        }
+    }
+    tblList = append(tblList, "BGP_NEIGHBOR")
+    return tblList, nil
+}
+
 var YangToDb_bgp_nbr_tbl_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (string, error) {
     var err error
     var vrfName string
 
-    log.Info("YangToDb_bgp_nbr_tbl_key_xfmr ***", inParams.uri)
+    log.Info("YangToDb_bgp_nbr_tbl_key_xfmr: ", inParams.uri)
     pathInfo := NewPathInfo(inParams.uri)
 
     /* Key should contain, <vrf name, protocol name, neighbor name> */
@@ -56,22 +152,22 @@ var YangToDb_bgp_nbr_tbl_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (s
     if len(vrfName) == 0 {
         err = errors.New("vrf name is missing");
         log.Info("VRF Name is Missing")
-        return vrfName, err
+        return "", err
     }
     if strings.Contains(bgpId,"BGP") == false {
         err = errors.New("BGP ID is missing");
         log.Info("BGP ID is missing")
-        return bgpId, err
+        return "", err
     }
     if len(protoName) == 0 {
         err = errors.New("Protocol Name is missing");
         log.Info("Protocol Name is Missing")
-        return protoName, err
+        return "", err
     }
     if len(pNbrAddr) == 0 {
-        err = errors.New("Neighbor address  is missing")
+        err = errors.New("Neighbor address is missing")
         log.Info("Neighbor address is Missing")
-        return pNbrAddr, err
+        return "", nil
     }
 
     log.Info("URI VRF", vrfName)
