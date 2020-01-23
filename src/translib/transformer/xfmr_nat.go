@@ -26,6 +26,7 @@ import (
     "translib/db"
     "github.com/openconfig/ygot/ygot"
     "translib/ocbinds"
+    "encoding/json"
 )
 
 func init() {
@@ -56,6 +57,7 @@ func init() {
     XlateFuncBind("YangToDb_nat_entry_type_field_xfmr", YangToDb_nat_entry_type_field_xfmr)
     XlateFuncBind("DbToYang_nat_entry_type_field_xfmr", DbToYang_nat_entry_type_field_xfmr)
     XlateFuncBind("nat_post_xfmr", nat_post_xfmr)
+    XlateFuncBind("rpc_clear_nat", rpc_clear_nat)
 }
 
 const (
@@ -1517,3 +1519,45 @@ var DbToYang_nat_entry_type_field_xfmr FieldXfmrDbtoYang = func(inParams XfmrPar
     return result, err
 }
 
+/*
+var NAT_CLEAR_PARAMS_MAP = map[string]string{
+    strconv.FormatInt(int64(ocbinds.OpenconfigNat_NAT_ENTRY_TYPE_STATIC), 10): "ENTRIES",
+    strconv.FormatInt(int64(ocbinds.OpenconfigNat_NAT_ENTRY_TYPE_DYNAMIC), 10): "STATISTICS",
+}
+*/
+
+var rpc_clear_nat RpcCallpoint = func(body []byte, dbs [db.MaxDB]*db.DB) ([]byte, error) {
+    var err error
+    log.Infof("Inside rpc_clear_nat: Input: %s\n", string(body))
+
+    var input map[string]interface{}
+    err = json.Unmarshal(body, &input)
+    if err != nil {
+        log.Infof("UnMarshall Error %v\n", err)
+        return nil, err
+    }
+
+    var  valLst [2]string
+    var data  []byte
+
+    i := input["sonic-nat:input"].(map[string]interface{})
+    //valLst[0] = findInMap(NAT_CLEAR_PARAMS_MAP, strconv.FormatInt(int64(i["nat-param"]), 10))
+    if i["nat-param"].(string) == "1" {
+        valLst[0] = "ENTRIES"
+    } else  {
+        valLst[0] = "STATISTICS"
+    }
+    valLst[1] = "ALL"
+
+    log.Infof("JSON Marshall valLst: %v\n", valLst)
+    data, err = json.Marshal(valLst)
+
+    if err != nil {
+        log.Error("Failed to  marshal input data; err=%v", err)
+        return nil, err
+    }
+
+    err = dbs[db.ApplDB].Publish("FLUSHNATREQUEST",data)
+
+    return nil, err
+}
