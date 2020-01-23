@@ -40,12 +40,16 @@
             {% endif %}
             {% if 'session-state' in n_state %}
                 {% if n_state['session-state'] == 'ESTABLISHED' %}
-                    {% if 'afi-safis' in neighbor and 'state' in neighbor['afi-safis'] %}
-                        {% set n_afi_safi_state = neighbor['afi-safis']['state'] %}
-                        {{-(n_afi_safi_state['prefixes']['received']|string).ljust(8)}}
-                    {% else %}
-                        {{-'0'.ljust(8)}}
+                    {% set ns = namespace(rcvd_prfx = 0) %}
+                    {% if 'afi-safis' in neighbor %}
+                        {% set afi_safis = neighbor['afi-safis']['afi-safi'] %}
+                        {% for afi_safi in afi_safis %}
+                           {% if 'state' in afi_safi and 'prefixes' in afi_safi['state'] %}
+                               {% set ns.rcvd_prfx = ns.rcvd_prfx + afi_safi['state']['prefixes']['received'] %}
+                           {% endif %}
+                        {% endfor %}
                     {% endif %}
+                    {{-(ns.rcvd_prfx|string).ljust(8)}}
                 {% else %}
                     {{-(n_state['session-state']|string).ljust(8)}}
                 {% endif %}
