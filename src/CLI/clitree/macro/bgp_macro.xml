@@ -64,5 +64,13 @@ limitations under the License.
          <PARAM name="prefix" help="IPv4 prefix" ptype="IP_ADDR_MASK"></PARAM>
          <PARAM name="summary" help="Summary of BGP neighbor status" ptype="SUBCOMMAND" mode="subcommand"/>
     </MACRODEF>
+
+     <MACRODEF name="BGP_EVPN_RT_TYPES">
+        <PARAM name="ead" help="Ethernet Auto-Discovery (type-1) route" ptype="SUBCOMMAND" mode="subcommand"/>
+        <PARAM name="es" help="Ethernet Segment (type-4) route" ptype="SUBCOMMAND" mode="subcommand"/>
+        <PARAM name="macip" help="MAC-IP (type-2) route" ptype="SUBCOMMAND" mode="subcommand"/>
+        <PARAM name="multicast" help="Multicast (type-3) route" ptype="SUBCOMMAND" mode="subcommand"/>
+        <PARAM name="prefix" help="Prefix (type-5) route" ptype="SUBCOMMAND" mode="subcommand"/>
+      </MACRODEF>
 </ROOT>
 
