@@ -22,9 +22,9 @@
             {% if 'session-state' in n_state %}
                 {{-'  BGP state = '}}{{(n_state['session-state']|string)-}}
                 {% if 'last-established' in n_state %} 
-                    {{-', up for '}}{{datetimeformat(n_state['last-established'])|string}}{{'\n'}}
+                    {{-', up for '}}{{n_state['last-established']|string}}{{'\n'}}
                 {% else %}
-                    {{-', up for '}}{{'00:00:00'}}{{'\n'}}
+                    {{-', up for '}}{{'00d:00h:00m:00s'}}{{'\n'}}
                 {% endif %}
             {% else %}
                 {{-'  BGP state = Unestablished'}}
