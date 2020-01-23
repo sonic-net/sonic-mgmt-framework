@@ -1591,7 +1591,7 @@ def invoke_show_api(func, args=[]):
         if args[2] == 'ipv6':
             iptype = 6
 
-        if len(args) == 9:
+        if len(args) > 8:
             keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/neighbors/neighbor={nbr_addr}', name=args[1], identifier=IDENTIFIER, name1=NAME1, nbr_addr=args[3])
             response = api.get(keypath)
             if response.ok():
