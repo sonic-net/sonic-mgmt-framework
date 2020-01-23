@@ -238,33 +238,112 @@ func isSonicYang(path string) bool {
     return false
 }
 
-func sonicKeyDataAdd(dbIndex db.DBNum, keyNameList []string, xpathPrefix string, keyStr string, resultMap map[string]interface{}) {
-	var dbOpts db.Options
-	dbOpts = getDBOptions(dbIndex)
-	keySeparator := dbOpts.KeySeparator
-    keyValList := strings.Split(keyStr, keySeparator)
-    xfmrLogInfoAll("yang keys list - %v, xpathprefix - %v, DB-key string - %v, DB-key list after db key separator split - %v, dbIndex - %v", keyNameList, xpathPrefix, keyStr, keyValList, dbIndex) 
+func hasIpv6AddString(val string) bool {
+        re_comp := regexp.MustCompile(`(([^:]+:){6}(([^:]+:[^:]+)|(.*\..*)))|((([^:]+:)*[^:]+)?::(([^:]+:)*[^:]+)?)(%.+)?`)
+        if re_comp.MatchString(val) {
+                return true
+        }
+        return false
+}
 
-    if len(keyNameList) != len(keyValList) {
-        return
-    }
+func hasMacAddString(val string) bool {
+        re_comp := regexp.MustCompile(`([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$`)
+        if re_comp.MatchString(val) {
+                return true
+        }
+        return false
+}
+
+func isMacAddString(val string) bool {
+        re_comp := regexp.MustCompile(`^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$`)
+        if re_comp.MatchString(val) {
+                return true
+        }
+        return false
+}
+
+func getYangTerminalNodeTypeName(xpathPrefix string, keyName string) string {
+        keyXpath := xpathPrefix + "/" + keyName
+        xfmrLogInfoAll("getYangTerminalNodeTypeName keyXpath: %v ", keyXpath)
+        dbInfo, ok := xDbSpecMap[keyXpath]
+        if ok {
+                yngTerminalNdTyName := dbInfo.dbEntry.Type.Name
+                xfmrLogInfoAll("yngTerminalNdTyName: %v", yngTerminalNdTyName)
+                return yngTerminalNdTyName
+        }
+        return ""
+}
+
+
+func sonicKeyDataAdd(dbIndex db.DBNum, keyNameList []string, xpathPrefix string, keyStr string, resultMap map[string]interface{}) {
+        var dbOpts db.Options
+        var keyValList []string
+        xfmrLogInfoAll("sonicKeyDataAdd keyNameList:%v, keyStr:%v", keyNameList, keyStr)
+
+        dbOpts = getDBOptions(dbIndex)
+        keySeparator := dbOpts.KeySeparator
+        /* num of key separators will be less than number of keys */
+        if len(keyNameList) == 1 && keySeparator == ":" {
+                yngTerminalNdTyName := getYangTerminalNodeTypeName(xpathPrefix, keyNameList[0])
+                if yngTerminalNdTyName == "mac-address" && isMacAddString(keyStr) {
+                        keyValList = strings.SplitN(keyStr, keySeparator, len(keyNameList))
+                } else if (yngTerminalNdTyName == "ip-address" || yngTerminalNdTyName == "ip-prefix" || yngTerminalNdTyName == "ipv6-prefix" || yngTerminalNdTyName == "ipv6-address") && hasIpv6AddString(keyStr) {
+                        keyValList = strings.SplitN(keyStr, keySeparator, len(keyNameList))
+                } else {
+                        keyValList = strings.SplitN(keyStr, keySeparator, -1)
+			xfmrLogInfoAll("Single key non ipv6/mac address for : separator")
+                }
+        } else if (strings.Count(keyStr, keySeparator) == len(keyNameList)-1) {
+                /* number of keys will match number of key values */
+                keyValList = strings.SplitN(keyStr, keySeparator, len(keyNameList))
+        } else {
+                /* number of dbKey values more than number of keys */
+                if keySeparator == ":" && hasIpv6AddString(keyStr) {
+                        if len(keyNameList) == 2 {
+                                valList := strings.SplitN(keyStr, keySeparator, -1)
+                                /* IPV6 address is first entry */
+                                yngTerminalNdTyName := getYangTerminalNodeTypeName(xpathPrefix, keyNameList[0])
+                                if yngTerminalNdTyName == "ip-address" || yngTerminalNdTyName == "ip-prefix" || yngTerminalNdTyName == "ipv6-prefix" || yngTerminalNdTyName == "ipv6-address" || yngTerminalNdTyName == "mac-address"{
+                                        keyValList = append(keyValList, strings.Join(valList[:len(valList)-2], keySeparator))
+                                        keyValList = append(keyValList, valList[len(valList)-1])
+                                } else {
+                                        yngTerminalNdTyName := getYangTerminalNodeTypeName(xpathPrefix, keyNameList[1])
+                                        if yngTerminalNdTyName == "ip-address" || yngTerminalNdTyName == "ip-prefix" || yngTerminalNdTyName == "ipv6-prefix" || yngTerminalNdTyName == "ipv6-address" || yngTerminalNdTyName == "mac-address" {
+                                                keyValList = append(keyValList, valList[0])
+                                                keyValList = append(keyValList, strings.Join(valList[1:], keySeparator))
+                                        } else {
+                                                xfmrLogInfoAll("No ipv6 or mac address found in value. Cannot split value ")
+                                        }
+                                }
+                        } else {
+                                xfmrLogInfoAll("Number of keys : %v", len(keyNameList))
+                        }
+                } else {
+                        keyValList = strings.SplitN(keyStr, keySeparator, -1)
+                }
+        }
+        xfmrLogInfoAll("yang keys list - %v, xpathprefix - %v, DB-key string - %v, DB-key list after db key separator split - %v, dbIndex - %v", keyNameList, xpathPrefix, keyStr, keyValList, dbIndex)
+
+        if len(keyNameList) != len(keyValList) {
+                return
+        }
 
     for i, keyName := range keyNameList {
-	    keyXpath := xpathPrefix + "/" + keyName
-	    dbInfo, ok := xDbSpecMap[keyXpath]
-	    var resVal interface{}
-	    resVal = keyValList[i]
-	    if !ok || dbInfo == nil {
-		    log.Warningf("xDbSpecMap entry not found or is nil for xpath %v, hence data-type conversion cannot happen", keyXpath)
-	    } else {
-		    yngTerminalNdDtType := dbInfo.dbEntry.Type.Kind
-		    var err error
-		    resVal, _, err = DbToYangType(yngTerminalNdDtType, keyXpath, keyValList[i])
-		    if err != nil {
-			    log.Warningf("Data-type conversion unsuccessfull for xpath %v", keyXpath)
-			    resVal = keyValList[i]
-		    }
-	    }
+            keyXpath := xpathPrefix + "/" + keyName
+            dbInfo, ok := xDbSpecMap[keyXpath]
+            var resVal interface{}
+            resVal = keyValList[i]
+            if !ok || dbInfo == nil {
+                    log.Warningf("xDbSpecMap entry not found or is nil for xpath %v, hence data-type conversion cannot happen", keyXpath)
+            } else {
+                    yngTerminalNdDtType := dbInfo.dbEntry.Type.Kind
+                    var err error
+                    resVal, _, err = DbToYangType(yngTerminalNdDtType, keyXpath, keyValList[i])
+                    if err != nil {
+                            log.Warningf("Data-type conversion unsuccessfull for xpath %v", keyXpath)
+                            resVal = keyValList[i]
+                    }
+            }
 
         resultMap[keyName] = resVal
     }
