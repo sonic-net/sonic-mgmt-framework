@@ -137,6 +137,47 @@ struct lyd_node *lyd_find_node(struct lyd_node *root, const char *xpath)
 	return node;
 }
 
+int lyd_node_leafref_match_in_union(struct lys_module *module, const char *xpath, const char *value) 
+{
+	struct ly_set *set = NULL;
+	struct lys_node *node = NULL;
+	int idx = 0;
+	struct lys_node_leaflist* lNode;
+
+	if (module == NULL)
+	{
+		return -1;
+	}
+
+	set = lys_find_path(module, NULL, xpath);
+	if (set == NULL || set->number == 0) {
+		return  -1;
+	}
+
+	node = set->set.s[0];
+	ly_set_free(set);
+
+	//Now check if it matches with any leafref node
+	lNode = (struct lys_node_leaflist*)node;
+
+	for (idx = 0; idx < lNode->type.info.uni.count; idx++) 
+	{
+		if (lNode->type.info.uni.types[idx].base != LY_TYPE_LEAFREF)  
+		{
+			//Look for leafref type only
+			continue;
+		}
+
+		if (0 == lyd_validate_value((struct lys_node*)
+		    lNode->type.info.uni.types[idx].info.lref.target, value))
+		{
+			return 0;
+		}
+	}
+
+	return -1;
+}
+
 struct lys_node* lys_get_snode(struct ly_set *set, int idx) {
 	if (set == NULL || set->number == 0) {
 		return NULL;
@@ -354,6 +395,17 @@ func(yp *YParser) AddChildNode(module *YParserModule, parent *YParserNode, name 
 	}
 
 	return ret
+}
+
+//Check if value matches with leafref node in union
+func (yp *YParser) IsLeafrefMatchedInUnion(module *YParserModule, xpath, value string) bool {
+
+	if (0 == C.lyd_node_leafref_match_in_union((*C.struct_lys_module)(module),
+	C.CString(xpath), C.CString(value))) {
+		return true
+	}
+
+	return false
 }
 
 //Add child node to a parent node
