@@ -56,14 +56,7 @@ class ApiClient(object):
             'User-Agent': "CLI"
         })
 
-    @staticmethod
-    def merge_dicts(*dict_args):
-        result = {}
-        for dictionary in dict_args:
-            result.update(dictionary)
-        return result
-
-    def request(self, method, path, data=None, headers={}):
+    def request(self, method, path, data=None, headers={}, query=None):
         from requests import request, RequestException
 
         url = '{0}{1}'.format(self.api_uri, path)
@@ -78,7 +71,14 @@ class ApiClient(object):
             body = json.dumps(data)
 
         try:
-            r = request(method, url, headers=req_headers, data=body, cert=self.clientCert, verify=self.checkCertificate)
+            r = request(
+                method, 
+                url, 
+                headers=req_headers, 
+                data=body, 
+                params=query,
+                cert=self.clientCert, 
+                verify=self.checkCertificate)
             return Response(r)
         except RequestException:
             #TODO have more specific error message based
@@ -87,11 +87,13 @@ class ApiClient(object):
     def post(self, path, data={}):
         return self.request("POST", path, data)
 
-    def get(self, path):
-        return self.request("GET", path, None)
+    def get(self, path, depth=None):
+        q = self.prepare_query(depth=depth)
+        return self.request("GET", path, query=q)
 
-    def head(self, path):
-        return self.request("HEAD", path, None)
+    def head(self, path, depth=None):
+        q = self.prepare_query(depth=depth)
+        return self.request("HEAD", path, query=q)
 
     def put(self, path, data={}):
         return self.request("PUT", path, data)
@@ -101,6 +103,13 @@ class ApiClient(object):
 
     def delete(self, path):
         return self.request("DELETE", path, None)
+
+    @staticmethod
+    def prepare_query(depth=None):
+        query = {}
+        if depth != None and depth != "unbounded":
+            query["depth"] = depth
+        return query
 
     @staticmethod
     def _make_error_response(errMessage, errType='client', errTag='operation-failed'):

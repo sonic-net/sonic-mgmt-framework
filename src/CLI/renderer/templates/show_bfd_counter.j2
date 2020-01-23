@@ -71,10 +71,8 @@
 {% if vars.vrf != ''%}
 {% set peerkey = '%s vrf %s'|format(peerkey, vars.vrf)%}
 {% endif %}
-{% if 'openconfig-bfd-ext:single-hop-state' in json_output %}
 {% if vars.interface != ''%}
 {% set peerkey = '%s interface %s'|format(peerkey, vars.interface)%}
-{% endif %}
 {% endif %}
 {{'%4s%s'|format(' ', peerkey)}}
 {{'%8sControl packet input: %s packets'|format(' ', vars.controlPktIn)}}

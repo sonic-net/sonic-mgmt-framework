@@ -644,7 +644,7 @@ func addTableNamesForMustExp() {
 					}
 					//Table name should appear like "../VLAN_MEMBER_LIST/tagging_mode' or '
 					// "/prt:PORT/prt:ifname"
-					re := regexp.MustCompile(fmt.Sprintf(".*[/]([-_a-zA-Z]*:)?%s_LIST[\\[/]", tblNameSrch))
+					re := regexp.MustCompile(fmt.Sprintf(".*[/]([-_a-zA-Z]*:)?%s_LIST[\\[/]?", tblNameSrch))
 					matches := re.FindStringSubmatch(mustExp.expr)
 					if (len(matches) > 0) {
 						//stores the table name 

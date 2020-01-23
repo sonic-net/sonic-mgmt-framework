@@ -35,7 +35,7 @@ limitations under the License.
             optional = "true"
             >
         </PARAM>
-        <ACTION builtin="clish_pyobj">sonic_cli_acl get_openconfig_acl_acl_acl_sets ${access-list-name} ACL_IPV4 show_access_list.j2 ${__full_line}</ACTION>
+        <ACTION builtin="clish_pyobj">sonic_cli_acl get_openconfig_acl_acl_acl_sets ${access-list-name} ACL_IPV4 show_access_list.j2</ACTION>
     </COMMAND>
 
 
@@ -44,7 +44,7 @@ limitations under the License.
          name="show ip access-group"
          help="Show IPv4 access-group information"
 		 >
-         <ACTION builtin="clish_pyobj">sonic_cli_acl get_openconfig_acl_acl_interfaces show_access_group.j2 ${__full_line}</ACTION>
+         <ACTION builtin="clish_pyobj">sonic_cli_acl get_openconfig_acl_acl_interfaces show_access_group.j2</ACTION>
     </COMMAND>
 
 </VIEW>
