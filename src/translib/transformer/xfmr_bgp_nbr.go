@@ -89,6 +89,23 @@ var bgp_nbr_tbl_xfmr TableXfmrFunc = func (inParams XfmrParams)  ([]string, erro
     } else {
         if(inParams.dbDataMap != nil) {
             err = errors.New("Opertational error")
+            nbrKeys, _ := inParams.d.GetKeys(&db.TableSpec{Name:"BGP_NEIGHBOR"})
+            if len(nbrKeys) > 0 {
+                if _, ok := (*inParams.dbDataMap)[db.ConfigDB]["BGP_NEIGHBOR"]; !ok {
+                    (*inParams.dbDataMap)[db.ConfigDB]["BGP_NEIGHBOR"] = make(map[string]db.Value)
+                }
+                for _, nkey := range nbrKeys {
+                    if nkey.Get(0) != vrf {
+                        continue
+                    }
+
+                    key = nkey.Get(0) + "|" + nkey.Get(1)
+                    if _, ok := (*inParams.dbDataMap)[db.ConfigDB]["BGP_NEIGHBOR"][key]; !ok {
+                        (*inParams.dbDataMap)[db.ConfigDB]["BGP_NEIGHBOR"][key] = db.Value{Field: make(map[string]string)}
+                    }
+                }
+            }
+
             var ok bool
             cmd := "show ip bgp vrf" + " " + vrf + " " + "summary json"
             bgpNeighOutputJson, cmd_err := exec_vtysh_cmd (cmd)
@@ -116,7 +133,12 @@ var bgp_nbr_tbl_xfmr TableXfmrFunc = func (inParams XfmrParams)  ([]string, erro
                 (*inParams.dbDataMap)[db.ConfigDB]["BGP_NEIGHBOR"] = make(map[string]db.Value)
             }
 
-            for peer, _ := range peers {
+            for peer, _peerData := range peers {
+                peerData := _peerData.(map[string]interface {})
+                if _, ok := peerData["dynamicPeer"].(bool) ; !ok {
+                  continue
+                }
+
                 key = vrf + "|" + peer
                 log.Info("bgp_nbr_tbl_xfmr: key - ", key)
                 if _, ok := (*inParams.dbDataMap)[db.ConfigDB]["BGP_NEIGHBOR"][key]; !ok {
