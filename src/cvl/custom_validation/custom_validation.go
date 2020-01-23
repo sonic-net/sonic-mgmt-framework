@@ -22,20 +22,21 @@ package custom_validation
 import (
 	"github.com/go-redis/redis"
 	"strings"
+	"fmt"
 	)
 
 //Custom validation code for sonic-acl.yang//
 /////////////////////////////////////////////
-//Path : /sonic-acl/ACL_TABLE/ACL_TABLE_LIST
-//Purpose: Allow maximum 1024 ACL tables
+//Path : /sonic-acl/ACL_RULE/ACL_RULE_LIST
+//Purpose: Allow maximum 65536 ACL rules 
 //vc : Custom Validation Context
 //Returns -  CVL Error object
-const MAX_ACL_TABLE_INSTANCES = 1024
-func (t *CustomValidation) ValidateMaxAclTable(
+const MAX_ACL_RULE_INSTANCES = 65536
+func (t *CustomValidation) ValidateMaxAclRule(
 	vc *CustValidationCtxt) CVLErrorInfo {
 
 	var nokey []string
-	ls := redis.NewScript(`return #redis.call('KEYS', "ACL_TABLE|*")`)
+	ls := redis.NewScript(`return #redis.call('KEYS', "ACL_RULE|*")`)
 
 	//Get current coutnt from Redis
 	redisEntries, err := ls.Run(vc.RClient, nokey).Result()
@@ -47,16 +48,18 @@ func (t *CustomValidation) ValidateMaxAclTable(
 	//Get count from user request
 	for idx := 0; idx < len(vc.ReqData); idx++ {
 		if (vc.ReqData[idx].VOp == OP_CREATE) &&
-		(strings.HasPrefix(vc.ReqData[idx].Key, "ACL_TABLE|")) {
+		(strings.HasPrefix(vc.ReqData[idx].Key, "ACL_RULE|")) {
 			aclTblCount = aclTblCount + 1
 		}
 	}
 
-	if (aclTblCount > MAX_ACL_TABLE_INSTANCES) {
+	if (aclTblCount > MAX_ACL_RULE_INSTANCES) {
 		return CVLErrorInfo{
 			ErrCode: CVL_SEMANTIC_ERROR,
-			TableName: "ACL_TABLE",
-			CVLErrDetails : "Max table count exceeded",
+			ErrAppTag: "too-many-elements",
+			Msg: fmt.Sprintf("Max elements limit %d reached", MAX_ACL_RULE_INSTANCES),
+			CVLErrDetails: "Config Validation Syntax Error",
+			TableName: "ACL_RULE",
 		}
 	}
 
