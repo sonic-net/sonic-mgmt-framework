@@ -23,6 +23,7 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"log"
+	"net/http"
 	"net/http/httptest"
 	"testing"
 )
@@ -135,6 +136,108 @@ func testYanglibVer(t *testing.T, requestAcceptType, expectedContentType string)
 	}
 }
 
+var ylibRouter http.Handler
+
+func TestYanglibHandler(t *testing.T) {
+	h := func(w http.ResponseWriter, r *http.Request) {
+		rc, r := GetContext(r)
+		rc.Produces.Add("application/yang-data+json")
+		Process(w, r)
+	}
+
+	AddRoute("ylibTop", "GET", "/restconf/data/ietf-yang-library:modules-state", h)
+	AddRoute("ylibMset", "GET", "/restconf/data/ietf-yang-library:modules-state/module-set-id", h)
+	AddRoute("ylibOne", "GET", "/restconf/data/ietf-yang-library:modules-state/module={name},{revision}", h)
+	AddRoute("ylibNS", "GET", "/restconf/data/ietf-yang-library:modules-state/module={name},{revision}/namespace", h)
+
+	ylibRouter = NewRouter()
+
+	t.Run("all", testYlibGetAll)
+	t.Run("mset", testYlibGetMsetID)
+	t.Run("1yang", testYlibGetOne)
+	t.Run("1attr", testYlibGetOneAttr)
+	t.Run("1bad", testYlibGetInvalid)
+
+	ylibRouter = nil
+}
+
+func testYlibGetAll(t *testing.T) {
+	status, data := getYanglibInfo("", "", "")
+	verifyRespStatus(t, status, 200)
+	v := data["ietf-yang-library:modules-state"]
+	if v1, ok := v.(map[string]interface{}); ok {
+		v = v1["module"]
+	}
+	if v1, ok := v.([]interface{}); !ok || len(v1) == 0 {
+		t.Fatalf("Server returned incorrect info.. %v", data)
+	}
+}
+
+func testYlibGetMsetID(t *testing.T) {
+	status, data := getYanglibInfo("", "", "module-set-id")
+	verifyRespStatus(t, status, 200)
+	if len(data) != 1 || data["ietf-yang-library:module-set-id"] == nil {
+		t.Fatalf("Server returned incorrect info.. %v", data)
+	}
+}
+
+func testYlibGetOne(t *testing.T) {
+	status, data := getYanglibInfo("ietf-yang-library", "2016-06-21", "")
+	verifyRespStatus(t, status, 200)
+
+	var m map[string]interface{}
+	if v, ok := data["ietf-yang-library:module"].([]interface{}); ok && len(v) == 1 {
+		m, ok = v[0].(map[string]interface{})
+	}
+
+	if m["name"] != "ietf-yang-library" ||
+		m["revision"] != "2016-06-21" ||
+		m["namespace"] != "urn:ietf:params:xml:ns:yang:ietf-yang-library" ||
+		m["conformance-type"] != "implement" {
+		t.Fatalf("Server returned incorrect info.. %v", data)
+	}
+}
+
+func testYlibGetOneAttr(t *testing.T) {
+	status, data := getYanglibInfo("ietf-yang-library", "2016-06-21", "namespace")
+	verifyRespStatus(t, status, 200)
+	if data["ietf-yang-library:namespace"] != "urn:ietf:params:xml:ns:yang:ietf-yang-library" {
+		t.Fatalf("Server returned incorrect info.. %v", data)
+	}
+}
+
+func testYlibGetInvalid(t *testing.T) {
+	status, _ := getYanglibInfo("unknown-yang", "0000-00-00", "")
+	verifyRespStatus(t, status, 404)
+}
+
+func verifyRespStatus(t *testing.T, status, expStatus int) {
+	if status != expStatus {
+		t.Fatalf("Expecting response status %d; got %d", expStatus, status)
+	}
+}
+
+func getYanglibInfo(name, rev, attr string) (int, map[string]interface{}) {
+	u := "/restconf/data/ietf-yang-library:modules-state"
+	if name != "" && rev != "" {
+		u += ("/module=" + name + "," + rev)
+	}
+	if attr != "" {
+		u += ("/" + attr)
+	}
+
+	w := httptest.NewRecorder()
+	ylibRouter.ServeHTTP(w, httptest.NewRequest("GET", u, nil))
+
+	if w.Code != 200 {
+		return w.Code, nil
+	}
+
+	data := make(map[string]interface{})
+	json.Unmarshal(w.Body.Bytes(), &data)
+	return w.Code, data
+}
+
 func TestCapability_1(t *testing.T) {
 	testCapability(t, "/restconf/data/ietf-restconf-monitoring:restconf-state/capabilities")
 }
@@ -170,7 +273,46 @@ func testCapability(t *testing.T, path string) {
 		cap = top["ietf-restconf-monitoring:capability"]
 	}
 
-	if c, ok := cap.([]interface{}); !ok || len(c) != 1 {
-		log.Fatalf("Could not parse capability info: %v", w.Body.String())
+	if c, ok := cap.([]interface{}); !ok || len(c) != 2 {
+		log.Fatalf("Could not parse capability info: %s", w.Body.String())
+	}
+}
+
+func TestQuery(t *testing.T) {
+	t.Run("none", testQuery("GET", "", 0, translibArgs{}))
+	t.Run("unknown", testQuery("GET", "one=1", 400, translibArgs{}))
+	t.Run("depth_def", testQuery("GET", "depth=unbounded", 0, translibArgs{depth: 0}))
+	t.Run("depth_0", testQuery("GET", "depth=0", 400, translibArgs{}))
+	t.Run("depth_1", testQuery("GET", "depth=1", 0, translibArgs{depth: 1}))
+	t.Run("depth_101", testQuery("GET", "depth=101", 0, translibArgs{depth: 101}))
+	t.Run("depth_65535", testQuery("GET", "depth=65535", 0, translibArgs{depth: 65535}))
+	t.Run("depth_65536", testQuery("GET", "depth=65536", 400, translibArgs{}))
+	t.Run("depth_bad", testQuery("GET", "depth=bad", 400, translibArgs{}))
+	t.Run("depth_extra", testQuery("GET", "depth=1&extra=1", 400, translibArgs{}))
+	t.Run("depth_head", testQuery("HEAD", "depth=5", 0, translibArgs{depth: 5}))
+	t.Run("depth_head_bad", testQuery("HEAD", "depth=bad", 400, translibArgs{}))
+	t.Run("depth_patch", testQuery("PATCH", "depth=1", 400, translibArgs{}))
+}
+
+func testQuery(method, queryStr string, expStatus int, expData translibArgs) func(*testing.T) {
+	return func(t *testing.T) {
+		r := httptest.NewRequest(method, "/test?"+queryStr, nil)
+		p := translibArgs{}
+		err := parseRestconfQueryParams(&p, r)
+
+		if expStatus != 0 {
+			if e1, ok := err.(httpErrorType); ok && e1.status == expStatus {
+				return // success
+			}
+			t.Fatalf("Failed to process query '%s'; expected err %d, got=%v", queryStr, expStatus, err)
+		}
+
+		if err != nil {
+			t.Fatalf("Failed to process query '%s'; err=%v", queryStr, err)
+		}
+		if expData.depth != p.depth {
+			t.Errorf("Testcase failed for query '%s'", queryStr)
+			t.Fatalf("'depth' mismatch; expecting %d, found %d", expData.depth, p.depth)
+		}
 	}
 }

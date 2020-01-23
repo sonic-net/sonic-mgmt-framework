@@ -33,6 +33,8 @@ import (
 	"github.com/openconfig/goyang/pkg/yang"
 	"github.com/openconfig/ygot/ygot"
 	"github.com/openconfig/ygot/ytypes"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 func getYangPathFromUri(uri string) (string, error) {
@@ -103,9 +105,14 @@ func generateGetResponsePayload(targetUri string, deviceObj *ocbinds.Device, ygo
 	}
 	parentNode := parentNodeList[0].Data
 
-	currentNodeList, err := ytypes.GetNode(ygSchema.RootSchema(), deviceObj, path, &(ytypes.GetPartialKeyMatch{}))
-	if err != nil {
-		return payload, err
+	currentNodeList, ygerr := ytypes.GetNode(ygSchema.RootSchema(), deviceObj, path, &(ytypes.GetPartialKeyMatch{}))
+	if ygerr != nil {
+		log.Errorf("Error from ytypes.GetNode: %v", ygerr)
+		if status.Convert(ygerr).Code() == codes.NotFound {
+			return payload, tlerr.NotFound("Resource not found")
+		} else {
+			return payload, ygerr
+		}
 	}
 	if len(currentNodeList) == 0 {
 		return payload, tlerr.NotFound("Resource not found")

@@ -1,20 +1,68 @@
+{% set mode, minlinks, fallback = "LACP", "1", "Disabled" %}
+
+
+{% if json_output['portchannel']['sonic-portchannel:LAG_TABLE'] and json_output['portchannel']['sonic-portchannel:LAG_TABLE']['LAG_TABLE_LIST'] %}
+{% for po_intf in json_output['portchannel']['sonic-portchannel:LAG_TABLE']['LAG_TABLE_LIST'] %}
+
+
+{% if json_output['portchannel']['sonic-portchannel:PORTCHANNEL'] and json_output['portchannel']['sonic-portchannel:PORTCHANNEL']['PORTCHANNEL_LIST'] %}
+{% for po_conf_intf in json_output['portchannel']['sonic-portchannel:PORTCHANNEL']['PORTCHANNEL_LIST'] %}
+
+{% if po_conf_intf['name'] == po_intf['lagname'] %}
+
+
+{% if po_conf_intf['name'] == po_intf['lagname'] and po_conf_intf['static'] == "true" %}
+{% set mode = "Static" %}
+{% endif %}
+
+{% if po_conf_intf['name'] == po_intf['lagname'] and 'min_links' in po_conf_intf %}
+{% set minlinks = po_conf_intf['min_links'] %}
+{% endif %}
+
+
+{% if po_conf_intf['name'] == po_intf['lagname'] and 'fallback' in po_conf_intf %}
+{% set fallback = "Enabled"  %}
+{% endif %}
+
+{{po_intf['lagname']}} is {{po_intf['admin_status']}}, line protocol is {{po_intf['oper_status']}}, mode {{mode}}
+Minimum number of links to bring PortChannel up is {{minlinks}}
+Fallback: {{fallback}}
+MTU {{po_intf['mtu']}}
+
+{% endif %}
+
+
+{% endfor %}
+{% endif %}
+
+
+
 {% if json_output['lacp']['openconfig-lacp:interfaces'] and json_output['lacp']['openconfig-lacp:interfaces']['interface']%}
 {% for intf in json_output['lacp']['openconfig-lacp:interfaces']['interface'] %}
-{% if json_output['portchannel']['sonic-portchannel:LAG_TABLE'] and json_output['portchannel']['sonic-portchannel:LAG_TABLE']['LAG_TABLE_LIST'] %}
 
-{% for po_intf in json_output['portchannel']['sonic-portchannel:LAG_TABLE']['LAG_TABLE_LIST'] %}
+
 {% if intf['name'] == po_intf['lagname'] %}
-{{po_intf['lagname']}} is {{po_intf['admin_status']}}, line protocol is {{po_intf['oper_status']}}, mode lacp
-MTU {{po_intf['mtu']}}
+
+
+{% if 'state' in intf %}
 LACP mode {{intf['state']['lacp-mode']}} interval {{intf['state']['interval']}} priority {{intf['state']['system-priority']}} address {{intf['state']['system-id-mac']}}
+{% endif %}
+
+
 {% if intf['members'] %}
 {% for mem in intf['members']['member'] %}
+
+{% if mem['state']['openconfig-interfaces-ext:selected'] == False %}
 Members in this channel: {{mem['interface'] }}
-selected {{mem['state']['openconfig-interfaces-ext:selected']}}
+{% else %}
+Members in this channel: {{mem['interface'] }}(Selected)
+{% endif %}
+
 LACP Actor port {{mem['state']['port-num']}}  address {{mem['state']['system-id']}} key {{mem['state']['oper-key']}}
 LACP Partner port {{mem['state']['partner-port-num']}}  address {{mem['state']['partner-id']}} key {{mem['state']['partner-key']}}
 {% endfor %}
 {% endif %}
+
 {% if po_intf['counters'] %}
 {%set counters = po_intf['counters']['openconfig-interfaces:counters'] %}
 Last clearing of "show interface" counters: {{ datetimeformat(counters['last-clear']) }}
@@ -28,10 +76,16 @@ Output statistics:
 {{counters['out-multicast-pkts']}} Multicasts, {{counters['out-broadcast-pkts']}} Broadcasts, {{counters['out-unicast-pkts']}} Unicasts
 {{counters['out-errors']}} error, {{counters['out-discards']}} discarded
 {% endif %}
+
+
 {% endif %}
-{% endfor %}
-{% endif %}
+
 
 {% endfor %}
 {% endif %}
+
+
+{% endfor %}
+{% endif %}
+
 

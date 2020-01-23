@@ -79,11 +79,11 @@ var xYangSpecMap  map[string]*yangXpathInfo
 var xDbSpecMap    map[string]*dbInfo
 var xDbSpecOrdTblMap map[string][]string //map of module-name to ordered list of db tables { "sonic-acl" : ["ACL_TABLE", "ACL_RULE"] }
 var xDbSpecTblSeqnMap  map[string]*sonicTblSeqnInfo
-var xMdlCpbltMap  map[string]*mdlInfo
+var xMdlCpbltMap       map[string]*mdlInfo
+var sonicOrdTblListMap map[string][]string
 
 /* Add module name to map storing model info for model capabilities */
 func addMdlCpbltEntry(yangMdlNm string) {
-       log.Info("Received yang model name to be added to model info map for gnmi ", yangMdlNm)
        if xMdlCpbltMap == nil {
                xMdlCpbltMap = make(map[string]*mdlInfo)
        }
@@ -100,7 +100,6 @@ func addMdlCpbltEntry(yangMdlNm string) {
 
 /* Add version and organization info for model capabilities into map */
 func addMdlCpbltData(yangMdlNm string, version string, organization string) {
-	log.Infof("Adding version %v and organization %v for yang module %v", version, organization, yangMdlNm)
 	if xMdlCpbltMap == nil {
                xMdlCpbltMap = make(map[string]*mdlInfo)
         }
@@ -325,8 +324,14 @@ func yangToDbMapBuild(entries map[string]*yang.Entry) {
 	// Fill the ordered map of child tables list for oc yangs
 	updateSchemaOrderedMap(module, e)
     }
-    mapPrint(xYangSpecMap, "/tmp/fullSpec.txt")
-    dbMapPrint("/tmp/dbSpecMap.txt")
+
+	sonicOrdTblListMap = make(map[string][]string)
+	jsonfile := YangPath + TblInfoJsonFile
+	xlateJsonTblInfoLoad(sonicOrdTblListMap, jsonfile)
+
+	mapPrint(xYangSpecMap, "/tmp/fullSpec.txt")
+	dbMapPrint("/tmp/dbSpecMap.txt")
+	xDbSpecTblSeqnMapPrint("/tmp/dbSpecTblSeqnMap.txt")
 }
 
 /* Fill the map with db details */
@@ -446,7 +451,6 @@ func dbMapBuild(entries []*yang.Entry) {
 		moduleNm := e.Name
 		dbMapFill("", "", moduleNm, xDbSpecMap, e)
 	}
-	xDbSpecTblSeqnMapPrint("/tmp/dbSpecTblSeqnMap.txt")
 }
 
 func childToUpdateParent( xpath string, tableName string) {
@@ -604,7 +608,6 @@ func annotDbSpecMapFill(xDbSpecMap map[string]*dbInfo, dbXpath string, entry *ya
 		}
 		dbXpathData, ok = xDbSpecMap[rpcName[1]]
 		if ok && dbXpathData.fieldType == "rpc" {
-			log.Infof("Annotate dbSpecMap for (%v)(rpcName:%v)\r\n", dbXpath, listName[1])
 			if entry != nil && len(entry.Exts) > 0 {
 				for _, ext := range entry.Exts {
 					dataTagArr := strings.Split(ext.Keyword, ":")
@@ -783,7 +786,16 @@ func xDbSpecTblSeqnMapPrint(fname string) {
                 }
                 fmt.Fprintf(fp, "                                }\r\n")
                 fmt.Fprintf(fp, "}\r\n")
-        }
+			}
+			fmt.Fprintf (fp, "-----------------------------------------------------------------\r\n")
+			fmt.Fprintf (fp, "OrderedTableList from json: \r\n")
+
+			for tbl, tlist := range sonicOrdTblListMap {
+				fmt.Fprintf(fp, "    %v : %v\r\n", tbl, tlist)
+			}
+			fmt.Fprintf (fp, "-----------------------------------------------------------------\r\n")
+			return
+
 }
 
 func updateSchemaOrderedMap(module string, entry *yang.Entry) {

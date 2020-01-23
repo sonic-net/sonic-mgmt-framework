@@ -8,23 +8,26 @@
 ]>
 <CLISH_MODULE xmlns="http://www.dellemc.com/sonic/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xi="http://www.w3.org/2001/XInclude" xsi:schemaLocation="http://www.dellemc.com/sonic/XMLSchema http://www.dellemc.com/sonic/XMLSchema/clish.xsd">
   <VIEW name="enable-view">
-    <COMMAND name="show ztp-status" help="Show ztp status">
+    <COMMAND name="show ztp-status" help="Show ZTP status">
       <ACTION> python $SONIC_CLI_ROOT/sonic-cli-ztp.py get_openconfig_ztp_ztp_state show_ztp.j2 ${__full_line} </ACTION>
       <xi:include href="include/pipe.xml"/>
     </COMMAND>
   </VIEW>
   <VIEW name="configure-view">
-    <COMMAND name="no ztp" help="Ztp control commands">
+    <COMMAND name="no ztp" help="Administratively disable ZTP">
       <ACTION builtin="clish_nop"/>
     </COMMAND>
-    <COMMAND name="no ztp enable" help="Ztp disable commands">
+    <COMMAND name="no ztp enable" help="Administratively disable ZTP">
       <ACTION> python $SONIC_CLI_ROOT/sonic-cli-ztp.py patch_openconfig_ztp_ztp_config ${__full_line} </ACTION>
     </COMMAND>
-    <COMMAND name="ztp" help="Ztp control commands">
+    <COMMAND name="ztp" help="ZTP configuration commands">
       <ACTION builtin="clish_nop"/>
     </COMMAND>
-    <COMMAND name="ztp enable" help="Ztp enable command" >
+    <COMMAND name="ztp enable" help="Administratively enable ZTP">
       <ACTION> python $SONIC_CLI_ROOT/sonic-cli-ztp.py patch_openconfig_ztp_ztp_config ${__full_line} </ACTION>
+    </COMMAND>
+    <COMMAND name="ztp run" help="Restart ZTP">
+      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-ztp.py patch_openconfig_ztp_ztp_run ${__full_line} </ACTION>
     </COMMAND>
   </VIEW>
 </CLISH_MODULE>

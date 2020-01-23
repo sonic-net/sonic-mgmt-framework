@@ -8,6 +8,7 @@ module ietf-ptp-annot {
     import sonic-extensions { prefix sonic-ext; }
     import ietf-interfaces { prefix if; }
     import ietf-ptp { prefix ptp; }
+    import ietf-ptp-ext { prefix ptp-ext; }
 
 	deviation /ptp:ptp {
 		deviate add {
@@ -112,6 +113,12 @@ module ietf-ptp-annot {
 		}
 	}
 
+	deviation /ptp:ptp/ptp:instance-list/ptp:port-ds-list/ptp:port-number {
+		deviate add {
+			sonic-ext:field-name "NONE";
+		}
+	}
+
 	deviation /ptp:ptp/ptp:instance-list/ptp:port-ds-list/ptp:port-state {
 		deviate add {
 			sonic-ext:field-transformer "ptp_port_state_xfmr";
@@ -121,6 +128,12 @@ module ietf-ptp-annot {
 	deviation /ptp:ptp/ptp:instance-list/ptp:port-ds-list/ptp:delay-mechanism {
 		deviate add {
 			sonic-ext:field-transformer "ptp_delay_mech_xfmr";
+		}
+	}
+
+	deviation /ptp:ptp/ptp:instance-list/ptp:port-ds-list/ptp-ext:unicast-table {
+		deviate add {
+			sonic-ext:field-transformer "ptp_unicast_table_xfmr";
 		}
 	}
 
@@ -135,6 +148,12 @@ module ietf-ptp-annot {
 			sonic-ext:table-name "PTP_CLOCK";
 			sonic-ext:key-transformer "ptp_entry_key_xfmr";
 			sonic-ext:db-name "STATE_DB";
+		}
+	}
+
+	deviation /ptp:ptp/ptp:instance-list/ptp:default-ds/ptp-ext:clock-type {
+		deviate add {
+			sonic-ext:field-name "clock-type";
 		}
 	}
 
@@ -156,6 +175,43 @@ module ietf-ptp-annot {
 		}
 	}
 
+	deviation /ptp:ptp/ptp:instance-list/ptp:default-ds/ptp-ext:network-transport {
+		deviate add {
+			sonic-ext:field-transformer "ptp_network_transport_xfmr";
+		}
+	}
+
+	deviation /ptp:ptp/ptp:instance-list/ptp:default-ds/ptp:domain-number {
+		deviate add {
+			sonic-ext:field-transformer "ptp_domain_number_xfmr";
+		}
+	}
+
+	deviation /ptp:ptp/ptp:instance-list/ptp:default-ds/ptp-ext:clock-type {
+		deviate add {
+			sonic-ext:field-transformer "ptp_clock_type_xfmr";
+		}
+	}
+
+	deviation /ptp:ptp/ptp:instance-list/ptp:default-ds/ptp-ext:domain-profile {
+		deviate add {
+			sonic-ext:field-transformer "ptp_domain_profile_xfmr";
+		}
+	}
+
+	deviation /ptp:ptp/ptp:instance-list/ptp:default-ds/ptp-ext:unicast-multicast {
+		deviate add {
+			sonic-ext:field-transformer "ptp_unicast_multicast_xfmr";
+		}
+	}
+
+	deviation /ptp:ptp/ptp:instance-list/ptp:default-ds/ptp-ext:udp6-scope {
+		deviate add {
+			sonic-ext:field-transformer "ptp_udp6_scope_xfmr";
+		}
+	}
+
+	/* currently unsupported
 	deviation /ptp:ptp/ptp:transparent-clock-port-ds-list {
 		deviate add {
 			sonic-ext:table-name "PTP_TC_PORT";
@@ -187,5 +243,6 @@ module ietf-ptp-annot {
 			sonic-ext:field-transformer "ptp_delay_mech_xfmr";
 		}
 	}
+	*/
 
 }

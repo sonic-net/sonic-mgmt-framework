@@ -1,0 +1,87 @@
+{% set vars = {'sessionId': ""} %}
+{% if vars.update({'localAddress': "unknown"}) %}{% endif %}
+{% if vars.update({'peerAddress': ""}) %}{% endif %}
+{% if vars.update({'status': ""}) %}{% endif %}
+{% if vars.update({'vrf': ""}) %}{% endif %}
+{% if vars.update({'interface': ""}) %}{% endif %}
+
+{% if vars.update({'controlPktIn': "0"}) %}{% endif %}
+{% if vars.update({'controlPktOut': "0"}) %}{% endif %}
+{% if vars.update({'echoPktIn': "0"}) %}{% endif %}
+{% if vars.update({'echoPktOut': "0"}) %}{% endif %}
+{% if vars.update({'sessionUp': "0"}) %}{% endif %}
+{% if vars.update({'sessionDown': "0"}) %}{% endif %}
+{% if vars.update({'zebraNotif': "0"}) %}{% endif %}
+{% if 'openconfig-bfd-ext:single-hop-state' in json_output or 'openconfig-bfd-ext:multi-hop-state' in json_output %}
+    {% if 'openconfig-bfd-ext:single-hop-state' in json_output %}
+        {% set sessions = json_output['openconfig-bfd-ext:single-hop-state'] %}
+    {% endif %}
+    {% if 'openconfig-bfd-ext:multi-hop-state' in json_output %}
+        {% set sessions = json_output['openconfig-bfd-ext:multi-hop-state'] %}
+    {% endif %}
+    {% if sessions %}
+        {% for peer in sessions %}
+            {% if "local-discriminator" in peer %}
+                {% if vars.update({'sessionId':peer['local-discriminator']}) %}{% endif %}
+            {% endif %}
+            {% if "local-address" in peer %}
+                {% if vars.update({'localAddress':peer['local-address']}) %}{% endif %}
+            {% endif %}
+            {% if "remote-address" in peer %}
+                {% if vars.update({'peerAddress':peer['remote-address']}) %}{% endif %}
+            {% endif %}
+            {% if "session-state" in peer %}
+                {% if vars.update({'status':peer['session-state']}) %}{% endif %}
+            {% endif %}
+            {% if "vrf" in peer %}
+                {% if vars.update({'vrf':peer['vrf']}) %}{% endif %}
+            {% endif %}
+            {% if "interface" in peer %}
+                {% if vars.update({'interface':peer['interface']}) %}{% endif %}
+            {% endif %}
+            {% if "async" in peer %}
+                {% if "transmitted-packets" in peer['async'] %}
+                    {% if vars.update({'controlPktOut':peer['async']['transmitted-packets']}) %}{% endif %}
+                {% endif %}
+                {% if "received-packets" in peer['async'] %}
+                    {% if vars.update({'controlPktIn':peer['async']['received-packets']}) %}{% endif %}
+                {% endif %}
+                {% if "up-transitions" in peer['async'] %}
+                    {% if vars.update({'sessionUp':peer['async']['up-transitions']}) %}{% endif %}
+                {% endif %}
+            {% endif %}
+            {% if "echo" in peer %}
+                {% if "transmitted-packets" in peer['echo'] %}
+                    {% if vars.update({'echoPktOut':peer['echo']['transmitted-packets']}) %}{% endif %}
+                {% endif %}
+                {% if "received-packets" in peer['echo'] %}
+                    {% if vars.update({'echoPktIn':peer['echo']['received-packets']}) %}{% endif %}
+                {% endif %}
+            {% endif %}
+            {% if "failure-transitions" in peer %}
+                {% if vars.update({'sessionDown':peer['failure-transitions']}) %}{% endif %}
+            {% endif %}        
+{% set peerkey = 'peer %s'|format(vars.peerAddress)%}
+{% if 'openconfig-bfd-ext:multi-hop-state' in json_output %}
+{% set peerkey = '%s %s'|format(peerkey, 'multihop')%}
+{% endif %}
+{% if vars.localAddress != 'null'%}
+{% set peerkey = '%s local-address %s'|format(peerkey, vars.localAddress)%}
+{% endif %}
+{% if vars.vrf != ''%}
+{% set peerkey = '%s vrf %s'|format(peerkey, vars.vrf)%}
+{% endif %}
+{% if vars.interface != ''%}
+{% set peerkey = '%s interface %s'|format(peerkey, vars.interface)%}
+{% endif %}
+{{'%4s%s'|format(' ', peerkey)}}
+{{'%8sControl packet input: %s packets'|format(' ', vars.controlPktIn)}}
+{{'%8sControl packet output: %s packets'|format(' ', vars.controlPktOut)}}
+{{'%8sEcho packet input: %s packets'|format(' ', vars.echoPktIn)}}
+{{'%8sEcho packet output: %s packets'|format(' ', vars.echoPktOut)}}
+{{'%8sSession up events: %s'|format(' ', vars.sessionUp)}}
+{{'%8sSession down events: %s'|format(' ', vars.sessionDown)}}
+{{'%8sZebra notifications: %s'|format(' ', vars.zebraNotif)}}
+        {% endfor %}
+    {% endif %}
+{% endif %}

@@ -692,7 +692,7 @@ limitations under the License.
     <PTYPE
         name="INT8_RANGE"
         method="integer"
-        pattern="-128..128"
+        pattern="-128..127"
         help="" />
     <!--=======================================================-->
   <PTYPE 
@@ -1011,4 +1011,5 @@ limitations under the License.
         help="Aging interval"
         />
     <!--=======================================================-->
+
 </CLISH_MODULE>

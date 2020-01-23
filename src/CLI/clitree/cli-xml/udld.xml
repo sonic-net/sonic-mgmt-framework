@@ -25,17 +25,13 @@
         <!-- show udld global -->
         <COMMAND name = "show udld global"
             help = "Show UDLD global level information">
-            <ACTION>
-                python $SONIC_CLI_ROOT/sonic-cli-udld.py get_sonic_udld_sonic_udld_udld_udld_list show_udld_global.j2&#xA;
-            </ACTION>
+            <ACTION builtin="clish_pyobj">sonic_cli_udld get_sonic_udld_sonic_udld_udld_udld_list show_udld_global.j2</ACTION>
         </COMMAND>
 
         <!-- show udld neighbors -->
         <COMMAND name = "show udld neighbors"
             help = "Show UDLD neighbors information">
-            <ACTION>
-                python $SONIC_CLI_ROOT/sonic-cli-udld.py get_list_sonic_udld_sonic_udld_udld_port_neigh_table_udld_port_neigh_table_list show_udld_neighbor.j2&#xA;
-            </ACTION>
+            <ACTION builtin="clish_pyobj">sonic_cli_udld get_list_sonic_udld_sonic_udld_udld_port_neigh_table_udld_port_neigh_table_list show_udld_neighbor.j2</ACTION>
         </COMMAND>
 
         <!-- show udld interface <ifname> -->
@@ -46,15 +42,11 @@
                 help = "Interface name"
                 ptype = "STRING">
             </PARAM>
-            <ACTION>
-                python $SONIC_CLI_ROOT/sonic-cli-udld.py get_sonic_udld_sonic_udld_udld_port_neigh_table_udld_port_neigh_table_list show_udld_interface.j2 ${interface-name}&#xA;
-            </ACTION>
+            <ACTION builtin="clish_pyobj">sonic_cli_udld get_sonic_udld_sonic_udld_udld_port_neigh_table_udld_port_neigh_table_list show_udld_interface.j2 ${interface-name}</ACTION>
         </COMMAND>
 
         <COMMAND name = "show udld statistics" help = "Show UDLD statistics">
-            <ACTION>
-                python $SONIC_CLI_ROOT/sonic-cli-udld.py get_list_sonic_udld_sonic_udld_udld_port_table_udld_port_table_list show_udld_stats.j2&#xA;
-            </ACTION>
+            <ACTION builtin="clish_pyobj">sonic_cli_udld get_list_sonic_udld_sonic_udld_udld_port_table_udld_port_table_list show_udld_stats.j2</ACTION>
         </COMMAND>
         <!-- show udld counters interface <ifname> -->
         <COMMAND name = "show udld statistics interface"
@@ -64,24 +56,19 @@
                 help = "Interface name"
                 ptype = "STRING">
             </PARAM>
-            <ACTION>
-                python $SONIC_CLI_ROOT/sonic-cli-udld.py get_sonic_udld_sonic_udld_udld_port_table_udld_port_table_list show_udld_stats.j2 ${interface-name}&#xA;
-            </ACTION>
+            <ACTION builtin="clish_pyobj">sonic_cli_udld get_sonic_udld_sonic_udld_udld_port_table_udld_port_table_list show_udld_stats.j2 ${interface-name}</ACTION>
         </COMMAND>
 
+        <!--
         <COMMAND name = "debug udld" help = "UDLD debug commands" />
         <COMMAND name = "no debug udld" help = "UDLD debug commands" />
         <COMMAND name = "debug udld dump" help = "Dump UDLD info commands" />
         <COMMAND name = "no debug udld dump" help = "Dump UDLD info commands" />
         <COMMAND name = "debug udld dump global" help = "Dump UDLD global debug information">
-            <ACTION>
-                python $SONIC_CLI_ROOT/sonic-cli-udld.py udldGlobalDebugHandler 1&#xA;
-            </ACTION>
+            <ACTION builtin="clish_pyobj">sonic_cli_udld udldGlobalDebugHandler 1</ACTION>
         </COMMAND>
         <COMMAND name = "no debug udld dump global" help = "Dump UDLD global debug information">
-            <ACTION>
-                python $SONIC_CLI_ROOT/sonic-cli-udld.py udldGlobalDebugHandler 0&#xA;
-            </ACTION>
+            <ACTION builtin="clish_pyobj">sonic_cli_udld udldGlobalDebugHandler 0</ACTION>
         </COMMAND>
         <COMMAND name = "debug udld dump interface" help = "Dump UDLD interface debug information">
             <PARAM 
@@ -89,9 +76,7 @@
                 help = "Interface name"
                 ptype = "STRING">
             </PARAM>
-            <ACTION>
-                python $SONIC_CLI_ROOT/sonic-cli-udld.py udldInterfaceDebugHandler 1 ${interface-name}&#xA;
-            </ACTION>
+            <ACTION builtin="clish_pyobj">sonic_cli_udld udldInterfaceDebugHandler 1 ${interface-name}</ACTION>
         </COMMAND>
         <COMMAND name = "no debug udld dump interface" help = "Dump UDLD interface debug information">
             <PARAM 
@@ -99,18 +84,16 @@
                 help = "Interface name"
                 ptype = "STRING">
             </PARAM>
-            <ACTION>
-                python $SONIC_CLI_ROOT/sonic-cli-udld.py udldInterfaceDebugHandler 0 ${interface-name}&#xA;
-            </ACTION>
+            <ACTION builtin="clish_pyobj">sonic_cli_udld udldInterfaceDebugHandler 0 ${interface-name}</ACTION>
         </COMMAND>
 
         <COMMAND name = "clear udld" help = "UDLD Clear commands" />
         <COMMAND name = "clear udld statistics" help = "Clear UDLD statistics">
-            <ACTION>
-                python $SONIC_CLI_ROOT/sonic-cli-udld.py udldInterfaceCountersClearHandler&#xA;
-            </ACTION>
+            <ACTION builtin="clish_pyobj">sonic_cli_udld udldInterfaceCountersClearHandler</ACTION>
         </COMMAND>
+        -->
         <!-- clear udld counters interface <ifname> -->
+        <!--
         <COMMAND name = "clear udld statistics interface"
             help = "Clear UDLD interface level statistics">
             <PARAM 
@@ -118,10 +101,9 @@
                 help = "Interface name"
                 ptype = "STRING">
             </PARAM>
-            <ACTION>
-                python $SONIC_CLI_ROOT/sonic-cli-udld.py udldInterfaceCountersClearHandler ${interface-name}&#xA;
-            </ACTION>
+            <ACTION builtin="clish_pyobj">sonic_cli_udld udldInterfaceCountersClearHandler ${interface-name}</ACTION>
         </COMMAND>
+        -->
     </VIEW>
 
 
@@ -130,27 +112,19 @@
         <COMMAND name="no udld" help="UDLD configuration subcommands"/>
         <COMMAND name = "udld enable"
             help = "Enable UDLD at global level">
-            <ACTION>
-                python $SONIC_CLI_ROOT/sonic-cli-udld.py post_list_sonic_udld_sonic_udld_udld_udld_list&#xA;
-            </ACTION>
+            <ACTION builtin="clish_pyobj">sonic_cli_udld post_list_sonic_udld_sonic_udld_udld_udld_list</ACTION>
         </COMMAND>
         <COMMAND name = "no udld enable"
             help = "Disable UDLD at global level">
-            <ACTION>
-                python $SONIC_CLI_ROOT/sonic-cli-udld.py delete_sonic_udld_sonic_udld_udld&#xA;
-            </ACTION>
+            <ACTION builtin="clish_pyobj">sonic_cli_udld delete_sonic_udld_sonic_udld_udld</ACTION>
         </COMMAND>
         <COMMAND name = "udld aggressive"
             help = "Enable aggressive UDLD mode at global level">
-            <ACTION>
-                python $SONIC_CLI_ROOT/sonic-cli-udld.py patch_sonic_udld_sonic_udld_udld_udld_list_aggressive true&#xA;
-            </ACTION>
+            <ACTION builtin="clish_pyobj">sonic_cli_udld patch_sonic_udld_sonic_udld_udld_udld_list_aggressive true</ACTION>
         </COMMAND>
         <COMMAND name = "no udld aggressive"
             help = "Disable aggressive UDLD mode at global level">
-            <ACTION>
-                python $SONIC_CLI_ROOT/sonic-cli-udld.py patch_sonic_udld_sonic_udld_udld_udld_list_aggressive false&#xA;
-            </ACTION>
+            <ACTION builtin="clish_pyobj">sonic_cli_udld patch_sonic_udld_sonic_udld_udld_udld_list_aggressive false</ACTION>
         </COMMAND>
         <COMMAND name = "udld message-time"
             help = "Configure UDLD message time value in seconds (1 - 30 sec)">
@@ -160,14 +134,10 @@
                 ptype="UDLD_MSG_TIME_TYPE"
                 >
             </PARAM>
-            <ACTION>
-                python $SONIC_CLI_ROOT/sonic-cli-udld.py patch_sonic_udld_sonic_udld_udld_udld_list_msg_time ${msg-time}&#xA;
-            </ACTION>
+            <ACTION builtin="clish_pyobj">sonic_cli_udld patch_sonic_udld_sonic_udld_udld_udld_list_msg_time ${msg-time}</ACTION>
         </COMMAND>
         <COMMAND name = "no udld message-time" help = "Reset UDLD Message time">
-            <ACTION>
-                python $SONIC_CLI_ROOT/sonic-cli-udld.py patch_sonic_udld_sonic_udld_udld_udld_list_msg_time 0&#xA;
-            </ACTION>
+            <ACTION builtin="clish_pyobj">sonic_cli_udld patch_sonic_udld_sonic_udld_udld_udld_list_msg_time 0</ACTION>
         </COMMAND>
 
         <COMMAND name = "udld multiplier"
@@ -178,14 +148,10 @@
                 ptype="UDLD_MULTIPLIER_TYPE"
                 >
             </PARAM>
-            <ACTION>
-                python $SONIC_CLI_ROOT/sonic-cli-udld.py patch_sonic_udld_sonic_udld_udld_udld_list_multiplier ${multiplier}&#xA;
-            </ACTION>
+            <ACTION builtin="clish_pyobj">sonic_cli_udld patch_sonic_udld_sonic_udld_udld_udld_list_multiplier ${multiplier}</ACTION>
         </COMMAND>
         <COMMAND name = "no udld multiplier" help = "Reset UDLD Multiplier">
-            <ACTION>
-                python $SONIC_CLI_ROOT/sonic-cli-udld.py patch_sonic_udld_sonic_udld_udld_udld_list_multiplier 0&#xA;
-            </ACTION>
+            <ACTION builtin="clish_pyobj">sonic_cli_udld patch_sonic_udld_sonic_udld_udld_udld_list_multiplier 0</ACTION>
         </COMMAND>
     </VIEW>
 
@@ -196,27 +162,19 @@
         <COMMAND name="no udld" help="UDLD interface configuration subcommands"/>
         <COMMAND name = "udld enable"
             help = "Enable UDLD at interface level">
-            <ACTION>
-                python $SONIC_CLI_ROOT/sonic-cli-udld.py post_list_sonic_udld_sonic_udld_udld_port_udld_port_list ${iface}&#xA;
-            </ACTION>
+            <ACTION builtin="clish_pyobj">sonic_cli_udld post_list_sonic_udld_sonic_udld_udld_port_udld_port_list ${iface}</ACTION>
         </COMMAND>
         <COMMAND name = "no udld enable"
             help = "Disable UDLD at interface level">
-            <ACTION>
-                python $SONIC_CLI_ROOT/sonic-cli-udld.py delete_sonic_udld_sonic_udld_udld_port_udld_port_list ${iface}&#xA;
-            </ACTION>
+            <ACTION builtin="clish_pyobj">sonic_cli_udld delete_sonic_udld_sonic_udld_udld_port_udld_port_list ${iface}</ACTION>
         </COMMAND>
         <COMMAND name = "udld aggressive"
             help = "Enable aggressive mode UDLD at interface level">
-            <ACTION>
-                python $SONIC_CLI_ROOT/sonic-cli-udld.py patch_sonic_udld_sonic_udld_udld_port_udld_port_list_aggressive true ${iface}&#xA;
-            </ACTION>
+            <ACTION builtin="clish_pyobj">sonic_cli_udld patch_sonic_udld_sonic_udld_udld_port_udld_port_list_aggressive true ${iface}</ACTION>
         </COMMAND>
         <COMMAND name = "no udld aggressive"
             help = "Disable aggressive mode UDLD at interface level">
-            <ACTION>
-                python $SONIC_CLI_ROOT/sonic-cli-udld.py patch_sonic_udld_sonic_udld_udld_port_udld_port_list_aggressive false ${iface}&#xA;
-            </ACTION>
+            <ACTION builtin="clish_pyobj">sonic_cli_udld patch_sonic_udld_sonic_udld_udld_port_udld_port_list_aggressive false ${iface}</ACTION>
         </COMMAND>
     </VIEW>
 </CLISH_MODULE>

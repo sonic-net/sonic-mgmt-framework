@@ -367,7 +367,7 @@ module openconfig-nat {
         container counters {
             description
                 "Counters associated with this NAT entry.";
-            uses nat-counters-common-top;
+            uses nat-type-counters-common-top;
         }
     }
 
@@ -446,7 +446,7 @@ module openconfig-nat {
         container counters {
             description
                 "Counters associated with this NAPT entry.";
-            uses nat-counters-common-top;
+            uses nat-type-counters-common-top;
         }
     }
 
@@ -581,35 +581,6 @@ module openconfig-nat {
         leaf nat-translations-bytes {
             description
                 "NAT translations byte count.";
-            type oc-yang:counter64;
-        }
-    }
-
-    grouping nat-counters-common-top {
-        description
-            "Top grouping for NAT counters.";
-
-        leaf dnat-translations-pkts {
-            description
-                "DNAT translations packet count.";
-            type oc-yang:counter64;
-        }
-
-        leaf dnat-translations-bytes {
-            description
-                "DNAT translations byte count.";
-            type oc-yang:counter64;
-        }
-
-        leaf snat-translations-pkts {
-            description
-                "SNAT translations packet count.";
-            type oc-yang:counter64;
-        }
-
-        leaf snat-translations-bytes {
-            description
-                "SNAT translations byte count.";
             type oc-yang:counter64;
         }
     }

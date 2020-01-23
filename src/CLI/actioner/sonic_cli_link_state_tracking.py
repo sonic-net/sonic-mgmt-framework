@@ -210,6 +210,7 @@ response_handlers = {
 
 
 def run(op_str, args):
+    pipestr().write(args)
     try:
         resp = request_handlers[op_str](args)
         response_handlers[op_str](resp, args)

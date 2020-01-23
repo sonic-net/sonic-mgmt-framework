@@ -52,6 +52,17 @@ type appData struct {
 	payload    []byte
 	ygotRoot   *ygot.GoStruct
 	ygotTarget *interface{}
+	appOptions
+}
+
+// appOptions holds additional options for appInterface APIs.
+// These include RESTCONF query parameters like - depth, fields etc.
+type appOptions struct {
+
+    // depth limits subtree levels in the response data.
+    // 0 indicates unlimited depth.
+    // Valid for GET API only.
+    depth uint
 }
 
 //map containing the base path to app module info

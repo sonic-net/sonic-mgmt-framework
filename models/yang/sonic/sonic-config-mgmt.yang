@@ -58,4 +58,25 @@ module sonic-config-mgmt {
       }
     }
   }
+
+  rpc write-erase {
+      input {
+          leaf subcmd {
+              type string;
+              description "Subcommand: op_write_erase | op_write_erase_boot | op_write_erase_install | op_no_write_erase";
+          }
+      }
+
+      output {
+        leaf status {
+            type int32;
+            description "The status of the operation execution request.";
+        }
+        leaf status-detail {
+            type string;
+            description "The detailed status of the operation execution request.";
+      }
+    }
+  }
+
 }

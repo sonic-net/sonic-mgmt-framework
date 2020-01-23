@@ -59,9 +59,7 @@
 						 </PARAM>
 					</PARAM>					 
 			</PARAM>
-    <ACTION>
-    		python $SONIC_CLI_ROOT/sonic-cli-igmp-snooping.py get_igmp_snooping_interfaces_interface_state show_igmp_snooping.j2 ${__params}&#xA;
-    </ACTION>
+            <ACTION builtin="clish_pyobj">sonic_cli_igmp_snooping get_igmp_snooping_interfaces_interface_state show_igmp_snooping.j2 ${__params}</ACTION>
     </COMMAND>
 </VIEW>
 
@@ -199,10 +197,7 @@
 									</PARAM>										
 							</PARAM>					
 				</PARAM>		    
-    <ACTION>
-    		python $SONIC_CLI_ROOT/sonic-cli-igmp-snooping.py patch_igmp_snooping_interfaces_interface_config ${vlan_id} ${__params}&#xA;
-        builtin="clish_nop"
-    </ACTION>
+                <ACTION builtin="clish_pyobj">sonic_cli_igmp_snooping patch_igmp_snooping_interfaces_interface_config ${vlan_id} ${__params}</ACTION>
     </COMMAND>
     
     <COMMAND name = "no ip igmp"
@@ -312,10 +307,7 @@
 									</PARAM>
 						</PARAM>					
 				</PARAM>		    
-        <ACTION>
-    		python $SONIC_CLI_ROOT/sonic-cli-igmp-snooping.py delete_igmp_snooping_interfaces_interface_config ${vlan_id} ${__params}&#xA;       
-        builtin="clish_nop"
-        </ACTION>
+        <ACTION builtin="clish_pyobj">sonic_cli_igmp_snooping delete_igmp_snooping_interfaces_interface_config ${vlan_id} ${__params}</ACTION>
     </COMMAND>        
 </VIEW>
 </CLISH_MODULE>

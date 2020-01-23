@@ -35,13 +35,7 @@ limitations under the License.
             optional = "true"
             >
         </PARAM>
-      <ACTION>
-        if test "${access-list-name}" = ""; then&#xA;
-            python $SONIC_CLI_ROOT/sonic-cli-acl.py get_openconfig_acl_acl_acl_sets show_access_list.j2&#xA;
-        else&#xA;
-            python $SONIC_CLI_ROOT/sonic-cli-acl.py get_openconfig_acl_acl_acl_sets_acl_set_acl_entries ${access-list-name} ACL_IPV4 show_access_list.j2&#xA;
-        fi&#xA;
-      </ACTION>
+        <ACTION builtin="clish_pyobj">sonic_cli_acl get_openconfig_acl_acl_acl_sets ${access-list-name} ACL_IPV4 show_access_list.j2</ACTION>
     </COMMAND>
 
 
@@ -50,9 +44,7 @@ limitations under the License.
          name="show ip access-group"
          help="Show IPv4 access-group information"
 		 >
-      <ACTION>
-        python $SONIC_CLI_ROOT/sonic-cli-acl.py get_openconfig_acl_acl_interfaces show_access_group.j2
-      </ACTION>
+         <ACTION builtin="clish_pyobj">sonic_cli_acl get_openconfig_acl_acl_interfaces show_access_group.j2</ACTION>
     </COMMAND>
 
 </VIEW>
@@ -68,13 +60,7 @@ limitations under the License.
 
     <MACRO name="ACG-OPTIONS" arg=""></MACRO>
 
-    <ACTION>
-        if test "${direction-switch}" = "in"; then&#xA;
-            python $SONIC_CLI_ROOT/sonic-cli-acl.py patch_list_openconfig_acl_acl_interfaces_interface ${access-list-name} ACL_IPV4 ${iface} ingress&#xA;
-        else&#xA;
-            python $SONIC_CLI_ROOT/sonic-cli-acl.py patch_list_openconfig_acl_acl_interfaces_interface ${access-list-name} ACL_IPV4 ${iface} egress&#xA;
-        fi&#xA;
-    </ACTION>
+    <ACTION builtin="clish_pyobj">sonic_cli_acl patch_list_openconfig_acl_acl_interfaces_interface ${access-list-name} ACL_IPV4 ${iface} ${direction-switch}</ACTION>
     </COMMAND>
 
 <!-- no ip access-group -->
@@ -85,13 +71,7 @@ limitations under the License.
 
     <MACRO name="NO-ACG-OPTIONS" arg=""></MACRO>
 
-    <ACTION>
-        if test "${direction-switch}" = "in"; then&#xA;
-            python $SONIC_CLI_ROOT/sonic-cli-acl.py delete_openconfig_acl_acl_interfaces_interface_ingress_acl_sets_ingress_acl_set ${iface} ${access-list-name} ACL_IPV4&#xA;
-        else&#xA;
-            python $SONIC_CLI_ROOT/sonic-cli-acl.py delete_openconfig_acl_acl_interfaces_interface_egress_acl_sets_egress_acl_set ${iface} ${access-list-name} ACL_IPV4&#xA;
-        fi&#xA;
-    </ACTION>
+    <ACTION builtin="clish_pyobj">sonic_cli_acl delete_openconfig_acl_accessgroup ${iface} ${access-list-name} ACL_IPV4 ${direction-switch}</ACTION>
     </COMMAND>
 
 </VIEW>
@@ -111,7 +91,7 @@ limitations under the License.
              ptype="STRING_63"
              >
         </PARAM>
-        <ACTION>python $SONIC_CLI_ROOT/sonic-cli-acl.py patch_openconfig_acl_acl_acl_sets_acl_set ${access-list-name} ACL_IPV4</ACTION>
+        <ACTION builtin="clish_pyobj">sonic_cli_acl patch_openconfig_acl_acl_acl_sets_acl_set ${access-list-name} ACL_IPV4</ACTION>
     </COMMAND>
 
 <!-- no ip access-list -->
@@ -123,7 +103,7 @@ limitations under the License.
              ptype="STRING_63"
 			 >
         </PARAM>
-    <ACTION>python $SONIC_CLI_ROOT/sonic-cli-acl.py delete_openconfig_acl_acl_acl_sets_acl_set ${access-list-name} ACL_IPV4</ACTION>
+    <ACTION builtin="clish_pyobj">sonic_cli_acl delete_openconfig_acl_acl_acl_sets_acl_set ${access-list-name} ACL_IPV4</ACTION>
     </COMMAND>
 
 </VIEW>
@@ -159,7 +139,7 @@ limitations under the License.
             help="Sequence number"
             ptype="RANGE_1_65535"
             />
-        <ACTION>python $SONIC_CLI_ROOT/sonic-cli-acl.py delete_openconfig_acl_acl_acl_sets_acl_set_acl_entries_acl_entry ${name} ACL_IPV4 ${seq-no}</ACTION>
+        <ACTION builtin="clish_pyobj">sonic_cli_acl delete_openconfig_acl_acl_acl_sets_acl_set_acl_entries_acl_entry ${name} ACL_IPV4 ${seq-no}</ACTION>
     </COMMAND>
 
      <COMMAND
@@ -209,9 +189,7 @@ limitations under the License.
                  </PARAM>
              </PARAM>
          </PARAM>
-         <ACTION>
-            python $SONIC_CLI_ROOT/sonic-cli-acl.py patch_list_openconfig_acl_acl_acl_sets_acl_set_acl_entries_acl_entry ${name} ACL_IPV4 ${__params}
-         </ACTION>
+         <ACTION builtin="clish_pyobj">sonic_cli_acl patch_list_openconfig_acl_acl_acl_sets_acl_set_acl_entries_acl_entry ${name} ACL_IPV4 ${__params}</ACTION>
      </COMMAND>
 </VIEW>
 
