@@ -38,7 +38,7 @@ type XfmrParams struct {
 	dbDataMap *map[db.DBNum]map[string]map[string]db.Value
 	subOpDataMap map[int]*RedisDbMap // used to add an in-flight data with a sub-op
 	param interface{}
-	txCache sync.Map
+	txCache *sync.Map
 	skipOrdTblChk *bool
 }
 

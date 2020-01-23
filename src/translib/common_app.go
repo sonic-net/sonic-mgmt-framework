@@ -194,7 +194,7 @@ func (app *CommonApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
     var payload []byte
     var resPayload []byte
     log.Info("processGet:path =", app.pathInfo.Path)
-    txCache := sync.Map{}
+    txCache := new(sync.Map)
 
     for {
 	    // Keep a copy of the ygotRoot and let Transformer use this copy of ygotRoot
@@ -304,7 +304,7 @@ func (app *CommonApp) translateCRUDCommon(d *db.DB, opcode int) ([]db.WatchKeys,
 	var err error
 	var keys []db.WatchKeys
 	var tblsToWatch []*db.TableSpec
-	txCache := sync.Map{}
+	txCache := new(sync.Map)
 	log.Info("translateCRUDCommon:path =", app.pathInfo.Path)
 
 	// translate yang to db
