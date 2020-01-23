@@ -2982,16 +2982,16 @@ module openconfig-network-instance-annot {
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst-ext:global-sag/oc-netinst-ext:config/oc-netinst-ext:ipv4-enable {
       deviate add {
-        sonic-ext:field-name "IPv4";
+        sonic-ext:field-transformer "sag_ipv4_enable_xfmr";
       }
     }
 
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst-ext:global-sag/oc-netinst-ext:config/oc-netinst-ext:ipv6-enable {
       deviate add {
-        sonic-ext:field-name "IPv6";
+        sonic-ext:field-transformer "sag_ipv6_enable_xfmr";
       }
     }
-
+	
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst-ext:global-sag/oc-netinst-ext:state {
       deviate add {
       }

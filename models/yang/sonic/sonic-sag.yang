@@ -73,14 +73,14 @@ module sonic-sag {
 				type string {
 					pattern 'disable|enable';
 				}
-			    // default "enable";
+			    default "enable";
 		    }
 
 			leaf IPv6 {
 				type string {
 					pattern 'disable|enable';
 			   }
-			   // default "enable";
+			   default "enable";
 		    }
 
 		    leaf gwmac {
