@@ -43,6 +43,12 @@ const (
        PORTCHANNEL_TABLE  = "PORTCHANNEL"
 )
 
+var LAG_TYPE_MAP = map[string]string{
+    strconv.FormatInt(int64(ocbinds.OpenconfigIfAggregate_AggregationType_LACP), 10): "false",
+    strconv.FormatInt(int64(ocbinds.OpenconfigIfAggregate_AggregationType_STATIC), 10): "true",
+}
+
+
 /* Validate whether LAG exists in DB */
 func validateLagExists(d *db.DB, lagTs *string, lagName *string) error {
     if len(*lagName) == 0 {
@@ -79,7 +85,6 @@ func get_min_links(d *db.DB, lagName *string, links *uint16) error {
     log.Infof("Got min links from DB : %d\n", *links)
     return nil
 }
-
 
 func get_lag_type(d *db.DB, lagName *string, mode *string) error {
     intTbl := IntfTypeTblMap[IntfTypePortChannel]
@@ -187,7 +192,7 @@ func can_configure_fallback(inParams XfmrParams) error {
            var mode string
            e = get_lag_type(inParams.d, &ifKey, &mode)
            if e == nil {
-               errStr := "Fallback option cannot be re-configured for an already existing PortChannel: " + ifKey
+               errStr := "Fallback option cannot be configured for an already existing PortChannel: " + ifKey
                return tlerr.InvalidArgsError{Format:errStr}
            }
        }
@@ -219,6 +224,15 @@ func getLagStateAttr(attr *string, ifName *string, lagInfoMap  map[string]db.Val
         return errors.New(errStr)
     }
     switch *attr {
+    case "mode":
+        oc_val.LagType = ocbinds.OpenconfigIfAggregate_AggregationType_LACP
+
+        lag_type,ok := lagEntries.Field["static"]
+        if ok {
+            if lag_type == "true" {
+                oc_val.LagType = ocbinds.OpenconfigIfAggregate_AggregationType_STATIC
+            }
+        }
     case "min-links":
         links, _ := strconv.Atoi(lagEntries.Field["min-links"])
         minlinks := uint16(links)
@@ -246,6 +260,15 @@ func getLagState(ifName *string, lagInfoMap  map[string]db.Value,
     oc_val.MinLinks = &minlinks
     fallbackVal, _:= strconv.ParseBool(lagEntries.Field["fallback"])
     oc_val.Fallback = &fallbackVal
+
+    oc_val.LagType = ocbinds.OpenconfigIfAggregate_AggregationType_LACP
+    lag_type,ok := lagEntries.Field["static"]
+    if ok {
+        if lag_type == "true" {
+            oc_val.LagType = ocbinds.OpenconfigIfAggregate_AggregationType_STATIC
+        }
+    }
+
     lagMembers := strings.Split(lagEntries.Field["member@"], ",")
     oc_val.Member = lagMembers
     return nil
@@ -307,6 +330,13 @@ func fillLagInfoForIntf(d *db.DB, ifName *string, lagInfoMap map[string]db.Value
         fallbackVal = "false"
     }
     lagInfoMap[*ifName].Field["fallback"] = fallbackVal
+
+    if v, k := curr.Field["static"]; k {
+        lagInfoMap[*ifName].Field["static"] = v
+    } else {
+        log.Info("Mode set to LACP, default value")
+        lagInfoMap[*ifName].Field["static"] = "false"
+    }
     log.Infof("Updated the lag-info-map for Interface: %s", *ifName)
 
     return err
@@ -369,6 +399,13 @@ var DbToYang_intf_lag_state_xfmr SubTreeXfmrDbToYang = func (inParams XfmrParams
         if err != nil {
             return err
         }
+    case "/openconfig-interfaces:interfaces/interface/openconfig-if-aggregate:aggregation/state/lag-type":
+         log.Info("Get is for lag type")
+         attr := "mode"
+         err = getLagStateAttr(&attr, &ifName, lagInfoMap, ocAggregationStateVal)
+         if err != nil {
+             return err
+         }
     case "/openconfig-interfaces:interfaces/interface/openconfig-if-aggregate:aggregation/state/openconfig-interfaces-ext:fallback":
         log.Info("Get is for fallback")
         attr := "fallback"
@@ -447,11 +484,6 @@ func deleteLagIntfAndMembers(inParams *XfmrParams, lagName *string) error {
     return nil
 }
 
-var LAG_TYPE_MAP = map[string]string{
-    strconv.FormatInt(int64(ocbinds.OpenconfigIfAggregate_AggregationType_LACP), 10): "false",
-    strconv.FormatInt(int64(ocbinds.OpenconfigIfAggregate_AggregationType_STATIC), 10): "true",
-}
-
 
 var YangToDb_lag_type_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
     result := make(map[string]string)
@@ -473,7 +505,7 @@ var YangToDb_lag_type_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[st
     user_mode := findInMap(LAG_TYPE_MAP, strconv.FormatInt(int64(t), 10))
 
     if err == nil && mode != user_mode  {
-        errStr := "Cannot reconfigure Mode for an existing PortChannel: " + ifKey
+        errStr := "Cannot configure Mode for an existing PortChannel: " + ifKey
         err = tlerr.InvalidArgsError{Format: errStr}
         return result, err
     }

@@ -1,8 +1,8 @@
-module sonic-showtech-annotation {
+module sonic-showtech-annot {
 
     yang-version "1";
 
-    namespace "http://openconfig.net/Azure/sonic-showtech-annotation";
+    namespace "http://openconfig.net/Azure/sonic-showtech-annot";
     prefix "showtech-annot";
 
     import sonic-extensions { prefix sonic-ext; }

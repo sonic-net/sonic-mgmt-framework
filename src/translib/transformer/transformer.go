@@ -30,6 +30,8 @@ import (
 )
 
 var YangPath = "/usr/models/yang/" // OpenConfig-*.yang and sonic yang models path
+var ModelsListFile  = "models_list"
+var TblInfoJsonFile = "sonic_table_info.json"
 
 var entries = map[string]*yang.Entry{}
 
@@ -50,7 +52,7 @@ func reportIfError(errs []error) {
 
 func getOcModelsList () ([]string) {
     var fileList []string
-    file, err := os.Open(YangPath + "models_list")
+    file, err := os.Open(YangPath + ModelsListFile)
     if err != nil {
         return fileList
     }

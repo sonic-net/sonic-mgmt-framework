@@ -205,7 +205,6 @@ func getIntfsRoot (s *ygot.GoStruct) *ocbinds.OpenconfigInterfaces_Interfaces {
 /* It should handle only Interface name key xfmr operations */
 func performIfNameKeyXfmrOp(inParams *XfmrParams, requestUriPath *string, ifName *string, ifType E_InterfaceType) error {
     var err error
-
     switch inParams.oper {
     case DELETE:
         if *requestUriPath == "/openconfig-interfaces:interfaces/interface" {
@@ -856,10 +855,59 @@ func validateIpForIntfType(ifType E_InterfaceType, ip *string, prfxLen *uint8, i
     return err
 }
 
+/* Check for IP overlap */
+func validateIpOverlap(d *db.DB, intf string, ipPref string, tblName string) (string, error) {
+    log.Info("Checking for IP overlap ....")
+    ipA, ipNetA, _ := net.ParseCIDR(ipPref)
+    //Using *INTERFACE to get all L3 config keys for different interface types
+    keys, err := d.GetKeys(&db.TableSpec{Name:"*INTERFACE"})
+    if (err!= nil){
+        return "", err
+    }
+    if len(keys) > 0 {
+        for _, key := range keys {
+            if len(key.Comp) < 2 {
+                continue
+            }
+            ipB, ipNetB, _ := net.ParseCIDR(key.Get(1))
+            if ipNetA.Contains(ipB) || ipNetB.Contains(ipA) {
+                if log.V(3) {
+                    log.Info("IP: ", ipPref, " overlaps with ", key.Get(1), " of ", key.Get(0))
+                }
+                //Handle IP overlap across different interface, reject if in same VRF
+                intfType, _, ierr := getIntfTypeByName(key.Get(0))
+                if ierr != nil {
+                    log.Errorf("Extracting Interface type for Interface: %s failed!", key.Get(0))
+                    return "", ierr
+                }
+                intTbl := IntfTypeTblMap[intfType]
+                if intf != key.Get(0) {
+                    vrfNameA, _ := d.GetMap(&db.TableSpec{Name:tblName+"|"+intf}, "vrf_name")
+                    vrfNameB, _ := d.GetMap(&db.TableSpec{Name:intTbl.cfgDb.intfTN+"|"+key.Get(0)}, "vrf_name")
+                    if vrfNameA == vrfNameB {
+                        errStr := "IP " + ipPref + " overlaps with IP " + key.Get(1) + " of Interface " + key.Get(0)
+                        log.Error(errStr)
+                        return "", errors.New(errStr)
+                    }
+                } else {
+                    //Handle IP overlap on same interface, replace
+                    log.Error("Entry ", key.Get(1), " on ", intf, " needs to be deleted")
+                    errStr := "IP overlap on same interface with IP " + key.Get(1)
+                    return key.Get(1), errors.New(errStr)
+                }
+            }
+        }
+    }
+    return "", nil
+}
 
 var YangToDb_intf_ip_addr_xfmr SubTreeXfmrYangToDb = func(inParams XfmrParams) (map[string]map[string]db.Value, error) {
-    var err error
+    var err, oerr error
+    subOpMap := make(map[db.DBNum]map[string]map[string]db.Value)
     subIntfmap := make(map[string]map[string]db.Value)
+    subIntfmap_del := make(map[string]map[string]db.Value)
+    var value db.Value
+    var overlapIP string
 
     intfsObj := getIntfsRoot(inParams.ygRoot)
     if intfsObj == nil || len(intfsObj.Interface) < 1 {
@@ -886,6 +934,14 @@ var YangToDb_intf_ip_addr_xfmr SubTreeXfmrYangToDb = func(inParams XfmrParams) (
         err = validateIntfAssociatedWithVlan(inParams.d, &ifName)
         if err != nil {
             return subIntfmap, err
+        }
+    }
+    /* Validate whether the Interface is configured as member-port associated with any portchannel */
+    if intfType == IntfTypeEthernet {
+        err = validateIntfAssociatedWithPortChannel(inParams.d, &ifName)
+        if err != nil {
+            errStr := "IP config is not permitted on LAG member port."
+            return subIntfmap, tlerr.InvalidArgsError{Format: errStr}
         }
     }
 
@@ -947,6 +1003,9 @@ var YangToDb_intf_ip_addr_xfmr SubTreeXfmrYangToDb = func(inParams XfmrParams) (
                 if err != nil {
                     return subIntfmap, err
                 }
+                /* Check for IP overlap */
+                ipPref := *addr.Config.Ip+"/"+strconv.Itoa(int(*addr.Config.PrefixLength))
+                overlapIP, oerr = validateIpOverlap(inParams.d, ifName, ipPref, tblName);
 
                 intf_key := intf_intf_tbl_key_gen(ifName, *addr.Config.Ip, int(*addr.Config.PrefixLength), "|")
                 m := make(map[string]string)
@@ -970,8 +1029,9 @@ var YangToDb_intf_ip_addr_xfmr SubTreeXfmrYangToDb = func(inParams XfmrParams) (
                     subIntfmap[tblName] = make(map[string]db.Value)
                 }
                 subIntfmap[tblName][intf_key] = value
-                log.Info("tblName :", tblName, "intf_key: ", intf_key, "data : ", value)
-
+                if log.V(3) {
+                    log.Info("tblName :", tblName, " intf_key: ", intf_key, " data : ", value)
+                }
             }
         }
     }
@@ -995,6 +1055,9 @@ var YangToDb_intf_ip_addr_xfmr SubTreeXfmrYangToDb = func(inParams XfmrParams) (
                 if err != nil {
                     return subIntfmap, err
                 }
+                /* Check for IPv6 overlap */
+                ipPref := *addr.Config.Ip+"/"+strconv.Itoa(int(*addr.Config.PrefixLength))
+                overlapIP, oerr = validateIpOverlap(inParams.d, ifName, ipPref, tblName);
 
                 intf_key := intf_intf_tbl_key_gen(ifName, *addr.Config.Ip, int(*addr.Config.PrefixLength), "|")
                 m := make(map[string]string)
@@ -1022,8 +1085,22 @@ var YangToDb_intf_ip_addr_xfmr SubTreeXfmrYangToDb = func(inParams XfmrParams) (
             }
         }
     }
-    log.Info("YangToDb_intf_subintf_ip_xfmr : subIntfmap : ",  subIntfmap)
 
+    if oerr != nil {
+        if overlapIP == "" {
+            log.Error(oerr)
+            return nil, tlerr.InvalidArgsError{Format: oerr.Error()}
+        } else {
+            subIntfmap_del[tblName] = make(map[string]db.Value)
+            key := ifName + "|" + overlapIP
+            subIntfmap_del[tblName][key] = value
+            subOpMap[db.ConfigDB] = subIntfmap_del
+            log.Info("subOpMap: ", subOpMap)
+            inParams.subOpDataMap[DELETE] = &subOpMap
+        }
+    }
+
+    log.Info("YangToDb_intf_subintf_ip_xfmr : subIntfmap : ",  subIntfmap)
     return subIntfmap, err
 }
 
@@ -1715,7 +1792,7 @@ var DbToYang_intf_get_counters_xfmr SubTreeXfmrDbToYang = func(inParams XfmrPara
     targetUriPath, err := getYangPathFromUri(inParams.uri)
     log.Info("targetUriPath is ", targetUriPath)
 
-    if  targetUriPath != "/openconfig-interfaces:interfaces/interface/state/counters" {
+    if  (strings.Contains(targetUriPath, "/openconfig-interfaces:interfaces/interface/state/counters") == false) {
         log.Info("%s is redundant", targetUriPath)
         return err
     }
@@ -1796,6 +1873,14 @@ var YangToDb_intf_eth_port_config_xfmr SubTreeXfmrYangToDb = func(inParams XfmrP
                 log.Info("Add member port")
                 lagId := intfObj.Ethernet.Config.AggregateId
                 lagStr = "PortChannel" + (*lagId)
+
+                intfType, _, err := getIntfTypeByName(ifName)
+                if intfType != IntfTypeEthernet || err != nil {
+                    intfTypeStr := strconv.Itoa(int(intfType))
+                    errStr := "Invalid interface type" + intfTypeStr
+                    log.Error(errStr)
+                    return nil, tlerr.InvalidArgsError{Format: errStr}
+                }
                 /* Check if PortChannel exists */
                 err = validateLagExists(inParams.d, &intTbl.cfgDb.portTN, &lagStr)
                 if err != nil {
@@ -1804,20 +1889,15 @@ var YangToDb_intf_eth_port_config_xfmr SubTreeXfmrYangToDb = func(inParams XfmrP
                     return nil, err
                 }
                 /* Check if given iface already part of a PortChannel */
-                lagKeys, err := inParams.d.GetKeys(&db.TableSpec{Name:tblName})
-                if err == nil {
-                    for i, _ := range lagKeys {
-                        if ifName == lagKeys[i].Get(1) {
-                            errStr := "Given interface already part of " + lagKeys[i].Get(0)
-                            err = tlerr.InvalidArgsError{Format: errStr}
-                            return nil, err
-                        }
-                    }
+                err = validateIntfAssociatedWithPortChannel(inParams.d, &ifName)
+                if err != nil {
+                    errStr := "Interface already part of a PortChannel"
+                    return nil, tlerr.InvalidArgsError{Format: errStr}
                 }
                 /* Check if L3 configs present on given physical interface */
                 err = validateL3ConfigExists(inParams.d, &ifName)
                 if err != nil {
-                    return nil, err
+                    return nil, tlerr.InvalidArgsError{Format: err.Error()}
                 }
 
             case DELETE:
@@ -2023,4 +2103,3 @@ var DbToYang_unnumbered_intf_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) 
     }
     return result, err
 }
-

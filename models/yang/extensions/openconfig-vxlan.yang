@@ -8,6 +8,7 @@ module openconfig-vxlan {
   prefix "oc-vxlan"; 
 
   import openconfig-network-instance { prefix oc-ni; }
+  //import openconfig-network-instance-l2 { prefix oc-ni-l2; }
   import openconfig-interfaces { prefix oc-if; }
   import openconfig-inet-types { prefix oc-inet; }
   import openconfig-if-types-ext { prefix oc-if-types-ext; }
@@ -522,6 +523,34 @@ module openconfig-vxlan {
       "VxLAN network instance state";
   }
 
+  grouping l2ni-mac-table-ext-state {
+    description
+      "Configuration data for MAC table entries";
+    leaf peer-ip {
+      type oc-inet:ipv4-address;
+      description
+        "The address of the NVE.";
+    }
+  }
+
+  grouping l2ni-mac-table-ext-top {
+    description
+      "l2ni mac table extension top";
+    container peer {
+      description
+        "l2ni mac table extension";
+      container config {
+        description
+          "l2ni mac table extension config";
+      }
+      container state {
+        config false;
+        description
+          "l2ni mac table extension state";
+        uses l2ni-mac-table-ext-state;
+      }
+    }
+  }
 
   grouping vxlan-interface-top {
     description
@@ -604,6 +633,16 @@ module openconfig-vxlan {
     uses vxlan-network-instance-top {
       description
         "VxLAN Global config/state";
+    }
+  }
+
+  //augment /oc-ni:network-instances/oc-ni:network-instance/oc-ni-l2:fdb/oc-ni-l2:mac-table/oc-ni-l2:entries/oc-ni-l2:entry {
+  augment /oc-ni:network-instances/oc-ni:network-instance/oc-ni:fdb/oc-ni:mac-table/oc-ni:entries/oc-ni:entry {
+    description
+      "Augment for network instance mac table";
+    uses l2ni-mac-table-ext-top {
+      description
+        "l2ni mac table extension config/state";
     }
   }
 

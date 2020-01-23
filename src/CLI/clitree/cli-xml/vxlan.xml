@@ -20,7 +20,12 @@
         <ACTION> python $SONIC_CLI_ROOT/sonic-cli-vxlan.py "show vxlan vlanvnimap" show_vxlan_vlanvnimap.j2  </ACTION>
       </COMMAND>
 
-      <!--show vxlan vlanvnimap -->
+      <!--show vxlan vrfvnimap -->
+      <COMMAND name="show vxlan vrfvnimap" help="Show Vrf VNI mapping information">
+        <ACTION> python $SONIC_CLI_ROOT/sonic-cli-vxlan.py "show vxlan vrfvnimap" show_vxlan_vrfvnimap.j2  </ACTION>
+      </COMMAND>
+
+      <!--show vxlan tunnel -->
       <COMMAND name="show vxlan tunnel" help="Show Vxlan Tunnels">
         <ACTION> python $SONIC_CLI_ROOT/sonic-cli-vxlan.py "show vxlan tunnel" show_vxlan_vlanvnimap.j2  </ACTION>
       </COMMAND>

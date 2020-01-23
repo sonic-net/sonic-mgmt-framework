@@ -20,6 +20,7 @@
 package server
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -31,9 +32,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func init() {
-	fmt.Println("+++++ init handler_test +++++")
-}
+type jsonObj map[string]interface{}
 
 var testRouter *Router
 
@@ -233,6 +232,11 @@ func TestPathConv(t *testing.T) {
 		"/myroot/restconf/data/id=TEST1",
 		"/id[name=TEST1]"))
 
+	t.Run("rcdata_multi", testPathConv(
+		"/restconf/data/id={name},{type},{subtype}/data/color={colorname},{rgb}/v={ver}",
+		"/restconf/data/id=TEST2,NEW,LATEST/data/color=RED,ff0000/v=1.0",
+		"/id[name=TEST2][type=NEW][subtype=LATEST]/data/color[colorname=RED][rgb=ff0000]/v[ver=1.0]"))
+
 	t.Run("no_template", testPathConv(
 		"*",
 		"/test/id=NOTEMPLATE",
@@ -278,16 +282,34 @@ func TestPathConv(t *testing.T) {
 		"/test/interface=Eth0%2f1:1,PHY",
 		"/test/interface[name=Eth0/1:1][type=PHY]"))
 
+	t.Run("rcdata_nparams", testPathConv2(
+		map[string]string{"name1": "name", "name2": "name"},
+		"/restconf/data/id={name1}/data/ref={name2}",
+		"/restconf/data/id=X/data/ref=Y",
+		"/id[name=X]/data/ref[name=Y]"))
+
+	t.Run("rcdata_escaped", testPathConv(
+		"/restconf/data/interface={name}/ip={addr}",
+		"/restconf/data/interface=Ethernet%200%2f1/ip=10.0.0.1%2f24",
+		"/interface[name=Ethernet 0/1]/ip[addr=10.0.0.1/24]"))
+
+	t.Run("rcdata_escaped2", testPathConv(
+		"/restconf/data/interface={name},{ip}",
+		"/restconf/data/interface=Eth0%2f1%5b2%5c%5d,1::1",
+		"/interface[name=Eth0/1[2\\\\\\]][ip=1::1]"))
+
+	t.Run("rcdata_escaped+param", testPathConv2(
+		map[string]string{"name1": "name"},
+		"/restconf/data/interface={name1},{type}",
+		"/restconf/data/interface=Eth0%2f1:1,PHY",
+		"/interface[name=Eth0/1:1][type=PHY]"))
+
 }
 
 // test handler to invoke getPathForTranslib and write the conveted
 // path into response. Conversion logic depends on context values
 // managed by mux router. Hence should be called from a handler.
 var pathConvHandler = func(w http.ResponseWriter, r *http.Request) {
-	// t, err := mux.CurrentRoute(r).GetPathTemplate()
-	// fmt.Printf("Patt : %v (err=%v)\n", t, err)
-	// fmt.Printf("Vars : %v\n", mux.Vars(r))
-
 	w.Write([]byte(getPathForTranslib(r)))
 }
 
@@ -497,7 +519,19 @@ func testRespData(r *http.Request, rc *RequestContext, data []byte, expType stri
 func TestProcessGET(t *testing.T) {
 	w := httptest.NewRecorder()
 	Process(w, prepareRequest(t, "GET", "/api-tests:sample", ""))
-	verifyResponse(t, w, 200)
+	verifyResponseData(t, w, 200, jsonObj{"depth": 0})
+}
+
+func TestProcessGET_query(t *testing.T) {
+	w := httptest.NewRecorder()
+	Process(w, prepareRequest(t, "GET", "/api-tests:sample?depth=10", ""))
+	verifyResponseData(t, w, 200, jsonObj{"depth": 10})
+}
+
+func TestProcessGET_query_error(t *testing.T) {
+	w := httptest.NewRecorder()
+	Process(w, prepareRequest(t, "GET", "/api-tests:sample?depth=none", ""))
+	verifyResponse(t, w, 400)
 }
 
 func TestProcessGET_error(t *testing.T) {
@@ -637,6 +671,23 @@ func prepareRequest(t *testing.T, method, path, data string) *http.Request {
 func verifyResponse(t *testing.T, w *httptest.ResponseRecorder, expCode int) {
 	if w.Code != expCode {
 		t.Fatalf("Expecting response status %d; got %d", expCode, w.Code)
+	}
+}
+
+func verifyResponseData(t *testing.T, w *httptest.ResponseRecorder,
+	expCode int, expData jsonObj) {
+	verifyResponse(t, w, expCode)
+
+	data := make(jsonObj)
+	err := json.Unmarshal(w.Body.Bytes(), &data)
+	if err != nil {
+		t.Fatalf("Unmarshal error: %v", err)
+	}
+
+	for k, v := range expData {
+		if fmt.Sprintf("%v", v) != fmt.Sprintf("%v", data[k]) {
+			t.Fatalf("Data mismatch for key '%s'; exp='%v', found='%v'", k, v, data[k])
+		}
 	}
 }
 

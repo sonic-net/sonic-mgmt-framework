@@ -1,3 +1,4 @@
+# Prerequisite: sudo apt-get install libsystemd-dev libdbus-c++-dev
 TARGET    := libham.so
 SRCS      := $(wildcard *.cpp)
 

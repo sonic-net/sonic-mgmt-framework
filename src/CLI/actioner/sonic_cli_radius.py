@@ -88,6 +88,19 @@ def invoke_api(func, args=[]):
                   } ]
                }
 
+        getpath = cc.Path(RADIUS_SERVER_GROUP + 'servers')
+        response = api.get(getpath)
+
+        exists='False'
+        if response.ok()\
+              and ('openconfig-system:servers' in response.content)\
+              and ('server' in response.content['openconfig-system:servers']):
+            for server in response.content['openconfig-system:servers']['server']:
+                if ('address' in server) and (server['address'] == args[0]):
+                    exists='True'
+
+        if (exists == 'False') and (len(auth_port) == 0):
+            auth_port="1812"
         if len(auth_port) != 0:
             body["openconfig-system:server"][0]["openconfig-system:radius"]\
                 ["openconfig-system:config"]["auth-port"] = int(auth_port)
@@ -105,6 +118,8 @@ def invoke_api(func, args=[]):
         if len(auth_type) != 0:
             body["openconfig-system:server"][0]["openconfig-system:config"]\
                 ["openconfig-system-ext:auth-type"] = auth_type
+        if (exists == 'False') and (len(priority) == 0):
+            priority="1"
         if len(priority) != 0:
             body["openconfig-system:server"][0]["openconfig-system:config"]\
                 ["openconfig-system-ext:priority"] = int(priority)
@@ -136,6 +151,39 @@ def invoke_api(func, args=[]):
     elif func == 'delete_openconfig_radius_global_config_host':
         path = RADIUS_SERVER_GROUP + 'servers/server={address}'
         if (len(args) >= 2) and (len(args[1]) != 0):
+
+            if (args[1] == "auth-port") or (args[1] == "priority"):
+                getpath = cc.Path(RADIUS_SERVER_GROUP + 'servers')
+                response = api.get(getpath)
+
+                if not response.ok():
+                    print("%Error: Get Failure")
+                    return response
+
+                if (not ('openconfig-system:servers' in response.content))\
+                  or (not ('server' \
+                   in response.content['openconfig-system:servers'])):
+                    return response
+
+                exists = 'False'
+                for server in response.content['openconfig-system:servers']['server']:
+                    if ('address' in server) and (server['address'] == args[0]):
+                        exists = 'True'
+
+                if exists == 'False':
+                    return response
+
+                if (args[1] == "auth-port"):
+                    return invoke_api(
+                        'patch_openconfig_radius_global_config_host',
+                        [args[0], "auth_port=1812", "timeout=", "retransmit=",
+                        "key=", "auth_type=", "priority=", "vrf="])
+                if (args[1] == "priority"):
+                    return invoke_api(
+                        'patch_openconfig_radius_global_config_host',
+                        [args[0], "auth_port=", "timeout=", "retransmit=",
+                        "key=", "auth_type=", "priority=1", "vrf="])
+
             uri_suffix = {
                 "auth-port": "/radius/config/auth-port",
                 "retransmit": "/radius/config/retransmit-attempts",
@@ -167,7 +215,7 @@ def get_sonic_radius_global():
 
     show_cli_output("show_radius_global.j2", api_response)
 
-def get_sonic_radius_servers(args):
+def get_sonic_radius_servers(args=[]):
     api_response = {}
     api = cc.ApiClient()
 
@@ -231,6 +279,11 @@ def get_sonic_radius_servers(args):
 
 
 def run(func, args):
+    if func == 'get_sonic_radius':
+        get_sonic_radius_global()
+        get_sonic_radius_servers()
+        return
+
     response = invoke_api(func, args)
 
     if response.ok():

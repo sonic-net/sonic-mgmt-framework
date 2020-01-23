@@ -541,6 +541,20 @@ func (app *StpApp) processCommon(d *db.DB, opcode int) error {
 				return err
 			}
 			err = app.setStpInterfacesDataInDB(d, true)
+		case UPDATE:
+			err = app.enableStpMode(d)
+			if err != nil {
+				return err
+			}
+			err = app.setRpvstVlanDataInDB(d, false)
+			if err != nil {
+				return err
+			}
+			err = app.setRpvstVlanInterfaceDataInDB(d, false)
+			if err != nil {
+				return err
+			}
+			err = app.setStpInterfacesDataInDB(d, false)
 		case DELETE:
 			err = app.disableStpMode(d)
 		case GET:

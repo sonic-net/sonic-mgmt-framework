@@ -3,6 +3,7 @@
     {% if 'neighbor' in neighbor_list %}
         {% set neighbors = neighbor_list['neighbor'] %}
         {% for neighbor in neighbors %}
+            {% if 'state' in neighbor %}
             {% set n_state = neighbor['state'] %}
             {{-'BGP neighbor is '}}{{neighbor['neighbor-address']-}}
             {{-', remote AS '}}{{n_state['peer-as']-}}
@@ -51,6 +52,7 @@
                 {{-'    Total:'.ljust(25)-}}
                 {{-(n_messages['sent']['NOTIFICATION']+n_messages['sent']['UPDATE']|string).ljust(12)-}}
                 {{-(n_messages['received']['NOTIFICATION']+n_messages['received']['UPDATE']|string)}}{{'\n'}}
+            {% endif %}
             {% endif %}
             {% if 'transport' in neighbor %}
                 {% set n_tp_state = neighbor['transport']['state'] %}
