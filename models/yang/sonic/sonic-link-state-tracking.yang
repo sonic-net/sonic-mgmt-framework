@@ -1,11 +1,7 @@
 module sonic-link-state-tracking {
     namespace "http://github.com/Azure/sonic-link-state-tracking";
-    prefix iftracking;
+    prefix slst;
     yang-version 1.1;
-
-    import sonic-common {
-        prefix scommon;
-    }
 
     import sonic-port {
         prefix sprt;
@@ -17,6 +13,10 @@ module sonic-link-state-tracking {
 
     import sonic-vlan {
         prefix svlan;
+    }
+
+    import sonic-extension {
+        prefix sonic-ext; 
     }
 
     organization
@@ -82,6 +82,36 @@ module sonic-link-state-tracking {
                         pattern "all-mclag|| ";
                     }
                     max-elements 1;
+                }
+            }
+        }
+
+        container INTF_TRACKING_TABLE {
+            sonic-ext:db-name "STATE_DB"; 
+            sonic-ext:key-delim "|"; 
+            config false;
+            list INTF_TRACKING_TABLE_LIST { 
+                key "name";
+                leaf name {
+                    type string; 
+                }
+                leaf description {
+                    type string;
+                }
+                leaf timeout {
+                    type uint16;
+                }
+                leaf-list upstream {
+                    type string;
+                }
+                leaf-list upstream_status {
+                    type string;
+                }
+                leaf-list downstream {
+                    type string;
+                }
+                leaf-list downstream_status {
+                    type string;
                 }
             }
         }
