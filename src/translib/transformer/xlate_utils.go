@@ -760,7 +760,11 @@ func xpathKeyExtract(d *db.DB, ygRoot *ygot.GoStruct, oper int, path string, req
 		 tableName = *tblPtr
 	 } else if xpathInfo.xfmrTbl != nil {
 		 inParams := formXfmrInputRequest(d, dbs, cdb, ygRoot, curPathWithKey, requestUri, oper, "", nil, subOpDataMap, nil, txCache)
-		 tableName, _ = tblNameFromTblXfmrGet(*xpathInfo.xfmrTbl, inParams)
+		 tableName, err = tblNameFromTblXfmrGet(*xpathInfo.xfmrTbl, inParams)
+		 if err != nil && oper != GET {
+			 return pfxPath, keyStr, tableName, err
+
+		 }
 	 }
 	 return pfxPath, keyStr, tableName, err
  }
