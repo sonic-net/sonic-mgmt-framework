@@ -462,11 +462,15 @@ var DbToYang_network_instance_name_field_xfmr KeyXfmrDbToYang = func(inParams Xf
         log.Info("DbToYang_network_instance_name_field_xfmr")
 
         if (inParams.key != "") {
-                if ((inParams.key == "default") || (strings.HasPrefix(inParams.key, "Vrf"))) {
-                        res_map["name"] = inParams.key
-                } else if (strings.HasPrefix(inParams.key, "vrf_global")) {
+                if (((inParams.key == "default") ||
+                     (strings.HasPrefix(inParams.key, "Vrf"))) && 
+                     ((isVrfDbTbl(inParams) == true))) {
+                        res_map["name"] = inParams.key 
+                } else if ((strings.HasPrefix(inParams.key, "vrf_global")) &&
+                           (isMgmtVrfDbTbl(inParams) == true)) {
                         res_map["name"] = "mgmt"
                 }
+
         } else {
                 log.Info("DbToYang_network_instance_name_field_xfmr, empty key")
         }
@@ -491,9 +495,10 @@ var DbToYang_network_instance_type_field_xfmr KeyXfmrDbToYang = func(inParams Xf
 
         log.Info("DbToYang_network_instance_type_field_xfmr")
 
-        if ((inParams.key == "vrf_global") || (strings.HasPrefix(inParams.key, "Vrf"))) {
+        if (((inParams.key == "vrf_global") && (isMgmtVrfDbTbl(inParams) == true)) ||
+             ((strings.HasPrefix(inParams.key, "Vrf")) && ((isVrfDbTbl(inParams) == true)))) {
                 res_map["type"] = "L3VRF"
-        } else if (inParams.key == "default") {
+        } else if ((inParams.key == "default") && (isVrfDbTbl(inParams) == true)) {
                 res_map["type"] = "DEFAULT_INSTANCE"
         }
 
