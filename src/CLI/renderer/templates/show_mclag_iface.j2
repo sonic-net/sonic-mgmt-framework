@@ -8,8 +8,10 @@
 {% if vars.update({'local_if_status':mclag_iface_info[key]["local_if_status"]}) %}{% endif %}
 {% if vars.update({'remote_if_status':mclag_iface_info[key]["remote_if_status"]}) %}{% endif %}
 {% if vars.update({'traffic_disable':mclag_iface_info[key]["traffic_disable"]}) %}{% endif %}
+{% if vars.update({'port_isolate':mclag_iface_info[key]["port_isolate"]}) %}{% endif %}
 
 {{'Local/Remote Status'.ljust(20)}} : {{vars.local_if_status}}{{'/'}}{{vars.remote_if_status}}
 {{'TrafficDisable'.ljust(20)}} : {{ vars.traffic_disable}}
+{{'IsolateWithPeerLink'.ljust(20)}} : {{ vars.port_isolate}}
 {% endfor %}
 {% endif %}
