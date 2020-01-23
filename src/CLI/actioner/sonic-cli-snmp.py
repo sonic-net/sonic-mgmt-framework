@@ -8,15 +8,13 @@ import re
 import swsssdk
 import cli_client as cc
 import socket
-#import ipaddress
+import ipaddress
 from rpipe_utils import pipestr
 from scripts.render_cli import show_cli_output
 from swsssdk import ConfigDBConnector
 from operator import itemgetter
 from collections import OrderedDict
 
-userWorkaround = True
-WORKAROUND_MESSAGE = "WORKAROUND IN PLACE"
 """
 module: ietf-snmp
   +--rw snmp
@@ -195,9 +193,7 @@ DEVICE_METADATA = 'DEVICE_METADATA'
 AGENTADDRESS    = 'SNMP_AGENT_ADDRESS_CONFIG'
 SYSTEM          = 'SYSTEM'
 SNMP_SERVER     = 'SNMP_SERVER'
-SNMP_GROUP      = 'SNMP_SERVER_GROUP'
-SNMP_USER       = 'SNMP_SERVER_USER'
-SNMP_ENGINE     = 'SNMP_SERVER_ENGINE'
+SNMP_SERVER_GROUP_MEMBER = 'SNMP_SERVER_GROUP_MEMBER'
 sysname         = 'sysName'
 contact         = 'sysContact'
 location        = 'sysLocation'
@@ -298,6 +294,12 @@ def set_system(row, data):
   if len(newentry):
     config_db.mod_entry(SNMP_SERVER, key, newentry)
   return None
+
+def getIPType(x):
+  try: socket.inet_pton(socket.AF_INET6, x)
+  except socket.error:
+    return False
+  return True
 
 def getAgentAddresses():
   """ Read system saved agent addresses.
@@ -426,6 +428,9 @@ def invoke(func, args):
                           "security-name" : group }]
     keypath = cc.Path('/restconf/data/ietf-snmp:snmp/community')
     response = aa.patch(keypath, entry)
+    if response.ok():
+      member = [group, args[0], 'v2c']
+      response = invoke('snmp_group_member_add', member)
     return response
 
   # Remove a community.
@@ -434,40 +439,177 @@ def invoke(func, args):
     response = aa.delete(keypath)
     return response
 
-  # Get the configured groups.
-  elif func == 'snmp_group_get':
-    if userWorkaround == True:
-      # temporary code in place until key-transformer is written
-      # print WORKAROUND_MESSAGE
-      keys = config_db.get_keys(SNMP_GROUP)
-      groups = []
+#============================================================================
+  # Get the configured member groups.
+  elif func == 'snmp_group_member_get':
+    ################ workaround ##########################
+    groups = []
+    keys = config_db.get_keys(SNMP_SERVER_GROUP_MEMBER)
+    if len(keys)>0:
       for key in keys:
         g = {}
-        g['name'] = str(key[0])
-        g['context'] = str(key[1])
-        if key[2] == "usm":
-          g['model'] = 'v3'
-        else:
-          g['model'] = str(key[2])
-        g['security'] = str(key[3])
-        datam = config_db.get_entry(SNMP_GROUP, key)
-        for row, data in datam.items():
-          g[row] = data
+        data = config_db.get_entry(SNMP_SERVER_GROUP_MEMBER, key)
+        name, secName = key
+        g['name'] = name
+        g['security-name'] = secName
+        g['security-model'] = data['securityModel']
         groups.append(g)
     
-      response=aa.cli_not_implemented("group")              # just to get the proper format ...
-      response.content = {}
-      response.status_code = 204
-      response.content['group'] = sorted(groups, key=itemgetter('name', 'model', 'security'))
+    response=aa.cli_not_implemented("group")              # just to get the proper format ...
+    response.content = {}
+    response.status_code = 200
+    response.content['group-member'] = groups
+    return response
+    ################ workaround ends #####################
 
-    else:
-      keypath = cc.Path('/restconf/data/ietf-snmp:snmp/vacm/group')
-      response = aa.get(keypath)
-      print keypath, response.content
+    groups = []
+    keypath = cc.Path('/restconf/data/ietf-snmp:snmp/vacm/group')
+    response = aa.get(keypath)
+    if response.ok():
+      if 'ietf-snmp:group' in response.content.keys():
+        groupDict = response.content['ietf-snmp:group']
+        while len(groupDict) > 0:
+          row = groupDict.pop(0)
+          group = row['name']
+          # Simple get request for '/restconf/data/ietf-snmp:snmp/vacm/group={name}/member'
+          # returns 'not found'. An exhaustive search is not possible
+          path = '/restconf/data/ietf-snmp:snmp/vacm/group={name}/member'
+          keypath = cc.Path(path, name = group)
+          print keypath
+          response = aa.get(keypath)
+          print response.content
+          if response.ok():
+            if 'ietf-snmp:member' in response.content.keys():
+              data = response.content['ietf-snmp:member']
+              while len(data) > 0:
+                entry = data.pop(0)
+                g = {}
+                g['name'] = group
+                g['security-name'] = entry['security-name']
+                g['security-model'] = entry['security-model']
+                groups.append(g)
+
+    response=aa.cli_not_implemented("group")              # just to get the proper format ...
+    response.content = {}
+    response.status_code = 204
+    response.content['group-member'] = sorted(groups, key=itemgetter('name', 'model', 'security'))
 
     return response
 
-  elif func == 'snmp_group_add':
+  # Add an member group.
+  # +--rw vacm
+  # |  +--rw group* [name]
+  # |  |  +--rw name      snmp:group-name
+  # |  |  +--rw member* [security-name]
+  # |  |  |  +--rw security-name     snmp:security-name
+  # |  |  |  +--rw security-model*   snmp:security-model
+  elif func == 'snmp_group_member_add':
+    ################ workaround ##########################
+    # args = ['group-name', 'security-name', 'security-model']
+    key = (args[0], args[1])
+    entry = { "securityModel" : args[2] }
+    config_db.set_entry(SNMP_SERVER_GROUP_MEMBER, key, entry)
+    response=aa.cli_not_implemented("group")              # just to get the proper format ...
+    response.content = {}
+    response.status_code = 200
+    return response
+    ################ workaround ends #####################
+
+    keypath = cc.Path('/restconf/data/ietf-snmp:snmp/vacm/group')
+    entry=collections.defaultdict(dict)
+    entry["group"]=[{ "name" : args[0] }]
+    response = aa.patch(keypath, entry)
+
+    path = '/restconf/data/ietf-snmp:snmp/vacm/group={name}/member'
+    keypath = cc.Path(path, name=args[0], secName=args[1])
+    print keypath
+    entry=collections.defaultdict(dict)
+    entry["member"]=[{ "security-name"  : args[1],
+                       "security-model" : args[2]}]
+    print entry
+    response = aa.patch(keypath, entry)
+    print response.content
+    return response
+
+  # Remove an member group.
+  elif func == 'snmp_group_member_del':
+    ################ workaround ##########################
+    # args = ['group-name', 'security-name']
+    key = (args[0], args[1])
+    entry = None                    # default is to delete the entry
+    config_db.set_entry(SNMP_SERVER_GROUP_MEMBER, key, entry)
+    response=aa.cli_not_implemented("group")              # just to get the proper format ...
+
+    response.content = {}
+    response.status_code = 200
+    return response
+    ################ workaround ends #####################
+
+    # args = ['group-name', 'security-name']
+    path = '/restconf/data/ietf-snmp:snmp/vacm/group={name}/member={secName}'
+    keypath = cc.Path(path, name=args[0], secName=args[1])
+    response = aa.delete(keypath)
+
+    # only delete master key if all access and all member antries are removed.
+    if response.ok():
+      response = invoke('snmp_group_member_get', None)
+      if len(response.content['group-member']) == 0:
+        response = invoke('snmp_group_access_get', None)
+        if len(response.content['group-access']) == 0:
+          path = '/restconf/data/ietf-snmp:snmp/vacm/group={name}'
+          keypath = cc.Path(path, name=args[0])
+          response = aa.delete(keypath)
+    return response
+#============================================================================
+
+  # Get the configured access groups.
+  elif func == 'snmp_group_access_get':
+    groups = []
+    keypath = cc.Path('/restconf/data/ietf-snmp:snmp/vacm/group')
+    response = aa.get(keypath)
+    if response.ok():
+      if 'ietf-snmp:group' in response.content.keys():
+        groupDict = response.content['ietf-snmp:group']
+        while len(groupDict) > 0:
+          row = groupDict.pop(0)
+          group = row['name']
+          # Simple get request for '/restconf/data/ietf-snmp:snmp/vacm/group={name}/access'
+          # returns 'not found' but a search for every possible combo should return one match
+          # if an access entry exists. Could be a member entry.
+          # path = '/restconf/data/ietf-snmp:snmp/vacm/group={name}/access'
+          for security in [('any', 'no-auth-no-priv'), ('v1', 'no-auth-no-priv'), ('v2c', 'no-auth-no-priv'), ('usm', 'no-auth-no-priv'), ('usm', 'auth-no-priv'), ('usm', 'auth-priv')]:
+            secModel, secLevel = security
+            path = '/restconf/data/ietf-snmp:snmp/vacm/group={name}/access=Default,{securityModel},{securityLevel}'
+            keypath = cc.Path(path, name = group, securityModel=secModel, securityLevel=secLevel)
+            response = aa.get(keypath)
+            if response.ok():
+              if 'ietf-snmp:access' in response.content.keys():
+                data = response.content['ietf-snmp:access']
+                while len(data) > 0:
+                  entry = data.pop(0)
+                  if 'read-view' in entry.keys():
+                    g = {}
+                    g['name'] = group
+                    g['context'] = entry['context']
+                    if secModel == "usm":
+                      g['model'] = 'v3'
+                    else:
+                      g['model'] = secModel
+                    g['security'] = secLevel
+                    g['read-view']   = entry['read-view']
+                    g['write-view']  = entry['write-view']
+                    g['notify-view'] = entry['notify-view']
+                    groups.append(g)
+
+    response=aa.cli_not_implemented("group")              # just to get the proper format ...
+    response.content = {}
+    response.status_code = 204
+    response.content['group-access'] = sorted(groups, key=itemgetter('name', 'model', 'security'))
+
+    return response
+
+  # Add an access group.
+  elif func == 'snmp_group_access_add':
     secModel = '1'
     secModel = SecurityModels[args[1]]
     if secModel == 'usm':
@@ -484,6 +626,11 @@ def invoke(func, args):
     for key in argsDict:
       viewOpts[key] = argsDict[key]
 
+    keypath = cc.Path('/restconf/data/ietf-snmp:snmp/vacm/group')
+    entry=collections.defaultdict(dict)
+    entry["group"]=[{ "name" : args[0] }]
+    response = aa.patch(keypath, entry)
+
     path = '/restconf/data/ietf-snmp:snmp/vacm/group={name}/access={contextName},{securityModel},{securityLevel}/read-view'
     keypath = cc.Path(path, name=args[0], contextName="Default", securityModel=secModel, securityLevel=secLevel)
     entry = { "ietf-snmp:read-view" : viewOpts['read'],
@@ -492,9 +639,8 @@ def invoke(func, args):
     response = aa.patch(keypath, entry)
     return response
 
-  # Remove a group.
-  elif func == 'snmp_group_delete':
-    secModel = '1'
+  # Remove an access group.
+  elif func == 'snmp_group_access_delete':
     secModel = SecurityModels[args[1]]
     if secModel == 'usm':
       secLevel = SecurityLevels[args[2]]
@@ -504,6 +650,17 @@ def invoke(func, args):
     path = '/restconf/data/ietf-snmp:snmp/vacm/group={name}/access={contextName},{securityModel},{securityLevel}'
     keypath = cc.Path(path, name=args[0], contextName="Default", securityModel=secModel, securityLevel=secLevel)
     response = aa.delete(keypath)
+
+    # only delete master key if all access and all member antries are removed.
+    if response.ok():
+      response = invoke('snmp_group_member_get', None)
+      if len(response.content['group-member']) == 0:
+        response = invoke('snmp_group_access_get', None)
+        if len(response.content['group-access']) == 0:
+          path = '/restconf/data/ietf-snmp:snmp/vacm/group={name}'
+          keypath = cc.Path(path, name=args[0])
+          response = aa.delete(keypath)
+
     return response
 
   # Get the configured views.
@@ -560,8 +717,12 @@ def invoke(func, args):
             row = data.pop(0)
             u = {}
             u['username'] = row['name']
-            # group is being removed and will appear differently
             u['group'] = 'None'
+            groupResps = invoke('snmp_group_member_get', None)
+            for grpResponse in groupResps.content['group-member']:
+              if grpResponse['security-name'] == u['username'] and grpResponse['security-model'] == 'usm':
+                u['group'] = grpResponse['name']
+                break
             
             auth = row['auth']
             if auth.has_key('md5'):
@@ -576,20 +737,22 @@ def invoke(func, args):
             value = value.translate(None, ':')
             if value == '00000000000000000000000000000000':
               u['auth'] = 'None'
-              
-            priv = row['priv']
-            if priv.has_key('aes'):
-              u['priv'] = 'aes'
-            elif priv.has_key('des'):
-              u['priv'] = 'des'
-            else:
-              u['priv'] = 'None'
-            key = priv[u['priv']]
-            value = key['key']
-            value = value.encode('ascii')
-            value = value.translate(None, ':')
-            if value == '00000000000000000000000000000000':
-              u['priv'] = 'None'
+            
+            u['priv'] = 'None'
+            if row.has_key('priv'):
+              priv = row['priv']
+              if priv.has_key('aes'):
+                u['priv'] = 'aes'
+              elif priv.has_key('des'):
+                u['priv'] = 'des'
+              else:
+                u['priv'] = 'None'
+              key = priv[u['priv']]
+              value = key['key']
+              value = value.encode('ascii')
+              value = value.translate(None, ':')
+              if value == '00000000000000000000000000000000':
+                u['priv'] = 'None'
               
             users.append(u)            
       response.content = {'user' : users}
@@ -680,10 +843,22 @@ def invoke(func, args):
     entry["user"]=[payload]
     keypath = cc.Path('/restconf/data/ietf-snmp:snmp/usm/local/user')
     response = aa.patch(keypath, entry)
+    if response.ok():
+      member = [group, user, 'usm']
+      response = invoke('snmp_group_member_add', member)
     return response
 
   # Remove a user.
   elif func == 'snmp_user_delete':
+    groupResps = invoke('snmp_group_member_get', None)
+    group = 'None'
+    for grpResponse in groupResps.content['group-member']:
+      if grpResponse['security-name'] == args[0] and grpResponse['security-model'] == 'usm':
+        group = grpResponse['name']
+        break
+    member = [group, args[0]]
+    groupResps = invoke('snmp_group_member_del', member)
+
     keypath = cc.Path('/restconf/data/ietf-snmp:snmp/usm/local/user={index}', index=args[0])
     response = aa.delete(keypath)
     return response
@@ -692,16 +867,19 @@ def invoke(func, args):
   elif func == 'snmp_host_get':
     keypath = cc.Path('/restconf/data/ietf-snmp:snmp/target')
     response=aa.get(keypath)
-    hosts_c = []
-    hosts_u = []
+    hosts4_c = []
+    hosts4_u = []
+    hosts6_c = []
+    hosts6_u = []
     if response.ok():
       if 'ietf-snmp:target' in response.content.keys():
         for key, table in response.content.items():
-          hosts_c, hosts_u = ([] for i in range(2))
+          hosts4_c, hosts6_c, hosts4_u, hosts6_u = ([] for i in range(4))
           while len(table) > 0:
             data = table.pop(0)
             h = {}
-            h['target'] = data['name']
+            h['target'] = data['target-params']
+            h['ip6'] = getIPType(h['target'])
             for key, value in data.items():
               if key == 'target-params':
                 path1 = cc.Path('/restconf/data/ietf-snmp:snmp/target-params={name}/v1', name=value)
@@ -734,12 +912,24 @@ def invoke(func, args):
                 else:
                   h['trapOrInform'] = tag
               h[key] = value
+            if 'timeout' in h:
+              h['timeout'] = h['timeout']/100  # displayed in seconds
             if "user-name" not in h:
-              hosts_c.append(h)
+              if not h['ip6']:
+                hosts4_c.append(h)
+              else:
+                hosts6_c.append(h)
             else:
-              hosts_u.append(h)
-      response.content = { "community" : sorted(hosts_c, key=lambda i: socket.inet_aton(i['target'])), 
-                           "user" :      sorted(hosts_u, key=lambda i: socket.inet_aton(i['target'])) }
+              if not h['ip6']:
+                hosts4_u.append(h)
+              else:
+                hosts6_u.append(h)
+
+    if len(hosts4_c) == 0 and len(hosts6_c) == 0 and len(hosts4_u) == 0 and len(hosts6_u) == 0:
+      return None
+    else:
+      response.content = { "community" : sorted(hosts4_c, key=lambda i: ipaddress.ip_address(i['target'])) + sorted(hosts6_c, key=lambda i: ipaddress.ip_address(i['target'])), 
+                           "user"      : sorted(hosts4_u, key=lambda i: ipaddress.ip_address(i['target'])) + sorted(hosts6_u, key=lambda i: ipaddress.ip_address(i['target'])) }
     return response
 
   # Add a host.
@@ -766,6 +956,11 @@ def invoke(func, args):
           params[args[index]] = args[index+1]
           if len(args) > (index+2):
             params[args[index+2]] = args[index+3]
+
+    # informs can never be 'v1'
+    if type == 'informNotify' and secModel == SecurityModels['v1']:
+      secModel = SecurityModels['v2c']
+
     targetEntry=collections.defaultdict(dict)
     targetEntry["target"]=[{ "name": args[0],
                              "timeout": 100*int(params['timeout']),
@@ -783,18 +978,18 @@ def invoke(func, args):
     targetParams=collections.defaultdict(dict)
     targetParams["target-params"]=[{ "name": args[0],
                                      secModel : security }]
-    keypath = cc.Path('/restconf/data/ietf-snmp:snmp/target')
-    response = aa.patch(keypath, targetEntry)
+
+
+    # since it is the targetParams is a leafref to "target-params",
+    # target-params must be written first
+    keypath = cc.Path('/restconf/data/ietf-snmp:snmp/target-params')
+    response = aa.patch(keypath, targetParams)
 
     if response.ok():
-      keypath = cc.Path('/restconf/data/ietf-snmp:snmp/target-params')
-      response = aa.patch(keypath, targetParams)
+      keypath = cc.Path('/restconf/data/ietf-snmp:snmp/target')
+      response = aa.patch(keypath, targetEntry)
 
     return response
-    if response.ok():
-      return None
-    else:
-      return response
 
   # Remove a host.
   elif func == 'snmp_host_delete':
@@ -810,7 +1005,7 @@ def invoke(func, args):
       return response
 
   else:
-      print("%Error: %func not implemented")
+      print("%Error: %func not implemented "+func)
       exit(1)
 
   return None
@@ -831,17 +1026,17 @@ def run(func, args):
         show_cli_output(args[0], api_response.content['community'])
       elif func == 'snmp_view_get':
         show_cli_output(args[0], api_response.content['view'])
-      elif func == 'snmp_group_get':
-        show_cli_output(args[0], api_response.content['group'])
+      elif func == 'snmp_group_access_get':
+        show_cli_output(args[0], api_response.content['group-access'])
       elif func == 'snmp_user_get':
         show_cli_output(args[0], api_response.content['user'])
       elif func == 'snmp_host_get':
         show_cli_output(args[0], api_response.content['community'])
         show_cli_output('show_snmp_host_user.j2', api_response.content['user'])
-  #  else:
-      # For some reason, the show commands return a status_code of 500
-     # print(api_response.status_code)
-     # print(api_response.error_message())
+    #else:
+    #  # For some reason, the show commands return a status_code of 500
+    #   print(api_response.status_code)
+    #   print(api_response.error_message())
 
   except:
     # system/network error
