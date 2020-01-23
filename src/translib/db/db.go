@@ -108,9 +108,9 @@ import (
 	"errors"
 	"strings"
 
+	"cvl"
 	"github.com/go-redis/redis"
 	"github.com/golang/glog"
-	"cvl"
 	"translib/tlerr"
 )
 
@@ -134,14 +134,14 @@ const (
 	ConfigDB                   // 4
 	FlexCounterDB              // 5
 	StateDB                    // 6
-    SnmpDB                     // 7
-    ErrorDB                    // 8 
-    UserDB                     // 9 
+	SnmpDB                     // 7
+	ErrorDB                    // 8
+	UserDB                     // 9
 	// All DBs added above this line, please ----
 	MaxDB //  The Number of DBs
 )
 
-func(dbNo DBNum) String() string {
+func (dbNo DBNum) String() string {
 	return fmt.Sprintf("%d", dbNo)
 }
 
@@ -151,9 +151,9 @@ type Options struct {
 	InitIndicator      string
 	TableNameSeparator string
 	KeySeparator       string
-    IsWriteDisabled    bool         //Indicated if write is allowed
+	IsWriteDisabled    bool //Indicated if write is allowed
 
-	DisableCVLCheck    bool
+	DisableCVLCheck bool
 }
 
 func (o Options) String() string {
@@ -201,7 +201,7 @@ type TableSpec struct {
 	// CompCt tells how many components in the key. Only the last component
 	// can have TableSeparator as part of the key. Otherwise, we cannot
 	// tell where the key component begins.
-	CompCt	int
+	CompCt int
 }
 
 // Key gives the key components.
@@ -214,7 +214,7 @@ func (k Key) String() string {
 	return fmt.Sprintf("{ Comp: %v }", k.Comp)
 }
 
-func (v Value) String () string {
+func (v Value) String() string {
 	var str string
 	for k, v1 := range v.Field {
 		str = str + fmt.Sprintf("\"%s\": \"%s\"\n", k, v1)
@@ -254,10 +254,10 @@ type Table struct {
 type _txOp int
 
 const (
-	txOpNone      _txOp = iota // No Op
-	txOpHMSet     // key, value gives the field:value to be set in key
-	txOpHDel      // key, value gives the fields to be deleted in key
-	txOpDel       // key
+	txOpNone  _txOp = iota // No Op
+	txOpHMSet              // key, value gives the field:value to be set in key
+	txOpHDel               // key, value gives the fields to be deleted in key
+	txOpDel                // key
 )
 
 type _txCmd struct {
@@ -272,18 +272,18 @@ type DB struct {
 	client *redis.Client
 	Opts   *Options
 
-	txState _txState
-	txCmds  []_txCmd
-	cv *cvl.CVL
-	cvlEditConfigData [] cvl.CVLEditConfigData
+	txState           _txState
+	txCmds            []_txCmd
+	cv                *cvl.CVL
+	cvlEditConfigData []cvl.CVLEditConfigData
 
-/*
-	sKeys []*SKey               // Subscribe Key array
-	sHandler HFunc              // Handler Function
-	sCh <-chan *redis.Message   // non-Nil implies SubscribeDB
-*/
-	sPubSub *redis.PubSub       // PubSub. non-Nil implies SubscribeDB
-	sCIP bool                   // Close in Progress
+	/*
+		sKeys []*SKey               // Subscribe Key array
+		sHandler HFunc              // Handler Function
+		sCh <-chan *redis.Message   // non-Nil implies SubscribeDB
+	*/
+	sPubSub *redis.PubSub // PubSub. non-Nil implies SubscribeDB
+	sCIP    bool          // Close in Progress
 }
 
 func (d DB) String() string {
@@ -312,15 +312,15 @@ func NewDB(opt Options) (*DB, error) {
 		PoolSize: 1,
 		// Each DB gets it own (single) connection.
 	}),
-		Opts:    &opt,
-		txState: txStateNone,
-		txCmds:  make([]_txCmd, 0, InitialTxPipelineSize),
+		Opts:              &opt,
+		txState:           txStateNone,
+		txCmds:            make([]_txCmd, 0, InitialTxPipelineSize),
 		cvlEditConfigData: make([]cvl.CVLEditConfigData, 0, InitialTxPipelineSize),
 	}
 
 	if d.client == nil {
 		glog.Error("NewDB: Could not create redis client")
-		e = tlerr.TranslibDBCannotOpen { }
+		e = tlerr.TranslibDBCannotOpen{}
 		goto NewDBExit
 	}
 
@@ -338,7 +338,7 @@ func NewDB(opt Options) (*DB, error) {
 	} else if init, _ := d.client.Get(d.Opts.InitIndicator).Int(); init != 1 {
 
 		glog.Error("NewDB: Database not inited")
-		e = tlerr.TranslibDBNotInit { }
+		e = tlerr.TranslibDBNotInit{}
 		goto NewDBExit
 	}
 
@@ -375,9 +375,9 @@ func (d *DB) key2redis(ts *TableSpec, key Key) string {
 				d.Opts.TableNameSeparator+
 				strings.Join(key.Comp, d.Opts.KeySeparator))
 	}
-        return ts.Name +
-               d.Opts.TableNameSeparator +
-               strings.Join(key.Comp, d.Opts.KeySeparator)
+	return ts.Name +
+		d.Opts.TableNameSeparator +
+		strings.Join(key.Comp, d.Opts.KeySeparator)
 }
 
 func (d *DB) redis2key(ts *TableSpec, redisKey string) Key {
@@ -385,7 +385,7 @@ func (d *DB) redis2key(ts *TableSpec, redisKey string) Key {
 	splitTable := strings.SplitN(redisKey, d.Opts.TableNameSeparator, 2)
 
 	if ts.CompCt > 0 {
-		return Key{strings.SplitN(splitTable[1],d.Opts.KeySeparator, ts.CompCt)}
+		return Key{strings.SplitN(splitTable[1], d.Opts.KeySeparator, ts.CompCt)}
 	} else {
 		return Key{strings.Split(splitTable[1], d.Opts.KeySeparator)}
 	}
@@ -435,7 +435,7 @@ func (d *DB) GetEntry(ts *TableSpec, key Key) (Value, error) {
 			glog.Info("GetEntry: HGetAll(): empty map")
 		}
 		// e = errors.New("Entry does not exist")
-		e = tlerr.TranslibRedisClientEntryNotExist { Entry: d.key2redis(ts, key) }
+		e = tlerr.TranslibRedisClientEntryNotExist{Entry: d.key2redis(ts, key)}
 	}
 
 	if glog.V(3) {
@@ -476,6 +476,32 @@ func (d *DB) GetKeys(ts *TableSpec) ([]Key, error) {
 	return keys, e
 }
 
+// GetKeysByPattern retrieves all entry/row keysi matching
+// with the given pattern.
+func (d *DB) GetKeysByPattern(ts *TableSpec, pattern string) ([]Key, error) {
+
+	if glog.V(3) {
+		glog.Info("GetKeysByPattern: Begin: ", "ts: ", ts)
+	}
+
+	redisKeys, e := d.client.Keys(d.key2redis(ts,
+		Key{Comp: []string{pattern}})).Result()
+	if glog.V(4) {
+		glog.Info("GetKeysByPattern: redisKeys: ", redisKeys, " e: ", e)
+	}
+
+	keys := make([]Key, 0, len(redisKeys))
+	for i := 0; i < len(redisKeys); i++ {
+		keys = append(keys, d.redis2key(ts, redisKeys[i]))
+	}
+
+	if glog.V(3) {
+		glog.Info("GetKeysByPattern: End: ", "keys: ", keys, " e: ", e)
+	}
+
+	return keys, e
+}
+
 // DeleteKeys deletes all entry/row keys matching a pattern.
 func (d *DB) DeleteKeys(ts *TableSpec, key Key) error {
 	if glog.V(3) {
@@ -505,8 +531,7 @@ func (d *DB) DeleteKeys(ts *TableSpec, key Key) error {
 	return e
 }
 
-
-func (d *DB) doCVL(ts * TableSpec, cvlOps []cvl.CVLOperation, key Key, vals []Value) error {
+func (d *DB) doCVL(ts *TableSpec, cvlOps []cvl.CVLOperation, key Key, vals []Value) error {
 	var e error = nil
 
 	var cvlRetCode cvl.CVLRetCode
@@ -530,11 +555,11 @@ func (d *DB) doCVL(ts * TableSpec, cvlOps []cvl.CVLOperation, key Key, vals []Va
 	}
 	for i := 0; i < len(cvlOps); i++ {
 
-		cvlEditConfigData := cvl.CVLEditConfigData {
-				VType: cvl.VALIDATE_ALL,
-				VOp: cvlOps[i],
-				Key: d.key2redis(ts, key),
-				}
+		cvlEditConfigData := cvl.CVLEditConfigData{
+			VType: cvl.VALIDATE_ALL,
+			VOp:   cvlOps[i],
+			Key:   d.key2redis(ts, key),
+		}
 
 		switch cvlOps[i] {
 		case cvl.OP_CREATE, cvl.OP_UPDATE:
@@ -543,7 +568,7 @@ func (d *DB) doCVL(ts * TableSpec, cvlOps []cvl.CVLOperation, key Key, vals []Va
 
 		case cvl.OP_DELETE:
 			if len(vals[i].Field) == 0 {
-				cvlEditConfigData.Data = map[string]string {}
+				cvlEditConfigData.Data = map[string]string{}
 			} else {
 				cvlEditConfigData.Data = vals[i].Field
 			}
@@ -567,15 +592,15 @@ func (d *DB) doCVL(ts * TableSpec, cvlOps []cvl.CVLOperation, key Key, vals []Va
 	cei, cvlRetCode = d.cv.ValidateEditConfig(d.cvlEditConfigData)
 
 	if cvl.CVL_SUCCESS != cvlRetCode {
-		glog.Error("doCVL: CVL Failure: " , cvlRetCode)
+		glog.Error("doCVL: CVL Failure: ", cvlRetCode)
 		// e = errors.New("CVL Failure: " + string(cvlRetCode))
-		e = tlerr.TranslibCVLFailure { Code: int(cvlRetCode),
-					CVLErrorInfo: cei }
-		glog.Error("doCVL: " , len(d.cvlEditConfigData), len(cvlOps))
-		d.cvlEditConfigData = d.cvlEditConfigData[:len(d.cvlEditConfigData) - len(cvlOps)]
+		e = tlerr.TranslibCVLFailure{Code: int(cvlRetCode),
+			CVLErrorInfo: cei}
+		glog.Error("doCVL: ", len(d.cvlEditConfigData), len(cvlOps))
+		d.cvlEditConfigData = d.cvlEditConfigData[:len(d.cvlEditConfigData)-len(cvlOps)]
 	} else {
 		for i := 0; i < len(cvlOps); i++ {
-			d.cvlEditConfigData[len(d.cvlEditConfigData)-1-i].VType = cvl.VALIDATE_NONE;
+			d.cvlEditConfigData[len(d.cvlEditConfigData)-1-i].VType = cvl.VALIDATE_NONE
 		}
 	}
 
@@ -588,15 +613,15 @@ doCVLExit:
 	return e
 }
 
-func (d *DB) doWrite(ts * TableSpec, op _txOp, key Key, val interface{}) error {
+func (d *DB) doWrite(ts *TableSpec, op _txOp, key Key, val interface{}) error {
 	var e error = nil
 	var value Value
 
-    if d.Opts.IsWriteDisabled {
-        glog.Error("doWrite: Write to DB disabled")
-        e = errors.New("Write to DB disabled during this operation")
-        goto doWriteExit
-    }   
+	if d.Opts.IsWriteDisabled {
+		glog.Error("doWrite: Write to DB disabled")
+		e = errors.New("Write to DB disabled during this operation")
+		goto doWriteExit
+	}
 
 	switch d.txState {
 	case txStateNone:
@@ -632,15 +657,15 @@ func (d *DB) doWrite(ts * TableSpec, op _txOp, key Key, val interface{}) error {
 		switch op {
 
 		case txOpHMSet:
-			value = Value { Field: make(map[string]string,
-					len(val.(Value).Field)) }
+			value = Value{Field: make(map[string]string,
+				len(val.(Value).Field))}
 			vintf := make(map[string]interface{})
 			for k, v := range val.(Value).Field {
 				vintf[k] = v
 			}
 			e = d.client.HMSet(d.key2redis(ts, key), vintf).Err()
 
-			if e!= nil {
+			if e != nil {
 				glog.Error("doWrite: HMSet: ", key, " : ", value, " e: ", e)
 			}
 
@@ -651,13 +676,13 @@ func (d *DB) doWrite(ts * TableSpec, op _txOp, key Key, val interface{}) error {
 			}
 
 			e = d.client.HDel(d.key2redis(ts, key), fields...).Err()
-			if e!= nil {
+			if e != nil {
 				glog.Error("doWrite: HDel: ", key, " : ", fields, " e: ", e)
 			}
 
 		case txOpDel:
 			e = d.client.Del(d.key2redis(ts, key)).Err()
-			if e!= nil {
+			if e != nil {
 				glog.Error("doWrite: Del: ", key, " : ", e)
 			}
 
@@ -708,7 +733,7 @@ doWriteExit:
 func (d *DB) setEntry(ts *TableSpec, key Key, value Value, isCreate bool) error {
 
 	var e error = nil
-	var valueComplement Value = Value { Field: make(map[string]string,len(value.Field))}
+	var valueComplement Value = Value{Field: make(map[string]string, len(value.Field))}
 	var valueCurrent Value
 
 	if glog.V(3) {
@@ -731,7 +756,7 @@ func (d *DB) setEntry(ts *TableSpec, key Key, value Value, isCreate bool) error 
 		if e == nil {
 			for k, _ := range valueCurrent.Field {
 				_, present := value.Field[k]
-				if ! present {
+				if !present {
 					valueComplement.Field[k] = string("")
 				}
 			}
@@ -743,17 +768,17 @@ func (d *DB) setEntry(ts *TableSpec, key Key, value Value, isCreate bool) error 
 			glog.Info("setEntry: DoCVL for UPDATE")
 		}
 		if len(valueComplement.Field) == 0 {
-			e = d.doCVL(ts, []cvl.CVLOperation {cvl.OP_UPDATE},
-					key, []Value { value} )
+			e = d.doCVL(ts, []cvl.CVLOperation{cvl.OP_UPDATE},
+				key, []Value{value})
 		} else {
-			e = d.doCVL(ts, []cvl.CVLOperation {cvl.OP_UPDATE, cvl.OP_DELETE},
-					key, []Value { value, valueComplement} )
+			e = d.doCVL(ts, []cvl.CVLOperation{cvl.OP_UPDATE, cvl.OP_DELETE},
+				key, []Value{value, valueComplement})
 		}
 	} else {
 		if glog.V(3) {
 			glog.Info("setEntry: DoCVL for CREATE")
 		}
-		e = d.doCVL(ts, []cvl.CVLOperation {cvl.OP_CREATE}, key, []Value { value })
+		e = d.doCVL(ts, []cvl.CVLOperation{cvl.OP_CREATE}, key, []Value{value})
 	}
 
 	if e != nil {
@@ -774,7 +799,7 @@ setEntryExit:
 }
 
 // CreateEntry creates an entry(row) in the table.
-func (d * DB) CreateEntry(ts * TableSpec, key Key, value Value) error {
+func (d *DB) CreateEntry(ts *TableSpec, key Key, value Value) error {
 
 	return d.setEntry(ts, key, value, true)
 }
@@ -784,10 +809,9 @@ func (d *DB) SetEntry(ts *TableSpec, key Key, value Value) error {
 	return d.setEntry(ts, key, value, false)
 }
 
-
-func (d* DB) Publish(channel string, message interface{}) error  {
-    e := d.client.Publish(channel, message).Err()
-    return e
+func (d *DB) Publish(channel string, message interface{}) error {
+	e := d.client.Publish(channel, message).Err()
+	return e
 }
 
 // DeleteEntry deletes an entry(row) in the table.
@@ -801,13 +825,13 @@ func (d *DB) DeleteEntry(ts *TableSpec, key Key) error {
 	if glog.V(3) {
 		glog.Info("DeleteEntry: DoCVL for DELETE")
 	}
-	e = d.doCVL(ts, []cvl.CVLOperation {cvl.OP_DELETE}, key, []Value {Value{}})
+	e = d.doCVL(ts, []cvl.CVLOperation{cvl.OP_DELETE}, key, []Value{Value{}})
 
 	if e == nil {
 		e = d.doWrite(ts, txOpDel, key, nil)
 	}
 
-	return e;
+	return e
 }
 
 // ModEntry modifies an entry(row) in the table.
@@ -829,7 +853,7 @@ func (d *DB) ModEntry(ts *TableSpec, key Key, value Value) error {
 	if glog.V(3) {
 		glog.Info("ModEntry: DoCVL for UPDATE")
 	}
-	e = d.doCVL(ts, []cvl.CVLOperation {cvl.OP_UPDATE}, key, []Value {value})
+	e = d.doCVL(ts, []cvl.CVLOperation{cvl.OP_UPDATE}, key, []Value{value})
 
 	if e == nil {
 		e = d.doWrite(ts, txOpHMSet, key, value)
@@ -856,7 +880,7 @@ func (d *DB) DeleteEntryFields(ts *TableSpec, key Key, value Value) error {
 		glog.Info("DeleteEntryFields: DoCVL for HDEL")
 	}
 
-	e := d.doCVL(ts, []cvl.CVLOperation {cvl.OP_DELETE}, key, []Value{value})
+	e := d.doCVL(ts, []cvl.CVLOperation{cvl.OP_DELETE}, key, []Value{value})
 
 	if e == nil {
 		d.doWrite(ts, txOpHDel, key, value)
@@ -864,7 +888,6 @@ func (d *DB) DeleteEntryFields(ts *TableSpec, key Key, value Value) error {
 
 	return e
 }
-
 
 // GetTable gets the entire table.
 func (d *DB) GetTable(ts *TableSpec) (Table, error) {
@@ -949,7 +972,7 @@ func (d *DB) DeleteTable(ts *TableSpec) error {
 		e := d.DeleteEntry(ts, keys[i])
 		if e != nil {
 			glog.Warning("DeleteTable: DeleteEntry: " + e.Error())
-			break	
+			break
 		}
 	}
 DeleteTableExit:
@@ -1103,13 +1126,13 @@ func (w WatchKeys) String() string {
 // Convenience function to make TableSpecs from strings.
 // This only works on Tables having key components without TableSeparator
 // as part of the key.
-func Tables2TableSpecs(tables []string) []* TableSpec {
+func Tables2TableSpecs(tables []string) []*TableSpec {
 	var tss []*TableSpec
 
 	tss = make([]*TableSpec, 0, len(tables))
 
 	for i := 0; i < len(tables); i++ {
-		tss = append(tss, &(TableSpec{ Name: tables[i]}))
+		tss = append(tss, &(TableSpec{Name: tables[i]}))
 	}
 
 	return tss
@@ -1118,114 +1141,114 @@ func Tables2TableSpecs(tables []string) []* TableSpec {
 // StartTx method is used by infra to start a check-and-set Transaction.
 func (d *DB) StartTx(w []WatchKeys, tss []*TableSpec) error {
 
-    if glog.V(3) {
-        glog.Info("StartTx: Begin: w: ", w, " tss: ", tss) 
-    }    
+	if glog.V(3) {
+		glog.Info("StartTx: Begin: w: ", w, " tss: ", tss)
+	}
 
-    var e error = nil
-    var ret cvl.CVLRetCode
+	var e error = nil
+	var ret cvl.CVLRetCode
 
-    //Start CVL session
-    if d.cv, ret = cvl.ValidationSessOpen(); ret != cvl.CVL_SUCCESS {
-        e = errors.New("StartTx: Unable to create CVL session")
-        goto StartTxExit
-    }
+	//Start CVL session
+	if d.cv, ret = cvl.ValidationSessOpen(); ret != cvl.CVL_SUCCESS {
+		e = errors.New("StartTx: Unable to create CVL session")
+		goto StartTxExit
+	}
 
-    // Validate State
-    if d.txState != txStateNone {
-        glog.Error("StartTx: Incorrect State, txState: ", d.txState)
-        e = errors.New("Transaction already in progress")
-        goto StartTxExit
-    }    
+	// Validate State
+	if d.txState != txStateNone {
+		glog.Error("StartTx: Incorrect State, txState: ", d.txState)
+		e = errors.New("Transaction already in progress")
+		goto StartTxExit
+	}
 
-    e = d.performWatch(w, tss) 
+	e = d.performWatch(w, tss)
 
 StartTxExit:
 
-    if glog.V(3) {
-        glog.Info("StartTx: End: e: ", e)
-    }    
-    return e
+	if glog.V(3) {
+		glog.Info("StartTx: End: e: ", e)
+	}
+	return e
 }
 
 func (d *DB) AppendWatchTx(w []WatchKeys, tss []*TableSpec) error {
-    if glog.V(3) {
-        glog.Info("AppendWatchTx: Begin: w: ", w, " tss: ", tss) 
-    }    
+	if glog.V(3) {
+		glog.Info("AppendWatchTx: Begin: w: ", w, " tss: ", tss)
+	}
 
-    var e error = nil
+	var e error = nil
 
-    // Validate State
-    if d.txState == txStateNone {
-        glog.Error("AppendWatchTx: Incorrect State, txState: ", d.txState)
-        e = errors.New("Transaction has not started")
-        goto AppendWatchTxExit
-    }
+	// Validate State
+	if d.txState == txStateNone {
+		glog.Error("AppendWatchTx: Incorrect State, txState: ", d.txState)
+		e = errors.New("Transaction has not started")
+		goto AppendWatchTxExit
+	}
 
-    e = d.performWatch(w, tss)
+	e = d.performWatch(w, tss)
 
 AppendWatchTxExit:
 
-    if glog.V(3) {
-        glog.Info("AppendWatchTx: End: e: ", e)
-    }
-    return e
+	if glog.V(3) {
+		glog.Info("AppendWatchTx: End: e: ", e)
+	}
+	return e
 }
 
 func (d *DB) performWatch(w []WatchKeys, tss []*TableSpec) error {
-    var e error
-    var args []interface{}
+	var e error
+	var args []interface{}
 
-    // For each watchkey
-    //   If a pattern, Get the keys, appending results to Cmd args.
-    //   Else append keys to the Cmd args
-    //   Note: (LUA scripts do not support WATCH)
+	// For each watchkey
+	//   If a pattern, Get the keys, appending results to Cmd args.
+	//   Else append keys to the Cmd args
+	//   Note: (LUA scripts do not support WATCH)
 
-    args = make([]interface{}, 0, len(w) + len(tss) + 1)
-    args = append(args, "WATCH")
-    for i := 0; i < len(w); i++ {
+	args = make([]interface{}, 0, len(w)+len(tss)+1)
+	args = append(args, "WATCH")
+	for i := 0; i < len(w); i++ {
 
-        redisKey := d.key2redis(w[i].Ts, *(w[i].Key))
+		redisKey := d.key2redis(w[i].Ts, *(w[i].Key))
 
-        if !strings.Contains(redisKey, "*") {
-            args = append(args, redisKey)
-            continue
-        }
+		if !strings.Contains(redisKey, "*") {
+			args = append(args, redisKey)
+			continue
+		}
 
-        redisKeys, e := d.client.Keys(redisKey).Result()
-        if e != nil {
-            glog.Warning("performWatch: Keys: " + e.Error())
-            continue
-        }
-        for j := 0; j < len(redisKeys); j++ {
-            args = append(args, d.redis2key(w[i].Ts, redisKeys[j]))
-        }
-    }
+		redisKeys, e := d.client.Keys(redisKey).Result()
+		if e != nil {
+			glog.Warning("performWatch: Keys: " + e.Error())
+			continue
+		}
+		for j := 0; j < len(redisKeys); j++ {
+			args = append(args, d.redis2key(w[i].Ts, redisKeys[j]))
+		}
+	}
 
-    // for each TS, append to args the CONFIG_DB_UPDATED_<TABLENAME> key
+	// for each TS, append to args the CONFIG_DB_UPDATED_<TABLENAME> key
 
-    for i := 0; i < len(tss); i++ {
-        args = append( args, d.ts2redisUpdated(tss[i]))
-    }
+	for i := 0; i < len(tss); i++ {
+		args = append(args, d.ts2redisUpdated(tss[i]))
+	}
 
-    if len(args) == 1 {
-        glog.Warning("performWatch: Empty WatchKeys. Skipping WATCH")
-        goto SkipWatch
-    }
+	if len(args) == 1 {
+		glog.Warning("performWatch: Empty WatchKeys. Skipping WATCH")
+		goto SkipWatch
+	}
 
-    // Issue the WATCH
-    _, e = d.client.Do(args...).Result()
+	// Issue the WATCH
+	_, e = d.client.Do(args...).Result()
 
-    if e != nil {
-        glog.Warning("performWatch: Do: WATCH ", args, " e: ", e.Error())
-    }
+	if e != nil {
+		glog.Warning("performWatch: Do: WATCH ", args, " e: ", e.Error())
+	}
 
 SkipWatch:
 
-    // Switch State
-    d.txState = txStateWatch
+	// Switch State
+	d.txState = txStateWatch
 
-    return e
+	return e
 }
 
 // CommitTx method is used by infra to commit a check-and-set Transaction.
@@ -1235,8 +1258,7 @@ func (d *DB) CommitTx() error {
 	}
 
 	var e error = nil
-	var tsmap map[TableSpec]bool =
-		make(map[TableSpec]bool, len(d.txCmds)) // UpperBound
+	var tsmap map[TableSpec]bool = make(map[TableSpec]bool, len(d.txCmds)) // UpperBound
 
 	// Validate State
 	switch d.txState {
@@ -1277,7 +1299,7 @@ func (d *DB) CommitTx() error {
 		redisKey := d.key2redis(d.txCmds[i].ts, *(d.txCmds[i].key))
 
 		// Add TS to the map of watchTables
-		tsmap[*(d.txCmds[i].ts)] = true;
+		tsmap[*(d.txCmds[i].ts)] = true
 
 		switch d.txCmds[i].op {
 
@@ -1341,7 +1363,7 @@ func (d *DB) CommitTx() error {
 				e.Error())
 		}
 	}
-	_, e = d.client.Do("SET", d.ts2redisUpdated(& TableSpec{Name: "*"}),
+	_, e = d.client.Do("SET", d.ts2redisUpdated(&TableSpec{Name: "*"}),
 		"1").Result()
 	if e != nil {
 		glog.Warning("CommitTx: Do: SET ",
@@ -1353,7 +1375,7 @@ func (d *DB) CommitTx() error {
 
 	if e != nil {
 		glog.Warning("CommitTx: Do: EXEC e: ", e.Error())
-		e = tlerr.TranslibTransactionFail { }
+		e = tlerr.TranslibTransactionFail{}
 	}
 
 	// Switch State, Clear Command list
