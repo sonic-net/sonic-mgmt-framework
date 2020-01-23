@@ -570,7 +570,10 @@ func (app *CommonApp) cmnAppDelDbOpn(d *db.DB, opcode int, dbMap map[string]map[
 			cmnAppTs = &db.TableSpec{Name: tblNm}
 			log.Info("Found table entry in yang to DB map")
 			if !app.skipOrdTableChk {
-				ordTblList = transformer.GetOrdTblList(tblNm, moduleNm)
+				ordTblList = transformer.GetXfmrOrdTblList(tblNm)
+				if len(ordTblList) == 0 {
+					ordTblList = transformer.GetOrdTblList(tblNm, moduleNm)
+				}
 				if len(ordTblList) == 0 {
 					log.Error("GetOrdTblList returned empty slice")
 					err = errors.New("GetOrdTblList returned empty slice. Insufficient information to process request")
