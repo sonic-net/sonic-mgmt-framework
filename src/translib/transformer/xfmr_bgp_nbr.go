@@ -773,6 +773,11 @@ func fill_nbr_state_timers_info (nbr_key *_xfmr_bgp_nbr_state_key, frrNbrDataVal
         nbrTimersState.NegotiatedHoldTime = &_neg_hold_time
     }
 
+    if value, ok := frrNbrDataJson["bgpTimerKeepAliveIntervalMsecs"] ; ok {
+        _keepaliveInterval := (value.(float64))/1000
+        nbrTimersState.KeepaliveInterval = &_keepaliveInterval
+    }
+
     if cfgDbEntry, cfgdb_get_err := get_spec_nbr_cfg_tbl_entry (cfgDb, nbr_key) ; cfgdb_get_err == nil {
         if value, ok := cfgDbEntry["conn_retry"] ; ok {
             _connectRetry, _ := strconv.ParseFloat(value, 64)
@@ -781,10 +786,6 @@ func fill_nbr_state_timers_info (nbr_key *_xfmr_bgp_nbr_state_key, frrNbrDataVal
         if value, ok := cfgDbEntry["holdtime"] ; ok {
             _holdTime, _ := strconv.ParseFloat(value, 64)
             nbrTimersState.HoldTime = &_holdTime
-        }
-        if value, ok := cfgDbEntry["keepalive"] ; ok {
-            _keepaliveInterval, _ := strconv.ParseFloat(value, 64)
-            nbrTimersState.KeepaliveInterval = &_keepaliveInterval
         }
         if value, ok := cfgDbEntry["min_adv_interval"] ; ok {
             _minimumAdvertisementInterval, _ := strconv.ParseFloat(value, 64)
