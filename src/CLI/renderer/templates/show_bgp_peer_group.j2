@@ -1,0 +1,92 @@
+{% set ns = namespace(v4status = "") %}
+{% set ns = namespace(v6status = "") %}
+{% set ns = namespace(v4prefix = []) %}
+{% set ns = namespace(v6prefix = []) %}
+{% if json_output -%}
+{% if json_output is iterable %}
+{% set pg_list = {} %}
+{% set pg_af_list = {} %}
+{% set listen_prefixes = {} %}
+{% if "openconfig-network-instance:peer-groups" is in json_output %}
+{% set pg_list = json_output['openconfig-network-instance:peer-groups']['peer-group'] %}
+{% endif %}
+{% if "openconfig-network-instance:peer-group" is in json_output %}
+{% set pg_list = json_output['openconfig-network-instance:peer-group'] %}
+{% endif %}
+{% if "openconfig-network-instance:dynamic-neighbor-prefixes" is in json_output %}
+{% set listen_prefixes = json_output['openconfig-network-instance:dynamic-neighbor-prefixes']['dynamic-neighbor-prefix'] %}
+{% endif %}
+{% for pg in pg_list %}
+{% set ns.v4status = " IPv4 Unicast;" %}
+{% set ns.v6status = "" %}
+{% set ns.v4prefix = [] %}
+{% set ns.v6prefix = [] %}
+{% if "config" in pg %}
+{% set vars = {'pg_name': ""} %}
+{% set vars = {'remoteAs':0} %}
+{% set vars = {'peer_type': ""} %}
+{% set mems = "" %}
+{% set pg_conf = pg['config'] %}
+{% if vars.update({'pg_name':pg_conf ['peer-group-name']}) %} {% endif %}
+{% if vars.update({'peer_type':pg_conf ['peer-type']}) %} {% endif %}
+{% if vars.update({'remoteAs':pg_conf ['peer-as']}) %} {% endif %}
+{% if "afi-safis" is in pg %}
+{% set pg_af_list = pg['afi-safis'] ['afi-safi']%}
+  {% for af in pg_af_list %}
+      {% if "config" in af %}
+      {% if af['config']['afi-safi-name'] == "openconfig-bgp-types:IPV4_UNICAST" and  af['config']['enabled'] == false %}
+      {% set ns.v4status = "" %}
+      {% elif af['config']['afi-safi-name'] == "openconfig-bgp-types:IPV6_UNICAST" and  af['config']['enabled'] == true %}
+      {% set ns.v6status = " IPv6 Unicast;" %}
+      {% endif %}
+    {% endif %}
+  {% endfor %}
+{% endif %}
+{{" "}}
+{% set rAS = "" %}
+{% if vars.remoteAs  %}
+{% set rAS = ", remote AS " +  vars.remoteAs | string %}
+{% endif %}
+BGP peer-group {{'%s'| format(vars.pg_name)}}{{'%s' |format(rAS)}}
+  {% if vars.peer_type |length != 0 %}
+  Peer-group type is {{'%s'| format(vars.peer_type) |lower()}}
+  {% endif %}
+  Configured address-families:{{'%s'| format(ns.v4status)}}{{'%s'| format(ns.v6status)}}
+  {% set v6temp = [] %}
+  {% set v4temp = [] %}
+  {% set ns.v6prefix = "" %}
+  {% set ns.v4prefix = "" %}
+  {% for prefix in listen_prefixes %}
+    {% if "peer-group" in prefix['config'] and prefix['config']['peer-group'] == vars.pg_name %}
+      {% if ":" in prefix['prefix'] %}
+      {% do v6temp.append(prefix['prefix']) %}
+      {% set ns.v6prefix = v6temp %}
+      {% else %}
+      {% do v4temp.append(prefix['prefix']) %}
+      {% set ns.v4prefix = v4temp %}
+      {% endif %}
+    {% endif %}
+  {% endfor %}
+  {% if ns.v4prefix|count !=  0 %}
+  {{ns.v4prefix|count}} IPv4 listen range(s)
+  {% for items in ns.v4prefix %}
+    {{ items }}
+  {% endfor %}
+  {% endif %}
+  {% if ns.v6prefix|count !=  0 %}
+  {{ns.v6prefix|count}} IPv6 listen range(s)
+  {% for items in ns.v6prefix %}
+    {{ items }}
+  {% endfor %}
+  {% endif %}
+   {% if "openconfig-bgp-ext:members-state" is in pg %}
+   {% set mems =  pg['openconfig-bgp-ext:members-state']['member'] %}
+  Peer-group members:
+   {% for mem in mems %}
+   {{ mem['neighbor'] }} {{ mem['state'] }}
+   {% endfor %}
+   {% endif %}
+{% endif %}
+{% endfor %}
+{% endif %}
+{% endif %}

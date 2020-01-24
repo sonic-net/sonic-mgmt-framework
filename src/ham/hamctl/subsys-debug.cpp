@@ -10,6 +10,8 @@
 #define FMT_RED         "\x1b[0;31m"
 #define FMT_NORMAL      "\x1b[0m"
 
+static DBus::BusDispatcher  dispatcher;
+
 /**
  * @brief hamctl's debug command
  *
@@ -63,11 +65,9 @@ static int debug(int argc, char *argv[])
 
     if (rc == 0)
     {
-        DBus::BusDispatcher         dispatcher;
-        DBus::default_dispatcher = &dispatcher;
+        DBus::default_dispatcher = &dispatcher; // DBus::default_dispatcher must be initialized before DBus::Connection.
         DBus::Connection    conn = DBus::Connection::SystemBus();
-
-        debug_proxy_c debug(conn, DBUS_BUS_NAME_BASE, DBUS_OBJ_PATH_BASE);
+        debug_proxy_c       debug(conn, DBUS_BUS_NAME_BASE, DBUS_OBJ_PATH_BASE);
 
         if (0 == strcmp("tron", command_p))
         {

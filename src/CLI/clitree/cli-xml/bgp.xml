@@ -37,22 +37,50 @@ limitations under the License.
        </PARAM>
     </PARAM>
     <ACTION>
+        if test -n "${ipv6}"; then&#xA;
+           iptype=${ipv6}&#xA;
+        else&#xA;
+           iptype="ipv4"&#xA;
+        fi&#xA;
         if test -n "${summary}"; then&#xA;
-           python $SONIC_CLI_ROOT/sonic-cli-bgp.py get_ip_bgp_summary show_ip_bgp_summary.j2 ${vrf-name}&#xA;
+           python $SONIC_CLI_ROOT/sonic-cli-bgp.py get_ip_bgp_summary show_ip_bgp_summary.j2 ${vrf-name} $iptype&#xA;
         elif test -n "${prefix}"; then&#xA;
            python $SONIC_CLI_ROOT/sonic-cli-bgp.py get_show_bgp_prefix ${__full_line}&#xA;
         elif test -n "${peer-group}"; then&#xA;
-           builtin="clish_nop"&#xA;
+	   if test -n "${peer-group-name}"; then&#xA;
+              python $SONIC_CLI_ROOT/sonic-cli-bgp.py get_show_bgp_peer_group ${__full_line}&#xA;
+	   else&#xA;
+              python $SONIC_CLI_ROOT/sonic-cli-bgp.py get_show_bgp_peer_group_all ${__full_line}&#xA;
+	   fi&#xA;
         elif test -n "${neighbors}"; then&#xA;
            if test -n "${neighbor-subcommands}"; then&#xA;
               python $SONIC_CLI_ROOT/sonic-cli-bgp.py get_show_bgp ${__full_line}&#xA;
            else&#xA;
-              python $SONIC_CLI_ROOT/sonic-cli-bgp.py get_ip_bgp_neighbors show_ip_bgp_neighbors.j2 ${vrf-name} ${neighbor-ip}&#xA;
+              python $SONIC_CLI_ROOT/sonic-cli-bgp.py get_ip_bgp_neighbors show_ip_bgp_neighbors.j2 ${vrf-name} $iptype ${neighbor-ip}&#xA;
            fi&#xA;
         else&#xA;
            python $SONIC_CLI_ROOT/sonic-cli-bgp.py get_show_bgp ${__full_line}&#xA;
         fi&#xA;
   </ACTION>
+  </COMMAND>
+  <COMMAND name="clear ip bgp" help="Clear BGP">
+    <PARAM name="clear_bgp_subcommands" help="BGP Subcommands" ptype="SUBCOMMAND" mode="switch">
+        <MACRO name="CLEAR_BGP_COMMON_OPTIONS_SUB_CMDS" arg=""></MACRO>
+        <MACRO name="CLEAR_IPV4_BGP_ADDR_OPTIONS_SUB_CMDS" arg=""></MACRO>
+        <MACRO name="CLEAR_IPV6_BGP_ADDR_OPTIONS_SUB_CMDS" arg=""></MACRO>
+        <MACRO name="CLEAR_IP_BGP_SUB_CMDS" arg=""></MACRO>
+        <PARAM name="vrf" help="BGP VRF" ptype="SUBCOMMAND" mode="subcommand" optional="true">
+         <PARAM name="vrf-name" help="VRF Name" ptype="STRING" default="default">
+           <PARAM name="ip_subcommands" help="IP subcommands" ptype="SUBCOMMAND" mode="switch">
+               <MACRO name="CLEAR_BGP_COMMON_OPTIONS_SUB_CMDS" arg=""></MACRO>
+               <MACRO name="CLEAR_IPV4_BGP_ADDR_OPTIONS_SUB_CMDS" arg=""></MACRO>
+               <MACRO name="CLEAR_IPV6_BGP_ADDR_OPTIONS_SUB_CMDS" arg=""></MACRO>
+               <MACRO name="CLEAR_IP_BGP_SUB_CMDS" arg=""></MACRO>
+           </PARAM>
+         </PARAM>
+       </PARAM>
+    </PARAM>
+    <ACTION builtin="clish_pyobj">sonic_cli_clear_bgp clear_bgp asn=${as-num-dot} n-ipv4=${neighbor-ipv4} n-ipv6=${neighbor-ipv6} ${__full_line}</ACTION>
   </COMMAND>
 </VIEW>
 
@@ -499,15 +527,13 @@ limitations under the License.
       <PARAM name="identifier" help="AS number" mode="subcommand" ptype="SUBCOMMAND">
         <PARAM name="id-as" help="Autonomous system number" ptype="RANGE_1_4294967295"/>
       </PARAM>
-      <PARAM name="peers" help="Peer ASs in BGP confederation" mode="subcommand" ptype="SUBCOMMAND">
-        <PARAM name="peer-as" help="Autonomous system number" ptype="RANGE_1_4294967295"/>
-      </PARAM>
+      <PARAM name="peers" help="Peer ASs in BGP confederation" mode="subcommand" ptype="SUBCOMMAND"/>
     </PARAM>
     <ACTION>
              if test "${conf-opt}" = "identifier" ; then&#xA;
                  python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_confederation_config_identifier ${vrf-name} ${id-as}&#xA;
              else&#xA;
-                 python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_confederation_config_member_as ${vrf-name} ${peer-as}&#xA;
+                 python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_global_confederation_config_member_as ${vrf-name}&#xA;
              fi&#xA;
     </ACTION>
   </COMMAND>
@@ -752,8 +778,17 @@ python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_netwo
     </ACTION>
   </COMMAND>
   <COMMAND name="no update-source" help="Source of routing updates">
-    <PARAM name="ip" help="IP source" ptype="IPV4V6_ADDR" view="configure-router-bgp-nbr-view" viewid="nbr-addr=${ip};vrf-name=${vrf-name}" optional="true"/>
-    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_transport_config_local_address ${vrf-name} ${nbr-addr} ${ip}</ACTION>
+    <PARAM name="source_param" help="update-source param"  mode="switch" ptype="SUBCOMMAND">
+      <PARAM name="ip" help="IP source" ptype="IPV4V6_ADDR" view="configure-router-bgp-nbr-view" viewid="nbr-addr=${ip};vrf-name=${vrf-name}" optional="true"/>
+      <PARAM name="interface" help="Interface name" ptype="STRING"/>
+    </PARAM>
+    <ACTION>
+            if test "${source_param}" = "ip" ; then&#xA;
+                   python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_transport_config_local_address ${vrf-name} ${nbr-addr} ${ip}&#xA;
+            else&#xA;
+                   python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_transport_config_local_address ${vrf-name} ${nbr-addr} ${interface}&#xA;
+            fi&#xA;
+    </ACTION>
   </COMMAND>
   <COMMAND name="no shutdown" help="Shutdown a neighbor">
     <PARAM name="message" help="Add a shutdown message (draft-ietf-idr-shutdown-06)" mode="subcommand" ptype="SUBCOMMAND" optional="true">
@@ -1042,8 +1077,17 @@ python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_netwo
     </ACTION>
   </COMMAND>
   <COMMAND name="no update-source" help="Source of routing updates">
-    <PARAM name="ip" help="IP source" ptype="IPV4V6_ADDR" view="configure-router-bgp-template-view" viewid="nbr-addr=${ip};vrf-name=${vrf-name}" optional="true"/>
-    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_transport_config_local_address ${vrf-name} ${template-name} ${ip}</ACTION>
+    <PARAM name="source_param" help="update-source param"  mode="switch" ptype="SUBCOMMAND">
+      <PARAM name="ip" help="IP source" ptype="IPV4V6_ADDR" view="configure-router-bgp-template-view" viewid="nbr-addr=${ip};vrf-name=${vrf-name}" optional="true"/>
+      <PARAM name="interface" help="Interface name" ptype="STRING" view="configure-router-bgp-template-view" />
+    </PARAM>
+    <ACTION>
+             if test "${source_param}" = "ip"; then&#xA;
+                 python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_transport_config_local_address ${vrf-name} ${template-name} ${ip}&#xA;
+             else&#xA;
+                 python $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_transport_config_local_address ${vrf-name} ${template-name} ${interface}&#xA;
+             fi&#xA;
+    </ACTION>
   </COMMAND>
   <COMMAND name="no shutdown" help="Shutdown a neighbor">
     <PARAM name="message" help="Add a shutdown message (draft-ietf-idr-shutdown-06)" mode="subcommand" ptype="SUBCOMMAND" optional="true">

@@ -145,6 +145,10 @@ def show_cli_output(template_file, response):
 
     j2_env.globals.update(datetimeformat=datetimeformat)
 
+    full_cmd = os.getenv('USER_COMMAND', None)
+    if full_cmd is not None:
+        pipestr().write(full_cmd.split())
+
     if response:
         t_str = (j2_env.get_template(template_file).render(json_output=response))
         write(t_str)

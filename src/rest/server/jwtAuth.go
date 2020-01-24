@@ -24,7 +24,7 @@ type Credentials struct {
 
 type Claims struct {
 	Username string `json:"username"`
-	Gid string `json:"gid"`
+	Roles []string `json:"roles"`
 	jwt.StandardClaims
 }
 
@@ -34,12 +34,12 @@ type jwtToken struct {
 	ExpIn     int64  `json:"expires_in"`
 }
 
-func generateJWT(username string, gid string, expire_dt time.Time) string {
+func generateJWT(username string, roles []string, expire_dt time.Time) string {
 	// Create a new token object, specifying signing method and the claims
 	// you would like it to contain.
 	claims := &Claims{
 		Username: username,
-		Gid: gid,
+		Roles: roles,
 		StandardClaims: jwt.StandardClaims{
 			// In JWT, the expiry time is expressed as unix milliseconds
 			ExpiresAt: expire_dt.Unix(),
@@ -56,9 +56,9 @@ func GenerateJwtSecretKey() {
 	rand.Read(hmacSampleSecret)
 }
 
-func tokenResp(w http.ResponseWriter, r *http.Request, username string, gid string) {
+func tokenResp(w http.ResponseWriter, r *http.Request, username string, roles []string) {
 	exp_tm := time.Now().Add(JwtValidInt)
-	token := jwtToken{Token: generateJWT(username, gid, exp_tm), TokenType: "Bearer", ExpIn: int64(JwtValidInt / time.Second)}
+	token := jwtToken{Token: generateJWT(username, roles, exp_tm), TokenType: "Bearer", ExpIn: int64(JwtValidInt / time.Second)}
 	resp, err := json.Marshal(token)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -101,9 +101,9 @@ func Authenticate(w http.ResponseWriter, r *http.Request) {
 	if auth_success {
 		usr, err := user.Lookup(username)
 		if err == nil {
-			group, err := user.LookupGroupId(usr.Gid)
+			roles, err := GetUserRoles(usr)
 			if err == nil {
-				tokenResp(w, r, creds.Username, group.Name)
+				tokenResp(w, r, creds.Username, roles)
 				return
 			}
 		}
@@ -140,7 +140,7 @@ func Refresh(w http.ResponseWriter, r *http.Request) {
 		w.Write(data)
 		return
 	}
-	tokenResp(w, r, claims.Username, claims.Gid)
+	tokenResp(w, r, claims.Username, claims.Roles)
 
 }
 
@@ -181,6 +181,6 @@ func JwtAuthenAndAuthor(r *http.Request, rc *RequestContext) (jwtToken, error) {
 	// 	return token, httpError(http.StatusUnauthorized, "")
 	// }
 	rc.Auth.User = claims.Username
-	rc.Auth.Group = claims.Gid
+	rc.Auth.Roles = claims.Roles
 	return token, nil
 }

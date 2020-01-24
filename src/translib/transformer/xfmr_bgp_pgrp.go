@@ -4,6 +4,7 @@ import (
     "errors"
     "strings"
     "translib/ocbinds"
+    "github.com/openconfig/ygot/ygot"
     log "github.com/golang/glog"
 )
 
@@ -15,6 +16,7 @@ func init () {
     XlateFuncBind("DbToYang_bgp_pgrp_peer_type_fld_xfmr", DbToYang_bgp_pgrp_peer_type_fld_xfmr)
     XlateFuncBind("YangToDb_bgp_pgrp_name_fld_xfmr", YangToDb_bgp_pgrp_name_fld_xfmr)
     XlateFuncBind("DbToYang_bgp_pgrp_name_fld_xfmr", DbToYang_bgp_pgrp_name_fld_xfmr)
+    XlateFuncBind("DbToYang_bgp_peer_group_mbrs_state_xfmr", DbToYang_bgp_peer_group_mbrs_state_xfmr)
 }
 
 var YangToDb_bgp_pgrp_name_fld_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
@@ -161,4 +163,119 @@ var DbToYang_bgp_pgrp_tbl_key_xfmr KeyXfmrDbToYang = func(inParams XfmrParams) (
     rmap["peer-group-name"] = pgrpName
 
     return rmap, nil
+}
+
+
+type _xfmr_bgp_pgrp_state_key struct {
+    niName string
+    pgrp string
+}
+
+func validate_pgrp_state_get (inParams XfmrParams, dbg_log string) (*ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_PeerGroups_PeerGroup, _xfmr_bgp_pgrp_state_key, error) {
+    var err error
+    oper_err := errors.New("Opertational error")
+    var pgrp_key _xfmr_bgp_pgrp_state_key
+    var bgp_obj *ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp
+
+    bgp_obj, pgrp_key.niName, err = getBgpRoot (inParams)
+    if err != nil {
+        log.Errorf ("%s failed !! Error:%s", dbg_log , err);
+        return nil, pgrp_key, err
+    }
+
+    pathInfo := NewPathInfo(inParams.uri)
+    targetUriPath, _ := getYangPathFromUri(pathInfo.Path)
+    pgrp_key.pgrp = pathInfo.Var("peer-group-name")
+    log.Info("%s : path:%s; template:%s targetUriPath:%s niName:%s peer group:%s",
+              dbg_log, pathInfo.Path, pathInfo.Template, targetUriPath, pgrp_key.niName, pgrp_key.pgrp)
+
+    if pgrp_key.niName == "default" {
+       pgrp_key.niName = ""
+    }
+
+    pgrps_obj := bgp_obj.PeerGroups
+    if pgrps_obj == nil {
+        log.Errorf("%s failed !! Error: Peer groups container missing", dbg_log)
+        return nil, pgrp_key, oper_err
+    }
+
+    pgrp_obj, ok := pgrps_obj.PeerGroup[pgrp_key.pgrp]
+    if !ok {
+        log.Info("%s Peer group object missing, add new", dbg_log)
+        pgrp_obj,_ = pgrps_obj.NewPeerGroup(pgrp_key.pgrp)
+    }
+    ygot.BuildEmptyTree(pgrp_obj)
+    return pgrp_obj, pgrp_key, err
+}
+
+func fill_pgrp_state_info (pgrp_key *_xfmr_bgp_pgrp_state_key, frrPgrpDataValue interface{},
+                              pgrp_obj *ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_PeerGroups_PeerGroup) error {
+    var err error
+    var pMember ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_PeerGroups_PeerGroup_MembersState
+    pgrp_obj.MembersState = &pMember
+
+    frrPgrpDataJson := frrPgrpDataValue.(map[string]interface{})
+
+    if frrPgrpDataJson == nil {
+        log.Info("peer group json Data NIL ")
+        return err
+    }
+
+    if peerGroupMembers,  ok := frrPgrpDataJson["peerGroupMembers"].(map[string]interface{}) ; ok {
+        for pgMem,_ := range peerGroupMembers {
+            member, ok := pMember.Member[pgMem]
+            if !ok {
+                member, _ = pMember.NewMember(pgMem)
+            }
+            temp, ok := peerGroupMembers[pgMem].(map[string]interface{})
+            if  ok {
+                if value, ok := temp["peerStatus"].(string); ok {
+                    member.State = &value
+                    log.Info("peer group member status ", member.State)
+                }
+                if value, ok := temp["isDynamic"].(bool); ok {
+                    member.Dynamic = &value
+                    log.Info("peer group member Dynamic ", member.Dynamic)
+                }
+            }
+        }
+    }
+
+    return err
+}
+
+func get_specific_pgrp_state (pgrp_obj *ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_PeerGroups_PeerGroup,
+                             pgrp_key *_xfmr_bgp_pgrp_state_key) error {
+    var err error
+    var vtysh_cmd string
+    if pgrp_key.niName == "" {
+       vtysh_cmd = "show ip bgp peer-group " + pgrp_key.pgrp + " json"
+    } else {
+       vtysh_cmd = "show ip bgp vrf " + pgrp_key.niName + " peer-group " + pgrp_key.pgrp + " json"
+    }
+    pgrpMapJson, cmd_err := exec_vtysh_cmd (vtysh_cmd)
+    if cmd_err != nil {
+        log.Errorf("Failed to fetch bgp peer group member state info for niName:%s peer group :%s. Err: %s\n", pgrp_key.niName, pgrp_key.pgrp, cmd_err)
+        return cmd_err
+    }
+
+    if frrPgrpDataJson, ok := pgrpMapJson[pgrp_key.pgrp].(map[string]interface{}) ; ok {
+        err = fill_pgrp_state_info (pgrp_key, frrPgrpDataJson, pgrp_obj)
+    }
+
+    return err
+}
+
+var DbToYang_bgp_peer_group_mbrs_state_xfmr SubTreeXfmrDbToYang = func(inParams XfmrParams) error {
+    var err error
+    cmn_log := "GET: xfmr for BGP Peer Group members state"
+
+    pgrp_obj, pgrp_key, get_err := validate_pgrp_state_get (inParams, cmn_log);
+    if get_err != nil {
+        log.Info("Peer Group members state get subtree error: ", get_err)
+        return get_err
+    }
+
+    err = get_specific_pgrp_state (pgrp_obj, &pgrp_key)
+    return err;
 }

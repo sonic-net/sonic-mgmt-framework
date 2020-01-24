@@ -407,7 +407,7 @@ limitations under the License.
                     <PARAM
                         name="line"
                         help="LINE An ordered list as a regular-expression"
-                        ptype="STRING"
+                        ptype="LINE"
                         >
                         <PARAM
                             name="any-all subcommands"
@@ -583,7 +583,7 @@ limitations under the License.
                     <PARAM
                         name="line"
                         help="LINE An ordered list as a regular-expression"
-                        ptype="STRING"
+                        ptype="LINE"
                         optional="true"
                         >
                     </PARAM>
