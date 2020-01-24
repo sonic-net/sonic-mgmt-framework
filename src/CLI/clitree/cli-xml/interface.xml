@@ -126,9 +126,9 @@ limitations under the License.
          </PARAM>
    <ACTION>
         if test "${if-subcommands}" = "status"; then&#xA;
-        python $SONIC_CLI_ROOT/sonic_cli_if.py get_openconfig_interfaces_interfaces show_interface_status.j2 ${__full_line}&#xA;
+            python $SONIC_CLI_ROOT/sonic_cli_if.py get_sonic_port_sonic_port_port_table show_sonic_interface_status.j2 ${__full_line}&#xA;
         elif test "${if-subcommands}" = "counters"; then&#xA;
-        python $SONIC_CLI_ROOT/sonic_cli_if.py get_openconfig_interfaces_interfaces show_interface_counters.j2 ${__full_line}&#xA;
+            python $SONIC_CLI_ROOT/sonic_cli_if.py get_openconfig_interfaces_interfaces show_interface_counters.j2 ${__full_line}&#xA;
         elif test "${if-subcommands}" = "PortChannel"; then&#xA;
             if test "${po-id}" = ""; then&#xA;
                 python $SONIC_CLI_ROOT/sonic-cli-interface-port-channel.py get_all_portchannels show_interface_portchannel.j2 ${__full_line}&#xA;

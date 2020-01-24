@@ -123,7 +123,22 @@ func PAMAuthUser(u string, p string) error {
 	err := cred.PAMAuthenticate()
 	return err
 }
-
+func GetUserRoles(usr *user.User) ([]string, error) {
+	// Lookup Roles
+	gids, err := usr.GroupIds()
+	if err != nil {
+		return nil, err
+	}
+	roles := make([]string, len(gids))
+	for idx, gid := range gids {
+		group, err := user.LookupGroupId(gid)
+		if err != nil {
+			return nil, err
+		}
+		roles[idx] = group.Name
+	}
+	return roles, nil
+}
 func PopulateAuthStruct(username string, auth *AuthInfo) error {
 	usr, err := user.Lookup(username)
 	if err != nil {
@@ -131,29 +146,15 @@ func PopulateAuthStruct(username string, auth *AuthInfo) error {
 	}
 
 	auth.User = username
-
-	// Get primary group
-	group, err := user.LookupGroupId(usr.Gid)
+	roles, err := GetUserRoles(usr)
 	if err != nil {
 		return err
 	}
-	auth.Group = group.Name
+	auth.Roles = roles
+	
 
-	// Lookup remaining groups
-	gids, err := usr.GroupIds()
-	if err != nil {
-		return err
-	}
-	auth.Groups = make([]string, len(gids))
-	for idx, gid := range gids {
-		group, err := user.LookupGroupId(gid)
-		if err != nil {
-			return err
-		}
-		auth.Groups[idx] = group.Name
-	}
 
-	// TODO: Populate roles list
+	
 	return nil
 }
 

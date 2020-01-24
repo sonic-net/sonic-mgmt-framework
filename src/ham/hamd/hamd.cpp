@@ -9,14 +9,15 @@
 #include <stdio.h>
 #include <sys/types.h>          // getpwnam(), getpid()
 #include <pwd.h>                // fgetpwent()
-#include <string>               // std::string
-#include <sstream>              // std::ostringstream
-#include <algorithm>            // std::find
 #include <syslog.h>             // syslog()
 #include <pwd.h>                // getpwnam(), getpwuid()
 #include <grp.h>                // getgrnam(), getgrgid()
 #include <shadow.h>             // getspnam()
 #include <unistd.h>             // getpid()
+#include <string>               // std::string
+#include <sstream>              // std::ostringstream
+#include <algorithm>            // std::find
+#include <set>                  // std::set
 
 #include <features.h>           // __GNUC_PREREQ()
 #if __GNUC_PREREQ(8,0) // If GCC >= 8.0
@@ -27,24 +28,36 @@
     typedef std::experimental::filesystem::path   path_t;
 #endif // __GNUC_PREREQ(8,0)
 
-int change_credentials(uid_t uid, gid_t gid)
+
+#define UNCONFIRMED_USER_MAGIC_STRING       "Unconfirmed SAC user"
+#define UNCONFIRMED_USER_MAGIC_STRING_LEN   (sizeof(UNCONFIRMED_USER_MAGIC_STRING)-1)
+#define CONFIRMED_USER_MAGIC_STRING         "SAC user"
+#define CONFIRMED_USER_MAGIC_STRING_LEN     (sizeof(CONFIRMED_USER_MAGIC_STRING)-1)
+
+static std::string get_file_contents(const char * fname, bool verbose=false)
 {
-    int rv;
-    rv = setegid(gid);
-    if (rv == -1)
+    LOG_CONDITIONAL(verbose, LOG_DEBUG, "get_file_contents() - fname=%s", fname);
+
+    std::string   contents;
+    std::FILE   * fp = std::fopen(fname, "re");
+
+    if (fp != nullptr)
     {
-        syslog(LOG_WARNING, "change_credentials() - Error! setegid() failed");
+        std::fseek(fp, 0, SEEK_END);
+        contents.resize(std::ftell(fp));
+        std::rewind(fp);
+        LOG_CONDITIONAL(verbose, LOG_DEBUG, "get_file_contents() - Reading %lu chars from %s", contents.size(), fname);
+        if (std::fread(&contents[0], contents.size(), 1, fp) != 1)
+            syslog(LOG_ERR, "get_file_contents() - failed to read %lu bytes from %s", contents.size(), fname);
+
+        std::fclose(fp);
     }
     else
     {
-        rv = seteuid(uid);
-        if (rv == -1)
-        {
-            syslog(LOG_WARNING, "change_credentials() - Error! seteuid() failed");
-        }
+        syslog(LOG_ERR, "get_file_contents() - failed to open %s", fname);
     }
 
-    return rv;
+    return contents;
 }
 
 /**
@@ -71,7 +84,7 @@ hamd_c::hamd_c(hamd_config_c & config_r, DBus::Connection & conn_r) :
 bool hamd_c::on_poll_timeout(gpointer user_data_p)
 {
     hamd_c * p = static_cast<hamd_c *>(user_data_p);
-    LOG_CONDITIONAL(p->is_tron(), LOG_INFO, "hamd_c::on_poll_timeout()");
+    //LOG_CONDITIONAL(p->is_tron(), LOG_INFO, "hamd_c::on_poll_timeout()");
     p->rm_unconfirmed_users();
     return true; // Return true to repeat timer
 }
@@ -106,39 +119,13 @@ void hamd_c::cleanup()
     poll_timer_m.stop();
 }
 
-#if (0)
 /**
- * @brief Scan "/etc/passwd" looking for user. If found, return a pointer
- *        to a "struct passwd" containing all the data related to user.
+ * @brief Generate user certificates
  *
- * @param fn E.g. /etc/passwd
- * @param user The user we're looking for
+ * @param login User's login name
  *
- * @return If user found, return a pointer to a struct passwd.
+ * @return Empty string on success, error message otherwise.
  */
-static struct passwd * fgetpwname(const char * login, const char * fname_p="/etc/passwd");
-static struct passwd * fgetpwname(const char * login, const char * fname_p)
-{
-    struct passwd * pwd = NULL;
-    FILE          * f   = fopen(fname_p, "re");
-    if (f)
-    {
-        struct passwd * ent;
-        while (NULL != (ent = fgetpwent(f)))
-        {
-            if (streq(ent->pw_name, login))
-            {
-                pwd = ent;
-                break;
-            }
-        }
-        fclose(f);
-    }
-
-    return pwd;
-}
-#endif
-
 std::string hamd_c::certgen(const std::string  & login) const
 {
     std::string cmd = config_rm.certgen_m + ' ' + login;
@@ -159,7 +146,18 @@ std::string hamd_c::certgen(const std::string  & login) const
     return "";
 }
 
-static std::string roles_as_string(const std::vector< std::string > & roles)
+/**
+ * @brief Add internal groups based on the roles being applied. For
+ *        example, both "role admin" and "role operator" must also be added
+ *        to the "docker" group. Similarly, "role admin" needs to be added
+ *        to the "sudo" group as well.
+ *
+ * @param roles  List of roles
+ *
+ * @return A new vector containing all the roles in @roles as well as any
+ *         additional groups as per the description above.
+ */
+static std::vector< std::string > get_full_roles(const std::vector< std::string > & roles)
 {
     std::vector< std::string > new_roles = roles;
     if (std::find(new_roles.cbegin(), new_roles.cend(), "admin") != new_roles.cend())
@@ -177,12 +175,30 @@ static std::string roles_as_string(const std::vector< std::string > & roles)
             new_roles.push_back("docker");
     }
 
+    return new_roles;
+}
+
+/**
+ * @brief Similar to @get_full_roles(), but return as a list of
+ *        comma-separated roles.
+ *
+ * @param roles  List of roles
+ *
+ * @return String containing comma-separated roles.
+ */
+static std::string get_full_roles_as_string(const std::vector< std::string > & roles)
+{
+    std::vector< std::string > new_roles = get_full_roles(roles);
     return join(new_roles.cbegin(), new_roles.cend(), ",");
 }
 
-
 /**
  * @brief Create a new user
+ *
+ * @param login     User's login name
+ * @param roles     List of roles
+ * @param hashed_pw Hashed password. Must follow useradd's --password
+ *                  syntax.
  */
 ::DBus::Struct< bool, std::string > hamd_c::useradd(const std::string                & login,
                                                     const std::vector< std::string > & roles,
@@ -205,7 +221,7 @@ static std::string roles_as_string(const std::vector< std::string > & roles)
     if (!shell_r.empty())
         cmd += " --shell " + shell_r;
 
-    std::string roles_str = roles_as_string(roles);
+    std::string roles_str = get_full_roles_as_string(roles);
     if (!roles_str.empty())
         cmd += " --groups " + roles_str;
 
@@ -322,7 +338,7 @@ static std::string roles_as_string(const std::vector< std::string > & roles)
  */
 ::DBus::Struct< bool, std::string > hamd_c::set_roles(const std::string& login, const std::vector< std::string >& roles)
 {
-    std::string roles_str = roles_as_string(roles);
+    std::string roles_str = get_full_roles_as_string(roles);
     std::string cmd;
 
     if (!roles_str.empty())
@@ -431,6 +447,12 @@ static std::string roles_as_string(const std::vector< std::string > & roles)
     return ret;
 }
 
+std::string hamd_c::getpwcontents()
+{
+    LOG_CONDITIONAL(is_tron(), LOG_DEBUG, "hamd_c::getpwcontents()");
+    return get_file_contents("/etc/passwd", is_tron());
+}
+
 ::DBus::Struct< bool, std::string, std::string, uint32_t, std::vector< std::string > > hamd_c::getgrnam(const std::string& name)
 {
     ::DBus::Struct< bool,                        /* success   */
@@ -481,6 +503,12 @@ static std::string roles_as_string(const std::vector< std::string > & roles)
     }
 
     return ret;
+}
+
+std::string hamd_c::getgrcontents()
+{
+    LOG_CONDITIONAL(is_tron(), LOG_DEBUG, "hamd_c::getgrcontents()");
+    return get_file_contents("/etc/group", is_tron());
 }
 
 ::DBus::Struct< bool, std::string, std::string, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, uint32_t > hamd_c::getspnam(const std::string& name)
@@ -534,8 +562,7 @@ void hamd_c::rm_unconfirmed_users() const
         while (NULL != (ent = fgetpwent(f)))
         {
             const char * pid_p;
-            if ((ent->pw_uid >= (uid_t)config_rm.sac_uid_min_m) && (ent->pw_uid <= (uid_t)config_rm.sac_uid_max_m) &&
-                (NULL != (pid_p = startswith(ent->pw_gecos, "Unconfirmed system-assigned credentials "))))
+            if (NULL != (pid_p = startswith(ent->pw_gecos, UNCONFIRMED_USER_MAGIC_STRING)))
             {
                 if (!g_file_test(pid_p, G_FILE_TEST_EXISTS))
                 {
@@ -570,19 +597,18 @@ void hamd_c::rm_unconfirmed_users() const
  * @brief This is a DBus interface used by remote programs to add an
  *        unconfirmed user.
  *
- * @param username  Username to be added
- * @param pid       PID of the caller.
+ * @param login User's login name
+ * @param pid   PID of the caller.
  *
- * @return bool     true if user was added successfully,
- *                  false otherwise.
+ * @return Empty string on success, Error message otherwise.
  */
-bool hamd_c::add_unconfirmed_user(const std::string& username, const uint32_t& pid)
+std::string hamd_c::add_unconfirmed_user(const std::string& login, const uint32_t& pid)
 {
     // First, let's check if there are any
     // unconfirmed users that could be removed.
     rm_unconfirmed_users();
 
-    // Next, add <username> as an unconfirmed user.
+    // Next, add <login> as an unconfirmed user.
     static const uint8_t hash_key[] =
     {
         0x37, 0x53, 0x7e, 0x31, 0xcf, 0xce, 0x48, 0xf5,
@@ -591,12 +617,12 @@ bool hamd_c::add_unconfirmed_user(const std::string& username, const uint32_t& p
 
     unsigned     n_tries;
     uid_t        candidate;
-    std::string  name(username);
+    std::string  name(login);
     std::string  full_cmd;
     std::string  base_cmd = "/usr/sbin/useradd"
                             " --create-home"
                             " --user-group"
-                            " --comment \"Unconfirmed system-assigned credentials " + std::to_string(pid) + '"';
+                            " --comment \"" UNCONFIRMED_USER_MAGIC_STRING " " + std::to_string(pid) + '"';
 
     const std::string & shell_r = config_rm.shell();
     if (!shell_r.empty())
@@ -611,7 +637,7 @@ bool hamd_c::add_unconfirmed_user(const std::string& username, const uint32_t& p
         candidate = config_rm.uid_fit_into_range(siphash24(name.c_str(), name.length(), hash_key));
 
         LOG_CONDITIONAL(is_tron(), LOG_DEBUG, "User \"%s\": attempt %d using name \"%s\", candidate UID=%lu",
-                        username.c_str(), n_tries, name.c_str(), (unsigned long)candidate);
+                        login.c_str(), n_tries, name.c_str(), (unsigned long)candidate);
 
         // Note: The range 60000-64999 is reserved on Debian platforms
         //       and should be avoided and the value 65535 is traditionally
@@ -620,76 +646,143 @@ bool hamd_c::add_unconfirmed_user(const std::string& username, const uint32_t& p
              (candidate != 65535) &&
             !::getpwuid(candidate)) /* make sure not already allocated */
         {
-            full_cmd = base_cmd + " --uid " + std::to_string(candidate) + ' ' + username;
+            full_cmd = base_cmd + " --uid " + std::to_string(candidate) + ' ' + login;
 
-            LOG_CONDITIONAL(is_tron(), LOG_DEBUG, "User \"%s\": executing \"%s\"", username.c_str(), full_cmd.c_str());
+            LOG_CONDITIONAL(is_tron(), LOG_DEBUG, "User \"%s\": executing \"%s\"", login.c_str(), full_cmd.c_str());
 
             int rc;
             std::string std_out;
             std::string std_err;
             std::tie(rc, std_out, std_err) = run(full_cmd);
 
-            LOG_CONDITIONAL(is_tron(), LOG_DEBUG, "User \"%s\": command returned rc=%d, stdout=%s, stderr=%s",
-                            username.c_str(), rc, std_out.c_str(), std_err.c_str());
+            LOG_CONDITIONAL(is_tron(), LOG_DEBUG, "SAC - User \"%s\": command returned rc=%d, stdout=%s, stderr=%s",
+                            login.c_str(), rc, std_out.c_str(), std_err.c_str());
 
-            return rc == 0;
+            return rc == 0 ? "" : strfmt("SAC - User \"%s\": useradd failed rc=%d, stdout=%s, stderr=%s",
+                                         login.c_str(), rc, std_out.c_str(), std_err.c_str());
         }
         else
         {
             // Try with a slightly different name
-            name = username + std::to_string(n_tries);
-            LOG_CONDITIONAL(is_tron(), LOG_DEBUG, "User \"%s\": candidate UID=%lu already in use. Retry with name = \"%s\"",
-                            username.c_str(), (unsigned long)candidate, name.c_str());
+            name = login + std::to_string(n_tries);
+            LOG_CONDITIONAL(is_tron(), LOG_DEBUG, "SAC - User \"%s\": candidate UID=%lu already in use. Retry with name = \"%s\"",
+                            login.c_str(), (unsigned long)candidate, name.c_str());
         }
     }
 
-    syslog(LOG_ERR, "User \"%s\": unable to create unconfirmed user after %d attempts",
-           username.c_str(), n_tries);
+    std::string errmsg = strfmt("SAC - User \"%s\": Unable to create user after %d attempts",
+                                login.c_str(), n_tries);
 
-    return false;
+    syslog(LOG_ERR, "%s", errmsg.c_str());
+
+    return errmsg;
 }
 
 /**
  * @brief This is a DBus interface used by remote programs to confirm a
  *        user.
  *
- * @param username  Username to be confirmed
- * @param groupname User's Primary group
- * @param groups    User's Supplementory groups (comma-separated list)
- * @param label     Label to be added in the comment (e.g. "RADIUS",
- *                  "TACACS+", "AAA", etc...)
+ * @param login  User's login name
+ * @param roles  List of roles
  *
- * @return bool     true if user was confirmed successfully,
- *                  false otherwise.
+ * @return Empty string on success, Error message otherwise.
  */
-bool hamd_c::confirm_user(const std::string& username, const std::string& groupname, const std::string& groups, const std::string& label)
+std::string hamd_c::user_confirm(const std::string & login, const std::vector<std::string> & roles)
 {
-    std::string  cmd("/usr/sbin/usermod --comment \"Automagic user");
+    std::string dbgstr;
+    if (is_tron())
+    {
+        dbgstr = strfmt("SAC - hamd_c::user_confirm(login=\"%s\", roles=\"[%s]\")",
+                         login.c_str(), join(roles.cbegin(), roles.cend(), ", "));
+        syslog(LOG_DEBUG, "%s", dbgstr.c_str());
+    }
 
-    if (!label.empty())
-        cmd += ' ' + label;
+    // Check whether user already exists in /etc/passwd
+    struct passwd * pw = ::getpwnam(login.c_str());
+    if ((NULL == pw) || (NULL == pw->pw_name) || (login != pw->pw_name))
+    {
+        std::string errmsg = strfmt("No such user in /etc/passwd: %s", login.c_str());
+        LOG_CONDITIONAL(is_tron(), LOG_DEBUG, "%s: %s", dbgstr.c_str(), errmsg.c_str());
+        return errmsg;
+    }
 
-    cmd += '"';
+    // Check whether it is an unconfirmed user or whether
+    // the roles have changed since last login.
 
-    if (!groups.empty())
-        cmd += " --append --groups " + groups;
+    std::vector<std::string> new_roles = get_full_roles(roles); // This adds internal groups such as "docker" or "sudo" as needed.
 
-    cmd += " --gid " + groupname + ' ' + username;
+    bool must_update_roles = true;
+    bool unconfirmed_user  = strneq(pw->pw_gecos, UNCONFIRMED_USER_MAGIC_STRING, UNCONFIRMED_USER_MAGIC_STRING_LEN);
+    LOG_CONDITIONAL(is_tron(), LOG_DEBUG, "%s: unconfirmed_user=%s", dbgstr.c_str(), true_false(unconfirmed_user));
+    if (!unconfirmed_user)
+    {
+        // It is NOT an unconfirmed user. Now let's check whether the groups
+        // (roles) have changed. If there's no change we can just leave the
+        // user DB alone. Otherwise, we'll update the roles with usermod.
 
-    LOG_CONDITIONAL(is_tron(), LOG_DEBUG, "User \"%s\": executing \"%s\"", username.c_str(), cmd.c_str());
+        // Get current roles.
+        gid_t primary_grp = pw->pw_gid;
+        gid_t groups[1000];
+        int   ngroups = sizeof(groups) / sizeof(groups[0]);
+
+        if (getgrouplist(login.c_str(), primary_grp, groups, &ngroups) != -1)
+        {
+            // We got the current groups (roles).
+            // Now let's compare to the new roles.
+            std::set<gid_t> cur_roles_set(&groups[0], &groups[ngroups]);
+            std::set<gid_t> new_roles_set = { primary_grp };
+            for (auto & role : new_roles)
+            {
+                struct group * grp = ::getgrnam(role.c_str()); // For each role get the gid_t
+                if (grp != NULL)
+                    new_roles_set.insert(grp->gr_gid);
+            }
+
+            if (is_tron())
+            {
+                syslog(LOG_DEBUG, "%s: cur_roles_set=[%s]",
+                       dbgstr.c_str(), join(cur_roles_set.cbegin(), cur_roles_set.cend(), ", ").c_str());
+                syslog(LOG_DEBUG, "%s: new_roles_set=[%s]",
+                       dbgstr.c_str(), join(new_roles_set.cbegin(), new_roles_set.cend(), ", ").c_str());
+            }
+
+            must_update_roles = cur_roles_set != new_roles_set;
+        }
+    }
+
+    LOG_CONDITIONAL(is_tron(), LOG_DEBUG, "%s: must_update_roles=%s",
+                    dbgstr.c_str(), true_false(must_update_roles));
+
+    if (!must_update_roles)
+        return ""; // We're all good. Nothing has changed.
+
+    std::string  cmd("/usr/sbin/usermod --comment \"" CONFIRMED_USER_MAGIC_STRING "\"");
+
+    if (!new_roles.empty())
+    {
+        std::string new_roles_str = join(new_roles.cbegin(), new_roles.cend(), ",");
+        cmd += " --groups " + new_roles_str;
+    }
+
+    cmd += ' ' + login;
+
+    LOG_CONDITIONAL(is_tron(), LOG_DEBUG, "%s: executing \"%s\"", dbgstr.c_str(), cmd.c_str());
 
     int rc;
     std::string std_out;
     std::string std_err;
     std::tie(rc, std_out, std_err) = run(cmd);
 
-    LOG_CONDITIONAL(is_tron(), LOG_DEBUG, "User \"%s\": command returned rc=%d, stdout=%s, stderr=%s",
-                    username.c_str(), rc, std_out.c_str(), std_err.c_str());
-    if (rc != 0)
-        return false;
+    LOG_CONDITIONAL(is_tron(), LOG_DEBUG, "%s: usermod returned rc=%d, stdout=%s, stderr=%s",
+                    dbgstr.c_str(), rc, std_out.c_str(), std_err.c_str());
 
-    std::string errmsg = certgen(username);
-    return errmsg.empty();
+    if (rc != 0)
+    {
+        return strfmt("usermod returned rc=%d, stdout=%s, stderr=%s",
+                      rc, std_out.c_str(), std_err.c_str());
+    }
+
+    return certgen(login);
 }
 
 /**

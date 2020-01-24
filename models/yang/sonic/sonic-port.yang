@@ -118,6 +118,18 @@ module sonic-port {
                 leaf oper_status {
                     type scommon:oper-status;
                 }
+
+                leaf admin_status {
+                    type scommon:admin-status;
+                }
+
+                leaf description {
+                    type string;
+                }
+
+                leaf speed {
+                    type uint64;
+                }
             }
         }
     }

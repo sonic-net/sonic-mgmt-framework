@@ -66,7 +66,7 @@ func XlateFuncBind(name string, fn interface{}) (err error) {
 		v.Type().NumIn()
 		XlateFuncs[name] = v
 	} else {
-		log.Info("Duplicate entry found in the XlateFunc map " + name)
+		xfmrLogInfo("Duplicate entry found in the XlateFunc map " + name)
 	}
 	return
 }
@@ -94,7 +94,6 @@ func TraverseDb(dbs [db.MaxDB]*db.DB, spec KeySpec, result *map[db.DBNum]map[str
 
 	dbOpts = getDBOptions(spec.dbNum)
 	separator := dbOpts.KeySeparator
-	//log.Infof("key separator for table %v in Db %v is %v", spec.Ts.Name, spec.dbNum, separator)
 
 	if spec.Key.Len() > 0 {
 		// get an entry with a specific key
@@ -124,7 +123,7 @@ func TraverseDb(dbs [db.MaxDB]*db.DB, spec KeySpec, result *map[db.DBNum]map[str
 				log.Warningf("Failed to get keys for tbl(%v) in TraverseDb", spec.Ts.Name)
 				return err
 			}
-			log.Infof("keys for table %v in Db %v are %v", spec.Ts.Name, spec.dbNum, keys)
+			xfmrLogInfoAll("keys for table %v in Db %v are %v", spec.Ts.Name, spec.dbNum, keys)
 			for i, _ := range keys {
 				if parentKey != nil && (spec.ignoreParentKey == false) {
 					// TODO - multi-depth with a custom delimiter
@@ -283,28 +282,28 @@ func XlateToDb(path string, opcode int, d *db.DB, yg *ygot.GoStruct, yt *interfa
 	var result = make(map[int]map[db.DBNum]map[string]map[string]db.Value)
 	switch opcode {
 	case CREATE:
-		log.Info("CREATE case")
+		xfmrLogInfo("CREATE case")
 		err = dbMapCreate(d, yg, opcode, path, requestUri, jsonData, result, txCache)
 		if err != nil {
 			log.Errorf("Error: Data translation from yang to db failed for create request.")
 		}
 
 	case UPDATE:
-		log.Info("UPDATE case")
+		xfmrLogInfo("UPDATE case")
 		err = dbMapUpdate(d, yg, opcode, path, requestUri, jsonData, result, txCache)
 		if err != nil {
 			log.Errorf("Error: Data translation from yang to db failed for update request.")
 		}
 
 	case REPLACE:
-		log.Info("REPLACE case")
+		xfmrLogInfo("REPLACE case")
 		err = dbMapUpdate(d, yg, opcode, path, requestUri, jsonData, result, txCache)
 		if err != nil {
 			log.Errorf("Error: Data translation from yang to db failed for replace request.")
 		}
 
 	case DELETE:
-		log.Info("DELETE case")
+		xfmrLogInfo("DELETE case")
 		err = dbMapDelete(d, yg, opcode, path, requestUri, jsonData, result, txCache, skipOrdTbl)
 		if err != nil {
 			log.Errorf("Error: Data translation from yang to db failed for delete request.")
@@ -316,7 +315,7 @@ func XlateToDb(path string, opcode int, d *db.DB, yg *ygot.GoStruct, yt *interfa
 func GetAndXlateFromDB(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db.DB, txCache interface{}) ([]byte, error, bool) {
 	var err error
 	var payload []byte
-	log.Info("received xpath =", uri)
+	xfmrLogInfo("received xpath = " + uri)
 
 	requestUri := uri
 	keySpec, err := XlateUriToKeySpec(uri, requestUri, ygRoot, nil, txCache)
@@ -387,7 +386,7 @@ func XlateFromDb(uri string, ygRoot *ygot.GoStruct, dbs [db.MaxDB]*db.DB, data R
 		}
 	}
 	payload, err, isEmptyPayload := dbDataToYangJsonCreate(uri, ygRoot, dbs, &dbData, cdb, txCache)
-	log.Info("Payload generated:", payload)
+	xfmrLogInfo("Payload generated : " + payload)
 
 	if err != nil {
 		log.Errorf("Error: failed to create json response from DB data.")
@@ -416,7 +415,7 @@ func extractFieldFromDb(tableName string, keyStr string, fieldName string, data 
 }
 
 func GetModuleNmFromPath(uri string) (string, error) {
-	log.Infof("received uri %s to extract module name from ", uri)
+	xfmrLogInfo("received uri %s to extract module name from ", uri)
 	moduleNm, err := uriModuleNameGet(uri)
 	return moduleNm, err
 }
@@ -448,7 +447,7 @@ func GetOrdTblList(xfmrTbl string, uriModuleNm string) []string {
                 sonicMdlTblInfo := xDbSpecTblSeqnMap[sonicMdlNm]
                 for _, ordTblNm := range(sonicMdlTblInfo.OrdTbl) {
                                 if xfmrTbl == ordTblNm {
-                                        log.Infof("Found sonic module(%v) whose ordered table list contains table %v", sonicMdlNm, xfmrTbl)
+                                        xfmrLogInfo("Found sonic module(%v) whose ordered table list contains table %v", sonicMdlNm, xfmrTbl)
                                         ordTblList = sonicMdlTblInfo.OrdTbl
                                         processedTbl = true
                                         break
@@ -458,7 +457,16 @@ func GetOrdTblList(xfmrTbl string, uriModuleNm string) []string {
                         break
                 }
         }
-        return ordTblList
+		return ordTblList
+	}
+
+/* Table hierarchy read from json file */
+func GetXfmrOrdTblList(xfmrTbl string) []string {
+	var ordTblList []string
+	if _, ok := sonicOrdTblListMap[xfmrTbl]; ok {
+		ordTblList = sonicOrdTblListMap[xfmrTbl]
+	}
+	return ordTblList
 }
 
 func GetTablesToWatch(xfmrTblList []string, uriModuleNm string) []string {
@@ -486,7 +494,7 @@ func GetTablesToWatch(xfmrTblList []string, uriModuleNm string) []string {
                         sonicMdlTblInfo := xDbSpecTblSeqnMap[sonicMdlNm]
                         for _, ordTblNm := range(sonicMdlTblInfo.OrdTbl) {
                                 if xfmrTbl == ordTblNm {
-                                        log.Infof("Found sonic module(%v) whose ordered table list contains table %v", sonicMdlNm, xfmrTbl)
+                                        xfmrLogInfo("Found sonic module(%v) whose ordered table list contains table %v", sonicMdlNm, xfmrTbl)
                                         ldepTblList := sonicMdlTblInfo.DepTbl[xfmrTbl]
                                         for _, depTblNm := range(ldepTblList) {
                                                 depTblMap[depTblNm] = true
@@ -514,7 +522,7 @@ func CallRpcMethod(path string, body []byte, dbs [db.MaxDB]*db.DB) ([]byte, erro
 	// TODO - check module name
 	rpcName := strings.Split(path, ":")
 	if dbXpathData, ok := xDbSpecMap[rpcName[1]]; ok {
-		log.Info("RPC callback invoked (%v) \r\n", rpcName)
+		xfmrLogInfo("RPC callback invoked (%v) \r\n", rpcName)
 		data, err := XlateFuncCall(dbXpathData.rpcFunc, body, dbs)
 		if err != nil {
 			return nil, err

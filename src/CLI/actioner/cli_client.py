@@ -204,3 +204,5 @@ def add_error_prefix(err_msg):
         return '%Error: ' + err_msg
     return err_msg
 
+def set_command(cmd):
+    os.environ['USER_COMMAND'] = cmd

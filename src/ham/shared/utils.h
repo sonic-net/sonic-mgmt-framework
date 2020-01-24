@@ -51,6 +51,7 @@ static inline char * cpy2buf(char * dest, const char * srce, size_t len)
 #   include <string>                /* std::string */
 #   include <sstream>               /* std::ostringstream, std::istringstream */
 #   include <vector>                /* std::vector */
+#   include <memory>                /* std::unique_ptr */
 
     inline const char * true_false(bool x, const char * pos_p = "true", const char * neg_p = "false")   { return (x) ? pos_p : neg_p; }
 
@@ -108,6 +109,28 @@ static inline char * cpy2buf(char * dest, const char * srce, size_t len)
           tokens.push_back(token);
        }
        return tokens;
+    }
+
+    static inline std::string trim(const std::string & str,
+                                   const std::string & whitespace = " \t")
+    {
+        const auto strBegin = str.find_first_not_of(whitespace);
+        if (strBegin == std::string::npos)
+            return ""; // no content
+
+        const auto strEnd = str.find_last_not_of(whitespace);
+        const auto strRange = strEnd - strBegin + 1;
+
+        return str.substr(strBegin, strRange);
+    }
+
+    template<typename ... VArgs>
+    std::string strfmt(const std::string &format, VArgs&& ... vargs)
+    {
+        size_t buf_size = std::snprintf(nullptr, 0, format.c_str(), std::forward<VArgs>(vargs)...) + 1;
+        std::unique_ptr<char[]> buffer(new char[buf_size]);
+        std::snprintf(buffer.get(), buf_size, format.c_str(), vargs ...);
+        return std::string(buffer.get(), buffer.get() + buf_size - 1);
     }
 
 #endif // __cplusplus
