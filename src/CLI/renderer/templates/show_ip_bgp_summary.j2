@@ -7,7 +7,6 @@
     {% if 'neighbor' in neighbor_list %}
         {% set neighbors = neighbor_list['neighbor'] %}
         {% for neighbor in neighbors %}
-            {% if 'state' in neighbor %}
             {% set n_state = neighbor['state'] %}
             {{-neighbor['neighbor-address'].ljust(16)-}}
             {{-'4'.ljust(4)-}}
@@ -33,10 +32,10 @@
                 {{-'0'.ljust(8)-}}
             {% endif %}
             {% if 'last-established' in n_state %}
-                {% set le_timestamp = datetimeformat(n_state['last-established']) %}
+                {% set le_timestamp = n_state['last-established'] %}
                 {{-le_timestamp.ljust(24)-}}
             {% else %}
-                {{-'00:00:00'.ljust(24)-}}
+                {{-'00d:00h:00m:00s'.ljust(24)-}}
             {% endif %}
             {% if 'session-state' in n_state %}
                 {% if n_state['session-state'] == 'ESTABLISHED' %}
@@ -55,7 +54,6 @@
                 {% endif %}
             {% else %}
                 {{-'0'.ljust(8)}}
-            {% endif %}
             {% endif %}
         {% endfor %}
     {% endif %}

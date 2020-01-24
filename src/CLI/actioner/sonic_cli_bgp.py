@@ -1523,12 +1523,33 @@ def invoke_api(func, args=[]):
 
     return api.cli_not_implemented(func)
 
-def filter_bgp_nbrs(iptype, nbrs):
+def preprocess_bgp_nbrs(iptype, nbrs):
     new_nbrs = []
     for nbr in nbrs:
-        ipaddr = netaddr.IPAddress(nbr['neighbor-address'])
-        if ipaddr.version == iptype:
+        ipt = 4
+        try:
+            ipaddr = netaddr.IPAddress(nbr['neighbor-address'])
+            ipt= ipaddr.version
+        except:
+            ipt = 4
+
+        if ipt == iptype:
+            if 'state' in nbr and 'session-state' in nbr['state'] and 'last-established' in nbr['state']:
+                if nbr['state']['session-state'] == 'ESTABLISHED':
+                    last_estbd = nbr['state']['last-established']
+                    seconds = time.time() - float(last_estbd)
+                    days = seconds // 86400
+                    seconds = seconds % 86400
+                    hours = seconds // 3600
+                    seconds = seconds % 3600
+                    minutes = seconds // 60
+                    seconds = seconds % 60
+                    nbr['state']['last-established'] = '{}d:{:02}h:{:02}m:{:02}s'.format(int(days), int(hours), int(minutes), int(seconds))
+                else:
+                    nbr['state']['last-established'] = '00d:00h:00m'
+
             new_nbrs.append(nbr)
+
     return new_nbrs
 
 
@@ -1554,7 +1575,9 @@ def invoke_show_api(func, args=[]):
                     iptype = 6
                 if 'openconfig-network-instance:neighbors' in response.content:
                     tmp = {}
-                    tmp['neighbor'] = filter_bgp_nbrs(iptype, response.content['openconfig-network-instance:neighbors']['neighbor'])
+                    tmp['neighbor'] = preprocess_bgp_nbrs(iptype, response.content['openconfig-network-instance:neighbors']['neighbor'])
+                    tup = tmp['neighbor']
+                    tmp['neighbor'] = sorted(tup, key=getNbr)
                     d['openconfig-network-instance:neighbors'] = tmp
                 return d
             else:
@@ -1576,7 +1599,7 @@ def invoke_show_api(func, args=[]):
             if response.ok():
                 if 'openconfig-network-instance:neighbor' in response.content:
                     tmp = {}
-                    tmp['neighbor'] = filter_bgp_nbrs(iptype, response.content['openconfig-network-instance:neighbor'])
+                    tmp['neighbor'] = preprocess_bgp_nbrs(iptype, response.content['openconfig-network-instance:neighbor'])
                     d['openconfig-network-instance:neighbors'] = tmp
                 return d
             else:
@@ -1589,7 +1612,9 @@ def invoke_show_api(func, args=[]):
             if response.ok():
                 if 'openconfig-network-instance:neighbors' in response.content:
                     tmp = {}
-                    tmp['neighbor'] = filter_bgp_nbrs(iptype, response.content['openconfig-network-instance:neighbors']['neighbor'])
+                    tmp['neighbor'] = preprocess_bgp_nbrs(iptype, response.content['openconfig-network-instance:neighbors']['neighbor'])
+                    tup = tmp['neighbor']
+                    tmp['neighbor'] = sorted(tup, key=getNbr)
                     d['openconfig-network-instance:neighbors'] = tmp
                 return d
             else:

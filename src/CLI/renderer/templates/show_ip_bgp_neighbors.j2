@@ -3,7 +3,6 @@
     {% if 'neighbor' in neighbor_list %}
         {% set neighbors = neighbor_list['neighbor'] %}
         {% for neighbor in neighbors %}
-            {% if 'state' in neighbor %}
             {% set n_state = neighbor['state'] %}
             {{-'BGP neighbor is '}}{{neighbor['neighbor-address']-}}
             {{-', remote AS '}}{{n_state['peer-as']-}}
@@ -22,9 +21,9 @@
             {% if 'session-state' in n_state %}
                 {{-'  BGP state = '}}{{(n_state['session-state']|string)-}}
                 {% if 'last-established' in n_state %} 
-                    {{-', up for '}}{{datetimeformat(n_state['last-established'])|string}}{{'\n'}}
+                    {{-', up for '}}{{n_state['last-established']|string}}{{'\n'}}
                 {% else %}
-                    {{-', up for '}}{{'00:00:00'}}{{'\n'}}
+                    {{-', up for '}}{{'00d:00h:00m:00s'}}{{'\n'}}
                 {% endif %}
             {% else %}
                 {{-'  BGP state = Unestablished'}}
@@ -52,7 +51,6 @@
                 {{-'    Total:'.ljust(25)-}}
                 {{-(n_messages['sent']['NOTIFICATION']+n_messages['sent']['UPDATE']|string).ljust(12)-}}
                 {{-(n_messages['received']['NOTIFICATION']+n_messages['received']['UPDATE']|string)}}{{'\n'}}
-            {% endif %}
             {% endif %}
             {% if 'transport' in neighbor %}
                 {% set n_tp_state = neighbor['transport']['state'] %}
