@@ -20,9 +20,63 @@ limitations under the License.
   <VIEW name="enable-view">
     <COMMAND name="show sflow" help="Show sFlow information">
       <ACTION> python $SONIC_CLI_ROOT/sonic-cli-sflow.py get_sonic_sflow_sonic_sflow show_sflow.j2 ${__full_line} </ACTION>
+      <DOCGEN>
+          <DESCRIPTION>Show global sFlow configuration</DESCRIPTION>
+          <EXAMPLE>
+              sonic# show sflow
+              ---------------------------------------------------------
+              Global sFlow Information
+              ---------------------------------------------------------
+              admin state:       up
+              polling-interval:  20
+              agent-id:          default
+              sonic#
+          </EXAMPLE>
+      </DOCGEN>
     </COMMAND>
     <COMMAND name="show sflow interface" help="Show sFlow interface information">
       <ACTION> python $SONIC_CLI_ROOT/sonic-cli-sflow.py get_sonic_sflow_sonic_sflow_sflow_session_table show_sflow_intf.j2 ${__full_line} </ACTION>
+      <DOCGEN>
+          <DESCRIPTION>Show sFlow interface configuration</DESCRIPTION>
+          <EXAMPLE>
+              sonic# show sflow interface
+              -----------------------------------------------------------
+              sFlow interface configurations
+              Interface            Admin State             Sampling Rate
+              Ethernet0            up                      4000
+              Ethernet1            up                      4000
+              Ethernet2            up                      4000
+              Ethernet3            up                      4000
+              Ethernet4            up                      4000
+              Ethernet5            up                      4000
+              Ethernet6            up                      4000
+              Ethernet7            up                      4000
+              Ethernet8            up                      4000
+              Ethernet9            up                      4000
+              Ethernet10           up                      4000
+              Ethernet11           up                      4000
+              Ethernet12           up                      4000
+              Ethernet13           up                      4000
+              Ethernet14           up                      4000
+              Ethernet15           up                      4000
+              Ethernet16           up                      4000
+              Ethernet17           up                      4000
+              Ethernet18           up                      4000
+              Ethernet19           up                      4000
+              Ethernet20           up                      4000
+              Ethernet21           up                      4000
+              --more--
+              Ethernet22           up                      4000
+              Ethernet23           up                      4000
+              Ethernet24           up                      4000
+              Ethernet25           up                      4000
+              Ethernet26           up                      4000
+              Ethernet27           up                      4000
+              Ethernet28           up                      4000
+              Ethernet29           up                      4000
+              sonic#
+          </EXAMPLE>
+      </DOCGEN>
     </COMMAND>
   </VIEW>
   <VIEW name="configure-view">
@@ -32,31 +86,91 @@ limitations under the License.
       <PARAM name="ip" help="Collector IP address" ptype="IPV4_OR_IPV6_ADDR"/>
       <PARAM name="port" help="Collector port number" ptype="RANGE_0_65535" optional="true"/>
       <ACTION> if test "${port}" = ""; then python $SONIC_CLI_ROOT/sonic-cli-sflow.py put_sonic_sflow_sonic_sflow_sflow_collector_sflow_collector_list ${name} ${ip}; else python $SONIC_CLI_ROOT/sonic-cli-sflow.py put_sonic_sflow_sonic_sflow_sflow_collector_sflow_collector_list ${name} ${ip} ${port}; fi </ACTION>
+      <DOCGEN>
+          <DESCRIPTION>Add an sFLow Collector</DESCRIPTION>
+          <EXAMPLE summary="Add an sFlow collector using default port 6343">
+              sonic(config)# sflow collector col1 1.1.1.1
+              sonic(config)#
+          </EXAMPLE>
+          <EXAMPLE summary="Add an sFlow collector with port number">
+              sonic(config)# sflow collector col2 1.1.1.2 port 4451
+              sonic(config)#
+          </EXAMPLE>
+      </DOCGEN>
     </COMMAND>
     <COMMAND name="sflow enable" help="Enable sFlow" ptype="SUBCOMMAND" mode="subcommand">
       <ACTION> python $SONIC_CLI_ROOT/sonic-cli-sflow.py patch_sonic_sflow_sonic_sflow_sflow_sflow_list_admin_state up </ACTION>
+      <DOCGEN>
+          <DESCRIPTION>Enable sFlow</DESCRIPTION>
+          <EXAMPLE>
+              sonic(config)# sflow enable
+              sonic(config)#
+          </EXAMPLE>
+      </DOCGEN>
     </COMMAND>
     <COMMAND name="sflow agent-id" help="Collector agent interface" ptype="SUBCOMMAND" mode="subcommand">
       <PARAM name="interface" help="Interface name" ptype="STRING"/>
       <ACTION> python $SONIC_CLI_ROOT/sonic-cli-sflow.py patch_sonic_sflow_sonic_sflow_sflow_sflow_list_agent_id ${interface} </ACTION>
+      <DOCGEN>
+          <DESCRIPTION>Configure sFlow agent interface</DESCRIPTION>
+          <EXAMPLE>
+              sonic(config)# sflow agent-id Ethernet0
+              sonic(config)#
+          </EXAMPLE>
+      </DOCGEN>
     </COMMAND>
     <COMMAND name="sflow polling-interval" help="Collector polling interval" ptype="SUBCOMMAND" mode="subcommand">
       <PARAM name="interval" help="Interval (default: 20)" ptype="SFLOW_POLL_INTERVAL"/>
       <ACTION> python $SONIC_CLI_ROOT/sonic-cli-sflow.py patch_sonic_sflow_sonic_sflow_sflow_sflow_list_polling_interval ${interval} </ACTION>
+      <DOCGEN>
+          <DESCRIPTION>Configure sFlow polling interval</DESCRIPTION>
+          <EXAMPLE>
+              sonic(config)# sflow polling-interval 44
+              sonic(config)#
+          </EXAMPLE>
+      </DOCGEN>
     </COMMAND>
     <COMMAND name="no sflow" help="sFlow Configurations"/>
     <COMMAND name="no sflow enable" help="Disable sFlow">
       <ACTION> python $SONIC_CLI_ROOT/sonic-cli-sflow.py patch_sonic_sflow_sonic_sflow_sflow_sflow_list_admin_state down </ACTION>
+      <DOCGEN>
+          <DESCRIPTION>Disable sFlow</DESCRIPTION>
+          <EXAMPLE>
+              sonic(config)# no sflow enable
+              sonic(config)#
+          </EXAMPLE>
+      </DOCGEN>
     </COMMAND>
     <COMMAND name="no sflow collector" help="Remove a collector" ptype="SUBCOMMAND" mode="subcommand">
       <PARAM name="name" help="Collector name" ptype="STRING"/>
       <ACTION> python $SONIC_CLI_ROOT/sonic-cli-sflow.py delete_sonic_sflow_sonic_sflow_sflow_collector_sflow_collector_list ${name} </ACTION>
+      <DOCGEN>
+          <DESCRIPTION>Remove an sFlow collector</DESCRIPTION>
+          <EXAMPLE>
+              sonic(config)# no sflow collector col1
+              sonic(config)#
+          </EXAMPLE>
+      </DOCGEN>
     </COMMAND>
     <COMMAND name="no sflow agent-id" help="Set default agent-id" ptype="SUBCOMMAND" mode="subcommand">
       <ACTION> python $SONIC_CLI_ROOT/sonic-cli-sflow.py delete_sonic_sflow_sonic_sflow_sflow_sflow_list_agent_id </ACTION>
+      <DOCGEN>
+          <DESCRIPTION>Reset sFlow agent to default interface</DESCRIPTION>
+          <EXAMPLE>
+              sonic(config)# no sflow agent-id
+              sonic(config)#
+          </EXAMPLE>
+      </DOCGEN>
     </COMMAND>
     <COMMAND name="no sflow polling-interval" help="Set default polling interval" ptype="SUBCOMMAND" mode="subcommand">
       <ACTION> python $SONIC_CLI_ROOT/sonic-cli-sflow.py delete_sonic_sflow_sonic_sflow_sflow_sflow_list_polling_interval </ACTION>
+      <DOCGEN>
+          <DESCRIPTION>Reset sFlow polling-interval to default</DESCRIPTION>
+          <EXAMPLE>
+              sonic(config)# no sflow polling-interval
+              sonic(config)#
+          </EXAMPLE>
+      </DOCGEN>
     </COMMAND>
   </VIEW>
 </CLISH_MODULE>
