@@ -228,7 +228,6 @@ def invoke(func, args):
 
 
 def run(func, args):
-    pipestr().write(args)
 
     if not path.exists('/proc/bcm/ksync/stats'):
         print("%Error: PTP feature not supported")

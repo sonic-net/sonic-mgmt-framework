@@ -216,7 +216,6 @@ def invoke(func, args):
         exit(1)
 
 def run(func, args):
-    pipestr().write(args)
     try:
         api_response = invoke(func, args)
         if api_response.ok():

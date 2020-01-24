@@ -286,7 +286,6 @@ def get_sonic_radius_servers(args=[]):
 
 
 def run(func, args):
-    pipestr().write(args)
     if func == 'get_sonic_radius':
         get_sonic_radius_global()
         get_sonic_radius_servers()

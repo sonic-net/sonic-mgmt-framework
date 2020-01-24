@@ -690,12 +690,12 @@ limitations under the License.
       <COMMAND
         name="neigh_suppress"
         help="Enable ARP and ND Suppression">
-        <ACTION> python $SONIC_CLI_ROOT/sonic-cli-vxlan.py patch_sonic_vxlan_sonic_vxlan_suppress_vlan_neigh_suppress_vlan_neigh_list ${vlan_id} </ACTION>
+        <ACTION builtin="clish_pyobj">sonic_cli_vxlan patch_sonic_vxlan_sonic_vxlan_suppress_vlan_neigh_suppress_vlan_neigh_list ${vlan_id}</ACTION>
       </COMMAND>
       <COMMAND
         name="no neigh_suppress"
         help="Disable ARP and ND Suppression">
-        <ACTION> python $SONIC_CLI_ROOT/sonic-cli-vxlan.py delete_sonic_vxlan_sonic_vxlan_suppress_vlan_neigh_suppress_vlan_neigh_list ${vlan_id} </ACTION>
+        <ACTION builtin="clish_pyobj">sonic_cli_vxlan delete_sonic_vxlan_sonic_vxlan_suppress_vlan_neigh_suppress_vlan_neigh_list ${vlan_id}</ACTION>
       </COMMAND>
       <!--
       <COMMAND

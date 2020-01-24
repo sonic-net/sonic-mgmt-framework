@@ -7,6 +7,7 @@ module openconfig-if-types-ext {
 
   // import statements
   import openconfig-if-types { prefix oc-if-types; }
+  import openconfig-extensions { prefix oc-ext; }
 
   // meta
   organization
