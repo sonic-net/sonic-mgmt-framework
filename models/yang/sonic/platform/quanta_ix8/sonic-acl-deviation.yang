@@ -28,7 +28,7 @@ module sonic-acl-deviation {
 	}
 
 	deviation /sacl:sonic-acl/sacl:ACL_RULE/sacl:ACL_RULE_LIST {
-		deviate add {
+		deviate replace {
 			max-elements 768;
 		}
 	}

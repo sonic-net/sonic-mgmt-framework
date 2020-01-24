@@ -46,13 +46,13 @@ func (c *CVL) checkMaxElemConstraint(op CVLOperation, tableName string) CVLRetCo
 
 	if (exists == false) { //fetch from Redis first time in the session
 		redisEntries, err := luaScripts["count_entries"].Run(redisClient, nokey, tableName + "|*").Result()
-		curSize = int(redisEntries.(int64))
-
 		if err != nil {
 			CVL_LOG(WARNING,"Unable to fetch current size of table %s from Redis, err= %v",
 			tableName, err)
 			return CVL_FAILURE
 		}
+
+		curSize = int(redisEntries.(int64))
 
 		//Store the current table size
 		c.maxTableElem[tableName] = curSize
