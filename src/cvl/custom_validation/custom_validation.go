@@ -23,6 +23,8 @@ import (
 	"github.com/go-redis/redis"
 	"strings"
 	"fmt"
+	log "github.com/golang/glog"
+	"net"
 	)
 
 //Custom validation code for sonic-acl.yang//
@@ -116,3 +118,66 @@ func (t *CustomValidation) ValidateAclRuleIPAddress(
 	return CVLErrorInfo{ErrCode: CVL_SUCCESS}
 }
 
+//Path : /sonic-sflow/SFLOW/SFLOW_LIST/agent_id
+//Purpose: Check correct for correct agent_id
+//vc : Custom Validation Context
+//Returns -  CVL Error object
+func (t *CustomValidation) ValidateSflowAgentId(
+	vc *CustValidationCtxt) CVLErrorInfo {
+
+	log.Info("ValidateSflowAgentId operation: ", vc.CurCfg.VOp)
+	if (vc.CurCfg.VOp == OP_DELETE) {
+		return CVLErrorInfo{ErrCode: CVL_SUCCESS}
+	}
+
+	log.Info("ValidateSflowAgentId YNodeVal: ", vc.YNodeVal)
+
+	/* check if input passed is found in ConfigDB PORT|* */
+	tableKeys, err:= vc.RClient.Keys("PORT|*").Result()
+
+	if (err != nil) || (vc.SessCache == nil) {
+		log.Info("ValidateSflowAgentId PORT is empty or invalid argument")
+		errStr := "ConfigDB PORT list is empty"
+		return CVLErrorInfo{
+			ErrCode: CVL_SEMANTIC_ERROR,
+			TableName: "SFLOW",
+			CVLErrDetails : errStr,
+			ConstraintErrMsg : errStr,
+		}
+	}
+
+	for _, dbKey := range tableKeys {
+		tmp := strings.Replace(dbKey, "PORT|", "", 1)
+		log.Info("ValidateSflowAgentId dbKey ", tmp)
+		if (tmp == vc.YNodeVal) {
+			return CVLErrorInfo{ErrCode: CVL_SUCCESS}
+		}
+	}
+
+	/* check if input passed is found in list of network interfaces (includes, network_if, mgmt_if, and loopback) */
+	ifaces, err2 := net.Interfaces()
+	if err2 != nil {
+		log.Info("ValidateSflowAgentId Error getting network interfaces")
+		errStr := "Error getting network interfaces"
+		return CVLErrorInfo{
+			ErrCode: CVL_SEMANTIC_ERROR,
+			TableName: "SFLOW",
+			CVLErrDetails : errStr,
+			ConstraintErrMsg : errStr,
+		}
+	}
+	for _, i := range ifaces {
+		log.Info("ValidateSflowAgentId i.Name ", i.Name)
+		if (i.Name == vc.YNodeVal) {
+			return CVLErrorInfo{ErrCode: CVL_SUCCESS}
+		}
+	}
+
+	errStr := "Invalid interface name"
+	return CVLErrorInfo{
+		ErrCode: CVL_SEMANTIC_ERROR,
+		TableName: "SFLOW",
+		CVLErrDetails : errStr,
+		ConstraintErrMsg : errStr,
+	}
+}
