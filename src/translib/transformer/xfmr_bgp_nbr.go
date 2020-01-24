@@ -135,8 +135,12 @@ var bgp_nbr_tbl_xfmr TableXfmrFunc = func (inParams XfmrParams)  ([]string, erro
 
             for peer, _peerData := range peers {
                 peerData := _peerData.(map[string]interface {})
-                if _, ok := peerData["dynamicPeer"].(bool) ; !ok {
-                  continue
+                if value, ok := peerData["dynamicPeer"].(bool) ; ok {
+                  if (value == false) {
+                      continue
+                  }
+                } else {
+                  continue;
                 }
 
                 key = vrf + "|" + peer
