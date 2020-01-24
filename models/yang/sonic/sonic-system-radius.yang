@@ -36,16 +36,6 @@ module sonic-system-radius {
                             "RADIUS global key";
                 }
 
-/*
-                leaf type {
-                    type enumeration {
-                        enum RADIUS;
-                    }
-                    description
-                            "RADIUS global type";
-                }
- */
-
                 leaf passkey {
                     type string {
                         length "1..32";
@@ -98,9 +88,7 @@ module sonic-system-radius {
 
             list RADIUS_SERVER_LIST {
                 key "ipaddress";
-/*
-                key "address";
-*/
+
                 max-elements 8;
 
                 leaf ipaddress {
@@ -108,14 +96,6 @@ module sonic-system-radius {
                     description
                             "RADIUS server's IP address (IPv4 or IPv6)";
                 }
-
-/*
-                leaf address {
-                    type inet:ip-address;
-                    description
-                            "RADIUS server's IP address (IPv4 or IPv6)";
-                }
-*/
 
                 leaf auth_port {
                     default 1812;
