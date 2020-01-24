@@ -40,6 +40,9 @@ func init() {
 }
 
 func isAuthorizedForSet(req SetRequest) bool {
+	if !req.AuthEnabled {
+		return true
+	}
 	for _, r := range req.User.Roles {
         if r == "admin" {
             return true
@@ -48,6 +51,9 @@ func isAuthorizedForSet(req SetRequest) bool {
 	return false
 }
 func isAuthorizedForBulk(req BulkRequest) bool {
+	if !req.AuthEnabled {
+		return true
+	}
 	for _, r := range req.User.Roles {
         if r == "admin" {
             return true
@@ -57,15 +63,27 @@ func isAuthorizedForBulk(req BulkRequest) bool {
 }
 
 func isAuthorizedForGet(req GetRequest) bool {
+	if !req.AuthEnabled {
+		return true
+	}
 	return  true
 }
 func isAuthorizedForSubscribe(req SubscribeRequest) bool {
+	if !req.AuthEnabled {
+		return true
+	}
 	return  true
 }
 func isAuthorizedForIsSubscribe(req IsSubscribeRequest) bool {
+	if !req.AuthEnabled {
+		return true
+	}
 	return  true
 }
 
 func isAuthorizedForAction(req ActionRequest) bool {
+	if !req.AuthEnabled {
+		return true
+	}
 	return  true
 }
