@@ -67,8 +67,13 @@ def invoke(func, args):
         keypath = cc.Path('/restconf/data/sonic-mclag:sonic-mclag/MCLAG_DOMAIN/MCLAG_DOMAIN_LIST={domain_id}/peer_link', domain_id=args[0])
 
         if (func.startswith("patch") is True):
+            if_name = None
+            if args[2] == 'PortChannel':
+                if_name = "PortChannel" + args[1]
+            else:
+                if_name = "Ethernet" + args[1]
             body = {
-                "sonic-mclag:peer_link": args[1]
+                "sonic-mclag:peer_link": if_name
             }
             return aa.patch(keypath, body)
         else:
@@ -407,13 +412,14 @@ def mclag_show_mclag_brief(args):
 
 def run(func, args):
 
+    pipestr().write(args)
     #show commands
     try:
         #show mclag brief command
-        if func == 'show mclag brief':
+        if func == 'show_mclag_brief':
             mclag_show_mclag_brief(args)
             return
-        if func == 'show mclag interface':
+        if func == 'show_mclag_interface':
             mclag_show_mclag_interface(args)
             return
 
