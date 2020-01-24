@@ -238,7 +238,7 @@ limitations under the License.
             ptype="UINT"
             >
         </PARAM>
-     <ACTION builtin="clish_nop"></ACTION>
+        <ACTION builtin="clish_restcl">oper=PATCH url=/restconf/data/openconfig-interfaces:interfaces/interface=Ethernet${phy-if-name}/config body={"openconfig-interfaces:config": {"name": "Ethernet${phy-if-name}"}}</ACTION>
      </COMMAND>
 
      <COMMAND
