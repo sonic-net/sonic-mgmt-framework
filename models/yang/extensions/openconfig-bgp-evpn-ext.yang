@@ -206,7 +206,7 @@ module openconfig-bgp-evpn-ext {
     deviate not-supported;
   }*/
 
-  grouping evpn-rib-key-refs {
+  grouping evpn-loc-rib-key-refs {
     description
       "Key references to support operational state structure for
       the BGP Adj-RIB tables";
@@ -226,7 +226,56 @@ module openconfig-bgp-evpn-ext {
       description
         "Reference to the prefix list key";
     }
+
+    leaf origin {
+      type leafref {
+        path "../state/origin";
+      }
+      description
+        "Reference to the origin list key";
+    }
+
+    leaf path-id {
+      type leafref {
+        path "../state/path-id";
+      }
+      description
+        "Reference to the path-id list key";
+    }
+
   }
+
+  grouping evpn-adj-rib-key-refs {
+    description
+      "Key references to support operational state structure for
+      the BGP Adj-RIB tables";
+
+    leaf route-distinguisher {
+      type leafref {
+        path "../state/route-distinguisher";
+      }
+      description
+        "Reference to the route-distinguisher list key";
+    }
+
+    leaf prefix {
+      type leafref {
+        path "../state/prefix";
+      }
+      description
+        "Reference to the prefix list key";
+    }
+
+    leaf path-id {
+      type leafref {
+        path "../state/path-id";
+      }
+      description
+        "Reference to the path-id list key";
+    }
+
+  }
+
 
   grouping evpn-adj-rib-common {
     description
@@ -247,7 +296,7 @@ module openconfig-bgp-evpn-ext {
           "List of routes in the table, keyed by the route
           distinguisher and route prefix.";
 
-        uses evpn-rib-key-refs;
+        uses evpn-adj-rib-key-refs;
 
         container state {
           description
@@ -296,7 +345,7 @@ module openconfig-bgp-evpn-ext {
           "List of routes in the table, keyed by the route
           distinguisher and route prefix.";
 
-        uses evpn-rib-key-refs;
+        uses evpn-adj-rib-key-refs;
 
         container state {
           description
@@ -342,13 +391,13 @@ module openconfig-bgp-evpn-ext {
           table.";
 
         list route {
-          key "route-distinguisher prefix";
+          key "route-distinguisher prefix origin path-id";
 
           description
             "List of routes in the table, keyed by the route
             distinguisher and route prefix.";
 
-          uses evpn-rib-key-refs;
+          uses evpn-loc-rib-key-refs;
 
           container state {
             description
