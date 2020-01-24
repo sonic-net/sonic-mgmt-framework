@@ -380,7 +380,7 @@ func TestValidateEditConfig_Create_Leafref_With_Other_DataType_In_Union_Non_Exis
 		cvl.CVLEditConfigData{
 			cvl.VALIDATE_ALL,
 			cvl.OP_CREATE,
-			"STP_PORT|Ethernet101", //Correct PORT format but not existing
+			"STP_PORT|Ethernet3999", //Correct PORT format but not existing
 			map[string]string{
 				"enabled": "true",
 				"edge_port": "true",
