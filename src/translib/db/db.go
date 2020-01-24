@@ -60,6 +60,10 @@ Example:
 
         keys, _ := d.GetKeys(&tsa);
 
+ * GetKeysPattern
+
+        keys, _ := d.GetKeys(&tsa, akeyPattern);
+
  * No-Transaction DeleteEntry
 
         d.DeleteEntry(&tsa, akey)
@@ -447,19 +451,16 @@ func (d *DB) GetEntry(ts *TableSpec, key Key) (Value, error) {
 
 // GetKeys retrieves all entry/row keys.
 func (d *DB) GetKeys(ts *TableSpec) ([]Key, error) {
+	return d.GetKeysPattern(ts, Key{Comp: []string{"*"}});
+}
+
+func (d *DB) GetKeysPattern(ts *TableSpec, pat Key) ([]Key, error) {
 
 	if glog.V(3) {
-		glog.Info("GetKeys: Begin: ", "ts: ", ts)
+		glog.Info("GetKeys: Begin: ", "ts: ", ts, "pat: ", pat)
 	}
 
-	/*
-		k := []Key{
-			{[]string{"k0.0", "k0.1"}},
-			{[]string{"k1.0", "k1.1"}},
-		}
-	*/
-	redisKeys, e := d.client.Keys(d.key2redis(ts,
-		Key{Comp: []string{"*"}})).Result()
+	redisKeys, e := d.client.Keys(d.key2redis(ts,pat)).Result()
 	if glog.V(4) {
 		glog.Info("GetKeys: redisKeys: ", redisKeys, " e: ", e)
 	}
