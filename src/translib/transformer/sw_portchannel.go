@@ -79,8 +79,8 @@ func get_min_links(d *db.DB, lagName *string, links *uint16) error {
         }
         *links = uint16(min_links)
     } else {
-        log.Info("Minlinks set to 1 (dafault value)")
-        *links = 1
+        log.Info("Minlinks set to 0 (dafault value)")
+        *links = 0
     }
     log.Infof("Got min links from DB : %d\n", *links)
     return nil
@@ -98,12 +98,30 @@ func get_lag_type(d *db.DB, lagName *string, mode *string) error {
         *mode = val
         log.Infof("Mode from DB: %s\n", *mode)
     } else {
-        log.Info("Default LACP mode (static false)")
         *mode = "false"
-        log.Infof("Default Mode: %s\n", *mode)
+        log.Infof("Default LACP Mode: %s\n", *mode)
     }
     return nil
 }
+
+func get_fallback(d *db.DB, lagName *string, fallback *string) error {
+    intTbl := IntfTypeTblMap[IntfTypePortChannel]
+    curr, err := d.GetEntry(&db.TableSpec{Name:intTbl.cfgDb.portTN}, db.Key{Comp: []string{*lagName}})
+    if err != nil {
+        errStr := "Failed to Get PortChannel details"
+        log.Info(errStr)
+        return errors.New(errStr)
+    }
+    if val, ok := curr.Field["fallback"]; ok {
+        *fallback = val
+        log.Infof("Fallback option read from DB: %s\n", *fallback)
+    } else {
+        *fallback = "false"
+        log.Infof("Default Fallback option: %s\n", *fallback)
+    }
+    return nil
+}
+
 
 /* Validate physical interface configured as member of PortChannel */
 func validateIntfAssociatedWithPortChannel(d *db.DB, ifName *string) error {
@@ -177,25 +195,39 @@ func can_configure_fallback(inParams XfmrParams) error {
     i := res.IntfS["interface"].([]interface{})
     po_map := i[0].(map[string]interface{})
 
+    pathInfo := NewPathInfo(inParams.uri)
+    ifKey := pathInfo.Var("name")
+
+    var static string = "false"
     if agg,ok := po_map["openconfig-if-aggregate:aggregation"]; ok {
        a := agg.(map[string]interface{})
        agg_conf := a["config"].(map[string]interface{})
        if lag_type,k := agg_conf["lag-type"]; k {
            if lag_type == "STATIC" {
-               errStr := "Fallback is not supported for Static LAGs"
-               return tlerr.InvalidArgsError{Format:errStr}
-           }
-       } else {
-           //User did not specify LAG Type; Check from DB
-           pathInfo := NewPathInfo(inParams.uri)
-           ifKey := pathInfo.Var("name")
-           var mode string
-           e = get_lag_type(inParams.d, &ifKey, &mode)
-           if e == nil {
-               errStr := "Fallback option cannot be configured for an already existing PortChannel: " + ifKey
-               return tlerr.InvalidArgsError{Format:errStr}
+               // User Input Static LAG
+               static = "true"
+           } else {
+               // Read LAG Type from DB
+               var mode string
+               e = get_lag_type(inParams.d, &ifKey, &mode)
+               if e == nil && mode == "true" {
+                   static = "true"
+               }
            }
        }
+    }
+
+    if static == "true" {
+        errStr := "Fallback is not supported for Static LAGs"
+        return tlerr.InvalidArgsError{Format:errStr}
+    }
+
+    // LACP LAG: Check for fallback re-configuration
+    var fallback string
+    e = get_fallback(inParams.d, &ifKey, &fallback)
+    if e == nil && fallback == "false" {
+        errStr := "Fallback option cannot be configured for an already existing PortChannel: " + ifKey
+        return tlerr.InvalidArgsError{Format:errStr}
     }
 
     return nil
