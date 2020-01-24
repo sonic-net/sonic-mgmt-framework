@@ -1219,6 +1219,8 @@ func (c *CVL) validateLeafRef(node *xmlquery.Node,
 
 			leafRefSuccess := false
 			nonLeafRefPresent := false //If leaf has non-leafref data type due to union
+			nodeValMatchedWithLeafref := false
+
 			refPathExpr := ""
 			//Excute all leafref checks, multiple leafref for unions
 			leafRefLoop:
@@ -1299,9 +1301,27 @@ func (c *CVL) validateLeafRef(node *xmlquery.Node,
 				}
 			} //for loop for all leafref check for a leaf - union case
 
-			if (leafRefSuccess == false) && (nonLeafRefPresent == false) {
-				//Return failure if none of the leafref exists and
-				//the leaf has no non-leafref data type as well
+			if (leafRefSuccess == false) && (nonLeafRefPresent == true) &&
+			(len(leafRefs) > 1) {
+				//If union has mixed type with base and leafref type,
+				//check if node value matched with any leafref.
+				//If so non-existence of leafref in DB will be treated as failure.
+				ctxtVal := ""
+				if (ctxNode.FirstChild != nil) {
+					ctxtVal = ctxNode.FirstChild.Data
+				}
+				if (ctxtVal != "") {
+					nodeValMatchedWithLeafref = c.yp.IsLeafrefMatchedInUnion(tblInfo.module,
+					fmt.Sprintf("/%s:%s/%s/%s_LIST/%s", tblInfo.modelName,
+					tblInfo.modelName, tblInfo.redisTableName,
+					tableName, nodeName),
+					ctxtVal)
+				}
+			}
+
+			if (leafRefSuccess == false) &&
+			((nonLeafRefPresent == false) || (nodeValMatchedWithLeafref == true)) {
+				//Return failure if none of the leafref exists
 				return CVLErrorInfo{
 					TableName: tableName,
 					Keys: strings.Split(key,
