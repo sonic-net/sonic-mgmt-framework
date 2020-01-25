@@ -1,0 +1,56 @@
+{
+    "tablelist": [
+    {
+        "tablename": "ACL_RULE_TABLE",
+        "parent": "ACL_TABLE"
+    },
+    {
+        "tablename": "BGP_GLOBALS_AF",
+        "parent": "BGP_GLOBALS"
+    },
+    {
+        "tablename": "BGP_GLOBALS_LISTEN_PREFIX",
+        "parent": "BGP_GLOBALS"
+    },
+    {
+        "tablename": "BGP_GLOBALS_AF_AGGREGATE_ADDR",
+        "parent": "BGP_GLOBALS"
+    },
+    {
+        "tablename": "BGP_GLOBALS_AF_NETWORK",
+        "parent": "BGP_GLOBALS"
+    },
+    {
+        "tablename": "BGP_GLOBALS_EVPN_RT",
+        "parent": "BGP_GLOBALS"
+    },
+    {
+        "tablename": "BGP_GLOBALS_EVPN_VNI",
+        "parent": "BGP_GLOBALS"
+    },
+    {
+        "tablename": "BGP_GLOBALS_EVPN_VNI_RT",
+        "parent": "BGP_GLOBALS"
+    },
+    {
+        "tablename": "BGP_PEER_GROUP_AF",
+        "parent": "BGP_PEER_GROUP"
+    },
+    {
+        "tablename": "BGP_NEIGHBOR_AF",
+        "parent": "BGP_NEIGHBOR"
+    },
+    {
+        "tablename": "BGP_NEIGHBOR",
+        "parent": "BGP_GLOBALS"
+    },
+    {
+        "tablename": "BGP_PEER_GROUP",
+        "parent": "BGP_GLOBALS"
+    },
+    {
+        "tablename": "PREFIX",
+        "parent": "PREFIX_SET"
+    }
+    ]
+}

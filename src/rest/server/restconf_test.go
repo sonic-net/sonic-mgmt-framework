@@ -273,7 +273,46 @@ func testCapability(t *testing.T, path string) {
 		cap = top["ietf-restconf-monitoring:capability"]
 	}
 
-	if c, ok := cap.([]interface{}); !ok || len(c) != 1 {
-		log.Fatalf("Could not parse capability info: %v", w.Body.String())
+	if c, ok := cap.([]interface{}); !ok || len(c) != 2 {
+		log.Fatalf("Could not parse capability info: %s", w.Body.String())
+	}
+}
+
+func TestQuery(t *testing.T) {
+	t.Run("none", testQuery("GET", "", 0, translibArgs{}))
+	t.Run("unknown", testQuery("GET", "one=1", 400, translibArgs{}))
+	t.Run("depth_def", testQuery("GET", "depth=unbounded", 0, translibArgs{depth: 0}))
+	t.Run("depth_0", testQuery("GET", "depth=0", 400, translibArgs{}))
+	t.Run("depth_1", testQuery("GET", "depth=1", 0, translibArgs{depth: 1}))
+	t.Run("depth_101", testQuery("GET", "depth=101", 0, translibArgs{depth: 101}))
+	t.Run("depth_65535", testQuery("GET", "depth=65535", 0, translibArgs{depth: 65535}))
+	t.Run("depth_65536", testQuery("GET", "depth=65536", 400, translibArgs{}))
+	t.Run("depth_bad", testQuery("GET", "depth=bad", 400, translibArgs{}))
+	t.Run("depth_extra", testQuery("GET", "depth=1&extra=1", 400, translibArgs{}))
+	t.Run("depth_head", testQuery("HEAD", "depth=5", 0, translibArgs{depth: 5}))
+	t.Run("depth_head_bad", testQuery("HEAD", "depth=bad", 400, translibArgs{}))
+	t.Run("depth_patch", testQuery("PATCH", "depth=1", 400, translibArgs{}))
+}
+
+func testQuery(method, queryStr string, expStatus int, expData translibArgs) func(*testing.T) {
+	return func(t *testing.T) {
+		r := httptest.NewRequest(method, "/test?"+queryStr, nil)
+		p := translibArgs{}
+		err := parseRestconfQueryParams(&p, r)
+
+		if expStatus != 0 {
+			if e1, ok := err.(httpErrorType); ok && e1.status == expStatus {
+				return // success
+			}
+			t.Fatalf("Failed to process query '%s'; expected err %d, got=%v", queryStr, expStatus, err)
+		}
+
+		if err != nil {
+			t.Fatalf("Failed to process query '%s'; err=%v", queryStr, err)
+		}
+		if expData.depth != p.depth {
+			t.Errorf("Testcase failed for query '%s'", queryStr)
+			t.Fatalf("'depth' mismatch; expecting %d, found %d", expData.depth, p.depth)
+		}
 	}
 }

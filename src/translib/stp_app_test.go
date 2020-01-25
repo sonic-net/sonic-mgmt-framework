@@ -170,7 +170,7 @@ func clearStpDataFromConfigDb() error {
 
 func processGetRequestToFile(url string, expectedRespJson string, errorCase bool) func(*testing.T) {
 	return func(t *testing.T) {
-		response, err := Get(GetRequest{Path: url, User: "admin", Group: "admin"})
+		response, err := Get(GetRequest{Path: url, User: UserRoles{Name: "admin", Roles: []string{"admin"}}})
 		if err != nil && !errorCase {
 			t.Errorf("Error %v received for Url: %s", err, url)
 		}

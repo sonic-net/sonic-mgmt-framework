@@ -390,7 +390,6 @@ var DbToYang_intf_tbl_key_xfmr  KeyXfmrDbToYang = func(inParams XfmrParams) (map
 }
 
 var intf_table_xfmr TableXfmrFunc = func (inParams XfmrParams) ([]string, error) {
-
     var tblList []string
     var err error
 
@@ -477,13 +476,21 @@ var YangToDb_intf_name_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[s
         res_map["NULL"] = "NULL"
     } else if strings.HasPrefix(ifName, LOOPBACK) == true {
         res_map["NULL"] = "NULL"
+    } else if strings.HasPrefix(ifName, ETHERNET) == true {
+        intTbl := IntfTypeTblMap[IntfTypeEthernet]
+        //Check if physical interface exists, if not return error
+        err = validateIntfExists(inParams.d, intTbl.cfgDb.portTN, ifName)
+        if err != nil {
+            errStr := "Interface " + ifName + " cannot be configured."
+            return res_map, tlerr.InvalidArgsError{Format:errStr}
+        }
     }
     log.Info("YangToDb_intf_name_xfm: res_map:", res_map)
     return res_map, err
 }
 
 var DbToYang_intf_name_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (map[string]interface{}, error) {
-    log.Info("Entering DbToYang_intf_tbl_key_xfmr")
+    log.Info("Entering DbToYang_intf_name_xfmr")
     res_map := make(map[string]interface{})
 
     pathInfo := NewPathInfo(inParams.uri)
@@ -828,6 +835,16 @@ func validateL3ConfigExists(d *db.DB, ifName *string) error {
         errStr := "L3 Configuration exists for Interface: " + *ifName
         log.Error(errStr)
         return tlerr.InvalidArgsError{Format:errStr}
+    }
+    return nil
+}
+
+/* Validate whether intf exists in DB */
+func validateIntfExists(d *db.DB, intfTs string, intfName string) error {
+    entry, err := d.GetEntry(&db.TableSpec{Name:intfTs}, db.Key{Comp: []string{intfName}})
+    if err != nil || !entry.IsPopulated() {
+        errStr := "Interface does not exist in DB"
+        return errors.New(errStr)
     }
     return nil
 }
@@ -1792,7 +1809,7 @@ var DbToYang_intf_get_counters_xfmr SubTreeXfmrDbToYang = func(inParams XfmrPara
     targetUriPath, err := getYangPathFromUri(inParams.uri)
     log.Info("targetUriPath is ", targetUriPath)
 
-    if  targetUriPath != "/openconfig-interfaces:interfaces/interface/state/counters" {
+    if  (strings.Contains(targetUriPath, "/openconfig-interfaces:interfaces/interface/state/counters") == false) {
         log.Info("%s is redundant", targetUriPath)
         return err
     }

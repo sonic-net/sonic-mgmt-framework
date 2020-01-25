@@ -55,6 +55,31 @@ class ZTP(host_service.HostModule):
 
         return rc, output
 
+    @staticmethod
+    def _run_command_run():
+        """Run a ZTP command"""
+        cmd = '/usr/bin/ztp run -y'
+
+        output = ""
+        try:
+            rc = 0
+            proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=None)
+            (out, err) = proc.communicate()
+            out = out.decode()
+            rc = proc.returncode
+            if rc == 0:
+                output = out.rstrip('\n')
+            else:
+                if isinstance(out, list):
+                    out[0] = out[0].rstrip('\n')
+                rc = 0
+                output = out
+        except subprocess.CalledProcessError as err:
+            rc = 1
+
+        output = out.rstrip('\n')
+        return rc, output
+
     @host_service.method(host_service.bus_name(MOD_NAME), in_signature='', out_signature='')
     def enable(self):
         self._run_command("enable")
@@ -79,6 +104,11 @@ class ZTP(host_service.HostModule):
         b = ztp_status()
         print("Returning", b)
         return b
+        
+    @host_service.method(host_service.bus_name(MOD_NAME), in_signature='', out_signature='is')
+    def run(self):
+        rc,output = self._run_command_run()
+        return rc, output
         
 def register():
     """Return the class name"""
@@ -243,8 +273,10 @@ def ztp_status():
                 else:
                     configdict[k]['error'] = 'NONE'
                 configdict[k]['cfg_ignoreresult'] = v.get('ignore-result')
-                if v.get('halt-on-failure') is not None and v.get('halt-on-failure'):
-                    print('Halt on Failure : %r' % v.get('halt-on-failure'))
+                if v.get('halt-on-failure') is not None:
+                    configdict[k]['cfg_haltonfailure'] = v.get('halt-on-failure')
+                if v.get('description') is not None:
+                    configdict[k]['cfg_description'] = v.get('description')
                 print (' ')
 
     else:

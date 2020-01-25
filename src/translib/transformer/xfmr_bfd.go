@@ -121,16 +121,12 @@ func get_bfd_shop_peers (bfd_obj *ocbinds.OpenconfigBfd_Bfd_BfdState, inParams X
     log.Info(output_counter)
     bfdCounterMapJson["output"] = output_counter
 
-    sessions, _ := bfdMapJson["output"].(map[string]interface{})
-    counters, _ := bfdCounterMapJson["output"].(map[string]interface{})
-
-    log.Info(sessions)
-    log.Info(counters)
-
-    if (len(sessions) != 0) {
-        if ok := fill_bfd_shop_data (bfd_obj, sessions, counters) ; !ok {return err}
-    } else { 
-        log.Errorf("Shop peer with input key doesn't exist")
+    if sessions, ok := bfdMapJson["output"].(map[string]interface{}) ; ok {
+        log.Info(sessions)
+        if counters, ok := bfdCounterMapJson["output"].(map[string]interface{}) ; ok {
+            log.Info(counters)
+            fill_bfd_shop_data (bfd_obj, sessions, counters)
+        }
     }
 
     return err;
@@ -139,6 +135,7 @@ func get_bfd_shop_peers (bfd_obj *ocbinds.OpenconfigBfd_Bfd_BfdState, inParams X
 func get_bfd_mhop_peers (bfd_obj *ocbinds.OpenconfigBfd_Bfd_BfdState, inParams XfmrParams) (error) {
     var bfdmhop_key ocbinds.OpenconfigBfd_Bfd_BfdState_MultiHopState_Key
     var err error
+    var vtysh_cmd string
 
     bfdMapJson := make(map[string]interface{})
     bfdCounterMapJson := make(map[string]interface{})
@@ -146,17 +143,28 @@ func get_bfd_mhop_peers (bfd_obj *ocbinds.OpenconfigBfd_Bfd_BfdState, inParams X
     pathInfo := NewPathInfo(inParams.uri)
 
     bfdmhop_key.RemoteAddress = pathInfo.Var("remote-address")
+    bfdmhop_key.Interface = pathInfo.Var("interface")
     bfdmhop_key.Vrf = pathInfo.Var("vrf")
     bfdmhop_key.LocalAddress = pathInfo.Var("local-address")
 
-    vtysh_cmd := "show bfd vrf " + bfdmhop_key.Vrf + " peer " + bfdmhop_key.RemoteAddress + " multihop " + " local-address " + bfdmhop_key.LocalAddress + " json"
+    if (bfdmhop_key.LocalAddress == "null") {
+        vtysh_cmd = "show bfd vrf " + bfdmhop_key.Vrf + " peer " + bfdmhop_key.RemoteAddress + " multihop " + " local-address " + bfdmhop_key.LocalAddress + " json"
+    } else {
+        vtysh_cmd = "show bfd vrf " + bfdmhop_key.Vrf + " peer " + bfdmhop_key.RemoteAddress + " multihop " + " local-address " + bfdmhop_key.LocalAddress + " interface " + bfdmhop_key.Interface + " json"
+    }
+
     output_peer, cmd_err := exec_vtysh_cmd (vtysh_cmd)
     if cmd_err != nil {
         log.Errorf("Failed to fetch shop bfd peers array:, err")
         return cmd_err;
     }
 
-    vtysh_cmd = "show bfd vrf " + bfdmhop_key.Vrf + " peer " + bfdmhop_key.RemoteAddress + " multihop " + " local-address " + bfdmhop_key.LocalAddress + " counters" + " json"
+    if (bfdmhop_key.LocalAddress == "null") {
+        vtysh_cmd = "show bfd vrf " + bfdmhop_key.Vrf + " peer " + bfdmhop_key.RemoteAddress + " multihop " + " local-address " + bfdmhop_key.LocalAddress + " counters" + " json"
+    } else {
+        vtysh_cmd = "show bfd vrf " + bfdmhop_key.Vrf + " peer " + bfdmhop_key.RemoteAddress + " multihop " + " local-address " + bfdmhop_key.LocalAddress + " interface " + bfdmhop_key.Interface + " counters" + " json"
+    }
+
     output_counter, cmd_err := exec_vtysh_cmd (vtysh_cmd)
     if cmd_err != nil {
         log.Errorf("Failed to fetch shop bfd peers counters array:, err")
@@ -169,16 +177,12 @@ func get_bfd_mhop_peers (bfd_obj *ocbinds.OpenconfigBfd_Bfd_BfdState, inParams X
     log.Info(output_counter)
     bfdCounterMapJson["output"] = output_counter
 
-    sessions, _ := bfdMapJson["output"].(map[string]interface{})
-    counters, _ := bfdCounterMapJson["output"].(map[string]interface{})
-
-    log.Info(sessions)
-    log.Info(counters)
-
-    if (len(sessions) != 0) {
-        if ok := fill_bfd_mhop_data (bfd_obj, sessions, counters) ; !ok {return err}
-    } else {
-        log.Errorf("Shop peer with input key doesn't exist")
+    if sessions, ok := bfdMapJson["output"].(map[string]interface{}) ; ok {
+        log.Info(sessions)
+        if counters, ok := bfdCounterMapJson["output"].(map[string]interface{}) ; ok {
+            log.Info(counters)
+            fill_bfd_mhop_data (bfd_obj, sessions, counters)
+        }
     }
 
     return err;
@@ -512,6 +516,12 @@ func fill_bfd_mhop_data (bfd_obj *ocbinds.OpenconfigBfd_Bfd_BfdState, session_da
         bfdmhopkey.RemoteAddress = value
     }
 
+    if value, ok := session_data["interface"].(string) ; ok {
+        bfdmhopkey.Interface = value
+    } else {
+        bfdmhopkey.Interface = "null"
+    }
+
     if value, ok := session_data["vrf"].(string) ; ok {
         bfdmhopkey.Vrf = value
     }
@@ -522,7 +532,7 @@ func fill_bfd_mhop_data (bfd_obj *ocbinds.OpenconfigBfd_Bfd_BfdState, session_da
 
     bfdmhop_obj := bfd_obj.MultiHopState[bfdmhopkey]
     if bfdmhop_obj == nil {
-        bfdmhop_obj, err = bfd_obj.NewMultiHopState(bfdmhopkey.RemoteAddress, bfdmhopkey.Vrf, bfdmhopkey.LocalAddress)
+        bfdmhop_obj, err = bfd_obj.NewMultiHopState(bfdmhopkey.RemoteAddress, bfdmhopkey.Interface, bfdmhopkey.Vrf, bfdmhopkey.LocalAddress)
         if err != nil {return false}
     }
 

@@ -215,7 +215,7 @@ def get_sonic_radius_global():
 
     show_cli_output("show_radius_global.j2", api_response)
 
-def get_sonic_radius_servers(args):
+def get_sonic_radius_servers(args=[]):
     api_response = {}
     api = cc.ApiClient()
 
@@ -279,6 +279,11 @@ def get_sonic_radius_servers(args):
 
 
 def run(func, args):
+    if func == 'get_sonic_radius':
+        get_sonic_radius_global()
+        get_sonic_radius_servers()
+        return
+
     response = invoke_api(func, args)
 
     if response.ok():

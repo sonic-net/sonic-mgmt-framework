@@ -220,7 +220,7 @@ limitations under the License.
    <VIEW
        name="configure-view"
        >
-    <COMMAND
+     <COMMAND
         name="interface"
         help="Select an interface"
         >
@@ -246,29 +246,7 @@ limitations under the License.
         />
         </PARAM>
 	<ACTION builtin="clish_pyobj">sonic_cli_if if_config ${if-switch} ${phy-if-name}${vlan-if-name}</ACTION>
-    </COMMAND>
-
-
-    <!-- interface commands -->
-    <!--COMMAND
-        name="interface"
-        help="Select an interface"
-        />
-
-    <COMMAND
-        name="interface Ethernet"
-        help="Select an interface"
-        view="configure-if-view"
-        viewid="iface=Ethernet${phy-if-name}"
-        >
-        <PARAM
-            name="phy-if-name"
-            help="Physical interface"
-            ptype="UINT"
-            >
-        </PARAM>
-     <ACTION builtin="clish_nop"></ACTION>
-     </COMMAND-->
+     </COMMAND>
 
      <COMMAND
          name="interface Management"
@@ -286,22 +264,6 @@ limitations under the License.
          </PARAM>
          <ACTION builtin="clish_nop"></ACTION>
      </COMMAND>
-     <!--COMMAND
-         name="interface Vlan"
-         help="Vlan Interface Configuration"
-         mode="subcommand"
-         ptype="SUBCOMMAND"
-         view="configure-vlan-view"
-         viewid="vlan_id=Vlan${vlan-id}"
-         >
-         <PARAM
-             name="vlan-id"
-             help="Vlan identifier"
-             ptype="VLAN_ID"
-             >
-         </PARAM>
-        <ACTION builtin="clish_restcl">oper=PATCH url=/restconf/data/openconfig-interfaces:interfaces/interface=Vlan${vlan-id}/config body={"openconfig-interfaces:config": {"name": "Vlan${vlan-id}"}}</ACTION>
-    </COMMAND-->
 
     <COMMAND
         name="interface PortChannel"

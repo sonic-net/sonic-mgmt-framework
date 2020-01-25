@@ -239,7 +239,7 @@ func getJson (nInfo *notificationInfo) ([]byte, error) {
 	path := nInfo.path
 	appInfo := nInfo.appInfo
 
-    err := appInitialize(app, appInfo, path, nil, GET)
+    err := appInitialize(app, appInfo, path, nil, nil, GET)
 
     if  err != nil {
         return payload, err

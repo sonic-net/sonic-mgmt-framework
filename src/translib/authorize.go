@@ -39,34 +39,51 @@ func init() {
 	//TODO:Allocate the maps and populate them here
 }
 
-//TODO:Subscribe to UserDB changes and repopulate the cache on any notification
-func isUserAuthorizedForSet(user string) bool {
-	//TODO:Need code to get role from username and then authorize based on that
-	//This is a temporary code, this needs to be fixed
-
-	if ((user == "") || (user == "admin")) {
+func isAuthorizedForSet(req SetRequest) bool {
+	if !req.AuthEnabled {
 		return true
 	}
-
+	for _, r := range req.User.Roles {
+        if r == "admin" {
+            return true
+        }
+    }
 	return false
 }
-func isAuthorizedForSet(req SetRequest) bool {
-	// TODO: Allow empty user for now
-	return req.Group == "admin" || req.User == ""
-}
-
-func isUserAuthorizedForGet(user string) bool {
-	return  true
+func isAuthorizedForBulk(req BulkRequest) bool {
+	if !req.AuthEnabled {
+		return true
+	}
+	for _, r := range req.User.Roles {
+        if r == "admin" {
+            return true
+        }
+    }
+	return false
 }
 
 func isAuthorizedForGet(req GetRequest) bool {
+	if !req.AuthEnabled {
+		return true
+	}
 	return  true
 }
-
-func isUserAuthorizedForAction(user string) bool {
+func isAuthorizedForSubscribe(req SubscribeRequest) bool {
+	if !req.AuthEnabled {
+		return true
+	}
+	return  true
+}
+func isAuthorizedForIsSubscribe(req IsSubscribeRequest) bool {
+	if !req.AuthEnabled {
+		return true
+	}
 	return  true
 }
 
 func isAuthorizedForAction(req ActionRequest) bool {
+	if !req.AuthEnabled {
+		return true
+	}
 	return  true
 }

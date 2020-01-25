@@ -35,12 +35,7 @@ def invoke_api(func, args=[]):
 
     # handle interfaces using the 'switch' mode
     if func == 'if_config':
-        if args[0] == 'phy-if-name':
-            import requests
-            r = cc.Response(requests.Response())
-            r.status_code = 200
-            return r
-        elif args[0] == 'vlan-if-name':
+        if args[0] == 'phy-if-name' or args[0] == 'vlan-if-name':
             body = { "openconfig-interfaces:config": { "name": args[1] }}
             path = cc.Path('/restconf/data/openconfig-interfaces:interfaces/interface={name}/config', name=args[1])
             return api.patch(path, body)
