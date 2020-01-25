@@ -131,11 +131,11 @@ def run(func, args):
 	if func == 'get_sonic_sflow_sonic_sflow_sflow_session_table':
             sess_lst = get_session_list(response.content, 'SFLOW_SESSION_TABLE')
             sess_lst = sorted(sess_lst, key=getId)
-            show_cli_output(sys.argv[2], sess_lst)
+            show_cli_output(args[0], sess_lst)
 
         elif func == 'get_sonic_sflow_sonic_sflow':
             resp = get_sflow_info(response.content)
-            show_cli_output(sys.argv[2], resp)
+            show_cli_output(args[0], resp)
 
     except Exception as e:
         print("% Error: Internal error: " + str(e))
