@@ -102,6 +102,10 @@ def getPrefix(item):
     ip = netaddr.IPNetwork(item['prefix'])
     return int(ip.ip)
 
+def getNbr(item):
+    ip = netaddr.IPNetwork(item['neighbor-address'])
+    return int(ip.ip)
+
 def generate_show_bgp_routes(args):
    api = cc.ApiClient()
    keypath = []
@@ -1525,13 +1529,16 @@ def invoke_api(func, args=[]):
 
 def preprocess_bgp_nbrs(iptype, nbrs):
     new_nbrs = []
+    unnumbered_nbrs = []
     for nbr in nbrs:
         ipt = 4
+        unnumbered = False
         try:
             ipaddr = netaddr.IPAddress(nbr['neighbor-address'])
             ipt= ipaddr.version
         except:
             ipt = 4
+            unnumbered = True
 
         if ipt == iptype:
             if 'state' in nbr and 'session-state' in nbr['state'] and 'last-established' in nbr['state']:
@@ -1547,10 +1554,12 @@ def preprocess_bgp_nbrs(iptype, nbrs):
                     nbr['state']['last-established'] = '{}d:{:02}h:{:02}m:{:02}s'.format(int(days), int(hours), int(minutes), int(seconds))
                 else:
                     nbr['state']['last-established'] = '00d:00h:00m'
+            if unnumbered == True:
+                unnumbered_nbrs.append(nbr)
+            else:
+                new_nbrs.append(nbr)
 
-            new_nbrs.append(nbr)
-
-    return new_nbrs
+    return new_nbrs, unnumbered_nbrs
 
 
 def invoke_show_api(func, args=[]):
@@ -1575,10 +1584,12 @@ def invoke_show_api(func, args=[]):
                     iptype = 6
                 if 'openconfig-network-instance:neighbors' in response.content:
                     tmp = {}
-                    tmp['neighbor'] = preprocess_bgp_nbrs(iptype, response.content['openconfig-network-instance:neighbors']['neighbor'])
+                    unnumbered_tmp = {}
+                    tmp['neighbor'], unnumbered_tmp['neighbor'] = preprocess_bgp_nbrs(iptype, response.content['openconfig-network-instance:neighbors']['neighbor'])
                     tup = tmp['neighbor']
                     tmp['neighbor'] = sorted(tup, key=getNbr)
-                    d['openconfig-network-instance:neighbors'] = tmp
+                    unnumbered_tmp['neighbor'].extend(tmp['neighbor'])
+                    d['openconfig-network-instance:neighbors'] = unnumbered_tmp
                 return d
             else:
                 print response.error_message()
@@ -1599,8 +1610,12 @@ def invoke_show_api(func, args=[]):
             if response.ok():
                 if 'openconfig-network-instance:neighbor' in response.content:
                     tmp = {}
-                    tmp['neighbor'] = preprocess_bgp_nbrs(iptype, response.content['openconfig-network-instance:neighbor'])
-                    d['openconfig-network-instance:neighbors'] = tmp
+                    unnumbered_tmp = {}
+                    tmp['neighbor'], unnumbered_tmp['neighbor'] = preprocess_bgp_nbrs(iptype, response.content['openconfig-network-instance:neighbors']['neighbor'])
+                    tup = tmp['neighbor']
+                    tmp['neighbor'] = sorted(tup, key=getNbr)
+                    unnumbered_tmp['neighbor'].extend(tmp['neighbor'])
+                    d['openconfig-network-instance:neighbors'] = unnumbered_tmp
                 return d
             else:
                 print response.error_message()
@@ -1612,10 +1627,12 @@ def invoke_show_api(func, args=[]):
             if response.ok():
                 if 'openconfig-network-instance:neighbors' in response.content:
                     tmp = {}
-                    tmp['neighbor'] = preprocess_bgp_nbrs(iptype, response.content['openconfig-network-instance:neighbors']['neighbor'])
+                    unnumbered_tmp = {}
+                    tmp['neighbor'], unnumbered_tmp['neighbor'] = preprocess_bgp_nbrs(iptype, response.content['openconfig-network-instance:neighbors']['neighbor'])
                     tup = tmp['neighbor']
                     tmp['neighbor'] = sorted(tup, key=getNbr)
-                    d['openconfig-network-instance:neighbors'] = tmp
+                    unnumbered_tmp['neighbor'].extend(tmp['neighbor'])
+                    d['openconfig-network-instance:neighbors'] = unnumbered_tmp
                 return d
             else:
                 print response.error_message()
