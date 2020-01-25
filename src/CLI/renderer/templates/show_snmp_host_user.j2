@@ -1,13 +1,22 @@
-{{ ' ' }}
-{{ 'Target Address'|center(26) }} {{ 'Type'|center(12) }} {{ 'User Name'|center(14) }} {{ 'Security' }} {{ 'Timeout' }} {{ 'Retries' }}
-{{'-------------------------- ------------ -------------- -------- ------- -------'}}
+{{ 'Target Address'|center(39) }} {{ 'Type'|center(6) }} {{ 'User Name'|center(14) }} {{ 'Security'|center(15) }} {{ 'T-Out' }} {{ 'Retries' }}
+{{'--------------------------------------- ------ -------------- --------------- ----- -------'}}
 {% for i in json_output %}
   {% set i1 = json_output[loop.index-1] %}
-{{ '%-26s'|format(i1['target'])|truncate(26,true,"") -}}
-{{ ' %-12s'|format(i1['trapOrInform'])|truncate(12,true,"") -}}
-{{ ' %-14s'|format(i1['user-name'])|truncate(14,true,"") -}}
-{{ ' %-8s'|format(i1['security-level']) -}}
-{{ ' %-7s'|format(i1['timeout']) -}}
+  {% for j in i1['user-name'] %}
+    {% set u_p1 = i1['user-name'][0:14] %}
+    {% set u_p2 = i1['user-name'][14:28] %}
+    {% set u_p3 = i1['user-name'][28:32] %}
+{{ '%-39s'|format(i1['target']) -}}
+{{ ' %-6s '|format(i1['trapOrInform']) -}}
+{{ u_p1 -}}
+{{ ' %-15s'|format(i1['security-level']) -}}
+{{ ' %-5s'|format(i1['timeout']) -}}
 {{ ' %-7s'|format(i1['retries']) }}
+                                               {{ u_p2 }}
+                                               {{ u_p3 }}
+    {% if loop.index > 0 %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
 {% endfor %}
 {{ ' ' }}
