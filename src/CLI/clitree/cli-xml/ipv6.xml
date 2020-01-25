@@ -229,7 +229,7 @@ limitations under the License.
                     ptype="STRING">
                     <PARAM
                         help="Destination prefix"
-                        name="A::B/mask"
+                        name="prefix"
                         optional="true"
                         ptype="IPV6_ADDR_MASK">
                     </PARAM>
@@ -238,12 +238,16 @@ limitations under the License.
            <PARAM
                 help="Destination prefix"
                 optional="true"
-                name="A::B/mask"
+                name="prefix"
                 ptype="IPV6_ADDR_MASK">
            </PARAM>
         </PARAM>
         <ACTION>
-            python $SONIC_CLI_ROOT/sonic-cli-ip-route.py get_network_instance_afts_ipv6_unicast show_ip_route.j2 ${__full_line}&#xA;
+            if test -n "${prefix}"; then&#xA;
+               python $SONIC_CLI_ROOT/sonic-cli-ip-route-rpc.py show_ip_route show_ip_route_rpc.j2 prefix ${prefix} ${__full_line}&#xA;
+            else&#xA;
+               python $SONIC_CLI_ROOT/sonic-cli-ip-route-rpc.py show_ip_route show_ip_route_rpc.j2 ${__full_line}&#xA;
+            fi&#xA;
         </ACTION>
     </COMMAND>
 </VIEW>

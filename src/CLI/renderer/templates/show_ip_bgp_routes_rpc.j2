@@ -1,0 +1,66 @@
+{% set vars = {'routerId': ""} %}
+{% set vars = {'vrfName': ""} %}
+{% set vars = {'asNum': ""} %}
+{% set vars = {'prefix': ""} %}
+{% set vars = {'nxtHop': ""} %}
+{% set vars = {'med': ""} %}
+{% set vars = {'locPref': ""} %}
+{% set vars = {'origin': "IGP"} %}
+{% set vars = {'validRoute': False} %}
+{% set vars = {'bestRoute': False} %}
+{% set vars = {'asPath': ""} %}
+{% if json_output %}
+{% if json_output is iterable %}
+{% set globalConfig = json_output %}
+{% if vars.update({'routerId':globalConfig["routerId"]}) %}{% endif %}
+{% if vars.update({'asNum':globalConfig["localAS"]}) %}{% endif %}
+{% if vars.update({'vrfName':globalConfig["vrfName"]}) %}{% endif %}
+BGP routing table information for VRF {{vars.vrfName}}
+Router identifier {{ vars.routerId }}, local AS number {{ vars.asNum }}
+Route status codes: * - valid, > - best
+Origin codes: i - IGP, e - EGP, ? - incomplete
+     {{'%-20s'|format("Network")}}{{'%-20s'|format("Next Hop")}}{{'%-15s'|format("Metric")}}{{'%-15s'|format("LocPref")}}{{'%s'|format("Path")}}
+{% set routeList = json_output["routes"] %}
+{% if routeList %}
+{% for key in routeList %}
+  {% if vars.update({'prefix':key}) %}{% endif %}
+  {% set route = routeList[key] %}
+  {% if vars.update({'asPath':''}) %} {% endif %}
+    {% for path in route %}
+       {% if vars.update({'locPref':path["localpref"]}) %}{% endif %}
+       {% if vars.update({'validRoute':path["valid"]}) %}{% endif %}
+       {% if vars.update({'origin':path["origin"]}) %}{% endif %}
+       {% if vars.update({'bestRoute':path["bestpath"]}) %}{% endif %}
+       {% if vars.update({'asPath': path['aspath']}) %} {% endif %}
+       {% if vars.update({'med':path['med']}) %}{% endif %}
+       {% set nexthops = path["nexthops"] %}
+       {% for nexthop in nexthops %}
+         {% if vars.update({'nxtHop':nexthop['ip']}) %}{% endif %}
+       {% endfor %}
+  {% if vars.origin == 'IGP' %}
+    {% if vars.update({'origin':"i"}) %}{% endif %}
+  {% elif vars.origin == 'EGP' %}
+    {% if vars.update({'origin':"e"}) %}{% endif %}
+  {% else %}
+    {% if vars.update({'origin':"?"}) %}{% endif %}
+  {% endif %}
+{% if vars.validRoute == True %}
+{% if vars.update({'validRoute':"*"}) %}{% endif %}
+{% else %}
+{% if vars.update({'validRoute':""}) %}{% endif %}
+{% endif %}
+{% if vars.bestRoute == True %}
+{% if vars.update({'bestRoute':">"}) %}{% endif %}
+{% else %}
+{% if vars.update({'bestRoute':""}) %}{% endif %}
+{% endif %}
+{% if loop.index == 1 %}
+{{'%-1s'|format(vars.validRoute)}}{{'%-4s'|format(vars.bestRoute)}}{{'%-20s'|format(vars.prefix)}}{{'%-20s'|format(vars.nxtHop)}}{{'%-15s'|format(vars.med)}}{{'%-15s'|format(vars.locPref)}}{{'%s'|format(vars.asPath)}} {{vars.origin}}
+{% else %}
+{{'%-1s'|format(vars.validRoute)}}{{'%-4s'|format(vars.bestRoute)}}{{'%-20s'|format(" ")}}{{'%-20s'|format(vars.nxtHop)}}{{'%-15s'|format(vars.med)}}{{'%-15s'|format(vars.locPref)}}{{'%s'|format(vars.asPath)}} {{vars.origin}}
+{% endif %}
+{% endfor %}
+{% endfor %}
+{% endif %}
+{% endif %}
+{% endif %}

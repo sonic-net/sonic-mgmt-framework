@@ -1,0 +1,16 @@
+module sonic-bgp-show-annot {
+
+    yang-version "1";
+
+    namespace "http://openconfig.net/yang/annotation/sbgpshow-annot";
+    prefix "sbgpshow-annot";
+
+    import sonic-bgp-show { prefix sbgpshow; }
+    import sonic-extensions { prefix sonic-ext; }
+
+    deviation /sbgpshow:show-bgp {
+        deviate add {
+            sonic-ext:rpc-callback "rpc_show_bgp";
+        }
+    }
+}
