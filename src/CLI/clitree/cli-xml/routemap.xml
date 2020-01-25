@@ -68,7 +68,7 @@ limitations under the License.
         </PARAM>
 	<PARAM name="seq-nu"
             help="sequence number"
-            ptype="UINT" 
+            ptype="RANGE_1_65535" 
                         />
 
     <ACTION>
@@ -84,17 +84,51 @@ limitations under the License.
     <COMMAND
          name="no route-map"
          help="remove routing policy map"
+         view="configure-route-map-view"
+         viewid="name=${route-map-name};seq_num=${seq-nu}"
          >
          <PARAM name="route-map-name"
             help="Name of route map (Max size 63)"
             ptype="STRING_63"
-                        /> <PARAM name="seq-nu" help="sequence number (Max size 63)"
-            ptype="STRING_63"
                         />
+         <PARAM name="action-switch"
+            help="Configure the action to apply on route-map"
+            ptype="SUBCOMMAND"
+            mode="switch"
+            >
+
+            <PARAM name="permit"
+                help="Apply permit action"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                                >
+                <PARAM name="seq-nu"
+                    help="sequence number"
+                    ptype="RANGE_1_65535"
+                                />
+            </PARAM>
+
+            <PARAM name="deny"
+                help="Apply deny action"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                                >
+                <PARAM name="seq-nu"
+                     help="sequence number"
+                     ptype="RANGE_1_65535"
+                                 />
+            </PARAM>
+
+        </PARAM>
     <ACTION>
-            python $SONIC_CLI_ROOT/sonic-cli-routemap.py delete_openconfig_routing_policy_routing_policy_policy_definitions_policy_definition_statements_statement_actions ${route-map-name} ${seq-nu}  &#xA;
+        if test "${action-switch}" = "permit"; then&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-routemap.py delete_openconfig_routing_policy_routing_policy_policy_definitions_policy_definition_statements_statement_actions_config_policy_result  ${route-map-name} ${seq-nu} ACCEPT_ROUTE&#xA;
+        else&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-routemap.py delete_openconfig_routing_policy_routing_policy_policy_definitions_policy_definition_statements_statement_actions_config_policy_result  ${route-map-name} ${seq-nu} REJECT_ROUTE&#xA;
+        fi&#xA;
     </ACTION>
     </COMMAND>
+
 </VIEW>
 
 <VIEW name="configure-route-map-view" prompt="${SYSTEM_NAME}(config-route-map)# "
@@ -118,9 +152,30 @@ limitations under the License.
     <ACTION builtin="clish_nop"/>
   </COMMAND>-->
   <COMMAND name="set community" help="BGP community attribute">
-    <PARAM name="comm-num" help="Community number in AA:NN format" ptype="AA_NN"/>
+    <PARAM name="comm-opt" mode="switch" ptype="SUBCOMMAND" help="Community options">
+      <PARAM name="comm-num" help="Community number aa:nn format 0..65535:0..65535" ptype="AA_NN"/>
+      <PARAM name="local-AS" mode="subcommand" ptype="SUBCOMMAND" help="Do not send outside local AS (well-known community)"/>
+      <PARAM name="no-advertise" mode="subcommand" ptype="SUBCOMMAND" help="Do not advertise to any peer (well-known community)"/>
+      <PARAM name="no-export" mode="subcommand" ptype="SUBCOMMAND" help="Do not export to next AS (well-known community)"/>
+      <PARAM name="no-peer" mode="subcommand" ptype="SUBCOMMAND" help="Do not export to next AS (well-known community)"/>
+    </PARAM>
     <ACTION>
-       python $SONIC_CLI_ROOT/sonic-cli-routemap.py patch_openconfig_bgp_policy_routing_policy_policy_definitions_policy_definition_statements_statement_actions_bgp_actions_set_community ${name} ${seq_num} ${comm-num} ADD&#xA;
+            if test "${comm-opt}" = "comm-num"; then&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-routemap.py patch_openconfig_bgp_policy_routing_policy_policy_definitions_policy_definition_statements_statement_actions_bgp_actions_set_community ${name} ${seq_num} ${comm-num} ADD&#xA;
+            fi&#xA;
+            if test "${comm-opt}" = "local-AS"; then&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-routemap.py patch_openconfig_bgp_policy_routing_policy_policy_definitions_policy_definition_statements_statement_actions_bgp_actions_set_community ${name} ${seq_num} NO_EXPORT_SUBCONFED ADD&#xA;
+            fi&#xA;
+            if test "${comm-opt}" = "no-advertise"; then&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-routemap.py patch_openconfig_bgp_policy_routing_policy_policy_definitions_policy_definition_statements_statement_actions_bgp_actions_set_community ${name} ${seq_num} NO_ADVERTISE ADD&#xA;
+            fi&#xA;
+            if test "${comm-opt}" = "no-export"; then&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-routemap.py patch_openconfig_bgp_policy_routing_policy_policy_definitions_policy_definition_statements_statement_actions_bgp_actions_set_community ${name} ${seq_num} NO_EXPORT ADD&#xA;
+            fi&#xA;
+            if test "${comm-opt}" = "no-peer"; then&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-routemap.py patch_openconfig_bgp_policy_routing_policy_policy_definitions_policy_definition_statements_statement_actions_bgp_actions_set_community ${name} ${seq_num} NOPEER ADD&#xA;
+            fi&#xA;
+
     </ACTION>
   </COMMAND>
   <COMMAND name="set extcommunity" help="BGP extended community attribute">
@@ -192,14 +247,34 @@ limitations under the License.
     <ACTION builtin="clish_nop"/>
   </COMMAND>-->
   <COMMAND name="no set community" help="BGP community attribute">
-   <PARAM name="comm-num" help="Community number in AA:NN format" ptype="AA_NN" optional="true"/>
-     <ACTION>
-     if test -n "${comm-num}"; then&#xA;
-        python $SONIC_CLI_ROOT/sonic-cli-routemap.py patch_openconfig_bgp_policy_routing_policy_policy_definitions_policy_definition_statements_statement_actions_bgp_actions_set_community ${name} ${seq_num} ${comm-num} REMOVE&#xA;
-    else&#xA;
-        python $SONIC_CLI_ROOT/sonic-cli-routemap.py delete_openconfig_bgp_policy_routing_policy_policy_definitions_policy_definition_statements_statement_actions_bgp_actions_set_community ${name} ${seq_num}&#xA;
-    fi&#xA;
-    </ACTION>
+    <PARAM name="comm-opt" mode="switch" ptype="SUBCOMMAND" help="Community options" optional="true">
+      <PARAM name="comm-num" help="Community number aa:nn format 0..65535:0..65535" ptype="AA_NN"/>
+      <PARAM name="local-AS" mode="subcommand" ptype="SUBCOMMAND" help="Do not send outside local AS (well-known community)"/>
+      <PARAM name="no-advertise" mode="subcommand" ptype="SUBCOMMAND" help="Do not advertise to any peer (well-known community)"/>
+      <PARAM name="no-export" mode="subcommand" ptype="SUBCOMMAND" help="Do not export to next AS (well-known community)"/>
+      <PARAM name="no-peer" mode="subcommand" ptype="SUBCOMMAND" help="Do not export to next AS (well-known community)"/>
+    </PARAM>
+    <ACTION>
+            if test -n "${comm-opt}"; then&#xA;
+                if test "${comm-opt}" = "comm-num"; then&#xA;
+                    python $SONIC_CLI_ROOT/sonic-cli-routemap.py patch_openconfig_bgp_policy_routing_policy_policy_definitions_policy_definition_statements_statement_actions_bgp_actions_set_community ${name} ${seq_num} ${comm-num} REMOVE&#xA;
+                fi&#xA;
+                if test "${comm-opt}" = "local-AS"; then&#xA;
+                    python $SONIC_CLI_ROOT/sonic-cli-routemap.py patch_openconfig_bgp_policy_routing_policy_policy_definitions_policy_definition_statements_statement_actions_bgp_actions_set_community ${name} ${seq_num} NO_EXPORT_SUBCONFED REMOVE&#xA;
+                fi&#xA;
+                if test "${comm-opt}" = "no-advertise"; then&#xA;
+                    python $SONIC_CLI_ROOT/sonic-cli-routemap.py patch_openconfig_bgp_policy_routing_policy_policy_definitions_policy_definition_statements_statement_actions_bgp_actions_set_community ${name} ${seq_num} NO_ADVERTISE REMOVE&#xA;
+                fi&#xA;
+                if test "${comm-opt}" = "no-export"; then&#xA;
+                    python $SONIC_CLI_ROOT/sonic-cli-routemap.py patch_openconfig_bgp_policy_routing_policy_policy_definitions_policy_definition_statements_statement_actions_bgp_actions_set_community ${name} ${seq_num} NO_EXPORT REREMOVEE&#xA;
+                fi&#xA;
+                if test "${comm-opt}" = "no-peer"; then&#xA;
+                    python $SONIC_CLI_ROOT/sonic-cli-routemap.py patch_openconfig_bgp_policy_routing_policy_policy_definitions_policy_definition_statements_statement_actions_bgp_actions_set_community ${name} ${seq_num} NOPEER REMOVE&#xA;
+                fi&#xA;
+            else&#xA;
+                python $SONIC_CLI_ROOT/sonic-cli-routemap.py delete_openconfig_bgp_policy_routing_policy_policy_definitions_policy_definition_statements_statement_actions_bgp_actions_set_community ${name} ${seq_num}&#xA;
+            fi&#xA;
+   </ACTION>
   </COMMAND>
   <COMMAND name="no set extcommunity" help="BGP extended community attribute">
     <PARAM name="extcommunity-opt" mode="switch" ptype="SUBCOMMAND" help="Extcommunity option" optional="true">

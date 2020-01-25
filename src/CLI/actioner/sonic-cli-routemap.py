@@ -72,6 +72,10 @@ def invoke_api(func, args=[]):
                 body = { "openconfig-bgp-policy:set-ext-community": { "config" : { "method":"INLINE", "options":args[4]}, "inline": {"config": {"communities":["route-origin:"+args[3]]}}}}
             return api.patch(keypath, body)
     elif op == 'delete':
+        if attr == 'openconfig_routing_policy_routing_policy_policy_definitions_policy_definition':
+            keypath = cc.Path('/restconf/data/openconfig-routing-policy:routing-policy/policy-definitions/policy-definition={name}:',
+            name=args[0])
+            return api.delete(keypath)
         keypath = cc.Path(uri, name=args[0], name1=args[1])
         return api.delete(keypath)
 
