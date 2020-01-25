@@ -48,6 +48,10 @@ def invoke_api(func, args=[]):
             keypath = cc.Path(uri, name=args[0], name1=args[1])
             body = { "openconfig-bgp-policy:set-local-pref" : int(args[2]) }
             return api.patch(keypath, body)
+        elif attr == 'openconfig_bgp_policy_routing_policy_policy_definitions_policy_definition_statements_statement_actions_bgp_actions_config_set_med':
+            keypath = cc.Path(uri, name=args[0], name1=args[1])
+            body = { "openconfig-bgp-policy:set-med" : int(args[2]) }
+            return api.patch(keypath, body)
         elif attr == 'openconfig_bgp_policy_routing_policy_policy_definitions_policy_definition_statements_statement_actions_bgp_actions_config_set_route_origin':
             keypath = cc.Path(uri, name=args[0], name1=args[1])
             body = { "openconfig-bgp-policy:set-route-origin" : args[2].upper() }
@@ -68,7 +72,6 @@ def invoke_api(func, args=[]):
                 body = { "openconfig-bgp-policy:set-ext-community": { "config" : { "method":"INLINE", "options":args[4]}, "inline": {"config": {"communities":["route-origin:"+args[3]]}}}}
             return api.patch(keypath, body)
     elif op == 'delete':
-
         keypath = cc.Path(uri, name=args[0], name1=args[1])
         return api.delete(keypath)
 
