@@ -122,8 +122,6 @@ func exec_vtysh_cmd (vtysh_cmd string) (map[string]interface{}, error) {
 }
 
 func init () {
-    XlateFuncBind("YangToDb_network_instance_protocol_key_xfmr", YangToDb_network_instance_protocol_key_xfmr)
-    XlateFuncBind("DbToYang_network_instance_protocol_key_xfmr", DbToYang_network_instance_protocol_key_xfmr)
     XlateFuncBind("YangToDb_bgp_gbl_tbl_key_xfmr", YangToDb_bgp_gbl_tbl_key_xfmr)
     XlateFuncBind("DbToYang_bgp_gbl_tbl_key_xfmr", DbToYang_bgp_gbl_tbl_key_xfmr)
     XlateFuncBind("YangToDb_bgp_local_asn_fld_xfmr", YangToDb_bgp_local_asn_fld_xfmr)
@@ -449,25 +447,6 @@ var DbToYang_bgp_gbl_afi_safi_addr_field_xfmr FieldXfmrDbtoYang = func(inParams 
     return rmap, err
 }
 
-var YangToDb_network_instance_protocol_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (string, error) {
-
-    return "", nil 
-}
-
-var DbToYang_network_instance_protocol_key_xfmr KeyXfmrDbToYang = func(inParams XfmrParams) (map[string]interface{}, error) {
-    rmap := make(map[string]interface{})
-    var err error
-
-    pathInfo := NewPathInfo(inParams.uri)
-
-    bgpId := pathInfo.Var("identifier")
-    protoName := pathInfo.Var("name#2")
-
-    rmap["name"] = protoName; 
-    rmap["identifier"] = bgpId; 
-    return rmap, err
-}
-
 var YangToDb_bgp_gbl_tbl_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (string, error) {
     var err error
 
@@ -478,19 +457,19 @@ var YangToDb_bgp_gbl_tbl_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (s
     protoName := pathInfo.Var("name#2")
 
     if len(pathInfo.Vars) <  3 {
-        return niName, errors.New("Invalid Key length")
+        return "", errors.New("Invalid Key length")
     }
 
     if len(niName) == 0 {
-        return niName, errors.New("vrf name is missing")
+        return "", errors.New("vrf name is missing")
     }
 
     if strings.Contains(bgpId,"BGP") == false {
-        return niName, errors.New("BGP ID is missing")
+        return "", errors.New("BGP ID is missing")
     }
 
     if len(protoName) == 0 {
-        return niName, errors.New("Protocol Name is missing")
+        return "", errors.New("Protocol Name is missing")
     }
 
     log.Info("URI VRF ", niName)
