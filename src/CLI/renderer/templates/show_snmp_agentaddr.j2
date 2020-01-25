@@ -1,13 +1,11 @@
-{{ ' ' }}
 {{ 'Agent Addresses:' }}
 {{ ' ' }}
-{{ 'IP Address'|center(32) }} {{ 'UDP Port'|center(8) }} {{ '       Interface' }}
-{{'-------------------------------- -------- ----------------'}}
+{{ 'IP Address'|center(39) }} {{ 'UDP Port'|center(8) }} {{ 'Interface'|center(32) }}
+{{'--------------------------------------- -------- --------------------------------'}}
 {% for i in json_output %}
   {% set i1 = json_output[loop.index-1] %}
-{{ '%-32s'|format(i1['ipAddr']) -}}
-{{  ' %8s'|format(i1['udpPort']) -}}
-{{ ' %16s'|format(i1['ifName']) }}
+{{ '%-39s'|format(i1['ipAddr']) -}}
+{{ ' %-8s'|format(i1['udpPort']) -}}
+{{ ' %-32s'|format(i1['ifName']) }}
 {% endfor %}
 {{ ' ' }}
-

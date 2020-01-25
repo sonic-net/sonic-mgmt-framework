@@ -43,7 +43,7 @@ module sonic-acl {
 
 			list ACL_TABLE_LIST {
 				key "aclname";
-				sonic-ext:custom-validation ValidateMaxAclTable;
+				max-elements 1024; // Max 1K ACL tables for all platforms
 
 				leaf aclname {
 					type string {
@@ -88,6 +88,7 @@ module sonic-acl {
 
 			list ACL_RULE_LIST { 
 				key "aclname rulename";
+				sonic-ext:custom-validation ValidateMaxAclRule; // Max 64K ACL rules for all platforms
 
 				leaf aclname {
 					type leafref {

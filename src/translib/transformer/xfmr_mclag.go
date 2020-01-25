@@ -134,8 +134,23 @@ var YangToDb_mclag_interface_subtree_xfmr SubTreeXfmrYangToDb = func(inParams Xf
 
 	for intfId, _ := range mclagObj.Interfaces.Interface {
 		intf := mclagObj.Interfaces.Interface[intfId]
-		if intf != nil && intf.Config != nil {
-			mclagIntfKey := strconv.Itoa(int(*intf.Config.MclagDomainId)) + "|" + *intf.Name
+		if intf != nil {
+			var mclagdomainId int
+			if intf.Config != nil {
+				mclagdomainId = int(*intf.Config.MclagDomainId)
+			} else {
+				// DomainId info NOT available from URI or body. So make db query.
+				mclagIntfKeys, _ := inParams.d.GetKeys(&db.TableSpec{Name: "MCLAG_INTERFACE"})
+				if len(mclagIntfKeys) > 0 {
+					for _, intfKey := range mclagIntfKeys {
+						if intfKey.Get(1) == *intf.Name {
+							domainid, _ := strconv.ParseUint(intfKey.Get(0), 10, 32)
+							mclagdomainId = int(domainid)
+						}
+					}
+				}
+			}
+			mclagIntfKey := strconv.Itoa(mclagdomainId) + "|" + *intf.Name
 			log.Infof("YangToDb_mclag_interface_subtree_xfmr --> key: %v", mclagIntfKey)
 
 			_, ok := mclagIntfTblMap[mclagIntfKey]

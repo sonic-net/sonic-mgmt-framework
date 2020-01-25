@@ -381,26 +381,31 @@ module ietf-snmp-annot {
     deviation /snmp:snmp/snmp:vacm/snmp:group/snmp:name {
       deviate add {
         sonic-ext:field-name "name";
+        sonic-ext:field-transformer "snmp_group_name_xfmr";
       }
     }
 
     deviation /snmp:snmp/snmp:vacm/snmp:group/snmp:member {
       deviate add {
+        sonic-ext:table-name "SNMP_SERVER_GROUP_MEMBER";
       }
     }
 
     deviation /snmp:snmp/snmp:vacm/snmp:group/snmp:member/snmp:security-name {
       deviate add {
+        sonic-ext:field-name "securityName";
       }
     }
 
     deviation /snmp:snmp/snmp:vacm/snmp:group/snmp:member/snmp:security-model {
       deviate add {
+        sonic-ext:field-name "securityModel";
       }
     }
 
     deviation /snmp:snmp/snmp:vacm/snmp:group/snmp:access {
       deviate add {
+        sonic-ext:table-name "SNMP_SERVER_GROUP_ACCESS";
       }
     }
 
@@ -816,7 +821,6 @@ module ietf-snmp-annot {
     deviation /snmp:snmp/snmp:target-params/snmp:name {
       deviate add {
         sonic-ext:field-name "name";
-        sonic-ext:key-transformer "snmp_target_params_key_xfmr";
       }
     }
 
@@ -824,6 +828,7 @@ module ietf-snmp-annot {
       deviate add {
       }
     }
+
     deviation /snmp:snmp/snmp:target-params/snmp:params/snmp:v1 {
       deviate add {
       }
