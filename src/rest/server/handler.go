@@ -273,6 +273,9 @@ func invokeTranslib(args *translibArgs, r *http.Request, rc *RequestContext) (in
 			Depth: args.depth,
 			User: translib.UserRoles{Name: rc.Auth.User, Roles: rc.Auth.Roles},
 		}
+		if ClientAuth.Any() {
+			req.AuthEnabled = true
+		}
 
 		resp, err1 := translib.Get(req)
 		if err1 == nil {
@@ -290,7 +293,9 @@ func invokeTranslib(args *translibArgs, r *http.Request, rc *RequestContext) (in
 				Payload: args.data,
 				User: translib.UserRoles{Name: rc.Auth.User, Roles: rc.Auth.Roles},
 			}
-
+			if ClientAuth.Any() {
+				req.AuthEnabled = true
+			}
 			res, err1 := translib.Action(req)
 			if err1 == nil {
 				status = 200
@@ -319,7 +324,9 @@ func invokeTranslib(args *translibArgs, r *http.Request, rc *RequestContext) (in
 			Payload: args.data,
 			User: translib.UserRoles{Name: rc.Auth.User, Roles: rc.Auth.Roles},
 		}
-
+		if ClientAuth.Any() {
+			req.AuthEnabled = true
+		}
 		_, err = translib.Replace(req)
 
 	case "PATCH":
@@ -330,7 +337,9 @@ func invokeTranslib(args *translibArgs, r *http.Request, rc *RequestContext) (in
 			Payload: args.data,
 			User: translib.UserRoles{Name: rc.Auth.User, Roles: rc.Auth.Roles},
 		}
-
+		if ClientAuth.Any() {
+			req.AuthEnabled = true
+		}
 		_, err = translib.Update(req)
 
 	case "DELETE":
@@ -340,7 +349,9 @@ func invokeTranslib(args *translibArgs, r *http.Request, rc *RequestContext) (in
 			Path:  args.path,
 			User: translib.UserRoles{Name: rc.Auth.User, Roles: rc.Auth.Roles},
 		}
-
+		if ClientAuth.Any() {
+			req.AuthEnabled = true
+		}
 		_, err = translib.Delete(req)
 
 	default:

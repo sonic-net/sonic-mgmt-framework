@@ -69,19 +69,19 @@ int print_error(char *str) {
     cJSON *ret_json = cJSON_Parse(str);
     if (!ret_json) {
         syslog(LOG_DEBUG, "clish_restcl: Failed parsing error string\r\n");
-        return 1;
+        return 0;
     }
 
     cJSON *ietf_err = cJSON_GetObjectItemCaseSensitive(ret_json, "ietf-restconf:errors");
     if (!ietf_err) {
         syslog(LOG_DEBUG, "clish_restcl: No errors\r\n");
-        return 1;
+        return 0;
     }
 
     cJSON *errors = cJSON_GetObjectItemCaseSensitive(ietf_err, "error");
     if (!errors) {
         syslog(LOG_DEBUG, "clish_restcl: No error\r\n");
-        return 1;
+        return 0;
     }
 
     cJSON *error;
@@ -90,6 +90,7 @@ int print_error(char *str) {
         if (err_msg) {
             lub_dump_printf("%% Error: %s\r\n", err_msg->valuestring);
         }
+        return 1;
     }
 
     return 0;
@@ -151,6 +152,7 @@ int rest_cl(char *cmd, const char *buff)
 {
 
   CURLcode res;
+  int ret_code = 0;
   char *url = NULL;
   char *body = NULL;
   char *oper = NULL;
@@ -227,7 +229,7 @@ int rest_cl(char *cmd, const char *buff)
       curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
       if (ret.size) {
           syslog(LOG_DEBUG, "clish_restcl: http_code:%ld [%d:%s]", http_code, ret.size, ret.memory);
-          print_error(ret.memory);
+          ret_code = print_error(ret.memory);
 
           if (ret.memory) {
             free(ret.memory);
@@ -240,10 +242,10 @@ int rest_cl(char *cmd, const char *buff)
   } else {
         lub_dump_printf("%%Error: Could not connect to Management REST Server\n");
         syslog(LOG_WARNING, "Couldn't initialize curl handle");
-    return 1;
+        ret_code = 1;
   }
 
-  return 0;
+  return ret_code;
 }
 
 CLISH_PLUGIN_SYM(clish_restcl)
@@ -251,5 +253,4 @@ CLISH_PLUGIN_SYM(clish_restcl)
     char *cmd = clish_shell__get_full_line(clish_context);
     return rest_cl(cmd, script);
 }
-
 
