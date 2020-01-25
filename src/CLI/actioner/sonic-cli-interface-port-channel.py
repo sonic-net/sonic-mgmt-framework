@@ -37,6 +37,10 @@ def invoke_api(func, args=[]):
         path = cc.Path('/restconf/data/sonic-portchannel:sonic-portchannel/LAG_TABLE/LAG_TABLE_LIST={lagname}', lagname=args[0])
         return api.get(path)
 
+    if func == 'get_sonic_portchannel_sonic_portchannel_lag_member_table':
+        path = cc.Path('/restconf/data/sonic-portchannel:sonic-portchannel/LAG_MEMBER_TABLE')
+        return api.get(path)
+        
     if func == 'get_sonic_portchannel_sonic_portchannel_portchannel':
         path = cc.Path('/restconf/data/sonic-portchannel:sonic-portchannel/PORTCHANNEL')
         return api.get(path)
@@ -101,6 +105,14 @@ def get_lag_data():
                         output['sonic-portchannel:PORTCHANNEL']['PORTCHANNEL_LIST'] = api_resp['sonic-portchannel:PORTCHANNEL_LIST']
                 else:
                     output.update( api_resp )
+
+        # GET LAG Members
+        resp2 = invoke_api('get_sonic_portchannel_sonic_portchannel_lag_member_table', args)
+        if resp2.ok():
+            if resp2.content is not None:
+                # Get Command Output
+                api_resp2 = resp2.content
+                output.update( api_resp2 )
 
     except Exception as e:
         print("Exception when calling get_lag_data : %s\n" %(e))

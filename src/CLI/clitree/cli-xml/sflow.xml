@@ -37,48 +37,8 @@ limitations under the License.
         <ACTION builtin="clish_pyobj">sonic_cli_sflow patch_sonic_sflow_sonic_sflow_sflow_sflow_list_admin_state up </ACTION>
     </COMMAND>
     <COMMAND name="sflow agent-id" help="Collector agent interface" ptype="SUBCOMMAND" mode="subcommand">
-      <PARAM name="interface" help="Interface name" mode="subcommand" ptype="SUBCOMMAND">
-        <PARAM name="iftype" help="interface type" mode="switch" ptype="SUBCOMMAND">
-          <PARAM name="Ethernet" help="Select an interface" mode="subcommand" ptype="SUBCOMMAND">
-            <PARAM name="phy-if-name" help="Physical interface" ptype="UINT"/>
-          </PARAM>
-          <PARAM name="Loopback" help="Loopback Interface Configuration" mode="subcommand" ptype="SUBCOMMAND">
-            <PARAM name="lo-id" help="Loopback identifier" ptype="LO_ID"/>
-          </PARAM>
-          <PARAM name="Management" help="Management Interface commands" mode="subcommand" ptype="SUBCOMMAND">
-            <PARAM name="mgmt-if-id" help="Management interface" ptype="MGMT_INTF_ID"/>
-          </PARAM>
-          <PARAM name="PortChannel" help="Port channel Interface Configuration" mode="subcommand" ptype="SUBCOMMAND">
-            <PARAM name="lag-id" help="PortChannel identifier" ptype="LAG_ID"/>
-          </PARAM>
-          <PARAM name="Vlan" help="Vlan Interface Configuration" mode="subcommand" ptype="SUBCOMMAND">
-            <PARAM name="vlan-id" help="Vlan identifier" ptype="VLAN_ID"/>
-          </PARAM>
-          <PARAM name="Vxlan" help="VXLAN Configuration mode" mode="subcommand" ptype="SUBCOMMAND">
-            <PARAM name="vxlan-if-name" help="VTEP Name" ptype="STRING_63"/>
-          </PARAM>
-        </PARAM>
-      </PARAM>
-      <ACTION>
-              if test "${iftype}" = "Ethernet" ; then&#xA;
-                  python $SONIC_CLI_ROOT/sonic_cli_sflow.py patch_sonic_sflow_sonic_sflow_sflow_sflow_list_agent_id Ethernet${phy-if-name}&#xA;
-              fi&#xA;
-              if test "${iftype}" = "Loopback" ; then&#xA;
-                  python $SONIC_CLI_ROOT/sonic_cli_sflow.py patch_sonic_sflow_sonic_sflow_sflow_sflow_list_agent_id Loopback${lo-id}&#xA;
-              fi&#xA;
-              if test "${iftype}" = "Management" ; then&#xA;
-                  python $SONIC_CLI_ROOT/sonic_cli_sflow.py patch_sonic_sflow_sonic_sflow_sflow_sflow_list_agent_id Management${mgmt-if-id}&#xA;
-              fi&#xA;
-              if test "${iftype}" = "PortChannel" ; then&#xA;
-                  python $SONIC_CLI_ROOT/sonic_cli_sflow.py patch_sonic_sflow_sonic_sflow_sflow_sflow_list_agent_id PortChannel${lag-id}&#xA;
-              fi&#xA;
-              if test "${iftype}" = "Vlan" ; then&#xA;
-                  python $SONIC_CLI_ROOT/sonic_cli_sflow.py patch_sonic_sflow_sonic_sflow_sflow_sflow_list_agent_id Vlan${vlan-id}&#xA;
-              fi&#xA;
-              if test "${iftype}" = "Vxlan" ; then&#xA;
-                  python $SONIC_CLI_ROOT/sonic_cli_sflow.py patch_sonic_sflow_sonic_sflow_sflow_sflow_list_agent_id Vxlan${vxlan-if-name}&#xA;
-              fi&#xA;
-      </ACTION>
+      <PARAM name="interface" help="Interface name" ptype="STRING"/>	      
+      <ACTION builtin="clish_pyobj">sonic_cli_sflow patch_sonic_sflow_sonic_sflow_sflow_sflow_list_agent_id ${interface} </ACTION> 
     </COMMAND>
     <COMMAND name="sflow polling-interval" help="Collector polling interval" ptype="SUBCOMMAND" mode="subcommand">
       <PARAM name="interval" help="Interval (default: 20)" ptype="SFLOW_POLL_INTERVAL"/>

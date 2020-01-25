@@ -213,6 +213,7 @@ def run(func, args):
                     sortMembers = collections.OrderedDict(sorted(val['vlanMembers'].items(), key=lambda t: t[1]))
                     val['vlanMembers'] = sortMembers
                 vDictSorted = collections.OrderedDict(sorted(vDict.items(), key = lambda t: getVlanId(t[0])))
+                vlanDict.clear()
                 if func == 'get_sonic_vlan_sonic_vlan':
                      show_cli_output(args[1], vDictSorted)
                 elif func == 'get_sonic_vxlan_sonic_vxlan_suppress_vlan_neigh':
