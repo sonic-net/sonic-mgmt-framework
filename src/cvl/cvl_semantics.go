@@ -28,6 +28,7 @@ import (
 	"github.com/antchfx/xpath"
 	"github.com/antchfx/xmlquery"
 	"github.com/antchfx/jsonquery"
+	"cvl/internal/yparser"
 	. "cvl/internal/util"
 )
 
@@ -204,7 +205,8 @@ func (c *CVL) generateYangListData(jsonNode *jsonquery.Node,
 	var cvlErrObj CVLErrorInfo
 
 	tableName := fmt.Sprintf("%s",jsonNode.Data)
-	c.batchLeaf = ""
+	c.batchLeaf = nil
+	c.batchLeaf = make([]*yparser.YParserLeafValue, 0)
 
 	//Every Redis table is mapped as list within a container,
 	//E.g. ACL_RULE is mapped as 

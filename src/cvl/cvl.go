@@ -143,7 +143,7 @@ type CVL struct {
 	requestCache map[string]map[string][]*requestCacheType//Cache of validated data,
 				//per table, per key. Can be used as dependent data in next request
 	maxTableElem map[string]int //max element count per table
-	batchLeaf string
+	batchLeaf []*yparser.YParserLeafValue //field name and value
 	chkLeafRefWithOthCache bool
 	yv *YValidator //Custom YANG validator for validating external dependencies
 	custvCache custv.CustValidationCache //Custom validation cache per session

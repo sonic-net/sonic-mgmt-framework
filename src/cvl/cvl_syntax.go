@@ -109,7 +109,7 @@ func (c *CVL) addChildLeaf(config bool, tableName string, parent *yparser.YParse
         }
 
 	//Batch leaf creation
-	c.batchLeaf = c.batchLeaf + name + "|" + value + "|"
+	c.batchLeaf = append(c.batchLeaf, &yparser.YParserLeafValue{Name: name, Value: value})
 }
 
 func (c *CVL) generateTableFieldsData(config bool, tableName string, jsonNode *jsonquery.Node,
@@ -171,7 +171,8 @@ func (c *CVL) generateTableData(config bool, jsonNode *jsonquery.Node)(*yparser.
 	var cvlErrObj CVLErrorInfo
 
 	tableName := fmt.Sprintf("%s",jsonNode.Data)
-	c.batchLeaf = ""
+	c.batchLeaf = nil
+	c.batchLeaf = make([]*yparser.YParserLeafValue, 0)
 
 	//Every Redis table is mapped as list within a container,
 	//E.g. ACL_RULE is mapped as 
@@ -252,15 +253,17 @@ func (c *CVL) generateTableData(config bool, jsonNode *jsonquery.Node)(*yparser.
 				keyIndices[idx] = 0
 			}
 
-			TRACE_LOG(TRACE_CACHE, "Starting batch leaf creation - %s\n", c.batchLeaf)
+			TRACE_LOG(TRACE_CACHE, "Starting batch leaf creation - %v\n", c.batchLeaf)
 			//process batch leaf creation
 			if errObj := c.yp.AddMultiLeafNodes(modelInfo.tableInfo[tableName].module, listNode, c.batchLeaf); errObj.ErrCode != yparser.YP_SUCCESS {
 				cvlErrObj = createCVLErrObj(errObj)
-				CVL_LOG(ERROR, "Failed to create leaf nodes, data = %s",
+				CVL_LOG(ERROR, "Failed to create leaf nodes, data = %v",
 				c.batchLeaf)
-				return nil, cvlErrObj 
+				return nil, cvlErrObj
 			}
-			c.batchLeaf = ""
+
+			c.batchLeaf = nil
+			c.batchLeaf = make([]*yparser.YParserLeafValue, 0)
 		}
 	}
 
