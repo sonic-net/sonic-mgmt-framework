@@ -328,7 +328,7 @@
 > 	}
 124a376,387
 >     /* Handle resource leak */
->         if((method == CLISH_PTYPE_METHOD_REGEXP_SELECT) && 
+>         if((method == CLISH_PTYPE_METHOD_INTEGER || method == CLISH_PTYPE_METHOD_UNSIGNEDINTEGER) &&
 >            (clish_ptype__get_usename(this->ptype) != USE_RANGE)){
 >         /* Dynamic memory is allocated and
 >          * retun pointer is assigned to range. Since at this point
