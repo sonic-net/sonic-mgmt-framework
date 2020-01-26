@@ -240,7 +240,7 @@ def getEngineID():
     content = response.content
     if content.has_key('ietf-snmp:engine-id'):
       engineID = content['ietf-snmp:engine-id']
-    else:
+    elif content.has_key('engine-id'):
       engineID = content['engine-id']
     engineID = engineID.encode('ascii')
     engineID = engineID.translate(None, ':')
