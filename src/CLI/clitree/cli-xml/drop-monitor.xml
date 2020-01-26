@@ -125,7 +125,7 @@
 	 <ACTION> if test "${feature-options}" = "enable"; then
 		  python $SONIC_CLI_ROOT/sonic-cli-drop-monitor.py patch_sonic_tam_drop_monitor_sonic_tam_drop_monitor_tam_drop_monitor_feature_table_tam_drop_monitor_feature_table_list_enable feature True;
 		  elif test "${feature-options}" = "disable"; then
-		  python $SONIC_CLI_ROOT/sonic-cli-drop-monitor.py patch_sonic_tam_drop_monitor_sonic_tam_drop_monitor_tam_drop_monitor_feature_table_tam_drop_monitor_feature_table_list_enable feature False;
+		  python $SONIC_CLI_ROOT/sonic-cli-drop-monitor.py delete_sonic_tam_drop_monitor_sonic_tam_drop_monitor_tam_drop_monitor_feature_table;
 		  fi 
 	 </ACTION>
     </COMMAND>
