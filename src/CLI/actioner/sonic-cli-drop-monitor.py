@@ -46,8 +46,6 @@ def invoke_api(func, args):
        path = cc.Path('/restconf/data/sonic-tam-drop-monitor:sonic-tam-drop-monitor/TAM_DROP_MONITOR_FEATURE_TABLE/TAM_DROP_MONITOR_FEATURE_TABLE_LIST={name}/enable', name=args[0])
        if args[1] == 'True':
            body = { "sonic-tam-drop-monitor:enable": True }
-       else:
-           body = { "sonic-tam-drop-monitor:enable": False }
        return api.patch(path, body)
 
     elif func == 'patch_sonic_tam_drop_monitor_sonic_tam_drop_monitor_tam_drop_monitor_aging_interval_table_tam_drop_monitor_aging_interval_table_list_aging_interval':
@@ -85,6 +83,10 @@ def invoke_api(func, args):
 
     elif func == 'delete_list_sonic_tam_drop_monitor_sonic_tam_drop_monitor_sample_rate_table_sample_rate_table_list':
        path = cc.Path('/restconf/data/sonic-tam-drop-monitor:sonic-tam-drop-monitor/SAMPLE_RATE_TABLE/SAMPLE_RATE_TABLE_LIST',)
+       return api.delete(path)
+
+    elif func == 'delete_sonic_tam_drop_monitor_sonic_tam_drop_monitor_tam_drop_monitor_feature_table':
+       path = cc.Path('/restconf/data/sonic-tam-drop-monitor:sonic-tam-drop-monitor/TAM_DROP_MONITOR_FEATURE_TABLE',)
        return api.delete(path)
 
     else:
