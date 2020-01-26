@@ -67,7 +67,7 @@ func parse_origin_type_data (jsonOriginType string, originType *ocbinds.E_Openco
 }
 
 func fill_ipv4_spec_pfx_path_loc_rib_data (ipv4LocRibRoutes_obj *ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Rib_AfiSafis_AfiSafi_Ipv4Unicast_LocRib_Routes,
-                                           prefix string, pathId uint32, pathData map[string]interface{}) bool {
+                                           rib_key *_xfmr_bgp_rib_key, prefix string, pathId uint32, pathData map[string]interface{}) bool {
     var err error
 
     peer, ok := pathData["peer"].(map[string]interface{})
@@ -78,11 +78,15 @@ func fill_ipv4_spec_pfx_path_loc_rib_data (ipv4LocRibRoutes_obj *ocbinds.Opencon
 
     _route_origin := &ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Rib_AfiSafis_AfiSafi_Ipv4Unicast_LocRib_Routes_Route_State_Origin_Union_String{peerId}
 
-	key := ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Rib_AfiSafis_AfiSafi_Ipv4Unicast_LocRib_Routes_Route_Key{
-		Prefix: prefix,
-		Origin: _route_origin,
-		PathId: pathId,
-	}
+    if (rib_key.prefix != "" && (prefix != rib_key.prefix)) {return false}
+    if (rib_key.origin != "" && (peerId != rib_key.origin)) {return false}
+    if (rib_key.pathIdKey != "" && (pathId != rib_key.pathId)) {return false}
+
+    key := ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Rib_AfiSafis_AfiSafi_Ipv4Unicast_LocRib_Routes_Route_Key{
+        Prefix: prefix,
+        Origin: _route_origin,
+        PathId: pathId,
+    }
 
     var ipv4LocRibRoute_obj *ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Rib_AfiSafis_AfiSafi_Ipv4Unicast_LocRib_Routes_Route
     if ipv4LocRibRoute_obj, ok = ipv4LocRibRoutes_obj.Route[key] ; !ok {
@@ -233,7 +237,7 @@ func hdl_get_bgp_ipv4_local_rib (ribAfiSafi_obj *ocbinds.OpenconfigNetworkInstan
             pathData := _pathData.(map[string]interface {})
             if value, ok := pathData["pathId"] ; ok {
                 pathId := uint32(value.(float64))
-                if ok := fill_ipv4_spec_pfx_path_loc_rib_data (ipv4LocRibRoutes_obj, prefix, pathId, pathData) ; !ok {continue}
+                if ok := fill_ipv4_spec_pfx_path_loc_rib_data (ipv4LocRibRoutes_obj, rib_key, prefix, pathId, pathData) ; !ok {continue}
             }
         }
     }
@@ -242,7 +246,7 @@ func hdl_get_bgp_ipv4_local_rib (ribAfiSafi_obj *ocbinds.OpenconfigNetworkInstan
 }
 
 func fill_ipv6_spec_pfx_path_loc_rib_data (ipv6LocRibRoutes_obj *ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Rib_AfiSafis_AfiSafi_Ipv6Unicast_LocRib_Routes,
-                                           prefix string, pathId uint32, pathData map[string]interface{}) bool {
+                                           rib_key *_xfmr_bgp_rib_key, prefix string, pathId uint32, pathData map[string]interface{}) bool {
     var err error
     peer, ok := pathData["peer"].(map[string]interface{})
     if !ok {return false}
@@ -252,11 +256,15 @@ func fill_ipv6_spec_pfx_path_loc_rib_data (ipv6LocRibRoutes_obj *ocbinds.Opencon
 
     _route_origin := &ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Rib_AfiSafis_AfiSafi_Ipv6Unicast_LocRib_Routes_Route_State_Origin_Union_String{peerId}
 
-	key := ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Rib_AfiSafis_AfiSafi_Ipv6Unicast_LocRib_Routes_Route_Key{
-		Prefix: prefix,
-		Origin: _route_origin,
-		PathId: pathId,
-	}
+    if (rib_key.prefix != "" && (prefix != rib_key.prefix)) {return false}
+    if (rib_key.origin != "" && (peerId != rib_key.origin)) {return false}
+    if (rib_key.pathIdKey != "" && (pathId != rib_key.pathId)) {return false}
+
+    key := ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Rib_AfiSafis_AfiSafi_Ipv6Unicast_LocRib_Routes_Route_Key{
+        Prefix: prefix,
+        Origin: _route_origin,
+        PathId: pathId,
+    }
 
     var ipv6LocRibRoute_obj *ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Rib_AfiSafis_AfiSafi_Ipv6Unicast_LocRib_Routes_Route
     if ipv6LocRibRoute_obj, ok = ipv6LocRibRoutes_obj.Route[key] ; !ok {
@@ -408,7 +416,7 @@ func hdl_get_bgp_ipv6_local_rib (ribAfiSafi_obj *ocbinds.OpenconfigNetworkInstan
             pathData := _pathData.(map[string]interface {})
             if value, ok := pathData["pathId"] ; ok {
                 pathId := uint32(value.(float64))
-                if ok := fill_ipv6_spec_pfx_path_loc_rib_data (ipv6LocRibRoutes_obj, prefix, pathId, pathData) ; !ok {continue}
+                if ok := fill_ipv6_spec_pfx_path_loc_rib_data (ipv6LocRibRoutes_obj, rib_key, prefix, pathId, pathData) ; !ok {continue}
             }
         }
     }
@@ -437,7 +445,7 @@ func hdl_get_bgp_local_rib (bgpRib_obj *ocbinds.OpenconfigNetworkInstance_Networ
 
     log.Infof("==> Local-RIB data filling to YGOT started!")
     if outError, ok := bgpRibOutputJson["warning"] ; ok {
-        log.Errorf ("%s failed !!, %s", outError)
+        log.Errorf ("%s failed !!, Error: %s", *dbg_log, outError)
         return oper_err
     }
 
@@ -2181,6 +2189,43 @@ func hdl_get_all_bgp_nbrs_adj_rib (bgpRib_obj *ocbinds.OpenconfigNetworkInstance
     return err
 }
 
+func get_all_ipv4_bgp_rib_objs (bgpRib_obj *ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Rib,
+                                rib_key *_xfmr_bgp_rib_key, dbg_log *string) (error) {
+    var err error
+    oper_err := errors.New("Opertational error")
+    err = hdl_get_bgp_local_rib (bgpRib_obj, rib_key, ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_IPV4_UNICAST, dbg_log) ; if err != nil {return oper_err}
+    err = hdl_get_all_bgp_nbrs_adj_rib (bgpRib_obj, rib_key, ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_IPV4_UNICAST, dbg_log) ; if err != nil {return oper_err}
+    return err
+}
+
+func get_all_ipv6_bgp_rib_objs (bgpRib_obj *ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Rib,
+                                rib_key *_xfmr_bgp_rib_key, dbg_log *string) (error) {
+    var err error
+    oper_err := errors.New("Opertational error")
+    err = hdl_get_bgp_local_rib (bgpRib_obj, rib_key, ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_IPV6_UNICAST, dbg_log) ; if err != nil {return oper_err}
+    err = hdl_get_all_bgp_nbrs_adj_rib (bgpRib_obj, rib_key, ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_IPV6_UNICAST, dbg_log) ; if err != nil {return oper_err}
+    return err
+}
+
+func get_all_bgp_rib_objs (bgpRib_obj *ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Rib,
+                           rib_key *_xfmr_bgp_rib_key, dbg_log *string) (error) {
+    var err error
+    oper_err := errors.New("Opertational error")
+    err = get_all_ipv4_bgp_rib_objs (bgpRib_obj, rib_key, dbg_log) ; if err != nil {return oper_err}
+    err = get_all_ipv6_bgp_rib_objs (bgpRib_obj, rib_key, dbg_log) ; if err != nil {return oper_err}
+    return err
+}
+
+func get_all_bgp_nbrs_adj_rib_for_specific_nbr (bgpRib_obj *ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Rib,
+                                                rib_key *_xfmr_bgp_rib_key, afiSafiType ocbinds.E_OpenconfigBgpTypes_AFI_SAFI_TYPE, dbg_log *string) (error) {
+    var err error
+    oper_err := errors.New("Opertational error")
+    err = hdl_get_bgp_nbrs_adj_rib_in_pre (bgpRib_obj, rib_key, afiSafiType, dbg_log) ; if err != nil {return oper_err}
+    err = hdl_get_bgp_nbrs_adj_rib_in_post (bgpRib_obj, rib_key, afiSafiType, dbg_log) ; if err != nil {return oper_err}
+    err = hdl_get_bgp_nbrs_adj_rib_out_post (bgpRib_obj, rib_key, afiSafiType, dbg_log) ; if err != nil {return oper_err}
+    return err
+}
+
 var DbToYang_bgp_routes_get_xfmr SubTreeXfmrDbToYang = func(inParams XfmrParams) error {
     var err error
     oper_err := errors.New("Opertational error")
@@ -2218,165 +2263,125 @@ var DbToYang_bgp_routes_get_xfmr SubTreeXfmrDbToYang = func(inParams XfmrParams)
 
     switch targetUriPath {
         case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib": fallthrough
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis": fallthrough
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi": fallthrough
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv4-unicast": fallthrough
+        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis":
+            err = get_all_bgp_rib_objs (bgpRib_obj, &rib_key, &dbg_log) ; if err != nil {return oper_err}
+
+        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi":
+            if (rib_key.afiSafiName == "") {
+                err = get_all_bgp_rib_objs (bgpRib_obj, &rib_key, &dbg_log) ; if err != nil {return oper_err}
+            } else {
+                switch rib_key.afiSafiName {
+                    case "IPV4_UNICAST":
+                        err = get_all_ipv4_bgp_rib_objs (bgpRib_obj, &rib_key, &dbg_log) ; if err != nil {return oper_err}
+                    case "IPV6_UNICAST":
+                        err = get_all_ipv6_bgp_rib_objs (bgpRib_obj, &rib_key, &dbg_log) ; if err != nil {return oper_err}
+                }
+            }
+
+        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv4-unicast":
+            if (rib_key.afiSafiName == "IPV4_UNICAST") {
+                err = get_all_ipv4_bgp_rib_objs (bgpRib_obj, &rib_key, &dbg_log) ; if err != nil {return oper_err}
+            }
+
+        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv6-unicast":
+            if (rib_key.afiSafiName == "IPV6_UNICAST") {
+                err = get_all_ipv6_bgp_rib_objs (bgpRib_obj, &rib_key, &dbg_log) ; if err != nil {return oper_err}
+            }
+
         case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv4-unicast/loc-rib": fallthrough
         case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv4-unicast/loc-rib/routes": fallthrough
         case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv4-unicast/loc-rib/routes/route":
-            if (rib_key.afiSafiName == "") || (rib_key.afiSafiName == "IPV4_UNICAST") {
-                err = hdl_get_bgp_local_rib (bgpRib_obj, &rib_key, ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_IPV4_UNICAST, &dbg_log)
-                if err != nil {
-                    log.Errorf("%s IPV4_UNICAST failed !! Error: BGP RIB container missing", cmn_log)
-                    return oper_err
-                }
+            if (rib_key.afiSafiName == "IPV4_UNICAST") {
+                err = hdl_get_bgp_local_rib (bgpRib_obj, &rib_key, ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_IPV4_UNICAST, &dbg_log) ; if err != nil {return oper_err}
             }
-    }
 
-    switch targetUriPath {
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib": fallthrough
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis": fallthrough
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi": fallthrough
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv6-unicast": fallthrough
         case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv6-unicast/loc-rib": fallthrough
         case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv6-unicast/loc-rib/routes": fallthrough
         case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv6-unicast/loc-rib/routes/route":
-            if (rib_key.afiSafiName == "") || (rib_key.afiSafiName == "IPV6_UNICAST") {
-                err = hdl_get_bgp_local_rib (bgpRib_obj, &rib_key, ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_IPV6_UNICAST, &dbg_log)
-                if err != nil {return oper_err}
+            if (rib_key.afiSafiName == "IPV6_UNICAST") {
+                err = hdl_get_bgp_local_rib (bgpRib_obj, &rib_key, ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_IPV6_UNICAST, &dbg_log) ; if err != nil {return oper_err}
             }
-    }
 
-    switch targetUriPath {
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib": fallthrough
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis": fallthrough
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi": fallthrough
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv4-unicast": fallthrough
         case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv4-unicast/neighbors":
-            if (rib_key.afiSafiName == "") || (rib_key.afiSafiName == "IPV4_UNICAST") {
-                err = hdl_get_all_bgp_nbrs_adj_rib (bgpRib_obj, &rib_key, ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_IPV4_UNICAST, &dbg_log)
-                if err != nil {return oper_err}
+            if (rib_key.afiSafiName == "IPV4_UNICAST") {
+                err = hdl_get_all_bgp_nbrs_adj_rib (bgpRib_obj, &rib_key, ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_IPV4_UNICAST, &dbg_log) ; if err != nil {return oper_err}
             }
-    }
 
-    switch targetUriPath {
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib": fallthrough
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis": fallthrough
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi": fallthrough
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv6-unicast": fallthrough
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv6-unicast/neighbors":
-            if (rib_key.afiSafiName == "") || (rib_key.afiSafiName == "IPV6_UNICAST") {
-                err = hdl_get_all_bgp_nbrs_adj_rib (bgpRib_obj, &rib_key, ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_IPV6_UNICAST, &dbg_log)
-                if err != nil {return oper_err}
+        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv4-unicast/neighbors/neighbor":
+            if (rib_key.afiSafiName == "IPV4_UNICAST") {
+                if (rib_key.nbrAddr == "") {
+                    err = hdl_get_all_bgp_nbrs_adj_rib (bgpRib_obj, &rib_key, ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_IPV4_UNICAST, &dbg_log) ; if err != nil {return oper_err}
+                } else {
+                    err = get_all_bgp_nbrs_adj_rib_for_specific_nbr (bgpRib_obj, &rib_key, ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_IPV4_UNICAST, &dbg_log) ; if err != nil {return oper_err}
+                }
             }
-    }
 
-    switch targetUriPath {
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv4-unicast/neighbors/neighbor": fallthrough
         case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv4-unicast/neighbors/neighbor/adj-rib-in-pre": fallthrough
         case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv4-unicast/neighbors/neighbor/adj-rib-in-pre/routes": fallthrough
         case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv4-unicast/neighbors/neighbor/adj-rib-in-pre/routes/route":
-            if (rib_key.afiSafiName == "") || (rib_key.afiSafiName == "IPV4_UNICAST") {
-                err = hdl_get_bgp_nbrs_adj_rib_in_pre (bgpRib_obj, &rib_key, ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_IPV4_UNICAST, &dbg_log)
-                if err != nil {return oper_err}
+            if (rib_key.afiSafiName == "IPV4_UNICAST") {
+                err = hdl_get_bgp_nbrs_adj_rib_in_pre (bgpRib_obj, &rib_key, ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_IPV4_UNICAST, &dbg_log) ; if err != nil {return oper_err}
             }
-    }
 
-    switch targetUriPath {
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv6-unicast/neighbors/neighbor": fallthrough
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv6-unicast/neighbors/neighbor/adj-rib-in-pre": fallthrough
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv6-unicast/neighbors/neighbor/adj-rib-in-pre/routes": fallthrough
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv6-unicast/neighbors/neighbor/adj-rib-in-pre/routes/route":
-            if (rib_key.afiSafiName == "") || (rib_key.afiSafiName == "IPV6_UNICAST") {
-                err = hdl_get_bgp_nbrs_adj_rib_in_pre (bgpRib_obj, &rib_key, ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_IPV6_UNICAST, &dbg_log)
-                if err != nil {return oper_err}
-            }
-    }
-
-    switch targetUriPath {
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv4-unicast/neighbors/neighbor": fallthrough
         case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv4-unicast/neighbors/neighbor/adj-rib-in-post": fallthrough
         case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv4-unicast/neighbors/neighbor/adj-rib-in-post/routes": fallthrough
         case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv4-unicast/neighbors/neighbor/adj-rib-in-post/routes/route":
-            if (rib_key.afiSafiName == "") || (rib_key.afiSafiName == "IPV4_UNICAST") {
-                err = hdl_get_bgp_nbrs_adj_rib_in_post (bgpRib_obj, &rib_key, ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_IPV4_UNICAST, &dbg_log)
-                if err != nil {return oper_err}
+            if (rib_key.afiSafiName == "IPV4_UNICAST") {
+                err = hdl_get_bgp_nbrs_adj_rib_in_post (bgpRib_obj, &rib_key, ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_IPV4_UNICAST, &dbg_log) ; if err != nil {return oper_err}
             }
-    }
 
-    switch targetUriPath {
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv6-unicast/neighbors/neighbor": fallthrough
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv6-unicast/neighbors/neighbor/adj-rib-in-post": fallthrough
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv6-unicast/neighbors/neighbor/adj-rib-in-post/routes": fallthrough
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv6-unicast/neighbors/neighbor/adj-rib-in-post/routes/route":
-            if (rib_key.afiSafiName == "") || (rib_key.afiSafiName == "IPV6_UNICAST") {
-                err = hdl_get_bgp_nbrs_adj_rib_in_post (bgpRib_obj, &rib_key, ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_IPV6_UNICAST, &dbg_log)
-                if err != nil {return oper_err}
-            }
-    }
-
-    switch targetUriPath {
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv4-unicast/neighbors/neighbor": fallthrough
         case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv4-unicast/neighbors/neighbor/adj-rib-out-post": fallthrough
         case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv4-unicast/neighbors/neighbor/adj-rib-out-post/routes": fallthrough
         case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv4-unicast/neighbors/neighbor/adj-rib-out-post/routes/route":
-            if (rib_key.afiSafiName == "") || (rib_key.afiSafiName == "IPV4_UNICAST") {
-                err = hdl_get_bgp_nbrs_adj_rib_out_post (bgpRib_obj, &rib_key, ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_IPV4_UNICAST, &dbg_log)
-                if err != nil {return oper_err}
+            if (rib_key.afiSafiName == "IPV4_UNICAST") {
+                err = hdl_get_bgp_nbrs_adj_rib_out_post (bgpRib_obj, &rib_key, ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_IPV4_UNICAST, &dbg_log) ; if err != nil {return oper_err}
             }
-    }
 
-    switch targetUriPath {
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv6-unicast/neighbors/neighbor": fallthrough
+        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv4-unicast/openconfig-rib-bgp-ext:loc-rib-prefix/routes/route":
+            if (rib_key.afiSafiName == "IPV4_UNICAST" && rib_key.prefix != "") {
+                err = hdl_get_bgp_local_rib_prefix (bgpRib_obj, &rib_key, ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_IPV4_UNICAST, &dbg_log) ; if err != nil {return oper_err}
+            }
+
+        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv6-unicast/neighbors":
+            if (rib_key.afiSafiName == "IPV6_UNICAST") {
+                err = hdl_get_all_bgp_nbrs_adj_rib (bgpRib_obj, &rib_key, ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_IPV6_UNICAST, &dbg_log) ; if err != nil {return oper_err}
+            }
+
+        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv6-unicast/neighbors/neighbor":
+            if (rib_key.afiSafiName == "IPV6_UNICAST") {
+                if (rib_key.nbrAddr == "") {
+                    err = hdl_get_all_bgp_nbrs_adj_rib (bgpRib_obj, &rib_key, ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_IPV6_UNICAST, &dbg_log) ; if err != nil {return oper_err}
+                } else {
+                    err = get_all_bgp_nbrs_adj_rib_for_specific_nbr (bgpRib_obj, &rib_key, ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_IPV6_UNICAST, &dbg_log) ; if err != nil {return oper_err}
+                }
+            }
+
+        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv6-unicast/neighbors/neighbor/adj-rib-in-pre": fallthrough
+        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv6-unicast/neighbors/neighbor/adj-rib-in-pre/routes": fallthrough
+        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv6-unicast/neighbors/neighbor/adj-rib-in-pre/routes/route":
+            if (rib_key.afiSafiName == "IPV6_UNICAST") {
+                err = hdl_get_bgp_nbrs_adj_rib_in_pre (bgpRib_obj, &rib_key, ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_IPV6_UNICAST, &dbg_log) ; if err != nil {return oper_err}
+            }
+
+        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv6-unicast/neighbors/neighbor/adj-rib-in-post": fallthrough
+        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv6-unicast/neighbors/neighbor/adj-rib-in-post/routes": fallthrough
+        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv6-unicast/neighbors/neighbor/adj-rib-in-post/routes/route":
+            if (rib_key.afiSafiName == "IPV6_UNICAST") {
+                err = hdl_get_bgp_nbrs_adj_rib_in_post (bgpRib_obj, &rib_key, ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_IPV6_UNICAST, &dbg_log) ; if err != nil {return oper_err}
+            }
+
         case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv6-unicast/neighbors/neighbor/adj-rib-out-post": fallthrough
         case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv6-unicast/neighbors/neighbor/adj-rib-out-post/routes": fallthrough
         case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv6-unicast/neighbors/neighbor/adj-rib-out-post/routes/route":
-            if (rib_key.afiSafiName == "") || (rib_key.afiSafiName == "IPV6_UNICAST") {
-                err = hdl_get_bgp_nbrs_adj_rib_out_post (bgpRib_obj, &rib_key, ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_IPV6_UNICAST, &dbg_log)
-                if err != nil {return oper_err}
+            if (rib_key.afiSafiName == "IPV6_UNICAST") {
+                err = hdl_get_bgp_nbrs_adj_rib_out_post (bgpRib_obj, &rib_key, ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_IPV6_UNICAST, &dbg_log) ; if err != nil {return oper_err}
             }
-    }
 
-    switch targetUriPath {
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib": fallthrough
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis": fallthrough
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi": fallthrough
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/openconfig-bgp-evpn-ext:l2vpn-evpn": fallthrough
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/openconfig-bgp-evpn-ext:l2vpn-evpn/loc-rib": fallthrough
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/openconfig-bgp-evpn-ext:l2vpn-evpn/loc-rib/routes": fallthrough
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/openconfig-bgp-evpn-ext:l2vpn-evpn/loc-rib/routes/route":
-            if (rib_key.afiSafiName == "") || (rib_key.afiSafiName == "L2VPN_EVPN") {
-                err = hdl_get_bgp_l2vpn_evpn_local_rib (bgpRib_obj, &rib_key, ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_L2VPN_EVPN, &dbg_log)
-                if err != nil {
-                    log.Errorf("%s L2VPN_EVPN failed !! Error: BGP RIB container missing", cmn_log)
-                    return oper_err
-                }
-            }
-    }
-
-    switch targetUriPath {
-        case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv4-unicast/openconfig-rib-bgp-ext:loc-rib-prefix/routes/route":
-            if (rib_key.afiSafiName == "") || (rib_key.afiSafiName == "IPV4_UNICAST") {
-                err = hdl_get_bgp_local_rib_prefix (bgpRib_obj, &rib_key, ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_IPV4_UNICAST, &dbg_log)
-                if err != nil {
-                    log.Errorf("%s IPV4_UNICAST failed !! Error: BGP RIB container missing", cmn_log)
-                    return oper_err
-                }
-            }
-    }
-
-    switch targetUriPath {
         case "/openconfig-network-instance:network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv6-unicast/openconfig-rib-bgp-ext:loc-rib-prefix/routes/route":
-            if (rib_key.afiSafiName == "") || (rib_key.afiSafiName == "IPV6_UNICAST") {
-                err = hdl_get_bgp_local_rib_prefix (bgpRib_obj, &rib_key, ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_IPV6_UNICAST, &dbg_log)
-                if err != nil {
-                    log.Errorf("%s IPV6_UNICAST failed !! Error: BGP RIB container missing", cmn_log)
-                    return oper_err
-				}
+            if (rib_key.afiSafiName == "IPV6_UNICAST" && rib_key.prefix != "") {
+                err = hdl_get_bgp_local_rib_prefix (bgpRib_obj, &rib_key, ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_IPV6_UNICAST, &dbg_log) ; if err != nil {return oper_err}
             }
     }
 
     return err;
 }
-
-

@@ -12,6 +12,7 @@ import (
     "bytes"
     "net"
     "encoding/binary"
+    "github.com/openconfig/ygot/ygot"
     log "github.com/golang/glog"
 )
 const sock_addr = "/etc/sonic/frr/bgpd_client_sock"
@@ -125,6 +126,7 @@ func init () {
     XlateFuncBind("DbToYang_bgp_gbl_tbl_key_xfmr", DbToYang_bgp_gbl_tbl_key_xfmr)
     XlateFuncBind("YangToDb_bgp_local_asn_fld_xfmr", YangToDb_bgp_local_asn_fld_xfmr)
     XlateFuncBind("DbToYang_bgp_local_asn_fld_xfmr", DbToYang_bgp_local_asn_fld_xfmr)
+    XlateFuncBind("DbToYang_bgp_gbl_state_xfmr", DbToYang_bgp_gbl_state_xfmr)
     XlateFuncBind("YangToDb_bgp_gbl_afi_safi_field_xfmr", YangToDb_bgp_gbl_afi_safi_field_xfmr)
     XlateFuncBind("DbToYang_bgp_gbl_afi_safi_field_xfmr", DbToYang_bgp_gbl_afi_safi_field_xfmr)
 	XlateFuncBind("YangToDb_bgp_dyn_neigh_listen_key_xfmr", YangToDb_bgp_dyn_neigh_listen_key_xfmr)
@@ -216,6 +218,149 @@ var DbToYang_bgp_local_asn_fld_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams
         log.Info("Local ASN field not found in DB")
     }
     return result, err
+}
+
+func get_spec_bgp_glb_cfg_tbl_entry (cfgDb *db.DB, niName string) (map[string]string, error) {
+    var err error
+
+    bgpGblTblTs := &db.TableSpec{Name: "BGP_GLOBALS"}
+    bgpGblEntryKey := db.Key{Comp: []string{niName}}
+
+    var entryValue db.Value
+    if entryValue, err = cfgDb.GetEntry(bgpGblTblTs, bgpGblEntryKey) ; err != nil {
+        return nil, err
+    }
+
+    return entryValue.Field, err
+}
+
+var DbToYang_bgp_gbl_state_xfmr SubTreeXfmrDbToYang = func(inParams XfmrParams) error {
+    var err error
+    oper_err := errors.New("Opertational error")
+    cmn_log := "GET: xfmr for BGP-Global State"
+
+    //var bgp_obj *ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp
+    bgp_obj, niName, err := getBgpRoot (inParams)
+    if err != nil {
+        log.Errorf ("%s failed !! Error:%s", cmn_log , err);
+        return oper_err
+    }
+
+    bgpGbl_obj := bgp_obj.Global
+    if bgpGbl_obj == nil {
+        log.Errorf("%s failed !! Error: BGP-Global container missing", cmn_log)
+        return oper_err
+    }
+    ygot.BuildEmptyTree (bgpGbl_obj)
+
+    bgpGblState_obj := bgpGbl_obj.State
+    if bgpGblState_obj == nil {
+        log.Errorf("%s failed !! Error: BGP-Global-State container missing", cmn_log)
+        return oper_err
+    }
+    ygot.BuildEmptyTree (bgpGblState_obj)
+
+    vtysh_cmd := "show ip bgp vrf " + niName + " summary json"
+    bgpGblJson, cmd_err := exec_vtysh_cmd (vtysh_cmd)
+    if cmd_err != nil {
+        log.Errorf("Failed to fetch BGP global info for niName:%s. Err: %s", niName, cmd_err)
+        return oper_err
+    }
+
+    bgpGblDataJson, ok := bgpGblJson["ipv4Unicast"].(map[string]interface{})
+    if !ok {
+        log.Errorf("Failed to fetch BGP global info for niName:%s from JSON data", niName)
+        return oper_err
+    }
+
+    if value, ok := bgpGblDataJson["as"] ; ok {
+        _localAs := uint32(value.(float64))
+        bgpGblState_obj.As = &_localAs
+    }
+
+    if value, ok := bgpGblDataJson["routerId"].(string) ; ok {
+        bgpGblState_obj.RouterId = &value
+    }
+
+    if cfgDbEntry, cfgdb_get_err := get_spec_bgp_glb_cfg_tbl_entry (inParams.dbs[db.ConfigDB], niName) ; cfgdb_get_err == nil {
+        if value, ok := cfgDbEntry["rr_clnt_to_clnt_reflection"] ; ok {
+            _clntToClntReflection, _ := strconv.ParseBool(value)
+            bgpGblState_obj.ClntToClntReflection = &_clntToClntReflection
+        }
+
+        if value, ok := cfgDbEntry["coalesce_time"] ; ok {
+            if _coalesceTime_u64, err := strconv.ParseUint(value, 10, 32) ; err == nil {
+                _coalesceTime_u32 := uint32(_coalesceTime_u64)
+                bgpGblState_obj.CoalesceTime = &_coalesceTime_u32
+            }
+        }
+
+        if value, ok := cfgDbEntry["deterministic_med"] ; ok {
+            _deterministicMed, _ := strconv.ParseBool(value)
+            bgpGblState_obj.DeterministicMed = &_deterministicMed
+        }
+
+        if value, ok := cfgDbEntry["disable_ebgp_connected_rt_check"] ; ok {
+            _disableEbgpConnectedRouteCheck, _ := strconv.ParseBool(value)
+            bgpGblState_obj.DisableEbgpConnectedRouteCheck = &_disableEbgpConnectedRouteCheck
+        }
+
+        if value, ok := cfgDbEntry["fast_external_failover"] ; ok {
+            _fastExternalFailover, _ := strconv.ParseBool(value)
+            bgpGblState_obj.FastExternalFailover = &_fastExternalFailover
+        }
+
+        if value, ok := cfgDbEntry["graceful_shutdown"] ; ok {
+            _gracefulShutdown, _ := strconv.ParseBool(value)
+            bgpGblState_obj.GracefulShutdown = &_gracefulShutdown
+        }
+
+        if value, ok := cfgDbEntry["holdtime"] ; ok {
+            _holdTime, _ := strconv.ParseFloat(value, 64)
+            bgpGblState_obj.HoldTime = &_holdTime
+        }
+
+        if value, ok := cfgDbEntry["keepalive"] ; ok {
+            _keepaliveInterval, _ := strconv.ParseFloat(value, 64)
+            bgpGblState_obj.KeepaliveInterval = &_keepaliveInterval
+        }
+
+        if value, ok := cfgDbEntry["max_dynamic_neighbors"] ; ok {
+            if _maxDynamicNeighbors_u64, err := strconv.ParseUint(value, 10, 32) ; err == nil {
+                _maxDynamicNeighbors_u16 := uint16(_maxDynamicNeighbors_u64)
+                bgpGblState_obj.MaxDynamicNeighbors = &_maxDynamicNeighbors_u16
+            }
+        }
+
+        if value, ok := cfgDbEntry["network_import_check"] ; ok {
+            _networkImportCheck, _ := strconv.ParseBool(value)
+            bgpGblState_obj.NetworkImportCheck = &_networkImportCheck
+        }
+
+        if value, ok := cfgDbEntry["read_quanta"] ; ok {
+            if _readQuanta_u64, err := strconv.ParseUint(value, 10, 32) ; err == nil {
+                _readQuanta_u8 := uint8(_readQuanta_u64)
+                bgpGblState_obj.ReadQuanta = &_readQuanta_u8
+            }
+        }
+
+        if value, ok := cfgDbEntry["route_map_process_delay"] ; ok {
+            if _routeMapProcessDelay_u64, err := strconv.ParseUint(value, 10, 32) ; err == nil {
+                _routeMapProcessDelay_u16 := uint16(_routeMapProcessDelay_u64)
+                bgpGblState_obj.RouteMapProcessDelay = &_routeMapProcessDelay_u16
+            }
+        }
+
+        if value, ok := cfgDbEntry["write_quanta"] ; ok {
+            if _writeQuanta_u64, err := strconv.ParseUint(value, 10, 32) ; err == nil {
+                _writeQuanta_u8 := uint8(_writeQuanta_u64)
+                bgpGblState_obj.WriteQuanta = &_writeQuanta_u8
+            }
+        }
+
+    }
+
+    return err;
 }
 
 var YangToDb_bgp_gbl_afi_safi_field_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
@@ -322,12 +467,26 @@ var YangToDb_bgp_gbl_tbl_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (s
     if strings.Contains(bgpId,"BGP") == false {
         return "", errors.New("BGP ID is missing")
     }
-    
+
     if len(protoName) == 0 {
         return "", errors.New("Protocol Name is missing")
     }
 
     log.Info("URI VRF ", niName)
+
+    if inParams.oper == DELETE && niName == "default" {
+        bgpGblTblTs := &db.TableSpec{Name: "BGP_GLOBALS"}
+        if bgpGblTblKeys, err := inParams.d.GetKeys(bgpGblTblTs) ; err == nil {
+            for _, key := range bgpGblTblKeys {
+                /* If "default" VRF is present in keys-list & still list-len is greater than 1,
+                 * then don't allow "default" VRF BGP-instance delete.
+                 * "default" VRF BGP-instance should be deleted, only after all non-default VRF instances are deleted from the system */
+                if key.Get(0) == niName && len(bgpGblTblKeys) > 1 {
+                    return "", tlerr.NotSupported("Delete not allowed, since non-default-VRF BGP-instance present in system")
+                }
+            }
+        }
+    }
 
     return niName, err
 }
