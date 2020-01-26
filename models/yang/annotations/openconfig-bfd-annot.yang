@@ -26,17 +26,13 @@ module openconfig-bfd-annot {
 
     deviation /oc-bfd:bfd/oc-bfd-ext:sessions/oc-bfd-ext:single-hop {
       deviate add {
-	//sonic-ext:key-transformer "bfd_shop_session_key_xfmr";
         sonic-ext:table-name "BFD_PEER_SINGLE_HOP";
-        //sonic-ext:subtree-transformer "bfd_shop_state_xfmr";
       }
     }
 
     deviation /oc-bfd:bfd/oc-bfd-ext:sessions/oc-bfd-ext:multi-hop {
       deviate add {
-	//sonic-ext:key-transformer "bfd_mhop_session_key_xfmr";
         sonic-ext:table-name "BFD_PEER_MULTI_HOP";
-        //sonic-ext:subtree-transformer "bfd_mhop_state_xfmr";
       }
     }
 
@@ -45,10 +41,4 @@ module openconfig-bfd-annot {
         sonic-ext:subtree-transformer "bfd_state_xfmr";
       }
     }
-
-    /*deviation /oc-bfd:bfd/oc-bfd-ext:bfd-state/oc-bfd-ext:multi-hop-state {
-      deviate add {
-        sonic-ext:subtree-transformer "bfd_mhop_state_xfmr";
-      }
-    }*/
 }

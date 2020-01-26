@@ -199,10 +199,42 @@ module sonic-snmp {
 
     container SNMP_SERVER_GROUP {
       list SNMP_SERVER_GROUP_LIST {
-        key "name context securityModel securityLevel";
-
+        key name;
         leaf name {
           type group-name;
+          description "SNMP group name";
+        }
+      }
+    }
+
+    container SNMP_SERVER_GROUP_MEMBER {
+      list SNMP_SERVER_GROUP_MEMBER_LIST {
+        key "groupName securityName";
+        leaf groupName {
+          description "SNMP group name";
+          type leafref {
+            path "/ssnmp:sonic-snmp/SNMP_SERVER_GROUP/SNMP_SERVER_GROUP_LIST/name";
+          }
+        }
+
+        leaf securityName {
+          type security-name;
+        }
+
+        leaf securityModel {
+          type security-model;
+        }
+      }
+    }
+
+    container SNMP_SERVER_GROUP_ACCESS {
+      list SNMP_SERVER_GROUP_ACCESS_LIST {
+        key "groupName context securityModel securityLevel";
+        leaf groupName {
+          description "SNMP group name";
+          type leafref {
+            path "/ssnmp:sonic-snmp/SNMP_SERVER_GROUP/SNMP_SERVER_GROUP_LIST/name";
+          }
         }
 
         leaf context {
@@ -265,40 +297,6 @@ module sonic-snmp {
       }
     }
 
-    container SNMP_SERVER_TARGET {
-      list SNMP_SERVER_TARGET_LIST {
-        key name;
-
-        leaf name {
-          type identifier;
-        }
-
-        leaf-list tag {
-          type tag-value;
-        }
-
-        leaf timeout {
-          type uint32;
-        }
-
-        leaf retries {
-          type uint8;
-        }
-
-        leaf targetParams {
-          type identifier;
-        }
-
-        leaf ip {
-          type inet:ip-address;
-        }
-
-        leaf port {
-          type inet:port-number;
-        }
-      }
-    }
-
     container SNMP_SERVER_PARAMS {
       list SNMP_SERVER_PARAMS_LIST {
         key name;
@@ -321,6 +319,42 @@ module sonic-snmp {
 
         leaf security-level {
           type security-level;
+        }
+      }
+    }
+
+    container SNMP_SERVER_TARGET {
+      list SNMP_SERVER_TARGET_LIST {
+        key name;
+
+        leaf name {
+          type identifier;
+        }
+
+        leaf-list tag {
+          type tag-value;
+        }
+
+        leaf timeout {
+          type uint32;
+        }
+
+        leaf retries {
+          type uint8;
+        }
+
+        leaf targetParams {
+          type leafref {
+            path "/ssnmp:sonic-snmp/SNMP_SERVER_PARAMS/SNMP_SERVER_PARAMS_LIST/name";
+          }
+        }
+
+        leaf ip {
+          type inet:ip-address;
+        }
+
+        leaf port {
+          type inet:port-number;
         }
       }
     }

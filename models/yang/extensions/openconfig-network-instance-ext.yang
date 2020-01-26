@@ -40,11 +40,13 @@ module openconfig-network-instance-ext {
 	  
       leaf ipv4-enable {
         type boolean;
+		default true;
       }
 
       leaf ipv6-enable {
         type boolean;
-      }		  
+		default true;
+      }
   }
 
   grouping global-sag-top {

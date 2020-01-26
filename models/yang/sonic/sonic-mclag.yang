@@ -190,6 +190,29 @@ module sonic-mclag {
             }
         }
 
+        //state MCLAG Local interface Table
+        container MCLAG_LOCAL_INTF_TABLE { 
+
+            sonic-ext:db-name "STATE_DB"; 
+            sonic-ext:key-delim "|"; 
+
+            config false;
+            description "state db LOCAL interface table";
+
+            list MCLAG_LOCAL_INTF_TABLE_LIST { 
+                key "if_name";
+
+                leaf if_name {
+                    type string;
+                }
+
+                leaf port_isolate_peer_link {
+                    type boolean; 
+                }
+            }
+        }
+
+
         //state MCLAG Remote interface Table
         container MCLAG_REMOTE_INTF_TABLE { 
 
