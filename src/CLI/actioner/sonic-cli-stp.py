@@ -279,6 +279,16 @@ def run(args):
 
     c = openconfig_spanning_tree_client.Configuration()
     c.verify_ssl = False
+
+    import os
+    c.host = os.getenv('REST_API_ROOT', 'https://localhost:8443')
+    username = os.getenv('CLI_USER', None)
+    if username is not None:
+        import pwd
+        certdir = os.path.join(pwd.getpwnam(username).pw_dir, ".cert")
+        c.cert_file = os.path.join(certdir, "certificate.pem")
+        c.key_file  = os.path.join(certdir, "key.pem")
+
     aa = openconfig_spanning_tree_client.OpenconfigSpanningTreeApi(api_client=openconfig_spanning_tree_client.ApiClient(configuration=c))
 
     oc_func = None
