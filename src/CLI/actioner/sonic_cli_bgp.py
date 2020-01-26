@@ -106,6 +106,22 @@ def getNbr(item):
     ip = netaddr.IPNetwork(item['neighbor-address'])
     return int(ip.ip)
 
+def getIntfId(item):
+
+    ifName = item['neighbor-address']
+    if ifName.startswith("Ethernet"):
+        ifId = int(ifName[len("Ethernet"):])
+    elif ifName.startswith("PortChannel"):
+        ifId = int(ifName[len("PortChannel"):])
+    elif ifName.startswith("Vlan"):
+        ifId = int(ifName[len("Vlan"):])
+    elif ifName.startswith("Loopback"):
+        ifId = int(ifName[len("Loopback"):])
+    else:
+        return ifName
+    return ifId
+
+
 def generate_show_bgp_routes(args):
    api = cc.ApiClient()
    keypath = []
@@ -1529,7 +1545,11 @@ def invoke_api(func, args=[]):
 
 def preprocess_bgp_nbrs(iptype, nbrs):
     new_nbrs = []
-    unnumbered_nbrs = []
+    un_enbrs = []
+    un_pnbrs = []
+    un_vnbrs = []
+    un_lnbrs = []
+    un_nbrs = []
     for nbr in nbrs:
         ipt = 4
         unnumbered = False
@@ -1555,17 +1575,45 @@ def preprocess_bgp_nbrs(iptype, nbrs):
                 else:
                     nbr['state']['last-established'] = '00d:00h:00m'
             if unnumbered == True:
-                unnumbered_nbrs.append(nbr)
+                ifName = nbr['neighbor-address']
+                if ifName.startswith("Ethernet"):
+                   un_enbrs.append(nbr)
+                elif ifName.startswith("PortChannel"):
+                   un_pnbrs.append(nbr)
+                elif ifName.startswith("Vlan"):
+                   un_vnbrs.append(nbr)
+                elif ifName.startswith("Loopback"):
+                   un_lnbrs.append(nbr)
+                else:
+                   un_nbrs.append(nbr)
             else:
                 new_nbrs.append(nbr)
 
-    return new_nbrs, unnumbered_nbrs
-
+    tup = new_nbrs
+    new_nbrs = sorted(tup, key=getNbr)
+    tup = un_enbrs
+    un_enbrs = sorted(tup, key=getIntfId)
+    tup = un_pnbrs
+    un_pnbrs = sorted(tup, key=getIntfId)
+    tup = un_vnbrs
+    un_vnbrs = sorted(tup, key=getIntfId)
+    tup = un_lnbrs
+    un_lnbrs = sorted(tup, key=getIntfId)
+    tup = un_nbrs
+    un_nbr = sorted(tup, key=getIntfId)
+     
+    un_enbrs.extend(un_pnbrs)
+    un_enbrs.extend(un_vnbrs)
+    un_enbrs.extend(un_lnbrs)
+    un_enbrs.extend(un_nbrs)
+    un_enbrs.extend(new_nbrs)
+    return un_enbrs
 
 def invoke_show_api(func, args=[]):
     api = cc.ApiClient()
     keypath = []
     body = None
+    tmp = {}
 
     if func == 'get_show_bgp':
         return generate_show_bgp_routes(args)
@@ -1583,13 +1631,8 @@ def invoke_show_api(func, args=[]):
                 if args[2] == 'ipv6':
                     iptype = 6
                 if 'openconfig-network-instance:neighbors' in response.content:
-                    tmp = {}
-                    unnumbered_tmp = {}
-                    tmp['neighbor'], unnumbered_tmp['neighbor'] = preprocess_bgp_nbrs(iptype, response.content['openconfig-network-instance:neighbors']['neighbor'])
-                    tup = tmp['neighbor']
-                    tmp['neighbor'] = sorted(tup, key=getNbr)
-                    unnumbered_tmp['neighbor'].extend(tmp['neighbor'])
-                    d['openconfig-network-instance:neighbors'] = unnumbered_tmp
+                    tmp['neighbor'] = preprocess_bgp_nbrs(iptype, response.content['openconfig-network-instance:neighbors']['neighbor'])
+                    d['openconfig-network-instance:neighbors'] = tmp
                 return d
             else:
                 print response.error_message()
@@ -1609,13 +1652,8 @@ def invoke_show_api(func, args=[]):
             response = api.get(keypath)
             if response.ok():
                 if 'openconfig-network-instance:neighbor' in response.content:
-                    tmp = {}
-                    unnumbered_tmp = {}
-                    tmp['neighbor'], unnumbered_tmp['neighbor'] = preprocess_bgp_nbrs(iptype, response.content['openconfig-network-instance:neighbors']['neighbor'])
-                    tup = tmp['neighbor']
-                    tmp['neighbor'] = sorted(tup, key=getNbr)
-                    unnumbered_tmp['neighbor'].extend(tmp['neighbor'])
-                    d['openconfig-network-instance:neighbors'] = unnumbered_tmp
+                    tmp['neighbor'] = preprocess_bgp_nbrs(iptype, response.content['openconfig-network-instance:neighbors']['neighbor'])
+                    d['openconfig-network-instance:neighbors'] = tmp
                 return d
             else:
                 print response.error_message()
@@ -1625,13 +1663,8 @@ def invoke_show_api(func, args=[]):
             response = api.get(keypath)
             if response.ok():
                 if 'openconfig-network-instance:neighbors' in response.content:
-                    tmp = {}
-                    unnumbered_tmp = {}
-                    tmp['neighbor'], unnumbered_tmp['neighbor'] = preprocess_bgp_nbrs(iptype, response.content['openconfig-network-instance:neighbors']['neighbor'])
-                    tup = tmp['neighbor']
-                    tmp['neighbor'] = sorted(tup, key=getNbr)
-                    unnumbered_tmp['neighbor'].extend(tmp['neighbor'])
-                    d['openconfig-network-instance:neighbors'] = unnumbered_tmp
+                    tmp['neighbor'] = preprocess_bgp_nbrs(iptype, response.content['openconfig-network-instance:neighbors']['neighbor'])
+                    d['openconfig-network-instance:neighbors'] = tmp
                 return d
             else:
                 print response.error_message()
