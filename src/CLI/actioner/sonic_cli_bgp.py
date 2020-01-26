@@ -26,6 +26,7 @@ from rpipe_utils import pipestr
 import cli_client as cc
 from scripts.render_cli import show_cli_output
 from bgp_openconfig_to_restconf_map import restconf_map
+from datetime import datetime, timedelta
 
 IDENTIFIER='BGP'
 NAME1='bgp'
@@ -1564,16 +1565,23 @@ def preprocess_bgp_nbrs(iptype, nbrs):
             if 'state' in nbr and 'session-state' in nbr['state'] and 'last-established' in nbr['state']:
                 if nbr['state']['session-state'] == 'ESTABLISHED':
                     last_estbd = nbr['state']['last-established']
-                    seconds = time.time() - float(last_estbd)
-                    days = seconds // 86400
-                    seconds = seconds % 86400
-                    hours = seconds // 3600
-                    seconds = seconds % 3600
-                    minutes = seconds // 60
-                    seconds = seconds % 60
-                    nbr['state']['last-established'] = '{}d:{:02}h:{:02}m:{:02}s'.format(int(days), int(hours), int(minutes), int(seconds))
+                    d = datetime.now()
+                    d = d - timedelta(seconds=int(last_estbd))
+                    weeks = 0
+                    days = d.day  
+                    if days != 0:
+                       days = days - 1 
+                       if days != 0:
+                          weeks = days // 7  
+                          days = days % 7  
+                    if weeks != 0:
+                        nbr['state']['last-established'] = '{}w{}d{:02}h'.format(int(weeks), int(days), int(d.hour))
+                    elif days != 0:
+                        nbr['state']['last-established'] = '{}d{:02}h{:02}m'.format(int(days), int(d.hour), int(d.minute))
+                    else:
+                        nbr['state']['last-established'] = '{:02}:{:02}:{:02}'.format(int(d.hour), int(d.minute), int(d.second))                  
                 else:
-                    nbr['state']['last-established'] = '00d:00h:00m'
+                    nbr['state']['last-established'] = 'never'
             if unnumbered == True:
                 ifName = nbr['neighbor-address']
                 if ifName.startswith("Ethernet"):
@@ -1620,7 +1628,7 @@ def invoke_show_api(func, args=[]):
 
     elif func == 'get_ip_bgp_summary':
         d = {}
-        keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/config', name=args[1], identifier=IDENTIFIER, name1=NAME1)
+        keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global', name=args[1], identifier=IDENTIFIER, name1=NAME1)
         response = api.get(keypath)
         if response.ok():
             d.update(response.content)

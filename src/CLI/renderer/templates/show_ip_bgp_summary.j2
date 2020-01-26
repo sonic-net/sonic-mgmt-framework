@@ -1,6 +1,12 @@
-{% if 'openconfig-network-instance:config' in json_output %}
-    {% set config = json_output['openconfig-network-instance:config'] %}
-    {{-'BGP router identifier '}}{{config['router-id']}}{{', local AS number '}}{{config['as']}}
+{% set bgp_global = json_output['openconfig-network-instance:global'] %}
+{% if 'config' in bgp_global and 'state' in bgp_global %}
+    {% set config = bgp_global['config'] %}
+    {% set state = bgp_global['state'] %}
+    {% if 'router-id' in state %}
+        {{-'BGP router identifier '}}{{state['router-id']}}{{', local AS number '}}{{config['as']}}
+    {% else %}    
+        {{-'BGP router identifier '}}{{'0.0.0.0'}}{{', local AS number '}}{{config['as']}}
+    {% endif %}
     {{-'\n' }}
     {{-'Neighbor        V   AS    MsgRcvd   MsgSent   InQ     OutQ    Up/Down                 State/PfxRcd'}}
     {% set neighbor_list = json_output['openconfig-network-instance:neighbors'] %}
@@ -35,10 +41,11 @@
                 {% set le_timestamp = n_state['last-established'] %}
                 {{-le_timestamp.ljust(24)-}}
             {% else %}
-                {{-'00d:00h:00m:00s'.ljust(24)-}}
+                {{-'never'.ljust(24)-}}
             {% endif %}
             {% if 'session-state' in n_state %}
-                {% if n_state['session-state'] == 'ESTABLISHED' %}
+                {% set state = n_state['session-state'] %}
+                {% if state == 'ESTABLISHED' %}
                     {% set ns = namespace(rcvd_prfx = 0) %}
                     {% if 'afi-safis' in neighbor %}
                         {% set afi_safis = neighbor['afi-safis']['afi-safi'] %}
@@ -50,7 +57,21 @@
                     {% endif %}
                     {{-(ns.rcvd_prfx|string).ljust(8)}}
                 {% else %}
-                    {{-(n_state['session-state']|string).ljust(8)}}
+                    {% if 'enabled' in n_state and n_state['enabled'] == False %}
+                        {{-'Idle(Admin)'.ljust(8)}}
+                    {% elif state == 'IDLE' %}
+                        {{-'Idle'.ljust(8)}}
+                    {% elif state == 'ACTIVE' %}
+                        {{-'Active'.ljust(8)}}
+                    {% elif state == 'CONNECT' %}
+                        {{-'Connect'.ljust(8)}}
+                    {% elif state == 'OPENSENT' %}
+                        {{-'OpenSent'.ljust(8)}}
+                    {% elif state == 'OPENCONFIRM' %}
+                        {{-'OpenConfirm'.ljust(8)}}
+                    {% else %}
+                        {{-'Unknown'.ljust(8)}}
+                    {% endif %}
                 {% endif %}
             {% else %}
                 {{-'0'.ljust(8)}}

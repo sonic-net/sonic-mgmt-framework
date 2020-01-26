@@ -1151,21 +1151,21 @@ var DbToYang_bgp_nbrs_nbr_af_state_xfmr SubTreeXfmrDbToYang = func(inParams Xfmr
     }
 
     vtysh_cmd := "show ip bgp vrf " + nbr_af_key.niName + " " + afiSafi_cmd + " neighbors " + nbr_af_key.nbrAddr + " received-routes json"
-    rcvdRoutesJson, cmd_err := exec_vtysh_cmd (vtysh_cmd)
-    if cmd_err != nil {
-        log.Errorf("Failed to fetch bgp neighbors received-routes state info for niName:%s nbrAddr:%s afi-safi-name:%s. Err: %s\n",
-                   nbr_af_key.niName, nbr_af_key.nbrAddr, afiSafi_cmd, cmd_err)
-        return cmd_err
+    rcvdRoutesJson, rcvd_cmd_err := exec_vtysh_cmd (vtysh_cmd)
+    if rcvd_cmd_err != nil {
+        log.Errorf("Failed check to fetch bgp neighbors received-routes state info for niName:%s nbrAddr:%s afi-safi-name:%s. Err: %s\n",
+                   nbr_af_key.niName, nbr_af_key.nbrAddr, afiSafi_cmd, rcvd_cmd_err)
     }
 
-    vtysh_cmd = "show ip bgp vrf " + nbr_af_key.niName + " " + afiSafi_cmd + " neighbors " + nbr_af_key.nbrAddr + " advertised-routes json"
-    advRoutesJson, cmd_err := exec_vtysh_cmd (vtysh_cmd)
-    if cmd_err != nil {
-        log.Errorf("Failed to fetch bgp neighbors advertised-routes state info for niName:%s nbrAddr:%s afi-safi-name:%s. Err: %s\n",
-                   nbr_af_key.niName, nbr_af_key.nbrAddr, afiSafi_cmd, cmd_err)
-        return cmd_err
+    vtysh_cmd = "show ip bgp vrf " + nbr_af_key.niName + " neighbors " + nbr_af_key.nbrAddr + " json"
+    nbrMapJson, nbr_cmd_err := exec_vtysh_cmd (vtysh_cmd)
+    if nbr_cmd_err != nil {
+        log.Errorf("Failed to fetch bgp neighbors state info for niName:%s nbrAddr:%s afi-safi-name:%s. Err: %s\n",
+                   nbr_af_key.niName, nbr_af_key.nbrAddr, afiSafi_cmd, nbr_cmd_err)
+        return nbr_cmd_err
     }
 
+    frrNbrDataJson := nbrMapJson[nbr_af_key.nbrAddr].(map[string]interface{})
     nbrs_af_state_obj.AfiSafiName = nbr_af_key.afiSafiNameEnum
 
     if cfgDbEntry, cfgdb_get_err := get_spec_nbr_af_cfg_tbl_entry (inParams.dbs[db.ConfigDB], &nbr_af_key) ; cfgdb_get_err == nil {
@@ -1221,29 +1221,47 @@ var DbToYang_bgp_nbrs_nbr_af_state_xfmr SubTreeXfmrDbToYang = func(inParams Xfmr
     _active := false
     var _prefixes ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Neighbors_Neighbor_AfiSafis_AfiSafi_State_Prefixes
 
-    var _receivedPrePolicy, _rcvdFilteredByPolicy, _activeRcvdPrefixes uint32
-    if value, ok := rcvdRoutesJson["totalPrefixCounter"] ; ok {
-        _active = true
-        _receivedPrePolicy = uint32(value.(float64))
-        _prefixes.ReceivedPrePolicy = &_receivedPrePolicy
+    var _activeRcvdPrefixes, _activeSentPrefixes uint32
+    if AddrFamilyMap, ok := frrNbrDataJson["addressFamilyInfo"].(map[string]interface{}) ; ok {
+    log.Info("Family dump: %v %d", AddrFamilyMap, nbrs_af_state_obj.AfiSafiName)
+        if nbrs_af_state_obj.AfiSafiName == ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_IPV4_UNICAST {
+            if ipv4UnicastMap, ok := AddrFamilyMap["ipv4Unicast"].(map[string]interface{}) ; ok {
+    log.Info("IPv4 dump: %v", AddrFamilyMap)
+                _active = true
+                if value, ok := ipv4UnicastMap["acceptedPrefixCounter"] ; ok {
+                    _activeRcvdPrefixes = uint32(value.(float64))
+    log.Info("IPv4 dump recd: %d", _activeRcvdPrefixes)
+                    _prefixes.Received = &_activeRcvdPrefixes
+                }
+                if value, ok := ipv4UnicastMap["sentPrefixCounter"] ; ok {
+                    _activeSentPrefixes = uint32(value.(float64))
+                    _prefixes.Sent = &_activeSentPrefixes
+    log.Info("IPv4 dump set: %d", _activeSentPrefixes)
+                }
+            }
+        } else if nbrs_af_state_obj.AfiSafiName == ocbinds.OpenconfigBgpTypes_AFI_SAFI_TYPE_IPV6_UNICAST {
+            if ipv6UnicastMap, ok := AddrFamilyMap["ipv6Unicast"].(map[string]interface{}) ; ok {
+                _active = true
+                if value, ok := ipv6UnicastMap["acceptedPrefixCounter"] ; ok {
+                    _activeRcvdPrefixes = uint32(value.(float64))
+                    _prefixes.Received = &_activeRcvdPrefixes
+                }
+                if value, ok := ipv6UnicastMap["sentPrefixCounter"] ; ok {
+                    _activeSentPrefixes = uint32(value.(float64))
+                    _prefixes.Sent = &_activeSentPrefixes
+                }
+           }
+        }
     }
-    if value, ok := rcvdRoutesJson["filteredPrefixCounter"] ; ok {
-        _rcvdFilteredByPolicy = uint32(value.(float64))
+   
+    if rcvd_cmd_err == nil {
+        var _receivedPrePolicy uint32
+        if value, ok := rcvdRoutesJson["totalPrefixCounter"] ; ok {
+            _active = true
+            _receivedPrePolicy = uint32(value.(float64))
+            _prefixes.ReceivedPrePolicy = &_receivedPrePolicy
+        }
     }
-    _activeRcvdPrefixes = _receivedPrePolicy - _rcvdFilteredByPolicy
-    _prefixes.Received = &_activeRcvdPrefixes
-
-    var _sentPrePolicy, _sentFilteredByPolicy, _activeSentPrefixes uint32
-    if value, ok := advRoutesJson["totalPrefixCounter"] ; ok {
-        _active = true
-        _sentPrePolicy = uint32(value.(float64))
-    }
-    if value, ok := advRoutesJson["filteredPrefixCounter"] ; ok {
-        _sentFilteredByPolicy = uint32(value.(float64))
-    }
-    _activeSentPrefixes = _sentPrePolicy - _sentFilteredByPolicy
-    _prefixes.Sent = &_activeSentPrefixes
-
     nbrs_af_state_obj.Active = &_active
     nbrs_af_state_obj.Prefixes = &_prefixes
 
