@@ -1,12 +1,17 @@
-{{'-----------------------------------------------------------'}}
-{{'Interface'.ljust(20)}} {{'State'}}
-{{'-----------------------------------------------------------'}}
+{% set vars = {'header' : true } %}
 {% for key,value in json_output.items() %}
 {% for tmp in value %}
 
 {% if 'port-ds-list' in tmp.keys() %}
 {% for ports in tmp['port-ds-list'] %}
 {% if 'port-number' in ports.keys() %}
+
+{% if vars.header %}
+{{'-----------------------------------------------------------'}}
+{{'Interface'.ljust(20)}} {{'State'}}
+{{'-----------------------------------------------------------'}}
+{% if vars.update({'header': False}) %}{% endif %}
+{% endif %}
 {% set port_state = ports['port-state'] %}
 {% if not port_state %}{% set port_state = 'none' %}{% endif %}
 {% set number = ports['port-number'] | int %}
@@ -16,6 +21,7 @@
 {% set vlannumber = number - 1000 %}
 {% print("Vlan%-16d") % vlannumber %} {{ port_state }}
 {% endif %}
+
 {% endif %}
 {% endfor %}
 {% endif %}
