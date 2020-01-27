@@ -232,7 +232,7 @@
 > 		char *val_str = NULL;
 > 		for (;i < cnt; i++) {
 > 			pname = clish_ptype_regexp_select__get_name(ptype, i);
-> 			if (!pval || !pname || !strncmp(pname, pval, strlen(pval))) {
+> 			if (!pval || !pname || !strncasecmp(pname, pval, strlen(pval))) {
 >                 if (!pval && !pname)
 >                     usename = USE_VALUE;
 > 				if (usename == USE_NAME) {
