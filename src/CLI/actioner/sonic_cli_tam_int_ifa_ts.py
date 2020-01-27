@@ -19,14 +19,16 @@ def invoke_api(func, args):
        resp = api.get(path)
        return api.get(path)
     elif func == 'get_sonic_tam_int_ifa_ts_sonic_tam_int_ifa_ts_tam_int_ifa_ts_flow_table':
-       path = cc.Path('/restconf/data/sonic-tam-int-ifa-ts:sonic-tam-int-ifa-ts/TAM_INT_IFA_TS_FLOW_TABLE')
-       return api.get(path)
-    elif func == 'get_list_sonic_tam_int_ifa_ts_sonic_tam_int_ifa_ts_tam_int_ifa_ts_flow_table_tam_int_ifa_ts_flow_table_list':
-       path = cc.Path('/restconf/data/sonic-tam-int-ifa-ts:sonic-tam-int-ifa-ts/TAM_INT_IFA_TS_FLOW_TABLE/TAM_INT_IFA_TS_FLOW_TABLE_LIST={name}', name=args[0])
-       return api.get(path)
+        if (len(args) == 2) and (args[1] != "all"):
+           path = cc.Path('/restconf/data/sonic-tam-int-ifa-ts:sonic-tam-int-ifa-ts/TAM_INT_IFA_TS_FLOW_TABLE/TAM_INT_IFA_TS_FLOW_TABLE_LIST={name}', name=args[1])
+           return api.get(path)
+        else:
+           path = cc.Path('/restconf/data/sonic-tam-int-ifa-ts:sonic-tam-int-ifa-ts/TAM_INT_IFA_TS_FLOW_TABLE')
+           return api.get(path)
+
     elif func == 'patch_sonic_tam_int_ifa_ts_sonic_tam_int_ifa_ts_tam_int_ifa_ts_feature_table_tam_int_ifa_ts_feature_table_list_enable':
-       path = cc.Path('/restconf/data/sonic-tam-int-ifa-ts:sonic-tam-int-ifa-ts/TAM_INT_IFA_TS_FEATURE_TABLE/TAM_INT_IFA_TS_FEATURE_TABLE_LIST={name}/enable', name=args[0])
-       if args[1] == 'True':
+       path = cc.Path('/restconf/data/sonic-tam-int-ifa-ts:sonic-tam-int-ifa-ts/TAM_INT_IFA_TS_FEATURE_TABLE/TAM_INT_IFA_TS_FEATURE_TABLE_LIST={name}/enable', name='feature')
+       if args[0] == 'enable':
            body = { "sonic-tam-int-ifa-ts:enable": True }
        else:
            body = { "sonic-tam-int-ifa-ts:enable": False }
@@ -39,12 +41,13 @@ def invoke_api(func, args):
        return api.patch(path, body)
 
     elif func == 'delete_sonic_tam_int_ifa_ts_sonic_tam_int_ifa_ts_tam_int_ifa_ts_flow_table_tam_int_ifa_ts_flow_table_list':
-       path = cc.Path('/restconf/data/sonic-tam-int-ifa-ts:sonic-tam-int-ifa-ts/TAM_INT_IFA_TS_FLOW_TABLE/TAM_INT_IFA_TS_FLOW_TABLE_LIST={name}', name=args[0])
-       return api.delete(path)
+        if (len(args) == 1) and (args[0] == "all"):
+           path = cc.Path('/restconf/data/sonic-tam-int-ifa-ts:sonic-tam-int-ifa-ts/TAM_INT_IFA_TS_FLOW_TABLE/TAM_INT_IFA_TS_FLOW_TABLE_LIST')
+           return api.delete(path)
+        elif (len(args) == 1):
+           path = cc.Path('/restconf/data/sonic-tam-int-ifa-ts:sonic-tam-int-ifa-ts/TAM_INT_IFA_TS_FLOW_TABLE/TAM_INT_IFA_TS_FLOW_TABLE_LIST={name}', name=args[0])
+           return api.delete(path)
 
-    elif func == 'delete_list_sonic_tam_int_ifa_ts_sonic_tam_int_ifa_ts_tam_int_ifa_ts_flow_table_tam_int_ifa_ts_flow_table_list':
-       path = cc.Path('/restconf/data/sonic-tam-int-ifa-ts:sonic-tam-int-ifa-ts/TAM_INT_IFA_TS_FLOW_TABLE/TAM_INT_IFA_TS_FLOW_TABLE_LIST')
-       return api.delete(path)
 
     else:
        body = {}
@@ -102,19 +105,20 @@ def get_tam_int_ifa_ts_flow_stats(args):
     counters_db = ConfigDBConnector()
     counters_db.db_connect('COUNTERS_DB')
 
-    if len(args) == 0:
-       path = cc.Path('/restconf/data/sonic-tam-int-ifa-ts:sonic-tam-int-ifa-ts/TAM_INT_IFA_TS_FLOW_TABLE')
-    else:
+    if len(args) == 1 and args[0] != "all":
        path = cc.Path('/restconf/data/sonic-tam-int-ifa-ts:sonic-tam-int-ifa-ts/TAM_INT_IFA_TS_FLOW_TABLE/TAM_INT_IFA_TS_FLOW_TABLE_LIST={name}', name=args[0])
+    else:
+       path = cc.Path('/restconf/data/sonic-tam-int-ifa-ts:sonic-tam-int-ifa-ts/TAM_INT_IFA_TS_FLOW_TABLE')
 
     response = api.get(path)
 
     if response.ok():
         if response.content:
-            if len(args) == 0:
-                api_response = response.content['sonic-tam-int-ifa-ts:TAM_INT_IFA_TS_FLOW_TABLE']['TAM_INT_IFA_TS_FLOW_TABLE_LIST']
-            else:
+            if len(args) == 1 and args[0] != "all":
                 api_response = response.content['sonic-tam-int-ifa-ts:TAM_INT_IFA_TS_FLOW_TABLE_LIST']
+            else:
+                api_response = response.content['sonic-tam-int-ifa-ts:TAM_INT_IFA_TS_FLOW_TABLE']['TAM_INT_IFA_TS_FLOW_TABLE_LIST']
+
             for i in range(len(api_response)):
                 api_response[i]['Packets'] = 0
                 api_response[i]['Bytes'] = 0
@@ -131,6 +135,16 @@ def get_tam_int_ifa_ts_flow_stats(args):
 
 
 def run(func, args):
+    if func == 'get_tam_ifa_ts_status':
+        get_tam_ifa_ts_status(args)
+        return
+    elif func == 'get_tam_int_ifa_ts_supported':
+        get_tam_int_ifa_ts_supported(args)
+        return
+    elif func == 'get_tam_int_ifa_ts_flow_stats':
+	get_tam_int_ifa_ts_flow_stats(args)
+        return
+
     response = invoke_api(func, args)
     if response.ok():
         if response.content is not None:
