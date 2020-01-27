@@ -12,10 +12,6 @@ import (
 )
 
 func init () {
-    //XlateFuncBind("YangToDb_bfd_shop_session_key_xfmr", YangToDb_bfd_shop_session_key_xfmr)
-    //XlateFuncBind("DbToYang_bfd_shop_session_key_xfmr", DbToYang_bfd_shop_session_key_xfmr)
-    //XlateFuncBind("YangToDb_bfd_smhop_session_key_xfmr", YangToDb_bfd_mhop_session_key_xfmr)
-    //XlateFuncBind("DbToYang_bfd_mhop_session_key_xfmr", DbToYang_bfd_mhop_session_key_xfmr)
     XlateFuncBind("DbToYang_bfd_state_xfmr", DbToYang_bfd_state_xfmr)
 }
 
@@ -321,10 +317,12 @@ func fill_bfd_shop_data (bfd_obj *ocbinds.OpenconfigBfd_Bfd_BfdState, session_da
         bfdshop_obj.RemoteSessionState = value
     }*/
 
-    if value, ok := session_data["downtime"].(float64) ; ok {
-        value64 := uint64(value)
-        bfdshop_obj.LastFailureTime = &value64
-    }   
+    if bfdshop_obj.SessionState != ocbinds.OpenconfigBfd_BfdSessionState_UP { 
+        if value, ok := session_data["downtime"].(float64) ; ok {
+            value64 := uint64(value)
+            bfdshop_obj.LastFailureTime = &value64
+        }   
+    }
 
     if value, ok := session_data["id"].(float64) ; ok {
         s := strconv.FormatFloat(value, 'f', -1, 64)
@@ -443,6 +441,13 @@ func fill_bfd_shop_data (bfd_obj *ocbinds.OpenconfigBfd_Bfd_BfdState, session_da
         bfdshop_obj.LastUpTime = &value
     }*/
 
+    if bfdshop_obj.SessionState == ocbinds.OpenconfigBfd_BfdSessionState_UP {
+        if value, ok := session_data["uptime"].(float64) ; ok {
+            value64 := uint64(value)
+            bfdshop_obj.LastUpTime = &value64
+        }
+    }
+
     bfdasyncstats = bfdshop_obj.Async
     bfdechocstats = bfdshop_obj.Echo
 
@@ -556,11 +561,12 @@ func fill_bfd_mhop_data (bfd_obj *ocbinds.OpenconfigBfd_Bfd_BfdState, session_da
         bfdmhop_obj.RemoteSessionState = value
     }*/
 
-    if value, ok := session_data["downtime"].(float64) ; ok {
-        value64 := uint64(value)
-        bfdmhop_obj.LastFailureTime = &value64
-    }   
-
+    if bfdmhop_obj.SessionState != ocbinds.OpenconfigBfd_BfdSessionState_UP {
+        if value, ok := session_data["downtime"].(float64) ; ok {
+            value64 := uint64(value)
+            bfdmhop_obj.LastFailureTime = &value64
+        }   
+    }
     if value, ok := session_data["id"].(float64) ; ok {
         s := strconv.FormatFloat(value, 'f', -1, 64)
         bfdmhop_obj.LocalDiscriminator = &s
@@ -674,9 +680,12 @@ func fill_bfd_mhop_data (bfd_obj *ocbinds.OpenconfigBfd_Bfd_BfdState, session_da
         bfdmhop_obj.MinimumEchoInterval = &value32
     }*/
 
-    /*if value, ok := session_data[""].(uint64) ; ok {
-        bfdmhop_obj.LastUpTime = &value
-    }*/
+    if bfdmhop_obj.SessionState == ocbinds.OpenconfigBfd_BfdSessionState_UP {
+        if value, ok := session_data["uptime"].(float64) ; ok {
+            value64 := uint64(value)
+            bfdmhop_obj.LastUpTime = &value64
+        }
+    }
 
     bfdasyncstats = bfdmhop_obj.Async
     //bfdechocstats = bfdmhop_obj.Echo
