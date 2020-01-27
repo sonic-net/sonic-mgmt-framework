@@ -45,7 +45,7 @@ module sonic-neighbor {
         input {
             leaf force {
                 type boolean;
-                description "Set it to True to delete PERMANENT/Static entries as well";
+                description "Set it to 'true' to delete PERMANENT/Static entries as well";
             }
 
             leaf family {
@@ -53,20 +53,15 @@ module sonic-neighbor {
                     enum IPv4;
                     enum IPv6;
                 }
-                description "Address family (IPv4/IPv6)";
+                description "Address family (IPv4/IPv6). Default: IPv4";
             }
 
             choice option {
-                leaf all {
-                    type boolean;
-                    description
-                        "Parameter for clearing all dynamic entries from ARP/NDP table";
-                }
-
                 leaf ip {
                     type inet:ip-prefix;
                     description
-                        "Parameter for deleting ARP/NDP entries related to the given IPv4/IPv6 address";
+                        "Parameter for deleting ARP/NDP entries related to the given IPv4/IPv6 address.
+                         Note: If both 'ip' and 'ifname' are not provided, all dynamic enties will be cleared from the ARP/NDP table.";
                 }
 
                 leaf ifname {
@@ -87,8 +82,9 @@ module sonic-neighbor {
                     description
                         "Interface name: Parameter for deleting all ARP  entries
                         related to the given inteface name Valid inputs are:
-                        Ethernet<port-number>/Vlan<Vlan ID>/PortChannel<port-channel ID>/Management<interface ID>.
-                        For example: Ethernet0, Vlan100, PortChannel10, eth0";
+                        Ethernet<port-number>/Vlan<Vlan ID>/PortChannel<port-channel ID>/eth<interface ID>.
+                        For example: Ethernet0, Vlan100, PortChannel10, eth0.
+                        Note: If both 'ip' and 'ifname' are not provided, all dynamic enties will be cleared from the ARP/NDP table.";
                 }
             }
         }
@@ -97,7 +93,7 @@ module sonic-neighbor {
             leaf response {
                 type string;
                 description
-                    "Success / failure in clearing up the entire ARP table";
+                    "Success / Failure in clearing up the entire ARP/NDP table";
             }
         }
     }
@@ -128,7 +124,7 @@ module sonic-neighbor {
                     }
                     description
                         "Valid inputs are:
-                        Ethernet<port-number>/Vlan<Vlan ID>/PortChannel<port-channel ID>/Management<interface ID>.
+                        Ethernet<port-number>/Vlan<Vlan ID>/PortChannel<port-channel ID>/eth<interface ID>.
                         For example: Ethernet0, Vlan100, PortChannel10, eth0";
                 }
 

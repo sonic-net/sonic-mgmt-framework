@@ -135,15 +135,16 @@ module openconfig-network-instance-annot {
             sonic-ext:subtree-transformer "fdb_mac_table_xfmr";
       }
     }
-/*
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp {
+    
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols {
         deviate add {
-            sonic-ext:subtree-transformer "bgp_global_subtree_xfmr";
+            sonic-ext:table-name "NONE";
         }
     }
-*/
+
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol {
         deviate add {
+            sonic-ext:table-transformer "network_instance_protocols_ptotocol_table_name_xfmr";
             sonic-ext:key-transformer "network_instance_protocol_key_xfmr";
         }
     }
@@ -163,21 +164,15 @@ module openconfig-network-instance-annot {
         }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:state/oc-netinst:router-id {
-      deviate add {
-            sonic-ext:field-name "router_id";
-      }
-    }
-
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:config/oc-netinst:as {
         deviate add {
             sonic-ext:field-transformer "bgp_local_asn_fld_xfmr";
         }
     }
 
-    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:state/oc-netinst:as {
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:global/oc-netinst:state {
         deviate add {
-            sonic-ext:field-name "local_asn";
+            sonic-ext:subtree-transformer "bgp_gbl_state_xfmr";
         }
     }
 
@@ -350,6 +345,12 @@ module openconfig-network-instance-annot {
       }
     }
 
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors {
+      deviate add {	        
+          sonic-ext:table-name "NONE";
+      }	  
+    }
+
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor/oc-netinst:state {
         deviate add {
             sonic-ext:subtree-transformer "bgp_nbrs_nbr_state_xfmr";
@@ -375,6 +376,12 @@ module openconfig-network-instance-annot {
     }
 
 /* peer-groups->peer-group */
+    deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups {
+      deviate add {
+            sonic-ext:table-name "NONE";
+      }
+    }
+
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:peer-groups/oc-netinst:peer-group/oc-bgp-ext:members-state {
       deviate add {
 	sonic-ext:subtree-transformer "bgp_peer_group_mbrs_state_xfmr";
@@ -1566,7 +1573,7 @@ module openconfig-network-instance-annot {
 /* BGP Neighbors*/
     deviation /oc-netinst:network-instances/oc-netinst:network-instance/oc-netinst:protocols/oc-netinst:protocol/oc-netinst:bgp/oc-netinst:neighbors/oc-netinst:neighbor {
       deviate add {
-        sonic-ext:table-name "BGP_NEIGHBOR";
+        sonic-ext:table-transformer "bgp_nbr_tbl_xfmr";
         sonic-ext:key-transformer "bgp_nbr_tbl_key_xfmr";
       }
     }

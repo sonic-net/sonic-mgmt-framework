@@ -436,7 +436,6 @@ func(yp *YParser) AddMultiLeafNodes(module *YParserModule, parent *YParserNode, 
 	return YParserError {ErrCode : YP_SUCCESS,}
 
 }
-
 //Return entire subtree in XML format in string
 func (yp *YParser) NodeDump(root *YParserNode) string {
 	if (root == nil) {

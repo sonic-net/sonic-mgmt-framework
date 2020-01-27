@@ -19,7 +19,7 @@ limitations under the License.
 <CLISH_MODULE xmlns="http://www.dellemc.com/sonic/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xi="http://www.w3.org/2001/XInclude" xsi:schemaLocation="http://www.dellemc.com/sonic/XMLSchema http://www.dellemc.com/sonic/XMLSchema/clish.xsd">
   <VIEW name="enable-view">
     <COMMAND name="show sflow" help="Show sFlow information">
-      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-sflow.py get_sonic_sflow_sonic_sflow show_sflow.j2 ${__full_line} </ACTION>
+      <ACTION builtin="clish_pyobj">sonic_cli_sflow get_sonic_sflow_sonic_sflow show_sflow.j2 ${__full_line} </ACTION>
       <DOCGEN>
           <DESCRIPTION>Show global sFlow configuration</DESCRIPTION>
           <EXAMPLE>
@@ -35,7 +35,7 @@ limitations under the License.
       </DOCGEN>
     </COMMAND>
     <COMMAND name="show sflow interface" help="Show sFlow interface information">
-      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-sflow.py get_sonic_sflow_sonic_sflow_sflow_session_table show_sflow_intf.j2 ${__full_line} </ACTION>
+      <ACTION builtin="clish_pyobj">sonic_cli_sflow get_sonic_sflow_sonic_sflow_sflow_session_table show_sflow_intf.j2 ${__full_line} </ACTION>
       <DOCGEN>
           <DESCRIPTION>Show sFlow interface configuration</DESCRIPTION>
           <EXAMPLE>
@@ -99,7 +99,7 @@ limitations under the License.
       </DOCGEN>
     </COMMAND>
     <COMMAND name="sflow enable" help="Enable sFlow" ptype="SUBCOMMAND" mode="subcommand">
-      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-sflow.py patch_sonic_sflow_sonic_sflow_sflow_sflow_list_admin_state up </ACTION>
+      <ACTION builtin="clish_pyobj">sonic_cli_sflow patch_sonic_sflow_sonic_sflow_sflow_sflow_list_admin_state up </ACTION>
       <DOCGEN>
           <DESCRIPTION>Enable sFlow</DESCRIPTION>
           <EXAMPLE>
@@ -110,7 +110,7 @@ limitations under the License.
     </COMMAND>
     <COMMAND name="sflow agent-id" help="Collector agent interface" ptype="SUBCOMMAND" mode="subcommand">
       <PARAM name="interface" help="Interface name" ptype="STRING"/>
-      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-sflow.py patch_sonic_sflow_sonic_sflow_sflow_sflow_list_agent_id ${interface} </ACTION>
+      <ACTION builtin="clish_pyobj">sonic_cli_sflow patch_sonic_sflow_sonic_sflow_sflow_sflow_list_agent_id ${interface} </ACTION> 
       <DOCGEN>
           <DESCRIPTION>Configure sFlow agent interface</DESCRIPTION>
           <EXAMPLE>
@@ -121,7 +121,7 @@ limitations under the License.
     </COMMAND>
     <COMMAND name="sflow polling-interval" help="Collector polling interval" ptype="SUBCOMMAND" mode="subcommand">
       <PARAM name="interval" help="Interval (default: 20)" ptype="SFLOW_POLL_INTERVAL"/>
-      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-sflow.py patch_sonic_sflow_sonic_sflow_sflow_sflow_list_polling_interval ${interval} </ACTION>
+      <ACTION builtin="clish_pyobj">sonic_cli_sflow patch_sonic_sflow_sonic_sflow_sflow_sflow_list_polling_interval ${interval} </ACTION>
       <DOCGEN>
           <DESCRIPTION>Configure sFlow polling interval</DESCRIPTION>
           <EXAMPLE>
@@ -132,7 +132,7 @@ limitations under the License.
     </COMMAND>
     <COMMAND name="no sflow" help="sFlow Configurations"/>
     <COMMAND name="no sflow enable" help="Disable sFlow">
-      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-sflow.py patch_sonic_sflow_sonic_sflow_sflow_sflow_list_admin_state down </ACTION>
+      <ACTION builtin="clish_pyobj">sonic_cli_sflow patch_sonic_sflow_sonic_sflow_sflow_sflow_list_admin_state down </ACTION>
       <DOCGEN>
           <DESCRIPTION>Disable sFlow</DESCRIPTION>
           <EXAMPLE>
@@ -143,7 +143,7 @@ limitations under the License.
     </COMMAND>
     <COMMAND name="no sflow collector" help="Remove a collector" ptype="SUBCOMMAND" mode="subcommand">
       <PARAM name="name" help="Collector name" ptype="STRING"/>
-      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-sflow.py delete_sonic_sflow_sonic_sflow_sflow_collector_sflow_collector_list ${name} </ACTION>
+      <ACTION builtin="clish_pyobj">sonic_cli_sflow delete_sonic_sflow_sonic_sflow_sflow_collector_sflow_collector_list ${name} </ACTION>
       <DOCGEN>
           <DESCRIPTION>Remove an sFlow collector</DESCRIPTION>
           <EXAMPLE>
@@ -153,7 +153,7 @@ limitations under the License.
       </DOCGEN>
     </COMMAND>
     <COMMAND name="no sflow agent-id" help="Set default agent-id" ptype="SUBCOMMAND" mode="subcommand">
-      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-sflow.py delete_sonic_sflow_sonic_sflow_sflow_sflow_list_agent_id </ACTION>
+      <ACTION builtin="clish_pyobj">sonic_cli_sflow delete_sonic_sflow_sonic_sflow_sflow_sflow_list_agent_id </ACTION>
       <DOCGEN>
           <DESCRIPTION>Reset sFlow agent to default interface</DESCRIPTION>
           <EXAMPLE>
@@ -163,7 +163,7 @@ limitations under the License.
       </DOCGEN>
     </COMMAND>
     <COMMAND name="no sflow polling-interval" help="Set default polling interval" ptype="SUBCOMMAND" mode="subcommand">
-      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-sflow.py delete_sonic_sflow_sonic_sflow_sflow_sflow_list_polling_interval </ACTION>
+      <ACTION builtin="clish_pyobj">sonic_cli_sflow delete_sonic_sflow_sonic_sflow_sflow_sflow_list_polling_interval </ACTION>
       <DOCGEN>
           <DESCRIPTION>Reset sFlow polling-interval to default</DESCRIPTION>
           <EXAMPLE>

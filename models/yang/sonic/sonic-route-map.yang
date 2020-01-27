@@ -69,6 +69,46 @@ module sonic-route-map {
         }
     }
 
+    typedef bgp-origin-attr-type {
+        type enumeration {
+            enum IGP {
+                description
+                "Origin of the NLRI is internal";
+            }
+            enum EGP {
+                description
+                "Origin of the NLRI is EGP";
+            }
+            enum INCOMPLETE {
+                description
+                "Origin of the NLRI is neither IGP or EGP";
+            }
+        }
+        description
+            "Type definition for standard BGP origin attribute";
+              reference "RFC 4271 - A Border Gateway Protocol 4 (BGP-4),
+              Sec 4.3";
+    }
+
+    typedef bgp-set-med-type {
+        type union {
+            type uint32;
+            type string {
+                pattern '^[+-][0-9]+$';
+            }
+            type enumeration {
+                enum IGP {
+                   description "set the MED value to the IGP cost toward the next hop for the route";
+                }
+            }
+        }
+        description
+                   "Type definition for specifying how the BGP MED can
+                    be set in BGP policy actions. The three choices are to set
+                    the MED directly, increment/decrement using +/- notation,
+                    and setting it to the IGP cost (predefined value).";
+    }
+
     container sonic-route-map {
         container ROUTE_MAP_SET {
             list ROUTE_MAP_SET_LIST {
@@ -173,6 +213,10 @@ module sonic-route-map {
 
                 leaf set_local_pref{
                     type uint32;
+                }
+
+                leaf set_med {
+                    type bgp-set-med-type;
                 }
 
                 leaf set_next_hop{

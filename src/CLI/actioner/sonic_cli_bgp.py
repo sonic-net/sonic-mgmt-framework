@@ -26,6 +26,7 @@ from rpipe_utils import pipestr
 import cli_client as cc
 from scripts.render_cli import show_cli_output
 from bgp_openconfig_to_restconf_map import restconf_map
+from datetime import datetime, timedelta
 
 IDENTIFIER='BGP'
 NAME1='bgp'
@@ -101,6 +102,26 @@ OCEXTPREFIX_DELETE_LEN=len(OCEXTPREFIX_DELETE)
 def getPrefix(item):
     ip = netaddr.IPNetwork(item['prefix'])
     return int(ip.ip)
+
+def getNbr(item):
+    ip = netaddr.IPNetwork(item['neighbor-address'])
+    return int(ip.ip)
+
+def getIntfId(item):
+
+    ifName = item['neighbor-address']
+    if ifName.startswith("Ethernet"):
+        ifId = int(ifName[len("Ethernet"):])
+    elif ifName.startswith("PortChannel"):
+        ifId = int(ifName[len("PortChannel"):])
+    elif ifName.startswith("Vlan"):
+        ifId = int(ifName[len("Vlan"):])
+    elif ifName.startswith("Loopback"):
+        ifId = int(ifName[len("Loopback"):])
+    else:
+        return ifName
+    return ifId
+
 
 def generate_show_bgp_routes(args):
    api = cc.ApiClient()
@@ -1523,26 +1544,91 @@ def invoke_api(func, args=[]):
 
     return api.cli_not_implemented(func)
 
-def filter_bgp_nbrs(iptype, nbrs):
+def preprocess_bgp_nbrs(iptype, nbrs):
     new_nbrs = []
+    un_enbrs = []
+    un_pnbrs = []
+    un_vnbrs = []
+    un_lnbrs = []
+    un_nbrs = []
     for nbr in nbrs:
-        ipaddr = netaddr.IPAddress(nbr['neighbor-address'])
-        if ipaddr.version == iptype:
-            new_nbrs.append(nbr)
-    return new_nbrs
+        ipt = 4
+        unnumbered = False
+        try:
+            ipaddr = netaddr.IPAddress(nbr['neighbor-address'])
+            ipt= ipaddr.version
+        except:
+            ipt = 4
+            unnumbered = True
 
+        if ipt == iptype:
+            if 'state' in nbr and 'session-state' in nbr['state'] and 'last-established' in nbr['state']:
+                if nbr['state']['session-state'] == 'ESTABLISHED':
+                    last_estbd = nbr['state']['last-established']
+                    d = datetime.now()
+                    d = d - timedelta(seconds=int(last_estbd))
+                    weeks = 0
+                    days = d.day  
+                    if days != 0:
+                       days = days - 1 
+                       if days != 0:
+                          weeks = days // 7  
+                          days = days % 7  
+                    if weeks != 0:
+                        nbr['state']['last-established'] = '{}w{}d{:02}h'.format(int(weeks), int(days), int(d.hour))
+                    elif days != 0:
+                        nbr['state']['last-established'] = '{}d{:02}h{:02}m'.format(int(days), int(d.hour), int(d.minute))
+                    else:
+                        nbr['state']['last-established'] = '{:02}:{:02}:{:02}'.format(int(d.hour), int(d.minute), int(d.second))                  
+                else:
+                    nbr['state']['last-established'] = 'never'
+            if unnumbered == True:
+                ifName = nbr['neighbor-address']
+                if ifName.startswith("Ethernet"):
+                   un_enbrs.append(nbr)
+                elif ifName.startswith("PortChannel"):
+                   un_pnbrs.append(nbr)
+                elif ifName.startswith("Vlan"):
+                   un_vnbrs.append(nbr)
+                elif ifName.startswith("Loopback"):
+                   un_lnbrs.append(nbr)
+                else:
+                   un_nbrs.append(nbr)
+            else:
+                new_nbrs.append(nbr)
+
+    tup = new_nbrs
+    new_nbrs = sorted(tup, key=getNbr)
+    tup = un_enbrs
+    un_enbrs = sorted(tup, key=getIntfId)
+    tup = un_pnbrs
+    un_pnbrs = sorted(tup, key=getIntfId)
+    tup = un_vnbrs
+    un_vnbrs = sorted(tup, key=getIntfId)
+    tup = un_lnbrs
+    un_lnbrs = sorted(tup, key=getIntfId)
+    tup = un_nbrs
+    un_nbr = sorted(tup, key=getIntfId)
+     
+    un_enbrs.extend(un_pnbrs)
+    un_enbrs.extend(un_vnbrs)
+    un_enbrs.extend(un_lnbrs)
+    un_enbrs.extend(un_nbrs)
+    un_enbrs.extend(new_nbrs)
+    return un_enbrs
 
 def invoke_show_api(func, args=[]):
     api = cc.ApiClient()
     keypath = []
     body = None
+    tmp = {}
 
     if func == 'get_show_bgp':
         return generate_show_bgp_routes(args)
 
     elif func == 'get_ip_bgp_summary':
         d = {}
-        keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global/config', name=args[1], identifier=IDENTIFIER, name1=NAME1)
+        keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/global', name=args[1], identifier=IDENTIFIER, name1=NAME1)
         response = api.get(keypath)
         if response.ok():
             d.update(response.content)
@@ -1553,8 +1639,7 @@ def invoke_show_api(func, args=[]):
                 if args[2] == 'ipv6':
                     iptype = 6
                 if 'openconfig-network-instance:neighbors' in response.content:
-                    tmp = {}
-                    tmp['neighbor'] = filter_bgp_nbrs(iptype, response.content['openconfig-network-instance:neighbors']['neighbor'])
+                    tmp['neighbor'] = preprocess_bgp_nbrs(iptype, response.content['openconfig-network-instance:neighbors']['neighbor'])
                     d['openconfig-network-instance:neighbors'] = tmp
                 return d
             else:
@@ -1575,8 +1660,7 @@ def invoke_show_api(func, args=[]):
             response = api.get(keypath)
             if response.ok():
                 if 'openconfig-network-instance:neighbor' in response.content:
-                    tmp = {}
-                    tmp['neighbor'] = filter_bgp_nbrs(iptype, response.content['openconfig-network-instance:neighbor'])
+                    tmp['neighbor'] = preprocess_bgp_nbrs(iptype, response.content['openconfig-network-instance:neighbors']['neighbor'])
                     d['openconfig-network-instance:neighbors'] = tmp
                 return d
             else:
@@ -1584,12 +1668,10 @@ def invoke_show_api(func, args=[]):
 
         else:
             keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/neighbors', name=args[1], identifier=IDENTIFIER, name1=NAME1)
-        
             response = api.get(keypath)
             if response.ok():
                 if 'openconfig-network-instance:neighbors' in response.content:
-                    tmp = {}
-                    tmp['neighbor'] = filter_bgp_nbrs(iptype, response.content['openconfig-network-instance:neighbors']['neighbor'])
+                    tmp['neighbor'] = preprocess_bgp_nbrs(iptype, response.content['openconfig-network-instance:neighbors']['neighbor'])
                     d['openconfig-network-instance:neighbors'] = tmp
                 return d
             else:
