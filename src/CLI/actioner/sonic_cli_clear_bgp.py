@@ -54,6 +54,8 @@ def clear_bgp_api(args):
            af = "IPv4"
         elif "ipv6" == arg:
            af = "IPv6"
+        elif "evpn" == arg:
+           af = "EVPN"
         elif "*" == arg:
            if len(args) > 7:
               cinall = True

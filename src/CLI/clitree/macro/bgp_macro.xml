@@ -92,6 +92,7 @@ limitations under the License.
            <MACRO name="CLEAR_BGP_INOUT_SUB_CMDS" arg=""></MACRO>
         </PARAM>
         <PARAM name="*" help=" Clear all peers" ptype="SUBCOMMAND" mode="subcommand" optional="true"> 
+          <MACRO name="CLEAR_BGP_INOUT_SUB_CMDS" arg=""></MACRO>
         </PARAM>
         <PARAM name="external" help="Clear all external peers" ptype="SUBCOMMAND" mode="subcommand" optional="true">
            <MACRO name="CLEAR_BGP_INOUT_SUB_CMDS" arg=""></MACRO>
@@ -146,6 +147,24 @@ limitations under the License.
     <MACRODEF name="CLEAR_IPV6_BGP_OPTIONS_SUB_CMDS">
         <MACRO name="CLEAR_BGP_COMMON_OPTIONS_SUB_CMDS" arg=""></MACRO>
         <MACRO name="CLEAR_IPV6_BGP_ADDR_OPTIONS_SUB_CMDS" arg=""></MACRO>
+        <PARAM name="in" help="Send route-refresh unless using 'soft-reconfiguration inbound" ptype="SUBCOMMAND" mode="subcommand" optional="true">
+        </PARAM>
+        <PARAM name="out" help="Resend all outbound updates" ptype="SUBCOMMAND" mode="subcommand" optional="true">
+        </PARAM>
+        <PARAM name="soft" help="Soft reconfig inbound and outbound updates" ptype="SUBCOMMAND" mode="subcommand" optional="true">
+            <PARAM name="in" help=" Send route-refresh unless using 'soft-reconfiguration inbound" ptype="SUBCOMMAND" mode="subcommand" optional="true"></PARAM>
+            <PARAM name="out" help="Resend all outbound updates" ptype="SUBCOMMAND" mode="subcommand" optional="true"></PARAM>
+        </PARAM>
+    </MACRODEF>
+
+    <MACRODEF name="CLEAR_EVPN_BGP_OPTIONS_SUB_CMDS">
+        <MACRO name="CLEAR_BGP_COMMON_OPTIONS_SUB_CMDS" arg=""></MACRO>
+        <PARAM name="neighbor-ipv6" help="BGP neighbor address to clear" ptype="IPV6_ADDR" optional="true">
+           <MACRO name="CLEAR_BGP_INOUT_SUB_CMDS" arg=""></MACRO>
+        </PARAM>
+        <PARAM name="neighbor-ipv4" help="BGP neighbor address to clear" ptype="IPV4_ADDR_ABC" optional="true">
+           <MACRO name="CLEAR_BGP_INOUT_SUB_CMDS" arg=""></MACRO>
+        </PARAM>
         <PARAM name="in" help="Send route-refresh unless using 'soft-reconfiguration inbound" ptype="SUBCOMMAND" mode="subcommand" optional="true">
         </PARAM>
         <PARAM name="out" help="Resend all outbound updates" ptype="SUBCOMMAND" mode="subcommand" optional="true">

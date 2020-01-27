@@ -614,7 +614,8 @@ var rpc_clear_bgp RpcCallpoint = func(body []byte, dbs [db.MaxDB]*db.DB) ([]byte
     var status string
     var clear_all string
     var af_str, vrf_name, all, soft, in, out,neigh_address, prefix, peer_group, asn, intf, external string
-    var cmd string
+    var cmd, cmdbase string
+    is_evpn := false
     var mapData map[string]interface{}
     err = json.Unmarshal(body, &mapData)
     if err != nil {
@@ -655,6 +656,9 @@ var rpc_clear_bgp RpcCallpoint = func(body []byte, dbs [db.MaxDB]*db.DB) ([]byte
             af_str = "ipv4 "
         } else if value == "IPv6" {
             af_str = "ipv6 "
+        } else if value == "EVPN" {
+            is_evpn = true
+            af_str = "evpn "
         }
     }
 
@@ -720,12 +724,17 @@ var rpc_clear_bgp RpcCallpoint = func(body []byte, dbs [db.MaxDB]*db.DB) ([]byte
 
     log.Info("In rpc_clear_bgp", clear_all, vrf_name, af_str, all, neigh_address, intf, asn, prefix, peer_group, in, out, soft)
 
-    if clear_all != "" {
-        cmd = "clear ip bgp " + clear_all
+    if is_evpn == false {
+        cmdbase = "clear ip bgp "
     } else {
-        cmd = "clear ip bgp "
+        cmdbase = "clear bgp l2vpn "
+    }
+    if clear_all != "" {
+        cmd = cmdbase + clear_all
+    } else {
+        cmd = cmdbase
         if vrf_name != "" {
-            cmd = "clear ip bgp " + vrf_name
+            cmd = cmdbase + vrf_name
         }
 
         if af_str != "" {

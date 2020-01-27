@@ -1117,6 +1117,14 @@ limitations under the License.
         fi&#xA;
   </ACTION>
   </COMMAND>
+
+  <COMMAND name="clear bgp l2vpn" help="Address family"/>
+  <COMMAND name="clear bgp l2vpn evpn" help="Address family modifier">
+    <PARAM name="clear_bgp_subcommands" help="BGP Subcommands" ptype="SUBCOMMAND" mode="switch">
+        <MACRO name="CLEAR_EVPN_BGP_OPTIONS_SUB_CMDS" arg=""></MACRO>
+    </PARAM>
+    <ACTION builtin="clish_pyobj">sonic_cli_clear_bgp clear_bgp asn=${as-num-dot} n-ipv4=${neighbor-ipv4} n-ipv6=${neighbor-ipv6} ${__full_line}</ACTION>
+  </COMMAND>
 </VIEW>
 
 </CLISH_MODULE>
