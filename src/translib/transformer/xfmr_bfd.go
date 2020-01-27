@@ -121,7 +121,7 @@ func get_bfd_shop_peers (bfd_obj *ocbinds.OpenconfigBfd_Bfd_BfdState, inParams X
         log.Info(sessions)
         if counters, ok := bfdCounterMapJson["output"].(map[string]interface{}) ; ok {
             log.Info(counters)
-            fill_bfd_shop_data (bfd_obj, sessions, counters)
+            fill_bfd_shop_data (bfd_obj, sessions, counters, &bfdshop_key)
         }
     }
 
@@ -177,7 +177,7 @@ func get_bfd_mhop_peers (bfd_obj *ocbinds.OpenconfigBfd_Bfd_BfdState, inParams X
         log.Info(sessions)
         if counters, ok := bfdCounterMapJson["output"].(map[string]interface{}) ; ok {
             log.Info(counters)
-            fill_bfd_mhop_data (bfd_obj, sessions, counters)
+            fill_bfd_mhop_data (bfd_obj, sessions, counters, &bfdmhop_key)
         }
     }
 
@@ -235,9 +235,9 @@ func get_bfd_peers (bfd_obj *ocbinds.OpenconfigBfd_Bfd_BfdState, inParams XfmrPa
         log.Info(counter_data)
         if value, ok := session_data["multihop"].(bool) ; ok {
             if value == false {
-                if ok := fill_bfd_shop_data (bfd_obj, session_data, counter_data) ; !ok {return err}
+                if ok := fill_bfd_shop_data (bfd_obj, session_data, counter_data, nil) ; !ok {return err}
             }else {
-                if ok := fill_bfd_mhop_data (bfd_obj, session_data, counter_data) ; !ok {return err}
+                if ok := fill_bfd_mhop_data (bfd_obj, session_data, counter_data, nil) ; !ok {return err}
             }
         }
     }
@@ -262,36 +262,47 @@ var DbToYang_bfd_state_xfmr SubTreeXfmrDbToYang = func(inParams XfmrParams) erro
     return err;
 }
 
-func fill_bfd_shop_data (bfd_obj *ocbinds.OpenconfigBfd_Bfd_BfdState, session_data map[string]interface{}, counter_data map[string]interface{}) bool {
+func fill_bfd_shop_data (bfd_obj *ocbinds.OpenconfigBfd_Bfd_BfdState, session_data map[string]interface{}, counter_data map[string]interface{}, bfdshop_Input_key *ocbinds.OpenconfigBfd_Bfd_BfdState_SingleHopState_Key) bool {
     var err error
+    var bfdshop_obj *ocbinds.OpenconfigBfd_Bfd_BfdState_SingleHopState
     var bfdshopkey ocbinds.OpenconfigBfd_Bfd_BfdState_SingleHopState_Key
+    var bfdshop_tempkey ocbinds.OpenconfigBfd_Bfd_BfdState_SingleHopState_Key
     var bfdasyncstats *ocbinds.OpenconfigBfd_Bfd_BfdState_SingleHopState_Async
     var bfdechocstats *ocbinds.OpenconfigBfd_Bfd_BfdState_SingleHopState_Echo
 
     log.Info("fill_bfd_shop_data")
 
-    if value, ok := session_data["peer"].(string) ; ok {
-        bfdshopkey.RemoteAddress = value
-    }
-
-    if value, ok := session_data["interface"].(string) ; ok {
-        bfdshopkey.Interface = value
-    }
-
-    if value, ok := session_data["vrf"].(string) ; ok {
-        bfdshopkey.Vrf = value
-    }
-
-    if value, ok := session_data["local"].(string) ; ok {
-        bfdshopkey.LocalAddress = value
+    if (nil != bfdshop_Input_key) {
+        bfdshop_tempkey = *bfdshop_Input_key
+	log.Info("fill_bfd_shop_data1")
+        bfdshop_obj = bfd_obj.SingleHopState[bfdshop_tempkey]
+        if (nil == bfdshop_obj) {
+            log.Info("Peer with input key not found")
+            return false; 
+        }
     } else {
-        bfdshopkey.LocalAddress = "null"
-    }
+        if value, ok := session_data["peer"].(string) ; ok {
+            bfdshopkey.RemoteAddress = value
+        }
 
-    bfdshop_obj := bfd_obj.SingleHopState[bfdshopkey]
-    if bfdshop_obj == nil {
+        if value, ok := session_data["interface"].(string) ; ok {
+           bfdshopkey.Interface = value
+        }
+
+        if value, ok := session_data["vrf"].(string) ; ok {
+            bfdshopkey.Vrf = value
+        }
+
+        if value, ok := session_data["local"].(string) ; ok {
+            bfdshopkey.LocalAddress = value
+        } else {
+            bfdshopkey.LocalAddress = "null"
+        }
+
         bfdshop_obj, err = bfd_obj.NewSingleHopState(bfdshopkey.RemoteAddress, bfdshopkey.Interface, bfdshopkey.Vrf, bfdshopkey.LocalAddress)
-        if err != nil {return false}
+        if (err != nil) {
+            return false;
+        }
     }
  
     ygot.BuildEmptyTree(bfdshop_obj)
@@ -510,33 +521,41 @@ func fill_bfd_shop_data (bfd_obj *ocbinds.OpenconfigBfd_Bfd_BfdState, session_da
 
 
 
-func fill_bfd_mhop_data (bfd_obj *ocbinds.OpenconfigBfd_Bfd_BfdState, session_data map[string]interface{}, counter_data map[string]interface{}) bool {
+func fill_bfd_mhop_data (bfd_obj *ocbinds.OpenconfigBfd_Bfd_BfdState, session_data map[string]interface{}, counter_data map[string]interface{}, bfdmhop_Input_key *ocbinds.OpenconfigBfd_Bfd_BfdState_MultiHopState_Key) bool {
     var err error
+    var bfdmhop_obj *ocbinds.OpenconfigBfd_Bfd_BfdState_MultiHopState
+    var bfdmhop_tempkey ocbinds.OpenconfigBfd_Bfd_BfdState_MultiHopState_Key
     var bfdmhopkey ocbinds.OpenconfigBfd_Bfd_BfdState_MultiHopState_Key
     var bfdasyncstats *ocbinds.OpenconfigBfd_Bfd_BfdState_MultiHopState_Async
 
     log.Info("fill_bfd_mhop_data")
 
-    if value, ok := session_data["peer"].(string) ; ok {
-        bfdmhopkey.RemoteAddress = value
-    }
-
-    if value, ok := session_data["interface"].(string) ; ok {
-        bfdmhopkey.Interface = value
+    if (nil != bfdmhop_Input_key) {
+        bfdmhop_tempkey = *bfdmhop_Input_key
+        bfdmhop_obj = bfd_obj.MultiHopState[bfdmhop_tempkey]
+        if (nil == bfdmhop_obj) {
+            log.Info("Peer with input key not found")
+            return false;
+        }
     } else {
-        bfdmhopkey.Interface = "null"
-    }
+        if value, ok := session_data["peer"].(string) ; ok {
+            bfdmhopkey.RemoteAddress = value
+        }
 
-    if value, ok := session_data["vrf"].(string) ; ok {
-        bfdmhopkey.Vrf = value
-    }
+        if value, ok := session_data["interface"].(string) ; ok {
+            bfdmhopkey.Interface = value
+        } else {
+            bfdmhopkey.Interface = "null"
+        }
 
-    if value, ok := session_data["local"].(string) ; ok {
-        bfdmhopkey.LocalAddress = value
-    }
+        if value, ok := session_data["vrf"].(string) ; ok {
+            bfdmhopkey.Vrf = value
+        }
 
-    bfdmhop_obj := bfd_obj.MultiHopState[bfdmhopkey]
-    if bfdmhop_obj == nil {
+        if value, ok := session_data["local"].(string) ; ok {
+            bfdmhopkey.LocalAddress = value
+        }
+
         bfdmhop_obj, err = bfd_obj.NewMultiHopState(bfdmhopkey.RemoteAddress, bfdmhopkey.Interface, bfdmhopkey.Vrf, bfdmhopkey.LocalAddress)
         if err != nil {return false}
     }
