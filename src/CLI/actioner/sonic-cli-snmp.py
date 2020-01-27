@@ -213,12 +213,33 @@ config_db.connect()
 
 aa = cc.ApiClient()
 
-def LevelsSecurity(snmpSecLevel):
-  """ Reverse lookup to convert SNMP security Level to CLI security option. """
-  for key, value in SecurityLevels.items():
-    if value == snmpSecLevel:
-      return key
-  return none
+def findKeyForTargetEntry(ipAddr):
+  keypath = cc.Path('/restconf/data/ietf-snmp:snmp/target')
+  response=aa.get(keypath)
+  if response.ok():
+    if 'ietf-snmp:target' in response.content.keys():
+      for key, table in response.content.items():
+        while len(table) > 0:
+          data = table.pop(0)
+          udp = data['udp']
+          if udp['ip'] == ipAddr:
+            return data['name']
+  return "None"
+
+def findNextKeyForTargetEntry(ipAddr):
+  key = "None"
+  index = 1
+  while 1:
+    key = "targetEntry{}".format(index)
+    index += 1
+    keypath = cc.Path('/restconf/data/ietf-snmp:snmp/target={name}', name=key)
+    response=aa.get(keypath)
+    if response.ok():
+      if len(response.content) == 0:
+        break
+    else:
+      break
+  return key
 
 def createYangHexStr(textString):
   """ Convert plain hex string into yang:hex-string """
@@ -904,8 +925,8 @@ def invoke(func, args):
             h = {}
             h['target'] = data['target-params']
             udp = data['udp']
-            h['ipaddress'] = udp['ip']
-            h['ip6'] = getIPType(h['target'])
+            h['ipaddr'] = udp['ip']
+            h['ip6'] = getIPType(h['ipaddr'])
             for key, value in data.items():
               if key == 'target-params':
                 path = cc.Path('/restconf/data/ietf-snmp:snmp/target-params={name}', name=data[key])
@@ -951,17 +972,21 @@ def invoke(func, args):
     if len(hosts4_c) == 0 and len(hosts6_c) == 0 and len(hosts4_u) == 0 and len(hosts6_u) == 0:
       return None
     else:
-      response.content = { "community" : sorted(hosts4_c, key=lambda i: ipaddress.ip_address(i['target'])) + sorted(hosts6_c, key=lambda i: ipaddress.ip_address(i['target'])),
-                           "user"      : sorted(hosts4_u, key=lambda i: ipaddress.ip_address(i['target'])) + sorted(hosts6_u, key=lambda i: ipaddress.ip_address(i['target'])) }
+      response.content = { "community" : sorted(hosts4_c, key=lambda i: ipaddress.ip_address(i['ipaddr'])) + sorted(hosts6_c, key=lambda i: ipaddress.ip_address(i['ipaddr'])),
+                           "user"      : sorted(hosts4_u, key=lambda i: ipaddress.ip_address(i['ipaddr'])) + sorted(hosts6_u, key=lambda i: ipaddress.ip_address(i['ipaddr'])) }
     return response
 
   # Add a host.
   elif func == 'snmp_host_add':
+    key = findKeyForTargetEntry(args[0])
+    if key == 'None':
+      key = findNextKeyForTargetEntry(args[0])
+
     type = 'trapNotify'
     if 'user' == args[1]:
       secModel = SecurityModels['v3']
     else:
-      secModel = SecurityModels['v1']
+      secModel = SecurityModels['v2c']                      # v1 is not supported, v2c should be default
 
     response = invoke('snmp_host_delete', [args[0]])        # delete user config if it already exists
     secLevel = SecurityLevels['noauth']
@@ -985,10 +1010,10 @@ def invoke(func, args):
       secModel = SecurityModels['v2c']
 
     targetEntry=collections.defaultdict(dict)
-    targetEntry["target"]=[{ "name": args[0],
+    targetEntry["target"]=[{ "name": key,
                              "timeout": 100*int(params['timeout']),
                              "retries": int(params['retries']),
-                             "target-params": args[0],
+                             "target-params": key,
                              "tag": [ type ],
                              "udp" : { "ip": args[0], "port": 162}
                              }]
@@ -999,7 +1024,7 @@ def invoke(func, args):
       security = { "security-name": args[2]}
 
     targetParams=collections.defaultdict(dict)
-    targetParams["target-params"]=[{ "name": args[0],
+    targetParams["target-params"]=[{ "name": key,
                                      secModel : security }]
 
 
@@ -1016,16 +1041,13 @@ def invoke(func, args):
 
   # Remove a host.
   elif func == 'snmp_host_delete':
-    keypath = cc.Path('/restconf/data/ietf-snmp:snmp/target={name}', name=args[0])
+    key = findKeyForTargetEntry(args[0])
+    keypath = cc.Path('/restconf/data/ietf-snmp:snmp/target={name}', name=key)
     response = aa.delete(keypath)
     if response.ok():
-      keypath = cc.Path('/restconf/data/ietf-snmp:snmp/target-params={name}', name=args[0])
+      keypath = cc.Path('/restconf/data/ietf-snmp:snmp/target-params={name}', name=key)
       response = aa.delete(keypath)
     return response
-    if response.ok():
-      return None
-    else:
-      return response
 
   else:
       print("%Error: %func not implemented "+func)
