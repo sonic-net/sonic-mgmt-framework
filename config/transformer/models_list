@@ -40,6 +40,7 @@ ietf-snmp-tsm.yang
 ietf-snmp-usm.yang
 ietf-snmp-vacm.yang
 ietf-snmp-annot.yang
+ietf-snmp-ext.yang
 openconfig-bfd.yang
 openconfig-bfd-ext.yang
 openconfig-bfd-annot.yang

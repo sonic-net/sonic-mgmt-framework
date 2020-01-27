@@ -131,6 +131,10 @@ func (t *CustomValidation) ValidateSflowAgentId(
 	}
 
 	log.Info("ValidateSflowAgentId YNodeVal: ", vc.YNodeVal)
+	/*  allow empty or deleted agent_id */
+	if vc.YNodeVal == "" {
+		return CVLErrorInfo{ErrCode: CVL_SUCCESS}
+	}
 
 	/* check if input passed is found in ConfigDB PORT|* */
 	tableKeys, err:= vc.RClient.Keys("PORT|*").Result()
