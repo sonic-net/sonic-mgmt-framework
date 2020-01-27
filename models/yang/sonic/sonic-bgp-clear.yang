@@ -66,9 +66,10 @@ module sonic-bgp-clear {
             type enumeration {
                 enum IPv4;
                 enum IPv6;
+                enum EVPN;
             }
             default "IPv4";
-            description "Address family (IPv4/IPv6)";
+            description "Address family (IPv4/IPv6/EVPN)";
         }
 
         choice option {
