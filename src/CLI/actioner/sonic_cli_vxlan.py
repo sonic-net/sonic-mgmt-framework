@@ -140,6 +140,7 @@ def invoke(func, args):
               if (func.startswith("delete") is True):
                 delkeypath = cc.Path('/restconf/data/sonic-vxlan:sonic-vxlan/VXLAN_TUNNEL_MAP/VXLAN_TUNNEL_MAP_LIST={name},{mapname1}', name=args[1][6:], mapname1=mapname)
                 api_response = aa.delete(delkeypath)
+                config_response_handler(api_response, func, resp_args)
 
               else:
                 listobj = {
@@ -150,12 +151,12 @@ def invoke(func, args):
                     }
                 maplist.append(listobj)
 
-                body = {
-                  "sonic-vxlan:VXLAN_TUNNEL_MAP_LIST": maplist
-                }
-                api_response =  aa.patch(keypath, body)
-
-              config_response_handler(api_response, func, resp_args)
+            if (func.startswith("patch") is True):
+               body = {
+                   "sonic-vxlan:VXLAN_TUNNEL_MAP_LIST": maplist
+               }
+               api_response =  aa.patch(keypath, body)
+               config_response_handler(api_response, func, args)
 
         return api_response
 
