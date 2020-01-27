@@ -20,6 +20,7 @@ import (
 type apiTests struct {
 	path string
 	body []byte
+	appOptions
 
 	echoMsg string
 	echoErr string
@@ -40,6 +41,7 @@ func init() {
 func (app *apiTests) initialize(inp appData) {
 	app.path = inp.path
 	app.body = inp.payload
+	app.appOptions = inp.appOptions
 }
 
 func (app *apiTests) translateCreate(d *db.DB) ([]db.WatchKeys, error) {
@@ -105,9 +107,16 @@ func (app *apiTests) processDelete(d *db.DB) (SetResponse, error) {
 func (app *apiTests) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
 	var gr GetResponse
 	err := app.getError()
-	if err == nil {
-		gr.Payload, err = json.Marshal(&app.echoMsg)
+	if err != nil {
+		return gr, err
 	}
+
+	resp := make(map[string]interface{})
+	resp["message"] = app.echoMsg
+	resp["path"] = app.path
+	resp["depth"] = app.depth
+
+	gr.Payload, err = json.Marshal(&resp)
 	return gr, err
 }
 

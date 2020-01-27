@@ -62,7 +62,9 @@ limitations under the License.
 <MACRODEF name="SNMP-SECURITY-MODELS">
   <PARAM name="security-model" help="" ptype="SUBCOMMAND" mode="switch">
     <PARAM name="any"   help="All SNMP Versions"   ptype="SUBCOMMAND"  mode="subcommand"></PARAM>
+<!--============= SNMP v1 is not currently supported ===============================
     <PARAM name="v1"   help="SNMP Version 1"   ptype="SUBCOMMAND"  mode="subcommand"></PARAM>
+========================================================================= -->
     <PARAM name="v2c"  help="SNMP Version 2c"  ptype="SUBCOMMAND"  mode="subcommand"></PARAM>
     <PARAM name="v3"   help="SNMP Version 3"   ptype="SUBCOMMAND"  mode="subcommand">
       <MACRO name="SNMP-SECURITY-LEVELS" arg="" />

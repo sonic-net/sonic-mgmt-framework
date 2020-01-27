@@ -129,6 +129,9 @@ swagger_tags = []
 swaggerDict["tags"] = swagger_tags
 swaggerDict["paths"] = OrderedDict()
 swaggerDict["definitions"] = OrderedDict()
+swaggerDict["securityDefinitions"] = {"basicAuth": {"type": "basic"}}
+swaggerDict["security"] = [{"basicAuth": []}]
+
 
 def resetDocJson():
     global docJson
@@ -162,6 +165,9 @@ def resetSwaggerDict():
     swaggerDict["tags"] = swagger_tags
     swaggerDict["paths"] = OrderedDict()
     swaggerDict["definitions"] = OrderedDict()    
+    swaggerDict["securityDefinitions"] = {"basicAuth": {"type": "basic"}}
+    swaggerDict["security"] = [{"basicAuth": []}]
+
 
 def documentFormatter(doc_obj, mdFh, mode):
     if len(doc_obj) > 0:

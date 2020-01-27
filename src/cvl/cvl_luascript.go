@@ -129,6 +129,8 @@ func loadLuaScript(luaScripts map[string]*redis.Script) {
 					cnt = cnt + 1 
 				elseif (row[field.."@"] ~= nil) then
 					row[field.."@"]:gsub("([^,]+)", function(c) cnt = cnt + 1 end)
+				elseif (string.match(ARGV[2], field.."[|]?") ~= nil) then
+					cnt = cnt + 1 
 				end
 			else
 				cnt = cnt + 1

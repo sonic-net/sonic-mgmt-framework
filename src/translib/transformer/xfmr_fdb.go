@@ -249,21 +249,34 @@ func fdbMacTableGetEntry(inParams XfmrParams, vlan string,  macAddress string, o
         }
     }
 
-    if  entry.Has("SAI_FDB_ENTRY_ATTR_BRIDGE_PORT_ID") {
-        intfOid := findInMap(brPrtOidToIntfOid, entry.Get("SAI_FDB_ENTRY_ATTR_BRIDGE_PORT_ID"))
-        if intfOid != "" {
-            intfName := new(string)
-            *intfName = findInMap(oidInfMap, intfOid)
-            if *intfName != "" {
-                ygot.BuildEmptyTree(mcEntry.Interface)
-                ygot.BuildEmptyTree(mcEntry.Interface.InterfaceRef)
-                ygot.BuildEmptyTree(mcEntry.Interface.InterfaceRef.Config)
-                mcEntry.Interface.InterfaceRef.Config.Interface = intfName
-                ygot.BuildEmptyTree(mcEntry.Interface.InterfaceRef.State)
-                mcEntry.Interface.InterfaceRef.State.Interface = intfName
-            }
+    var fdbEntryRemoteIpAddress = new(string)
+    if  entry.Has("SAI_FDB_ENTRY_ATTR_ENDPOINT_IP") {
+        *fdbEntryRemoteIpAddress = entry.Get("SAI_FDB_ENTRY_ATTR_ENDPOINT_IP")
+    } else {
+        *fdbEntryRemoteIpAddress = "0.0.0.0"
+    }
 
+    if *fdbEntryRemoteIpAddress == "0.0.0.0" {
+        if  entry.Has("SAI_FDB_ENTRY_ATTR_BRIDGE_PORT_ID") {
+            intfOid := findInMap(brPrtOidToIntfOid, entry.Get("SAI_FDB_ENTRY_ATTR_BRIDGE_PORT_ID"))
+            if intfOid != "" {
+                intfName := new(string)
+                *intfName = findInMap(oidInfMap, intfOid)
+                if *intfName != "" {
+                    ygot.BuildEmptyTree(mcEntry.Interface)
+                    ygot.BuildEmptyTree(mcEntry.Interface.InterfaceRef)
+                    ygot.BuildEmptyTree(mcEntry.Interface.InterfaceRef.Config)
+                    mcEntry.Interface.InterfaceRef.Config.Interface = intfName
+                    ygot.BuildEmptyTree(mcEntry.Interface.InterfaceRef.State)
+                    mcEntry.Interface.InterfaceRef.State.Interface = intfName
+                }
+            }
         }
+    } else {
+        ygot.BuildEmptyTree(mcEntry.Peer)
+        ygot.BuildEmptyTree(mcEntry.Peer.Config)
+        ygot.BuildEmptyTree(mcEntry.Peer.State)
+        mcEntry.Peer.State.PeerIp = fdbEntryRemoteIpAddress
     }
 
     return err
@@ -275,6 +288,10 @@ var DbToYang_fdb_mac_table_xfmr SubTreeXfmrDbToYang = func (inParams XfmrParams)
     instance := pathInfo.Var("name")
     vlan := pathInfo.Var("vlan")
     macAddress := pathInfo.Var("mac-address")
+
+    if (instance != "default") {
+        return err
+    }
 
     targetUriPath, err := getYangPathFromUri(inParams.uri)
     log.Info("targetUriPath is ", targetUriPath)

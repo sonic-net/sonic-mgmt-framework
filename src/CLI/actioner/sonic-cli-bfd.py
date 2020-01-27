@@ -36,19 +36,19 @@ def invoke_api(func, args=[]):
 	    print("%Error: Interface must be configured for single-hop peer")
 	    exit(1)
 
+        if args[2] != "default" and args[1] == "null":
+            print("%Error: Interface must be configured for non-default vrf")
+            exit(1)
+
         keypath = cc.Path('/restconf/data/openconfig-bfd:bfd/openconfig-bfd-ext:sessions/single-hop={address},{interfacename},{vrfname},{localaddress}/enabled', address=args[0], interfacename=args[1], vrfname=args[2],localaddress=args[3])
         body = {"openconfig-bfd-ext:enabled": True}
         return api.patch(keypath, body)
     elif func == 'patch_openconfig_bfd_ext_bfd_sessions_multi_hop':
-	if len(args) == 4:
-	    print("%Error: Interface should not be configured for multi-hop peer")
-	    exit(1)
-
-	if args[2] == "null":
+	if args[3] == "null":
             print("%Error: Local Address must be configured for multi-hop peer")
             exit(1)
 
-        keypath = cc.Path('/restconf/data/openconfig-bfd:bfd/openconfig-bfd-ext:sessions/multi-hop={address},{vrfname},{localaddress}/enabled', address=args[0], vrfname=args[1], localaddress=args[2])
+        keypath = cc.Path('/restconf/data/openconfig-bfd:bfd/openconfig-bfd-ext:sessions/multi-hop={address},{interfacename},{vrfname},{localaddress}/enabled', address=args[0], interfacename=args[1], vrfname=args[2], localaddress=args[3])
         body = {"openconfig-bfd-ext:enabled": True}
         return api.patch(keypath, body)
     elif func == 'patch_openconfig_bfd_ext_bfd_sessions_single_hop_enabled':
@@ -84,24 +84,24 @@ def invoke_api(func, args=[]):
         body = {"openconfig-bfd-ext:echo-active": False}
         return api.patch(keypath, body)
     elif func == 'patch_openconfig_bfd_ext_bfd_sessions_multi_hop_enabled':
-        keypath = cc.Path('/restconf/data/openconfig-bfd:bfd/openconfig-bfd-ext:sessions/multi-hop={address},{vrfname},{localaddress}/enabled', address=args[0], vrfname=args[1],localaddress=args[2])        
+        keypath = cc.Path('/restconf/data/openconfig-bfd:bfd/openconfig-bfd-ext:sessions/multi-hop={address},{interfacename},{vrfname},{localaddress}/enabled', address=args[0], interfacename=args[1], vrfname=args[2],localaddress=args[3])        
 	body = {"openconfig-bfd-ext:enabled": True}
         return api.patch(keypath, body)
     elif func == 'patch_openconfig_bfd_ext_bfd_sessions_multi_hop_disable':
-        keypath = cc.Path('/restconf/data/openconfig-bfd:bfd/openconfig-bfd-ext:sessions/multi-hop={address},{vrfname},{localaddress}/enabled', address=args[0], vrfname=args[1],localaddress=args[2])
+        keypath = cc.Path('/restconf/data/openconfig-bfd:bfd/openconfig-bfd-ext:sessions/multi-hop={address},{interfacename},{vrfname},{localaddress}/enabled', address=args[0], interfacename=args[1], vrfname=args[2],localaddress=args[3])
         body = {"openconfig-bfd-ext:enabled": False}
         return api.patch(keypath, body)
     elif func == 'patch_openconfig_bfd_ext_bfd_sessions_multi_hop_desired_minimum_tx_interval':
-        keypath = cc.Path('/restconf/data/openconfig-bfd:bfd/openconfig-bfd-ext:sessions/multi-hop={address},{vrfname},{localaddress}/desired-minimum-tx-interval', address=args[0], vrfname=args[1],localaddress=args[2])
-	body = {"openconfig-bfd-ext:desired-minimum-tx-interval": int(args[3])}
+        keypath = cc.Path('/restconf/data/openconfig-bfd:bfd/openconfig-bfd-ext:sessions/multi-hop={address},{interfacename},{vrfname},{localaddress}/desired-minimum-tx-interval', address=args[0], interfacename=args[1], vrfname=args[2],localaddress=args[3])
+	body = {"openconfig-bfd-ext:desired-minimum-tx-interval": int(args[4])}
         return api.patch(keypath, body)
     elif func == 'patch_openconfig_bfd_ext_bfd_sessions_multi_hop_required_minimum_receive':
-        keypath = cc.Path('/restconf/data/openconfig-bfd:bfd/openconfig-bfd-ext:sessions/multi-hop={address},{vrfname},{localaddress}/required-minimum-receive', address=args[0], vrfname=args[1],localaddress=args[2])       
-	body = {"openconfig-bfd-ext:required-minimum-receive": int(args[3])}
+        keypath = cc.Path('/restconf/data/openconfig-bfd:bfd/openconfig-bfd-ext:sessions/multi-hop={address},{interfacename},{vrfname},{localaddress}/required-minimum-receive', interfacename=args[1], address=args[0], vrfname=args[2],localaddress=args[3])       
+	body = {"openconfig-bfd-ext:required-minimum-receive": int(args[4])}
         return api.patch(keypath, body)
     elif func == 'patch_openconfig_bfd_ext_bfd_sessions_multi_hop_detection_multiplier':
-        keypath = cc.Path('/restconf/data/openconfig-bfd:bfd/openconfig-bfd-ext:sessions/multi-hop={address},{vrfname},{localaddress}/detection-multiplier', address=args[0], vrfname=args[1],localaddress=args[2])       
-	body = {"openconfig-bfd-ext:detection-multiplier": int(args[3])}
+        keypath = cc.Path('/restconf/data/openconfig-bfd:bfd/openconfig-bfd-ext:sessions/multi-hop={address},{interfacename},{vrfname},{localaddress}/detection-multiplier', address=args[0], interfacename=args[1], vrfname=args[2],localaddress=args[3])       
+	body = {"openconfig-bfd-ext:detection-multiplier": int(args[4])}
         return api.patch(keypath, body)
     elif func == 'patch_openconfig_bfd_ext_bfd_sessions_multi_hop_desired_minimum_echo_receive':
 	print("%Error: Echo-mode is not supported for multihop peer")
@@ -117,15 +117,12 @@ def invoke_api(func, args=[]):
         keypath = cc.Path('/restconf/data/openconfig-bfd:bfd/openconfig-bfd-ext:sessions/single-hop={address},{interfacename},{vrfname},{localaddress}', address=args[0], interfacename=args[1], vrfname=args[2], localaddress=args[3])
         return api.delete(keypath)
     elif func == 'delete_openconfig_bfd_ext_bfd_sessions_multi_hop':
-        if len(args) == 4:
-            print("%Error: Interface should not be configured for multi-hop peer")
-            exit(1)
 
         if args[2] == "null":
             print("%Error: Local Address must be configured for multi-hop peer")
             exit(1)
 
-        keypath = cc.Path('/restconf/data/openconfig-bfd:bfd/openconfig-bfd-ext:sessions/multi-hop={address},{vrfname},{localaddress}', address=args[0], vrfname=args[1],localaddress=args[2])
+        keypath = cc.Path('/restconf/data/openconfig-bfd:bfd/openconfig-bfd-ext:sessions/multi-hop={address},{interfacename},{vrfname},{localaddress}', address=args[0], interfacename=args[1], vrfname=args[2],localaddress=args[3])
         return api.delete(keypath)
 
     return api.cli_not_implemented(func)
@@ -162,15 +159,12 @@ def invoke_show_api(func, args=[]):
 
 	elif func == 'get_openconfig_bfd_ext_bfd_sessions_multi_hop':
 		d = {}
-                if len(args) == 5:
-                    print("%Error: Interface should not be configured for multi-hop peer")
-                    exit(1)
 
-                if args[3] == "null":
+                if args[4] == "null":
                     print("%Error: Local Address must be configured for multi-hop peer")
                     exit(1)
 
-		keypath = cc.Path('/restconf/data/openconfig-bfd:bfd/openconfig-bfd-ext:bfd-state/multi-hop-state={address},{vrfname},{localaddress}', address=args[1], vrfname=args[2], localaddress=args[3])
+		keypath = cc.Path('/restconf/data/openconfig-bfd:bfd/openconfig-bfd-ext:bfd-state/multi-hop-state={address},{interfacename},{vrfname},{localaddress}', address=args[1], interfacename=args[2], vrfname=args[3], localaddress=args[4])
 		response = api.get(keypath)
 		if response.ok():
 			tmp = {}

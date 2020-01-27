@@ -482,9 +482,15 @@ limitations under the License.
 
      </COMMAND>
 
+   </VIEW>
+
+
+     <VIEW name="enable-view">
+
      <!--====================clear <translations | statistics>======================-->
+
     <COMMAND
-        name="clear"
+        name="clear nat"
         help="Clear NAT">
         <PARAM
             name="clear-subcommands"
@@ -513,9 +519,6 @@ limitations under the License.
     </COMMAND>
 
 
-   </VIEW>
-
-     <VIEW name="enable-view">
     <!--show nat -->
     <COMMAND
          name="show nat"

@@ -1519,13 +1519,6 @@ var DbToYang_nat_entry_type_field_xfmr FieldXfmrDbtoYang = func(inParams XfmrPar
     return result, err
 }
 
-/*
-var NAT_CLEAR_PARAMS_MAP = map[string]string{
-    strconv.FormatInt(int64(ocbinds.OpenconfigNat_NAT_ENTRY_TYPE_STATIC), 10): "ENTRIES",
-    strconv.FormatInt(int64(ocbinds.OpenconfigNat_NAT_ENTRY_TYPE_DYNAMIC), 10): "STATISTICS",
-}
-*/
-
 var rpc_clear_nat RpcCallpoint = func(body []byte, dbs [db.MaxDB]*db.DB) ([]byte, error) {
     var err error
     log.Infof("Inside rpc_clear_nat: Input: %s\n", string(body))
@@ -1541,7 +1534,6 @@ var rpc_clear_nat RpcCallpoint = func(body []byte, dbs [db.MaxDB]*db.DB) ([]byte
     var data  []byte
 
     i := input["sonic-nat:input"].(map[string]interface{})
-    //valLst[0] = findInMap(NAT_CLEAR_PARAMS_MAP, strconv.FormatInt(int64(i["nat-param"]), 10))
     if i["nat-param"].(string) == "1" {
         valLst[0] = "ENTRIES"
     } else  {
@@ -1549,7 +1541,6 @@ var rpc_clear_nat RpcCallpoint = func(body []byte, dbs [db.MaxDB]*db.DB) ([]byte
     }
     valLst[1] = "ALL"
 
-    log.Infof("JSON Marshall valLst: %v\n", valLst)
     data, err = json.Marshal(valLst)
 
     if err != nil {
@@ -1557,6 +1548,7 @@ var rpc_clear_nat RpcCallpoint = func(body []byte, dbs [db.MaxDB]*db.DB) ([]byte
         return nil, err
     }
 
+    log.Infof("NAT DATA Published: %v\n", string(data))
     err = dbs[db.ApplDB].Publish("FLUSHNATREQUEST",data)
 
     return nil, err

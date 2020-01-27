@@ -238,7 +238,7 @@ limitations under the License.
             ptype="UINT"
             >
         </PARAM>
-     <ACTION builtin="clish_nop"></ACTION>
+        <ACTION builtin="clish_restcl">oper=PATCH url=/restconf/data/openconfig-interfaces:interfaces/interface=Ethernet${phy-if-name}/config body={"openconfig-interfaces:config": {"name": "Ethernet${phy-if-name}"}}</ACTION>
      </COMMAND>
 
      <COMMAND
@@ -635,6 +635,20 @@ limitations under the License.
         name="no"
         help="Negate a command or set its defaults"
       />
+      <COMMAND
+            name="nat-zone"
+            help="NAT Zone">
+            <PARAM
+                name="zone"
+                help="NAT zone of the interface"
+                ptype="RANGE_NAT_ZONE" />
+            <ACTION builtin="clish_restcl">oper=PATCH url=/restconf/data/openconfig-interfaces:interfaces/interface=${lo_name}/openconfig-interfaces-ext:nat-zone/config/nat-zone body={"openconfig-interfaces-ext:nat-zone": ${zone}}</ACTION>
+        </COMMAND>
+        <COMMAND
+            name="no nat-zone"
+            help="Remove Nat Zone on the interface" >
+            <ACTION builtin="clish_restcl">oper=DELETE url=/restconf/data/openconfig-interfaces:interfaces/interface=${lo_name}/openconfig-interfaces-ext:nat-zone/config/nat-zone</ACTION>
+        </COMMAND>
 </VIEW>
 
 <VIEW
@@ -713,12 +727,12 @@ limitations under the License.
     <COMMAND
            name="mclag-seperate-ip"
            help="Configure seperate IP on Vlan interface for L3 protocol support over MCLAG" >
-           <ACTION> python $SONIC_CLI_ROOT/sonic-cli-mclag.py patch_sonic_mclag_seperate_ip_list ${vlan_id} </ACTION>
+           <ACTION builtin="clish_pyobj">sonic_cli_mclag patch_sonic_mclag_seperate_ip_list ${vlan_id} </ACTION>
     </COMMAND>
     <COMMAND
            name="no mclag-seperate-ip"
            help="Unconfigure seperate IP on Vlan interface for L3 protocol support over MCLAG" >
-           <ACTION> python $SONIC_CLI_ROOT/sonic-cli-mclag.py delete_sonic_mclag_seperate_ip_list ${vlan_id} </ACTION>
+           <ACTION builtin="clish_pyobj">sonic_cli_mclag delete_sonic_mclag_seperate_ip_list ${vlan_id} </ACTION>
     </COMMAND>
 </VIEW> <!-- End of Configure View for Vlan-->
 <VIEW
@@ -914,13 +928,13 @@ limitations under the License.
            name="mclag"
            help="Configure MCLAG interface" >
            <PARAM name="domain_id" help="mclag domain id" ptype="RANGE_1_4095" />
-           <ACTION> python $SONIC_CLI_ROOT/sonic-cli-mclag.py patch_sonic_mclag_sonic_mclag_mclag_interface_mclag_interface_list ${domain_id} ${po_name} </ACTION>
+           <ACTION builtin="clish_pyobj">sonic_cli_mclag patch_sonic_mclag_sonic_mclag_mclag_interface_mclag_interface_list ${domain_id} ${po_name} </ACTION>
     </COMMAND>
     <COMMAND
            name="no mclag"
            help="Unconfigure MCLAG interface">
            <PARAM name="domain_id" help="mclag domain id" ptype="RANGE_1_4095" />
-           <ACTION> python $SONIC_CLI_ROOT/sonic-cli-mclag.py delete_sonic_mclag_sonic_mclag_mclag_interface_mclag_interface_list ${domain_id} ${po_name} </ACTION>
+           <ACTION builtin="clish_pyobj">sonic_cli_mclag delete_sonic_mclag_sonic_mclag_mclag_interface_mclag_interface_list ${domain_id} ${po_name} </ACTION>
     </COMMAND>
     </VIEW> <!-- End of Configure View for PortChannel-->
 

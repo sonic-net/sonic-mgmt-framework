@@ -108,6 +108,12 @@ def get_sag_netdev(intf):
 
 def get_if_master_and_oper(in_data):
     data = in_data
+    totalgwipv4 = 0
+    adminupgwipv4 = 0
+    operupgwipv4 = 0
+    totalgwipv6 = 0
+    adminupgwipv6 = 0
+    operupgwipv6 = 0
     output = {}
     sag_ifa4 = get_netdev_all_sag_ifa('IPv4')
     for item in data:
@@ -123,6 +129,23 @@ def get_if_master_and_oper(in_data):
                     output[item["ifname"]][ip]["admin_state"] = "up"
                 else:
                     output[item["ifname"]][ip]["admin_state"] = "down"
+                if item["table_distinguisher"] == "IPv6":
+                    totalgwipv6 = totalgwipv6 + 1
+                    if output[item["ifname"]][ip]["admin_state"] == "up":
+                        adminupgwipv6 = adminupgwipv6 + 1
+                    if output[item["ifname"]][ip]["oper_state"] == "up":
+                        operupgwipv6 = operupgwipv6 + 1
+                else:
+                    totalgwipv4 = totalgwipv4 + 1
+                    if output[item["ifname"]][ip]["admin_state"] == "up":
+                        adminupgwipv4 = adminupgwipv4 + 1
+                    if output[item["ifname"]][ip]["oper_state"] == "up":
+                        operupgwipv4 = operupgwipv4 + 1
+
+    output["counters"] = {}
+    output["counters"]["totalgw"] = {'IPv4':totalgwipv4, 'IPv6':totalgwipv6}
+    output["counters"]["adminupgw"] = {'IPv4':adminupgwipv4, 'IPv6':adminupgwipv6}
+    output["counters"]["operupgw"] = {'IPv4':operupgwipv4, 'IPv6':operupgwipv6}
 
     return output
 

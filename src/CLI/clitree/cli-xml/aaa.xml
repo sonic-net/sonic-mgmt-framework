@@ -31,6 +31,13 @@ limitations under the License.
      pattern="tacacs+(tacacs+)"
      help=""
      />
+<!--=========================================================================-->
+  <PTYPE
+     name="AAA_AUTH_RADIUS"
+     method="select"
+     pattern="radius(radius)"
+     help=""
+     />
   <!--=========================================================================-->
   <PTYPE
      name="AAA_AUTH_LOCAL"
@@ -86,9 +93,16 @@ limitations under the License.
                  mode="subcommand" 
                  ptype="SUBCOMMAND">
               <PARAM name="tacacs+" 
+                     test='"${radius}"!="radius"' 
                      help="tacacs+ authentication" 
                      optional="true" 
                      ptype="AAA_AUTH_TACPLUS"> 
+              </PARAM>
+              <PARAM name="radius" 
+                     test='"${tacacs+}"!="tacacs+"' 
+                     help="radius authentication" 
+                     optional="true" 
+                     ptype="AAA_AUTH_RADIUS"> 
               </PARAM>
           </PARAM>
           <PARAM name="tacacs+" 
@@ -102,8 +116,19 @@ limitations under the License.
                      ptype="AAA_AUTH_LOCAL"> 
               </PARAM>
           </PARAM>
+          <PARAM name="radius" 
+                 help="radius authentication" 
+                 optional="true" 
+                 mode="subcommand" 
+                 ptype="SUBCOMMAND"> 
+              <PARAM name="local" 
+                     help="local authentication" 
+                     optional="true" 
+                     ptype="AAA_AUTH_LOCAL"> 
+              </PARAM>
+          </PARAM>
       </PARAM>
-      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-aaa.py put_openconfig_system_system_aaa_authentication_config_authentication_method ${login} ${local} ${tacacs+} </ACTION>
+      <ACTION> python $SONIC_CLI_ROOT/sonic-cli-aaa.py put_openconfig_system_system_aaa_authentication_config_authentication_method ${login} ${local} ${tacacs+} ${radius} </ACTION>
     </COMMAND>
     <COMMAND name="no aaa" help="Unconfigure aaa authentication configuration"/>
     <COMMAND name="no aaa authentication" help="Unconfigure aaa authentication configuration"/>

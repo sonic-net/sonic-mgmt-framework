@@ -215,7 +215,7 @@ def get_sonic_radius_global():
 
     show_cli_output("show_radius_global.j2", api_response)
 
-def get_sonic_radius_servers(args):
+def get_sonic_radius_servers(args=[]):
     api_response = {}
     api = cc.ApiClient()
 
@@ -240,36 +240,43 @@ def get_sonic_radius_servers(args):
         if 'address' in server:
             api_response['address'] = server['address']
 
+        api_response['timeout'] = "-"
         if 'config' in server \
                 and 'timeout' in server['config']:
             api_response['timeout'] = server['config']['timeout']
 
+        api_response['port'] = "-"
         if 'radius' in server \
                 and 'config' in server['radius'] \
                 and 'auth-port' in server['radius']['config']:
             api_response['port'] = server['radius']['config']['auth-port']
 
+        api_response['key'] = "-"
         if 'radius' in server \
                 and 'config' in server['radius'] \
                 and 'secret-key' in server['radius']['config']:
             api_response['key'] = server['radius']['config']['secret-key']
 
+        api_response['retransmit'] = "-"
         if 'radius' in server \
                 and 'config' in server['radius'] \
                 and 'retransmit-attempts' in server['radius']['config']:
             api_response['retransmit'] = \
                 server['radius']['config']['retransmit-attempts']
 
+        api_response['authtype'] = "-"
         if 'config' in server \
                 and 'openconfig-system-ext:auth-type' in server['config']:
             api_response['authtype'] = \
                 server['config']['openconfig-system-ext:auth-type']
 
+        api_response['priority'] = "-"
         if 'config' in server \
                 and 'openconfig-system-ext:priority' in server['config']:
             api_response['priority'] = \
                 server['config']['openconfig-system-ext:priority']
 
+        api_response['vrf'] = "-"
         if 'config' in server \
                 and 'openconfig-system-ext:vrf' in server['config']:
             api_response['vrf'] = \
@@ -279,6 +286,12 @@ def get_sonic_radius_servers(args):
 
 
 def run(func, args):
+    pipestr().write(args)
+    if func == 'get_sonic_radius':
+        get_sonic_radius_global()
+        get_sonic_radius_servers()
+        return
+
     response = invoke_api(func, args)
 
     if response.ok():

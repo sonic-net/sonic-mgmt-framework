@@ -23,7 +23,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"net/http"
+	"strconv"
 	"strings"
+
+	"github.com/golang/glog"
 )
 
 const mimeYangDataJSON = "application/yang-data+json"
@@ -94,6 +97,9 @@ func capabilityHandler(w http.ResponseWriter, r *http.Request) {
 	c.Capabilities.Capability = append(c.Capabilities.Capability,
 		"urn:ietf:params:restconf:capability:defaults:1.0?basic-mode=report-all")
 
+	c.Capabilities.Capability = append(c.Capabilities.Capability,
+		"urn:ietf:params:restconf:capability:depth:1.0")
+
 	var data []byte
 	if strings.HasSuffix(r.URL.Path, "/capabilities") {
 		data, _ = json.Marshal(&c)
@@ -112,4 +118,55 @@ func capabilityHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", mimeYangDataJSON)
 	w.Write(data)
+}
+
+// parseRestconfQueryParams parses query parameters of a request 'r' to
+// fill translibArgs object 'args'. Only RESTCONF standard parameters
+// are accepted. Returns httpError with status 400 if any parameter is
+// unsupported or has invalid value.
+func parseRestconfQueryParams(args *translibArgs, r *http.Request) error {
+	var err error
+	qParams := r.URL.Query()
+
+	for name, val := range qParams {
+		switch name {
+		case "depth":
+			args.depth, err = parseDepthParam(val, r)
+		default:
+			err = httpError(http.StatusBadRequest, "Unsupported query parameter '%s'", name)
+		}
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// parseDepthParam parses query parameter value for "depth" parameter.
+// See https://tools.ietf.org/html/rfc8040#section-4.8.2
+func parseDepthParam(v []string, r *http.Request) (uint, error) {
+	if r.Method != "GET" && r.Method != "HEAD" {
+		return 0, httpError(http.StatusBadRequest,
+			"%s does not support 'depth' query parameter", r.Method)
+	}
+
+	if len(v) != 1 {
+		glog.Errorf("Expecting only 1 depth param.. found %d", len(v))
+		return 0, httpError(http.StatusBadRequest,
+			"Invalid 'depth' query parameter")
+	}
+
+	if v[0] == "unbounded" {
+		return 0, nil
+	}
+
+	d, err := strconv.ParseUint(v[0], 10, 16)
+	if err != nil || d == 0 {
+		glog.Errorf("Bad depth value '%s', err=%v", v[0], err)
+		return 0, httpError(http.StatusBadRequest,
+			"Invalid 'depth' query parameter")
+	}
+
+	return uint(d), nil
 }

@@ -46,137 +46,110 @@ limitations under the License.
 
 </VIEW>
 
-<!--MODE : interface -->
+  <!--MODE : interface -->
+  <VIEW name="configure-vlan-view">
+    <!-- ip static-anycast-gateway -->
+    <COMMAND name="ip anycast-address" help="Configure IPv4 Static Anycast Gateway">
+      <PARAM name="anycast-addr" help="Anycast Gateway Address" ptype="IP_ADDR_MASK"> </PARAM>
+		<ACTION>python $SONIC_CLI_ROOT/sonic-cli-sag.py patch_openconfig_interfaces_ext_interfaces_interface_subinterfaces_subinterface_ipv4_sag_ipv4_config_static_anycast_gateway ${vlan_id} ${anycast-addr}&#xA; </ACTION>
+    </COMMAND>
+    <!-- no ip static-anycast-gateway -->
+    <COMMAND name="no ip anycast-address" help="Unconfigure IPv4 Static Anycast Gateway">
+      <PARAM name="anycast-addr" help="Anycast Gateway Address" ptype="IP_ADDR_MASK"> </PARAM>
+      <ACTION>python $SONIC_CLI_ROOT/sonic-cli-sag.py del_llist_openconfig_interfaces_ext_interfaces_interface_subinterfaces_subinterface_ipv4_sag_ipv4_config_static_anycast_gateway ${vlan_id} ${anycast-addr}&#xA; </ACTION>
+    </COMMAND>
+    <!-- ipv6 anycast-address -->
+    <COMMAND name="ipv6 anycast-address" help="Configure IPv6 Static Anycast Gateway">
+      <PARAM name="anycast-addr" help="Anycast Gateway Address" ptype="IPV6_ADDR_MASK"> </PARAM>
+      <ACTION>python $SONIC_CLI_ROOT/sonic-cli-sag.py patch_openconfig_interfaces_ext_interfaces_interface_subinterfaces_subinterface_ipv6_sag_ipv6_config_static_anycast_gateway ${vlan_id} ${anycast-addr}&#xA; </ACTION>
+    </COMMAND>
+    <!-- no ipv6 anycast-address -->
+    <COMMAND name="no ipv6 anycast-address" help="Unconfigure IPv6 Static Anycast Gateway">
+      <PARAM name="anycast-addr" help="Anycast Gateway Address" ptype="IPV6_ADDR_MASK"> </PARAM>
+      <ACTION>python $SONIC_CLI_ROOT/sonic-cli-sag.py del_llist_openconfig_interfaces_ext_interfaces_interface_subinterfaces_subinterface_ipv6_sag_ipv6_config_static_anycast_gateway ${vlan_id} ${anycast-addr}&#xA; </ACTION>
+    </COMMAND>
+  </VIEW>
+  <VIEW name="configure-view">
+    <!-- ip anycast-mac-address -->
+    <COMMAND name="ip anycast-mac-address" help="Configure Anycast Gateway MAC address">
+      <PARAM name="anycast-mac" help="Anycast Gateway MAC Address" ptype="MAC_ADDR"> </PARAM>
+      <ACTION>python $SONIC_CLI_ROOT/sonic-cli-sag.py patch_openconfig_network_instance_ext_network_instances_network_instance_global_sag_config_anycast_mac ${anycast-mac}&#xA; </ACTION>
+    </COMMAND>
+    <!-- no ip anycast-mac-address -->
+    <COMMAND name="no ip anycast-mac-address" help="Configure Anycast Gateway MAC address">
+      <PARAM name="anycast-mac" help="Anycast Gateway MAC Address" ptype="MAC_ADDR"> </PARAM>
+      <ACTION>python $SONIC_CLI_ROOT/sonic-cli-sag.py delete_openconfig_network_instance_ext_network_instances_network_instance_global_sag_config_anycast_mac ${anycast-mac}&#xA; </ACTION>
+    </COMMAND>
 
-<VIEW name="configure-if-view">
-
-<!-- ip static-anycast-gateway -->
-   <COMMAND
-         name="ip anycast-address"
-         help="Configure IPv4 Static Anycast Gateway"
-         >
-         <PARAM
-             name="anycast-addr"
-             help="Anycast Gateway Address"
-             ptype="IP_ADDR"
-             >
+    <COMMAND
+        name="ip anycast-address"
+        help="Enable/Disable IPv4 Anycast Gateway"
+        >
+        <PARAM
+            name="anycast_sub_cmds"
+            help="Enable/Disable IPv4 Anycast Gateway"
+            ptype="SUBCOMMAND"
+            mode="switch"
+            >
+            <PARAM
+                name="enable"
+                help="Enables IPv4 Anycast Gateway"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                >
+            </PARAM>
+            <PARAM
+                name="disable"
+                help="Disable IPv4 Anycast Gateway"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                >
+            </PARAM>
         </PARAM>
-		<ACTION builtin="clish_nop"> </ACTION>          
-    </COMMAND>
+		<ACTION>
+		
+        if test "${anycast_sub_cmds}" = "enable";then&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-sag.py patch_openconfig_network_instance_ext_network_instances_network_instance_global_sag_config_ipv4_enable True&#xA;
+        elif test "${anycast_sub_cmds}" = "disable";then&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-sag.py patch_openconfig_network_instance_ext_network_instances_network_instance_global_sag_config_ipv4_enable False&#xA;
+        fi&#xA;	
+		
+		</ACTION>    </COMMAND>
 
-<!-- no ip static-anycast-gateway -->
-   <COMMAND
-         name="no ip anycast-address"
-         help="Unconfigure IPv4 Static Anycast Gateway"
-         >
-         <PARAM
-             name="anycast-addr"
-             help="Anycast Gateway Address"
-             ptype="IP_ADDR"
-             >
+    <COMMAND
+        name="ipv6 anycast-address"
+        help="Enable/Disable IPv6 Anycast Gateway"
+        >
+        <PARAM
+            name="anycast_sub_cmds"
+            help="Enable/Disable IPv6 Anycast Gateway"
+            ptype="SUBCOMMAND"
+            mode="switch"
+            >
+            <PARAM
+                name="enable"
+                help="Enables IPv6 Anycast Gateway"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                >
+            </PARAM>
+            <PARAM
+                name="disable"
+                help="Disable IPv6 Anycast Gateway"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                >
+            </PARAM>
         </PARAM>
-		<ACTION builtin="clish_nop"> </ACTION>          
-    </COMMAND>	
+		<ACTION>
+		
+        if test "${anycast_sub_cmds}" = "enable";then&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-sag.py patch_openconfig_network_instance_ext_network_instances_network_instance_global_sag_config_ipv6_enable True&#xA;
+        elif test "${anycast_sub_cmds}" = "disable";then&#xA;
+            python $SONIC_CLI_ROOT/sonic-cli-sag.py patch_openconfig_network_instance_ext_network_instances_network_instance_global_sag_config_ipv6_enable False&#xA;
+        fi&#xA;	
+		
+		</ACTION>      </COMMAND>
 
-
-<!-- ipv6 anycast-address -->
-   <COMMAND
-         name="ipv6 anycast-address"
-         help="Configure IPv6 Static Anycast Gateway"
-         >
-         <PARAM
-             name="anycast-addr"
-             help="Anycast Gateway Address"
-             ptype="IP_ADDR"
-             >
-        </PARAM>
-		<ACTION builtin="clish_nop"> </ACTION>          
-    </COMMAND>
-
-<!-- no ipv6 anycast-address -->
-   <COMMAND
-         name="no ipv6 anycast-address"
-         help="Unconfigure IPv6 Static Anycast Gateway"
-         >
-         <PARAM
-             name="anycast-addr"
-             help="Anycast Gateway Address"
-             ptype="IP_ADDR"
-             >
-        </PARAM>
-		<ACTION builtin="clish_nop"> </ACTION>          
-    </COMMAND>	
-
-
-</VIEW>
-
-
-<VIEW name="configure-view">
-
-<!-- ip anycast-mac-address -->
-   <COMMAND
-         name="ip anycast-mac-address"
-         help="Configure Anycast Gateway MAC address"
-         >
-         <PARAM
-             name="anycast-mac"
-             help="Anycast Gateway MAC Address"
-             ptype="STRING_32"
-             >
-        </PARAM>
-		<ACTION builtin="clish_nop"> </ACTION>          
-    </COMMAND>
-
-<!-- no ip anycast-mac-address -->
-   <COMMAND
-         name="no ip anycast-mac-address"
-         help="Configure Anycast Gateway MAC address"
-         >
-         <PARAM
-             name="anycast-mac"
-             help="Anycast Gateway MAC Address"
-             ptype="STRING_32"
-             >
-        </PARAM>
-		<ACTION builtin="clish_nop"> </ACTION>          
-    </COMMAND>
-
-<!-- ip anycast-address disable -->
-   <COMMAND
-         name="ip anycast-address disable"
-         help="Enable IPv4 Anycast Gateway"
-         >
-		<ACTION builtin="clish_nop"> </ACTION>          
-    </COMMAND>
-
-<!-- ip anycast-address eanble -->
-   <COMMAND
-         name="ip anycast-address enable"
-         help="Enable IPv4 Anycast Gateway"
-         >
-		<ACTION builtin="clish_nop"> </ACTION>          
-    </COMMAND>
-
-	
-<!-- ipv6 anycast-address disable -->
-   <COMMAND
-         name="ipv6 anycast-address disable"
-         help="Enable IPv6 Anycast Gateway"
-         >
-		<ACTION builtin="clish_nop"> </ACTION>          
-    </COMMAND>
-
-<!-- ipv6 anycast-address eanble -->
-   <COMMAND
-         name="ipv6 anycast-address enable"
-         help="Enable IPv6 Anycast Gateway"
-         >
-		<ACTION builtin="clish_nop"> </ACTION>          
-    </COMMAND>
-
-</VIEW>
-
-
-
-
+  </VIEW>
 </CLISH_MODULE>

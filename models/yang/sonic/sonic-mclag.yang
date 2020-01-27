@@ -19,6 +19,10 @@ module sonic-mclag {
         prefix sonic-ext;
     }
 
+    import sonic-port {
+        prefix prt;
+    }
+
     import sonic-portchannel {
         prefix spc;
     }
@@ -68,7 +72,14 @@ module sonic-mclag {
                     type inet:ipv4-address;
                 }
                 leaf peer_link {
-                    type string;
+                    type union {
+                        type leafref {
+                            path "/prt:sonic-port/prt:PORT/prt:PORT_LIST/prt:ifname";
+                        }
+                        type leafref {
+                            path "/spc:sonic-portchannel/spc:PORTCHANNEL/spc:PORTCHANNEL_LIST/spc:name";
+                        }
+                    }
                 }
                 leaf keepalive_interval {
                     type uint16 {
@@ -91,10 +102,6 @@ module sonic-mclag {
                 must "(keepalive_interval * 3) <= session_timeout" {
                         error-message "(keepalive interval * 3) <= session_timeout value";
                         error-app-tag keepalive_interval-invalid;
-                }
-                must "session_timeout >= (3 *keepalive_interval)" {
-                        error-message "(keepalive interval * 3) <= session_timeout value";
-                        error-app-tag session_timeout-invalid;
                 }
             }
         }
@@ -127,15 +134,14 @@ module sonic-mclag {
                 key "if_name";
 
                 must "count(../../MCLAG_DOMAIN/MCLAG_DOMAIN_LIST/domain_id) != 0" {
-                //must "count(../../MCLAG_DOMAIN/MCLAG_DOMAIN_LIST) != 0" {
                     error-message "mclag not configured";
                     error-app-tag mclag-invalid;
                 }
 
-                //must "count(/svlan-intf:sonic-vlan-interface/svlan-intf:VLAN_INTERFACE/svlan-intf:VLAN_INTERFACE_IPADDR_LIST[svlan-intf:vlanName=./if_name]) = 0" {
-                //    error-message "remove configured ip/v6 address and reconfigure after seperate ip configuration";
-                //    error-app-tag vlan-intf-ip-invalid;
-                //}
+                must "count(/svlan-intf:sonic-vlan-interface/svlan-intf:VLAN_INTERFACE/svlan-intf:VLAN_INTERFACE_IPADDR_LIST[svlan-intf:vlanName=current()/if_name]) = 0" {
+                    error-message "remove configured ip/v6 address and reconfigure after seperate ip configuration";
+                    error-app-tag vlan-intf-ip-invalid;
+                }
 
                 leaf if_name {
                     type leafref {
@@ -183,6 +189,29 @@ module sonic-mclag {
                 }
             }
         }
+
+        //state MCLAG Local interface Table
+        container MCLAG_LOCAL_INTF_TABLE { 
+
+            sonic-ext:db-name "STATE_DB"; 
+            sonic-ext:key-delim "|"; 
+
+            config false;
+            description "state db LOCAL interface table";
+
+            list MCLAG_LOCAL_INTF_TABLE_LIST { 
+                key "if_name";
+
+                leaf if_name {
+                    type string;
+                }
+
+                leaf port_isolate_peer_link {
+                    type boolean; 
+                }
+            }
+        }
+
 
         //state MCLAG Remote interface Table
         container MCLAG_REMOTE_INTF_TABLE { 

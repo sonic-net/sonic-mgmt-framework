@@ -143,7 +143,7 @@ type CVL struct {
 	requestCache map[string]map[string][]*requestCacheType//Cache of validated data,
 				//per table, per key. Can be used as dependent data in next request
 	maxTableElem map[string]int //max element count per table
-	batchLeaf string
+	batchLeaf []*yparser.YParserLeafValue //field name and value
 	chkLeafRefWithOthCache bool
 	yv *YValidator //Custom YANG validator for validating external dependencies
 	custvCache custv.CustValidationCache //Custom validation cache per session
@@ -644,7 +644,7 @@ func addTableNamesForMustExp() {
 					}
 					//Table name should appear like "../VLAN_MEMBER_LIST/tagging_mode' or '
 					// "/prt:PORT/prt:ifname"
-					re := regexp.MustCompile(fmt.Sprintf(".*[/]([-_a-zA-Z]*:)?%s_LIST[\\[/]", tblNameSrch))
+					re := regexp.MustCompile(fmt.Sprintf(".*[/]([-_a-zA-Z]*:)?%s_LIST[\\[/]?", tblNameSrch))
 					matches := re.FindStringSubmatch(mustExp.expr)
 					if (len(matches) > 0) {
 						//stores the table name 

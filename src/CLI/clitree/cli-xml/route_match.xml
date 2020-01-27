@@ -154,7 +154,7 @@ limitations under the License.
         help="Set routing policy match criteria to ipv4 prefix-list"
         >
         <PARAM name="prefix-list-name"
-                     help="Name of prefis-list (Max size 63)"
+                     help="Name of prefix-list (Max size 63)"
                      ptype="STRING"
         />
         <ACTION>
@@ -222,7 +222,7 @@ limitations under the License.
         >
         <PARAM name="match-tag"
                      help="tag value (1-4294967295)"
-                     ptype="STRING"
+                     ptype="RANGE_1_4294967295"
         />
        <ACTION>
            python $SONIC_CLI_ROOT/sonic-cli-route-match.py patch_openconfig_routing_policy_ext_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_match_tag_set_config_tag_value  ${name} ${seq_num} ${match-tag}

@@ -38,23 +38,30 @@ import (
 func Process(w http.ResponseWriter, r *http.Request) {
 	rc, r := GetContext(r)
 	reqID := rc.ID
-	path := r.URL.Path
+	args := translibArgs{reqID: reqID, method: r.Method}
 
+	var err error
 	var status int
 	var data []byte
 	var rtype string
 
-	glog.Infof("[%s] %s %s; content-len=%d", reqID, r.Method, path, r.ContentLength)
-	_, body, err := getRequestBody(r, rc)
+	glog.Infof("[%s] %s %s; content-len=%d", reqID, r.Method, r.URL.Path, r.ContentLength)
+	_, args.data, err = getRequestBody(r, rc)
 	if err != nil {
 		status, data, rtype = prepareErrorResponse(err, r)
 		goto write_resp
 	}
 
-	path = getPathForTranslib(r)
-	glog.V(2).Infof("[%s] Translated path = %s", reqID, path)
+	args.path = getPathForTranslib(r)
+	glog.V(1).Infof("[%s] Translated path = %s", reqID, args.path)
 
-	status, data, err = invokeTranslib(r, rc, path, body)
+	err = parseQueryParams(&args, r)
+	if err != nil {
+		status, data, rtype = prepareErrorResponse(err, r)
+		goto write_resp
+	}
+
+	status, data, err = invokeTranslib(&args, r, rc)
 	if err != nil {
 		glog.Errorf("[%s] Translib error %T - %v", reqID, err, err)
 		status, data, rtype = prepareErrorResponse(err, r)
@@ -229,9 +236,29 @@ func isOperationsRequest(r *http.Request) bool {
 	//Use swagger generated API name instead???
 }
 
+// parseQueryParams parses the http request's query parameters
+// into a translibArgs args.
+func parseQueryParams(args *translibArgs, r *http.Request) error {
+	if strings.HasPrefix(r.URL.Path, restconfPathPrefix) {
+		return parseRestconfQueryParams(args, r)
+	}
+
+	return nil
+}
+
+// translibArgs holds arguments for invoking translib APIs.
+type translibArgs struct {
+	reqID  string // request id
+	method string // method name
+	path   string // Translib path
+	data   []byte // payload
+
+	depth uint // RESTCONF depth, for Get API only
+}
+
 // invokeTranslib calls appropriate TransLib API for the given HTTP
 // method. Returns response status code and content.
-func invokeTranslib(r *http.Request, rc *RequestContext, path string, payload []byte) (int, []byte, error) {
+func invokeTranslib(args *translibArgs, r *http.Request, rc *RequestContext) (int, []byte, error) {
 	var status = 400
 	var content []byte
 	var err error
@@ -240,7 +267,16 @@ func invokeTranslib(r *http.Request, rc *RequestContext, path string, payload []
 
 	switch r.Method {
 	case "GET", "HEAD":
-		req := translib.GetRequest{Path: path, User: translib.UserRoles{Name: rc.Auth.User, Roles: rc.Auth.Roles}}
+
+		req := translib.GetRequest{
+			Path:  args.path,
+			Depth: args.depth,
+			User: translib.UserRoles{Name: rc.Auth.User, Roles: rc.Auth.Roles},
+		}
+		if ClientAuth.Any() {
+			req.AuthEnabled = true
+		}
+
 		resp, err1 := translib.Get(req)
 		if err1 == nil {
 			status = 200
@@ -251,7 +287,15 @@ func invokeTranslib(r *http.Request, rc *RequestContext, path string, payload []
 
 	case "POST":
 		if isOperationsRequest(r) {
-			req := translib.ActionRequest{Path: path, Payload: payload, User: translib.UserRoles{Name: rc.Auth.User, Roles: rc.Auth.Roles}}
+
+			req := translib.ActionRequest{
+				Path:    args.path,
+				Payload: args.data,
+				User: translib.UserRoles{Name: rc.Auth.User, Roles: rc.Auth.Roles},
+			}
+			if ClientAuth.Any() {
+				req.AuthEnabled = true
+			}
 			res, err1 := translib.Action(req)
 			if err1 == nil {
 				status = 200
@@ -261,24 +305,53 @@ func invokeTranslib(r *http.Request, rc *RequestContext, path string, payload []
 			}
 		} else {
 			status = 201
-			req := translib.SetRequest{Path: path, Payload: payload, User: translib.UserRoles{Name: rc.Auth.User, Roles: rc.Auth.Roles}}
+
+			req := translib.SetRequest{
+				Path:    args.path,
+				Payload: args.data,
+				User: translib.UserRoles{Name: rc.Auth.User, Roles: rc.Auth.Roles},
+			}
+
 			_, err = translib.Create(req)
 		}
 
 	case "PUT":
 		//TODO send 201 if PUT resulted in creation
 		status = 204
-		req := translib.SetRequest{Path: path, Payload: payload, User: translib.UserRoles{Name: rc.Auth.User, Roles: rc.Auth.Roles}}
+
+		req := translib.SetRequest{
+			Path:    args.path,
+			Payload: args.data,
+			User: translib.UserRoles{Name: rc.Auth.User, Roles: rc.Auth.Roles},
+		}
+		if ClientAuth.Any() {
+			req.AuthEnabled = true
+		}
 		_, err = translib.Replace(req)
 
 	case "PATCH":
 		status = 204
-		req := translib.SetRequest{Path: path, Payload: payload, User: translib.UserRoles{Name: rc.Auth.User, Roles: rc.Auth.Roles}}
+
+		req := translib.SetRequest{
+			Path:    args.path,
+			Payload: args.data,
+			User: translib.UserRoles{Name: rc.Auth.User, Roles: rc.Auth.Roles},
+		}
+		if ClientAuth.Any() {
+			req.AuthEnabled = true
+		}
 		_, err = translib.Update(req)
 
 	case "DELETE":
 		status = 204
-		req := translib.SetRequest{Path: path, User: translib.UserRoles{Name: rc.Auth.User, Roles: rc.Auth.Roles}}
+
+		req := translib.SetRequest{
+			Path:  args.path,
+			User: translib.UserRoles{Name: rc.Auth.User, Roles: rc.Auth.Roles},
+		}
+		if ClientAuth.Any() {
+			req.AuthEnabled = true
+		}
 		_, err = translib.Delete(req)
 
 	default:
