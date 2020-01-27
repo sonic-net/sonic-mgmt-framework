@@ -26,6 +26,10 @@ module sonic-interface {
         prefix cmn;
     }
 
+	import sonic-extension {
+		prefix sonic-ext;
+	}
+
 
 	organization
 		"SONiC";
@@ -138,6 +142,7 @@ module sonic-interface {
                         error-app-tag donor-intf-non-def-vrf;
                     }
 
+					sonic-ext:custom-validation ValidateIpv4UnnumIntf;
                     type leafref {
                         path "/lointf:sonic-loopback-interface/lointf:LOOPBACK_INTERFACE/lointf:LOOPBACK_INTERFACE_LIST/lointf:loIfName";
                     }
