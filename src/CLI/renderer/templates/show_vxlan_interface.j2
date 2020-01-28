@@ -1,0 +1,14 @@
+{% if json_output -%}
+
+{% for tunnel in  json_output['sonic-vxlan:VXLAN_TUNNEL_LIST'] %}
+{{'VTEP Name        : '}} {{(tunnel.name|string).ljust(8)}}
+{{'VTEP Source IP   : '}} {{(tunnel.src_ip|string).ljust(8)}}
+{% endfor %}
+
+{% for nvo_list in  json_output['sonic-vxlan:EVPN_NVO_LIST'] %}
+{{'EVPN NVO Name    : '}} {{(nvo_list.name|string).ljust(8)}}
+{{'EVPN VTEP        : '}} {{(nvo_list.source_vtep|string).ljust(8)}}
+{% endfor %}
+
+{% endif %}
+

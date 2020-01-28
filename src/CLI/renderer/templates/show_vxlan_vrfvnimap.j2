@@ -1,0 +1,15 @@
+{% set count = namespace(value=0) %}
+
+{{'%-8s'|format("VRF")}}  {{'%-10s'|format("VNI")}}
+{{'%-8s'|format("======")}}  {{'%-10s'|format("=====")}}
+
+{% if json_output -%}
+
+{% for tunnel in  json_output['sonic-vrf:VRF_LIST'] %}
+{{'%-8s'|format(tunnel['vrf_name'])}}  {{'%-8s'|format(tunnel['vni'])}}
+  {% set count.value = count.value + 1 %}
+{% endfor %}
+
+{{'Total count : %4s'|format(count.value)}}
+{% endif %}
+
