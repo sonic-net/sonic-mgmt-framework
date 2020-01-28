@@ -27,6 +27,17 @@ module openconfig-spanning-tree-ext {
         reference "IEEE 802.1D 17.13.7 Bridge Identifier Priority";
     }
 
+    typedef stp-port-priority-type-ext {
+        type uint8 {
+            range 0..240;
+        }
+        description
+            "The manageable component of the Port Identifier,
+            also known as the Port Priority";
+        reference
+            "IEEE 802.1D 17.13.10 Port Identifier Priority";
+    }
+
     grouping stp-global-ext-config {
         leaf rootguard-timeout {
             type uint16 {
@@ -34,6 +45,10 @@ module openconfig-spanning-tree-ext {
             }
             units "seconds";
             default 30;
+            description
+                "Once superior BPDUs stop coming on the port, device will wait
+                for a period until root guard timeout before moving the port to
+                forwarding state";
         }
         uses oc-stp:stp-timer-config;
         uses oc-stp:bridge-priority-config;
@@ -78,7 +93,7 @@ module openconfig-spanning-tree-ext {
         }
 
         leaf port-priority {
-            type oc-stp-types:stp-port-priority-type;
+            type stp-port-priority-type-ext;
             description
                 "The manageable component of the Port Identifier,
                 also known as the Port Priority";
@@ -279,6 +294,18 @@ module openconfig-spanning-tree-ext {
     deviation /oc-stp:stp/oc-stp:rapid-pvst/oc-stp:vlan/oc-stp:config/oc-stp:bridge-priority {
         deviate replace {
             type stp-bridge-priority-type-ext;
+        }
+    }
+
+    deviation /oc-stp:stp/oc-stp:rapid-pvst/oc-stp:vlan/oc-stp:interfaces/oc-stp:interface/oc-stp:config/oc-stp:port-priority {
+        deviate replace {
+            type stp-port-priority-type-ext;
+        }
+    }
+
+    deviation /oc-stp:stp/oc-stp-ext:pvst/oc-stp-ext:vlan/oc-stp-ext:interfaces/oc-stp-ext:interface/oc-stp-ext:config/oc-stp-ext:port-priority {
+        deviate replace {
+            type stp-port-priority-type-ext;
         }
     }
 
