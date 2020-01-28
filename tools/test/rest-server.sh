@@ -51,15 +51,16 @@ if [ -z $YANG_MODELS_PATH ]; then
 fi
 
 EXTRA_ARGS="-ui $SERVER_DIR/dist/ui -logtostderr"
-HAS_CRTFILE=
-HAS_KEYFILE=
 
 for V in $@; do
     case $V in
     -cert|--cert|-cert=*|--cert=*) HAS_CRTFILE=1;;
     -key|--key|-key=*|--key=*) HAS_KEYFILE=1;;
+    -v) HAS_V=1;;
     esac
 done
+
+[ -z $HAS_V ] && EXTRA_ARGS+=" -v 1"
 
 cd $SERVER_DIR
 
