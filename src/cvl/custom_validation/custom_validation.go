@@ -277,8 +277,13 @@ func (t *CustomValidation) ValidatePtp(
 		platform = s.Index(1).Interface().(string)
 	}
 	log.Info("ValidatePtp platform : ", platform)
+	/* SONIC-16692. For some reason, with the addition of docker_routing_config_mode = split
+	in DEVICE_METADATA|localhost, redis returns the hwsku. So adding hwsku in list of strings
+	*/
 	if !strings.Contains(platform, "x86_64-accton_as7712_32x") && 
-		!strings.Contains(platform, "x86_64-accton_as5712_54x") {
+		!strings.Contains(platform, "x86_64-accton_as5712_54x") &&
+		!strings.Contains(platform, "Accton-AS7712-32X") &&
+		!strings.Contains(platform, "Accton-AS5712-54X") {
 		errStr := "This object is not supported in this platform"
 		return CVLErrorInfo{
 			ErrCode: CVL_SEMANTIC_ERROR,
