@@ -481,9 +481,44 @@ limitations under the License.
    </ACTION>
 
      </COMMAND>
+
    </VIEW>
 
+
      <VIEW name="enable-view">
+
+     <!--====================clear <translations | statistics>======================-->
+
+    <COMMAND
+        name="clear nat"
+        help="Clear NAT">
+        <PARAM
+            name="clear-subcommands"
+            help="Clear subcommands"
+            mode="switch"
+            ptype="SUBCOMMAND"
+            >
+            <PARAM
+                name="translations"
+                help="Clearing dynamic NAT Translations"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                >
+            </PARAM>
+            <PARAM
+                name="statistics"
+                help="Clearing NAT Statistics"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                >
+            </PARAM>
+        </PARAM>
+    <ACTION>
+        python $SONIC_CLI_ROOT/sonic-cli-nat.py rpc_nat_clear ${clear-subcommands}&#xA;
+    </ACTION>
+    </COMMAND>
+
+
     <!--show nat -->
     <COMMAND
          name="show nat"
