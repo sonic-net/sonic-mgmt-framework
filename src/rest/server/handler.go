@@ -38,7 +38,12 @@ import (
 func Process(w http.ResponseWriter, r *http.Request) {
 	rc, r := GetContext(r)
 	reqID := rc.ID
-	args := translibArgs{reqID: reqID, method: r.Method}
+	args := translibArgs{
+		reqID: reqID,
+		method: r.Method,
+		AuthEnabled: rc.ClientAuth.Any(),
+		User: translib.UserRoles{Name: rc.Auth.User, Roles: rc.Auth.Roles},
+	}
 
 	var err error
 	var status int
@@ -252,8 +257,9 @@ type translibArgs struct {
 	method string // method name
 	path   string // Translib path
 	data   []byte // payload
-
 	depth uint // RESTCONF depth, for Get API only
+	AuthEnabled bool //Enable Authorization
+	User translib.UserRoles // User and role info for RBAC
 }
 
 // invokeTranslib calls appropriate TransLib API for the given HTTP
@@ -262,7 +268,7 @@ func invokeTranslib(args *translibArgs, r *http.Request, rc *RequestContext) (in
 	var status = 400
 	var content []byte
 	var err error
-
+	
 	ts := time.Now()
 
 	switch r.Method {
@@ -271,10 +277,8 @@ func invokeTranslib(args *translibArgs, r *http.Request, rc *RequestContext) (in
 		req := translib.GetRequest{
 			Path:  args.path,
 			Depth: args.depth,
-			User: translib.UserRoles{Name: rc.Auth.User, Roles: rc.Auth.Roles},
-		}
-		if ClientAuth.Any() {
-			req.AuthEnabled = true
+			AuthEnabled: args.AuthEnabled,
+			User: args.User,
 		}
 
 		resp, err1 := translib.Get(req)
@@ -291,10 +295,8 @@ func invokeTranslib(args *translibArgs, r *http.Request, rc *RequestContext) (in
 			req := translib.ActionRequest{
 				Path:    args.path,
 				Payload: args.data,
-				User: translib.UserRoles{Name: rc.Auth.User, Roles: rc.Auth.Roles},
-			}
-			if ClientAuth.Any() {
-				req.AuthEnabled = true
+				AuthEnabled: args.AuthEnabled,
+				User: args.User,
 			}
 			res, err1 := translib.Action(req)
 			if err1 == nil {
@@ -309,7 +311,8 @@ func invokeTranslib(args *translibArgs, r *http.Request, rc *RequestContext) (in
 			req := translib.SetRequest{
 				Path:    args.path,
 				Payload: args.data,
-				User: translib.UserRoles{Name: rc.Auth.User, Roles: rc.Auth.Roles},
+				AuthEnabled: args.AuthEnabled,
+				User: args.User,
 			}
 
 			_, err = translib.Create(req)
@@ -322,10 +325,8 @@ func invokeTranslib(args *translibArgs, r *http.Request, rc *RequestContext) (in
 		req := translib.SetRequest{
 			Path:    args.path,
 			Payload: args.data,
-			User: translib.UserRoles{Name: rc.Auth.User, Roles: rc.Auth.Roles},
-		}
-		if ClientAuth.Any() {
-			req.AuthEnabled = true
+			AuthEnabled: args.AuthEnabled,
+			User: args.User,
 		}
 		_, err = translib.Replace(req)
 
@@ -335,10 +336,8 @@ func invokeTranslib(args *translibArgs, r *http.Request, rc *RequestContext) (in
 		req := translib.SetRequest{
 			Path:    args.path,
 			Payload: args.data,
-			User: translib.UserRoles{Name: rc.Auth.User, Roles: rc.Auth.Roles},
-		}
-		if ClientAuth.Any() {
-			req.AuthEnabled = true
+			AuthEnabled: args.AuthEnabled,
+			User: args.User,
 		}
 		_, err = translib.Update(req)
 
@@ -347,10 +346,8 @@ func invokeTranslib(args *translibArgs, r *http.Request, rc *RequestContext) (in
 
 		req := translib.SetRequest{
 			Path:  args.path,
-			User: translib.UserRoles{Name: rc.Auth.User, Roles: rc.Auth.Roles},
-		}
-		if ClientAuth.Any() {
-			req.AuthEnabled = true
+			AuthEnabled: args.AuthEnabled,
+			User: args.User,
 		}
 		_, err = translib.Delete(req)
 

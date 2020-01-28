@@ -138,7 +138,7 @@ type routeNode struct {
 }
 
 // add function registers a REST API info into routeTree.
-func (t *routeTree) add(parentPrefix, path string, rr *routeRegInfo) {
+func (t *routeTree) add(parentPrefix, path string, rr *routeRegInfo, auth UserAuth) {
 	root, next := pathSplit(path)
 	node := (*t)[root]
 	if node == nil {
@@ -158,14 +158,14 @@ func (t *routeTree) add(parentPrefix, path string, rr *routeRegInfo) {
 			node.handlers = make(map[string]http.Handler)
 		}
 
-		node.handlers[rr.method] = withMiddleware(rr.handler, rr.name)
+		node.handlers[rr.method] = withMiddleware(rr.handler, rr.name, auth)
 
 	} else {
 		if node.subpaths == nil {
 			node.subpaths = make(routeTree)
 		}
 
-		node.subpaths.add(node.path, next, rr)
+		node.subpaths.add(node.path, next, rr, auth)
 	}
 }
 
@@ -302,13 +302,13 @@ func AddRoute(name, method, pattern string, handler http.HandlerFunc) {
 // NewRouter creates a new http router instance for the REST server.
 // Includes all routes registered via AddRoute API as well as few
 // in-built routes.
-func NewRouter() http.Handler {
-	router := newRouter()
+func NewRouter(auth UserAuth) http.Handler {
+	router := newRouter(auth)
 	return withStat(router)
 }
 
 // newRouter creates a new Router instance from the registered routes.
-func newRouter() *Router {
+func newRouter(auth UserAuth) *Router {
 	var mb muxBuilder
 	mb.init()
 
@@ -316,7 +316,7 @@ func newRouter() *Router {
 		rcRoutes:  make(routeTree),
 		muxRoutes: mb.router,
 		optionsHandler: withMiddleware(
-			http.HandlerFunc(commonOptionsHandler), "optionsHandler"),
+			http.HandlerFunc(commonOptionsHandler), "optionsHandler", auth),
 	}
 
 	glog.Infof("Server has %d routes", len(allRoutes))
@@ -324,17 +324,17 @@ func newRouter() *Router {
 
 	for _, rr := range allRoutes {
 		if isServeFromTree(rr.path) {
-			router.rcRoutes.add("", rr.path, &rr)
+			router.rcRoutes.add("", rr.path, &rr, auth)
 			rcRouteCount++
 		} else {
-			mb.add(&rr)
+			mb.add(&rr, auth)
 			muxRouteCount++
 		}
 	}
 
 	glog.Infof("Installed %d routes on routeTree and %d on mux", rcRouteCount, muxRouteCount)
 
-	mb.finish()
+	mb.finish(auth)
 	return router
 }
 
@@ -355,23 +355,23 @@ func (mb *muxBuilder) init() {
 }
 
 // add creates a new route in mux router
-func (mb *muxBuilder) add(rr *routeRegInfo) {
+func (mb *muxBuilder) add(rr *routeRegInfo, auth UserAuth) {
 	glog.V(2).Infof("Adding %s, %s %s", rr.name, rr.method, rr.path)
 
 	mb.paths[rr.path] = true
-	h := withMiddleware(rr.handler, rr.name)
+	h := withMiddleware(rr.handler, rr.name, auth)
 	mb.router.Name(rr.name).Methods(rr.method).Path(rr.path).Handler(h)
 }
 
 // finish creates routes for all internal service API handlers in
 // mux router. Should be called after all REST API routes are added.
-func (mb *muxBuilder) finish() {
+func (mb *muxBuilder) finish(auth UserAuth) {
 	router := mb.router
 
 	// Register common OPTIONS handler for every path template
 	// New sub-router is used to avoid extra match during regular APIs
 	sr := router.Methods("OPTIONS").Subrouter()
-	oh := withMiddleware(http.HandlerFunc(commonOptionsHandler), "optionsHandler")
+	oh := withMiddleware(http.HandlerFunc(commonOptionsHandler), "optionsHandler", auth)
 	for p := range mb.paths {
 		sr.Path(p).Handler(oh)
 	}
@@ -384,11 +384,11 @@ func (mb *muxBuilder) finish() {
 	router.Methods("GET").Path("/ui").
 		Handler(http.RedirectHandler("/ui/index.html", 301))
 
-	if ClientAuth.Enabled("jwt") {
-		//Allow POST for user/pass auth and or GET for cert auth.
-		router.Methods("POST","GET").Path("/authenticate").Handler(http.HandlerFunc(Authenticate))
-		router.Methods("POST","GET").Path("/refresh").Handler(http.HandlerFunc(Refresh))
-	}
+	
+	//Allow POST for user/pass auth and or GET for cert auth.
+	router.Methods("POST","GET").Path("/authenticate").Handler(withMiddleware(http.HandlerFunc(Authenticate), "jwtAuthHandler", auth))
+	router.Methods("POST","GET").Path("/refresh").Handler(withMiddleware(http.HandlerFunc(Refresh), "jwtRefreshHandler", auth))
+	
 
 	// To download yang models
 	ydirHandler := http.FileServer(http.Dir(translib.GetYangPath()))
@@ -444,10 +444,10 @@ func loggingMiddleware(inner http.Handler, name string) http.Handler {
 
 // withMiddleware function prepares the default middleware chain for
 // REST APIs.
-func withMiddleware(h http.Handler, name string) http.Handler {
-	if ClientAuth.Any() {
-		h = authMiddleware(h)
-	}
+func withMiddleware(h http.Handler, name string, auth UserAuth) http.Handler {
+	
+	h = authMiddleware(h, auth)
+	
 
 	return loggingMiddleware(h, name)
 }
@@ -456,26 +456,32 @@ func withMiddleware(h http.Handler, name string) http.Handler {
 // authentication and authorization. This middleware will return
 // 401 response if authentication fails and 403 if authorization
 // fails.
-func authMiddleware(inner http.Handler) http.Handler {
+func authMiddleware(inner http.Handler, auth UserAuth) http.Handler {
+	if !auth.Any() {
+		return inner
+	}
+
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		rc, r := GetContext(r)
+		rc.ClientAuth = auth
+		glog.V(2).Infof("Valid Auth Modes: %s", rc.ClientAuth)
 		var err error
 		success := false
 		ts := time.Now()
 
-		if ClientAuth.Enabled("password") {
+		if rc.ClientAuth.Enabled("password") || rc.ClientAuth.Enabled("user") {
 			err = BasicAuthenAndAuthor(r, rc)
 			if err == nil {
 				success = true
 			}
 		}
-		if !success && ClientAuth.Enabled("jwt") {
+		if !success && rc.ClientAuth.Enabled("jwt") {
 			_, err = JwtAuthenAndAuthor(r, rc)
 			if err == nil {
 				success = true
 			}
 		}
-		if !success && (ClientAuth.Enabled("cert") || ClientAuth.Enabled("cliuser")) {
+		if !success && rc.ClientAuth.Enabled("cert") {
 			err = ClientCertAuthenAndAuthor(r, rc)
 			if err == nil {
 				success = true
