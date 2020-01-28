@@ -879,18 +879,35 @@ func validateIpForIntfType(ifType E_InterfaceType, ip *string, prfxLen *uint8, i
 /* Check for IP overlap */
 func validateIpOverlap(d *db.DB, intf string, ipPref string, tblName string) (string, error) {
     log.Info("Checking for IP overlap ....")
-    ipA, ipNetA, _ := net.ParseCIDR(ipPref)
-    //Using *INTERFACE to get all L3 config keys for different interface types
-    keys, err := d.GetKeys(&db.TableSpec{Name:"*INTERFACE"})
-    if (err!= nil){
+
+    ipA, ipNetA, err := net.ParseCIDR(ipPref)
+    if err != nil {
+        log.Info("Failed to parse IP address: ", ipPref)
         return "", err
     }
-    if len(keys) > 0 {
-        for _, key := range keys {
+
+    var allIntfKeys []db.Key
+
+    for key, _ := range IntfTypeTblMap {
+        intTbl := IntfTypeTblMap[key]
+        keys, err := d.GetKeys(&db.TableSpec{Name:intTbl.cfgDb.intfTN})
+        if err != nil {
+            log.Info("Failed to get keys; err=%v", err)
+            return "", err
+        }
+        allIntfKeys = append(allIntfKeys, keys...)
+    }
+
+    if len(allIntfKeys) > 0 {
+        for _, key := range allIntfKeys {
             if len(key.Comp) < 2 {
                 continue
             }
-            ipB, ipNetB, _ := net.ParseCIDR(key.Get(1))
+            ipB, ipNetB, perr := net.ParseCIDR(key.Get(1))
+            //Check if key has IP, if not continue
+            if ipB == nil || perr != nil {
+                continue
+            }
             if ipNetA.Contains(ipB) || ipNetB.Contains(ipA) {
                 if log.V(3) {
                     log.Info("IP: ", ipPref, " overlaps with ", key.Get(1), " of ", key.Get(0))
