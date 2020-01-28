@@ -39,6 +39,9 @@ module sonic-spanning-tree {
             }
             units seconds;
             default 15;
+            description
+                "The delay used by STP bridges to transition root and
+                designated ports to forwarding";
         }
 
         leaf hello_time {
@@ -49,6 +52,9 @@ module sonic-spanning-tree {
             }
             units seconds;
             default 2;
+            description
+                "The interval between periodic transmissions of
+                configuration messages by designated ports";
         }
 
         leaf max_age {
@@ -59,6 +65,9 @@ module sonic-spanning-tree {
             }
             units seconds;
             default 20;
+            description
+                "The maximum age of the information transmitted by the
+                bridge when it is the root bridge";
         }
 
         leaf priority {
@@ -68,6 +77,8 @@ module sonic-spanning-tree {
                 }
             }
             default 32768;
+            description
+                "The manageable component of the Bridge Identifier";
         }
     }
 
@@ -79,15 +90,21 @@ module sonic-spanning-tree {
                 }
             }
             default 200;
+            description
+                "The port's contribution, when it is the Root Port,
+                to the Root Path Cost for the Bridge";
         }
 
         leaf priority {
             type uint8 {
-                range "1..240" {
+                range "0..240" {
                     error-message "Invalid Port Priority value.";
                 }
             }
             default 128;
+            description
+                "The manageable component of the Port Identifier,
+                also known as the Port Priority";
         }
     }
 
@@ -102,6 +119,8 @@ module sonic-spanning-tree {
                     type enumeration {
                         enum GLOBAL;
                     }
+                    description
+                        "Key node identifier. It's value is always GLOBAL";
                 }
 
                 leaf mode {
@@ -111,6 +130,8 @@ module sonic-spanning-tree {
                         enum mstp;
                         enum rstp;
                     }
+                    description
+                        "Spanning tree mode";
                 }
 
                 leaf rootguard_timeout {
@@ -121,10 +142,16 @@ module sonic-spanning-tree {
                     }
                     units seconds;
                     default 30;
+                    description
+                        "Once superior BPDUs stop coming on the port, device
+                        will wait for a period until root guard timeout before
+                        moving the port to forwarding state";
                 }
 
                 leaf bpdu_filter {
                     type boolean;
+                    description
+                        "Enable edge port BPDU filter";
                 }
 
                 uses vlanModeAttr;
@@ -139,6 +166,8 @@ module sonic-spanning-tree {
                     type leafref {
                         path "/svlan:sonic-vlan/svlan:VLAN/svlan:VLAN_LIST/svlan:name";
                     }
+                    description
+                        "Vlan identifier";
                 }
 
                 leaf vlanid {
@@ -148,10 +177,14 @@ module sonic-spanning-tree {
                             error-app-tag vlanid-invalid;
                         }
                     }
+                    description
+                        "Vlan identifier number";
                 }
 
                 leaf enabled {
                     type boolean;
+                    description
+                        "Spanning tree enabled/disabled on Vlan";
                 }
 
                 uses vlanModeAttr;
@@ -166,12 +199,16 @@ module sonic-spanning-tree {
                     type leafref {
                         path "../../../STP_VLAN/STP_VLAN_LIST/name";
                     }
+                    description
+                        "Reference to Vlan";
                 }
 
                 leaf ifname {
                     type leafref {
                         path "../../../STP_PORT/STP_PORT_LIST/ifname";
                     }
+                    description
+                        "Reference to Ethernet interface or PortChannel";
                 }
 
                 uses interfaceAttr;
@@ -191,18 +228,26 @@ module sonic-spanning-tree {
                             path "/spc:sonic-portchannel/spc:PORTCHANNEL/spc:PORTCHANNEL_LIST/spc:name";
                         }
                     }
+                    description
+                        "Reference to Ethernet interface or PortChannel";
                 }
 
                 leaf enabled {
                     type boolean;
+                    description
+                        "Spanning tree enabled/disabled on Interface";
                 }
 
                 leaf root_guard {
                     type boolean;
+                    description
+                        "Enable/Disable Root guard on port";
                 }
 
                 leaf bpdu_guard {
                     type boolean;
+                    description
+                        "Enable/Disable port BPDU guard";
                 }
 
                 leaf bpdu_filter {
@@ -211,18 +256,27 @@ module sonic-spanning-tree {
                         enum disable;
                         enum global;
                     }
+                    description
+                        "Enable port BPDU filter. Permissible values are 
+                        'enable', 'disable' and 'global'";
                 }
 
                 leaf bpdu_guard_do_disable {
                     type boolean;
+                    description
+                        "Port to be disabled when it receives a BPDU";
                 }
 
                 leaf uplink_fast {
                     type boolean;
+                    description
+                        "Enable/Disable uplink-fast on port";
                 }
 
                 leaf portfast {
                     type boolean;
+                    description
+                        "Enable/Disable portfast on port";
                 }
 
                 uses interfaceAttr;
@@ -234,6 +288,8 @@ module sonic-spanning-tree {
                         error-app-tag stp-invalid;
                     }
                     type boolean;
+                    description
+                        "Enable/Disable Edge-port on interface";
                 }
 
                 leaf link_type {
@@ -246,6 +302,9 @@ module sonic-spanning-tree {
                         enum shared;
                         enum point-to-point;
                     }
+                    description
+                        "Specifies the interface's link type. Permissible values
+                        are 'shared', 'point-to-point' and 'auto'";
                 }
             }
         }
