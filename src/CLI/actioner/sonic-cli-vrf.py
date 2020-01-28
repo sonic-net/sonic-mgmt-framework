@@ -99,7 +99,8 @@ def invoke_api(func, args=[]):
                 vrf_list = sonic_vrfs.content['sonic-vrf:VRF_LIST']
                 for vrf in vrf_list:
                    vrf_name = vrf['vrf_name']
-                   get_vrf_data(vrf_name, show_data)
+                   if vrf_name != "default": 
+                       get_vrf_data(vrf_name, show_data)
 
             if len(show_data) != 0:
                 show_cli_output(args[0], show_data)

@@ -92,7 +92,7 @@ def invoke_api(func, args=[]):
         keypath  = cc.Path('/restconf/data/openconfig-routing-policy:routing-policy/policy-definitions/policy-definition={name}/statements/statement={name1}/conditions/match-tag-set/config/openconfig-routing-policy-ext:tag-value',
              name=args[0], name1= args[1])
         api.delete(keypath)
-        body = {"openconfig-routing-policy:tag-value":[args[2]]}
+        body = {"openconfig-routing-policy:tag-value":[int(args[2])]}
         return api.patch(keypath, body)
     elif func == 'delete_openconfig_routing_policy_ext_routing_policy_policy_definitions_policy_definition_statements_statement_conditions_match_tag_set_config_tag_value':
         keypath  = cc.Path('/restconf/data/openconfig-routing-policy:routing-policy/policy-definitions/policy-definition={name}/statements/statement={name1}/conditions/match-tag-set/config/openconfig-routing-policy-ext:tag-value',

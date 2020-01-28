@@ -26,6 +26,7 @@ openconfig-system-ext.yang
 openconfig-system-annot.yang
 openconfig-nat.yang
 openconfig-nat-annot.yang
+openconfig-network-instance-ext.yang
 ietf-snmp.yang
 ietf-snmp-common.yang
 ietf-snmp-community.yang
