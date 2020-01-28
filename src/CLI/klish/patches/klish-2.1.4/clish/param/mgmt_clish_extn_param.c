@@ -1,6 +1,6 @@
 /*
  * filename: mgmt_clish_extn_param.c
- * (c) Copyright 2015 Dell EMC All Rights Reserved.
+ * (c) Copyright 2020 Dell EMC All Rights Reserved.
  *
  * APIs to set and get the new attributes added to the klish PARAM option
  */

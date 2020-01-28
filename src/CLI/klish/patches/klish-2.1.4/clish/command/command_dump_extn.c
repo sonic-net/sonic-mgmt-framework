@@ -1,6 +1,6 @@
 /*
  * filename: command_dump_extn.c
- * (c) Copyright 2015 Dell EMC All Rights Reserved.
+ * (c) Copyright 2020 Dell EMC All Rights Reserved.
  *
  * The functions are modelled in the line of command_dump.c except
  * that two new routines are called, one to print command with help

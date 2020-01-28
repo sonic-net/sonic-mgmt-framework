@@ -1,6 +1,6 @@
 /*
  * filename: dump_extn.c
- * (c) Copyright 2015 Dell EMC All Rights Reserved.
+ * (c) Copyright 2020 Dell EMC All Rights Reserved.
  *
  * The functions are modelled in the line of lub_dump.c except that
  * new routines are introduced to do syntax printing and that separate

@@ -1,6 +1,6 @@
 /*
  * filename: clish_api.h
- * (c) Copyright 2015 Dell EMC All Rights Reserved.
+ * (c) Copyright 2020 Dell EMC All Rights Reserved.
  *
  * Dell EMC extension over klish to implement an API for parsing XML input
  * CLISH library extension header file
