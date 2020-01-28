@@ -30,7 +30,7 @@ urllib3.disable_warnings()
 
 nat_type_map = {"snat" : "SNAT", "dnat": "DNAT"}
 nat_protocol_map = {"icmp": "1", "tcp": "6", "udp": "17"}
-clear_nat_map = {"translations": "1", "statistics": "2"}
+clear_nat_map = {"translations": "ENTRIES", "statistics": "STATISTICS"}
 config = True
 
 def invoke_api(func, args=[]):

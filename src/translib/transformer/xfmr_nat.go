@@ -1534,11 +1534,7 @@ var rpc_clear_nat RpcCallpoint = func(body []byte, dbs [db.MaxDB]*db.DB) ([]byte
     var data  []byte
 
     i := input["sonic-nat:input"].(map[string]interface{})
-    if i["nat-param"].(string) == "1" {
-        valLst[0] = "ENTRIES"
-    } else  {
-        valLst[0] = "STATISTICS"
-    }
+    valLst[0] = i["nat-param"].(string)
     valLst[1] = "ALL"
 
     data, err = json.Marshal(valLst)
