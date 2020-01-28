@@ -30,6 +30,7 @@ urllib3.disable_warnings()
 
 nat_type_map = {"snat" : "SNAT", "dnat": "DNAT"}
 nat_protocol_map = {"icmp": "1", "tcp": "6", "udp": "17"}
+clear_nat_map = {"translations": "ENTRIES", "statistics": "STATISTICS"}
 config = True
 
 def invoke_api(func, args=[]):
@@ -172,6 +173,12 @@ def invoke_api(func, args=[]):
     elif func == 'delete_openconfig_interfaces_ext_interfaces_interface_nat_zone_config_nat_zone':
         path = cc.Path('/restconf/data/openconfig-interfaces:interfaces/interface={name}/openconfig-interfaces-ext:nat-zone/config/nat-zone', name=args[1])
         return api.delete(path)
+
+    # Clear NAT Translations/Statistics
+    elif func == 'rpc_nat_clear':
+        path = cc.Path('/restconf/operations/sonic-nat:clear_nat')
+        body = {"sonic-nat:input":{"nat-param": clear_nat_map[args[1]]}}
+        return api.post(path,body)
 
 
     # Get NAT Global Config
