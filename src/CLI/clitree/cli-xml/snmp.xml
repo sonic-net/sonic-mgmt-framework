@@ -175,7 +175,7 @@ Before each command articulation, a comment is shown with the desired command sy
               </PARAM>
               <PARAM name="sha"    help="SHA Authentication" ptype="SUBCOMMAND"  mode="subcommand">
                 <PARAM name="auth-password" help="" ptype="SUBCOMMAND" mode="subcommand">
-                  <PARAM name="authpassword" help="Encrypted SHA Password" ptype="AUTH_KEY_TYPE">
+                  <PARAM name="authpassword" help="Encrypted SHA Password" ptype="SHA_AUTH_KEY_TYPE">
                     <MACRO name="SNMP-USER-PRIVENCRYPT-OPTIONS" arg=""/>
                   </PARAM>
                 </PARAM>
