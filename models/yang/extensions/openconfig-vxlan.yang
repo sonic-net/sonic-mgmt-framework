@@ -14,6 +14,7 @@ module openconfig-vxlan {
   import openconfig-if-types-ext { prefix oc-if-types-ext; }
   // import openconfig-yang-types { prefix oc-yang; }
   import openconfig-extensions { prefix oc-ext; }
+  import openconfig-vlan-types { prefix oc-vlan-types; }
 
   // OpenConfig specific extensions for module metadata.
   oc-ext:regexp-posix;
@@ -165,6 +166,16 @@ module openconfig-vxlan {
       "bdBindVniType";
   }  
 
+  typedef vlan-suppress-type {
+    type enumeration {
+      enum "arp-and-nd" {
+        description
+          "Suppress both ARP and ND.";
+      }
+   }
+    description
+      "Neighbour Suppress Value";
+  }
 
   grouping vxlan-vni-static-ipv4-peer-config {
     description
@@ -647,4 +658,45 @@ module openconfig-vxlan {
   }
 
   uses vxlan-top;
+
+  grouping neighbour-suppress-config {
+    description
+      "Grouping for Neigbour Suppress configuration";
+
+    leaf neigh-suppress{
+      type vlan-suppress-type;
+      description
+        "Enable Arp and ND Suppression";
+    }
+  }
+
+  grouping neighbour-suppress-top {
+      container neighbour-suppress {
+          container config {
+              description
+                  "Configuration data for neigh-suppress";
+              uses neighbour-suppress-config;
+          }
+          container state {
+              config false;
+              description
+                  "Operational state data ";
+              uses neighbour-suppress-config;
+          }
+      }
+  }
+
+  augment "/oc-if:interfaces/oc-if:interface" {
+      description
+          "Adds neighbour suppress configuration for routed VLAN interfaces";
+
+      uses  neighbour-suppress-top {
+          when "current()/oc-if:config/oc-if:type = 'ift:l3ipvlan'" {
+              description
+                  "Active when the interface is a logical interface providing
+                  L3 routing for VLANs";
+          }
+      }
+  }
+
 }

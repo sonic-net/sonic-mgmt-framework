@@ -121,7 +121,9 @@ module sonic-vxlan {
                     type string;
                 }
                 leaf suppress {
-                    type string;
+                    type enumeration {
+                        enum on;
+                    }
                 }
 
             }
