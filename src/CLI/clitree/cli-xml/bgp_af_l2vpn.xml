@@ -1030,7 +1030,52 @@ limitations under the License.
     <ACTION builtin="clish_nop"/>
   </COMMAND>
   <COMMAND name="show bgp l2vpn evpn route" help="EVPN Route information">
-    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-show-bgp-evpn.py get_bgp_evpn_routes show_evpn_routes.j2 default L2VPN_EVPN</ACTION>
+    <PARAM name="evpnroutesubcommands" help="EVPN Route Subcommands" ptype="SUBCOMMAND" mode="switch" optional="true">
+      <PARAM name="rd" help="Route Distinguisher" mode="subcommand" ptype="SUBCOMMAND" optional="true">
+        <PARAM name="rdvalue" help="Route Distinguisher" ptype="RD">
+          <PARAM name="evpnrouterdsubcommands" help="EVPN Route RD Subcommands" ptype="SUBCOMMAND" mode="switch" optional="true">
+            <PARAM name="mac" help="MAC" mode="subcommand" ptype="SUBCOMMAND" optional="true">
+              <PARAM name="macvalue" help="MAC" ptype="MAC_ADDR">
+                <PARAM name="ip" help="IP" mode="subcommand" ptype="SUBCOMMAND">
+                  <PARAM name="ipvalue" help="IP" ptype="IPV4V6_ADDR">
+                  </PARAM>
+                </PARAM>
+              </PARAM>
+            </PARAM>
+            <PARAM name="type" help="Specify Route Type" mode="subcommand" ptype="SUBCOMMAND" optional="true">
+              <PARAM name="types" help="EVPN route type subcommands" ptype="SUBCOMMAND" mode="switch">
+                <MACRO name="BGP_EVPN_RT_TYPES" arg=""></MACRO>
+              </PARAM>
+            </PARAM>
+          </PARAM>
+        </PARAM>
+      </PARAM>
+    </PARAM>
+    <!--ACTION> python $SONIC_CLI_ROOT/sonic-cli-show-bgp-evpn.py get_bgp_evpn_routes show_evpn_routes.j2 default L2VPN_EVPN</ACTION-->
+    <ACTION>
+        if test -n "${rd}"; then&#xA;
+          if test -n "${ead}"; then&#xA;
+             python $SONIC_CLI_ROOT/sonic-cli-show-bgp-evpn.py get_bgp_evpn_routes_filter show_evpn_routes_detail.j2 default L2VPN_EVPN filter=rd,type ${rdvalue} 1&#xA;
+          elif test -n "${es}"; then&#xA;
+             python $SONIC_CLI_ROOT/sonic-cli-show-bgp-evpn.py get_bgp_evpn_routes_filter show_evpn_routes_detail.j2 default L2VPN_EVPN filter=rd,type ${rdvalue} 4&#xA;
+          elif test -n "${macip}"; then&#xA;
+             python $SONIC_CLI_ROOT/sonic-cli-show-bgp-evpn.py get_bgp_evpn_routes_filter show_evpn_routes_detail.j2 default L2VPN_EVPN filter=rd,type ${rdvalue} 2&#xA;
+          elif test -n "${multicast}"; then&#xA;
+             python $SONIC_CLI_ROOT/sonic-cli-show-bgp-evpn.py get_bgp_evpn_routes_filter show_evpn_routes_detail.j2 default L2VPN_EVPN filter=rd,type ${rdvalue} 3&#xA;
+          elif test -n "${prefix}"; then&#xA;
+             python $SONIC_CLI_ROOT/sonic-cli-show-bgp-evpn.py get_bgp_evpn_routes_filter show_evpn_routes_detail.j2 default L2VPN_EVPN filter=rd,type ${rdvalue} 5&#xA;
+          elif test -n "${macvalue}"; then&#xA;
+             python $SONIC_CLI_ROOT/sonic-cli-show-bgp-evpn.py get_bgp_evpn_routes_filter show_evpn_routes_detail.j2 default L2VPN_EVPN filter=rd,macip ${rdvalue} ${macvalue} ${ipvalue}&#xA;
+          else&#xA;
+             python $SONIC_CLI_ROOT/sonic-cli-show-bgp-evpn.py get_bgp_evpn_routes_filter show_evpn_routes_detail.j2 default L2VPN_EVPN filter=rd ${rdvalue}&#xA;
+          fi&#xA;  
+        else&#xA;
+          python $SONIC_CLI_ROOT/sonic-cli-show-bgp-evpn.py get_bgp_evpn_routes show_evpn_routes.j2 default L2VPN_EVPN&#xA;
+        fi&#xA;      
+  </ACTION>
+  </COMMAND>
+  <COMMAND name="show bgp l2vpn evpn route detail" help="Display Detailed Information">
+    <ACTION> python $SONIC_CLI_ROOT/sonic-cli-show-bgp-evpn.py get_bgp_evpn_routes show_evpn_routes_detail.j2 default L2VPN_EVPN</ACTION>
   </COMMAND>
   <COMMAND name="show bgp l2vpn evpn summary" help="Summary of BGP neighbor status">
     <ACTION> python $SONIC_CLI_ROOT/sonic-cli-bgp.py get_ip_bgp_summary show_evpn_summary.j2 default</ACTION>
@@ -1041,17 +1086,37 @@ limitations under the License.
     </PARAM>
     <ACTION>
         if test -n "${ead}"; then&#xA;
-           python $SONIC_CLI_ROOT/sonic-cli-show-bgp-evpn.py get_bgp_evpn_routes_filter show_evpn_routes.j2 default L2VPN_EVPN type=1&#xA;
+           python $SONIC_CLI_ROOT/sonic-cli-show-bgp-evpn.py get_bgp_evpn_routes_filter show_evpn_routes.j2 default L2VPN_EVPN filter=type 1&#xA;
         elif test -n "${es}"; then&#xA;
-           python $SONIC_CLI_ROOT/sonic-cli-show-bgp-evpn.py get_bgp_evpn_routes_filter show_evpn_routes.j2 default L2VPN_EVPN type=4&#xA;
+           python $SONIC_CLI_ROOT/sonic-cli-show-bgp-evpn.py get_bgp_evpn_routes_filter show_evpn_routes.j2 default L2VPN_EVPN filter=type 4&#xA;
         elif test -n "${macip}"; then&#xA;
-           python $SONIC_CLI_ROOT/sonic-cli-show-bgp-evpn.py get_bgp_evpn_routes_filter show_evpn_routes.j2 default L2VPN_EVPN type=2&#xA;
+           python $SONIC_CLI_ROOT/sonic-cli-show-bgp-evpn.py get_bgp_evpn_routes_filter show_evpn_routes.j2 default L2VPN_EVPN filter=type 2&#xA;
         elif test -n "${multicast}"; then&#xA;
-           python $SONIC_CLI_ROOT/sonic-cli-show-bgp-evpn.py get_bgp_evpn_routes_filter show_evpn_routes.j2 default L2VPN_EVPN type=3&#xA;
+           python $SONIC_CLI_ROOT/sonic-cli-show-bgp-evpn.py get_bgp_evpn_routes_filter show_evpn_routes.j2 default L2VPN_EVPN filter=type 3&#xA;
         elif test -n "${prefix}"; then&#xA;
-           python $SONIC_CLI_ROOT/sonic-cli-show-bgp-evpn.py get_bgp_evpn_routes_filter show_evpn_routes.j2 default L2VPN_EVPN type=5&#xA;
+           python $SONIC_CLI_ROOT/sonic-cli-show-bgp-evpn.py get_bgp_evpn_routes_filter show_evpn_routes.j2 default L2VPN_EVPN filter=type 5&#xA;
         else&#xA;
            python $SONIC_CLI_ROOT/sonic-cli-show-bgp-evpn.py get_bgp_evpn_routes show_evpn_routes.j2 default L2VPN_EVPN&#xA;
+        fi&#xA;
+  </ACTION>
+  </COMMAND>
+  <COMMAND name="show bgp l2vpn evpn route detail type" help="Specify Route type">
+    <PARAM name="type" help="EVPN route type subcommands" ptype="SUBCOMMAND" mode="switch">
+      <MACRO name="BGP_EVPN_RT_TYPES" arg=""></MACRO>
+    </PARAM>
+    <ACTION>
+        if test -n "${ead}"; then&#xA;
+           python $SONIC_CLI_ROOT/sonic-cli-show-bgp-evpn.py get_bgp_evpn_routes_filter show_evpn_routes_detail.j2 default L2VPN_EVPN filter=type 1&#xA;
+        elif test -n "${es}"; then&#xA;
+           python $SONIC_CLI_ROOT/sonic-cli-show-bgp-evpn.py get_bgp_evpn_routes_filter show_evpn_routes_detail.j2 default L2VPN_EVPN filter=type 4&#xA;
+        elif test -n "${macip}"; then&#xA;
+           python $SONIC_CLI_ROOT/sonic-cli-show-bgp-evpn.py get_bgp_evpn_routes_filter show_evpn_routes_detail.j2 default L2VPN_EVPN filter=type 2&#xA;
+        elif test -n "${multicast}"; then&#xA;
+           python $SONIC_CLI_ROOT/sonic-cli-show-bgp-evpn.py get_bgp_evpn_routes_filter show_evpn_routes_detail.j2 default L2VPN_EVPN filter=type 3&#xA;
+        elif test -n "${prefix}"; then&#xA;
+           python $SONIC_CLI_ROOT/sonic-cli-show-bgp-evpn.py get_bgp_evpn_routes_filter show_evpn_routes_detail.j2 default L2VPN_EVPN filter=type 5&#xA;
+        else&#xA;
+           python $SONIC_CLI_ROOT/sonic-cli-show-bgp-evpn.py get_bgp_evpn_routes show_evpn_routes_detail.j2 default L2VPN_EVPN&#xA;
         fi&#xA;
   </ACTION>
   </COMMAND>

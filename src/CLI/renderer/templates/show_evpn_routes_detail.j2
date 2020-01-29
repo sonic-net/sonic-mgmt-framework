@@ -11,7 +11,7 @@
 {% set vars = {'validRoute': ""} %}
 {% set vars = {'tableVersion': "1"} %}
 {% set vars = {'extcommstr': ""} %}
-{% set vars = {'aspathstr': ""} %}
+{% set vars = {'aspathstr': "Local"} %}
 {% if json_output -%}
 {% for key in json_output %}
 {% if "openconfig-network-instance:config" in key %}
@@ -20,17 +20,6 @@
 {% if vars.update({'asNum':globalConfig["as"]}) %}{% endif %}
 {% endif %}
 {% endfor %}
-BGP table version is {{ vars.tableVersion }}, local router ID is {{ vars.routerId }}
-Status codes: s suppressed, d damped, h history, * valid, > best, i - internal
-Origin codes: i - IGP, e - EGP, ? - incomplete
-EVPN type-1 prefix: [1]:[ESI]:[EthTag]
-EVPN type-2 prefix: [2]:[EthTag]:[MAClen]:[MAC]:[IPlen]:[IP]
-EVPN type-3 prefix: [3]:[EthTag]:[IPlen]:[OrigIP]
-EVPN type-4 prefix: [4]:[ESI]:[IPlen]:[OrigIP]
-EVPN type-5 prefix: [5]:[EthTag]:[IPlen]:[IP]
-{{' '}}
-     {{'%-20s'|format("Network")}}{{'%-20s'|format("Next Hop")}}{{'%-8s'|format("Metric")}}{{'%-8s'|format("LocPref")}}{{'%-8s'|format("Weight")}}{{'%-15s'|format("Path")}}
-     {{'%-20s'|format(" ")}}{{'%-20s'|format("Extended Community")}}
 {% for key in json_output %}
 {% if "openconfig-bgp-evpn-ext:routes" in key %}
 {% set routeList = json_output["openconfig-bgp-evpn-ext:routes"] %}
@@ -72,21 +61,26 @@ EVPN type-5 prefix: [5]:[EthTag]:[IPlen]:[IP]
     {% endif %}
   {% endif %}
   {% if vars.origin == 'IGP' %}
-    {% if vars.update({'origin':"i"}) %}{% endif %}
+    {% if vars.update({'origin':"IGP"}) %}{% endif %}
   {% elif vars.origin == 'EGP' %}
-    {% if vars.update({'origin':"e"}) %}{% endif %}
+    {% if vars.update({'origin':"EGP"}) %}{% endif %}
   {% else %}
-    {% if vars.update({'origin':"?"}) %}{% endif %}
+    {% if vars.update({'origin':"Incomplete"}) %}{% endif %}
   {% endif %}
 {% endfor %}
 {% if vars.validRoute == True %}
-{% if vars.update({'validRoute':"*"}) %}{% endif %}
+{% if vars.update({'validRoute':"valid"}) %}{% endif %}
 {% else %}
 {% if vars.update({'validRoute':""}) %}{% endif %}
 {% endif %}
-{{'%-5s'|format(vars.validRoute)}}{{'%-20s'|format(vars.prefix)}}
-{{'%-25s'|format("")}}{{'%-20s'|format(vars.nxtHop)}}{{'%8s'|format(vars.med)}}{{'%8s'|format(vars.locPref)}}{{'%8s'|format(vars.weight)}}{{' '}}{{'%s'|format(vars.aspathstr)}}{{' '}}{{vars.origin}}
-{{'%-25s'|format("")}}{{'%s'|format(vars.extcommstr)}}
+BGP routing table entry for {{vars.rd~':'~vars.prefix}}
+Paths: ({{''}} availalbe, best #{{''}})
+  Route {{vars.prefix}} VNI {{''}}
+  {{vars.aspathstr}}
+      {{vars.neighbor}} from {{vars.nxtHop}} ({{vars.rd}})
+        Origin {{vars.origin}}, {{vars.validRoute}}, {{''}}, {{''}} ({{''}})
+        Extended Community: {{vars.extcommstr}}
+        Last update: {{datetimeformat(vars.time)|string}}
 {% endfor %}
 {% endif %}
 {% endfor %}

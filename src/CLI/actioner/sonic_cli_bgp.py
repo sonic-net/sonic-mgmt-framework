@@ -690,10 +690,14 @@ def invoke_api(func, args=[]):
         body = { "openconfig-network-instance:passive-mode": True if args[2] == 'True' else False }
         return api.patch(keypath, body)
     elif func == 'patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_auth_password':
-        keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/neighbors/neighbor={neighbor_address}/config/auth-password',
+        keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/neighbors/neighbor={neighbor_address}/openconfig-bgp-ext:auth-password/config',
                 name=args[0], identifier=IDENTIFIER, name1=NAME1, neighbor_address=args[1])
-        body = { "openconfig-network-instance:auth-password": args[2] }
+        body = { "oc-bgp-ext:config": { "oc-bgp-ext:password": args[2],  "oc-bgp-ext:encrypted": True if "encrypted" in args[2:] else False }}
         return api.patch(keypath, body)
+    elif func == 'delete_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_auth_password':
+        keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/neighbors/neighbor={neighbor_address}/openconfig-bgp-ext:auth-password',
+                name=args[0], identifier=IDENTIFIER, name1=NAME1, neighbor_address=args[1])
+        return api.delete(keypath)
     elif func == 'patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_neighbors_neighbor_config_solo_peer':
         keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/neighbors/neighbor={neighbor_address}/config/openconfig-bgp-ext:solo-peer',
                 name=args[0], identifier=IDENTIFIER, name1=NAME1, neighbor_address=args[1])
@@ -941,10 +945,14 @@ def invoke_api(func, args=[]):
         body = { "openconfig-network-instance:passive-mode": True if args[2] == 'True' else False }
         return api.patch(keypath, body)
     elif func == 'patch_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_config_auth_password':
-        keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/peer-groups/peer-group={peer_group_name}/config/auth-password',
+        keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/peer-groups/peer-group={peer_group_name}/openconfig-bgp-ext:auth-password/config',
                 name=args[0], identifier=IDENTIFIER, name1=NAME1, peer_group_name=args[1])
-        body = { "openconfig-network-instance:auth-password": args[2] }
+        body = { "oc-bgp-ext:config": { "oc-bgp-ext:password": args[2],  "oc-bgp-ext:encrypted": True if "encrypted" in args[2:] else False }}
         return api.patch(keypath, body)
+    elif func == 'delete_openconfig_network_instance_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_auth_password':
+        keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/peer-groups/peer-group={peer_group_name}/openconfig-bgp-ext:auth-password/config',
+                name=args[0], identifier=IDENTIFIER, name1=NAME1, peer_group_name=args[1])
+        return api.delete(keypath)
     elif func == 'patch_openconfig_bgp_ext_network_instances_network_instance_protocols_protocol_bgp_peer_groups_peer_group_config_solo_peer':
         keypath = cc.Path('/restconf/data/openconfig-network-instance:network-instances/network-instance={name}/protocols/protocol={identifier},{name1}/bgp/peer-groups/peer-group={peer_group_name}/config/openconfig-bgp-ext:solo-peer',
                 name=args[0], identifier=IDENTIFIER, name1=NAME1, peer_group_name=args[1])
@@ -1660,7 +1668,7 @@ def invoke_show_api(func, args=[]):
             response = api.get(keypath)
             if response.ok():
                 if 'openconfig-network-instance:neighbor' in response.content:
-                    tmp['neighbor'] = preprocess_bgp_nbrs(iptype, response.content['openconfig-network-instance:neighbors']['neighbor'])
+                    tmp['neighbor'] = preprocess_bgp_nbrs(iptype, response.content['openconfig-network-instance:neighbor'])
                     d['openconfig-network-instance:neighbors'] = tmp
                 return d
             else:

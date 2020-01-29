@@ -27,9 +27,25 @@ module sonic-nat {
     description
         "SONiC NAT";
 
+    revision 2020-01-22 {
+        description
+            "Adding RPC for clear NAT.";
+    }
+
     revision 2019-10-30 {
         description
             "Initial revision.";
+    }
+
+    typedef nat-clear-param {
+        type enumeration {
+            enum ENTRIES {
+                description "NAT dynamic Entries";
+            }
+            enum STATISTICS {
+                description "NAT Statistics";
+            }
+        }
     }
 
     typedef nat-type {
@@ -236,6 +252,23 @@ module sonic-nat {
                     default snat;
                 }
                 uses sonic-twice-nat-id;
+            }
+        }
+    }
+
+    rpc clear_nat {
+        input {
+            leaf nat-param {
+                type nat-clear-param;
+                description
+                    "Parameter for deleting either all dynamic NAT entries or all NAT statistics";
+            }
+        }
+        output {
+            leaf status {
+                type string;
+                description
+                    " Success / Failure of deletion of NAT Parameters";
             }
         }
     }

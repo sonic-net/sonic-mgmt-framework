@@ -1,0 +1,19 @@
+module ietf-snmp-ext {
+
+  yang-version 1;
+
+  namespace "http://github.com/Azure/sonic-snmp-ext";
+
+  prefix snmp-ext;
+
+  import ietf-snmp {prefix snmp; }
+
+  deviation /snmp:snmp/snmp:engine/snmp:version/snmp:v1 {
+    deviate not-supported;
+  }
+
+  deviation /snmp:snmp/snmp:target-params/snmp:params/snmp:v1 {
+    deviate not-supported;
+  }
+
+}

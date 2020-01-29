@@ -412,7 +412,6 @@ def mclag_show_mclag_brief(args):
 
 def run(func, args):
 
-    pipestr().write(args)
     #show commands
     try:
         #show mclag brief command

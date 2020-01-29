@@ -718,11 +718,13 @@ func hdl_get_bgp_evpn_local_rib (ribAfiSafi_obj *ocbinds.OpenconfigNetworkInstan
 func fill_evpn_spec_pfx_path_loc_rib_data (ipv4LocRibRoutes_obj *ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Rib_AfiSafis_AfiSafi_L2VpnEvpn_LocRib_Routes,
                                                rd string, prefix string, pathId uint32, pathData map[string]interface{}) bool {
     
-    origin, ok := pathData["origin"].(string)
+    peer, ok := pathData["peer"].(map[string]interface{})
     if !ok {return false}
 
-    _route_origin := &ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Rib_AfiSafis_AfiSafi_L2VpnEvpn_LocRib_Routes_Route_State_Origin_Union_String{origin}
-    ipv4LocRibRoute_obj, err := ipv4LocRibRoutes_obj.NewRoute (rd, prefix)
+    peerId, ok := peer["peerId"].(string)
+    if !ok {return false}
+    _route_origin := &ocbinds.OpenconfigNetworkInstance_NetworkInstances_NetworkInstance_Protocols_Protocol_Bgp_Rib_AfiSafis_AfiSafi_L2VpnEvpn_LocRib_Routes_Route_State_Origin_Union_String{peerId}
+    ipv4LocRibRoute_obj, err := ipv4LocRibRoutes_obj.NewRoute (rd, prefix, _route_origin, pathId)
     if err != nil {return false}
     ygot.BuildEmptyTree(ipv4LocRibRoute_obj)
 
@@ -736,6 +738,14 @@ func fill_evpn_spec_pfx_path_loc_rib_data (ipv4LocRibRoutes_obj *ocbinds.Opencon
 
     if value, ok := pathData["valid"].(bool) ; ok {
         ipv4LocRibRouteState.ValidRoute = &value
+    }
+
+    lastUpdate, ok := pathData["lastUpdate"].(map[string]interface{})
+    if ok {
+        if value, ok := lastUpdate["epoch"] ; ok {
+            _lastUpdateEpoch := uint64(value.(float64))
+            ipv4LocRibRouteState.LastModified = &_lastUpdateEpoch
+        }
     }
 
     ipv4LocRibRouteAttrSets := ipv4LocRibRoute_obj.AttrSets
@@ -754,6 +764,10 @@ func fill_evpn_spec_pfx_path_loc_rib_data (ipv4LocRibRoutes_obj *ocbinds.Opencon
         ipv4LocRibRouteAttrSets.OriginatorId = &value
     }
 
+    if value, ok := pathData["origin"].(string) ; ok {
+        parse_origin_type_data (value, &ipv4LocRibRouteAttrSets.Origin)
+    }
+    
     if value, ok := pathData["nexthops"].([]interface{}) ; ok {
         if nhop, ok := value[0].(map[string]interface{}) ; ok {
             if ip, ok := nhop["ip"].(string) ; ok {

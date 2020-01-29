@@ -841,7 +841,6 @@ module ietf-snmp-annot {
 
     deviation /snmp:snmp/snmp:target-params/snmp:params/snmp:v1/snmp:v1/snmp:security-name {
       deviate add {
-        sonic-ext:field-name "securityNameV1";
       }
     }
 

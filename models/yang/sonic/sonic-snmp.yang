@@ -78,7 +78,6 @@ module sonic-snmp {
   typedef security-model {
     type union {
       type enumeration {
-        enum v1  { value 1; }
         enum v2c { value 2; }
         enum usm { value 3; }
         enum tsm { value 4; }
@@ -303,10 +302,6 @@ module sonic-snmp {
 
         leaf name {
           type identifier;
-        }
-
-        leaf securityNameV1 {
-          type security-name;
         }
 
         leaf securityNameV2 {

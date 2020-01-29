@@ -177,7 +177,10 @@ def show_link_state_tracking_group_data(groups, details):
 def show_link_state_tracking_group_response_handler(response, args):
     if response.ok():
         data = response.content
-        show_link_state_tracking_group_data(data['sonic-link-state-tracking:INTF_TRACKING_TABLE_LIST'], len(args) > 0)
+        if bool(data):
+            show_link_state_tracking_group_data(data['sonic-link-state-tracking:INTF_TRACKING_TABLE_LIST'], len(args) > 0)
+        elif len(args) > 0:
+             print("%Error: Group not found")
     elif str(response.status_code) == '404':
         if len(args) > 0:
             print("%Error: Group not found")
@@ -215,7 +218,6 @@ response_handlers = {
 
 
 def run(op_str, args):
-    pipestr().write(args)
     try:
         resp = request_handlers[op_str](args)
         response_handlers[op_str](resp, args)
