@@ -29,8 +29,6 @@ urllib3.disable_warnings()
 
 sess = requests.Session()
 
-client_token = None
-
 class ApiClient(object):
     """
     A client for accessing a RESTful API
@@ -75,9 +73,7 @@ class ApiClient(object):
         req_headers = self.set_headers()
         req_headers.update(headers)
 
-        global client_token
-        if client_token is None:
-            client_token = os.getenv('REST_API_TOKEN', None)
+        client_token = os.getenv('REST_API_TOKEN', None)
 
         if client_token:
             syslog.syslog(syslog.LOG_DEBUG, "cli_client request using token %s" % client_token)
@@ -229,10 +225,3 @@ def add_error_prefix(err_msg):
         return '%Error: ' + err_msg
     return err_msg
 
-def set_token(token):
-    global client_token
-    client_token = token
-    syslog.syslog(syslog.LOG_DEBUG, "cli_client new token %s" % token)
-
-def set_command(cmd):
-    os.environ['USER_COMMAND'] = cmd

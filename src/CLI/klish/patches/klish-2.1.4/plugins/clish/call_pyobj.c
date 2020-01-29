@@ -27,9 +27,6 @@
 
 void pyobj_init() {
     Py_Initialize();
-    char *cert = getenv("USER_CERT_PATH");
-    char *key = getenv("USER_KEY_PATH");
-    syslog(LOG_WARNING, "clish_pyobj: cert:%s key:%s", cert, key);
 }
 
 static void pyobj_handle_error() {
@@ -78,49 +75,48 @@ static void pyobj_handle_error() {
     Py_XDECREF(py_module);
 }
 
-static int pyobj_set_user_cmd(const char *cmd) {
-    PyObject *module, *value;
-    int ret_code = 0;
+static int pyobj_update_environ(const char *key, const char *val) {
 
-    module = PyImport_ImportModule("cli_client");
+    PyObject *module = PyImport_ImportModule("os");
     if (module == NULL) {
         pyobj_handle_error();
         return -1;
     }
 
-    value = PyObject_CallMethod(module, "set_command", "(s)", cmd);
-    if (value == NULL) {
-        syslog(LOG_WARNING, "%s failed calling set_command", __FUNCTION__);
+    PyObject *dict = PyModule_GetDict(module);
+    PyObject *env_obj = PyDict_GetItemString(dict, "environ");
+
+    PyObject *func = PyObject_GetAttrString(env_obj, "update");
+   
+    PyObject *pMap = PyDict_New();
+    PyObject *v_obj = PyString_FromString(val);
+    PyDict_SetItemString(pMap, key, v_obj);
+
+    PyObject *args = PyTuple_New(1);
+    PyTuple_SetItem(args, 0, pMap);
+
+    PyObject_CallObject(func, args);
+
+    if (PyErr_Occurred()) {
         pyobj_handle_error();
-        ret_code = 1;
+        return 1;
     }
 
     Py_XDECREF(module);
-    Py_XDECREF(value);
+    Py_XDECREF(func);
+    Py_XDECREF(v_obj);
+    Py_XDECREF(pMap);
+    Py_XDECREF(args);
 
-    return ret_code;
+    return 0;
+}
+
+static int pyobj_set_user_cmd(const char *cmd) {
+    return pyobj_update_environ("USER_COMMAND", cmd);
 }
 
 int pyobj_set_rest_token(const char *token) {
-    PyObject *module, *value;
-    int ret_code = 0;
-
-    module = PyImport_ImportModule("cli_client");
-    if (module == NULL) {
-        pyobj_handle_error();
-        return -1;
-    }
-
-    value = PyObject_CallMethod(module, "set_token", "(s)", token);
-    if (value == NULL) {
-        syslog(LOG_WARNING, "%s failed calling set_token", __FUNCTION__);
-        pyobj_handle_error();
-        ret_code = 0;
-    }
-
-    Py_XDECREF(module);
-    Py_XDECREF(value);
-    return ret_code;
+    return pyobj_update_environ("REST_API_TOKEN", token);
 }
 
 int call_pyobj(char *cmd, const char *arg) {

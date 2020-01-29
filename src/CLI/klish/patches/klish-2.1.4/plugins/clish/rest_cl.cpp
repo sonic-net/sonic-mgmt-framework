@@ -196,12 +196,16 @@ static int _init_curl() {
 int rest_token_fetch(int *interval) {
 
     CURLcode res;
-    std::string url("https://localhost:8443/authenticate");
+    std::string url;
 
     if (!curl) {
         _init_curl();
         rest_set_curl_cert_key();
     }
+    
+    url  = REST_API_ROOT;
+    url.append("/authenticate");
+
     rest_set_curl_headers(false);
    
     RestResponse ret = {};
@@ -282,11 +286,7 @@ int _parse_args (std::string &input, std::string &oper_s, std::string &url_s, st
         url_pos += strlen("url=");
     }
 
-    if (rest_token.size()) {
-        url_s.assign("https://localhost:8443");
-    } else {
-        url_s = REST_API_ROOT;
-    }
+    url_s = REST_API_ROOT;
     
     size_t body_pos = input.find("body=");
 
