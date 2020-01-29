@@ -31,8 +31,10 @@
 {% for interface in interface_list %}
     {% for key in interface %}
       {% if "ethernet" in key %}
-        {% if vars.update({'speed':interface[key]["state"]["port-speed"]|replace("openconfig-if-ethernet:SPEED_", "")}) %}{% endif %}
-        {% if vars.update({'autoneg':interface[key]["state"]["auto-negotiate"]}) %}{% endif %}
+        {% if "state" in interface[key] %}
+          {% if vars.update({'speed':interface[key]["state"]["port-speed"]|replace("openconfig-if-ethernet:SPEED_", "")}) %}{% endif %}
+          {% if vars.update({'autoneg':interface[key]["state"]["auto-negotiate"]}) %}{% endif %}
+        {% endif %}
       {% endif %}
       {% if "state" in key %}
         {% if vars.update({'name':interface[key]["name"]}) %}{% endif %}
@@ -65,8 +67,10 @@
               {% set ip_list = subif["openconfig-if-ip:ipv4"]["addresses"]["address"] %}
               {% set ip_all = [] %}
               {% for ip in ip_list %}
-                {% set ipfx = ip["state"]["ip"] + "/" + ip["state"]["prefix-length"]|string() %}
-                {{ ip_all.append(ipfx)|default("", True)}}
+                {% if "state" in ip %}
+                  {% set ipfx = ip["state"]["ip"] + "/" + ip["state"]["prefix-length"]|string() %}
+                  {{ ip_all.append(ipfx)|default("", True)}}
+                {% endif %}
                 {% if vars.update({'mode4':"MANUAL"}) %}{% endif %}
               {% endfor %}
               {% if vars.update({'ipv4_src_pfx':ip_all|join(',')}) %}{% endif %}
@@ -77,8 +81,10 @@
               {% set ip_list = subif["openconfig-if-ip:ipv6"]["addresses"]["address"] %}
               {% set ipv6_all = [] %}
               {% for ip in ip_list %}
-                {% set ipfx = ip["state"]["ip"] + "/" + ip["state"]["prefix-length"]|string() %}
-                {{ ipv6_all.append(ipfx)|default("", True)}}
+                {% if "state" in ip %}
+                  {% set ipfx = ip["state"]["ip"] + "/" + ip["state"]["prefix-length"]|string() %}
+                  {{ ipv6_all.append(ipfx)|default("", True)}}
+                {% endif %}
                 {% if vars.update({'mode6':"MANUAL"}) %}{% endif %}
               {% endfor %}
               {% if vars.update({'ipv6_src_pfx':ipv6_all|join(',')}) %}{% endif %}

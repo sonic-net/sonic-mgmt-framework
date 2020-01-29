@@ -6,14 +6,24 @@
 {% set vars = {'out_packets': ""} %}
 {% set vars = {'out_errors': ""} %}
 {% set vars = {'out_discards': ""} %}
+{% set vars = {'in_oversize':""} %}
+{% set vars = {'out_oversize':""} %}
 {% if json_output -%}
 ------------------------------------------------------------------------------------------------
-{{'%-15s'|format("Interface")}}{{'%-10s'|format("State")}}{{'%-10s'|format("RX_OK")}}{{'%-10s'|format("RX_ERR")}}{{'%-10s'|format("RX_DRP")}}{{'%-10s'|format("TX_OK")}}{{'%-10s'|format("TX_ERR")}}{{'%-10s'|format("TX_DRP")}}
+{{'%-15s'|format("Interface")}}{{'%-10s'|format("State")}}{{'%-10s'|format("RX_OK")}}{{'%-10s'|format("RX_ERR")}}{{'%-10s'|format("RX_DRP")}}{{'%-10s'|format("RX_OVERSIZE")}}{{'%-10s'|format("TX_OK")}}{{'%-10s'|format("TX_ERR")}}{{'%-10s'|format("TX_DRP")}}{{'%-10s'|format("TX_OVERSIZE")}}
 ------------------------------------------------------------------------------------------------
 {% for key_json in json_output %}
 {% set interface_list = json_output[key_json]["interface"] %}
 {% for interface in interface_list %}
     {% for key in interface %}
+        {% if "ethernet" in key %}
+          {% if "state" in interface[key] %}
+            {% if "counters" in interface[key]["state"] %}
+              {% if vars.update({'in_oversize':interface[key]["state"]["counters"]["in-oversize-frames"]}) %}{% endif %}
+              {% if vars.update({'out_oversize':interface[key]["state"]["counters"]["openconfig-interfaces-ext:out-oversize-frames"]}) %}{% endif %}
+            {% endif %}
+          {% endif %}
+        {% endif %}
         {% if "state" in key %}
             {% if vars.update({'name':interface[key]["name"]}) %}{% endif %}
             {% if interface[key]["oper-status"] =='DOWN' %}
@@ -32,7 +42,7 @@
         {% endif %}
     {% endfor %}
 {% if 'Ethernet' in vars.name %}
-{{'%-15s'|format(vars.name)}}{{'%-10s'|format(vars.oper_state)}}{{'%-10s'|format(vars.in_packets)}}{{'%-10s'|format(vars.in_errors)}}{{'%-10s'|format(vars.in_discards)}}{{'%-10s'|format(vars.out_packets)}}{{'%-10s'|format(vars.out_errors)}}{{'%-10s'|format(vars.out_discards)}}
+{{'%-15s'|format(vars.name)}}{{'%-10s'|format(vars.oper_state)}}{{'%-10s'|format(vars.in_packets)}}{{'%-10s'|format(vars.in_errors)}}{{'%-10s'|format(vars.in_discards)}}{{'%-10s'|format(vars.in_oversize)}}{{'%-10s'|format(vars.out_packets)}}{{'%-10s'|format(vars.out_errors)}}{{'%-10s'|format(vars.out_discards)}}{{'%-10s'|format(vars.out_oversize)}}
 {% endif %}
 {% endfor %}
 {% endfor %}
