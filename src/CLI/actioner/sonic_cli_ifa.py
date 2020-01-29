@@ -36,18 +36,22 @@ def invoke_api(func, args):
        path = cc.Path('/restconf/data/sonic-ifa:sonic-ifa/TAM_INT_IFA_FEATURE_TABLE')
        return api.get(path)
     elif func == 'get_sonic_ifa_sonic_ifa_tam_int_ifa_flow_table':
-       path = cc.Path('/restconf/data/sonic-ifa:sonic-ifa/TAM_INT_IFA_FLOW_TABLE')
-       return api.get(path)
-    elif func == 'get_sonic_ifa_sonic_ifa_tam_int_ifa_flow_table_tam_int_ifa_flow_table_list':
-       path = cc.Path('/restconf/data/sonic-ifa:sonic-ifa/TAM_INT_IFA_FLOW_TABLE/TAM_INT_IFA_FLOW_TABLE_LIST={name}', name=args[0])
-       return api.get(path)
+        if (len(args) == 2) and (args[1] != "all"):
+           path = cc.Path('/restconf/data/sonic-ifa:sonic-ifa/TAM_INT_IFA_FLOW_TABLE/TAM_INT_IFA_FLOW_TABLE_LIST={name}', name=args[1])
+        else:
+           path = cc.Path('/restconf/data/sonic-ifa:sonic-ifa/TAM_INT_IFA_FLOW_TABLE')
+
+        return api.get(path)
+
     elif func == 'patch_sonic_ifa_sonic_ifa_tam_int_ifa_feature_table_tam_int_ifa_feature_table_list_enable':
-       path = cc.Path('/restconf/data/sonic-ifa:sonic-ifa/TAM_INT_IFA_FEATURE_TABLE/TAM_INT_IFA_FEATURE_TABLE_LIST={name}/enable', name=args[0])
-       if args[1] == 'True':
+       path = cc.Path('/restconf/data/sonic-ifa:sonic-ifa/TAM_INT_IFA_FEATURE_TABLE/TAM_INT_IFA_FEATURE_TABLE_LIST={name}/enable', name='feature')
+
+       if args[0] == 'enable':
            body = { "sonic-ifa:enable": True }
        else:
            body = { "sonic-ifa:enable": False }
        return api.patch(path, body)
+
     elif func == 'patch_sonic_ifa_sonic_ifa_tam_int_ifa_flow_table_tam_int_ifa_flow_table_list':
        path = cc.Path('/restconf/data/sonic-ifa:sonic-ifa/TAM_INT_IFA_FLOW_TABLE/TAM_INT_IFA_FLOW_TABLE_LIST={name}', name=args[0])
        bodydict = {"name": args[0], "acl-rule-name": args[1], "acl-table-name": args[2]}
@@ -62,18 +66,29 @@ def invoke_api(func, args):
                pass
        body = { "sonic-ifa:TAM_INT_IFA_FLOW_TABLE_LIST": [ bodydict ] }
        return api.patch(path, body)
+
     elif func == 'delete_sonic_ifa_sonic_ifa_tam_int_ifa_flow_table_tam_int_ifa_flow_table_list':
-       path = cc.Path('/restconf/data/sonic-ifa:sonic-ifa/TAM_INT_IFA_FLOW_TABLE/TAM_INT_IFA_FLOW_TABLE_LIST={name}', name=args[0])
-       return api.delete(path)
-    elif func == 'delete_list_sonic_ifa_sonic_ifa_tam_int_ifa_flow_table_tam_int_ifa_flow_table_list':
-       path = cc.Path('/restconf/data/sonic-ifa:sonic-ifa/TAM_INT_IFA_FLOW_TABLE/TAM_INT_IFA_FLOW_TABLE_LIST',)
-       return api.delete(path)
+        if args[0] != "all": 
+            path = cc.Path('/restconf/data/sonic-ifa:sonic-ifa/TAM_INT_IFA_FLOW_TABLE/TAM_INT_IFA_FLOW_TABLE_LIST={name}', name=args[0])
+        else:
+            path = cc.Path('/restconf/data/sonic-ifa:sonic-ifa/TAM_INT_IFA_FLOW_TABLE/TAM_INT_IFA_FLOW_TABLE_LIST')
+
+        return api.delete(path)
+
     else:
        body = {}
 
     return api.cli_not_implemented(func)
 
 def run(func, args):
+
+    if func == 'get_tam_ifa_status':
+        get_tam_ifa_status(args)
+        return
+    elif func == 'get_tam_ifa_flow_stats':
+        get_tam_ifa_flow_stats(args)
+        return
+
     response = invoke_api(func, args)
     if response.ok():
         if response.content is not None:
@@ -94,8 +109,6 @@ def run(func, args):
                 show_cli_output(args[0], api_response)
             elif func == 'get_sonic_ifa_sonic_ifa_tam_int_ifa_flow_table':
                 show_cli_output(args[0], api_response)
-            elif func == 'get_sonic_ifa_sonic_ifa_tam_int_ifa_flow_table_tam_int_ifa_flow_table_list':
-                show_cli_output(args[1], api_response)
             else:
                 return
     else:
@@ -135,19 +148,19 @@ def get_tam_ifa_flow_stats(args):
     api_response = {}
     api = cc.ApiClient()
 
-    if len(args) == 0:
-       path = cc.Path('/restconf/data/sonic-ifa:sonic-ifa/TAM_INT_IFA_FLOW_TABLE')
-    else:
+    if (len(args) == 1) and (args[0] != "all"):
        path = cc.Path('/restconf/data/sonic-ifa:sonic-ifa/TAM_INT_IFA_FLOW_TABLE/TAM_INT_IFA_FLOW_TABLE_LIST={name}', name=args[0])
+    else:
+       path = cc.Path('/restconf/data/sonic-ifa:sonic-ifa/TAM_INT_IFA_FLOW_TABLE')
 
     response = api.get(path)
 
     if response.ok():
         if response.content:
-            if len(args) == 0:
-                api_response = response.content['sonic-ifa:TAM_INT_IFA_FLOW_TABLE']['TAM_INT_IFA_FLOW_TABLE_LIST']
-            else:
+            if (len(args) == 1) and (args[0] != "all"):
                 api_response = response.content['sonic-ifa:TAM_INT_IFA_FLOW_TABLE_LIST']
+            else:
+                api_response = response.content['sonic-ifa:TAM_INT_IFA_FLOW_TABLE']['TAM_INT_IFA_FLOW_TABLE_LIST']
 
             for i in range(len(api_response)):
                 api_response[i]['Packets'] = 0
